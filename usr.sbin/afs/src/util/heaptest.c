@@ -35,7 +35,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: heaptest.c,v 1.3 2000/10/03 00:31:03 lha Exp $");
+RCSID("$arla: heaptest.c,v 1.3 2000/10/03 00:31:03 lha Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>

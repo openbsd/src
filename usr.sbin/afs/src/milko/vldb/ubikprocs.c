@@ -39,7 +39,7 @@
 #include <krb.h>
 #endif
 
-RCSID("$KTH: ubikprocs.c,v 1.3 2000/10/03 00:21:02 lha Exp $");
+RCSID("$arla: ubikprocs.c,v 1.3 2000/10/03 00:21:02 lha Exp $");
 
 int Ubik_Beacon(struct rx_call *call, 
 		const int32_t state, 

@@ -42,7 +42,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: mnode.c,v 1.9 2000/10/03 00:19:17 lha Exp $");
+RCSID("$arla: mnode.c,v 1.11 2001/11/06 16:03:19 tol Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -56,6 +56,10 @@ RCSID("$KTH: mnode.c,v 1.9 2000/10/03 00:19:17 lha Exp $");
 #include <hash.h>
 
 #include <mnode.h>
+
+#include <mdebug.h>
+#include <mlog.h>
+
 
 List *mnode_lru;	/* least recently used on tail, ref == 0 */
 
@@ -127,7 +131,11 @@ mnode_init (unsigned num)
 static void
 reset_node (struct mnode *n, const AFSFid *fid)
 {
-    assert (n->flags.fdp == FALSE);
+    assert (n->ref == 0);
+    if (n->flags.fdp) {
+	close (n->fd);
+	n->flags.fdp = FALSE;
+    }
     memset (n, 0, sizeof (*n));
     n->fid = *fid;
 }
@@ -143,29 +151,50 @@ reset_node (struct mnode *n, const AFSFid *fid)
 int
 mnode_find (const AFSFid *fid, struct mnode **node)
 {
-    struct mnode ptr, *res;
+    struct mnode ptr, *res = NULL;
     
     ptr.fid = *fid;
 
-    res = hashtabsearch (mnode_htab, &ptr);
+    while (res == NULL) {
+	res = hashtabsearch (mnode_htab, &ptr);
+	
+	if (res) {
+	    if (res->flags.removedp == TRUE)
+		return ENOENT;
 
-    if (res) {
-	if (res->li)
-	    listdel (mnode_lru, res->li);
-	if (res->ref == 0)
-	    mnode_numfree--;
-	res->ref++;
-    } else if (mnode_numfree != 0) {
-	res = listdeltail (mnode_lru); assert (res);
-	assert (res->ref == 0);
-	hashtabdel (mnode_htab, res);
-	reset_node (res, fid);
-	hashtabadd (mnode_htab, res);
-	res->ref++;
-    } else {
-	/* XXX */
-	abort();
+	    if (res->li)
+		listdel (mnode_lru, res->li);
+	    if (res->ref == 0)
+		mnode_numfree--;
+	    res->ref++;
+	} else if (mnode_numfree != 0) {
+	    res = listdeltail (mnode_lru); assert (res);
+	    assert (res->ref == 0);
+	    hashtabdel (mnode_htab, res);
+	    reset_node (res, fid);
+	    hashtabadd (mnode_htab, res);
+	    res->ref++;
+	} else {
+	    /* XXX */
+	    mlog_log (MDEBWARN,
+		      "mnode_find: no free nodes, had to malloc()");
+
+	    res = malloc(sizeof(struct mnode));
+	    if (res == NULL) {
+		mlog_log (MDEBWARN,
+			  "mnode_find: malloc() failed");
+		LWP_DispatchProcess(); /* Yield */
+		continue;
+	    }
+
+	    reset_node (res, fid);
+	    hashtabadd (mnode_htab, res);
+	    res->ref++;
+	}
     }
+
+    assert(res->flags.removedp == FALSE);
+
     *node = res;
     res->li = listaddhead (mnode_lru, *node);
     return 0;
@@ -196,10 +225,15 @@ mnode_free (struct mnode *node, Bool bad)
 	    close (node->fd);
 	    node->flags.fdp = FALSE;
 	}
-	mnode_numfree++;
-    }
 
-    node->li = listaddhead (mnode_lru, node);
+	if (node->flags.removedp == TRUE) {
+	    hashtabdel (mnode_htab, node);
+	    node->flags.removedp = FALSE;
+	}
+	mnode_numfree++;
+	node->li = listaddtail (mnode_lru, node);
+    } else
+	node->li = listaddhead (mnode_lru, node);
 }
 
 /*
@@ -222,7 +256,7 @@ mnode_remove (const AFSFid *fid)
 	if (res->li)
 	    listdel (mnode_lru, res->li);
 	res->li = listaddhead (mnode_lru, res);
-	mnode_numfree++;
+	res->flags.removedp = TRUE;
     }
 }
 
@@ -267,3 +301,4 @@ mnode_update_size_cached (struct mnode *n)
     n->fs.Length = n->sb.st_size;
     return 0;
 }
+ 

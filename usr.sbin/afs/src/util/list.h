@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,10 +35,10 @@
  * list handling functions
  */
 
-/* $KTH: list.h,v 1.10 2000/10/03 00:31:14 lha Exp $ */
+/* $arla: list.h,v 1.13 2003/01/10 12:38:43 lha Exp $ */
 
-#ifndef _LIST_
-#define _LIST_
+#ifndef _ARLAUTIL_LIST_H
+#define _ARLAUTIL_LIST_H 1
 
 #include "bool.h"
 #include <roken.h>
@@ -61,6 +61,8 @@ typedef struct list List;
  */
 
 List *listnew (void);
+
+void listfree(List *);
 
 Listitem *listaddhead (List *list, void *data);
 
@@ -125,4 +127,4 @@ listnextp(Listitem *item)
     return (Bool)(item->next != NULL);
 }
 
-#endif /* _LIST_ */
+#endif /* _ARLAUTIL_LIST_H */

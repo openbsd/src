@@ -1,5 +1,5 @@
 .\" Copyright (c) 2000 Kungliga Tekniska Högskolan
-.\" $KTH: log_log.3,v 1.5 2000/09/04 05:34:16 lha Exp $
+.\" $arla: log_log.3,v 1.6 2002/10/17 09:18:06 lha Exp $
 .Dd August 24, 2000
 .Dt LOG_LOG
 .Os UTIL
@@ -75,8 +75,8 @@ what fd will be connected to fd number 2).
 .Pp
 .Fn log_open
 will open a Log_method that all Log_units will log though, Log_method
-controls to what device the log is sent. Logging devices, passed in
-fname, are syslog, /dev/stderr, or a file.
+controls to what device the log is sent.
+Logging devices, passed in fname, are syslog, /dev/stderr, or a file.
 .Pp
 Options can be passes to the subsystem with an extra colon. Valid
 options are:
@@ -100,7 +100,8 @@ get the logging mask for a logging unit.
 .Pp
 .Fn log_mask2str
 convert the longing mask for `unit' (or all if this is NULL), to a
-string that can be printed. The string can be parsed by
+string that can be printed.
+The string can be parsed by
 .Fn log_set_mask_str .
 .Pp
 .Fn log_set_mask_str

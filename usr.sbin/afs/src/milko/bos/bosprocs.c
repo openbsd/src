@@ -33,7 +33,7 @@
 
 #include "bos_locl.h"
 
-RCSID("$KTH: bosprocs.c,v 1.4 2000/10/03 00:16:53 lha Exp $");
+RCSID("$arla: bosprocs.c,v 1.6 2002/06/02 21:12:15 lha Exp $");
 
 /*
  *
@@ -97,7 +97,8 @@ BOZO_GetStatus(struct rx_call *call,
 
 int
 BOZO_SetStatus(struct rx_call *call,
-	       const char *instance)
+	       const char *instance,
+	       const int32_t status)
 {
     bosdebug ("BOZO_SetStatus: %s\n", instance);
 
@@ -165,9 +166,11 @@ BOZO_AddSUser(struct rx_call *call, const char *name)
     if (strchr(name, '@'))
 	n = strdup (name);
     else
-	asnprintf (&n, BOZO_BSSIZE, "%s@%s", name, cell_getthiscell());
+	asprintf (&n, "%s@%s", name, cell_getthiscell());
     if (n == NULL)
 	return BZIO;
+    if (strlen(n) > BOZO_BSSIZE)
+	n[BOZO_BSSIZE - 1] = '\0';
     ret = sec_add_superuser (n);
     free (n);
     if (ret)
@@ -187,11 +190,13 @@ BOZO_DeleteSUser(struct rx_call *call, const char *name)
     int ret;
 
     if (strchr(name, '@'))
-	asnprintf (&n, BOZO_BSSIZE, "%s", name);
+	asprintf (&n, "%s", name);
     else
-	asnprintf (&n, BOZO_BSSIZE, "%s@%s", name, cell_getthiscell());
+	asprintf (&n, "%s@%s", name, cell_getthiscell());
     if (n == NULL)
 	return BZIO;
+    if (strlen(n) > BOZO_BSSIZE)
+	n[BOZO_BSSIZE - 1] = '\0';
     ret = sec_del_superuser (n);
     free (n);
     if (ret)

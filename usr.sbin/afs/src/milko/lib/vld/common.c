@@ -33,7 +33,7 @@
 
 #include <sfvol_private.h>
 
-RCSID("$KTH: common.c,v 1.3 2000/10/03 00:18:41 lha Exp $");
+RCSID("$arla: common.c,v 1.3 2000/10/03 00:18:41 lha Exp $");
 
 /*
  * Translate the `opaque' to the `ino'.

@@ -39,7 +39,7 @@
 #include "voldb_locl.h"
 #include "voldb_internal.h"
 
-RCSID("$KTH: voldb.c,v 1.21 2000/10/03 00:20:13 lha Exp $");
+RCSID("$arla: voldb.c,v 1.24 2002/02/07 17:59:56 lha Exp $");
 
 struct voldb_type *voltypes[] = {
     &vdb_flat,
@@ -92,22 +92,22 @@ file_local2afs (int32_t vno)
 int
 voldb_parse_header (struct voldb *db, void *d, size_t sz)
 {
-    u_int32_t i;
+    uint32_t i;
     unsigned char *data = d;
     
     assert (sz >= VOLDB_HEADER_HALF);
     
     memcpy (&i, data, sizeof (i));
     db->hdr.magic = ntohl (i);
-    data += sizeof (u_int32_t);
+    data += sizeof (uint32_t);
     
     memcpy (&i, data, sizeof (i));
     db->hdr.num = ntohl (i);
-    data += sizeof (u_int32_t);
+    data += sizeof (uint32_t);
     
     memcpy (&i, data, sizeof (i));
     db->hdr.flags = ntohl (i);
-    data += sizeof (u_int32_t);
+    data += sizeof (uint32_t);
 
     return 0;
 }
@@ -185,7 +185,7 @@ voldb_close (struct voldb *db)
  */
 
 int
-voldb_put_acl (struct voldb *db, u_int32_t num, struct voldb_dir_entry *e)
+voldb_put_acl (struct voldb *db, uint32_t num, struct voldb_dir_entry *e)
 {
     assert (db && e);
     assert ((db->hdr.flags & VOLDB_DIR) == VOLDB_DIR);
@@ -258,6 +258,26 @@ voldb_get_entry (struct voldb *db, int32_t num, struct voldb_entry *e)
 	abort();
 }
 
+/* Expand the table to num size */
+
+int
+voldb_expand (struct voldb *db, int32_t num)
+{
+    assert (db);
+
+    return VOLDB_FUNC(db, expand)(db, num);
+}
+
+/* Rebuild the table */
+
+int
+voldb_rebuild (struct voldb *db)
+{
+    assert (db);
+
+    return VOLDB_FUNC(db, rebuild)(db);
+}
+
 /*
  * Fill out the data we need to have stored and the
  * let the lower layer store it.
@@ -267,22 +287,22 @@ int
 voldb_write_hdr (int fd, struct voldb *db)
 {
     int ret;
-    u_int32_t i;
+    uint32_t i;
     unsigned char data[VOLDB_HEADER_SIZE], *ptr;
 
     ptr = data;
 
     i = htonl (db->hdr.magic);
     memcpy (ptr, &i, sizeof (i));
-    ptr += sizeof (u_int32_t);
+    ptr += sizeof (uint32_t);
 
     i = htonl (db->hdr.num);
     memcpy (ptr, &i, sizeof (i));
-    ptr += sizeof (u_int32_t);
+    ptr += sizeof (uint32_t);
 
     i = htonl (db->hdr.flags);
     memcpy (ptr, &i, sizeof (i));
-    ptr += sizeof (u_int32_t);
+    ptr += sizeof (uint32_t);
     
     /* Here is space for yet other 2 int32_t */
 
@@ -349,7 +369,7 @@ voldb_flush (struct voldb *db)
 
 
 int
-voldb_new_entry (struct voldb *db, u_int32_t *num, u_int32_t *unique)
+voldb_new_entry (struct voldb *db, uint32_t *num, uint32_t *unique)
 {
     assert (db && unique);
 
@@ -365,7 +385,7 @@ voldb_new_entry (struct voldb *db, u_int32_t *num, u_int32_t *unique)
  */
 
 int
-voldb_del_entry (struct voldb *db, u_int32_t num, onode_opaque *ino)
+voldb_del_entry (struct voldb *db, uint32_t num, onode_opaque *ino)
 {
     assert (db);
 
@@ -379,8 +399,8 @@ voldb_del_entry (struct voldb *db, u_int32_t num, onode_opaque *ino)
 
 int
 voldb_header_info (struct voldb *db, 
-		   u_int32_t *num,
-		   u_int32_t *flags)
+		   uint32_t *num,
+		   uint32_t *flags)
 {
     if (num)
 	*num = db->hdr.num;
@@ -394,7 +414,7 @@ voldb_header_info (struct voldb *db,
  *
  */
 
-u_int32_t
+uint32_t
 voldb_get_volume (struct voldb *db)
 {
     return db->volume;

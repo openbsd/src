@@ -32,7 +32,7 @@
  */
 
 /*
- * $KTH: mlog.h,v 1.4 2000/10/03 00:18:03 lha Exp $
+ * $arla: mlog.h,v 1.4 2000/10/03 00:18:03 lha Exp $
  */
 
 #ifndef _arladeb_h

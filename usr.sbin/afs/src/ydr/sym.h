@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: sym.h,v 1.8 2000/10/02 22:37:05 lha Exp $ */
+/* $arla: sym.h,v 1.10 2002/04/15 14:53:19 lha Exp $ */
 
 #ifndef _SYM_
 #define _SYM_
@@ -45,7 +45,8 @@ typedef struct Type Type;
 
 typedef enum
 {
-     TUNDEFINED, TSTRUCT, TENUM, TCONST, TENUMVAL, TTYPEDEF, TPROC
+     YDR_TUNDEFINED, YDR_TSTRUCT, YDR_TENUM, YDR_TCONST, YDR_TENUMVAL,
+     YDR_TTYPEDEF, YDR_TPROC
 } SymbolType;
 
 enum { TSPLIT = 1, TSIMPLE = 2, TMULTI = 4};
@@ -64,6 +65,7 @@ typedef struct {
 	      char *package;
 	  } proc;
      } u;
+     List *attrs;
 } Symbol;
 
 void initsym (void);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: salvage.h,v 1.2 2000/10/03 00:19:33 lha Exp $ */
+/* $arla: salvage.h,v 1.2 2000/10/03 00:19:33 lha Exp $ */
 
 #ifndef MILKO_SALVAGE_H
 #define MILKO_SALVAGE_H 1

@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: hash.c,v 1.14.2.1 2001/08/31 18:10:43 ahltorp Exp $");
+RCSID("$arla: hash.c,v 1.18 2002/05/23 15:21:41 lha Exp $");
 #endif
 
 #include <assert.h>
@@ -47,31 +47,85 @@ RCSID("$KTH: hash.c,v 1.14.2.1 2001/08/31 18:10:43 ahltorp Exp $");
 #include <ctype.h>
 #include <bool.h>
 #include <hash.h>
+#include <arlamath.h>
+
+struct ht_bucket {
+     Hashentry *e;
+     int len;
+};
+
+
+struct hashtab {		/* Hash table */
+     int (*cmp)(void *, void *); /* Compare function */
+     unsigned (*hash)(void *);	/* hash function */
+     int flags;			/* flags */
+     int sz;			/* Size */
+     int maxbucketlen;		/* max bucket length */
+     struct ht_bucket *tab;	/* The table */
+};
+
+struct hashentry {		/* Entry in bucket */
+     struct hashentry **prev;
+     struct hashentry *next;
+     void *ptr;
+};
+
+#define HASHTAB_INITAL_SIZE	17
+#define HASHTAB_MAX_BUCKET_LEN	20
 
 static Hashentry *_search(Hashtab * htab,	/* The hash table */
 			  void *ptr);	/* And key */
+static void *_add(Hashtab * htab,
+		  void *ptr,
+		  Bool unique);
+
+static void _might_resize(Hashtab *htab,	/* The hash table */
+			  int bucket_len);	/* Hash bucket len */
 
 Hashtab *
 hashtabnew(int sz,
 	   int (*cmp) (void *, void *),
 	   unsigned (*hash) (void *))
 {
+     return hashtabnewf(sz, cmp, hash, 0);
+}
+
+Hashtab *
+hashtabnewf(int sz,
+	    int (*cmp) (void *, void *),
+	    unsigned (*hash) (void *),
+	    int flags) 
+{
     Hashtab *htab;
     int i;
 
-    assert(sz > 0);
+    assert(sz > 0 || (flags & HASHTAB_GROW));
 
-    htab = (Hashtab *) malloc(sizeof(Hashtab) + (sz - 1) * sizeof(Hashentry *));
+    htab = (Hashtab *) malloc(sizeof(Hashtab));
 
     if (htab == NULL)
 	return NULL;
 
-    for (i = 0; i < sz; ++i)
-	htab->tab[i] = NULL;
+    if (sz == 0 && (flags & HASHTAB_GROW))
+	 sz = HASHTAB_INITAL_SIZE;
+
+    htab->tab = malloc(sz * sizeof(struct ht_bucket));
+    if (htab->tab == NULL){
+	 free(htab);
+	 return NULL;
+    }
+
+    for (i = 0; i < sz; ++i) {
+	htab->tab[i].e = NULL;
+	htab->tab[i].len = 0;
+    }
 
     htab->cmp = cmp;
     htab->hash = hash;
     htab->sz = sz;
+    htab->maxbucketlen = HASHTAB_MAX_BUCKET_LEN;
+    htab->flags = flags;
+	
     return htab;
 }
 
@@ -84,13 +138,55 @@ _search(Hashtab * htab, void *ptr)
 
     assert(htab && ptr);
 
-    for (hptr = htab->tab[(*htab->hash) (ptr) % htab->sz];
+    for (hptr = htab->tab[(*htab->hash) (ptr) % htab->sz].e;
 	 hptr;
 	 hptr = hptr->next)
 	if ((*htab->cmp) (ptr, hptr->ptr) == 0)
 	    break;
     return hptr;
 }
+
+/* Interal resize function */
+
+static Bool
+_resize(void *ptr, void *arg)
+{
+     Hashtab *h = arg;
+     _add(h, ptr, TRUE);
+     return TRUE;
+}
+
+static void
+_might_resize(Hashtab *htab, int bucket_len)
+{
+     if (bucket_len > htab->maxbucketlen) {
+	  Hashtab *nhtab;
+	  struct ht_bucket *tab;
+	  int new_size, old_size;
+
+	  new_size = arlautil_findprime(htab->sz * 2);
+	  assert (new_size > htab->sz);
+
+	  nhtab = hashtabnewf(new_size, htab->cmp,
+			      htab->hash, htab->flags);
+	  if (nhtab == NULL)
+	       return;
+
+	  hashtabcleantab(htab, _resize, nhtab);
+
+	  /* switch place between the tab and size */
+	  tab = htab->tab;
+	  htab->tab = nhtab->tab;
+	  nhtab->tab = tab;
+
+	  old_size = htab->sz;
+	  htab->sz = nhtab->sz;
+	  nhtab->sz = old_size;
+	  
+	  hashtabrelease(nhtab);
+     }
+}
+
 
 /* Search for element in hash table */
 
@@ -112,6 +208,7 @@ _add(Hashtab * htab, void *ptr, Bool unique)
 {
     Hashentry *h = _search(htab, ptr);
     Hashentry **tabptr;
+    struct ht_bucket *hb;
 
     assert(htab && ptr);
 
@@ -119,19 +216,24 @@ _add(Hashtab * htab, void *ptr, Bool unique)
 	if (unique)
 	    return NULL;
 	free((void *) h->ptr);
+	h->ptr = ptr;
     } else {
 	h = (Hashentry *) malloc(sizeof(Hashentry));
 	if (h == NULL) {
 	    return NULL;
 	}
-	tabptr = &htab->tab[(*htab->hash) (ptr) % htab->sz];
+	hb = &htab->tab[(*htab->hash) (ptr) % htab->sz];
+	hb->len++;
+	tabptr = &hb->e;
 	h->next = *tabptr;
 	*tabptr = h;
 	h->prev = tabptr;
 	if (h->next)
 	    h->next->prev = &h->next;
+	h->ptr = ptr;
+	if (htab->flags & HASHTAB_GROW)
+	     _might_resize(htab, hb->len);
     }
-    h->ptr = ptr;
     return h;
 }
 
@@ -174,12 +276,13 @@ void
 hashtabforeach(Hashtab * htab, Bool(*func) (void *ptr, void *arg),
 	       void *arg)
 {
-    Hashentry **h, *g, *next;
+    struct ht_bucket *h;
+    Hashentry *g, *next;
 
     assert(htab);
 
     for (h = htab->tab; h < &htab->tab[htab->sz]; ++h)
-	for (g = *h; g; g = next) {
+	for (g = h->e; g; g = next) {
 	    next = g->next;
 	    if ((*func) (g->ptr, arg))
 		return;
@@ -193,18 +296,21 @@ void
 hashtabcleantab(Hashtab * htab, Bool(*cond) (void *ptr, void *arg),
 	       void *arg)
 {
-    Hashentry **h, *g, *f;
+    struct ht_bucket *h;
+    Hashentry *g, *f;
 
     assert(htab);
 
     for (h = htab->tab; h < &htab->tab[htab->sz]; ++h) {
-	for (g = *h; g;) {
+	for (g = h->e; g;) {
 	    if ((*cond) (g->ptr, arg)) {
 		f = g ; 
 		g = g->next ;
 		if ((*(f->prev) = f->next))
 		    f->next->prev = f->prev;
 		free(f);
+		assert(h->len > 0);
+		h->len--;
 	    } else {
 		 g = g->next;
 	    }
@@ -224,6 +330,7 @@ void
 hashtabrelease(Hashtab *htab)
 {
     hashtabcleantab(htab, true_cond, NULL);
+    free(htab->tab);
     free(htab);
 }
 

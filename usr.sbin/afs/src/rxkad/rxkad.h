@@ -1,7 +1,7 @@
 /* -*- C -*- */
 
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* @(#)$KTH: rxkad.h,v 1.8.2.1 2001/10/03 22:55:31 assar Exp $ */
+/* @(#)$arla: rxkad.h,v 1.11 2003/06/10 16:15:39 lha Exp $ */
 
 #ifndef __RXKAD_H
 #define __RXKAD_H
@@ -51,6 +51,7 @@
 
 /* Is this really large enough for a krb5 ticket? */
 #define MAXKRB5TICKETLEN	1024
+#define MAXKRB4TICKETLEN	1024
 
 typedef char rxkad_level;
 #define rxkad_clear 0		/* checksum some selected header fields */
@@ -64,20 +65,22 @@ extern int rxkad_EpochWasSet;
 #define __P(x) x
 #endif
 
-int32 rxkad_GetServerInfo __P((struct rx_connection *con,
+struct rx_connection;
+
+int32_t rxkad_GetServerInfo __P((struct rx_connection *con,
 			       rxkad_level *level,
-			       u_int32 *expiration,
+			       uint32_t *expiration,
 			       char *name,
 			       char *instance,
 			       char *cell,
-			       int32 *kvno));
+			       int32_t *kvno));
 
 struct rx_securityClass *
 rxkad_NewServerSecurityObject __P((/*rxkad_level*/ int min_level,
 				   void *appl_data,
 				   int (*get_key)(void *appl_data,
 						  int kvno,
-						  des_cblock *key),
+						  void *key),
 				   int (*user_ok)(char *name,
 						  char *inst,
 						  char *realm,
@@ -86,7 +89,7 @@ rxkad_NewServerSecurityObject __P((/*rxkad_level*/ int min_level,
 struct rx_securityClass *
 rxkad_NewClientSecurityObject __P((/*rxkad_level*/ int level,
 				   void *sessionkey,
-				   int32 kvno,
+				   int32_t kvno,
 				   int ticketLen,
 				   char *ticket));
 
@@ -136,32 +139,32 @@ struct ktc_principal {
   char cell[MAXKTCREALMLEN];
 };
 
-u_int32 life_to_time __P((u_int32 start, int life_));
+uint32_t life_to_time __P((uint32_t start, int life_));
 
-int time_to_life __P((u_int32 start, u_int32 end));
+int time_to_life __P((uint32_t start, uint32_t end));
 
-int tkt_CheckTimes __P((int32 begin, int32 end, int32 now));
+int tkt_CheckTimes __P((int32_t begin, int32_t end, int32_t now));
 
 int
 tkt_MakeTicket __P((char *ticket,
 		    int *ticketLen,
 		    struct ktc_encryptionKey *key,
 		    char *name, char *inst, char *cell,
-		    u_int32 start, u_int32 end,
+		    uint32_t start, uint32_t end,
 		    struct ktc_encryptionKey *sessionKey,
-		    u_int32 host,
+		    uint32_t host,
 		    char *sname, char *sinst));
 
 int
 tkt_DecodeTicket __P((char *asecret,
-		      int32 ticketLen,
+		      int32_t ticketLen,
 		      struct ktc_encryptionKey *key,
 		      char *name,
 		      char *inst,
 		      char *cell,
 		      char *sessionKey,
-		      int32 *host,
-		      int32 *start,
-		      int32 *end));
+		      int32_t *host,
+		      int32_t *start,
+		      int32_t *end));
 
 #endif /* __RXKAD_H */

@@ -31,26 +31,28 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: ptserver.h,v 1.8 2000/10/03 00:20:56 lha Exp $ */
-
-#define PRDB_DB		0x0200000
-#define PRDB_RPC	0x0400000
-#define PRDB_WARN	0x0800000
-#define PRDB_ERROR	0x1000000
-
-#define PR_DEFAULT_LOG (PRDB_WARN|PRDB_ERROR)
+/* $arla: ptserver.h,v 1.10 2001/10/12 15:25:50 tol Exp $ */
 
 void
-pt_setdebug (char *debug_level);
+write_header(void);
 
 void
-pt_debug (unsigned int level, char *fmt, ...);
+read_header(void);
 
 int
-get_pr_entry_by_id(int id, prentry *pr_entry);
+read_prentry(int id, prentry *pr_entry);
 
 int
-get_pr_entry_by_name(const char *name, prentry *pr_entry);
+write_prentry(prentry *pr_entry);
+
+int
+store_disk_entry(prentry_disk *entry);
+
+int
+get_disk_entry(int id, prentry_disk *disk_entry);
+
+int
+get_ydr_disk_entry(int id, char **buf);
 
 int
 conv_name_to_id(const char *name, int *id);
@@ -59,10 +61,10 @@ int
 conv_id_to_name(int id, char *name);
 
 int
-next_free_group_id(void);
+next_free_group_id(int *id);
 
 int
-next_free_user_id(void);
+next_free_user_id(int *id);
 
 int
 create_user(const char *name, int32_t id, int32_t owner, int32_t creator);
@@ -79,8 +81,8 @@ int
 listelements(int32_t id, prlist *elist, Bool default_id_p);
 
 char *
-localize_name(const char *name);
+localize_name(const char *name, Bool *localp);
 
-extern prheader pr_header;
+extern prheader_disk pr_header;
 
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: vstatus.h,v 1.3 2000/10/03 00:20:40 lha Exp $ */
+/* $arla: vstatus.h,v 1.3 2000/10/03 00:20:40 lha Exp $ */
 
 #ifndef __FILBUNKE_VSTATUS_H
 #define __FILBUNKE_VSTATUS_H 1

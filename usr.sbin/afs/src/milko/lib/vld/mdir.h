@@ -31,13 +31,13 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: mdir.h,v 1.4 2000/10/03 00:19:11 lha Exp $ */
+/* $arla: mdir.h,v 1.8 2002/03/06 22:43:02 tol Exp $ */
 
 /*
  * Interface to fdir directory handling routines
  */
 
-/* $KTH: mdir.h,v 1.4 2000/10/03 00:19:11 lha Exp $ */
+/* $arla: mdir.h,v 1.8 2002/03/06 22:43:02 tol Exp $ */
 
 #ifndef _MDIR_H_
 #define _MDIR_H_
@@ -46,16 +46,16 @@
 #include <mnode.h>
 
 int
-mdir_lookup (struct mnode *node, VenusFid *dir, const char *name, VenusFid *file);
+mdir_lookup (struct mnode *node, const char *name, AFSFid *file);
 
 int
 mdir_emptyp (struct mnode *node);
 
 int
 mdir_readdir (struct mnode *node,
-	      void (*func)(VenusFid *, const char *, void *), 
+	      int (*func)(VenusFid *, const char *, void *),
 	      void *arg,
-	      VenusFid *dir);
+	      VenusFid dir);
 
 int
 mdir_creat (struct mnode *node,
@@ -70,5 +70,12 @@ int
 mdir_mkdir (struct mnode *node,
 	    AFSFid dot,
 	    AFSFid dot_dot);
+
+int
+mdir_rename(struct mnode *dir1, const char *name1, int32_t *len1,
+	    struct mnode *dir2, const char *name2, int32_t *len2);
+
+int
+mdir_changefid(struct mnode *dir, const char *name, AFSFid fid);
 
 #endif /* _MDIR_H_ */

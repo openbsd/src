@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,117 +33,66 @@
 
 #include "vldb_locl.h"
 
-RCSID("$KTH: vl_db.c,v 1.3 2000/10/03 00:21:07 lha Exp $");
+RCSID("$arla: vl_db.c,v 1.10 2002/06/02 21:12:20 lha Exp $");
+
+#define DISK_VLENTRY_MAX 10000
 
 static void open_db (char *databaseprefix, int flags);
 
 int vl_database;
-vlheader vl_header;
-off_t file_length;
+vital_vlheader vl_header;
 
-static char vl_header_ydr[VLHEADER_SIZE];
+MDB *idtoname, *nametodata;
 
 void
 vldb_write_header(void)
 {
-    off_t pos;
-    int length = VLHEADER_SIZE;
+    int length = VITAL_VLHEADER_SIZE;
+    struct mdb_datum key, value;
+    char vl_header_ydr[VITAL_VLHEADER_SIZE];
+    int code;
+    char headerid[] = "\0\0\0\0";
 
-    if (ydr_encode_vlheader(&vl_header, vl_header_ydr, &length) == NULL)
+    if (ydr_encode_vital_vlheader(&vl_header, vl_header_ydr, &length) == NULL)
         err(1, "write_header");
 
-    pos = lseek(vl_database, 0, SEEK_SET);
-    assert(pos == 0);
+    assert (length == 0);
 
-    length = write(vl_database, vl_header_ydr, VLHEADER_SIZE);
-    assert (length == VLHEADER_SIZE);
+    key.data = headerid;
+    key.length = sizeof(headerid);
+
+    value.data = vl_header_ydr;
+    value.length = VITAL_VLHEADER_SIZE;
+
+    code = mdb_store(nametodata, &key, &value);
+    assert(code == 0);
+
 }
 
 void
 vldb_read_header(void)
 {
-    char vl_header_ydr[VLHEADER_SIZE];
-    int length = VLHEADER_SIZE;
+    int length = VITAL_VLHEADER_SIZE;
+    struct mdb_datum key, value;
+    char headerid[] = "\0\0\0\0";
+    int ret;
 
-    if (lseek(vl_database, 0, SEEK_SET) == -1)
-        err(1, "lseek");
+    key.data = headerid;
+    key.length = sizeof(headerid);
 
-    length = read(vl_database, vl_header_ydr, VLHEADER_SIZE);
-    if (length == -1)
-        err(1, "read");
-    if (length != VLHEADER_SIZE)
-        errx(1, "read_header read failed");
+    value.data = malloc(length);
+    value.length = length;
 
-    if (ydr_decode_vlheader(&vl_header, vl_header_ydr, &length) == NULL)
+    ret = mdb_fetch(nametodata, &key, &value);
+
+    if (ret) {
+	errx(1, "read_header: mdb_fetch failed");
+    }
+
+    assert(value.length == VITAL_VLHEADER_SIZE);
+    
+    if (ydr_decode_vital_vlheader(&vl_header, value.data, &length) == NULL)
         err(1, "read_header");
-}
-
-void
-vldb_get_file_length(void)
-{
-    file_length = lseek(vl_database, 0, SEEK_END);
-    if (file_length == -1) {
-        err(1, "lseek");
-    }
-}
-
-off_t
-vldb_find_first_free(void)
-{
-    off_t pos;
-
-    if (vl_header.vital_header.freePtr == 0) {
-	/* if there are no free entries */
-	pos = lseek(vl_database, 0, SEEK_END);
-	if (pos == -1)
-	    err(1, "lseek");
-	if (ftruncate(vl_database, pos + DISK_VLENTRY_SIZE) == -1)
-	    err(1, "ftruncate");
-	return pos;
-    } else { /* there are free entries */
-	/* Not implemented yet */
-	assert(0);
-    }
-    return 0;
-}
-
-int
-vldb_write_entry(off_t offset, disk_vlentry *vl_entry)
-{
-    off_t pos;
-    char vl_entry_ydr[DISK_VLENTRY_SIZE];
-    int length = DISK_VLENTRY_SIZE;
-
-    if (ydr_encode_disk_vlentry(vl_entry, vl_entry_ydr, &length) == NULL)
-	err(1, "write_entry");
-
-    pos = lseek(vl_database, offset, SEEK_SET);
-    assert(pos == offset);
-
-    length = write(vl_database, vl_entry_ydr, DISK_VLENTRY_SIZE);
-    assert (length == DISK_VLENTRY_SIZE);
-
-    return 0;
-}
-
-int
-vldb_read_entry(off_t offset, disk_vlentry *vl_entry)
-{
-    off_t pos;
-    char vl_entry_ydr[DISK_VLENTRY_SIZE];
-    int length = DISK_VLENTRY_SIZE;
-
-    pos = lseek(vl_database, offset, SEEK_SET);
-    assert(pos == offset);
-
-    length = read(vl_database, vl_entry_ydr, DISK_VLENTRY_SIZE);
-    assert (length == DISK_VLENTRY_SIZE);
-
-    if (ydr_decode_disk_vlentry((disk_vlentry *) vl_entry, 
-				vl_entry_ydr, &length) == NULL)
-	err(1, "write_entry");
-
-    return 0;
 }
 
 static void
@@ -151,123 +100,164 @@ create_database(void)
 {
     int i;
 
-    vl_header.vital_header.vldbversion = 0;
-    vl_header.vital_header.headersize = VLHEADER_SIZE;
-    vl_header.vital_header.freePtr = 0;
-    vl_header.vital_header.eofPtr = VLHEADER_SIZE;
-    vl_header.vital_header.allocs = 0;
-    vl_header.vital_header.frees = 0;
-    vl_header.vital_header.MaxVolumeId = 0xA0000000 - 1;
+    vl_header.vldbversion = 0;
+    vl_header.headersize = VITAL_VLHEADER_SIZE;
+    vl_header.freePtr = 0;
+    vl_header.eofPtr = VITAL_VLHEADER_SIZE;
+    vl_header.allocs = 0;
+    vl_header.frees = 0;
+    vl_header.MaxVolumeId = 0x20000000;
     for (i = 0; i < MAXTYPES; i++)
-	vl_header.vital_header.totalEntries[i] = 0;
+	vl_header.totalEntries[i] = 0;
 
-    for (i = 0; i < MAXSERVERID+1; i++)
-	vl_header.IpMappedAddr[i] = 0;
-
-    memset(vl_header.VolnameHash, 0, HASHSIZE * sizeof(int32_t));
-    memset(vl_header.VolidHash, 0, HASHSIZE * MAXTYPES * sizeof(int32_t));
     vldb_write_header();
-    vldb_get_file_length();
-}
-
-unsigned long
-vldb_get_id_hash(long id)
-{
-    return ((unsigned long) id) % HASHSIZE;
-}
-
-unsigned long
-vldb_get_name_hash(const char *name)
-{
-    int i;
-    unsigned long hash = 0x47114711;
-
-    for (i = 0; name[i] && i < 32; i++)
-	hash *= name[i];
-
-    return hash % HASHSIZE;
 }
 
 int
-vldb_get_first_id_entry(unsigned long hash_id, long type,
-			disk_vlentry *vl_entry)
+vldb_write_entry(const disk_vlentry *vldb_entry)
 {
-    off_t offset = vl_header.VolidHash[type][hash_id];
-    int status;
+    struct mdb_datum datum;
+    struct mdb_datum key;
+    char *disk_vlentry_ydr;
+    int length = DISK_VLENTRY_MAX;
+    int ret;
 
-    vldb_debug ("  get_first_id_entry hash_id: %lu type: %ld offset: %d\n", 
-		 hash_id, type, (int) offset);
+    disk_vlentry_ydr = malloc(length);
 
-    if (offset == 0)
-	return VL_NOENT;
+    if (ydr_encode_disk_vlentry(vldb_entry, disk_vlentry_ydr, &length) == NULL)
+        err(1, "write_entry");
 
-    status = vldb_read_entry(offset, vl_entry);
+    datum.data = disk_vlentry_ydr;
+    datum.length = DISK_VLENTRY_MAX - length;
 
-    return status;
+    length = datum.length;
+
+    key.data = (char *) vldb_entry->name;
+    key.length = strlen(vldb_entry->name);
+
+    ret = mdb_store(nametodata, &key, &datum);
+    free(disk_vlentry_ydr);
+    return ret;
 }
 
 int
-vldb_get_first_name_entry(unsigned long hash_name, disk_vlentry *vl_entry)
+vldb_read_entry(const char *name, disk_vlentry *entry)
 {
-    off_t offset = vl_header.VolnameHash[hash_name];
-    int status;
+    struct mdb_datum key, value;
+    int length;
+    int ret;
 
-    vldb_debug ("  get_first_name_entry hash_name: %lu offset: %d\n", 
-		 hash_name, (int) offset);
-    if (offset == 0)
-	return VL_NOENT;
+    key.data = (char *) name;
+    key.length = strlen(name);
 
-    status = vldb_read_entry(offset, vl_entry);
+    ret = mdb_fetch(nametodata, &key, &value);
 
-    return status;
-}
+    if (ret)
+	return ret;
 
-int
-vldb_insert_entry(disk_vlentry *vl_entry)
-{
-    off_t offset;
-    int status;
-    unsigned long hash_id, hash_name;
-    disk_vlentry first_id_entry;
-    disk_vlentry first_name_entry;
-    
-    /* Allokera plats i filen */
-    offset = vldb_find_first_free();
+    length = value.length;
 
-    /* Allocate new volume id? */
-    /*id = vl_header.vital_header.MaxVolumeId++;*/
+    if (ydr_decode_disk_vlentry(entry, value.data, &length) == NULL)
+        err(1, "read_entry");
 
-    /* Hitta plats i hashtabellerna */
-    /* XXX At present, only RW is handled */
-    hash_id = vldb_get_id_hash(vl_entry->volumeId[RWVOL]);
-    hash_name = vldb_get_name_hash(vl_entry->name);
-
-    status = vldb_get_first_id_entry(hash_id, vl_entry->volumeType,
-				     &first_id_entry);
-
-/* XXX    vl_entry->nextIDHash[vldb_entry->type] = status ? 0 : first_id_entry.nextID;*/
-    vl_entry->nextIdHash[vl_entry->volumeType] = status ? 0 : vl_header.VolidHash[vl_entry->volumeType][hash_id];
-
-    status = vldb_get_first_name_entry(hash_name, &first_name_entry);
-/* XXX    pr_entry->nextName = status ? 0 : first_name_entry.nextName;*/
-    vl_entry->nextNameHash = status ? 0 : vl_header.VolnameHash[hash_name];
-
-    /* XXX: uppdatera owned och nextOwned */
-
-    /* Lägg in entryt i filen */
-    status = vldb_write_entry(offset, vl_entry);
-    if (status)
-	return status;
-    
-    /* Uppdatera hashtabell */
-    vl_header.VolidHash[vl_entry->volumeType][hash_id] = offset;
-    vl_header.VolnameHash[hash_name] = offset;
-    vldb_write_header();
     return 0;
 }
 
 int
-vldb_print_entry (struct disk_vlentry *entry, int long_print)
+vldb_delete_entry(const char *name)
+{
+    struct mdb_datum key;
+    int ret;
+
+    key.data = (char *) name;
+    key.length = strlen(name);
+
+    ret = mdb_delete(nametodata, &key);
+
+    if (ret)
+	return ret;
+
+    return 0;
+}
+
+int
+vldb_id_to_name(const int32_t volid, char **name)
+{
+    struct mdb_datum key, value;
+    int ret;
+
+    key.data = (char *)&volid;
+    key.length = sizeof(volid);
+
+    ret = mdb_fetch(idtoname, &key, &value);
+
+    if (ret)
+	return ret;
+
+    *name = malloc(value.length+1);
+
+    if (*name == 0)
+	return ENOMEM;
+
+    memcpy(*name, value.data, value.length);
+    (*name)[value.length] = '\0';
+
+    return 0;
+}
+
+int
+vldb_write_id (const char *name, const uint32_t volid)
+{
+    struct mdb_datum datum, key;
+    char *name_copy;
+    uint32_t volid_copy = volid;
+
+    if (volid == 0)
+	return 0;
+
+    name_copy = strdup(name);
+
+    datum.data = name_copy;
+    datum.length = strlen(name_copy);
+
+    key.data=&volid_copy;
+    key.length = sizeof(volid);
+
+    mdb_store(idtoname, &key, &datum);
+    
+    free(name_copy);
+    return 0;
+}
+
+int
+vldb_delete_id (const char *name, const uint32_t volid)
+{
+    struct mdb_datum named, vold;
+    char *name_copy;
+    uint32_t volid_copy = volid;
+    int ret;
+
+    if (volid == 0)
+	return 0;
+
+    name_copy = strdup(name);
+
+    named.data = name_copy;
+    named.length = strlen(name_copy);
+
+    vold.data=&volid_copy;
+    vold.length = sizeof(volid);
+
+    ret = mdb_delete(idtoname, &vold);
+    if (ret)
+	return ret;
+    
+    free(name_copy);
+    return 0;
+}
+
+int
+vldb_print_entry (vldbentry *entry, int long_print)
 {
     int i;
     printf ("name: %s\n"
@@ -293,42 +283,42 @@ vldb_print_entry (struct disk_vlentry *entry, int long_print)
 		    entry->serverFlags[i] & VLSF_NEWREPSITE ? "New site" : "");
     }
 
-#if 0
-    u_long volumeId[MAXTYPES];
-    long flags;
-    long LockAfsId;
-    long LockTimestamp;
-    long cloneId;
-    long AssociatedChain;
-    long nextIdHash[MAXTYPES];
-    long nextNameHash;
-    long spares1[2];
-    char name[VLDB_MAXNAMELEN];
-    u_char volumeType;
-    u_char RefCount;
-    char spares2[1];
-#endif
     return 0;
 }
 
 static void
 open_db (char *databaseprefix, int flags)
 {
+
     char database[MAXPATHLEN];
 
     if (databaseprefix == NULL)
 	databaseprefix = MILKO_SYSCONFDIR;
 
-    snprintf (database, sizeof(database), "%s/vl_database", 
+    snprintf (database, sizeof(database), "%s/vl_idtoname", 
 	      databaseprefix);
 
-    vldb_debug ("Loading db from file %s\n", database);
+    mlog_log (MDEBVL, "Loading db from file %s\n", database);
 
-    vl_database = open(database, flags, S_IRWXU);
+    idtoname = mdb_open(database, flags, 0600);
 
-    if (vl_database == -1)
+    if (idtoname == NULL)
+        err(1, "failed open (%s)", database);
+
+    snprintf (database, sizeof(database), "%s/vl_nametodata", 
+	      databaseprefix);
+
+    mlog_log (MDEBVL, "Loading db from file %s\n", database);
+
+    nametodata = mdb_open(database, flags, 0600);
+
+    if (nametodata == NULL)
         err(1, "failed open (%s)", database);
 }
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 void
 vldb_create (char *databaseprefix)
@@ -344,28 +334,18 @@ vldb_init(char *databaseprefix)
 {
     open_db (databaseprefix, O_RDWR|O_BINARY);
     vldb_read_header();
-    vldb_get_file_length();
-}
-
-static int vldbdebug = 0;
-
-int
-vldb_setdebug (int debug)
-{
-    int odebug = vldbdebug;
-    vldbdebug = debug;
-    return odebug;
 }
 
 void
-vldb_debug (char *fmt, ...)
+vldb_close(void)
 {
-    va_list args;
-    if (!vldbdebug)
-	return ;
-
-    va_start (args, fmt);
-    vfprintf (stderr, fmt, args);
-    va_end(args);
+    mdb_close(nametodata);
+    mdb_close(idtoname);
 }
 
+void
+vldb_flush(void)
+{
+    mdb_flush(nametodata);
+    mdb_flush(idtoname);
+}

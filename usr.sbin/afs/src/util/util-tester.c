@@ -35,6 +35,8 @@
 #include <config.h>
 #endif
 
+#include <roken.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +47,7 @@
 #include "bool.h"
 #include "hash.h"
 #include "log.h"
+#include "arlamath.h"
 
 struct timeval time1, time2;
 
@@ -120,8 +123,8 @@ test_hash(void)
 	   (char *)hashtabsearch(h, "three"),
 	   (char *)hashtabsearch(h, "four"));
 
-    
-    printf("XXX there is no simple way to free a hashtab\n");
+    hashtabrelease(h);
+
     return endtesting(0);
 }
 
@@ -236,11 +239,35 @@ test_log (void)
     return endtesting (0);
 }
 
+static int
+test_math (void)
+{
+    starttesting ("math");
+
+    if (arlautil_findprime(17) != 17)
+	return endtesting (1);
+    if (arlautil_findprime(18) != 19)
+	return endtesting (1);
+    if (arlautil_findprime(11412) != 11423)
+	return endtesting (1);
+
+    if (arlautil_findprime(11412) != 11423)
+	return endtesting (1);
+
+    if (arlautil_isprime(20897) == 0)
+	return endtesting (1);
+    if (arlautil_isprime(49037) == 0)
+	return endtesting (1);
+
+    return endtesting (0);
+}
+
 int 
 main(int argc, char **argv)
 {
     int ret = 0;
     ret |= test_hash();
     ret |= test_log();
+    ret |= test_math();
     return ret;
 }

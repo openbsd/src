@@ -1,5 +1,5 @@
 #
-# $KTH: arla.spec.in,v 1.4 2000/10/08 06:03:14 lha Exp $
+# $arla: arla.spec.in,v 1.5 2002/09/07 10:43:39 lha Exp $
 #
 # A spec file for build a arla rpm
 #
@@ -74,41 +74,41 @@ mkdir ${RPM_BUILD_ROOT}
 CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%{prefix} --sysconfdir=/etc/arla
 make
 
-cd xfs/linux
+cd nnpfs/linux
 make clean
 CPPFLAGS="-D__BOOT_KERNEL_SMP=1 -D__BOOT_KERNEL_UP=0" make
-mv xfs.o xfs.smp.o.save
+mv nnpfs.o nnpfs.smp.o.save
 
 make clean
 CPPFLAGS="-D__BOOT_KERNEL_SMP=0 -D__BOOT_KERNEL_UP=1" make
-mv xfs.o xfs.up.o.save
+mv nnpfs.o nnpfs.up.o.save
 
 
 
-echo "dummy file, to be removed later" > xfs.o
+echo "dummy file, to be removed later" > nnpfs.o
 
-mv xfs.up.o.save xfs.up.o
-mv xfs.smp.o.save xfs.smp.o
+mv nnpfs.up.o.save nnpfs.up.o
+mv nnpfs.smp.o.save nnpfs.smp.o
 
 %install
 
 mkdir ${RPM_BUILD_ROOT}/etc
 mkdir ${RPM_BUILD_ROOT}/sbin
 make install DESTDIR=$RPM_BUILD_ROOT
-rm $RPM_BUILD_ROOT/%{prefix}/bin/xfs.o
+rm $RPM_BUILD_ROOT/%{prefix}/bin/nnpfs.o
 
 KERNEL_VERSION=$(uname -r | sed 's/smp$//')
 
-cp xfs/linux/xfs.{smp,up}.o $RPM_BUILD_ROOT%{prefix}/bin
+cp nnpfs/linux/nnpfs.{smp,up}.o $RPM_BUILD_ROOT%{prefix}/bin
 
 mkdir -p $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}/fs
-cp xfs/linux/xfs.up.o \
-    $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}/fs/xfs.o
+cp nnpfs/linux/nnpfs.up.o \
+    $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}/fs/nnpfs.o
 mkdir -p $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}smp/fs
-cp xfs/linux/xfs.smp.o \
-    $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}smp/fs/xfs.o
+cp nnpfs/linux/nnpfs.smp.o \
+    $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}smp/fs/nnpfs.o
 
-cp xfs/linux/libgetcwd.so $RPM_BUILD_ROOT%{prefix}/lib
+cp nnpfs/linux/libgetcwd.so $RPM_BUILD_ROOT%{prefix}/lib
 chmod 555 $RPM_BUILD_ROOT%{prefix}/lib/libgetcwd.so
 
 %post 

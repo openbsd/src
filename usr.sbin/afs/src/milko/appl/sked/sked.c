@@ -34,7 +34,7 @@
 #include <config.h>
 #include "roken.h"
 
-RCSID("$KTH: sked.c,v 1.26 2000/12/29 20:21:30 tol Exp $");
+RCSID("$arla: sked.c,v 1.33 2002/04/26 16:11:41 lha Exp $");
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -69,7 +69,7 @@ static int interactivep = 0;
 #define INTER_RETURN(ret) if (interactivep) return 0; else exit (ret);
 
 static int
-create_volume (u_int32_t part, u_int32_t num, char *name)
+create_volume (uint32_t part, uint32_t num, char *name)
 {
     int ret;
     int32_t backstoretype = VLD_SVOL;
@@ -92,7 +92,7 @@ create_volume (u_int32_t part, u_int32_t num, char *name)
  */
 
 static int
-show_volume (u_int32_t part, u_int32_t num)
+show_volume (uint32_t part, uint32_t num)
 {
     volume_handle *vh = NULL;
     int ret;
@@ -188,7 +188,7 @@ showvols_cb (void *data, int fd)
  */
 
 static int
-show_vols (u_int32_t part)
+show_vols (uint32_t part)
 {
     struct dp_part *p;
     int ret;
@@ -216,7 +216,7 @@ show_vols (u_int32_t part)
 static int
 volcreate_cmd (int argc, char **argv)
 {
-    u_int32_t num, part;
+    uint32_t num, part;
     int ret;
 
     if (argc < 4 || argc > 5) {
@@ -224,7 +224,8 @@ volcreate_cmd (int argc, char **argv)
 	INTER_RETURN(1);
     }
 
-    dpart_root = argv[4];
+    if (argc == 5)
+	dpart_root = argv[4];
 
     ret = dp_parse (argv[1], &part);
     if (ret) {
@@ -256,7 +257,7 @@ volcreate_cmd (int argc, char **argv)
 static int
 volshow_cmd (int argc, char **argv)
 {
-    u_int32_t num, part;
+    uint32_t num, part;
     int ret;
 
     if (argc < 3 || argc > 4) {
@@ -272,7 +273,7 @@ volshow_cmd (int argc, char **argv)
 	INTER_RETURN(1);
     }
 
-    dpart_root = argv[4];
+    dpart_root = argv[3];
 
     ret = show_volume (part, num);
     if (ret) {
@@ -290,7 +291,7 @@ volshow_cmd (int argc, char **argv)
 static int
 vollist_cmd (int argc, char **argv)
 {
-    u_int32_t part;
+    uint32_t part;
     int ret;
 
     if (argc != 2) {
@@ -313,7 +314,7 @@ vollist_cmd (int argc, char **argv)
  *
  */
 
-static void
+static int
 volls_dir_cb (VenusFid *fid, const char *name, void *arg)
 {
     printf ("%-60s %d.%d.%d\n",
@@ -321,14 +322,15 @@ volls_dir_cb (VenusFid *fid, const char *name, void *arg)
 	    fid->fid.Volume,
 	    fid->fid.Vnode, 
 	    fid->fid.Unique);
+    return 0;
 }
 
 static int
 volls_cmd (int argc, char **argv)
 {
-    u_int32_t part;
-    u_int32_t vol;
-    u_int32_t vnode;
+    uint32_t part;
+    uint32_t vol;
+    uint32_t vnode;
     struct dp_part *dp;
     int ret;
     
@@ -385,7 +387,8 @@ volls_cmd (int argc, char **argv)
 #endif
 
 	printf ("mode=%o ino=%x dev=%x rdev=%x\n",
-		n.sb.st_mode, n.sb.st_ino, n.sb.st_dev, n.sb.st_rdev);
+		n.sb.st_mode, (int) n.sb.st_ino,
+		(int) n.sb.st_dev, (int) n.sb.st_rdev);
 	
 	printf ("size: %d\nparent fid: %d.%d\n",
 		n.fs.Length, n.fs.ParentVnode, n.fs.ParentUnique);
@@ -397,7 +400,7 @@ volls_cmd (int argc, char **argv)
 	    fid.fid.Vnode = vnode;
 	    fid.fid.Unique = 0;
 
-	    ret = mdir_readdir (&n, volls_dir_cb, NULL, &fid);
+	    ret = mdir_readdir (&n, volls_dir_cb, NULL, fid);
 	    if (ret)
 		errx (1, "volls: mdir_readdir failed with %d", ret);
 
@@ -420,9 +423,9 @@ volls_cmd (int argc, char **argv)
 static int
 volvnode_cmd (int argc, char **argv)
 {
-    u_int32_t part;
+    uint32_t part;
     char *part_str = NULL;
-    u_int32_t vol;
+    uint32_t vol;
     char *vol_str = NULL;
     struct dp_part *dp;
     int do_list = 0;
@@ -463,7 +466,7 @@ volvnode_cmd (int argc, char **argv)
     {
 	struct volume_handle *volh;
 	int i;
-	u_int32_t num, flags;
+	uint32_t num, flags;
 
 
 	ret = vld_open_volume_by_num (dp, vol, &volh);
@@ -553,7 +556,7 @@ volvnode_cmd (int argc, char **argv)
 static int
 fvolcreate_cmd (int argc, char **argv)
 {
-    u_int32_t part;
+    uint32_t part;
     char *part_str = NULL;
     char *path_str = NULL;
     int vol_int = 0;
@@ -609,8 +612,8 @@ static int
 showvolname_cmd (int argc, char **argv)
 {
     int ret;
-    u_int32_t num;
-    u_int32_t part;
+    uint32_t num;
+    uint32_t part;
     char name[MAXPATHLEN];
 
     if (argc != 2 && argc != 3)
@@ -779,7 +782,7 @@ main (int argc, char **argv)
     
     set_progname (argv[0]);
 
-    method = log_open (get_progname(), log_file);
+    method = log_open (getprogname(), log_file);
     if (method == NULL)
 	errx (1, "log_open failed");
     
@@ -800,7 +803,7 @@ main (int argc, char **argv)
 	sl_loop (cmds, "sked (cmd): ");
     } else {
 	ret = sl_command(cmds, argc - 1, argv + 1);
-	if (ret == SL_BADCOMMAND)
+	if (ret == -1)
 	    printf ("%s: Unknown command\n", argv[1]); 
     }
 

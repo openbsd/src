@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: rxk_locl.c,v 1.8 2000/10/03 00:38:38 lha Exp $");
+RCSID("$arla: rxk_locl.c,v 1.9 2003/01/11 00:50:32 lha Exp $");
 
 /* The header checksum is the last 16 bits of this struct after
  * encryption. Note that only the last 8 bytes change per packet. */
@@ -46,16 +46,16 @@ struct header_data {
 
 struct const_header_data {
   /* Data that is constant per connection */
-  u_int32 epoch;
-  u_int32 cid;
-  u_int32 zero;
-  u_int32 security_index;
+  uint32_t epoch;
+  uint32_t cid;
+  uint32_t zero;
+  uint32_t security_index;
 };
 
 struct variable_header_data {
   /* Data that changes per packet */
-  u_int32 call_number;
-  u_int32 channel_and_seq;
+  uint32_t call_number;
+  uint32_t channel_and_seq;
 };
 
 /* To create a 16 bit packet header checksum we first create an iv
@@ -63,19 +63,19 @@ struct variable_header_data {
  */
 void
 rxkad_calc_header_iv(const struct rx_connection *conn,
-		     const int32 *sched,
+		     const int32_t *sched,
 		     const des_cblock *in_iv,
-		     u_int32 *out_iv)
+		     uint32_t *out_iv)
 {
   struct const_header_data h;
-  u_int32 *t;
+  uint32_t *t;
 
   h.epoch = htonl(conn->epoch);
   h.cid = htonl(conn->cid & RX_CIDMASK);
   h.zero = 0;
   h.security_index = htonl(conn->securityIndex);
 
-  t = (u_int32 *)in_iv;		/* memcpy(out_iv, in_iv, 8); */
+  t = (uint32_t *)in_iv;		/* memcpy(out_iv, in_iv, 8); */
   out_iv[0] = t[0];
   out_iv[1] = t[1];
   fc_cbc_encrypt(&h, &h, sizeof(h), sched, out_iv, ENCRYPT);
@@ -93,11 +93,11 @@ rxkad_calc_header_iv(const struct rx_connection *conn,
 static
 int
 rxkad_cksum_header(const struct rx_packet *packet,
-		   const int32 *sched,
+		   const int32_t *sched,
 		   const unsigned int *iv)
 {
   struct variable_header_data h;
-  u_int32 t;
+  uint32_t t;
 
   /* Collect selected packet fields */
   h.call_number = htonl(packet->header.callNumber);
@@ -120,11 +120,11 @@ rxkad_cksum_header(const struct rx_packet *packet,
 
 /* Checksum a rxkad_response, this checksum is buried within the
  * encrypted part of the response but covers the entire response. */
-u_int32
+uint32_t
 rxkad_cksum_response(rxkad_response *r)
 {
   u_char *t;
-  u_int32 cksum = 1000003;
+  uint32_t cksum = 1000003;
   
   for (t = (u_char *)r; t < (u_char*)(r + 1); t++)
     cksum = *t + cksum * 0x10204081;
@@ -149,9 +149,9 @@ rxkad_prepare_packet(struct rx_packet *pkt,
   
   if (level != rxkad_clear)
     {
-      u_int32 *data = (u_int32 *) rx_DataOf(pkt);
-      u_int32 t;
-      int32 code = 0;
+      uint32_t *data = (uint32_t *) rx_DataOf(pkt);
+      uint32_t t;
+      int32_t code = 0;
 
       assert(pkt->wirevec[1].iov_len >= 4);
 
@@ -190,7 +190,7 @@ rxkad_prepare_packet(struct rx_packet *pkt,
  	rx_SetDataSize(pkt, len); /* Set extended packet length */
  
  	assert((len % 8) == 0);
- 	code = rxkad_EncryptPacket(con, k->keysched,(u_int32*)k->key, len,pkt);
+ 	code = rxkad_EncryptPacket(con, k->keysched,(uint32_t*)k->key, len,pkt);
 	break;
 
       default:
@@ -224,9 +224,9 @@ rxkad_check_packet(struct rx_packet *pkt,
   else
     {
       u_int len;		/* Real packet length */
-      u_int32 *data = (u_int32 *) rx_DataOf(pkt);
-      u_int32 t;
-      int32 code;
+      uint32_t *data = (uint32_t *) rx_DataOf(pkt);
+      uint32_t t;
+      int32_t code;
 
       switch (level) {
       case rxkad_auth:
@@ -235,7 +235,7 @@ rxkad_check_packet(struct rx_packet *pkt,
 	break;
 
       case rxkad_crypt:
-	code = rxkad_DecryptPacket(con, k->keysched,(u_int32*)k->key, xlen, pkt);
+	code = rxkad_DecryptPacket(con, k->keysched,(uint32_t*)k->key, xlen, pkt);
 	if (code)
 	  return code;
 	break;

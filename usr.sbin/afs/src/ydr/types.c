@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: types.c,v 1.8 2000/10/02 22:37:15 lha Exp $");
+RCSID("$arla: types.c,v 1.10 2002/04/15 14:53:19 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -48,11 +48,11 @@ define_const (char *name, int value)
 
      s = addsym (name);
 
-     if (s->type != TUNDEFINED) {
+     if (s->type != YDR_TUNDEFINED) {
 	  error_message (1, "Redeclaration of %s\n", s->name);
 	  return NULL;
      }
-     s->type = TCONST;
+     s->type = YDR_TCONST;
      s->u.val = value;
      return s;
 }
@@ -64,11 +64,11 @@ define_enum (char *name, List *list)
 
      s = addsym (name);
 
-     if (s->type != TUNDEFINED) {
+     if (s->type != YDR_TUNDEFINED) {
 	  error_message (1, "Redeclaration of %s\n", s->name);
 	  return NULL;
      }
-     s->type = TENUM;
+     s->type = YDR_TENUM;
      s->u.list = list;
      return s;
 }
@@ -80,12 +80,12 @@ define_struct (char *name)
 
      s = addsym (name);
 
-     if (s->type != TSTRUCT && s->type != TUNDEFINED) {
+     if (s->type != YDR_TSTRUCT && s->type != YDR_TUNDEFINED) {
 	  error_message (1, "Redeclaration of %s as a different type\n",
 			 s->name);
 	  return NULL;
      }
-     s->type = TSTRUCT;
+     s->type = YDR_TSTRUCT;
      s->u.list = NULL;
      return s;
 }
@@ -117,11 +117,11 @@ define_typedef (StructEntry *entry)
 
      s = addsym (entry->name);
 
-     if (s->type != TUNDEFINED) {
+     if (s->type != YDR_TUNDEFINED) {
 	  error_message (1, "Redeclaration of %s\n", s->name);
 	  return NULL;
      }
-     s->type = TTYPEDEF;
+     s->type = YDR_TTYPEDEF;
      s->name = entry->name;
      s->u.type = entry->type;
      free (entry);
@@ -136,11 +136,11 @@ define_proc (char *name, List *args, unsigned id)
 
      s = addsym (name);
 
-     if (s->type != TUNDEFINED) {
+     if (s->type != YDR_TUNDEFINED) {
 	  error_message (1, "Redeclaration of %s\n", s->name);
 	  return NULL;
      }
-     s->type = TPROC;
+     s->type = YDR_TPROC;
      s->u.proc.id = id;
      s->u.proc.arguments = args;
      return s;
@@ -153,11 +153,11 @@ createenumentry (char *name, int value)
 
      s = addsym (name);
 
-     if (s->type != TUNDEFINED) {
+     if (s->type != YDR_TUNDEFINED) {
 	  error_message (1,"Redeclaration of %s\n", s->name);
 	  return NULL;
      }
-     s->type = TENUMVAL;
+     s->type = YDR_TENUMVAL;
      s->u.val = value;
      return s;
 }
@@ -191,3 +191,48 @@ create_type (TypeType type, Symbol *symbol, unsigned size,
     return t;
 }
 
+void
+set_sym_attrs(Symbol *symbol, List *attrs)
+{
+    switch (symbol->type) {
+    case YDR_TSTRUCT:
+	break;
+    default:
+	error_message(1, "can't set attribues for %s", symbol->name);
+	return;
+    }
+    symbol->attrs = attrs;
+}
+
+struct fa {
+    char *attr;
+    int found;
+};
+
+static int
+find_attr(List *l, Listitem *li, void *ptr)
+{
+    struct fa *f = ptr;
+    char *mem = listdata(li);
+    if (strcmp(f->attr, mem) == 0) {
+	f->found = 1;
+	return 1;
+    }
+    return 0;
+}
+
+int
+sym_find_attr(Symbol *symbol, char *attr)
+{
+    struct fa f;
+
+    if (symbol->attrs == NULL)
+	return 0;
+
+    f.attr = attr;
+    f.found = 0;
+
+    listiter(symbol->attrs, find_attr, &f);
+
+    return f.found;
+}

@@ -38,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: bits.c,v 1.6 1998/12/20 15:55:29 assar Exp $");
+RCSID("$arla: bits.c,v 1.7 2002/02/07 17:59:15 lha Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -60,7 +60,7 @@ strupr(char *s)
 
 #define BITSIZE(TYPE)						\
 {								\
-    int b = 0; TYPE x = 1, zero = 0; char *pre = "u_";		\
+    int b = 0; TYPE x = 1, zero = 0; char *pre = "u";		\
     char tmp[128], tmp2[128];					\
     while(x){ x <<= 1; b++; if(x < zero) pre=""; }		\
     if(b >= len){						\
@@ -140,15 +140,15 @@ int main(int argc, char **argv)
     }
     fprintf(f, "/* %s -- this file was generated for %s by\n", fn, HOST);
     fprintf(f, "   %*s    %s */\n\n", strlen(fn), "", 
-	    "$KTH: bits.c,v 1.6 1998/12/20 15:55:29 assar Exp $");
+	    "$arla: bits.c,v 1.7 2002/02/07 17:59:15 lha Exp $");
     fprintf(f, "#ifndef %s\n", hb);
     fprintf(f, "#define %s\n", hb);
     fprintf(f, "\n");
 #ifdef HAVE_SYS_TYPES_H
     fprintf(f, "#include <sys/types.h>\n");
 #endif
-#ifdef HAVE_INTTYPES_H
-    fprintf(f, "#include <inttypes.h>\n");
+#ifdef HAVE_STDINT_H
+    fprintf(f, "#include <stdint.h>\n");
 #endif
 #ifdef HAVE_SYS_BITYPES_H
     fprintf(f, "#include <sys/bitypes.h>\n");
@@ -181,23 +181,23 @@ int main(int argc, char **argv)
 #endif /* HAVE_INT64_T */
 #endif
 
-#ifndef HAVE_U_INT8_T
+#ifndef HAVE_UINT8_T
     flag = print_bt(f, flag);
     try_unsigned (f, 8);
 #endif /* HAVE_INT8_T */
-#ifndef HAVE_U_INT16_T
+#ifndef HAVE_UINT16_T
     flag = print_bt(f, flag);
     try_unsigned (f, 16);
-#endif /* HAVE_U_INT16_T */
-#ifndef HAVE_U_INT32_T
+#endif /* HAVE_UINT16_T */
+#ifndef HAVE_UINT32_T
     flag = print_bt(f, flag);
     try_unsigned (f, 32);
-#endif /* HAVE_U_INT32_T */
+#endif /* HAVE_UINT32_T */
 #if 0
-#ifndef HAVE_U_INT64_T
+#ifndef HAVE_UINT64_T
     flag = print_bt(f, flag);
     try_unsigned (f, 64);
-#endif /* HAVE_U_INT64_T */
+#endif /* HAVE_UINT64_T */
 #endif
 
     if(flag){

@@ -34,7 +34,7 @@
 %{
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: parse.y,v 1.24 2000/10/02 22:36:59 lha Exp $");
+RCSID("$arla: parse.y,v 1.28 2003/01/20 07:12:58 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -66,6 +66,7 @@ static int varcnt = 0;
 %token T_ENUM T_STRUCT T_CONST T_UNSIGNED T_ULONG T_INT T_CHAR T_STRING
 %token T_LONG T_TYPEDEF T_OPAQUE T_IN T_OUT T_INOUT T_SPLIT T_MULTI
 %token T_SHORT T_USHORT T_UCHAR T_ASIS T_PROC
+%token T_LONGLONG T_ULONGLONG
 %token <name> T_IDENTIFIER T_VERBATIM T_PACKAGE T_PREFIX T_ERROR_FUNCTION
 %token <constant> T_CONSTANT
 %token <sym> T_IDCONST T_IDTYPE
@@ -73,11 +74,12 @@ static int varcnt = 0;
 %type <constant> constant opt_constant opt_proc
 %type <constant> param_type
 %type <sym> enumentry type_decl proc_decl
-%type <list> enumentries enumbody structbody memberdecls params
+%type <list> enumentries enumbody structbody memberdecls params attrs
 %type <type> type
 %type <sentry> memberdecl memberdecl2
 %type <arg> param
 %type <flags> flags
+%type <name> attr
 
 %start specification
 
@@ -90,6 +92,7 @@ specification:
 		;
 
 declaration:	type_decl { 
+                 if (!sym_find_attr($1, "__nogenerate__")) {
      		     generate_header ($1, headerfile.stream);
 		     generate_sizeof ($1, headerfile.stream);
 		     generate_function ($1, ydrfile.stream, TRUE);
@@ -98,6 +101,9 @@ declaration:	type_decl {
 		     generate_function_prototype ($1, headerfile.stream, FALSE);
 		     generate_printfunction ($1, ydrfile.stream);
 		     generate_printfunction_prototype ($1, headerfile.stream);
+		     generate_freefunction ($1, ydrfile.stream);
+		     generate_freefunction_prototype ($1, headerfile.stream);
+		 }
 		}
 		| proc_decl { 
 		     generate_client_stub ($1, clientfile.stream,
@@ -105,19 +111,20 @@ declaration:	type_decl {
 		     generate_server_stub ($1, serverfile.stream,
 					   serverhdrfile.stream,
 					   headerfile.stream);
-		     generate_tcpdump_stub ($1, td_file.stream);
 		}
 		;
 
 type_decl	: T_ENUM T_IDENTIFIER enumbody ';'
 		{ $$ = define_enum ($2, $3); varcnt = 0; }
-		| T_STRUCT T_IDENTIFIER { define_struct($2); } structbody ';'
-		{ $$ = set_struct_body ($2, $4); }
-		| T_STRUCT type structbody ';'
-		{ if($2->symbol && $2->symbol->type != TSTRUCT)
+		| T_STRUCT T_IDENTIFIER { define_struct($2); } structbody attrs ';'
+		{ $$ = set_struct_body ($2, $4);
+		  set_sym_attrs($$, $5); }
+		| T_STRUCT type structbody attrs';'
+		{ if($2->symbol && $2->symbol->type != YDR_TSTRUCT)
 		    error_message (1, "%s is not a struct\n",
 				   $2->symbol->name);
 		  $$ = set_struct_body_sym ($2->symbol, $3);
+		  set_sym_attrs($2->symbol, $4);
 		}
 		| T_TYPEDEF memberdecl ';'
 		{ $$ = define_typedef ($2); }
@@ -136,7 +143,7 @@ opt_proc:	{ $$ = 0; }/* empty */
 
 proc_decl:	opt_proc T_IDENTIFIER '(' params ')' flags '=' constant ';'
 		{ $$ = (Symbol *)emalloc(sizeof(Symbol));
-	          $$->type = TPROC;
+	          $$->type = YDR_TPROC;
 	          $$->name = $2;
 		  $$->u.proc.package = package;
 		  $$->u.proc.arguments = $4;
@@ -202,67 +209,71 @@ memberdecl:	T_ASIS memberdecl2
 memberdecl2:	type T_IDENTIFIER
 		{ $$ = createstructentry ($2, $1); }
 		| T_STRING T_IDENTIFIER '<' opt_constant '>'
-		{ Type *t  = create_type (TSTRING, NULL, $4, NULL, NULL, 0);
+		{ Type *t  = create_type (YDR_TSTRING, NULL, $4, NULL, NULL,0);
 		  $$ = createstructentry ($2, t);
 		}
 		| T_STRING T_IDENTIFIER
-		{ Type *t  = create_type (TSTRING, NULL, 0, NULL, NULL, 0);
+		{ Type *t  = create_type (YDR_TSTRING, NULL, 0, NULL, NULL, 0);
 		  $$ = createstructentry ($2, t);
 		}
 		| type T_IDENTIFIER '[' opt_constant ']' 
-		{ Type *t  = create_type (TARRAY, NULL, $4, $1, NULL, 0);
+		{ Type *t  = create_type (YDR_TARRAY, NULL, $4, $1, NULL, 0);
 		  $$ = createstructentry ($2, t); }
 		| type T_IDENTIFIER '<' opt_constant '>'
-		{ Type *t  = create_type (TVARRAY, NULL, $4, $1, NULL, 0);
+		{ Type *t  = create_type (YDR_TVARRAY, NULL, $4, $1, NULL, 0);
 		  $$ = createstructentry ($2, t); }
 		| type T_IDENTIFIER '<' type '>'
-		{ Type *t  = create_type (TVARRAY, NULL, 0, $1, $4, 0);
+		{ Type *t  = create_type (YDR_TVARRAY, NULL, 0, $1, $4, 0);
 		  $$ = createstructentry ($2, t); }
 		;
 
 type:		long_or_int
-                { $$ = create_type (TLONG, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TLONG, NULL, 0, NULL, NULL, 0); }
 		| T_UNSIGNED
-                { $$ = create_type (TULONG, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TULONG, NULL, 0, NULL, NULL, 0); }
 		| T_ULONG
-                { $$ = create_type (TULONG, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TULONG, NULL, 0, NULL, NULL, 0); }
 		| T_UNSIGNED T_LONG
-                { $$ = create_type (TULONG, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TULONG, NULL, 0, NULL, NULL, 0); }
+		| T_LONGLONG
+                { $$ = create_type (YDR_TLONGLONG, NULL, 0, NULL, NULL, 0); }
+		| T_ULONGLONG
+                { $$ = create_type (YDR_TULONGLONG, NULL, 0, NULL, NULL, 0); }
 		| T_CHAR
-                { $$ = create_type (TCHAR, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TCHAR, NULL, 0, NULL, NULL, 0); }
 		| T_UCHAR
-                { $$ = create_type (TUCHAR, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TUCHAR, NULL, 0, NULL, NULL, 0); }
 		| T_UNSIGNED T_CHAR
-                { $$ = create_type (TUCHAR, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TUCHAR, NULL, 0, NULL, NULL, 0); }
 		| T_SHORT
-                { $$ = create_type (TSHORT, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TSHORT, NULL, 0, NULL, NULL, 0); }
 		| T_USHORT
-                { $$ = create_type (TUSHORT, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TUSHORT, NULL, 0, NULL, NULL, 0); }
 		| T_UNSIGNED T_SHORT
-                { $$ = create_type (TUSHORT, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TUSHORT, NULL, 0, NULL, NULL, 0); }
 		| T_STRING
-                { $$ = create_type (TSTRING, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TSTRING, NULL, 0, NULL, NULL, 0); }
 		| T_OPAQUE
-                { $$ = create_type (TOPAQUE, NULL, 0, NULL, NULL, 0); }
+                { $$ = create_type (YDR_TOPAQUE, NULL, 0, NULL, NULL, 0); }
 		| type '*'
-                { $$ = create_type (TPOINTER, NULL, 0, $1, NULL, 0); }
+                { $$ = create_type (YDR_TPOINTER, NULL, 0, $1, NULL, 0); }
 		| T_IDTYPE
-                { $$ = create_type (TUSERDEF, $1, 0, NULL, NULL, 0);
-		  if ($$->symbol->type != TSTRUCT 
-		      && $$->symbol->type != TENUM
-		      && $$->symbol->type != TTYPEDEF)
+                { $$ = create_type (YDR_TUSERDEF, $1, 0, NULL, NULL, 0);
+		  if ($$->symbol->type != YDR_TSTRUCT 
+		      && $$->symbol->type != YDR_TENUM
+		      && $$->symbol->type != YDR_TTYPEDEF)
 		       error_message (1, "%s used as a type\n",
 				      $$->symbol->name);
 	        }
 		| T_STRUCT type
 		{
 		    $$ = $2;
-		    if ($$->symbol && $$->symbol->type != TSTRUCT)
+		    if ($$->symbol && $$->symbol->type != YDR_TSTRUCT)
 			error_message (1, "%s is not a struct\n",
 				       $$->symbol->name);
 		}
 		| T_STRUCT T_IDENTIFIER
-                {   $$ = create_type (TUSERDEF, define_struct($2), 0, NULL,
+                {   $$ = create_type (YDR_TUSERDEF, define_struct($2), 0, NULL,
 				      NULL, 0); 
                 }
 		;
@@ -286,12 +297,24 @@ opt_constant:	  { $$ = 0; }
 constant:	T_CONSTANT { $$ = $1; }
 		| T_IDCONST
 		{ Symbol *s = $1;
-		  if (s->type != TCONST) {
+		  if (s->type != YDR_TCONST) {
 		       error_message (1, "%s not a constant\n", s->name);
 		  } else
 		       $$ = s->u.val;
-	     }
+	        }
+		;
 		  
+attrs:		{ $$ = listnew(); }
+		| attr { $$ = listnew(); listaddhead ($$, $1); }
+		| attrs attr
+		{ listaddtail ($1, $2); $$ = $1; }
+		;
+
+attr:		T_IDENTIFIER '(' '(' T_IDENTIFIER ')' ')'
+		{ $$ = $4; 
+		  if (strcmp($1, "__attribute__") != 0)
+		     error_message(1, "%s isn't __attribute__"); }
+		;
 %%
 
 void

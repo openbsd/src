@@ -32,7 +32,7 @@
  */
 
 /*
- * $KTH: voldb_locl.h,v 1.4 2000/12/29 20:16:01 tol Exp $
+ * $arla: voldb_locl.h,v 1.4 2000/12/29 20:16:01 tol Exp $
  */
 
 #include <config.h>

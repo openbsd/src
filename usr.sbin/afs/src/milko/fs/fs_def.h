@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,7 +35,7 @@
  * Fileserver global defines
  */
 
-/* $KTH: fs_def.h,v 1.4 2000/10/03 00:17:19 lha Exp $ */
+/* $arla: fs_def.h,v 1.6 2002/01/29 03:54:54 lha Exp $ */
 
 #ifndef __FILBUNKE__FS_DEF_H
 #define __FILBUNKE__FS_DEF_H 1
@@ -48,5 +48,7 @@
 #define N_SECURITY_OBJECTS 3
 
 #define MAX_TRANSACTIONS 100
+
+#define MILKO_ROFS	EROFS
 
 #endif /* __FILBUNKE__FS_DEF_H */

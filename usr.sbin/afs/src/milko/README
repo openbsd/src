@@ -1,4 +1,4 @@
- Milko ($KTH: README,v 1.28 2000/08/16 22:17:48 tol Exp $)
+ Milko ($arla: README,v 1.29 2001/04/28 12:54:41 lha Exp $)
 =====
 
 Note: 
@@ -166,8 +166,8 @@ Note:
   There should be a notice in the top (after the copyright blub)
   that will give you a general idea what the module (should) do.
 
-  Each function should documented in the comment above the function.
-  Where each argument is described. Any simple/complex/no-trivial
+  Each function should be documented in the comment above the function,
+  where each argument is described. Any simple/complex/no-trivial
   locking event should be documented.
 
   If you see any assert()s in the top of the function (just after

@@ -37,7 +37,7 @@
 
 #include <config.h>
 
-RCSID("$KTH: mdir.c,v 1.10 2000/10/03 00:19:06 lha Exp $");
+RCSID("$arla: mdir.c,v 1.14 2002/03/06 22:43:01 tol Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -54,25 +54,31 @@ RCSID("$KTH: mdir.c,v 1.10 2000/10/03 00:19:06 lha Exp $");
 
 
 int
-mdir_lookup (struct mnode *node, VenusFid *dir, const char *name, VenusFid *file)
+mdir_lookup (struct mnode *node, const char *name, AFSFid *file)
 {
     fbuf the_fbuf;
+    VenusFid dir, fid;
     int ret, saved_ret;
 
     assert (node->flags.sbp);
     assert (node->flags.fdp);
+
+    dir.Cell = 0;
+    dir.fid = node->fid;
 
     ret = fbuf_create (&the_fbuf, node->fd, node->sb.st_size, 
 		       FBUF_READ|FBUF_PRIVATE);
     if (ret)
 	return ret;
 
-    saved_ret = fdir_lookup (&the_fbuf, dir, name, file);
+    saved_ret = fdir_lookup (&the_fbuf, &dir, name, &fid);
 
     ret = fbuf_end (&the_fbuf);
     if (ret)
 	return ret;
     
+    *file = fid.fid;
+
     return saved_ret;
 }
 
@@ -101,9 +107,9 @@ mdir_emptyp (struct mnode *node)
 
 int
 mdir_readdir (struct mnode *node,
-	      void (*func)(VenusFid *, const char *, void *), 
+	      int (*func)(VenusFid *, const char *, void *),
 	      void *arg,
-	      VenusFid *dir)
+	      VenusFid dir)
 {
     fbuf the_fbuf;
     int ret, saved_ret;
@@ -116,7 +122,7 @@ mdir_readdir (struct mnode *node,
     if (ret)
 	return ret;
 
-    saved_ret = fdir_readdir (&the_fbuf, func, arg, dir);
+    saved_ret = fdir_readdir (&the_fbuf, func, arg, dir, NULL);
 
     ret = fbuf_end (&the_fbuf);
     if (ret)
@@ -219,4 +225,119 @@ mdir_mkdir (struct mnode *node,
     return saved_ret;
 }
 
+int
+mdir_rename(struct mnode *dir1, const char *name1, int32_t *len1,
+	    struct mnode *dir2, const char *name2, int32_t *len2)
+{
+    fbuf origfbuf;
+    fbuf newfbuf;
+    fbuf *newfbufP = &newfbuf;
+    VenusFid child, origVFid;
+    int ret, dirp;
+    int same_dir = FALSE;
+    
+    origVFid.Cell = 0;
+    origVFid.fid = dir1->fid;
 
+    ret = fbuf_create (&origfbuf, dir1->fd, dir1->sb.st_size, 
+		       FBUF_READ|FBUF_WRITE|FBUF_SHARED);
+    if (ret)
+	return ret;
+
+    ret = fdir_lookup(&origfbuf, &origVFid, name1, &child);
+    if (ret) {
+	fbuf_end (&origfbuf);
+	return ret;
+    }
+
+    dirp = afs_dir_p (child.fid.Vnode);
+
+    if (dir1 == dir2) {
+	newfbufP = &origfbuf;
+	same_dir = TRUE;
+    } else {
+	ret = fbuf_create (&newfbuf, dir2->fd, 
+			   dir2->sb.st_size, 
+			   FBUF_READ|FBUF_WRITE|FBUF_SHARED);
+	if (ret) {
+	    fbuf_end (&origfbuf);
+	    return ret;
+	}
+    }
+
+    {
+	VenusFid sentenced_file;
+	VenusFid dir;
+
+	dir.fid = dir2->fid;
+	dir.Cell = 0;
+
+	if (fdir_lookup(newfbufP, &dir, name2, &sentenced_file) == ENOENT) {
+	    ret = fdir_creat (newfbufP, name2, child.fid);
+	    if (ret)
+		goto out1;
+
+	} else {
+	    if (afs_dir_p (sentenced_file.fid.Vnode) != dirp) { /* XXX check properly */
+		ret = EISDIR;
+		goto out1;
+	    }
+	    
+	    if (dirp && fdir_emptyp(newfbufP) != TRUE) {
+		ret = ENOTEMPTY;
+		goto out1;
+	    }
+	    
+	    ret = fdir_changefid(newfbufP, name2, &child);
+	    if (ret)
+		goto out1;
+	}
+    }
+    
+    ret = fdir_remove (&origfbuf, name1, NULL);
+    if (ret == 0) {
+	*len1 = fbuf_len (&origfbuf);
+	if (!same_dir)
+	    *len2 = fbuf_len (newfbufP);
+    }
+
+ out1:
+    fbuf_end (&origfbuf);
+    if (!same_dir) {
+	fbuf_end (&newfbuf);
+    }
+
+    return ret;
+}
+
+int
+mdir_changefid(struct mnode *dir, const char *name, AFSFid fid) {
+    fbuf the_fbuf;
+    VenusFid vfid;
+    int ret, saved_ret;
+    int32_t len;
+
+    assert (dir->flags.sbp);
+    assert (dir->flags.fdp);
+
+    vfid.Cell = 0;
+    vfid.fid = fid;
+
+    ret = fbuf_create (&the_fbuf, dir->fd, dir->sb.st_size,
+		       FBUF_READ|FBUF_WRITE|FBUF_SHARED);
+    if (ret)
+	return ret;
+
+    saved_ret = fdir_changefid (&the_fbuf, name, &vfid);
+
+    if (ret == 0) {
+	len = fbuf_len (&the_fbuf);
+	mnode_update_size (dir, &len);
+    }
+
+    ret = fbuf_end (&the_fbuf);
+    if (ret)
+	return ret;
+    
+    return saved_ret;
+}

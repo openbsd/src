@@ -60,7 +60,7 @@
 #include <err.h>
 #include <errno.h>
  
-RCSID("$KTH: glue.c,v 1.4 2000/10/03 00:19:01 lha Exp $");
+RCSID("$arla: glue.c,v 1.4 2000/10/03 00:19:01 lha Exp $");
 
 /*
  *

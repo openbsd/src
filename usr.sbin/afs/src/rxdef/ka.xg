@@ -47,7 +47,7 @@ const KAMINORVERSION		= 1;
 const NEVERDATE			= 037777777777;
 const KADEBUGKCINFOSIZE		= 25;
 
-#define Date u_int32_t
+#define Date uint32_t
 
 /* Errors */
 
@@ -112,10 +112,11 @@ struct EncryptionKey {
 
 const MAXKANAMELEN	= 64;
 #define MAXKANAMELEN	64
+const KA_LABELSIZE    = 4;
+
 %#ifndef MAXKTCTICKETLEN
 const MAXKTCTICKETLEN = 344;
 %#endif
-const KA_LABELSIZE    = 4;
 
 typedef string kaname<MAXKANAMELEN>;
 
@@ -127,14 +128,14 @@ struct kaident {
 struct kaentryinfo {
     int32_t minor_version;
     int32_t flags;
-    u_int32_t user_expiration;
+    uint32_t user_expiration;
     Date modification_time;
     kaident modification_user;
     Date change_password_time;
     long max_ticket_lifetime;
     long key_version;
     EncryptionKey key;
-    u_int32_t keyCheckSym;
+    uint32_t keyCheckSym;
     int32_t reserved2;
     int32_t reserved3;
     int32_t reserved4;

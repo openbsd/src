@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -47,7 +47,11 @@
 #include <ko.h>
 
 #ifdef KERBEROS
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <rxkad.h>
 #endif
@@ -66,6 +70,10 @@
 
 #include <agetarg.h>
 
+#include <mlog.h>
+#include <mdebug.h>
+#include <mdb.h>
+
 #include "rx/rxgencon.h"
 #include "vldb.h"
 #include "vldb.ss.h"
@@ -73,32 +81,33 @@
 
 
 extern int vl_database;
-extern vlheader vl_header;
-extern off_t file_length;
-
-void
-vlservdebug (char *fmt, ...)
-    __attribute__ ((format (printf, 1, 2)));
-
+extern vital_vlheader vl_header;
 
 void  vldb_write_header (void);
 void  vldb_read_header (void);
-void  vldb_get_file_length (void);
-off_t vldb_find_first_free (void);
-int   vldb_write_entry (off_t offset, disk_vlentry *vl_entry);
-int   vldb_read_entry (off_t offset, disk_vlentry *vl_entry);
+int   vldb_write_entry(const disk_vlentry *vldb_entry);
+int   vldb_read_entry (const char *name, disk_vlentry *entry);
+int   vldb_delete_entry (const char *name);
+int   vldb_id_to_name (const int32_t volid, char **name);
+int   vldb_write_id (const char *name, const uint32_t volid);
+int   vldb_delete_id (const char *name, const uint32_t volid);
+void  vldb_close(void);
+void  vldb_flush(void);
+
+
 unsigned long vldb_get_id_hash (long id);
 unsigned long vldb_get_name_hash (const char *name);
-int   vldb_get_first_id_entry (unsigned long hash_id, long type,
-			       disk_vlentry *vl_entry);
-int   vldb_get_first_name_entry (unsigned long hash_name,
-				 disk_vlentry *vl_entry);
-int   vldb_insert_entry (disk_vlentry *vl_entry);
-
 void  vldb_create (char *databaseprefix);
 void  vldb_init (char *databaseprefix);
-int   vldb_print_entry (struct disk_vlentry *entry, int long_print);
-int   vldb_setdebug (int debug);
-void  vldb_debug (char *fmt, ...);
+int   vldb_print_entry (vldbentry *entry, int long_print);
 
-    
+void  vldb_entry_to_disk(const struct vldbentry *newentry,
+			 struct disk_vlentry *diskentry);
+void  vldb_nentry_to_disk(const struct nvldbentry *entry,
+			  struct disk_vlentry *diskentry);
+void  vldb_disk_to_entry(const struct disk_vlentry *diskentry,
+			 struct vldbentry *entry);
+void  vldb_disk_to_nentry(const struct disk_vlentry *diskentry,
+			  struct nvldbentry *entry);
+
+void  vldb_free_diskentry(struct disk_vlentry *diskentry);

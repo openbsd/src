@@ -2,7 +2,7 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: servers.texi,v 1.10 2000/12/01 08:32:34 lha Exp $
+@c $arla: servers.texi,v 1.10 2000/12/01 08:32:34 lha Exp $
 
 @c
 @c  This file contain random junk that should be ordered some day

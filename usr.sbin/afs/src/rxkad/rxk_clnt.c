@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,15 +33,15 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: rxk_clnt.c,v 1.7 2000/10/03 00:38:22 lha Exp $");
+RCSID("$arla: rxk_clnt.c,v 1.8 2003/01/11 00:50:31 lha Exp $");
 
 /* This code also links into the kernel so we need to use osi_Alloc()
  * to avoid calling malloc(). Similar trick with memcpy() */
 
 #undef osi_Alloc
 #undef osi_Free
-char *osi_Alloc(int32 size);
-void osi_Free(void *p, int32 size);
+char *osi_Alloc(int32_t size);
+void osi_Free(void *p, int32_t size);
 
 #undef memcpy
 #define memcpy(to, from, len) bcopy1((from), (to), (len))
@@ -65,8 +65,8 @@ typedef struct rxkad_clnt_class {
   struct rx_securityClass klass;
   rxkad_level level;
   key_stuff k;
-  int32 kvno;
-  int32 ticket_len;
+  int32_t kvno;
+  int32_t ticket_len;
   char *ticket;
 } rxkad_clnt_class;
 
@@ -183,14 +183,14 @@ client_GetResponse(const struct rx_securityClass *obj_,
       }
   }
   r.encrypted.inc_nonce = htonl(ntohl(c.nonce) + 1);
-  r.encrypted.level = htonl((int32)obj->level);
+  r.encrypted.level = htonl((int32_t)obj->level);
   r.kvno = htonl(obj->kvno);
   r.ticket_len = htonl(obj->ticket_len);
   /* Make checksum before we seal r.encrypted */
   r.encrypted.cksum = rxkad_cksum_response(&r);
   /* Seal r.encrypted */
   fc_cbc_enc2(&r.encrypted, &r.encrypted, sizeof(r.encrypted),
-	      obj->k.keysched, (u_int32*)obj->k.key, ENCRYPT);
+	      obj->k.keysched, (uint32_t*)obj->k.key, ENCRYPT);
 
   /* Stuff response and kerberos ticket into packet */
   if (rx_SlowWritePacket(pkt, 0, sizeof(r), &r) != sizeof(r))
@@ -283,7 +283,7 @@ int rxkad_min_level = rxkad_clear; /* rxkad_{clear, auth, crypt} */
 struct rx_securityClass *
 rxkad_NewClientSecurityObject(/*rxkad_level*/ int level,
 			      void *sessionkey,
-			      int32 kvno,
+			      int32_t kvno,
 			      int ticket_len,
 			      char *ticket)
 {
@@ -298,10 +298,10 @@ rxkad_NewClientSecurityObject(/*rxkad_level*/ int level,
       /* Any good random numbers will do, no real need to use
        * cryptographic techniques here */
       union {
-	u_int32 rnd[2];
+	uint32_t rnd[2];
 	des_cblock k;
       } u;
-      int32 sched[ROUNDS];
+      int32_t sched[ROUNDS];
       u_long next_epoch;
 
       u.rnd[0] = rx_nextCid;

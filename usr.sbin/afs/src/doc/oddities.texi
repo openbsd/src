@@ -2,9 +2,9 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: oddities.texi,v 1.7 2000/10/03 01:09:56 lha Exp $
+@c $arla: oddities.texi,v 1.11 2003/02/01 17:15:44 lha Exp $
 
-@node Oddities, Arla timeline, Porting, Top
+@node Oddities, Arla timeline, Programming, Top
 @chapter Oddities
 
 @c ----------------------------------------------------
@@ -37,7 +37,7 @@ programs (like make) "knows" that the two first entries are . and .. and
 thus can be skiped.
 
 @item Reclen (in struct dirent) shouldn't be too large. When its
-larger then the buffer used in opendir/readdir/closedir, you loose.
+larger then the buffer used in opendir/readdir/closedir, you lose.
 
 @end itemize
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: msecurity.h,v 1.5 2000/10/03 00:18:14 lha Exp $ */
+/* $arla: msecurity.h,v 1.5 2000/10/03 00:18:14 lha Exp $ */
 
 void
 sec_disable_superuser_check (void);

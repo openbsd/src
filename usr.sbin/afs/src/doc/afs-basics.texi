@@ -2,7 +2,7 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: afs-basics.texi,v 1.17 2000/12/01 08:31:07 lha Exp $
+@c $arla: afs-basics.texi,v 1.17 2000/12/01 08:31:07 lha Exp $
 
 @node AFS infrastructure, Organization of data, Introduction, Top
 @comment  node-name,  next,  previous,  up

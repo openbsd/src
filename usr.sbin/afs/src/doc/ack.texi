@@ -1,7 +1,7 @@
 @c Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
-@c $KTH: ack.texi,v 1.17 2001/01/08 18:02:43 lha Exp $
+@c $arla: ack.texi,v 1.20 2002/05/26 14:49:33 lha Exp $
 
 @node  Acknowledgments, Index, Authors, Top
 @comment  node-name,  next,  previous,  up
@@ -159,6 +159,24 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 
 @item Nickolai Zeldovich 
 @tab @email{kolya@@MIT.EDU}
+
+@item Adam Thornton 
+@tab @email{adam@@sinenomine.net}
+
+@item Neale Ferguson 
+@tab @email{Neale.Ferguson@@SoftwareAG-usa.com}
+
+@item Hidvegi 
+@tab @email{hzoli@@austin.ibm.com}
+
+@item Todd T. Fries 
+@tab @email{todd@@fries.net}
+
+@item Andrea Campi 
+@tab @email{andrea@@webcom.it}
+
+@item William Uther 
+@tab @email{will+@@cs.cmu.edu}
 
 
 @end multitable

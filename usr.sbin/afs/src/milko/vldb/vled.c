@@ -37,7 +37,7 @@
 #include <arpa/inet.h>
 #include <limits.h>
 
-RCSID("$KTH: vled.c,v 1.6 2000/10/03 00:21:23 lha Exp $");
+RCSID("$arla: vled.c,v 1.7 2002/10/01 23:35:35 lha Exp $");
 
 struct ed_context {
     long begin;
@@ -277,7 +277,7 @@ get_string (FILE *f, char *buf, size_t len)
 	    return ED_EOF;
 	return ED_FATAL;
     }
-    buf[strlen(buf)-1] = '\0';
+    buf[strcspn(buf, "\n")] = '\0';
     return ED_NOERR;
 }
 

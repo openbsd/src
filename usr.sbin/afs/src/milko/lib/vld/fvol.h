@@ -32,7 +32,7 @@
  */
 
 /*
- * $KTH: fvol.h,v 1.3 2000/10/03 00:18:56 lha Exp $
+ * $arla: fvol.h,v 1.3 2000/10/03 00:18:56 lha Exp $
  */
 
 #define FVOL_MAGIC1 0x1132

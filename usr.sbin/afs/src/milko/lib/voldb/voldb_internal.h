@@ -40,10 +40,10 @@
  */
 
 struct voldb_header {
-    u_int32_t magic;	/* network order */
+    uint32_t magic;	/* network order */
 #define VOLDB_MAGIC_HEADER 0x47111147
-    u_int32_t num;	/* Number of entries in the db */
-    u_int32_t flags;	/* flags */
+    uint32_t num;	/* Number of entries in the db */
+    uint32_t flags;	/* flags */
 };
 
 struct voldb {
@@ -59,30 +59,33 @@ struct voldb_type {
     int (*init) (int fd, struct voldb *db, int createp);
     int (*close) (struct voldb *db);
     int (*get_dir) (struct voldb *db,
-		    const u_int32_t num, 
+		    const uint32_t num, 
 		    struct voldb_dir_entry *e);
     int (*put_dir) (struct voldb *db, 
-		    const u_int32_t num, 
+		    const uint32_t num, 
 		    struct voldb_dir_entry *e);
     int (*put_acl) (struct voldb *db, 
-		    u_int32_t num,
+		    uint32_t num,
 		    struct voldb_dir_entry *e);
     int (*get_file) (struct voldb *db,
-		     u_int32_t num, 
+		     uint32_t num, 
 		     struct voldb_file_entry *e);
     int (*put_file) (struct voldb *db, 
-		     u_int32_t num, 
+		     uint32_t num, 
 		     struct voldb_file_entry *e);
     int (*flush) (struct voldb *db);
     int (*new_entry) (struct voldb *db, 
-		      u_int32_t *num, 
-		      u_int32_t *unique);
+		      uint32_t *num, 
+		      uint32_t *unique);
     int (*del_entry) (struct voldb *db, 
-		      const u_int32_t num,
+		      const uint32_t num,
 		      onode_opaque *ino);
     int (*write_header) (struct voldb *db,
 			 void *data,
 			 size_t sz);
+    int (*expand) (struct voldb *db,
+		   uint32_t num);
+    int (*rebuild) (struct voldb *db);
 };
 
 
@@ -91,25 +94,25 @@ struct voldb_type {
 extern struct voldb_type *voltypes[];
 
 static inline int __attribute__ ((unused))
-voldb_get_dir (struct voldb *db, u_int32_t num, struct voldb_dir_entry *e)
+voldb_get_dir (struct voldb *db, uint32_t num, struct voldb_dir_entry *e)
 {
     return VOLDB_FUNC(db,get_dir)(db, num, e);
 }
 
 static inline int __attribute__ ((unused))
-voldb_get_file (struct voldb *db, u_int32_t num, struct voldb_file_entry *e)
+voldb_get_file (struct voldb *db, uint32_t num, struct voldb_file_entry *e)
 {
     return VOLDB_FUNC(db,get_file)(db, num, e);
 }
 
 static inline int __attribute__ ((unused))
-voldb_put_dir (struct voldb *db, u_int32_t num, struct voldb_dir_entry *e)
+voldb_put_dir (struct voldb *db, uint32_t num, struct voldb_dir_entry *e)
 {
     return VOLDB_FUNC(db,put_dir)(db, num, e);
 }
 
 static inline int __attribute__ ((unused))
-voldb_put_file (struct voldb *db, u_int32_t num, struct voldb_file_entry *e)
+voldb_put_file (struct voldb *db, uint32_t num, struct voldb_file_entry *e)
 {
     return VOLDB_FUNC(db,put_file)(db, num, e);
 }

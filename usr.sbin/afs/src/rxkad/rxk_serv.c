@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +37,7 @@
 #include <krb5.h>
 #endif
 
-RCSID("$KTH: rxk_serv.c,v 1.6 2000/10/03 00:38:44 lha Exp $");
+RCSID("$arla: rxk_serv.c,v 1.11 2003/06/11 15:24:34 lha Exp $");
 
 /* Security object specific server data */
 typedef struct rxkad_serv_class {
@@ -113,13 +113,13 @@ server_CreateChallenge(struct rx_securityClass *obj_,
   rxkad_serv_class *obj = (rxkad_serv_class *) obj_;
   serv_con_data *cdat = (serv_con_data *) con->securityData;
   union {
-    u_int32 rnd[2];
+    uint32_t rnd[2];
     des_cblock k;
   } u;
 
   /* Any good random numbers will do, no real need to use
    * cryptographic techniques here */
-  des_random_key(u.k);
+  des_random_key(&u.k);
   cdat->nonce = u.rnd[0] ^ u.rnd[1];
   cdat->authenticated = 0;
   cdat->cur_level = obj->min_level;
@@ -141,7 +141,7 @@ server_GetChallenge(const struct rx_securityClass *obj,
   /* Make challenge */
   c.version = htonl(RXKAD_VERSION);
   c.nonce = htonl(cdat->nonce);
-  c.min_level = htonl((int32)cdat->cur_level);
+  c.min_level = htonl((int32_t)cdat->cur_level);
   c.unused = 0; /* Use this to hint client we understand krb5 tickets??? */
 
   /* Stuff into packet */
@@ -156,10 +156,10 @@ int
 decode_krb5_ticket(rxkad_serv_class *obj,
 		   int serv_kvno,
 		   char *ticket,
-		   int32 ticket_len,
+		   int32_t ticket_len,
 		   /* OUT parms */
 		   des_cblock session_key,
-		   u_int32 *expires,
+		   uint32_t *expires,
 		   krb_principal *p)
 {
 #if !defined(KRB5)
@@ -225,6 +225,16 @@ decode_krb5_ticket(rxkad_serv_class *obj,
   if (code != 0)
     goto bad_ticket;
 
+  /* Check that the key type really fit into 8 bytes */
+  switch (decr_part.key.etype) {
+  case ETYPE_DES_CBC_CRC:
+  case ETYPE_DES_CBC_MD4:
+  case ETYPE_DES_CBC_MD5:
+    break;
+  default:
+    goto unknown_key;
+  }
+
   /* Extract realm and principal */  
   memset(p, 0x0, sizeof(p));
   strncpy(p->realm, decr_part.crealm, REALM_SZ - 1);
@@ -285,16 +295,16 @@ int
 decode_krb4_ticket(rxkad_serv_class *obj,
 		   int serv_kvno,
 		   char *ticket,
-		   int32 ticket_len,
+		   int32_t ticket_len,
 		   /* OUT parms */
 		   des_cblock session_key,
-		   u_int32 *expires,
+		   uint32_t *expires,
 		   krb_principal *p)
 {
   u_char kflags;
   int klife;
-  u_int32 start;
-  u_int32 paddress;
+  uint32_t start;
+  uint32_t paddress;
   char sname[SNAME_SZ], sinstance[INST_SZ];
   KTEXT_ST tkt;
   des_cblock serv_key;		/* Service's secret key */
@@ -348,12 +358,12 @@ server_CheckResponse(struct rx_securityClass *obj_,
   serv_con_data *cdat = (serv_con_data *) con->securityData;
 
   int serv_kvno;		/* Service's kvno we used */
-  int32 ticket_len;
+  int32_t ticket_len;
   char ticket[MAXKRB5TICKETLEN];
   int code;
   rxkad_response r;
   krb_principal p;
-  u_int32 cksum;
+  uint32_t cksum;
 
   if (rx_SlowReadPacket(pkt, 0, sizeof(r), &r) != sizeof(r))
     return RXKADPACKETSHORT;
@@ -381,7 +391,7 @@ server_CheckResponse(struct rx_securityClass *obj_,
 
   /* Unseal r.encrypted */
   fc_cbc_enc2(&r.encrypted, &r.encrypted, sizeof(r.encrypted),
-	      cdat->k.keysched, (u_int32*)cdat->k.key, DECRYPT);
+	      cdat->k.keysched, (uint32_t*)cdat->k.key, DECRYPT);
 
   /* Verify response integrity */
   cksum = r.encrypted.cksum;
@@ -528,7 +538,7 @@ rxkad_NewServerSecurityObject(/*rxkad_level*/ int min_level,
 			      void *appl_data,
 			      int (*get_key)(void *appl_data,
 					     int kvno,
-					     des_cblock *key),
+					     void *opaque_key),
 			      int (*user_ok)(char *name,
 					     char *inst,
 					     char *realm,
@@ -546,7 +556,7 @@ rxkad_NewServerSecurityObject(/*rxkad_level*/ int min_level,
 
   obj->min_level = min_level;
   obj->appl_data = appl_data;
-  obj->get_key = get_key;
+  obj->get_key = (void *)get_key;
   obj->user_ok = user_ok;
 
   return &obj->klass;

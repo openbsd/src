@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: voldb.h,v 1.17 2000/10/03 00:20:19 lha Exp $ */
+/* $arla: voldb.h,v 1.21 2002/02/07 17:59:58 lha Exp $ */
 
 #ifndef FILBUNKE_VOLDB_H
 #define FILBUNKE_VOLDB_H 1
@@ -53,26 +53,26 @@
  */
 
 struct voldb_file_entry {    
-    u_int32_t nextptr;
-    u_int32_t unique;
+    uint32_t nextptr;
+    uint32_t unique;
     onode_opaque ino;
-    u_int32_t spare2;		/* Must be zero */
-    u_int32_t InterfaceVersion;
-    u_int32_t FileType;
-    u_int32_t LinkCount;
-    u_int32_t Length;
-    u_int32_t spare3;		/* Must be zero */
-    u_int32_t DataVersion;
-    u_int32_t Author;
-    u_int32_t Owner;
-    u_int32_t UnixModeBits;
-    u_int32_t ParentVnode;
-    u_int32_t ParentUnique;
-    u_int32_t SegSize;
-    u_int32_t ServerModTime;
-    u_int32_t spare4;		/* Must be zero */
-    u_int32_t Group;
-    u_int32_t spare5;		/* Must be zero */
+    uint32_t spare2;		/* Must be zero */
+    uint32_t InterfaceVersion;
+    uint32_t FileType;
+    uint32_t LinkCount;
+    uint32_t Length;
+    uint32_t spare3;		/* Must be zero */
+    uint32_t DataVersion;
+    uint32_t Author;
+    uint32_t Owner;
+    uint32_t UnixModeBits;
+    uint32_t ParentVnode;
+    uint32_t ParentUnique;
+    uint32_t SegSize;
+    uint32_t ServerModTime;
+    uint32_t spare4;		/* Must be zero */
+    uint32_t Group;
+    uint32_t spare5;		/* Must be zero */
 };
 
 /*
@@ -80,8 +80,8 @@ struct voldb_file_entry {
  */
 
 struct acl_entry {
-    u_int32_t owner;
-    u_int32_t flags;
+    uint32_t owner;
+    uint32_t flags;
 };
 
 /*
@@ -89,26 +89,26 @@ struct acl_entry {
  */
 
 struct voldb_dir_entry {    
-    u_int32_t nextptr;
-    u_int32_t unique;
+    uint32_t nextptr;
+    uint32_t unique;
     onode_opaque ino;
-    u_int32_t spare2;		/* Must be zero */
-    u_int32_t InterfaceVersion;
-    u_int32_t FileType;
-    u_int32_t LinkCount;
-    u_int32_t Length;
-    u_int32_t spare3;		/* Must be zero */
-    u_int32_t DataVersion;
-    u_int32_t Author;
-    u_int32_t Owner;
-    u_int32_t UnixModeBits;
-    u_int32_t ParentVnode;
-    u_int32_t ParentUnique;
-    u_int32_t SegSize;
-    u_int32_t ServerModTime;
-    u_int32_t spare4;		/* Must be zero */
-    u_int32_t Group;
-    u_int32_t spare5;		/* Must be zero */
+    uint32_t spare2;		/* Must be zero */
+    uint32_t InterfaceVersion;
+    uint32_t FileType;
+    uint32_t LinkCount;
+    uint32_t Length;
+    uint32_t spare3;		/* Must be zero */
+    uint32_t DataVersion;
+    uint32_t Author;
+    uint32_t Owner;
+    uint32_t UnixModeBits;
+    uint32_t ParentVnode;
+    uint32_t ParentUnique;
+    uint32_t SegSize;
+    uint32_t ServerModTime;
+    uint32_t spare4;		/* Must be zero */
+    uint32_t Group;
+    uint32_t spare5;		/* Must be zero */
     struct acl_entry negacl[FS_MAX_ACL];
     struct acl_entry acl[FS_MAX_ACL];
 };
@@ -127,6 +127,9 @@ struct voldb_entry {
 #define VOLDB_DIR 0x2
 
 #define VOLDB_DEFAULT_TYPE 0
+
+#define VOLDB_FREELIST_END 0xffffffff
+#define VOLDB_ENTRY_USED 0xfffffffe
 
 /* forward declarations */
 
@@ -150,7 +153,7 @@ int
 voldb_get_entry (struct voldb *db, int32_t num, struct voldb_entry *e);
 
 int
-voldb_put_acl (struct voldb *db, u_int32_t num, struct voldb_dir_entry *e);
+voldb_put_acl (struct voldb *db, uint32_t num, struct voldb_dir_entry *e);
 
 int
 voldb_pretty_print_file (struct voldb_file_entry *e);
@@ -168,17 +171,17 @@ int
 voldb_flush (struct voldb *db);
 
 int
-voldb_new_entry (struct voldb *db, u_int32_t *num, u_int32_t *unique);
+voldb_new_entry (struct voldb *db, uint32_t *num, uint32_t *unique);
 
 int
-voldb_del_entry (struct voldb *db, u_int32_t num, onode_opaque *ino);
+voldb_del_entry (struct voldb *db, uint32_t num, onode_opaque *ino);
 
 int
 voldb_header_info (struct voldb *db, 
-		   u_int32_t *num,
-		   u_int32_t *flags);
+		   uint32_t *num,
+		   uint32_t *flags);
 
-u_int32_t
+uint32_t
 voldb_get_volume (struct voldb *db);
 
 int
@@ -190,10 +193,10 @@ voldb_update_time(struct voldb_entry *e, time_t t);
 /* vol.c */
 
 int
-vol_getname (u_int32_t num, char *str, size_t sz);
+vol_getname (uint32_t num, char *str, size_t sz);
 
 int
-vol_getfullname (u_int32_t part, u_int32_t num, char *str, size_t sz);
+vol_getfullname (uint32_t part, uint32_t num, char *str, size_t sz);
 
 int
 vol_read_header (int fd, volintInfo *info);
@@ -202,11 +205,17 @@ int
 vol_write_header (int fd, volintInfo *info);
 
 int
-vol_create (int fd, u_int32_t num, const char *name,
-	    u_int32_t type, u_int32_t parent);
+vol_create (int fd, uint32_t num, const char *name,
+	    uint32_t type, uint32_t parent);
 
 void
 vol_pretty_print_info (FILE *out, volintInfo *info);
+
+int
+voldb_expand (struct voldb *db, int32_t num);
+
+int
+voldb_rebuild (struct voldb *db);
 
 enum voldb_newnum_sizes {  VOLDB_ENTEND_NUM = 10 } ;
 

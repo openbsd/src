@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: list.c,v 1.11 2000/10/03 00:31:09 lha Exp $");
+RCSID("$arla: list.c,v 1.12 2002/04/20 17:06:21 lha Exp $");
 #endif
 
 #include <assert.h>
@@ -63,6 +63,17 @@ listnew (void)
 	  tmp->head = tmp->tail = NULL;
      return tmp;
 }
+
+/*
+ * Free a list, assume that its empty
+ */
+
+void
+listfree(List *list)
+{
+	list->head = list->tail = NULL;
+	free(list);
+} 
 
 /*
  * Add an element before `item'

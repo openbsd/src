@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: lex.h,v 1.6 2000/10/02 22:36:33 lha Exp $ */
+/* $arla: lex.h,v 1.6 2000/10/02 22:36:33 lha Exp $ */
 
 #ifndef _LEX_
 #define _LEX_

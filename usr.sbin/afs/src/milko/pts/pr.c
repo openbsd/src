@@ -43,10 +43,15 @@
 #include <rx/rx_null.h>
 
 #include <ports.h>
+#include <ko.h>
 #include <bool.h>
 
 #ifdef KERBEROS
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <rxkad.h>
 #include "rxkad_locl.h"
@@ -67,7 +72,10 @@
 
 #include "msecurity.h"
 
-RCSID("$KTH: pr.c,v 1.21 2001/01/04 12:06:17 mattiasa Exp $");
+#include <mlog.h>
+#include <mdebug.h>
+
+RCSID("$arla: pr.c,v 1.24 2002/04/20 15:57:17 lha Exp $");
 
 /*
  *
@@ -78,18 +86,17 @@ PR_NameToID(struct rx_call *call, const namelist *nlist, idlist *ilist)
 {
     int i;
     int status;
-    char *localname;
 
-    pt_debug (PRDB_RPC, "PR_NameToID: securityIndex: %d ilen: %d",
+    mlog_log (MDEBPR, "PR_NameToID: securityIndex: %d ilen: %d",
 	      call->conn->securityIndex, nlist->len);
 
 #ifdef KERBEROS
     if (call->conn->securityIndex == 2) {
 	serv_con_data *cdat = call->conn->securityData;
-	pt_debug (PRDB_RPC,"  user: %s.%s@%s",
-	       cdat->user->name,
-	       cdat->user->instance,
-	       cdat->user->realm);
+	mlog_log (MDEBPR, "  user: %s.%s@%s",
+		  cdat->user->name,
+		  cdat->user->instance,
+		  cdat->user->realm);
     }
 #endif
 
@@ -99,11 +106,9 @@ PR_NameToID(struct rx_call *call, const namelist *nlist, idlist *ilist)
 	return PRDBBAD;
 
     for (i = 0; i < nlist->len; i++) {
-	pt_debug (PRDB_RPC,"  name: %s", nlist->val[i]);
+	mlog_log (MDEBPR, "  name: %s", nlist->val[i]);
 	
-	localname = localize_name(nlist->val[i]);
-
-	status = conv_name_to_id(localname, &ilist->val[i]);
+	status = conv_name_to_id(nlist->val[i], &ilist->val[i]);
 	if (status == PRNOENT)
 	    ilist->val[i] = PR_ANONYMOUSID;
 	else if (status)
@@ -122,7 +127,7 @@ PR_IDToName(struct rx_call *call, const idlist *ilist, namelist *nlist)
     int i;
     int status;
     
-    pt_debug (PRDB_RPC, "PR_IDToName: securityIndex: %d ilen %d",
+    mlog_log (MDEBPR, "PR_IDToName: securityIndex: %d ilen %d",
 	      call->conn->securityIndex, ilist->len);
 
     
@@ -141,7 +146,7 @@ PR_IDToName(struct rx_call *call, const idlist *ilist, namelist *nlist)
 	return PRDBBAD;
 
     for (i = 0; i < ilist->len; i++) {
-	pt_debug (PRDB_RPC,"  id: %d", ilist->val[i]);
+	mlog_log (MDEBPR, "  id: %d", ilist->val[i]);
 	status = conv_id_to_name(ilist->val[i], nlist->val[i]);
 	if (status == PRNOENT)
 	    snprintf (nlist->val[i], PR_MAXNAMELEN, "%d", ilist->val[i]);
@@ -160,31 +165,34 @@ PR_NewEntry(struct rx_call *call, const char *name,
 	    const int32_t flag, const int32_t oid, int32_t *id)
 {
     int error;
+    int32_t owner;
     char *localname;
+    Bool localp;
 
-    pt_debug (PRDB_RPC, "PR_NewEntry: securityIndex: %d name: %s oid: %d",
+    mlog_log (MDEBPR, "PR_NewEntry: securityIndex: %d name: %s oid: %d",
 	      call->conn->securityIndex, name, oid);
 
 
-/* XXX should be authuser? */
+    /* XXX should be authuser? */
     if (!sec_is_superuser(call))
 	return PRPERM;
 
-    localname = localize_name(name);
+    localname = localize_name(name, &localp);
+
+    /* XXX do it properly! */
+    if (localp == FALSE)
+	owner = PR_SYSADMINID;
+    else
+	owner = oid;
+
     if ((flag & PRTYPE) == PRUSER) {
-	error = conv_name_to_id(localname, id);
-	if (error == PRNOENT) {
-	    *id = next_free_user_id();
-	    error = create_user(localname, *id, oid, PR_SYSADMINID); /* XXX */
-	} else
-	    error = PREXIST;
+	error = next_free_user_id(id);
+	if (!error)
+	    error = create_user(localname, *id, owner, PR_SYSADMINID); /* XXX */
     } else if ((flag & PRTYPE) == PRGRP) {
-	error = conv_name_to_id(localname, id);
-	if (error == PRNOENT) {
-	    *id = next_free_group_id();
-	    error = create_group(localname, *id, oid, PR_SYSADMINID); /* XXX */
-	} else
-	    error = PREXIST;
+	error = next_free_group_id(id);
+	if (!error)
+	    error = create_group(localname, *id, owner, PR_SYSADMINID); /* XXX */
     } else {
 	error = PRPERM;
     }
@@ -201,31 +209,30 @@ PR_INewEntry(struct rx_call *call, const char *name,
 	     const int32_t id, const int32_t oid)
 {
     int error;
-    int tempid;
     char *localname;
-
+    Bool localp;
+    int32_t owner = PR_SYSADMINID;
+    int32_t creator = PR_SYSADMINID;
+    
+    /* XXX should be authuser? */
     if (!sec_is_superuser(call))
 	return PRPERM;
 
-    pt_debug (PRDB_RPC, "PR_INewEntry securityIndex: %d name: %s oid: %d",
+    mlog_log (MDEBPR, "PR_INewEntry securityIndex: %d name: %s oid: %d",
 	      call->conn->securityIndex, name, oid);
 
-    localname = localize_name(name);
-    if (id > 0) {
-	error = conv_name_to_id(localname, &tempid);
-	if (error == PRNOENT) {
-	    error = create_user(localname, id, oid, PR_SYSADMINID); /* XXX */
-	} else
-	    error = PREXIST;
-    } else if (id < 0) {
-	error = conv_name_to_id(localname, &tempid);
-	if (error == PRNOENT) {
-	    error = create_group(localname, id, oid, PR_SYSADMINID); /* XXX */
-	} else
-	    error = PREXIST;
-    } else {
+    localname = localize_name(name, &localp);
+    
+    /* XXX do it properly! */
+    if (localp == TRUE)
+	owner = oid;
+    
+    if (id > 0)
+	error = create_user(localname, id, owner, creator); /* XXX */
+    else if (id < 0)
+	error = create_group(localname, id, owner, creator); /* XXX */
+    else
 	error = PRPERM;
-    }
 
     return error;
 }
@@ -241,12 +248,12 @@ PR_ListEntry(struct rx_call *call, const int32_t id,
     prentry pr_entry;
     int status;
    
-    pt_debug (PRDB_RPC, "PR_ListEntry securityIndex: %d id: %d", 
+    mlog_log (MDEBPR, "PR_ListEntry securityIndex: %d id: %d", 
 	      call->conn->securityIndex, id);
 #ifdef KERBEROS
     if (call->conn->securityIndex == 2) {
 	serv_con_data *cdat = call->conn->securityData;
-	pt_debug (PRDB_RPC, "PR_ListEntry user: %s.%s@%s",
+	mlog_log (MDEBPR, "PR_ListEntry user: %s.%s@%s",
 		  cdat->user->name,
 		  cdat->user->instance,
 		  cdat->user->realm);
@@ -254,7 +261,7 @@ PR_ListEntry(struct rx_call *call, const int32_t id,
 #endif
 
     memset(&pr_entry, 0, sizeof(pr_entry));
-    status = get_pr_entry_by_id(id, &pr_entry);
+    status = read_prentry(id, &pr_entry);
     if (status)
 	return status;
     entry->flags = pr_entry.flags;
@@ -278,7 +285,7 @@ int
 PR_DumpEntry(struct rx_call *call, const int32_t pos, 
 	     struct prdebugentry *entry)
 {
-    pt_debug (PRDB_RPC, "PR_DumpEntry");
+    mlog_log (MDEBPR, "PR_DumpEntry");
     return -1;
 }
 
@@ -290,7 +297,7 @@ int
 PR_ChangeEntry(struct rx_call *call, const int32_t id, const char *name,
 	       const int32_t oid, const int32_t newid)
 {
-    pt_debug (PRDB_RPC, "PR_ChangeEntry");
+    mlog_log (MDEBPR, "PR_ChangeEntry");
     return -1;
 }
 
@@ -305,7 +312,7 @@ PR_SetFieldsEntry(struct rx_call *call, const int32_t id, const int32_t mask,
 		  const int32_t nusers,
 		  const int32_t spare1, const int32_t spare2)
 {
-    pt_debug (PRDB_RPC, "PR_SetFieldsEntry");
+    mlog_log (MDEBPR, "PR_SetFieldsEntry");
     return -1;
 }
 
@@ -317,7 +324,11 @@ PR_SetFieldsEntry(struct rx_call *call, const int32_t id, const int32_t mask,
 int
 PR_Delete(struct rx_call *call, const int32_t id)
 {
-    pt_debug (PRDB_RPC, "PR_Delete");
+    mlog_log (MDEBPR, "PR_Delete");
+
+    if (!sec_is_superuser(call))
+	return PRPERM;
+
     return -1;
 }
 
@@ -329,7 +340,7 @@ PR_Delete(struct rx_call *call, const int32_t id)
 int
 PR_WhereIsIt(struct rx_call *call, const int32_t id, int32_t *ps)
 {
-    pt_debug (PRDB_RPC, "PR_WhereIsIt");
+    mlog_log (MDEBPR, "PR_WhereIsIt");
     return -1;
 }
 
@@ -341,7 +352,7 @@ PR_WhereIsIt(struct rx_call *call, const int32_t id, int32_t *ps)
 int
 PR_AddToGroup(struct rx_call *call, const int32_t uid, const int32_t gid)
 {
-    pt_debug (PRDB_RPC, "PR_AddToGroup");
+    mlog_log (MDEBPR, "PR_AddToGroup");
 
     if (!sec_is_superuser(call))
       return PRPERM;
@@ -357,7 +368,7 @@ PR_AddToGroup(struct rx_call *call, const int32_t uid, const int32_t gid)
 int
 PR_RemoveFromGroup(struct rx_call *call, const int32_t id, const int32_t gid)
 {
-    pt_debug (PRDB_RPC, "PR_RemoveFromGroup");
+    mlog_log (MDEBPR, "PR_RemoveFromGroup");
 
     if (!sec_is_superuser(call))
 	return PRPERM;
@@ -373,7 +384,7 @@ PR_RemoveFromGroup(struct rx_call *call, const int32_t id, const int32_t gid)
 int
 PR_ListMax(struct rx_call *call, int32_t *uid, int32_t *gid)
 {
-    pt_debug (PRDB_RPC, "PR_ListMax");
+    mlog_log (MDEBPR, "PR_ListMax");
     *uid = pr_header.maxID;
     *gid = pr_header.maxGroup;
     return 0;
@@ -387,13 +398,14 @@ PR_ListMax(struct rx_call *call, int32_t *uid, int32_t *gid)
 int
 PR_SetMax(struct rx_call *call, const int32_t uid, const int32_t gflag)
 {
-    pt_debug (PRDB_RPC, "PR_SetMax");
+    mlog_log (MDEBPR, "PR_SetMax");
 
     if(gflag) {
-      pr_header.maxGroup = uid;
+	pr_header.maxGroup = uid;
     } else {
-      pr_header.maxID = uid;
+	pr_header.maxID = uid;
     }
+
     return 0;
 }
 
@@ -406,7 +418,7 @@ int
 PR_ListElements(struct rx_call *call, const int32_t id, 
 		prlist *elist, int32_t *over)
 {
-    pt_debug (PRDB_RPC, "PR_ListElements");
+    mlog_log (MDEBPR, "PR_ListElements");
 
     return listelements(id, elist, FALSE);
 }
@@ -420,7 +432,7 @@ int
 PR_GetCPS(struct rx_call *call, const int32_t id, 
 	  prlist *elist, int32_t *over)
 {
-    pt_debug (PRDB_RPC, "PR_GetCPS");
+    mlog_log (MDEBPR, "PR_GetCPS");
 
     return listelements(id, elist, TRUE);
 }
@@ -434,7 +446,7 @@ int
 PR_ListOwned(struct rx_call *call, const int32_t id, 
 	     prlist *elist, int32_t *over)
 {
-    pt_debug (PRDB_RPC, "PR_ListOwned");
+    mlog_log (MDEBPR, "PR_ListOwned");
     return -1;
 }
 
@@ -454,21 +466,21 @@ PR_IsAMemberOf(struct rx_call *call, const int32_t uid, const int32_t gid,
     int ret=0;
     int i=0;
 
-    pt_debug (PRDB_RPC, "PR_IsAMemberOf");
+    mlog_log (MDEBPR, "PR_IsAMemberOf");
 
     if((ret = listelements(uid, &elist, TRUE)) !=0) {
-      free(elist.val);
-      return ret;
+	free(elist.val);
+	return ret;
     }
 
     for(i=0; i < elist.len ; i++) {
-      if(elist.val[i] == gid) {
-	*flag=1;
-	free(elist.val);
-	return 0;
-      }
+	if(elist.val[i] == gid) {
+	    *flag=1;
+	    free(elist.val);
+	    return 0;
+	}
     }
-
+    
     free(elist.val);
     return 0;
 }

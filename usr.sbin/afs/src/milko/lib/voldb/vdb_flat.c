@@ -39,26 +39,26 @@
 #include "voldb_locl.h"
 #include "voldb_internal.h"
 
-RCSID("$KTH: vdb_flat.c,v 1.14 2000/10/03 00:20:03 lha Exp $");
+RCSID("$arla: vdb_flat.c,v 1.19 2002/02/07 17:59:54 lha Exp $");
 
 
 static int vdbflat_init (int fd, struct voldb *db, int createp);
 static int vdbflat_close (struct voldb *db);
-static int vdbflat_get_dir (struct voldb *db, const u_int32_t num,
+static int vdbflat_get_dir (struct voldb *db, const uint32_t num,
 			    struct voldb_dir_entry *e);
-static int vdbflat_put_dir (struct voldb *db, const u_int32_t num,
+static int vdbflat_put_dir (struct voldb *db, const uint32_t num,
 			    struct voldb_dir_entry *e);
-static int vdbflat_put_acl (struct voldb *db, u_int32_t num,
+static int vdbflat_put_acl (struct voldb *db, uint32_t num,
 			    struct voldb_dir_entry *e);
-static int vdbflat_get_file (struct voldb *db, const u_int32_t num,
+static int vdbflat_get_file (struct voldb *db, const uint32_t num,
 			     struct voldb_file_entry *e);
-static int vdbflat_put_file (struct voldb *db, const u_int32_t num,
+static int vdbflat_put_file (struct voldb *db, const uint32_t num,
 			     struct voldb_file_entry *e);
 static int vdbflat_extend_db (struct voldb *db, unsigned int num);
 static int vdbflat_flush (struct voldb *db);
-static int vdbflat_new_entry (struct voldb *db, u_int32_t *num, 
-			      u_int32_t *unique);
-static int vdbflat_del_entry (struct voldb *db, const u_int32_t num,
+static int vdbflat_new_entry (struct voldb *db, uint32_t *num, 
+			      uint32_t *unique);
+static int vdbflat_del_entry (struct voldb *db, const uint32_t num,
 			      onode_opaque *ino);
 static int vdbflat_write_header (struct voldb *db, void *d, size_t sz);
     
@@ -109,7 +109,7 @@ static int
 vdbflat_init (int fd, struct voldb *db, int createp)
 {
     vdbflat *vdb;
-    u_int32_t i;
+    uint32_t i;
     int size;
     int ret;
     unsigned char *data;
@@ -130,7 +130,7 @@ vdbflat_init (int fd, struct voldb *db, int createp)
 
     /* If we are being created, there is no sane data on disk */
     if (createp) {
-	vdb->freeptr = 0;
+	vdb->freeptr = VOLDB_FREELIST_END;
     } else {
 	/* Let the above layer parse the header */
 	voldb_parse_header (db, vdb->ptr, VOLDB_HEADER_HALF);
@@ -215,7 +215,7 @@ vdbflat_close (struct voldb *db)
 
 static int
 vdbflat_get_dir (struct voldb *db, 
-		 const u_int32_t num,
+		 const uint32_t num,
 		 struct voldb_dir_entry *e)
 {
     vdbflat *vdb = (vdbflat *) db->ptr;
@@ -233,7 +233,7 @@ vdbflat_get_dir (struct voldb *db,
     memcpy (e, &vdb->u.dir[num], sizeof (*e));
 #else
     {
-	u_int32_t tmp;
+	uint32_t tmp;
 	int i;
 	unsigned char *ptr = 
 	    ((unsigned char *)vdb->u.dir) +
@@ -324,7 +324,7 @@ vdbflat_get_dir (struct voldb *db,
 
 int
 vdbflat_put_dir (struct voldb *db,
-		 const u_int32_t num,
+		 const uint32_t num,
 		 struct voldb_dir_entry *e)
 {
     vdbflat *vdb = (vdbflat *) db->ptr;
@@ -341,7 +341,7 @@ vdbflat_put_dir (struct voldb *db,
     memcpy (&vdb->u.dir[num], e, sizeof (*e));
 #else
     {
-	u_int32_t tmp;
+	uint32_t tmp;
 	size_t len;
 	unsigned char *ptr =
 	    ((unsigned char *)vdb->u.dir) +
@@ -418,7 +418,7 @@ vdbflat_put_dir (struct voldb *db,
  */
 
 static int
-vdbflat_put_acl (struct voldb *db, u_int32_t num, struct voldb_dir_entry *e)
+vdbflat_put_acl (struct voldb *db, uint32_t num, struct voldb_dir_entry *e)
 {
     vdbflat *vdb = (vdbflat *) db->ptr;
 
@@ -435,7 +435,7 @@ vdbflat_put_acl (struct voldb *db, u_int32_t num, struct voldb_dir_entry *e)
 	    sizeof (*e->negacl) + sizeof (*e->acl));
 #else
     {
-	u_int32_t tmp;
+	uint32_t tmp;
 	unsigned char *ptr =
 	    ((unsigned char *)vdb->u.dir) +
 	    VOLDB_DIR_SIZE * num;
@@ -467,7 +467,7 @@ vdbflat_put_acl (struct voldb *db, u_int32_t num, struct voldb_dir_entry *e)
  */
 
 static int
-vdbflat_get_file (struct voldb *db, u_int32_t num, struct voldb_file_entry *e)
+vdbflat_get_file (struct voldb *db, uint32_t num, struct voldb_file_entry *e)
 {
     vdbflat *vdb = (vdbflat *) db->ptr;
 
@@ -483,7 +483,7 @@ vdbflat_get_file (struct voldb *db, u_int32_t num, struct voldb_file_entry *e)
     memcpy (e, &vdb->u.file[num], sizeof (*e));
 #else
     {
-	u_int32_t tmp;
+	uint32_t tmp;
 	size_t len;
 	unsigned char *ptr =
 	    ((unsigned char *)vdb->u.file) +
@@ -560,7 +560,7 @@ vdbflat_get_file (struct voldb *db, u_int32_t num, struct voldb_file_entry *e)
  */
 
 int
-vdbflat_put_file (struct voldb *db, u_int32_t num, struct voldb_file_entry *e)
+vdbflat_put_file (struct voldb *db, uint32_t num, struct voldb_file_entry *e)
 {
     vdbflat *vdb = (vdbflat *) db->ptr;
 
@@ -576,7 +576,7 @@ vdbflat_put_file (struct voldb *db, u_int32_t num, struct voldb_file_entry *e)
     memcpy (&vdb->u.file[num], e, sizeof (*e));
 #else
     {
-	u_int32_t tmp;
+	uint32_t tmp;
 	size_t len;
 	unsigned char *ptr =
 	    ((unsigned char *)vdb->u.file) +
@@ -656,7 +656,7 @@ vdbflat_extend_db (struct voldb *db, unsigned int num)
 {
     int dirp = 0, ret;
     size_t newsize;
-    u_int32_t oldnum = db->hdr.num;
+    uint32_t oldnum = db->hdr.num;
     vdbflat *vdb = db->ptr;
 
     if (db->hdr.magic != VOLDB_MAGIC_HEADER)
@@ -689,7 +689,7 @@ vdbflat_extend_db (struct voldb *db, unsigned int num)
     set_volhdr_union_ptr (db);
 
     if (dirp) {
-	u_int32_t i = oldnum;
+	uint32_t i = oldnum;
 	struct voldb_dir_entry e;
 
 	memset (&e, 0, sizeof (e));
@@ -708,7 +708,7 @@ vdbflat_extend_db (struct voldb *db, unsigned int num)
 	    }
 	}
     } else {
-	u_int32_t i = oldnum;
+	uint32_t i = oldnum;
 	struct voldb_file_entry e;
 
 	memset (&e, 0, sizeof (e));
@@ -738,13 +738,13 @@ vdbflat_extend_db (struct voldb *db, unsigned int num)
 }
 
 int
-vdbflat_new_entry (struct voldb *db, u_int32_t *num, u_int32_t *unique)
+vdbflat_new_entry (struct voldb *db, uint32_t *num, uint32_t *unique)
 {
-    u_int32_t oldfreeptr, newfreeptr, newunique;
+    uint32_t oldfreeptr, newfreeptr, newunique;
     vdbflat *vdb = db->ptr;
     int ret;
 
-    if (vdb->freeptr == 0) {
+    if (vdb->freeptr == VOLDB_FREELIST_END) {
 	ret = vdbflat_extend_db (db, VOLDB_ENTEND_NUM);
 	if (ret)
 	    return ret;
@@ -759,9 +759,10 @@ vdbflat_new_entry (struct voldb *db, u_int32_t *num, u_int32_t *unique)
 	if (ret)
 	    return ret;
 
+	assert(e.nextptr != VOLDB_ENTRY_USED);
 	newfreeptr = e.nextptr;
 	newunique = ++e.unique;
-	e.nextptr = 0;
+	e.nextptr = VOLDB_ENTRY_USED;
 	e.FileType = TYPE_DIR;
 
 	ret = voldb_put_dir (db, oldfreeptr, &e);
@@ -775,9 +776,10 @@ vdbflat_new_entry (struct voldb *db, u_int32_t *num, u_int32_t *unique)
 	if (ret)
 	    return ret;
 
+	assert(e.nextptr != VOLDB_ENTRY_USED);
 	newfreeptr = e.nextptr;
 	newunique = ++e.unique;
-	e.nextptr = 0;
+	e.nextptr = VOLDB_ENTRY_USED;
 	e.FileType = TYPE_FILE;
 
 	ret = voldb_put_file (db, oldfreeptr, &e);
@@ -806,7 +808,7 @@ vdbflat_new_entry (struct voldb *db, u_int32_t *num, u_int32_t *unique)
 
 static int
 vdbflat_del_entry (struct voldb *db,
-		   const u_int32_t num,
+		   const uint32_t num,
 		   onode_opaque *ino)
 {
     vdbflat *vdb = db->ptr;
@@ -822,7 +824,7 @@ vdbflat_del_entry (struct voldb *db,
 	e.FileType = 0;
 	e.ParentVnode = e.ParentUnique = 0;
 	e.LinkCount = 0;
-	assert (e.nextptr == 0);
+	assert (e.nextptr == VOLDB_ENTRY_USED);
 	e.nextptr = vdb->freeptr;
 	if (ino)
 	    memcpy (ino, &e.ino, sizeof (e.ino));
@@ -842,7 +844,7 @@ vdbflat_del_entry (struct voldb *db,
 	e.FileType = 0;
 	e.ParentVnode = e.ParentUnique = 0;
 	e.LinkCount = 0;
-	assert (e.nextptr == 0);
+	assert (e.nextptr == VOLDB_ENTRY_USED);
 	e.nextptr = vdb->freeptr;
 	if (ino)
 	    memcpy (ino, &e.ino, sizeof (e.ino));
@@ -889,7 +891,7 @@ vdbflat_write_header (struct voldb *db,
     vdbflat *vdb = (vdbflat *) db->ptr;
     unsigned char *data = d;
     size_t size = sz;
-    u_int32_t i;
+    uint32_t i;
     int ret;
 
     assert (sz == VOLDB_HEADER_SIZE);
@@ -904,7 +906,7 @@ vdbflat_write_header (struct voldb *db,
     assert (size >= sizeof (i));
 
     if (vdb == NULL) {
-	i = htonl (0);
+	i = htonl (VOLDB_FREELIST_END);
     } else {
 	i = htonl(vdb->freeptr);
     }
@@ -917,6 +919,73 @@ vdbflat_write_header (struct voldb *db,
     if (ret)
 	return errno;
 
+    return 0;
+}
+
+static int
+vdbflat_expand (struct voldb *db,
+		uint32_t num)
+{
+    int entriesneeded;
+    int ret = 0;
+
+    entriesneeded = num - db->hdr.num + 1;
+    if (entriesneeded > 0)
+	ret = vdbflat_extend_db(db, entriesneeded + VOLDB_ENTEND_NUM);
+
+    if (ret)
+	return ret;
+
+    return 0;
+}
+
+static int
+vdbflat_rebuild (struct voldb *db)
+{
+    uint32_t freeptr;
+    vdbflat *vdb = db->ptr;
+    int ret;
+    int i;
+
+    freeptr = VOLDB_FREELIST_END;
+
+    for (i = db->hdr.num - 1; i >= 0; i--) {
+	if ((db->hdr.flags & VOLDB_DIR) == VOLDB_DIR) {
+	    struct voldb_dir_entry e;
+
+	    ret = voldb_get_dir(db, i, &e);
+	    if (ret)
+		return ret;
+
+	    if (e.nextptr == VOLDB_ENTRY_USED) {
+		assert (e.FileType == TYPE_DIR);
+	    } else {
+		e.nextptr = VOLDB_FREELIST_END;
+		freeptr = i;
+		ret = voldb_put_dir(db, i, &e);
+		if (ret)
+		    return ret;
+	    }
+	} else {
+	    struct voldb_file_entry e;
+
+	    ret = voldb_get_file(db, i, &e);
+	    if (ret)
+		return ret;
+	    
+	    if (e.nextptr == VOLDB_ENTRY_USED) {
+		assert (e.FileType == TYPE_FILE);
+	    } else {
+		e.nextptr = VOLDB_FREELIST_END;
+		freeptr = i;		
+		ret = voldb_put_file(db, i, &e);
+		if (ret)
+		    return ret;
+	    }
+	}
+    }
+
+    vdb->freeptr = freeptr;
     return 0;
 }
 
@@ -935,5 +1004,7 @@ struct voldb_type vdb_flat = {
     vdbflat_flush,
     vdbflat_new_entry,
     vdbflat_del_entry,
-    vdbflat_write_header
+    vdbflat_write_header,
+    vdbflat_expand,
+    vdbflat_rebuild,
 };

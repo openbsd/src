@@ -45,7 +45,11 @@
 #include <msecurity.h>
 
 #ifdef KERBEROS
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <rxkad.h>
 #endif
@@ -61,110 +65,81 @@
 
 #include <service.h>
 
+#include <mlog.h>
+#include <mdebug.h>
+#include <mdb.h>
+
 #include "pts.h"
 #include "pts.ss.h"
 #include "ptserver.h"
 #include "pts.ss.h"
 
-RCSID("$KTH: ptserver.c,v 1.36 2000/12/29 19:55:21 tol Exp $");
+RCSID("$arla: ptserver.c,v 1.46 2003/04/09 02:41:28 lha Exp $");
 
 static struct rx_service *prservice;
 
-static int pr_database = -1;
-static off_t file_length;
-prheader pr_header;
+prheader_disk pr_header;
 
-static Log_unit *pr_log_unit;
-static Log_method *pr_method;
+#define HEADERID PR_BADID
+#define ILLEGAL_ID 0x40000000
+#define ILLEGAL_GROUP 0x40000000
 
-char pr_header_ydr[PRHEADER_SIZE];
+#define PRENTRY_DISK_SIZE (sizeof(prentry_disk) + PR_MAXGROUPS * sizeof(int32_t) + 16)
+#define PRHEADER_DISK_SIZE (sizeof(prheader_disk) + 4 * PR_MAXGROUPS * sizeof(int32_t) + 16)
 
-#define all (PRDB_ERROR|PRDB_WARN|PRDB_RPC|PRDB_DB)
+static void open_db (char *databaseprefix, int flags);
+void prserver_close(void);
 
-struct units pr_deb_units[] = {
-    { "all",		all },
-    { "errors",		PRDB_ERROR },
-#undef all
-    { "warnings",	PRDB_WARN },
-    { "rpc",		PRDB_RPC },
-    { "db",		PRDB_DB },
-    { NULL}
-};
+MDB *nametoid, *idtodata;
 
-void
-pt_setdebug (char *debug_level)
-{
-    log_set_mask_str (pr_method, pr_log_unit, debug_level);
-}
 
 /*
  *
  */
 
 void
-pt_debug (unsigned int level, char *fmt, ...)
-{
-    va_list args;
-
-    va_start (args, fmt);
-    log_vlog (pr_log_unit, level, fmt, args);
-    va_end(args);
-}
-
-/*
- *
- */
-
-static void
 write_header(void)
 {
-    off_t pos;
-    int length = PRHEADER_SIZE;
+    int length = PRHEADER_DISK_SIZE;
+    struct mdb_datum key, value;
+    char pr_header_ydr[PRHEADER_DISK_SIZE];
+    int code;
 
-    if (ydr_encode_prheader(&pr_header, pr_header_ydr, &length) == NULL)
-	err(1, "write_header");
+    char headerid = htonl(HEADERID);
 
-    pos = lseek(pr_database, 0, SEEK_SET);
-    assert(pos == 0);
+    if (ydr_encode_prheader_disk(&pr_header, pr_header_ydr, &length) == NULL)
+        err(1, "write_header");
 
-    length = write(pr_database, pr_header_ydr, PRHEADER_SIZE);
-    assert (length == PRHEADER_SIZE);
+    key.data = &headerid;
+    key.length = sizeof(headerid);
+
+    value.data = pr_header_ydr;
+    value.length = PRHEADER_DISK_SIZE - length;
+
+    code = mdb_store(idtodata, &key, &value);
+    assert(code == 0);
 }
 
 /*
  *
  */
 
-static void
+void
 read_header(void)
 {
-    char pr_header_ydr[PRHEADER_SIZE];
-    int length = PRHEADER_SIZE;
+    int length = PRHEADER_DISK_SIZE;
+    struct mdb_datum key, value;
+    char headerid = htonl(HEADERID);
+    int code;
 
-    if (lseek(pr_database, 0, SEEK_SET) == -1)
-	err(1, "lseek");
+    key.data = &headerid;
+    key.length = sizeof(headerid);
 
-    length = read(pr_database, pr_header_ydr, PRHEADER_SIZE);
-    if (length == -1)
-	err(1, "read");
-    if (length != PRHEADER_SIZE)
-	errx(1, "read_header read failed");
+    code = mdb_fetch(idtodata, &key, &value);
+    assert(code == 0);
     
-    if (ydr_decode_prheader(&pr_header, pr_header_ydr, &length) == NULL)
-	err(1, "read_header");
-}
-
-/*
- *
- */
-
-static void
-get_file_length(void)
-{
-    file_length = lseek(pr_database, 0, SEEK_END);
-    if (file_length == -1) {
-	err(1, "lseek");
-    }
+    if (ydr_decode_prheader_disk(&pr_header, value.data, &length) == NULL)
+        err(1, "read_header");
 }
 
 /*
@@ -172,18 +147,22 @@ get_file_length(void)
  */
 
 char *
-localize_name(const char *name)
+localize_name(const char *name, Bool *localp)
 {
     static prname localname;
     char *tmp;
+
+    *localp = FALSE;
 
     strlcpy(localname, name, sizeof(localname));
     strlwr(localname);
     
     tmp = strchr(localname, '@');
     if (tmp)
-	if (!strcasecmp(tmp + 1, netinit_getrealm()))
+	if (!strcasecmp(tmp + 1, netinit_getrealm())) {
 	    *tmp = '\0';
+	    *localp = TRUE;
+	}
 
     return localname;
 }
@@ -196,195 +175,127 @@ static void
 create_database(void)
 {
     pr_header.version = 0;
-    pr_header.headerSize = PRHEADER_SIZE;
-    pr_header.freePtr = 0;
-    pr_header.eofPtr = PRHEADER_SIZE;
+    pr_header.headerSize = PRHEADER_DISK_SIZE;
     pr_header.maxGroup = -210; /* XXX */
     pr_header.maxID = 0;
-    pr_header.maxForeign = 65536; /* XXX */
-    pr_header.maxInst = 0;
-    pr_header.orphan = 0;
+/*XXX    pr_header.orphan = 0;*/
     pr_header.usercount = 0;
     pr_header.groupcount = 0;
-    pr_header.foreigncount = 0;
-    pr_header.instcount = 0;
-    memset(pr_header.reserved, 0, 5 * sizeof(int32_t));
-    memset(pr_header.nameHash, 0, 8191 * sizeof(int32_t));
-    memset(pr_header.idHash, 0, 8191 * sizeof(int32_t));
     write_header();
-    get_file_length();
 }
 
 /*
- *
+ * read_prentry(): Fetch data from db, return a classic pr_entry
  */
 
-static int
-read_entry(off_t offset, prentry *pr_entry)
+int
+read_prentry(int id, prentry *pr_entry)
 {
-    off_t pos;
-    char pr_entry_disk_ydr[PRENTRY_DISK_SIZE];
-    int length = PRENTRY_DISK_SIZE;
+    prentry_disk disk_entry;
+    int status, i;
 
-    pos = lseek(pr_database, offset, SEEK_SET);
-    assert(pos == offset);
-
-    length = read(pr_database, pr_entry_disk_ydr, PRENTRY_DISK_SIZE);
-    assert (length == PRENTRY_DISK_SIZE);
-
-    if (ydr_decode_prentry_disk((prentry_disk *) pr_entry, pr_entry_disk_ydr, &length) == NULL)
-	err(1, "write_entry");
-
-    return 0;
-}
-
-/*
- *
- */
-
-static off_t
-find_first_free(void)
-{
-    prentry pr_entry;
-    off_t pos;
-
-    if (pr_header.freePtr == 0) { /* if there are no free entries */
-	pos = lseek(pr_database, 0, SEEK_END);
-	if (pos == -1)
-	    err(1, "lseek");
-	if (ftruncate(pr_database, pos + PRENTRY_DISK_SIZE) == -1)
-	    err(1, "ftruncate");
-	return pos;
-    } else { /* there are free entries */
-	/* XXX if the caller discards this entry it will become orphaned */
-	pos = pr_header.freePtr;
-	read_entry(pos, &pr_entry);
-	pr_header.freePtr = pr_entry.next;
-	write_header();
-	return pos;
-    }
-    return 0;
-}
-
-/*
- *
- */
-
-static int
-write_entry(off_t offset, prentry *pr_entry)
-{
-    off_t pos;
-    char pr_entry_disk_ydr[PRENTRY_DISK_SIZE];
-    int length = PRENTRY_DISK_SIZE;
-
-    if (ydr_encode_prentry_disk((prentry_disk *) pr_entry, pr_entry_disk_ydr, &length) == NULL)
-	err(1, "write_entry");
-
-    pos = lseek(pr_database, offset, SEEK_SET);
-    assert(pos == offset);
-
-    length = write(pr_database, pr_entry_disk_ydr, PRENTRY_DISK_SIZE);
-    assert (length == PRENTRY_DISK_SIZE);
-
-    return 0;
-}
-
-/*
- *
- */
-
-static unsigned long
-get_id_hash(long id)
-{
-    return ((unsigned long) id) % HASHSIZE;
-}
-
-/*
- *
- */
-
-static unsigned long
-get_name_hash(const char *name)
-{
-    int i;
-    unsigned long hash = 0x47114711;
-
-    for (i = 0; name[i] && i < 32; i++)
-	hash *= name[i];
-
-    return hash % HASHSIZE;
-}
-
-/*
- *
- */
-
-static int
-get_first_id_entry(unsigned long hash_id, prentry *pr_entry)
-{
-    off_t offset = pr_header.idHash[hash_id];
-    int status;
-
-    pt_debug (PRDB_DB, "get_first_id_entry hash_id: %lu offset: %ld",
-	      hash_id, (long)offset);
-    if (offset == 0)
-	return PRNOENT;
-
-    status = read_entry(offset, pr_entry);
-
-    return status;
-}
-
-/*
- *
- */
-
-static int
-get_first_name_entry(unsigned long hash_name, prentry *pr_entry)
-{
-    off_t offset = pr_header.nameHash[hash_name];
-    int status;
-
-    pt_debug (PRDB_DB, "get_first_name_entry hash_name: %lu offset: %ld",
-	      hash_name, (long)offset);
-    if (offset == 0)
-	return PRNOENT;
-
-    status = read_entry(offset, pr_entry);
-
-    return status;
-}
-
-/*
- *
- */
-
-static int
-update_entry(prentry *pr_entry)
-{
-    off_t offset;
-    int status;
-    unsigned long hash_id;
-    prentry old_pr_entry;
-
-    pt_debug (PRDB_DB, "update_entry");
-
-    hash_id = get_id_hash(pr_entry->id);
-
-    offset = pr_header.idHash[hash_id];
-
-    status = get_first_id_entry(hash_id, &old_pr_entry);
+    status = get_disk_entry(id, &disk_entry);
     if (status)
-	return PRNOENT;
+	return status;
 
-    while (old_pr_entry.id != pr_entry->id) {
-	if (old_pr_entry.nextID == 0)
-	    return PRNOENT;
-	offset=old_pr_entry.nextID;
-	status = read_entry(offset, &old_pr_entry);
-    }
+    memset(pr_entry, 0, sizeof(prentry));
 
-    return write_entry(offset, pr_entry);
+    pr_entry->flags = disk_entry.flags;
+    pr_entry->id = disk_entry.id;
+    pr_entry->cellid = disk_entry.cellid;
+    pr_entry->owner = disk_entry.owner;
+    pr_entry->creator = disk_entry.creator;
+    pr_entry->ngroups = disk_entry.ngroups;
+    strlcpy(pr_entry->name, disk_entry.name, sizeof(pr_entry->name));
+
+    if (disk_entry.owned.len > 0)
+	pr_entry->owned = disk_entry.owned.val[0];
+      
+    for (i = 0; i < PRSIZE && i < disk_entry.entries.len; i++)
+	pr_entry->entries[i] = disk_entry.entries.val[i];
+
+    mlog_log (MDEBPRDB, "read_prentry id: %d owner: %d creator: %d name: %s",
+	      pr_entry->id, pr_entry->owner, 
+	      pr_entry->creator, pr_entry->name);
+
+    return 0;
+}
+
+/* 
+ * store_disk_entry(): marshal prentry_disk and store in db
+ */
+
+int
+store_disk_entry(prentry_disk *entry)
+{
+    char pr_entry_disk_ydr[PRENTRY_DISK_SIZE];
+    int length = PRENTRY_DISK_SIZE;
+    struct mdb_datum key, value;
+    int id;
+
+    mlog_log (MDEBPRDB, "store_disk_entry id: %d owner: %d creator: %d name: %s",
+	      entry->id, entry->owner, 
+	      entry->creator, entry->name);
+
+    if (ydr_encode_prentry_disk((prentry_disk *) entry, pr_entry_disk_ydr, &length) == NULL)
+	err(1, "store_disk_entry");
+
+    id = htonl(entry->id);
+    key.data = &id;
+    key.length = sizeof(id);
+
+    value.data = pr_entry_disk_ydr;
+    value.length = PRENTRY_DISK_SIZE - length;
+
+    return mdb_store(idtodata, &key, &value);
+}
+
+/*
+ * write_prentry(): update db with classic prentry
+ */
+
+int
+write_prentry(prentry *pr_entry)
+{
+    prentry_disk disk_entry;
+    int i;
+
+    memset(&disk_entry, 0, sizeof(prentry_disk));
+    
+    disk_entry.flags = pr_entry->flags;
+    disk_entry.id = pr_entry->id;
+    disk_entry.cellid = pr_entry->cellid;
+    disk_entry.owner = pr_entry->owner;
+    disk_entry.creator = pr_entry->creator;
+    disk_entry.ngroups = pr_entry->ngroups;
+/*    disk_entry.owned = pr_entry->owned;   XXX */
+    strlcpy(disk_entry.name, pr_entry->name, sizeof(disk_entry.name));
+      
+    for (i = 0; i < PRSIZE && i < pr_entry->count; i++)
+	disk_entry.entries.val[i] = pr_entry->entries[i];
+    
+    disk_entry.entries.len = i;
+
+    return store_disk_entry(&disk_entry);
+}
+
+/*
+ *
+ */
+
+static int
+write_name(prentry *pr_entry)
+{
+    struct mdb_datum key, value;
+    int32_t id = htonl(pr_entry->id);
+
+    key.data = pr_entry->name;
+    key.length = strlen(pr_entry->name);
+
+    value.data = &id;
+    value.length = sizeof(id);
+
+    return mdb_store(nametoid, &key, &value);
 }
 
 /*
@@ -394,37 +305,33 @@ update_entry(prentry *pr_entry)
 static int
 insert_entry(prentry *pr_entry)
 {
-    off_t offset;
+    char *pr_entry_disk_ydr;
     int status;
-    unsigned long hash_id, hash_name;
-    prentry first_id_entry;
-    prentry first_name_entry;
-    
-    /* Allokera plats i filen */
-    offset = find_first_free();
+    int id;
 
-    /* Hitta plats i hashtabell */
-    hash_id = get_id_hash(pr_entry->id);
-    hash_name = get_name_hash(pr_entry->name);
+    char *name = pr_entry->name;
 
-    status = get_first_id_entry(hash_id, &first_id_entry);
-    pr_entry->nextID = status ? 0 : first_id_entry.nextID;
+    status = get_ydr_disk_entry(pr_entry->id, &pr_entry_disk_ydr);
+    if (status == 0)
+	return PREXIST;
+    if (status != PRNOENT)
+	return status;
 
-    status = get_first_name_entry(hash_name, &first_name_entry);
-    pr_entry->nextName = status ? 0 : first_name_entry.nextName;
+    status = conv_name_to_id(name, &id);
+    if (status == 0)
+	return PREXIST;
+    if (status != PRNOENT)
+	return status;
 
-    /* XXX: uppdatera owned och nextOwned */
-
-    /* Lägg in entryt i filen */
-    status = write_entry(offset, pr_entry);
+    status = write_name(pr_entry);
     if (status)
 	return status;
-    
-    /* Uppdatera hashtabell */
-    pr_header.idHash[hash_id] = offset;
-    pr_header.nameHash[hash_name] = offset;
-    write_header();
-    return 0;
+
+    return write_prentry(pr_entry);
+
+    /* XXX: update owned and nextOwned */
+    /* XXX update header */
+    /* write_header(); */
 }
 
 /*
@@ -488,66 +395,57 @@ create_user(const char *name,
 int
 addtogroup (int32_t uid, int32_t gid)
 {
-    prentry uid_entry;
-    prentry gid_entry;
-    int error, i;
+    prentry_disk uid_entry;
+    prentry_disk gid_entry;
+    int error, i, tmp1, tmp2;
 
-    pt_debug (PRDB_DB, "addtogroup");
+    mlog_log (MDEBPRDB, "addtogroup");
 
-    error = get_pr_entry_by_id(uid, &uid_entry);
+    error = get_disk_entry(uid, &uid_entry);
     if (error)
 	return error;
 
-    error = get_pr_entry_by_id(gid, &gid_entry);
+    error = get_disk_entry(gid, &gid_entry);
     if (error)
 	return error;
 
-    /* XXX should allocate contentry block */
-    
-    if (uid_entry.count >= PRSIZE || gid_entry.count >= PRSIZE)
+    if (uid_entry.entries.len >= (PR_MAXGROUPS - 1)
+	|| gid_entry.entries.len >= (PR_MAXLIST - 1))
 	return PRNOENT;
 
-    assert (uid_entry.entries[uid_entry.count] == 0);
+    i = 0;
+    while (uid_entry.entries.val[i] < gid && i < uid_entry.entries.len)
+	i++;
 
-    for (i = 0; i < uid_entry.count; i++)
-	if (uid_entry.entries[i] == gid)
-	    break;
-
-    if (i == uid_entry.count) { 
-	if (uid_entry.count < PRSIZE - 1) {
-	    uid_entry.entries[uid_entry.count] = gid;
-	    uid_entry.count++;
-	} else 
-	    return PRNOENT;
+    tmp1 = gid;
+    for (; i < uid_entry.entries.len; i++) {
+	tmp2 = uid_entry.entries.val[i];
+	uid_entry.entries.val[i] = tmp1;
+	tmp1 = tmp2;
     }
+    uid_entry.entries.val[uid_entry.entries.len] = tmp1;
+    uid_entry.entries.len++;
 
-    assert (gid_entry.entries[gid_entry.count] == 0);
+    i = 0;
+    while (gid_entry.entries.val[i] < uid && i < gid_entry.entries.len)
+	i++;
 
-    for (i = 0; i < gid_entry.count; i++)
-	if (gid_entry.entries[i] == uid)
-	    break;
-
-    if (i == gid_entry.count) {
-	if (gid_entry.count < PRSIZE - 1) {
-	    gid_entry.entries[gid_entry.count] = uid;
-	    gid_entry.count++;
-	} else {
-	    if (uid_entry.entries[uid_entry.count - 1] == gid) {
-		uid_entry.entries[uid_entry.count - 1] = 0;
-		uid_entry.count--;
-	    }
-	    return PRNOENT;
-	}
+    tmp1 = uid;
+    for (; i < gid_entry.entries.len; i++) {
+	tmp2 = gid_entry.entries.val[i];
+	gid_entry.entries.val[i] = tmp1;
+	tmp1 = tmp2;
     }
+    gid_entry.entries.val[gid_entry.entries.len] = tmp1;
+    gid_entry.entries.len++;
 
-    if ((error = update_entry(&uid_entry)) != 0)
+    if ((error = store_disk_entry(&uid_entry)) != 0)
 	return error;
 
-    if ((error = update_entry(&gid_entry)) != 0)
+    if ((error = store_disk_entry(&gid_entry)) != 0)
 	return error;
 
     return 0;
-
 }
 
 /*
@@ -557,54 +455,51 @@ addtogroup (int32_t uid, int32_t gid)
 int
 removefromgroup (int32_t uid, int32_t gid)
 {
-    prentry uid_entry;
-    prentry gid_entry;
+    prentry_disk uid_entry;
+    prentry_disk gid_entry;
     int error, i;
 
-    pt_debug (PRDB_DB, "removefromgroup");
+    mlog_log (MDEBPRDB, "removefromgroup");
 
-    error = get_pr_entry_by_id(uid, &uid_entry);
+    error = get_disk_entry(uid, &uid_entry);
     if (error)
 	return error;
 
-    error = get_pr_entry_by_id(gid, &gid_entry);
-    if (error)
-	return error;
-
-    /* XXX No check for full list */
-
-    /* XXX should the list be sorted? */
-
-    error = PRNOENT;  /* XXX */
-    for (i = 0; i < PRSIZE; i++)
-	if (uid_entry.entries[i] == gid) {
-	    uid_entry.count--;
-	    uid_entry.entries[i] = uid_entry.entries[uid_entry.count];
-	    uid_entry.entries[uid_entry.count] = 0;
-	    error = 0;
-	}
+    error = get_disk_entry(gid, &gid_entry);
     if (error)
 	return error;
 
 
-    error = PRNOENT;  /* XXX */
-    for (i = 0; i < PRSIZE; i++)
-	if (gid_entry.entries[i] == uid) {
-	    gid_entry.count--;
-	    gid_entry.entries[i] = gid_entry.entries[gid_entry.count];
-	    gid_entry.entries[gid_entry.count] = 0;
-	    error = 0;
-	}
-    if (error)
-	return error;
+    i = 0;
+    while (uid_entry.entries.val[i] < gid && i < uid_entry.entries.len)
+	i++;
 
+    if (uid_entry.entries.val[i] != gid)
+	return PRNOENT;
+
+    for (i++; i < uid_entry.entries.len; i++)
+	uid_entry.entries.val[i - 1]  = uid_entry.entries.val[i];
+
+    uid_entry.entries.len--;
+
+    i = 0;
+    while (gid_entry.entries.val[i] < uid && i < gid_entry.entries.len)
+	i++;
+
+    if (gid_entry.entries.val[i] != uid)
+	return PRNOENT;
+
+    for (i++; i < gid_entry.entries.len; i++)
+	gid_entry.entries.val[i - 1]  = gid_entry.entries.val[i];
+
+    gid_entry.entries.len--;
 
     /* XXX may leave database inconsistent ?? */
 
-    if ((error = update_entry(&uid_entry)) != 0)
+    if ((error = store_disk_entry(&uid_entry)) != 0)
 	return error;
     
-    if ((error = update_entry(&gid_entry)) != 0)
+    if ((error = store_disk_entry(&gid_entry)) != 0)
 	return error;
 
     return 0;
@@ -618,35 +513,32 @@ removefromgroup (int32_t uid, int32_t gid)
 int
 listelements (int32_t id, prlist *elist, Bool default_id_p)
 {
-    prentry pr_entry;
+    prentry_disk disk_entry;
     int i = 0, error;
 
-    error = get_pr_entry_by_id (id, &pr_entry);
+    error = get_disk_entry(id, &disk_entry);
     if (error)
         return error;
     
-    if(default_id_p)
-	elist->len = pr_entry.count + 3;
+    if (default_id_p)
+	elist->len = disk_entry.entries.len + 3;
     else
-	elist->len = pr_entry.count;
+	elist->len = disk_entry.entries.len;
 
-    elist->val = malloc(sizeof(*elist->val)
-			* (pr_entry.count + elist->len));
+    elist->val = malloc(sizeof(*elist->val) * elist->len);
     if (elist->val == NULL)
 	return ENOMEM; /* XXX */
     
 
-    /* XXX contentry blocks... */
     /* XXX should be sorted */
 
-    for (i = 0; i < pr_entry.count; i++)
-	    elist->val[i] = pr_entry.entries[i];
+    for (i = 0; i < disk_entry.entries.len; i++)
+	    elist->val[i] = disk_entry.entries.val[i];
 
     if (default_id_p) {
 	elist->val[i] = id;
 	elist->val[++i] = PR_ANYUSERID;
 	elist->val[++i] = PR_AUTHUSERID;
-	elist->len = pr_entry.count + 3;
     }
 
     return 0;
@@ -657,30 +549,23 @@ listelements (int32_t id, prlist *elist, Bool default_id_p)
  */
 
 int
-get_pr_entry_by_id(int id, prentry *pr_entry)
+get_ydr_disk_entry(int id, char **buf)
 {
-    unsigned long hash_id = get_id_hash(id);
+    struct mdb_datum key, value;
     int status;
+    
+    id = htonl(id);
 
-    pt_debug (PRDB_DB, "get_pr_entry_by_id id:%d hash_id: %ld", 
-	      id, hash_id);
+    key.data = &id;
+    key.length = sizeof(id);
 
-    status = get_first_id_entry(hash_id, pr_entry);
-    pt_debug (PRDB_DB, "get_pr_entry_by_id status:%d", status);
-    if (status)
+    status = mdb_fetch(idtodata, &key, &value);
+    if (status == ENOENT)
 	return PRNOENT;
 
-    while (pr_entry->id != id) {
-	if (pr_entry->nextID == 0)
-	    return PRNOENT;
-	status = read_entry(pr_entry->nextID, pr_entry);
-    }
+    *buf = value.data;
 
-    pt_debug (PRDB_DB, "entry_by_name id: %d owner: %d creator: %d name: %s",
-	      pr_entry->id, pr_entry->owner, 
-	      pr_entry->creator, pr_entry->name);
-
-    return 0;
+    return status;
 }
 
 /*
@@ -688,26 +573,20 @@ get_pr_entry_by_id(int id, prentry *pr_entry)
  */
 
 int
-get_pr_entry_by_name(const char *name, prentry *pr_entry)
+get_disk_entry(int id, prentry_disk *entry)
 {
-    int hash_name = get_name_hash(name);
+    char *pr_entry_disk_ydr;
+    int length = PRENTRY_DISK_SIZE; /* XXX maxsize in mdb??? */
     int status;
 
-    status = get_first_name_entry(hash_name, pr_entry);
+    status = get_ydr_disk_entry(id, &pr_entry_disk_ydr);
     if (status)
-	return PRNOENT;
+	return status;
 
-    while (strcmp(pr_entry->name, name)) {
-	if (pr_entry->nextName == 0)
-	    return PRNOENT;
-	status = read_entry(pr_entry->nextName, pr_entry);
-    }
+    if (ydr_decode_prentry_disk(entry, pr_entry_disk_ydr, &length) == NULL)
+	err(1, "get_disk_entry");
 
-    pt_debug (PRDB_DB, "entry_by_name id: %d owner: %d creator: %d name: %s",
-	      pr_entry->id, pr_entry->owner, 
-	      pr_entry->creator, pr_entry->name);
-
-    return 0;
+    return status;
 }
 
 /*
@@ -717,14 +596,21 @@ get_pr_entry_by_name(const char *name, prentry *pr_entry)
 int
 conv_name_to_id(const char *name, int *id)
 {
-    prentry pr_entry;
+    struct mdb_datum key, value;
     int status;
 
-    status = get_pr_entry_by_name(name, &pr_entry);
-    if (status)
-	return status;
-    *id = pr_entry.id;
-    return 0;
+    key.data = strdup(name); /*XXX*/
+    key.length = strlen(name);
+
+    status = mdb_fetch(nametoid, &key, &value);
+    if (status == ENOENT)
+	status = PRNOENT;
+    else
+	*id = ntohl(*((int *)value.data));
+    
+    free(key.data);
+
+    return status;
 }
 
 /*
@@ -737,7 +623,7 @@ conv_id_to_name(int id, char *name)
     prentry pr_entry;
     int status;
 
-    status = get_pr_entry_by_id(id, &pr_entry);
+    status = read_prentry(id, &pr_entry);
     if (status)
 	return status;
     strlcpy(name, pr_entry.name, PR_MAXNAMELEN);
@@ -749,46 +635,17 @@ conv_id_to_name(int id, char *name)
  */
 
 int
-next_free_group_id(void)
+next_free_group_id(int *id)
 {
     pr_header.maxGroup--; /* XXX */
+    if (pr_header.maxGroup == ILLEGAL_GROUP) {
+	pr_header.maxGroup++;
+	return -1;
+    }
+
     write_header();
-    return pr_header.maxGroup;
-}
 
-/*
- *
- */
-
-int
-next_free_user_id()
-{
-    pr_header.maxID++; /* XXX */
-    write_header();
-    return pr_header.maxID;
-}
-
-/*
- * Open the pr database that lives in ``databaseprefix''
- * with open(2) ``flags''. Returns 0 or errno.
- */
-
-static int
-open_db(char *databaseprefix, int flags)
-{
-    char database[MAXPATHLEN];
-
-    assert (pr_database == -1);
-
-    if (databaseprefix == NULL)
-	databaseprefix = MILKO_SYSCONFDIR;
-
-    snprintf (database, sizeof(database), "%s/pr_database", 
-	      databaseprefix);
-
-    pr_database = open(database, flags, S_IRWXU);
-    if (pr_database < 0)
-	return errno;
+    *id = pr_header.maxGroup;
     return 0;
 }
 
@@ -796,18 +653,76 @@ open_db(char *databaseprefix, int flags)
  *
  */
 
+int
+next_free_user_id(int *id)
+{
+    pr_header.maxID++; /* XXX */
+    if (pr_header.maxID == ILLEGAL_ID) {
+	pr_header.maxID--;
+	return -1;
+    }
+
+    write_header();
+
+    *id = pr_header.maxID;
+    return 0;
+}
+
+/*
+ *
+ */
+
+static void
+open_db (char *databaseprefix, int flags)
+{
+    char database[MAXPATHLEN];
+
+    if (databaseprefix == NULL)
+	databaseprefix = MILKO_SYSCONFDIR;
+
+    snprintf (database, sizeof(database), "%s/pr_idtodata", 
+	      databaseprefix);
+
+    mlog_log (MDEBPR, "Loading db from file %s\n", database);
+
+    idtodata = mdb_open(database, flags, 0600);
+    if (idtodata == NULL)
+        err(1, "failed open (%s)", database);
+
+
+    snprintf (database, sizeof(database), "%s/pr_nametoid", 
+	      databaseprefix);
+
+    mlog_log (MDEBPR, "Loading db from file %s\n", database);
+
+    nametoid = mdb_open(database, flags, 0600);
+    if (nametoid == NULL)
+        err(1, "failed open (%s)", database);
+}
+
+void
+prserver_close(void)
+{
+    mdb_close(idtodata);
+    mdb_close(nametoid);
+}
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
+/*
+ *
+ */
+
 static int
-prserver_create(char *databaseprefix)
+prserver_create (char *databaseprefix)
 {
     int status;
 
+    open_db (databaseprefix, O_RDWR|O_CREAT|O_EXCL|O_BINARY);
+
     printf ("Creating a new pr-database.\n");
-
-    status = open_db(databaseprefix, O_RDWR|O_CREAT|O_BINARY|O_EXCL);
-    if (status)
-	errx (1, "failed open_db with error: %s (%d)",
-	      strerror(status), status);
-
     create_database();
 
 #define M(N,I,O,G) \
@@ -825,6 +740,8 @@ prserver_create(char *databaseprefix)
 
 #undef M
 
+    prserver_close();
+
     return 0;
 }
 
@@ -835,15 +752,8 @@ prserver_create(char *databaseprefix)
 static int
 prserver_init(char *databaseprefix)
 {
-    int status;
-    
-    status = open_db(databaseprefix, O_RDWR|O_BINARY);
-    if (status)
-	errx (1, "failed open_db with error: %s (%d)",
-	      strerror(status), status);
-
+    open_db(databaseprefix, O_RDWR|O_BINARY);
     read_header();
-    get_file_length();
 
     return 0;
 }
@@ -854,24 +764,25 @@ prserver_init(char *databaseprefix)
 
 static char *cell = NULL;
 static char *realm = NULL;
-static char *databasedir = NULL;
 static char *srvtab_file = NULL;
 static char *log_file = "syslog";
-static char *debug_level = NULL;
+static char *debug_levels = NULL;
 static int no_auth = 0;
 static int do_help = 0;
+static char *databasedir = NULL;
 static int do_create = 0;
 
 static struct agetargs args[] = {
-    {"create",  0, aarg_flag,      &do_create, "create new databas"},
     {"cell",	0, aarg_string,    &cell, "what cell to use"},
     {"realm",	0, aarg_string,	  &realm, "what realm to use"},
-    {"prefix",'p', aarg_string,    &databasedir, "what dir to store the db"},
+    {"debug",  'd', aarg_string,  &debug_levels, "debug level"},
+    {"log",	'l',	aarg_string,	&log_file,
+     "where to write log (stderr, syslog (default), or path to file)"},
+    {"srvtab", 0, aarg_string,    &srvtab_file, "what srvtab to use"},
     {"noauth", 0,  aarg_flag,	  &no_auth, "disable authentication checks"},
-    {"srvtab",'s', aarg_string,    &srvtab_file, "what srvtab to use"},
-    {"debug",  'd',aarg_string,    &debug_level, "enable debug messages"},
-    {"log",    'l', aarg_string,   &log_file, "log file"},
     {"help",  'h', aarg_flag,      &do_help, "help"},
+    {"dbdir",  0, aarg_string,    &databasedir, "where to store the db"},
+    {"create",  0, aarg_flag,      &do_create, "create new database"},
     { NULL, 0, aarg_end, NULL }
 };
 
@@ -882,7 +793,7 @@ static struct agetargs args[] = {
 static void
 usage(int exit_code)
 {
-    aarg_printusage(args, NULL, "", AARG_AFSSTYLE);
+    aarg_printusage (args, NULL, "", AARG_GNUSTYLE);
     exit (exit_code);
 }
 
@@ -895,10 +806,11 @@ main(int argc, char **argv)
 {
     int optind = 0;
     int ret;
+    Log_method *method;
 
     set_progname (argv[0]);
 
-    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_GNUSTYLE)) {
 	usage (1);
     }
 
@@ -913,36 +825,32 @@ main(int argc, char **argv)
     if (do_help)
 	usage(0);
 
-    pr_method = log_open (get_progname(), log_file);
-    if (pr_method == NULL)
-	errx (1, "log_open failed");
-
-    pr_log_unit = log_unit_init (pr_method, "arla", pr_deb_units,
-				 PR_DEFAULT_LOG);
-    if (pr_log_unit == NULL)
-	errx (1, "log_unit_init failed");
-
-    if (debug_level)
-	pt_setdebug (debug_level);
-
-    if (do_create) {
-	prserver_create (databasedir);
-	return 0;
-    }
-
     if (no_auth)
 	sec_disable_superuser_check ();
 
-    cell_init(0, pr_method);
+    method = log_open (getprogname(), log_file);
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
     ports_init();
 
     printf ("ptserver booting");
+
+    mlog_loginit (method, milko_deb_units, MDEFAULT_LOG);
+
+    if (debug_levels)
+	mlog_log_set_level (debug_levels);
 
     if (cell)
 	cell_setthiscell (cell);
 
     network_kerberos_init (srvtab_file);
     
+    if (do_create) {
+	prserver_create (databasedir);
+	return 0;
+    }
+
     ret = prserver_init(databasedir);
     if (ret)
 	errx (1, "prserver_init: error %d", ret);
@@ -952,7 +860,7 @@ main(int argc, char **argv)
     if (ret)
 	errx (1, "network_init returned %d", ret);
 
-    pt_debug (PRDB_WARN, "started");
+    mlog_log (MDEBWARN, "started");
 
     rx_SetMaxProcs(prservice,5) ;
     rx_StartServer(1) ;

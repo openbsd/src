@@ -37,7 +37,7 @@
 
 #include "voldb_locl.h"
 
-RCSID("$KTH: vol.c,v 1.6 2000/12/29 20:16:01 tol Exp $");
+RCSID("$arla: vol.c,v 1.7 2002/02/07 17:59:55 lha Exp $");
 
 /*
  * get the partial name of the volume
@@ -46,7 +46,7 @@ RCSID("$KTH: vol.c,v 1.6 2000/12/29 20:16:01 tol Exp $");
  */
 
 int
-vol_getname (u_int32_t num, char *str, size_t sz)
+vol_getname (uint32_t num, char *str, size_t sz)
 {
     int i;
     i = snprintf (str, sz, "vol%08u", num);
@@ -61,7 +61,7 @@ vol_getname (u_int32_t num, char *str, size_t sz)
  */
 
 int
-vol_getfullname (u_int32_t part, u_int32_t num, char *str, size_t sz)
+vol_getfullname (uint32_t part, uint32_t num, char *str, size_t sz)
 {
     int ret;
     char volname[VOLSER_MAXVOLNAME];
@@ -181,8 +181,8 @@ vol_write_header (int fd, volintInfo *info)
  */
 
 int
-vol_create (int fd, u_int32_t num, const char *name,
-	    u_int32_t type, u_int32_t parent)
+vol_create (int fd, uint32_t num, const char *name,
+	    uint32_t type, uint32_t parent)
 {
     int ret;
     struct timeval tv;

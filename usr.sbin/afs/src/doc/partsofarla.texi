@@ -2,7 +2,7 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: partsofarla.texi,v 1.19 2000/11/25 11:24:06 lha Exp $
+@c $arla: partsofarla.texi,v 1.21 2003/01/11 00:29:05 lha Exp $
 
 @node Parts of Arla, Debugging, AFS and the real world, Top
 @comment  node-name,  next,  previous,  up
@@ -17,7 +17,7 @@ For real info read the code. If you have any questions, mail
 
 @menu
 * How arla works::
-* The relation between Arlad and XFS::
+* The relation between Arlad and NNPFS::
 * The life of a file::
 * Tools and libs::
 * The files in arlad/::
@@ -25,34 +25,34 @@ For real info read the code. If you have any questions, mail
 @end menu
 
 @comment -----------------------------------------------------
-@node How arla works, The relation between Arlad and XFS, Parts of Arla, Parts of Arla 
+@node How arla works, The relation between Arlad and NNPFS, Parts of Arla, Parts of Arla 
 @heading How does arla work
 
 Arla consists of two parts, a userland process (arlad) and the
-kernel-module (xfs).
+kernel-module (nnpfs).
 
 Arlad is written in user-space for simpler debugging (and less rebooting).
 As a uset space program arlad does not have the same limitations as if it 
 would be written in the kernel. To avoid performance loss as much as possible,
-xfs is caching data.
+nnpfs is caching data.
 
 @c XXX ptr to coda and arla-usenix paper
 
-xfs and arlad communicate with each other via a char-device-driver.
+nnpfs and arlad communicate with each other via a char-device-driver.
 There is a rpc-protocol currenly used specially written for this
 (@file{arlad/message.c})
 
-xfs is written to be as simple as possible. Theoretically, xfs could
+nnpfs is written to be as simple as possible. Theoretically, nnpfs could
 be used by other user-space daemons to implement a file system. Some
 parts, such as syscalls, are arla-specific. These parts are designed
 to be as general as possible.
 
-For example, xfs does not recognize which pioctl the user-level
+For example, nnpfs does not recognize which pioctl the user-level
 program calls, it just passes this information on to arlad.
 
 @comment -----------------------------------------------------
-@node The relation between Arlad and XFS, The life of a file, How arla works, Parts of Arla
-@heading The relation between Arlad and XFS
+@node The relation between Arlad and NNPFS, The life of a file, How arla works, Parts of Arla
+@heading The relation between Arlad and NNPFS
 
 @example
 Userland
@@ -62,19 +62,19 @@ Userland
                |             ---------
            ----|-----------------|[1]----
             -------           -------
-Kernel      | VFS | <--[2]--> | XFS |
+Kernel      | VFS | <--[2]--> | NNPFS |
             -------           -------
 
 @end example
 
 @table @asis
-@item [1] A char device (/dev/xfs0)
+@item [1] A char device (/dev/nnpfs0)
 @item [2] Xfs provides a filesystem for the vfs-layer in
 the operating system.
 @end table
 
 @comment -----------------------------------------------------
-@node The life of a file, Tools and libs, The relation between Arlad and XFS, Parts of Arla
+@node The life of a file, Tools and libs, The relation between Arlad and NNPFS, Parts of Arla
 @section The life of a file
 
 @comment This a rough description of the life of a file. 
@@ -89,40 +89,40 @@ in most operating systems.
 
 @item open(2) syscall is issued.
 
-@item The vfslayer sends a VOP_LOOKUP to xfs that is forwarded
+@item The vfslayer sends a VOP_LOOKUP to nnpfs that is forwarded
 to arlad with a getnode() (seq-num 1).
 
 @item arlad tries to find the requested file and then, if found, sends an
-install_node to xfs by writing to the xfs character device.
+install_node to nnpfs by writing to the nnpfs character device.
 
-@item xfs inserts the node into the cache and returns from the device write.
+@item nnpfs inserts the node into the cache and returns from the device write.
 
-@item arlad sends a wakeup rpc message (seq-num 1) to xfs.
-If the return value is zero xfs tries to find the node in the cache, if
+@item arlad sends a wakeup rpc message (seq-num 1) to nnpfs.
+If the return value is zero nnpfs tries to find the node in the cache, if
 not found it might have been flushed out of the cache and the whole
 thing is repeated.
 
 @item If a none-zero return value is returned, this value is sent
 as reply to the user. This way arla can decide what error message
-is returned, without xfs having support for each error.
+is returned, without nnpfs having support for each error.
 
-@item xfs now checks if it has the valid attributes. If the attributes
-are invalid, xfs will send a rpc message to arlad to refresh it.
+@item nnpfs now checks if it has the valid attributes. If the attributes
+are invalid, nnpfs will send a rpc message to arlad to refresh it.
 
 @item Since the user wanted to open the file, a getdata rpc message is
-sent from xfs to arlad. Now arlad fetches the files from the 
+sent from nnpfs to arlad. Now arlad fetches the files from the 
 afs file server.
 
 @item Arlad stores the file in the file cache. All vnode operations will
-be done on this file. Now arlad sends a installdata to xfs.
+be done on this file. Now arlad sends a installdata to nnpfs.
 
-@item When xfs recives the installdata it looks up the node in the cache,
+@item When nnpfs recives the installdata it looks up the node in the cache,
 and then it does a VOP_LOOKUP to find a vnode to the cachefile (and store
 it to keep it for future use). 
 
 @item The same thing is done when the file is a directory, except that
 the directory is converted from the afs directory format to an operating
-system dependent format and stored in a file. xfs reads this file
+system dependent format and stored in a file. nnpfs reads this file
 instead.
 
 @item If the directory is modified locally, write operations are
@@ -133,9 +133,9 @@ changed file is converted and reinstalled.
 
 @item read(2) system call is issued.
 
-@item A VOP_READ is sent to the from the vfs-layer to xfs.
+@item A VOP_READ is sent to the from the vfs-layer to nnpfs.
 
-@item xfs checks if it has valid attributes/and data (and updates if needed).
+@item nnpfs checks if it has valid attributes/and data (and updates if needed).
 Now VOP_READ is simply performed on the stored vnode of the cachefile.
 
 @end itemize
@@ -230,7 +230,7 @@ the items a VenusFid and you can access them this way.
 
 @item @file{kernel.c} - The interface between arlad and the char-device.
 
-@item @file{messages.c} - The rpc interface between arlad and xfs.
+@item @file{messages.c} - The rpc interface between arlad and nnpfs.
 
 @item @file{volcache.c} - Cache for all volumes.
 
@@ -258,7 +258,7 @@ Today it's just conv_dir().
 @node pioctl and kafs, ,The files in arlad/, Parts of Arla
 @heading pioctl and kafs
 
-The pioctl interface is the only part of xfs that is afs related.
+The pioctl interface is the only part of nnpfs that is afs related.
 
 pioctl is a ioctl but called with a path instead of a filedescriptor.
 When you probe if there is a live afsclient you first run
@@ -274,15 +274,15 @@ expects to find an @code{EINVAL} returned from @code{syscall(2)}.
 
 The pioctl is used more then just for @code{AFSCALL_PIOCTL}, an other
 use is @code{AFSCALL_SETPAG} (setting pag). It has also been in use for 
-setting xfs debugging levels.
+setting nnpfs debugging levels.
 
-When xfs discovers that a path is given in the @code{pioctl()} it does a
+When nnpfs discovers that a path is given in the @code{pioctl()} it does a
 @code{VOP_LOOKUP} on the path and if the returned value is a vnode that
-resides in afs then it extracts the xfs-handle for that node (that just
+resides in afs then it extracts the nnpfs-handle for that node (that just
 happens to be the VenusFid) and passes that on to arlad.
 
 The only ugly thing about the current implentation is that
-the syscall code assumes that the arlad on "xfs-fd" is the
+the syscall code assumes that the arlad on "nnpfs-fd" is the
 arlad that should get this syscall.
 
 An example of using @code{pioctl()}:
@@ -349,3 +349,18 @@ main (int argc, char **argv)
 @c [ lha: Mark is only known to assar ]
 @c [ assar: Mark == Mark Eichin ]
 @c -----------------------------------------------------------
+
+@c From: Craig_Everhart@transarc.com
+@c Subject: Re: [OpenAFS] Silly question, Just interested
+@c To: <openafs-info@openafs.org>
+@c Date: Fri, 19 Jul 2002 10:00:19 -0400 (EDT)
+@c 
+@c 
+@c The other way around: Vice was the Vast Integrated Computing Environment
+@c on the server, and Venus was the client-side component but I don't know
+@c if it was an acronym.
+@c 
+@c 		Craig
+@c 
+
+

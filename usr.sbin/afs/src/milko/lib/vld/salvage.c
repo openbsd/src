@@ -33,7 +33,7 @@
 
 #include <config.h>
 
-RCSID("$KTH: salvage.c,v 1.11 2000/10/03 00:19:27 lha Exp $");
+RCSID("$arla: salvage.c,v 1.15 2002/03/06 22:43:02 tol Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -93,7 +93,7 @@ struct vinfo {
 static struct inodeinfo *
 find_node (struct vinfo *info, int32_t inode)
 {
-    u_int32_t i;
+    uint32_t i;
     assert (info);
 
     for (i = 0; i < info->nnodes; i++) {
@@ -219,30 +219,32 @@ do {									     \
     }									     \
 } while (0)
 
-#define CHECK_VALUE_BITMASK(check_val,val,mask,string,modified)		     \
-do {									     \
-    if (((~(mask) & (check_val)) & ~(val)) != 0) {					     \
-	(check_val) &= (val) + (~(mask) & (check_val));			     \
-	(modified) = 1;							     \
-	mlog_log (MDEBSALVAGE, "%s had a errorous value resetting", string); \
-    }									     \
-} while (0)
+/*
+ * 
+ */
 
-#define SET_VALUE_BITMASK(check_val,val,defval,string,modified)		  \
-do {									  \
-    if (((check_val) & (val)) == 0) {					  \
-	(check_val) |= (defval);					  \
-	(modified) = 1;							  \
-	mlog_log (MDEBSALVAGE, "%s had a missing value setting", string); \
-    }									  \
-} while (0)
+static int
+check_value_bitmask(uint32_t *checkval, uint32_t val, uint32_t mask,
+		    const char *string)
+{
+    int32_t newval;
+
+    if ((mask & (*checkval)) & ~val) {
+	newval = (*checkval) & (val | (~mask & (*checkval)));
+	mlog_log (MDEBSALVAGE, "%s had a errorous value 0%o resetting to 0%o",
+		  string, *checkval, newval);
+	*checkval = newval;
+	return 1;
+    }
+    return 0;
+}
 
 /*
  *
  */
 
 static int
-read_nodes_dir (u_int32_t num, struct voldb_entry *entry,
+read_nodes_dir (uint32_t num, struct voldb_entry *entry,
 		struct vinfo *info, struct inodeinfo **ret_node)
 {
     struct inodeinfo *node;
@@ -250,17 +252,17 @@ read_nodes_dir (u_int32_t num, struct voldb_entry *entry,
 
     assert (entry->type == TYPE_DIR);
 
-    if (entry->u.dir.FileType == 0 || entry->u.file.nextptr != 0) {
+    if (entry->u.dir.FileType == 0 ||
+	entry->u.file.nextptr != VOLDB_ENTRY_USED)
+    {
 	mlog_log (MDEBSALVAGE, "%d is a unused node (dir)", num);
 	return SALVAGE_RN_UNUSED;
     }
 
 
     CHECK_VALUE_EQ(entry->u.dir.InterfaceVersion,1, "InterfaceVersion",mod);
-    CHECK_VALUE_BITMASK(entry->u.dir.UnixModeBits,047777, 0777777,
-			"Unix rights",mod);
-    SET_VALUE_BITMASK(entry->u.dir.UnixModeBits,040000,040000,
-		      "Directory bit",mod);
+    mod |= check_value_bitmask(&entry->u.dir.UnixModeBits, 04777, 07777,
+			       "Unix dir rights");
     
     CHECK_VALUE_EQ(entry->u.dir.FileType,TYPE_DIR,"FileType",mod);
 
@@ -268,7 +270,7 @@ read_nodes_dir (u_int32_t num, struct voldb_entry *entry,
     node->inode_num 	= dir_local2afs (num);
     node->parent_num 	= entry->u.dir.ParentVnode;
     node->parent_unique	= entry->u.dir.ParentUnique;
-    if (entry->u.dir.nextptr)
+    if (entry->u.dir.nextptr != VOLDB_ENTRY_USED)
 	node->status	= IUNUSED;
     else
 	node->status	= IFOUND;
@@ -286,36 +288,39 @@ read_nodes_dir (u_int32_t num, struct voldb_entry *entry,
  */
 
 static int
-read_nodes_file (u_int32_t num, struct voldb_entry *entry,
+read_nodes_file (uint32_t num, struct voldb_entry *entry,
 		 struct vinfo *info, struct inodeinfo **ret_node)
 {
     struct inodeinfo *node;
     int mod = 0;
 
-    if (entry->u.file.FileType == 0 || entry->u.file.nextptr != 0) {
+    if (entry->u.file.FileType == 0 ||
+	entry->u.file.nextptr != VOLDB_ENTRY_USED)
+    {
 	mlog_log (MDEBSALVAGE, "%d is a unused node (file)", num);
 	return 0; /* XXX ? */
     }
     
     CHECK_VALUE_EQ(entry->u.file.InterfaceVersion,1, "InterfaceVersion",mod);
-    CHECK_VALUE_BITMASK(entry->u.file.UnixModeBits,047777, 0777777,
-			"Unix rights",mod);
-    SET_VALUE_BITMASK(entry->u.file.UnixModeBits,0120000,0100000,
-		      "Directory bit",mod);
-    
+    /* Remove sgid and sticky bit */
+    mod |= check_value_bitmask(&entry->u.file.UnixModeBits, 04777, 07777,
+			       "Unix file rights");
+
     switch (entry->u.file.FileType) {
     case TYPE_FILE:
     case TYPE_LINK:
 	break;
     default:
-	CHECK_VALUE_EQ(entry->u.file.FileType,TYPE_FILE,"FileType",mod);
+	mlog_log (MDEBSALVAGE, "File type incorrect, resetting");
+	entry->u.file.FileType = TYPE_FILE;
+	mod |= 1;
     }
 
     node = allocate_node (info, file_local2afs(num), TYPE_FILE);
     node->inode_num 	= file_local2afs(num);
     node->parent_num 	= entry->u.file.ParentVnode;
     node->parent_unique	= entry->u.file.ParentUnique;
-    if (entry->u.file.nextptr != 0)
+    if (entry->u.file.nextptr != VOLDB_ENTRY_USED)
 	node->status	= IUNUSED;
     else
 	node->status	= IFOUND;
@@ -332,11 +337,11 @@ read_nodes_file (u_int32_t num, struct voldb_entry *entry,
 
 static int
 read_nodes (struct volume_handle *volh, struct voldb *db,
-	    u_int32_t size, struct vinfo *info,
-	    int (*func) (u_int32_t, struct voldb_entry *, struct vinfo *,
+	    uint32_t size, struct vinfo *info,
+	    int (*func) (uint32_t, struct voldb_entry *, struct vinfo *,
 			 struct inodeinfo **))
 {
-    u_int32_t i;
+    uint32_t i;
     int ret;
     int changed = 0;
     int check_data;
@@ -397,7 +402,7 @@ read_nodes (struct volume_handle *volh, struct voldb *db,
 static int
 remove_node (struct volume_handle *volh, struct inodeinfo *node)
 {
-    u_int32_t ino;
+    uint32_t ino;
     struct voldb *db;
     
     if (afs_dir_p (node->inode_num)) {
@@ -421,7 +426,7 @@ struct dir_func_s {
     struct volume_handle *volh;
 };
 
-static void
+static int
 check_dir_func (VenusFid *fid, const char *name, void *arg)
 {
     struct dir_func_s *f = (struct dir_func_s *)arg;
@@ -475,6 +480,7 @@ check_dir_func (VenusFid *fid, const char *name, void *arg)
 	    }
 	}
     }
+    return 0;
 }
 
 /*
@@ -518,7 +524,7 @@ check_content_dir_func (volume_handle *vol,
     ret = fbuf_create (&the_fbuf, fd, size,
 		       FBUF_READ|FBUF_WRITE|FBUF_SHARED);
 
-    ret = fdir_readdir (&the_fbuf, check_dir_func, &f, &fid);
+    ret = fdir_readdir (&the_fbuf, check_dir_func, &f, fid, NULL);
     if (ret)
 	mlog_log (MDEBSALVAGE, "check_content_dir_func: fbuf_readdir failed");
 
@@ -692,8 +698,8 @@ find_list_tree_nodes (struct volume_handle *volh,
 int
 salvage_volume (struct volume_handle *volh)
 {
-    u_int32_t dsize, fsize;
-    u_int32_t foundnodes;
+    uint32_t dsize, fsize;
+    uint32_t foundnodes;
     int ret, i;
     struct vinfo info;
     struct inodeinfo *lfnodes;

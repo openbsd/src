@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: dpart.h,v 1.6 2000/12/29 20:12:36 tol Exp $ */
+/* $arla: dpart.h,v 1.8 2002/02/07 17:59:45 lha Exp $ */
 
 #ifndef __FILBULKE_DPART_H
 #define __FILBULKE_DPART_H 1
@@ -48,7 +48,7 @@ extern char *dpart_root;
 #define DP_NAME(dp)   ((dp)->part)
 
 int
-dp_create (u_int32_t num, struct dp_part **dp);
+dp_create (uint32_t num, struct dp_part **dp);
 
 void
 dp_ref (struct dp_part *dp);
@@ -63,9 +63,12 @@ int
 dp_findvol (struct dp_part *d, void (*cb)(void *, int), void *data);
 
 int
-dp_parse (const char *str, u_int32_t *num);
+dp_parse (const char *str, uint32_t *num);
 
 struct dp_part *
 dp_getpart (const char *str);
+
+int
+dp_getstats (struct dp_part *dp, long *availblocks, long *totalblocks);
 
 #endif /* __FILBULKE_DPART_H */

@@ -31,29 +31,25 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: stds.h,v 1.6 2000/10/03 00:34:21 lha Exp $ */
+/* $arla: stds.h,v 1.10 2003/06/12 05:28:19 lha Exp $ */
 
 #ifndef __STDS_H
 #define __STDS_H 1
 
-#ifndef HAVE_INT32
-typedef int32_t int32;
-#endif
-
-#ifndef HAVE_U_INT32
-typedef u_int32_t u_int32;
-#endif
-
-#ifndef HAVE_INT16
-typedef int16_t int16;
-#endif
-
-#ifndef HAVE_U_INT16
-typedef u_int16_t u_int16;
-#endif
-
 /* for compat resons with other kerberos distributions */
+
+#ifndef ANAME_SZ
+#define ANAME_SZ 40
+#endif
+#ifndef INST_SZ
+#define INST_SZ 40
+#endif
+#ifndef REALM_SZ
+#define REALM_SZ 40
+#endif
+
 #if defined(KERBEROS) && !defined(HAVE_KRB_PRINCIPAL)
+
 typedef struct krb_principal{
     char name[ANAME_SZ];
     char instance[INST_SZ];

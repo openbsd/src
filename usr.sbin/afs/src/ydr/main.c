@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: main.c,v 1.22 2000/10/16 22:01:45 assar Exp $");
+RCSID("$arla: main.c,v 1.23 2002/11/27 23:48:58 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -141,7 +141,6 @@ main (int argc, char **argv)
     free (arg);
     ret = yyparse ();
     generate_server_switch (serverfile.stream, serverhdrfile.stream);
-    generate_tcpdump_patches (td_file.stream, filename);
     pclose (yyin);
     close_generator (filename);
     unlink (tmp_filename);

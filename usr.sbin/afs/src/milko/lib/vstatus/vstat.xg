@@ -50,8 +50,8 @@ const VSTATUS_MAGIC = 0xCAFE4711;
 const VSTATUS_VERSION = 4;
 
 struct vstatus {
-    u_int32_t version;		/* version */
-    u_int32_t magic;		/* must be VSTATUS_MAGIC */
+    uint32_t version;		/* version */
+    uint32_t magic;		/* must be VSTATUS_MAGIC */
     int32_t   volid;		/* The AFS-volume id */
     int32_t   type;		/* Type of volume */
     int32_t   bstype;		/* Type of backstore */

@@ -4,7 +4,7 @@
 @c All rights reserved.
 
 @c %**start of header
-@c $KTH: arla.texi,v 1.40.2.7 2001/07/16 15:39:43 lha Exp $
+@c $arla: arla.texi,v 1.53 2003/02/01 17:16:03 lha Exp $
 @setfilename arla.info
 @settitle ARLA
 @iftex
@@ -37,13 +37,13 @@
 @end ifnottex
 
 @subtitle A Free AFS implementation from KTH
-@subtitle Edition 0.3, for Release 0.35.5
-@subtitle 1999 - 2001
+@subtitle Edition 0.3, for version 0.36
+@subtitle 1999 - 2002
 
 @author Love Hörnquist-Åstrand
 @author Assar Westerlund
 @author Harald Barth
-@author last updated $KTH: 2001/07/16 15:39:43 $
+@author last updated $arla: 2003/02/01 17:16:03 $
 
 @comment This text will show up in the output of texi2html
 @def@fnotsupported{THIS TEXT MAY CONTAIN GARBLED OUTPUT BECAUSE THIS VIEW FORMAT DOES NOT SUPPORT TEXI FUNCTIONS}
@@ -56,7 +56,7 @@
 @copyrightstart
 @example
 
-Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan 
+Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan 
 (Royal Institute of Technology, Stockholm, Sweden).
 All rights reserved.
 
@@ -88,6 +88,43 @@ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 
 @end example
+
+@copynext
+@example
+/*
+ * Copyright (c) 2002, Stockholms Universitet
+ * (Stockholm University, Stockholm Sweden)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the university nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+@end example
+
 @copynext
 @example
 
@@ -241,14 +278,15 @@ Please send comments (and fixes) on this manual and the arla programs to
 @menu
 * Introduction::                Introduction to Arla.
 * AFS infrastructure::		A description of the afs infrastructure.
-* Organization of data::	How diffrent data are organized in AFS.
+* Organization of data::	How different data is organized in AFS.
 * AFS and the real world::	Common problems and their solutions.
-* Parts of Arla::		Description of diffrent parts of arla.
+* Parts of Arla::		Description of different parts of arla.
 * Debugging::			How to debug arla when its not working.
 * Porting::			That you need to know to port arla.
-* Authors::			The authors of arla.
-* Oddities::			Strange things that have happen to us.
+* Programming::			Programming documentation of arla.
+* Oddities::			Strange things that did happen to us.
 * Arla timeline::		Short timeline of arla.
+* Authors::			The authors of arla.
 * Acknowledgments::             People that have helped us.
 * Index::             		Index.
 @c * Building and Installing::     
@@ -273,22 +311,24 @@ How to cope with reality
 
 * NAT::
 * Samba::
+* Integration with Kerberos::
+* Kerberos tickets and AFS tokens::
 
 The parts of arla
 
 * How arla works::
-* The relation between Arlad and XFS::
+* The relation between Arlad and NNPFS::
 * The life of a file::
 * Tools and libs::
 * The files in arlad/::
 * pioctl and kafs::
 
-Yes, its doesn't work, lets debug.
+How to debug arla when its not working
 
 * Arlad::
 * Debugging LWP with GDB::
-* xfs::
-* xfs on linux::
+* nnpfs::
+* nnpfs on linux::
 * Debugging techniques::
 * Kernel debuggers::
 * Darwin/MacOS X::
@@ -297,7 +337,14 @@ Porting arla
 
 * Porting::
 * Porting user-space::
-* Porting XFS::
+* Porting NNPFS::
+
+Programming
+
+* Programming::
+* Disco with arla::
+* afsUUID::
+@c * NNPFS interface::
 
 Odd stuff you find when looking around
 
@@ -324,6 +371,7 @@ Miscellaneous
 @include partsofarla.texi
 @include debugging.texi
 @include porting.texi
+@include prog.texi
 @include oddities.texi
 @include timeline.texi
 @include authors.texi

@@ -61,6 +61,7 @@
 #include <rx/rxgencon.h>
 
 #include <cb.cs.h>
+#include <fs.ss.h>
 
 #include <err.h>
 
@@ -69,7 +70,7 @@
 
 #include <ropa.h>
 
-RCSID("$KTH: ropa.c,v 1.28 2000/12/04 19:34:30 lha Exp $");
+RCSID("$arla: ropa.c,v 1.30 2002/02/07 17:59:47 lha Exp $");
 
 #ifdef DIAGNOSTIC
 #define DIAGNOSTIC 1
@@ -104,8 +105,8 @@ struct ropa_addr {
     int magic;				/* magic */
 #endif
     struct ropa_client *c;		/* pointer to head */
-    u_int32_t   addr_in;		/* */
-    u_int32_t 	subnetmask;		/* */
+    uint32_t   addr_in;		/* */
+    uint32_t 	subnetmask;		/* */
     int		mtu;			/* */
 };
 
@@ -131,7 +132,7 @@ struct ropa_client {
     int			numberOfInterfaces;
     afsUUID		uuid;
     struct ropa_addr	addr[AFS_MAX_INTERFACE_ADDR];
-    u_int16_t 		port;		/* port of client in network byte order */
+    uint16_t 		port;		/* port of client in network byte order */
     struct rx_connection *conn;		/* connection to client */
     time_t		lastseen;	/* last got a message */
     List		*callbacks;	/* list of ccpairs */
@@ -521,8 +522,8 @@ clear_addr (struct ropa_addr *addr)
  */
 
 static void
-client_update_interfaces (struct ropa_client *c, u_int32_t host,
-			  u_int16_t port, interfaceAddr *addr)
+client_update_interfaces (struct ropa_client *c, uint32_t host,
+			  uint16_t port, interfaceAddr *addr)
 {
     int i;
     int found_addr = 0;
@@ -568,7 +569,7 @@ client_update_interfaces (struct ropa_client *c, u_int32_t host,
  */
 
 static void
-client_init (struct ropa_client *c, u_int32_t host, u_int16_t port,
+client_init (struct ropa_client *c, uint32_t host, uint16_t port,
 	     afsUUID *uuid, interfaceAddr *addr)
 {
     c->port = port;
@@ -727,7 +728,7 @@ add_client (struct ropa_cb *cb, struct ropa_client *c)
  */
 
 static void
-uuid_init_simple (afsUUID *uuid, u_int32_t host)
+uuid_init_simple (afsUUID *uuid, uint32_t host)
 {
     uuid->node[0] = 0xff & host;
     uuid->node[1] = 0xff & (host >> 8);
@@ -742,7 +743,7 @@ uuid_init_simple (afsUUID *uuid, u_int32_t host)
  */
 
 static struct ropa_client *
-client_query_notalkback (u_int32_t host, u_int16_t port)
+client_query_notalkback (uint32_t host, uint16_t port)
 {
     struct ropa_client ckey;
     struct ropa_addr *addr;
@@ -785,7 +786,7 @@ obtain_client (void)
  */
 
 static struct ropa_client *
-client_query (u_int32_t host, u_int16_t port)
+client_query (uint32_t host, uint16_t port)
 {
     struct ropa_client *c, *c_new;
     int ret;
@@ -885,7 +886,7 @@ client_query (u_int32_t host, u_int16_t port)
 
 #if 0
 static struct ropa_client *
-uuid_query_simple (u_int32_t host)
+uuid_query_simple (uint32_t host)
 {
     struct ropa_client ckey;
     uuid_init_simple (&ckey.uuid, host);
@@ -924,12 +925,13 @@ update_callback (struct ropa_ccpair *cc, AFSCallBack *callback, int32_t type)
  */
 
 int
-ropa_getcallback (u_int32_t host, u_int16_t port, const struct AFSFid *fid,
-		  AFSCallBack *callback)
+ropa_getcallback (uint32_t host, uint16_t port, const struct AFSFid *fid,
+		  AFSCallBack *callback, int32_t voltype)
 {
     struct ropa_client *c;
     struct ropa_cb cbkey, *cb;
     struct ropa_ccpair *cc ;
+    struct AFSFid callback_fid;
 
     debug_print_callbacks();
 
@@ -951,7 +953,15 @@ ropa_getcallback (u_int32_t host, u_int16_t port, const struct AFSFid *fid,
 	break_outstanding_callbacks (c);
 #endif
 
-    cbkey.fid = *fid;
+    if (voltype == RWVOL) {
+	callback_fid = *fid;
+    } else {
+	callback_fid.Volume = fid->Volume;
+	callback_fid.Vnode = 0;
+	callback_fid.Unique = 0;
+    }
+
+    cbkey.fid = callback_fid;
 
     cb = hashtabsearch (ht_callbacks, &cbkey);
     if (cb == NULL) {
@@ -965,14 +975,16 @@ ropa_getcallback (u_int32_t host, u_int16_t port, const struct AFSFid *fid,
 	    callback_ref(cb);
 	    cb->li = listaddhead (lru_callback, cb);
 	}
-	cb->fid = *fid;
+	cb->fid = callback_fid;
 	hashtabadd (ht_callbacks, cb);
 
 	mlog_log (MDEBROPA, "ropa_getcallback: added callback %x.%x.%x:%x",
-		fid->Volume, fid->Vnode, fid->Unique, host);
+		  callback_fid.Volume, callback_fid.Vnode,
+		  callback_fid.Unique, host);
     } else {
 	mlog_log (MDEBROPA, "ropa_getcallback: found callback %x.%x.%x:%x",
-		fid->Volume, fid->Vnode, fid->Unique, host);
+		  callback_fid.Volume, callback_fid.Vnode,
+		  callback_fid.Unique, host);
 	callback_ref(cb);
     }
 
@@ -1006,7 +1018,7 @@ notify_client (struct ropa_client *c, AFSCBFids *fids, AFSCBs *cbs)
 	    return ret;
     }
     for (i = 0; i < c->numberOfInterfaces ; i++) {
-	u_int16_t port = c->port;
+	uint16_t port = c->port;
 	DIAGNOSTIC_CHECK_ADDR(&c->addr[i]);
 
 	c->conn = rx_NewConnection (c->addr[i].addr_in,
@@ -1113,10 +1125,9 @@ break_ccpairs (struct ropa_client *c, Bool notify_clientp)
     cbs.val = NULL;
     cbs.len = 0;
 
-    update_callback (cc, &callback, CBDROPPED);
-
     while ((cc = listdeltail (c->callbacks)) != NULL) {
 	DIAGNOSTIC_CHECK_CCPAIR(cc);
+	update_callback (cc, &callback, CBDROPPED);
 	add_to_cb (&cc->cb->fid, &callback, &fids, &cbs);
 	break_ccpair (cc, FALSE);
     }
@@ -1168,16 +1179,33 @@ break_callback (struct ropa_cb *cb, struct ropa_client *caller, Bool break_own)
 	client_deref (caller);
 }
 
+static int
+break_fid (const struct AFSFid *fid, struct ropa_client *c,
+	   Bool break_own)
+{
+    struct ropa_cb cbkey, *cb;
+
+    cbkey.fid = *fid;
+    
+    cb = hashtabsearch (ht_callbacks, &cbkey);
+    if (cb == NULL) {
+	return -1;
+    }
+
+    break_callback (cb, c, break_own);
+
+    return 0;
+}
+
 /*
  *
  */
 
 void
-ropa_break_callback (u_int32_t addr, u_int16_t port,
+ropa_break_callback (uint32_t addr, uint16_t port,
 		     const struct AFSFid *fid, Bool break_own)
 {
     struct ropa_client *c = NULL;
-    struct ropa_cb cbkey, *cb;
     
     debug_print_callbacks();
     
@@ -1185,22 +1213,28 @@ ropa_break_callback (u_int32_t addr, u_int16_t port,
     if (c == NULL) {
 	mlog_log (MDEBROPA, "ropa_break_callback: didn't find client %x/%d",
 		  addr, addr);
- 	return;
+ 	return; /* XXX */
     }
 
-    cbkey.fid = *fid;
-    
-    cb = hashtabsearch (ht_callbacks, &cbkey);
-    if (cb == NULL) {
+    if (break_fid(fid, c, break_own)) {
 	mlog_log (MDEBROPA, "ropa_break_callback: "
 		  "didn't find callback %x.%x.%x:%x/%d",
-		fid->Volume, fid->Vnode, fid->Unique, addr, port);
-	return;
+		  fid->Volume, fid->Vnode, fid->Unique, addr, port);
     }
 
-    break_callback (cb, c, break_own);
-
     debug_print_callbacks();
+}
+
+void
+ropa_break_volume_callback(int32_t volume)
+{
+    struct AFSFid fid;
+
+    fid.Volume = volume;
+    fid.Vnode = 0;
+    fid.Unique = 0;
+
+    break_fid(&fid, NULL, FALSE);
 }
 
 /*
@@ -1208,7 +1242,7 @@ ropa_break_callback (u_int32_t addr, u_int16_t port,
  */
 
 int
-ropa_drop_callbacks (u_int32_t addr, u_int16_t port,
+ropa_drop_callbacks (uint32_t addr, uint16_t port,
 		     const AFSCBFids *a_cbfids_p, const AFSCBs *a_cbs_p)
 {
     struct ropa_client *c;
@@ -1267,7 +1301,7 @@ break_client (struct ropa_client *c, Bool notify_clientp)
 }
 
 void
-ropa_break_client (u_int32_t host, u_int16_t port)
+ropa_break_client (uint32_t host, uint16_t port)
 {
     struct ropa_client *c;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,13 +33,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: output.c,v 1.73.2.1 2001/03/04 04:48:48 lha Exp $");
+RCSID("$arla: output.c,v 1.91 2003/04/16 09:07:03 lha Exp $");
 #endif
 
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <list.h>
+#include <ctype.h>
 #include <err.h>
 #include <roken.h>
 #include "sym.h"
@@ -76,10 +77,9 @@ ydr_file headerfile,
     serverfile,
     clienthdrfile,
     serverhdrfile,
-    td_file,
     ydrfile;
 
-long tmpcnt = 0;
+static long tmpcnt = 0;
 
 /*
  * Function to convert error codes with.
@@ -116,31 +116,39 @@ static void encode_typedef (Symbol *s, char *name, FILE *f,
 static void encode_symbol (Symbol *s, char *name, FILE *f, 
 			   EncodeType encodetype, Side side);
 static void print_symbol (char *where, Symbol *s, char *name, FILE *f);
+static void free_symbol (char *where, Symbol *s, char *name, FILE *f);
+static void free_type (char *where, char *name, Type *type, FILE *f);
 
 static void
 print_type (char *name, Type *type, enum argtype argtype, 
 	    DeclType decl, FILE *f)
 {
      switch (type->type) {
-	  case TCHAR :
+	  case YDR_TCHAR :
 	       fprintf (f, "char %s", name);
 	       break;
-	  case TUCHAR :
+	  case YDR_TUCHAR :
 	       fprintf (f, "unsigned char %s", name);
 	       break;
-	  case TSHORT :
+	  case YDR_TSHORT :
 	       fprintf (f, "int16_t %s", name);
 	       break;
-	  case TUSHORT :
-	       fprintf (f, "u_int16_t %s", name);
+	  case YDR_TUSHORT :
+	       fprintf (f, "uint16_t %s", name);
 	       break;
-	  case TLONG :
+	  case YDR_TLONG :
 	       fprintf (f, "int32_t %s", name);
 	       break;
-	  case TULONG :
-	       fprintf (f, "u_int32_t %s", name);
+	  case YDR_TULONG :
+	       fprintf (f, "uint32_t %s", name);
 	       break;
-	  case TSTRING :
+	  case YDR_TLONGLONG:
+	       fprintf (f, "int64_t %s", name);
+	       break;
+	  case YDR_TULONGLONG:
+	       fprintf (f, "uint64_t %s", name);
+	       break;
+	  case YDR_TSTRING :
 	       if (type->size && decl == VDECL)
 		   fprintf (f, "char %s[%d]", name, type->size);
 	       else if (argtype != TIN && type->size == 0)
@@ -148,7 +156,7 @@ print_type (char *name, Type *type, enum argtype argtype,
 	       else
 		   fprintf (f, "char *%s", name);
 	       break;
-	  case TPOINTER :
+	  case YDR_TPOINTER :
 	  {
 	       char *tmp;
 	       size_t len = strlen(name) + 2;
@@ -160,13 +168,13 @@ print_type (char *name, Type *type, enum argtype argtype,
 	       free (tmp);
 	       break;
 	  }
-	  case TUSERDEF : 
-	       if(type->symbol->type == TSTRUCT)
+	  case YDR_TUSERDEF : 
+	       if(type->symbol->type == YDR_TSTRUCT)
 		    fprintf (f, "struct %s %s", type->symbol->name, name);
 	       else
 		    fprintf (f, "%s %s", type->symbol->name, name);
 	       break;
-	  case TVARRAY :
+	  case YDR_TVARRAY :
 	  {
 	       char *s;
 	       size_t len = strlen (name) + 6;
@@ -188,11 +196,11 @@ print_type (char *name, Type *type, enum argtype argtype,
 	       free(s);
 	       break;
 	  }
-	  case TARRAY :
+	  case YDR_TARRAY :
 	       print_type (name, type->subtype, argtype, decl, f);
 	       fprintf (f, "[ %d ]", type->size);
 	       break;
-	  case TOPAQUE :
+	  case YDR_TOPAQUE :
 	       fprintf (f, "char %s", name);
 	       break;
 	  default :
@@ -214,7 +222,8 @@ print_entry (List *list, Listitem *item, void *i)
 
 /*
  * Return the size of this type in bytes.
- * In the case of a variable-sized type, return -1.
+ * In the case of a variable-sized type, return -1 (unknown) or
+ * the negative maxsize.
  */
 
 static Bool
@@ -228,8 +237,11 @@ sizeof_struct_iter (List *list, Listitem *item, void *arg)
      if (sz == -1) {
 	  *tot = -1;
 	  return TRUE;
+     } else if (sz < 0 || *tot < 0) {
+	  *tot = -1 * (abs(*tot) + abs(sz));
+	  return FALSE;
      } else {
-	  *tot += sz;
+	  *tot = *tot + sz;
 	  return FALSE;
      }
 }
@@ -239,7 +251,8 @@ sizeof_struct (Symbol *s)
 {
      int tot = 0;
 
-     listiter (s->u.list, sizeof_struct_iter, &tot);
+     if (s->u.list)
+	 listiter (s->u.list, sizeof_struct_iter, &tot);
      return tot;
 }
 
@@ -247,36 +260,44 @@ static int
 sizeof_type (Type *t)
 {
      switch (t->type) {
-     case TCHAR :
-     case TUCHAR :
-/*	  return 1;*/
-     case TSHORT :
-     case TUSHORT :
-/*	  return 2;*/
-     case TLONG :
-     case TULONG :
+     case YDR_TCHAR :
+     case YDR_TUCHAR :
+     case YDR_TSHORT :
+     case YDR_TUSHORT :
+     case YDR_TLONG :
+     case YDR_TULONG :
 	  return 4;
-     case TSTRING :
+     case YDR_TLONGLONG :
+     case YDR_TULONGLONG :
+	  return 8;
+     case YDR_TSTRING :
 	 if (t->size == 0)
 	     return -1;
 	 else
 	     return t->size;
-     case TOPAQUE :
+     case YDR_TOPAQUE :
 	  return 1;
-     case TUSERDEF :
+     case YDR_TUSERDEF :
 	  return sizeof_symbol (t->symbol);
-     case TARRAY :
+     case YDR_TARRAY :
      {
 	  int sz = sizeof_type (t->subtype);
 
 	  if (sz == -1)
 	       return -1;
-	  else
-	       return t->size * sz;
+	  return t->size * sz;
      }
-     case TVARRAY :
-	  return -1;
-     case TPOINTER :
+     case YDR_TVARRAY :
+     {
+	 int sz;
+	 if (t->size == 0)
+	     return -1;
+	 sz = sizeof_type(t->subtype);
+	 if (sz == -1)
+	     return -1;
+	 return -1 * (t->size * abs(sz) + 4); /* 4 is size of the var part */
+     }
+     case YDR_TPOINTER :
 	  return -1;
      default :
 	  abort ();
@@ -287,18 +308,18 @@ static int
 sizeof_symbol (Symbol *s)
 {
      switch (s->type) {
-	  case TUNDEFINED :
+	  case YDR_TUNDEFINED :
 	       fprintf (stderr, "What is %s doing in sizeof_type?", s->name);
 	       return 0;
-	  case TSTRUCT :
+	  case YDR_TSTRUCT :
 	       return sizeof_struct (s);
-	  case TENUM :
+	  case YDR_TENUM :
 	       return 4;
-	  case TCONST :
+	  case YDR_TCONST :
 	       return 0;
-	  case TENUMVAL :
+	  case YDR_TENUMVAL :
 	       return 0;
-	  case TTYPEDEF :
+	  case YDR_TTYPEDEF :
 	       return sizeof_type (s->u.type);
 	  default :
 	       abort ();
@@ -325,16 +346,20 @@ generate_hdr_enum (Symbol *s, FILE *f)
      Symbol *e;
 
      fprintf (f, "enum %s {\n", s->name);
-     for (item = listhead (s->u.list); 
-	  item && listnext (s->u.list, item); 
-	  item = listnext (s->u.list, item)) {
-	  e = (Symbol *)listdata (item);
-
-	  fprintf (f, "     %s = %d,\n", e->name, e->u.val);
+     if (s->u.list) {
+	 for (item = listhead (s->u.list); 
+	      item && listnext (s->u.list, item); 
+	      item = listnext (s->u.list, item))
+	 {
+	     e = (Symbol *)listdata (item);
+	     
+	     fprintf (f, "     %s = %d,\n", e->name, e->u.val);	     
+	 }
+	 e = (Symbol *)listdata (item);
+	 fprintf (f, "     %s = %d\n};\n", e->name, e->u.val);
      }
-     e = (Symbol *)listdata (item);
-     fprintf (f, "     %s = %d\n};\ntypedef enum %s %s;\n",
-	      e->name, e->u.val, s->name, s->name);
+     fprintf (f, "typedef enum %s %s;\n",
+	      s->name, s->name);
 }
 
 static void
@@ -356,15 +381,19 @@ generate_sizeof (Symbol *s, FILE *f)
 {
      int sz;
 
-     if (s->type == TCONST)
+     if (s->type == YDR_TCONST)
 	 return;
 
      sz = sizeof_symbol (s);
-     if (sz != -1) {
-	  char *name;
+     if (sz == -1) {
+	 ; /* the size is unknown */
+     } else {
+	  char *name, *ms = "";
+	  if (sz < 0)
+	      ms = "MAX_";
 
 	  name = estrdup (s->name);
-	  fprintf (f, "#define %s_SIZE %d\n", strupr (name), sz);
+	  fprintf (f, "#define %s_%sSIZE %d\n", strupr (name), ms, abs(sz));
 	  free (name);
      }
 }
@@ -373,21 +402,21 @@ void
 generate_header (Symbol *s, FILE *f)
 {
      switch (s->type) {
-	  case TUNDEFINED :
+	  case YDR_TUNDEFINED :
 	       fprintf (f, "What is %s doing in generate_header?", s->name);
 	       break;
-	  case TSTRUCT :
+	  case YDR_TSTRUCT :
 	       generate_hdr_struct (s, f);
 	       break;
-	  case TENUM :
+	  case YDR_TENUM :
 	       generate_hdr_enum (s, f);
 	       break;
-	  case TCONST :
+	  case YDR_TCONST :
 	       generate_hdr_const (s, f);
 	       break;
-	  case TENUMVAL :
+	  case YDR_TENUMVAL :
 	       break;
-	  case TTYPEDEF :
+	  case YDR_TTYPEDEF :
 	       generate_hdr_typedef (s, f);
 	  default :
 	       break;
@@ -399,84 +428,96 @@ generate_header (Symbol *s, FILE *f)
  * Generate functions for encoding and decoding.
  */
 
-/* XXX - still assumes that a word is 32 bits */
-
 static char *
 encode_function (Type *type, EncodeType encodetype)
 {
      if (type->flags & TASIS)
 	  return "";
-     else if (encodetype == ENCODE_RX || encodetype == ENCODE_MEM)
-	 return "htonl";
-#if 0
-	  if (type->type == TSHORT || type->type == TUSHORT)
-	       return "htons";
-	  else if (type->type == TLONG || type->type == TULONG)
-	       return "htonl";
-	  else
-	       abort();
-#endif
-     else if (encodetype == DECODE_RX || encodetype == DECODE_MEM)
-	 return "ntohl";
-#if 0
-	  if (type->type == TSHORT || type->type == TUSHORT)
-	       return "ntohs";
-	  else if (type->type == TLONG || type->type == TULONG)
-	       return "ntohl";
-	  else
-	       abort();
-#endif
-     else
+     else if (encodetype == ENCODE_RX || encodetype == ENCODE_MEM) {
+	 switch (type->type) {
+	 case YDR_TLONGLONG:
+	 case YDR_TULONGLONG:
+	     return "htole64";
+	 default:
+	     return "htonl";
+	     break;
+	 }
+     } else if (encodetype == DECODE_RX || encodetype == DECODE_MEM) {
+	 switch (type->type) {
+	 case YDR_TLONGLONG:
+	 case YDR_TULONGLONG:
+	     return "letoh64";
+	 default:
+	     return "ntohl";
+	     break;
+	 }
+     } else
 	  abort();
 }
 
 /*
- * encode/decode long
+ * encode/decode long/longlong
  */
 
 static void
-encode_long (char *name, Type *type, FILE *f, EncodeType encodetype)
+encode_int_type (char *name, char *tname, Type *type, 
+		 FILE *f, EncodeType encodetype)
 {
      switch (encodetype) {
 	  case ENCODE_RX :
-	       fprintf (f, "{ u_int32_t u;\n"
+	       fprintf (f, "{ u%s u;\n"
 			"u = %s (%s);\n"
 			"if(rx_Write(call, &u, sizeof(u)) != sizeof(u))\n"
 			"goto fail;\n"
 			"}\n",
+			tname,
 			encode_function (type, encodetype),
 			name);
 	       break;
 	  case DECODE_RX :
-	       fprintf (f, "{ u_int32_t u;\n"
+	       fprintf (f, "{ u%s u;\n"
 			"if(rx_Read(call, &u, sizeof(u)) != sizeof(u))\n"
 			"goto fail;\n"
 			"%s = %s (u);\n"
-			"}\n", name,
+			"}\n", tname, name,
 			encode_function (type, encodetype));
 	       break;
 	  case ENCODE_MEM :
-	       fprintf (f, "{ int32_t tmp = %s(%s); "
-			"if (*total_len < sizeof(int32_t)) goto fail;\n"
-			"bcopy ((char*)&tmp, ptr, sizeof(int32_t)); "
-			"ptr += sizeof(int32_t); "
-			"*total_len -= sizeof(int32_t);}\n",
+	       fprintf (f, "{ %s tmp = %s(%s); "
+			"if (*total_len < sizeof(tmp)) goto fail;\n"
+			"memcpy (ptr, (char*)&tmp, sizeof(tmp)); "
+			"ptr += sizeof(tmp); "
+			"*total_len -= sizeof(tmp);}\n",
+			tname,
 			encode_function (type, encodetype),
 			name);
 	       break;
 	  case DECODE_MEM :
-	       fprintf (f, "{ int32_t tmp; "
-			"if (*total_len < sizeof(int32_t)) goto fail;"
-			"bcopy (ptr, (char *)&tmp, sizeof(int32_t)); "
+	       fprintf (f, "{ %s tmp; "
+			"if (*total_len < sizeof(tmp)) goto fail;"
+			"memcpy ((char*)&tmp, ptr, sizeof(tmp)); "
 			"%s = %s(tmp); "
-			"ptr += sizeof(int32_t); "
-			"*total_len -= sizeof(int32_t);}\n", 
+			"ptr += sizeof(tmp); "
+			"*total_len -= sizeof(tmp);}\n", 
+			tname,
 			name,
 			encode_function (type, encodetype));
 	       break;
 	  default :
 	       abort ();
      }
+}
+
+static void
+encode_long (char *name, Type *type, FILE *f, EncodeType encodetype)
+{
+    encode_int_type(name, "int32_t", type, f, encodetype);
+}
+
+static void
+encode_longlong (char *name, Type *type, FILE *f, EncodeType encodetype)
+{
+    encode_int_type(name, "int64_t", type, f, encodetype);
 }
 
 /*
@@ -487,6 +528,38 @@ static void
 print_long (char *where, char *name, Type *type, FILE *f)
 {
     fprintf (f, "printf(\" %s = %%d\", %s%s);", name, where, name);
+}
+
+/*
+ * print longlong
+ */ 
+
+static void
+print_longlong (char *where, char *name, Type *type, FILE *f)
+{
+    fprintf (f, "printf(\" %s = %%d\", (int32_t)%s%s);", name, where, name);
+}
+
+/*
+ *
+ */
+
+static void
+gen_check_overflow(Type *indextype, Type *subtype, char *num, FILE *f)
+{
+     /* Check if we will overflow */
+     fprintf(f, "{\n");
+     print_type ("overI", indextype, TIN, VDECL, f);
+     fprintf(f, ";\n");
+     fprintf(f, "overI = ((");
+     print_type ("", indextype, TIN, VDECL, f);
+     fprintf(f, ")~((");
+     print_type ("", indextype, TIN, VDECL, f);
+     fprintf(f, ")0) >> 1) / sizeof(");
+     print_type ("", subtype, TIN, VDECL, f);
+     fprintf(f, ");\n");
+     fprintf(f, "if (overI < %s) goto fail;\n", num);
+     fprintf(f, "}\n");
 }
 
 /*
@@ -550,7 +623,7 @@ encode_short (char *name, Type *type, FILE *f, EncodeType encodetype)
 	  case ENCODE_MEM :
 	  fprintf (f, "{ in16_t tmp = %s(%s); "
 	  	      "if (*total_len < sizeof(int16_t)) goto fail;\n"
-	              "bcopy ((char*)&tmp, ptr, sizeof(int16_t)); "
+	              "memcpy (ptr, (char*)&tmp, sizeof(int16_t)); "
 	              "ptr += sizeof(int16_t); "
 	              "*total_len -= sizeof(int16_t);}\n", 
 	                encode_function (type, encodetype),
@@ -559,7 +632,7 @@ encode_short (char *name, Type *type, FILE *f, EncodeType encodetype)
 	  case DECODE_MEM :
 	       fprintf (f, "{ int16_t tmp; "
 			"if (*total_len < sizeof(int16_t)) goto fail;\n"
-			"bcopy (ptr, (char *)&tmp, sizeof(int16_t)); "
+			"memcpy ((char *)&tmp, ptr, sizeof(int16_t)); "
 			"%s = %s(tmp); "
 			"ptr += sizeof(int16_t); "
 			"*total_len -= sizeof(int16_t); }\n", 
@@ -579,7 +652,7 @@ static void
 encode_string (char *name, Type *type, FILE *f, EncodeType encodetype,
 	       Side side)
 {
-     Type lentype = {TULONG};
+     Type lentype = {YDR_TULONG};
      char *nname;
 
      asprintf (&nname, "(%s%s)",
@@ -611,12 +684,21 @@ encode_string (char *name, Type *type, FILE *f, EncodeType encodetype,
 	       if (type->size != 0) {
 		   fprintf (f,
 			    "if (len >= %u) {\n"
-			    "rx_Error(call) = ENOMEM;\n"
+			    "rx_SetCallError(call, ENOMEM);\n"
 			    "goto fail;\n"
 			    "}\n",
 			    type->size);
 	       } else {
-		   fprintf(f, "%s = malloc(len + 1);\n", nname);
+		   fprintf(f, "if (len == (uint32_t) -1) {\n"
+			   "rx_SetCallError(call, ENOMEM);\n"
+			   "goto fail;\n"
+			   "}\n");
+		   fprintf(f, "%s = malloc(len + 1);\n"
+			   "if (%s == NULL) {\n"
+			   "rx_SetCallError(call, ENOMEM);\n"
+			   "goto fail;\n"
+			   "}\n", 
+			   nname, nname);
 	       }
 
 	       fprintf (f, 
@@ -636,8 +718,8 @@ encode_string (char *name, Type *type, FILE *f, EncodeType encodetype,
 			name);
 	       encode_type ("len", &lentype, f, encodetype, side);
 	       fprintf (f, "strncpy (ptr, %s, len);\n", name);
-	       fprintf (f, "ptr += len + (4 - (len %% 4) %% 4);\n"
-			"*total_len -= len + (4 - (len %% 4) %% 4);\n}\n");
+	       fprintf (f, "ptr += len + (4 - (len %% 4)) %% 4;\n"
+			"*total_len -= len + (4 - (len %% 4)) %% 4;\n}\n");
 	       break;
 	  case DECODE_MEM :
 	       fprintf (f,
@@ -652,13 +734,20 @@ encode_string (char *name, Type *type, FILE *f, EncodeType encodetype,
 			    "goto fail;\n",
 			    type->size);
 	       } else {
-		   fprintf (f, "%s = malloc(len + 1);\n", nname);
+		   fprintf(f, "if (len == (uint32_t) -1) {\n"
+			   "goto fail;\n"
+			   "}\n");
+		   fprintf(f, "%s = malloc(len + 1);\n"
+			   "if (%s == NULL) {\n"
+			   "goto fail;\n"
+			   "}\n", 
+			   nname, nname);
 	       }
 	       fprintf (f,
 			"memcpy (%s, ptr, len);\n"
 			"%s[len] = '\\0';\n"
 			"ptr += len + (4 - (len %% 4)) %% 4;\n"
-			"*total_len -= len + (4 - (len %% 4) %% 4);\n}\n",
+			"*total_len -= len + (4 - (len %% 4)) %% 4;\n}\n",
 			nname, nname);
 	       break;
 	  default :
@@ -678,6 +767,18 @@ print_string (char *where, char *name, Type *type, FILE *f)
     fprintf (f, "printf(\" %s = %%s\", %s%s);", name, where, name);
 }
 
+#if 0
+/*
+ * free TSTRING
+ */
+
+static void
+free_string (char *where, char *name, Type *type, FILE *f)
+{
+    fprintf (f, "free(%s%s);\n", where, name);
+}
+#endif
+
 /*
  * encode/decode TARRAY 
  */
@@ -686,7 +787,7 @@ static void
 encode_array (char *name, Type *type, FILE *f, EncodeType encodetype,
 	      Side side)
 {
-     if (type->subtype->type == TOPAQUE) {
+     if (type->subtype->type == YDR_TOPAQUE) {
 	  if (type->size % 4 != 0)
 	       error_message (1, "Opaque array should be"
 			      "multiple of 4");
@@ -736,7 +837,7 @@ encode_array (char *name, Type *type, FILE *f, EncodeType encodetype,
 }
 
 /*
- * encode/decode TARRAY 
+ * print ARRAY
  */
 
 static void
@@ -746,7 +847,7 @@ print_array (char *where, char *name, Type *type, FILE *f)
 
     fprintf (f, "/* printing ARRAY %s%s */\n", where, name);
 
-    if (type->subtype->type == TOPAQUE) {
+    if (type->subtype->type == YDR_TOPAQUE) {
 	if (type->size % 4 != 0)
 	    error_message (1, "print_array: Opaque array should be"
 			   "multiple of 4");
@@ -776,6 +877,30 @@ print_array (char *where, char *name, Type *type, FILE *f)
 }
 
 /*
+ * free TARRAY
+ */
+
+static void
+free_array (char *where, char *name, Type *type, FILE *f)
+{
+    if (type->subtype->type == YDR_TOPAQUE) {
+	; /* nothing */
+    } else {
+	char tmp[256];
+
+	fprintf (f, "{\nint i%lu;\nfor(i%lu = 0; i%lu < %u;"
+		 "++i%lu){\n", tmpcnt, tmpcnt, tmpcnt, type->size,tmpcnt);
+	snprintf(tmp, sizeof(tmp)-1, "%s[i%lu]", name, tmpcnt);
+	tmpcnt++;
+	if (type->flags)
+	    type->subtype->flags |= type->flags;
+	free_type (tmp, "", type->subtype, f);
+	tmpcnt--;
+	fprintf (f, "}\n}\n");
+    }
+}
+
+/*
  * encode/decode TVARRAY
  */
 
@@ -784,21 +909,34 @@ encode_varray (char *name, Type *type, FILE *f, EncodeType encodetype,
 	       Side side)
 {
      char tmp[256];
-     Type lentype = {TULONG};
+     Type lentype = {YDR_TULONG};
+     Type *indextype;
 	       
      strlcpy (tmp, name, sizeof tmp);
      strlcat (tmp, ".len", sizeof tmp);
 
-     encode_type (tmp, type->indextype ? type->indextype : &lentype,
-		  f, encodetype, side);
+     indextype = type->indextype ? type->indextype : &lentype;
+
+     encode_type (tmp, indextype, f, encodetype, side);
+     if (encodetype == DECODE_MEM || encodetype == DECODE_RX) {
+	 if (type->size != 0)
+	     fprintf (f, "if (%s > %d) goto fail;\n", tmp, type->size);
+	 if (encodetype == DECODE_MEM) {
+	     fprintf (f, "if ((%s * sizeof(", tmp);
+	     print_type ("", type->subtype, TIN, VDECL, f);
+	     fprintf (f, ")) > *total_len) goto fail;\n");
+	 }
+     }
+     gen_check_overflow(indextype, type->subtype, tmp, f);
      if (encodetype == DECODE_MEM || encodetype == DECODE_RX) {
 	 fprintf (f, "%s.val = (", name);
 	 print_type ("*", type->subtype, TIN, VDECL, f);
 	 fprintf (f, ")malloc(sizeof(");
 	 print_type ("", type->subtype, TIN, VDECL, f);
 	 fprintf (f, ") * %s);\n", tmp);
+	 fprintf (f, "if (%s.val == NULL) goto fail;\n", name);
      }
-     if (type->subtype->type == TOPAQUE) {
+     if (type->subtype->type == YDR_TOPAQUE) {
 	  switch (encodetype) {
 	       case ENCODE_RX :
 		    fprintf (f, "{\n"
@@ -823,18 +961,19 @@ encode_varray (char *name, Type *type, FILE *f, EncodeType encodetype,
 			     tmp, name, tmp, tmp);
 		    break;
 	       case ENCODE_MEM :
-		   /* XXX bounce checking */
 		    fprintf (f, "{\n"
 			     "char zero[4] = {0, 0, 0, 0};\n"
+			     "size_t sz = %s + (4 - (%s %% 4)) %% 4;\n"
+			     "if (*total_len < sz) goto fail;\n"
 			     "memcpy (ptr, %s.val, %s);\n"
 			     "memcpy (ptr + %s, zero, (4 - (%s %% 4)) %% 4);\n"
-			     "ptr += %s + (4 - (%s %% 4)) %% 4;\n"
+			     "ptr += sz; *total_len -= sz;\n"
 			     "}\n",
-			     name, tmp, tmp, tmp, tmp, tmp);
+			     tmp, tmp, name, tmp, tmp, tmp);
 		    break;
 	       case DECODE_MEM :
-		   /* XXX bounce checking */
-		    fprintf (f, "{\n"
+		    fprintf (f, 
+			     "{\n"
 			     "memcpy (%s.val, ptr, %s);\n"
 			     "ptr += %s + (4 - (%s %% 4)) %% 4;\n"
 			     "}\n",
@@ -865,9 +1004,9 @@ print_varray (char *where, char *name, Type *type, FILE *f)
 {
     fprintf (f, "{\nunsigned int i%lu;\n", tmpcnt);
 
-    fprintf (f, "/* printing TVARRAY %s%s */\n", where, name);
+    fprintf (f, "/* printing YDR_TVARRAY %s%s */\n", where, name);
 
-    if (type->subtype->type == TOPAQUE) {
+    if (type->subtype->type == YDR_TOPAQUE) {
 	fprintf (f, "char *ptr = %s%s.val;\n", where, name);
 	fprintf (f, "printf(\"0x\");");
 	fprintf (f, "for (i%lu = 0; i%lu < %s%s.len; ++i%lu)\n"
@@ -892,6 +1031,30 @@ print_varray (char *where, char *name, Type *type, FILE *f)
 }
 
 /*
+ * free TVARRAY
+ */
+
+static void
+free_varray (char *where, char *name, Type *type, FILE *f)
+{
+    if (type->subtype->type != YDR_TOPAQUE) {
+	char *ptr;
+	fprintf (f, "{\n"
+		 "unsigned int i%lu;\n", tmpcnt);
+	fprintf (f, "for (i%lu = 0; i%lu < %s%s.len; ++i%lu) {\n", 
+		 tmpcnt, tmpcnt, where, name, tmpcnt);
+	asprintf(&ptr, "%s%s.val[i%ld]", where, name, tmpcnt);
+	tmpcnt++;
+	free_type (ptr, "", type->subtype, f);
+	tmpcnt--;
+	free(ptr);
+	fprintf (f, "}\n");
+	fprintf (f, "}\n");
+    }
+    fprintf (f, "free((%s%s).val);\n", where, name);
+}
+
+/*
  * encode/decode pointer
  */
 
@@ -899,7 +1062,7 @@ static void
 encode_pointer (char *name, Type *type, FILE *f, EncodeType encodetype,
 		Side side)
 {
-     Type booltype = {TULONG};
+     Type booltype = {YDR_TULONG};
      char tmp[256];
 
      snprintf (tmp, sizeof(tmp), "*(%s)", name);
@@ -937,6 +1100,21 @@ encode_pointer (char *name, Type *type, FILE *f, EncodeType encodetype,
 }
 
 /*
+ * free pointer
+ */
+
+static void
+free_pointer (char *where, char *name, Type *type, FILE *f)
+{
+    char *tmp;
+
+    asprintf (&tmp, "*(%s%s)", where, name);
+    fprintf (f, "if(%s%s)", where, name);
+    free_type(tmp, "", type->subtype, f);
+    free(tmp);
+}
+
+/*
  * encode type
  */
 
@@ -945,39 +1123,35 @@ encode_type (char *name, Type *type, FILE *f, EncodeType encodetype,
 	     Side side)
 {
      switch (type->type) {
-	  case TCHAR :
-	  case TUCHAR :
-#if 0
-	       encode_char (name, type, f, encodetype);
-	       break;
-#endif
-	  case TSHORT :
-	  case TUSHORT :
-#if 0
-	       encode_short (name, type, f, encodetype);
-	       break;
-#endif
-	  case TLONG :
-	  case TULONG :
+	  case YDR_TCHAR :
+	  case YDR_TUCHAR :
+	  case YDR_TSHORT :
+	  case YDR_TUSHORT :
+	  case YDR_TLONG :
+	  case YDR_TULONG :
 	       encode_long (name, type, f, encodetype);
 	       break;
-	  case TSTRING :
+	  case YDR_TLONGLONG :
+	  case YDR_TULONGLONG :
+	       encode_longlong (name, type, f, encodetype);
+	       break;
+	  case YDR_TSTRING :
 	       encode_string (name, type, f, encodetype, side);
 	       break;
-	  case TOPAQUE :
+	  case YDR_TOPAQUE :
 	       error_message (1,
 			      "Type opaque only allowed as part of an array");
 	       break;
-	  case TUSERDEF :
+	  case YDR_TUSERDEF :
 	       encode_symbol (type->symbol, name, f, encodetype, side);
 	       break;
-	  case TARRAY :
+	  case YDR_TARRAY :
 	       encode_array (name, type, f, encodetype, side);
 	       break;
-	  case TVARRAY :
+	  case YDR_TVARRAY :
 	       encode_varray (name, type, f, encodetype, side);
 	       break;
-	  case TPOINTER :
+	  case YDR_TPOINTER :
 	       encode_pointer (name, type, f, encodetype, side);
 	       break;
 	  default :
@@ -995,39 +1169,76 @@ display_type (char *where, char *name, Type *type, FILE *f)
     assert (where);
 
     switch (type->type) {
-    case TCHAR :
-    case TUCHAR :
-#if 0
-	print_char (name, type, f, encodetype);
-	break;
-#endif
-    case TSHORT :
-    case TUSHORT :
-#if 0
-	print_short (name, type, f, encodetype);
-	break;
-#endif
-    case TLONG :
-    case TULONG :
+    case YDR_TCHAR :
+    case YDR_TUCHAR :
+    case YDR_TSHORT :
+    case YDR_TUSHORT :
+    case YDR_TLONG :
+    case YDR_TULONG :
 	print_long (where, name, type, f);
 	break;
-    case TSTRING :
+    case YDR_TLONGLONG :
+    case YDR_TULONGLONG :
+	print_longlong (where, name, type, f);
+	break;
+    case YDR_TSTRING :
 	print_string (where, name, type, f);
 	break;
-    case TOPAQUE :
+    case YDR_TOPAQUE :
 	fprintf (f, "printf(\"printing TOPAQUE\\n\");");
 	break;
-    case TUSERDEF :
+    case YDR_TUSERDEF :
 	print_symbol (where, type->symbol, name, f);
 	break;
-    case TARRAY :
+    case YDR_TARRAY :
 	print_array (where, name, type, f);
 	break;
-    case TVARRAY :
+    case YDR_TVARRAY :
 	print_varray (where, name, type, f);
 	break;
-    case TPOINTER :
+    case YDR_TPOINTER :
 	fprintf (f, "printf(\"printing TPOINTER\\n\");");
+	break;
+    default :
+	abort();
+    }
+}
+
+/*
+ * free type
+ */
+
+static void
+free_type (char *where, char *name, Type *type, FILE *f)
+{
+    switch (type->type) {
+    case YDR_TCHAR :
+    case YDR_TUCHAR :
+    case YDR_TSHORT :
+    case YDR_TUSHORT :
+    case YDR_TLONG :
+    case YDR_TULONG :
+    case YDR_TLONGLONG :
+    case YDR_TULONGLONG :
+	break;
+    case YDR_TSTRING :
+#if 0
+	free_string (where, name, type, f);
+#endif
+	break;
+    case YDR_TOPAQUE :
+	break;
+    case YDR_TUSERDEF :
+	free_symbol (where, type->symbol, name, f);
+	break;
+    case YDR_TARRAY :
+	free_array (where, name, type, f);
+	break;
+    case YDR_TVARRAY :
+	free_varray (where, name, type, f);
+	break;
+    case YDR_TPOINTER :
+	free_pointer (where, name, type, f);
 	break;
     default :
 	abort();
@@ -1057,9 +1268,9 @@ encode_entry (List *list, Listitem *item, void *arg)
      strlcat (tmp, ".", sizeof tmp);
      strlcat (tmp, s->name, sizeof tmp);
 
-     if (s->type->type == TPOINTER
-	 && s->type->subtype->type == TUSERDEF
-	 && s->type->subtype->symbol->type == TSTRUCT
+     if (s->type->type == YDR_TPOINTER
+	 && s->type->subtype->type == YDR_TUSERDEF
+	 && s->type->subtype->symbol->type == YDR_TSTRUCT
 	 && strcmp(s->type->subtype->symbol->name,
 		   context->symbol->name) == 0) {
 	 fprintf (context->f,
@@ -1090,7 +1301,8 @@ encode_struct (Symbol *s, char *name, FILE *f, EncodeType encodetype,
      context.encodetype = encodetype;
      context.side       = side;
 
-     listiter (s->u.list, encode_entry, (void *)&context);
+     if (s->u.list)
+	 listiter (s->u.list, encode_entry, (void *)&context);
 }
 
 /*
@@ -1116,9 +1328,9 @@ print_structentry (List *list, Listitem *item, void *arg)
      asprintf(&tmp, ".%s", s->name);
      asprintf(&tmp2, "%s%s", context->where, context->name);
 
-     if (s->type->type == TPOINTER
-	 && s->type->subtype->type == TUSERDEF
-	 && s->type->subtype->symbol->type == TSTRUCT
+     if (s->type->type == YDR_TPOINTER
+	 && s->type->subtype->type == YDR_TUSERDEF
+	 && s->type->subtype->symbol->type == YDR_TSTRUCT
 	 && strcmp(s->type->subtype->symbol->name,
 		   context->symbol->name) == 0) {
 	 fprintf (context->f,
@@ -1155,7 +1367,70 @@ print_struct (char *where, Symbol *s, char *name, FILE *f)
 
     fprintf (f, "/* printing TSTRUCT %s%s */\n", where, name);
     
-    listiter (s->u.list, print_structentry, (void *)&context);
+    if (s->u.list)
+	listiter (s->u.list, print_structentry, (void *)&context);
+}
+
+/*
+ * help function for free_struct
+ */
+
+struct freecontext {
+    char *where;
+    char *name;
+    FILE *f;
+    Symbol *symbol;
+};
+
+static Bool
+free_structentry (List *list, Listitem *item, void *arg)
+{
+     StructEntry *s = (StructEntry *)listdata (item);
+     struct freecontext *context = (struct freecontext *)arg;
+
+     char *tmp;
+     char *tmp2;
+
+     asprintf(&tmp, ".%s", s->name);
+     asprintf(&tmp2, "%s%s", context->where, context->name);
+
+     if (s->type->type == YDR_TPOINTER
+	 && s->type->subtype->type == YDR_TUSERDEF
+	 && s->type->subtype->symbol->type == YDR_TSTRUCT
+	 && strcmp(s->type->subtype->symbol->name,
+		   context->symbol->name) == 0) {
+	 fprintf (context->f,
+		  "ydr_free_%s%s(%s%s, ptr);\n",
+		  package,
+		  context->symbol->name,
+		  tmp2,
+		  tmp);
+     } else {
+	 free_type (tmp2, tmp, s->type, context->f);
+     }
+
+     free(tmp);
+     free(tmp2);
+
+     return FALSE;
+}
+
+/*
+ * free TSTRUCT
+ */
+
+static void
+free_struct (char *where, Symbol *s, char *name, FILE *f)
+{
+    struct freecontext context;
+    
+    context.name       = name;
+    context.symbol     = s;
+    context.f          = f;
+    context.where      = where;
+
+    if (s->u.list)
+	listiter (s->u.list, free_structentry, (void *)&context);
 }
 
 /*
@@ -1166,7 +1441,7 @@ static void
 encode_enum (Symbol *s, char *name, FILE *f, EncodeType encodetype,
 	     Side side)
 {
-     Type type = {TLONG};
+     Type type = {YDR_TLONG};
 
      encode_type (name, &type, f, encodetype, side);
 }
@@ -1196,7 +1471,8 @@ print_enum (char *where, Symbol *s, char *name, FILE *f)
 
     fprintf (f, "printf(\"%s = \");", name);
     fprintf (f, "switch(%s) {\n", where);
-    listiter (s->u.list, gen_printenum, f);
+    if (s->u.list)
+	listiter (s->u.list, gen_printenum, f);
     fprintf (f, 
 	     "default:\n"
 	     "printf(\" unknown enum %%d\", %s);\n"
@@ -1226,6 +1502,16 @@ print_typedef (char *where, Symbol *s, char *name, FILE *f)
 }
 
 /*
+ * free TTYPEDEF
+ */
+
+static void
+free_typedef (char *where, Symbol *s, char *name, FILE *f)
+{
+    free_type (where, name, s->u.type, f);
+}
+
+/*
  * Encode symbol/TUSERDEF
  */
 
@@ -1234,13 +1520,13 @@ encode_symbol (Symbol *s, char *name, FILE *f, EncodeType encodetype,
 	       Side side)
 {
      switch (s->type) {
-	  case TSTRUCT :
+	  case YDR_TSTRUCT :
 	       encode_struct (s, name, f, encodetype, side);
 	       break;
-	  case TENUM :
+	  case YDR_TENUM :
 	       encode_enum (s, name, f, encodetype, side);
 	       break;
-	  case TTYPEDEF :
+	  case YDR_TTYPEDEF :
 	       encode_typedef (s, name, f, encodetype, side);
 	       break;
 	  default :
@@ -1256,14 +1542,35 @@ static void
 print_symbol (char *where, Symbol *s, char *name, FILE *f)
 {
      switch (s->type) {
-	  case TSTRUCT :
+	  case YDR_TSTRUCT :
 	       print_struct (where, s, name, f);
 	       break;
-	  case TENUM :
+	  case YDR_TENUM :
 	       print_enum (where, s, name, f);
 	       break;
-	  case TTYPEDEF :
+	  case YDR_TTYPEDEF :
 	       print_typedef (where, s, name, f);
+	       break;
+	  default :
+	       abort();
+	  }
+}
+
+/*
+ * Generate a free function for symbol
+ */
+
+static void
+free_symbol (char *where, Symbol *s, char *name, FILE *f)
+{
+     switch (s->type) {
+	  case YDR_TSTRUCT :
+	       free_struct (where, s, name, f);
+	       break;
+	  case YDR_TENUM :
+	       break;
+	  case YDR_TTYPEDEF :
+	       free_typedef (where, s, name, f);
 	       break;
 	  default :
 	       abort();
@@ -1277,13 +1584,21 @@ print_symbol (char *where, Symbol *s, char *name, FILE *f)
 static void
 generate_function_definition (Symbol *s, FILE *f, Bool encodep)
 {
-     if (s->type == TSTRUCT || s->type == TENUM || s->type == TTYPEDEF) {
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF)
+     {
 	  fprintf (f, 
-		   "char *ydr_%scode_%s(%s *o, char *ptr, size_t *total_len)",
+		   "%schar *ydr_%scode_%s(%s%s *o, %schar *ptr, size_t *total_len)",
+		   encodep ? "" : "const ",
 		   encodep ? "en" : "de",
-		   s->name, s->name);
-     } else if (s->type == TCONST || s->type == TENUMVAL 
-	      || s->type == TTYPEDEF)
+		   s->name,
+		   encodep ? "const " : "",
+		   s->name,
+		   encodep ? "" : "const ");
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
 	  ;
      else
 	  error_message (1, "What is %s (type %d) doing here?\n",
@@ -1297,12 +1612,39 @@ generate_function_definition (Symbol *s, FILE *f, Bool encodep)
 static void
 generate_printfunction_definition (Symbol *s, FILE *f)
 {
-     if (s->type == TSTRUCT || s->type == TENUM || s->type == TTYPEDEF) {
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF) 
+     {
 	  fprintf (f, 
 		   "void ydr_print_%s(%s *o)",
 		   s->name, s->name);
-     } else if (s->type == TCONST || s->type == TENUMVAL 
-	      || s->type == TTYPEDEF)
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
+	  ;
+     else
+	  error_message (1, "What is %s (type %d) doing here?\n",
+			 s->name, s->type);
+}
+
+/*
+ * Generate a defintion for a function to free `s', writing it to `f'
+ */
+
+static void
+generate_freefunction_definition (Symbol *s, FILE *f)
+{
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF) 
+     {
+	  fprintf (f, 
+		   "void ydr_free_%s(%s *o)",
+		   s->name, s->name);
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
 	  ;
      else
 	  error_message (1, "What is %s (type %d) doing here?\n",
@@ -1316,17 +1658,25 @@ generate_printfunction_definition (Symbol *s, FILE *f)
 void
 generate_function (Symbol *s, FILE *f, Bool encodep)
 {
-     if (s->type == TSTRUCT || s->type == TENUM || s->type == TTYPEDEF) {
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF)
+     {
 	  generate_function_definition (s, f, encodep);
 	  fprintf (f, "\n{\n");
+	  if (!encodep)
+	      fprintf (f, "memset(o, 0, sizeof(*o));\n");
 	  encode_symbol (s, "(*o)", f,
 			 encodep ? ENCODE_MEM : DECODE_MEM, CLIENT);
 	  fprintf (f, "return ptr;\n"
-		   "fail:\n"
-		   "errno = EFAULT;\n"
+		   "fail:\n");
+	  if (!encodep)
+	      free_symbol ("", s, "(*o)", f);
+	  fprintf (f, "errno = EINVAL;\n"
 		   "return NULL;}\n");
-     } else if (s->type == TCONST || s->type == TENUMVAL 
-	      || s->type == TTYPEDEF)
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
 	  ;
      else
 	  error_message (1, "What is %s (type %d) doing here?\n",
@@ -1340,13 +1690,39 @@ generate_function (Symbol *s, FILE *f, Bool encodep)
 void
 generate_printfunction (Symbol *s, FILE *f)
 {
-     if (s->type == TSTRUCT || s->type == TENUM || s->type == TTYPEDEF) {
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF) {
 	  generate_printfunction_definition (s, f);
 	  fprintf (f, "\n{\n");
 	  print_symbol ("(*o)",  s, "", f);
 	  fprintf (f, "return;\n}\n");
-     } else if (s->type == TCONST || s->type == TENUMVAL 
-	      || s->type == TTYPEDEF)
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
+	  ;
+     else
+	  error_message (1, "What is %s (type %d) doing here?\n",
+			 s->name, s->type);
+}
+
+/*
+ * Generate a free function for the type `s' and print it on `f'.
+ */
+
+void
+generate_freefunction (Symbol *s, FILE *f)
+{
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF) {
+	  generate_freefunction_definition (s, f);
+	  fprintf (f, "\n{\n");
+	  free_symbol("(*o)", s, "", f);
+	  fprintf (f, "return;\n}\n");
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
 	  ;
      else
 	  error_message (1, "What is %s (type %d) doing here?\n",
@@ -1360,11 +1736,15 @@ generate_printfunction (Symbol *s, FILE *f)
 void
 generate_function_prototype (Symbol *s, FILE *f, Bool encodep)
 {
-     if (s->type == TSTRUCT || s->type == TENUM || s->type == TTYPEDEF) {
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF) 
+     {
 	  generate_function_definition (s, f, encodep);
 	  fprintf (f, ";\n");
-     } else if (s->type == TCONST || s->type == TENUMVAL 
-	      || s->type == TTYPEDEF)
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
 	  ;
      else
 	  error_message (1, "What is %s (type %d) doing here?\n",
@@ -1378,11 +1758,36 @@ generate_function_prototype (Symbol *s, FILE *f, Bool encodep)
 void
 generate_printfunction_prototype (Symbol *s, FILE *f)
 {
-     if (s->type == TSTRUCT || s->type == TENUM || s->type == TTYPEDEF) {
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF) {
 	  generate_printfunction_definition (s, f);
 	  fprintf (f, ";\n");
-     } else if (s->type == TCONST || s->type == TENUMVAL 
-	      || s->type == TTYPEDEF)
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
+	  ;
+     else
+	  error_message (1, "What is %s (type %d) doing here?\n",
+			 s->name, s->type);
+}
+
+/*
+ * Generate a prototype for a free function for the `s' type
+ * and output it to `f'
+ */
+
+void
+generate_freefunction_prototype(Symbol *s, FILE *f)
+{
+     if (s->type == YDR_TSTRUCT
+	 || s->type == YDR_TENUM
+	 || s->type == YDR_TTYPEDEF) {
+	  generate_freefunction_definition (s, f);
+	  fprintf (f, ";\n");
+     } else if (s->type == YDR_TCONST
+		|| s->type == YDR_TENUMVAL 
+		|| s->type == YDR_TTYPEDEF)
 	  ;
      else
 	  error_message (1, "What is %s (type %d) doing here?\n",
@@ -1396,8 +1801,8 @@ gen1 (List *list, Listitem *item, void *arg)
      FILE *f = (FILE *)arg;
 
      if ((a->argtype == TOUT || a->argtype == TINOUT)
-	 && a->type->type != TPOINTER
-	 && a->type->type != TSTRING)
+	 && a->type->type != YDR_TPOINTER
+	 && a->type->type != YDR_TSTRING)
 	 error_message (1, "Argument %s is OUT and not pointer or string.\n",
 			a->name);
      fprintf (f, ", ");
@@ -1439,7 +1844,7 @@ gendeclare (List *list, Listitem *item, void *arg)
      Argument *a = (Argument *)listdata (item);
      FILE *f = (FILE *)arg;
 
-     if (a->type->type == TPOINTER)
+     if (a->type->type == YDR_TPOINTER)
 	  print_type (a->name, a->type->subtype, TIN, VDECL, f);
      else
 	  print_type (a->name, a->type, TIN, VDECL, f);
@@ -1448,15 +1853,26 @@ gendeclare (List *list, Listitem *item, void *arg)
 }
 
 static Bool
+genzero (List *list, Listitem *item, void *arg)
+{
+     Argument *a = (Argument *)listdata (item);
+     FILE *f = (FILE *)arg;
+
+     fprintf (f, "memset(&%s, 0, sizeof(%s));\n",
+	      a->name, a->name);
+     return FALSE;
+}
+
+static Bool
 genfree_isarrayp(Type *type)
 {
-    if (type->type == TVARRAY)
+    if (type->type == YDR_TVARRAY)
 	return TRUE;
-    if (type->type == TPOINTER)
+    if (type->type == YDR_TPOINTER)
 	return genfree_isarrayp(type->subtype);
-    if (type->type == TUSERDEF &&
+    if (type->type == YDR_TUSERDEF &&
 	type->symbol &&
-	type->symbol->type == TTYPEDEF)
+	type->symbol->type == YDR_TTYPEDEF)
 	return genfree_isarrayp(type->symbol->u.type);
     
     return FALSE;
@@ -1472,7 +1888,7 @@ genfree (List *list, Listitem *item, void *arg)
      if (genfree_isarrayp(a->type))
 	 fprintf(f, "free(%s.val);\n", a->name);
      else if (a->argtype != TIN
-	      && a->type->type == TSTRING && a->type->size == 0)
+	      && a->type->type == YDR_TSTRING && a->type->size == 0)
 	 fprintf (f, "free(%s);\n", a->name);
      return FALSE;
 }
@@ -1513,7 +1929,7 @@ gendecodeout (List *list, Listitem *item, void *arg)
 
 	     encode_type (tmp, a->type->subtype, f, DECODE_RX, CLIENT);
 	     free (tmp);
-	 } else if(a->type->type == TSTRING) {
+	 } else if(a->type->type == YDR_TSTRING) {
 	     encode_type (a->name, a->type, f, DECODE_RX, CLIENT);
 	 }
      }
@@ -1529,7 +1945,7 @@ gendecodein (List *list, Listitem *item, void *arg)
      if (a->argtype != TIN && a->argtype != TINOUT)
 	  return TRUE;
      else {
-	  if (a->type->type == TPOINTER) {
+	  if (a->type->type == YDR_TPOINTER) {
 #if 0
 	       size_t len = strlen(a->name) + 4;
 	       char *tmp = (char *)emalloc (len);
@@ -1553,7 +1969,7 @@ genencodeout (List *list, Listitem *item, void *arg)
      FILE *f = (FILE *)arg;
 
      if (a->argtype == TOUT || a->argtype == TINOUT) {
-	  if (a->type->type == TPOINTER)
+	  if (a->type->type == YDR_TPOINTER)
 	       encode_type (a->name, a->type->subtype, f, ENCODE_RX, SERVER);
 	  else
 	       encode_type (a->name, a->type, f, ENCODE_RX, SERVER);
@@ -1590,9 +2006,9 @@ genargs (List *list, Listitem *item, void *arg)
      Argument *a = (Argument *)listdata (item);
      FILE *f = (FILE *)arg;
 
-     if (a->type->type == TPOINTER
+     if (a->type->type == YDR_TPOINTER
 	 || (a->argtype != TIN
-	     && a->type->type == TSTRING && a->type->size == 0))
+	     && a->type->type == YDR_TSTRING && a->type->size == 0))
 	  putc ('&', f);
      fputs (a->name, f);
      if (listnext (list, item))
@@ -1607,7 +2023,7 @@ genargs (List *list, Listitem *item, void *arg)
 static void
 generate_simple_stub (Symbol *s, FILE *f, FILE *headerf)
 {
-     Type type = {TLONG};
+     Type type = {YDR_TLONG};
      char *op;
 
      fprintf (headerf, "int %s%s(\nstruct rx_connection *connection\n",
@@ -1632,7 +2048,7 @@ generate_simple_stub (Symbol *s, FILE *f, FILE *headerf)
      fprintf (f,
 	      "return %s(rx_EndCall (call,0));\n"
 	      "fail:\n"
-	      "ret = %s(rx_Error(call));\n"
+	      "ret = %s(rx_GetCallError(call));\n"
 	      "rx_EndCall (call, 0);\n"
 	      "return ret;\n"
 	      "}\n",
@@ -1643,7 +2059,7 @@ generate_simple_stub (Symbol *s, FILE *f, FILE *headerf)
 static void
 generate_split_stub (Symbol *s, FILE *f, FILE *headerf)
 {
-     Type type = {TLONG};
+     Type type = {YDR_TLONG};
      char *op;
 
      fprintf (headerf, "int Start%s%s(\nstruct rx_call *call\n",
@@ -1666,7 +2082,7 @@ generate_split_stub (Symbol *s, FILE *f, FILE *headerf)
      if (findargtype(s->u.proc.arguments, TIN) || 
 	 findargtype(s->u.proc.arguments, TINOUT))
 	 fprintf (f, "fail:\n"
-                 "return %s(rx_Error(call));\n",
+                 "return %s(rx_GetCallError(call));\n",
 		  error_function);
 
      fprintf (f, "}\n\n");
@@ -1687,7 +2103,7 @@ generate_split_stub (Symbol *s, FILE *f, FILE *headerf)
      if (findargtype(s->u.proc.arguments, TOUT) || 
 	 findargtype(s->u.proc.arguments, TINOUT))
 	 fprintf (f, "fail:\n"
-                 "return %s(rx_Error(call));\n",
+                 "return %s(rx_GetCallError(call));\n",
 		  error_function);
 
      fprintf (f, "}\n\n");
@@ -1767,12 +2183,29 @@ generate_standard_c_prologue (FILE *f,
      fprintf (f, "#include <string.h>\n");
      fprintf (f, "#include <netinet/in.h>\n");
      fprintf (f, "#include <errno.h>\n");
-     fprintf (f, "#ifndef HAVE_BCOPY\n"
-	      "#define bcopy(a,b,c) memcpy((b),(a),(c))\n"
-	      "#endif /* !HAVE_BCOPY */\n\n");
      fprintf (f, "#ifdef RCSID\n"
-	      "RCSID(\"%s generated from %s.xg with $KTH: output.c,v 1.73.2.1 2001/03/04 04:48:48 lha Exp $\");\n"
+	      "RCSID(\"%s generated from %s.xg with $arla: output.c,v 1.91 2003/04/16 09:07:03 lha Exp $\");\n"
 	      "#endif\n\n", filename, basename);
+}
+
+/*
+ * Convert filename into a cpp symbol
+ */
+
+static char *
+cppfilesymbolname(const char *fn)
+{
+     char *symname, *tmp;
+
+     symname = estrdup(fn);
+     estrdup (symname);
+     for (tmp = symname; *tmp; tmp++) {
+	 if (tmp == symname && isdigit((unsigned char)*tmp))
+	     *tmp = '_';
+	 if (!isalpha((unsigned char)*tmp))
+	     *tmp = '_';
+     }
+     return symname;
 }
 
 /*
@@ -1783,7 +2216,7 @@ void
 init_generate (const char *filename)
 {
      char *tmp;
-     char *fileuppr;
+     char *fileupr;
 
      func_list = listnew ();
 
@@ -1793,13 +2226,12 @@ init_generate (const char *filename)
      ydr_fopen (tmp, "w", &headerfile);
      free (tmp);
 
-     fileuppr = estrdup (filename);
-     strupr (fileuppr);
+     fileupr = cppfilesymbolname(filename);
      fprintf (headerfile.stream, "/* Generated from %s.xg */\n", filename);
      fprintf (headerfile.stream, "#ifndef _%s_\n"
-	      "#define _%s_\n\n", fileuppr, fileuppr);
+	      "#define _%s_\n\n", fileupr, fileupr);
      fprintf (headerfile.stream, "#include <atypes.h>\n\n");
-     free (fileuppr);
+     free (fileupr);
      
      asprintf (&tmp, "%s.ydr.c", filename);
      if (tmp == NULL)
@@ -1842,12 +2274,6 @@ init_generate (const char *filename)
      fprintf (serverhdrfile.stream, "#include <rx/rx.h>\n");
      fprintf (serverhdrfile.stream, "#include \"%s.h\"\n\n", filename);
 
-     asprintf (&tmp, "%s.td.c", filename);
-     if (tmp == NULL)
-	 err (1, "malloc");
-     ydr_fopen (tmp, "w", &td_file);
-     free (tmp);
-
      packagelist = listnew();
      if (packagelist == NULL)
 	 err (1, "init_generate: listnew: packagelist");
@@ -1856,17 +2282,17 @@ init_generate (const char *filename)
 void
 close_generator (const char *filename)
 {
-     char *fileupr = estrdup (filename);
+     char *fileupr;
 	  
-     strupr (fileupr);
+     fileupr = cppfilesymbolname(filename);
      fprintf (headerfile.stream, "\n#endif /* %s */\n", fileupr);
+     free(fileupr);
      ydr_fclose (&headerfile);
      ydr_fclose (&clientfile);
      ydr_fclose (&serverfile);
      ydr_fclose (&clienthdrfile);
      ydr_fclose (&serverhdrfile);
      ydr_fclose (&ydrfile);
-     ydr_fclose (&td_file);
 }
 
 /*
@@ -1877,21 +2303,20 @@ close_generator (const char *filename)
 void
 generate_server_stub (Symbol *s, FILE *f, FILE *headerf, FILE *h_file)
 {
-     fprintf (headerf, "int _%s%s(\nstruct rx_call *call);\n",
-	      package, s->name);
-     fprintf (headerf, "int %s%s%s(\nstruct rx_call *call\n",
+     fprintf (headerf, "int S%s%s%s(\nstruct rx_call *call\n",
 	      prefix, package, s->name);
      listiter (s->u.proc.arguments, gen1, headerf);
      fprintf (headerf, ");\n\n");
 
-     fprintf (f, "int _%s%s(\nstruct rx_call *call)\n",
+     fprintf (f, "static int ydr_ps_%s%s(\nstruct rx_call *call)\n",
 	      package, s->name);
      fprintf (f, "{\n"
 	      "int32_t _result;\n");
      listiter (s->u.proc.arguments, gendeclare, f);
+     listiter (s->u.proc.arguments, genzero, f);
      fprintf (f, "\n");
      listiter (s->u.proc.arguments, gendecodein, f);
-     fprintf (f, "_result = %s%s%s(", prefix, package, s->name);
+     fprintf (f, "_result = S%s%s%s(", prefix, package, s->name);
      if (/* s->u.proc.splitp */ 1) {
 	  fprintf (f, "call");
 	  if (!listemptyp (s->u.proc.arguments))
@@ -1906,7 +2331,7 @@ generate_server_stub (Symbol *s, FILE *f, FILE *headerf, FILE *h_file)
      if (!listemptyp(s->u.proc.arguments)) {
 	 fprintf(f, "fail:\n");
 	 listiter (s->u.proc.arguments, genfree, f);
-	 fprintf(f, "return rx_Error(call);\n");
+	 fprintf(f, "return rx_GetCallError(call);\n");
 
      }
      fprintf(f, "funcfail:\n"
@@ -1932,7 +2357,7 @@ gencase (List *list, Listitem *item, void *arg)
 
      if (c->package == s->u.proc.package) {
 	 fprintf (f, "case %u: {\n"
-		  "_result = _%s%s(call);\n"
+		  "_result = ydr_ps_%s%s(call);\n"
 		  "break;\n"
 		  "}\n",
 		  s->u.proc.id, s->u.proc.package, s->name);
@@ -1948,7 +2373,7 @@ void
 generate_server_switch (FILE *c_file,
 			FILE *h_file)
 {
-     Type optype = {TULONG};
+     Type optype = {YDR_TULONG};
      Listitem *li;
      struct gencase_context c;
 
@@ -1976,150 +2401,19 @@ generate_server_switch (FILE *c_file,
 	 
 	 fprintf (c_file, "default:\n"
  		  "_result = RXGEN_OPCODE;\n"
-		  "fprintf (stderr, \"Ignoring %%d\\n\", opcode);\n"
 		  "}\n"
 		  "return _result;\n"
 		  "fail:\n"
-		  "return rx_Error(call);\n"
+		  "return rx_GetCallError(call);\n"
 		  "}\n\n");
 
 	 li = listnext (packagelist, li);
      }
 }
 
-static Bool
-gentcpdump_decode (List *list, Listitem *item, void *arg)
-{
-     Argument *a = (Argument *)listdata (item);
-     FILE *f = (FILE *)arg;
-
-     if (a->type->type == TPOINTER)
-	 encode_type (a->name, a->type->subtype, f, ENCODE_MEM, CLIENT);
-     else
-	 encode_type (a->name, a->type, f, ENCODE_MEM, CLIENT);
-
-     fprintf (f, "++found;\n");
-     return FALSE;
-}
-
 /*
  *
  */
-
-static Bool
-gentcpdump_print (List *list, Listitem *item, void *arg)
-{
-     Argument *a = (Argument *)listdata (item);
-     FILE *f = (FILE *)arg;
-
-     fprintf (f, "if (found > 0)\n\n"
-	      "{ --found;\n");
-
-     if (a->type->type == TPOINTER)
-	 display_type ("", a->name, a->type->subtype, f);
-     else
-	 display_type ("", a->name, a->type, f);
-
-     if (listnextp(item))
-	 fprintf (f, "printf(\",\");\n");
-     
-     fprintf (f, "} else\n"
-	      "goto failandquit;\n");
-     
-     return FALSE;
-}
-
-/*
- *
- */
-
-void
-generate_tcpdump_stub (Symbol *s, FILE *f)
-{
-     fprintf (f, "void %s%s_print(char *ptr, size_t *total_len)\n"
-	      "{\n"
-	      "int found = 0;\n",
-	      package, s->name);
-     listiter (s->u.proc.arguments, gendeclare, f);
-     fprintf (f, "\n");
-
-     listiter (s->u.proc.arguments, gentcpdump_decode, f);
-     if (!listemptyp(s->u.proc.arguments))
-	 fprintf(f, "fail:\n");
-     fprintf (f, "printf(\"{\");");
-     listiter (s->u.proc.arguments, gentcpdump_print, f);
-     fprintf (f, "printf(\"}\\n\");");
-
-     fprintf (f, "\nreturn ptr;\n");
-     if (!listemptyp(s->u.proc.arguments))
-	 fprintf(f, "failandquit:\n"
-		 "printf(\"Error decoding paket\");\n"
-		 "return NULL;");
-     fprintf(f, "}\n\n");
-}
-
-
-static Bool
-gentcpdump_case (List *list, Listitem *item, void *arg)
-{
-     Symbol *s = (Symbol *)listdata (item);
-     FILE *f = (FILE *)arg;
-
-     fprintf (f, "case %u:\n"
-	      "printf(\"%s%s(\");\n"
-	      "ret = %s%s_print(ptr, &total_len);\n"
-	      "break;\n",
-	      s->u.proc.id,
-	      package,
-	      s->name,
-	      package,
-	      s->name);
-
-     return FALSE;
-}
-
-/*
- * generate tcpdump patches
- */
-
-
-void
-generate_tcpdump_patches(FILE *td_file, const char *filename)
-{
-    Type optype = {TULONG};
-
-    fprintf(td_file, "/* generated by $KTH: output.c,v 1.73.2.1 2001/03/04 04:48:48 lha Exp $ */\n\n");
-
-    fprintf (td_file, 
-	     "#include <stdio.h>\n"
-	     "#include <stdlib.h>\n"
-	     "#include \"%s.h\"\n",
-	     filename);
-
-    fprintf (td_file, "%stcpdump_print(const unsigned char *ptr,"
-	     "unsigned int len,"
-	     "unsigned char *bp2)\n"
-	     "{\n"
-	     "u_int32_t opcode;\n"
-	     "size_t *total_len = len;\n"
-	     "char *ret;\n",
-	     package);
-    
-    encode_type ("opcode", &optype, td_file, DECODE_MEM, CLIENT);
-
-    fprintf (td_file, "switch(opcode) {\n");
-
-    listiter (func_list, gentcpdump_case, td_file);
-    
-    fprintf (td_file, "default:\n"
-	     "printf (\"Unknown opcode %%s->%%d\\n\", "
-	     "package, opcode);\n"
-	     "}\n"
-	     "fail:\n"
-	     "printf(\"Error decoding packet\\n\");\n"
-	     "}\n\n");
-
-}
 
 void
 ydr_fopen (const char *name, const char *mode, ydr_file *f)

@@ -44,7 +44,7 @@
 
 #include "mlog.h"
 
-RCSID("$KTH: mlog.c,v 1.8 2000/10/03 00:17:58 lha Exp $");
+RCSID("$arla: mlog.c,v 1.8 2000/10/03 00:17:58 lha Exp $");
 
 static Log_method* mlog_log_method = NULL;
 static Log_unit* mlog_log_unit = NULL;

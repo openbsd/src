@@ -2,13 +2,11 @@
  * Interface to Volumeserver, 
  * reference /afs/nada.kth.se/misc/reference/programming/afs/shadow/
  *
- * $KTH: volumeserver.xg,v 1.20 2000/06/01 23:59:02 ahltorp Exp $
+ * $arla: volumeserver.xg,v 1.25 2002/08/05 16:46:14 lha Exp $
  */
 
 package VOLSER_
 
-%#include <config.h>
-%#include <roken.h>
 %#include <fs_errors.h>
 
 error-function conv_to_arla_errno
@@ -259,7 +257,9 @@ struct replica {
     struct destServer destserver;
 };
 
-typedef replica replicas<>;
+#define AFS_MAX_DESTINATIONS	255
+
+typedef replica manyDests<AFS_MAX_DESTINATIONS>;
 
 AFSVolCreateVolume(IN long partition,
 		   IN string name,
@@ -276,7 +276,7 @@ AFSVolNukeVolume(IN long partID,
 AFSVolDump(IN long fromTrans,
 	   IN long fromDate) split = VOLDUMP;
 
-AFSVolSignalRestore(IN char *name,
+AFSVolSignalRestore(IN string name<>,
 		    IN int type,
 		    IN long pid,
 		    IN long cloneid) = VOLSIGNALRESTORE;
@@ -294,7 +294,7 @@ AFSVolForward(IN int32_t fromTrans,
 AFSVolClone(IN long trans,
 	    IN long purgeVol,
 	    IN long newType,
-	    IN char *newName,
+	    IN string newName,
 	    INOUT long *newVol) = VOLCLONE;
 
 AFSVolReClone(IN long tid,
@@ -324,7 +324,7 @@ AFSVolGetStatus(IN long tid,
 		OUT volser_status *status) = VOLGETSTATUS;
 
 AFSVolSetIdsTypes(IN long tId,
-		  IN char *name,
+		  IN string name<>,
 		  IN long type,
 		  IN long pId,
 		  IN long cloneId,
@@ -367,7 +367,7 @@ AFSVolXListPartitions(OUT part_entries *ent) = VOLXLISTPARTITIONS;
 
 AFSVolForwardMultiple(IN int32_t fromTrans,
 		      IN int32_t fromData,
-		      IN replicas *destinations,
+		      IN manyDests *destinations,
 		      IN long spare0,
 		      IN struct restoreCookie *cookie,
-		      IN multi_results *results) = VOLFORWARDMULTIPLE;
+		      OUT multi_results *results) = VOLFORWARDMULTIPLE;

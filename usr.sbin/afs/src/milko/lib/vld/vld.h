@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: vld.h,v 1.24 2000/10/03 00:19:57 lha Exp $ */
+/* $arla: vld.h,v 1.32 2002/02/07 17:59:52 lha Exp $ */
 
 #ifndef MILKO_VLD_H
 #define MILKO_VLD_H 1
@@ -66,7 +66,7 @@
 typedef struct volume_handle {
     int type;			/* type of volume backstore */
     int voldbtype;		/* type of voldb structures */
-    u_int32_t vol;		/* volume number */
+    uint32_t vol;		/* volume number */
     int ref;			/* refcount */
     struct dp_part *dp;		/* on what partition the volume resides */
     void *data;			/* data blob for volume type */
@@ -233,10 +233,18 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
 		  struct msec *m);
 
 int
-vld_remove_node (volume_handle *vol, int32_t node);
+vld_remove_node (volume_handle *vol, struct mnode *n);
 
 int
 vld_db_flush (volume_handle *vol);
+
+int
+vld_list_volumes(struct dp_part *dp, List **retlist);
+
+int
+vld_delete_volume (struct dp_part *dp, int32_t volid, 
+		   int32_t backstoretype,
+		   int flags);
 
 void
 vld_end (void);
@@ -244,6 +252,81 @@ vld_end (void);
 int
 vld_fvol_create_volume_ondisk (struct dp_part *dp, int32_t volid,
 			       const char *path);
+
+int
+vld_get_volstats (volume_handle *vol,
+		  struct AFSFetchVolumeStatus *volstat,
+		  char *volName,
+		  char *offLineMsg,
+		  char *motd);
+
+int
+vld_set_volstats (volume_handle *vol,
+		  const struct AFSStoreVolumeStatus *volstat,
+		  const char *volName,
+		  const char *offLineMsg,
+		  const char *motd);
+
+int
+restore_file(struct rx_call *call,
+	     uint32_t vnode,
+	     uint32_t uniq,
+	     uint32_t length,
+	     uint32_t dataversion,
+	     uint32_t author,
+	     uint32_t owner,
+	     uint32_t group,
+	     uint32_t parent,
+	     uint32_t client_date,
+	     uint32_t server_date,
+	     uint16_t nlinks,
+	     uint16_t mode,
+	     uint8_t type,
+	     volume_handle *vol,
+	     int32_t *acl);
+
+int
+vld_rebuild (struct volume_handle *vol);
+
+int
+vld_foreach_dir (struct volume_handle *volh,
+		 int (*func)(int fd,
+			     uint32_t vnode,
+			     uint32_t uniq,
+			     uint32_t length,
+			     uint32_t dataversion,
+			     uint32_t author,
+			     uint32_t owner,
+			     uint32_t group,
+			     uint32_t parent,
+			     uint32_t client_date,
+			     uint32_t server_date,
+			     uint16_t nlinks,
+			     uint16_t mode,
+			     uint8_t type,
+			     int32_t *acl,
+			     void *arg),
+		 void *arg);
+
+int
+vld_foreach_file (struct volume_handle *volh,
+		  int (*func)(int fd,
+			      uint32_t vnode,
+			      uint32_t uniq,
+			      uint32_t length,
+			      uint32_t dataversion,
+			      uint32_t author,
+			      uint32_t owner,
+			      uint32_t group,
+			      uint32_t parent,
+			      uint32_t client_date,
+			      uint32_t server_date,
+			      uint16_t nlinks,
+			      uint16_t mode,
+			      uint8_t type,
+			      int32_t *acl,
+			      void *arg),
+		  void *arg);
 
 /*
  * This function is internal to vld and vol modules.

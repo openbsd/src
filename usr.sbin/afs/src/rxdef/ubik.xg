@@ -1,13 +1,11 @@
 /* -*- C -*- */
 
 /*
- * $KTH: ubik.xg,v 1.8 2000/03/14 22:28:12 assar Exp $
+ * $arla: ubik.xg,v 1.10 2002/09/07 21:02:38 mattiasa Exp $
  */
 
 package Ubik_
 
-%#include <config.h>
-%#include <roken.h>
 %#include <fs_errors.h>
 
 error-function conv_to_arla_errno
@@ -20,6 +18,8 @@ struct net_tid {
     long epoch;
     long counter;
 };
+
+const UBIK_MAX_INTERFACE_ADDR = 256; /* max interfaces per server */
 
 typedef net_tid net_version;
 
@@ -60,6 +60,8 @@ struct ubik_sdebug {
         long currentDB;
         long beaconSinceDown;
         long up;
+        afs_int32 altAddr[255];				/*alternate addresses:host byte */
+							/*this is actually UBIK_MAX_INTERFACE_ADDR-1*/
 };
 
 

@@ -2,7 +2,7 @@
  * Common defintions used by several *.xg files
  */
 
-/* $KTH: common.h,v 1.12 2000/11/03 10:09:48 lha Exp $ */
+/* $arla: common.h,v 1.19 2003/03/06 20:39:47 lha Exp $ */
 
 %#ifndef _COMMON_
 %#define _COMMON_
@@ -14,21 +14,25 @@ const LockRelease = 3;
 
 const AFSNAMEMAX = 256;
 
+const RWVOL   = 0;
+const ROVOL   = 1;
+const BACKVOL = 2;
+
 struct AFSFid {
-     unsigned long Volume;
-     unsigned long Vnode;
-     unsigned long Unique;
+     uint32_t Volume;
+     uint32_t Vnode;
+     uint32_t Unique;
 };
 
 struct VenusFid {
-     long Cell;
+     int32_t Cell;
      AFSFid fid;
 };
 
 struct AFSCallBack {
-     unsigned long CallBackVersion;
-     unsigned long ExpirationTime;
-     unsigned long CallBackType;
+     uint32_t CallBackVersion;
+     uint32_t ExpirationTime;
+     uint32_t CallBackType;
 };
 
 enum CallBackType { CBEXCLUSIVE = 1, CBSHARED = 2, CBDROPPED = 3};
@@ -36,12 +40,12 @@ enum CallBackType { CBEXCLUSIVE = 1, CBSHARED = 2, CBDROPPED = 3};
 const CALLBACK_VERSION = 1;
 
 struct AFSVolSync {
-     unsigned spare1;
-     unsigned spare2;
-     unsigned spare3;
-     unsigned spare4;
-     unsigned spare5;
-     unsigned spare6;
+     uint32_t spare1;
+     uint32_t spare2;
+     uint32_t spare3;
+     uint32_t spare4;
+     uint32_t spare5;
+     uint32_t spare6;
 };
 
 const TYPE_FILE = 1;
@@ -49,27 +53,27 @@ const TYPE_DIR  = 2;
 const TYPE_LINK = 3;
 
 struct AFSFetchStatus {
-     unsigned long InterfaceVersion;
-     unsigned long FileType;
-     unsigned long LinkCount;
-     unsigned long Length;
-     unsigned long DataVersion;
-     unsigned long Author;
-     unsigned long Owner;
-     unsigned long CallerAccess;
-     unsigned long AnonymousAccess;
-     unsigned long UnixModeBits;
-     unsigned long ParentVnode;
-     unsigned long ParentUnique;
-     unsigned long SegSize;
-     unsigned long ClientModTime;
-     unsigned long ServerModTime;
-     unsigned long Group;
-     unsigned long SyncCount;
-     unsigned spare1;
-     unsigned spare2;
-     unsigned spare3;
-     unsigned spare4;
+     uint32_t InterfaceVersion;
+     uint32_t FileType;
+     uint32_t LinkCount;
+     uint32_t Length;
+     uint32_t DataVersion;
+     uint32_t Author;
+     uint32_t Owner;
+     uint32_t CallerAccess;
+     uint32_t AnonymousAccess;
+     uint32_t UnixModeBits;
+     uint32_t ParentVnode;
+     uint32_t ParentUnique;
+     uint32_t SegSize;
+     uint32_t ClientModTime;
+     uint32_t ServerModTime;
+     uint32_t Group;
+     uint32_t SyncCount;
+     uint32_t DataVersionHigh;	/* For AFS/DFS translator */
+     uint32_t LockCount;
+     uint32_t LengthHigh;
+     uint32_t ErrorCode;
 };
 
 /*
@@ -85,12 +89,12 @@ const SS_FSYNC       = 0x400; /* 1024 */
 
 
 struct AFSStoreStatus {
-     unsigned long Mask;
-     unsigned long ClientModTime;
-     unsigned long Owner;
-     unsigned long Group;
-     unsigned long UnixModeBits;
-     unsigned long SegSize;
+     uint32_t Mask;
+     uint32_t ClientModTime;
+     uint32_t Owner;
+     uint32_t Group;
+     uint32_t UnixModeBits;
+     uint32_t SegSize;
 };
 
 struct AFSFetchVolumeStatus {
@@ -114,11 +118,14 @@ struct AFSStoreVolumeStatus {
     int32_t   MaxQuota;
 };
 
+const AFS_SETMINQUOTA = 1;
+const AFS_SETMAXQUOTA = 2;
+
 const AFSOPAQUEMAX = 1024;
 
 typedef opaque AFSOpaque<AFSOPAQUEMAX>;
 
-typedef long ViceLockType;
+typedef int32_t ViceLockType;
 
 const AFSCBMAX = 50;
 
@@ -137,39 +144,36 @@ const PRSFS_LOCK       = 32 ; /* Read-lock files */
 const PRSFS_ADMINISTER = 64 ; /* Set access list of directory */
 
 struct AFSVolumeInfo {
-    u_long  Vid;
-    long    Type;
-    u_long  Type0;
-    u_long  Type1;
-    u_long  Type2;
-    u_long  Type3;
-    u_long  Type4;
-    u_long  ServerCount;
-    u_long  Server0;
-    u_long  Server1;
-    u_long  Server2;
-    u_long  Server3;
-    u_long  Server4;
-    u_long  Server5;
-    u_long  Server6;
-    u_long  Server7;
-    unsigned short Port0;
-    unsigned short Port1;
-    unsigned short Port2;
-    unsigned short Port3;
-    unsigned short Port4;
-    unsigned short Port5;
-    unsigned short Port6;
-    unsigned short Port7;
+    uint32_t  Vid;
+    int32_t   Type;
+    uint32_t  Type0;
+    uint32_t  Type1;
+    uint32_t  Type2;
+    uint32_t  Type3;
+    uint32_t  Type4;
+    uint32_t  ServerCount;
+    uint32_t  Server0;
+    uint32_t  Server1;
+    uint32_t  Server2;
+    uint32_t  Server3;
+    uint32_t  Server4;
+    uint32_t  Server5;
+    uint32_t  Server6;
+    uint32_t  Server7;
+    uint16_t  Port0;
+    uint16_t  Port1;
+    uint16_t  Port2;
+    uint16_t  Port3;
+    uint16_t  Port4;
+    uint16_t  Port5;
+    uint16_t  Port6;
+    uint16_t  Port7;
 };
 
-struct afsUUID {
-     u_long time_low;
-     u_short time_mid;
-     u_short time_hi_and_version;
-     char clock_seq_hi_and_reserved;
-     char clock_seq_low;
-     char node[6];
-};
+#include "afsuuid.h"
+
+const AFSCAPABILITIESMAX = 196;
+
+typedef int32_t Capabilities<AFSCAPABILITIESMAX>;
 
 %#endif /* _COMMON_ */

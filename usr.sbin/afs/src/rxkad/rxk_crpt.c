@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -53,7 +53,7 @@
 #  endif
 #endif
 
-RCSID("$KTH: rxk_crpt.c,v 1.12 2000/10/03 00:38:27 lha Exp $");
+RCSID("$arla: rxk_crpt.c,v 1.15 2003/04/09 02:34:16 lha Exp $");
 
 /*
  * Unrolling of the inner loops helps the most on pentium chips
@@ -88,8 +88,12 @@ RCSID("$KTH: rxk_crpt.c,v 1.12 2000/10/03 00:38:27 lha Exp $");
 #endif
 
 /* Rotate 32 bit word left */
-#define ROT32L(x, n) ((((u_int32) x) << (n)) | (((u_int32) x) >> (32-(n))))
+#undef bswap32
+#undef ROT32L
+
+#define ROT32L(x, n) ((((uint32_t) x) << (n)) | (((uint32_t) x) >> (32-(n))))
 #define bswap32(x) (((ROT32L(x, 16) & 0x00ff00ff)<<8) | ((ROT32L(x, 16)>>8) & 0x00ff00ff))
+
 
 #if WORDS_BIGENDIAN
 #define NTOH(x) (x)
@@ -109,8 +113,8 @@ RCSID("$KTH: rxk_crpt.c,v 1.12 2000/10/03 00:38:27 lha Exp $");
  */
 
 #if defined(__GNUC__) && (defined(i386) || defined(__i386__))
-static inline u_int32
-bswap(u_int32 x)
+static inline uint32_t
+bswap(uint32_t x)
 {
   asm("bswap %0" : "=r" (x) : "0" (x));
   return x;
@@ -124,7 +128,7 @@ bswap(u_int32 x)
 
 #undef Z
 #define Z(x) NTOH(x << 3)
-static const u_int32 sbox0[256] = {
+static const uint32_t sbox0[256] = {
   Z(0xea), Z(0x7f), Z(0xb2), Z(0x64), Z(0x9d), Z(0xb0), Z(0xd9), Z(0x11), Z(0xcd), Z(0x86), Z(0x86),
   Z(0x91), Z(0x0a), Z(0xb2), Z(0x93), Z(0x06), Z(0x0e), Z(0x06), Z(0xd2), Z(0x65), Z(0x73), Z(0xc5),
   Z(0x28), Z(0x60), Z(0xf2), Z(0x20), Z(0xb5), Z(0x38), Z(0x7e), Z(0xda), Z(0x9f), Z(0xe3), Z(0xd2),
@@ -152,7 +156,7 @@ static const u_int32 sbox0[256] = {
 
 #undef Z
 #define Z(x) NTOH((x << 27) | (x >> 5))
-static const u_int32 sbox1[256] = {
+static const uint32_t sbox1[256] = {
   Z(0x77), Z(0x14), Z(0xa6), Z(0xfe), Z(0xb2), Z(0x5e), Z(0x8c), Z(0x3e), Z(0x67), Z(0x6c), Z(0xa1),
   Z(0x0d), Z(0xc2), Z(0xa2), Z(0xc1), Z(0x85), Z(0x6c), Z(0x7b), Z(0x67), Z(0xc6), Z(0x23), Z(0xe3),
   Z(0xf2), Z(0x89), Z(0x50), Z(0x9c), Z(0x03), Z(0xb7), Z(0x73), Z(0xe6), Z(0xe1), Z(0x39), Z(0x31),
@@ -180,7 +184,7 @@ static const u_int32 sbox1[256] = {
 
 #undef Z
 #define Z(x) NTOH(x << 11)
-static const u_int32 sbox2[256] = {
+static const uint32_t sbox2[256] = {
   Z(0xf0), Z(0x37), Z(0x24), Z(0x53), Z(0x2a), Z(0x03), Z(0x83), Z(0x86), Z(0xd1), Z(0xec), Z(0x50),
   Z(0xf0), Z(0x42), Z(0x78), Z(0x2f), Z(0x6d), Z(0xbf), Z(0x80), Z(0x87), Z(0x27), Z(0x95), Z(0xe2),
   Z(0xc5), Z(0x5d), Z(0xf9), Z(0x6f), Z(0xdb), Z(0xb4), Z(0x65), Z(0x6e), Z(0xe7), Z(0x24), Z(0xc8),
@@ -208,7 +212,7 @@ static const u_int32 sbox2[256] = {
 
 #undef Z
 #define Z(x) NTOH(x << 19)
-static const u_int32 sbox3[256] = {
+static const uint32_t sbox3[256] = {
   Z(0xa9), Z(0x2a), Z(0x48), Z(0x51), Z(0x84), Z(0x7e), Z(0x49), Z(0xe2), Z(0xb5), Z(0xb7), Z(0x42),
   Z(0x33), Z(0x7d), Z(0x5d), Z(0xa6), Z(0x12), Z(0x44), Z(0x48), Z(0x6d), Z(0x28), Z(0xaa), Z(0x20),
   Z(0x6d), Z(0x57), Z(0xd6), Z(0x6b), Z(0x5d), Z(0x72), Z(0xf0), Z(0x92), Z(0x5a), Z(0x1b), Z(0x53),
@@ -239,7 +243,7 @@ static const u_int32 sbox3[256] = {
  */
 
 #define F_ENCRYPT(R, L, sched) { \
- union lc4 { u_int32 l; unsigned char c[4]; } u; \
+ union lc4 { uint32_t l; unsigned char c[4]; } u; \
  u.l = sched ^ R; \
  L ^= sbox0[u.c[0]] ^ sbox1[u.c[1]] ^ sbox2[u.c[2]] ^ sbox3[u.c[3]]; }
 
@@ -250,17 +254,17 @@ static const u_int32 sbox3[256] = {
 #undef F_ENCRYPT
 #define FF(y, shiftN) (((y) >> shiftN) & 0xFF)
 #define F_ENCRYPT(R, L, sched) { \
- u_int32 u; \
+ uint32_t u; \
  u = sched ^ R; \
  L ^= sbox0[FF(u, 0)] ^ sbox1[FF(u, 8)] ^ sbox2[FF(u, 16)] ^ sbox3[FF(u, 24)];}
 #endif
 
 static inline
 void
-fc_ecb_enc(u_int32 l,
-	   u_int32 r,
-	   u_int32 out[2],
-	   const int32 sched[ROUNDS])
+fc_ecb_enc(uint32_t l,
+	   uint32_t r,
+	   uint32_t out[2],
+	   const int32_t sched[ROUNDS])
 {
 #if !defined(UNROLL_LOOPS)
   {
@@ -298,10 +302,10 @@ fc_ecb_enc(u_int32 l,
 
 static inline
 void
-fc_ecb_dec(u_int32 l,
-	   u_int32 r,
-	   u_int32 out[2],
-	   const int32 sched[ROUNDS])
+fc_ecb_dec(uint32_t l,
+	   uint32_t r,
+	   uint32_t out[2],
+	   const int32_t sched[ROUNDS])
 {
   sched = &sched[ROUNDS-1];
 
@@ -341,17 +345,17 @@ fc_ecb_dec(u_int32 l,
 
 static inline
 void
-fc_cbc_enc(const u_int32 *in,
-	   u_int32 *out,
-	   int32 length,
-	   const int32 sched[ROUNDS],
-	   u_int32 iv[2])
+fc_cbc_enc(const uint32_t *in,
+	   uint32_t *out,
+	   int32_t length,
+	   const int32_t sched[ROUNDS],
+	   uint32_t iv[2])
 {
-  int32 xor0 = iv[0], xor1 = iv[1];
+  int32_t xor0 = iv[0], xor1 = iv[1];
 
   for (; length > 0; length -= 8)
     {
-      u_int32 b8[2];
+      uint32_t b8[2];
       /* If length < 8 we read to much, usally ok */
       xor0 ^= in[0];
       xor1 ^= in[1];
@@ -370,17 +374,17 @@ fc_cbc_enc(const u_int32 *in,
 
 static inline
 void
-fc_cbc_dec(const u_int32 *in,
-	   u_int32 *out,
-	   int32 length,
-	   const int32 sched[ROUNDS],
-	   u_int32 iv[2])
+fc_cbc_dec(const uint32_t *in,
+	   uint32_t *out,
+	   int32_t length,
+	   const int32_t sched[ROUNDS],
+	   uint32_t iv[2])
 {
-  int32 xor0 = iv[0], xor1 = iv[1];
+  int32_t xor0 = iv[0], xor1 = iv[1];
 
   for (; length > 0; length -= 8)
     {
-      u_int32 b8[2];
+      uint32_t b8[2];
       /* In is always a multiple of 8 */
       fc_ecb_dec(in[0], in[1], b8, sched);
       b8[0] ^= xor0;
@@ -407,11 +411,11 @@ fc_cbc_dec(const u_int32 *in,
 int
 fc_ecb_encrypt(const void *in_,
 	       void *out_,
-	       const int32 sched[ROUNDS],
+	       const int32_t sched[ROUNDS],
 	       int encrypt)
 {
-  const u_int32 *in = in_;	/*  In must be u_int32 aligned */
-  u_int32 *out = out_;		/* Out must be u_int32 aligned */
+  const uint32_t *in = in_;	/*  In must be uint32_t aligned */
+  uint32_t *out = out_;		/* Out must be uint32_t aligned */
   if (encrypt)
     fc_ecb_enc(in[0], in[1], out, sched);
   else
@@ -422,13 +426,13 @@ fc_ecb_encrypt(const void *in_,
 int
 fc_cbc_encrypt(const void *in_,
 	       void *out_,
-	       int32 length,
-	       const int32 sched[ROUNDS],
-	       u_int32 iv[2],
+	       int32_t length,
+	       const int32_t sched[ROUNDS],
+	       uint32_t iv[2],
 	       int encrypt)
 {
-  const u_int32 *in = in_;	/*  In must be u_int32 aligned */
-  u_int32 *out = out_;		/* Out must be u_int32 aligned */
+  const uint32_t *in = in_;	/*  In must be uint32_t aligned */
+  uint32_t *out = out_;		/* Out must be uint32_t aligned */
   if (encrypt)
     fc_cbc_enc(in, out, length, sched, iv);
   else
@@ -438,7 +442,7 @@ fc_cbc_encrypt(const void *in_,
 
 /* Rotate two 32 bit numbers as a 56 bit number */
 #define ROT56R(hi, lo, n) { \
-  u_int32 t = lo & ((1<<n)-1); \
+  uint32_t t = lo & ((1<<n)-1); \
   lo = (lo >> n) | ((hi & ((1<<n)-1)) << (32-n)); \
   hi = (hi >> n) | (t << (24-n)); }
 
@@ -460,7 +464,7 @@ fc_cbc_encrypt(const void *in_,
  */
 int
 fc_keysched(const void *key_,
-	    int32 sched[ROUNDS])
+	    int32_t sched[ROUNDS])
 {
   const unsigned char *key = key_;
 
@@ -486,43 +490,43 @@ fc_keysched(const void *key_,
   k |= (*key) >> 1;
 
   /* Use lower 32 bits for schedule, rotate by 11 each round (16 times) */
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
-  ROT56R64(k, 11);
-
-  *sched++ = EFF_NTOHL((u_int32)k);
-  ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
-  ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
-  ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
 
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
 
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   ROT56R64(k, 11);
-  *sched++ = EFF_NTOHL((u_int32)k);
+  *sched++ = EFF_NTOHL((uint32_t)k);
+  ROT56R64(k, 11);
+
+  *sched++ = EFF_NTOHL((uint32_t)k);
+  ROT56R64(k, 11);
+  *sched++ = EFF_NTOHL((uint32_t)k);
+  ROT56R64(k, 11);
+  *sched++ = EFF_NTOHL((uint32_t)k);
+  ROT56R64(k, 11);
+  *sched++ = EFF_NTOHL((uint32_t)k);
   return 0;
 #else
-  u_int32 hi, lo; /* hi is upper 24 bits and lo lower 32, total 56 */
+  uint32_t hi, lo; /* hi is upper 24 bits and lo lower 32, total 56 */
 
   /* Compress out parity bits */
   lo = (*key++) >> 1;
@@ -589,12 +593,12 @@ fc_keysched(const void *key_,
  */
 int
 rxkad_EncryptPacket(const void *rx_connection_not_used,
-		    const int32 sched[ROUNDS],
-		    const u_int32 iv[2],
+		    const int32_t sched[ROUNDS],
+		    const uint32_t iv[2],
 		    int len,
 		    struct rx_packet *packet)
 {
-  u_int32 ivec[2];
+  uint32_t ivec[2];
   struct iovec *frag;
 
   {
@@ -602,7 +606,7 @@ rxkad_EncryptPacket(const void *rx_connection_not_used,
      * It turns out that the security header for auth_enc is of
      * size 8 bytes and the last 4 bytes are defined to be 0!
      */
-    u_int32 *t = (u_int32 *)packet->wirevec[1].iov_base;
+    uint32_t *t = (uint32_t *)packet->wirevec[1].iov_base;
     t[1] = 0;
   }
 
@@ -610,7 +614,7 @@ rxkad_EncryptPacket(const void *rx_connection_not_used,
   for (frag = &packet->wirevec[1]; len; frag++)
     {
       int      iov_len = frag->iov_len;
-      u_int32 *iov_bas = (u_int32 *) frag->iov_base;
+      uint32_t *iov_bas = (uint32_t *) frag->iov_base;
       if (iov_len == 0)
 	return RXKADDATALEN;	/* Length mismatch */
       if (len < iov_len)
@@ -623,19 +627,19 @@ rxkad_EncryptPacket(const void *rx_connection_not_used,
 
 int
 rxkad_DecryptPacket(const void *rx_connection_not_used,
-		    const int32 sched[ROUNDS],
-		    const u_int32 iv[2],
+		    const int32_t sched[ROUNDS],
+		    const uint32_t iv[2],
 		    int len,
 		    struct rx_packet *packet)
 {
-  u_int32 ivec[2];
+  uint32_t ivec[2];
   struct iovec *frag;
 
   memcpy(ivec, iv, sizeof(ivec)); /* Must use copy of iv */
   for (frag = &packet->wirevec[1]; len > 0; frag++)
     {
       int      iov_len = frag->iov_len;
-      u_int32 *iov_bas = (u_int32 *) frag->iov_base;
+      uint32_t *iov_bas = (uint32_t *) frag->iov_base;
       if (iov_len == 0)
 	return RXKADDATALEN;	/* Length mismatch */
       if (len < iov_len)
@@ -681,21 +685,19 @@ const char ciph2[] = {
 #define rxkad_EncryptPacket _afs_bpwQbdoghO
 #endif
 
-int rx_SlowPutInt32() { abort(); }
-
 int
 main()
 {
-  int32 sched[ROUNDS];
+  int32_t sched[ROUNDS];
   char ciph[100], clear[100], tmp[100];
-  u_int32 data[2];
-  u_int32 iv[2];
+  uint32_t data[2];
+  uint32_t iv[2];
   struct rx_packet packet;
 
-  if (sizeof(int32) != 4)
-    fprintf(stderr, "error: sizeof(int32) != 4\n");
-  if (sizeof(u_int32) != 4)
-    fprintf(stderr, "error: sizeof(u_int32) != 4\n");
+  if (sizeof(int32_t) != 4)
+    fprintf(stderr, "error: sizeof(int32_t) != 4\n");
+  if (sizeof(uint32_t) != 4)
+    fprintf(stderr, "error: sizeof(uint32_t) != 4\n");
 
   /*
    * Use key1 and key2 as iv */

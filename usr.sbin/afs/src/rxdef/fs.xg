@@ -1,6 +1,6 @@
 /* This is -*-c-*- */
 
-/* $KTH: fs.xg,v 1.13 2000/04/30 10:14:25 assar Exp $ */
+/* $arla: fs.xg,v 1.18 2003/03/06 16:15:53 lha Exp $ */
 
 /*
  * Interface to FS
@@ -8,13 +8,17 @@
 
 package RXAFS_
 
-%#include <config.h>
-%#include <roken.h>
 %#include <fs_errors.h>
 
 error-function conv_to_arla_errno
 
+#define AFSUUID_GENERATE
+
 #include "common.h"
+
+const FLUSHMAX = 10;
+typedef int32_t ViceIds<FLUSHMAX>;
+typedef int32_t IPAddrs<FLUSHMAX>;
 
 /*
  * Interface
@@ -152,3 +156,30 @@ ExtendLock	(IN  AFSFid *Fid,
 
 ReleaseLock	(IN  AFSFid *Fid, 
 		 OUT AFSVolSync *Sync) = 158;
+
+FlushCPS	(IN  ViceIds *IdsArray,
+		 IN IPAddrs *AddrsArray,
+		 IN int32_t spare1,
+	         OUT int32_t *spare2,
+		 OUT int32_t *spare3) = 162;
+
+#if 0
+FetchData64	(IN  AFSFid *Fid, 
+		 IN int64_t Pos, 
+		 IN int64_t Length, 
+		 OUT AFSFetchStatus *OutStatus, 
+		 OUT AFSCallBack *CallBack, 
+		 OUT AFSVolSync *Sync) split = 65537;
+
+StoreData64	(IN  AFSFid *Fid, 
+		 IN AFSStoreStatus *InStatus, 
+		 IN uint64_t Pos, 
+		 INT uint64_t Length, 
+		 INT uint64_t FileLength, 
+		 OUT AFSFetchStatus *OutStatus, 
+		 AFSVolSync *Sync) split = 65538;
+#endif
+
+GiveUpAllCallBacks () = 65539 ;
+
+GetCapabilities(OUT Capabilities *capabilities) = 65540;

@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: lex.l,v 1.24.2.1 2001/05/28 23:23:03 mattiasa Exp $");
+RCSID("$arla: lex.l,v 1.31 2003/01/20 07:12:56 lha Exp $");
 #endif
 
 /*
@@ -84,13 +84,19 @@ struct				{ return T_STRUCT; }
 typedef				{ return T_TYPEDEF; }
 unsigned			{ return T_UNSIGNED; }
 long				{ return T_LONG; }
+afs_int32			{ return T_LONG; }
 int32_t				{ return T_LONG; }
+afs_int64			{ return T_LONGLONG; }
+int64_t				{ return T_LONGLONG; }
 u_long				{ return T_ULONG; }
-u_int32_t			{ return T_ULONG; }
+uint32_t			{ return T_ULONG; }
+afs_uint32			{ return T_ULONG; }
+uint64_t			{ return T_ULONGLONG; }
+afs_uint64			{ return T_ULONGLONG; }
 short				{ return T_SHORT; }
 int16_t				{ return T_SHORT; }
 u_short				{ return T_USHORT; }
-u_int16_t			{ return T_USHORT; }
+uint16_t			{ return T_USHORT; }
 int				{ return T_INT; }
 u_char				{ return T_UCHAR; }
 char				{ return T_CHAR; }
@@ -110,7 +116,7 @@ ASIS				{ return T_ASIS; }
 ^\%[^\n]*$			{ yylval.name = strdup (yytext+1); return T_VERBATIM; }
 -?[0-9]+			{ yylval.constant = atoi(yytext); return T_CONSTANT; }
 0[Xx][0-9a-fA-F]+		{ yylval.constant = (int)strtol(yytext+2, NULL, 0x10); return T_CONSTANT; }
-[A-Za-z][A-Za-z0-9_]*		{
+[A-Za-z_][A-Za-z0-9_]*		{
 Symbol *sym;
 
 sym = findsym(yytext);
@@ -118,9 +124,11 @@ yylval.sym = sym;
 if (sym == NULL) {
     yylval.name = strdup(yytext);
     return T_IDENTIFIER;
-} else if (sym->type == TCONST)
+} else if (sym->type == YDR_TCONST)
     return T_IDCONST;
-else if (sym->type == TTYPEDEF || sym->type == TENUM || sym->type == TSTRUCT)
+else if (sym->type == YDR_TTYPEDEF
+	 || sym->type == YDR_TENUM
+	 || sym->type == YDR_TSTRUCT)
     return T_IDTYPE;
 else
     error_message (0, "Ignoring \"%s\"\n", yytext);

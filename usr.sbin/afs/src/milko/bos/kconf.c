@@ -49,7 +49,7 @@
 /* $Heimdal: config_file.c,v 1.38 1999/12/02 17:05:08 joda Exp $ */
 
 #ifdef RCSID
-RCSID("$KTH: kconf.c,v 1.3 2000/05/27 21:56:56 ahltorp Exp $");
+RCSID("$arla: kconf.c,v 1.5 2002/10/01 23:34:57 lha Exp $");
 #endif
 
 static int parse_section(char *p, kconf_config_section **s,
@@ -130,8 +130,7 @@ parse_list(FILE *f, unsigned *lineno, kconf_config_binding **parent,
 	char *p;
 
 	++*lineno;
-	if (buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\n")] = '\0';
 	p = buf;
 	while(isspace((unsigned char)*p))
 	    ++p;
@@ -256,8 +255,7 @@ kconf_config_parse_file_debug (const char *fname,
 	char *p;
 
 	++*lineno;
-	if(buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\n")] = '\0';
 	p = buf;
 	while(isspace((unsigned char)*p))
 	    ++p;

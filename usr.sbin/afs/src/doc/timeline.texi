@@ -2,7 +2,7 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: timeline.texi,v 1.5 2000/12/10 23:06:32 lha Exp $
+@c $arla: timeline.texi,v 1.13 2003/02/01 17:15:00 lha Exp $
 
 @node Arla timeline, Authors, Oddities, Top
 @comment  node-name,  next,  previous,  up
@@ -10,11 +10,12 @@
 
 Arla have existed for quite some years.
 
-Development started around XXX by Björn Grönvall
-@email{bg@@nada.kth.se}, quick followers was Assar
-@email{assar@@sics.se} (at that time @email{assar@@pdc.kth.se>) and
-Johan Danielsson <joda@@pdc.kth.se}. The platform that was chosen was
-Sparc SunOS4 (the OS that NADA, KTH was using).
+Development started in fall 1993 by Björn Grönvall
+@email{bg@@nada.kth.se} (with an rxkad implantation), he had a working
+read-only implementation in winter 1994. Quick followers was Assar
+@email{assar@@sics.se} (at that time @email{assar@@pdc.kth.se>}) and
+Johan Danielsson <@email{joda@@pdc.kth.se}>. The platform that was
+chosen was Sparc SunOS4 (the OS that NADA, KTH was using).
 
 Some work was being done by Patrik Stymne @email{patriks@@e.kth.se} in
 porting arla to Ultrix, but this work was never finished.
@@ -78,6 +79,9 @@ expected to.
 We added support for `dynroot' and `fake-mp' to prepare for Windows and
 Darwin/MacOSX support.
 
+Rhapsody xfs port was contributed by Alexandra Ellwood @email{lxs@@MIT.EDU}
+Later, Rhapsody was renamed Darwin.
+
 In Mars 2000 preliminary support for MacOS X/Darwin 1.0 was merged in
 by Magnus and Assar.
 
@@ -88,6 +92,10 @@ same time.
 In June 2000 there was a presentation on MADE2000 in Gothenburg, Sweden.
 
 In September 2000 MacOS X Beta was working.
+
+In March 2001 Incremental open code stable for some platforms
+
+In September 2001 xfs was renamed to nnpfs.
 
 This just includes some milestones, for more information se
 Changelog.* and NEWS files in the distribution.

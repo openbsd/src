@@ -35,24 +35,16 @@
  * hash.h. Header file for hash table functions
  */
 
-/* $KTH: hash.h,v 1.6.2.1 2001/08/31 18:09:17 ahltorp Exp $ */
+/* $arla: hash.h,v 1.8 2002/05/12 16:02:33 lha Exp $ */
 
 #include <bool.h>
 
-struct hashentry {		/* Entry in bucket */
-     struct hashentry **prev;
-     struct hashentry *next;
-     void *ptr;
-};
+#define HASHTAB_GROW		0x01
 
+struct hashentry;
 typedef struct hashentry Hashentry;
 
-struct hashtab {		/* Hash table */
-     int (*cmp)(void *, void *); /* Compare function */
-     unsigned (*hash)(void *);	/* hash function */
-     int sz;			/* Size */
-     Hashentry *tab[1];		/* The table */
-};
+struct hashtab;
 
 typedef struct hashtab Hashtab;
 typedef int (*hashtabnew_arg2_t)(void *, void *);
@@ -63,6 +55,11 @@ typedef unsigned (*hashtabnew_arg3_t)(void *);
 Hashtab *hashtabnew(int sz, 
 		    int (*cmp)(void *, void *),
 		    unsigned (*hash)(void *));	/* Make new hash table */
+
+Hashtab *hashtabnewf(int sz,
+		     int (*cmp)(void *, void *),
+		     unsigned (*hash)(void *),
+		     int flags);	/* Make new hash table */
 
 void *hashtabsearch(Hashtab *htab, /* The hash table */
 		    void *ptr);	/*  The key */

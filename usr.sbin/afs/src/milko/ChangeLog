@@ -1,3 +1,366 @@
+2003-04-09  Love  <lha@stacken.kth.se>
+
+	* pts/ptserver.c: s/strcpy/strlcpy/
+	
+2003-04-08  Love  <lha@stacken.kth.se>
+
+	* fs/fsprocs.c: s/RXAFS_/SRXAFS_/
+	* fs/fsprocs.c: replace sprint with snprintf
+	
+2003-02-16  Love  <lha@stacken.kth.se>
+
+	* lib/mdb/ndbm.c: build if we have HAVE_NEW_DB
+	
+	* lib/mdb/ndbm.c (mdb_NDBM_create): instead of assert()ing, return
+	failure
+
+2003-02-15  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* vldb/Makefile.in: s/arlautil/libarlautil
+
+	* vldb/vldbserver.c: s/int32/int32_t
+
+	* fs/Makefile.in: Added libvers.la Removed libko.a, we alreday
+	have libko.la
+
+	* lib/vld/vld.c: spare1-4 in AFSFetchStatus are no more
+
+2002-11-29  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* lib/vld/vld.c (vld_modify_vnode): update ServerModTime in
+	correct union
+
+2002-10-31  Love  <lha@stacken.kth.se>
+
+	* vldb/vldbserver.c: fix prototype for VL_GetAddrs
+	
+2002-10-02  Love  <lha@stacken.kth.se>
+
+	* bos/kconf.c: fix NUL termination of fgets string
+	
+2002-09-08  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* fs/volprocs.c (VOLSER_AFSVolForwardMultiple): change to new xdr
+	definition
+
+	* lib/dpart/Makefile.in: Added @MILKO_ROOT@
+
+2002-07-03  Love  <lha@stacken.kth.se>
+
+	* milko/appl/perf: move to arla appl tree
+
+2002-06-02  Love  <lha@stacken.kth.se>
+
+	* Make compile again
+
+2002-03-06  Tomas Olsson  <tol@stacken.kth.se>
+
+	* lib/vld/mdir.[ch] use fdir_readdir the new way
+
+	* lib/vld/salvage.c use fdir_readdir the new way
+
+	* appl/sked/sked.c use fdir_readdir the new way
+
+	* appl/perf/Makefile.in depend on libarlautil
+
+	* appl/sked/Makefile.in depend on libarlautil
+	
+2002-01-29  Love  <lha@stacken.kth.se>
+
+	* fs/dump.c: remove __FUNCTION__, its not portable
+
+2002-01-29  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* fs/volprocs.c (VOLSER_AFSVolDump): call generate_dump()
+
+	* fs/dump.h, fs/dump.c: Added dump functionality
+
+	* lib/vld/vld.h, lib/vld/vld.c: Added vld_foreach_dir and
+	vld_foreach_file
+
+2002-01-23  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* fs/fsprocs.c: Pass volume type to ropa_getcallback
+	(check_ss_bits): check super user
+	(fs_init_req): don't allow writes to a read-only volume
+	(RXAFS_SetVolumeStatus): check super user
+
+	* fs/volprocs.c: Changed debugging output
+	(VOLSER_AFSVolEndTrans): break callback for volume
+
+	* fs/fs_def.h: Define MILKO_ROFS
+
+	* fs/dump.c: tag is unsigned char
+
+	* fs/connsec.c (fs_connsec_createconn): fill in superuser field
+
+	* lib/voldb/vdb_flat.c (vdbflat_rebuild): implement
+
+	* lib/vld/vld.c (vld_storestatus_to_dent): remove permission check
+	(vld_storestatus_to_dent): remove permission check
+	(vld_check_rights): use superuser flag in fs_security_context
+
+	* lib/vld/salvage.c: Update to new voldb nextptr behaviour
+	(read_nodes_dir): Rewrite permissions check
+	(read_nodes_file): Rewrite permissions check
+
+	* lib/vld/mnode.h: Added superuser field in struct
+	fs_security_context
+
+2002-01-11  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* fs/volprocs.c: Call vld_rebuild
+
+	* lib/vld/vld.c: Added vld_rebuild
+
+	* lib/vld/vld.h: Added vld_rebuild
+
+	* lib/voldb/voldb.c: Added voldb_rebuild
+
+	* lib/voldb/vdb_flat.c: Added vdbflat_rebuild
+
+	* lib/voldb/voldb.h: Added voldb_rebuild
+
+	* lib/voldb/voldb_internal.h: Added voldb_rebuild
+
+	* lib/vld/vld.c (delete_all_nodes): nextptr is VOLDB_ENTRY_USED if
+	used
+	(restore_file): nextptr is VOLDB_ENTRY_USED if used
+	(restore_file): if a file exists at the same vnode, remove the old
+	file
+
+	* fs/fsrv_locl.h: Include roken.h
+
+	* fs/fsprocs.c (RXAFS_StoreACL): only get VOLOP_GETSTATUS and
+	VOLOP_ADMIN
+
+	* fs/dump.c (read_vnodeheader): restore_file changed acl argument
+	to int32_t *
+
+	* lib/vld/vld.h (restore_file): change acl argument to int32_t *
+
+	* lib/vld/vld.c (restore_file): restore ACL and update volsize
+
+	* fs/connsec.c (fs_connsec_createconn): Don't free db server
+	context before PR_GetCPS
+
+2002-01-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* lib/dpart/dpart.c: Use statvfs if present
+
+2001-11-17  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* fs/connsec.c (fs_connsec_nametoid): Use arlalib
+	(fs_connsec_idtoname): Use arlalib
+	(fs_connsec_createconn): Use arlalib
+
+	* vldb/vldbserver.c: Flush database after writing
+	(VL_DeleteEntry): rewrite
+
+2001-11-07  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* fs/volprocs.c (volser_fetch_vh): return better error messages
+	(VOLSER_AFSVolClone): log more
+	(VOLSER_AFSVolTransCreate): check for volume existence
+	(VOLSER_AFSVolPartitionInfo): fill in some bogus free value
+
+	* fs/Makefile.in: Use arlalib
+	
+2001-11-06  Tomas Olsson  <tol@stacken.kth.se>
+
+	* fs/fsprocs.c (removenode): more proper callback handling
+	(RXAFS_Rename): cover more cases, handle callbacks better
+
+	* lib/vld/mnode.c (mnode_{find,free,remove}): use flags.removedp
+	* lib/vld/mnode.h (struct mnode): added flags.removedp
+	* lib/vld/mdir.c (mdir_changefid): added
+	* lib/vld/mdir.h: added mdir_changefid()
+	* lib/vld/vld.c (vld_adjust_linkcount): always update fetchstatus
+	(vld_modify_vnode): update ServerModTime
+
+2001-11-02  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/sked/sked.c (volshow_cmd): partdir is the 3rd argument
+
+	* vldb/vldb_locl.h vldb/vl_db.c: Added vldb_flush
+
+2001-11-02  Tomas Olsson  <tol@stacken.kth.se>
+
+	* lib/voldb/vdb_flat.c: use VOLDB_ENTRY_USED
+	* lib/voldb/voldb.h: define VOLDB_ENTRY_USED
+	* pts/ptserver.c (read_header): no need to malloc()
+	* fs/fileserver.c (main): do usage() on --help
+
+2001-10-14  Love  <lha@stacken.kth.se>
+
+	* appl/sked/sked.c: replace SL_BADCOMMAND with -1 to make it
+	compatible with older libsl
+
+2001-10-14  Tomas Olsson  <tol@stacken.kth.se>
+
+	* fs/fsprocs.c (RXAFS_Rename): initialize new_n when same dir too
+
+	* lib/vld/mdir.h (mdir_lookup): new signature
+	(mdir_rename): added
+
+	* lib/vld/mdir.c (mdir_lookup): new signature
+	(mdir_rename): added
+
+	* lib/vld/vld.h (vld_remove_node): use mnode
+	(vld_[gs]et_volstats): added
+
+	* lib/vld/vld.c
+	(vld_{update_volsize,check_quota,{get,set}_volstats}): new functions
+	added quota handling, hard links, anonymous gets some rights
+
+	* fs/fsprocs.c: added quota handling, hard links
+
+	* pts/ptserver.c (read_header): free() buffer
+	(conv_name_to_id): free() buffer
+
+	* lib/vld/mnode.c (reset_node): close fd
+	(mnode_find): try harder when no free nodes
+
+	* lib/dpart/dpart.c (dp_getstats): added
+	* lib/dpart/dpart.h (dp_getstats): added
+
+2001-10-12  Tomas Olsson  <tol@stacken.kth.se>
+
+	* fs/connsec.c (fs_connsec_createconn): lowercase realm for ptserver
+	* pts/{Makefile.in,pr.c,ptserver.[ch]} use mdb
+	
+2001-10-03  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* lib/mdb/mdb.[ch], lib/mdb/ndbm.c: Added flush
+
+	* fs/fsprocs.c (RXAFS_FetchStatus): use exit label instead of
+	return
+	* fs/dump.[ch]: Make it work somewhat
+
+	* fs/volprocs.c (VOLSER_AFSVolRestore): Added transaction handling
+
+	* lib/vld/vld.h: Added restore_file
+	* lib/vld/vld.c: Added restore_file
+	(vld_check_rights): Added implicit read, lookup and administer
+	rights for system:administrators
+
+	* lib/voldb/vdb_flat.c: Added expand
+	* lib/voldb/voldb.c: Added expand
+	* lib/voldb/voldb.h: Added expand
+	* lib/voldb/voldb_internal.h: Added expand
+
+	* vldb/Makefile.in: Changed to namecentric database handling
+	* vldb/vl_db.c: Changed to namecentric database handling
+	* vldb/vldb_locl.h: Changed to namecentric database handling
+	* vldb/vldbserver.c: Changed to namecentric database handling
+	* vldb/vl_disk.c: Changed to namecentric database handling
+
+2001-10-02  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* lib/vld/vld.[ch]: Added vld_delete_volume
+
+	* fs/Makefile.in: Added dump.c
+
+	* fs/fsrv_locl.h: Added dump.h
+
+	* fs/volprocs.c: Implement DeleteVolume, Restore, GetStatus,
+	SetIdsTypes, SetDate
+
+	* fs/dump.[ch]: Added bogus dump functionality
+
+2001-09-28  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* fs/volprocs.c (VOLSER_AFSVolListVolumes): implement
+
+	* vldb/vldbserver.c: Use vital_vlheader instead of vlheader
+
+	* vldb/vl_db.c: Use vital_vlheader instead of vlheader
+
+	* lib/mdb/ndbm.c (NDBM_fetch): return ENOENT on error
+
+	* lib/vld/vld.[ch]: Added vld_list_volumes
+
+	* fs/volprocs.c: Added security checks and logging.
+
+2001-09-04  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/sked/sked.c (volcreate_cmd): avoid using null arg for
+	dpart_root
+
+	* vldb/vldb_locl.h: update prototypes, cleanup
+
+	* vldb/vl_db.c (vldb_{read_entry,id_to_name,write_name}): 
+	error handling, fixup
+	(vldb_name_to_id): added new arg (name), some error handling, fixup
+	(vldb_{print_entry,close}): update signature
+
+	* vldb/vldbserver.c (VL_{Create,Delete}Entry, VL_GetEntryBy{Name,ID}): 
+	some error handling & cleanup
+
+	* lib/mdb/mdb.c (mdb_delete): added
+	* lib/mdb/mdb.h: Added prototypes for mdb_delete() and mdb_close()
+	* lib/mdb/ndbm.c (NDBM_delete): added
+
+2001-08-30  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* vldb/Makefile.in: Link with libmdb. Don't build vled.
+	* vldb/{vl_bd.c,vldbserver.c,vldb_locl.h}: changed to use mdb
+	* lib/Makefile.in: added directory mdb
+	* lib/mdb: Database library for vl- and ptserver, added
+
+2001-08-26  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* pts/ptserver.c (main): move prserver_create after mlog_loginit
+	* vldb/vldbserver.c (main): call vldb_create after mlog_loginit
+
+2001-07-26  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* vldb/{vl_db.c,vldb_locl.h,vldbserver.c}: Use mlog. Restructure
+	program arguments
+
+	* pts/{pr.c,ptserver.c,ptserver.h}: Use mlog. Restructure program
+	arguments
+
+	* lib/vld/Makefile.in: Removed debug.c
+
+	* lib/mlog/Makefile.in: Added mdebug.c
+
+	* lib/vld/debug.c: Moved to lib/mlod/mdebug.c
+
+	* pts/Makefile.in, vldb/Makefile.in: Link with mlog
+
+	* include/mdebug.h: Moved to lib/mlog/mdebug.h
+
+	* fs/fileserver.c: Make salvage_options a passed variable
+	Restructure program arguments
+
+2001-07-07  Magnus Ahltorp  <map@stacken.kth.se>
+
+	* vldb/vldbserver.c (VL_ReplaceEntryN): argument should be
+	nvldbentry
+
+	* bos/bosprocs.c (BOZO_SetStatus): Added status argument
+
+	* appl/sked/sked.c (volls_cmd): Cast printf arguments.
+	mdir_readdir changed argument from VenusFid pointer to VenusFid.
+
+	* lib/msecurity/msecurity.c: Include roken.h
+
+	* lib/vld/salvage.c (check_content_dir_func): fdir_readdir changed
+	argument from VenusFid pointer to VenusFid
+
+	* lib/vld/mdir.[ch] (mdir_readdir): change argument from VenusFid
+	pointer to VenusFid
+
+2001-02-12  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* lib/dpart/dpart.c: Added parentheses
+
+2001-01-09  Love  <lha@stacken.kth.se>
+
+	* fs/fileserver.c (arg): too arguments where using short option
+	's' From Nickolai Zeldovich <kolya@MIT.EDU>
+	
 2001-01-01  Love  <lha@stacken.kth.se>
 
 	* fs/fsprocs.c: (RXAFS_FetchACL): add dummy call to i2nlist() to

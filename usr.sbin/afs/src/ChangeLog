@@ -1,1026 +1,1075 @@
-2002-02-25  Love Hörnquist-Åstrand  <lha@stevens.e.kth.se>
+2003-07-15  Love  <lha@stacken.kth.se>
 
-	* Release 0.35.7
+	* nnpfs/bsd/nnpfs_dev-common.c: freebsd5.x needs
+	nnpfs_block_sigset too
 
-2002-02-24  Love  <lha@stacken.kth.se>
+	* nnpfs/bsd/nnpfs_dev-common.c: drop support for freebsd 5.0 and
+	only support freebsd 5.1
 
-	* tests/fhbench.c: include timevalsub and rename it to tvsub
+2003-07-01  Tomas Olsson <tol@stacken.kth.se>
+
+	* nnpfs/winnt/src/nnpfs_init.c (nnpfs_initdevice): use nnpfs_fsd_*
+	wrappers
+
+	* nnpfs/winnt/src/nnpfs_vops.c: defined wrappers (nnpfs_fsd_*) for
+	all fsd entry points.
+	(nnpfs_{handle_stale,data_valid}): some lock handling
+
+	* nnpfs/winnt/src/nnpfs_node.c
+	(nnpfs_{vrele,node_gc_all,close_data_handle,open_file,open_fh}):
+	locking
+
+	* nnpfs/winnt/src/nnpfs_message.c
+	(nnpfs_message_{installdata,invalidnode}): lock MainResource
+
+	* nnpfs/winnt/src/nnpfs_fastio.c (nnpfs_fastio_read): don't print
+	buffer contents, use FsRtlE{nter,xit}FileSystem
+	(nnpfs_createsec_acq): use FsRtlE{nter,xit}FileSystem
+	(nnpfs_lazywrite_{acq,rel}): use node->lazy_writer
+
+	* nnpfs/winnt/src/nnpfs_dnlc.c (*): more
+	FsRtlE{nter,xit}FileSystem usage
+	* nnpfs/winnt/src/nnpfs_dev.c (*): more FsRtlE{nter,xit}FileSystem
+	usage
+
+	* nnpfs/winnt/src/nnpfs_dev.c (nnpfs_devctl): renamed to
+	nnpfs_fsd_devctl sprinkle some FsRtlE{nter,xit}FileSystem()
+
+	* nnpfs/winnt/inc/nnpfs_proto.h: added DEFINE_IRP:s for wrappers
+	for fsd entry points
+
+	* nnpfs/winnt/inc/nnpfs_locl.h (nnpfs_node): store lazy writer
+	thread
+
+2003-06-26  Tomas Olsson <tol@stacken.kth.se>
+
+        * nnpfs/winnt/src/inc/nnpfs_locl.h 
+	use FastMutex to protect zone allocation and nodelist 
+
+        * nnpfs/winnt/src/nnpfs_{dev,dnlc,init,misc}.c 
+	use FastMutex to protect zone allocation and nodelist 
+
+	* nnpfs/winnt/src/nnpfs_node.c (*): use FastMutexes to protect
+	zone allocation and node list
+	(nnpfs_open_fh): added
+
+	* nnpfs/winnt/src/nnpfs_message.c (nnpfs_message_gc_node): set
+	STALE and call vgone() for unused nodes
+
+	* nnpfs/winnt/src/nnpfs_vops.c (nnpfs_get_dummynode): clear
+	wake_event
+	(nnpfs_readwrite): hold PagingIoResource when paging
+
+	* nnpfs/winnt/src/nnpfs_fastio.c (nnpfs_fastio_initmap): added
+	(*): updated lock handling, use nnpfs_fastio_initmap
+
+2003-06-12  Love  <lha@stacken.kth.se>
+
+	* appl/lib/arlalib.c: add more v4 glue
+
+	* rxkad/rxkad_locl.h: protect v4 stuff with #ifdef HAVE_KRB4
 	
-2002-02-08  Love  <lha@stacken.kth.se>
-
-	* xfs/linux/xfs_inodeops.c: 1.174->1.175: (xfs_file_mmap): pass in
-	the xfs-inode to data_valid instead of the cache-node
+	* appl/lib/Makefile.in: add krb5 includes
 	
-2002-02-06  Love  <lha@stacken.kth.se>
-
-	* xfs/linux/xfs_dev.c: 1.87->1.88:
-	(free_node): create yet another free function, this one does
-	consistency checks and replaces xfs_free(xn, XFS_MEM_XNODE)
-	(xfs_queue_inactive): if the channel is closed, just free the node
-	(xfs_process_inactive_queue): use free_node()
-	(xfs_empty_inactive_queue): use free_node()
-
-	* xfs/linux/xfs_syscalls.c: 1.69->1.70: (xfs_fh_to_dentry):
-	linux-2.4: after a get_super, we need to drop_super(), w/o this,
-	the we will fail to unmount the super block of the
-	cache-filesystem.
-
-2002-02-05  Love  <lha@stacken.kth.se>
-
-	* tests/copy-and-diff-gnu-mirror: 1.7->1.8: don't run unless use
-	are running -large tests
-
-	* tests/run-tests.in: 1.76->1.78: add option -large that avoids
-	running tests that uses up large amount of diskspace (like
-	copy-and-diff-gnu-mirror), add new option -fail that make test-run
-	stop after the first failure
+	* include/stds.h: s/HAVE_KERBEROS/KERBEROS/
 	
-2002-02-01  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* appl/mac/Arla_Configuration/ReadCells.m: 1.2->1.3: Added static
-	on local functions
-	* appl/mac/Arla_Configuration/Makefile.in: 1.6->1.7: Use install
-	instead of tar
-	* appl/mac/Arla_Configuration/DataSource.m: 1.12->1.13: Added
-	static on local functions 1.12->1.13: (checkdaemonpid): give -p to
-	ps
-
-2002-02-01  Love  <lha@stacken.kth.se>
-
-	* xfs/linux: dual license xfs for linux under bsd/gpl, update
-	copyright years. See xfs/linux/license for more detailed
-	information.
-
-	* xfs/linux/xfs_node.c: adding missing symbol xfs_null_aops
+	* appl/lib/appl_locl.h: add <krb5.h>
 	
-2002-02-01  Magnus Ahltorp  <ahltorp@nada.kth.se>
+2003-06-11  Love  <lha@stacken.kth.se>
 
-	* lwp/Makefile.in: Remove superfluous -lroken
-
-	* cf/check-roken.m4: Reference libroken directly instead of with -l
-
-2002-02-01  Love  <lha@stacken.kth.se>
-
-	* conf/CellServDB: 1.62->1.63: (theory.cornell.edu): removed, from
-	Ruth Mitchell <mitchell@tc.cornell.edu> on info-afs@transarc.com
+	* appl/lib/arlalib.c: add krb5 support, untested
 	
-	* Fix support for linux-2.4. This is only tested with 2.4.17,
-	  older version will probably not work.
-
-	xfs_inodeops.c: 1.165->1.166
-	xfs_message.c: 1.99->1.102
-	xfs_node.c: 1.56->1.58
-	xfs_vfsops.c: 1.75->1.77
-	xfs/xfs_fs.h: 1.23->1.24
-	xfs/xfs_locl.h: 1.51->1.52
-
-2002-01-31  Love  <lha@stacken.kth.se>
-
-	* configure.in: 1.526->1.527: check for list_del_init
-	* cf/linux-func-init-mutex.m4: 1.6->1.7: make test work when
-	init_MUTEX is a macro (late linux-2.2)
-
-	* configure.in: 1.474->1.475: (linux): test for struct
-	dcache_operations.d_delete returning void
-
-	* cf/linux-d_delete-void.m4: 1.1: added from current
+	* rxkad/rxk_serv.c: avoid warning
 	
-2002-01-30  Love  <lha@stacken.kth.se>
+	* rxkad/rxk_serv.c: make rxkad_NewServerSecurityObject match
+	prototype
 
-	* xfs/linux/xfs_dev.c: part of 1.82->1.83: use init_MUTEX
-	* xfs/linux/xfs/xfs_locl.h: add from current, local define of
-	init_MUTEX
+	* appl/lib/arlalib.c: change enable to support krb5, now just fill
+	in the blanks
 
-2002-01-28  Love  <lha@stacken.kth.se>
+2003-06-10  Love  <lha@stacken.kth.se>
 
-	* xfs/include/xfs/xfs_message.h: 1.46->1.47: add symbol
-	XFS_XDELETED
-
-2002-01-25  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* appl/mac/Arla_Configuration: Build appl/mac/Arla_Configuration
-	with normal make
-
-	* configure.in: 1.510->1.511: Build appl/mac/Arla_Configuration
-	with normal make
-
-2002-01-25  Love  <lha@stacken.kth.se>
-
-	* configure.in: Disable (arlad/fbuf) mmap for darwin for now, we
-	get 0 byte long files sometime.
+	* rxkad/Makefile.am: drop rxk_info.c its a server function
 	
-2002-01-22  Love  <lha@stacken.kth.se>
-
-	* xfs/bsd/xfs_message.c: 1.52->1.53: handle struct
-	mount.mnt_nvnodelist (FreeBSD 4.5 and higher)
-
-	* xfs/bsd/xfs_node-bsd.c: 1.59->1.60: handle struct
-	mount.mnt_nvnodelist (FreeBSD 4.5 and higher)
-
-	* configure.in (1.523->1.524): (FreeBSD): never set smp flags to
-	"no"
-	 (FreeBSD): test for struct mount.mnt_nvnodelist (the new name for
-	mnt_vnodelist in 4.5 and above)
+	* rx/rx_misc.c: drop osi_{Alloc,Free}, we use macros
 	
-	* configure.in: unbreak the --enable-smp for both linux and
-	freebsd, for freebsd is plainly didn't work, and for linux it
-	didn't autoprobe
-
-2001-12-20  Love  <lha@stacken.kth.se>
-
-	* tests/hardlink3: 1.2->1.3: hardlink3 is not fast
+	* lib/ko/koerror.c: wrap krb4 stuff with HAVE_KRB4
 	
-	* xfs/bsd/xfs_vfsops-netbsd.c: create a xfs_reinit
-	* configure.in: 1.507->1.508: check for vfs_reinit
+	* lib/ko/kocell.c: wrap krb4 stuff with krb4
+
+	* configure.in: add AC_FUNC_KAFS_SETTOKEN_RXKAD
 	
-	* configure.in: 1.521->1.522: (netbsd,openbsd): make sure we pass
-	in -I$SYS to incl
-	(KERNEL_CPPFLAGS) since the <bsd.lkm.mk> might not set it.
-
-2001-12-20  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* arlad/fcache.c (try_next_fs): return true for RXKADUNKNOWNKEY
-
-2001-11-24  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* rx/rxdebug.c (1.11->1.12) print byte and packetcounters as
-	unsigned
-
-2001-11-16  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* appl/vos/vos_{un,}lock.c send request to syncsite
-	* rx/rxdebug.c (1.10->1.11) servers do return statistics
-	* appl/vos/vos_listvldb.c (1.12 -> 1.13) handle partitions > 'z'
-
-2001-10-24  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* lib/bufdir/fbuf.c: 1.15->1.16: msync doesn't take protection
-	flags
-
-	* appl/mac/make-mac-package.sh: Changed to /Library/StartupItems
-
-	* lib/bufdir/fbuf.c: 1.14->1.15: Added msync before munmap where
-	necessary
-
-	* lib/ko/Makefile.in: 1.35->1.36: Added LDFLAGS
-
-	* appl/vos/Makefile.in: 1.17->1.18: Added LDFLAGS
-
-	* appl/udebug/Makefile.in: 1.14->1.15: Added LDFLAGS
-
-	* appl/fs/Makefile.in: 1.16->1.17: Added LDFLAGS
-
-	* appl/pts/Makefile.in: 1.14->1.15: Added LDFLAGS
-
-	* appl/bos/Makefile.in: 1.15->1.16: Added LDFLAGS
-
-	* appl/afsutils/Makefile.in: 1.19->1.20: Added LDFLAGS
-
-	* appl/Makefile.in: Only build kalog when we have tf_util
-
-	* cf/check-kerberos.m4: 1.39->1.40: Added support for Mac OS X
-	built-in kerberos and kth-krb with openssl
-
-	* configure.in: 1.520->1.521: Don't use libroken in tf_util test.
-
-2001-10-22  Love  <lha@stacken.kth.se>
-
-	* configure.in: freebsd[45]): when build with --enable-smp tag on
-	APIC_IO since its needed (true for alpha too ?)
+	* lib/ko/auth.c: wrap krb4 stuff with krb4, use kafs_settoken_rxkad
 	
-2001-10-22  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* configure.in: 1.517->1.519: Added -flat_namespace on Mac OS X.
-	Only compile kalog if there is a tf_init.
-
-2001-10-19  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* xfs/bsd/xfs_message.c: 1.70->1.72: (xfs_message_invalidnode):
-	Don't treat node as used if only UBC uses it.
-
-	* xfs/bsd/xfs_vnodeops-common.c: 1.77->1.78:
-	(xfs_inactive_common): Clear dirty flag when fsync fails
-	1.78->1.79: (xfs_read_common): Do not print out random memory
-	1.79->1.80: (xfs_open_valid): Call xfs_handle_stale 1.79->1.80:
-	Added xfs_handle_stale
-
-	* xfs/bsd/xfs/xfs_locl.h: 1.50->1.51: xfs_set_vp_size is called
-	ubc_setsize on Darwin
-
-	* arlad/messages.c (xfs_message_getroot): Correct typo
-
-2001-10-16  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* arlad/messages.c: 1.263->1.264: (xfs_message_getroot): Set
-	tokens in installroot message
-
-2001-10-14  Love  <lha@stacken.kth.se>
-
-	* conf/CellServDB: mc.vanderbilt.edu removed, from David Krause
-	<david.w.krause@vanderbilt.edu> on arla-drinkers
+	* include/netbsd-lkm/Makefile: include <bsd.own.mk>
 	
-2001-10-11  Magnus Ahltorp  <ahltorp@fridge.nada.kth.se>
-
-	* Release 0.35.6
-
-2001-10-09  Love  <lha@stacken.kth.se>
-
-	* arlad/fcache.c: (get_attr_bulk): avoid updating entries that are
-	locked, fixes tests/hardlink3
+	* include/stds.h: more kerberos4 defines
 	
-	* tests/hardlink3: added test that trigged bulkstatus bug
+	* appl/lib/arlalib.c: wrap krb4 stuff in HAVE_KRB4
 	
-2001-10-08  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* INSTALL: Updated
-	* README: Updated
-
-2001-10-04  Assar Westerlund  <assar@sics.se>
-
-	* appl/lib/ka-procs.c (ka_authenticate): handle k_afsklog
-	* appl/afsutils/klog.c (get_afs_token), appl/afsutils/aklog.c
-	(krb_afslog_uid): k_afslog -> k_afsklog_uid
-	(which always was the old name)
-
-2001-10-02  Love  <lha@stacken.kth.se>
-
-	* cf/check-kerberos.m4: replace -lroken with $LIB_roken
+	* appl/lib/appl_locl.h: wrap krb4 stuff in HAVE_KRB4
 	
-2001-10-01  Mattias Amnefelt  <mattiasa@e.kth.se>
+	* rxkad/Makefile.am: drop rxkad server end (to be build later as
+	rxkad_server)
 
-	* arlad/fcache.c (1.349->1.350) (get_root_of_volume): always try
-	to get the best credential
-
-2001-09-30  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* xfs/bsd/xfs/xfs_dev.h: Support three argument selrecord
-
-	* xfs/bsd/xfs_dev-bsd.c: Support three argument selrecord
-
-2001-09-28  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* arlad/conn.h: increase fuzz by a factor of 1000
-
-2001-09-26  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* appl/vos/vos_listpart.c: null terminate agetarg list
-
-2001-09-24  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* configure.in: Removed building of mac applications
-
-2001-09-23  Assar Westerlund  <assar@sics.se>
-
-	* arlad/messages.c (1.261->1.262): (try_again): do not invalidate
-	the volcache entry on VNOVOL, it's done in fcache.c:try_next_fs
-	now
-	* arlad/fcache.c (merge 1.347->1.348): (try_next_fs): send in fid
-	too.  and mark volcache entry as invalid on VNOVOL and VMOVED.
-	this way we actually mark volcache entries as invalid and refresh
-	them even when there are other r/o clones that work
-
-2001-09-21  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* rx/rxdebug.c (GetVersion) Check return codes
-
-2001-09-19  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* appl/vos/vos_examine.c: Print info from vldb even if we can't 
-	reach fileserver 
-	* appl/vos/vos_examine.c: (printvolstat) only print volumeid when 
-	clone exists
-
-2001-09-18  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* appl/vos/vos_examine.c: use VLSF_DONTUSE information
-	* appl/vos/vos.c: added vos backup and vos backupsys
-	* appl/vos/vos_common.c (get_vlentry): try to find
-	dbserver if it's not given
-
-2001-09-17  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* rxdef/vldb.xg: use nvldbentry in ReleaseEntryN
-	* appl/vos/vos_listvol.c: argument partition is aarg_optional_swless
-	* appl/vos/vos_local.h: added backup, backupsys and volname
-	* appl/vos/vos_backup.c: added
-	* appl/vos/Makefile.in: added vos_backup.c
-	* appl/vos/vos_listvldb.c: correct termination of listvldb
-	* appl/vos/vos_listvldb.c: (listvldb_iter): use VL_ListAttributes 
-	interface, and allow to mask on
-	* appl/vos/vos_listvldb.c: serverna me and partition take volume 
-	as argument, print volumeids
-	* appl/vos/vos_backup.c (vos_backupsys): send volumename to
-	vos_listvldb_iter
-
-2001-09-17  Love  <lha@stacken.kth.se>
-
-	* xfs/bsd/xfs_node-bsd.c (free_all_xfs_nodes): if we have a
-	vfs_deallocate_syncvnode, use that to free the syncer-node, indent
-	* configure.in: check for vfs_deallocate_syncvnode
+	* configure.in: make include k5 stuff in rxkad lib
 	
-2001-09-15  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* lib/ko/gensysname.c: find better sysname for alpha osf
-	* appl/fs/fs.c (fsversion_cmd): test for correct number of
-	arguments
-	* rx/rxdebug.c: Use agetarg instead of libcmd
-	* rx/Makefile.in: link rxdebug with libko
-	* Makefile.in: build rx after libko
-
-2001-09-14  Love  <lha@stacken.kth.se>
-
-	* arlad/messages.c: 1.257->1.258: (try_again): when fileserver
-	busy or restarting, wait afs_BusyWaitPeriod seconds, this is the
-	same timeout as transarc/openafs has.
-	* arlad/arla.c: 1.137->1.138: set afs_BusyWaitPeriod to 15 (as
-	transarc/openafs does)
-	* arlad/arla_local.h: 1.66->1.67: export afs_BusyWaitPeriod
+	* arlad/arla_local.h: wrap krb4 stuff in HAVE_KRB4
 	
-	* arlad/messages.c: 1.256->1.257: (vioc_new_cell): memset dbs,
-	make sure we a static entry
-	(timeout == 0)
-
-2001-09-09  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* rx/rxdebug.c (MakeCall): check return codes
-
-2001-09-07  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* config.guess, config.sub: update to newer versions
-
-2001-09-07  Love  <lha@stacken.kth.se>
-
-	* conf/CellServDB: 1.58->1.59: added dynarc.se
+	* arlad/arla.c: wrap krb4 stuff in HAVE_KRB4
 	
-2001-09-06  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* xfs/solaris/xfs_node.c: 1.16->1.17: (new_xfs_node): Set tokens
-	from message
-
-2001-09-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* xfs/linux/xfs_node.c: 1.54->1.55: (new_xfs_node): Set tokens
-	from message
-	* xfs/bsd/xfs_node-bsd.c: 1.55->1.56: (new_xfs_node): Set tokens
-	from message
-
-2001-09-04  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* configure.in: Added selrecord test
-	* cf/bsd-func-selrecord.m4: Added selrecord test
-
-2001-09-04  Love  <lha@stacken.kth.se>
-
-	* arlad/fcache.c: 1.342->1.343: (find_first_fs): don't use entries
-	maked by the vldb server as VLSF_DONTUSE, there are volumes marked
-	up my the vldb server as non released volumes.
+	* arlad/Makefile.in: use krb5 cflags too
 	
-2001-09-04  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* arlad/conn.c: 1.64->1.65: (re_probe): If sleeping already,
-	choose the earliest wakeup
-
-2001-09-03  Love  <lha@stacken.kth.se>
-
-	* xfs/bsd/xfs_node-bsd.c: 1.54->1.55:
-	(free_all_xfs_nodes/xfs_vflush): do magic with syncer-node on
-	freebsd, this is since FreeBSD > 4.3 changed vflush api so we have
-	to remove the mnt_syncer node first before calling vflush to avoid
-	dying in a deadlock. break out vflush to a common function
-	xfs_vflush().
-
-2001-08-31  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* util/hash.c: 1.14->1.15: Added hashtabrelease
-
-	* util/hash.c: 1.15->1.16: (hashtabcleantab): Free the correct
-	pointer
+	* arlad/cred.h: use MAXKRB4TICKETLEN
 	
-	* util/hash.h: 1.6->1.7: Added hashtabrelease
-
-2001-08-01  Love  <lha@stacken.kth.se>
-
-	* xfs/linux/xfs_syscalls.c: fix merge error
+	* rxkad/rxkad.h: provide MAXKRB4TICKETLEN
 	
-2001-07-26  Love  <lha@stacken.kth.se>
-
-	* appl/pts/pts.1: 1.1->1.2: remove .Pp before .Sh, from openbsd
+	* appl/perf/afsfsperf.c: wrap <krb.h> with HAVE_KRB4
 	
-	* xfs/bsd/xfs_vnodeops-bsd.c: 1.94->1.95, 1.96->1.97:
-	(xfs_symlink): NetBSD 1.5X/OpenBSD current
-	(aka version 200107) and above doesn't vput the created symlink
-
-	* xfs/linux/xfs_syscalls.c: 1.66->1.67: (fhget_call): make
-	`dentry' const and never dput it
-	(user_path2dentry): define it differently for 2.3
-	(sys_afs_int): move dput to the end of the function and call
-	path_release in 2.3 1.65->1.66: (xfs_debug_print): call
-	print_dentry
-
-2001-07-26  Assar Westerlund  <assar@stacken.kth.se>
-
-	* xfs/linux/xfs_dev.c:1.80->1.81: (xfs_devwrite): do not set dumpable
-	* arlad/arlad.c (arla_start): 1.9->1.10: set dumpable 
-	with prctl if possible
-	* arlad/arla_local.h: 1.63->1.64: add sys/prctl.h
-	* configure.in: 1.496->1.497: check for sys/prctl.h
-
-2001-07-25  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* xfs/bsd/xfs_vnodeops-bsd.c:1.95->1.96: (xfs_remove): call
-	ubc_uncache after vput:ing (on osx/darwin)
-
-2001-07-16  Love  <lha@stacken.kth.se>
-
-	* Release 0.35.5
-
-2001-07-16  Love  <lha@stacken.kth.se>
-
-	* xfs/bsd/xfs_vnodeops-osf.c: 1.29->1.30: make *common functions
-	not handle any vrele/vput. add the correct vrele's to the osf
-	functions
-	* xfs/bsd/xfs_vnodeops-common.c: 1.74->1.75: make *common
-	functions not handle any vrele/vput
-	* xfs/bsd/xfs_vnodeops-bsd.c: 1.93->1.94: make *common functions
-	not handle any vrele/vput
-
-2001-07-15  Love  <lha@stacken.kth.se>
-
-	* arlad/fcache.c: 1.337->1.338: (get_attr_bulk): make comparison
-	simpler to understand
-
-	* arlad/fcache.c: 1.337->1.337: (get_attr_bulk): when getting the
-	fid to install the addr, use a fid will some !random value in it
+	* lib/ko/auth.h: put ifdef HAVE_KRB4 around <krb.h>
 	
-2001-07-14  Love  <lha@stacken.kth.se>
+	* arlad/{arla-cli.c,conn.c,cred.c,cred.h,messages.c}:
+	remove depency on CREDENTIALS (and thus krb4) for rxkad
 
-	* lib/cmd/Makefile.in: 1.5->1.6: link testc with @LIBS@
-	* configure.in: 1.494->1.495: check for get_progname set_progname
-	warnerr
+2003-06-04  Hans Insulander  <hin@stacken.kth.se>
 
-2001-07-11  Mattias Amnefelt  <mattiasa@e.kth.se>
+	* appl/vos/vos_listvldb.c: Remove \n from warnx()
+	* appl/vos/vos.c: Missing \n on printout added
+	* appl/afsutils/aklog.1: Spellfix
+	* appl/afsutils/klog.c: Spellfix
 
-	* xfs/bsd/bin/startarla.in: added support for dux
-	* xfs/bsd/bin/Makefile.in: build startarla on dux
+2003-06-04  Tomas Olsson  <tol@stacken.kth.se>
 
-2001-07-09  Love  <lha@stacken.kth.se>
+	* appl/afsutils/aklog.1: speling
 
-	* lib/ko/kocell.c: 1.49->1.50: (host_sort): don't use E->name,
-	since it might be NULL in case we did a ``fs newcell'', noted by
-	Nickolai Zeldovich <kolya@mit.edu>
+2003-06-02  Love  <lha@stacken.kth.se>
 
-2001-07-06  Love  <lha@stacken.kth.se>
+	* nnpfs/bsd: s/make_dead_vnode/nnpfs_make_dead_vnode/
 
-	* appl/lib/arlalib.c: 1.41->1.42: (arlalib_try_next_db): Use
-	ARLA_CALL_DEAD instead of RX_CALL_DEAD
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_installdata): use
+	nnpfs_dnlc_purge instead of cache_purge
+
+2003-05-21  Love  <lha@stacken.kth.se>
+
+	* appl/fs/fs.1: retreived->retrieved, from pjanzen@openbsd via
+	jmc@openbsd
+
+2003-05-06  Love  <lha@stacken.kth.se>
+
+	* appl/fs/fs_la.c (afs_getacl): a couple of off-by-one string
+	bounds in sscanf, from Anil Madhavapeddy <avsm@cvs.openbsd.org>
+	via openbsd.
+
+2003-04-25  Love  <lha@stacken.kth.se>
+
+	* appl/afsutils/unlog.1: remove unused .Ed fixe typos
+	from jmc <jmc@prioris.mini.pw.edu.pl>	
 	
-	* appl/pts/pts.c: 1.52->1.53: membership: Move error handling to
-	outside of the server trying loop.  Handle non-existing users and
-	groups.
-2001-07-06  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* conf/CellServDB changed vldb for it.kth.se according to
-	<elu@it.kth.se>
-
-2001-07-06  Love  <lha@stacken.kth.se>
-
-	* rx/rx_pkt.c: 1.15->1.16: (rxi_SendDebugPacket): truncate the iov
-	to the size of the outgoing packet
+	* appl/afsutils/tokens.1: fixed bad .Fl usage, remove unused .El
+	from jmc <jmc@prioris.mini.pw.edu.pl>
 	
-2001-06-27  Mattias Amnefelt  <mattiasa@e.kth.se>
+2003-04-24  Love  <lha@stacken.kth.se>
 
-	* xfs/bsd/xfs_node-osf.c: (free_all_xfs_nodes) 1.23 -> 1.24 :
-	vflush the mountpoint after relasing the root vnode
+	* appl/lib/arlalib.h: s/managment/management/, from jmc
+	<jmc@prioris.mini.pw.edu.pl>
+	* doc/storage.texi: s/managment/management/, from jmc
+	<jmc@prioris.mini.pw.edu.pl>
 
-2001-06-11  Love  <lha@stacken.kth.se>
+2003-04-16  Love  <lha@stacken.kth.se>
 
-	* arlad/DynRootDB.5: clarify what happens if .Nm doesn't exist
+	* ydr/output.c (cppfilesymbolname): new function, Convert filename
+	into a cpp symbol
+	(init_generate): use cppfilesymbolname
+	(close_generator): ditto
+
+2003-04-13  Love  <lha@stacken.kth.se>
+
+	* appl/pts/pts.c (pr_name2id): don't free memory on error
 	
-2001-06-06  Assar Westerlund  <assar@sics.se>
+2003-04-10  Love  <lha@stacken.kth.se>
 
-	* xfs/solaris/bin: move startarla, mount_xfs from bin to sbin
+	* arlad/messages.c (try_again): treat RXKADBADTICKET, RXKADBADKEY
+	as key expired
 
-2001-06-06  Magnus Ahltorp  <ahltorp@fridge.nada.kth.se>
+	* arlad/volcache.c (get_info_loop): treat RXKADBADTICKET,
+	RXKADBADKEY as key expired
 
-	* Release 0.35.4
+2003-04-09  Love  <lha@stacken.kth.se>
 
-2001-06-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* arlad/{inter.c,messages.c}: Disable attrusedp asserts
-
-	* arlad/{adir.c,adir.h,inter.c,messages.c}: Renamed from
-	adir_lookup_fcacheentry to adir_lookup. Removed old adir_lookup.
-	Use new adir_lookup instead.
-
-	* arlad/{discon_log.c,reconnect.c}: Disable nonworking functions.
+	* lib/ko/gensysname.c: s/strcpy/strlcpy/
+	* tests/large-dir.c: s/strcpy/strlcpy/
+	* rxkad/rxk_crpt.c: s/strcpy/strlcpy/
+	* rx/rx_dumptrace.c: s/strcpy/strlcpy/
 	
-2001-06-04  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* xfs/bsd/xfs_vfsops-osf.c: test for vfs_swapvp and vfs_smoothsync
-	* xfs/bsd/xfs_syscalls_common.c: don't use fhlookup on dux
-	* configure.in: test for vfs_swapvp and vfs_smoothsync in struct
-	vfsops (for dux)
-
-2001-05-29  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* xfs/bsd/xfs_{vnodeops,node}-osf.c: general update of the osf/1
-	code. Doesn't crash immidiately
-	* lib/sl/lex.l,ydr/lex.l: build with lex on dux 4.0d
-	* arlad/Makefile.in: use correct syntax
-	* cf/osf-func-vfs-name-hash.m4: function to find out more about 
-	vfs_name_hash()
-	* cf/try-compile-kernel.m4: use KERNEL_CC if it is defined
-	* configure.in: find out more about vfs_name_hash on osf/1
-	* appl/{afsutils,amon,asrvutil,bos,fs,kalog,pts,udebug,vos}/Makefile.in
-	lib/ko/Makefile.in: build working makefile even if @LIBS@ is empty
-
-2001-05-28  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* arlad/{dynroot.c,dynroot.h,fcache.c}: Make dynroot add
-	CallerAccess to creds
-
-2001-05-22  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* arlad/fcache.c: Allow setting of highvnodes.
-
-2001-05-17  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* configure.in: Arla configuration program for Mac OS X
-
-	* appl/mac/Makefile.in: Added mac directory
-
-	* appl/mac/Arla_Configuration/English.lproj/InfoPlist.strings:
-	Arla configuration program for Mac OS X
+	* rx/rx_pkt.c: make osi_Msg sane
+	* rx/rx.c: make osi_Msg sane
+	* rx/rx_user.c: make osi_Msg sane add rx_vMsg
+	* rx/rx_user.h: make osi_Msg sane
 	
-	* appl/mac/Arla_Configuration/English.lproj/MainMenu.nib/{classes.nib,
-	info.nib, objects.nib}: Arla configuration program for Mac OS X
+2003-04-08  Love  <lha@stacken.kth.se>
 
-	* appl/mac/Arla_Configuration/Arla_Configuration.pbproj/
-	project.pbxproj.in: Arla configuration program for Mac OS X
-
-	* appl/mac/Arla_Configuration/{Controller.h, Controller.m,
-	DataSource.h, DataSource.m, Makefile.in, ReadCells.h, ReadCells.m,
-	arla.icns, main.m}: Arla configuration program for Mac OS X
-
-	* arlad/messages.c (viocgetcacheparms): Return lowbytes and
-	lowvnodes.
-
-	* arlad/fcache.[ch]: Added fcache_lowbytes and fcache_lowvnodes.
-
-2001-05-17  Love  <lha@stacken.kth.se>
-
-	* xfs/bsd/bin/startarla.in: remove symbol file before loading
-	kernel module
-	* xfs/bsd/bin/startarla.in: use /var/db so the data is kept after
-	a crash
-
-2001-05-07  Love  <lha@stacken.kth.se>
-
-	* xfs/bsd/xfs/xfs_locl.h: Fixed merge error, va_size_t differ
-	between osf/1 other BSDs, this is correct in current
+	* arlad/arla_local.h: include <uae.h>
 	
-	* xfs/bsd/bin/startarla.in: same for platforms (macosx) using
-	kmodload
-
-	* xfs/bsd/bin/startarla.in: Store the output file from modload and
-	modstat in /var/run so it will be possible to debug the kernel
-	core
-
-2001-05-07  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* arlad/inter.c (cm_open): assert attrusedp when setting datausedp
-
-	* arlad/fcache.c (stale): Don't clear attrusedp and datausedp
-
-	* arlad/messages.c: Assert or set attrusedp when setting datausedp
-	(break_callback): Don't clear kernelp, attrusedp and datausedp
-
-	* cf/linux-filldir-dt-type.m4: try actually calling a filldir_t
-	function. just assigning a pointer is not a fatal error
-
-	* arlad{DynRootDB.5,Makefile.in,arlad.8,dynroot.c}, lib/ko/{ko.h,
-	kocell.c}: Add support for DynRootDB
-
-2001-04-30  Love  <lha@stacken.kth.se>
-
-	* arlad/{arla.c,arla_local.h,arlad.c,arladeb.c,arladeb.h,arlad.8}:
-	added option --cpu-usage
-	* util/log.[ch]: added support for printing cpu usage on each line
-	* configure.in: check for getrusage
-
-2001-04-28  Love  <lha@stacken.kth.se>
-
-	* README: 1.78->1.79: openbsd
+	* arlad/arla.c: init uae
 	
-2001-04-28  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* xfs/bsd/xfs_node-osf.c (xfs_dnlc_purge_mp) don't use
-	cache_purgevfs() if not available
-	* xfs/bsd/xfs_syscalls-wrap-osf.c: use sy_info in struct sysent on
-	dux 5.1
-	* xfs/bsd/xfs_vfsops-osf.c: added xfs_mountroot, xfs_swapvp,
-	xfs_smoothsync from dux vfsops
-	* configure.in: test for sys/vfs_proto.h sys/vnode.h and
-	function cache_purgevfs()
-	* xfs/bsd/xfs_node-osf.c: 
-	(xfs_dnlc_enter): set ni_makeentry when calling cache_lookup
-	(xfs_cnp_init): compute cache correctly
-	* xfs/bsd/xfs_vnodeops-osf.c: set name in ndp->cn_nameptr when 
-	symlinking
-	* xfs/bsd/xfs_vnodeops-osf.c: xfs_{mkdir,create}: set
-	ndp->cn_nameptr before calling lookup
-	* xfs/bsd/xfs_vnodeops-osf.c (xfs_lookup): Need to set pointer to
-	the parent directory.
-	* xfs/bsd/xfs/xfs_locl.h, xfs/bsd/xfs_vnodeops-common.c: use
-	va_size_t instead of u_quad_t
-	* xfs/bsd/xfs_vfsops-common.c: Wrap vfs_getnewfsid in autoconf
-	ifdef
-	* xfs/bsd/xfs_node-osf.c: new function xfs_dnlc_lock, doing dnlc
-	locking on osf
-	* xfs/bsd/xfs_message.c: there is no vrecycle on osf
-	* xfs/bsd/xfs_common.c, xfs/bsd/xfs_common-bsd.c: moved memcpy to
-	xfs_common.c
-	* configure.in: test for vfs_mountroot in vfsops and sy_info in
-	sysent
-
-2001-04-22  Love  <lha@stacken.kth.se>
-
-	* lib/ko/ports.c: 1.10->1.11: (ports_init): make quiet since
-	people can't right and add services into their services file (or
-	equivalent)
-
-2001-04-21  Love  <lha@stacken.kth.se>
-
-	* arlad/cred.c: 1.34->1.36: remove cred from hashtab when its
-	killed, update copyright
-	* arlad/conn.c: 1.62->1.64: remove conn from hashtab when its
-	killed.
+	* rx/rxperf.c: replace sprint with snprintf
 	
-2001-04-18  Love  <lha@stacken.kth.se>
-
-	* conf/CellServDB: 1.50->1.51: mit cells zone.mit.edu and
-	ops.mit.edu have moved From Nickolai Zeldovich <kolya@MIT.EDU>
+	* appl/fs/fs_copyacl.c: replace sprint with snprintf
 	
-	* appl/lib/tokens.c: 1.2->1.3: (arlalib_token_iter): return right
-	thing, From Nickolai Zeldovich <kolya@MIT.EDU>
-
-	* appl/bos/bos_listusers.c: 1.6->1.7: (printusers): only print
-	user when we are are getting back good data, From Nickolai
-	Zeldovich <kolya@MIT.EDU>
-
-	* arlad/fcache.c: 1.325->1.326: (getacl): fix problem that opaque
-	can be uninitialized when returning errors, when caller might do
-	stupid things, found by Nickolai Zeldovich <kolya@MIT.EDU>
+	* appl/vos/vos_backup.c: replace sprint with asprintf
 	
-2001-04-17  Love  <lha@stacken.kth.se>
+2003-04-08  Mattias Amnefelt  <mattiasa@e.kth.se>
 
-	* cf: quote argument to undefine, patch by 
-	Hidvegi	<hzoli@austin.ibm.com>
+	* arlad/conn.c (re_probe): only increase ntries until threshold
+	value. more readable logic for problelist removal
+	(pinger): always schedule re_probe
 
-2001-04-12  Magnus Ahltorp  <ahltorp@nada.kth.se>
+	* arlad/arla_local.h: added argument f to assert_not_flag
+	* arlad/conn.c (init_fs_context): Set rtt to half of its previous
+	value if fileserver unreachable
 
-	* configure.in: Compile with -traditional-cpp on Mac OS X
+2003-04-08  Love  <lha@stacken.kth.se>
 
-2001-04-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
-
-	* configure.in, cf/check-kernel.m4,
-	xfs/bsd/xfs_syscalls-wrap-macos.c: Make it build on Mac OS X
-	release
-
-2001-04-04  Love  <lha@stacken.kth.se>
-
-	* arlad/fcache.c: 1.324->1.325: (find_first_fs): memset context,
-	in case we fail to update the volume, context will contains data
-	that free_fs_server_context() will grok.
+	* arlad/arla_local.h: include <uae.h>
 	
-2001-03-25  Love  <lha@stacken.kth.se>
-
-	* xfs/linux/xfs_dev.c: 1.78->1.79: (xfs_message_rpc): ignore
-	SIGSTOP, this make ptrace() work
-
-2001-03-23  Love  <lha@stacken.kth.se>
-
-	* arlad/fcache.c (get_attr_bulk): if parent entry is missing data,
-	bail out and force regular get_attr
-	(getvolstat): remove unused code
-
-2001-03-12  Love  <lha@stacken.kth.se>
-
-	* Release 0.35.3
-
-	* util/heap.c (heap_new): don't fail if malloc(0) return NULL.
+	* arlad/arla.c: init uae
 	
-	* lib/ko/kocell.c: 1.47->1.78: handle cells with zero cells on
-	computer with malloc returns NULL on malloc(0).
+	* rx/rxperf.c: replace sprint with snprintf
 	
-	* arlad/kernel.c: 1.27->1.29: handle case when running out of
-	threads better
-
-2001-03-06  Tomas Olsson  <tol@stacken.kth.se>
-
-	* tests/run-tests.in: 1.70->1.71: don't run compare-inum-mp
-
-2001-03-04  Love  <lha@stacken.kth.se>
-
-	* xfs/linux/xfs_message.c: make got data w/o token more quiet
-	* appl/lib/arlalib.h: 1.37->1.38: fs_checkvolumes
-	* appl/lib/fs_lib.c: 1.31->1.32: fs_checkvolumes
+	* appl/fs/fs_copyacl.c: replace sprint with snprintf
 	
-	* include/afssysdefs.h: solaris 8 uses 65, openbsd uses 208,
-	freebsd uses 339
+	* appl/vos/vos_backup.c: replace sprint with asprintf
 	
-	* ydr/output.c: 1.73->1.74: remember to code INOUT argument too
-	* rxdef/pts.xg: 1.14->1.15: (ListOwned): over in INOUT
+2003-04-08  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* arlad/fcache.c (unlink_lru_entry): assert_not_flag() on kernelp
+
+2003-04-03  Love  <lha@stacken.kth.se>
+
+	* include/afssysdefs.h: freebsd 4 uses 210 freebsd 5 uses 339
 	
-	* xfs/bsd/xfs_syscalls-wrap-bsd.c: 1.11->1.12: xfs_syscallent,
-	check for HAVE_STRUCT_SYSENT_SY_FLAGS
+	* configure.in: no longer change for chflags and lchflags, it was
+	themis that needed it
 
-	* appl/lib/tokens.c: 1.1->1.2: memset token
+2003-04-01  Love  <lha@stacken.kth.se>
 
-	* appl/fs/fs*: fs improvements
+	* appl/afsutils/Makefile.in: avoid building klog when that we are
+	not install it
+
+	* rx/rxdebug.1: spelling, from jmc <jmc@prioris.mini.pw.edu.pl>
 	
-	* lib/ko/agetarg.c: 1.9->1.11 agetarg improvments
-	* lib/ko/agetarg.h: 1.4->1.6
+	* appl/kalog/kalog.1: spelling, from jmc
+	<jmc@prioris.mini.pw.edu.pl>
 	
-	* appl/vos/*.c: start to use get_servername()
-	* arlad/volcache.c: 1.98->1.100: use volname_*, more gc issues
+	* appl/bos/bos.8: spelling, from jmc
+	<jmc@prioris.mini.pw.edu.pl>
+
+	* arlad/{DynRootDB,arla.conf,ThisCell}.5arla-cli.8: spelling, from
+	jmc <jmc@prioris.mini.pw.edu.pl>
+
+	* nnpfs/bsd/nnpfs_dev-bsd.c (nnpfs_dev): handle newer freebsd,
+	from Mattias Amnefelt <mattiasa@e.kth.se>
+
+	* configure.in: check for d_psize and d_kqfilter
 	
-	* lib/ko/ko.h: 1.27->1.28: volname_specific, volname_canonicalize
-	* lib/ko/vlmisc.c: 1.3->1.4: volname_specific,
-	volname_canonicalize
+2003-03-17  Love  <lha@stacken.kth.se>
 
-	* appl/vos/vos_examine.c: 1.17->1.21
-	* appl/vos/vos.c: 1.16->1.17: call tzset
+	* lib/ko/koerror.c: s/Invaild/Invalid/
 	
-2001-02-21  Love  <lha@stacken.kth.se>
+2003-03-13  Love  <lha@stacken.kth.se>
 
-	* THANKS: 1.44->1.45: added s/390 contributors
+	* util/log.c: log in LOG_NOTICE since LOG_INFO might get lost
 	
-	* arlad/arlad.8: 1.7->1.8: mandoc fix
+2003-03-10  Love  <lha@stacken.kth.se>
+
+	* appl/afstool/at_fs_flush_cps.c: fix usage usage info
 	
-	* lwp/{process.s390.S,make-process.o.sh.in,lwp_asm.c,LICENSE.s390}:
-	pull up S/390 support from head, contributed by
-	<Neale.Ferguson@SoftwareAG-usa.com> and <adam@sinenomine.net>
-
-	* arlad/fcache.c: 1.318->1.319: (fcache_update_length): correct
-	variable spelling
-
-2001-02-18  Love  <lha@stacken.kth.se>
-
-	* arlad/fcache.c: 1.317->1.318: (fcache_update_length): remove
-	overly paranoid assertion
-
-2001-02-14  Love  <lha@stacken.kth.se>
-
-	* xfs/solaris/xfs_message.c: 1.27->1.28: xfs_message_installdata
-	fix
-	* xfs/solaris/bin/startarla.in: 1.3->1.4: only create /dev/xfs0
-	symlink if it doesn't exist
-	* xfs/solaris/xfs_vfsops.c: 1.18->1.19: turn printf into XFSDEB
-	* xfs/solaris/xfs_node.c: 1.15->1.16: Corrected bad function call
-	and declaration
-
-	* appl/lib/ka-procs.c: 1.4->1.5: (get_password): fix problem noted
-	by John Callaghan <jpc@msu.edu>
-
-2001-02-13  Assar Westerlund  <assar@sics.se>
-
-	* arlad/fcache.c 1.316->1.317: (fcache_update_length): rewrite the
-	assert:s in a more robust way
-
-2001-02-11  Love  <lha@stacken.kth.se>
-
-	* arlad/messages.c: 1.235->1.236: remove key when we get a rxkad
-	message invalidkey.
+	* lib/ko/uae.h: remove dup
 	
-2001-02-11  Assar Westerlund  <assar@sics.se>
+	* nnpfs/linux/nnpfs_load.c (init_module): do devfs_register_chrdev
+	also when using a chardev, pointed out by Per Olofsson.
 
-	* arlad/arladeb.c 1.24->1.25 (arla_vwarnx_with_fid): adapt to new
- 	volcache_getname
-	* arlad/fcache.c 1.315->1.316 (fcache_store_state): fix arla_warnx
-	(getvolstat): use new volcache_getname
-	* arlad/volcache.h 1.29->1.30 (volcacheentry): only store one name
-	pointer
- 	(the canonical name)
-	(volcache_getname): update prototype
-	* arlad/volcache.c 1.96->1.97: re-structure so that we only keep the
- 	canonical name for a volume
-	(volcache_getname): copy name out instead of returning it
+2003-03-09  Love  <lha@stacken.kth.se>
 
-	* xfs/solaris/xfs_vnodeops.c 1.38->1.39 (xfs_inactive): check the
- 	v_count of the node since due to a race condition we can get nodes
- 	that shouldn't really be thrown away here
-	(xfs_getpage, xfs_putpage): read the cache node from the xfs_node
- 	after calling xfs_data_valid
-
-	* arlad/volcache.c: 1.97->1.98: re-do some of the ref-counting
- 	logic and make it simpler
-
-2001-02-02  Assar Westerlund  <assar@sics.se>
-
-	* appl/afsutils/aklog.c: 1.6->1.7: add fallback for
-	krb_get_default_principal for krb libraries without it
-
-2001-01-31  Love  <lha@stacken.kth.se>
-
-	* xfs/bsd/xfs_vnodeops-bsd.c: 1.88->1.89: (xfs_readdir): avoid
-	looping when there is a (incorrect) entry with d_reclen==0.
-	Patch from: Chris Csanady <ccsanady@iastate.edu>
-
-2001-01-30  Love  <lha@stacken.kth.se>
-
-	* Release 0.35.2
+	* configure.in: pull in arla_OPENSSL_COMPAT, add the -I to
+	netbsd-lkm dir after the system KERNEL_CPPFLAGS
 	
-	* xfs/linux/xfs_vfsops.c: 1.71->1.72: (xfs_replace_root): update
-	xfsf_attr2inode usage
+2003-03-08  Love  <lha@stacken.kth.se>
 
-	* conf/CellServDB: 1.49->1.50: biocenter.helsinki.fi
+	* appl/vos/vos_status.c: fix bad lp64 broken typecasts, make
+	strftime buffer 128bytes
+	* lib/ko/kocell.c: make strftime buffer 128 bytes
+	* appl/afstool/at_fs_gettime.c: make strftime buffer 128 bytes
+	* appl/afstool/at_u_debug.c: make strftime buffer 128 bytes
 	
-	* Release 0.35.1
-
-	* xfs/*/xfs/xfs_fs.h: (xfs_attr2inode): update signature
-	* xfs/*/xfs_node.c: (new_xfs_node): clean node
-	(xfs_attr2inode): only clean node if needed
-	* xfs/*/xfs_message.c: (xfs_message_installdata): clear node
-	(xfs_message_installattr): don't clear node
-
-2001-01-29  Love  <lha@stacken.kth.se>
-
-	* arlad/bsd-subr.c: 1.55->1.56: make XFS_DIRENT_BLOCKSIZE smaller
-	since otherwise linux emulation code under freebsd will lose any
-	entries that have it's end past 512 bytes.
+	* appl/vos/vos_examine.c: make strftime buffer 128 bytes
+	* appl/vos/vos_status.c (printstatus): fix formating
 	
-2001-01-28  Love  <lha@stacken.kth.se>
+2003-03-07  Love  <lha@stacken.kth.se>
 
-	* configure.in: 1.472->1.4.73: Fixed fatal typo in pthreads
-	detection
-
-	* xfs/linux/xfs_inodeops.c: 1.150->1.151: (xfs_lookup): fill in
-	the whole getnode message inside the look, since xfs_message_rpc()
-	might clobber it.
-
-2001-01-25  Love  <lha@stacken.kth.se>
-
-	* Release 0.35
+	* lib/ko/uae.c: add all missing errorcodes
 	
-	* appl/fs/fs.c: 1.94->1.95: fs incompat command
-	* appl/lib/fs_lib.c: 1.32->1.33: fs_incompat_renumber
-	* appl/lib/arlalib.h: 1.38->1.39: fs_incompat_renumber
+	* lib/ko/uae.h: add UAE_ERROR_base remove dup
 	
-	* xfs/solaris/bin/startarla.in: 1.2->1.3: solaris 8 afs
-	syscallnumber
-
-	* xfs/linux/bin/Makefile.in: 1.21->1.22: s,XFS_BIN,XFS_SBIN,
+	* lib/ko/uae.h: add more error codes from derrick
 	
-	* arlad/conn.h: 1.24->1.25: new conn_clearcred signature
-	* arlad/conn.c: 1.61->1.62: make conn_crearcred take mask
-	* arlad/messages.c: 1.234->1.235: use new conn_clearcred
+2003-03-06  Love  <lha@stacken.kth.se>
 
-	* xfs/bsd/xfs/xfs_fs.h: 1.18->1.19: clean vattr fix
-	* xfs/bsd/xfs_node-bsd.c: 1.47->1.48: clean vattr fix
-	* xfs/bsd/xfs_message.c: 1.64->1.65: clean vattr fix
+	* rxdef/common.h: add Capabilities
 	
-2001-01-15  Love  <lha@stacken.kth.se>
-
-	* include/kafs.h: 1.32->1.34: include/kafs.h: update arla pioctl's
-	that are assigned to assigned to arla, added comments for arla
-	pioctls
+	* HACKING: automake appl/udebug/Makefile
 	
-	WARNING this break compability with older versions of arla !
-
-2001-01-09  Love  <lha@stacken.kth.se>
-
-	* lib/ko/agetarg.c: 1.8->1.9: (print_arg): fix formating error in
-	help text From Nickolai Zeldovich <kolya@MIT.EDU>
+	* include/Makefile.in: add uae.h
 	
-	* arlad/cred.c: 1.33->1.34: (cred_expire): dont try to get
-	username since we are chroot()ed From Nickolai Zeldovich
-	<kolya@MIT.ED>
+	* appl/afstool/at_fs_getcap.c: print string name of caps
+	
+	* appl/afstool: add support for RXAFS_GetCapabilities
 
-	* appl/vos/vos_partinfo.c: 1.7->1.8: end args with aarg_end, from
+	* rxdef/fs.xg: add GetCapabilities
+	
+	* appl/udebug: replace udebug with a shellscript that call afstool
+
+	* NEWS: UAE
+	
+	* arlad/fs_errors.h: do uae translation
+	
+	* arlad/cmcb.c (SRXAFSCB_TellMeAboutYourself): tell server we
+	support UAE
+
+	* lib/ko/uae.c: comment how this should work
+	
+	* appl/perf/Makefile.in: adapt for uae
+	
+	* appl/afstool/Makefile.am: adapt for uae
+	
+	* lib/ko: Add infrastructure for 'Unified AFS errnos' (uae)
+
+2003-03-05  Love  <lha@stacken.kth.se>
+
+	* appl/afstool: use getarg style --no-auth like the rest for the
+	arguments, fix auth
+	
+	* appl/afstool: add ubik debug
+
+	* appl/afstool/afstool.1: fs gettime
+	
+	* appl/afstool/at_locl.h: add mini_cachemanager_init and
+	fs_gettime_cmd
+
+	* appl/afstool/Makefile.am: add mini cm, gettime and link with
+	librxcbserver
+
+	* appl/afstool/at_fileserver.c: plug in gettime
+	
+	* appl/afstool/at_fs_gettime.c: fetch time from fileserver
+	
+	* appl/afstool/at_mini_cm.c: add yet another mini cache-manager
+	
+	* rx/rx_user.h (rxi_GetUDPSocket): return the portnumber we bound to
+	* rx/rx_user.c (rxi_GetUDPSocket): return the portnumber we bound to
+
+	* rx/rx.c: find out the portnumber we bound too
+	
+	* appl/afstool/afstool.c (main) call rx_Init(0)
+	
+	* arlad/cmcb.c: prefix callback manager stubs with S
+	
+	* ydr/output.c (generate_server_stub): prefix server stubs with S
+	
+	* ydr/output.c: move the server parsing stubs into private
+	namespace and make them static
+
+	* appl/afstool/at_fs_flush_cps.c: remove stale comment
+
+	* appl/afstool/at_cm_{localcell,whoareyou}.c: make use of for loop
+	to make it look like other code in same directory
+
+	* appl/afstool/afstool.c: add aliases for fileserver (fs) and
+	cachemanager (cm)
+
+	* appl/perf/afsfsperf.c: add dummy for GetCellByNum and
+	TellMeAboutYourself
+
+	* arlad/cmcb.c: add dummy for GetCellByNum and implement
+	TellMeAboutYourself
+	
+	* rxdef/cb.xg: add GetCellByNum and TellMeAboutYourself
+	
+	* appl/afstool/Makefile.am: install manpage
+	
+	* appl/afstool/at_cm_localcell.c: getarg-ify, make more sane
+	* appl/afstool/at_cm_whoareyou.c: getarg-ify, make more sane
+	* appl/afstool/afstool.1: getarg-ify, make more sane
+
+	* appl/afstool/afstool.1: mdoc fixes
+	
+2003-03-04  Love  <lha@stacken.kth.se>
+
+	* arlad/poller.c (poller_foreach): new function
+	
+	* appl/afstool/afstool.1: manpage for afstool
+	
+	* configure.in: remove cbdebug
+	
+	* appl/afstool: fold in cbdebug
+
+	* appl/cbdebug: remove cbdebug, move to afstool
+	
+	* appl/afstool/at_locl.h: add some more headers
+	
+	* appl/perf/Makefile.in: link agaist the new cb lib
+	
+	* arlad/Makefile.in: link agaist the new cb lib
+	
+	* rxdef/Makefile.in: split callback stubs to their own libs
+	
+	* configure.in (AC_OUTPUT): add appl/afstool/Makefile
+
+	* HACKING: add appl/afstool/Makefile
+	
+	* appl/afstool: afstool
+
+	* arlad/fcache.c: improve logging when giving back callbacks
+	
+	* appl/fs/fs_connect.c: add callback-connected, connect and
+	refetch callback we had before
+
+	* arlad/poller.c: add poller_foreach and poller_iter_func
+	
+	* arlad/poller.h: add poller_foreach and poller_iter_func
+	
+	* arlad/fcache.c (fcache_giveup_all_callbacks): first try poller +
+	giveup_all_callbacks
+	(giveup_all_callbacks): give up all callback with new rpc function
+	RXAFS_GiveUpAllCallBacks.
+	(throw_entry): conn can never be NULL, check for aliveness instead
+	(fcache_reobtain_callbacks): conn can never be NULL
+
+	* rxdef/fs.xg: add GiveUpAllCallBacks, and FlushCPS add commented
+	out versions of 64 bit fetch/store data
+	
+2003-03-03  Love  <lha@stacken.kth.se>
+
+	* arlad/messages.c (nnpfs_message_getdata): make comptible with
+	open and set the DATA_W if requested.
+	
+2003-02-28  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c (nnpfs_file_mmap): don't iref
+
+2003-02-28  Love  <lha@stacken.kth.se>
+
+	* tests/run-tests.in: add mmap-and-fork
+	
+	* tests/mmap-and-fork.c: mmap and fork test
+	
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_dnlc_enter): use
+	nnpfs_vfs_unlock instead of VOP_UNLOCK
+
+2003-02-26  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_node-bsd.c: OpenBSD 3.3 will have NetBSD 1.5
+	dnlc semantics
+
+2003-02-24  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (clear_all_children): don't throw
+	negative dentries, and it's the children we drop
+
+2003-02-24  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* nnpfs/linux/nnpfs_inodeops.c: nnpfs_d_revalidate: always return
+	true if root node
+
+2003-02-22  Love  <lha@stacken.kth.se>
+
+	* Add support for netbsd 1.6O
+
+	* configure.in: fix openbsd makefile probing
+	
+2003-02-21  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (clear_all_children): drop negative
+	dentries
+
+	* arlad/messages.c (*): send messages to kernel before
+	fcache_release()
+
+2003-02-18  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (nnpfs_d_remove): added
+	(nnpfs_message_installnode): handle new inode != existing better
+	(clear_all_children): use dcache_lock, don't use xdentry if null,
+	use nnpfs_d_remove()
+	(d_prune_aliases): use nnpfs_d_remove()
+
+2003-02-17  Love  <lha@stacken.kth.se>
+
+	* configure.in: decrease world pain by setting AM_MAINTAINER_MODE,
+	now Makefile.in isn't rebuilt when Makefile.am have a newer
+	timestamp
+
+2003-02-16  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c: make it compile
+
+2003-02-16  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_message.c (clear_all_children): throw way
+	unused nodes more aggressively (that is, remove then, don't just
+	unhash them)
+
+2003-02-15  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h: define I_DIRTY_DATASYNC to 0 if
+	it isn't there
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: even more extensive casting to
+	print lk_lockholder
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: include <sys/inttypes.h> try to
+	define nnpfs_uintptr_t
+	
+	* configure.in: check for uintptr_t
+	
+	* appl/lib/ka-procs.c: remove som more memsets
+	
+	* tests/run-tests.in (ARLA_TESTS): add kill-mh
+	
+	* tests/kill-mh: unpacking and removing the "right" files in the
+	test tar-ball that will trigger a bug in the directory removing
+	code if it doesn't that care and consider directory page
+	(DIRBLKSIZ) bounderies correctly, bug report and tarfile came from
 	Nickolai Zeldovich <kolya@MIT.EDU>
 
-2001-01-08  Love  <lha@stacken.kth.se>
+	* arlad/bsd-subr.c (dir_remove_name): make sure the d_reclen is
+	too large so it will cross a page boundary, found by
+	kolya@mit.edu.
 
-	* appl/kalog/kalog.c (main): use koerr_gettext to print error from
-	ka_authenticate
+2003-02-14  Love  <lha@stacken.kth.se>
 
-	* lib/ko/koerror.c: ka errors
+	* appl/lib/ka-procs.c: make compile with new openssl >= 0.9.7,
+	ignore type of key schedule
+
+	* nnpfs/bsd/nnpfs_vnodeops-bsd.c: freebsd current make
+	lk_lockholder to the thread (or so my spies say), so just cast to
+	long long and print with %llx
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: malloc(9) waits by default,
+	freebsd post 5.0 choose to remove the flag, provide glue
 	
-	* xfs/bsd/bin/umount_xfs.8: simplistic manualpage
-	* xfs/bsd/bin/mount_xfs.8: simplistic manualpage
-	* xfs/bsd/bin/Makefile.in (MANPAGES): mount_ffs.8, umount_xfs.8
-	(install,uninstall): manualpages
-
-	* lib/ko/agetarg.c (agetarg): fixed broken short option mandatory
-	handleing
-
-2001-01-07  Love  <lha@stacken.kth.se>
-
-	* arlad/fcache.c (purge_cred, fcache_get_data): update use of
-	install_attr()
-	* arlad/messages.c (install_attr): update take a flag field for
-	fcacheentry2xfsnode()
-	(fcacheentry2xfsnode): update to take a flag field and use it.
-	(*): update to new signature of install_attr() and
-	fcacheentry2xfsnode()
-
-	* arlad/messages.h (FCACHE2XFSNODE_{ATTR,RIGHT,ALL}): flags for
-	fcacheentry2xfsnode()
-	(fcacheentry2xfsnode): update to take a flag field
-
-	* rx/rx.c (rxi_CheckCall): return -2 is the call is freed.
-	(rxi_ReapConnections): check if rxi_CheckCall returns -2, in that
-	case the hash-bucket might have changed and we need to restart.
-
-	* lib/ko/agetarg.c: make mandatory work for real
+	* */*: add copyright notice
 	
-	* util/log.c (log_open): pass on name to lower open, free name
+2003-02-14  Tomas Olsson  <tol@stacken.kth.se>
+
+	* tests/asu.c (is_pag): getgroups() might not include egid in
+	groups list
+
+	* tests/build-emacs-j: bsd make wants an arg after -j, use 4
+
+	* nnpfs/linux/Makefile.in: don't build getcwd on ia64
+
+	* configure.in: added AM_CONDITIONAL for LINUX_IA64
+
+2003-02-13  Fallsjo <fallsjo@stacken.kth.se>
+
+	* .cvsignore: Honor new name of autom4te cache
+
+2003-02-12  Love  <lha@stacken.kth.se>
+
+	* arlad/arlad.8: rxkad-level, default is crypt
+	* arlad/arla.c (rxkad_level_string): default to crypt
 	
-	* appl/lib/Makefile.in: add tokens.c
-	* appl/lib/arlalib.c (arlalib_get_cred_afs): get token from kernel
-	(arlalib_get_cred_krb): rename from arlalib_get_cred
-	(arlalib_getsecurecontext): use arlalib_get_cred_afs()
-	* appl/lib/tokens.c (arlalib_token_iter): new func to iterate all
-	tokens.
+2003-02-11  Love  <lha@stacken.kth.se>
 
-	* xfs/bsd/xfs_dev-common.c (xfs_block_sigset): new function that
-	remove signals we want to block from a sigset_t in some diffrent
-	ways.
-	(xfs_message_rpc): use xfs_block_sigset(); if there is a p_sigctx, use it.
-
-	* xfs/solaris/xfs_vnodeops.c (xfs_map): remove the check that the
-	mapping is off the end of the file, solaris vm works that way.
+	* nnpfs/linux/nnpfs_vfsops.c (nnpfs_statfs): bump values some to
+	make it more pretty from Harald Barth <haba@pdc.kth.se>
 	
-	* xfs/linux/xfs_message.c (xfs_invalid_xnode): don't mark
-	directories as STALE
-	* xfs/bsd/xfs_message.c (xfs_message_invalidnode): don't mark
-	directories as STALE
-
-	* rx/rx.c (rxi_FindPeer): init connQueue
+	* arlad/cred.c (cred_add): use cred_delete instead of
+	recycle_entry, so when the entry is still in use we don't stomp
+	all over it
 	
-2001-01-06  Love  <lha@stacken.kth.se>
+	also, sprinkel asserts all over the place to make sure we don't
+	use root node or reuse nodes that still have refcount
 
-	* rx/rx.c (rxi_InsertPeer): change all connection that used the
-	original peer that is about to die.
-	(rx_NewConnection,rxi_FindConnection): attach this conn to the peer
-	(rx_DestroyConnection): when the connection dies, deattach it
-	from the peer.
+2003-02-11  Tomas Olsson  <tol@stacken.kth.se>
 
-	* rx/rx.h (rx_connection): add a queue_item that attaches this
-	connection to its peer.
+	* arlad/messages.c (nnpfs_message_getdata): set datausedp in entry
+
+	* appl/perf/Makefile.in: move up arlautil before roken in LIBS
+
+2003-02-10  Love  <lha@stacken.kth.se>
+
+	* lib/ko/afs_uuid.c: when we use a randomized uuid, set the
+	multicast bit to make sure we don't collied witha a real
+	(allocated) address.
+
+2003-02-10  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c: declare sys_call_table as its
+	actual type
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: don't check for
+	sys_call_table
+
+	* nnpfs/linux/nnpfs/nnpfs_syscalls.h: check for sys_call_table
+
+	* appl/perf/Makefile.in: move up LIB_roken in LIBS
+
+	* lib/Makefile.am: build editline before sl
+
+2003-02-08  Love  <lha@stacken.kth.se>
+
+	* tests/run-tests.in: add read-past-eof
 	
-2001-01-06  Simon Josefsson  <jas@nada.kth.se>
-
-	* conf/CellServDB (extundo.com): add.
-
-2001-01-06  Love  <lha@stacken.kth.se>
-
-	* appl/fs/fs.c (newcell_cmd): mark cell as mandatory and remove
-	check
-
-2001-01-05  Love  <lha@stacken.kth.se>
-
-	* rx/rx.c (rxi_DecongestionEvent): decrement the refcount after we
-	are done, so that the peer doesn't get reclaimed if we block in
-	rxi_Start(). From Nickolai Zeldovich <kolya@mit.edu>.
-
-	* appl/fs/fs.c (afs_listacl): just return if there a access
-	failure.  From Nickolai Zeldovich <kolya@mit.edu>
+	* tests/Makefile.in: add read-past-eof
 	
-	* arlad/fcache.c (getacl): reset the opaque data structure in case
-	we fail, make sure we free data when we fail. 
-	From Nickolai Zeldovich <kolya@mit.edu>
+	* tests/read-past-eof.c: test for read past end of file
 	
-	* arlad/fcache.c (get_attr_bulk): pull out the host from the rx
-	connection in case we need it later, then we don't need to used
-	freed memory.  From Nickolai Zeldovich <kolya@mit.edu>.
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c (nnpfs_netbsd_read): don't
+	premit reading past end of file (found with mozilla)
+
+2003-02-07  Love  <lha@stacken.kth.se>
+
+	* arlad/messages.c: replace assert_kernelp with assert_flag
 	
-2001-01-04  Love  <lha@stacken.kth.se>
-
-	* lib/ko/agetarg.c (agetarg): check that the mandatory arguments
-	are filled in, from Nickolai Zeldovich <kolya@mit.edu>
-
-	* appl/fs/fs.c (cmds): added "df" from Nickolai Zeldovich
-	<kolya@mit.edu>
-
-2001-01-04  Mattias Amnefelt  <mattiasa@e.kth.se>
-
-	* appl/pts/pts.c (member_cmd): set conn_context to null before 
-	using it.
-
-2001-01-02  Love  <lha@stacken.kth.se>
-
-	* xfs/bsd/xfs_vnodeops-bsd.c (xfs_getpages): use VOP_GETPAGES()
-	for BSDs that doesn't have vnode_pager_generic_getpages().
+	* arlad/fcache.c: replace assert_kernelp with assert_flag
 	
-	* xfs/linux/bin/Makefile.in: install startarla in $prefix/sbin
+	* arlad/arla_local.h: replace assert_kernelp with assert_flag
 	
-2001-01-01  Assar Westerlund  <assar@sics.se>
+	* nnpfs/linux/nnpfs_syscalls.c: use [] for now on sys_call_table
+	
+2003-02-04  Love  <lha@stacken.kth.se>
 
-	* xfs/bsd/xfs_syscalls-common.c (fhget_call): always vrelease `vp'
-	(fhopen_call): check `vp' first
-	(xfs_pioctl_call): handle the weird case of someone sending a filename
-	to debug
+	* configure.in (netbsd,openbsd): we really want -f flags too when
+	building lkms
 
-For older ChangeLog entries see ChangeLog.2000
+	* lib/bufdir/fdir.c: trust length of directory file more then the
+	data in the top of the file, this is slightly broken because what
+	really happen was that we just removed a entry, and then shrinked
+	the file because it was the last entry (and thus decremented the
+	page-count), refetched the length from the fileserver and then
+	expected the pagecount == size / AFSPAGESIZE
+
+	* nnpfs/bsd/nnpfs_wrap-bsd.c (nnpfs_uninstall): detach malloc
+	types when we are all done not completly right, but better then
+	before
+
+	* nnpfs/bsd/nnpfs_wrap-bsd.c: move malloc_type_detach from
+	nnpfs_stat to nnpfs_uninstall
+
+2003-02-03  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls.c:
+	s/sys_call_function/nnpfs_sys_call_function/g
+
+	* nnpfs/bsd/nnpfs_wrap-bsd.c: attach/detach malloc types when
+	loading module
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: type argument to malloc is
+	malloc_type in netbsd 1.6N
+
+2003-02-03  Tomas Olsson  <tol@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: make it compile, ifdef,
+	define
+
+	* nnpfs/linux/nnpfs_syscalls.c (install_afs_syscall): call
+	nnpfs_fixup_syscall_lossage()
+
+	* nnpfs/linux/nnpfs/nnpfs_locl.h: added
+	nnpfs_fixup_syscall_lossage
+
+	* nnpfs/linux/Makefile.in: build nnpfs_syscalls-lossage.c
+
+2003-02-02  Love  <lha@stacken.kth.se>
+
+	* nnpfs/linux/nnpfs_node.c (nnpfs_iget): use get_empty_inode for
+	linux22
+
+	* nnpfs/linux/nnpfs_message.c (nnpfs_message_installdata): only
+	whine when there is a real failure to do a fh_to_dentry
+	
+	* nnpfs/linux/nnpfs_node.c (nnpfs_iget): use new_inode (and
+	unlock_new_inode in case we have I_NEW)
+
+2003-02-01  Love  <lha@stacken.kth.se>
+
+	* doc/themis.texi: drop themis, live a life of its own now
+	
+	* doc/oddities.texi: s/Themis/Arla timeline/
+	
+	* doc/timeline.texi: s/Themis/Oddities/
+	
+	* doc/arla.texi: drop @include themis.texi
+	
+	* appl/lib/tokens.c: don't bail out if cell == NULL, then we want
+	all cells
+
+	* rx/Makefile.in: help libtool find libko
+	
+	* nnpfs/linux/nnpfs/nnpfs_locl.h: add typedef for
+	nnpfs_sys_call_function
+
+	* nnpfs/linux/nnpfs_syscalls-lossage.c: for you to make compile
+	and work and start to use ok'ed to put in copyrighted to KTH by
+	Chaskiel when I asked him
+
+2003-01-28  Love  <lha@stacken.kth.se>
+
+	* appl/fs/fs_listquota.c: more spaceing, 8 number for printing
+	used space it not enougth
+
+	* tests/write-and-stat: test that detects if dncl is there, or if
+	we just live on tbl (really detects another bug, but this is fine
+	for now)
+
+	* nnpfs/bsd/nnpfs_node-bsd.c (nnpfs_cnp_init): if we have a
+	namei_hash, use it
+
+	* nnpfs/bsd/nnpfs_vnodeops-netbsd.c: fix printing of b_blkno
+	
+2003-01-27  Love  <lha@stacken.kth.se>
+
+	* appl/perf/afsfsperf.c: make the tests table drivern, now you can
+	write afsfsperf ... -tests get-time,bulk-status
+
+	* tests/check-sysname: remove set -x
+	
+	* tests/run-tests.in: ARLA_TESTS: add check-sysname
+	
+	* tests/check-sysname: check if sysname seems to work
+	
+	* arlad/messages.c (nnpfs_message_getnode): replace #if 0 assert
+	with assert_kernelp()
+
+	* nnpfs/bsd/nnpfs_vnodeops-common.c (nnpfs_attr_valid): fix logic,
+	request node from userland when we don't have one of requested
+	token or don't have the pag in the pag cache.
+	
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: help SCARG-less freebsd some more
+	
+	* appl/perf/afsfsperf.c: add bulkstatus perf testing
+	
+	* rxdef/Makefile.in: add depenecy on common.h where needed
+	
+2003-01-25  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (resolve_mp): use fcache_verify_data instead of
+	fcache_get_data
+
+	* nnpfs/bsd/nnpfs_message.c (nnpfs_message_updatefid): use new
+	function nnpfs_update_handle, now that there are a fid hash
+	instead of a list, we can't just update the handle in the
+	nnpfs_node.
+
+	* nnpfs/bsd/nnpfs_node.c: add nnpfs_update_handle
+	
+	* nnpfs/bsd/nnpfs/nnpfs_node.h: add nnpfs_update_handle
+	
+	* arlad/messages.c (nnpfs_message_getdata): use entry->fid as fid
+	since it might have changed because of resolved mp's
+	
+2003-01-24  Tomas Olsson  <tol@stacken.kth.se>
+
+	* tests/intr-read.c: wait on killed children
+
+	* lwp/plwp.c (*): indent, clean up debugging
+
+2003-01-24  Love  <lha@stacken.kth.se>
+
+	* tests/intr-read.c: add comment why we kill children, "they smell
+	bad" :)
+
+	* tests/intr-read.c: kill children when parents is done
+	
+	* appl/fs/fs_diskfree.c: from dup printf, from Nickolai Zeldovich
+	
+2003-01-23  Tomas Olsson  <tol@stacken.kth.se>
+
+	* lib/bufdir/fbuf.c (mmap_copyrx2fd): adjust mapped length to
+	pagesize
+
+2003-01-23  Love  <lha@stacken.kth.se>
+
+	* lib/bufdir/fbuf.c (mmap_copy{rx2fd,fd2rx}): make these handle
+	off/len that are not a multiple of the pagesize.
+	
+2003-01-22  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_dev-common.c (nnpfs_block_sigset): make the
+	three diffrent cases define a macro that later code can use, this
+	to make it easier to block new signals, and while I'm here, ignore
+	SIGINFO
+
+2003-01-21  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/Makefile.in: don't build themis and mpp
+	* configure.in: don't build themis and mpp
+	* util/.cvsignore: ignore Makefile.in
+	* appl/themis appl/mpp: removed, they are now in their own repos
+
+2003-01-20  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (dynroot_update_entry): no more spare, change to
+	update fields
+
+	* arlad/dynroot.c (dynroot_update_entry): no more spare, change to
+	real version
+
+	* ydr/Makefile.am: ydr_SOURCES: add header files
+	
+	* ydr/Makefile.am: CLEANFILES = lex.c parse.c parse.h
+	
+	* ydr/Makefile.am: YFLAGS= -d
+	
+	* rxdef/common.h: make the last for elements match the rest of the
+	code
+
+	* rxdef/common.h: drop all long/short/unsigned stuff and replace
+	all by c99 types
+
+	* rxdef/common.h (AFSFetchStatus): fill in the now no longer spare
+	bits of FetchStatus
+
+	* lib/Makefile.am: add libvers
+	
+	* rxdef/Makefile.in: add EXEEXT to ydr
+	
+	* ydr: automakeify
+
+	* ydr: 64 bits encodeing/decodeing support (require presence of
+	htole64/le64toh) verified same output with:
+	perl -pi -e 's/sizeof\(tmp\)/sizeof\(int32_t\)/g' *.[ch]
+	for a in *.[ch] ; do diff -uw $a old/$a ; done
+
+	* lib/ko/kocell.c (cell_getthiscell): if the cell is unconfigured,
+	return "unknown-cell-missing-configuration"
+	
+2003-01-19  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs_syscalls-common.c (*): use syscall_d_thread_t,
+	syscall_thread_to_thread
+
+	* nnpfs/bsd/nnpfs/nnpfs_syscalls.h (*): use syscall_d_thread_t
+	
+	* nnpfs/bsd/nnpfs_syscalls-wrap-bsd.c (sys_lkmnosys): use
+	syscall_d_thread_t
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: add yet another glue type
+	syscall_d_thread_t, this is the process/thread argument that
+	syscall are called with, add a syscall_thread_to_thread macro that
+	converts from a syscall_d_thread_t to a d_thread_t
+
+	* nnpfs/bsd/nnpfs_dev-common.c (nnpfs_cursig): in netbsd 1.6M
+	CURSIG takes a struct lwp disable this for now
+
+	* nnpfs/bsd/nnpfs_dev-bsd.c, nnpfs/bsd/nnpfs_dev-common.c
+	nnpfs/bsd/nnpfs_dev-osf.c, nnpfs/bsd/nnpfs/nnpfs_dev.h:
+	nnpfs_devopen_common dont need struct proc, remove it
+
+	* appl/cbdebug/cbdebug.h: update to changed signature of cbgetconn()
+	* appl/cbdebug/localcell.c: ditto
+	* appl/cbdebug/whoareyou.c: ditto
+
+	* appl/cbdebug/cbdebug.c (cbgetconn): make it possible for
+	cbgetconn to return hostname if not passed in.
+	(*): change to use afscallbackport
+
+	* rx/Makefile.in: fix rx_trace that I manage to break
+	
+	* rx/rx.c: s/long/int32_t/;s/short/int16_t/ where apropriate
+	* rx/rx.h: s/long/int32_t/;s/short/int16_t/ where apropriate
+	* rx/rx_misc.c: s/long/int32_t/;s/short/int16_t/ where apropriate
+	* rx/rx_misc.h: s/long/int32_t/;s/short/int16_t/ where apropriate
+	* rx/rx_globs.h: s/long/int32_t/;s/short/int16_t/ where apropriate
+	* rx/rx_pkt.c: s/long/int32_t/;s/short/int16_t/ where apropriate
+	* rx/rx_pkt.h: s/long/int32_t/;s/short/int16_t/ where apropriate
+	* rx/rx_user.c: s/long/int32_t/;s/short/int16_t/ where apropriate
+	* rx/rx_rxdebug.c: s/long/int32_t/;s/short/int16_t/ where apropriate
+	
+	* rx/rx_multi.h: remove register, s/long/int32_t/ where aproporate
+	
+	* rx/rx_kern.h: remove register
+	* rx/rx_event.h: remove register
+	* rx/rx_event.c: remove register
+	
+2003-01-18  Love  <lha@stacken.kth.se>
+
+	* arlad/SuidCells.5: improve
+	
+	* arlad/DynRootDB.5: improve
+	
+2003-01-17  Love  <lha@stacken.kth.se>
+
+	* appl/udebug/udebug.c: print version with print_version()
+	(and cleanup usage string)
+
+	* appl/kalog/kalog.c: print version with print_version()
+	
+	* appl/cbdebug/cbdebug.c: print version with print_version()
+
+	* appl/cbdebug/Makefile.in: add libvers
+	
+	* appl/amon/amon.c: print version with print_version()
+	
+	* appl/pts/pts.c: use arlalib_version_cmd for version
+	
+	* appl/fs/fs.c: use arlalib_version_cmd for version
+	
+	* appl/lib/arlalib.h: add arlalib_version_cmd
+	
+	* appl/fs/Makefile.in: add libvers
+
+	* appl/fs/fs.c: print version with print_version()
+	
+	* appl/lib/arlalib.h: drop fslib_version
+	
+	* appl/lib/fs_lib.c: drop fslib_version
+	
+	* arlad/arla-cli.c: print version with print_version()
+	
+	* arlad/arlad.c: print version with print_version()
+	
+	* appl/perf/afsfsperf.c: print version now and then
+	
+	* configure.in: AC_OUTPUT: add lib/vers/Makefile
+	
+	* lib/vers: add from heimdal/kth-krb
+
+2003-01-15  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: add missing #endif
+	
+	* lib/ko/Makefile.am: split CPPFLAGS to target_CFLAGS
+	
+2003-01-14  Tomas Olsson  <tol@stacken.kth.se>
+
+	* arlad/messages.c (nnpfs_message_getdata): OR new flags into
+	msg.flags
+
+2003-01-14  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (read_data, write_data): be more careful how
+	updating of ->length and usedbytes is done to make sure its
+	correct
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: freebsd removed SCARG in 5.0RC3
+	and later
+
+	* lib/ko/Makefile.am: s/SYSCONFDIR/sysconfdir/
+	
+2003-01-13  Love  <lha@stacken.kth.se>
+
+	* HACKING: spell
+	
+2003-01-11  Love  <lha@stacken.kth.se>
+
+	* rxkad: change from old afs int32/u_int32 to iso c99 int32_t/uint32_t
+
+	* includes/stds.h: drop compat glue for rxkad
+
+	* util: drop copy_dirname/copy_basename
+
+	* arlad/arla-cli.c: inline copy_dirname/copy_basename
+
+	* appl/lib/arlalib.c: (arlalib_get_cred_krb): rewrite the code
+	that fetches the server key to be simpler
+
+	* HACKING: more automake
+
+	* **/Makefile.in: use libtool library for libarlautil and libko
+
+	* lib/ko/gensysname.c: change to use getarg (instead of agetarg)
+	to drop circular dependcy for libtool
+
+	* conf/Makefile.in: (arla.conf): depend on the right file
+
+	* appl/afsutils/klog.c: fix (stupid) warning with cast
+
+	* appl/aafs-perl/Makefile.in: fix building
+
+	* util/heap.c: (heap_remove): compare dummy with the right thing
+
+	* lib/Makefile, lib/ko/Makefile: generate with automake
+
+	* README: update to reality
+
+2003-01-10  Tomas Olsson  <tol@stacken.kth.se>
+
+	* arlad/arla.conf.5: spelling, clarify, explain fake_stat
+
+	* arlad/{kernel,fcache,messages}.c: indent
+
+2003-01-10  Love  <lha@stacken.kth.se>
+
+	* HACKING: add util/Makefile as a automake file
+	
+	* util/Makefile.am: automakeify
+	
+	* util/*.h: unify header protection and make it arlalib specific
+
+	* arlad/fcache.h (FCacheEntry): remove datap
+	
+	* arlad/{fcache.c,inter.c,dynroot.c,unknown-subr.c}:
+	remove all references to datap, instead use '->length',
+	'->fetch_data', or just remove the paranoid assert.
+
+	the state log doesn't change (value still stored), its just
+	ignored when reading back the state
+	
+	* arlad/poller.c: some poller log statments
+	
+2003-01-09  Love  <lha@stacken.kth.se>
+
+	* nnpfs/bsd/nnpfs: (nnpfs_message_installdata): pass
+	NNPFS_LOCKLEAF to namei
+
+	* nnpfs/bsd/nnpfs/nnpfs_locl.h: provide glue for namei flag
+	LOCKLEAF
+
+	* arlad/messages.c (nnpfs_message_{open,getdata}): set msg.flag
+	correctly
+
+	* includes/kafs.h: add AFSCOMMONIOC_GKK5SETTOK (in arla space for now)
+	
+	* arlad/cred.h: add prototype for rxgk cred handling
+	
+	* arlad/messages.c: add prototype for rxgk cred handling
+
+	* arlad/inter.h: new signature of cm_open
+	
+	* arlad/inter.c (cm_open): simplify, let other do the hard work
+	
+	* arlad/messages.c: Split message_getdata and message_open for
+	now. They are quite simular, but I want to see the diffrences
+	between them. Also, this fixes inc-open (again) since I broke it
+	before.
+
+	* arlad/fcache.c (fcache_get_data): directories can fetch part of
+	the file, explain why we shold remove `update attr case' in this
+	function.
+	(fcache_update_length): set wanted_length to min of len we have and
+	length of file so we don't got off and fetch the whole thing.
+	(sum_node): don't look at datap/attrp, length will be 0 when there
+	isn't any data
+
+2003-01-07  Love  <lha@stacken.kth.se>
+
+	* arlad/kernel.c: name the workers with their worker id
+	
+2003-01-06  Love  <lha@stacken.kth.se>
+
+	* appl/lib/tokens.c (arlalib_token_iter): if there is unknown
+	error from k_pioctl, bail out
+
+2003-01-03  Tomas Olsson  <tol@stacken.kth.se>
+
+	* lwp/plwp.h: include windows.h after roken.h
+
+	* lwp/plwp.c (*): indent, cleanup, more debugging
+
+	* lwp/plwp.c (LWP_INT_SIGNAL): use SetEvent(), not PulseEvent()
+	(Create_Process_Part2): handle locks properly around LWP_INT_WAIT
+
+For older ChangeLog entries see ChangeLog.2002

@@ -31,13 +31,17 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: log.h,v 1.8.2.1 2001/04/29 23:53:31 lha Exp $ */
+/* $arla: log.h,v 1.12 2003/01/10 12:38:44 lha Exp $ */
 
-#ifndef _LOG_
-#define _LOG_
+#ifndef _ARLAUTIL_LOG_H
+#define _ARLAUTIL_LOG_H 1
 
 #include <stdarg.h>
 #include <parse_units.h>
+
+#if !defined(__GNUC__) && !defined(__attribute__)
+#define __attribute__(x)
+#endif
 
 typedef enum {
     LOG_CPU_USAGE = 1
@@ -54,32 +58,32 @@ Log_method *log_open (const char *progname, char *fname);
 /* Starting logging to `fname'.  Label all messages as coming from
  * `progname'. */
 
-void log_close (Log_method *log);
+void log_close (Log_method *logm);
 
 Log_unit *log_unit_init (Log_method *method, const char *name,
 			 struct units *lognames,
 			 unsigned long default_mask);
 
-void log_unit_free (Log_method *method, Log_unit *log);
+void log_unit_free (Log_method *method, Log_unit *logu);
 
-log_flags log_setflags(Log_method *log, log_flags flags);
-log_flags log_getflags(Log_method *log);
+log_flags log_setflags(Log_method *logm, log_flags flags);
+log_flags log_getflags(Log_method *logm);
 
-void log_log (Log_unit *log, unsigned level, const char *fmt, ...)
+void log_log (Log_unit *logu, unsigned level, const char *fmt, ...)
 __attribute__((format (printf, 3, 4)))
 ;
 
-void log_vlog(Log_unit *log, unsigned level, const char *fmt, va_list args)
+void log_vlog(Log_unit *logu, unsigned level, const char *fmt, va_list args)
 __attribute__((format (printf, 3, 0)))
 ;
 
-unsigned log_get_mask (Log_unit *log);
+unsigned log_get_mask (Log_unit *logu);
 
-void log_set_mask (Log_unit *log, unsigned mask);
+void log_set_mask (Log_unit *logu, unsigned mask);
 
 void log_set_mask_str (Log_method *method, Log_unit *default_unit,
 		       const char *str);
 
 size_t log_mask2str (Log_method *method, Log_unit *unit, char *buf, size_t sz);
 
-#endif /* _LOG_ */
+#endif /* _ARLAUTIL_LOG_H */

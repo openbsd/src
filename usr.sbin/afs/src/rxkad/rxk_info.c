@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,16 +33,16 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: rxk_info.c,v 1.4 2000/10/03 00:38:33 lha Exp $");
+RCSID("$arla: rxk_info.c,v 1.5 2003/01/11 00:50:32 lha Exp $");
 
-int32
+int32_t
 rxkad_GetServerInfo(struct rx_connection *con,
 		    rxkad_level *level,
-		    u_int32 *expiration,
+		    uint32_t *expiration,
 		    char *name,
 		    char *instance,
 		    char *cell,
-		    int32 *kvno)
+		    int32_t *kvno)
 {
   serv_con_data *cdat = (serv_con_data *) con->securityData;
 

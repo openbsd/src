@@ -35,7 +35,9 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: mmaptime_test.c,v 1.4 2000/10/03 00:31:46 lha Exp $");
+RCSID("$arla: mmaptime_test.c,v 1.6 2002/05/16 22:09:46 hin Exp $");
+
+#ifdef USE_MMAPTIME
 
 #include <stdio.h>
 #include <time.h>
@@ -79,7 +81,7 @@ int main(int argc, char **argv)
     if (!(argc == 2 && sscanf(argv[1], "%d", &times) == 1))
 	times = 100000;
 
-    /* Get date two diffrent ways */
+    /* Get date two different ways */
 
     if (mmaptime_gettimeofday(&t, NULL))
 	err(1, "mmaptime_gettimeofday: here am I");
@@ -123,3 +125,12 @@ int main(int argc, char **argv)
     return 0;
 }
 
+#else /* !USE_MMAPTIME */
+
+int
+main(int argc, char **argv)
+{
+    return 0;
+}
+
+#endif /* USE_MMAPTIME */

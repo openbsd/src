@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: vld.c,v 1.49 2000/12/29 19:45:50 tol Exp $ */
+/* $arla: vld.c,v 1.63 2003/02/15 14:57:32 map Exp $ */
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -74,8 +74,8 @@ static int vld_ent_to_fetchstatus  (struct volume_handle *vol,
 				    struct voldb_entry *e,
 				    struct mnode *n);
 static void vld_set_author(struct voldb_entry *e, struct msec *m);
-static int super_user (struct msec *m);
-
+static int vld_update_volsize (volume_handle *vol, int diff);
+static int vld_check_quota (volume_handle *vol, int diff);
 
 /*
  * Local variables
@@ -99,6 +99,9 @@ vol_op *backstoretypes[VLD_MAX_BACKSTORE_TYPES];
  */
 
 #define VLD_VALID_BACKSTORETYPE(backstoretype) (!(backstoretype >= 0 && backstoretype < VLD_MAX_BACKSTORE_TYPES && backstoretypes[backstoretype] != NULL))
+
+#define ENTRY_DISK_SIZE 1
+#define DIR_DISK_SIZE 2
 
 static int 
 VLD_VALID_VOLNAME(const char *volname) 
@@ -362,16 +365,18 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
     onode_opaque dummy; /* used when removing when failed */
     int ret;
     struct mnode *n;
-    u_int32_t real_mnode, unique;
+    uint32_t real_mnode, unique;
     struct voldb *db;
     int (*convert_local2afs)(int32_t);
     node_type ntype;
+    int space_needed = ENTRY_DISK_SIZE;
 
     switch (type) {
     case TYPE_DIR:
 	db = VLD_VOLH_DIR(vol);
 	convert_local2afs = dir_local2afs;
 	ntype = NODE_DIR;
+	space_needed += DIR_DISK_SIZE;
 	break;
     case TYPE_FILE:
     case TYPE_LINK:
@@ -382,6 +387,10 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
     default:
 	abort();
     }
+
+    ret = vld_check_quota (vol, space_needed);
+    if (ret)
+	return ret;
 
     ret = voldb_new_entry (db, &real_mnode, &unique);
     if (ret)
@@ -464,20 +473,24 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
 
 
     if (ret_n) {
+	if (n->flags.ep == FALSE) {
+	    ret = voldb_get_entry (db, real_mnode, &n->e); 
+	    if (ret)
+		goto out_bad_put;
+	    n->flags.ep = TRUE;
+	}
+
 	if (m && (m->flags & VOLOP_GETSTATUS) == VOLOP_GETSTATUS) {
 	    assert(n->flags.fdp);
-	    
-	    if (n->flags.ep == FALSE) {
-		ret = voldb_get_entry (db, real_mnode, &n->e); 
-		if (ret)
-		    goto out_bad_put;
-		n->flags.ep = TRUE;
-	    }
-	    
+	    	    
 	    ret = vld_ent_to_fetchstatus(vol, &e, n);
 	    if (ret)
 		goto out_bad_put;
 	}
+
+	ret = vld_update_volsize (vol, ENTRY_DISK_SIZE + n->e.u.dir.Length/1024);
+	if (ret)
+	    goto out_bad_put;
 
 	*ret_n = n;
     } else
@@ -569,16 +582,22 @@ vld_adjust_linkcount (volume_handle *vol, struct mnode *n, int adjust)
     }
 
     *LinkCount += adjust;
-    
-    /* XXX is this necessary? */
-    ret = voldb_put_entry (db, real_mnode, &n->e);
-    if (ret)
-	return ret;
-  
     n->fs.LinkCount += adjust;
-    n->flags.ep = TRUE;
+    
+    assert(*LinkCount >= 0);
 
-    return 0;
+    if (*LinkCount == 0) {
+	ret = vld_remove_node(vol, n);
+    } else {
+	/* XXX is this necessary? */
+	ret = voldb_put_entry (db, real_mnode, &n->e);
+	if (ret)
+	    return ret;
+	
+	n->flags.ep = TRUE;
+    }
+
+    return ret;
 }
 
 static struct trans *transactions[MAX_TRANSACTIONS] = {NULL};
@@ -655,7 +674,7 @@ vld_verify_trans(int32_t trans)
 	if (transactions[i] && transactions[i]->tid == trans)
 	    return 0;
     }
-    return VOLSERBAD_ACCESS;
+    return ENOENT;
 }
 
 int
@@ -962,6 +981,292 @@ vld_create_volume (struct dp_part *dp, int32_t volid,
     return 0;
 }
 
+static int
+delete_all_nodes (struct volume_handle *volh)
+{
+    uint32_t dsize, fsize;
+    int ret, i;
+
+    /* XXX check volintInfo */
+
+    ret = vld_db_uptodate (volh);
+    if (ret)
+	return ret;
+
+    ret = voldb_header_info(VLD_VOLH_FILE(volh), &fsize, NULL);
+    if (ret)
+	return ret;
+
+    for (i = 0; i < fsize; i++) {
+	struct voldb_entry entry;
+	onode_opaque o;
+	
+	ret = voldb_get_entry (VLD_VOLH_FILE(volh), i, &entry);
+	if (ret)
+	    continue;
+
+	if (entry.u.file.FileType != 0 &&
+	    entry.u.file.nextptr == VOLDB_ENTRY_USED) {
+	    mlog_log (MDEBVLD, "removing file %d\n", i);
+	    ret = voldb_del_entry(VLD_VOLH_FILE(volh), i, &o);
+	    if (ret)
+		return ret;
+	    VOLOP_IUNLINK(volh, &o);
+	}
+    }
+
+    ret = voldb_header_info(VLD_VOLH_DIR(volh), &dsize, NULL);
+    if (ret)
+	return ret;
+
+    for (i = 0; i < dsize; i++) {
+	struct voldb_entry entry;
+	onode_opaque o;
+	
+	ret = voldb_get_entry (VLD_VOLH_DIR(volh), i, &entry);
+	if (ret)
+	    continue;
+
+	if (entry.u.file.FileType != 0 &&
+	    entry.u.file.nextptr == VOLDB_ENTRY_USED) {
+	    mlog_log (MDEBVLD, "removing dir %d\n", i);
+	    ret = voldb_del_entry(VLD_VOLH_DIR(volh), i, &o);
+	    if (ret)
+		return ret;
+	    VOLOP_IUNLINK(volh, &o);
+	}
+    }
+
+    VOLOP_IUNLINK(volh, &volh->fino);
+    VOLOP_IUNLINK(volh, &volh->dino);
+    VOLOP_IUNLINK(volh, &volh->sino);
+    VOLOP_REMOVE (volh);
+    
+    return 0;
+}
+
+int
+vld_foreach_dir (struct volume_handle *volh,
+		 int (*func)(int fd,
+			     uint32_t vnode,
+			     uint32_t uniq,
+			     uint32_t length,
+			     uint32_t dataversion,
+			     uint32_t author,
+			     uint32_t owner,
+			     uint32_t group,
+			     uint32_t parent,
+			     uint32_t client_date,
+			     uint32_t server_date,
+			     uint16_t nlinks,
+			     uint16_t mode,
+			     uint8_t type,
+			     int32_t *acl,
+			     void *arg),
+		 void *arg)
+{
+    struct voldb_entry entry;
+    onode_opaque *o;
+    uint32_t size;
+    int ret, i;
+    int num;
+    int fd;
+    int32_t acl[48]; /* XXX */
+
+    ret = vld_db_uptodate (volh);
+    if (ret)
+	return ret;
+
+    ret = voldb_header_info(VLD_VOLH_DIR(volh), &size, NULL);
+    if (ret)
+	return ret;
+
+    for (num = 0; num < size; num++) {
+
+	ret = voldb_get_entry (VLD_VOLH_DIR(volh), num, &entry);
+	if (ret)
+	    continue;
+
+	{
+	    int32_t size;
+	    int32_t version;
+	    int32_t total;
+	    int32_t positive;
+	    int32_t negative;
+
+	    memset(acl, 0, sizeof(acl));
+	    for (i = 0; entry.u.dir.acl[i].owner; i++) {
+		acl[i*2+5] = htonl(entry.u.dir.acl[i].owner);
+		acl[i*2+6] = htonl(entry.u.dir.acl[i].flags);
+	    }
+	    positive = i;
+	    for (i = 0; entry.u.dir.negacl[i].owner; i++) {
+		acl[(i+positive)*2+5] = htonl(entry.u.dir.negacl[i].owner);
+		acl[(i+positive)*2+6] = htonl(entry.u.dir.negacl[i].flags);
+	    }
+	    negative = i;
+	    total = positive + negative;
+	    version = 1;
+	    size = sizeof(acl);
+	    acl[0] = htonl(size);
+	    acl[1] = htonl(version);
+	    acl[2] = htonl(total);
+	    acl[3] = htonl(positive);
+	    acl[4] = htonl(negative);
+	}
+
+	o = &entry.u.dir.ino;
+
+	if (entry.u.dir.FileType != 0 &&
+	    entry.u.dir.nextptr == VOLDB_ENTRY_USED) {
+	    ret = VOLOP_IOPEN(volh, o, O_RDONLY, &fd);
+	    if (ret)
+		return ret;
+
+	    mlog_log(MDEBVOLDB, "vnode %i length %d",
+		     dir_local2afs(num), entry.u.dir.Length);
+
+	    ret = func(fd,
+		       dir_local2afs(num),
+		       entry.u.dir.unique,
+		       entry.u.dir.Length,
+		       entry.u.dir.DataVersion,
+		       entry.u.dir.Author,
+		       entry.u.dir.Owner,
+		       entry.u.dir.Group,
+		       entry.u.dir.ParentVnode,
+		       entry.u.dir.ServerModTime, /* XXX */
+		       entry.u.dir.ServerModTime,
+		       entry.u.dir.LinkCount,
+		       entry.u.dir.UnixModeBits,
+		       entry.u.dir.FileType,
+		       acl,
+		       arg);
+	    close(fd);
+	    if (ret)
+		return ret;
+	}
+    }
+    
+    return 0;
+}
+
+int
+vld_foreach_file (struct volume_handle *volh,
+		  int (*func)(int fd,
+			      uint32_t vnode,
+			      uint32_t uniq,
+			      uint32_t length,
+			      uint32_t dataversion,
+			      uint32_t author,
+			      uint32_t owner,
+			      uint32_t group,
+			      uint32_t parent,
+			      uint32_t client_date,
+			      uint32_t server_date,
+			      uint16_t nlinks,
+			      uint16_t mode,
+			      uint8_t type,
+			      int32_t *acl,
+			      void *arg),
+		  void *arg)
+{
+    struct voldb_entry entry;
+    onode_opaque *o;
+    uint32_t size;
+    int ret;
+    int num;
+    int fd;
+
+    ret = vld_db_uptodate (volh);
+    if (ret)
+	return ret;
+
+    ret = voldb_header_info(VLD_VOLH_FILE(volh), &size, NULL);
+    if (ret)
+	return ret;
+
+    for (num = 0; num < size; num++) {
+
+	ret = voldb_get_entry (VLD_VOLH_FILE(volh), num, &entry);
+	if (ret)
+	    continue;
+
+	o = &entry.u.dir.ino;
+
+	if (entry.u.dir.FileType != 0 &&
+	    entry.u.dir.nextptr == VOLDB_ENTRY_USED) {
+	    ret = VOLOP_IOPEN(volh, o, O_RDONLY, &fd);
+	    if (ret)
+		return ret;
+
+	    mlog_log(MDEBVOLDB, "vnode %i length %d",
+		     file_local2afs(num), entry.u.file.Length);
+
+	    ret = func(fd,
+		       file_local2afs(num),
+		       entry.u.file.unique,
+		       entry.u.file.Length,
+		       entry.u.file.DataVersion,
+		       entry.u.file.Author,
+		       entry.u.file.Owner,
+		       entry.u.file.Group,
+		       entry.u.file.ParentVnode,
+		       entry.u.file.ServerModTime, /* XXX */
+		       entry.u.file.ServerModTime,
+		       entry.u.file.LinkCount,
+		       entry.u.file.UnixModeBits,
+		       entry.u.file.FileType,
+		       NULL,
+		       arg);
+	    close(fd);
+	    if (ret)
+		return ret;
+	}
+    }
+    
+    return 0;
+}
+
+
+int
+vld_delete_volume (struct dp_part *dp, int32_t volid, 
+		   int32_t backstoretype,
+		   int flags)
+{
+    int ret;
+    volume_handle *vol;
+    char path[MAXPATHLEN];
+
+    ret = vld_open_volume_by_num (dp, volid, &vol);
+    if (ret)
+	return ret;
+
+    ret = delete_all_nodes (vol);
+    if (ret) {
+	vld_free (vol);
+	return ret;
+    }
+
+    hashtabdel (volume_htab, vol);
+
+    ret = vol_getfullname (DP_NUMBER(dp), volid, path, sizeof(path));
+    if (ret) {
+	vld_free (vol);
+	return ret;
+    }
+
+    ret = unlink(path);
+    if (ret) {
+	vld_free (vol);
+	return ret;
+    }
+
+    vld_free (vol);
+
+    return 0;
+}
+
 /*
  * Register a new volume type
  */
@@ -1003,27 +1308,6 @@ vld_find_vol (const int32_t volid, struct volume_handle **vol)
 }
 
 /*
- * return a non zero value if the user is the superuser.
- */
-
-#define SUPER_USER 0
-
-static int
-super_user (struct msec *m)
-{
-    int i;
-    prlist *entries = m->sec->cps;
-    int lim = min(PR_MAXLIST, entries->len);
-    for (i = 0; i < lim; i++) {
-	if (entries->val[i] == PR_SYSADMINID)
-	    return 1;
-    }
-
-    return 0;
-
-}
-
-/*
  *
  */
 
@@ -1032,11 +1316,9 @@ vld_storestatus_to_dent (struct voldb_dir_entry *e,
 			 const AFSStoreStatus *ss,
 			 struct msec *m)
 {
-    if (ss->Mask & SS_OWNER) {
-	if (ss->Owner == SUPER_USER && !super_user (m))
-	    return EPERM;
+    if (ss->Mask & SS_OWNER)
 	e->Owner = ss->Owner;
-    }
+
     if (ss->Mask & SS_MODTIME) {
 	e->ServerModTime = ss->ClientModTime; /* XXX should modify
 						 ClientModTime */
@@ -1059,11 +1341,9 @@ vld_storestatus_to_fent (struct voldb_file_entry *e,
 			 const AFSStoreStatus *ss,
 			 struct msec *m)
 {
-    if (ss->Mask & SS_OWNER) {
-	if (ss->Owner == SUPER_USER && !super_user (m))
-	    return EPERM;
+    if (ss->Mask & SS_OWNER)
 	e->Owner = ss->Owner;
-    }
+
     if (ss->Mask & SS_MODTIME) {
 	e->ServerModTime = ss->ClientModTime; /* XXX should modify
 						 ClientModTime */
@@ -1127,10 +1407,10 @@ vld_dent_to_fetchstatus (struct volume_handle *vol,
     fs->ClientModTime 	= e->ServerModTime;
     fs->ServerModTime	= e->ServerModTime;
     fs->SyncCount 	= 0;
-    fs->spare1		= vol->info.creationDate;
-    fs->spare2		= 0;
-    fs->spare3		= 0;
-    fs->spare4		= 0;
+    fs->DataVersionHigh	= vol->info.creationDate;
+    fs->LockCount	= 0;
+    fs->LengthHigh	= 0;
+    fs->ErrorCode	= 0;
     fs->Author		= e->Author;
     fs->Owner		= e->Owner;
     fs->Group		= e->Group;
@@ -1176,10 +1456,10 @@ vld_fent_to_fetchstatus (struct volume_handle *vol,
     fs->ClientModTime 	= e->ServerModTime;
     fs->ServerModTime	= e->ServerModTime;
     fs->SyncCount 	= 0;
-    fs->spare1		= vol->info.creationDate;
-    fs->spare2		= 0;
-    fs->spare3		= 0;
-    fs->spare4		= 0;
+    fs->DataVersionHigh	= vol->info.creationDate;
+    fs->LockCount	= 0;
+    fs->LengthHigh	= 0;
+    fs->ErrorCode	= 0;
     fs->Author		= e->Author;
     fs->Owner		= e->Owner;
     fs->Group		= e->Group;
@@ -1297,7 +1577,7 @@ foo(void)
 	}
     }
     if (validop_p(*callers_rights, operation))
-        return TRUE;
+	return TRUE;
     return FALSE;
 }
 #endif
@@ -1344,14 +1624,7 @@ vld_check_rights (volume_handle *vol, struct mnode *n,
 #if 0
     if ((m->flags & VOLOP_NOCHECK) == VOLOP_NOCHECK)
 	return 0;
-#else
-/*    m->caller_access = m->anonymous_access =
-	PRSFS_READ | PRSFS_WRITE | PRSFS_INSERT |
-	PRSFS_LOOKUP | PRSFS_DELETE |
-	PRSFS_LOCK | PRSFS_ADMINISTER;
-    return 0;*/
 #endif
-
 
     assert(m->sec);
 
@@ -1387,14 +1660,24 @@ vld_check_rights (volume_handle *vol, struct mnode *n,
 
     m->caller_access = m->anonymous_access = 0;
 
-    for (i = 0; i < FS_MAX_ACL; i++)
+    for (i = 0; i < FS_MAX_ACL; i++) {
 	for (j = 0; j < m->sec->cps->len; j++)
 	    if (parent_n->e.u.dir.acl[i].owner == m->sec->cps->val[j])
 		m->caller_access |= parent_n->e.u.dir.acl[i].flags;
-    for (i = 0; i < FS_MAX_ACL; i++)
+	if (parent_n->e.u.dir.acl[i].owner == PR_ANYUSERID)
+	    m->anonymous_access |= parent_n->e.u.dir.acl[i].flags;
+    }
+
+    for (i = 0; i < FS_MAX_ACL; i++) {
 	for (j = 0; j < m->sec->cps->len; j++)
 	    if (parent_n->e.u.dir.negacl[i].owner == m->sec->cps->val[j])
 		m->caller_access &= ~parent_n->e.u.dir.negacl[i].flags;
+	if (parent_n->e.u.dir.negacl[i].owner == PR_ANYUSERID)
+	    m->anonymous_access &= ~parent_n->e.u.dir.negacl[i].flags;
+    }
+
+    if (m->sec->superuser)
+	m->caller_access |= PRSFS_LOOKUP | PRSFS_ADMINISTER;
 
     for (i = 0; 
 	 i < sizeof(check_flags)/sizeof(*check_flags) 
@@ -1432,7 +1715,7 @@ vld_open_vnode (volume_handle *vol, struct mnode *n, struct msec *m)
      * is everything cached ?
      */
 
-    if ((m->flags & VOLOP_GETSTATUS) == 0 
+    if ((m->flags & VOLOP_GETSTATUS) == 0  /* XXX why? */
 	&& n->flags.fsp == TRUE
 	&& n->flags.ep == TRUE)
 	return 0;
@@ -1501,23 +1784,44 @@ vld_modify_vnode (volume_handle *vol, struct mnode *n, struct msec *m,
     }
 
     if (len) {
-	ret = ftruncate (n->fd, *len);
+	int diff;
+	uint32_t *Length;
+
+	assert (vol->flags.infop);
+	
+	if (afs_dir_p (n->fid.Vnode))
+	    Length = &n->e.u.dir.Length;
+	else
+	    Length = &n->e.u.file.Length;
+
+	diff = *len / 1024 - *Length / 1024; 
+
+	mlog_log (MDEBFS,
+		  "vld_modify_vnode: olen=%d, nlen=%d, diff=%d", *Length, *len, diff);
+
+	ret = vld_update_volsize (vol, diff);
 	if (ret)
 	    return ret;
 
-	if (n->e.type == TYPE_DIR)
-	    n->e.u.dir.Length = *len;
-	else
-	    n->e.u.file.Length = *len;
+	ret = ftruncate (n->fd, *len);
+	if (ret) {
+	    vld_update_volsize (vol, -diff);
+	    return ret;
+	}
+
+	*Length = *len;
 
 	n->sb.st_size = *len;
     }
 
     if (m->flags & (VOLOP_WRITE|VOLOP_INSERT|VOLOP_DELETE)) {
-	if (n->e.type == TYPE_DIR)
+	if (n->e.type == TYPE_DIR) {
 	    n->e.u.dir.DataVersion++;
-	else
+	    n->e.u.dir.ServerModTime = time(0);
+	} else {
 	    n->e.u.file.DataVersion++;
+	    n->e.u.file.ServerModTime = time(0);
+	}
     }
 
     ret = voldb_put_entry (db, real_mnode, &n->e);
@@ -1678,6 +1982,41 @@ vld_db_uptodate (volume_handle *vol)
     return 0;
 }
 
+static int
+vld_open_volume_by_handle (struct dp_part *dp, volume_handle *vol)
+{
+    int ret, fd;
+    char path[MAXPATHLEN];
+    vstatus vs;
+
+    vld_ref(vol);
+
+    ret = vol_getfullname (DP_NUMBER(dp), vol->vol, path, sizeof (path));
+    if (ret)
+	return ret;
+
+    fd = open (path, O_RDONLY, 0600);
+    if (fd < 0)
+	return errno;
+
+    ret = vstatus_read (fd, &vs);
+    if (ret) {
+	close (fd);
+	return ret;
+    }
+    close (fd);
+
+    ret = vstatus2volume_handle (&vs, dp, &vol);
+    if (ret)
+	return ret;
+
+    ret = VOLOP_OPEN(vol->type, vol->dp, vol->vol, 
+		     VOLOP_NOFLAGS, &vol->data);
+
+    return ret;
+}
+
+
 /*
  * Open volume on partition `dp' with volume id `volid'
  * and return it ref:ed in `vol'.
@@ -1732,23 +2071,35 @@ vld_open_volume_by_num (struct dp_part *dp, int32_t volid,
 }
 
 int
-vld_remove_node (volume_handle *vol, int32_t node)
+vld_remove_node (volume_handle *vol, struct mnode *n)
 {
     int ret;
     onode_opaque o;
+    int32_t node = n->fid.Vnode;
+    int diff;
+
+    assert (vol->flags.infop);
+
+    mnode_remove(&n->fid);
 
     if (afs_dir_p (node)) {
-	dir_afs2local(node);
 	ret = voldb_del_entry (VLD_VOLH_DIR(vol), dir_afs2local(node), &o);
 	if (ret)
 	    return ret;
 
+	diff = n->e.u.dir.Length;
     } else {
 	ret = voldb_del_entry (VLD_VOLH_FILE(vol), file_afs2local(node), &o);
 	if (ret)
 	    return ret;
 
+	diff = n->e.u.file.Length;
     }
+
+    mlog_log (MDEBFS,
+	      "vld_remove_node: olen=%d, diff=%d", diff, -(ENTRY_DISK_SIZE + diff/1024));
+
+    vld_update_volsize (vol, -(ENTRY_DISK_SIZE + diff/1024));
 
     return VOLOP_IUNLINK (vol, &o);
 }
@@ -1840,6 +2191,127 @@ vld_info_write (volume_handle *vol)
 }
 
 /*
+ * check quota and update volume size
+ */
+
+int
+vld_update_volsize  (volume_handle *vol, int diff) {
+    int ret = vld_info_uptodatep(vol);
+    if (ret)
+	return ret;
+    
+    if (vol->info.maxquota < vol->info.size + diff)
+	    return VOVERQUOTA;
+    
+    vol->info.size += diff;
+    
+    assert (vol->info.size >= 0);
+    ret = vld_info_write (vol); 
+
+    return ret;
+}
+
+int
+vld_get_volstats (volume_handle *vol,
+		  struct AFSFetchVolumeStatus *volstat,
+		  char *volName,
+		  char *offLineMsg,
+		  char *motd) 
+{
+    int ret;
+    long availblocks, totalblocks;
+
+    ret = vld_info_uptodatep(vol);
+    if (ret)
+	return ret;
+
+    ret = dp_getstats(vol->dp, &availblocks, &totalblocks);
+    if (ret)
+	return ret;
+
+    volstat->Vid = vol->vol;
+    volstat->ParentId = vol->info.parentID;
+    volstat->Online = !vol->flags.offlinep;
+    volstat->InService = vol->info.inUse;
+    volstat->Blessed = vol->info.inUse;
+    volstat->NeedsSalvage = vol->info.needsSalvaged;
+    volstat->Type = vol->type;
+    volstat->MinQuota = 0;
+    volstat->MaxQuota = vol->info.maxquota;
+    volstat->BlocksInUse = vol->info.size;
+    volstat->PartBlocksAvail = availblocks;
+    volstat->PartMaxBlocks = totalblocks;
+    
+    strlcpy(volName, vol->info.name, VNAMESIZE);
+
+    *offLineMsg = '\0';
+    *motd = '\0';
+
+    return 0;
+}
+
+int
+vld_set_volstats (volume_handle *vol,
+		  const struct AFSStoreVolumeStatus *volstat,
+		  const char *volName,
+		  const char *offLineMsg,
+		  const char *motd) 
+{
+    int ret;
+
+    ret = vld_info_uptodatep(vol);
+    if (ret)
+	return ret;
+
+    if ((volstat->Mask & AFS_SETMAXQUOTA)== AFS_SETMAXQUOTA)
+	vol->info.maxquota = volstat->MaxQuota;
+
+    /* XXX store minquota, volName, offLineMsg, motd */
+
+    return 0;
+}
+
+struct collect_volumes_args {
+    struct dp_part *dp;
+    List *vollist;
+};
+
+static Bool
+vld_collect_volumes (void *ptr, void *arg)
+{
+    volume_handle *vol = (volume_handle *) ptr;
+    struct collect_volumes_args *args = (struct collect_volumes_args *) arg;
+    List *vollist = args->vollist;
+    struct dp_part *dp = args->dp;
+
+    vld_open_volume_by_handle (dp, vol);
+
+    listaddtail(vollist, vol);
+
+    return 0;
+}
+
+int
+vld_list_volumes(struct dp_part *dp, List **retlist)
+{
+    struct collect_volumes_args args;
+    List *vollist;
+
+    vollist = listnew();
+
+    if (vollist == NULL)
+	return ENOMEM;
+
+    args.vollist = vollist;
+    args.dp = dp;
+
+    hashtabforeach(volume_htab, vld_collect_volumes, &args);
+    *retlist = vollist;
+
+    return 0;
+}
+
+/*
  * Shutdown time
  */
 
@@ -1849,4 +2321,203 @@ vld_end (void)
     /* XXX flush volume_htab to disk */
 
     return;
+}
+
+int
+restore_file(struct rx_call *call,
+	     uint32_t vnode,
+	     uint32_t uniq,
+	     uint32_t length,
+	     uint32_t dataversion,
+	     uint32_t author,
+	     uint32_t owner,
+	     uint32_t group,
+	     uint32_t parent,
+	     uint32_t client_date,
+	     uint32_t server_date,
+	     uint16_t nlinks,
+	     uint16_t mode,
+	     uint8_t type,
+	     volume_handle *vol,
+	     int32_t *acl)
+{
+    int ret;
+    struct voldb *db;
+    int (*convert_afs2local)(int32_t);
+    struct voldb_entry e;
+    AFSFid node;
+    onode_opaque ino;
+    node_type ntype;
+    struct mnode *n;
+    int i;
+    int exists;
+
+    switch (type) {
+    case TYPE_DIR:
+        db = VLD_VOLH_DIR(vol);
+        convert_afs2local = dir_afs2local;
+        ntype = NODE_DIR;
+        break;
+    case TYPE_FILE:
+    case TYPE_LINK:
+        db = VLD_VOLH_FILE(vol);
+        convert_afs2local = file_afs2local;
+        ntype = NODE_REG;
+        break;
+    default:
+        abort();
+    }
+
+    node.Volume = vol->vol;
+    node.Vnode = vnode;
+    node.Unique = uniq;
+    
+#if 0
+    printf("create_file: %u %u %u %u %u %u %u %u %u %u %u %u %u\n",
+	   vnode, uniq, length,
+	   dataversion, author, owner, group, parent, client_date,
+	   server_date, (uint32_t) nlinks, (uint32_t) mode,
+	   (uint32_t) type);
+#endif
+
+    ret = voldb_expand(db, convert_afs2local(vnode));
+    if (ret)
+	return ret;
+    
+    ret = voldb_get_entry(db, convert_afs2local(vnode), &e);
+    if (ret)
+	return ret;
+
+    if (type == TYPE_DIR)
+	exists = (e.u.dir.nextptr == VOLDB_ENTRY_USED);
+    else
+	exists = (e.u.file.nextptr == VOLDB_ENTRY_USED);
+
+    if (exists) {
+	onode_opaque o;
+
+	ret = voldb_del_entry(db, convert_afs2local(vnode), &o);
+	if (ret)
+	    return ret;
+	VOLOP_IUNLINK(vol, &o);
+    }
+
+    e.type = type;
+
+    ret = mnode_find(&node, &n);
+    if (ret)
+	return ret;
+
+    ret = VOLOP_ICREATE(vol, &ino, ntype, n);
+    if (ret)
+	return ret;
+
+    if (type == TYPE_DIR) {
+	e.u.dir.nextptr = VOLDB_ENTRY_USED;
+	e.u.dir.ino = ino;
+	e.u.dir.FileType = type;
+	e.u.dir.LinkCount = nlinks;
+	e.u.dir.DataVersion = dataversion;
+	e.u.dir.Length = length;
+	e.u.dir.Author = author;
+	e.u.dir.Owner = owner;
+	e.u.dir.Group = group;
+	e.u.dir.ParentVnode = parent;
+	e.u.dir.ParentUnique = 0 /* XXX */;
+	e.u.dir.ServerModTime = server_date;
+	e.u.dir.UnixModeBits = 0x40000 | mode;
+	e.u.dir.InterfaceVersion = 1;
+	memset (e.u.dir.acl, 0, 
+		sizeof (e.u.dir.acl));
+	memset (e.u.dir.negacl, 0, 
+		sizeof (e.u.dir.negacl));
+	{
+#if 0
+	    int32_t size = ntohl(acl[0]);
+	    int32_t version = ntohl(acl[1]);
+	    int32_t total = ntohl(acl[2]);
+#endif
+	    int32_t positive = ntohl(acl[3]);
+	    int32_t negative = ntohl(acl[4]);
+	    if (positive <= FS_MAX_ACL && negative <= FS_MAX_ACL) {
+		for (i = 0; i < positive; i++) {
+		    e.u.dir.acl[i].owner = ntohl(acl[i*2+5]);
+		    e.u.dir.acl[i].flags = ntohl(acl[i*2+6]);
+		}
+		for (i = 0; i < negative; i++) {
+		    e.u.dir.negacl[i].owner = ntohl(acl[(i+positive)*2+5]);
+		    e.u.dir.negacl[i].flags = ntohl(acl[(i+positive)*2+6]);
+		}
+	    }
+	}
+	ret = voldb_put_acl (db, convert_afs2local(vnode), &e.u.dir);
+	if (ret)
+	    return ret;
+    } else {
+	e.u.file.nextptr = VOLDB_ENTRY_USED;
+	e.u.file.ino = ino;
+	e.u.file.FileType = type;
+	e.u.file.LinkCount = nlinks;
+	e.u.file.DataVersion = dataversion;
+	e.u.file.Length = length;
+	e.u.file.Author = author;
+	e.u.file.Owner = owner;
+	e.u.file.Group = group;
+	e.u.file.ParentVnode = parent;
+	e.u.file.ParentUnique = 0 /* XXX */;
+	e.u.file.ServerModTime = server_date;
+	e.u.file.UnixModeBits = mode;
+	e.u.dir.InterfaceVersion = 1;
+    }
+
+    ret = voldb_put_entry(db, convert_afs2local(vnode), &e);
+    if (ret)
+	return ret;
+
+    ret = vld_update_volsize (vol, ENTRY_DISK_SIZE + length/1024);
+    if (ret)
+	return ret;
+
+    ret = ftruncate(n->fd, length);
+    if (ret)
+	return errno;
+
+    ret = copyrx2fd (call, n->fd, 0, length);
+    if (ret)
+	return ret;
+
+    mnode_free (n, FALSE);
+
+    return 0;
+}
+
+int
+vld_rebuild (struct volume_handle *vol)
+{
+    int ret;
+
+    assert (vol->flags.voldbp);
+
+    ret = voldb_rebuild (VLD_VOLH_DIR(vol));
+
+    if (ret)
+	return ret;
+
+    ret = voldb_rebuild (VLD_VOLH_FILE(vol));
+
+    return ret;
+}
+
+static int vld_check_quota (volume_handle *vol, int diff)
+{ 
+    int ret;
+
+    ret = vld_info_uptodatep(vol);
+    if (ret)
+	return ret;
+
+    if (vol->info.maxquota < vol->info.size + diff)
+	return VOVERQUOTA;
+
+    return 0;
 }

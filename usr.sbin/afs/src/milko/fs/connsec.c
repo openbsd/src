@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,54 +35,34 @@
 
 #include "pts.cs.h"
 
-RCSID("$KTH: connsec.c,v 1.12 2000/10/03 00:17:03 lha Exp $");
+#include "arlalib.h"
 
-static struct rx_connection *
-get_conn(int32_t addr, int32_t port, int32_t servid)
-{
-    struct rx_securityClass *sec;
-    struct rx_connection *conn;
-
-    sec = netinit_client_getcred();
-    if (sec == NULL)
-	return NULL;
-    
-    conn = rx_NewConnection (addr, 
-			     htons (port), 
-			     servid,
-			     sec,
-			     2 /* secureindex */);
-    if (conn == NULL)
-	return NULL;
-
-    return conn;
-}
-
-static struct rx_connection *out_conn = NULL;
+RCSID("$arla: connsec.c,v 1.18 2002/02/07 17:59:39 lha Exp $");
 
 int
 fs_connsec_nametoid(namelist *nlist, idlist *ilist)
 {
-    int error;
+    int error = ARLA_CALL_DEAD;
     int first = 0;
+    struct db_server_context conn_context;
+    struct rx_connection *conn;
 
 retry:
-    if (out_conn == NULL)
-	out_conn = get_conn(htonl(0x7f000001) /* XXX */,
-			    afsprport,
-			    PR_SERVICE_ID);
-    
-    if (out_conn == NULL)
-	return ENETDOWN;
-    
-    error = PR_NameToID(out_conn, nlist, ilist);
+
+    for (conn = arlalib_first_db(&conn_context,
+				 NULL, NULL, afsprport, PR_SERVICE_ID, 
+				 arlalib_getauthflag (0, 1, 0, 0));
+	 conn != NULL && arlalib_try_next_db(error);
+	 conn = arlalib_next_db(&conn_context)) {
+	error = PR_NameToID(conn, nlist, ilist);
+    }
+
+    free_db_server_context(&conn_context);
+
     if (error == RXKADEXPIRED && first == 0) {
 	++first;
-	rx_DestroyConnection (out_conn);
-	out_conn = NULL;
 	goto retry;
     }
-    
     
     if (error) {
 	fprintf(stderr, "PR_NameToID error: %s(%d)\n",
@@ -96,18 +76,28 @@ retry:
 int
 fs_connsec_idtoname(idlist *ilist, namelist *nlist)
 {
-    int error;
+    int error = ARLA_CALL_DEAD;
+    int first = 0;
+    struct db_server_context conn_context;
+    struct rx_connection *conn;
 
-    if (out_conn == NULL)
-	out_conn = get_conn(htonl(0x7f000001) /* XXX */,
-			    afsprport,
-			    PR_SERVICE_ID);
+retry:
 
-    if (out_conn == NULL)
-	return ENETDOWN;
-    
-    error = PR_IDToName(out_conn, ilist, nlist);
-    
+    for (conn = arlalib_first_db(&conn_context,
+				 NULL, NULL, afsprport, PR_SERVICE_ID, 
+				 arlalib_getauthflag (0, 1, 0, 0));
+	 conn != NULL && arlalib_try_next_db(error);
+	 conn = arlalib_next_db(&conn_context)) {
+	error = PR_IDToName(conn, ilist, nlist);
+    }
+
+    free_db_server_context(&conn_context);
+
+    if (error == RXKADEXPIRED && first == 0) {
+	++first;
+	goto retry;
+    }
+
     if (error) {
 	if (koerr_gettext(error))
 	    fprintf(stderr, "PR_IDToName error: %s(%d)\n",
@@ -125,7 +115,7 @@ fs_connsec_anonymous(struct fs_security_context *sec)
 {
     sec->uid = PR_ANONYMOUSID;
     sec->cps->len = 2;
-    sec->cps->val = malloc(2*sizeof(u_int32_t));
+    sec->cps->val = malloc(2*sizeof(uint32_t));
     if (sec->cps->val == NULL) {
 	sec->cps->len = 0;
 	return; /* XXX */
@@ -141,11 +131,14 @@ fs_connsec_createconn(struct rx_connection *conn)
     namelist nlist;
     idlist ilist;
     char rname[PR_MAXNAMELEN];
-    int error;
+    int error = ARLA_CALL_DEAD;
     char aname[ANAME_SZ];
     char inst[INST_SZ];
     char realm[REALM_SZ];
     int32_t over;
+    struct db_server_context conn_context;
+    struct rx_connection *out_conn;
+    int i;
 
     if (conn->rock)
 	return;
@@ -154,6 +147,7 @@ fs_connsec_createconn(struct rx_connection *conn)
     if (sec == NULL) 
 	return; /* XXX */
 
+    sec->superuser = 0;
     sec->ref = 1;
     sec->cps = malloc(sizeof(prlist));
     if (sec->cps == NULL)
@@ -168,39 +162,40 @@ fs_connsec_createconn(struct rx_connection *conn)
     }
 
     /* 
-     * XXX This should retry with a new connection if the first one
-     * fails. It should also try all ptservers.
-     */
-
-    if (out_conn == NULL)
-	out_conn = get_conn(htonl(0x7f000001) /* XXX */,
-			    afsprport,
-			    PR_SERVICE_ID);
-
-    if (out_conn == NULL) {
-	fs_connsec_anonymous(sec);
-	return;
-    }
-
-    /* 
      * XXX It is not a good thing to truncate, allows for spoofing?
      * Perhaps we should just deny access if fullname is to long. 
      */
 
-    strlcpy(rname, krb_unparse_name_long(aname, inst, realm), sizeof(rname));
-    
+    if (!strcasecmp(realm, netinit_getrealm()))
+	strlcpy(rname, 
+		krb_unparse_name_long(aname, inst, NULL), 
+		sizeof(rname));
+    else
+	strlcpy(rname, 
+		krb_unparse_name_long(aname, inst, strlwr(realm)), 
+		sizeof(rname));
+
     nlist.len = 1;
     nlist.val = &rname;
     ilist.val = NULL;
 
-    error = PR_NameToID(out_conn, &nlist, &ilist);
-    
+    for (out_conn = arlalib_first_db(&conn_context,
+				 NULL, NULL, afsprport, PR_SERVICE_ID, 
+				 arlalib_getauthflag (0, 1, 0, 0));
+	 out_conn != NULL && arlalib_try_next_db(error);
+	 out_conn = arlalib_next_db(&conn_context)) {
+	error = PR_NameToID(out_conn, &nlist, &ilist);
+	if (error == 0)
+	    break;
+    }
+
     if (error) {
 	fprintf(stderr, "PR_NameToID error: %s(%d)\n",
 		koerr_gettext(error), error);
 	free(ilist.val);
 
 	fs_connsec_anonymous(sec);
+	free_db_server_context(&conn_context);
 	return;
     }
 
@@ -210,6 +205,8 @@ fs_connsec_createconn(struct rx_connection *conn)
 
     error = PR_GetCPS(out_conn, sec->uid, sec->cps, &over);
 
+    free_db_server_context(&conn_context);
+
     if (error) {
 	fprintf(stderr, "PR_GetCPS error: %s(%d)\n",
 		koerr_gettext(error), error);
@@ -217,6 +214,12 @@ fs_connsec_createconn(struct rx_connection *conn)
 	return;
     }
 
+    for (i = 0; i < sec->cps->len; i++) {
+	if (sec->cps->val[i] == PR_SYSADMINID) {
+	    sec->superuser = 1;
+	    break;
+	}
+    }
 }
 
 void

@@ -1,4 +1,4 @@
-$KTH: arla-0-35-7 $)
+Id: INSTALL,v 1.93 2002/09/07 10:41:43 lha Exp $arla:  $)
 
 * Building arla
 
@@ -26,18 +26,18 @@ There are also some arla-specific arguments to configure:
   --with-krb4=dir         use kerberos 4 in dir
   --with-krb4-lib=dir     use krb4-lib in dir
   --with-krb4-include=dir use krb4-include in dir
-  --with-krbafs=dir       use cmu's krbafs lib (If you not are using kth-krb.
-			  This is not needed when using kth-krb since
-			  libkafs is included there.)
+  --with-krbafs=dir       use krbafs lib. For non kth-krb users, see README
+			  for more information about libkrbafs)
   --with-krb5=dir	  use kerberos 4 compat from kerberos 5 in dir
+  --with-sl=dir	          use the sl in dir
+  --with-sl-lib=dir	  use the sl library in dir
+  --with-sl-include=dir	  use the sl includes in dir
   --disable-mmap	  don't use mmap at all
-  --enable-mmaptime       use mmap:ed time from /dev/kmem
-                          (known to work on FreeBSD)
   --disable-dynamic-afs	  don't use loaded AFS library with AIX
   --enable-smp		  compile for SMP (currently only on Linux and FreeBSD)
   --enable-knfs		  enable code to nfsmount AFS (*BSD only).
   --enable-kld		  build KLD modules (for FreeBSD[34]-current)
-  --disable-xfs		  do not build XFS
+  --disable-nnpfs	  do not build NNPFS
   --without-x		  don't build X code
   --with-pthreads=dir	  use the pthreads library in dir
   --with-sys=dir          The base directory of your kernel source
@@ -51,6 +51,13 @@ There are also some arla-specific arguments to configure:
   --with-roken-include=dir   that knowns what they do and want to use
   --with-roken-lib=dir       another roken the default. You will shot off
                              your feet using this option.
+			     If you use a roken, you want to use it from
+			     KTH-KRB1.2 or Heimdal 0.4e (or later)
+  --with-bsd-make=prog    When using a bsd and cross compiling we need
+                             to know your make, default /usr/bin/make
+  --without-lwp-redzone   LWP creates a redzone page on top of all
+			     thread stacks with mmap(), if this causes
+			     you problem you can turn it of with this option.
 
 By default configure will use gcc if it finds it.  If you want to use
 a specific compiler or some special options you can specify that when
@@ -72,7 +79,7 @@ configured.
 Solaris 2.7, 2.8 (or Solaris 7, 8)
 
 On Solaris 2.7, 2.8 the kernel itself can be either 32 bit or 64 bit.
-The xfs kernel module needs to be of the same type as the kernel.  You
+The nnpfs kernel module needs to be of the same type as the kernel.  You
 can find out what type of kernel you have from `dmesg'.  It should say
 something like:
 
@@ -101,11 +108,13 @@ lwp/make-process.o.sh.in.
 
 Mac OS X/Darwin
 
-The platforms we have tested are Mac OS X 10.0.4 (Darwin 1.3.7) and
-Mac OS X 10.1 (Darwin 1.4). You must install the Developer Tools CD
-before you can compile Arla. On Mac OS X 10.1, you must currently use
-the option --disable-mmap to the configure script, since mmap is
-broken in that version.
+The platforms we have tested are Mac OS X 10.2. You must install the
+Developer Tools CD before you can compile Arla.
+
+There is documentation to configure the native kerberos in Mac OS X provided by MIT here: <http://web.mit.edu/macdev/Development/MITKerberos/Common/Documentation/preferences.html>
+
+If you choose to use the native Kerberos stuff you'll need krbafs, see
+the README where to find it.
 
 Linux
 
@@ -127,6 +136,10 @@ and make dep before you run arla's configure. This since
 header files (like linux/version.h) need to have right datestamp to 
 please make. Another problem is that all symbol-rewrite #defines
 doesn't exists.
+
+{Net,Free,Open}BSD
+
+You will need the kernel source installed in /usr/src/sys.
 
 NetBSD
 
@@ -220,18 +233,14 @@ Linux:
 
 SunOS4:
 
-  modload /usr/arla/bin/libxfs.o
+  modload /usr/arla/bin/libnnpfs.o
   modstat
-  mknod /dev/xfs0 c <C-major from modstat> 0
+  mknod /dev/nnpfs0 c <C-major from modstat> 0
   mkdir /afs
-  /usr/arla/bin/mount_xfs /afs /dev/xfs0
+  /usr/arla/bin/mount_nnpfs /afs /dev/nnpfs0
   /usr/arla/libexec/arlad
 
 {Net|Open}BSD:
-
-  NetBSD 1.4.2 have a problem with syscall(2) and shared libs, it will
-  simply not work. The configure script tries to detect that its 1.4.2
-  and build everything static. Gross, but at least working.
 
   You can not load kernel modules (the modload step) when your
   securelevel is above zero. There are two ways to make sure that you
@@ -247,15 +256,15 @@ SunOS4:
 
 FreeBSD:
   
-  Do like in {Net|Open} except that after the first time (when /dev/xfs0
+  Do like in {Net|Open} except that after the first time (when /dev/nnpfs0
   exists) you can skip the modload since the module with automatically
-  be loaded by mount_xfs assuming you have copied xfs_mod.o to /modules with
+  be loaded by mount_nnpfs assuming you have copied nnpfs_mod.o to /modules with
   something like the following commands:
 
     mkdir /modules
-    cp /usr/arla/bin/xfs.ko /modules
+    cp /usr/arla/bin/nnpfs.ko /modules
 
-  And mount_xfs will load the filesystem into the kernel.
+  And mount_nnpfs will load the filesystem into the kernel.
 
   As with other BSDs, /usr/arla/bin/startarla should do everything for you.
 
@@ -266,7 +275,7 @@ Solaris:
 
   Add a line to /etc/name_to_major with (138 should be any unused number)
 
-    xfs 138
+    nnpfs 138
 
   and another one to /etc/name_to_sysnum (105 is the preferred system
   call number by Solaris < 7 and 73 for Solaris 7).  If that's already
@@ -276,47 +285,47 @@ Solaris:
   40, 42, 45, 49, 51 - 53, 64-78, 82, 83, 101, 102, 110, 111, 127, 140,
   150, 151, 176 - 184, 226 - 229
 
-    xfs 105
+    nnpfs 105
 
   (or)
 
-    xfs 73
+    nnpfs 73
 
   You might have to reboot for these changes to take effect.  Then, type:
 
-    modload xfs
+    modload nnpfs
 
-  You should probably add a file in /usr/kernel/drv/xfs.conf with:
+  You should probably add a file in /usr/kernel/drv/nnpfs.conf with:
 
-    name="xfs" parent="pseudo" instance=0;
+    name="nnpfs" parent="pseudo" instance=0;
 
   and then run:
 
-    drvconfig -i xfs
+    drvconfig -i nnpfs
 
   Create a /dev link and a directory:
 
-    ln -s "/devices/pseudo/xfs@0:" /dev/xfs0
+    ln -s "/devices/pseudo/nnpfs@0:" /dev/nnpfs0
     mkdir /afs
 
   Now you can try mounting the file system and start the daemon:
 
-    /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+    /usr/arla/bin/mount_nnpfs /dev/nnpfs0 /afs
     /usr/arla/libexec/arlad
 
   Note that if you are using a syscall other than 105, you have to use a
-  new kth-krb (with afssys.c 1.59 or newer) and set AFS_SYSCALL=xfs
+  new kth-krb (with afssys.c 1.59 or newer) and set AFS_SYSCALL=nnpfs
   before starting arlad.
 
-  If you want to, you can copy the xfs/solaris/xfs module to /kernel/fs
-  and xfs/solaris/bin/mount_xfs to /lib/fs/xfs/mount which enables you to
-  automatically load the xfs module when mounting the xfs file system.
+  If you want to, you can copy the nnpfs/solaris/nnpfs module to /kernel/fs
+  and nnpfs/solaris/bin/mount_nnpfs to /lib/fs/nnpfs/mount which enables you to
+  automatically load the nnpfs module when mounting the nnpfs file system.
 
 AIX:
 
   Create the device node:
 
-    mknod /dev/xfs0 c 100 0
+    mknod /dev/nnpfs0 c 100 0
 
   And add a line like the following to /etc/vfs:
 
@@ -324,41 +333,41 @@ AIX:
 
   Now you can try mounting the file system and start the daemon:
 
-    /usr/arla/bin/xfs_load /usr/arla/bin/xfs
-    /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+    /usr/arla/bin/nnpfs_load /usr/arla/bin/nnpfs
+    /usr/arla/bin/mount_nnpfs /dev/nnpfs0 /afs
     /usr/arla/libexec/arlad
 
 Tru64 Unix (aka Digital Unix (aka OSF/1)):
 
-  Copy the xfs.mod to some of /subsys, /var/subsys, /sys/BINARY,
+  Copy the nnpfs.mod to some of /subsys, /var/subsys, /sys/BINARY,
   or /subsystems. Depending on what your kloadsrv thinks is the
   right thing<tm>.
 
-  Load (configure) the module with sysconfig -c xfs
+  Load (configure) the module with sysconfig -c nnpfs
 
   Query the module to see if it loaded ok and get the
   character device and syscall number from it with:
-  sysconfig -q xfs
+  sysconfig -q nnpfs
 
-  Create the char-device "mknod /dev/xfs0 c <MAJOR> 0"
+  Create the char-device "mknod /dev/nnpfs0 c <MAJOR> 0"
   where <MAJOR> is the number obtained above.
 
   Create the afs directory: mkdir /afs
 
   Mount the device and start the daemon: 
-     /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+     /usr/arla/bin/mount_nnpfs /dev/nnpfs0 /afs
      /usr/arla/libexec/arlad
 
   It could look something like this:
 
-  datan:~# sysconfig -c xfs
-  datan:~# sysconfig -q xfs
+  datan:~# sysconfig -c nnpfs
+  datan:~# sysconfig -q nnpfs
   syscall = 34
   major = 68
   debug = 255
-  datan:~# mknod /dev/xfs0 c 68 0
+  datan:~# mknod /dev/nnpfs0 c 68 0
   datan:~# mkdir /afs
-  datan:~# /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+  datan:~# /usr/arla/bin/mount_nnpfs /dev/nnpfs0 /afs
   datan:~# /usr/arla/libexec/arlad 
   datan:~# ls /afs | head
   .stacken.kth.se
@@ -399,14 +408,16 @@ If you have to use Arla thru a firewall, it is useful to review how
 Arla communicates.  Arla uses UDP in the following way:
 
 arlad			Server
-4711	 <-->		7000,7003
+7001(*)	 <-->		7000,7003
 
-Tools(*)		Server
-whatever(**) <-->	7002,7003,7005
+Tools(**)		Server
+whatever(***) <-->	7002,7003,7005
 
-(*) vos/pts/bos
+(*) arla older then 0.36 used 4711
 
-(**) dynamically assigned port numbers, depends on your OS
+(**) vos/pts/bos
+
+(***) dynamically assigned port numbers, depends on your OS
 
 If your server is on the other side of a firewall and the
 configuration allows connections to be opened only one way, your

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: compat.c,v 1.5 2000/10/03 00:38:11 lha Exp $");
+RCSID("$arla: compat.c,v 1.6 2003/01/11 00:50:30 lha Exp $");
 
 void initialize_rxk_error_table(void);
 
@@ -43,14 +43,14 @@ initialize_rxk_error_table(void)
   /* A no op, our com_err is not compatible anyways. */
 }
 
-u_int32
-life_to_time(u_int32 start, int life_)
+uint32_t
+life_to_time(uint32_t start, int life_)
 {
   return krb_life_to_time(start, life_);
 }
 
 int
-time_to_life(u_int32 start, u_int32 end)
+time_to_life(uint32_t start, uint32_t end)
 {
   return krb_time_to_life(start, end);
 }
@@ -75,7 +75,7 @@ time_to_life(u_int32 start, u_int32 end)
  * and the lifetime is within the legal limit.
  */
 int
-tkt_CheckTimes(int32 begin, int32 end, int32 now)
+tkt_CheckTimes(int32_t begin, int32_t end, int32_t now)
 {
     if (end <= begin
 	|| begin > now + KTC_TIME_UNCERTAINTY + MAXKTCTICKETLIFETIME
@@ -104,9 +104,9 @@ tkt_MakeTicket(char *ticket,
 	       int *ticketLen,
 	       struct ktc_encryptionKey *key,
 	       char *name, char *inst, char *cell,
-	       u_int32 start, u_int32 end,
+	       uint32_t start, uint32_t end,
 	       struct ktc_encryptionKey *sessionKey,
-	       u_int32 host,
+	       uint32_t host,
 	       char *sname, char *sinst)
 {
   int code;
@@ -132,15 +132,15 @@ tkt_MakeTicket(char *ticket,
 
 int
 tkt_DecodeTicket (char *asecret,
-		  int32 ticketLen,
+		  int32_t ticketLen,
 		  struct ktc_encryptionKey *key_,
 		  char *name,
 		  char *inst,
 		  char *cell,
 		  char *sessionKey,
-		  int32 *host_,
-		  int32 *start_,
-		  int32 *end)
+		  int32_t *host_,
+		  int32_t *start_,
+		  int32_t *end)
 {
     des_cblock *key = (des_cblock *)key_;
     des_key_schedule sched;
@@ -150,8 +150,8 @@ tkt_DecodeTicket (char *asecret,
     int life;
     char sname[ANAME_SZ];
     char sinst[INST_SZ];
-    u_int32 *start = (u_int32 *)start_;
-    u_int32 *host = (u_int32 *)host_;
+    uint32_t *start = (uint32_t *)start_;
+    uint32_t *host = (uint32_t *)host_;
 
     des_key_sched(key, sched);
     txt.length = ticketLen;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,17 +33,17 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: osi_alloc.c,v 1.4 2000/10/03 00:38:16 lha Exp $");
+RCSID("$arla: osi_alloc.c,v 1.5 2003/01/11 00:50:30 lha Exp $");
 
 #undef osi_Alloc
 #undef osi_Free
-char *osi_Alloc(int32 size);
-void osi_Free(void *p, int32 size);
+char *osi_Alloc(int32_t size);
+void osi_Free(void *p, int32_t size);
 
 static char zero_malloc;
 
 char *
-osi_Alloc(int32 size)
+osi_Alloc(int32_t size)
 {
   if (size == 0)
     return &zero_malloc;
@@ -51,7 +51,7 @@ osi_Alloc(int32 size)
 }
 
 void
-osi_Free(void *p, int32 size)
+osi_Free(void *p, int32_t size)
 {
   if (p == &zero_malloc)
     return;

@@ -35,10 +35,10 @@
  * Boolean
  */
 
-/* $KTH: bool.h,v 1.4 2000/10/03 00:30:38 lha Exp $ */
+/* $arla: bool.h,v 1.5 2003/01/10 12:38:40 lha Exp $ */
 
-#ifndef _BOOL_
-#define _BOOL_
+#ifndef _ARLAUTIL_BOOL_H
+#define _ARLAUTIL_BOOL_H 1
 
 #ifndef FALSE
 
@@ -65,4 +65,4 @@ typedef int Bool;
 
 #endif /* FALSE */
 
-#endif /* _BOOL_ */
+#endif /* _ARLAUTIL_BOOL_H */

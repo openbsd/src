@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: output.h,v 1.16 2000/10/10 00:48:55 lha Exp $ */
+/* $arla: output.h,v 1.17 2002/11/27 23:51:35 lha Exp $ */
 
 #ifndef _OUTPUT_
 #define _OUTPUT_
@@ -56,7 +56,8 @@ void generate_client_stub (Symbol *s, FILE *f, FILE *headerf);
 void generate_server_stub (Symbol *s, FILE *f, FILE *headerf, FILE *h_file);
 void generate_tcpdump_stub (Symbol *s, FILE *f);
 void generate_server_switch (FILE *c_f, FILE *h_file);
-void generate_tcpdump_patches(FILE *td_file, const char *filename);
+void generate_freefunction (Symbol *s, FILE *f);
+void generate_freefunction_prototype (Symbol *s, FILE *f);
 void init_generate (const char *filename);
 void close_generator (const char *filename);
 
@@ -66,7 +67,7 @@ extern List *packagelist;
 extern char *prefix;
 
 extern ydr_file headerfile, clientfile, serverfile, clienthdrfile,
-    serverhdrfile, ydrfile, td_file;
+    serverhdrfile, ydrfile;
 
 extern char *error_function;
 

@@ -47,7 +47,11 @@
 #include <ctype.h>
 
 #ifdef KERBEROS
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <rxkad.h>
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: log.c,v 1.28.2.2 2001/04/30 02:55:41 lha Exp $");
+RCSID("$arla: log.c,v 1.38 2003/03/13 14:50:58 lha Exp $");
 #endif
 
 #include <sys/types.h>
@@ -97,6 +97,7 @@ struct log_method_file_data {
     FILE *f;
     int flags;
 #define LOGFILE_NO_TIME 1
+    char *progname;
 };
 
 #if HAVE_SYSLOG
@@ -281,14 +282,14 @@ log_open_syslog (Log_method *lm, const char *progname, char *fname,
 static void
 log_vprint_syslog (Log_method *lm, char *fmt, va_list args)
 {
-     vsyslog (LOG_INFO, fmt, args);
+     vsyslog (LOG_NOTICE, fmt, args);
 }
 #endif /* HAVE_VSYSLOG */
 
 static void
 log_print_syslog (Log_method *lm, char *str)
 {
-     syslog (LOG_INFO, "%s", str);
+     syslog (LOG_NOTICE, "%s", str);
 }
 
 static void
@@ -325,6 +326,19 @@ file_parse_extra(FILE *f, char *extra_args)
 }
 
 static void
+log_open_file_common(struct log_method_file_data *data, 
+		     const char *progname, char *extra_args)
+{
+    if (progname != NULL)
+	data->progname = strdup(progname);
+    else
+	progname = "unknown-program";
+    if (data->progname == NULL)
+	data->progname = "out of memory";
+    data->flags = file_parse_extra(data->f, extra_args);
+}
+
+static void
 log_open_stderr (Log_method *lm, const char *progname, char *fname,
 		 char *extra_args)
 {
@@ -335,7 +349,7 @@ log_open_stderr (Log_method *lm, const char *progname, char *fname,
      lm->data.v = data;
 
      data->f = stderr;
-     data->flags = file_parse_extra(stderr, extra_args);
+     log_open_file_common(data, progname, extra_args);
 }
 
 static void
@@ -351,7 +365,7 @@ log_open_file (Log_method *lm, const char *progname, char *fname,
      data->f = fopen (fname, "a");
      if (data->f == NULL)
 	  data->f = stderr;
-     data->flags = file_parse_extra(data->f, extra_args);
+     log_open_file_common(data, progname, extra_args);
 }
 
 static void
@@ -383,13 +397,13 @@ log_vprint_file (Log_method *lm,  char *fmt, va_list args)
 	struct tm tm;
 	gettimeofday(&tv, NULL);
 	t = tv.tv_sec;
-	strftime(time, sizeof(time), "%Y-%m-%d %H:%M:%S", 
+	strftime(time, sizeof(time), "%Y-%m-%d %H:%M:%S %Z", 
 		 localtime_r(&t, &tm));
 	time[sizeof(time)-1] = '\0';
 	fprintf (f, "%s: ", time);
     }
 
-    fprintf (f, "%s: ", __progname);
+    fprintf (f, "%s: ", data->progname);
     vfprintf (f, fmt, args);
     putc ('\n', f);
     fflush (f);
@@ -407,17 +421,17 @@ Log_method *
 log_open (const char *progname, char *fname)
 {
      int i;
-     Log_method *log;
+     Log_method *logm;
      char *name, *extra;
 
      name = strdup(fname);
      if (name == NULL)
 	 return NULL;
 
-     log = (Log_method *)malloc (sizeof(Log_method));
-     if (log == NULL) {
+     logm = (Log_method *)malloc (sizeof(Log_method));
+     if (logm == NULL) {
 	 free (name);
-	 return log;
+	 return logm;
      }
      for (i = 0; i < sizeof(special_names) / sizeof(*special_names);
 	  ++i) {
@@ -428,17 +442,17 @@ log_open (const char *progname, char *fname)
 	     || (strncmp (special_names[i].name, fname, len) == 0 &&
 		 (special_names[i].name[len] == '\0'
 		  || special_names[i].name[len] == ':'))) {
-	     *log = special_names[i];
+	     *logm = special_names[i];
 	     break;
 	 }
      }
      extra = name;
      strsep(&extra, ":");
-     log->num_units = 0;
-     log->units = NULL;
-     (*log->open)(log, progname, name, extra);
+     logm->num_units = 0;
+     logm->units = NULL;
+     (*logm->open)(logm, progname, name, extra);
      free (name);
-     return log;
+     return logm;
 }
 
 log_flags
@@ -458,9 +472,9 @@ log_getflags(Log_method *method)
 }
 
 void
-log_set_mask (Log_unit *log, unsigned m)
+log_set_mask (Log_unit *logu, unsigned m)
 {
-     log->mask = m;
+     logu->mask = m;
 }
 
 unsigned
@@ -532,12 +546,12 @@ log_vlog(Log_unit *unit, unsigned level, const char *fmt, va_list args)
 
 
 void
-log_log (Log_unit *log, unsigned level, const char *fmt, ...)
+log_log (Log_unit *logu, unsigned level, const char *fmt, ...)
 {
     va_list args;
     
     va_start (args, fmt);
-    log_vlog(log, level, fmt, args);
+    log_vlog(logu, level, fmt, args);
     va_end (args);
 }
 
@@ -581,13 +595,13 @@ log_unit_init (Log_method *method, const char *name, struct units *unit,
 }
 
 void
-log_unit_free (Log_method *method, Log_unit *log)
+log_unit_free (Log_method *method, Log_unit *logu)
 {
     Log_unit **list;
     int i;
 
     for (i = 0; i < method->num_units; i++)
-	if (log == method->units[method->num_units])
+	if (logu == method->units[method->num_units])
 	    break;
     if (i < method->num_units - 1)
 	memmove (&method->units[i], &method->units[i+1],
@@ -599,12 +613,12 @@ log_unit_free (Log_method *method, Log_unit *log)
 	abort();
     method->units = list;
 
-    free (log->name);
-    assert (log->method == method);
-    log->name = NULL;
-    log->unit = NULL;
-    log->mask = 0;
-    free (log);
+    free (logu->name);
+    assert (logu->method == method);
+    logu->name = NULL;
+    logu->unit = NULL;
+    logu->mask = 0;
+    free (logu);
 }
 
 static int

@@ -3,7 +3,7 @@ Ropa - callbacks
 
 Thoughts by Love <lha@stacken.kth.se>
 
-$KTH: README,v 1.1 1999/11/12 04:50:19 lha Exp $
+$arla: README,v 1.3 2002/05/16 22:09:45 hin Exp $
 
 Design
 ======
@@ -63,8 +63,8 @@ Use UUID for all clients ? Cook and mark cooked for pre 3.5 clients.
     This need to be storted on UUID so we can avoid sending cb
     to the client.
 
-[3] Should callbacks be given all to the same time, or should diffrent
-    clients have diffrent callbacks ? Will we get fetch-storms when
+[3] Should callbacks be given all to the same time, or should different
+    clients have different callbacks ? Will we get fetch-storms when
     callbacks expire for wellused files (or RO volumes).
 
 [4] We need to query the client when i contacts us the first time

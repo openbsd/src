@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: types.h,v 1.10 2000/10/02 22:37:20 lha Exp $ */
+/* $arla: types.h,v 1.13 2003/01/20 07:12:59 lha Exp $ */
 
 #ifndef _YDR_TYPES_
 #define _YDR_TYPES_
@@ -44,9 +44,9 @@ typedef struct {
 } EnumEntry;
 
 typedef enum {
-     TCHAR, TUCHAR, TSHORT, TUSHORT, TLONG, TULONG, TSTRING, TOPAQUE, 
-     TUSERDEF, TARRAY,
-     TVARRAY, TPOINTER
+     YDR_TCHAR, YDR_TUCHAR, YDR_TSHORT, YDR_TUSHORT, YDR_TLONG, YDR_TULONG,
+     YDR_TSTRING, YDR_TOPAQUE, YDR_TUSERDEF, YDR_TARRAY, 
+     YDR_TVARRAY, YDR_TPOINTER, YDR_TLONGLONG, YDR_TULONGLONG
 } TypeType;
 
 struct Type {
@@ -79,6 +79,8 @@ Symbol *set_struct_body (char *name, List *list);
 Symbol *define_typedef (StructEntry *entry);
 Symbol *define_proc (char *name, List *args, unsigned id);
 Symbol *createenumentry (char *name, int val);
+void set_sym_attrs(Symbol *, List *);
+int sym_find_attr(Symbol *, char *);
 StructEntry *createstructentry (char *name, Type *type);
 struct Type *create_type (TypeType type, Symbol *symbol, unsigned size,
 			  Type *subtype, Type *indextype, int flags);

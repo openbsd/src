@@ -1,5 +1,4 @@
-This is Info file arla.info, produced by Makeinfo version 1.68 from the
-input file arla.texi.
+This is arla.info, produced by makeinfo version 4.0 from arla.texi.
 
 INFO-DIR-SECTION Arla
 START-INFO-DIR-ENTRY
@@ -21,19 +20,21 @@ Please send comments (and fixes) on this manual and the arla programs to
 
 * Introduction::                Introduction to Arla.
 * AFS infrastructure::		A description of the afs infrastructure.
-* Organization of data::	How diffrent data are organized in AFS.
+* Organization of data::	How different data is organized in AFS.
 * AFS and the real world::	Common problems and their solutions.
-* Parts of Arla::		Description of diffrent parts of arla.
+* Parts of Arla::		Description of different parts of arla.
 * Debugging::			How to debug arla when its not working.
 * Porting::			That you need to know to port arla.
-* Authors::			The authors of arla.
-* Oddities::			Strange things that have happen to us.
+* Programming::			Programming documentation of arla.
+* Oddities::			Strange things that did happen to us.
+* Themis::			Tool to keep your files system up-to-date.
 * Arla timeline::		Short timeline of arla.
+* Authors::			The authors of arla.
 * Acknowledgments::             People that have helped us.
 * Index::             		Index.
 
 
- -- The Detailed Node Listing --
+ --- The Detailed Node Listing ---
 
 * Introduction::
 * AFS infrastructure::
@@ -50,22 +51,24 @@ How to cope with reality
 
 * NAT::
 * Samba::
+* Integration with Kerberos::
+* Kerberos tickets and AFS tokens::
 
 The parts of arla
 
 * How arla works::
-* The relation between Arlad and XFS::
+* The relation between Arlad and NNPFS::
 * The life of a file::
 * Tools and libs::
 * The files in arlad/::
 * pioctl and kafs::
 
-Yes, its doesn't work, lets debug.
+How to debug arla when its not working
 
 * Arlad::
 * Debugging LWP with GDB::
-* xfs::
-* xfs on linux::
+* nnpfs::
+* nnpfs on linux::
 * Debugging techniques::
 * Kernel debuggers::
 * Darwin/MacOS X::
@@ -74,7 +77,13 @@ Porting arla
 
 * Porting::
 * Porting user-space::
-* Porting XFS::
+* Porting NNPFS::
+
+Programming
+
+* Programming::
+* Disco with arla::
+* afsUUID::
 
 Odd stuff you find when looking around
 
@@ -176,7 +185,11 @@ There are two mailing lists with talk about Arla.
 There is also commit list <arla-commit@stacken.kth.se>.  Send a message
 to <LIST-request@stacken.kth.se> to subscribe.
 
-The list are achived on `http://www.stacken.kth.se/lists/'.
+The list are achived on <http://www.stacken.kth.se/lists/>.
+
+Please note that the mailinglists have a policy of subscriber only
+posting. So if you want to mail a message to the list, subscribe to it
+first, otherwise it wont be posted on the list.
 
 
 File: arla.info,  Node: AFS infrastructure,  Next: Organization of data,  Prev: Introduction,  Up: Top
@@ -430,9 +443,9 @@ File: arla.info,  Node: Organization of data,  Next: AFS and the real world,  Pr
 Organization of data
 ********************
 
-This chapter how data is stored and how AFS diffrent from, for example,
-NFS. It also describes how data kept consistent and what the
-requirements was and how that inpacted on the design.
+This chapter describes how data is stored and how AFS is different from,
+for example, NFS. It also describes how data is kept consistent and what
+the requirements were and how that inpacted on the design.
 
 * Menu:
 
@@ -453,14 +466,11 @@ Requirements
      It should be possible to use AFS with hundred-thousands of users
      without problems.
 
-     Writes that are done to diffrent parts of the filesystem should not
-     affect each other. It should be possible to distribute out the
-     reads and writes over many file-servers. So if you have a file
-     that is accessed by many clients, it should be possible to
-     distribute out the load.
-
-     If there is multiple writes to the same file, are you sure that
-     isn't a database.
+     Writes that are done to different parts of the filesystem should
+     not affect each other. It should be possible to distribute out the
+     reads and writes over many fileservers. If you have a file that is
+     accessed by many clients, it should be possible to distribute the
+     load.
 
    * Transparent to users
 
@@ -475,7 +485,7 @@ Requirements
      should also be possible to move the users data for a fileserver to
      a less loaded one, or one with more diskspace available.
 
-     Some benefits of using AFS is:
+     Some benefits of using AFS are:
 
         * user-transparent data migration
 
@@ -499,8 +509,8 @@ Anti-requirements
    * No databases
 
      AFS isn't constructed for storing databases. It would be possible
-     to use AFS for storing a database if a layer above provided
-     locking and synchronizing of data.
+     to use AFS for storing a database if a layer above for locking and
+     synchronizing data would be provided.
 
      One of the problems is that AFS doesn't include mandatory
      byte-range locks. AFS uses advisory locking on whole files.
@@ -508,59 +518,61 @@ Anti-requirements
      If you need a real database, use one, they are much more efficent
      on solving a database problem. Don't use AFS.
 
+
 
 File: arla.info,  Node: Data organization,  Next: Callbacks,  Prev: Requirements,  Up: Organization of data
 
 Volume
 ======
 
-A volume is a unit that is smaller then a partition. Its usually (should
-be) a well defined area, like a user's home directory, a project work
-area, or a program distribution.
+A volume is a unit that is smaller than a partition. It is usually (or
+should be) a well defined area, like a user's home directory, a project
+work area, or a program distribution.
 
-Quota is controlled on volume-level. All day-to-day management are done
+Quota is controlled on volume-level. All day-to-day management is done
 on volumes.
 
 Partition
 =========
 
 In AFS a partition is what normally is named a partition. All partions
-that afs isusing is named a special way, `/vicepNN', where NN is ranged
-from a to z, continuing with aa to zz. The fileserver (and volser)
-automaticly picks upp all partition starting with `/vicep'
+that afs is using are named a special way, `/vicepNN', where NN is
+ranged from a to z, continuing with aa to zz. The fileserver (and
+volser) automaticly picks upp all partitions starting with `/vicep'
 
-Volumes are stored in a partition. Volumes can't overlap partitions.
-Partitions are added when the fileserver is created or when a new disk
-is added to a filesystem.
+Volumes are stored in a partition. Volumes can't span several
+partitions. Partitions are added when the fileserver is created or when
+a new disk is added to a filesystem.
 
 Volume cloning and read-only clones
 ===================================
 
-A clone of volume is often needed for the volume operations. A clone is
+A clone of a volume is often needed for volume operations. A clone is a
 copy-on-write copy of a volume, the clone is the read-only version.
 
-A two special versions of a clone is the read-only volume and the backup
+Two special versions of a clone are the read-only volume and the backup
 volume. The read-only volume is a snapshot of a read-write volume (that
-is what a clone is) that can be replicated to several fileserver to
-distribute the load. Each fileserver plus partition where the read-only
-is located is called a replication-site.
+is what a clone is) that can be replicated to several fileservers to
+distribute the load. Each fileserver plus partition where a read-only
+clone is located is called a replication-site. It usually does not make
+sense to have more than one read-only clone on each fileserver.
 
 The backup volume is a clone that typically is made (with `vos
-backupsys') each night to enable the user to retrieve yestoday's data
+backupsys') each night to enable the user to retrieve yesterday's data
 when they happen to remove a file. This is a very useful feature, since
-it lessen the load on the system-administrators to restore files from
+it lessens the load on the system-administrators to restore files from
 backup. The volume is usually mounted in the root user's home directory
 under the name OldFiles. A special feature of the backup volume is that
-inside it you can't follow mountpoint.
+you can't follow mountpoints out of a backup volume.
 
 Mountpoints
 ===========
 
-The volumes are independent of each other. To clue the together there is
-a `mountpoint's. Mountpoints are really symlink that is formated a
-special way that points out a volume (and a optional cell). A
-AFS-cache-manager will show a mountpoint as directory, in fact it will
-be the root directory of the target volume.
+Volumes are independent of each other. To glue together the file tree
+there are `mountpoint's. Mountpoints are really symlinks that are
+formated in a special way so that they point out a volume and an
+optional cell. An AFS-cache-manager will show a mountpoint as directory
+and in fact it will be the root directory of the target volume.
 
 
 File: arla.info,  Node: Callbacks,  Next: Volume management,  Prev: Data organization,  Up: Organization of data
@@ -568,18 +580,19 @@ File: arla.info,  Node: Callbacks,  Next: Volume management,  Prev: Data organiz
 Callbacks
 =========
 
-Callbacks are what enable the AFS-cache-manager to keep the files
-without asking the server if there is newer version of the file.
+Callbacks are messages that enable the AFS-cache-manager to keep the
+files without asking the server if there is newer version of the file.
 
 A callback is a promise from the fileserver that it will notify the
 client if the file (or directory) changes within the timelimit of the
 callback.
 
-For read-only callbacks there is only callback given its called a volume
-callback and it will be broken when the read-only volume is updated.
+For contents of read-only volumes there is only one callback per volume
+called a volume callback and it will be broken when the read-only volume
+is updated.
 
-The time range of callbacks range from 1 hour to 5 minutes depending of
-how many user of the file exists.
+The time range of callbacks is from 5 to 60 minutes depending on how
+many users of the file exist.
 
 
 File: arla.info,  Node: Volume management,  Next: Relationship between pts uid and unix uid,  Prev: Callbacks,  Up: Organization of data
@@ -587,9 +600,9 @@ File: arla.info,  Node: Volume management,  Next: Relationship between pts uid a
 Volume management
 =================
 
-All volume managment is done with the vos-command. To get a list of all
-commands `vos help' can be used. For help on a specific vos subcommand,
-`vos subcommand -h' can be used.
+All volume managment is done with the `vos' command. To get a list of
+all commands `vos help' can be used. For help on a specific vos
+subcommand, `vos subcommand -h' can be used.
 
    * Create
 
@@ -604,19 +617,19 @@ commands `vos help' can be used. For help on a specific vos subcommand,
 
      Read-only volumes can be replicated over several servers, they are
      first added with `vos addsite', and the replicated with `vos
-     release' out over the servers.
+     release' over the servers.
 
    * Release
 
-     When you want to distribute out the changes in the readwrite
-     volume.
+     When you want to distribute the changes in the readwrite volume to
+     the read-only clones.
 
    * Remove
 
      Volumes can be removed
 
      Note that you shouldn't remove the last readonly volume since this
-     make clients misbehave. If you are moving the volume you should
+     makes clients misbehave. If you are moving the volume you should
      rather add a new RO to the new server and then remove it from the
      old server.
 
@@ -627,13 +640,23 @@ commands `vos help' can be used. For help on a specific vos subcommand,
      To stream a volume out to a `file' or `stdout' you use `vos dump'.
      The opposite command is named `vos restore'.
 
+
 
 File: arla.info,  Node: Relationship between pts uid and unix uid,  Prev: Volume management,  Up: Organization of data
 
 Relationship between pts uid and unix uid
 =========================================
 
-foo
+Files in AFS are created with the pts uid of the token that was valid at
+the time. The pts uid number is then by commands like `ls -l'
+interpreted as a unix uid and translated into a username. If the pts and
+the unix uids differ, this might confuse the user as it looks like as
+her files are owned by someone else. This is however not the case.
+Complications can occur if programs impose further access restrictions
+based on these wrongly interpreted uids instead of using the `access()'
+system call for that purpose. Graphical file browsers are typically
+prone to that problem with the effect that the users are not able to
+see their own files in these tools.
 
 
 File: arla.info,  Node: AFS and the real world,  Next: Parts of Arla,  Prev: Organization of data,  Up: Top
@@ -646,9 +669,10 @@ that perfect) world and show possible solutions to these problems.
 
 * Menu:
 
-* NAT::				Really evil stuff.
+* NAT::				Truly evil stuff.
 * Samba::			Export AFS to Windows computers.
 * Integration with Kerberos:: 	How to integrate Kerberos with AFS.
+* Kerberos tickets and AFS tokens:: History and tools
 
 
 File: arla.info,  Node: NAT,  Next: Samba,  Prev: AFS and the real world,  Up: AFS and the real world
@@ -656,8 +680,9 @@ File: arla.info,  Node: NAT,  Next: Samba,  Prev: AFS and the real world,  Up: A
 NAT
 ===
 
-There's something evil out there that's called NAT.  For whatever
-reasons, people are using it and will continue doing so.
+There's something evil out there that's called NAT, which stands for
+Network Address Translation. For whatever reasons, people are using it
+and will continue doing so.
 
 First of all, it seemed like AFS should work just fine through NAT, you
 just appear to be coming from the NAT-address and some random port
@@ -676,14 +701,29 @@ they have a rather short timeout:
 `Linux Nat (masq)'
      300 seconds
 
-And if the client doesn't transmit any traffic to a particular host for
-that amount of time, it will get mapped into a new address.  And then
-the server will just figure out it has a new client, right?
+If the client doesn't transmit any traffic to a particular host for that
+amount of time, it will get mapped to one of the IP address of the
+NAT-server (if you happen to run PAT, the port will be randomized too).
 
-Wrong, the rx-connection is cached on the connection id, not the
-host/port pair. This is right, but the connection is never updated in
-the original rx-code. This have the unfortunate effect that the server
-keep talking to the old client.
+The authors of Rx realized that keeping a Rx connection associated with
+(IP-address,port) pair was a bad idea. One example is that you get
+problems with multi-homed hosts. So Rx keeps its own connection id data
+in the packet. With this feature client and server should be able to
+detect address changes.
+
+Unfortunately, the use of the orignal Rx-code stops this from happening
+in Transarc/OpenAFS code. The code keeps track of incoming packets and
+keeps track of the right peer (client). But it never updates the
+IP-address,port pair in its data structure, so the answer packet will go
+to the old IP-address,port pair.
+
+If you can control your NAT machine you can have static mapping for your
+AFS hosts (Transarc/OpenAFS uses source port 7000 and Arla uses source
+port 4711). You can try to use Natkeep
+<http://mit.edu/fredette/www/natkeep/> if you run an old Arla or
+Transarc/OpenAFS client. From version 0.36 arla will have support for
+polling the servers at the right interval to prevent NAT from dropping
+information about your session.
 
 
 File: arla.info,  Node: Samba,  Next: Integration with Kerberos,  Prev: NAT,  Up: AFS and the real world
@@ -691,34 +731,165 @@ File: arla.info,  Node: Samba,  Next: Integration with Kerberos,  Prev: NAT,  Up
 Samba
 =====
 
-The major problem with getting AFS to exported read-write to SMB
-(Windows fileshareing) using Samba is how to transfer the user token to
+The major problem when exporting the AFS filespace read-write to SMB
+(Windows fileshareing) using Samba is the transfer of the user token to
 the smb-server. The simple may is to use clear-text password between the
-samba-server and the client, and then get tokens for the user with this
-password. This solution is clearly not acceptable for AFS administrators
-that are security aware.
+Windows client and the samba-server, and then to get tokens for the user
+with this password. This solution is clearly not acceptable for security
+aware AFS administrators.
 
 Describe here how to make AFS work "securely" with samba.
 
+On solution is to use `kimpersonate' + store afs key on fileserver
+(talk to Love).
+
 
-File: arla.info,  Node: Integration with Kerberos,  Prev: Samba,  Up: AFS and the real world
+File: arla.info,  Node: Integration with Kerberos,  Next: Kerberos tickets and AFS tokens,  Prev: Samba,  Up: AFS and the real world
 
 Integration with Kerberos
 =========================
 
-Kerberos 4 and 5 can be integrated quite well with AFS. This is many due
-to that the security model used in AFS is in fact Keberos. The kaserver
-is a Kerberos 4 server with pre-authentication. Kaserver also provides a
-feature that you can only try a password N times, and after that you are
-locked out for half-an-hour. This feature require that
-pre-authentication is used, but since the ka-server provides a Kerberos
-4 interface (that doesn't use pre-authentication) is mostly worthless.
+Kerberos 4 and 5 can be integrated quite well with AFS. This is mainly
+due to the fact that the security model used in AFS is Kerberos. The
+kaserver is a Kerberos 4 server with pre-authentication. The kaserver
+also provides a feature that limits the number of password retries, and
+after that you are locked out for half an hour. This feature can only be
+used in the ka interface as it requires pre-authentication, but since
+the kaserver provides a Kerberos 4 interface (without pre-authentication
+and without this limitation) it is quite worthless.
 
-Many sites indeed uses a kerberosserver instead of a kaserver. One of
-the resons are that they want to use Kerberos 5 (with for example
+Many sites indeed use a kerberosserver instead of a kaserver. One of
+the reasons is that they want to use Kerberos 5 (which is required for
 Windows 2000).
 
-More text here how to create KeyFile, and describe TheseCells.
+To use a kerberosserver, you have to put the same key into the AFS
+KeyFile and the principal named afs of your kerberos realm. If you have
+a cell which has another name than lowercase of your realmname, the
+instance is the cellname. As the cellname often contains dots, this can
+be quite confusing in Kerberos 4: afs.stacken.kth.se@STACKEN.KTH.SE. The
+first dot is the seperator between principal and instance, the other
+dots are part of the name. The simplest way to do create a KeyFile on
+your AFS server is to use heimdal's kadmin to generate and extract a
+KeyFile. It has an option designed to do so. Be aware that the serial
+number of the afs principal must match on all kerberos servers and all
+KeyFiles on all AFS servers.
+
+The default cellname to get a kerberos ticket for is contained in the
+configuration file `ThisCell'. If you got more than one cell, you want
+to list all cells to get tickets for in the `TheseCells' file.
+
+
+File: arla.info,  Node: Kerberos tickets and AFS tokens,  Prev: Integration with Kerberos,  Up: AFS and the real world
+
+Kerberos tickets and AFS tokens
+===============================
+
+To further confuse the poor user, AFS and Kerberos programmers decided
+that they wanted to store their credentials at different places. In AFS,
+the kernel was a natural place to store the credentials (named token)
+since the CMU/Transarc AFS/OpenAFS implementation lives in the kernel.
+The Kerberos people on the other hand thought that storing the
+credentials (named ticket) in a file would be a good idea.
+
+So know you have to synchronize the credentials if you just want to
+enter your password once. There are several tools that can do that for
+you. The question is what tools to use for what problem.
+
+To add to the confusion not all tools talk to both Kerberos and
+kaservers. There is also a bogus user-id in the token that is supposed
+to be the same as your pts-user-id. Not that it makes any difference,
+but some people get confused when unknown numbers show up in the token.
+The easily confused people are often the ones that have more than one
+principal in the same realm/cell (read sysadmins).
+
+If you want to get your ticket from your Kerberos server, you use
+`kinit', and then use `afslog' or `aklog' to get AFS tokens and push
+them to the kernel (and AFS daemon). Some `kinit' (and `kauth') can do
+both for you, use `kinit --afslog' or simply `kauth'. Note that `kinit'
+and `kauth' don't get set your AFS-token user-id right, and thus can be
+confusing for people who think that this is important.
+
+The `klog' program that you get with Transarc/OpenAFS talks to the
+kaserver and behaves just-right in the sense that it talks to the pts
+server to get the AFS-token user-id right, but `klog' talks only to the
+kaserver which will not work for people with a Kerberos server.  `Klog'
+in Arla was written by Chris Wing <wingc@engin.umich.edu> as a part of
+a packet called `afsutils', they did the right thing and talked to the
+pts-server to get the user-id. However, it uses Kerberos libs to talk
+to the server. These libraries require the files `/etc/krb.conf' and
+`/etc/krb.realms' to be setup correctly for their cell/realm. Not that
+easy.
+
+A long time ago Ken Hornstein <kenh@cmf.nrl.navy.mil> wrote the AFS
+Migration Kit that helped you to migrate from AFS to MIT Kerberos 5.
+It included a tool named aklog that could convert a Kerberos tickets to
+tokens. This tool was also rewritten in Arla by Brandon S. Allbery
+<allbery@ece.cmu.edu>. `aklog' can't get you new credentials, it just
+converts old ones to new ones.
+
+Then Transarc decided that they needed to fix a security hole in their
+kaserver, and while doing that, they managed to break a part in the
+kaserver so it ceased to work for kerberos requests.
+
+First the defect existed unnoticed for a long time, later Transarc has
+not managed to distribute a working version of the kaserver. Due to
+this, a lot of sites run a kaserver with this defect. Instead of
+installing working authentification servers from another sources,
+people started to whine again and Love <lha@stacken.kth.se> wrote the
+tool `kalog' that talked the ka-protocol (but didn't do the AFS user-id
+right) to work around that problem.
+
+All tools that use Kerberos 4 need a working `/etc/krb.conf' and
+`/etc/krb.realms'. Kerberos 5 programs need `/etc/krb5.conf'.  AFS
+aware tools need `/usr/arla/etc/CellServDB' or
+`/usr/vice/etc/CellServDB'.
+
+Also the Kerberos implementations from KTH (kth-krb and Heimdal) include
+AFS support to make your life more pleasant. One thing is that you can
+have a file `$HOME/.TheseCells' that lists the cells you use and the
+Kerberos tools will try to get tickes and tokens for those cells.
+Heimdal contains support for converting a Kerberos 4 srvtab to an AFS
+KeyFile.
+
+Below is a table that describes what tools does what, what
+inheritance(s) they have, and what protocol(s) they speak. From the
+inheritance (also in a table below) it is possible to deduct what
+configuration files the tools use.
+
+Tool                    Inheritance    Protocol   Produces
+Transarc/OpenAFS klog   afs authlib    KA         Ticket and tokens
+Arla klog               Kerberos and   Kerberos   Ticket and tokens
+                        libkafs                   
+AFS Migration kit's     MIT Kerberos   Kerberos   Converts Kerberos
+aklog                   and Ken                   tickets to tokens
+                        Hornstein's               
+                        afslib                    
+Arla's aklog            Kerberos and   Kerberos   Converts Kerberos
+                        libkafs                   tickets to tokens
+kth-krb's and           Kerberos and   Kerberos   Converts Kerberos
+Heimdal's afslog        libkafs                   tickets to tokens
+kalog                   arla and       KA         Get initial
+                        libkafs                   ticket, store
+                                                  tokens and tickets
+
+Inheritance table
+
+`afs authlib'
+     Reads `CellServDB' and `ThisCell' in `/usr/vice/etc'
+
+`Kerberos and libkafs'
+     Kerberos 4 uses `/etc/krb.conf' and `/etc/krb.realms'. Kerberos 5
+     uses `/etc/krb5.conf'.
+
+`arla'
+     Arla uses `CellServDB' and `ThisCell' in `/usr/vice/etc' and
+     `/usr/arla/etc'
+
+`libkafs'
+     Libkafs uses DNS and `CellServDB' in `/usr/vice/etc' and
+     `/usr/arla/etc' to figure out what ticket it should convert into
+     tables. The file `TheseCells' and `$HOME/.TheseCells' is used to
+     get extra tokens.
 
 
 File: arla.info,  Node: Parts of Arla,  Next: Debugging,  Prev: AFS and the real world,  Up: Top
@@ -733,42 +904,42 @@ Parts of Arla
 * Menu:
 
 * How arla works::
-* The relation between Arlad and XFS::
+* The relation between Arlad and NNPFS::
 * The life of a file::
 * Tools and libs::
 * The files in arlad/::
 * pioctl and kafs::
 
 
-File: arla.info,  Node: How arla works,  Next: The relation between Arlad and XFS,  Prev: Parts of Arla,  Up: Parts of Arla
+File: arla.info,  Node: How arla works,  Next: The relation between Arlad and NNPFS,  Prev: Parts of Arla,  Up: Parts of Arla
 
 How does arla work
 ==================
 
 Arla consists of two parts, a userland process (arlad) and the
-kernel-module (xfs).
+kernel-module (nnpfs).
 
 Arlad is written in user-space for simpler debugging (and less
 rebooting).  As a uset space program arlad does not have the same
 limitations as if it would be written in the kernel. To avoid
-performance loss as much as possible, xfs is caching data.
+performance loss as much as possible, nnpfs is caching data.
 
-xfs and arlad communicate with each other via a char-device-driver.
+nnpfs and arlad communicate with each other via a char-device-driver.
 There is a rpc-protocol currenly used specially written for this
 (`arlad/message.c')
 
-xfs is written to be as simple as possible. Theoretically, xfs could be
+nnpfs is written to be as simple as possible. Theoretically, nnpfs could be
 used by other user-space daemons to implement a file system. Some
 parts, such as syscalls, are arla-specific. These parts are designed to
 be as general as possible.
 
-For example, xfs does not recognize which pioctl the user-level program
+For example, nnpfs does not recognize which pioctl the user-level program
 calls, it just passes this information on to arlad.
 
 
-File: arla.info,  Node: The relation between Arlad and XFS,  Next: The life of a file,  Prev: How arla works,  Up: Parts of Arla
+File: arla.info,  Node: The relation between Arlad and NNPFS,  Next: The life of a file,  Prev: How arla works,  Up: Parts of Arla
 
-The relation between Arlad and XFS
+The relation between Arlad and NNPFS
 ==================================
 
      Userland
@@ -778,16 +949,16 @@ The relation between Arlad and XFS
                     |             ---------
                 ----|-----------------|[1]----
                  -------           -------
-     Kernel      | VFS | <--[2]--> | XFS |
+     Kernel      | VFS | <--[2]--> | NNPFS |
                  -------           -------
 
-[1] A char device (/dev/xfs0)
+[1] A char device (/dev/nnpfs0)
 
 [2] Xfs provides a filesystem for the vfs-layer in
      the operating system.
 
 
-File: arla.info,  Node: The life of a file,  Next: Tools and libs,  Prev: The relation between Arlad and XFS,  Up: Parts of Arla
+File: arla.info,  Node: The life of a file,  Next: Tools and libs,  Prev: The relation between Arlad and NNPFS,  Up: Parts of Arla
 
 The life of a file
 ==================
@@ -800,41 +971,41 @@ in most operating systems.
 
    * open(2) syscall is issued.
 
-   * The vfslayer sends a VOP_LOOKUP to xfs that is forwarded to arlad
+   * The vfslayer sends a VOP_LOOKUP to nnpfs that is forwarded to arlad
      with a getnode() (seq-num 1).
 
    * arlad tries to find the requested file and then, if found, sends an
-     install_node to xfs by writing to the xfs character device.
+     install_node to nnpfs by writing to the nnpfs character device.
 
-   * xfs inserts the node into the cache and returns from the device
+   * nnpfs inserts the node into the cache and returns from the device
      write.
 
-   * arlad sends a wakeup rpc message (seq-num 1) to xfs.  If the
-     return value is zero xfs tries to find the node in the cache, if
+   * arlad sends a wakeup rpc message (seq-num 1) to nnpfs.  If the
+     return value is zero nnpfs tries to find the node in the cache, if
      not found it might have been flushed out of the cache and the whole
      thing is repeated.
 
    * If a none-zero return value is returned, this value is sent as
      reply to the user. This way arla can decide what error message is
-     returned, without xfs having support for each error.
+     returned, without nnpfs having support for each error.
 
-   * xfs now checks if it has the valid attributes. If the attributes
-     are invalid, xfs will send a rpc message to arlad to refresh it.
+   * nnpfs now checks if it has the valid attributes. If the attributes
+     are invalid, nnpfs will send a rpc message to arlad to refresh it.
 
    * Since the user wanted to open the file, a getdata rpc message is
-     sent from xfs to arlad. Now arlad fetches the files from the afs
+     sent from nnpfs to arlad. Now arlad fetches the files from the afs
      file server.
 
    * Arlad stores the file in the file cache. All vnode operations will
-     be done on this file. Now arlad sends a installdata to xfs.
+     be done on this file. Now arlad sends a installdata to nnpfs.
 
-   * When xfs recives the installdata it looks up the node in the cache,
+   * When nnpfs recives the installdata it looks up the node in the cache,
      and then it does a VOP_LOOKUP to find a vnode to the cachefile
      (and store it to keep it for future use).
 
    * The same thing is done when the file is a directory, except that
      the directory is converted from the afs directory format to an
-     operating system dependent format and stored in a file. xfs reads
+     operating system dependent format and stored in a file. nnpfs reads
      this file instead.
 
    * If the directory is modified locally, write operations are done on
@@ -845,11 +1016,12 @@ in most operating systems.
 
    * read(2) system call is issued.
 
-   * A VOP_READ is sent to the from the vfs-layer to xfs.
+   * A VOP_READ is sent to the from the vfs-layer to nnpfs.
 
-   * xfs checks if it has valid attributes/and data (and updates if
+   * nnpfs checks if it has valid attributes/and data (and updates if
      needed).  Now VOP_READ is simply performed on the stored vnode of
      the cachefile.
+
 
 
 File: arla.info,  Node: Tools and libs,  Next: The files in arlad/,  Prev: The life of a file,  Up: Parts of Arla
@@ -864,10 +1036,10 @@ libutil: `util/libutil.a' - A library for the most often used
      date-parsing, etc
 
 rx: `rx/librx.a' - The library for the rx protocol
-     (*note Rx protocol::.).
+     (*note Rx protocol::).
 
 lwp: `lwp/liblwp.a' - The library for the lwp thread-package
-     (*note LWP::.).
+     (*note LWP::).
 
 ydr: `ydr/ydr' - A stub generator that replaces rxgen.
 
@@ -966,7 +1138,7 @@ The core of arlad
 
 `kernel.c' - The interface between arlad and the char-device.
 
-`messages.c' - The rpc interface between arlad and xfs.
+`messages.c' - The rpc interface between arlad and nnpfs.
 
 `volcache.c' - Cache for all volumes.
 Operating system specific files
@@ -996,7 +1168,7 @@ File: arla.info,  Node: pioctl and kafs,  Prev: The files in arlad/,  Up: Parts 
 pioctl and kafs
 ===============
 
-The pioctl interface is the only part of xfs that is afs related.
+The pioctl interface is the only part of nnpfs that is afs related.
 
 pioctl is a ioctl but called with a path instead of a filedescriptor.
 When you probe if there is a live afsclient you first run `k_hasafs()'
@@ -1010,16 +1182,16 @@ This is cleary invalid and kafs expects to find an `EINVAL' returned
 from `syscall(2)'.
 
 The pioctl is used more then just for `AFSCALL_PIOCTL', an other use is
-`AFSCALL_SETPAG' (setting pag). It has also been in use for setting xfs
+`AFSCALL_SETPAG' (setting pag). It has also been in use for setting nnpfs
 debugging levels.
 
-When xfs discovers that a path is given in the `pioctl()' it does a
+When nnpfs discovers that a path is given in the `pioctl()' it does a
 `VOP_LOOKUP' on the path and if the returned value is a vnode that
-resides in afs then it extracts the xfs-handle for that node (that just
+resides in afs then it extracts the nnpfs-handle for that node (that just
 happens to be the VenusFid) and passes that on to arlad.
 
 The only ugly thing about the current implentation is that the syscall
-code assumes that the arlad on "xfs-fd" is the arlad that should get
+code assumes that the arlad on "nnpfs-fd" is the arlad that should get
 this syscall.
 
 An example of using `pioctl()':
@@ -1064,7 +1236,7 @@ Debugging
 This chapter of the manual includes tips that are useful when debugging
 arla.
 
-Arla and xfs contains logging facilities that is quite useful when
+Arla and nnpfs contains logging facilities that is quite useful when
 debugging when something goes wrong. This and some kernel debugging tips
 are described.
 
@@ -1072,8 +1244,8 @@ are described.
 
 * Arlad::
 * Debugging LWP with GDB::
-* xfs::
-* xfs on linux::
+* nnpfs::
+* nnpfs on linux::
 * Debugging techniques::
 * Kernel debuggers::
 * Darwin/MacOS X::
@@ -1114,13 +1286,13 @@ By default, arlad logs through syslog if running as a daemon and to
 stderr when running in the foreground (with `--no-fork').
 
 
-File: arla.info,  Node: Debugging LWP with GDB,  Next: xfs,  Prev: Arlad,  Up: Debugging
+File: arla.info,  Node: Debugging LWP with GDB,  Next: nnpfs,  Prev: Arlad,  Up: Debugging
 
 Debugging LWP with GDB
 ======================
 
 For easy tracing of threads we have patch
-(`http://www.stacken.kth.se/projekt/arla/gdb-4.18-backfrom.diff') for
+(<http://www.stacken.kth.se/projekt/arla/gdb-4.18-backfrom.diff>) for
 gdb 4.18 (a new command) and a gdb sequence (think script).
 
 The sequence only works for i386, but its just matter of choosing
@@ -1165,31 +1337,31 @@ There also the possibility to run arla with pthreads (run configure with
 -with-pthreads).
 
 
-File: arla.info,  Node: xfs,  Next: xfs on linux,  Prev: Debugging LWP with GDB,  Up: Debugging
+File: arla.info,  Node: nnpfs,  Next: nnpfs on linux,  Prev: Debugging LWP with GDB,  Up: Debugging
 
-xfs
+nnpfs
 ===
 
-XFS debugging does almost look the same on all platforms. They all
+NNPFS debugging does almost look the same on all platforms. They all
 share same debugging flags, but not all are enabled on all platforms.
 
-Change the debugging with the `fs xfsdebug' command.
+Change the debugging with the `fs nnpfsdebug' command.
 
-     datan:~# fs xfsdebug
-     xfsdebug is: none
-     datan:~# fs xfsdebug almost-all
+     datan:~# fs nnpfsdebug
+     nnpfsdebug is: none
+     datan:~# fs nnpfsdebug almost-all
      datan:~#
 
 If it crashes before you have an opportunity to set the debug level, you
-will have to edit `xfs/YOUR-OS/xfs_deb.c' and recompile.
+will have to edit `nnpfs/YOUR-OS/nnpfs_deb.c' and recompile.
 
-The logging of xfs ends up in your syslog. Syslog usully logs to
+The logging of nnpfs ends up in your syslog. Syslog usully logs to
 /var/log or /var/adm (look in /etc/syslog.conf).
 
 
-File: arla.info,  Node: xfs on linux,  Next: Debugging techniques,  Prev: xfs,  Up: Debugging
+File: arla.info,  Node: nnpfs on linux,  Next: Debugging techniques,  Prev: nnpfs,  Up: Debugging
 
-xfs on linux
+nnpfs on linux
 ============
 
 There is a problem with klogd, it's too slow. Cat the `/proc/kmsg' file
@@ -1198,7 +1370,7 @@ from the ring-bufer, and you will only get some of the message in your
 cat.
 
 
-File: arla.info,  Node: Debugging techniques,  Next: Kernel debuggers,  Prev: xfs on linux,  Up: Debugging
+File: arla.info,  Node: Debugging techniques,  Next: Kernel debuggers,  Prev: nnpfs on linux,  Up: Debugging
 
 Debugging techniques
 ====================
@@ -1232,7 +1404,7 @@ Kernel debuggers
 ================
 
 Kernel debuggers are the most useful tool when you are trying to figure
-out what's wrong with xfs. Unfortunately they also seem to have their
+out what's wrong with nnpfs. Unfortunately they also seem to have their
 own life and do not always behave as expected.
 
 Using GDB
@@ -1246,14 +1418,14 @@ same.  You get the idea from the NetBSD example below:
        (gdb) symbol-file /sys/arch/i386/compile/NUTCRACKER/netbsd.gdb
 
 This example loads the kernel symbols into gdb. But this doesn't show
-the xfs symbols, and that makes your life harder.
+the nnpfs symbols, and that makes your life harder.
 
 Getting all symbols loaded at the same time
 -------------------------------------------
 
-If you want to use the symbols of xfs, there is a gdb command called
+If you want to use the symbols of nnpfs, there is a gdb command called
 `add-symbol-file' that is useful. The symbol file is obtained by
-loading the kernel module xfs with `kmodload -o /tmp/xfs-sym' (Darwin)
+loading the kernel module nnpfs with `kmodload -o /tmp/nnpfs-sym' (Darwin)
 or `modload' (NetBSD and OpenBSD).  FreeBSD has a linker in the kernel
 that does the linking instead of relying on `ld'. The symbol address
 where the module is loaded get be gotten from `modstat', `kldstat' or
@@ -1269,9 +1441,9 @@ You should also source the commands in /sys/gdbscripts (NetBSD), or
 System/xnu/osfmk/.gdbinit (Darwin) to get commands like ps inside gdb.
 
        datan:~# modstat Type Id Off Loadaddr Size Info Rev Module
-       Name DEV 0 29 ce37f000 002c ce388fc0 1 xfs_mod [...]
+       Name DEV 0 29 ce37f000 002c ce388fc0 1 nnpfs_mod [...]
        [...]
-       (gdb) add-symbol-table xfs.sym ce37f000
+       (gdb) add-symbol-table nnpfs.sym ce37f000
 
 Debugging processes, examine their stack, etc
 ---------------------------------------------
@@ -1293,10 +1465,10 @@ Debugging Linux
 
 You can't get a crashdump for linux with patching the kernel. There are
 two projects have support for this. Mission Critical Linux
-`http://www.missioncritiallinux.com' and SGI `http://oss.sgi.com/'.
+<http://www.missioncritiallinux.com> and SGI <http://oss.sgi.com/>.
 
 Remember save the context of /proc/ksyms before you crash, since this is
-needed to figure out where the xfs symbols are located in the kernel.
+needed to figure out where the nnpfs symbols are located in the kernel.
 
 But you can still use the debugger (or objdump) to figure out where in
 the binary that you crashed.
@@ -1309,7 +1481,7 @@ Using adb
 Adb is not a symbolic debugger, this means that you have to read the
 disassembled object-code to figure out where it made the wrong turn and
 died. You might be able to use GNU objdump to list the assembler and
-source-code intertwined (`objdump -S -d mod_xfs.o'). Remember that GNU
+source-code intertwined (`objdump -S -d mod_nnpfs.o'). Remember that GNU
 binutils for sparc-v9 isn't that good yet.
 
 You can find the script that use use for the adb command `$<' in
@@ -1347,7 +1519,7 @@ File: arla.info,  Node: Darwin/MacOS X,  Next: Porting,  Prev: Kernel debuggers,
 Darwin/MacOS X
 ==============
 
-You'll need two computers to debug arlad/xfs on darwin since the common
+You'll need two computers to debug arlad/nnpfs on darwin since the common
 way to debug is to use a remote kernel-debugger over IP/UDP.
 
 First you need to publish the arp-address of the computer that you are
@@ -1357,32 +1529,32 @@ We have not found any kernel symbols in MacOSX Public Beta, so you
 should probably build your own kernel. Use Darwin xnu kernel source
 with cvs-tag: Apple-103-0-1 (not xnu-103).
 
-     gdb xfs.out
+     gdb nnpfs.out
      target remote-kdp
      add-symbol-table ...
      attach <host>
 
 
-File: arla.info,  Node: Porting,  Next: Oddities,  Prev: Darwin/MacOS X,  Up: Top
+File: arla.info,  Node: Porting,  Next: Programming,  Prev: Darwin/MacOS X,  Up: Top
 
 Porting
 *******
 
 The largest part of the work needed to port Arla to a new operating
-system is in porting xfs, as kernel programming always is harder, less
+system is in porting nnpfs, as kernel programming always is harder, less
 portable and messier than user-space dito.  Arla in test mode
 (`arla-cli') should work without any porting on any system that's not
 very far away from Unix and that provides berkeley sockets (including
-cygwin32).  The hard part is porting the XFS kernel module, and we will
+cygwin32).  The hard part is porting the NNPFS kernel module, and we will
 spent most of this text on how to do that.
 
 * Menu:
 
 * Porting user-space::
-* Porting XFS::
+* Porting NNPFS::
 
 
-File: arla.info,  Node: Porting user-space,  Next: Porting XFS,  Prev: Porting,  Up: Porting
+File: arla.info,  Node: Porting user-space,  Next: Porting NNPFS,  Prev: Porting,  Up: Porting
 
 user-space
 ==========
@@ -1419,9 +1591,9 @@ assembler, `savecontext' and `returnto' that save and restore the
 processor context.
 
 
-File: arla.info,  Node: Porting XFS,  Prev: Porting user-space,  Up: Porting
+File: arla.info,  Node: Porting NNPFS,  Prev: Porting user-space,  Up: Porting
 
-XFS
+NNPFS
 ===
 
   1. It helps to have source code for your operating system.
@@ -1440,7 +1612,7 @@ XFS
 
   3. Be lazy
 
-     Try to find out what other XFS port is most similar to your OS and
+     Try to find out what other NNPFS port is most similar to your OS and
      start with that code.
 
   4. Figure out how your kernel works.
@@ -1518,14 +1690,14 @@ XFS
        2. Then add a device driver to the module which dummy functions
           and verify that works.
 
-       3. Try to fit the device driver functions in `xfs_dev.c' into the
+       3. Try to fit the device driver functions in `nnpfs_dev.c' into the
           device driver.
 
        4. Do a dummy module with a system call and verify that you can
           call it.
 
        5. Start trying to add enough of the vfs/vnode operations from
-          `xfs_vfsops.c' and `xfs_vnodeops.c' so that you can build it.
+          `nnpfs_vfsops.c' and `nnpfs_vnodeops.c' so that you can build it.
 
        6. Debug it.
 
@@ -1534,7 +1706,256 @@ XFS
 
 
 
-File: arla.info,  Node: Oddities,  Next: Arla timeline,  Prev: Porting,  Up: Top
+File: arla.info,  Node: Programming,  Next: Oddities,  Prev: Porting,  Up: Top
+
+Programming
+***********
+
+This chapter is programming documentation of arla's internal parts.
+
+This is just to cover the ideas of the implemation, but documentation
+of the actual code, please see commends in the source code for that.
+
+* Menu:
+
+* Arla pioctl's::	Documentation of arla pioctl's
+* Disco with arla::	Disconnected mode
+* afsUUID::		afs UUID
+
+
+File: arla.info,  Node: Arla pioctl's,  Next: Disco with arla,  Prev: Programming,  Up: Programming
+
+Arla pioctl's
+*************
+
+This chaper documents arla pioctl's. Arla's pioct are in the `A' range
+of the pioctls. OpenAFS uses `O' and orignal Transarc uses `V'.
+
+     `AIOC_STATISTICS'
+
+     XXX max constants
+
+       1. `opcode STATISTICS_OPCODE_LIST'
+
+          Get a specific host/partition entry.
+
+       2. `opcode STATISTICS_OPCODE_GETENTRY'
+
+          Get a specific entry. The 5 values that are passed in are:
+          opcode (STATISTICS_OPCODE_GETENTRY), ipv4-host-address,
+          partition, type-of-data, slot in the histogram.
+
+          Possible types of data are:
+
+            1. `STATISTICS_REQTYPE_FETCHSTATUS'
+
+            2. `STATISTICS_REQTYPE_FETCHDATA'
+
+            3. `STATISTICS_REQTYPE_BULKSTATUS'
+
+            4. `STATISTICS_REQTYPE_STOREDATA'
+
+            5. `STATISTICS_REQTYPE_STORESTATUS'
+
+
+
+     `AIOC_PTSNAMETOID'
+
+     Return a pts name to id for a cell, the cell is referenced by the
+     file that is passed into the request, or by name.
+
+     XXX document format
+
+
+
+File: arla.info,  Node: Disco with arla,  Next: afsUUID,  Prev: Arla pioctl's,  Up: Programming
+
+Disco with arla
+***************
+
+Disconnected operation of arla.
+
+The Log
+=======
+
+The binary log is written to a file. All entries are of variable size.
+A entry is never removed from the log *note Log entry optimization::.
+
+One log entry
+-------------
+
+One log entry consists of a log header with magic cookie, opcode,
+checksum, and length. The entry is is always 4 byte aligned in the
+logfile.  The checksum is a simple one, its just to verify that for
+data corruption hasn't occured and to make sure the entry is a valid
+one.
+
+Disconnected vs connected nodes
+-------------------------------
+
+A FCacheNode is either a "disconnected node" or a "connected node". The
+later means that the node was created when arla was in connected mode
+and thus (potentially) exist on the file server.
+
+A disconnected node on the other hand was created when is disconnected
+operation. A disconnected node always have one or more entries in the
+log.
+
+Log entry offset
+----------------
+
+The offset of the entry, a unsigned 32 bit number, is called
+"disco_id". Its stored in the FCacheNode so it can be updated when
+there is a operation on this node. All nodes for a FCacheEntry are
+single linked list (from the newest log entry to the oldest), the
+optimizer uses this to modify all previous entries from a FCacheNode.
+
+A FCacheNode with disco_id equal to 0 is a connected node that there
+have been no disconnected operation made on.
+
+The first entry in the log is a nop entry to make sure not a log-offset
+that is for a "real" entry.
+
+The limit of number of entries in the log are 2^32 / the size of the
+largest entry since the offset is a 32 bit number.
+
+Log entry optimization
+======================
+
+To try to preserve bandwith when reinterating there are dependencies
+between entries. First we try to avoid storing data to the fileserver
+that was never meant to got there. For example a file that was created
+and then removed in disconnected mode, ie `DISCO_HEADER_NOP' is set in
+the flags field in the header.
+
+Removal operations
+------------------
+
+When a node is removed and the node is a disconnected node, the all
+previous entries are optizmied away by setting a flags in their entry
+headers. This make this entry/nodes be ignored by the reintergration
+code and never commited to the fileserver.
+
+Moveing a disconnected node
+---------------------------
+
+If a disconnected node is moved, it will be created in the target
+directory instead of first being created and then moved.
+
+Storestatus and storedata
+-------------------------
+
+Also, all entries for one node storestate/storestatus are compressed to
+one createnode (and if needed storedata).
+
+data storage
+============
+
+common data types
+-----------------
+
+fid - VenusFid equivalent   storestatus - AFSStoreStatus equivalent
+
+  1. `nop'
+
+     needs to be smaller or equal in size then the rest
+
+     data storage:     header     flags     fid
+
+  2. `storedata'
+
+     (truncation is a storedata)
+
+     data storage:     header     fid     storestatus     size
+
+  3. `storestatus'
+
+     data storage:     header     fid     storestatus
+
+  4. `createfile'
+
+     data storage:     header     parentfid     fid     storestatus
+     name[AFSNAMEMAX]
+
+  5. `createsymlink'
+
+     data storage:     header     parentfid     fid     storestatus
+     name[AFSNAMEMAX]     targetname[AFSNAMEMAX]
+
+  6. `createlink'
+
+     data storage:     header     parentfid     fid     storestatus
+     name[AFSNAMEMAX]     targetfid
+
+  7. `unlink'
+
+     data storage:     header     parentfid     fid /* dup info */
+     name[AFSNAMEMAX]
+
+  8. `createdir'
+
+     data storage:     header     parentfid     fid /* dup info */
+     storestatus     name[AFSNAMEMAX]
+
+  9. `removedir'
+
+     data storage:     header     parentfid     fid /* dup info */
+     name[AFSNAMEMAX]
+
+
+reintegration
+=============
+
+Cook-book
+---------
+
+  1.  make sure first entry in the log is a nop entry
+
+  2.  if nop entry or `DISCO_HEADER_NOP' is set, continue to next
+
+  3.  the parent fid is transformed to a connected fid (if needed)   it
+     this failes, we are unhappy and save this node for collision
+     recovery
+
+  4.  the fid is transformed to a connected fid (if needed)   it this
+     failes, we are unhappy and save this node for collision   recovery
+
+  5.  operation is performed
+
+  6.  if there is change on a fid
+
+       1.  update kernelhandle
+
+       2.  update fcachehandle
+
+       3.  update directory fid for this name (if needed)
+
+       4.  transformed fids are stored in the transformation table
+
+
+
+
+File: arla.info,  Node: afsUUID,  Prev: Disco with arla,  Up: Programming
+
+afsUUID
+*******
+
+`AFS' uses a `DCE UUID' (Microsoft GUID is a another version of a DCE
+UUID) is identify file servers and callback managers. The callback
+manager regenerate its `uuid' every time it restarts.
+
+The fileserver stores its `uuid' on disk and uses it to identify it
+self when registering its addresses with the VLDB-server.
+
+The `afsUUID' is special in some implementations since it uses the
+ip-address as the node identifier instead of the mac-address (IEEE OUI
++ node address).  Also the time in DCE is based on Unix epoch instead
+of DCE epoch. This will cause problems in about 287 years when the old
+generated afs UUID till start to collide with new genrated DCE UUIDs.
+Hopefully people have a solution to this problem then.
+
+
+File: arla.info,  Node: Oddities,  Next: Themis,  Prev: Programming,  Up: Top
 
 Oddities
 ********
@@ -1551,6 +1972,7 @@ AFS
    * Mountpoints have the mode-bits 0644, if they don't they are
      symlinks (and have the mode-bits 0755).
 
+
 Operating systems
 =================
 
@@ -1564,17 +1986,104 @@ Operating systems
    * Reclen (in struct dirent) shouldn't be too large. When its larger
      then the buffer used in opendir/readdir/closedir, you loose.
 
+
 
-File: arla.info,  Node: Arla timeline,  Next: Authors,  Prev: Oddities,  Up: Top
+File: arla.info,  Node: Themis,  Next: Arla timeline,  Prev: Oddities,  Up: Top
+
+Themis
+******
+
+`Themis' is a tool for keeping local file systems up-to-date with a
+file system description.
+
+All lines in the input file consist of white-space separated fields. For
+all directives except the `exclude' directive consist of one uppercase
+letter, and flags can be added directly after the directive letter.
+Flags can be specified in any order, and consist of uppercase letters.
+
+If owner, group or mode is not specified, implicit values are used.
+The default implicit values are `root' for owner, `wheel' for group,
+`755' for directory mode bits and `644' for file mode bits.
+
+These are the directives:
+
+   * F<flags> <destination> <source> [<owner> <group>] [<mode>]
+
+     Indicates the presence of a file.
+
+   * D<flags> <destination> [<owner> <group>] [<mode>]
+
+     Indicates the presence of a directory.
+
+   * T<flags> <destination> <source> [<owner> <group>] [<mode>]
+
+     Indicates the presence of a directory tree.
+
+   * L<flags> <destination> <link data>
+
+     Indicates the presence of a symbolic link.
+
+   * N<flags> <destination>
+
+     Indicates that themis should ignore that file/directory. If the
+     file exists, it is left alone.
+
+   * X<flags> <destination>
+
+     Indicates that themis should remove the file/directory.
+
+   * M<flags> <destination> [<owner> <group>] [<mode>]
+
+     Modifies the flags, owner, group and mode of the (already
+     specified) destination.
+
+   * exclude <pattern>
+
+     In a tree traversal, excludes all files that match <pattern>.
+     Normal shell-style globbing can be used. Default exclution
+     patterns that are included are: `.' and `..'. Also, when running
+     with -macosx flag `._*' files are excluded.
+
+     Common pattern to start to exclude are `*~', `RCS', `.OldFiles',
+     `*,v', and `*.core'.
+
+
+These are the flags:
+
+   * `A' The source path is absolute. When this flag is not specified,
+     the destination path is appended to the source path.
+
+   * `I' The file should not be overwritten if it exists.
+
+   * `O' Rename existing files to .old, instead of overwriting them.
+
+   * `Q' Exit with error level 4 to indicate that the file has changed.
+     This can be used to check if a reboot is needed when certain
+     critical files change.
+
+   * `R' Only valid on directories (`D' and `T' directives). Specifies
+     that the directory should be cleaned of any files that are not in
+     the description file.
+
+   * `P' Replaces the implicit owner, group and mode bits with the
+     values from the source file.
+
+
+Normally, the input file should be pre-processed by mpp, m4, or some
+other pre-processor, to enable conditional processing and include files.
+
+
+File: arla.info,  Node: Arla timeline,  Next: Authors,  Prev: Themis,  Up: Top
 
 Arla timeline
 *************
 
 Arla have existed for quite some years.
 
-Development started around XXX by Björn Grönvall <bg@nada.kth.se>,
-quick followers was Assar <assar@sics.se> (at that time
-<assar@pdc.kth.se>) and Johan Danielsson <joda@pdc.kth.se>. The
+Development started in fall 1993 by Björn Grönvall <bg@nada.kth.se>
+(with an rxkad implantation), he had a working read-only implementation
+in winter 1994. Quick followers was Assar <assar@sics.se> (at that time
+<assar@pdc.kth.se>>) and Johan Danielsson <<joda@pdc.kth.se>>. The
 platform that was chosen was Sparc SunOS4 (the OS that NADA, KTH was
 using).
 
@@ -1597,12 +2106,12 @@ the local computer club at KTH. Other free OS:es, as NetBSD, FreeBSD
 and Linux(primarily sparc) were also in need of AFS clients.
 
 In TokKOM, a local communications system using LysKOM
-(`http://www.lysator.liu.se/lyskom/'), Assar suggested to some club
+(<http://www.lysator.liu.se/lyskom/>), Assar suggested to some club
 members that it would be a nice thing to resume the arla development.
 
 Some people suggested that it would be less trouble having someone with
 access to the Transarc AFS source code port the code to the relevent
-platforms. Assar then ported xfs to FreeBSD 2.2.x in notime (over the
+platforms. Assar then ported nnpfs to FreeBSD 2.2.x in notime (over the
 night), just to show the high portability.
 
 People started to understand that arla was a concept that would work,
@@ -1618,7 +2127,7 @@ concentrating on OpenBSD kernel stuff.
 
 The first entry in ChangeLog is dated Fri Oct 24 17:20:40 1997. Around
 this time arla was given a CVS tree, to ease development. Now you could
-also mount the xfs-device and get the root-directory out of it.
+also mount the nnpfs-device and get the root-directory out of it.
 
 The Linux port was done in a few weeks in the beginning of 1998. Only
 the Linux 2.0 kernel was supported at this time.
@@ -1665,17 +2174,17 @@ Assar Westerlund, Everything
 
 Magnus Ahltorp, Everything
 
-Artur Grabowski, BSD xfs, OpenBSD maintainer
+Artur Grabowski, BSD nnpfs, OpenBSD maintainer
 
 Love Hörnquist-Åstrand, Everything
 
-Robert Burgess, fs, Solaris xfs
+Robert Burgess, fs, Solaris nnpfs
 
-Johan Danielsson, OSF/1 xfs
+Johan Danielsson, OSF/1 nnpfs
 
 Hans Insulander, pts, OpenBSD maintainer
 
-Mattias Amnefelt, vos, milko, OSF/1
+Mattias Amnefelt, vos, milko
 
 Harald Barth, doc
 
@@ -1684,7 +2193,7 @@ Tomas Olsson, milko
 Mikael Vidstedt (userland, some milko stuff)
 
 Jimmy Engelbercht (bos)
-Rhapsody xfs port was contributed by Alexandra Ellwood <lxs@MIT.EDU>
+Rhapsody nnpfs port was contributed by Alexandra Ellwood <lxs@MIT.EDU>
 Later, Rhapsody was renamed Darwin.
 
 Disconnected code is written by:
@@ -1719,51 +2228,57 @@ The code for gluing these together were written by ourselves.
 Bugfixes, documentation, encouragement, and code has been contributed
 by:
 
-Aaron M. Ucko                        <amu@MIT.EDU>                        
-Alec Wolman                          <wolman@cs.washington.edu>           
-Alexandra Ellwood                    <lxs@MIT.EDU>                        
-Brad Keryan                          <keryan@andrew.cmu.edu>              
-Constantine Sapuntzakis              <csapuntz@openbsd.org>               
-Dan Winship                          <danw@MIT.EDU>                       
-Derrick J Brashear                   <shadow@dementia.org>                
-Harald Barth                         <haba@pdc.kth.se>                    
-Jim Doyle                            <jrd@bu.edu>                         
-John Davison                         <davisoja@clarkson.edu>              
-John Hawkinson                       <jhawk@MIT.EDU>                      
-Karl Ramm                            <kcr@MIT.EDU>                        
-Mark Eichin                          <eichin@kitten.gen.ma.us>            
-Per Boussard T/ED                    <Per.Boussard@era-t.ericsson.se>     
-Dima Ruban                           <dima@best.net>                      
-Max                                  <davros@cyclone.Stanford.EDU>        
-Andrzej Filinski                     <andrzej@daimi.aau.dk>               
-Chuck Lever                          <chuckl@netscape.com>                
-WUWEI SHEN                           <wwshen@engin.umich.edu>             
-Cheng Jin                            <chengjin@eecs.umich.edu>            
-Paul Callaway                        <pcallawa@umich.edu>                 
-Brandon S. Allbery                   <allbery@ece.cmu.edu>                
-Ken Raeburn                          <raeburn@raeburn.org>                
-Jeffrey Hutzelman                    <jhutz+@cmu.edu>                     
-Hee-Seok Heo                         <hsheo@postech.ac.kr>                
-Paul Ewing Jr.                       <ewing@ima.umn.edu>                  
-Niklas Hallqvist                     <niklas@appli.se>                    
-Marko Asplund                        <aspa@hip.fi>                        
-Chris Wing                           <wingc@engin.umich.edu>              
-Simon Josefsson                      <jas@pdc.kth.se>                     
-Magnus Lindström                     <magnus.lindstrom@s3.kth.se>         
-Greg Stark                           <gsstark@mit.edu>                    
-Matt                                 <deberg@mit.edu>                     
-Björn Grönvall                       <bg@sics.se>                         
+Aaron M. Ucko                        <amu@MIT.EDU>
+Alec Wolman                          <wolman@cs.washington.edu>
+Alexandra Ellwood                    <lxs@MIT.EDU>
+Brad Keryan                          <keryan@andrew.cmu.edu>
+Constantine Sapuntzakis              <csapuntz@openbsd.org>
+Dan Winship                          <danw@MIT.EDU>
+Derrick J Brashear                   <shadow@dementia.org>
+Harald Barth                         <haba@pdc.kth.se>
+Jim Doyle                            <jrd@bu.edu>
+John Davison                         <davisoja@clarkson.edu>
+John Hawkinson                       <jhawk@MIT.EDU>
+Karl Ramm                            <kcr@MIT.EDU>
+Mark Eichin                          <eichin@kitten.gen.ma.us>
+Per Boussard T/ED                    <Per.Boussard@era-t.ericsson.se>
+Dima Ruban                           <dima@best.net>
+Max                                  <davros@cyclone.Stanford.EDU>
+Andrzej Filinski                     <andrzej@daimi.aau.dk>
+Chuck Lever                          <chuckl@netscape.com>
+WUWEI SHEN                           <wwshen@engin.umich.edu>
+Cheng Jin                            <chengjin@eecs.umich.edu>
+Paul Callaway                        <pcallawa@umich.edu>
+Brandon S. Allbery                   <allbery@ece.cmu.edu>
+Ken Raeburn                          <raeburn@raeburn.org>
+Jeffrey Hutzelman                    <jhutz+@cmu.edu>
+Hee-Seok Heo                         <hsheo@postech.ac.kr>
+Paul Ewing Jr.                       <ewing@ima.umn.edu>
+Niklas Hallqvist                     <niklas@appli.se>
+Marko Asplund                        <aspa@hip.fi>
+Chris Wing                           <wingc@engin.umich.edu>
+Simon Josefsson                      <jas@pdc.kth.se>
+Magnus Lindström                     <magnus.lindstrom@s3.kth.se>
+Greg Stark                           <gsstark@mit.edu>
+Matt                                 <deberg@mit.edu>
+Björn Grönvall                       <bg@sics.se>
 Tino Schwarze                        <tino.schwarze@informatik.tu-chemnitz.de>
-David Sanderson                      <david@transarc.ibm.com>             
+David Sanderson                      <david@transarc.ibm.com>
 Roman Hodek                          <Roman.Hodek@informatik.uni-erlangen.de>
 Michael Sperber                      <sperber@informatik.uni-tuebingen.de>
-Dr. Lex Wennmacher                   <wennmach@geo.Uni-Koeln.DE>          
-Janne Johansson                      <jj@dynarc.se>                       
-Dr A V Le Blanc                      <LeBlanc@mcc.ac.uk>                  
-Dave Morrison                        <dave@bnl.gov>                       
-Jochen Saile                         <saile@sfs.nphil.uni-tuebingen.de>   
-Chris Kuklewicz                      <chrisk@MIT.EDU>                     
-Nickolai Zeldovich                   <kolya@MIT.EDU>                      
+Dr. Lex Wennmacher                   <wennmach@geo.Uni-Koeln.DE>
+Janne Johansson                      <jj@dynarc.se>
+Dr A V Le Blanc                      <LeBlanc@mcc.ac.uk>
+Dave Morrison                        <dave@bnl.gov>
+Jochen Saile                         <saile@sfs.nphil.uni-tuebingen.de>
+Chris Kuklewicz                      <chrisk@MIT.EDU>
+Nickolai Zeldovich                   <kolya@MIT.EDU>
+Adam Thornton                        <adam@sinenomine.net>
+Neale Ferguson                       <Neale.Ferguson@SoftwareAG-usa.com>
+Hidvegi                              <hzoli@austin.ibm.com>
+Todd T. Fries                        <todd@fries.net>
+Andrea Campi                         <andrea@webcom.it>
+William Uther                        <will+@cs.cmu.edu>
 
 If you have done something and are not mentioned here, please send mail
 to <arla-drinkers@stacken.kth.se>.
@@ -1782,6 +2297,9 @@ Index
 * adb:                                   Kernel debuggers.
 * AFS Filespace:                         AFS infrastructure.
 * AFSDB:                                 AFS infrastructure.
+* afslog:                                Kerberos tickets and AFS tokens.
+* afsUUID:                               afsUUID.
+* aklog:                                 Kerberos tickets and AFS tokens.
 * ALG:                                   NAT.
 * Archives:                              Introduction.
 * Arlad debugging:                       Arlad.
@@ -1792,17 +2310,26 @@ Index
 * Cell:                                  AFS infrastructure.
 * CellServDB:                            AFS infrastructure.
 * Comments:                              Introduction.
+* DCE UUID:                              afsUUID.
 * Debugging:                             Debugging.
 * Debugging arlad:                       Arlad.
 * Debugging techniques:                  Debugging techniques.
-* Debugging XFS:                         xfs.
+* Debugging NNPFS:                         nnpfs.
+* Disconected operation:                 Disco with arla.
 * DNS:                                   AFS infrastructure.
 * Fileserver:                            AFS infrastructure.
 * Filespace:                             AFS infrastructure.
 * Fsserver:                              AFS infrastructure.
 * Gdb:                                   Debugging LWP with GDB.
+* kalog:                                 Kerberos tickets and AFS tokens.
+* kaserver:                              Integration with Kerberos.
+* kauth:                                 Kerberos tickets and AFS tokens.
+* kerberosserver:                        Integration with Kerberos.
 * Kernel debugging:                      Kernel debuggers.
 * Kernel debuging on linux:              Kernel debuggers.
+* KeyFile:                               Integration with Kerberos.
+* kinit:                                 Kerberos tickets and AFS tokens.
+* klog:                                  Kerberos tickets and AFS tokens.
 * Ksymoops:                              Kernel debuggers.
 * Linux kernel debugging:                Kernel debuggers.
 * Live kernel:                           Kernel debuggers.
@@ -1811,57 +2338,71 @@ Index
 * Masquerading:                          NAT.
 * NAT:                                   NAT.
 * PAT:                                   NAT.
+* pts:                                   Relationship between pts uid and unix uid.
 * Ptserver:                              AFS infrastructure.
 * Salvage:                               AFS infrastructure.
 * Samba:                                 Samba.
+* Themis:                                Themis.
+* TheseCells:                            Integration with Kerberos.
+* ThisCell:                              Integration with Kerberos.
+* Tickets:                               Kerberos tickets and AFS tokens.
+* Tokens:                                Kerberos tickets and AFS tokens.
 * Ubik:                                  AFS infrastructure.
+* uid:                                   Relationship between pts uid and unix uid.
 * Upserver:                              AFS infrastructure.
 * Vldbserver:                            AFS infrastructure.
 * Vlserver:                              AFS infrastructure.
 * Volser:                                AFS infrastructure.
 * Volumeserver:                          AFS infrastructure.
-* XFS debugging:                         xfs.
+* NNPFS debugging:                         nnpfs.
 
 
 
 Tag Table:
-Node: Top217
-Node: Introduction1893
-Node: AFS infrastructure5142
-Node: Organization of data15560
-Node: Requirements16038
-Node: Data organization18097
-Node: Callbacks20286
-Node: Volume management20954
-Node: Relationship between pts uid and unix uid22277
-Node: AFS and the real world22489
-Node: NAT22937
-Node: Samba24001
-Node: Integration with Kerberos24562
-Node: Parts of Arla25417
-Node: How arla works25869
-Node: The relation between Arlad and XFS26888
-Node: The life of a file27547
-Node: Tools and libs30068
-Node: Rx protocol31285
-Node: LWP31562
-Node: The files in arlad/31974
-Node: pioctl and kafs34099
-Node: Debugging36198
-Node: Arlad36674
-Node: Debugging LWP with GDB37917
-Node: xfs39672
-Node: xfs on linux40319
-Node: Debugging techniques40664
-Node: Kernel debuggers41596
-Node: Darwin/MacOS X46009
-Node: Porting46626
-Node: Porting user-space47234
-Node: Porting XFS48997
-Node: Oddities53346
-Node: Arla timeline54253
-Node: Authors57835
-Node: Acknowledgments58662
-Node: Index62898
+Node: Top191
+Node: Introduction2110
+Node: AFS infrastructure5546
+Node: Organization of data15964
+Node: Requirements16460
+Node: Data organization18431
+Node: Callbacks20761
+Node: Volume management21446
+Node: Relationship between pts uid and unix uid22789
+Node: AFS and the real world23658
+Node: NAT24159
+Node: Samba26081
+Node: Integration with Kerberos26732
+Node: Kerberos tickets and AFS tokens28564
+Node: Parts of Arla34115
+Node: How arla works34567
+Node: The relation between Arlad and NNPFS35586
+Node: The life of a file36245
+Node: Tools and libs38767
+Node: Rx protocol39982
+Node: LWP40259
+Node: The files in arlad/40671
+Node: pioctl and kafs42796
+Node: Debugging44895
+Node: Arlad45371
+Node: Debugging LWP with GDB46614
+Node: nnpfs48369
+Node: nnpfs on linux49016
+Node: Debugging techniques49361
+Node: Kernel debuggers50293
+Node: Darwin/MacOS X54706
+Node: Porting55323
+Node: Porting user-space55934
+Node: Porting NNPFS57697
+Node: Programming62046
+Node: Arla pioctl's62481
+Node: Disco with arla63589
+Ref: Log entry optimization65373
+Node: afsUUID68205
+Node: Oddities69023
+Node: Themis69929
+Node: Arla timeline72653
+Node: Authors76325
+Node: Acknowledgments77145
+Node: Index81013
 
 End Tag Table

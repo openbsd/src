@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,12 +31,12 @@
  * SUCH DAMAGE.
  */
 
-/* @(#)$KTH: rxkad_locl.h,v 1.10 2000/10/03 00:38:55 lha Exp $ */
+/* @(#)$arla: rxkad_locl.h,v 1.14 2003/06/12 05:32:16 lha Exp $ */
 
 #ifndef __RXKAD_LOCL_H
 #define __RXKAD_LOCL_H
 
-/* $KTH: rxkad_locl.h,v 1.10 2000/10/03 00:38:55 lha Exp $ */
+/* $arla: rxkad_locl.h,v 1.14 2003/06/12 05:32:16 lha Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -49,11 +49,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
-#ifdef USE_MMAPTIME
-#include <mmaptime.h>
-#define gettimeofday mmaptime_gettimeofday
-#endif
-
 #ifdef NDEBUG
 #ifndef assert
 #define assert(e) ((void)0)
@@ -64,8 +59,14 @@
 #endif
 #endif
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
+#ifdef HAVE_KRB4
 #include <krb.h>
+#endif /* HAVE_KRB4 */
 
 #undef RCSID
 #include <rx/rx.h>
@@ -86,39 +87,39 @@ extern int rx_epoch, rx_nextCid;
 
 #define ROUNDS 16
 
-int fc_keysched(const void *key_, int32 sched[ROUNDS]);
+int fc_keysched(const void *key_, int32_t sched[ROUNDS]);
 
-/* In_ and out_ MUST be u_int32 aligned */
+/* In_ and out_ MUST be uint32_t aligned */
 int fc_ecb_encrypt(const void *in_, void *out_,
-		   const int32 sched[ROUNDS], int encrypt);
+		   const int32_t sched[ROUNDS], int encrypt);
 
-/* In_ and out_ MUST be u_int32 aligned */
-int fc_cbc_encrypt(const void *in_, void *out_, int32 length,
-		   const int32 sched[ROUNDS], u_int32 iv[2],
+/* In_ and out_ MUST be uint32_t aligned */
+int fc_cbc_encrypt(const void *in_, void *out_, int32_t length,
+		   const int32_t sched[ROUNDS], uint32_t iv[2],
 		   int encrypt);
 
 int rxkad_EncryptPacket(const void *rx_connection_not_used,
-			const int32 sched[ROUNDS], const u_int32 iv[2],
+			const int32_t sched[ROUNDS], const uint32_t iv[2],
 			int len, struct rx_packet *packet);
 
 int rxkad_DecryptPacket(const void *rx_connection_not_used,
-			const int32 sched[ROUNDS], const u_int32 iv[2],
+			const int32_t sched[ROUNDS], const uint32_t iv[2],
 			int len, struct rx_packet *packet);
 
 #ifdef __GNUC__
 static inline
 void
-fc_cbc_enc2(const void *in, void *out, int32 length, const int32 sched[ROUNDS],
-	    const u_int32 iv_[2], int encrypt)
+fc_cbc_enc2(const void *in, void *out, int32_t length, const int32_t sched[ROUNDS],
+	    const uint32_t iv_[2], int encrypt)
 {
-  u_int32 iv[2];
+  uint32_t iv[2];
   iv[0] = iv_[0];
   iv[1] = iv_[1];
   fc_cbc_encrypt(in, out, length, sched, iv, encrypt);
 }
 #else
 #define fc_cbc_enc2(in, out, length, sched, iv_, encrypt) \
-{ u_int32 _iv_[2]; u_int32 *_tmp_ = (iv_); \
+{ uint32_t _iv_[2]; uint32_t *_tmp_ = (iv_); \
   memcpy(_iv_, _tmp_, 8);  \
   fc_cbc_encrypt((in), (out), (length), (sched), (_iv_), (encrypt)); }
 #endif
@@ -127,49 +128,49 @@ fc_cbc_enc2(const void *in, void *out, int32 length, const int32 sched[ROUNDS],
 
 /* Version 2 challenge format */
 typedef struct rxkad_challenge {
-  int32 version;
-  int32 nonce;
-  int32 min_level;
-  int32 unused;
+  int32_t version;
+  int32_t nonce;
+  int32_t min_level;
+  int32_t unused;
 } rxkad_challenge;
 
 /* To protect the client from being used as an oracle the response
  * contains connection specific information. */
 typedef struct rxkad_response {
-  int32 version;
-  int32 unused;
+  int32_t version;
+  int32_t unused;
   struct {
-    int32 epoch;
-    int32 cid;
-    u_int32 cksum;		/* Cksum of this response */
-    int32 security_index;
-    int32 call_numbers[RX_MAXCALLS];
-    int32 inc_nonce;
-    int32 level;
+    int32_t epoch;
+    int32_t cid;
+    uint32_t cksum;		/* Cksum of this response */
+    int32_t security_index;
+    int32_t call_numbers[RX_MAXCALLS];
+    int32_t inc_nonce;
+    int32_t level;
   } encrypted;
-  int32 kvno;
-  int32 ticket_len;
+  int32_t kvno;
+  int32_t ticket_len;
   /* u_char the_ticket[ticket_len]; */
 } rxkad_response;
 
 typedef struct key_stuff {
-  int32 keysched[ROUNDS];
+  int32_t keysched[ROUNDS];
   des_cblock key;
 } key_stuff;
 
 typedef struct end_stuff {
-  u_int32 header_iv[2];
-  u_int32 bytesReceived, packetsReceived, bytesSent, packetsSent;
+  uint32_t header_iv[2];
+  uint32_t bytesReceived, packetsReceived, bytesSent, packetsSent;
 } end_stuff;
 
-u_int32
+uint32_t
 rxkad_cksum_response(rxkad_response *r);
 
 void
 rxkad_calc_header_iv(const struct rx_connection *conn,
-		     const int32 sched[ROUNDS],
+		     const int32_t sched[ROUNDS],
 		     const des_cblock *in_iv,
-		     u_int32 out_iv[2]);
+		     uint32_t out_iv[2]);
 
 int
 rxkad_prepare_packet(struct rx_packet *pkt, struct rx_connection *con,
@@ -179,15 +180,19 @@ int
 rxkad_check_packet(struct rx_packet *pkt, struct rx_connection *con,
 		   int level, key_stuff *k, end_stuff *e);
 
+#ifdef HAVE_KRB4
+
 /* Per connection specific server data */
 typedef struct serv_con_data {
   end_stuff e;
   key_stuff k;
-  u_int32 expires;
-  int32 nonce;
+  uint32_t expires;
+  int32_t nonce;
   krb_principal *user;
   rxkad_level cur_level;	/* Starts at min_level and can only increase */
   char authenticated;
 } serv_con_data;
+
+#endif
 
 #endif /* __RXKAD_LOCL_H */

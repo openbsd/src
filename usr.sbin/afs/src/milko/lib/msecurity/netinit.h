@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: netinit.h,v 1.8 2000/10/03 00:18:24 lha Exp $ */
+/* $arla: netinit.h,v 1.8 2000/10/03 00:18:24 lha Exp $ */
 
 void network_kerberos_init (char *srvtab);
 

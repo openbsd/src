@@ -39,7 +39,7 @@
 
 #include <config.h>
 
-RCSID("$KTH: vstatus.c,v 1.5 2000/10/03 00:20:35 lha Exp $");
+RCSID("$arla: vstatus.c,v 1.6 2002/07/16 20:38:57 lha Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>

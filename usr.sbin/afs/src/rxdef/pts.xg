@@ -6,8 +6,6 @@
 
 package PR_
 
-%#include <config.h>
-%#include <roken.h>
 %#include <fs_errors.h>
 
 error-function conv_to_arla_errno
@@ -112,6 +110,16 @@ struct prheader {
     long idHash[HASHSIZE];
 };
 
+struct prheader_disk {
+    long version;
+    long headerSize;
+    long maxGroup;
+    long maxID;
+    long orphan<>;
+    long usercount;
+    long groupcount;
+};
+
 struct prentry {
     long flags;
     long id;
@@ -139,32 +147,12 @@ struct prentry_disk {
     long flags;
     long id;
     long cellid;
-    long next;
-    long reserved[5];
-    long entries[PRSIZE];
-    long nextID;
-    long nextName;
     long owner;
     long creator;
     long ngroups;
-    long nusers;
-    long count;
-    long instance;
-    long owned;
-    long nextOwned;
-    long parent;
-    long sibling;
-    long child;
+    long owned<PR_MAXGROUPS>;
     string name<PR_MAXNAMELEN>;
-};
-
-struct contentry {
-    long flags;
-    long id;
-    long cellid;
-    long next;
-    long reserved[5];
-    long entries[COSIZE];
+    long entries<PR_MAXGROUPS>;
 };
 
 struct prdebugentry {
@@ -265,6 +253,16 @@ SetFieldsEntry(IN long id,
 	       IN long nusers,
 	       IN long spare1,
 	       IN long spare2) = 516;
+
+/*
+ * Group/entries that can't be deleted: SYSADMINID, ANYUSERID,
+ * AUTHUSERID, ANONYMOUSID. Error returned is PRPERM.
+ *
+ * Rights: member of SYSADMINID, or owner to entry, or member of the
+ * owner to `id'.
+ *
+ * Sucess: PRSUCCESS.
+ */
 
 Delete(IN long id) = 506;
 

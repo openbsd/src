@@ -1,5 +1,5 @@
-README for arla-0.35.7 ($KTH: arla-0-35-7 $)
-$KTH: README,v 1.77.2.11 2002/02/25 02:35:01 lha Exp $
+README for arla-0.35 ($arla:  $)
+$arla: README,v 1.87 2003/07/15 16:22:58 lha Exp $
 
 1. What is arla?
 
@@ -8,8 +8,8 @@ Arla is a free AFS cache-manager implementation.
 2. Where do I find this file?
 
 This file is contained inside
-ftp://ftp.stacken.kth.se/pub/arla/arla-0.35.7.tar.gz
-(aka /afs/stacken.kth.se/ftp/pub/arla/arla-0.35.7.tar.gz).
+ftp://ftp.stacken.kth.se/pub/arla/arla-0.35.tar.gz
+(aka /afs/stacken.kth.se/ftp/pub/arla/arla-0.35.tar.gz).
 
 3. What is AFS?
 
@@ -22,38 +22,36 @@ for more information.
 There is kernel support (with different level of functionality) for
 the following operating systems:
 
-- FreeBSD 3.x, 4.,x, and 5.x
-- OpenBSD 2.2-2.9
-- NetBSD 1.2, 1.3, 1.4, and 1.5
-- Linux 2.2.x, 2.3.x, 2.4.x
+- FreeBSD 4.5 (and later), and 5.1 and later
+- OpenBSD 3.1 - 3.2
+- NetBSD 1.5 and 1.6
+- Linux 2.2.x, 2.4.x
 - SunOS 4
-- Solaris 2.5, 2.6, 7, and 8
+- Solaris 2.6, 7, and 8
 - AIX 4.x
 - IRIX 6.x
 - Digital Unix 4.0, Compaq Tru64 5.0 (OSF/1)
-- Darwin 1.3 and 1.4, Mac OS X 10.0 and 10.1
-
-Userland only:
-- Ultrix 4.4
+- Mac OS X 10.0 and 10.2 (and Darwin)
 
 A cache manager (arlad) that works both in user-level mode and with
 the kernel module.  The user-level mode is quite portable and has even
 been working under Windows NT (with the cygwin32 libraries).
 
-Some simple programs (amon, fs, klog, tokens, vos, udebug, and pts).
+Some simple programs (amon, bos, fs, pts, tokens, vos, and udebug).
 
 An experimental AFS server called milko.
 
 5. What's the status of arla?
 
 - Working stable client (currently cacheing whole files)
+  Arlad caches ranges of files, from the first byte to the last requested.
 - Authentication (using kth-krb4 or any other krb4 implantation)
-- Used in production systems with OpenBSD, FreeBSD, NetBSD, Linux,
-  Mac OS X, Compaq Tru64.
-- Some administration programs (fs, vos, pts and bos)
+- Used in production systems with OpenBSD, FreeBSD, NetBSD, Linux, and
+  Mac OS X
+- Some administration programs (bos, fs, vos, pts and bos)
 - An experimental AFS server (milko)
 - Graphical program, amon, for monitoring the state of the cache.
-- A graphical interface for managing ACLs
+- A graphical interface for managing ACLs (for MacOS X only)
 - A configuration utility for Mac OS X
 
 6. What do I need to run arla?
@@ -74,10 +72,11 @@ afslog.  (can be found in /usr/src/kerberosIV/{kafs,afslog}) (versions
 since 2.3 have AFS=yes on by default, except for m88k).
 
 If you are using MIT-Kerberos or CNS Kerberos you can find a replacement
-for libkafs in http://andrew2.andrew.cmu.edu/dist/krbafs.html. Then you
+for libkafs in http://web.mit.edu/openafs/krbafs/. Then you
 need to use the --with-krbafs=dir option when running configure.
-Thanks to Derrick J Brashear <shadow@dementia.org> for making this
-available for the american users.
+Thanks to Derrick J Brashear <shadow@dementia.org> and Alexandra
+Ellwood <lxs@mit.edu> for making this available for the MIT kerberos
+users.
 
 If you don't have Kerberos, you should still be able to test that it
 works, but there's not much point in running unauthenticated, and it's
@@ -95,8 +94,8 @@ Report it with as much detail as possible (including patches) to
 If you find a bug, and do not have a clue what is wrong, please run
 arlad with `arlad -n -z --debug=almost-all' and append the output the
 the mail.  You can also turn on debug on an already running arlad with
-`fs arladebug <debug-level>'.  To enable debugging in the xfs kernel
-module, use `fs xfsdebug <debug-level>'.  The output will end up in
+`fs arladebug <debug-level>'.  To enable debugging in the nnpfs kernel
+module, use `fs nnpfsdebug <debug-level>'.  The output will end up in
 your syslog (like /var/log/messages or /var/adm/messages).
 
 If arlad crashes, at least run gdb on the core dump and do a `bt'.
@@ -113,18 +112,18 @@ Without this info we are probably as lost as you are.
 
 9. How do I adjust the amount of debug information?
 
-Both arlad and the xfs (the kernel module) have variables for
+Both arlad and the nnpfs (the kernel module) have variables for
 controlling what type of debug messages should be printed.
 
 They are controlled by the `--debug' option to arlad and then by
-running `fs arladebug' and `fs xfsdebug'.
+running `fs arladebug' and `fs nnpfsdebug'.
 
 10. How hard is it to port arla to a new operating system?
 
 It's not hard.  The user-level code is quite portable and is not much
 different between different operating systems.  The kernel module is
 system-specific but not that large and you can probably start with the
-one in `xfs/SYSTEM' that's most similar to your system.  If you're
+one in `nnpfs/SYSTEM' that's most similar to your system.  If you're
 interested in doing the port or even run Arla on an OS not mentioned
 above, send mail to
 <arla-drinkers@stacken.kth.se>.

@@ -33,7 +33,7 @@
 
 #include "bos_locl.h"
 
-RCSID("$KTH: bosserver.c,v 1.22 2000/10/03 00:16:58 lha Exp $");
+RCSID("$arla: bosserver.c,v 1.23 2002/04/26 16:11:42 lha Exp $");
 
 static char *email = "root";
 static char *serverfile = MILKO_SYSCONFDIR "/server-file";
@@ -611,7 +611,7 @@ main (int argc, char **argv)
     int optind = 0;
     int ret;
     
-    set_progname(argv[0]);
+    setprogname(argv[0]);
 
     if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage (1);
@@ -631,7 +631,7 @@ main (int argc, char **argv)
     if (bosserverprefix == NULL)
 	bosserverprefix = MILKO_LIBEXECDIR;
 
-    method = log_open (get_progname(), log_file);
+    method = log_open (getprogname(), log_file);
     if (method == NULL)
 	errx (1, "log_open failed");
     cell_init(0, method);

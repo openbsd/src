@@ -6,13 +6,10 @@
 
 package RXAFSCB_
 
-%#include <config.h>
-%#include <roken.h>
 %#include <fs_errors.h>
+%#include <fs.h>
 
 error-function conv_to_arla_errno
-
-/*%#include "fs.h"*/
 
 /*
  * Interface
@@ -67,6 +64,13 @@ struct interfaceAddr {          /* for multihomed clients */
     int32_t     mtu[AFS_MAX_INTERFACE_ADDR]; /* MTU */
 };
 
+const AFSMAXCELLHOSTS = 8;	/*Max VLDB servers per cell*/
+
+typedef int32_t serverList[AFSMAXCELLHOSTS];
+
+typedef afs_uint32 cacheConfig<>;
+
+
 CallBack (IN AFSCBFids *a_fidArrayP,
 	  IN AFSCBs *a_callBackArrayP) = 204;
 
@@ -105,3 +109,21 @@ InitCallBackState3(IN afsUUID *serverUuid) = 213;
 /* still there?  0 if match, !0 otherwise */
 
 ProbeUUID(IN afsUUID *uuid) = 214;
+
+GetCellServDB(IN afs_int32 cellIndex,
+	      OUT string cellName<AFSNAMEMAX>,
+	      OUT serverList *cellHosts) = 216;
+
+GetLocalCell(OUT string cellName<AFSNAMEMAX>) = 217;
+
+GetCacheConfig(IN afs_uint32 callerVersion,
+	       OUT afs_uint32 *serverVersion,
+	       OUT afs_uint32 *configCount,
+	       OUT cacheConfig *config) = 218;
+
+GetCellByNum(IN  int32_t cellNumber,
+	     OUT string cellName<AFSNAMEMAX>,
+	     OUT serverList *cellHosts) = 65537;
+
+TellMeAboutYourself(OUT struct interfaceAddr *addr,
+		    OUT Capabilities *capabilities) = 65538;

@@ -2,7 +2,7 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: debugging.texi,v 1.26 2001/01/08 18:01:07 lha Exp $
+@c $arla: debugging.texi,v 1.28 2002/11/29 19:53:00 tol Exp $
 
 @node Debugging, Arlad, Parts of Arla, Top
 @chapter Debugging
@@ -12,15 +12,15 @@
 This chapter of the manual includes tips that are useful when debugging
 arla. 
 
-Arla and xfs contains logging facilities that is quite useful when
+Arla and nnpfs contains logging facilities that is quite useful when
 debugging when something goes wrong. This and some kernel debugging tips
 are described.
 
 @menu
 * Arlad::  
 * Debugging LWP with GDB::
-* xfs::
-* xfs on linux::
+* nnpfs::
+* nnpfs on linux::
 * Debugging techniques::
 * Kernel debuggers::
 * Darwin/MacOS X::
@@ -70,7 +70,7 @@ datan:~#
 By default, arlad logs through syslog if running as a daemon and to
 stderr when running in the foreground (with @kbd{--no-fork}).
 
-@node Debugging LWP with GDB, xfs, Arlad, Debugging
+@node Debugging LWP with GDB, nnpfs, Arlad, Debugging
 @comment  node-name,  next,  previous,  up
 @section Debugging LWP with GDB
 
@@ -123,35 +123,35 @@ Print backtrace of FRAMEPOINTER and PROGRAMCOUNTER.
 There also the possibility to run arla with pthreads (run configure with
 --with-pthreads).
 
-@node xfs, xfs on linux, Debugging LWP with GDB, Debugging
+@node nnpfs, nnpfs on linux, Debugging LWP with GDB, Debugging
 @comment  node-name,  next,  previous,  up
-@section xfs
+@section nnpfs
 
-@cindex Debugging XFS
-@cindex XFS debugging
+@cindex Debugging NNPFS
+@cindex NNPFS debugging
 
-XFS debugging does almost look the same on all platforms. They
+NNPFS debugging does almost look the same on all platforms. They
 all share same debugging flags, but not all are enabled on all
 platforms.
 
-Change the debugging with the @kbd{fs xfsdebug} command.
+Change the debugging with the @kbd{fs nnpfsdebug} command.
 
 @example
-datan:~# fs xfsdebug
-xfsdebug is: none
-datan:~# fs xfsdebug almost-all
+datan:~# fs nnpfsdebug
+nnpfsdebug is: none
+datan:~# fs nnpfsdebug almost-all
 datan:~#
 @end example
 
 If it crashes before you have an opportunity to set the debug level, you
-will have to edit @file{xfs/@var{your-os}/xfs_deb.c} and recompile.
+will have to edit @file{nnpfs/@var{your-os}/nnpfs_deb.c} and recompile.
 
-The logging of xfs ends up in your syslog. Syslog usully logs to /var/log
+The logging of nnpfs ends up in your syslog. Syslog usully logs to /var/log
 or /var/adm (look in /etc/syslog.conf).
 
-@node xfs on linux, Debugging techniques, xfs, Debugging
+@node nnpfs on linux, Debugging techniques, nnpfs, Debugging
 @comment  node-name,  next,  previous,  up
-@section xfs on linux
+@section nnpfs on linux
 
 There is a problem with klogd, it's too slow. Cat the @file{/proc/kmsg}
 file instead.  Remember to kill klogd, since the reader will delete the
@@ -159,7 +159,7 @@ text from the ring-bufer, and you will only get some of the message in
 your cat.
 
 
-@node Debugging techniques, Kernel debuggers, xfs on linux, Debugging
+@node Debugging techniques, Kernel debuggers, nnpfs on linux, Debugging
 @comment  node-name,  next,  previous,  up
 @section Debugging techniques
 
@@ -193,7 +193,7 @@ Make sure bugs don't get reintroduced.
 @cindex Kernel debugging
 
 Kernel debuggers are the most useful tool when you are trying to figure
-out what's wrong with xfs. Unfortunately they also seem to have their
+out what's wrong with nnpfs. Unfortunately they also seem to have their
 own life and do not always behave as expected.
 
 @subsection Using GDB
@@ -208,13 +208,13 @@ same.  You get the idea from the NetBSD example below:
 @end example
 
 This example loads the kernel symbols into gdb. But this doesn't show
-the xfs symbols, and that makes your life harder.
+the nnpfs symbols, and that makes your life harder.
 
 @subsection Getting all symbols loaded at the same time
 
-If you want to use the symbols of xfs, there is a gdb command called
+If you want to use the symbols of nnpfs, there is a gdb command called
 @samp{add-symbol-file} that is useful. The symbol file is obtained by
-loading the kernel module xfs with @samp{kmodload -o /tmp/xfs-sym}
+loading the kernel module nnpfs with @samp{kmodload -o /tmp/nnpfs-sym}
 (Darwin) or @samp{modload} (NetBSD and OpenBSD).  FreeBSD has a linker
 in the kernel that does the linking instead of relying on @samp{ld}. The
 symbol address where the module is loaded get be gotten from
@@ -223,7 +223,7 @@ symbol address where the module is loaded get be gotten from
 
 If you forgot the to run modstat/kldstat/kmodstat, you can extract the
 information from the kernel. In Darwin you look at the variable kmod
-(you might have to case it to a (kmod_info_t *). We have seen gdb loose
+(you might have to case it to a (kmod_info_t *). We have seen gdb lose
 the debugging info). kmod is the start of a linked list. Other BSDs have
 some variant of this.
 
@@ -232,9 +232,9 @@ System/xnu/osfmk/.gdbinit (Darwin) to get commands like ps inside gdb.
 
 @example
   datan:~# modstat Type Id Off Loadaddr Size Info Rev Module
-  Name DEV 0 29 ce37f000 002c ce388fc0 1 xfs_mod [...]
+  Name DEV 0 29 ce37f000 002c ce388fc0 1 nnpfs_mod [...]
   [...]
-  (gdb) add-symbol-table xfs.sym ce37f000
+  (gdb) add-symbol-table nnpfs.sym ce37f000
 @end example
 
 @subsection Debugging processes, examine their stack, etc
@@ -262,7 +262,7 @@ two projects have support for this. Mission Critical Linux
 @url{http://oss.sgi.com/}.
 
 Remember save the context of /proc/ksyms before you crash, since this is
-needed to figure out where the xfs symbols are located in the kernel.
+needed to figure out where the nnpfs symbols are located in the kernel.
 
 But you can still use the debugger (or objdump) to figure out where in
 the binary that you crashed.
@@ -278,7 +278,7 @@ the binary that you crashed.
 Adb is not a symbolic debugger, this means that you have to read the
 disassembled object-code to figure out where it made the wrong turn and
 died. You might be able to use GNU objdump to list the assembler and
-source-code intertwined (@samp{objdump -S -d mod_xfs.o}). Remember that
+source-code intertwined (@samp{objdump -S -d mod_nnpfs.o}). Remember that
 GNU binutils for sparc-v9 isn't that good yet.
 
 You can find the script that use use for the adb command @samp{$<} in
@@ -319,7 +319,7 @@ coredump to extract information on some system.
 @comment  node-name,  next,  previous,  up
 @section Darwin/MacOS X
 
-You'll need two computers to debug arlad/xfs on darwin since the common
+You'll need two computers to debug arlad/nnpfs on darwin since the common
 way to debug is to use a remote kernel-debugger over IP/UDP.
 
 First you need to publish the arp-address of the computer that you are
@@ -330,7 +330,7 @@ should probably build your own kernel. Use Darwin xnu kernel source
 with cvs-tag: Apple-103-0-1 (not xnu-103).
 
 @example
-gdb xfs.out
+gdb nnpfs.out
 target remote-kdp
 add-symbol-table ...
 attach <host>

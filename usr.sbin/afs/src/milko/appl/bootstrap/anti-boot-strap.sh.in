@@ -5,7 +5,7 @@
 
 # shell stuff
 
-version="$KTH: anti-boot-strap.sh.in,v 1.2 1999/11/03 05:57:53 lha Exp $"
+version="$arla: anti-boot-strap.sh.in,v 1.2 1999/11/03 05:57:53 lha Exp $"
 usage="NOT USE IF YOU DONT KNOW _=*KNOW*=_ WHAT YOU ARE DOING"
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH

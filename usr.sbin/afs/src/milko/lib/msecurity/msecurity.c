@@ -34,6 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <roken.h>
 
 #include <sys/types.h>
 #include <rx/rx.h>
@@ -42,7 +43,11 @@
 #include <assert.h>
 
 #ifdef KERBEROS
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <rxkad.h>
 #include <rxkad_locl.h>
@@ -67,7 +72,7 @@
 #include "msecurity.h"
 #include "acl.h"
 
-RCSID("$KTH: msecurity.c,v 1.9 2000/10/03 00:18:08 lha Exp $");
+RCSID("$arla: msecurity.c,v 1.11 2002/04/20 15:57:17 lha Exp $");
 
 static char acl_file[] = MILKO_SYSCONFDIR "/superuserlist"; /* XXX */
 

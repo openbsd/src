@@ -1,5 +1,5 @@
 /* This is -*-c-*- */
-/* $KTH: bos.xg,v 1.6 2000/08/31 02:46:42 lha Exp $ */
+/* $arla: bos.xg,v 1.8 2002/05/31 21:05:55 lha Exp $ */
 
 /*
  * Interface to BOS server
@@ -7,8 +7,6 @@
 
 package BOZO_
 
-%#include <config.h>
-%#include <roken.h>
 %#include <fs_errors.h>
 
 error-function conv_to_arla_errno
@@ -38,14 +36,14 @@ const BSTAT_STARTINGUP		= 3;
 
 const BOZO_PRUNEOLD		= 1;
 const BOZO_PRUNEBAK		= 2;
-const BOZO_PRUNECORE		= 3;
+const BOZO_PRUNECORE		= 4;
 
 const BPROC_STARTED		= 1;
 const BPROC_EXITED		= 2;
 
 const BOZO_HASCORE		= 1;
 const BOZO_ERRORSTOP		= 2;
-const BOZO_BADDIRACCESS		= 3;
+const BOZO_BADDIRACCESS		= 4;
 
 const BNODE_NEEDTIMEOUT		= 0x01;
 const BNODE_ACTIVE		= 0x02;
@@ -108,19 +106,6 @@ struct bozo_keyInfo {
     long spare2;
 };
 
-struct bozo_keyInfoFOOO {
-    long goal;
-    long fileGoal;
-    long procStartTime;
-    long procStarts;
-    long lastAnyExit;
-    long lastErrorExit;
-    long errorCode;
-    long errorSignal;
-    long flags;
-    long spare[8];
-};
-
 #if 0
 struct bnode_ops {
     struct bnode *(*create)();
@@ -148,7 +133,9 @@ CreateBnode (IN string type<BOZO_BSSIZE>,
 
 DeleteBnode (IN string instance<BOZO_BSSIZE>) = 81;
 
-SetStatus (IN string instance<BOZO_BSSIZE>) = 82;
+SetStatus (IN string instance<BOZO_BSSIZE>,
+	    IN long status) = 82;
+
 
 GetStatus (IN string instance<BOZO_BSSIZE>,
 	   OUT long *inStat,
@@ -215,7 +202,7 @@ Install (IN string path<BOZO_BSSIZE>,
 	 IN long flags,
 	 IN long date) split = 105;
 
-UnInstall (IN string path) = 106;
+UnInstall (IN string path<BOZO_BSSIZE>) = 106;
 
 GetDates (IN string path<BOZO_BSSIZE>,
 	  OUT long *newtime,
@@ -239,7 +226,7 @@ GetLog(IN string name<BOZO_BSSIZE>) split = 112;
 
 WaitAll () =  113;
 
-GetInstanceStrings (IN string instance,
+GetInstanceStrings (IN string instance<BOZO_BSSIZE>,
 		    OUT string errorname<BOZO_BSSIZE>,
 		    OUT string spare1<BOZO_BSSIZE>,
 		    OUT string spare2<BOZO_BSSIZE>,

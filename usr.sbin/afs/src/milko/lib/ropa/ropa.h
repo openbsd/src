@@ -31,23 +31,26 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: ropa.h,v 1.8 2000/10/03 00:18:35 lha Exp $ */
+/* $arla: ropa.h,v 1.10 2002/02/07 17:59:48 lha Exp $ */
 
 int
 ropa_init (unsigned num_cb, unsigned num_cli, unsigned num_cc,
 	   unsigned hashsz_cb, unsigned hashsz_cli, unsigned hashsz_cc);
 
 int
-ropa_getcallback (u_int32_t host, u_int16_t port, const struct AFSFid *fid,
-		  AFSCallBack *callback);
+ropa_getcallback (uint32_t host, uint16_t port, const struct AFSFid *fid,
+		  AFSCallBack *callback, int32_t voltype);
 
 int
-ropa_drop_callbacks (u_int32_t host, u_int16_t port,
+ropa_drop_callbacks (uint32_t host, uint16_t port,
 		     const AFSCBFids *a_cbfids_p, const AFSCBs *a_cbs_p);
 
 void
-ropa_break_callback (u_int32_t addr, u_int16_t port,
+ropa_break_callback (uint32_t addr, uint16_t port,
 		     const struct AFSFid *fid, Bool break_own);
 
 void
-ropa_break_client (u_int32_t addr, u_int16_t port);
+ropa_break_client (uint32_t addr, uint16_t port);
+
+void
+ropa_break_volume_callback(int32_t volume);

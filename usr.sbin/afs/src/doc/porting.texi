@@ -2,25 +2,26 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: porting.texi,v 1.11 2000/11/25 14:18:42 lha Exp $
+@c $arla: porting.texi,v 1.14 2002/09/07 10:43:55 lha Exp $
 
-@node Porting, Oddities, Darwin/MacOS X, Top
+@node Porting, Programming, Darwin/MacOS X, Top
+@comment  node-name,  next,  previous,  up
 @chapter Porting
 
 The largest part of the work needed to port Arla to a new operating
-system is in porting xfs, as kernel programming always is harder, less
+system is in porting nnpfs, as kernel programming always is harder, less
 portable and messier than user-space dito.  Arla in test mode
 (@kbd{arla-cli}) should work without any porting on any system that's
 not very far away from Unix and that provides berkeley sockets
-(including cygwin32).  The hard part is porting the XFS kernel module,
+(including cygwin32).  The hard part is porting the NNPFS kernel module,
 and we will spent most of this text on how to do that.
 
 @menu
 * Porting user-space::
-* Porting XFS::
+* Porting NNPFS::
 @end menu
 
-@node Porting user-space, Porting XFS, Porting, Porting
+@node Porting user-space, Porting NNPFS, Porting, Porting
 @section user-space
 
 The user-space parts should work on basically any system that is
@@ -53,8 +54,8 @@ have to figure out enough details on your CPU to write two functions in
 assembler, @samp{savecontext} and @samp{returnto} that save and
 restore the processor context.
 
-@node Porting XFS, , Porting user-space, Porting
-@section XFS
+@node Porting NNPFS, , Porting user-space, Porting
+@section NNPFS
 
 @enumerate
 
@@ -76,7 +77,7 @@ kernel by reading the includes files in @file{<sys/*.h>}.
 @item
 Be lazy
 
-Try to find out what other XFS port is most similar to your OS and start
+Try to find out what other NNPFS port is most similar to your OS and start
 with that code.
 
 @item
@@ -166,7 +167,7 @@ Then add a device driver to the module which dummy functions and
 verify that works.
 
 @item
-Try to fit the device driver functions in @file{xfs_dev.c} into the
+Try to fit the device driver functions in @file{nnpfs_dev.c} into the
 device driver.
 
 @item
@@ -174,7 +175,7 @@ Do a dummy module with a system call and verify that you can call it.
 
 @item
 Start trying to add enough of the vfs/vnode operations from
-@file{xfs_vfsops.c} and @file{xfs_vnodeops.c} so that you can build it.
+@file{nnpfs_vfsops.c} and @file{nnpfs_vnodeops.c} so that you can build it.
 
 @item
 Debug it.

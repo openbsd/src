@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,7 +32,7 @@
  */
 
 /*
- * $KTH: fsrv_locl.h,v 1.11 2000/10/03 00:17:31 lha Exp $
+ * $arla: fsrv_locl.h,v 1.15 2002/04/20 15:57:17 lha Exp $
  */
 
 
@@ -40,6 +40,8 @@
 #define __FILBUNKE_FSRV_H 1
 
 #include <config.h>
+
+#include <roken.h>
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -51,7 +53,11 @@
 #include <rx/rx_null.h>
 
 #ifdef KERBEROS
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <rxkad.h>
 #endif
@@ -87,5 +93,7 @@
 #include <mdebug.h>
 
 #include <salvage.h>
+
+#include <dump.h>
 
 #endif /* __FILBUNKE_FSRV_H */

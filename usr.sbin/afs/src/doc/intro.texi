@@ -2,7 +2,7 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: intro.texi,v 1.15 2000/12/01 08:32:09 lha Exp $
+@c $arla: intro.texi,v 1.16 2002/05/26 14:48:26 lha Exp $
 
 @node Introduction, AFS infrastructure, Top, Top
 @comment  node-name,  next,  previous,  up
@@ -104,3 +104,7 @@ There is also commit list
 
 The list are achived on
 @url{http://www.stacken.kth.se/lists/}.
+
+Please note that the mailinglists have a policy of subscriber only
+posting. So if you want to mail a message to the list, subscribe to it
+first, otherwise it wont be posted on the list.

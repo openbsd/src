@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: mnode.h,v 1.7 2000/10/03 00:19:22 lha Exp $ */
+/* $arla: mnode.h,v 1.9 2002/01/23 00:50:08 d95_mah Exp $ */
 
 #ifndef MILKO_MNODE_H
 #define MILKO_MNODE_H 1
@@ -63,7 +63,8 @@ struct mnode {
     AFSFid fid;			/* only valid if on hashtable */
     struct voldb_entry e;	/* entry information */
     struct {
-	unsigned usedp:1;		/* if node is used */
+	unsigned usedp:1;	/* if node is used */
+	unsigned removedp:1;	/* if node has been removed */
 	unsigned fdp:1;		/* if fd is open */
 	unsigned sbp:1;		/* if stat sb is valid */
 	unsigned fsp:1;		/* if afsfetchstatus fs is valid */
@@ -83,6 +84,7 @@ struct msec {
 struct fs_security_context {
     prlist *cps;	/* current proctection set */
     int32_t uid;	/* user id of caller */
+    int superuser;	/* is super user */
     int ref;		/* reference counter */
 };
 
@@ -105,3 +107,4 @@ int
 mnode_update_size (struct mnode *, int32_t *len);
 
 #endif /* MILKO_MNODE_H */
+ 

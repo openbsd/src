@@ -33,10 +33,19 @@
 
 #include <config.h>
 
+#include <roken.h>
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
+#ifdef HAVE_STATVFS
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_STATFS_H
+#include <sys/statfs.h>
+#endif
+#include <sys/mount.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -50,7 +59,7 @@
 
 #include <dpart.h>
 
-RCSID("$KTH: dpart.c,v 1.6 2000/12/29 20:12:35 tol Exp $");
+RCSID("$arla: dpart.c,v 1.11 2002/06/02 21:12:16 lha Exp $");
 
 #ifdef MILKO_ROOT
 char *dpart_root = MILKO_ROOT;
@@ -64,7 +73,7 @@ char *dpart_root = "";
  */
 
 int
-dp_create (u_int32_t num, struct dp_part **dp)
+dp_create (uint32_t num, struct dp_part **dp)
 {
     struct dp_part *d;
     int ret;
@@ -74,7 +83,7 @@ dp_create (u_int32_t num, struct dp_part **dp)
 
     *dp = NULL;
 
-    if (num > ('z' - 'a' * 'z' - 'a'))
+    if (num > (('z' - 'a') * ('z' - 'a')))
 	return EINVAL;
 
     d = malloc (sizeof (*d));
@@ -137,7 +146,7 @@ dp_free (struct dp_part *dp)
 int
 dp_find (struct dp_part **dp)
 {
-    u_int32_t num;
+    uint32_t num;
     int found = 0, ret;
     struct stat sb;
     
@@ -210,10 +219,10 @@ dp_findvol (struct dp_part *d, void (*cb)(void *, int), void *data)
  */
 
 int
-dp_parse (const char *str, u_int32_t *num)
+dp_parse (const char *str, uint32_t *num)
 {
     int len;
-    u_int32_t part = 0;
+    uint32_t part = 0;
 
     assert (str && num);
 
@@ -250,7 +259,7 @@ dp_getpart (const char *str)
 {
     int ret;
     struct dp_part *dp;
-    u_int32_t part;
+    uint32_t part;
 
     ret = dp_parse (str, &part);
     if (ret)
@@ -261,4 +270,39 @@ dp_getpart (const char *str)
 	return NULL;
 
     return dp;
+}
+
+/*
+ * get available and total number of 1k blocks on partition
+ */
+
+int
+dp_getstats (struct dp_part *dp, long *availblocks, long *totalblocks)
+{
+#ifdef HAVE_STATVFS
+    struct statvfs sb;
+#else
+    struct statfs sb;
+#endif
+    int reservedblocks;
+    int ret;
+
+#ifdef HAVE_STATVFS
+    ret = statvfs (dp->part, &sb);
+#else
+    ret = statfs (dp->part, &sb);
+#endif
+    if (ret)
+	return errno;
+    
+    reservedblocks = sb.f_bfree - sb.f_bavail;
+    if (sb.f_bsize <= 1024) {
+	*availblocks = sb.f_bavail * (1024/sb.f_bsize);
+	*totalblocks = (sb.f_blocks - reservedblocks) * (1024/sb.f_bsize);
+    } else {
+	*availblocks = sb.f_bavail / (sb.f_bsize/1024);
+	*totalblocks = (sb.f_blocks - reservedblocks) / (sb.f_bsize/1024);
+    }
+
+    return 0;
 }

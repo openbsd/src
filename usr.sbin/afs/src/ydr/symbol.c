@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: symbol.c,v 1.8 2000/10/02 22:37:10 lha Exp $");
+RCSID("$arla: symbol.c,v 1.10 2002/04/15 14:53:19 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -81,7 +81,8 @@ addsym (char *name)
      if (sym == NULL) {
 	  sym = (Symbol *)emalloc (sizeof (Symbol));
 	  sym->name = name;
-	  sym->type = TUNDEFINED;
+	  sym->type = YDR_TUNDEFINED;
+	  sym->attrs = NULL;
 	  hashtabadd (hashtab, sym);
      }
      return sym;
@@ -102,22 +103,22 @@ printsymbol (void *ptr, void *arg)
      Symbol *s = (Symbol *)ptr;
 
      switch (s->type) {
-	  case TUNDEFINED :
+	  case YDR_TUNDEFINED :
 	       printf ("undefined ");
 	       break;
-	  case TSTRUCT :
+	  case YDR_TSTRUCT :
 	       printf ("struct ");
 	       break;
-	  case TENUM :
+	  case YDR_TENUM :
 	       printf ("enum ");
 	       break;
-	  case TENUMVAL :
+	  case YDR_TENUMVAL :
 	       printf ("enumval ");
 	       break;
-	  case TCONST :
+	  case YDR_TCONST :
 	       printf ("const ");
 	       break;
-	  case TTYPEDEF :
+	  case YDR_TTYPEDEF :
 	       printf ("typedef ");
 	       break;
 	  default :

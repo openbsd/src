@@ -33,7 +33,7 @@
 
 #include <sfvol_private.h>
 
-RCSID("$KTH: svol.c,v 1.3 2000/10/03 00:19:44 lha Exp $");
+RCSID("$arla: svol.c,v 1.3 2000/10/03 00:19:44 lha Exp $");
 
 /*
  * Description:

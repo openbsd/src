@@ -38,12 +38,20 @@
 #include <rx/rx_null.h>
 
 #ifdef KERBEROS
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <rxkad.h>
 #endif
 
 #include <ko.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <string.h>
 #include <assert.h>
@@ -54,7 +62,7 @@
 #include <unistd.h>
 #endif
 
-RCSID("$KTH: netinit.c,v 1.14 2000/10/03 00:18:19 lha Exp $");
+RCSID("$arla: netinit.c,v 1.16 2002/06/02 21:12:17 lha Exp $");
 
 /*
  * Network functions

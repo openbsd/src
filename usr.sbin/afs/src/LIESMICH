@@ -1,5 +1,5 @@
-LIESMICH für arla-0.35.7 ($KTH: arla-0-35-7 $)
-$KTH: LIESMICH,v 1.7.2.8 2002/02/25 02:35:03 lha Exp $
+LIESMICH für arla-0.35 ($arla:  $)
+$arla: LIESMICH,v 1.9 2002/09/07 10:41:44 lha Exp $
 
 Für alle, die zuerst 'mal lieber auf Deutsch lesen. Die Lektüre von
 README wird aber trotzdem empfohlen.
@@ -11,8 +11,8 @@ Arla ist eine freie Implementation des AFS Cacheverwalters.
 2. Wo finde ich diese Datei?
 
 Diese Datei ist enthalten in
-ftp://ftp.stacken.kth.se/pub/arla/arla-0.35.7.tar.gz
-(d.h. /afs/stacken.kth.se/ftp/pub/arla/arla-0.35.7.tar.gz).
+ftp://ftp.stacken.kth.se/pub/arla/arla-0.35.tar.gz
+(d.h. /afs/stacken.kth.se/ftp/pub/arla/arla-0.35.tar.gz).
 
 3. Was ist AFS?
 
@@ -95,7 +95,7 @@ gelaufen sein könnte, versuchen Sie es noch einmal mit
 `arlad -n -z --debug=almost-all' und legen sie den produzierten Text
 dem Email bei. Sie können auch das Debugniveau eines laufenden arlad 
 (als root) mit `fs arladebug <debug-level>' ändern. Das gleiche gilt
-für den Kerneltreiber mit `fs xfsdebug <debug-level>'. Das Ergebnis
+für den Kerneltreiber mit `fs nnpfsdebug <debug-level>'. Das Ergebnis
 landet in Ihrem syslog (/var/log/messages, /var/adm/messages oder so
 ähnlich).
 
@@ -113,19 +113,19 @@ Ohne diese Information können wir Ihnen nicht helfen.
 
 9. Wie kann ich die Menge der Debuginformation steuern?
 
-Sowohl arlad als auch xfs (der Kerneltreiber) haben Variabeln mit
+Sowohl arlad als auch nnpfs (der Kerneltreiber) haben Variabeln mit
 denen die Art der Debuginformation (und damit die Menge) kontrolliert
 werden kann.
 
 Arlad anwendet `--debug' und nach dem Start `fs arladebug'. Für
-den Kerneltreiber wendet man `fs xfsdebug' an.
+den Kerneltreiber wendet man `fs nnpfsdebug' an.
 
 10. Wie schwierig ist es Arla auf ein neues Betriebssystem zu
     portieren?
 
 Nicht sehr. Im user-level sind die Unterschiede gering zwischen
 verschiedenen Betriebssystemen. Für den Kernel kann man mit einem
-anderen ähnlichen System (in xfs/SYSTEM) anfangen. Falls Sie sich für
+anderen ähnlichen System (in nnpfs/SYSTEM) anfangen. Falls Sie sich für
 so etwas interessieren oder sogar Arla auf einem oben nicht genannten
 Betriebssystem laufen haben, schicken Sie ein Email an
 <arla-drinkers@stacken.kth.se>.

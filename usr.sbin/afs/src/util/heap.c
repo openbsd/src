@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: heap.c,v 1.2.2.1 2001/03/12 16:49:07 lha Exp $");
+RCSID("$arla: heap.c,v 1.5 2003/01/11 00:18:24 lha Exp $");
 #endif
 
 #include <assert.h>
@@ -240,6 +240,8 @@ heap_remove (Heap *h, heap_ptr ptr)
 {
     if (h->sz == 0)
 	return -1;
+
+    assert (h->data[ptr].ptr != &dummy);
 
     remove_this (h, ptr);
     return 0;

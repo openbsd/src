@@ -35,10 +35,10 @@
  * an abstract heap implementation
  */
 
-/* $KTH: heap.h,v 1.2 2000/10/03 00:30:58 lha Exp $ */
+/* $arla: heap.h,v 1.3 2003/01/10 12:38:42 lha Exp $ */
 
-#ifndef _HEAP_
-#define _HEAP_
+#ifndef _ARLAUTIL_HEAP_H
+#define _ARLAUTIL_HEAP_H 1
 
 #include "bool.h"
 
@@ -82,4 +82,4 @@ heap_delete (Heap *h);
 Bool
 heap_verify (Heap *h);
 
-#endif /* _HEAP_ */
+#endif /* _ARLAUTIL_HEAP_H */
