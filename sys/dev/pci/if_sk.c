@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.7 2000/08/29 23:45:40 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.8 2000/09/04 17:11:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -863,7 +863,7 @@ sk_attach(parent, self, aux)
 		    sk_win_read_1(sc, SK_MAC0_0 + (sa->skc_port * 8) + i);
 
 
-	printf(": <XaQti Corp. XMAC II> address %s\n",
+	printf(": address %s\n",
 	    ether_sprintf(sc_if->arpcom.ac_enaddr));
 
 	/*
