@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.44 2002/05/18 17:00:33 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.45 2002/06/07 08:09:04 nordin Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -260,19 +260,29 @@ cryptof_ioctl(fp, cmd, data, p)
 		error = crypto_newsession(&sid, (txform ? &crie : &cria),
 		    !cryptodevallowsoft);
 
+		if (error)
+			goto bail;
+
+		cse = csecreate(fcr, sid, crie.cri_key, crie.cri_klen,
+		    cria.cri_key, cria.cri_klen, sop->cipher, sop->mac, txform,
+		    thash);
+
+		if (cse == NULL) {
+			crypto_freesession(sid);
+			error = EINVAL;
+			goto bail;
+		}
+
+		sop->ses = cse->ses;
+
 bail:
 		if (error) {
 			if (crie.cri_key)
 				FREE(crie.cri_key, M_XDATA);
 			if (cria.cri_key)
 				FREE(cria.cri_key, M_XDATA);
-			return (error);
 		}
 
-		cse = csecreate(fcr, sid, crie.cri_key, crie.cri_klen,
-		    cria.cri_key, cria.cri_klen, sop->cipher, sop->mac, txform,
-		    thash);
-		sop->ses = cse->ses;
 		break;
 	case CIOCFSESSION:
 		ses = *(u_int32_t *)data;
@@ -733,6 +743,8 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, u_int64_t keylen,
 
 	MALLOC(cse, struct csession *, sizeof(struct csession),
 	    M_XDATA, M_NOWAIT);
+	if (cse == NULL)
+		return NULL;
 	cse->key = key;
 	cse->keylen = keylen/8;
 	cse->mackey = mackey;
