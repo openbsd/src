@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.7 1996/09/29 04:34:08 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.8 1996/09/29 21:28:42 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -37,17 +37,19 @@
 #define SKEY_MIN_PW_LEN	4
 #endif
 
+void	usage __P((char *));
+
 int
 main(argc, argv)
 	int     argc;
 	char   *argv[];
 {
-	int     rval, n, nn, i, l, md=0, defaultsetup=1, zerokey=0, hexmode=0;
+	int     rval, n, nn, i, l, defaultsetup=1, zerokey=0, hexmode=0;
 	time_t  now;
 	char	hostname[MAXHOSTNAMELEN];
 	char    seed[18], tmp[80], key[8], defaultseed[17];
 	char    passwd[256], passwd2[256], tbuf[27], buf[60];
-	char    lastc, me[UT_NAMESIZE+1], *salt, *p, *pw;
+	char    lastc, me[UT_NAMESIZE+1], *salt, *p, *pw, *ht=NULL;
 	struct skey skey;
 	struct passwd *pp;
 	struct tm *tm;
@@ -71,8 +73,10 @@ main(argc, argv)
 	if ((pp = getpwnam(me)) == NULL)
 		err(1, "Who are you?");
 
-	while ((i = getopt(argc, argv, "sxz45")) != EOF) {
-		switch (i) {
+	for (i = 1; i < argc && argv[i][0] == '-' && strcmp(argv[i], "--");) {
+		if (argv[i][2] == '\0') {
+			/* Single character switch */
+			switch (argv[i][1]) {
 			case 's':
 				defaultsetup = 0;
 				break;
@@ -82,34 +86,24 @@ main(argc, argv)
 			case 'z':
 				zerokey = 1;
 				break;
-			case '4':
-				md = 4;
-				break;
-			case '5':
-				md = 5;
-				break;
+			default:
+				usage(argv[0]);
+			}
+		} else {
+			/* Multi character switches are hash types */
+			if ((ht = skey_set_algorithm(&argv[i][1])) == NULL) {
+				warnx("Unknown hash algorithm %s", &argv[i][1]);
+				usage(argv[0]);
+			}
 		}
-	}
-
-	/* check for md4/md5 argument */
-	if (argv[optind]) {
-		if (strcmp(argv[optind], "MD4") == 0) {
-			md = 4;
-			optind++;
-		} else if (strcmp(argv[optind], "MD5") == 0) {
-			md = 5;
-			optind++;
-		}
+		i++;
 	}
 
 	/* check for optional user string */
-	if (argc - optind  > 1) {
-		(void)fprintf(stderr,
-			"Usage: %s [-s] [-x] [-z] [-4|-5] [MD4|MD5] [user]\n",
-			argv[0]);
-		exit(1);
-	} else if (argv[optind]) {
-		if ((pp = getpwnam(argv[optind])) == NULL)
+	if (argc - i  > 1) {
+		usage(argv[0]);
+	} else if (argv[i]) {
+		if ((pp = getpwnam(argv[i])) == NULL)
 			err(1, "User unknown");
 
 		if (strcmp(pp->pw_name, me) != 0) {
@@ -174,9 +168,9 @@ main(argc, argv)
 	}
 	n = 99;
 
-	/* Set MDX (currently 4 or 5) if given the option */
-	if (md)
-		skey_set_MDX(md);
+	/* Set hash type if asked to */
+	if (ht)
+		skey_set_algorithm(ht);
 
 	if (!defaultsetup) {
 		(void)printf("You need the 6 english words generated from the \"skey\" command.\n");
@@ -271,11 +265,20 @@ main(argc, argv)
 
 	btoa8(skey.val, key);
 
-	(void)fprintf(skey.keyfile, "%s MD%d %04d %-16s %s %-21s\n",
-	    pp->pw_name, skey_get_MDX(), n, seed, skey.val, tbuf);
+	(void)fprintf(skey.keyfile, "%s %s %04d %-16s %s %-21s\n",
+	    pp->pw_name, skey_get_algorithm(), n, seed, skey.val, tbuf);
 	(void)fclose(skey.keyfile);
 	(void)printf("\nID %s skey is %d %s\n", pp->pw_name, n, seed);
 	(void)printf("Next login password: %s\n", hexmode ? put8(buf, key) : btoe(buf, key));
 
 	exit(0);
+}
+
+void
+usage(s)
+	char *s;
+{
+	(void)fprintf(stderr,
+		"Usage: %s [-s] [-x] [-z] [-md4|-md5|-sha1] [user]\n", s);
+	exit(1);
 }
