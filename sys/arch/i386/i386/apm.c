@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.47 2001/06/24 05:02:13 fgsch Exp $	*/
+/*	$OpenBSD: apm.c,v 1.48 2001/06/24 20:38:04 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -317,8 +317,6 @@ apm_power_print (sc, regs)
 void
 apm_suspend()
 {
-	extern int cold;
-
 	dopowerhooks(PWR_SUSPEND);
 
 	if (cold)
@@ -330,8 +328,6 @@ apm_suspend()
 void
 apm_standby()
 {
-	extern int cold;
-
 	dopowerhooks(PWR_STANDBY);
 
 	if (cold)
