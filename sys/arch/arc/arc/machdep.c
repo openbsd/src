@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 1996/09/24 19:37:24 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 1996/10/20 22:40:32 imp Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.15 1996/09/24 19:37:24 pefo Exp $
+ *      $Id: machdep.c,v 1.16 1996/10/20 22:40:32 imp Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -302,7 +302,7 @@ mips_init(argc, argv, code)
 		break;
 
 	case DESKSTATION_RPC44:
-        break;
+		break;
 	}
 
 	/*
