@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2001/12/04 21:44:53 jason Exp $
+#	$OpenBSD: GENERIC,v 1.30 2001/12/06 22:25:37 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -29,6 +29,7 @@ ebus*	at pci?
 
 hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
+dc*	at pci? dev ? function ?
 siop*	at pci? dev ? function ?
 scsibus* at siop?
 
