@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.28 2000/09/19 08:38:28 angelos Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.29 2000/09/19 19:01:31 angelos Exp $	*/
 /*	$EOM: pf_key_v2.c,v 1.41 2000/06/20 03:35:01 itojun Exp $	*/
 
 /*
@@ -1101,6 +1101,7 @@ pf_key_v2_mask_to_bits (u_int32_t mask)
   return (33 - ffs (~mask + 1)) % 33;
 }
 
+#ifndef OPENBSD_IPSEC_API_VERSION
 /*
  * Enable/disable a flow.
  * XXX Assumes OpenBSD {ADD,DEL}FLOW extensions.
@@ -1479,11 +1480,16 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   return -1;
 #endif
 }
+#endif
 
 /* Enable a flow given a SA.  */
 int
 pf_key_v2_enable_sa (struct sa *sa)
 {
+#if OPENBSD_IPSEC_API_VERSION == 1
+  /* We don't mess with flows */
+  return 0;
+#else
   struct ipsec_sa *isa = sa->data;
   struct sockaddr *dst, *src;
   int dstlen, srclen, error;
@@ -1540,8 +1546,10 @@ pf_key_v2_enable_sa (struct sa *sa)
 			 isa->src_mask, proto->spi[1], proto->proto,
 			 ((struct sockaddr_in *)src)->sin_addr.s_addr,
 			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1);
+#endif
 }
 
+#ifndef OPENBSD_IPSEC_API_VERSION
 /* Disable a flow given a SA.  */
 static int
 pf_key_v2_disable_sa (struct sa *sa, int incoming)
@@ -1604,6 +1612,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
                              1, 1);
     }
 }
+#endif
 
 /*
  * Delete the IPSec SA represented by the INCOMING direction in protocol PROTO
@@ -1612,6 +1621,9 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 int
 pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 {
+#if OPENBSD_IPSEC_API_VERSION == 1
+  return 0;
+#else
   struct sadb_msg msg; 
   struct sadb_sa ssa;
   struct sadb_address *addr = 0;
@@ -1744,6 +1756,7 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   if (ret)
     pf_key_v2_msg_free (ret);
   return -1;
+#endif
 }
 
 static void
@@ -1845,6 +1858,43 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
     }
 }
 
+/* Handle a PF_KEY SA ACQUIRE message PMSG.  */
+static void
+pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
+{
+  struct sadb_msg *msg;
+  struct sadb_address *dst, *src;
+  struct sockaddr *dstaddr, *srcaddr;
+  struct sadb_comb *scmb;
+  struct sadb_prop *sprp;
+  char adbuf[40];
+
+  msg = (struct sadb_msg *)TAILQ_FIRST (pmsg)->seg;
+  dst = pf_key_v2_find_ext (pmsg, SADB_EXT_ADDRESS_DST)->seg;
+  src = pf_key_v2_find_ext (pmsg, SADB_EXT_ADDRESS_SRC)->seg;
+  sprp = pf_key_v2_find_ext (pmsg, SADB_EXT_PROPOSAL)->seg;
+  scmb = (struct sadb_comb *)(sprp + 1);
+
+  dstaddr = (struct sockaddr *)(dst + 1);
+  srcaddr = (struct sockaddr *)(src + 1);
+
+  switch (dstaddr->sa_family)
+  {
+      case AF_INET:
+         LOG_DBG ((LOG_SYSDEP, 20, "pf_key_v2_acquire: dst=%s sproto %d",
+                   inet_ntop(AF_INET, &((struct sockaddr_in *)dstaddr)->sin_addr, adbuf, 16), msg->sadb_msg_satype));
+         break;
+
+      case AF_INET6:
+         LOG_DBG ((LOG_SYSDEP, 20, "pf_key_v2_acquire: dst=%s sproto %d",
+                   inet_ntop(AF_INET6, &((struct sockaddr_in6 *)dstaddr)->sin6_addr, adbuf, 16), msg->sadb_msg_satype));
+         break;
+  }
+
+  /* XXX Only support one proposal for now */
+  /* XXX Finish it */
+}
+
 static void
 pf_key_v2_notify (struct pf_key_v2_msg *msg)
 {
@@ -1855,8 +1905,7 @@ pf_key_v2_notify (struct pf_key_v2_msg *msg)
       break;
 
     case SADB_ACQUIRE:
-      log_print ("pf_key_v2_notify: ACQUIRE not yet implemented");
-      /* XXX To be implemented.  */
+      pf_key_v2_acquire (msg);
       break;
 
     default:
