@@ -5,7 +5,7 @@ The defaults settings are usually suitable for OpenBSD; make sure the
 environment is configured in BUG mode. You can check and change this with
 the ENV command.
 
-You wil need to check that the ethernet address is correct as well, with
+You will need to check that the ethernet address is correct as well, with
 the LSAD command.
 
 Some models also require specific preparation:
