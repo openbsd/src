@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.6 2001/05/14 15:37:16 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.7 2001/05/15 09:00:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -505,7 +505,7 @@ cryptoioctl(dev, cmd, data, flag, p)
 			return (error);
 		}
 		f->f_flag = FREAD | FWRITE;
-		f->f_type = DTYPE_PIPE;
+		f->f_type = DTYPE_CRYPTO;
 		f->f_ops = &cryptofops;
 		f->f_data = (caddr_t)fcr;
 		*(u_int32_t *)data = fd;
