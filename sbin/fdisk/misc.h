@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.10 2004/09/18 23:22:05 deraadt Exp $	*/
+/*	$OpenBSD: misc.h,v 1.11 2004/09/30 08:27:50 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,7 +34,7 @@
 
 /* typedefs */
 
-const struct unit_type {
+struct unit_type {
 	char	*abbr;
 	int	conversion;
 	char	*lname;
