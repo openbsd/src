@@ -1,4 +1,4 @@
-#	$Id: Makefile.kc,v 1.2 1996/06/11 09:04:53 deraadt Exp $
+#	$Id: Makefile.kc,v 1.3 1996/06/11 10:20:26 deraadt Exp $
 
 .ifndef MOUNT_POINT
 MOUNT_POINT=	/mnt
@@ -23,7 +23,7 @@ all:
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
 	vnconfig -c ${VND_DEV} ${REALIMAGE}
 	disklabel -w -B -b ${DESTDIR}/usr/mdec/fdboot -s ${DESTDIR}/usr/mdec/bootfd \
-		${VND} floppy5
+		${VND_RDEV} floppy5
 	newfs -m 0 -o space -i 6144 -c 80 ${VND_DEV} floppy5
 	mount ${VND_DEV} ${MOUNT_POINT}
 	for d in ${ROOTDIRLIST} ; do \
