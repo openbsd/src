@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.9 1998/04/25 18:52:18 mickey Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.10 1998/09/08 04:21:08 millert Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ char *banner[] =
 {
     "#ifndef lint",
     "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.9 1998/04/25 18:52:18 mickey Exp $\";",
+    "static char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.10 1998/09/08 04:21:08 millert Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -147,11 +147,15 @@ char *body[] =
     "    else if ((newsize *= 2) > YYMAXDEPTH)",
     "        newsize = YYMAXDEPTH;",
     "    i = yyssp - yyss;",
-    "    if ((newss = (short *)realloc(yyss, newsize * sizeof *newss)) == NULL)",
+    "    newss = yyss ? (short *)realloc(yyss, newsize * sizeof *newss) :",
+    "      (short *)malloc(newsize * sizeof *newss);",
+    "    if (newss == NULL)",
     "        return -1;",
     "    yyss = newss;",
     "    yyssp = newss + i;",
-    "    if ((newvs = (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs)) == NULL)",
+    "    newvs = yyvs ? (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs) :",
+    "      (YYSTYPE *)malloc(newsize * sizeof *newvs);",
+    "    if (newvs == NULL)",
     "        return -1;",
     "    yyvs = newvs;",
     "    yyvsp = newvs + i;",
