@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.35 2004/06/20 21:31:02 miod Exp $
+#	$OpenBSD: Makefile,v 1.36 2004/06/21 04:43:41 miod Exp $
 
 # TODO: clock.4 timer.4
-MAN=	apio.4 asio.4 audioce.4 audiocs.4 autoconf.4 auxio.4 \
+MAN=	agten.4 apio.4 asio.4 audioce.4 audiocs.4 autoconf.4 auxio.4 \
 	be.4 beeper.4 bwtwo.4 \
 	cgsix.4 cgthree.4 comkbd.4 creator.4 \
 	ebus.4 esp.4 intro.4 le.4 magma.4 mem.4 mgx.4 openprom.4 \
