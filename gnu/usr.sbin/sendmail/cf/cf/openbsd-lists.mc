@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.7 2001/11/29 18:47:58 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.8 2001/12/04 02:23:56 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -108,6 +108,7 @@ HTo: $>CheckTo
 HMessage-Id: $>CheckMessageId
 HSubject: $>Check_Subject
 HX-Spanska: $>Spanska
+HContent-Type: $>Check_Content
 
 #
 # Melissa worm detection (done in Check_Subject)
@@ -129,6 +130,22 @@ D{ILMsg}This message may contain the ILOVEYOU virus; see http://www.datafellows.
 #
 D{LSPat}Fw: Life stages
 D{LSMsg}This message may contain the Life stages virus; see http://www.f-secure.com/v-descs/stages.htm
+
+#
+# W32/Badtrans worm detection (done in Check_Content)
+# See see http://vil.nai.com/vil/virusSummary.asp?virus_k=99069
+#
+D{WPat1}boundary= \"====_ABC1234567890DEF_====\"
+D{WPat2}boundary= \"====_ABC0987654321DEF_====\"
+D{WMsg}This message may contain the W32/Badtrans@MM virus; see http://vil.nai.com/vil/virusSummary.asp?virus_k=99069
+
+#
+# Reject mail based on regexp above
+#
+SLocal_check_mail
+R$*				$: $>Parse0 $>3 $1
+R$+				$: $(checkaddress $1 $)
+R@MATCH				$#error $: "553 Header error"
 
 #
 # Reject some mail based on To: header
@@ -160,3 +177,10 @@ R${ILPat}			$#error $: 553 ${ILMsg}
 RRe: ${ILPat}			$#error $: 553 ${ILMsg}
 R${LSPat}			$#error $: 553 ${LSMsg}
 RRe: ${LSPat}			$#error $: 553 ${LSMsg}
+
+#
+# Check Content-Type header for worm/virus telltales
+#
+SCheck_Content
+R$+ ${WPat1} $*			$#error $: 553 ${WMsg}
+R$+ ${WPat2} $*			$#error $: 553 ${WMsg}
