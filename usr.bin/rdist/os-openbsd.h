@@ -1,4 +1,4 @@
-/* * $OpenBSD: os-openbsd.h,v 1.6 1997/07/21 05:26:44 deraadt Exp $*/
+/* * $OpenBSD: os-openbsd.h,v 1.7 1997/07/22 04:34:28 millert Exp $*/
 /*
  * Copyright (c) 1993 Michael A. Cooper
  * Copyright (c) 1993 Regents of the University of California.
@@ -158,7 +158,5 @@ typedef void POINTER;
  * Define this only if the pathname is different than
  * that which appears in "include/paths.h".
  */
-#if 0
-/* Not a chance. set the environment variable RSH instead */
-#define _PATH_REMSH	"/usr/local/bin/ssh"			/**/
-#endif
+/* Set the environment variable RSH to override this */
+#define _PATH_RSH	"/usr/bin/rsh"			/**/
