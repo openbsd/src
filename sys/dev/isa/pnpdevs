@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.12 1998/05/08 18:39:35 csapuntz Exp $
+#	$OpenBSD: pnpdevs,v 1.13 1998/06/02 09:54:20 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -358,6 +358,7 @@ pccom	BDP0356	#Best Data 56x2
 
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
+#ep	TCM5095 #3COM 3c509B		(PNP80F7)
 
 # Sound:
 sb	ADS7150	#AD1815
