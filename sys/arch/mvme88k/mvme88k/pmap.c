@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.101 2004/01/02 17:08:58 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.102 2004/01/02 17:14:40 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1118,6 +1118,7 @@ pmap_zero_page(struct vm_page *pg)
 	SPLX(spl);
 
 	bzero((void *)va, PAGE_SIZE);
+	cmmu_flush_data_cache(cpu, pa, PAGE_SIZE);
 }
 
 /*
@@ -2451,6 +2452,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	SPLX(spl);
 
 	bcopy((void *)srcva, (void *)dstva, PAGE_SIZE);
+	cmmu_flush_data_cache(cpu, src, PAGE_SIZE);
+	cmmu_flush_data_cache(cpu, dst, PAGE_SIZE);
 }
 
 /*
