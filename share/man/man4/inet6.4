@@ -1,5 +1,5 @@
-.\"	$OpenBSD: inet6.4,v 1.12 2000/06/12 11:15:37 itojun Exp $
-.\"	$KAME: inet6.4,v 1.10 2000/06/12 10:27:23 itojun Exp $
+.\"	$OpenBSD: inet6.4,v 1.13 2000/06/14 16:09:15 itojun Exp $
+.\"	$KAME: inet6.4,v 1.12 2000/06/14 15:52:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -277,6 +277,81 @@ message protocol is accessible from a raw socket.
 .\" will trigger the mechanism; whereas raw
 .\" .Tn IP
 .\" packets, whether locally-generated or forwarded, will not.
+.Ss Interation between IPv4/v6 sockets
+The behavior of 
+.Dv AF_INET6
+TCP/UDP socket is documented in RFC2553.
+Basically, it says as follows:
+.Bl -bullet -compact
+.It
+Specific bind on
+.Dv AF_INET6
+socket
+.Po
+.Xr bind 2
+with address specified
+.Pc
+should accept IPv6 traffic to that address only.
+.It
+If you perform wildcard bind
+on
+.Dv AF_INET6
+socket
+.Po
+.Xr bind 2
+to IPv6 address
+.Li ::
+.Pc ,
+and there is no wildcard bind
+.Dv AF_INET
+socket on that TCP/UDP port, IPv6 traffic as well as IPv4 traffic
+should be routed to that
+.Dv AF_INET6
+socket.
+IPv4 traffic should be seen as if it came from IPv6 address like
+.Li ::ffff:10.1.1.1 .
+This is called IPv4 mapped address.
+.It
+If there are both wildcard bind
+.Dv AF_INET
+socket and wildcard bind
+.Dv AF_INET6
+socket on one TCP/UDP port, they should behave separately.
+IPv4 traffic should be routed to
+.Dv AF_INET
+socket and IPv6 should be routed to
+.Dv AF_INET6
+socket.
+.El
+.Pp
+However, RFC2553 does not define the constraint between the order of
+.Xr bind 2 ,
+nor how IPv4 TCP/UDP port number and IPv6 TCP/UDP port number
+relate each other
+.Po
+should they be integrated or separated
+.Pc .
+Implemented behavior is very different across kernel to kernel.
+Therefore, it is unwise to rely too much upon the behavior of
+.Dv AF_INET6
+wildcard bind socket.
+.Pp
+It should also be noted that
+malicious parties can take advantage of the complexity presented above,
+and are able to bypass access control,
+if the target node routes IPv4 traffic to
+.Dv AF_INET6
+socket.
+Users are advised to take caution handling connections
+from IPv4 mapped address to
+.Dv AF_INET6
+sockets.
+.Pp
+Because of the above,
+.Ox
+does not route IPv4 traffic to
+.Dv AF_INET6
+socket.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
