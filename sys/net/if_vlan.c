@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.2 2000/04/26 22:57:27 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.3 2000/04/27 00:00:24 chris Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -503,7 +503,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	 	 * jumbo frames.  It would be nice to replace ETHERMTU
 		 * with the parent interface's MTU in the following statement.
 		 */
-		if (ifr->ifr_mtu > ETHERMTU) {
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
 			error = EINVAL;
 		} else {
 			ifp->if_mtu = ifr->ifr_mtu;

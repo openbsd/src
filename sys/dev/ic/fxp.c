@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.3 2000/04/26 19:12:08 chris Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.4 2000/04/27 00:00:25 chris Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1415,8 +1415,16 @@ fxp_ioctl(ifp, command, data)
 
 	case SIOCSIFADDR:
 	case SIOCGIFADDR:
-	case SIOCSIFMTU:
 		error = ether_ioctl(ifp, command, data);
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
+			error = EINVAL;
+		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+			ifp->if_mtu = ifr->ifr_mtu;
+			error = fxp_init(sc);
+		}
 		break;
 
 	case SIOCSIFFLAGS:
