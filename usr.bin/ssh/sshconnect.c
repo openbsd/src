@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.67 2000/04/14 10:09:16 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.68 2000/04/14 10:30:33 markus Exp $");
 
 #include <openssl/bn.h>
 #include "xmalloc.h"
@@ -243,7 +243,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 			debug("Trying again...");
 
 		/* Loop through addresses for this host, and try each one in
- 		   sequence until the connection succeeds. */
+		   sequence until the connection succeeds. */
 		for (ai = aitop; ai; ai = ai->ai_next) {
 			if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
 				continue;
@@ -257,7 +257,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 				host, ntop, strport);
 
 			/* Create a socket for connecting. */
-			sock = ssh_create_socket(original_real_uid, 
+			sock = ssh_create_socket(original_real_uid,
 			    !anonymous && geteuid() == 0 && port < IPPORT_RESERVED,
 			    ai->ai_family);
 			if (sock < 0)
@@ -1052,7 +1052,7 @@ ssh_exchange_identification()
 			break;
 		}
 		/* FALLTHROUGH */
-	default: 
+	default:
 		mismatch = 1;
 		break;
 	}
@@ -1352,13 +1352,13 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 
 	debug("Sending KEX init.");
 	if (options.ciphers != NULL) {
-		myproposal[PROPOSAL_ENC_ALGS_CTOS] = 
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
 	} else if (
 	    options.cipher == SSH_CIPHER_ARCFOUR ||
-            options.cipher == SSH_CIPHER_3DES_CBC ||
-            options.cipher == SSH_CIPHER_CAST128_CBC ||
-            options.cipher == SSH_CIPHER_BLOWFISH_CBC) {
+	    options.cipher == SSH_CIPHER_3DES_CBC ||
+	    options.cipher == SSH_CIPHER_CAST128_CBC ||
+	    options.cipher == SSH_CIPHER_BLOWFISH_CBC) {
 		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = cipher_name(options.cipher);
 	}
@@ -1424,7 +1424,7 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	fprintf(stderr, "\npub= ");
 	bignum_print(dh->pub_key);
 	fprintf(stderr, "\n");
-        DHparams_print_fp(stderr, dh);
+	DHparams_print_fp(stderr, dh);
 #endif
 
 	debug("Wait SSH2_MSG_KEXDH_REPLY.");
@@ -1466,14 +1466,14 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	kout = DH_compute_key(kbuf, dh_server_pub, dh);
 #ifdef DEBUG_KEXDH
 	debug("shared secret: len %d/%d", klen, kout);
-        fprintf(stderr, "shared secret == ");
-        for (i = 0; i< kout; i++)
-                fprintf(stderr, "%02x", (kbuf[i])&0xff);
-        fprintf(stderr, "\n");
+	fprintf(stderr, "shared secret == ");
+	for (i = 0; i< kout; i++)
+		fprintf(stderr, "%02x", (kbuf[i])&0xff);
+	fprintf(stderr, "\n");
 #endif
-        shared_secret = BN_new();
+	shared_secret = BN_new();
 
-        BN_bin2bn(kbuf, kout, shared_secret);
+	BN_bin2bn(kbuf, kout, shared_secret);
 	memset(kbuf, 0, klen);
 	xfree(kbuf);
 
@@ -1493,10 +1493,10 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	xfree(client_kexinit);
 	xfree(server_kexinit);
 #ifdef DEBUG_KEXDH
-        fprintf(stderr, "hash == ");
-        for (i = 0; i< 20; i++)
-                fprintf(stderr, "%02x", (hash[i])&0xff);
-        fprintf(stderr, "\n");
+	fprintf(stderr, "hash == ");
+	for (i = 0; i< 20; i++)
+		fprintf(stderr, "%02x", (hash[i])&0xff);
+	fprintf(stderr, "\n");
 #endif
 	dsa_verify(server_host_key, (unsigned char *)signature, slen, hash, 20);
 	key_free(server_host_key);

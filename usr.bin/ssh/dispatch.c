@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$Id: dispatch.c,v 1.1 2000/03/28 20:40:48 markus Exp $");
+RCSID("$Id: dispatch.c,v 1.2 2000/04/14 10:30:31 markus Exp $");
 #include "ssh.h"
 #include "dispatch.h"
 #include "packet.h"
@@ -42,7 +42,7 @@ dispatch_protocol_error(int type, int plen)
 {
 	error("Hm, dispatch protocol error: type %d plen %d", type, plen);
 }
-void 
+void
 dispatch_init(dispatch_fn *dflt)
 {
 	int i;

@@ -1,22 +1,22 @@
 /*
- * 
+ *
  * auth-rsa.c
- * 
+ *
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
- * 
+ *
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
- * 
+ *
  * Created: Mon Mar 27 01:46:52 1995 ylo
- * 
+ *
  * RSA-based authentication.  This code determines whether to admit a login
  * based on RSA authentication.  This file also contains functions to check
  * validity of the host key.
- * 
+ *
  */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.20 2000/04/12 09:39:09 markus Exp $");
+RCSID("$Id: auth-rsa.c,v 1.21 2000/04/14 10:30:29 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -238,7 +238,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 			debug("%.100s, line %lu: bad key syntax",
 			      SSH_USER_PERMITTED_KEYS, linenum);
 			packet_send_debug("%.100s, line %lu: bad key syntax",
-				          SSH_USER_PERMITTED_KEYS, linenum);
+					  SSH_USER_PERMITTED_KEYS, linenum);
 			continue;
 		}
 		/* cp now points to the comment part. */

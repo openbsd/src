@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.17 2000/03/16 20:56:14 markus Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.18 2000/04/14 10:30:33 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -504,7 +504,7 @@ passphrase_again:
 	if (identity_comment) {
 		strlcpy(comment, identity_comment, sizeof(comment));
 	} else {
-	  	/* Create default commend field for the passphrase. */
+		/* Create default commend field for the passphrase. */
 		if (gethostname(hostname, sizeof(hostname)) < 0) {
 			perror("gethostname");
 			exit(1);

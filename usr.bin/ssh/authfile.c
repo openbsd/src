@@ -1,21 +1,21 @@
 /*
- * 
+ *
  * authfile.c
- * 
+ *
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
- * 
+ *
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
- * 
+ *
  * Created: Mon Mar 27 03:52:05 1995 ylo
- * 
+ *
  * This file contains functions for reading and writing identity files, and
  * for reading the passphrase from the user.
- * 
+ *
  */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.13 2000/04/12 09:39:10 markus Exp $");
+RCSID("$Id: authfile.c,v 1.14 2000/04/14 10:30:30 markus Exp $");
 
 #include <openssl/bn.h>
 #include "xmalloc.h"

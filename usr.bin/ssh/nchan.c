@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: nchan.c,v 1.13 2000/04/03 07:07:15 markus Exp $");
+RCSID("$Id: nchan.c,v 1.14 2000/04/14 10:30:32 markus Exp $");
 
 #include "ssh.h"
 
@@ -389,11 +389,11 @@ chan_delete_if_full_closed2(Channel *c)
 		if (!(c->flags & CHAN_CLOSE_SENT)) {
 			chan_send_close2(c);
 		}
-		if ((c->flags & CHAN_CLOSE_SENT) && 
+		if ((c->flags & CHAN_CLOSE_SENT) &&
 		    (c->flags & CHAN_CLOSE_RCVD)) {
 			debug("channel %d: full closed2", c->self);
 			channel_free(c->self);
-		} 
+		}
 	}
 }
 

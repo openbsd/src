@@ -1,14 +1,14 @@
 /*
- * 
+ *
  * bufaux.c
- * 
+ *
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
- * 
+ *
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
- * 
+ *
  * Created: Wed Mar 29 02:24:47 1995 ylo
- * 
+ *
  * Auxiliary functions for storing and retrieving various data types to/from
  * Buffers.
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: bufaux.c,v 1.10 2000/04/12 09:39:10 markus Exp $");
+RCSID("$Id: bufaux.c,v 1.11 2000/04/14 10:30:30 markus Exp $");
 
 #include "ssh.h"
 #include <openssl/bn.h>
@@ -124,7 +124,7 @@ buffer_get_bignum2(Buffer *buffer, BIGNUM *value)
 /*
  * Returns an integer from the buffer (4 bytes, msb first).
  */
-unsigned int 
+unsigned int
 buffer_get_int(Buffer *buffer)
 {
 	unsigned char buf[4];
@@ -135,7 +135,7 @@ buffer_get_int(Buffer *buffer)
 /*
  * Stores an integer in the buffer in 4 bytes, msb first.
  */
-void 
+void
 buffer_put_int(Buffer *buffer, unsigned int value)
 {
 	char buf[4];
@@ -175,13 +175,13 @@ buffer_get_string(Buffer *buffer, unsigned int *length_ptr)
 /*
  * Stores and arbitrary binary string in the buffer.
  */
-void 
+void
 buffer_put_string(Buffer *buffer, const void *buf, unsigned int len)
 {
 	buffer_put_int(buffer, len);
 	buffer_append(buffer, buf, len);
 }
-void 
+void
 buffer_put_cstring(Buffer *buffer, const char *s)
 {
 	buffer_put_string(buffer, s, strlen(s));
@@ -190,7 +190,7 @@ buffer_put_cstring(Buffer *buffer, const char *s)
 /*
  * Returns a character from the buffer (0 - 255).
  */
-int 
+int
 buffer_get_char(Buffer *buffer)
 {
 	char ch;
@@ -201,7 +201,7 @@ buffer_get_char(Buffer *buffer)
 /*
  * Stores a character in the buffer.
  */
-void 
+void
 buffer_put_char(Buffer *buffer, int value)
 {
 	char ch = value;

@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.3 2000/04/14 10:09:16 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.4 2000/04/14 10:30:33 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -113,7 +113,7 @@ xauthfile_cleanup_proc(void *ignore)
  * Function to perform cleanup if we get aborted abnormally (e.g., due to a
  * dropped connection).
  */
-void 
+void
 pty_cleanup_proc(void *session)
 {
 	Session *s=session;
@@ -136,7 +136,7 @@ pty_cleanup_proc(void *session)
  * terminals are allocated, X11, TCP/IP, and authentication agent forwardings
  * are requested, etc.
  */
-void 
+void
 do_authenticated(struct passwd * pw)
 {
 	Session *s;
@@ -366,7 +366,7 @@ do_authenticated(struct passwd * pw)
  * will call do_child from the child, and server_loop from the parent after
  * setting up file descriptors and such.
  */
-void 
+void
 do_exec_no_pty(Session *s, const char *command, struct passwd * pw)
 {
 	int pid;
@@ -483,7 +483,7 @@ do_exec_no_pty(Session *s, const char *command, struct passwd * pw)
  * setting up file descriptors, controlling tty, updating wtmp, utmp,
  * lastlog, and other such operations.
  */
-void 
+void
 do_exec_pty(Session *s, const char *command, struct passwd * pw)
 {
 	FILE *f;
@@ -646,7 +646,7 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
  * Sets the value of the given variable in the environment.  If the variable
  * already exists, its value is overriden.
  */
-void 
+void
 child_set_env(char ***envp, unsigned int *envsizep, const char *name,
 	      const char *value)
 {
@@ -687,7 +687,7 @@ child_set_env(char ***envp, unsigned int *envsizep, const char *name,
  * Otherwise, it must consist of empty lines, comments (line starts with '#')
  * and assignments of the form name=value.  No other forms are allowed.
  */
-void 
+void
 read_environment_file(char ***env, unsigned int *envsize,
 		      const char *filename)
 {
@@ -724,7 +724,7 @@ read_environment_file(char ***env, unsigned int *envsize,
  * environment, closing extra file descriptors, setting the user and group
  * ids, and executing the command or shell.
  */
-void 
+void
 do_child(const char *command, struct passwd * pw, const char *term,
 	 const char *display, const char *auth_proto,
 	 const char *auth_data, const char *ttyname)

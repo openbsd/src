@@ -1,19 +1,19 @@
 /*
- * 
+ *
  * rsa.h
- * 
+ *
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
- * 
+ *
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
- * 
+ *
  * Created: Fri Mar  3 22:01:06 1995 ylo
- * 
+ *
  * RSA key generation, encryption and decryption.
- * 
+ *
 */
 
-/* RCSID("$Id: rsa.h,v 1.5 2000/04/12 09:39:10 markus Exp $"); */
+/* RCSID("$Id: rsa.h,v 1.6 2000/04/14 10:30:32 markus Exp $"); */
 
 #ifndef RSA_H
 #define RSA_H

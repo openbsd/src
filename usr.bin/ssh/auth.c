@@ -5,7 +5,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.3 2000/04/14 10:09:14 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.4 2000/04/14 10:30:29 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -36,9 +36,9 @@ extern char *forced_command;
  * DenyUsers or user's primary group is listed in DenyGroups, false will
  * be returned. If AllowUsers isn't empty and user isn't listed there, or
  * if AllowGroups isn't empty and user isn't listed there, false will be
- * returned. 
+ * returned.
  * If the user's shell is not executable, false will be returned.
- * Otherwise true is returned. 
+ * Otherwise true is returned.
  */
 static int
 allowed_user(struct passwd * pw)
@@ -184,10 +184,10 @@ do_fake_authloop1(char *user)
 				packet_write_wait();
 				continue;
 			} else if (type == SSH_CMSG_AUTH_PASSWORD &&
-			           options.password_authentication &&
-			           (password = packet_get_string(&dlen)) != NULL &&
-			           dlen == 5 &&
-			           strncasecmp(password, "s/key", 5) == 0 ) {
+				   options.password_authentication &&
+				   (password = packet_get_string(&dlen)) != NULL &&
+				   dlen == 5 &&
+				   strncasecmp(password, "s/key", 5) == 0 ) {
 				packet_send_debug(skeyinfo);
 			}
 		}
@@ -437,21 +437,21 @@ do_authloop(struct passwd * pw)
 			log("Unknown message during authentication: type %d", type);
 			break;
 		}
- 
- 		/*
- 		 * Check if the user is logging in as root and root logins
- 		 * are disallowed.
- 		 * Note that root login is allowed for forced commands.
- 		 */
- 		if (authenticated && pw->pw_uid == 0 && !options.permit_root_login) {
- 			if (forced_command) {
- 				log("Root login accepted for forced command.");
- 			} else {
- 				authenticated = 0;
- 				log("ROOT LOGIN REFUSED FROM %.200s",
- 				    get_canonical_hostname());
- 			}
-  		}
+
+		/*
+		 * Check if the user is logging in as root and root logins
+		 * are disallowed.
+		 * Note that root login is allowed for forced commands.
+		 */
+		if (authenticated && pw->pw_uid == 0 && !options.permit_root_login) {
+			if (forced_command) {
+				log("Root login accepted for forced command.");
+			} else {
+				authenticated = 0;
+				log("ROOT LOGIN REFUSED FROM %.200s",
+				    get_canonical_hostname());
+			}
+		}
 
 		/* Raise logging level */
 		if (authenticated ||
@@ -725,7 +725,7 @@ input_userauth_request(int type, int plen)
 	xfree(user);
 	xfree(method);
 }
-void 
+void
 do_authentication2()
 {
 	dispatch_init(&protocol_error);

@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.47 2000/04/14 10:11:12 markus Exp $");
+RCSID("$Id: ssh.c,v 1.48 2000/04/14 10:30:33 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -242,8 +242,8 @@ main(int ac, char **av)
 			if (host)
 				break;
 			if ((cp = strchr(av[optind], '@'))) {
-			        if(cp == av[optind])
-				        usage();
+				if(cp == av[optind])
+					usage();
 				options.user = av[optind];
 				*cp = '\0';
 				host = ++cp;
@@ -270,40 +270,31 @@ main(int ac, char **av)
 		case '2':
 			options.protocol = SSH_PROTO_2;
 			break;
-
 		case '4':
 			IPv4or6 = AF_INET;
 			break;
-
 		case '6':
 			IPv4or6 = AF_INET6;
 			break;
-
 		case 'n':
 			stdin_null_flag = 1;
 			break;
-
 		case 'f':
 			fork_after_authentication_flag = 1;
 			stdin_null_flag = 1;
 			break;
-
 		case 'x':
 			options.forward_x11 = 0;
 			break;
-
 		case 'X':
 			options.forward_x11 = 1;
 			break;
-
 		case 'g':
 			options.gateway_ports = 1;
 			break;
-
 		case 'P':
 			options.use_privileged_port = 0;
 			break;
-
 		case 'a':
 			options.forward_agent = 0;
 			break;
@@ -325,11 +316,9 @@ main(int ac, char **av)
 			options.identity_files[options.num_identity_files++] =
 				xstrdup(optarg);
 			break;
-
 		case 't':
 			tty_flag = 1;
 			break;
-
 		case 'v':
 		case 'V':
 			fprintf(stderr, "SSH Version %s, protocol versions %d.%d/%d.%d.\n",
@@ -342,11 +331,9 @@ main(int ac, char **av)
 			debug_flag = 1;
 			options.log_level = SYSLOG_LEVEL_DEBUG;
 			break;
-
 		case 'q':
 			options.log_level = SYSLOG_LEVEL_QUIET;
 			break;
-
 		case 'e':
 			if (optarg[0] == '^' && optarg[2] == 0 &&
 			    (unsigned char) optarg[1] >= 64 && (unsigned char) optarg[1] < 128)
@@ -360,7 +347,6 @@ main(int ac, char **av)
 				exit(1);
 			}
 			break;
-
 		case 'c':
 			options.cipher = cipher_number(optarg);
 			if (options.cipher == -1) {
@@ -368,15 +354,12 @@ main(int ac, char **av)
 				exit(1);
 			}
 			break;
-
 		case 'p':
 			options.port = atoi(optarg);
 			break;
-
 		case 'l':
 			options.user = optarg;
 			break;
-
 		case 'R':
 			if (sscanf(optarg, "%hu/%255[^/]/%hu", &fwd_port, buf,
 			    &fwd_host_port) != 3 &&
@@ -388,7 +371,6 @@ main(int ac, char **av)
 			}
 			add_remote_forward(&options, fwd_port, buf, fwd_host_port);
 			break;
-
 		case 'L':
 			if (sscanf(optarg, "%hu/%255[^/]/%hu", &fwd_port, buf,
 			    &fwd_host_port) != 3 &&
@@ -400,27 +382,22 @@ main(int ac, char **av)
 			}
 			add_local_forward(&options, fwd_port, buf, fwd_host_port);
 			break;
-
 		case 'C':
 			options.compression = 1;
 			break;
-
 		case 'N':
 			no_shell_flag = 1;
 			no_tty_flag = 1;
 			break;
-
 		case 'T':
 			no_tty_flag = 1;
 			break;
-
 		case 'o':
 			dummy = 1;
 			if (process_config_line(&options, host ? host : "", optarg,
 					 "command-line", 0, &dummy) != 0)
 				exit(1);
 			break;
-
 		default:
 			usage();
 		}
@@ -631,7 +608,7 @@ main(int ac, char **av)
 
 	/* Expand ~ in known host file names. */
 	options.system_hostfile = tilde_expand_filename(options.system_hostfile,
-						        original_real_uid);
+							original_real_uid);
 	options.user_hostfile = tilde_expand_filename(options.user_hostfile,
 						      original_real_uid);
 
@@ -800,7 +777,7 @@ ssh_session(void)
 		      options.local_forwards[i].host,
 		      options.local_forwards[i].host_port);
 		channel_request_local_forwarding(options.local_forwards[i].port,
-					  	 options.local_forwards[i].host,
+						 options.local_forwards[i].host,
 						 options.local_forwards[i].host_port,
 						 options.gateway_ports);
 	}
@@ -813,11 +790,11 @@ ssh_session(void)
 		      options.remote_forwards[i].host_port);
 		channel_request_remote_forwarding(options.remote_forwards[i].port,
 						  options.remote_forwards[i].host,
-				   		  options.remote_forwards[i].host_port);
+						  options.remote_forwards[i].host_port);
 	}
 
 	/* If requested, let ssh continue in the background. */
-	if (fork_after_authentication_flag) 
+	if (fork_after_authentication_flag)
 		if (daemon(1, 1) < 0)
 			fatal("daemon() failed: %.200s", strerror(errno));
 
@@ -856,7 +833,7 @@ init_local_fwd(void)
 		      options.local_forwards[i].host,
 		      options.local_forwards[i].host_port);
 		channel_request_local_forwarding(options.local_forwards[i].port,
-					  	 options.local_forwards[i].host,
+						 options.local_forwards[i].host,
 						 options.local_forwards[i].host_port,
 						 options.gateway_ports);
 	}
