@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.10 1997/06/17 11:11:12 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.11 1997/09/11 10:48:12 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -718,8 +718,8 @@ svr4_sys_ulimit(p, v, retval)
 			if (error)
 				return error;
 
-			srl.which = RLIMIT_FSIZE;
-			srl.rlp = url;
+			SCARG(&srl, which) = RLIMIT_FSIZE;
+			SCARG(&srl, rlp) = url;
 
 			error = sys_setrlimit(p, &srl, retval);
 			if (error)
