@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: id.c,v 1.2 1997/12/21 14:27:03 brian Exp $
+ *	$Id: id.c,v 1.3 1997/12/27 19:22:26 brian Exp $
  */
 
 #include <sys/types.h>
@@ -141,6 +141,18 @@ ID0open(const char *path, int flags)
   ID0set0();
   ret = open(path, flags);
   LogPrintf(LogID0, "%d = open(\"%s\", %d)\n", ret, path, flags);
+  ID0setuser();
+  return ret;
+}
+
+int
+ID0write(int fd, const void *data, size_t len)
+{
+  int ret;
+
+  ID0set0();
+  ret = write(fd, data, len);
+  LogPrintf(LogID0, "%d = write(%d, data, %d)\n", ret, fd, len);
   ID0setuser();
   return ret;
 }
