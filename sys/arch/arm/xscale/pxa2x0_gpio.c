@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.3 2005/01/04 02:08:41 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.4 2005/01/04 05:35:40 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -164,12 +164,15 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 	pxagpio_reg_write(sc, GPIO_GRER0, 0);
 	pxagpio_reg_write(sc, GPIO_GRER1, 0);
 	pxagpio_reg_write(sc, GPIO_GRER2, 0);
+	pxagpio_reg_write(sc, GPIO_GRER3, 0);
 	pxagpio_reg_write(sc, GPIO_GFER0, 0);
 	pxagpio_reg_write(sc, GPIO_GFER1, 0);
 	pxagpio_reg_write(sc, GPIO_GFER2, 0);
+	pxagpio_reg_write(sc, GPIO_GFER3, 0);
 	pxagpio_reg_write(sc, GPIO_GEDR0, ~0);
 	pxagpio_reg_write(sc, GPIO_GEDR1, ~0);
 	pxagpio_reg_write(sc, GPIO_GEDR2, ~0);
+	pxagpio_reg_write(sc, GPIO_GEDR3, ~0);
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	sc->sc_irqcookie[2] = pxa2x0_intr_establish(PXA2X0_INT_GPION, IPL_BIO,
