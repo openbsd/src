@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_proto.c,v 1.12 2000/01/13 05:06:12 angelos Exp $ */
+/* $OpenBSD: in6_proto.c,v 1.13 2000/01/13 06:01:22 angelos Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,6 +93,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
+#include <netinet/ip_ip4.h>
 
 #include <netinet6/pim6_var.h>
 
