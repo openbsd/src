@@ -50,14 +50,14 @@ Installation floppy:
 	This disk contains the software necessary to prepare your hard
 	drive for OpenBSD and install the OpenBSD distribution. It is
 	not bootable, and must be used in conjunction with one of the
-	kernel-copy floppies.  This floppy is named "inst-20.fs".
+	kernel-copy floppies.  This floppy is named "inst-21.fs".
 
 Upgrade floppy:
 
 	This disk contains the software to be used in upgrading the
 	system from a previous version of OpenBSD.  It is not bootable,
 	and must be used in conjunction with one of the kernel-copy
-	floppies.  This floppy is named "upgr20.fs"
+	floppies.  This floppy is named "upgr21.fs"
 
 The OpenBSD/i386 binary distribution sets contain the binaries which
 comprise the OpenBSD 2.1 release for the i386.  There are seven binary
@@ -65,7 +65,7 @@ distribution sets.  The binary distribution sets can be found in
 subdirectories of the "i386/bins" subdirectory of the OpenBSD 2.1
 distribution tree, and are as follows:
 
-	base20	The OpenBSD/i386 2.1 base binary distribution.  You
+	base21	The OpenBSD/i386 2.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -73,7 +73,7 @@ distribution tree, and are as follows:
 		everything described below.
 		[ 7.5M gzipped, 19.5M uncompressed ]
 
-	comp20	The OpenBSD/i386 Compiler tools.  All of the tools
+	comp21	The OpenBSD/i386 Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -84,7 +84,7 @@ distribution tree, and are as follows:
 		call and library manual pages.
 		[ 4.9M gzipped, 15.0M uncompressed ]
 
-	etc20	This distribution set contains the system
+	etc21	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -93,22 +93,22 @@ distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 63K gzipped, 338K uncompressed ]
 
-	game20	This set includes the games and their manual pages.
+	game21	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 6.9M uncompressed ]
 
-	man20	This set includes all of the manual pages for the
+	man21	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 0.8M gzipped, 3.4M uncompressed ]
 
-	misc20	This set includes the system dictionaries (which are
+	misc21	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.9M gzipped, 6.6M uncompressed ]
 
-	text20	This set includes OpenBSD's text processing tools,
+	text21	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
