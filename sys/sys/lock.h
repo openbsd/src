@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.8 2001/11/07 02:44:10 art Exp $	*/
+/*	$OpenBSD: lock.h,v 1.9 2001/11/11 00:25:47 art Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -170,6 +170,12 @@ int	lockmgr __P((__volatile struct lock *, u_int flags,
 			struct simplelock *, struct proc *p));
 void    lockmgr_printinfo __P((struct lock *));
 int	lockstatus __P((struct lock *));
+
+#ifdef LOCKDEBUG
+#define LOCK_ASSERT(x)	KASSERT(x)
+#else
+#define LOCK_ASSERT(x)	/* nothing */
+#endif
 
 #endif /* !_LOCK_H_ */
 
