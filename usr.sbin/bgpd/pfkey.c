@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.10 2004/01/28 20:00:29 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.11 2004/01/28 20:03:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,8 +41,9 @@ static int		fd;
 int	pfkey_reply(int, u_int32_t *);
 int	pfkey_send(int, uint8_t, struct bgpd_addr *, struct bgpd_addr *,
     u_int32_t, char *);
-int	pfkey_setkey(struct bgpd_addr *, struct bgpd_addr *, char *,
+int	pfkey_sa_add(struct bgpd_addr *, struct bgpd_addr *, char *,
 	    u_int32_t *);
+int	pfkey_sa_remove(struct bgpd_addr *, struct bgpd_addr *, u_int32_t *);
 
 int
 pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
@@ -277,7 +278,7 @@ pfkey_reply(int sd, u_int32_t *spip)
 }
 
 int
-pfkey_setkey(struct bgpd_addr *src, struct bgpd_addr *dst, char *key,
+pfkey_sa_add(struct bgpd_addr *src, struct bgpd_addr *dst, char *key,
     u_int32_t *spi)
 {
 	if (pfkey_send(fd, SADB_GETSPI, src, dst, 0, NULL) < 0)
@@ -292,18 +293,29 @@ pfkey_setkey(struct bgpd_addr *src, struct bgpd_addr *dst, char *key,
 }
 
 int
+pfkey_sa_remove(struct bgpd_addr *src, struct bgpd_addr *dst, u_int32_t *spi)
+{
+	if (pfkey_send(fd, SADB_DELETE, src, dst, *spi, NULL) < 0)
+		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
+		return (-1);
+	*spi = 0;
+	return (0);
+}
+
+int
 pfkey_auth_establish(struct peer *p)
 {
 	if (!p->conf.tcp_sign_key[0])
 		return (0);
 
 	if (!p->auth.spi_out)
-		if (pfkey_setkey(&p->conf.local_addr, &p->conf.remote_addr,
+		if (pfkey_sa_add(&p->conf.local_addr, &p->conf.remote_addr,
 		    p->conf.tcp_sign_key, &p->auth.spi_out) == -1)
 			return (-1);
 
 	if (!p->auth.spi_in)
-		if (pfkey_setkey(&p->conf.remote_addr, &p->conf.local_addr,
+		if (pfkey_sa_add(&p->conf.remote_addr, &p->conf.local_addr,
 		    p->conf.tcp_sign_key, &p->auth.spi_in) == -1)
 			return (-1);
 
@@ -313,6 +325,16 @@ pfkey_auth_establish(struct peer *p)
 int
 pfkey_auth_remove(struct peer *p)
 {
+	if (p->auth.spi_out)
+		if (pfkey_sa_remove(&p->conf.local_addr, &p->conf.remote_addr,
+		    &p->auth.spi_out) == -1)
+			return (-1);
+
+	if (p->auth.spi_in)
+		if (pfkey_sa_remove(&p->conf.remote_addr, &p->conf.local_addr,
+		    &p->auth.spi_in) == -1)
+			return (-1);
+
 	return (0);
 }
 
