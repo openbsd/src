@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.2 2005/03/12 00:09:04 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.3 2005/03/17 22:26:22 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -363,10 +363,8 @@ fdcattach_sbus(parent, self, aux)
 		return;
 	}
 
-	if (getproplen(sa->sa_node, "manual") >= 0) {
-		printf(": manual eject");
+	if (getproplen(sa->sa_node, "manual") >= 0)
 		fdc->sc_flags |= FDC_NOEJECT;
-	}
 
 	if (fdcattach(fdc, sa->sa_pri) != 0)
 		bus_space_unmap(sa->sa_bustag, fdc->sc_handle, sa->sa_size);
@@ -428,10 +426,8 @@ fdcattach_ebus(parent, self, aux)
 
 	fdc->sc_flags |= FDC_EBUS;
 
-	if (getproplen(ea->ea_node, "manual") >= 0) {
-		printf(": manual eject");
+	if (getproplen(ea->ea_node, "manual") >= 0)
 		fdc->sc_flags |= FDC_NOEJECT;
-	}
 
 	/* XXX unmapping if it fails */
 	fdcattach(fdc, ea->ea_intrs[0]);
@@ -554,7 +550,11 @@ fdcattach(fdc, pri)
 			fdc->sc_dev.dv_xname);
 		return (-1);
 	}
-	printf(" softpri %d\n", PIL_FDSOFT);
+
+	printf(" softpri %d", PIL_FDSOFT);
+	if (fdc->sc_flags & FDC_NOEJECT)
+		printf(": manual eject");
+	printf("\n");
 
 	/* physical limit: four drives per controller. */
 	drive_attached = 0;
@@ -908,7 +908,7 @@ fdcresult(fdc)
 	bus_space_handle_t h = fdc->sc_handle;
 	int j, n = 0;
 
-	for (j = 10000; j; j--) {
+	for (j = 100000; j; j--) {
 		u_int8_t v = bus_space_read_1(t, h, FDREG77_MSR);
 		v &= (NE7_DIO | NE7_RQM | NE7_CB);
 		if (v == NE7_RQM)
