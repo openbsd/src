@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.24 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.25 2004/12/18 22:11:43 millert Exp $	*/
 
 /*
  * Process and job control
@@ -114,7 +114,7 @@ static int		child_max;	/* CHILD_MAX */
 
 
 /* held_sigchld is set if sigchld occurs before a job is completely started */
-static int		held_sigchld;
+static volatile sig_atomic_t held_sigchld;
 
 #ifdef JOBS
 static struct shf	*shl_j;

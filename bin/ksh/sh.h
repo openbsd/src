@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.22 2004/12/18 21:58:39 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.23 2004/12/18 22:11:43 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -256,7 +256,7 @@ typedef struct trap {
 	const char *name;	/* short name */
 	const char *mess;	/* descriptive name */
 	char   *trap;		/* trap command */
-	int	volatile set;	/* trap pending */
+	volatile sig_atomic_t set; /* trap pending */
 	int	flags;		/* TF_* */
 	sig_t cursig;		/* current handler (valid if TF_ORIG_* set) */
 	sig_t shtrap;		/* shell signal handler */
@@ -287,9 +287,9 @@ typedef struct trap {
 #define SIGEXIT_	0	/* for trap EXIT */
 #define SIGERR_		NSIG	/* for trap ERR */
 
-EXTERN	int volatile trap;	/* traps pending? */
-EXTERN	int volatile intrsig;	/* pending trap interrupts executing command */
-EXTERN	int volatile fatal_trap;/* received a fatal signal */
+EXTERN	volatile sig_atomic_t trap;	/* traps pending? */
+EXTERN	volatile sig_atomic_t intrsig;	/* pending trap interrupts command */
+EXTERN	volatile sig_atomic_t fatal_trap;/* received a fatal signal */
 extern	Trap	sigtraps[NSIG+1];
 
 /*
