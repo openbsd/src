@@ -29,6 +29,7 @@ usr/bin/strings
 usr/bin/tftp
 usr/bin/vi
 usr/lib/libc.so.??.?
+usr/lib/libcurses.so.?.?
 usr/lib/libedit.so.?.?
 usr/lib/libm.so.?.?
 usr/lib/libtermcap.so.?.?
