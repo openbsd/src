@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.83 2005/02/18 04:00:21 jaredy Exp $	*/
+/*	$OpenBSD: route.c,v 1.84 2005/03/30 05:20:18 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.83 2005/02/18 04:00:21 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.84 2005/03/30 05:20:18 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ static const char rcsid[] = "$OpenBSD: route.c,v 1.83 2005/02/18 04:00:21 jaredy
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netipx/ipx.h>
-#include <netccitt/x25.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -82,7 +81,6 @@ union	sockunion {
 #endif
 	struct	sockaddr_ipx sipx;
 	struct	sockaddr_dl sdl;
-	struct	sockaddr_x25 sx25;
 	struct	sockaddr_rtin rtin;
 	struct	sockaddr_rtlabel rtlabel;
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label;
@@ -116,13 +114,11 @@ static int inet6_makenetandmask(struct sockaddr_in6 *);
 #endif
 int	 getaddr(int, char *, struct hostent **);
 int	 rtmsg(int, int);
-int	 x25_makemask(void);
 __dead void usage(char *);
 void	 set_metric(char *, int);
 void	 inet_makenetandmask(u_int32_t, struct sockaddr_in *, int);
 void	 interfaces(void);
 void	 getlabel(char *);
-int	 ccitt_addr(char *, struct sockaddr_x25 *);
 
 __dead void
 usage(char *cp)
@@ -245,9 +241,6 @@ flushroutes(int argc, char **argv)
 				break;
 			case K_LINK:
 				af = AF_LINK;
-				break;
-			case K_X25:
-				af = AF_CCITT;
 				break;
 			default:
 				usage(*argv);
@@ -397,10 +390,6 @@ newroute(int argc, char **argv)
 				aflen = sizeof(struct sockaddr_in6);
 				break;
 #endif
-			case K_X25:
-				af = AF_CCITT;
-				aflen = sizeof(struct sockaddr_x25);
-				break;
 			case K_SA:
 				af = PF_ROUTE;
 				aflen = sizeof(union sockunion);
@@ -624,9 +613,6 @@ show(int argc, char *argv[])
 			case K_LINK:
 				af = AF_LINK;
 				break;
-			case K_X25:
-				af = AF_CCITT;
-				break;
 			default:
 				usage(*argv);
 				/* NOTREACHED */
@@ -827,10 +813,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 		link_addr(s, &su->sdl);
 		return (1);
 
-	case AF_CCITT:
-		ccitt_addr(s, &su->sx25);
-		return (which == RTA_DST ? x25_makemask() : 1);
-
 	case PF_ROUTE:
 		su->sa.sa_len = sizeof(*su);
 		sockaddr(s, &su->sa);
@@ -924,21 +906,6 @@ prefixlen(char *s)
 #endif
 	}
 	return (len == max);
-}
-
-int
-x25_makemask(void)
-{
-	char *cp;
-
-	if ((rtm_addrs & RTA_NETMASK) == 0) {
-		rtm_addrs |= RTA_NETMASK;
-		for (cp = (char *)&so_mask.sx25.x25_net;
-		     cp < &so_mask.sx25.x25_opts.op_flags; cp++)
-			*cp = -1;
-		so_mask.sx25.x25_len = (u_char)&(((sup)0)->sx25.x25_opts);
-	}
-	return (0);
 }
 
 void
@@ -1091,7 +1058,6 @@ mask_addr(union sockunion *addr, union sockunion *mask, int which)
 #ifdef INET6
 	case AF_INET6:
 #endif
-	case AF_CCITT:
 	case 0:
 		return;
 	}

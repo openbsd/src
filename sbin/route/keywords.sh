@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.11 2004/09/24 01:13:04 jaredy Exp $
+# $OpenBSD: keywords.sh,v 1.12 2005/03/30 05:20:18 henning Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -52,7 +52,6 @@ sendpipe
 show
 ssthresh
 static
-x25
 xresolve
 _EOF_
 
