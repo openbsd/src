@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apply.1,v 1.14 2000/12/24 11:22:53 aaron Exp $
+.\"	$OpenBSD: apply.1,v 1.15 2001/05/01 03:50:39 aaron Exp $
 .\"	$NetBSD: apply.1,v 1.4 1996/03/18 23:16:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -98,24 +98,29 @@ Debug mode.
 Print commands to the standard output but do not actually execute them.
 .El
 .Sh EXAMPLES
-.Bl -tag -width apply
-.It Li "apply echo a*"
-is similar to
-.Xr ls 1 ;
-.It Li "apply \-2 cmp a1 b1 a2 b2 a3 b3"
-compares the
-.Sq a
+.Cm "apply echo a*"
+.Pp
+Similar to
+.Xr ls 1 .
+.Pp
+.Cm "apply \-2 cmp a1 b1 a2 b2 a3 b3"
+.Pp
+Compares the
+.Dq a
 files to the
-.Sq b
-files;
-.It Li "apply \-0 who 1 2 3 4 5"
-runs
+.Dq b
+files.
+.Pp
+.Cm "apply \-0 who 1 2 3 4 5"
+.Pp
+Runs
 .Xr who 1
-5 times; and
-.It Li "apply \'ln %1 /usr/joe\'" *
-links all files in the current directory to the directory
+5 times.
+.Pp
+.Cm "apply \'ln %1 /usr/joe\'" *
+.Pp
+Links all files in the current directory to the directory
 .Pa /usr/joe .
-.El
 .Sh ENVIRONMENT
 The following environment variable affects the execution of
 .Nm apply :
@@ -131,7 +136,7 @@ default shell
 .El
 .Sh SEE ALSO
 .Xr xargs 1
-.Sh AUTHOR
+.Sh AUTHORS
 Rob Pike
 .Sh HISTORY
 The
