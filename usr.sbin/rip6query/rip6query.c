@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.8 2002/09/08 01:36:37 itojun Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.9 2003/04/14 22:24:58 pvalchev Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ main(argc, argv)
 	int c;
 	int ifidx = -1;
 	int error;
-	char pbuf[10];
+	char pbuf[12];
 	struct addrinfo hints, *res;
 
 	while ((c = getopt(argc, argv, "I:w:")) != -1) {
