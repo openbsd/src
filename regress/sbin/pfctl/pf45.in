@@ -1,0 +1,4 @@
+altq on lo0 priq bandwidth 10Mb queue { pri-low pri-med pri-high }
+queue pri-low priority 0
+queue pri-med priority 1 priq(default)
+queue pri-high priority 2
