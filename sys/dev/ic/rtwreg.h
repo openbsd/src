@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtwreg.h,v 1.4 2005/02/08 11:08:56 jsg Exp $	*/
-/*	$NetBSD: rtwreg.h,v 1.4 2004/12/21 09:07:23 dyoung Exp $	*/
+/*	$OpenBSD: rtwreg.h,v 1.5 2005/02/14 12:49:29 jsg Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.12 2005/01/16 11:50:43 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -194,8 +194,9 @@
 /* Convenient interrupt conjunctions. */
 #define RTW_INTR_RX	(RTW_INTR_RER|RTW_INTR_ROK)
 #define RTW_INTR_TX	(RTW_INTR_TLPDER|RTW_INTR_TLPDOK|RTW_INTR_THPDER|\
-			 RTW_INTR_THPDOK|RTW_INTR_TNPDER|RTW_INTR_TNPDOK)
-#define RTW_INTR_BEACON	(RTW_INTR_TBDER|RTW_INTR_TBDOK|RTW_INTR_BCNINT)
+			 RTW_INTR_THPDOK|RTW_INTR_TNPDER|RTW_INTR_TNPDOK|\
+			 RTW_INTR_TBDER|RTW_INTR_TBDOK)
+#define RTW_INTR_BEACON	(RTW_INTR_BCNINT)
 #define RTW_INTR_IOERROR	(RTW_INTR_TXFOVW|RTW_INTR_RXFOVW|RTW_INTR_RDU)
 
 #define	RTW_TCR		0x40	/* Transmit Configuration Register, 32b */
@@ -768,17 +769,20 @@
 #define RTW_TPPOLL_SHPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
 				 * stop high-priority DMA.
 				 */
-#define RTW_TPPOLL_SNPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
+#define RTW_TPPOLL_SNPQ	BIT(1)	/* Host writes 1 to tell RTL8180 to
 				 * stop normal-priority DMA. This bit is invalid
 				 * when RTW_CONFIG2_DPS is set.
 				 */
-#define RTW_TPPOLL_SLPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
+#define RTW_TPPOLL_SLPQ	BIT(0)	/* Host writes 1 to tell RTL8180 to
 				 * stop low-priority DMA.
 				 */
-#define RTW_TPPOLL_FSWINT	BIT(0)	/* Force software interrupt. From
-				 	 * reference driver.
-					 */
 
+/* Start all queues. */
+#define	RTW_TPPOLL_ALL	(RTW_TPPOLL_BQ | RTW_TPPOLL_HPQ | \
+			 RTW_TPPOLL_NPQ | RTW_TPPOLL_LPQ)
+/* Stop all queues. */
+#define	RTW_TPPOLL_SALL	(RTW_TPPOLL_SBQ | RTW_TPPOLL_SHPQ | \
+			 RTW_TPPOLL_SNPQ | RTW_TPPOLL_SLPQ)
 
 #define	RTW_CWR		0xdc	/* Contention Window Register, 16b, read-only */
 /* Contention Window: indicates number of contention windows before Tx
@@ -1098,13 +1102,19 @@ struct rtw_rxdesc {
  * Registers for RTL8180L's built-in baseband modem.
  */
 #define RTW_BBP_SYS1		0x00
-#define RTW_BBP_TXAGC		0x03
-#define RTW_BBP_LNADET		0x04
-#define RTW_BBP_IFAGCINI	0x05
-#define RTW_BBP_IFAGCLIMIT	0x06
-#define RTW_BBP_IFAGCDET	0x07
+#define RTW_BBP_TXAGC		0x03	/* guess: transmit auto gain control */
+#define RTW_BBP_LNADET		0x04	/* guess: low-noise amplifier activation
+					 * threshold
+					 */
+#define RTW_BBP_IFAGCINI	0x05	/* guess: intermediate frequency (IF)
+					 * auto-gain control (AGC) initial value
+					 */
+#define RTW_BBP_IFAGCLIMIT	0x06	/* guess: IF AGC maximum value */
+#define RTW_BBP_IFAGCDET	0x07	/* guess: activation threshold for
+					 * IF AGC loop
+					 */
 
-#define RTW_BBP_ANTATTEN	0x10
+#define RTW_BBP_ANTATTEN	0x10	/* guess: antenna & attenuation */
 #define RTW_BBP_ANTATTEN_PHILIPS_MAGIC		0x91
 #define RTW_BBP_ANTATTEN_INTERSIL_MAGIC		0x92
 #define RTW_BBP_ANTATTEN_RFMD_MAGIC		0x93
@@ -1112,7 +1122,9 @@ struct rtw_rxdesc {
 #define	RTW_BBP_ANTATTEN_DFLANTB		0x40
 #define	RTW_BBP_ANTATTEN_CHAN14			0x0c
 
-#define RTW_BBP_TRL			0x11
+#define RTW_BBP_TRL			0x11	/* guess: transmit/receive
+						 * switch latency
+						 */
 #define RTW_BBP_SYS2			0x12
 #define RTW_BBP_SYS2_ANTDIV		0x80	/* enable antenna diversity */
 #define RTW_BBP_SYS2_RATE_MASK		BITS(5,4)	/* loopback rate?
@@ -1124,6 +1136,9 @@ struct rtw_rxdesc {
 #define RTW_BBP_SYS3			0x13
 /* carrier-sense threshold */
 #define RTW_BBP_SYS3_CSTHRESH_MASK	BITS(0,3)
-#define RTW_BBP_CHESTLIM	0x19
-#define RTW_BBP_CHSQLIM		0x1a
-
+#define RTW_BBP_CHESTLIM	0x19	/* guess: channel energy-detect
+					 * threshold
+					 */
+#define RTW_BBP_CHSQLIM		0x1a	/* guess: channel signal-quality
+					 * threshold
+					 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.5 2005/01/22 11:22:18 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.6 2005/02/14 12:49:29 jsg Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -59,7 +59,8 @@
 #define	RTW_DEBUG_PHYBITIO	0x040000
 #define	RTW_DEBUG_TIMEOUT	0x080000
 #define	RTW_DEBUG_BUGS		0x100000
-#define	RTW_DEBUG_MAX		0x1fffff
+#define RTW_DEBUG_BEACON	0x200000
+#define	RTW_DEBUG_MAX		0x3fffff
 
 extern int rtw_debug;
 #define RTW_DPRINTF(__flags, __x)	\
@@ -176,10 +177,20 @@ struct rtw_txsoft {
 
 #define RTW_RXQLEN	64
 
+struct rtw_rxdesc_blk {
+	struct rtw_rxdesc	*rdb_desc;
+	u_int			rdb_next;
+	u_int			rdb_ndesc;
+	bus_dma_tag_t		rdb_dmat;
+	bus_dmamap_t		rdb_dmamap;
+};
+
 struct rtw_txdesc_blk {
 	u_int			tdb_ndesc;
 	u_int			tdb_next;
 	u_int			tdb_nfree;
+	bus_dma_tag_t		tdb_dmat;
+	bus_dmamap_t		tdb_dmamap;
 	bus_addr_t		tdb_physbase;
 	bus_addr_t		tdb_ofs;
 	struct rtw_txdesc	*tdb_desc;
@@ -200,6 +211,7 @@ struct rtw_txsoft_blk {
 	u_int			tsb_ndesc;
 	int			tsb_tx_timer;
 	struct rtw_txsoft	*tsb_desc;
+	uint8_t			tsb_poll;
 };
 
 struct rtw_descs {
@@ -319,7 +331,6 @@ int rtw_rf_tune(struct rtw_rf *, u_int);
 int rtw_rf_txpower(struct rtw_rf *, u_int8_t);
 int rtw_rfbus_write(struct rtw_rfbus *, enum rtw_rfchipid, u_int, u_int32_t);
 
-
 struct rtw_max2820 {
 	struct rtw_rf		mx_rf;
 	struct rtw_rfbus	mx_bus;
@@ -351,13 +362,10 @@ struct rtw_softc {
 
 	/* s/w Tx/Rx descriptors */
 	struct rtw_txsoft_blk	sc_txsoft_blk[RTW_NTXPRI];
-	struct rtw_rxsoft	sc_rxsoft[RTW_RXQLEN];
-	u_int			sc_txq;
-	u_int			sc_txnext;
-
 	struct rtw_txdesc_blk	sc_txdesc_blk[RTW_NTXPRI];
-	struct rtw_rxdesc	*sc_rxdesc;
-	u_int			sc_rxnext;
+
+	struct rtw_rxsoft	sc_rxsoft[RTW_RXQLEN];
+	struct rtw_rxdesc_blk	sc_rxdesc_blk;
 
 	struct rtw_descs	*sc_descs;
 
@@ -377,7 +385,7 @@ struct rtw_softc {
 	u_int16_t		sc_inten;
 
 	/* interrupt acknowledge hook */
-	void (*sc_intr_ack) __P((struct rtw_regs *));
+	void (*sc_intr_ack)(struct rtw_regs *);
 
 	int			(*sc_enable)(struct rtw_softc *);
 	void			(*sc_disable)(struct rtw_softc *);
@@ -410,8 +418,8 @@ struct rtw_softc {
 		struct rtw_tx_radiotap_header	tap;
 		u_int8_t			pad[64];
 	} sc_txtapu;
-	enum rtw_access		sc_access;
-	
+	int			sc_txkey;
+	struct ifqueue		sc_beaconq;
 	int			sc_hwverid;
 };
 
