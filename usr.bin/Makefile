@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 1996/08/08 20:39:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 1996/08/08 23:38:27 deraadt Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -28,7 +28,7 @@ SUBDIR+= ar gprof nm ranlib size strip strings
 
 .if   make(clean) || make(cleandir) || make(obj)
 SUBDIR+= pctrctl
-.if ${MACHINE_ARCH} == "i386"
+.elif ${MACHINE_ARCH} == "i386"
 SUBDIR+= pctrctl
 .endif
 
