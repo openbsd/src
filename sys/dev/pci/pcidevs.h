@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.654 2003/07/20 21:40:48 matthieu Exp 
+ *		OpenBSD: pcidevs,v 1.655 2003/07/22 18:53:31 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -573,6 +573,7 @@
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
+#define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
@@ -2227,6 +2228,9 @@
 #define	PCI_PRODUCT_S3_TWISTER_K	0x8d02		/* Twister-K */
 #define	PCI_PRODUCT_S3_PROSAVAGE_DDR	0x8d04		/* ProSavage DDR */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
+
+/* SafeNet, Inc. products */
+#define	PCI_PRODUCT_SAFENET_SAFEXCEL	0x1141		/* SafeXcel */
 
 /* Schneider & Koch (SysKonnect) */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_GE	0x4300		/* 984x GE */

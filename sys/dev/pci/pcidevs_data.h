@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.654 2003/07/20 21:40:48 matthieu Exp 
+ *		OpenBSD: pcidevs,v 1.655 2003/07/22 18:53:31 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5243,6 +5243,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SonicVibes",
 	},
 	{
+	    PCI_VENDOR_SAFENET, PCI_PRODUCT_SAFENET_SAFEXCEL,
+	    "SafeXcel",
+	},
+	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_GE,
 	    "984x GE",
 	},
@@ -8977,6 +8981,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_GLOBALSUN,
 	    "Global Sun",
+	},
+	{
+	    PCI_VENDOR_SAFENET,
+	    "SafeNet",
 	},
 	{
 	    PCI_VENDOR_USR2,
