@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.5 2004/12/26 00:11:24 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.6 2005/03/29 22:16:13 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -202,6 +202,7 @@
 #define		AMI_FC_WRCONF	0x0d
 #define		AMI_FC_PRODINF	0x0e
 #define		AMI_FC_EINQ3	0x0f
+#define		AMI_FC_EINQ4	0x1f
 #define			AMI_FC_EINQ3_SOLICITED_NOTIFY	0x01
 #define			AMI_FC_EINQ3_SOLICITED_FULL	0x02
 #define			AMI_FC_EINQ3_UNSOLICITED	0x03
@@ -217,6 +218,12 @@
 #define	AMI_HSPDIAG	0xb1
 #define	AMI_GESENSEINFO	0xb2	/* get extended sense info */
 #define	AMI_SYSFLUSH	0xfe	/* flush system */
+#define AMI_ALARM	0x51	/* alarm functions */
+#define 	AMI_ALARM_OFF   0x00
+#define 	AMI_ALARM_ON    0x01
+#define 	AMI_ALARM_QUIET 0x02
+#define 	AMI_ALARM_GET   0x03
+#define 	AMI_ALARM_TEST  0x04 /* not all boards support this */
 
 /* command structures */
 #pragma pack(1)
@@ -401,11 +408,94 @@ struct ami_inquiry {
 #define	AMI_SIGN466	0xfffa0005
 };
 
+#define MAX_NOTIFY_SIZE	0x80
+#define CUR_NOTIFY_SIZE (sizeof(struct ami_notify))
+struct ami_notify
+{
+	u_int32_t	ano_eventcounter;	/* incremented for changes */
+
+	u_int8_t	ano_paramcounter;	/* param change */
+	u_int8_t	ano_paramid;		/* param modified */
+#define AMI_PARAM_RBLD_RATE		0x01 /* new rebuild rate */
+#define AMI_PARAM_CACHE_FLUSH_INTERVAL	0x02 /* new cache flush interval */
+#define AMI_PARAM_SENSE_ALERT		0x03 /* pd caused check condition */
+#define AMI_PARAM_DRIVE_INSERTED	0x04 /* pd inserted */
+#define AMI_PARAM_BATTERY_STATUS	0x05 /* battery status */
+#define AMI_PARAM_NVRAM_EVENT_ALERT	0x06 /* NVRAM # of entries */
+#define AMI_PARAM_PATROL_READ_UPDATE	0x07 /* # pd done with patrol read */
+#define AMI_PARAM_PATROL_READ_STATUS	0x08 /* 0 stopped
+					      * 2 aborted
+					      * 4 started */
+
+	u_int16_t	ano_paramval;		/* new val modified param */
+
+	u_int8_t	ano_writeconfcounter;	/* write config */
+	u_int8_t	ano_writeconfrsvd[3];
+
+	u_int8_t	ano_ldopcounter;	/* ld op started/completed */
+	u_int8_t	ano_ldopid;		/* ld modified */
+	u_int8_t	ano_ldopcmd;		/* ld operation */
+#define AMI_LDCMD_CHKCONSISTANCY	0x01
+#define AMI_LDCMD_INITIALIZE		0x02
+#define AMI_LDCMD_RECONSTRUCTION	0x03
+	u_int8_t	ano_ldopstatus;		/* status of the operation */
+#define AMI_LDOP_SUCCESS		0x00
+#define AMI_LDOP_FAILED			0x01
+#define AMI_LDOP_ABORTED		0x02
+#define AMI_LDOP_CORRECTED		0x03
+#define AMI_LDOP_STARTED		0x04
+
+	u_int8_t	ano_ldstatecounter;	/* change of ld state */
+	u_int8_t	ano_ldstateid;		/* ld state changed */
+	u_int8_t	ano_ldstatenew;		/* new state */
+	u_int8_t	ano_ldstateold;		/* old state */
+#define AMI_RDRV_OFFLINE		0
+#define AMI_RDRV_DEGRADED		1
+#define AMI_RDRV_OPTIMAL		2
+#define AMI_RDRV_DELETED		3
+
+	u_int8_t	ano_pdstatecounter;	/* change of pd state */
+	u_int8_t	ano_pdstateid;		/* pd state changed */
+	u_int8_t	ano_pdstatenew;		/* new state */
+	u_int8_t	ano_pdstateold;		/* old state */
+#define AMI_PD_UNCNF			0
+#define AMI_PD_ONLINE			3
+#define AMI_PD_FAILED			4
+#define AMI_PD_RBLD			5
+#define AMI_PD_HOTSPARE			6
+
+	u_int8_t	ano_pdfmtcounter;	/* pd format started/over */
+	u_int8_t	ano_pdfmtid;		/* pd id */
+	u_int8_t	ano_pdfmtval;		/* format started/over */
+#define AMI_PDFMT_START			0x01
+#define AMI_PDFMT_OVER			0x02
+	u_int8_t	ano_pdfmtrsvd;
+
+	u_int8_t	ano_targxfercounter;	/* SCSI-2 Xfer rate change */
+	u_int8_t	ano_targxferid;		/* pd that changed  */
+	u_int8_t	ano_targxferval;	/* new xfer parameters */
+	u_int8_t	ano_targxferrsvd;
+
+	u_int8_t	ano_fclidchgcounter;	/* loop id changed */
+	u_int8_t	ano_fclidpdid;		/* pd id */
+	u_int8_t	ano_fclid0;		/* loop id on fc loop 0 */
+	u_int8_t	ano_fclid1;		/* loop id on fc loop 1 */
+
+	u_int8_t	ano_fclstatecounter;	/* loop state changed */
+	u_int8_t	ano_fclstate0;		/* state of fc loop 0 */
+	u_int8_t	ano_fclstate1;		/* state of fc loop 1 */
+#define AMI_FCLOOP_FAILED		0
+#define AMI_FCLOOP_ACTIVE		1
+#define AMI_FCLOOP_TRANSIENT		2
+	u_int8_t	ano_fclstatersvd;
+};
+
 struct ami_fc_einquiry {
 	u_int32_t	ain_size;	/* size of this structure */
 
 	/* notify */
-	u_int8_t	ain_notify[0x80];
+	struct	ami_notify ain_notify;
+	u_int8_t	ain_notifyrsvd[MAX_NOTIFY_SIZE - CUR_NOTIFY_SIZE];
 
 	u_int8_t	ain_rbldrate;	/* rebuild rate %% */
 	u_int8_t	ain_flushintvl;
