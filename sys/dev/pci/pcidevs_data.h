@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.224 2000/03/20 07:33:07 rahnds Exp 
+ *		OpenBSD: pcidevs,v 1.225 2000/03/20 07:40:44 rahnds Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -555,66 +555,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Acenic",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
-	    0,
-	    "Apple Computer",
-	    "PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GC,
-	    0,
-	    "Apple Computer",
-	    "PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_OHARE,
-	    0,
-	    "Apple Computer",
-	    "PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_HEATHROW,
-	    0,
-	    "Apple Computer",
-	    "MACIO",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON,
-	    0,
-	    "Apple Computer",
-	    "MACIO",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHETH,
-	    0,
-	    "Apple Computer",
-	    "PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH,
-	    0,
-	    "Apple Computer",
-	    "PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHAGP,
-	    0,
-	    "Apple Computer",
-	    "AGP",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC,
-	    0,
-	    "Apple Computer",
-	    "GMAC",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO,
-	    0,
-	    "Apple Computer",
-	    "MACIO",
-	},
-	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    0,
 	    "AMD",
@@ -673,6 +613,66 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "AMD",
 	    "756 USB Host",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
+	    0,
+	    "Apple Computer",
+	    "PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GC,
+	    0,
+	    "Apple Computer",
+	    "PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_OHARE,
+	    0,
+	    "Apple Computer",
+	    "PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_HEATHROW,
+	    0,
+	    "Apple Computer",
+	    "MACIO",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON,
+	    0,
+	    "Apple Computer",
+	    "MACIO",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHETH,
+	    0,
+	    "Apple Computer",
+	    "PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH,
+	    0,
+	    "Apple Computer",
+	    "PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHAGP,
+	    0,
+	    "Apple Computer",
+	    "AGP",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC,
+	    0,
+	    "Apple Computer",
+	    "GMAC",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO,
+	    0,
+	    "Apple Computer",
+	    "MACIO",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
