@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.4 1996/06/29 18:44:17 deraadt Exp $	*/
+/*	$OpenBSD: pty.c,v 1.5 1996/08/09 00:26:15 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: pty.c,v 1.4 1996/06/29 18:44:17 deraadt Exp $";
+static char *rcsid = "$Id: pty.c,v 1.5 1996/08/09 00:26:15 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -51,12 +51,7 @@ static char *rcsid = "$Id: pty.c,v 1.4 1996/06/29 18:44:17 deraadt Exp $";
 
 #include "util.h"
 
-#ifdef i386
-/* PCVT conflicts with ttyv*. */
-#define TTY_LETTERS "pqrstuwxyzPQRST"
-#else
 #define TTY_LETTERS "pqrstuvwxyzPQRST"
-#endif
 
 int
 openpty(amaster, aslave, name, termp, winp)
