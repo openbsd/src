@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.c,v 1.2 2000/12/20 01:52:12 millert Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.3 2001/05/30 20:15:57 markus Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -82,17 +82,18 @@ tokendb_getrec(char *username, TOKENDB_Rec *tokenrec)
 		return(-1);
 
 	status = (tokendb->get)(tokendb, &key, &data, 0);
-	tokendb_close();
-
 	switch (status) {
 	case 1:
+		tokendb_close();
 		return(ENOENT);
 	case -1:
+		tokendb_close();
 		return(-1);
 	}
 	memcpy(tokenrec, data.data, sizeof(TOKENDB_Rec));
 	if ((tokenrec->flags & TOKEN_USEMODES) == 0)
 		tokenrec->mode = tt->modes & ~TOKEN_RIM;
+	tokendb_close();
 	return (0);
 }
 
