@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1998/09/02 06:36:07 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1998/11/29 19:45:10 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/09/02 06:36:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1998/11/29 19:45:10 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ main(argc, argv)
 			unlink(argv[1]);/* Don't re-use the save */
 			goto l8;	/* Get where we're going */
 		case 1:		/* Couldn't open it */
-			exit(1);	/* So give up */
+			errx(1, "can't open file");	/* So give up */
 		case 2:		/* Oops -- file was altered */
 			rspeak(202);	/* You dissolve */
 			exit(2);	/* File could be non-adventure */
@@ -270,8 +270,7 @@ l2630:		i = vocab(wd1, -1, 0);
 		case 3: goto l4000;
 		case 4: goto l2010;
 		default:
-			printf("Error 22\n");
-			exit(22);
+			bug(22);
 		}
 
 l8:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.2 1998/09/20 23:36:50 pjanzen Exp $	*/
+/*	$OpenBSD: execute.c,v 1.3 1998/11/29 19:45:11 pjanzen Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: execute.c,v 1.2 1998/09/20 23:36:50 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: execute.c,v 1.3 1998/11/29 19:45:11 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -266,7 +266,7 @@ rest_f(file)
 	char	*start, *end;
 	STAT	sbuf;
 
-	if ((inf = open(file, 0)) < 0) {
+	if ((inf = open(file, O_RDONLY)) < 0) {
 		warn(file);
 		return FALSE;
 	}

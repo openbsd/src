@@ -1,4 +1,4 @@
-/*	$OpenBSD: vocab.c,v 1.6 1998/09/12 01:54:42 pjanzen Exp $	*/
+/*	$OpenBSD: vocab.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $	*/
 /*	$NetBSD: vocab.c,v 1.2 1995/03/21 12:05:13 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: vocab.c,v 1.6 1998/09/12 01:54:42 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: vocab.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,10 +186,8 @@ vocab(word, type, value)	/* look up or store a word	*/
 			/* the word matched o.k.			*/
 			return (h->val);
 		default:		/* looking up known word	*/
-			if (h->val == 0) {
-				printf("Unable to find %s in vocab\n", word);
-				exit(1);
-			}
+			if (h->val == 0)
+				errx(1, "Unable to find %s in vocab", word);
 			for (s = word, t = h->atab; *t ^ '=';)
 				if ((*s++ ^ '=') != *t++)
 					goto exitloop2;
@@ -200,10 +198,8 @@ vocab(word, type, value)	/* look up or store a word	*/
 		}
 
 exitloop2:			/* hashed entry does not match	*/
-		if (adr + 1 == hash || (adr == HTSIZE && hash == 0)) {
-			printf("Hash table overflow\n");
-			exit(1);
-		}
+		if (adr + 1 == hash || (adr == HTSIZE && hash == 0))
+			errx(1, "Hash table overflow");
 	}
 }
 

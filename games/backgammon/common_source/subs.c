@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.6 1998/09/02 06:46:51 pjanzen Exp $	*/
+/*	$OpenBSD: subs.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subs.c,v 1.6 1998/09/02 06:46:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: subs.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -326,7 +326,7 @@ getarg(argc,argv)
 			args[acnt++] = 'n';
 			break;
 
-		case 'b':	/* player is both read and white */
+		case 'b':	/* player is both red and white */
 			if (rflag)
 				break;
 			pnum = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.6 1998/09/12 01:54:42 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.6 1998/09/12 01:54:42 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -333,10 +333,8 @@ rdesc(sect)			/* read description-format msgs */
 				ptext[oldloc].txtlen = maystart - seekstart;
 				break;
 			case 6:	/* random messages		*/
-				if (oldloc > RTXSIZ) {
-					printf("Too many random msgs\n");
-					exit(1);
-				}
+				if (oldloc > RTXSIZ)
+					errx(1, "Too many random msgs");
 				rtext[oldloc].seekadr = seekhere;
 				rtext[oldloc].txtlen = maystart - seekstart;
 				break;
@@ -346,16 +344,13 @@ rdesc(sect)			/* read description-format msgs */
 				cval[clsses++] = oldloc;
 				break;
 			case 12:/* magic messages		*/
-				if (oldloc > MAGSIZ) {
-					printf("Too many magic msgs\n");
-					exit(1);
-				}
+				if (oldloc > MAGSIZ)
+					errx(1, "Too many magic msgs");
 				mtext[oldloc].seekadr = seekhere;
 				mtext[oldloc].txtlen = maystart - seekstart;
 				break;
 			default:
-				printf("rdesc called with bad section\n");
-				exit(1);
+				errx(1, "rdesc called with bad section");
 			}
 			seekhere += maystart - seekstart;
 		}
