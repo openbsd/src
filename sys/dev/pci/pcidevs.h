@@ -126,3 +126,4 @@
 
 /* 3COM Products */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 */
+#define	PCI_PRODUCT_3COM_3C595	0x5950		/* 3c595 */

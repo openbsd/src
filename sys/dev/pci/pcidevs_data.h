@@ -218,6 +218,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c590",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595,
+	    0,
+	    "3Com",
+	    "3c595",
+	},
+	{
 	    PCI_VENDOR_OLDNCR, 0,
 	    PCI_KNOWNDEV_UNSUPP | PCI_KNOWNDEV_NOPROD,
 	    "NCR",

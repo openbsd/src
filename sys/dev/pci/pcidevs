@@ -121,3 +121,4 @@ product S3 VISION864	0x88c0	UNSUPP	Vision 864
 
 /* 3COM Products */
 product	3COM 3C590	0x5900		3c590
+product	3COM 3C595	0x5950		3c595

@@ -331,7 +331,8 @@ epprobe(parent, match, aux)
 		struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 		if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM ||
-		    PCI_CHIPID(pa->pa_id) != PCI_PRODUCT_3COM_3C590)
+		    (PCI_CHIPID(pa->pa_id) != PCI_PRODUCT_3COM_3C590
+		     && PCI_CHIPID(pa->pa_id) != PCI_PRODUCT_3COM_3C595))
 			return 0;
 
 		if (nepcards >= MAXEPCARDS)
