@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.8 2001/01/08 21:38:25 mickey Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.9 2001/01/27 21:16:11 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -39,168 +39,118 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct cardbus_knowndev cardbus_knowndevs[] = {
+struct cardbus_known_product cardbus_known_product[] = {
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575,
-	    0,
-	    "3Com",
 	    "3C575",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFE575BT,
-	    0,
-	    "3Com",
 	    "3CCFE575BT",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFE575CT,
-	    0,
-	    "3Com",
 	    "3CCFE575CT",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFEM656,
-	    0,
-	    "3Com",
 	    "3CCFEM656",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFEM656B,
-	    0,
-	    "3Com",
 	    "3CCFEM656B",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_MODEM56,
-	    0,
-	    "3Com",
 	    "56k Modem",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFEM656C,
-	    0,
-	    "3Com",
 	    "3CCFEM656C",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_GLOBALMODEM56,
-	    0,
-	    "3Com",
 	    "56k Global Modem",
 	},
 	{
 	    CARDBUS_VENDOR_ADMTEK, CARDBUS_PRODUCT_ADMTEK_AN985,
-	    0,
-	    "ADMtek",
 	    "AN985",
 	},
 	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
-	    0,
-	    "Adaptec",
 	    "APA-1480",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
-	    0,
-	    "DEC",
 	    "21142/3",
 	},
 	{
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_82557,
-	    0,
-	    "Intel",
 	    "82557",
 	},
 	{
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
-	    0,
-	    "Intel",
 	    "Modem",
 	},
 	{
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_DFE660,
-	    0,
-	    "Intel",
 	    "DFE-660",
 	},
 	{
 	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
-	    0,
-	    "Opti",
 	    "82C861",
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3,
-	    0,
-	    "Xircom",
 	    "X3201-3",
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3_21143,
-	    0,
-	    "Xircom",
 	    "X3201-3 (21143)",
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
-	    0,
-	    "Xircom",
 	    "56k Modem",
 	},
+	{ 0, 0, NULL }
+};
+
+struct cardbus_known_vendor cardbus_known_vendors[] = {
 	{
 	    CARDBUS_VENDOR_DEC, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "DEC",
-	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_OPTI, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Opti",
-	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_3COM, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "3Com",
-	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Xircom",
-	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_ADMTEK, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "ADMtek",
-	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_INTEL, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Intel",
-	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_ADP, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Adaptec",
-	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_ADP2, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Adaptec(2)",
-	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_INVALID, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
 	    "INVALID",
-	    NULL,
 	},
-	{ 0, 0, 0, NULL, NULL, }
+	{ 0, 0, NULL }
 };

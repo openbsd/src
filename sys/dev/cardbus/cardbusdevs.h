@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.8 2001/01/08 21:38:25 mickey Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.9 2001/01/27 21:16:10 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
