@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.31 2000/08/17 21:44:56 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.32 2000/08/19 16:41:01 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -86,6 +86,7 @@ int	ubsec_freesession __P((u_int64_t));
 int	ubsec_process __P((struct cryptop *));
 void	ubsec_callback __P((struct ubsec_q *));
 int	ubsec_feed __P((struct ubsec_softc *));
+void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
 
 #define	READ_REG(sc,r) \
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
@@ -443,6 +444,7 @@ ubsec_newsession(sidp, cri)
 			bcopy(encini->cri_key, &ses->ses_deskey[4], 8);
 		} else
 			bcopy(encini->cri_key, &ses->ses_deskey[0], 24);
+
 		SWAP32(ses->ses_deskey[0]);
 		SWAP32(ses->ses_deskey[1]);
 		SWAP32(ses->ses_deskey[2]);
@@ -452,7 +454,7 @@ ubsec_newsession(sidp, cri)
 	}
 
 	if (macini) {
-                for (i = 0; i < macini->cri_klen / 8; i++)
+		for (i = 0; i < macini->cri_klen / 8; i++)
 			macini->cri_key[i] ^= HMAC_IPAD_VAL;
 
 		if (macini->cri_alg == CRYPTO_MD5_HMAC96) {
@@ -530,7 +532,8 @@ ubsec_process(crp)
 	int card, err, i, j, s, nicealign;
 	struct ubsec_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
-	int encoffset = 0, macoffset = 0, sskip, dskip, stheend, dtheend;
+	int encoffset = 0, macoffset = 0, cpskip, cpoffset;
+	int sskip, dskip, stheend, dtheend;
 	int16_t coffset;
 	struct ubsec_session *ses;
 
@@ -682,7 +685,6 @@ ubsec_process(crp)
 
 	if (enccrd && maccrd) {
 		/*
-		 *
 		 * ubsec cannot handle packets where the end of encryption
 		 * and authentication are not the same, or where the
 		 * encrypted part begins before the authenticated part.
@@ -694,10 +696,11 @@ ubsec_process(crp)
 			goto errout;
 		}
 		sskip = maccrd->crd_skip;
-		dskip = enccrd->crd_skip;
+		cpskip = dskip = enccrd->crd_skip;
 		stheend = maccrd->crd_len;
 		dtheend = enccrd->crd_len;
 		coffset = enccrd->crd_skip - maccrd->crd_skip;
+		cpoffset = cpskip + dtheend;
 #ifdef UBSEC_DEBUG
 		printf("mac: skip %d, len %d, inject %d\n",
  		    maccrd->crd_skip, maccrd->crd_len, maccrd->crd_inject);
@@ -705,11 +708,13 @@ ubsec_process(crp)
 		    enccrd->crd_skip, enccrd->crd_len, enccrd->crd_inject);
 		printf("src: skip %d, len %d\n", sskip, stheend);
 		printf("dst: skip %d, len %d\n", dskip, dtheend);
-		printf("ubs: coffset %d, pktlen %d\n", coffset, stheend);
+		printf("ubs: coffset %d, pktlen %d, cpskip %d, cpoffset %d\n",
+		       coffset, stheend, cpskip, cpoffset);
 #endif
 	} else {
-		dskip = sskip = macoffset + encoffset;
+		cpskip = dskip = sskip = macoffset + encoffset;
 		dtheend = stheend = (enccrd)?enccrd->crd_len:maccrd->crd_len;
+		cpoffset = cpskip + dtheend;
 		coffset = 0;
 	}
 	q->q_ctx.pc_offset = coffset >> 2;
@@ -840,6 +845,7 @@ ubsec_process(crp)
 				mp = &m->m_next;
 			}
 			q->q_dst_m = top;
+			ubsec_mcopy(q->q_src_m, q->q_dst_m, cpskip, cpoffset);
 		} else
 			q->q_dst_m = q->q_src_m;
 
@@ -974,4 +980,43 @@ ubsec_callback(q)
 	 */
 	free(q, M_DEVBUF);
 	crypto_done(crp);
+}
+
+void
+ubsec_mcopy(srcm, dstm, hoffset, toffset)
+	struct mbuf *srcm, *dstm;
+	int hoffset, toffset;
+{
+	int i, j, dlen, slen;
+	caddr_t dptr, sptr;
+
+	j = 0;
+	sptr = srcm->m_data;
+	slen = srcm->m_len;
+	dptr = dstm->m_data;
+	dlen = dstm->m_len;
+
+	while (1) {
+		for (i = 0; i < min(slen, dlen); i++) {
+			if (j < hoffset || j >= toffset)
+				*dptr++ = *sptr++;
+			slen--;
+			dlen--;
+			j++;
+		}
+		if (slen == 0) {
+			srcm = srcm->m_next;
+			if (srcm == NULL)
+				return;
+			sptr = srcm->m_data;
+			slen = srcm->m_len;
+		}
+		if (dlen == 0) {
+			dstm = dstm->m_next;
+			if (dstm == NULL)
+				return;
+			dptr = dstm->m_data;
+			dlen = dstm->m_len;
+		}
+	}
 }
