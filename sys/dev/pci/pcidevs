@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.802 2004/11/21 17:56:06 grange Exp $
+$OpenBSD: pcidevs,v 1.803 2004/11/22 21:09:18 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1031,6 +1031,7 @@ product DELL PERC_3DI_2		0x0008	PERC 3/Di
 product DELL PERC_3DI_3		0x000a	PERC 3/Di
 product DELL PERC_4DI		0x000e	PERC 4/Di i960
 product DELL PERC_4DI_2		0x000f	PERC 4/Di Verde
+product DELL PERC_4EDI		0x0013	PERC 4e/Di
 product DELL PERC_3DI_2_SUB	0x00cf	PERC 3/Di
 product DELL PERC_3SI_2_SUB	0x00d0	PERC 3/Si
 product DELL PERC_3DI_SUB2	0x00d1	PERC 3/Di
