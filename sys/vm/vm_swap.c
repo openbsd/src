@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.9 1999/05/22 21:22:34 weingart Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.10 1999/05/24 17:08:37 weingart Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.64 1998/11/08 19:45:17 mycroft Exp $	*/
 
 /*
@@ -1243,14 +1243,11 @@ swapmount()
 	}
 		
 	/* Look for a swap device */
-	printf("Adding swap(%d, %d):", major(swap_dev), minor(swap_dev));
-
 	if (swap_on(p, sdp) != 0) {
-		printf(" failed!\n");
 		free((caddr_t)sdp, M_VMSWAP);
 		return;
-	} else
-		printf(" done.\n");
+	}
+
 #ifdef SWAP_TO_FILES
 	/*
 	 * XXX Is NFS elaboration necessary?
