@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_syms.c,v 1.3 2002/03/15 17:49:51 art Exp $	*/
+/*	$OpenBSD: aout_syms.c,v 1.4 2002/03/19 21:17:52 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -77,26 +77,28 @@ int
 sym_check_aout(const char *name, struct pstate *ps)
 {
 	struct exec ahdr;
+	int error = 0;
 	int fd;
 
 	if ((fd = open(name, O_RDONLY)) < 0)
-		return (-1);
+		return (1);
 
 	if (pread(fd, &ahdr, sizeof(ahdr), 0) != sizeof(ahdr)) {
 #ifndef IGNORE_PREAD_ERRORS
-		return (-1);
+		error = 1;
 #endif
 	}
 
 	if (N_BADMAG(ahdr)) {
-		return (-1);
+		error = 1;
 	}
 
 	close(fd);
 
-	ps->ps_sops = &aout_sops;
+	if (!error)
+		ps->ps_sops = &aout_sops;
 
-	return (0);
+	return (error);
 }
 
 struct sym_table *

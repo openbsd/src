@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_syms.c,v 1.3 2002/03/15 17:49:51 art Exp $	*/
+/*	$OpenBSD: elf_syms.c,v 1.4 2002/03/19 21:17:52 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -79,29 +79,31 @@ int
 sym_check_elf(const char *name, struct pstate *ps)
 {
 	Elf_Ehdr ehdr;
+	int error = 0;
 	int fd;
 
 	if ((fd = open(name, O_RDONLY)) < 0)
-		return (-1);
+		return (1);
 
 	if (pread(fd, &ehdr, sizeof(Elf_Ehdr), 0) != sizeof(Elf_Ehdr))
-		return (-1);
+		error = 1;
 
 #ifndef __NetBSD__
-	if (!IS_ELF(ehdr) ||
+	if (!error && !IS_ELF(ehdr) ||
 	    ehdr.e_ident[EI_CLASS] != ELF_TARG_CLASS ||
 	    ehdr.e_ident[EI_DATA] != ELF_TARG_DATA ||
 	    ehdr.e_ident[EI_VERSION] != ELF_TARG_VER ||
 	    ehdr.e_machine != ELF_TARG_MACH ||
 	    ehdr.e_version != ELF_TARG_VER)
-		return (-1);
+		error = 1;
 #endif
 
 	close(fd);
 
-	ps->ps_sops = &elf_sops;
+	if (!error)
+		ps->ps_sops = &elf_sops;
 
-	return (0);
+	return (error);
 }
 
 struct sym_table *
