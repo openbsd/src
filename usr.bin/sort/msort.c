@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.9 2001/02/04 21:27:01 ericj Exp $	*/
+/*	$OpenBSD: msort.c,v 1.10 2002/01/04 16:33:14 art Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.9 2001/02/04 21:27:01 ericj Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.10 2002/01/04 16:33:14 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -271,13 +271,14 @@ order(infile, get, ftbl)
 		if ((linebuf = malloc(MAXLLEN)) == NULL)
 			errx(2, "cannot allocate memory");
 	}
-	buffer = malloc(2 * (MAXLLEN + sizeof(TRECHEADER)));
+	buffer = malloc(2 * ALIGN((MAXLLEN + sizeof(TRECHEADER))));
 	if (buffer == NULL)
 		errx(2, "cannot allocate memory");
+
 	crec = (RECHEADER *) buffer;
-	crec_end = buffer + MAXLLEN + sizeof(TRECHEADER);
-	prec = (RECHEADER *) (buffer + MAXLLEN + sizeof(TRECHEADER));
-	prec_end = buffer + 2 * (MAXLLEN + sizeof(TRECHEADER));
+	crec_end = ((char *)crec) + ALIGN(MAXLLEN + sizeof(TRECHEADER));
+	prec = (RECHEADER *) crec_end;
+	prec_end = ((char *)prec) + ALIGN(MAXLLEN + sizeof(TRECHEADER));
 	wts = ftbl->weights;
 	if (SINGL_FLD && (ftbl->flags & F))
 		wts1 = ftbl->flags & R ? Rascii : ascii;
