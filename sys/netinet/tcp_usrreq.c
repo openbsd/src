@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.29 1998/11/17 19:23:02 provos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.30 1999/01/07 05:52:26 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -622,7 +622,7 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 		return (EINVAL);
 	if  (*oldlenp < sizeof(tir))
 		return (ENOMEM);
-	if ((error = copyin (oldp, &tir, sizeof (tir))) != 0 )
+	if ((error = copyin(oldp, &tir, sizeof (tir))) != 0 )
 		return (error);
 	if (tir.faddr.sa_len != sizeof (struct sockaddr) ||
 	    tir.faddr.sa_family != AF_INET)
@@ -630,12 +630,12 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	fin = (struct sockaddr_in *)&tir.faddr;
 	lin = (struct sockaddr_in *)&tir.laddr;
 
-	s = splsoftnet ();
-	inp = in_pcbhashlookup (&tcbtable,  fin->sin_addr, fin->sin_port,
+	s = splsoftnet();
+	inp = in_pcbhashlookup(&tcbtable,  fin->sin_addr, fin->sin_port,
 	    lin->sin_addr, lin->sin_port);
 	if (inp == NULL) {
 		++tcpstat.tcps_pcbhashmiss;
-		inp = in_pcblookup (&tcbtable, fin->sin_addr, fin->sin_port,
+		inp = in_pcblookup(&tcbtable, fin->sin_addr, fin->sin_port,
 		    lin->sin_addr, lin->sin_port, 0);
 	}
 	if (inp != NULL && (inp->inp_socket->so_state & SS_CONNECTOUT)) {
@@ -648,7 +648,7 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	splx(s);
 
 	*oldlenp = sizeof (tir);
-	error = copyout ((void *)&tir, oldp, sizeof (tir));
+	error = copyout((void *)&tir, oldp, sizeof (tir));
 	return (error);
 }
 
