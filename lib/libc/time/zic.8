@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.3 1996/08/19 08:34:55 tholo Exp $
+.\"	$OpenBSD: zic.8,v 1.4 1997/01/14 03:16:57 millert Exp $
 .TH ZIC 8
 .SH NAME
 zic \- time zone compiler
@@ -74,7 +74,7 @@ no leap second information appears in output files.
 .B \-v
 Complain if a year that appears in a data file is outside the range
 of years representable by
-.IR time (2)
+.IR time (3)
 values.
 .TP
 .B \-s
@@ -305,6 +305,9 @@ It is specified as a year, a month, a day, and a time of day.
 If this is specified,
 the time zone information is generated from the given GMT offset
 and rule change until the time specified.
+The month, day, and time of day have the same format as the IN, ON, and AT
+columns of a rule; trailing columns can be omitted, and default to the
+earliest possible value for the missing columns.
 .IP
 The next line must be a
 .q continuation
@@ -406,4 +409,4 @@ the earliest transition time recorded in the compiled file is correct.
 /usr/share/zoneinfo	standard directory used for created files
 .SH "SEE ALSO"
 ctime(3), tzfile(5), zdump(8)
-.\" @(#)zic.8	7.12
+.\" @(#)zic.8	7.14

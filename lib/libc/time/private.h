@@ -1,14 +1,21 @@
-/*	$OpenBSD: private.h,v 1.5 1996/10/30 00:20:12 tholo Exp $	*/
+/*	$OpenBSD: private.h,v 1.6 1997/01/14 03:16:48 millert Exp $	*/
 
 #ifndef PRIVATE_H
+
 #define PRIVATE_H
 
+/*
+** This file is in the public domain, so clarified as of
+** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+*/
+
 /* OpenBSD defaults */
-#define TM_GMTOFF	tm_gmtoff
-#define TM_ZONE		tm_zone
-#define PCTS		1
-#define STD_INSPIRED	1
-#define HAVE_LONG_DOUBLE 1
+#define TM_GMTOFF		tm_gmtoff
+#define TM_ZONE			tm_zone
+#define PCTS			1
+#define STD_INSPIRED		1
+#define HAVE_LONG_DOUBLE	1
+#define HAVE_STRERROR		1
 
 /*
 ** This header is for use ONLY with the time conversion code.
@@ -19,6 +26,18 @@
 */
 
 /*
+** ID
+*/
+
+#if 0
+#ifndef lint
+#ifndef NOID
+static char	privatehid[] = "@(#)private.h	7.44";
+#endif /* !defined NOID */
+#endif /* !defined lint */
+#endif
+
+/*
 ** Defaults for preprocessor symbols.
 ** You can override these in your C compiler options, e.g. `-DHAVE_ADJTIME=0'.
 */
@@ -27,9 +46,17 @@
 #define HAVE_ADJTIME		1
 #endif /* !defined HAVE_ADJTIME */
 
+#ifndef HAVE_GETTEXT
+#define HAVE_GETTEXT		0
+#endif /* !defined HAVE_GETTEXT */
+
 #ifndef HAVE_SETTIMEOFDAY
 #define HAVE_SETTIMEOFDAY	3
 #endif /* !defined HAVE_SETTIMEOFDAY */
+
+#ifndef HAVE_STRERROR
+#define HAVE_STRERROR		0
+#endif /* !defined HAVE_STRERROR */
 
 #ifndef HAVE_UNISTD_H
 #define HAVE_UNISTD_H		1
@@ -54,6 +81,10 @@
 #include "limits.h"	/* for CHAR_BIT */
 #include "time.h"
 #include "stdlib.h"
+
+#if HAVE_GETTEXT - 0
+#include "libintl.h"
+#endif /* HAVE_GETTEXT - 0 */
 
 #if HAVE_UNISTD_H - 0
 #include "unistd.h"	/* for F_OK and R_OK */
@@ -144,6 +175,17 @@ extern int	unlink P((const char * filename));
 #define remove	unlink
 #endif /* !defined remove */
 
+#if 0
+/*
+** Some ancient errno.h implementations don't declare errno.
+** But some newer errno.h implementations define it as a macro.
+** Fix the former without affecting the latter.
+*/
+#ifndef errno
+extern int errno;
+#endif /* !defined errno */
+#endif
+
 /*
 ** Finally, some convenience items.
 */
@@ -198,6 +240,24 @@ extern int	unlink P((const char * filename));
 #define INITIALIZE(x)
 #endif /* !defined GNUC_or_lint */
 #endif /* !defined INITIALIZE */
+
+/*
+** For the benefit of GNU folk...
+** `_(MSGID)' uses the current locale's message library string for MSGID.
+** The default is to use gettext if available, and use MSGID otherwise.
+*/
+
+#ifndef _
+#if HAVE_GETTEXT - 0
+#define _(msgid) gettext(msgid)
+#else /* !(HAVE_GETTEXT - 0) */
+#define _(msgid) msgid
+#endif /* !(HAVE_GETTEXT - 0) */
+#endif /* !defined _ */
+
+#ifndef TZ_DOMAIN
+#define TZ_DOMAIN "tz"
+#endif /* !defined TZ_DOMAIN */
 
 /*
 ** UNIX was a registered trademark of UNIX System Laboratories in 1993.

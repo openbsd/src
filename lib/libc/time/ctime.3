@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.5 1996/08/19 08:34:48 tholo Exp $
+.\"	$OpenBSD: ctime.3,v 1.6 1997/01/14 03:16:43 millert Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
@@ -31,13 +31,14 @@ asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to 
 .B time_t mktime(tm)
 .B struct tm *tm;
 .PP
+.B cc ... -lz
 .fi
 .SH DESCRIPTION
 .I Ctime\^
 converts a long integer, pointed to by
 .IR clock ,
 representing the time in seconds since
-00:00:00 UTC, January 1, 1970,
+00:00:00 UTC, 1970-01-01,
 and returns a pointer to a
 26-character string
 of the form
@@ -211,4 +212,4 @@ will also be overwritten at the next call
 Avoid using out-of-range values with
 .I mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" @(#)newctime.3	7.12
+.\" @(#)newctime.3	7.13

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: time2posix.3,v 1.3 1996/08/19 08:34:52 tholo Exp $
+.\"	$OpenBSD: time2posix.3,v 1.4 1997/01/14 03:16:50 millert Exp $
 .TH TIME2POSIX 3
 .SH NAME
 time2posix, posix2time \- convert seconds since the Epoch
@@ -13,6 +13,7 @@ time2posix, posix2time \- convert seconds since the Epoch
 .B time_t posix2time(t)
 .B time_t t
 .PP
+.B cc ... -lz
 .fi
 .SH DESCRIPTION
 IEEE Standard 1003.1
@@ -116,4 +117,6 @@ difftime(3),
 localtime(3),
 mktime(3),
 time(3)
-.\" @(#)time2posix.3	7.3
+.\" @(#)time2posix.3	7.5
+.\" This file is in the public domain, so clarified as of
+.\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).

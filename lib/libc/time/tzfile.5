@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tzfile.5,v 1.3 1996/08/19 08:34:52 tholo Exp $
+.\"	$OpenBSD: tzfile.5,v 1.4 1997/01/14 03:16:51 millert Exp $
 .TH TZFILE 5
 .SH NAME
 tzfile \- time zone information
@@ -44,7 +44,7 @@ four-byte values of type
 sorted in ascending order.
 These values are written in ``standard'' byte order.
 Each is used as a transition time (as returned by
-.IR time (2))
+.IR time (3))
 at which the rules for computing local time change.
 Next come
 .I tzh_timecnt
@@ -132,4 +132,6 @@ is zero or the time argument is less than the first transition time recorded
 in the file.
 .SH SEE ALSO
 ctime(3)
-.\" @(#)tzfile.5	7.3
+.\" @(#)tzfile.5	7.5
+.\" This file is in the public domain, so clarified as of
+.\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).

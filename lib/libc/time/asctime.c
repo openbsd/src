@@ -1,5 +1,14 @@
+/*
+** This file is in the public domain, so clarified as of
+** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+*/
+
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: asctime.c,v 1.2 1996/08/19 08:34:47 tholo Exp $";
+#if 0
+static char	elsieid[] = "@(#)asctime.c	7.8";
+#else
+static char rcsid[] = "$OpenBSD: asctime.c,v 1.3 1997/01/14 03:16:42 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
