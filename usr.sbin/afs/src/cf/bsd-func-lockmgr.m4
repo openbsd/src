@@ -1,5 +1,5 @@
 dnl
-dnl $Id: bsd-func-lockmgr.m4,v 1.1 2000/09/11 14:40:44 art Exp $
+dnl $KTH: bsd-func-lockmgr.m4,v 1.3 2000/03/24 03:36:23 assar Exp $
 dnl
 
 AC_DEFUN(AC_BSD_FUNC_LOCKMGR, [

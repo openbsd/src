@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-RCSID("$Id: echo-n.c,v 1.1 2000/09/11 14:41:29 art Exp $");
+RCSID("$KTH: echo-n.c,v 1.1 1999/12/11 04:57:31 lha Exp $");
 
 int
 main (int argc, char **argv)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: main.c,v 1.3 2000/09/11 14:41:41 art Exp $");
+RCSID("$KTH: main.c,v 1.22 2000/10/16 22:01:45 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -61,6 +56,37 @@ int parse_errors;
 
 int yyparse(void);
 
+/*
+ * Return the basename of `s'.
+ * The result is malloc'ed.
+ */
+
+static char *
+ydr_basename (const char *s)
+{
+     const char *p, *q;
+     char *res;
+
+     p = strrchr (s, '/');
+     if (p == NULL)
+	  p = s;
+     else
+	  ++p;
+     q = strchr (p, '.');
+     if (q == NULL)
+	  q = s + strlen (s);
+     res = malloc (q - p + 1);
+     if (res == NULL)
+	 return NULL;
+     memmove (res, p, q - p);
+     res[q - p] = '\0';
+     return res;
+}
+
+/*
+ *
+ */
+
 int
 main (int argc, char **argv)
 {
@@ -78,10 +104,12 @@ main (int argc, char **argv)
 
     snprintf (tmp_filename, sizeof(tmp_filename),
 	      "ydr_tmp_%u.c", (unsigned)getpid());
-    foo = efopen (tmp_filename, "w");
-    filename = copy_basename (argv[argc - 1]);
+    foo = fopen (tmp_filename, "w");
+    if (foo == NULL)
+	err (1, "error opening %s", tmp_filename);
+    filename = ydr_basename (argv[argc - 1]);
     fprintf (foo, "#include \"%s\"\n", argv[argc - 1]);
-    efclose (foo);
+    fclose (foo);
 
     initsym ();
     init_generate (filename);

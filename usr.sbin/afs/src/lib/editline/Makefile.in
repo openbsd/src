@@ -1,10 +1,11 @@
 #
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:56 art Exp $
+# $KTH: Makefile.in,v 1.8.2.1 2001/05/28 11:35:50 mattiasa Exp $
 #
 
 SHELL = /bin/sh
 
 srcdir = @srcdir@
+top_builddir	= ../..
 VPATH = @srcdir@
 
 CC = @CC@
@@ -42,11 +43,11 @@ Wall:
 	make CFLAGS="-g -Wall -Wmissing-prototypes -Wmissing-declarations -D__USE_FIXED_PROTOTYPES__"
 
 .c.o:
-	$(CC) -c $(CPPFLAGS) $(DEFS) -I../../include -I$(srcdir) -I$(srcdir)/../roken $(CFLAGS) $(PICFLAGS) $<
+	$(CC) -c $(CPPFLAGS) $(DEFS) @INC_roken@ -I../../include -I$(srcdir) $(CFLAGS) $(PICFLAGS) $<
 
 install: all
 	$(MKINSTALLDIRS) $(DESTDIR)$(libdir); \
-	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)/$(LIB); \
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)/$(LIB);
 
 uninstall:
 	rm -f $(DESTDIR)$(libdir)/$(LIB)

@@ -1,4 +1,4 @@
-dnl $Id: broken-glob.m4,v 1.1 2000/09/11 14:40:44 art Exp $
+dnl $KTH: broken-glob.m4,v 1.1 1999/05/15 22:45:18 assar Exp $
 dnl
 dnl check for glob(3)
 dnl

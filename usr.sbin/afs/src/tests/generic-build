@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: generic-build,v 1.1 2000/09/11 14:41:30 art Exp $
+# $KTH: generic-build,v 1.5 2000/01/05 11:20:20 assar Exp $
 if test $# -ne 1 -a $# -ne 2; then
   echo "Usage: $0 file [directory]"
   exit 1

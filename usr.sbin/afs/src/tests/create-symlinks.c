@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -53,8 +48,12 @@
 #include <roken.h>
 
 #ifdef RCSID
-RCSID("$Id: create-symlinks.c,v 1.1 2000/09/11 14:41:28 art Exp $");
+RCSID("$KTH: create-symlinks.c,v 1.3 2000/10/12 00:26:03 lha Exp $");
 #endif
+
+#define CONTENT_STRING "kaka"
+
+static FILE *verbose_fp = NULL;
 
 static int
 creat_symlinks (int count)
@@ -62,15 +61,44 @@ creat_symlinks (int count)
     int ret;
     int i;
     
+    fprintf (verbose_fp, "creating:");
+
     for (i = 0; i < count; ++i) {
 	char num[17];
 
+	fprintf (verbose_fp, " c%d", i);
+	fflush (verbose_fp);
+
 	snprintf (num, sizeof(num), "%d", i);
 	
-	ret = symlink ("kaka", num);
+	ret = symlink (CONTENT_STRING, num);
 	if (ret < 0)
 	    err (1, "symlink %s", num);
     }
+    fprintf (verbose_fp, "\n");
+    return 0;
+}
+
+static int
+verify_contents (int count)
+{
+    int ret, i;
+    char file[MAXPATHLEN];
+    char content[MAXPATHLEN];
+    
+    fprintf (verbose_fp, "reading:");
+    for (i = 0; i < count; i++) {
+	fprintf (verbose_fp, " r%d", i); 
+	fflush (verbose_fp);
+
+	snprintf (file, sizeof(file), "%d", i);
+	ret = readlink (file, content, sizeof(content));
+	if (ret < 0)
+	    err (1, "readlink: %d", i);
+	if (strcmp (CONTENT_STRING, content) != 0)
+	    errx (1, "%s != %s", content, CONTENT_STRING);
+    }
+    fprintf (verbose_fp, "\n");
     return 0;
 }
 
@@ -92,9 +120,17 @@ main(int argc, char **argv)
     if (argc != 2)
 	usage (1);
 
+    verbose_fp = fdopen (4, "w");
+    if (verbose_fp == NULL) {
+	verbose_fp = fopen ("/dev/null", "w");
+	if (verbose_fp == NULL)
+	    err (1, "fopen");
+    }
+
     count = strtol (argv[1], &ptr, 0);
     if (count == 0 && ptr == argv[1])
 	errx (1, "'%s' not a number", argv[1]);
 
-    return creat_symlinks (count);
+    return creat_symlinks (count) ||
+	verify_contents(count);
 }

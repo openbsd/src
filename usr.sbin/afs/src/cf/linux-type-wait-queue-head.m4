@@ -1,5 +1,5 @@
 dnl
-dnl $Id: linux-type-wait-queue-head.m4,v 1.1 2000/09/11 14:40:50 art Exp $
+dnl $KTH: linux-type-wait-queue-head.m4,v 1.2 1999/05/16 16:38:36 assar Exp $
 dnl
 
 AC_DEFUN(AC_LINUX_TYPE_WAIT_QUEUE_HEAD_T, [

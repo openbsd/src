@@ -1,4 +1,4 @@
-/* $Id: rx_globs.h,v 1.2 2000/09/11 14:41:21 art Exp $ */
+/* $KTH: rx_globs.h,v 1.6 2000/10/08 17:48:15 assar Exp $ */
 
 /*
 ****************************************************************************
@@ -139,11 +139,6 @@ EXT osi_socket rx_socket;
 
 /* Port requested at rx_Init.  If this is zero, the actual port used will be different--but it will only be used for client operations.  If non-zero, server provided services may use the same port. */
 EXT u_short rx_port;
-
-/* 32-bit select Mask for rx_Listener.  We use 32 bits because IOMGR_Select only supports 32 */
-EXT fd_set rx_selectMask;
-EXT int rx_maxSocketNumber;	       /* Maximum socket number represented
-				        * in the select mask */
 
 /* This is actually the minimum number of packets that must remain free,
     overall, immediately after a packet of the requested class has been

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: bsd-func-vfs-getnewfsid.m4,v 1.1 2000/09/11 14:40:44 art Exp $
+dnl $KTH: bsd-func-vfs-getnewfsid.m4,v 1.2 2000/05/23 14:30:43 assar Exp $
 dnl
 
 AC_DEFUN(AC_BSD_FUNC_VFS_GETNEWFSID, [

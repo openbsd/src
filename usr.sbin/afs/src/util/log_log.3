@@ -1,5 +1,5 @@
 .\" Copyright (c) 2000 Kungliga Tekniska Högskolan
-.\" $Id: log_log.3,v 1.1 2000/09/11 14:41:39 art Exp $
+.\" $KTH: log_log.3,v 1.5 2000/09/04 05:34:16 lha Exp $
 .Dd August 24, 2000
 .Dt LOG_LOG
 .Os UTIL
@@ -78,6 +78,10 @@ will open a Log_method that all Log_units will log though, Log_method
 controls to what device the log is sent. Logging devices, passed in
 fname, are syslog, /dev/stderr, or a file.
 .Pp
+Options can be passes to the subsystem with an extra colon. Valid
+options are:
+.D1 syslog[:pid,no-delay,console,stderr[:facility]]
+.D1 {/dev/stderr,/file}[:notime]
 .Fn log_close
 closeses the Log_method and assosiated Log_units.
 .Pp

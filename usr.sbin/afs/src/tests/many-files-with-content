@@ -1,4 +1,4 @@
 #!/bin/sh
-# $Id: many-files-with-content,v 1.1 2000/09/11 14:41:31 art Exp $
+# $KTH: many-files-with-content,v 1.2 1999/10/08 02:53:39 assar Exp $
 
 $objdir/create-files 1000 10

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: check-kernel-funcs.m4,v 1.1 2000/09/11 14:40:46 art Exp $
+dnl $KTH: check-kernel-funcs.m4,v 1.2 1999/08/09 23:02:45 assar Exp $
 dnl
 
 dnl AC_CHECK_KERNEL_FUNCS(functions...)

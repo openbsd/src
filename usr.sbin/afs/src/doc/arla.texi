@@ -1,6 +1,10 @@
 \input texinfo @c -*- texinfo -*-
+@c Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
+
 @c %**start of header
-@c $Id: arla.texi,v 1.1 2000/09/11 14:40:52 art Exp $
+@c $KTH: arla.texi,v 1.40.2.7 2001/07/16 15:39:43 lha Exp $
 @setfilename arla.info
 @settitle ARLA
 @iftex
@@ -17,20 +21,29 @@
 @ifinfo
 @dircategory Arla
 @direntry
-* Arla: (arla).           Arla - The Free AFS Clone
+* Arla: (arla).           Arla - A Free AFS Implementation
 @end direntry
 @end ifinfo
 
 @c title page
 @titlepage
+@iftex
+@image{arla-logo}
+@sp 5
+@end iftex
+
+@ifnottex
 @title Arla
-@subtitle A Free AFS Clone from KTH
-@subtitle Edition 0.1, for version 0.34
-@subtitle 1999 - 2000
+@end ifnottex
+
+@subtitle A Free AFS implementation from KTH
+@subtitle Edition 0.3, for Release 0.35.5
+@subtitle 1999 - 2001
+
 @author Love Hörnquist-Åstrand
 @author Assar Westerlund
 @author Harald Barth
-@author last updated $Date: 2000/09/11 14:40:52 $
+@author last updated $KTH: 2001/07/16 15:39:43 $
 
 @comment This text will show up in the output of texi2html
 @def@fnotsupported{THIS TEXT MAY CONTAIN GARBLED OUTPUT BECAUSE THIS VIEW FORMAT DOES NOT SUPPORT TEXI FUNCTIONS}
@@ -38,9 +51,12 @@
 @def@copynext{@vskip 20pt plus 1fil@penalty-1000}
 @def@copyrightstart{}
 @def@copyrightend{}
+
 @page
 @copyrightstart
-Copyright (c) 1998 - 1999 Kungliga Tekniska Högskolan 
+@example
+
+Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan 
 (Royal Institute of Technology, Stockholm, Sweden).
 All rights reserved.
 
@@ -55,12 +71,7 @@ are met:
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
 
-3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-     This product includes software developed by Kungliga Tekniska
-     Högskolan and its contributors.
-
-4. Neither the name of the Institute nor the names of its contributors
+3. Neither the name of the Institute nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
 
@@ -76,7 +87,9 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 
+@end example
 @copynext
+@example
 
 Copyright (c) 1988, 1990, 1993
      The Regents of the University of California.  All rights reserved.
@@ -113,7 +126,9 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 
+@end example
 @copynext
+@example
 
 Copyright 1992 Simmule Turner and Rich Salz.  All rights reserved. 
 
@@ -137,7 +152,42 @@ to the following restrictions:
 
 4. This notice may not be removed or altered.
 
+
+@end example
 @copynext
+@example
+
+COPYRIGHT  (C)  1998
+THE REGENTS OF THE UNIVERSITY OF MICHIGAN
+ALL RIGHTS RESERVED
+
+PERMISSION IS GRANTED TO USE, COPY, CREATE DERIVATIVE WORKS 
+AND REDISTRIBUTE THIS SOFTWARE AND SUCH DERIVATIVE WORKS 
+FOR ANY PURPOSE, SO LONG AS THE NAME OF THE UNIVERSITY OF 
+MICHIGAN IS NOT USED IN ANY ADVERTISING OR PUBLICITY 
+PERTAINING TO THE USE OR DISTRIBUTION OF THIS SOFTWARE 
+WITHOUT SPECIFIC, WRITTEN PRIOR AUTHORIZATION.  IF THE 
+ABOVE COPYRIGHT NOTICE OR ANY OTHER IDENTIFICATION OF THE 
+UNIVERSITY OF MICHIGAN IS INCLUDED IN ANY COPY OF ANY 
+PORTION OF THIS SOFTWARE, THEN THE DISCLAIMER BELOW MUST 
+ALSO BE INCLUDED.
+
+THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION 
+FROM THE UNIVERSITY OF MICHIGAN AS TO ITS FITNESS FOR ANY 
+PURPOSE, AND WITHOUT WARRANTY BY THE UNIVERSITY OF 
+MICHIGAN OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING 
+WITHOUT LIMITATION THE IMPLIED WARRANTIES OF 
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE 
+REGENTS OF THE UNIVERSITY OF MICHIGAN SHALL NOT BE LIABLE 
+FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL, OR 
+CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING 
+OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN 
+IF IT HAS BEEN OR IS HEREAFTER ADVISED OF THE POSSIBILITY OF 
+SUCH DAMAGES.
+
+@end example
+@copynext
+@example
 
 /*
 ****************************************************************************
@@ -160,6 +210,7 @@ to the following restrictions:
 ****************************************************************************
 */
 
+@end example
 @copyrightend
 @end titlepage
 
@@ -182,41 +233,101 @@ to the following restrictions:
 
 Arla is a free AFS implementation from KTH.
 
+Please send comments (and fixes) on this manual and the arla programs to
+@email{arla-drinkers@@stacken.kth.se}.
+
 @end ifinfo
 
 @menu
-* Introduction::                
-* Description of AFS infrastructure::
-* Organization of data::
-* Parts of Arla::          
-* Debugging::
-* Porting::
-* Authors::
-* Oddities::
-* Arla timeline::
-* Acknowledgments::             
-@end menu
-@c * What is AFS::           
+* Introduction::                Introduction to Arla.
+* AFS infrastructure::		A description of the afs infrastructure.
+* Organization of data::	How diffrent data are organized in AFS.
+* AFS and the real world::	Common problems and their solutions.
+* Parts of Arla::		Description of diffrent parts of arla.
+* Debugging::			How to debug arla when its not working.
+* Porting::			That you need to know to port arla.
+* Authors::			The authors of arla.
+* Oddities::			Strange things that have happen to us.
+* Arla timeline::		Short timeline of arla.
+* Acknowledgments::             People that have helped us.
+* Index::             		Index.
 @c * Building and Installing::     
 @c * Unreleased parts of the arla suite::
-@c * Things that might be done better::  
+
+@detailmenu
+
+ --- The Detailed Node Listing ---
+
+* Introduction::
+* AFS infrastructure::
+
+How data and servers are organized in AFS.
+
+* Requirements::
+* Data organization::
+* Callbacks::
+* Volume management::
+* Relationship between pts uid and unix uid::
+
+How to cope with reality
+
+* NAT::
+* Samba::
+
+The parts of arla
+
+* How arla works::
+* The relation between Arlad and XFS::
+* The life of a file::
+* Tools and libs::
+* The files in arlad/::
+* pioctl and kafs::
+
+Yes, its doesn't work, lets debug.
+
+* Arlad::
+* Debugging LWP with GDB::
+* xfs::
+* xfs on linux::
+* Debugging techniques::
+* Kernel debuggers::
+* Darwin/MacOS X::
+
+Porting arla
+
+* Porting::
+* Porting user-space::
+* Porting XFS::
+
+Odd stuff you find when looking around
+
+* Oddities::
+
+Miscellaneous
+
+* Arla timeline::
+* Authors::
+* Acknowledgments::
+
+* Index::
+
+@end detailmenu
+@end menu
+
+@contents
 
 @include intro.texi
-@c @include whatisafs.texi
 @c @include install.texi
 @include afs-basics.texi
 @include storage.texi
+@include real-world.texi
 @include partsofarla.texi
-@c @include milko.texi
 @include debugging.texi
 @include porting.texi
 @include oddities.texi
 @include timeline.texi
 @include authors.texi
 @include ack.texi
-
-@c @shortcontents
-@contents
+@include index.texi
 
 @bye
-

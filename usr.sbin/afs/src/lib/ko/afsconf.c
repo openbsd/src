@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,8 +34,9 @@
 #include "ko_locl.h"
 #include "cellconfig.h"
 #include "ports.h"
+#include <log.h>
 
-RCSID("$Id: afsconf.c,v 1.1 2000/09/11 14:40:57 art Exp $");
+RCSID("$KTH: afsconf.c,v 1.5 2000/10/03 00:28:53 lha Exp $");
 
 /*
  * Currently only handles dir_path == NULL
@@ -50,13 +46,19 @@ struct afsconf_dir *
 afsconf_Open(const char *dir_path)
 {
     struct afsconf_dir *ret;
+    Log_method *method;
 
     assert (dir_path == NULL);
     ret = malloc (sizeof (*ret));
     if (ret == NULL)
 	return NULL;
-    cell_init (0);
+
+    method = log_open ("afsconf", "/dev/stderr");
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
     ports_init ();
+
     return ret;
 }
 

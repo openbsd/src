@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: hello-world.in,v 1.1 2000/09/11 14:41:30 art Exp $
+# $KTH: hello-world.in,v 1.1 1998/11/19 16:47:34 assar Exp $
 cat <<FOO > foo.c
 int main() { return 0; }
 FOO

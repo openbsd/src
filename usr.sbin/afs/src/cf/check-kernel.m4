@@ -1,5 +1,5 @@
 dnl
-dnl $Id: check-kernel.m4,v 1.1 2000/09/11 14:40:46 art Exp $
+dnl $KTH: check-kernel.m4,v 1.6.2.2 2001/04/27 11:43:40 ahltorp Exp $
 dnl
 
 dnl there are two different heuristics for doing the kernel tests
@@ -11,8 +11,14 @@ AC_DEFUN(AC_CHECK_KERNEL,
 [AC_MSG_CHECKING([for $1 in kernel])
 AC_CACHE_VAL($2,
 [
-if test "$target_os" = "macos10.0"; then
+if expr "$target_os" : "darwin" > /dev/null 2>&1; then
   if nm $KERNEL | egrep "\\<_?$1\\>" >/dev/null 2>&1; then
+    eval "$2=yes"
+  else
+    eval "$2=no"
+  fi
+elif expr "$target_os" : "osf" >/dev/null 2>&1; then
+  if nm  $KERNEL | egrep "^$1 " > /dev/null 2>&1; then
     eval "$2=yes"
   else
     eval "$2=no"

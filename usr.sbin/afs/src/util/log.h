@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: log.h,v 1.2 2000/09/11 14:41:39 art Exp $ */
+/* $KTH: log.h,v 1.8.2.1 2001/04/29 23:53:31 lha Exp $ */
 
 #ifndef _LOG_
 #define _LOG_
@@ -44,9 +39,9 @@
 #include <stdarg.h>
 #include <parse_units.h>
 
-#if HAVE_SYSLOG
-#include <syslog.h>
-#endif /* HAVE_SYSLOG */
+typedef enum {
+    LOG_CPU_USAGE = 1
+} log_flags;
 
 typedef struct log_method Log_method;
 typedef struct log_unit Log_unit;
@@ -55,7 +50,7 @@ typedef struct log_unit Log_unit;
  * Functions for handling logging
  */
 
-Log_method *log_open (char *progname, char *fname);
+Log_method *log_open (const char *progname, char *fname);
 /* Starting logging to `fname'.  Label all messages as coming from
  * `progname'. */
 
@@ -66,6 +61,9 @@ Log_unit *log_unit_init (Log_method *method, const char *name,
 			 unsigned long default_mask);
 
 void log_unit_free (Log_method *method, Log_unit *log);
+
+log_flags log_setflags(Log_method *log, log_flags flags);
+log_flags log_getflags(Log_method *log);
 
 void log_log (Log_unit *log, unsigned level, const char *fmt, ...)
 __attribute__((format (printf, 3, 4)))

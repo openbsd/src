@@ -1,5 +1,5 @@
 dnl
-dnl $Id: kernel-have-def.m4,v 1.1 2000/09/11 14:40:48 art Exp $
+dnl $KTH: kernel-have-def.m4,v 1.1.24.1 2001/04/16 23:07:57 lha Exp $
 dnl
 
 dnl AC_HAVE_KERNEL_DEF(includes, [struct|typedef])
@@ -13,7 +13,7 @@ cache_val=no)])
 if test "$cache_val" = yes; then
 	define(foo, translit(HAVE_DEF_$2, [a-z ], [A-Z_]))
 	AC_DEFINE(foo, 1, [Define if you have $2])
-	undefine(foo)
+	undefine([foo])
 fi
 undefine([cache_val])
 ])

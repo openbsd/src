@@ -1,5 +1,5 @@
-README for arla-0.34 ($Name:  $)
-$Id: README,v 1.3 2000/09/11 14:40:29 art Exp $
+README for arla-0.35.7 ($KTH: arla-0-35-7 $)
+$KTH: README,v 1.77.2.11 2002/02/25 02:35:01 lha Exp $
 
 1. What is arla?
 
@@ -8,8 +8,8 @@ Arla is a free AFS cache-manager implementation.
 2. Where do I find this file?
 
 This file is contained inside
-ftp://ftp.stacken.kth.se/pub/arla/arla-0.34.tar.gz
-(aka /afs/stacken.kth.se/ftp/pub/arla/arla-0.34.tar.gz).
+ftp://ftp.stacken.kth.se/pub/arla/arla-0.35.7.tar.gz
+(aka /afs/stacken.kth.se/ftp/pub/arla/arla-0.35.7.tar.gz).
 
 3. What is AFS?
 
@@ -23,15 +23,15 @@ There is kernel support (with different level of functionality) for
 the following operating systems:
 
 - FreeBSD 3.x, 4.,x, and 5.x
-- OpenBSD 2.2-2.7
+- OpenBSD 2.2-2.9
 - NetBSD 1.2, 1.3, 1.4, and 1.5
-- Linux 2.0.x, 2.1.x, 2.2.x, 2.3.x, 2.4.x
+- Linux 2.2.x, 2.3.x, 2.4.x
 - SunOS 4
 - Solaris 2.5, 2.6, 7, and 8
 - AIX 4.x
 - IRIX 6.x
-- Digital Unix 4.0, 5.0 (OSF/1)
-- Darwin (MacOS DP3)
+- Digital Unix 4.0, Compaq Tru64 5.0 (OSF/1)
+- Darwin 1.3 and 1.4, Mac OS X 10.0 and 10.1
 
 Userland only:
 - Ultrix 4.4
@@ -44,14 +44,17 @@ Some simple programs (amon, fs, klog, tokens, vos, udebug, and pts).
 
 An experimental AFS server called milko.
 
-5. What's the status or arla?
+5. What's the status of arla?
 
-This is a snapshot and pre-greek letters.
-
-Most of the functionality is there.  You can read and write files and
-directories, with or without authentication.  It's not as stable or
-high-performing as we would like, yet.  It only does whole-file
-caching, but that's probably good enough for now.
+- Working stable client (currently cacheing whole files)
+- Authentication (using kth-krb4 or any other krb4 implantation)
+- Used in production systems with OpenBSD, FreeBSD, NetBSD, Linux,
+  Mac OS X, Compaq Tru64.
+- Some administration programs (fs, vos, pts and bos)
+- An experimental AFS server (milko)
+- Graphical program, amon, for monitoring the state of the cache.
+- A graphical interface for managing ACLs
+- A configuration utility for Mac OS X
 
 6. What do I need to run arla?
 
@@ -65,9 +68,10 @@ If you want to use authentication, you will also need a Kerberos v4
 implementation.  We use and recommend the one at
 <http://www.pdc.kth.se/kth-krb/>.
 
-OpenBSD 2.3 and above already ships with kth-krb.  However, you'll
+OpenBSD 2.3 and above already ships with kth-krb.  On OpenBSD 2.3 only, you'll
 have to add the line 'AFS=yes' to /etc/mk.conf and rebuild libkafs and
-afslog.  (can be found in /usr/src/kerberosIV/{kafs,afslog}).
+afslog.  (can be found in /usr/src/kerberosIV/{kafs,afslog}) (versions
+since 2.3 have AFS=yes on by default, except for m88k).
 
 If you are using MIT-Kerberos or CNS Kerberos you can find a replacement
 for libkafs in http://andrew2.andrew.cmu.edu/dist/krbafs.html. Then you
@@ -131,17 +135,12 @@ OpenBSD on some architectures have serious problems with mmap.  If arlad
 doesn't seem to work om your system run configure with `--disable-mmap'.
 This problem has only been noticed on sun4m platforms.
 
+The same problem exists on Mac OS X 10.1 (Darwin 1.4). Use the
+--disable-mmap option.
+
 If you have problems with stale data cached or arlad is misbehaving a
 lot try zapping the entire cache directory (`/usr/arla/cache' per
 default) and restarting arlad.
-
-If you are using Digital's cc you should use the option -std1 (i.e.
-setting CC to "cc -std1" when runing configure).
-
-Solaris does not have an memcpy function in the kernel and gcc can
-sometimes generate calls to this function.  If you get unresolved
-symbol errors on memcpy, either compile with Sun's compiler or define
-memcpy in terms of bcopy.
 
 12. How can I help?
 

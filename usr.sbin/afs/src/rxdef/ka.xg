@@ -98,19 +98,22 @@ const  KALOCKED                                 = 180522;
 
 
 struct ka_CBS {
-    char Seq<>;
+    opaque Seq<>;
 };
 
 struct ka_BBS {
     int32_t MaxSeqLen;
-    char Seq<>;
+    opaque Seq<>;
 };
 
 struct EncryptionKey {
     char key[8];
 };
 
+const MAXKANAMELEN	= 64;
 #define MAXKANAMELEN	64
+const MAXKTCTICKETLEN = 344;
+const KA_LABELSIZE    = 4;
 
 typedef string kaname<MAXKANAMELEN>;
 
@@ -142,6 +145,7 @@ Authenticate (IN kaname name,
 	      IN kaname instance,
 	      IN Date start_time,
 	      IN Date end_time,
+	      IN ka_CBS *request,
 	      INOUT ka_BBS *answer) = 21;
 
 ChangePassword (IN kaname name,
@@ -174,4 +178,22 @@ GetEntry (IN kaname name,
 	  IN long major_version,
 	  OUT kaentryinfo *entry) = 8;
 
+
+package KAT_
+
+GetTicket_old (IN int32_t kvno,
+	       IN kaname auth_domain,
+	       IN struct ka_CBS *aticket,
+	       IN kaname name,
+	       IN kaname instance,
+	       IN struct ka_CBS *atimes,
+	       INOUT struct ka_BBS *oanswer) = 3;
+
+GetTicket (IN int32_t kvno,
+	   IN kaname auth_domain,
+	   IN struct ka_CBS *aticket,
+	   IN kaname name,
+	   IN kaname instance,
+	   IN struct ka_CBS *atimes,
+	   INOUT struct ka_BBS *oanswer) = 23;
 

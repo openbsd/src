@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -74,9 +69,9 @@
 
 #include <ropa.h>
 
-RCSID("$Id: ropa.c,v 1.1 2000/09/11 14:41:16 art Exp $");
+RCSID("$KTH: ropa.c,v 1.28 2000/12/04 19:34:30 lha Exp $");
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 #define DIAGNOSTIC 1
 #define DIAGNOSTIC_CLIENT 471114
 #define DIAGNOSTIC_CHECK_CLIENT(c) assert((c)->magic == DIAGNOSTIC_CLIENT)
@@ -93,12 +88,14 @@ RCSID("$Id: ropa.c,v 1.1 2000/09/11 14:41:16 art Exp $");
 #define DIAGNOSTIC_CHECK_CCPAIR(c)
 #endif
 
+#undef NO_CALLBACKS
 
 /*
  * Declarations
  */
 
 #define ROPA_STACKSIZE (16*1024)
+#define DEFAULT_TIMEOUT 600
 
 struct ropa_client;
 
@@ -112,14 +109,30 @@ struct ropa_addr {
     int		mtu;			/* */
 };
 
+typedef enum { ROPAC_FREE,	/* this entry is free for use */
+	       ROPAC_LOOKUP_U,	/* pending RXAFSCB_WhoAreYou */
+	       ROPAC_LOOKUP,	/* pending RXAFSCB_InitCallBackState */
+	       ROPAC_DEAD,	/* is client doesn't respond */
+	       ROPAC_PLAIN,	/* is a client w/o a UUID*/
+	       ROPAC_UUID	/* is a client w/ a UUID */
+} ropa_state_t;
+
+enum { 
+    ROPAF_LOOKUP = 0x1,	/* pending a lookup => set WAITING, wait on addr(c) */
+    ROPAF_WAITING = 0x2	/* wait on lookup to finish */
+};
+
 struct ropa_client {
 #ifdef DIAGNOSTIC
     int magic;				/* magic */
 #endif
+    ropa_state_t	state;
+    unsigned		flags;
     int			numberOfInterfaces;
     afsUUID		uuid;
     struct ropa_addr	addr[AFS_MAX_INTERFACE_ADDR];
     u_int16_t 		port;		/* port of client in network byte order */
+    struct rx_connection *conn;		/* connection to client */
     time_t		lastseen;	/* last got a message */
     List		*callbacks;	/* list of ccpairs */
     int			ref;		/* refence counter */
@@ -134,7 +147,6 @@ struct ropa_ccpair {			/* heap object */
     struct ropa_cb	*cb;		/* pointer to callback */
     Listitem		*cb_li;		/* pointer to li on callback */
     time_t		expire;		/* when this cb expire */
-    int32_t		version;	/* version of this callback */
     heap_ptr		heap;		/* heap pointer */
     Listitem	       	*li;		/* where on lru */
 };
@@ -153,18 +165,15 @@ static void break_callback (struct ropa_cb *cb,struct ropa_client *caller,
 			    Bool break_own);
 static void break_ccpair (struct ropa_ccpair *cc, Bool notify_clientp);
 static void break_client (struct ropa_client *c, Bool notify_clientp);
-static void create_callbacks (void);
-static void create_ccpairs (void);
+static void create_callbacks (unsigned n);
+static void create_ccpairs (unsigned n);
+static void create_clients (unsigned n);
 static int uuid_magic_eq (afsUUID *uuid1, afsUUID *uuid2);
 static void debug_print_callbacks(void);
 
 /*
  * Module variables
  */
-
-#define NUM_CLIENTS	100
-#define NUM_CALLBACKS	300
-#define NUM_CCPAIR	600
 
 #define ROPA_MTU       1500
 
@@ -175,18 +184,21 @@ static void debug_print_callbacks(void);
 static Hashtab *ht_clients_ip = NULL;
 static Hashtab *ht_clients_uuid = NULL;
 static Hashtab *ht_callbacks = NULL;
+static Hashtab *ht_ccpairs = NULL;
 /* least recently used on tail */
 static List *lru_clients = NULL;
 static List *lru_ccpair = NULL;
 static List *lru_callback = NULL;
-static unsigned long num_clients = 0;
-static unsigned long num_callbacks = 0;
-static unsigned long num_ccpair = 0;
+static unsigned num_clients = 0;
+static unsigned num_callbacks = 0;
+static unsigned num_ccpair = 0;
 
 static Heap *heap_ccpairs = NULL;
 static PROCESS cleaner_pid;
 
 static unsigned debuglevel;
+
+afsUUID server_uuid;
 
 /*
  *
@@ -291,12 +303,39 @@ callbacks_hash (void *p)
 	c->fid.Unique;
 }
 
+
+/*
+ * 
+ */
+
+static int
+ccpairs_cmp (void *p1, void *p2)
+{
+    struct ropa_ccpair *c1 = (struct ropa_ccpair *) p1;
+    struct ropa_ccpair *c2 = (struct ropa_ccpair *) p2;
+
+    return c1->cb - c2->cb
+	|| c1->client - c2->client;
+}
+
+/*
+ *
+ */
+
+static unsigned
+ccpairs_hash (void *p)
+{
+    struct ropa_ccpair *c = (struct ropa_ccpair *) p;
+    
+    return (unsigned) c->client + callbacks_hash (c->cb);
+}
+
 /*
  *
  */
 
 static int
-ccpair_cmp (const void *p1, const void *p2)
+ccpair_cmp_time (const void *p1, const void *p2)
 {
     struct ropa_ccpair *c1 = (struct ropa_ccpair *) p1;
     struct ropa_ccpair *c2 = (struct ropa_ccpair *) p2;
@@ -312,7 +351,11 @@ static Bool
 client_inuse_p (struct ropa_client *c)
 {
     assert (c);
-    return c->port == 0 ? FALSE : TRUE ;
+    if (c->state == ROPAC_FREE)
+	return FALSE;
+    if (c->state == ROPAC_DEAD && listemptyp(c->callbacks))
+	return FALSE;
+    return TRUE;
 }
 
 /*
@@ -342,17 +385,17 @@ ccpairs_inuse_p (struct ropa_ccpair *cc)
  */
 
 static void
-create_clients (void)
+create_clients (unsigned n)
 {
     struct ropa_client *c;
     unsigned long i;
 
-    c = malloc (NUM_CLIENTS * sizeof (*c));
+    c = malloc (n * sizeof (*c));
     if (c == NULL)
 	err (1, "create_clients: malloc");
-    memset (c, 0, NUM_CLIENTS * sizeof (*c));
+    memset (c, 0, n * sizeof (*c));
 
-    for (i = 0 ; i < NUM_CLIENTS; i++) {
+    for (i = 0 ; i < n; i++) {
 #ifdef DIAGNOSTIC
 	c[i].magic = DIAGNOSTIC_CLIENT;
 	{
@@ -368,9 +411,10 @@ create_clients (void)
 	if (c[i].callbacks == NULL)
 	    err (1, "create_clients: listnew");
 	c[i].ref = 0;
+	c[i].state = ROPAC_FREE;
 	c[i].li = listaddtail (lru_clients, &c[i]);
     }
-    num_clients += NUM_CLIENTS;
+    num_clients += n;
 }
 
 /*
@@ -378,17 +422,17 @@ create_clients (void)
  */
 
 static void
-create_callbacks (void)
+create_callbacks (unsigned n)
 {
     struct ropa_cb *c;
     int i;
 
-    c = malloc (NUM_CALLBACKS * sizeof (*c));
+    c = malloc (n * sizeof (*c));
     if (c == NULL)
 	err (1, "create_callbacks: malloc");
-    memset (c, 0, NUM_CALLBACKS * sizeof (*c));
+    memset (c, 0, n * sizeof (*c));
 
-    for (i = 0; i < NUM_CALLBACKS ; i++) {
+    for (i = 0; i < n ; i++) {
 #ifdef DIAGNOSTIC
 	c[i].magic = DIAGNOSTIC_CALLBACK;
 #endif
@@ -397,31 +441,31 @@ create_callbacks (void)
 	    err (1, "create_callbacks: listnew");
 	c[i].li = listaddtail (lru_callback, &c[i]);
     }
-    num_callbacks += NUM_CALLBACKS;
+    num_callbacks += n;
 }
 
 /*
  *
  */
 
-void
-create_ccpairs (void) 
+static void
+create_ccpairs (unsigned n) 
 {
     struct ropa_ccpair *c;
     int i;
 
-    c = malloc (NUM_CCPAIR * sizeof (*c));
+    c = malloc (n * sizeof (*c));
     if (c == NULL)
 	err (1, "create_ccpairs: malloc");
-    memset (c, 0, NUM_CCPAIR * sizeof (*c));
+    memset (c, 0, n * sizeof (*c));
 
-    for (i = 0; i < NUM_CCPAIR ; i++) {
+    for (i = 0; i < n ; i++) {
 #ifdef DIAGNOSTIC
 	c[i].magic = DIAGNOSTIC_CCPAIR;
 #endif
 	c[i].li = listaddtail (lru_ccpair, &c[i]);
     }
-    num_ccpair += NUM_CCPAIR;
+    num_ccpair += n;
 }
 
 /*
@@ -471,193 +515,14 @@ clear_addr (struct ropa_addr *addr)
     addr->subnetmask	= 0;
     addr->mtu		= 0;
 }
+
 /*
- *
+ * Update `c' with new host information.
  */
 
 static void
-client_deref (struct ropa_client *c)
-{
-    int i, ret;
-
-    c->ref--;
-
-    if (c->ref == 0) {
-	for (i = 0 ; i < c->numberOfInterfaces ; i++) {
-	    int ret = hashtabdel (ht_clients_ip, &c->addr[i]);
-	    assert (ret == 0);
-	    clear_addr (&c->addr[i]);
-	}
-	c->numberOfInterfaces = 0;
-	c->port = 0;
-
-	ret = hashtabdel (ht_clients_uuid, c);
-	assert (ret == 0);
-	listdel (lru_clients, c->li);
-	c->li = listaddtail (lru_clients, c);
-    }
-}
-
-/*
- *
- */
-
-static void
-callback_deref (struct ropa_cb *cb)
-{
-    cb->ref--;
-
-    mlog_log (MDEBROPA, "cb_deref: %x.%x.%x (%d)",
-		cb->fid.Volume, cb->fid.Vnode, cb->fid.Unique, cb->ref);
-
-    if (cb->ref == 0) {
-	int ret = hashtabdel (ht_callbacks, cb);
-
-	mlog_log (MDEBROPA, "cb_deref: removing %x.%x.%x",
-		cb->fid.Volume, cb->fid.Vnode, cb->fid.Unique);
-
-	assert (ret == 0);
-
-	if (cb->li) 
-	    listdel (lru_callback, cb->li);
-
-	assert (listemptyp (cb->ccpairs));
-	memset (&cb->fid, 0, sizeof(cb->fid));
-	cb->li = listaddtail (lru_callback, cb);
-    }
-}
-
-/*
- * 
- */
-
-struct find_client_s {
-    struct ropa_ccpair *cc;
-    struct ropa_client *c;
-};
-
-static Bool
-find_client (List *list, Listitem *li, void *arg)
-{
-    struct find_client_s *fc = (struct find_client_s *)arg;
-    struct ropa_ccpair *cc = listdata (li);
-
-    mlog_log (MDEBROPA, "\tclient fc->c = 0x%x cc = 0x%x cc->client = 0x%d",
-	      fc->c, cc, cc == NULL ? 0 : cc->client); 
-    if (cc == NULL)
-	return FALSE;
-    if (cc->client == fc->c) {
-	fc->cc = cc;
-	return TRUE;
-    }
-    return FALSE;
-}
-
-static struct ropa_ccpair *
-add_client (struct ropa_cb *cb, struct ropa_client *c)
-{
-    struct timeval tv;
-    struct ropa_ccpair *cc;
-    struct find_client_s fc;
-
-    assert (cb && c);
-
-    fc.c = c;
-    fc.cc = NULL;
-    listiter (cb->ccpairs, find_client, &fc);
-    if (fc.cc) {
-	listdel (lru_ccpair, fc.cc->li);
-	fc.cc->li = listaddhead (lru_ccpair, fc.cc);
-	return fc.cc;
-    }
-
-    /* The reverse of these are in break_ccpair */
-    callback_ref (cb);
-    client_ref (c);
-
-    cc = listdeltail (lru_ccpair);
-    DIAGNOSTIC_CHECK_CCPAIR(cc);    
-    cc->li = NULL;
-
-    if (ccpairs_inuse_p (cc))
-	break_ccpair (cc, TRUE);
-
-    /* XXX  do it for real */
-    gettimeofday(&tv, NULL);
-    cc->expire = tv.tv_sec + 3600;
-    cc->version += 1;
-    
-    heap_insert (heap_ccpairs, cc, &cc->heap);
-    LWP_NoYieldSignal (heap_ccpairs);
-    cc->cb_li = listaddtail (cb->ccpairs, cc);
-    
-    cc->client = c;
-    cc->cb = cb;
-    cc->li = listaddhead (lru_ccpair, cc);
-
-    mlog_log (MDEBROPA, "add_client: added %x to callback %x.%x.%x",
-	    c->addr[0].addr_in, cb->fid.Volume, cb->fid.Vnode, cb->fid.Unique);
-
-    return cc;
-}
-
-/*
- *
- */
-
-static void
-uuid_init_simple (afsUUID *uuid, u_int32_t host)
-{
-    uuid->node[0] = 0xff & host;
-    uuid->node[1] = 0xff & (host >> 8);
-    uuid->node[2] = 0xff & (host >> 16);
-    uuid->node[3] = 0xff & (host >> 24);
-    uuid->node[4] = 0xaa;
-    uuid->node[5] = 0x77;
-}
-
-/*
- *
- */
-
-static struct ropa_client *
-client_query (u_int32_t host, u_int16_t port)
-{
-    struct ropa_client ckey;
-    struct ropa_addr *addr;
-    ckey.numberOfInterfaces = 1;
-    ckey.addr[0].c= &ckey;
-    ckey.addr[0].addr_in = host;
-    ckey.port = port;
-    addr = hashtabsearch (ht_clients_ip, &ckey.addr[0]);
-    if (addr) {
-	assert (addr->c->numberOfInterfaces);
-	return addr->c;
-    }
-    return NULL;
-}
-
-/*
- *
- */
-
-#if 0
-static struct ropa_client *
-uuid_query_simple (u_int32_t host)
-{
-    struct ropa_client ckey;
-    uuid_init_simple (&ckey.uuid, host);
-    return hashtabsearch (ht_clients_uuid, &ckey);
-}
-#endif
-
-/*
- *
- */
-
-static void
-client_update_interfaces (struct ropa_client *c, 
-                         u_int32_t host, interfaceAddr *addr)
+client_update_interfaces (struct ropa_client *c, u_int32_t host,
+			  u_int16_t port, interfaceAddr *addr)
 {
     int i;
     int found_addr = 0;
@@ -695,20 +560,28 @@ client_update_interfaces (struct ropa_client *c,
 }
 
 /*
+ * Initialize the client `c' with `host'/`port' (or use `addr' if that
+ * is available). Add the client to hashtables.
  *
+ * Note that this function can be called more then one time on the
+ * same client to update the address/uuid information.
  */
 
 static void
 client_init (struct ropa_client *c, u_int32_t host, u_int16_t port,
 	     afsUUID *uuid, interfaceAddr *addr)
 {
-    assert (c->numberOfInterfaces == 0);
-
-    c->ref = 0;
     c->port = port;
     if (addr) {
-	client_update_interfaces (c, host, addr);
+	client_update_interfaces (c, host, port, addr);
     } else {
+	int i;
+
+	for (i = 0; i < c->numberOfInterfaces; i++) {
+	    hashtabdel (ht_clients_ip, &c->addr[i]);
+	    DIAGNOSTIC_CHECK_ADDR(&c->addr[i]);
+	}
+
 	c->numberOfInterfaces = 1;
 	DIAGNOSTIC_CHECK_ADDR(&c->addr[0]);
 	c->addr[0].c = c;
@@ -719,15 +592,335 @@ client_init (struct ropa_client *c, u_int32_t host, u_int16_t port,
     }
     if (uuid) {
 	c->uuid = *uuid;
-    } else {
-	uuid_init_simple (&c->uuid, host);
+	hashtabadd (ht_clients_uuid, c);
     }
-    hashtabadd (ht_clients_uuid, c);
-
 }
 
 /*
- * XXX race
+ * Free client `c' and remove from alla data-structures.
+ */
+
+static void
+disconnect_client (struct ropa_client *c)
+{
+    int ret;
+    int i;
+
+    assert (c->ref == 0);
+
+    if (c->li) {
+	listdel (lru_clients, c->li);
+	c->li = NULL;
+    }
+
+    for (i = 0 ; i < c->numberOfInterfaces ; i++) {
+	int ret = hashtabdel (ht_clients_ip, &c->addr[i]);
+	assert (ret == 0);
+	clear_addr (&c->addr[i]);
+    }
+    c->numberOfInterfaces = 0;
+    c->port = 0;
+    c->state = ROPAC_FREE;
+    
+    ret = hashtabdel (ht_clients_uuid, c);
+    assert (ret == 0);
+    c->li = listaddtail (lru_clients, c);
+}
+
+/*
+ *
+ */
+
+static void
+client_deref (struct ropa_client *c)
+{
+    c->ref--;
+
+    if (c->ref == 0)
+	disconnect_client (c);
+}
+
+/*
+ *
+ */
+
+static void
+callback_deref (struct ropa_cb *cb)
+{
+    cb->ref--;
+
+    mlog_log (MDEBROPA, "cb_deref: %x.%x.%x (%d)",
+		cb->fid.Volume, cb->fid.Vnode, cb->fid.Unique, cb->ref);
+
+    if (cb->ref == 0) {
+	int ret = hashtabdel (ht_callbacks, cb);
+
+	mlog_log (MDEBROPA, "cb_deref: removing %x.%x.%x",
+		cb->fid.Volume, cb->fid.Vnode, cb->fid.Unique);
+
+	assert (ret == 0);
+
+	if (cb->li) 
+	    listdel (lru_callback, cb->li);
+
+	assert (listemptyp (cb->ccpairs));
+	memset (&cb->fid, 0, sizeof(cb->fid));
+	cb->li = listaddtail (lru_callback, cb);
+    }
+}
+
+/*
+ * 
+ */
+
+static struct ropa_ccpair *
+add_client (struct ropa_cb *cb, struct ropa_client *c)
+{
+    struct timeval tv;
+    struct ropa_ccpair cckey, *cc;
+
+    assert (cb && c);
+
+    cckey.client = c;
+    cckey.cb = cb;
+    
+    cc = hashtabsearch (ht_ccpairs, &cckey);
+
+    if (cc) {
+	listdel (lru_ccpair, cc->li);
+	cc->li = listaddhead (lru_ccpair, cc);
+	return cc;
+    }
+
+    /* The reverse of these are in break_ccpair */
+    callback_ref (cb);
+    client_ref (c);
+
+    cc = listdeltail (lru_ccpair);
+    DIAGNOSTIC_CHECK_CCPAIR(cc);    
+    cc->li = NULL;
+
+    if (ccpairs_inuse_p (cc))
+	break_ccpair (cc, TRUE);
+
+    /* XXX  do it for real */
+    gettimeofday(&tv, NULL);
+    cc->expire = tv.tv_sec + 3600;
+    
+    heap_insert (heap_ccpairs, cc, &cc->heap);
+    LWP_NoYieldSignal (heap_ccpairs);
+    cc->cb_li = listaddtail (cb->ccpairs, cc);
+    
+    cc->client = c;
+    cc->cb = cb;
+    cc->li = listaddhead (lru_ccpair, cc);
+    hashtabadd (ht_ccpairs, cc);
+
+    mlog_log (MDEBROPA, "add_client: added %x to callback %x.%x.%x",
+	    c->addr[0].addr_in, cb->fid.Volume, cb->fid.Vnode, cb->fid.Unique);
+
+    return cc;
+}
+
+/*
+ *
+ */
+
+static void
+uuid_init_simple (afsUUID *uuid, u_int32_t host)
+{
+    uuid->node[0] = 0xff & host;
+    uuid->node[1] = 0xff & (host >> 8);
+    uuid->node[2] = 0xff & (host >> 16);
+    uuid->node[3] = 0xff & (host >> 24);
+    uuid->node[4] = 0xaa;
+    uuid->node[5] = 0x77;
+}
+
+/*
+ *
+ */
+
+static struct ropa_client *
+client_query_notalkback (u_int32_t host, u_int16_t port)
+{
+    struct ropa_client ckey;
+    struct ropa_addr *addr;
+    ckey.numberOfInterfaces = 1;
+    ckey.addr[0].c= &ckey;
+    ckey.addr[0].addr_in = host;
+    ckey.port = port;
+    addr = hashtabsearch (ht_clients_ip, &ckey.addr[0]);
+    if (addr) {
+	assert (addr->c->numberOfInterfaces);
+	return addr->c;
+    }
+    return NULL;
+}
+
+/*
+ *
+ */
+
+static struct ropa_client *
+obtain_client (void)
+{
+    struct ropa_client *c;
+
+    c = listdeltail (lru_clients);
+    DIAGNOSTIC_CHECK_CLIENT(c);
+    c->li = NULL;
+    if (client_inuse_p (c))
+	break_client (c, TRUE);
+
+    if (c->li) {
+	listdel(lru_clients, c->li);
+	c->li = NULL;
+    }
+    return c;
+}
+
+/*
+ *
+ */
+
+static struct ropa_client *
+client_query (u_int32_t host, u_int16_t port)
+{
+    struct ropa_client *c, *c_new;
+    int ret;
+
+    c = client_query_notalkback(host, port);
+    if (c == NULL) {
+	interfaceAddr remote;
+	struct rx_connection *conn = NULL;
+
+	c = obtain_client();
+	assert (c->state == ROPAC_FREE && c->li == NULL);
+	c->state = ROPAC_LOOKUP_U;
+	c->flags |= ROPAF_LOOKUP;
+	client_init (c, host, port, NULL, NULL);
+	
+	conn = rx_NewConnection (host, port, CM_SERVICE_ID,
+				 rxnull_NewClientSecurityObject(),
+				 0);
+	if (conn == NULL) {
+	    abort(); /* XXX: free c */
+	    return NULL;
+	}
+    retry:
+	switch (c->state) {
+	case ROPAC_DEAD:
+	    c->li = listaddtail (lru_clients, c);
+	    ret = ENETDOWN;
+	    break;
+	case ROPAC_LOOKUP_U:
+	    ret = RXAFSCB_WhoAreYou (conn, &remote);
+	    if (ret == RXGEN_OPCODE) {
+		c->state = ROPAC_LOOKUP;
+		goto retry;
+	    } else if (ret == RX_CALL_DEAD) {
+		c->state = ROPAC_DEAD;
+		goto retry;
+	    } else {
+		struct ropa_client ckey;
+		
+		ckey.uuid = remote.uuid;
+		c_new = hashtabsearch (ht_clients_uuid, &ckey);
+		if (c_new == NULL) {
+		    client_init (c, host, port, &remote.uuid, NULL);
+		    ret = RXAFSCB_InitCallBackState3(conn, &server_uuid);
+		} else {
+		    client_update_interfaces (c_new, host, port, &remote);
+		    disconnect_client (c);
+		    c = c_new;
+		    listdel(lru_clients, c->li);
+		    c->li = NULL;
+		}
+	    }
+	    break;
+	case ROPAC_LOOKUP: {
+	    afsUUID uuid;
+	    ret = RXAFSCB_InitCallBackState(conn);
+	    if (ret == RX_CALL_DEAD) {
+		c->state = ROPAC_DEAD;
+		goto retry;
+	    }
+	    uuid_init_simple (&uuid, host);
+	    client_init (c, host, port, &uuid, NULL);
+	    break;
+	}
+	default:
+	    abort();
+	}
+	
+	rx_DestroyConnection (conn);
+	
+	if ((c->flags & ROPAF_WAITING) != 0)
+	    LWP_NoYieldSignal (c);
+	c->flags &= ~(ROPAF_LOOKUP|ROPAF_WAITING);
+
+	if (ret) {
+	    assert (c->li != NULL);
+	    return NULL;
+	}
+
+	assert (c->li == NULL);
+	c->li = listaddhead (lru_clients, c);
+
+    } else { /* c != NULL */
+	if ((c->flags & ROPAF_LOOKUP) != 0) {
+	    c->flags |= ROPAF_WAITING;
+	    LWP_WaitProcess (c);
+	}
+	assert (c->li != NULL);
+    }
+
+    return c;
+}
+
+/*
+ *
+ */
+
+#if 0
+static struct ropa_client *
+uuid_query_simple (u_int32_t host)
+{
+    struct ropa_client ckey;
+    uuid_init_simple (&ckey.uuid, host);
+    return hashtabsearch (ht_clients_uuid, &ckey);
+}
+#endif
+
+/*
+ * Update `callback' of `type' to expire at `time'.
+ */
+
+static void
+update_callback_time (int32_t time, AFSCallBack *callback, int32_t type)
+{
+    callback->CallBackVersion = CALLBACK_VERSION;
+    callback->ExpirationTime = time;
+    callback->CallBackType = type;
+}
+
+/*
+ * Update the `callback' of `type' from `cc'.
+ */
+
+static void
+update_callback (struct ropa_ccpair *cc, AFSCallBack *callback, int32_t type)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    update_callback_time (cc->expire - tv.tv_sec, callback, type);
+}
+    
+
+/*
+ * ropa_getcallback will obtain a callback for the socketpair
+ * `host'/`port' and `fid', then result is returned in `callback'.
  */
 
 int
@@ -737,100 +930,26 @@ ropa_getcallback (u_int32_t host, u_int16_t port, const struct AFSFid *fid,
     struct ropa_client *c;
     struct ropa_cb cbkey, *cb;
     struct ropa_ccpair *cc ;
-    int ret;
 
     debug_print_callbacks();
 
     c = client_query (host, port);
     if (c == NULL) {
-	interfaceAddr remote;
-	struct rx_connection *conn;
-	
-	conn = rx_NewConnection (host, port, CM_SERVICE_ID,
-				 rxnull_NewClientSecurityObject(),
-				 0);
-	
-	ret = RXAFSCB_WhoAreYou (conn, &remote);
-    
-	/* XXX race, entry can be found, and inserted by other thread */
+	mlog_log (MDEBROPA, "ropa_getcallback: didn't find client %x/%d",
+		  host, port);
+	update_callback_time (DEFAULT_TIMEOUT, callback, CBSHARED);
+	return 0;
+    }
 
-	if (ret == RX_CALL_DEAD) {
-	    rx_DestroyConnection (conn);
-	    return ENETDOWN;
-	} else if (ret == RXGEN_OPCODE) {
-	    /*
-	     * This is an new client that doen't support  WhoAreYou.
-	     * Lets add it after a InitCallbackState
-	     */
-
-	    ret = RXAFSCB_InitCallBackState(conn);
-	    /* XXX race, entry can be found, and inserted by other thread */
-	    rx_DestroyConnection (conn);
-	    if (ret)
-		return ret;
-
-	    c = listdeltail (lru_clients);
-	    DIAGNOSTIC_CHECK_CLIENT(c);
-	    c->li = NULL;
-	    if (client_inuse_p (c))
-		break_client (c, TRUE);
-	    /* XXX race, entry can be found, and inserted by other thread */
-
-	    client_init (c, host, port, NULL, NULL);
-
-	    c->li = listaddhead (lru_clients, c);
-
-	} else if (ret == 0) {
-	    struct ropa_client ckey;
-	    ckey.uuid = remote.uuid;
-	    c = hashtabsearch (ht_clients_uuid, &ckey);
-	    if (c == NULL) {
-		afsUUID uuid;
-
-		/* 
-		 * This is a new clint that support WhoAreYou
-		 * Lets add it after a InitCallbackState3.
-		 */
-
-		c = listdeltail (lru_clients);
-		DIAGNOSTIC_CHECK_CLIENT(c);
-		if (client_inuse_p (c))
-		    break_client (c, TRUE);
-		/* XXX race, entry can be found, and inserted by other thread */
-
-		ret = RXAFSCB_InitCallBackState3 (conn, &uuid);
-		rx_DestroyConnection (conn);
-		if (ret != 0) {
-		    c->li = listaddtail (lru_clients, c);
-		    return ENETDOWN;
-		}
-		/* XXX race, entry can be found, and inserted by other thread */
-		/* XXX check uuid */
-
-		client_init (c, host, port, &remote.uuid, &remote);
-		c->li = listaddhead (lru_clients, c);
-
-		mlog_log (MDEBROPA, "ropa_getcb: new client %x:%x", c, host);
-	    } else {
-		/*
-		 * We didn't find the client in the ip-hash, but the
-		 * uuid hash, it have changed addresses. XXX If it's a bad
-		 * client, break outstanding callbacks.
-		 */
-		
-		client_update_interfaces (c, host, &remote);
-
-		mlog_log (MDEBROPA, "ropa_getcb: updated %x", c);
+    /*
+     * At this point the client should be firmly set
+     * in the ropa client database.
+     */
 
 #if 0
-		if (c->have_outstanding_callbacks)
-		    break_outstanding_callbacks (c);
+    if (c->have_outstanding_callbacks)
+	break_outstanding_callbacks (c);
 #endif
-	    }
-	} else {
-	    return ENETDOWN; /* XXX some unknown error */
-	}
-    }
 
     cbkey.fid = *fid;
 
@@ -863,9 +982,7 @@ ropa_getcallback (u_int32_t host, u_int16_t port, const struct AFSFid *fid,
 
     callback_deref (cb);
 
-    callback->CallBackVersion = cc->version;
-    callback->ExpirationTime = cc->expire;
-    callback->CallBackType = CBSHARED;
+    update_callback (cc, callback, CBSHARED);
 
     debug_print_callbacks();
 
@@ -879,28 +996,37 @@ ropa_getcallback (u_int32_t host, u_int16_t port, const struct AFSFid *fid,
 static int
 notify_client (struct ropa_client *c, AFSCBFids *fids, AFSCBs *cbs)
 {
-    struct rx_connection *conn;
-    u_int16_t port = c->port;
+#ifdef NO_CALLBACKS
+    return 0;
+#else
     int i, ret;
-
+    if (c->conn) {
+	ret = RXAFSCB_CallBack (c->conn, fids, cbs);
+	if (ret == 0)
+	    return ret;
+    }
     for (i = 0; i < c->numberOfInterfaces ; i++) {
+	u_int16_t port = c->port;
 	DIAGNOSTIC_CHECK_ADDR(&c->addr[i]);
-	conn = rx_NewConnection (c->addr[i].addr_in,
+
+	c->conn = rx_NewConnection (c->addr[i].addr_in,
 				 port,
 				 CM_SERVICE_ID,
 				 rxnull_NewClientSecurityObject(),
 				 0);
 	mlog_log (MDEBROPA, "notify_client: notifying %x", c->addr[i].addr_in);
 
-	ret = RXAFSCB_CallBack (conn, fids, cbs);
-	rx_DestroyConnection (conn);
-	if (ret == 0) 
+	ret = RXAFSCB_CallBack (c->conn, fids, cbs);
+	if (ret)
+	    rx_DestroyConnection (c->conn);
+	else
 	    break;
 
 	/* XXX warn */
     }
 
     return ret;
+#endif
 }
 
 /*
@@ -914,6 +1040,7 @@ break_ccpair (struct ropa_ccpair *cc, Bool notify_clientp)
 {
     AFSCBFids fids;
     AFSCBs cbs;
+    int ret;
 
     debug_print_callbacks();
 
@@ -923,15 +1050,9 @@ break_ccpair (struct ropa_ccpair *cc, Bool notify_clientp)
 	listdel (lru_ccpair, cc->li);
 
     if (notify_clientp) {
-	AFSCallBack callback;
-	callback.CallBackVersion = cc->version;
-	callback.ExpirationTime  = cc->expire;
-	callback.CallBackType    = CBDROPPED;
-
 	fids.len = 1;
 	fids.val = &cc->cb->fid;
-	cbs.len = 1;
-	cbs.val = &callback;
+	cbs.len = 0;
 	notify_client (cc->client, &fids, &cbs);
     }
 
@@ -941,12 +1062,15 @@ break_ccpair (struct ropa_ccpair *cc, Bool notify_clientp)
     }
 
     /* The reverse of these are in add_client */
+    ret = hashtabdel (ht_ccpairs, cc);
+    assert (ret == 0);
     client_deref (cc->client);
     cc->client = NULL;
     callback_deref (cc->cb);
     cc->cb = NULL;
 
     heap_remove (heap_ccpairs, cc->heap);
+    
     cc->li = listaddtail (lru_ccpair, cc);
 
     debug_print_callbacks();
@@ -989,7 +1113,8 @@ break_ccpairs (struct ropa_client *c, Bool notify_clientp)
     cbs.val = NULL;
     cbs.len = 0;
 
-    callback.CallBackType = CBDROPPED;
+    update_callback (cc, &callback, CBDROPPED);
+
     while ((cc = listdeltail (c->callbacks)) != NULL) {
 	DIAGNOSTIC_CHECK_CCPAIR(cc);
 	add_to_cb (&cc->cb->fid, &callback, &fids, &cbs);
@@ -1053,24 +1178,23 @@ ropa_break_callback (u_int32_t addr, u_int16_t port,
 {
     struct ropa_client *c = NULL;
     struct ropa_cb cbkey, *cb;
-
+    
     debug_print_callbacks();
-
-    c = client_query (addr, port);
+    
+    c = client_query_notalkback (addr, port);
     if (c == NULL) {
-	/* XXX warn */
-	mlog_log (MDEBROPA, "ropa_break_callback: didn't find client %x", addr);
-/* 	return;
-	XXX really no need to return, right? */
+	mlog_log (MDEBROPA, "ropa_break_callback: didn't find client %x/%d",
+		  addr, addr);
+ 	return;
     }
 
     cbkey.fid = *fid;
     
     cb = hashtabsearch (ht_callbacks, &cbkey);
     if (cb == NULL) {
-	/* XXX warn */
-	mlog_log (MDEBROPA, "ropa_break_callback: didn't find callback %x.%x.%x:%x",
-		fid->Volume, fid->Vnode, fid->Unique, addr);
+	mlog_log (MDEBROPA, "ropa_break_callback: "
+		  "didn't find callback %x.%x.%x:%x/%d",
+		fid->Volume, fid->Vnode, fid->Unique, addr, port);
 	return;
     }
 
@@ -1089,47 +1213,39 @@ ropa_drop_callbacks (u_int32_t addr, u_int16_t port,
 {
     struct ropa_client *c;
     struct ropa_cb cbkey, *cb;
-    struct find_client_s fc;
+    struct ropa_ccpair cckey, *cc;
     int i; 
     
     debug_print_callbacks();
 
-    if (a_cbfids_p->len > AFSCBMAX) {
-/*	|| a_cbfids_p->len > a_cbs_p->len) */
-	abort();
+    if (a_cbfids_p->len > AFSCBMAX)
 	return EINVAL;
-    }
 
     c = client_query (addr, port);
     if (c == NULL) {
-	/* XXX warn */
-	return EINVAL;
+	mlog_log (MDEBROPA, "ropa_drop_callbacks: didn't find client %x/%d",
+		  addr, port);
+	return 0;
     }
 
     for (i = 0; i < a_cbfids_p->len; i++) {
 	cbkey.fid = a_cbfids_p->val[i];
 	
 	cb = hashtabsearch (ht_callbacks, &cbkey);
-	if (cb == NULL) {
-	    /* XXX warn */
-/*	    return EINVAL; not necessary? */
-	} else {
-	    /* XXX check version */
+	if (cb != NULL) {
+	    cckey.client = c;
+	    cckey.cb = cb;
 	    
-	    fc.c = c;
-	    fc.cc = NULL;
-	    listiter (cb->ccpairs, find_client, &fc);
-	    if (fc.cc == NULL) {
-		/* XXX warn */
-/*	    return EINVAL; not necessary? */
-	    } else {
-		mlog_log (MDEBROPA, "ropa_drop: dropping %x.%x.%x:%x",
-			cb->fid.Volume, cb->fid.Vnode, cb->fid.Unique, addr);
-		break_ccpair (fc.cc, FALSE);
+	    cc = hashtabsearch (ht_ccpairs, &cckey);
+	    if (cc != NULL) {
+		mlog_log (MDEBROPA, "ropa_drop: dropping %x.%x.%x:%x/%d",
+			  cb->fid.Volume, cb->fid.Vnode, cb->fid.Unique, 
+			  addr, port);
+		break_ccpair (cc, FALSE);
 	    }
 	}
     }
-
+    
     debug_print_callbacks();
 
     return 0;
@@ -1203,20 +1319,26 @@ heapcleaner (char *arg)
  */
 
 int
-ropa_init (unsigned long num_callback, unsigned long num_clients)
+ropa_init (unsigned num_cb, unsigned num_cli, unsigned num_cc,
+	   unsigned hashsz_cb, unsigned hashsz_cli, unsigned hashsz_cc)
 {
-    ht_callbacks = hashtabnew (num_callback, callbacks_cmp, callbacks_hash);
+    ht_callbacks = hashtabnew (hashsz_cb, callbacks_cmp, callbacks_hash);
     if (ht_callbacks == NULL)
 	errx (1, "ropa_init: failed to create hashtable for callbacks");
 
-    ht_clients_ip = hashtabnew (num_clients, clients_cmp_ip, clients_hash_ip);
+    ht_clients_ip = hashtabnew (hashsz_cli, clients_cmp_ip, clients_hash_ip);
     if (ht_clients_ip == NULL)
 	errx (1, "ropa_init: failed to create hashtable for clients_ip");
 	
-    ht_clients_uuid = hashtabnew (num_clients, clients_cmp_uuid,
+    ht_clients_uuid = hashtabnew (hashsz_cli, clients_cmp_uuid,
 				  clients_hash_uuid);
     if (ht_clients_uuid == NULL)
 	errx (1, "ropa_init: failed to create hashtable for clients_uuid");
+
+    ht_ccpairs = hashtabnew (hashsz_cc, ccpairs_cmp,
+				  ccpairs_hash);
+    if (ht_ccpairs == NULL)
+	errx (1, "ropa_init: failed to create hashtable for ccpairs");
 	
     lru_clients = listnew ();
     if (lru_clients == NULL)
@@ -1230,13 +1352,15 @@ ropa_init (unsigned long num_callback, unsigned long num_clients)
     if (lru_callback == NULL)
 	errx (1, "ropa_init: failed to create list for callback");
 
-    heap_ccpairs = heap_new (NUM_CCPAIR, ccpair_cmp);
+    heap_ccpairs = heap_new (num_cc, ccpair_cmp_time);
     if (heap_ccpairs == NULL)
 	errx (1, "ropa_init: failed to create heap for ccpairs");
 
-    create_clients();
-    create_callbacks();
-    create_ccpairs();
+    create_clients(num_cli);
+    create_callbacks(num_cb);
+    create_ccpairs(num_cc);
+
+    uuid_init_simple (&server_uuid, 0x82ED305E);
 
     if (LWP_CreateProcess (heapcleaner, ROPA_STACKSIZE, 1,
 			   NULL, "heap-invalidator", &cleaner_pid))

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: check-kerberos.m4,v 1.1 2000/09/11 14:40:46 art Exp $
+dnl $KTH: check-kerberos.m4,v 1.38.2.2 2001/10/23 23:27:23 ahltorp Exp $
 dnl
 dnl Check if the dog is alive
 dnl
@@ -18,10 +18,12 @@ dnl Set:
 dnl   ac_cv_found_krb4=[yes|no]
 dnl   KRB4_{LIB|INC}_DIR
 dnl   KRB4_{LIB,INC}_FLAGS
+dnl   KRB4_LIB_LIBS
 dnl
 dnl   ac_cv_found_krb5=[yes|no]
 dnl   KRB5_{LIB|INC}_DIR
 dnl   KRB5_{LIB,INC}_FLAGS
+dnl   KRB5_LIB_LIBS
 dnl
 dnl
 dnl Check order
@@ -227,11 +229,11 @@ if test "X$ac_cv_found_krb5" = "Xyes"; then
   if test "X$KRB5_INC_DIR" != "X" ; then
     KRB5_INC_FLAGS="-I${KRB5_INC_DIR}"
   fi
-  KRB5_LIB_FLAGS=
   if test "X$KRB5_LIB_DIR" != "X" ; then
-     KRB5_LIB_FLAGS="-L${KRB5_LIB_DIR}"
+     KRB5_LIB_DIR="-L$KRB5_LIB_DIR"
   fi
-  KRB5_LIB_FLAGS="$KRB5_LIB_FLAGS -lkrb5 -lcom_err $ac_cv_krb5_extralib"
+  KRB5_LIB_LIBS="-lkrb5 -lcom_err $ac_cv_krb5_extralib"
+  KRB5_LIB_FLAGS="$KRB5_LIB_DIR $KRB5_LIB_LIBS"
 fi
 
 ]) dnl KRB5 VARS
@@ -245,11 +247,11 @@ if test "X$ac_cv_found_krb4" = "Xyes"; then
   if test "X$KRB4_INC_DIR" != "X" ; then
     KRB4_INC_FLAGS="-I${KRB4_INC_DIR}"
   fi
-  KRB4_LIB_FLAGS="$ac_cv_krb4_extralib"
+  KRB4_LIB_LIBS="$ac_cv_krb4_extralib"
   if test "X$KRB4_LIB_DIR" != "X" ; then
-     KRB4_LIB_FLAGS="-L${KRB4_LIB_DIR} ${KRB4_LIB_FLAGS}"
+     KRB4_LIB_DIR="-L${KRB4_LIB_DIR}"
   fi
-
+  KRB4_LIB_FLAGS="$KRB4_LIB_DIR $KRB4_LIB_LIBS"
 fi
 
 ]) dnl KRB4 VARS
@@ -283,6 +285,7 @@ ifelse(-1,regexp($1,5),[],[
 AC_SUBST(KRB5_LIB_DIR)
 AC_SUBST(KRB5_INC_DIR)
 AC_SUBST(KRB5_INC_FLAGS)
+AC_SUBST(KRB5_LIB_LIBS)
 AC_SUBST(KRB5_LIB_FLAGS)]) dnl END KRB5 - export
 
 dnl KRB 4 - export
@@ -298,6 +301,7 @@ fi
 AC_SUBST(KRB4_LIB_DIR)
 AC_SUBST(KRB4_INC_DIR)
 AC_SUBST(KRB4_INC_FLAGS)
+AC_SUBST(KRB4_LIB_LIBS)
 AC_SUBST(KRB4_LIB_FLAGS)]) dnl END KRB4 - export
 
 ]) dnl END AC_CHECK_KERBEROS end of this short function
@@ -351,11 +355,13 @@ dnl
 
 AC_DEFUN(AC_KRB4_LIB_WHERE1, [
 saved_LIBS=$LIBS
+ac_cv_found_krb4_lib=no
 for a in "-lkrb -ldes"			dnl kth-krb && mit-krb
-	 "-lkrb -ldes -lroken"		dnl kth-krb in nbsd
-	 "-lkrb -ldes -lroken -lcom_err" dnl kth-krb in nbsd for real
+	 "-lkrb -ldes $LIB_roken"		dnl kth-krb in nbsd
+	 "-lkrb -ldes $LIB_roken -lcom_err" dnl kth-krb in nbsd for real
 	 "-lkrb -ldes -lcom_err" 	dnl kth-krb in fbsd
 	 "-lkrb -ldes -lcom_err -lcrypt" dnl CNS q96 à la SCS
+	 "-lkrb -lcrypto" dnl kth-krb with openssl
 	; do
   LIBS="$saved_LIBS"
   if test "X$1" != "X"; then
@@ -367,21 +373,25 @@ for a in "-lkrb -ldes"			dnl kth-krb && mit-krb
   [ac_cv_found_krb4_lib=yes
    ac_cv_krb4_extralib="$a"
    ac_cv_found_krb4=yes
-   break],
-  [ac_cv_found_krb4_lib=no
+   break])
+done
+
    if test "$ac_cv_found_krb4_lib" = "no"; then
+  for a in "-lkrb4 -ldes425 -lkrb5 -lcom_err $ac_cv_krb5_extralib" dnl
+	   "-lkrb4 -ldes524 -lkrb5 -lcom_err $ac_cv_krb5_extralib" dnl
+	; do
+    LIBS="$saved_LIBS"
     if test "X$1" != "X"; then
-       LIBS="$saved_LIBS -L$1"
+      LIBS="$LIBS -L$1"
     fi
-    LIBS="$LIBS -lkrb4 -ldes425 -lkrb5 -lcom_err $ac_cv_krb5_extralib"
+    LIBS="$LIBS $a"
     AC_TRY_LINK([], 
     [dest_tkt();],
     [ac_cv_found_krb4_lib=compat
-     ac_cv_krb4_extralib="-lkrb4 -ldes425 -lkrb5 -lcom_err $ac_cv_krb5_extralib"
-     break],
-    [ac_cv_found_krb4_lib=no])
-   fi])
+     ac_cv_krb4_extralib="$a"
+     break])
 done
+fi
 LIBS=$saved_LIBS
 ])
 
@@ -438,12 +448,12 @@ AC_DEFUN(AC_KRB5_LIB_WHERE1, [
 saved_LIBS=$LIBS
 for a in "-lk5crypto -lcom_err" 		dnl new mit krb
 	 "-lcrypto -lcom_err" 			dnl old mit krb
-         "-lasn1 -ldes -lroken" 		dnl heimdal w/ roken w/o dep on db
-         "-lasn1 -ldes -lroken -lresolv" 	dnl heimdal w/ roken w/o dep on db w/ dep on resolv
-         "-lasn1 -lcrypto -lcom_err -lroken"	dnl heimdal-BSD w/ roken w/o dep on db
-	 "-lasn1 -ldes -lroken -ldb" 		dnl heimdal w/ roken w/ dep on db
-	 "-lasn1 -ldes -lroken -ldb -lresolv" 	dnl heimdal w/ roken w/ dep on db w/ dep on resolv
-	 "-lasn1 -lcrypto -lcom_err -lroken -ldb" dnl heimdal-BSD w/ roken w/ dep on db
+         "-lasn1 -ldes $LIB_roken" 		dnl heimdal w/ roken w/o dep on db
+         "-lasn1 -ldes $LIB_roken -lresolv" 	dnl heimdal w/ roken w/o dep on db w/ dep on resolv
+         "-lasn1 -lcrypto -lcom_err $LIB_roken"	dnl heimdal-BSD w/ roken w/o dep on db
+	 "-lasn1 -ldes $LIB_roken -ldb" 		dnl heimdal w/ roken w/ dep on db
+	 "-lasn1 -ldes $LIB_roken -ldb -lresolv" 	dnl heimdal w/ roken w/ dep on db w/ dep on resolv
+	 "-lasn1 -lcrypto -lcom_err $LIB_roken -ldb" dnl heimdal-BSD w/ roken w/ dep on db
 	; do
   LIBS="$saved_LIBS"
   if test "X$1" != "X"; then

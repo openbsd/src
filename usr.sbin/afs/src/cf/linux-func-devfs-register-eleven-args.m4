@@ -1,5 +1,5 @@
 dnl
-dnl $Id: linux-func-devfs-register-eleven-args.m4,v 1.1 2000/09/11 14:40:50 art Exp $
+dnl $KTH: linux-func-devfs-register-eleven-args.m4,v 1.1 1999/11/03 01:09:04 mackan Exp $
 dnl
 
 AC_DEFUN(AC_LINUX_FUNC_DEVFS_REGISTER_ELEVEN_ARGS, [

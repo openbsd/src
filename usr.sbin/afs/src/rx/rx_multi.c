@@ -21,7 +21,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$Id: rx_multi.c,v 1.2 2000/09/11 14:41:22 art Exp $");
+RCSID("$KTH: rx_multi.c,v 1.6 2000/03/03 08:56:12 assar Exp $");
 
 /* multi.c and multi.h, together with some rxgen hooks, provide a way of making multiple, but similar, rx calls to multiple hosts simultaneously */
 

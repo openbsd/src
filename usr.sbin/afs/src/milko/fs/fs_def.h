@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
  * Fileserver global defines
  */
 
-/* $Id: fs_def.h,v 1.1 2000/09/11 14:41:13 art Exp $ */
+/* $KTH: fs_def.h,v 1.4 2000/10/03 00:17:19 lha Exp $ */
 
 #ifndef __FILBUNKE__FS_DEF_H
 #define __FILBUNKE__FS_DEF_H 1

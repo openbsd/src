@@ -1,5 +1,5 @@
-LIESMICH für arla-0.34 ($Name:  $)
-$Id: LIESMICH,v 1.1 2000/09/11 14:40:29 art Exp $
+LIESMICH für arla-0.35.7 ($KTH: arla-0-35-7 $)
+$KTH: LIESMICH,v 1.7.2.8 2002/02/25 02:35:03 lha Exp $
 
 Für alle, die zuerst 'mal lieber auf Deutsch lesen. Die Lektüre von
 README wird aber trotzdem empfohlen.
@@ -11,8 +11,8 @@ Arla ist eine freie Implementation des AFS Cacheverwalters.
 2. Wo finde ich diese Datei?
 
 Diese Datei ist enthalten in
-ftp://ftp.stacken.kth.se/pub/arla/arla-0.34.tar.gz
-(d.h. /afs/stacken.kth.se/ftp/pub/arla/arla-0.34.tar.gz).
+ftp://ftp.stacken.kth.se/pub/arla/arla-0.35.7.tar.gz
+(d.h. /afs/stacken.kth.se/ftp/pub/arla/arla-0.35.7.tar.gz).
 
 3. Was ist AFS?
 

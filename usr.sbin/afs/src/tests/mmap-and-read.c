@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -53,7 +48,7 @@
 #include <roken.h>
 
 #ifdef RCSID
-RCSID("$Id: mmap-and-read.c,v 1.1 2000/09/11 14:41:32 art Exp $");
+RCSID("$KTH: mmap-and-read.c,v 1.12 2000/12/18 04:03:51 assar Exp $");
 #endif
 
 #ifndef MAP_FAILED
@@ -63,7 +58,8 @@ RCSID("$Id: mmap-and-read.c,v 1.1 2000/09/11 14:41:32 art Exp $");
 static char *
 generate_random_file (const char *filename,
 		      unsigned npages,
-		      unsigned pagesize)
+		      unsigned pagesize,
+		      int writep)
 {
     int fd;
     char *buf, *fbuf;
@@ -93,8 +89,10 @@ generate_random_file (const char *filename,
     if (fbuf == (void *)MAP_FAILED)
 	err (1, "mmap");
 
-    if(write(fd, "hej\n", 4) != 4)
-	err(1, "write");
+    if (writep) {
+	if(write(fd, "hej\n", 4) != 4)
+	    err(1, "write");
+    }
 
     memcpy (fbuf, buf, sz);
 
@@ -124,21 +122,16 @@ read_file (int fd, size_t sz)
     return buf;
 }
 
-int
-main (int argc, char **argv)
+static int
+test (const char *file, int writep)
 {
-    const char *file = "foo";
     const size_t sz  = 4 * getpagesize();
     char *buf;
     char *malloc_buf;
     int fd;
     int ret;
 
-    set_progname (argv[0]);
-
-    srand (time(NULL));
-
-    buf = generate_random_file (file, 4, getpagesize());
+    buf = generate_random_file (file, 4, getpagesize(), writep);
 
     fd = open (file, O_RDONLY, 0);
     if (fd < 0)
@@ -148,5 +141,23 @@ main (int argc, char **argv)
     close (fd);
     ret = memcmp (buf, malloc_buf, sz);
     free (buf);
-    return ret != 0;
+    
+    return ret;
+}
+
+
+int
+main (int argc, char **argv)
+{
+
+    set_progname (argv[0]);
+
+    srand (time(NULL));
+
+    if (test ("foo", 1) != 0)
+	errx (1, "test(1)");
+    if (test ("bar", 0) != 0)
+	errx (1, "test(2)");
+
+    return 0;
 }

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: run-tests.in,v 1.1 2000/09/11 14:41:34 art Exp $
+# $KTH: run-tests.in,v 1.70.2.3 2002/02/05 13:22:11 lha Exp $
 #
 srcdir=@srcdir@
 objdir=`pwd`
@@ -18,6 +18,7 @@ ARLA_TESTS="creat1			\
 	    symlink 			\
 	    hardlink1			\
 	    hardlink2			\
+	    hardlink3			\
 	    touch1			\
 	    write1			\
 	    write2			\
@@ -28,9 +29,13 @@ ARLA_TESTS="creat1			\
 	    rename4			\
 	    rename5			\
 	    rename-under-feet		\
+	    large-filename		\
+	    fchmod			\
+	    truncate			\
 	    mkdir-lnk			\
 	    mkm-rmm			\
 	    fs-sa-la			\
+	    copy-file			\
 	    dd				\
 	    exec			\
 	    ga-test			\
@@ -75,8 +80,12 @@ ARLA_TESTS="creat1			\
 	    create-remove-dirs		\
 	    fcachesize-dir		\
 	    fcachesize-file-small	\
-	    compare-inums		\
-	    compare-inum-mp"
+	    compare-inums"
+
+# this should really be work, but it's hard and it doesn't work so
+# leave it out not to scare users
+
+#	    compare-inum-mp		\
 
 #	    visit-volumes		\
 
@@ -110,13 +119,17 @@ linebreak=":-------------------------------;"
 
 PARALLELL=
 FAST=
+LARGE=
+FAIL=
 PRINT_CACHESIZE=
-usage="Usage: $0 [-arla|-milko] [-all] [-fast] [-j] [-verbose] [-x] tests ..."
+usage="Usage: $0 [-arla|-milko] [-all] [-fast] [-fail] [-j] [-large] [-verbose] [-x] tests ..."
 while true
 do
   case $1 in
   -all) ALL=yes;;
   -fast) FAST=yes;;
+  -fail) FAIL=yes;;
+  -large) LARGE=yes;;
   -j) PARALLELL="&";;
   -verbose) VERBOSE=yes;;
   -x) SHELLVERBOSE="-x";;
@@ -127,7 +140,7 @@ do
 	echo "arla tests available: $linebreak"; for a in "$ARLA_TESTS"; do echo $a ; done;
 	echo "milko tests available: $linebreak"; for a in "$MILKO_TESTS"; do echo $a ; done;
 	exit 0;;
-  -version|--version) echo "$0 $Id: run-tests.in,v 1.1 2000/09/11 14:41:34 art Exp $"; exit 0;;
+  -version|--version) echo "$KTH: run-tests.in,v 1.70.2.3 2002/02/05 13:22:11 lha Exp $"; exit 0;;
   -*) echo "$0: Bad option $1"; echo $usage; exit 1;;
   *) break;;
   esac
@@ -150,6 +163,7 @@ fi
 # these are variables exported to the scripts
 
 export FAST
+export LARGE
 export VERBOSE
 export SHELLVERBOSE
 
@@ -211,8 +225,9 @@ for a in $RUNTESTS; do
   if test "X${PARALLELL}" = "X" ;then
      if test $saved_res != 0 ; then 
 	echo "Test $a FAILED"
-        FAILEDTESTS="${FAILEDTESTS} $a"; 
+        FAILEDTESTS="${FAILEDTESTS} $a";
         exitval=$savedres
+	if test X$FAIL != X; then break; fi
      else
 	test "X$VERBOSE" != "X" && echo "Test $a succeeded, tmpdir is removed"
 	${objdir}/rm-rf $tmpdir

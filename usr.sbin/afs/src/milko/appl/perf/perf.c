@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: perf.c,v 1.1 2000/09/11 14:41:12 art Exp $");
+RCSID("$KTH: perf.c,v 1.12 2000/12/10 22:24:37 lha Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -57,6 +52,7 @@ RCSID("$Id: perf.c,v 1.1 2000/09/11 14:41:12 art Exp $");
 
 #include <rx/rx.h>
 #include <rx/rx_null.h>
+#include <rx/rxgencon.h>
 #include <rxkad/rxkad.h>
 
 #include <atypes.h>
@@ -65,7 +61,7 @@ RCSID("$Id: perf.c,v 1.1 2000/09/11 14:41:12 art Exp $");
 #include <ports.h>
 #include <service.h>
 
-#include <getarg.h>
+#include <agetarg.h>
 
 static char *arg_cell = NULL;
 
@@ -114,7 +110,7 @@ int
 RXAFSCB_XStatsVersion(struct rx_call *a_rxCallP,
 		      int32_t *version)
 {
-    return EOPNOTSUPP;
+    return RXGEN_OPCODE;
 }
 
 int
@@ -125,35 +121,35 @@ RXAFSCB_GetXStats(struct rx_call *a_rxCallP,
 		  int32_t *time,
 		  AFSCB_CollData *stats)
 {
-    return EOPNOTSUPP;
+    return RXGEN_OPCODE;
 }
 
 int
 RXAFSCB_InitCallBackState2(struct rx_call *a_rxCallP,
 			   interfaceAddr *addr)
 {
-    return EOPNOTSUPP;
+    return RXGEN_OPCODE;
 }
 
 int
 RXAFSCB_WhoAreYou(struct rx_call *a_rxCallP,
 		  interfaceAddr *addr)
 {
-    return EOPNOTSUPP;
+    return RXGEN_OPCODE;
 }
 
 int
 RXAFSCB_InitCallBackState3(struct rx_call *a_rxCallP,
 			   const afsUUID *server_uuid)
 {
-    return EOPNOTSUPP;
+    return 0;
 }
 
 int
 RXAFSCB_ProbeUUID(struct rx_call *a_rxCallP,
 		  const afsUUID *uuid)
 {
-    return EOPNOTSUPP;
+    return RXGEN_OPCODE;
 }
 
 static void
@@ -591,28 +587,28 @@ static int   arg_help  = 0;
 static int   arg_vnode = 0;
 static int   arg_uniq = 0;
 
-struct getargs args[] = {
-    {"host",	0, arg_string, &arg_host,
-     "what host to use", "host", arg_mandatory},
-    {"volume",	0, arg_integer, &arg_volume,
-     "what volume to use", NULL, arg_mandatory}, 
-    {"authlevel",0, arg_integer, &arg_authlevel,
-     "authlevel", NULL, arg_mandatory},
-    {"help",	0, arg_flag, &arg_help,
-     "authlevel", NULL, arg_mandatory},
-    {"vnode", 0, arg_integer, &arg_vnode,
-     "what vnode to read from", NULL, arg_optional},
-    {"uniq", 0, arg_integer, &arg_uniq,
-     "what uniq to read from", NULL, arg_optional},
-    {"cell", 0, arg_string, &arg_cell,
-     "cell", NULL, arg_optional},
+struct agetargs args[] = {
+    {"host",	0, aarg_string, &arg_host,
+     "what host to use", "host", aarg_mandatory},
+    {"volume",	0, aarg_integer, &arg_volume,
+     "what volume to use", NULL, aarg_mandatory}, 
+    {"authlevel",0, aarg_integer, &arg_authlevel,
+     "authlevel", NULL, aarg_mandatory},
+    {"help",	0, aarg_flag, &arg_help,
+     "authlevel", NULL, aarg_mandatory},
+    {"vnode", 0, aarg_integer, &arg_vnode,
+     "what vnode to read from", NULL, aarg_optional},
+    {"uniq", 0, aarg_integer, &arg_uniq,
+     "what uniq to read from", NULL, aarg_optional},
+    {"cell", 0, aarg_string, &arg_cell,
+     "cell", NULL, aarg_optional},
    { NULL, 0}
 };
 
 static void
 usage (int eval)
 {
-    arg_printusage(args, "perf", NULL, ARG_AFSSTYLE);
+    aarg_printusage(args, "perf", NULL, AARG_AFSSTYLE);
 
     printf ("\nTips:\n"
 	    " on errors use `fs strerror <errno>' to figure"
@@ -635,8 +631,8 @@ main (int argc, char **argv)
     if (ret)
 	errx (1, "rx_Init returnd %d", ret);
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage (args, "", NULL, ARG_AFSSTYLE);
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage (args, "", NULL, AARG_AFSSTYLE);
 	return 0;
     }
 

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -52,15 +47,21 @@
 #include <roken.h>
 #include <ko.h>
 
-RCSID("$Id: kotest.c,v 1.1 2000/09/11 14:40:58 art Exp $");
+RCSID("$KTH: kotest.c,v 1.5 2000/10/02 22:43:19 lha Exp $");
 
 int
 main (int argc, char **argv)
 {
     const char *name;
     int ret = 0;
+    Log_method *method;
 
-    cell_init(0);
+    set_progname(argv[0]);
+
+    method = log_open(get_progname(), "/dev/stderr");
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
 
     name = cell_expand_cell ("stacken");
     if (strcmp (name, "stacken.kth.se") != 0) {

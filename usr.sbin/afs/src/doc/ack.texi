@@ -1,6 +1,9 @@
-@c $Id: ack.texi,v 1.1 2000/09/11 14:40:52 art Exp $
+@c Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
+@c $KTH: ack.texi,v 1.17 2001/01/08 18:02:43 lha Exp $
 
-@node  Acknowledgments, , Authors, Top
+@node  Acknowledgments, Index, Authors, Top
 @comment  node-name,  next,  previous,  up
 @appendix Acknowledgments
 
@@ -19,121 +22,146 @@ NetBSD/FreeBSD
 The code for gluing these together were written by ourselves.
 
 Bugfixes, documentation, encouragement, and code has been contributed by:
-@table @asis
+
+@multitable @columnfractions .5 .5
 
 @item Aaron M. Ucko 
-@email{amu@@MIT.EDU}
+@tab @email{amu@@MIT.EDU}
 
 @item Alec Wolman 
-@email{wolman@@cs.washington.edu}
+@tab @email{wolman@@cs.washington.edu}
 
 @item Alexandra Ellwood 
-@email{lxs@@MIT.EDU}
+@tab @email{lxs@@MIT.EDU}
 
 @item Brad Keryan 
-@email{keryan@@andrew.cmu.edu}
+@tab @email{keryan@@andrew.cmu.edu}
 
 @item Constantine Sapuntzakis 
-@email{csapuntz@@openbsd.org}
+@tab @email{csapuntz@@openbsd.org}
 
 @item Dan Winship 
-@email{danw@@MIT.EDU}
+@tab @email{danw@@MIT.EDU}
 
 @item Derrick J Brashear 
-@email{shadow@@dementia.org}
+@tab @email{shadow@@dementia.org}
 
 @item Harald Barth 
-@email{haba@@pdc.kth.se}
+@tab @email{haba@@pdc.kth.se}
 
 @item Jim Doyle 
-@email{jrd@@bu.edu}
+@tab @email{jrd@@bu.edu}
 
 @item John Davison 
-@email{davisoja@@clarkson.edu}
+@tab @email{davisoja@@clarkson.edu}
 
 @item John Hawkinson 
-@email{jhawk@@MIT.EDU}
+@tab @email{jhawk@@MIT.EDU}
 
 @item Karl Ramm 
-@email{kcr@@MIT.EDU}
+@tab @email{kcr@@MIT.EDU}
 
 @item Mark Eichin 
-@email{eichin@@kitten.gen.ma.us}
+@tab @email{eichin@@kitten.gen.ma.us}
 
 @item Per Boussard T/ED 
-@email{Per.Boussard@@era-t.ericsson.se}
+@tab @email{Per.Boussard@@era-t.ericsson.se}
 
 @item Dima Ruban 
-@email{dima@@best.net}
+@tab @email{dima@@best.net}
 
 @item Max 
-@email{davros@@cyclone.Stanford.EDU}
+@tab @email{davros@@cyclone.Stanford.EDU}
 
 @item Andrzej Filinski 
-@email{andrzej@@daimi.aau.dk}
+@tab @email{andrzej@@daimi.aau.dk}
 
 @item Chuck Lever 
-@email{chuckl@@netscape.com}
+@tab @email{chuckl@@netscape.com}
 
 @item WUWEI SHEN 
-@email{wwshen@@engin.umich.edu}
+@tab @email{wwshen@@engin.umich.edu}
 
 @item Cheng Jin 
-@email{chengjin@@eecs.umich.edu}
+@tab @email{chengjin@@eecs.umich.edu}
 
 @item Paul Callaway 
-@email{pcallawa@@umich.edu}
+@tab @email{pcallawa@@umich.edu}
 
 @item Brandon S. Allbery 
-@email{allbery@@ece.cmu.edu}
+@tab @email{allbery@@ece.cmu.edu}
 
 @item Ken Raeburn 
-@email{raeburn@@raeburn.org}
+@tab @email{raeburn@@raeburn.org}
 
 @item Jeffrey Hutzelman 
-@email{jhutz+@@cmu.edu}
+@tab @email{jhutz+@@cmu.edu}
 
 @item Hee-Seok Heo 
-@email{hsheo@@postech.ac.kr}
+@tab @email{hsheo@@postech.ac.kr}
 
 @item Paul Ewing Jr. 
-@email{ewing@@ima.umn.edu}
+@tab @email{ewing@@ima.umn.edu}
 
 @item Niklas Hallqvist 
-@email{niklas@@appli.se}
+@tab @email{niklas@@appli.se}
 
 @item Marko Asplund 
-@email{aspa@@hip.fi}
+@tab @email{aspa@@hip.fi}
 
 @item Chris Wing 
-@email{wingc@@engin.umich.edu}
+@tab @email{wingc@@engin.umich.edu}
 
 @item Simon Josefsson 
-@email{jas@@pdc.kth.se}
+@tab @email{jas@@pdc.kth.se}
 
 @item Magnus Lindström 
-@email{magnus.lindstrom@@s3.kth.se}
+@tab @email{magnus.lindstrom@@s3.kth.se}
 
 @item Greg Stark 
-@email{gsstark@@mit.edu}
+@tab @email{gsstark@@mit.edu}
 
 @item Matt 
-@email{deberg@@mit.edu}
+@tab @email{deberg@@mit.edu}
 
 @item Björn Grönvall 
-@email{bg@@sics.se}
+@tab @email{bg@@sics.se}
 
 @item Tino Schwarze 
-@email{tino.schwarze@@informatik.tu-chemnitz.de}
+@tab @email{tino.schwarze@@informatik.tu-chemnitz.de}
 
 @item David Sanderson 
-@email{david@@transarc.ibm.com}
+@tab @email{david@@transarc.ibm.com}
 
 @item Roman Hodek 
-@email{Roman.Hodek@@informatik.uni-erlangen.de}
+@tab @email{Roman.Hodek@@informatik.uni-erlangen.de}
+
+@item Michael Sperber 
+@tab @email{sperber@@informatik.uni-tuebingen.de}
+
+@item Dr. Lex Wennmacher 
+@tab @email{wennmach@@geo.Uni-Koeln.DE}
+
+@item Janne Johansson 
+@tab @email{jj@@dynarc.se}
+
+@item Dr A V Le Blanc 
+@tab @email{LeBlanc@@mcc.ac.uk}
+
+@item Dave Morrison 
+@tab @email{dave@@bnl.gov}
+
+@item Jochen Saile 
+@tab @email{saile@@sfs.nphil.uni-tuebingen.de}
+
+@item Chris Kuklewicz 
+@tab @email{chrisk@@MIT.EDU}
+
+@item Nickolai Zeldovich 
+@tab @email{kolya@@MIT.EDU}
 
 
-@end table
+@end multitable
 
 If you have done something and are not mentioned here, please send
 mail to @email{arla-drinkers@@stacken.kth.se}.

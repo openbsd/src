@@ -1,5 +1,5 @@
 dnl
-dnl $Id: have-kernel-struct-field.m4,v 1.1 2000/09/11 14:40:48 art Exp $
+dnl $KTH: have-kernel-struct-field.m4,v 1.3.22.1 2001/04/16 23:07:52 lha Exp $
 dnl
 
 dnl AC_HAVE_KERNEL_STRUCT_FIELD(includes, struct, type, field)
@@ -13,7 +13,7 @@ cache_val=no)])
 if test "$cache_val" = yes; then
 	define(foo, translit(HAVE_STRUCT_$2_$4, [a-z ], [A-Z_]))
 	AC_DEFINE(foo, 1, [Define if struct $2 has field $4])
-	undefine(foo)
+	undefine([foo])
 fi
-undefine(cache_val)
+undefine([cache_val])
 ])

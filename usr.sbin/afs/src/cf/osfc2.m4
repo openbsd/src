@@ -1,4 +1,4 @@
-dnl $Id: osfc2.m4,v 1.1 2000/09/11 14:40:50 art Exp $
+dnl $KTH: osfc2.m4,v 1.1 1999/05/15 22:45:33 assar Exp $
 dnl
 dnl enable OSF C2 stuff
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: discon-touch2,v 1.1 2000/09/11 14:41:29 art Exp $
+# $KTH: discon-touch2,v 1.3 2000/06/10 09:17:09 assar Exp $
 FS=${FS:-${objdir}/../appl/fs/fs}
 > foobar
 ${FS} conn disconn

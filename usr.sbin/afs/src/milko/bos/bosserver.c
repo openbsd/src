@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #include "bos_locl.h"
 
-RCSID("$Id: bosserver.c,v 1.1 2000/09/11 14:41:12 art Exp $");
+RCSID("$KTH: bosserver.c,v 1.22 2000/10/03 00:16:58 lha Exp $");
 
 static char *email = "root";
 static char *serverfile = MILKO_SYSCONFDIR "/server-file";
@@ -53,11 +48,11 @@ typedef struct mtype {
     pid_t pid;				/* pid of server */
     time_t last_start;			/* last started */
     struct {
-	unsigned long email:1;		/* email when event happens */
-	unsigned long savecore:1;	/* try to save the corefile */
-	unsigned long trydebug:1;	/* try to include debugging */
-	unsigned long restart_p:1;	/* needs to be restarted */
-	unsigned long enablep:1;	/* is enabled */
+	unsigned email:1;		/* email when event happens */
+	unsigned savecore:1;	/* try to save the corefile */
+	unsigned trydebug:1;	/* try to include debugging */
+	unsigned restart_p:1;	/* needs to be restarted */
+	unsigned enablep:1;	/* is enabled */
     } flags;
     struct mtype *next;			/* next server on linked list */
 } mtype;
@@ -150,6 +145,26 @@ find_and_remove_server (struct mtype **old_srv, const char *name)
 }
 
 /*
+ * find server named `name' in linked list `old_srv'.
+ * If `name' isn't found, return NULL.
+ */
+
+static struct mtype *
+find_server (struct mtype **old_srv, const char *name)
+{
+    struct mtype *srv = *old_srv;
+
+    while (srv) {
+	if (srv->name && strcasecmp (name, srv->name) == 0) {
+	    return srv;
+	}
+	srv = srv->next;
+    }
+    return NULL;
+}
+
+
+/*
  *
  */
 
@@ -203,7 +218,7 @@ write_serverfile (struct mtype *s, const char *fn)
     FILE *f;
 
     f = fopen (fn, "w");
-    if (f) {
+    if (f == NULL) {
 	errx (1, "failed to open serverfile (%s) for writing",
 	      serverfile);
     }
@@ -224,39 +239,34 @@ static void
 read_config_file (char *filename)
 {
     kconf_context context;
-    kconf_config_section *c;
+    kconf_config_section *conf, *c;
     struct mtype *old_servers;
+    struct mtype *s;
     const char *str;
-    int lineno;
     FILE *f;
     int ret;
 
     kconf_init (&context);
 
-    ret = kconf_config_parse_file (filename, &c);
+    ret = kconf_config_parse_file (filename, &conf);
     if (ret) {
 	shutdown_servers (servers);
 	errx (1, "read_config_file");
     }
     
     email = 
-	estrdup (kconf_config_get_string_default (context, c,
+	estrdup (kconf_config_get_string_default (context, conf,
 						  email,
 						  "bos",
 						  "email",
 						  NULL));
     
     serverfile =
-	estrdup (kconf_config_get_string_default (context, c,
+	estrdup (kconf_config_get_string_default (context, conf,
 						  serverfile,
 						  "bos",
 						  "serverfile",
 						  NULL));
-    f = fopen (serverfile, "r");
-    if (f == NULL) {
-	shutdown_servers (servers);
-	err (1, "tried to open serverfile \"%s\"", serverfile);
-    }
 
     /*
      * Save the old list of servers
@@ -264,30 +274,25 @@ read_config_file (char *filename)
 
     old_servers = servers;
     servers = NULL;
+    c = conf;
 
-    /*
-     * reread server list copy over existing servers to new list, add
-     * new servers
-     */
-
-    lineno = 0;
-    while (!feof (f)) {
-	struct mtype *s;
-	char name[100];
-	int enablep;
+    while (c) {
+	char *name;
 	
-	lineno ++;
-	ret = fscanf (f, "%s %d", name, &enablep);
-	if (ret == EOF)
-	    break;
-	if (ret != 2) {
+	if (!strcmp (c->name, "bos")) {
+	    c = c->next;
+	    continue;
+	}
+	
+	name = c->name;
+
+	if (name == NULL) {
 	    shutdown_servers (servers);
 	    shutdown_servers (old_servers);
-	    errx (1, "error scaning line %d of serverfile (%s)",
-		  lineno, serverfile);
+	    errx (1, "error in config file (%s)", filename);
 	}
 
-	str = kconf_config_get_string (context, c,
+	str = kconf_config_get_string (context, conf,
 				       name,
 				       "arguments",
 				       NULL);
@@ -304,31 +309,31 @@ read_config_file (char *filename)
 	    s = new_server (name);
 	    if (str)
 		s->arg = estrdup (str);
-	}
-	if (s->flags.enablep != enablep)
+
+	    s->flags.enablep = 1;
 	    s->flags.restart_p = 1;
-	s->flags.enablep = enablep;
+	}
 	
-	s->flags.email = kconf_config_get_bool_default (context, c,
+	s->flags.email = kconf_config_get_bool_default (context, conf,
 							KCONF_FALSE,
 							name,
 							"email",
 							NULL);
 	s->program = 
-	    estrdup (kconf_config_get_string_default (context, c,
+	    estrdup (kconf_config_get_string_default (context, conf,
 						      name,
 						      name,
 						      "program",
 						      NULL));
 
 	s->coredir =
-	    estrdup (kconf_config_get_string_default (context, c,
+	    estrdup (kconf_config_get_string_default (context, conf,
 						      MILKO_LIBEXECDIR,
 						      name,
 						      "coredir",
 						      NULL));
 	s->flags.savecore =
-	    kconf_config_get_bool_default (context, c,
+	    kconf_config_get_bool_default (context, conf,
 					   KCONF_FALSE,
 					   name,
 					   "savecore",
@@ -336,7 +341,7 @@ read_config_file (char *filename)
 
 
 	s->flags.trydebug =
-	    kconf_config_get_bool_default (context, c,
+	    kconf_config_get_bool_default (context, conf,
 					   KCONF_FALSE,
 					   name,
 					   "trydebug",
@@ -344,9 +349,36 @@ read_config_file (char *filename)
 
 	s->next = servers;
 	servers = s;
+	c = c->next;
     }
     
-    fclose (f);
+    f = fopen (serverfile, "r");
+    if (f == NULL) {
+	shutdown_servers (old_servers);
+/*	err (1, "tried to open serverfile \"%s\"", serverfile);*/
+    } else {
+	int lineno = 0;
+	while (!feof (f)) {
+	    char name[100];
+	    int enablep;
+	    lineno ++;
+	    ret = fscanf (f, "%s %d", name, &enablep);
+	    if (ret == EOF)
+		break;
+	    if (ret != 2) {
+		errx (1, "error scaning line %d of serverfile (%s)",
+		      lineno, serverfile);
+	    }
+
+	    s = find_server (&servers, name);
+	    if (s && s->flags.enablep != enablep) {
+		s->flags.enablep = enablep;
+		s->flags.restart_p = enablep;
+	    }
+	}
+	fclose (f);
+    }
+
 
     /*
      * nuke the old ones and write down a new serverfile
@@ -367,7 +399,7 @@ start_server (struct mtype *server)
     time_t newtime = time(NULL);
 
     bosdebug ("starting server %s (%s)\n", server->name, 
-	      server->path);
+	      server->program);
 
     if (newtime + 10 < server->last_start 
 	&& server->last_start != 0) {
@@ -383,7 +415,7 @@ start_server (struct mtype *server)
     case 0: {
 	char *newargv[3];
 
-	newargv[0] = server->path;
+	newargv[0] = server->program;
 #if 1
 	newargv[1] = NULL;	
 #else
@@ -396,9 +428,9 @@ start_server (struct mtype *server)
 	    close (2);
 	}
 
-	execvp (server->path, newargv);
+	execvp (server->program, newargv);
 
-	bosdebug ("server %s failed with %s (%d)\n", server->path,
+	bosdebug ("server %s failed with %s (%d)\n", server->program,
 		  strerror (errno), errno);
 	exit (1);
 	break;
@@ -545,24 +577,26 @@ static int do_help = 0;
 static char *srvtab_file = NULL;
 static int no_auth = 0;
 static char *configfile = MILKO_SYSCONFDIR "/bos.conf";
+static char *log_file = "syslog";
 
-static struct getargs args[] = {
-    {"cell",	0, arg_string,    &cell, "what cell to use", NULL},
-    {"realm",  0, arg_string,    &realm, "what realm to use"},
-    {"prefix",'p', arg_string,    &bosserverprefix, 
+static struct agetargs args[] = {
+    {"cell",	0, aarg_string,    &cell, "what cell to use", NULL},
+    {"realm",  0, aarg_string,    &realm, "what realm to use"},
+    {"prefix",'p', aarg_string,    &bosserverprefix, 
      "directory where servers is stored", NULL},
-    {"noauth",   0,  arg_flag,	  &no_auth, "disable authentication checks"},
-    {"debug", 'd', arg_flag,      &debug, "output debugging"},
-    {"help",  'h', arg_flag,      &do_help, "help"},
-    {"srvtab",'s', arg_string,    &srvtab_file, "what srvtab to use"},
-    {"configfile", 'f', arg_string, &configfile, "configuration file"},
-    { NULL, 0, arg_end, NULL }
+    {"noauth",   0,  aarg_flag,	  &no_auth, "disable authentication checks"},
+    {"debug", 'd', aarg_flag,      &debug, "output debugging"},
+    {"log", 'l', aarg_string,      &log_file, "where output debugging"},
+    {"help",  'h', aarg_flag,      &do_help, "help"},
+    {"srvtab",'s', aarg_string,    &srvtab_file, "what srvtab to use"},
+    {"configfile", 'f', aarg_string, &configfile, "configuration file"},
+    { NULL, 0, aarg_end, NULL }
 };
 
 static void
 usage(int exit_code)
 {
-    arg_printusage(args, NULL, "", ARG_AFSSTYLE);
+    aarg_printusage(args, NULL, "", AARG_AFSSTYLE);
     exit (exit_code);
 }
 
@@ -573,10 +607,13 @@ usage(int exit_code)
 int
 main (int argc, char **argv)
 {
-    int ret;
+    Log_method *method;
     int optind = 0;
+    int ret;
     
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    set_progname(argv[0]);
+
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage (1);
     }
 
@@ -594,10 +631,13 @@ main (int argc, char **argv)
     if (bosserverprefix == NULL)
 	bosserverprefix = MILKO_LIBEXECDIR;
 
-    read_config_file (configfile);
-
+    method = log_open (get_progname(), log_file);
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
     ports_init();
-    cell_init(0);
+    
+    read_config_file (configfile);
 
     if (no_auth)
 	sec_disable_superuser_check ();
@@ -627,4 +667,3 @@ main (int argc, char **argv)
 
     return 0;
 }
-

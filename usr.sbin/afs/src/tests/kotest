@@ -1,4 +1,4 @@
 #!/bin/sh
-# $Id: kotest,v 1.1 2000/09/11 14:41:31 art Exp $
+# $KTH: kotest,v 1.2 2000/05/19 14:35:33 assar Exp $
 
 exec ${objdir}/../lib/ko/kotest

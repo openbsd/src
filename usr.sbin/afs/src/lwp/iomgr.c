@@ -35,7 +35,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: iomgr.c,v 1.3 2000/09/11 14:41:08 art Exp $");
+RCSID("$KTH: iomgr.c,v 1.24 2000/02/15 23:53:40 assar Exp $");
 #endif
 
 #include <stdio.h>

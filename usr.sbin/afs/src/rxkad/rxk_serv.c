@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -42,7 +37,7 @@
 #include <krb5.h>
 #endif
 
-RCSID("$Id: rxk_serv.c,v 1.3 2000/09/11 14:41:25 art Exp $");
+RCSID("$KTH: rxk_serv.c,v 1.6 2000/10/03 00:38:44 lha Exp $");
 
 /* Security object specific server data */
 typedef struct rxkad_serv_class {

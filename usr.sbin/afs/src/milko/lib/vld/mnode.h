@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: mnode.h,v 1.1 2000/09/11 14:41:17 art Exp $ */
+/* $KTH: mnode.h,v 1.7 2000/10/03 00:19:22 lha Exp $ */
 
 #ifndef MILKO_MNODE_H
 #define MILKO_MNODE_H 1
@@ -57,8 +52,7 @@ typedef enum { VOLOP_READ	= 0x001,	/* read file */
 	       VOLOP_LOCK	= 0x020,	/* lock file */
 	       VOLOP_ADMIN	= 0x040,	/* modify bits */
 	       VOLOP_GETSTATUS	= 0x080,	/* get status */
-	       VOLOP_PARENT	= 0x100,	/* this is a parent */
-	       VOLOP_NOCHECK	= 0x200		/* do no check */
+	       VOLOP_NOCHECK	= 0x100		/* do no check */
 } volop_flags ;
 
 struct mnode {

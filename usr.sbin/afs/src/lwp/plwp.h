@@ -1,5 +1,5 @@
 /*
- * $Id: plwp.h,v 1.2 2000/09/11 14:41:09 art Exp $
+ * $KTH: plwp.h,v 1.5 2000/10/20 11:01:46 lha Exp $
  */
 
 #ifndef LWP_INCLUDED
@@ -84,6 +84,9 @@ typedef struct lwp_pcb *PROCESS;
 #define LWP_SOABORT	2		/* abort the program */
 #define LWP_SOMESSAGE	3		/* print a message and be quiet */
 extern int lwp_overflowAction;
+
+/* Invalid LWP Index */
+#define LWP_INVALIDTHREADID		(-1)
 
 /* Tells if stack size counting is enabled. */
 extern int lwp_stackUseEnabled;

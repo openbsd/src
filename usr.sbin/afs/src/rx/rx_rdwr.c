@@ -1,6 +1,6 @@
 #include "rx_locl.h"
 
-RCSID("$Id: rx_rdwr.c,v 1.2 2000/09/11 14:41:23 art Exp $");
+RCSID("$KTH: rx_rdwr.c,v 1.5 1999/11/18 01:51:18 assar Exp $");
 
 #ifdef	AFS_SGIMP_ENV
 int 

@@ -1,3 +1,11 @@
+2000-12-21  Love  <lha@stacken.kth.se>
+
+	* Makefile.in: added @LIBS@ to program built localy
+	
+2000-09-19  Love  <lha@stacken.kth.se>
+
+	* Makefile.in (clean): remove symlinks
+
 2000-06-17  Assar Westerlund  <assar@sics.se>
 
 	* ss.c: look for com_err.h in more places

@@ -34,7 +34,7 @@
 #include "make_cmds.h"
 #include <getarg.h>
 
-RCSID("$Id: make_cmds.c,v 1.1 2000/09/11 14:41:07 art Exp $");
+RCSID("$KTH: make_cmds.c,v 1.3 2000/09/01 21:29:38 lha Exp $");
 
 #include <roken.h>
 #include <err.h>
@@ -204,7 +204,7 @@ struct getargs args[] = {
 static void
 usage(int code)
 {
-    arg_printusage(args, NULL, "command-table", ARG_DEFAULT);
+    arg_printusage(args, sizeof(args)/sizeof(*args), NULL, "command-table");
     exit(code);
 }
 
@@ -214,12 +214,12 @@ main(int argc, char **argv)
     int optind = 0;
 
     set_progname(argv[0]);
-    if(getarg(args, argc, argv, &optind, ARG_DEFAULT))
+    if(getarg(args, sizeof(args)/sizeof(*args), argc, argv, &optind))
 	usage(1);
     if(help_flag)
 	usage(0);
     if(version_flag) {
-	printf ("$Id: make_cmds.c,v 1.1 2000/09/11 14:41:07 art Exp $\n");
+	printf ("$KTH: make_cmds.c,v 1.3 2000/09/01 21:29:38 lha Exp $\n");
 	exit(0);
     }
     

@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "config.h"
 
-RCSID("$Id: acl_files.c,v 1.1 2000/09/11 14:40:55 art Exp $");
+RCSID("$KTH: acl_files.c,v 1.5 1999/09/09 23:46:01 assar Exp $");
 
 #ifdef KERBEROS
 

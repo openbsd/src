@@ -1,4 +1,4 @@
-/* $Id: rx.h,v 1.4 2002/02/19 19:39:39 millert Exp $ */
+/* $KTH: rx.h,v 1.19 2001/01/06 21:54:20 lha Exp $ */
 
 /*
 ****************************************************************************
@@ -296,8 +296,13 @@ struct rx_securityClass {
     int refCount;
 };
 
+#if defined(__STDC__) && !defined(__HIGHC__)
 #define RXS_OP(obj,op,args) ((obj->ops->op_ ## op) ? \
 			     (*(obj)->ops->op_ ## op)args : 0)
+#else
+#define RXS_OP(obj,op,args) ((obj->ops->op_/**/op) ? \
+			     (*(obj)->ops->op_/**/op)args : 0)
+#endif
 
 #define RXS_Close(obj) RXS_OP(obj,Close,(obj))
 #define RXS_NewConnection(obj,conn) RXS_OP(obj,NewConnection,(obj,conn))
@@ -417,6 +422,7 @@ struct rx_serverQueueEntry {
  */
 struct rx_peer {
     struct rx_peer *next;	       /* Next in hash conflict or free list */
+    struct rx_queue connQueue;	       /* a list of all conn use this peer */
     u_long host;		       /* Remote IP address, in net byte
 				        * order */
     u_short port;		       /* Remote UDP port, in net byte order */
@@ -484,6 +490,7 @@ struct rx_peer {
  * limited multiple asynchronous conversations.
  */
 struct rx_connection {
+    struct rx_queue queue_item;        /* conns on same peer */
     struct rx_connection *next;	       /* on hash chain _or_ free list */
     struct rx_peer *peer;
 #ifdef	RX_ENABLE_LOCKS
@@ -862,6 +869,9 @@ struct rx_ackPacket {
  * codes
  */
 
+/* Min rx error */
+#define RX_MIN_ERROR		    (-1)
+
 /* Something bad happened to the connection; temporary loss of communication */
 #define	RX_CALL_DEAD		    (-1)
 
@@ -892,6 +902,9 @@ struct rx_ackPacket {
 
 /* EMSGSIZE returned from network.  Packet too big, must fragment */
 #define RX_MSGSIZE		    (-8)
+
+/* Max rx error */
+#define RX_MAX_ERROR		    (-64)
 
 /*
  * Structure for keeping rx statistics.  Note that this structure is returned

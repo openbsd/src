@@ -31,7 +31,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: timer.c,v 1.2 2000/09/11 14:41:10 art Exp $");
+RCSID("$KTH: timer.c,v 1.5 1998/05/18 05:44:41 art Exp $");
 #endif
 
 #include <sys/time.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #include "ko_locl.h"
 
-RCSID("$Id: vlmisc.c,v 1.2 2000/09/11 14:40:58 art Exp $");
+RCSID("$KTH: vlmisc.c,v 1.3.2.1 2001/03/04 04:07:15 lha Exp $");
 
 /*
  * Convert old style vldbentry `old` to newer vldbNentry style `new'
@@ -87,4 +82,60 @@ volintInfo2xvolintInfo (const volintInfo *old, xvolintInfo *new)
     new->filecount	= old->filecount;
     new->maxquota	= old->maxquota;
     new->size		= old->size;
+}
+
+/*
+ * Suffixes for volume names.
+ */
+
+static char *volsuffixes[] = {
+"",				/* RWVOL */
+".readonly",			/* ROVOL */
+".backup"			/* BACKVOL */
+};
+
+/*
+ * canonicalize `volname' and return type of volume
+ */
+
+int
+volname_canonicalize (char *volname)
+{
+    int i;
+    int type = RWVOL;
+
+    for (i = 0; i < MAXTYPES; ++i) {
+	char *p = strrchr (volname, '.');
+	if (p != NULL && strcmp(p, volsuffixes[i]) == 0) {
+	    *p = '\0';
+	    type = i;
+	    break;
+	}
+    }
+    return type;
+}
+
+/*
+ * make specific volume name
+ */
+
+size_t
+volname_specific (const char *volname, int type, char *buf, size_t buf_sz)
+{
+    assert (type >= 0 && type < MAXTYPES);
+
+    return snprintf (buf, buf_sz, "%s%s", volname, volsuffixes[type]);
+}
+
+
+/*
+ * get volume suffix
+ */
+
+const char *
+volname_suffix (int type)
+{
+    assert (type >= 0 && type < MAXTYPES);
+
+    return volsuffixes[type];
 }

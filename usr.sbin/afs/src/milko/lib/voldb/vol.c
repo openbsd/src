@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -42,7 +37,7 @@
 
 #include "voldb_locl.h"
 
-RCSID("$Id: vol.c,v 1.1 2000/09/11 14:41:18 art Exp $");
+RCSID("$KTH: vol.c,v 1.6 2000/12/29 20:16:01 tol Exp $");
 
 /*
  * get the partial name of the volume
@@ -76,10 +71,11 @@ vol_getfullname (u_int32_t part, u_int32_t num, char *str, size_t sz)
 	return ret;
 
     if (part <= 'z' - 'a')
-	ret = snprintf (str, sz, "/vicep%c/%s", 'a' + part, volname);
+	ret = snprintf (str, sz, "%s/vicep%c/%s",
+			dpart_root, 'a' + part, volname);
 #if 0
     else if (part <= ('z' - 'a') * ('z' - 'a'))
-	ret = snprintf (str, sz, "/vicep%c%c/%s", 
+	ret = snprintf (str, sz, "%s/vicep%c%c/%s", dpart_root,
 		      'a' + part / ('z' - 'a'),
 		      'a' + part % ('z' - 'a'),
 		      volname);

@@ -1,4 +1,4 @@
-dnl $Id: find-func-no-libs.m4,v 1.1 2000/09/11 14:40:47 art Exp $
+dnl $KTH: find-func-no-libs.m4,v 1.3 1999/10/30 21:04:34 assar Exp $
 dnl
 dnl
 dnl Look for function in any of the specified libraries

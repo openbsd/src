@@ -1,4 +1,8 @@
-@c $Id: oddities.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+@c Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
+
+@c $KTH: oddities.texi,v 1.7 2000/10/03 01:09:56 lha Exp $
 
 @node Oddities, Arla timeline, Porting, Top
 @chapter Oddities

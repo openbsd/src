@@ -1,5 +1,5 @@
 dnl
-dnl $Id: bsd-func-suser.m4,v 1.1 2000/09/11 14:40:44 art Exp $
+dnl $KTH: bsd-func-suser.m4,v 1.4 2000/11/01 02:09:16 assar Exp $
 dnl
 
 AC_DEFUN(AC_BSD_FUNC_SUSER, [
@@ -13,6 +13,7 @@ AC_TRY_COMPILE_KERNEL([
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 ], [suser(NULL, NULL)],
 ac_cv_func_suser_two_args=yes,
 ac_cv_func_suser_two_args=no))

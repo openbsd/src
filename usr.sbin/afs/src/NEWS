@@ -1,4 +1,74 @@
+Changes in release 0.35.7
+
+* Support for Linux 2.4
+
+* Support FreeBSD 4.5
+
+* Bug fixes
+
+Changes in release 0.35.6
+
+* Handle moved volumes better
+
+* Support for Mac OS X 10.1
+
+* Fix "server is down" problem
+
+* Fix xfs for FreeBSD 4.4
+
+* Fix Linux unmount problem
+
+* Fix unlink kernel crash on Mac OS X
+
+* Bug fixes
+
+Changes in release 0.35.5
+
+* Security fix
+
+* Save and restore the signal masks (SIGIO, SIGALRM, SIGVTALRM) on OSF 5.x
+
+* Bug fixes
+
+Changes in release 0.35.4
+
+* Configuration program for Mac OS X
+
+* General update of the osf/1 code, might even work now
+
+* Erroneous reuse of cache nodes fixed
+
+* Bug fixes
+
+Changes in release 0.35.3
+
+* Linux S/390 support
+
+* Userland applications improved 
+
+* Bug fixes
+
+Changes in release 0.35.2:
+
+* Bug fixes
+
+Changes in release 0.35.2:
+
+* Bug fixes
+
+Changes in release 0.35.1:
+
+* Bug fixes
+
 Changes in release 0.35:
+
+* Added a klog like program called kalog that talkes directly to the
+ka-server.
+
+* removed advertising clause.
+
+* split arlad to a commadline client, arla-cli and a daemon arlad,
+this makes us not depend of things like libreadline.so.
 
 * add man-pages
 
@@ -7,6 +77,32 @@ Changes in release 0.35:
 * improve installation procedure on solaris
 
 * improve stability on solaris/smp
+
+* Even more bug fixes
+
+Changes in release 0.34.6:
+
+* Bug fixes
+
+Changes in release 0.34.5:
+
+* Bug fixes
+
+Changes in release 0.34.4:
+
+* Bug fixes
+
+Changes in release 0.34.3:
+
+* Make BSD more stable
+
+* Update parts of libroken
+
+* Always read SuidCells
+
+* m68k fixes in LWP
+
+* make arlad more robust against a busy fileserver
 
 Changes in release 0.34.2:
 

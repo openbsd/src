@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: output.c,v 1.3 2000/09/11 14:41:41 art Exp $");
+RCSID("$KTH: output.c,v 1.73.2.1 2001/03/04 04:48:48 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -76,7 +71,7 @@ char *prefix = "";
  * File handles for the generated files themselves.
  */
 
-fileblob headerfile,
+ydr_file headerfile,
     clientfile,
     serverfile,
     clienthdrfile,
@@ -97,7 +92,10 @@ typedef enum { ENCODE_RX, DECODE_RX, ENCODE_MEM, DECODE_MEM } EncodeType;
 
 typedef enum { CLIENT, SERVER } Side;
 
-static void print_type (char *name, Type *type, enum argtype argtype, FILE *f);
+typedef enum { FDECL, VDECL } DeclType;
+
+static void print_type (char *name, Type *type, enum argtype argtype, 
+			DeclType decl, FILE *f);
 static Bool print_entry (List *list, Listitem *item, void *i);
 static void generate_hdr_struct (Symbol *s, FILE *f);
 static void generate_hdr_enum (Symbol *s, FILE *f);
@@ -120,7 +118,8 @@ static void encode_symbol (Symbol *s, char *name, FILE *f,
 static void print_symbol (char *where, Symbol *s, char *name, FILE *f);
 
 static void
-print_type (char *name, Type *type, enum argtype argtype, FILE *f)
+print_type (char *name, Type *type, enum argtype argtype, 
+	    DeclType decl, FILE *f)
 {
      switch (type->type) {
 	  case TCHAR :
@@ -142,9 +141,9 @@ print_type (char *name, Type *type, enum argtype argtype, FILE *f)
 	       fprintf (f, "u_int32_t %s", name);
 	       break;
 	  case TSTRING :
-	       if (type->size)
+	       if (type->size && decl == VDECL)
 		   fprintf (f, "char %s[%d]", name, type->size);
-	       else if (argtype != TIN)
+	       else if (argtype != TIN && type->size == 0)
 		   fprintf (f, "char **%s", name);
 	       else
 		   fprintf (f, "char *%s", name);
@@ -156,7 +155,7 @@ print_type (char *name, Type *type, enum argtype argtype, FILE *f)
 	       tmp = (char *)emalloc (strlen(name) + 2);
 	       *tmp = '*';
 	       strcpy (tmp+1, name);
-	       print_type (tmp, type->subtype, argtype, f);
+	       print_type (tmp, type->subtype, argtype, decl, f);
 	       free (tmp);
 	       break;
 	  }
@@ -177,18 +176,18 @@ print_type (char *name, Type *type, enum argtype argtype, FILE *f)
 
 	       fprintf (f, "struct {\n");
 	       if (type->indextype)
-		    print_type ("len", type->indextype, argtype, f);
+		    print_type ("len", type->indextype, argtype, decl, f);
 	       else
 		    fprintf (f, "unsigned %s", "len");
 	       fprintf (f, ";\n");
 	       strcpy(s + strlen(s) - 3, "val");
-	       print_type ("*val", type->subtype, argtype, f);
+	       print_type ("*val", type->subtype, argtype, decl, f);
 	       fprintf (f, ";\n} %s", name);
 	       free(s);
 	       break;
 	  }
 	  case TARRAY :
-	       print_type (name, type->subtype, argtype, f);
+	       print_type (name, type->subtype, argtype, decl, f);
 	       fprintf (f, "[ %d ]", type->size);
 	       break;
 	  case TOPAQUE :
@@ -206,7 +205,7 @@ print_entry (List *list, Listitem *item, void *i)
      FILE *f = (FILE *)i;
 
      fprintf (f, "     ");
-     print_type (s->name, s->type, TIN, f);
+     print_type (s->name, s->type, TIN, VDECL, f);
      fprintf (f, ";\n");
      return FALSE;
 }
@@ -346,7 +345,7 @@ static void
 generate_hdr_typedef (Symbol *s, FILE *f)
 {
      fprintf (f, "typedef ");
-     print_type (s->name, s->u.type, TIN, f);
+     print_type (s->name, s->u.type, TIN, VDECL, f);
      fprintf (f, ";\n");
 }
 
@@ -582,7 +581,9 @@ encode_string (char *name, Type *type, FILE *f, EncodeType encodetype,
      char *nname;
 
      asprintf (&nname, "(%s%s)",
-	       (type->size == 0) && side == CLIENT ? "*" : "", name);
+	       ((type->size == 0) && side == CLIENT 
+		&& (encodetype == ENCODE_RX || encodetype == ENCODE_MEM))
+	       ? "*" : "", name);
 
      switch (encodetype) {
 	  case ENCODE_RX :
@@ -790,9 +791,9 @@ encode_varray (char *name, Type *type, FILE *f, EncodeType encodetype,
 		  f, encodetype, side);
      if (encodetype == DECODE_MEM || encodetype == DECODE_RX) {
 	 fprintf (f, "%s.val = (", name);
-	 print_type ("*", type->subtype, TIN, f);
+	 print_type ("*", type->subtype, TIN, VDECL, f);
 	 fprintf (f, ")malloc(sizeof(");
-	 print_type ("", type->subtype, TIN, f);
+	 print_type ("", type->subtype, TIN, VDECL, f);
 	 fprintf (f, ") * %s);\n", tmp);
      }
      if (type->subtype->type == TOPAQUE) {
@@ -1400,7 +1401,7 @@ gen1 (List *list, Listitem *item, void *arg)
      fprintf (f, ", ");
      if (a->argtype == TIN)
 	 fprintf (f, "const ");
-     print_type (a->name, a->type, a->argtype, f);
+     print_type (a->name, a->type, a->argtype, FDECL, f);
      fprintf (f, "\n");
      return FALSE;
 }
@@ -1413,7 +1414,7 @@ genin (List *list, Listitem *item, void *arg)
 
      if (a->argtype == TIN || a->argtype == TINOUT) {
 	  fprintf (f, ", %s ", a->argtype == TIN ? "const" : "");
-	  print_type (a->name, a->type, a->argtype, f);
+	  print_type (a->name, a->type, a->argtype, FDECL, f);
 	  fprintf (f, "\n");
      }
      return FALSE;
@@ -1437,9 +1438,9 @@ gendeclare (List *list, Listitem *item, void *arg)
      FILE *f = (FILE *)arg;
 
      if (a->type->type == TPOINTER)
-	  print_type (a->name, a->type->subtype, TIN, f);
+	  print_type (a->name, a->type->subtype, TIN, VDECL, f);
      else
-	  print_type (a->name, a->type, TIN, f);
+	  print_type (a->name, a->type, TIN, VDECL, f);
      fprintf (f, ";\n");
      return FALSE;
 }
@@ -1477,23 +1478,21 @@ genfree (List *list, Listitem *item, void *arg)
 static Bool
 genencodein (List *list, Listitem *item, void *arg)
 {
-     Argument *a = (Argument *)listdata (item);
-     FILE *f = (FILE *)arg;
-
-     if (a->argtype != TIN && a->argtype != TINOUT)
-	  return TRUE;
-     else {
-	  if (a->type->type == TPOINTER) {
-	       char *tmp = (char *)emalloc (strlen (a->name) + 4);
-	       
-	       sprintf (tmp, "(*%s)", a->name);
-
-	       encode_type (tmp, a->type->subtype, f, ENCODE_RX, CLIENT);
-	       free (tmp);
-	  } else
-	       encode_type (a->name, a->type, f, ENCODE_RX, CLIENT);
-	  return FALSE;
-     }
+    Argument *a = (Argument *)listdata (item);
+    FILE *f = (FILE *)arg;
+    
+    if (a->argtype == TIN || a->argtype == TINOUT) {
+	if (a->type->type == TPOINTER) {
+	    char *tmp = (char *)emalloc (strlen (a->name) + 4);
+	    
+	    sprintf (tmp, "(*%s)", a->name);
+	    
+	    encode_type (tmp, a->type->subtype, f, ENCODE_RX, CLIENT);
+	    free (tmp);
+	} else
+	    encode_type (a->name, a->type, f, ENCODE_RX, CLIENT);
+    }
+    return FALSE;
 }
 
 static Bool
@@ -1767,7 +1766,7 @@ generate_standard_c_prologue (FILE *f,
 	      "#define bcopy(a,b,c) memcpy((b),(a),(c))\n"
 	      "#endif /* !HAVE_BCOPY */\n\n");
      fprintf (f, "#ifdef RCSID\n"
-	      "RCSID(\"%s generated from %s.xg with $Id: output.c,v 1.3 2000/09/11 14:41:41 art Exp $\");\n"
+	      "RCSID(\"%s generated from %s.xg with $KTH: output.c,v 1.73.2.1 2001/03/04 04:48:48 lha Exp $\");\n"
 	      "#endif\n\n", filename, basename);
 }
 
@@ -1786,7 +1785,7 @@ init_generate (const char *filename)
      asprintf (&tmp, "%s.h", filename);
      if (tmp == NULL)
 	 err (1, "malloc");
-     eefopen (tmp, "w", &headerfile);
+     ydr_fopen (tmp, "w", &headerfile);
      free (tmp);
 
      fileuppr = estrdup (filename);
@@ -1800,14 +1799,14 @@ init_generate (const char *filename)
      asprintf (&tmp, "%s.ydr.c", filename);
      if (tmp == NULL)
 	 err (1, "malloc");
-     eefopen (tmp, "w", &ydrfile);
+     ydr_fopen (tmp, "w", &ydrfile);
      generate_standard_c_prologue (ydrfile.stream, tmp, filename);
      free (tmp);
 
      asprintf (&tmp, "%s.cs.c", filename);
      if (tmp == NULL)
 	 err (1, "malloc");
-     eefopen (tmp, "w", &clientfile);
+     ydr_fopen (tmp, "w", &clientfile);
      generate_standard_c_prologue (clientfile.stream, tmp, filename);
      fprintf (clientfile.stream, "#include \"%s.cs.h\"\n\n", filename);
      free (tmp);
@@ -1815,7 +1814,7 @@ init_generate (const char *filename)
      asprintf (&tmp, "%s.ss.c", filename);
      if (tmp == NULL)
 	 err (1, "malloc");
-     eefopen (tmp, "w", &serverfile);
+     ydr_fopen (tmp, "w", &serverfile);
      generate_standard_c_prologue (serverfile.stream, tmp, filename);
      fprintf (serverfile.stream, "#include \"%s.ss.h\"\n\n", filename);
      free (tmp);
@@ -1823,7 +1822,7 @@ init_generate (const char *filename)
      asprintf (&tmp, "%s.cs.h", filename);
      if (tmp == NULL)
 	 err (1, "malloc");
-     eefopen (tmp, "w", &clienthdrfile);
+     ydr_fopen (tmp, "w", &clienthdrfile);
      free (tmp);
      fprintf (clienthdrfile.stream, "/* Generated from %s.xg */\n", filename);
      fprintf (clienthdrfile.stream, "#include <rx/rx.h>\n");
@@ -1832,7 +1831,7 @@ init_generate (const char *filename)
      asprintf (&tmp, "%s.ss.h", filename);
      if (tmp == NULL)
 	 err (1, "malloc");
-     eefopen (tmp, "w", &serverhdrfile);
+     ydr_fopen (tmp, "w", &serverhdrfile);
      free (tmp);
      fprintf (serverhdrfile.stream, "/* Generated from %s.xg */\n", filename);
      fprintf (serverhdrfile.stream, "#include <rx/rx.h>\n");
@@ -1841,7 +1840,7 @@ init_generate (const char *filename)
      asprintf (&tmp, "%s.td.c", filename);
      if (tmp == NULL)
 	 err (1, "malloc");
-     eefopen (tmp, "w", &td_file);
+     ydr_fopen (tmp, "w", &td_file);
      free (tmp);
 
      packagelist = listnew();
@@ -1856,13 +1855,13 @@ close_generator (const char *filename)
 	  
      strupr (fileupr);
      fprintf (headerfile.stream, "\n#endif /* %s */\n", fileupr);
-     eefclose (&headerfile);
-     eefclose (&clientfile);
-     eefclose (&serverfile);
-     eefclose (&clienthdrfile);
-     eefclose (&serverhdrfile);
-     eefclose (&ydrfile);
-     eefclose (&td_file);
+     ydr_fclose (&headerfile);
+     ydr_fclose (&clientfile);
+     ydr_fclose (&serverfile);
+     ydr_fclose (&clienthdrfile);
+     ydr_fclose (&serverhdrfile);
+     ydr_fclose (&ydrfile);
+     ydr_fclose (&td_file);
 }
 
 /*
@@ -1883,7 +1882,7 @@ generate_server_stub (Symbol *s, FILE *f, FILE *headerf, FILE *h_file)
      fprintf (f, "int _%s%s(\nstruct rx_call *call)\n",
 	      package, s->name);
      fprintf (f, "{\n"
-	      "int _result;\n");
+	      "int32_t _result;\n");
      listiter (s->u.proc.arguments, gendeclare, f);
      fprintf (f, "\n");
      listiter (s->u.proc.arguments, gendecodein, f);
@@ -1962,7 +1961,7 @@ generate_server_switch (FILE *c_file,
 		  "int32_t %sExecuteRequest(struct rx_call *call)\n"
 		  "{\n"
 		  "unsigned opcode;\n"
-		  "int _result;\n",
+		  "int32_t _result;\n",
 		  c.package);
 	 
 	 encode_type ("opcode", &optype, c_file, DECODE_RX, SERVER);
@@ -2084,7 +2083,7 @@ generate_tcpdump_patches(FILE *td_file, const char *filename)
 {
     Type optype = {TULONG};
 
-    fprintf(td_file, "/* generated by $Id: output.c,v 1.3 2000/09/11 14:41:41 art Exp $ */\n\n");
+    fprintf(td_file, "/* generated by $KTH: output.c,v 1.73.2.1 2001/03/04 04:48:48 lha Exp $ */\n\n");
 
     fprintf (td_file, 
 	     "#include <stdio.h>\n"
@@ -2115,4 +2114,33 @@ generate_tcpdump_patches(FILE *td_file, const char *filename)
 	     "printf(\"Error decoding packet\\n\");\n"
 	     "}\n\n");
 
+}
+
+void
+ydr_fopen (const char *name, const char *mode, ydr_file *f)
+{
+     int streamfd;
+
+     asprintf (&f->curname, "%sXXXXXX", name);
+     if (f->curname == NULL)
+	 err (1, "malloc");
+
+     streamfd = mkstemp(f->curname);
+     if (streamfd < 0)
+	 err (1, "mkstemp %s failed", f->curname);
+     f->stream = fdopen (streamfd, mode);
+     if (f->stream == NULL)
+	 err (1, "open %s mode %s", f->curname, mode);
+     f->newname = estrdup(name);
+}
+
+void
+ydr_fclose (ydr_file *f)
+{
+     if (fclose (f->stream))
+	 err (1, "close %s", f->curname);
+     if (rename(f->curname, f->newname))
+	 err (1, "rename %s, %s", f->curname, f->newname);
+     free(f->curname);
+     free(f->newname);
 }

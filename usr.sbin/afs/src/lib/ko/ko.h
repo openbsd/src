@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: ko.h,v 1.3 2000/09/11 14:40:57 art Exp $ */
+/* $KTH: ko.h,v 1.27.2.2 2001/05/06 22:40:49 ahltorp Exp $ */
 
 #ifndef __KO_H
 #define __KO_H 1
@@ -45,6 +40,7 @@
 #include <netinet/in.h>
 #include <atypes.h>
 #include <bool.h>
+#include <log.h>
 
 typedef int32_t koerr_t;
 
@@ -66,20 +62,28 @@ const char *arla_getsysname(void);
  */
 
 typedef struct {
-     const char *name;
-     struct in_addr addr;
+    const char *name;
+    struct in_addr addr;
+    time_t timeout;		/* timeout of address */
 } cell_db_entry;
+
+enum { SUID_CELL 	= 0x1,	/* if this is a suid cell */
+       DYNROOT_CELL	= 0x2	/* cell should show up in dynroot */
+};
+
 
 typedef struct {
     int32_t id;			/* Cell-ID */
     const char *name;		/* Domain-style name */
     const char *expl;		/* Longer name */
     unsigned ndbservers;	/* # of database servers */
+    unsigned active_hosts;	/* # of active db servers */
     cell_db_entry *dbservers;	/* Database servers */
-    enum { NOSUID_CELL, SUID_CELL } suid_cell ; /* if this is a suid cell */
+    unsigned flags;		/* Various flags, like SUID_CELL */
+    time_t timeout;		/* when this entry expire */
 } cell_entry;
 
-void           cell_init (int cellcachesize);
+void	      cell_init (int cellcachesize, Log_method *log);
 
 const cell_db_entry *cell_dbservers_by_id (int32_t cell, int *);
 
@@ -92,7 +96,8 @@ cell_entry    *cell_get_by_name (const char *cellname);
 cell_entry    *cell_get_by_id (int32_t cell);
 cell_entry    *cell_new (const char *name);
 cell_entry    *cell_new_dynamic (const char *name);
-Bool           cell_issuid (cell_entry *c);
+Bool	       cell_dynroot (const cell_entry *c);
+Bool           cell_issuid (const cell_entry *c);
 Bool           cell_issuid_by_num (int32_t cell);
 Bool           cell_issuid_by_name (const char *cell);
 Bool	       cell_setsuid_by_num (int32_t cell);
@@ -103,6 +108,8 @@ const char    *cell_expand_cell (const char *cell);
 unsigned long  cell_get_version(void);
 Bool 	       cell_is_sanep (int cell);
 const char **  cell_thesecells (void);
+void 	       cell_print_cell (cell_entry *c, FILE *out);
+
 
 /*
  * misc vl
@@ -113,5 +120,10 @@ const char **  cell_thesecells (void);
 
 void vldb2vldbN (const vldbentry *old, nvldbentry *new);
 void volintInfo2xvolintInfo (const volintInfo *old, xvolintInfo *new);
+
+int volname_canonicalize (char *volname);
+size_t volname_specific (const char *volname, int type,
+			 char *buf, size_t buf_sz);
+const char *volname_suffix (int type);
 
 #endif /* __KO_H */

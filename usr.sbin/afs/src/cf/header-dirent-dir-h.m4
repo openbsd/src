@@ -1,4 +1,4 @@
-dnl $Id: header-dirent-dir-h.m4,v 1.1 2000/09/11 14:40:48 art Exp $
+dnl $KTH: header-dirent-dir-h.m4,v 1.1 2000/03/24 04:07:32 assar Exp $
 
 dnl
 dnl Check if we can include both dirent.h and sys/dir.h

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: prog-cc-flags.m4,v 1.1 2000/09/11 14:40:51 art Exp $
+dnl $KTH: prog-cc-flags.m4,v 1.2 2000/01/23 12:34:11 assar Exp $
 dnl
 
 AC_DEFUN(AC_PROG_CC_FLAGS, [

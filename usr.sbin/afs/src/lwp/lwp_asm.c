@@ -37,7 +37,7 @@
 
 #include "lwp.h"
 
-RCSID("$Id: lwp_asm.c,v 1.1 2000/09/11 14:41:08 art Exp $");
+RCSID("$KTH: lwp_asm.c,v 1.16.2.1 2001/02/21 17:53:17 lha Exp $");
 
 #ifdef	AFS_AIX32_ENV
 #include <ulimit.h>
@@ -59,12 +59,10 @@ extern char PRE_Block;	/* from preempt.c */
 #define  DESTROYED	4
 #define QWAITING		5
 #define  MAXINT     (~(1<<((sizeof(int)*8)-1)))
-#define  MINSTACK   44
 
 
 /*
- * I don't really know if this is the right thing to do, but
- * now I don't get any unalinged memory access on my alpha /lha 
+ * Make sure that alignment and saving of data is right
  */
 
 #if defined(__alpha) || defined(__uxpv__) || defined(__sparcv9)
@@ -73,9 +71,18 @@ extern char PRE_Block;	/* from preempt.c */
 #define REGSIZE 4
 #endif
 
+/*
+ * Space before first stack frame expressed in registers. 
+ * 
+ * This should maybe be a ABI specific value defined somewhere else.
+ */
 
 #ifdef __hp9000s800
-#define MINFRAME 64
+#define STACK_HEADROOM 16
+#elif defined(__s390__)
+#define STACK_HEADROOM 24
+#else
+#define STACK_HEADROOM 5		
 #endif
 
 /* Debugging macro */
@@ -266,15 +273,13 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
     char *stackptr;
 #endif
 
-#if defined(AFS_LWP_MINSTACKSIZE)
     /*
      * on some systems (e.g. hpux), a minimum usable stack size has
      * been discovered
      */
-    if (stacksize < AFS_LWP_MINSTACKSIZE) {
-      stacksize = AFS_LWP_MINSTACKSIZE;
-    }
-#endif /* defined(AFS_LWP_MINSTACKSIZE) */
+    if (stacksize < AFS_LWP_MINSTACKSIZE)
+	stacksize = AFS_LWP_MINSTACKSIZE;
+
     /* more stack size computations; keep track of for IOMGR */
     if (lwp_MaxStackSeen < stacksize)
 	lwp_MaxStackSeen = stacksize;
@@ -283,19 +288,15 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
     /* Throw away all dead process control blocks */
     purge_dead_pcbs();
     if (lwp_init) {
-	temp = (PROCESS) malloc (sizeof (struct lwp_pcb));
+      temp = (PROCESS) malloc(sizeof(struct lwp_pcb));
 	if (temp == NULL) {
 	    Set_LWP_RC();
 	    return LWP_ENOMEM;
 	}
-	if (stacksize < MINSTACK)
-	    stacksize = 1000;
-	else
-#ifdef __hp9000s800
-	    stacksize = 8 * ((stacksize+7) / 8);
-#else
-	    stacksize = REGSIZE * ((stacksize+REGSIZE-1) / REGSIZE);
-#endif
+	
+	/* align stacksize */
+	stacksize = REGSIZE * ((stacksize+REGSIZE-1) / REGSIZE);
+
 #ifdef	AFS_AIX32_ENV
 	if (!stackptr) {
      /*
@@ -353,10 +354,11 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
 	PRE_Block = 1;
 	lwp_cpptr = temp;
 #ifdef __hp9000s800
-	savecontext(Create_Process_Part2, &temp2->context, stackptr+MINFRAME);
+	savecontext(Create_Process_Part2, &temp2->context,
+		    stackptr + (REGSIZE * STACK_HEADROOM));
 #else
 	savecontext(Create_Process_Part2, &temp2->context,
-		    stackptr+stacksize-REGSIZE);
+		    stackptr + stacksize - (REGSIZE * STACK_HEADROOM));
 #endif
 	/* End of gross hack */
 
@@ -398,10 +400,11 @@ LWP_DestroyProcess(PROCESS pid)
 	    temp = lwp_cpptr;
 #ifdef __hp9000s800
 	    savecontext(Dispatcher, &(temp -> context),
-			&(LWPANCHOR.dsptchstack[MINFRAME]));
+			&(LWPANCHOR.dsptchstack[(REGSIZE * STACK_HEADROOM)]));
 #else
 	    savecontext(Dispatcher, &(temp -> context),
-			&(LWPANCHOR.dsptchstack[(sizeof LWPANCHOR.dsptchstack)-REGSIZE]));
+			&(LWPANCHOR.dsptchstack[(sizeof LWPANCHOR.dsptchstack)
+					       - (REGSIZE * STACK_HEADROOM)]));
 #endif
 	}
 	return LWP_SUCCESS;
@@ -847,7 +850,7 @@ Initialize_PCB(PROCESS temp, int priority, char *stack, int stacksize,
     temp -> stacksize = stacksize;
 #ifdef __hp9000s800
     if (temp -> stack != NULL)
-	temp -> stackcheck = *(long *) ((temp -> stack) + stacksize - 4);
+	temp -> stackcheck = *(long *) ((temp -> stack) + stacksize - REGSIZE);
 #else
     if (temp -> stack != NULL)
 	temp -> stackcheck = *(long *) (temp -> stack);

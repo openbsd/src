@@ -1,4 +1,4 @@
 #!/bin/sh
-# $Id: many-files,v 1.1 2000/09/11 14:41:31 art Exp $
+# $KTH: many-files,v 1.4 1999/10/10 23:51:00 assar Exp $
 
 $objdir/create-files 1000 0

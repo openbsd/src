@@ -1,3 +1,117 @@
+2001-01-01  Love  <lha@stacken.kth.se>
+
+	* fs/fsprocs.c: (RXAFS_FetchACL): add dummy call to i2nlist() to
+	return numbers when pts-server is down
+	(RXAFS_Link): dummy implement, not enabled
+	
+	* vldb/vldbserver.c(main): pass realm to network_init().
+
+2000-12-29  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/sked/sked.c ({vol{create,show,ls},salvage}_cmd):
+	Handle vicep* in other places than /
+	* lib/voldb/voldb_locl.h Makefile.in vol.c:
+	Handle vicep* in other places than /
+	* lib/dpart/dpart.[ch]: Handle vicep* in other places than /
+	* fs/fileserver.c (main): use the given realm, new arg partdir,
+	place to look for vicep*
+	(sigusr1): look in the right place for vicepa
+	* pts/ptserver.c (main): use the given realm
+	* fs/fsprocs.c (RXAFS_StoreACL): return correct values
+	* lib/vld/vld.c (vld_create_volume): no default rights for
+	anonymous
+
+2000-12-10  Love  <lha@stacken.kth.se>
+
+	* appl/perf/perf.c: return somewhat more sane error-codes in the
+	callbackserver
+
+2000-12-05  Love  <lha@stacken.kth.se>
+
+	* lib/mlog/Makefile.in: added $(srcdir)/../../..
+	
+2000-12-04  Love  <lha@stacken.kth.se>
+
+	* lib/ropa/ropa.c (ropa_getcallback): if we fail to probe the
+	client, whine and return a bogus callback
+	(update_callback_time): new, update a backback
+	(update_callback): use update_callback_time().
+
+2000-12-01  Tomas Olsson  <tol@stacken.kth.se>
+
+	* fs/fsprocs.c (*): always give a real mnode as arg when calling
+	vld_modify_vnode()
+	* lib/vld/vld.c (*ent_to_fetchstatus): new format w/ volume_handle
+	(*): set fetchstatus more correctly, use new *ent_to_fetchstatus
+
+2000-11-25  Love  <lha@stacken.kth.se>
+
+	* lib/ropa/ropa.c: first shot at threadsafeness
+	
+2000-10-08  Tomas Olsson  <tol@stacken.kth.se>
+
+	* appl/sked/sked.c (volcreate_cmd): parse partition name correctly
+
+2000-10-03  Love  <lha@stacken.kth.se>
+
+	* **/*.[chly]: Removed advertising clause.
+
+2000-10-02  Assar Westerlund  <assar@sics.se>
+
+	* lib/vld/vld.c (vld_check_rights): always look at the node itself
+	if it's a directory
+	* lib/vld/mnode.h: remove VOLOP_PARENT
+
+2000-09-29  Tomas Olsson  <tol@stacken.kth.se>
+
+	* pts/ptserver.c (addtogroup): avoid duplicates
+	* bos/bosserver.c: check both serverfile and bos.conf
+	* appl/sked/sked.c (main): make logging work
+	* fs/fsprocs.c
+ 	(RXAFS_{FetchData,FetchStatus,StoreData,CreateFile}): log
+ 	calleraccess on return
+	* fs/fileserver.c (main): use ropa_init() the new way
+	* lib/ropa/ropa.h: update prototype for ropa_init()
+	* lib/ropa/ropa.c: keep connections to clients and reuse,
+	added hashtable to keep track of ccpairs
+	(ropa_init): new interface w/ htabsizes & #ccpairs
+
+2000-09-29  Love  <lha@stacken.kth.se>
+
+	* pts/pr.c (PR_NameToID,PR_IDToName): print [in]len
+	* pts/*.c: change to log_log, clean up
+	* bos/bosserver.c: remove unused variables
+	
+2000-09-15  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* pts/ptserver.c (find_first_free): Use deleted entries
+	* pts/ptserver.c (listelements): don't include own id when 
+	  PR_ListElements
+
+2000-09-15  Tomas Olsson  <tol@stacken.kth.se>
+
+	* lib/mlog/mlog.c (mlog_loginit): use the supplied method
+
+2000-09-06  Tomas Olsson  <tol@stacken.kth.se>
+
+	* fs/fsprocs.c (removenode): return error if dirp doesn't match
+	actual node type
+	* bos/bosserver.c: somewhat closer to working condition
+	* bos.conf: closer to current format
+	
+2000-09-04  Love  <lha@stacken.kth.se>
+
+	* pts/ptserver.c: remove some warnings usr log_log
+	
+2000-09-03  Love  <lha@stacken.kth.se>
+
+	* bos/bosprocs.c (AddSUser, DeleteSUser): add some content
+	(*): re-indent
+
+2000-09-02  Love  <lha@stacken.kth.se>
+
+	* bos/bosprocs.c: added missing functions
+
 2000-08-24  Love  <lha@stacken.kth.se>
 
 	* fs/fileserver.c: update code to new mlog_log_set_level
@@ -36,7 +150,7 @@
 	* lib/vld/vld.h: more unsigned
 	* lib/vld/mnode.h: use unsigned instead of long for flags
 	* lib/ropa/ropa.c (find_client): fix typo
-	(client_update_interfaces): use htohl() on hidden elements in
+	(client_update_interfaces): use ntohl() on hidden elements in
 	struct from peer 
 	(ropa_init): get & save debuglevel for later use
 	(debug_print_callbacks): don't iterate if MDEBROPA not set i debuglevel

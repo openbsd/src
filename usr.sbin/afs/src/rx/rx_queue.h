@@ -1,5 +1,5 @@
-/* $Header: /home/cvs/src/usr.sbin/afs/src/rx/Attic/rx_queue.h,v 1.2 2000/09/11 14:41:22 art Exp $ */
-/* $Source: /home/cvs/src/usr.sbin/afs/src/rx/Attic/rx_queue.h,v $ */
+/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_queue.h,v 1.4 2000/10/02 21:08:29 haba Exp $ */
+/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_queue.h,v $ */
 
 /*
 ****************************************************************************
@@ -116,8 +116,8 @@ for (n=0, queue_Scan(&myqueue, qe, nqe, myelement), n++) {}
 #define queue_Replace(q1,q2) if (queue_IsEmpty(q2)) queue_Init(q1); else \
     (*_RX_QUEUE(q1) = *_RX_QUEUE(q2), _RX_QUEUE(q1)->next->prev = _RX_QUEUE(q1)->prev->next = _RX_QUEUE(q1), queue_Init(q2))
 
-/* Remove a queue element (*i) from it's queue.  The next field is 0'd, so that any further use of this q entry will hopefully cause a core dump.  Multiple removes of the same queue item are not supported */
-#define queue_Remove(i) (_QR(i), _RX_QUEUE(i)->next = 0)
+/* Remove a queue element (*i) from it's queue.  The next and prev field is 0'd, so that any further use of this q entry will hopefully cause a core dump.  Multiple removes of the same queue item are not supported */
+#define queue_Remove(i) (_QR(i), _RX_QUEUE(i)->next = 0, _RX_QUEUE(i)->prev = 0 )
 
 /* Move the queue element (*i) from it's queue to the end of the queue (*q) */
 #define queue_MoveAppend(q,i) (_QR(i), queue_Append(q,i))

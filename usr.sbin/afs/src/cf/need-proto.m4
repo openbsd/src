@@ -1,4 +1,4 @@
-dnl $Id: need-proto.m4,v 1.1 2000/09/11 14:40:50 art Exp $
+dnl $KTH: need-proto.m4,v 1.1 1999/05/15 22:45:33 assar Exp $
 dnl
 dnl
 dnl Check if we need the prototype for a function

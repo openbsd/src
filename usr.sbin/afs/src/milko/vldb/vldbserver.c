@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #include "vldb_locl.h"
 
-RCSID("$Id: vldbserver.c,v 1.1 2000/09/11 14:41:20 art Exp $");
+RCSID("$KTH: vldbserver.c,v 1.33 2001/01/01 20:42:58 lha Exp $");
 
 static void make_vldb_from_vl(struct vldbentry *vldb_entry,
 			      struct disk_vlentry *vl_entry);
@@ -736,36 +731,39 @@ static char *cell = NULL;
 static char *realm = NULL;
 static char *databasedir = NULL;
 static char *srvtab_file = NULL;
+static char *log_file = "syslog";
 static int no_auth = 0;
 static int do_create = 0;
 static int vlsrv_debug = 0;
 
-static struct getargs args[] = {
-    {"create",  0, arg_flag,      &do_create, "create new database"},
-    {"cell",	0, arg_string,    &cell, "what cell to use"},
-    {"realm",	0, arg_string,	  &realm, "what realm to use"},
-    {"prefix",'p', arg_string,    &databasedir, "what dir to store the db"},
-    {"noauth", 0,  arg_flag,	  &no_auth, "disable authentication checks"},
-    {"debug", 'd', arg_flag,      &vlsrv_debug, "output debugging"},
-    {"srvtab",'s', arg_string,    &srvtab_file, "what srvtab to use"},
-    { NULL, 0, arg_end, NULL }
+static struct agetargs args[] = {
+    {"create",  0, aarg_flag,      &do_create, "create new database"},
+    {"cell",	0, aarg_string,    &cell, "what cell to use"},
+    {"realm",	0, aarg_string,	  &realm, "what realm to use"},
+    {"prefix",'p', aarg_string,    &databasedir, "what dir to store the db"},
+    {"noauth", 0,  aarg_flag,	  &no_auth, "disable authentication checks"},
+    {"debug", 'd', aarg_flag,      &vlsrv_debug, "output debugging"},
+    {"log",   'd', aarg_string,    &log_file, "log file"},
+    {"srvtab",'s', aarg_string,    &srvtab_file, "what srvtab to use"},
+    { NULL, 0, aarg_end, NULL }
 };
 
 static void
 usage(void)
 {
-    arg_printusage(args, NULL, "", ARG_AFSSTYLE);
+    aarg_printusage(args, NULL, "", AARG_AFSSTYLE);
 }
 
 int
 main(int argc, char **argv) 
 {
-    int ret;
+    Log_method *method;
     int optind = 0;
+    int ret;
     
     set_progname (argv[0]);
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
 	return 1;
     }
@@ -789,8 +787,12 @@ main(int argc, char **argv)
 	return 0;
     }
 	
+    method = log_open (get_progname(), log_file);
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
     ports_init();
-    cell_init(0);
+
 
     if (cell)
 	cell_setthiscell (cell);
@@ -805,7 +807,7 @@ main(int argc, char **argv)
 	errx (1, "network_init failed with %d", ret);
     
     ret = network_init(htons(afsvldbport), "ubik", VOTE_SERVICE_ID, 
-		       Ubik_ExecuteRequest, &ubikservice, NULL);
+		       Ubik_ExecuteRequest, &ubikservice, realm);
     if (ret)
 	errx (1, "network_init failed with %d", ret);
 

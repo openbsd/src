@@ -31,16 +31,20 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <cmd.h>
+#include <agetarg.h>
 
 #include <stdio.h>
+#include <err.h>
 
 #include "rx_user.h"
 #include "rx_clock.h"
 #include "rx_queue.h"
 #include "rx.h"
 
-RCSID ("$Id: rxdebug.c,v 1.1 2000/09/11 14:41:23 art Exp $");
+#include "config.h"
+#include "roken.h"
+
+RCSID ("$KTH: rxdebug.c,v 1.7.2.5 2001/11/24 17:00:58 mattiasa Exp $");
 
 #define	TIMEOUT	    20
 
@@ -95,20 +99,32 @@ MakeCall (int asocket, long ahost, short aport, char *adata,
 	bcopy(adata, tp, alen);
 	code = sendto(asocket, tbuffer, alen+sizeof(struct rx_header), 0,
 		      (struct sockaddr *)&taddr, sizeof(struct sockaddr_in));
-	
+	if (code == -1) {
+	    err(1, "sendto");
+	}
 	/* see if there's a packet available */
 	
+	if (asocket >= FD_SETSIZE) {
+	    printf("rxdebug: socket fd too large\n");
+	    exit (1);
+	}
+
 	FD_ZERO(&imask);
 	FD_SET(asocket,&imask); 
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 	code = select(asocket+1, &imask, NULL, NULL, &tv);
+	if (code == -1) {
+	    err(1, "select");
+	}
 	if (code > 0) {
 	    /* now receive a packet */
 	    faddrLen = sizeof(struct sockaddr_in);
 	    code = recvfrom(asocket, tbuffer, sizeof(tbuffer), 0,
 			    (struct sockaddr *)&faddr, &faddrLen);
-
+	    if (code == -1) {
+		err(1, "recvfrom");
+	    }
 	    bcopy(tbuffer, &theader, sizeof(struct rx_header));
 	    if (counter == ntohl(theader.callNumber)) break;
 	}
@@ -159,7 +175,15 @@ GetVersion(int asocket, long ahost, short aport, void *adata, long alen,
 
 	code = sendto(asocket, tbuffer, alen+sizeof(struct rx_header), 0,
 		      (struct sockaddr *)&taddr, sizeof(struct sockaddr_in));
-	
+	if (code == -1) {
+            err(1, "sendto");
+        }
+
+	if (asocket >= FD_SETSIZE) {
+	    printf("rxdebug: socket fd too large\n");
+	    exit (1);
+	}
+
 	/* see if there's a packet available */
 	FD_ZERO(&imask);
 	FD_SET(asocket, &imask);
@@ -170,12 +194,18 @@ GetVersion(int asocket, long ahost, short aport, void *adata, long alen,
 	tv.tv_usec = 0;
 
 	code = select(32, &imask, 0, 0, &tv);
+	if (code == -1) {
+	    err(1, "select");
+	}
 	if (code > 0) {
 	    /* now receive a packet */
 	    faddrLen = sizeof(struct sockaddr_in);
 
 	    code = recvfrom(asocket, tbuffer, sizeof(tbuffer), 0,
 			    (struct sockaddr *)&faddr, &faddrLen);
+	    if (code == -1) {
+		err(1, "recvfrom");
+	    }
 
 	    bcopy(tbuffer, &theader, sizeof(struct rx_header));
 
@@ -221,8 +251,22 @@ MapOldConn (char version, struct rx_debugConn *tconn)
     return 0;
 }
 
+static char *hostName;
+static char *portName;
+static int nodally;
+static int allconns;
+static int rxstats;
+static char *onlyPortName;
+static char *onlyHostName;
+static int onlyServer;
+static int onlyClient;
+static char *onlyAuthName;
+static int version_flag;
+static int noConns;
+static int helpflag;
+
 static int
-MainCommand (struct cmd_syndesc *as, void *arock)
+MainCommand (void)
 {
     register int i;
     int s;
@@ -234,10 +278,6 @@ MainCommand (struct cmd_syndesc *as, void *arock)
     struct hostent *th;
     struct rx_debugIn tin;
     int code;
-    int nodally;
-    int allconns;
-    int rxstats;
-    int onlyClient, onlyServer;
     long onlyHost;
     short onlyPort;
     int onlyAuth;
@@ -248,35 +288,14 @@ MainCommand (struct cmd_syndesc *as, void *arock)
     int withRxStats;
     int withWaiters;
     struct rx_debugStats tstats;
-    char *portName, *hostName;
     struct rx_debugConn tconn;
-    short noConns;
 
-    int version_flag;
     char version[64];
     char nada[64];
     long length=64;
     
-    nodally = (as->parms[2].items ? 1 : 0);
-    allconns = (as->parms[3].items ? 1 : 0);
-    rxstats = (as->parms[4].items ? 1 : 0);
-    onlyServer = (as->parms[5].items ? 1 : 0);
-    onlyClient = (as->parms[6].items ? 1 : 0);
-    version_flag=(as->parms[10].items ? 1 : 0);
-    noConns = (as->parms[11].items ? 1 : 0);
-    
-    if (as->parms[0].items)
-	hostName = as->parms[0].items->data;
-    else
-	hostName = (char *) 0;
-    
-    if (as->parms[1].items)
-	portName = as->parms[1].items->data;
-    else
-	portName = (char *) 0;
-    
-    if (as->parms[7].items) {
-	char *name = as->parms[7].items->data;
+    if (onlyPortName) {
+	char *name = onlyPortName;
 	if ((onlyPort = PortNumber(name)) == -1)
 	    onlyPort = PortName(name);
 	if (onlyPort == -1) {
@@ -285,8 +304,8 @@ MainCommand (struct cmd_syndesc *as, void *arock)
 	}
     } else onlyPort = -1;
     
-    if (as->parms[8].items) {
-	char *name = as->parms[8].items->data;
+    if (onlyHostName) {
+	char *name = onlyHostName;
 	struct hostent *th;
 	th = gethostbyname(name);
 	if (!th) {
@@ -296,8 +315,8 @@ MainCommand (struct cmd_syndesc *as, void *arock)
 	bcopy(th->h_addr, &onlyHost, sizeof(long));
     } else onlyHost = -1;
 
-    if (as->parms[9].items) {
-	char *name = as->parms[9].items->data;
+    if (onlyAuthName) {
+	char *name = onlyAuthName;
 	if (strcmp (name, "clear") == 0) onlyAuth = 0;
 	else if (strcmp (name, "auth") == 0) onlyAuth = 1;
 	else if (strcmp (name, "crypt") == 0) onlyAuth = 2;
@@ -395,17 +414,15 @@ MainCommand (struct cmd_syndesc *as, void *arock)
 	printf("%ld calls waiting for a thread\n",
 	       (long)ntohl(tstats.nWaiting));
     
-    if (rxstats) {
-	if (!withRxStats) {
-	noRxStats:
-	    withRxStats = 0;
+    if (rxstats && withRxStats) {
+	if(!withRxStats) {
 	    fprintf (stderr, "WARNING: Server doens't support "
 		     "retrieval of Rx statistics\n");
 	} else {
 	    struct rx_stats rxstats;
 	    int i;
 	    long *lp;
-	    
+	
 	    bzero (&rxstats, sizeof(rxstats));
 	    tin.type = htonl(RX_DEBUGI_RXSTATS);
 	    tin.index = 0;
@@ -416,22 +433,26 @@ MainCommand (struct cmd_syndesc *as, void *arock)
 		printf("rxstats call failed with code %d\n", code);
 		exit(1);
 	    }
-	    if (code != sizeof(rxstats)) {
-		if ((code == sizeof(tin)) &&
-		    (ntohl(((struct rx_debugIn *)(&rxstats))->type) ==
-		     RX_DEBUGI_BADTYPE)) goto noRxStats;
-		fprintf (stderr, "WARNING: returned Rx statistics of "
-			 "unexpected size (got %d)\n",
-			code);
-		/* handle other versions?... */
+
+	    if ((code == sizeof(tin)) &&
+		(ntohl(((struct rx_debugIn *)(&rxstats))->type) ==
+		 RX_DEBUGI_BADTYPE)) {
+		fprintf (stderr, "WARNING: Server doens't support "
+			 "retrieval of Rx statistics\n");
+	    } else {
+		if  (code != sizeof(rxstats)) {
+		    /* handle other versions?... */
+		    fprintf (stderr, "WARNING: returned Rx statistics of "
+			     "unexpected size (got %d)\n",
+			     code);
+		}
+		/* Since its all longs convert to host order with a loop. */
+		lp = (long *)&rxstats;
+		for (i=0; i<sizeof(rxstats)/sizeof(int); i++,lp++)
+		    *lp = ntohl(*lp);
+		
+		rx_PrintTheseStats (stdout, &rxstats, sizeof(rxstats));
 	    }
-	    
-	    /* Since its all longs convert to host order with a loop. */
-	    lp = (long *)&rxstats;
-	    for (i=0; i<sizeof(rxstats)/sizeof(int); i++,lp++)
-		*lp = ntohl(*lp);
-	    
-	    rx_PrintTheseStats (stdout, &rxstats, sizeof(rxstats));
 	}
     }
     
@@ -440,11 +461,7 @@ MainCommand (struct cmd_syndesc *as, void *arock)
     
     tin.type = htonl(RX_DEBUGI_GETCONN);
     if (allconns) {
-	if (!withAllConn) 
-	    fprintf (stderr, "WARNING: Server doesn't support retrieval of "
-		     "all connections,\n"
-		     "getting only interesting instead.\n");
-	else tin.type = htonl(RX_DEBUGI_GETALLCONN);
+	tin.type = htonl(RX_DEBUGI_GETALLCONN);
     }
     
     if (onlyServer) printf ("Showing only server connections\n");
@@ -572,10 +589,10 @@ MainCommand (struct cmd_syndesc *as, void *arock)
 			    ((u_long)ntohl(tconn.secStats.expires) -
 			     time(0)) / 3600.0);
 		if (!(flags & 1)) {
-		    printf ("\n  Received %ld bytes in %ld packets\n", 
+		    printf ("\n  Received %lu bytes in %lu packets\n", 
 			    (long)ntohl(tconn.secStats.bytesReceived),
 			    (long)ntohl(tconn.secStats.packetsReceived));
-		    printf ("  Sent %ld bytes in %ld packets\n", 
+		    printf ("  Sent %lu bytes in %lu packets\n", 
 			    (long)ntohl(tconn.secStats.bytesSent),
 			    (long)ntohl(tconn.secStats.packetsSent));
 		} else
@@ -638,33 +655,66 @@ MainCommand (struct cmd_syndesc *as, void *arock)
     return 0;
 }
 
+static struct agetargs args[] = {
+    {"servers",  0, aarg_string,  &hostName,
+     "server machine", NULL, aarg_mandatory},
+    {"port", 0, aarg_string, &portName,
+     "IP port", NULL, aarg_optional_swless },
+    {"nodally", 0, aarg_flag, &nodally,
+     "don't show dallying conns", NULL },
+    {"allconnections", 0, aarg_flag, &allconns,
+     "don't filter out uninteresting connections on server"},
+    {"rxstats", 0, aarg_flag, &rxstats,
+     "show Rx statistics", NULL },
+    {"onlyserver", 0, aarg_flag, &onlyServer,
+     "only show server conns", NULL },
+    {"onlyclient", 0, aarg_flag, &onlyClient,
+     "only show client conns", NULL},
+    {"onlyport", 0, aarg_integer, &onlyPortName,
+     "show only <port>", NULL },
+    {"onlyhost", 0, aarg_string, &onlyHostName,
+     "show only <host>", NULL },
+    {"onlyauth", 0, aarg_string, &onlyAuthName,
+     "show only <auth level>", NULL },
+    {"version", 0, aarg_flag, &version_flag,
+     "show AFS version id", NULL },
+    {"noconns", 0, aarg_flag, &noConns,
+     "show no connections", NULL },
+    {NULL}
+};
+
+static void
+usage(void)
+{   
+    aarg_printusage (args, "rxdebug", "", AARG_AFSSTYLE);
+}
+
+
 /* simple main program */
 
 int
 main(int argc, char **argv)
 {
-    struct cmd_syndesc *ts;
+
+    int optind = 0;
     
-    ts = cmd_CreateSyntax((char *) 0, MainCommand, 0, "probe RX server");
-    cmd_AddParm(ts, "-servers", CMD_SINGLE, CMD_REQUIRED, "server machine");
-    cmd_AddParm(ts, "-port", CMD_SINGLE, CMD_OPTIONAL, "IP port");
-    cmd_AddParm(ts, "-nodally", CMD_FLAG, CMD_OPTIONAL,
-		"don't show dallying conns");
-    cmd_AddParm(ts, "-allconnections", CMD_FLAG, CMD_OPTIONAL,
-		"don't filter out uninteresting connections on server");
-    cmd_AddParm(ts, "-rxstats", CMD_FLAG, CMD_OPTIONAL, "show Rx statistics");
-    cmd_AddParm(ts, "-onlyserver", CMD_FLAG, CMD_OPTIONAL,
-		"only show server conns");
-    cmd_AddParm(ts, "-onlyclient", CMD_FLAG, CMD_OPTIONAL,
-		"only show client conns");
-    cmd_AddParm(ts, "-onlyport", CMD_SINGLE, CMD_OPTIONAL, "show only <port>");
-    cmd_AddParm(ts, "-onlyhost", CMD_SINGLE, CMD_OPTIONAL, "show only <host>");
-    cmd_AddParm(ts, "-onlyauth", CMD_SINGLE, CMD_OPTIONAL,
-		"show only <auth level>");
-    
-    cmd_AddParm(ts,"-version",CMD_FLAG,CMD_OPTIONAL,"show AFS version id");
-    cmd_AddParm(ts,"-noconns",CMD_FLAG,CMD_OPTIONAL,"show no connections");
-    
-    cmd_Dispatch(argc, argv);
-    return 0;
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
+        usage();
+        return 0;
+    }
+
+    if(helpflag) {
+        usage();
+        return 0;
+    }
+
+    argc -= optind;
+    argv += optind;
+
+    if (argc > 0) {
+        fprintf (stderr, "create volume: unparsed arguments\n");
+        return 0;
+    }
+
+    return MainCommand();
 }

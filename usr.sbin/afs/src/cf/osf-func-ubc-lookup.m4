@@ -1,5 +1,5 @@
 dnl
-dnl $Id: osf-func-ubc-lookup.m4,v 1.1 2000/09/11 14:40:50 art Exp $
+dnl $KTH: osf-func-ubc-lookup.m4,v 1.2 2000/06/12 06:57:40 assar Exp $
 dnl
 
 AC_DEFUN(AC_OSF_FUNC_UBC_LOOKUP, [

@@ -39,7 +39,7 @@
 #endif
 #include "ss.h"
 
-RCSID("$Id: ss.c,v 1.1 2000/09/11 14:41:07 art Exp $");
+RCSID("$KTH: ss.c,v 1.2 2000/06/17 03:14:59 assar Exp $");
 
 struct ss_subst {
     char *name;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: vld.c,v 1.1 2000/09/11 14:41:17 art Exp $ */
+/* $KTH: vld.c,v 1.49 2000/12/29 19:45:50 tol Exp $ */
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -75,7 +70,9 @@
 
 int vld_storestatus_to_ent (struct voldb_entry *e, const AFSStoreStatus *ss,
 			    struct msec *sec);
-static int vld_ent_to_fetchstatus  (struct voldb_entry *e, struct mnode *n);
+static int vld_ent_to_fetchstatus  (struct volume_handle *vol,
+				    struct voldb_entry *e,
+				    struct mnode *n);
 static void vld_set_author(struct voldb_entry *e, struct msec *m);
 static int super_user (struct msec *m);
 
@@ -369,7 +366,6 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
     struct voldb *db;
     int (*convert_local2afs)(int32_t);
     node_type ntype;
-    time_t now;
 
     switch (type) {
     case TYPE_DIR:
@@ -427,13 +423,11 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
 	}
     }
 
-    now = time(NULL);
-
     if (type == TYPE_DIR) {
 	e.u.dir.ino = child_ino;
 	e.u.dir.FileType = type;
 	e.u.dir.LinkCount = 2;
-	e.u.dir.DataVersion = now;
+	e.u.dir.DataVersion = 0;
 	e.u.dir.ParentVnode = parent->fid.Vnode;
 	e.u.dir.ParentUnique = parent->fid.Unique;
 	memcpy (&e.u.dir.negacl, &parent->e.u.dir.negacl, 
@@ -444,12 +438,12 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
 	e.u.file.ino = child_ino;
 	e.u.file.FileType = type;
 	e.u.file.LinkCount = 1;
-	e.u.file.DataVersion = now;
+	e.u.file.DataVersion = 0;
 	e.u.file.ParentVnode = parent->fid.Vnode;
 	e.u.file.ParentUnique = parent->fid.Unique;
     }
 
-    voldb_update_time(&e, now);
+    voldb_update_time(&e, time(NULL));
     vld_set_author(&e, m);
     
     ret = vld_storestatus_to_ent (&e, ss, m);
@@ -480,7 +474,7 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
 		n->flags.ep = TRUE;
 	    }
 	    
-	    ret = vld_ent_to_fetchstatus(&e, n);
+	    ret = vld_ent_to_fetchstatus(vol, &e, n);
 	    if (ret)
 		goto out_bad_put;
 	}
@@ -580,7 +574,7 @@ vld_adjust_linkcount (volume_handle *vol, struct mnode *n, int adjust)
     ret = voldb_put_entry (db, real_mnode, &n->e);
     if (ret)
 	return ret;
-    
+  
     n->fs.LinkCount += adjust;
     n->flags.ep = TRUE;
 
@@ -945,8 +939,6 @@ vld_create_volume (struct dp_part *dp, int32_t volid,
 	    PRSFS_ADMINISTER;
 	parent_n.e.u.dir.acl[1].owner = PR_ANYUSERID;
 	parent_n.e.u.dir.acl[1].flags = PRSFS_LOOKUP | PRSFS_READ;
-	parent_n.e.u.dir.acl[2].owner = PR_ANONYMOUSID;
-	parent_n.e.u.dir.acl[2].flags = PRSFS_LOOKUP | PRSFS_READ;
 
 	ret = vld_create_entry (vol, &parent_n, &child, 
 				TYPE_DIR, &ss, &n, NULL);
@@ -1110,7 +1102,8 @@ vld_storestatus_to_ent (struct voldb_entry *e,
  */
 
 static int
-vld_dent_to_fetchstatus (struct voldb_dir_entry *e,
+vld_dent_to_fetchstatus (struct volume_handle *vol, 
+			 struct voldb_dir_entry *e,
 			 struct mnode *n)
 {
     int ret;
@@ -1133,8 +1126,8 @@ vld_dent_to_fetchstatus (struct voldb_dir_entry *e,
     fs->SegSize 	= e->SegSize;
     fs->ClientModTime 	= e->ServerModTime;
     fs->ServerModTime	= e->ServerModTime;
-    fs->SyncCount 	= 4711;
-    fs->spare1		= 0;
+    fs->SyncCount 	= 0;
+    fs->spare1		= vol->info.creationDate;
     fs->spare2		= 0;
     fs->spare3		= 0;
     fs->spare4		= 0;
@@ -1158,7 +1151,8 @@ vld_dent_to_fetchstatus (struct voldb_dir_entry *e,
  */
 
 static int
-vld_fent_to_fetchstatus (struct voldb_file_entry *e,
+vld_fent_to_fetchstatus (struct volume_handle *vol,
+			 struct voldb_file_entry *e,
 			 struct mnode *n)
 {
     int ret;
@@ -1181,8 +1175,8 @@ vld_fent_to_fetchstatus (struct voldb_file_entry *e,
     fs->SegSize 	= e->SegSize;
     fs->ClientModTime 	= e->ServerModTime;
     fs->ServerModTime	= e->ServerModTime;
-    fs->SyncCount 	= 4711;
-    fs->spare1		= 0;
+    fs->SyncCount 	= 0;
+    fs->spare1		= vol->info.creationDate;
     fs->spare2		= 0;
     fs->spare3		= 0;
     fs->spare4		= 0;
@@ -1206,7 +1200,9 @@ vld_fent_to_fetchstatus (struct voldb_file_entry *e,
  */
 
 static int
-vld_ent_to_fetchstatus  (struct voldb_entry *e, struct mnode *n)
+vld_ent_to_fetchstatus  (struct volume_handle *vol,
+			 struct voldb_entry *e,
+			 struct mnode *n)
 {
     int ret;
 
@@ -1217,11 +1213,11 @@ vld_ent_to_fetchstatus  (struct voldb_entry *e, struct mnode *n)
 
     switch (e->type) {
     case TYPE_DIR:
-	ret = vld_dent_to_fetchstatus (&e->u.dir, n);
+	ret = vld_dent_to_fetchstatus (vol, &e->u.dir, n);
 	break;
     case TYPE_FILE:
     case TYPE_LINK:
-	ret = vld_fent_to_fetchstatus (&e->u.file, n);
+	ret = vld_fent_to_fetchstatus (vol, &e->u.file, n);
 	break;
     default:
 	abort();
@@ -1362,13 +1358,7 @@ vld_check_rights (volume_handle *vol, struct mnode *n,
     if (m->sec->cps == NULL)
 	return EPERM;
     
-    /*
-     * The root node has itself as parent
-     */
-
-    if ((n->fid.Vnode == 1 && n->fid.Unique == 1)
-	|| (m->flags & VOLOP_PARENT) == VOLOP_PARENT) {
-	assert(n->e.type == TYPE_DIR);
+    if (n->e.type == TYPE_DIR) {
 	parent_n = n;
     } else {
 	memset (&pm, 0, sizeof (pm));
@@ -1473,7 +1463,7 @@ vld_open_vnode (volume_handle *vol, struct mnode *n, struct msec *m)
     n->flags.fdp = TRUE;
 
     if ((m->flags & VOLOP_GETSTATUS) == VOLOP_GETSTATUS)
-	ret = vld_ent_to_fetchstatus (&n->e, n);
+	ret = vld_ent_to_fetchstatus (vol, &n->e, n);
 
     return ret;
 }
@@ -1523,10 +1513,12 @@ vld_modify_vnode (volume_handle *vol, struct mnode *n, struct msec *m,
 	n->sb.st_size = *len;
     }
 
-    if (n->e.type == TYPE_DIR)
-	n->e.u.dir.DataVersion++;
-    else
-	n->e.u.file.DataVersion++;
+    if (m->flags & (VOLOP_WRITE|VOLOP_INSERT|VOLOP_DELETE)) {
+	if (n->e.type == TYPE_DIR)
+	    n->e.u.dir.DataVersion++;
+	else
+	    n->e.u.file.DataVersion++;
+    }
 
     ret = voldb_put_entry (db, real_mnode, &n->e);
     if (ret)
@@ -1534,7 +1526,7 @@ vld_modify_vnode (volume_handle *vol, struct mnode *n, struct msec *m,
 
     n->flags.fsp = FALSE; /* Force vld_ent_to_fetchstatus
 			     to fill in the field */
-    ret = vld_ent_to_fetchstatus (&n->e, n);
+    ret = vld_ent_to_fetchstatus (vol, &n->e, n);
 
     return ret;
 }
@@ -1569,7 +1561,7 @@ vld_put_acl (volume_handle *vol, struct mnode *n, struct msec *m)
 			     to fill in the field */
 	
     if ((m->flags & VOLOP_GETSTATUS) == VOLOP_GETSTATUS)
-	ret = vld_ent_to_fetchstatus (&n->e, n);
+	ret = vld_ent_to_fetchstatus (vol, &n->e, n);
 
     return ret;
 }

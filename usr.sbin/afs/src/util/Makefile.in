@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:36 art Exp $
+# $KTH: Makefile.in,v 1.38 2000/10/25 07:06:47 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -8,7 +9,7 @@ AR		= ar
 RANLIB		= @RANLIB@
 MAKEDEPEND	= makedepend
 ETAGS		= etags
-LIBS		= -L../lib/roken -lroken @LIBS@
+LIBS		= @LIB_roken@ @LIBS@
 
 INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
@@ -17,6 +18,7 @@ prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 includedir	= @includedir@
 libdir		= @libdir@
+mandir		= @mandir@
 
 # Profiler flags
 PROF		=
@@ -27,10 +29,12 @@ SHELL		= /bin/sh
 
 CFLAGS		= @CFLAGS@
 REALCFLAGS	= $(CFLAGS) $(DEFS) \
+		  @INC_roken@ \
 		  -I$(srcdir) -I../include -I$(srcdir)/../include $(PROF)
 
 PROGS		= mmaptime_test util-tester heaptest
 LIB		= libutil.a
+MANPAGES	= log_log.3
 
 HEADERS		= bool.h hash.h heap.h list.h log.h
 
@@ -78,13 +82,27 @@ install:	all
 		$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)/$(LIB)
 		for i in $(HEADERS); do \
 		  $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(includedir)/$$i; \
+		done ; \
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
+			$(INSTALL_DATA) $(srcdir)/$$x \
+				$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
 		done
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/$(LIB)
-	for i in $(HEADERS); do \
-	  rm -f $(DESTDIR)$(includedir)/$$i; \
-	done
+		rm -f $(DESTDIR)$(libdir)/$(LIB)
+		for i in $(HEADERS); do \
+			rm -f $(DESTDIR)$(includedir)/$$i; \
+		done ; \
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			rm -rf $(DESTDIR)$(mandir)/$$f.$$e; \
+		done
 
 libutil.a:	$(libutil_OBJS)
 		$(AR) cr $@ $(libutil_OBJS)
@@ -117,7 +135,7 @@ clean:
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile
+		rm -f Makefile *~
 
 realclean:	distclean
 		rm -f TAGS

@@ -1,6 +1,10 @@
-@c $Id: partsofarla.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+@c Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
 
-@node Parts of Arla, Debugging, Organization of data, Top
+@c $KTH: partsofarla.texi,v 1.19 2000/11/25 11:24:06 lha Exp $
+
+@node Parts of Arla, Debugging, AFS and the real world, Top
 @comment  node-name,  next,  previous,  up
 @chapter Parts of Arla
 

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -55,7 +50,13 @@
 
 #include <dpart.h>
 
-RCSID("$Id: dpart.c,v 1.1 2000/09/11 14:41:14 art Exp $");
+RCSID("$KTH: dpart.c,v 1.6 2000/12/29 20:12:35 tol Exp $");
+
+#ifdef MILKO_ROOT
+char *dpart_root = MILKO_ROOT;
+#else
+char *dpart_root = "";
+#endif
 
 /*
  * Allocate a dp_part structure for partition `num' and
@@ -90,8 +91,8 @@ dp_create (u_int32_t num, struct dp_part **dp)
     ptr[0] = num + 'a';
     ptr[1] = '\0';
 
-    ret = asprintf (&d->part, "/vicep%s", str);
-    if (ret != 7) {
+    ret = asprintf (&d->part, "%s/vicep%s", dpart_root, str);
+    if (ret < 0) {
 	free (d);
 	return EINVAL;
     }

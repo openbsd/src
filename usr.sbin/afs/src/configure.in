@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script
 dnl This requires autoconf 2.13
-AC_REVISION($Revision: 1.1 $)dnl
+AC_REVISION($KTH: 1.465.2.78 $)dnl
 AC_PREREQ(2.13)
 AC_INIT(arlad/arla.c)
 AC_CONFIG_HEADER(include/config.h)
@@ -11,7 +11,7 @@ dnl
 
 PACKAGE=arla
 AC_SUBST(PACKAGE)dnl
-VERSION=0.35pre
+VERSION=0.35.7
 AC_SUBST(VERSION)dnl
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [what package is this?])dnl
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [and what version?])dnl
@@ -48,6 +48,7 @@ AC_CHECK_PROGS(DVIPS, dvips, :)
 AC_CHECK_PROGS(chmod, chmod, :)
 AC_PATH_PROGS(GUILE_GTK, guile-gtk, /bin/false)
 
+
 dnl 
 dnl See if there is any X11 present
 dnl
@@ -70,6 +71,7 @@ else
   smp="no"
 fi
 ])
+
 
 AC_ARG_ENABLE(kld,
 [  --enable-kld            build kld modules (only FreeBSD 3.0)],
@@ -100,10 +102,12 @@ elif test "$with_pthreads" != "no"; then
   LWP_H="plwp.h"
   PLWP_INC_FLAGS="-DPTHREADS_LWP"
   if test "$with_pthreads" != "yes"; then
-    PLWP_LIB_FLAGS="-L${with_pthreads}/lib -lpthread"
+    AC_FIND_FUNC_NO_LIBS(pthread_create, pthread,,,[-L${with_pthreads}/lib])
+    PLWP_LIB_FLAGS="-L${with_pthreads}/lib $LIB_pthread_create"
     PLWP_INC_FLAGS="-I${with_pthreads}/include -DPTHREADS_LWP"
   else
-    PLWP_LIB_FLAGS="-lpthread"
+    AC_FIND_FUNC_NO_LIBS(pthread_create, pthread)
+    PLWP_LIB_FLAGS="$LIB_pthread_create"
     PLWP_INC_FLAGS="-DPTHREADS_LWP"
   fi
 fi],[with_pthreads=no])
@@ -205,7 +209,8 @@ echo:
 	@echo \$(CFLAGS)
 END
   ac_out=`/usr/bin/make S=$SYS -f conftest.mk echo 2> /dev/null`
-  incl= defs= flags=
+  incl=-I$SYS
+  defs= flags=
   for i in $ac_out; do
 	case "$i" in
 		-I*)	if test "$i" != -I. -a "$i" != "-I`pwd`"; then
@@ -262,7 +267,8 @@ echo:
 	@echo \$(CFLAGS)
 END
   ac_out=`/usr/bin/make S=$SYS -f conftest.mk echo 2> /dev/null`
-  incl= defs= flags=
+  incl=-I$SYS
+  defs= flags=
   for i in $ac_out; do
 	case "$i" in
 		-I*)	if test "$i" != -I. -a "$i" != "-I`pwd`"; then
@@ -305,6 +311,15 @@ changequote([,])dnl
   esac
   AC_MSG_RESULT($kernobjformat)
 
+  AC_MSG_CHECKING(if /kernel and headers match)
+  HDRVERSION=`awk '/#define __FreeBSD_version/ { printf("%2.1f\n",$3/100000); }' < $SYS/sys/param.h`
+  KERNELVERSION=`uname -r | cut -f1 -d-`
+
+  if test X"${HDRVERSION}" != X"${KERNELVERSION}" ; then
+	AC_MSG_ERROR([version mismatch headerfiles $HDRVERSION != kernel $KERNELVERSION])
+  fi
+  AC_MSG_RESULT(yes)
+
   AC_MSG_CHECKING(for kld)
   dnl Default to kld if freebsd4.0
   case "$target_os" in
@@ -313,6 +328,11 @@ changequote(, )dnl
 changequote([,])dnl
 	if test "X$kld" = "X"; then
 		kld="yes";
+	fi
+	if test "X$smp" != "Xno" -a "X$smp" != "X"; then
+		smp="-DAPIC_IO $smp"
+	else
+		smp=""
 	fi
 	;;
   esac
@@ -366,7 +386,11 @@ macos*|darwin*)
   KERNEL_HDRS=''
   KERNEL=/mach
 
-  KERNEL_CPPFLAGS="${KERNEL_CPPFLAGS} -DKERNEL -D_KERNEL -I/System/Library/Frameworks/Kernel.framework/Headers -static -DKERNEL_PRIVATE -DDIAGNOSTIC -DUSE_SELECT -DMACH_USER_API"
+  ac_cv_func_mmap_fixed_mapped=no		dnl disable mmap for darwin
+
+  KERNEL_CPPFLAGS="${KERNEL_CPPFLAGS} -DKERNEL -D_KERNEL -I/System/Library/Frameworks/Kernel.framework/Headers -static -DKERNEL_PRIVATE -DDIAGNOSTIC -DUSE_SELECT -DMACH_USER_API -traditional-cpp"
+  CFLAGS="${CFLAGS} -traditional-cpp"
+  LDFLAGS="${LDFLAGS} -flat_namespace"
   KERNEL_CFLAGS="${KERNEL_CFLAGS} -fno-common -Wno-format -pipe -finline -fno-keep-inline-functions -force_cpusubtype_ALL -msoft-float -mlong-branch"
   test_KERNEL_CFLAGS="${KERNEL_CFLAGS}"
   KERNEL_LD='ld'
@@ -376,7 +400,7 @@ macos*|darwin*)
   MODUNLOAD=kmodunload
 
   XFS_SUBDIR=bsd
-  XFS_SRCS='xfs_wrap-bsd.c xfs_common-bsd.c xfs_dev-common.c xfs_dev-bsd.c xfs_syscalls-common.c xfs_syscalls-wrap-bsd.c xfs_node-bsd.c xfs_vfsops-common.c xfs_vfsops-bsd.c xfs_vfsops-macos.c xfs_vnodeops-common.c xfs_vnodeops-bsd.c xfs_info.c'
+  XFS_SRCS='xfs_wrap-bsd.c xfs_common-bsd.c xfs_dev-common.c xfs_dev-bsd.c xfs_syscalls-common.c xfs_syscalls-wrap-macos.c xfs_node-bsd.c xfs_vfsops-common.c xfs_vfsops-bsd.c xfs_vfsops-macos.c xfs_vnodeops-common.c xfs_vnodeops-bsd.c xfs_info.c'
 
   ;;
 linux*)
@@ -411,16 +435,18 @@ fi
      AC_MSG_RESULT(yes)
   fi
   KERNEL_CPPFLAGS="-I$SYS/include -DMODULE -D__KERNEL__ $smp ${KERNEL_CPPFLAGS} "
-  KERNEL_CC="$CC"
   case "$target_cpu" in
   alpha*)
+    KERNEL_CC=${KERNEL_CC:-$CC}
     KERNEL_CFLAGS="${KERNEL_CFLAGS} -mno-fp-regs -ffixed-8" ;;
   sparc64*)
     KERNEL_CFLAGS="${KERNEL_CFLAGS} -mno-fpu -ffixed-g4 -fcall-used-g5 -fcall-used-g7"
     KERNEL_LDFLAGS="-m elf64_sparc"
-    KERNEL_CC=sparc64-linux-gcc 
+    KERNEL_CC=${KERNEL_CC:-sparc64-linux-gcc}
     AC_DEFINE(NEED_VICEIOCTL32, 1,
-	[define if you need 32 bit compat pioctl]);;
+	[define if you need 32 bit compat pioctl]) ;;
+   *)
+    KERNEL_CC=${KERNEL_CC:-$CC} ;;
   esac
   test_KERNEL_CFLAGS="${KERNEL_CFLAGS}"
   XFS_SUBDIR=linux
@@ -436,8 +462,9 @@ osf*)
   nodename=`hostname | sed 's/\..*//' | tr 'a-z' 'A-Z'`
   foo=`ls $SYS/inet.h $SYS/GENERIC/inet.h $SYS/$nodename/inet.h $SYS/*/inet.h 2> /dev/null | head -1 | sed -e 's,/inet.h,,'`
   KERNEL_CPPFLAGS="${KERNEL_CPPFLAGS} -I/usr/sys/include -I$foo"
-  test_KERNEL_CFLAGS="${KERNEL_CFLAGS}"
+  test_KERNEL_CFLAGS="-w2 ${KERNEL_CFLAGS}"
   KERNEL_LD='ld'
+  KERNEL_CC="cc -std0"
   XFS_SUBDIR=bsd
   AC_MSG_RESULT(osf/1)
   KERNEL=/vmunix
@@ -510,6 +537,12 @@ AC_ARG_ENABLE(knfs,
 AC_SUBST(ARLA_KNFS)
 
 dnl
+dnl
+dnl
+
+AC_CHECK_ROKEN
+
+dnl
 dnl If we want to use pthreads
 dnl
 
@@ -534,6 +567,17 @@ else
   APPL_SUBDIRS=
 fi
 
+#
+# check for tf_util
+#
+
+AC_FIND_FUNC_NO_LIBS2(tf_init, "", , , [$KRB4_LIB_FLAGS])
+
+if test "$ac_cv_func_tf_init" = yes; then
+	APPL_SUBDIRS="$APPL_SUBDIRS kalog"
+fi
+
+
 AC_SUBST(APPL_SUBDIRS)dnl
 
 AC_TYPE_MSGHDR
@@ -541,6 +585,7 @@ AC_TYPE_IOVEC
 AC_TYPE_KRB_PRINCIPAL
 AC_FUNC_KRB_GET_ERR_TEXT
 AC_FUNC_KRB_GET_DEFAULT_TKT_ROOT
+AC_FUNC_KRB_GET_DEFAULT_PRINCIPAL
 AC_FUNC_KRB_KDCTIMEOFDAY
 
 dnl AC_TYPE_MODE_T
@@ -676,12 +721,14 @@ AC_CHECK_HEADERS([				\
 		sys/filedesc.h			\
 		sys/ioccom.h			\
 		sys/ioctl.h			\
+		sys/libkern.h			\
 		sys/lkm.h			\
 		sys/mman.h			\
 		sys/module.h			\
 		sys/mount.h			\
 		sys/param.h			\
 		sys/poll.h			\
+		sys/prctl.h			\
 		sys/proc.h			\
 		sys/queue.h			\
 		sys/resource.h			\
@@ -695,13 +742,17 @@ AC_CHECK_HEADERS([				\
 		sys/sysctl.h			\
 		sys/sysent.h			\
 		sys/sysproto.h			\
+		sys/systm.h			\
 		sys/time.h			\
 		sys/tty.h			\
 		sys/types.h			\
+		sys/ubc.h			\
 		sys/uio.h			\
 		sys/user.h			\
 		sys/utsname.h			\
 		sys/vfs.h			\
+		sys/vfs_proto.h			\
+		sys/vnode.h			\
 		sys/wait.h			\
 		syslog.h			\
 		termios.h			\
@@ -798,22 +849,15 @@ dnl
 dnl System V is have misplaced the socket routines, should really be in libc
 dnl
 
-AC_FIND_FUNC(socket, socket,
-[#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif],
-[0,0,0])
-AC_FIND_FUNC(gethostbyname, nsl,
-[#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif],
-"foo")
+AC_FIND_FUNC(socket, socket)
+AC_FIND_FUNC(gethostbyname, nsl)
+AC_FIND_FUNC(gethostbyname2, inet6 ip6)
+
+dnl we don't actually use v6 functions in this code, but some generic
+dnl functions such as getnameinfo et al can reside in libraries that are
+dnl found by this macro
+
+AC_KRB_IPV6
 
 AC_FIND_FUNC(res_search, resolv,
 [
@@ -832,6 +876,24 @@ AC_FIND_FUNC(res_search, resolv,
 #endif
 ],
 [0,0,0,0,0])
+
+AC_FIND_FUNC(res_init, resolv,
+[
+#include <stdio.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
+],
+[])
 
 AC_FIND_FUNC(dn_expand, resolv,
 [
@@ -877,12 +939,6 @@ CPPFLAGS="${save_CPPFLAGS}"
 
 AC_TYPE_SIGNAL
 
-#
-# Check if we have _res
-#
-
-AC_CHECK_VAR([#include <resolv.h>], res)
-
 dnl
 dnl check for old libkafs
 dnl
@@ -892,6 +948,8 @@ AC_FIND_FUNC_NO_LIBS2(krb_afslog_uid, "", , , [$KAFS_LIBS $KRB4_LIB_FLAGS])
 #
 # libroken
 #
+
+AC_FUNC_GETLOGIN
 
 AC_FIND_IF_NOT_BROKEN(hstrerror, resolv,
 [#ifdef HAVE_NETDB_H
@@ -906,11 +964,16 @@ hstrerror)
 AC_FUNC_HSTRERROR_CONST
 
 AC_BROKEN(chown daemon err errx fchown flock getcwd getdtablesize getopt)
-AC_BROKEN(getusershell inet_aton initgroups lstat memmove mkstemp)
+AC_BROKEN(getusershell initgroups lstat localtime_r memmove mkstemp)
 AC_BROKEN(putenv rcmd readv recvmsg sendmsg setegid setenv seteuid)
 AC_BROKEN(strcasecmp strdup strerror strftime strlcat strlcpy strlwr)
 AC_BROKEN(strnlen strsep strsep_copy strptime strtok_r strupr unsetenv)
 AC_BROKEN(verr verrx vsyslog vwarn vwarnx warn warnx writev)
+
+AC_BROKEN(getipnodebyname getipnodebyaddr freehostent copyhostent)
+AC_BROKEN(gai_strerror freeaddrinfo getaddrinfo getnameinfo)
+AC_BROKEN(inet_aton inet_ntop inet_pton)
+
 
 if test "$ac_cv_func_inet_aton" = "yes"; then
 AC_NEED_PROTO([
@@ -929,16 +992,14 @@ AC_NEED_PROTO([
 inet_aton)
 fi
 
-AC_CHECK_FUNCS(fcntl getrlimit getspnam getspuid mktime setregid)
+AC_CHECK_FUNCS(fcntl getrlimit getrusage getspnam getspuid mktime setregid)
 AC_CHECK_FUNCS(setresuid setreuid setsid setsockopt sysconf sysctl)
+
+AC_CHECK_FUNCS(get_progname set_progname warnerr)
 
 AC_CHECK_FUNCS(getitimer)
 
-AC_CHECK_FUNCS(vfsisloadable vfsload)
-
 AC_CHECK_FUNCS(getfh fhopen)
-
-AC_FUNC_GETVFSBYNAME
 
 AC_CHECK_VAR([#include <stdlib.h>], optreset)dnl
 if test "$ac_cv_var_optreset" = yes; then
@@ -994,6 +1055,24 @@ AC_HAVE_STRUCT_FIELD(struct sockaddr,
 sa_len,
 [#include <sys/types.h>
 #include <sys/socket.h>])
+
+dnl
+dnl Check for sin_len
+dnl
+
+AC_HAVE_STRUCT_FIELD(struct sockaddr_in,
+sin_len,
+[#include <sys/types.h>
+#include <sys/socket.h>
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+
+AC_HAVE_TYPE([sa_family_t],[#include <sys/socket.h>])
+AC_HAVE_TYPE([socklen_t],[#include <sys/socket.h>])
+AC_HAVE_TYPE([struct sockaddr], [#include <sys/socket.h>])
+AC_HAVE_TYPE([struct sockaddr_storage], [#include <sys/socket.h>])
+AC_HAVE_TYPE([struct addrinfo], [#include <netdb.h>])
 
 dnl
 dnl variable checks
@@ -1053,8 +1132,10 @@ dnl
 
 if test "$XFS_SUBDIR" = "bsd"; then
 
+
 AC_ELF_OBJECT_FORMAT
 AC_KERNEL
+
 AC_CHECK_KERNEL_FUNCS(				\
 cdevsw_add					\
 debuglockmgr					\
@@ -1067,6 +1148,7 @@ vfs_opv_init_default				\
 vfs_opv_init_explicit				\
 vfs_add_vnodeops				\
 vfs_attach					\
+vfs_deallocate_syncvnode			\
 vfs_register					\
 vfs_getvfs					\
 vgonel						\
@@ -1081,10 +1163,109 @@ snprintf					\
 nosys						\
 sys_nosys					\
 sys_lkmnosys					\
+cache_purgevfs					\
+vfs_name_hash					\
 )
 AC_CHECK_KERNEL_FUNC(memcpy, [0,0,0])
 
 AC_BSD_HEADER_VNODE_IF_H
+
+AC_KERNEL_NEED_PROTO([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_PROC_H
+#include <sys/proc.h>
+#endif
+#ifdef HAVE_SYS_VNODE_H
+#include <sys/vnode.h>
+#endif
+],
+vgonel)
+
+AC_KERNEL_NEED_PROTO([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_PROC_H
+#include <sys/proc.h>
+#endif
+#include <sys/signal.h>
+#include <sys/signalvar.h>
+],
+issignal)
+
+AC_KERNEL_NEED_PROTO([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_PROC_H
+#include <sys/proc.h>
+#endif
+#ifdef HAVE_SYS_VNODE_H
+#include <sys/vnode.h>
+#endif
+#ifdef HAVE_SYS_VFS_PROTO_H
+#include <sys/vfs_proto.h>
+#endif
+],
+vn_writechk)
+
+AC_KERNEL_NEED_PROTO([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_PROC_H
+#include <sys/proc.h>
+#endif
+#ifdef HAVE_SYS_VNODE_H
+#include <sys/vnode.h>
+#endif
+#ifdef HAVE_SYS_UBC_H
+#include <sys/ubc.h>
+#endif
+],
+ubc_pushdirty)
+
+AC_KERNEL_NEED_PROTO([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_LIBKERN_H
+#include <sys/libkern.h>
+#endif
+#ifdef HAVE_SYS_SYSTM_H
+#include <sys/systm.h>
+#endif
+],
+strncmp)
 
 AC_CHECK_KERNEL_VAR(doforce, int)
 AC_CHECK_KERNEL_VAR(aout_sysent, struct sysent*,[#include <sys/systm.h>])
@@ -1097,9 +1278,12 @@ AC_BSD_FUNC_SUSER
 AC_BSD_FUNC_VFS_GETNEWFSID
 AC_BSD_FUNC_LOCKMGR
 AC_BSD_FUNC_LOCKSTATUS
+AC_BSD_FUNC_SELRECORD
 case "$target_os" in
 osf*)
-AC_OSF_FUNC_UBC_LOOKUP ;;
+AC_OSF_FUNC_UBC_LOOKUP 
+AC_OSF_FUNC_VFS_NAME_HASH
+;;
 esac
 
 AC_CHECK_DIRSIZ
@@ -1111,6 +1295,22 @@ dnl
 AC_HAVE_STRUCT_FIELD(
 struct proc,
 p_sigmask,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_PROC_H
+#include <sys/proc.h>
+#endif])
+
+AC_HAVE_STRUCT_FIELD(
+struct proc,
+p_sigctx,
 [#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -1147,6 +1347,32 @@ AC_HAVE_KERNEL_STRUCT_FIELD([
 mount,
 struct vnode *,
 mnt_syncer)
+
+dnl FreeBSD 4.5 and above changed mnt_vnodelist to mnt_nvnodelist
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_PROC_H
+#include <sys/proc.h>
+#endif
+#ifdef HAVE_SYS_VNODE_H
+#include <sys/vnode.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+],
+mount,
+struct vnodelst,
+mnt_nvnodelist)
 
 AC_HAVE_KERNEL_STRUCT_FIELD([
 #ifdef HAVE_SYS_TYPES_H
@@ -1234,6 +1460,15 @@ AC_HAVE_KERNEL_STRUCT_FIELD([
 #include <sys/mount.h>
 ],
 vfsops,
+void *,
+vfs_reinit)
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mount.h>
+],
+vfsops,
 struct sysctl_oid *,
 vfs_oid)
 
@@ -1258,12 +1493,63 @@ vfs_checkexp)
 AC_HAVE_KERNEL_STRUCT_FIELD([
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/mount.h>
+],
+vfsops,
+void *,
+vfs_mountroot)
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mount.h>
+],
+vfsops,
+void *,
+vfs_swapvp)
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mount.h>
+],
+vfsops,
+void *,
+vfs_smoothsync)
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <sys/types.h>
+#include <sys/systm.h>
+],
+sysent,
+int,
+sy_flags)
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <sys/types.h>
+#include <sys/systm.h>
+],
+sysent,
+unsigned char,
+sy_info)
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/vnode.h>
-#include <sys/vnode_if.h>
 ],
 vop_fsync_args,
 int,
 a_flags)
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/vnode.h>
+],
+vop_putpages_args,
+int,
+a_sync)
 
 AC_HAVE_KERNEL_STRUCT_FIELD([
 #ifdef HAVE_SYS_TYPES_H
@@ -1282,7 +1568,6 @@ AC_HAVE_KERNEL_STRUCT_FIELD([
 proc,
 register_t *,
 p_retval)
-
 
 AC_HAVE_KERNEL_DEF([
 #ifdef HAVE_SYS_TYPES_H
@@ -1416,12 +1701,25 @@ AC_HAVE_KERNEL_STRUCT_FIELD([
 #ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
+#include <sys/conf.h>
+],
+cdevsw,
+int,
+d_bmaj)
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <sys/types.h>
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
 #include <sys/uio.h>
 #include <sys/namei.h>
 ],
 componentname,
 u_long,
 cn_hash)
+
+AC_CHECK_BSD_UVM_ONLY
 
 dnl
 dnl linux
@@ -1430,7 +1728,7 @@ dnl
 elif test "$XFS_SUBDIR" = "linux"; then
 
 dnl Linux devfs check
-AC_CHECK_HEADERS(linux/devfs_fs.h linux/devfs_fs_kernel.h)
+AC_CHECK_HEADERS(linux/devfs_fs.h linux/devfs_fs_kernel.h linux/stddef.h)
 
 AC_LINUX_FUNC_D_ALLOC_ROOT_TWO_ARGS
 AC_LINUX_FUNC_DEVFS_REGISTER_ELEVEN_ARGS
@@ -1492,8 +1790,22 @@ smap_type,
 smap)
 
 AC_LINUX_TYPE_WAIT_QUEUE_HEAD_T
+AC_LINUX_TYPE_WAIT_QUEUE_TASK_LIST
 AC_LINUX_FUNC_INIT_WAITQUEUE_HEAD
 AC_LINUX_FUNC_INIT_MUTEX
+AC_LINUX_FUNC_LIST_DEL_INIT
+AC_LINUX_FILLDIR_DT_TYPE
+AC_LINUX_FUNC_DGET_LOCKED
+
+AC_HAVE_KERNEL_STRUCT_FIELD([
+#include <asm/current.h>
+#include <linux/sched.h>
+],
+task_struct,
+[struct sigpending],
+pending)
+
+AC_LINUX_D_DELETE_VOID
 
 elif test "$XFS_SUBDIR" = "solaris"; then
 
@@ -1507,6 +1819,16 @@ freevfs_type,
 vfs_freevfs)
 
 fi # end of OS-specific tests
+
+dnl
+dnl Global kernel checks
+dnl
+
+AC_CHECK_KERNEL_FUNCS(strlcpy)
+
+dnl
+dnl
+dnl
 
 AC_MSG_CHECKING(for working htonl)
 AC_CACHE_VAL(ac_cv_htonl_works, [
@@ -1568,6 +1890,7 @@ AC_OUTPUT(Makefile				\
 	appl/Makefile				\
 	appl/lib/Makefile			\
 	appl/asrvutil/Makefile			\
+	appl/kalog/Makefile			\
 	appl/afsmgr/Makefile			\
 	appl/afsutils/Makefile			\
 	appl/amon/Makefile			\
@@ -1576,11 +1899,14 @@ AC_OUTPUT(Makefile				\
 	appl/udebug/Makefile			\
 	appl/vos/Makefile			\
 	appl/bos/Makefile			\
+	appl/mac/Makefile			\
+	appl/mac/Arla_Configuration/Makefile	\
+	appl/mac/Arla_Configuration/Info.plist	\
 	doc/Makefile				\
 	lib/Makefile				\
 	lib/roken/Makefile			\
 	lib/sl/Makefile				\
-	lib/cmd/Makefile				\
+	lib/cmd/Makefile			\
 	lib/editline/Makefile			\
 	lib/ko/Makefile				\
 	lib/acl/Makefile			\

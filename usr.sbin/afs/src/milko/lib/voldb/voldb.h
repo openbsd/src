@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: voldb.h,v 1.1 2000/09/11 14:41:18 art Exp $ */
+/* $KTH: voldb.h,v 1.17 2000/10/03 00:20:19 lha Exp $ */
 
 #ifndef FILBUNKE_VOLDB_H
 #define FILBUNKE_VOLDB_H 1

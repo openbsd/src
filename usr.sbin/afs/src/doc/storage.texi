@@ -1,6 +1,10 @@
-@c $Id: storage.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+@c Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
 
-@node Organization of data, Parts of Arla, Description of AFS infrastructure, Top
+@c $KTH: storage.texi,v 1.7 2000/11/25 11:23:56 lha Exp $
+
+@node Organization of data, AFS and the real world, AFS infrastructure, Top
 @comment  node-name,  next,  previous,  up
 
 @chapter Organization of data
@@ -14,11 +18,12 @@ requirements was and how that inpacted on the design.
 * Data organization::
 * Callbacks::
 * Volume management::
+* Relationship between pts uid and unix uid::
 @end menu
 
 @node Requirements, Data organization, Organization of data, Organization of data
 @comment  node-name,  next,  previous,  up
-@heading Requirements
+@section Requirements
 
 @itemize @bullet
 @item Scalability
@@ -60,7 +65,7 @@ critical data
 @end itemize
 @end itemize
 
-@heading Anti-requirements
+@section Anti-requirements
 
 @itemize @bullet
 @item No databases
@@ -79,7 +84,7 @@ solving a database problem. Don't use AFS.
 
 @node Data organization, Callbacks, Requirements, Organization of data
 @comment  node-name,  next,  previous,  up
-@heading Volume
+@section Volume
 
 A volume is a unit that is smaller then a partition. Its usually (should
 be) a well defined area, like a user's home directory, a project work
@@ -88,7 +93,7 @@ area, or a program distribution.
 Quota is controlled on volume-level. All day-to-day management are done
 on volumes.
 
-@heading Partition
+@section Partition
 
 In AFS a partition is what normally is named a partition. All partions
 that afs isusing is named a special way, @file{/vicepNN}, where NN is
@@ -99,7 +104,7 @@ Volumes are stored in a partition. Volumes can't overlap
 partitions. Partitions are added when the fileserver is created or when
 a new disk is added to a filesystem. 
 
-@heading Volume cloning and read-only clones
+@section Volume cloning and read-only clones
 
 A clone of volume is often needed for the volume operations. A clone is
 copy-on-write copy of a volume, the clone is the read-only version.
@@ -110,12 +115,15 @@ is what a clone is) that can be replicated to several fileserver to
 distribute the load. Each fileserver plus partition where the read-only
 is located is called a replication-site.
 
-The backup volume is a clone that typically is made each night to enable
-the user to retrieve yestoday's data when they happen to remove a
-file. This is a very useful feature, since it lessen the load on the
-system-administrators to restore files from backup.
+The backup volume is a clone that typically is made (with @code{vos
+backupsys}) each night to enable the user to retrieve yestoday's data
+when they happen to remove a file. This is a very useful feature, since
+it lessen the load on the system-administrators to restore files from
+backup. The volume is usually mounted in the root user's home directory
+under the name OldFiles. A special feature of the backup volume is that
+inside it you can't follow mountpoint.
 
-@heading Mountpoints
+@section Mountpoints
 
 The volumes are independent of each other. To clue the together there is
 a @samp{mountpoint}s. Mountpoints are really symlink that is formated a
@@ -125,7 +133,7 @@ be the root directory of the target volume.
 
 @node Callbacks, Volume management, Data organization, Organization of data
 @comment  node-name,  next,  previous,  up
-@heading Callbacks
+@section Callbacks
 
 Callbacks are what enable the AFS-cache-manager to keep the files
 without asking the server if there is newer version of the file.
@@ -137,14 +145,60 @@ callback.
 For read-only callbacks there is only callback given its called a volume
 callback and it will be broken when the read-only volume is updated.
 
-@node Volume management, , Callbacks, Organization of data
+The time range of callbacks range from 1 hour to 5 minutes depending of
+how many user of the file exists.
+
+@node Volume management, Relationship between pts uid and unix uid, Callbacks, Organization of data
 @comment  node-name,  next,  previous,  up
-@heading Volume management
+@section Volume management
+
+All volume managment is done with the vos-command. To get a list of all
+commands `vos help' can be used. For help on a specific vos subcommand,
+`vos subcommand -h' can be used.
 
 @itemize @bullet
 @item Create
+
+@example
+vos create mim c HO.staff.lha.fluff -quota 400000
+@end example
+
+@item Move
+
+Volumes can be moved from a server to another, even when users are using
+the volume.
+
 @item Replicate
+
+Read-only volumes can be replicated over several servers, they are first
+added with @code{vos addsite}, and the replicated with @code{vos
+release} out over the servers.
+
 @item Release
-@item Delete
-@item Backup
+
+When you want to distribute out the changes in the readwrite volume.
+
+@item Remove
+
+Volumes can be removed
+
+Note that you shouldn't remove the last readonly volume since this make
+clients misbehave. If you are moving the volume you should rather add a
+new RO to the new server and then remove it from the old server.
+
+@item Backup and restoration of volumes.
+
+@code{vos backup} and @code{vos backupsys} creates the backup volume.
+
+To stream a volume out to a @file{file} or @file{stdout} you use
+@code{vos dump}. The opposite command is named @code{vos restore}.
+
 @end itemize
+
+@node Relationship between pts uid and unix uid, , Volume management, Organization of data
+@comment  node-name,  next,  previous,  up
+@section Relationship between pts uid and unix uid
+
+foo
+
+

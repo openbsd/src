@@ -1,5 +1,5 @@
 dnl
-dnl $Id: check-dirsiz.m4,v 1.1 2000/09/11 14:40:45 art Exp $
+dnl $KTH: check-dirsiz.m4,v 1.1 1999/05/15 22:45:21 assar Exp $
 dnl
 
 dnl

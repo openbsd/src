@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/src/usr.sbin/afs/src/rx/Attic/rx_trace.h,v 1.2 2000/09/11 14:41:23 art Exp $ */
+/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_trace.h,v 1.3 1998/02/22 19:55:28 joda Exp $ */
 
 #ifndef	_RX_TRACE
 #define _RX_TRACE

@@ -1,6 +1,6 @@
 #include "rx_locl.h"
 
-RCSID("$Id: rx_pkt.c,v 1.3 2000/09/11 14:41:22 art Exp $");
+RCSID("$KTH: rx_pkt.c,v 1.15.2.1 2001/07/05 23:16:53 lha Exp $");
 
 struct rx_packet *rx_mallocedP = 0;
 struct rx_cbuf *rx_mallocedC = 0;
@@ -690,6 +690,8 @@ osi_NetSend(osi_socket socket, char *addr, struct iovec *dvec,
 	}
 
 	FD_ZERO(&sfds);
+	if (socket >= FD_SETSIZE)
+	    osi_Panic("osi_NetSend: fd too large");
 	FD_SET(socket, &sfds);
 	while ((err = select(socket + 1, 0, &sfds, 0, 0)) != 1) {
 	    if (err >= 0 || errno != EINTR)
@@ -1034,10 +1036,27 @@ rxi_SendDebugPacket(struct rx_packet *apacket, osi_socket asocket,
 		    long ahost, short aport)
 {
     struct sockaddr_in taddr;
+    int i = 0;
+    int savelen = 0;
+    int saven = 0;
+    int nbytes;
 
     taddr.sin_family = AF_INET;
     taddr.sin_port = aport;
     taddr.sin_addr.s_addr = ahost;
+
+    nbytes = apacket->length;
+
+    for (i = 1; i < apacket->niovecs; i++) {
+	if (nbytes <= apacket->wirevec[i].iov_len) {
+	    savelen = apacket->wirevec[i].iov_len;
+	    saven = apacket->niovecs;
+	    apacket->wirevec[i].iov_len = nbytes;
+	    apacket->niovecs = i + 1;	      
+	    /* so condition fails because i == niovecs */
+	} else
+	    nbytes -= apacket->wirevec[i].iov_len;
+    }
 
     GLOBAL_UNLOCK();
     /* debug packets are not reliably delivered, hence the cast below. */
@@ -1045,6 +1064,11 @@ rxi_SendDebugPacket(struct rx_packet *apacket, osi_socket asocket,
     (void) osi_NetSend(asocket, (char *)&taddr, apacket->wirevec,
 		       apacket->niovecs, apacket->length + RX_HEADER_SIZE);
     GLOBAL_LOCK();
+
+    if (saven) {
+	apacket->wirevec[i - 1].iov_len = savelen;
+	apacket->niovecs = saven;
+    }
 }
 
 /*
@@ -1272,7 +1296,7 @@ get32 (unsigned char **p)
 void 
 rxi_EncodePacketHeader(struct rx_packet *p)
 {
-    unsigned char *buf = p->wirevec[0].iov_base;
+    unsigned char *buf = (unsigned char *)p->wirevec[0].iov_base;
 
     memset(buf, 0, RX_HEADER_SIZE);
     put32(&buf, p->header.epoch);
@@ -1293,7 +1317,7 @@ rxi_EncodePacketHeader(struct rx_packet *p)
 void 
 rxi_DecodePacketHeader(struct rx_packet *p)
 {
-    unsigned char *buf = p->wirevec[0].iov_base;
+    unsigned char *buf = (unsigned char *)p->wirevec[0].iov_base;
     u_int32_t temp;
 
     p->header.epoch      = get32(&buf);

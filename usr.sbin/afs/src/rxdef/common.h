@@ -2,7 +2,7 @@
  * Common defintions used by several *.xg files
  */
 
-/* $Id: common.h,v 1.3 2000/09/11 14:41:24 art Exp $ */
+/* $KTH: common.h,v 1.12 2000/11/03 10:09:48 lha Exp $ */
 
 %#ifndef _COMMON_
 %#define _COMMON_
@@ -32,6 +32,8 @@ struct AFSCallBack {
 };
 
 enum CallBackType { CBEXCLUSIVE = 1, CBSHARED = 2, CBDROPPED = 3};
+
+const CALLBACK_VERSION = 1;
 
 struct AFSVolSync {
      unsigned spare1;

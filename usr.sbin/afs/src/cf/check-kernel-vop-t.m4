@@ -1,5 +1,5 @@
 dnl
-dnl $Id: check-kernel-vop-t.m4,v 1.1 2000/09/11 14:40:46 art Exp $
+dnl $KTH: check-kernel-vop-t.m4,v 1.1 1999/05/15 22:45:22 assar Exp $
 dnl
 
 dnl

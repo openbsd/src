@@ -1,5 +1,5 @@
 dnl
-dnl $Id: bsd-vop-lock.m4,v 1.1 2000/09/11 14:40:45 art Exp $
+dnl $KTH: bsd-vop-lock.m4,v 1.3 2000/01/30 23:56:45 assar Exp $
 dnl
 
 dnl

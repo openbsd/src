@@ -1,3 +1,3 @@
 #!/bin/sh
-# $Id: checkpwd,v 1.1 2000/09/11 14:41:27 art Exp $
+# $KTH: checkpwd,v 1.1 2000/03/17 15:41:45 assar Exp $
 $objdir/apwd

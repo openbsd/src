@@ -1,4 +1,4 @@
-dnl $Id: check-type-extra.m4,v 1.1 2000/09/11 14:40:46 art Exp $
+dnl $KTH: check-type-extra.m4,v 1.1 1999/05/15 22:45:23 assar Exp $
 dnl
 dnl ac_check_type + extra headers
 

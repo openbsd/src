@@ -1,4 +1,4 @@
-dnl $Id: auth-modules.m4,v 1.1 2000/09/11 14:40:44 art Exp $
+dnl $KTH: auth-modules.m4,v 1.1 1999/05/15 22:45:18 assar Exp $
 dnl
 dnl Figure what authentication modules should be built
 

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #include "fsrv_locl.h"
 
-RCSID("$Id: fsprocs.c,v 1.1 2000/09/11 14:41:13 art Exp $");
+RCSID("$KTH: fsprocs.c,v 1.55 2001/01/01 20:50:23 lha Exp $");
 
 #define GETHOST(call) rx_HostOf(rx_PeerOf(rx_ConnectionOf((call))))
 #define GETPORT(call) rx_PortOf(rx_PeerOf(rx_ConnectionOf((call))))
@@ -258,8 +253,23 @@ out:
     mnode_free (n, FALSE);
     vld_free (volh);
 
+    mlog_log (MDEBFS, "FetchData: ret = %d (at end), calleraccess = %x\n",
+	      ret, a_fidStatP->CallerAccess);
+
     return ret;
 }
+
+/*
+ *
+ */
+
+static int
+i2nlist (idlist *ilist, namelist *nlist)
+{
+    /* XXX convert the number is the ilist to name-as-numbers */
+    return ENETDOWN;
+}
+
 
 /*
  *
@@ -315,8 +325,18 @@ RXAFS_FetchACL(struct rx_call *call,
     }
 
     ret = fs_connsec_idtoname(&ilist, &nlist);
-    if (ret)
+    switch (ret) {
+    case ENETDOWN :
+    case RX_CALL_DEAD : 
+
+	ret = i2nlist (&ilist, &nlist);
+	if (ret)
+	    goto err_out;
+	
+	break;
+    default:
 	goto err_out;
+    }
 
     tempacl = NULL;
     tempacl_old = strdup("");
@@ -413,6 +433,9 @@ RXAFS_FetchStatus(struct rx_call *call,
     mnode_free (n, FALSE);
     vld_free (volh);
 
+    mlog_log (MDEBFS, "FetchStatus: ret = %d (at end), calleraccess = %x\n",
+	      ret, a_currStatP->CallerAccess);
+
     return ret;
 }
 
@@ -501,8 +524,8 @@ RXAFS_StoreData(struct rx_call *call,
     mnode_free (n, FALSE);
     vld_free (volh);
 
-    mlog_log (MDEBFS, "StoreData: ret = %d (at end), len = %d",
-	      ret, a_fidStatP->Length);
+    mlog_log (MDEBFS, "StoreData: ret = %d (at end), len = %d, calleraccess = %x",
+	      ret, a_fidStatP->Length, a_fidStatP->CallerAccess);
     return ret;
 }
 
@@ -614,6 +637,7 @@ RXAFS_StoreACL(struct rx_call *call,
     if (ret)
 	goto err_out;
 
+    fs_update_fs (n, &m, a_dirNewStatP);
     ropa_break_callback (GETHOST(call), GETPORT(call), a_dirFidP, FALSE);
 
     vld_vld2volsync (volh, a_volSyncP);
@@ -621,7 +645,7 @@ RXAFS_StoreACL(struct rx_call *call,
  err_out:
     mnode_free (n, FALSE);
     vld_free (volh);
-    return 0;
+    return ret;
 }
 
 /*
@@ -685,11 +709,11 @@ removenode (struct rx_call *call,
     struct volume_handle *volh;
     struct mnode *n;
     struct msec m;
-    VenusFid fid;
+    VenusFid parentFid, fid;
     int ret;
     int32_t new_len;
     
-    m.flags = VOLOP_GETSTATUS|VOLOP_DELETE|VOLOP_PARENT;
+    m.flags = VOLOP_GETSTATUS|VOLOP_DELETE;
 
     ret = fs_init_req (a_dirFidP, &m, &volh, call, &n);
     if (ret)
@@ -700,7 +724,7 @@ removenode (struct rx_call *call,
 
     if (n->fs.FileType != TYPE_DIR) {
 	mnode_free (n, FALSE);
-	return EPERM;
+	return ENOTDIR;
     }
 
     ret = fbuf_create (&the_fbuf, n->fd, n->fs.Length, 
@@ -711,23 +735,29 @@ removenode (struct rx_call *call,
 	return ret;
     }
 
+    parentFid.Cell = 0;
+    parentFid.fid = n->fid;
+    
+    ret = fdir_lookup (&the_fbuf, &parentFid, a_name, &fid);
+    if (ret) {
+	fbuf_end (&the_fbuf);
+	mnode_free (n, FALSE);
+	vld_free (volh);
+	return ret;
+    }
+	
+    if (afs_dir_p (fid.fid.Vnode) != dirp) {
+	fbuf_end (&the_fbuf);
+	mnode_free (n, FALSE);
+	vld_free (volh);
+	return dirp ? ENOTDIR : EISDIR;
+    }
+
     if (dirp) {
 	fbuf dirfbuf;
-	struct mnode *parent_n;
 	struct msec pm;
-	VenusFid parentFid, fid;
+	struct mnode *parent_n;
 
-	parentFid.Cell = 0;
-	parentFid.fid = n->fid;
-
-	ret = fdir_lookup (&the_fbuf, &parentFid, a_name, &fid);
-	if (ret) {
-	    fbuf_end (&the_fbuf);
-	    mnode_free (n, FALSE);
-	    vld_free (volh);
-	    return ret;
-	}
-	
 	pm.flags		= VOLOP_GETSTATUS|VOLOP_READ|VOLOP_NOCHECK;
 	fs_init_msec (call, &pm);
 	pm.loop			= m.loop + 1;
@@ -791,7 +821,7 @@ removenode (struct rx_call *call,
 	}
     }
 
-    ret = vld_modify_vnode (volh, n, NULL, NULL, &new_len);
+    ret = vld_modify_vnode (volh, n, &m, NULL, &new_len);
 
     fs_update_fs (n, &m, a_srvStatusP);
 
@@ -855,7 +885,7 @@ RXAFS_CreateFile(struct rx_call *call,
 	      DirFid->Volume, DirFid->Vnode,
 	      DirFid->Unique, Name);
 
-    m.flags = VOLOP_GETSTATUS|VOLOP_INSERT|VOLOP_PARENT;
+    m.flags = VOLOP_GETSTATUS|VOLOP_INSERT;
 
     ret = fs_init_req (DirFid, &m, &volh, call, &n);
     if (ret)
@@ -890,7 +920,7 @@ RXAFS_CreateFile(struct rx_call *call,
 
     if (ret == 0) {
 	int32_t len = n->sb.st_size;
-	ret = vld_modify_vnode (volh, n, NULL, NULL, &len);
+	ret = vld_modify_vnode (volh, n, &m, NULL, &len);
     }
 
     if (ret) {
@@ -921,9 +951,9 @@ RXAFS_CreateFile(struct rx_call *call,
     vld_vld2volsync (volh, a_volSyncP);
     vld_free (volh);
 
-    mlog_log (MDEBFS, "CreateFile: created fid: %d.%d.%d", 
+    mlog_log (MDEBFS, "CreateFile: created fid: %d.%d.%d calleraccess: %x", 
 	      OutFid->Volume, OutFid->Vnode,
-	      OutFid->Unique);
+	      OutFid->Unique, OutFidStatus->CallerAccess);
 
     return ret;
 }
@@ -963,7 +993,7 @@ RXAFS_Rename(struct rx_call *call,
     if (a_origDirFidP->Volume != a_newDirFidP->Volume)
 	return EXDEV;
 
-    orig_m.flags = VOLOP_GETSTATUS|VOLOP_DELETE|VOLOP_PARENT;
+    orig_m.flags = VOLOP_GETSTATUS|VOLOP_DELETE;
     if (a_origDirFidP->Vnode == a_newDirFidP->Vnode
 	&& a_origDirFidP->Unique == a_newDirFidP->Unique)
 	orig_m.flags |= VOLOP_INSERT;
@@ -1006,7 +1036,7 @@ RXAFS_Rename(struct rx_call *call,
 	same_dir = TRUE;
     } else {
 
-	new_m.flags = VOLOP_GETSTATUS|VOLOP_INSERT|VOLOP_PARENT;
+	new_m.flags = VOLOP_GETSTATUS|VOLOP_INSERT;
 
 	/* XXX */
 	ret = fs_init_req (a_newDirFidP, &new_m, &volh, call, &new_n);
@@ -1074,10 +1104,10 @@ RXAFS_Rename(struct rx_call *call,
     if (ret == 0) {
 	int32_t len;
 	len = fbuf_len (&origfbuf);
-	vld_modify_vnode (volh, orig_n, NULL, NULL, &len);
+	vld_modify_vnode (volh, orig_n, &orig_m, NULL, &len);
 	if (!same_dir) {
 	    len = fbuf_len (newfbufP);
-	    vld_modify_vnode (volh, new_n, NULL, NULL, &len);
+	    vld_modify_vnode (volh, new_n, &new_m, NULL, &len);
 	}
     }
 
@@ -1141,7 +1171,7 @@ RXAFS_Symlink(struct rx_call *call,
 	      a_dirFidP->Volume, a_dirFidP->Vnode,
 	      a_dirFidP->Unique, a_nameP, a_linkContentsP);
 
-    m.flags = VOLOP_GETSTATUS|VOLOP_INSERT|VOLOP_PARENT;
+    m.flags = VOLOP_GETSTATUS|VOLOP_INSERT;
 
     ret = fs_init_req (a_dirFidP, &m, &volh, call, &n);
     if (ret) {
@@ -1207,7 +1237,7 @@ RXAFS_Symlink(struct rx_call *call,
     ret = fdir_creat (&the_fbuf, a_nameP, child);
     if (ret == 0) {
 	int32_t len = fbuf_len (&the_fbuf);
-	vld_modify_vnode (volh, n, NULL, NULL, &len);
+	vld_modify_vnode (volh, n, &m, NULL, &len);
     }
 
     fbuf_end (&the_fbuf); /* XXX error ? */
@@ -1233,7 +1263,7 @@ RXAFS_Symlink(struct rx_call *call,
     if (ret == 0) {
 	int32_t len32 = len;
 	*a_newFidP = child;
-	vld_modify_vnode (volh, child_n, NULL, NULL, &len32);
+	vld_modify_vnode (volh, child_n, &child_m, NULL, &len32);
 	fs_update_fs (n, &m, a_newDirStatP);
 	fs_update_fs (child_n, &child_m, a_newFidStatP);
 	vld_vld2volsync (volh, a_volSyncP);
@@ -1263,7 +1293,119 @@ RXAFS_Link(struct rx_call *call,
 	   struct AFSFetchStatus *a_newDirStatP,
 	   struct AFSVolSync *a_volSyncP)
 {
+#if 0
+    struct volume_handle *volh;
+    VenusFid a_vchild, a_vdirFid;
+    AFSFid child;
+    fbuf the_fbuf;
+    struct mnode *n;
+    struct msec m;
+    struct mnode *child_n;
+    struct msec child_m;
+    int ret;
+
+    mlog_log (MDEBFS, "Link: fid: %d.%d.%d name: %s existing", 
+	      a_dirFidP->Volume, a_dirFidP->Vnode,
+	      a_dirFidP->Unique, a_nameP);
+
+    m.flags = VOLOP_GETSTATUS|VOLOP_INSERT;
+
+    ret = fs_init_req (a_dirFidP, &m, &volh, call, &n);
+    if (ret) {
+	mlog_log (MDEBFS, "Link: ret = %d (init_req)", ret);
+	return ret;
+    }
+
+    assert (n->flags.fdp);
+    assert (n->flags.fsp);
+
+    if (n->fs.FileType != TYPE_DIR) {
+	mnode_free (n, FALSE);
+	vld_free (volh);
+	mlog_log (MDEBFS, "Link: ret = %d (not DIR)", EPERM);
+	return EPERM;
+    }
+
+    child_m.flags = VOLOP_GETSTATUS;
+    fs_init_msec (call, &child_m);
+    
+    ret = fs_open_node (a_dirFidP, volh, &child_m, &child_n);
+    if (ret) {
+	mlog_log(MDEBFS, "Link: Failed to open existing fid, ret = %d", ret);
+	goto out_parent;
+    }
+
+    ret = vld_check_rights (volh, child_n, &child_m);
+    if (ret) {
+	mlog_log (MDEBFS, "Link: child right insufficient ret = %d", ret);
+	goto out_parent;
+    }
+
+    ret = (child_n->fs.ParentVnode == a_dirFidP->Vnode
+	   && child_n->fs.ParentUnique == a_dirFidP->Unique);
+    if (ret != 0) {
+	mnode_free (n, FALSE);
+	mlog_log (MDEBFS, "Link: ret = %d (not same volume)", EPERM);
+	ret = EPERM;
+	goto out_child;
+    }
+
+    a_vdirFid.Cell = 0;
+    a_vdirFid.fid = *a_dirFidP;
+    
+    ret = fbuf_create (&the_fbuf, n->fd, n->sb.st_size, 
+		       FBUF_READ|FBUF_WRITE|FBUF_SHARED);
+    if (ret) {
+	mlog_log (MDEBFS, "Link: ret = %d (fbuf_create)", ret);
+	goto out_child;
+    }
+
+    ret = fdir_lookup (&the_fbuf, &a_vdirFid, a_nameP, &a_vchild);
+    if (ret != ENOENT) {
+	fbuf_end (&the_fbuf);
+	if (ret == 0) {
+	    mlog_log (MDEBFS, "Link: ret = %d (EEXIST)", EEXIST);
+	    ret = EEXIST;
+	} else
+	    mlog_log (MDEBFS, "Link: ret = %d (fdir_lookup)", ret);
+	goto out_child;
+    }
+
+    child = *a_existingFidP;
+    child.Volume = volh->vol;
+   
+    /* XXX check name ! */
+    ret = fdir_creat (&the_fbuf, a_nameP, child);
+    if (ret == 0) {
+	int32_t len = fbuf_len (&the_fbuf);
+	vld_modify_vnode (volh, n, &m, NULL, &len);
+    }
+    
+    fbuf_end (&the_fbuf); /* XXX error ? */
+    
+    if (ret) {
+	mnode_remove (&child);
+	mlog_log (MDEBFS, "Link: ret = %d (fdir_creat)", ret);
+	goto out_child;
+    }
+
+    assert (child_n->flags.fdp);
+
+    fs_update_fs (n, &m, a_newDirStatP);
+    fs_update_fs (child_n, &child_m, a_newFidStatP);
+    vld_vld2volsync (volh, a_volSyncP);
+    ropa_break_callback (GETHOST(call), GETPORT(call), a_dirFidP, FALSE);
+
+ out_child:
+    mnode_free (child_n, FALSE);
+ out_parent:
+    mnode_free (n, FALSE);
+    vld_free (volh);
+
+    return ret;
+#else
     return EPERM;
+#endif
 }
 
 /*
@@ -1293,7 +1435,7 @@ RXAFS_MakeDir(struct rx_call *call,
 	      a_parentDirFidP->Volume, a_parentDirFidP->Vnode,
 	      a_parentDirFidP->Unique, a_newDirNameP);
 
-    m.flags = VOLOP_WRITE | VOLOP_INSERT | VOLOP_PARENT | VOLOP_GETSTATUS;
+    m.flags = VOLOP_WRITE | VOLOP_INSERT | VOLOP_GETSTATUS;
 
     ret = fs_init_req (a_parentDirFidP, &m, &volh, call, &n);
     if (ret)
@@ -1339,7 +1481,7 @@ RXAFS_MakeDir(struct rx_call *call,
 	return ret;
     }
 
-    ret = vld_modify_vnode (volh, n, NULL, NULL, NULL);
+    ret = vld_modify_vnode (volh, n, &m, NULL, NULL);
     if (ret) {
 	/* XXX adjust directory size? */
 	vld_adjust_linkcount (volh, n, -1);

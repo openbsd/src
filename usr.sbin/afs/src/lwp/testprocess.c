@@ -8,7 +8,7 @@
  *
  *  Todo: really a test-program
  *
- * $Id: testprocess.c,v 1.2 2000/09/11 14:41:10 art Exp $
+ * $KTH: testprocess.c,v 1.1 1998/06/09 11:52:53 lha Exp $
  */
 
 int savecontext();

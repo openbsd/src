@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:53 art Exp $
+# $KTH: Makefile.in,v 1.50 2000/12/21 12:46:09 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh
@@ -22,17 +23,21 @@ prefix 		= @prefix@
 exec_prefix	= @exec_prefix@
 includedir	= @includedir@
 
-LOCL_HEADERS	= roken.h ko.h sl.h part.h list.h  \
+ROKEN_H		= @ROKEN_H@
+
+LOCL_HEADERS	= $(ROKEN_H) ko.h sl.h part.h list.h  \
 		  bool.h log.h \
 		  hash.h \
 		  lwp.h lock.h getarg.h err.h parse_units.h \
 		  resolve.h rxkad.h service.h mmaptime.h ports.h \
 		  heap.h fbuf.h fdir.h afs_dir.h parse_time.h parse_bytes.h \
-		  acl.h
+		  acl.h agetarg.h
 
 BUILDHEADERS	= atypes.h fs_errors.h 
 
 HEADERS		= $(BUILDHEADERS)
+
+LIBS		= @LIBS@
 
 BITS_OBJECTS	= bits.o
 
@@ -58,7 +63,7 @@ uninstall:
 	done
 
 bits:	$(BITS_OBJECTS)
-	$(CC) -o $@ $(BITS_OBJECTS)
+	$(CC) -o $@ $(BITS_OBJECTS) $(LIBS)
 
 bits.o: bits.c
 
@@ -84,6 +89,8 @@ part.h:
 	$(LN_S) $(srcdir)/../lib/ko/part.h .
 ports.h:
 	$(LN_S) $(srcdir)/../lib/ko/ports.h .
+agetarg.h:
+	$(LN_S) $(srcdir)/../lib/ko/agetarg.h .
 atom.h:
 	$(LN_S) $(srcdir)/../util/atom.h .
 list.h:

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #include "bos_locl.h"
 
-RCSID("$Id: bosprocs.c,v 1.1 2000/09/11 14:41:12 art Exp $");
+RCSID("$KTH: bosprocs.c,v 1.4 2000/10/03 00:16:53 lha Exp $");
 
 /*
  *
@@ -115,7 +110,7 @@ BOZO_SetStatus(struct rx_call *call,
 int
 BOZO_EnumerateInstance(struct rx_call *call,
 			   const int32_t instance,
-			   char **iname)
+			   char *iname)
 {
     bosdebug ("BOZO_EnumerateInstance: %d\n", instance);
 
@@ -129,14 +124,12 @@ BOZO_EnumerateInstance(struct rx_call *call,
 int
 BOZO_GetInstanceInfo(struct rx_call *call,
 		     const char *instance,
-		     char **type,
+		     char *type,
 		     struct bozo_status *status)
 {
     bosdebug ("BOZO_GetInstanceInfo: %s\n", instance);
 
-#if 0
-    strcpy (type, "simple");
-#endif
+    strlcpy (type, "simple", BOZO_BSSIZE);
     memset (status, 0, sizeof(*status));
     return 0;
 }
@@ -150,13 +143,368 @@ int
 BOZO_GetInstanceParm(struct rx_call *call,
 		     const char *instance,
 		     const int32_t num,
-		     char **param)
+		     char *param)
 {
     bosdebug ("BOZO_GetInstanceParm: %s %d\n", instance, num);
 
-#if 0
-    strcpy (param, "foo");
-#endif
+    strlcpy (param, "foo", BOZO_BSSIZE);
     return 0;
+}
+
+/*
+ *
+ */
+
+int
+BOZO_AddSUser(struct rx_call *call, const char *name)
+{
+    char *n;
+    int ret;
+
+    if (strchr(name, '@'))
+	n = strdup (name);
+    else
+	asnprintf (&n, BOZO_BSSIZE, "%s@%s", name, cell_getthiscell());
+    if (n == NULL)
+	return BZIO;
+    ret = sec_add_superuser (n);
+    free (n);
+    if (ret)
+	return BZIO;
+    return 0;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_DeleteSUser(struct rx_call *call, const char *name)
+{
+    char *n;
+    int ret;
+
+    if (strchr(name, '@'))
+	asnprintf (&n, BOZO_BSSIZE, "%s", name);
+    else
+	asnprintf (&n, BOZO_BSSIZE, "%s@%s", name, cell_getthiscell());
+    if (n == NULL)
+	return BZIO;
+    ret = sec_del_superuser (n);
+    free (n);
+    if (ret)
+	return BZIO;
+    return 0;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_ListSUsers(struct rx_call *call, const /*
+ *
+ */
+
+int32_t an, char *name)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_ListKeys(struct rx_call *call, const int32_t an, int32_t *kvno,
+	      struct bozo_key *key, struct bozo_keyInfo *keinfo)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_AddKey(struct rx_call *call, const int32_t an,
+	    const struct bozo_key *key)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_DeleteKey(struct rx_call *call, const /*
+ *
+ */
+
+int32_t an)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_SetCellName(struct rx_call *call, const char *name)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_GetCellName(struct rx_call *call, char *name)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_GetCellHost(struct rx_call *call, const int32_t awhich, char *name)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_AddCellHost(struct rx_call *call, const char *name)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_DeleteCellHost(struct rx_call *call, const char *name)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_SetTStatus(struct rx_call *call, const char *instance,
+		const /*
+ *
+ */
+
+int32_t status)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_ShutdownAll(struct rx_call *call)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_RestartAll(struct rx_call *call)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_StartupAll(struct rx_call *call)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_SetNoAuthFlag(struct rx_call *call, const /*
+ *
+ */
+
+int32_t flag)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_ReBozo(struct rx_call *call)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_Restart(struct rx_call *call, const char *instance)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_Install(struct rx_call *call, const char *path, const int32_t size,
+	     const int32_t flags, const int32_t date)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_UnInstall(struct rx_call *call, const char *path)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_GetDates(struct rx_call *call, const char *path, int32_t *newtime,
+	      int32_t *baktime, int32_t *oldtime)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_Exec(struct rx_call *call, const char *cmd)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_Prune(struct rx_call *call, const int32_t flags)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_SetRestartTime(struct rx_call *call, const int32_t type,
+		    const struct bozo_netKTime *restartTime)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_GetRestartTime(struct rx_call *call, const int32_t type,
+		    struct bozo_netKTime *restartTime)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_GetLog(struct rx_call *call, const char *name)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_WaitAll(struct rx_call *call)
+{
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+BOZO_GetInstanceStrings(struct rx_call *call, const char *instance,
+			char *errorname, char *spare1, char *spare2, char *spare3)
+{
+    return -1;
 }
 

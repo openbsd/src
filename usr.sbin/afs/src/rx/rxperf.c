@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,14 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: rxperf.c,v 1.1 2000/09/11 14:41:23 art Exp $");
+/* 
+ * We are using getopt since we want it to be possible to link to
+ * transarc libs.
+ */
+
+#ifdef RCSID
+RCSID("$KTH: rxperf.c,v 1.3 2000/10/03 00:41:39 lha Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -56,15 +58,48 @@ RCSID("$Id: rxperf.c,v 1.1 2000/09/11 14:41:23 art Exp $");
 #include <strings.h>
 #include <assert.h>
 #include <unistd.h>
-#include <cmd.h>
-
-#include <roken.h>
-#include <err.h>
-
+#include <signal.h>
+#ifdef HAVE_ERRX
+#include <err.h> /* not stricly right, but if we have a errx() there
+		  * is hopefully a err.h */
+#endif
 #include "rx.h"
 #include "rx_null.h"
 
-#define DEFAULT_PORT 4711
+#if defined(u_int32)
+#define u_int32_t u_int32
+#elif defined(hget32)
+#define u_int32_t afs_uint32
+#endif
+
+static const char *__progname;
+
+#ifndef HAVE_ERRX
+static void
+errx(int eval, const char *fmt)
+{
+  fprintf(stderr, "%s: %s", __progname, fmt);
+  exit(eval);
+}
+#endif /* !HAVE_ERRX */
+
+#ifndef HAVE_WARNX
+static void
+warnx(const char *fmt)
+{
+  fprintf(stderr, "%s: %s", __progname, fmt);
+}
+#endif /* !HAVE_WARNX */
+     
+#ifndef HAVE_WARN
+static void
+warn(const char *fmt)
+{
+  fprintf(stderr, "%s: %s", __progname, fmt);
+}
+#endif /* HAVE_WARN */
+     
+#define DEFAULT_PORT 7009	/* To match tcpdump */
 #define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_BYTES 1000000
 #define RXPERF_BUFSIZE 1400
@@ -126,8 +161,11 @@ str2addr (const char *s)
     struct in_addr server;
     struct hostent *h;
 
-    if (inet_aton (s, &server) == 1)
-	return server.s_addr;
+#ifndef INADDR_NONE
+#define INADDR_NONE 0xffffffff
+#endif
+    if (inet_addr(s) != INADDR_NONE)
+        return inet_addr(s);
     h = gethostbyname (s);
     if (h != NULL) {
 	memcpy (&server, h->h_addr_list[0], sizeof(server));
@@ -208,7 +246,7 @@ rxperf_ExecuteRequest(struct rx_call *call)
 	break;
     case RX_PERF_RECV:
     default:
-	warnx ("client sent a unsupported command: %d", command);
+	warnx ("client sent a unsupported command");
 	return -1;
     }
     return 0;
@@ -261,9 +299,10 @@ do_client (const char *server, int port, int32_t bytes)
     int32_t data;
     int size;
     int ret;
-    char *stamp;
+    char stamp[1024];
 
-    memset (buf, 0, sizeof(buf));
+    for (size = 0; size < RXPERF_BUFSIZE; size++)
+      buf[size] = rand() >> 3;
 
     ret = rx_Init (0);
     if (ret)
@@ -277,7 +316,7 @@ do_client (const char *server, int port, int32_t bytes)
 			    secureobj,
 			    secureindex);
     if (conn == NULL)
-	errx (1, "failed to contact %s", server);
+	errx (1, "failed to contact server");
 
     call = rx_NewCall (conn);
     if (call == NULL)
@@ -291,7 +330,7 @@ do_client (const char *server, int port, int32_t bytes)
     if (rx_Write (call, &data, 4) != 4)
 	errx (1, "rx_Write failed to send command");
 
-    asprintf (&stamp, "send       %d bytes", bytes);
+    sprintf (stamp, "send       %d bytes", bytes);
     start_timer();
     
     data = htonl (bytes);
@@ -303,13 +342,23 @@ do_client (const char *server, int port, int32_t bytes)
 	if (size > bytes)
 	    size = bytes;
 	if (rx_Write (call, buf, size) != size)
-	    errx (1, "failed when %d bytes was left to send", bytes);
+	    errx (1, "failed when bytes where still left to send");
 	bytes -= size;
     }
     if (rx_Read (call, &bytes, 4) != 4)
 	errx (1, "failed to read result from server");
     end_and_print_timer (stamp);
     rx_EndCall (call, 0);
+    rx_Finalize();
+}
+
+static void
+usage()
+{
+  fprintf(stderr, "usage: %s (client) -b bytes -p port -s server\n",
+	  __progname);
+  fprintf(stderr, "usage: %s server -p port\n", __progname);
+  exit(1);
 }
 
 /*
@@ -317,18 +366,24 @@ do_client (const char *server, int port, int32_t bytes)
  */
 
 static int
-rxperf_server (struct cmd_syndesc *as, void *arock)
+rxperf_server (int argc, char **argv)
 {
     int port	   = DEFAULT_PORT;
-    char *portname;
     char *ptr;
+    int ch;
 
-    if (as->parms[0].items) {
-	portname = as->parms[1].items->data;
-	port = strtol (portname, &ptr, 0);
-	if (ptr && ptr != '\0')
+    while ((ch = getopt(argc, argv, "p:")) != -1)
+      switch (ch) {
+      case 'p':
+	port = strtol(optarg, &ptr, 0);
+	if (ptr != 0 && ptr[0] != '\0')
 	    errx (1, "can't resolve portname");
-    }
+	break;
+      default:
+	usage();
+      }
+    if (optind != argc)
+      usage();
     
     do_server (htons(port));
 
@@ -340,32 +395,35 @@ rxperf_server (struct cmd_syndesc *as, void *arock)
  */
 
 static int
-rxperf_client (struct cmd_syndesc *as, void *arock)
+rxperf_client (int argc, char **argv)
 {
     char *host	   = DEFAULT_HOST;
     int bytes	   = DEFAULT_BYTES;
     int port	   = DEFAULT_PORT;
-    char *numbytes = NULL;
-    char *portname;
     char *ptr;
+    int ch;
 
-    if (as->parms[0].items)
-	host = as->parms[0].items->data;
-
-    if (as->parms[1].items) {
-	portname = as->parms[1].items->data;
-	port = strtol (portname, &ptr, 0);
-	if (ptr && ptr != '\0')
-	    errx (1, "can't resolve portname");
-    }
-    
-    if (as->parms[2].items) {
-	numbytes = as->parms[2].items->data;
-	bytes = strtol (numbytes, &ptr, 0);
+    while ((ch  = getopt(argc, argv, "b:p:s:")) != -1)
+      switch (ch) {
+      case 'b':
+	bytes = strtol (optarg, &ptr, 0);
 	if (ptr && *ptr != '\0')
-	    errx (1, "can't resolve number of bytes to transfer");
-    }
-
+	  errx (1, "can't resolve number of bytes to transfer");
+	break;
+      case 'p':
+	port = strtol(optarg, &ptr, 0);
+	if (ptr != 0 && ptr[0] != '\0')
+	    errx (1, "can't resolve portname");
+	break;
+      case 's':
+	host = optarg;
+	break;
+      default:
+	usage();
+      }
+    if (optind != argc)
+      usage();
+    
     do_client (host, htons(port), bytes);
 
     return 0;
@@ -378,23 +436,22 @@ rxperf_client (struct cmd_syndesc *as, void *arock)
 int
 main(int argc, char **argv)
 {
-    struct cmd_syndesc *ts;
     PROCESS pid;
 
-    set_progname (argv[0]);
+    __progname = strrchr(argv[0], '/');
+    if (__progname == 0)
+      __progname = argv[0];
 
     signal (SIGUSR1, sigusr1);
 
-    ts = cmd_CreateSyntax("server", rxperf_server, NULL, "server");
-    cmd_AddParm(ts, "-port", CMD_SINGLE, CMD_OPTIONAL, "udp port");
-
-    ts = cmd_CreateSyntax("client", rxperf_client, NULL, "client");
-    cmd_AddParm(ts, "-server", CMD_SINGLE, CMD_OPTIONAL, "server machine");
-    cmd_AddParm(ts, "-port", CMD_SINGLE, CMD_OPTIONAL, "udp port");
-    cmd_AddParm(ts, "-bytes", CMD_SINGLE, CMD_OPTIONAL, "number of bytes to transfer");
-
     LWP_InitializeProcessSupport (LWP_NORMAL_PRIORITY, &pid);
 
-    cmd_Dispatch(argc, argv);
+    if (argc >= 2 && strcmp(argv[1], "server") == 0)
+      rxperf_server(argc - 1, argv + 1);
+    else if (argc >= 2 && strcmp(argv[1], "client") == 0)
+      rxperf_client(argc - 1, argv + 1);
+    else
+      rxperf_client(argc, argv);
     return 0;
 }
+

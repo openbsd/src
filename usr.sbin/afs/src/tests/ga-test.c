@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +32,7 @@
  */
 
 /*
- * Test if getarg works as expected
+ * Test if agetarg works as expected
  */
 
 #ifdef HAVE_CONFIG_H
@@ -49,9 +44,9 @@
 #include <err.h>
 #include <roken.h>
 
-#include <getarg.h>
+#include <agetarg.h>
 
-RCSID("$Id: ga-test.c,v 1.1 2000/09/11 14:41:30 art Exp $");
+RCSID("$KTH: ga-test.c,v 1.12 2000/10/03 00:33:59 lha Exp $");
 
 typedef struct {
     int style;
@@ -61,7 +56,7 @@ typedef struct {
 } ga_tests;
 
 
-/* XXX TODO: arg_negative_flag, manualpage generation ? */
+/* XXX TODO: aarg_negative_flag, manualpage generation ? */
 
 /*
  *
@@ -73,17 +68,17 @@ test_simple_string (void)
     char *string;
     int i, optind;
     ga_tests tests[] = {
-	{ ARG_GNUSTYLE, 2, { "string", "--string=foo", NULL } },
-	{ ARG_GNUSTYLE, 3, { "string", "-s", "foo", NULL} },
-	{ ARG_AFSSTYLE, 3, { "string", "-string", "foo", NULL} },
-	{ ARG_AFSSTYLE, 2, { "string", "--flag"}, 		GA_FAILURE },
-	{ ARG_AFSSTYLE, 2, { "string", "foo", NULL} }
+	{ AARG_GNUSTYLE, 2, { "string", "--string=foo", NULL } },
+	{ AARG_GNUSTYLE, 3, { "string", "-s", "foo", NULL} },
+	{ AARG_AFSSTYLE, 3, { "string", "-string", "foo", NULL} },
+	{ AARG_AFSSTYLE, 2, { "string", "--flag"}, 		GA_FAILURE },
+	{ AARG_AFSSTYLE, 2, { "string", "foo", NULL} }
     };
 
-    struct getargs args[] = {
-	{ "string", 's', arg_string, NULL,
-	  "string test", "stringfoo", arg_mandatory},
-	{ NULL, 0, arg_end, NULL, NULL }
+    struct agetargs args[] = {
+	{ "string", 's', aarg_string, NULL,
+	  "string test", "stringfoo", aarg_mandatory},
+	{ NULL, 0, aarg_end, NULL, NULL }
     }, *a = args;
 
     a->value = &string;
@@ -92,7 +87,7 @@ test_simple_string (void)
 	string = NULL;
 	optind = 0;
 
-	if (getarg (args, tests[i].argc, tests[i].argv, &optind, 
+	if (agetarg (args, tests[i].argc, tests[i].argv, &optind, 
 		    tests[i].style)) {
 	    if (tests[i].retval == GA_FAILURE)
 		continue;
@@ -126,23 +121,23 @@ test_simple_string (void)
 static void
 test_simple_strings (void)
 {
-    getarg_strings strings;
+    agetarg_strings strings;
 
     int i, optind;
     ga_tests tests[] = {
-	{ ARG_GNUSTYLE, 3, { "strings", 
+	{ AARG_GNUSTYLE, 3, { "strings", 
 			     "--strings=foo", "--strings=bar", NULL } },
-	{ ARG_GNUSTYLE, 5, { "strings", "-s", "foo", "-s", "bar", NULL} },
-	{ ARG_AFSSTYLE, 4, { "strings", "-string", "foo", "bar", NULL} }
+	{ AARG_GNUSTYLE, 5, { "strings", "-s", "foo", "-s", "bar", NULL} },
+	{ AARG_AFSSTYLE, 4, { "strings", "-string", "foo", "bar", NULL} }
 #if 0
-	{ ARG_AFSSTYLE, 3, { "strings", "foo", "bar", NULL} }
+	{ AARG_AFSSTYLE, 3, { "strings", "foo", "bar", NULL} }
 #endif
     };
 
-    struct getargs args[] = {
-	{ "strings", 's', arg_strings, NULL,
-	  "strings test", "stringsfoo", arg_optional},
-	{ NULL, 0, arg_end, NULL, NULL }
+    struct agetargs args[] = {
+	{ "strings", 's', aarg_strings, NULL,
+	  "strings test", "stringsfoo", aarg_optional},
+	{ NULL, 0, aarg_end, NULL, NULL }
     }, *a = args;
 
     a->value = &strings;
@@ -152,7 +147,7 @@ test_simple_strings (void)
 	strings.strings = NULL;
 	optind = 0;
 
-	if (getarg (args, tests[i].argc, tests[i].argv, &optind, 
+	if (agetarg (args, tests[i].argc, tests[i].argv, &optind, 
 		    tests[i].style)) {
 	    if (tests[i].retval == GA_FAILURE)
 		continue;
@@ -193,16 +188,16 @@ test_simple_integer (void)
     int integer;
     int i, optind;
     ga_tests tests[] = {
-	{ ARG_GNUSTYLE, 2, { "integer", "--integer=4711", NULL } },
-	{ ARG_GNUSTYLE, 3, { "integer", "-i", "4711", NULL} },
-	{ ARG_AFSSTYLE, 3, { "integer", "-integer", "4711", NULL} },
-	{ ARG_AFSSTYLE, 2, { "integer", "4711", NULL} }
+	{ AARG_GNUSTYLE, 2, { "integer", "--integer=4711", NULL } },
+	{ AARG_GNUSTYLE, 3, { "integer", "-i", "4711", NULL} },
+	{ AARG_AFSSTYLE, 3, { "integer", "-integer", "4711", NULL} },
+	{ AARG_AFSSTYLE, 2, { "integer", "4711", NULL} }
     };
 
-    struct getargs args[] = {
-	{ "integer", 'i', arg_integer, NULL,
-	  "integer test", "integer", arg_mandatory},
-	{ NULL, 0, arg_end, NULL, NULL }
+    struct agetargs args[] = {
+	{ "integer", 'i', aarg_integer, NULL,
+	  "integer test", "integer", aarg_mandatory},
+	{ NULL, 0, aarg_end, NULL, NULL }
     }, *a = args;
 
     a->value = &integer;
@@ -211,7 +206,7 @@ test_simple_integer (void)
 	integer = 0;
 	optind = 0;
 
-	if (getarg (args, tests[i].argc, tests[i].argv, &optind, 
+	if (agetarg (args, tests[i].argc, tests[i].argv, &optind, 
 		    tests[i].style)) {
 	    if (tests[i].retval == GA_FAILURE)
 		continue;
@@ -249,21 +244,21 @@ test_simple_flag (void)
     int flag;
     int i, optind;
     ga_tests tests[] = {
-	{ ARG_GNUSTYLE, 2, { "flag", "--flag=yes", NULL },	GA_SUCCESS },
-	{ ARG_GNUSTYLE, 2, { "flag", "-g", NULL},		GA_SUCCESS },
-	{ ARG_AFSSTYLE, 2, { "flag", "--flag"}, 		GA_FAILURE },
-	{ ARG_AFSSTYLE, 2, { "flag", "-flag", NULL},		GA_SUCCESS },
+	{ AARG_GNUSTYLE, 2, { "flag", "--flag=yes", NULL },	GA_SUCCESS },
+	{ AARG_GNUSTYLE, 2, { "flag", "-g", NULL},		GA_SUCCESS },
+	{ AARG_AFSSTYLE, 2, { "flag", "--flag"}, 		GA_FAILURE },
+	{ AARG_AFSSTYLE, 2, { "flag", "-flag", NULL},		GA_SUCCESS },
 #if 0
 	/* XXX */
-	{ ARG_AFSSTYLE, 2, { "flag", "yes", NULL},		GA_SUCCESS },
+	{ AARG_AFSSTYLE, 2, { "flag", "yes", NULL},		GA_SUCCESS },
 #endif
-	{ ARG_GNUSTYLE, 2, { "flag", "--no-flag", NULL},	GA_SUCCESS }
+	{ AARG_GNUSTYLE, 2, { "flag", "--no-flag", NULL},	GA_SUCCESS }
     };
 
-    struct getargs args[] = {
-	{ "flag", 'g', arg_flag, NULL,
-	  "flag", "flag bar", arg_optional},
-	{ NULL, 0, arg_end, NULL, NULL }
+    struct agetargs args[] = {
+	{ "flag", 'g', aarg_flag, NULL,
+	  "flag", "flag bar", aarg_optional},
+	{ NULL, 0, aarg_end, NULL, NULL }
     }, *a = args;
 
     a->value = &flag;
@@ -275,7 +270,7 @@ test_simple_flag (void)
 	    flag = 1;
 	optind = 0;
 
-	if (getarg (args, tests[i].argc, tests[i].argv, &optind, 
+	if (agetarg (args, tests[i].argc, tests[i].argv, &optind, 
 		    tests[i].style)) {
 	    if (tests[i].retval == GA_FAILURE)
 		continue;

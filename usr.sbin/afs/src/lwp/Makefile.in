@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:07 art Exp $
+# $KTH: Makefile.in,v 1.58.2.1 2002/02/01 14:22:21 ahltorp Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -26,7 +27,7 @@ includedir	= @includedir@
 HOST_CPU	= @host_cpu@
 HOST_OS		= @host_os@
 
-INCLUDES	= -I../include
+INCLUDES	= -I../include @INC_roken@
 
 PROCESS_S	= process.aix22.S \
 		  process.alpha.S \
@@ -84,11 +85,10 @@ process.o:	$(PROCESS_S) make-process.o.sh testprocess.o preempt.o @LWP_O@
 		$(SHELL) make-process.o.sh
 
 testlwp: testlwp.o liblwp.a
-	$(CC) -o testlwp testlwp.o -L. -llwp -L../lib/roken \
-	-lroken @PLWP_LIB_FLAGS@
+	$(CC) -o testlwp testlwp.o -L. -llwp @LIB_roken@ @PLWP_LIB_FLAGS@
 rw: rw.o liblwp.a
-	$(CC) -o rw rw.o -L. -llwp -L../lib/roken \
-	-lroken @PLWP_LIB_FLAGS@
+	$(CC) -o rw rw.o -L. -llwp @LIB_roken@ @PLWP_LIB_FLAGS@
+
 .c.o:
 		$(CC) -c $(CPPFLAGS) $(DEFS) $(REALCFLAGS) -I$(srcdir) -I. $<
 
@@ -106,7 +106,7 @@ testprocess.o: testprocess.c
 testlwp.o: testlwp.c
 
 clean:
-	rm -f *.o *.a core process.ss process.i $(LIB) make-process.o.sh testprocess $(TEST_PROGRAMS)
+	rm -f *.o *.a core process.ss process.i $(LIB) make-process.o.sh testprocess $(TEST_PROGRAMS) process.S
 
 distclean: clean
 	rm -f Makefile

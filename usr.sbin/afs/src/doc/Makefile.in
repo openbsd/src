@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:52 art Exp $
+# $KTH: Makefile.in,v 1.18 2000/12/01 08:30:46 lha Exp $
 #
 
 SHELL = /bin/sh
@@ -7,6 +7,7 @@ AWK   = awk
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir	= ..
 VPATH = @srcdir@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -34,6 +35,8 @@ arla_TEXINFOS =  ack.texi \
 	authors.texi \
 	storage.texi \
 	timeline.texi \
+	real-world.texi \
+	index.texi \
 	afs-basics.texi
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../include/config.h
@@ -64,14 +67,14 @@ Makefile: Makefile.in  ../config.status
 arla.info: arla.texi $(arla_TEXINFOS)
 arla.dvi: arla.texi $(arla_TEXINFOS)
 
-ack.texi: ack.texi.in Makefile.in
+ack.texi: ack.texi.in Makefile.in ../THANKS
 	rm -f tempfile
 	$(AWK) 'BEGIN { FS="|";foo=0;printf("/%%THANKS%%\nd\ni\n"); } \
 	/@/ { if (foo) { \
 		printf("@item %s\n\n",$$1);\
 	} \
 	} /expect you to/ { foo=1; } \
-	END { printf(".\n1,$$s/<.*@/&@/g\n1,$$s/</\\\n@email{/g\n1,$$s/>/}/g\nw %s\nq\n", "$(srcdir)/ack.texi") ;} ' < $(srcdir)/../THANKS > tempfile
+	END { printf(".\n1,$$s/<.*@/&@/g\n1,$$s/</\\\n@tab @email{/g\n1,$$s/>/}/g\nw %s\nq\n", "$(srcdir)/ack.texi") ;} ' < $(srcdir)/../THANKS > tempfile
 	$(ED) $(srcdir)/ack.texi.in < tempfile
 	rm -f tempfile
 
@@ -88,11 +91,11 @@ DVIPS = @DVIPS@
 
 .texi.pdf:
 	TEXINPUTS=$(srcdir):$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2PDF) --language=Texinfo $<
+	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2PDF) $<
 
 .texi.html:
 	TEXINPUTS=$(srcdir):$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2HTML) -split_chapter -split_node $< && ln -s $*_toc.html $*.html
+	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2HTML) -split=chapter $<
 
 .texi:
 	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
@@ -181,7 +184,10 @@ dvi: $(DVIS)
 clean:
 	rm -f arla.aux arla.cp arla.cps arla.dvi arla.fn arla.fns arla.ky \
 	  arla.kys arla.ps arla.log arla.pg arla.toc arla.tp arla.tps \
-	  arla.vr arla.vrs arla.op arla.tr arla.cv arla.cn
+	  arla.vr arla.vrs arla.op arla.tr arla.cv arla.cn *.html
+
+distclean:
+	rm -f *.dvi *.info *.ps *.ps *.html *.pdf
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

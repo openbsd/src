@@ -1,4 +1,8 @@
-@c $Id: servers.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+@c Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
+
+@c $KTH: servers.texi,v 1.10 2000/12/01 08:32:34 lha Exp $
 
 @c
 @c  This file contain random junk that should be ordered some day
@@ -6,6 +10,9 @@
 
 
 @section YDR
+
+@cindex Ydr
+@cindex Rxgen
 
 @code{Ydr} is a rxgen replacement that is generating a lot more stuff
 then rxgen (like headerfiles). It also does the same thing in one run
@@ -31,30 +38,6 @@ a file) is called ydra.
 
 @end itemize
 
-
-@section CellServDB
-
-Transarc users a flat file called @code{CellServDB} to distribute the
-knowledge of what cells exist in the world. There is a way to represent
-that kind of information in DNS, but Transarc never implemented that in
-their software. Arla uses both ways to build its view of the AFS world.
-In spite of being organized in IPnumber - name pairs, where the name
-parts resemble comments, both values are used by Transarc software and
-confusion may arise if they are not synchronized with each other.
-
-@example
-
->stacken.kth.se            # Stacken Computer Club, KTH, Sweden
-130.237.234.3              #milko.stacken.kth.se
-130.237.234.43             #hot.stacken.kth.se
-130.237.237.230            #fishburger.stacken.kth.se
-
-@end example
-
-Again, please note that the text after the # in the cell-name is a
-comment, @strong{but} the hostnames after the # on the rows of an
-IP-address is @strong{not} a comment. The host and the ip-address needs
-to point at the same computer.
 
 @c Creations of a volume
 @c VOLSER_ListPartions

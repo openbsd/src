@@ -1,4 +1,4 @@
 #!/bin/sh
-# $Id: setgroups,v 1.1 2000/09/11 14:41:34 art Exp $
+# $KTH: setgroups,v 1.1 1999/05/28 09:43:00 assar Exp $
 
 $objdir/test-setgroups nobody 1>&4

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #include "fsrv_locl.h"
 
-RCSID("$Id: fileserver.c,v 1.1 2000/09/11 14:41:13 art Exp $");
+RCSID("$KTH: fileserver.c,v 1.25 2000/12/29 20:03:30 tol Exp $");
 
 typedef enum { NO_SALVAGE, NORMAL_SALVAGE, SALVAGE_ALL } salvage_options_e;
 
@@ -53,7 +48,7 @@ static char *cell = NULL;
 static char *realm = NULL;
 static char *srvtab_file = NULL;
 static char *debug_levels = NULL;
-static char *log_name = "syslog";
+static char *log_file  = "syslog";
 static int no_auth = 0;
 static int force_salvage = 0;
 static int salvage_options = NORMAL_SALVAGE;
@@ -65,8 +60,11 @@ static int salvage_options = NORMAL_SALVAGE;
 static void
 sigusr1 (int foo)
 {
+    char *dumpdir;
     printf ("sigusr1\n");
-    chdir ("/vicepa");
+    asprintf (&dumpdir, "%s/vicepa", dpart_root);
+    if (dumpdir)
+	chdir (dumpdir);
     exit (2); /* XXX profiler */
 }
 
@@ -139,21 +137,23 @@ attach_volumes(void)
  * Main
  */
 
-static struct getargs args[] = {
-    {"cell",	0, arg_string,    &cell, "what cell to use"},
-    {"realm",	0, arg_string,	  &realm, "what realm to use"},
-    {"noauth",	0, arg_flag,	  &no_auth, "disable authentication checks"},
-    {"debug",	0, arg_string,	  &debug_levels, "debug level"},
-    {"log",	0, arg_string,	  &log_name, "log device name"},
-    {"srvtab",'s', arg_string,    &srvtab_file, "what srvtab to use"},
-    {"salvage", 0, arg_flag,      &force_salvage, "Force a salvage for all vols"},
-    { NULL, 0, arg_end, NULL }
+static struct agetargs args[] = {
+    {"cell",	0, aarg_string,    &cell, "what cell to use"},
+    {"realm",	0, aarg_string,	  &realm, "what realm to use"},
+    {"noauth",	0, aarg_flag,	  &no_auth, "disable authentication checks"},
+    {"debug",	0, aarg_string,	  &debug_levels, "debug level"},
+    {"log",	'l',	aarg_string,	&log_file,
+     "where to write log (stderr (default), syslog, or path to file)"},
+    {"srvtab",'s', aarg_string,    &srvtab_file, "what srvtab to use"},
+    {"salvage", 0, aarg_flag,      &force_salvage, "Force a salvage for all vols"},
+    {"partdir",'s', aarg_string,    &dpart_root, "where to find vicep*"},
+    { NULL, 0, aarg_end, NULL }
 };
 
 static void
 usage(void)
 {
-    arg_printusage(args, "fileserver", "", ARG_GNUSTYLE);
+    aarg_printusage(args, "fileserver", "", AARG_GNUSTYLE);
 }
 
 int 
@@ -162,10 +162,11 @@ main(int argc, char **argv)
     int ret;
     int optind = 0;
     PROCESS pid;
+    Log_method *method;
     
     set_progname (argv[0]);
 
-    if (getarg (args, argc, argv, &optind, ARG_GNUSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_GNUSTYLE)) {
 	usage ();
 	return 1;
     }
@@ -178,20 +179,24 @@ main(int argc, char **argv)
 	return 1;
     }
 
+    method = log_open (get_progname(), log_file);
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
+    ports_init();
+
     printf ("fileserver booting\n");
 
     LWP_InitializeProcessSupport (LWP_NORMAL_PRIORITY, &pid);
 
-    mlog_loginit (log_name, milko_deb_units, MDEFAULT_LOG);
+    mlog_loginit (method, milko_deb_units, MDEFAULT_LOG);
     if (debug_levels)
 	mlog_log_set_level (debug_levels);
     
     if (force_salvage)
       salvage_options = SALVAGE_ALL;
 
-    ports_init();
-    cell_init(0);
-    ropa_init(400,1000);
+    ropa_init(30000, 100, 40000, 40000, 150, 50000);
 
     if (no_auth)
 	sec_disable_superuser_check ();
@@ -202,14 +207,14 @@ main(int argc, char **argv)
     network_kerberos_init (srvtab_file);
     
     ret = network_init(htons(afsport), "fs", FS_SERVICE_ID, 
-		       RXAFS_ExecuteRequest, &fsservice, NULL);
+		       RXAFS_ExecuteRequest, &fsservice, realm);
     if (ret)
 	errx (1, "network_init failed with %d", ret);
 
     fsservice->destroyConnProc = fs_connsec_destroyconn;
     
     ret = network_init(htons(afsvolport), "volser", VOLSER_SERVICE_ID, 
-		       VOLSER_ExecuteRequest, &volservice, NULL);
+		       VOLSER_ExecuteRequest, &volservice, realm);
     if (ret)
 	errx (1, "network_init failed with %d", ret);
 

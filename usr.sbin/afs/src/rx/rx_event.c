@@ -21,7 +21,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$Id: rx_event.c,v 1.2 2000/09/11 14:41:21 art Exp $");
+RCSID("$KTH: rx_event.c,v 1.5 2000/09/04 03:59:54 lha Exp $");
 
 /*
  * All event processing is relative to the apparent current time
@@ -212,6 +212,7 @@ rxevent_RaiseEvents(struct clock * next)
     return 0;
 }
 
+#if 0
 static void
 shutdown_rxevent(void)
 {
@@ -227,3 +228,4 @@ shutdown_rxevent(void)
     }
 #endif
 }
+#endif

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: func-ntohl.m4,v 1.1 2000/09/11 14:40:47 art Exp $
+dnl $KTH: func-ntohl.m4,v 1.1 1999/05/15 22:45:26 assar Exp $
 dnl
 dnl test for how to do ntohl
 dnl

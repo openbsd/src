@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: mkdir,v 1.1 2000/09/11 14:41:32 art Exp $
+# $KTH: mkdir,v 1.2 2000/05/25 01:22:30 lha Exp $
 mkdir foo || exit 1
 echo hej > foo/1 || exit 1
 rmdir foo >/dev/null 2>&1 

@@ -3,7 +3,7 @@
 # make-process.o.sh
 #  Try to make process.o various ways.
 #
-#  $Id: make-process.o.sh.in,v 1.3 2000/09/11 14:41:08 art Exp $
+#  $KTH: make-process.o.sh.in,v 1.24.2.1 2001/02/21 17:53:19 lha Exp $
 #
 
 srcdir=@srcdir@
@@ -53,6 +53,8 @@ case "$HOST_CPU" in
     hppa*)   PROCESS_S="process.hpux.S" ;;
     powerpc) PROCESS_S="process.ppc.S" ;;
     rs6000)  PROCESS_S="process.rios.S" ;;
+    vax)     PROCESS_S="process.vax.S" ;;
+    s390*)   PROCESS_S="process.s390.S" ;;
     f301) ;;
     *)  echo "Unknown host_cpu, good luck" ;;
 esac 
@@ -68,7 +70,6 @@ case "$HOST_OS" in
     *solaris*) OSDEF="-DAFS_SUN5_ENV -D_ASM" USE_AS="yes" ;; 
     *irix*) OSDEF="-Dsgi -n32 -DHAVE_PIC"; ASDEF="-n32" ;; 
     *hpux*) OSDEF="-DAFS_HPUX_ENV" ;; 
-    rhapsody*) OSDEF="-DAFS_BSD_ENV" ;; 
     aix*) CPUDEF=""; OSDEF="" ;; 
     uxpv*) 
 	$CPP -P ${srcdir}/process-vpp.s > foo.s

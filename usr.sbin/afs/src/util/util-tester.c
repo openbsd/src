@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -35,6 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,6 +126,7 @@ test_hash(void)
 }
 
 struct units u1_units[] = {
+    { "all",		0xff },
     { "u1-hack",	0x04 },
     { "warning", 	0x02 },
     { "debug",		0x01 },
@@ -134,6 +134,7 @@ struct units u1_units[] = {
 };
 
 struct units u2_units[] = {
+    { "all",		0xff },
     { "u2-hack2",	0x08 },
     { "u2-hack1",	0x04 },
     { "warning", 	0x02 },
@@ -150,7 +151,7 @@ test_log (void)
 
     starttesting ("log");
 
-    m = log_open ("util-tester", "/dev/stderr");
+    m = log_open ("util-tester", "/dev/stderr:notime");
     if (m == NULL)
 	return endtesting(1);
 
@@ -199,17 +200,17 @@ test_log (void)
     log_set_mask_str (m, NULL, "+debug,+warning");
     log_log (u1, 0x1, "5.  now this should show");
     log_log (u2, 0x1, "6.  now this should show");
-    log_log (u1, 0x2, "8.  now this should show");
-    log_log (u2, 0x2, "9.  now this should show");
+    log_log (u1, 0x2, "7.  now this should show");
+    log_log (u2, 0x2, "8.  now this should show");
     log_mask2str (m, NULL, buf, sizeof(buf));
     printf ("%s\n", buf); fflush (stdout);
     log_set_mask_str (m, NULL, buf);
 
     log_set_mask_str (m, u1, "-debug,-warning");
     log_log (u1, 0x1, "X. now this should NOT show");
-    log_log (u2, 0x1, "10. now this should show");
+    log_log (u2, 0x1, "9. now this should show");
     log_log (u1, 0x2, "X. now this should NOT show");
-    log_log (u2, 0x2, "11. now this should show");
+    log_log (u2, 0x2, "10. now this should show");
 
     log_mask2str (m, NULL, buf, sizeof(buf));
     printf ("%s\n", buf); fflush (stdout);
@@ -221,6 +222,15 @@ test_log (void)
     log_mask2str (m, NULL, buf, sizeof(buf));
     printf ("%s\n", buf); fflush (stdout);
     log_set_mask_str (m, NULL, buf);
+
+    log_set_mask_str (m, NULL, "all");
+    log_mask2str (m, NULL, buf, sizeof(buf));
+    printf ("all: %s\n", buf); fflush (stdout);
+
+    log_set_mask_str (m, NULL, "-all");
+    log_mask2str (m, NULL, buf, sizeof(buf));
+    printf ("none: %s\n", buf); fflush (stdout);
+
 
     log_close (m);
     return endtesting (0);

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: bsd-vget.m4,v 1.1 2000/09/11 14:40:45 art Exp $
+dnl $KTH: bsd-vget.m4,v 1.4 2000/06/12 06:13:52 assar Exp $
 dnl
 
 AC_DEFUN(AC_BSD_FUNC_VGET, [

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 
 #include "pts.cs.h"
 
-RCSID("$Id: connsec.c,v 1.1 2000/09/11 14:41:13 art Exp $");
+RCSID("$KTH: connsec.c,v 1.12 2000/10/03 00:17:03 lha Exp $");
 
 static struct rx_connection *
 get_conn(int32_t addr, int32_t port, int32_t servid)
@@ -151,7 +146,6 @@ fs_connsec_createconn(struct rx_connection *conn)
     char inst[INST_SZ];
     char realm[REALM_SZ];
     int32_t over;
-    int rnamelen;
 
     if (conn->rock)
 	return;

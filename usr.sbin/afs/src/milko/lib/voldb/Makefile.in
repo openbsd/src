@@ -1,10 +1,11 @@
 #
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:18 art Exp $
+# $KTH: Makefile.in,v 1.8 2000/12/29 20:16:00 tol Exp $
 #
 
 SHELL	= /bin/sh
 
 srcdir	= @srcdir@
+top_builddir	= ../../..
 VPATH	= @srcdir@
 
 CC	= @CC@
@@ -16,6 +17,7 @@ INCLUDES = -I.					\
 	   -I$(srcdir)/../../..			\
 	   -I../../../rxdef			\
 	   -I../../../include			\
+	   -I$(srcdir)/../dpart				\
 	   -I../vstatus				\
 	   -I$(srcdir)/../vstatus				\
 	   $(KRB4_INC_FLAGS)			\

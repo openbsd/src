@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -60,7 +55,7 @@
 #define MAP_FAILED ((void *)-1)
 #endif
 
-RCSID("$Id: append-over-page.c,v 1.1 2000/09/11 14:41:26 art Exp $");
+RCSID("$KTH: append-over-page.c,v 1.3 2000/10/03 00:33:07 lha Exp $");
 
 static char long_buf[] =
 "1000\n"

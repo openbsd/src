@@ -1,5 +1,5 @@
 dnl
-dnl $Id: type-iovec.m4,v 1.1 2000/09/11 14:40:51 art Exp $
+dnl $KTH: type-iovec.m4,v 1.2 1999/06/24 01:44:58 assar Exp $
 dnl
 
 dnl

@@ -1,4 +1,4 @@
 #!/bin/sh
-# $Id: setpag,v 1.1 2000/09/11 14:41:34 art Exp $
+# $KTH: setpag,v 1.1 1999/05/28 09:43:01 assar Exp $
 
 $objdir/test-setpag 1>&4

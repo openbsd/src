@@ -1,11 +1,11 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:29 art Exp $
+# $KTH: Makefile.in,v 1.29.2.1 2001/09/15 13:33:35 mattiasa Exp $
 
 srcdir		= @srcdir@
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh
 
-SUBDIRS		= include lib util ydr lwp rx rxdef lib/ko lib/bufdir \
+SUBDIRS		= include lib util ydr lwp rxdef lib/ko rx lib/bufdir \
 		  @RXKAD@ xfs arlad conf appl tests doc
 
 all:
@@ -27,6 +27,10 @@ distclean:
 		SUBDIRS='$(SUBDIRS)'; \
 		for i in $$SUBDIRS; \
 		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+		rm -f Makefile
+		rm -f conf/arla.spec
+		rm -f include/arla-version.h
+		rm -f config.cache config.status config.log include/config.h
 
 mostlyclean:
 		SUBDIRS='$(SUBDIRS)'; \

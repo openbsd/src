@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: output.h,v 1.3 2000/09/11 14:41:41 art Exp $ */
+/* $KTH: output.h,v 1.16 2000/10/10 00:48:55 lha Exp $ */
 
 #ifndef _OUTPUT_
 #define _OUTPUT_
@@ -44,6 +39,12 @@
 #include <stdio.h>
 #include <bool.h>
 #include <roken.h>
+
+typedef struct {
+  FILE *stream;
+  char *curname;
+  char *newname;
+} ydr_file;
 
 void generate_header (Symbol *s, FILE *f);
 void generate_sizeof (Symbol *s, FILE *f);
@@ -64,11 +65,18 @@ extern List *packagelist;
 
 extern char *prefix;
 
-extern fileblob headerfile, clientfile, serverfile, clienthdrfile,
+extern ydr_file headerfile, clientfile, serverfile, clienthdrfile,
     serverhdrfile, ydrfile, td_file;
 
 extern char *error_function;
 
 extern int parse_errors;
+
+void
+ydr_fopen (const char *name, const char *mode, ydr_file *f);
+
+void
+ydr_fclose (ydr_file *f);
+
 
 #endif /* _OUTPUT_ */

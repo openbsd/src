@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:13 art Exp $
+# $KTH: Makefile.in,v 1.19 2000/10/10 20:56:23 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ../..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -45,6 +46,7 @@ INCLUDES	= -I$(srcdir)/../.. \
 		  -I$(srcdir)/../lib/vstatus \
 		  -I../lib/vstatus \
 		  -I../../rxdef \
+		  @INC_roken@ \
 		  $(RXKADINC)
 DEFINES		= -DDEBUG
 REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) -DRXDEBUG
@@ -65,12 +67,13 @@ LIBS		= -L../lib/mlog -lmlog \
 		  -L../../util -lutil \
 		  -L../../rxdef -lrxvolserver -lrxfsserver -L../../rx -lrx \
 		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
-		  -L../../lib/roken -lroken $(RXKADLIB) \
+		  $(RXKADLIB) \
 		  $(KAFS_LIBS) \
+		  @LIB_roken@ \
 		  @LIBS@
 LIBDEPENDS	= ../../rxdef/librxdefclient.a ../../rx/librx.a \
 		  ../../lwp/liblwp.a ../../util/libutil.a \
-		  ../../lib/roken/libroken.a ../../lib/ko/libko.a \
+		  ../../lib/ko/libko.a \
 		  ../lib/voldb/libvoldb.a ../lib/vld/libvld.a \
 		  ../lib/msecurity/libmsecurity.a ../../lib/ko/libko.a \
 		  ../lib/dpart/libdpart.a ../../rxdef/libptclient.a \

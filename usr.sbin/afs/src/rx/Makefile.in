@@ -1,9 +1,10 @@
 #
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:20 art Exp $
+# $KTH: Makefile.in,v 1.37.2.1 2001/09/15 13:33:59 mattiasa Exp $
 #
 
 SHELL		= /bin/sh
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -22,11 +23,12 @@ bindir		= @bindir@
 sbindir		= @sbindir@
 libdir		= @libdir@
 includedir	= @includedir@
+mandir		= @mandir@
 
 DEFS		= @DEFS@ -DRXDEBUG
 CFLAGS		= @CFLAGS@
 INCLUDES	= -I$(srcdir) -I../include -I$(srcdir)/../include \
-		  @KRB4_INC_FLAGS@ -I$(srcdir)/../lib/cmd
+		  @INC_roken@ @KRB4_INC_FLAGS@ -I$(srcdir)/../lib/cmd
 
 LIB		= librx.a
 include_HEADERS = rx.h rx_clock.h rx_event.h rx_globs.h rx_mach.h rx_misc.h \
@@ -100,7 +102,7 @@ install: all
 		e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
 		f=`echo $$n | sed '$(transform)'`; \
 		$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
-		$(INSTALL_PROGRAM) $(srcdir)/$$x \
+		$(INSTALL_DATA) $(srcdir)/$$x \
 			$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
 	done
 
@@ -141,10 +143,10 @@ test_rx_clock: $(test_rx_clock_OBJECTS) $(LIB)
 	$(CC) -o $@ $(test_rx_clock_OBJECTS) -L. -lrx $(LIBS)
 
 rxdebug: $(rxdebug_OBJECTS) $(LIB)
-	$(CC) -o $@ $(rxdebug_OBJECTS) -L../lib/cmd -lcmd -L. -lrx $(LIBS) -L../lwp -llwp @PLWP_LIB_FLAGS@ -L../lib/roken -lroken @LIBS@
+	$(CC) -o $@ $(rxdebug_OBJECTS) -L../lib/cmd -lcmd -L. -lrx $(LIBS) -L../lwp -llwp @PLWP_LIB_FLAGS@ -L../lib/ko -lko @LIB_roken@ @LIBS@ 
 
 rxperf: $(rxperf_OBJECTS) $(LIB)
-	$(CC) -o $@ $(rxperf_OBJECTS) -L../lib/cmd -lcmd -L. -lrx $(LIBS) -L../lwp -llwp @PLWP_LIB_FLAGS@ -L../lib/roken -lroken @LIBS@
+	$(CC) -o $@ $(rxperf_OBJECTS) -L../lib/cmd -lcmd -L. -lrx $(LIBS) -L../lwp -llwp @PLWP_LIB_FLAGS@ @LIB_roken@ @LIBS@
 
 TAGS:	$(SOURCES)
 	etags $(SOURCES)

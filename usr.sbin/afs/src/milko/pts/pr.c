@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -72,22 +67,26 @@
 
 #include "msecurity.h"
 
-RCSID("$Id: pr.c,v 1.1 2000/09/11 14:41:19 art Exp $");
+RCSID("$KTH: pr.c,v 1.21 2001/01/04 12:06:17 mattiasa Exp $");
 
-int PR_NameToID(struct rx_call *call,
-		const namelist *nlist,
-		idlist *ilist)
+/*
+ *
+ */
+
+int
+PR_NameToID(struct rx_call *call, const namelist *nlist, idlist *ilist)
 {
     int i;
     int status;
     char *localname;
 
-    printf("PR_NameToID\n");
-/*    printf("  securityIndex: %d\n", call->conn->securityIndex);*/
+    pt_debug (PRDB_RPC, "PR_NameToID: securityIndex: %d ilen: %d",
+	      call->conn->securityIndex, nlist->len);
+
 #ifdef KERBEROS
     if (call->conn->securityIndex == 2) {
 	serv_con_data *cdat = call->conn->securityData;
-	printf("  user: %s.%s@%s\n",
+	pt_debug (PRDB_RPC,"  user: %s.%s@%s",
 	       cdat->user->name,
 	       cdat->user->instance,
 	       cdat->user->realm);
@@ -100,7 +99,7 @@ int PR_NameToID(struct rx_call *call,
 	return PRDBBAD;
 
     for (i = 0; i < nlist->len; i++) {
-	printf("  name: %s\n", nlist->val[i]);
+	pt_debug (PRDB_RPC,"  name: %s", nlist->val[i]);
 	
 	localname = localize_name(nlist->val[i]);
 
@@ -113,15 +112,18 @@ int PR_NameToID(struct rx_call *call,
     return 0;
 }
 
+/*
+ *
+ */
+
 int
-PR_IDToName(struct rx_call *call,
-	    const idlist *ilist,
-	    namelist *nlist)
+PR_IDToName(struct rx_call *call, const idlist *ilist, namelist *nlist)
 {
     int i;
     int status;
-
-    printf("PR_IDToName\n");
+    
+    pt_debug (PRDB_RPC, "PR_IDToName: securityIndex: %d ilen %d",
+	      call->conn->securityIndex, ilist->len);
 
     
     if (ilist->len < 0 || ilist->len >= PR_MAXLIST)
@@ -139,7 +141,7 @@ PR_IDToName(struct rx_call *call,
 	return PRDBBAD;
 
     for (i = 0; i < ilist->len; i++) {
-/*	printf("  id: %d\n", ilist->val[i]);*/
+	pt_debug (PRDB_RPC,"  id: %d", ilist->val[i]);
 	status = conv_id_to_name(ilist->val[i], nlist->val[i]);
 	if (status == PRNOENT)
 	    snprintf (nlist->val[i], PR_MAXNAMELEN, "%d", ilist->val[i]);
@@ -149,19 +151,19 @@ PR_IDToName(struct rx_call *call,
     return 0;
 }
 
-int PR_NewEntry(struct rx_call *call
-    , const char name[ 64 ]
-    , const int32_t flag
-    , const int32_t oid
-    , int32_t *id
-    )
+/*
+ *
+ */
+
+int
+PR_NewEntry(struct rx_call *call, const char *name, 
+	    const int32_t flag, const int32_t oid, int32_t *id)
 {
     int error;
     char *localname;
 
-    printf("PR_NewEntry\n");
-    printf("  securityIndex: %d\n", call->conn->securityIndex);
-    printf("  name:%s oid:%d\n", name, oid);
+    pt_debug (PRDB_RPC, "PR_NewEntry: securityIndex: %d name: %s oid: %d",
+	      call->conn->securityIndex, name, oid);
 
 
 /* XXX should be authuser? */
@@ -190,12 +192,13 @@ int PR_NewEntry(struct rx_call *call
     return error;
 }
 
-int PR_INewEntry(
-    struct rx_call *call
-    , const char name[ 64 ]
-    , const int32_t id
-    , const int32_t oid
-    )
+/*
+ *
+ */
+
+int
+PR_INewEntry(struct rx_call *call, const char *name, 
+	     const int32_t id, const int32_t oid)
 {
     int error;
     int tempid;
@@ -204,9 +207,8 @@ int PR_INewEntry(
     if (!sec_is_superuser(call))
 	return PRPERM;
 
-    printf("PR_INewEntry\n");
-    printf("  securityIndex: %d\n", call->conn->securityIndex);
-    printf("  name:%s oid:%d\n", name, oid);
+    pt_debug (PRDB_RPC, "PR_INewEntry securityIndex: %d name: %s oid: %d",
+	      call->conn->securityIndex, name, oid);
 
     localname = localize_name(name);
     if (id > 0) {
@@ -228,25 +230,26 @@ int PR_INewEntry(
     return error;
 }
 
-int PR_ListEntry(
-    struct rx_call *call
-    , const int32_t id
-    , struct prcheckentry *entry
-    )
+/*
+ *
+ */
+
+int
+PR_ListEntry(struct rx_call *call, const int32_t id,
+	     struct prcheckentry *entry)
 {
     prentry pr_entry;
     int status;
    
-    printf("PR_ListEntry\n");
-    printf("  securityIndex: %d\n", call->conn->securityIndex);
-    printf("  id:%d\n", id);
+    pt_debug (PRDB_RPC, "PR_ListEntry securityIndex: %d id: %d", 
+	      call->conn->securityIndex, id);
 #ifdef KERBEROS
     if (call->conn->securityIndex == 2) {
 	serv_con_data *cdat = call->conn->securityData;
-	printf("  user: %s.%s@%s\n",
-	       cdat->user->name,
-	       cdat->user->instance,
-	       cdat->user->realm);
+	pt_debug (PRDB_RPC, "PR_ListEntry user: %s.%s@%s",
+		  cdat->user->name,
+		  cdat->user->instance,
+		  cdat->user->realm);
     }
 #endif
 
@@ -267,73 +270,78 @@ int PR_ListEntry(
     return 0;
 }
 
-int PR_DumpEntry(
-    struct rx_call *call
-    , const int32_t pos
-    , struct prdebugentry *entry
-    )
+/*
+ *
+ */
+
+int
+PR_DumpEntry(struct rx_call *call, const int32_t pos, 
+	     struct prdebugentry *entry)
 {
-    printf("PR_DumpEntry\n");
+    pt_debug (PRDB_RPC, "PR_DumpEntry");
     return -1;
 }
 
-int PR_ChangeEntry(
-    struct rx_call *call
-    , const int32_t id
-    , const char name[ 64 ]
-    , const int32_t oid
-    , const int32_t newid
-    )
-{
-    printf("PR_ChangeEntry\n");
-    return -1;
-}
+/*
+ *
+ */
 
-
-int PR_SetFieldsEntry(
-    struct rx_call *call
-    , const int32_t id
-    , const int32_t mask
-    , const int32_t flags
-    , const int32_t ngroups
-    , const int32_t nusers
-    , const int32_t spare1
-    , const int32_t spare2
-    )
+int
+PR_ChangeEntry(struct rx_call *call, const int32_t id, const char *name,
+	       const int32_t oid, const int32_t newid)
 {
-    printf("PR_SetFieldsEntry\n");
+    pt_debug (PRDB_RPC, "PR_ChangeEntry");
     return -1;
 }
 
 
-int PR_Delete(
-    struct rx_call *call
-    , const int32_t id
-    )
+/*
+ *
+ */
+
+int
+PR_SetFieldsEntry(struct rx_call *call, const int32_t id, const int32_t mask,
+		  const int32_t flags, const int32_t ngroups, 
+		  const int32_t nusers,
+		  const int32_t spare1, const int32_t spare2)
 {
-    printf("PR_Delete\n");
+    pt_debug (PRDB_RPC, "PR_SetFieldsEntry");
     return -1;
 }
 
 
-int PR_WhereIsIt(
-    struct rx_call *call
-    , const int32_t id
-    , int32_t *ps
-    )
+/*
+ *
+ */
+
+int
+PR_Delete(struct rx_call *call, const int32_t id)
 {
-    printf("PR_WhereIsIt\n");
+    pt_debug (PRDB_RPC, "PR_Delete");
     return -1;
 }
 
 
-int PR_AddToGroup(
-    struct rx_call *call
-    , const int32_t uid
-    , const int32_t gid
-    )
+/*
+ *
+ */
+
+int
+PR_WhereIsIt(struct rx_call *call, const int32_t id, int32_t *ps)
 {
-    printf("PR_AddToGroup\n");
+    pt_debug (PRDB_RPC, "PR_WhereIsIt");
+    return -1;
+}
+
+
+/*
+ *
+ */
+
+int
+PR_AddToGroup(struct rx_call *call, const int32_t uid, const int32_t gid)
+{
+    pt_debug (PRDB_RPC, "PR_AddToGroup");
 
     if (!sec_is_superuser(call))
       return PRPERM;
@@ -342,13 +350,14 @@ int PR_AddToGroup(
 }
 
 
-int PR_RemoveFromGroup(
-    struct rx_call *call
-    , const int32_t id
-    , const int32_t gid
-    )
+/*
+ *
+ */
+
+int
+PR_RemoveFromGroup(struct rx_call *call, const int32_t id, const int32_t gid)
 {
-    printf("PR_RemoveFromGroup\n");
+    pt_debug (PRDB_RPC, "PR_RemoveFromGroup");
 
     if (!sec_is_superuser(call))
 	return PRPERM;
@@ -357,75 +366,109 @@ int PR_RemoveFromGroup(
 }
 
 
-int PR_ListMax(
-    struct rx_call *call
-    , int32_t *uid
-    , int32_t *gid
-    )
+/*
+ *
+ */
+
+int
+PR_ListMax(struct rx_call *call, int32_t *uid, int32_t *gid)
 {
-    printf("PR_ListMax\n");
+    pt_debug (PRDB_RPC, "PR_ListMax");
     *uid = pr_header.maxID;
     *gid = pr_header.maxGroup;
     return 0;
 }
 
 
-int PR_SetMax(
-    struct rx_call *call
-    , const int32_t uid
-    , const int32_t gflag
-    )
+/*
+ *
+ */
+
+int
+PR_SetMax(struct rx_call *call, const int32_t uid, const int32_t gflag)
 {
-    printf("PR_SetMax\n");
-    return -1;
+    pt_debug (PRDB_RPC, "PR_SetMax");
+
+    if(gflag) {
+      pr_header.maxGroup = uid;
+    } else {
+      pr_header.maxID = uid;
+    }
+    return 0;
 }
 
 
-int PR_ListElements(
-    struct rx_call *call
-    , const int32_t id
-    , prlist *elist
-    , int32_t *over
-    )
+/*
+ *
+ */
+
+int
+PR_ListElements(struct rx_call *call, const int32_t id, 
+		prlist *elist, int32_t *over)
 {
-    printf("PR_ListElements\n");
+    pt_debug (PRDB_RPC, "PR_ListElements");
 
     return listelements(id, elist, FALSE);
 }
 
 
-int PR_GetCPS(
-    struct rx_call *call
-    , const int32_t id
-    , prlist *elist
-    , int32_t *over
-    )
+/*
+ *
+ */
+
+int
+PR_GetCPS(struct rx_call *call, const int32_t id, 
+	  prlist *elist, int32_t *over)
 {
-    printf("PR_GetCPS\n");
+    pt_debug (PRDB_RPC, "PR_GetCPS");
 
     return listelements(id, elist, TRUE);
 }
 
 
-int PR_ListOwned(
-    struct rx_call *call
-    , const int32_t id
-    , prlist *elist
-    , int32_t *over
-    )
+/*
+ *
+ */
+
+int
+PR_ListOwned(struct rx_call *call, const int32_t id, 
+	     prlist *elist, int32_t *over)
 {
-    printf("PR_ListOwned\n");
+    pt_debug (PRDB_RPC, "PR_ListOwned");
     return -1;
 }
 
 
-int PR_IsAMemberOf(
-    struct rx_call *call
-    , const int32_t uid
-    , const int32_t gid
-    , int32_t *flag
-    )
+/*
+ *
+ */
+
+int
+PR_IsAMemberOf(struct rx_call *call, const int32_t uid, const int32_t gid,
+	       int32_t *flag)
 {
-    printf("PR_IsAMemberOf\n");
-    return -1;
+
+  /* XXX Check authorization */
+
+    prlist elist;
+    int ret=0;
+    int i=0;
+
+    pt_debug (PRDB_RPC, "PR_IsAMemberOf");
+
+    if((ret = listelements(uid, &elist, TRUE)) !=0) {
+      free(elist.val);
+      return ret;
+    }
+
+    for(i=0; i < elist.len ; i++) {
+      if(elist.val[i] == gid) {
+	*flag=1;
+	free(elist.val);
+	return 0;
+      }
+    }
+
+    free(elist.val);
+    return 0;
 }

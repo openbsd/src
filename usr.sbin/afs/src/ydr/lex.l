@@ -15,12 +15,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +34,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: lex.l,v 1.3 2000/09/11 14:41:41 art Exp $");
+RCSID("$KTH: lex.l,v 1.24.2.1 2001/05/28 23:23:03 mattiasa Exp $");
 #endif
 
 /*
@@ -48,7 +43,9 @@ RCSID("$Id: lex.l,v 1.3 2000/09/11 14:41:41 art Exp $");
  * generate for it.  It's only a problem for AIX lex.
  */
 
+#ifndef __osf__
 #undef ECHO
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -61,7 +58,9 @@ RCSID("$Id: lex.l,v 1.3 2000/09/11 14:41:41 art Exp $");
 #include "lex.h"
 #include "output.h"
 
+#ifndef __osf__
 #undef ECHO
+#endif
 
 #define YY_NO_UNPUT
 

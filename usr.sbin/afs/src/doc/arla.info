@@ -3,7 +3,7 @@ input file arla.texi.
 
 INFO-DIR-SECTION Arla
 START-INFO-DIR-ENTRY
-* Arla: (arla).           Arla - The Free AFS Clone
+* Arla: (arla).           Arla - A Free AFS Implementation
 END-INFO-DIR-ENTRY
 
 
@@ -14,21 +14,82 @@ Arla
 
 Arla is a free AFS implementation from KTH.
 
+Please send comments (and fixes) on this manual and the arla programs to
+<arla-drinkers@stacken.kth.se>.
+
 * Menu:
 
+* Introduction::                Introduction to Arla.
+* AFS infrastructure::		A description of the afs infrastructure.
+* Organization of data::	How diffrent data are organized in AFS.
+* AFS and the real world::	Common problems and their solutions.
+* Parts of Arla::		Description of diffrent parts of arla.
+* Debugging::			How to debug arla when its not working.
+* Porting::			That you need to know to port arla.
+* Authors::			The authors of arla.
+* Oddities::			Strange things that have happen to us.
+* Arla timeline::		Short timeline of arla.
+* Acknowledgments::             People that have helped us.
+* Index::             		Index.
+
+
+ -- The Detailed Node Listing --
+
 * Introduction::
-* Description of AFS infrastructure::
-* Organization of data::
-* Parts of Arla::
-* Debugging::
+* AFS infrastructure::
+
+How data and servers are organized in AFS.
+
+* Requirements::
+* Data organization::
+* Callbacks::
+* Volume management::
+* Relationship between pts uid and unix uid::
+
+How to cope with reality
+
+* NAT::
+* Samba::
+
+The parts of arla
+
+* How arla works::
+* The relation between Arlad and XFS::
+* The life of a file::
+* Tools and libs::
+* The files in arlad/::
+* pioctl and kafs::
+
+Yes, its doesn't work, lets debug.
+
+* Arlad::
+* Debugging LWP with GDB::
+* xfs::
+* xfs on linux::
+* Debugging techniques::
+* Kernel debuggers::
+* Darwin/MacOS X::
+
+Porting arla
+
 * Porting::
-* Authors::
+* Porting user-space::
+* Porting XFS::
+
+Odd stuff you find when looking around
+
 * Oddities::
+
+Miscellaneous
+
 * Arla timeline::
+* Authors::
 * Acknowledgments::
 
+* Index::
+
 
-File: arla.info,  Node: Introduction,  Next: Description of AFS infrastructure,  Prev: Top,  Up: Top
+File: arla.info,  Node: Introduction,  Next: AFS infrastructure,  Prev: Top,  Up: Top
 
 Introduction
 ************
@@ -46,11 +107,11 @@ Arla is a free AFS implementation. Some of the goals are:
      and playing with cool stuff, like support for disconnected-mode.
      Implement features you can't get from commercial AFS.
 
-   * to provide an alternative to Transarc's AFS-client and server
-     implementations.
+   * to provide an alternative to Transarc's and OpenAFS AFS-clients and
+     server implementations.
 
    * to add support for platfroms that don't have AFS support from
-     Transarc today.
+     Transarc or OpenAFS today.
 
 This release is known to work on the following platforms: NetBSD,
 OpenBSD, FreeBSD, Linux, Solaris, Darwin/MacOS X.
@@ -60,7 +121,7 @@ following platforms: SunOS, AIX, IRIX, Digital UNIX. Some fixes might
 be necessary to make Arla work.
 
 There is or has been done work to support the following platforms: HPUX,
-Fujitsu UXP/V, . Some development is necessary to make Arla work.
+Fujitsu UXP/V. Some development is necessary to make Arla work.
 
 There is work going on to support the following platform: Windows
 NT/2000. Contributions are very welcome.
@@ -110,21 +171,24 @@ Mailing list
 
 There are two mailing lists with talk about Arla.
 <arla-announce@stacken.kth.se> is a low-volume announcement list, while
-<arla-drinkers@stacken.kth.se> is for general discussion.  There is
-also commit list <arla-commit@stacken.kth.se>.  Send a message to
-<LIST-request@stacken.kth.se> to subscribe.
+<arla-drinkers@stacken.kth.se> is for general discussion.
+
+There is also commit list <arla-commit@stacken.kth.se>.  Send a message
+to <LIST-request@stacken.kth.se> to subscribe.
+
+The list are achived on `http://www.stacken.kth.se/lists/'.
 
 
-File: arla.info,  Node: Description of AFS infrastructure,  Next: Organization of data,  Prev: Introduction,  Up: Top
+File: arla.info,  Node: AFS infrastructure,  Next: Organization of data,  Prev: Introduction,  Up: Top
 
-Description of AFS infrastructure
-*********************************
+AFS infrastructure
+******************
 
 This is an overview of the AFS infrastructure as viewed from a Transarc
 perspective, since most people still run Transarc cells.
 
-Server overview
-===============
+AFS Filespace
+=============
 
 AFS filespace is split up in smaller parts called cells. These cells are
 usually listed under `/afs'. A cell is usually a whole organization or
@@ -133,17 +197,47 @@ an adminstative unit within an organization. An example is e.kth.se
 engineering at KTH, which obviously has the `e.kth.se' domain in DNS.
 Using DNS domains for cell names is the typical and most convenient way.
 
+Note that cell names are written in lowercase by convention.
+
+CellServDB
+==========
+
 All cells (and their db-servers) in the AFS world are listed in a file
 named `CellServDB'. There is a central copy that is maintained by
-Transarc at `/afs/transarc.com/service/etc/CellServDB'.  In addition
-Arla can use DNS to find the db-servers of a cell. The DNS resource
-record that is used is the AFSDB. It tells you what machines are db
-servers for a particular cell.  The AFSDB resource record is also used
-for DCE/DFS.  An example (the 1 means AFS, 2 is used for DCE):
+Transarc at `/afs/transarc.com/service/etc/CellServDB'.
 
-     e.kth.se.               1D IN AFSDB     1 sonen.e.kth.se.
-     e.kth.se.               1D IN AFSDB     1 anden.e.kth.se.
-     e.kth.se.               1D IN AFSDB     1 fadern.e.kth.se.
+In spite of being organized in IPnumber - name pairs, where the name
+parts resemble comments, both values are used by Transarc software and
+confusion may arise if they are not synchronized with each other.
+
+
+     >e.kth.se            	# Royal Institute of Technology, Elektro
+     130.237.48.8               	#sonen.e.kth.se.
+     130.237.48.7                    #anden.e.kth.se.
+     130.237.48.244                  #fadern.e.kth.se.
+
+Again, please note that the text after the # in the cell-name is a
+comment, *but* the hostnames after the # on the rows of an IP-address
+is *not* a comment. The host and the ip-address needs to point at the
+same computer.
+
+AFSDB
+=====
+
+In addition Arla can use DNS to find the db-servers of a cell. The DNS
+resource record that is used is the `AFSDB'. The resourcerecord was
+created by Transarc but have never been implemeted in released software.
+
+`AFSDB' tells you what machines are db servers for a particular cell.
+The `AFSDB' resourcerecord is also used for DCE/DFS.  An example (the 1
+means AFS, 2 is used for DCE):
+
+     e.kth.se.               IN AFSDB     1 fadern.e.kth.se.
+     e.kth.se.               IN AFSDB     1 sonen.e.kth.se.
+     e.kth.se.               IN AFSDB     1 anden.e.kth.se.
+
+Shortcut names
+==============
 
 Some cells use the abbreviated version `/afs/<word-before-first-dot>'
 (in the example above that would be `/afs/e/'.  This might be
@@ -151,7 +245,8 @@ convenient when typing them, but is a bad idea, because it does not
 create the same name space everywhere.  If you create a symbolic link
 to `/afs/e/foo/bar', it will not work for people in other cells.
 
-Note that cell names are written in lowercase by convention.
+Server organization
+===================
 
 There are several servers running in an AFS cell. For performance and
 redundancy reasons, these servers are often run on different hosts.
@@ -225,13 +320,13 @@ some important differences.
 
 AFS 3.3 is the classic interface. 3.4 adds the possibility of multihomed
 servers for the client to talk to, and that introduces the N interface.
-To deal with multihomed clients AFS 3.5 was introduced. This we call the
-U interface.
+To deal with multihomed clients AFS 3.5 was introduced. This is called
+call the U interface. The name is due to how the functions are named.
 
 The N interface added more replication-sites in the database-entry
 structure. The U interface changed the server and clients in two ways.
 
-Now a server registers all its ip-addresses when it boots. This means
+When a 3.5 server boot it registers all its ip-addresses. This means
 that a server can add (or remove) an network interface without
 rebooting. When registering at the vldb server, the file server presents
 itself with an UUID, an unique identifier. This UUID will be stored in a
@@ -242,7 +337,17 @@ Protection server - ptserver
 ============================
 
 The protection server keeps track of all users and groups. It's used a
-lot by the file servers.
+lot by the file servers. Users can self create, modify and delete
+groups.
+
+When a fileserver is access they are durring the authentication giving
+the name of the client. This name if looked up in the
+protection-database via the protection server that returns the id of the
+user and all the groups that the user belongs too.
+
+This information is used when to check if the user have access to a
+particular file or directory. All files created by the user are assigned
+the user id that the protectionserver returned.
 
 Kerberos server - kaserver
 ==========================
@@ -279,7 +384,27 @@ where you add, move, change, and delete volumes from the server.
 
 The volume server and file server are ran at the same time and they sync
 with each other to make sure that fileserver does not access a volume
-that volser is about to change.
+that volser is about to modify.
+
+Every time a fileserver is started it registers it IP addresses with the
+vldbserserver using the VL_RegisterAddrs rpc-call. As the unique
+identifier for itself it uses its afsUUID.
+
+The afsUUID for a fileserver is stored in /usr/afs/local/sysid. This is
+the reson you must not clone a server w/o removing the sysid file.
+Otherwise the new filserver will register as the old one and all
+volumes on the old fileserver are pointed to the new one (where the
+probably doesn't exist).
+
+The fileserver doesn't bind to a specific interface (read address), gets
+all packets that are destined for port 7000 (afs-fileserver/udp). All
+outgoing packets are send on the same socket, and means that your
+operatingsystem will choose the source-address of the udp datagram.
+
+This have the side-effect that you will have asymmetric routing on
+mulithomed fileserver for 3.4 (and older) compatible clients if they
+don't use the closest address when sorting the vldb entry. Arla avoids
+this problem.
 
 Salvage
 =======
@@ -300,7 +425,7 @@ Heimdal. Heimdal's kdc even implements a ka-server readonly interface,
 so your users can keep using programs like klog.
 
 
-File: arla.info,  Node: Organization of data,  Next: Parts of Arla,  Prev: Description of AFS infrastructure,  Up: Top
+File: arla.info,  Node: Organization of data,  Next: AFS and the real world,  Prev: AFS infrastructure,  Up: Top
 
 Organization of data
 ********************
@@ -315,6 +440,7 @@ requirements was and how that inpacted on the design.
 * Data organization::
 * Callbacks::
 * Volume management::
+* Relationship between pts uid and unix uid::
 
 
 File: arla.info,  Node: Requirements,  Next: Data organization,  Prev: Organization of data,  Up: Organization of data
@@ -419,10 +545,13 @@ is what a clone is) that can be replicated to several fileserver to
 distribute the load. Each fileserver plus partition where the read-only
 is located is called a replication-site.
 
-The backup volume is a clone that typically is made each night to enable
-the user to retrieve yestoday's data when they happen to remove a file.
-This is a very useful feature, since it lessen the load on the
-system-administrators to restore files from backup.
+The backup volume is a clone that typically is made (with `vos
+backupsys') each night to enable the user to retrieve yestoday's data
+when they happen to remove a file. This is a very useful feature, since
+it lessen the load on the system-administrators to restore files from
+backup. The volume is usually mounted in the root user's home directory
+under the name OldFiles. A special feature of the backup volume is that
+inside it you can't follow mountpoint.
 
 Mountpoints
 ===========
@@ -449,24 +578,150 @@ callback.
 For read-only callbacks there is only callback given its called a volume
 callback and it will be broken when the read-only volume is updated.
 
+The time range of callbacks range from 1 hour to 5 minutes depending of
+how many user of the file exists.
+
 
-File: arla.info,  Node: Volume management,  Prev: Callbacks,  Up: Organization of data
+File: arla.info,  Node: Volume management,  Next: Relationship between pts uid and unix uid,  Prev: Callbacks,  Up: Organization of data
 
 Volume management
 =================
 
+All volume managment is done with the vos-command. To get a list of all
+commands `vos help' can be used. For help on a specific vos subcommand,
+`vos subcommand -h' can be used.
+
    * Create
+
+          vos create mim c HO.staff.lha.fluff -quota 400000
+
+   * Move
+
+     Volumes can be moved from a server to another, even when users are
+     using the volume.
 
    * Replicate
 
+     Read-only volumes can be replicated over several servers, they are
+     first added with `vos addsite', and the replicated with `vos
+     release' out over the servers.
+
    * Release
 
-   * Delete
+     When you want to distribute out the changes in the readwrite
+     volume.
 
-   * Backup
+   * Remove
+
+     Volumes can be removed
+
+     Note that you shouldn't remove the last readonly volume since this
+     make clients misbehave. If you are moving the volume you should
+     rather add a new RO to the new server and then remove it from the
+     old server.
+
+   * Backup and restoration of volumes.
+
+     `vos backup' and `vos backupsys' creates the backup volume.
+
+     To stream a volume out to a `file' or `stdout' you use `vos dump'.
+     The opposite command is named `vos restore'.
 
 
-File: arla.info,  Node: Parts of Arla,  Next: Debugging,  Prev: Organization of data,  Up: Top
+File: arla.info,  Node: Relationship between pts uid and unix uid,  Prev: Volume management,  Up: Organization of data
+
+Relationship between pts uid and unix uid
+=========================================
+
+foo
+
+
+File: arla.info,  Node: AFS and the real world,  Next: Parts of Arla,  Prev: Organization of data,  Up: Top
+
+AFS and the real world
+**********************
+
+This chapter tries to describe problems that you see in the real (not
+that perfect) world and show possible solutions to these problems.
+
+* Menu:
+
+* NAT::				Really evil stuff.
+* Samba::			Export AFS to Windows computers.
+* Integration with Kerberos:: 	How to integrate Kerberos with AFS.
+
+
+File: arla.info,  Node: NAT,  Next: Samba,  Prev: AFS and the real world,  Up: AFS and the real world
+
+NAT
+===
+
+There's something evil out there that's called NAT.  For whatever
+reasons, people are using it and will continue doing so.
+
+First of all, it seemed like AFS should work just fine through NAT, you
+just appear to be coming from the NAT-address and some random port
+instead.  Looking closer at different NAT implementations it seems like
+they have a rather short timeout:
+
+`FreeBSD natd'
+     60 seconds
+
+`Cisco IOS'
+     300 seconds
+
+`NetBSD ipf (ipnat)'
+     600 seconds
+
+`Linux Nat (masq)'
+     300 seconds
+
+And if the client doesn't transmit any traffic to a particular host for
+that amount of time, it will get mapped into a new address.  And then
+the server will just figure out it has a new client, right?
+
+Wrong, the rx-connection is cached on the connection id, not the
+host/port pair. This is right, but the connection is never updated in
+the original rx-code. This have the unfortunate effect that the server
+keep talking to the old client.
+
+
+File: arla.info,  Node: Samba,  Next: Integration with Kerberos,  Prev: NAT,  Up: AFS and the real world
+
+Samba
+=====
+
+The major problem with getting AFS to exported read-write to SMB
+(Windows fileshareing) using Samba is how to transfer the user token to
+the smb-server. The simple may is to use clear-text password between the
+samba-server and the client, and then get tokens for the user with this
+password. This solution is clearly not acceptable for AFS administrators
+that are security aware.
+
+Describe here how to make AFS work "securely" with samba.
+
+
+File: arla.info,  Node: Integration with Kerberos,  Prev: Samba,  Up: AFS and the real world
+
+Integration with Kerberos
+=========================
+
+Kerberos 4 and 5 can be integrated quite well with AFS. This is many due
+to that the security model used in AFS is in fact Keberos. The kaserver
+is a Kerberos 4 server with pre-authentication. Kaserver also provides a
+feature that you can only try a password N times, and after that you are
+locked out for half-an-hour. This feature require that
+pre-authentication is used, but since the ka-server provides a Kerberos
+4 interface (that doesn't use pre-authentication) is mostly worthless.
+
+Many sites indeed uses a kerberosserver instead of a kaserver. One of
+the resons are that they want to use Kerberos 5 (with for example
+Windows 2000).
+
+More text here how to create KeyFile, and describe TheseCells.
+
+
+File: arla.info,  Node: Parts of Arla,  Next: Debugging,  Prev: AFS and the real world,  Up: Top
 
 Parts of Arla
 *************
@@ -658,17 +913,9 @@ LWP is a preepmtive thread package. It does it's context-switching by
 creating a private stack for each thread. The heart of the package is
 select(2).
 
-The core of the package is `process.S'. Its currenty built with a
-bourne-shell file. `Process.s' is preprocessed with `cpp' and then
-given to (g)as. The magic how to build this file a portable way is not
-fun.
-
 The stack is checked for overruns in context-switches, but that is often
 too late. It might be an idea to add a `red zone' at the top of the
 stack to be able to detect overruns.
-
-For architectures not supported by LWP, it can be exchanged with the
-pthreads pakage.
 
 
 File: arla.info,  Node: The files in arlad/,  Next: pioctl and kafs,  Prev: Tools and libs,  Up: Parts of Arla
@@ -809,10 +1056,30 @@ An example of using `pioctl()':
      }
 
 
-File: arla.info,  Node: Debugging,  Next: Porting,  Prev: Parts of Arla,  Up: Top
+File: arla.info,  Node: Debugging,  Next: Arlad,  Prev: Parts of Arla,  Up: Top
 
 Debugging
 *********
+
+This chapter of the manual includes tips that are useful when debugging
+arla.
+
+Arla and xfs contains logging facilities that is quite useful when
+debugging when something goes wrong. This and some kernel debugging tips
+are described.
+
+* Menu:
+
+* Arlad::
+* Debugging LWP with GDB::
+* xfs::
+* xfs on linux::
+* Debugging techniques::
+* Kernel debuggers::
+* Darwin/MacOS X::
+
+
+File: arla.info,  Node: Arlad,  Next: Debugging LWP with GDB,  Prev: Debugging,  Up: Debugging
 
 Arlad
 =====
@@ -829,7 +1096,7 @@ To enable more debuggning run arla with the switch
 The cleaner output is usully not that intresting and can be ignored.
 
 A convenient way to debug arlad is to start it inside gdb.
-     datan:~# gdb /usr/arla/bin/arlad
+     datan:~# gdb /usr/arla/libexec/arlad
      (gdb) run -z -n
 This gives you the opportunity to examine a crashed arlad.
      (gdb) bt
@@ -845,6 +1112,60 @@ To set the debugging with a running arlad use `fs arladeb' as root.
 
 By default, arlad logs through syslog if running as a daemon and to
 stderr when running in the foreground (with `--no-fork').
+
+
+File: arla.info,  Node: Debugging LWP with GDB,  Next: xfs,  Prev: Arlad,  Up: Debugging
+
+Debugging LWP with GDB
+======================
+
+For easy tracing of threads we have patch
+(`http://www.stacken.kth.se/projekt/arla/gdb-4.18-backfrom.diff') for
+gdb 4.18 (a new command) and a gdb sequence (think script).
+
+The sequence only works for i386, but its just matter of choosing
+different offset in topstack to find $fp and $pc in the lwp_ps_internal
+part of the sequence.
+
+You should copy the `.gdbinit' (that you can find in the arlad
+directory in the source-code) to your home-directory, the directory from
+where you startat the patched gdb or use flag -x to gdb.
+
+Your debugging session might look like this:
+
+     (gdb) lwp_ps
+     Runnable[0]
+      name: IO MANAGER
+       eventlist:
+       fp: 0x806aac4
+       pc: 0x806aac4
+      name: producer
+       eventlist: 8048b00
+       fp: 0x8083b40
+       pc: 0x8083b40
+     Runnable[1]
+     [...]
+     (gdb) help backfrom
+     Print backtrace of FRAMEPOINTER and PROGRAMCOUNTER.
+     
+     (gdb) backfrom 0x8083b40 0x8083b40
+     #0  0x8083b40 in ?? ()
+     #1  0x8049e2f in LWP_MwaitProcess (wcount=1, evlist=0x8083b70)
+         at /afs/e.kth.se/home/staff/lha/src/cvs/arla-foo/lwp/lwp.c:567
+     #2  0x8049eaf in LWP_WaitProcess (event=0x8048b00)
+         at /afs/e.kth.se/home/staff/lha/src/cvs/arla-foo/lwp/lwp.c:585
+     #3  0x8048b12 in Producer (foo=0x0)
+         at /afs/e.kth.se/home/staff/lha/src/cvs/arla-foo/lwp/testlwp.c:76
+     #4  0x804a00c in Create_Process_Part2 ()
+         at /afs/e.kth.se/home/staff/lha/src/cvs/arla-foo/lwp/lwp.c:629
+     #5  0xfffefdfc in ?? ()
+     #6  0x8051980 in ?? ()
+
+There also the possibility to run arla with pthreads (run configure with
+-with-pthreads).
+
+
+File: arla.info,  Node: xfs,  Next: xfs on linux,  Prev: Debugging LWP with GDB,  Up: Debugging
 
 xfs
 ===
@@ -865,12 +1186,8 @@ will have to edit `xfs/YOUR-OS/xfs_deb.c' and recompile.
 The logging of xfs ends up in your syslog. Syslog usully logs to
 /var/log or /var/adm (look in /etc/syslog.conf).
 
-When reporting problems
-=======================
-
-Please do not include a whole log in a email. Most people on the list
-doesn't want to read this. Instead send a pointer to a URL (http or
-ftp).
+
+File: arla.info,  Node: xfs on linux,  Next: Debugging techniques,  Prev: xfs,  Up: Debugging
 
 xfs on linux
 ============
@@ -881,18 +1198,228 @@ from the ring-bufer, and you will only get some of the message in your
 cat.
 
 
-File: arla.info,  Node: Porting,  Next: Oddities,  Prev: Debugging,  Up: Top
+File: arla.info,  Node: Debugging techniques,  Next: Kernel debuggers,  Prev: xfs on linux,  Up: Debugging
+
+Debugging techniques
+====================
+
+Kernel debugging can sometimes force you to exercise your imagination.
+We have learned some different techniques that can be useful.
+
+Signals
+-------
+
+On operatingsystems with kernel debugger that you can use probably find
+where in the kernel a user-program live, and thus deadlocks or trigger
+the bad event, that later will result in a bug. This is a problem, how
+do you some a process to find where it did the intresting thing when you
+can't set a kernel breakpoint ?
+
+One way to be notified is to send a signal from the kernel module
+(psignal() on a BSD and force_sig() on linux). SIGABRT() is quite useful
+if you want to force a coredump. If you want to continue debugging, use
+SIGSTOP.
+
+Recreateable testcases
+----------------------
+
+Make sure bugs don't get reintroduced.
+
+
+File: arla.info,  Node: Kernel debuggers,  Next: Darwin/MacOS X,  Prev: Debugging techniques,  Up: Debugging
+
+Kernel debuggers
+================
+
+Kernel debuggers are the most useful tool when you are trying to figure
+out what's wrong with xfs. Unfortunately they also seem to have their
+own life and do not always behave as expected.
+
+Using GDB
+---------
+
+Kernel debugging on NetBSD, OpenBSD, FreeBSD and Darwin are almost the
+same.  You get the idea from the NetBSD example below:
+
+       (gdb) file netbsd.N
+       (gdb) target kcore netbsd.N.core
+       (gdb) symbol-file /sys/arch/i386/compile/NUTCRACKER/netbsd.gdb
+
+This example loads the kernel symbols into gdb. But this doesn't show
+the xfs symbols, and that makes your life harder.
+
+Getting all symbols loaded at the same time
+-------------------------------------------
+
+If you want to use the symbols of xfs, there is a gdb command called
+`add-symbol-file' that is useful. The symbol file is obtained by
+loading the kernel module xfs with `kmodload -o /tmp/xfs-sym' (Darwin)
+or `modload' (NetBSD and OpenBSD).  FreeBSD has a linker in the kernel
+that does the linking instead of relying on `ld'. The symbol address
+where the module is loaded get be gotten from `modstat', `kldstat' or
+`kmodstat' (it's in the `area' field).
+
+If you forgot the to run modstat/kldstat/kmodstat, you can extract the
+information from the kernel. In Darwin you look at the variable kmod
+(you might have to case it to a (kmod_info_t *). We have seen gdb loose
+the debugging info). kmod is the start of a linked list. Other BSDs have
+some variant of this.
+
+You should also source the commands in /sys/gdbscripts (NetBSD), or
+System/xnu/osfmk/.gdbinit (Darwin) to get commands like ps inside gdb.
+
+       datan:~# modstat Type Id Off Loadaddr Size Info Rev Module
+       Name DEV 0 29 ce37f000 002c ce388fc0 1 xfs_mod [...]
+       [...]
+       (gdb) add-symbol-table xfs.sym ce37f000
+
+Debugging processes, examine their stack, etc
+---------------------------------------------
+
+One of diffrencies between the BSD's are the `proc', a command that
+enables you do to a backtrace on all processes. On FreeBSD you give the
+`proc' command a `pid', but on NetBSD and OpenBSD you give a pointer to
+a `struct proc'.
+
+After you have ran `proc' to set the current process, you can examine
+the backtrace with the regular `backtrace' command.
+
+Darwin does't have a `proc' command. Instead you are supposed to use
+gdb sequences (System/xnu/osfmk/.gdbinit) to print process stacks,
+threads, activations, and other information.
+
+Debugging Linux
+---------------
+
+You can't get a crashdump for linux with patching the kernel. There are
+two projects have support for this. Mission Critical Linux
+`http://www.missioncritiallinux.com' and SGI `http://oss.sgi.com/'.
+
+Remember save the context of /proc/ksyms before you crash, since this is
+needed to figure out where the xfs symbols are located in the kernel.
+
+But you can still use the debugger (or objdump) to figure out where in
+the binary that you crashed.
+
+`ksymoops' can be used to create a backtrace.
+
+Using adb
+---------
+
+Adb is not a symbolic debugger, this means that you have to read the
+disassembled object-code to figure out where it made the wrong turn and
+died. You might be able to use GNU objdump to list the assembler and
+source-code intertwined (`objdump -S -d mod_xfs.o'). Remember that GNU
+binutils for sparc-v9 isn't that good yet.
+
+You can find the script that use use for the adb command `$<' in
+`/usr/lib/adb' and `/usr/platform/PLATFORNAME/adb'.
+
+Debugging a live kernel
+-----------------------
+
+An important thing to know is that you can debug a live kernel too, this
+can be useful to find dead-locks. To attach to a kernel you use a
+command like this on a BSD  system (that is using gdb):
+
+       (gdb) file /netbsd
+       (gdb) target kcore /dev/mem
+       (gdb) symbol-file /sys/arch/i386/compile/NUTCRACKER/netbsd.gdb
+
+And on Solaris:
+
+       # adb -k /dev/ksyms /dev/mem
+
+Other useful debugging tools
+----------------------------
+
+Most diagnosics tools like ps, dmesg, and pstat on BSD systems used to
+look in kernel memory to extract information (and thus earned the name
+kmem-groovlers). On some systems they have been replaced with other
+method of getting their data, like /proc and sysctl.
+
+But due to their heritage they can still be used in with a kernel and
+coredump to extract information on some system.
+
+
+File: arla.info,  Node: Darwin/MacOS X,  Next: Porting,  Prev: Kernel debuggers,  Up: Debugging
+
+Darwin/MacOS X
+==============
+
+You'll need two computers to debug arlad/xfs on darwin since the common
+way to debug is to use a remote kernel-debugger over IP/UDP.
+
+First you need to publish the arp-address of the computer that you are
+going to crash.
+
+We have not found any kernel symbols in MacOSX Public Beta, so you
+should probably build your own kernel. Use Darwin xnu kernel source
+with cvs-tag: Apple-103-0-1 (not xnu-103).
+
+     gdb xfs.out
+     target remote-kdp
+     add-symbol-table ...
+     attach <host>
+
+
+File: arla.info,  Node: Porting,  Next: Oddities,  Prev: Darwin/MacOS X,  Up: Top
 
 Porting
 *******
 
 The largest part of the work needed to port Arla to a new operating
 system is in porting xfs, as kernel programming always is harder, less
-portable and messier than user-space dito.  Arlad in test mode (`arlad
---test') should work without any porting on any system that's not very
-far away from Unix and that provides berkeley sockets (including
-cygwin32).  Therefore we will concern ourselves mostly with how to port
-the XFS module.
+portable and messier than user-space dito.  Arla in test mode
+(`arla-cli') should work without any porting on any system that's not
+very far away from Unix and that provides berkeley sockets (including
+cygwin32).  The hard part is porting the XFS kernel module, and we will
+spent most of this text on how to do that.
+
+* Menu:
+
+* Porting user-space::
+* Porting XFS::
+
+
+File: arla.info,  Node: Porting user-space,  Next: Porting XFS,  Prev: Porting,  Up: Porting
+
+user-space
+==========
+
+The user-space parts should work on basically any system that is
+reasonably Posix and has berkeley sockets.  The build uses autoconf and
+should adapt itself to most forseeable circumstances.  If it fails to
+consider something that is missing or not working on the particular OS
+you are porting to, hard-code it to make sure that is what is missing
+and then try to create an autoconf test for it.  If you fail to do so,
+or have no autoconf experience, send us the patches anyway and tell us
+where you are having the problem.
+
+LWP
+---
+
+The only thing that might take a little bit more effort in porting is
+the context-switch in the LWP user-level threads package.  There are
+assembler versions for most of the common architectures in `lwp'.  Part
+of the problem is getting this code assembled properly.  There is
+unfortunately no easy and portable way of preprocessing and assembling
+code.  There is a script `lwp/make-process.o.sh' that tries to do in
+some different ways, but it may fail for you.  Next problem is that
+assembler syntax can vary a lot even on the same CPU.  The source files
+are written in such a way that they should be acceptable to almost any
+syntax, but if it fails you have to find out what particular syntax has
+to be used and adapt the source file for that.
+
+The more interesting problem is if there is no support for your CPU.
+The first thing to try then is the `--with-pthreads' option that uses
+the pthreads library.  If that fails or you want LWP working you have
+to figure out enough details on your CPU to write two functions in
+assembler, `savecontext' and `returnto' that save and restore the
+processor context.
+
+
+File: arla.info,  Node: Porting XFS,  Prev: Porting user-space,  Up: Porting
 
 XFS
 ===
@@ -951,11 +1478,13 @@ XFS
           the major device number. If you're really lucky there's a new
           way to get the kernel to add your `struct cdevsw' to the
           global table when loading the module or a function that does
-          the addition for you. If not, you'll have to fallback on
-          looking for a free slot in the table and putting your struct
-          cdevsw there. In some cases, this is not stored in a table but
-          then there'll be a way of adding entries to the new data
-          structure so you don't need to worry about it.
+          the addition for you.  Otherwise there might be functions for
+          adding/removing devices to the global table.  If not, you'll
+          have to fallback on looking for a free slot in the table and
+          putting your struct cdevsw there. In some cases, this is not
+          stored in a table but then there'll be a way of adding
+          entries to the new data structure so you don't need to worry
+          about it.
 
        3. Adding a new system call
 
@@ -1039,7 +1568,7 @@ Operating systems
 File: arla.info,  Node: Arla timeline,  Next: Authors,  Prev: Oddities,  Up: Top
 
 Arla timeline
-=============
+*************
 
 Arla have existed for quite some years.
 
@@ -1073,8 +1602,8 @@ members that it would be a nice thing to resume the arla development.
 
 Some people suggested that it would be less trouble having someone with
 access to the Transarc AFS source code port the code to the relevent
-platforms. Assar then ported xfs to FreeBSD 2.2.x in notime, just to
-show the high portability.
+platforms. Assar then ported xfs to FreeBSD 2.2.x in notime (over the
+night), just to show the high portability.
 
 People started to understand that arla was a concept that would work,
 and first out was Love Hörnqvist-Åstrand <lha@stacken.kth.se> to join.
@@ -1105,7 +1634,10 @@ them.
 
 There was from this point a lot of work being done and quite a lot of
 studies was "wasted". We learned a lot, but not the stuff we were
-expected too.
+expected to.
+
+We added support for `dynroot' and `fake-mp' to prepare for Windows and
+Darwin/MacOSX support.
 
 In Mars 2000 preliminary support for MacOS X/Darwin 1.0 was merged in
 by Magnus and Assar.
@@ -1115,6 +1647,8 @@ There was also some work being done on Windows 2000 native driver at
 same time.
 
 In June 2000 there was a presentation on MADE2000 in Gothenburg, Sweden.
+
+In September 2000 MacOS X Beta was working.
 
 This just includes some milestones, for more information se Changelog.*
 and NEWS files in the distribution.
@@ -1141,7 +1675,7 @@ Johan Danielsson, OSF/1 xfs
 
 Hans Insulander, pts, OpenBSD maintainer
 
-Mattias Amnefelt, vos, milko
+Mattias Amnefelt, vos, milko, OSF/1
 
 Harald Barth, doc
 
@@ -1151,7 +1685,7 @@ Mikael Vidstedt (userland, some milko stuff)
 
 Jimmy Engelbercht (bos)
 Rhapsody xfs port was contributed by Alexandra Ellwood <lxs@MIT.EDU>
-Previously, Rhapsody named Darwin.
+Later, Rhapsody was renamed Darwin.
 
 Disconnected code is written by:
 
@@ -1160,11 +1694,10 @@ WUWEI SHEN <wwshen@engin.umich.edu>
 Cheng Jin <chengjin@eecs.umich.edu>
 
 Paul Callaway <pcallawa@umich.edu>
-For more contributors look in the THANKS file in the distribution on
-`ftp://ftp.stacken.kth.se/pub/arla/'.
+For contributors, see *Note Acknowledgments::.
 
 
-File: arla.info,  Node: Acknowledgments,  Prev: Authors,  Up: Top
+File: arla.info,  Node: Acknowledgments,  Next: Index,  Prev: Authors,  Up: Top
 
 Acknowledgments
 ***************
@@ -1185,116 +1718,52 @@ The code for gluing these together were written by ourselves.
 
 Bugfixes, documentation, encouragement, and code has been contributed
 by:
-Aaron M. Ucko
-     <amu@MIT.EDU>
 
-Alec Wolman
-     <wolman@cs.washington.edu>
-
-Alexandra Ellwood
-     <lxs@MIT.EDU>
-
-Brad Keryan
-     <keryan@andrew.cmu.edu>
-
-Constantine Sapuntzakis
-     <csapuntz@openbsd.org>
-
-Dan Winship
-     <danw@MIT.EDU>
-
-Derrick J Brashear
-     <shadow@dementia.org>
-
-Harald Barth
-     <haba@pdc.kth.se>
-
-Jim Doyle
-     <jrd@bu.edu>
-
-John Davison
-     <davisoja@clarkson.edu>
-
-John Hawkinson
-     <jhawk@MIT.EDU>
-
-Karl Ramm
-     <kcr@MIT.EDU>
-
-Mark Eichin
-     <eichin@kitten.gen.ma.us>
-
-Per Boussard T/ED
-     <Per.Boussard@era-t.ericsson.se>
-
-Dima Ruban
-     <dima@best.net>
-
-Max
-     <davros@cyclone.Stanford.EDU>
-
-Andrzej Filinski
-     <andrzej@daimi.aau.dk>
-
-Chuck Lever
-     <chuckl@netscape.com>
-
-WUWEI SHEN
-     <wwshen@engin.umich.edu>
-
-Cheng Jin
-     <chengjin@eecs.umich.edu>
-
-Paul Callaway
-     <pcallawa@umich.edu>
-
-Brandon S. Allbery
-     <allbery@ece.cmu.edu>
-
-Ken Raeburn
-     <raeburn@raeburn.org>
-
-Jeffrey Hutzelman
-     <jhutz+@cmu.edu>
-
-Hee-Seok Heo
-     <hsheo@postech.ac.kr>
-
-Paul Ewing Jr.
-     <ewing@ima.umn.edu>
-
-Niklas Hallqvist
-     <niklas@appli.se>
-
-Marko Asplund
-     <aspa@hip.fi>
-
-Chris Wing
-     <wingc@engin.umich.edu>
-
-Simon Josefsson
-     <jas@pdc.kth.se>
-
-Magnus Lindström
-     <magnus.lindstrom@s3.kth.se>
-
-Greg Stark
-     <gsstark@mit.edu>
-
-Matt
-     <deberg@mit.edu>
-
-Björn Grönvall
-     <bg@sics.se>
-
-Tino Schwarze
-     <tino.schwarze@informatik.tu-chemnitz.de>
-
-David Sanderson
-     <david@transarc.ibm.com>
-
-Roman Hodek
-     <Roman.Hodek@informatik.uni-erlangen.de>
+Aaron M. Ucko                        <amu@MIT.EDU>                        
+Alec Wolman                          <wolman@cs.washington.edu>           
+Alexandra Ellwood                    <lxs@MIT.EDU>                        
+Brad Keryan                          <keryan@andrew.cmu.edu>              
+Constantine Sapuntzakis              <csapuntz@openbsd.org>               
+Dan Winship                          <danw@MIT.EDU>                       
+Derrick J Brashear                   <shadow@dementia.org>                
+Harald Barth                         <haba@pdc.kth.se>                    
+Jim Doyle                            <jrd@bu.edu>                         
+John Davison                         <davisoja@clarkson.edu>              
+John Hawkinson                       <jhawk@MIT.EDU>                      
+Karl Ramm                            <kcr@MIT.EDU>                        
+Mark Eichin                          <eichin@kitten.gen.ma.us>            
+Per Boussard T/ED                    <Per.Boussard@era-t.ericsson.se>     
+Dima Ruban                           <dima@best.net>                      
+Max                                  <davros@cyclone.Stanford.EDU>        
+Andrzej Filinski                     <andrzej@daimi.aau.dk>               
+Chuck Lever                          <chuckl@netscape.com>                
+WUWEI SHEN                           <wwshen@engin.umich.edu>             
+Cheng Jin                            <chengjin@eecs.umich.edu>            
+Paul Callaway                        <pcallawa@umich.edu>                 
+Brandon S. Allbery                   <allbery@ece.cmu.edu>                
+Ken Raeburn                          <raeburn@raeburn.org>                
+Jeffrey Hutzelman                    <jhutz+@cmu.edu>                     
+Hee-Seok Heo                         <hsheo@postech.ac.kr>                
+Paul Ewing Jr.                       <ewing@ima.umn.edu>                  
+Niklas Hallqvist                     <niklas@appli.se>                    
+Marko Asplund                        <aspa@hip.fi>                        
+Chris Wing                           <wingc@engin.umich.edu>              
+Simon Josefsson                      <jas@pdc.kth.se>                     
+Magnus Lindström                     <magnus.lindstrom@s3.kth.se>         
+Greg Stark                           <gsstark@mit.edu>                    
+Matt                                 <deberg@mit.edu>                     
+Björn Grönvall                       <bg@sics.se>                         
+Tino Schwarze                        <tino.schwarze@informatik.tu-chemnitz.de>
+David Sanderson                      <david@transarc.ibm.com>             
+Roman Hodek                          <Roman.Hodek@informatik.uni-erlangen.de>
+Michael Sperber                      <sperber@informatik.uni-tuebingen.de>
+Dr. Lex Wennmacher                   <wennmach@geo.Uni-Koeln.DE>          
+Janne Johansson                      <jj@dynarc.se>                       
+Dr A V Le Blanc                      <LeBlanc@mcc.ac.uk>                  
+Dave Morrison                        <dave@bnl.gov>                       
+Jochen Saile                         <saile@sfs.nphil.uni-tuebingen.de>   
+Chris Kuklewicz                      <chrisk@MIT.EDU>                     
+Nickolai Zeldovich                   <kolya@MIT.EDU>                      
 
 If you have done something and are not mentioned here, please send mail
 to <arla-drinkers@stacken.kth.se>.
@@ -1302,31 +1771,97 @@ to <arla-drinkers@stacken.kth.se>.
 If you are mentioned here and have not contributed, that's because we
 expect you to.
 
+
+File: arla.info,  Node: Index,  Prev: Acknowledgments,  Up: Top
+
+Index
+*****
+
+* Menu:
+
+* adb:                                   Kernel debuggers.
+* AFS Filespace:                         AFS infrastructure.
+* AFSDB:                                 AFS infrastructure.
+* ALG:                                   NAT.
+* Archives:                              Introduction.
+* Arlad debugging:                       Arlad.
+* Backup server:                         AFS infrastructure.
+* Bos server:                            AFS infrastructure.
+* Bug reports:                           Introduction.
+* Buserver:                              AFS infrastructure.
+* Cell:                                  AFS infrastructure.
+* CellServDB:                            AFS infrastructure.
+* Comments:                              Introduction.
+* Debugging:                             Debugging.
+* Debugging arlad:                       Arlad.
+* Debugging techniques:                  Debugging techniques.
+* Debugging XFS:                         xfs.
+* DNS:                                   AFS infrastructure.
+* Fileserver:                            AFS infrastructure.
+* Filespace:                             AFS infrastructure.
+* Fsserver:                              AFS infrastructure.
+* Gdb:                                   Debugging LWP with GDB.
+* Kernel debugging:                      Kernel debuggers.
+* Kernel debuging on linux:              Kernel debuggers.
+* Ksymoops:                              Kernel debuggers.
+* Linux kernel debugging:                Kernel debuggers.
+* Live kernel:                           Kernel debuggers.
+* Mail archives:                         Introduction.
+* Mailing list:                          Introduction.
+* Masquerading:                          NAT.
+* NAT:                                   NAT.
+* PAT:                                   NAT.
+* Ptserver:                              AFS infrastructure.
+* Salvage:                               AFS infrastructure.
+* Samba:                                 Samba.
+* Ubik:                                  AFS infrastructure.
+* Upserver:                              AFS infrastructure.
+* Vldbserver:                            AFS infrastructure.
+* Vlserver:                              AFS infrastructure.
+* Volser:                                AFS infrastructure.
+* Volumeserver:                          AFS infrastructure.
+* XFS debugging:                         xfs.
+
 
 
 Tag Table:
-Node: Top210
-Node: Introduction520
-Node: Description of AFS infrastructure3701
-Node: Organization of data11783
-Node: Requirements12221
-Node: Data organization14280
-Node: Callbacks16271
-Node: Volume management16832
-Node: Parts of Arla17028
-Node: How arla works17478
-Node: The relation between Arlad and XFS18497
-Node: The life of a file19156
-Node: Tools and libs21677
-Node: Rx protocol22894
-Node: LWP23171
-Node: The files in arlad/23880
-Node: pioctl and kafs26005
-Node: Debugging28104
-Node: Porting30341
-Node: Oddities35036
-Node: Arla timeline35943
-Node: Authors39368
-Node: Acknowledgments40247
+Node: Top217
+Node: Introduction1893
+Node: AFS infrastructure5142
+Node: Organization of data15560
+Node: Requirements16038
+Node: Data organization18097
+Node: Callbacks20286
+Node: Volume management20954
+Node: Relationship between pts uid and unix uid22277
+Node: AFS and the real world22489
+Node: NAT22937
+Node: Samba24001
+Node: Integration with Kerberos24562
+Node: Parts of Arla25417
+Node: How arla works25869
+Node: The relation between Arlad and XFS26888
+Node: The life of a file27547
+Node: Tools and libs30068
+Node: Rx protocol31285
+Node: LWP31562
+Node: The files in arlad/31974
+Node: pioctl and kafs34099
+Node: Debugging36198
+Node: Arlad36674
+Node: Debugging LWP with GDB37917
+Node: xfs39672
+Node: xfs on linux40319
+Node: Debugging techniques40664
+Node: Kernel debuggers41596
+Node: Darwin/MacOS X46009
+Node: Porting46626
+Node: Porting user-space47234
+Node: Porting XFS48997
+Node: Oddities53346
+Node: Arla timeline54253
+Node: Authors57835
+Node: Acknowledgments58662
+Node: Index62898
 
 End Tag Table

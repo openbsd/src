@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:12 art Exp $
+# $KTH: Makefile.in,v 1.9 2000/10/10 20:56:20 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ../..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -36,6 +37,7 @@ INCLUDES	= -I$(srcdir)/../.. \
 		  -I$(srcdir)/../../include \
 		  -I$(srcdir)/../lib/msecurity \
 		  -I../../rxdef \
+		  @INC_roken@ \
 		  $(RXKADINC)
 DEFINES		= -DDEBUG
 REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) -DRXDEBUG
@@ -48,13 +50,14 @@ LIBS		= -L../../rxdef -lrxvlserver \
 		  -L../../lib/ko -lko \
 		  -L../../util -lutil \
 		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
-		  -L../../lib/roken -lroken $(RXKADLIB) \
+		  $(RXKADLIB) \
 		  $(KAFS_LIBS) \
 		  -L../../rxdef -lbosserver \
+		  @LIB_roken@ \
 		  @LIBS@
 LIBDEPENDS	= ../../rxdef/libbosserver.a ../../rx/librx.a \
 		  ../../lwp/liblwp.a ../../util/libutil.a \
-		  ../../lib/roken/libroken.a ../../lib/ko/libko.a \
+		  ../../lib/ko/libko.a \
 		  ../lib/msecurity/libmsecurity.a \
 		  ../../rxdef/libbosserver.a
 PROGS		= bosserver

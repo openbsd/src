@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -58,7 +53,7 @@
 #include <err.h>
 #include <assert.h>
 #include <ctype.h>
-#include <getarg.h>
+#include <agetarg.h>
 
 #ifndef HAVE_UNISTD_H
 #include <unistd.h>
@@ -71,7 +66,7 @@
 #include "ptserver.h"
 #include "pts.ss.h"
 
-RCSID("$Id: ptserver.c,v 1.1 2000/09/11 14:41:19 art Exp $");
+RCSID("$KTH: ptserver.c,v 1.36 2000/12/29 19:55:21 tol Exp $");
 
 static struct rx_service *prservice;
 
@@ -79,31 +74,46 @@ static int pr_database = -1;
 static off_t file_length;
 prheader pr_header;
 
+static Log_unit *pr_log_unit;
+static Log_method *pr_method;
+
 char pr_header_ydr[PRHEADER_SIZE];
 
+#define all (PRDB_ERROR|PRDB_WARN|PRDB_RPC|PRDB_DB)
 
-static int ptdebug = 0;
-
-int
-pt_setdebug (int debug)
-{
-    int odebug = ptdebug;
-    ptdebug = debug;
-    return odebug;
-}
+struct units pr_deb_units[] = {
+    { "all",		all },
+    { "errors",		PRDB_ERROR },
+#undef all
+    { "warnings",	PRDB_WARN },
+    { "rpc",		PRDB_RPC },
+    { "db",		PRDB_DB },
+    { NULL}
+};
 
 void
-pt_debug (char *fmt, ...)
+pt_setdebug (char *debug_level)
+{
+    log_set_mask_str (pr_method, pr_log_unit, debug_level);
+}
+
+/*
+ *
+ */
+
+void
+pt_debug (unsigned int level, char *fmt, ...)
 {
     va_list args;
-    if (!ptdebug)
-	return ;
 
     va_start (args, fmt);
-    vfprintf (stderr, fmt, args);
+    log_vlog (pr_log_unit, level, fmt, args);
     va_end(args);
 }
 
+/*
+ *
+ */
 
 static void
 write_header(void)
@@ -120,6 +130,10 @@ write_header(void)
     length = write(pr_database, pr_header_ydr, PRHEADER_SIZE);
     assert (length == PRHEADER_SIZE);
 }
+
+/*
+ *
+ */
 
 static void
 read_header(void)
@@ -140,6 +154,10 @@ read_header(void)
 	err(1, "read_header");
 }
 
+/*
+ *
+ */
+
 static void
 get_file_length(void)
 {
@@ -149,6 +167,9 @@ get_file_length(void)
     }
 }
 
+/*
+ *
+ */
 
 char *
 localize_name(const char *name)
@@ -159,12 +180,17 @@ localize_name(const char *name)
     strlcpy(localname, name, sizeof(localname));
     strlwr(localname);
     
-    if (tmp = strchr(localname, '@'))
+    tmp = strchr(localname, '@');
+    if (tmp)
 	if (!strcasecmp(tmp + 1, netinit_getrealm()))
 	    *tmp = '\0';
 
     return localname;
 }
+
+/*
+ *
+ */
 
 static void
 create_database(void)
@@ -189,43 +215,9 @@ create_database(void)
     get_file_length();
 }
 
-static off_t
-find_first_free(void)
-{
-    off_t pos;
-
-    if (pr_header.freePtr == 0) { /* if there are no free entries */
-	pos = lseek(pr_database, 0, SEEK_END);
-	if (pos == -1)
-	    err(1, "lseek");
-	if (ftruncate(pr_database, pos + PRENTRY_DISK_SIZE) == -1)
-	    err(1, "ftruncate");
-	return pos;
-    } else { /* there are free entries */
-	/* Not implemented yet */
-	assert(0);
-    }
-    return 0;
-}
-
-static int
-write_entry(off_t offset, prentry *pr_entry)
-{
-    off_t pos;
-    char pr_entry_disk_ydr[PRENTRY_DISK_SIZE];
-    int length = PRENTRY_DISK_SIZE;
-
-    if (ydr_encode_prentry_disk((prentry_disk *) pr_entry, pr_entry_disk_ydr, &length) == NULL)
-	err(1, "write_entry");
-
-    pos = lseek(pr_database, offset, SEEK_SET);
-    assert(pos == offset);
-
-    length = write(pr_database, pr_entry_disk_ydr, PRENTRY_DISK_SIZE);
-    assert (length == PRENTRY_DISK_SIZE);
-
-    return 0;
-}
+/*
+ *
+ */
 
 static int
 read_entry(off_t offset, prentry *pr_entry)
@@ -246,11 +238,70 @@ read_entry(off_t offset, prentry *pr_entry)
     return 0;
 }
 
+/*
+ *
+ */
+
+static off_t
+find_first_free(void)
+{
+    prentry pr_entry;
+    off_t pos;
+
+    if (pr_header.freePtr == 0) { /* if there are no free entries */
+	pos = lseek(pr_database, 0, SEEK_END);
+	if (pos == -1)
+	    err(1, "lseek");
+	if (ftruncate(pr_database, pos + PRENTRY_DISK_SIZE) == -1)
+	    err(1, "ftruncate");
+	return pos;
+    } else { /* there are free entries */
+	/* XXX if the caller discards this entry it will become orphaned */
+	pos = pr_header.freePtr;
+	read_entry(pos, &pr_entry);
+	pr_header.freePtr = pr_entry.next;
+	write_header();
+	return pos;
+    }
+    return 0;
+}
+
+/*
+ *
+ */
+
+static int
+write_entry(off_t offset, prentry *pr_entry)
+{
+    off_t pos;
+    char pr_entry_disk_ydr[PRENTRY_DISK_SIZE];
+    int length = PRENTRY_DISK_SIZE;
+
+    if (ydr_encode_prentry_disk((prentry_disk *) pr_entry, pr_entry_disk_ydr, &length) == NULL)
+	err(1, "write_entry");
+
+    pos = lseek(pr_database, offset, SEEK_SET);
+    assert(pos == offset);
+
+    length = write(pr_database, pr_entry_disk_ydr, PRENTRY_DISK_SIZE);
+    assert (length == PRENTRY_DISK_SIZE);
+
+    return 0;
+}
+
+/*
+ *
+ */
+
 static unsigned long
 get_id_hash(long id)
 {
     return ((unsigned long) id) % HASHSIZE;
 }
+
+/*
+ *
+ */
 
 static unsigned long
 get_name_hash(const char *name)
@@ -264,14 +315,18 @@ get_name_hash(const char *name)
     return hash % HASHSIZE;
 }
 
+/*
+ *
+ */
+
 static int
 get_first_id_entry(unsigned long hash_id, prentry *pr_entry)
 {
     off_t offset = pr_header.idHash[hash_id];
     int status;
 
-    pt_debug ("get_first_id_entry hash_id: %lu offset: %ld\n",
-	    hash_id, (long)offset);
+    pt_debug (PRDB_DB, "get_first_id_entry hash_id: %lu offset: %ld",
+	      hash_id, (long)offset);
     if (offset == 0)
 	return PRNOENT;
 
@@ -279,6 +334,10 @@ get_first_id_entry(unsigned long hash_id, prentry *pr_entry)
 
     return status;
 }
+
+/*
+ *
+ */
 
 static int
 get_first_name_entry(unsigned long hash_name, prentry *pr_entry)
@@ -286,8 +345,8 @@ get_first_name_entry(unsigned long hash_name, prentry *pr_entry)
     off_t offset = pr_header.nameHash[hash_name];
     int status;
 
-    pt_debug ("get_first_name_entry hash_name: %lu offset: %ld\n",
-	    hash_name, (long)offset);
+    pt_debug (PRDB_DB, "get_first_name_entry hash_name: %lu offset: %ld",
+	      hash_name, (long)offset);
     if (offset == 0)
 	return PRNOENT;
 
@@ -295,6 +354,10 @@ get_first_name_entry(unsigned long hash_name, prentry *pr_entry)
 
     return status;
 }
+
+/*
+ *
+ */
 
 static int
 update_entry(prentry *pr_entry)
@@ -304,7 +367,7 @@ update_entry(prentry *pr_entry)
     unsigned long hash_id;
     prentry old_pr_entry;
 
-    fprintf(stderr, "update_entry\n");
+    pt_debug (PRDB_DB, "update_entry");
 
     hash_id = get_id_hash(pr_entry->id);
 
@@ -323,6 +386,10 @@ update_entry(prentry *pr_entry)
 
     return write_entry(offset, pr_entry);
 }
+
+/*
+ *
+ */
 
 static int
 insert_entry(prentry *pr_entry)
@@ -360,6 +427,10 @@ insert_entry(prentry *pr_entry)
     return 0;
 }
 
+/*
+ *
+ */
+
 int
 create_group(const char *name,
 	     int32_t id,
@@ -382,6 +453,10 @@ create_group(const char *name,
 
     return 0;
 }
+
+/*
+ *
+ */
 
 int
 create_user(const char *name,
@@ -406,18 +481,25 @@ create_user(const char *name,
     return 0;
 }
 
+/*
+ *
+ */
+
 int
-addtogroup (int32_t uid, int32_t gid) {
+addtogroup (int32_t uid, int32_t gid)
+{
     prentry uid_entry;
     prentry gid_entry;
-    int error,i;
+    int error, i;
 
-    fprintf(stderr, "addtogroup\n");
+    pt_debug (PRDB_DB, "addtogroup");
 
-    if (error = get_pr_entry_by_id(uid, &uid_entry))
+    error = get_pr_entry_by_id(uid, &uid_entry);
+    if (error)
 	return error;
 
-    if (error = get_pr_entry_by_id(gid, &gid_entry))
+    error = get_pr_entry_by_id(gid, &gid_entry);
+    if (error)
 	return error;
 
     /* XXX should allocate contentry block */
@@ -426,12 +508,37 @@ addtogroup (int32_t uid, int32_t gid) {
 	return PRNOENT;
 
     assert (uid_entry.entries[uid_entry.count] == 0);
-    uid_entry.entries[uid_entry.count] = gid;
-    uid_entry.count++;
+
+    for (i = 0; i < uid_entry.count; i++)
+	if (uid_entry.entries[i] == gid)
+	    break;
+
+    if (i == uid_entry.count) { 
+	if (uid_entry.count < PRSIZE - 1) {
+	    uid_entry.entries[uid_entry.count] = gid;
+	    uid_entry.count++;
+	} else 
+	    return PRNOENT;
+    }
 
     assert (gid_entry.entries[gid_entry.count] == 0);
-    gid_entry.entries[gid_entry.count] = uid;
-    gid_entry.count++;
+
+    for (i = 0; i < gid_entry.count; i++)
+	if (gid_entry.entries[i] == uid)
+	    break;
+
+    if (i == gid_entry.count) {
+	if (gid_entry.count < PRSIZE - 1) {
+	    gid_entry.entries[gid_entry.count] = uid;
+	    gid_entry.count++;
+	} else {
+	    if (uid_entry.entries[uid_entry.count - 1] == gid) {
+		uid_entry.entries[uid_entry.count - 1] = 0;
+		uid_entry.count--;
+	    }
+	    return PRNOENT;
+	}
+    }
 
     if ((error = update_entry(&uid_entry)) != 0)
 	return error;
@@ -442,18 +549,26 @@ addtogroup (int32_t uid, int32_t gid) {
     return 0;
 
 }
+
+/*
+ *
+ */
+
 int
-removefromgroup (int32_t uid, int32_t gid) {
+removefromgroup (int32_t uid, int32_t gid)
+{
     prentry uid_entry;
     prentry gid_entry;
-    int error, i, offset;
+    int error, i;
 
-    fprintf(stderr, "removefromgroup\n");
+    pt_debug (PRDB_DB, "removefromgroup");
 
-    if (error = get_pr_entry_by_id(uid, &uid_entry))
+    error = get_pr_entry_by_id(uid, &uid_entry);
+    if (error)
 	return error;
 
-    if (error = get_pr_entry_by_id(gid, &gid_entry))
+    error = get_pr_entry_by_id(gid, &gid_entry);
+    if (error)
 	return error;
 
     /* XXX No check for full list */
@@ -496,38 +611,50 @@ removefromgroup (int32_t uid, int32_t gid) {
 
 }
 
+/*
+ *
+ */
+
 int
 listelements (int32_t id, prlist *elist, Bool default_id_p)
 {
     prentry pr_entry;
     int i = 0, error;
 
-    if (error = get_pr_entry_by_id (id, &pr_entry))
+    error = get_pr_entry_by_id (id, &pr_entry);
+    if (error)
         return error;
     
+    if(default_id_p)
+	elist->len = pr_entry.count + 3;
+    else
+	elist->len = pr_entry.count;
+
     elist->val = malloc(sizeof(*elist->val)
-			* (pr_entry.count + (default_id_p ? 3 : 1)));
+			* (pr_entry.count + elist->len));
     if (elist->val == NULL)
 	return ENOMEM; /* XXX */
-
     
+
     /* XXX contentry blocks... */
     /* XXX should be sorted */
 
     for (i = 0; i < pr_entry.count; i++)
 	    elist->val[i] = pr_entry.entries[i];
 
-    elist->val[i] = id;
     if (default_id_p) {
+	elist->val[i] = id;
 	elist->val[++i] = PR_ANYUSERID;
 	elist->val[++i] = PR_AUTHUSERID;
 	elist->len = pr_entry.count + 3;
-    } else
-	elist->len = pr_entry.count + 1;
+    }
 
     return 0;
 }
 
+/*
+ *
+ */
 
 int
 get_pr_entry_by_id(int id, prentry *pr_entry)
@@ -535,10 +662,11 @@ get_pr_entry_by_id(int id, prentry *pr_entry)
     unsigned long hash_id = get_id_hash(id);
     int status;
 
-    pt_debug ("get_pr_entry_by_id id:%d hash_id: %ld\n", id, hash_id);
+    pt_debug (PRDB_DB, "get_pr_entry_by_id id:%d hash_id: %ld", 
+	      id, hash_id);
 
     status = get_first_id_entry(hash_id, pr_entry);
-    pt_debug ("get_pr_entry_by_id status:%d\n", status);
+    pt_debug (PRDB_DB, "get_pr_entry_by_id status:%d", status);
     if (status)
 	return PRNOENT;
 
@@ -548,13 +676,16 @@ get_pr_entry_by_id(int id, prentry *pr_entry)
 	status = read_entry(pr_entry->nextID, pr_entry);
     }
 
-    pt_debug ("pr_entry->id: %d\n", pr_entry->id);
-    pt_debug ("pr_entry->owner: %d\n", pr_entry->owner);
-    pt_debug ("pr_entry->creator: %d\n", pr_entry->creator);
-    pt_debug ("pr_entry->name: %s\n", pr_entry->name);
+    pt_debug (PRDB_DB, "entry_by_name id: %d owner: %d creator: %d name: %s",
+	      pr_entry->id, pr_entry->owner, 
+	      pr_entry->creator, pr_entry->name);
 
     return 0;
 }
+
+/*
+ *
+ */
 
 int
 get_pr_entry_by_name(const char *name, prentry *pr_entry)
@@ -572,13 +703,16 @@ get_pr_entry_by_name(const char *name, prentry *pr_entry)
 	status = read_entry(pr_entry->nextName, pr_entry);
     }
 
-    fprintf(stderr, "  pr_entry->id: %d\n", pr_entry->id);
-    fprintf(stderr, "  pr_entry->owner: %d\n", pr_entry->owner);
-    fprintf(stderr, "  pr_entry->creator: %d\n", pr_entry->creator);
-    fprintf(stderr, "  pr_entry->name: %s\n", pr_entry->name);
+    pt_debug (PRDB_DB, "entry_by_name id: %d owner: %d creator: %d name: %s",
+	      pr_entry->id, pr_entry->owner, 
+	      pr_entry->creator, pr_entry->name);
 
     return 0;
 }
+
+/*
+ *
+ */
 
 int
 conv_name_to_id(const char *name, int *id)
@@ -593,6 +727,10 @@ conv_name_to_id(const char *name, int *id)
     return 0;
 }
 
+/*
+ *
+ */
+
 int
 conv_id_to_name(int id, char *name)
 {
@@ -606,6 +744,10 @@ conv_id_to_name(int id, char *name)
     return 0;
 }
 
+/*
+ *
+ */
+
 int
 next_free_group_id(void)
 {
@@ -614,6 +756,10 @@ next_free_group_id(void)
     return pr_header.maxGroup;
 }
 
+/*
+ *
+ */
+
 int
 next_free_user_id()
 {
@@ -621,7 +767,6 @@ next_free_user_id()
     write_header();
     return pr_header.maxID;
 }
-
 
 /*
  * Open the pr database that lives in ``databaseprefix''
@@ -646,6 +791,10 @@ open_db(char *databaseprefix, int flags)
 	return errno;
     return 0;
 }
+
+/*
+ *
+ */
 
 static int
 prserver_create(char *databaseprefix)
@@ -679,6 +828,10 @@ prserver_create(char *databaseprefix)
     return 0;
 }
 
+/*
+ *
+ */
+
 static int
 prserver_init(char *databaseprefix)
 {
@@ -695,31 +848,41 @@ prserver_init(char *databaseprefix)
     return 0;
 }
 
+/*
+ *
+ */
+
 static char *cell = NULL;
 static char *realm = NULL;
 static char *databasedir = NULL;
 static char *srvtab_file = NULL;
+static char *log_file = "syslog";
+static char *debug_level = NULL;
 static int no_auth = 0;
 static int do_help = 0;
-static int do_debug = 0;
 static int do_create = 0;
 
-static struct getargs args[] = {
-    {"create",  0, arg_flag,      &do_create, "create new databas"},
-    {"cell",	0, arg_string,    &cell, "what cell to use"},
-    {"realm",	0, arg_string,	  &realm, "what realm to use"},
-    {"prefix",'p', arg_string,    &databasedir, "what dir to store the db"},
-    {"noauth", 0,  arg_flag,	  &no_auth, "disable authentication checks"},
-    {"srvtab",'s', arg_string,    &srvtab_file, "what srvtab to use"},
-    {"debug",  'd', arg_flag,     &do_debug, "enable debug messages"},
-    {"help",  'h', arg_flag,      &do_help, "help"},
-    { NULL, 0, arg_end, NULL }
+static struct agetargs args[] = {
+    {"create",  0, aarg_flag,      &do_create, "create new databas"},
+    {"cell",	0, aarg_string,    &cell, "what cell to use"},
+    {"realm",	0, aarg_string,	  &realm, "what realm to use"},
+    {"prefix",'p', aarg_string,    &databasedir, "what dir to store the db"},
+    {"noauth", 0,  aarg_flag,	  &no_auth, "disable authentication checks"},
+    {"srvtab",'s', aarg_string,    &srvtab_file, "what srvtab to use"},
+    {"debug",  'd',aarg_string,    &debug_level, "enable debug messages"},
+    {"log",    'l', aarg_string,   &log_file, "log file"},
+    {"help",  'h', aarg_flag,      &do_help, "help"},
+    { NULL, 0, aarg_end, NULL }
 };
+
+/*
+ *
+ */
 
 static void
 usage(int exit_code)
 {
-    arg_printusage(args, NULL, "", ARG_AFSSTYLE);
+    aarg_printusage(args, NULL, "", AARG_AFSSTYLE);
     exit (exit_code);
 }
 
@@ -730,10 +893,12 @@ usage(int exit_code)
 int
 main(int argc, char **argv) 
 {
-    int ret;
     int optind = 0;
+    int ret;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    set_progname (argv[0]);
+
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage (1);
     }
 
@@ -741,15 +906,24 @@ main(int argc, char **argv)
     argv += optind;
 
     if (argc) {
-	printf("unknown option %s\n", *argv);
+	printf("unknown option %s", *argv);
 	return 1;
     }
 
     if (do_help)
 	usage(0);
 
-    if (do_debug)
-	pt_setdebug (1);
+    pr_method = log_open (get_progname(), log_file);
+    if (pr_method == NULL)
+	errx (1, "log_open failed");
+
+    pr_log_unit = log_unit_init (pr_method, "arla", pr_deb_units,
+				 PR_DEFAULT_LOG);
+    if (pr_log_unit == NULL)
+	errx (1, "log_unit_init failed");
+
+    if (debug_level)
+	pt_setdebug (debug_level);
 
     if (do_create) {
 	prserver_create (databasedir);
@@ -759,10 +933,10 @@ main(int argc, char **argv)
     if (no_auth)
 	sec_disable_superuser_check ();
 
-    printf ("ptserver booting\n");
-
+    cell_init(0, pr_method);
     ports_init();
-    cell_init(0);
+
+    printf ("ptserver booting");
 
     if (cell)
 	cell_setthiscell (cell);
@@ -771,14 +945,14 @@ main(int argc, char **argv)
     
     ret = prserver_init(databasedir);
     if (ret)
-	errx (1, "prserver_init: error %d\n", ret);
+	errx (1, "prserver_init: error %d", ret);
 
     ret = network_init(htons(afsprport), "pr", PR_SERVICE_ID, 
-		       PR_ExecuteRequest, &prservice, NULL);
+		       PR_ExecuteRequest, &prservice, realm);
     if (ret)
 	errx (1, "network_init returned %d", ret);
 
-    printf("started\n");
+    pt_debug (PRDB_WARN, "started");
 
     rx_SetMaxProcs(prservice,5) ;
     rx_StartServer(1) ;

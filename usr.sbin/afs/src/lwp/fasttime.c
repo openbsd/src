@@ -38,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: fasttime.c,v 1.2 2000/09/11 14:41:08 art Exp $");
+RCSID("$KTH: fasttime.c,v 1.8 1999/12/31 05:38:58 assar Exp $");
 #endif
 
 #include <stdio.h>

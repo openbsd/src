@@ -26,7 +26,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$Id: rx_user.c,v 1.3 2000/09/11 14:41:23 art Exp $");
+RCSID("$KTH: rx_user.c,v 1.16 2000/10/08 17:49:48 assar Exp $");
 
 #ifndef	IPPORT_USERRESERVED
 /*
@@ -38,16 +38,17 @@ RCSID("$Id: rx_user.c,v 1.3 2000/09/11 14:41:23 art Exp $");
 #endif
 
 /* Don't set this to anything else right now; it is currently broken */
-int (*rx_select) (int, fd_set *, fd_set *, 
+static int (*rx_select) (int, fd_set *, fd_set *, 
 		  fd_set *, struct timeval *) = IOMGR_Select;
                                        /* 
 					* Can be set to "select", in some
 				        * cases 
 					*/
 
-fd_set rx_selectMask = { {0,0,0,0,0,0,0,0} }; /* XXX */
-
-PROCESS rx_listenerPid;		       /* LWP process id of socket listener
+static fd_set rx_selectMask;
+static int rx_maxSocketNumber = -1;    /* Maximum socket number represented
+				        * in the select mask */
+static PROCESS rx_listenerPid;	       /* LWP process id of socket listener
 				        * process */
 void rxi_Listener(void);
 
@@ -152,12 +153,21 @@ rxi_GetUDPSocket(u_short port)
 	return OSI_NULLSOCKET;
     }
 
+    if (socketFd >= FD_SETSIZE) {
+	(osi_Msg "socket fd too large\n");
+	return OSI_NULLSOCKET;
+    }
+
 #ifdef SO_BSDCOMPAT
     {
 	int one = 1;
 	setsockopt (socketFd, SOL_SOCKET, SO_BSDCOMPAT, &one, sizeof(one));
     }
 #endif    
+
+    if (rx_maxSocketNumber < 0) {
+	FD_ZERO(&rx_selectMask);
+    }
 
     FD_SET(socketFd, &rx_selectMask);
     if (socketFd > rx_maxSocketNumber)
@@ -361,7 +371,7 @@ osi_Free(char *x, long size)
 #endif
 #endif				       /* AFS_AIX32_ENV */
 
-#define	ADDRSPERSITE	16
+#define	ADDRSPERSITE	256
 
 #ifdef ADAPT_MTU
 

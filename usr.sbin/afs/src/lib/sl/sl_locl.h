@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: sl_locl.h,v 1.2 2000/09/11 14:41:07 art Exp $ */
+/* $KTH: sl_locl.h,v 1.2 2000/03/07 22:08:48 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

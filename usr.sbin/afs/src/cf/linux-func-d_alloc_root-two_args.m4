@@ -1,5 +1,5 @@
 dnl
-dnl $Id: linux-func-d_alloc_root-two_args.m4,v 1.1 2000/09/11 14:40:50 art Exp $
+dnl $KTH: linux-func-d_alloc_root-two_args.m4,v 1.2 1999/07/22 04:59:34 assar Exp $
 dnl
 
 AC_DEFUN(AC_LINUX_FUNC_D_ALLOC_ROOT_TWO_ARGS, [

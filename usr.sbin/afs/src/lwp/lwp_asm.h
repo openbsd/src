@@ -28,7 +28,7 @@
 * 								    *
 \*******************************************************************/
 
-/* $Id: lwp_asm.h,v 1.1 2000/09/11 14:41:08 art Exp $ */ 
+/* $KTH: lwp_asm.h,v 1.17 2000/10/20 11:01:49 lha Exp $ */ 
 
 #ifndef __LWP_INCLUDE_
 #define	__LWP_INCLUDE_	1
@@ -141,6 +141,7 @@ extern int lwp_nextindex;                      /* Next lwp index to assign */
 
 
 #ifndef LWP_KERNEL
+#define LWP_INVALIDTHREADID		(-1)
 #define LWP_ActiveProcess	(lwp_cpptr+0)
 #define LWP_Index() (LWP_ActiveProcess->index)
 #define LWP_HighestIndex() (lwp_nextindex - 1)
@@ -174,14 +175,11 @@ extern
 #endif
 
 /* 
- * Under hpux, any stack size smaller than 16K seems prone to
- * overflow problems.
+ * Under some unices any stack size smaller than 16K seems prone to
+ * overflow problems. Set it to a somewhat larger value.
  */
-#if defined(AFS_HPUX_ENV) || defined(AFS_NEXT_ENV) /*|| defined(AFS_SUN5_ENV)*/
+
 #define AFS_LWP_MINSTACKSIZE	(100 * 1024)
-#else
-#define AFS_LWP_MINSTACKSIZE	(100 * 1024)
-#endif /* defined(AFS_HPUX_ENV) */
 
 /* Action to take on stack overflow. */
 #define LWP_SOQUIET	1		/* do nothing */

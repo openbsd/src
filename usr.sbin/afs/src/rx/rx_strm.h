@@ -1,5 +1,5 @@
-/* $Header: /home/cvs/src/usr.sbin/afs/src/rx/Attic/rx_strm.h,v 1.2 2000/09/11 14:41:23 art Exp $ */
-/* $Source: /home/cvs/src/usr.sbin/afs/src/rx/Attic/rx_strm.h,v $ */
+/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_strm.h,v 1.3 1998/02/22 19:54:23 joda Exp $ */
+/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_strm.h,v $ */
 
 /*
 ****************************************************************************

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: have-linux-kernel-types.m4,v 1.1 2000/09/11 14:40:48 art Exp $
+dnl $KTH: have-linux-kernel-types.m4,v 1.1 1999/05/15 22:45:27 assar Exp $
 dnl
 dnl Check for types in the Linux kernel
 dnl

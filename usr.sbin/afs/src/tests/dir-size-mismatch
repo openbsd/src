@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: dir-size-mismatch,v 1.1 2000/09/11 14:41:28 art Exp $
+# $KTH: dir-size-mismatch,v 1.3 1999/01/31 19:48:10 assar Exp $
 if test "X$FAST" != "X" ; then echo "Not running $0" ;exit 0; fi
 
 for i in `awk 'BEGIN {for(i=0; i < 1000; ++i) printf "%d\n", i}' /dev/null`; do

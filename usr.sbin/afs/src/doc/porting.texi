@@ -1,16 +1,59 @@
-@c $Id: porting.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+@c Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
 
-@node Porting, Oddities, Debugging, Top
+@c $KTH: porting.texi,v 1.11 2000/11/25 14:18:42 lha Exp $
+
+@node Porting, Oddities, Darwin/MacOS X, Top
 @chapter Porting
 
 The largest part of the work needed to port Arla to a new operating
 system is in porting xfs, as kernel programming always is harder, less
-portable and messier than user-space dito.  Arlad in test mode
-(@kbd{arlad --test}) should work without any porting on any system
-that's not very far away from Unix and that provides berkeley sockets
-(including cygwin32).  Therefore we will concern ourselves mostly with
-how to port the XFS module.
+portable and messier than user-space dito.  Arla in test mode
+(@kbd{arla-cli}) should work without any porting on any system that's
+not very far away from Unix and that provides berkeley sockets
+(including cygwin32).  The hard part is porting the XFS kernel module,
+and we will spent most of this text on how to do that.
 
+@menu
+* Porting user-space::
+* Porting XFS::
+@end menu
+
+@node Porting user-space, Porting XFS, Porting, Porting
+@section user-space
+
+The user-space parts should work on basically any system that is
+reasonably Posix and has berkeley sockets.  The build uses autoconf and
+should adapt itself to most forseeable circumstances.  If it fails to
+consider something that is missing or not working on the particular OS
+you are porting to, hard-code it to make sure that is what is missing
+and then try to create an autoconf test for it.  If you fail to do so,
+or have no autoconf experience, send us the patches anyway and tell us
+where you are having the problem.
+
+@subsection LWP
+
+The only thing that might take a little bit more effort in porting is
+the context-switch in the LWP user-level threads package.  There are
+assembler versions for most of the common architectures in @file{lwp}.
+Part of the problem is getting this code assembled properly.  There is
+unfortunately no easy and portable way of preprocessing and assembling
+code.  There is a script @file{lwp/make-process.o.sh} that tries to do
+in some different ways, but it may fail for you.  Next problem is that
+assembler syntax can vary a lot even on the same CPU.  The source files
+are written in such a way that they should be acceptable to almost any
+syntax, but if it fails you have to find out what particular syntax has
+to be used and adapt the source file for that.
+
+The more interesting problem is if there is no support for your CPU.
+The first thing to try then is the @kbd{--with-pthreads} option that
+uses the pthreads library.  If that fails or you want LWP working you
+have to figure out enough details on your CPU to write two functions in
+assembler, @samp{savecontext} and @samp{returnto} that save and
+restore the processor context.
+
+@node Porting XFS, , Porting user-space, Porting
 @section XFS
 
 @enumerate
@@ -75,7 +118,9 @@ struct cdevsw cdevsw[];
 These are then usually stored in a table `cdevsw' indexed by the major
 device number. If you're really lucky there's a new way to get the
 kernel to add your `struct cdevsw' to the global table when loading the
-module or a function that does the addition for you. If not, you'll have
+module or a function that does the addition for you.  Otherwise there
+might be functions for adding/removing devices to the global table.
+If not, you'll have
 to fallback on looking for a free slot in the table and putting your
 struct cdevsw there. In some cases, this is not stored in a table but
 then there'll be a way of adding entries to the new data structure so
@@ -85,7 +130,7 @@ you don't need to worry about it.
 Adding a new system call
 
 This is quite similar to adding a new cdev but the table is usually
-called `sysent' instead.
+called @code{sysent} instead.
 
 @item
 Adding a new file system

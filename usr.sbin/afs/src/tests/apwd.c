@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -52,11 +47,11 @@
 #include <dirent.h>
 
 #include <err.h>
-#include <getarg.h>
+#include <agetarg.h>
 
 #include <roken.h>
 
-RCSID("$Id: apwd.c,v 1.1 2000/09/11 14:41:26 art Exp $");
+RCSID("$KTH: apwd.c,v 1.10 2000/10/03 00:33:12 lha Exp $");
 
 static int verbose_flag;
 static FILE *verbose_fp = NULL;
@@ -419,16 +414,16 @@ getcwd_syscall (char *buf, size_t size)
 
 static int help_flag;
 
-static struct getargs args[] = {
-    {"verbose", 'v',	arg_flag,	&verbose_flag,	"verbose",	NULL},
-    {"help",	0,	arg_flag,	&help_flag,	NULL,		NULL},
-    {NULL,	0,	arg_end,	NULL,		NULL,		NULL}
+static struct agetargs args[] = {
+    {"verbose", 'v',	aarg_flag,	&verbose_flag,	"verbose",	NULL},
+    {"help",	0,	aarg_flag,	&help_flag,	NULL,		NULL},
+    {NULL,	0,	aarg_end,	NULL,		NULL,		NULL}
 };
 
 static void
 usage (int exit_val)
 {
-    arg_printusage (args, NULL, "", ARG_GNUSTYLE);
+    aarg_printusage (args, NULL, "", AARG_GNUSTYLE);
 }
 
 int
@@ -441,7 +436,7 @@ main(int argc, char **argv)
 
     verbose_flag = getenv ("VERBOSE") != NULL;
 
-    if (getarg (args, argc, argv, &optind, ARG_GNUSTYLE))
+    if (agetarg (args, argc, argv, &optind, AARG_GNUSTYLE))
 	usage (1);
 
     argc -= optind;

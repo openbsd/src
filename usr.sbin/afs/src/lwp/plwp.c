@@ -40,7 +40,7 @@
 
 #include <lwp.h>
 
-RCSID("$Id: plwp.c,v 1.2 2000/09/11 14:41:08 art Exp $");
+RCSID("$KTH: plwp.c,v 1.9 2000/05/12 08:41:32 lha Exp $");
 
 #ifdef	AFS_AIX32_ENV
 #include <ulimit.h>

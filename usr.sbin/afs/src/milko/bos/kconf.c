@@ -49,7 +49,7 @@
 /* $Heimdal: config_file.c,v 1.38 1999/12/02 17:05:08 joda Exp $ */
 
 #ifdef RCSID
-RCSID("$Id: kconf.c,v 1.1 2000/09/11 14:41:12 art Exp $");
+RCSID("$KTH: kconf.c,v 1.3 2000/05/27 21:56:56 ahltorp Exp $");
 #endif
 
 static int parse_section(char *p, kconf_config_section **s,

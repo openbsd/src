@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #include <config.h>
 
-RCSID("$Id: fbuf.c,v 1.1 2000/09/11 14:40:55 art Exp $") ;
+RCSID("$KTH: fbuf.c,v 1.13.2.3 2001/10/24 01:35:22 ahltorp Exp $") ;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -131,12 +126,15 @@ mmap_create (fbuf *f, int fd, size_t len, fbuf_flags flags)
 static int
 mmap_truncate (fbuf *f, size_t new_len)
 {
-    int ret;
+    int ret = 0;
 
     if (f->buf != NULL) {
-	ret = munmap (f->buf, f->len);
-	if (ret < 0)
-	    return errno;
+	if (msync(f->buf, f->len, MS_ASYNC))
+	    ret = errno;
+	if (munmap (f->buf, f->len))
+	    ret = errno;
+	if (ret)
+	    return ret;
     }
     ret = ftruncate (f->fd, new_len);
     if (ret < 0)
@@ -152,10 +150,11 @@ mmap_truncate (fbuf *f, size_t new_len)
 static int
 mmap_end (fbuf *f)
 {
-    int ret;
+    int ret = 0;
 
-    ret = munmap (f->buf, f->len);
-    if (ret < 0)
+    if (msync (f->buf, f->len, MS_ASYNC))
+	ret = errno;
+    if (munmap (f->buf, f->len))
 	ret = errno;
     return ret;
 }
@@ -181,7 +180,12 @@ mmap_copyrx2fd (struct rx_call *call, int fd, off_t off, size_t len)
     r_len = rx_Read (call, buf, len);
     if (r_len != len)
 	ret = conv_to_arla_errno(rx_Error(call));
-    munmap (buf, len);
+
+    if (msync (buf, len, MS_ASYNC))
+	ret = errno;
+    if (munmap (buf, len))
+	ret = errno;
+
     return ret;
 }
 
@@ -206,7 +210,10 @@ mmap_copyfd2rx (int fd, struct rx_call *call, off_t off, size_t len)
     r_write = rx_Write (call, buf, len);
     if (r_write != len)
 	ret = conv_to_arla_errno(rx_Error(call));
-    munmap (buf, len);
+
+    if (munmap (buf, len))
+	ret = errno;
+
     return ret;
 }
 

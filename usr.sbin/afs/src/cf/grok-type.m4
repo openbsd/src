@@ -1,4 +1,4 @@
-dnl $Id: grok-type.m4,v 1.1 2000/09/11 14:40:47 art Exp $
+dnl $KTH: grok-type.m4,v 1.1 1999/05/15 22:45:26 assar Exp $
 dnl
 AC_DEFUN(AC_GROK_TYPE, [
 AC_CACHE_VAL(ac_cv_type_$1, 

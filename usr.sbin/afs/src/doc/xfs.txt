@@ -2,7 +2,7 @@
 XFS DOCUMENTATION
 =================
 
-$Id: xfs.txt,v 1.2 2001/04/10 08:17:54 deraadt Exp $
+$KTH: xfs.txt,v 1.5 2000/06/06 15:21:12 lha Exp $
 
 This is not the truth, but close too.
 

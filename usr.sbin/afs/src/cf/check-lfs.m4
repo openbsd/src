@@ -1,5 +1,5 @@
 dnl
-dnl $Id: check-lfs.m4,v 1.1 2000/09/11 14:40:46 art Exp $
+dnl $KTH: check-lfs.m4,v 1.2 2000/03/14 00:04:10 assar Exp $
 dnl
 
 AC_DEFUN(AC_HAVE_GETCONF, [

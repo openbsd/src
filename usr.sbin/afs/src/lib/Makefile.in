@@ -1,11 +1,12 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:54 art Exp $
+# $KTH: Makefile.in,v 1.18 2000/10/25 07:03:04 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh
 
-SUBDIRS		= roken sl @editline_dir@ acl cmd
+SUBDIRS		= @DIR_roken@ sl @editline_dir@ acl cmd
 
 all:
 		SUBDIRS='$(SUBDIRS)'; \
@@ -36,6 +37,7 @@ distclean:
 		SUBDIRS='$(SUBDIRS)'; \
 		for i in $$SUBDIRS; \
 		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+		rm -f Makefile
 
 mostlyclean:
 		SUBDIRS='$(SUBDIRS)'; \

@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:23 art Exp $
+# $KTH: Makefile.in,v 1.48 2000/10/25 07:07:43 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -31,7 +32,8 @@ MAKEDEPEND	= makedepend
 DEFINES		=
 INCLUDES	= -I../include \
 		  -I$(srcdir)/../include \
-		  -I$(srcdir)/.. 
+		  @INC_roken@ \
+		  -I$(srcdir)/..
 REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS)
 XGFILES		= $(srcdir)/vldb.xg \
 		  $(srcdir)/fs.xg \
@@ -190,7 +192,7 @@ clean		:
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile config.status
+		rm -f Makefile *~
 
 realclean:	distclean
 		rm -f TAGS

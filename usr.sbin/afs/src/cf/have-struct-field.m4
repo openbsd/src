@@ -1,4 +1,4 @@
-dnl $Id: have-struct-field.m4,v 1.1 2000/09/11 14:40:48 art Exp $
+dnl $KTH: have-struct-field.m4,v 1.1.28.1 2001/04/16 23:07:54 lha Exp $
 dnl
 dnl check for fields in a structure
 dnl
@@ -13,7 +13,7 @@ cache_val=no)])
 if test "$cache_val" = yes; then
 	define(foo, translit(HAVE_$1_$2, [a-z ], [A-Z_]))
 	AC_DEFINE(foo, 1, [Define if $1 has field $2.])
-	undefine(foo)
+	undefine([foo])
 fi
-undefine(cache_val)
+undefine([cache_val])
 ])

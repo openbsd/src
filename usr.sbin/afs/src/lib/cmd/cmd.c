@@ -43,11 +43,12 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <roken.h>
 
 #include <cmd.h>
 
 #ifdef RCSID
-RCSID("$Id: cmd.c,v 1.1 2000/09/11 14:40:55 art Exp $");
+RCSID("$KTH: cmd.c,v 1.11 2000/09/29 22:43:02 assar Exp $");
 #endif
 
 static struct cmd_syndesc *cmd_cmds = NULL;
@@ -380,7 +381,7 @@ cmd_FreeArgv (char **argv)
  *
  */
 
-#define CMD_IS_CMD(str) (str[0] == '-' && !isdigit(str[1]))
+#define CMD_IS_CMD(str) (str[0] == '-' && !isdigit((unsigned char)str[1]))
 
 /*
  *
@@ -815,7 +816,7 @@ cmd_ExtraText (const char *cmd, const char *sectionname,
 	    if (buf[0] == '%') {
 		break;
 	    }
-	    while (isspace (*p)) p++;
+	    while (isspace ((unsigned char)*p)) p++;
 	    if (*p == '\0')
 		continue;
 	    printf ("%s%s", p, withcr ? "\n" : "");

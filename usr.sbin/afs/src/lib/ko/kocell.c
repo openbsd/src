@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -55,13 +50,14 @@
 
 #include "resolve.h"
 
-RCSID("$Id: kocell.c,v 1.3 2000/09/11 14:40:57 art Exp $");
+RCSID("$KTH: kocell.c,v 1.47.2.3 2001/07/09 03:27:48 lha Exp $");
 
 #define TRANSARCSYSCONFDIR "/usr/vice/etc"
 #define CELLFILENAME "CellServDB"
 #define THISCELLFILENAME "ThisCell"
 #define SUIDCELLSFILENAME "SuidCells"
 #define THESECELLFILENAME "TheseCells"
+#define DYNROOTDBFILENAME "DynRootDB"
 #define DEFCELLCACHESIZE 499
 
 /*
@@ -77,15 +73,39 @@ static Hashtab *cellnamehtab, *cellnumhtab;
 static char *thiscell = NULL;
 static char **thesecells = NULL;
 static int numthesecells = 1;
+static int dynrootdb_in_use;
 
+enum { CELL_INVALID_HOST = 1 };
+
+/*
+ * Logging
+ */
+
+#define CDEBERR		0x800
+#define CDEBWARN	0x400
+#define CDEBDNS		0x200
+
+#define CDEBDEFAULT	(CDEBWARN|CDEBERR)
+#define cdeball		(CDEBWARN|CDEBERR)
+
+static struct units celldebug_units[]  = {
+    { "all", 		cdeball },
+    { "almost-all",	cdeball },
+    { "warn",		CDEBWARN },
+    { "error", 		CDEBERR },
+    { "dns",		CDEBDNS },
+    { NULL, 0 },
+};
+
+#undef cdeball
+
+static Log_unit *cell_log = NULL;
 
 /*
  *
  */
 
 static unsigned long celldb_version = 0;
-
-static int suid_read = 0;
 
 static int add_special_dynroot_cell (void);
 
@@ -155,17 +175,91 @@ newcell (char *line)
 }
 
 /*
- * Record this cell in the hashtable
+ *
  */
 
 static void
-recordcell (cell_entry *c, int dbnum, cell_db_entry *dbservers)
+fetch_host (cell_entry *c, cell_db_entry *host)
 {
-     c->ndbservers = dbnum;
-     c->dbservers  = malloc (dbnum * sizeof(cell_db_entry));
-     if (c->dbservers == NULL)
-	 err (1, "malloc %lu", (unsigned long)dbnum * sizeof(cell_db_entry));
-     memcpy (c->dbservers, dbservers, dbnum * sizeof (cell_db_entry));
+    struct dns_reply *r;
+    struct resource_record *rr;
+    struct timeval tv;
+
+    gettimeofday (&tv, NULL);
+    
+    r = dns_lookup(host->name, "A");
+    if (r == NULL) {
+	log_log (cell_log, CDEBDNS, 
+		 "fetch_host: failed to resolve host %s in cell %s",
+		 host->name, c->name);
+	host->timeout = CELL_INVALID_HOST;
+	return;
+    }
+    for(rr = r->head; rr;rr=rr->next){
+	if (rr->type == T_A) {
+	    if (strcmp(host->name,rr->domain) == 0) {
+		host->addr = *(rr->u.a);
+		host->timeout = tv.tv_sec + rr->ttl;
+		break;
+	    }
+	}
+    }
+    dns_free_data(r);
+}
+
+
+/*
+ * Help function for updatehosts
+ */
+
+static int 
+host_sort (const void *p1, const void *p2)
+{
+    const cell_db_entry *a = (const cell_db_entry *)p1;
+    const cell_db_entry *b = (const cell_db_entry *)p2;
+    if (a->timeout == CELL_INVALID_HOST)
+	return -1;
+    if (b->timeout == CELL_INVALID_HOST)
+	return 1;
+    return a->addr.s_addr - b->addr.s_addr;
+}
+
+/*
+ * Update the hosts for this cell
+ */
+
+static void
+updatehosts (cell_entry *c, int dbnum, cell_db_entry *dbservers)
+{
+    cell_db_entry *old_servers = c->dbservers;
+    struct timeval tv;
+    int i;
+
+    gettimeofday(&tv, NULL);
+
+    for (i = 0; i < dbnum; i++) {
+	if (dbservers[i].timeout == CELL_INVALID_HOST
+	    || (dbservers[i].timeout && dbservers[i].timeout < tv.tv_sec)) {
+	    fetch_host (c, &dbservers[i]);
+	}
+    }
+
+    c->ndbservers = dbnum;
+    c->dbservers  = malloc (dbnum * sizeof(cell_db_entry));
+    if (c->dbservers == NULL && dbnum != 0)
+	err (1, "malloc %lu", (unsigned long)dbnum * sizeof(cell_db_entry));
+    memcpy (c->dbservers, dbservers, dbnum * sizeof (cell_db_entry));
+    free (old_servers);
+
+    if (c->ndbservers)
+	qsort (c->dbservers, c->ndbservers, sizeof(c->dbservers[0]),
+	       host_sort);
+
+    c->active_hosts = 0;
+    for (i = 0; i < c->ndbservers; i++) {
+	if (c->dbservers[i].timeout != CELL_INVALID_HOST)
+	    c->active_hosts++;
+    }
 }
 
 /*
@@ -173,17 +267,29 @@ recordcell (cell_entry *c, int dbnum, cell_db_entry *dbservers)
  * if c == NULL, a new cell will be allocated
  */
 
-static void
-try_to_find_cell(const char *cell, cell_entry *c)
+static int
+dns_lookup_cell (const char *cell, cell_entry *c)
 {
     struct dns_reply *r;
     struct resource_record *rr;
     int dbnum = 0;
     cell_db_entry dbservers[256];
+    int lowest_ttl;
+    int i;
+    struct timeval tv;
+
+    memset (dbservers, 0, sizeof(dbservers));
+    gettimeofday(&tv, NULL);
 
     r = dns_lookup(cell, "AFSDB");
-    if (r == NULL)
-	return;
+    if (r == NULL) {
+	log_log (cell_log, CDEBDNS, 
+		 "dns_lookup_cell: failed to resolve cell %s", cell);
+	return 1;
+    }
+    if (c == NULL)
+	c = cell_new_dynamic (cell);
+
     for(rr = r->head; rr;rr=rr->next){
 	if(rr->type == T_AFSDB) {
 	    struct mx_record *mx = (struct mx_record*)rr->u.data;
@@ -191,34 +297,54 @@ try_to_find_cell(const char *cell, cell_entry *c)
 	    if (mx->preference != 1) {
 		break;
 	    }
-	    if (c == NULL)
-		c = cell_new_dynamic (cell);
 	    if (dbnum >= sizeof (dbservers) / sizeof(*dbservers)) {
 	        break;
 	    }
+	    if (lowest_ttl > rr->ttl || lowest_ttl == 0)
+		lowest_ttl = rr->ttl;
 	    dbservers[dbnum].name = strdup (mx->domain);
 	    if (dbservers[dbnum].name == NULL)
 		err (1, "strdup");
-	    dbservers[dbnum].addr.s_addr = inet_addr ("0.0.0.0");
-	    ++dbnum;
-	    break;
+	    dbservers[dbnum].timeout = CELL_INVALID_HOST;
+	    dbnum++;
 	}
     }
     for(rr = r->head; rr;rr=rr->next){
 	if (rr->type == T_A) {
-	    int i;
-
 	    for (i = 0; i < dbnum; i++) {
 		if (strcmp(dbservers[i].name,rr->domain) == 0) {
 		    dbservers[i].addr = *(rr->u.a);
+		    dbservers[i].timeout = tv.tv_sec + rr->ttl;
 		    break;
 		}
 	    }
 	}
     }
-    if (c)
-	recordcell (c, dbnum, dbservers);
     dns_free_data(r);
+
+    /* catch the hosts that didn't fit in additional rr */
+    c->timeout = lowest_ttl + tv.tv_sec;
+    updatehosts (c, dbnum, dbservers);
+    return 0;
+}
+
+/*
+ * If the cell-information comes from a source that have a time-limit,
+ * make sure the data is uptodate.
+ */
+
+static void
+update_cell (cell_entry *c)
+{
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    if ((c->timeout && c->timeout < tv.tv_sec)
+	|| c->ndbservers == 0) {
+	dns_lookup_cell (c->name, c);
+    }
+    updatehosts (c, c->ndbservers, c->dbservers);
 }
 
 /*
@@ -233,9 +359,11 @@ cell_get_by_name (const char *cellname)
     key.name = cellname;
     data = (cell_entry *)hashtabsearch (cellnamehtab, &key);
     if (data == NULL) {
-	try_to_find_cell (cellname, NULL);
+	dns_lookup_cell (cellname, NULL);
 	data = (cell_entry *)hashtabsearch (cellnamehtab, &key);
     }
+    if (data)
+	update_cell (data);
     return data;
 }
 
@@ -246,10 +374,13 @@ cell_get_by_name (const char *cellname)
 cell_entry *
 cell_get_by_id (int32_t cell)
 {
-    cell_entry key;
+    cell_entry key, *data;
 
     key.id = cell;
-    return (cell_entry *)hashtabsearch (cellnumhtab, &key);
+    data = (cell_entry *)hashtabsearch (cellnumhtab, &key);
+    if (data)
+	update_cell (data);
+    return data;
 }
 
 /*
@@ -277,13 +408,15 @@ cell_new (const char *name)
 	return NULL;
     }
     assert (cellno != 0);
-    c->id         = cellno++;
-    c->expl       = NULL;
-    c->ndbservers = 0;
-    c->dbservers  = NULL;
-    c->suid_cell  = NOSUID_CELL;
+    c->id           = cellno++;
+    c->expl         = NULL;
+    c->ndbservers   = 0;
+    c->active_hosts = 0;
+    c->dbservers    = NULL;
+    c->flags	    = 0;
     hashtabadd (cellnamehtab, c);
     hashtabadd (cellnumhtab, c);
+    c->timeout      = 0;
     celldb_version++;
     return c;
 }
@@ -301,11 +434,12 @@ cell_new_dynamic (const char *name)
     c = cell_new (name);
     if (c == NULL)
 	return NULL;
+    c->expl = "dynamically added cell";
     f = fopen (SYSCONFDIR "/" CELLFILENAME, "a");
     if (f == NULL)
 	f = fopen (TRANSARCSYSCONFDIR "/" CELLFILENAME, "a");
     if (f == NULL) {
-	fprintf (stderr, "Cannot open CellServDB for writing\n");
+	log_log (cell_log, CDEBWARN,"Cannot open CellServDB for writing");
 	return c;
     }
     fprintf (f, ">%s	#dynamically added cell\n", name);
@@ -327,21 +461,25 @@ readdb (char *line, cell_entry* c, int *dbnum, int maxdbs,
      if (*dbnum >= maxdbs) {
 	  return -1;
      }
+     
+     while (*line && isspace((unsigned char)*line))
+	    ++line;
+
      if (inet_aton (line, &numaddr) == 0) {
 	  return -1;
      }
 
-     while (*line && !isspace(*line) && *line != '#')
+     while (*line && !isspace((unsigned char)*line) && *line != '#')
 	 ++line;
 
      hostname = line;
 
-     while (isspace (*hostname) || *hostname == '#')
+     while (isspace ((unsigned char)*hostname) || *hostname == '#')
 	 ++hostname;
 
      eh = hostname;
 
-     while (*eh && !isspace(*eh) && *eh != '#')
+     while (*eh && !isspace((unsigned char)*eh) && *eh != '#')
 	 ++eh;
 
      *eh = '\0';
@@ -353,6 +491,7 @@ readdb (char *line, cell_entry* c, int *dbnum, int maxdbs,
      if (dbservs[*dbnum].name == NULL)
 	 err (1, "strdup");
      dbservs[*dbnum].addr = numaddr;
+     dbservs[*dbnum].timeout = 0;
      ++(*dbnum);
      return 0;
 }
@@ -370,6 +509,7 @@ readcellservdb (const char *filename)
      int lineno = 0;
      int dbnum;
      cell_db_entry dbservs[256];
+     int i;
 
      f = fopen (filename, "r");
      if (f == NULL) {
@@ -378,25 +518,52 @@ readcellservdb (const char *filename)
 
      while (fgets (line, sizeof (line), f)) {
 	  ++lineno;
+	  i = 0;
 	  line[strlen(line) - 1] = '\0';
-	  if (*line == '#' || *line == '\0')
+	  while (line[0] && isspace((unsigned char)line[i]))
+		 i++;
+	  if (line[i] == '#' || line[i] == '\0')
 	       continue;
-	  if (*line == '>') {
+	  if (line[i] == '>') {
 	       if (c != NULL)
-		    recordcell (c, dbnum, dbservs);
-	       c = newcell (line + 1);
+		    updatehosts (c, dbnum, dbservs);
+	       c = newcell (&line[i] + 1);
+	       memset (dbservs, 0, sizeof(dbservs));
 	       dbnum = 0;
 	  } else {
-	       if (readdb(line, c, &dbnum, sizeof (dbservs) /
-			  sizeof(*dbservs),
-			  dbservs, lineno))
-		    continue;
+	      if (readdb(&line[i], c, &dbnum, sizeof (dbservs) /
+			 sizeof(*dbservs),
+			 dbservs, lineno))
+		  continue;
 	  }
      }
      if (c != NULL)
-	  recordcell (c, dbnum, dbservs);
+	  updatehosts (c, dbnum, dbservs);
      fclose (f);
      return 0;
+}
+
+/*
+ * Read single line confilefiles in `filename' and send the 
+ * to `func'.
+ */
+
+static int
+parse_simple_file (const char *filename, void (*func)(const char *))
+{
+    FILE *f;
+    char line[256];
+    
+    f = fopen (filename, "r");
+    if (f == NULL)
+	return 1;
+    
+    while ((fgets (line, sizeof(line), f) != NULL)) {
+	line[strlen(line) - 1] = '\0';
+	(*func) (line);
+    }
+    fclose (f);
+    return 0;
 }
 
 /*
@@ -419,24 +586,13 @@ addthesecell (const char *cellname)
 }
 
 /*
- * Read cells in these cell's
+ * Read cells in TheseCells
  */
 
 static int
 readthesecells (const char *filename)
 {
-     FILE *f;
-     char cell[256];
-
-     f = fopen (filename, "r");
-     if (f == NULL)
-	 return 1;
-
-     while ((fgets (cell, sizeof cell, f) != NULL)) {
-	 cell[strlen(cell) - 1] = '\0';
-	 addthesecell (cell);
-     }
-     fclose (f);
+     parse_simple_file (filename, addthesecell);
      if (numthesecells == 1)
 	 return 1;
      return 0;
@@ -457,9 +613,9 @@ readthiscell (const char *filename)
 	 return 1;
 
      if (fgets (cell, sizeof cell, f) == NULL) {
-	  fprintf(stderr, "Cannot read cellname from %s\n",
+	 log_log (cell_log, CDEBERR, "Cannot read cellname from %s\n",
 		  filename);
-	  return 1;
+	 return 1;
      }
      if (cell[strlen(cell) - 1] == '\n')
 	 cell[strlen(cell) - 1] = '\0';
@@ -474,48 +630,49 @@ readthiscell (const char *filename)
  * Read suidcells file and set suidcell flag
  */
 
+static void
+addsuidcell (const char *cellname)
+{
+    cell_entry *e;
+
+    e = cell_get_by_name (cellname);
+    if (e == NULL) {
+	log_log (cell_log, CDEBWARN,
+		 "suidcell: cell %s doesn't exist in the db\n", cellname);
+    } else {
+	e->flags |= SUID_CELL;
+    }
+}
+
 static int
 readsuidcell (const char *filename)
 {
-     FILE *f;
-     char cell[256];
-
-     f = fopen (filename, "r");
-     if (f == NULL)
-	 return 1;
-
-     while (fgets (cell, sizeof(cell), f) != NULL) {
-	 int i;
-	 cell_entry *e;
-
-	 i = strlen (cell);
-	 if (cell[i - 1] == '\n')
-	     cell[i - 1] = '\0';
-
-	 e = cell_get_by_name (cell);
-	 if (e == NULL) {
-	     fprintf (stderr, "cell %s doesn't exist in the db\n", cell);
-	 } else {
-	     e->suid_cell = SUID_CELL;
-	 }
-     }
-     fclose (f);
-     return 0;
+    return parse_simple_file (filename, addsuidcell);
 }
 
 /*
- * initialize suid information, if hasn't already been done
+ *
  */
 
 static void
-cond_readsuidcell (void)
+add_dynroot(const char *cellname)
 {
-    if (suid_read)
-	return;
+    cell_entry *e; 
 
-    if (readsuidcell (SYSCONFDIR "/" SUIDCELLSFILENAME))
-	readsuidcell (TRANSARCSYSCONFDIR "/" SUIDCELLSFILENAME);
-    suid_read = 1;
+    e = cell_get_by_name (cellname);
+    if (e == NULL) {
+	log_log (cell_log, CDEBWARN,
+		 "dynroot: cell %s doesn't exist in the db\n", cellname);
+    } else {
+	e->flags |= DYNROOT_CELL;
+	dynrootdb_in_use = 1;
+    }
+}
+
+static int
+readdynrootdb (const char *filename)
+{
+    return parse_simple_file (filename, add_dynroot);
 }
 
 /*
@@ -525,16 +682,26 @@ cond_readsuidcell (void)
 static int cell_inited = 0;
 
 void
-cell_init (int cellcachesize)
+cell_init (int cellcachesize, Log_method *log)
 {
     char *env;
     int ret;
 
+    assert (log);
+
     if (cell_inited) {
-	fprintf(stderr, "cell_init: Already initlized\n");
+	log_log (cell_log, CDEBWARN, "cell_init: Already initlized");
 	return;
     }
     cell_inited = 1;
+
+#ifdef HAVE_RES_INIT
+    res_init();
+#endif
+
+    cell_log = log_unit_init (log, "cell", celldebug_units, CDEBDEFAULT);
+    if (cell_log == NULL)
+	errx (1, "cell_init: log_unit_init failed");
 
     if (cellcachesize == 0)
 	cellcachesize = DEFCELLCACHESIZE;
@@ -559,14 +726,15 @@ cell_init (int cellcachesize)
 
     if (readcellservdb (SYSCONFDIR "/" CELLFILENAME)) {
 	if (readcellservdb(TRANSARCSYSCONFDIR "/" CELLFILENAME)) {
-	    fprintf(stderr, "Can't read the CellServDB file," \
-		    "will use DNS AFSDB entries\n");
+	    log_log (cell_log, CDEBWARN,
+		     "Can't read the CellServDB file, "
+		     "will use DNS AFSDB entries");
 	}
     }
     ret = add_special_dynroot_cell();
     if (ret)
-	fprintf (stderr, "adding dynroot cell failed with %d", ret);
-
+	log_log (cell_log, CDEBWARN, "adding dynroot cell failed with %d", ret);
+    
     if (readthesecells (SYSCONFDIR "/" THESECELLFILENAME))
 	readthesecells (TRANSARCSYSCONFDIR "/" THESECELLFILENAME);
     if (getenv("HOME") != NULL) {
@@ -577,6 +745,11 @@ cell_init (int cellcachesize)
 	readthesecells (homedir);
     }
     addthesecell (thiscell);
+    if (readsuidcell (SYSCONFDIR "/" SUIDCELLSFILENAME))
+	readsuidcell (TRANSARCSYSCONFDIR "/" SUIDCELLSFILENAME);
+    if (readdynrootdb (SYSCONFDIR "/" DYNROOTDBFILENAME))
+	readdynrootdb (TRANSARCSYSCONFDIR "/" DYNROOTDBFILENAME);
+
 }
 
 /*
@@ -603,9 +776,11 @@ cell_dbservers_by_id (int32_t id, int *num)
 	return NULL;
 
     if (data->ndbservers == 0)
-	try_to_find_cell (data->name, data);
+	dns_lookup_cell (data->name, data);
+     if (data->ndbservers == 0 || data->active_hosts == 0)
+	 return NULL;
 
-    *num = data->ndbservers;
+    *num = data->active_hosts;
     return data->dbservers;
 }
 
@@ -622,8 +797,8 @@ cell_findnamedbbyname (const char *cell)
      if (data == NULL)
 	  return NULL;
      if (data->ndbservers == 0)
-	 try_to_find_cell (cell, data);
-     if (data->ndbservers == 0)
+	 dns_lookup_cell (cell, data);
+     if (data->ndbservers == 0 || data->active_hosts == 0)
 	 return NULL;
 
      return data->dbservers[0].name ;
@@ -648,7 +823,7 @@ cell_getcellbyhost(const char *host)
     ptr = strchr (host, '.');
     if (ptr == NULL)
 	return NULL;
-    return strdup (ptr + 1);
+    return ptr + 1;
 }
 
 /*
@@ -703,12 +878,9 @@ cell_setthiscell (const char *cell)
 {
     cell_entry *data;
 
-    if (!cell_inited)
-	cell_init (0);
-
     data = cell_get_by_name(cell);
     if (data == NULL) {
-	fprintf (stderr, "this cell doesn't exist: %s", cell);
+	log_log (cell_log, CDEBWARN, "this cell doesn't exist: %s", cell);
 	return 1;
     }
 
@@ -721,16 +893,27 @@ cell_setthiscell (const char *cell)
 }
 
 /*
+ * Return if this should be in dynroot
+ */
+
+Bool
+cell_dynroot (const cell_entry *c)
+{
+    assert (c);
+    if (!dynrootdb_in_use)
+	return TRUE;
+    return (c->flags & DYNROOT_CELL) != 0;
+}
+
+/*
  * Return if this is a suid cell
  */
 
 Bool
-cell_issuid (cell_entry *c)
+cell_issuid (const cell_entry *c)
 {
     assert (c);
-
-    cond_readsuidcell ();
-    return c->suid_cell == SUID_CELL;
+    return (c->flags & SUID_CELL) != 0;
 }
 
 Bool
@@ -738,7 +921,6 @@ cell_issuid_by_num (int32_t cell)
 {
     cell_entry *c;
 
-    cond_readsuidcell ();
     c = cell_get_by_id (cell);
     if (c == NULL)
 	return FALSE;
@@ -751,7 +933,6 @@ cell_issuid_by_name (const char *cell)
 {
     cell_entry *c;
 
-    cond_readsuidcell ();
     c = cell_get_by_name (cell);
     if (c == NULL)
 	return FALSE;
@@ -764,14 +945,53 @@ cell_setsuid_by_num (int32_t cell)
 {
     cell_entry *c;
 
-    cond_readsuidcell ();
     c = cell_get_by_id (cell);
     if (c == NULL)
 	return FALSE;
     
-    c->suid_cell = SUID_CELL;
+    c->flags |= SUID_CELL;
 
     return 0;
+}
+
+/*
+ *
+ */
+
+void
+cell_print_cell (cell_entry *c, FILE *out)
+{
+    int i;
+    char timestr[30];
+    struct tm tm;
+    time_t t;
+
+    fprintf (out, "name: %s id: %d type: %s\n",
+	     c->name, c->id, c->timeout ? "dynamic" : "static");
+    fprintf (out, "comment: %s\n", c->expl);
+    if (c->timeout) {
+	t = c->timeout;
+	strftime(timestr, sizeof(timestr),
+		 "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm));
+	fprintf (out, "timeout: %s\n", timestr);
+    }
+    fprintf (out, "num hosts: %d active hosts: %d\n",
+	     c->ndbservers, c->active_hosts);
+    for (i = 0; i < c->ndbservers; i++) {
+	char *buf;
+	if (c->dbservers[i].timeout == CELL_INVALID_HOST)
+	    buf = "invalid";
+	else if (c->dbservers[i].timeout == 0)
+	    buf = "no timeout";
+	else {
+	    t = c->timeout;
+	    strftime(timestr, sizeof(timestr),
+		     "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm));
+	    buf = timestr;
+	}
+	fprintf (out, " host: %s %s - %s\n", c->dbservers[i].name,
+		 inet_ntoa (c->dbservers[i].addr), buf);
+    }
 }
 
 /*
@@ -886,7 +1106,7 @@ add_special_dynroot_cell (void)
     c->expl       = "The special dynroot cell";
     c->ndbservers = 0;
     c->dbservers  = NULL;
-    c->suid_cell  = NOSUID_CELL;
+    c->flags	  = 0;
     hashtabadd (cellnamehtab, c);
     hashtabadd (cellnumhtab, c);
     return 0;

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: check-glibc.m4,v 1.1 2000/09/11 14:40:45 art Exp $
+dnl $KTH: check-glibc.m4,v 1.2 2000/03/14 00:04:09 assar Exp $
 dnl
 dnl
 dnl test for GNU libc

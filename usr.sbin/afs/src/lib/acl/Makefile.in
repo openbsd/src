@@ -1,10 +1,11 @@
 #
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:54 art Exp $
+# $KTH: Makefile.in,v 1.7 2000/10/10 20:55:55 lha Exp $
 #
 
 SHELL = /bin/sh
 
 srcdir = @srcdir@
+top_builddir	= ../..
 VPATH = @srcdir@
 
 CC = @CC@
@@ -25,6 +26,7 @@ libdir = @libdir@
 INCLUDES = -I../../include \
 	   -I$(srcdir)/../../include \
 	   -I$(srcdir) \
+	   @INC_roken@ \
 	   -I.
 
 REALCFLAGS = $(INCLUDES) @KRB4_INC_FLAGS@ $(CFLAGS)

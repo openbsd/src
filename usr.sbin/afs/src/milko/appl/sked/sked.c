@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +34,7 @@
 #include <config.h>
 #include "roken.h"
 
-RCSID("$Id: sked.c,v 1.1 2000/09/11 14:41:12 art Exp $");
+RCSID("$KTH: sked.c,v 1.26 2000/12/29 20:21:30 tol Exp $");
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -51,7 +46,7 @@ RCSID("$Id: sked.c,v 1.1 2000/09/11 14:41:12 art Exp $");
 #include <assert.h>
 
 #include <sl.h>
-#include <getarg.h>
+#include <agetarg.h>
 
 #include <atypes.h>
 #include <rx/rx.h>
@@ -224,13 +219,19 @@ volcreate_cmd (int argc, char **argv)
     u_int32_t num, part;
     int ret;
 
-    if (argc != 4) {
-	printf ("usage: volcreate part num name\n");
+    if (argc < 4 || argc > 5) {
+	printf ("usage: volcreate part num name [partdir]\n");
 	INTER_RETURN(1);
     }
 
-    part = atoi (argv[1]);
-    
+    dpart_root = argv[4];
+
+    ret = dp_parse (argv[1], &part);
+    if (ret) {
+	printf ("volcreate: `%s' is a invalid argument for partition\n", argv[1]);
+	INTER_RETURN(1);
+    }
+	
     num = atoi (argv[2]);
     if (num == 0) {
 	printf ("volcreate: `%s' is a invalid argument for volnum\n", argv[2]);
@@ -258,8 +259,8 @@ volshow_cmd (int argc, char **argv)
     u_int32_t num, part;
     int ret;
 
-    if (argc != 3) {
-	printf ("usage: volshow part num\n");
+    if (argc < 3 || argc > 4) {
+	printf ("usage: volshow part num [partdir]\n");
 	INTER_RETURN(1);
     }
 
@@ -270,6 +271,8 @@ volshow_cmd (int argc, char **argv)
 	printf ("volcreate: `%s' is a invalid argument for volnum\n", argv[2]);
 	INTER_RETURN(1);
     }
+
+    dpart_root = argv[4];
 
     ret = show_volume (part, num);
     if (ret) {
@@ -329,8 +332,8 @@ volls_cmd (int argc, char **argv)
     struct dp_part *dp;
     int ret;
     
-    if (argc != 4) {
-	printf ("volls part volume# vnode#\n");
+    if (argc < 4 || argc > 5) {
+	printf ("volls part volume# vnode# [partdir]\n");
 	INTER_RETURN(1);
     }
 
@@ -346,6 +349,8 @@ volls_cmd (int argc, char **argv)
 	printf ("erronous vnode number\n");
 	INTER_RETURN(1);
     }
+
+    dpart_root = argv[4];
 
     ret = dp_create (part, &dp);
     if (ret) {
@@ -423,14 +428,14 @@ volvnode_cmd (int argc, char **argv)
     int do_list = 0;
     int ret, optind = 0;
 
-    struct getargs args[] = {
-	{"part",	0, arg_string, NULL,
-	 "what part to use", NULL, arg_mandatory},
-	{"vol",	        0, arg_string, NULL,
-	 "what vol to use", NULL, arg_mandatory},
-	{"list",      'l', arg_flag, NULL,
+    struct agetargs args[] = {
+	{"part",	0, aarg_string, NULL,
+	 "what part to use", NULL, aarg_mandatory},
+	{"vol",	        0, aarg_string, NULL,
+	 "what vol to use", NULL, aarg_mandatory},
+	{"list",      'l', aarg_flag, NULL,
 	 "list vnodes" },
-        { NULL, 0, arg_end, NULL }
+        { NULL, 0, aarg_end, NULL }
     }, *arg;
 
     arg = args;
@@ -438,8 +443,8 @@ volvnode_cmd (int argc, char **argv)
     arg->value = &vol_str;     arg++;
     arg->value = &do_list;   arg++;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(args, "volvnode", NULL, ARG_AFSSTYLE);
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(args, "volvnode", NULL, AARG_AFSSTYLE);
 	INTER_RETURN(1);
     }
     part = atoi(part_str);
@@ -555,14 +560,14 @@ fvolcreate_cmd (int argc, char **argv)
     struct dp_part *dp;
     int ret, optind = 0;
 
-    struct getargs args[] = {
-	{"part",	0, arg_string, NULL,
-	 "what part to use", NULL, arg_mandatory},
-	{"vol",	        0, arg_integer, NULL,
-	 "what vol-number to use", NULL, arg_mandatory},
-	{"path",        0, arg_string, NULL,
-	 "what path to volume-ify", NULL, arg_mandatory},
-        { NULL, 0, arg_end, NULL }
+    struct agetargs args[] = {
+	{"part",	0, aarg_string, NULL,
+	 "what part to use", NULL, aarg_mandatory},
+	{"vol",	        0, aarg_integer, NULL,
+	 "what vol-number to use", NULL, aarg_mandatory},
+	{"path",        0, aarg_string, NULL,
+	 "what path to volume-ify", NULL, aarg_mandatory},
+        { NULL, 0, aarg_end, NULL }
     }, *arg;
 
     arg = args;
@@ -570,8 +575,8 @@ fvolcreate_cmd (int argc, char **argv)
     arg->value = &vol_int;    arg++;
     arg->value = &path_str;   arg++;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(args, "volvnode", NULL, ARG_AFSSTYLE);
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(args, "volvnode", NULL, AARG_AFSSTYLE);
 	INTER_RETURN(1);
     }
 
@@ -651,20 +656,23 @@ salvage_cmd (int argc, char **argv)
     int ret, optind = 0;
 	struct volume_handle *volh;
 
-    struct getargs args[] = {
-	{"part",	0, arg_string, NULL,
-	 "what part to use", NULL, arg_mandatory},
-	{"vol",	        0, arg_integer, NULL,
-	 "what vol-number to use", NULL, arg_mandatory},
-        { NULL, 0, arg_end, NULL }
+    struct agetargs args[] = {
+	{"part",	0, aarg_string, NULL,
+	 "what part to use", NULL, aarg_mandatory},
+	{"vol",	        0, aarg_integer, NULL,
+	 "what vol-number to use", NULL, aarg_mandatory},
+	{"partdir",	0, aarg_string, NULL,
+	 "where to find vicep*", NULL, aarg_optional},
+        { NULL, 0, aarg_end, NULL }
     }, *arg;
 
     arg = args;
     arg->value = &part_str;   arg++;
     arg->value = &vol;    arg++;
+    arg->value = &dpart_root;    arg++;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(args, "volvnode", NULL, ARG_AFSSTYLE);
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(args, "volvnode", NULL, AARG_AFSSTYLE);
 	INTER_RETURN(1);
     }
 
@@ -766,7 +774,14 @@ int
 main (int argc, char **argv)
 {
     int ret;
-    char *log_name = "/dev/stderr";
+    Log_method *method;
+    char *log_file = "/dev/stderr";
+    
+    set_progname (argv[0]);
+
+    method = log_open (get_progname(), log_file);
+    if (method == NULL)
+	errx (1, "log_open failed");
     
    /*
     * We only boot, not init since we dont want to read in all volumes
@@ -774,7 +789,7 @@ main (int argc, char **argv)
     vld_boot ();
     mnode_init (173);
     
-    mlog_loginit (log_name, milko_deb_units, MDEFAULT_LOG /* MDEBALL */);
+    mlog_loginit (method, milko_deb_units, MDEFAULT_LOG /* MDEBALL */);
 
     /*
      * Command loop or if command, eval.

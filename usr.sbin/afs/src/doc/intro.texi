@@ -1,6 +1,10 @@
-@c $Id: intro.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+@c Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
 
-@node Introduction, Description of AFS infrastructure, Top, Top
+@c $KTH: intro.texi,v 1.15 2000/12/01 08:32:09 lha Exp $
+
+@node Introduction, AFS infrastructure, Top, Top
 @comment  node-name,  next,  previous,  up
 @chapter Introduction
 
@@ -10,7 +14,7 @@ If something doesn't work, it's probably because it doesn't. If you
 don't have backup of your data, take backup.
 @end quotation
 
-@heading What is Arla?
+@section What is Arla?
 
 Arla is a free AFS implementation. Some of the goals are:
 
@@ -20,9 +24,11 @@ to have an implementation that is free and can be used for adding and
 playing with cool stuff, like support for disconnected-mode. Implement
 features you can't get from commercial AFS.
 @item
-to provide an alternative to Transarc's AFS-client and server implementations.
+to provide an alternative to Transarc's and OpenAFS AFS-clients and
+server implementations.
 @item
-to add support for platfroms that don't have AFS support from Transarc today.
+to add support for platfroms that don't have AFS support from Transarc
+or OpenAFS today.
 @end itemize
 
 This release is known to work on the following platforms: NetBSD,
@@ -33,12 +39,12 @@ following platforms: SunOS, AIX, IRIX, Digital UNIX. Some fixes might
 be necessary to make Arla work.
 
 There is or has been done work to support the following platforms: HPUX,
-Fujitsu UXP/V, . Some development is necessary to make Arla work.
+Fujitsu UXP/V. Some development is necessary to make Arla work.
 
 There is work going on to support the following platform: Windows
 NT/2000. Contributions are very welcome.
 
-@heading Status
+@section Status
 
 Arla has the following features (quality varies between
 stable and not implemented):
@@ -64,7 +70,10 @@ API to the storage backend(s). Milko is still unstable and
 not fit for production yet.
 @end itemize
 
-@heading Bug reports
+@section Bug reports
+
+@cindex Bug reports
+@cindex Comments
 
 If you find bugs in this software, make sure it is a genuine bug and not
 just a part of the code that isn't implemented.
@@ -78,12 +87,20 @@ one. Please make any patches with @code{diff -u} or @code{diff -c}.
 
 Suggestions, comments and other non bug reports are also welcome.
 
-@heading Mailing list
+@section Mailing list
+
+@cindex Mailing list
+@cindex Mail archives
+@cindex Archives
 
 There are two mailing lists with talk about
 Arla. @email{arla-announce@@stacken.kth.se} is a low-volume announcement
 list, while @email{arla-drinkers@@stacken.kth.se} is for general
-discussion.  There is also commit list
+discussion.
+
+There is also commit list
 @email{arla-commit@@stacken.kth.se}.  Send a message to
 @email{LIST-request@@stacken.kth.se} to subscribe.
 
+The list are achived on
+@url{http://www.stacken.kth.se/lists/}.

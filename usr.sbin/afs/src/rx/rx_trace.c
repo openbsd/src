@@ -1,6 +1,6 @@
 #include "rx_locl.h"
 
-RCSID("$Id: rx_trace.c,v 1.3 2000/09/11 14:41:23 art Exp $");
+RCSID("$KTH: rx_trace.c,v 1.5 1998/09/09 10:17:53 assar Exp $");
 
 #ifdef RXTRACEON
 char rxi_tracename[80] = "/tmp/rxcalltrace";

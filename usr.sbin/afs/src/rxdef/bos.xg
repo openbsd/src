@@ -1,5 +1,5 @@
 /* This is -*-c-*- */
-/* $Id: bos.xg,v 1.1 2000/09/11 14:41:24 art Exp $ */
+/* $KTH: bos.xg,v 1.6 2000/08/31 02:46:42 lha Exp $ */
 
 /*
  * Interface to BOS server
@@ -60,6 +60,11 @@ const KTIME_DAY			= 0x08;
 const KTIME_TIME		= 0x07;
 const KTIME_NEVER		= 0x10;
 const KTIME_NOW			= 0x20;
+
+/* GetRestartTime */
+
+const BOZO_RESTARTTIME_GENERAL	= 0x1;	/* general reboot time */
+const BOZO_RESTARTTIME_NEWBIN	= 0x2;	/* new binary */
 
 #if 0
 const GETSTATUS_FSRUN  		= "file server running";
@@ -132,41 +137,41 @@ struct bnode_ops {
 #endif
 
 
-CreateBnode (IN string type,
-	     IN string instance,
-	     IN string p1,
-	     IN string p2,
-	     IN string p3,
-	     IN string p4,
-	     IN string p5,
-	     IN string p6) = 80;
+CreateBnode (IN string type<BOZO_BSSIZE>,
+	     IN string instance<BOZO_BSSIZE>,
+	     IN string p1<BOZO_BSSIZE>,
+	     IN string p2<BOZO_BSSIZE>,
+	     IN string p3<BOZO_BSSIZE>,
+	     IN string p4<BOZO_BSSIZE>,
+	     IN string p5<BOZO_BSSIZE>,
+	     IN string p6<BOZO_BSSIZE>) = 80;
 
-DeleteBnode (IN string instance) = 81;
+DeleteBnode (IN string instance<BOZO_BSSIZE>) = 81;
 
-SetStatus (IN string instance) = 82;
+SetStatus (IN string instance<BOZO_BSSIZE>) = 82;
 
-GetStatus (IN string instance,
+GetStatus (IN string instance<BOZO_BSSIZE>,
 	   OUT long *inStat,
 	   OUT string statdescr<BOZO_BSSIZE>) = 83;
 
 
 EnumerateInstance (IN long instance,
-		   OUT string iname) = 84;
+		   OUT string iname<BOZO_BSSIZE>) = 84;
 
-GetInstanceInfo ( IN string instance,
-		  OUT string type<>,
-		  OUT struct bozo_status *status) = 85;
+GetInstanceInfo (IN string instance<BOZO_BSSIZE>,
+		 OUT string type<BOZO_BSSIZE>,
+		 OUT struct bozo_status *status) = 85;
 		  
-GetInstanceParm (IN string instance<>,
+GetInstanceParm (IN string instance<BOZO_BSSIZE>,
 		 IN long num,
-		 OUT string parm<>) = 86;
+		 OUT string parm<BOZO_BSSIZE>) = 86;
 
-AddSUser (IN string name) = 87;
+AddSUser (IN string name<BOZO_BSSIZE>) = 87;
 
-DeleteSUser (IN string name) = 88;
+DeleteSUser (IN string name<BOZO_BSSIZE>) = 88;
 
 ListSUsers (IN long an,
-	    OUT string name<>) = 89;
+	    OUT string name<BOZO_BSSIZE>) = 89;
 
 ListKeys (IN long an,
 	  OUT long *kvno,
@@ -178,18 +183,18 @@ AddKey (IN long an,
 
 DeleteKey (IN long an) = 92;
 
-SetCellName (IN string name) = 93;
+SetCellName (IN string name<BOZO_BSSIZE>) = 93;
 
-GetCellName (OUT string name<>) = 94;
+GetCellName (OUT string name<BOZO_BSSIZE>) = 94;
 
 GetCellHost (IN long awhich,
-	     OUT string name<>) = 95;
+	     OUT string name<BOZO_BSSIZE>) = 95;
 
-AddCellHost (IN string name) = 96;
+AddCellHost (IN string name<BOZO_BSSIZE>) = 96;
 
-DeleteCellHost (IN string name) = 97;
+DeleteCellHost (IN string name<BOZO_BSSIZE>) = 97;
 
-SetTStatus (IN string instance,
+SetTStatus (IN string instance<BOZO_BSSIZE>,
 	    IN long status) = 98;
 
 ShutdownAll () = 99;
@@ -202,24 +207,22 @@ SetNoAuthFlag (IN long flag) = 102;
 
 ReBozo () = 103;
 
-Restart (IN string instance) = 104;
+Restart (IN string instance<BOZO_BSSIZE>) = 104;
 
-Install (IN string path,
+Install (IN string path<BOZO_BSSIZE>,
 	 IN long size,
 	 IN long flags,
-	 IN long date) = 105;
-
-/* EndBOZO_Install ? XXX */
+	 IN long date) split = 105;
 
 UnInstall (IN string path) = 106;
 
-GetDates (IN string path,
+GetDates (IN string path<BOZO_BSSIZE>,
 	  OUT long *newtime,
 	  OUT long *baktime,
 	  OUT long *oldtime) = 107;
 
 
-Exec (IN string cmd) = 108;
+Exec (IN string cmd<BOZO_BSSIZE>) = 108;
 
 Prune (IN long flags) = 109;
 
@@ -231,18 +234,13 @@ SetRestartTime (IN long type,
 GetRestartTime (IN long type,
 		OUT struct bozo_netKTime *restartTime) = 111;
 
-#if 0
-GetLog 112
-/* the documentation about this call(s?) is/are very confusing/confused */
-#endif
+GetLog(IN string name<BOZO_BSSIZE>) split = 112;
 
 WaitAll () =  113;
 
 GetInstanceStrings (IN string instance,
-		    OUT string errorname<>,
-		    OUT string spare1<>,
-		    OUT string spare2<>,
-		    OUT string spare3<>) = 114;
+		    OUT string errorname<BOZO_BSSIZE>,
+		    OUT string spare1<BOZO_BSSIZE>,
+		    OUT string spare2<BOZO_BSSIZE>,
+		    OUT string spare3<BOZO_BSSIZE>) = 114;
 
-
-/* XXX */

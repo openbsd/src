@@ -1,18 +1,20 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:26 art Exp $
+# $KTH: Makefile.in,v 1.75.2.2 2001/05/17 07:39:13 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
-REALCFLAGS	= -I../include -I$(srcdir)/../include @KRB4_INC_FLAGS@ $(CFLAGS) \
-		  -I../rxdef -I$(srcdir)/../appl/lib
+REALCFLAGS	= -I$(srcdir)/.. -I../include -I$(srcdir)/../include \
+		  @KRB4_INC_FLAGS@ \
+		  $(CFLAGS) -I../rxdef -I$(srcdir)/../appl/lib @INC_roken@
 CPPFLAGS	= @CPPFLAGS@
 DEFS		= @DEFS@
 LDFLAGS		= @LDFLAGS@
-LIBS		= -L../lib/roken -lroken @LIBS@
+LIBS		= @LIB_roken@ @LIBS@
 KAFS_LIBS	= @AFS_EXTRA_LIBS@ @KAFS_LIBS@
 KRB_LIBS	= @KRB4_LIB_FLAGS@
 APPL_LIB	= -L../appl/lib -larlalib -L../lib/ko -lko
@@ -30,7 +32,9 @@ TEST_PROGRAMS = write-ro-file hello-world read-vs-mmap read-vs-mmap2	 \
 		kill-softly kill-softer rm-rf apwd exit-wo-close	 \
 		mmap-vs-read mmap-vs-read2 strange-characters-c pine	 \
 		append-over-page write-ucc utime-dir mmap-shared-write	 \
-		rename5 rename-under-feet write-closed write-closed2
+		rename5 rename-under-feet write-closed write-closed2	 \
+		truncate fchmod fhbench make-page utime-file		 \
+		invalidate-file still-there-p mmap-cat
 
 TEST_OBJS     = write-ro-file.o read-vs-mmap.o read-vs-mmap2.o		   \
 		mmap-and-read.o large-dir.o large-dir2.o large-dir3.o	   \
@@ -43,7 +47,9 @@ TEST_OBJS     = write-ro-file.o read-vs-mmap.o read-vs-mmap2.o		   \
 		exit-wo-close.o mmap-vs-read.o mmap-vs-read2.o		   \
 		strange-characters-c.o pine.o append-over-page.o	   \
 		write-ucc.o utime-dir.o mmap-shared-write.o rename5.o	   \
-		rename-under-feet.o write-closed.o write-closed2.o
+		rename-under-feet.o write-closed.o write-closed2.o	   \
+		truncate.o fchmod.o fhbench.o make-page.o utime-file.o	   \
+		invalidate-file.o still-there-p.o mmap-cat.o
 
 TEST_SRCS     = write-ro-file.c read-vs-mmap.c read-vs-mmap2.c		   \
 		mmap-and-read.c large-dir.c large-dir2.c large-dir3.o	   \
@@ -56,7 +62,9 @@ TEST_SRCS     = write-ro-file.c read-vs-mmap.c read-vs-mmap2.c		   \
 		exit-wo-close.c mmap-vs-read.c mmap-vs-read2.c		   \
 		strange-characters-c.c pine.c append-over-page.c	   \
 		write-ucc.c utime-dir.c mmap-shared-write.c rename5.c	   \
-		rename-under-feet.c write-closed.c write-closed2.c
+		rename-under-feet.c write-closed.c write-closed2.c	   \
+		truncate.c fchmod.c fhbench.c make-page.c utime-file.c	   \
+		invalidate-file.c still-there-p.c mmap-cat.c
 
 all: run-tests $(TEST_PROGRAMS)
 
@@ -94,8 +102,23 @@ large-dir2: large-dir2.o
 large-dir3: large-dir3.o
 	$(CC) $(LDFLAGS) -o $@ large-dir3.o $(LIBS)
 
+fchmod: fchmod.o
+	$(CC) $(LDFLAGS) -o $@ fchmod.o $(LIBS)
+
+truncate: truncate.o
+	$(CC) $(LDFLAGS) -o $@ truncate.o $(LIBS)
+
+make-page: make-page.o
+	$(CC) $(LDFLAGS) -o $@ make-page.o $(LIBS)
+
+still-there-p: still-there-p.o
+	$(CC) $(LDFLAGS) -o $@ still-there-p.o $(LIBS)
+
+mmap-cat: mmap-cat.o
+	$(CC) $(LDFLAGS) -o $@ mmap-cat.o  $(APPL_LIB) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
 ga-test: ga-test.o
-	$(CC) $(LDFLAGS) -o $@ ga-test.o $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ ga-test.o $(APPL_LIB) $(LIBS)
 
 test-setgroups: test-setgroups.o
 	$(CC) $(LDFLAGS) -o $@ test-setgroups.o $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
@@ -158,6 +181,9 @@ rm-rf: rm-rf.o
 apwd: apwd.o
 	$(CC) $(LDFLAGS) -o $@ apwd.o $(APPL_LIB) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
 
+invalidate-file: invalidate-file.o
+	$(CC) $(LDFLAGS) -o $@ invalidate-file.o $(APPL_LIB) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
 exit-wo-close: exit-wo-close.o
 	$(CC) $(LDFLAGS) -o $@ exit-wo-close.o $(APPL_LIB) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
 
@@ -176,6 +202,9 @@ write-ucc: write-ucc.o
 utime-dir: utime-dir.o
 	$(CC) $(LDFLAGS) -o $@ utime-dir.o $(KRB_LIBS) $(LIBS)
 
+utime-file: utime-file.o
+	$(CC) $(LDFLAGS) -o $@ utime-file.o $(LIBS)
+
 mmap-shared-write: mmap-shared-write.o
 	$(CC) $(LDFLAGS) -o $@ mmap-shared-write.o $(KRB_LIBS) $(LIBS)
 
@@ -190,6 +219,9 @@ write-closed: write-closed.o
 
 write-closed2: write-closed2.o
 	$(CC) $(LDFLAGS) -o $@ write-closed2.o $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
+
+fhbench: fhbench.o
+	$(CC) $(LDFLAGS) -o $@ fhbench.o $(APPL_LIB) $(KAFS_LIBS) $(KRB_LIBS) $(LIBS)
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
@@ -207,7 +239,8 @@ clean:
 
 realclean:
 
-distclean:
+distclean: clean
+	rm -f Makefile
 
 mostlyclean:
 

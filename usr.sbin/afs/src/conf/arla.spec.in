@@ -1,5 +1,5 @@
 #
-# $Id: arla.spec.in,v 1.1 2000/09/11 14:40:52 art Exp $
+# $KTH: arla.spec.in,v 1.4 2000/10/08 06:03:14 lha Exp $
 #
 # A spec file for build a arla rpm
 #
@@ -31,12 +31,14 @@ BuildRoot:      /var/tmp/arla-%{version}-%{release}-root
 Prefix: %{prefix}
 
 Provides: arla
-Requires: krb4
 
 %description
 A free implementation of AFS
 
 %changelog
+
+* Wed Sep 20 2000 <lha@stacken.kth.se>
+  Cleaned some
 
 * Thu Jan 21 2000 <lha@s3.kth.se>
   Added to distribution
@@ -91,9 +93,9 @@ mv xfs.smp.o.save xfs.smp.o
 %install
 
 mkdir ${RPM_BUILD_ROOT}/etc
-make prefix=$RPM_BUILD_ROOT%{prefix} install
-rm $RPM_BUILD_ROOT%{prefix}/bin/xfs.o
-
+mkdir ${RPM_BUILD_ROOT}/sbin
+make install DESTDIR=$RPM_BUILD_ROOT
+rm $RPM_BUILD_ROOT/%{prefix}/bin/xfs.o
 
 KERNEL_VERSION=$(uname -r | sed 's/smp$//')
 
@@ -106,10 +108,6 @@ mkdir -p $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}smp/fs
 cp xfs/linux/xfs.smp.o \
     $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}smp/fs/xfs.o
 
-mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
-cp xfs/linux/bin/arla $RPM_BUILD_ROOT/etc/rc.d/init.d/arla
-chmod 555 $RPM_BUILD_ROOT/etc/rc.d/init.d/arla
-
 cp xfs/linux/libgetcwd.so $RPM_BUILD_ROOT%{prefix}/lib
 chmod 555 $RPM_BUILD_ROOT%{prefix}/lib/libgetcwd.so
 
@@ -118,6 +116,8 @@ chmod 555 $RPM_BUILD_ROOT%{prefix}/lib/libgetcwd.so
 depmod -a
 
 %files
+
+%defattr(-,root,root)
 
 %doc README NEWS ChangeLog
 
@@ -129,5 +129,6 @@ depmod -a
 %{prefix}/lib
 %{prefix}/include
 %{prefix}/cache
-/etc/rc.d/init.d
+/etc
+/sbin
 /lib/modules

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: koerror.c,v 1.3 2000/09/11 14:40:58 art Exp $");
+RCSID("$KTH: koerror.c,v 1.20 2001/01/08 16:48:03 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -51,6 +46,7 @@ RCSID("$Id: koerror.c,v 1.3 2000/09/11 14:40:58 art Exp $");
 #include <pts.h>
 #include <bos.h>
 #include <ubik.h>
+#include <ka.h>
 #include <rx/rx.h>
 #include <rx/rxgencon.h>
 #ifdef KERBEROS
@@ -230,6 +226,52 @@ static struct koerr koerrmsg[] = {
     {UBADPATH,	              "UBADPATH"},
     {UBADF,	              "UBADF"},
     {UREINITIALIZE,	      "UREINITIALIZE"},
+
+    /* ka errors */
+
+    {KADATABASEINCONSISTENT,	"ka - database inconsistent"},
+    {KAEXIST,			"ka - already exists"},
+    {KAIO,			"ka - io error"},
+    {KACREATEFAIL,		"ka - creation failed"},
+    {KANOENT,			"ka - no such entry"},
+    {KAEMPTY,			"ka - empty"},
+    {KABADNAME,			"ka - bad name"},
+    {KABADINDEX,		"ka - bad index"},
+    {KANOAUTH,			"ka - no authorization"},
+    {KAANSWERTOOLONG,		"ka - answer too long"},
+    {KABADREQUEST,		"ka - bad request"},
+    {KAOLDINTERFACE,		"ka - old interface"},
+    {KABADARGUMENT,		"ka - bad argument"},
+    {KABADCMD,			"ka - bad command"},
+    {KANOKEYS,			"ka - no keys"},
+    {KAREADPW,			"ka - error reading password"},
+    {KABADKEY,			"ka - bad key"},
+    {KAUBIKINIT,		"ka - error initialing ubik"},
+    {KAUBIKCALL,		"ka - error in ubik call"},
+    {KABADPROTOCOL,		"ka - bad protocol"},
+    {KANOCELLS,			"ka - no cells"},
+    {KANOCELL,			"ka - no cell"},
+    {KATOOMANYUBIKS,		"ka - too many ubiks"},
+    {KATOOMANYKEYS,		"ka - too many keys"},
+    {KABADTICKET,		"ka - bad ticket"},
+    {KAUNKNOWNKEY,		"ka - unknown key"},
+    {KAKEYCACHEINVALID,		"ka - key cache invalid"},
+    {KABADSERVER,		"ka - bad server"},
+    {KABADUSER,			"ka - bad user"},
+    {KABADCPW,			"ka - bad change password"},
+    {KABADCREATE,		"ka - bad creation"},
+    {KANOTICKET,		"ka - no ticket"},
+    {KAASSOCUSER,		"ka - associated user"},
+    {KANOTSPECIAL,		"ka - not special"},
+    {KACLOCKSKEW,		"ka - clock skew"},
+    {KANORECURSE,		"ka - no recurse"},
+    {KARXFAIL,			"ka - rx failed"},
+    {KANULLPASSWORD,		"ka - null password"},
+    {KAINTERNALERROR,		"ka - internal error"},
+    {KAPWEXPIRED,		"ka - password expired"},
+    {KAREUSED,			"ka - password reused"},
+    {KATOOSOON,			"ka - password changed too soon"},
+    {KALOCKED,			"ka - account locked"},
 
     /* Not a known error */
 

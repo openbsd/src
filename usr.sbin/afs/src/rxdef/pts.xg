@@ -293,7 +293,7 @@ GetCPS(IN long id,
 
 ListOwned(IN long id,
 	  OUT prlist *elist,
-	  OUT long *over) = 517;
+	  INOUT long *over) = 517;
 
 IsAMemberOf(IN long uid,
 	    IN long gid,

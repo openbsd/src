@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,8 +32,9 @@
  */
 
 #include "ko_locl.h"
+#include <fnmatch.h>
 
-RCSID("$Id: gensysname.c,v 1.3 2000/09/11 14:40:57 art Exp $");
+RCSID("$KTH: gensysname.c,v 1.35.2.1 2001/09/15 13:33:04 mattiasa Exp $");
 
 typedef int (*test_sysname)(void);
 typedef void (*gen_sysname)(char*, size_t, const char*, 
@@ -71,6 +67,28 @@ linux_glibc_test(void)
     ret = stat("/lib/libc.so.6", &sb);
     return ret == 0;
 }
+
+static void
+osf_gen_sysname(char *buf, 
+		size_t len, 
+		const char *cpu, 
+		const char *vendor, 
+		const char *os)
+{
+
+    int minor, major, nargs;
+    char patch;
+    nargs = sscanf(os, "osf%d.%d%c", &major, &minor, &patch);
+    if(nargs == 3) {
+	snprintf(buf, len, "alpha_osf%d%d%c", major, minor, patch);
+    } else if(nargs == 2) {
+	snprintf(buf, len, "alpha_osf%d%d", major, minor);
+    } else {
+	snprintf(buf, len, "alpha_osf");
+    }
+
+}
+
 
 /*
  * generic function for generating sysnames for *BSD systems.  the
@@ -123,27 +141,29 @@ bsd_gen_sysname(char *buf,
  */
 
 struct sysname sysnames[] = {
-    { "sparc_linux6", "sparc", "*", "linux-gnu*", &linux_glibc_test },
-    { "sparc_linux5", "sparc", "*", "linux-gnu*", NULL },
+    { "sparc_linux6", "sparc*", "*", "linux-gnu*", &linux_glibc_test },
+    { "sparc_linux5", "sparc*", "*", "linux-gnu*", NULL },
     { "i386_linux6", "i*86*", "*pc*", "linux-gnu*", &linux_glibc_test },
     { "i386_linux5", "i*86*", "*pc*", "linux-gnu*", NULL },
     { "alpha_linux6", "alpha", "*", "linux-gnu*", &linux_glibc_test },
     { "alpha_linux5", "alpha", "*", "linux-gnu*", NULL },
+    { "alpha_dux40", "alpha*", "*", "osf4.0*", NULL},  
     { "ppc_linux22",  "powerpc", "*", "linux-gnu*", NULL },
-    { "alpha_dux40",  "alpha", "*", "osf4.0*", NULL },
-    { "sun4x_54",     "sparc", "*", "solaris2.4*", NULL },
-    { "sun4x_551",    "sparc", "*", "solaris2.5.1*", NULL },
-    { "sun4x_55",     "sparc", "*", "solaris2.5*", NULL },
-    { "sun4x_56",     "sparc", "*", "solaris2.6*", NULL },
-    { "sun4x_57",     "sparc", "*", "solaris2.7*", NULL },
+    { "sun4x_54",     "sparc*", "*", "solaris2.4*", NULL },
+    { "sun4x_551",    "sparc*", "*", "solaris2.5.1*", NULL },
+    { "sun4x_55",     "sparc*", "*", "solaris2.5*", NULL },
+    { "sun4x_56",     "sparc*", "*", "solaris2.6*", NULL },
+    { "sun4x_57",     "sparc*", "*", "solaris2.7*", NULL },
     { "sunx86_54",    "i386", "*", "solaris2.4*", NULL },
     { "sunx86_551",   "i386", "*", "solaris2.5.1*", NULL },
     { "sunx86_55",    "i386", "*", "solaris2.5*", NULL },
     { "sunx86_56",    "i386", "*", "solaris2.6*", NULL },
     { "sunx86_57",    "i386", "*", "solaris2.7*", NULL },
     { "i386_nt35",    "i*86*", "*", "cygwin*", NULL },
-#ifdef HAVE_SYS_UTSNAME_H
+    { "ppc_macosx",   "powerpc", "*", "darwin*", NULL },
+    { "",	      "alpha*",    "*", "*osf*", NULL, &osf_gen_sysname },
     /* catch-all bsd entry */
+#ifdef HAVE_SYS_UTSNAME_H
     { "",	      "*",    "*", "*bsd*",       NULL, &bsd_gen_sysname },
 #endif
     {NULL}
@@ -160,7 +180,8 @@ printsysname(const char *sysname)
 	printf("%s\n", sysname);
 	break;
     case OUTPUT_C:
-	printf("/* Generated from $Id: gensysname.c,v 1.3 2000/09/11 14:40:57 art Exp $ */\n\n");
+	printf("/* Generated from $KTH: gensysname.c,v 1.35.2.1 2001/09/15 13:33:04 mattiasa Exp $ */\n\n");
+	printf("#ifdef HAVE_CONFIG_H\n#include <config.h>\n#endif\n");
 	printf("#include <ko.h>\n\n");
 	printf("const char *arla_getsysname(void) { return \"%s\" ; }\n", 
 	       sysname);
@@ -179,21 +200,21 @@ static int allflag = 0;
 static int sysnameflag = 0;
 static int versionflag = 0;
 
-struct getargs args[] = {
-    {"machine", 'm', arg_flag,    &machineflag, "machine output", NULL},
-    {"human",   'h', arg_flag,    &humanflag,   "human", NULL},
-    {"ccode",   'c', arg_flag,    &ccodeflag, "", NULL},
-    {"sysname",	's', arg_flag,    &sysnameflag, NULL, NULL},
-    {"version", 'v', arg_flag,    &versionflag, NULL, NULL},
-    {"all",     'a', arg_flag,    &allflag, NULL, NULL},
-    {"help",	0,   arg_flag,    &helpflag, NULL, NULL},
-    {NULL,      0, arg_end, NULL}
+struct agetargs args[] = {
+    {"machine", 'm', aarg_flag,    &machineflag, "machine output", NULL},
+    {"human",   'h', aarg_flag,    &humanflag,   "human", NULL},
+    {"ccode",   'c', aarg_flag,    &ccodeflag, "", NULL},
+    {"sysname",	's', aarg_flag,    &sysnameflag, NULL, NULL},
+    {"version", 'v', aarg_flag,    &versionflag, NULL, NULL},
+    {"all",     'a', aarg_flag,    &allflag, NULL, NULL},
+    {"help",	0,   aarg_flag,    &helpflag, NULL, NULL},
+    {NULL,      0, aarg_end, NULL}
 };
 
 static void
 usage(void)
 {
-    arg_printusage(args, NULL, "[sysname]", 0);
+    aarg_printusage(args, NULL, "[sysname]", 0);
     exit(1);
     
 }
@@ -230,7 +251,7 @@ main(int argc, char **argv)
 
     set_progname (argv[0]);
 
-    if (getarg (args, argc, argv, &optind, ARG_GNUSTYLE)) 
+    if (agetarg (args, argc, argv, &optind, AARG_GNUSTYLE)) 
 	usage();
 
     argc -= optind;
@@ -240,7 +261,7 @@ main(int argc, char **argv)
 	usage();
 
     if (versionflag)
-	errx(0, "Version: $Id: gensysname.c,v 1.3 2000/09/11 14:40:57 art Exp $");
+	errx(0, "Version: $KTH: gensysname.c,v 1.35.2.1 2001/09/15 13:33:04 mattiasa Exp $");
 
     if (ccodeflag)
 	output = OUTPUT_C;
@@ -272,9 +293,9 @@ main(int argc, char **argv)
 
     while (sysname->sysname && !found) {
 	char sn[64];
-	if (!strmatch(sysname->cpu, cpu) &&
-	    !strmatch(sysname->vendor, vendor) &&
-	    !strmatch(sysname->os, os) &&
+	if (!fnmatch(sysname->cpu, cpu, 0) &&
+	    !fnmatch(sysname->vendor, vendor, 0) &&
+	    !fnmatch(sysname->os, os, 0) &&
 	    (sysname->atest == NULL || ((*(sysname->atest))()))) {
 	    
 	    found = 1;

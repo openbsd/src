@@ -1,5 +1,5 @@
-/* $Header: /home/cvs/src/usr.sbin/afs/src/rx/Attic/rx_null.h,v 1.2 2000/09/11 14:41:22 art Exp $ */
-/* $Source: /home/cvs/src/usr.sbin/afs/src/rx/Attic/rx_null.h,v $ */
+/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_null.h,v 1.3 1998/01/28 04:54:19 art Exp $ */
+/* $KTH: /afs/stacken.kth.se/src/SourceRepository/arla/rx/rx_null.h,v $ */
 
 /*
 ****************************************************************************

@@ -1,4 +1,4 @@
-dnl $Id: check-declaration.m4,v 1.1 2000/09/11 14:40:45 art Exp $
+dnl $KTH: check-declaration.m4,v 1.2 1999/10/06 03:15:53 assar Exp $
 dnl
 dnl
 dnl Check if we need the declaration of a variable

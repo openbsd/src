@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: mountpoint.in,v 1.1 2000/09/11 14:41:33 art Exp $
+# $KTH: mountpoint.in,v 1.9 2000/07/19 00:07:02 assar Exp $
 FS=${FS:-${objdir}/../appl/fs/fs}
 ${FS} sa . system:anyuser all || exit 1
 ${FS} mkm root root.afs || exit 1

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -54,7 +49,7 @@
 
 #include "ports.h"
 
-RCSID("$Id: ports.c,v 1.3 2000/09/11 14:40:58 art Exp $") ;
+RCSID("$KTH: ports.c,v 1.10.2.1 2001/04/22 01:21:37 lha Exp $") ;
 
 typedef struct {
      const char *name;		/* Name of the service */
@@ -63,9 +58,16 @@ typedef struct {
      int defport;		/* Default port */
 } Port;
 
-int afsport, afscallbackport, afsprport, afsvldbport,
-   afskaport, afsvolport, afserrorsport, afsbosport,
-   afsupdateport, afsrmtsys ;
+int afsport = 0,
+    afscallbackport = 0,
+    afsprport = 0,
+    afsvldbport = 0,
+    afskaport = 0,
+    afsvolport = 0,
+    afserrorsport = 0,
+    afsbosport = 0,
+    afsupdateport = 0,
+    afsrmtsys = 0;
 
 Port ports[] = {
 {"afs3-fileserver",	"udp", &afsport,	7000},
@@ -97,13 +99,9 @@ ports_init (void)
 	  struct servent *service;
 
 	  service = getservbyname (ports[i].name, ports[i].proto);
-	  if (service == NULL) {
-
-	       fprintf (stderr,
-			"Unable to find service %s/%s, using port %d\n",
-			ports[i].name, ports[i].proto, ports[i].defport);
+	  if (service == NULL)
 	       *(ports[i].port) = ports[i].defport;
-	  } else
+	  else
 	       *(ports[i].port) = ntohs (service->s_port);
      }
      inited = 1;

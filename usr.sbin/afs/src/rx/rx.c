@@ -21,9 +21,10 @@
 
 /* RX:  Extended Remote Procedure Call */
 
+#include <assert.h>
 #include "rx_locl.h"
 
-RCSID("$Id: rx.c,v 1.3 2000/09/11 14:41:20 art Exp $");
+RCSID("$KTH: rx.c,v 1.20 2001/01/07 16:42:43 lha Exp $");
 
 /*
  * quota system: each attached server process must be able to make
@@ -305,6 +306,7 @@ rx_NewConnection(u_long shost, u_short sport, u_short sservice,
     conn->cid = cid;
     conn->epoch = rx_epoch;
     conn->peer = rxi_FindPeer(shost, sport);
+    queue_Append(&conn->peer->connQueue, conn);
     conn->serviceId = sservice;
     conn->securityObject = securityObject;
     conn->securityData = (void *) 0;
@@ -422,6 +424,7 @@ rx_DestroyConnection(struct rx_connection * conn)
     /* Make sure that the connection is completely reset before deleting it. */
     rxi_ResetConnection(conn);
 
+    queue_Remove(conn);
     if (--conn->peer->refCount == 0)
 	conn->peer->idleWhen = clock_Sec();
 
@@ -1162,8 +1165,12 @@ rxi_FreeCall(struct rx_call * call)
      * connections).  Only do this, however, if there are no
      * outstanding calls
      */
-    if (conn->flags & RX_CONN_DESTROY_ME)
+    if (conn->flags & RX_CONN_DESTROY_ME) {
+#if 0
+	conn->refCount++;
+#endif
 	rx_DestroyConnection(conn);
+    }
 }
 
 
@@ -1225,6 +1232,7 @@ rxi_FindPeer(u_long host, u_short port)
 					*/
 	pp->port = port;
 	queue_Init(&pp->congestionQueue);
+	queue_Init(&pp->connQueue);
 	pp->next = rx_peerHashTable[hashIndex];
 	rx_peerHashTable[hashIndex] = pp;
 	rxi_InitPeerParams(pp);
@@ -1261,6 +1269,7 @@ static void
 rxi_DestroyPeer(struct rx_peer * peer)
 {
     rxi_RemovePeer(peer);
+    assert(queue_IsEmpty(&peer->connQueue));
     rxi_FreePeer(peer);
     rx_stats.nPeerStructs--;
 }
@@ -1281,9 +1290,19 @@ rxi_InsertPeer(struct rx_peer *peer)
 	    break;
     }
     if (pp != NULL) {
+	struct rx_connection *conn, *next;
+
 	pp->refCount  += peer->refCount;
 	pp->nSent     += peer->nSent;
 	pp->reSends   += peer->reSends;
+
+	for (queue_Scan(&peer->connQueue, conn, next, rx_connection)) {
+	    conn->peer = pp;
+	    queue_Remove(conn);
+	    queue_Append(&pp->connQueue, conn);
+	}
+
+	assert(queue_IsEmpty(&peer->connQueue));
 	rxi_FreePeer(peer);
 	rx_stats.nPeerStructs--;
 	return pp;
@@ -1360,6 +1379,7 @@ rxi_FindConnection(osi_socket socket, long host,
 	conn->next = rx_connHashTable[hashindex];
 	rx_connHashTable[hashindex] = conn;
 	conn->peer = rxi_FindPeer(host, port);
+	queue_Append(&conn->peer->connQueue, conn);
 	conn->maxPacketSize = MIN(conn->peer->packetSize, OLD_MAX_PACKET_SIZE);
 	conn->type = RX_SERVER_CONNECTION;
 	conn->lastSendTime = clock_Sec();	/* don't GC immediately */
@@ -2617,7 +2637,7 @@ struct rx_packet *
 rxi_SendCallAbort(struct rx_call * call, struct rx_packet * packet)
 {
     if (call->error) {
-	long error;
+	int32_t error;
 
 	error = htonl(call->error);
 	packet = rxi_SendSpecial(call, call->conn, packet, RX_PACKET_TYPE_ABORT,
@@ -2635,7 +2655,7 @@ rxi_SendConnectionAbort(struct rx_connection * conn,
 			struct rx_packet * packet)
 {
     if (conn->error) {
-	long error;
+	int32_t error;
 
 	error = htonl(conn->error);
 	packet = rxi_SendSpecial((struct rx_call *) 0, conn, packet,
@@ -3223,9 +3243,10 @@ rxi_Send(struct rx_call *call, struct rx_packet *p)
  * Check if a call needs to be destroyed.  Called by keep-alive code to ensure
  * that things are fine.  Also called periodically to guarantee that nothing
  * falls through the cracks (e.g. (error + dally) connections have keepalive
- * turned off.  Returns 0 if conn is well, -1 otherwise.  If otherwise, call
- * may be freed! 
+ * turned off.  Returns 0 if conn is well, negativ otherwise.
+ * -1 means that the call still exists, -2 means that the call is freed.
  */
+
 static int 
 rxi_CheckCall(struct rx_call *call)
 {
@@ -3241,17 +3262,21 @@ rxi_CheckCall(struct rx_call *call)
      * seconds.
      */
     if (now > (call->lastReceiveTime + conn->secondsUntilDead)) {
-	if (call->state == RX_STATE_ACTIVE)
+
+	if (call->state == RX_STATE_ACTIVE) {
 	    rxi_CallError(call, RX_CALL_DEAD);
-	else
+	    return -1;
+	} else {
 	    rxi_FreeCall(call);
+	    return -2;
+	}
 
 	/*
 	 * Non-active calls are destroyed if they are not responding to
 	 * pings; active calls are simply flagged in error, so the attached
 	 * process can die reasonably gracefully.
 	 */
-	return -1;
+	
     }
     /* see if we have a non-activity timeout */
     tservice = conn->service;
@@ -3397,11 +3422,12 @@ rxi_DecongestionEvent(struct rxevent *event, struct rx_peer *peer,
     struct rx_call *call;
     struct rx_call *nxcall;   /* Next pointer for queue_Scan */
 
-    peer->refCount--;		       /* It was bumped by the callee */
     peer->burst += nPackets;
     if (peer->burst > peer->burstSize)
 	peer->burst = peer->burstSize;
     for (queue_Scan(&peer->congestionQueue, call, nxcall, rx_call)) {
+	assert(queue_IsNotEmpty(&peer->congestionQueue));
+	assert(queue_Prev(&peer->congestionQueue, rx_call));
 	queue_Remove(call);
 
 	/*
@@ -3412,8 +3438,11 @@ rxi_DecongestionEvent(struct rxevent *event, struct rx_peer *peer,
 	 */
 	rxi_Start((struct rxevent *) 0, call);
 	if (!peer->burst)
-	    return;
+	    goto done;
     }
+ done:
+    peer->refCount--;		       /* It was bumped by the callee */
+    return;
 }
 
 /*
@@ -3448,6 +3477,8 @@ rxi_CongestionWait(struct rx_call *call)
 {
     if (queue_IsOnQueue(call))
 	return;
+    assert(queue_IsNotEmpty(&call->conn->peer->congestionQueue));
+    assert(queue_Prev(&call->conn->peer->congestionQueue, rx_call));
     queue_Append(&call->conn->peer->congestionQueue, call);
 }
 
@@ -3569,13 +3600,15 @@ rxi_ReapConnections(void)
      */
     {
 	struct rx_connection **conn_ptr, **conn_end;
-	int i, havecalls = 0;
+	int i, havecalls = 0, ret;
 
-	for (conn_ptr = &rx_connHashTable[0],
-	     conn_end = &rx_connHashTable[rx_hashTableSize];
-	     conn_ptr < conn_end; conn_ptr++) {
+	for (conn_ptr = &rx_connHashTable[0], 
+		 conn_end = &rx_connHashTable[rx_hashTableSize];
+	     conn_ptr < conn_end; 
+	     conn_ptr++) {
 	    struct rx_connection *conn, *next;
 
+	rereap:
 	    for (conn = *conn_ptr; conn; conn = next) {
 		next = conn->next;
 		/* once a minute look at everything to see what's up */
@@ -3583,7 +3616,14 @@ rxi_ReapConnections(void)
 		for (i = 0; i < RX_MAXCALLS; i++) {
 		    if (conn->call[i]) {
 			havecalls = 1;
-			rxi_CheckCall(conn->call[i]);
+			ret = rxi_CheckCall(conn->call[i]);
+			if (ret == -2) {
+			    /* If CheckCall freed the call, it might
+			     * have destroyed  the connection as well,
+			     * which screws up the linked lists.
+			     */
+			    goto rereap;
+			}
 		    }
 		}
 		if (conn->type == RX_SERVER_CONNECTION) {

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: bsd-header-vnode-if-h.m4,v 1.1 2000/09/11 14:40:45 art Exp $
+dnl $KTH: bsd-header-vnode-if-h.m4,v 1.2 2000/03/16 10:34:32 assar Exp $
 dnl
 
 AC_DEFUN(AC_BSD_HEADER_VNODE_IF_H, [

@@ -34,7 +34,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$Id: lock.c,v 1.2 2000/09/11 14:41:08 art Exp $");
+RCSID("$KTH: lock.c,v 1.10 2000/10/20 11:04:47 lha Exp $");
 #endif
 #include "lwp.h"
 #include "lock.h"
@@ -53,6 +53,7 @@ Lock_Init(register struct Lock *lock)
     lock -> excl_locked = 0;
     lock -> wait_states = 0;
     lock -> num_waiting = 0;
+    lock -> thread_index = LWP_INVALIDTHREADID;
 }
 
 void

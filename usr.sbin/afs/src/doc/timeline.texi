@@ -1,4 +1,8 @@
-@c $Id: timeline.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+@c Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
+
+@c $KTH: timeline.texi,v 1.5 2000/12/10 23:06:32 lha Exp $
 
 @node Arla timeline, Authors, Oddities, Top
 @comment  node-name,  next,  previous,  up
@@ -37,8 +41,8 @@ development.
 
 Some people suggested that it would be less trouble having someone with
 access to the Transarc AFS source code port the code to the relevent
-platforms. Assar then ported xfs to FreeBSD 2.2.x in notime, just to
-show the high portability.
+platforms. Assar then ported xfs to FreeBSD 2.2.x in notime (over the
+night), just to show the high portability.
 
 People started to understand that arla was a concept that would work,
 and first out was Love Hörnqvist-Åstrand @email{lha@@stacken.kth.se} to
@@ -69,7 +73,10 @@ store them.
 
 There was from this point a lot of work being done and quite a lot of
 studies was "wasted". We learned a lot, but not the stuff we were
-expected too.
+expected to.
+
+We added support for `dynroot' and `fake-mp' to prepare for Windows and
+Darwin/MacOSX support.
 
 In Mars 2000 preliminary support for MacOS X/Darwin 1.0 was merged in
 by Magnus and Assar.
@@ -79,6 +86,8 @@ There was also some work being done on Windows 2000 native driver at
 same time.
 
 In June 2000 there was a presentation on MADE2000 in Gothenburg, Sweden.
+
+In September 2000 MacOS X Beta was working.
 
 This just includes some milestones, for more information se
 Changelog.* and NEWS files in the distribution.

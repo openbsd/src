@@ -1,10 +1,11 @@
 #
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:57 art Exp $
+# $KTH: Makefile.in,v 1.30.2.3 2001/10/23 23:54:09 ahltorp Exp $
 #
 
 SHELL	= /bin/sh
 
 srcdir	= @srcdir@
+top_builddir	= ../..
 VPATH	= @srcdir@
 
 CC	= @CC@
@@ -16,20 +17,20 @@ INCLUDES = -I.					\
 	   -I$(srcdir)/../../include		\
 	   -I../.. -I$(srcdir)/../..		\
 	   -I../../rxdef			\
+	   @INC_roken@ \
 	   @KRB4_INC_FLAGS@
 
 CFLAGS	= @CFLAGS@
+LDFLAGS = @LDFLAGS@
 
 INSTALL = @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
 MKINSTALLDIRS = @top_srcdir@/mkinstalldirs
 KRB4_LIB_FLAGS	= @KRB4_LIB_FLAGS@
 
-LIBS		= -L. -lko \
-		  -L../../util -lutil \
-		  -L../roken -lroken \
-		  $(KRB4_LIB_FLAGS) \
-		  @LIBS@
+LIBS		= -L../../util -lutil \
+		  @LIB_roken@ \
+		  $(KRB4_LIB_FLAGS) @LIBS@
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
@@ -44,7 +45,7 @@ target_vendor	= @target_vendor@
 target_cpu	= @target_cpu@
 
 #PICFLAGS = @PICFLAGS@
- 
+
 LIBNAME = $(LIBPREFIX)ko
 #LIBEXT = @LIBEXT@
 LIBEXT = a
@@ -63,6 +64,7 @@ DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)\" \
 LIB_SOURCES = koerror.c \
 	kocell.c \
 	ports.c \
+	agetarg.c \
 	part.c \
 	sysname.c \
 	vlmisc.c \
@@ -74,6 +76,7 @@ SOURCES = $(LIB_SOURCES) $(gensysname_SRCS)
 LIB_OBJECTS = koerror.o \
 	kocell.o \
 	ports.o \
+	agetarg.o \
 	part.o \
 	sysname.o \
 	vlmisc.o \
@@ -88,7 +91,7 @@ GENSYSNAMEDEFS= @DEFS@ -DARLAOS=\"$(target_os)\" \
 
 gensysname_SRCS = gensysname.c
 
-gensysname_OBJS = gensysname.o
+gensysname_OBJS = gensysname.o agetarg.o
 
 kotest_SRCS = kotest.c
 
@@ -125,10 +128,10 @@ TAGS: $(SOURCES)
 
 
 gensysname: $(gensysname_OBJS)
-	$(CC) -o $@ $(gensysname_OBJS) -L../../util -lutil -L../roken -lroken
+	$(CC) $(LDFLAGS) -o $@ $(gensysname_OBJS) $(LIBS)
 
 kotest: $(kotest_OBJS) $(LIBNAME).a
-	$(CC) -o $@ $(kotest_OBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(kotest_OBJS) -L. -lko $(LIBS)
 
 check:
 

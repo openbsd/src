@@ -1,7 +1,7 @@
 /* -*- C -*- */
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -16,12 +16,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* @(#)$Id: rxkad.h,v 1.4 2002/02/17 19:42:35 millert Exp $ */
+/* @(#)$KTH: rxkad.h,v 1.8.2.1 2001/10/03 22:55:31 assar Exp $ */
 
 #ifndef __RXKAD_H
 #define __RXKAD_H
@@ -65,31 +60,35 @@ extern int rxkad_min_level;	/* enforce min level at client end */
 
 extern int rxkad_EpochWasSet;
 
-int32 rxkad_GetServerInfo(struct rx_connection *con,
-			  rxkad_level *level,
-			  u_int32 *expiration,
-			  char *name,
-			  char *instance,
-			  char *cell,
-			  int32 *kvno);
+#ifndef __P
+#define __P(x) x
+#endif
+
+int32 rxkad_GetServerInfo __P((struct rx_connection *con,
+			       rxkad_level *level,
+			       u_int32 *expiration,
+			       char *name,
+			       char *instance,
+			       char *cell,
+			       int32 *kvno));
 
 struct rx_securityClass *
-rxkad_NewServerSecurityObject(/*rxkad_level*/ int min_level,
-			      void *appl_data,
-			      int (*get_key)(void *appl_data,
-			      int kvno,
-			      des_cblock *key),
-			      int (*user_ok)(char *name,
-					     char *inst,
-					     char *realm,
-					     int kvno));
+rxkad_NewServerSecurityObject __P((/*rxkad_level*/ int min_level,
+				   void *appl_data,
+				   int (*get_key)(void *appl_data,
+						  int kvno,
+						  des_cblock *key),
+				   int (*user_ok)(char *name,
+						  char *inst,
+						  char *realm,
+						  int kvno)));
 
 struct rx_securityClass *
-rxkad_NewClientSecurityObject(/*rxkad_level*/ int level,
-			      void *sessionkey,
-			      int32 kvno,
-			      int ticketLen,
-			      char *ticket);
+rxkad_NewClientSecurityObject __P((/*rxkad_level*/ int level,
+				   void *sessionkey,
+				   int32 kvno,
+				   int ticketLen,
+				   char *ticket));
 
 #define RXKADINCONSISTENCY	(19270400L)
 #define RXKADPACKETSHORT	(19270401L)
@@ -117,6 +116,10 @@ rxkad_NewClientSecurityObject(/*rxkad_level*/ int level,
 #define MAXKTCREALMLEN		REALM_SZ
 */
 
+#ifndef CLOCK_SKEW
+#define CLOCK_SKEW (5*60)
+#endif
+
 #define KTC_TIME_UNCERTAINTY (CLOCK_SKEW)
 
 /*
@@ -133,32 +136,32 @@ struct ktc_principal {
   char cell[MAXKTCREALMLEN];
 };
 
-u_int32 life_to_time(u_int32 start, int life_);
+u_int32 life_to_time __P((u_int32 start, int life_));
 
-int time_to_life(u_int32 start, u_int32 end);
+int time_to_life __P((u_int32 start, u_int32 end));
 
-int tkt_CheckTimes(int32 begin, int32 end, int32 now);
-
-int
-tkt_MakeTicket(char *ticket,
-	       int *ticketLen,
-	       struct ktc_encryptionKey *key,
-	       char *name, char *inst, char *cell,
-	       u_int32 start, u_int32 end,
-	       struct ktc_encryptionKey *sessionKey,
-	       u_int32 host,
-	       char *sname, char *sinst);
+int tkt_CheckTimes __P((int32 begin, int32 end, int32 now));
 
 int
-tkt_DecodeTicket(char *asecret,
-		 int32 ticketLen,
-		 struct ktc_encryptionKey *key,
-		 char *name,
-		 char *inst,
-		 char *cell,
-		 char *sessionKey,
-		 int32 *host,
-		 int32 *start,
-		 int32 *end);
+tkt_MakeTicket __P((char *ticket,
+		    int *ticketLen,
+		    struct ktc_encryptionKey *key,
+		    char *name, char *inst, char *cell,
+		    u_int32 start, u_int32 end,
+		    struct ktc_encryptionKey *sessionKey,
+		    u_int32 host,
+		    char *sname, char *sinst));
+
+int
+tkt_DecodeTicket __P((char *asecret,
+		      int32 ticketLen,
+		      struct ktc_encryptionKey *key,
+		      char *name,
+		      char *inst,
+		      char *cell,
+		      char *sessionKey,
+		      int32 *host,
+		      int32 *start,
+		      int32 *end));
 
 #endif /* __RXKAD_H */

@@ -393,7 +393,7 @@ GetEntryByNameN (IN string volumename<VLDB_MAXNAMELEN>,
 
 ReplaceEntryN (IN long Volid,
 	      IN long voltype,
-	      IN vldbentry *newentry,
+	      IN nvldbentry *newentry,
 	      IN long ReleaseType) = 520;
 
 ListEntryN() = 521;

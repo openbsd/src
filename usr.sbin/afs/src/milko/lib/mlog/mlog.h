@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +32,7 @@
  */
 
 /*
- * $Id: mlog.h,v 1.1 2000/09/11 14:41:15 art Exp $
+ * $KTH: mlog.h,v 1.4 2000/10/03 00:18:03 lha Exp $
  */
 
 #ifndef _arladeb_h
@@ -51,7 +46,8 @@
 #include <parse_units.h>
 
 void mlog_log(unsigned level, char *fmt, ...);
-void mlog_loginit(char *log, struct units *deb_units, unsigned default_level);
+void mlog_loginit(Log_method *method, struct units *deb_units, 
+		  unsigned default_level);
 void mlog_log_set_level (const char *s);
 void mlog_log_set_level_num (unsigned level);
 void mlog_log_get_level (char *s, size_t len);

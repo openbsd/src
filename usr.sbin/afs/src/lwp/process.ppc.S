@@ -1,4 +1,4 @@
-/* $Id: process.ppc.S,v 1.1 2000/09/11 14:41:09 art Exp $ */
+/* $KTH: process.ppc.S,v 1.3 2000/10/14 11:12:37 lha Exp $ */
 
 /*
 ****************************************************************************
@@ -35,6 +35,31 @@
  *       PowerPC [AIX] ABI needs this extra space.
  */
 
+/*
+ * PowerPC Stack structure (according to apple)
+ *
+ * -----------------------------------------
+ * | Parameter area
+ * |     [...]
+ * -----------------------------------------
+ * | Linkage area: (each row is 4 bytes)
+ * |  Saved GPR 2 [saved by calling if imported routine,or pointer-based call]
+ * |  Reserved
+ * |  Reserved
+ * |  Saved LR	[ may be set by called ]
+ * |  Saved CR	[ may be set by called ]
+ * |  Saved SP	[ saved by calling ]
+ * -----------------------------------------  <-- SP
+ * | Local variables
+ * |     [...]
+ * -----------------------------------------
+ * | Parameter area
+ * |     [...]
+ * -----------------------------------------
+ * | Linkage area:
+ * |     [...]
+ * -----------------------------------------  <-- SP
+ */
 
 /* Mach-O assemblers */
 #if !defined(NeXT) && !defined(__APPLE__)

@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:41:40 art Exp $
+# $KTH: Makefile.in,v 1.21 2000/12/21 12:47:04 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -21,6 +22,8 @@ bindir 		= @bindir@
 
 DEFS		= @DEFS@ -DCPP="\"@CPP@\""
 
+LIBS		= @LIBS@
+
 SHELL		= /bin/sh
 
 CFLAGS		= @CFLAGS@
@@ -29,6 +32,7 @@ REALCFLAGS	= -I$(srcdir) \
 		  -I../include \
 		  -I$(srcdir)/../include \
 		  -I. \
+		  @INC_roken@ \
 		  $(CFLAGS) $(DEFS)
 ydr_SRCS	= parse.y lex.l main.c symbol.c types.c output.c
 ydr_OBJS	= parse.o lex.o main.o symbol.o types.o output.o
@@ -62,7 +66,7 @@ uninstall:
 		done
 
 ydr:		$(ydr_OBJS) ../util/libutil.a
-		$(CC) $(LDFLAGS) -o $@ $(ydr_OBJS) ../util/libutil.a -L../lib/roken -lroken $(LIBS)
+		$(CC) $(LDFLAGS) -o $@ $(ydr_OBJS) ../util/libutil.a @LIB_roken@ $(LIBS)
 
 parse.c:	parse.h
 parse.h:	parse.y
@@ -93,7 +97,7 @@ clean		:
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile config.status
+		rm -f Makefile *~
 
 realclean:	distclean
 		rm -f TAGS
