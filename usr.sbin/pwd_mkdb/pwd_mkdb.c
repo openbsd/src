@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.13 1998/04/26 10:08:42 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.14 1998/04/26 10:10:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.13 1998/04/26 10:08:42 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.14 1998/04/26 10:10:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -336,21 +336,21 @@ main(argc, argv)
 		len = strlen(pwd.pw_name);
 		memmove(tbuf + 1, pwd.pw_name, len);
 		key.size = len + 1;
-		if ((dp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
+		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
 
 		/* Store secure by number. */
 		tbuf[0] = _PW_KEYBYNUM;
 		memmove(tbuf + 1, &cnt, sizeof(cnt));
 		key.size = sizeof(cnt) + 1;
-		if ((dp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
+		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
 
 		/* Store secure by uid. */
 		tbuf[0] = _PW_KEYBYUID;
 		memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
 		key.size = sizeof(pwd.pw_uid) + 1;
-		if ((dp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
+		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
 	}
 
@@ -361,7 +361,7 @@ main(argc, argv)
 		ypdata.data = (u_char *)NULL;
 		ypdata.size = 0;
 
-		if ((dp->put)(edp, &ypkey, &ypdata, R_NOOVERWRITE) == -1)
+		if ((edp->put)(edp, &ypkey, &ypdata, R_NOOVERWRITE) == -1)
 			error("put");
 	}
 
