@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2004/04/20 15:05:18 pvalchev Exp $
+#	$OpenBSD: GENERIC,v 1.14 2004/04/26 19:42:53 tedu Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -328,7 +328,7 @@ xl*	at pci? dev ? function ?		# 3C9xx ethernet
 #tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 #wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
-#sf*	at pci? dev ? function ?		# Adaptec AIC-6915 ethernet
+sf*	at pci? dev ? function ? 		# Adaptec AIC-6915 ethernet
 sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
 #ste*	at pci? dev ? function ?		# Sundance ST201 ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
