@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.6 1996/07/28 23:32:16 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.7 1996/07/29 00:03:19 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -646,6 +646,7 @@ pass(passwd)
 {
 	int rval;
 	FILE *fd;
+	static char homedir[MAXPATHLEN];
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -756,6 +757,13 @@ skip:
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
+
+	/*
+	 * Set home directory so that use of ~ (tilde) works correctly.
+	 */
+	if (getcwd(homedir, MAXPATHLEN) != NULL)
+		setenv("HOME", homedir, 1);
+
 	/*
 	 * Display a login message, if it exists.
 	 * N.B. reply(230,) must follow the message.
