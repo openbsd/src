@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.9 1996/05/10 12:31:13 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.10 1996/05/16 11:52:08 mickey Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -76,6 +76,17 @@
 
 #include <net/if_tun.h>
 
+struct tun_softc {
+	u_short	tun_flags;		/* misc flags */
+	struct	ifnet tun_if;		/* the interface */
+	int	tun_pgrp;		/* the process group - if any */
+	struct	selinfo	tun_rsel;	/* read select */
+	struct	selinfo	tun_wsel;	/* write select (not used) */
+#if NBPFILTER > 0
+	caddr_t		tun_bpf;
+#endif
+};
+
 #ifdef	TUN_DEBUG
 int	tundebug = TUN_DEBUG;
 #define TUNDEBUG(a)	(tundebug? printf a : 0)
@@ -121,7 +132,6 @@ tunattach(unused)
 		ifp->if_type  = IFT_PROPVIRTUAL;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 		ifp->if_hdrlen = sizeof(struct tunnel_header);
-		ifp->if_addrlen = 0;
 		ifp->if_collisions = 0;
 		ifp->if_ierrors = 0;
 		ifp->if_oerrors = 0;
@@ -144,8 +154,8 @@ tunopen(dev, flag, mode, p)
 	int	flag, mode;
 	struct proc *p;
 {
-	struct ifnet	*ifp;
 	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	register int	unit, error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -153,9 +163,11 @@ tunopen(dev, flag, mode, p)
 
 	if ((unit = minor(dev)) >= NTUN)
 		return (ENXIO);
+
 	tp = &tunctl[unit];
 	if (tp->tun_flags & TUN_OPEN)
-		return ENXIO;
+		return EBUSY;
+
 	ifp = &tp->tun_if;
 	tp->tun_flags |= TUN_OPEN;
 	TUNDEBUG(("%s: open\n", ifp->if_xname));
@@ -163,8 +175,8 @@ tunopen(dev, flag, mode, p)
 }
 
 /*
- * tunclose - close the device - mark i/f down & delete
- * routing info
+ * tunclose - close the device; if closing the real device, flush pending
+ *  output and (unless set STAYUP) bring down the interface.
  */
 int
 tunclose(dev, flag, mode, p)
@@ -173,11 +185,16 @@ tunclose(dev, flag, mode, p)
 	int	mode;
 	struct proc *p;
 {
-	register int	unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
-	struct ifnet	*ifp = &tp->tun_if;
+	register int	unit, s;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	struct mbuf	*m;
 
+	if ((unit = minor(dev)) >= NTUN)
+		return (ENXIO);
+
+	tp = &tunctl[unit];
+	ifp = &tp->tun_if;
 	tp->tun_flags &= ~TUN_OPEN;
 
 	/*
@@ -191,17 +208,18 @@ tunclose(dev, flag, mode, p)
 			m_freem(m);
 	} while (m);
 
-	if (ifp->if_flags & IFF_UP) {
+	if ((ifp->if_flags & IFF_UP) && !(tp->tun_flags & TUN_STAYUP)) {
 		s = splimp();
 		if_down(ifp);
 		if (ifp->if_flags & IFF_RUNNING) {
 			/* find internet addresses and delete routes */
 			register struct ifaddr *ifa;
 			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-				 ifa = ifa->ifa_list.tqe_next) {
+			     ifa = ifa->ifa_list.tqe_next) {
 				if (ifa->ifa_addr->sa_family == AF_INET) {
 					rtinit(ifa, (int)RTM_DELETE,
-					    tp->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
+					       (tp->tun_flags & TUN_DSTADDR)?
+							RTF_HOST : 0);
 				}
 			}
 		}
@@ -225,6 +243,7 @@ tuninit(tp)
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
+	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR|TUN_BRDADDR);
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	    ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
@@ -234,9 +253,19 @@ tuninit(tp)
 			if (sin && sin->sin_addr.s_addr)
 				tp->tun_flags |= TUN_IASET;
 
-			sin = satosin(ifa->ifa_dstaddr);
-			if (sin && sin->sin_addr.s_addr)
-				tp->tun_flags |= TUN_DSTADDR;
+			if (ifp->if_flags & IFF_POINTOPOINT) {
+				sin = satosin(ifa->ifa_dstaddr);
+				if (sin && sin->sin_addr.s_addr)
+					tp->tun_flags |= TUN_DSTADDR;
+			} else
+				tp->tun_flags &= ~TUN_DSTADDR;
+
+			if (ifp->if_flags & IFF_BROADCAST) {
+				sin = satosin(ifa->ifa_broadaddr);
+				if (sin && sin->sin_addr.s_addr)
+					tp->tun_flags |= TUN_BRDADDR;
+			} else
+				tp->tun_flags &= ~TUN_BRDADDR;
 		}
 	}
 
@@ -252,7 +281,7 @@ tun_ioctl(ifp, cmd, data)
 	u_long	cmd;
 	caddr_t	data;
 {
-	int		error = 0, s;
+	int	error = 0, s;
 
 	s = splimp();
 	switch(cmd) {
@@ -264,6 +293,22 @@ tun_ioctl(ifp, cmd, data)
 		tuninit((struct tun_softc *)(ifp->if_softc));
 		TUNDEBUG(("%s: destination address set\n", ifp->if_name));
 		break;
+	case SIOCSIFBRDADDR:
+		tuninit((struct tun_softc *)(ifp->if_softc));
+		TUNDEBUG(("%s: broadcast address set\n", ifp->if_name));
+		break;
+#if 0
+	case SIOCSIFMTU:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
+		((struct tun_softc *)(ifp->if_softc))->tun_if.if_mtu
+			= ((struct ifreq *)data)->ifr_mtu;
+		break;
+	case SIOCGIFMTU:
+		((struct ifreq *)data)->ifr_mtu =
+			((struct tun_softc *)(ifp->if_softc))->tun_if.if_mtu;
+		break;
+#endif
 	default:
 		error = EINVAL;
 	}
@@ -345,21 +390,29 @@ tunioctl(dev, cmd, data, flag, p)
 	int		flag;
 	struct proc	*p;
 {
-	int		unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
+	int		unit, s;
+	struct tun_softc *tp;
  	struct tuninfo *tunp;
 
+	if ((unit = minor(dev)) >= NTUN)
+		return (ENXIO);
+
+	tp = &tunctl[unit];
+
+	s = splimp();
 	switch (cmd) {
  	case TUNSIFINFO:
-        tunp = (struct tuninfo *)data;
+		tunp = (struct tuninfo *)data;
  		tp->tun_if.if_mtu = tunp->mtu;
  		tp->tun_if.if_type = tunp->type;
+ 		tp->tun_if.if_flags = tunp->flags;
  		tp->tun_if.if_baudrate = tunp->baudrate;
  		break;
  	case TUNGIFINFO:
  		tunp = (struct tuninfo *)data;
  		tunp->mtu = tp->tun_if.if_mtu;
  		tunp->type = tp->tun_if.if_type;
+ 		tunp->flags = tp->tun_if.if_flags;
  		tunp->baudrate = tp->tun_if.if_baudrate;
  		break;
 #ifdef TUN_DEBUG
@@ -397,8 +450,10 @@ tunioctl(dev, cmd, data, flag, p)
 		*(int *)data = tp->tun_pgrp;
 		break;
 	default:
+		splx(s);
 		return (ENOTTY);
 	}
+	splx(s);
 	return (0);
 }
 
@@ -412,12 +467,17 @@ tunread(dev, uio, ioflag)
 	struct uio	*uio;
 	int		ioflag;
 {
-	int		unit = minor(dev);
-	struct tun_softc *tp = &tunctl[unit];
-	struct ifnet	*ifp = &tp->tun_if;
+	int		unit;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	struct mbuf	*m, *m0;
-	int		error=0, len, s;
+	int		error = 0, len, s;
 
+	if ((unit = minor(dev)) >= NTUN)
+		return (ENXIO);
+
+	tp = &tunctl[unit];
+	ifp = &tp->tun_if;
 	TUNDEBUG(("%s: read\n", ifp->if_xname));
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
 		TUNDEBUG(("%s: not ready 0%o\n", ifp->if_xname,
@@ -429,6 +489,10 @@ tunread(dev, uio, ioflag)
 
 	s = splimp();
 	do {
+		while ((tp->tun_flags & TUN_READY) != TUN_READY)
+			if (tsleep((caddr_t)tp, (PZERO+1)|PCATCH, "tunread", 0) != 0)
+				return(EINTR);
+
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0) {
 			if (tp->tun_flags & TUN_NBIO && ioflag & IO_NDELAY) {
@@ -436,7 +500,8 @@ tunread(dev, uio, ioflag)
 				return EWOULDBLOCK;
 			}
 			tp->tun_flags |= TUN_RWAIT;
-			tsleep((caddr_t)tp, PZERO + 1, "tunread", 0);
+			if (tsleep((caddr_t)tp, (PZERO + 1)|PCATCH, "tunread", 0) != 0)
+				return EINTR;
 		}
 	} while (m0 == 0);
 	splx(s);
@@ -469,19 +534,23 @@ tunwrite(dev, uio, ioflag)
 	struct uio	*uio;
 	int		ioflag;
 {
-	int		unit = minor (dev);
-	struct ifnet	*ifp = &tunctl[unit].tun_if;
+	int		unit;
+	struct ifnet	*ifp;
 	struct ifqueue	*ifq;
 	struct tunnel_header	*th;
 	struct mbuf	*top, **mp, *m;
 	int		isr;
 	int		error=0, s, tlen, mlen;
 
+	if ((unit = minor(dev)) >= NTUN)
+		return (ENXIO);
+
+	ifp = &tunctl[unit].tun_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
 
 	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
 		TUNDEBUG(("%s: len=%d!\n", ifp->if_xname, uio->uio_resid));
-		return EIO;
+		return EMSGSIZE;
 	}
 	tlen = uio->uio_resid;
 
@@ -588,10 +657,15 @@ tunselect(dev, rw, p)
 	int		rw;
 	struct proc	*p;
 {
-	int		unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
-	struct ifnet	*ifp = &tp->tun_if;
+	int		unit, s;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 
+	if ((unit = minor(dev)) >= NTUN)
+		return (ENXIO);
+
+	tp = &tunctl[unit];
+	ifp = &tp->tun_if;
 	s = splimp();
 	TUNDEBUG(("%s: tunselect\n", ifp->if_xname));
 
@@ -600,7 +674,7 @@ tunselect(dev, rw, p)
 		if (ifp->if_snd.ifq_len > 0) {
 			splx(s);
 			TUNDEBUG(("%s: tunselect q=%d\n", ifp->if_xname,
-			    ifp->if_snd.ifq_len));
+				  ifp->if_snd.ifq_len));
 			return 1;
 		}
 		selrecord(curproc, &tp->tun_rsel);

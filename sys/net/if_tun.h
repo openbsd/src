@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.3 1996/04/21 22:28:36 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.4 1996/05/16 11:52:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,8 +19,8 @@
 #ifndef _NET_IF_TUN_H_
 #define _NET_IF_TUN_H_
 
-struct tun_softc {
-	u_short	tun_flags;		/* misc flags */
+#include <sys/ioccom.h>
+
 #define	TUN_OPEN	0x0001
 #define	TUN_INITED	0x0002
 #define	TUN_RCOLL	0x0004
@@ -29,17 +29,10 @@ struct tun_softc {
 #define	TUN_RWAIT	0x0040
 #define	TUN_ASYNC	0x0080
 #define	TUN_NBIO	0x0100
+#define TUN_BRDADDR	0x0200
+#define TUN_STAYUP	0x0400
 
 #define	TUN_READY	(TUN_OPEN | TUN_INITED | TUN_IASET)
-
-	struct	ifnet tun_if;		/* the interface */
-	int	tun_pgrp;		/* the process group - if any */
-	struct	selinfo	tun_rsel;	/* read select */
-	struct	selinfo	tun_wsel;	/* write select (not used) */
-#if NBPFILTER > 0
-	caddr_t		tun_bpf;
-#endif
-};
 
 struct tunnel_header
 {
@@ -58,6 +51,7 @@ struct tuninfo
 {
 	u_int	mtu;
 	u_short	type;
+	u_short	flags;
 	u_int	baudrate;
 };
 #define TUNSIFINFO	_IOW('t', 91, struct tuninfo)
