@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.7 2004/04/28 06:50:21 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.8 2004/05/19 13:05:16 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -73,7 +73,7 @@ sub DirrmOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-		next unless m/^\@cwd/ || m/^\@dirrm/ || m/^\@name/;
+		next unless m/^\@cwd\b/ || m/^\@dirrm\b/ || m/^\@name\b/;
 		&$cont($_);
 	}
 }
@@ -83,7 +83,7 @@ sub FilesOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-	    	next unless m/^\@cwd/ || m/^\@name/ || !m/^\@/;
+	    	next unless m/^\@cwd\b/ || m/^\@name\b/ || !m/^\@/;
 		&$cont($_);
 	}
 }
@@ -93,7 +93,7 @@ sub ConflictOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-	    	next unless m/^\@pkgcfl/ || m/^\@option/ || m/^\@name/;
+	    	next unless m/^\@pkgcfl\b/ || m/^\@option\b/ || m/^\@name\b/;
 		&$cont($_);
 	}
 }
@@ -104,14 +104,14 @@ sub SharedStuffOnly
 	local $_;
 MAINLOOP:
 	while (<$fh>) {
-		if (m/^\@shared/) {
+		if (m/^\@shared\b/) {
 			&$cont($_);
 			while(<$fh>) {
-				redo MAINLOOP unless m/^\@md5/ || m/^\@size/;
+				redo MAINLOOP unless m/^\@md5\b/ || m/^\@size\b/;
 				&$cont($_);
 			}
 		} else {
-			next unless m/^\@cwd/ || m/^\@dirrm/ || m/^\@name/;
+			next unless m/^\@cwd\b/ || m/^\@dirrm\b/ || m/^\@name\b/;
 		}
 		&$cont($_);
 	}
