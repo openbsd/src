@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.22 1998/06/30 23:03:09 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.23 1998/11/19 06:44:07 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@ int	 getgroups __P((int, gid_t *));
 char	*getlogin __P((void));
 pid_t	 getpgrp __P((void));
 pid_t	 getpid __P((void));
+pid_t	 getpgid __P((pid_t));
 pid_t	 getppid __P((void));
 uid_t	 getuid __P((void));
 int	 isatty __P((int));
