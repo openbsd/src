@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.63 2005/03/21 22:41:30 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.64 2005/03/23 17:10:24 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -119,18 +119,6 @@ static	void bootpath_fake(struct bootpath *, char *);
 static	void bootpath_print(struct bootpath *);
 int	search_prom(int, char *);
 char	mainbus_model[30];
-
-/*
- * The mountroot_hook is provided as a mechanism for devices to perform
- * a special function if they're the root device, such as the floppy
- * drive ejecting the current disk and prompting for a filesystem floppy.
- */
-struct mountroot_hook {
-	LIST_ENTRY(mountroot_hook) mr_link;
-	struct	device *mr_device;
-	void	(*mr_func)(struct device *);
-};
-LIST_HEAD(, mountroot_hook) mrh_list;
 
 #ifdef RAMDISK_HOOKS
 static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
@@ -763,9 +751,6 @@ cpu_configure()
 	register char *cp;
 	int s;
 	extern struct user *proc0paddr;
-
-	/* Initialize the mountroot_hook list. */
-	LIST_INIT(&mrh_list);
 
 	/* build the bootpath */
 	bootpath_build();
@@ -1887,24 +1872,6 @@ gotdisk:
 	return (dv);
 }
 
-void
-mountroot_hook_establish(func, dev)
-	void (*func)(struct device *);
-	struct device *dev;
-{
-	struct mountroot_hook *mrhp;
-
-	mrhp = (struct mountroot_hook *)malloc(sizeof(struct mountroot_hook),
-	    M_DEVBUF, M_NOWAIT);
-	if (mrhp == NULL)
-		panic("no memory for mountroot_hook");
-
-	bzero(mrhp, sizeof(struct mountroot_hook));
-	mrhp->mr_device = dev;
-	mrhp->mr_func = func;
-	LIST_INSERT_HEAD(&mrh_list, mrhp, mr_link);
-}
-
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
@@ -1923,7 +1890,6 @@ setroot()
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
 	dev_t temp;
-	struct mountroot_hook *mrhp;
 	struct device *bootdv;
 	struct bootpath *bp;
 #if defined(NFSCLIENT)
@@ -2074,7 +2040,7 @@ gotswap:
 		majdev = major(rootdev);
 		unit = DISKUNIT(rootdev);
 		part = DISKPART(rootdev);
-		goto gotroot;
+		return;
 	}
 
 	switch (bootdv->dv_class) {
@@ -2118,20 +2084,6 @@ gotswap:
 		if (temp == dumpdev)
 			dumpdev = swdevt[0].sw_dev;
 	}
-
-gotroot:
-	/*
-	 * Find mountroot hook and execute.
-	 */
-	LIST_FOREACH(mrhp, &mrh_list, mr_link)
-		if (mrhp->mr_device == bootdv) {
-			if (findblkmajor(mrhp->mr_device) == major(rootdev)) 
-				(*mrhp->mr_func)(bootdv);
-			else
-				(*mrhp->mr_func)(NULL);
-			break;
-		}
-
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.40 2005/03/12 00:09:01 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.41 2005/03/23 17:10:22 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -276,7 +276,6 @@ void	fdcretry(struct fdc_softc *fdc);
 void	fdfinish(struct fd_softc *fd, struct buf *bp);
 int	fdformat(dev_t, struct fd_formb *, struct proc *);
 void	fd_do_eject(struct fd_softc *);
-void	fd_mountroot_hook(struct device *);
 static int fdconf(struct fdc_softc *);
 
 #if IPL_FDSOFT == 4
@@ -678,12 +677,6 @@ fdattach(parent, self, aux)
 	 */
 	if (fa->fa_bootpath)
 		fa->fa_bootpath->dev = &fd->sc_dv;
-
-	/*
-	 * Establish a mountroot_hook anyway in case we booted
-	 * with RB_ASKNAME and get selected as the boot device.
-	 */
-	mountroot_hook_establish(fd_mountroot_hook, &fd->sc_dv);
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
@@ -2018,32 +2011,5 @@ fd_do_eject(fd)
 		delay(10);
 		*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
 		return;
-	}
-}
-
-/*
- * The mountroot_hook is called once the root and swap device have been
- * established.  NULL implies that we may have been the boot device but
- * haven't been elected for the root device.
- */
-
-/* ARGSUSED */
-void
-fd_mountroot_hook(dev)
-	struct device *dev;
-{
-	int c;
-
-	if (dev) {
-		fd_do_eject((struct fd_softc *)dev);
-
-		printf("Insert filesystem floppy and press return.");
-		for (;;) {
-			c = cngetc();
-			if ((c == '\r') || (c == '\n')) {
-				printf("\n");
-				break;
-			}
-		}
 	}
 }
