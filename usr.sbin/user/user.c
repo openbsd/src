@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.15 2000/06/16 07:17:39 ho Exp $ */
+/* $OpenBSD: user.c,v 1.16 2000/07/06 09:23:30 ho Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -817,12 +817,12 @@ adduser(char *login, user_t *up)
 			up->u_comment,
 			home,
 			up->u_shell);
-	if (cc > MaxPasswordEntryLen ||
+	if (cc >= MaxPasswordEntryLen ||
 	    (strchr(up->u_comment, '&') != NULL &&
-	     cc + strlen(login) > MaxPasswordEntryLen)) {
+	     cc + strlen(login) >= MaxPasswordEntryLen)) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
-		err(EXIT_FAILURE, "can't add `%s', line too long", buf);
+		errx(EXIT_FAILURE, "can't add `%s', line too long", buf);
 	}
 	if (write(ptmpfd, buf, (size_t) cc) != cc) {
 		(void) close(ptmpfd);
@@ -981,12 +981,12 @@ moduser(char *login, char *newlogin, user_t *up)
 					up->u_comment,
 					home,
 					up->u_shell);
-				if (cc > MaxPasswordEntryLen ||
+				if (cc >= MaxPasswordEntryLen ||
 				    (strchr(up->u_comment, '&') != NULL &&
-				     cc + strlen(newlogin) > MaxPasswordEntryLen)) {
+				     cc + strlen(newlogin) >= MaxPasswordEntryLen)) {
 					(void) close(ptmpfd);
 					(void) pw_abort();
-					err(EXIT_FAILURE, "can't add `%s', line too long", buf);
+					errx(EXIT_FAILURE, "can't add `%s', line too long (%d bytes)", buf, cc + strlen(newlogin));
 				}
 				if (write(ptmpfd, buf, (size_t) cc) != cc) {
 					(void) close(ptmpfd);
