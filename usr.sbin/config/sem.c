@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.12 1997/11/13 08:21:56 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.13 1999/01/19 01:11:24 niklas Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -728,6 +728,7 @@ newdevi(name, unit, d)
 	i->i_atdeva = NULL;
 	i->i_locs = NULL;
 	i->i_cfflags = 0;
+	i->i_cfindex = -1;
 	i->i_lineno = currentline();
 	if (unit >= d->d_umax)
 		d->d_umax = unit + 1;
