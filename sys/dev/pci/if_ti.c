@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.42 2003/02/20 18:08:43 henning Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.43 2003/02/26 19:02:50 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -152,7 +152,9 @@ void ti_add_mcast(struct ti_softc *, struct ether_addr *);
 void ti_del_mcast(struct ti_softc *, struct ether_addr *);
 void ti_setmulti(struct ti_softc *);
 
-void ti_mem(struct ti_softc *, u_int32_t, u_int32_t, caddr_t);
+void ti_mem_read(struct ti_softc *, u_int32_t, u_int32_t, void *);
+void ti_mem_write(struct ti_softc *, u_int32_t, u_int32_t, const void*);
+void ti_mem_set(struct ti_softc *, u_int32_t, u_int32_t);
 void ti_loadfw(struct ti_softc *);
 void ti_cmd(struct ti_softc *, struct ti_cmd_desc *);
 void ti_cmd_ext(struct ti_softc *, struct ti_cmd_desc *,
@@ -320,14 +322,13 @@ int ti_read_eeprom(sc, dest, off, cnt)
 }
 
 /*
- * NIC memory access function. Can be used to either clear a section
- * of NIC local memory or (if buf is non-NULL) copy data into it.
+ * NIC memory read function.
+ * Can be used to copy data from NIC local memory.
  */
-void
-ti_mem(sc, addr, len, buf)
+void ti_mem_read(sc, addr, len, buf)
 	struct ti_softc		*sc;
 	u_int32_t		addr, len;
-	caddr_t			buf;
+	void			*buf;
 {
 	int			segptr, segsize, cnt;
 	caddr_t			ptr;
@@ -342,21 +343,70 @@ ti_mem(sc, addr, len, buf)
 		else
 			segsize = TI_WINLEN - (segptr % TI_WINLEN);
 		CSR_WRITE_4(sc, TI_WINBASE, (segptr & ~(TI_WINLEN - 1)));
-		if (buf == NULL) {
-			bus_space_set_region_4(sc->ti_btag, sc->ti_bhandle,
-			    TI_WINDOW + (segptr & (TI_WINLEN - 1)), 0,
-			    segsize / 4);
-		} else {
-			bus_space_write_region_4(sc->ti_btag, sc->ti_bhandle,
-			    TI_WINDOW + (segptr & (TI_WINLEN - 1)),
-			    (u_int32_t *)ptr, segsize / 4);
-			ptr += segsize;
-		}
+		bus_space_read_region_4(sc->ti_btag, sc->ti_bhandle,
+		    TI_WINDOW + (segptr & (TI_WINLEN - 1)), (u_int32_t *)ptr,
+		    segsize / 4);
+		ptr += segsize;
 		segptr += segsize;
 		cnt -= segsize;
 	}
+}
 
-	return;
+/*
+ * NIC memory write function.
+ * Can be used to copy data into  NIC local memory.
+ */
+void ti_mem_write(sc, addr, len, buf)
+	struct ti_softc		*sc;
+	u_int32_t		addr, len;
+	const void		*buf;
+{
+	int			segptr, segsize, cnt;
+	const char		*ptr;
+
+	segptr = addr;
+	cnt = len;
+	ptr = buf;
+
+	while(cnt) {
+		if (cnt < TI_WINLEN)
+			segsize = cnt;
+		else
+			segsize = TI_WINLEN - (segptr % TI_WINLEN);
+		CSR_WRITE_4(sc, TI_WINBASE, (segptr & ~(TI_WINLEN - 1)));
+		bus_space_write_region_4(sc->ti_btag, sc->ti_bhandle,
+		    TI_WINDOW + (segptr & (TI_WINLEN - 1)), (u_int32_t *)ptr,
+		    segsize / 4);
+		ptr += segsize;
+		segptr += segsize;
+		cnt -= segsize;
+	}
+}
+
+/*
+ * NIC memory write function.
+ * Can be used to clear a section of NIC local memory.
+ */
+void ti_mem_set(sc, addr, len)
+	struct ti_softc		*sc;
+	u_int32_t		addr, len;
+{
+	int			segptr, segsize, cnt;
+
+	segptr = addr;
+	cnt = len;
+
+	while(cnt) {
+		if (cnt < TI_WINLEN)
+			segsize = cnt;
+		else
+			segsize = TI_WINLEN - (segptr % TI_WINLEN);
+		CSR_WRITE_4(sc, TI_WINBASE, (segptr & ~(TI_WINLEN - 1)));
+		bus_space_set_region_4(sc->ti_btag, sc->ti_bhandle,
+		    TI_WINDOW + (segptr & (TI_WINLEN - 1)), 0, segsize / 4);
+		segptr += segsize;
+		cnt -= segsize;
+	}
 }
 
 /*
@@ -379,14 +429,14 @@ void ti_loadfw(sc)
 			    tigonFwReleaseMinor, tigonFwReleaseFix);
 			return;
 		}
-		ti_mem(sc, tigonFwTextAddr, tigonFwTextLen,
+		ti_mem_write(sc, tigonFwTextAddr, tigonFwTextLen,
 		    (caddr_t)tigonFwText);
-		ti_mem(sc, tigonFwDataAddr, tigonFwDataLen,
+		ti_mem_write(sc, tigonFwDataAddr, tigonFwDataLen,
 		    (caddr_t)tigonFwData);
-		ti_mem(sc, tigonFwRodataAddr, tigonFwRodataLen,
+		ti_mem_write(sc, tigonFwRodataAddr, tigonFwRodataLen,
 		    (caddr_t)tigonFwRodata);
-		ti_mem(sc, tigonFwBssAddr, tigonFwBssLen, NULL);
-		ti_mem(sc, tigonFwSbssAddr, tigonFwSbssLen, NULL);
+		ti_mem_set(sc, tigonFwBssAddr, tigonFwBssLen);
+		ti_mem_set(sc, tigonFwSbssAddr, tigonFwSbssLen);
 		CSR_WRITE_4(sc, TI_CPU_PROGRAM_COUNTER, tigonFwStartAddr);
 		break;
 	case TI_HWREV_TIGON_II:
@@ -400,14 +450,14 @@ void ti_loadfw(sc)
 			    tigon2FwReleaseMinor, tigon2FwReleaseFix);
 			return;
 		}
-		ti_mem(sc, tigon2FwTextAddr, tigon2FwTextLen,
+		ti_mem_write(sc, tigon2FwTextAddr, tigon2FwTextLen,
 		    (caddr_t)tigon2FwText);
-		ti_mem(sc, tigon2FwDataAddr, tigon2FwDataLen,
+		ti_mem_write(sc, tigon2FwDataAddr, tigon2FwDataLen,
 		    (caddr_t)tigon2FwData);
-		ti_mem(sc, tigon2FwRodataAddr, tigon2FwRodataLen,
+		ti_mem_write(sc, tigon2FwRodataAddr, tigon2FwRodataLen,
 		    (caddr_t)tigon2FwRodata);
-		ti_mem(sc, tigon2FwBssAddr, tigon2FwBssLen, NULL);
-		ti_mem(sc, tigon2FwSbssAddr, tigon2FwSbssLen, NULL);
+		ti_mem_set(sc, tigon2FwBssAddr, tigon2FwBssLen);
+		ti_mem_set(sc, tigon2FwSbssAddr, tigon2FwSbssLen);
 		CSR_WRITE_4(sc, TI_CPU_PROGRAM_COUNTER, tigon2FwStartAddr);
 		break;
 	default:
@@ -427,9 +477,6 @@ void ti_cmd(sc, cmd)
 	struct ti_cmd_desc	*cmd;
 {
 	u_int32_t		index;
-
-	if (sc->ti_cmd_ring == NULL)
-		return;
 
 	index = sc->ti_cmd_saved_prodidx;
 	CSR_WRITE_4(sc, TI_GCR_CMDRING + (index * 4), *(u_int32_t *)(cmd));
@@ -452,9 +499,6 @@ void ti_cmd_ext(sc, cmd, arg, len)
 {
 	u_int32_t		index;
 	int		i;
-
-	if (sc->ti_cmd_ring == NULL)
-		return;
 
 	index = sc->ti_cmd_saved_prodidx;
 	CSR_WRITE_4(sc, TI_GCR_CMDRING + (index * 4), *(u_int32_t *)(cmd));
@@ -1378,8 +1422,6 @@ int ti_gibinit(sc)
 	/* Set up the command ring and producer mailbox. */
 	rcb = &sc->ti_rdata->ti_info.ti_cmd_rcb;
 
-	sc->ti_cmd_ring =
-	    (struct ti_cmd_desc *)(sc->ti_bhandle + TI_GCR_CMDRING);
 	TI_HOSTADDR(rcb->ti_hostaddr) = TI_GCR_NIC_ADDR(TI_GCR_CMDRING);
 	rcb->ti_flags = 0;
 	rcb->ti_max_len = 0;
@@ -1456,10 +1498,6 @@ int ti_gibinit(sc)
 	 * a Tigon 1 chip.
 	 */
 	CSR_WRITE_4(sc, TI_WINBASE, TI_TX_RING_BASE);
-	if (sc->ti_hwrev == TI_HWREV_TIGON) {
-		sc->ti_tx_ring_nic =
-		    (struct ti_tx_desc *)(sc->ti_bhandle + TI_WINDOW);
-	}
 	bzero((char *)sc->ti_rdata->ti_tx_ring,
 	    TI_TX_RING_CNT * sizeof(struct ti_tx_desc));
 	rcb = &sc->ti_rdata->ti_info.ti_tx_rcb;
@@ -1594,7 +1632,7 @@ ti_attach(parent, self, aux)
 	}
 
 	/* Zero out the NIC's on-board SRAM. */
-	ti_mem(sc, 0x2000, 0x100000 - 0x2000,  NULL);
+	ti_mem_set(sc, 0x2000, 0x100000 - 0x2000);
 
 	/* Init again -- zeroing memory may have clobbered some registers. */
 	if (ti_chipinit(sc)) {
@@ -1837,6 +1875,9 @@ void ti_rxeof(sc)
 				continue;
 			}
 		}
+
+		if (m == NULL)
+			panic("%s: couldn't get mbuf\n", sc->sc_dv.dv_xname);
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
 		ifp->if_ipackets++;
@@ -2512,7 +2553,7 @@ void ti_stop(sc)
 
 	/* Halt and reinitialize. */
 	ti_chipinit(sc);
-	ti_mem(sc, 0x2000, 0x100000 - 0x2000, NULL);
+	ti_mem_set(sc, 0x2000, 0x100000 - 0x2000);
 	ti_chipinit(sc);
 
 	/* Free the RX lists. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.12 2002/12/04 17:32:30 nate Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.13 2003/02/26 19:02:50 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -386,18 +386,11 @@
  * Even on the alpha, pci addresses are 32-bit quantities
  */
 
-#ifdef __64_bit_pci_addressing__ 
-typedef struct {
-	u_int64_t		ti_addr;
-} ti_hostaddr;
-#define TI_HOSTADDR(x)	x.ti_addr
-#else
 typedef struct {
 	u_int32_t		ti_addr_hi;
 	u_int32_t		ti_addr_lo;
 } ti_hostaddr;
 #define TI_HOSTADDR(x)	x.ti_addr_lo
-#endif
 
 /*
  * Ring control block structure. The rules for the max_len field
@@ -1119,7 +1112,6 @@ struct ti_softc {
 #define ti_return_prodidx	ti_rdata->ti_return_prodidx_r
 #define ti_tx_considx		ti_rdata->ti_tx_considx_r
 	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
-	struct ti_cmd_desc	*ti_cmd_ring;	/* pointer to shared mem */
 	bus_dmamap_t		ti_ring_map;
 	u_int16_t		ti_tx_saved_considx;
 	u_int16_t		ti_rx_saved_considx;
