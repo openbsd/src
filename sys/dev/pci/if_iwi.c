@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.22 2004/12/21 17:29:53 damien Exp $  */
+/*	$OpenBSD: if_iwi.c,v 1.23 2005/01/05 09:07:15 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2004
