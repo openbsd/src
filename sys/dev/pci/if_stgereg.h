@@ -1,4 +1,4 @@
-/*	$NetBSD$	*/
+/*	$OpenBSD: if_stgereg.h,v 1.3 2004/10/03 08:52:44 grange Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
