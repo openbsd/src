@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: defs.c,v 1.21 2001/11/23 11:17:03 brian Exp $
+ *	$OpenBSD: defs.c,v 1.22 2002/03/12 16:14:22 brian Exp $
  */
 
 
@@ -229,6 +229,12 @@ static const struct speeds {
 #endif
 #ifdef B230400
   { 230400, B230400, },
+#endif
+#ifdef B460800
+  { 460800, B460800, },
+#endif
+#ifdef B921600
+  { 921600, B921600, },
 #endif
 #ifdef EXTA
   { 19200, EXTA, },
