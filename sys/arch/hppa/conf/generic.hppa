@@ -1,4 +1,4 @@
-#	$OpenBSD: generic.hppa,v 1.4 2000/08/15 20:27:37 mickey Exp $
+#	$OpenBSD: generic.hppa,v 1.5 2002/03/01 23:27:57 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -25,12 +25,13 @@ option		USELEDS		# blink 'em
 
 lasi*	at mainbus0 irq 28	# LASI host adapter (LSI PN???)
 asp*	at mainbus0 irq 28	# this one comes w/ Viper and leds
-#wax*	at mainbus0 irq 28	# Wax may host EISA as well
+#wax*	at mainbus0 irq 24	# Wax may host EISA as well
 mongoose* at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
 #vmeb*	at mainbus0 irq ?	# VME bus adapter
 #dino*	at mainbus0 irq ?	# PCI bus bridge
 
-sti*	at mainbus0 irq ?	# [H]CRX-{8,24,48}[Z] graphics
+sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
+sti1	at mainbus0 irq 12
 
 # internal i/o space
 gsc*	at lasi?		# 712
@@ -53,6 +54,7 @@ hil*	at gsc? irq 1	# Human Interface Loop, kbd and mouse
 #medusa* at gsc? irq 4	# FDDI
 com0	at gsc? irq 5	# RS/232 serial port
 com1	at gsc? irq 6	# RS/232 serial port
+com2	at gsc? irq 13	# only on asp0 w/o harmony
 lpt0	at gsc? irq 7	# both com and lpt are on WD16C552 or LASI
 ie0	at gsc? irq 8	# 82C5[89]6 ether
 siop0	at gsc? irq 9	# NCR 53C7xx

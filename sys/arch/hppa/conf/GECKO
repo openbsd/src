@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.13 2002/02/12 16:22:08 mickey Exp $
+#	$OpenBSD: GECKO,v 1.14 2002/03/01 23:27:57 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -20,9 +20,9 @@ config	bsd swap generic
 
 lasi0	at mainbus0 offset 0x100000 irq 28	# LASI host adapter (LSI ???)
 lasi1	at mainbus0 offset 0x500000 irq 27	# LASI host adapter in the GIO
-#wax0	at mainbus0 irq 27?	# WAX ASIC in the GIO slot
-sti0	at mainbus0 		# onboard HCRX-8 graphics
-sti1	at mainbus0 		# GIO slot HCRX-8 graphics A2263-65538
+#wax0	at mainbus0 irq 24	# WAX ASIC in the GIO slot
+sti0	at mainbus0 irq 11	# onboard HCRX-8 graphics
+sti1	at mainbus0 irq 12	# GIO slot HCRX-8 graphics A2263-65538
 
 # internal I/O space
 gsc0	at lasi0
@@ -30,6 +30,7 @@ gsc1	at lasi1
 #gsc2	at wax0
 com0	at gsc0 irq 5		# serial port
 com1	at gsc1	irq 5		# serial port on A2263-6653[56]
+com2	at gsc0 irq 13		# only on asp w/o harmony
 lpt0	at gsc0	irq 7		# both com0 and lpt0 are on LASI
 ie0	at gsc0	irq 8		# 82C596 ether
 ie1	at gsc1	irq 8		# 82C596 ether on A2263-66536
