@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.4 1996/09/26 04:19:41 tholo Exp $
+.\"	$OpenBSD: malloc.3,v 1.5 1997/05/31 08:47:55 tholo Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -159,6 +159,18 @@ This can substantially aid in compacting memory.
 .It U
 ``utrace'' generate entries for ktrace(1) for all operations.
 Consult the source for this one.
+
+.It X
+``xmalloc'' 
+rather than return failure,
+.Xr abort 3
+the program with a diagnostic message on stderr.
+It is the intention that this option be set at compile time by
+including in the source:
+.Bd -literal -offset indent
+extern char *malloc_options;
+malloc_options = "X";
+.Ed
 
 .It Z
 ``zero'' fill some junk into the area allocated (see ``J''),

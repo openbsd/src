@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.24 1997/04/30 05:52:50 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.25 1997/05/31 08:47:56 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -37,14 +37,11 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.24 1997/04/30 05:52:50 tholo Exp $
  */
 #define SOME_JUNK	0xd0		/* as in "Duh" :-) */
 
-/*
- * No user serviceable parts behind this point.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +61,26 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.24 1997/04/30 05:52:50 tholo Exp $
  *			returned by malloc/realloc.
  *
  */
+
+#if defined(__i386__) && defined(__FreeBSD__)
+#   define malloc_pageshift		12U
+#   define malloc_minsize		16U
+#endif /* __i386__ && __FreeBSD__ */
+
+#if defined(__sparc__) && !defined(__OpenBSD__)
+#   define malloc_pageshirt		12U
+#   define malloc_minsize		16U
+#   define MAP_ANON			(0)
+#   define USE_DEV_ZERO
+#   define MADV_FREE			MADV_DONTNEED
+#endif /* __sparc__ */
+
+/* Insert your combination here... */
+#if defined(__FOOCPU__) && defined(__BAROS__)
+#   define malloc_pageshift		12U
+#   define malloc_minsize		16U
+#endif /* __FOOCPU__ && __BAROS__ */
+
 #ifdef __OpenBSD__
 #   if defined(__alpha__) || defined(__m68k__) || defined(__mips__) || \
        defined(__i386__) || defined(__m88k__) || defined(__ns32k__) || \
@@ -73,7 +90,21 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.24 1997/04/30 05:52:50 tholo Exp $
 #   endif /* __i386__ */
 #endif /* __OpenBSD__ */
 
+#ifdef _THREAD_SAFE
+#include <pthread.h>
+static pthread_mutex_t malloc_lock;
+#define THREAD_LOCK()		pthread_mutex_lock(&malloc_lock)
+#define THREAD_UNLOCK()		pthread_mutex_unlock(&malloc_lock)
+#define THREAD_LOCK_INIT()	pthread_mutex_init(&malloc_lock, 0);
+#else
+#define THREAD_LOCK()
+#define THREAD_UNLOCK()
+#define THREAD_LOCK_INIT()
+#endif
+
 /*
+ * No user serviceable parts behind this point.
+ *
  * This structure describes a page worth of chunks.
  */
 
@@ -144,6 +175,18 @@ struct pgfree {
 #define pageround(foo) (((foo) + (malloc_pagemask))&(~(malloc_pagemask)))
 #define ptr2index(foo) (((u_long)(foo) >> malloc_pageshift)-malloc_origo)
 
+/* fd of /dev/zero */
+#ifdef USE_DEV_ZERO
+static int fdzero;
+#define	MMAP_FD	fdzero
+#define INIT_MMAP() \
+	{ if ((fdzero=open("/dev/zero", O_RDWR, 0000)) == -1) \
+	    wrterror("open of /dev/zero"); }
+#else
+#define MMAP_FD (-1)
+#define INIT_MMAP()
+#endif
+
 /* Set when initialization has been done */
 static unsigned malloc_started;	
 
@@ -184,6 +227,9 @@ static int malloc_realloc;
 static int malloc_hint;
 #endif
 
+/* xmalloc behaviour ?  */
+static int malloc_xmalloc;
+
 /* zero fill ?  */
 static int malloc_zero;
 
@@ -216,6 +262,11 @@ char *malloc_options;
 
 /* Name of the current public function */
 static char *malloc_func;
+
+/* Macro for mmap */
+#define MMAP(size) \
+	mmap((caddr_t)0, (size), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, \
+	    MMAP_FD, (off_t)0);
 
 /*
  * Necessary function declarations
@@ -291,11 +342,11 @@ wrterror(p)
     char *p;
 {
     char *q = " error: ";
-    suicide = 1;
     write(2, __progname, strlen(__progname));
     write(2, malloc_func, strlen(malloc_func));
     write(2, q, strlen(q));
     write(2, p, strlen(p));
+    suicide = 1;
 #ifdef MALLOC_STATS
     if (malloc_stats)
 	malloc_dump(stderr);
@@ -393,8 +444,7 @@ extend_pgdir(index)
      */
 
     /* Get new pages */
-    new = (struct pginfo**) mmap(0, i * malloc_pagesize, PROT_READ|PROT_WRITE,
-				 MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+    new = (struct pginfo**) MMAP(i * malloc_pagesize);
     if (new == (struct pginfo **)-1)
 	return 0;
 
@@ -422,6 +472,10 @@ malloc_init ()
 {
     char *p, b[64];
     int i, j;
+
+    THREAD_LOCK_INIT();
+
+    INIT_MMAP();
 
 #ifdef EXTRA_SANITY
     malloc_junk = 1;
@@ -464,6 +518,8 @@ malloc_init ()
 		case 'u': malloc_utrace  = 0; break;
 		case 'U': malloc_utrace  = 1; break;
 #endif /* __FreeBSD__ */
+		case 'x': malloc_xmalloc = 0; break;
+		case 'X': malloc_xmalloc = 1; break;
 		case 'z': malloc_zero    = 0; break;
 		case 'Z': malloc_zero    = 1; break;
 		default:
@@ -491,8 +547,8 @@ malloc_init ()
 #endif /* MALLOC_STATS */
 
     /* Allocate one page for the page directory */
-    page_dir = (struct pginfo **) mmap(0, malloc_pagesize, PROT_READ|PROT_WRITE,
-				       MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+    page_dir = (struct pginfo **) MMAP(malloc_pagesize);
+
     if (page_dir == (struct pginfo **) -1)
 	wrterror("mmap(2) failed, check limits.\n");
 
@@ -745,9 +801,6 @@ imalloc(size)
     size_t size;
 {
     void *result;
-#ifdef  _THREAD_SAFE
-    int     status;
-#endif
 
     if (!malloc_started)
 	malloc_init();
@@ -783,12 +836,9 @@ irealloc(ptr, size)
     u_long osize, index;
     struct pginfo **mp;
     int i;
-#ifdef  _THREAD_SAFE
-    int     status;
-#endif
 
     if (suicide)
-	return 0;
+	abort();
 
     if (!malloc_started) {
 	wrtwarning("malloc() has never been called.\n");
@@ -1082,9 +1132,6 @@ ifree(ptr)
 {
     struct pginfo *info;
     int index;
-#ifdef  _THREAD_SAFE
-    int     status;
-#endif
 
     /* This is legal */
     if (!ptr)
@@ -1124,17 +1171,6 @@ ifree(ptr)
  * These are the public exported interface routines.
  */
 
-#ifdef _THREAD_SAFE
-#include <pthread.h>
-#include "pthread_private.h"
-static int malloc_lock;
-#define THREAD_LOCK() _thread_kern_sig_block(&malloc_lock);
-#define THREAD_UNLOCK() _thread_kern_sig_unblock(malloc_lock);
-#else
-#define THREAD_LOCK() 
-#define THREAD_UNLOCK()
-#endif
-
 static int malloc_active;
 
 void *
@@ -1153,6 +1189,8 @@ malloc(size_t size)
     UTRACE(0, size, r);
     malloc_active--;
     THREAD_UNLOCK();
+    if (malloc_xmalloc && !r)
+	wrterror("out of memory.\n");
     return (r);
 }
 
@@ -1196,5 +1234,7 @@ realloc(void *ptr, size_t size)
     UTRACE(ptr, size, r);
     malloc_active--;
     THREAD_UNLOCK();
+    if (malloc_xmalloc && !r)
+	wrterror("out of memory.\n");
     return (r);
 }
