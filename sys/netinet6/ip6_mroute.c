@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.31 2002/11/27 05:10:07 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.32 2003/05/07 02:12:09 deraadt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -582,8 +582,9 @@ add_m6if(mifcp)
 
 	if (mifcp->mif6c_flags & MIFF_REGISTER) {
 		if (reg_mif_num == (mifi_t)-1) {
-			strcpy(multicast_register_if.if_xname,
-			       "register_mif"); /* XXX */
+			strlcpy(multicast_register_if.if_xname,
+			    "register_mif",
+			    sizeof multicast_register_if.if_xname); /* XXX */
 			multicast_register_if.if_flags |= IFF_LOOPBACK;
 			multicast_register_if.if_index = mifcp->mif6c_mifi;
 			reg_mif_num = mifcp->mif6c_mifi;
