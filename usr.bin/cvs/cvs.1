@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.21 2005/01/05 23:45:56 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.22 2005/01/07 18:45:13 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -206,8 +206,32 @@ Show repository access history.
 Aliases:
 .Ic hi ,
 .Ic his .
-.It Ic import
+.It Xo Ic import
+.Op Fl b Ar branch
+.Op Fl m Ar msg
+.Ar repository
+.Ar vendortag
+.Ar releasetag
+.Xc
+.Pp
 Import sources into CVS using vendor branches.
+.Pp
+The
+.Fl b
+flag specifies the first-level branch number.
+The
+.Fl m
+flag specifies the log message to send.
+.Pp
+At least three arguments are required:
+.Ar repository
+specifies the location of the sources to be imported;
+.Ar vendortag
+is a tag for the entire branch;
+.Ar releasetag
+is used to identify the files you created with
+.Nm
+.Ic import .
 .Pp
 Aliases:
 .Ic im ,
