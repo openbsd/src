@@ -49,4 +49,6 @@ main(argc, argv)
 		printf("%s\n", strerror(errno));
 		exit(1);
 	}
+
+	exit(0);
 }

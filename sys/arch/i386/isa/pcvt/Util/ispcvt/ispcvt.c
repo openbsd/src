@@ -54,12 +54,19 @@ static char *id =
  *
  *---------------------------------------------------------------------------*/
 
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <machine/pcvt_ioctl.h>
 
 #define DEFAULTFD 0
 
+void next __P((void));
+void usage __P((void));
+
+int
 main(argc,argv)
 int argc;
 char *argv[];
@@ -76,7 +83,7 @@ char *argv[];
 	int config = 0;	
 	int dflag = 0;
 	int fd;
-	char *device;
+	char *device = NULL;
 
 	while( (c = getopt(argc, argv, "vcd:")) != EOF)
 	{
@@ -277,10 +284,12 @@ char *argv[];
 		fprintf(stderr,"BSD Version      = %u\n", pcvtinfo.opsys);
 		fprintf(stderr,"PCVT_NSCREENS    = %u\n", pcvtinfo.nscreens);
 		fprintf(stderr,"PCVT_SYSBEEPF    = %u\n", pcvtinfo.sysbeepf);
-		fprintf(stderr,"Compile options  = 0x%08X\n", pcvtinfo.compile_opts);
+		fprintf(stderr,"Compile options  = 0x%08X\n", (unsigned int)pcvtinfo.compile_opts);
 	}
+	exit(0);
 }
 
+void
 usage()
 {
 	fprintf(stderr,"\nispcvt - verify current video driver is the pcvt-driver\n");
@@ -291,6 +300,7 @@ usage()
 	exit(5);
 }
 
+void
 next()
 {
 	static int i = 0;

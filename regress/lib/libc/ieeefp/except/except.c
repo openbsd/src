@@ -12,6 +12,7 @@ static volatile const double zero = 0.0;
 static volatile const double huge = DBL_MAX;
 static volatile const double tiny = DBL_MIN;
 
+int
 main()
 {
 	volatile double x;

@@ -129,7 +129,7 @@ void readfont(char *filename)
 			break;
 			
 		default:
-			fprintf(stderr,"error, file %s is no valid font file, size=%d\n",filename,sbp->st_size);
+			fprintf(stderr,"error, file %s is no valid font file, size=%ld\n",filename,(long)sbp->st_size);
 			exit(1);
 	}			
 
@@ -144,7 +144,7 @@ void readfont(char *filename)
 
 	if((ret = fread(fonttab, sizeof(*fonttab), sbp->st_size, in)) != sbp->st_size)
 	{
-		sprintf(buffer,"error reading file %s, size = %d, ret = %d\n",filename,sbp->st_size, ret);
+		sprintf(buffer,"error reading file %s, size = %ld, ret = %d\n",filename,(long)sbp->st_size, ret);
 		perror(buffer);
 		exit(1);
 	}		

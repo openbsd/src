@@ -44,13 +44,19 @@ static char *id =
  *
  *---------------------------------------------------------------------------*/
 	
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <machine/pcvt_ioctl.h>
 
 #define DEFAULTFD 0
 
+void usage __P((void));
+
+int
 main(argc,argv)
 int argc;
 char *argv[];
@@ -66,7 +72,7 @@ char *argv[];
 	int start = -1;
 	int end = -1;
 	int dflag = -1;
-	char *device;
+	char *device = NULL;
 	
 	while( (c = getopt(argc, argv, "d:n:s:e:")) != EOF)
 	{
@@ -144,6 +150,7 @@ char *argv[];
 		exit(0);
 }
 
+void
 usage()
 {
 	fprintf(stderr,"\ncursor - set cursor shape for pcvt video driver\n");
@@ -154,4 +161,3 @@ usage()
 	fprintf(stderr,"       -e <line>     ending scan line (bottom scan line)\n\n");
 	exit(1);
 }
-

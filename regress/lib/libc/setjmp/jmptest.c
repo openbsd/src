@@ -32,6 +32,7 @@
  */
 
 #include <sys/types.h>
+#include <err.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>

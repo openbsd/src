@@ -35,6 +35,8 @@ void clear_screen();
 #include <sys/ioctl.h>
 #endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ */
 #include <signal.h>
+#include <string.h>
+#include <unistd.h>
 
 #ifdef CURFIX
 #define CURSORON  "\033[?25h"
@@ -112,12 +114,32 @@ struct termios old_stty, new_stty;
 #endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ */
 FILE * font_file = (FILE *)0;
 
+#ifdef __P
+void interrupt __P((void));
+void command __P((void));
+int get_key __P((void));
+void pad __P((void));
+void init_restore __P((void));
+void draw_current __P((void));
+void highlight __P((unsigned int, unsigned int, bool));
+void clear_screen __P((void));
+void move __P((int, int));
+void build_entry __P((unsigned int));
+void extract_entry __P((unsigned int));
+void send_entry __P((int));
+void print_entry __P((register unsigned int, bool));
+void save_table __P((FILE *));
+void get_table __P((FILE *));
+void help __P((void));
+void warning __P((char *));
+#endif
 
 /*
  * Interrupt
  *	Exit gracefully.
  */
 
+void
 interrupt()
 {
 	void clear_screen();
@@ -143,6 +165,7 @@ interrupt()
  *	Grab input/output file and call main command processor.
  */
 	
+int
 main( argc, argv )
 int argc;
 char *argv[];
@@ -231,6 +254,7 @@ char *argv[];
 #ifdef CURFIX
         printf("%s\n",CURSORON);
 #endif CURFIX
+	exit(0);
 }
 
 
@@ -501,6 +525,7 @@ get_key()
  *	Emit nulls so that the terminal can catch up.
  */
 
+void
 pad()
 {
 	int i;
@@ -668,6 +693,7 @@ clear_screen()
  * move
  */
 
+void
 move( y, x )
 int y, x;
 {

@@ -1,4 +1,6 @@
+/*	$OpenBSD: crt0.c,v 1.2 1996/12/21 22:23:36 millert Exp $	*/
 /*	$NetBSD: crt0.c,v 1.20 1995/06/03 13:16:08 pk Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -67,7 +69,7 @@ start()
 	argv = &kfp->kargv[0];
 	environ = argv + kfp->kargc + 1;
 
-	if (ap = argv[0])
+	if ((ap = argv[0]))
 		if ((__progname = _strrchr(ap, '/')) == NULL)
 			__progname = ap;
 		else

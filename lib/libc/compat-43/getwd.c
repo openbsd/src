@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getwd.c,v 1.3 1996/12/17 02:38:39 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getwd.c,v 1.4 1996/12/21 22:23:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ getwd(buf)
 {
 	char *p;
 
-	if (p = getcwd(buf, MAXPATHLEN))
+	if ((p = getcwd(buf, MAXPATHLEN)))
 		return(p);
 	(void)strncpy(buf, strerror(errno), MAXPATHLEN-1);
 	buf[MAXPATHLEN-1] = '\0';
