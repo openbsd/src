@@ -97,7 +97,6 @@ extern int h_errno;
 #endif
 
 #include "cdefs.h"
-#include "osdep.h"
 #include "dhcp.h"
 #include "tree.h"
 #include "hash.h"
@@ -866,31 +865,6 @@ void assemble_tr_header PROTO ((struct interface_info *, unsigned char *,
 ssize_t decode_tr_header PROTO ((struct interface_info *,
 				 unsigned char *,
 				 int, struct hardware *));
-
-/* dhxpxlt.c */
-void convert_statement PROTO ((FILE *));
-void convert_host_statement PROTO ((FILE *, jrefproto));
-void convert_host_name PROTO ((FILE *, jrefproto));
-void convert_class_statement PROTO ((FILE *, jrefproto, int));
-void convert_class_decl PROTO ((FILE *, jrefproto));
-void convert_lease_time PROTO ((FILE *, jrefproto, char *));
-void convert_shared_net_statement PROTO ((FILE *, jrefproto));
-void convert_subnet_statement PROTO ((FILE *, jrefproto));
-void convert_subnet_decl PROTO ((FILE *, jrefproto));
-void convert_host_decl PROTO ((FILE *, jrefproto));
-void convert_hardware_decl PROTO ((FILE *, jrefproto));
-void convert_hardware_addr PROTO ((FILE *, jrefproto));
-void convert_filename_decl PROTO ((FILE *, jrefproto));
-void convert_servername_decl PROTO ((FILE *, jrefproto));
-void convert_ip_addr_or_hostname PROTO ((FILE *, jrefproto, int));
-void convert_fixed_addr_decl PROTO ((FILE *, jrefproto));
-void convert_option_decl PROTO ((FILE *, jrefproto));
-void convert_timestamp PROTO ((FILE *, jrefproto));
-void convert_lease_statement PROTO ((FILE *, jrefproto));
-void convert_address_range PROTO ((FILE *, jrefproto));
-void convert_date PROTO ((FILE *, jrefproto, char *));
-void convert_numeric_aggregate PROTO ((FILE *, jrefproto, int, int, int, int));
-void indent PROTO ((int));
 
 /* route.c */
 void add_route_direct PROTO ((struct interface_info *, struct in_addr));
