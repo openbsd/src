@@ -1,4 +1,4 @@
-#	$OpenBSD: isakmp_fld.fld,v 1.7 2003/06/03 14:28:16 ho Exp $
+#	$OpenBSD: isakmp_fld.fld,v 1.8 2004/06/20 15:24:05 ho Exp $
 #	$EOM: isakmp_fld.fld,v 1.5 1999/04/25 13:38:22 niklas Exp $
 
 #
@@ -149,4 +149,16 @@ ISAKMP_ATTRIBUTE : ISAKMP_GEN
   RESERVED		ign 1
   ID			num 2
   ATTRS			raw
+.
+
+# NAT Discovery payload.
+ISAKMP_NAT_D : ISAKMP_GEN
+  DATA			raw
+.
+
+# NAT Original Address payload.
+ISAKMP_NAT_OA : ISAKMP_GEN
+  TYPE			num 1
+  RESERVED		ign 3
+  DATA			raw
 .

@@ -1,10 +1,10 @@
-/* $OpenBSD: init.c,v 1.29 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: init.c,v 1.30 2004/06/20 15:24:05 ho Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 2000 Angelos D. Keromytis.  All rights reserved.
- * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 2003, 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,12 +50,18 @@
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
+#include "virtual.h"
 #include "udp.h"
 #include "ui.h"
 #include "util.h"
 
-#ifdef USE_POLICY
+#if defined (USE_POLICY)
 #include "policy.h"
+#endif
+
+#if defined (USE_NAT_TRAVERSAL)
+#include "nat_traversal.h"
+#include "udp_encap.h"
 #endif
 
 void
@@ -78,7 +84,7 @@ init(void)
 	/* This depends on conf_init, thus check as soon as possible. */
 	log_reinit();
 
-#ifdef USE_POLICY
+#if defined (USE_POLICY)
 	/* policy_init depends on conf_init having run.  */
 	policy_init();
 #endif
@@ -89,7 +95,12 @@ init(void)
 
 	sa_init();
 	transport_init();
+	virtual_init();
 	udp_init();
+#if defined (USE_NAT_TRAVERSAL)
+	nat_t_init();
+	udp_encap_init();
+#endif
 	ui_init();
 }
 
@@ -116,7 +127,7 @@ reinit(void)
 
 	log_reinit();
 
-#ifdef USE_POLICY
+#if defined (USE_POLICY)
 	/* Reread the policies.  */
 	policy_init();
 #endif
@@ -129,7 +140,7 @@ reinit(void)
 	connection_reinit();
 
 	/*
-	 * Rescan interfaces.
+	 * Rescan interfaces (call reinit() in all transports).
          */
 	transport_reinit();
 

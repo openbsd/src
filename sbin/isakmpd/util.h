@@ -1,9 +1,9 @@
-/* $OpenBSD: util.h,v 1.19 2004/05/23 16:14:22 deraadt Exp $	 */
+/* $OpenBSD: util.h,v 1.20 2004/06/20 15:24:05 ho Exp $	 */
 /* $EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 2001, 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,6 +63,7 @@ extern int      sockaddr2text(struct sockaddr *, char **, int);
 extern u_int8_t *sockaddr_addrdata(struct sockaddr *);
 extern int      sockaddr_addrlen(struct sockaddr *);
 extern in_port_t sockaddr_port(struct sockaddr *);
+extern void	sockaddr_set_port(struct sockaddr *, in_port_t);
 extern int      text2sockaddr(char *, char *, struct sockaddr **);
 extern void     util_ntoa(char **, int, u_int8_t *);
 extern int      zero_test(const u_int8_t *, size_t);

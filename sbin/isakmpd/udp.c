@@ -1,9 +1,10 @@
-/* $OpenBSD: udp.c,v 1.74 2004/06/17 19:36:36 hshoexer Exp $	 */
+/* $OpenBSD: udp.c,v 1.75 2004/06/20 15:24:05 ho Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 2000 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2003, 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,6 +60,7 @@
 #include "transport.h"
 #include "udp.h"
 #include "util.h"
+#include "virtual.h"
 
 #define UDP_SIZE 65536
 
@@ -67,65 +69,47 @@
 #define SO_REUSEPORT SO_REUSEADDR
 #endif
 
-struct udp_transport {
-	struct transport transport;
-	struct sockaddr *src, *dst;
-	int             s;
-	LIST_ENTRY(udp_transport) link;
-};
+/* These are reused by udp_encap.c, thus not 'static' here.  */
+struct transport *udp_clone(struct transport *, struct sockaddr *);
+void		 udp_get_dst(struct transport *, struct sockaddr **);
+void		 udp_get_src(struct transport *, struct sockaddr **);
+char		*udp_decode_ids(struct transport *);
 
-static struct transport *udp_clone(struct udp_transport *, struct sockaddr *);
 static struct transport *udp_create(char *);
-static void     udp_reinit(void);
 static void     udp_remove(struct transport *);
 static void     udp_report(struct transport *);
-static int      udp_fd_set(struct transport *, fd_set *, int);
-static int      udp_fd_isset(struct transport *, fd_set *);
 static void     udp_handle_message(struct transport *);
 static struct transport *udp_make(struct sockaddr *);
-static int      udp_send_message(struct message *);
-static void     udp_get_dst(struct transport *, struct sockaddr **);
-static void     udp_get_src(struct transport *, struct sockaddr **);
-static char    *udp_decode_ids(struct transport *);
+static int      udp_send_message(struct message *, struct transport *);
 #if 0
 static in_port_t udp_decode_port(char *);
 #endif
 
 static struct transport_vtbl udp_transport_vtbl = {
-	{0}, "udp",
+	{0}, "udp_physical",
 	udp_create,
-	udp_reinit,
+	0,
 	udp_remove,
 	udp_report,
-	udp_fd_set,
-	udp_fd_isset,
+	0,
+	0,
 	udp_handle_message,
 	udp_send_message,
 	udp_get_dst,
 	udp_get_src,
-	udp_decode_ids
+	udp_decode_ids,
+	udp_clone,
+	0
 };
 
-/* A list of UDP transports we listen for messages on.  */
-static
-LIST_HEAD(udp_listen_list, udp_transport) udp_listen_list;
-
-static struct transport *default_transport, *default_transport6;
 char		*udp_default_port = 0;
 char		*udp_bind_port = 0;
 int		bind_family = 0;
 
-/* Find an UDP transport listening on ADDR:PORT.  */
-static struct udp_transport *
-udp_listen_lookup(struct sockaddr *addr)
+void
+udp_init(void)
 {
-	struct udp_transport *u;
-
-	for (u = LIST_FIRST(&udp_listen_list); u; u = LIST_NEXT(u, link))
-		if (sysdep_sa_len(u->src) == sysdep_sa_len(addr) &&
-		    memcmp(u->src, addr, sysdep_sa_len(addr)) == 0)
-			return u;
-	return 0;
+	transport_method_add(&udp_transport_vtbl);
 }
 
 /* Create a UDP transport structure bound to LADDR just for listening.  */
@@ -133,11 +117,12 @@ static struct transport *
 udp_make(struct sockaddr *laddr)
 {
 	struct udp_transport *t = 0;
-	int		s, on, wildcardaddress = 0;
+	int	s, on, wildcardaddress = 0;
+	char	*tstr;
 
 	t = calloc(1, sizeof *t);
 	if (!t) {
-		log_print("udp_make: malloc (%lu) failed",
+		log_print("udp_make: calloc (1, %lu) failed",
 		    (unsigned long)sizeof *t);
 		free(laddr);
 		return 0;
@@ -184,8 +169,6 @@ udp_make(struct sockaddr *laddr)
 	}
 	t->transport.vtbl = &udp_transport_vtbl;
 	if (monitor_bind(s, t->src, sysdep_sa_len(t->src))) {
-		char	*tstr;
-
 		if (sockaddr2text(t->src, &tstr, 0))
 			log_error("udp_make: bind (%d, %p, %lu)", s, &t->src,
 			    (unsigned long)sizeof t->src);
@@ -197,7 +180,17 @@ udp_make(struct sockaddr *laddr)
 		goto err;
 	}
 	t->s = s;
-	transport_add(&t->transport);
+	if (sockaddr2text(t->src, &tstr, 0))
+		LOG_DBG((LOG_MISC, 20, "udp_make: "
+		    "transport %p socket %d family %d", t, s,
+		    t->src->sa_family == AF_INET ? 4 : 6));
+	else {
+		LOG_DBG((LOG_MISC, 20, "udp_make: "
+		    "transport %p socket %d ip %s port %d", t, s,
+		    tstr, ntohs(sockaddr_port(t->src))));
+		free (tstr);
+	}
+	transport_setup(&t->transport, 0);
 	transport_reference(&t->transport);
 	t->transport.flags |= TRANSPORT_LISTEN;
 	return &t->transport;
@@ -214,9 +207,10 @@ err:
 }
 
 /* Clone a listen transport U, record a destination RADDR for outbound use.  */
-static struct transport *
-udp_clone(struct udp_transport *u, struct sockaddr *raddr)
+struct transport *
+udp_clone(struct transport *ut, struct sockaddr *raddr)
 {
+	struct udp_transport *u = (struct udp_transport *)ut;
 	struct udp_transport *u2;
 	struct transport *t;
 
@@ -250,7 +244,7 @@ udp_clone(struct udp_transport *u, struct sockaddr *raddr)
 	memcpy(u2->dst, raddr, sysdep_sa_len(raddr));
 
 	t->flags &= ~TRANSPORT_LISTEN;
-	transport_add(t);
+	transport_setup(t, 0);
 	return t;
 }
 
@@ -260,7 +254,7 @@ udp_clone(struct udp_transport *u, struct sockaddr *raddr)
  * that specific port.  Add the polymorphic transport structure to the
  * system-wide pools of known ISAKMP transports.
  */
-static struct transport *
+struct transport *
 udp_bind(const struct sockaddr *addr)
 {
 	struct sockaddr *src;
@@ -274,187 +268,25 @@ udp_bind(const struct sockaddr *addr)
 }
 
 /*
- * When looking at a specific network interface address, if it's an INET one,
- * create an UDP server socket bound to it.
- * Return 0 if successful, -1 otherwise.
- */
-static int
-udp_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
-{
-	char	*port = (char *) arg, *addr_str, *ep;
-	struct sockaddr_storage saddr_st;
-	struct sockaddr *saddr = (struct sockaddr *) & saddr_st;
-	struct conf_list *listen_on;
-	struct udp_transport *u;
-	struct conf_list_node *address;
-	struct sockaddr *addr;
-	struct transport *t;
-	struct ifreq    flags_ifr;
-	int		s, error;
-	long		lport;
-
-	/*
-	 * Well, UDP is an internet protocol after all so drop other ifreqs.
-	*/
-	if ((if_addr->sa_family != AF_INET ||
-	    sysdep_sa_len(if_addr) != sizeof(struct sockaddr_in)) &&
-	    (if_addr->sa_family != AF_INET6 ||
-	    sysdep_sa_len(if_addr) != sizeof(struct sockaddr_in6)))
-		return 0;
-
-	/*
-	 * Only create sockets for families we should listen to.
-	 */
-	if (bind_family) {
-		switch (if_addr->sa_family) {
-		case AF_INET:
-			if ((bind_family & BIND_FAMILY_INET4) == 0)
-				return 0;
-			break;
-		case AF_INET6:
-			if ((bind_family & BIND_FAMILY_INET6) == 0)
-				return 0;
-			break;
-		default:
-			return 0;
-		}
-	}
-
-	/*
-	 * These special addresses are not useable as they have special meaning
-	 * in the IP stack.
-	 */
-	if (if_addr->sa_family == AF_INET &&
-	    (((struct sockaddr_in *)if_addr)->sin_addr.s_addr == INADDR_ANY ||
-	    (((struct sockaddr_in *)if_addr)->sin_addr.s_addr == INADDR_NONE)))
-		return 0;
-
-	/*
-	 * Go through the list of transports and see if we already have this
-	 * address bound. If so, unmark the transport and skip it; this allows
-	 * us to call this function when we suspect a new address has appeared.
-	 */
-	if (sysdep_sa_len(if_addr) > sizeof saddr_st)
-		return 0;
-	memcpy(saddr, if_addr, sysdep_sa_len(if_addr));
-	switch (saddr->sa_family) { /* Add the port number to the sockaddr. */
-	case AF_INET:
-		((struct sockaddr_in *)saddr)->sin_port =
-		    htons(strtol(port, &ep, 10));
-		break;
-	case AF_INET6:
-		((struct sockaddr_in6 *)saddr)->sin6_port =
-		    htons(strtol(port, &ep, 10));
-		break;
-	}
-
-	if ((u = udp_listen_lookup(saddr)) != 0) {
-		u->transport.flags &= ~TRANSPORT_MARK;
-		return 0;
-	}
-	/* Don't bother with interfaces that are down.  */
-	s = socket(if_addr->sa_family, SOCK_DGRAM, 0);
-	if (s == -1) {
-		log_error("udp_bind_if: socket (%d, SOCK_DGRAM, 0) failed",
-		    if_addr->sa_family);
-		return -1;
-	}
-	strlcpy(flags_ifr.ifr_name, ifname, sizeof flags_ifr.ifr_name);
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t) & flags_ifr) == -1) {
-		log_error("udp_bind_if: ioctl (%d, SIOCGIFFLAGS, ...) failed",
-		    s);
-		return -1;
-	}
-	close(s);
-	if (!(flags_ifr.ifr_flags & IFF_UP))
-		return 0;
-
-	/*
-	 * Set port.
-	 * XXX Use getservbyname too.
-	 */
-	lport = strtol(port, &ep, 10);
-	if (*ep != '\0' || lport < (long) 0 || lport > (long) USHRT_MAX) {
-		log_print("udp_bind_if: "
-		    "port string \"%s\" not convertible to in_port_t", port);
-		return -1;
-	}
-	switch (if_addr->sa_family) {
-	case AF_INET:
-		((struct sockaddr_in *)if_addr)->sin_port = htons(lport);
-		break;
-	case AF_INET6:
-		((struct sockaddr_in6 *)if_addr)->sin6_port = htons(lport);
-		break;
-	default:
-		log_print("udp_bind_if: unsupported protocol family %d",
-		    if_addr->sa_family);
-		break;
-	}
-
-	/*
-	 * If we are explicit about what addresses we can listen to, be sure
-	 * to respect that option.
-	 * This is quite wasteful redoing the list-run for every interface,
-	 * but who cares?  This is not an operation that needs to be fast.
-	 */
-	listen_on = conf_get_list("General", "Listen-on");
-	if (listen_on) {
-		for (address = TAILQ_FIRST(&listen_on->fields); address;
-		    address = TAILQ_NEXT(address, link)) {
-			if (text2sockaddr(address->field, port, &addr)) {
-				log_print("udp_bind_if: invalid address %s "
-				    "in \"Listen-on\"", address->field);
-				continue;
-			}
-			/* If found, take the easy way out. */
-			if (memcmp(addr, if_addr, sysdep_sa_len(addr)) == 0) {
-				free(addr);
-				break;
-			}
-			free(addr);
-		}
-		conf_free_list(listen_on);
-
-		/*
-		 * If address is zero then we did not find the address among
-		 * the ones we should listen to.
-		 * XXX We do not discover if we do not find our listen
-		 * addresses...  Maybe this should be the other way round.
-		 */
-		if (!address)
-			return 0;
-	}
-	t = udp_bind(if_addr);
-	if (!t) {
-		error = sockaddr2text(if_addr, &addr_str, 0);
-		log_print("udp_bind_if: failed to create a socket on %s:%s",
-		    error ? "unknown" : addr_str, port);
-		if (!error)
-			free(addr_str);
-		return -1;
-	}
-	LIST_INSERT_HEAD(&udp_listen_list, (struct udp_transport *)t, link);
-	return 0;
-}
-
-/*
  * NAME is a section name found in the config database.  Setup and return
  * a transport useable to talk to the peer specified by that name.
  */
 static struct transport *
 udp_create(char *name)
 {
+	struct virtual_transport *v;
 	struct udp_transport *u;
-	struct transport *rv;
-	struct sockaddr *dst, *addr;
+	struct transport *rv, *t;
+	struct sockaddr	*dst, *addr;
 	char	*addr_str, *port_str;
+	struct conf_list *addr_list = 0;
+	struct conf_list_node *addr_node;
 
 	port_str = conf_get_str(name, "Port");
 	if (!port_str)
 		port_str = udp_default_port;
 	if (!port_str)
-		port_str = "500";
+		port_str = UDP_DEFAULT_PORT_STR;
 
 	addr_str = conf_get_str(name, "Address");
 	if (!addr_str) {
@@ -469,18 +301,38 @@ udp_create(char *name)
 	}
 	addr_str = conf_get_str(name, "Local-address");
 	if (!addr_str)
-		addr_str = conf_get_str("General", "Listen-on");
-	if (!addr_str) {
-		if ((dst->sa_family == AF_INET && !default_transport) ||
-		    (dst->sa_family == AF_INET6 && !default_transport6)) {
+		addr_list = conf_get_list("General", "Listen-on");
+	if (!addr_str && !addr_list) {
+		v = virtual_get_default(dst->sa_family);
+		u = (struct udp_transport *)v->main;
+
+		if (!u) {
 			log_print("udp_create: no default transport");
 			rv = 0;
 			goto ret;
 		} else {
-			/* XXX Ugly! */
-			rv = udp_clone((struct udp_transport *)
-			    (dst->sa_family == AF_INET ? default_transport :
-			    default_transport6), dst);
+			rv = udp_clone((struct transport *)u, dst);
+			if (rv)
+				rv->vtbl = &udp_transport_vtbl;
+			goto ret;
+		}
+	}
+
+	if (addr_list) {
+		for (addr_node = TAILQ_FIRST(&addr_list->fields);
+		     addr_node; addr_node = TAILQ_NEXT(addr_node, link))
+			if (text2sockaddr(addr_node->field, port_str, &addr)
+			    == 0) {
+				v = virtual_listen_lookup(addr);
+				free(addr);
+				if (v) {
+					addr_str = addr_node->field;
+					break;
+				}
+			}
+		if (!addr_str) {
+			log_print("udp_create: no matching listener found");
+			rv = 0;
 			goto ret;
 		}
 	}
@@ -490,17 +342,25 @@ udp_create(char *name)
 		rv = 0;
 		goto ret;
 	}
-	u = udp_listen_lookup(addr);
+	
+	v = virtual_listen_lookup(addr);
 	free(addr);
-	if (!u) {
+	if (!v) {
 		log_print("udp_create: %s:%s must exist as a listener too",
 		    addr_str, port_str);
 		rv = 0;
 		goto ret;
 	}
-	rv = udp_clone(u, dst);
+	t = (struct transport *)v;
+	rv = udp_clone(v->main, dst);
+	if (rv) {
+		rv->vtbl = &udp_transport_vtbl;
+		transport_reference(rv->virtual);
+	}
 
 ret:
+	if (addr_list)
+		conf_free_list(addr_list);
 	free(dst);
 	return rv;
 }
@@ -517,10 +377,6 @@ udp_remove(struct transport *t)
 	if (t->flags & TRANSPORT_LISTEN) {
 		if (u->s >= 0)
 			close(u->s);
-		if (t == default_transport)
-			default_transport = 0;
-		else if (t == default_transport6)
-			default_transport6 = 0;
 		if (u->link.le_prev)
 			LIST_REMOVE(u, link);
 	}
@@ -532,181 +388,25 @@ void
 udp_report(struct transport *t)
 {
 	struct udp_transport *u = (struct udp_transport *)t;
-	char	*src = NULL, *dst = NULL;
+	char		*src = NULL, *dst = NULL;
+	in_port_t	 sport, dport;
 
 	if (sockaddr2text(u->src, &src, 0))
 		goto ret;
+	sport = sockaddr_port(u->src);
 
 	if (!u->dst || sockaddr2text(u->dst, &dst, 0))
 		dst = 0;
+	dport = dst ? sockaddr_port(u->dst) : 0;
 
-	LOG_DBG((LOG_REPORT, 0, "udp_report: fd %d src %s dst %s", u->s, src,
-	    dst ? dst : "<none>"));
+	LOG_DBG((LOG_REPORT, 0, "udp_report: fd %d src %s:%u dst %s:%u", u->s,
+	    src, ntohs(sport), dst ? dst : "<none>", ntohs(dport)));
 
 ret:
 	if (dst)
 		free(dst);
 	if (src)
 		free(src);
-}
-
-/*
- * Probe the interface list and determine what new interfaces have
- * appeared.
- *
- * At the same time, we try to determine whether existing interfaces have
- * been rendered invalid; we do this by marking all UDP transports before
- * we call udp_bind_if () through if_map (), and then releasing those
- * transports that have not been unmarked.
- */
-static void
-udp_reinit(void)
-{
-	struct udp_transport *u, *u2;
-	char		*port;
-
-	/* Initialize the protocol and port numbers. */
-	port = udp_default_port ? udp_default_port : "500";
-
-	/* Mark all UDP transports, except the default ones. */
-	for (u = LIST_FIRST(&udp_listen_list); u; u = LIST_NEXT(u, link))
-		if (&u->transport != default_transport &&
-		    &u->transport != default_transport6)
-			u->transport.flags |= TRANSPORT_MARK;
-
-	/* Re-probe interface list. */
-	if (if_map(udp_bind_if, port) == -1)
-		log_print("udp_init: Could not bind the ISAKMP UDP port %s "
-		    "on all interfaces", port);
-
-	/*
-	 * Release listening transports for local addresses that no
-	 * longer exist. udp_bind_if () will have left those still marked.
-         */
-	u = LIST_FIRST(&udp_listen_list);
-	while (u) {
-		u2 = LIST_NEXT(u, link);
-
-		if (u->transport.flags & TRANSPORT_MARK) {
-			LIST_REMOVE(u, link);
-			transport_release(&u->transport);
-		}
-		u = u2;
-	}
-}
-
-/*
- * Find out the magic numbers for the UDP protocol as well as the UDP port
- * to use.  Setup an UDP server for each address of this machine, and one
- * for the generic case when we are the initiator.
- */
-void
-udp_init(void)
-{
-	struct sockaddr_storage dflt_stor;
-	struct sockaddr_in *dflt = (struct sockaddr_in *) & dflt_stor;
-	struct conf_list *listen_on;
-	char           *port;
-	long            lport;
-	char           *ep;
-
-	/* Initialize the protocol and port numbers.  */
-	port = udp_default_port ? udp_default_port : "500";
-
-	LIST_INIT(&udp_listen_list);
-
-	transport_method_add(&udp_transport_vtbl);
-
-	/* Bind the ISAKMP UDP port on all network interfaces we have.  */
-	if (if_map(udp_bind_if, port) == -1)
-		log_fatal("udp_init: Could not bind the ISAKMP UDP port %s "
-		    "on all interfaces", port);
-
-	/* Only listen to the specified address if Listen-on is configured */
-	listen_on = conf_get_list("General", "Listen-on");
-	if (listen_on) {
-		LOG_DBG((LOG_TRANSPORT, 50,
-		    "udp_init: not binding ISAKMP UDP port to INADDR_ANY"));
-		conf_free_list(listen_on);
-		return;
-	}
-	/*
-	 * Get port.
-	 * XXX Use getservbyname too.
-         */
-	lport = strtol(port, &ep, 10);
-	if (*ep != '\0' || lport < (long) 0 || lport > (long) USHRT_MAX) {
-		log_print("udp_init: port string \"%s\" not convertible to "
-		    "in_port_t", port);
-		return;
-	}
-	/*
-	 * Bind to INADDR_ANY in case of new addresses popping up.  Packet
-	 * reception on this transport is taken as a hint to reprobe the
-	 * interface list.
-         */
-	if (!bind_family || (bind_family & BIND_FAMILY_INET4)) {
-		memset(&dflt_stor, 0, sizeof dflt_stor);
-		dflt->sin_family = AF_INET;
-#if !defined (LINUX_IPSEC)
-		((struct sockaddr_in *)dflt)->sin_len =
-		    sizeof(struct sockaddr_in);
-#endif
-		((struct sockaddr_in *)dflt)->sin_port = htons(lport);
-
-		default_transport = udp_bind((struct sockaddr *)&dflt_stor);
-		if (!default_transport) {
-			log_error("udp_init: could not allocate default "
-			    "IPv4 ISAKMP UDP port");
-			return;
-		}
-		LIST_INSERT_HEAD(&udp_listen_list,
-		    (struct udp_transport *)default_transport, link);
-	}
-	if (!bind_family || (bind_family & BIND_FAMILY_INET6)) {
-		memset(&dflt_stor, 0, sizeof dflt_stor);
-		dflt->sin_family = AF_INET6;
-#if !defined (LINUX_IPSEC)
-		((struct sockaddr_in6 *)dflt)->sin6_len =
-		    sizeof(struct sockaddr_in6);
-#endif
-		((struct sockaddr_in6 *)dflt)->sin6_port = htons(lport);
-
-		default_transport6 = udp_bind((struct sockaddr *)&dflt_stor);
-		if (!default_transport6) {
-			log_error("udp_init: could not allocate default "
-			    "IPv6 ISAKMP UDP port");
-			return;
-		}
-		LIST_INSERT_HEAD(&udp_listen_list,
-		    (struct udp_transport *)default_transport6, link);
-	}
-}
-
-/*
- * Set transport T's socket in FDS, return a value useable by select(2)
- * as the number of file descriptors to check.
- */
-static int
-udp_fd_set(struct transport *t, fd_set *fds, int bit)
-{
-	struct udp_transport *u = (struct udp_transport *)t;
-
-	if (bit)
-		FD_SET(u->s, fds);
-	else
-		FD_CLR(u->s, fds);
-
-	return u->s + 1;
-}
-
-/* Check if transport T's socket is set in FDS.  */
-static int
-udp_fd_isset(struct transport *t, fd_set *fds)
-{
-	struct udp_transport *u = (struct udp_transport *)t;
-
-	return FD_ISSET(u->s, fds);
 }
 
 /*
@@ -718,38 +418,24 @@ udp_fd_isset(struct transport *t, fd_set *fds)
 static void
 udp_handle_message(struct transport *t)
 {
-	struct udp_transport *u = (struct udp_transport *) t;
+	struct udp_transport *u = (struct udp_transport *)t;
 	u_int8_t        buf[UDP_SIZE];
 	struct sockaddr_storage from;
 	u_int32_t       len = sizeof from;
 	ssize_t         n;
 	struct message *msg;
 
-	n = recvfrom(u->s, buf, UDP_SIZE, 0, (struct sockaddr *) & from, &len);
+	n = recvfrom(u->s, buf, UDP_SIZE, 0, (struct sockaddr *)&from, &len);
 	if (n == -1) {
 		log_error("recvfrom (%d, %p, %d, %d, %p, %p)", u->s, buf,
 		    UDP_SIZE, 0, &from, &len);
 		return;
 	}
 	/*
-	 * If we received the packet over the default transports, reprobe the
-	 * interfaces.
-         */
-	if (t == default_transport || t == default_transport6) {
-		udp_reinit();
-
-		/*
-		 * As we don't know the actual destination address of the
-		 * packet, we can't really deal with it. So, just ignore it
-		 * and hope we catch the retransmission.
-	         */
-		return;
-	}
-	/*
 	 * Make a specialized UDP transport structure out of the incoming
 	 * transport and the address information we got from recvfrom(2).
          */
-	t = udp_clone(u, (struct sockaddr *)&from);
+	t = t->virtual->vtbl->clone(t->virtual, (struct sockaddr *)&from);
 	if (!t)
 		return;
 
@@ -757,6 +443,7 @@ udp_handle_message(struct transport *t)
 	if (!msg) {
 		log_error("failed to allocate message structure, dropping "
 		    "packet received on transport %p", u);
+		t->vtbl->remove(t);
 		return;
 	}
 	message_recv(msg);
@@ -764,9 +451,9 @@ udp_handle_message(struct transport *t)
 
 /* Physically send the message MSG over its associated transport.  */
 static int
-udp_send_message(struct message *msg)
+udp_send_message(struct message *msg, struct transport *t)
 {
-	struct udp_transport *u = (struct udp_transport *)msg->transport;
+	struct udp_transport *u = (struct udp_transport *)t;
 	ssize_t         n;
 	struct msghdr   m;
 
@@ -794,7 +481,7 @@ udp_send_message(struct message *msg)
  * Get transport T's peer address and stuff it into the sockaddr pointed
  * to by DST.
  */
-static void
+void
 udp_get_dst(struct transport *t, struct sockaddr **dst)
 {
 	*dst = ((struct udp_transport *)t)->dst;
@@ -804,37 +491,37 @@ udp_get_dst(struct transport *t, struct sockaddr **dst)
  * Get transport T's local address and stuff it into the sockaddr pointed
  * to by SRC.  Put its length into SRC_LEN.
  */
-static void
+void
 udp_get_src(struct transport *t, struct sockaddr **src)
 {
 	*src = ((struct udp_transport *)t)->src;
 }
 
-static char *
+char *
 udp_decode_ids(struct transport *t)
 {
+	struct sockaddr *src, *dst;
 	static char     result[1024];
 	char            idsrc[256], iddst[256];
 
+	t->vtbl->get_src(t, &src);
+	t->vtbl->get_dst(t, &dst);
+
 #ifdef HAVE_GETNAMEINFO
-	if (getnameinfo(((struct udp_transport *)t)->src,
-	    sysdep_sa_len(((struct udp_transport *)t)->src),
-	    idsrc, sizeof idsrc, NULL, 0, NI_NUMERICHOST) != 0) {
+	if (getnameinfo(src, sysdep_sa_len(src), idsrc, sizeof idsrc, NULL, 0,
+	    NI_NUMERICHOST) != 0) {
 		log_print("udp_decode_ids: getnameinfo () failed for 'src'");
 		strlcpy(idsrc, "<error>", 256);
 	}
-	if (getnameinfo(((struct udp_transport *)t)->dst,
-	    sysdep_sa_len(((struct udp_transport *)t)->dst),
-	    iddst, sizeof iddst, NULL, 0, NI_NUMERICHOST) != 0) {
+	if (getnameinfo(dst, sysdep_sa_len(dst), iddst, sizeof iddst, NULL, 0,
+	    NI_NUMERICHOST) != 0) {
 		log_print("udp_decode_ids: getnameinfo () failed for 'dst'");
 		strlcpy(iddst, "<error>", 256);
 	}
 #else
-	strlcpy(idsrc, inet_ntoa(((struct udp_transport *)t)->src.sin_addr),
-	    256);
-	strlcpy(iddst, inet_ntoa(((struct udp_transport *)t)->dst.sin_addr),
-	    256);
-#endif				/* HAVE_GETNAMEINFO */
+	strlcpy(idsrc, inet_ntoa(src->sin_addr), 256);
+	strlcpy(iddst, inet_ntoa(dst->sin_addr), 256);
+#endif	/* HAVE_GETNAMEINFO */
 
 	snprintf(result, sizeof result, "src: %s dst: %s", idsrc, iddst);
 	return result;

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.26 2004/05/03 21:23:51 hshoexer Exp $	 */
+/* $OpenBSD: exchange.h,v 1.27 2004/06/20 15:24:05 ho Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -212,11 +212,15 @@ struct exchange {
 };
 
 /* The flag bits.  */
-#define EXCHANGE_FLAG_I_COMMITTED	1
-#define EXCHANGE_FLAG_HE_COMMITTED	2
+#define EXCHANGE_FLAG_I_COMMITTED	0x01
+#define EXCHANGE_FLAG_HE_COMMITTED	0x02
 #define EXCHANGE_FLAG_COMMITTED		(EXCHANGE_FLAG_I_COMMITTED \
 					 | EXCHANGE_FLAG_HE_COMMITTED)
-#define EXCHANGE_FLAG_ENCRYPT		4
+#define EXCHANGE_FLAG_ENCRYPT		0x04
+#define EXCHANGE_FLAG_NAT_T_CAP_PEER	0x08	/* Peer is NAT capable.  */
+#define EXCHANGE_FLAG_NAT_T_ENABLE	0x10	/* We are doing NAT-T.  */
+#define EXCHANGE_FLAG_NAT_T_KEEPALIVE	0x20	/* We are the NAT:ed peer.  */
+#define EXCHANGE_FLAG_DPD_CAP_PEER	0x40	/* Peer is DPD capable.  */
 
 extern int      exchange_add_certs(struct message *);
 extern void     exchange_finalize(struct message *);

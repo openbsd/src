@@ -1,9 +1,9 @@
-/* $OpenBSD: transport.c,v 1.26 2004/06/14 09:55:42 ho Exp $	 */
+/* $OpenBSD: transport.c,v 1.27 2004/06/20 15:24:05 ho Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 2001, 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,6 +43,7 @@
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
+#include "virtual.h"
 
 /* If no retransmit limit is given, use this as a default.  */
 #define RETRANSMIT_DEFAULT 10
@@ -51,14 +52,15 @@ LIST_HEAD(transport_list, transport) transport_list;
 LIST_HEAD(transport_method_list, transport_vtbl) transport_method_list;
 
 /* Call the reinit function of the various transports.  */
-	void
-	                transport_reinit(void)
+void
+transport_reinit(void)
 {
 	struct transport_vtbl *method;
 
 	for (method = LIST_FIRST(&transport_method_list); method;
 	     method = LIST_NEXT(method, link))
-		method->reinit();
+		if (method->reinit)
+			method->reinit();
 }
 
 /* Initialize the transport maintenance module.  */
@@ -71,12 +73,16 @@ transport_init(void)
 
 /* Register another transport T.  */
 void
-transport_add(struct transport *t)
+transport_setup(struct transport *t, int toplevel)
 {
-	LOG_DBG((LOG_TRANSPORT, 70, "transport_add: adding %p", t));
-	TAILQ_INIT(&t->sendq);
-	TAILQ_INIT(&t->prio_sendq);
-	LIST_INSERT_HEAD(&transport_list, t, link);
+	LOG_DBG((LOG_TRANSPORT, 70, "transport_setup: adding %p", t));
+	if (toplevel == 0)
+		LIST_INSERT_HEAD(&transport_list, t, link);
+	else {
+		/* Only the toplevel (virtual) transport has the sendqueues. */
+		TAILQ_INIT(&t->sendq);
+		TAILQ_INIT(&t->prio_sendq);
+	}
 	t->flags = 0;
 	t->refcnt = 0;
 }
@@ -87,8 +93,8 @@ transport_reference(struct transport *t)
 {
 	t->refcnt++;
 	LOG_DBG((LOG_TRANSPORT, 95,
-	       "transport_reference: transport %p now has %d references", t,
-		 t->refcnt));
+	    "transport_reference: transport %p now has %d references", t,
+	    t->refcnt));
 }
 
 /*
@@ -98,19 +104,28 @@ void
 transport_release(struct transport *t)
 {
 	LOG_DBG((LOG_TRANSPORT, 95,
-		 "transport_release: transport %p had %d references", t,
-		 t->refcnt));
+	    "transport_release: transport %p had %d references", t,
+	    t->refcnt));
 	if (--t->refcnt)
 		return;
 
 	LOG_DBG((LOG_TRANSPORT, 70, "transport_release: freeing %p", t));
-	LIST_REMOVE(t, link);
+	if (t->virtual) {
+		struct virtual_transport *v =
+		    (struct virtual_transport *)t->virtual;
+		if (v->main == t)
+			v->main = 0;
+		else
+			v->encap = 0;
+		LIST_REMOVE(t, link);
+	}
 	t->vtbl->remove(t);
 }
 
 void
 transport_report(void)
 {
+	struct virtual_transport *v;
 	struct transport *t;
 	struct message *msg;
 
@@ -119,18 +134,26 @@ transport_report(void)
 		     "transport_report: transport %p flags %x refcnt %d", t,
 			 t->flags, t->refcnt));
 
+		/* XXX Report sth on the virtual transport?  */
 		t->vtbl->report(t);
 
 		/*
 		 * This is the reason message_dump_raw lives outside
 		 * message.c.
 		 */
-		for (msg = TAILQ_FIRST(&t->prio_sendq); msg;
-		     msg = TAILQ_NEXT(msg, link))
-			message_dump_raw("udp_report", msg, LOG_REPORT);
+		v = (struct virtual_transport *)t->virtual;
+		if ((v->encap_is_active && v->encap == t) ||
+		    (!v->encap_is_active && v->main == t)) {
+			for (msg = TAILQ_FIRST(&t->virtual->prio_sendq); msg;
+			     msg = TAILQ_NEXT(msg, link))
+				message_dump_raw("udp_report(prio)", msg,
+				    LOG_REPORT);
 
-		for (msg = TAILQ_FIRST(&t->sendq); msg; msg = TAILQ_NEXT(msg, link))
-			message_dump_raw("udp_report", msg, LOG_REPORT);
+			for (msg = TAILQ_FIRST(&t->virtual->sendq); msg;
+			     msg = TAILQ_NEXT(msg, link))
+				message_dump_raw("udp_report", msg,
+				    LOG_REPORT);
+		}
 	}
 }
 
@@ -140,7 +163,7 @@ transport_prio_sendqs_empty(void)
 	struct transport *t;
 
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
-		if (TAILQ_FIRST(&t->prio_sendq))
+		if (TAILQ_FIRST(&t->virtual->prio_sendq))
 			return 0;
 	return 1;
 }
@@ -152,7 +175,7 @@ transport_method_add(struct transport_vtbl *t)
 	LIST_INSERT_HEAD(&transport_method_list, t, link);
 }
 
-/* Apply a function FUNC on all registered transports.  */
+/* Apply a function FUNC on all registered (non-toplevel) transports.  */
 void
 transport_map(void (*func) (struct transport *))
 {
@@ -170,15 +193,19 @@ transport_map(void (*func) (struct transport *))
 int
 transport_fd_set(fd_set * fds)
 {
-	int             n;
-	int             max = -1;
 	struct transport *t;
+	int	n;
+	int	max = -1;
 
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
-		if (t->flags & TRANSPORT_LISTEN) {
-			n = t->vtbl->fd_set(t, fds, 1);
+		if (t->virtual->flags & TRANSPORT_LISTEN) {
+			n = t->virtual->vtbl->fd_set(t->virtual, fds, 1);
 			if (n > max)
 				max = n;
+
+			LOG_DBG((LOG_TRANSPORT,95,"transport_fd_set: "
+			    "transport %p (virtual %p) fd %d", t,
+			    t->virtual, n));
 		}
 	return max + 1;
 }
@@ -192,13 +219,17 @@ transport_fd_set(fd_set * fds)
 int
 transport_pending_wfd_set(fd_set * fds)
 {
-	int             n;
-	int             max = -1;
 	struct transport *t;
+	int	n;
+	int	max = -1;
 
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
-		if (TAILQ_FIRST(&t->sendq) || TAILQ_FIRST(&t->prio_sendq)) {
-			n = t->vtbl->fd_set(t, fds, 1);
+		if (TAILQ_FIRST(&t->virtual->sendq) ||
+		    TAILQ_FIRST(&t->virtual->prio_sendq)) {
+			n = t->virtual->vtbl->fd_set(t->virtual, fds, 1);
+			LOG_DBG((LOG_TRANSPORT,95,"transport_pending_wfd_set: "
+			    "transport %p (virtual %p) fd %d pending", t,
+			    t->virtual, n));
 			if (n > max)
 				max = n;
 		}
@@ -211,14 +242,17 @@ transport_pending_wfd_set(fd_set * fds)
  * incoming message and start processing it.
  */
 void
-transport_handle_messages(fd_set * fds)
+transport_handle_messages(fd_set *fds)
 {
 	struct transport *t;
 
-	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
+	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
 		if ((t->flags & TRANSPORT_LISTEN) &&
-		    (*t->vtbl->fd_isset) (t, fds))
-			(*t->vtbl->handle_message) (t);
+		    (*t->virtual->vtbl->fd_isset)(t->virtual, fds)) {
+			(*t->virtual->vtbl->handle_message)(t->virtual);
+			(*t->virtual->vtbl->fd_set)(t->virtual, fds, 0);
+		}
+	}
 }
 
 /*
@@ -243,21 +277,26 @@ transport_send_messages(fd_set * fds)
 	 * Reference all transports first so noone will disappear while in
 	 * use.
 	 */
-	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
-		transport_reference(t);
-
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
-		if ((TAILQ_FIRST(&t->sendq) || TAILQ_FIRST(&t->prio_sendq))
-		    && t->vtbl->fd_isset(t, fds)) {
-			t->vtbl->fd_set(t, fds, 0);
+		transport_reference(t->virtual);
+		transport_reference(t);
+	}
+	
+	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
+		if ((TAILQ_FIRST(&t->virtual->sendq) ||
+		    TAILQ_FIRST(&t->virtual->prio_sendq)) &&
+		    t->virtual->vtbl->fd_isset(t->virtual, fds)) {
+			/* Remove fd bit.  */
+			t->virtual->vtbl->fd_set(t->virtual, fds, 0);
 
 			/* Prefer a message from the prioritized sendq.  */
-			if (TAILQ_FIRST(&t->prio_sendq)) {
-				msg = TAILQ_FIRST(&t->prio_sendq);
-				TAILQ_REMOVE(&t->prio_sendq, msg, link);
+			if (TAILQ_FIRST(&t->virtual->prio_sendq)) {
+				msg = TAILQ_FIRST(&t->virtual->prio_sendq);
+				TAILQ_REMOVE(&t->virtual->prio_sendq, msg,
+				    link);
 			} else {
-				msg = TAILQ_FIRST(&t->sendq);
-				TAILQ_REMOVE(&t->sendq, msg, link);
+				msg = TAILQ_FIRST(&t->virtual->sendq);
+				TAILQ_REMOVE(&t->virtual->sendq, msg, link);
 			}
 
 			msg->flags &= ~MSG_IN_TRANSIT;
@@ -269,23 +308,22 @@ transport_send_messages(fd_set * fds)
 			 * hoping that the retransmit will go better.
 			 * XXX Consider a retry/fatal error discriminator.
 		         */
-			t->vtbl->send_message(msg);
+			t->virtual->vtbl->send_message(msg, 0);
 			msg->xmits++;
 
 			/*
 			 * This piece of code has been proven to be quite
-			 * delicate. Think twice for before altering.  Here's
-			 * an outline: If this message is not the one which
-			 * finishes an exchange, check if we have reached the
-			 * number of retransmit before queuing it up for
-			 * another.
+			 * delicate. Think twice for before altering.
+			 * Here's an outline:
+		         *
+			 * If this message is not the one which finishes an
+			 * exchange, check if we have reached the number of
+			 * retransmit before queuing it up for another.
 		         *
 			 * If it is a finishing message we still may have to
 			 * keep it around for an on-demand retransmit when
 			 * seeing a duplicate of our peer's previous message.
 		         *
-			 * If we have no previous message from our peer, we
-			 * need not to keep the message around.
 		         */
 			if ((msg->flags & MSG_LAST) == 0) {
 				if (msg->xmits > conf_get_num("General",
@@ -357,9 +395,9 @@ transport_send_messages(fd_set * fds)
 			/*
 			 * If this is not a retransmit call post-send
 			 * functions that allows parallel work to be done
-			 * while the network and peer does their share of the
-			 * job.  Note that a post-send function may take away
-			 * the exchange we belong to, but only if no
+			 * while the network and peer does their share of
+			 * the job.  Note that a post-send function may take
+			 * away the exchange we belong to, but only if no
 			 * retransmits are possible.
 		         */
 			if (msg->xmits == 1)
@@ -372,6 +410,7 @@ transport_send_messages(fd_set * fds)
 
 	for (t = LIST_FIRST(&transport_list); t; t = next) {
 		next = LIST_NEXT(t, link);
+		transport_release(t->virtual);
 		transport_release(t);
 	}
 }

@@ -1,8 +1,7 @@
-/* $OpenBSD: udp.h,v 1.9 2004/06/20 15:24:05 ho Exp $	 */
-/* $EOM: udp.h,v 1.4 1998/12/22 02:23:43 niklas Exp $	 */
+/*	$OpenBSD: nat_traversal.h,v 1.1 2004/06/20 15:24:05 ho Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,29 +24,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This code was written under funding by Ericsson Radio Systems.
- */
+#ifndef _NAT_TRAVERSAL_H_
+#define _NAT_TRAVERSAL_H_
 
-#ifndef _UDP_H_
-#define _UDP_H_
+void	nat_t_init(void);
+int	nat_t_add_vendor_payloads(struct message *);
+void	nat_t_check_vendor_payload(struct message *, struct payload *);
+int	nat_t_exchange_add_nat_d(struct message *);
+int	nat_t_exchange_check_nat_d(struct message *);
 
-extern char    *udp_default_port;
-extern char    *udp_bind_port;
-extern int      bind_family;
-
-#define BIND_FAMILY_INET4	0x0001
-#define BIND_FAMILY_INET6	0x0002
-
-struct transport *udp_bind(const struct sockaddr *);
-void		  udp_init(void);
-
-struct udp_transport {
-	struct transport  transport;
-	struct sockaddr	 *src;
-	struct sockaddr	 *dst;
-	int		  s;
-	LIST_ENTRY(udp_transport) link;
-};
-
-#endif				/* _UDP_H_ */
+#endif /* _NAT_TRAVERSAL_H_ */

@@ -1,9 +1,9 @@
-/* $OpenBSD: util.c,v 1.42 2004/06/16 15:08:20 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.43 2004/06/20 15:24:05 ho Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 2000, 2001 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 2000, 2001, 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -450,6 +450,21 @@ sockaddr_port(struct sockaddr *sa)
 		log_print("sockaddr_port: unsupported protocol family %d",
 		    sa->sa_family);
 		return 0;
+	}
+}
+
+/* Utility function used to set the port of a sockaddr.  */
+void
+sockaddr_set_port(struct sockaddr *sa, in_port_t port)
+{
+	switch (sa->sa_family) {
+	case AF_INET:
+		((struct sockaddr_in *)sa)->sin_port = htons (port);
+		break;
+
+	case AF_INET6:
+		((struct sockaddr_in6 *)sa)->sin6_port = htons (port);
+		break;
 	}
 }
 

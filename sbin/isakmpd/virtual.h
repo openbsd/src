@@ -1,8 +1,7 @@
-/* $OpenBSD: udp.h,v 1.9 2004/06/20 15:24:05 ho Exp $	 */
-/* $EOM: udp.h,v 1.4 1998/12/22 02:23:43 niklas Exp $	 */
+/*	$OpenBSD: virtual.h,v 1.1 2004/06/20 15:24:05 ho Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,29 +24,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This code was written under funding by Ericsson Radio Systems.
- */
+#ifndef _TRP_VIRTUAL_H_
+#define _TRP_VIRTUAL_H_
 
-#ifndef _UDP_H_
-#define _UDP_H_
-
-extern char    *udp_default_port;
-extern char    *udp_bind_port;
-extern int      bind_family;
-
-#define BIND_FAMILY_INET4	0x0001
-#define BIND_FAMILY_INET6	0x0002
-
-struct transport *udp_bind(const struct sockaddr *);
-void		  udp_init(void);
-
-struct udp_transport {
-	struct transport  transport;
-	struct sockaddr	 *src;
-	struct sockaddr	 *dst;
-	int		  s;
-	LIST_ENTRY(udp_transport) link;
+struct virtual_transport {
+	struct transport transport;
+	struct transport *main;	 /* Normally this transport is used.  */
+	struct transport *encap; /* Or this, depending on 'encap_is_active'. */
+	int		  encap_is_active;
+	LIST_ENTRY (virtual_transport) link;
 };
 
-#endif				/* _UDP_H_ */
+void			  virtual_init(void);
+struct virtual_transport *virtual_get_default(sa_family_t);
+struct virtual_transport *virtual_listen_lookup(struct sockaddr *);
+
+#endif /* _TRP_VIRTUAL_H_ */

@@ -1,9 +1,9 @@
-/* $OpenBSD: transport.h,v 1.14 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: transport.h,v 1.15 2004/06/20 15:24:05 ho Exp $	 */
 /* $EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 2001, 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -80,7 +80,7 @@ struct transport_vtbl {
 	void            (*handle_message) (struct transport *);
 
 	/* Send a message through the outgoing pipe.  */
-	int             (*send_message) (struct message *);
+	int             (*send_message) (struct message *, struct transport *);
 
 	/*
 	 * Fill out a sockaddr structure with the transport's destination end's
@@ -98,6 +98,16 @@ struct transport_vtbl {
 	 * Return a string with decoded src and dst information
          */
 	char           *(*decode_ids) (struct transport *);
+
+	/*
+	 * Clone a transport for outbound use.
+	 */
+	struct transport *(*clone) (struct transport *, struct sockaddr *);
+
+	/*
+	 * Locate the correct sendq to use for outbound messages.
+	 */
+	struct msg_head *(*get_queue) (struct message *);
 };
 
 struct transport {
@@ -120,8 +130,11 @@ struct transport {
 	/* Flags describing the transport.  */
 	int             flags;
 
-	/* References counter.  */
+	/* Reference counter.  */
 	int             refcnt;
+
+	/* Pointer to parent virtual transport, if any.  */
+	struct transport *virtual;
 };
 
 /* Set if this is a transport we want to listen on.  */
@@ -129,7 +142,6 @@ struct transport {
 /* Used for mark-and-sweep-type garbage collection of transports */
 #define TRANSPORT_MARK		2
 
-extern void     transport_add(struct transport *);
 extern struct transport *transport_create(char *, char *);
 extern int      transport_fd_set(fd_set *);
 extern void     transport_handle_messages(fd_set *);
@@ -137,10 +149,11 @@ extern void     transport_init(void);
 extern void     transport_map(void (*) (struct transport *));
 extern void     transport_method_add(struct transport_vtbl *);
 extern int      transport_pending_wfd_set(fd_set *);
+extern int      transport_prio_sendqs_empty(void);
 extern void     transport_reference(struct transport *);
+extern void     transport_reinit(void);
 extern void     transport_release(struct transport *);
 extern void     transport_report(void);
 extern void     transport_send_messages(fd_set *);
-extern void     transport_reinit(void);
-extern int      transport_prio_sendqs_empty(void);
+extern void     transport_setup(struct transport *, int);
 #endif				/* _TRANSPORT_H_ */

@@ -1,10 +1,10 @@
-/* $OpenBSD: message.c,v 1.80 2004/06/20 15:11:29 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.81 2004/06/20 15:24:05 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
- * Copyright (c) 1999, 2000, 2001 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001, 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,6 +45,9 @@
 #include "constants.h"
 #include "crypto.h"
 #include "doi.h"
+#ifdef USE_DPD
+#include "dpd.h"
+#endif
 #include "exchange.h"
 #include "field.h"
 #include "hash.h"
@@ -53,6 +56,9 @@
 #include "isakmp.h"
 #include "log.h"
 #include "message.h"
+#if defined (USE_NAT_TRAVERSAL)
+#include "nat_traversal.h"
+#endif
 #include "prf.h"
 #include "sa.h"
 #include "timer.h"
@@ -85,6 +91,8 @@ static int      message_validate_delete(struct message *, struct payload *);
 static int      message_validate_hash(struct message *, struct payload *);
 static int      message_validate_id(struct message *, struct payload *);
 static int      message_validate_key_exch(struct message *, struct payload *);
+static int      message_validate_nat_d(struct message *, struct payload *);
+static int      message_validate_nat_oa(struct message *, struct payload *);
 static int      message_validate_nonce(struct message *, struct payload *);
 static int      message_validate_notify(struct message *, struct payload *);
 static int      message_validate_proposal(struct message *, struct payload *);
@@ -102,14 +110,16 @@ static int (*message_validate_payload[])(struct message *, struct payload *) =
 	message_validate_id, message_validate_cert, message_validate_cert_req,
 	message_validate_hash, message_validate_sig, message_validate_nonce,
 	message_validate_notify, message_validate_delete,
-	message_validate_vendor, message_validate_attribute
+	message_validate_vendor, message_validate_attribute,
+	message_validate_nat_d, message_validate_nat_oa
 };
 
 static struct field *fields[] = {
 	isakmp_sa_fld, isakmp_prop_fld, isakmp_transform_fld, isakmp_ke_fld,
 	isakmp_id_fld, isakmp_cert_fld, isakmp_certreq_fld, isakmp_hash_fld,
 	isakmp_sig_fld, isakmp_nonce_fld, isakmp_notify_fld, isakmp_delete_fld,
-	isakmp_vendor_fld, isakmp_attribute_fld
+	isakmp_vendor_fld, isakmp_attribute_fld, isakmp_nat_d_fld,
+	isakmp_nat_oa_fld
 };
 
 /*
@@ -211,12 +221,9 @@ message_free(struct message *msg)
 		    link);
 
 	/* If we are on the send queue, remove us from there.  */
-	if (msg->flags & MSG_IN_TRANSIT) {
-		if (msg->flags & MSG_PRIORITIZED)
-			TAILQ_REMOVE(&msg->transport->prio_sendq, msg, link);
-		else
-			TAILQ_REMOVE(&msg->transport->sendq, msg, link);
-	}
+	if (msg->flags & MSG_IN_TRANSIT)
+		TAILQ_REMOVE(msg->transport->vtbl->get_queue(msg), msg, link);
+
 	transport_release(msg->transport);
 
 	if (msg->isakmp_sa)
@@ -478,8 +485,8 @@ message_validate_cert_req(struct message *msg, struct payload *p)
 		return -1;
 	}
 	/*
-	 * Check the certificate types we support and if an acceptable authority
-	 * is included in the payload check if it can be decoded
+	 * Check the certificate types we support and if an acceptable
+	 * authority is included in the payload check if it can be decoded
          */
 	cert = cert_get(GET_ISAKMP_CERTREQ_TYPE(p->p));
 	if (!cert || (len && !cert->certreq_validate(p->p +
@@ -742,6 +749,53 @@ message_validate_key_exch(struct message *msg, struct payload *p)
 		    0, 1, 1);
 		return -1;
 	}
+	return 0;
+}
+
+/* Validate the NAT-D payload P in message MSG.  */
+static int
+message_validate_nat_d(struct message *msg, struct payload *p)
+{
+	struct exchange	*exchange = msg->exchange;
+
+	if (!exchange) {
+		/* We should have an exchange at this point.  */
+		log_print("message_validate_nat_d: payload out of sequence");
+		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+		return -1;
+	}
+
+	if (exchange->phase != 1) {
+		log_print("message_validate_nat_d: "
+		    "NAT-D payload must be in phase 1");
+		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+		return -1;
+	}
+
+	/* Mark as handled.  */
+	p->flags |= PL_MARK;
+
+	return 0;
+}
+
+/* Validate the NAT-OA payload P in message MSG.  */
+static int
+message_validate_nat_oa(struct message *msg, struct payload *p)
+{
+	struct exchange	*exchange = msg->exchange;
+
+	if (!exchange) {
+		/* We should have an exchange at this point.  */
+		log_print("message_validate_nat_d: payload out of sequence");
+		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+		return -1;
+	}
+
+#ifdef notyet /* XXX Probably never, due to patent issues.  */
+	/* Mark as handled.  */
+	p->flags |= PL_MARK;
+#endif
+
 	return 0;
 }
 
@@ -1020,7 +1074,15 @@ message_validate_vendor(struct message *msg, struct payload *p)
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE, 0, 1, 1);
 		return -1;
 	}
-	LOG_DBG((LOG_MESSAGE, 40, "message_validate_vendor: vendor ID seen"));
+#if defined (USE_DPD)
+	dpd_check_vendor_payload(msg, p);
+#endif	
+#if defined (USE_NAT_TRAVERSAL)
+	nat_t_check_vendor_payload(msg, p);
+#endif
+	if (!(p->flags & PL_MARK))
+		LOG_DBG((LOG_MESSAGE, 40, "message_validate_vendor: "
+		    "vendor ID seen"));
 	return 0;
 }
 
@@ -1134,7 +1196,7 @@ message_recv(struct message *msg)
 	 * made nicer.
          */
 	setup_isakmp_sa = zero_test(buf + ISAKMP_HDR_RCOOKIE_OFF,
-				    ISAKMP_HDR_RCOOKIE_LEN);
+	    ISAKMP_HDR_RCOOKIE_LEN);
 	if (setup_isakmp_sa) {
 		/*
 		 * This might be a retransmission of a former ISAKMP SA setup
@@ -1445,9 +1507,7 @@ message_send(struct message *msg)
 	 * has left the queue, don't queue it again, as it will result
 	 * in a circular list.
          */
-	q = msg->flags & MSG_PRIORITIZED ? &msg->transport->prio_sendq :
-		&msg->transport->sendq;
-
+	q = msg->transport->vtbl->get_queue(msg);
 	for (m = TAILQ_FIRST(q); m; m = TAILQ_NEXT(m, link))
 		if (m == msg) {
 			LOG_DBG((LOG_MESSAGE, 60,
@@ -1880,12 +1940,9 @@ message_check_duplicate(struct message *msg)
          */
 	if (exchange->last_sent) {
 		if (exchange->last_sent == exchange->in_transit) {
-			if (exchange->in_transit->flags & MSG_PRIORITIZED)
-				TAILQ_REMOVE(&exchange->in_transit->transport->prio_sendq,
-				    exchange->in_transit, link);
-			else
-				TAILQ_REMOVE(&exchange->in_transit->transport->sendq,
-				    exchange->in_transit, link);
+			struct message *m = exchange->in_transit;
+			TAILQ_REMOVE(m->transport->vtbl->get_queue(m), m,
+			    link);
 			exchange->in_transit = 0;
 		}
 		message_free(exchange->last_sent);
