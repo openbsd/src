@@ -2607,7 +2607,7 @@ m88k_builtin_saveregs (arglist)
 		   && (TREE_VALUE (tree_last (TYPE_ARG_TYPES (fntype)))
 		       != void_type_node)))
 		? -UNITS_PER_WORD : 0) + UNITS_PER_WORD - 1;
-  int fixed, delta;
+  int fixed, delta, regno;
 
   if (! CONSTANT_P (current_function_arg_offset_rtx))
     abort ();
@@ -2667,8 +2667,24 @@ m88k_builtin_saveregs (arglist)
 						  (delta - fixed) *
 						  UNITS_PER_WORD)));
 
-      move_block_from_reg (2 + fixed, addr, 8 - fixed,
-			   UNITS_PER_WORD * (8 - fixed));
+      regno = 2 + fixed;
+
+      if (regno & 1)
+	{
+	  emit_move_insn (operand_subword (addr, 0, 1, BLKmode),
+			  gen_rtx_REG (word_mode, regno));
+	  regno++;
+	}
+
+      while (regno < 10)
+	{
+	  emit_move_insn (change_address (addr, DImode,
+					  plus_constant (XEXP (addr, 0),
+							 (regno - (2 + fixed)) *
+							 UNITS_PER_WORD)),
+			  gen_rtx_REG (DImode, regno));
+	  regno += 2;
+	}
     }
 
   if (current_function_check_memory_usage)
