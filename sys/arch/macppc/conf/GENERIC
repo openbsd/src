@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2002/06/08 00:05:02 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.26 2002/06/18 04:21:39 itojun Exp $g
 #
 # PPC GENERIC config file
 #
@@ -102,6 +102,7 @@ gpio*		at macobio?			# GPIO, PMU interrupt router.
 gpio*		at gpio?			# GPIO, PMU interrupt router.
 aed*		at adb?				# ADB Event Device
 akbd*		at adb?				# ADB keyboard
+#option		CAPS_IS_CONTROL			# for using CAPS as CONTROL
 
 wskbd*		at akbd? console ? mux 1
 ams*		at adb?				# ADB mouse
