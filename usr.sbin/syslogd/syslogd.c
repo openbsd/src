@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.44 2001/11/16 19:57:33 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.45 2001/11/17 13:32:57 markus Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.44 2001/11/16 19:57:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.45 2001/11/17 13:32:57 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,6 +196,7 @@ int	MarkSeq = 0;		/* mark sequence number */
 
 sig_atomic_t MarkSet;
 sig_atomic_t WantDie;
+sig_atomic_t DoInit;
 
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 
@@ -203,11 +204,12 @@ void	cfline __P((char *, struct filed *, char *));
 char   *cvthname __P((struct sockaddr_in *));
 int	decode __P((const char *, CODE *));
 void	dodie __P((int));
+void	doinit __P((int));
 void	die __P((int));
 void	domark __P((int));
 void	markit __P((void));
 void	fprintlog __P((struct filed *, int, char *));
-void	init __P((int));
+void	init __P((void));
 void	logerror __P((char *));
 void	logmsg __P((int, char *, char *, int));
 void	printline __P((char *, char *));
@@ -231,6 +233,7 @@ main(argc, argv)
 	int ch, i, fklog, len, linesize, fdsrmax = 0;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
+	sigset_t blockmask;
 	fd_set *fdsr = NULL;
 	char *p, *line;
 	FILE *fp;
@@ -292,6 +295,9 @@ main(argc, argv)
 	linesize++;
 	line = malloc(linesize);
 
+	sigemptyset(&blockmask);
+	sigaddset(&blockmask, SIGHUP);
+	(void)signal(SIGHUP, doinit);
 	(void)signal(SIGTERM, dodie);
 	(void)signal(SIGINT, Debug ? dodie : SIG_IGN);
 	(void)signal(SIGQUIT, Debug ? dodie : SIG_IGN);
@@ -357,8 +363,7 @@ main(argc, argv)
 
 	dprintf("off & running....\n");
 
-	init(0);
-	(void)signal(SIGHUP, init);
+	init();
 
 	if (fklog != -1 && fklog > fdsrmax)
 		fdsrmax = fklog;
@@ -379,6 +384,13 @@ main(argc, argv)
 			markit();
 		if (WantDie)
 			die(WantDie);
+
+		sigprocmask(SIG_BLOCK, &blockmask, NULL);
+		if (DoInit) {
+			init();
+			DoInit = 0;
+		}
+		sigprocmask(SIG_UNBLOCK, &blockmask, NULL);
 
 		bzero(fdsr, howmany(fdsrmax+1, NFDBITS) *
 		    sizeof(fd_mask));
@@ -908,6 +920,13 @@ domark(signo)
 	MarkSet = 1;
 }
 
+void
+doinit(signo)
+	int signo;
+{
+	DoInit = 1;
+}
+
 /*
  * Print syslogd errors some place.
  */
@@ -960,8 +979,7 @@ die(signo)
  *  INIT -- Initialize syslogd from configuration table
  */
 void
-init(signo)
-	int signo;
+init()
 {
 	int i;
 	FILE *cf;
