@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.84 2002/09/09 18:32:27 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.85 2002/09/10 21:20:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -985,11 +985,7 @@ hpmc_v
 	ATRAP(privr,T_PRIV_REG)		/* 11. privileged register trap */
 	ATRAP(ovrfl,T_OVERFLOW)		/* 12. overflow trap */
 	ATRAP(cond,T_CONDITION)		/* 13. conditional trap */
-#ifdef FPEMUL
-	CTRAP(excpt,T_EXCEPTION,)	/* 14. assist exception trap */
-#else
-	ATRAP(excpt,T_EXCEPTION)
-#endif
+	ATRAP(excpt,T_EXCEPTION)	/* 14. assist exception trap */
 	STRAP(dtlb,T_DTLBMISS,DTLBPRE)	/* 15. data TLB miss fault */
 	STRAP(itlbna,T_ITLBMISSNA,DTLBPRE)/* 16. ITLB non-access miss fault */
 	STRAP(dtlbna,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
@@ -1042,11 +1038,8 @@ hpmc_v
 	ATRAP(unk63,63)
 					/* 64 */
 
-
 	.export TLABEL(emu), entry
 LEAF_ENTRY(TLABEL(emu))
-	/* restore %r1 from CTRAP() */
-	mfctl	tr7, r1
 
 	/*
 	 * Switch FPU/SFU context
@@ -1059,198 +1052,80 @@ LEAF_ENTRY(TLABEL(emu))
 	 *	 instruction is a coprocessor load or store.
 	 *
 	 */
-	mtctl	t1, tr2
-	mtctl	t2, tr3
-	mtctl	t3, tr5
 
-	ldil	L%fpu_curpcb, t1
-	ldw	R%fpu_curpcb(t1), t1
-
-	mfctl	ccr, t3
-	mfctl	cr30, t2
-
+	mfctl	ccr, r1
 	/* enable coprocessor */
-	depi	3, 25, 2, t3
-	mtctl	t3, ccr
+	depi	3, 25, 2, r1
+	mtctl	r1, ccr
 
-	comb,=,n t1, t2, $fpusw_done
-	comb,=,n r0, t1, $fpusw_nosave
+	mtctl	arg0, tr5
+	ldil	L%fpu_curpcb, arg0
+	mfctl	cr30, r1
+	ldw	R%fpu_curpcb(arg0), arg0
 
-#if PCB_FPREGS != 0 || U_PCB != 0
-	ldo	PCB_FPREGS+U_PCB(t1), t1
-#endif
+	comb,=,n arg0, r1, $fpusw_done
+	comb,=,n r0, arg0, $fpusw_nosave
 
-	fstds,ma fr0 , 8(t3)	/* fr0 must be saved first */
-	fstds,ma fr1 , 8(t3)
-	fstds,ma fr2 , 8(t3)
-	fstds,ma fr3 , 8(t3)
-	fstds,ma fr4 , 8(t3)
-	fstds,ma fr5 , 8(t3)
-	fstds,ma fr6 , 8(t3)
-	fstds,ma fr7 , 8(t3)
-	fstds,ma fr8 , 8(t3)
-	fstds,ma fr9 , 8(t3)
-	fstds,ma fr10, 8(t3)
-	fstds,ma fr11, 8(t3)
-	fstds,ma fr12, 8(t3)
-	fstds,ma fr13, 8(t3)
-	fstds,ma fr14, 8(t3)
-	fstds,ma fr15, 8(t3)
-	fstds,ma fr16, 8(t3)
-	fstds,ma fr17, 8(t3)
-	fstds,ma fr18, 8(t3)
-	fstds,ma fr19, 8(t3)
-	fstds,ma fr20, 8(t3)
-	fstds,ma fr21, 8(t3)
-	fstds,ma fr22, 8(t3)
-	fstds,ma fr23, 8(t3)
-	fstds,ma fr24, 8(t3)
-	fstds,ma fr25, 8(t3)
-	fstds,ma fr26, 8(t3)
-	fstds,ma fr27, 8(t3)
-	fstds,ma fr28, 8(t3)
-	fstds,ma fr29, 8(t3)
-	fstds,ma fr30, 8(t3)
-	fstds    fr31, 0(t3)
+	copy	rp, r1
+	.import	fpu_save, entry
+	.call
+	bl	fpu_save, rp
+	ldo	PCB_FPREGS+U_PCB(arg0), arg0
+	copy	r1, rp
 
 $fpusw_nosave
 
 	/* count switches */
-	ldil	L%fpu_csw, t1
-	ldw	R%fpu_csw(t1), t3
-	ldo	1(t3), t3
-	stw	t3, R%fpu_csw(t1)
+	ldil	L%fpu_csw, r1
+	ldw	R%fpu_csw(r1), arg0
+	ldo	1(arg0), arg0
+	stw	arg0, R%fpu_csw(r1)
 
-	ldo	31*8+PCB_FPREGS+U_PCB(t2), t3
+	mfctl	cr30, r1
+	ldo	31*8+PCB_FPREGS+U_PCB(r1), arg0
 
-	fldds,ma -8(t3), fr31
-	fldds,ma -8(t3), fr30
-	fldds,ma -8(t3), fr29
-	fldds,ma -8(t3), fr28
-	fldds,ma -8(t3), fr27
-	fldds,ma -8(t3), fr26
-	fldds,ma -8(t3), fr25
-	fldds,ma -8(t3), fr24
-	fldds,ma -8(t3), fr23
-	fldds,ma -8(t3), fr22
-	fldds,ma -8(t3), fr21
-	fldds,ma -8(t3), fr20
-	fldds,ma -8(t3), fr19
-	fldds,ma -8(t3), fr18
-	fldds,ma -8(t3), fr17
-	fldds,ma -8(t3), fr16
-	fldds,ma -8(t3), fr15
-	fldds,ma -8(t3), fr14
-	fldds,ma -8(t3), fr13
-	fldds,ma -8(t3), fr12
-	fldds,ma -8(t3), fr11
-	fldds,ma -8(t3), fr10
-	fldds,ma -8(t3), fr9
-	fldds,ma -8(t3), fr8
-	fldds,ma -8(t3), fr7
-	fldds,ma -8(t3), fr6
-	fldds,ma -8(t3), fr5
-	fldds,ma -8(t3), fr4
-	fldds,ma -8(t3), fr3
-	fldds,ma -8(t3), fr2
-	fldds,ma -8(t3), fr1
-	fldds     0(t3), fr0	/* fr0 must be restored last */
+	fldds,ma -8(arg0), fr31
+	fldds,ma -8(arg0), fr30
+	fldds,ma -8(arg0), fr29
+	fldds,ma -8(arg0), fr28
+	fldds,ma -8(arg0), fr27
+	fldds,ma -8(arg0), fr26
+	fldds,ma -8(arg0), fr25
+	fldds,ma -8(arg0), fr24
+	fldds,ma -8(arg0), fr23
+	fldds,ma -8(arg0), fr22
+	fldds,ma -8(arg0), fr21
+	fldds,ma -8(arg0), fr20
+	fldds,ma -8(arg0), fr19
+	fldds,ma -8(arg0), fr18
+	fldds,ma -8(arg0), fr17
+	fldds,ma -8(arg0), fr16
+	fldds,ma -8(arg0), fr15
+	fldds,ma -8(arg0), fr14
+	fldds,ma -8(arg0), fr13
+	fldds,ma -8(arg0), fr12
+	fldds,ma -8(arg0), fr11
+	fldds,ma -8(arg0), fr10
+	fldds,ma -8(arg0), fr9
+	fldds,ma -8(arg0), fr8
+	fldds,ma -8(arg0), fr7
+	fldds,ma -8(arg0), fr6
+	fldds,ma -8(arg0), fr5
+	fldds,ma -8(arg0), fr4
+	fldds,ma -8(arg0), fr3
+	fldds,ma -8(arg0), fr2
+	fldds,ma -8(arg0), fr1
+	fldds     0(arg0), fr0	/* fr0 must be restored last */
 
-	ldil	L%fpu_curpcb, t1
-	stw	t2, R%fpu_curpcb(t1)
+	ldil	L%fpu_curpcb, r1
+	stw	arg0, R%fpu_curpcb(r1)
 
 $fpusw_done
-	mfctl	tr5, t3
-	mfctl	tr3, t2
-	mfctl	tr2, t1
+	mfctl	tr7, r1
+	mfctl	tr5, arg0
 	rfi
 	nop
 EXIT(TLABEL(emu))
-
-#ifdef FPEMUL
-	.export TLABEL(excpt), entry
-	/*
-	 * Emulate FPU/SFU if none/disabled
-	 *
-	 * iisq:iioq - exception triggered instruction
-	 */
-ENTRY(TLABEL(excpt),0)
-	mtctl	sp, tr3
-	mtctl	r31, tr2
-
-	ldil	L%fpemu_stack, r31
-	ldw	R%fpemu_stack(r31), r31
-	ldo	R%TRAPFRAME_SIZEOF+HPPA_FRAME_SIZE(r31), sp
-
-	stw	r1 , TF_R1 (r31)
-	stw	r2 , TF_R2 (r31)
-	stw	r19, TF_R19(r31)
-	stw	r20, TF_R20(r31)
-	stw	r21, TF_R21(r31)
-	stw	r22, TF_R22(r31)
-	stw	r23, TF_R23(r31)
-	stw	r24, TF_R24(r31)
-	stw	r25, TF_R25(r31)
-	stw	r26, TF_R26(r31)
-	stw	r27, TF_R27(r31)
-	stw	r28, TF_R28(r31)
-	stw	r29, TF_R29(r31)
-	mfctl	sar, r1
-	mfctl	iir, arg0
-	stw	r1, TF_CR11(r31)
-
-	extru,<> arg0, 10, 1, r0
-	extru,= arg0, 11, 1, r0
-	or,tr	r0, r0, r0
-	.call
-	bl,n	$sfu_emu, rp
-
-	.import	fpu_emulate, code
-	ldil	L%fpu_emulate,t1
-	ldo	R%fpu_emulate(t1),t1
-	mfctl	iir, arg0
-	/* arg3 -- regs */
-	.call
-	blr	r0,rp
-	bv,n	0(t1)
-	nop
-
-	ldil	L%fpemu_stack, r31
-	ldw	R%fpemu_stack(r31), r31
-
-	ldw	TF_CR11(r31), r1
-	mtsar	r1
-	ldw	TF_R29(r31), r29
-	ldw	TF_R28(r31), r27
-	mtctl	r27, tr5
-	ldw	TF_R27(r31), r27
-	ldw	TF_R26(r31), r26
-	ldw	TF_R25(r31), r25
-	ldw	TF_R24(r31), r24
-	ldw	TF_R23(r31), r23
-	ldw	TF_R22(r31), r22
-	ldw	TF_R21(r31), r21
-	ldw	TF_R20(r31), r20
-	ldw	TF_R19(r31), r19
-	ldw	TF_R2 (r31), r2
-	mfctl	tr3, sp
-	mfctl	tr2, r31
-
-	comb,<>	r0, ret0, TLABEL(all)
-	mfctl	tr5, ret0
-
-	mfctl	tr7, r1
-	rfi
-	nop
-EXIT(TLABEL(excpt))
-
-	.export	$sfu_emu, entry
-ENTRY($sfu_emu,0)
-	bv	r0(rp)
-	ldo	1(r0), ret0	/* none supported by now */
-EXIT($sfu_emu)
-
-#endif /* FPEMUL */
 
 	/* Compute the hpt entry ptr */
 #define	HPTENT \
@@ -1291,7 +1166,7 @@ EXIT($sfu_emu)
 	ldw	0(r25), r24			! \
 	ldw	4(r25), r17			! \
 	ldo	1(r24), r24			! \
-	ldo	-2(r16), r16			! \
+	ldo	-2(r16), r16 /* for mtctl */	! \
 	add	r16, r17, r17			! \
 	stw	r24, 0(r25)			! \
 	stw	r17, 4(r25)
@@ -2033,6 +1908,90 @@ LEAF_ENTRY(fpu_save)
 	nop
 EXIT(fpu_save)
 
+#ifdef FPEMUL
+	/*
+	 * Emulate FPU/SFU if none/disabled
+	 *
+	 * iisq:iioq - exception triggered instruction
+	 */
+ENTRY($fpu_emulate,0)
+	mtctl	sp, tr3
+	mtctl	r31, tr2
+
+	ldil	L%fpemu_stack, r31
+	ldw	R%fpemu_stack(r31), r31
+	ldo	R%TRAPFRAME_SIZEOF+HPPA_FRAME_SIZE(r31), sp
+
+	stw	r1 , TF_R1 (r31)
+	stw	r2 , TF_R2 (r31)
+	stw	r19, TF_R19(r31)
+	stw	r20, TF_R20(r31)
+	stw	r21, TF_R21(r31)
+	stw	r22, TF_R22(r31)
+	stw	r23, TF_R23(r31)
+	stw	r24, TF_R24(r31)
+	stw	r25, TF_R25(r31)
+	stw	r26, TF_R26(r31)
+	stw	r27, TF_R27(r31)
+	stw	r28, TF_R28(r31)
+	stw	r29, TF_R29(r31)
+	mfctl	sar, r1
+	mfctl	iir, arg0
+	stw	r1, TF_CR11(r31)
+
+	extru,<> arg0, 10, 1, r0
+	extru,= arg0, 11, 1, r0
+	or,tr	r0, r0, r0
+	.call
+	bl,n	$sfu_emu, rp
+
+	.import	fpu_emulate, code
+	ldil	L%fpu_emulate,t1
+	ldo	R%fpu_emulate(t1),t1
+	mfctl	iir, arg0
+	/* arg3 -- regs */
+	.call
+	blr	r0,rp
+	bv,n	0(t1)
+	nop
+
+	ldil	L%fpemu_stack, r31
+	ldw	R%fpemu_stack(r31), r31
+
+	ldw	TF_CR11(r31), r1
+	mtsar	r1
+	ldw	TF_R29(r31), r29
+	ldw	TF_R28(r31), r27
+	mtctl	r27, tr5
+	ldw	TF_R27(r31), r27
+	ldw	TF_R26(r31), r26
+	ldw	TF_R25(r31), r25
+	ldw	TF_R24(r31), r24
+	ldw	TF_R23(r31), r23
+	ldw	TF_R22(r31), r22
+	ldw	TF_R21(r31), r21
+	ldw	TF_R20(r31), r20
+	ldw	TF_R19(r31), r19
+	ldw	TF_R2 (r31), r2
+	mfctl	tr3, sp
+	mfctl	tr2, r31
+
+	comb,<>	r0, ret0, TLABEL(all)
+	mfctl	tr5, ret0
+
+	mfctl	tr7, r1
+	rfi
+	nop
+EXIT($fpu_emulate)
+
+	.export	$sfu_emu, entry
+ENTRY($sfu_emu,0)
+	bv	r0(rp)
+	ldo	1(r0), ret0	/* none supported by now */
+EXIT($sfu_emu)
+
+#endif /* FPEMUL */
+
 	.import	dcache_stride, data
 LEAF_ENTRY(fdcache)
 	ldil	L%dcache_stride,t1
@@ -2339,7 +2298,6 @@ $spstrcpy_exit
 	bv	0(rp)
 	copy	r0, ret0
 EXIT(spstrcpy)
-
 
 /*
  * adjust the time value
