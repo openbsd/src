@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.2 2002/03/14 01:27:02 millert Exp $ */
+/*	$OpenBSD: rasops.h,v 1.3 2002/07/02 19:38:55 nate Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -124,7 +124,7 @@ struct rasops_info {
  */
 
 /*
- * Per-depth initalization functions. These should not be called outside
+ * Per-depth initialization functions. These should not be called outside
  * the rasops code.
  */
 void	rasops1_init(struct rasops_info *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.17 2002/06/09 03:14:18 todd Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.18 2002/07/02 19:38:55 nate Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -978,7 +978,7 @@ void rl_init(xsc)
 	CSR_WRITE_1(sc, RL_COMMAND, RL_CMD_TX_ENB|RL_CMD_RX_ENB);
 
 	/*
-	 * Set the inital TX and RX configuration.
+	 * Set the initial TX and RX configuration.
 	 */
 	CSR_WRITE_4(sc, RL_TXCFG, RL_TXCFG_CONFIG);
 	CSR_WRITE_4(sc, RL_RXCFG, RL_RXCFG_CONFIG);

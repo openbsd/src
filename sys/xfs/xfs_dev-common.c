@@ -39,7 +39,7 @@
 #include <xfs/xfs_dev.h>
 #include <xfs/xfs_deb.h>
 
-RCSID("$Id: xfs_dev-common.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
+RCSID("$Id: xfs_dev-common.c,v 1.5 2002/07/02 19:38:55 nate Exp $");
 
 struct xfs_channel xfs_channel[NXFS];
 
@@ -106,7 +106,7 @@ xfs_devopen_common(dev_t dev, struct proc *p)
 
     chan->message_buffer = xfs_alloc(MAX_XMSG_SIZE);
 
-    /* initalize the queues if they have not been initialized before */
+    /* initialize the queues if they have not been initialized before */
     xfs_initq(&chan->sleepq);
     xfs_initq(&chan->messageq);
 

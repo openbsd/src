@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.10 2001/11/06 19:53:21 miod Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.11 2002/07/02 19:38:55 nate Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -49,7 +49,7 @@ int uvm_doswapencrypt = 0;
 u_int uvm_swpkeyscreated = 0;
 u_int uvm_swpkeysdeleted = 0;
 
-int swap_encrypt_initalized = 0;
+int swap_encrypt_initialized = 0;
 
 int
 swap_encrypt_ctl(name, namelen, oldp, oldlenp, newp, newlen, p)
@@ -75,7 +75,7 @@ swap_encrypt_ctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return result;
 
 		/* Swap Encryption has been turned on, we need to
-		 * initalize state for swap devices that have been
+		 * initialize state for swap devices that have been
 		 * added 
 		 */
 		if (doencrypt)
@@ -130,8 +130,8 @@ swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst,
 	u_int32_t iv[4];
 	u_int32_t iv1, iv2, iv3, iv4;
 
-	if (!swap_encrypt_initalized)
-		swap_encrypt_initalized = 1;
+	if (!swap_encrypt_initialized)
+		swap_encrypt_initialized = 1;
 
 	swap_key_prepare(key, 1);
 
@@ -175,8 +175,8 @@ swap_decrypt(struct swap_key *key, caddr_t src, caddr_t dst,
 	u_int32_t iv[4];
 	u_int32_t iv1, iv2, iv3, iv4, niv1, niv2, niv3, niv4;
 
-	if (!swap_encrypt_initalized)
-		panic("swap_decrypt: key not initalized");
+	if (!swap_encrypt_initialized)
+		panic("swap_decrypt: key not initialized");
 
 	swap_key_prepare(key, 0);
 

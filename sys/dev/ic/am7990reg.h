@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990reg.h,v 1.3 1999/03/12 18:52:21 jason Exp $	*/
+/*	$OpenBSD: am7990reg.h,v 1.4 2002/07/02 19:38:55 nate Exp $	*/
 /*	$NetBSD: am7990reg.h,v 1.1 1995/04/11 04:17:50 mycroft Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ struct leinit {
 #define	LE_C0_MERR	0x0800		/* memory error */
 #define	LE_C0_RINT	0x0400		/* receiver interrupt */
 #define	LE_C0_TINT	0x0200		/* transmitter interrupt */
-#define	LE_C0_IDON	0x0100		/* initalization done */
+#define	LE_C0_IDON	0x0100		/* initialization done */
 #define	LE_C0_INTR	0x0080		/* interrupt condition */
 #define	LE_C0_INEA	0x0040		/* interrupt enable */
 #define	LE_C0_RXON	0x0020		/* receiver on */
@@ -122,7 +122,7 @@ struct leinit {
 #define	LE_C0_TDMD	0x0008		/* transmit demand */
 #define	LE_C0_STOP	0x0004		/* disable all external activity */
 #define	LE_C0_STRT	0x0002		/* enable external activity */
-#define	LE_C0_INIT	0x0001		/* begin initalization */
+#define	LE_C0_INIT	0x0001		/* begin initialization */
 
 #define	LE_C0_BITS \
     "\20\20ERR\17BABL\16CERR\15MISS\14MERR\13RINT\

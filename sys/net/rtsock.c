@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.21 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.22 2002/07/02 19:38:55 nate Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -455,7 +455,7 @@ rt_xaddrs(cp, cplim, rtinfo)
 /*
  * Copy data from a buffer back into the indicated mbuf chain,
  * starting "off" bytes from the beginning, extending the mbuf
- * chain if necessary. The mbuf needs to be properly initalized
+ * chain if necessary. The mbuf needs to be properly initialized
  * including the setting of m_len.
  */
 void
