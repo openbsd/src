@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.2 2001/06/25 05:40:39 angelos Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.3 2001/06/25 05:47:17 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -99,7 +99,7 @@ The currently defined tag types are:
 This should never be used.
 .It PACKET_TAG_IPSEC_IN_DONE
 Used by
-.Xr IPsec 4
+.Xr ipsec 4
 to indicate successful processing performed on an input packet.
 The tag contains a
 .Va struct tdb_ident ,
