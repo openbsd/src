@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.321 2003/02/17 06:56:04 mpech Exp $	*/
+/*	$OpenBSD: parse.y,v 1.322 2003/02/17 14:36:46 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3792,18 +3792,18 @@ symset(const char *nam, const char *val, int persist)
 }
 
 int
-pfctl_cmdline_symset(char *optarg)
+pfctl_cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	 ret;
 
-	if ((val = strrchr(optarg, '=')) == NULL)
+	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
 
-	if ((sym = malloc(strlen(optarg) - strlen(val) + 1)) == NULL)
+	if ((sym = malloc(strlen(s) - strlen(val) + 1)) == NULL)
 		err(1, "pfctl_cmdline_symset: malloc");
 
-	strlcpy(sym, optarg, strlen(optarg) - strlen(val) + 1);
+	strlcpy(sym, s, strlen(s) - strlen(val) + 1);
 
 	ret = symset(sym, val + 1, 1);
 	free(sym);
