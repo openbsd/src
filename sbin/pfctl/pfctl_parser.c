@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.90 2002/06/19 17:44:02 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.91 2002/06/27 10:17:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -565,16 +565,16 @@ print_status(struct pf_status *s)
 		    day, hrs, min, sec);
 	} else
 		snprintf(statline, sizeof(statline), "Status: Disabled");
-	printf("%-34s", statline);
+	printf("%-44s", statline);
 	switch (s->debug) {
 	case 0:
-		printf("%25s\n\n", "Debug: None");
+		printf("%15s\n\n", "Debug: None");
 		break;
 	case 1:
-		printf("%25s\n\n", "Debug: Urgent");
+		printf("%15s\n\n", "Debug: Urgent");
 		break;
 	case 2:
-		printf("%25s\n\n", "Debug: Misc");
+		printf("%15s\n\n", "Debug: Misc");
 		break;
 	}
 	if (s->ifname[0] != 0) {
