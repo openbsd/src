@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl.c,v 1.1 1999/01/02 00:02:40 niklas Exp $	*/
+/*	$OpenBSD: opl.c,v 1.2 2001/05/01 02:21:42 mickey Exp $	*/
 /*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
 
 /*
@@ -279,7 +279,7 @@ opl_load_patch(sc, v)
 	struct opl_softc *sc;
 	int v;
 {
-	struct opl_operators *p = sc->voices[v].patch;
+	const struct opl_operators *p = sc->voices[v].patch;
 
 	opl_set_op_reg(sc, OPL_AM_VIB,          v, 0, p->ops[OO_CHARS+0]);
 	opl_set_op_reg(sc, OPL_AM_VIB,          v, 1, p->ops[OO_CHARS+1]);
@@ -435,7 +435,7 @@ oplsyn_noteon(ms, voice, freq, vel)
 {
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
-	struct opl_operators *p;
+	const struct opl_operators *p;
 	u_int32_t block_fnum;
 	int mult;
 	int c_mult, m_mult;
