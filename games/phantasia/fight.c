@@ -1,4 +1,4 @@
-/*	$OpenBSD: fight.c,v 1.3 1998/11/29 19:56:55 pjanzen Exp $	*/
+/*	$OpenBSD: fight.c,v 1.4 2000/04/07 04:31:45 pjanzen Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -653,7 +653,7 @@ monsthits()
 			mvprintw(Lines++, 0,
 			    "%s flew away, and left you to contend with one of its friends.",
 			    Enemyname);
-			Whichmonster = 55 + (drandom() > 0.5) ? 22 : 0;
+			Whichmonster = 55 + ((drandom() > 0.5) ? 22 : 0);
 			longjmp(Fightenv, 0);
 			/* NOTREACHED */
 
@@ -1069,7 +1069,7 @@ callmonster(which)
 			Curmonster.m_energy = Player.p_might * 30.0;
 			Curmonster.m_type = SM_MORGOTH;
 			Curmonster.m_speed = Player.p_speed * 1.1
-			    + (Player.p_specialtype == SC_EXVALAR) ? Player.p_speed : 0.0;
+			    + ((Player.p_specialtype == SC_EXVALAR) ? Player.p_speed : 0.0);
 			Curmonster.m_flock = 0.0;
 			Curmonster.m_treasuretype = 0;
 			Curmonster.m_experience = 0.0;
