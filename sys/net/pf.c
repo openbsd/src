@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.158 2001/09/27 15:15:17 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.159 2001/09/27 17:49:12 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2100,7 +2100,7 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 	r = TAILQ_FIRST(rules);
 	while (r != NULL) {
 		a = 0;
-		for (i = 0; i < 6; ++i) {
+		for (i = 0; i < 7; ++i) {
 			a |= 1 << i;
 			r->skip[i] = TAILQ_NEXT(r, entries);
 		}
