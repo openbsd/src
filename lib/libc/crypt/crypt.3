@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.16 2000/04/18 02:31:34 aaron Exp $
+.\" $OpenBSD: crypt.3,v 1.17 2000/04/28 07:00:19 deraadt Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -43,8 +43,8 @@
 .Nd DES encryption
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
-.Ft char
-.Fn *crypt "const char *key" "const char *setting"
+.Ft char *
+.Fn crypt "const char *key" "const char *setting"
 .Ft int
 .Fn setkey "char *key"
 .Ft int
