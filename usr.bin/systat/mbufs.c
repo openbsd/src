@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.4 1997/12/19 09:03:32 deraadt Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.5 2001/05/04 16:48:34 ericj Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.4 1997/12/19 09:03:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.5 2001/05/04 16:48:34 ericj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -145,11 +145,13 @@ static struct nlist namelist[] = {
 int
 initmbufs()
 {
+	int ret;
+
 	if (namelist[X_MBSTAT].n_type == 0) {
-		if (kvm_nlist(kd, namelist)) {
+		if ((ret = kvm_nlist(kd, namelist)) == -1)
+			errx(1, "%s", kvm_geterr(kd));
+		else if (ret)
 			nlisterr(namelist);
-			return(0);
-		}
 		if (namelist[X_MBSTAT].n_type == 0) {
 			error("namelist on %s failed", _PATH_UNIX);
 			return(0);

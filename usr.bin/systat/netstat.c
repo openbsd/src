@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.13 2000/05/24 13:17:08 itojun Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.14 2001/05/04 16:48:34 ericj Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.13 2000/05/24 13:17:08 itojun Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.14 2001/05/04 16:48:34 ericj Exp $";
 #endif /* not lint */
 
 /*
@@ -162,10 +162,12 @@ static struct nlist namelist[] = {
 int
 initnetstat()
 {
-	if (kvm_nlist(kd, namelist)) {
+	int ret;
+
+	if ((ret = kvm_nlist(kd, namelist)) == -1)
+		errx(1, "%s", kvm_geterr(kd));
+	else if (ret)
 		nlisterr(namelist);
-		return(0);
-	}
 	if (namelist[X_TCBTABLE].n_value == 0) {
 		error("No symbols in namelist");
 		return(0);

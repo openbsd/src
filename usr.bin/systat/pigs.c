@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.6 2000/06/18 17:59:55 niklas Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.7 2001/05/04 16:48:34 ericj Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.6 2000/06/18 17:59:55 niklas Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.7 2001/05/04 16:48:34 ericj Exp $";
 #endif /* not lint */
 
 /*
@@ -157,12 +157,13 @@ int
 initpigs()
 {
 	fixpt_t ccpu;
+	int ret;
 
 	if (namelist[X_FIRST].n_type == 0) {
-		if (kvm_nlist(kd, namelist)) {
+		if ((ret = kvm_nlist(kd, namelist)) == -1)
+			errx(1, "%s", kvm_geterr(kd));
+		else if (ret)
 			nlisterr(namelist);
-		        return(0);
-		}
 		if (namelist[X_FIRST].n_type == 0) {
 			error("namelist failed");
 			return(0);
