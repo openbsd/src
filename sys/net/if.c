@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.85 2004/04/17 00:09:01 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.86 2004/04/28 00:28:43 mcbride Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1007,6 +1007,10 @@ if_down(struct ifnet *ifp)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	}
 	IFQ_PURGE(&ifp->if_snd);
+#if NCARP > 0
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp->if_carp);
+#endif
 	rt_ifmsg(ifp);
 }
 
@@ -1031,6 +1035,10 @@ if_up(struct ifnet *ifp)
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
 	}
+#endif
+#if NCARP > 0
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp->if_carp);
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
