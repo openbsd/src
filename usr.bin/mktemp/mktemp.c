@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.1 1996/11/21 07:59:33 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.2 1997/01/03 22:49:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.1 1996/11/21 07:59:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.2 1997/01/03 22:49:22 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <stdio.h>
@@ -84,7 +84,7 @@ main(argc, argv)
 		if (qflag)
 			exit(1);
 		else
-			err(1, "Cannot create temp file");
+			err(1, "Cannot create temp file %s", template);
 	}
 
 	if (uflag)
