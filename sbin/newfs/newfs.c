@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.12 1997/02/11 07:01:38 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.13 1997/02/22 05:53:35 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.12 1997/02/11 07:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.13 1997/02/22 05:53:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,15 +185,14 @@ int	unlabeled;
 #endif
 
 char	device[MAXPATHLEN];
-char	*progname;
+
+extern	char *__progname;
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	register int ch;
 	register struct partition *pp;
 	register struct disklabel *lp;
@@ -208,15 +207,8 @@ main(argc, argv)
 	char **saveargv = argv;
 	int ffs = 1;
 
-	if (progname = strrchr(*argv, '/'))
-		++progname;
-	else
-		progname = *argv;
-
-	if (strstr(progname, "mfs")) {
-		mfs = 1;
-		Nflag++;
-	}
+	if (strstr(__progname, "mfs"))
+		mfs = Nflag = 1;
 
 	maxpartitions = getmaxpartitions();
 	if (maxpartitions > 26)
@@ -444,7 +436,7 @@ main(argc, argv)
 			fatal("%s: %s", special, strerror(errno));
 		if (!S_ISCHR(st.st_mode) && !mfs)
 			printf("%s: %s: not a character-special device\n",
-			    progname, special);
+			    __progname, special);
 		cp = strchr(argv[0], '\0') - 1;
 		if (cp == 0 || (*cp < 'a' || *cp > ('a' + maxpartitions - 1))
 		    && !isdigit(*cp))
@@ -597,7 +589,12 @@ havelabel:
 			fatal("%s: %s", argv[1], strerror(errno));
 	}
 #endif
-	exit(0);
+	if (!Nflag) {
+		(void)execl(_PATH_FSIRAND, "fsirand", special, NULL);
+		err(1, "Can't exec %s", _PATH_FSIRAND);
+	} else {
+		exit(0);
+	}
 }
 
 #ifdef COMPAT
@@ -702,7 +699,7 @@ fatal(fmt, va_alist)
 	va_start(ap);
 #endif
 	if (fcntl(STDERR_FILENO, F_GETFL) < 0) {
-		openlog(progname, LOG_CONS, LOG_DAEMON);
+		openlog(__progname, LOG_CONS, LOG_DAEMON);
 		vsyslog(LOG_ERR, fmt, ap);
 		closelog();
 	} else {
@@ -718,11 +715,11 @@ usage()
 	if (mfs) {
 		fprintf(stderr,
 		    "usage: %s [ -fsoptions ] special-device mount-point\n",
-			progname);
+			__progname);
 	} else
 		fprintf(stderr,
 		    "usage: %s [ -fsoptions ] special-device%s\n",
-		    progname,
+		    __progname,
 #ifdef COMPAT
 		    " [device-type]");
 #else
