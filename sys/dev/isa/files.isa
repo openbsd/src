@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.59 1999/07/25 04:38:26 csapuntz Exp $
+#	$OpenBSD: files.isa,v 1.60 1999/07/31 06:10:04 d Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -218,6 +218,10 @@ file	dev/isa/if_le_isa.c		le_isa
 # SMC91Cxx Ethernet Controllers 
 attach	sm at isa with sm_isa
 file	dev/isa/if_sm_isa.c		sm_isa
+
+# RangeLAN2 wireless network
+attach	rln at isa with rln_isa
+file	dev/isa/if_rln_isa.c		rln_isa
 
 #
 # ISA Sound hardware
