@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.118 1999/02/16 04:15:20 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.119 1999/02/16 17:45:39 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -913,7 +913,7 @@
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
 
 /* Invertex */
-#define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */
+#define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON Encryption */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
