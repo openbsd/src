@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_signal.c,v 1.3 1996/08/02 20:35:26 niklas Exp $	*/
+/*	$OpenBSD: osf1_signal.c,v 1.4 1997/09/15 03:01:47 deraadt Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,8 @@ osf1_to_bsd_sigaction(osa, bsa)
 		bsa->sa_flags |= SA_NOCLDSTOP;
 	if ((osa->sa_flags & OSF1_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
+	if ((osa->sa_flags & OSF1_SA_SIGINFO) != 0)
+		bsa->sa_flags |= SA_SIGINFO;
 }
 
 void
@@ -171,15 +173,17 @@ bsd_to_osf1_sigaction(bsa, osa)
 	bsd_to_osf1_sigset(&bsa->sa_mask, &osa->sa_mask);
 	osa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_ONSTACK) != 0)
-		osa->sa_flags |= SA_ONSTACK;
+		osa->sa_flags |= OSF1_SA_ONSTACK;
 	if ((bsa->sa_flags & SA_RESTART) != 0)
-		osa->sa_flags |= SA_RESTART;
+		osa->sa_flags |= OSF1_SA_RESTART;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
-		osa->sa_flags |= SA_NOCLDSTOP;
+		osa->sa_flags |= OSF1_SA_NOCLDSTOP;
 	if ((bsa->sa_flags & SA_NODEFER) != 0)
-		osa->sa_flags |= SA_NODEFER;
+		osa->sa_flags |= OSF1_SA_NODEFER;
 	if ((bsa->sa_flags & SA_RESETHAND) != 0)
-		osa->sa_flags |= SA_RESETHAND;
+		osa->sa_flags |= OSF1_SA_RESETHAND;
+	if ((bsa->sa_flags & SA_SIGINFO) != 0)
+		osa->sa_flags |= OSF1_SA_SIGINFO;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_signal.c,v 1.4 1997/06/02 09:42:08 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_signal.c,v 1.5 1997/09/15 03:01:44 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_signal.c,v 1.8 1996/05/03 17:05:27 christos Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ bsd_to_ibcs2_sigaction(bsa, isa)
 	bsd_to_ibcs2_sigset(&bsa->sa_mask, &isa->sa_mask);
 	isa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
-		isa->sa_flags |= SA_NOCLDSTOP;
+		isa->sa_flags |= IBCS2_SA_NOCLDSTOP;
 }
 
 int
