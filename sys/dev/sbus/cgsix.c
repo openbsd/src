@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.37 2003/03/28 00:23:05 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.38 2003/03/28 03:18:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -344,7 +344,7 @@ cgsix_ioctl(v, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNCG6;
 		break;
 	case WSDISPLAYIO_SMODE:
 		mode = *(u_int *)data;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.27 2003/03/27 18:11:38 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.28 2003/03/28 03:18:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -364,7 +364,7 @@ cgthree_ioctl(v, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNCG3;
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
