@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 1995/06/28 02:56:08 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 1995/12/21 05:02:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -56,7 +56,6 @@
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
-#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

@@ -1,4 +1,4 @@
-/*	$Id: cpu.h,v 1.2 1995/11/07 08:49:47 deraadt Exp $ */
+/*	$Id: cpu.h,v 1.3 1995/12/21 14:40:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -81,7 +81,6 @@
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
-#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
 #define cpu_swapout(p)			/* nothing */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1995/06/28 02:55:18 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 1995/12/21 05:01:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,6 @@
  * referenced in generic code
  */
 #define	cpu_wait(p)			/* nothing */
-#define	cpu_setstack(p, ap)		(p)->p_addr->u_pcb.pcb_usp
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

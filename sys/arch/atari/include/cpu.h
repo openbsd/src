@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 1995/06/28 02:55:39 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 1995/12/21 05:01:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,6 @@
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
-#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
 #define cpu_swapout(p)			/* nothing */
 
 /*

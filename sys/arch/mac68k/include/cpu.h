@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 1995/09/14 02:48:09 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 1995/12/21 05:02:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,8 +78,7 @@
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
-#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
-#define	cpu_swapout(p)
+#define	cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock, softclock and gatherstats
