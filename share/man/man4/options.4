@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.76 2001/08/07 18:58:42 heko Exp $
+.\"	$OpenBSD: options.4,v 1.77 2001/08/08 10:46:22 heko Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -977,7 +977,7 @@ See
 .Pa /usr/include/machine/param.h
 for exact default information.
 Increase this value if
-.Dq mb_map full
+.Dq mclpool limit reached
 messages appear.
 .It Cd option NKMEMCLUSTERS=value
 Size of kernel malloc area in CLBYTES-sized logical pages.
