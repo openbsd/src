@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.9 1998/06/02 06:10:27 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.10 1998/06/11 06:01:04 beck Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -486,6 +486,7 @@ The currently defined protocols and names are:
 .It icmp	maskrepl	integer	yes
 .It tcp	rfc1323	integer	yes
 .It tcp	baddynamic	array	yes
+.It tcp	ident	structure	no
 .It udp	checksum	integer	yes
 .It udp	baddynamic	array	yes
 .El
@@ -513,6 +514,13 @@ An array of
 is returned specifying the bitmask of TCP ports between 512
 and 1023 inclusive that should not be allocated dynamically
 by the kernel (ie: they must be bound specifically by port number).
+.It Li tcp.ident
+A structure
+.Va struct tcp_ident_mapping
+specifying a local and foreign endpoint of a tcp socket 
+is filled in with the euid and ruid of the process that owns the socket.
+If no such socket exists then the euid and ruid values are both
+set to -1.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
