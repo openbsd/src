@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.63 2001/12/04 01:20:27 marc Exp $	*/
+/*	$OpenBSD: locore.s,v 1.64 2001/12/04 20:54:11 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -2146,7 +2146,7 @@ syscall1:
 	pushl	$4f			# format string
 	call	_C_LABEL(printf)
 	addl	$24,%esp
-#if defined(DDB)
+#if defined(DDB) && 0
 	int	$3
 #endif /* DDB */
 	movl	%ebx,_C_LABEL(cpl)
