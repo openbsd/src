@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbdmap.h,v 1.5 2005/01/14 00:53:12 drahn Exp $ */
+/* $OpenBSD: zaurus_kbdmap.h,v 1.6 2005/01/14 01:12:20 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -77,11 +77,11 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(68),	KS_Return,
     KC(70),	KS_KP_Right, /* right, */
     KC(80),	KS_KP_Next, /* OK, (ext) */
-    KC(81),	KS_KP_Next, /* tog left, */
+    KC(81),	KS_KP_Prior, /* tog left, */
     KC(83),	KS_Shift_R,
     KC(84),	KS_Shift_L,
     KC(88),	KS_KP_Prior, /* cancel (ext), */
-    KC(89),	KS_KP_Prior, /* tog right, */
+    KC(89),	KS_KP_Next, /* tog right, */
     KC(93),	KS_Mode_switch /* Fn */
 };
 
