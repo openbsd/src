@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.22 2001/08/17 11:13:58 mpech Exp $
+.\" $OpenBSD: cdio.1,v 1.23 2002/04/18 20:18:31 espie Exp $
 .\"
 .Dd July 3, 1995
 .Dt CDIO 1
@@ -9,6 +9,7 @@
 .Sh SYNOPSIS
 .Nm cdio
 .Op Fl sv
+.Op Fl d Ar host:port
 .Op Fl f Ar device
 .Op Ar command args ...
 .Sh DESCRIPTION
@@ -41,6 +42,8 @@ Do not print table headers or human-readable comments.
 .It Fl v
 Verbose mode.
 Print as much information as possible.
+.It Fl d Ar host:port
+Specifies cddb host.
 .It Fl f Ar device
 Specifies a device name such as
 .Pa /dev/rcd0d
@@ -129,6 +132,10 @@ Play the left subtrack on both left and right channels.
 Play the right subtrack on both left and right channels.
 .It Ic info
 Print the table of contents.
+.It Ic cddb Op Ar n
+Print the table of contents after matching the disc with the cddb.
+In case of multiple matches, reissue the command with
+.Ar n
 .It Ic status
 Print information about the disc:
 the current playing status and position,
@@ -164,7 +171,8 @@ Quit the program.
 .Sh AUTHORS
 Jean-Marc Zucconi,
 Andrey A.\ Chernov,
-Serge V.\ Vakulenko
+Serge V.\ Vakulenko,
+Marc Espie
 .Sh HISTORY
 The
 .Nm

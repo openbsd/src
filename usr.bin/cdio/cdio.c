@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.23 2002/03/22 03:43:37 espie Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.24 2002/04/18 20:18:31 espie Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -34,8 +34,8 @@
 #include <sys/file.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
+#include "extern.h"
 
-#define VERSION "2.0"
 
 #define ASTS_INVALID    0x00  /* Audio status byte not valid */
 #define ASTS_PLAYING    0x11  /* Audio play operation in progress */
@@ -66,11 +66,12 @@
 #define CMD_NEXT	16
 #define CMD_PREV	17
 #define CMD_REPLAY	18
+#define CMD_CDDB	19
 
 struct cmdtab {
 	int command;
 	char *name;
-	unsigned  min;
+	unsigned int min;
 	char *args;
 } cmdtab[] = {
 { CMD_CLOSE,    "close",        1, "" },
@@ -95,7 +96,8 @@ struct cmdtab {
 { CMD_STATUS,   "status",       1, "" },
 { CMD_STOP,     "stop",         3, "" },
 { CMD_VOLUME,   "volume",       1, "<l> <r> | left | right | mute | mono | stereo" },
-{ 0, }
+{ CMD_CDDB,   	"cddbinfo",       2, "[n]" },
+{ 0, 0, 0, 0}
 };
 
 struct cd_toc_entry     *toc_buffer;
@@ -104,6 +106,8 @@ char		*cdname;
 int             fd = -1;
 int             verbose = 1;
 int             msf = 1;
+const char 	*cddb_host;
+char		**track_names;
 
 extern char     *__progname;
 
@@ -116,12 +120,13 @@ int             status(int *, int *, int *, int *);
 int             open_cd(char *);
 int             play(char *arg);
 int             info(char *arg);
+int             cddbinfo(char *arg);
 int             pstatus(char *arg);
 int		play_next(char *arg);
 int		play_prev(char *arg);
 int		play_same(char *arg);
 char            *input(int *);
-void            prtrack(struct cd_toc_entry *e, int lastflag);
+void            prtrack(struct cd_toc_entry *e, int lastflag, char *name);
 void            lba2msf(unsigned long lba, u_char *m, u_char *s, u_char *f);
 unsigned int    msf2lba(u_char m, u_char s, u_char f);
 int             play_blocks(int blk, int len);
@@ -166,9 +171,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int cmd;
 	char *arg;
@@ -177,8 +180,12 @@ main(argc, argv)
 	if (! cdname)
 		cdname = getenv("CDROM");
 
+	cddb_host = getenv("CDDB");
+	if (!cddb_host)
+		cddb_host = "freedb.freedb.org";
+
 	for (;;) {
-		switch (getopt(argc, argv, "svf:")) {
+		switch (getopt(argc, argv, "svd:f:")) {
 		case -1:
 			break;
 		case 's':
@@ -189,6 +196,9 @@ main(argc, argv)
 			continue;
 		case 'f':
 			cdname = optarg;
+			continue;
+	    	case 'd':
+			cddb_host = optarg;
 			continue;
 		default:
 			usage();
@@ -249,9 +259,7 @@ main(argc, argv)
 }
 
 int
-run(cmd, arg)
-	int cmd;
-	char *arg;
+run(int cmd, char *arg)
 {
 	int l, r, rc;
 	static char newcdname[MAXPATHLEN];
@@ -266,6 +274,12 @@ run(cmd, arg)
 			return (0);
 
 		return info(arg);
+
+	case CMD_CDDB:
+		if (fd < 0 && ! open_cd(cdname))
+			return (0);
+
+		return cddbinfo(arg);
 
 	case CMD_STATUS:
 		if (fd < 0 && ! open_cd(cdname))
@@ -347,6 +361,9 @@ run(cmd, arg)
 		close(fd);
 		fd = -1;
 #endif
+		if (track_names)
+			free_names(track_names);
+		track_names = NULL;
 		return (0);
 
 	case CMD_CLOSE:
@@ -436,8 +453,7 @@ run(cmd, arg)
 }
 
 int
-play(arg)
-	char *arg;
+play(char *arg)
 {
 	struct ioc_toc_header h;
 	int rc, n, start, end = 0, istart = 1, iend = 1;
@@ -488,8 +504,8 @@ play(arg)
 		 *
 		 *      tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]
 		 */
-		unsigned tr1, tr2;
-		unsigned m1, m2, s1, s2, f1, f2;
+		int tr1, tr2;
+		unsigned int m1, m2, s1, s2, f1, f2;
 		unsigned char tm, ts, tf;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
@@ -557,7 +573,7 @@ play(arg)
 		goto Try_Absolute_Timed_Addresses;
 
 Play_Relative_Addresses:
-		if (! tr1)
+		if (tr1 <= 0)
 			tr1 = 1;
 		else if (tr1 > n)
 			tr1 = n;
@@ -594,7 +610,7 @@ Play_Relative_Addresses:
 
 		m1 += tm;
 
-		if (! tr2) {
+		if (tr2 <= 0) {
 			if (m2 || s2 || f2) {
 				tr2 = tr1;
 				f2 += f1;
@@ -717,8 +733,7 @@ Clean_up:
 }
 
 int
-play_prev(arg)
-	char *arg;
+play_prev(char *arg)
 {
 	int trk, min, sec, frm, rc;
 	struct ioc_toc_header h;
@@ -742,8 +757,7 @@ play_prev(arg)
 }
 
 int
-play_same(arg)
-	char *arg;
+play_same(char *arg)
 {
 	int trk, min, sec, frm, rc;
 	struct ioc_toc_header h;
@@ -762,8 +776,7 @@ play_same(arg)
 }
 
 int
-play_next(arg)
-	char *arg;
+play_next(char *arg)
 {
 	int trk, min, sec, frm, rc;
 	struct ioc_toc_header h;
@@ -793,8 +806,7 @@ play_next(arg)
 }
 
 char *
-strstatus(sts)
-	int sts;
+strstatus(int sts)
 {
 	switch (sts) {
 	case ASTS_INVALID:
@@ -815,8 +827,7 @@ strstatus(sts)
 }
 
 int
-pstatus(arg)
-	char *arg;
+pstatus(char *arg)
 {
 	struct ioc_vol v;
 	struct ioc_read_subchannel ss;
@@ -826,10 +837,19 @@ pstatus(arg)
 
 	rc = status(&trk, &m, &s, &f);
 	if (rc >= 0) {
-		if (verbose)
-			printf("Audio status = %d<%s>, current track = %d, current position = %d:%02d.%02d\n",
-			    rc, strstatus(rc), trk, m, s, f);
-		else
+		if (verbose) {
+			if (track_names)
+				printf("Audio status = %d<%s>, "
+				    "current track = %d (%s)\n"
+				    "\tcurrent position = %d:%02d.%02d\n",
+				    rc, strstatus(rc), trk,
+				    trk ? track_names[trk-1] : "", m, s, f);
+			else
+				printf("Audio status = %d<%s>, "
+				    "current track = %d, "
+				    "current position = %d:%02d.%02d\n",
+				    rc, strstatus(rc), trk, m, s, f);
+		} else
 			printf("%d %d %d:%02d.%02d\n", rc, trk, m, s, f);
 	} else
 		printf("No current status info available\n");
@@ -867,8 +887,7 @@ pstatus(arg)
 }
 
 int
-info(arg)
-	char *arg;
+info(char *arg)
 {
 	struct ioc_toc_header h;
 	int rc, i, n;
@@ -898,19 +917,51 @@ info(arg)
 
 	for (i = 0; i < n; i++) {
 		printf("%5d  ", toc_buffer[i].track);
-		prtrack(toc_buffer + i, 0);
+		prtrack(toc_buffer + i, 0, NULL);
 	}
 	printf("%5d  ", toc_buffer[n].track);
-	prtrack(toc_buffer + n, 1);
+	prtrack(toc_buffer + n, 1, NULL);
+	return (0);
+}
+
+int
+cddbinfo(char *arg)
+{
+	struct ioc_toc_header h;
+	int rc, i, n;
+
+	rc = ioctl(fd, CDIOREADTOCHEADER, &h);
+	if (rc == -1) {
+		warn("getting toc header");
+		return (rc);
+	}
+
+	n = h.ending_track - h.starting_track + 1;
+	rc = read_toc_entrys((n + 1) * sizeof (struct cd_toc_entry));
+	if (rc < 0)
+		return (rc);
+
+	if (track_names)
+		free_names(track_names);
+	track_names = NULL;
+
+	track_names = cddb(cddb_host, n, toc_buffer, arg);
+	if (!track_names)
+		return(0);
+
+	printf("-------------------------------------------------\n");
+
+	for (i = 0; i < n; i++) {
+		printf("%5d  ", toc_buffer[i].track);
+		prtrack(toc_buffer + i, 0, track_names[i]);
+	}
+	printf("%5d  ", toc_buffer[n].track);
+	prtrack(toc_buffer + n, 1, "");
 	return (0);
 }
 
 void
-lba2msf(lba, m, s, f)
-	unsigned long lba;
-	u_char *m;
-	u_char *s;
-	u_char *f;
+lba2msf(unsigned long lba, u_char *m, u_char *s, u_char *f)
 {
 	lba += 150;		/* block start offset */
 	lba &= 0xffffff;	/* negative lbas use only 24 bits */
@@ -926,30 +977,65 @@ msf2lba(u_char m, u_char s, u_char f)
 	return (((m * 60) + s) * 75 + f) - 150;
 }
 
+unsigned long
+entry2time(struct cd_toc_entry *e)
+{
+	int block;
+	u_char m, s, f;
+
+	if (msf) {
+		return (e->addr.msf.minute * 60 + e->addr.msf.second);
+	} else {
+		block = ntohl(e->addr.lba);
+		lba2msf(block, &m, &s, &f);
+		return (m*60+s);
+	}
+}
+
+unsigned long
+entry2frames(struct cd_toc_entry *e)
+{
+	int block;
+	unsigned char m, s, f;
+
+	if (msf) {
+		return e->addr.msf.frame + e->addr.msf.second * 75 +
+		    e->addr.msf.minute * 60 * 75;
+	} else {
+		block = ntohl(e->addr.lba);
+		lba2msf(block, &m, &s, &f);
+		return f + s * 75 + m * 60 * 75;
+	}
+}
+
 void
-prtrack(e, lastflag)
-	struct cd_toc_entry *e;
-	int lastflag;
+prtrack(struct cd_toc_entry *e, int lastflag, char *name)
 {
 	int block, next, len;
 	u_char m, s, f;
 
 	if (msf) {
-		/* Print track start */
-		printf("%2d:%02d.%02d  ", e->addr.msf.minute,
-			e->addr.msf.second, e->addr.msf.frame);
+		if (!name || lastflag)
+			/* Print track start */
+			printf("%2d:%02d.%02d  ", e->addr.msf.minute,
+			    e->addr.msf.second, e->addr.msf.frame);
 
 		block = msf2lba(e->addr.msf.minute, e->addr.msf.second,
 			e->addr.msf.frame);
 	} else {
 		block = ntohl(e->addr.lba);
-		lba2msf(block, &m, &s, &f);
-		/* Print track start */
-		printf("%2d:%02d.%02d  ", m, s, f);
+		if (!name || lastflag) {
+			lba2msf(block, &m, &s, &f);
+			/* Print track start */
+			printf("%2d:%02d.%02d  ", m, s, f);
+	    	}
 	}
 	if (lastflag) {
-		/* Last track -- print block */
-		printf("       -  %6d       -      -\n", block);
+		if (!name)
+			/* Last track -- print block */
+			printf("       -  %6d       -      -\n", block);
+		else
+			printf("\n");
 		return;
 	}
 
@@ -961,17 +1047,16 @@ prtrack(e, lastflag)
 	len = next - block;
 	lba2msf(len, &m, &s, &f);
 
+	if (name)
+		printf("%2d:%02d.%02d  %s\n", m, s, f, name);
 	/* Print duration, block, length, type */
-	printf("%2d:%02d.%02d  %6d  %6d  %5s\n", m, s, f, block, len,
-	    (e->control & 4) ? "data" : "audio");
+	else
+		printf("%2d:%02d.%02d  %6d  %6d  %5s\n", m, s, f, block, len,
+		    (e->control & 4) ? "data" : "audio");
 }
 
 int
-play_track(tstart, istart, tend, iend)
-	int tstart;
-	int istart;
-	int tend;
-	int iend;
+play_track(int tstart, int istart, int tend, int iend)
 {
 	struct ioc_play_track t;
 
@@ -984,9 +1069,7 @@ play_track(tstart, istart, tend, iend)
 }
 
 int
-play_blocks(blk, len)
-	int blk;
-	int len;
+play_blocks(int blk, int len)
 {
 	struct ioc_play_blocks  t;
 
@@ -997,9 +1080,7 @@ play_blocks(blk, len)
 }
 
 int
-setvol(left, right)
-	int left;
-	int right;
+setvol(int left, int right)
 {
 	struct ioc_vol  v;
 
@@ -1012,8 +1093,7 @@ setvol(left, right)
 }
 
 int
-read_toc_entrys(len)
-	int len;
+read_toc_entrys(int len)
 {
 	struct ioc_read_toc_entry t;
 
@@ -1038,13 +1118,7 @@ read_toc_entrys(len)
 }
 
 int
-play_msf(start_m, start_s, start_f, end_m, end_s, end_f)
-	int start_m;
-	int start_s;
-	int start_f;
-	int end_m;
-	int end_s;
-	int end_f;
+play_msf(int start_m, int start_s, int start_f, int end_m, int end_s, int end_f)
 {
 	struct ioc_play_msf a;
 
@@ -1059,11 +1133,7 @@ play_msf(start_m, start_s, start_f, end_m, end_s, end_f)
 }
 
 int 
-status(trk, min, sec, frame)
-	int *trk;
-	int *min;
-	int *sec;
-	int *frame;
+status(int *trk, int *min, int *sec, int *frame)
 {
 	struct ioc_read_subchannel s;
 	struct cd_sub_channel_info data;
@@ -1095,8 +1165,7 @@ status(trk, min, sec, frame)
 }
 
 char *
-input(cmd)
-	int *cmd;
+input(int *cmd)
 {
 	static char buf[80];
 	char *p;
@@ -1115,9 +1184,7 @@ input(cmd)
 }
 
 char *
-parse(buf, cmd)
-	char *buf;
-	int *cmd;
+parse(char *buf, int *cmd)
 {
 	struct cmdtab *c;
 	char *p;
@@ -1177,8 +1244,7 @@ parse(buf, cmd)
 }
 
 int
-open_cd(dev)
-	char *dev;
+open_cd(char *dev)
 {
 	char *realdev;
 	int tries;
