@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.11 1997/04/18 14:27:23 provos Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.12 1997/04/18 20:15:47 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -112,7 +112,6 @@ readdisklabel(dev, strat, lp, osdep)
 		unsigned long extoff = 0;
 		int wander = 1;
 		int n = 0;
-		unsigned char *p;
 
 		/*
 		 * Read dos partition table, follow extended partitions.
@@ -135,12 +134,11 @@ readdisklabel(dev, strat, lp, osdep)
 				goto done;
 			}
 		     
-                	/* XXX - how do we check veracity/bounds of this? */
-			p = (unsigned char *)bp->b_data + BOOT_MAGIC_OFF;
-			if ((p[0] | (p[1] << 8)) != BOOT_MAGIC) {
-				msg = "dos partition corrupt";
-				goto done;
-			}
+                	/* 
+			 * We would like to check if each MBR has a valid
+			 * BOOT_MAGIC, but we cannot because it doesn't
+			 * always exist. So.. we assume the MBR is valid.
+			 */
 		     
 			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
 
