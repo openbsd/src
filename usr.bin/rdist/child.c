@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.8 1999/02/04 23:18:56 millert Exp $	*/
+/*	$OpenBSD: child.c,v 1.9 1999/02/05 00:39:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: child.c,v 6.28 1996/02/22 19:30:09 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: child.c,v 1.8 1999/02/04 23:18:56 millert Exp $";
+"$OpenBSD: child.c,v 1.9 1999/02/05 00:39:08 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -406,7 +406,7 @@ extern void waitup()
 	debugmsg(DM_MISC, "waitup() Call select(), activechildren=%d\n", 
 		 activechildren);
 
-	count = select(FD_SETSIZE, (SELECT_FD_TYPE *) rchildfdsp, 
+	count = select(rchildfdsn+1, (SELECT_FD_TYPE *) rchildfdsp, 
 		       NULL, NULL, NULL);
 
 	debugmsg(DM_MISC, "waitup() select returned %d activechildren = %d\n", 
