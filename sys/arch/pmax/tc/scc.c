@@ -1332,7 +1332,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-void
+int /* TTTTT was void */
 sccstop(tp, flag)
 	register struct tty *tp;
 	int flag;

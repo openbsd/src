@@ -690,7 +690,7 @@ dtopparam(tp, t)
  * Stop output on a line.
  */
 /*ARGSUSED*/
-void
+int /* TTTTT was void */
 dtopstop(tp, flag)
 	register struct tty *tp;
 	int flag;
