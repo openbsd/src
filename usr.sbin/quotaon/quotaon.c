@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.12 2002/03/14 16:44:25 mpech Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.13 2002/05/22 09:09:32 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -219,7 +219,7 @@ hasquota(fs, type, qfnamep, force)
 		sprintf(grpname, "%s%s", qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	strcpy(buf, fs->fs_mntops);
+	strlcpy(buf, fs->fs_mntops, sizeof buf);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if (cp = strchr(opt, '='))
 			*cp++ = '\0';

@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.3 2002/03/14 16:44:25 mpech Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.4 2002/05/22 09:09:32 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.3 2002/03/14 16:44:25 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.4 2002/05/22 09:09:32 deraadt Exp $";
 #endif
 
 /*
@@ -113,9 +113,10 @@ __setnetgrent(group)
 		if (parse_netgrp(group))
 			__endnetgrent();
 		else {
-			grouphead.grname = (char *)
-				malloc(strlen(group) + 1);
-			strcpy(grouphead.grname, group);
+			int len = strlen(group) + 1;
+
+			grouphead.grname = malloc(len);
+			strlcpy(grouphead.grname, group, len);
 		}
 	}
 	nextgrp = grouphead.gr;

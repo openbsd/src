@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.89 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.90 2002/05/22 09:09:32 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.89 2002/03/14 16:44:25 mpech Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.90 2002/05/22 09:09:32 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1998,7 +1998,7 @@ daytime_stream(s, sep)		/* Return human-readable time of day */
 
 	clock = time(NULL);
 
-	(void) sprintf(buffer, "%.24s\r\n", ctime(&clock));
+	(void) snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clock));
 	(void) write(s, buffer, strlen(buffer));
 }
 
@@ -2021,7 +2021,7 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 		return;
 	if (dg_badinput((struct sockaddr *)&ss))
 		return;
-	(void) sprintf(buffer, "%.24s\r\n", ctime(&clock));
+	(void) snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clock));
 	(void) sendto(s, buffer, strlen(buffer), 0, (struct sockaddr *)&ss,
 	    size);
 }

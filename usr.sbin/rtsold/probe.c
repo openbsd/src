@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.4 2002/02/16 21:28:09 millert Exp $	*/
+/*	$OpenBSD: probe.c,v 1.5 2002/05/22 09:09:32 deraadt Exp $	*/
 /*	$KAME: probe.c,v 1.10 2000/08/13 06:14:59 itojun Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ defrouter_probe(int ifindex)
 		return;
 	}
 	bzero(&dr, sizeof(dr));
-	strcpy(dr.ifname, "lo0"); /* dummy interface */
+	strlcpy(dr.ifname, "lo0", sizeof dr.ifname); /* dummy interface */
 	if (ioctl(s, SIOCGDRLST_IN6, (caddr_t)&dr) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "ioctl(SIOCGDRLST_IN6): %s",
 		       strerror(errno));

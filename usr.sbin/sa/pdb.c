@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: pdb.c,v 1.3 2002/02/16 21:28:09 millert Exp $";
+static char rcsid[] = "$Id: pdb.c,v 1.4 2002/05/22 09:09:32 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -213,11 +213,11 @@ pacct_print()
 	int rv;
 
 	memset(&ci_total, 0, sizeof(ci_total));
-	strcpy(ci_total.ci_comm, "");
+	strlcpy(ci_total.ci_comm, "", sizeof ci_total.ci_comm);
 	memset(&ci_other, 0, sizeof(ci_other));
-	strcpy(ci_other.ci_comm, "***other");
+	strlcpy(ci_other.ci_comm, "***other", sizeof ci_other.ci_comm);
 	memset(&ci_junk, 0, sizeof(ci_junk));
-	strcpy(ci_junk.ci_comm, "**junk**");
+	strlcpy(ci_junk.ci_comm, "**junk**", sizeof ci_junk.ci_comm);
 
 	/*
 	 * Retrieve them into new DB, sorted by appropriate key.

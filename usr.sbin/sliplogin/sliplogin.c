@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.20 2002/05/16 10:26:27 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.21 2002/05/22 09:09:32 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -171,7 +171,7 @@ sigstr(s)
 		return(sys_signame[s]);
 	else {
 		static char buf[32];
-		(void)sprintf(buf, "sig %d", s);
+		(void)snprintf(buf, sizeof buf, "sig %d", s);
 		return(buf);
 	}
 }
