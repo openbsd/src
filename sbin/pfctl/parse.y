@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.445 2004/03/01 17:40:54 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.446 2004/03/06 21:49:25 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4478,10 +4478,9 @@ top:
 		} while ((c = lgetc(fin)) != EOF && (allowed_in_string(c)));
 		lungetc(c);
 		*p = '\0';
-		token = lookup(buf);
-		yylval.v.string = strdup(buf);
-		if (yylval.v.string == NULL)
-			err(1, "yylex: strdup");
+		if ((token = lookup(buf)) == STRING)
+			if ((yylval.v.string = strdup(buf)) == NULL)
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
