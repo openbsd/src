@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.26 2001/11/08 23:26:45 millert Exp $ */
+/* $OpenBSD: user.c,v 1.27 2001/11/15 20:09:08 danh Exp $ */
 /* $NetBSD: user.c,v 1.40 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -1022,7 +1022,7 @@ moduser(char *login, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_flags & F_PASSWORD) {
-			if (up->u_password != NULL && strlen(up->u_password) == PasswordLength)
+			if (up->u_password != NULL && strlen(up->u_password) <= PasswordLength)
 				pwp->pw_passwd = up->u_password;
 		}
 		if (up->u_flags & F_UID) {
