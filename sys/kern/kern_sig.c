@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.23 1997/12/08 21:25:36 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.24 1998/01/09 16:33:48 csapuntz Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1103,7 +1103,7 @@ sigexit(p, signum)
 	/* NOTREACHED */
 }
 
-int nosuidcoredump = 1;
+int nosuidcoredump = 0;
 
 /*
  * Dump core, into a file named "progname.core", unless the process was
@@ -1146,7 +1146,10 @@ coredump(p)
 
 	sprintf(name, "%s.core", p->p_comm);
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
-	if ((error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR)) != 0) {
+
+	error = vn_open(&nd, O_CREAT | FWRITE | FNOSYMLINK, S_IRUSR | S_IWUSR);
+
+	if (error) {
 		crfree(cred);
 		return (error);
 	}

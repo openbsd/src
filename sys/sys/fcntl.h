@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.4 1997/10/24 09:04:24 deraadt Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.5 1998/01/09 16:33:47 csapuntz Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -94,6 +94,12 @@
 #define	FMARK		0x1000		/* mark during gc() */
 #define	FDEFER		0x2000		/* defer for next gc pass */
 #define	FHASLOCK	0x4000		/* descriptor holds advisory lock */
+
+/* Note: The below is not a flag that can be used in the struct file. 
+   It's an option that can be passed to vn_open to make sure it doesn't
+   follow a symlink on the last lookup */
+#define FNOSYMLINK     0x10000          /* Don't follow symlink for last
+					   component */
 #endif
 
 /* defined by POSIX 1003.1; BSD default, this bit is not required */
