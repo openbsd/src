@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.60 2003/06/30 23:47:14 avsm Exp $
+#	$OpenBSD: security,v 1.61 2003/07/01 21:52:39 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -136,14 +136,18 @@ umaskset=no
 list="/etc/csh.cshrc /etc/csh.login ${rhome}/.cshrc ${rhome}/.login"
 for i in $list ; do
 	if [ -s $i ] ; then
-		if egrep umask $i > /dev/null ; then
+		awk '{
+		    if ($1 == "umask") {
+			 if ($2 % 100 ~ /^[0145]/)
+			    print "Root umask is group writable";
+			 if ($2 % 10 ~ /^[0145]/)
+			    print "Root umask is other writable";
+		    }
+		}' < $i > $TMP3
+		if [ -s $TMP3 ]; then
 			umaskset=yes
+			cat $TMP3 >> $OUTPUT
 		fi
-		egrep umask $i |
-		awk '$2 % 100 < 20 \
-			{ print "Root umask is group writable" }
-		     $2 % 10 < 2 \
-			{ print "Root umask is other writable" }' >> $OUTPUT
 		SAVE_PATH=$PATH
 		unset PATH
 		/bin/csh -f -s << end-of-csh > /dev/null 2>&1
