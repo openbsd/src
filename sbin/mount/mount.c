@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.18 1997/06/18 09:57:04 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.19 1998/02/01 18:49:08 mickey Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.18 1997/06/18 09:57:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.19 1998/02/01 18:49:08 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ static struct opt {
 	{ MNT_RDONLY,		0,	"read-only" },
 	{ MNT_ROOTFS,		1,	"root file system" },
 	{ MNT_SYNCHRONOUS,	0,	"synchronous" },
+	{ MNT_SOFTDEP,		0,	"softdep" },
 	{ MNT_UNION,		0,	"union" },
 	{ NULL }
 };
