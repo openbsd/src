@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2003/10/21 17:05:16 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 2003/10/21 20:53:34 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1263,7 +1263,7 @@ __C(bus_space_copy_,BYTES)(void *v, bus_space_handle_t h1,		\
 	dst = (TYPE *) (h2+o2);						\
 									\
 	if (h1 == h2 && o2 > o1)					\
-		for (i = c; i > 0; i--)					\
+		for (i = c-1; i >= 0; i--)				\
 			dst[i] = src[i];				\
 	else								\
 		for (i = 0; i < c; i++)					\
