@@ -1,4 +1,4 @@
-/*	$Id: autoconf.c,v 1.3 1995/11/30 22:53:55 deraadt Exp $ */
+/*	$Id: autoconf.c,v 1.4 1995/12/30 09:24:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -101,7 +101,6 @@
  * the machine.
  */
 extern int cold;		/* if 1, still working on cold-start */
-int dkn;			/* number of iostat dk numbers assigned so far */
 
 /* XXX must be allocated statically because of early console init */
 struct	map extiomap[EIOMAPSIZE/16];

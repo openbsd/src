@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.22 1995/03/03 01:24:03 cgd Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.23 1995/12/28 19:16:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -418,8 +418,6 @@ stopprofclock(p)
 	}
 }
 
-int	dk_ndrive = DK_NDRIVE;
-
 /*
  * Statistics clock.  Grab profile sample, and if divider reaches 0,
  * do process and kernel statistics.
@@ -491,6 +489,8 @@ statclock(frame)
 	pscnt = psdiv;
 
 	/*
+	 * XXX Support old-style instrumentation for now.
+	 *
 	 * We maintain statistics shown by user-level statistics
 	 * programs:  the amount of time in each cpu state, and
 	 * the amount of time each of DK_NDRIVE ``drives'' is busy.

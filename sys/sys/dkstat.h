@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstat.h,v 1.7 1995/03/26 20:24:01 jtc Exp $	*/
+/*	$NetBSD: dkstat.h,v 1.8 1995/12/28 19:16:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,14 +50,16 @@
 #define	DK_NDRIVE	8
 #ifdef _KERNEL
 long cp_time[CPUSTATES];
-long dk_seek[DK_NDRIVE];
-long dk_time[DK_NDRIVE];
-long dk_wds[DK_NDRIVE];
-long dk_wpms[DK_NDRIVE];
-long dk_xfer[DK_NDRIVE];
 
-int dk_busy;
-int dk_ndrive;
+extern long dk_seek[];
+extern long dk_time[];
+extern long dk_wds[];
+extern long dk_wpms[];
+extern long dk_xfer[];
+
+extern int dk_busy;
+extern int dk_ndrive;
+extern int dkn;
 
 long tk_cancc;
 long tk_nin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.13 1995/03/29 20:57:35 mycroft Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.14 1995/12/28 19:16:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -45,6 +45,20 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/dkstat.h>		/* XXX */
+
+/*
+ * Old-style disk instrumentation structures.  These will go away
+ * someday.
+ */
+long	dk_seek[DK_NDRIVE];
+long	dk_time[DK_NDRIVE];
+long	dk_wds[DK_NDRIVE];
+long	dk_wpms[DK_NDRIVE];
+long	dk_xfer[DK_NDRIVE];
+int	dk_busy;
+int	dk_ndrive = DK_NDRIVE;
+int	dkn;			/* number of slots filled so far */
 
 /*
  * Seek sort for disks.  We depend on the driver which calls us using b_resid

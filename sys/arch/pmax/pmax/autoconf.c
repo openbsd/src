@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1995/09/13 19:36:01 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1995/12/28 19:16:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,7 +70,6 @@
  * the machine.
  */
 int	cold = 1;	/* if 1, still working on cold-start */
-int	dkn;		/* number of iostat dk numbers assigned so far */
 int	cpuspeed = 30;	/* approx # instr per usec. */
 extern	int pmax_boardtype;
 extern	tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];

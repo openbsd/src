@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.11 1995/12/13 19:02:57 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.12 1995/12/28 19:17:07 thorpej Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -66,7 +66,6 @@
 #include "ubareg.h"
 #include "ubavar.h"
 
-int dkn;
 extern int cold;
 
 volatile int rbr,rcvec;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1994/11/04 00:36:47 mycroft Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1995/12/28 19:16:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,6 @@
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	dkn;		/* number of iostat dk numbers assigned so far */
 extern int	cold;		/* cold start flag initialized in locore.s */
 
 /*

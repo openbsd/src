@@ -144,8 +144,6 @@ configure_scsi()
 	register struct pmax_scsi_device *dp;
 	register struct pmax_driver *drp;
 
-	extern int dkn;	/* number of iostat dk numbers assigned */
-
 	/* probe and initialize SCSI buses */
 	for (cp = &pmax_scsi_table[0]; drp = cp->pmax_driver; cp++) {
 

@@ -109,7 +109,6 @@
  * the machine.
  */
 int	cold;		/* if 1, still working on cold-start */
-int	dkn;		/* number of iostat dk numbers assigned so far */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
 int	cpumod;		/* CPU model, valid only if cputyp==CPU_SUN4 */
