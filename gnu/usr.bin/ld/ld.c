@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.25 2002/07/15 21:05:56 marc Exp $	*/
+/*	$OpenBSD: ld.c,v 1.26 2002/07/17 20:33:29 marc Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -249,34 +249,34 @@ int	warn_forwards_compatible_inexact = 1;
 int	warn_forwards_compatible_inexact = 0;
 #endif
 
-static void	decode_option __P((char *, char *));
-static void	decode_command __P((int, char **));
-static int	classify_arg __P((char *));
-static void	load_symbols __P((void));
-static void	enter_global_ref __P((struct localsymbol *,
-						char *, struct file_entry *));
-static void	digest_symbols __P((void));
-static void	digest_pass1 __P((void)), digest_pass2 __P((void));
-static void	consider_file_section_lengths __P((struct file_entry *));
-static void	relocate_file_addresses __P((struct file_entry *));
-static void	consider_relocation __P((struct file_entry *, int));
-static void	consider_local_symbols __P((struct file_entry *));
-static void	perform_relocation __P((char *, int,
-						struct relocation_info *, int,
-						struct file_entry *, int));
-static void	copy_text __P((struct file_entry *));
-static void	copy_data __P((struct file_entry *));
-static void	coptxtrel __P((struct file_entry *));
-static void	copdatrel __P((struct file_entry *));
-static void	write_output __P((void));
-static void	write_header __P((void));
-static void	write_text __P((void));
-static void	write_data __P((void));
-static void	write_rel __P((void));
-static void	write_syms __P((void));
-static void	assign_symbolnums __P((struct file_entry *, int *));
-static void	cleanup __P((void));
-static int	parse __P((char *, char *, char *));
+static void	decode_option(char *, char *);
+static void	decode_command(int, char **);
+static int	classify_arg(char *);
+static void	load_symbols(void);
+static void	enter_global_ref(struct localsymbol *,
+				 char *, struct file_entry *);
+static void	digest_symbols(void);
+static void	digest_pass1(void), digest_pass2(void);
+static void	consider_file_section_lengths(struct file_entry *);
+static void	relocate_file_addresses(struct file_entry *);
+static void	consider_relocation(struct file_entry *, int);
+static void	consider_local_symbols(struct file_entry *);
+static void	perform_relocation(char *, int,
+				   struct relocation_info *, int,
+				   struct file_entry *, int);
+static void	copy_text(struct file_entry *);
+static void	copy_data(struct file_entry *);
+static void	coptxtrel(struct file_entry *);
+static void	copdatrel(struct file_entry *);
+static void	write_output(void);
+static void	write_header(void);
+static void	write_text(void);
+static void	write_data(void);
+static void	write_rel(void);
+static void	write_syms(void);
+static void	assign_symbolnums(struct file_entry *, int *);
+static void	cleanup(void);
+static int	parse(char *, char *, char *);
 
 
 int
@@ -3357,8 +3357,8 @@ copdatrel(entry)
 		sizeof(struct relocation_info), outstream);
 }
 
-void write_file_syms __P((struct file_entry *, int *));
-void write_string_table __P((void));
+void write_file_syms(struct file_entry *, int *);
+void write_string_table(void);
 
 /* Offsets and current lengths of symbol and string tables in output file. */
 

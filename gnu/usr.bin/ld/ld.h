@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.10 2002/07/15 21:05:56 marc Exp $	*/
+/*	$OpenBSD: ld.h,v 1.11 2002/07/17 20:33:29 marc Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -15,14 +15,6 @@
 
 #ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef __P
-#ifndef __STDC__
-#define __P(a)	()
-#else
-#define __P(a)	a
-#endif
 #endif
 
 /* If compiled with GNU C, use the built-in alloca */
@@ -615,103 +607,103 @@ extern int	n_search_dirs;	/* Length of above. */
 
 extern int	write_map;	/* write a load map (`-M') */
 
-void	read_header __P((int, struct file_entry *));
-void	read_entry_symbols __P((int, struct file_entry *));
-void	read_entry_strings __P((int, struct file_entry *));
-void	read_entry_relocation __P((int, struct file_entry *));
-void	enter_file_symbols __P((struct file_entry *));
-void	read_file_symbols __P((struct file_entry *));
-int	set_element_prefixed_p __P((char *));
-int	text_offset __P((struct file_entry *));
-int	file_open __P((struct file_entry *));
-void	each_file __P((void (*)(), void *));
-void	each_full_file __P((void (*)(), void *));
-unsigned long	check_each_file __P((unsigned long (*)(), void *));
-void	mywrite __P((void *, int, int, FILE *));
-void	padfile __P((int, FILE *));
+void	read_header(int, struct file_entry *);
+void	read_entry_symbols(int, struct file_entry *);
+void	read_entry_strings(int, struct file_entry *);
+void	read_entry_relocation(int, struct file_entry *);
+void	enter_file_symbols(struct file_entry *);
+void	read_file_symbols(struct file_entry *);
+int	set_element_prefixed_p(char *);
+int	text_offset(struct file_entry *);
+int	file_open(struct file_entry *);
+void	each_file(void (*)(), void *);
+void	each_full_file(void (*)(), void *);
+unsigned long	check_each_file(unsigned long (*)(), void *);
+void	mywrite(void *, int, int, FILE *);
+void	padfile(int, FILE *);
 extern int	will_see_later(const char *);
 
 /* In warnings.c: */
-void	perror_name __P((char *));
-void	perror_file __P((struct file_entry *));
-void	print_symbols __P((FILE *));
-char	*get_file_name __P((struct file_entry *));
-void	print_file_name __P((struct file_entry *, FILE *));
-void	prline_file_name __P((struct file_entry *, FILE *));
-int	do_warnings __P((FILE *));
+void	perror_name(char *);
+void	perror_file(struct file_entry *);
+void	print_symbols(FILE *);
+char	*get_file_name(struct file_entry *);
+void	print_file_name(struct file_entry *, FILE *);
+void	prline_file_name(struct file_entry *, FILE *);
+int	do_warnings(FILE *);
 
 /* In etc.c: */
-char	*xstrdup __P((const char *));
-void	*xmalloc __P((size_t));
-void	*xrealloc __P((void *, size_t));
-char	*concat __P((const char *, const char *, const char *));
+char	*xstrdup(const char *);
+void	*xmalloc(size_t);
+void	*xrealloc(void *, size_t);
+char	*concat(const char *, const char *, const char *);
 
 /* In symbol.c: */
-void	symtab_init __P((int));
-symbol	*getsym __P((char *)), *getsym_soft __P((char *));
+void	symtab_init(int);
+symbol	*getsym(char *), *getsym_soft(char *);
 
 /* In lib.c: */
-void	search_library __P((int, struct file_entry *));
-void	read_shared_object __P((int, struct file_entry *));
-int	findlib __P((struct file_entry *));
+void	search_library(int, struct file_entry *);
+void	read_shared_object(int, struct file_entry *);
+int	findlib(struct file_entry *);
 
 /* In shlib.c: */
-char	*findshlib __P((char *, int *, int *, int));
-void	add_search_dir __P((char *));
-void	add_search_path __P((char *));
-void	std_search_path __P((void));
-int	getdewey __P((int[], char *));
-int	cmpndewey __P((int[], int, int[], int));
+char	*findshlib(char *, int *, int *, int);
+void	add_search_dir(char *);
+void	add_search_path(char *);
+void	std_search_path(void);
+int	getdewey(int[], char *);
+int	cmpndewey(int[], int, int[], int);
 
 /* In rrs.c: */
-void	init_rrs __P((void));
-int	rrs_add_shobj __P((struct file_entry *));
-void	alloc_rrs_reloc __P((struct file_entry *, symbol *));
-void	alloc_rrs_segment_reloc __P((struct file_entry *, struct relocation_info  *));
-void	alloc_rrs_jmpslot __P((struct file_entry *, symbol *));
-void	alloc_rrs_gotslot __P((struct file_entry *, struct relocation_info  *, localsymbol_t *));
-void	alloc_rrs_cpy_reloc __P((struct file_entry *, symbol *));
+void	init_rrs(void);
+int	rrs_add_shobj(struct file_entry *);
+void	alloc_rrs_reloc(struct file_entry *, symbol *);
+void	alloc_rrs_segment_reloc(struct file_entry *, struct relocation_info  *);
+void	alloc_rrs_jmpslot(struct file_entry *, symbol *);
+void	alloc_rrs_gotslot(struct file_entry *, struct relocation_info  *, localsymbol_t *);
+void	alloc_rrs_cpy_reloc(struct file_entry *, symbol *);
 
-int	claim_rrs_reloc __P((struct file_entry *, struct relocation_info *, symbol *, long *));
-long	claim_rrs_jmpslot __P((struct file_entry *, struct relocation_info *, symbol *, long));
-long	claim_rrs_gotslot __P((struct file_entry *, struct relocation_info *, struct localsymbol *, long));
-long	claim_rrs_internal_gotslot __P((struct file_entry *, struct relocation_info *, struct localsymbol *, long));
-void	claim_rrs_cpy_reloc __P((struct file_entry *, struct relocation_info *, symbol *));
-void	claim_rrs_segment_reloc __P((struct file_entry *, struct relocation_info *));
-void	consider_rrs_section_lengths __P((void));
-void	relocate_rrs_addresses __P((void));
-void	write_rrs __P((void));
-void	rrs_summarize_warnings __P((void));
+int	claim_rrs_reloc(struct file_entry *, struct relocation_info *, symbol *, long *);
+long	claim_rrs_jmpslot(struct file_entry *, struct relocation_info *, symbol *, long);
+long	claim_rrs_gotslot(struct file_entry *, struct relocation_info *, struct localsymbol *, long);
+long	claim_rrs_internal_gotslot(struct file_entry *, struct relocation_info *, struct localsymbol *, long);
+void	claim_rrs_cpy_reloc(struct file_entry *, struct relocation_info *, symbol *);
+void	claim_rrs_segment_reloc(struct file_entry *, struct relocation_info *);
+void	consider_rrs_section_lengths(void);
+void	relocate_rrs_addresses(void);
+void	write_rrs(void);
+void	rrs_summarize_warnings(void);
 
 /* In <md>.c */
-void	md_init_header __P((struct exec *, int, int));
-long	md_get_addend __P((struct relocation_info *, unsigned char *));
-void	md_relocate __P((struct relocation_info *, long, unsigned char *, int));
-void	md_make_jmpslot __P((jmpslot_t *, long, long));
-void	md_fix_jmpslot __P((jmpslot_t *, long, u_long));
-int	md_make_reloc __P((struct relocation_info *, struct relocation_info *, int));
-void	md_make_jmpreloc __P((struct relocation_info *, struct relocation_info *, int));
-void	md_make_gotreloc __P((struct relocation_info *, struct relocation_info *, int));
-void	md_make_copyreloc __P((struct relocation_info *, struct relocation_info *));
-void	md_set_breakpoint __P((long, long *));
+void	md_init_header(struct exec *, int, int);
+long	md_get_addend(struct relocation_info *, unsigned char *);
+void	md_relocate(struct relocation_info *, long, unsigned char *, int);
+void	md_make_jmpslot(jmpslot_t *, long, long);
+void	md_fix_jmpslot(jmpslot_t *, long, u_long);
+int	md_make_reloc(struct relocation_info *, struct relocation_info *, int);
+void	md_make_jmpreloc(struct relocation_info *, struct relocation_info *, int);
+void	md_make_gotreloc(struct relocation_info *, struct relocation_info *, int);
+void	md_make_copyreloc(struct relocation_info *, struct relocation_info *);
+void	md_set_breakpoint(long, long *);
 
 #ifdef NEED_SWAP
-void	md_swapin_exec_hdr __P((struct exec *));
-void	md_swapout_exec_hdr __P((struct exec *));
-void	md_swapin_reloc __P((struct relocation_info *, int));
-void	md_swapout_reloc __P((struct relocation_info *, int));
-void	md_swapout_jmpslot __P((jmpslot_t *, int));
+void	md_swapin_exec_hdr(struct exec *);
+void	md_swapout_exec_hdr(struct exec *);
+void	md_swapin_reloc(struct relocation_info *, int);
+void	md_swapout_reloc(struct relocation_info *, int);
+void	md_swapout_jmpslot(jmpslot_t *, int);
 
 /* In xbits.c: */
-void	swap_longs __P((long *, int));
-void	swap_symbols __P((struct nlist *, int));
-void	swap_zsymbols __P((struct nzlist *, int));
+void	swap_longs(long *, int);
+void	swap_symbols(struct nlist *, int);
+void	swap_zsymbols(struct nzlist *, int);
 struct ranlib; /* keep pedantic ISO compilers happy */
-void	swap_ranlib_hdr __P((struct ranlib *, int));
-void	swap__dynamic __P((struct _dynamic *));
-void	swap_section_dispatch_table __P((struct section_dispatch_table *));
-void	swap_so_debug __P((struct so_debug *));
-void	swapin_sod __P((struct sod *, int));
-void	swapout_sod __P((struct sod *, int));
-void	swap_rrs_hash __P((struct rrs_hash *, int));
+void	swap_ranlib_hdr(struct ranlib *, int);
+void	swap__dynamic(struct _dynamic *);
+void	swap_section_dispatch_table(struct section_dispatch_table *);
+void	swap_so_debug(struct so_debug *);
+void	swapin_sod(struct sod *, int);
+void	swapout_sod(struct sod *, int);
+void	swap_rrs_hash(struct rrs_hash *, int);
 #endif

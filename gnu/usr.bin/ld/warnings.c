@@ -1,4 +1,4 @@
-/* * $OpenBSD: warnings.c,v 1.6 2002/07/15 21:05:56 marc Exp $*/
+/* * $OpenBSD: warnings.c,v 1.7 2002/07/17 20:33:29 marc Exp $*/
 /*
  */
 
@@ -91,8 +91,8 @@ get_file_name (entry)
 
 /* Print a complete or partial map of the output file. */
 
-static void	describe_file_sections __P((struct file_entry *, FILE *));
-static void	list_file_locals __P((struct file_entry *, FILE *));
+static void	describe_file_sections(struct file_entry *, FILE *);
+static void	list_file_locals(struct file_entry *, FILE *);
 
 void
 print_symbols(outfile)
@@ -173,8 +173,8 @@ list_file_locals (entry, outfile)
 static int list_unresolved_refs;	/* List unresolved refs */
 static int list_multiple_defs;		/* List multiple definitions */
 
-static struct line_debug_entry *init_debug_scan __P((int, struct file_entry *));
-static int	next_debug_entry __P((int, struct line_debug_entry *));
+static struct line_debug_entry *init_debug_scan(int, struct file_entry *);
+static int	next_debug_entry(int, struct line_debug_entry *);
 
 /*
  * Structure for communication between do_file_warnings and it's

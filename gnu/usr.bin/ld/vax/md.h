@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.8 2002/07/15 21:05:57 marc Exp $	*/
+/*	$OpenBSD: md.h,v 1.9 2002/07/17 20:33:29 marc Exp $	*/
 /*	$NetBSD: md.h,v 1.1 1995/10/19 13:10:20 ragge Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -184,11 +184,11 @@ typedef struct jmpslot {
 
 /* Define IO byte swapping routines */
 
-void	md_swapin_exec_hdr __P((struct exec *));
-void	md_swapout_exec_hdr __P((struct exec *));
-void	md_swapin_reloc __P((struct relocation_info *, int));
-void	md_swapout_reloc __P((struct relocation_info *, int));
-void	md_swapout_jmpslot __P((jmpslot_t *, int));
+void	md_swapin_exec_hdr(struct exec *);
+void	md_swapout_exec_hdr(struct exec *);
+void	md_swapin_reloc(struct relocation_info *, int);
+void	md_swapout_reloc(struct relocation_info *, int);
+void	md_swapout_jmpslot(jmpslot_t *, int);
 
 #define md_swapin_symbols(s,n)			swap_symbols(s,n)
 #define md_swapout_symbols(s,n)			swap_symbols(s,n)

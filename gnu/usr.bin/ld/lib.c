@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.7 2002/07/15 21:05:56 marc Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.8 2002/07/17 20:33:29 marc Exp $	- library routines*/
 /*
  */
 
@@ -22,11 +22,11 @@
 
 #include "ld.h"
 
-static void		linear_library __P((int, struct file_entry *));
-static void		symdef_library __P((int, struct file_entry *, int));
-static struct file_entry	*decode_library_subfile __P((int,
+static void		linear_library(int, struct file_entry *);
+static void		symdef_library(int, struct file_entry *, int);
+static struct file_entry	*decode_library_subfile(int,
 							struct file_entry *,
-							int, int *));
+							int, int *);
 
 /*
  * Search the library ENTRY, already open on descriptor FD. This means
@@ -156,7 +156,7 @@ decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
 	return subentry;
 }
 
-static int	subfile_wanted_p __P((struct file_entry *));
+static int	subfile_wanted_p(struct file_entry *);
 
 /*
  * Search a library that has a __.SYMDEF member. FD is a descriptor on
