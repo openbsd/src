@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.107 2004/06/26 06:59:17 alex Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.108 2004/06/26 17:36:33 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.107 2004/06/26 06:59:17 alex Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.108 2004/06/26 17:36:33 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -1050,32 +1050,28 @@ setifmtu(const char *val, int d)
 void
 setifgroup(const char *group_name, int dummy)
 {
-	struct ifgroupreq ifg;
+	struct ifgroupreq ifgr;
 
-	memset(&ifg, 0, sizeof(ifg));
+	memset(&ifgr, 0, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
 
-	strlcpy(ifg.if_name, name, IFNAMSIZ);
-
-	if (strlcpy(ifg.ifg_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
+	if (strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
 		err(1, "setifgroup: group name too long");
-
-	if (ioctl(s, SIOCAIFGROUP, (caddr_t)&ifg) == -1)
+	if (ioctl(s, SIOCAIFGROUP, (caddr_t)&ifgr) == -1)
 		err(1," SIOCAIFGROUP");
 }
 
 void
 unsetifgroup(const char *group_name, int dummy)
 {
-	struct ifgroupreq ifg;
+	struct ifgroupreq ifgr;
 
-	memset(&ifg, 0, sizeof(ifg));
+	memset(&ifgr, 0, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
 
-	strlcpy(ifg.if_name, name, IFNAMSIZ);
-
-	if (strlcpy(ifg.ifg_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
+	if (strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
 		err(1, "unsetifgroup: group name too long");
-
-	if (ioctl(s, SIOCDIFGROUP, (caddr_t)&ifg) == -1)
+	if (ioctl(s, SIOCDIFGROUP, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCDIFGROUP");
 }
 
@@ -2650,38 +2646,38 @@ void
 getifgroups(void)
 {
 	int len;
-	struct ifgroupreq ifg;
-	struct ifgroup *ifgp;
+	struct ifgroupreq ifgr;
+	struct ifgroup *ifg;
 
-	memset(&ifg, 0, sizeof(ifg));
-	strlcpy(ifg.if_name, name, IFNAMSIZ);
+	memset(&ifgr, 0, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
 	
-	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifg) == -1)
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
 		if (errno == EINVAL || errno == ENOTTY)
 			return;
 		else
 			err(1, "SIOCGIFGROUP");
 
-	len = ifg.ifg_len;
-	ifg.ifg_groups = (struct ifgroup *)calloc(len / sizeof(struct ifgroup),
+	len = ifgr.ifgr_len;
+	ifgr.ifgr_groups = (struct ifgroup *)calloc(len / sizeof(struct ifgroup),
 	    sizeof(struct ifgroup));
-	if (ifg.ifg_groups == NULL)
+	if (ifgr.ifgr_groups == NULL)
 		err(1, "getifgroups");
 	
-	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifg) == -1)
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCGIFGROUP");
 	
 	if (len -= sizeof(struct ifgroup)) {
 		len += sizeof(struct ifgroup);
 		printf("\tgroups: ");
-		ifgp = ifg.ifg_groups;
-		if (ifgp) {
+		ifg = ifgr.ifgr_groups;
+		if (ifg) {
 			len -= sizeof(struct ifgroup);
-			ifgp++;
+			ifg++;
 		}
-		for (; ifgp && len >= sizeof(struct ifgroup); ifgp++) {
+		for (; ifg && len >= sizeof(struct ifgroup); ifg++) {
 			len -= sizeof(struct ifgroup);
-			printf("%s ", ifgp->if_group);
+			printf("%s ", ifg->ifg_group);
 		}
 		printf("\n");
 	}

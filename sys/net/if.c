@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.89 2004/06/25 18:24:23 pb Exp $	*/
+/*	$OpenBSD: if.c,v 1.90 2004/06/26 17:36:32 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -248,8 +248,8 @@ if_attachsetup(ifp)
 		    ifp->if_xname[n] < '0' || ifp->if_xname[n] > '9';
 		    n++)
 			continue;
-		strlcpy(ifg->if_group, ifp->if_xname, n + 1);
-		TAILQ_INSERT_HEAD(&ifp->if_groups, ifg, group_list);
+		strlcpy(ifg->ifg_group, ifp->if_xname, n + 1);
+		TAILQ_INSERT_HEAD(&ifp->if_groups, ifg, ifg_next);
  	}
 
 	ifindex2ifnet[if_index] = ifp;
@@ -596,7 +596,7 @@ do { \
 
 	for (ifg = TAILQ_FIRST(&ifp->if_groups); ifg;
 	    ifg = TAILQ_FIRST(&ifp->if_groups)) {
-		TAILQ_REMOVE(&ifp->if_groups, ifg, group_list);
+		TAILQ_REMOVE(&ifp->if_groups, ifg, ifg_next);
 		free(ifg, M_TEMP);
 	}
 
@@ -1501,20 +1501,20 @@ if_detached_watchdog(struct ifnet *ifp)
  * Add a group to an interface
  */
 int
-if_addgroup(struct ifgroupreq *ifg, struct ifnet *ifp)
+if_addgroup(struct ifgroupreq *ifgr, struct ifnet *ifp)
 {
 	struct ifgroup	*ifgnew, *ifgp;
 
-	TAILQ_FOREACH(ifgp, &ifp->if_groups, group_list)
-		if (!strcmp(ifgp->if_group, ifg->ifg_group))
+	TAILQ_FOREACH(ifgp, &ifp->if_groups, ifg_next)
+		if (!strcmp(ifgp->ifg_group, ifgr->ifgr_group))
 			return (EEXIST);
 
 	ifgnew = (struct ifgroup *)malloc(sizeof(struct ifgroup), M_TEMP, 
 	    M_NOWAIT);
 	if (ifgnew == NULL)
 		return (ENOMEM);
-	strlcpy(ifgnew->if_group, ifg->ifg_group, IFNAMSIZ);
-	TAILQ_INSERT_TAIL(&ifp->if_groups, ifgnew, group_list);
+	strlcpy(ifgnew->ifg_group, ifgr->ifgr_group, IFNAMSIZ);
+	TAILQ_INSERT_TAIL(&ifp->if_groups, ifgnew, ifg_next);
 
 	return (0);
 }
@@ -1524,23 +1524,22 @@ if_addgroup(struct ifgroupreq *ifg, struct ifnet *ifp)
  * note: the first group is the if-family - do not remove
  */
 int
-if_delgroup(struct ifgroupreq *ifg, struct ifnet *ifp)
+if_delgroup(struct ifgroupreq *ifgr, struct ifnet *ifp)
 {
 	struct ifgroup	*ifgp;
 
 	for (ifgp = TAILQ_FIRST(&ifp->if_groups);
 	    ifgp != TAILQ_END(&ifp->if_groups);
-	    ifgp = TAILQ_NEXT(ifgp, group_list)) {
+	    ifgp = TAILQ_NEXT(ifgp, ifg_next)) {
 		if (ifgp == TAILQ_FIRST(&ifp->if_groups) &&
-		    !strcmp(ifgp->if_group, ifg->ifg_group))
+		    !strcmp(ifgp->ifg_group, ifgr->ifgr_group))
 			return (EPERM);
-		if (!strcmp(ifgp->if_group, ifg->ifg_group)) {
-			TAILQ_REMOVE(&ifp->if_groups, ifgp, group_list);
+		if (!strcmp(ifgp->ifg_group, ifgr->ifgr_group)) {
+			TAILQ_REMOVE(&ifp->if_groups, ifgp, ifg_next);
 			free(ifgp, M_TEMP);
 			return (0);
 		}
 	}
-
 	return (ENOENT);
 }
 
@@ -1556,19 +1555,19 @@ if_getgroup(caddr_t data, struct ifnet *ifp)
 	struct ifgroup *ifgp, *ifgp2, ifg;
 	struct ifgroupreq *ifgr = (struct ifgroupreq *)data;
 
-	if (ifgr->ifg_len == 0) {
-		TAILQ_FOREACH(ifgp, &ifp->if_groups, group_list)
-			ifgr->ifg_len += sizeof(struct ifgroup);
+	if (ifgr->ifgr_len == 0) {
+		TAILQ_FOREACH(ifgp, &ifp->if_groups, ifg_next)
+			ifgr->ifgr_len += sizeof(struct ifgroup);
 		return (0);
 	}
 
-	len = ifgr->ifg_len;
-	ifgp = ifgr->ifg_groups;
+	len = ifgr->ifgr_len;
+	ifgp = ifgr->ifgr_groups;
 	for (ifgp2 = TAILQ_FIRST(&ifp->if_groups); ifgp2 && 
 	    len >= sizeof(struct ifgroup);
-	    ifgp2 = TAILQ_NEXT(ifgp2, group_list)) {
+	    ifgp2 = TAILQ_NEXT(ifgp2, ifg_next)) {
 		memset(&ifg, 0, sizeof(struct ifgroup));
-		strlcpy(ifg.if_group, ifgp2->if_group, IFNAMSIZ);
+		strlcpy(ifg.ifg_group, ifgp2->ifg_group, IFNAMSIZ);
 		error = copyout((caddr_t)&ifg, (caddr_t)ifgp, 
 		    sizeof(struct ifgroup));
 		if (error)

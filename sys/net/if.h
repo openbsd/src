@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.55 2004/06/25 18:24:23 pb Exp $	*/
+/*	$OpenBSD: if.h,v 1.56 2004/06/26 17:36:33 markus Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -401,25 +401,22 @@ struct if_announcemsghdr {
  * The groups on an interface
  */
 struct ifgroup {
-	char if_group[IFNAMSIZ];
-	TAILQ_ENTRY(ifgroup) group_list;
+	char ifg_group[IFNAMSIZ];
+	TAILQ_ENTRY(ifgroup) ifg_next;
 };
 
 /*
  * Used to lookup groups for an interface
  */
 struct ifgroupreq {
-	char if_name[IFNAMSIZ];
-	u_int ifg_len;
-
+	char	ifgr_name[IFNAMSIZ];
+	u_int	ifgr_len;
 	union {
-		char if_group[IFNAMSIZ];
-		struct ifgroup *ifg;
-	} ifg_ifgu;
-
-	TAILQ_ENTRY(ifgroupreq) next_if;
-#define ifg_group	ifg_ifgu.if_group
-#define ifg_groups	ifg_ifgu.ifg
+		char	ifgru_group[IFNAMSIZ];
+		struct	ifgroup *ifgru_groups;
+	} ifgr_ifgru;
+#define ifgr_group	ifgr_ifgru.ifgru_group
+#define ifgr_groups	ifgr_ifgru.ifgru_groups
 };
 
 /*
