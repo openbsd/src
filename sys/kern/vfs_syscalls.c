@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.86 2002/01/21 18:50:45 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.87 2002/02/04 11:43:16 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -883,16 +883,17 @@ sys_open(p, v, retval)
 		flags &= ~O_TRUNC;	/* Must do truncate ourselves */
 	}
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
-		ffree(fp);
 		if ((error == ENODEV || error == ENXIO) &&
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =
 			dupfdopen(fdp, indx, p->p_dupfd, flags, error)) == 0) {
+			closef(fp, p);
 			*retval = indx;
 			return (0);
 		}
 		if (error == ERESTART)
 			error = EINTR;
+		closef(fp, p);
 		fdremove(fdp, indx);
 		return (error);
 	}
