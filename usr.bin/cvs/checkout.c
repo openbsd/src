@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.6 2004/07/30 18:14:07 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.7 2004/08/03 04:56:27 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -70,7 +70,7 @@ cvs_checkout(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	dir = cvs_file_get(".", CF_IGNORE|CF_MKADMIN);
+	dir = cvs_file_get(".", CF_IGNORE);
 	root = CVS_DIR_ROOT(dir);
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		cvs_connect(root);
