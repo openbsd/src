@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 1999/09/03 18:00:30 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2000/05/27 21:21:19 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -58,6 +58,9 @@
 #include <vm/vm.h>
 #include <sys/user.h>
 #include <vm/vm_kern.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 #include <machine/pte.h>
 
 /* XXX - Put this in some header file? */
@@ -150,10 +153,18 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
+#if defined(UVM)
+	uvmspace_free(p->p_vmspace);
+#else
 	vmspace_free(p->p_vmspace);
+#endif
 	
 	(void)splhigh();
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -380,7 +391,11 @@ vmapbuf(bp, sz)
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
 	npf = btoc(round_page(bp->b_bcount + off));
+#if defined(UVM)
+	kva = uvm_km_valloc_wait(phys_map, len);
+#else
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
+#endif
 	bp->b_un.b_addr = (caddr_t) (kva + off);
 	while (npf--) {
 		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
@@ -412,7 +427,11 @@ vunmapbuf(bp, sz)
 		panic("vunmapbuf");
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, kva, len);
+#else
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
+#endif
 	bp->b_un.b_addr = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
