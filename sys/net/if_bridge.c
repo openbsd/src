@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.111 2003/02/17 18:23:22 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.112 2003/02/21 21:49:37 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2648,11 +2648,15 @@ bridge_send_icmp_err(sc, ifp, eh, n, hassnap, llc, type, code)
 	u_int8_t ether_tmp[ETHER_ADDR_LEN];
 
 	n2 = m_copym(n, 0, M_COPYALL, M_DONTWAIT);
-	if (!n2)
+	if (!n2) {
+		m_freem(n);
 		return;
+	}
 	m = icmp_do_error(n, type, code, 0, ifp);
-	if (m == NULL)
+	if (m == NULL) {
+		m_freem(n2);
 		return;
+	}
 
 	n = n2;
 
