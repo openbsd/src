@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.24 2004/02/15 02:45:47 tedu Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.25 2004/04/22 22:28:37 millert Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -242,8 +242,8 @@ dkreadstats(void)
 				    dk_ndrive * sizeof(*cur.dk_time));
 				last.dk_rxfer = realloc(last.dk_rxfer,
 				    dk_ndrive * sizeof(*last.dk_rxfer));
-				last.dk_wxfer = realloc(last.dk_rxfer,
-				    dk_ndrive * sizeof(*last.dk_rxfer));
+				last.dk_wxfer = realloc(last.dk_wxfer,
+				    dk_ndrive * sizeof(*last.dk_wxfer));
 				last.dk_seek = realloc(last.dk_seek,
 				    dk_ndrive * sizeof(*last.dk_seek));
 				last.dk_rbytes = realloc(last.dk_rbytes,
