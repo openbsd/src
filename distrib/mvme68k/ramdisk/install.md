@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.20 2002/05/18 17:56:03 krw Exp $
+#       $OpenBSD: install.md,v 1.21 2002/05/19 16:16:05 krw Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -102,10 +102,10 @@ Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
 are in sector (most likely 512 bytes) units. Make sure these size/offset
 pairs are on cylinder boundaries (the number of sector per cylinder is
-given in the `sectors/cylinder' entry, which is not shown here).
+given in the 'sectors/cylinder' entry, which is not shown here).
 
 Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `16 partitions:' line, even
+It's probably also wisest not to touch the '16 partitions:' line, even
 in case you have defined less than sixteen partitions.
 
 [Example]

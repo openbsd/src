@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 2002/05/18 17:56:03 krw Exp $
+#	$OpenBSD: install.md,v 1.13 2002/05/19 16:16:05 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ md_prep_disklabel()
 Disk partition sizes and offsets are in sector (most likely 512 bytes) units.
 You may set these size/offset pairs on cylinder boundaries
      (the number of sector per cylinder is given in )
-     (the `sectors/cylinder' entry, which is not shown here)
+     (the 'sectors/cylinder' entry, which is not shown here)
 Also, you *must* make sure that the 'i' partition points at the MSDOS
 partition that will be used for booting. The 'c' partition shall start
 at offset 0 and include the entire disk. This is most likely correct when
