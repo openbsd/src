@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.4 2005/02/21 07:46:48 dlg Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.5 2005/03/30 14:24:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -33,13 +33,18 @@
 int	pxaudc_match(struct device *, void *, void *);
 void	pxaudc_attach(struct device *, struct device *, void *);
 int	pxaudc_detach(struct device *, int);
+void	pxaudc_power(int, void *);
 
 struct pxaudc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_size;
+
+	void 			*sc_powerhook;
 };
+
+void	pxaudc_enable(struct pxaudc_softc *);
 
 struct cfattach pxaudc_ca = {
 	sizeof(struct pxaudc_softc), pxaudc_match, pxaudc_attach,
@@ -64,10 +69,10 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxaudc_softc		*sc = (struct pxaudc_softc *)self;
 	struct pxaip_attach_args	*pxa = aux;
-	u_int32_t			hr;
 
 	sc->sc_iot = pxa->pxa_iot;
 	sc->sc_size = 0;
+	sc->sc_powerhook = NULL;
 
 	if (bus_space_map(sc->sc_iot, PXA2X0_USBDC_BASE, PXA2X0_USBDC_SIZE, 0,
 	    &sc->sc_ioh)) {
@@ -84,8 +89,46 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_gpio_set_function(35, GPIO_ALT_FN_2_IN); /* USB_P2_1 */
 	pxa2x0_gpio_set_function(37, GPIO_ALT_FN_1_OUT); /* USB_P2_8 */
 	pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_IN); /* USB_P2_7 */
+	pxa2x0_gpio_set_function(89, GPIO_ALT_FN_2_OUT); /* USBHPEN<1> */
+	pxa2x0_gpio_set_function(120, GPIO_ALT_FN_2_OUT); /* USBHPEN<2> */
 
 	pxa2x0_clkman_config(CKEN_USBDC, 0);
+	pxaudc_enable(sc);
+
+	pxa2x0_gpio_set_bit(37); /* USB_P2_8 */
+
+	sc->sc_powerhook = powerhook_establish(pxaudc_power, sc);
+}
+
+int
+pxaudc_detach(struct device *self, int flags)
+{
+	struct pxaudc_softc		*sc = (struct pxaudc_softc *)self;
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+
+	if (sc->sc_size) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
+		sc->sc_size = 0;
+	}
+
+	return (0);
+}
+
+void
+pxaudc_power(int why, void *arg)
+{
+	struct pxaudc_softc		*sc = (struct pxaudc_softc *)arg;
+
+	if (why == PWR_RESUME)
+		pxaudc_enable(sc);
+}
+
+void
+pxaudc_enable(struct pxaudc_softc *sc)
+{
+	u_int32_t			hr;
 
 	/* disable the controller */
 	hr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, USBDC_UDCCR);
@@ -106,19 +149,4 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	hr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, USBDC_UP2OCR);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, USBDC_UP2OCR,
 	    hr | USBDC_UP2OCR_DPPDE|USBDC_UP2OCR_DMPDE);
-
-	pxa2x0_gpio_set_bit(37); /* USB_P2_8 */
-}
-
-int
-pxaudc_detach(struct device *self, int flags)
-{
-	struct pxaudc_softc		*sc = (struct pxaudc_softc *)self;
-
-	if (sc->sc_size) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
-		sc->sc_size = 0;
-	}
-
-	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.14 2005/03/30 14:02:02 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.15 2005/03/30 14:24:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -39,11 +39,14 @@
 int	pxaohci_match(struct device *, void *, void *);
 void	pxaohci_attach(struct device *, struct device *, void *);
 int	pxaohci_detach(struct device *, int);
+void	pxaohci_power(int, void *);
 
 struct pxaohci_softc {
 	ohci_softc_t	sc;
 	void		*sc_ih;
 };
+
+void	pxaohci_enable(struct pxaohci_softc *);
 
 struct cfattach pxaohci_ca = {
         sizeof (struct pxaohci_softc), pxaohci_match, pxaohci_attach,
@@ -64,7 +67,6 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxaohci_softc		*sc = (struct pxaohci_softc *)self;
 	struct pxaip_attach_args	*pxa = aux;
-	u_int32_t			hr;
 	usbd_status			r;
 
 	sc->sc.iot = pxa->pxa_iot;
@@ -86,34 +88,7 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* start the usb clock */
 	pxa2x0_clkman_config(CKEN_USBHC, 1);
-
-	/* Full host reset */
-	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
-	    (hr & USBHC_HR_MASK) | USBHC_HR_FHR);
-
-	DELAY(mstohz(USBHC_RST_WAIT));
-
-	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
-	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_FHR));
-
-	/* Force system bus interface reset */
-	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
-	    (hr & USBHC_HR_MASK) | USBHC_HR_FSBIR);
-
-	while (bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR) & \
-	    USBHC_HR_FSBIR)
-		DELAY(3);
-
-	/* Enable the ports (physically only one, only enable that one?) */
-	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
-	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSE));
-	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
-	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSEP2));
+	pxaohci_enable(sc);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
@@ -178,3 +153,64 @@ pxaohci_detach(struct device *self, int flags)
 
 	return (0);
 }
+
+
+void
+pxaohci_power(int why, void *arg)
+{
+	struct pxaohci_softc		*sc = (struct pxaohci_softc *)arg;
+	int				s;
+
+	s = splhardusb();
+	sc->sc.sc_bus.use_polling++;
+	switch (why) {
+	case PWR_STANDBY:
+	case PWR_SUSPEND:
+		ohci_power(why, arg);
+		pxa2x0_clkman_config(CKEN_USBHC, 0);
+		break;
+
+	case PWR_RESUME:
+		pxa2x0_clkman_config(CKEN_USBHC, 1);
+		pxaohci_enable(sc);
+		ohci_power(why, arg);
+		break;
+	}
+	sc->sc.sc_bus.use_polling--;
+	splx(s);
+}
+
+void
+pxaohci_enable(struct pxaohci_softc *sc)
+{
+	u_int32_t			hr;
+
+	/* Full host reset */
+	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
+	    (hr & USBHC_HR_MASK) | USBHC_HR_FHR);
+
+	DELAY(mstohz(USBHC_RST_WAIT));
+
+	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
+	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_FHR));
+
+	/* Force system bus interface reset */
+	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
+	    (hr & USBHC_HR_MASK) | USBHC_HR_FSBIR);
+
+	while (bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR) & \
+	    USBHC_HR_FSBIR)
+		DELAY(3);
+
+	/* Enable the ports (physically only one, only enable that one?) */
+	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
+	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSE));
+	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
+	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSEP2));
+}
+
