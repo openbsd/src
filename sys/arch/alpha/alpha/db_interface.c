@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.15 2003/02/19 19:32:44 miod Exp $ */
+/* $OpenBSD: db_interface.c,v 1.16 2004/01/22 17:47:01 miod Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -78,6 +78,8 @@ extern label_t	*db_recover;
 extern char *trap_type[];
 extern int trap_types;
 #endif
+
+db_regs_t ddb_regs;
 
 int	db_active = 0;
 

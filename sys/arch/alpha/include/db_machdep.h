@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.16 2003/10/18 20:14:41 jmc Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.17 2004/01/22 17:47:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -48,7 +48,7 @@ typedef	vm_offset_t db_addr_t;
 typedef	long db_expr_t;
 typedef struct trapframe db_regs_t;
 
-db_regs_t		ddb_regs;
+extern db_regs_t	ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs[FRAME_PC])
