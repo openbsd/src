@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.29 2004/09/28 07:05:50 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.30 2004/09/30 14:58:02 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1359,10 +1359,12 @@ rl_miibus_readreg(self, phy, reg)
 		case MII_ANLPAR:
 			rl8139_reg = RL_LPAR;
 			break;
+		case RL_MEDIASTAT:
+			return (CSR_READ_1(sc, RL_MEDIASTAT));
 		case MII_PHYIDR1:
 		case MII_PHYIDR2:
+		default:
 			return (0);
-			break;
 		}
 		return (CSR_READ_2(sc, rl8139_reg));
 	}
