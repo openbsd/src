@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.8 1997/03/26 08:11:06 downsj Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.9 1997/06/17 11:11:08 deraadt Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.8 1997/03/16 10:14:44 thorpej Exp $	*/
 
 /*
@@ -305,10 +305,20 @@ hpux_sys_execve(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sys_execve_args *uap = v;
+	struct hpux_sys_execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+		syscallarg(char **) envp;
+        } */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p->p_emul);
 	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (sys_execve(p, (struct sys_execve_args *)&uap, retval));
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return (sys_execve(p, &ap, retval));
 }

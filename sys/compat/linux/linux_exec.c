@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.4 1996/12/23 02:56:49 deraadt Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.5 1997/06/17 11:11:10 deraadt Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -491,7 +491,7 @@ linux_sys_uselib(p, v, retval)
 
 /*
  * Execve(2). Just check the alternate emulation path, and pass it on
- * to the NetBSD execve().
+ * to the regular execve().
  */
 int
 linux_sys_execve(p, v, retval)
@@ -503,11 +503,16 @@ linux_sys_execve(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
-	} */ *uap = v;
+        } */ *uap = v;
+	struct sys_execve_args ap;
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_execve(p, uap, retval);
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return sys_execve(p, &ap, retval);
 }

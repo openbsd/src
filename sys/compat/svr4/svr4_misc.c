@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.9 1997/03/28 22:03:46 kstailey Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.10 1997/06/17 11:11:12 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -143,8 +143,9 @@ svr4_sys_execv(p, v, retval)
 		syscallarg(char **) argv;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg;
 
+	sg = stackgap_init(p->p_emul);
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -161,16 +162,22 @@ svr4_sys_execve(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_execve_args /* {
+	struct svr4_sys_execve_args /* {
 		syscallarg(char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
-	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+        } */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
 
+	sg = stackgap_init(p->p_emul);
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_execve(p, uap, retval);
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return sys_execve(p, &ap, retval);
 }
 
 

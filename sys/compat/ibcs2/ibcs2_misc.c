@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.8 1997/01/23 16:12:18 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.9 1997/06/17 11:11:09 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -200,14 +200,17 @@ ibcs2_sys_execv(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(char **) argp;
 	} */ *uap = v;
-	struct sys_execve_args ea;
-	caddr_t sg = stackgap_init(p->p_emul);
+	struct sys_execve_args ap;
+	caddr_t sg;
 
+	sg = stackgap_init(p->p_emul);
         IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	SCARG(&ea, path) = SCARG(uap, path);
-	SCARG(&ea, argp) = SCARG(uap, argp);
-	SCARG(&ea, envp) = NULL;
-	return sys_execve(p, &ea, retval);
+
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = NULL;
+
+	return sys_execve(p, &ap, retval);
 }
 
 int
@@ -216,15 +219,22 @@ ibcs2_sys_execve(p, v, retval)
 	void *v;
         register_t *retval;
 {
-	struct sys_execve_args /* {
+	struct ibcs2_sys_execve_args /* {
 		syscallarg(char *) path;
-		syscallarg(char **) argp;
+		syscallarg(char **) argv;
 		syscallarg(char **) envp;
-	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        } */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
 
-        IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-        return sys_execve(p, uap, retval);
+	sg = stackgap_init(p->p_emul);
+	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return sys_execve(p, &ap, retval);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.11 1997/04/12 19:58:02 graichen Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.12 1997/06/17 11:11:13 deraadt Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -591,10 +591,20 @@ ultrix_sys_execve(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct ultrix_sys_execve_args *uap = v;
+	struct ultrix_sys_execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+		syscallarg(char **) envp;
+        } */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p->p_emul);
 	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (sys_execve(p, (struct sys_execve_args *)&uap, retval));
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return (sys_execve(p, &ap, retval));
 }
