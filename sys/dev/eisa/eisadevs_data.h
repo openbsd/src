@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.12 1999/03/04 15:37:58 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.13 1999/06/23 04:55:09 mickey Exp 
  */
 
 /*
@@ -159,6 +159,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "MDG0002",
+	    EISA_PRODUCT_MDG0002,
+	},
+	{
+	    0,
 	    "HWP0C70",
 	    EISA_PRODUCT_HWP0C70,
 	},
@@ -171,6 +176,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "HWP1850",
 	    EISA_PRODUCT_HWP1850,
+	},
+	{
+	    0,
+	    "HWP1980",
+	    EISA_PRODUCT_HWP1980,
 	},
 	{
 	    0,
@@ -311,6 +321,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "MLX",
 	    "Mylex",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "MDG",
+	    "Madge Networks",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
