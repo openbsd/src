@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.5 2002/06/09 03:47:23 drahn Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.6 2002/07/09 11:00:27 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -76,12 +76,6 @@ int	wi_obio_activate(struct device *, enum devact);
 void	wi_obio_attach(struct device *, struct device *, void *);
 int	wi_obio_enable(struct wi_softc *sc);
 void	wi_obio_disable(struct wi_softc *sc);
-
-
-int	wi_intr(void *);
-int	wi_attach(struct wi_softc *);
-void	wi_init(void *);
-void	wi_stop(struct wi_softc *);
 
 struct wi_obio_softc {
 	struct wi_softc sc_wi;

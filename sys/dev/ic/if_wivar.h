@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.17 2002/06/22 22:10:38 fgsch Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.18 2002/07/09 11:00:27 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -129,4 +129,9 @@ struct wi_softc	{
 #define WI_PRT_FMT "%s"
 #define WI_PRT_ARG(sc)	(sc)->sc_dev.dv_xname
 
-int wi_mgmt_xmit(struct wi_softc *, caddr_t, int);
+int	wi_attach(struct wi_softc *);
+int	wi_intr(void *);
+void	wi_init(struct wi_softc *);
+void	wi_stop(struct wi_softc *);
+void	wi_cor_reset(struct wi_softc *);
+int	wi_mgmt_xmit(struct wi_softc *, caddr_t, int);

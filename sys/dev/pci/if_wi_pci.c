@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.26 2002/04/15 21:19:52 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.27 2002/07/09 11:00:27 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -99,8 +99,6 @@ const struct wi_pci_product *wi_pci_lookup(struct pci_attach_args *pa);
 int	wi_pci_match(struct device *, void *, void *);
 void	wi_pci_attach(struct device *, struct device *, void *);
 int	wi_pci_handle_cis(struct wi_softc *);
-int	wi_intr(void *);
-int	wi_attach(struct wi_softc *);
 
 struct cfattach wi_pci_ca = {
 	sizeof (struct wi_softc), wi_pci_match, wi_pci_attach

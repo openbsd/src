@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.37 2002/07/01 13:31:06 fgsch Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.38 2002/07/09 11:00:27 fgsch Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -74,12 +74,6 @@ int	wi_pcmcia_match(struct device *, void *, void *);
 void	wi_pcmcia_attach(struct device *, struct device *, void *);
 int	wi_pcmcia_detach(struct device *, int);
 int	wi_pcmcia_activate(struct device *, enum devact);
-
-int	wi_intr(void *);
-int	wi_attach(struct wi_softc *);
-void	wi_cor_reset(struct wi_softc *);
-void	wi_init(struct wi_softc *);
-void	wi_stop(struct wi_softc *);
 
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
