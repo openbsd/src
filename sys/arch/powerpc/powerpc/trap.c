@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 1997/02/05 06:10:05 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 1997/10/13 13:43:01 pefo Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
 
-volatile int astpending;
 volatile int want_resched;
 
 void
@@ -260,6 +259,7 @@ syscall_bad:
 	
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
+mpc_print_pci_stat();
 		panic("trap");
 
 	case EXC_PGM|EXC_USER:

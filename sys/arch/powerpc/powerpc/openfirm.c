@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.2 1996/12/28 06:22:12 rahnds Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.3 1997/10/13 13:43:00 pefo Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #include <machine/psl.h>
 #include <machine/stdarg.h>
 
-#include <dev/ofw/openfirm.h>
+/*#include <dev/ofw/openfirm.h>*/
 
 char *OF_buf;
 
@@ -113,29 +113,6 @@ OF_parent(phandle)
 }
 
 int
-OF_instance_to_package(ihandle)
-	int ihandle;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int ihandle;
-		int phandle;
-	} args = {
-		"instance-to-package",
-		1,
-		1,
-	};
-
-	ofw_stack();
-	args.ihandle = ihandle;
-	if (openfirmware(&args) == -1)
-		return -1;
-	return args.phandle;
-}
-
-int
 OF_getprop(handle, prop, buf, buflen)
 	int handle;
 	char *prop;
@@ -194,317 +171,6 @@ OF_finddevice(name)
 	return args.phandle;
 }
 
-int
-OF_instance_to_path(ihandle, buf, buflen)
-	int ihandle;
-	char *buf;
-	int buflen;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int ihandle;
-		char *buf;
-		int buflen;
-		int length;
-	} args = {
-		"instance-to-path",
-		3,
-		1,
-	};
-
-	if (buflen > NBPG)
-		return -1;
-	args.ihandle = ihandle;
-	args.buf = OF_buf;
-	args.buflen = buflen;
-	if (openfirmware(&args) < 0)
-		return -1;
-	if (args.length > 0)
-		ofbcopy(OF_buf, buf, args.length);
-	return args.length;
-}
-
-int
-OF_package_to_path(phandle, buf, buflen)
-	int phandle;
-	char *buf;
-	int buflen;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int phandle;
-		char *buf;
-		int buflen;
-		int length;
-	} args = {
-		"package-to-path",
-		3,
-		1,
-	};
-	
-	ofw_stack();
-	if (buflen > NBPG)
-		return -1;
-	args.phandle = phandle;
-	args.buf = OF_buf;
-	args.buflen = buflen;
-	if (openfirmware(&args) < 0)
-		return -1;
-	if (args.length > 0)
-		ofbcopy(OF_buf, buf, args.length);
-	return args.length;
-}
-
-int
-#ifdef	__STDC__
-OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
-#else
-OF_call_method(method, ihandle, nargs, nreturns, va_alist)
-	char *method;
-	int ihandle;
-	int nargs;
-	int nreturns;
-	va_dcl
-#endif
-{
-	va_list ap;
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		char *method;
-		int ihandle;
-		int args_n_results[12];
-	} args = {
-		"call-method",
-		2,
-		1,
-	};
-	int *ip, n;
-	
-	if (nargs > 6)
-		return -1;
-	args.nargs = nargs + 2;
-	args.nreturns = nreturns + 1;
-	args.method = method;
-	args.ihandle = ihandle;
-	va_start(ap, nreturns);
-	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
-		*--ip = va_arg(ap, int);
-	ofw_stack();
-	if (openfirmware(&args) == -1)
-		return -1;
-	if (args.args_n_results[nargs])
-		return args.args_n_results[nargs];
-	for (ip = args.args_n_results + nargs + (n = args.nreturns); --n > 0;)
-		*va_arg(ap, int *) = *--ip;
-	va_end(ap);
-	return 0;
-}
-
-int
-#ifdef	__STDC__
-OF_call_method_1(char *method, int ihandle, int nargs, ...)
-#else
-OF_call_method_1(method, ihandle, nargs, va_alist)
-	char *method;
-	int ihandle;
-	int nargs;
-	va_dcl
-#endif
-{
-	va_list ap;
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		char *method;
-		int ihandle;
-		int args_n_results[8];
-	} args = {
-		"call-method",
-		2,
-		2,
-	};
-	int *ip, n;
-	
-	if (nargs > 6)
-		return -1;
-	args.nargs = nargs + 2;
-	args.method = method;
-	args.ihandle = ihandle;
-	va_start(ap, nargs);
-	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
-		*--ip = va_arg(ap, int);
-	va_end(ap);
-	ofw_stack();
-	if (openfirmware(&args) == -1)
-		return -1;
-	if (args.args_n_results[nargs])
-		return -1;
-	return args.args_n_results[nargs + 1];
-}
-
-int
-OF_open(dname)
-	char *dname;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		char *dname;
-		int handle;
-	} args = {
-		"open",
-		1,
-		1,
-	};
-	int l;
-	
-	ofw_stack();
-	if ((l = strlen(dname)) >= NBPG)
-		return -1;
-	ofbcopy(dname, OF_buf, l + 1);
-	args.dname = OF_buf;
-	if (openfirmware(&args) == -1)
-		return -1;
-	return args.handle;
-}
-
-void
-OF_close(handle)
-	int handle;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int handle;
-	} args = {
-		"close",
-		1,
-		0,
-	};
-
-	ofw_stack();
-	args.handle = handle;
-	openfirmware(&args);
-}
-
-/* 
- * This assumes that character devices don't read in multiples of NBPG.
- */
-int
-OF_read(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int ihandle;
-		void *addr;
-		int len;
-		int actual;
-	} args = {
-		"read",
-		3,
-		1,
-	};
-	int l, act = 0;
-	
-	ofw_stack();
-	args.ihandle = handle;
-	args.addr = OF_buf;
-	for (; len > 0; len -= l, addr += l) {
-		l = min(NBPG, len);
-		args.len = l;
-		if (openfirmware(&args) == -1)
-			return -1;
-		if (args.actual > 0) {
-			ofbcopy(OF_buf, addr, args.actual);
-			act += args.actual;
-		}
-		if (args.actual < l)
-			if (act)
-				return act;
-			else
-				return args.actual;
-	}
-	return act;
-}
-
-int
-OF_write(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int ihandle;
-		void *addr;
-		int len;
-		int actual;
-	} args = {
-		"write",
-		3,
-		1,
-	};
-	int l, act = 0;
-	
-	ofw_stack();
-	args.ihandle = handle;
-	args.addr = OF_buf;
-	for (; len > 0; len -= l, addr += l) {
-		l = min(NBPG, len);
-		ofbcopy(addr, OF_buf, l);
-		args.len = l;
-		if (openfirmware(&args) == -1)
-			return -1;
-		l = args.actual;
-		act += l;
-	}
-	return act;
-}
-
-int
-OF_seek(handle, pos)
-	int handle;
-	u_quad_t pos;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int handle;
-		int poshi;
-		int poslo;
-		int status;
-	} args = {
-		"seek",
-		3,
-		1,
-	};
-
-	ofw_stack();
-	args.handle = handle;
-	args.poshi = (int)(pos >> 32);
-	args.poslo = (int)pos;
-	if (openfirmware(&args) == -1)
-		return -1;
-	return args.status;
-}
-
 void
 OF_boot(bootspec)
 	char *bootspec;
@@ -527,24 +193,7 @@ OF_boot(bootspec)
 	ofbcopy(bootspec, OF_buf, l + 1);
 	args.bootspec = OF_buf;
 	openfirmware(&args);
-	while (1);			/* just in case */
-}
-
-void
-OF_enter()
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-	} args = {
-		"enter",
-		0,
-		0,
-	};
-
-	ofw_stack();
-	openfirmware(&args);
+	panic ("OF_boot returned!");		/* just in case */
 }
 
 void
@@ -562,50 +211,23 @@ OF_exit()
 
 	ofw_stack();
 	openfirmware(&args);
-	while (1);			/* just in case */
+	panic ("OF_exit returned!");		/* just in case */
 }
 
-void
-(*OF_set_callback(newfunc))()
-	void (*newfunc)();
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		void (*newfunc)();
-		void (*oldfunc)();
-	} args = {
-		"set-callback",
-		1,
-		1,
-	};
-
-	ofw_stack();
-	args.newfunc = newfunc;
-	if (openfirmware(&args) == -1)
-		return 0;
-	return args.oldfunc;
-}
-
-/*
- * This version of bcopy doesn't work for overlapping regions!
- */
+/* XXX What is the reason to have this instead of bcopy/memcpy? */
 void
 ofbcopy(src, dst, len)
-	const void *src;
-	void *dst;
-	size_t len;
+        const void *src;    
+        void *dst;         
+        size_t len;
 {
-	const char *sp = src;
-	char *dp = dst;
+        const char *sp = src;
+        char *dp = dst;
 
-	if (src == dst)
-		return;
-	
-	/*
-	 * Do some optimization?						XXX
-	 */
-	while (len-- > 0)
-		*dp++ = *sp++;
+        if (src == dst)
+                return; 
+                
+        while (len-- > 0)                     
+                *dp++ = *sp++;
 }
+

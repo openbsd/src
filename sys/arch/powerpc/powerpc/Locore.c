@@ -1,8 +1,8 @@
-/*	$OpenBSD: copyinstr.c,v 1.3 1997/10/13 13:42:55 pefo Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.5 1997/10/13 13:42:52 pefo Exp $	*/
 
-/*-
- * Copyright (C) 1995 Wolfgang Solfrank.
- * Copyright (C) 1995 TooLs GmbH.
+/*
+ * Copyright (C) 1995, 1996 Wolfgang Solfrank.
+ * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,33 +30,60 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/param.h>
-#include <sys/errno.h>
 
 /*
- * Emulate copyinstr.
+ * Some additional routines that happened to be in locore.S traditionally,
+ * but have no need to be coded in assembly.
  */
-int
-copyinstr(udaddr, kaddr, len, done)
-	void *udaddr;
-	void *kaddr;
-	size_t len;
-	size_t *done;
+
+#include <sys/param.h>
+#include <sys/proc.h>
+
+int whichqs;
+
+/*
+ * Put process p on the run queue, given by its priority.
+ * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
+ */
+void
+setrunqueue(p)
+	struct proc *p;
 {
-	int c;
-	u_char *kp = kaddr;
-	int l;
+	struct  prochd *q;
+	struct proc *oldlast;
+	int which = p->p_priority >> 2;
 	
-	for (l = 0; len-- > 0; l++) {
-		if ((c = fubyte(udaddr++)) < 0) {
-			*done = l;
-			return EACCES;
-		}
-		if (!(*kp++ = c)) {
-			*done = l + 1;
-			return 0;
-		}
-	}
-	*done = l;
-	return ENAMETOOLONG;
+#ifdef	DIAGNOSTIC
+	if (p->p_back)
+		panic("setrunqueue");
+#endif
+	q = &qs[which];
+	whichqs |= 0x80000000 >> which;
+	p->p_forw = (struct proc *)q;
+	p->p_back = oldlast = q->ph_rlink;
+	q->ph_rlink = p;
+	oldlast->p_forw = p;
+}
+
+/*
+ * Remove process p from its run queue, given by its priority.
+ * Calls should be made at splstatclock().
+ */
+void
+remrunqueue(p)
+	struct proc *p;
+{
+	int which = p->p_priority >> 2;
+	struct prochd *q;
+
+#ifdef	DIAGNOSTIC	
+	if (!(whichqs & (0x80000000 >> which)))
+		panic("remrunqueue");
+#endif
+	p->p_forw->p_back = p->p_back;
+	p->p_back->p_forw = p->p_forw;
+	p->p_back = NULL;
+	q = &qs[which];
+	if (q->ph_link == (struct proc *)q)
+		whichqs &= ~(0x80000000 >> which);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 1996/12/28 06:22:31 rahnds Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 1997/10/13 13:43:02 pefo Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ cpu_exit(p)
 		fpuproc = 0;
 	
 	vmspace_free(p->p_vmspace);
+	(void)splhigh();
 	switchexit(kernel_map, p->p_addr, USPACE);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.2 1996/12/28 06:21:39 rahnds Exp $	*/
+/*	$OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 
+#include <machine/pio.h>
+
 void resettodr();
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
@@ -53,10 +55,14 @@ static volatile u_long lasttb;
 #define SECDAY          (24 * 60 * 60)
 #define SECYR           (SECDAY * 365)
 #define LEAPYEAR(y)     (((y) & 3) == 0)
+#define YEAR0		1900
 
 typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
          int *mon, int *yr);
-clock_read_t *clock_read;
+
+int power4e_getclock(int *, int *, int *, int *, int *, int *);
+
+clock_read_t *clock_read = power4e_getclock;
 
 static u_long
 chiptotime(int sec, int min, int hour, int day, int mon, int year);
@@ -93,8 +99,6 @@ inittodr(base)
 	if (clock_read != NULL ) {
 		(*clock_read)( &sec, &min, &hour, &day, &mon, &year);
 	}
-printf("time: sec %x, min %x, hour %x, day %x, mon %x, year %x\n",
-	sec, min, hour, day, mon, year);
 	if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
 		printf("WARNING: unable to get date/time");
 		/*
@@ -130,14 +134,12 @@ chiptotime(sec, min, hour, day, mon, year)
 {
 	int days, yr;
 		
-#if 0
 	sec = FROMBCD(sec);
 	min = FROMBCD(min);
 	hour = FROMBCD(hour);
 	day = FROMBCD(day);
 	mon = FROMBCD(mon);
 	year = FROMBCD(year) + YEAR0;
-#endif
 		
 	/* simple sanity checks */
 	if (year < 1970 || mon < 1 || mon > 12 || day < 1 || day > 31)
@@ -191,13 +193,11 @@ decr_intr(frame)
 	 */
 	lasttb = tb + tick - ticks_per_intr;
 
-	pri = cpl;
-	
-	if (pri & SPLCLOCK)
-		clockpending += nticks;
-	else {
-		cpl = pri | SPLCLOCK | SPLSOFTCLOCK | SPLSOFTNET;
+	pri = splclock();
 
+	if (pri & SPL_CLOCK)
+		tickspending += nticks;
+	else {
 		/*
 		 * Reenable interrupts
 		 */
@@ -208,13 +208,13 @@ decr_intr(frame)
 		 * Do standard timer interrupt stuff.
 		 * Do softclock stuff only on the last iteration.
 		 */
-		frame->pri = pri | SPLSOFTCLOCK;
+		frame->pri = pri | SINT_CLOCK;
 		while (--nticks > 0)
 			hardclock(frame);
 		frame->pri = pri;
 		hardclock(frame);
 	}
-	intr_return(pri);
+	splx(pri);
 }
 
 void
@@ -318,4 +318,27 @@ setstatclockrate(arg)
 	int arg;
 {
 	/* Do nothing */
+}
+
+
+int
+power4e_getclock(sec, min, hour, day, mon, year)
+	int *sec;
+	int *min;
+	int *hour;
+	int *day;
+	int *mon;
+	int *year;
+{
+	int clkbase = 0xc00f1ff8;
+
+	outb(clkbase, inb(clkbase) | 0x40);	/* stop update */
+	*sec = inb(clkbase + 1);
+	*min = inb(clkbase + 2);
+	*hour = inb(clkbase + 3);
+	*day = inb(clkbase + 5);
+	*mon = inb(clkbase + 6);
+	*year = inb(clkbase + 7);
+	outb(clkbase, inb(clkbase) & ~0x40);
+	return(0);
 }

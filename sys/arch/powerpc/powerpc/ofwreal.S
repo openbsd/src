@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwreal.S,v 1.3 1997/01/27 03:40:09 rahnds Exp $	*/
+/*	$OpenBSD: ofwreal.S,v 1.4 1997/10/13 13:42:59 pefo Exp $	*/
 /*	$NetBSD: ofwreal.S,v 1.1 1996/09/30 16:34:51 ws Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
  * Furthermore it assumes that addresses returned by OpenFirmware are not
  * accessed by the client.
  *
- * TODO: handle set-callback specially
  */
 #include <machine/asm.h>
 #include <machine/psl.h>

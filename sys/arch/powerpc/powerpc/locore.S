@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 1997/10/13 13:42:58 pefo Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ _ENTRY(_C_LABEL(cpu_switch))
 	lwz	31,_C_LABEL(curpcb)@l(3)
 
 	xor	3,3,3
-	bl	_C_LABEL(splx)
+	bl	_C_LABEL(lcsplx)
 	stw	3,PCB_SPL(31)		/* save spl */
 
 /* Find a new process */
@@ -370,7 +370,7 @@ switch_exited:
 switch_return:
 	mr	30,7			/* save proc pointer */
 	lwz	3,PCB_SPL(4)
-	bl	_C_LABEL(splx)
+	bl	_C_LABEL(lcsplx)
 
 	mr	3,30			/* get curproc for special fork returns */
 
@@ -896,7 +896,7 @@ trapexit:
 	.globl	_C_LABEL(fork_trampoline)
 _C_LABEL(fork_trampoline):
 	xor	3,3,3
-	bl	_C_LABEL(splx)
+	bl	_C_LABEL(lcsplx)
 	mtlr	31
 	mr	3,30
 	blrl				/* jump indirect to r31 */

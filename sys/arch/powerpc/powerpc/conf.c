@@ -1,11 +1,9 @@
-/*	$OpenBSD: conf.c,v 1.3 1997/02/06 04:36:41 rahnds Exp $	*/
-/*	$NetBSD: conf.c,v 1.2 1996/10/16 17:26:19 ws Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 1997/10/13 13:42:54 pefo Exp $ */
 
 /*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
- * All rights reserved.
- *
+ * Copyright (c) 1997 Per Fogelstrom
+ * Copyright (c) 1997 RTMX Inc, North Carolina
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,20 +14,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by TooLs GmbH.
- * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *	This product includes software developed under OpenBSD for RTMX Inc,
+ *	North Carolina, USA, by Per Fogelstrom, Opsycon AB, Sweden.
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
  */
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,8 +40,8 @@
 #include <sys/tty.h>
 #include <sys/vnode.h>
 
-#include "ofdisk.h"
-bdev_decl(ofd);
+#include "sd.h"
+bdev_decl(sd);
 bdev_decl(sw);
 
 #include "rd.h"
@@ -53,10 +54,10 @@ bdev_decl(ccd);
 
 struct bdevsw bdevsw[] = {
 	bdev_notdef(),                  /* 0 */
-	bdev_swap_init(1,sw),		/* 1: swap pseudo device */
-	bdev_notdef(),                  /* 2 SCSI tape */
+	bdev_swap_init(1,sw),		/* 1 swap pseudo device */
+	bdev_disk_init(NSD,sd),		/* 2 SCSI Disk */
 	bdev_notdef(),                  /* 3 SCSI CD-ROM */
-	bdev_disk_init(NOFDISK,ofd),	/* 4: Openfirmware disk */
+	bdev_notdef(),			/* 4 */
 	bdev_notdef(),                  /* 5 unknown*/
 	bdev_notdef(),                  /* 6 unknown*/
 	bdev_notdef(),                  /* 7 unknown*/
@@ -88,11 +89,8 @@ cdev_decl(pts);
 cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(sw);
-#include "ofcons.h"
-cdev_decl(ofc);
-cdev_decl(ofd);
-#include "ofrtc.h"
-cdev_decl(ofrtc);
+#include "com.h"
+cdev_decl(com);
 
 #include <sd.h>
 #include <st.h>
@@ -129,11 +127,6 @@ cdev_decl(ipl);
 #define NIPF 0
 #endif  
 
-#define	cdev_rtc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	dev_init(c,n,read), dev_init(c,n,write), \
-	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
 
 struct cdevsw cdevsw[] = {
         cdev_cn_init(1,cn),             /* 0: virtual console */
@@ -143,18 +136,18 @@ struct cdevsw cdevsw[] = {
         cdev_tty_init(NPTY,pts),        /* 4: pseudo-tty slave */
         cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
         cdev_log_init(1,log),           /* 6: /dev/klog */
-	cdev_tty_init(NOFCONS,ofc),	/* 7: Openfirmware console */
+	cdev_tty_init(NCOM,com),	/* 7: Serial ports */
         cdev_disk_init(NSD,sd),         /* 8: SCSI disk */
         cdev_disk_init(NCD,cd),         /* 9: SCSI CD-ROM */
-        cdev_notdef(),                  /* 10 */
+        cdev_notdef(),                  /* 10: SCSI changer */
         cdev_notdef(),                  /* 11 */
         cdev_notdef(),                  /* 12 */
-	cdev_disk_init(NOFDISK,ofd),	/* 13: Openfirmware disk */
+	cdev_notdef(),			/* 13 */
         cdev_notdef(),                  /* 14 */
         cdev_notdef(),                  /* 15 */
         cdev_notdef(),                  /* 16 */
 	cdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
-	cdev_rtc_init(NOFRTC,ofrtc),	/* 18: Openfirmware RTC */
+	cdev_disk_init(NCCD,ccd),	/* 18 concatenated disk driver */
         cdev_disk_init(NVND,vnd),       /* 19: vnode disk */
         cdev_tape_init(NST,st),         /* 20: SCSI tape */
         cdev_fd_init(1,filedesc),       /* 21: file descriptor pseudo-dev */
@@ -177,6 +170,7 @@ struct cdevsw cdevsw[] = {
         cdev_lkm_dummy(),               /* 38 */
         cdev_gen_ipf(NIPF,ipl),         /* 39: IP filter */
         cdev_random_init(1,random),     /* 40: random data source */
+	/* If adding devs, don't forget to expand 'chrtoblktbl' below! */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -218,12 +212,12 @@ static int chrtoblktbl[] = {
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
-	/*  8 */	NODEV,
+	/*  8 */	2,
 	/*  9 */	NODEV,
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
-	/* 13 */	4,
+	/* 13 */	NODEV,
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
@@ -232,6 +226,25 @@ static int chrtoblktbl[] = {
 	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
 };
 
 /*
@@ -270,11 +283,11 @@ blktochr(dev)
 
 #include <dev/cons.h>
 
-cons_decl(ofc);
+cons_decl(com);
 
 struct consdev constab[] = {
-#if NOFCONS > 0
-	cons_init(ofc),
+#if NCOM > 0
+	cons_init(com),
 #endif
 	{ 0 },
 };
