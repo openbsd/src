@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.12 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: common.c,v 1.13 2002/05/06 19:48:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.12 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: common.c,v 1.13 2002/05/06 19:48:14 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -135,8 +135,10 @@ extern int init(argc, argv, envp)
 	int i;
 	char *cp;
 
+#ifdef SIGSEGV_CHECK
 	if (!isserver)
 		(void) signal(SIGSEGV, sighandler);
+#endif
 
 	setprogname(argv);
 
@@ -230,6 +232,7 @@ extern void lostconn()
 	finish();
 }
 
+#ifdef SIGSEGV_CHECK
 /*
  * Do a core dump
  */
@@ -242,6 +245,7 @@ extern void coredump()
 	/*NOTREACHED*/
 	fatalerr("Abort failed - no core dump.  Exiting...");
 }
+#endif
 
 /*
  * General signal handler
@@ -269,9 +273,11 @@ extern void sighandler(sig)
 		debug = !debug;
 		break;
 
+#ifdef SIGSEGV_CHECK
 	case SIGSEGV:
 		coredump();
 		break;
+#endif
 
 	case SIGHUP:
 	case SIGINT:
