@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.228 2003/05/05 17:54:59 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.229 2003/05/13 03:49:04 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1674,7 +1674,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
-	tf->tf_cs = pmap->pm_nxpages > 0?
+	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
 	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
@@ -2078,7 +2078,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_ebp = 0;
 	tf->tf_ebx = (int)PS_STRINGS;
 	tf->tf_eip = pack->ep_entry;
-	tf->tf_cs = pmap->pm_nxpages > 0?
+	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
 	    LSEL(LUCODE1_SEL, SEL_UPL) : LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;

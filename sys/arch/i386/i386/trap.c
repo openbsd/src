@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2003/05/04 15:56:34 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.57 2003/05/13 03:49:04 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -325,12 +325,14 @@ trap(frame)
 			goto out;
 		}
 #endif
-		if (ftype == VM_PROT_READ) {
-			ftype |= VM_PROT_EXECUTE;
-			/* XXX force %cr2 register have fault address */
-			__asm __volatile("movl %0,%%cr2" :: "r" (frame.tf_eip));
-		}
-		goto page_fault;
+		/* If pmap_exec_fixup does something, let's retry the trap. */
+		if (pmap_exec_fixup(&p->p_vmspace->vm_map, &frame,
+		    &p->p_addr->u_pcb))
+			goto out;
+
+		sv.sival_int = frame.tf_eip;
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		goto out;
 
 	case T_TSSFLT|T_USER:
 		sv.sival_int = frame.tf_eip;
@@ -414,7 +416,6 @@ trap(frame)
 			goto we_re_toast;
 #endif
 		/* FALLTHROUGH */
-	page_fault:
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		vaddr_t va, fa;
 		struct vmspace *vm = p->p_vmspace;

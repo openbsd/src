@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.19 2003/05/04 05:01:04 drahn Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.20 2003/05/13 03:49:04 art Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -379,7 +379,7 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
-	tf->tf_cs = pmap->pm_nxpages > 0?
+	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
 	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;

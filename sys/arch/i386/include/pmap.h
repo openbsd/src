@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.31 2003/04/09 07:53:57 niklas Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.32 2003/05/13 03:49:04 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ struct pmap {
 	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
-	int pm_nxpages;			/* # of executable pages on stack */
+	vaddr_t pm_hiexec;		/* highest executable mapping */
 	int pm_flags;			/* see below */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
@@ -387,6 +387,8 @@ static void	pmap_update_pg(vaddr_t);
 static void	pmap_update_2pg(vaddr_t,vaddr_t);
 void		pmap_write_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
+int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
+		    struct pcb *);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -475,12 +477,15 @@ pmap_protect(pmap, sva, eva, prot)
 	vaddr_t sva, eva;
 	vm_prot_t prot;
 {
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			pmap_write_protect(pmap, sva, eva, prot);
-		} else {
-			pmap_remove(pmap, sva, eva);
-		}
+	if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
+	    (VM_PROT_WRITE|VM_PROT_EXECUTE))
+		return;
+
+	if ((prot & (VM_PROT_READ|VM_PROT_EXECUTE)) ==
+	    (VM_PROT_READ|VM_PROT_EXECUTE)) {
+		pmap_write_protect(pmap, sva, eva, prot);
+	} else {
+		pmap_remove(pmap, sva, eva);
 	}
 }
 

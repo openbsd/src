@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2003/05/09 23:51:23 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.72 2003/05/13 03:49:04 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -572,31 +572,67 @@ pmap_unmap_ptes(pmap)
 }
 
 __inline static void
-pmap_nxstack_account(struct pmap *pmap, vaddr_t va,
+pmap_exec_account(struct pmap *pm, vaddr_t va,
     pt_entry_t opte, pt_entry_t npte)
 {
-	if (((opte ^ npte) & PG_X) &&
-	    va < VM_MAXUSER_ADDRESS && va >= I386_MAX_EXE_ADDR) {
+	if (curproc == NULL || curproc->p_vmspace == NULL ||
+	    pm != vm_map_pmap(&curproc->p_vmspace->vm_map))
+		return;
+
+	if ((opte ^ npte) & PG_X)
+		pmap_update_pg(va);
+		
+	/*
+	 * Executability was removed on the last executable change.
+	 * Reset the code segment to something conservative and
+	 * let the trap handler deal with setting the right limit.
+	 * We can't do that because of locking constraints on the vm map.
+	 *
+	 * XXX - floating cs - set this _really_ low.
+	 */
+	if ((opte & PG_X) && (npte & PG_X) == 0 && va == pm->pm_hiexec) {
 		struct trapframe *tf = curproc->p_md.md_regs;
-		struct vm_map *map = &curproc->p_vmspace->vm_map;
 		struct pcb *pcb = &curproc->p_addr->u_pcb;
 
-		if (npte & PG_X && !(opte & PG_X)) {
-			if (++pmap->pm_nxpages == 1 &&
-			    pmap == vm_map_pmap(map)) {
-				pcb->pcb_cs = tf->tf_cs =
-				    GSEL(GUCODE1_SEL, SEL_UPL);
-				pmap_update_pg(va);
-			}
-		} else {
-			if (!--pmap->pm_nxpages &&
-			    pmap == vm_map_pmap(map)) {
-				pcb->pcb_cs = tf->tf_cs =
-				    GSEL(GUCODE_SEL, SEL_UPL);
-				pmap_update_pg(va);
-			}
-		}
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+		pm->pm_hiexec = I386_MAX_EXE_ADDR;
 	}
+}
+
+/*
+ * Fixup the code segment to cover all potential executable mappings.
+ * returns 0 if no changes to the code segment were made.
+ */
+int
+pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
+{
+	struct vm_map_entry *ent;
+	struct pmap *pm = vm_map_pmap(map);
+	vaddr_t va = 0;
+
+	vm_map_lock(map);
+	for (ent = (&map->header)->next; ent != &map->header; ent = ent->next) {
+		/*
+		 * This entry has greater va than the entries before.
+		 * We need to make it point to the last page, not past it.
+		 */
+		if (ent->protection & VM_PROT_EXECUTE)
+			va = trunc_page(ent->end) - PAGE_SIZE;
+	}
+	vm_map_unlock(map);
+
+	if (va == pm->pm_hiexec)
+		return (0);
+
+	pm->pm_hiexec = va;
+
+	if (pm->pm_hiexec > (vaddr_t)I386_MAX_EXE_ADDR) {
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE1_SEL, SEL_UPL);
+	} else {
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	}
+	
+	return (1);
 }
 
 /*
@@ -1728,7 +1764,7 @@ pmap_pinit(pmap)
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
 	pmap->pm_ptphint = NULL;
-	pmap->pm_nxpages = 0;
+	pmap->pm_hiexec = 0;
 	pmap->pm_flags = 0;
 
 	/* allocate PDP */
@@ -2243,7 +2279,7 @@ pmap_remove_pte(pmap, ptp, pte, va)
 	opte = *pte;			/* save the old PTE */
 	*pte = 0;			/* zap! */
 
-	pmap_nxstack_account(pmap, va, opte, 0);
+	pmap_exec_account(pmap, va, opte, 0);
 
 	if (opte & PG_W)
 		pmap->pm_stats.wired_count--;
@@ -2828,8 +2864,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 			npte = (*spte & ~PG_PROT) | md_prot;
 
 			if (npte != *spte) {
-				/* account for executable pages on the stack */
-				pmap_nxstack_account(pmap, sva, *spte, npte);
+				pmap_exec_account(pmap, sva, *spte, npte);
 
 				*spte = npte;		/* zap! */
 
@@ -3125,7 +3160,7 @@ enter_now:
 	 */
 
 	npte = pa | protection_codes[prot] | PG_V;
-	pmap_nxstack_account(pmap, va, opte, npte);
+	pmap_exec_account(pmap, va, opte, npte);
 	if (pvh)
 		npte |= PG_PVLIST;
 	if (wired)
