@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ext2fs.8,v 1.12 2003/06/02 20:06:15 millert Exp $
+.\"	$OpenBSD: fsck_ext2fs.8,v 1.13 2003/07/08 18:50:40 jmc Exp $
 .\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
@@ -169,9 +169,9 @@ this should be used with great caution as this is a free license
 to continue after essentially unlimited trouble has been encountered.
 .El
 .Pp
-.Bl -enum -indent indent -compact
 Inconsistencies checked are as follows:
 .Pp
+.Bl -enum -compact
 .It
 Blocks claimed by more than one inode or the free map.
 .It
@@ -180,7 +180,7 @@ Blocks claimed by an inode outside the range of the filesystem.
 Incorrect link counts.
 .It
 Size checks:
-.Bl -item -indent indent -compact
+.Bl -item -compact
 .It
 Directory size not a multiple of filesystem block size.
 .It
@@ -192,7 +192,7 @@ Bad inode format.
 Blocks not accounted for anywhere.
 .It
 Directory checks:
-.Bl -item -indent indent -compact
+.Bl -item -compact
 .It
 File pointing to unallocated inode.
 .It
@@ -203,7 +203,7 @@ or having the wrong inode number.
 .El
 .It
 Super Block checks:
-.Bl -item -indent indent -compact
+.Bl -item -compact
 .It
 More blocks for inodes than there are in the filesystem.
 .It

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.104 2003/06/29 07:23:19 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.105 2003/07/08 18:50:40 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -358,18 +358,16 @@ The
 program can get or set debugging variables
 that have been identified for its display.
 This information can be obtained by using the command:
-.Bd -literal -offset indent
-$ sysctl debug
-.Ed
+.Pp
+.Dl $ sysctl debug
 .Pp
 In addition,
 .Nm
 can extract information about the filesystems that have been compiled
 into the running system.
 This information can be obtained by using the command:
-.Bd -literal -offset indent
-$ sysctl vfs.mounts
-.Ed
+.Pp
+.Dl $ sysctl vfs.mounts
 .Pp
 By default, only filesystems that are actively being used are listed.
 Use of the
@@ -418,38 +416,32 @@ definitions for third level FFS identifiers
 .Sh EXAMPLES
 To retrieve the maximum number of processes allowed
 in the system:
-.Bd -literal -offset indent
-$ sysctl kern.maxproc
-.Ed
+.Pp
+.Dl $ sysctl kern.maxproc
 .Pp
 To set the maximum number of processes allowed
 in the system to 1000:
-.Bd -literal -offset indent
-# sysctl -w kern.maxproc=1000
-.Ed
+.Pp
+.Dl # sysctl -w kern.maxproc=1000
 .Pp
 To retrieve information about the system clock rate:
-.Bd -literal -offset indent
-$ sysctl kern.clockrate
-.Ed
+.Pp
+.Dl $ sysctl kern.clockrate
 .Pp
 To retrieve information about the load average history:
-.Bd -literal -offset indent
-$ sysctl vm.loadavg
-.Ed
+.Pp
+.Dl $ sysctl vm.loadavg
 .Pp
 To make the
 .Xr chown 2
 system call use traditional BSD semantics (don't clear setuid/setgid bits):
-.Bd -literal -offset indent
-# sysctl -w fs.posix.setuid=0
-.Ed
+.Pp
+.Dl # sysctl -w fs.posix.setuid=0
 .Pp
 To set the list of reserved TCP ports that should not be allocated
 by the kernel dynamically:
-.Bd -literal -offset indent
-# sysctl -w net.inet.tcp.baddynamic=749,750,751,760,761,871
-.Ed
+.Pp
+.Dl # sysctl -w net.inet.tcp.baddynamic=749,750,751,760,761,871
 .Pp
 This can be used to keep daemons
 from stealing a specific port that another program needs to function.
@@ -465,9 +457,8 @@ To adjust the number of kernel
 .Nm nfsio
 threads used to service asynchronous
 I/O requests on an NFS client machine:
-.Bd -literal -offset indent
-# sysctl -w vfs.nfs.iothreads=4
-.Ed
+.Pp
+.Dl # sysctl -w vfs.nfs.iothreads=4
 .Pp
 The number of 4 is the default, 20 is the maximum.
 See
@@ -478,7 +469,7 @@ for further discussion.
 .Pp
 To set the amount of shared memory available in the system and
 the maximum number of shared memory segments:
-.Bd -literal noffset indent
+.Bd -literal -offset indent
 # sysctl -w kern.shminfo.shmmax=33554432
 # sysctl -w kern.shminfo.shmseg=32
 .Ed
