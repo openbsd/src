@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.22 2004/08/31 05:20:23 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.23 2004/09/14 22:03:29 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -243,6 +243,7 @@ The debug SFU is currently defined only for Level 0 processors.
 .Xr intro 4 ,
 .Xr lasi 4 ,
 .Xr mem 4 ,
+.Xr pdc 4 ,
 .Xr wax 4
 .Rs
 .%T PA-RISC 1.1 Architecture and Instruction Set Reference Manual
