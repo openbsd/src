@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.7 1997/10/28 05:22:51 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.8 1997/10/28 05:52:26 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -37,7 +37,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April, 19, 1994
+.Dd October 27, 1997
 .Dt DISKLABEL 8
 .Os BSD 4.2
 .Sh NAME
@@ -154,7 +154,7 @@ The second form of the command, with the
 flag, is used to write a standard label on the designated drive.
 The required arguments to
 .Nm disklabel
-are the drive to be labeled (e.g. sd0), and
+are the drive to be labelled (e.g. sd0), and
 the drive type as described in the
 .Xr disktab 5
 file.
@@ -271,20 +271,20 @@ fdisk partition table is incapable if storing the real size.
 .\" What is this limit?  [somewhere between 8 and 9 gig]
 .It a Op part
 Add new partition.  This option adds a new BSD partition.  If no
-partition letter is specified (a-p), the user will be prompted for
+partion letter is specified (a-p), the user will be prompted for
 one.
 .It c Op part
-Change the size of an existing partition.  If no partition is
+Change the size of an existing partition.  If no parition is
 specified, the user will be prompted for one.  The new size may be
 in terms the aforementioned units and may also be prefixed with
 '+' or '-' to change the size by a relative amount.
 .It d Op part
-Delete an existing partition.  If no partition is specified, the
+Delete an existing partition.  If no parition is specified, the
 user will be prompted for one.
 .It m Op part
-Modify parameters for an existing partition.  If no partition is
+Modify parameters for an existing partition.  If no parition is
 specified, the user will be prompted for one.  This option allows
-the user to change the filesystem type, starting offset, partition
+the user to change the filesystem type, starting offset, parition
 size, block fragment size, block size, and cylinders per group for
 the specified partition (not all parameters are configurable for
 non-BSD partitions).
@@ -306,7 +306,7 @@ Exit the editor without saving any changes to the label.
 .Pp
 The final three forms of
 .Nm disklabel
-are used to install bootstrap code on machines where the bootstrap
+are used to install boostrap code on machines where the bootstrap
 is part of the label.  The bootstrap code is comprised of one or
 two boot programs depending on the machine.  The
 .Fl B
@@ -328,8 +328,7 @@ is the name of that program.  For machines with a two-level bootstrap,
 indicates the primary boot program and
 .Fl s
 the secondary boot program.  If the names are not explicitly given,
-standard boot programs will be used.  The boot programs are located
-in
+standard boot programs will be used.  The boot programs are located in
 .Pa /usr/mdec .
 The names of the programs are taken from the ``b0'' and ``b1''
 parameters of the
@@ -380,7 +379,7 @@ not want to use the -r flag though.)
 .Pp
 Read the on-disk label for sd0, edit it and reinstall in-core as
 well as on-disk.  (Normally you do not want to use the -r flag
-though.) Existing bootstrap code is unaffected.
+though.)  Existing bootstrap code is unaffected.
 .Pp
 .Dl disklabel -R sd0 mylabel
 .Pp
