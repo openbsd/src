@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.4 2003/12/23 12:07:11 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -231,15 +231,15 @@ dino_intr_establish(void *v, pci_intr_handle_t ih,
 	volatile struct dino_regs *r = sc->sc_regs;
 	void *iv;
 
-	/* no mapping */
-	if (ih == 0)
+	/* no mapping or bogus */
+	if (ih <= 0 || ih > 11)
 		return (NULL);
 
 	if ((iv = cpu_intr_map(sc->sc_ih, pri, ih - 1, handler, arg, name))) {
 		if (cold)
 			sc->sc_imr |= (1 << (ih - 1));
 		else
-			r->imr |= (1 << (ih - 1));
+			r->imr = sc->sc_imr |= (1 << (ih - 1));
 		r->icr &= ~(1 << (ih - 1));
 	}
 
@@ -1533,6 +1533,10 @@ dinoattach(parent, self, aux)
 	sc->sc_pc._cookie = sc;
 	sc->sc_dmatag = dino_dmat;
 	sc->sc_dmatag._cookie = sc;
+
+	/* scan for ps2 kbd/ms, serial, and flying toasters */
+	ca->ca_hpamask = -1;
+	pdc_scanbus(self, ca, MAXMODBUS);
 
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iot;
