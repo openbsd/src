@@ -1,4 +1,4 @@
-/*	$OpenBSD: tea5757.c,v 1.1 2001/10/04 19:46:46 gluk Exp $	*/
+/*	$OpenBSD: tea5757.c,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -27,6 +27,30 @@
 
 /* Implementation of most common TEA5757 routines */
 
+/*
+ * Philips TEA5757H Self Tuned Radio
+ *         http://www.semiconductors.philips.com/pip/TEA5757H
+ *
+ * The TEA5757; TEA5759 is a 44-pin integrated AM/FM stereo radio circuit.
+ * The radio part is based on the TEA5712.
+ *
+ * The TEA5757 is used in FM-standards in which the local oscillator
+ * frequency is above the radio frequency (e.g. European and American
+ * standards). The TEA5759 is the version in which the oscillator frequency
+ * is below the radio frequency (e.g. Japanese standard).
+ *
+ * The TEA5757; TEA5759 radio has a bus which consists of three wires:
+ * BUS-CLOCK: software driven clock input
+ * DATA: data input/output
+ * WRITE-ENABLE: write/read input
+ *
+ * The TEA5757; TEA5759 has a 25-bit shift register.
+ *
+ * The chips are used in Radiotrack II, Guillemot Maxi Radio FM 2000,
+ * Gemtek PCI cards and most Mediaforte FM tuners and sound cards with
+ * integrated FM tuners.
+ */
+
 #include <sys/param.h>
 #include <sys/radioio.h>
 
@@ -35,8 +59,8 @@
 /*
  * Convert frequency to hardware representation
  */
-u_long
-tea5757_encode_freq(u_long freq)
+u_int32_t
+tea5757_encode_freq(u_int32_t freq)
 {
 #ifdef RADIO_TEA5759
 	freq -= IF_FREQ;
@@ -54,8 +78,8 @@ tea5757_encode_freq(u_long freq)
 /*
  * Convert frequency from hardware representation
  */
-u_long
-tea5757_decode_freq(u_long freq)
+u_int32_t
+tea5757_decode_freq(u_int32_t freq)
 {
 	freq &= TEA5757_FREQ;
 	freq *= 125; /* 12.5 kHz */
@@ -72,9 +96,9 @@ tea5757_decode_freq(u_long freq)
  * Hardware search
  */
 void
-tea5757_search(struct tea5757_t *tea, u_long stereo, u_long lock, int dir)
+tea5757_search(struct tea5757_t *tea, u_int32_t stereo, u_int32_t lock, int dir)
 {
-	u_long reg;
+	u_int32_t reg;
 	u_int co = 0;
 
 	reg = stereo | lock | TEA5757_SEARCH_START;
@@ -90,7 +114,7 @@ tea5757_search(struct tea5757_t *tea, u_long stereo, u_long lock, int dir)
 }
 
 void
-tea5757_hardware_write(struct tea5757_t *tea, u_long data)
+tea5757_hardware_write(struct tea5757_t *tea, u_int32_t data)
 {
 	int i = TEA5757_REGISTER_LENGTH;
 
@@ -105,10 +129,10 @@ tea5757_hardware_write(struct tea5757_t *tea, u_long data)
 	tea->rset(tea->iot, tea->ioh, tea->offset, 0);
 }
 
-u_long
-tea5757_set_freq(struct tea5757_t *tea, u_long stereo, u_long lock, u_long freq)
+u_int32_t
+tea5757_set_freq(struct tea5757_t *tea, u_int32_t stereo, u_int32_t lock, u_int32_t freq)
 {
-	u_long data = 0ul;
+	u_int32_t data = 0ul;
 
 	if (freq < MIN_FM_FREQ)
 		freq = MIN_FM_FREQ;
@@ -121,10 +145,10 @@ tea5757_set_freq(struct tea5757_t *tea, u_long stereo, u_long lock, u_long freq)
 	return freq;
 }
 
-u_long
-tea5757_encode_lock(u_char lock)
+u_int32_t
+tea5757_encode_lock(u_int8_t lock)
 {
-	u_long ret;
+	u_int32_t ret;
 
 	if (lock < 8)
 		ret = TEA5757_S005;
@@ -138,10 +162,10 @@ tea5757_encode_lock(u_char lock)
 	return ret;
 }
 
-u_char
-tea5757_decode_lock(u_long lock)
+u_int8_t
+tea5757_decode_lock(u_int32_t lock)
 {
-	u_char ret;
+	u_int8_t ret = 150;
 
 	switch (lock) {
 	case TEA5757_S005:
@@ -154,8 +178,6 @@ tea5757_decode_lock(u_long lock)
 		ret = 30;
 		break;
 	case TEA5757_S150:
-		/* FALLTHROUGH */
-	default:
 		ret = 150;
 		break;
 	}

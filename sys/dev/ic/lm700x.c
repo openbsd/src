@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm700x.c,v 1.1 2001/10/04 19:46:46 gluk Exp $	*/
+/*	$OpenBSD: lm700x.c,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -27,38 +27,42 @@
 
 /* Implementation of most common lm700x routines */
 
+/*
+ * Sanyo LM7001 Direct PLL Frequency Synthesizer
+ *    ??? See http://www.redsword.com/tjacobs/geeb/fmcard.htm
+ *
+ * The LM7001J and LM7001JM (used in Aztech/PackardBell cards) are PLL
+ * frequency synthesizer LSIs for tuners. These LSIs are software compatible
+ * with LM7000 (used in Radiotrack, Radioreveal RA300, some Mediaforte cards),
+ * but do not include an IF calculation circuit.
+ *
+ * The FM VCO circuit includes a high-speed programmable divider that can
+ * divide directly.
+ *
+ * Features:
+ * Seven reference frequencies: 1, 5, 9, 10, 25, 50, and 100 kHz;
+ * Band-switching outputs (3 bits);
+ * Controller clock output (400 kHz);
+ * Serial input circuit for data input (using the CE, CL and DATA pins).
+ *
+ * The LM7001J and LM7001JM have a 24-bit shift register.
+ */
+
 #include <sys/param.h>
 #include <sys/radioio.h>
 
 #include <dev/ic/lm700x.h>
 
-u_long
-lm700x_encode_freq(u_long nfreq, u_long rf)
+u_int32_t
+lm700x_encode_freq(u_int32_t nfreq, u_int32_t rf)
 {
-	u_char ref_freq;
-
-	switch (rf) {
-	case LM700X_REF_100:
-		ref_freq = 100;
-		break;
-	case LM700X_REF_025:
-		ref_freq = 25;
-		break;
-	case LM700X_REF_050:
-		/* FALLTHROUGH */
-	default:
-		ref_freq = 50;
-		break;
-	}
-
 	nfreq += IF_FREQ;
-	nfreq /= ref_freq;
-
+	nfreq /= lm700x_decode_ref(rf);
 	return nfreq;
 }
 
 void
-lm700x_hardware_write(struct lm700x_t *lm, u_long data, u_long addon)
+lm700x_hardware_write(struct lm700x_t *lm, u_int32_t data, u_int32_t addon)
 {
 	int i;
 
@@ -88,10 +92,10 @@ lm700x_hardware_write(struct lm700x_t *lm, u_long data, u_long addon)
 	lm->rset(lm->iot, lm->ioh, lm->offset, lm->rsetdata | addon);
 }
 
-u_long
-lm700x_encode_ref(u_char rf)
+u_int32_t
+lm700x_encode_ref(u_int8_t rf)
 {
-	u_long ret;
+	u_int32_t ret;
 
 	if (rf < 36)
 		ret = LM700X_REF_025;
@@ -103,10 +107,10 @@ lm700x_encode_ref(u_char rf)
 	return ret;
 }
 
-u_char
-lm700x_decode_ref(u_long rf)
+u_int8_t
+lm700x_decode_ref(u_int32_t rf)
 {
-	u_char ret;
+	u_int8_t ret;
 
 	switch (rf) {
 	case LM700X_REF_100:

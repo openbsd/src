@@ -1,5 +1,5 @@
-/*	$OpenBSD: tea5757.h,v 1.1 2001/10/04 19:46:46 gluk Exp $	*/
-/* $RuOBSD: tea5757.h,v 1.5 2001/10/04 18:51:50 pva Exp $ */
+/*	$OpenBSD: tea5757.h,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
+/* $RuOBSD: tea5757.h,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
 /*
  * Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -67,22 +67,22 @@ struct tea5757_t {
 	bus_size_t	offset;
 
 	void	(*init)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-			u_long); /* init value */
+			u_int32_t); /* init value */
 	void	(*rset)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-			u_long); /* reset value */
+			u_int32_t); /* reset value */
 	void	(*write_bit)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-			u_char); /* the bit */
-	u_long	(*read)(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+			int); /* the bit */
+	u_int32_t	(*read)(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 };
 
-u_long	tea5757_encode_freq(u_long);
-u_long	tea5757_decode_freq(u_long);
-u_long	tea5757_encode_lock(u_char);
-u_char	tea5757_decode_lock(u_long);
+u_int32_t	tea5757_encode_freq(u_int32_t);
+u_int32_t	tea5757_decode_freq(u_int32_t);
+u_int32_t	tea5757_encode_lock(u_int8_t);
+u_int8_t	tea5757_decode_lock(u_int32_t);
 
-u_long	tea5757_set_freq(struct tea5757_t *, u_long, u_long, u_long);
-void	tea5757_search(struct tea5757_t *, u_long, u_long, int);
+u_int32_t	tea5757_set_freq(struct tea5757_t *, u_int32_t, u_int32_t, u_int32_t);
+void	tea5757_search(struct tea5757_t *, u_int32_t, u_int32_t, int);
 
-void	tea5757_hardware_write(struct tea5757_t *, u_long);
+void	tea5757_hardware_write(struct tea5757_t *, u_int32_t);
 
 #endif /* _TEA5757_H_ */

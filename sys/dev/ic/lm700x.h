@@ -1,5 +1,5 @@
-/*	$OpenBSD: lm700x.h,v 1.1 2001/10/04 19:46:46 gluk Exp $	*/
-/* $RuOBSD: lm700x.h,v 1.3 2001/10/04 19:25:39 gluk Exp $ */
+/*	$OpenBSD: lm700x.h,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
+/* $RuOBSD: lm700x.h,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
 /*
  * Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -60,20 +60,20 @@ struct lm700x_t {
 	bus_space_handle_t	ioh;
 	bus_size_t	offset;
 
-	u_long	wzcl;	/* write zero clock low */
-	u_long	wzch;	/* write zero clock high */
-	u_long	wocl;	/* write one clock low */
-	u_long	woch;	/* write one clock high */
-	u_long	initdata;
-	u_long	rsetdata;
+	u_int32_t	wzcl;	/* write zero clock low */
+	u_int32_t	wzch;	/* write zero clock high */
+	u_int32_t	wocl;	/* write one clock low */
+	u_int32_t	woch;	/* write one clock high */
+	u_int32_t	initdata;
+	u_int32_t	rsetdata;
 
-	void (*init)(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_long);
-	void (*rset)(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_long);
+	void (*init)(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+	void (*rset)(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 };
 
-u_long	lm700x_encode_freq(u_long, u_long);
-u_long	lm700x_encode_ref(u_char);
-u_char	lm700x_decode_ref(u_long);
-void	lm700x_hardware_write(struct lm700x_t *, u_long, u_long);
+u_int32_t	lm700x_encode_freq(u_int32_t, u_int32_t);
+u_int32_t	lm700x_encode_ref(u_int8_t);
+u_int8_t	lm700x_decode_ref(u_int32_t);
+void	lm700x_hardware_write(struct lm700x_t *, u_int32_t, u_int32_t);
 
 #endif /* _LM700X_H_ */
