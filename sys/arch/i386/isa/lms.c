@@ -1,4 +1,4 @@
-/*	$OpenBSD: lms.c,v 1.11 1999/01/13 07:26:01 niklas Exp $	*/
+/*	$OpenBSD: lms.c,v 1.12 1999/08/22 08:16:20 downsj Exp $	*/
 /*	$NetBSD: lms.c,v 1.30 1996/10/21 22:27:41 thorpej Exp $	*/
 
 /*-
@@ -287,6 +287,13 @@ lmsioctl(dev, cmd, addr, flag, p)
 
 		splx(s);
 		error = copyout(&info, addr, sizeof(struct mouseinfo));
+		break;
+
+	case MOUSEIOCSRAW:
+		error = ENODEV;
+		break;
+
+	case MOUSEIOCSCOOKED:	/* Do nothing. */
 		break;
 
 	default:

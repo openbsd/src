@@ -1,4 +1,4 @@
-/*	$OpenBSD: mms.c,v 1.9 1999/01/13 07:26:01 niklas Exp $	*/
+/*	$OpenBSD: mms.c,v 1.10 1999/08/22 08:16:20 downsj Exp $	*/
 /*	$NetBSD: mms.c,v 1.24 1996/05/12 23:12:18 mycroft Exp $	*/
 
 /*-
@@ -263,6 +263,13 @@ mmsioctl(dev, cmd, addr, flag, p)
 
 		splx(s);
 		error = copyout(&info, addr, sizeof(struct mouseinfo));
+		break;
+
+	case MOUSEIOCSRAW:
+		error = ENODEV;
+		break;
+
+	case MOUSEIOCSCOOKED:	/* Do nothing. */
 		break;
 
 	default:
