@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.21 1997/06/05 10:02:31 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.22 1997/06/11 10:04:24 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.21 1997/06/05 10:02:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.22 1997/06/11 10:04:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,8 +187,8 @@ main(argc, argv)
 	struct protoent *proto;
 	struct in_addr saddr;
 	register int i;
-	int ch, fdmask, hold = 1, packlen, preload;
-	int maxsize, maxsizelen;
+	int ch, hold = 1, packlen, preload;
+	int maxsize, maxsizelen, fdmasks;
 	u_char *datap, *packet;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
 	u_char ttl = MAXTTL, loop = 1, df = 0;
@@ -196,6 +196,7 @@ main(argc, argv)
 #ifdef IP_OPTIONS
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 #endif
+	fd_set *fdmaskp;
 
 	if (!(proto = getprotobyname("icmp")))
 		errx(1, "unknown protocol icmp");
@@ -460,6 +461,10 @@ main(argc, argv)
 	if ((options & F_FLOOD) == 0)
 		catcher();		/* start things going */
 
+	fdmasks = howmany(s+1, NFDBITS) * sizeof(fd_mask);
+	if ((fdmaskp = (fd_set *)malloc(fdmasks)) == NULL)
+		err(1, "malloc");
+
 	for (;;) {
 		struct sockaddr_in from;
 		register int cc;
@@ -469,8 +474,9 @@ main(argc, argv)
 			pinger();
 			timeout.tv_sec = 0;
 			timeout.tv_usec = 10000;
-			fdmask = 1 << s;
-			if (select(s + 1, (fd_set *)&fdmask, (fd_set *)NULL,
+			memset(fdmaskp, 0, fdmasks);
+			FD_SET(s, fdmaskp);
+			if (select(s + 1, (fd_set *)fdmaskp, (fd_set *)NULL,
 			    (fd_set *)NULL, &timeout) < 1)
 				continue;
 		}
@@ -486,6 +492,7 @@ main(argc, argv)
 		if (npackets && nreceived >= npackets)
 			break;
 	}
+	free(fdmaskp);
 	finish();
 	/* NOTREACHED */
 	exit(0);	/* Make the compiler happy */
