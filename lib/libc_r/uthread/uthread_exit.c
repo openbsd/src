@@ -184,7 +184,7 @@ pthread_exit(void *status)
 	if (pthread_mutex_unlock(&_gc_mutex) != 0)
 		PANIC("Cannot lock gc mutex");
 
-	/* This this thread will never be re-scheduled. */
+	/* This thread will never be re-scheduled. */
 	_thread_kern_sched_state(PS_DEAD, __FILE__, __LINE__);
 
 	/* This point should not be reached. */
