@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.44 2001/10/11 08:07:12 gluk Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.45 2001/10/11 14:44:10 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -848,8 +848,8 @@ start:
 	if (numdirtypages >= hidirtypages)
 		wakeup(&bd_req);
 
-	if ((numcleanpages <= locleanpages)
-	    && (curproc != syncerproc || curproc != cleanerproc)) {
+	if ((numcleanpages <= locleanpages) &&
+	    curproc != syncerproc && curproc != cleanerproc) {
 		needbuffer++;
 		error = tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf",
 				slptimeo);
