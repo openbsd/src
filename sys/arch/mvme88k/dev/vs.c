@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.39 2004/05/22 21:02:38 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.40 2004/05/23 20:52:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -49,7 +49,7 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm_param.h>
+#include <uvm/uvm.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -111,6 +111,7 @@ void	vs_scsidone(struct vs_softc *, struct scsi_xfer *, int);
 
 static __inline__ void vs_clear_return_info(struct vs_softc *);
 static __inline__ int vs_queue_number(int, int);
+static __inline__ paddr_t kvtop(vaddr_t);
 
 int
 vsmatch(struct device *device, void *cf, void *args)
@@ -1009,4 +1010,14 @@ vs_build_memory_structure(struct vs_softc *sc, struct scsi_xfer *xs,
 		vs_write(4, iopb + IOPB_LENGTH, len);
 	}
 	return sg;
+}
+
+static paddr_t
+kvtop(vaddr_t va)
+{
+	paddr_t pa;
+
+	pmap_extract(pmap_kernel(), va, &pa);
+	/* XXX check for failure */
+	return pa;
 }

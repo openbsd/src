@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.2 2004/05/23 20:52:15 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -246,7 +246,5 @@ extern vaddr_t kmapva;
 #define kvtopte(va)	\
 	((pt_entry_t *)(PG_PFNUM(*((sdt_entry_t *)kmapva + \
 	    SDTIDX(va) + SDT_ENTRIES)) << PDT_SHIFT) + PDTIDX(va))
-
-u_int kvtop(vaddr_t);
 
 #endif /* __MACHINE_MMU_H__ */

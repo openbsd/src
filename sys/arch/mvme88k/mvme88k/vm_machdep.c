@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.61 2004/03/03 22:23:58 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.62 2004/05/23 20:52:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -488,15 +488,4 @@ pagemove(from, to, size)
 		size -= PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
-}
-
-u_int
-kvtop(va)
-	vaddr_t va;
-{
-	paddr_t pa;
-
-	pmap_extract(pmap_kernel(), va, &pa);
-	/* XXX check for failure */
-	return ((u_int)pa);
 }
