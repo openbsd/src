@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.14 1997/09/04 04:37:15 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.15 1997/09/04 04:42:34 millert Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -1336,7 +1336,7 @@ By default, this is bound to the TAB key.
 .Sh ENVIRONMENT
 .Nm
 utilizes the following environment variables.
-.Bl -tag -width "http_proxy"
+.Bl -tag -width "FTPSERVERPORT"
 .It Ev FTPSERVER
 Host to use as gate-ftp server when
 .Ic gate
@@ -1359,6 +1359,8 @@ Used by
 to display files.
 .It Ev SHELL
 For default shell.
+.It Ev TMPDIR
+Directory to put temporary files.
 .It Ev ftp_proxy
 URL of FTP proxy to use when making FTP URL requests
 (if not defined, use the standard ftp protocol).
