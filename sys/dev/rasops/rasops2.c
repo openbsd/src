@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops2.c,v 1.4 2002/05/29 00:22:10 fgsch Exp $	*/
+/*	$OpenBSD: rasops2.c,v 1.5 2002/07/27 22:17:49 miod Exp $	*/
 /*	$NetBSD: rasops2.c,v 1.5 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -47,15 +47,15 @@
 #include <dev/rasops/rasops.h>
 #include <dev/rasops/rasops_masks.h>
 
-static void	rasops2_copycols(void *, int, int, int, int);
-static void	rasops2_erasecols(void *, int, int, int, long);
-static void	rasops2_do_cursor(struct rasops_info *);
-static void	rasops2_putchar(void *, int, int col, u_int, long);
+void	rasops2_copycols(void *, int, int, int, int);
+void	rasops2_erasecols(void *, int, int, int, long);
+void	rasops2_do_cursor(struct rasops_info *);
+void	rasops2_putchar(void *, int, int col, u_int, long);
 #ifndef RASOPS_SMALL
-static void	rasops2_putchar8(void *, int, int col, u_int, long);
-static void	rasops2_putchar12(void *, int, int col, u_int, long);
-static void	rasops2_putchar16(void *, int, int col, u_int, long);
-static void	rasops2_makestamp(struct rasops_info *, long);
+void	rasops2_putchar8(void *, int, int col, u_int, long);
+void	rasops2_putchar12(void *, int, int col, u_int, long);
+void	rasops2_putchar16(void *, int, int col, u_int, long);
+void	rasops2_makestamp(struct rasops_info *, long);
 
 /*
  * 4x1 stamp for optimized character blitting
@@ -102,7 +102,7 @@ rasops2_init(ri)
 /*
  * Paint a single character. This is the generic version, this is ugly.
  */
-static void
+void
 rasops2_putchar(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -217,7 +217,7 @@ rasops2_putchar(cookie, row, col, uc, attr)
 /*
  * Put a single character. This is the generic version.
  */
-static void
+void
 rasops2_putchar(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -232,7 +232,7 @@ rasops2_putchar(cookie, row, col, uc, attr)
 /*
  * Recompute the blitting stamp.
  */
-static void
+void
 rasops2_makestamp(ri, attr)
 	struct rasops_info *ri;
 	long attr;
@@ -254,7 +254,7 @@ rasops2_makestamp(ri, attr)
 /*
  * Put a single character. This is for 8-pixel wide fonts.
  */
-static void
+void
 rasops2_putchar8(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -324,7 +324,7 @@ rasops2_putchar8(cookie, row, col, uc, attr)
 /*
  * Put a single character. This is for 12-pixel wide fonts.
  */
-static void
+void
 rasops2_putchar12(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -397,7 +397,7 @@ rasops2_putchar12(cookie, row, col, uc, attr)
 /*
  * Put a single character. This is for 16-pixel wide fonts.
  */
-static void
+void
 rasops2_putchar16(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;

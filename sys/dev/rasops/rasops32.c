@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops32.c,v 1.3 2002/05/28 22:10:03 fgsch Exp $	*/
+/*	$OpenBSD: rasops32.c,v 1.4 2002/07/27 22:17:49 miod Exp $	*/
 /*	$NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops32_putchar(void *, int, int, u_int, long);
+void 	rasops32_putchar(void *, int, int, u_int, long);
 
 /*
  * Initialize a 'rasops_info' descriptor for this depth.
@@ -70,7 +70,7 @@ rasops32_init(ri)
 /*
  * Paint a single character.
  */
-static void
+void
 rasops32_putchar(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;

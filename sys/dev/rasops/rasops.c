@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.6 2002/07/23 22:02:08 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.7 2002/07/27 22:17:49 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -100,13 +100,13 @@ const u_char rasops_isgray[16] = {
 };
 
 /* Generic functions */
-static void	rasops_copyrows(void *, int, int, int);
-static int	rasops_mapchar(void *, int, u_int *);
-static void	rasops_cursor(void *, int, int, int);
-static int	rasops_alloc_cattr(void *, int, int, int, long *);
-static int	rasops_alloc_mattr(void *, int, int, int, long *);
-static void	rasops_do_cursor(struct rasops_info *);
-static void	rasops_init_devcmap(struct rasops_info *);
+void	rasops_copyrows(void *, int, int, int);
+int	rasops_mapchar(void *, int, u_int *);
+void	rasops_cursor(void *, int, int, int);
+int	rasops_alloc_cattr(void *, int, int, int, long *);
+int	rasops_alloc_mattr(void *, int, int, int, long *);
+void	rasops_do_cursor(struct rasops_info *);
+void	rasops_init_devcmap(struct rasops_info *);
 
 /*
  * Initialize a 'rasops_info' descriptor.
@@ -319,7 +319,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 /*
  * Map a character.
  */
-static int
+int
 rasops_mapchar(cookie, c, cp)
 	void *cookie;
 	int c;
@@ -361,7 +361,7 @@ rasops_mapchar(cookie, c, cp)
 /*
  * Allocate a color attribute.
  */
-static int
+int
 rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 	void *cookie;
 	int fg, bg, flg;
@@ -405,7 +405,7 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 /*
  * Allocate a mono attribute.
  */
-static int
+int
 rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 	void *cookie;
 	int fg, bg, flg;
@@ -432,7 +432,7 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 /*
  * Copy rows.
  */
-static void
+void
 rasops_copyrows(cookie, src, dst, num)
 	void *cookie;
 	int src, dst, num;
@@ -569,7 +569,7 @@ rasops_copycols(cookie, row, src, dst, num)
 /*
  * Turn cursor off/on.
  */
-static void
+void
 rasops_cursor(cookie, on, row, col)
 	void *cookie;
 	int on, row, col;
@@ -610,7 +610,7 @@ rasops_cursor(cookie, on, row, col)
 /*
  * Make the device colormap
  */
-static void
+void
 rasops_init_devcmap(ri)
 	struct rasops_info *ri;
 {
@@ -694,7 +694,7 @@ rasops_unpack_attr(attr, fg, bg, underline)
 }
 
 /*
- * Erase rows. This isn't static, since 24-bpp uses it in special cases.
+ * Erase rows
  */
 void
 rasops_eraserows(cookie, row, num, attr)
@@ -769,7 +769,7 @@ rasops_eraserows(cookie, row, num, attr)
  * Actually turn the cursor on or off. This does the dirty work for
  * rasops_cursor().
  */
-static void
+void
 rasops_do_cursor(ri)
 	struct rasops_info *ri;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops8.c,v 1.5 2002/07/25 19:18:44 jason Exp $	*/
+/*	$OpenBSD: rasops8.c,v 1.6 2002/07/27 22:17:49 miod Exp $	*/
 /*	$NetBSD: rasops8.c,v 1.8 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -45,12 +45,12 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops8_putchar(void *, int, int, u_int, long attr);
+void 	rasops8_putchar(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
-static void 	rasops8_putchar8(void *, int, int, u_int, long attr);
-static void 	rasops8_putchar12(void *, int, int, u_int, long attr);
-static void 	rasops8_putchar16(void *, int, int, u_int, long attr);
-static void	rasops8_makestamp(struct rasops_info *ri, long);
+void 	rasops8_putchar8(void *, int, int, u_int, long attr);
+void 	rasops8_putchar12(void *, int, int, u_int, long attr);
+void 	rasops8_putchar16(void *, int, int, u_int, long attr);
+void	rasops8_makestamp(struct rasops_info *ri, long);
 
 /*
  * 4x1 stamp for optimized character blitting
@@ -100,7 +100,7 @@ rasops8_init(ri)
 /*
  * Put a single character.
  */
-static void
+void
 rasops8_putchar(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -171,7 +171,7 @@ rasops8_putchar(cookie, row, col, uc, attr)
 /*
  * Recompute the 4x1 blitting stamp.
  */
-static void
+void
 rasops8_makestamp(ri, attr)
 	struct rasops_info *ri;
 	long attr;
@@ -203,7 +203,7 @@ rasops8_makestamp(ri, attr)
 /*
  * Put a single character. This is for 8-pixel wide fonts.
  */
-static void
+void
 rasops8_putchar8(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -274,7 +274,7 @@ rasops8_putchar8(cookie, row, col, uc, attr)
 /*
  * Put a single character. This is for 12-pixel wide fonts.
  */
-static void
+void
 rasops8_putchar12(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -348,7 +348,7 @@ rasops8_putchar12(cookie, row, col, uc, attr)
 /*
  * Put a single character. This is for 16-pixel wide fonts.
  */
-static void
+void
 rasops8_putchar16(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;

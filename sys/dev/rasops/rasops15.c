@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops15.c,v 1.3 2002/05/28 22:10:03 fgsch Exp $	*/
+/*	$OpenBSD: rasops15.c,v 1.4 2002/07/27 22:17:49 miod Exp $	*/
 /*	$NetBSD: rasops15.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -45,12 +45,12 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops15_putchar(void *, int, int, u_int, long attr);
+void 	rasops15_putchar(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
-static void 	rasops15_putchar8(void *, int, int, u_int, long attr);
-static void 	rasops15_putchar12(void *, int, int, u_int, long attr);
-static void 	rasops15_putchar16(void *, int, int, u_int, long attr);
-static void	rasops15_makestamp(struct rasops_info *, long);
+void 	rasops15_putchar8(void *, int, int, u_int, long attr);
+void 	rasops15_putchar12(void *, int, int, u_int, long attr);
+void 	rasops15_putchar16(void *, int, int, u_int, long attr);
+void	rasops15_makestamp(struct rasops_info *, long);
 
 /*
  * (2x2)x1 stamp for optimized character blitting
@@ -112,7 +112,7 @@ rasops15_init(ri)
 /*
  * Paint a single character.
  */
-static void
+void
 rasops15_putchar(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -186,7 +186,7 @@ rasops15_putchar(cookie, row, col, uc, attr)
 /*
  * Recompute the (2x2)x1 blitting stamp.
  */
-static void
+void
 rasops15_makestamp(ri, attr)
 	struct rasops_info *ri;
 	long attr;
@@ -216,7 +216,7 @@ rasops15_makestamp(ri, attr)
 /*
  * Paint a single character. This is for 8-pixel wide fonts.
  */
-static void
+void
 rasops15_putchar8(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -295,7 +295,7 @@ rasops15_putchar8(cookie, row, col, uc, attr)
 /*
  * Paint a single character. This is for 12-pixel wide fonts.
  */
-static void
+void
 rasops15_putchar12(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -378,7 +378,7 @@ rasops15_putchar12(cookie, row, col, uc, attr)
 /*
  * Paint a single character. This is for 16-pixel wide fonts.
  */
-static void
+void
 rasops15_putchar16(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
