@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.39 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.40 2003/08/23 20:27:30 tedu Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -95,6 +95,8 @@ static int _lkm_exec(struct lkm_table *, int);
 
 void lkminit(void);
 int lkmexists(struct lkm_table *);
+
+void init_exec(void);
 
 void
 lkminit()
@@ -814,8 +816,8 @@ _lkm_exec(struct lkm_table *lkmtp, int cmd)
 		/* replace with new */
 		bcopy(args->lkm_exec, &execsw[i], sizeof(struct execsw));
 
-		/* realize need to recompute max header size */
-		exec_maxhdrsz = 0;
+		/* need to recompute max header size */
+		init_exec();
 
 		/* done! */
 		args->lkm_offset = i;	/* slot in execsw[] */
@@ -829,8 +831,8 @@ _lkm_exec(struct lkm_table *lkmtp, int cmd)
 		/* replace current slot contents with old contents */
 		bcopy(&args->lkm_oldexec, &execsw[i], sizeof(struct execsw));
 
-		/* realize need to recompute max header size */
-		exec_maxhdrsz = 0;
+		/* need to recompute max header size */
+		init_exec();
 
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.15 2003/08/23 20:02:59 tedu Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.16 2003/08/23 20:27:30 tedu Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -177,10 +177,8 @@ init_exec(void)
 	 * XXX should be able to keep LKM code from modifying exec switch
 	 * when we're still using it, but...
 	 */
-	if (exec_maxhdrsz == 0) {
-		for (i = 0; i < nexecs; i++)
-			if (execsw[i].es_check != NULL &&
-			    execsw[i].es_hdrsz > exec_maxhdrsz)
-				exec_maxhdrsz = execsw[i].es_hdrsz;
-	}
+	for (i = 0; i < nexecs; i++)
+		if (execsw[i].es_check != NULL &&
+		    execsw[i].es_hdrsz > exec_maxhdrsz)
+			exec_maxhdrsz = execsw[i].es_hdrsz;
 }
