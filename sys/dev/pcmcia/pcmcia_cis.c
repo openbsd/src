@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.11 2003/10/22 09:58:46 jmc Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.12 2004/09/16 07:19:49 brad Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -65,8 +65,7 @@ pcmcia_read_cis(sc)
 {
 	struct cis_state state;
 
-	state.count = 0;
-	state.gotmfc = 0;
+	memset(&state, 0, sizeof state);
 
 	state.card = &sc->card;
 
@@ -154,12 +153,22 @@ pcmcia_scan_cis(dev, fct, arg)
 
 	while (1) {
 		while (1) {
-			/* get the tuple code */
-			if (tuple.ptr * tuple.mult < PCMCIA_CIS_SIZE)
-				tuple.code = pcmcia_cis_read_1(&tuple,
-				    tuple.ptr);
-			else
+			/*
+			 * Perform boundary check for insane cards.
+			 * If CIS is too long, simulate CIS end.
+			 * (This check may not be sufficient for
+			 * malicious cards.)
+			 */
+			if (tuple.mult * tuple.ptr >= PCMCIA_CIS_SIZE - 1
+			    - 32 /* ad hoc value */ ) {
+				DPRINTF(("CISTPL_END (too long CIS)\n"));
 				tuple.code = PCMCIA_CISTPL_END;
+				goto cis_end;
+			}
+
+			/* get the tuple code */
+
+			tuple.code = pcmcia_cis_read_1(&tuple, tuple.ptr);
 
 			/* two special-case tuples */
 
@@ -169,6 +178,7 @@ pcmcia_scan_cis(dev, fct, arg)
 				continue;
 			} else if (tuple.code == PCMCIA_CISTPL_END) {
 				DPRINTF(("CISTPL_END\n ff\n"));
+			cis_end:
 				/* Call the function for the END tuple, since
 				   the CIS semantics depend on it */
 				if ((*fct) (&tuple, arg)) {
@@ -275,12 +285,43 @@ pcmcia_scan_cis(dev, fct, arg)
 					break;
 				}
 				{
-					int i;
+					int i, tmp_count;
 
-					mfc_count =
+					/*
+					 * put count into tmp var so that
+					 * if we have to bail (because it's
+					 * a bogus count) it won't be
+					 * remembered for later use.
+					 */
+					tmp_count =
 					    pcmcia_tuple_read_1(&tuple, 0);
 					DPRINTF(("CISTPL_LONGLINK_MFC %d",
-					    mfc_count));
+					    tmp_count));
+
+					/*
+					 * make _sure_ it's the right size;
+					 * if too short, it may be a weird
+					 * (unknown/undefined) format
+					 */
+					if (tuple.length != (tmp_count*5 + 1)) {
+						DPRINTF((" bogus length %d\n",
+						    tuple.length));
+						break;
+					}
+
+#ifdef PCMCIACISDEBUG	/* maybe enable all the time? */
+					/*
+					 * sanity check for a programming
+					 * error which is difficult to find
+					 * when debugging.
+					 */
+					if (tmp_count >
+					    howmany(sizeof mfc, sizeof mfc[0]))
+						panic("CISTPL_LONGLINK_MFC mfc "
+						    "count would blow stack");
+#endif
+
+					mfc_count = tmp_count;
 					for (i = 0; i < mfc_count; i++) {
 						mfc[i].common =
 						    (pcmcia_tuple_read_1(&tuple,
@@ -922,6 +963,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			 * cis, create new entry in the queue and start it
 			 * with the current default
 			 */
+			if (state->default_cfe == NULL) {
+				DPRINTF(("CISTPL_CFTABLE_ENTRY with no "
+				    "default\n"));
+				break;
+			}
 			if (num != state->default_cfe->number) {
 				cfe = (struct pcmcia_config_entry *)
 				    malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
