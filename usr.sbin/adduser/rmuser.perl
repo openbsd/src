@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- perl -*-
 #
-# $OpenBSD: rmuser.perl,v 1.3 2000/11/25 23:22:33 millert Exp $
+# $OpenBSD: rmuser.perl,v 1.4 2001/09/04 07:47:09 deraadt Exp $
 #
 # Copyright 1995, 1996 Guy Helmer, Madison, South Dakota 57042.
 # All rights reserved.
@@ -228,8 +228,8 @@ sub get_login_name {
 	chomp $login_name;
 	if (!($login_name =~ /^\w+$/)) {
 	    print STDERR "Sorry, login name must contain alphanumeric characters only.\n";
-	} elsif (length($login_name) > 16 || length($login_name) == 0) {
-	    print STDERR "Sorry, login name must be 16 characters or less.\n";
+	} elsif (length($login_name) > 31 || length($login_name) == 0) {
+	    print STDERR "Sorry, login name must be 31 characters or less.\n";
 	} else {
 	    $done = 1;
 	}
