@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.44 2003/09/26 21:43:32 miod Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.45 2003/12/24 13:20:05 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -615,7 +615,8 @@ sc_err1(xs, async)
 
 	default:
 		sc_print_addr(xs->sc_link);
-		printf("unknown error category from scsi driver\n");
+		printf("unknown error category (0x%x) from scsi driver\n",
+		    xs->error);
 		error = EIO;
 		break;
 	}
