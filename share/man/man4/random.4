@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.14 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: random.4,v 1.15 2002/10/26 15:34:52 jakob Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -71,12 +71,12 @@ Simple pseudo-random generator.
 .It /dev/arandom
 As required, entropy pool data re-seeds an ARC4 generator,
 which then generates high-quality pseudo-random output data.
-.El
 .Pp
 The
 .Xr arc4random 3
 function in userland libraries seeds itself from this device,
 providing a second level of ARC4 hashed data.
+.El
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr md5 3 ,
