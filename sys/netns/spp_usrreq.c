@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.5 1997/03/29 18:21:00 deraadt Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.6 1998/01/03 22:32:57 deraadt Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -1473,6 +1473,8 @@ spp_usrreq(so, req, m, nam, controlp)
 		}
 
 	case PRU_SHUTDOWN:
+		if (so->so_state & SS_CANTSENDMORE)
+			break;
 		socantsendmore(so);
 		cb = spp_usrclosed(cb);
 		if (cb)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tuba_usrreq.c,v 1.2 1996/03/04 10:36:54 mickey Exp $	*/
+/*	$OpenBSD: tuba_usrreq.c,v 1.3 1998/01/03 22:32:56 deraadt Exp $	*/
 /*	$NetBSD: tuba_usrreq.c,v 1.8 1996/02/13 22:12:40 christos Exp $	*/
 
 /*
@@ -267,6 +267,8 @@ tuba_usrreq(so, req, m, nam, control)
 		 * Mark the connection as being incapable of further output.
 		 */
 	case PRU_SHUTDOWN:
+		if (so->so_state & SS_CANTSENDMORE)
+			break;
 		socantsendmore(so);
 		tp = tcp_usrclosed(tp);
 		if (tp)
