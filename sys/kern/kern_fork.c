@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.21 1999/07/15 14:07:41 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.22 1999/07/17 21:49:37 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -378,13 +378,11 @@ again:
 	 */
 	p1->p_holdcnt--;
 
-#if defined(UVM) /* ART_UVM_XXX */
+#if defined(UVM)
 	uvmexp.forks++;
-#ifdef notyet
-	if (rforkflags & FORK_PPWAIT)
+	if (forktype == ISVFORK)
 		uvmexp.forks_ppwait++;
-#endif
-	if (rforkflags & RFMEM)
+	if (forktype == ISRFORK && (rforkflags & RFMEM))
 		uvmexp.forks_sharevm++;
 #endif
 
