@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.9 1998/08/15 20:23:20 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.10 1999/02/20 18:59:25 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.9 1998/08/15 20:23:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.10 1999/02/20 18:59:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ printlong(dp)
 		else
 			printtime(sp->st_mtime);
 		(void)printf("%s", p->fts_name);
-		if (f_type)
+		if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 			(void)printtype(sp->st_mode);
 		if (S_ISLNK(sp->st_mode))
 			printlink(p);
@@ -172,7 +172,7 @@ printcol(dp)
 		colwidth += dp->s_inode + 1;
 	if (f_size)
 		colwidth += dp->s_block + 1;
-	if (f_type)
+	if (f_type || f_typedir)
 		colwidth += 1;
 
 	colwidth += 1;
@@ -222,7 +222,7 @@ printaname(p, inodefield, sizefield)
 		chcnt += printf("%*qd ",
 		    (int)sizefield, howmany(sp->st_blocks, blocksize));
 	chcnt += printf("%s", p->fts_name);
-	if (f_type)
+	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 		chcnt += printtype(sp->st_mode);
 	return (chcnt);
 }
@@ -251,6 +251,84 @@ printtime(ftime)
 			(void)putchar(longstring[i]);
 	}
 	(void)putchar(' ');
+}
+
+void
+printacol(dp)
+	DISPLAY *dp;
+{
+	extern int termwidth;
+	FTSENT *p;
+	int chcnt, col, colwidth;
+	int numcols;
+
+	colwidth = dp->maxlen;
+	if (f_inode)
+		colwidth += dp->s_inode + 1;
+	if (f_size)
+		colwidth += dp->s_block + 1;
+	if (f_type || f_typedir)
+		colwidth += 1;
+
+	colwidth += 1;
+
+	if (termwidth < 2 * colwidth) {
+		printscol(dp);
+		return;
+	}
+
+	numcols = termwidth / colwidth;
+	colwidth = termwidth / numcols;		/* spread out if possible */
+
+	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
+		(void)printf("total %llu\n",
+		    (long long)(howmany(dp->btotal, blocksize)));
+	chcnt = col = 0;
+	for (p = dp->list; p; p = p->fts_link) {
+		if (IS_NOPRINT(p))
+			continue;
+		if (col >= numcols) {
+			chcnt = col = 0;
+			(void)putchar('\n');
+		}
+		chcnt = printaname(p, dp->s_inode, dp->s_block);
+		while (chcnt++ < colwidth)
+			(void)putchar(' ');
+		col++;
+	}
+	(void)putchar('\n');
+}
+
+void
+printstream(dp)
+	DISPLAY *dp;
+{
+	extern int termwidth;
+	FTSENT *p;
+	int col;
+	int extwidth;
+
+	extwidth = 0;
+	if (f_inode)
+		extwidth += dp->s_inode + 1;
+	if (f_size)
+		extwidth += dp->s_block + 1;
+	if (f_type)
+		extwidth += 1;
+
+	for (col = 0, p = dp->list; p != NULL; p = p->fts_link) {
+		if (IS_NOPRINT(p))
+			continue;
+		if (col > 0) {
+			(void)putchar(','), col++;
+			if (col + 1 + extwidth + p->fts_namelen >= termwidth)
+				(void)putchar('\n'), col = 0;
+			else
+				(void)putchar(' '), col++;
+		}
+		col += printaname(p, dp->s_inode, dp->s_block);
+	}
+	(void)putchar('\n');
 }
 
 static int

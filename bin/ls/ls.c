@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.9 1998/08/07 19:45:06 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.10 1999/02/20 18:59:25 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.9 1998/08/07 19:45:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.10 1999/02/20 18:59:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ int sortkey = BY_NAME;
 /* flags */
 int f_accesstime;		/* use time of last access */
 int f_column;			/* columnated format */
+int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
@@ -103,8 +104,10 @@ int f_sectime;			/* print the real time for all files */
 int f_singlecol;		/* use single column output */
 int f_size;			/* list size in short listing */
 int f_statustime;		/* use time of last mode change */
+int f_stream;			/* stream format */
 int f_dirname;			/* if precede with directory name */
 int f_type;			/* add type character for non-regular files */
+int f_typedir;			/* add type character for directories */
 int f_whiteout;			/* show whiteout entries */
 
 int rval;
@@ -136,24 +139,33 @@ main(argc, argv)
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklnoqrstu")) != -1) {
+	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklmnopqrstux")) != -1) {
 		switch (ch) {
 		/*
-		 * The -1, -C and -l options all override each other so shell
-		 * aliasing works right.
+		 * The -1, -C and -l, -m and -x options all override each
+		 * other so shell aliasing works right.
 		 */
 		case '1':
 			f_singlecol = 1;
-			f_column = f_longform = 0;
+			f_column = f_columnacross = f_longform = f_stream = 0;
 			break;
 		case 'C':
 			f_column = 1;
-			f_longform = f_singlecol = 0;
+			f_longform = f_columnacross = f_singlecol = f_stream = 0;
 			break;
 		case 'l':
 			f_longform = 1;
 			f_numericonly = 0;
-			f_column = f_singlecol = 0;
+			f_column = f_columnacross = f_singlecol = f_stream = 0;
+			break;
+		case 'm':
+			f_stream = 1;
+			f_column = f_columnacross = f_singlecol = 0;
+			f_singlecol = 0;
+			break;
+		case 'x':
+			f_columnacross = 1;
+			f_column = f_longform = f_singlecol = f_stream = 0;
 			break;
 		case 'n':
 			f_longform = 1;
@@ -205,6 +217,9 @@ main(argc, argv)
 		case 'o':
 			f_flags = 1;
 			break;
+		case 'p':
+			f_typedir = 1;
+			break;
 		case 'q':
 			f_nonprint = 1;
 			break;
@@ -234,10 +249,10 @@ main(argc, argv)
 	argv += optind;
 
 	/*
-	 * If not -F, -i, -l, -S, -s or -t options, don't require stat
+	 * If not -F, -i, -l, -p, -S, -s or -t options, don't require stat
 	 * information.
 	 */
-	if (!f_inode && !f_longform && !f_size && !f_type &&
+	if (!f_inode && !f_longform && !f_size && !f_type && !f_typedir &&
 	    sortkey == BY_NAME)
 		fts_options |= FTS_NOSTAT;
 
@@ -303,8 +318,12 @@ main(argc, argv)
 	/* Select a print function. */
 	if (f_singlecol)
 		printfcn = printscol;
+	else if (f_columnacross)
+		printfcn = printacol;
 	else if (f_longform)
 		printfcn = printlong;
+	else if (f_stream)
+		printfcn = printstream;
 	else
 		printfcn = printcol;
 

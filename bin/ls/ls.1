@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ls.1,v 1.13 1998/12/15 01:20:23 aaron Exp $
+.\"	$OpenBSD: ls.1,v 1.14 1999/02/20 18:59:25 deraadt Exp $
 .\"	$NetBSD: ls.1,v 1.14 1995/12/05 02:44:01 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -45,7 +45,7 @@
 .Nd list directory contents
 .Sh SYNOPSIS
 .Nm ls
-.Op Fl ACFLRSTWacdfgiklnoqrstu1
+.Op Fl 1ACFLRSTWacdfgiklmnopqrstux
 .Op Ar file ...
 .Sh DESCRIPTION
 For each operand that names a
@@ -138,12 +138,16 @@ option, causing the sizes to be reported in kilobytes.
 List in long format. (See below.)
 If the output is to a terminal, a total sum for all the file
 sizes is output on a line before the long listing.
+.It Fl m
+Stream output format; list files across the page, separated by commas.
 .It Fl n
 List in long format as in
 .Fl l ,
 but retain user and group IDs in a numeric format.
 .It Fl o
 Include the file flags in a long
+.It Fl p
+Display a slash (/) immediately after each pathname that is a directory.
 .Pq Fl l
 output.
 .It Fl q
@@ -176,6 +180,11 @@ or printing
 Force output to be one entry per line.
 This is the default when
 output is not to a terminal.
+.It Fl x
+Multi-column output sorted across the page rather than down the page.
+.It Fl \&1
+(The numeric digit ``one.'')  Force output to be
+one entry per line.
 .El
 .Pp
 The
@@ -199,7 +208,9 @@ By default,
 lists one entry per line to standard
 output; the exceptions are to terminals or when the
 .Fl C
-option is specified.
+or
+.Fl m
+options are specified.
 .Pp
 File information is displayed with one or more
 <blank>s separating the information associated with the
