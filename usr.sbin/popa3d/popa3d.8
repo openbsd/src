@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popa3d.8,v 1.2 2001/08/27 07:14:17 mpech Exp $
+.\"	$OpenBSD: popa3d.8,v 1.3 2001/09/21 20:37:39 camield Exp $
 .Dd August 15, 2001
 .Dt POPA3D 8
 .Os
@@ -6,13 +6,12 @@
 .Nm popa3d
 .Nd "Post Office Protocol server"
 .Sh SYNOPSIS
-.Nm popa3d
+.Nm
+.Op Fl D
 .Sh DESCRIPTION
 .Nm
 is a POP3 server.
-It offers remote access to user mailboxes.
-Using the POP protocol, a remote mail user agent (MUA) can list,
-retrieve and delete email messages on the server.
+It offers network access to user mailboxes through the POP3 protocol.
 The server uses the 
 .Tn TCP
 protocol
@@ -20,20 +19,147 @@ and listens at the port specified in the
 .Dq pop3
 service specification; see
 .Xr services 5 .
+.Pp
+A POP3 server operates on local mailboxes on behalf of its remote
+users.
+Users can connect at any time to check their mailbox and fetch the
+mail that has accumulated.
+The advantage of this ``pull'' approach is that any user with a simple
+POP3-capable mailreader program can receive mail, eschewing the need
+for a full-fledged Mail Transfer Agent (MTA) and a permanent network
+connection.
+.Pp
+Note that POP3 can only be used to retrieve mail, not to send it.
+To send mail, the SMTP protocol is commonly used; see
+.Xr sendmail 8 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D
+With this option set,
+.Nm
+will detach and become a daemon, accepting connections on the pop3
+port and forking child processes to handle them.
+This has lower overhead than starting
+.Nm
+from
+.Xr inetd 8
+and is thus useful on busy servers to reduce load.
+.Pp
+In this mode
+.Nm
+also does quite a few checks to significantly reduce the impact of
+connection flood attacks.
+.Pp
+.El
+.Pp
+Alternatively,
+.Nm
+can be used through
+.Xr inetd 8 .
+This requires the following entry to be added to
+.Pa /etc/inetd.conf :
+.Pp
+.Pa pop3 stream tcp nowait root /usr/sbin/popa3d popa3d
+.Pp
+or, using
+.Xr tcpd 8
+for TCP-wrappers access control:
+.Pp
+.Pa pop3 stream tcp nowait root /usr/libexec/tcpd /usr/sbin/popa3d
+.Pp
+Send SIGHUP to the
+.Xr inetd 8
+daemon to make the changes effective.
+.Pp
+After starting the daemon, either stand-alone or through
+.Xr inetd 8 ,
+all valid users can access their mailbox through the POP3 service.
+This requires the username to be in the password database and the
+password to not be empty. Authentication for super-users like root
+will always fail, even if the password is correct.
+.Sh PREREQUISITES
+Before using
+.Nm
+for the first time, the following steps have to be carried out as root:
+.Bl -enum
+.It
+groupadd popa3d
+.It
+useradd -c 'POP3 server' -d /nonexistent -g popa3d -s /sbin/nologin popa3d
+.It
+mkdir -m 755 /usr/share/empty
+.El
+.Sh COMMANDS
+A normal POP3 session progresses through three states: authorization,
+transaction and update.
+.Pp
+After the TCP connection opens, the client must authenticate itself
+to the server in the authorization state.
+The following commands are supported in the authorization state.
+All commands are case-insensitive.
+.Bl -column "Command    " -offset indent
+.It Sy Command Ta Sy Description
+.It USER name Ta "authenticate as user ``name''"
+.It PASS string Ta "authenticate using password ``string''"
+.It QUIT Ta "quit; do not enter update state"
+.El
+.Pp
+When authorization is successful, the server enters the transaction
+state.
+The client can now list and retrieve messages or mark messages for
+deletion.
+The following commands are supported in the transaction state.
+.Bl -column "Command    " -offset indent
+.It Sy Command Ta Sy Description
+.It DELE msg Ta "mark message for deletion"
+.It LAST Ta "show highest message number accessed (obsolete)"
+.It LIST [msg] Ta "list message number and size"
+.It NOOP Ta "do nothing" 
+.It QUIT Ta "quit; enter update state"
+.It RETR msg Ta "retrieve message"
+.It RSET Ta "clear deletion marks"
+.It STAT Ta "return total number of messages and total size"
+.It TOP msg n Ta "show top n lines of message body"
+.It UIDL [msg] Ta "list message number and digest"
+.El
+.Pp
+When the client issues the QUIT command in the transaction state,
+the server enters the update state.
+All messages that were marked for deletion are now removed.
+The server then closes the connection.
 .Sh FILES
-.Bl -tag -width /var/mail -compact
+.Bl -tag -width Ds
 .It Pa /var/mail
 User mail spools
+.It Pa /etc/hosts.allow, /etc/hosts.deny
+TCP-wrappers access controls may be defined here as described in
+.Xr hosts_access 5 .
+Only valid if either
+.Nm
+is started in daemon-mode and is compiled with LIBWRAP, or if
+.Nm
+is running through
+.Xr inetd 8
+and is used in combination with
+.Xr tcpd 8 .
 .El
 .Sh SEE ALSO
 .Xr inetd 8 ,
-.Xr sendmail 8
+.Xr sendmail 8 .
+.Pp
+Official Internet Protocol Standard
+.%T STD 53 ,
+also known as
+.%T RFC 1939 .
+.Pp
+http://www.openwall.com/popa3d/
 .Sh HISTORY
 .Nm
 first appeared in
 .Ox 3.0 .
 .Sh CAVEATS
-POP authenticates using cleartext passwords.
+POP3 authenticates using cleartext passwords.
 .Sh AUTHORS
 Solar Designer
 .Aq solar@openwall.com
