@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.14 2000/11/21 05:54:33 angelos Exp $
+.\"	$OpenBSD: queue.3,v 1.15 2000/12/14 20:20:06 provos Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -825,11 +825,11 @@ TAILQ_INSERT_AFTER(&head, n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 TAILQ_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
-for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next)
+for (np = TAILQ_FIRST(&head); np; np = TAILQ_NEXT(&head, entries))
 	np-> ...
 					/* Delete. */
-while (head.tqh_first != NULL)
-	TAILQ_REMOVE(&head, head.tqh_first, entries);
+while (np = TAILQ_FIRST(&head))
+	TAILQ_REMOVE(&head, np, entries);
 .Ed
 .Sh CIRCULAR QUEUES
 A circular queue is headed by a structure defined by the
