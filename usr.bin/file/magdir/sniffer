@@ -1,4 +1,4 @@
-#	$OpenBSD: sniffer,v 1.3 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: sniffer,v 1.4 2004/06/03 03:36:46 tedu Exp $
 
 #------------------------------------------------------------------------------
 # sniffer:  file(1) magic for packet capture files
@@ -86,9 +86,13 @@
 >20	belong		9		(PPP
 >20	belong		10		(FDDI
 >20	belong		11		(RFC 1483 ATM
->20	belong		12		(raw IP
->20	belong		13		(BSD/OS SLIP
->20	belong		14		(BSD/OS PPP
+>20	belong		12		(Loopback
+>20	belong		13		(IPSec Enc
+>20	belong		14		(Raw IP
+>20	belong		15		(BSD/OS SLIP
+>20	belong		16		(BSD/OS PPP
+>20	belong		17		(Old PF Log
+>20	belong		18		(PFSync
 >20	belong		50		(PPP or Cisco HDLC
 >20	belong		51		(PPP-over-Ethernet
 >20	belong		100		(RFC 1483 ATM
@@ -129,9 +133,13 @@
 >20	lelong		9		(PPP
 >20	lelong		10		(FDDI
 >20	lelong		11		(RFC 1483 ATM
->20	lelong		12		(raw IP
->20	lelong		13		(BSD/OS SLIP
->20	lelong		14		(BSD/OS PPP
+>20	lelong		12		(Loopback
+>20	lelong		13		(IPSec Enc
+>20	lelong		14		(Raw IP
+>20	lelong		15		(BSD/OS SLIP
+>20	lelong		16		(BSD/OS PPP
+>20	lelong		17		(Old PF Log
+>20	lelong		18		(PFSync
 >20	lelong		50		(PPP or Cisco HDLC
 >20	lelong		51		(PPP-over-Ethernet
 >20	lelong		100		(RFC 1483 ATM
