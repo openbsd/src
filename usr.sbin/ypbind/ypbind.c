@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.11 1996/07/25 21:42:45 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.12 1996/08/28 23:10:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.11 1996/07/25 21:42:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.12 1996/08/28 23:10:06 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: ypbind.c,v 1.11 1996/07/25 21:42:45 deraadt Exp
 #include <sys/ioctl.h>
 #include <sys/signal.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
 #include <sys/uio.h>
@@ -86,6 +87,13 @@ struct _dom_binding {
 extern bool_t xdr_domainname(), xdr_ypbind_resp();
 extern bool_t xdr_ypreq_key(), xdr_ypresp_val();
 extern bool_t xdr_ypbind_setdom();
+
+void rpc_received __P((char *dom, struct sockaddr_in *raddrp, int force));
+void checkwork __P((void));
+enum clnt_stat handle_replies __P((void));
+enum clnt_stat handle_ping __P((void));
+int broadcast __P((struct _dom_binding *ypdb));
+int ping __P((struct _dom_binding *ypdb));
 
 char *domain;
 
@@ -157,7 +165,7 @@ ypbindproc_domain_2x(transp, argp, clnt)
 		ypdb->dom_alive = 0;
 		ypdb->dom_lockfd = -1;
 		sprintf(path, "%s/%s.%d", BINDINGDIR, ypdb->dom_domain,
-		    ypdb->dom_vers);
+		    (int)ypdb->dom_vers);
 		unlink(path);
 		ypdb->dom_xid = unique_xid(ypdb);
 		ypdb->dom_pnext = ypbindlist;
@@ -186,7 +194,6 @@ ypbindproc_domain_2x(transp, argp, clnt)
 	ypdb->dom_ask_t = now;
 #endif
 
-answer:
 	res.ypbind_status = YPBIND_SUCC_VAL;
 	memmove(&res.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_addr,
 	    &ypdb->dom_server_addr.sin_addr,
@@ -351,7 +358,7 @@ main(argc, argv)
 	/* blow away everything in BINDINGDIR */
 	dirp = opendir(BINDINGDIR);
 	if (dirp) {
-		while (dent = readdir(dirp)) {
+		while ((dent = readdir(dirp))) {
 			if (!strcmp(dent->d_name, ".") ||
 			    !strcmp(dent->d_name, ".."))
 				continue;
@@ -484,7 +491,7 @@ main(argc, argv)
 	ypbindlist->dom_alive = 0;
 	ypbindlist->dom_lockfd = -1;
 	sprintf(path, "%s/%s.%d", BINDINGDIR, ypbindlist->dom_domain,
-	    ypbindlist->dom_vers);
+	    (int)ypbindlist->dom_vers);
 	(void)unlink(path);
 
 	checkwork();
@@ -540,6 +547,7 @@ main(argc, argv)
  * checking	timeout		ping server + broadcast	checking	5 sec
  * checking	answer		--			binding		60 sec
  */
+void
 checkwork()
 {
 	struct _dom_binding *ypdb;
@@ -559,6 +567,7 @@ checkwork()
 	check = 0;
 }
 
+int
 ping(ypdb)
 	struct _dom_binding *ypdb;
 {
@@ -616,6 +625,7 @@ ping(ypdb)
 
 }
 
+int
 broadcast(ypdb)
 	struct _dom_binding *ypdb;
 {
@@ -676,7 +686,7 @@ broadcast(ypdb)
 		close(ypdb->dom_lockfd);
 		ypdb->dom_lockfd = -1;
 		sprintf(path, "%s/%s.%d", BINDINGDIR, ypdb->dom_domain,
-		    ypdb->dom_vers);
+		    (int)ypdb->dom_vers);
 		unlink(path);
 	}
 
@@ -752,7 +762,7 @@ broadcast(ypdb)
 	return 0;
 }
 
-/*enum clnt_stat*/
+enum clnt_stat
 handle_replies()
 {
 	char buf[1400];
@@ -802,7 +812,7 @@ try_again:
 	return RPC_SUCCESS;
 }
 
-/*enum clnt_stat*/
+enum clnt_stat
 handle_ping()
 {
 	char buf[1400];
@@ -855,6 +865,7 @@ try_again:
 /*
  * We prefer loopback connections.
  */
+void
 rpc_received(dom, raddrp, force)
 char *dom;
 struct sockaddr_in *raddrp;
@@ -921,7 +932,7 @@ int force;
 		close(ypdb->dom_lockfd);
 
 	sprintf(path, "%s/%s.%d", BINDINGDIR,
-	    ypdb->dom_domain, ypdb->dom_vers);
+	    ypdb->dom_domain, (int)ypdb->dom_vers);
 #ifdef O_SHLOCK
 	if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1) {
 		(void)mkdir(BINDINGDIR, 0755);
