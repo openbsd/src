@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.119 1999/08/04 03:31:40 jason Exp $
+#	$OpenBSD: GENERIC,v 1.120 1999/08/04 23:38:24 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -230,6 +230,7 @@ pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# sound port driver
 
 eap*	at pci? dev ? function ?		# Ensoniq AudioPCI S5016
+eso*	at pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
 sb*	at isapnp?
@@ -242,6 +243,7 @@ mpu*	at isapnp?
 
 # OPL[23] FM syntheziers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at eso?
 opl*	at sb?
 
 # MIDI support
@@ -262,6 +264,7 @@ audio*  at sp?
 audio*  at wss?
 audio*  at ym?
 audio*  at eap?
+audio*	at eso?
 audio*  at sv?
 
 bktr0   at pci? dev ? function ?
