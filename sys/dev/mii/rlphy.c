@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.14 2004/10/07 21:30:57 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.15 2005/01/10 20:33:01 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -64,10 +64,9 @@ struct cfdriver rlphy_cd = {
 
 int	rlphy_service(struct mii_softc *, struct mii_data *, int);
 void	rlphy_status(struct mii_softc *);
-void	rlphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs rlphy_funcs = {
-	rlphy_service, rlphy_status, rlphy_reset,
+	rlphy_service, rlphy_status, mii_phy_reset,
 };
 
 int
@@ -114,6 +113,8 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
+	sc->mii_flags |= MIIF_NOISOLATE;
+
 	PHY_RESET(sc);
 
 	sc->mii_capabilities =
@@ -147,12 +148,47 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		mii_phy_setmedia(sc);
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_AUTO:
+			/*
+			 * If we're already in auto mode, just return.
+			 */
+			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
+				return (0);
+			(void) mii_phy_auto(sc);
+			break;
+		case IFM_100_T4:
+			/*
+			 * XXX Not supported as a manual setting right now.
+			 */
+			return (EINVAL);
+		default:
+			/*
+			 * BMCR data is stored in the ifmedia entry.
+			 */
+			PHY_WRITE(sc, MII_ANAR,
+			    mii_anar(ife->ifm_media));
+			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
+		}
 		break;
 
 	case MII_TICK:
-		if (mii_phy_tick(sc) == EJUSTRETURN)
+		/*
+		 * Is the interface even up?
+		 */
+		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return (0);
+
+		/*
+		 * Only used for autonegotiation.
+		 */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+			break;
+
+		/*
+		 * The RealTek PHY's autonegotiation doesn't need to be
+		 * kicked; it continues in the background.
+		 */
 		break;
 
 	case MII_DOWN:
@@ -166,21 +202,6 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
 	return (0);
-}
-
-void
-rlphy_reset(struct mii_softc *sc)
-{
-	int bmcr;
-
-	/*
-	 * XXX The RTL8139 doesn't set the BMCR properly
-	 * XXX after reset, which breaks autoneg.
-	 */
-
-	bmcr = PHY_READ(sc, MII_BMCR);
-	mii_phy_reset(sc);
-	PHY_WRITE(sc, MII_BMCR, bmcr);
 }
 
 void
@@ -219,13 +240,8 @@ rlphy_status(struct mii_softc *sc)
 			return;
 		}
 
-		anlpar = PHY_READ(sc, MII_ANAR) & PHY_READ(sc, MII_ANLPAR);
-
-		/*
-		 * if anlpar is non-zero, NWay succeeded with an NWay
-		 * link partner.  Otherwise, punt.
-		 */
-		if (anlpar != 0) {
+		if ((anlpar = PHY_READ(sc, MII_ANAR) &
+		    PHY_READ(sc, MII_ANLPAR))) {
 			if (anlpar & ANLPAR_T4)
 				mii->mii_media_active |= IFM_100_T4;
 			else if (anlpar & ANLPAR_TX_FD)
@@ -241,6 +257,33 @@ rlphy_status(struct mii_softc *sc)
 			return;
 		}
 
+		/*
+		 * If the other side doesn't support NWAY, then the
+		 * best we can do is determine if we have a 10Mbps or
+		 * 100Mbps link. There's no way to know if the link 
+		 * is full or half duplex, so we default to half duplex
+		 * and hope that the user is clever enough to manually
+		 * change the media settings if we're wrong.
+		 */
+
+		/*
+		 * The RealTek PHY supports non-NWAY link speed
+		 * detection, however it does not report the link
+		 * detection results via the ANLPAR or BMSR registers.
+		 * (What? RealTek doesn't do things the way everyone
+		 * else does? I'm just shocked, shocked I tell you.)
+		 * To determine the link speed, we have to do one
+		 * of two things:
+		 *
+		 * - If this is a standalone RealTek RTL8201(L) PHY,
+		 *   we can determine the link speed by testing bit 0
+		 *   in the magic, vendor-specific register at offset
+		 *   0x19.
+		 *
+		 * - If this is a RealTek MAC with integrated PHY, we
+		 *   can test the 'SPEED10' bit of the MAC's media status
+		 *   register.
+		 */
 		if (strcmp("rl",
 		    sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name)
 		    == 0) {
