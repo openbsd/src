@@ -41,4 +41,12 @@ understand the extended disklabels with 16 partitions.  You can use Solaris
 bootblocks, but remember that OpenBSD bootblocks must be installed with
 OpenBSD installboot and Solaris bootblocks with Solaris installboot.
 
+Most of new Ultras shipped by Sun with a preinstalled Solaris have an
+initial strange setup of the boot ROM, in order to start up Solaris
+WebStart at the first boot: boot-device is set to disk:f.  Make sure
+you reset the boot device to its default value:
 
+    ok set-default boot-device
+
+will work for most systems. This can be adapted if you've multiple
+systems installed and know what you're doing.
