@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.65 2003/02/24 01:18:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.66 2003/05/20 05:05:17 tedu Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck
@@ -18,6 +18,7 @@ SUBDIR+= mount_kernfs
 # mount_mfs -> newfs
 SUBDIR+= mount_msdos	newfs_msdos fsck_msdos
 SUBDIR+= mount_nfs
+SUBDIR+= mount_ntfs
 SUBDIR+= mount_null
 SUBDIR+= mount_portal
 SUBDIR+= mount_procfs
