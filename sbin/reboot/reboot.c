@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.7 1997/04/11 09:06:42 deraadt Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.8 1997/06/22 22:19:11 downsj Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.7 1997/04/11 09:06:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.8 1997/06/22 22:19:11 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ main(argc, argv)
 {
 	register int i;
 	struct passwd *pw;
-	int ch, howto, lflag, nflag, qflag, sverrno;
+	int ch, howto, lflag, nflag, pflag, qflag, sverrno;
 	char *p, *user;
 
 	/* Get our name */
@@ -89,9 +89,12 @@ main(argc, argv)
 		howto = RB_HALT;
 	} else
 		howto = 0;
-	lflag = nflag = qflag = 0;
-	while ((ch = getopt(argc, argv, "lnqd")) != -1)
+	lflag = nflag = pflag = qflag = 0;
+	while ((ch = getopt(argc, argv, "dlnpq")) != -1)
 		switch(ch) {
+		case 'd':
+			howto |= RB_DUMP;
+			break;
 		case 'l':		/* Undocumented; used by shutdown. */
 			lflag = 1;
 			break;
@@ -99,11 +102,15 @@ main(argc, argv)
 			nflag = 1;
 			howto |= RB_NOSYNC;
 			break;
+		case 'p':
+			/* Only works if we're called as halt. */
+			if (dohalt) {
+				pflag = 1;
+				howto |= RB_POWERDOWN;
+			}
+			break;
 		case 'q':
 			qflag = 1;
-			break;
-		case 'd':
-			howto |= RB_DUMP;
 			break;
 		case '?':
 		default:
@@ -127,7 +134,12 @@ main(argc, argv)
 			    pw->pw_name : "???";
 		if (dohalt) {
 			openlog("halt", 0, LOG_AUTH | LOG_CONS);
-			syslog(LOG_CRIT, "halted by %s", user);
+			if (pflag) {
+				syslog(LOG_CRIT,
+					"halted (with powerdown) by %s", user);
+			} else {
+				syslog(LOG_CRIT, "halted by %s", user);
+			}
 		} else {
 			openlog("reboot", 0, LOG_AUTH | LOG_CONS);
 			syslog(LOG_CRIT, "rebooted by %s", user);
