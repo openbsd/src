@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.37 2002/11/21 19:34:25 jason Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.38 2003/02/21 20:33:35 jason Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -741,7 +741,6 @@ swcr_freesession(u_int64_t tid)
 	struct swcr_data *swd;
 	struct enc_xform *txf;
 	struct auth_hash *axf;
-	struct comp_algo *cxf;
 	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
 	if (sid > swcr_sesnum || swcr_sessions == NULL ||
@@ -804,10 +803,6 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_ictx)
 				free(swd->sw_ictx, M_CRYPTO_DATA);
-			break;
-
-		case CRYPTO_DEFLATE_COMP:
-			cxf = swd->sw_cxf;
 			break;
 		}
 
