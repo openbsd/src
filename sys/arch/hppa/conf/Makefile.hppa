@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.5 1999/02/25 16:42:43 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.6 1999/06/22 17:32:56 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -39,7 +39,7 @@ HOSTCC?=${CC}
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
-COPTS?=		-O2
+COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 S?=	../../../..
@@ -49,11 +49,33 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dhppa
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format -Wno-main
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float -mdisable-fpregs \
-		-mpa-risc-1-0 -mfast-indirect-calls -mportable-runtime
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-space-regs \
+		-mfast-indirect-calls -mportable-runtime -mno-space-regs
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-T ${HPPA}/conf/ld.script -Ttext 12000
-STRIPFLAGS=	-g -X -x
+LINKFLAGS=	-T ${HPPA}/conf/ld.script -Ttext 12000 -Map bsd.map
+STRIPFLAGS=	-g
+
+
+.if ${IDENT:M-DDDB} != ""
+CFLAGS+=	-fno-omit-frame-pointer
+.endif
+
+.if ${IDENT:M-DHP7[01]00_CPU} != ""
+CFLAGS+=	-mpa-risc-1-0 -mschedule=700
+.elif ${IDENT:M-DHP8*_CPU} != ""
+CFLAGS+=	-mpa-risc-2-0
+.else
+CFLAGS+=	-mpa-risc-1-1
+.endif
+
+.if ${IDENT:M-DHP*_CPU} == ${IDENT:M-HHP7100LC_CPU}
+# XXX they said gcc has bugs in 7100lc scheduling
+#CFLAGS+=	-mschedule=7100LC
+.endif
+
+.if ${IDENT:M-DFPEMUL} != ""
+CFLAGS+=	-msoft-float -mdisable-fpregs
+.endif
 
 HOSTED_CC=	${HOSTCC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -87,7 +109,7 @@ HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %CFILES
 
-#%SFILES
+%SFILES
 
 SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
@@ -129,7 +151,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 
 clean::
-	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd bsd.map bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
