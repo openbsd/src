@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.41 2004/12/13 01:47:26 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.42 2004/12/16 00:45:34 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -223,7 +223,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 
 	bcopy(sp->id, &st->id, sizeof(st->id));
 	st->creatorid = sp->creatorid;
-	st->sync_flags = sp->sync_flags | PFSTATE_FROMSYNC;
+	st->sync_flags = PFSTATE_FROMSYNC;
 
 
 	if (pf_insert_state(kif, st)) {
@@ -466,8 +466,9 @@ pfsync_input(struct mbuf *m, ...)
 					if (sc->sc_mbuf != NULL && !stale)
 						pfsync_sendout(sc);
 					stale++;
-					pfsync_pack_state(PFSYNC_ACT_UPD, st,
-					    flags);
+					if (!st->sync_flags)
+						pfsync_pack_state(
+						    PFSYNC_ACT_UPD, st, flags);
 				}
 				continue;
 			}
@@ -592,8 +593,9 @@ pfsync_input(struct mbuf *m, ...)
 					update_requested = 0;
 				}
 				stale++;
-				pfsync_pack_state(PFSYNC_ACT_UPD, st,
-				    PFSYNC_FLAG_STALE);
+				if (!st->sync_flags)
+					pfsync_pack_state(PFSYNC_ACT_UPD, st,
+					    PFSYNC_FLAG_STALE);
 				continue;
 			}
 			pf_state_peer_ntoh(&up->src, &st->src);
@@ -663,7 +665,9 @@ pfsync_input(struct mbuf *m, ...)
 					pfsyncstats.pfsyncs_badstate++;
 					continue;
 				}
-				pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+				if (!st->sync_flags)
+					pfsync_pack_state(PFSYNC_ACT_UPD,
+					    st, 0);
 			}
 		}
 		if (sc->sc_mbuf != NULL)
@@ -1074,9 +1078,8 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 		sp->allow_opts = st->allow_opts;
 		sp->timeout = st->timeout;
 
-		sp->sync_flags = st->sync_flags & PFSTATE_NOSYNC;
 		if (flags & PFSYNC_FLAG_STALE)
-			sp->sync_flags = st->sync_flags & PFSTATE_STALE;
+			sp->sync_flags |= PFSTATE_STALE;
 	}
 
 	pf_state_peer_hton(&st->src, &sp->src);
