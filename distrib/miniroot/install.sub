@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.325 2004/01/11 18:57:02 krw Exp $
+#	$OpenBSD: install.sub,v 1.326 2004/02/07 17:45:04 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -499,20 +499,15 @@ configure_all_interfaces() {
 	done
 }
 
-# Obtain and output the inet information related to the given
-# interface. Should output '<up/down> <addr> <netmask> <broadcast>'.
+# Output '<UP | DOWN> [<addr> <netmask> <rest of inet line>]'.
 #
 # $1 == interface
 inet_info() {
 	ifconfig $1 inet | sed -n '
-		1s/.*<UP,.*$/UP/p
-		1s/.*<.*>*$/DOWN/p
-		/media:/s/^.*$//
-		/status:/s/^.*$//
-		/inet/s/--> [0-9.][0-9.]*//
+		1s/.*<UP,.*/UP/p
+		1s/.*<.*/DOWN/p
 		/inet/s/netmask//
-		/inet/s/broadcast//
-		/inet/s/inet// p'
+		/inet/s/inet//p'
 }
 
 # Construct etc/dhclient.conf and issue DHCP request. Return FALSE if
