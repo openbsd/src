@@ -20,7 +20,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.12 2000/02/19 14:55:18 chris Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.13 2000/03/07 16:50:42 chris Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -72,6 +72,8 @@ ether_print(register const u_char *bp, u_int length)
 			     length);
 }
 
+static u_short extracted_ethertype;
+
 /*
  * This is the top level routine of the printer.  'p' is the points
  * to the ether header of the packet, 'tvp' is the timestamp,
@@ -85,7 +87,6 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	u_int length = h->len;
 	struct ether_header *ep;
 	u_short ether_type;
-	extern u_short extracted_ethertype;
 
 	ts_print(&h->ts);
 
@@ -152,12 +153,11 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
  * that might want to know what it is.
  */
 
-u_short	extracted_ethertype;
-
 int
 ether_encap_print(u_short ethertype, const u_char *p,
     u_int length, u_int caplen)
 {
+recurse:
 	extracted_ethertype = ethertype;
 
 	switch (ethertype) {
@@ -183,6 +183,33 @@ ether_encap_print(u_short ethertype, const u_char *p,
 
 	case ETHERTYPE_AARP:
 		aarp_print(p, length);
+		return (1);
+
+	case ETHERTYPE_VLAN:
+		printf("802.1Q vid %d pri %d%s",
+		       ntohs(*(unsigned short*)p)&0xFFF,
+		       ntohs(*(unsigned short*)p)>>13,
+		       (ntohs(*(unsigned short*)p)&0x1000) ? " cfi " : " ");
+		ethertype = ntohs(*(unsigned short*)(p+2));
+		p += 4;
+		length -= 4;
+		caplen -= 4;
+		if (ethertype > ETHERMTU) 
+			goto recurse;
+
+		extracted_ethertype = 0;
+
+		if (llc_print(p, length, caplen, p-18, p-12) == 0) {
+			/* ether_type not known, print raw packet */
+			if (!eflag)
+				ether_print(p-18, length+4);
+			if (extracted_ethertype) {
+				printf("(LLC %s) ",
+				etherproto_string(htons(extracted_ethertype)));
+			}
+			if (!xflag && !qflag)
+				default_print(p-18, caplen+4);
+		}
 		return (1);
 
 #ifdef PPP
