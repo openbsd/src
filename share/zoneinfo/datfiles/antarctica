@@ -1,5 +1,5 @@
-# $OpenBSD: antarctica,v 1.10 2001/03/28 13:33:44 millert Exp $
-# @(#)antarctica	7.20
+# $OpenBSD: antarctica,v 1.11 2002/04/04 18:51:20 millert Exp $
+# @(#)antarctica	7.22
 
 # From Paul Eggert (1999-11-15):
 # To keep things manageable, we list only locations occupied year-round; see
@@ -40,8 +40,8 @@ Rule	ArgAQ	1974	only	-	Jan	23	0:00	1:00	S
 Rule	ArgAQ	1974	only	-	May	 1	0:00	0	-
 Rule	ArgAQ	1974	1976	-	Oct	Sun<=7	0:00	1:00	S
 Rule	ArgAQ	1975	1977	-	Apr	Sun<=7	0:00	0	-
-Rule	ChileAQ	1969	1997	-	Oct	Sun>=9	0:00	1:00	S
-Rule	ChileAQ	1970	1998	-	Mar	Sun>=9	0:00	0	-
+Rule	ChileAQ	1966	1997	-	Oct	Sun>=9	0:00	1:00	S
+Rule	ChileAQ	1967	1998	-	Mar	Sun>=9	0:00	0	-
 Rule	ChileAQ	1998	only	-	Sep	27	0:00	1:00	S
 Rule	ChileAQ	1999	only	-	Apr	 4	0:00	0	-
 Rule	ChileAQ	1999	max	-	Oct	Sun>=9	0:00	1:00	S
@@ -93,11 +93,13 @@ Zone Antarctica/Mawson	0	-	zzz	1954 Feb 13
 # Brazil - year-round base
 # Ferraz, King George Island, since 1983/4
 
-# Chile - year-round bases
+# Chile - year-round bases and towns
 # Escudero, South Shetland Is, -621157-0585735, since 1994
-# Frei, King George Is, -6214-05848, since 1969
+# Frei, King George Island, -6214-05848, since 1969-03-07
 # O'Higgins, Antarctic Peninsula, -6319-05704, since 1948-02
 # Prat, -6230-05941
+# Villa Las Estrellas (a town), King George Island, since 1984-04-09
+# These locations have always used Santiago time; use TZ='America/Santiago'.
 
 # China - year-round bases
 # Great Wall, King George Island, since 1985-02-20
@@ -201,25 +203,36 @@ Rule	NZAQ	1990	max	-	Mar	Sun>=15	2:00s	0	S
 # Russia - year-round bases
 # Bellingshausen, King George Island, -621159-0585337, since 1968-02-22
 # Mirny, Davis coast, -6633+09301, since 1956-02
-# Molodezhnaya
-# Novolazarevskaya
+# Molodezhnaya, Alasheyev Bay, year-round from 1962-02 to 1999-07-01
+# Novolazarevskaya, Queen Maud Land, -7046+01150,
+#	year-round from 1960/61 to 1992
 
-# Vostok, since 1957-12-16
+# Vostok, since 1957-12-16, temporarily closed 1994-02/1994-11
 # <a href="http://quest.arc.nasa.gov/antarctica/QA/computers/Directions,Time,ZIP">
 # From Craig Mundell (1994-12-15)</a>:
 # Vostok, which is one of the Russian stations, is set on the same
 # time as Moscow, Russia.
 #
-# From Paul Eggert (2001-03-03):
-# Today I talked with a neighbor Robert Lee Hotz, a neighbor who
-# recently returned from Vostok.  He said that the Americans have a
-# substation next to Vostok that keeps New Zealand time.
-# He thought the Russians still use Moscow time, but wasn't sure.
+# From Lee Hotz (2001-03-08):
+# I queried the folks at Columbia who spent the summer at Vostok and this is
+# what they had to say about time there:
+# ``in the US Camp (East Camp) we have been on New Zealand (McMurdo)
+# time, which is 12 hours ahead of GMT. The Russian Station Vostok was
+# 6 hours behind that (although only 2 miles away, i.e. 6 hours ahead
+# of GMT). This is a time zone I think two hours east of Moscow. The
+# natural time zone is in between the two: 8 hours ahead of GMT.''
+#
+# From Paul Eggert (2001-05-04):
+# This seems to be hopelessly confusing, so I asked Lee Hotz about it
+# in person.  He said that some Antartic locations set their local
+# time so that noon is the warmest part of the day, and that this
+# changes during the year and does not necessarily correspond to mean
+# solar noon.  So the Vostok time might have been whatever the clocks
+# happened to be during their visit.  So we still don't really know what time
+# it is at Vostok.  But we'll guess UTC+6.
 #
 Zone Antarctica/Vostok	0	-	zzz	1957 Dec 16
-			3:00	RussAQ	MSK/MSD	1991 Mar 31 2:00s
-			2:00	RussAQ	EE%sT	1992 Jan 19 2:00s
-			3:00	RussAQ	MSK/MSD
+			6:00	-	VOST	# Vostok time
 
 # S Africa - year-round bases
 # Marion Island
@@ -232,14 +245,16 @@ Zone Antarctica/Vostok	0	-	zzz	1957 Dec 16
 #	scientific station from 1903
 #	whaling station at Signy I 1920/1926
 # South Shetland Islands
-#	whaling station at Deception I 1912/1931
-#	scientific station from 1943;
-#	previously sealers and a scientific expedition wintered by accident,
-#	and a garrison was deployed briefly
 #
 # year-round bases
 # Bird Island, South Georgia, -5400-03803, since 1983
-# Halley, Coates Land, -7535-2619, since 1956-01-06
+# Deception Island, -6259-06034, whaling station 1912/1931,
+#	scientific station 1943/1967,
+#	previously sealers and a scientific expedition wintered by accident,
+#	and a garrison was deployed briefly
+# Halley, Coates Land, -7535-02604, since 1956-01-06
+#	Halley is on a moving ice shelf and is periodically relocated
+#	so that it is never more than 10km from its nominal location.
 # Rothera, Adelaide Island, -6734-6808, since 1976-12-01
 
 # Uruguay - year round base
@@ -263,12 +278,13 @@ Zone Antarctica/Palmer	0	-	zzz	1965
 			-4:00	ChileAQ	CL%sT
 #
 #
-# McMurdo, Ross Island, since 1956
+# McMurdo, Ross Island, since 1955-12
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Antarctica/McMurdo	0	-	zzz	1956
 			12:00	NZAQ	NZ%sT
 #
-# Amundsen-Scott, South Pole, since 1957-01-23
+# Amundsen-Scott, South Pole, continuously occupied since 1956-11-20
+#
 # From Paul Eggert (1996-09-03):
 # Normally it wouldn't have a separate entry, since it's like the
 # larger Antarctica/McMurdo since 1970, but it's too famous to omit.
