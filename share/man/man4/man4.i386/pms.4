@@ -1,5 +1,5 @@
 .\"
-.\"	$OpenBSD: pms.4,v 1.5 1998/10/11 03:06:52 downsj Exp $
+.\"	$OpenBSD: pms.4,v 1.6 1999/10/10 13:16:21 matthieu Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 12, 1996
+.Dd October 10, 1999
 .Dt PMS 4 i386
 .Os
 .Sh NAME
@@ -39,7 +39,8 @@
 PS/2 auxiliary port mouse driver
 .Sh SYNOPSIS
 .\" XXX this is awful hackery to get it to work right... -- cgd
-.Cd "pms0 at isa? port" \&"IO_KBD\&" irq 12
+.\".Cd "pms0 at isa? port" \&"IO_KBD\&" irq 12
+.Cd "pms0 at pckbd? irq 12"
 .Sh DESCRIPTION
 This driver provides an interface to a PS/2 auxiliary port mice.  The driver
 offers two modes of operation, both a raw and the old style translated
@@ -72,7 +73,7 @@ puts it into translated (or cooked) mode.  If the mode of the
 .Nm
 device driver changes, all pending but not yet read input is flushed.
 .Pp
-The
+In translated mode, the
 .Nm
 driver also supports
 .Dq Intellimouse
@@ -81,11 +82,25 @@ be compiled with
 .Pp
 .Cd option INTELLIMOUSE
 .Pp
-specified in the config file, and the X server should be configured to use
+specified in the config file, and the X server can be configured to use
 the translated mode of the driver.  (The output of the translated mode is
 .Em Busmouse
 compatible.)  Otherwise, the mouse works as a normal, two button, PS/2
 device.
+.Pp
+.Sh NOTES
+The translated mode of this driver is being deprecated. The raw device 
+.Pa /dev/psm0
+should be used in
+.Pa /etc/XF86Config
+with the 
+.Em PS/2
+protocol, or one of its variants (
+.Em IMPS/2
+for MS Intellimouse,
+.Em ThinkingMousePS/2
+for Kensington Thinking Mouse).
+.Pp
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/psm0
@@ -95,4 +110,5 @@ PS/2 mouse device file, defaulting to translating mode
 .El
 .Sh SEE ALSO
 .Xr lms 4 ,
-.Xr mms 4
+.Xr mms 4 ,
+.Xr XF86Config 4
