@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.32 2001/12/02 04:03:53 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.33 2002/03/15 21:49:44 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -126,16 +126,16 @@ file	arch/hppa/gsc/gscbus.c		gsc
 
 # com and lpt are both on WD 16C552
 attach	com at gsc with com_gsc
-file	arch/hppa/gsc/com_gsc.c		com
+file	arch/hppa/gsc/com_gsc.c		com_gsc
 
 attach	lpt at gsc with lpt_gsc
-file	arch/hppa/gsc/lpt_gsc.c		lpt
+file	arch/hppa/gsc/lpt_gsc.c		lpt_gsc
 
 #include "dev/fdc/files.fdc"
 #major	{ fd = 7 }
 #major	{ ft = 8 }
 #attach	fdc at gsc with fdc_gsc
-#file	arch/hppa/gsc/fdc_gsc.c		fdc
+#file	arch/hppa/gsc/fdc_gsc.c		fdc_gsc
 
 attach	ie at gsc with ie_gsc
 file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
