@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.496 2002/03/26 16:38:16 mickey Exp $
+	$OpenBSD: pcidevs,v 1.497 2002/03/26 20:37:07 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -548,7 +548,7 @@ vendor DELTA		0x1500	Delta
 vendor TOPIC		0x151f	Topic/SmartLink
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
-vendor COREGA		0x15e8	Corega
+vendor NDC		0x15e8	National Datacomm Corp
 vendor SYBA		0x1592	Syba
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
@@ -1039,9 +1039,6 @@ product CONEXANT SOFTK56_PCI	0x2443	SoftK56 PCI
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB
 product CONTAQ 82C693		0xc693	CY82C693U PCI-ISA
 
-/* Corega products */
-product COREGA CGWLPCIA11 	0x0130	WLAN 11Mb
-
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
 
@@ -1531,6 +1528,10 @@ product MYLEX ACCELERAID	0x0050	AcceleRAID
 
 /* Mutech products */
 product MUTECH MV1000		0x0001	MV1000
+
+/* National Datacomm Corp products */
+product NDC NCP130 		0x0130	NCP130
+product NDC NCP130A2 		0x0131	NCP130 Rev A2
 
 /* National Semiconductor products */
 product NS DP83810		0x0001	DP83810 10/100
