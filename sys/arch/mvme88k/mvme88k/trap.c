@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.55 2003/10/09 16:30:58 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.56 2003/10/23 19:06:54 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -648,10 +648,10 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	unsigned nss, fault_addr;
 	struct vmspace *vm;
 	union sigval sv;
+	int result;
 #ifdef DDB
         int s; /* IPL */
 #endif
-	int result;
 	int sig = 0;
 	unsigned pc = PC_REGS(frame);  /* get program counter (exip) */
 	pt_entry_t *pte;
@@ -659,6 +659,7 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	extern struct vm_map *kernel_map;
 	extern unsigned guarded_access_start;
 	extern unsigned guarded_access_end;
+	extern unsigned guarded_access_bad;
 	extern pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
 	uvmexp.traps++;
@@ -710,21 +711,21 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	case T_KDB_TRACE:
 		s = splhigh();
 		db_enable_interrupt();
-		ddb_break_trap(T_KDB_TRACE,(db_regs_t*)frame);
+		ddb_break_trap(T_KDB_TRACE, (db_regs_t*)frame);
 		db_disable_interrupt();
 		splx(s);
 		return;
 	case T_KDB_BREAK:
 		s = splhigh();
 		db_enable_interrupt();
-		ddb_break_trap(T_KDB_BREAK,(db_regs_t*)frame);
+		ddb_break_trap(T_KDB_BREAK, (db_regs_t*)frame);
 		db_disable_interrupt();
 		splx(s);
 		return;
 	case T_KDB_ENTRY:
 		s = splhigh();
 		db_enable_interrupt();
-		ddb_entry_trap(T_KDB_ENTRY,(db_regs_t*)frame);
+		ddb_entry_trap(T_KDB_ENTRY, (db_regs_t*)frame);
 		db_disable_interrupt();
 		if (frame->enip) {
 			frame->exip = frame->enip;
@@ -809,6 +810,7 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 			      (unsigned)&guarded_access_start &&
 			    (frame->exip & XIP_ADDR) <=
 			      (unsigned)&guarded_access_end) {
+				frame->exip = (unsigned)&guarded_access_bad;
 				return;
 			}
 		}
