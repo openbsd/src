@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -87,7 +87,7 @@ hex()
 
 alph2d()
 {
-	local t="$1"  
+	local t="$1"
 	local p="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	local sub=${p%${t}*}
 	echo ${#sub}

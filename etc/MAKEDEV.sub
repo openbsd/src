@@ -1,4 +1,4 @@
-dnl	$OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp $
+dnl	$OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp $
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -26,7 +26,7 @@ changequote(`{-', `-}')dnl
 dnl
 dnl o Next, change the comment character to make shell parameter
 dnl   substitution possible
-dnl   
+dnl
 changecom(`/*', `*/')dnl
 dnl
 dnl o version info must be stripped of $ so we can say 'generated from' below
@@ -71,8 +71,8 @@ dnl store a version string for 'this' file
 dnl
 dnl vers ( uniqueidstring, versionstring, subdir )
 dnl
-dnl example1: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp $-})
-dnl example2: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp $-}, etc.MACHINE)
+dnl example1: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp $-})
+dnl example2: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp $-}, etc.MACHINE)
 dnl
 dnl if subdir is defined, prepend it to the filename in the version string
 dnl
@@ -83,7 +83,7 @@ define({-vers-},
 dnl
 dnl Version info for this file:
 dnl
-vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp $-})dnl
+vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp $-})dnl
 dnl
 dnl
 define({-_addsubdir-},

@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.17 2004/04/11 18:05:23 millert Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.18 2005/02/07 06:14:18 david Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -102,8 +102,8 @@ adb)
 	;;
 
 asc*)
-        M asc$U c 36 $U
-        ;;
+	M asc$U c 36 $U
+	;;
 dnl
 dnl *** mac68k specific targets
 dnl
