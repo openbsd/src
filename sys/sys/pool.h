@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.13 2002/11/24 18:43:33 pb Exp $	*/
+/*	$OpenBSD: pool.h,v 1.14 2002/12/20 07:48:01 art Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -124,13 +124,14 @@ struct pool {
 	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
-#define PR_MALLOCOK	1
-#define	PR_NOWAIT	0		/* for symmetry */
-#define PR_WAITOK	2
-#define PR_WANTED	4
-#define PR_PHINPAGE	64
-#define PR_LOGGING	128
-#define PR_LIMITFAIL	256	/* even if waiting, fail if we hit limit */
+#define PR_MALLOCOK	0x01
+#define	PR_NOWAIT	0x00		/* for symmetry */
+#define PR_WAITOK	0x02
+#define PR_WANTED	0x04
+#define PR_PHINPAGE	0x08
+#define PR_LOGGING	0x10
+#define PR_LIMITFAIL	0x20	/* even if waiting, fail if we hit limit */
+#define PR_DEBUG	0x40
 
 	/*
 	 * `pr_slock' protects the pool's data structures when removing

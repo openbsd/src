@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.37 2002/12/11 06:20:31 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.38 2002/12/20 07:48:00 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -388,6 +388,10 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		flags |= PR_LOGGING;
 #endif
 
+#ifdef MALLOC_DEBUG
+	if ((flags & PR_DEBUG) && (ioff != 0 || align != 0))
+		flags &= ~PR_DEBUG;
+#endif
 	/*
 	 * Check arguments and construct default values.
 	 */
@@ -625,6 +629,8 @@ pool_get(struct pool *pp, int flags)
 	void *v;
 
 #ifdef DIAGNOSTIC
+	if ((flags & PR_WAITOK) != 0)
+		splassert(IPL_NONE);
 	if (__predict_false(curproc == NULL && /* doing_shutdown == 0 && XXX*/
 			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: %s:must have NOWAIT", pp->pr_wchan);
@@ -634,6 +640,17 @@ pool_get(struct pool *pp, int flags)
 		simple_lock_only_held(NULL, "pool_get(PR_WAITOK)");
 #endif
 #endif /* DIAGNOSTIC */
+
+#ifdef MALLOC_DEBUG
+	if (pp->pr_roflags & PR_DEBUG) {
+		void *addr;
+
+		addr = NULL;
+		debug_malloc(pp->pr_size, M_DEBUG,
+		    (flags & PR_WAITOK) ? M_WAITOK : M_NOWAIT, &addr);
+		return (addr);
+	}
+#endif
 
 	simple_lock(&pp->pr_slock);
 	pr_enter(pp, file, line);
@@ -865,6 +882,13 @@ pool_do_put(struct pool *pp, void *v)
 	struct pool_item_header *ph;
 	caddr_t page;
 	int s;
+
+#ifdef MALLOC_DEBUG
+	if (pp->pr_roflags & PR_DEBUG) {
+		debug_free(v, M_DEBUG);
+		return;
+	}
+#endif
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
 
@@ -1115,6 +1139,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 
 	while (n--) {
 		pi = (struct pool_item *)cp;
+
+		KASSERT(((((vaddr_t)pi) + ioff) & (align - 1)) == 0);
 
 		/* Insert on page list */
 		TAILQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
@@ -2048,6 +2074,8 @@ pool_page_alloc_nointr(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
+	splassert(IPL_NONE);
+
 	return ((void *)uvm_km_alloc_poolpage1(kernel_map, uvm.kernel_object,
 	    waitok));
 }
@@ -2055,5 +2083,7 @@ pool_page_alloc_nointr(struct pool *pp, int flags)
 void
 pool_page_free_nointr(struct pool *pp, void *v)
 {
+	splassert(IPL_NONE);
+
 	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
 }
