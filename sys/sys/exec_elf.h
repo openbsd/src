@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.22 2001/01/16 15:44:36 art Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.23 2001/01/16 18:04:19 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -500,8 +500,6 @@ struct elf_args {
 #define ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
-
-#include <machine/elf_machdep.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define Elf_Ehdr	Elf32_Ehdr
