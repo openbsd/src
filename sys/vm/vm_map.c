@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.9 1997/11/13 18:35:36 deraadt Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.10 1998/02/02 18:39:49 downsj Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_map.c	8.9 (Berkeley) 5/17/95
+ *	@(#)vm_map.c	8.3 (Berkeley) 1/12/94
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -70,11 +70,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+#include <vm/vm_object.h>
 
 /*
  *	Virtual memory maps provide for the mapping, protection,
@@ -139,6 +142,14 @@ vm_size_t	kentry_data_size;
 vm_map_entry_t	kentry_free;
 vm_map_t	kmap_free;
 
+static int kentry_count;
+static vm_offset_t mapvm_start, mapvm, mapvmmax;
+static int mapvmpgcnt;
+
+static struct vm_map_entry *mappool;
+static int mappoolcnt;
+#define KENTRY_LOW_WATER 128
+
 static void	_vm_map_clip_end __P((vm_map_t, vm_map_entry_t, vm_offset_t));
 static void	_vm_map_clip_start __P((vm_map_t, vm_map_entry_t, vm_offset_t));
 
@@ -166,7 +177,7 @@ vm_map_startup()
 	 * with the rest.
 	 */
 	kentry_free = mep = (vm_map_entry_t) mp;
-	i = (kentry_data_size - MAX_KMAP * sizeof *mp) / sizeof *mep;
+	kentry_count = i = (kentry_data_size - MAX_KMAP * sizeof *mp) / sizeof *mep;
 	while (--i > 0) {
 		mep->next = mep + 1;
 		mep++;
@@ -186,6 +197,14 @@ vmspace_alloc(min, max, pageable)
 {
 	register struct vmspace *vm;
 
+	if (mapvmpgcnt == 0 && mapvm == 0) {
+		mapvmpgcnt = (vm_page_count * sizeof(struct vm_map_entry) + PAGE_SIZE - 1) / PAGE_SIZE;
+		mapvm_start = mapvm = kmem_alloc_pageable(kernel_map,
+			mapvmpgcnt * PAGE_SIZE);
+		mapvmmax = mapvm_start + mapvmpgcnt * PAGE_SIZE;
+		if (!mapvm)
+			mapvmpgcnt = 0;
+	}
 	MALLOC(vm, struct vmspace *, sizeof(struct vmspace), M_VMMAP, M_WAITOK);
 	bzero(vm, (caddr_t) &vm->vm_startcopy - (caddr_t) vm);
 	vm_map_init(&vm->vm_map, min, max, pageable);
@@ -266,7 +285,7 @@ vm_map_init(map, min, max, pageable)
 	map->first_free = &map->header;
 	map->hint = &map->header;
 	map->timestamp = 0;
-	lockinit(&map->lock, PVM, "thrd_sleep", 0, 0);
+	lock_init(&map->lock, TRUE);
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
 }
@@ -282,25 +301,67 @@ vm_map_entry_create(map)
 	vm_map_t	map;
 {
 	vm_map_entry_t	entry;
-#ifdef DEBUG
-	extern vm_map_t		kernel_map, kmem_map, mb_map, pager_map;
-	boolean_t		isspecial;
+	int i, s;
 
-	isspecial = (map == kernel_map || map == kmem_map ||
-		     map == mb_map || map == pager_map);
-	if ((isspecial && map->entries_pageable) ||
-	    (!isspecial && !map->entries_pageable))
-		panic("vm_map_entry_create: bogus map");
+	/*
+	 * This is a *very* nasty (and sort of incomplete) hack!!!!
+	 */
+	if (kentry_count < KENTRY_LOW_WATER) {
+		s = splimp();
+		if (mapvmpgcnt && mapvm) {
+			vm_page_t m;
+
+			m = vm_page_alloc(kernel_object,
+			    mapvm - VM_MIN_KERNEL_ADDRESS);
+
+			if (m) {
+				int newentries;
+
+				newentries = (PAGE_SIZE / sizeof(struct vm_map_entry));
+#ifdef DIAGNOSTIC
+				printf("vm_map_entry_create: allocated %d new entries.\n", newentries);
 #endif
-	if (map->entries_pageable) {
-		MALLOC(entry, vm_map_entry_t, sizeof(struct vm_map_entry),
-		       M_VMMAPENT, M_WAITOK);
-	} else {
-		if ((entry = kentry_free) != NULL)
-			kentry_free = kentry_free->next;
+
+				/* XXX */
+				vm_page_wire(m);
+				PAGE_WAKEUP(m);
+				pmap_enter(pmap_kernel(), mapvm,
+				    VM_PAGE_TO_PHYS(m), 
+				    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+
+				entry = (vm_map_entry_t) mapvm;
+				mapvm += PAGE_SIZE;
+				--mapvmpgcnt;
+
+				for (i = 0; i < newentries; i++) {
+					vm_map_entry_dispose(kernel_map, entry);
+					entry++;
+				}
+			}
+		}
+		splx(s);
 	}
-	if (entry == NULL)
-		panic("vm_map_entry_create: out of map entries");
+
+	if (map->entries_pageable) {
+		if ((entry = mappool) != NULL) {
+			mappool = mappool->next;
+			--mappoolcnt;
+		} else {
+			MALLOC(entry, vm_map_entry_t,
+			    sizeof(struct vm_map_entry), M_VMMAPENT, M_WAITOK);
+			if (entry == NULL)
+				panic("vm_map_entry_create: couldn't alloc pageable map entry");
+		}
+	} else {
+		s = splimp();
+		if ((entry = kentry_free) != NULL) {
+			kentry_free = kentry_free->next;
+			--kentry_count;
+		}
+		if (entry == NULL)
+			panic("vm_map_entry_create: out of map entries for kernel");
+		splx(s);
+	}
 
 	return(entry);
 }
@@ -315,21 +376,18 @@ vm_map_entry_dispose(map, entry)
 	vm_map_t	map;
 	vm_map_entry_t	entry;
 {
-#ifdef DEBUG
-	extern vm_map_t		kernel_map, kmem_map, mb_map, pager_map;
-	boolean_t		isspecial;
+	int s;
 
-	isspecial = (map == kernel_map || map == kmem_map ||
-		     map == mb_map || map == pager_map);
-	if ((isspecial && map->entries_pageable) ||
-	    (!isspecial && !map->entries_pageable))
-		panic("vm_map_entry_dispose: bogus map");
-#endif
 	if (map->entries_pageable) {
-		FREE(entry, M_VMMAPENT);
+		entry->next = mappool;
+		mappool = entry;
+		++mappoolcnt;
 	} else {
+		s = splimp();
 		entry->next = kentry_free;
 		kentry_free = entry;
+		++kentry_count;
+		splx(s);
 	}
 }
 
@@ -400,13 +458,11 @@ vm_map_deallocate(map)
 	 *	to it.
 	 */
 
-	vm_map_lock_drain_interlock(map);
+	vm_map_lock(map);
 
 	(void) vm_map_delete(map, map->min_offset, map->max_offset);
 
 	pmap_destroy(map->pmap);
-
-	vm_map_unlock(map);
 
 	FREE(map, M_VMMAP);
 }
@@ -1196,7 +1252,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		 *	If a region becomes completely unwired,
 		 *	unwire its physical pages and mappings.
 		 */
-		vm_map_set_recursive(&map->lock);
+		lock_set_recursive(&map->lock);
 
 		entry = start_entry;
 		while ((entry != &map->header) && (entry->start < end)) {
@@ -1208,7 +1264,7 @@ vm_map_pageable(map, start, end, new_pageable)
 
 		    entry = entry->next;
 		}
-		vm_map_clear_recursive(&map->lock);
+		lock_clear_recursive(&map->lock);
 	}
 
 	else {
@@ -1317,8 +1373,8 @@ vm_map_pageable(map, start, end, new_pageable)
 		    vm_map_unlock(map);		/* trust me ... */
 		}
 		else {
-		    vm_map_set_recursive(&map->lock);
-		    lockmgr(&map->lock, LK_DOWNGRADE, (void *)0, curproc);
+		    lock_set_recursive(&map->lock);
+		    lock_write_to_read(&map->lock);
 		}
 
 		rv = 0;
@@ -1349,7 +1405,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		    vm_map_lock(map);
 		}
 		else {
-		    vm_map_clear_recursive(&map->lock);
+		    lock_clear_recursive(&map->lock);
 		}
 		if (rv) {
 		    vm_map_unlock(map);
@@ -1394,8 +1450,7 @@ vm_map_clean(map, start, end, syncio, invalidate)
 	}
 
 	/*
-	 * Make a first pass to check for holes, and (if invalidating)
-	 * wired pages.
+	 * Make a first pass to check for holes.
 	 */
 	for (current = entry; current->start < end; current = current->next) {
 		if (current->is_sub_map) {
@@ -1407,10 +1462,6 @@ vm_map_clean(map, start, end, syncio, invalidate)
 		     current->end != current->next->start)) {
 			vm_map_unlock_read(map);
 			return(KERN_INVALID_ADDRESS);
-		}
-		if (current->wired_count) {
-			vm_map_unlock_read(map);
-			return(KERN_PAGES_LOCKED);
 		}
 	}
 
@@ -2008,7 +2059,7 @@ vm_map_copy(dst_map, src_map,
 			else {
 			 	new_src_map = src_map;
 				new_src_start = src_entry->start;
-				vm_map_set_recursive(&src_map->lock);
+				lock_set_recursive(&src_map->lock);
 			}
 
 			if (dst_entry->is_a_map) {
@@ -2046,7 +2097,7 @@ vm_map_copy(dst_map, src_map,
 			else {
 			 	new_dst_map = dst_map;
 				new_dst_start = dst_entry->start;
-				vm_map_set_recursive(&dst_map->lock);
+				lock_set_recursive(&dst_map->lock);
 			}
 
 			/*
@@ -2058,9 +2109,9 @@ vm_map_copy(dst_map, src_map,
 				FALSE, FALSE);
 
 			if (dst_map == new_dst_map)
-				vm_map_clear_recursive(&dst_map->lock);
+				lock_clear_recursive(&dst_map->lock);
 			if (src_map == new_src_map)
-				vm_map_clear_recursive(&src_map->lock);
+				lock_clear_recursive(&src_map->lock);
 		}
 
 		/*
@@ -2429,8 +2480,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 			 *	share map to the new object.
 			 */
 
-			if (lockmgr(&share_map->lock, LK_EXCLUPGRADE,
-				    (void *)0, curproc)) {
+			if (lock_read_to_write(&share_map->lock)) {
 				if (share_map != map)
 					vm_map_unlock_read(map);
 				goto RetryLookup;
@@ -2443,8 +2493,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 				
 			entry->needs_copy = FALSE;
 			
-			lockmgr(&share_map->lock, LK_DOWNGRADE,
-				(void *)0, curproc);
+			lock_write_to_read(&share_map->lock);
 		}
 		else {
 			/*
@@ -2461,8 +2510,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 	 */
 	if (entry->object.vm_object == NULL) {
 
-		if (lockmgr(&share_map->lock, LK_EXCLUPGRADE,
-				(void *)0, curproc)) {
+		if (lock_read_to_write(&share_map->lock)) {
 			if (share_map != map)
 				vm_map_unlock_read(map);
 			goto RetryLookup;
@@ -2471,7 +2519,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 		entry->object.vm_object = vm_object_allocate(
 					(vm_size_t)(entry->end - entry->start));
 		entry->offset = 0;
-		lockmgr(&share_map->lock, LK_DOWNGRADE, (void *)0, curproc);
+		lock_write_to_read(&share_map->lock);
 	}
 
 	/*
