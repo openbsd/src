@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.7 2004/05/05 01:20:12 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.8 2004/07/29 22:12:15 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -26,6 +26,33 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * The CARP header layout is as follows:
+ *
+ *     0                   1                   2                   3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |Version| Type  | VirtualHostID |    AdvSkew    |    Auth Len   |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |   Reserved    |     AdvBase   |          Checksum             |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                         Counter (1)                           |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                         Counter (2)                           |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                        SHA-1 HMAC (1)                         |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                        SHA-1 HMAC (2)                         |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                        SHA-1 HMAC (3)                         |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                        SHA-1 HMAC (4)                         |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                        SHA-1 HMAC (5)                         |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+ */
+
 struct carp_header {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_int8_t	carp_type:4,
@@ -42,7 +69,7 @@ struct carp_header {
 	u_int8_t	carp_advbase;	/* advertisement interval */
 	u_int16_t	carp_cksum;
 	u_int32_t	carp_counter[2];
-	unsigned char	carp_md[20];	/* sha1 message digest */
+	unsigned char	carp_md[20];	/* SHA1 HMAC */
 } __packed;
 
 #define	CARP_DFLTTL		255
