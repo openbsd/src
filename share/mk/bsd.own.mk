@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.46 2001/06/13 19:02:14 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.47 2001/06/26 19:02:55 hin Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -20,7 +20,7 @@ SKEY?=		yes
 # Set `KERBEROS' to `yes' to build with support for Kerberos authentication.
 KERBEROS?=	yes
 # Set `KERBEROS5' to `yes' to build with support for Kerberos5 authentication.
-KERBEROS5?=	no
+KERBEROS5?=	yes
 # Set `YP' to `yes' to build with support for NIS/YP.
 YP?=		yes
 # Set `TCP_WRAPPERS' to `yes' to build certain networking daemons with
