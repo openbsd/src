@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 1997/10/14 17:11:10 pefo Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.5 1998/04/06 20:22:23 pefo Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /* 
@@ -36,7 +36,6 @@
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
-#include <vm/lock.h>
 #include <machine/trap.h>
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
