@@ -37,8 +37,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <syslog.h>
 #include <stdarg.h>
+#include <syslog.h>
 #include <ssl/objects.h>
 #include <ssl/engine.h>
 #include <ssl/evp.h>
@@ -361,7 +361,6 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	struct session_op *sess = &state->d_sess;
 	void *iiv;
 	unsigned char save_iv[EVP_MAX_IV_LENGTH];
-	struct syslog_data sd = SYSLOG_DATA_INIT;
 
 	if (state->d_fd < 0)
 		return (0);
@@ -394,7 +393,6 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		/* XXX need better errror handling
 		 * this can fail for a number of different reasons.
 		 */
-		syslog_r(LOG_ERR, &sd, "CIOCCRYPT failed (%m)");
 		return (0);
 	}
 
@@ -414,7 +412,6 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
 	struct dev_crypto_state *state = ctx->cipher_data;
 	struct session_op *sess = &state->d_sess;
-	struct syslog_data sd = SYSLOG_DATA_INIT;
 	int cipher;
 
 	if ((cipher = cipher_nid_to_cryptodev(ctx->cipher->nid)) == NID_undef)
@@ -436,8 +433,6 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	sess->cipher = cipher;
 
 	if (ioctl(state->d_fd, CIOCGSESSION, sess) == -1) {
-		syslog_r(LOG_ERR, &sd, "CIOCGSESSION failed (%m)");
-
 		close(state->d_fd);
 		state->d_fd = -1;
 		return (0);
@@ -455,7 +450,6 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 	int ret = 0;
 	struct dev_crypto_state *state = ctx->cipher_data;
 	struct session_op *sess = &state->d_sess;
-	struct syslog_data sd = SYSLOG_DATA_INIT;
 
 	if (state->d_fd < 0)
 		return (0);
@@ -472,7 +466,6 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 	 */
 
 	if (ioctl(state->d_fd, CIOCFSESSION, &sess->ses) == -1) {
-		syslog_r(LOG_ERR, &sd, "CIOCFSESSION failed (%m)");
 		ret = 0;
 	} else {
 		ret = 1;
@@ -1052,7 +1045,6 @@ void
 ENGINE_load_cryptodev(void)
 {
 	ENGINE *engine = ENGINE_new();
-	struct syslog_data sd = SYSLOG_DATA_INIT;
 	int fd;
 
 	if (engine == NULL)
@@ -1064,7 +1056,6 @@ ENGINE_load_cryptodev(void)
 	 * find out what asymmetric crypto algorithms we support
 	 */
 	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
-		syslog_r(LOG_ERR, &sd, "CIOCASYMFEAT failed (%m)");
 		close(fd);
 		return;
 	}
