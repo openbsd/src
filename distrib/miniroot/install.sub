@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.311 2003/07/03 13:42:03 krw Exp $
+#	$OpenBSD: install.sub,v 1.312 2003/07/03 15:19:01 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -239,7 +239,7 @@ ask_which () {
 	local _name=$1 _query=$2 _devs=$3 _defdev=$4
 	
 	set -- $_devs
-	if [[ $# < 1 ]]; then
+	if [[ $# -lt 1 ]]; then
 		echo "Done - no available ${_name}s found."
 		resp=done
 		return
@@ -302,7 +302,7 @@ rmel() {
 bsort() {
 	local _l _a=$1 _b
 
-	[[ $# > 0 ]] || return
+	[[ $# -gt 0 ]] || return
 
 	shift
 	for _b; do
@@ -419,7 +419,7 @@ fi
 	SWAPDEV=
 
 	set -- $DKDEVS
-	[[ $# > 1 ]] && _defdsk=done
+	[[ $# -gt 1 ]] && _defdsk=done
 
 	ask_which "disk" "is the root disk?" "$DKDEVS" "$_defdsk"
 	[[ $resp == done ]] && exit
@@ -642,7 +642,7 @@ __EOT
 isalphanumeric() {
 	local _n
 	_n=$1
-	while [ ${#_n} != 0 ]; do
+	while [[ ${#_n} -ne 0 ]]; do
 		case $_n in
 		[A-Za-z0-9]*)	;;
 		*)		return 1;;
@@ -922,7 +922,7 @@ install_url() {
 			# as a line number in $SERVERLIST.
 			[[ -s $SERVERLIST ]] || continue
 			set -- $(sed -ne "${resp}p" $SERVERLIST)
-			[[ $# < 1 ]] && { echo "There is no line $resp." ; continue ; }
+			[[ $# -lt 1 ]] && { echo "There is no line $resp." ; continue ; }
 			echo "Using	$*"
 			eval _${_url_type}_server_ip=${1%%/*}
 			eval _${_url_type}_server_dir=${1#*/}/$SETDIR

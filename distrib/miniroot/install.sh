@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.133 2003/07/02 16:42:19 krw Exp $
+#	$OpenBSD: install.sh,v 1.134 2003/07/03 15:19:01 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -174,7 +174,7 @@ if [ ! -f /etc/fstab ]; then
 		fi
 
 		# If there are no BSD partitions, or $DISK has been reset, go on to next disk.
-		[[ ${#_partitions[*]} > 0 && -n $DISK ]] || continue
+		[[ ${#_partitions[*]} -gt 0 && -n $DISK ]] || continue
 
 		# Now prompt the user for the mount points. Loop until "done" entered.
 		_i=0
