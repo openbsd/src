@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.h,v 1.4 1997/10/11 01:21:17 angelos Exp $	*/
+/*	$OpenBSD: natm.h,v 1.5 1997/10/11 01:32:08 angelos Exp $	*/
 
 /*
  *
@@ -138,8 +138,13 @@ void	npcb_free __P((struct natmpcb *, int));
 struct	natmpcb *npcb_add __P((struct natmpcb *, struct ifnet *, int, int));
 
 /* natm.c */
+#if defined(__NetBSD__)
+int	natm_usrreq __P((struct socket *, int, struct mbuf *,
+                             struct mbuf *, struct mbuf *, struct proc *));
+#elif defined(__OpenBSD__) || defined(FreeBSD)
 int	natm_usrreq __P((struct socket *, int, struct mbuf *,
                              struct mbuf *, struct mbuf *));
+#endif
 int	natm0_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	natm5_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	natmintr __P((void));
