@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.69 2003/08/25 08:18:54 fgsch Exp $	*/
+/*	$OpenBSD: if.c,v 1.70 2003/08/27 00:33:34 henric Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -108,8 +108,6 @@
 void	if_attachsetup(struct ifnet *);
 void	if_attachdomain1(struct ifnet *);
 int	if_detach_rtdelete(struct radix_node *, void *);
-int	if_mark_ignore(struct radix_node *, void *);
-int	if_mark_unignore(struct radix_node *, void *);
 
 int	ifqmaxlen = IFQ_MAXLEN;
 int	netisr;
@@ -368,34 +366,6 @@ if_detach_rtdelete(rn, vifp)
 	 * XXX There should be no need to check for rt_ifa belonging to this
 	 * interface, because then rt_ifp is set, right?
 	 */
-
-	return (0);
-}
-
-int
-if_mark_ignore(rn, vifp)
-	struct radix_node *rn;
-	void *vifp;
-{
-	struct ifnet *ifp = vifp;
-	struct rtentry *rt = (struct rtentry *)rn;
-
-	if (rt->rt_ifp == ifp)
-		rn->rn_flags |= RNF_IGNORE;
-
-	return (0);
-}
-
-int
-if_mark_unignore(rn, vifp)
-	struct radix_node *rn;
-	void *vifp;
-{
-	struct ifnet *ifp = vifp;
-	struct rtentry *rt = (struct rtentry *)rn;
-
-	if (rt->rt_ifp == ifp)
-		rn->rn_flags &= ~RNF_IGNORE;
 
 	return (0);
 }
@@ -765,8 +735,6 @@ void
 if_down(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
-	struct radix_node_head *rnh;
-	int i;
 
 	splassert(IPL_SOFTNET);
 
@@ -777,16 +745,6 @@ if_down(struct ifnet *ifp)
 	}
 	IFQ_PURGE(&ifp->if_snd);
 	rt_ifmsg(ifp);
-
-	/*
-	 * Find and mark as ignore all routes which are using this interface.
-	 * XXX Factor out into a route.c function?
-	 */
-	for (i = 1; i <= AF_MAX; i++) {
-		rnh = rt_tables[i];
-		if (rnh)
-			(*rnh->rnh_walktree)(rnh, if_mark_ignore, ifp);
-	}
 }
 
 /*
@@ -800,8 +758,6 @@ if_up(struct ifnet *ifp)
 #ifdef notyet
 	struct ifaddr *ifa;
 #endif
-	struct radix_node_head *rnh;
-	int i;
 
 	splassert(IPL_SOFTNET);
 
@@ -817,16 +773,6 @@ if_up(struct ifnet *ifp)
 #ifdef INET6
 	in6_if_up(ifp);
 #endif
-
-	/*
-	 * Find and unignore all routes which are using this interface.
-	 * XXX Factor out into a route.c function?
-	 */
-	for (i = 1; i <= AF_MAX; i++) {
-		rnh = rt_tables[i];
-		if (rnh)
-			(*rnh->rnh_walktree)(rnh, if_mark_unignore, ifp);
-	}
 }
 
 /*

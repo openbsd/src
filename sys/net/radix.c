@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.10 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: radix.c,v 1.11 2003/08/27 00:33:34 henric Exp $	*/
 /*	$NetBSD: radix.c,v 1.11 1996/03/16 23:55:36 christos Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ on1:
 	 */
 	if ((saved_t = t)->rn_mask == 0)
 		t = t->rn_dupedkey;
-	for (; t && !(t->rn_flags & RNF_IGNORE); t = t->rn_dupedkey)
+	for (; t; t = t->rn_dupedkey)
 		/*
 		 * Even if we don't match exactly as a host,
 		 * we may match if the leaf we wound up at is
@@ -287,16 +287,14 @@ on1:
 			 */
 			do {
 				if (m->rm_flags & RNF_NORMAL) {
-					if (rn_b <= m->rm_b &&
-					    !(m->rm_flags & RNF_IGNORE))
+					if (rn_b <= m->rm_b)
 						return (m->rm_leaf);
 				} else {
 					off = min(t->rn_off, matched_off);
 					x = rn_search_m(v, t, m->rm_mask);
 					while (x && x->rn_mask != m->rm_mask)
 						x = x->rn_dupedkey;
-					if (x && !(x->rn_flags & RNF_IGNORE) &&
-					    rn_satsifies_leaf(v, x, off))
+					if (x && rn_satsifies_leaf(v, x, off))
 						    return x;
 				}
 			} while ((m = m->rm_mklist) != NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.55 2003/08/26 08:33:12 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.56 2003/08/27 00:33:33 henric Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.55 2003/08/26 08:33:12 itojun Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.56 2003/08/27 00:33:33 henric Exp $";
 #endif
 #endif /* not lint */
 
@@ -325,9 +325,7 @@ p_rtflags(u_char flags)
 		putchar('R');
 	if (flags & RNF_ACTIVE)
 		putchar('A');
-	if (flags & RNF_IGNORE)
-		putchar('I');
-	if (flags & ~(RNF_NORMAL | RNF_ROOT | RNF_ACTIVE | RNF_IGNORE))
+	if (flags & ~(RNF_NORMAL | RNF_ROOT | RNF_ACTIVE))
 		printf("/0x%02x", flags);
 	putchar('>');
 }
