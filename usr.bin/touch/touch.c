@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.3 1997/01/15 23:43:22 millert Exp $	*/
+/*	$OpenBSD: touch.c,v 1.4 2000/09/20 13:26:55 pjanzen Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.3 1997/01/15 23:43:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.4 2000/09/20 13:26:55 pjanzen Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -138,7 +138,7 @@ main(argc, argv)
 
 	for (rval = 0; *argv; ++argv) {
 		/* See if the file exists. */
-		if (stat(*argv, &sb))
+		if (stat(*argv, &sb)) {
 			if (!cflag) {
 				/* Create the file. */
 				fd = open(*argv,
@@ -154,6 +154,7 @@ main(argc, argv)
 					continue;
 			} else
 				continue;
+		}
 
 		if (!aflag)
 			TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
@@ -264,19 +265,22 @@ stime_arg2(arg, year, tvp)
 	if ((t = localtime(&tmptime)) == NULL)
 		err(1, "localtime");
 
-	t->tm_mon = ATOI2(arg);		/* MMDDhhmm[yy] */
+	t->tm_mon = ATOI2(arg);		/* MMDDhhmm[YY] */
 	--t->tm_mon;			/* Convert from 01-12 to 00-11 */
 	t->tm_mday = ATOI2(arg);
 	t->tm_hour = ATOI2(arg);
 	t->tm_min = ATOI2(arg);
-	if (year)
+	if (year) {
 		t->tm_year = ATOI2(arg);
+		if (t->tm_year < 69)
+			t->tm_year += 100;
+	}
 
 	t->tm_isdst = -1;		/* Figure out DST. */
 	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
 	if (tvp[0].tv_sec == -1)
 		errx(1,
-	"out of range or illegal time specification: MMDDhhmm[yy]");
+	"out of range or illegal time specification: MMDDhhmm[YY]");
 
 	tvp[0].tv_usec = tvp[1].tv_usec = 0;
 }
