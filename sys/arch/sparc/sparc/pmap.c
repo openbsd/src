@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 1999/09/03 18:01:59 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 1999/09/03 18:11:29 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -612,7 +612,7 @@ setpgt4m(ptep, pte)
 	int *ptep;
 	int pte;
 {
-	*ptep = pte;
+	swap(ptep, pte);
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
 		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
 }
