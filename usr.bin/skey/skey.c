@@ -1,4 +1,4 @@
-/* * $OpenBSD: skey.c,v 1.4 1996/09/29 04:33:58 millert Exp $*/
+/* * $OpenBSD: skey.c,v 1.5 1996/09/29 21:28:38 millert Exp $*/
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -38,59 +38,64 @@ main(argc, argv)
 	int     n, i, cnt = 1, pass = 0, hexmode = 0;
 	char    passwd[256], key[8], buf[33], *seed, *slash;
 
-	while ((i = getopt(argc, argv, "n:p:x45")) != EOF) {
-		switch (i) {
-		case 'n':
-			cnt = atoi(optarg);
-			break;
-		case 'p':
-			strcpy(passwd, optarg);
-			pass = 1;
-			break;
-		case 'x':
-			hexmode = 1;
-			break;
-		case '4':
-			skey_set_MDX(4);
-			break;
-		case '5':
-			skey_set_MDX(5);
-			break;
-		}
+	/* If we were called as otp-METHOD, set algorithm based on that */
+	if (strncmp(argv[0], "otp-", 4) == 0) {
+		if (skey_set_algorithm(&argv[0][4]) == NULL)
+			errx(1, "Unknown hash algorithm %s", &argv[0][4]);
 	}
 
-	/* check for md4/md5 argument */
-	if (argv[optind]) {
-		if (strcmp(argv[optind], "MD4") == 0) {
-			skey_set_MDX(4);
-			optind++;
-		} else if (strcmp(argv[optind], "MD5") == 0) {
-			skey_set_MDX(5);
-			optind++;
+	for (i = 1; i < argc && argv[i][0] == '-' && strcmp(argv[i], "--");) {
+		if (argv[i][2] == '\0') {
+			/* Single character switch */
+			switch (argv[i][1]) {
+			case 'n':
+				if (i + 1 == argc)
+					usage(argv[0]);
+				cnt = atoi(argv[++i]);
+				break;
+			case 'p':
+				if (i + 1 == argc)
+					usage(argv[0]);
+				(void)strcpy(passwd, argv[++i]);
+				pass = 1;
+				break;
+			case 'x':
+				hexmode = 1;
+				break;
+			default:
+				usage(argv[0]);
+			}
+		} else {
+			/* Multi character switches are hash types */
+			if (skey_set_algorithm(&argv[i][1]) == NULL) {
+				warnx("Unknown hash algorithm %s", &argv[i][1]);
+				usage(argv[0]);
+			}
 		}
+		i++;
 	}
 
-	/* could be in the form <number>/<seed> */
-	if (argc <= optind + 1) {
+	/* Could be in the form <number>/<seed> */
+	if (argc <= i + 1) {
 		/* look for / in it */
-		if (argc <= optind)
+		if (argc <= i)
 			usage(argv[0]);
-		slash = strchr(argv[optind], '/');
+		slash = strchr(argv[i], '/');
 		if (slash == NULL)
 			usage(argv[0]);
 		*slash++ = '\0';
 		seed = slash;
 
-		if ((n = atoi(argv[optind])) < 0) {
-			warnx("%s not positive", argv[optind]);
+		if ((n = atoi(argv[i])) < 0) {
+			warnx("%s not positive", argv[i]);
 			usage(argv[0]);
 		}
 	} else {
-		if ((n = atoi(argv[optind])) < 0) {
-			warnx("%s not positive", argv[optind]);
+		if ((n = atoi(argv[i])) < 0) {
+			warnx("%s not positive", argv[i]);
 			usage(argv[0]);
 		}
-		seed = argv[++optind];
+		seed = argv[++i];
 	}
 
 	/* Get user's secret password */
@@ -128,6 +133,6 @@ void
 usage(s)
 	char   *s;
 {
-	(void)fprintf(stderr, "Usage: %s [-x] [-4|-5] [-n count] [-p password] [MD4|MD5] sequence# [/] key", s);
+	(void)fprintf(stderr, "Usage: %s [-x] [-md4|-md5|-sha1] [-n count] [-p password] <sequence#>[/] key\n", s);
 	exit(1);
 }

@@ -1,7 +1,10 @@
-# $OpenBSD: Makefile,v 1.4 1996/09/28 00:00:40 millert Exp $
+# $OpenBSD: Makefile,v 1.5 1996/09/29 21:28:37 millert Exp $
 
-PROG= skey
-MAN= skey.1 skeyinfo.1 skeyaudit.1 skeyprune.8
+PROG=	skey
+MAN=	skey.1 skeyinfo.1 skeyaudit.1 skeyprune.8
+LINKS=	/usr/bin/skey /usr/bin/otp-md5 \
+	/usr/bin/skey /usr/bin/otp-md4 \
+	/usr/bin/skey /usr/bin/otp-sha1
 DPADD=	${LIBSKEY}
 LDADD=	-lskey
 
