@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.4 2003/05/18 19:37:46 ho Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.5 2003/05/18 21:26:36 ho Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -76,6 +76,7 @@ void m_priv_getsocket (int);
 void m_priv_setsockopt (int);
 void m_priv_bind (int);
 void m_priv_mkfifo (int);
+void m_priv_local_sanitize_path (char *, size_t, int);
 
 #if defined (USE_X509)
 void m_priv_rsa_getkey (int);
@@ -639,7 +640,7 @@ m_priv_getfd (int s)
     goto errout;
   mode = (mode_t)v;
 
-  /* XXX Sanity checks  */
+  m_priv_local_sanitize_path (path, sizeof path, flags);
 
   v = (int32_t)open (path, flags, mode);
   if (mm_send_fd (s, v))
@@ -1171,3 +1172,49 @@ m_priv_local_deletekey (int32_t keyno)
   return;
 }
 #endif /* USE_X509 */
+
+/* Check that path/mode is permitted.  */
+void
+m_priv_local_sanitize_path (char *path, size_t pmax, int flags)
+{
+  char *p;
+
+  /*
+   * Basically, we only permit paths starting with
+   *  /etc/isakmpd/	(read only)
+   *  /var/run/
+   *  /var/tmp
+   *  /tmp
+   *
+   * XXX This is an interim measure only.
+   */
+
+  if (strlen (path) < sizeof "/tmp")
+    goto bad_path;
+
+  /* Any path containing '..' is invalid.  */
+  for (p = path; *p && (p - path) < pmax; p++)
+    if (*p == '.' && *(p + 1) == '.')
+      goto bad_path;
+
+  /* For any write-mode, only a few paths are permitted.  */
+  if ((flags & O_ACCMODE) != O_RDONLY)
+    {
+      if (strncmp ("/var/run/", path, sizeof "/var/run") == 0 ||
+	  strncmp ("/var/tmp/", path, sizeof "/var/tmp") == 0 ||
+	  strncmp ("/tmp/", path, sizeof "/tmp") == 0)
+	return;
+      goto bad_path;
+    }
+
+  /* Any other paths are read-only.  */
+  if (strncmp (ISAKMPD_ROOT, path, strlen (ISAKMPD_ROOT)) == 0)
+    return;
+
+ bad_path:
+  log_print ("m_priv_local_sanitize_path: illegal path \"%.1024s\", "
+	     "replaced with \"/dev/null\"", path);
+  strlcpy (path, "/dev/null", pmax);
+  return;
+}
+
