@@ -41,6 +41,7 @@
 ./usr/include/crypto/blf.h
 ./usr/include/crypto/cast.h
 ./usr/include/crypto/castsb.h
+./usr/include/crypto/crypto.h
 ./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
 ./usr/include/crypto/podd.h
@@ -49,6 +50,7 @@
 ./usr/include/crypto/sk.h
 ./usr/include/crypto/skipjack.h
 ./usr/include/crypto/spr.h
+./usr/include/crypto/xform.h
 ./usr/include/ctype.h
 ./usr/include/curses.h
 ./usr/include/db.h
@@ -262,11 +264,11 @@
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
-./usr/include/dev/pci/hifn7751reg.h
-./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/brktree_reg.h
 ./usr/include/dev/pci/esoreg.h
 ./usr/include/dev/pci/esovar.h
+./usr/include/dev/pci/hifn7751reg.h
+./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/if_alreg.h
 ./usr/include/dev/pci/if_axreg.h
 ./usr/include/dev/pci/if_dcreg.h
@@ -1205,6 +1207,7 @@
 ./usr/include/uvm/uvm_stat.h
 ./usr/include/uvm/uvm_swap.h
 ./usr/include/uvm/uvm_swap_encrypt.h
+./usr/include/uvm/uvm_uio.h
 ./usr/include/uvm/uvm_vnode.h
 ./usr/include/varargs.h
 ./usr/include/vis.h
@@ -3339,4 +3342,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/uvm/uvm_uio.h
