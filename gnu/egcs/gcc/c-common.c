@@ -2691,7 +2691,7 @@ check_format_info (info, params)
 	  && TREE_CODE (TREE_TYPE (cur_param)) == ARRAY_TYPE
 	  && TREE_CODE (TREE_TYPE (TREE_TYPE (cur_param))) == INTEGER_TYPE) {
 	tree array_size_expr = TYPE_MAX_VALUE (TYPE_DOMAIN (TREE_TYPE (cur_param)));
-	if (array_size_expr != 0) {
+	if (array_size_expr != 0 && TREE_CODE (array_size_expr) == INTEGER_CST) {
 	    int array_size = TREE_INT_CST_LOW (array_size_expr) + 1;
 
 #if 0  /* Gives false positives at the moment */
