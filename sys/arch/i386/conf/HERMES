@@ -3,7 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
-# $OpenBSD: HERMES,v 1.14 1998/07/11 15:31:20 todd Exp $
+# $OpenBSD: HERMES,v 1.15 1998/10/09 21:57:21 kstailey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -12,6 +12,7 @@ makeoptions     CC="cc -Werror"
 option		I586_CPU	# CPU classes; at least one is REQUIRED
 
 option		XSERVER		# diddle with console driver
+option		APERTURE	# in-kernel XFree86 aperture driver
 option		PPP_BSDCOMP,PPP_DEFLATE
 
 maxusers	16		# estimated number of users
@@ -31,16 +32,16 @@ option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
 #option		SHMMAXPGS=1024	# 1024 pages is the default
 
-option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
-option		COMPAT_10	# NetBSD 1.0,
-option		COMPAT_11	# NetBSD 1.1,
+#option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
+#option		COMPAT_10	# NetBSD 1.0,
+#option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
 #option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 #option		COMPAT_SVR4	# binary compatibility with SVR4
 #option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 option		COMPAT_LINUX	# binary compatibility with Linux
-option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 
 #option		VM86		# Virtual x86 mode; to be used by dos emualtors
@@ -100,19 +101,18 @@ scsibus* at bt?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 ss*	at scsibus? target ? lun ?	# SCSI scanners (hermes is the cradle)
-uk*	at scsibus? target ? lun ?	# unknown SCSI
+#uk*	at scsibus? target ? lun ?	# unknown SCSI
 #cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
-#ep0	at isa? port ? irq ?		# 3c509 ethernet card
-#ed0	at isa? port 0x300 irq 3 iomem 0xd000	# Linksys Ether16 LAN
-ed0	at isa? port 0x300 irq 10 iomem 0xd000	# Linksys Ether16 LAN
+ne0	at isa? port 0x300 irq 10 iomem 0xd000	# Linksys Ether16 LAN
 
-sb0	at isa? port 0x220 irq 5 drq 3	# SoundBlaster
 spkr0	at pckbd? port 0x61		# built-in speaker
+sb0	at isa? port 0x220 irq 5 drq 3	# SoundBlaster
+audio*  at sb?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 4		# packet filter (used by rarpd)
