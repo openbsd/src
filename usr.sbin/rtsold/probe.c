@@ -1,4 +1,5 @@
-/*	$OpenBSD: probe.c,v 1.2 1999/12/09 15:10:49 itojun Exp $	*/
+/*	$OpenBSD: probe.c,v 1.3 2000/08/13 18:24:00 itojun Exp $	*/
+/*	$KAME: probe.c,v 1.10 2000/08/13 06:14:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -34,6 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -51,6 +53,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdlib.h>
 
 #include "rtsold.h"
 
@@ -59,11 +62,19 @@ static struct iovec sndiov[2];
 static int probesock;
 static void sendprobe __P((struct in6_addr *addr, int ifindex));
 
+
 int
 probe_init()
 {
-	static u_char sndcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
-				CMSG_SPACE(sizeof(int))];
+	int scmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+		CMSG_SPACE(sizeof(int));
+	static u_char *sndcmsgbuf = NULL;
+	
+	if (sndcmsgbuf == NULL &&
+	    (sndcmsgbuf = (u_char *)malloc(scmsglen)) == NULL) {
+		warnmsg(LOG_ERR, __FUNCTION__, "malloc failed");
+		return(-1);
+	}
 
 	if ((probesock = socket(AF_INET6, SOCK_RAW, IPPROTO_NONE)) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "socket: %s", strerror(errno));
@@ -81,7 +92,7 @@ probe_init()
 	sndmhdr.msg_iov = sndiov;
 	sndmhdr.msg_iovlen = 1;
 	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
-	sndmhdr.msg_controllen = sizeof(sndcmsgbuf);
+	sndmhdr.msg_controllen = scmsglen;
 
 	return(0);
 }
