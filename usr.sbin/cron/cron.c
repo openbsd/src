@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.19 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.20 2002/05/09 21:22:01 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,12 +21,14 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.19 2002/02/16 21:28:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.20 2002/05/09 21:22:01 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
 
 #include "cron.h"
+#include <sys/socket.h>
+#include <sys/un.h>
 
 static	void	usage(void),
 		run_reboot_jobs(cron_db *),
@@ -35,13 +37,12 @@ static	void	usage(void),
 		cron_sleep(int),
 		sigchld_handler(int),
 		sighup_handler(int),
-		sigusr1_handler(int),
 		sigchld_reaper(void),
 		check_sigs(int),
 		parse_args(int c, char *v[]);
 
-static	volatile sig_atomic_t	got_sighup, got_sigchld, got_sigusr1;
-static	int			timeRunning, virtualTime, clockTime;
+static	volatile sig_atomic_t	got_sighup, got_sigchld;
+static	int			timeRunning, virtualTime, clockTime, cronSock;
 static	long			GMToff;
 static	cron_db			database;
 
@@ -82,6 +83,9 @@ main(int argc, char *argv[]) {
 	(void) sigaction(SIGCHLD, &sact, NULL);
 	sact.sa_handler = sighup_handler;
 	(void) sigaction(SIGHUP, &sact, NULL);
+	sact.sa_handler = SIG_IGN;
+	(void) sigaction(SIGPIPE, &sact, NULL);
+	(void) sigaction(SIGUSR1, &sact, NULL);	/* XXX */
 
 	acquire_daemonlock(0);
 	set_cron_uid();
@@ -123,6 +127,7 @@ main(int argc, char *argv[]) {
 	}
 
 	acquire_daemonlock(0);
+	cronSock = open_socket();
 	database.head = NULL;
 	database.tail = NULL;
 	database.mtime = (time_t) 0;
@@ -338,40 +343,55 @@ set_time(int initialize) {
  */
 static void
 cron_sleep(int target) {
-	time_t t1, t2;
-	int seconds_to_wait;
-	struct sigaction sact;
+	char c;
+	int fd, nfds;
+	struct timeval t1, t2, tv;
+	struct sockaddr_un sun;
+	socklen_t sunlen;
+	static fd_set *fdsr;
 
-	bzero((char *)&sact, sizeof sact);
-	sigemptyset(&sact.sa_mask);
-	sact.sa_flags = 0;
-#ifdef SA_RESTART
-	sact.sa_flags |= SA_RESTART;
-#endif
-	sact.sa_handler = sigusr1_handler;
-	(void) sigaction(SIGUSR1, &sact, NULL);
+	gettimeofday(&t1, NULL);
+	t1.tv_sec += GMToff;
+	tv.tv_sec = (target * SECONDS_PER_MINUTE - t1.tv_sec) + 1;
+	tv.tv_usec = 0;
+	Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%ld\n",
+	    (long)getpid(), (long)target*SECONDS_PER_MINUTE, tv.tv_sec))
 
-	t1 = time(NULL) + GMToff;
-	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t1) + 1;
-	Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%d\n",
-	    (long)getpid(), (long)target*SECONDS_PER_MINUTE, seconds_to_wait))
-
-	while (seconds_to_wait > 0 && seconds_to_wait < 65) {
-		sleep((unsigned int) seconds_to_wait);
-
-		/*
-		 * Check to see if we were interrupted by a signal.
-		 * If so, service the signal(s) then continue sleeping
-		 * where we left off.
-		 */
-		check_sigs(FALSE);
-		t2 = time(NULL) + GMToff;
-		seconds_to_wait -= (int)(t2 - t1);
-		t1 = t2;
+	if (fdsr == NULL) {
+		fdsr = (fd_set *)calloc(howmany(cronSock + 1, NFDBITS),
+		    sizeof(fd_mask));
 	}
 
-	sact.sa_handler = SIG_DFL;
-	(void) sigaction(SIGUSR1, &sact, NULL);
+	while (timerisset(&tv) && tv.tv_sec < 65) {
+		if (fdsr)
+			FD_SET(cronSock, fdsr);
+		/* Sleep until we time out, get a crontab poke, or signal. */
+		nfds = select(cronSock + 1, fdsr, NULL, NULL, &tv);
+		if (nfds == 0)
+			break;		/* timer expired */
+		if (nfds > 0) {
+			Debug(DSCH, ("[%ld] Got a poke on the socket\n",
+			    (long)getpid()))
+			fd = accept(cronSock, (struct sockaddr *)&sun, &sunlen);
+			if (fd >= 0) {
+				while (read(fd, &c, sizeof c) > 0)
+					; /* suck up anything in the socket */
+				close(fd);
+			}
+		}
+
+		/*
+		 * Check to see if we were interrupted by a signal or a poke
+		 * on the socket.  If so, service the signal/poke, adjust tv
+		 * and continue the select() where we left off.
+		 */
+		check_sigs(nfds > 0);
+		gettimeofday(&t2, NULL);
+		t2.tv_sec += GMToff;
+		timersub(&t2, &t1, &t1);
+		timersub(&tv, &t1, &tv);
+		memcpy(&t1, &t2, sizeof(t1));
+	}
 }
 
 static void
@@ -382,11 +402,6 @@ sighup_handler(int x) {
 static void
 sigchld_handler(int x) {
 	got_sigchld = 1;
-}
-
-static void
-sigusr1_handler(int x) {
-	got_sigusr1 = 1;
 }
 
 static void
@@ -427,10 +442,8 @@ check_sigs(int force_dbload) {
 		got_sigchld = 0;
 		sigchld_reaper();
 	}
-	if (got_sigusr1 || force_dbload) {
-		got_sigusr1 = 0;
+	if (force_dbload)
 		load_database(&database);
-	}
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.3 2001/02/18 19:48:34 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.4 2002/05/09 21:22:01 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -24,7 +24,9 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#if !defined(AIX) && !defined(UNICOS)
 #include <sys/time.h>
+#endif
 #include <sys/wait.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
@@ -84,17 +86,11 @@ extern char *tzname[2];
 #endif
 
 #if (BSD >= 199103)
-# define HAVE_SAVED_UIDS
+# define HAVE_SAVED_GIDS
 #endif
 
 #define MY_UID(pw) getuid()
 #define MY_GID(pw) getgid()
-
-#if !defined(AIX) && !defined(UNICOS)
-# define SYS_TIME_H 1
-#else
-# define SYS_TIME_H 0
-#endif
 
 /* getopt() isn't part of POSIX.  some systems define it in <stdlib.h> anyway.
  * of those that do, some complain that our definition is different and some

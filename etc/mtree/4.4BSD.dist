@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.123 2002/04/24 22:19:19 espie Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.124 2002/05/09 21:22:01 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1871,7 +1871,7 @@ crash		mode=770
 cron		mode=0555
 
 # ./var/cron/tabs
-tabs		mode=0700
+tabs		gname=crontab mode=1730
 # ./var/cron/tabs
 ..
 

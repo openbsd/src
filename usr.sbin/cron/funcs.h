@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.4 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.5 2002/05/09 21:22:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -44,8 +44,8 @@ int		job_runqueue(void),
 		set_debug_flags(char *),
 		get_char(FILE *),
 		get_string(char *, int, FILE *, char *),
-		swap_uids(void),
-		swap_uids_back(void),
+		swap_gids(void),
+		swap_gids_back(void),
 		load_env(char *, FILE *),
 		cron_pclose(FILE *),
 		glue_strings(char *, int, char *, char *, int),

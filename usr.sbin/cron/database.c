@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.5 2001/02/18 19:48:33 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.6 2002/05/09 21:22:01 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: database.c,v 1.5 2001/02/18 19:48:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: database.c,v 1.6 2002/05/09 21:22:01 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the log]
@@ -190,7 +190,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		goto next_crontab;
 	}
 
-	if ((crontab_fd = open(tabname, O_RDONLY, 0)) < OK) {
+	if ((crontab_fd = open(tabname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < OK) {
 		/* crontab not accessible?
 		 */
 		log_it(fname, getpid(), "CAN'T OPEN", tabname);
@@ -199,6 +199,22 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 
 	if (fstat(crontab_fd, statbuf) < OK) {
 		log_it(fname, getpid(), "FSTAT FAILED", tabname);
+		goto next_crontab;
+	}
+	if (!S_ISREG(statbuf->st_mode)) {
+		log_it(fname, getpid(), "NOT REGULAR", tabname);
+		goto next_crontab;
+	}
+	if ((statbuf->st_mode & 07777) != 0600) {
+		log_it(fname, getpid(), "BAD FILE MODE", tabname);
+		goto next_crontab;
+	}
+	if (statbuf->st_uid != 0 && pw && statbuf->st_uid != pw->pw_uid) {
+		log_it(fname, getpid(), "WRONG FILE OWNER", tabname);
+		goto next_crontab;
+	}
+	if (statbuf->st_nlink != 1) {
+		log_it(fname, getpid(), "BAD LINK COUNT", tabname);
 		goto next_crontab;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 2001/10/24 17:28:16 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2002/05/09 21:22:01 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -37,6 +37,12 @@
 			 * didn't exist last time around...)
 			 */
 #define SPOOL_DIR	"tabs"
+
+			/* CRONSOCK is the name of the socket used by crontab
+			 * to poke cron while it is sleeping to re-read the
+			 * cron spool files.  It lives in the spool directory.
+			 */
+#define CRONSOCK	".sock"
 
 			/* undefining these turns off their features.  note
 			 * that ALLOW_FILE and DENY_FILE must both be defined

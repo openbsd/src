@@ -17,7 +17,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: cron.8,v 1.13 2001/12/20 23:27:47 millert Exp $
+.\" $OpenBSD: cron.8,v 1.14 2002/05/09 21:22:01 millert Exp $
 .\"
 .Dd June 6, 1999
 .Dt CRON 8
@@ -109,12 +109,19 @@ this has no effect because
 .Nm cron
 logs via
 .Xr syslog 3 .
-.It Dv SIGUSR1
-causes
+.El
+.Sh FILES
+.Bl -tag -width "/var/cron/tabs/.sock" -compact
+.It Pa /var/cron/log
+cron's log file
+.It Pa /var/cron/tabs
+directory of individual crontabs
+.It Pa /var/cron/tabs/.sock
+used by
+.Xr crontab 1
+to tell
 .Nm
-to check its spool directory's modtime (and the modtime of
-.Pa /etc/crontab )
-at the next possible moment instead of waiting until the next minute.
+to check for crontab changes immediately
 .El
 .Sh SEE ALSO
 .Xr crontab 1 ,

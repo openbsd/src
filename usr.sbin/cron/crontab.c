@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.28 2002/05/08 22:57:58 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.29 2002/05/09 21:22:01 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.28 2002/05/08 22:57:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: crontab.c,v 1.29 2002/05/09 21:22:01 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -32,6 +32,8 @@ static char rcsid[] = "$OpenBSD: crontab.c,v 1.28 2002/05/08 22:57:58 millert Ex
 #define	MAIN_PROGRAM
 
 #include "cron.h"
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #define NHEADER_LINES 3
 
@@ -85,7 +87,6 @@ main(int argc, char *argv[]) {
 	setlinebuf(stderr);
 #endif
 	parse_args(argc, argv);		/* sets many globals, opens a file */
-	set_cron_uid();
 	set_cron_cwd();
 	if (!allowed(User)) {
 		fprintf(stderr,
@@ -201,7 +202,7 @@ parse_args(int argc, char *argv[]) {
 		if (!strcmp(Filename, "-"))
 			NewCrontab = stdin;
 		else {
-			/* relinquish the setuid status of the binary during
+			/* relinquish the setgid status of the binary during
 			 * the open, lest nonroot users read files they should
 			 * not be able to read.  we can't use access() here
 			 * since there's a race condition.  thanks go out to
@@ -209,16 +210,16 @@ parse_args(int argc, char *argv[]) {
 			 * the race.
 			 */
 
-			if (swap_uids() < OK) {
-				perror("swapping uids");
+			if (swap_gids() < OK) {
+				perror("swapping gids");
 				exit(ERROR_EXIT);
 			}
 			if (!(NewCrontab = fopen(Filename, "r"))) {
 				perror(Filename);
 				exit(ERROR_EXIT);
 			}
-			if (swap_uids_back() < OK) {
-				perror("swapping uids back");
+			if (swap_gids_back() < OK) {
+				perror("swapping gids back");
 				exit(ERROR_EXIT);
 			}
 		}
@@ -334,17 +335,6 @@ edit_cmd(void) {
 		perror(Filename);
 		goto fatal;
 	}
-#ifdef HAVE_FCHOWN
-	if (fchown(t, MY_UID(pw), MY_GID(pw)) < 0) {
-		perror("fchown");
-		goto fatal;
-	}
-#else
-	if (chown(Filename, MY_UID(pw), MY_GID(pw)) < 0) {
-		perror("chown");
-		goto fatal;
-	}
-#endif
 	if (!(NewCrontab = fdopen(t, "r+"))) {
 		perror("fdopen");
 		goto fatal;
@@ -411,10 +401,6 @@ edit_cmd(void) {
 		/* child */
 		if (setgid(MY_GID(pw)) < 0) {
 			perror("setgid(getgid())");
-			exit(ERROR_EXIT);
-		}
-		if (setuid(MY_UID(pw)) < 0) {
-			perror("setuid(getuid())");
 			exit(ERROR_EXIT);
 		}
 		if (chdir(_PATH_TMP) < 0) {
@@ -524,7 +510,6 @@ replace_cmd(void) {
 	entry *e;
 	time_t now = time(NULL);
 	char **envp = env_init();
-	struct stat sb;
 
 	if (envp == NULL) {
 		fprintf(stderr, "%s: Cannot allocate memory.\n", ProgramName);
@@ -606,35 +591,16 @@ replace_cmd(void) {
 		goto done;
 	}
 
-	if (fstat(fileno(tmp), &sb))
-		sb.st_gid = -1;
-
 #ifdef HAVE_FCHOWN
-	if (fchown(fileno(tmp), ROOT_UID, sb.st_gid) < OK) {
+	if (fchown(fileno(tmp), pw->pw_uid, -1) < OK) {
 		perror("fchown");
 		fclose(tmp);
 		error = -2;
 		goto done;
 	}
 #else
-	if (chown(TempFilename, ROOT_UID, sb.st_gid) < OK) {
+	if (chown(TempFilename, pw->pw_uid, -1) < OK) {
 		perror("chown");
-		fclose(tmp);
-		error = -2;
-		goto done;
-	}
-#endif
-
-#ifdef HAVE_FCHMOD
-	if (fchmod(fileno(tmp), 0600) < OK) {
-		perror("fchmod");
-		fclose(tmp);
-		error = -2;
-		goto done;
-	}
-#else
-	if (chmod(TempFilename, 0600) < OK) {
-		perror("chmod");
 		fclose(tmp);
 		error = -2;
 		goto done;
@@ -677,8 +643,8 @@ done:
 
 static void
 poke_daemon() {
-	char pidfile[MAX_FNAME];
-	PID_T pid;
+	int sock, flags;
+	struct sockaddr_un sun;
 	FILE *fp;
 
 	if (utime(SPOOL_DIR, NULL) < OK) {
@@ -686,11 +652,22 @@ poke_daemon() {
 		perror(SPOOL_DIR);
 		return;
 	}
-	if (glue_strings(pidfile, sizeof pidfile, PIDDIR, PIDFILE, '/')) {
-		if ((fp = fopen(pidfile, "r")) &&
-		    fscanf(fp, "%d", &pid) == 1)
-			kill(pid, SIGUSR1);
+
+	/* Failure to poke the daemon socket is not a fatal error. */
+	(void) signal(SIGPIPE, SIG_IGN);
+	if (glue_strings(sun.sun_path, sizeof sun.sun_path, SPOOL_DIR,
+	    CRONSOCK, '/')) {
+		sun.sun_family = AF_UNIX;
+		sun.sun_len = strlen(sun.sun_path);
+		if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
+		    (flags = fcntl(sock, F_GETFL)) >= 0 &&
+		    fcntl(sock, F_SETFL, flags | O_NONBLOCK) >= 0 &&
+		    connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
+			write(sock, "!", 1);
+			close(sock);
+		}
 	}
+	(void) signal(SIGPIPE, SIG_DFL);
 }
 
 static void

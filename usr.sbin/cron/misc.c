@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 2001/12/12 19:02:50 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2002/05/09 21:22:01 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.11 2001/12/12 19:02:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.12 2002/05/09 21:22:01 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -30,18 +30,8 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.11 2001/12/12 19:02:50 millert Exp $
 
 
 #include "cron.h"
-#if SYS_TIME_H
-# include <sys/time.h>
-#else
-# include <time.h>
-#endif
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <fcntl.h>
-#if defined(SYSLOG)
-# include <syslog.h>
-#endif
+#include <sys/socket.h>
+#include <sys/un.h>
 
 
 #if defined(LOG_CRON) && defined(LOG_FILE)
@@ -302,7 +292,7 @@ acquire_daemonlock(closeflag)
 	if (!fp) {
 		if (!glue_strings(pidfile, sizeof pidfile, PIDDIR,
 		    PIDFILE, '/')) {
-			fprintf(stderr, "%s%s: path too long\n",
+			fprintf(stderr, "%s/%s: path too long\n",
 				PIDDIR, PIDFILE);
 			log_it("CRON", getpid(), "DEATH", "path too long");
 			exit(ERROR_EXIT);
@@ -720,14 +710,14 @@ arpadate(clock)
 }
 #endif /*MAIL_DATE*/
 
-#ifdef HAVE_SAVED_UIDS
-static uid_t save_euid;
-int swap_uids() { save_euid = geteuid(); return (seteuid(getuid())); }
-int swap_uids_back() { return (seteuid(save_euid)); }
-#else /*HAVE_SAVED_UIDS*/
-int swap_uids() { return (setreuid(geteuid(), getuid())); }
-int swap_uids_back() { return (swap_uids()); }
-#endif /*HAVE_SAVED_UIDS*/
+#ifdef HAVE_SAVED_GIDS
+static gid_t save_egid;
+int swap_gids() { save_egid = getegid(); return (setegid(getgid())); }
+int swap_gids_back() { return (setegid(save_egid)); }
+#else /*HAVE_SAVED_GIDS*/
+int swap_gids() { return (setregid(getegid(), getgid())); }
+int swap_gids_back() { return (swap_gids()); }
+#endif /*HAVE_SAVED_GIDS*/
 
 /* Return the offset from GMT in seconds (algorithm taken from sendmail). */
 #ifndef HAVE_TM_GMTOFF
@@ -757,3 +747,57 @@ long get_gmtoff(time_t *clock, struct tm *local)
 	return (offset);
 }
 #endif /* HAVE_TM_GMTOFF */
+
+/* void open_socket(void)
+ *	opens a UNIX domain socket that crontab uses to poke cron.
+ */
+int
+open_socket()
+{
+	int		   sock, flags;
+	mode_t		   omask;
+	struct sockaddr_un sun;
+
+	sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (sock == -1) {
+		fprintf(stderr, "%s: can't create socket: %s\n",
+		    ProgramName, strerror(errno));
+		log_it("CRON", getpid(), "DEATH", "can't create socket");
+		exit(ERROR_EXIT);
+	}
+	if ((flags = fcntl(sock, F_GETFL)) == -1 ||
+	    fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+		fprintf(stderr, "%s: can't set non-block: %s\n",
+		    ProgramName, strerror(errno));
+		log_it("CRON", getpid(), "DEATH", "can't set non-block");
+		exit(ERROR_EXIT);
+	}
+
+	if (!glue_strings(sun.sun_path, sizeof sun.sun_path, SPOOL_DIR,
+	    CRONSOCK, '/')) {
+		fprintf(stderr, "%s/%s: path too long\n", SPOOL_DIR, CRONSOCK);
+		log_it("CRON", getpid(), "DEATH", "path too long");
+		exit(ERROR_EXIT);
+	}
+	unlink(sun.sun_path);
+	sun.sun_len = strlen(sun.sun_path);
+	sun.sun_family = AF_UNIX;
+
+	omask = umask(007);
+	if (bind(sock, (struct sockaddr *)&sun, sizeof(sun))) {
+		fprintf(stderr, "%s: can't bind socket: %s\n",
+		    ProgramName, strerror(errno));
+		log_it("CRON", getpid(), "DEATH", "can't bind socket");
+		exit(ERROR_EXIT);
+	}
+	if (listen(sock, SOMAXCONN)) {
+		fprintf(stderr, "%s: can't listen on socket: %s\n",
+		    ProgramName, strerror(errno));
+		log_it("CRON", getpid(), "DEATH", "can't listen on socket");
+		exit(ERROR_EXIT);
+	}
+	chmod(sun.sun_path, 0660);
+	umask(omask);
+
+	return(sock);
+}
