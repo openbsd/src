@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.36 2002/06/09 22:23:17 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.37 2002/06/10 22:36:49 beck Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -597,18 +597,19 @@ crypto_getfeat(int *featp)
 	extern int cryptodevallowsoft;
 	int hid, kalg, feat = 0;
 
+	memset(kalgs, 0, sizeof(kalgs));
+
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
-		    cryptodevallowsoft == 0)
+		    cryptodevallowsoft == 0) {
 			continue;
+		}
 		if (crypto_drivers[hid].cc_kprocess == NULL)
 			continue;
 		for (kalg = 0; kalg < CRK_ALGORITHM_MAX; kalg++)
 			if ((crypto_drivers[hid].cc_kalg[kalg] &
-			    CRYPTO_ALG_FLAG_SUPPORTED) != 0)
+			    CRYPTO_ALG_FLAG_SUPPORTED) != 0) 
 				kalgs[kalg] = 1;
-			else
-				kalgs[kalg] = 0;
 	}
 
 	if (kalgs[CRK_MOD_EXP] && kalgs[CRK_MOD_EXP_CRT])
