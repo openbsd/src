@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1996/08/26 05:52:24 downsj Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1997/04/17 18:21:30 kstailey Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -34,7 +34,7 @@ MANLOCALBUILD=	yes
 GENERATED=	config.sh Makefile cflags config.h makeaperl makedepend \
 		makedir perl.exp writemain x2p/Makefile x2p/cflags
 
-CLEANFILES=	config.sh
+CLEANFILES=	config.sh ${MANALL}
 
 .BEGIN:
 	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
