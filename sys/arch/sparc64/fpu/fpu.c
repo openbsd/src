@@ -1,5 +1,36 @@
-/*	$OpenBSD: fpu.c,v 1.3 2001/09/10 16:03:02 jason Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.4 2001/09/15 23:42:36 jason Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
+
+/*
+ * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Jason L. Wright
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,8 +89,27 @@
 #include <sparc64/fpu/fpu_emu.h>
 #include <sparc64/fpu/fpu_extern.h>
 
+int fpu_regoffset __P((int, int));
+int fpu_insn_fmov __P((struct fpstate64 *, struct fpemu *, union instr));
+int fpu_insn_fabs __P((struct fpstate64 *, struct fpemu *, union instr));
+int fpu_insn_fneg __P((struct fpstate64 *, struct fpemu *, union instr));
+int fpu_insn_itof __P((struct fpemu *, union instr, int, int *,
+    int *, u_int *));
+int fpu_insn_ftoi __P((struct fpemu *, union instr, int *, int, u_int *));
+int fpu_insn_ftof __P((struct fpemu *, union instr, int *, int *, u_int *));
+int fpu_insn_fsqrt __P((struct fpemu *, union instr, int *, int *, u_int *));
+int fpu_insn_fcmp __P((struct fpstate64 *, struct fpemu *, union instr, int));
+int fpu_insn_fmul __P((struct fpemu *, union instr, int *, int *, u_int *));
+int fpu_insn_fmulx __P((struct fpemu *, union instr, int *, int *, u_int *));
+int fpu_insn_fdiv __P((struct fpemu *, union instr, int *, int *, u_int *));
+int fpu_insn_fadd __P((struct fpemu *, union instr, int *, int *, u_int *));
+int fpu_insn_fsub __P((struct fpemu *, union instr, int *, int *, u_int *));
+int fpu_insn_fmovcc __P((struct fpstate64 *, union instr));
+int fpu_insn_fmovr __P((struct fpstate64 *, union instr));
+void fpu_fcopy __P((u_int *, u_int *, int));
+
 #ifdef DEBUG
-int fpe_debug = 0xf;
+int fpe_debug = 0;
 
 /*
  * Dump a `fpn' structure.
@@ -73,17 +123,14 @@ fpu_dumpfpn(struct fpn *fp)
 	    fp->fp_sign ? '-' : ' ', fp->fp_mant[0], fp->fp_mant[1],
 	    fp->fp_mant[2], fp->fp_mant[3], fp->fp_exp);
 }
-
 void
-fpu_dumpstate(struct fpstate64 *fp)
+fpu_dumpstate(struct fpstate64 *fs)
 {
 	int i;
 
-	for (i = 0; i < 64; i++) {
-		printf("%%f%02d: %08x  ", i, fp->fs_regs[i]);
-		if ((i & 3) == 3)
-			printf("\n");
-	}
+	for (i = 0; i < 64; i++)
+		printf("%%f%02d: %08x%s",
+		    i, fs->fs_regs[i], ((i & 3) == 3) ? "\n" : "   ");
 }
 #endif
 
@@ -126,6 +173,21 @@ static int fpu_types[] = {
 	FPE_FLTOVF,
 	FPE_FLTINV,
 };
+
+void
+fpu_fcopy(src, dst, type)
+	u_int *src, *dst;
+	int type;
+{
+	*dst++ = *src++;
+	if (type == FTYPE_SNG || type == FTYPE_INT)
+		return;
+	*dst++ = *src++;
+	if (type != FTYPE_EXT)
+		return;
+	*dst++ = *src++;
+	*dst = *src;
+}
 
 /*
  * The FPU gave us an exception.  Clean up the mess.  Note that the
@@ -285,305 +347,154 @@ fpu_emulate(p, tf, fs)
 #endif
 
 /*
+ * Compute offset given a register and type.  For 32 bit sparc, bits 1 and 0
+ * must be zero for ext types, and bit 0 must be 0 for double and long types.
+ * For 64bit sparc, bit 1 must be zero for quad types, and bit 0 becomes bit
+ * 5 in the register offset for long, double, and quad types.
+ */
+int
+fpu_regoffset(rx, type)
+	int rx, type;
+{
+	if (type == FTYPE_LNG || type == FTYPE_DBL || type == FTYPE_EXT) {
+		rx |= (rx & 1) << 5;
+		rx &= 0x3e;
+		if ((type == FTYPE_EXT) && (rx & 2))
+			return (-1);
+	}
+	return (rx);
+}
+
+/*
  * Execute an FPU instruction (one that runs entirely in the FPU; not
  * FBfcc or STF, for instance).  On return, fe->fe_fs->fs_fsr will be
  * modified to reflect the setting the hardware would have left.
- *
- * Note that we do not catch all illegal opcodes, so you can, for instance,
- * multiply two integers this way.
  */
 int
 fpu_execute(fe, instr)
-	register struct fpemu *fe;
+	struct fpemu *fe;
 	union instr instr;
 {
-	register struct fpn *fp;
-#ifndef SUN4U
-	register int opf, rs1, rs2, rd, type, mask, fsr, cx;
-	register struct fpstate *fs;
-#else /* SUN4U */
-	register int opf, rs1, rs2, rd, type, mask, fsr, cx, i, cond;
-	register struct fpstate64 *fs;
-#endif /* SUN4U */
+	struct fpstate *fs;
+	int opf, rdtype, rd, err, mask, cx, fsr;
 	u_int space[4];
 
-	/*
-	 * `Decode' and execute instruction.  Start with no exceptions.
-	 * The type of any i_opf opcode is in the bottom two bits, so we
-	 * squish them out here.
-	 */
+	DPRINTF(FPE_INSN, ("op3: %x, opf %x\n", instr.i_opf.i_op3,
+	    instr.i_opf.i_opf));
+	DPRINTF(FPE_STATE, ("BEFORE:\n"));
+	DUMPSTATE(FPE_STATE, fe->fe_fpstate);
 	opf = instr.i_opf.i_opf;
-	type = opf & 3;
-	mask = "\0\0\1\3"[type];
-	rs1 = instr.i_opf.i_rs1 & ~mask;
-	rs2 = instr.i_opf.i_rs2 & ~mask;
-	rd = instr.i_opf.i_rd & ~mask;
-#ifdef notdef
-	if ((rs1 | rs2 | rd) & mask)
-		return (BADREG);
-#endif
 	fs = fe->fe_fpstate;
-	DPRINTF(FPE_REG, ("BEFORE:\n"));
-	DUMPSTATE(FPE_REG, fs);
 	fe->fe_fsr = fs->fs_fsr & ~FSR_CX;
 	fe->fe_cx = 0;
-#ifdef SUN4U
-	/*
-	 * Check to see if we're dealing with a fancy cmove and handle
-	 * it first.
-	 */
-	if (instr.i_op3.i_op3 == IOP3_FPop2 && (opf&0xff0) != (FCMP&0xff0)) {
-		switch (opf >>= 2) {
-		case FMVFC0 >> 2:
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVFC0\n"));
-			cond = (fs->fs_fsr>>FSR_FCC_SHIFT)&FSR_FCC_MASK;
-			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;
-		case FMVFC1 >> 2:
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVFC1\n"));
-			cond = (fs->fs_fsr>>FSR_FCC1_SHIFT)&FSR_FCC_MASK;
-			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;
-		case FMVFC2 >> 2:
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVFC2\n"));
-			cond = (fs->fs_fsr>>FSR_FCC2_SHIFT)&FSR_FCC_MASK;
-			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;
-		case FMVFC3 >> 2:
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVFC3\n"));
-			cond = (fs->fs_fsr>>FSR_FCC3_SHIFT)&FSR_FCC_MASK;
-			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;
-		case FMVIC >> 2:
-			/* Presume we're curproc */
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVIC\n"));
-			cond = (curproc->p_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
-			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;			
-		case FMVXC >> 2:
-			/* Presume we're curproc */
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVXC\n"));
-			cond = (curproc->p_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
-			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;			
-		case FMVRZ >> 2:
-			/* Presume we're curproc */
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVRZ\n"));
-			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] != 0)
-				return (0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;			
-		case FMVRLEZ >> 2:
-			/* Presume we're curproc */
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLEZ\n"));
-			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] > 0)
-				return (0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;			
-		case FMVRLZ >> 2:
-			/* Presume we're curproc */
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLZ\n"));
-			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] >= 0)
-				return (0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;			
-		case FMVRNZ >> 2:
-			/* Presume we're curproc */
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVRNZ\n"));
-			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] == 0)
-				return (0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;			
-		case FMVRGZ >> 2:
-			/* Presume we're curproc */
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGZ\n"));
-			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] <= 0)
-				return (0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;			
-		case FMVRGEZ >> 2:
-			/* Presume we're curproc */
-			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGEZ\n"));
-			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] < 0)
-				return (0); /* success */
-			rs1 = fs->fs_regs[rs2];
-			goto mov;		
-		default:
-			DPRINTF(FPE_INSN, 
-				("fpu_execute: unknown v9 FP inst %x opf %x\n", 
-					instr.i_int, opf));
-			return (NOTFPU);
-		}
-	}
-#endif /* SUN4U */
-	DPRINTF(FPE_INSN, ("opf: %x\n", opf));
-	switch (opf >>= 2) {
 
-	default:
-		DPRINTF(FPE_INSN, 
-			("fpu_execute: unknown basic FP inst %x opf %x\n",
-				instr.i_int, opf));
+	if ((instr.i_int & 0xc0000000) != 0x80000000)
 		return (NOTFPU);
 
-	case FMOV >> 2:		/* these should all be pretty obvious */
-		DPRINTF(FPE_INSN, ("fpu_execute: FMOV\n"));
-		rs1 = fs->fs_regs[rs2];
-		goto mov;
+	if (instr.i_opf.i_op3 == IOP3_FPop2) {
+		switch (opf) {
+		case FCMPS: case FCMPD: case FCMPQ:
+			return (fpu_insn_fcmp(fs, fe, instr, 0));
 
-	case FNEG >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FNEG\n"));
-		rs1 = fs->fs_regs[rs2] ^ (1 << 31);
-		goto mov;
+		case FCMPES: case FCMPED: case FCMPEQ:
+			return (fpu_insn_fcmp(fs, fe, instr, 1));
 
-	case FABS >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FABS\n"));
-		rs1 = fs->fs_regs[rs2] & ~(1 << 31);
-	mov:
-#ifndef SUN4U
-		fs->fs_regs[rd] = rs1;
-#else /* SUN4U */
-		i = 1<<type;
-		fs->fs_regs[rd++] = rs1;
-		while (--i) 
-			fs->fs_regs[rd++] = fs->fs_regs[++rs2];
-#endif /* SUN4U */
-		fs->fs_fsr = fe->fe_fsr;
-		return (0);	/* success */
+		case FMVFC0S: case FMVFC0D: case FMVFC0Q:
+		case FMVFC1S: case FMVFC1D: case FMVFC1Q:
+		case FMVFC2S: case FMVFC2D: case FMVFC2Q:
+		case FMVFC3S: case FMVFC3D: case FMVFC3Q:
+		case FMVICS: case FMVICD: case FMVICQ:
+		case FMVXCS: case FMVXCD: case FMVXCQ:
+			return (fpu_insn_fmovcc(fs, instr));
 
-	case FSQRT >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FSQRT\n"));
-		fpu_explode(fe, &fe->fe_f1, type, rs2);
-		fp = fpu_sqrt(fe);
-		break;
-
-	case FADD >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FADD (%d %d -> %d)\n",
-		    instr.i_opf.i_rs1, instr.i_opf.i_rs2, instr.i_opf.i_rd));
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fp = fpu_add(fe);
-		break;
-
-	case FSUB >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FSUB\n"));
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fp = fpu_sub(fe);
-		break;
-
-	case FMUL >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FMUL\n"));
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fp = fpu_mul(fe);
-		break;
-
-	case FDIV >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FDIV\n"));
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fp = fpu_div(fe);
-		break;
-
-	case FCMP >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FCMP\n"));
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fpu_compare(fe, 0);
-		goto cmpdone;
-
-	case FCMPE >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FCMPE\n"));
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fpu_compare(fe, 1);
-	cmpdone:
-		/*
-		 * The only possible exception here is NV; catch it
-		 * early and get out, as there is no result register.
-		 */
-		cx = fe->fe_cx;
-		fsr = fe->fe_fsr | (cx << FSR_CX_SHIFT);
-		if (cx != 0) {
-			if (fsr & (FSR_NV << FSR_TEM_SHIFT)) {
-				fs->fs_fsr = (fsr & ~FSR_FTT) |
-				    (FSR_TT_IEEE << FSR_FTT_SHIFT);
-				return (FPE);
-			}
-			fsr |= FSR_NV << FSR_AX_SHIFT;
+		case FMOVZS: case FMOVZD: case FMOVZQ:
+		case FMOVLEZS: case FMOVLEZD: case FMOVLEZQ:
+		case FMOVLZS: case FMOVLZD: case FMOVLZQ:
+		case FMOVNZS: case FMOVNZD: case FMOVNZQ:
+		case FMOVGZS: case FMOVGZD: case FMOVGZQ:
+		case FMOVGEZS: case FMOVGEZD: case FMOVGEZQ:
+			return (fpu_insn_fmovr(fs, instr));
 		}
-		fs->fs_fsr = fsr;
-		return (0);
-
-	case FSMULD >> 2:
-	case FDMULX >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FSMULx\n"));
-		if (type == FTYPE_EXT)
-			return (NOTFPU);
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		type++;	/* single to double, or double to quad */
-		fp = fpu_mul(fe);
-		break;
-
-#ifdef SUN4U
-	case FXTOS >> 2:
-	case FXTOD >> 2:
-	case FXTOQ >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FXTOx (%d -> %d)\n",
-		    instr.i_opf.i_rs2, instr.i_opf.i_rd));
-		type = FTYPE_LNG;
-		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
-		type = opf & 3;	/* sneaky; depends on instruction encoding */
-		break;
-
-	case FTOX >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FTOX\n"));
-		rd = instr.i_opf.i_rd & (~1);
-		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
-		type = FTYPE_LNG;
-		break;
-#endif /* SUN4U */
-
-	case FTOS >> 2:
-	case FTOI >> 2:
-		rd = instr.i_opf.i_rd;
-		goto fto;
-	case FTOD >> 2:
-		rd = instr.i_opf.i_rd & (~1);
-		goto fto;
-
-	case FTOQ >> 2:
-		rd = instr.i_opf.i_rd & (~3);
-		goto fto;
-
-fto:
-		DPRINTF(FPE_INSN, ("fpu_execute: FTOx (%d -> %d)\n",
-		    instr.i_opf.i_rs2, instr.i_opf.i_rd));
-		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
-		type = opf & 3;	/* sneaky; depends on instruction encoding */
-		break;
+		return (NOTFPU);
 	}
 
-	/*
-	 * ALU operation is complete.  Collapse the result and then check
-	 * for exceptions.  If we got any, and they are enabled, do not
-	 * alter the destination register, just stop with an exception.
-	 * Otherwise set new current exceptions and accrue.
-	 */
-	fpu_implode(fe, fp, type, space);
+	if (instr.i_opf.i_op3 != IOP3_FPop1)
+		return (NOTFPU);
+
+	switch (instr.i_opf.i_opf) {
+	case FSTOX: case FDTOX: case FQTOX:
+		rdtype = FTYPE_LNG;
+		if ((err = fpu_insn_ftoi(fe, instr, &rd, rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FSTOI: case FDTOI: case FQTOI:
+		rdtype = FTYPE_INT;
+		if ((err = fpu_insn_ftoi(fe, instr, &rd, rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FITOS: case FITOD: case FITOQ:
+		if ((err = fpu_insn_itof(fe, instr, FTYPE_INT, &rd,
+		    &rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FXTOS: case FXTOD: case FXTOQ:
+		if ((err = fpu_insn_itof(fe, instr, FTYPE_LNG, &rd,
+		    &rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FSTOD: case FSTOQ:
+	case FDTOS: case FDTOQ:
+	case FQTOS: case FQTOD:
+		if ((err = fpu_insn_ftof(fe, instr, &rd, &rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FMOVS: case FMOVD: case FMOVQ:
+		return (fpu_insn_fmov(fs, fe, instr));
+
+	case FNEGS: case FNEGD: case FNEGQ:
+		return (fpu_insn_fneg(fs, fe, instr));
+
+	case FABSS: case FABSD: case FABSQ:
+		return (fpu_insn_fabs(fs, fe, instr));
+
+	case FSQRTS: case FSQRTD: case FSQRTQ:
+		if ((err = fpu_insn_fsqrt(fe, instr, &rd, &rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FMULS: case FMULD: case FMULQ:
+		if ((err = fpu_insn_fmul(fe, instr, &rd, &rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FDIVS: case FDIVD: case FDIVQ:
+		if ((err = fpu_insn_fdiv(fe, instr, &rd, &rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FSMULD: case FDMULQ:
+		if ((err = fpu_insn_fmulx(fe, instr, &rd, &rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FADDS: case FADDD: case FADDQ:
+		if ((err = fpu_insn_fadd(fe, instr, &rd, &rdtype, space)) != 0)
+			return (err);
+		break;
+
+	case FSUBS: case FSUBD: case FSUBQ:
+		if ((err = fpu_insn_fsub(fe, instr, &rd, &rdtype, space)) != 0)
+			return (err);
+		break;
+	default:
+		return (NOTFPU);
+	}
+
 	cx = fe->fe_cx;
 	fsr = fe->fe_fsr;
 	if (cx != 0) {
@@ -598,16 +509,510 @@ fto:
 		fsr |= (cx << FSR_CX_SHIFT) | (cx << FSR_AX_SHIFT);
 	}
 	fs->fs_fsr = fsr;
-	fs->fs_regs[rd] = space[0];
-	if (type >= FTYPE_DBL || type == FTYPE_LNG) {
-		fs->fs_regs[rd + 1] = space[1];
-		if (type > FTYPE_DBL) {
-			fs->fs_regs[rd + 2] = space[2];
-			fs->fs_regs[rd + 3] = space[3];
+	fpu_fcopy(space, fs->fs_regs + rd, rdtype);
+	DPRINTF(FPE_STATE, ("AFTER:\n"));
+	DUMPSTATE(FPE_STATE, fs);
+	return (0);
+}
+
+/*
+ * Handler for FMOV[SDQ] emulation.
+ */
+int
+fpu_insn_fmov(fs, fe, instr)
+	struct fpstate64 *fs;
+	struct fpemu *fe;
+	union instr instr;
+{
+	int opf = instr.i_opf.i_opf, rs, rd, rtype;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
+		return (NOTFPU);
+	fpu_fcopy(fs->fs_regs + rs, fs->fs_regs + rd, rtype);
+	fs->fs_fsr = fe->fe_fsr;
+	return (0);
+}
+
+/*
+ * Handler for FABS[SDQ] emulation.
+ */
+int
+fpu_insn_fabs(fs, fe, instr)
+	struct fpstate64 *fs;
+	struct fpemu *fe;
+	union instr instr;
+{
+	int opf = instr.i_opf.i_opf, rs, rd, rtype;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
+		return (NOTFPU);
+	fpu_fcopy(fs->fs_regs + rs, fs->fs_regs + rd, rtype);
+	fs->fs_regs[rd] = fs->fs_regs[rd] & ~(1 << 31);
+	fs->fs_fsr = fe->fe_fsr;
+	return (0);
+}
+
+/*
+ * Handler for FNEG[SDQ] emulation.
+ */
+int
+fpu_insn_fneg(fs, fe, instr)
+	struct fpstate64 *fs;
+	struct fpemu *fe;
+	union instr instr;
+{
+	int opf = instr.i_opf.i_opf, rs, rd, rtype;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
+		return (NOTFPU);
+	fpu_fcopy(fs->fs_regs + rs, fs->fs_regs + rd, rtype);
+	fs->fs_regs[rd] = fs->fs_regs[rd] ^ (1 << 31);
+	fs->fs_fsr = fe->fe_fsr;
+	return (0);
+}
+
+/*
+ * Handler for F[XI]TO[SDQ] emulation.
+ */
+int
+fpu_insn_itof(fe, instr, rstype, rdp, rdtypep, space)
+	struct fpemu *fe;
+	union instr instr;
+	u_int *space;
+	int rstype, *rdp, *rdtypep;
+{
+	int opf = instr.i_opf.i_opf, rs, rd, rdtype;
+
+	if ((rs = fpu_regoffset(instr.i_opf.i_rs2, rstype)) < 0)
+		return (NOTFPU);
+
+	rdtype = (opf >> 2) & 3;
+	if (rdtype == 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rdtype)) < 0)
+		return (NOTFPU);
+
+	DPRINTF(FPE_INSN, ("itof %%f%d(%d, %d) -> %%f%d(%d, %d)\n",
+	    rs, rstype, instr.i_opf.i_rs2, rd, rdtype, instr.i_opf.i_rd));
+	fpu_explode(fe, &fe->fe_f1, rstype, rs);
+	fpu_implode(fe, &fe->fe_f1, rdtype, space);
+	*rdp = rd;
+	*rdtypep = rdtype;
+	return (0);
+}
+
+/*
+ * Handler for F[SDQ]TO[XI] emulation.
+ */
+int
+fpu_insn_ftoi(fe, instr, rdp, rdtype, space)
+	struct fpemu *fe;
+	union instr instr;
+	u_int *space;
+	int *rdp, rdtype;
+{
+	int opf = instr.i_opf.i_opf, rd, rstype, rs;
+
+	rstype = opf & 3;
+	if (rstype == 0)
+		return (NOTFPU);
+	if ((rs = fpu_regoffset(instr.i_opf.i_rs2, rstype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rdtype)) < 0)
+		return (NOTFPU);
+
+	fpu_explode(fe, &fe->fe_f1, rstype, rs);
+	fpu_implode(fe, &fe->fe_f1, rdtype, space);
+	*rdp = rd;
+	return (0);
+}
+
+/*
+ * Handler for F[SDQ]TO[SDQ] emulation.
+ */
+int
+fpu_insn_ftof(fe, instr, rdp, rdtypep, space)
+	struct fpemu *fe;
+	union instr instr;
+	u_int *space;
+	int *rdp, *rdtypep;
+{
+	int opf = instr.i_opf.i_opf, rd, rs, rdtype, rstype;
+
+	rstype = opf & 3;
+	rdtype = (opf >> 2) & 3;
+
+	if ((rstype == rdtype) || (rstype == 0) || (rdtype == 0))
+		return (NOTFPU);
+
+	if ((rs = fpu_regoffset(instr.i_opf.i_rs2, rstype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rdtype)) < 0)
+		return (NOTFPU);
+
+	DPRINTF(FPE_INSN, ("ftof %%f%d(%d, %d) -> %%f%d(%d, %d)\n",
+	    rs, rstype, instr.i_opf.i_rs2, rd, rdtype, instr.i_opf.i_rd));
+
+	fpu_explode(fe, &fe->fe_f1, rstype, rs);
+	fpu_implode(fe, &fe->fe_f1, rdtype, space);
+	*rdp = rd;
+	*rdtypep = rdtype;
+	return (0);
+}
+
+/*
+ * Handler for FQSRT[SDQ] emulation.
+ */
+int
+fpu_insn_fsqrt(fe, instr, rdp, rdtypep, space)
+	struct fpemu *fe;
+	union instr instr;
+	u_int *space;
+	int *rdp, *rdtypep;
+{
+	int opf = instr.i_opf.i_opf, rd, rs, rtype;
+	struct fpn *fp;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
+		return (NOTFPU);
+
+	fpu_explode(fe, &fe->fe_f1, rtype, rs);
+	fp = fpu_sqrt(fe);
+	fpu_implode(fe, fp, rtype, space);
+	*rdp = rd;
+	*rdtypep = rtype;
+	return (0);
+}
+
+/*
+ * Handler for FCMP{E}[SDQ] emulation.
+ */
+int
+fpu_insn_fcmp(fs, fe, instr, cmpe)
+	struct fpstate64 *fs;
+	struct fpemu *fe;
+	union instr instr;
+	int cmpe;
+{
+	int opf = instr.i_opf.i_opf, rs1, rs2, rtype, cx, fsr;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs1 = fpu_regoffset(instr.i_opf.i_rs1, rtype)) < 0)
+		return (NOTFPU);
+	if ((rs2 = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+
+	fpu_explode(fe, &fe->fe_f1, rtype, rs1);
+	fpu_explode(fe, &fe->fe_f2, rtype, rs2);
+	fpu_compare(fe, cmpe);
+
+	/*
+	 * The only possible exception here is NV; catch it early
+	 * and get out, as there is no result register.
+	 */
+	cx = fe->fe_cx;
+	fsr = fe->fe_fsr | (cx << FSR_CX_SHIFT);
+	if (cx != 0) {
+		if (fsr & (FSR_NV << FSR_TEM_SHIFT)) {
+			fs->fs_fsr = (fsr & ~FSR_FTT) |
+			    (FSR_TT_IEEE << FSR_FTT_SHIFT);
+			return (FPE);
 		}
+		fsr |= FSR_NV << FSR_AX_SHIFT;
 	}
-	DPRINTF(FPE_REG, ("AFTER (rd %d, type %d, space %x/%x/%x/%x):\n", rd, type,
-	    space[0], space[1], space[2], space[3]));
-	DUMPSTATE(FPE_REG, fs);
-	return (0);	/* success */
+	fs->fs_fsr = fsr;
+	return (0);
+}
+
+/*
+ * Handler for FMUL[SDQ] emulation.
+ */
+int
+fpu_insn_fmul(fe, instr, rdp, rdtypep, space)
+	struct fpemu *fe;
+	union instr instr;
+	int *rdp, *rdtypep;
+	u_int *space;
+{
+	struct fpn *fp;
+	int opf = instr.i_opf.i_opf, rd, rtype, rs1, rs2;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs1 = fpu_regoffset(instr.i_opf.i_rs1, rtype)) < 0)
+		return (NOTFPU);
+	if ((rs2 = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
+		return (NOTFPU);
+
+	fpu_explode(fe, &fe->fe_f1, rtype, rs1);
+	fpu_explode(fe, &fe->fe_f2, rtype, rs2);
+	fp = fpu_mul(fe);
+	fpu_implode(fe, fp, rtype, space);
+	*rdp = rd;
+	*rdtypep = rtype;
+	return (0);
+}
+
+/*
+ * Handler for FSMULD, FDMULQ emulation.
+ */
+int
+fpu_insn_fmulx(fe, instr, rdp, rdtypep, space)
+	struct fpemu *fe;
+	union instr instr;
+	int *rdp, *rdtypep;
+	u_int *space;
+{
+	struct fpn *fp;
+	int opf = instr.i_opf.i_opf, rd, rdtype, rstype, rs1, rs2;
+
+	rstype = opf & 3;
+	rdtype = (opf >> 2) & 3;
+	if ((rstype != rdtype + 1) || (rstype == 0) || (rdtype == 0))
+		return (NOTFPU);
+	if ((rs1 = fpu_regoffset(instr.i_opf.i_rs1, rstype)) < 0)
+		return (NOTFPU);
+	if ((rs2 = fpu_regoffset(instr.i_opf.i_rs2, rstype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rdtype)) < 0)
+		return (NOTFPU);
+
+	fpu_explode(fe, &fe->fe_f1, rstype, rs1);
+	fpu_explode(fe, &fe->fe_f2, rstype, rs2);
+	fp = fpu_mul(fe);
+	fpu_implode(fe, fp, rdtype, space);
+	*rdp = rd;
+	*rdtypep = rdtype;
+	return (0);
+}
+
+/*
+ * Handler for FDIV[SDQ] emulation.
+ */
+int
+fpu_insn_fdiv(fe, instr, rdp, rdtypep, space)
+	struct fpemu *fe;
+	union instr instr;
+	int *rdp, *rdtypep;
+	u_int *space;
+{
+	struct fpn *fp;
+	int opf = instr.i_opf.i_opf, rd, rtype, rs1, rs2;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs1 = fpu_regoffset(instr.i_opf.i_rs1, rtype)) < 0)
+		return (NOTFPU);
+	if ((rs2 = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
+		return (NOTFPU);
+
+	fpu_explode(fe, &fe->fe_f1, rtype, rs1);
+	fpu_explode(fe, &fe->fe_f2, rtype, rs2);
+	fp = fpu_div(fe);
+	fpu_implode(fe, fp, rtype, space);
+	*rdp = rd;
+	*rdtypep = rtype;
+	return (0);
+}
+
+/*
+ * Handler for FADD[SDQ] emulation.
+ */
+int
+fpu_insn_fadd(fe, instr, rdp, rdtypep, space)
+	struct fpemu *fe;
+	union instr instr;
+	int *rdp, *rdtypep;
+	u_int *space;
+{
+	struct fpn *fp;
+	int opf = instr.i_opf.i_opf, rd, rtype, rs1, rs2;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs1 = fpu_regoffset(instr.i_opf.i_rs1, rtype)) < 0)
+		return (NOTFPU);
+	if ((rs2 = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
+		return (NOTFPU);
+
+	fpu_explode(fe, &fe->fe_f1, rtype, rs1);
+	fpu_explode(fe, &fe->fe_f2, rtype, rs2);
+	fp = fpu_add(fe);
+	fpu_implode(fe, fp, rtype, space);
+	*rdp = rd;
+	*rdtypep = rtype;
+	return (0);
+}
+
+/*
+ * Handler for FSUB[SDQ] emulation.
+ */
+int
+fpu_insn_fsub(fe, instr, rdp, rdtypep, space)
+	struct fpemu *fe;
+	union instr instr;
+	int *rdp, *rdtypep;
+	u_int *space;
+{
+	struct fpn *fp;
+	int opf = instr.i_opf.i_opf, rd, rtype, rs1, rs2;
+
+	rtype = opf & 3;
+	if (rtype == 0)
+		return (NOTFPU);
+	if ((rs1 = fpu_regoffset(instr.i_opf.i_rs1, rtype)) < 0)
+		return (NOTFPU);
+	if ((rs2 = fpu_regoffset(instr.i_opf.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	if ((rd = fpu_regoffset(instr.i_opf.i_rd, rtype)) < 0)
+		return (NOTFPU);
+
+	fpu_explode(fe, &fe->fe_f1, rtype, rs1);
+	fpu_explode(fe, &fe->fe_f2, rtype, rs2);
+	fp = fpu_sub(fe);
+	fpu_implode(fe, fp, rtype, space);
+	*rdp = rd;
+	*rdtypep = rtype;
+	return (0);
+}
+
+/*
+ * Handler for FMOV[SDQ][cond] emulation. XXX Assumes we are curproc.
+ */
+int
+fpu_insn_fmovcc(fs, instr)
+	struct fpstate64 *fs;
+	union instr instr;
+{
+	int rtype, rd, rs, cond;
+
+	rtype = instr.i_fmovcc.i_opf_low & 3;
+	if ((rtype == 0) || (instr.i_int & 0x00040000))
+		return (NOTFPU);
+
+	if ((rd = fpu_regoffset(instr.i_fmovcc.i_rd, rtype)) < 0)
+		return (NOTFPU);
+	if ((rs = fpu_regoffset(instr.i_fmovcc.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+
+	switch (instr.i_fmovcc.i_opf_cc) {
+	case 0:
+		cond = (fs->fs_fsr >> FSR_FCC_SHIFT) & FSR_FCC_MASK;
+		break;
+	case 1:
+		cond = (fs->fs_fsr >> FSR_FCC1_SHIFT) & FSR_FCC_MASK;
+		break;
+	case 2:
+		cond = (fs->fs_fsr >> FSR_FCC2_SHIFT) & FSR_FCC_MASK;
+		break;
+	case 3:
+		cond = (fs->fs_fsr >> FSR_FCC3_SHIFT) & FSR_FCC_MASK;
+		break;
+	case 4:
+		cond = (curproc->p_md.md_tf->tf_tstate >> TSTATE_CCR_SHIFT) &
+		    PSR_ICC;
+		break;
+	case 6:
+		cond = (curproc->p_md.md_tf->tf_tstate >>
+		    (TSTATE_CCR_SHIFT + XCC_SHIFT)) & PSR_ICC;
+		break;
+	default:
+		return (NOTFPU);
+	}
+
+	if (instr.i_fmovcc.i_cond != cond)
+		return (0);
+
+	fpu_fcopy(fs->fs_regs + rs, fs->fs_regs + rd, rtype);
+	return (0);
+}
+
+/*
+ * Handler for FMOVR[icond][SDQ] emulation.  XXX Assumes we are curproc.
+ */
+int
+fpu_insn_fmovr(fs, instr)
+	struct fpstate64 *fs;
+	union instr instr;
+{
+	int rtype, rd, rs2, rs1;
+
+	rtype = instr.i_fmovcc.i_opf_low & 3;
+	if ((rtype == 0) || (instr.i_int & 0x00002000))
+		return (NOTFPU);
+
+	if ((rd = fpu_regoffset(instr.i_fmovr.i_rd, rtype)) < 0)
+		return (NOTFPU);
+	if ((rs2 = fpu_regoffset(instr.i_fmovr.i_rs2, rtype)) < 0)
+		return (NOTFPU);
+	rs1 = instr.i_fmovr.i_rs1;
+
+	switch (instr.i_fmovr.i_rcond) {
+	case 1:	/* Z */
+		if (rs1 != 0 &&
+		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] != 0)
+			return (0);
+		break;
+	case 2: /* LEZ */
+		if (rs1 != 0 &&
+		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] > 0)
+			return (0);
+		break;
+	case 3: /* LZ */
+		if (rs1 == 0 ||
+		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] >= 0)
+			return (0);
+		break;
+	case 5:	/* NZ */
+		if (rs1 == 0 ||
+		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] == 0)
+			return (0);
+		break;
+	case 6: /* NGZ */
+		if (rs1 == 0 ||
+		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] <= 0)
+			return (0);
+		break;
+	case 7: /* NGEZ */
+		if (rs1 != 0 &&
+		    (int64_t)curproc->p_md.md_tf->tf_global[rs1] < 0)
+			return (0);
+		break;
+	default:
+		return (NOTFPU);
+	}
+
+	fpu_fcopy(fs->fs_regs + rs2, fs->fs_regs + rd, rtype);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: instr.h,v 1.1 2001/08/18 20:16:10 jason Exp $	*/
+/*	$OpenBSD: instr.h,v 1.2 2001/09/15 23:42:37 jason Exp $	*/
 /*	$NetBSD: instr.h,v 1.3 2000/01/10 03:53:20 eeh Exp $ */
 
 /*
@@ -402,45 +402,98 @@ union instr {
 #define	I_JMPLrr(rd, rs1, rs2)	_I_OP3_R_RR(rd, IOP3_JMPL, rs1, rs2)
 
 /*
- * (Since these are sparse, we skip the enumerations for now.)
- * FPop values.  All appear in both FPop1 and FPop2 spaces, but arithmetic
- * ops should happen only with FPop1 and comparison only with FPop2.
- * The type sits in the low two bits; those bits are given as zero here.
+ * FPop values.
  */
-#define	FMOV	0x00
-#define	FNEG	0x04
-#define	FABS	0x08
-#define	FSQRT	0x28
-#define	FADD	0x40
-#define	FSUB	0x44
-#define	FMUL	0x48
-#define	FDIV	0x4c
-#define	FCMP	0x50
-#define	FCMPE	0x54
-#define	FSMULD	0x68
-#define	FDMULX	0x6c
-#define FTOX	0x80
-#define FXTOS	0x84
-#define FXTOD	0x88
-#define FXTOQ	0x8c
-#define	FTOS	0xc4
-#define	FTOD	0xc8
-#define	FTOQ	0xcc
-#define	FTOI	0xd0
+
+/* These are in FPop1 space */
+#define	FMOVS		0x001
+#define	FMOVD		0x002
+#define	FMOVQ		0x003
+#define	FNEGS		0x005
+#define	FNEGD		0x006
+#define	FNEGQ		0x007
+#define	FABSS		0x009
+#define	FABSD		0x00a
+#define	FABSQ		0x00b
+#define	FSQRTS		0x029
+#define	FSQRTD		0x02a
+#define	FSQRTQ		0x02b
+#define	FADDS		0x041
+#define	FADDD		0x042
+#define	FADDQ		0x043
+#define	FSUBS		0x045
+#define	FSUBD		0x046
+#define	FSUBQ		0x047
+#define	FMULS		0x049
+#define	FMULD		0x04a
+#define	FMULQ		0x04b
+#define	FDIVS		0x04d
+#define	FDIVD		0x04e
+#define	FDIVQ		0x04f
+#define	FSMULD		0x069
+#define	FDMULQ		0x06e
+#define	FSTOX		0x081
+#define	FDTOX		0x082
+#define	FQTOX		0x083
+#define	FXTOS		0x084
+#define	FXTOD		0x088
+#define	FXTOQ		0x08c
+#define	FITOS		0x0c4
+#define	FDTOS		0x0c6
+#define	FQTOS		0x0c7
+#define	FITOD		0x0c8
+#define	FSTOD		0x0c9
+#define	FQTOD		0x0cb
+#define	FITOQ		0x0cc
+#define	FSTOQ		0x0cd
+#define	FDTOQ		0x0ce
+#define	FSTOI		0x0d1
+#define	FDTOI		0x0d2
+#define	FQTOI		0x0d3
 
 /* These are in FPop2 space */
-#define FMVFC0	0x00
-#define FMVRZ	0x24
-#define FMVFC1	0x40
-#define FMVRLEZ	0x44
-#define FMVRLZ	0x64
-#define FMVFC2	0x80
-#define FMVRNZ	0xa4
-#define FMVFC3	0xc0
-#define FMVRGZ	0xc4
-#define FMVRGEZ	0xe4
-#define FMVIC	0x100
-#define FMVXC	0x180
+#define	FMVFC0S		0x001
+#define	FMVFC0D		0x002
+#define	FMVFC0Q		0x003
+#define	FMOVZS		0x025
+#define	FMOVZD		0x026
+#define	FMOVZQ		0x027
+#define	FMVFC1S		0x041
+#define	FMVFC1D		0x042
+#define	FMVFC1Q		0x043
+#define	FMOVLEZS	0x045
+#define	FMOVLEZD	0x046
+#define	FMOVLEZQ	0x047
+#define	FCMPS		0x051
+#define	FCMPD		0x052
+#define	FCMPQ		0x053
+#define	FCMPES		0x055
+#define	FCMPED		0x056
+#define	FCMPEQ		0x057
+#define	FMOVLZS		0x065
+#define	FMOVLZD		0x066
+#define	FMOVLZQ		0x067
+#define	FMVFC2S		0x081
+#define	FMVFC2D		0x082
+#define	FMVFC2Q		0x083
+#define	FMOVNZS		0x0a5
+#define	FMOVNZD		0x0a6
+#define	FMOVNZQ		0x0a7
+#define	FMVFC3S		0x0c1
+#define	FMVFC3D		0x0c2
+#define	FMVFC3Q		0x0c3
+#define	FMOVGZS		0x0c5
+#define	FMOVGZD		0x0c6
+#define	FMOVGZQ		0x0c7
+#define	FMOVGEZS	0x0e5
+#define	FMOVGEZD	0x0e6
+#define	FMOVGEZQ	0x0e7
+#define	FMVICS		0x101
+#define	FMVICD		0x102
+#define	FMVICQ		0x103
+#define	FMVXCS		0x181
+#define	FMVXCD		0x182
+#define	FMVXCQ		0x183
 
 /*
  * FPU data types.
