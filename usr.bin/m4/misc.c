@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.27 2002/04/26 16:15:16 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.28 2002/04/28 14:37:12 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.27 2002/04/26 16:15:16 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.28 2002/04/28 14:37:12 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ xstrdup(const char *s)
 void
 usage()
 {
-	fprintf(stderr, "usage: m4 [-Dname[=val]] [-Uname] [-I dirname...]\n");
+	fprintf(stderr, "usage: m4 [-gs] [-d flags] [-t macro] [-o file] [-Dname[=val]] [-Uname] [-I dirname...]\n");
 	exit(1);
 }
 
@@ -311,6 +311,15 @@ set_input(struct input_file *f, FILE *real, const char *name)
 	f->lineno = 1;
 	f->c = 0;
 	f->name = xstrdup(name);
+	emit_synchline();
+}
+
+void
+do_emit_synchline()
+{
+	fprintf(active, "#line %lu \"%s\"\n",
+	    infile[ilevel].lineno, infile[ilevel].name);
+	infile[ilevel].synch_lineno = infile[ilevel].lineno;
 }
 
 void 

@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.24 2002/04/18 18:57:23 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.25 2002/04/28 14:37:12 espie Exp $
 .\"
 .\"
 .Dd January 26, 1993
@@ -12,6 +12,7 @@
 .Op Fl d Ar flags
 .Op Fl t Ar name
 .Op Fl g
+.Op Fl s
 .Oo
 .Fl D Ns Ar name Ns Op Ar =value
 .Oc
@@ -104,6 +105,9 @@ In this mode, changequote with
 two empty parameters deactivates quotes, translit handles simple character
 ranges (e.g., a-z), regular expressions mimic emacs behavior,
 and the number of diversions is unlimited.
+.It Fl s
+Output line synchronization directives, suitable for
+.Xr cpp 1 .
 .El
 .Sh SYNTAX
 .Nm m4

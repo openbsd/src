@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.29 2002/02/16 21:27:48 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.30 2002/04/28 14:37:12 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -71,6 +71,8 @@ extern void	remhash(const char *, int);
 extern void outputstr(const char *);
 extern int builtin_type(const char *);
 extern char *builtin_realname(int);
+extern void do_emit_synchline(void);
+#define emit_synchline() do { if (synch_lines) do_emit_synchline(); } while(0)
 
 /* misc.c */
 extern void	chrsave(int);
@@ -148,5 +150,6 @@ extern char *m4wraps;		/* m4wrap string default. */
 extern char *null;		/* as it says.. just a null. */
 extern char rquote[MAXCCHARS+1];/* right quote character (') */
 extern char scommt[MAXCCHARS+1];/* start character for comment */
+extern int  synch_lines;	/* line synchronisation directives */
 
 extern int mimic_gnu;		/* behaves like gnu-m4 */

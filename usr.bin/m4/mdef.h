@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.21 2001/09/27 11:40:33 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.22 2002/04/28 14:37:12 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -157,6 +157,7 @@ struct input_file {
 	FILE 		*file;
 	char 		*name;
 	unsigned long 	lineno;
+	unsigned long   synch_lineno;	/* used for -s */
 	int 		c;
 };
 

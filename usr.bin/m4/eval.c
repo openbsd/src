@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.44 2002/04/26 16:15:16 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.45 2002/04/28 14:37:12 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.44 2002/04/26 16:15:16 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.45 2002/04/28 14:37:12 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -753,9 +753,12 @@ dopaste(const char *pfile)
 	int c;
 
 	if ((pf = fopen(pfile, "r")) != NULL) {
+		if (synch_lines)
+		    fprintf(active, "#line 1 \"%s\"\n", pfile);
 		while ((c = getc(pf)) != EOF)
 			putc(c, active);
 		(void) fclose(pf);
+		emit_synchline();
 		return (1);
 	} else
 		return (0);
