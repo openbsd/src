@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.6 1996/06/29 19:59:40 chuck Exp $	*/
-/*	(sync'd to midway.c 1.55)	*/
+/*	$OpenBSD: midway.c,v 1.7 1996/06/29 23:22:31 chuck Exp $	*/
+/*	(sync'd to midway.c 1.56)	*/
 
 /*
  *
@@ -896,10 +896,15 @@ caddr_t data;
 			error = EINVAL;
 			break;
 		}
-		if (ario->rawvalue)
+		if (ario->rawvalue > EN_RXSZ*1024)
+			ario->rawvalue = EN_RXSZ*1024;
+		if (ario->rawvalue) {
 			sc->rxslot[slot].oth_flags |= ENOTHER_RAW;
-		else
+			sc->rxslot[slot].raw_threshold = ario->rawvalue;
+		} else {
 			sc->rxslot[slot].oth_flags &= (~ENOTHER_RAW);
+			sc->rxslot[slot].raw_threshold = 0;
+		}
 #ifdef EN_DEBUG
 		printf("%s: rxvci%d: turn %s raw (boodi) mode\n",
 			sc->sc_dev.dv_xname, ario->npcb->npcb_vci,
@@ -1033,7 +1038,7 @@ int on;
   /* if stuff is still going on we are going to have to drain it out */
   if (sc->rxslot[slot].indma.ifq_head || 
 		sc->rxslot[slot].q.ifq_head ||
-		(oldmode & MIDV_INSERVICE) != 0 ||
+		(EN_READ(sc, MID_VC(vci)) & MIDV_INSERVICE) != 0 ||
 		(sc->rxslot[slot].oth_flags & ENOTHER_SWSL) != 0) {
     sc->rxslot[slot].oth_flags |= ENOTHER_DRAIN;
   } else {
@@ -2085,14 +2090,15 @@ void *arg;
 
       /* fetch and remove it from hardware service list */
       vci = EN_READ(sc, sc->hwslistp);
+      EN_WRAPADD(MID_SLOFF, MID_SLEND, sc->hwslistp, 4);/* advance hw ptr */
       slot = sc->rxvc2slot[vci];
       if (slot == RX_NONE) {
-	printf("%s: unexpected rx interrupt on VCI %d\n", sc->sc_dev.dv_xname, 
-	    EN_READ(sc, sc->hwslistp));
-	panic("enintr: service");
+	printf("%s: unexpected rx interrupt on VCI %d\n", 
+		sc->sc_dev.dv_xname, vci);
+	EN_WRITE(sc, MID_VC(vci), MIDV_TRASH);  /* rx off, damn it! */
+	continue;				/* next */
       }
       EN_WRITE(sc, MID_VC(vci), sc->rxslot[slot].mode); /* remove from hwsl */
-      EN_WRAPADD(MID_SLOFF, MID_SLEND, sc->hwslistp, 4);/* advance hw ptr */
       EN_COUNT(sc->hwpull);
 
 #ifdef EN_DEBUG
@@ -2207,6 +2213,7 @@ same_vci:
 
   /* check to see if there is any data at all */
   if (dstart == cur) {
+defer:					/* defer processing */
     EN_WRAPADD(0, MID_SL_N, sc->swsl_head, 1); 
     sc->rxslot[slot].oth_flags &= ~ENOTHER_SWSL;
     sc->swsl_size--;
@@ -2231,6 +2238,9 @@ same_vci:
       mlen = dstart - cur;
     else
       mlen = (dstart + (EN_RXSZ*1024)) - cur;
+
+    if (mlen < sc->rxslot[slot].raw_threshold)
+      goto defer; 		/* too little data to deal with */
 
   } else {
 
