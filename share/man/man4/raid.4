@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.11 2000/04/03 21:19:37 aaron Exp $
+.\"	$OpenBSD: raid.4,v 1.12 2000/12/21 18:15:13 avsm Exp $
 .\"     $NetBSD: raid.4,v 1.8 1999/12/15 22:07:33 abs Exp $
 .\"
 .\"
@@ -119,7 +119,7 @@ set, and whether the data (and parity) on the component is
 .Sq clean .
 If the driver determines that the labels are very inconsistent with
 respect to each other (e.g. two or more serial numbers do not match)
-or that the component label is not consistent with it's assigned place
+or that the component label is not consistent with its assigned place
 in the set (e.g. the component label claims the component should be
 the 3rd one a 6-disk set, but the RAID set has it as the 3rd component
 in a 5-disk set) then the device will fail to configure.  If the
@@ -139,7 +139,7 @@ actively used in an existing filesystem.  Should a disk fail, the
 driver is capable of reconstructing the failed disk onto a hot spare
 or back onto a replacement drive.
 If the components are hot swapable, the failed disk can then be
-removed, a new disk put in it's place, and a copyback operation
+removed, a new disk put in its place, and a copyback operation
 performed.  The copyback operation, as its name indicates, will copy
 the reconstructed data from the hot spare to the previously failed
 (and now replaced) disk.  Hot spares can also be hot-added using

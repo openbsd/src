@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctxsw.9,v 1.6 2000/10/12 18:05:58 aaron Exp $
+.\"	$OpenBSD: ctxsw.9,v 1.7 2000/12/21 18:15:14 avsm Exp $
 .\"	$NetBSD: ctxsw.9,v 1.9 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ signal to be posted to the process, while exceeding the hard limit will
 cause a
 .Dv SIGKILL .
 For a process which accumulated longer than 10 minutes of
-cpu time it's nice level is raised to 4.
+cpu time, its nice level is raised to 4.
 After these administrative tasks are done,
 .Fn mi_switch
 hands over control to the machine dependent routine

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.14 2000/11/10 20:02:16 todd Exp $
+.\"	$OpenBSD: ahc.4,v 1.15 2000/12/21 18:15:13 avsm Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -13,7 +13,7 @@
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. The name of the author may not be used to endorse or promote products
-.\"    derived from this software withough specific prior written permission.
+.\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -107,7 +107,7 @@ and
 .Pp
 Driver features include support for twin and wide busses,
 fast, ultra and ultra2 synchronous transfers depending on controller type,
-tagged queueing, and SCB paging.
+tagged queuing, and SCB paging.
 .Pp
 Memory mapped I/O can be enabled for PCI devices with the
 .Dq Dv AHC_ALLOW_MEMIO
@@ -208,7 +208,7 @@ If external SRAM is not available, SCBs are a limited resource and
 using them in a straight forward manner would only allow us to
 keep as many transactions as there are SCBs outstanding at a time.
 This would not allow enough concurrency to fully utilize the SCSI
-bus and it's devices.
+bus and its devices.
 The solution to this problem is
 .Em SCB Paging ,
 a concept similar to memory paging.
