@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.16 2000/04/13 04:25:10 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.17 2000/04/13 23:51:23 smurph Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -177,8 +177,9 @@ void *match, *aux;
 			break;
 	case PCI_VENDOR_ADP2:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ADP2_2940U2:
 		case PCI_PRODUCT_ADP2_AIC7890:
+		case PCI_PRODUCT_ADP2_2940U2:
+		case PCI_PRODUCT_ADP2_2930U2:
 		case PCI_PRODUCT_ADP2_AIC7892:
 		case PCI_PRODUCT_ADP2_29160:
 		case PCI_PRODUCT_ADP2_19160B:
