@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2000/06/23 16:39:45 espie Exp $
+#	$OpenBSD: Makefile,v 1.19 2000/06/25 20:31:08 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR} -Wall -Wno-char-subscripts -Wno-unused -Wstrict-prototypes#-Wmissing-prototypes -Wstrict-prototypes
@@ -33,6 +33,7 @@ libohash.a: ${LIBOBJS}
 	ranlib $@
 
 CLEANFILES+=${LIBOBJS} libohash.a
+CLEANFILES+= hashconsts.h generate.o generate
 
 beforedepend: hashconsts.h
 # may need tweaking if you add variable synonyms or change the hash function
@@ -45,7 +46,7 @@ generate: generate.o error.o libohash.a
 	${CC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
 
 # kludge for people who forget to make depend
-${.CURDIR}/var.c: hashconsts.h
+var.o: hashconsts.h
 
 .if make(install)
 SUBDIR+= PSD.doc
