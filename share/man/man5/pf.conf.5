@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.240 2003/05/16 17:15:17 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.241 2003/05/16 18:38:47 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1625,14 +1625,12 @@ Hence,
 includes
 .Ar modulate state
 and
-.Ar keep state
-.
+.Ar keep state .
 .Pp
 Example:
 .Bd -literal -offset indent
 pass in proto tcp from any to any port www flags S/SA synproxy state
 .Ed
-.Pp
 .Sh STATEFUL TRACKING OPTIONS
 Both
 .Ar keep state
