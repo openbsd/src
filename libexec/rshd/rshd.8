@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rshd.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: rshd.8,v 1.1.1.1 1995/10/18 08:43:22 deraadt Exp $
+.\"	$Id: rshd.8,v 1.2 1996/07/13 11:23:17 deraadt Exp $
 .\"
 .Dd June 4, 1993
 .Dt RSHD 8
@@ -51,6 +51,21 @@ routine and, consequently, for the
 .Xr rsh 1
 program.  The server provides remote execution facilities
 with authentication based on privileged port numbers from trusted hosts.
+.Pp
+Options supported by
+.Nm rshd :
+.Bl -tag -width Ds
+.It Fl a
+Ask hostname for verification.
+.It Fl l
+Prevent any authentication based on the user's
+.Dq Pa .rhosts
+file, unless the user is logging in as the superuser.
+.It Fl n
+Disable keep-alive messages.
+.It Fl L
+Log successful accesses very verbosely.
+.El
 .Pp
 The
 .Nm rshd
