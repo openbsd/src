@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 2001/08/23 15:18:54 art Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -67,11 +67,10 @@
 #include "st.h"
 #include "cd.h"
 #include "uk.h"
-#ifdef notyet
 #include "wd.h"
+#ifdef notyet
 #include "raid.h"
 #endif
-#define NWD 0
 #define NRAID 0
 
 #ifdef notyet
