@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.8 2001/03/02 08:33:55 art Exp $	*/
+/*	$OpenBSD: dir.c,v 1.9 2001/05/28 21:22:47 gluk Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.8 2001/03/02 08:33:55 art Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.9 2001/05/28 21:22:47 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,31 +80,21 @@ static int chgino __P((struct  inodesc *));
  * Propagate connected state through the tree.
  */
 void
-propagate()
+propagate(inumber)
+	ino_t	inumber;
 {
-	register struct inoinfo **inpp, *inp, *pinp;
-	struct inoinfo **inpend;
+	struct	inoinfo *inp;
+	char	state;
 
-	/*
-	 * Create a list of children for each directory.
-	 */
-	inpend = &inpsort[inplast];
-	for (inpp = inpsort; inpp < inpend; inpp++) {
-		inp = *inpp;
-		if (inp->i_parent == 0 ||
-		    inp->i_number == ROOTINO)
-			continue;
-		pinp = getinoinfo(inp->i_parent);
-		inp->i_parentp = pinp;
-		inp->i_sibling = pinp->i_child;
-		pinp->i_child = inp;
-	}
-	inp = getinoinfo(ROOTINO);
-	while (inp) {
-		statemap[inp->i_number] = DFOUND;
+	inp = getinoinfo(inumber);
+	state = statemap[inp->i_number];
+	for (;;) {
+		statemap[inp->i_number] = state;
 		if (inp->i_child &&
-		    statemap[inp->i_child->i_number] == DSTATE)
+		    statemap[inp->i_child->i_number] != state)
 			inp = inp->i_child;
+		else if (inp->i_number == inumber)
+			break;
 		else if (inp->i_sibling)
 			inp = inp->i_sibling;
 		else
@@ -432,8 +422,6 @@ linkup(orphan, parentdir)
 	else
 		if (reply("RECONNECT") == 0)
 			return (0);
-	if (parentdir != 0)
-		lncntp[parentdir]++;
 	if (lfdir == 0) {
 		dp = ginode(ROOTINO);
 		idesc.id_name = lfname;
@@ -651,6 +639,7 @@ allocdir(parent, request, mode)
 	struct dinode *dp;
 	register struct bufarea *bp;
 	struct dirtemplate *dirp;
+	struct inoinfo *inp;
 
 	ino = allocino(request, IFDIR|mode);
 	if (newinofmt)
@@ -683,6 +672,9 @@ allocdir(parent, request, mode)
 		return (0);
 	}
 	cacheino(dp, ino);
+	inp = getinoinfo(ino);
+	inp->i_parent = parent;
+	inp->i_dotdot = parent;
 	statemap[ino] = statemap[parent];
 	if (statemap[ino] == DSTATE) {
 		lncntp[ino] = dp->di_nlink;

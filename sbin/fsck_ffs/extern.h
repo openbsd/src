@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 1999/03/01 07:45:17 d Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2001/05/28 21:22:47 gluk Exp $	*/
 /*	$NetBSD: extern.h,v 1.6 1996/09/27 22:45:12 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ int	pass1check __P((struct inodesc *));
 int	pass4check __P((struct inodesc *));
 void	pass5 __P((void));
 void	pinode __P((ino_t));
-void	propagate __P((void));
+void	propagate __P((ino_t));
 int	reply __P((char *));
 void	resetinodebuf __P((void));
 int	setup __P((char *));
