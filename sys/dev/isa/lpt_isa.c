@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.7 1997/10/07 05:36:07 mickey Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.8 1997/10/07 05:58:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -117,7 +117,7 @@ lpt_isa_probe(parent, match, aux)
 
 	iot = ia->ia_iot;
 	base = ia->ia_iobase;
-	iosz = (ia->ia_iosize == -1) ? LPT_NPORTS : ia->ia_iosize;
+	iosz = (ia->ia_iosize == 0x666) ? LPT_NPORTS : ia->ia_iosize;
 	if (bus_space_map(iot, base, iosz, 0, &ioh))
 		return 0;
 
