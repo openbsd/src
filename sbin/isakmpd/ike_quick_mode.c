@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.90 2005/03/22 12:43:39 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.91 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -168,7 +168,7 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 		/*
 		 * For shared keys, just duplicate the passphrase with the
 		 * appropriate prefix tag.
-	         */
+		 */
 		nprinc = 3;
 		principal = calloc(nprinc, sizeof *principal);
 		if (!principal) {
@@ -609,12 +609,11 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 				/*
 				 * Life durations are special, we should be
 				 * able to specify several, one per type.
-			         */
+				 */
 				life_conf = conf_get_list(xf->field, "Life");
 				if (life_conf) {
 					for (life = TAILQ_FIRST(&life_conf->fields);
-					     life;
-					     life = TAILQ_NEXT(life, link)) {
+					    life; life = TAILQ_NEXT(life, link)) {
 						attribute_set_constant(
 						    life->field, "LIFE_TYPE",
 						    ipsec_duration_cst,
@@ -650,7 +649,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 				}
 				attribute_set_constant(xf->field,
 				    "ENCAPSULATION_MODE", ipsec_encap_cst,
-				      IPSEC_ATTR_ENCAPSULATION_MODE, &attr);
+				    IPSEC_ATTR_ENCAPSULATION_MODE, &attr);
 
 				if (proto_id != IPSEC_PROTO_IPCOMP) {
 					attribute_set_constant(xf->field,
@@ -714,7 +713,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 					 * description is specified, it is
 					 * specified for all transforms
 					 * equally.
-				         */
+					 */
 					attr =
 					    (u_int8_t *)conf_get_str(xf->field,
 						"GROUP_DESCRIPTION");
@@ -736,7 +735,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 			/*
 			 * Get SPI from application.
 			 * XXX Should we care about unknown constants?
-		         */
+			 */
 			protocol_num = constant_value(ipsec_proto_cst,
 			    protocol_id);
 			spi = doi->get_spi(&spi_sz, protocol_num, msg);
@@ -855,8 +854,8 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 		saved_nextp_prop = msg->nextp;
 		for (xf_no = 0; xf_no < transform_cnt[i]; xf_no++) {
 			if (message_add_payload(msg, ISAKMP_PAYLOAD_TRANSFORM,
-						transform[i][xf_no],
-				     transform_len[i][xf_no], update_nextp))
+			    transform[i][xf_no],
+			    transform_len[i][xf_no], update_nextp))
 				goto bail_out;
 			update_nextp = 1;
 			transform[i][xf_no] = 0;
@@ -959,7 +958,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 			return -1;
 		}
 		memcpy(id + ISAKMP_ID_DATA_OFF, sockaddr_addrdata(src),
-		       sockaddr_addrlen(src));
+		    sockaddr_addrlen(src));
 
 		LOG_DBG_BUF((LOG_NEGOTIATION, 90,
 		    "initiator_send_HASH_SA_NONCE: IDic", id, sz));
@@ -1002,7 +1001,7 @@ bail_out:
 				free(proposal[i]);
 			if (transform[i]) {
 				for (xf_no = 0; xf_no < transform_cnt[i];
-				     xf_no++)
+				    xf_no++)
 					if (transform[i][xf_no])
 						free(transform[i][xf_no]);
 				free(transform[i]);
@@ -1150,9 +1149,9 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 		 *    peers, without any constraints on the protocol or port
 		 *    numbers allowed, unless client identifiers are specified
 		 *    in Quick Mode.
-	         *
+		 *
 		 * -- Michael Paddon (mwp@aba.net.au)
-	         */
+		 */
 
 		ie->flags = IPSEC_EXCH_FLAG_NO_ID;
 
@@ -1209,19 +1208,19 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 			return -1;
 		}
 		memcpy(ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_addrdata(src),
-		       sockaddr_addrlen(src));
+		    sockaddr_addrlen(src));
 		memcpy(ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_addrdata(dst),
-		       sockaddr_addrlen(dst));
+		    sockaddr_addrlen(dst));
 	}
 
 	/* Build the protection suite in our SA.  */
 	for (xf = payload_first(msg, ISAKMP_PAYLOAD_TRANSFORM); xf;
-	     xf = TAILQ_NEXT(xf, link)) {
+	    xf = TAILQ_NEXT(xf, link)) {
 
 		/*
 		 * XXX We could check that the proposal each transform
 		 * belongs to is unique.
-	         */
+		 */
 
 		if (sa_add_transform(sa, xf, exchange->initiator, &proto))
 			return -1;
@@ -1285,7 +1284,7 @@ initiator_send_HASH(struct message *msg)
 	buf = malloc(ISAKMP_HASH_SZ + hash->hashsize);
 	if (!buf) {
 		log_error("initiator_send_HASH: malloc (%lu) failed",
-			  ISAKMP_HASH_SZ + (unsigned long)hash->hashsize);
+		    ISAKMP_HASH_SZ + (unsigned long)hash->hashsize);
 		return -1;
 	}
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_HASH, buf,
@@ -1295,7 +1294,7 @@ initiator_send_HASH(struct message *msg)
 	}
 	/* Allocate the prf and start calculating our HASH(3).  XXX Share?  */
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "initiator_send_HASH: SKEYID_a",
-		     isa->skeyid_a, isa->skeyid_len));
+	    isa->skeyid_a, isa->skeyid_len));
 	prf = prf_alloc(isa->prf_type, isa->hash, isa->skeyid_a,
 	    isa->skeyid_len);
 	if (!prf)
@@ -1344,9 +1343,9 @@ post_quick_mode(struct message *msg)
 	 * per protocol.
          */
 	for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
-	     sa = TAILQ_NEXT(sa, next)) {
+	    sa = TAILQ_NEXT(sa, next)) {
 		for (proto = TAILQ_FIRST(&sa->protos); proto;
-		     proto = TAILQ_NEXT(proto, link)) {
+		    proto = TAILQ_NEXT(proto, link)) {
 			if (proto->proto == IPSEC_PROTO_IPCOMP)
 				continue;
 
@@ -1355,7 +1354,7 @@ post_quick_mode(struct message *msg)
 			/*
 			 * There are two SAs for each SA negotiation,
 			 * incoming and outcoing.
-		         */
+			 */
 			for (i = 0; i < 2; i++) {
 				prf = prf_alloc(isa->prf_type, isa->hash,
 				    isa->skeyid_d, isa->skeyid_len);
@@ -1370,7 +1369,7 @@ post_quick_mode(struct message *msg)
 				 * material buffer to a multiple of the PRF's
 				 * blocksize as it is generated in chunks of
 				 * that blocksize.
-			         */
+				 */
 				iproto->keymat[i]
 					= malloc(((ie->keymat_len + prf->blocksize - 1)
 					/ prf->blocksize) * prf->blocksize);
@@ -1386,7 +1385,7 @@ post_quick_mode(struct message *msg)
 				}
 				for (keymat = iproto->keymat[i];
 				keymat < iproto->keymat[i] + ie->keymat_len;
-				     keymat += prf->blocksize) {
+				    keymat += prf->blocksize) {
 					prf->Init(prf->prfctx);
 
 					if (keymat != iproto->keymat[i]) {
@@ -1491,7 +1490,7 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 	my_hash = malloc(hash_len - ISAKMP_GEN_SZ);
 	if (!my_hash) {
 		log_error("responder_recv_HASH_SA_NONCE: malloc (%lu) failed",
-			  (unsigned long)hash_len - ISAKMP_GEN_SZ);
+		    (unsigned long)hash_len - ISAKMP_GEN_SZ);
 		goto cleanup;
 	}
 	/*
@@ -1506,21 +1505,21 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 		goto cleanup;
 	prf->Init(prf->prfctx);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90,
-		     "responder_recv_HASH_SA_NONCE: message_id",
-		     exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
+	    "responder_recv_HASH_SA_NONCE: message_id",
+	    exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
 	prf->Update(prf->prfctx, exchange->message_id,
 	    ISAKMP_HDR_MESSAGE_ID_LEN);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90,
-		     "responder_recv_HASH_SA_NONCE: message after HASH",
-		     hash + hash_len,
-		     msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len));
+	    "responder_recv_HASH_SA_NONCE: message after HASH",
+	    hash + hash_len,
+	    msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len));
 	prf->Update(prf->prfctx, hash + hash_len,
-		    msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len);
+	    msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len);
 	prf->Final(my_hash, prf->prfctx);
 	prf_free(prf);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90,
-		  "responder_recv_HASH_SA_NONCE: computed HASH(1)", my_hash,
-		     hash_len - ISAKMP_GEN_SZ));
+	    "responder_recv_HASH_SA_NONCE: computed HASH(1)", my_hash,
+	    hash_len - ISAKMP_GEN_SZ));
 	if (memcmp(hash + ISAKMP_GEN_SZ, my_hash, hash_len - ISAKMP_GEN_SZ)
 	    != 0) {
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0,
@@ -1584,9 +1583,9 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 		 *    peers, without any constraints on the protocol or port
 		 *    numbers allowed, unless client identifiers are specified
 		 *    in Quick Mode.
-	         *
+		 *
 		 * -- Michael Paddon (mwp@aba.net.au)
-	         */
+		 */
 
 		ie->flags = IPSEC_EXCH_FLAG_NO_ID;
 
@@ -1628,9 +1627,9 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 		}
 
 		memcpy(ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_addrdata(src),
-		       sockaddr_addrlen(src));
+		    sockaddr_addrlen(src));
 		memcpy(ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_addrdata(dst),
-		       sockaddr_addrlen(dst));
+		    sockaddr_addrlen(dst));
 	}
 
 #ifdef USE_POLICY
@@ -1647,9 +1646,9 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 #endif				/* USE_POLICY */
 
 	for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
-	     sa = TAILQ_NEXT(sa, next)) {
+	    sa = TAILQ_NEXT(sa, next)) {
 		for (proto = TAILQ_FIRST(&sa->protos); proto;
-		     proto = TAILQ_NEXT(proto, link)) {
+		    proto = TAILQ_NEXT(proto, link)) {
 			/*
 			 * XXX we need to have some attributes per proto, not
 			 * all per SA.
@@ -1708,7 +1707,7 @@ next_sa:
 			 * description we should notify our peer, but this
 			 * should probably be done by the attribute
 			 * validation.  Is it?
-		         */
+			 */
 			goto cleanup;
 		}
 	}
@@ -1746,9 +1745,9 @@ next_sa:
 	    strncmp("yes", conf_get_str("General", "Use-Keynote"), 3)) {
 		log_print("responder_recv_HASH_SA_NONCE: peer proposed "
 		    "invalid phase 2 IDs: %s",
-		        (exchange->doi->decode_ids("initiator id %s, responder"
-			" id %s", ie->id_ci, ie->id_ci_sz, ie->id_cr,
-			ie->id_cr_sz, 1)));
+		    (exchange->doi->decode_ids("initiator id %s, responder"
+		    " id %s", ie->id_ci, ie->id_ci_sz, ie->id_cr,
+		    ie->id_cr_sz, 1)));
 		message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 		goto cleanup;
 	}
@@ -1758,7 +1757,7 @@ next_sa:
 cleanup:
 	/* Remove all potential protocols that have been added to the SAs.  */
 	for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
-	     sa = TAILQ_NEXT(sa, next))
+	    sa = TAILQ_NEXT(sa, next))
 		while ((proto = TAILQ_FIRST(&sa->protos)) != 0)
 			proto_free(proto);
 	if (my_hash)
@@ -1864,8 +1863,8 @@ responder_send_HASH_SA_NONCE(struct message *msg)
 		return -1;
 	prf->Init(prf->prfctx);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90,
-		     "responder_send_HASH_SA_NONCE: message_id",
-		     exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
+	    "responder_send_HASH_SA_NONCE: message_id",
+	    exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
 	prf->Update(prf->prfctx, exchange->message_id,
 	    ISAKMP_HDR_MESSAGE_ID_LEN);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "responder_send_HASH_SA_NONCE: "
@@ -1879,7 +1878,7 @@ responder_send_HASH_SA_NONCE(struct message *msg)
 		   "responder_send_HASH_SA_NONCE: payload %d after HASH(2)",
 			 i - 1);
 		LOG_DBG_BUF((LOG_NEGOTIATION, 90, header, msg->iov[i].iov_base,
-			     msg->iov[i].iov_len));
+		    msg->iov[i].iov_len));
 		prf->Update(prf->prfctx, msg->iov[i].iov_base,
 		    msg->iov[i].iov_len);
 	}
@@ -1910,7 +1909,7 @@ gen_g_xy(struct message *msg)
 		return;
 	}
 	if (dh_create_shared(ie->group, ie->g_xy,
-			     exchange->initiator ? ie->g_xr : ie->g_xi)) {
+	    exchange->initiator ? ie->g_xr : ie->g_xi)) {
 		log_print("gen_g_xy: dh_create_shared failed");
 		return;
 	}
@@ -1944,7 +1943,7 @@ responder_recv_HASH(struct message *msg)
 	LOG_DBG((LOG_NEGOTIATION, 90, "responder_recv_HASH: "
 	    "isakmp_sa %p isa %p", isakmp_sa, isa));
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "responder_recv_HASH: SKEYID_a",
-		     isa->skeyid_a, isa->skeyid_len));
+	    isa->skeyid_a, isa->skeyid_len));
 	prf = prf_alloc(isa->prf_type, isa->hash, isa->skeyid_a,
 	    isa->skeyid_len);
 	if (!prf)
@@ -1952,20 +1951,20 @@ responder_recv_HASH(struct message *msg)
 	prf->Init(prf->prfctx);
 	prf->Update(prf->prfctx, (unsigned char *)"\0", 1);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "responder_recv_HASH: message_id",
-		     exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
+	    exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
 	prf->Update(prf->prfctx, exchange->message_id,
 	    ISAKMP_HDR_MESSAGE_ID_LEN);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "responder_recv_HASH: NONCE_I_b",
-		     exchange->nonce_i, exchange->nonce_i_len));
+	    exchange->nonce_i, exchange->nonce_i_len));
 	prf->Update(prf->prfctx, exchange->nonce_i, exchange->nonce_i_len);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "responder_recv_HASH: NONCE_R_b",
-		     exchange->nonce_r, exchange->nonce_r_len));
+	    exchange->nonce_r, exchange->nonce_r_len));
 	prf->Update(prf->prfctx, exchange->nonce_r, exchange->nonce_r_len);
 	prf->Final(my_hash, prf->prfctx);
 	prf_free(prf);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90,
-		     "responder_recv_HASH: computed HASH(3)", my_hash,
-		     hash_len - ISAKMP_GEN_SZ));
+	    "responder_recv_HASH: computed HASH(3)", my_hash,
+	    hash_len - ISAKMP_GEN_SZ));
 	if (memcmp(hash + ISAKMP_GEN_SZ, my_hash, hash_len - ISAKMP_GEN_SZ)
 	    != 0) {
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0,

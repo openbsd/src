@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.9 2005/02/24 16:16:46 markus Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.10 2005/04/04 19:31:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -131,11 +131,10 @@ dpd_check_vendor_payload(struct message *msg, struct payload *p)
 		}
 		p->flags |= PL_MARK;
 	}
-	return;
 }
 
 /*
- * All incoming DPD Notify messages enter here. Message has been validated. 
+ * All incoming DPD Notify messages enter here. Message has been validated.
  */
 void
 dpd_handle_notify(struct message *msg, struct payload *p)
@@ -233,7 +232,7 @@ dpd_timer_reset(struct sa *sa, u_int32_t time_passed, enum dpd_tstate mode)
 	default:
 		break;
 	}
-	if (!sa->dpd_event) 
+	if (!sa->dpd_event)
 		log_print("dpd_timer_reset: timer_add_event failed");
 }
 
@@ -257,7 +256,7 @@ struct dpd_args {
 
 /* Helper function for dpd_event().  */
 static int
-dpd_check_time(struct sa *sa, void *v_arg) 
+dpd_check_time(struct sa *sa, void *v_arg)
 {
 	struct dpd_args *args = v_arg;
 	struct sockaddr *dst;
@@ -289,10 +288,9 @@ dpd_check_time(struct sa *sa, void *v_arg)
 		args->interval = (u_int32_t)(tv.tv_sec - ksa->last_used);
 		return 1;
 	}
-	
 	return 0;
 }
-	
+
 /* Called by the timer.  */
 static void
 dpd_event(void *v_sa)
@@ -365,8 +363,8 @@ dpd_check_event(void *v_sa)
 		dpd_timer_reset(isakmp_sa, 0, DPD_TIMER_CHECK);
 		return;
 	}
-	
-	/* 
+
+	/*
 	 * Peer is considered dead. Delete all SAs created under isakmp_sa.
 	 */
 	LOG_DBG((LOG_MESSAGE, 10, "dpd_check_event: peer is dead, "

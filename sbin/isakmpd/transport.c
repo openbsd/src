@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.30 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: transport.c,v 1.31 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -58,7 +58,7 @@ transport_reinit(void)
 	struct transport_vtbl *method;
 
 	for (method = LIST_FIRST(&transport_method_list); method;
-	     method = LIST_NEXT(method, link))
+	    method = LIST_NEXT(method, link))
 		if (method->reinit)
 			method->reinit();
 }
@@ -127,8 +127,8 @@ transport_report(void)
 
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
 		LOG_DBG((LOG_REPORT, 0,
-		     "transport_report: transport %p flags %x refcnt %d", t,
-			 t->flags, t->refcnt));
+		    "transport_report: transport %p flags %x refcnt %d", t,
+		    t->flags, t->refcnt));
 
 		/* XXX Report sth on the virtual transport?  */
 		t->vtbl->report(t);
@@ -141,12 +141,12 @@ transport_report(void)
 		if ((v->encap_is_active && v->encap == t) ||
 		    (!v->encap_is_active && v->main == t)) {
 			for (msg = TAILQ_FIRST(&t->virtual->prio_sendq); msg;
-			     msg = TAILQ_NEXT(msg, link))
+			    msg = TAILQ_NEXT(msg, link))
 				message_dump_raw("udp_report(prio)", msg,
 				    LOG_REPORT);
 
 			for (msg = TAILQ_FIRST(&t->virtual->sendq); msg;
-			     msg = TAILQ_NEXT(msg, link))
+			    msg = TAILQ_NEXT(msg, link))
 				message_dump_raw("udp_report", msg,
 				    LOG_REPORT);
 		}
@@ -302,7 +302,7 @@ transport_send_messages(fd_set * fds)
 			 * We disregard the potential error message here,
 			 * hoping that the retransmit will go better.
 			 * XXX Consider a retry/fatal error discriminator.
-		         */
+			 */
 			t->virtual->vtbl->send_message(msg, 0);
 			msg->xmits++;
 
@@ -310,16 +310,15 @@ transport_send_messages(fd_set * fds)
 			 * This piece of code has been proven to be quite
 			 * delicate. Think twice for before altering.
 			 * Here's an outline:
-		         *
+			 *
 			 * If this message is not the one which finishes an
 			 * exchange, check if we have reached the number of
 			 * retransmit before queuing it up for another.
-		         *
+			 *
 			 * If it is a finishing message we still may have to
 			 * keep it around for an on-demand retransmit when
 			 * seeing a duplicate of our peer's previous message.
-		         *
-		         */
+			 */
 			if ((msg->flags & MSG_LAST) == 0) {
 				if (msg->xmits > conf_get_num("General",
 				    "retransmits", RETRANSMIT_DEFAULT)) {
@@ -357,7 +356,7 @@ transport_send_messages(fd_set * fds)
 					/*
 					 * XXX Calculate from round trip
 					 * timings and a backoff func.
-				         */
+					 */
 					expiry = msg->xmits * 2 + 5;
 					expiration.tv_sec += expiry;
 					LOG_DBG((LOG_TRANSPORT, 30,
@@ -388,7 +387,7 @@ transport_send_messages(fd_set * fds)
 			 * after the post-send function. But as the post-send
 			 * function may remove the exchange, we need to
 			 * remember this fact here.
-		         */
+			 */
 			ok_to_drop_message = exchange->last_sent == 0;
 
 			/*
@@ -398,7 +397,7 @@ transport_send_messages(fd_set * fds)
 			 * the job.  Note that a post-send function may take
 			 * away the exchange we belong to, but only if no
 			 * retransmits are possible.
-		         */
+			 */
 			if (msg->xmits == 1)
 				message_post_send(msg);
 
@@ -424,7 +423,7 @@ transport_create(char *name, char *addr)
 	struct transport_vtbl *method;
 
 	for (method = LIST_FIRST(&transport_method_list); method;
-	     method = LIST_NEXT(method, link))
+	    method = LIST_NEXT(method, link))
 		if (strcmp(method->name, name) == 0)
 			return (*method->create) (addr);
 	return 0;

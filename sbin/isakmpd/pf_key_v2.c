@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.155 2005/03/02 12:49:51 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.156 2005/04/04 19:31:11 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -135,7 +135,7 @@ static u_int8_t *pf_key_v2_convert_id(u_int8_t *, int, size_t *, int *);
 #endif
 static struct pf_key_v2_msg *pf_key_v2_call(struct pf_key_v2_msg *);
 static struct pf_key_v2_node *pf_key_v2_find_ext(struct pf_key_v2_msg *,
-	                u_int16_t);
+		    u_int16_t);
 static void     pf_key_v2_notify(struct pf_key_v2_msg *);
 static struct pf_key_v2_msg *pf_key_v2_read(u_int32_t);
 static u_int32_t pf_key_v2_seq(void);
@@ -827,7 +827,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 		    (unsigned long)sizeof *ssa);
 		goto cleanup;
 	}
-	
+
 	ssa->sadb_sa_exttype = SADB_EXT_SA;
 	ssa->sadb_sa_len = sizeof *ssa / PF_KEY_V2_CHUNK;
 	memcpy(&ssa->sadb_sa_spi, spi, sizeof ssa->sadb_sa_spi);
@@ -884,7 +884,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 	ext = pf_key_v2_find_ext(ret, SADB_EXT_SA);
 	if (!ext)
 		goto cleanup;
-	
+
 	ssa = (struct sadb_sa *)ext;
 	ksa.spi = ssa->sadb_sa_spi;
 	ksa.wnd = ssa->sadb_sa_replay;
@@ -907,7 +907,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 		ksa.soft_timeout = life->sadb_lifetime_addtime;
 		ksa.soft_first_use = life->sadb_lifetime_usetime;
 	}
-	
+
 	ext = pf_key_v2_find_ext(ret, SADB_EXT_LIFETIME_HARD);
 	if (ext) {
 		life = (struct sadb_lifetime *)ext->seg;
@@ -917,7 +917,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 		ksa.exp_first_use = life->sadb_lifetime_usetime;
 	}
 
-#if defined (SADB_X_EXT_LIFETIME_LASTUSE)	
+#if defined (SADB_X_EXT_LIFETIME_LASTUSE)
 	ext = pf_key_v2_find_ext(ret, SADB_X_EXT_LIFETIME_LASTUSE);
 	if (ext) {
 		life = (struct sadb_lifetime *)ext->seg;
@@ -932,7 +932,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 		    sa->sa_family == AF_INET ? sizeof(struct sockaddr_in) :
 		    sizeof(struct sockaddr_in6));
 	}
-	
+
 	ext = pf_key_v2_find_ext(ret, SADB_EXT_ADDRESS_DST);
 	if (ext) {
 		sa = (struct sockaddr *)ext->seg;
@@ -963,7 +963,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 	    spi_sz));
 
 	return &ksa;
-	
+
   cleanup:
 	if (addr)
 		free (addr);
@@ -1361,7 +1361,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		life->sadb_lifetime_usetime = 0;
 #endif
 		if (pf_key_v2_msg_add(update, (struct sadb_ext *) life,
-				      PF_KEY_V2_NODE_MALLOCED) == -1)
+		    PF_KEY_V2_NODE_MALLOCED) == -1)
 			goto cleanup;
 		life = 0;
 
@@ -2043,7 +2043,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 		pf_key_v2_setup_sockaddr(addr + 1, dst, 0, 0, 0);
 #endif
 		if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
-				      PF_KEY_V2_NODE_MALLOCED) == -1)
+		    PF_KEY_V2_NODE_MALLOCED) == -1)
 			goto cleanup;
 		addr = 0;
 	}
@@ -2056,7 +2056,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	addr->sadb_address_reserved = 0;
 	pf_key_v2_setup_sockaddr(addr + 1, laddr, 0, sport, 0);
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -2068,7 +2068,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	addr->sadb_address_reserved = 0;
 	pf_key_v2_setup_sockaddr(addr + 1, lmask, 0, sport ? 0xffff : 0, 0);
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -2080,7 +2080,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	addr->sadb_address_reserved = 0;
 	pf_key_v2_setup_sockaddr(addr + 1, raddr, 0, dport, 0);
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -2092,7 +2092,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	addr->sadb_address_reserved = 0;
 	pf_key_v2_setup_sockaddr(addr + 1, rmask, 0, dport ? 0xffff : 0, 0);
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -2228,7 +2228,7 @@ cleanup:
 		break;
 	}
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -2262,7 +2262,7 @@ cleanup:
 		break;
 	}
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -2401,7 +2401,7 @@ pf_key_v2_convert_id(u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 	switch (id[0]) {
 	case IPSEC_ID_FQDN:
 		res = calloc(idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ,
-			     sizeof(u_int8_t));
+		    sizeof(u_int8_t));
 		if (!res)
 			return 0;
 
@@ -2414,7 +2414,7 @@ pf_key_v2_convert_id(u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 
 	case IPSEC_ID_USER_FQDN:
 		res = calloc(idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ,
-			     sizeof(u_int8_t));
+		    sizeof(u_int8_t));
 		if (!res)
 			return 0;
 
@@ -2427,7 +2427,7 @@ pf_key_v2_convert_id(u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 
 	case IPSEC_ID_IPV4_ADDR:	/* XXX CONNECTION ? */
 		if (inet_ntop(AF_INET, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
-			      addrbuf, ADDRESS_MAX) == NULL)
+		    addrbuf, ADDRESS_MAX) == NULL)
 			return 0;
 		*reslen = strlen(addrbuf) + 3;
 		strlcat(addrbuf, "/32", ADDRESS_MAX + 5);
@@ -3098,9 +3098,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	struct sadb_comb *scmb = 0;
 	struct sadb_prop *sprp = 0;
 	struct sadb_ident *srcident = 0, *dstident = 0;
-	char		dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0,
-	               *conn = 0;
-	char		confname[120];
+	char		dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0;
+	char		confname[120], *conn = 0;
 	char           *srcid = 0, *dstid = 0, *prefstring = 0;
 	int		slen, af, afamily, masklen, buflen;
 	struct sockaddr *smask, *sflow, *dmask, *dflow;
@@ -3551,8 +3550,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 		default:
 			LOG_DBG((LOG_SYSDEP, 20,
-			     "pf_key_v2_acquire: invalid source ID type %d",
-				 srcident->sadb_ident_type));
+			    "pf_key_v2_acquire: invalid source ID type %d",
+			    srcident->sadb_ident_type));
 			goto fail;
 		}
 
@@ -4211,7 +4210,7 @@ pf_key_v2_handler(int fd)
 	 */
 	if (ioctl(pf_key_v2_socket, FIONREAD, &n) == -1) {
 		log_error("pf_key_v2_handler: ioctl (%d, FIONREAD, &n) failed",
-			  pf_key_v2_socket);
+		    pf_key_v2_socket);
 		return;
 	}
 	if (!n)

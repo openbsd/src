@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.17 2005/02/27 13:12:12 hshoexer Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.18 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -219,7 +219,7 @@ b2n_set_str(b2n_ptr n, char *str)
 		tmp = 0;
 		for (j = (i == 0 ?
 		    ((len - 1) % CHUNK_BYTES) + 1 : CHUNK_BYTES);
-		     j > 0; j--) {
+		    j > 0; j--) {
 			tmp <<= 8;
 			tmp |= (hex2int(str[w]) << 4) | hex2int(str[w + 1]);
 			w += 2;

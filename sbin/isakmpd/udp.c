@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.84 2005/03/05 12:21:34 ho Exp $	 */
+/* $OpenBSD: udp.c,v 1.85 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -316,10 +316,9 @@ udp_create(char *name)
 
 	if (addr_list) {
 		for (addr_node = TAILQ_FIRST(&addr_list->fields);
-		     addr_node; addr_node = TAILQ_NEXT(addr_node, link))
+		    addr_node; addr_node = TAILQ_NEXT(addr_node, link))
 			if (text2sockaddr(addr_node->field,
-			    port_str, &addr, 0, 0)
-			    == 0) {
+			    port_str, &addr, 0, 0) == 0) {
 				v = virtual_listen_lookup(addr);
 				free(addr);
 				if (v) {
@@ -428,7 +427,7 @@ udp_handle_message(struct transport *t)
 	/*
 	 * Make a specialized UDP transport structure out of the incoming
 	 * transport and the address information we got from recvfrom(2).
-         */
+	 */
 	t = t->virtual->vtbl->clone(t->virtual, (struct sockaddr *)&from);
 	if (!t)
 		return;
@@ -454,7 +453,7 @@ udp_send_message(struct message *msg, struct transport *t)
 	/*
 	 * Sending on connected sockets requires that no destination address is
 	 * given, or else EISCONN will occur.
-         */
+	 */
 	m.msg_name = (caddr_t) u->dst;
 	m.msg_namelen = sysdep_sa_len(u->dst);
 	m.msg_iov = msg->iov;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.109 2005/04/04 18:40:45 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.110 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -337,7 +337,7 @@ ipsec_finalize_exchange(struct message *msg)
 			/*
 			 * Tell the application(s) about the SPIs and key
 			 * material.
-		         */
+			 */
 			for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
 			    sa = TAILQ_NEXT(sa, next)) {
 				isa = sa->data;
@@ -426,7 +426,7 @@ ipsec_finalize_exchange(struct message *msg)
 				 * If this is not an SA acquired by the
 				 * kernel, it needs to have a SPD entry
 				 * (a.k.a. flow) set up.
-			         */
+				 */
 				if (!(sa->flags & SA_FLAG_ONDEMAND ||
 					conf_get_str("General", "Acquire-Only")
 					|| acquire_only)
@@ -871,15 +871,15 @@ ipsec_validate_key_information(u_int8_t *buf, size_t sz)
 static int
 ipsec_validate_notification(u_int16_t type)
 {
-	return type < IPSEC_NOTIFY_RESPONDER_LIFETIME
-	    || type > IPSEC_NOTIFY_INITIAL_CONTACT ? -1 : 0;
+	return type < IPSEC_NOTIFY_RESPONDER_LIFETIME ||
+	    type > IPSEC_NOTIFY_INITIAL_CONTACT ? -1 : 0;
 }
 
 static int
 ipsec_validate_proto(u_int8_t proto)
 {
-	return proto < IPSEC_PROTO_IPSEC_AH
-	    || proto > IPSEC_PROTO_IPCOMP ? -1 : 0;
+	return proto < IPSEC_PROTO_IPSEC_AH ||
+	    proto > IPSEC_PROTO_IPCOMP ? -1 : 0;
 }
 
 static int
@@ -907,21 +907,21 @@ ipsec_validate_transform_id(u_int8_t proto, u_int8_t transform_id)
 		 * As no unexpected protocols can occur, we just tie the
 		 * default case to the first case, in orer to silence a GCC
 		 * warning.
-	         */
+		 */
 		default:
 		case ISAKMP_PROTO_ISAKMP:
 			return transform_id != IPSEC_TRANSFORM_KEY_IKE;
 		case IPSEC_PROTO_IPSEC_AH:
-			return transform_id < IPSEC_AH_MD5
-			    || transform_id > IPSEC_AH_DES ? -1 : 0;
+			return transform_id < IPSEC_AH_MD5 ||
+			    transform_id > IPSEC_AH_DES ? -1 : 0;
 	case IPSEC_PROTO_IPSEC_ESP:
-		return transform_id < IPSEC_ESP_DES_IV64
-		    || (transform_id > IPSEC_ESP_AES_128_CTR
-			&& transform_id < IPSEC_ESP_AES_MARS)
-		    || transform_id > IPSEC_ESP_AES_TWOFISH ? -1 : 0;
+		return transform_id < IPSEC_ESP_DES_IV64 ||
+		    (transform_id > IPSEC_ESP_AES_128_CTR &&
+		    transform_id < IPSEC_ESP_AES_MARS) ||
+		    transform_id > IPSEC_ESP_AES_TWOFISH ? -1 : 0;
 	case IPSEC_PROTO_IPCOMP:
-		return transform_id < IPSEC_IPCOMP_OUI
-		    || transform_id > IPSEC_IPCOMP_V42BIS ? -1 : 0;
+		return transform_id < IPSEC_IPCOMP_OUI ||
+		    transform_id > IPSEC_IPCOMP_V42BIS ? -1 : 0;
 	}
 }
 
@@ -934,12 +934,12 @@ ipsec_initiator(struct message *msg)
 	/* Check that the SA is coherent with the IKE rules.  */
 	if (exchange->type != ISAKMP_EXCH_TRANSACTION
 	    && ((exchange->phase == 1 &&
-		exchange->type != ISAKMP_EXCH_ID_PROT &&
-		exchange->type != ISAKMP_EXCH_AGGRESSIVE &&
-		exchange->type != ISAKMP_EXCH_INFO)
-	    || (exchange->phase == 2 &&	
-		exchange->type != IKE_EXCH_QUICK_MODE &&
-		exchange->type != ISAKMP_EXCH_INFO))) {
+	    exchange->type != ISAKMP_EXCH_ID_PROT &&
+	    exchange->type != ISAKMP_EXCH_AGGRESSIVE &&
+	    exchange->type != ISAKMP_EXCH_INFO)
+	    || (exchange->phase == 2 &&
+	    exchange->type != IKE_EXCH_QUICK_MODE &&
+	    exchange->type != ISAKMP_EXCH_INFO))) {
 		log_print("ipsec_initiator: unsupported exchange type %d "
 		    "in phase %d", exchange->type, exchange->phase);
 		return -1;
@@ -1086,7 +1086,7 @@ ipsec_responder(struct message *msg)
 		/*
 		 * If any DELETEs are in here, let the logic of leftover
 		 * payloads deal with them.
-	         */
+		 */
 		return 0;
 
 	case IKE_EXCH_QUICK_MODE:
@@ -1181,7 +1181,7 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			/*
 			 * Our crypto routines only allows key-lengths which
 			 * are multiples of an octet.
-		         */
+			 */
 			return dv % 8 != 0;
 		case IKE_ATTR_FIELD_SIZE:
 			return 1;
@@ -1631,14 +1631,14 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			 * Permit INITIAL-CONTACT if
 			 *   - this is not an AGGRESSIVE mode exchange
 			 *   - it is protected by an ISAKMP SA
-		         *
+			 *
 			 * XXX Instead of the first condition above, we could
 			 * XXX permit this only for phase 2. In the last
 			 * XXX packet of main-mode, this payload, while
 			 * XXX encrypted, is not part of the hash digest.  As
 			 * XXX we currently send our own INITIAL-CONTACTs at
 			 * XXX this point, this too would need to be changed.
-		         */
+			 */
 			if (msg->exchange->type == ISAKMP_EXCH_AGGRESSIVE) {
 				log_print("ipsec_handle_leftover_payload: got "
 				    "INITIAL-CONTACT in AGGRESSIVE mode");
@@ -1661,7 +1661,7 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			 * SA that is ready.  Exchanges will timeout
 			 * themselves and then the non-ready SAs will
 			 * disappear too.
-		         */
+			 */
 			msg->transport->vtbl->get_dst(msg->transport, &dst);
 			while ((sa = sa_lookup_by_peer(dst,
 			    sysdep_sa_len(dst))) != 0) {
@@ -1672,7 +1672,7 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 				 * the SA from the list to avoid an endless
 				 * loop, but keep a reference so it won't
 				 * disappear meanwhile.
-			         */
+				 */
 				if (sa == msg->isakmp_sa) {
 					sa_reference(sa);
 					sa_remove(sa);

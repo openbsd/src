@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.52 2005/03/10 21:39:21 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.53 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -265,7 +265,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 		 */
 		if (!strcmp(address, "default")) {
 			fd = socket(PF_ROUTE, SOCK_RAW, af);
-			
+
 			bzero(buf, sizeof(buf));
 
 			rtm = (struct rt_msghdr *)buf;
@@ -273,7 +273,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 			rtm->rtm_type = RTM_GET;
 			rtm->rtm_flags = RTF_UP;
 			rtm->rtm_addrs = RTA_DST;
-			rtm->rtm_seq = seq = arc4random(); 
+			rtm->rtm_seq = seq = arc4random();
 
 			/* default destination */
 			sa2 = (struct sockaddr *)(rtm + 1);
@@ -327,10 +327,10 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 				np = if_indextoname(rtm->rtm_index, ifname);
 				if (np == NULL)
 					return (-1);
-			}	
+			}
 		}
 #endif /* USE_DEFAULT_ROUTE */
-	
+
 		if (getifaddrs(&ifap) != 0)
 			return (-1);
 
@@ -339,18 +339,18 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 		case AF_INET:
 			for (ifa = ifap; ifa; ifa = ifa->ifa_next)
 				if (!strcmp(ifa->ifa_name, np) &&
-				    ifa->ifa_addr != NULL && 
+				    ifa->ifa_addr != NULL &&
 				    ifa->ifa_addr->sa_family == AF_INET)
 					break;
 			break;
 		case AF_INET6:
 			for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 				if (!strcmp(ifa->ifa_name, np) &&
-				    ifa->ifa_addr != NULL && 
+				    ifa->ifa_addr != NULL &&
 				    ifa->ifa_addr->sa_family == AF_INET6) {
 					if (IN6_IS_ADDR_LINKLOCAL(
 					    &((struct sockaddr_in6 *)
-					    ifa->ifa_addr)->sin6_addr) && 
+					    ifa->ifa_addr)->sin6_addr) &&
 					    llifa == NULL)
 						llifa = ifa;
 					else
@@ -362,12 +362,11 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 			}
 			break;
 		}
-  
+
 		if (ifa) {
 			if (netmask)
 				memcpy(&tmp_sas, ifa->ifa_netmask,
 				    sysdep_sa_len(ifa->ifa_netmask));
-				    
 			else
 				memcpy(&tmp_sas, ifa->ifa_addr,
 				    sysdep_sa_len(ifa->ifa_addr));

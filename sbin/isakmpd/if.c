@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.22 2004/06/14 09:55:41 ho Exp $	*/
+/*	$OpenBSD: if.c,v 1.23 2005/04/04 19:31:11 deraadt Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ siocgifconf(struct ifconf *ifcp)
 		/*
 		 * Allocate a larger buffer each time around the loop and get
 		 * the network interfaces configurations into it.
-	         */
+		 */
 		new_buf = realloc(buf, len);
 		if (!new_buf) {
 			log_error("siocgifconf: realloc (%p, %d) failed", buf,
@@ -96,7 +96,7 @@ siocgifconf(struct ifconf *ifcp)
 		 * If there is place for another ifreq we can be sure that the
 		 * buffer was big enough, otherwise double the size and try
 		 * again.
-	         */
+		 */
 		if (len - ifcp->ifc_len >= sizeof(struct ifreq))
 			break;
 		len *= 2;

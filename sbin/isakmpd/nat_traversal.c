@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.10 2005/03/05 12:22:40 ho Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.11 2005/04/04 19:31:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -159,7 +159,6 @@ nat_t_add_vendor_payload(struct message *msg, char *hash)
 		free(buf);
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -172,11 +171,9 @@ nat_t_add_vendor_payloads(struct message *msg)
 	if (!nat_t_hashes)
 		if (nat_t_setup_hashes())
 			return 0;  /* XXX should this be an error?  */
-
 	while (nat_t_hashes[i])
 		if (nat_t_add_vendor_payload(msg, nat_t_hashes[i++]))
 			return -1;
-
 	return 0;
 }
 
@@ -218,8 +215,6 @@ nat_t_check_vendor_payload(struct message *msg, struct payload *p)
 			p->flags |= PL_MARK;
 			return;
 		}
-
-	return;
 }
 
 /* Generate the NAT-D payload hash : HASH(CKY-I | CKY-R | IP | Port).  */
@@ -257,7 +252,6 @@ nat_t_generate_nat_d_hash(struct message *msg, struct sockaddr *sa,
 	hash->Update(hash->ctx, sockaddr_addrdata(sa), sockaddr_addrlen(sa));
 	hash->Update(hash->ctx, (unsigned char *)&port, sizeof port);
 	hash->Final(res, hash->ctx);
-
 	return res;
 }
 
@@ -291,7 +285,6 @@ nat_t_add_nat_d(struct message *msg, struct sockaddr *sa)
 		free(buf);
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -309,7 +302,6 @@ nat_t_exchange_add_nat_d(struct message *msg)
 	msg->transport->vtbl->get_src(msg->transport, &sa);
 	if (nat_t_add_nat_d(msg, sa))
 		return -1;
-
 	return 0;
 }
 

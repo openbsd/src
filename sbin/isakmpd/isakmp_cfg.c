@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.34 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.35 2005/04/04 19:31:11 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -239,7 +239,7 @@ cfg_initiator_send_ATTR(struct message *msg)
 		/*
 		 * We can continue, but this indicates a configuration error
 		 * that the user probably will want to correct.
-	         */
+		 */
 		free(id_string);
 		return 0;
 	}

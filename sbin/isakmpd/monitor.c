@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.36 2005/03/11 12:39:55 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.37 2005/04/04 19:31:11 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -181,7 +181,6 @@ monitor_ui_init(void)
 
 errout:
 	log_error("monitor_ui_init: problem talking to privileged process");
-	return;
 }
 
 int
@@ -491,8 +490,6 @@ monitor_init_done(void)
 {
 	if (m_write_int32(m_state.s, MONITOR_INIT_DONE))
 		log_print("monitor_init_done: read/write error");
-
-	return;
 }
 
 /*
@@ -552,7 +549,7 @@ monitor_loop(int debug)
 		/*
 		 * Currently, there is no need for us to hang around if the
 		 * child is in the process of shutting down.
-	         */
+		 */
 		if (sigtermed) {
 			m_priv_increase_state(STATE_QUIT);
 			kill(m_state.pid, SIGTERM);
@@ -680,7 +677,6 @@ m_priv_ui_init(int s)
 
 errout:
 	log_error("m_priv_ui_init: read/write operation failed");
-	return;
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -710,7 +706,6 @@ m_priv_pfkey_open(int s)
 
 errout:
 	log_error("m_priv_pfkey_open: read/write operation failed");
-	return;
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -763,7 +758,6 @@ m_priv_getfd(int s)
 
 errout:
 	log_error("m_priv_getfd: read/write operation failed");
-	return;
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -802,7 +796,6 @@ m_priv_getsocket(int s)
 
 errout:
 	log_error("m_priv_getsocket: read/write operation failed");
-	return;
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -862,7 +855,6 @@ errout:
 		free(optval);
 	if (sock >= 0)
 		close(sock);
-	return;
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -920,7 +912,6 @@ errout:
 		free(name);
 	if (sock >= 0)
 		close(sock);
-	return;
 }
 
 /*
@@ -1123,5 +1114,4 @@ m_priv_test_state(int state)
 	if (cur_state != state)
 		log_print("m_priv_test_state: Illegal state: %d != %d",
 		    (int)cur_state, state);
-	return;
 }

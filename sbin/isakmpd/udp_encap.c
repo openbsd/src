@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.12 2005/03/05 12:21:35 ho Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.13 2005/04/04 19:31:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -277,7 +277,7 @@ udp_encap_create(char *name)
 
 	if (addr_list) {
 		for (addr_node = TAILQ_FIRST(&addr_list->fields);
-		     addr_node; addr_node = TAILQ_NEXT(addr_node, link))
+		    addr_node; addr_node = TAILQ_NEXT(addr_node, link))
 			if (text2sockaddr(addr_node->field, port_str,
 			    &addr, 0, 0) == 0) {
 				v = virtual_listen_lookup(addr);

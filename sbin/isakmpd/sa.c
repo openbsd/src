@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.90 2005/02/27 13:12:12 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.91 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -976,9 +976,9 @@ sa_add_transform(struct sa *sa, struct payload *xf, int initiator,
 		 * selected proposal to make this lookup easier. Most vendors
 		 * follow this. One noted exception is the CiscoPIX (and
 		 * perhaps other Cisco products).
-	         *
+		 *
 		 * We start by matching on the proposal number, as before.
-	         */
+		 */
 		for (proto = TAILQ_FIRST(&sa->protos);
 		    proto && proto->no != GET_ISAKMP_PROP_NO(prop->p);
 		    proto = TAILQ_NEXT(proto, link))
@@ -986,13 +986,12 @@ sa_add_transform(struct sa *sa, struct payload *xf, int initiator,
 		/*
 		 * If we did not find a match, search through all proposals
 		 * and xforms.
-	         */
+		 */
 		if (!proto || sa_validate_proto_xf(proto, xf, sa->phase) != 0)
 			for (proto = TAILQ_FIRST(&sa->protos);
-			     proto && sa_validate_proto_xf(proto, xf,
-				 sa->phase) != 0;
-			     proto = TAILQ_NEXT(proto, link))
-			    ;
+			    proto && sa_validate_proto_xf(proto, xf, sa->phase) != 0;
+			    proto = TAILQ_NEXT(proto, link))
+				;
 	}
 	if (!proto)
 		return -1;
@@ -1100,7 +1099,7 @@ sa_soft_expire(void *v_sa)
 		/*
 		 * Start to watch the use of this SA, so a renegotiation can
 		 * happen as soon as it is shown to be alive.
-	         */
+		 */
 		sa->flags |= SA_FLAG_FADING;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.111 2005/03/10 17:19:08 cloder Exp $	 */
+/* $OpenBSD: exchange.c,v 1.112 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -190,7 +190,7 @@ exchange_script(struct exchange *exchange)
 		return script_transaction;
 #endif
 	default:
-		if (exchange->type >= ISAKMP_EXCH_DOI_MIN 
+		if (exchange->type >= ISAKMP_EXCH_DOI_MIN
 #if 0 /* always true; silence GCC3 warning */
 		    && exchange->type <= ISAKMP_EXCH_DOI_MAX
 #endif
@@ -259,7 +259,7 @@ exchange_handle_leftover_payloads(struct message *msg)
 		    i == ISAKMP_PAYLOAD_TRANSFORM)
 			continue;
 		for (p = payload_first(msg, i); p;
-		     p = TAILQ_NEXT(p, link)) {
+		    p = TAILQ_NEXT(p, link)) {
 			if (p->flags & PL_MARK)
 				continue;
 			if (!doi->handle_leftover_payload ||
@@ -289,9 +289,9 @@ exchange_run(struct message *msg)
 
 	while (!done) {
 		/*
-	         * It's our turn if we're either the initiator on an even step,
-	         * or the responder on an odd step of the dialogue.
-	         */
+		 * It's our turn if we're either the initiator on an even step,
+		 * or the responder on an odd step of the dialogue.
+		 */
 		if (exchange->initiator ^ (exchange->step % 2)) {
 			done = 1;
 			if (exchange->step)
@@ -308,7 +308,7 @@ exchange_run(struct message *msg)
 				 * the SA at his side so we need to do that
 				 * too, i.e.  implement automatic SA teardown
 				 * after a certain amount of inactivity.
-			         */
+				 */
 				log_print("exchange_run: doi->%s (%p) failed",
 				    exchange->initiator ? "initiator" :
 				    "responder", msg);
@@ -323,7 +323,7 @@ exchange_run(struct message *msg)
 				 * than "on-demand", i.e. if we see
 				 * retransmits of the last message of the peer
 				 * later.
-			         */
+				 */
 				msg->flags |= MSG_LAST;
 				if (exchange->step > 0) {
 					if (exchange->last_sent)
@@ -336,7 +336,7 @@ exchange_run(struct message *msg)
 				 * finalization, like telling our application
 				 * the SA is ready to be used, or issuing a
 				 * CONNECTED notify if we set the COMMIT bit.
-			         */
+				 */
 				message_register_post_send(msg,
 				    exchange_finalize);
 
@@ -362,17 +362,17 @@ exchange_run(struct message *msg)
 				/* Feed the message to the DOI.  */
 				if (handler(msg)) {
 					/*
-				         * Trust the peer to retransmit.
+					 * Trust the peer to retransmit.
 					 * XXX We have to implement SA aging
 					 * with automatic teardown.
-				         */
+					 */
 					message_free(msg);
 					return;
 				}
 				/*
 				 * Go over the yet unhandled payloads and feed
 				 * them to DOI for handling.
-			         */
+				 */
 				exchange_handle_leftover_payloads(msg);
 
 				/*
@@ -380,7 +380,7 @@ exchange_run(struct message *msg)
 				 * been processing an incoming message, record
 				 * that message as the one to do duplication
 				 * tests against.
-			         */
+				 */
 				if (exchange->last_received)
 					message_free(exchange->last_received);
 				exchange->last_received = msg;
@@ -460,7 +460,7 @@ exchange_lookup_from_icookie(u_int8_t *cookie)
 
 	for (i = 0; i <= bucket_mask; i++)
 		for (exchange = LIST_FIRST(&exchange_tab[i]); exchange;
-		     exchange = LIST_NEXT(exchange, link))
+		    exchange = LIST_NEXT(exchange, link))
 			if (memcmp(exchange->cookies, cookie,
 			    ISAKMP_HDR_ICOOKIE_LEN) == 0 &&
 			    exchange->phase == 1)
@@ -481,7 +481,7 @@ exchange_lookup_by_name(char *name, int phase)
 
 	for (i = 0; i <= bucket_mask; i++)
 		for (exchange = LIST_FIRST(&exchange_tab[i]); exchange;
-		     exchange = LIST_NEXT(exchange, link)) {
+		    exchange = LIST_NEXT(exchange, link)) {
 			LOG_DBG((LOG_EXCHANGE, 90,
 			    "exchange_lookup_by_name: %s == %s && %d == %d?",
 			    name, exchange->name ? exchange->name :
@@ -596,7 +596,7 @@ exchange_lookup(u_int8_t *msg, int phase2)
 		    exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN) != 0) ||
 		(!phase2 && !zero_test(msg + ISAKMP_HDR_MESSAGE_ID_OFF,
 		    ISAKMP_HDR_MESSAGE_ID_LEN)));
-	     exchange = LIST_NEXT(exchange, link))
+	    exchange = LIST_NEXT(exchange, link))
 		;
 
 	return exchange;
@@ -859,7 +859,7 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 		 * Don't install a transport into this SA as it will be an
 		 * INADDR_ANY address in the local end, which is not good at
 		 * all.  Let the reply packet install the transport instead.
-	         */
+		 */
 		sa_create(exchange, 0);
 		msg->isakmp_sa = TAILQ_FIRST(&exchange->sa_list);
 		if (!msg->isakmp_sa) {
@@ -1011,8 +1011,8 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 	type = GET_ISAKMP_HDR_EXCH_TYPE(msg->iov[0].iov_base);
 	if (type != ISAKMP_EXCH_INFO) {
 		/*
-	         * Find out our inbound phase 1 mode.
-	         */
+		 * Find out our inbound phase 1 mode.
+		 */
 		t->vtbl->get_dst(t, &dst);
 		if (sockaddr2text(dst, &str, 0) == -1)
 			return 0;
@@ -1024,7 +1024,7 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 			 * returning the call. However, we will need to
 			 * continue responding if our phase 1 exchange is
 			 * still waiting for step 1 (i.e still half-open).
-		         */
+			 */
 			if (exchange_lookup_active(name, 1))
 				return 0;
 		} else {
@@ -1092,7 +1092,7 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 #ifdef USE_ISAKMP_CFG
 	if (name && (flags = conf_get_list(name, "Flags")) != NULL) {
 		for (flag = TAILQ_FIRST(&flags->fields); flag;
-		     flag = TAILQ_NEXT(flag, link))
+		    flag = TAILQ_NEXT(flag, link))
 			if (strcasecmp(flag->field, "ikecfg") == 0) {
 				struct exchange_finalization_node *node;
 
@@ -1539,7 +1539,7 @@ exchange_nonce(struct exchange *exchange, int peer, size_t nonce_sz,
 
 	if (nonce_sz < 8 || nonce_sz > 256) {
 		/*
-		 * RFC2409, ch 5: The length of nonce payload MUST be 
+		 * RFC2409, ch 5: The length of nonce payload MUST be
 		 * between 8 and 256 bytes inclusive.
 		 * XXX I'm assuming the generic payload header is not included.
 		 */
@@ -1786,7 +1786,7 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 			 * be application-specific information that won't get
 			 * cleaned up, since no error signalling will be done.
 			 * This is the case with dynamic SAs and PFKEY.
-		         */
+			 */
 			exchange_establish(peer, exchange_establish_finalize,
 			    name);
 			exchange = exchange_lookup_by_name(peer, 1);
@@ -1794,7 +1794,7 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 			 * If the exchange was correctly initialized, add the
 			 * original finalization routine; otherwise, call it
 			 * directly.
-		         */
+			 */
 			if (exchange)
 				exchange_add_finalization(exchange, finalize,
 				    arg);

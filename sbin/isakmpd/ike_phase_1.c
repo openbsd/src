@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.58 2005/01/29 17:07:55 hshoexer Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.59 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -734,7 +734,7 @@ ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 		prf->Final(key, prf->prfctx);
 
 		for (len = prf->blocksize, p = key; len < exchange->key_length;
-		     len += prf->blocksize, p += prf->blocksize) {
+		    len += prf->blocksize, p += prf->blocksize) {
 			prf->Init(prf->prfctx);
 			prf->Update(prf->prfctx, p, prf->blocksize);
 			prf->Final(p + prf->blocksize, prf->prfctx);
@@ -1199,7 +1199,7 @@ ike_phase_1_validate_prop(struct exchange *exchange, struct sa *sa,
 					 * we have, they do not provide?
 					 */
 					for (node = LIST_FIRST(&vs.attrs);
-					     node; node = next_node) {
+					    node; node = next_node) {
 						next_node =
 						    LIST_NEXT(node, link);
 						if (node->type ==

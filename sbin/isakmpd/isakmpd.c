@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.74 2005/03/22 17:27:59 cloder Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.75 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -163,7 +163,7 @@ parse_args(int argc, char *argv[])
 			if (sscanf(optarg, "%d=%d", &cls, &level) != 2) {
 				if (sscanf(optarg, "A=%d", &level) == 1) {
 					for (cls = 0; cls < LOG_ENDCLASS;
-					     cls++)
+					    cls++)
 						log_debug_cmd(cls, level);
 				} else
 					log_print("parse_args: -D argument "
@@ -317,7 +317,7 @@ daemon_shutdown(void)
 		log_print("isakmpd: shutting down...");
 
 		/*
-		 * Delete all active SAs.  First IPsec SAs, then ISAKMPD. 
+		 * Delete all active SAs.  First IPsec SAs, then ISAKMPD.
 		 * Each DELETE is another (outgoing) message.
 		 */
 		while ((sa = sa_find(phase2_sa_check, NULL)))
@@ -331,7 +331,7 @@ daemon_shutdown(void)
 		/*
 		 * When the prioritized transport sendq:s are empty, i.e all
 		 * the DELETE notifications have been sent, we can shutdown.
-	         */
+		 */
 
 #ifdef USE_DEBUG
 		log_packet_stop();
@@ -490,7 +490,7 @@ main(int argc, char *argv[])
 		 * and if someone set 'sigtermed' (SIGTERM, SIGINT or via the
 		 * UI), this indicates we should start a controlled shutdown
 		 * of the daemon.
-	         *
+		 *
 		 * Note: Since _one_ message is sent per iteration of this
 		 * enclosing while-loop, and we want to send a number of
 		 * DELETE notifications, we must loop atleast this number of
@@ -498,7 +498,7 @@ main(int argc, char *argv[])
 		 * the DELETEs, all other calls just increments the
 		 * 'sigtermed' variable until it reaches a "safe" value, and
 		 * the daemon exits.
-	         */
+		 */
 		if (sigtermed)
 			daemon_shutdown();
 
@@ -513,7 +513,7 @@ main(int argc, char *argv[])
 		 * XXX Some day we might want to deal with an abstract
 		 * application class instead, with many instantiations
 		 * possible.
-	         */
+		 */
 		if (!app_none && app_socket >= 0) {
 			FD_SET(app_socket, rfds);
 			if (app_socket + 1 > n)
@@ -539,7 +539,7 @@ main(int argc, char *argv[])
 				 * condition time to resolve without letting
 				 * this process eat up all available CPU
 				 * we sleep for a short while.
-			         */
+				 */
 				sleep(1);
 			}
 		} else if (n) {

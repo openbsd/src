@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.42 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: ui.c,v 1.43 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -324,7 +324,6 @@ ui_debug(char *cmd)
 		}
 	}
 	log_print("ui_debug: command \"%s\" malformed", cmd);
-	return;
 }
 
 static void
@@ -505,7 +504,7 @@ ui_handler(void)
 		/*
 		 * When we find a newline, cut off the line and feed it to the
 		 * command processor.  Then move the rest up-front.
-	         */
+		 */
 		if (*p == '\n') {
 			*p = '\0';
 			ui_handle_command(buf);

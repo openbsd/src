@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.13 2005/03/05 12:21:35 ho Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.14 2005/04/04 19:31:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -136,8 +136,6 @@ virtual_init(void)
 		    (struct virtual_transport *)default_transport6, link);
 		transport_reference(default_transport6);
 	}
-
-	return;
 }
 
 struct virtual_transport *
@@ -601,7 +599,6 @@ virtual_remove(struct transport *t)
 static void
 virtual_report(struct transport *t)
 {
-	return;
 }
 
 static void

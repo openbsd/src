@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.98 2005/03/05 12:35:03 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.99 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -241,7 +241,7 @@ message_free(struct message *msg)
 	if (msg->payload) {
 		for (i = 0; i < payload_index_max; i++)
 			for (payload = payload_first(msg, i); payload;
-			     payload = next) {
+			    payload = next) {
 				next = TAILQ_NEXT(payload, link);
 				free(payload);
 			}
@@ -321,7 +321,7 @@ message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
 		}
 		/*
 		 * Decode and validate the payload length field.
-	         */
+		 */
 		len = GET_ISAKMP_GEN_LENGTH(buf);
 
 		if (message_payload_sz(payload) == 0) {
@@ -360,7 +360,7 @@ message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
 		/*
 		 * Check if the current payload is one of the accepted ones at
 		 * this stage.
-	         */
+		 */
 		if (!ISSET(payload, accepted_payloads)) {
 			log_print("message_parse_payloads: payload type %s "
 			    "unexpected", constant_name(isakmp_payload_cst,
@@ -680,7 +680,7 @@ message_validate_hash(struct message *msg, struct payload *p)
 	/* If no SKEYID_a, we can not do anything (should not happen).  */
 	if (!isa->skeyid_a)
 		goto invalid;
-		
+
 	/* Allocate the prf and start calculating our HASH(1). */
 	LOG_DBG_BUF((LOG_MISC, 90, "message_validate_hash: SKEYID_a",
 	    isa->skeyid_a, isa->skeyid_len));
@@ -870,7 +870,7 @@ message_validate_notify(struct message *msg, struct payload *p)
 	}
 
 	/* Validate the SPI. XXX Just ISAKMP for now.  */
-	if (proto == ISAKMP_PROTO_ISAKMP && 
+	if (proto == ISAKMP_PROTO_ISAKMP &&
 	    GET_ISAKMP_NOTIFY_SPI_SZ(p->p) == ISAKMP_HDR_COOKIES_LEN &&
 	    msg->isakmp_sa &&
 	    memcmp(p->p + ISAKMP_NOTIFY_SPI_OFF, msg->isakmp_sa->cookies,
@@ -1234,13 +1234,13 @@ message_recv(struct message *msg)
 		 * This might be a retransmission of a former ISAKMP SA setup
 		 * message.  If so, just drop it.
 		 * XXX Must we really look in both the SA and exchange pools?
-	         */
+		 */
 		if (exchange_lookup_from_icookie(buf + ISAKMP_HDR_ICOOKIE_OFF)
 		    || sa_lookup_from_icookie(buf + ISAKMP_HDR_ICOOKIE_OFF)) {
 			/*
 			 * XXX Later we should differentiate between
 			 * retransmissions and potential replay attacks.
-		         */
+			 */
 			LOG_DBG((LOG_MESSAGE, 90,
 			    "message_recv: dropping setup for existing SA"));
 			message_free(msg);
@@ -1255,7 +1255,7 @@ message_recv(struct message *msg)
 		 * If we cannot find an ISAKMP SA out of the cookies, this is
 		 * either a responder's first reply, and we need to upgrade
 		 * our exchange, or it's just plain invalid cookies.
-	         */
+		 */
 		if (!msg->isakmp_sa) {
 			msg->exchange = exchange_lookup_from_icookie(buf +
 			    ISAKMP_HDR_ICOOKIE_OFF);
@@ -1359,7 +1359,7 @@ message_recv(struct message *msg)
 		/*
 		 * XXX Very likely redundant, look at the  else clause of the
 		 * if (setup_isakmp_sa) statement above.
-	         */
+		 */
 		msg->exchange = exchange_lookup(buf, 0);
 		if (!msg->exchange) {
 			log_print("message_recv: phase 1 message after "
@@ -1715,7 +1715,7 @@ message_send_delete(struct sa *sa)
 		/*
 		 * XXX We ought to setup an ISAKMP SA with our peer here and
 		 * send the DELETE over that one.
-	         */
+		 */
 		return;
 	}
 	args.discr = 'D';
@@ -1782,7 +1782,7 @@ message_send_info(struct message *msg)
 		sz = ISAKMP_DELETE_SPI_OFF + args->u.d.nspis * args->spi_sz;
 		break;
 	}
-	
+
 	buf = calloc(1, sz);
 	if (!buf) {
 		log_error("message_send_info: calloc (1, %lu) failed",
@@ -2031,7 +2031,7 @@ message_check_duplicate(struct message *msg)
 			 * Retransmit if the previos sent message was the last
 			 * of an exchange, otherwise just wait for the
 			 * ordinary retransmission.
-		         */
+			 */
 			if (exchange->last_sent && (exchange->last_sent->flags
 			    & MSG_LAST))
 				message_send(exchange->last_sent);
@@ -2140,7 +2140,7 @@ retry_transform:
 		/*
 		 * Figure out if we will be looking at a new protocol proposal
 		 * inside the current protection suite.
-	         */
+		 */
 		if (next_tp && propp != next_propp && sap == next_sap
 		    && (GET_ISAKMP_PROP_NO(propp->p)
 		    == GET_ISAKMP_PROP_NO(next_propp->p))) {
@@ -2182,7 +2182,7 @@ retry_transform:
 			/*
 			 * Check if the suite we just considered was OK, if so
 			 * we check it against the accepted ones.
-		         */
+			 */
 			if (suite_ok_so_far) {
 				if (!validate || validate(exchange, sa,
 				    msg->isakmp_sa)) {
@@ -2230,7 +2230,7 @@ retry_transform:
 				 * seeing we just turn down one of the offers,
 				 * can we?  I suggest renaming message_drop to
 				 * something else.
-			         */
+				 */
 				log_print("message_negotiate_sa: no "
 				    "compatible proposal found");
 				message_drop(msg,
@@ -2373,7 +2373,7 @@ message_add_sa_payload(struct message *msg)
 		 * Add the payloads.  As this is a SA, we need to recompute the
 		 * lengths of the payloads containing others.  We also need to
 		 * reset these payload's "next payload type" field.
-	         */
+		 */
 		if (message_add_payload(msg, ISAKMP_PAYLOAD_SA, sa_buf,
 		    sa_len, 1))
 			goto cleanup;

@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.29 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: connection.c,v 1.30 2005/04/04 19:31:11 deraadt Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -110,7 +110,7 @@ connection_init(void)
 			 * XXX This code (i.e. the attribute lookup) seems
 			 * like a likely candidate for factoring out into a
 			 * function of its own.
-		         */
+			 */
 			attrs = conf_get_list(conn->field, "Flags");
 			if (attrs)
 				for (attr = TAILQ_FIRST(&attrs->fields); attr;
@@ -220,7 +220,7 @@ connection_passive_lookup_by_ids(u_int8_t *id1, u_int8_t *id2)
 		/*
 		 * If both IDs match what we have saved, return the name.
 		 * Don't bother in which order they are.
-	         */
+		 */
 		if ((compare_ids(id1, conn->local_id, conn->local_sz) == 0 &&
 		    compare_ids(id2, conn->remote_id, conn->remote_sz) == 0) ||
 		    (compare_ids(id1, conn->remote_id, conn->remote_sz) == 0 &&
