@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.13 1998/12/30 10:25:29 deraadt Exp $
+.\" $OpenBSD: ipsec.4,v 1.14 1999/02/18 10:09:05 niklas Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Dt IPSEC 4
 .Os
 .Sh NAME
-.Nm ipsec
+.Tn IPsec
 .Nd IP Security Protocol
 .Sh SYNOPSIS
 .Fd #include <net/encap.h>
@@ -43,50 +43,232 @@
 .Ft int
 .Fn socket AF_ENCAP SOCK_RAW AF_UNSPEC
 .Sh DESCRIPTION
-.Tn IPSec is a pair of protocols,
-.Nm ESP
+.Tn IPSec
+is a pair of protocols,
+.Tn ESP
 (for Encapsulting Security
 Payload) and
-.Nm AH
+.Tn AH
 (for Authentication Header), which provide
-security services for IP datagrams. Specifically,
-.Nm ESP
-provides
-confidentiality, connectionless
-integrity, anti-replay service and limited traffic flow
-confidentiality. It optionally provides data origin authentication.
-.Nm AH
-provides connectionless integrity, data
-origin authentication and anti-replay service.
+security services for IP datagrams.
 .Pp
-This is done by inserting the appropriate header
-.Nm ( ESP
-or
-.Nm AH )
-between the IP header and the payload. The inserted header,
-along with the IP header destination address, provide enough
-information to find the relevant state in the kernel (security
-association) and handle the packet appropriately (decrypt,
-authenticate etc.)
+The internet protocol,
+.Tn IP ,
+aka
+.Tn IPv4 ,
+does not inherently provide any
+protection to your transferred data.  It does not even guarantee that
+the sender is who he says he is.
+.Tn IPSec
+tries to remedy this.  There
+are several kinds of properties you might want to add to your
+communication, the most common are:
+.Bl -inset -offset indent
+.It	Confidentiality
+- Make sure it is hard for anyone but the
+receiver to understand what data has been communicated.
+You do not want anyone to see your passwords when logging
+into a remote machine over the Internet.
+.It	Integrity
+- Guarantee that the data does not get changed on
+the way.  If you are on a line carrying invoicing data you
+probably want to know that the amounts and account numbers
+are correct and not altered while in-transit.
+.It	Authenticity
+- Sign your data so that others can see that it
+is really you that sent it.  It is clearly nice to know that
+documents are not forged.
+.It	Replay protection
+- We need ways to ensure a transaction can only be carried out once unless
+we are authorized to repeat it.  I.e. it should not be possible for someone
+to record a transaction, and then replaying it verbatim, in order to get an
+effect of multiple transactions being received by the peer.  Consider the
+attacker has got to know what the traffic is all about by other means than
+cracking the encryption, and that the traffic causes events favourable for him,
+like depositing money into his account.  We need to make sure he cannot just
+replay that traffic later.
+.El
 .Pp
-An SA (Security Association) is uniquely defined by the
-.Nm SPI
-(Security Parameter Index), which is a 32-bit integer,
-the remote IP address and the security protocol.
+.Tn IPSec
+can provide all of these properties, in two new protocols,
+called
+.Tn AH ,
+Authentication header, and
+.Tn ESP ,
+Encapsulated security payload.
 .Pp
-The payload can be any of the usual IP protocols (TCP, UDP, ICMP
-etc.) or IP itself, for those situations where IP tunneling is
-required.
+.Tn ESP
+can provide authentication, integrity, replay protection, and
+confidentiality of the data (it secures everything in the packet that
+follows the
+.Tn IP
+header). Replay protection requires authentication and
+integrity (these two go always together). Confidentiality (encryption)
+can be used with or without authentication/integrity. Similarly,
+one could use authentication/integrity with or without confidentiality.
+.Pp
+.Tn AH
+provides authentication, integrity, and replay protection (but not
+confidentiality). Its main difference with
+.Tn ESP
+is that
+.Tn AH
+also secures
+parts of the
+.Tn IP
+header of the packet (like the source/destination
+addresses).
+.Pp
+These protocols need some parameters for each connection, telling
+exactly how the wanted protection will be added.  These parameters are
+collected in an entity called a security association, or SA for short.
+Typical parameters are: encryption algorithm, hash algorithm,
+encryption key, authentication key etc.  When two peers have setup
+matching SAs at both ends, packets protected with one end's SA, will
+be possible to verify and/or decrypt using the other end's SA.  The
+only problem left is to see that both ends have matching SAa, which
+can be done manually, or automatically with a key management daemon.
+.Pp
+Further information on manual SA establishment is described in
+.Xr ipsecadm 8 ,
+and we provide two key management daemons,
+.Xr photurisd 8
+and
+.Xr isakmpd 8 .
+.Pp
+.Tn AH
+works by doing a computation of a value depending on all of the payload
+data, some of the
+.Tn IP
+header data and a certain secret value, the
+authentication key and sending this value along with the rest of each
+packet.  The receiver will do the same computation, and if the value matches,
+he knows noone tampered with the data (integrity), the address information
+(authenticity) or a sequence number (replay protection).  He knows this because
+the secret authentication key makes sure no man in the middle can recompute the
+correct value after altering the packet.  The algorithms used for the
+computations are called hash algorithms and is a parameter in the SA, just
+like the authentication key.
+.Pp
+.Tn ESP
+optionally does almost everything that
+.Tn AH
+does except that it does not
+protect the outer
+.Tn IP
+header but furthermore it encrypts the payload data
+with an encryption algorithm using a secret encryption key.  Only the ones
+knowing this key can decrypt the data, hence confidentiality is provided.  Both
+the algorithm and the encryption key are parameters of the SA.
+.Pp
+In order to identify a SA we need to have a unique name for it.  This name is
+a triplet, consisting of the destination address, security parameter index
+(aka SPI) and the security protocol.  Since the destination address is part
+of the name, a SA is a unidirectional construct.  For a bidirectional
+communication channel, two SAs are needed, one outgoing and one incoming,
+where the destination address is our local IP address.  The SPI is just a
+number that helps us making the name unique, it can be arbitrarily chosen
+in the range 0x100 - 0xffffffff.  The security protocol number should be 50
+for
+.Tn ESP
+and 51 for
+.Tn AH ,
+as these are the protocol numbers assigned by IANA.
+.Pp
+.Tn IPSec
+can operate in two modes, either tunnel or transport mode.  In transport
+mode the ordinary
+.Tn IP
+header is used to deliver the packets to their endpoint,
+in tunnel mode the ordinary
+.Tn IP
+header just tells us the address of a
+security gateway, knowing how to verify/decrypt the payload and forward the
+packet to a destination given by another
+.Tn IP
+header contained in the
+protected payload.  Tunnel mode can be used for establishing VPNs, virtual
+private networks, where parts of the networks can be spread out over an
+unsafe public network, but security gateways at each subnet are responsible
+for encrypting and decrypting the data passing over the public net.  A SA
+will hold information telling if it is a tunnel or transport mode SA, and for
+tunnels, it will contain values to fill in into the outer
+.Tn IP
+header.
+.Pp
+The SA also holds a couple of other parameters, especially useful for
+automatic keying, called lifetimes, which puts a limit on how much we can
+use a SA for protecting our data.  These limits can be in wall-clock time
+or in volume of our data.
+.Pp
+To better illustrate how
+.Tn IPSec
+works, consider a typical
+.Tn TCP
+packet:
+.Bd -literal -offset indent
+[IP header] [TCP header] [data...]
+.Ed
+.Pp
+If we apply
+.Tn ESP
+in transport mode to the above packet, we will get:
+.Bd -literal -offset indent
+[IP header] [ESP header] [TCP header] [data...]
+.Ed
+.Pp
+where everything after the
+.Tn ESP
+header is protected by whatever services of
+.Tn ESP
+we are using (authentication/integrity, replay protection,
+confidentiality). This means the
+.Tn IP
+header itself is not protected.
+.Pp
+If we apply
+.Tn ESP
+in tunnel mode to the original packet, we would get:
+.Bd -literal -offset indent
+[IP header] [ESP header] [IP header] [TCP header] [data...]
+.Ed
+.Pp
+where, again, everything after the
+.Tn ESP
+header is cryptographically
+protected. Notice the insertion of an
+.Tn IP
+header between the
+.Tn ESP
+and
+.Tn TCP
+header. This mode of operation allows us to hide who the true
+source and destination addresses of a packet are (since the protected
+and the unprotected
+.Tn IP
+headers don't have to be exactly the same). A
+typical application of this is in Virtual Private Networks (or VPNs),
+where two firewalls use
+.Tn IPSec
+to secure the traffic of all the hosts behind them. For example:
+.Bd -literal -offset indent
+Net A <----> Firewall 1 <--- Internet ---> Firewall 2 <----> Net B
+.Ed
+.Pp
+Firewall 1 and Firewall 2 can protect all communications between Net A
+and Net B by using
+.Tn IPSec
+in tunnel mode, as illustrated above.
 .Pp
 This implementation makes use of a virtual interface
 .Nm enc0 ,
 which can be used in packet filters to specify those
-packets that have been successfully processed by IPSec.
+packets that have been successfully processed by
+.Tn IPSec.
 .Pp
-Security Associations can be set up manually with
-the
+Security Associations can be set up manually with the
 .Xr ipsecadm 1
-utility or the 
+utility or automatically with the 
 .Xr photurisd 8
 or
 .Xr isakmpd 8
@@ -147,7 +329,7 @@ connections to prevent session hijacking.
 It would issue the following
 .Xr setsockopt 2
 call:
-.Bd -literal
+.Bd -literal -offset 4n
 int level = IPSEC_LEVEL_REQUIRE;
 error = setsockopt(s, IPPROTO_IP, IP_AUTH_LEVEL, &level, sizeof(int));
 .Ed
@@ -185,8 +367,12 @@ At the moment the socket options are not fully implemented.
 .Xr photurisd 8 ,
 .Xr vpn 8 .
 .Sh ACKNOWLEDGMENTS
-The authors of this code are John Ioannidis, Angelos D.
-Keromytis and Niels Provos.
+The authors of the
+.Tn IPSec
+code proper are John Ioannidis, Angelos D. Keromytis and Niels Provos.
+.Pp
+Niklas Hallqvist & Niels Provos are the authors of
+.Xr isakmpd 8 .
 .Pp
 Eric Young's libdeslite was used in this implementation for the
 DES algorithm.
@@ -199,9 +385,16 @@ The
 interface follows somewhat loosely the draft-mcdonald-simple-ipsec-api,
 which is work in progress.
 .Sh HISTORY
-The IPsec protocol started in 1992, by John Ioannidis, Phil Karn
+The
+.Tn IPSec
+protocol started in 1992, by John Ioannidis, Phil Karn
 and William Allen Simpson. In 1995, the former wrote an
-implementation for BSD/OS. Angelos D. Keromytis ported it to
-OpenBSD and NetBSD. The latest transforms and new features were
+implementation for
+.Tn BSD/OS .
+Angelos D. Keromytis ported it to
+.Ox
+and
+.Nx .
+The latest transforms and new features were
 implemented by Angelos D. Keromytis and Niels Provos.
 
