@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.38 2001/02/23 22:54:32 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.39 2001/02/26 22:19:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -1423,25 +1423,25 @@ EXIT(desidhash_l)
 
 	.align	32
 $tlbd_l
-	mfctl	cr28, r16
+	mfctl	cr28, r24
 
 	/*
 	 * Chase the list of entries for this hash bucket until we find
 	 * the correct mapping or NULL.
 	 */
-	ldw	hpt_entry(r16), r24
+	ldw	hpt_entry(r24), r16
 $hash_loop_tlbd_l
-	comb,=,n r0, r24, TLABEL(all)
-	ldw	pv_va(r24), r25
-	ldw	pv_space(r24), r17
+	comb,=,n r0, r16, TLABEL(all)
+	ldw	pv_va(r16), r25
+	ldw	pv_space(r16), r17
 	comb,<>,n r9, r25, $hash_loop_tlbd_l
-	ldw	pv_hash(r24), r24
+	ldw	pv_hash(r16), r16
 	comb,<>,n r8, r17, $hash_loop_tlbd_l
-	ldw	pv_hash(r24), r24
+	ldw	pv_hash(r16), r16
 
 	/* Set the dirty bit for this physical page. */
-	ldw	pv_tlbpage(r24),r17
-	ldw	pv_tlbprot(r24), r25
+	ldw	pv_tlbpage(r16), r17
+	ldw	pv_tlbprot(r16), r25
 	b	$tlb_inshpt_l
 	depi	1, TLB_DIRTY_POS, 1, r25
 
