@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2001/08/19 23:22:17 brian Exp $
+#	$OpenBSD: Makefile,v 1.23 2001/09/08 20:22:37 ho Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
@@ -23,6 +23,7 @@ BINOWN=	root
 .endif
 BINGRP=	network
 MAN=	ppp.8
+CLEANFILES=	ppp.8
 
 .SUFFIXES: .8 .8.m4
 
