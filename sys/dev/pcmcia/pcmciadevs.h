@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.88 2002/04/06 00:58:32 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.89 2002/04/17 04:33:27 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.87 2002/04/06 00:58:05 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.88 2002/04/17 04:33:02 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -433,8 +433,8 @@
 /* Symbol */
 #define	PCMCIA_CIS_SYMBOL_SPECTRUM24	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SYMBOL_SPECTRUM24	0x0801
-#define	PCMCIA_CIS_SYMBOL2_LA4100	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_SYMBOL2_LA4100	0x0001
+#define	PCMCIA_CIS_SYMBOL_LA4100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SYMBOL_LA4100	0x0001
 
 /* Telecom Device */
 #define	PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100	{ NULL, NULL, NULL, NULL }
