@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 1997/08/08 08:27:01 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 1997/11/11 10:24:07 niklas Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -471,6 +471,8 @@ bootpath_build()
 			boothowto |= RB_KDB;	/* XXX unused */
 			kgdb_debug_panic = 1;
 			kgdb_connect(1);
+#elif DDB
+			Debugger();
 #else
 			printf("kernel not compiled with KGDB\n");
 #endif
@@ -1059,8 +1061,8 @@ mainbus_attach(parent, dev, aux)
 {
 	struct confargs oca;
 	register const char *const *ssp, *sp = NULL;
-	struct confargs *ca = aux;
 #if defined(SUN4C) || defined(SUN4M)
+	struct confargs *ca = aux;
 	register int node0, node;
 	const char *const *openboot_special;
 #define L1A_HACK		/* XXX hack to allow L1-A during autoconf */
