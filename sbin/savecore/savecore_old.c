@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.6 1996/12/29 12:21:29 graichen Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.7 1998/03/25 23:38:53 deraadt Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.6 1996/12/29 12:21:29 graichen Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.7 1998/03/25 23:38:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -662,6 +662,6 @@ Write(fd, bp, size)
 void
 usage()
 {
-	(void)syslog(LOG_ERR, "usage: savecore [-cfvz] [-N system] directory");
+	fprintf(stderr, "usage: savecore [-cfvz] [-N system] directory");
 	exit(1);
 }
