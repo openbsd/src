@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.11 1996/11/03 23:24:08 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.12 1996/12/20 15:58:40 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -126,6 +126,8 @@ main(argc, argv)
 	uid = getuid();
 	options = 0;
 	gethostname(host, sizeof(host));
+
+	name = "lpd";
 
 	if (euid != 0) {
 		fprintf(stderr,"lpd: must run as root\n");
