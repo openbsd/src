@@ -4,6 +4,8 @@
 
 	.text
 PREFIX(sigprocmask)
+	stwu	1, -16(1)
+	stw	5, 12(1)
 	
 	/* check set (new mask value) for null, in which case
 	   fiddle arguments */
@@ -23,8 +25,10 @@ do_call:
 	b cerror
 
 sigprocmask_ok:
+	lwz	5, 12(1)
 	cmpwi 5, 0
 	beq+ sigprocmask_done
-	stw 4, 0(5)
+	stw 3, 0(5)
 sigprocmask_done:
+	addi	1, 1, 16
 	blr
