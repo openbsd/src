@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.41 2003/02/19 04:24:39 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.42 2003/05/28 11:23:19 henric Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -895,25 +895,25 @@ fxp_stats_update(arg)
 	int s;
 
 	FXP_STATS_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	ifp->if_opackets += sp->tx_good;
-	ifp->if_collisions += sp->tx_total_collisions;
+	ifp->if_opackets += letoh32(sp->tx_good);
+	ifp->if_collisions += letoh32(sp->tx_total_collisions);
 	if (sp->rx_good) {
-		ifp->if_ipackets += sp->rx_good;
+		ifp->if_ipackets += letoh32(sp->rx_good);
 		sc->rx_idle_secs = 0;
 	} else {
 		sc->rx_idle_secs++;
 	}
 	ifp->if_ierrors +=
-	    sp->rx_crc_errors +
-	    sp->rx_alignment_errors +
-	    sp->rx_rnr_errors +
-	    sp->rx_overrun_errors;
+	    letoh32(sp->rx_crc_errors) +
+	    letoh32(sp->rx_alignment_errors) +
+	    letoh32(sp->rx_rnr_errors) +
+	    letoh32(sp->rx_overrun_errors);
 	/*
 	 * If any transmit underruns occurred, bump up the transmit
 	 * threshold by another 512 bytes (64 * 8).
 	 */
 	if (sp->tx_underruns) {
-		ifp->if_oerrors += sp->tx_underruns;
+		ifp->if_oerrors += letoh32(sp->tx_underruns);
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
