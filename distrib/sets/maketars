@@ -1,5 +1,7 @@
 #!/bin/csh -f
 
+set RELEASE=20
+
 if (! $?RELEASEDIR) then
 	echo RELEASEDIR must be set
 	exit 1
@@ -24,7 +26,7 @@ set lists=(base comp etc games text)
 foreach setname ($lists)
 	echo -n "${setname}: "
 	cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} | sort | \
-	    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
+	    pax -w -d | gzip -9 > ${tardir}/${setname}${RELEASE}.tar.gz
 	echo    "done."
 end
 
@@ -32,12 +34,12 @@ set setname=man
 echo -n "${setname}: "
 grep ${arch} $listsdir/man/md_share | \
     cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} - | sort | \
-    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
+    pax -w -d | gzip -9 > ${tardir}/${setname}${RELEASE}.tar.gz
 echo    "done."
 
 set setname=misc
 echo -n "${setname}: "
 grep -v ${arch} $listsdir/man/md_share | \
     cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} - | sort | \
-    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
+    pax -w -d | gzip -9 > ${tardir}/${setname}${RELEASE}.tar.gz
 echo    "done."
