@@ -1,4 +1,4 @@
-/*	$OpenBSD: upa.c,v 1.1 2002/06/11 10:49:14 jason Exp $	*/
+/*	$OpenBSD: upa.c,v 1.2 2002/06/11 11:03:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -220,7 +220,6 @@ __upa_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	offset -= sc->sc_range[i].ur_space;
 	offset += sc->sc_range[i].ur_addr;
 
-	Debugger();
 	return (bus_space_map2(sc->sc_bt, btype, offset, size,
 	    flags, vaddr, hp));
 }
