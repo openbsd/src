@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.21 2000/11/09 01:27:38 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.22 2001/01/04 22:42:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ L_high_code:
 	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
 	movl	sp,a1			| a1=trapframe
 	lea	_C_LABEL(proc0),a0	| proc0 in a0
-	movl	a1,a0@(P_MDREGS)	| save frame for proc0
+	movl	a1,a0@(P_MD_REGS)	| save frame for proc0
 	movl	a2,a1@(FR_SP)		| a2 == usp (from above)
 	pea	a1@			| push &trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)
@@ -380,7 +380,7 @@ ASLOCAL(kbrkpt)
 	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
 	| Save the system sp rather than the user sp.
 	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	lea	sp@(FR_SIZE),a6		| Save stack pointer
+	lea	sp@(CFSIZE),a6		| Save stack pointer
 	movl	a6,sp@(FR_SP)		|  from before trap
 
 	| If we are not on tmpstk switch to it.
@@ -392,7 +392,7 @@ ASLOCAL(kbrkpt)
 	movl	sp,a0			| a0=src
 	lea	_ASM_LABEL(tmpstk)-96,a1	| a1=dst
 	movl	a1,sp			| sp=new frame
-	moveq	#FR_SIZE,d1
+	moveq	#CFSIZE,d1
 Lbrkpt1:
 	movl	a0@+,a1@+
 	subql	#4,d1
@@ -437,7 +437,7 @@ Lbrkpt3:
 	| so push the hardware frame at the current sp
 	| before restoring registers and returning.
 	movl	sp@(FR_SP),a0		| modified sp
-	lea	sp@(FR_SIZE),a1		| end of our frame
+	lea	sp@(CFSIZE),a1		| end of our frame
 	movl	a1@-,a0@-		| copy 2 longs with
 	movl	a1@-,a0@-		| ... predecrement
 	movl	a0,sp@(FR_SP)		| sp = h/w frame
