@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996
+ * Copyright (c) 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,29 +21,58 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.c,v 1.2 1999/07/28 20:41:35 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/setsignal.c,v 1.1 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
-#ifdef __osf__
-#include <sys/sysinfo.h>
-#include <sys/proc.h>
+
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
+#endif
+#include <signal.h>
+#ifdef HAVE_SIGACTION
+#include <string.h>
 #endif
 
-#include <pcap.h>
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
 
-#include "machdep.h"
+#include "setsignal.h"
 
-int
-abort_on_misalignment(char *ebuf)
+/*
+ * An os independent signal() with BSD semantics, e.g. the signal
+ * catcher is restored following service of the signal.
+ *
+ * When sigset() is available, signal() has SYSV semantics and sigset()
+ * has BSD semantics and call interface. Unfortunately, Linux does not
+ * have sigset() so we use the more complicated sigaction() interface
+ * there.
+ *
+ * Did I mention that signals suck?
+ */
+RETSIGTYPE
+(*setsignal (int sig, RETSIGTYPE (*func)(int)))(int)
 {
-#ifdef __osf__
-	static int buf[2] = { SSIN_UACPROC, UAC_SIGBUS };
+#ifdef HAVE_SIGACTION
+	struct sigaction old, new;
 
-	if (setsysinfo(SSI_NVPAIRS, (caddr_t)buf, 1, 0, 0) < 0) {
-		(void)sprintf(ebuf, "setsysinfo: errno %d", errno);
-		return (-1);
-	}
+	memset(&new, 0, sizeof(new));
+	new.sa_handler = func;
+#ifdef SA_RESTART
+	new.sa_flags |= SA_RESTART;
 #endif
-	return (0);
+	if (sigaction(sig, &new, &old) < 0)
+		return (SIG_ERR);
+	return (old.sa_handler);
+
+#else
+#ifdef HAVE_SIGSET
+	return (sigset(sig, func));
+#else
+	return (signal(sig, func));
+#endif
+#endif
 }
+

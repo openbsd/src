@@ -9,7 +9,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/parsenfsfh.c,v 1.5 1996/12/12 16:22:44 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/parsenfsfh.c,v 1.6 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -312,13 +312,14 @@ int ourself;		/* true if file handle was generated on this host */
 	    if (sizeof(*fsidp) >= 14) {
 		if (sizeof(*fsidp) > 14)
 		    memset((char *)fsidp, 0, sizeof(*fsidp));
-		memcpy((char *)fsidp, fh, 14);	/* just use the whole thing */
+		/* just use the whole thing */
+		memcpy((char *)fsidp, (char *)fh, 14);
 	    }
 	    else {
 		u_int32_t tempa[4];	/* at least 16 bytes, maybe more */
 
 		memset((char *)tempa, 0, sizeof(tempa));
-		memcpy((char *)tempa, fh, 14);	/* ensure alignment */
+		memcpy((char *)tempa, (char *)fh, 14); /* ensure alignment */
 		fsidp->Fsid_dev.Minor = tempa[0] + (tempa[1]<<1);
 		fsidp->Fsid_dev.Major = tempa[2] + (tempa[3]<<1);
 		fsidp->fsid_code = 0;

@@ -24,7 +24,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.12 1999/06/29 20:33:29 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.13 1999/07/28 20:41:37 jakob Exp $ (LBL)";
 #endif
 
 /*
@@ -50,21 +50,25 @@ static const char rcsid[] =
 #include "interface.h"
 #include "addrtoname.h"
 #include "machdep.h"
+#include "setsignal.h"
+#include "gmt2local.h"
 
+int aflag;			/* translate network and broadcast addresses */
+int dflag;			/* print filter code */
+int eflag;			/* print ethernet header */
 int fflag;			/* don't translate "foreign" IP address */
 int nflag;			/* leave addresses as numbers */
 int Nflag;			/* remove domains from printed host names */
+int Oflag = 1;			/* run filter code optimizer */
 int pflag;			/* don't go promiscuous */
 int qflag;			/* quick (shorter) output */
+int Sflag;			/* print raw TCP sequence numbers */
 int tflag = 1;			/* print packet arrival time */
-int eflag;			/* print ethernet header */
 int vflag;			/* verbose */
 int xflag;			/* print packet in hex */
-int Oflag = 1;			/* run filter code optimizer */
-int Sflag;			/* print raw TCP sequence numbers */
-int packettype;
+int Xflag;			/* print packet in emacs-hexl style */
 
-int dflag;			/* print filter code */
+int packettype;
 
 char *program_name;
 
@@ -100,7 +104,6 @@ static struct printer printers[] = {
 	{ atm_if_print,		DLT_ATM_RFC1483 },
 	{ null_if_print, 	DLT_LOOP },
 	{ enc_if_print, 	DLT_ENC },
-	{ null_if_print, 	DLT_LOOP },
 	{ NULL,			0 },
 };
 
@@ -131,6 +134,7 @@ main(int argc, char **argv)
 	register char *cp, *infile, *cmdbuf, *device, *RFileName, *WFileName;
 	pcap_handler printer;
 	struct bpf_program fcode;
+	RETSIGTYPE (*oldhandler)(int);
 	u_char *pcap_userdata;
 	char ebuf[PCAP_ERRBUF_SIZE];
 
@@ -148,8 +152,13 @@ main(int argc, char **argv)
 		error("%s", ebuf);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "c:defF:i:lnNOpqr:s:StT:vw:xY")) != -1)
+	while ((op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xXY")) != -1)
 		switch (op) {
+
+		case 'a':
+			++aflag;
+			break;
+
 		case 'c':
 			cnt = atoi(optarg);
 			if (cnt <= 0)
@@ -261,13 +270,18 @@ main(int argc, char **argv)
 			++xflag;
 			break;
 
+		case 'X':
+			++Xflag;
+			if (xflag == 0) ++xflag;
+			break;
+
 		default:
 			usage();
 			/* NOTREACHED */
 		}
 
 	if (tflag > 0)
-		thiszone = gmt2local();
+		thiszone = gmt2local(0);
 
 	if (RFileName != NULL) {
 		/*
@@ -320,11 +334,13 @@ main(int argc, char **argv)
 		bpf_dump(&fcode, dflag);
 		exit(0);
 	}
-	init_addrtoname(fflag, localnet, netmask);
+	init_addrtoname(localnet, netmask);
 
-	(void)signal(SIGTERM, cleanup);
-	(void)signal(SIGINT, cleanup);
-	(void)signal(SIGHUP, cleanup);
+	(void)setsignal(SIGTERM, cleanup);
+	(void)setsignal(SIGINT, cleanup);
+	/* Cooperate with nohup(1) */
+	if ((oldhandler = setsignal(SIGHUP, cleanup)) != SIG_DFL)
+		(void)setsignal(SIGHUP, oldhandler);
 
 	if (pcap_setfilter(pd, &fcode) < 0)
 		error("%s", pcap_geterr(pd));
@@ -375,6 +391,55 @@ cleanup(int signo)
 	exit(0);
 }
 
+/* dump the buffer in `emacs-hexl' style */
+void
+default_print_hexl(const u_char *cp, unsigned int length, unsigned int offset)
+{
+	unsigned int i, j, jm;
+	int c;
+	char ln[128];
+
+	printf("\n");
+	for (i = 0; i < length; i += 0x10) {
+		snprintf(ln, 
+			 sizeof(ln),
+			 "  %04x: ", (unsigned int)(i + offset));
+		jm = length - i;
+		jm = jm > 16 ? 16 : jm;
+
+		for (j = 0; j < jm; j++) {
+			if ((j % 2) == 1)
+				snprintf(ln + strlen(ln),
+					 sizeof(ln) - strlen(ln),
+					 "%02x ", (unsigned int)cp[i+j]);
+			else
+				snprintf(ln + strlen(ln), 
+					 sizeof(ln) - strlen(ln),
+					 "%02x", (unsigned int)cp[i+j]);
+		}
+		for (; j < 16; j++) {
+			if ((j % 2) == 1)
+				snprintf(ln + strlen(ln), 
+					 sizeof(ln) - strlen(ln),
+					 "   ");
+			else
+				snprintf(ln + strlen(ln), 
+					 sizeof(ln) - strlen(ln),
+					 "  ");
+		}
+
+		snprintf(ln + strlen(ln), sizeof(ln) - strlen(ln), " ");
+		for (j = 0; j < jm; j++) {
+			c = cp[i+j];
+			c = isprint(c) ? c : '.';
+			snprintf(ln + strlen(ln), 
+				 sizeof(ln) - strlen(ln), 
+				 "%c", c);
+		}
+		printf("%s\n", ln);
+	}
+}
+
 /* Like default_print() but data need not be aligned */
 void
 default_print_unaligned(register const u_char *cp, register u_int length)
@@ -382,18 +447,24 @@ default_print_unaligned(register const u_char *cp, register u_int length)
 	register u_int i, s;
 	register int nshorts;
 
-	nshorts = (u_int) length / sizeof(u_short);
-	i = 0;
-	while (--nshorts >= 0) {
-		if ((i++ % 8) == 0)
-			(void)printf("\n\t\t\t");
-		s = *cp++;
-		(void)printf(" %02x%02x", s, *cp++);
-	}
-	if (length & 1) {
-		if ((i % 8) == 0)
-			(void)printf("\n\t\t\t");
-		(void)printf(" %02x", *cp);
+	if (Xflag) {
+		/* dump the buffer in `emacs-hexl' style */
+		default_print_hexl(cp, length, 0);
+	} else {
+		/* dump the buffer in old tcpdump style */
+		nshorts = (u_int) length / sizeof(u_short);
+		i = 0;
+		while (--nshorts >= 0) {
+			if ((i++ % 8) == 0)
+				(void)printf("\n\t\t\t");
+			s = *cp++;
+			(void)printf(" %02x%02x", s, *cp++);
+		}
+		if (length & 1) {
+			if ((i % 8) == 0)
+				(void)printf("\n\t\t\t");
+			(void)printf(" %02x", *cp);
+		}
 	}
 }
 
@@ -404,22 +475,28 @@ default_print(register const u_char *bp, register u_int length)
 	register u_int i;
 	register int nshorts;
 
-	if ((long)bp & 1) {
-		default_print_unaligned(bp, length);
-		return;
-	}
-	sp = (u_short *)bp;
-	nshorts = (u_int) length / sizeof(u_short);
-	i = 0;
-	while (--nshorts >= 0) {
-		if ((i++ % 8) == 0)
-			(void)printf("\n\t\t\t");
-		(void)printf(" %04x", ntohs(*sp++));
-	}
-	if (length & 1) {
-		if ((i % 8) == 0)
-			(void)printf("\n\t\t\t");
-		(void)printf(" %02x", *(u_char *)sp);
+	if (Xflag) {
+		/* dump the buffer in `emacs-hexl' style */
+		default_print_hexl(bp, length, 0);
+	} else {
+		/* dump the buffer in old tcpdump style */
+		if ((long)bp & 1) {
+			default_print_unaligned(bp, length);
+			return;
+		}
+		sp = (u_short *)bp;
+		nshorts = (u_int) length / sizeof(u_short);
+		i = 0;
+		while (--nshorts >= 0) {
+			if ((i++ % 8) == 0)
+				(void)printf("\n\t\t\t");
+			(void)printf(" %04x", ntohs(*sp++));
+		}
+		if (length & 1) {
+			if ((i % 8) == 0)
+				(void)printf("\n\t\t\t");
+			(void)printf(" %02x", *(u_char *)sp);
+		}
 	}
 }
 
@@ -428,9 +505,9 @@ usage(void)
 {
 	extern char version[];
 
-	(void)fprintf(stderr, "Version %s\n", version);
+	(void)fprintf(stderr, "%s version %s\n", program_name, version);
 	(void)fprintf(stderr,
-"Usage: tcpdump [-deflnNOpqStvx] [-c count] [ -F file ]\n");
+"Usage: tcpdump [-adeflnNOpqStvxX] [-c count] [ -F file ]\n");
 	(void)fprintf(stderr,
 "\t\t[ -i interface ] [ -r file ] [ -s snaplen ]\n");
 	(void)fprintf(stderr,

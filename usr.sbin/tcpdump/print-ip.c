@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.5 1996/12/12 16:22:35 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.6 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -53,6 +53,15 @@ static const char rcsid[] =
 
 #ifndef IN_CLASSD
 #define IN_CLASSD(i) (((int32_t)(i) & 0xf0000000) == 0xe0000000)
+#endif
+
+/* Definitions required for ECN
+   for use if the OS running tcpdump does not have ECN */
+#ifndef IPTOS_ECT
+#define IPTOS_ECT	0x02	/* ECN Capable Transport in IP header*/
+#endif
+#ifndef IPTOS_CE
+#define IPTOS_CE	0x01	/* ECN Cong. Experienced in IP header*/
 #endif
 
 /* (following from ipmulti/mrouted/prune.h) */
@@ -463,6 +472,20 @@ ip_print(register const u_char *bp, register u_int length)
   			}
   			break;
 
+#ifndef IPPROTO_ESP
+#define IPPROTO_ESP 50
+#endif
+		case IPPROTO_ESP:
+			esp_print(cp, len, (const u_char *)ip);
+			break;
+
+#ifndef IPPROTO_AH
+#define IPPROTO_AH 51
+#endif
+		case IPPROTO_AH:
+			ah_print(cp, len, (const u_char *)ip);
+			break;
+
 		default:
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
 				ipaddr_string(&ip->ip_dst));
@@ -489,8 +512,23 @@ ip_print(register const u_char *bp, register u_int length)
 	} else if (off & IP_DF)
 		(void)printf(" (DF)");
 
-	if (ip->ip_tos)
-		(void)printf(" [tos 0x%x]", (int)ip->ip_tos);
+	if (ip->ip_tos) {
+		(void)printf(" [tos 0x%x", (int)ip->ip_tos);
+		if (ip->ip_tos & (IPTOS_CE|IPTOS_ECT)) {
+			(void)printf(" (");
+			if (ip->ip_tos & IPTOS_ECT) {
+				/* ECN-capable transport */
+				putchar('E');
+			}
+			if (ip->ip_tos & IPTOS_CE) {
+				/* _C_ongestion experienced (ECN) */
+				putchar('C'); 
+			}
+			(void)printf(")");
+  		}
+		(void)printf("]");
+	}
+
 	if (ip->ip_ttl <= 1)
 		(void)printf(" [ttl %d]", (int)ip->ip_ttl);
 

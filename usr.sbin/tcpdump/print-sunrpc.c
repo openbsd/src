@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.7 1998/07/14 00:01:11 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.8 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -119,7 +119,7 @@ progstr(prog)
 {
 	register struct rpcent *rp;
 	static char buf[32];
-	static lastprog = 0;
+	static int lastprog = 0;
 
 	if (lastprog != 0 && prog == lastprog)
 		return (buf);

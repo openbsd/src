@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-isoclns.c,v 1.6 1997/07/25 20:12:25 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-isoclns.c,v 1.7 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -293,7 +293,7 @@ osi_cksum(register const u_char *p, register u_int len,
 		return 0;
 
 	off[0] = off[1] = 0;
-	while (--len >= 0) {
+	while ((int)--len >= 0) {
 		c0 += *p++;
 		c1 += c0;
 		c0 %= 255;

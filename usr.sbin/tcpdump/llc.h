@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/llc.h,v 1.5 1996/12/12 16:22:52 bitblt Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/llc.h,v 1.6 1999/07/28 20:41:35 jakob Exp $ (LBL)
  */
 
 /*
@@ -79,8 +79,8 @@ struct llc {
 #define	LLC_RNR		0x0500
 #define	LLC_REJ		0x0900
 
-#define LLC_IS_NR(is)	(((is) >> 9) & 0x7f)
-#define LLC_I_NS(is)	(((is) >> 1) & 0x7f)
+#define LLC_IS_NR(is)	(((is) >> 1) & 0x7f)
+#define LLC_I_NS(is)	(((is) >> 9) & 0x7f)
 
 #ifndef LLCSAP_NULL
 #define	LLCSAP_NULL		0x00

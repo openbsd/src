@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.6 1997/07/25 20:12:23 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.7 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -44,8 +44,13 @@ struct rtentry;
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 
+#ifdef NOERROR
 #undef NOERROR					/* Solaris sucks */
+#endif
+#ifdef NOERROR
 #undef T_UNSPEC					/* SINIX does too */
+#endif
+
 #include <arpa/nameser.h>
 
 #include <stdio.h>
@@ -98,9 +103,22 @@ struct rtentry;
 #define T_LOC		29		/* Location Information */
 #endif
 
+#ifndef T_UINFO
+#define T_UINFO		100
+#endif
+
+#ifndef T_UID
+#define T_UID		101
+#endif
+
+#ifndef T_GID
+#define T_GID		102
+#endif
+
 #ifndef T_UNSPEC
 #define T_UNSPEC	103		/* Unspecified format (binary data) */
 #endif
+
 #ifndef T_UNSPECA
 #define T_UNSPECA	104		/* "unspecified ascii". Ugly MIT hack */
 #endif

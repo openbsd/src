@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1993, 1994, 1995, 1996
+ * Copyright (c) 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,23 +17,48 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/lbl/Attic/os-ultrix4.h,v 1.1 1996/12/12 16:08:24 bitblt Exp $ (LBL)
  */
 
-/* Prototypes missing in Ultrix 4 */
-int	bcmp(const char *, const char *, u_int);
-void	bcopy(const void *, void *, u_int);
-void	bzero(void *, u_int);
-void	endservent(void);
-int	getopt(int, char * const *, const char *);
-#ifdef __STDC__
-struct timeval;
-struct timezone;
+#ifndef lint
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/savestr.c,v 1.1 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
-int	gettimeofday(struct timeval *, struct timezone *);
-int	ioctl(int, int, caddr_t);
-int	pfopen(char *, int);
-int	setlinebuf(FILE *);
-int	socket(int, int, int);
-int	strcasecmp(const char *, const char *);
+
+#include <sys/types.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
+
+#include "savestr.h"
+
+/* A replacement for strdup() that cuts down on malloc() overhead */
+char *
+savestr(register const char *str)
+{
+	register u_int size;
+	register char *p;
+	static char *strptr = NULL;
+	static u_int strsize = 0;
+
+	size = strlen(str) + 1;
+	if (size > strsize) {
+		strsize = 1024;
+		if (strsize < size)
+			strsize = size;
+		strptr = (char *)malloc(strsize);
+		if (strptr == NULL) {
+			fprintf(stderr, "savestr: malloc\n");
+			exit(1);
+		}
+	}
+	(void)strcpy(strptr, str);
+	p = strptr;
+	strptr += size;
+	strsize -= size;
+	return (p);
+}

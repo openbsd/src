@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.18 1999/07/09 13:35:54 aaron Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.19 1999/07/28 20:41:37 jakob Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .Nd dump traffic on a network
 .Sh SYNOPSIS
 .Nm tcpdump
-.Op Fl deflnNOpqStvx
+.Op Fl adeflnNOpqStvxX
 .Op Fl c Ar count
 .Op Fl F Ar file
 .Op Fl i Ar interface
@@ -45,6 +45,8 @@ You must have read access to
 .Pa /dev/bpf\&* .
 .Sh OPTIONS
 .Bl -tag -width "-ddd"
+.It Fl a
+Attempt to convert network and broadcast addresses to names.
 .It Fl c Ar count
 Exit after receiving
 .Ar count
@@ -221,6 +223,10 @@ in hex.
 The smaller of the entire packet or
 .Ar snaplen
 bytes will be printed.
+.It Fl X
+Like
+.Fl x
+but dumps the packet in emacs-hexl like format.
 .It Ar expression
 selects which packets will be dumped. If no
 .Ar expression
@@ -1110,7 +1116,11 @@ is some combination of
 .Pq Tn PUSH ,
 or
 .Sq R
-.Pq Tn RST
+.Pq Tn RST ,
+.Sq W
+.Pq Tn congestion Window reduced ,
+.Sq E
+.Pq Tn ecn ECHO
 or a single
 .Ql \&.
 .Pq no flags .
@@ -1835,4 +1845,3 @@ but is not true for protocols such as
 .Tn ISO CLNS .
 Therefore, the filter may inadvertently accept certain packets that
 do not properly match the filter expression.
-

@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.9 1998/07/13 22:13:46 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.10 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ struct rtentry;
 #include "ethertype.h"
 #include "extract.h"			/* must come after interface.h */
 #include "appletalk.h"
+#include "savestr.h"
 
 static struct tok type2str[] = {
 	{ ddpRTMP,		"rtmp" },
@@ -462,7 +463,7 @@ print_cstring(register const char *cp, register const u_char *ep)
 		(void)printf("[len=%d]", length);
 		return (0);
 	}
-	while (--length >= 0) {
+	while ((int)--length >= 0) {
 		if (cp >= (char *)ep) {
 			fputs(tstr, stdout);
 			return (0);
@@ -596,9 +597,11 @@ ataddr_string(u_short atnet, u_char athost)
 	tp->addr = (atnet << 8) | athost;
 	tp->nxt = newhnamemem();
 	if (athost != 255)
-		(void)snprintf(nambuf, sizeof nambuf, "%d.%d", atnet, athost);
+		(void)snprintf(nambuf, sizeof nambuf, "%d.%d.%d",
+			atnet >> 8, atnet & 0xff, athost);
 	else
-		(void)snprintf(nambuf, sizeof nambuf, "%d", atnet);
+		(void)snprintf(nambuf, sizeof nambuf, "%d.%d",
+			atnet >> 8, atnet & 0xff);
 	tp->name = savestr(nambuf);
 
 	return (tp->name);

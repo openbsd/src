@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1992, 1993, 1994, 1995
+ * Copyright (c) 1990, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.h,v 1.5 1996/12/12 16:22:59 bitblt Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.h,v 1.6 1999/07/28 20:41:35 jakob Exp $ (LBL)
  */
 
 /* Name to address translation routines. */
@@ -30,7 +30,7 @@ extern char *udpport_string(u_short);
 extern char *getname(const u_char *);
 extern char *intoa(u_int32_t);
 
-extern void init_addrtoname(int, u_int32_t, u_int32_t);
+extern void init_addrtoname(u_int32_t, u_int32_t);
 extern struct hnamemem *newhnamemem(void);
 
 #define ipaddr_string(p) getname((const u_char *)(p))

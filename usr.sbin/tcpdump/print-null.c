@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1991, 1993, 1994, 1995, 1996
+ * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.8 1998/06/26 09:14:50 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.9 1999/07/28 20:41:36 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -53,6 +53,10 @@ struct rtentry;
 #include "addrtoname.h"
 #include "interface.h"
 
+/*
+ * The DLT_NULL packet header is 4 bytes long. It contains a network
+ * order 32 bit integer that specifies the family, e.g. AF_INET
+ */
 #define	NULL_HDRLEN 4
 
 #ifndef AF_NS
@@ -62,7 +66,6 @@ struct rtentry;
 static void
 null_print(const u_char *p, u_int length, u_int family)
 {
-
 	if (nflag) {
 		/* XXX just dump the header */
 		return;

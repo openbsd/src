@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996
+ * Copyright (c) 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,29 +21,52 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.c,v 1.2 1999/07/28 20:41:35 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/gmt2local.c,v 1.1 1999/07/28 20:41:35 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
-#ifdef __osf__
-#include <sys/sysinfo.h>
-#include <sys/proc.h>
+#include <sys/time.h>
+
+#include <stdio.h>
+#ifdef TIME_WITH_SYS_TIME
+#include <time.h>
 #endif
 
-#include <pcap.h>
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
 
-#include "machdep.h"
+#include "gmt2local.h"
 
-int
-abort_on_misalignment(char *ebuf)
+/*
+ * Returns the difference between gmt and local time in seconds.
+ * Use gmtime() and localtime() to keep things simple.
+ */
+int32_t
+gmt2local(time_t t)
 {
-#ifdef __osf__
-	static int buf[2] = { SSIN_UACPROC, UAC_SIGBUS };
+	register int dt, dir;
+	register struct tm *gmt, *loc;
+	struct tm sgmt;
 
-	if (setsysinfo(SSI_NVPAIRS, (caddr_t)buf, 1, 0, 0) < 0) {
-		(void)sprintf(ebuf, "setsysinfo: errno %d", errno);
-		return (-1);
-	}
-#endif
-	return (0);
+	if (t == 0)
+		t = time(NULL);
+	gmt = &sgmt;
+	*gmt = *gmtime(&t);
+	loc = localtime(&t);
+	dt = (loc->tm_hour - gmt->tm_hour) * 60 * 60 +
+	    (loc->tm_min - gmt->tm_min) * 60;
+
+	/*
+	 * If the year or julian day is different, we span 00:00 GMT
+	 * and must add or subtract a day. Check the year first to
+	 * avoid problems when the julian day wraps.
+	 */
+	dir = loc->tm_year - gmt->tm_year;
+	if (dir == 0)
+		dir = loc->tm_yday - gmt->tm_yday;
+	dt += dir * 24 * 60 * 60;
+
+	return (dt);
 }
