@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.109 2004/01/24 23:30:26 deraadt Exp $
+	$OpenBSD: pcmciadevs,v 1.110 2004/04/06 21:08:25 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -85,6 +85,7 @@ vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274	The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
+vendor MICROSOFT		0x02d2	Microsoft
 vendor NWN			0x0602	No Wires Needed
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
@@ -255,6 +256,9 @@ product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK
 
 /* Melco */
 product MELCO LPC3_TX	 	0xc1ab Melco LPC3-TX
+
+/* Microsoft */
+product MICROSOFT MN520		0x0001 Microsoft MN-520
 
 /* Motorola */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4
