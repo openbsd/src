@@ -34,7 +34,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.74 2000/11/29 21:11:59 markus Exp $
+.\" $OpenBSD: sshd.8,v 1.75 2000/12/27 11:41:31 markus Exp $
 .Dd September 25, 1999
 .Dt SSHD 8
 .Os
@@ -202,12 +202,14 @@ If the client fails to authenticate the user within
 this many seconds, the server disconnects and exits.
 A value of zero indicates no limit.
 .It Fl h Ar host_key_file
-Specifies the file from which the RSA host key is read (default
+Specifies the file from which the host key is read (default
 .Pa /etc/ssh_host_key ) .
 This option must be given if
 .Nm
 is not run as root (as the normal
 host file is normally not readable by anyone but root).
+It is possible to have multiple host key files for
+the different protocol versions.
 .It Fl i
 Specifies that
 .Nm
@@ -726,26 +728,37 @@ file lists the RSA keys that are
 permitted for RSA authentication in SSH protocols 1.3 and 1.5
 Similarly, the
 .Pa $HOME/.ssh/authorized_keys2
-file lists the DSA keys that are
-permitted for DSA authentication in SSH protocol 2.0.
+file lists the DSA and RSA keys that are
+permitted for public key authentication (PubkeyAuthentication)
+in SSH protocol 2.0.
+.Pp
 Each line of the file contains one
 key (empty lines and lines starting with a
 .Ql #
 are ignored as
 comments).
-Each line consists of the following fields, separated by
+Each RSA public key consists of the following fields, separated by
 spaces: options, bits, exponent, modulus, comment.
-The options field
-is optional; its presence is determined by whether the line starts
+Each protocol version 2 public key consists of:
+options, keytype, base64 encoded key, comment.
+The options fields
+are optional; its presence is determined by whether the line starts
 with a number or not (the option field never starts with a number).
-The bits, exponent, modulus and comment fields give the RSA key; the
+The bits, exponent, modulus and comment fields give the RSA key for
+protocol version 1; the
 comment field is not used for anything (but may be convenient for the
 user to identify the key).
+For protocol version 2 the keytype is
+.Dq ssh-dss
+or
+.Dq ssh-rsa .
 .Pp
 Note that lines in this file are usually several hundred bytes long
 (because of the size of the RSA key modulus).
 You don't want to type them in; instead, copy the
 .Pa identity.pub
+or the
+.Pa id_dsa.pub
 file and edit it.
 .Pp
 The options (if present) consist of comma-separated option
