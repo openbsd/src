@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.64 2001/07/26 22:27:45 miod Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.65 2001/08/02 08:16:45 assar Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -763,8 +763,8 @@ vput(vp)
 
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount == 0) {
-		vprint("vrele: bad ref count", vp);
-		panic("vrele: ref cnt");
+		vprint("vput: bad ref count", vp);
+		panic("vput: ref cnt");
 	}
 #endif
 	vp->v_usecount--;
@@ -776,8 +776,8 @@ vput(vp)
 
 #ifdef DIAGNOSTIC
 	if (vp->v_writecount != 0) {
-		vprint("vrele: bad writecount", vp);
-		panic("vrele: v_writecount != 0");
+		vprint("vput: bad writecount", vp);
+		panic("vput: v_writecount != 0");
 	}
 #endif
 	vputonfreelist(vp);
