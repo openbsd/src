@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.53 2002/01/23 15:46:48 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.54 2002/01/25 15:00:26 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -342,6 +342,7 @@ extern struct pool proc_pool;		/* memory pool for procs */
 extern struct pool rusage_pool;		/* memory pool for zombies */
 extern struct pool ucred_pool;		/* memory pool for ucreds */
 extern struct pool session_pool;	/* memory pool for sessions */
+extern struct pool pcred_pool;		/* memory pool for pcreds */
 
 #define	NQS	32			/* 32 run queues. */
 int	whichqs;			/* Bit mask summary of non-empty Q's. */

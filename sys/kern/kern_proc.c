@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.11 2002/01/23 15:46:48 art Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.12 2002/01/25 15:00:26 art Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct pool rusage_pool;
 struct pool ucred_pool;
 struct pool pgrp_pool;
 struct pool session_pool;
+struct pool pcred_pool;
 
 /*
  * Locking of this proclist is special; it's accessed in a
@@ -122,6 +123,8 @@ procinit()
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
 	    &pool_allocator_nointr);
 	pool_init(&session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
+	    &pool_allocator_nointr);
+	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
 	    &pool_allocator_nointr);
 }
 
