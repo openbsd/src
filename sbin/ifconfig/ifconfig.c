@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.89 2004/01/13 01:42:45 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.90 2004/02/26 20:25:09 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.89 2004/01/13 01:42:45 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.90 2004/02/26 20:25:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -648,7 +648,7 @@ printif(struct ifreq *ifrm, int ifaliases)
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	const char *namep;
-	char ch, *oname = NULL;
+	char *oname = NULL;
 	struct ifreq *ifrp;
 	int nlen, count = 0, noinet = 1;
 
@@ -664,13 +664,17 @@ printif(struct ifreq *ifrm, int ifaliases)
 
 	namep = NULL;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (oname && strncmp(oname, ifa->ifa_name, nlen))
-			continue;
 		if (oname) {
-			/* Check for end or a digit ! */
-			ch = ifa->ifa_name[nlen];
-			if (ch && (ch < '0' || ch > '9'))
-				continue;
+			if (isdigit(oname[nlen - 1])) {
+				/* must have exact match */
+				if (strcmp(oname, ifa->ifa_name) != 0)
+					continue;
+			} else {
+				/* partial match OK if it ends w/ digit */
+				if (strncmp(oname, ifa->ifa_name, nlen) != 0 ||
+				    !isdigit(ifa->ifa_name[nlen]))
+					continue;
+			}
 		}
 		(void) strlcpy(name, ifa->ifa_name, sizeof(name));
 
