@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1 1998/06/23 19:45:25 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 1998/10/30 19:28:13 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -27,7 +27,7 @@
 #include <machine/intr.h>
 
 /*
- * Machine dependent constants for PA-RISC (1.1).
+ * Machine dependent constants for PA-RISC.
  */
 
 #define	_MACHINE	hp700
@@ -47,7 +47,6 @@
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NPTEPG		(1 << (PGSHIFT-PTESHIFT))
 
 #define	SEGSHIFT	(PGSHIFT + (PGSHIFT-PTESHIFT))	/* LOG2(NBSEG) */
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment (quadrant) */
@@ -96,7 +95,7 @@
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(1024*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(8192*1024/CLBYTES)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
@@ -107,12 +106,8 @@
 #define	ctob(x)	((x)<<PGSHIFT)
 #define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
 
-#define LABELOFFSET	0
-
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((unsigned)(bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((unsigned)(db) << DEV_BSHIFT)
+#define	btodb(bytes)	((unsigned)(bytes) >> DEV_BSHIFT)
+#define	dbtob(db)	((unsigned)(db) << DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
@@ -127,15 +122,11 @@
  */
 #define hppa_round_page(x)	((((unsigned long)(x)) + NBPG - 1) & ~(NBPG-1))
 #define hppa_trunc_page(x)	((unsigned long)(x) & ~(NBPG-1))
-#define hppa_btop(x)		((unsigned long)(x) >> PGSHIFT)
-#define hppa_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
-#include <machine/intr.h>
+#define btop(x)		((unsigned long)(x) >> PGSHIFT)
+#define ptob(x)		((unsigned long)(x) << PGSHIFT)
 
 #ifdef _KERNEL
-
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
-
 #ifdef COMPAT_HPUX
 /*
  * Constants/macros for HPUX multiple mapping of user address space.
