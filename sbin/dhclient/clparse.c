@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.16 2004/07/04 23:33:49 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.17 2004/08/24 15:06:03 henning Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -96,18 +96,16 @@ read_client_conf(void)
 	top_level_config.requested_options
 	    [top_level_config.requested_option_count++] = DHO_HOST_NAME;
 
-	if ((cfile = fopen(path_dhclient_conf, "r")) == NULL)
-		error("can't open config file %s: %m",
-		    path_dhclient_conf);
-
-	do {
-		token = peek_token(&val, cfile);
-		if (token == EOF)
-			break;
-		parse_client_statement(cfile, NULL, &top_level_config);
-	} while (1);
-	token = next_token(&val, cfile); /* Clear the peek buffer */
-	fclose(cfile);
+	if ((cfile = fopen(path_dhclient_conf, "r")) != NULL) {
+		do {
+			token = peek_token(&val, cfile);
+			if (token == EOF)
+				break;
+			parse_client_statement(cfile, NULL, &top_level_config);
+		} while (1);
+		token = next_token(&val, cfile); /* Clear the peek buffer */
+		fclose(cfile);
+	}
 
 	/*
 	 * Set up state and config structures for clients that don't
