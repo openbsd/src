@@ -1,4 +1,4 @@
-/*	$OpenBSD: getNAME.c,v 1.9 2002/05/22 06:35:43 deraadt Exp $	*/
+/*	$OpenBSD: getNAME.c,v 1.10 2002/07/03 23:39:03 deraadt Exp $	*/
 /*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-static char rcsid[] = "$OpenBSD: getNAME.c,v 1.9 2002/05/22 06:35:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getNAME.c,v 1.10 2002/07/03 23:39:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,9 +73,7 @@ void usage(void);
 int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 
@@ -106,8 +104,7 @@ main(argc, argv)
 }
 
 void
-getfrom(pathname)
-	char *pathname;
+getfrom(char *pathname)
 {
 	int i = 0;
 	char *name, *loc, *s, *t;
@@ -275,8 +272,7 @@ newman:
 }
 
 void
-trimln(cp)
-	char *cp;
+trimln(char *cp)
 {
 
 	while (*cp)
@@ -286,8 +282,7 @@ trimln(cp)
 }
 
 void
-doname(name)
-	char *name;
+doname(char *name)
 {
 	char *dp = name, *ep;
 
@@ -310,8 +305,7 @@ again:
 }
 
 void
-split(line, name)
-	char *line, *name;
+split(char *line, char *name)
 {
 	char *cp, *dp;
 	char *sp, *sep;
@@ -343,8 +337,7 @@ split(line, name)
 }
 
 void
-dorefname(name)
-	char *name;
+dorefname(char *name)
 {
 	char *dp = name, *ep;
 
@@ -365,7 +358,7 @@ again:
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: getNAME [-itw] file ...\n");
 	exit(1);

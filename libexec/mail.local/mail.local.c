@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.23 2002/06/02 01:27:16 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -45,7 +45,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
 #else
-static char rcsid[] = "$OpenBSD: mail.local.c,v 1.23 2002/06/02 01:27:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mail.local.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,9 +68,7 @@ static char rcsid[] = "$OpenBSD: mail.local.c,v 1.23 2002/06/02 01:27:16 deraadt
 #include "mail.local.h"
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	int ch, fd, eval, lockfile=1, holdme=0;
@@ -134,8 +132,7 @@ main(argc, argv)
 }
 
 int
-store(from)
-	char *from;
+store(char *from)
 {
 	FILE *fp = NULL;
 	time_t tval;
@@ -189,10 +186,7 @@ store(from)
 }
 
 int
-deliver(fd, name, lockfile)
-	int fd;
-	char *name;
-	int lockfile;
+deliver(int fd, char *name, int lockfile)
 {
 	struct stat sb, fsb;
 	struct passwd *pw;
@@ -310,8 +304,7 @@ bad:
 }
 
 void
-notifybiff(msg)
-	char *msg;
+notifybiff(char *msg)
 {
 	static struct sockaddr_in addr;
 	static int f = -1;
@@ -343,7 +336,7 @@ notifybiff(msg)
 }
 
 void
-usage()
+usage(void)
 {
 	merr(FATAL, "usage: mail.local [-lL] [-f from] user ...");
 }

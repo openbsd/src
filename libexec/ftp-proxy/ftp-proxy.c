@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.22 2002/06/09 01:03:12 beck Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.23 2002/07/03 23:39:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -161,7 +161,7 @@ connection_mode_t connection_mode;
 extern void debuglog(int debug_level, const char *fmt, ...);
 
 static void
-usage()
+usage(void)
 {
 	syslog(LOG_NOTICE,
 	    "usage: %s [-AnrVw] [-t timeout] [-D debuglevel] %s %s",
@@ -171,7 +171,7 @@ usage()
 }
 
 static void
-close_client_data()
+close_client_data(void)
 {
 	if (client_data_socket >= 0) {
 		shutdown(client_data_socket, 2);
@@ -181,7 +181,7 @@ close_client_data()
 }
 
 static void
-close_server_data()
+close_server_data(void)
 {
 	if (server_data_socket >= 0)  {
 		shutdown(server_data_socket, 2);
@@ -191,7 +191,7 @@ close_server_data()
 }
 
 static void
-drop_privs()
+drop_privs(void)
 {
 	struct passwd *pw;
 	struct group *gr;
@@ -285,7 +285,7 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 }
 
 double
-wallclock_time()
+wallclock_time(void)
 {
 	struct timeval tv;
 
@@ -297,7 +297,7 @@ wallclock_time()
  * Show the stats for this data transfer
  */
 void
-show_xfer_stats()
+show_xfer_stats(void)
 {
 	char tbuf[1000];
 	double delta;
@@ -452,7 +452,7 @@ new_dataconn(int server)
 }
 
 static void
-connect_pasv_backchannel()
+connect_pasv_backchannel(void)
 {
 	struct sockaddr_in listen_sa;
 	int salen;
@@ -495,7 +495,7 @@ connect_pasv_backchannel()
 }
 
 static void
-connect_port_backchannel()
+connect_port_backchannel(void)
 {
 	struct sockaddr_in listen_sa;
 	int salen;
@@ -951,7 +951,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 }
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	struct csiob client_iob, server_iob;
 	struct sigaction new_sa, old_sa;

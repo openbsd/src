@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.14 2002/06/20 03:43:33 deraadt Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.15 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -50,7 +50,7 @@ struct fs_stat *fs_begin = NULL;
 int from_inetd = 1;
 
 void 
-cleanup()
+cleanup(void)
 {
 	(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);	/* XXX signal races */
 	_exit(0);

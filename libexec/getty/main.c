@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2002/05/22 06:35:43 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.23 2002/05/22 06:35:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,7 +128,7 @@ char partab[] = {
 #define	EOT	tmode.c_cc[VEOF]
 
 static void
-dingdong()
+dingdong(int signo)
 {
 	tmode.c_ispeed = tmode.c_ospeed = 0;
 	(void)tcsetattr(0, TCSANOW, &tmode);
@@ -138,7 +138,7 @@ dingdong()
 volatile sig_atomic_t interrupt_flag;
 
 static void
-interrupt()
+interrupt(int signo)
 {
 	int save_errno = errno;
 
@@ -151,8 +151,7 @@ interrupt()
  * Action to take when getty is running too long.
  */
 void
-timeoverrun(signo)
-	int signo;
+timeoverrun(int signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
@@ -170,9 +169,7 @@ static void	putpad(char *);
 static void	xputs(char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern char **environ;
 	char *tname;
@@ -349,7 +346,7 @@ main(argc, argv)
 }
 
 static int
-getname()
+getname(void)
 {
 	int ppp_state = 0, ppp_connection = 0;
 	unsigned char cs;
@@ -466,8 +463,7 @@ getname()
 }
 
 static void
-putpad(s)
-	char *s;
+putpad(char *s)
 {
 	int pad = 0;
 	speed_t ospeed = cfgetospeed(&tmode);
@@ -504,8 +500,7 @@ putpad(s)
 }
 
 static void
-xputs(s)
-	char *s;
+xputs(char *s)
 {
 	while (*s)
 		putchr(*s++);
@@ -515,8 +510,7 @@ char	outbuf[OBUFSIZ];
 int	obufcnt = 0;
 
 static void
-putchr(cc)
-	int cc;
+putchr(int cc)
 {
 	char c;
 
@@ -535,7 +529,7 @@ putchr(cc)
 }
 
 static void
-oflush()
+oflush(void)
 {
 	if (obufcnt)
 		write(STDOUT_FILENO, outbuf, obufcnt);
@@ -543,7 +537,7 @@ oflush()
 }
 
 static void
-prompt()
+prompt(void)
 {
 
 	putf(LM);
@@ -552,8 +546,7 @@ prompt()
 }
 
 static void
-putf(cp)
-	char *cp;
+putf(char *cp)
 {
 	extern char editedhost[];
 	char *slash, db[100];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.5 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: locking.c,v 1.6 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: locking.c,v 1.5 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: locking.c,v 1.6 2002/07/03 23:39:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: locking.c,v 1.5 2002/02/19 19:39:38 millert Exp
 static char lpath[MAXPATHLEN];
 
 void
-rellock()
+rellock(void)
 {
 
 	if (lpath[0])
@@ -57,9 +57,7 @@ rellock()
 }
 
 int
-getlock(name, pw)
-	char *name;
-	struct passwd *pw;
+getlock(char *name, struct passwd *pw)
 {
 	struct stat sb, fsb;
 	int lfd=-1;
@@ -143,8 +141,7 @@ again:
 }
 
 void
-baditem(path)
-	char *path;
+baditem(char *path)
 {
 	char npath[MAXPATHLEN];
 

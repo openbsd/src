@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.16 2002/05/27 06:36:40 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.17 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: subr.c,v 1.16 2002/05/27 06:36:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.17 2002/07/03 23:39:03 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -60,8 +60,7 @@ static void	compatflags(long);
  * Get a table entry.
  */
 void
-gettable(name, buf)
-	char *name, *buf;
+gettable(char *name, char *buf)
 {
 	struct gettystrs *sp;
 	struct gettynums *np;
@@ -106,7 +105,7 @@ gettable(name, buf)
 }
 
 void
-gendefaults()
+gendefaults(void)
 {
 	struct gettystrs *sp;
 	struct gettynums *np;
@@ -126,7 +125,7 @@ gendefaults()
 }
 
 void
-setdefaults()
+setdefaults(void)
 {
 	struct gettystrs *sp;
 	struct gettynums *np;
@@ -159,7 +158,7 @@ charvars[] = {
 };
 
 void
-setchars()
+setchars(void)
 {
 	int i;
 	char *p;
@@ -179,8 +178,7 @@ setchars()
 #define	ISSET(t, f)	((t) & (f))
 
 void
-setflags(n)
-	int n;
+setflags(int n)
 {
 	tcflag_t iflag, oflag, cflag, lflag;
 
@@ -362,8 +360,7 @@ out:
  * Old TTY => termios, snatched from <sys/kern/tty_compat.c>
  */
 void
-compatflags(flags)
-long flags;
+compatflags(long flags)
 {
 	tcflag_t iflag, oflag, cflag, lflag;
 
@@ -555,9 +552,7 @@ delaybits()
 }
 
 int
-adelay(ms, dp)
-	ms;
-	struct delayval *dp;
+adelay(int ms, struct delayval *dp)
 {
 	if (ms == 0)
 		return (0);
@@ -570,8 +565,7 @@ adelay(ms, dp)
 char	editedhost[48];
 
 void
-edithost(pat)
-	char *pat;
+edithost(char *pat)
 {
 	char *host = HN;
 	char *res = editedhost;
@@ -609,8 +603,7 @@ edithost(pat)
 }
 
 void
-makeenv(env)
-	char *env[];
+makeenv(char *env[])
 {
 	static char termbuf[128] = "TERM=";
 	char *p, *q;
@@ -658,7 +651,7 @@ struct	portselect {
 };
 
 char *
-portselector()
+portselector(void)
 {
 	char c, baud[20], *type = "default";
 	struct portselect *ps;
@@ -693,7 +686,7 @@ portselector()
 #include <sys/time.h>
 
 char *
-autobaud()
+autobaud(void)
 {
 	fd_set rfds;
 	struct timeval timeout;

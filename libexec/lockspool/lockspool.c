@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.7 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.8 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: lockspool.c,v 1.7 2002/02/16 21:27:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lockspool.c,v 1.8 2002/07/03 23:39:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/signal.h>
@@ -46,9 +46,7 @@ void usage(void);
 extern char *__progname;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	char *from, c;
@@ -97,8 +95,7 @@ main(argc, argv)
 }
 
 void
-unhold(sig)
-	int sig;
+unhold(int signo)
 {
 
 	rellock();
@@ -106,7 +103,7 @@ unhold(sig)
 }
 
 void
-usage()
+usage(void)
 {
 
 	merr(FATAL, "usage: %s [username]", __progname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.23 2002/06/20 18:26:49 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.23 2002/06/20 18:26:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,9 +87,7 @@ void reapchildren(int);
 volatile sig_atomic_t wantreadutmp;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sockaddr_storage from;
 	struct sigaction sa;
@@ -158,8 +156,7 @@ main(argc, argv)
 }
 
 void
-reapchildren(signo)
-	int signo;
+reapchildren(int signo)
 {
 	int save_errno = errno;
 
@@ -169,8 +166,7 @@ reapchildren(signo)
 }
 
 void
-readutmp(signo)
-	int signo;
+readutmp(int signo)
 {
 	wantreadutmp = 1;
 }
@@ -201,8 +197,7 @@ doreadutmp(void)
 }
 
 void
-mailfor(name)
-	char *name;
+mailfor(char *name)
 {
 	struct utmp *utp = &utmp[nutmp];
 	char utname[UT_NAMESIZE+1];
@@ -224,9 +219,7 @@ mailfor(name)
 static char *cr;
 
 void
-notify(utp, offset)
-	struct utmp *utp;
-	off_t offset;
+notify(struct utmp *utp, off_t offset)
 {
 	FILE *tp;
 	struct stat stb;
@@ -268,10 +261,7 @@ notify(utp, offset)
 }
 
 void
-jkfprintf(tp, name, offset)
-	FILE *tp;
-	char name[];
-	off_t offset;
+jkfprintf(FILE *tp, char name[], off_t offset)
 {
 	char *cp, ch;
 	char visout[5], *s2;

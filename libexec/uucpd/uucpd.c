@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.23 2002/05/26 09:32:08 deraadt Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.23 2002/05/26 09:32:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -95,9 +95,7 @@ extern char **environ;
 char utline[UT_LINESIZE+1];
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char *argv[])
 {
 #ifndef BSDINETD
 	int s, tcp_socket;
@@ -130,7 +128,7 @@ char **argv;
 		exit(0);
 	snprintf(utline, sizeof(utline), "uucp%.4ld", (long)childpid);
 
-	if ((s=open(_PATH_TTY, 2)) >= 0){
+	if ((s = open(_PATH_TTY, 2)) >= 0){
 		ioctl(s, TIOCNOTTY, (char *)0);
 		close(s);
 	}
@@ -172,12 +170,11 @@ char **argv;
 }
 
 void
-doit(sinp)
-struct sockaddr_in *sinp;
+doit(struct sockaddr_in *sinp)
 {
 	char user[64], passwd[64];
-	char *xpasswd, *crypt();
-	struct passwd *pw, *getpwnam();
+	char *xpasswd;
+	struct passwd *pw;
 
 	alarm(60);
 	do {
@@ -232,9 +229,7 @@ struct sockaddr_in *sinp;
 }
 
 int
-readline(p, n)
-char *p;
-int n;
+readline(char *p, int n)
 {
 	char c;
 
@@ -257,7 +252,7 @@ int n;
 struct	utmp utmp;
 
 void
-dologout()
+dologout(void)
 {
 	int save_errno = errno;
 	int status, wtmp;
@@ -285,9 +280,7 @@ dologout()
  * Record login in wtmp file.
  */
 void
-dologin(pw, sin)
-struct passwd *pw;
-struct sockaddr_in *sin;
+dologin(struct passwd *pw, struct sockaddr_in *sin)
 {
 	char line[32];
 	char remotehost[MAXHOSTNAMELEN];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.24 2002/06/04 10:08:51 mpech Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.25 2002/07/03 23:39:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.24 2002/06/04 10:08:51 mpech Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.25 2002/07/03 23:39:03 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -120,16 +120,14 @@ int	write_behind(FILE *file, int convert);
 int	synchnet(int f);
 
 static void
-usage()
+usage(void)
 {
 	syslog(LOG_ERR, "Usage: %s [-cs] [directory ...]", __progname);
 	exit(1);
 }
 
 int
-main(argc, argv)
-	int    argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct tftphdr *tp;
 	struct passwd *pw;
@@ -285,9 +283,7 @@ main(argc, argv)
  * Handle initial connection protocol.
  */
 void
-tftp(tp, size)
-	struct tftphdr *tp;
-	int size;
+tftp(struct tftphdr *tp, int size)
 {
 	char *cp;
 	int first = 1, ecode;
@@ -347,9 +343,7 @@ FILE *file;
  * given as we have no login directory.
  */
 int
-validate_access(filename, mode)
-	char *filename;
-	int mode;
+validate_access(char *filename, int mode)
 {
 	struct stat stbuf;
 	int	fd, wmode;
@@ -419,7 +413,7 @@ int	timeout;
 jmp_buf	timeoutbuf;
 
 void
-timer()
+timer(int signo)
 {
 	/* XXX longjmp/signal resource leaks */
 	timeout += rexmtval;
@@ -432,8 +426,7 @@ timer()
  * Send the requested file.
  */
 int
-sendfile(pf)
-	struct formats *pf;
+sendfile(struct formats *pf)
 {
 	struct tftphdr *dp, *r_init();
 	struct tftphdr *ap;    /* ack packet */
@@ -494,7 +487,7 @@ abort:
 }
 
 void
-justquit()
+justquit(int signo)
 {
 	_exit(0);
 }
@@ -504,8 +497,7 @@ justquit()
  * Receive a file.
  */
 int
-recvfile(pf)
-	struct formats *pf;
+recvfile(struct formats *pf)
 {
 	struct tftphdr *dp, *w_init();
 	struct tftphdr *ap;    /* ack buffer */
@@ -600,8 +592,7 @@ struct errmsg {
  * offset by 100.
  */
 void
-nak(error)
-	int error;
+nak(int error)
 {
 	struct tftphdr *tp;
 	int length;
