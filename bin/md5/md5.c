@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: md5.c,v 1.8 1998/01/02 07:04:23 deraadt Exp $
+ * $OpenBSD: md5.c,v 1.9 1999/10/07 16:56:33 espie Exp $
  *
  * Derived from:
  *	MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -34,6 +34,12 @@
 #define TEST_BLOCK_LEN 10000
 #define TEST_BLOCK_COUNT 10000
 
+union ANY_CTX {
+	RMD160_CTX a; 
+	SHA1_CTX b; 
+	MD5_CTX c;
+};
+
 extern char *__progname;
 
 static void MDString __P((char *));
@@ -41,8 +47,6 @@ static void MDTimeTrial __P((void *));
 static void MDTestSuite __P((void));
 static void MDFilter __P((int, void *));
 static void usage __P((char *));
-
-int main __P((int, char *[]));
 
 /*
  * Globals for indirection...
@@ -73,6 +77,9 @@ main(argc, argv)
 	char	buf[41];
 	void   *context;
 
+	if ((context = malloc(sizeof(union ANY_CTX))) == NULL)
+			err(1, "malloc");
+
 	/* What were we called as?  Default to md5 */
 	if (strcmp(__progname, "rmd160") == 0) {
 		MDType = "RMD160";
@@ -81,8 +88,6 @@ main(argc, argv)
 		MDEnd = RMD160End;
 		MDFile = RMD160File;
 		MDData = RMD160Data;
-		if ((context = malloc(sizeof(RMD160_CTX))) == NULL)
-			err(1, "malloc");
 	} else if (strcmp(__progname, "sha1") == 0) {
 		MDType = "SHA1";
 		MDInit = SHA1Init;
@@ -90,8 +95,6 @@ main(argc, argv)
 		MDEnd = SHA1End;
 		MDFile = SHA1File;
 		MDData = SHA1Data;
-		if ((context = malloc(sizeof(SHA1_CTX))) == NULL)
-			err(1, "malloc");
 	} else {
 		MDType = "MD5";
 		MDInit = MD5Init;
@@ -99,8 +102,6 @@ main(argc, argv)
 		MDEnd = MD5End;
 		MDFile = MD5File;
 		MDData = MD5Data;
-		if ((context = malloc(sizeof(MD5_CTX))) == NULL)
-			err(1, "malloc");
 	}
 
 	if (argc > 1) {
