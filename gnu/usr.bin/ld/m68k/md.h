@@ -1,24 +1,16 @@
-/* * $OpenBSD: md.h,v 1.5 2002/07/17 20:33:29 marc Exp $*/
+/* * $OpenBSD: md.h,v 1.6 2002/09/17 16:20:46 miod Exp $*/
 /*
  *	- m68k dependent definitions
  */
 
 #if defined(CROSS_LINKER) 
 #include <sys/endian.h>
-
 #if BYTE_ORDER != BIG_ENDIAN
 #define NEED_SWAP
 #endif
 
-#undef __LDPGSZ
-#undef ELF_TARG_DATA
-#undef ELF_TARG_MACH
-#undef relocation_info
-#undef MID_MACHINE
-#define MID_MACHINE MID_M68K
-#include <m68k/exec.h>
-#endif
-
+/* Remove definitions from the host exec.h */
+#include <machine/exec.h>
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 
