@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.31 2004/09/14 22:27:46 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.32 2005/03/10 22:42:46 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -181,6 +181,7 @@ int
 bind_socket(const char *sockname)
 {
 	struct sockaddr_un s_un;
+	mode_t old_umask;
 	int sock;
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -193,10 +194,11 @@ bind_socket(const char *sockname)
 
 	/* remove it if present, we're moving in */
 	(void) remove(sockname);
-	umask(077);
 
+	old_umask = umask(077);
 	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
 		error("cannot connect to APM socket", NULL);
+	umask(old_umask);
 	if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1)
 		error("cannot set socket mode/owner/group to 660/0/0", NULL);
 
