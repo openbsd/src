@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.50 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: bridge.4,v 1.51 2003/06/11 17:03:09 pb Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -583,6 +583,16 @@ Since bridged packets pass through the filter twice with the source
 and destination addresses reversed between interfaces, two state
 entries (one for each direction) are required when all interfaces
 are filtered statefully.
+.Pp
+It is unsupported to use filter rules which would generate packets.
+This applies to rules with
+.Ar return ,
+.Ar return-rst ,
+.Ar return-icmp ,
+.Ar return-icmp6
+or
+.Ar synproxy
+defined.
 .Pp
 If an IP packet is too large for the outgoing interface the bridge
 will perform IP fragmentation.

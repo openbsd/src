@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.255 2003/06/10 16:59:49 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.256 2003/06/11 17:03:09 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1030,6 +1030,11 @@ This causes a TCP RST to be returned for
 .Xr tcp 4
 packets and an ICMP UNREACHABLE for UDP and other packets.
 .El
+.Pp
+Options returning packets have no effect if
+.Xr pf 4
+operates on a
+.Xr bridge 4 .
 .It Ar pass
 The packet is passed.
 .El
@@ -1669,6 +1674,13 @@ includes
 .Ar modulate state
 and
 .Ar keep state .
+.Pp
+Rules with
+.Ar synproxy
+will not work if
+.Xr pf 4
+operates on a
+.Xr bridge 4 .
 .Pp
 Example:
 .Bd -literal -offset indent
