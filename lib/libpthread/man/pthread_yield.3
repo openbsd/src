@@ -1,0 +1,27 @@
+.\" $OpenBSD: pthread_yield.3,v 1.1 2004/01/15 23:17:19 marc Exp $
+.\"
+.\" PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org>
+.\"
+.Dd January 15, 2004
+.Dt PTHREAD_YIELD 3
+.Os
+.Sh NAME
+.Nm pthread_yield
+.Nd yield control of the current thread
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft void
+.Fn pthread_yield "void"
+.Sh DESCRIPTION
+The
+.Fn pthread_yield
+function resets the accumulated time slice of the current thread and then
+enters the thread scheduler which resumes execution of the next thread ready
+to run.
+If no other thread is ready to run control returns to the current thread.
+.Sh SEE ALSO
+.Xr pthreads 3
+.Sh STANDARDS
+.Fn pthread_yield
+is a non-portable (but quite common) extension to
+.St -p1003.1-01 .

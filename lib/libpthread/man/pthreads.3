@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.22 2004/01/15 11:27:04 jmc Exp $
+.\" $OpenBSD: pthreads.3,v 1.23 2004/01/15 23:17:19 marc Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -171,6 +171,10 @@ Set the name of a thread.
 Switch thread scheduling mode.
 .It Fn pthread_multi_np
 Switch thread scheduling mode.
+.It Fn pthread_stackseg_np
+Return stack size and location.
+.It Fn pthread_yield
+Yield control of the current thread.
 .El
 .Ss Read/Write Lock Routines
 The functions available are as follows:
@@ -513,8 +517,10 @@ environment variable.
 .Xr pthread_setspecific 3 ,
 .Xr pthread_sigmask 3 ,
 .Xr pthread_single_np 3 ,
+.Xr pthread_stackseg_np 3 ,
 .Xr pthread_suspend_np 3 ,
-.Xr pthread_testcancel 3
+.Xr pthread_testcancel 3 ,
+.Xr pthread_yield 3
 .Sh STANDARDS
 The user-level thread library provides functions that
 conform to ISO/IEC 9945-1 ANSI/IEEE
