@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.9 1997/05/13 18:22:18 millert Exp $
+#	$OpenBSD: install.sh,v 1.10 1997/05/14 21:07:59 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ MODE="install"
 #	md_native_fstype()	- native filesystem type for disk installs
 #	md_native_fsopts()	- native filesystem options for disk installs
 #	md_makerootwritable()	- make root writable (at least /tmp)
+#	md_machine_arch()	- get machine architecture
 
 # include machine dependent subroutines
 . install.md
@@ -99,6 +100,9 @@ esac
 
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
+
+# Get the machine architecture
+ARCH=`md_machine_arch`
 
 # Deal with terminal issues
 md_set_term
