@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.36 2004/04/01 23:56:05 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.37 2004/04/19 22:38:39 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -154,9 +154,13 @@ sonewconn(struct socket *head, int connstatus)
 {
 	struct socket *so;
 	int soqueue = connstatus ? 1 : 0;
+	extern u_long unpst_sendspace, unpst_recvspace;
+	u_long snd_sb_hiwat, rcv_sb_hiwat;
 
 	splassert(IPL_SOFTNET);
 
+	if (mclpool.pr_nout > mclpool.pr_hardlimit * 95 / 100)
+		return ((struct socket *)0);
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return ((struct socket *)0);
 	so = pool_get(&socket_pool, PR_NOWAIT);
@@ -176,7 +180,19 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_rgid = head->so_rgid;
 	so->so_siguid = head->so_siguid;
 	so->so_sigeuid = head->so_sigeuid;
-	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
+
+	/*
+	 * If we are tight on mbuf clusters, create the new socket
+	 * with the minimum.  Sorry, you lose.
+	 */
+	snd_sb_hiwat = head->so_snd.sb_hiwat;
+	if (sbcheckreserve(snd_sb_hiwat, unpst_sendspace))
+		snd_sb_hiwat = unpst_sendspace;		/* and udp? */
+	rcv_sb_hiwat = head->so_rcv.sb_hiwat;
+	if (sbcheckreserve(rcv_sb_hiwat, unpst_recvspace))
+		rcv_sb_hiwat = unpst_recvspace;		/* and udp? */
+
+	(void) soreserve(so, snd_sb_hiwat, rcv_sb_hiwat);
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0)) {
@@ -392,6 +408,19 @@ sbreserve(sb, cc)
 	if (sb->sb_lowat > sb->sb_hiwat)
 		sb->sb_lowat = sb->sb_hiwat;
 	return (1);
+}
+
+/*
+ * If over 50% of mbuf clusters in use, do not accept any
+ * greater than normal request.
+ */
+int
+sbcheckreserve(u_long cnt, u_long defcnt)
+{
+	if (cnt > defcnt &&
+	    mclpool.pr_nout> mclpool.pr_hardlimit / 2)
+		return (ENOBUFS);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.33 2004/04/12 23:58:10 tedu Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.34 2004/04/19 22:38:37 deraadt Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -259,6 +259,7 @@ void	sbdroprecord(struct sockbuf *sb);
 void	sbflush(struct sockbuf *sb);
 void	sbinsertoob(struct sockbuf *sb, struct mbuf *m0);
 void	sbrelease(struct sockbuf *sb);
+int	sbcheckreserve(u_long cnt, u_long defcnt);
 int	sbreserve(struct sockbuf *sb, u_long cc);
 int	sbwait(struct sockbuf *sb);
 int	sb_lock(struct sockbuf *sb);
