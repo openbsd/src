@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.53 2001/12/10 17:27:01 art Exp $	*/
-/*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.54 2001/12/11 16:35:18 art Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2000/09/05 21:56:41 thorpej Exp $	*/
 
 /*
  *
@@ -433,11 +433,13 @@ static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
 static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
 static void		 pmap_tmpunmap_pa __P((void));
 static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
+#if 0
 static boolean_t	 pmap_transfer_ptes __P((struct pmap *,
 					 struct pmap_transfer_location *,
 					 struct pmap *,
 					 struct pmap_transfer_location *,
 					 int, boolean_t));
+#endif
 static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *,
 						struct pv_entry *));
@@ -933,7 +935,7 @@ pmap_bootstrap(kva_start)
 void
 pmap_init()
 {
-	int npages, lcv;
+	int npages, lcv, i;
 	vaddr_t addr;
 	vsize_t s;
 
@@ -961,6 +963,11 @@ pmap_init()
 		vm_physmem[lcv].pmseg.pvhead = (struct pv_head *) addr;
 		addr = (vaddr_t)(vm_physmem[lcv].pmseg.pvhead +
 				 (vm_physmem[lcv].end - vm_physmem[lcv].start));
+		for (i = 0;
+		     i < (vm_physmem[lcv].end - vm_physmem[lcv].start); i++) {
+			simple_lock_init(
+			    &vm_physmem[lcv].pmseg.pvhead[i].pvh_lock);
+		}
 	}
 
 	/* now allocate attrs */
@@ -1949,9 +1956,9 @@ pmap_ldt_cleanup(p)
 #endif /* USER_LDT */
 
 /*
- * pmap_activate: activate a process' pmap (fill in %cr3 info)
+ * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)
  *
- * => called from cpu_fork()
+ * => called from cpu_switch()
  * => if proc is the curproc, then load it into the MMU
  */
 
@@ -2001,16 +2008,25 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	paddr_t retval;
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, pte;
+	pd_entry_t pde;
 
-	if (pmap->pm_pdir[pdei(va)]) {
+	if (__predict_true((pde = pmap->pm_pdir[pdei(va)]) != 0)) {
+		if (pde & PG_PS) {
+			if (pap != NULL)
+				*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
+			return (TRUE);
+		}
+
 		ptes = pmap_map_ptes(pmap);
-		retval = (paddr_t)(ptes[i386_btop(va)] & PG_FRAME);
+		pte = ptes[i386_btop(va)];
 		pmap_unmap_ptes(pmap);
-		if (pap != NULL)
-			*pap = retval | (va & ~PG_FRAME);
-		return (TRUE);
+
+		if (__predict_true((pte & PG_V) != 0)) {
+			if (pap != NULL)
+				*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			return (TRUE);
+		}
 	}
 	return (FALSE);
 }
@@ -2923,6 +2939,7 @@ pmap_collect(pmap)
 	pmap_update(pmap);
 }
 
+#if 0
 /*
  * pmap_transfer: transfer (move or copy) mapping from one pmap
  * 	to another.
@@ -3387,6 +3404,7 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
 /*
  * defined as macro call to pmap_transfer in pmap.h
  */
+#endif
 
 /*
  * pmap_enter: enter a mapping into a pmap
