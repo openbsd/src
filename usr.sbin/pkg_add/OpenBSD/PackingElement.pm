@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.18 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.19 2004/08/06 10:23:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,9 @@
 use strict;
 use warnings;
 use OpenBSD::PackageInfo;
+
+# perl ipc
+require 5.008_000;
 
 # This is the basic class, which is mostly abstract, except for
 # setKeyword and Factory.
@@ -340,6 +343,54 @@ sub destate
 		$state->{mandirs}->{$d} = [] 
 		    unless defined $state->{mandirs}->{$d};
 		push(@{$state->{mandirs}->{$d}}, $fname);
+	}
+}
+
+package OpenBSD::PackingElement::Lib;
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
+use File::Basename;
+
+__PACKAGE__->setKeyword('lib');
+sub keyword() { "lib" }
+
+our $todo;
+my $path;
+our $ldconfig = '/sbin/ldconfig';
+
+sub add_ldconfig_dirs()
+{
+	my $sub = shift;
+	return unless defined $todo;
+	for my $d (keys %$todo) {
+		&$sub($d);
+	}
+	$todo={};
+}
+
+sub mark_ldconfig_directory
+{
+	my ($self, $destdir) = @_;
+	if (!defined $path) {
+		$path={};
+		open my $fh, "-|", $ldconfig, "-r";
+		if (defined $fh) {
+			local $_;
+			while (<$fh>) {
+				if (m/^\s*search directories:\s*(.*?)\s*$/) {
+					for my $d (split(':', $1)) {
+						$path->{$d} = 1;
+					}
+				}
+			}
+			close($fh);
+		} else {
+			print STDERR "Can't find ldconfig\n";
+		}
+	}
+	my $d = dirname($self->fullname());
+	if ($path->{$d}) {
+		$todo = {} unless defined $todo;
+		$todo->{$d} = 1;
 	}
 }
 

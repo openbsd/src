@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.42 2004/08/06 08:14:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.43 2004/08/06 10:23:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -31,6 +31,16 @@ use File::Copy;
 
 our %forced = ();
 our ($ftp_only, $cdrom_only);
+
+sub ensure_ldconfig
+{
+	my $verbose = shift;
+	return unless defined $OpenBSD::PackingElement::Lib::todo;
+	print "running ldconfig -m ", join(' ', keys %$OpenBSD: pkg_add,v 1.43 2004/08/06 10:23:45 espie Exp $verbose;
+	system($OpenBSD::PackingElement::Lib::ldconfig, "-m", 
+	    keys %$OpenBSD::PackingElement::Lib::todo);
+	undef $OpenBSD::PackingElement::Lib::todo;
+}
 
 package OpenBSD::PackingElement;
 
@@ -151,8 +161,18 @@ sub install
 {
 	my ($self, $archive, $destdir, $verbose, $not) = @_;
 
+	main::ensure_ldconfig($verbose) unless $not;
 	print "exec ", $self->{expanded}, "\n" if $verbose or $not;
 	system('/bin/sh', '-c', $self->{expanded}) unless $not;
+}
+
+package OpenBSD::PackingElement::Lib;
+
+sub install
+{
+	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	$self->SUPER::install($archive, $destdir, $verbose, $not);
+	$self->mark_ldconfig_directory($destdir);
 }
 
 package OpenBSD::PackingElement::Arch;
@@ -552,6 +572,7 @@ sub really_add($$)
 	};
 
 	if ($plist->has(REQUIRE)) {
+		ensure_ldconfig($opt_v) unless $opt_n;
 		print "Require script: $dir",REQUIRE," $pkgname INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
 			chmod 0755, $dir.REQUIRE;
@@ -562,6 +583,7 @@ sub really_add($$)
 
 	unless ($opt_I) {
 		if ($plist->has(INSTALL)) {
+			ensure_ldconfig($opt_v) unless $opt_n;
 			print "Install script: $dir",INSTALL," $pkgname PRE-INSTALL\n" if $opt_v or $opt_n;
 			unless ($opt_n) {
 				chmod 0755, $dir.INSTALL;
@@ -595,6 +617,7 @@ sub really_add($$)
 
 	unless ($opt_I) {
 		if ($plist->has(INSTALL) && !$interrupted) {
+			ensure_ldconfig($opt_v) unless $opt_n;
 			print "Install script: $dir",INSTALL ," $pkgname POST-INSTALL\n" if $opt_v or $opt_n;
 			unless ($opt_n) {
 				if (system($dir.INSTALL, $pkgname, "POST-INSTALL") != 0) {
@@ -683,6 +706,8 @@ while (my $pkg = shift @todo) {
 	really_add($handle, $destdir);
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
 }
+
+ensure_ldconfig($opt_v) unless $opt_n;
 
 if ($opt_n or $opt_v) {
 	OpenBSD::Vstat::tally();

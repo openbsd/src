@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.33 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: pkg_delete,v 1.34 2004/08/06 10:23:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -25,10 +25,19 @@ use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
 use OpenBSD::Logger;
 use OpenBSD::Vstat;
+use OpenBSD::PackageInfo;
 
 our %forced = ();
 
-use OpenBSD::PackageInfo;
+
+sub ensure_ldconfig
+{
+	my $verbose = shift;
+	return unless defined $OpenBSD::PackingElement::Lib::todo;
+	print "running ldconfig -R\n" if $verbose;
+	system($OpenBSD::PackingElement::Lib::ldconfig, "-R");
+	undef $OpenBSD::PackingElement::Lib::todo;
+}
 
 sub find_alldirrms
 {
@@ -119,6 +128,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 	my $cmd = $self->{expanded};
+	main::ensure_ldconfig($state->{verbose}) unless $state->{not};
 	if ($state->{verbose} or $state->{not}) {
 		print "unexec: $cmd\n";
 	}
@@ -271,11 +281,21 @@ sub delete
 	return unless $state->{extra};
 
 	my $cmd = $self->{expanded};
+	main::ensure_ldconfig($state->{verbose}) unless $state->{not};
 	if ($state->{verbose} or $state->{not}) {
 		print "unexec: $cmd\n";
 	}
 	return if $state->{not};
 	system($cmd);
+}
+
+package OpenBSD::PackingElement::Lib;
+
+sub delete
+{
+	my ($self, $state) = @_;
+	$self->SUPER::delete($state);
+	$self->mark_ldconfig_directory($state->{destdir});
 }
 
 package OpenBSD::PackingElement::FREQUIRE;
@@ -289,6 +309,7 @@ sub delete
 	my $opt_n = $state->{not};
 	my $pkgname = $state->{pkgname};
 
+	main::ensure_ldconfig($opt_v) unless $opt_n;
 	print "Require script: $dir",REQUIRE," $pkgname DEINSTALL\n" if $opt_v or $opt_n;
 	unless ($opt_n) {
 		chmod 0755, $dir.REQUIRE;
@@ -307,6 +328,7 @@ sub delete
 	my $opt_v = $state->{verbose};
 	my $opt_n = $state->{not};
 	my $pkgname = $state->{pkgname};
+	main::ensure_ldconfig($opt_v) unless $opt_n;
 	print "Deinstall script: $dir",DEINSTALL ," $pkgname DEINSTALL\n" if $opt_v or $opt_n;
 	unless ($opt_n) {
 		chmod 0755, $dir.DEINSTALL;
@@ -532,6 +554,7 @@ if ($opt_B eq '') {
 	last if $opt_n;
 } while ($removed); }
 
+ensure_ldconfig($opt_v) unless $opt_n;
 # delayed directory removal
 remove_dirs($state);
 
