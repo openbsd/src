@@ -15,10 +15,11 @@ by address 0x1f in the EEPROM, which you can examine and change in
 the PROM monitor by entering "q 1f", then a numeric value (or just a
 '.' if you don't want to change it, and "q" again to return to the prom).
 Console values are:
-	00: default graphics display
+	00: monochrome framebuffer (on-board or VME)
 	10: tty a (9600-N-8-1)
 	11: tty b (1200-N-8-1)
-	20: Color option board on P4 (model 3/60 only)
+	12: color framebuffer
+	20: color option board on P4 (model 3/60 only)
 
 OpenBSD will use the EEPROM setting to determine which device to
 use as the console, so you should make sure it is correct.
