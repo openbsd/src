@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.26 1997/09/11 11:20:43 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.27 1997/10/15 09:35:00 provos Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -970,7 +970,7 @@ cdioctl(dev, cmd, addr, flag, p)
 
 		if (CDPART(dev) != RAW_PART)
 			return ENOTTY;
-		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
+		if ((error = cd_get_mode(cd, &data, AUDIO_PAGE)) != 0)
 			return error;
 		if (onoff) {
 			/* turn it on */
