@@ -1,4 +1,4 @@
-# $OpenBSD: PackageName.pm,v 1.3 2003/11/06 17:47:25 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.4 2004/02/20 19:11:28 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -223,11 +223,6 @@ sub subpattern_match
 
 	my ($stemspec, $vspec, $flavorspec);
 
-	# first, handle special characters (shell -> perl)
-	$p =~ s/\./\\\./g;
-	$p =~ s/\+/\\\+/g;
-	$p =~ s/\*/\.\*/g;
-	$p =~ s/\?/\./g;
 
 	# then, guess at where the version number is if any,
 	
@@ -238,14 +233,24 @@ sub subpattern_match
 	if ($p =~ m/\-((?:\>|\>\=|\<|\<\=)?\d[^-]*)/) {
 		($stemspec, $vspec, $flavorspec) = ($`, $1, $');
 	# `any version' matcher
-	} elsif ($p =~ m/\-(\.\*)/) {
-		($stemspec, $vspec, $flavorspec) = ($`, $1, $');
+	} elsif ($p =~ m/\-\*/) {
+		($stemspec, $vspec, $flavorspec) = ($`, '*', $');
 	# okay, so no version marker. Assume no flavor spec.
 	} else {
 		($stemspec, $vspec, $flavorspec) = ($p, '', '');
 	}
 
-	$p = "$stemspec-\.\*" if $vspec ne '';
+	$stemspec =~ s/\./\\\./g;
+	$stemspec =~ s/\+/\\\+/g;
+	$stemspec =~ s/\*/\.\*/g;
+	$stemspec =~ s/\?/\./g;
+	$vspec =~ s/\./\\\./g;
+	$vspec =~ s/\+/\\\+/g;
+	$vspec =~ s/\*/\.\*/g;
+	$vspec =~ s/\?/\./g;
+
+	$p = $stemspec;
+	$p.="-.*" if $vspec ne '';
 
 	# First trim down the list
 	my @l = grep {/^$p$/} @$list;
