@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.36 2001/03/30 10:30:26 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.37 2001/04/06 19:10:49 gluk Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -588,6 +588,10 @@ brelse(bp)
 		/*
 		 * It has valid data.  Put it on the end of the appropriate
 		 * queue, so that it'll stick around for as long as possible.
+		 * If buf is AGE, but has dependencies, must put it on last
+		 * bufqueue to be scanned, ie LRU. This protects against the
+		 * livelock where BQ_AGE only has buffers with dependencies,
+		 * and we thus never get to the dependent buffers in BQ_LRU.
 		 */
 		if (ISSET(bp->b_flags, B_LOCKED))
 			/* locked in core */
@@ -598,7 +602,8 @@ brelse(bp)
 				numcleanbufs++;
 			if (ISSET(bp->b_flags, B_AGE))
 				/* stale but valid data */
-				bufq = &bufqueues[BQ_AGE];
+				bufq = buf_countdeps(bp, 0, 1) ?
+				    &bufqueues[BQ_LRU] : &bufqueues[BQ_AGE];
 			else
 				/* valid data */
 				bufq = &bufqueues[BQ_LRU];
