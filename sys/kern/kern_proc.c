@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.14 2003/05/12 19:56:03 mickey Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.15 2003/05/12 22:44:12 tedu Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ proc_printit(struct proc *p, const char *modif, int (*pr)(const char *, ...))
 	const char *pst = pstbuf;
 
 	if (p->p_stat > sizeof(pstat)/sizeof(*pstat))
-		sprintf(pstbuf, "%d", p->p_stat);
+		snprintf(pstbuf, sizeof(pstbuf), "%d", p->p_stat);
 	else
 		pst = pstat[(int)p->p_stat];
 
