@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.33 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: sigaction.2,v 1.34 2003/02/03 21:20:40 deraadt Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -695,7 +695,8 @@ Extension Interfaces:
 .Fn strlcpy ,
 .Fn strlcat .
 .Pp
-All functions not in the above lists are considered to be unsafe
+.Pp
+Most functions not in the above lists are considered to be unsafe
 with respect to signals.
 That is to say, the behaviour of such functions when called from
 a signal handler is undefined.
@@ -704,6 +705,20 @@ As well, inside the signal handler it is also considered more safe to
 make a copy the global variable
 .Va errno
 and restore it before returning from the signal handler.
+.Pp
+A few other functions are signal race safe in
+.Ox
+but probably not on other systems:
+.Pp
+.Bl -tag -offset indent -compact -width foofoofoofoo
+.It Fn snprintf
+Safe as long as $n positional arguments are not used.
+.It Fn syslog_r
+Safe if the
+.Va syslog_data
+struct is initialized as a local variable.
+.El
+.Pp
 .Sh SEE ALSO
 .Xr kill 1 ,
 .Xr kill 2 ,
