@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.6 1997/11/05 10:00:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.7 1997/11/05 10:17:40 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -172,11 +172,10 @@ call_again:
 	msg.acpted_rply.ar_results.proc = xresults;
 	if (! xdr_replymsg(xdrs, &msg)) {
 		/* xdr_replymsg() may have left some things allocated */
-		int op = reply_xdrs.x_op;
-		reply_xdrs.x_op = XDR_FREE;
-		xdr_replymsg(&reply_xdrs, &reply_msg);
-		reply_xdrs.x_op = op;
-		cu->cu_error.re_status = RPC_CANTDECODERES;
+		int op = xdrs->x_op;
+		xdrs->x_op = XDR_FREE;
+		xdr_replymsg(xdrs, &msg);
+		xdrs->x_op = op;
 		return (RPC_CANTDECODERES);
 	}
 	_seterr_reply(&msg, &error);
