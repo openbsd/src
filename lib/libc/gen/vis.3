@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.15 2001/11/09 19:34:46 aaron Exp $
+.\"	$OpenBSD: vis.3,v 1.16 2002/07/01 07:48:50 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,11 +45,11 @@
 .Ft char *
 .Fn vis "char *dst" "char c" "int flag" "char nextc"
 .Ft int
-.Fn strvis "char *dst" "char *src" "int flag"
+.Fn strvis "char *dst" "const char *src" "int flag"
 .Ft int
-.Fn strnvis "char *dst" "char *src" "size_t size" "int flag"
+.Fn strnvis "char *dst" "const char *src" "size_t size" "int flag"
 .Ft int
-.Fn strvisx "char *dst" "char *src" "size_t len" "int flag"
+.Fn strvisx "char *dst" "const char *src" "size_t len" "int flag"
 .Sh DESCRIPTION
 The
 .Fn vis
@@ -111,7 +111,14 @@ characters from
 (this
 is useful for encoding a block of data that may contain NULs).
 All three forms NUL terminate
-.Fa dst .
+.Fa dst ,
+except for
+.Fn strnvis
+when
+.Fa size
+is zero, in which case
+.Fa dst
+is not touched.
 For
 .Fn strvis
 and

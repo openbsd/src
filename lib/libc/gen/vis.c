@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vis.c,v 1.8 2002/02/19 19:39:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.9 2002/07/01 07:48:50 pjanzen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -168,16 +168,20 @@ strvis(dst, src, flag)
 
 int
 strnvis(dst, src, siz, flag)
-	register char *dst;
-	register const char *src;
+	char *dst;
+	const char *src;
 	size_t siz;
 	int flag;
 {
-	register char c;
+	char c;
 	char *start, *end;
+	char tbuf[5];
+	int  i;
 
+	i = 0;
 	for (start = dst, end = start + siz - 1; (c = *src) && dst < end; ) {
 		if (isvisible(c)) {
+			i = 1;
 			*dst++ = c;
 			if (c == '\\' && (flag & VIS_NOSLASH) == 0) {
 				/* need space for the extra '\\' */
@@ -185,22 +189,25 @@ strnvis(dst, src, siz, flag)
 					*dst++ = '\\';
 				else {
 					dst--;
+					i = 2;
 					break;
 				}
 			}
 			src++;
 		} else {
-			/* vis(3) requires up to 4 chars */
-			if (dst + 3 < end)
-				dst = vis(dst, c, flag, *++src);
-			else
+			i = vis(tbuf, c, flag, *++src) - tbuf;
+			if (dst + i <= end) {
+				memcpy(dst, tbuf, i);
+				dst += i;
+			} else {
+				src--;
 				break;
+			}
 		}
 	}
-	*dst = '\0';
-	if (dst >= end) {
-		char tbuf[5];
-
+	if (siz > 0)
+		*dst = '\0';
+	if (dst + i > end) {
 		/* adjust return value for truncation */
 		while ((c = *src))
 			dst += vis(tbuf, c, flag, *++src) - tbuf;
