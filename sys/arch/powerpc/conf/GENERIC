@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2001/03/29 20:41:34 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.30 2001/03/30 00:16:50 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -134,6 +134,7 @@ scsibus* at usscanner?
 ugen*	at uhub? port ? configuration ? # USB Generic driver
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
+kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
 
 #### Workstation Console attachments
 
