@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.70 2004/03/10 23:02:54 tom Exp $ */
+/* $OpenBSD: machdep.c,v 1.71 2004/12/02 19:40:46 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -797,9 +797,6 @@ allocsys(v)
 	 * at least 16 buffers.  	 
 	 */
 	if (bufpages == 0) {
-	    if (physmem < btoc(2 * 1024 * 1024))
-	        bufpages = physmem / 10;
-	    else
 		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
 		    bufcachepercent / 100;
 	}
