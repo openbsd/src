@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.5 2002/06/04 19:43:35 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.6 2002/06/04 19:50:12 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -382,15 +382,19 @@ main(int argc, char **argv)
 	int i, c;
 	char **args;
 	char *filename = NULL;
+	char *guipath = _PATH_XSYSTRACE;
 	int usex11 = 1;
 
-	while ((c = getopt(argc, argv, "aitf:")) != -1) {
+	while ((c = getopt(argc, argv, "aitg:f:")) != -1) {
 		switch (c) {
 		case 'a':
 			automatic = 1;
 			break;
 		case 'i':
 			inherit = 1;
+			break;
+		case 'g':
+			guipath = optarg;
 			break;
 		case 'f':
 			filename = optarg;
@@ -434,7 +438,7 @@ main(int argc, char **argv)
 		err(1, "attach");
 
 	if (usex11 && !automatic)
-		requestor_start(_PATH_XSYSTRACE);
+		requestor_start(guipath);
 
 	if (kill(pid, SIGCONT) == -1)
 		err(1, "kill");
