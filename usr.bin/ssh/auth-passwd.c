@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.22 2001/03/20 18:57:04 markus Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.23 2001/06/26 16:15:23 dugsong Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -64,6 +64,22 @@ auth_password(Authctxt *authctxt, const char *password)
 		return 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
+#ifdef KRB5
+	if (options.kerberos_authentication == 1) {
+		int ret = auth_krb5_password(authctxt, password);
+		if (ret == 1 || ret == 0)
+			return ret;
+		/* Fall back to ordinary passwd authentication. */
+	}
+#endif
+#ifdef KRB4
+	if (options.kerberos_authentication == 1) {
+		int ret = auth_krb4_password(authctxt, password);
+		if (ret == 1 || ret == 0)
+			return ret;
+		/* Fall back to ordinary passwd authentication. */
+	}
+#endif
 #ifdef BSD_AUTH
 	if (auth_userokay(pw->pw_name, authctxt->style, "auth-ssh",
 	    (char *)password) == 0)
@@ -71,16 +87,6 @@ auth_password(Authctxt *authctxt, const char *password)
 	else
 		return 1;
 #endif
-
-#ifdef KRB4
-	if (options.kerberos_authentication == 1) {
-		int ret = auth_krb4_password(pw, password);
-		if (ret == 1 || ret == 0)
-			return ret;
-		/* Fall back to ordinary passwd authentication. */
-	}
-#endif
-
 	/* Check for users with no password. */
 	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
 		return 1;

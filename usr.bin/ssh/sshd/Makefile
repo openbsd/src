@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2001/05/29 22:23:58 millert Exp $
+#	$OpenBSD: Makefile,v 1.41 2001/06/26 16:15:26 dugsong Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -23,6 +23,12 @@ CFLAGS+= -DAFS
 LDADD+=  -lkafs
 DPADD+=  ${LIBKRBAFS}
 .endif # AFS
+
+CFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/kerberosV
+SRCS+=  auth-krb5.c
+LDADD+= -lkrb5 -lkafs -lasn1
+DPADD+= ${LIBKRB5} ${LIBKAFS} ${LIBASN1}
+
 CFLAGS+= -DKRB4 -I${DESTDIR}/usr/include/kerberosIV
 SRCS+=	auth-krb4.c
 LDADD+=	 -lkrb
