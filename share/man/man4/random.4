@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.6 1999/06/05 13:18:32 aaron Exp $
+.\"	$OpenBSD: random.4,v 1.7 1999/06/29 22:06:11 deraadt Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -44,23 +44,37 @@
 .Fd #include <dev/rndvar.h>
 .Fd #include <dev/rndioctl.h>
 .Sh DESCRIPTION
-The
+The various
 .Nm
-device produces random data, with different random quality.
-{u,s,a}random devices generates random data based on the system activity
-(like disk and network devices).
+devices produce random output data with different random qualities.
+Entropy data is collected from system activity (like disk and
+network device interrupts and such), and then run through various
+hash or message digest functions to generate the output.
 .Pp
-.Bl -hang -width /dev/srandomXXX
+.Bl -hang -width /dev/srandomX
 .It /dev/random
-reserved for nuclear noise generators.
+This device is reserved for future support of hardware
+random generators.
 .It /dev/srandom
-strong random data.
+Strong random data.  This device returns reliable random data.
+If sufficient entropy is not currently available (ie. the entropy
+pool quality starts to run low), the driver pauses while more of
+such data is collected.
+The entropy pool data is converted into output data using MD5.
 .It /dev/urandom
-same as above, but does not guarantee the data to be strong.
+Same as above, but does not guarantee the data to be strong.
+The entropy pool data is converted into output data using MD5.
+When the entropy pool quality runs low, the driver will continue
+to output data.
 .It /dev/prandom
-simple pseudo-random generator (as it is in the kernel).
+Simple pseudo-random generator.
 .It /dev/arandom
-aRC4 hashed data (as apposed to the {u,s}random, as they are MD5).
+As required, entropy pool data re-seeds an ARC4 generator,
+which then generates high-quality pseudo-random output data.
+The
+.Xr arc4random 3
+function in userland libraries seeds itself from this device,
+providing a second level of ARC4 hashed data.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr md5 3 ,
@@ -74,8 +88,8 @@ aRC4 hashed data (as apposed to the {u,s}random, as they are MD5).
 .Sh BUGS
 No randomness testing suite provided.
 .Sh HISTORY
-An
+A
 .Nm
-device first appeared in Linux operating system.
+device first appeared in Linux operating system.  This is a cloned interface.
 .Pp
-aRC4 routines added by David Mazieres.
+ARC4 routines added by David Mazieres.
