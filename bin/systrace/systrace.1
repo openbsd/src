@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.30 2002/12/09 07:24:56 itojun Exp $
+.\"	$OpenBSD: systrace.1,v 1.31 2002/12/09 19:43:53 ian Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm systrace
-.Nd generates and enforces system call policies
+.Nd generate and enforce system call policies
 .Sh SYNOPSIS
 .Nm systrace
 .Op Fl aAituU
@@ -57,10 +57,20 @@ the system.
 Alternatively, it might be used to protect the system
 from software bugs (such as buffer overflows) by constraining a
 daemon's access to the system.
+Its privilege elevation feature can be used to obviate the
+need to run large, untrusted programs as root when only one or two 
+system calls require root privilege.
 .Pp
 The access policy can be generated interactively or obtained from a
 policy file.
-Operations not covered by the policy raise an alarm and
+Interactive policy generation will be performed by the ``notification
+user agent'', normally
+.Xr xsystrace 1 ,
+unless text mode is specified via
+.Fl t .
+.Pp
+When running in ``automatic enforcement'' mode,
+operations not covered by the policy raise an alarm and
 allow an user to refine the currently configured policy.
 .Pp
 The options are as follows:
@@ -100,9 +110,10 @@ Specifies the
 .Va uid
 and
 .Va gid
-that the monitored application should be executed with.
+that the monitored application should be executed with,
+which must be specified as nonnegative integers (not as names).
 This is useful in conjunction with privilege elevation and requires
-root privileges.
+root privilege.
 .It Fl f Ar file
 The policies specified in
 .Ar file
@@ -216,6 +227,10 @@ Predicates have the following format:
 .Pp
 A rule is added to the configured policy only if its predicate
 evaluates to true.
+.Pp
+The environment variables $HOME, $USER and $CWD are substituted in rules.
+Comments, begun by an unquoted '#' character and 
+continuing to the end of the line, are ignored.
 .Sh PRIVILEGE ELEVATION
 With
 .Nm
@@ -247,12 +262,11 @@ The effective
 and
 .Va gid
 are elevated only for the duration of the system call, and are restored
-to the old values afterwards.
-The only exceptions are the
+to the old values afterwards (except for the
 .Va seteuid
 or
 .Va setegid
-system calls.
+system calls).
 .Sh FILES
 .Bl -tag -width xHOME/xsystrace -compact
 .It Pa /dev/systrace
@@ -260,7 +274,8 @@ systrace device
 .It Pa /etc/systrace
 global systrace policies
 .It Pa $HOME/.systrace
-user specified policies
+user specified policies, one per binary, with slashes in the full pathname
+replaced by the underscore character.
 .El
 .Sh EXAMPLES
 An excerpt from a sample
