@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.15 1999/06/29 06:02:36 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.16 1999/07/23 14:51:53 ho Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1321,8 +1321,13 @@ rl_attach(parent, self, aux)
 		return;
 	}
 
+#ifndef UVM
 	sc->rl_cdata.rl_rx_buf = (caddr_t) vm_page_alloc_contig(
 	    RL_RXBUFLEN + 32, 0x100000, 0xffffffff, PAGE_SIZE);
+#else
+	sc->rl_cdata.rl_rx_buf = (caddr_t) uvm_pagealloc_contig(
+	    RL_RXBUFLEN + 32, 0x100000, 0xffffffff, PAGE_SIZE);
+#endif
 	bzero(sc->rl_cdata.rl_rx_buf, RL_RXBUFLEN + 16);
 
 	/* Leave a few bytes before the start of the RX ring buffer. */
