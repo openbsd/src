@@ -266,7 +266,6 @@ kadm_listen(void)
     int admin_fd;
     int peer_fd;
     struct pollfd pfd[1];
-    int nfds;
     struct sockaddr_in peer;
     int addrlen;
     int pid;
@@ -305,14 +304,14 @@ kadm_listen(void)
 	    kill_children();
 	    return(0);
 	}
-	if ((found = poll(pfd, 1, 0) == 0)
+	if ((found = poll(pfd, 1, -1)) == 0)
 	    continue;			/* no things read */
 	if (found < 0) {
 	    if (errno != EINTR)
 		krb_log("select: %s",error_message(errno));
 	    continue;
-	}      
-	if (FD_ISSET(admin_fd, &readfds)) {
+	}
+	if (pfd[0].revents & POLLIN) {
 	    /* accept the conn */
 	    addrlen = sizeof(peer);
 	    if ((peer_fd = accept(admin_fd, (struct sockaddr *)&peer,

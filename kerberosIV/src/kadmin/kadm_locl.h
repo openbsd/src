@@ -97,6 +97,7 @@
 #include <syslog.h>
 #endif
 
+#include <poll.h>
 #include <err.h>
 
 #ifdef SOCKS
