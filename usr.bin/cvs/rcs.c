@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.9 2004/08/12 21:02:20 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.10 2004/09/16 15:02:21 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -372,6 +372,12 @@ rcs_addsym(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 	}
 
 	symp->rs_name = strdup(sym);
+	if (symp->rs_name == NULL) {
+		cvs_log(LP_ERRNO, "failed to duplicate symbol");
+		free(symp);
+		return (-1);
+	}
+
 	symp->rs_num = rcsnum_alloc();
 	rcsnum_cpy(snum, symp->rs_num, 0);
 
@@ -724,6 +730,11 @@ rcs_parse(RCSFILE *rfp)
 	}
 
 	rfp->rf_desc = strdup(RCS_TOKSTR(rfp));
+	if (rfp->rf_desc == NULL) {
+		cvs_log(LP_ERRNO, "failed to duplicate rcs token");
+		rcs_freepdata(pdp);
+		return (-1);
+	}
 
 	for (;;) {
 		ret = rcs_parse_deltatext(rfp);
@@ -810,9 +821,19 @@ rcs_parse_admin(RCSFILE *rfp)
 			}
 			else if (tok == RCS_TOK_COMMENT) {
 				rfp->rf_comment = strdup(RCS_TOKSTR(rfp));
+				if (rfp->rf_comment == NULL) {
+					cvs_log(LP_ERRNO,
+					    "failed to duplicate rcs token");
+					return (-1);
+				}
 			}
 			else if (tok == RCS_TOK_EXPAND) {
 				rfp->rf_expand = strdup(RCS_TOKSTR(rfp));
+				if (rfp->rf_expand == NULL) {
+					cvs_log(LP_ERRNO,
+					    "failed to duplicate rcs token");
+					return (-1);
+				}
 			}
 
 			/* now get the expected semi-colon */
@@ -943,7 +964,12 @@ rcs_parse_delta(RCSFILE *rfp)
 			if (tokstr != NULL)
 				free(tokstr);
 			tokstr = strdup(RCS_TOKSTR(rfp));
-
+			if (tokstr == NULL) {
+				cvs_log(LP_ERRNO, 
+				    "failed to duplicate rcs token");
+				rcs_freedelta(rdp);
+				return (-1);
+			}
 
 			/* now get the expected semi-colon */
 			ntok = rcs_gettok(rfp);
@@ -1143,6 +1169,12 @@ rcs_parse_symbols(RCSFILE *rfp)
 			return (-1);
 		}
 		symp->rs_name = strdup(RCS_TOKSTR(rfp));
+		if (symp->rs_name == NULL) {
+			cvs_log(LP_ERRNO, "failed to duplicate rcs token");
+			free(symp);
+			return (-1);
+		}
+
 		symp->rs_num = rcsnum_alloc();
 
 		type = rcs_gettok(rfp);
