@@ -1,4 +1,4 @@
-/*	$OpenBSD: safevar.h,v 1.3 2003/08/12 23:08:46 jason Exp $	*/
+/*	$OpenBSD: safevar.h,v 1.4 2003/08/14 15:26:03 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -50,10 +50,6 @@
 #define	SAFE_CARD(sid)		(((sid) & 0xf0000000) >> 28)
 #define	SAFE_SESSION(sid)	( (sid) & 0x0fffffff)
 #define	SAFE_SID(crd, sesn)	(((crd) << 28) | ((sesn) & 0x0fffffff))
-
-#define SAFE_DEF_RTY		0xff	/* PCI Retry Timeout */
-#define SAFE_DEF_TOUT		0xff	/* PCI TRDY Timeout */
-#define SAFE_DEF_CACHELINE	0x01	/* Cache Line setting */
 
 #ifdef _KERNEL
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.3 2003/08/12 23:08:46 jason Exp $	*/
+/*	$OpenBSD: safe.c,v 1.4 2003/08/14 15:26:03 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -103,7 +103,6 @@ void safe_reset_board(struct safe_softc *);
 void safe_init_board(struct safe_softc *);
 void safe_init_pciregs(struct safe_softc *);
 void safe_cleanchip(struct safe_softc *);
-void safe_totalreset(struct safe_softc *);
 __inline u_int32_t safe_rng_read(struct safe_softc *);
 
 int safe_free_entry(struct safe_softc *, struct safe_ringentry *);
@@ -179,7 +178,7 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	/* 
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
+	if (pci_mapreg_map(pa, SAFE_BAR, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
 		printf(": can't map register space\n");
 		goto bad;
@@ -265,14 +264,14 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dpfree = sc->sc_dpring;
 	bzero(sc->sc_dpring, SAFE_TOTAL_DPART * sizeof(struct safe_pdesc));
 
-	printf(":");
+	printf(": %s", intrstr);
 
 	devinfo = READ_REG(sc, SAFE_DEVINFO);
 	if (devinfo & SAFE_DEVINFO_RNG)
 		printf(" rng");
 
 	bzero(algs, sizeof(algs));
-#if 0
+#ifdef notyet
 	/* Key ops not supported yet */
 	if (devinfo & SAFE_DEVINFO_PKEY) {
 		printf(" key");
@@ -335,13 +334,12 @@ safe_process(struct cryptop *crp)
 	struct safe_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 	int bypass, oplen, ivsize, card;
-	caddr_t iv;
 	int16_t coffset;
 	struct safe_session *ses;
 	struct safe_ringentry *re;
 	struct safe_sarec *sa;
 	struct safe_pdesc *pd;
-	u_int32_t cmd0, cmd1, staterec;
+	u_int32_t cmd0, cmd1, staterec, iv[4];
 
 	s = splnet();
 	if (crp == NULL || crp->crp_callback == NULL) {
@@ -482,34 +480,34 @@ safe_process(struct cryptop *crp)
 			cmd0 |= SAFE_SA_CMD0_OUTBOUND;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				iv = enccrd->crd_iv;
+				bcopy(enccrd->crd_iv, iv, ivsize);
 			else
-				iv = (caddr_t) ses->ses_iv;
+				bcopy(ses->ses_iv, iv, ivsize);
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback(re->re_src_m,
-						enccrd->crd_inject, ivsize, iv);
+					    enccrd->crd_inject, ivsize, iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					cuio_copyback(re->re_src_io,
-						enccrd->crd_inject, ivsize, iv);
+					    enccrd->crd_inject, ivsize, iv);
 			}
-			bcopy(iv, re->re_sastate.sa_saved_iv, ivsize);
+			for (i = 0; i < ivsize / sizeof(iv[0]); i++)
+				re->re_sastate.sa_saved_iv[i] = htole32(iv[i]);
 			cmd0 |= SAFE_SA_CMD0_IVLD_STATE | SAFE_SA_CMD0_SAVEIV;
 			re->re_flags |= SAFE_QFLAGS_COPYOUTIV;
 		} else {
 			cmd0 |= SAFE_SA_CMD0_INBOUND;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv,
-					re->re_sastate.sa_saved_iv, ivsize);
+				bcopy(enccrd->crd_iv, iv, ivsize);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(re->re_src_m, enccrd->crd_inject,
-					ivsize,
-					(caddr_t)re->re_sastate.sa_saved_iv);
+				    ivsize, (caddr_t)iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copydata(re->re_src_io, enccrd->crd_inject,
-					ivsize,
-					(caddr_t)re->re_sastate.sa_saved_iv);
+				    ivsize, (caddr_t)iv);
+			for (i = 0; i < ivsize / sizeof(iv[0]); i++)
+				re->re_sastate.sa_saved_iv[i] = htole32(iv[i]);
 			cmd0 |= SAFE_SA_CMD0_IVLD_STATE;
 		}
 		/*
@@ -523,7 +521,8 @@ safe_process(struct cryptop *crp)
 		cmd0 |= SAFE_SA_CMD0_PAD_ZERO;
 
 		/* XXX assert key bufs have the same size */
-		bcopy(ses->ses_key, sa->sa_key, sizeof(sa->sa_key));
+		for (i = 0; i < sizeof(sa->sa_key)/sizeof(sa->sa_key[0]); i++)
+			sa->sa_key[i] = ses->ses_key[i];
 	}
 
 	if (maccrd) {
@@ -542,10 +541,12 @@ safe_process(struct cryptop *crp)
 		 * retrieve it for return to the caller.
 		 */
 		/* XXX assert digest bufs have the same size */
-		bcopy(ses->ses_hminner, sa->sa_indigest,
-			sizeof(sa->sa_indigest));
-		bcopy(ses->ses_hmouter, sa->sa_outdigest,
-			sizeof(sa->sa_outdigest));
+		for (i = 0;
+		     i < sizeof(sa->sa_outdigest)/sizeof(sa->sa_outdigest[i]);
+		     i++) {
+			sa->sa_indigest[i] = ses->ses_hminner[i];
+			sa->sa_outdigest[i] = ses->ses_hmouter[i];
+		}
 
 		cmd0 |= SAFE_SA_CMD0_HSLD_SA | SAFE_SA_CMD0_SAVEHASH;
 		re->re_flags |= SAFE_QFLAGS_COPYOUTICV;
@@ -680,8 +681,9 @@ safe_process(struct cryptop *crp)
 				("bogus source particle descriptor; flags %x",
 				pd->pd_flags));
 			pd->pd_addr = re->re_src_segs[i].ds_addr;
-			pd->pd_size = re->re_src_segs[i].ds_len;
-			pd->pd_flags = SAFE_PD_READY;
+			pd->pd_ctrl = SAFE_PD_READY |
+			    ((re->re_src_segs[i].ds_len << SAFE_PD_LEN_S)
+			    & SAFE_PD_LEN_M);
 		}
 		cmd0 |= SAFE_SA_CMD0_IGATHER;
 	} else {
@@ -915,7 +917,7 @@ safe_process(struct cryptop *crp)
 				if (++(sc->sc_dpfree) == sc->sc_dpringtop)
 					sc->sc_dpfree = sc->sc_dpring;
 				pd->pd_addr = re->re_dst_segs[i].ds_addr;
-				pd->pd_flags = SAFE_PD_READY;
+				pd->pd_ctrl = SAFE_PD_READY;
 			}
 			cmd0 |= SAFE_SA_CMD0_OSCATTER;
 		} else {
@@ -1013,20 +1015,23 @@ safe_init_board(struct safe_softc *sc)
 {
 	u_int32_t v, dwords;
 
-	v = READ_REG(sc, SAFE_PE_DMACFG);;
-	v &=~ SAFE_PE_DMACFG_PEMODE;
+	v = READ_REG(sc, SAFE_PE_DMACFG);
+	v &= ~(SAFE_PE_DMACFG_PEMODE | SAFE_PE_DMACFG_ESPACKET);
 	v |= SAFE_PE_DMACFG_FSENA		/* failsafe enable */
 	  |  SAFE_PE_DMACFG_GPRPCI		/* gather ring on PCI */
 	  |  SAFE_PE_DMACFG_SPRPCI		/* scatter ring on PCI */
 	  |  SAFE_PE_DMACFG_ESDESC		/* endian-swap descriptors */
-	  |  SAFE_PE_DMACFG_ESSA		/* endian-swap SA's */
 	  |  SAFE_PE_DMACFG_ESPDESC		/* endian-swap part. desc's */
+	  |  SAFE_PE_DMACFG_ESSA		/* endian-swap SA data */
 	  ;
 	WRITE_REG(sc, SAFE_PE_DMACFG, v);
-#if 0
-	/* XXX select byte swap based on host byte order */
-	WRITE_REG(sc, SAFE_ENDIAN, 0x1b);
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+	WRITE_REG(sc, SAFE_ENDIAN, 0x00e400e4);
+#elif BYTE_ORDER == BIG_ENDIAN
+	WRITE_REG(sc, SAFE_ENDIAN, 0x00e4001b);
 #endif
+
 	if (sc->sc_chiprev == SAFE_REV(1,0)) {
 		/*
 		 * Avoid large PCI DMA transfers.  Rev 1.0 has a bug where
@@ -1043,6 +1048,12 @@ safe_init_board(struct safe_softc *sc)
 		    SAFE_REV_MIN(sc->sc_chiprev));
 	}
 
+	/*
+	 * XXX: not sure why this delay is necessary.  Without it, my MacPPC
+	 * hangs on every boot.
+	 */
+	DELAY(1000);
+
 	/* NB: operands+results are overlaid */
 	WRITE_REG(sc, SAFE_PE_PDRBASE, sc->sc_ringalloc.dma_paddr);
 	WRITE_REG(sc, SAFE_PE_RDRBASE, sc->sc_ringalloc.dma_paddr);
@@ -1050,16 +1061,16 @@ safe_init_board(struct safe_softc *sc)
 	 * Configure ring entry size and number of items in the ring.
 	 */
 	KASSERT_X((sizeof(struct safe_ringentry) % sizeof(u_int32_t)) == 0,
-		("PE ring entry not 32-bit aligned!"));
+	    ("PE ring entry not 32-bit aligned!"));
 	dwords = sizeof(struct safe_ringentry) / sizeof(u_int32_t);
 	WRITE_REG(sc, SAFE_PE_RINGCFG,
-		(dwords << SAFE_PE_RINGCFG_OFFSET_S) | SAFE_MAX_NQUEUE);
+	    (dwords << SAFE_PE_RINGCFG_OFFSET_S) | SAFE_MAX_NQUEUE);
 	WRITE_REG(sc, SAFE_PE_RINGPOLL, 0);	/* disable polling */
 
 	WRITE_REG(sc, SAFE_PE_GRNGBASE, sc->sc_spalloc.dma_paddr);
 	WRITE_REG(sc, SAFE_PE_SRNGBASE, sc->sc_dpalloc.dma_paddr);
 	WRITE_REG(sc, SAFE_PE_PARTSIZE,
-		(SAFE_TOTAL_DPART<<16) | SAFE_TOTAL_SPART);
+	    (SAFE_TOTAL_DPART<<16) | SAFE_TOTAL_SPART);
 	/*
 	 * NB: destination particles are fixed size.  We use
 	 *     an mbuf cluster and require all results go to
@@ -1189,7 +1200,7 @@ safe_rng_read(struct safe_softc *sc)
 	i = 0;
 	while (READ_REG(sc, SAFE_RNG_STAT) != 0 && ++i < SAFE_RNG_MAXWAIT)
 		;
-	return READ_REG(sc, SAFE_RNG_OUT);
+	return (READ_REG(sc, SAFE_RNG_OUT));
 }
 
 void
@@ -1357,7 +1368,6 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		ses->ses_klen = encini->cri_klen;
 		bcopy(encini->cri_key, ses->ses_key, ses->ses_klen / 8);
 
-		/* PE is little-endian, insure proper byte order */
 		for (i = 0;
 		     i < sizeof(ses->ses_key)/sizeof(ses->ses_key[0]); i++)
 			ses->ses_key[i] = htole32(ses->ses_key[i]);
@@ -1450,18 +1460,6 @@ safe_freesession(u_int64_t tid)
 }
 
 /*
- * Routine to reset the chip and clean up.
- * It is assumed that the caller is in splimp()
- */
-void
-safe_totalreset(struct safe_softc *sc)
-{
-	safe_reset_board(sc);
-	safe_init_board(sc);
-	safe_cleanchip(sc);
-}
-
-/*
  * Is the operand suitable aligned for direct DMA.  Each
  * segment must be aligned on a 32-bit boundary and all
  * but the last segment must be a multiple of 4 bytes.
@@ -1524,7 +1522,7 @@ safe_free_entry(struct safe_softc *sc, struct safe_ringentry *re)
 	
 	crp->crp_etype = EFAULT;
 	crypto_done(crp);
-	return(0);
+	return (0);
 }
 
 /*
@@ -1569,17 +1567,16 @@ safe_feed(struct safe_softc *sc, struct safe_ringentry *re)
 int
 safe_dmamap_uniform(const struct safe_operand *op)
 {
-	int result = 1;
+	int result = 1, i;
 
-	if (op->map->dm_nsegs > 0) {
-		int i;
+	if (op->map->dm_nsegs <= 0)
+		return (result);
 
-		for (i = 0; i < op->map->dm_nsegs-1; i++) {
-			if (op->map->dm_segs[i].ds_len % SAFE_MAX_DSIZE)
-				return (0);
-			if (op->map->dm_segs[i].ds_len != SAFE_MAX_DSIZE)
-				result = 2;
-		}
+	for (i = 0; i < op->map->dm_nsegs-1; i++) {
+		if (op->map->dm_segs[i].ds_len % SAFE_MAX_DSIZE)
+			return (0);
+		if (op->map->dm_segs[i].ds_len != SAFE_MAX_DSIZE)
+			result = 2;
 	}
 	return (result);
 }
@@ -1899,4 +1896,5 @@ safe_dump_ring(struct safe_softc *sc, const char *tag)
 		} while (re != sc->sc_front);
 	}
 }
+
 #endif /* SAFE_DEBUG */

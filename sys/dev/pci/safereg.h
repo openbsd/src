@@ -1,4 +1,4 @@
-/*	$OpenBSD: safereg.h,v 1.1 2003/08/12 18:48:13 jason Exp $	*/
+/*	$OpenBSD: safereg.h,v 1.2 2003/08/14 15:26:03 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -36,9 +36,7 @@
  * Definitions from revision 1.3 (Nov 6 2002) of the User's Manual.
  */
 
-#define BS_BAR			0x10	/* DMA base address register */
-#define	BS_TRDY_TIMEOUT		0x40	/* TRDY timeout */
-#define	BS_RETRY_TIMEOUT	0x41	/* DMA retry timeout */
+#define SAFE_BAR		0x10	/* DMA base address register */
 
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet, Inc. */
 
@@ -163,8 +161,10 @@
 #define	SAFE_HI_CFG_LEVEL	0x00000000	/* use level interrupt */
 #define	SAFE_HI_CFG_AUTOCLR	0x00000002	/* auto-clear pulse interrupt */
 
-#define	SAFE_ENDIAN_PASS	0x000000e4	/* straight pass-thru */
-#define	SAFE_ENDIAN_SWAB	0x0000001b	/* swap bytes in 32-bit word */
+#define	SAFE_ENDIAN_TGT_PASS	0x00e40000	/* target pass-thru */
+#define	SAFE_ENDIAN_TGT_SWAB	0x001b0000	/* target swap32 */
+#define	SAFE_ENDIAN_DMA_PASS	0x000000e4	/* DMA pass-thru */
+#define	SAFE_ENDIAN_DMA_SWAB	0x0000001b	/* DMA swap32 */
 
 #define	SAFE_PE_DMACFG_PERESET	0x00000001	/* reset packet engine */
 #define	SAFE_PE_DMACFG_PDRRESET	0x00000002	/* reset PDR counters/ptrs */
@@ -287,11 +287,11 @@
  * list of ``particle descriptors'' when using scatter/gather i/o.
  */
 struct safe_desc {
-	u_int32_t	d_csr;			/* per-packet control/status */
-	u_int32_t	d_src;			/* source address */
-	u_int32_t	d_dst;			/* destination address */
-	u_int32_t	d_sa;			/* SA address */
-	u_int32_t	d_len;			/* length, bypass, status */
+	volatile u_int32_t	d_csr;		/* per-packet control/status */
+	volatile u_int32_t	d_src;		/* source address */
+	volatile u_int32_t	d_dst;		/* destination address */
+	volatile u_int32_t	d_sa;		/* SA address */
+	volatile u_int32_t	d_len;		/* length, bypass, status */
 };
 
 /*
@@ -301,34 +301,35 @@ struct safe_desc {
  *     by the setting of the SAFE_PE_PARTCFG register.
  */
 struct safe_pdesc {
-	u_int32_t	pd_addr;		/* particle address */
-	u_int16_t	pd_flags;		/* control word */
-	u_int16_t	pd_size;		/* particle size (bytes) */
+	volatile u_int32_t	pd_addr;	/* particle address */
+	volatile u_int32_t	pd_ctrl;	/* length/flags */
 };
 
-#define	SAFE_PD_READY	0x0001			/* ready for processing */
-#define	SAFE_PD_DONE	0x0002			/* h/w completed processing */
+#define	SAFE_PD_LEN_M	0x0000ffff		/* length mask */
+#define	SAFE_PD_LEN_S	16
+#define	SAFE_PD_READY	0x00000001		/* ready for processing */
+#define	SAFE_PD_DONE	0x00000002		/* h/w completed processing */
 
 /*
  * Security Association (SA) Record (Rev 1).  One of these is
  * required for each operation processed by the packet engine.
  */
 struct safe_sarec {
-	u_int32_t	sa_cmd0;
-	u_int32_t	sa_cmd1;
-	u_int32_t	sa_resv0;
-	u_int32_t	sa_resv1;
-	u_int32_t	sa_key[8];		/* DES/3DES/AES key */
-	u_int32_t	sa_indigest[5];		/* inner digest */
-	u_int32_t	sa_outdigest[5];	/* outer digest */
-	u_int32_t	sa_spi;			/* SPI */
-	u_int32_t	sa_seqnum;		/* sequence number */
-	u_int32_t	sa_seqmask[2];		/* sequence number mask */
-	u_int32_t	sa_resv2;
-	u_int32_t	sa_staterec;		/* address of state record */
-	u_int32_t	sa_resv3[2];
-	u_int32_t	sa_samgmt0;		/* SA management field 0 */
-	u_int32_t	sa_samgmt1;		/* SA management field 0 */
+	volatile u_int32_t	sa_cmd0;
+	volatile u_int32_t	sa_cmd1;
+	volatile u_int32_t	sa_resv0;
+	volatile u_int32_t	sa_resv1;
+	volatile u_int32_t	sa_key[8];	/* DES/3DES/AES key */
+	volatile u_int32_t	sa_indigest[5];	/* inner digest */
+	volatile u_int32_t	sa_outdigest[5];/* outer digest */
+	volatile u_int32_t	sa_spi;		/* SPI */
+	volatile u_int32_t	sa_seqnum;	/* sequence number */
+	volatile u_int32_t	sa_seqmask[2];	/* sequence number mask */
+	volatile u_int32_t	sa_resv2;
+	volatile u_int32_t	sa_staterec;	/* address of state record */
+	volatile u_int32_t	sa_resv3[2];
+	volatile u_int32_t	sa_samgmt0;	/* SA management field 0 */
+	volatile u_int32_t	sa_samgmt1;	/* SA management field 0 */
 };
 
 #define	SAFE_SA_CMD0_OP		0x00000007	/* operation code */
@@ -407,8 +408,8 @@ struct safe_sarec {
  * Security Associate State Record (Rev 1).
  */
 struct safe_sastate {
-	u_int32_t	sa_saved_iv[4];		/* saved IV (DES/3DES/AES) */
-	u_int32_t	sa_saved_hashbc;	/* saved hash byte count */
-	u_int32_t	sa_saved_indigest[5];	/* saved inner digest */
+	volatile u_int32_t	sa_saved_iv[4];	/* saved IV (DES/3DES/AES) */
+	volatile u_int32_t	sa_saved_hashbc;/* saved hash byte count */
+	volatile u_int32_t	sa_saved_indigest[5]; /* saved inner digest */
 };
 #endif /* _SAFE_SAFEREG_H_ */
