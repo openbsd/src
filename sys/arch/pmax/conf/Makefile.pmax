@@ -21,26 +21,38 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
+AS?=	as
 CC?=	cc
-LD=	ld
 MKDEP?=	mkdep
+CPP?=	cpp
+LD?=	ld
 STRIP?=	strip
+TOUCH?=	touch	
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
-#S!=	cd ../../../..; pwd
-S=	../../../..
+S!=	cd ../../../..; pwd
 .endif
 PMAX=	$S/arch/pmax
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dpmax
-CFLAGS=		${DEBUG} -O2 -Werror -mno-abicalls -mcpu=r3000
+INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpmax
+
+# that is our goal to be up to date with i386 for instance ...
+#CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
+#		-Wno-format
+# ... and this we will use for now to get the kernel compiled
+CDIAGFLAGS=	-Werror
+
+CMACHFLAGS=	-mno-abicalls -mcpu=r3000
+
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80030000 -e start
 STRIPFLAGS=	-d
+TOUCHFLAGS=	-f -c
 
-HOSTED_CC=	${CC}
+HOSTCC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
@@ -60,13 +72,21 @@ LIBCOMPAT=	${COMPATLIB}
 LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
-# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
-# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
+# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
+# where TYPE is NORMAL, DRIVER, or PROFILE; SUFFIX is the file suffix,
+# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
+# is marked as config-dependent.
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -83,15 +103,13 @@ SYSTEM_OBJ=	locore.o fp.o locore_machdep.o \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
-#SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
-#		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
 SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		then strip=-X; \
 		else strip=-x; \
 		fi; \
-		echo ${LD} $$strip -o $@ -e start -T ../../conf/ld.script \
-			'$${SYSTEM_OBJ}' vers.o; \
-		${LD} $$strip -o $@ -e start -T ../../conf/ld.script \
+		@echo ${LD} ${LINKFLAGS} -o $@ -e start \
+			-T ../../conf/ld.script '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ -e start -T ../../conf/ld.script \
 			${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
 
@@ -112,21 +130,17 @@ SYSTEM_LD_TAIL+=;\
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: $S/arch/pmax/pmax/genassym.c
-	${CC} ${INCLUDES} ${IDENT} -D_KERNEL -Dpmax -c $<
+assym.h: $S/kern/genassym.sh ${PMAX}/pmax/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${PMAX}/pmax/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C}
+	${NORMAL_C_C}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -137,11 +151,11 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 
 clean::
-	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	rm -f eddep *bsd bsd.elf bsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
 	    ${CFILES} ${PMAX}/pmax/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
@@ -155,7 +169,7 @@ links:
 	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
 	  sort -u | comm -23 - dontlink | \
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink
+	sh makelinks && rm -f dontlink makelinks
 
 SRCS=	${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S \
 	${PMAX}/pmax/locore_machdep.S \
@@ -166,26 +180,25 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    $S/arch/pmax/pmax/genassym.c
-
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
  
 # depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
+if.o if_tun.o if_loop.o if_ethersubr.o: Makefile
+if_arp.o if_ether.o: Makefile
+ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
+tcp_subr.o tcp_timer.o tcp_output.o: Makefile
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 machdep.o mainbus.o trap.o: Makefile
 
-
 locore.o: ${PMAX}/pmax/locore.S assym.h
 	${NORMAL_S}
-
 
 fp.o: ${PMAX}/pmax/fp.S assym.h
 	${NORMAL_S}
