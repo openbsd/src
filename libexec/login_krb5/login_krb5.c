@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.4 2001/06/25 02:54:02 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.5 2001/06/25 05:23:13 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -65,7 +65,8 @@ main(int argc, char **argv)
 {
 	int opt, mode;
 	FILE *back = NULL;
-	char *class, *username = NULL, *instance;
+	char *class, *username = NULL, *instance, *password, pw_prompt[256];
+	char *tmp_name;
 
 	krb5_error_code ret;
 	krb5_context context;
@@ -144,8 +145,13 @@ main(int argc, char **argv)
 	} else
 		instance = "";
 
+	krb5_unparse_name(context, princ, &tmp_name);
+	snprintf(pw_prompt, sizeof(pw_prompt), "%s's Password: ", tmp_name);
+
+	password = getpass(pw_prompt);
+
 	ret = krb5_verify_user_lrealm(context, princ, ccache, 
-				      NULL,	/* Let krb5 lib ask for pw */
+				      password,
 				      1,	/* verify with keytab */
 				      NULL);
 
@@ -267,7 +273,7 @@ main(int argc, char **argv)
 	case KRB5KRB_AP_ERR_MODIFIED:
 		/* XXX syslog here? */
 	case KRB5KRB_AP_ERR_BAD_INTEGRITY:
-		fprintf(back, BI_REJECT " 2\n");
+		fprintf(back, BI_REJECT "\n");
 		break;
 	default:
 		krb5_syslog(context, LOG_ERR, ret, "verify");
