@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.110 2003/03/18 23:55:21 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.111 2003/03/19 20:21:38 mickey Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -653,6 +653,7 @@ Supported hardware {:-include-:}:
 		"PS/2"-style mice
 		Serial mice (uses serial port driver)
 	Sound Devices [G]
+		AMD 768 and 8111 AC'97
 		C-Media CMI8[37]38
 		Cirrus Logic CrystalClear CS4280, CS4281
 		Ensoniq AudioPCI
@@ -664,6 +665,8 @@ Supported hardware {:-include-:}:
 		Gravis Ultrasound and Ultrasound Max
 		Intel i810/i820 and 440MX AC'97
 		NeoMagic 256AV/ZX
+		nVidia nForce and nForce AC'97
+		SiS 7012 AC'97
 		SoundBlaster ISA cards and 100% compatibles
 		SoundBlaster PCI128
 		SoundBlaster Live! and PCI512 (EMU10k1)
