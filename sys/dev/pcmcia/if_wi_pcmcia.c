@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.41 2003/07/06 21:17:50 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.42 2003/07/14 22:06:48 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -278,6 +278,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_AIRVAST_WN_100,
 	  PCMCIA_CIS_AIRVAST_WN_100,
 	  "AirVast WN-100 Wireless LAN PC CARD",
+	},
+	{ PCMCIA_VENDOR_SIEMENS,
+	  PCMCIA_PRODUCT_SIEMENS_SS1021,
+	  PCMCIA_CIS_SIEMENS_SS1021,
+	  "SpeedStream 1021 Wireless PCMCIA CARD",
 	},
 	{ 0,
 	  0,

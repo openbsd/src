@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.104 2003/07/06 21:16:59 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.105 2003/07/14 22:05:15 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -61,6 +61,7 @@ vendor COMPAQ			0x0138	Compaq
 vendor GREYCELL			0x0143	Grey Cell
 vendor LINKSYS			0x0149	Linksys
 vendor NETGEAR			0x0149	Netgear
+vendor SIEMENS			0x02ac	Siemens
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL2			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent
@@ -314,6 +315,9 @@ product SANDISK SDCFB		0x0401 Sandisk CompactFlash
 
 /* Simple Technology */
 product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
+
+/* Siemens */
+product SIEMENS SS1021		0x0002 Siemens SpeedStream 1021
 
 /* Socket Communications */
 product SOCKET EA_ETHER		0x0000 Socket Communications EA

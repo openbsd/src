@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.29 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.30 2003/07/14 22:08:20 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -183,6 +183,7 @@ NTT-ME 11Mbps Wireless LAN:Prism-2:PCMCIA
 Proxim Harmony:Prism-2:PCMCIA
 Proxim RangeLAN-DS:Prism-2:PCMCIA
 Samsung MagicLAN SWL-2000N:Prism-2:PCMCIA
+Siemens SpeedStream SS1021:Prism-2:PCMCIA
 Symbol Spectrum24:Spectrum24:PCMCIA
 Symbol LA4123:Spectrum24:PCI
 SMC 2632 EZ Connect:Prism-2:PCMCIA
