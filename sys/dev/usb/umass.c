@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.32 2004/07/21 07:49:07 dlg Exp $ */
+/*	$OpenBSD: umass.c,v 1.33 2004/07/21 07:51:04 dlg Exp $ */
 /*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -1749,7 +1749,7 @@ Static void
 umass_bbb_dump_csw(struct umass_softc *sc, umass_bbb_csw_t *csw)
 {
 	int sig = UGETDW(csw->dCSWSignature);
-	int tag = UGETW(csw->dCSWTag);
+	int tag = UGETDW(csw->dCSWTag);
 	int res = UGETDW(csw->dCSWDataResidue);
 	int status = csw->bCSWStatus;
 
