@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.73 2004/12/05 04:42:42 jsg Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.74 2004/12/11 14:26:31 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -569,11 +569,8 @@ brelse(struct buf *bp)
 }
 
 /*
- * Determine if a block is in the cache.
- * Just look on what would be its hash chain.  If it's there, return
- * a pointer to it, unless it's marked invalid.  If it's marked invalid,
- * we normally don't return the buffer, unless the caller explicitly
- * wants us to.
+ * Determine if a block is in the cache. Just look on what would be its hash
+ * chain. If it's there, return a pointer to it, unless it's marked invalid.
  */
 struct buf *
 incore(struct vnode *vp, daddr_t blkno)
@@ -587,7 +584,7 @@ incore(struct vnode *vp, daddr_t blkno)
 			return (bp);
 	}
 
-	return (0);
+	return (NULL);
 }
 
 /*
