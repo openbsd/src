@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+input file ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -906,9 +906,9 @@ run the `cvs --help' command, or see *Note Index::.
 
    Keyword expansion modes (*note Substitution modes::.):
 
-     -kkv  $Id: cvs.info-6,v 1.1.1.10 1998/07/13 04:04:56 tholo Exp $
-     -kkvl $Id: cvs.info-6,v 1.1.1.10 1998/07/13 04:04:56 tholo Exp $
-     -kk   $Id: cvs.info-6,v 1.1.1.10 1998/07/13 04:04:56 tholo Exp $
+     -kkv  $Id: cvs.info-6,v 1.1.1.11 1998/08/22 20:57:44 tholo Exp $
+     -kkvl $Id: cvs.info-6,v 1.1.1.11 1998/08/22 20:57:44 tholo Exp $
+     -kk   $Id: cvs.info-6,v 1.1.1.11 1998/08/22 20:57:44 tholo Exp $
      -kv   file1,v 1.1 1993/12/09 03:21:13 joe Exp
      -ko   no expansion
      -kb   no expansion, file is binary
@@ -916,17 +916,17 @@ run the `cvs --help' command, or see *Note Index::.
    Keywords (*note Keyword list::.):
 
      $Author: tholo $
-     $Date: 1998/07/13 04:04:56 $
-     $Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-6,v 1.1.1.10 1998/07/13 04:04:56 tholo Exp $
-     $Id: cvs.info-6,v 1.1.1.10 1998/07/13 04:04:56 tholo Exp $
+     $Date: 1998/08/22 20:57:44 $
+     $Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-6,v 1.1.1.11 1998/08/22 20:57:44 tholo Exp $
+     $Id: cvs.info-6,v 1.1.1.11 1998/08/22 20:57:44 tholo Exp $
      $Locker:  $
      $Name:  $
      $RCSfile: cvs.info-6,v $
-     $Revision: 1.1.1.10 $
+     $Revision: 1.1.1.11 $
      $Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-6,v $
      $State: Exp $
      $Log: cvs.info-6,v $
-     Revision 1.1.1.10  1998/07/13 04:04:56  tholo
+     Revision 1.1.1.11  1998/08/22 20:57:44  tholo
      Latest version from Cyclic; skipped files
 
      Revision 1.1  1993/12/09 03:30:17  joe

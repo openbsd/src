@@ -11,10 +11,10 @@ project: cvs.exe
 install_dir = s:/gnu/util
 
 # srcdir is usually "."
-srcdir     = ../../work/ccvs/emx
+srcdir     = .
 
 # top_srcdir is usually ".."
-top_srcdir = ../../work/ccvs
+top_srcdir = ..
 
 lib_dir     = ${top_srcdir}/lib
 cvs_srcdir = ${top_srcdir}/src

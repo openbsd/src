@@ -1,5 +1,5 @@
 This is Info file cvsclient.info, produced by Makeinfo version 1.67
-from the input file ../../work/ccvs/doc/cvsclient.texi.
+from the input file ./cvsclient.texi.
 
 
 File: cvsclient.info,  Node: Requests,  Next: Response intro,  Prev: Request intro,  Up: Protocol
@@ -41,7 +41,7 @@ Requests
      command.  The LOCAL-DIRECTORY is relative to the top level at
      which the command is occurring (i.e. the last `Directory' which is
      sent before the command); to indicate that top level, `.' should
-     be send for LOCAL-DIRECTORY.
+     be sent for LOCAL-DIRECTORY.
 
      Here is an example of where a client gets REPOSITORY and
      LOCAL-DIRECTORY.  Suppose that there is a module defined by
@@ -380,7 +380,6 @@ Requests
 `tag \n'
 `status \n'
 `log \n'
-`remove \n'
 `admin \n'
 `history \n'
 `watchers \n'
@@ -513,6 +512,22 @@ Requests
      above), use `.' for LOCAL-DIRECTORY.  Specifying another string for
      LOCAL-DIRECTORY may not get an error, but it will get you strange
      `Checked-in' responses from the buggy servers.
+
+`remove \n'
+     Response expected: yes.  Remove a file.  This uses any previous
+     `Argument', `Directory', `Entry', or `Modified' requests, if they
+     have been sent.  The last `Directory' sent specifies the working
+     directory at the time of the operation.
+
+     Note that this request does not actually do anything to the
+     repository; the only effect of a successful `remove' request is to
+     supply the client with a new entries line containing `-' to
+     indicate a removed file.  In fact, the client probably could
+     perform this operation without contacting the server, although
+     using `remove' may cause the server to perform a few more checks.
+
+     The client sends a subsequent `ci' request to actually record the
+     removal in the repository.
 
 `watch-on \n'
 `watch-off \n'

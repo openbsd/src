@@ -1,35 +1,35 @@
 This is Info file cvsclient.info, produced by Makeinfo version 1.67
-from the input file ../../work/ccvs/doc/cvsclient.texi.
+from the input file ./cvsclient.texi.
 
 
 Indirect:
-cvsclient.info-1: 125
-cvsclient.info-2: 23866
-cvsclient.info-3: 70456
+cvsclient.info-1: 107
+cvsclient.info-2: 23844
+cvsclient.info-3: 71202
 
 Tag Table:
 (Indirect)
-Node: Top125
-Node: Introduction946
-Node: Goals3481
-Node: Connection and Authentication6405
-Node: Password scrambling12363
-Node: Protocol14230
-Node: Entries Lines16315
-Node: File Modes17418
-Node: Filenames18956
-Node: File transmissions20263
-Node: Strings21821
-Node: Dates22504
-Node: Request intro23448
-Node: Requests23866
-Node: Response intro51046
-Node: Response pathnames52413
-Node: Responses54324
-Node: Text tags69207
-Node: Example70456
-Node: Requirements74235
-Node: Obsolete75143
-Node: Protocol Notes75881
+Node: Top107
+Node: Introduction926
+Node: Goals3459
+Node: Connection and Authentication6383
+Node: Password scrambling12341
+Node: Protocol14208
+Node: Entries Lines16293
+Node: File Modes17396
+Node: Filenames18934
+Node: File transmissions20241
+Node: Strings21799
+Node: Dates22482
+Node: Request intro23426
+Node: Requests23844
+Node: Response intro51792
+Node: Response pathnames53159
+Node: Responses55070
+Node: Text tags69953
+Node: Example71202
+Node: Requirements74981
+Node: Obsolete75889
+Node: Protocol Notes76627
 
 End Tag Table

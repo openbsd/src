@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+input file ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -534,7 +534,7 @@ you undo the effect!
      and `Rel' (for released).  By default, the state of a new revision
      is set to `Exp' when it is created.  The state is visible in the
      output from CVS LOG (*note log::.), and in the `$Log: cvs.info-5,v $
-     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.13  1998/07/13 04:04:54  tholo
+     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.14  1998/08/22 20:57:41  tholo
      output from CVS LOG (*note log::.), and in the `Latest version from Cyclic; skipped files
      output from CVS LOG (*note log::.), and in the `' and
      `$State: Exp $' keywords (*note Keyword substitution::.).  Note that CVS

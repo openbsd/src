@@ -1,5 +1,5 @@
 This is Info file cvsclient.info, produced by Makeinfo version 1.67
-from the input file ../../work/ccvs/doc/cvsclient.texi.
+from the input file ./cvsclient.texi.
 
 
 File: cvsclient.info,  Node: Top,  Next: Introduction,  Up: (dir)
@@ -9,7 +9,7 @@ CVS Client/Server
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.9.28 of the protocol
+regular CVS manual for that.  This is version 1.10 of the protocol
 specification--*Note Introduction::, for more on what this version
 number means.
 
@@ -58,7 +58,7 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.9.28 of the protocol specification.  This version
+   This is version 1.10 of the protocol specification.  This version
 number is intended only to aid in distinguishing different versions of
 this specification.  Although the specification is currently maintained
 in conjunction with the CVS implementation, and carries the same

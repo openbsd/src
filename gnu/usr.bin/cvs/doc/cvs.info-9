@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+input file ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -31,6 +31,14 @@ Index
 * Menu:
 
 * !, in modules file:                    Excluding directories.
+* #cvs.lock, removing:                   Concurrency.
+* #cvs.lock, technical details:          Locks.
+* #cvs.rfl, and backups:                 Backing up.
+* #cvs.rfl, removing:                    Concurrency.
+* #cvs.rfl, technical details:           Locks.
+* #cvs.tfl:                              Locks.
+* #cvs.wfl, removing:                    Concurrency.
+* #cvs.wfl, technical details:           Locks.
 * &, in modules file:                    Ampersand modules.
 * -a, in modules file:                   Alias modules.
 * -d, in modules file:                   Module options.
@@ -319,7 +327,9 @@ Index
 * Locally Removed:                       File status.
 * Locker keyword:                        Keyword list.
 * Locking files:                         Multiple developers.
-* locks, cvs:                            Concurrency.
+* locks, cvs, and backups:               Backing up.
+* locks, cvs, introduction:              Concurrency.
+* locks, cvs, technical details:         Locks.
 * Log (subcommand):                      log.
 * Log information, saving:               history file.
 * Log keyword:                           Keyword list.
@@ -530,6 +540,7 @@ Index
 * TMP, environment variable:             Environment variables.
 * TMPDIR, environment variable:          Environment variables.
 * TMPDIR, overriding:                    Global options.
+* TopLevelAdmin, in CVSROOT/config:      config.
 * Trace:                                 Global options.
 * Traceability:                          History browsing.
 * Tracking sources:                      Tracking sources.

@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+input file ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -28,7 +28,7 @@ File: cvs.info,  Node: Top,  Next: Overview,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.9.28.
+1.10.
 
 * Menu:
 
@@ -128,15 +128,12 @@ topics, see:
      http://www.loria.fr/~molli/cvs-index.html
 
    There is a mailing list, known as `info-cvs', devoted to CVS.  To
-subscribe or unsubscribe send a message to
-`info-cvs-request@prep.ai.mit.edu'.  Please be specific about your
-email address.  As of May 1996, subscription requests are handled by a
-busy human being, so you cannot expect to be added or removed
-immediately.  If you prefer a usenet group, the right group is
-`comp.software.config-mgmt' which is for CVS discussions (along with
-other configuration management systems).  In the future, it might be
-possible to create a `comp.software.config-mgmt.cvs', but probably only
-if there is sufficient CVS traffic on `comp.software.config-mgmt'.
+subscribe or unsubscribe write to `info-cvs-request@gnu.org'.  If you
+prefer a usenet group, the right group is `comp.software.config-mgmt'
+which is for CVS discussions (along with other configuration management
+systems).  In the future, it might be possible to create a
+`comp.software.config-mgmt.cvs', but probably only if there is
+sufficient CVS traffic on `comp.software.config-mgmt'.
 
    You can also subscribe to the bug-cvs mailing list, described in
 more detail in *Note BUGS::.  To subscribe send mail to
