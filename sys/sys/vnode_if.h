@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.10 2001/03/01 20:54:34 provos Exp 
+ *	OpenBSD: vnode_if.src,v 1.11 2001/06/23 02:21:05 csapuntz Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
  */
@@ -205,16 +205,6 @@ struct vop_revoke_args {
 extern struct vnodeop_desc vop_revoke_desc;
 int VOP_REVOKE __P((struct vnode *, int));
 
-struct vop_mmap_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	int a_fflags;
-	struct ucred *a_cred;
-	struct proc *a_p;
-};
-extern struct vnodeop_desc vop_mmap_desc;
-int VOP_MMAP __P((struct vnode *, int, struct ucred *, struct proc *));
-
 struct vop_fsync_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -224,16 +214,6 @@ struct vop_fsync_args {
 };
 extern struct vnodeop_desc vop_fsync_desc;
 int VOP_FSYNC __P((struct vnode *, struct ucred *, int, struct proc *));
-
-struct vop_seek_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	off_t a_oldoff;
-	off_t a_newoff;
-	struct ucred *a_cred;
-};
-extern struct vnodeop_desc vop_seek_desc;
-int VOP_SEEK __P((struct vnode *, off_t, off_t, struct ucred *));
 
 struct vop_remove_args {
 	struct vnodeop_desc *a_desc;
@@ -400,39 +380,6 @@ struct vop_advlock_args {
 extern struct vnodeop_desc vop_advlock_desc;
 int VOP_ADVLOCK __P((struct vnode *, caddr_t, int, struct flock *, int));
 
-struct vop_blkatoff_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	off_t a_offset;
-	char **a_res;
-	struct buf **a_bpp;
-};
-extern struct vnodeop_desc vop_blkatoff_desc;
-int VOP_BLKATOFF __P((struct vnode *, off_t, char **, struct buf **));
-
-struct vop_valloc_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_pvp;
-	int a_mode;
-	struct ucred *a_cred;
-	struct vnode **a_vpp;
-};
-extern struct vnodeop_desc vop_valloc_desc;
-int VOP_VALLOC __P((struct vnode *, int, struct ucred *, struct vnode **));
-
-struct vop_balloc_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	off_t a_startoffset;
-	int a_size;
-	struct ucred *a_cred;
-	int a_flags;
-	struct buf **a_bpp;
-};
-extern struct vnodeop_desc vop_balloc_desc;
-int VOP_BALLOC __P((struct vnode *, off_t, int, struct ucred *, int, 
-    struct buf **));
-
 struct vop_reallocblks_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -440,37 +387,6 @@ struct vop_reallocblks_args {
 };
 extern struct vnodeop_desc vop_reallocblks_desc;
 int VOP_REALLOCBLKS __P((struct vnode *, struct cluster_save *));
-
-struct vop_vfree_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_pvp;
-	ino_t a_ino;
-	int a_mode;
-};
-extern struct vnodeop_desc vop_vfree_desc;
-int VOP_VFREE __P((struct vnode *, ino_t, int));
-
-struct vop_truncate_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	off_t a_length;
-	int a_flags;
-	struct ucred *a_cred;
-	struct proc *a_p;
-};
-extern struct vnodeop_desc vop_truncate_desc;
-int VOP_TRUNCATE __P((struct vnode *, off_t, int, struct ucred *, 
-    struct proc *));
-
-struct vop_update_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	struct timespec *a_access;
-	struct timespec *a_modify;
-	int a_waitfor;
-};
-extern struct vnodeop_desc vop_update_desc;
-int VOP_UPDATE __P((struct vnode *, struct timespec *, struct timespec *, int));
 
 struct vop_whiteout_args {
 	struct vnodeop_desc *a_desc;

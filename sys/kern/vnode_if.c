@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.10 2001/03/01 20:54:34 provos Exp 
+ *	OpenBSD: vnode_if.src,v 1.11 2001/06/23 02:21:05 csapuntz Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
  */
@@ -568,37 +568,6 @@ int VOP_REVOKE(vp, flags)
 	return (VCALL(vp, VOFFSET(vop_revoke), &a));
 }
 
-int vop_mmap_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_mmap_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_mmap_desc = {
-	0,
-	"vop_mmap",
-	0,
-	vop_mmap_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_mmap_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_mmap_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_MMAP(vp, fflags, cred, p)
-	struct vnode *vp;
-	int fflags;
-	struct ucred *cred;
-	struct proc *p;
-{
-	struct vop_mmap_args a;
-	a.a_desc = VDESC(vop_mmap);
-	a.a_vp = vp;
-	a.a_fflags = fflags;
-	a.a_cred = cred;
-	a.a_p = p;
-	return (VCALL(vp, VOFFSET(vop_mmap), &a));
-}
-
 int vop_fsync_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_fsync_args,a_vp),
 	VDESC_NO_OFFSET
@@ -632,37 +601,6 @@ int VOP_FSYNC(vp, cred, waitfor, p)
 	a.a_waitfor = waitfor;
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_fsync), &a));
-}
-
-int vop_seek_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_seek_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_seek_desc = {
-	0,
-	"vop_seek",
-	0,
-	vop_seek_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_seek_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_SEEK(vp, oldoff, newoff, cred)
-	struct vnode *vp;
-	off_t oldoff;
-	off_t newoff;
-	struct ucred *cred;
-{
-	struct vop_seek_args a;
-	a.a_desc = VDESC(vop_seek);
-	a.a_vp = vp;
-	a.a_oldoff = oldoff;
-	a.a_newoff = newoff;
-	a.a_cred = cred;
-	return (VCALL(vp, VOFFSET(vop_seek), &a));
 }
 
 int vop_remove_vp_offsets[] = {
@@ -1228,115 +1166,6 @@ int VOP_ADVLOCK(vp, id, op, fl, flags)
 	return (VCALL(vp, VOFFSET(vop_advlock), &a));
 }
 
-int vop_blkatoff_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_blkatoff_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_blkatoff_desc = {
-	0,
-	"vop_blkatoff",
-	0,
-	vop_blkatoff_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_BLKATOFF(vp, offset, res, bpp)
-	struct vnode *vp;
-	off_t offset;
-	char **res;
-	struct buf **bpp;
-{
-	struct vop_blkatoff_args a;
-	a.a_desc = VDESC(vop_blkatoff);
-	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_blkatoff: vp");
-#endif
-	a.a_offset = offset;
-	a.a_res = res;
-	a.a_bpp = bpp;
-	return (VCALL(vp, VOFFSET(vop_blkatoff), &a));
-}
-
-int vop_valloc_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_valloc_args,a_pvp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_valloc_desc = {
-	0,
-	"vop_valloc",
-	0,
-	vop_valloc_vp_offsets,
-	VOPARG_OFFSETOF(struct vop_valloc_args, a_vpp),
-	VOPARG_OFFSETOF(struct vop_valloc_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_VALLOC(pvp, mode, cred, vpp)
-	struct vnode *pvp;
-	int mode;
-	struct ucred *cred;
-	struct vnode **vpp;
-{
-	struct vop_valloc_args a;
-	a.a_desc = VDESC(vop_valloc);
-	a.a_pvp = pvp;
-#ifdef LOCKDEBUG
-	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp))
-		panic("vop_valloc: pvp");
-#endif
-	a.a_mode = mode;
-	a.a_cred = cred;
-	a.a_vpp = vpp;
-	return (VCALL(pvp, VOFFSET(vop_valloc), &a));
-}
-
-int vop_balloc_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_balloc_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_balloc_desc = {
-	0,
-	"vop_balloc",
-	0,
-	vop_balloc_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_balloc_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_BALLOC(vp, startoffset, size, cred, flags, bpp)
-	struct vnode *vp;
-	off_t startoffset;
-	int size;
-	struct ucred *cred;
-	int flags;
-	struct buf **bpp;
-{
-	struct vop_balloc_args a;
-	a.a_desc = VDESC(vop_balloc);
-	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_balloc: vp");
-#endif
-	a.a_startoffset = startoffset;
-	a.a_size = size;
-	a.a_cred = cred;
-	a.a_flags = flags;
-	a.a_bpp = bpp;
-	return (VCALL(vp, VOFFSET(vop_balloc), &a));
-}
-
 int vop_reallocblks_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_reallocblks_args,a_vp),
 	VDESC_NO_OFFSET
@@ -1366,111 +1195,6 @@ int VOP_REALLOCBLKS(vp, buflist)
 #endif
 	a.a_buflist = buflist;
 	return (VCALL(vp, VOFFSET(vop_reallocblks), &a));
-}
-
-int vop_vfree_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_vfree_args,a_pvp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_vfree_desc = {
-	0,
-	"vop_vfree",
-	0,
-	vop_vfree_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_VFREE(pvp, ino, mode)
-	struct vnode *pvp;
-	ino_t ino;
-	int mode;
-{
-	struct vop_vfree_args a;
-	a.a_desc = VDESC(vop_vfree);
-	a.a_pvp = pvp;
-#ifdef LOCKDEBUG
-	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp))
-		panic("vop_vfree: pvp");
-#endif
-	a.a_ino = ino;
-	a.a_mode = mode;
-	return (VCALL(pvp, VOFFSET(vop_vfree), &a));
-}
-
-int vop_truncate_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_truncate_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_truncate_desc = {
-	0,
-	"vop_truncate",
-	0,
-	vop_truncate_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_truncate_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_truncate_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_TRUNCATE(vp, length, flags, cred, p)
-	struct vnode *vp;
-	off_t length;
-	int flags;
-	struct ucred *cred;
-	struct proc *p;
-{
-	struct vop_truncate_args a;
-	a.a_desc = VDESC(vop_truncate);
-	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_truncate: vp");
-#endif
-	a.a_length = length;
-	a.a_flags = flags;
-	a.a_cred = cred;
-	a.a_p = p;
-	return (VCALL(vp, VOFFSET(vop_truncate), &a));
-}
-
-int vop_update_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_update_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_update_desc = {
-	0,
-	"vop_update",
-	0,
-	vop_update_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_UPDATE(vp, access, modify, waitfor)
-	struct vnode *vp;
-	struct timespec *access;
-	struct timespec *modify;
-	int waitfor;
-{
-	struct vop_update_args a;
-	a.a_desc = VDESC(vop_update);
-	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_update: vp");
-#endif
-	a.a_access = access;
-	a.a_modify = modify;
-	a.a_waitfor = waitfor;
-	return (VCALL(vp, VOFFSET(vop_update), &a));
 }
 
 int vop_whiteout_vp_offsets[] = {
@@ -1579,9 +1303,7 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_select_desc,
 	&vop_kqfilter_desc,
 	&vop_revoke_desc,
-	&vop_mmap_desc,
 	&vop_fsync_desc,
-	&vop_seek_desc,
 	&vop_remove_desc,
 	&vop_link_desc,
 	&vop_rename_desc,
@@ -1599,13 +1321,7 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_print_desc,
 	&vop_pathconf_desc,
 	&vop_advlock_desc,
-	&vop_blkatoff_desc,
-	&vop_valloc_desc,
-	&vop_balloc_desc,
 	&vop_reallocblks_desc,
-	&vop_vfree_desc,
-	&vop_truncate_desc,
-	&vop_update_desc,
 	&vop_whiteout_desc,
 	NULL
 };
