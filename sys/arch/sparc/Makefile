@@ -8,15 +8,14 @@ NOPROG=	noprog
 NOMAN=	noman
 NOOBJ=	noobj
 
-DIRS=	conf dev fpu include rcons sbus sparc
+DIRS=	conf dev fpu include sparc
 
 links::
 	-for i in ${DIRS}; do \
 	    (cd $$i && { rm -f tags; ln -s ${SYSTAGS} tags; }) done
 
 SPARC=	/sys/arch/sparc/dev/*.[ch] /sys/arch/sparc/fpu/*.[ch] \
-	/sys/arch/sparc/include/*.[ch] /sys/arch/sparc/rcons/*.[ch] \
-	/sys/arch/sparc/sbus/*.[ch] /sys/arch/sparc/sparc/*.[ch]
+	/sys/arch/sparc/include/*.[ch] /sys/arch/sparc/sparc/*.[ch]
 ASPARC=	/sys/arch/sparc/sparc/*.s
 
 tags:
