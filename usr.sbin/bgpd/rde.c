@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.7 2003/12/19 11:19:02 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.8 2003/12/19 16:46:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -171,9 +171,8 @@ rde_dispatch_imsg(int fd, int idx)
 {
 	struct imsg		 imsg;
 	struct peer_config	*pconf;
-	struct rde_peer	*p;
+	struct rde_peer		*p, *np;
 	u_int32_t		 rid;
-	int			 reconf;
 
 	if (get_imsg(fd, &imsg) > 0) {
 		switch (imsg.hdr.type) {
@@ -191,35 +190,34 @@ rde_dispatch_imsg(int fd, int idx)
 				fatal("reconf request not from parent", 0);
 			pconf = (struct peer_config *)imsg.data;
 			p = peer_get(pconf->id); /* will always fail atm */
-			if (p == NULL) {
+			if (p == NULL)
 				p = peer_add(pconf->id, pconf);
-				reconf = RECONF_REINIT;
-			} else {
+			else
 				memcpy(&p->conf, pconf,
-				sizeof(struct peer_config));
-				reconf = RECONF_KEEP;
-			}
-			p->conf.reconf_action = reconf;
-			if (pconf->reconf_action > reconf)
-				p->conf.reconf_action = pconf->reconf_action;
+				    sizeof(struct peer_config));
+			p->conf.reconf_action = RECONF_KEEP;
 			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)
 				fatal("reconf request not from parent", 0);
 			if (nconf == NULL)
 				fatal("got IMSG_RECONF_DONE but no config", 0);
-			/* Just remove deleted peers, new peers need no action
-			 * and merged peers neither. If the SE needs to drop
-			 * the current session and reopen a new one we get a
-			 * DOWN/UP request.  We tag the deleted peers and
-			 * remove them in peer_down.
-			 */
-			LIST_FOREACH(p, &peerlist, peer_l)
-				if (p->conf.reconf_action == RECONF_NONE ||
-				    p->conf.reconf_action == RECONF_DELETE)
-					p->conf.reconf_action = RECONF_DELETE;
-				else
+			for (p = LIST_FIRST(&peerlist);
+			    p != LIST_END(&peerlist);
+			    p = np) {
+				np = LIST_NEXT(p, peer_l);
+				switch (p->conf.reconf_action) {
+				case RECONF_NONE:
+					peer_remove(p);
+					break;
+				case RECONF_KEEP:
+					/* reset state */
 					p->conf.reconf_action = RECONF_NONE;
+					break;
+				default:
+					break;
+				}
+			}
 			memcpy(conf, nconf, sizeof(struct bgpd_config));
 			free(nconf);
 			nconf = NULL;
@@ -590,13 +588,22 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 void
 peer_remove(struct rde_peer *peer)
 {
-	ENSURE(peer_get(peer->conf.id) != NULL);
-	ENSURE(LIST_EMPTY(&peer->path_h));
+	/*
+	 * If the session is up we wait until we get the IMSG_SESSION_DOWN
+	 * message. If the session is down or was never up we delete the
+	 * peer.
+	 */
+	if (peer->state == PEER_UP) {
+		peer->conf.reconf_action = RECONF_DELETE;
+	} else {
+		ENSURE(peer_get(peer->conf.id) != NULL);
+		ENSURE(LIST_EMPTY(&peer->path_h));
 
-	LIST_REMOVE(peer, hash_l);
-	LIST_REMOVE(peer, peer_l);
+		LIST_REMOVE(peer, hash_l);
+		LIST_REMOVE(peer, peer_l);
 
-	free(peer);
+		free(peer);
+	}
 }
 
 void
