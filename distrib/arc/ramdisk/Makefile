@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/05/24 10:25:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/05/24 14:21:00 pefo Exp $
 
 # NOTE! We don't do crunched yet!
 
@@ -8,8 +8,8 @@ TOP=		${.CURDIR}/..
 BSD_RD=		bsd.rd
 IMAGE=		mr.fs
 CBIN?=		instbin
-CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
 LISTS=		${.CURDIR}/list
+UTILS?=		${.CURDIR}/../../miniroot
 
 MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/mtree.conf
@@ -79,8 +79,11 @@ unconfig:
 install:
 	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+${CBIN}.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
@@ -91,8 +94,8 @@ do_files:
 	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c \
-	    bsd ${BSD_RD} ${BSD_RD}.elf rdsetroot
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.conf ${CBIN}.mk ${CBIN}.cache \
+	*.o *.lo *.c bsd ${BSD_RD} ${BSD_RD}.elf rdsetroot
 
 beforeinstall:
 	cp ${BSD.RD} ${DESTDIR}/snapshot
