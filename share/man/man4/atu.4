@@ -1,4 +1,4 @@
-.\" $OpenBSD: atu.4,v 1.17 2005/03/03 11:51:37 dlg Exp $
+.\" $OpenBSD: atu.4,v 1.18 2005/03/06 21:49:00 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm atu
-.Nd Atmel AT76C50x 802.11b wireless network interfaces
+.Nd Atmel AT76C50x IEEE 802.11b wireless network driver
 .Sh SYNOPSIS
 .Cd "# all architectures"
 .Cd "atu* at uhub? port ?"
@@ -46,66 +46,43 @@ driver provides support for wireless network adapters based around
 the Atmel AT76C503, AT76C503A, AT76C505, and AT76C505A USB chipsets and four
 companion radio chipsets.
 .Pp
-The hardware supports features including 802.11 and 802.3 frames,
-Wired Equivalent Privacy (WEP), power management,
-selectable transmission rates, and both BSS and IBSS modes of operation.
-.Pp
 The
 .Nm
-driver encapsulates all IP and ARP traffic as 802.11 frames, however
-it can receive either 802.11 or 802.3 frames.
+driver encapsulates all IP and ARP traffic as 802.11 frames,
+though it can receive either 802.11 or 802.3 frames.
 .Pp
-The
+These are the modes the
 .Nm
-driver supports Basic Service Set (BSS) operation
-(also known as infrastructure mode).
-This mode requires the use of an access point (also known as a base station)
-to support communication between the adapter and the network.
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set.
+However, actual connections between stations are peer-to-peer.
+.El
 .Pp
-The
 .Nm
-driver also supports Independent Basic Service Set (IBSS)
-operation (also known as ad-hoc or point-to-point mode).
-In IBSS mode stations can communicate amongst themselves without the aid of
-an access point.
-Note there are two different modes described as ad-hoc:
-ad-hoc demo mode, which predates IEEE, is not standardised and does not
-allow interoperability with cards from other vendors; and IBSS,
-which is IEEE standardised and permits interoperability.
-The
-.Nm
-driver supports IEEE standardised IBSS operation.
-.Pp
+supports hardware WEP.
 Wired Equivalent Privacy (WEP) is the de facto encryption standard
 for wireless networks.
 It can be typically configured in one of three modes:
-no encryption; 40-bit encryption; or 128-bit encryption.
+no encryption; 40-bit encryption; or 104-bit encryption.
 Unfortunately, due to serious weaknesses in WEP protocol
 it is strongly recommended that it not be used as the
 sole mechanism to secure wireless communication.
 WEP is not enabled by default.
-.Pp
-The following devices are known to be supported by the
-.Nm
-driver:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Tn Acer Peripherals AWL300
-.It Tn Acer Peripherals AWL400
-.It Tn Aincomm AWU2000B
-.It Tn Bluetake BW002
-.It Tn D-Link DWL-120
-.It Tn Geowave GW-US11S
-.It Tn Linksys WUSB11
-.It Tn Linksys WUSB11-V28
-.It Tn Netgear MA101 rev B
-.It Tn Ovislink AirLive WL-1120USB
-.It Tn OvisLink AirLive WL-1130USB
-.It Tn SMC 2662W-AR
-.It Tn SMC 2662W-V4
-.It Tn WiFi interface on OQO model 01
-.El
-.Pp
+.Sh CONFIGURATION
 The
 .Nm
 driver can be configured at runtime with
@@ -121,11 +98,11 @@ Unset the desired BSSID.
 The interface will automatically select a BSSID in this mode, which is
 the default.
 .It Cm chan Ar n
-Set the channel (radio frequency) to be used by the adapter based on
+Set the channel (radio frequency) to be used by the driver based on
 the given channel ID
 .Ar n .
 .It Fl chan
-Unset the desired channel to be used by the adapter.
+Unset the desired channel to be used by the driver.
 The driver will automatically select a channel in this mode, which is
 the default.
 .It Cm media Ar media
@@ -139,13 +116,13 @@ types:
 .It Cm autoselect
 Enable autoselection of the media type and options.
 .It Cm DS1
-Set Direct Spread 1Mbps operation.
+Set 802.11b DS 1Mbps operation.
 .It Cm DS2
-Set Direct Spread 2Mbps operation.
+Set 802.11b DS 2Mbps operation.
 .It Cm DS5
-Set Direct Spread 5.5Mbps operation.
+Set 802.11b DS 5.5Mbps operation.
 .It Cm DS11
-Set Direct Spread 11Mbps operation.
+Set 802.11b DS 11Mbps operation.
 .El
 .It Cm mediaopt Ar opts
 The
@@ -156,16 +133,8 @@ driver supports the following media options:
 Select Independent Basic Service Set (IBSS) operation.
 .El
 .It Fl mediaopt Ar opts
-Disable the specified media options on the adapter and returns it to the
+Disable the specified media options on the driver and returns it to the
 default mode of operation (BSS).
-.It Cm mode Ar mode
-The
-.Nm
-driver supports the following modes:
-.Bl -tag -width 11b
-.It Cm 11b
-Force 802.11b operation.
-.El
 .It Cm nwid Ar id
 Set the network ID.
 The
@@ -207,6 +176,27 @@ or 104-bit (13 characters or 26 hexadecimal digits) keys.
 Disable WEP encryption.
 This is the default mode of operation.
 .El
+.Sh HARDWARE
+The following devices are known to be supported by the
+.Nm
+driver:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Tn Acer Peripherals AWL300
+.It Tn Acer Peripherals AWL400
+.It Tn Aincomm AWU2000B
+.It Tn Bluetake BW002
+.It Tn D-Link DWL-120
+.It Tn Geowave GW-US11S
+.It Tn Linksys WUSB11
+.It Tn Linksys WUSB11-V28
+.It Tn Netgear MA101 rev B
+.It Tn OQO model 01 WiFi
+.It Tn Ovislink AirLive WL-1120USB
+.It Tn OvisLink AirLive WL-1130USB
+.It Tn SMC 2662W-AR
+.It Tn SMC 2662W-V4
+.El
 .Sh FILES
 The adapter needs some firmware files, which are loaded on demand by the
 driver when the device is attached:
@@ -221,6 +211,34 @@ driver when the device is attached:
 .It Pa /etc/firmware/atu-rfmd2958smc-int
 .It Pa /etc/firmware/atu-rfmd2958smc-ext
 .El
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures atu0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+Configure atu0 for WEP, using hex key
+.Dq 0x1deadbeef1 :
+.Bd -literal -offset indent
+# ifconfig atu0 nwkey 0x1deadbeef1
+.Ed
+.Pp
+Return atu0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig atu0 -bssid -chan media autoselect -mediaopt \e
+	nwid "" -nwkey
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig atu0 192.168.0.2 netmask 0xffffff00 nwid my_net
+.Ed
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,

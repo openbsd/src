@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.14 2004/11/09 22:01:59 jmc Exp $
+.\"	$OpenBSD: ray.4,v 1.15 2005/03/06 21:49:00 jmc Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -31,8 +31,7 @@
 .Os
 .Sh NAME
 .Nm ray
-.Nd Raytheon Raylink/WebGear Aviator IEEE 802.11FH 2Mbps wireless
-network adapter
+.Nd Raytheon Raylink/WebGear Aviator IEEE 802.11FH wireless network driver
 .Sh SYNOPSIS
 .Cd "ray* at pcmcia?"
 .Cd "option RAY_PID_COUNTRY_CODE_DEFAULT=RAY_PID_COUNTRY_CODE_USA"
@@ -41,29 +40,6 @@ The
 .Nm
 device driver supports the Raytheon Raylink and Aviator 2.4/PRO
 802.11 Frequency Hopping 2Mbps wireless PCMCIA cards.
-The cards can be operated in either adhoc or infrastructure modes.
-The operating mode is selectable with
-.Xr ifconfig 8
-through a media option.
-.Pp
-Cards supported by the
-.Nm
-driver include:
-.Pp
-.Bl -item -offset indent -compact
-.It
-WebGear Aviator 2.4
-.It
-WebGear Aviator PRO
-.It
-Raytheon Raylink WLAN
-.El
-.Pp
-To communicate with other 802.11 cards a common network ID or NWID must
-be specified on each station that wishes to participate in the shared
-wireless network.
-The NWID can be set with
-.Xr ifconfig 8 .
 .Pp
 The device uses IEEE 802.11 standard Frequency Hopping Spread Spectrum
 signaling and operates in the ranges of 2.400 to 2.4835 Gigahertz.
@@ -72,62 +48,148 @@ that country's regulations.
 Currently the
 .Nm
 driver defaults to using the ranges appropriate for the USA.
-To change this setting you must define the kernel option
+To change this setting, define the kernel option
 .Dv RAY_PID_COUNTRY_CODE_DEFAULT
 to one of the following values:
-.Pp
-.Bl -item -offset indent -compact
-.It
-.Cd RAY_PID_COUNTRY_CODE_USA
-.It
-.Cd RAY_PID_COUNTRY_CODE_EUROPE
-.It
-.Cd RAY_PID_COUNTRY_CODE_JAPAN
-.It
-.Cd RAY_PID_COUNTRY_CODE_KOREA
-.It
-.Cd RAY_PID_COUNTRY_CODE_SPAIN
-.It
-.Cd RAY_PID_COUNTRY_CODE_FRANCE
-.It
-.Cd RAY_PID_COUNTRY_CODE_ISRAEL
-.It
-.Cd RAY_PID_COUNTRY_CODE_AUSTRALIA
-.El
+.Bd -literal -offset indent
+RAY_PID_COUNTRY_CODE_USA
+RAY_PID_COUNTRY_CODE_EUROPE
+RAY_PID_COUNTRY_CODE_JAPAN
+RAY_PID_COUNTRY_CODE_KOREA
+RAY_PID_COUNTRY_CODE_SPAIN
+RAY_PID_COUNTRY_CODE_FRANCE
+RAY_PID_COUNTRY_CODE_ISRAEL
+RAY_PID_COUNTRY_CODE_AUSTRALIA
+.Ed
 .Pp
 The output power of the transceiver is 100mW and the card's power consumption
 is 365 mA @ 5 volts.
 The transmission range in open air (line of sight)
-is a maximum of 1000 feet (or ~304 meters), and indoors (i.e., with
+is a maximum of 1000 feet (or ~304 meters), and indoors (i.e. with
 obstructions) it is a maximum of 500 feet (152 meters).
 .Pp
-.Tn Windows
-drivers may use one of two framing modes for wireless packets,
-"translation" and "encapsulation."
-"Encapsulation" is the only framing
-mode available when using some older
-.Tn Windows
-drivers.
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set.
+However, actual connections between stations are peer-to-peer.
+.El
+.Sh CONFIGURATION
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
 .Pp
-Setting
-.Em link0
-flag on the interface allows the
-Ethernet2 in 802.11 "encapsulation" framing method used by
-older
-.Tn Windows
-drivers for the card.
-For all other purposes, link0 should not be used, and "translation"
-should be selected if you are given the option in a newer
-.Tn Windows
-driver.
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm FH1
+Set legacy 802.11 FH 1Mbps operation.
+.It Cm FH2
+Set legacy 802.11 FH 2Mbps operation.
+.El
+.It Cm mediaopt Ar opts
+The
+.Nm
+driver supports the following media options:
+.Pp
+.Bl -tag -width monitor -compact
+.It Cm ibss
+Select IBSS operation.
+.El
+.It Fl mediaopt Ar opts
+Disable the specified media options on the driver and returns it to the
+default mode of operation (BSS).
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+.El
+.Sh HARDWARE
+Cards supported by the
+.Nm
+driver include:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Raytheon Raylink WLAN
+.It WebGear Aviator 2.4
+.It WebGear Aviator PRO
+.El
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures ray0 to join whatever network is available on boot,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE chan 11
+.Ed
+.Pp
+Return ray0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig ray0 -bssid -chan media autoselect -mediaopt nwid ""
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig ray0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ray0: card failed self test: status x"
 Indicates the card has failed its initial startup tests.
 .El
 .Sh SEE ALSO
+.Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
+.Xr netintro 4 ,
 .Xr pcmcia 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
@@ -148,10 +210,6 @@ and ported to
 .Ox
 by
 .An Michael Shalayeff Aq mickey@openbsd.org .
-Support for interoperating with newer
-.Tn Windows
-driver was added by
-.An Steve Weiss Aq srw@alum.mit.edu .
 .Sh BUGS
 Currently the infrastructure mode is untested, and authentication
 using WEP is unimplemented.

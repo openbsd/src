@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.14 2005/02/25 22:31:31 reyk Exp $
+.\"	$OpenBSD: ath.4,v 1.15 2005/03/06 21:49:00 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -47,7 +47,7 @@
 .Os
 .Sh NAME
 .Nm ath
-.Nd Atheros IEEE 802.11A/B/G wireless network adapter
+.Nd Atheros IEEE 802.11a/b/g wireless network driver
 .Sh SYNOPSIS
 .Cd "ath* at pci? dev ? function ?"
 .Cd "ath* at cardbus? dev ? function ?"
@@ -55,16 +55,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for wireless network adapters based on
-the Atheros AR5210, AR5211 and AR5212 chips.
+driver provides support for wireless network devices based on
+the Atheros AR5210, AR5211, and AR5212 chips.
 .Pp
-Supported features include 802.11 and 802.3 frames, power management, BSS,
-IBSS, and host-based access point operation modes.
 All host/device interaction is via DMA.
-.Pp
 The
 .Nm
-driver encapsulates all IP and ARP traffic as 802.11 frames, however
+driver encapsulates all IP and ARP traffic as 802.11 frames, though
 it can receive either 802.11 or 802.3 frames.
 Transmit speed and operating mode is selectable and
 depends on the specific chipset.
@@ -72,12 +69,13 @@ depends on the specific chipset.
 AR5210-based devices support 802.11a operation with transmit speeds
 of 6 Mbps, 9 Mbps, 12 Mbps, 18 Mbps, 24 Mbps, 36 Mbps, 48 Mbps, and 54 Mbps.
 .Pp
-AR5211-based devices support 802.11a and 802.11b operation
-with transmit speeds appropriate to each.
+AR5211-based devices support 802.11a and 802.11b operation with
+transmit speeds as above for 802.11a and
+1Mbps, 2Mbps, 5.5 Mbps, and 11Mbps for 802.11b operation.
 .Pp
-AR5212-based devices support 802.11a, 802.11b and 802.11g operation with
-transmit speeds as above for 802.11a and 802.11g operation and
-1Mbps, 2Mbps, 5.5 Mbps and 11Mbps for 802.11b operation.
+AR5212-based devices support 802.11a, 802.11b, and 802.11g operation with
+transmit speeds as above for 802.11a, 802.11b, and 802.11g operation
+(802.11g speeds are the same as for 802.11a speeds).
 .Pp
 All chips also support an Atheros Turbo Mode (TM) that operates in the
 802.11a frequency range with 2x the transmit speeds.
@@ -86,34 +84,195 @@ All chips also support an Atheros Turbo Mode (TM) that operates in the
 The actual transmit speed used is dependent on signal quality and the
 .Dq rate control
 algorithm employed by the driver.
-All chips support WEP encryption.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set.
+However, actual connections between stations are peer-to-peer.
+.It Host AP
+In this mode the adapter acts as an access point (base station)
+for other cards.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
+.El
+.Pp
+.Nm
+supports hardware WEP.
+Wired Equivalent Privacy (WEP) is the de facto encryption standard
+for wireless networks.
+It can be typically configured in one of three modes:
+no encryption; 40-bit encryption; or 104-bit encryption.
+Unfortunately, due to serious weaknesses in WEP protocol
+it is strongly recommended that it not be used as the
+sole mechanism to secure wireless communication.
+WEP is not enabled by default.
+.Pp
 AR5211 and AR5212 support the AES, TKIP, and Michael cryptographic
 operations required for WPA but at this time the driver does not support them.
-To enable encryption, use
-.Xr ifconfig 8 .
-.Pp
-By default, the
-.Nm
-driver configures the card for BSS operation (aka infrastructure
-mode).
-This mode requires the use of an access point (base station).
-.Pp
+.Sh CONFIGURATION
 The
 .Nm
-driver also supports the standard IBSS point-to-point mode
-where stations can communicate amongst themselves without the
-aid of an access point.
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
 .Pp
-The driver may also be configured to operate in hostap mode.
-In this mode a host may function as an access point (base station).
-In hostap mode access points operate in BSS mode.
-They allow for easier roaming and bridge all Ethernet traffic such
-that machines connected via an access point appear to be on the local
-Ethernet segment.
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm DS1
+Set 802.11b DS 1Mbps operation.
+.It Cm DS2
+Set 802.11b DS 2Mbps operation.
+.It Cm DS5
+Set 802.11b DS 5.5Mbps operation.
+.It Cm DS11
+Set 802.11b DS 11Mbps operation.
+.It Cm OFDM6
+Set 802.11g OFDM 6Mbps operation.
+.It Cm OFDM9
+Set 802.11g OFDM 9Mbps operation.
+.It Cm OFDM12
+Set 802.11g OFDM 12Mbps operation.
+.It Cm OFDM18
+Set 802.11g OFDM 18Mbps operation.
+.It Cm OFDM24
+Set 802.11g OFDM 24Mbps operation.
+.It Cm OFDM36
+Set 802.11g OFDM 36Mbps operation.
+.It Cm OFDM48
+Set 802.11g OFDM 48Mbps operation.
+.It Cm OFDM54
+Set 802.11g OFDM 54Mbps operation.
+.El
+.It Cm mediaopt Ar opts
+The
+.Nm
+driver supports the following media options:
 .Pp
-For more information on configuring this device, see
-.Xr ifconfig 8 .
+.Bl -tag -width monitor -compact
+.It Cm hostap
+Select Host AP operation.
+.It Cm ibss
+Select IBSS operation.
+.It Cm monitor
+Select monitor mode.
+.It Cm turbo
+Select turbo mode.
+.El
+.It Fl mediaopt Ar opts
+Disable the specified media options on the driver and returns it to the
+default mode of operation (BSS).
+.It Cm mode Ar mode
+The
+.Nm
+driver supports the following modes:
 .Pp
+.Bl -tag -width 11b -compact
+.It Cm 11a
+Force 802.11a operation.
+.It Cm 11b
+Force 802.11b operation.
+.It Cm 11g
+Force 802.11g operation.
+.El
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+.It Cm nwkey Ar key
+Enable WEP encryption using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits (preceded by
+.Sq 0x ) ,
+or a set of keys of the form
+.Dq n:k1,k2,k3,k4 ,
+where
+.Sq n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Dq k1
+through
+.Dq k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Pq Sq \&,
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+.Nm
+is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
+or 104-bit (13 characters or 26 hexadecimal digits) keys.
+.It Fl nwkey
+Disable WEP encryption.
+This is the default mode of operation.
+.It Cm nwkey persist
+Enable WEP encryption with the persistent key stored in the network card.
+.It Cm nwkey persist : Ns Ar key
+Write
+.Ar key
+to the persistent memory of the network card,
+and enable WEP encryption using that key.
+.It Cm powersave
+Enable power saving mode.
+.It Fl powersave
+Disable power saving mode.
+This is the default mode of operation.
+.It Cm powersavesleep Ar duration
+Set the receiver sleep duration (in milliseconds) for power saving mode.
+.El
+.Sh HARDWARE
 Devices supported by the
 .Nm
 driver come in either CardBus or mini-PCI packages.
@@ -123,8 +282,9 @@ The following cards are among those supported by the
 .Nm
 driver:
 .Pp
-.Bl -column -compact "Samsung SWL-5200N" "AR5212" "CardBus" "a/b/g"
+.Bl -column -compact "Samsung SWL-5200N" "AR5212" "CardBus" "a/b/g" -offset 6n
 .Em "Card	Chip	Bus	Standard"
+3Com 3CRPAG175	AR5212	Cardbus	a/b/g
 Aztech WL830PC	AR5212	CardBus	b/g
 D-Link DWL-A650	AR5210	CardBus	a
 D-Link DWL-AB650	AR5211	CardBus	a/b
@@ -149,22 +309,58 @@ NEC PA-WL/54AG	AR5212	CardBus	a/b/g
 Netgear WAG311	AR5212	PCI	a/b/g
 Netgear WAB501	AR5211	CardBus	a/b
 Netgear WAG511	AR5212	CardBus	a/b/g
-Netgear WG311	AR5212	PCI	b/g
+Netgear WG311 rev1	AR5212	PCI	b/g
 Netgear WG511T	AR5212	CardBus	b/g
 Orinoco 8480	AR5212	CardBus	a/b/g
 Orinoco 8470WD	AR5212	CardBus	a/b/g
 Proxim Skyline 4030	AR5210	CardBus	a
 Proxim Skyline 4032	AR5210	PCI	a
 Samsung SWL-5200N	AR5212	CardBus	a/b/g
+Senao NL-5354MP	AR5212	PCI	a/b/g
 SMC SMC2735W	AR5210	CardBus	a
 Sony PCWA-C700	AR5212	CardBus	a/b
 Sony PCWA-C300S	AR5212	CardBus	b/g
 Sony PCWA-C500	AR5210	CardBus	a
-3Com 3CRPAG175	AR5212	CardBus	a/b/g
 .El
 .Pp
 An up to date list can be found at
 .Pa http://customerproducts.atheros.com/customerproducts .
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures ath0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+The following
+.Xr hostname.if 5
+example creates a host-based access point on boot:
+.Bd -literal -offset indent
+inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
+	mediaopt hostap nwid my_net chan 11
+.Ed
+.Pp
+Configure ath0 for WEP, using hex key
+.Dq 0x1deadbeef1 :
+.Bd -literal -offset indent
+# ifconfig ath0 nwkey 0x1deadbeef1
+.Ed
+.Pp
+Return ath0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig ath0 -bssid -chan media autoselect -mediaopt \e
+	nwid "" -nwkey -powersave
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig ath0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ath%d: unable to attach hardware; HAL status %u"
@@ -184,8 +380,6 @@ This should not happen.
 The request to the HAL to set up the transmit queue for 802.11 beacon frames
 failed.
 This should not happen.
-.It "ath%d: 802.11 address: %s"
-The MAC address programmed in the EEPROM is displayed.
 .It "ath%d: hardware error; resetting"
 An unrecoverable error in the hardware occurred.
 Errors of this sort include unrecoverable DMA errors.
@@ -224,13 +418,6 @@ the set of available channels.
 A problem occurred while querying the HAL to find the set of available
 channels for the device.
 This should not happen.
-.It "ath%d: %s: %dM -\*[Gt] %dM (%d ok, %d err, %d retr)"
-The driver's rate control algorithm changed the current rate for transmitting
-frames.
-This message is temporarily enabled for normal use to help in diagnosing
-and improving the rate control algorithm.
-The message indicates the new and old transmit rates and the statistics
-it used to decide on this change.
 .It "ath%d: failed to enable memory mapping"
 The driver was unable to enable memory-mapped I/O to the PCI device registers.
 This should not happen.
@@ -252,9 +439,20 @@ This should not happen.
 .Xr cardbus 4 ,
 .Xr gpio 4 ,
 .Xr ifmedia 4 ,
+.Xt intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Fx 5.2
+using a binary-only HAL module which was ported to
+.Nx 2.0 .
+The driver using a free HAL-replacement first appeared in
+.Ox 3.7 .
 .Sh AUTHORS
 The
 .Nm
@@ -263,13 +461,9 @@ driver was written by
 and was ported to
 .Ox
 by
-.An Reyk Floeter .
+.An Reyk Floeter Aq reyk@openbsd.org
+who also wrote a free replacement of the binary-only HAL.
 .Sh CAVEATS
-Different regulatory domains have different default channels for adhoc
-mode.
-See
-.Xr ifconfig 8
-for information on how to change the channel.
 Different regulatory domains may not be able to communicate with each
 other with 802.11a as different regulatory domains do not necessarily
 have overlapping channels.
@@ -282,7 +476,7 @@ The algorithm used to select the rate for transmitted packets is
 very simplistic.
 There is no software retransmit; only hardware retransmit is used.
 Contributors are encouraged to replace the existing rate control algorithm
-with a better one (hint: all the information needed is available to the driver).
+with a better one.
 .Pp
 The driver does not fully enable power-save operation of the chip;
 consequently power use is suboptimal.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.12 2005/02/21 13:33:25 damien Exp $
+.\" $OpenBSD: iwi.4,v 1.13 2005/03/06 21:49:00 jmc Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -30,9 +30,7 @@
 .Dt IWI 4
 .Sh NAME
 .Nm iwi
-.Nd
-.Tn Intel
-PRO/Wireless 2200BG/2225BG/2915ABG IEEE 802.11A/B/G wireless network adapters
+.Nd Intel PRO/Wireless 2200BG/2225BG/2915ABG IEEE 802.11a/b/g wireless network driver
 .Sh SYNOPSIS
 .Cd "iwi* at pci?"
 .Sh DESCRIPTION
@@ -42,13 +40,105 @@ driver provides support for
 .Tn Intel
 PRO/Wireless 2200BG/2915ABG MiniPCI and 2225BG PCI network adapters.
 .Pp
-By default, the
+These are the modes the
 .Nm
-driver configures the adapter for BSS operation (aka infrastructure mode).
-This mode requires the use of an access point.
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This is the only mode available for this card.
+.El
 .Pp
-For more information on configuring this device, see
-.Xr ifconfig 8 .
+.Nm
+supports hardware WEP.
+Wired Equivalent Privacy (WEP) is the de facto encryption standard
+for wireless networks.
+It can be typically configured in one of three modes:
+no encryption; 40-bit encryption; or 104-bit encryption.
+Unfortunately, due to serious weaknesses in WEP protocol
+it is strongly recommended that it not be used as the
+sole mechanism to secure wireless communication.
+WEP is not enabled by default.
+.Sh CONFIGURATION
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm mode Ar mode
+The
+.Nm
+driver supports the following modes:
+.Pp
+.Bl -tag -width 11b -compact
+.It Cm 11a
+Force 802.11a operation.
+.It Cm 11b
+Force 802.11b operation.
+.It Cm 11g
+Force 802.11g operation.
+.El
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+.It Cm nwkey Ar key
+Enable WEP encryption using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits (preceded by
+.Sq 0x ) ,
+or a set of keys of the form
+.Dq n:k1,k2,k3,k4 ,
+where
+.Sq n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Dq k1
+through
+.Dq k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Pq Sq \&,
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+.Nm
+is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
+or 104-bit (13 characters or 26 hexadecimal digits) keys.
+.It Fl nwkey
+Disable WEP encryption.
+This is the default mode of operation.
+.El
 .Sh FILES
 The driver needs some firmware files,
 which are loaded on demand when the device is attached:
@@ -70,25 +160,31 @@ users have to find these files on their own.
 The official person to state your views to about this issue is
 peter.engelbrecht@intel.com at (858) 391 1857.
 .Sh EXAMPLES
-Join an existing BSS network (ie: connect to an access point):
-.Pp
-.Dl "# ifconfig iwi0 inet 192.168.0.20 netmask 0xffffff00"
-.Pp
-Join a specific BSS network with network name
-.Dq Li my_net :
-.Pp
-.Dl "# ifconfig iwi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net"
-.Pp
-Join a specific BSS network with 64 bits WEP encryption:
+The following
+.Xr hostname.if 5
+example configures iwi0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-# ifconfig iwi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-        nwkey 0x1234567890
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
 .Ed
 .Pp
-Join a specific BSS network with 128bits WEP encryption:
+Configure iwi0 for WEP, using hex key
+.Dq 0x1deadbeef1 :
 .Bd -literal -offset indent
-# ifconfig iwi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-        nwkey 0x01020304050607080910111213
+# ifconfig iwi0 nwkey 0x1deadbeef1
+.Ed
+.Pp
+Return iwi0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig iwi0 -bssid -chan nwid "" -nwkey
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig iwi0 192.168.1.1 netmask 0xffffff00 nwid my_net
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

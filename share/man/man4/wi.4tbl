@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.68 2005/03/06 12:53:25 jsg Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.69 2005/03/06 21:49:00 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm wi
-.Nd WaveLAN/IEEE, PRISM 2-3 and Spectrum24 802.11B wireless network interfaces
+.Nd "WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b wireless network driver"
 .Sh SYNOPSIS
 .Cd "# all architectures"
 .Cd "wi* at pci?"
@@ -50,63 +50,204 @@
 The
 .Nm
 driver provides support for wireless network adapters based around
-the Lucent Hermes, Intersil PRISM-2, Intersil PRISM-2.5, Intersil PRISM-3
+the Lucent Hermes, Intersil PRISM-2, Intersil PRISM-2.5, Intersil PRISM-3,
 and Symbol Spectrum24 chipsets.
 All five chipsets provide a similar interface to the driver.
 .Pp
-All host/device interaction is via programmed I/O.
-Supported features include 802.11 and 802.3 frames, power management, BSS,
-IBSS, WDS and ad-hoc operation modes.
-Cards based on the Intersil chips also support a host-based access point
-mode which allows a card to act as a normal access point (with some
-assistance from the
-.Nm
-driver).
-The Lucent Hermes and Symbol Spectrum24 chipsets do not contain this
-functionality.
-.Pp
 The
 .Nm
-driver encapsulates all IP and ARP traffic as 802.11 frames, however
+driver encapsulates all IP and ARP traffic as 802.11 frames, though
 it can receive either 802.11 or 802.3 frames.
 Transmit speed is selectable between 1Mbps fixed, 2Mbps fixed, 2Mbps
-with auto fallback, 5.5Mbps, 8Mbps, or 11Mbps depending on your hardware.
+with auto fallback, 5.5Mbps, 8Mbps, or 11Mbps, depending on hardware.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set.
+However, actual connections between stations are peer-to-peer
+as in ad-hoc mode.
+Cards with very old firmware revisions do not support this mode.
+.It IBSS master
+Also know as
+.Em Host IBSS
+mode.
+In this mode the station takes on part of the role of an access point,
+though traffic does not pass through it to reach the other stations.
+When a group of stations are operating in IBSS mode, one of them must be
+the master, specifying the network name of the service set.
+.It Host AP
+In this mode the driver acts as an access point (base station)
+for other cards.
+Only cards based on the Intersil chipsets support this mode.
+Furthermore, this mode is not supported on USB devices.
+.It ad-hoc mode
+More accurately known as
+.Em ad-hoc demo mode .
+This mode does not require an access point; the adapter communicates with
+other ad-hoc stations within range on a peer-to-peer basis.
+This mode is not specified by the IEEE 802.11 standard and there
+may be problems interoperating with adapters manufactured by different vendors.
+.El
+.Pp
+.Nm
+supports both software and hardware WEP.
+Wired Equivalent Privacy (WEP) is the de facto encryption standard
+for wireless networks.
+It can be typically configured in one of three modes:
+no encryption; 40-bit encryption; or 104-bit encryption.
+Unfortunately, due to serious weaknesses in WEP protocol
+it is strongly recommended that it not be used as the
+sole mechanism to secure wireless communication.
+WEP is not enabled by default.
+.Pp
 The Lucent WaveLAN/IEEE Silver and Gold cards as well as the Intersil
 and Symbol cards have support for WEP encryption.
 The WaveLAN Gold as well as newer Intersil and Symbol cards support
-104bit keys, the others only accept 40bit keys.
+104-bit keys, the others only accept 40-bit keys.
 The Lucent WaveLAN/IEEE Bronze cards do not support WEP at all.
-To enable encryption, use the
-.Xr wicontrol 8
-utility to set your keys, or use
-.Xr ifconfig 8
-as shown below.
-.Pp
-By default, the
-.Nm
-driver configures the card for BSS operation (aka infrastructure
-mode).
-This mode requires the use of an access point (base station).
-.Pp
+See also
+.Sx CAVEATS
+below.
+.Sh CONFIGURATION
 The
 .Nm
-driver also supports an ad-hoc (point-to-point) mode where
-the nwid is ignored and stations can communicate amongst
-themselves without the aid of an access point.
-Note that there are two possible ad-hoc modes.
-One mode, referred to as
-.Dq ad-hoc demo mode ,
-predates the IEEE 802.11 specification and so may not interoperate
-with cards from other vendors.
-The standardized ad-hoc mode, also known as IBSS mode, is not
-supported by cards with very old firmware revisions.
+driver can be configured using
+.Xr wicontrol 8 .
+It can also be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
 .Pp
-Cards based on the Intersil chipsets also have a host-based access point
-mode which allows the card to act as an access point (base station).
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm DS1
+Set 802.11b DS 1Mbps operation.
+.It Cm DS2
+Set 802.11b DS 2Mbps operation.
+.It Cm DS5
+Set 802.11b DS 5.5Mbps operation.
+.It Cm DS11
+Set 802.11b DS 11Mbps operation.
+.El
+.It Cm mediaopt Ar opts
+The
+.Nm
+driver supports the following media options:
 .Pp
-For more information on configuring this device, see
-.Xr ifconfig 8 .
-.Pp
+.Bl -tag -width ibss-master -compact
+.It Cm adhoc
+Select ad-hoc demo mode.
+.It Cm hostap
+Select Host AP operation.
+.It Cm ibss
+Select IBSS operation.
+.It Cm ibss-master
+Select IBSS master operation.
+.El
+.It Fl mediaopt Ar opts
+Disable the specified media options on the driver and returns it to the
+default mode of operation (BSS).
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+.It Cm nwkey Ar key
+Enable WEP encryption using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits (preceded by
+.Sq 0x ) ,
+or a set of keys of the form
+.Dq n:k1,k2,k3,k4 ,
+where
+.Sq n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Dq k1
+through
+.Dq k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Pq Sq \&,
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+.Nm
+is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
+or 104-bit (13 characters or 26 hexadecimal digits) keys.
+.It Fl nwkey
+Disable WEP encryption.
+This is the default mode of operation.
+.It Cm nwkey persist
+Enable WEP encryption with the persistent key stored in the network card.
+.It Cm nwkey persist : Ns Ar key
+Write
+.Ar key
+to the persistent memory of the network card,
+and enable WEP encryption using that key.
+.It Cm powersave
+Enable power saving mode.
+.It Fl powersave
+Disable power saving mode.
+This is the default mode of operation.
+.It Cm powersavesleep Ar duration
+Set the receiver sleep duration (in milliseconds) for power saving mode.
+.It Cm txpower Ar dBm
+Set the transmit power
+(and disable any auto level and transmit power controls).
+.It Fl txpower
+Disable manual transmit power
+(and enable any auto level and transmit power controls).
+This is the default mode of operation.
+.El
+.Sh HARDWARE
 Cards supported by the
 .Nm
 driver come in a variety of packages, though the most common
@@ -119,7 +260,6 @@ A true PCMCIA bridge (such as those sold by Lucent) will attach
 as a real PCMCIA controller.
 The wireless card will then attach to the PCMCIA bus.
 Wireless cards in PCMCIA slots may be inserted and ejected on the fly.
-.Pp
 A dumb bridge, on the other hand, does not show up as a true PCMCIA bus.
 The wireless card will simply appear to the host as a normal PCI
 device and will not require any PCMCIA support.
@@ -221,6 +361,7 @@ Proxim Harmony:Prism-2:PCMCIA
 Proxim RangeLAN-DS:Prism-2:PCMCIA
 Samsung MagicLAN SWL-2000N:Prism-2:PCMCIA
 Samsung MagicLAN SWL-2210P:Prism-2:PCI
+Senao NL-2511MP:Prism-2.5:PCI
 Siemens SpeedStream SS1021:Prism-2:PCMCIA
 Siemens SpeedStream SS1022:Prism-3:USB
 Sitecom WL-022:Prism-3:USB
@@ -241,7 +382,7 @@ ZyXEL ZyAIR B-200:Prism-3:USB
 Note that some of the PRISM-II adapters only work at 3.3V, hence
 .Xr cardbus 4
 support is required for those cards to set VCC correctly, even
-though they are really 16bit cards.
+though they are really 16-bit cards.
 .Pp
 USB support is still experimental and the device may stop functioning
 during normal use.
@@ -262,81 +403,10 @@ The following such adapters are supported or expected to work:
 .It LinkSys WDT11 (a rebadged GL24110P02)
 .It Longshine 8031
 .It Netgear MA301
-.It US Robotics 2415 (rebadged WL11000P)
 .It Siemens/Efficient Networks SpeedStream 1023
+.It US Robotics 2415 (rebadged WL11000P)
 .El
 .Sh EXAMPLES
-The following examples utilize
-.Xr ifconfig 8
-for simplicity, however,
-.Xr wicontrol 8
-can also be used to set wireless parameters.
-.Pp
-Join an existing BSS network (ie: connect to an access point):
-.Dl # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00
-.Pp
-Join a specific BSS network with network name
-.Dq my_net :
-.Dl # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net
-.Pp
-Join a specific BSS network with WEP encryption:
-.Bd -literal -compact -offset indent
-# ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-	nwkey 0x8736639624
-.Ed
-.Pp
-Join an ad-hoc network with network name
-.Dq my_net :
-.Bd -literal -compact -offset indent
-# ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-	mediaopt adhoc
-.Ed
-.Pp
-Create an IBSS network with network name
-.Dq my_net :
-.Bd -literal -compact -offset indent
-# ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-	mediaopt ibss-master
-.Ed
-.Pp
-Join an IBSS network with network name
-.Dq my_net :
-.Bd -literal -compact -offset indent
-# ifconfig wi0 inet 192.168.0.22 netmask 0xffffff00 nwid my_net \e
-	mediaopt ibss
-.Ed
-.Pp
-Create a host-based access point (Prism only):
-.Bd -literal -compact -offset indent
-# ifconfig wi0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
-	mediaopt hostap
-.Ed
-.Pp
-Create a host-based access point with WEP enabled (Prism only):
-.Bd -literal -compact -offset indent
-# ifconfig wi0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
-	nwkey 0x1234567890 mediaopt hostap
-.Ed
-.Pp
-Create a host-based wireless bridge to fxp0 (Prism only):
-.Bd -literal -compact -offset indent
-# ifconfig wi0 inet up nwid my_ap mediaopt hostap
-# brconfig bridge0 add fxp0 add wi0 up
-.Ed
-.Pp
-The following examples utilize
-.Xr wicontrol 8
-to set options not supported by
-.Xr ifconfig 8 .
-.Pp
-Enable software-based WEP (Prism only, see
-.Sx CAVEATS
-below):
-.Dl # wicontrol wi0 -x 1
-.Pp
-Hide the SSID of a HostAP server (Prism only, requires firmware >= 1.6.3)
-.Dl # wicontrol wi0 -E 3
-.Pp
 Note that when setting options via
 .Xr wicontrol 8
 in a
@@ -358,7 +428,33 @@ inet 192.168.1.1 255.255.255.0 NONE nwid my_net \e
 	nwkey 0x8736639624 mediaopt hostap
 .Ed
 .Pp
-Note that the line beginning with "inet" has been split for readability.
+The following
+.Xr hostname.if 5
+example configures wi0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+Configure wi0 for WEP, using hex key
+.Dq 0x1deadbeef1 :
+.Bd -literal -offset indent
+# ifconfig wi0 nwkey 0x1deadbeef1
+.Ed
+.Pp
+Return wi0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig wi0 -bssid -chan media autoselect -mediaopt \e
+	nwid "" -nwkey -powersave -txpower
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig wi0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "wi%d: init failed"
@@ -375,7 +471,6 @@ command.
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
-.Xr macobio 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
@@ -424,7 +519,7 @@ bugs when used with firmware versions prior to 0.8.3 and is completely
 unusable with firmware versions prior to 0.8.0 and 1.4.0-1.4.2.
 .Pp
 Software WEP is currently only supported in HostAP and BSS modes.
-Furthermore, Software WEP is currently incapable of decrypting
+Furthermore, software WEP is currently incapable of decrypting
 fragmented frames.
 Lucent-based cards using firmware 8.10 and above fragment encrypted
 frames sent at 11Mbps.

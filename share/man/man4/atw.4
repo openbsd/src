@@ -1,4 +1,4 @@
-.\"     $OpenBSD: atw.4,v 1.11 2004/11/08 23:05:42 deraadt Exp $
+.\"     $OpenBSD: atw.4,v 1.12 2005/03/06 21:49:00 jmc Exp $
 .\"	$NetBSD: atw.4,v 1.8 2004/06/06 04:05:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm atw
-.Nd ADMtek ADM8211 802.11B wireless network interface
+.Nd ADMtek ADM8211 IEEE 802.11b wireless network driver
 .Sh SYNOPSIS
 .Cd "atw* at cardbus?"
 .Cd "atw* at pci?"
@@ -45,9 +45,9 @@ ADMtek ADM8211.
 .Pp
 The ADM8211 is a bus-mastering 802.11 Media Access Controller (MAC)
 which is derived from ADMtek's DEC/Intel 21143 clones (see
-.Xr dc 4 ) .
-It supports contention-free traffic (with an 802.11 Point Coordinator),
-64/128-bit WEP encryption, and 802.11 power-saving.
+.Xr dc 4
+for more information).
+It supports contention-free traffic (with an 802.11 Point Coordinator).
 The ADM8211 integrates an RF3000 baseband processor (BBP) by RF
 Microdevices.
 .Pp
@@ -68,31 +68,141 @@ association, and authentication.
 The host is also responsible for programming both the BBP and the
 RF/IF synthesizer.
 .Pp
+These are the modes the
 .Nm
-contains incomplete support for the ADM8211's WEP encryption/decryption
-engine.
-.Nm
-does not yet support hardware WEP decryption, however, it will use
-the ADM8211's crypto engine to encrypt transmitted frames.
-Documentation from ADMtek claims that, in addition to the 4 128-bit
-shared WEP keys, the ADM8211 will store WEP key pairs for up to 20
-peers.
-The documentation provides no details, hence
-.Nm
-does not support the 20 key-pairs.
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set.
+However, actual connections between stations are peer-to-peer.
+.El
 .Pp
-The ADM8211 operates in 802.11 infrastructure mode (with an access
-point) and in 802.11 ad hoc mode (without an access point) at 1,
-2, 5.5, and 11Mbps.
-ADMtek says that the ADM8211 cannot operate as an access point.
+.Nm
+supports hardware WEP (though see
+.Sx CAVEATS
+below).
+Wired Equivalent Privacy (WEP) is the de facto encryption standard
+for wireless networks.
+It can be typically configured in one of three modes:
+no encryption; 40-bit encryption; or 104-bit encryption.
+Unfortunately, due to serious weaknesses in WEP protocol
+it is strongly recommended that it not be used as the
+sole mechanism to secure wireless communication.
+WEP is not enabled by default.
+.Sh CONFIGURATION
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
 .Pp
-The operating mode is selected using the
-.Xr ifconfig 8
-utility.
-For more information on configuring this device, see
-.Xr ifconfig 8
-and
-.Xr ifmedia 4 .
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm DS1
+Set 802.11b DS 1Mbps operation.
+.It Cm DS2
+Set 802.11b DS 2Mbps operation.
+.It Cm DS5
+Set 802.11b DS 5.5Mbps operation.
+.It Cm DS11
+Set 802.11b DS 11Mbps operation.
+.El
+.It Cm mediaopt Ar opts
+The
+.Nm
+driver supports the following media options:
+.Pp
+.Bl -tag -width monitor -compact
+.It Cm ibss
+Select IBSS operation.
+.El
+.It Fl mediaopt Ar opts
+Disable the specified media options on the driver and returns it to the
+default mode of operation (BSS).
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+.It Cm nwkey Ar key
+Enable WEP encryption using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits (preceded by
+.Sq 0x ) ,
+or a set of keys of the form
+.Dq n:k1,k2,k3,k4 ,
+where
+.Sq n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Dq k1
+through
+.Dq k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Pq Sq \&,
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+.Nm
+is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
+or 104-bit (13 characters or 26 hexadecimal digits) keys.
+.It Fl nwkey
+Disable WEP encryption.
+This is the default mode of operation.
+.It Cm nwkey persist
+Enable WEP encryption with the persistent key stored in the network card.
+.It Cm nwkey persist : Ns Ar key
+Write
+.Ar key
+to the persistent memory of the network card,
+and enable WEP encryption using that key.
+.El
 .Sh HARDWARE
 The
 .Nm
@@ -100,24 +210,15 @@ driver supports PCI and Cardbus cards using revision 0x11 and 0x15
 of the ADM8211 (aka ADM8211A).
 This includes:
 .Pp
-.Bl -item -offset indent -compact
-.It
-3Com OfficeConnect 3CRSHPW796 Cardbus card
-.It
-Belkin F5D6001 PCI card (version 2 only)
-.It
-Blitz NetWave Point Cardbus card
-.It
-D-Link DWL-650 Rev. L1 Cardbus card
-.It
-D-Link DWL-520 Rev. C1 PCI card
-.It
-LanReady WP2000 PCI card
-.It
-TrendNet TEW-221PC Cardbus card
-.It
-Xterasys XN2511B PCI card
-.It
+.Bl -tag -width Ds -offset indent -compact
+.It 3Com OfficeConnect 3CRSHPW796 Cardbus
+.It Belkin F5D6001 PCI (version 2 only)
+.It Blitz NetWave Point Cardbus
+.It D-Link DWL-650 Rev. \&L1 Cardbus
+.It D-Link DWL-520 Rev. \&C1 PCI
+.It LanReady WP2000 PCI
+.It TrendNet TEW-221PC Cardbus
+.It Xterasys XN2511B PCI
 .El
 .Pp
 The
@@ -126,10 +227,37 @@ driver does not yet support cards using revision 0x20 (ADM8211B) or
 0x30 (ADM8211C).
 This includes:
 .Pp
-.Bl -item -offset indent -compact
-.It
-SMC 2635W Cardbus card
+.Bl -tag -width Ds -offset indent -compact
+.It SMC 2635W Cardbus
 .El
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures atw0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+Configure atw0 for WEP, using hex key
+.Dq 0x1deadbeef1 :
+.Bd -literal -offset indent
+# ifconfig atw0 nwkey 0x1deadbeef1
+.Ed
+.Pp
+Return atw0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig atw0 -bssid -chan media autoselect -mediaopt \e
+	nwid "" -nwkey
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig atw0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "atw0: failed to tune channel %d"
@@ -147,8 +275,10 @@ command.
 .Xr arp 4 ,
 .Xr cardbus 4 ,
 .Xr ifmedia 4 ,
+.Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
 .%T ADMtek
@@ -183,8 +313,8 @@ tlp driver by
 The author does not fully understand what processing the duration
 fields for the PLCP header and the 802.11 header undergo before
 they are applied to a transmitted frame.
-If the duration fields in transmitted frames are incorrect, the
-performance of your network may suffer.
+If the duration fields in transmitted frames are incorrect,
+network performance may suffer.
 .Pp
 The driver does not provide rate control when the media type is
 set to autoselect.
@@ -199,19 +329,32 @@ The author is investigating.
 Many features are still missing, especially WEP decryption and
 802.11 power-saving.
 .Pp
-The ad hoc mode has not been rigorously tested.
+The ad-hoc mode has not been rigorously tested.
 IBSSs with the same SSID may not coalesce, but this should not
 matter for most applications.
 .Pp
 The driver is untested in the ad-hoc demo mode of Lucent WaveLAN
 cards.
 .Pp
-The ADM8211 supports 802.11 power-saving, however,
+The ADM8211 supports 802.11 power-saving; however,
 .Nm
 does not support it yet.
 For time-bounded service, the ADM8211 will interoperate with an
-access point which implements the 802.11 Point Coordination Function,
+access point which implements the 802.11 Point Coordination Function;
 however, this is also not supported.
 .Pp
 Combinations of an ADM8211 with either an Intersil or a Marvell RF
 front-end are not supported.
+.Pp
+.Nm
+contains incomplete support for the ADM8211's WEP encryption/decryption
+engine.
+.Nm
+does not yet support hardware WEP decryption; however, it will use
+the ADM8211's crypto engine to encrypt transmitted frames.
+Documentation from ADMtek claims that, in addition to the 4 104-bit
+shared WEP keys, the ADM8211 will store WEP key pairs for up to 20
+peers.
+The documentation provides no details, hence
+.Nm
+does not support the 20 key-pairs.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awi.4,v 1.18 2004/11/08 20:16:02 jmc Exp $
+.\"	$OpenBSD: awi.4,v 1.19 2005/03/06 21:49:00 jmc Exp $
 .\"     $NetBSD: awi.4,v 1.1 1999/11/04 19:36:01 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,19 +48,6 @@ The
 .Nm
 driver provides support for wireless adapters based upon the AMD 802.11
 PCnet Mobile firmware.
-This includes the following adapters:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Bay Networks BayStack 650
-.It Bay Networks BayStack 660
-.It Bay Network AirSurfer Pro
-.It AMD Am79C930
-.It Icom SL-200
-.It Nokia C020
-.It Farallon Communications SkyLINE Wireless
-.It Zoom Air-4000
-.El
-.Pp
 The PCnet Mobile design is based on an AMD 79c930 controller, which provides
 access to 32kb of memory shared between the controller and the host.
 All host/device interaction is via this shared memory, which can be
@@ -70,10 +57,6 @@ The
 driver encapsulates all IP and ARP traffic as 802.11 frames.
 Transmit speed is fixed at 1Mbps.
 .Pp
-The driver currently only works in infrastructure mode, communicating
-with an Access Point which serves as a link-layer bridge between an
-Ethernet and the wireless network.
-.Pp
 This card seems to take between 5 and 20 seconds after it has been brought up
 to synchronize with an AP.
 When using
@@ -82,6 +65,99 @@ to automatically configure an address on this card, it may be
 advisable to delay the invocation of dhclient for about 10 seconds
 after the card is brought up using
 .Xr ifconfig 8 .
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This is the only mode available for this card.
+.El
+.Sh CONFIGURATION
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
+.Pp
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm FH1
+Set legacy 802.11 FH 1Mbps operation.
+.El
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+.El
+.Sh HARDWARE
+The following adapters are known to be supported:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It AMD Am79C930
+.It Bay Networks BayStack 650
+.It Bay Networks BayStack 660
+.It Bay Network AirSurfer Pro
+.It Farallon Communications SkyLINE Wireless
+.It Icom SL-200
+.It Nokia C020
+.It Zoom Air-4000
+.El
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures awi0 to join whatever network is available on boot,
+using channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE chan 11
+.Ed
+.Pp
+Return awi0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig awi0 -bssid -chan media autoselect nwid ""
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig awi0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "awi0: unable to allocate memory space; using i/o only"
@@ -145,7 +221,7 @@ driver was written by
 and ported to
 .Ox
 by
-.An Angelos D. Keromytis Aq angelos@dsl.cis.upenn.edu
+.An Angelos D. Keromytis Aq angelos@dsl.cis.upenn.edu .
 .Sh BUGS
 Doesn't support ad-hoc mode or WEP.
 Round trip times seem higher than what one might expect.
