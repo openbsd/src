@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.385 2001/04/08 17:31:34 aaron Exp $
+	$OpenBSD: pcidevs,v 1.386 2001/04/11 01:57:16 chris Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -801,12 +801,17 @@ product ATI MACH64_LI		0x4c49  Mach64 LI
 product ATI MOBILITY_1		0x4c4d	Mobility 1
 product ATI MACH64_LP		0x4c50  Mach64 LP
 product ATI RAGE_PM		0x4c52	Rage P/M
-product ATI RAGE_FURY		0x5046	Rage Fury AGP4x
+product ATI RAGE_FURY		0x5046	Rage Fury
 product ATI RAGE128_PK		0x5052	Rage 128 PK
 product ATI RADEON_AIW		0x5144	AIW Radeon
-product ATI RAGE128GL		0x5245	Rage 128 GL
+product ATI RAGE128_GL		0x5245	Rage 128 GL
 product ATI RAGE_MAGNUM		0x5246	Rage Magnum
-product ATI RAGE_128_VR_AGP	0x524c	Rage 128 VR AGP
+product ATI RAGE128_VR		0x524c	Rage 128 VR
+product ATI RAGE128_SH		0x5348	Rage 128 SH
+product ATI RAGE128_SK		0x534b	Rage 128 SK
+product ATI RAGE128_SL		0x534c	Rage 128 SL
+product ATI RAGE128_SM		0x534d	Rage 128 SM
+prodcut ATI RAGE128		0x534e	Rage 128
 product ATI MACH64_VT		0x5654	Mach64 VT
 product ATI MACH64_VU		0x5655	Mach64 VU
 product ATI MACH64_VV		0x5656	Mach64 VV
