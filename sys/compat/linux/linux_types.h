@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_types.h,v 1.3 1996/05/22 12:01:51 deraadt Exp $	*/
+/*	$OpenBSD: linux_types.h,v 1.4 2000/12/22 07:34:02 jasoni Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
@@ -157,6 +157,42 @@ struct linux___sysctl {
 	void         *new;
 	size_t        newlen;
 	unsigned long __unused[4];
+};
+
+/* This matches struct stat64 in glibc2.1, hence the absolutely
+ * insane amounts of padding around dev_t's.
+ */
+struct linux_stat64 {
+	unsigned short	lst_dev;
+	unsigned char	__pad0[10];
+
+	unsigned long	lst_ino;
+	unsigned int	lst_mode;
+	unsigned int	lst_nlink;
+
+	unsigned long	lst_uid;
+	unsigned long	lst_gid;
+
+	unsigned short	lst_rdev;
+	unsigned char	__pad3[10];
+
+	long long	lst_size;
+	unsigned long	lst_blksize;
+
+	unsigned long	lst_blocks;	/* Number 512-byte blocks allocated. */
+	unsigned long	__pad4;		/* future possible st_blocks high bits*/
+
+	unsigned long	lst_atime;
+	unsigned long	__pad5;
+
+	unsigned long	lst_mtime;
+	unsigned long	__pad6;
+
+	unsigned long	lst_ctime;
+	unsigned long	__pad7;		/* will be high 32 bits of ctime someday */
+
+	unsigned long	__unused1;
+	unsigned long	__unused2;
 };
 
 #endif /* !_LINUX_TYPES_H */

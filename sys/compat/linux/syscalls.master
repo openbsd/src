@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.25 2000/07/07 02:13:40 jasoni Exp $
+	$OpenBSD: syscalls.master,v 1.26 2000/12/22 07:34:02 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -306,9 +306,13 @@
 191	STD		{ int linux_sys_ugetrlimit(u_int which, \
 			    struct linux_rlimit *rlp); }
 192     STD		{ int linux_sys_mmap2(void); }
-193     STD        	{ int linux_sys_truncate64(void); }
+193     STD        	{ int linux_sys_truncate64(char *path, \
+			    off_t length); }
 194     STD        	{ int linux_sys_ftruncate64(void); }
-195     STD        	{ int linux_sys_stat64(void); }
-196     STD        	{ int linux_sys_lstat64(void); }
-197     STD        	{ int linux_sys_fstat64(void); }
+195     STD        	{ int linux_sys_stat64(char *path, \
+			    struct linux_stat64 *sp); }
+196     STD        	{ int linux_sys_lstat64(char *path, \
+			    struct linux_stat64 *sp); }
+197     STD        	{ int linux_sys_fstat64(int fd, \
+			    struct linux_stat64 *sp); }
 
