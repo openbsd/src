@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 2001/05/09 15:31:24 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.30 2001/05/15 14:19:58 jj Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -692,7 +692,7 @@ bogons:
 	 * Allocate the segment table map and the page table map.
 	 */
 	addr = amiga_uptbase;
-	if ((AMIGA_UPTMAXSIZE / AMIGA_MAX_PTSIZE) < maxproc) {
+	if ((AMIGA_UPTMAXSIZE / AMIGA_UPTSIZE) < maxproc) {
 		s = AMIGA_UPTMAXSIZE;
 		/*
 		 * XXX We don't want to hang when we run out of
@@ -700,9 +700,9 @@ bogons:
 		 * will fail instead.  Note that root could still raise
 		 * this value via sysctl(2).
 		 */
-		maxproc = AMIGA_UPTMAXSIZE / AMIGA_MAX_PTSIZE;
+		maxproc = AMIGA_UPTMAXSIZE / AMIGA_UPTSIZE;
 	} else
-		s = (maxproc * AMIGA_MAX_PTSIZE);
+		s = (maxproc * AMIGA_UPTSIZE);
 
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, VM_MAP_PAGEABLE,
 				 TRUE, &pt_map_store);
