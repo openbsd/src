@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.54 2005/01/28 12:01:32 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.55 2005/01/28 12:37:20 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -242,9 +242,9 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	p->reply[p->shift].status.stratum = msg.stratum;
 
 	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
-		interval = INTERVAL_QUERY_PATHETIC;
+		interval = scale_interval(INTERVAL_QUERY_PATHETIC);
 	else if (p->trustlevel < TRUSTLEVEL_AGRESSIVE)
-		interval = INTERVAL_QUERY_AGRESSIVE;
+		interval = scale_interval(INTERVAL_QUERY_AGRESSIVE);
 	else
 		interval = scale_interval(INTERVAL_QUERY_NORMAL);
 

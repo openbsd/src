@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.50 2005/01/27 14:44:00 dtucker Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.51 2005/01/28 12:37:20 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,7 +51,6 @@
 
 #define	QSCALE_OFF_MIN			0.05
 #define	QSCALE_OFF_MAX			0.50
-#define	QSCALE_FACTOR			1000
 
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
 #define	OFFSET_ARRAY_SIZE	8

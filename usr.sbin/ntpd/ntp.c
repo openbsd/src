@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.48 2005/01/27 14:44:00 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.49 2005/01/28 12:37:20 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -143,7 +143,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	b = 1000000000 / tp.tv_nsec;	/* convert to Hz */
 	for (a = 0; b > 1; a--, b >>= 1);
 	conf->status.precision = a;
-	conf->scale = QSCALE_FACTOR;
+	conf->scale = 1;
 
 	log_info("ntp engine ready");
 
@@ -465,22 +465,30 @@ update_scale(double offset)
                 offset = -offset;
   
         if (offset > QSCALE_OFF_MAX)
-                conf->scale = QSCALE_FACTOR;
+                conf->scale = 1;
         else if (offset < QSCALE_OFF_MIN)
-                conf->scale = QSCALE_FACTOR * QSCALE_OFF_MAX / QSCALE_OFF_MIN;
+                conf->scale = QSCALE_OFF_MAX / QSCALE_OFF_MIN;
         else
-                conf->scale = QSCALE_FACTOR * QSCALE_OFF_MAX / offset;
+                conf->scale = QSCALE_OFF_MAX / offset;
 }
 
 time_t
 scale_interval(time_t requested)
 {
-        return (requested * conf->scale / QSCALE_FACTOR);
+	time_t interval, r;
+
+	interval = requested * conf->scale;
+	r = arc4random() % MAX(5, interval / 10);
+	return (interval + r);
 }
-   
+
 time_t
-error_interval(void)  
+error_interval(void)
 {
-        return (INTERVAL_QUERY_PATHETIC * QSCALE_OFF_MAX / QSCALE_OFF_MIN);
+	time_t interval, r;
+
+	interval = INTERVAL_QUERY_PATHETIC * QSCALE_OFF_MAX / QSCALE_OFF_MIN;
+	r = arc4random() % (interval / 10);
+	return (interval + r);
 }
 
