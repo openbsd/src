@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.10 1996/04/18 17:12:16 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.11 1996/04/19 05:41:52 mickey Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.11 1996/02/28 01:49:35 cgd Exp $	*/
 
 /*-
@@ -125,19 +125,15 @@ void
 isa_strayintr(irq)
 	int irq;
 {
-	static u_long strays;
-
-	intrstray[irq]++;
-
         /*
          * Stray interrupts on irq 7 occur when an interrupt line is raised
          * and then lowered before the CPU acknowledges it.  This generally
          * means either the device is screwed or something is cli'ing too
          * long and it's timing out.
          */
-	if (++strays <= 5)
+	if (++intrstray[irq] <= 5)
 		log(LOG_ERR, "stray interrupt %d%s\n", irq,
-		    strays >= 5 ? "; stopped logging" : "");
+		    intrstray[irq] >= 5 ? "; stopped logging" : "");
 }
 
 int fastvec;
