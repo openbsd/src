@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.24 1997/12/21 14:44:32 downsj Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.25 1997/12/25 06:13:04 downsj Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
 
 /*-
@@ -454,7 +454,15 @@ isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
-	/* Nothing to do. */
+	extern int isa_has_been_seen;
+
+	/*
+	 * Notify others that might need to know that the ISA bus
+	 * has now been attached.
+	 */
+	if (isa_has_been_seen)
+		panic("isaattach: ISA bus already seen!");
+	isa_has_been_seen = 1;
 }
 
 /*
