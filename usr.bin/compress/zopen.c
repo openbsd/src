@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.12 2003/07/11 02:31:18 millert Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.13 2003/07/17 20:06:01 millert Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
 const char z_rcsid[] =
-	"$OpenBSD: zopen.c,v 1.12 2003/07/11 02:31:18 millert Exp $";
+	"$OpenBSD: zopen.c,v 1.13 2003/07/17 20:06:01 millert Exp $";
 #endif
 
 /*-
@@ -123,7 +123,7 @@ struct s_zstate {
 	long zs_ratio;
 	count_int zs_checkpoint;
 	long zs_in_count;		/* Length of input. */
-	long zs_bytes_out;		/* Length of compressed output. */
+	long zs_bytes_out;		/* Length of output. */
 	long zs_out_count;		/* # of codes output (for debugging).*/
 	u_char zs_buf[ZBUFSIZ];		/* I/O buffer */
 	u_char *zs_bp;			/* Current I/O window in the zs_buf */
@@ -313,7 +313,7 @@ nomatch:		if (output(zs, (code_int) zs->zs_ent) == -1)
 }
 
 int
-zclose(void *cookie)
+z_close(void *cookie, struct z_info *info)
 {
 	struct s_zstate *zs;
 	int rval;
@@ -332,9 +332,24 @@ zclose(void *cookie)
 			return (-1);
 		}
 	}
+
+	if (info != NULL) {
+		info->mtime = 0;
+		info->crc = (u_int32_t)-1;
+		info->hlen = 0;
+		info->total_in = (off_t)zs->zs_in_count;
+		info->total_out = (off_t)zs->zs_bytes_out;
+	}
+
 	rval = close(zs->zs_fd);
 	free(zs);
 	return (rval);
+}
+
+int
+zclose(void *cookie)
+{
+	return z_close(cookie, NULL);
 }
 
 /*-
@@ -493,6 +508,7 @@ zread(void *cookie, char *rbp, int num)
 		return (-1);
 	}
 	zs->zs_maxbits = header[2];	/* Set -b from file. */
+	zs->zs_in_count += sizeof(header);
 	zs->zs_block_compress = zs->zs_maxbits & BLOCK_MASK;
 	zs->zs_maxbits &= BIT_MASK;
 	zs->zs_maxmaxcode = 1L << zs->zs_maxbits;
@@ -545,8 +561,10 @@ zread(void *cookie, char *rbp, int num)
 
 		/* And put them out in forward order.  */
 middle:		do {
-			if (count-- == 0)
+			if (count-- == 0) {
+				zs->zs_bytes_out += num;
 				return (num);
+			}
 			*bp++ = *--zs->zs_stackp;
 		} while (zs->zs_stackp > de_stack);
 
@@ -561,6 +579,7 @@ middle:		do {
 		zs->zs_oldcode = zs->zs_incode;
 	}
 	zs->zs_state = S_EOF;
+	zs->zs_bytes_out += num - count;
 eof:	return (num - count);
 }
 
@@ -607,6 +626,7 @@ getcode(struct s_zstate *zs)
 			if ((bits = read(zs->zs_fd, bp, ZBUFSIZ -
 					 (bp - zs->zs_buf))) < 0)
 				return -1;
+			zs->zs_in_count += bits;
 			zs->zs_bp = zs->zs_buf;
 			zs->zs_ebp = bp + bits;
 		}
@@ -717,7 +737,7 @@ zopen(const char *name, const char *mode, int bits)
 	if ((fd = open(name, (*mode=='r'? O_RDONLY:O_WRONLY|O_CREAT),
 	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
 		return NULL;
-	if ((cookie = z_open(fd, mode, bits, 0)) == NULL) {
+	if ((cookie = z_open(fd, mode, NULL, bits, 0, 0)) == NULL) {
 		close(fd);
 		return NULL;
 	}
@@ -726,7 +746,8 @@ zopen(const char *name, const char *mode, int bits)
 }
 
 void *
-z_open(int fd, const char *mode, int bits, int gotmagic)
+z_open(int fd, const char *mode, char *name, int bits,
+    u_int32_t mtime, int gotmagic)
 {
 	struct s_zstate *zs;
 
@@ -749,7 +770,7 @@ z_open(int fd, const char *mode, int bits, int gotmagic)
 	zs->zs_clear_flg = 0;
 	zs->zs_ratio = 0;
 	zs->zs_checkpoint = CHECK_GAP;
-	zs->zs_in_count = 1;		/* Length of input. */
+	zs->zs_in_count = 0;		/* Length of input. */
 	zs->zs_out_count = 0;		/* # of codes output (for debugging).*/
 	zs->zs_state = gotmagic ? S_MAGIC : S_START;
 	zs->zs_offset = 0;

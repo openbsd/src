@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.5 2003/07/11 02:31:18 millert Exp $	*/
+/*	$OpenBSD: compress.h,v 1.6 2003/07/17 20:06:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -27,32 +27,45 @@
  *
  */
 
+struct z_info {
+	u_int32_t mtime;	/* timestamp */
+	u_int32_t crc;		/* crc */
+	u_int32_t hlen;		/* header length */
+	u_int64_t total_in;	/* # bytes in */
+	u_int64_t total_out;	/* # bytes out */
+};
+
 /*
  * making it any bigger does not affect perfomance very much.
  * actually this value is just a little bit better than 8192.
  */
 #define Z_BUFSIZE 16384
 
+/*
+ * exit codes for compress
+ */
+#define	SUCCESS	0
+#define	FAILURE	1
+#define	WARNING	2
+
 extern const char main_rcsid[], z_rcsid[], gz_rcsid[], pkzip_rcsid[],
     pack_rcsid[], lzh_rcsid[];
 
-extern int z_check_header(int, struct stat *, const char *);
-extern void *z_open(int, const char *, int, int);
+extern void *z_open(int, const char *, char *, int, u_int32_t, int);
 extern FILE *zopen(const char *, const char *,int);
 extern int zread(void *, char *, int);
 extern int zwrite(void *, const char *, int);
-extern int zclose(void *);
+extern int z_close(void *, struct z_info *);
 
-extern int gz_check_header(int, struct stat *, const char *);
-extern void *gz_open(int, const char *, int, int);
+
+extern void *gz_open(int, const char *, char *, int, u_int32_t, int);
 extern int gz_read(void *, char *, int);
 extern int gz_write(void *, const char *, int);
-extern int gz_close(void *);
+extern int gz_close(void *, struct z_info *);
 extern int gz_flush(void *, int);
 
-extern int lzh_check_header(int, struct stat *, const char *);
-extern void *lzh_open(int, const char *, int, int);
+extern void *lzh_open(int, const char *, char *, int, u_int32_t, int);
 extern int lzh_read(void *, char *, int);
 extern int lzh_write(void *, const char *, int);
-extern int lzh_close(void *);
+extern int lzh_close(void *, struct z_info *);
 extern int lzh_flush(void *, int);
