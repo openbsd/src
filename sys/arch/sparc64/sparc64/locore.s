@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.21 2002/07/20 22:39:00 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.22 2002/07/23 13:58:23 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4179,7 +4179,7 @@ _C_LABEL(sparc_interrupt):
 	stw	%g2, [%g1]
 1:
 #endif
-	INTR_SETUP(-CC64FSZ-TF_SIZE)
+	INTR_SETUP(-CC64FSZ-TF_SIZE-8)
 	! Switch to normal globals so we can save them
 	wrpr	%g0, PSTATE_KERN, %pstate
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
@@ -4224,7 +4224,17 @@ _C_LABEL(sparc_interrupt):
 	STULNG	%o0, [%l4]
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	
+	sethi	%hi(_C_LABEL(handled_intr_level)), %l4
+
 	wrpr	%l6, %pil
+
+	/*
+	 * Set handled_intr_level and save the old one so we can restore it
+	 * later.
+	 */
+	ld	[%l4 + %lo(_C_LABEL(handled_intr_level))], %l7
+	st	%l6, [%l4 + %lo(_C_LABEL(handled_intr_level))]
+	st	%l7, [%sp + CC64FSZ + STKB + TF_SIZE]
 
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
@@ -4392,6 +4402,11 @@ intrcmplt:
 	restore
 97:
 #endif
+
+	/* Restore old handled_intr_level */
+	sethi	%hi(_C_LABEL(handled_intr_level)), %l4
+	ld	[%sp + CC64FSZ + STKB + TF_SIZE], %l7
+	st	%l7, [%l4 + %lo(_C_LABEL(handled_intr_level))]
 
 	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
