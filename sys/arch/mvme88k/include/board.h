@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.16 2003/09/16 20:52:19 miod Exp $ */
+/*	$OpenBSD: board.h,v 1.17 2003/09/28 16:01:11 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -66,8 +66,6 @@
    handles the CMMU's. */
 #define CMMU_SIZE	0x1000
 
-#ifndef CMMU_DEFS
-#define CMMU_DEFS
 #define SBC_CMMU_I	0xFFF77000 	/* Single Board Computer code CMMU */
 #define SBC_CMMU_D	0xFFF7F000 	/* Single Board Computer data CMMU */
 
@@ -79,7 +77,6 @@
 #define VME_CMMU_D1	0xFFF5F000 	/* MVME188 data CMMU 1 */
 #define VME_CMMU_D2	0xFFF3F000 	/* MVME188 data CMMU 2 */
 #define VME_CMMU_D3	0xFFF7F000 	/* MVME188 data CMMU 3 */
-#endif /* CMMU_DEFS */
 
 /* These are the hardware exceptions. */
 #define INT_BIT		0x1		/* interrupt exception		*/
