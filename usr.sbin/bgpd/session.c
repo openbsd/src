@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.130 2004/03/10 14:29:37 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.131 2004/03/10 14:45:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -137,17 +137,18 @@ setup_listener(void)
 
 
 int
-session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
-    int pipe_s2r[2])
+session_main(struct bgpd_config *config, struct peer *cpeers,
+    struct filter_head *rules, int pipe_m2s[2], int pipe_s2r[2])
 {
-	int		 nfds, i, j, timeout, idx_peers;
-	pid_t		 pid;
-	time_t		 nextaction;
-	struct passwd	*pw;
-	struct peer	*p, *peer_l[OPEN_MAX], *last, *next;
-	struct pollfd	 pfd[OPEN_MAX];
-	struct ctl_conn	*ctl_conn;
-	short		 events;
+	int			 nfds, i, j, timeout, idx_peers;
+	pid_t			 pid;
+	time_t			 nextaction;
+	struct passwd		*pw;
+	struct peer		*p, *peer_l[OPEN_MAX], *last, *next;
+	struct filter_rule	*r;
+	struct pollfd		 pfd[OPEN_MAX];
+	struct ctl_conn		*ctl_conn;
+	short			 events;
 
 	conf = config;
 	peers = cpeers;
@@ -196,6 +197,13 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 	TAILQ_INIT(&ctl_conns);
 	csock = control_listen();
 	LIST_INIT(&mrt_l);
+
+	/* filter rules are not used in the SE */
+	while ((r = TAILQ_FIRST(rules)) != NULL) {
+		TAILQ_REMOVE(rules, r, entries);
+		free(r);
+	}
+	free(rules);
 
 	while (session_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
@@ -355,7 +363,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 
 	control_shutdown();
 	log_info("session engine exiting");
-	_exit(0);
+	exit(0);
 }
 
 void
