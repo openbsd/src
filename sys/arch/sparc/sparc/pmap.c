@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2000/01/26 23:30:04 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.63 2000/01/27 00:01:06 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -4002,28 +4002,10 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 	 * If the segment is all gone, remove it from everyone and
 	 * flush the TLB.
 	 */
-	if ((sp->sg_npte = nleft) == 0) {
-		va = VSTOVA(vr,vs);		/* retract */
-
-		tlb_flush_segment(vr, vs); 	/* Paranoia? */
-
-		/*
-		 * We need to free the segment table. The problem is that
-		 * we can't free the initial (bootstrap) mapping, so
-		 * we have to explicitly check for this case (ugh).
-		 */
-		if (va < virtual_avail) {
-#ifdef DEBUG
-			printf("pmap_rmk4m: attempt to free base kernel alloc\n");
-#endif
-			return;
-		}
-		/* no need to free the table; it is statically allocated */
-		qzero(sp->sg_pte, SRMMU_L3SIZE * sizeof(long));
-	}
-	/* if we're done with a region, leave it wired */
+	sp->sg_npte = nleft;
 }
 #endif /* sun4m */
+
 /*
  * Just like pmap_rmk_magic, but we have a different threshold.
  * Note that this may well deserve further tuning work.
