@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.14 2001/12/05 16:28:13 art Exp $ */
+/*	$OpenBSD: param.h,v 1.15 2001/12/07 21:49:15 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,6 +63,13 @@
 #define MSGBUFSIZE	4096
 
 #include <m68k/param.h>
+
+/*
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((2 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((2 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * spl functions; all but spl0 are done in-line
