@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.10 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.11 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -48,17 +48,17 @@ static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 
 #define ARGNAME "arg"
 
-static isdefined(definition *);
-static def_struct(definition *);
-static def_program(definition *);
-static def_enum(definition *);
-static def_const(definition *);
-static def_union(definition *);
-static def_typedef(definition *);
-static get_declaration(declaration *, defkind);
-static get_prog_declaration(declaration *, defkind, int);
-static get_type(char **, char **, defkind);
-static unsigned_dec(char **);
+static void isdefined(definition *);
+static void def_struct(definition *);
+static void def_program(definition *);
+static void def_enum(definition *);
+static void def_const(definition *);
+static void def_union(definition *);
+static void def_typedef(definition *);
+static void get_declaration(declaration *, defkind);
+static void get_prog_declaration(declaration *, defkind, int);
+static void get_type(char **, char **, defkind);
+static void unsigned_dec(char **);
 
 /*
  * return the next definition you see
@@ -100,14 +100,14 @@ get_definition()
 	return (defp);
 }
 
-static
+static void
 isdefined(defp)
 	definition *defp;
 {
 	STOREVAL(&defined, defp);
 }
 
-static
+static void
 def_struct(defp)
 	definition *defp;
 {
@@ -135,7 +135,7 @@ def_struct(defp)
 	*tailp = NULL;
 }
 
-static
+static void
 def_program(defp)
 	definition *defp;
 {
@@ -166,7 +166,7 @@ def_program(defp)
 			/* get result type */
 			plist = ALLOC(proc_list);
 			get_type(&plist->res_prefix, &plist->res_type,
-				 DEF_PROGRAM);
+			    DEF_PROGRAM);
 			if (streq(plist->res_type, "opaque")) {
 				error("illegal result type");
 			}
@@ -182,29 +182,29 @@ def_program(defp)
 			 */
 			get_prog_declaration(&dec, DEF_PROGRAM, num_args);
 			if (streq(dec.type, "void"))
-			  isvoid = TRUE;
+				isvoid = TRUE;
 			decls = ALLOC(decl_list);
 			plist->args.decls = decls;
 			decls->decl = dec;
 			tailp = &decls->next;
 			/* get args */
 			while (peekscan(TOK_COMMA, &tok)) {
-			  num_args++;
-			  get_prog_declaration(&dec, DEF_STRUCT,
-					       num_args);
-			  decls = ALLOC(decl_list);
-			  decls->decl = dec;
-			  *tailp = decls;
-			  if (streq(dec.type, "void"))
-			    isvoid = TRUE;
-			  tailp = &decls->next;
+				num_args++;
+				get_prog_declaration(&dec, DEF_STRUCT,
+				    num_args);
+				decls = ALLOC(decl_list);
+				decls->decl = dec;
+				*tailp = decls;
+				if (streq(dec.type, "void"))
+					isvoid = TRUE;
+				tailp = &decls->next;
 			}
 			/* multiple arguments are only allowed in newstyle */
-			if( !newstyle && num_args > 1 ) {
-			  error("only one argument is allowed" );
+			if (!newstyle && num_args > 1) {
+				error("only one argument is allowed");
 			}
 			if (isvoid && num_args > 1) {
-			  error("illegal use of void in program definition");
+				error("illegal use of void in program definition");
 			}
 			*tailp = NULL;
 			scan(TOK_RPAREN, &tok);
@@ -225,10 +225,10 @@ def_program(defp)
 		scan_num(&tok);
 		vlist->vers_num = tok.str;
 		/* make the argument structure name for each arg*/
-		for(plist = vlist->procs; plist != NULL;
+		for (plist = vlist->procs; plist != NULL;
 		    plist = plist->next) {
 			plist->args.argname = make_argname(plist->proc_name,
-							   vlist->vers_num);
+			    vlist->vers_num);
 			/* free the memory ??*/
 		}
 		scan(TOK_SEMICOLON, &tok);
@@ -241,7 +241,7 @@ def_program(defp)
 }
 
 
-static
+static void
 def_enum(defp)
 	definition *defp;
 {
@@ -271,7 +271,7 @@ def_enum(defp)
 	*tailp = NULL;
 }
 
-static
+static void
 def_const(defp)
 	definition *defp;
 {
@@ -285,78 +285,70 @@ def_const(defp)
 	defp->def.co = tok.str;
 }
 
-static
+static void
 def_union(defp)
 	definition *defp;
 {
-  token tok;
-  declaration dec;
-  case_list *cases,*tcase;
-  case_list **tailp;
-  int flag;
+	token tok;
+	declaration dec;
+	case_list *cases;
+	case_list **tailp;
+	int flag;
 
-  defp->def_kind = DEF_UNION;
-  scan(TOK_IDENT, &tok);
-  defp->def_name = tok.str;
-  scan(TOK_SWITCH, &tok);
-  scan(TOK_LPAREN, &tok);
-  get_declaration(&dec, DEF_UNION);
-  defp->def.un.enum_decl = dec;
-  tailp = &defp->def.un.cases;
-  scan(TOK_RPAREN, &tok);
-  scan(TOK_LBRACE, &tok);
-  scan(TOK_CASE, &tok);
-  while (tok.kind == TOK_CASE) {
-    scan2(TOK_IDENT, TOK_CHARCONST, &tok);
-    cases = ALLOC(case_list);
-    cases->case_name = tok.str;
-    scan(TOK_COLON, &tok);
-    /* now peek at next token */
-    flag=0;
-    if(peekscan(TOK_CASE,&tok))
-      {
+	defp->def_kind = DEF_UNION;
+	scan(TOK_IDENT, &tok);
+	defp->def_name = tok.str;
+	scan(TOK_SWITCH, &tok);
+	scan(TOK_LPAREN, &tok);
+	get_declaration(&dec, DEF_UNION);
+	defp->def.un.enum_decl = dec;
+	tailp = &defp->def.un.cases;
+	scan(TOK_RPAREN, &tok);
+	scan(TOK_LBRACE, &tok);
+	scan(TOK_CASE, &tok);
+	while (tok.kind == TOK_CASE) {
+		scan2(TOK_IDENT, TOK_CHARCONST, &tok);
+		cases = ALLOC(case_list);
+		cases->case_name = tok.str;
+		scan(TOK_COLON, &tok);
+		/* now peek at next token */
+		flag=0;
+		if (peekscan(TOK_CASE,&tok)) {
+			do {
+				scan2(TOK_IDENT, TOK_CHARCONST, &tok);
+				cases->contflag=1;	/* continued case statement */
+				*tailp = cases;
+				tailp = &cases->next;
+				cases = ALLOC(case_list);
+				cases->case_name = tok.str;
+				scan(TOK_COLON, &tok);
+			} while (peekscan(TOK_CASE,&tok));
+		} else if (flag) {
+			*tailp = cases;
+			tailp = &cases->next;
+			cases = ALLOC(case_list);
+		}
+		get_declaration(&dec, DEF_UNION);
+		cases->case_decl = dec;
+		cases->contflag=0;		/* no continued case statement */
+		*tailp = cases;
+		tailp = &cases->next;
+		scan(TOK_SEMICOLON, &tok);
 
-	do
-	  {
-	    scan2(TOK_IDENT, TOK_CHARCONST, &tok);
-	    cases->contflag=1;	/* continued case statement */
-	    *tailp = cases;
-	    tailp = &cases->next;
-	    cases = ALLOC(case_list);
-	    cases->case_name = tok.str;
-	    scan(TOK_COLON, &tok);
-
-	  } while (peekscan(TOK_CASE,&tok));
-      }
-    else
-      if(flag)
-	{
-
-	  *tailp = cases;
-	  tailp = &cases->next;
-	  cases = ALLOC(case_list);
+		scan3(TOK_CASE, TOK_DEFAULT, TOK_RBRACE, &tok);
 	}
+	*tailp = NULL;
 
-    get_declaration(&dec, DEF_UNION);
-    cases->case_decl = dec;
-    cases->contflag=0;		/* no continued case statement */
-    *tailp = cases;
-    tailp = &cases->next;
-    scan(TOK_SEMICOLON, &tok);
-
-    scan3(TOK_CASE, TOK_DEFAULT, TOK_RBRACE, &tok);
-  }
-  *tailp = NULL;
-  if (tok.kind == TOK_DEFAULT) {
-    scan(TOK_COLON, &tok);
-    get_declaration(&dec, DEF_UNION);
-    defp->def.un.default_decl = ALLOC(declaration);
-    *defp->def.un.default_decl = dec;
-    scan(TOK_SEMICOLON, &tok);
-    scan(TOK_RBRACE, &tok);
-  } else {
-    defp->def.un.default_decl = NULL;
-  }
+	if (tok.kind == TOK_DEFAULT) {
+		scan(TOK_COLON, &tok);
+		get_declaration(&dec, DEF_UNION);
+		defp->def.un.default_decl = ALLOC(declaration);
+		*defp->def.un.default_decl = dec;
+		scan(TOK_SEMICOLON, &tok);
+		scan(TOK_RBRACE, &tok);
+	} else {
+		defp->def.un.default_decl = NULL;
+	}
 }
 
 static char *reserved_words[] = {
@@ -383,32 +375,34 @@ static char *reserved_types[] = {
 
 /* check that the given name is not one that would eventually result in
    xdr routines that would conflict with internal XDR routines. */
-static check_type_name( name, new_type )
-int new_type;
-char *name;
+static void
+check_type_name(name, new_type)
+	int new_type;
+	char *name;
 {
-  int i;
-  char tmp[100];
+	int i;
+	char tmp[100];
 
-  for( i = 0; reserved_words[i] != NULL; i++ ) {
-    if( strcmp( name, reserved_words[i] ) == 0 ) {
-      snprintf(tmp, sizeof tmp,
-	      "illegal (reserved) name :\'%s\' in type definition", name );
-      error(tmp);
-    }
-  }
-  if( new_type ) {
-    for( i = 0; reserved_types[i] != NULL; i++ ) {
-      if( strcmp( name, reserved_types[i] ) == 0 ) {
-	snprintf(tmp, sizeof tmp,
-		"illegal (reserved) name :\'%s\' in type definition", name );
-	error(tmp);
-      }
-    }
-  }
+	for (i = 0; reserved_words[i] != NULL; i++) {
+		if (strcmp(name, reserved_words[i]) == 0) {
+			snprintf(tmp, sizeof tmp,
+			    "illegal (reserved) name :\'%s\' in type definition", name);
+			error(tmp);
+		}
+	}
+	if (new_type) {
+		for (i = 0; reserved_types[i] != NULL; i++) {
+			if (strcmp(name, reserved_types[i]) == 0) {
+				snprintf(tmp, sizeof tmp,
+				    "illegal (reserved) name :\'%s\' in"
+				    " type definition", name);
+				error(tmp);
+			}
+		}
+	}
 }
 
-static
+static void
 def_typedef(defp)
 	definition *defp;
 {
@@ -417,14 +411,14 @@ def_typedef(defp)
 	defp->def_kind = DEF_TYPEDEF;
 	get_declaration(&dec, DEF_TYPEDEF);
 	defp->def_name = dec.name;
-	check_type_name( dec.name, 1 );
+	check_type_name(dec.name, 1);
 	defp->def.ty.old_prefix = dec.prefix;
 	defp->def.ty.old_type = dec.type;
 	defp->def.ty.rel = dec.rel;
 	defp->def.ty.array_max = dec.array_max;
 }
 
-static
+static void
 get_declaration(dec, dkind)
 	declaration *dec;
 	defkind dkind;
@@ -437,7 +431,7 @@ get_declaration(dec, dkind)
 		return;
 	}
 
-	check_type_name( dec->type, 0 );
+	check_type_name(dec->type, 0);
 
 	scan2(TOK_STAR, TOK_IDENT, &tok);
 	if (tok.kind == TOK_STAR) {
@@ -477,53 +471,59 @@ get_declaration(dec, dkind)
 	}
 }
 
-static
+static void
 get_prog_declaration(dec, dkind, num)
 	declaration *dec;
 	defkind dkind;
-        int num;  /* arg number */
+	int num;  /* arg number */
 {
 	token tok;
 	char name[10]; /* argument name */
 
 	if (dkind == DEF_PROGRAM) {
-	  peek(&tok);
-	  if (tok.kind == TOK_RPAREN) { /* no arguments */
-	    	dec->rel = REL_ALIAS;
-		dec->type = "void";
-		dec->prefix = NULL;
-		dec->name = NULL;
-		return;
-	      }
+		peek(&tok);
+		if (tok.kind == TOK_RPAREN) { /* no arguments */
+			dec->rel = REL_ALIAS;
+			dec->type = "void";
+			dec->prefix = NULL;
+			dec->name = NULL;
+			return;
+		}
 	}
 	get_type(&dec->prefix, &dec->type, dkind);
 	dec->rel = REL_ALIAS;
 	if (peekscan(TOK_IDENT, &tok))  /* optional name of argument */
 		strlcpy(name, tok.str, sizeof name);
-	else
-		snprintf(name, sizeof name, "%s%d", ARGNAME, num); /* default name of argument */
+	else {
+		/* default name of argument */
+		snprintf(name, sizeof name, "%s%d", ARGNAME, num);
+	}
 
 	dec->name = (char *)strdup(name);
+	if (dec->name == NULL)
+		error("out of memory");
 
-	if (streq(dec->type, "void")) {
+	if (streq(dec->type, "void"))
 		return;
-	}
 
-	if (streq(dec->type, "opaque")) {
+	if (streq(dec->type, "opaque"))
 		error("opaque -- illegal argument type");
-	}
+
 	if (peekscan(TOK_STAR, &tok)) {
-	  if (streq(dec->type, "string")) {
-	    error("pointer to string not allowed in program arguments\n");
-	  }
+		if (streq(dec->type, "string"))
+			error("pointer to string not allowed in program arguments\n");
+
 		dec->rel = REL_POINTER;
-		if (peekscan(TOK_IDENT, &tok))  /* optional name of argument */
-		  dec->name = (char *)strdup(tok.str);
-      }
-	  if (peekscan(TOK_LANGLE, &tok)) {
-	    if (!streq(dec->type, "string")) {
-	      error("arrays cannot be declared as arguments to procedures -- use typedef");
-	    }
+		if (peekscan(TOK_IDENT, &tok)) { /* optional name of argument */
+			dec->name = (char *)strdup(tok.str);
+			if (dec->name == NULL)
+				error("out of memory");
+		}
+	}
+	if (peekscan(TOK_LANGLE, &tok)) {
+		if (!streq(dec->type, "string"))
+			error("arrays cannot be declared as arguments to "
+			    "procedures -- use typedef");
 		dec->rel = REL_ARRAY;
 		if (peekscan(TOK_RANGLE, &tok)) {
 			dec->array_max = "~0";/* unspecified size, use max */
@@ -534,19 +534,18 @@ get_prog_declaration(dec, dkind, num)
 		}
 	}
 	if (streq(dec->type, "string")) {
-		if (dec->rel != REL_ARRAY) {  /* .x specifies just string as
-					       * type of argument
-					       * - make it string<>
-					       */
+		/* .x specifies just string as
+		 * type of argument
+		 * - make it string<>
+		 */
+		if (dec->rel != REL_ARRAY) {
 			dec->rel = REL_ARRAY;
 			dec->array_max = "~0";/* unspecified size, use max */
 		}
 	}
 }
 
-
-
-static
+static void
 get_type(prefixp, typep, dkind)
 	char **prefixp;
 	char **typep;
@@ -598,7 +597,7 @@ get_type(prefixp, typep, dkind)
 	}
 }
 
-static
+static void
 unsigned_dec(typep)
 	char **typep;
 {

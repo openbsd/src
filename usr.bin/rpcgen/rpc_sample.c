@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_sample.c,v 1.12 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_sample.c,v 1.13 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_sample.c,v 1.2 1995/06/11 21:50:01 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -54,7 +54,7 @@ static void return_type(proc_list *);
 
 void
 write_sample_svc(def)
-     definition *def;
+	definition *def;
 {
 
 	if (def->def_kind != DEF_PROGRAM)
@@ -65,9 +65,9 @@ write_sample_svc(def)
 
 int
 write_sample_clnt(def)
-     definition *def;
+	definition *def;
 {
-        version_list *vp;
+	version_list *vp;
 	int count = 0;
 
 	if (def->def_kind != DEF_PROGRAM)
@@ -83,85 +83,85 @@ write_sample_clnt(def)
 
 static void
 write_sample_client(program_name, vp)
-     char *program_name;
-     version_list *vp;
+	char *program_name;
+	version_list *vp;
 {
-  proc_list *proc;
-  int i;
-  decl_list *l;
+	proc_list *proc;
+	int i;
+	decl_list *l;
 
-  fprintf(fout, "\n\nvoid\n");
-  pvname(program_name, vp->vers_num);
-  if (Cflag)
-    fprintf(fout,"(char *host)\n{\n");
-  else
-    fprintf(fout, "(host)\nchar *host;\n{\n");
-  fprintf(fout, "\tCLIENT *clnt;\n");
-
-  i = 0;
-  for (proc = vp->procs; proc != NULL; proc = proc->next) {
-      fprintf(fout, "\t");
-      ptype(proc->res_prefix, proc->res_type, 1);
-      fprintf(fout, " *result_%d;\n",++i);
-      /* print out declarations for arguments */
-      if (proc->arg_num < 2 && !newstyle) {
-	fprintf(fout, "\t");
-	if (!streq(proc->args.decls->decl.type, "void"))
-	  ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
+	fprintf(fout, "\n\nvoid\n");
+	pvname(program_name, vp->vers_num);
+	if (Cflag)
+		fprintf(fout,"(char *host)\n{\n");
 	else
-	  fprintf(fout, "char *");  /* cannot have "void" type */
-	fprintf(fout, " ");
-	pvname(proc->proc_name, vp->vers_num);
-	fprintf(fout, "_arg;\n");
-      } else if (!streq(proc->args.decls->decl.type, "void")) {
-	for (l = proc->args.decls; l != NULL; l = l->next) {
-	  fprintf(fout, "\t");
-	  ptype(l->decl.prefix, l->decl.type, 1);
-	  fprintf(fout, " ");
-	  pvname(proc->proc_name, vp->vers_num);
-	  fprintf(fout, "_%s;\n", l->decl.name);
-/*	  pdeclaration(proc->args.argname, &l->decl, 1, ";\n");*/
+		fprintf(fout, "(host)\nchar *host;\n{\n");
+	fprintf(fout, "\tCLIENT *clnt;\n");
+
+	i = 0;
+	for (proc = vp->procs; proc != NULL; proc = proc->next) {
+		fprintf(fout, "\t");
+		ptype(proc->res_prefix, proc->res_type, 1);
+		fprintf(fout, " *result_%d;\n",++i);
+		/* print out declarations for arguments */
+		if (proc->arg_num < 2 && !newstyle) {
+			fprintf(fout, "\t");
+			if (!streq(proc->args.decls->decl.type, "void"))
+				ptype(proc->args.decls->decl.prefix,
+				    proc->args.decls->decl.type, 1);
+			else
+				fprintf(fout, "char *"); /* cannot have "void" type */
+			fprintf(fout, " ");
+			pvname(proc->proc_name, vp->vers_num);
+			fprintf(fout, "_arg;\n");
+		} else if (!streq(proc->args.decls->decl.type, "void")) {
+			for (l = proc->args.decls; l != NULL; l = l->next) {
+				fprintf(fout, "\t");
+				ptype(l->decl.prefix, l->decl.type, 1);
+				fprintf(fout, " ");
+				pvname(proc->proc_name, vp->vers_num);
+				fprintf(fout, "_%s;\n", l->decl.name);
+		/*		pdeclaration(proc->args.argname, &l->decl, 1, ";\n");*/
+			}
+		}
 	}
-      }
-    }
 
-  /* generate creation of client handle */
-  fprintf(fout, "\tclnt = clnt_create(host, %s, %s, \"%s\");\n",
-	  program_name, vp->vers_name, tirpcflag? "netpath" : "udp");
-  fprintf(fout, "\tif (clnt == NULL) {\n");
-  fprintf(fout, "\t\tclnt_pcreateerror(host);\n");
-  fprintf(fout, "\t\texit(1);\n\t}\n");
+	/* generate creation of client handle */
+	fprintf(fout, "\tclnt = clnt_create(host, %s, %s, \"%s\");\n",
+	    program_name, vp->vers_name, tirpcflag? "netpath" : "udp");
+	fprintf(fout, "\tif (clnt == NULL) {\n");
+	fprintf(fout, "\t\tclnt_pcreateerror(host);\n");
+	fprintf(fout, "\t\texit(1);\n\t}\n");
 
-  /* generate calls to procedures */
-  i = 0;
-  for (proc = vp->procs; proc != NULL; proc = proc->next) {
-      fprintf(fout, "\tresult_%d = ",++i);
-      pvname(proc->proc_name, vp->vers_num);
-      if (proc->arg_num < 2 && !newstyle) {
-	fprintf(fout, "(");
-	if (streq(proc->args.decls->decl.type, "void"))  /* cast to void* */
-	  fprintf(fout, "(void*)");
-	fprintf(fout, "&");
-	pvname(proc->proc_name, vp->vers_num);
-	fprintf(fout, "_arg, clnt);\n");
-      } else if (streq(proc->args.decls->decl.type, "void")) {
-	    fprintf(fout, "(clnt);\n");
-	  }
-      else {
-	fprintf(fout, "(");
-	for (l = proc->args.decls;  l != NULL; l = l->next) {
-	  pvname(proc->proc_name, vp->vers_num);
-	  fprintf(fout, "_%s, ", l->decl.name);
+	/* generate calls to procedures */
+	i = 0;
+	for (proc = vp->procs; proc != NULL; proc = proc->next) {
+		fprintf(fout, "\tresult_%d = ",++i);
+		pvname(proc->proc_name, vp->vers_num);
+		if (proc->arg_num < 2 && !newstyle) {
+			fprintf(fout, "(");
+			if (streq(proc->args.decls->decl.type, "void"))
+				fprintf(fout, "(void*)");
+			fprintf(fout, "&");
+			pvname(proc->proc_name, vp->vers_num);
+			fprintf(fout, "_arg, clnt);\n");
+		} else if (streq(proc->args.decls->decl.type, "void")) {
+			fprintf(fout, "(clnt);\n");
+		} else {
+			fprintf(fout, "(");
+			for (l = proc->args.decls;	l != NULL; l = l->next) {
+				pvname(proc->proc_name, vp->vers_num);
+				fprintf(fout, "_%s, ", l->decl.name);
+			}
+			fprintf(fout, "clnt);\n");
+		}
+		fprintf(fout, "\tif (result_%d == NULL) {\n", i);
+		fprintf(fout, "\t\tclnt_perror(clnt, \"call failed:\");\n");
+		fprintf(fout, "\t}\n");
 	}
-	fprintf(fout, "clnt);\n");
-      }
-      fprintf(fout, "\tif (result_%d == NULL) {\n", i);
-      fprintf(fout, "\t\tclnt_perror(clnt, \"call failed:\");\n");
-      fprintf(fout, "\t}\n");
-    }
 
-  fprintf(fout, "\tclnt_destroy(clnt);\n");
-  fprintf(fout, "}\n");
+	fprintf(fout, "\tclnt_destroy(clnt);\n");
+	fprintf(fout, "}\n");
 }
 
 static void

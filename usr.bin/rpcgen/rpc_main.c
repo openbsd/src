@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.14 2002/06/01 01:40:38 deraadt Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.15 2002/07/05 05:39:42 deraadt Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char     sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.14 2002/06/01 01:40:38 deraadt Exp $";
+static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.15 2002/07/05 05:39:42 deraadt Exp $";
 #endif
 
 /*
@@ -41,18 +41,15 @@ static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.14 2002/06/01 01:40:38 deraa
 
 #define RPCGEN_VERSION	"199506"/* This program's version (year & month) */
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/file.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#ifdef __TURBOC__
-#define	MAXPATHLEN	80
-#include <process.h>
-#include <dir.h>
-#else
-#include <sys/param.h>
-#include <sys/file.h>
-#endif
+#include <unistd.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <sys/stat.h>
 #include "rpc_parse.h"
 #include "rpc_util.h"
@@ -130,21 +127,21 @@ int tirpcflag = 0;	/* generating code for tirpc, by default */
 static char    *dos_cppfile = NULL;
 #endif
 
-static c_output(char *, char *, int, char *);
-static h_output(char *, char *, int, char *);
-static s_output(int, char **, char *, char *, int, char *, int, int);
-static l_output(char *, char *, int, char *);
-static t_output(char *, char *, int, char *);
-static svc_output(char *, char *, int, char *);
-static clnt_output(char *, char *, int, char *);
-static do_registers(int, char **);
+static void c_output(char *, char *, int, char *);
+static void h_output(char *, char *, int, char *);
+static void s_output(int, char **, char *, char *, int, char *, int, int);
+static void l_output(char *, char *, int, char *);
+static void t_output(char *, char *, int, char *);
+static void svc_output(char *, char *, int, char *);
+static void clnt_output(char *, char *, int, char *);
+static int do_registers(int, char **);
 static void addarg(char *);
 static void putarg(int, char *);
 static void clear_args(void);
 static void checkfiles(char *, char *);
 static int parseargs(int, char **, struct commandline *);
-static usage(void);
-
+static void usage(void);
+void c_initialize(void);
 
 int
 main(argc, argv)
@@ -234,8 +231,10 @@ extendfile(path, ext)
 		file++;
 
 	res = alloc(strlen(file) + strlen(ext) + 1);
-	if (res == NULL)
-		abort();
+	if (res == NULL) {
+		fprintf(stderr, "could not allocate memory\n");
+		exit(1);
+	}
 	p = strrchr(file, '.');
 	if (p == NULL)
 		p = file + strlen(file);
@@ -272,7 +271,7 @@ open_output(infile, outfile)
 
 }
 
-static
+static void
 add_warning()
 {
 	fprintf(fout, "/*\n");
@@ -282,7 +281,7 @@ add_warning()
 }
 
 /* clear list of arguments */
-static void 
+static void
 clear_args()
 {
 	int             i;
@@ -292,7 +291,7 @@ clear_args()
 }
 
 /* make sure that a CPP exists */
-static void 
+static void
 find_cpp()
 {
 	struct stat     buf;
@@ -317,7 +316,7 @@ find_cpp()
 /*
  * Open input file with given define for C-preprocessor
  */
-static
+static void
 open_input(infile, define)
 	char           *infile;
 	char           *define;
@@ -416,7 +415,7 @@ static char    *valid_i_nettypes[] = {
 	NULL
 };
 
-static int 
+static int
 check_nettype(name, list_to_check)
 	char           *name;
 	char           *list_to_check[];
@@ -434,7 +433,7 @@ check_nettype(name, list_to_check)
  * Compile into an XDR routine output file
  */
 
-static
+static void
 c_output(infile, define, extend, outfile)
 	char           *infile;
 	char           *define;
@@ -458,7 +457,7 @@ c_output(infile, define, extend, outfile)
 	} else
 		fprintf(fout, "#include <rpc/rpc.h>\n");
 	tell = ftell(fout);
-	while (def = get_definition()) {
+	while ((def = get_definition())) {
 		emit(def);
 	}
 	if (extend && tell == ftell(fout)) {
@@ -467,7 +466,8 @@ c_output(infile, define, extend, outfile)
 }
 
 
-c_initialize()
+void
+c_initialize(void)
 {
 
 	/* add all the starting basic types */
@@ -492,7 +492,7 @@ char            rpcgen_table_dcl[] = "struct rpcgen_table {\n\
 };\n";
 
 
-char           *
+char *
 generate_guard(pathname)
 	char           *pathname;
 {
@@ -501,6 +501,11 @@ generate_guard(pathname)
 	filename = strrchr(pathname, '/');	/* find last component */
 	filename = ((filename == 0) ? pathname : filename + 1);
 	guard = strdup(filename);
+	if (guard == NULL) {
+		fprintf(stderr, "out of memory while processing %s\n", filename);
+		crash();
+	}
+
 	/* convert to upper case */
 	tmp = guard;
 	while (*tmp) {
@@ -517,7 +522,7 @@ generate_guard(pathname)
  * Compile into an XDR header file
  */
 
-static
+static void
 h_output(infile, define, extend, outfile)
 	char           *infile;
 	char           *define;
@@ -544,7 +549,7 @@ h_output(infile, define, extend, outfile)
 
 	tell = ftell(fout);
 	/* print data definitions */
-	while (def = get_definition()) {
+	while ((def = get_definition())) {
 		print_datadef(def);
 	}
 
@@ -566,7 +571,7 @@ h_output(infile, define, extend, outfile)
 /*
  * Compile into an RPC service
  */
-static
+static void
 s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	int             argc;
 	char           *argv[];
@@ -632,7 +637,7 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	if ((netflag || pmflag) && tirpcflag) {
 		fprintf(fout, "#include <netconfig.h>\n");
 	}
-	if ( /* timerflag && */ tirpcflag)
+	if (/* timerflag && */ tirpcflag)
 		fprintf(fout, "#include <sys/resource.h> /* rlimit */\n");
 	if (logflag || inetdflag || pmflag) {
 		fprintf(fout, "#include <syslog.h>\n");
@@ -644,7 +649,7 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	fprintf(fout, "\n#ifdef DEBUG\n#define RPC_SVC_FG\n#endif\n");
 	if (timerflag)
 		fprintf(fout, "\n#define _RPCSVC_CLOSEDOWN %s\n", svcclosetime);
-	while (def = get_definition()) {
+	while ((def = get_definition())) {
 		foundprogram |= (def->def_kind == DEF_PROGRAM);
 	}
 	if (extend && !foundprogram) {
@@ -667,7 +672,7 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 /*
  * generate client side stubs
  */
-static
+static void
 l_output(infile, define, extend, outfile)
 	char           *infile;
 	char           *define;
@@ -690,7 +695,7 @@ l_output(infile, define, extend, outfile)
 		free(include);
 	} else
 		fprintf(fout, "#include <rpc/rpc.h>\n");
-	while (def = get_definition())
+	while ((def = get_definition()))
 		foundprogram |= (def->def_kind == DEF_PROGRAM);
 
 	if (extend && !foundprogram) {
@@ -703,7 +708,7 @@ l_output(infile, define, extend, outfile)
 /*
  * generate the dispatch table
  */
-static
+static void
 t_output(infile, define, extend, outfile)
 	char           *infile;
 	char           *define;
@@ -718,7 +723,7 @@ t_output(infile, define, extend, outfile)
 	outfilename = extend ? extendfile(infile, outfile) : outfile;
 	open_output(infile, outfilename);
 	add_warning();
-	while (def = get_definition())
+	while ((def = get_definition()))
 		foundprogram |= (def->def_kind == DEF_PROGRAM);
 
 	if (extend && !foundprogram) {
@@ -729,7 +734,7 @@ t_output(infile, define, extend, outfile)
 }
 
 /* sample routine for the server template */
-static
+static void
 svc_output(infile, define, extend, outfile)
 	char           *infile;
 	char           *define;
@@ -756,7 +761,7 @@ svc_output(infile, define, extend, outfile)
 		fprintf(fout, "#include <rpc/rpc.h>\n");
 
 	tell = ftell(fout);
-	while (def = get_definition())
+	while ((def = get_definition()))
 		write_sample_svc(def);
 
 	if (extend && tell == ftell(fout))
@@ -765,7 +770,7 @@ svc_output(infile, define, extend, outfile)
 
 
 /* sample main routine for client */
-static
+static void
 clnt_output(infile, define, extend, outfile)
 	char           *infile;
 	char           *define;
@@ -794,7 +799,7 @@ clnt_output(infile, define, extend, outfile)
 	} else
 		fprintf(fout, "#include <rpc/rpc.h>\n");
 	tell = ftell(fout);
-	while (def = get_definition())
+	while ((def = get_definition()))
 		has_program += write_sample_clnt(def);
 
 	if (has_program)
@@ -808,8 +813,7 @@ clnt_output(infile, define, extend, outfile)
  * Perform registrations for service output
  * Return 0 if failed; 1 otherwise.
  */
-static
-int 
+static int
 do_registers(argc, argv)
 	int             argc;
 	char           *argv[];
@@ -952,9 +956,9 @@ parseargs(argc, argv, cmd)
 				case 'l':
 				case 'm':
 				case 't':
-					if (flag[c])
+					if (flag[(unsigned char)c])
 						return (0);
-					flag[c] = 1;
+					flag[(unsigned char)c] = 1;
 					break;
 				case 'S':
 					/*
@@ -970,9 +974,9 @@ parseargs(argc, argv, cmd)
 					else
 						return (0);
 
-					if (flag[c])
+					if (flag[(unsigned char)c])
 						return (0);
-					flag[c] = 1;
+					flag[(unsigned char)c] = 1;
 					break;
 				case 'C':	/* ANSI C syntax */
 					Cflag = 1;
@@ -1014,7 +1018,7 @@ parseargs(argc, argv, cmd)
 					if (argv[i][j - 1] != '-' ||
 					    argv[i][j + 1] != 0)
 						return (0);
-					flag[c] = 1;
+					flag[(unsigned char)c] = 1;
 					if (++i == argc)
 						return (0);
 					if (c == 's') {
@@ -1097,8 +1101,8 @@ parseargs(argc, argv, cmd)
 	return (1);
 }
 
-static
-usage()
+static void
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-abACILNT] [-Dname[=value]] [-i lines] "
 	    "[-K seconds] infile\n", cmdname);

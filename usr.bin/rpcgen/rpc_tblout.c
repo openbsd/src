@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_tblout.c,v 1.9 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_tblout.c,v 1.10 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,6 +39,7 @@ static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
  */
 #include <sys/cdefs.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "rpc_parse.h"
 #include "rpc_util.h"
@@ -149,7 +150,7 @@ printit(prefix, type)
 {
 	int len, tabs;
 
- 	len = fprintf(fout, "\txdr_%s,", stringfix(type));
+	len = fprintf(fout, "\txdr_%s,", stringfix(type));
 	/* account for leading tab expansion */
 	len += TABSIZE - 1;
 	/* round up to tabs required */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_hout.c,v 1.11 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_hout.c,v 1.12 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_hout.c,v 1.4 1995/06/11 21:49:55 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -68,7 +68,7 @@ print_datadef(def)
 {
 
 	if (def->def_kind == DEF_PROGRAM)  /* handle data only */
-	        return;
+		return;
 
 	if (def->def_kind != DEF_CONST)
 		fprintf(fout, "\n");
@@ -93,7 +93,7 @@ print_datadef(def)
 		break;
 	}
 	if (def->def_kind != DEF_PROGRAM && def->def_kind != DEF_CONST) {
-		pxdrfuncdecl( def->def_name,
+		pxdrfuncdecl(def->def_name,
 		    def->def_kind != DEF_TYPEDEF ||
 		    !isvectordef(def->def.ty.old_type, def->def.ty.rel));
 	}
@@ -137,9 +137,10 @@ pconstdef(def)
 	pdefine(def->def_name, def->def.co);
 }
 
-/* print out the definitions for the arguments of functions in the
-   header file
-*/
+/*
+ * print out the definitions for the arguments of functions in the
+ * header file
+ */
 static void
 pargdef(def)
 	definition *def;
@@ -150,7 +151,7 @@ pargdef(def)
 	proc_list *plist;
 
 	for (vers = def->def.pr.versions; vers != NULL; vers = vers->next) {
-		for(plist = vers->procs; plist != NULL;
+		for (plist = vers->procs; plist != NULL;
 		    plist = plist->next) {
 			if (!newstyle || plist->arg_num < 2) {
 				continue; /* old style or single args */
@@ -158,7 +159,7 @@ pargdef(def)
 			name = plist->args.argname;
 			fprintf(fout, "struct %s {\n", name);
 			for (l = plist->args.decls;
-			     l != NULL; l = l->next) {
+			    l != NULL; l = l->next) {
 				pdeclaration(name, &l->decl, 1, ";\n");
 			}
 			fprintf(fout, "};\n");
@@ -274,7 +275,7 @@ pprogramdef(def)
 		 * Print out 3 definitions, one for ANSI-C, another for C++,
 		 * a third for old style C
 		 */
-		for(i=0; i<3; i++) {
+		for (i=0; i<3; i++) {
 			if (i==0) {
 				fprintf(fout,"\n#ifdef __cplusplus\n");
 				ext = "extern \"C\" ";
@@ -431,7 +432,7 @@ pdeclaration(name, dec, tab, separator)
 	char *name;
 	declaration *dec;
 	int tab;
-        char *separator;
+	char *separator;
 {
 	char buf[8];	/* enough to hold "struct ", include NUL */
 	char *prefix;

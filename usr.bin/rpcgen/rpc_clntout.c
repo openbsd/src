@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_clntout.c,v 1.10 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_clntout.c,v 1.11 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_clntout.c,v 1.4 1995/06/11 21:49:52 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -84,7 +84,7 @@ write_program(def)
 			ptype(proc->res_prefix, proc->res_type, 1);
 			fprintf(fout, "*\n");
 			pvname(proc->proc_name, vp->vers_num);
-			printarglist( proc, "clnt", "CLIENT *" );
+			printarglist(proc, "clnt", "CLIENT *");
 			fprintf(fout, "{\n");
 			printbody(proc);
 			fprintf(fout, "}\n");
@@ -92,61 +92,59 @@ write_program(def)
 	}
 }
 
-/* Writes out declarations of procedure's argument list.
-   In either ANSI C style, in one of old rpcgen style (pass by reference),
-   or new rpcgen style (multiple arguments, pass by value);
-   */
+/*
+ * Writes out declarations of procedure's argument list.
+ * In either ANSI C style, in one of old rpcgen style (pass by reference),
+ * or new rpcgen style (multiple arguments, pass by value);
+ */
 
 /* sample addargname = "clnt"; sample addargtype = "CLIENT * " */
 
-void printarglist( proc, addargname, addargtype )
-     proc_list *proc;
-     char *addargname, *addargtype;
+void printarglist(proc, addargname, addargtype)
+	proc_list *proc;
+	char *addargname, *addargtype;
 {
+	decl_list *l;
 
-  decl_list *l;
+	if (!newstyle) {	/* old style: always pass argument by reference */
+		if (Cflag) {			/* C++ style heading */
+			fprintf(fout, "(");
+			ptype(proc->args.decls->decl.prefix,
+			    proc->args.decls->decl.type, 1);
+			fprintf(fout, "*argp, %s%s)\n", addargtype, addargname);
+		} else {
+			fprintf(fout, "(argp, %s)\n", addargname);
+			fprintf(fout, "\t");
+			ptype(proc->args.decls->decl.prefix,
+			    proc->args.decls->decl.type, 1);
+			fprintf(fout, "*argp;\n");
+		}
+	} else if (streq(proc->args.decls->decl.type, "void")) {
+		/* newstyle, 0 argument */
+		if (Cflag)
+			fprintf(fout, "(%s%s)\n", addargtype, addargname);
+		else
+			fprintf(fout, "(%s)\n", addargname);
+	} else {
+		/* new style, 1 or multiple arguments */
+		if (!Cflag) {
+			fprintf(fout, "(");
+			for (l = proc->args.decls; l != NULL; l = l->next)
+				fprintf(fout, "%s, ", l->decl.name);
+			fprintf(fout, "%s)\n", addargname);
+			for (l = proc->args.decls; l != NULL; l = l->next)
+				pdeclaration(proc->args.argname, &l->decl, 1, ";\n");
+		} else {	/* C++ style header */
+			fprintf(fout, "(");
+			for (l = proc->args.decls; l != NULL; l = l->next)
+				pdeclaration(proc->args.argname, &l->decl, 0, ", ");
+			fprintf(fout, " %s%s)\n", addargtype, addargname);
+		}
+	}
 
-  if (!newstyle) {    /* old style: always pass argument by reference */
-    if (Cflag) {      /* C++ style heading */
-      fprintf(fout, "(");
-      ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
-      fprintf(fout, "*argp, %s%s)\n", addargtype, addargname );
-    } else {
-      fprintf(fout, "(argp, %s)\n", addargname);
-      fprintf(fout, "\t");
-      ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
-      fprintf(fout, "*argp;\n");
-    }
-  } else if (streq( proc->args.decls->decl.type, "void")) {
-    /* newstyle, 0 argument */
-    if (Cflag)
-      fprintf(fout, "(%s%s)\n", addargtype, addargname );
-    else
-      fprintf(fout, "(%s)\n", addargname);
-  } else {
-    /* new style, 1 or multiple arguments */
-    if (!Cflag) {
-      fprintf(fout, "(");
-      for (l = proc->args.decls;  l != NULL; l = l->next)
-	fprintf(fout, "%s, ", l->decl.name);
-      fprintf(fout, "%s)\n", addargname );
-      for (l = proc->args.decls; l != NULL; l = l->next) {
-	pdeclaration(proc->args.argname, &l->decl, 1, ";\n" );
-      }
-    } else {  /* C++ style header */
-      fprintf(fout, "(");
-      for(l = proc->args.decls; l != NULL; l = l->next) {
-	pdeclaration(proc->args.argname, &l->decl, 0, ", " );
-      }
-      fprintf(fout, " %s%s)\n", addargtype, addargname );
-    }
-  }
-
-  if (!Cflag)
-    fprintf(fout, "\t%s%s;\n", addargtype, addargname );
+	if (!Cflag)
+		fprintf(fout, "\t%s%s;\n", addargtype, addargname);
 }
-
-
 
 static char *
 ampr(type)
@@ -163,12 +161,14 @@ static void
 printbody(proc)
 	proc_list *proc;
 {
-  decl_list *l;
-  bool_t args2 = (proc->arg_num > 1);
+	decl_list *l;
+	bool_t args2 = (proc->arg_num > 1);
 
-  /* For new style with multiple arguments, need a structure in which
-     to stuff the arguments. */
-	if ( newstyle && args2) {
+	/*
+	 * For new style with multiple arguments, need a structure in which
+	 * to stuff the arguments.
+	 */
+	if (newstyle && args2) {
 		fprintf(fout, "\t%s", proc->args.argname);
 		fprintf(fout, " arg;\n");
 	}
@@ -180,44 +180,44 @@ printbody(proc)
 	}
 	fprintf(fout, "%s;\n",RESULT);
 	fprintf(fout, "\n");
-        fprintf(fout, "\tmemset((char *)%s%s, 0, sizeof(%s));\n",
-		ampr(proc->res_type ), RESULT, RESULT);
-	if (newstyle && !args2 && (streq( proc->args.decls->decl.type, "void"))) {
-	  /* newstyle, 0 arguments */
-	  fprintf(fout,
+	fprintf(fout, "\tmemset((char *)%s%s, 0, sizeof(%s));\n",
+	    ampr(proc->res_type), RESULT, RESULT);
+	if (newstyle && !args2 && (streq(proc->args.decls->decl.type, "void"))) {
+		/* newstyle, 0 arguments */
+		fprintf(fout,
 		    "\tif (clnt_call(clnt, %s, xdr_void", proc->proc_name);
-	  fprintf(fout,
- 		  ", NULL, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
- 		  stringfix(proc->res_type), ampr(proc->res_type), RESULT);
-
-	} else if ( newstyle && args2) {
-	  /* newstyle, multiple arguments:  stuff arguments into structure */
-	  for (l = proc->args.decls;  l != NULL; l = l->next) {
-	    fprintf(fout, "\targ.%s = %s;\n",
-		    l->decl.name, l->decl.name);
-	  }
-	  fprintf(fout,
-		  "\tif (clnt_call(clnt, %s, xdr_%s", proc->proc_name,
-		  proc->args.argname);
-	  fprintf(fout,
- 		  ", &arg, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
- 		  stringfix(proc->res_type),
-		  ampr(proc->res_type), RESULT);
+		fprintf(fout,
+		    ", NULL, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
+		    stringfix(proc->res_type), ampr(proc->res_type), RESULT);
+	} else if (newstyle && args2) {
+		/* newstyle, multiple arguments:  stuff arguments into structure */
+		for (l = proc->args.decls;  l != NULL; l = l->next) {
+			fprintf(fout, "\targ.%s = %s;\n",
+			    l->decl.name, l->decl.name);
+		}
+		fprintf(fout,
+		    "\tif (clnt_call(clnt, %s, xdr_%s", proc->proc_name,
+		    proc->args.argname);
+		fprintf(fout,
+		    ", &arg, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
+		    stringfix(proc->res_type),
+		    ampr(proc->res_type), RESULT);
 	} else {  /* single argument, new or old style */
-	      fprintf(fout,
- 		      "\tif (clnt_call(clnt, %s, xdr_%s, %s%s, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
-		      proc->proc_name,
-		      stringfix(proc->args.decls->decl.type),
-		      (newstyle ? "&" : ""),
-		      (newstyle ? proc->args.decls->decl.name : "argp"),
-		      stringfix(proc->res_type),
-		      ampr(proc->res_type),RESULT);
-	    }
+		fprintf(fout,
+		    "\tif (clnt_call(clnt, %s, xdr_%s, %s%s, xdr_%s, "
+		    "%s%s, TIMEOUT) != RPC_SUCCESS) {\n",
+		    proc->proc_name,
+		    stringfix(proc->args.decls->decl.type),
+		    (newstyle ? "&" : ""),
+		    (newstyle ? proc->args.decls->decl.name : "argp"),
+		    stringfix(proc->res_type),
+		    ampr(proc->res_type),RESULT);
+	}
 	fprintf(fout, "\t\treturn (NULL);\n");
 	fprintf(fout, "\t}\n");
 	if (streq(proc->res_type, "void")) {
 		fprintf(fout, "\treturn ((void *)%s%s);\n",
-			ampr(proc->res_type),RESULT);
+		    ampr(proc->res_type),RESULT);
 	} else {
 		fprintf(fout, "\treturn (%s%s);\n", ampr(proc->res_type),RESULT);
 	}

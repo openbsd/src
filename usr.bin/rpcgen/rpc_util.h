@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.h,v 1.10 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.h,v 1.11 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.h,v 1.3 1995/06/11 21:50:10 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -154,3 +154,6 @@ void write_tables(void);
 void write_sample_svc(definition *);
 int write_sample_clnt(definition *);
 void write_sample_clnt_main(void);
+
+void add_type(int len, char *type);
+

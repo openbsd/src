@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.h,v 1.3 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: rpc_scan.h,v 1.4 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_scan.h,v 1.3 1995/06/11 21:50:04 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -101,6 +101,7 @@ void scan_num(token *);
 void peek(token *);
 int peekscan(tok_kind, token *);
 void get_token(token *);
+void reinitialize(void);
 
 void expected1(tok_kind);
 void expected2(tok_kind, tok_kind);

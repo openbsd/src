@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.9 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.10 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -119,8 +119,13 @@ storeval(lstp, val)
 	list **l;
 	list *lst;
 
-	for (l = lstp; *l != NULL; l = (list **) & (*l)->next);
+	for (l = lstp; *l != NULL; l = (list **) & (*l)->next)
+		;
 	lst = ALLOC(list);
+	if (lst == NULL) {
+		fprintf(stderr, "failed in alloc\n");
+		exit(1);
+	}
 	lst->val = val;
 	lst->next = NULL;
 	*l = lst;
@@ -200,11 +205,10 @@ typedefed(def, type)
 	definition *def;
 	char *type;
 {
-	if (def->def_kind != DEF_TYPEDEF || def->def.ty.old_prefix != NULL) {
+	if (def->def_kind != DEF_TYPEDEF || def->def.ty.old_prefix != NULL)
 		return (0);
-	} else {
+	else
 		return (streq(def->def_name, type));
-	}
 }
 
 int
@@ -224,9 +228,8 @@ isvectordef(type, rel)
 			return (0);
 		case REL_ALIAS:
 			def = (definition *) FINDVAL(defined, type, typedefed);
-			if (def == NULL) {
+			if (def == NULL)
 				return (0);
-			}
 			type = def->def.ty.old_type;
 			rel = def->def.ty.rel;
 		}
@@ -241,9 +244,8 @@ locase(str)
 	static char buf[100];
 	char *p = buf;
 
-	while ((c = *str++)) {
+	while ((c = *str++))
 		*p++ = (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c;
-	}
 	*p = 0;
 	return (buf);
 }
@@ -315,7 +317,7 @@ expected1(exp1)
 	tok_kind exp1;
 {
 	snprintf(expectbuf, sizeof expectbuf, "expected '%s'",
-		toktostr(exp1));
+	    toktostr(exp1));
 	error(expectbuf);
 }
 
@@ -327,8 +329,7 @@ expected2(exp1, exp2)
 	tok_kind exp1, exp2;
 {
 	snprintf(expectbuf, sizeof expectbuf, "expected '%s' or '%s'",
-		toktostr(exp1),
-		toktostr(exp2));
+	    toktostr(exp1), toktostr(exp2));
 	error(expectbuf);
 }
 
@@ -340,9 +341,7 @@ expected3(exp1, exp2, exp3)
 	tok_kind exp1, exp2, exp3;
 {
 	snprintf(expectbuf, sizeof expectbuf, "expected '%s', '%s' or '%s'",
-		toktostr(exp1),
-		toktostr(exp2),
-		toktostr(exp3));
+	    toktostr(exp1), toktostr(exp2), toktostr(exp3));
 	error(expectbuf);
 }
 
@@ -399,7 +398,8 @@ toktostr(kind)
 {
 	token *sp;
 
-	for (sp = tokstrings; sp->kind != TOK_EOF && sp->kind != kind; sp++);
+	for (sp = tokstrings; sp->kind != TOK_EOF && sp->kind != kind; sp++)
+		;
 	return (sp->str);
 }
 
@@ -457,7 +457,7 @@ make_argname(pname, vname)
 
 	name = (char *)malloc(len);
 	if (!name) {
-		fprintf(stderr, "failed in malloc");
+		fprintf(stderr, "failed in malloc\n");
 		exit(1);
 	}
 	snprintf(name, len, "%s_%s_%s", locase(pname), vname, ARGEXT);
@@ -468,26 +468,26 @@ bas_type *typ_list_h;
 bas_type *typ_list_t;
 
 void
-add_type(len,type)
+add_type(len, type)
 	int len;
 	char *type;
 {
 	bas_type *ptr;
 
 	if ((ptr = (bas_type *)malloc(sizeof(bas_type))) == (bas_type *)NULL) {
-		fprintf(stderr, "failed in malloc");
+		fprintf(stderr, "failed in malloc\n");
 		exit(1);
 	}
 
-	ptr->name=type;
-	ptr->length=len;
-	ptr->next=NULL;
+	ptr->name = type;
+	ptr->length = len;
+	ptr->next = NULL;
 	if (typ_list_t == NULL) {
-		typ_list_t=ptr;
-		typ_list_h=ptr;
+		typ_list_t = ptr;
+		typ_list_h = ptr;
 	} else {
-		typ_list_t->next=ptr;
-		typ_list_t=ptr;
+		typ_list_t->next = ptr;
+		typ_list_t = ptr;
 	}
 }
 
@@ -500,10 +500,10 @@ find_type(type)
 	ptr = typ_list_h;
 
 	while (ptr != NULL) {
-		if (strcmp(ptr->name,type) == 0)
+		if (strcmp(ptr->name, type) == 0)
 			return(ptr);
 		else
-			ptr=ptr->next;
+			ptr = ptr->next;
 	}
 	return(NULL);
 }

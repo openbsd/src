@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.9 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.10 2002/07/05 05:39:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -47,15 +47,15 @@ static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static unget_token(token *tokp);
-static findstrconst(char **, char **);
-static findchrconst(char **, char **);
-static findconst(char **, char **);
-static findkind(char **, token *);
-static cppline(char *);
-static directive(char *);
-static printdirective(char *);
-static docppline(char *, int *, char **);
+static void unget_token(token *tokp);
+static void findstrconst(char **, char **);
+static void findchrconst(char **, char **);
+static void findconst(char **, char **);
+static void findkind(char **, token *);
+static int cppline(char *);
+static int directive(char *);
+static void printdirective(char *);
+static void docppline(char *, int *, char **);
 
 #define startcomment(where) (where[0] == '/' && where[1] == '*')
 #define endcomment(where) (where[-1] == '*' && where[0] == '/')
@@ -305,7 +305,7 @@ get_token(tokp)
 	}
 }
 
-static
+static void
 unget_token(tokp)
 	token *tokp;
 {
@@ -313,7 +313,7 @@ unget_token(tokp)
 	pushed = 1;
 }
 
-static
+static void
 findstrconst(str, val)
 	char **str;
 	char **val;
@@ -323,7 +323,7 @@ findstrconst(str, val)
 
 	p = *str;
 	do {
-		*p++;
+		p++;
 	} while (*p && *p != '"');
 	if (*p == 0) {
 		error("unterminated string constant");
@@ -331,12 +331,14 @@ findstrconst(str, val)
 	p++;
 	size = p - *str;
 	*val = alloc(size + 1);
+	if (val == NULL)
+		error("alloc failed");
 	(void) strncpy(*val, *str, size);
 	(*val)[size] = 0;
 	*str = p;
 }
 
-static
+static void
 findchrconst(str, val)
 	char **str;
 	char **val;
@@ -346,7 +348,7 @@ findchrconst(str, val)
 
 	p = *str;
 	do {
-		*p++;
+		p++;
 	} while (*p && *p != '\'');
 	if (*p == 0) {
 		error("unterminated string constant");
@@ -357,12 +359,14 @@ findchrconst(str, val)
 		error("empty char string");
 	}
 	*val = alloc(size + 1);
+	if (val == NULL)
+		error("alloc failed");
 	(void) strncpy(*val, *str, size);
 	(*val)[size] = 0;
 	*str = p;
 }
 
-static
+static void
 findconst(str, val)
 	char **str;
 	char **val;
@@ -383,6 +387,8 @@ findconst(str, val)
 	}
 	size = p - *str;
 	*val = alloc(size + 1);
+	if (val == NULL)
+		error("alloc failed");
 	(void) strncpy(*val, *str, size);
 	(*val)[size] = 0;
 	*str = p;
@@ -413,7 +419,7 @@ static token symbols[] = {
 	{TOK_EOF, "??????"},
 };
 
-static
+static void
 findkind(mark, tokp)
 	char **mark;
 	token *tokp;
@@ -437,33 +443,35 @@ findkind(mark, tokp)
 	tokp->kind = TOK_IDENT;
 	for (len = 0; isalnum(str[len]) || str[len] == '_'; len++);
 	tokp->str = alloc(len + 1);
+	if (tokp->str == NULL)
+		error("alloc failed");
 	(void) strncpy(tokp->str, str, len);
 	tokp->str[len] = 0;
 	*mark = str + len;
 }
 
-static
+static int
 cppline(line)
 	char *line;
 {
 	return (line == curline && *line == '#');
 }
 
-static
+static int
 directive(line)
 	char *line;
 {
 	return (line == curline && *line == '%');
 }
 
-static
+static void
 printdirective(line)
 	char *line;
 {
 	fprintf(fout, "%s", line + 1);
 }
 
-static
+static void
 docppline(line, lineno, fname)
 	char *line;
 	int *lineno;
@@ -489,6 +497,8 @@ docppline(line, lineno, fname)
 	}
 	line++;
 	p = file = alloc(strlen(line) + 1);
+	if (p == NULL)
+		error("alloc failed");
 	while (*line && *line != '"') {
 		*p++ = *line++;
 	}
