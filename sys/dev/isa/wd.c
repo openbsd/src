@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.32 1997/12/10 23:09:37 rees Exp $	*/
+/*	$OpenBSD: wd.c,v 1.33 1998/07/23 04:40:11 csapuntz Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -175,16 +175,33 @@ wdattach(parent, self, aux)
 
 	printf(": <%s>\n", buf);
 	if (d_link->sc_lp->d_type != DTYPE_ST506) {
-		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec (%dKB cache)\n",
-		    self->dv_xname,
-		    d_link->sc_params.wdp_cylinders *
-		    (d_link->sc_params.wdp_heads *
-		     d_link->sc_params.wdp_sectors) / (1048576 / DEV_BSIZE),
-		    d_link->sc_params.wdp_cylinders,
-		    d_link->sc_params.wdp_heads,
-		    d_link->sc_params.wdp_sectors,
-		    DEV_BSIZE,
-		    d_link->sc_params.wdp_bufsize / 2);
+		if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
+
+			printf("%s: %dMB, %d sec, %d bytes/sec (%dKB cache)\n",
+			       self->dv_xname,
+			       d_link->sc_params.wdp_lbacapacity / 2048,
+			       d_link->sc_params.wdp_lbacapacity,
+			       DEV_BSIZE, /* XXX */
+			       d_link->sc_params.wdp_bufsize / 2);
+
+			printf ("%s: %d cyl, %d head, %d sec\n",
+				self->dv_xname,
+				d_link->sc_params.wdp_cylinders,
+				d_link->sc_params.wdp_heads,
+				d_link->sc_params.wdp_sectors);
+		}
+		else {
+			printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec (%dKB cache)\n",
+			       self->dv_xname,
+			       d_link->sc_params.wdp_cylinders *
+			       (d_link->sc_params.wdp_heads *
+				d_link->sc_params.wdp_sectors) / (1048576 / DEV_BSIZE),
+			       d_link->sc_params.wdp_cylinders,
+			       d_link->sc_params.wdp_heads,
+			       d_link->sc_params.wdp_sectors,
+			       DEV_BSIZE,
+			       d_link->sc_params.wdp_bufsize / 2);
+		}
 	}
 
 #if NISADMA > 0
@@ -193,13 +210,13 @@ wdattach(parent, self, aux)
 		d_link->sc_mode = WDM_DMA;
 	} else
 #endif
-	if (d_link->sc_params.wdp_maxmulti > 1) {
-		d_link->sc_mode = WDM_PIOMULTI;
-		d_link->sc_multiple = min(d_link->sc_params.wdp_maxmulti, 16);
-	} else {
-		d_link->sc_mode = WDM_PIOSINGLE;
-		d_link->sc_multiple = 1;
-	}
+		if (d_link->sc_params.wdp_maxmulti > 1) {
+			d_link->sc_mode = WDM_PIOMULTI;
+			d_link->sc_multiple = min(d_link->sc_params.wdp_maxmulti, 16);
+		} else {
+			d_link->sc_mode = WDM_PIOSINGLE;
+			d_link->sc_multiple = 1;
+		}
 
 	printf("%s: using", wd->sc_dev.dv_xname);
 #if NISADMA > 0
@@ -208,8 +225,8 @@ wdattach(parent, self, aux)
 	else
 #endif
 		printf(" %d-sector %d-bit pio transfers,",
-		    d_link->sc_multiple,
-		    (d_link->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
+		       d_link->sc_multiple,
+		       (d_link->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
 	if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
 		printf(" lba addressing\n");
 	else
