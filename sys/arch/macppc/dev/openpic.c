@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.5 2001/09/28 04:13:12 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.6 2001/10/03 14:07:05 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -74,7 +74,7 @@ static char *intr_typename __P((int type));
 static void intr_calculatemasks __P((void));
 static __inline int cntlzw __P((int x));
 static int mapirq __P((int irq));
-int prog_switch __P((void *arg));
+int openpic_prog_button __P((void *arg));
 void openpic_enable_irq_mask __P((int irq_mask));
 
 #define HWIRQ_MAX 27
@@ -169,7 +169,7 @@ openpic_attach(parent, self, aux)
 
 #if 1
 	mac_intr_establish(parent, 0x37, IST_LEVEL,
-		IPL_HIGH, prog_switch, (void*)0x37, "prog button");
+		IPL_HIGH, openpic_prog_button, (void*)0x37, "prog button");
 #endif
 	ppc_intr_enable(1);
 
@@ -685,4 +685,19 @@ openpic_init()
                 openpic_disable_irq(irq);
 
         install_extint(ext_intr_openpic);
+}
+
+/*
+ * programmer_button function to fix args to Debugger.
+ * deal with any enables/disables, if necessary.
+ */
+int
+openpic_prog_button (void *arg)
+{
+#ifdef DDB
+        Debugger();
+#else
+	printf("programmer button pressed, debugger not available\n");
+#endif
+	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.4 2001/09/28 04:13:12 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.5 2001/10/03 14:07:05 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -144,7 +144,7 @@ macintr_match(parent, cf, aux)
 u_int8_t *interrupt_reg;
 typedef void  (void_f) (void);
 extern void_f *pending_int_f;
-int prog_switch (void *arg);
+int macintr_prog_button (void *arg);
 
 intr_establish_t macintr_establish;
 intr_disestablish_t macintr_disestablish;
@@ -173,7 +173,7 @@ macintr_attach(parent, self, aux)
 	macintr_collect_preconf_intr();
 
 	mac_intr_establish(parent, 0x14, IST_LEVEL, IPL_HIGH,
-		prog_switch, (void *)0x14, "prog button");
+		macintr_prog_button, (void *)0x14, "prog button");
 
 	ppc_intr_enable(1);
 
@@ -202,8 +202,12 @@ macintr_collect_preconf_intr()
 }
 
 
+/*
+ * programmer_button function to fix args to Debugger.
+ * deal with any enables/disables, if necessary.
+ */
 int
-prog_switch (void *arg)
+macintr_prog_button (void *arg)
 {
 #ifdef DDB
         Debugger();
