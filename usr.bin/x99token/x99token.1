@@ -1,4 +1,4 @@
-.\" $OpenBSD: x99token.1,v 1.2 2001/08/01 21:36:19 millert Exp $
+.\" $OpenBSD: x99token.1,v 1.3 2001/08/01 23:16:03 millert Exp $
 .\"
 .Dd August 1, 2001
 .Dt X99TOKEN 1
@@ -77,12 +77,15 @@ predicted challenge.  This process may be repeated.
 .It Pa $HOME/.keyfile.des
 default keyfile
 .El
-.Sh NOTES
+.Sh SEE ALSO
+.Xr tokenadm 8 ,
+.Xr tokeninit 8
+.Sh AUTHORS
+Paul Borman <prb@krystal.com>
+.Sh CAVEATS
 This is a very simple minded program.  It is recommended that the
 keyfile be placed on a floppy disk which you keep physically secure.
 .Pp
 Having not read the X9.9 standard, this may not be complete or accurate
 implementation of that standard.  This software is provided AS IS
 with no express or implied warranty.
-.Sh AUTHOR
-Paul Borman <prb@krystal.com>
