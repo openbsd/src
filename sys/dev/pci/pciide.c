@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.56 2001/06/27 05:22:31 deraadt Exp $     */
+/*      $OpenBSD: pciide.c,v 1.57 2001/07/19 18:16:22 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
 
 /*
@@ -302,6 +302,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 
 const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC756_IDE,	/* AMD 756 */
+	  0,
+	  amd756_chip_map
+	},
+	{ PCI_PRODUCT_AMD_766_IDE, /* AMD 766 */
 	  0,
 	  amd756_chip_map
 	},
@@ -1880,7 +1884,14 @@ amd756_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 4;
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_AMD_766_IDE:
+		sc->sc_wdcdev.UDMA_cap = 5;
+		break;
+	default:
+		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	}
 	sc->sc_wdcdev.set_modes = amd756_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
@@ -1931,6 +1942,8 @@ amd756_setup_channel(chp)
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 #ifndef	PCIIDE_AMD756_ENABLEDMA
+	int product = PCI_PRODUCT(
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_ID_REG));
 	int rev = PCI_REVISION(
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 #endif
@@ -1975,7 +1988,7 @@ amd756_setup_channel(chp)
 			 * PCIIDE_AMD756_ENABLEDMA. It causes a hard hang if
 			 * triggered. 
 			 */
-			if (AMD756_CHIPREV_DISABLEDMA(rev)) {
+			if (AMD756_CHIPREV_DISABLEDMA(product, rev)) {
 				printf("%s:%d:%d: multi-word DMA disabled due "
 				    "to chip revision\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_amd_reg.h,v 1.3 2001/04/04 07:02:52 csapuntz Exp $ 	*/
+/*	$OpenBSD: pciide_amd_reg.h,v 1.4 2001/07/19 18:16:22 csapuntz Exp $ 	*/
 /*	$NetBSD: pciide_amd_reg.h,v 1.2 2000/07/06 15:08:11 bouyer Exp $	*/
 
 /*
@@ -51,7 +51,8 @@
  * 
  * See: http://www.amd.com/products/cpg/athlon/techdocs/pdf/22591.pdf
  */
-#define	AMD756_CHIPREV_DISABLEDMA(rev)	((rev) <= AMD756_CHIPREV_D2)
+#define	AMD756_CHIPREV_DISABLEDMA(product, rev)	\
+        ((product) == PCI_PRODUCT_AMD_PBC756_IDE && (rev) <= AMD756_CHIPREV_D2)
 
 /* Channel enable */
 #define AMD756_CHANSTATUS_EN		0x40
@@ -78,4 +79,4 @@ static const int8_t amd756_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
 #define AMD756_UDMA_EN_MTH(channel, drive) (0x80 << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 
-static const int8_t amd756_udma_tim[] = {0x02, 0x01, 0x00, 0x04, 0x05};
+static const int8_t amd756_udma_tim[] = {0x02, 0x01, 0x00, 0x04, 0x05, 0x06};
