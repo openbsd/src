@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 2001/04/17 04:15:27 drahn Exp $
+#	$OpenBSD: install.md,v 1.23 2001/04/17 05:37:01 drahn Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -79,12 +79,19 @@ md_questions() {
 }
 
 md_installboot() {
-	echo "Installing boot in the msdos partition /dev/${1}i"
-	if mount -t msdos /dev/${1}i /mnt2 ; then
-		cp /usr/mdec/ofwboot /mnt2
-		umount /mnt2
-	else
-		echo "Failed, you will not be able to boot from /dev/${1}."
+	if [[ $disklabeltype = "HFS" ]] 
+	then
+		echo "the 'ofwboot' program needs to be copied to the first HFS partition"
+		echo "of the disk to allow booting of OpenBSD"
+	elif [[ $disklabeltype = "MBR" ]] 
+	then
+		echo "Installing boot in the msdos partition /dev/${1}i"
+		if mount -t msdos /dev/${1}i /mnt2 ; then
+			cp /usr/mdec/ofwboot /mnt2
+			umount /mnt2
+		else
+			echo "Failed, you will not be able to boot from /dev/${1}."
+		fi
 	fi
 }
 
@@ -163,12 +170,12 @@ md_checkfordisklabel() {
 	getresp "h"
 	case "$resp" in
 	m*|M*)
-		disklabeltype=MBR
+		export disklabeltype=MBR
 		md_checkforMBRdisklabel $1
 		rval=$?
 		;;
 	*)
-		disklabeltype=HFS
+		export disklabeltype=HFS
 		md_init_hfs $1
 		rval=$?
 		;;
