@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.5 2000/01/07 00:57:54 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.6 2000/01/11 07:47:09 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,6 +94,7 @@ in_gif_output(ifp, family, m, rt)
 	struct xformsw xfs;
 	int error;
 	int hlen, poff;
+	u_int16_t plen;
 	struct mbuf *mp;
 
 	if (sin_src == NULL || sin_dst == NULL ||
@@ -138,6 +139,10 @@ in_gif_output(ifp, family, m, rt)
 		break;
 #endif
 	default:
+#ifdef DIAGNOSTIC
+	        printf("in_gif_output: warning: unknown family %d passed\n",
+			family);
+#endif
 		m_freem(m);
 		return EAFNOSUPPORT;
 	}
@@ -152,17 +157,12 @@ in_gif_output(ifp, family, m, rt)
 
 	m = mp;
 
-    {
 	/* ip_output needs host-order length.  it should be nuked */
-	struct ip *ip;
-	if (m->m_len < sizeof(struct ip)) {
-		m = m_pullup(m, sizeof(struct ip));
-		if (m == NULL)
-			return ENOBUFS;
-	}
-	ip = mtod(m, struct ip *);
-	ip->ip_len = ntohs(ip->ip_len);
-    }
+	m_copydata(m, offsetof(struct ip, ip_len), sizeof(u_int16_t),
+		   (caddr_t) &plen);
+	NTOHS(plen);
+	m_copyback(m, offsetof(struct ip, ip_len), sizeof(u_int16_t),
+		   (caddr_t) &plen);
 
 	return ip_output(m, NULL, NULL, 0, NULL, NULL);
 }
@@ -187,10 +187,7 @@ in_gif_input(m, va_alist)
 	off = va_arg(ap, int);
 	va_end(ap);
 
-	/*
-	 * XXX
-	 * what if we run transport-mode IPsec to protect gif tunnel?
-	 */
+	/* XXX what if we run transport-mode IPsec to protect gif tunnel ? */
 	if (m->m_flags & (M_AUTH | M_CONF))
 		goto inject;
 
@@ -216,8 +213,10 @@ in_gif_input(m, va_alist)
 			continue;
 		}
 
-		if (satosin(sc->gif_psrc)->sin_addr.s_addr == ip->ip_dst.s_addr
-		 && satosin(sc->gif_pdst)->sin_addr.s_addr == ip->ip_src.s_addr)
+		if (satosin(sc->gif_psrc)->sin_addr.s_addr ==
+		    ip->ip_dst.s_addr
+		 && satosin(sc->gif_pdst)->sin_addr.s_addr ==
+		    ip->ip_src.s_addr)
 		{
 			gifp = &sc->gif_if;
 			break;
