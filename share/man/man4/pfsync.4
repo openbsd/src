@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.18 2004/08/03 06:02:44 mcbride Exp $
+.\"	$OpenBSD: pfsync.4,v 1.19 2004/08/03 09:15:33 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" Copyright (c) 2003-2004 Ryan McBride
@@ -106,12 +106,12 @@ interface using IP multicast packets.
 The protocol is IP protocol 240, PFSYNC, and the multicast group
 used is 224.0.0.240.
 When a peer address is specified using the
-.Em syncpeer
+.Ic syncpeer
 keyword, the peer address is used as a destination for the pfsync traffic,
 and the traffic can then be protected using
 .Xr ipsec 4 .
 In such a configuration, the syncif should be set to the
-.Xr enc
+.Xr enc 4
 interface, as this is where the traffic arrives when it is decapsulated,
 e.g.:
 .Bd -literal -offset indent
@@ -121,7 +121,7 @@ e.g.:
 It is important that the pfsync traffic be well secured
 as there is no authentication on the protocol and it would
 be trivial to spoof packets which create states, bypassing the pf ruleset.
-Either run the pfsync protocol on a trusted network - ideally  a network
+Either run the pfsync protocol on a trusted network \- ideally  a network
 dedicated to pfsync messages such as a crossover cable between two firewalls,
 or specify a peer address and protect the traffic with
 .Xr ipsec 4 .
@@ -225,7 +225,7 @@ net.inet.carp.preempt=1
 .Ed
 .Sh SEE ALSO
 .Xr bpf 4 ,
-.Xr enc 4,
+.Xr enc 4 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr ipsec 4 ,
