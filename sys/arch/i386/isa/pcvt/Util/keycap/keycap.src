@@ -1,4 +1,4 @@
-#	$OpenBSD: keycap.src,v 1.6 2000/05/25 18:58:15 hugh Exp $
+#	$OpenBSD: keycap.src,v 1.7 2000/05/27 02:30:20 hugh Exp $
 
 # Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis, Joerg Wunsch and
 #                                Holger Veit.
@@ -653,20 +653,20 @@ koi8:koi8-r:ru-koi8:ru:dummy cyrillic keymap:\
 # contributed by Trevor Schroeder?
 # not rigorously tested 
 
-dvorak|Dvorak Keyboard:\ 
-:K12=[:C12=^[:S12={:K13=]:C13=^]:S13=}:\ 
-:K17=':S17=":C17=^':K18=,:S18=<:K19=.:S19=>:K20=p:\ 
-:C20=^p:S20=P:K21=y:C21=^y:S21=Y:K22=f:C22=^f:S22=F:\ 
-:K23=g:C23=^g:S23=G:K24=c:C24=^c:S24=C:K25=r:C25=^r:\ 
-:S25=R:K26=l:c26=^l:S26=L:K27=/:S27=?:K28==:S28=+:\ 
-:K31=a:C31=^a:S31=A:K32=o:C32=^o:S32=O:K33=e:C33=^e:\ 
-:S33=E:K34=u:C34=^u:S34=U:K35=i:K35=^i:S35=I:K36=d:\ 
-:C36=^d:S36=D:K37=h:C37:=^h:S37=H:K38=t:C38=^t:\ 
-:S38=T:K39=n:C39=^n:S39=N:K40=s:C40=^s:S40=S:K41=-:\ 
-:S41=_:\ 
-:K46=;:S46=\::K47=q:C47=^q:S47=Q:K48=j:C48=^j:\ 
-:S48=J:K49=k:C49=^k:S49=K:K50=x:C50=^x:S50=X:K51=b:\ 
-:C51=^b:S51=B:K52=m:C52=^m:S52=M:K53=w:C53=^w:S53=W:\ 
-:K54=v:C54=^v:S54=V:K55=z:C55=^z:S55=Z: 
+dvorak|Dvorak Keyboard:\
+:K12=[:C12=^[:S12={:K13=]:C13=^]:S13=}:\
+:K17=':S17=":C17=^':K18=,:S18=<:K19=.:S19=>:K20=p:\
+:C20=^p:S20=P:K21=y:C21=^y:S21=Y:K22=f:C22=^f:S22=F:\
+:K23=g:C23=^g:S23=G:K24=c:C24=^c:S24=C:K25=r:C25=^r:\
+:S25=R:K26=l:c26=^l:S26=L:K27=/:S27=?:K28==:S28=+:\
+:K31=a:C31=^a:S31=A:K32=o:C32=^o:S32=O:K33=e:C33=^e:\
+:S33=E:K34=u:C34=^u:S34=U:K35=i:K35=^i:S35=I:K36=d:\
+:C36=^d:S36=D:K37=h:C37:=^h:S37=H:K38=t:C38=^t:\
+:S38=T:K39=n:C39=^n:S39=N:K40=s:C40=^s:S40=S:K41=-:\
+:S41=_:\
+:K46=;:S46=\::K47=q:C47=^q:S47=Q:K48=j:C48=^j:\
+:S48=J:K49=k:C49=^k:S49=K:K50=x:C50=^x:S50=X:K51=b:\
+:C51=^b:S51=B:K52=m:C52=^m:S52=M:K53=w:C53=^w:S53=W:\
+:K54=v:C54=^v:S54=V:K55=z:C55=^z:S55=Z:
 
 # EOF
