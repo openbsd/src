@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.80 2002/02/23 08:07:59 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.81 2002/03/01 02:57:32 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -266,7 +266,7 @@ The types of data currently available are process information,
 system vnodes, the open file entries, routing table entries,
 virtual memory statistics, load average history, and clock rate
 information.
-.Bl -column "KERNXCHOWNXRESTRICTEDXXX" "struct clockrateXXX" -offset indent
+.Bl -column "KERNXCRYPTODEVALLOWSOFTXXX" "struct clockrateXXX" -offset indent
 .It Sy Second level name	Type	Changeable
 .It Dv KERN_ARGMAX No "	integer	no"
 .It Dv KERN_ARND No "	integer	no"
@@ -314,6 +314,7 @@ information.
 .It Dv KERN_VNODE No "	struct vnode	no"
 .It Dv KERN_STACKGAPRANDOM No "	integer	yes"
 .It Dv KERN_USERCRYPTO No "	integer	yes"
+.It Dv KERN_CRYPTODEVALLOWSOFT No "	integer	no"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -623,6 +624,10 @@ but it also means bigger waste of memory.
 Permits userland to use
 .Pa /dev/crypto
 for cryptographic support via hardware cryptographic devices.
+.It Dv KERN_CRYPTODEVALLOWSOFT
+Permits userland to use
+.Pa /dev/crypto
+even if there is no hardware crypto accelerator in the system.
 .El
 .Ss CTL_MACHDEP
 The set of variables defined is architecture dependent.
