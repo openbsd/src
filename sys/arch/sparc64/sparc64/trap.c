@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2003/07/10 15:26:54 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2003/07/10 19:23:16 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -455,7 +455,6 @@ trap(tf, type, pc, tstate)
 		 * the FPU.
 		 */
 		if (type == T_FPDISABLED) {
-extern void db_printf(const char * , ...);
 #ifndef NEW_FPSTATE
 			if (fpproc != NULL) {	/* someone else had it */
 				savefpstate(fpproc->p_md.md_fpstate);
@@ -572,11 +571,7 @@ badtrap:
 	}
 
 	case T_INST_EXCEPT:
-		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
-		break;
 	case T_TEXTFAULT:
-		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
-		break;
 	case T_PRIVINST:
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
 		break;
@@ -597,14 +592,10 @@ badtrap:
 		 * Since All UltraSPARC CPUs have an FPU how can this happen?
 		 */
 		if (!foundfpu) {
-#ifdef notyet
-			fpu_emulate(p, tf, fs);
+			trapsignal(p, SIGFPE, 0, FPE_FLTINV, sv);
 			break;
-#else
-			trapsignal(p, SIGFPE, 0, FPE_FLTINV, sv);	/* XXX code?? */
-			break;
-#endif
 		}
+
 		/*
 		 * We may have more FPEs stored up and/or ops queued.
 		 * If they exist, handle them and get out.  Otherwise,
