@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.21 2000/02/21 20:56:07 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.22 2000/10/16 17:08:08 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1399,7 +1399,8 @@ rl_attach(parent, self, aux)
 	sc->sc_mii.mii_writereg = rl_miibus_writereg;
 	sc->sc_mii.mii_statchg = rl_miibus_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, rl_ifmedia_upd, rl_ifmedia_sts);
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
+	    0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);

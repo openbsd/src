@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.14 2000/10/11 17:01:24 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.15 2000/10/16 17:08:07 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1382,7 +1382,9 @@ void dc_attach_common(sc)
 	sc->sc_mii.mii_writereg = dc_miibus_writereg;
 	sc->sc_mii.mii_statchg = dc_miibus_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, dc_ifmedia_upd, dc_ifmedia_sts);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
+
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		error = ENXIO;
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
@@ -1397,7 +1399,8 @@ void dc_attach_common(sc)
 		if (error) {
 			sc->dc_pmode = DC_PMODE_SYM;
 			sc->dc_flags |= DC_21143_NWAY;
-			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 			error = 0;
 		} else {
 			/* we have a PHY, so we must clear this bit */

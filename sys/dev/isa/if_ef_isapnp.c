@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.7 2000/06/07 02:48:22 aaron Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.8 2000/10/16 17:08:07 aaron Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -220,7 +220,8 @@ ef_isapnp_attach(parent, self, aux)
 	sc->sc_mii.mii_writereg = ef_miibus_writereg;
 	sc->sc_mii.mii_statchg = ef_miibus_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ef_ifmedia_upd, ef_ifmedia_sts);
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
+	    0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.15 2000/10/15 18:46:02 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.16 2000/10/16 17:08:07 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2503,7 +2503,8 @@ xl_attach(sc)
 		sc->sc_mii.mii_writereg = xl_miibus_writereg;
 		sc->sc_mii.mii_statchg = xl_miibus_statchg;
 		xl_setcfg(sc);
-		mii_phy_probe((struct device *)sc, &sc->sc_mii, 0xffffffff);
+		mii_attach((struct device *)sc, &sc->sc_mii, 0xffffffff,
+		    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 			ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE,

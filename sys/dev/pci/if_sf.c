@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.7 2000/08/02 19:23:54 aaron Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.8 2000/10/16 17:08:08 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -749,7 +749,8 @@ void sf_attach(parent, self, aux)
 	sc->sc_mii.mii_writereg = sf_miibus_writereg;
 	sc->sc_mii.mii_statchg = sf_miibus_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, sf_ifmedia_upd, sf_ifmedia_sts);
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
+	    0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);

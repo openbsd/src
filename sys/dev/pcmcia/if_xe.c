@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.16 2000/08/26 20:08:39 nate Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.17 2000/10/16 17:08:08 aaron Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -408,7 +408,8 @@ xe_pcmcia_attach(parent, self, aux)
 	    xe_mediastatus);
 	DPRINTF(XED_MII | XED_CONFIG,
 	    ("bmsr %x\n", xe_mdi_read(&sc->sc_dev, 0, 1)));
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
+	    0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO, 0,
 		    NULL);

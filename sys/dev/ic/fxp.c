@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.9 2000/09/17 17:08:16 aaron Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.10 2000/10/16 17:08:07 aaron Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -376,7 +376,8 @@ fxp_attach_common(sc, enaddr, intrstr)
 	sc->sc_mii.mii_statchg = fxp_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mediachange,
 	    fxp_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, MIIF_NOISOLATE);
 	/* If no phy found, just use auto mode */
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL,

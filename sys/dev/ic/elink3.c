@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.44 2000/09/17 19:10:56 provos Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.45 2000/10/16 17:08:07 aaron Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -406,7 +406,8 @@ epconfig(sc, chipset, enaddr)
 		 * we don't, just treat the Boomerang like the Vortex.
 		 */
 		if (sc->ep_flags & EP_FLAGS_MII) {
-			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 				ifmedia_add(&sc->sc_mii.mii_media,
 				    IFM_ETHER|IFM_NONE, 0, NULL);
