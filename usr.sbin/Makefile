@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1996/06/11 03:25:16 tholo Exp $
+#	$OpenBSD: Makefile,v 1.14 1996/06/20 08:22:45 downsj Exp $
 
 # not yet done: catman
 
@@ -30,7 +30,7 @@ SUBDIR+=iteconfig
 .elif ${MACHINE} == "hp300"
 SUBDIR+=grfinfo hilinfo config.old
 .elif ${MACHINE} == "i386"
-SUBDIR+=bad144 apm apmd pcmciad
+SUBDIR+=bad144 apm apmd fdformat pcmciad
 .elif ${MACHINE} == "pmax"
 SUBDIR+=
 .elif ${MACHINE} == "sun3"
