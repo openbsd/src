@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2000/01/22 20:24:49 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2000/04/01 17:20:10 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.17 2000/01/22 20:24:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.18 2000/04/01 17:20:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -458,7 +458,7 @@ next_addr()
 
 int patlock = 0;	/* if set, pattern not freed by get_compiled_pattern() */
 
-long rows = 22;		/* scroll length: ws_row - 2 */
+int rows = 22;		/* scroll length: ws_row - 2 */
 
 /* exec_command: execute the next command in command buffer; return print
    request, if any */
