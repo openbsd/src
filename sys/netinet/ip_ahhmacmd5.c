@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahhmacmd5.c,v 1.10 1997/06/24 20:48:40 provos Exp $	*/
+/*	$OpenBSD: ip_ahhmacmd5.c,v 1.11 1997/06/24 20:57:24 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -361,7 +361,7 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
 
     /* Update the counters */
     tdb->tdb_packets++;
-    tdb->tdb_bytes += NTOHS(ip->ip_len) - (ip->ip_hl << 2);
+    tdb->tdb_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
     return m;
 }

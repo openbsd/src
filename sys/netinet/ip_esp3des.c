@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp3des.c,v 1.4 1997/06/24 12:15:22 provos Exp $	*/
+/*	$OpenBSD: ip_esp3des.c,v 1.5 1997/06/24 20:57:27 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -301,7 +301,7 @@ esp3des_input(struct mbuf *m, struct tdb *tdb)
     
     /* Update the counters */
     tdb->tdb_packets++;
-    tdb->tdb_bytes += NTOHS(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
+    tdb->tdb_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
 
     return m;
 }
