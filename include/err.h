@@ -49,6 +49,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+
 __dead void	err __P((int, const char *, ...))
 			__attribute__((noreturn, format (printf, 2, 3)));
 __dead void	verr __P((int, const char *, _BSD_VA_LIST_))
@@ -65,6 +66,30 @@ void		warnx __P((const char *, ...))
 			__attribute__((format (printf, 1, 2)));
 void		vwarnx __P((const char *, _BSD_VA_LIST_))
 			__attribute__((format (printf, 1, 0)));
+
+#ifdef __indr_reference
+/*
+ * The _* versios are for use in library functions so user-defined
+ * versions of err*,warn* do not get used.
+ */
+__dead void	_err __P((int, const char *, ...))
+			__attribute__((noreturn, format (printf, 2, 3)));
+__dead void	_verr __P((int, const char *, _BSD_VA_LIST_))
+			__attribute__((noreturn, format (printf, 2, 0)));
+__dead void	_errx __P((int, const char *, ...))
+			__attribute__((noreturn, format (printf, 2, 3)));
+__dead void	_verrx __P((int, const char *, _BSD_VA_LIST_))
+			__attribute__((noreturn, format (printf, 2, 0)));
+void		_warn __P((const char *, ...))
+			__attribute__((format (printf, 1, 2)));
+void		_vwarn __P((const char *, _BSD_VA_LIST_))
+			__attribute__((format (printf, 1, 0)));
+void		_warnx __P((const char *, ...))
+			__attribute__((format (printf, 1, 2)));
+void		_vwarnx __P((const char *, _BSD_VA_LIST_))
+			__attribute__((format (printf, 1, 0)));
+#endif
+
 __END_DECLS
 
 #endif /* !_ERR_H_ */
