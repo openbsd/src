@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.7 2002/03/14 01:26:53 millert Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.8 2004/07/12 22:52:35 brad Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -39,7 +39,7 @@
    is infact a 16x50 or 8250, which is not necessarily true (in
    practice this shouldn't be a problem). It also does not handle
    devices in the `multiport serial' or `modem' sub-classes, I've
-   never seen any of thise, so I don't know what they might look like.
+   never seen any of these, so I don't know what they might look like.
 
    If the CardBus device only has one BAR (that is not also the CIS
    BAR) listed in the CIS, it is assumed to be the one to use. For
