@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.18 2005/03/09 15:15:15 jfb Exp $
+#	$OpenBSD: Makefile,v 1.19 2005/03/24 01:03:41 joris Exp $
 
 .PATH:	${.CURDIR}/..
 
 PROG=	cvs
 MAN=	cvs.1 cvsrc.5 cvsintro.7
 
-SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c commit.c diff.c \
+SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c diff.c \
 	entries.c file.c getlog.c history.c hist.c import.c init.c log.c \
 	logmsg.c proto.c rcs.c rcsnum.c remove.c req.c resp.c root.c \
 	server.c sock.c status.c tag.c update.c util.c version.c

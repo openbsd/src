@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.45 2005/03/06 21:09:00 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.46 2005/03/24 01:03:41 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -126,6 +126,52 @@
 #define CVS_PATH_ROOTSPEC       CVS_PATH_CVSDIR "/Root"
 #define CVS_PATH_REPOSITORY     CVS_PATH_CVSDIR "/Repository"
 
+struct cvs_cmd_info {
+	/* parses the options for the command */
+	int (*cmd_options)(char *, int, char **, int *);
+
+	/* send command specific flags (CVS_METHOD_REMOTE only) */
+	int (*cmd_sendflags)(struct cvsroot *);
+
+	/* callback to be used for cvs_file_examine() */
+	int (*cmd_examine)(CVSFILE *, void *);
+
+	/* called after everything is done */
+	int (*cmd_cleanup)(void);
+
+	/* helper function, gets called after cvs_file_get()
+	 * to do command specific operations if needed.
+	 */
+	int (*cmd_helper)(void);
+
+	/* flags for cvs_file_get() */
+	int file_flags;
+
+	/* number of request */
+	int cmd_req;
+
+	/* info on the command (see flags below) */
+	int cmd_flags;
+};
+
+/* flags for cmd_flags */
+#define CVS_CMD_ALLOWSPEC	0x01
+#define CVS_CMD_NEEDLOG		0x02
+#define CVS_CMD_SENDARGS1	0x04
+#define CVS_CMD_SENDARGS2	0x08
+#define CVS_CMD_SENDDIR		0x10
+
+struct cvs_cmd {
+	int cmd_op;
+	char cmd_name[CVS_CMD_MAXNAMELEN];
+	char cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
+	int (*cmd_hdlr)(int, char **);
+	char *cmd_synopsis;
+	char *cmd_opts;
+	char cmd_descr[CVS_CMD_MAXDESCRLEN];
+	char *cmd_defargs;
+	struct cvs_cmd_info *cmd_info;
+};
 
 struct cvs_file;
 struct cvs_dir;
@@ -272,6 +318,7 @@ extern CVSFILE *cvs_files;
 
 
 /* client command handlers */
+int  cvs_startcmd (struct cvs_cmd *, int, char **);
 int  cvs_add      (int, char **);
 int  cvs_admin    (int, char **);
 int  cvs_annotate (int, char **);
