@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.13 1997/04/28 07:39:00 weingart Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.14 1997/05/31 01:35:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -33,7 +33,6 @@
  */
 
 #include <sys/param.h>
-#include <string.h>
 #include <libsa.h>
 #include <debug.h>
 #include <sys/reboot.h>
@@ -246,11 +245,7 @@ readline(buf, to)
 
 	for (i = to; i-- && !ischar(); )
 #ifndef _TEST
-		if ((to = usleep(100000))) {
-			printf ("usleep failed (%d)\n", to);
-			i = 1;
-			break;
-		}
+		usleep(100000);
 #else
 		;
 #endif
