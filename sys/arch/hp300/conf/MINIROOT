@@ -1,7 +1,6 @@
-#	$OpenBSD: DISKLESS,v 1.12 1997/02/16 10:42:14 downsj Exp $
-#	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
+#	$OpenBSD: MINIROOT,v 1.1 1997/02/16 10:42:17 downsj Exp $
 #
-# Generic kernel - one size fits all.
+# Ram disk kernel for the miniroot.
 #
 
 machine hp300 m68k
@@ -20,7 +19,7 @@ option	 	HP375		# includes 345, 400t, 400s
 option	 	HP380		# includes 425t, 425s, 433s
 
 # Need to set locally
-maxusers	8
+maxusers	16
 
 # Options for HP hardware
 option	 	FPSP		# floating point interface for 68040
@@ -38,9 +37,9 @@ option	 	SE_KEYBOARD	# include Swedish HIL keymap
 # HP-UX binary compatibility.
 # NOTE: THIS IS STILL VERY EXPERIMENTAL.  YOUR MILEAGE MAY VARY.
 #
-option	 	COMPAT_HPUX	# HP-UX binary compatibility
+#option	 	COMPAT_HPUX	# HP-UX binary compatibility
 
-option	 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
+#option	 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)
@@ -88,3 +87,27 @@ dca*		at dio? scode ?
 dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
 le*		at dio? scode ?		# LANCE ethernet interfaces
+
+nhpib0		at dio? scode 7		# slow internal HP-IB
+nhpib*		at dio? scode ?
+
+fhpib*		at dio? scode ?		# `fast' HP-IB
+
+hpibbus0	at nhpib0
+hpibbus*	at nhpib?
+hpibbus*	at fhpib?
+
+hd*		at hpibbus? slave ? punit ?	# HP-IB disks
+ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
+mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
+ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
+
+oscsi*		at dio? scode ?		# Old HP SCSI
+
+sd*		at oscsi? target ? lun ?	# SCSI disks
+st*		at oscsi? target ? lun ?	# SCSI tapes
+ac*		at oscsi? target ? lun ?	# SCSI changers
+
+option		MINIROOTSIZE=4096
+option		RAMDISK_HOOKS
+pseudo-device	rd 2

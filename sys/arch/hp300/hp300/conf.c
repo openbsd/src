@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1997/02/03 08:12:00 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 1997/02/16 10:42:22 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.34 1996/12/17 08:41:20 thorpej Exp $	*/
 
 /*-
@@ -59,6 +59,8 @@ bdev_decl(ccd);
 bdev_decl(vnd);
 #include "st.h"
 bdev_decl(st);
+#include "rd.h"
+bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -70,12 +72,13 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
 	bdev_tape_init(NST,st),		/* 7: SCSI tape */
-	bdev_lkm_dummy(),		/* 8 */
+	bdev_disk_init(NRD,rd),		/* 8: RAM disk */
 	bdev_lkm_dummy(),		/* 9 */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
+	bdev_lkm_dummy(),		/* 14 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -139,6 +142,7 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 cdev_decl(random);
+cdev_decl(rd);
 
 cdev_decl(ipl);
 #ifdef IPFILTER
@@ -183,6 +187,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 31 */
 	cdev_random_init(1,random),	/* 32: random generator */
 	cdev_gen_ipf(NIPF,ipl),		/* 33: ip filtering */
+	cdev_disk_init(NRD,rd),		/* 34: RAM disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

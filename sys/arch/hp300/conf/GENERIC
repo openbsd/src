@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 1997/02/10 06:43:28 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.16 1997/02/16 10:42:16 downsj Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -6,7 +6,7 @@
 
 machine hp300 m68k
 
-# Include all GENERIC option	
+# Include all GENERIC options
 include "../../../conf/GENERIC"
 
 # Support for various CPU types
