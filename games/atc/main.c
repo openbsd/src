@@ -174,6 +174,7 @@ main(ac, av)
 	tcgetattr(fileno(stdin), &tty_start);
 	tty_new = tty_start;
 	tty_new.c_lflag &= ~(ICANON|ECHO);
+	tty_new.c_iflag |= ICRNL;
 	tty_new.c_cc[VMIN] = 1;
 	tty_new.c_cc[VTIME] = 0;
 	tcsetattr(fileno(stdin), TCSADRAIN, &tty_new);
