@@ -26,13 +26,13 @@ A  ::/7
 8 addresses added.
 # pass show 
    ::/0
-   ::/7
-   ::/6
-   ::/5
-   ::/4
-   ::/3
-   ::/2
    ::/1
+   ::/2
+   ::/3
+   ::/4
+   ::/5
+   ::/6
+   ::/7
 # pass replace -n ::/8 ::/9 ::/10 ::/11 ::/12 ::/13 ::/14 ::/15
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -77,14 +77,14 @@ D  ::/0
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/15
-   ::/14
-   ::/13
-   ::/12
-   ::/11
    ::/10
-   ::/9
+   ::/11
+   ::/12
+   ::/13
+   ::/14
+   ::/15
    ::/8
+   ::/9
 # pass replace -n ::/16 ::/17 ::/18 ::/19 ::/20 ::/21 ::/22 ::/23
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -129,14 +129,14 @@ D  ::/15
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/23
-   ::/22
-   ::/21
-   ::/20
-   ::/19
-   ::/18
-   ::/17
    ::/16
+   ::/17
+   ::/18
+   ::/19
+   ::/20
+   ::/21
+   ::/22
+   ::/23
 # pass replace -n ::/24 ::/25 ::/26 ::/27 ::/28 ::/29 ::/30 ::/31
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -181,14 +181,14 @@ D  ::/23
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/31
-   ::/30
-   ::/29
-   ::/28
-   ::/27
-   ::/26
-   ::/25
    ::/24
+   ::/25
+   ::/26
+   ::/27
+   ::/28
+   ::/29
+   ::/30
+   ::/31
 # pass replace -n ::/32 ::/33 ::/34 ::/35 ::/36 ::/37 ::/38 ::/39
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -233,14 +233,14 @@ D  ::/31
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/39
-   ::/38
-   ::/37
-   ::/36
-   ::/35
-   ::/34
-   ::/33
    ::/32
+   ::/33
+   ::/34
+   ::/35
+   ::/36
+   ::/37
+   ::/38
+   ::/39
 # pass replace -n ::/40 ::/41 ::/42 ::/43 ::/44 ::/45 ::/46 ::/47
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -285,14 +285,14 @@ D  ::/39
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/47
-   ::/46
-   ::/45
-   ::/44
-   ::/43
-   ::/42
-   ::/41
    ::/40
+   ::/41
+   ::/42
+   ::/43
+   ::/44
+   ::/45
+   ::/46
+   ::/47
 # pass replace -n ::/48 ::/49 ::/50 ::/51 ::/52 ::/53 ::/54 ::/55
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -337,14 +337,14 @@ D  ::/47
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/55
-   ::/54
-   ::/53
-   ::/52
-   ::/51
-   ::/50
-   ::/49
    ::/48
+   ::/49
+   ::/50
+   ::/51
+   ::/52
+   ::/53
+   ::/54
+   ::/55
 # pass replace -n ::/56 ::/57 ::/58 ::/59 ::/60 ::/61 ::/62 ::/63
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -389,14 +389,14 @@ D  ::/55
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/63
-   ::/62
-   ::/61
-   ::/60
-   ::/59
-   ::/58
-   ::/57
    ::/56
+   ::/57
+   ::/58
+   ::/59
+   ::/60
+   ::/61
+   ::/62
+   ::/63
 # pass replace -n ::/64 ::/65 ::/66 ::/67 ::/68 ::/69 ::/70 ::/71
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -441,14 +441,14 @@ D  ::/63
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/71
-   ::/70
-   ::/69
-   ::/68
-   ::/67
-   ::/66
-   ::/65
    ::/64
+   ::/65
+   ::/66
+   ::/67
+   ::/68
+   ::/69
+   ::/70
+   ::/71
 # pass replace -n ::/72 ::/73 ::/74 ::/75 ::/76 ::/77 ::/78 ::/79
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -493,14 +493,14 @@ D  ::/71
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/79
-   ::/78
-   ::/77
-   ::/76
-   ::/75
-   ::/74
-   ::/73
    ::/72
+   ::/73
+   ::/74
+   ::/75
+   ::/76
+   ::/77
+   ::/78
+   ::/79
 # pass replace -n ::/80 ::/81 ::/82 ::/83 ::/84 ::/85 ::/86 ::/87
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -545,14 +545,14 @@ D  ::/79
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/87
-   ::/86
-   ::/85
-   ::/84
-   ::/83
-   ::/82
-   ::/81
    ::/80
+   ::/81
+   ::/82
+   ::/83
+   ::/84
+   ::/85
+   ::/86
+   ::/87
 # pass replace -n ::/88 ::/89 ::/90 ::/91 ::/92 ::/93 ::/94 ::/95
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -597,14 +597,14 @@ D  ::/87
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/95
-   ::/94
-   ::/93
-   ::/92
-   ::/91
-   ::/90
-   ::/89
    ::/88
+   ::/89
+   ::/90
+   ::/91
+   ::/92
+   ::/93
+   ::/94
+   ::/95
 # pass replace -n ::/96 ::/97 ::/98 ::/99 ::/100 ::/101 ::/102 ::/103
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -649,14 +649,14 @@ D  ::/95
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/103
-   ::/102
-   ::/101
    ::/100
-   ::/99
-   ::/98
-   ::/97
+   ::/101
+   ::/102
+   ::/103
    ::/96
+   ::/97
+   ::/98
+   ::/99
 # pass replace -n ::/104 ::/105 ::/106 ::/107 ::/108 ::/109 ::/110 ::/111
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -701,14 +701,14 @@ D  ::/103
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/111
-   ::/110
-   ::/109
-   ::/108
-   ::/107
-   ::/106
-   ::/105
    ::/104
+   ::/105
+   ::/106
+   ::/107
+   ::/108
+   ::/109
+   ::/110
+   ::/111
 # pass replace -n ::/112 ::/113 ::/114 ::/115 ::/116 ::/117 ::/118 ::/119
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -753,14 +753,14 @@ D  ::/111
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/119
-   ::/118
-   ::/117
-   ::/116
-   ::/115
-   ::/114
-   ::/113
    ::/112
+   ::/113
+   ::/114
+   ::/115
+   ::/116
+   ::/117
+   ::/118
+   ::/119
 # pass replace -n ::/120 ::/121 ::/122 ::/123 ::/124 ::/125 ::/126 ::/127
 8 addresses added (dummy).
 8 addresses deleted (dummy).
@@ -805,14 +805,14 @@ D  ::/119
 8 addresses added.
 8 addresses deleted.
 # pass show 
-   ::/127
-   ::/126
-   ::/125
-   ::/124
-   ::/123
-   ::/122
-   ::/121
    ::/120
+   ::/121
+   ::/122
+   ::/123
+   ::/124
+   ::/125
+   ::/126
+   ::/127
 # kill
 1 table deleted.
 ktable: 81 allocated, 81 released, 0 leaked.

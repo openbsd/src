@@ -54,7 +54,7 @@ for LINE in `sed -e "s/ /_/g" $1`; do
 			echo $ARGS | pfctl -a regress:regress -f- 2>&1 || exit 1
 			;;
 		*)
-			pfctl -t regress -T $CMD $ARGS 2>&1 || exit 1
+			pfctl -t regress -T $CMD $ARGS 2>&1 | sort || exit 1
 			;;
 		esac
 	else
