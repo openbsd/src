@@ -21,18 +21,18 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: chap_ms.c,v 1.1 1996/07/20 12:02:06 joshd Exp $";
+static char rcsid[] = "$Id: chap_ms.c,v 1.2 1997/01/03 20:42:04 millert Exp $";
 #endif
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <syslog.h>
+#include <md4.h>
 
 #include "pppd.h"
 #include "chap.h"
 #include "chap_ms.h"
-#include "md4.h"
 
 
 #ifdef CHAPMS
@@ -154,9 +154,10 @@ ChapMS(cstate, rchallenge, rchallenge_len, secret, secret_len)
 {
 #ifdef CHAPMS
     int			i;
-    MDstruct		md4Context;
+    MD4_CTX		md4Context;
     MS_ChapResponse	response;
     u_char		unicodePassword[MAX_NT_PASSWORD * 2];
+    u_char		digest[16];
 
 #if 0
     CHAPDEBUG((LOG_INFO, "ChapMS: secret is '%.*s'", secret_len, secret));
@@ -170,11 +171,11 @@ ChapMS(cstate, rchallenge, rchallenge_len, secret, secret_len)
     for (i = 0; i < secret_len; i++)
 	unicodePassword[i * 2] = (u_char)secret[i];
 
-    MDbegin(&md4Context);
-    MDupdate(&md4Context, unicodePassword, secret_len * 2 * 8);	/* Unicode is 2 bytes/char, *8 for bit count */
-    MDupdate(&md4Context, NULL, 0);	/* Tell MD4 we're done */
+    MD4Init(&md4Context);
+    MD4Update(&md4Context, unicodePassword, secret_len * 2 * 8);	/* Unicode is 2 bytes/char, *8 for bit count */
+    MD4Final(digest, &md4Context);	/* Tell MD4 we're done */
 
-    ChallengeResponse(rchallenge, (char *)md4Context.buffer, response.NTResp);
+    ChallengeResponse(rchallenge, (char *)digest, response.NTResp);
 
     response.UseNT = 1;
 
