@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.7 1997/07/06 19:46:10 mickey Exp $
+.\"	$OpenBSD: ddb.4,v 1.8 1997/10/13 04:32:15 mickey Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -115,12 +115,14 @@ display as an instruction
 .It I
 display as an instruction with possible alternate formats depending on the
 machine:
+.Bl -tag -width powerpc_
 .It vax
 don't assume that each external label is a procedure entry mask
 .It i386
 don't round to the next long word boundary
 .It mips
 print register contents
+.El
 .El
 .It xf
 Examine forward.
