@@ -228,6 +228,7 @@
 ./usr/include/dev/mii
 ./usr/include/dev/mii/icsphyreg.h
 ./usr/include/dev/mii/inphyreg.h
+./usr/include/dev/mii/iophyreg.h
 ./usr/include/dev/mii/lxtphyreg.h
 ./usr/include/dev/mii/mii.h
 ./usr/include/dev/mii/miidevs.h
