@@ -16,8 +16,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/tcp.h>
 
 struct tcpipv6hdr {
-  struct ipv6 ti6_i;
-  struct tcphdr ti6_t;
+	struct ipv6 ti6_i;
+	struct tcphdr ti6_t;
 };
 
 #define ti6_src		ti6_i.ipv6_src
