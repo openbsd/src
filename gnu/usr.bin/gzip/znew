@@ -1,6 +1,5 @@
 #!/bin/sh
 
-PATH="/usr/local/bin:$PATH"; export PATH
 check=0
 pipe=0
 opt=
