@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.11 2001/04/08 00:00:42 gluk Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.12 2001/04/13 21:35:56 gluk Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.11 2001/04/08 00:00:42 gluk Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.12 2001/04/13 21:35:56 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -305,16 +305,18 @@ getsb(fs, file)
 void
 printfs()
 {
-	warnx("soft updates: (-s)                                 %s",
-	      (sblock.fs_flags & FS_DOSOFTDEP) ? "yes" : "no");
 	warnx("maximum contiguous block count: (-a)               %d",
 	      sblock.fs_maxcontig);
 	warnx("rotational delay between contiguous blocks: (-d)   %d ms",
 	      sblock.fs_rotdelay);
 	warnx("maximum blocks per file in a cylinder group: (-e)  %d",
 	      sblock.fs_maxbpg);
+	warnx("expected average file size: (-f)                   %d",
+	      sblock.fs_avgfilesize);
 	warnx("minimum percentage of free space: (-m)             %d%%",
 	      sblock.fs_minfree);
+	warnx("expected number of files per directory: (-n)       %d",
+	      sblock.fs_avgfpdir);
 	warnx("optimization preference: (-o)                      %s",
 	      sblock.fs_optim == FS_OPTSPACE ? "space" : "time");
 	if (sblock.fs_minfree >= MINFREE &&
