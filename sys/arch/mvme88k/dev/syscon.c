@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.16 2004/04/14 22:33:28 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.17 2004/04/14 23:27:11 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -30,23 +30,14 @@
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/ioctl.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/tty.h>
-#include <sys/uio.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/fcntl.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/board.h>
 #include <machine/frame.h>
-
-#include <dev/cons.h>
 
 #include <mvme88k/dev/sysconfunc.h>
 #include <mvme88k/dev/sysconreg.h>
@@ -152,7 +143,7 @@ syscon_scan(parent, child, args)
 	bzero(&oca, sizeof oca);
 	oca.ca_offset = cf->cf_loc[0];
 	oca.ca_ipl = cf->cf_loc[1];
-	if (((int)oca.ca_offset != -1) && ISIIOVA(sc->sc_vaddr + oca.ca_offset)) {
+	if ((oca.ca_offset != -1) && ISIIOVA(sc->sc_vaddr + oca.ca_offset)) {
 		oca.ca_vaddr = sc->sc_vaddr + oca.ca_offset;
 		oca.ca_paddr = sc->sc_paddr + oca.ca_offset;
 	} else {
