@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.10 1999/03/24 15:43:36 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.12 1999/03/24 11:01:56 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.11 1999/03/31 00:51:29 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.13 1999/03/30 21:41:33 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -208,6 +208,12 @@ Look at <IPSec-ID> below.
 If existent, the name of the section that describes the
 optional remote client ID that we should present to our peer.
 Look at <IPSec-ID> below.
+.It Em Flags
+A comma-separated list of flags controlling the further
+handling of the IPSec SA.  Currently only one flag is defined:
+.Dv Stayalive ,
+which means that after the expiration of an IPSec SA, the initiator
+side will automatically renegotiate for a new SA of the same name.
 .El
 .It Em <IPSec-configuration>
 .Bl -tag -width 12n
