@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.19 2001/02/16 16:00:56 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.20 2001/02/16 16:38:14 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.77 2001/02/09 06:17:40 jinmei Exp $	*/
 
 /*
@@ -407,14 +407,7 @@ struct route_in6 {
 #endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
 
-#if 1 /*IPV6FIREWALL*/
-#define IPV6_FW_ADD		30 /* add a firewall rule to chain */
-#define IPV6_FW_DEL		31 /* delete a firewall rule from chain */
-#define IPV6_FW_FLUSH		32 /* flush firewall rule chain */
-#define IPV6_FW_ZERO		33 /* clear single/all firewall counter(s) */
-#define IPV6_FW_GET		34 /* get entire firewall rule chain */
-#endif
-/* 35-52: reserved */
+/* 30-52: reserved */
 #define IPV6_AUTH_LEVEL		53   /* int; authentication used */
 #define IPV6_ESP_TRANS_LEVEL	54   /* int; transport encryption */
 #define IPV6_ESP_NETWORK_LEVEL	55   /* int; full-packet encryption */

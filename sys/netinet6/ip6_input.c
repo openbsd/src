@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.26 2001/02/16 16:00:57 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.27 2001/02/16 16:38:15 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.176 2001/02/14 07:13:39 itojun Exp $	*/
 
 /*
@@ -102,10 +102,6 @@
 #include <netinet6/nd6.h>
 #include <netinet6/in6_prefix.h>
 
-#ifdef IPV6FIREWALL
-#include <netinet6/ip6_fw.h>
-#endif
-
 #include <netinet6/ip6protosw.h>
 
 #include "faith.h"
@@ -125,12 +121,6 @@ struct ifqueue ip6intrq;
 int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
-
-#ifdef IPV6FIREWALL
-/* firewall hooks */
-ip6_fw_chk_t *ip6_fw_chk_ptr;
-ip6_fw_ctl_t *ip6_fw_ctl_ptr;
-#endif
 
 struct ip6stat ip6stat;
 
@@ -164,9 +154,6 @@ ip6_init()
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
 	nd6_init();
 	frag6_init();
-#ifdef IPV6FIREWALL
-	ip6_fw_init();
-#endif
 	ip6_flow_seq = arc4random();
 	ip6_init2((void *)0);
 }
@@ -287,23 +274,6 @@ ip6_input(m)
 	}
 
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
-
-#ifdef IPV6FIREWALL
-	/*
-	 * Check with the firewall...
-	 */
-	if (ip6_fw_chk_ptr) {
-		u_short port = 0;
-		/* If ipfw says divert, we have to just drop packet */
-		/* use port as a dummy argument */
-		if ((*ip6_fw_chk_ptr)(&ip6, NULL, &port, &m)) {
-			m_freem(m);
-			m = NULL;
-		}
-		if (!m)
-			return;
-	}
-#endif
 
 	/*
 	 * Scope check

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.11 2001/02/16 08:48:05 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.12 2001/02/16 16:38:14 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.44 2000/07/27 13:43:21 itojun Exp $	*/
 
 /*
@@ -416,22 +416,6 @@ ip6_forward(m, srcrt)
 	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0)
 		type = ND_REDIRECT;
-
-#ifdef IPV6FIREWALL
-	/*
-	 * Check with the firewall...
-	 */
-	if (ip6_fw_chk_ptr) {
-		u_short port = 0;
-		/* If ipfw says divert, we have to just drop packet */
-		if ((*ip6_fw_chk_ptr)(&ip6, rt->rt_ifp, &port, &m)) {
-			m_freem(m);
-			goto freecopy;
-		}
-		if (!m)
-			goto freecopy;
-	}
-#endif
 
 	/*
 	 * Fake scoped addresses. Note that even link-local source or

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.24 2001/02/16 14:58:13 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.25 2001/02/16 16:38:15 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.164 2001/02/10 05:05:15 itojun Exp $	*/
 
 /*
@@ -104,10 +104,6 @@ extern int ipsec_esp_network_default_level;
 #endif /* IPSEC */
 
 #include <net/net_osdep.h>
-
-#ifdef IPV6FIREWALL
-#include <netinet6/ip6_fw.h>
-#endif
 
 struct ip6_exthdrs {
 	struct mbuf *ip6e_ip6;
@@ -880,25 +876,6 @@ skip_ipsec2:;
 			ip6->ip6_dst.s6_addr16[1] = 0;
 	}
 
-#ifdef IPV6FIREWALL
-	/*
-	 * Check with the firewall...
-	 */
-	if (ip6_fw_chk_ptr) {
-		u_short port = 0;
-		m->m_pkthdr.rcvif = NULL;	/*XXX*/
-		/* If ipfw says divert, we have to just drop packet */
-		if ((*ip6_fw_chk_ptr)(&ip6, ifp, &port, &m)) {
-			m_freem(m);
-			goto done;
-		}
-		if (!m) {
-			error = EACCES;
-			goto done;
-		}
-	}
-#endif
-
 	/*
 	 * If the outgoing packet contains a hop-by-hop options header,
 	 * it must be examined and processed even by the source node.
@@ -1444,21 +1421,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 				break;
 #endif /* IPSEC */
 
-#ifdef IPV6FIREWALL
-			case IPV6_FW_ADD:
-			case IPV6_FW_DEL:
-			case IPV6_FW_FLUSH:
-			case IPV6_FW_ZERO:
-			    {
-				if (ip6_fw_ctl_ptr == NULL) {
-					if (m) (void)m_free(m);
-					return EINVAL;
-				}
-				error = (*ip6_fw_ctl_ptr)(optname, mp);
-				m = *mp;
-			    }
-				break;
-#endif
 			case IPSEC6_OUTSA:
 #ifndef IPSEC
 				error = EINVAL;
@@ -1675,20 +1637,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 				break;
 			  }
 #endif /* IPSEC */
-
-#ifdef IPV6FIREWALL
-			case IPV6_FW_GET:
-			  {
-				if (ip6_fw_ctl_ptr == NULL)
-			        {
-					if (m)
-						(void)m_free(m);
-					return EINVAL;
-				}
-				error = (*ip6_fw_ctl_ptr)(optname, mp);
-			  }
-				break;
-#endif
 
 			case IPSEC6_OUTSA:
 #ifndef IPSEC
