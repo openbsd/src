@@ -24,7 +24,7 @@
  * There is an e-mail list for tcpdump: <tcpdump@ee.lbl.gov>
  */
 #ifndef lint
-static char rcsid[] = "$Id: print-bootp.c,v 1.1.1.1 1995/10/18 08:47:27 deraadt Exp $";
+static char rcsid[] = "$Id: print-bootp.c,v 1.2 1998/11/28 04:07:24 millert Exp $";
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -54,7 +54,7 @@ void
 bootp_print(bp, length, sport, dport)
 	struct bootp *bp;
 	int length;
-	u_short sport, dport;
+	in_port_t sport, dport;
 {
 	static char tstr[] = " [|bootp]";
 	static unsigned char vm_cmu[4] = VM_CMU;

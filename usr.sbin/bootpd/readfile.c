@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: readfile.c,v 1.2 1996/06/23 10:22:26 deraadt Exp $";
+static char rcsid[] = "$Id: readfile.c,v 1.3 1998/11/28 04:07:24 millert Exp $";
 #endif
 
 
@@ -344,7 +344,7 @@ readtab(force)
 #ifdef DEBUG
 	if (debug > 3) {
 		char timestr[28];
-		strcpy(timestr, ctime(&(st.st_mtime)));
+		strlcpy(timestr, ctime(&(st.st_mtime)), sizeof(timestr));
 		/* zap the newline */
 		timestr[24] = '\0';
 		report(LOG_INFO, "bootptab mtime: %s",

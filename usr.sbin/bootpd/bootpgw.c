@@ -26,7 +26,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpgw.c,v 1.2 1996/05/06 11:28:16 deraadt Exp $";
+static char rcsid[] = "$Id: bootpgw.c,v 1.3 1998/11/28 04:07:23 millert Exp $";
 #endif
 
 /*
@@ -105,7 +105,7 @@ static void handle_request P((void));
  * IP port numbers for client and server obtained from /etc/services
  */
 
-u_short bootps_port, bootpc_port;
+in_port_t bootps_port, bootpc_port;
 
 
 /*
@@ -399,9 +399,9 @@ main(argc, argv)
 		 */
 		servp = getservbyname("bootps", "udp");
 		if (servp) {
-			bootps_port = ntohs((u_short) servp->s_port);
+			bootps_port = ntohs((in_port_t) servp->s_port);
 		} else {
-			bootps_port = (u_short) IPPORT_BOOTPS;
+			bootps_port = (in_port_t) IPPORT_BOOTPS;
 			report(LOG_ERR,
 				   "udp/bootps: unknown service -- assuming port %d",
 				   bootps_port);
@@ -430,7 +430,7 @@ main(argc, argv)
 		report(LOG_ERR,
 			   "udp/bootpc: unknown service -- assuming port %d",
 			   IPPORT_BOOTPC);
-		bootpc_port = (u_short) IPPORT_BOOTPC;
+		bootpc_port = (in_port_t) IPPORT_BOOTPC;
 	}
 
 	/* no signal catchers */
