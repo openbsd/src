@@ -1,4 +1,4 @@
-/*	$OpenBSD: modunload.c,v 1.9 2001/07/07 00:15:14 millert Exp $	*/
+/*	$OpenBSD: modunload.c,v 1.10 2002/01/09 22:22:56 ericj Exp $	*/
 /*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
@@ -48,22 +48,22 @@
 #include <unistd.h>
 #include "pathnames.h"
 
-void
+static int devfd;
+
+static void
 usage()
 {
+	extern char *__progname;
 
-	fprintf(stderr,
-	    "usage: modunload [-i <module id>] [-n <module name>]\n");
+	(void)fprintf(stderr, "usage: %s [-i id] [-n name] [-p postunload]\n",
+		__progname);
 	exit(1);
 }
-
-int devfd;
 
 void
 cleanup()
 {
-
-	close(devfd);
+	(void)close(devfd);
 }
 
 int
@@ -74,23 +74,24 @@ main(argc, argv)
 	int c;
 	long modnum = -1;
 	char *modname = NULL;
-	char *endptr;
+	char *endptr, *post = NULL;
 	struct lmc_unload ulbuf;
 
-	while ((c = getopt(argc, argv, "i:n:")) != -1) {
+	while ((c = getopt(argc, argv, "i:n:p:")) != -1) {
 		switch (c) {
 		case 'i':
 			modnum = strtol(optarg, &endptr, 0);
 			if (modnum < 0 || modnum > INT_MAX || *endptr != '\0')
                                 errx(1, "not a valid number");
-			break;	/* number */
+			break;
 		case 'n':
 			modname = optarg;
-			break;	/* name */
-		case '?':
-			usage();
+			break;
+		case 'p':
+			post = optarg;
+			break;
 		default:
-			printf("default!\n");
+			usage();
 			break;
 		}
 	}
@@ -118,14 +119,21 @@ main(argc, argv)
 
 	if (ioctl(devfd, LMUNLOAD, &ulbuf) == -1) {
 		switch (errno) {
-		case EINVAL:		/* out of range */
+		case EINVAL:
 			errx(3, "id out of range");
-		case ENOENT:		/* no such entry */
+		case ENOENT:
 			errx(3, "no such module");
-		default:		/* other error (EFAULT, etc) */
+		default:
 			err(5, "LMUNLOAD");
 		}
 	}
 
-	return 0;
+	/*
+	 * Execute the post-unload program.
+	 */
+	if (post) {
+		execl(post, post, (char *)NULL);
+		err(16, "can't exec `%s'", post);
+	}
+	exit(0);
 }
