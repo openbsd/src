@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.15 2001/06/29 21:24:07 kjell Exp $
+.\" $OpenBSD: pfctl.8,v 1.16 2001/07/01 16:58:51 kjell Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -10,10 +10,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by Ericsson Radio Systems.
-.\" 4. The name of the author may not be used to endorse or promote products
+.\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -35,16 +32,12 @@
 .Nd control the packet filter and NAT subsystems
 .Sh SYNOPSIS
 .Nm 
-.Op Fl d
-.Op Fl e
+.Op Fl dehnv
 .Op Fl F Ar modifier
-.Op Fl h
 .Op Fl l Ar interface
 .Op Fl N Ar file
-.Op Fl n
 .Op Fl R Ar file
 .Op Fl s Ar modifier
-.Op Fl v
 .Sh DESCRIPTION
 The
 .Nm
@@ -86,16 +79,18 @@ Disable the packet filter
 .It Fl e
 Enable the packet filter
 .It Fl F Ar modifier
-Flush one of the following sets:
-.Bl -tag -width "F n" -compact
-.It Fl F Ar n
+Flush one of the following. Modifier name may be abbreviated:
+.Bl -tag -width "F rules" -compact
+.It Fl F Ar nat
 Flush the NAT rules
-.It Fl F Ar r
+.It Fl F Ar rules
 Flush the filter rules
-.It Fl F Ar s
+.It Fl F Ar state
 Flush the state table (NAT and filter)
-.It Fl F Ar S
-Flush (zero) the filter statistics
+.It Fl F Ar info
+Flush the filter information (statistics and counters)
+.It Fl F Ar all
+Flush all of the above
 .El
 .It Fl h
 Help
@@ -103,8 +98,8 @@ Help
 Enable collection of packet and byte count statistics for interface named
 .Ar interface .
 These statistics can be viewed with the
-.Fl "sS"
-flag.
+.Fl s Ar info
+option.
 .It Fl n
 Do not actually load rules
 .It Fl N Ar file
@@ -112,16 +107,18 @@ Load a NAT rules file
 .It Fl R Ar file
 Load a filter rules file into the filter
 .It Fl s Ar modifier
-Show filter parameters.
-.Bl -tag -width "s n" -compact
-.It Fl s Ar n
+Show filter parameters. Modifier names may be abbreviated.
+.Bl -tag -width "s rules" -compact
+.It Fl s Ar nat
 Show the currently loaded NAT rules
-.It Fl s Ar r
+.It Fl s Ar rules
 Show the currently loaded packet filter rules
-.It Fl s Ar s
+.It Fl s Ar state
 Show the contents of the state table
-.It Fl s Ar S
-Show filter statistics
+.It Fl s Ar info
+Show filter information (statistics and counters)
+.It Fl a Ar all
+Show all of the above
 .El
 .It Fl v
 Show rules as they are parsed
@@ -135,7 +132,8 @@ rules for Network Address Translation
 .Sh SEE ALSO
 .Xr pf 4 , 
 .Xr pf.conf 5 ,
-.Xr nat.conf 5 .
+.Xr nat.conf 5 ,
+.Xr rc 8 .
 .Sh COMPATIBILITY
 This mechanism is largely compatible with the previous
 IP Filter mechanism, which was removed from
@@ -152,5 +150,3 @@ filter mechanism first appeared in
 .Ox 2.9 .
 .Sh BUGS
 Probably.
-.Sh CAVEATS
-It is not yet as fully featured as the mechanism it replaced.

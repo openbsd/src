@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.24 2001/06/29 21:11:24 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.25 2001/07/01 16:58:51 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -78,10 +78,8 @@ char	*showopt;
 void
 usage()
 {
-	extern char *__progname;
- 
-	fprintf(stderr, "usage: %s [-de] [-F set] [-l interface]", __progname);
-	fprintf(stderr, " [-n] [-N file] [-R file] [-s set] [-v]\n");
+	fprintf(stderr, "usage: pfctl [-denvh] [-F set] [-l interface] ");
+	fprintf(stderr, "[-N file] [-R file] [-s set]\n");
 	exit(1);
 }
 
@@ -467,19 +465,27 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (clearopt != NULL) {
-		if (!strcmp(clearopt, "r")) {
-			if (pfctl_clear_rules(dev))
-				error = 1;
-		} else if (!strcmp(clearopt, "n")) {
-			if (pfctl_clear_nat(dev))
-				error = 1;
-		} else if (!strcmp(clearopt, "s")) {
-			if (pfctl_clear_states(dev))
-				error = 1;
-		} else if (!strcmp (clearopt, "S")) {
-			if (pfctl_clear_stats(dev))
-				error = 1;
-		} else {
+		
+		switch (*clearopt) {
+		case 'r':
+			pfctl_clear_rules(dev);
+			break;
+		case 'n':
+			pfctl_clear_nat(dev);
+			break;
+		case 's':
+			pfctl_clear_states(dev);
+			break;
+		case 'i':
+			pfctl_clear_stats(dev);
+			break;
+		case 'a':
+			pfctl_clear_rules(dev);
+			pfctl_clear_nat(dev);
+			pfctl_clear_states(dev);
+			pfctl_clear_stats(dev);
+			break;
+		default:
 			warnx("Unknown flush modifier '%s'", clearopt);
 			error = 1;
 		}
@@ -494,19 +500,26 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (showopt != NULL) {
-		if (!strcmp(showopt, "r")) {
-			if (pfctl_show_rules(dev))
-				error = 1;
-		} else if (!strcmp(showopt, "n")) {
-			if (pfctl_show_nat(dev))
-				error = 1;
-		} else if (!strcmp(showopt, "s")) {
-			if (pfctl_show_states(dev, 0))
-				error = 1;
-		} else if (!strcmp(showopt, "S")) {
-			if (pfctl_show_status(dev))
-				error = 1;
-		} else {
+		switch (*showopt) {
+		case 'r':
+			pfctl_show_rules(dev);
+			break;
+		case 'n':
+			pfctl_show_nat(dev);
+			break;
+		case 's':
+			pfctl_show_states(dev, 0);
+			break;
+		case 'i':
+			pfctl_show_status(dev);
+			break;
+		case 'a':
+			pfctl_show_rules(dev);
+			pfctl_show_nat(dev);
+			pfctl_show_states(dev, 0);
+			pfctl_show_status(dev);
+			break;
+		default:
 			warnx("Unknown show modifier '%s'", showopt);
 			error = 1;
 		}
