@@ -193,6 +193,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		ST_Q_FORCE_BLKSIZE, 1024, DDS,		/* minor 8-11 */
 		ST_Q_FORCE_BLKSIZE, 0, DDS		/* minor 12-15 */
 	}},
+	{T_SEQUENTIAL, T_REMOV,
+	 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????", 0, 0, {
+		0, ST_Q_IGNORE_LOADS, 0,		/* minor 0-3 */
+		0, 0, 0,				/* minor 4-7 */
+		0, 0, 0,				/* minor 8-11 */
+		0, 0, 0,				/* minor 12-15 */
+	}},
 #if 0
 	{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", "",     0, 12, {
@@ -1095,6 +1102,9 @@ stioctl(dev, cmd, arg, flag, p)
 			if (!error)
 				error = st_space(st, number, SP_BLKS, flags);
 			break;
+		case MTERASE:	/* erase */
+			error = st_erase(st, FALSE, flags);
+			break;
 		case MTREW:	/* rewind */
 			error = st_rewind(st, 0, flags);
 			break;
@@ -1596,6 +1606,41 @@ st_rewind(st, immediate, flags)
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, ST_RETRIES, immediate ? 5000 : 300000, NULL,
 	    flags);
+}
+
+/*
+ * Erase the tape
+ */ 
+int 
+st_erase(st, immediate, flags)
+	struct st_data *st;
+	u_int immediate;
+	int flags;
+{
+	struct scsi_erase scsi_cmd;
+	int error;
+	int nmarks;
+
+	error = st_check_eod(st, FALSE, &nmarks, flags);
+	if (error)
+		return (error);
+	/*
+	 * Archive Viper 2525 technical manual 5.7 (ERASE 19h):
+	 * tape has to be positioned to BOT first before erase command
+	 * is issued or command is rejected. So we rewind the tape first
+	 * and exit with an error, if the tape can't be rewinded.
+	 */
+	error = st_rewind(st, FALSE, SCSI_SILENT);
+	if (error)
+		return (error);
+	st->flags &= ~ST_PER_ACTION;
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.op_code = ERASE;
+	scsi_cmd.byte2 = SE_LONG | (immediate ? SE_IMMED : 0);
+	return (scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
+	    sizeof(scsi_cmd), 0, 0, ST_RETRIES,
+	    immediate ? 5000 : 300000,		/* 5 sec or 5 min */
+	    NULL, flags));
 }
 
 /*

@@ -97,6 +97,16 @@ struct scsi_rewind {
 	u_char	control;
 };
 
+#define	ERASE			0x19
+struct scsi_erase {
+	u_char	opcode;
+	u_char	byte2;
+#define	SE_LONG			0x01	/* some units do not allow short erase */
+#define	SE_IMMED		0x02
+	u_char	unused[3];
+	u_char	control;
+} erase;
+
 #define LOAD			0x1b
 struct scsi_load {
 	u_char	opcode;
