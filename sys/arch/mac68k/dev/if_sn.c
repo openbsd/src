@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_sn.c,v 1.8 1996/10/28 14:46:25 briggs Exp $	*/
+/*      $OpenBSD: if_sn.c,v 1.9 1997/03/12 13:20:31 briggs Exp $       
+*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -9,8 +10,6 @@
  * This driver has been substantially modified since Algorithmics donated
  * it.
  */
-
-#include "sn.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,237 +36,112 @@
 
 #include <vm/vm.h>
 
+extern int kvtop(caddr_t addr);
+
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
 
-#define NTXB	10	/* Number of xmit buffers */
-
-#define SONICDW 32
 typedef unsigned char uchar;
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/macinfo.h>
 #include <machine/viareg.h>
-#include <mac68k/dev/if_sn.h>
+#include <mac68k/dev/if_snreg.h>
+#include <mac68k/dev/if_snvar.h>
 
-#define SWR(a, x) 	(a) = (x)
-#define SRD(a)		((a) & 0xffff)
+#include	"nubus.h"
+
+#define SWR(a, x)       (a) = (x)
+#define SRD(a)	  ((a) & 0xffff)
 
 #define wbflush()
 
-/*
- * Statistics collected over time
- */
-struct sn_stats {
-	int     ls_opacks;	/* packets transmitted */
-	int     ls_ipacks;	/* packets received */
-	int     ls_tdr;		/* contents of tdr after collision */
-	int     ls_tdef;	/* packets where had to wait */
-	int     ls_tone;	/* packets with one retry */
-	int     ls_tmore;	/* packets with more than one retry */
-	int     ls_tbuff;	/* transmit buff errors */
-	int     ls_tuflo;	/* "      uflo  "     */
-	int     ls_tlcol;
-	int     ls_tlcar;
-	int     ls_trtry;
-	int     ls_rbuff;	/* receive buff errors */
-	int     ls_rfram;	/* framing     */
-	int     ls_roflo;	/* overflow    */
-	int     ls_rcrc;
-	int     ls_rrng;	/* rx ring sequence error */
-	int     ls_babl;	/* chip babl error */
-	int     ls_cerr;	/* collision error */
-	int     ls_miss;	/* missed packet */
-	int     ls_merr;	/* memory error */
-	int     ls_copies;	/* copies due to out of range mbufs */
-	int     ls_maxmbufs;	/* max mbufs on transmit */
-	int     ls_maxslots;	/* max ring slots on transmit */
-};
-
-struct sn_softc {
-	struct	device sc_dev;
-	struct	arpcom sc_arpcom;
-#define	sc_if		sc_arpcom.ac_if		/* network visible interface */
-#define	sc_enaddr	sc_arpcom.ac_enaddr	/* hardware ethernet address */
-
-	struct sonic_reg *sc_csr;	/* hardware pointer */
-	int	sc_rxmark;		/* position in rx ring for reading buffs */
-
-	int	sc_rramark;		/* index into rra of wp */
-
-	int	sc_txhead;		/* index of first TDA passed to chip  */
-	int	sc_missed;		/* missed packet counter */
-
-	int	txb_cnt;		/* total number of xmit buffers */
-	int	txb_inuse;		/* number of active xmit buffers */
-	int	txb_new;		/* index of next open slot. */
-
-	struct	RXpkt *sc_lrxp;		/* last RDA available to chip */
-	struct	sn_stats sc_sum;
-	short	sc_iflags;
-} sn_softc;
-
 static void snwatchdog __P((struct ifnet *));
-static int snmatch __P((struct device *, void *, void *));
-static void snattach __P((struct device *, struct device *, void *));
-static int sngetaddr __P((struct sn_softc *sc));
 static int sninit __P((struct sn_softc *sc));
 static int snstop __P((struct sn_softc *sc));
-static int sonicput __P((struct sn_softc *sc, struct mbuf *m0));
-static int snintr __P((struct sn_softc *, int));
+static int sonicput32 __P((struct sn_softc *sc, struct mbuf *m0));
+static int sonicput16 __P((struct sn_softc *sc, struct mbuf *m0));
+static void snintr __P((void *, int));
 static int snioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
 static void snstart __P((struct ifnet *ifp));
 static void snreset __P((struct sn_softc *sc));
+static void sntxint16 __P((struct sn_softc *));
+static void sntxint32 __P((struct sn_softc *));
+static void snrxint16 __P((struct sn_softc *));
+static void snrxint32 __P((struct sn_softc *));
+
 
 void camdump __P((struct sn_softc *sc));
-
-struct cfattach sn_ca = {
-	sizeof(struct sn_softc), snmatch, snattach
-};
-
-struct cfdriver sn_cd = {
-	NULL, "sn", DV_IFNET
-};
 
 #undef assert
 #undef _assert
 
 #ifdef NDEBUG
-#define	assert(e)	((void)0)
-#define	_assert(e)	((void)0)
+#define assert(e)       ((void)0)
+#define _assert(e)      ((void)0)
 #else
-#define	_assert(e)	assert(e)
+#define _assert(e)      assert(e)
 #ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
-#else	/* PCC */
-#define	assert(e)	((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
+#define assert(e)       ((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
+#else   /* PCC */
+#define assert(e)       ((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
 #endif
 #endif
 
 int ethdebug = 0;
 
-/*
- * SONIC buffers need to be aligned 16 or 32 bit aligned.
- * These macros calculate and verify alignment.
- */
-#if SONICDW == 32
-#define SONICALIGN 4
-#else
-#define SONICALIGN 2
-#endif
-#define SOALIGN(array) (((int)array+SONICALIGN-1) & ~(SONICALIGN-1))
-#define SOALIGNED(p) (!(((uint)p)&(SONICALIGN-1)))
+#define ROUNDUP(p, N)   (((int) p + N - 1) & ~(N - 1))
 
 #define LOWER(x) ((unsigned)(x) & 0xffff)
 #define UPPER(x) ((unsigned)(x) >> 16)
 
 /*
- * buffer sizes in 32 bit mode
- * 1 TXpkt is 4 hdr words + (3 * FRAGMAX) + 1 link word
- * FRAGMAX == 16 => 54 words == 216 bytes
- *
- * 1 RxPkt is 7 words == 28 bytes
- * 1 Rda   is 4 words == 16 bytes
- */
-
-#define NRRA	32		/* # receive resource descriptors */
-#define RRAMASK	0x1f		/* the reason why it must be power of two */
-
-#define NRBA	16		/* # receive buffers < NRRA */
-#define NRDA	NRBA		/* # receive descriptors */
-#define NTDA	4		/* # transmit descriptors */
-
-#define CDASIZE sizeof(struct CDA)
-#define RRASIZE (NRRA*sizeof(struct RXrsrc))
-#define RDASIZE (NRDA*sizeof(struct RXpkt))
-#define TDASIZE (NTDA*sizeof(struct TXpkt))
-
-#define FCSSIZE	4		/* size of FCS append te received packets */
-
-/*
- * maximum receive packet size plus 2 byte pad to make each
- * one aligned. 4 byte slop (required for eobc)
- */
-#define RBASIZE	(sizeof(struct ether_header) + ETHERMTU	+ FCSSIZE + 2 + 4)
-
-/*
- * space required for descriptors
- */
-#define DESC_SIZE (RRASIZE + CDASIZE + RDASIZE + TDASIZE + SONICALIGN - 1)
-
-/*
- * 16k transmit buffer area
- */
-#define TXBSIZE	1536	/* 6*2^8 -- the same size as the 8390 TXBUF */
-#define TBASIZE	(TXBSIZE * NTXB)
-
-/*
  * Nicely aligned pointers into the SONIC buffers
  * p_ points at physical (K1_SEG) addresses.
  */
-struct RXrsrc	*p_rra;	/* receiver resource descriptors */
-struct RXpkt	*p_rda;	/* receiver desriptors */
-struct TXpkt	*p_tda;	/* transmitter descriptors */
-struct CDA	*p_cda;	/* CAM descriptors */
-char		*p_rba;	/* receive buffer area base */
-char		*p_tba;	/* transmit buffer area base */
 
 /* Meta transmit descriptors */
 struct mtd {
-	struct	mtd *mtd_link;
-	struct	TXpkt *mtd_txp;
-	unsigned char *mtd_buf;
+	struct mtd	*mtd_link;
+	void		*mtd_txp;
+	int		mtd_vtxp;
+	unsigned char	*mtd_buf;
 } mtda[NTDA];
 
-struct mtd *mtdfree;		/* list of free meta transmit descriptors */
-struct mtd *mtdhead;		/* head of descriptors assigned to chip */
-struct mtd *mtdtail;		/* tail of descriptors assigned to chip */
-struct mtd *mtdnext;		/* next descriptor to give to chip */
+struct mtd *mtdfree;	    /* list of free meta transmit descriptors */
+struct mtd *mtdhead;	    /* head of descriptors assigned to chip */
+struct mtd *mtdtail;	    /* tail of descriptors assigned to chip */
+struct mtd *mtdnext;	    /* next descriptor to give to chip */
 
 void mtd_free __P((struct mtd *));
 struct mtd *mtd_alloc __P((void));
 
-static int
-snmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	if (!mac68k_machine.sonic)
-		return 0;
+struct cfdriver sn_cd = {
+	NULL, "sn", DV_IFNET
+};
 
-	return 1;
-}
+void
+snsetup(sc)
+	struct sn_softc	*sc;
+{
+	struct ifnet	*ifp = &sc->sc_if;
+	unsigned char	*p;
+	unsigned char	*pp;
+	int		i;
+
+	sc->sc_csr = (struct sonic_reg *) sc->sc_regh;
 
 /*
- * Interface exists: make available by filling in network interface
- * record.  System will initialize the interface when it is ready
- * to accept packets.
+ * Disable caching on register and DMA space.
  */
-static void
-snattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-{
-extern	unsigned char	SONICSPACE;
-extern	unsigned long	SONICSPACE_size;
-	struct sn_softc *sc = (void *)self;
-	struct ifnet *ifp = &sc->sc_if;
-	int base, p, pp;
+	physaccess((caddr_t) sc->sc_csr, (caddr_t) kvtop((caddr_t) sc->sc_csr),
+		SN_REGSIZE, PG_V | PG_RW | PG_CI);
 
-	/* Must allocate extra memory in case we need to round later. */
-	pp = (DESC_SIZE + NRBA*RBASIZE + 0x10000 + 4 + TBASIZE);
-	if (pp != SONICSPACE_size) {
-		printf(": SONICSPACE_size (%ld) != pp (%d).  Punt!\n",
-			SONICSPACE_size, pp);
-		return;
-	}
-	base = p = (int) &SONICSPACE;
-
-#define SONIC_IO_OFFSET	0xA000
-	sc->sc_csr = (struct sonic_reg *)(IOBase + SONIC_IO_OFFSET);
+	physaccess((caddr_t) sc->space, (caddr_t) kvtop((caddr_t) sc->space),
+		sizeof(sc->space), PG_V | PG_RW | PG_CI);
 
 /*
  * Put the pup in reset mode (sninit() will fix it later)
@@ -283,40 +157,57 @@ extern	unsigned long	SONICSPACE_size;
  * a higher buffer address to a 16 bit offset--this will cause wrap
  * around problems near the end of 64k !!
  */
-	if ((p ^ (p + RRASIZE + CDASIZE)) & 0x10000)
-		p = (p + 0x10000) & ~0xffff;
-	p_rra = (struct RXrsrc *) p;
+	p = &sc->space[0];
+	pp = (unsigned char *)ROUNDUP ((int)p, NBPG);
+
+	if ((RRASIZE + CDASIZE + RDASIZE + TDASIZE) > NBPG) {
+		printf ("sn: sizeof RRA (%d) + CDA (%d) + "
+			"RDA (%d) + TDA (%d) > NBPG (%d).  Punt!\n",
+			RRASIZE, CDASIZE, RDASIZE, TDASIZE, NBPG);
+		return;
+	}
+
+	p = pp;
+	sc->p_rra = (void *) p;
+	sc->v_rra = kvtop((caddr_t) sc->p_rra);
 	p += RRASIZE;
 
-	p_cda = (struct CDA *) p;
+	sc->p_cda = (void *) (p);
+	sc->v_cda = kvtop((caddr_t) sc->p_cda);
 	p += CDASIZE;
 
-	if ((p ^ (p + RDASIZE)) & 0x10000)
-		p = (p + 0x10000) & ~0xffff;
-	p_rda = (struct RXpkt *) p;
+	sc->p_rda = (void *) p;
+	sc->v_rda = kvtop((caddr_t) sc->p_rda);
 	p += RDASIZE;
 
-	if ((p ^ (p + TDASIZE)) & 0x10000)
-		p = (p + 0x10000) & ~0xffff;
-	p_tda = (struct TXpkt *) p;
+	sc->p_tda = (void *) p;
+	sc->v_tda = kvtop((caddr_t) sc->p_tda);
 	p += TDASIZE;
 
-	p = SOALIGN(p);
-	p_rba = (char *) p;
-	p += NRBA * RBASIZE;
+	p = pp + NBPG;
 
-	p_tba = (char *) p;
+	for (i = 0; i < NRBA; i+=2) {
+		sc->rbuf[i] = (caddr_t) p;
+		sc->rbuf[i+1] = (caddr_t)(p + (NBPG/2));
+		p += NBPG;
+	}
+
+	for (i = 0; i < NTXB; i+=2) {
+		sc->tbuf[i] = (caddr_t) p;
+		sc->tbuf[i+1] = (caddr_t)(p + (NBPG/2));
+		sc->vtbuf[i] = kvtop(sc->tbuf[i]);
+		sc->vtbuf[i+1] = kvtop(sc->tbuf[i+1]);
+		p += NBPG;
+	}
 
 #if 0
 	camdump(sc);
 #endif
-	sngetaddr(sc);
-	printf(" address %s, ", ether_sprintf(sc->sc_enaddr));
-	printf("SONIC ethernet--%d bytes at 0x%x.\n", pp, base);
+	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
 
 #if 0
-printf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x tba=0x%x\n",
-	p_rra, p_cda, p_rda, p_tda, p_rba, p_tba);
+printf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x\n",
+	sc->p_rra, sc->p_cda, sc->p_rda, sc->p_tda);
 #endif
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -325,14 +216,22 @@ printf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x tba=0x%x\n",
 	ifp->if_start = snstart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_watchdog = snwatchdog;
+
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	add_nubus_intr(9, (void (*) __P((void *, int))) snintr, (void *) sc);
-	enable_nubus_intr();
+	if (sc->sc_is16) {
+		sc->rxint = snrxint16;
+		sc->txint = sntxint16;
+	} else {
+		sc->rxint = snrxint32;
+		sc->txint = sntxint32;
+	}
+	add_nubus_intr(sc->slotno, snintr, (void *) sc);
 }
 
 static int
@@ -344,12 +243,7 @@ snioctl(ifp, cmd, data)
 	struct ifaddr *ifa;
 	struct sn_softc *sc = ifp->if_softc;
 	int     s = splnet(), err = 0;
-	int	temp, error;
-
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		splx(s);
-		return error;
-	}
+	int     temp;
 
 	switch (cmd) {
 
@@ -378,7 +272,8 @@ snioctl(ifp, cmd, data)
 		    (ifp->if_flags & IFF_RUNNING) == 0)
 			(void)sninit(ifp->if_softc);
 		/*
-		 * If the state of the promiscuous bit changes, the interface
+		 * If the state of the promiscuous bit changes, the
+interface
 		 * must be reset to effect the change.
 		 */
 		if (((ifp->if_flags ^ sc->sc_iflags) & IFF_PROMISC) &&
@@ -430,7 +325,7 @@ snstart(ifp)
 {
 	struct sn_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int	len;
+	int     len;
 
 	if ((sc->sc_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -464,8 +359,12 @@ outloop:
 	 * the Tx ring, then send the packet directly.  Otherwise append
 	 * it to the o/p queue.
 	 */
-	len = sonicput(sc, m);
-#if DIAGNOSTIC
+	if (sc->sc_is16) {
+		len = sonicput16(sc, m);
+	} else {
+		len = sonicput32(sc, m);
+	}
+#if 0
 	if (len != m->m_pkthdr.len) {
 		printf("snstart: len %d != m->m_pkthdr.len %d.\n",
 			len, m->m_pkthdr.len);
@@ -482,7 +381,7 @@ outloop:
 	sc->txb_inuse++;
 
 	sc->sc_if.if_opackets++;	/* # of pkts */
-	sc->sc_sum.ls_opacks++;		/* # of pkts */
+	sc->sc_sum.ls_opacks++;	 /* # of pkts */
 
 	/* Jump back for possibly more punishment. */
 	goto outloop;
@@ -492,8 +391,8 @@ outloop:
  * This is called from sonicioctl() when /etc/ifconfig is run to set
  * the address or switch the i/f on.
  */
-void caminitialise __P((void));
-void camentry __P((int, unsigned char *ea));
+void caminitialise __P((struct sn_softc *));
+void camentry __P((struct sn_softc *, int, unsigned char *));
 void camprogram __P((struct sn_softc *));
 void initialise_tda __P((struct sn_softc *));
 void initialise_rda __P((struct sn_softc *));
@@ -526,13 +425,12 @@ sninit(sc)
 
 	s = splnet();
 
-	csr->s_cr = CR_RST;	/* s_dcr only accessable reset mode! */
+	csr->s_cr = CR_RST;     /* s_dcr only accessable reset mode! */
 
 	/* config it */
-	csr->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 | DCR_DW32 | DCR_DMABLOCK |
-	    DCR_RFT16 | DCR_TFT16;
+	csr->s_dcr = sc->s_dcr;
 	csr->s_rcr = RCR_BRD | RCR_LBNONE;
-	csr->s_imr = IMR_PRXEN | IMR_PTXEN | IMR_TXEREN | IMR_HBLEN | IMR_LCDEN;
+	csr->s_imr = IMR_PRXEN | IMR_PTXEN | IMR_TXEREN | IMR_LCDEN;
 
 	/* clear pending interrupts */
 	csr->s_isr = 0x7fff;
@@ -552,8 +450,8 @@ sninit(sc)
 	wbflush();
 
 	/* program the CAM with our address */
-	caminitialise();
-	camentry(0, sc->sc_enaddr);
+	caminitialise(sc);
+	camentry(sc, 0, sc->sc_enaddr);
 	camprogram(sc);
 
 	/* get it to read resource descriptors */
@@ -618,15 +516,22 @@ snwatchdog(ifp)
 {
 	struct sn_softc *sc = ifp->if_softc;
 	int temp;
+	u_long status;
 
 	if (mtdhead && mtdhead->mtd_buf) {
 		/* something still pending for transmit */
-		if (mtdhead->mtd_txp->status == 0)
+		if (sc->sc_is16) {
+			status = ((struct _short_TXpkt *)
+				  mtdhead->mtd_txp)->status;
+		} else {
+			status = ((struct TXpkt *) mtdhead->mtd_txp)->status;
+		}
+		if (status == 0)
 			log(LOG_ERR, "%s: Tx - timeout\n",
 				sc->sc_dev.dv_xname);
 		else
 			log(LOG_ERR, "%s: Tx - lost interrupt\n",
-			   	 sc->sc_dev.dv_xname);
+				 sc->sc_dev.dv_xname);
 		temp = sc->sc_if.if_flags & IFF_UP;
 		snreset(sc);
 		sc->sc_if.if_flags |= temp;
@@ -634,26 +539,27 @@ snwatchdog(ifp)
 }
 
 /*
- * stuff packet into sonic (at splnet)
+ * stuff packet into sonic (at splnet) (16-bit)
  */
 static int 
-sonicput(sc, m0)
+sonicput16(sc, m0)
 	struct sn_softc *sc;
 	struct mbuf *m0;
 {
 	struct sonic_reg *csr = sc->sc_csr;
-	unsigned char	*buff, *buffer, *data;
-	struct TXpkt *txp;
+	unsigned char   *buff, *buffer, *data;
+	struct _short_TXpkt *txp;
 	struct mtd *mtdnew;
 	struct mbuf *m;
-	int len = 0, totlen = 0;
+	unsigned int len = 0;
+	unsigned int totlen = 0;
 
 	/* grab the replacement mtd */
 	if ((mtdnew = mtd_alloc()) == 0)
 		return (0);
 
 	/* We are guaranteed, if we get here, that the xmit buffer is free. */
-	buff = buffer = p_tba + sc->txb_new * TXBSIZE;
+	buff = buffer = sc->tbuf[sc->txb_new];
 	
 	/* this packet goes to mdtnext fill in the TDA */
 	mtdnext->mtd_buf = buffer;
@@ -670,13 +576,12 @@ sonicput(sc, m0)
 	if (totlen >= TXBSIZE) {
 		panic("packet overflow in sonicput.");
 	}
-	SWR(txp->u[0].frag_ptrlo, LOWER(buffer));
-	SWR(txp->u[0].frag_ptrhi, UPPER(buffer));
+	SWR(txp->u[0].frag_ptrlo, LOWER(sc->vtbuf[sc->txb_new]));
+	SWR(txp->u[0].frag_ptrhi, UPPER(sc->vtbuf[sc->txb_new]));
 	SWR(txp->u[0].frag_size, totlen);
 
-	if (len < ETHERMIN + sizeof(struct ether_header)) {
+	if (totlen < ETHERMIN + sizeof(struct ether_header)) {
 		int pad = ETHERMIN + sizeof(struct ether_header) - totlen;
-printf("Padding %d to %d bytes\n", totlen, totlen+pad);
 		bzero(buffer + totlen, pad);
 		SWR(txp->u[0].frag_size, pad + SRD(txp->u[0].frag_size));
 		totlen = ETHERMIN + sizeof(struct ether_header);
@@ -685,20 +590,23 @@ printf("Padding %d to %d bytes\n", totlen, totlen+pad);
 	SWR(txp->pkt_size, totlen);
 
 	/* link onto the next mtd that will be used */
-	SWR(txp->u[0].tlink, LOWER(mtdnew->mtd_txp) | EOL);
+	SWR(txp->u[1].tlink, LOWER(mtdnew->mtd_vtxp) | EOL);
 
 	if (mtdhead == 0) {
 		/* no current transmit list start with this one */
 		mtdtail = mtdhead = mtdnext;
-		csr->s_ctda = LOWER(txp);
+		csr->s_ctda = LOWER(mtdnext->mtd_vtxp);
 	} else {
 		/*
 		 * have a transmit list append it to end note
 		 * mtdnext is already physicaly linked to mtdtail in
 		 * mtdtail->mtd_txp->u[mtdtail->mtd_txp->frag_count].tlink
 		 */
-		SWR(mtdtail->mtd_txp->u[mtdtail->mtd_txp->frag_count].tlink,
-		    SRD(mtdtail->mtd_txp->u[mtdtail->mtd_txp->frag_count].tlink) & ~EOL);
+		struct _short_TXpkt *tp;
+
+		tp = (struct _short_TXpkt *) mtdtail->mtd_txp;
+		SWR(tp->u[tp->frag_count].tlink,
+			SRD(tp->u[tp->frag_count].tlink) & ~EOL);
 		mtdtail = mtdnext;
 	}
 	mtdnext->mtd_link = mtdnew;
@@ -708,46 +616,93 @@ printf("Padding %d to %d bytes\n", totlen, totlen+pad);
 	wbflush();
 	csr->s_cr = CR_TXP;
 	wbflush();
-	sc->sc_if.if_timer = 5;	/* 5 seconds to watch for failing to transmit */
+	sc->sc_if.if_timer = 5; /* 5 seconds to watch for failing to transmit */
 	return (totlen);
 }
 
 /*
- *  Read out the ethernet address from the cam. It is stored
- *  there by the boot when doing a loopback test. Thus we don't
- *  have to fetch it from nv ram.
+ * 32-bit version of sonicput
  */
 static int 
-sngetaddr(sc)
+sonicput32(sc, m0)
 	struct sn_softc *sc;
+	struct mbuf *m0;
 {
-	unsigned i;
+	struct sonic_reg *csr = sc->sc_csr;
+	unsigned char   *buff, *buffer, *data;
+	struct TXpkt *txp;
+	struct mtd *mtdnew;
+	struct mbuf *m;
+	unsigned int len = 0;
+	unsigned int totlen = 0;
 
-	sc->sc_csr->s_cr = CR_RST;
-	wbflush();
-	sc->sc_csr->s_cep = 15; /* For some reason, Apple fills top first. */
-	i = sc->sc_csr->s_cap2;
-	wbflush();
-	sc->sc_enaddr[5] = i >> 8;
-	sc->sc_enaddr[4] = i;
-	i = sc->sc_csr->s_cap1;
-	wbflush();
-	sc->sc_enaddr[3] = i >> 8;
-	sc->sc_enaddr[2] = i;
-	i = sc->sc_csr->s_cap0;
-	wbflush();
-	sc->sc_enaddr[1] = i >> 8;
-	sc->sc_enaddr[0] = i;
+	/* grab the replacement mtd */
+	if ((mtdnew = mtd_alloc()) == 0)
+		return (0);
 
-	sc->sc_csr->s_cr = 0;
+	/* We are guaranteed, if we get here, that the xmit buffer is free. */
+	buff = buffer = sc->tbuf[sc->txb_new];
+	
+	/* this packet goes to mdtnext fill in the TDA */
+	mtdnext->mtd_buf = buffer;
+	txp = mtdnext->mtd_txp;
+	SWR(txp->config, 0);
+
+	for (m = m0; m; m = m->m_next) {
+		data = mtod(m, u_char *);
+		len = m->m_len;
+		totlen += len;
+		bcopy(data, buff, len);
+		buff += len;
+	}
+	if (totlen >= TXBSIZE) {
+		panic("packet overflow in sonicput.");
+	}
+	SWR(txp->u[0].frag_ptrlo, LOWER(sc->vtbuf[sc->txb_new]));
+	SWR(txp->u[0].frag_ptrhi, UPPER(sc->vtbuf[sc->txb_new]));
+	SWR(txp->u[0].frag_size, totlen);
+
+	if (totlen < ETHERMIN + sizeof(struct ether_header)) {
+		int pad = ETHERMIN + sizeof(struct ether_header) - totlen;
+		bzero(buffer + totlen, pad);
+		SWR(txp->u[0].frag_size, pad + SRD(txp->u[0].frag_size));
+		totlen = ETHERMIN + sizeof(struct ether_header);
+	}
+	SWR(txp->frag_count, 1);
+	SWR(txp->pkt_size, totlen);
+
+	/* link onto the next mtd that will be used */
+	SWR(txp->u[1].tlink, LOWER(mtdnew->mtd_vtxp) | EOL);
+
+	if (mtdhead == 0) {
+		/* no current transmit list start with this one */
+		mtdtail = mtdhead = mtdnext;
+		csr->s_ctda = LOWER(mtdnext->mtd_vtxp);
+	} else {
+		/*
+		 * have a transmit list append it to end note
+		 * mtdnext is already physicaly linked to mtdtail in
+		 * mtdtail->mtd_txp->u[mtdtail->mtd_txp->frag_count].tlink
+		 */
+		struct TXpkt *tp;
+
+		tp = (struct TXpkt *) mtdtail->mtd_txp;
+		SWR(tp->u[tp->frag_count].tlink,
+			SRD(tp->u[tp->frag_count].tlink) & ~EOL);
+		mtdtail = mtdnext;
+	}
+	mtdnext->mtd_link = mtdnew;
+	mtdnext = mtdnew;
+
+	/* make sure chip is running */
 	wbflush();
-	return (0);
+	csr->s_cr = CR_TXP;
+	wbflush();
+	sc->sc_if.if_timer = 5; /* 5 seconds to watch for failing to transmit */
+	return (totlen);
 }
 
-void sonictxint __P((struct sn_softc *));
-void sonicrxint __P((struct sn_softc *));
-
-int sonic_read __P((struct sn_softc *, struct RXpkt *));
+int sonic_read __P((struct sn_softc *, caddr_t, int));
 struct mbuf *sonic_get __P((struct sn_softc *, struct ether_header *, int));
 
 void 
@@ -774,25 +729,53 @@ mtd_alloc()
  * CAM support
  */
 void 
-caminitialise()
+caminitialise(sc)
+	struct sn_softc *sc;
 {
 	int     i;
 
-	for (i = 0; i < MAXCAM; i++)
-		SWR(p_cda->desc[i].cam_ep, i);
-	SWR(p_cda->enable, 0);
+	if (sc->sc_is16) {
+		struct _short_CDA *p_cda;
+
+		p_cda = (struct _short_CDA *) sc->p_cda;
+		for (i = 0; i < MAXCAM; i++)
+			SWR(p_cda->desc[i].cam_ep, i);
+		SWR(p_cda->enable, 0);
+	} else {
+		struct CDA *p_cda;
+
+		p_cda = (struct CDA *) sc->p_cda;
+		for (i = 0; i < MAXCAM; i++)
+			SWR(p_cda->desc[i].cam_ep, i);
+		SWR(p_cda->enable, 0);
+	}
 }
 
 void 
-camentry(entry, ea)
+camentry(sc, entry, ea)
+	struct sn_softc *sc;
 	int entry;
 	unsigned char *ea;
 {
-	SWR(p_cda->desc[entry].cam_ep, entry);
-	SWR(p_cda->desc[entry].cam_ap2, (ea[5] << 8) | ea[4]);
-	SWR(p_cda->desc[entry].cam_ap1, (ea[3] << 8) | ea[2]);
-	SWR(p_cda->desc[entry].cam_ap0, (ea[1] << 8) | ea[0]);
-	SWR(p_cda->enable, SRD(p_cda->enable) | (1 << entry));
+	if (sc->sc_is16) {
+		struct _short_CDA *p_cda;
+
+		p_cda = (struct _short_CDA *) sc->p_cda;
+		SWR(p_cda->desc[entry].cam_ep, entry);
+		SWR(p_cda->desc[entry].cam_ap2, (ea[5] << 8) | ea[4]);
+		SWR(p_cda->desc[entry].cam_ap1, (ea[3] << 8) | ea[2]);
+		SWR(p_cda->desc[entry].cam_ap0, (ea[1] << 8) | ea[0]);
+		SWR(p_cda->enable, SRD(p_cda->enable) | (1 << entry));
+	} else {
+		struct CDA *p_cda;
+
+		p_cda = (struct CDA *) sc->p_cda;
+		SWR(p_cda->desc[entry].cam_ep, entry);
+		SWR(p_cda->desc[entry].cam_ap2, (ea[5] << 8) | ea[4]);
+		SWR(p_cda->desc[entry].cam_ap1, (ea[3] << 8) | ea[2]);
+		SWR(p_cda->desc[entry].cam_ap0, (ea[1] << 8) | ea[0]);
+		SWR(p_cda->enable, SRD(p_cda->enable) | (1 << entry));
+	}
 }
 
 void 
@@ -803,7 +786,7 @@ camprogram(sc)
 	int     timeout;
 
 	csr = sc->sc_csr;
-	csr->s_cdp = LOWER(p_cda);
+	csr->s_cdp = LOWER(sc->v_cda);
 	csr->s_cdc = MAXCAM;
 	csr->s_cr = CR_LCAM;
 	wbflush();
@@ -859,21 +842,28 @@ initialise_tda(sc)
 {
 	struct sonic_reg *csr;
 	struct mtd *mtd;
-	int     i;
+	int     i, psize;
+	u_long	p;
 
 	csr = sc->sc_csr;
 
 	mtdfree = mtdhead = mtdtail = (struct mtd *) 0;
 
+	p = (u_long) sc->p_tda;
+	psize = (sc->sc_is16 ?
+			sizeof(struct _short_TXpkt) : sizeof(struct TXpkt));
+
 	for (i = 0; i < NTDA; i++) {
 		mtd = &mtda[i];
-		mtd->mtd_txp = &p_tda[i];
+		mtd->mtd_txp = (struct TXpkt *) p;
+		mtd->mtd_vtxp = kvtop((caddr_t) mtd->mtd_txp);
 		mtd->mtd_buf = 0;
 		mtd_free(mtd);
+		p += psize;
 	}
 	mtdnext = mtd_alloc();
 
-	csr->s_utda = UPPER(p_tda);
+	csr->s_utda = UPPER(sc->v_tda);
 }
 
 void 
@@ -886,20 +876,43 @@ initialise_rda(sc)
 	csr = sc->sc_csr;
 
 	/* link the RDA's together into a circular list */
-	for (i = 0; i < (NRDA - 1); i++) {
-		SWR(p_rda[i].rlink, LOWER(&p_rda[i + 1]));
-		SWR(p_rda[i].in_use, 1);
-	}
-	SWR(p_rda[NRDA - 1].rlink, LOWER(&p_rda[0]) | EOL);
-	SWR(p_rda[NRDA - 1].in_use, 1);
+	if (sc->sc_is16) {
+		int			v_rda;
+		struct _short_RXpkt	*p_rda;
 
-	/* mark end of receive descriptor list */
-	sc->sc_lrxp = &p_rda[NRDA - 1];
+		p_rda = (struct _short_RXpkt *) sc->p_rda;
+		for (i = 0; i < (NRDA - 1); i++) {
+			SWR(p_rda[i].rlink,
+			 LOWER(v_rda + (i + 1) * sizeof(struct _short_RXpkt)));
+			SWR(p_rda[i].in_use, 1);
+		}
+		SWR(p_rda[NRDA - 1].rlink, LOWER(v_rda) | EOL);
+		SWR(p_rda[NRDA - 1].in_use, 1);
+
+		/* mark end of receive descriptor list */
+		sc->sc_lrxp = &p_rda[NRDA - 1];
+	} else {
+		int		v_rda;
+		struct RXpkt	*p_rda;
+
+		v_rda = sc->v_rda;
+		p_rda = (struct RXpkt *) sc->p_rda;
+		for (i = 0; i < (NRDA - 1); i++) {
+			SWR(p_rda[i].rlink,
+				LOWER(v_rda + (i + 1) * sizeof(struct RXpkt)));
+			SWR(p_rda[i].in_use, 1);
+		}
+		SWR(p_rda[NRDA - 1].rlink, LOWER(v_rda) | EOL);
+		SWR(p_rda[NRDA - 1].in_use, 1);
+
+		/* mark end of receive descriptor list */
+		sc->sc_lrxp = &p_rda[NRDA - 1];
+	}
 
 	sc->sc_rxmark = 0;
 
-	csr->s_urda = UPPER(&p_rda[0]);
-	csr->s_crda = LOWER(&p_rda[0]);
+	csr->s_urda = UPPER(sc->v_rda);
+	csr->s_crda = LOWER(sc->v_rda);
 	wbflush();
 }
 
@@ -909,24 +922,46 @@ initialise_rra(sc)
 {
 	struct sonic_reg *csr;
 	int     i;
+	int	rr_size;
 
 	csr = sc->sc_csr;
 
-	csr->s_eobc = RBASIZE / 2 - 2;	/* must be >= MAXETHERPKT */
-	csr->s_urra = UPPER(p_rra);
-	csr->s_rsa = LOWER(p_rra);
-	csr->s_rea = LOWER(&p_rra[NRRA]);
-	csr->s_rrp = LOWER(p_rra);
+	if (sc->sc_is16) {
+		rr_size = sizeof(struct _short_RXrsrc);
+		csr->s_eobc = RBASIZE(sc) / 2 - 1;  /* must be >= MAXETHERPKT */
+	} else {
+		rr_size = sizeof(struct RXrsrc);
+		csr->s_eobc = RBASIZE(sc) / 2 - 2;  /* must be >= MAXETHERPKT */
+	}
+	csr->s_urra = UPPER(sc->v_rra);
+	csr->s_rsa = LOWER(sc->v_rra);
+	csr->s_rea = LOWER(sc->v_rra + (NRRA * rr_size));
+	csr->s_rrp = LOWER(sc->v_rra);
 
 	/* fill up SOME of the rra with buffers */
-	for (i = 0; i < NRBA; i++) {
-		SWR(p_rra[i].buff_ptrhi, UPPER(&p_rba[i * RBASIZE]));
-		SWR(p_rra[i].buff_ptrlo, LOWER(&p_rba[i * RBASIZE]));
-		SWR(p_rra[i].buff_wchi, UPPER(RBASIZE / 2));
-		SWR(p_rra[i].buff_wclo, LOWER(RBASIZE / 2));
+	if (sc->sc_is16) {
+		struct _short_RXrsrc *p_rra;
+
+		p_rra = (struct _short_RXrsrc *) sc->p_rra;
+		for (i = 0; i < NRBA; i++) {
+			SWR(p_rra[i].buff_ptrhi, UPPER(kvtop(sc->rbuf[i])));
+			SWR(p_rra[i].buff_ptrlo, LOWER(kvtop(sc->rbuf[i])));
+			SWR(p_rra[i].buff_wchi, UPPER(RBASIZE(sc) / 2));
+			SWR(p_rra[i].buff_wclo, LOWER(RBASIZE(sc) / 2));
+		}
+	} else {
+		struct RXrsrc *p_rra;
+
+		p_rra = (struct RXrsrc *) sc->p_rra;
+		for (i = 0; i < NRBA; i++) {
+			SWR(p_rra[i].buff_ptrhi, UPPER(kvtop(sc->rbuf[i])));
+			SWR(p_rra[i].buff_ptrlo, LOWER(kvtop(sc->rbuf[i])));
+			SWR(p_rra[i].buff_wchi, UPPER(RBASIZE(sc) / 2));
+			SWR(p_rra[i].buff_wclo, LOWER(RBASIZE(sc) / 2));
+		}
 	}
 	sc->sc_rramark = NRBA;
-	csr->s_rwp = LOWER(&p_rra[sc->sc_rramark]);
+	csr->s_rwp = LOWER(sc->v_rra + (sc->sc_rramark * rr_size));
 	wbflush();
 }
 
@@ -939,16 +974,16 @@ initialise_tba(sc)
 	sc->txb_new = 0;
 }
 
-static int 
-snintr(sc, slot)
-	struct sn_softc *sc;
-	int	slot;
+static void
+snintr(arg, slot)
+	void    *arg;
+	int     slot;
 {
+	struct sn_softc *sc = (struct sn_softc *)arg;
 	struct sonic_reg *csr = sc->sc_csr;
-	int	isr;
+	int     isr;
 
 	while ((isr = (csr->s_isr & ISR_ALL)) != 0) {
-printf("snintr: %x.\n", isr);
 		/* scrub the interrupts that we are going to service */
 		csr->s_isr = isr;
 		wbflush();
@@ -957,14 +992,21 @@ printf("snintr: %x.\n", isr);
 			printf("sonic: unexpected interrupt status 0x%x\n", isr);
 
 		if (isr & (ISR_TXDN | ISR_TXER))
-			sonictxint(sc);
+			(*sc->txint)(sc);
 
 		if (isr & ISR_PKTRX)
-			sonicrxint(sc);
+			(*sc->rxint)(sc);
 
 		if (isr & (ISR_HBL | ISR_RDE | ISR_RBE | ISR_RBAE | ISR_RFO)) {
 			if (isr & ISR_HBL)
-				printf("sonic: no heartbeat\n");
+				/*
+				 * The repeater is not providing a heartbeat.
+				 * In itself this isn't harmful, lots of the
+				 * cheap repeater hubs don't supply a heartbeat.
+				 * So ignore the lack of heartbeat. Its only
+				 * if we can't detect a carrier that we have a
+				 * problem.
+				 */
 			if (isr & ISR_RDE)
 				printf("sonic: receive descriptors exhausted\n");
 			if (isr & ISR_RBE)
@@ -986,14 +1028,75 @@ printf("snintr: %x.\n", isr);
 		}
 		snstart(&sc->sc_if);
 	}
-	return (1);
+	return;
 }
 
 /*
- * Transmit interrupt routine
+ * Transmit interrupt routine (16-bit)
  */
-void 
-sonictxint(sc)
+static void 
+sntxint16(sc)
+	struct sn_softc *sc;
+{
+	struct _short_TXpkt *txp;
+	struct sonic_reg *csr;
+	struct mtd *mtd;
+
+	if (mtdhead == (struct mtd *) 0)
+		return;
+
+	csr = sc->sc_csr;
+
+	while ((mtd = mtdhead) != NULL) {
+		if (mtd->mtd_buf == 0)
+			break;
+
+		txp = (struct _short_TXpkt *) mtd->mtd_txp;
+
+		if (SRD(txp->status) == 0)      /* it hasn't really gone yet */
+			return;
+
+		if (ethdebug) {
+			struct ether_header *eh;
+
+			eh = (struct ether_header *) mtd->mtd_buf;
+			printf("xmit status=0x%x len=%d type=0x%x from %s",
+			    txp->status,
+			    txp->pkt_size,
+			    htons(eh->ether_type),
+			    ether_sprintf(eh->ether_shost));
+			printf(" (to %s)\n", ether_sprintf(eh->ether_dhost));
+		}
+		sc->txb_inuse--;
+		mtd->mtd_buf = 0;
+		mtdhead = mtd->mtd_link;
+
+		mtd_free(mtd);
+
+		/* XXX - Do stats here. */
+
+		if ((SRD(txp->status) & TCR_PTX) == 0) {
+			printf("sonic: Tx packet status=0x%x\n", txp->status);
+
+			/* XXX - DG This looks bogus */
+			if (mtdhead != mtdnext) {
+				printf("resubmitting remaining packets\n");
+				csr->s_ctda = LOWER(mtdhead->mtd_vtxp);
+				csr->s_cr = CR_TXP;
+				wbflush();
+				return;
+			}
+		}
+	}
+	/* mtdhead should be at mtdnext (go) */
+	mtdhead = 0;
+}
+
+/*
+ * Transmit interrupt routine (32-bit)
+ */
+static void 
+sntxint32(sc)
 	struct sn_softc *sc;
 {
 	struct TXpkt *txp;
@@ -1011,7 +1114,7 @@ sonictxint(sc)
 
 		txp = mtd->mtd_txp;
 
-		if (SRD(txp->status) == 0)	/* it hasn't really gone yet */
+		if (SRD(txp->status) == 0)      /* it hasn't really gone yet */
 			return;
 
 		if (ethdebug) {
@@ -1036,9 +1139,10 @@ sonictxint(sc)
 		if ((SRD(txp->status) & TCR_PTX) == 0) {
 			printf("sonic: Tx packet status=0x%lx\n", txp->status);
 
+			/* XXX - DG This looks bogus */
 			if (mtdhead != mtdnext) {
 				printf("resubmitting remaining packets\n");
-				csr->s_ctda = LOWER(mtdhead->mtd_txp);
+				csr->s_ctda = LOWER(mtdhead->mtd_vtxp);
 				csr->s_cr = CR_TXP;
 				wbflush();
 				return;
@@ -1046,32 +1150,36 @@ sonictxint(sc)
 		}
 	}
 	/* mtdhead should be at mtdnext (go) */
-	assert(mtdhead == mtdnext);
-	assert(mtdhead->mtd_link == 0);
 	mtdhead = 0;
 }
 
 /*
- * Receive interrupt routine
+ * Receive interrupt routine (16-bit)
  */
-void 
-sonicrxint(sc)
+static void 
+snrxint16(sc)
 	struct sn_softc *sc;
 {
-	struct sonic_reg *csr = sc->sc_csr;
-	struct RXpkt *rxp;
-	int     orra;
+	struct sonic_reg	*csr = sc->sc_csr;
+	struct _short_RXpkt	*rxp, *p_rda;
+	struct _short_RXrsrc	*p_rra;
+	int			orra;
+	int			len;
 
+	p_rra = (struct _short_RXrsrc *) sc->p_rra;
+	p_rda = (struct _short_RXpkt *) sc->p_rda;
 	rxp = &p_rda[sc->sc_rxmark];
 
 	while (SRD(rxp->in_use) == 0) {
 		unsigned status = SRD(rxp->status);
 		if ((status & RCR_LPKT) == 0)
 			printf("sonic: more than one packet in RBA!\n");
-		assert(PSNSEQ(SRD(rxp->seq_no)) == 0);
 
+		orra = RBASEQ(SRD(rxp->seq_no)) & RRAMASK;
+		len = SRD(rxp->byte_count)
+				- sizeof(struct ether_header) - FCSSIZE;
 		if (status & RCR_PRX) {
-			if (sonic_read(sc, rxp)) {
+			if (sonic_read(sc, sc->rbuf[orra & RBAMASK], len)) {
 				sc->sc_if.if_ipackets++;
 				sc->sc_sum.ls_ipacks++;
 				sc->sc_missed = 0;
@@ -1080,17 +1188,8 @@ sonicrxint(sc)
 			sc->sc_if.if_ierrors++;
 
 		/*
-		 * give receive buffer area back to chip XXX what buffer
-		 * did the sonic use for this descriptor answer look at
-		 * the rba sequence number !! 
-		 */
-		orra = RBASEQ(SRD(rxp->seq_no)) & RRAMASK;
-
-		assert(SRD(rxp->pkt_ptrhi) == SRD(p_rra[orra].buff_ptrhi));
-		assert(SRD(rxp->pkt_ptrlo) == SRD(p_rra[orra].buff_ptrlo));
-		assert(SRD(p_rra[orra].buff_wclo));
-
-		/*
+		 * give receive buffer area back to chip.
+		 *
 		 * orra is now empty of packets and can be freed if
 		 * sonic read didnt copy it out then we would have to
 		 * wait !!
@@ -1103,7 +1202,8 @@ sonicrxint(sc)
 		p_rra[orra].buff_wclo = 0;
 
 		sc->sc_rramark = (sc->sc_rramark + 1) & RRAMASK;
-		csr->s_rwp = LOWER(&p_rra[sc->sc_rramark]);
+		csr->s_rwp = LOWER(sc->v_rra +
+			(sc->sc_rramark * sizeof(struct _short_RXrsrc)));
 		wbflush();
 
 		/*
@@ -1112,8 +1212,78 @@ sonicrxint(sc)
 		 */
 		SWR(rxp->in_use, 1);
 		SWR(rxp->rlink, SRD(rxp->rlink) | EOL);
-		SWR(sc->sc_lrxp->rlink, SRD(sc->sc_lrxp->rlink) & ~EOL);
-		sc->sc_lrxp = rxp;
+		SWR(((struct _short_RXpkt *) sc->sc_lrxp)->rlink,
+		    SRD(((struct _short_RXpkt *) sc->sc_lrxp)->rlink) & ~EOL);
+		sc->sc_lrxp = (void *) rxp;
+
+		if (++sc->sc_rxmark >= NRDA)
+			sc->sc_rxmark = 0;
+		rxp = &p_rda[sc->sc_rxmark];
+	}
+}
+
+/*
+ * Receive interrupt routine (normal 32-bit)
+ */
+static void 
+snrxint32(sc)
+	struct sn_softc *sc;
+{
+	struct sonic_reg  *csr = sc->sc_csr;
+	struct RXpkt      *rxp, *p_rda;
+	struct RXrsrc	  *p_rra;
+	int		  orra;
+	int		  len;
+
+	p_rra = (struct RXrsrc *) sc->p_rra;
+	p_rda = (struct RXpkt *) sc->p_rda;
+	rxp = &p_rda[sc->sc_rxmark];
+
+	while (SRD(rxp->in_use) == 0) {
+		unsigned status = SRD(rxp->status);
+		if ((status & RCR_LPKT) == 0)
+			printf("sonic: more than one packet in RBA!\n");
+
+		orra = RBASEQ(SRD(rxp->seq_no)) & RRAMASK;
+		len = SRD(rxp->byte_count)
+				- sizeof(struct ether_header) - FCSSIZE;
+		if (status & RCR_PRX) {
+			if (sonic_read(sc, sc->rbuf[orra & RBAMASK], len)) {
+				sc->sc_if.if_ipackets++;
+				sc->sc_sum.ls_ipacks++;
+				sc->sc_missed = 0;
+			}
+		} else
+			sc->sc_if.if_ierrors++;
+
+		/*
+		 * give receive buffer area back to chip.
+		 *
+		 * orra is now empty of packets and can be freed if
+		 * sonic read didnt copy it out then we would have to
+		 * wait !!
+		 * (dont bother add it back in again straight away)
+		 */
+		p_rra[sc->sc_rramark] = p_rra[orra];
+
+		/* zap old rra for fun */
+		p_rra[orra].buff_wchi = 0;
+		p_rra[orra].buff_wclo = 0;
+
+		sc->sc_rramark = (sc->sc_rramark + 1) & RRAMASK;
+		csr->s_rwp = LOWER(sc->v_rra +
+			(sc->sc_rramark * sizeof(struct RXrsrc)));
+		wbflush();
+
+		/*
+		 * give receive descriptor back to chip simple
+		 * list is circular
+		 */
+		SWR(rxp->in_use, 1);
+		SWR(rxp->rlink, SRD(rxp->rlink) | EOL);
+		SWR(((struct RXpkt *) sc->sc_lrxp)->rlink,
+			SRD(((struct RXpkt *) sc->sc_lrxp)->rlink) & ~EOL);
+		sc->sc_lrxp = (void *) rxp;
 
 		if (++sc->sc_rxmark >= NRDA)
 			sc->sc_rxmark = 0;
@@ -1126,32 +1296,26 @@ sonicrxint(sc)
  * appropriate protocol handler
  */
 int 
-sonic_read(sc, rxp)
+sonic_read(sc, pkt, len)
 	struct sn_softc *sc;
-	struct RXpkt *rxp;
+	caddr_t pkt;
+	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	/*extern char *ether_sprintf();*/
 	struct ether_header *et;
 	struct mbuf *m;
-	int     len;
-	caddr_t	pkt;
 
 	/*
-         * Get input data length.
-         * Get pointer to ethernet header (in input buffer).
-         * Deal with trailer protocol: if type is PUP trailer
-         * get true type from first 16-bit word past data.
-         * Remember that type was trailer by setting off.
-         */
-
-	len = SRD(rxp->byte_count) - sizeof(struct ether_header) - FCSSIZE;
-	pkt = (caddr_t)((SRD(rxp->pkt_ptrhi) << 16) | SRD(rxp->pkt_ptrlo));
+	 * Get pointer to ethernet header (in input buffer).
+	 * Deal with trailer protocol: if type is PUP trailer
+	 * get true type from first 16-bit word past data.
+	 * Remember that type was trailer by setting off.
+	 */
 	et = (struct ether_header *)pkt;
 
 	if (ethdebug) {
-		printf("rcvd 0x%p status=0x%lx, len=%d type=0x%x from %s",
-		    et, rxp->status, len, htons(et->ether_type),
+		printf("rcvd 0x%p len=%d type=0x%x from %s",
+		    et, len, htons(et->ether_type),
 		    ether_sprintf(et->ether_shost));
 		printf(" (to %s)\n", ether_sprintf(et->ether_dhost));
 	}
@@ -1164,7 +1328,8 @@ sonic_read(sc, rxp)
 	/*
 	 * Check if there's a bpf filter listening on this interface.
 	 * If so, hand off the raw packet to enet, then discard things
-	 * not destined for us (but be sure to keep broadcast/multicast).
+	 * not destined for us (but be sure to keep
+broadcast/multicast).
 	 */
 	if (sc->sc_if.if_bpf) {
 		bpf_tap(sc->sc_if.if_bpf, pkt,
@@ -1183,7 +1348,7 @@ sonic_read(sc, rxp)
 	return(1);
 }
 
-#define sonicdataaddr(eh, off, type)       ((type)(((caddr_t)((eh)+1)+(off))))
+#define sonicdataaddr(eh, off, type)      ((type)(((caddr_t)((eh)+1)+(off))))
 
 /*
  * munge the received packet into an mbuf chain
@@ -1199,9 +1364,9 @@ sonic_get(sc, eh, datalen)
 	struct mbuf *m;
 	struct mbuf *top = 0, **mp = &top;
 	int	len;
-	char   *spkt = sonicdataaddr(eh, 0, caddr_t);
-	char   *epkt = spkt + datalen;
-	char *cp = spkt;
+	char	*spkt = sonicdataaddr(eh, 0, caddr_t);
+	char	*epkt = spkt + datalen;
+	char	*cp = spkt;
 
 	epkt = cp + datalen;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1229,8 +1394,8 @@ sonic_get(sc, eh, datalen)
 				len = m->m_len;
 		} else {
 			/*
-		         * Place initial small packet/header at end of mbuf.
-		         */
+			 * Place initial small packet/header at end of mbuf.
+			 */
 			if (len < m->m_len) {
 				if (top == 0 && len + max_linkhdr <= m->m_len)
 					m->m_data += max_linkhdr;
