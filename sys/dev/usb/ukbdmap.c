@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.8 2002/03/12 15:16:33 mickey Exp $ */
+/*	$OpenBSD: ukbdmap.c,v 1.9 2002/05/05 21:52:16 nate Exp $ */
 /*	$NetBSD: ukbdmap.c,v 1.6 2001/04/04 05:31:57 toshii Exp $	*/
 
 /*
@@ -437,13 +437,13 @@ Static const keysym_t ukbd_keydesc_sf[] = {
 
 const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	ukbd_keydesc_us),
-	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	ukbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_US | KB_SWAPCTRLCAPS,KB_US,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_JP,			KB_US,	ukbd_keydesc_jp),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS,KB_JP,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_DE,			KB_US,	ukbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	ukbd_keydesc_de_nodead),
-	KBD_MAP(KB_FR,                  KB_US,  ukbd_keydesc_fr),
-	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, ukbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_FR,                  KB_US,	ukbd_keydesc_fr),
+	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS,KB_FR,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_DK,			KB_US,	ukbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	ukbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	ukbd_keydesc_it),
