@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.14 2002/05/29 07:54:59 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.15 2002/06/07 03:06:15 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -346,6 +346,7 @@ nd6_ra_input(m, off, icmp6len)
 	 */
 	if (ndopts.nd_opts_mtu && ndopts.nd_opts_mtu->nd_opt_mtu_len == 1) {
 		u_int32_t mtu = ntohl(ndopts.nd_opts_mtu->nd_opt_mtu_mtu);
+		u_long maxmtu;
 
 		/* lower bound */
 		if (mtu < IPV6_MMTU) {
@@ -356,25 +357,19 @@ nd6_ra_input(m, off, icmp6len)
 		}
 
 		/* upper bound */
-		if (ndi->maxmtu) {
-			if (mtu <= ndi->maxmtu) {
-				int change = (ndi->linkmtu != mtu);
+		maxmtu = (ndi->maxmtu && ndi->maxmtu < ifp->if_mtu)
+		    ? ndi->maxmtu : ifp->if_mtu;
+		if (mtu <= maxmtu) {
+			int change = (ndi->linkmtu != mtu);
 
-				ndi->linkmtu = mtu;
-				if (change) /* in6_maxmtu may change */
-					in6_setmaxmtu();
-			} else {
-				nd6log((LOG_INFO, "nd6_ra_input: bogus mtu "
-				    "mtu=%d sent from %s; "
-				    "exceeds maxmtu %d, ignoring\n",
-				    mtu, ip6_sprintf(&ip6->ip6_src),
-				    ndi->maxmtu));
-			}
+			ndi->linkmtu = mtu;
+			if (change) /* in6_maxmtu may change */
+				in6_setmaxmtu();
 		} else {
-			nd6log((LOG_INFO, "nd6_ra_input: mtu option "
-			    "mtu=%d sent from %s; maxmtu unknown, "
-			    "ignoring\n",
-			    mtu, ip6_sprintf(&ip6->ip6_src)));
+			nd6log((LOG_INFO, "nd6_ra_input: bogus mtu "
+			    "mtu=%d sent from %s; "
+			    "exceeds maxmtu %lu, ignoring\n",
+			    mtu, ip6_sprintf(&ip6->ip6_src), maxmtu));
 		}
 	}
 
@@ -395,8 +390,8 @@ nd6_ra_input(m, off, icmp6len)
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
 		nd6log((LOG_INFO,
 		    "nd6_ra_input: lladdrlen mismatch for %s "
-		    "(if %d, RA packet %d)\n",
-			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2));
+		    "(if %d, RA packet %d)\n", ip6_sprintf(&saddr6),
+		    ifp->if_addrlen, lladdrlen - 2));
 		goto bad;
 	}
 
