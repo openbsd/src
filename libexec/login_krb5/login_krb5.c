@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.7 2001/06/25 15:49:21 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.8 2001/06/25 18:58:59 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -55,6 +55,10 @@
 #define AUTH_FAILED -1
 
 FILE *back = NULL;
+krb5_error_code ret;
+krb5_context context;
+krb5_ccache ccache;
+krb5_principal princ;
 
 void
 krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ...) 
@@ -67,15 +71,109 @@ krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ..
     syslog(level, "%s: %s", buf, krb5_get_err_text(context, code));
 }
 
+void
+store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
+	      int token_install) {
+	char cc_file[MAXPATHLEN];
+	krb5_ccache ccache_store;
+	int get_krb4_ticket = 0;
+	char krb4_ticket_file[MAXPATHLEN];
+
+	if(ticket_newfiles)
+		snprintf(cc_file, sizeof(cc_file), "FILE:/tmp/krb5cc_%d",
+			 pwd->pw_uid);
+	else
+		snprintf(cc_file, sizeof(cc_file),"%s",
+			 krb5_cc_default_name(context));
+
+	if(ticket_store) {
+		ret = krb5_cc_resolve(context, cc_file, &ccache_store);
+		if(ret != 0) {
+			krb5_syslog(context, LOG_ERR, ret,
+				    "krb5_cc_gen_new");
+			exit(1);
+		}
+		
+		ret = krb5_cc_copy_cache(context, ccache,
+					 ccache_store);
+		if(ret != 0) {
+			krb5_syslog(context, LOG_ERR, ret,
+				    "krb5_cc_copy_cache");
+		}
+	
+		chown(krb5_cc_get_name(context, ccache_store),
+		      pwd->pw_uid, pwd->pw_gid);
+		
+		fprintf(back, BI_SETENV " KRB5CCNAME %s:%s\n",
+			krb5_cc_get_type(context, ccache_store),
+			krb5_cc_get_name(context, ccache_store));
+
+#ifdef KRB4
+		get_krb4_ticket =
+			krb5_config_get_bool_default (context, NULL,
+						      get_krb4_ticket,
+						      "libdefaults",
+						      "krb4_get_tickets",
+						      NULL);
+		if(get_krb4_ticket) {
+			CREDENTIALS c;
+			krb5_creds cred;
+			krb5_cc_cursor cursor;
+			
+			ret = krb5_cc_start_seq_get(context, ccache, &cursor);
+			if(ret != 0) {
+				krb5_syslog(context, LOG_ERR, ret,
+					    "start seq");
+				exit(1);
+			}
+			
+			ret = krb5_cc_next_cred(context, ccache,
+						&cursor, &cred);
+			if(ret != 0) {
+				krb5_syslog(context, LOG_ERR, ret,
+					    "next cred");
+				exit(1);
+			}
+			
+			ret = krb5_cc_end_seq_get(context, ccache,
+						  &cursor);
+			if(ret != 0) {
+				krb5_syslog(context, LOG_ERR, ret,
+					    "end seq");
+				exit(1);
+			}
+			
+			ret = krb524_convert_creds_kdc(context, ccache,
+						       &cred, &c);
+			if(ret != 0) {
+				krb5_syslog(context, LOG_ERR, ret,
+					    "convert");
+			} else {
+				snprintf(krb4_ticket_file,
+					 sizeof(krb4_ticket_file),
+					 "%s%d", TKT_ROOT, pwd->pw_uid);
+				krb_set_tkt_string(krb4_ticket_file);
+				tf_setup(&c, c.pname, c.pinst);
+				chown(krb4_ticket_file,
+				      pwd->pw_uid, pwd->pw_gid);
+			}
+		}
+	}
+#endif
+	
+	/* Need to chown the ticket file */
+#ifdef KRB4
+	if(get_krb4_ticket)
+		fprintf(back, BI_SETENV " KRBTKFILE %s\n",
+			krb4_ticket_file);
+#endif
+}
+
 int
-krb5_login(char *username, char *password)
+krb5_login(char *username, char *password, int login, int tickets)
 {
 	int return_code = AUTH_FAILED;
 	char *instance, *tmp_name;
-	krb5_error_code ret;
-	krb5_context context;
-	krb5_ccache ccache;
-	krb5_principal princ;
 
 	if(username == NULL || password == NULL)
 		return AUTH_FAILED;
@@ -116,11 +214,7 @@ krb5_login(char *username, char *password)
 
 	switch(ret) {
 	case 0: {
-		krb5_ccache ccache_store;
 		struct passwd *pwd;
-		int get_krb4_ticket = 0;
-		char krb4_ticket_file[MAXPATHLEN];
-		char cc_file[MAXPATHLEN];
 
 		/*
 		 * The only instance a user should be allowed to login with
@@ -142,90 +236,11 @@ krb5_login(char *username, char *password)
 		if(pwd == NULL) {
 			krb5_syslog(context, LOG_ERR, ret,
 				    "%s: no such user", username);
+			return AUTH_FAILED;
 		}
-		snprintf(cc_file, sizeof(cc_file), "FILE:/tmp/krb5cc_%d",
-			 pwd->pw_uid);
-
-		ret = krb5_cc_resolve(context, cc_file, &ccache_store);
-		if(ret != 0) {
-			krb5_syslog(context, LOG_ERR, ret, "krb5_cc_gen_new");
-			exit(1);
-		}
-
-		ret = krb5_cc_copy_cache(context, ccache, ccache_store);
-		if(ret != 0) {
-			krb5_syslog(context, LOG_ERR, ret,
-				    "krb5_cc_copy_cache");
-		}
-
-#ifdef KRB4
-		get_krb4_ticket =
-			krb5_config_get_bool_default (context, NULL,
-						      get_krb4_ticket,
-						      "libdefaults",
-						      "krb4_get_tickets",
-						      NULL);
-#if 1
-		if(get_krb4_ticket) {
-			CREDENTIALS c;
-			krb5_creds cred;
-			krb5_cc_cursor cursor;
-
-			ret = krb5_cc_start_seq_get(context, ccache, &cursor);
-			if(ret != 0) {
-				krb5_syslog(context, LOG_ERR, ret,
-					    "start seq");
-				exit(1);
-			}
-
-			ret = krb5_cc_next_cred(context, ccache, &cursor,
-						&cred);
-			if(ret != 0) {
-				krb5_syslog(context, LOG_ERR, ret,
-					    "next cred");
-				exit(1);
-			}
-
-			ret = krb5_cc_end_seq_get(context, ccache, &cursor);
-			if(ret != 0) {
-				krb5_syslog(context, LOG_ERR, ret, "end seq");
-				exit(1);
-			}
-			
-			ret = krb524_convert_creds_kdc(context, ccache, &cred,
-						       &c);
-			if(ret != 0) {
-				krb5_syslog(context, LOG_ERR, ret, "convert");
-			} else {
-				snprintf(krb4_ticket_file,
-					 sizeof(krb4_ticket_file),
-					 "%s%d", TKT_ROOT, pwd->pw_uid);
-				krb_set_tkt_string(krb4_ticket_file);
-				tf_setup(&c, c.pname, c.pinst);
-				chown(krb4_ticket_file,
-				      pwd->pw_uid, pwd->pw_gid);
-			}
-		}
-#endif
-#endif
-
-		if(strcmp(instance, "root") == 0) {
-		} else {
-			/* Need to chown the ticket file */
-			chown(krb5_cc_get_name(context, ccache_store),
-			      pwd->pw_uid, pwd->pw_gid);
-		}
-
 		fprintf(back, BI_AUTH "\n");
 		
-		fprintf(back, BI_SETENV " KRB5CCNAME %s:%s\n",
-			krb5_cc_get_type(context, ccache_store),
-			krb5_cc_get_name(context, ccache_store));
-#ifdef KRB4
-		if(get_krb4_ticket)
-			fprintf(back, BI_SETENV " KRBTKFILE %s\n",
-				krb4_ticket_file);
-#endif
+		store_tickets(pwd, login && tickets, login && tickets, login);
 
 		return_code = AUTH_OK;
 		break;
@@ -288,7 +303,8 @@ main(int argc, char **argv)
 	int opt, mode = 0, ret;
 	char *username, *password = NULL;
 	char response[1024];
-
+	int arg_login = 0, arg_notickets = 0;
+	
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
 	setpriority(PRIO_PROCESS, 0, 0);
@@ -313,7 +329,11 @@ main(int argc, char **argv)
 			}
 			break;
 		case 'v':
-			/* silently ignore -v options */
+			if(strcmp(optarg, "login=yes") == 0)
+				arg_login = 1;
+			else if(strcmp(optarg, "notickets=yes") == 0)
+				arg_notickets = 1;
+			/* All other arguments are silently ignored */
 			break;
 		default:
 			syslog(LOG_ERR, "usage error1");
@@ -342,7 +362,8 @@ main(int argc, char **argv)
 	 *
 	 * XXX  This is completely ungrokkable, and should be rewritten.
 	 */
-	if(mode == MODE_RESPONSE) {
+	switch(mode) {
+	case MODE_RESPONSE: {
 		int count;
 		mode = 0;
 		count = -1;
@@ -358,10 +379,25 @@ main(int argc, char **argv)
 			syslog(LOG_ERR, "protocol error on back channel");
 			exit(1);
 		}
-	} else
-		password = getpass("Password:");
+		break;
+	}
 
-	ret = krb5_login(username, password);
+	case MODE_LOGIN:
+		password = getpass("Password:");
+		break;
+		
+	case MODE_CHALLENGE:
+		fprintf(back, BI_AUTH "\n");
+		exit(0);
+		break;
+	default:
+		syslog(LOG_ERR, "%d: unknown mode", mode);
+		exit(1);
+		break;
+	}
+
+	ret = krb5_login(username, password, arg_login, !arg_notickets);
+			 
 #ifdef PASSWD
 	if(ret != AUTH_OK)
 		ret = pwd_login(username, password);
