@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.5 1996/12/12 16:22:24 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.6 1997/07/23 02:59:02 denny Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -400,7 +400,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 		    (atalk_port(sport) || atalk_port(dport))) {
 			if (vflag)
 				fputs("kip ", stdout);
-			atalk_print(cp, length);
+			atalk_print_llap(cp, length);
 			return;
 		}
 	}

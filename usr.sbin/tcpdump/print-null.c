@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.5 1996/12/12 16:22:30 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.6 1997/07/23 02:59:02 denny Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -60,11 +60,8 @@ struct rtentry;
 #endif
 
 static void
-null_print(const u_char *p, const struct ip *ip, u_int length)
+null_print(const u_char *p, u_int length, u_int family)
 {
-	u_int family;
-
-	memcpy((char *)&family, (char *)p, sizeof(family));
 
 	if (nflag) {
 		/* XXX just dump the header */
@@ -91,7 +88,8 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int length = h->len;
 	u_int caplen = h->caplen;
-	const struct ip *ip;
+	u_int family;
+	const u_char *pkt;
 
 	ts_print(&h->ts);
 
@@ -103,17 +101,25 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	packetp = p;
 	snapend = p + caplen;
 
+	pkt = p + NULL_HDRLEN;
 	length -= NULL_HDRLEN;
 
-	ip = (struct ip *)(p + NULL_HDRLEN);
+	memcpy((char *)&family, (char *)p, sizeof(family));
 
 	if (eflag)
-		null_print(p, ip, length);
+		null_print(p, length, family);
 
-	ip_print((const u_char *)ip, length);
+	switch (family) {
+	case AF_INET:
+		ip_print(pkt, length);
+		break;
+	case AF_APPLETALK:
+		atalk_print(pkt, length);
+		break;
+	}
 
 	if (xflag)
-		default_print((const u_char *)ip, caplen - NULL_HDRLEN);
+		default_print(pkt, caplen - NULL_HDRLEN);
 	putchar('\n');
 }
 

@@ -20,7 +20,7 @@
  *
  * AppleTalk protocol formats (courtesy Bill Croft of Stanford/SUMEX).
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/appletalk.h,v 1.5 1996/12/12 16:22:59 bitblt Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/appletalk.h,v 1.6 1997/07/23 02:59:00 denny Exp $ (LBL)
  */
 
 struct LAP {
@@ -121,6 +121,12 @@ struct atNBPtuple {
 #define	nbpBrRq		0x10
 #define	nbpLkUp		0x20
 #define	nbpLkUpReply	0x30
+#define	nbpFwd		0x40
+/* The following are not standard, but netatalk uses them. */
+#define	nbpNATLKrgstr	0xc0
+#define	nbpNATLKunrgstr	0xd0
+#define	nbpNATLKok	0xe0
+#define	nbpNATLKerr	0xf0
 
 #define	nbpNIS		2
 #define	nbpTupleMax	15

@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.5 1996/12/12 16:22:33 bitblt Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.6 1997/07/23 02:59:02 denny Exp $";
 #endif
 
 #include <sys/param.h>
@@ -41,6 +41,7 @@ static const char rcsid[] =
 #include "interface.h"
 #include "addrtoname.h"
 #include "extract.h"			/* must come after interface.h */
+#include "ethertype.h"
 
 #include "llc.h"
 
@@ -106,7 +107,24 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 
 		/* This is an encapsulated Ethernet packet */
 		et = EXTRACT_16BITS(&llc.ethertype[0]);
-		ret = ether_encap_print(et, p, length, caplen);
+
+		/*
+		 * Some protocols have special handling if they are 802.3
+		 * SNAP encapsulated vs vers II encapsulated. Handle
+		 * those special protocols here, and hand the rest to
+		 * print-ether.c so we don't have to duplicate
+		 * all that code here.
+		 */
+		switch (et) {
+		case ETHERTYPE_ATALK:
+			atalk_print(p, length);
+			ret = 1;
+			break;
+		default:
+			ret = ether_encap_print(et, p, length, caplen);
+			break;
+		}
+
 		if (ret)
 			return (ret);
 	}

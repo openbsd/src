@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.5 1996/12/12 16:22:43 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.6 1997/07/23 02:59:01 denny Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -92,10 +92,40 @@ static void ddp_print(const u_char *, u_int, int, u_short, u_char, u_char);
 static const char *ddpskt_string(int);
 
 /*
- * Print AppleTalk Datagram Delivery Protocol packets.
+ * Print AppleTalk Datagram Delivery Protocol packets
+ * without the LLAP encapsulating header (i.e.
+ * from Ethertalk)
  */
 void
 atalk_print(register const u_char *bp, u_int length)
+{
+	register const struct atDDP *dp;
+	u_short snet;
+
+	if (length < ddpSize) {
+		(void)printf(" [|ddp %d]", length);
+		return;
+	}
+	dp = (const struct atDDP *)bp;
+	snet = EXTRACT_16BITS(&dp->srcNet);
+	printf("%s.%s", ataddr_string(snet, dp->srcNode),
+	    ddpskt_string(dp->srcSkt));
+	printf(" > %s.%s:",
+	    ataddr_string(EXTRACT_16BITS(&dp->dstNet), dp->dstNode),
+	    ddpskt_string(dp->dstSkt));
+	bp += ddpSize;
+	length -= ddpSize;
+	ddp_print(bp, length, dp->type, snet, dp->srcNode, dp->srcSkt);
+}
+
+/*
+ * Print AppleTalk Datagram Delivery Protocol packets
+ * from localtalk (i.e. the 230 Kbps net built into
+ * every Macintosh). We can get these from a localtalk
+ * interface if we have one, or from UDP encapsulated tunnels.
+ */
+void
+atalk_print_llap(register const u_char *bp, u_int length)
 {
 	register const struct LAP *lp;
 	register const struct atDDP *dp;
@@ -338,10 +368,23 @@ nbp_print(register const struct atNBP *np, u_int length, register u_short snet,
 	int i;
 	const u_char *ep;
 
+	if (length < nbpHeaderSize) {
+		(void)printf(" truncated-nbp %d", length);
+		return;
+	}
+
 	length -= nbpHeaderSize;
 	if (length < 8) {
 		/* must be room for at least one tuple */
-		(void)printf(" truncated-nbp %d", length + nbpHeaderSize);
+		if (np->control == nbpNATLKerr) {
+			(void)printf(" nbp-netatalk_err");
+			return;
+		} else if (np->control == nbpNATLKok) {
+			(void)printf(" nbp-netatalk_ok");
+			return;
+		}
+		(void)printf(" truncated-nbp nbp-0x%x  %d (%d)",
+			np->control, np->id, length + nbpHeaderSize);
 		return;
 	}
 	/* ep points to end of available data */
@@ -381,6 +424,16 @@ nbp_print(register const struct atNBP *np, u_int length, register u_short snet,
 		(void)printf(" nbp-reply %d:", np->id);
 
 		/* print each of the tuples in the reply */
+		for (i = np->control & 0xf; --i >= 0 && tp; )
+			tp = nbp_tuple_print(tp, ep, snet, snode, skt);
+		break;
+
+	case nbpNATLKrgstr:
+	case nbpNATLKunrgstr:
+		(void)printf((i == nbpNATLKrgstr) ?
+			" nbp-netatalk_rgstr %d:" :
+			" nbp-netatalk_unrgstr %d:",
+			np->id);
 		for (i = np->control & 0xf; --i >= 0 && tp; )
 			tp = nbp_tuple_print(tp, ep, snet, snode, skt);
 		break;
@@ -542,10 +595,9 @@ ataddr_string(u_short atnet, u_char athost)
 	tp->addr = (atnet << 8) | athost;
 	tp->nxt = newhnamemem();
 	if (athost != 255)
-		(void)sprintf(nambuf, "%d.%d.%d",
-		    atnet >> 8, atnet & 0xff, athost);
+		(void)sprintf(nambuf, "%d.%d", atnet, athost);
 	else
-		(void)sprintf(nambuf, "%d.%d", atnet >> 8, atnet & 0xff);
+		(void)sprintf(nambuf, "%d", atnet);
 	tp->name = savestr(nambuf);
 
 	return (tp->name);
