@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.4 1998/06/29 05:26:33 angelos Exp $
+.\"	$OpenBSD: boot_config.8,v 1.5 1998/12/13 22:28:39 millert Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 21, 1996
+.Dd December 13, 1998
 .Dt boot_config 8
-.Os BSD 4
+.Os OpenBSD
 .Sh NAME
 .Nm boot_config
 .Nd how to change kernel configuration at boot
@@ -93,52 +93,53 @@ The ethernet card is not detected at boot because the kernel configuration
 does not match the physical hardware configuration,
 e.g. wrong IRQ in OpenBSD/i386.
 The ethernet card is supposed to use the
-.Xr ed 4
+.Xr ne 4
 driver.
 .Pp
 .Bd -literal
-.No UKC> Ic find ed
-81 ed0 at isa0 port 0x280 size 0 iomem 0xd0000 iosiz 0 irq 9 drq -1 pnpid -1
-82 ed1 at isa0 port 0x250 size 0 iomem 0xd8000 iosiz 0 irq 9 drq -1 pnpid -1
-83 ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 pnpid -1
-84 ed* at pcmcia0 port 0x300 size 0x20 iomem -1 iosiz 0 irq 10 drq -1 slot -1
+.No UKC> Ic find ne
+24 ne0 at isa0 port 0x240 size 0 iomem 0xd8000 iosiz 0 irq 9 drq -1 drq2 -1
+25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
+26 ne* at isapnp0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1
+27 ne* at pci* dev -1 function -1
+28 ne* at pcmcia* function -1 irq -1
 UKC>
 .Ed
 .Pp
-ed2 seems to match the configuration except it uses IRQ 5 instead of IRQ 10. So
-the irq on ed2 should be changed via the
+ne1 seems to match the configuration except it uses IRQ 5 instead of IRQ 10. So
+the irq on ne1 should be changed via the
 .Fa change
 command. The device can be specified by either name or number.
 .Pp
 .Bd -literal
-.No UKC> Ic change ed2
-83 E ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 pnpid -1
+.No UKC> Ic change ne1
+25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
 .No change (y/n) ? Ic y
 .No port [0x300] ?
 .No size [0] ?
-.No iomem [0xcc000] ?
+.No iomem [-1] ?
 .No iosiz [0] ?
 .No irq [10] ? Ic 5
 .No drq [-1] ?
-.No pnpid [-1] ?
-83 ed2 changed
-83 ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 5 drq -1 pnpid -1
+.No drq2 [-1] ?
+25 ne1 changed
+25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 5 drq -1 drq2 -1
 UKC>
 .Ed
 .Pp
 Another case is a mistakenly detected non-existing device instead of another
 device at the probed location.
 One known case is the Mitsumi
-ATAPI cdrom in OpenBSD/i386. The simplest thing to solve that problem is to
+CD-ROM in OpenBSD/i386. The simplest thing to solve that problem is to
 disable mcd0.
 .Pp
 .Bd -literal
 .No UKC> Ic find mcd0
- 29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
+ 29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
 .No UKC> Ic disable mcd0
  29 mcd0 disabled
 .No UKC> Ic find 29
- 29 mcd0 at isa0 disable port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
+ 29 mcd0 at isa0 disable port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
 .Ed
 .Pp
 The show command is useful for finding which devices have a certain attribute.
@@ -146,22 +147,17 @@ It can also be used to find those devices with a particular value for
 an attribute.
 .Bd -literal
 .No UKC> Ic show slot
-  1 ahc* at eisa0 slot -1
-  3 ep0 at eisa0 slot -1
-  6 ep* at eisa0 slot -1
-  8 ep* at pcmcia* port 0x300 size 0x10 iomem -1 iosiz 0 irq 10 drq -1 slot -1
- 40 com3 at pcmcia* port 0x2e8 size 8 iomem -1 iosiz 0 irq 3 drq -1 slot -1
- 84 ed* at pcmcia* port 0x300 size 0x20 iomem -1 iosiz 0 irq 10 drq -1 slot -1
- 86 ahb* at eisa0 slot -1
- 87 fea* at eisa0 slot -1
+  2 ahc* at eisa0 slot -1
+ 10 uha* at eisa0 slot -1
+ 12 ep0 at eisa0 slot -1
+ 17 ep* at eisa0 slot -1
+102 ahb* at eisa0 slot -1
+103 fea* at eisa0 slot -1
 .No UKC> Ic show port 0x300
-  8 ep* at pcmcia* port 0x300 size 0x10 iomem -1 iosiz 0 irq 10 drq -1 slot -1
- 29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
- 31 wt0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 5 drq 1 pnpid -1
- 58 el0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 9 drq -1 pnpid -1
- 60 ie1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 pnpid -1
- 83 ed2 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 pnpid -1
- 84 ed* at pcmcia* port 0x300 size 0x20 iomem -1 iosiz 0 irq 10 drq -1 slot -1
+ 25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
+ 72 we1 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 drq2 -1
+ 75 el0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 9 drq -1 drq2 -1
+ 77 ie1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
 UKC>
 .Ed
 .Pp
@@ -169,25 +165,26 @@ It is possible to add new devices, but only devices that were linked into the
 kernel. If a new device is added, following devices will be renumbered.
 .Pp
 .Bd -literal
-.No UKC> Ic "find ep"
-  2 ep0 at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 pnpid -1
-  3 ep0 at eisa0 slot -1
-  4 ep0 at pci0|pci* dev -1 function -1
-  5 ep* at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 pnpid -1
-  6 ep* at eisa0 slot -1
-  7 ep* at pci0|pci* dev -1 function -1
-  8 ep* at pcmcia* port 0x300 size 0x10 iomem -1 iosiz 0 irq 10 drq -1 slot -1
-.No UKC> Ic "add ep1"
-.No "Clone Device (DevNo, 'q' or '?') ?" Ic 4
-.No "Insert before Device (DevNo, 'q' or '?') ?" Ic 5
-  5 ep1 at pci0|pci* dev -1 function -1
-.No UKC> Ic change 5
-  5 ep1 at pci0|pci* dev -1 function -1
+.No UKC> Ic find ep
+ 11 ep0 at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 drq2 -1
+ 12 ep0 at eisa0 slot -1
+ 13 ep0 at pci* dev -1 function -1
+ 14 ep* at isapnp0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1
+ 15 ep* at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 drq2 -1
+ 16 ep* at eisa0 slot -1
+ 17 ep* at pci* dev -1 function -1
+ 18 ep* at pcmcia* dev -1 irq -1
+.No UKC> Ic add ep1
+.No "Clone Device (DevNo, 'q' or '?') ?" Ic 13
+.No "Insert before Device (DevNo, 'q' or '?') ?" Ic 14
+ 14 ep1 at pci* dev -1 function -1
+.No UKC> Ic change 14
+ 14 ep1 at pci* dev -1 function -1
 .No change (y/n) ? Ic y
 .No dev [-1] ? Ic 14
 .No function [-1] ?
-  5 ep1 changed
-  5 ep1 at pci0|pci* dev 14 function -1
+ 14 ep1 changed
+ 14 ep1 at pci* dev 14 function -1
 UKC>
 .Ed
 .Pp
