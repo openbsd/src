@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.26 2003/03/13 22:17:04 millert Exp $	*/
+/*	$OpenBSD: mv.c,v 1.27 2003/03/21 15:49:39 millert Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.26 2003/03/13 22:17:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.27 2003/03/21 15:49:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ do_move(char *from, char *to)
 	 * (1)	If the destination path exists, the -f option is not specified
 	 *	and either of the following conditions are true:
 	 *
-	 *	(a) The perimissions of the destination path do not permit
+	 *	(a) The permissions of the destination path do not permit
 	 *	    writing and the standard input is a terminal.
 	 *	(b) The -i option is specified.
 	 *
@@ -263,7 +263,7 @@ do_move(char *from, char *to)
 
 	/*
 	 * (5)	The file hierarchy rooted in source_file shall be duplicated
-	 *	as a file hiearchy rooted in the destination path...
+	 *	as a file hierarchy rooted in the destination path...
 	 */
 	return (S_ISREG(fsb.st_mode) ?
 	    fastcopy(from, to, &fsb) : copy(from, to));
