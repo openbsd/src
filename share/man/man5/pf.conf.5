@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.299 2004/08/25 07:19:00 jaredy Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.300 2004/09/10 12:40:49 jaredy Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2256,6 +2256,52 @@ Hence,
 .Ed
 .Pp
 will only block connections from 1.2.3.4 to port 25.
+.Pp
+Anchors may end with the asterisk
+.Pq Sq *
+character, which signifies that all anchors attached at that point
+should be evaluated in the alphabetical ordering of their anchor name.
+For example,
+.Bd -literal -offset indent
+anchor "spam/*"
+.Ed
+.Pp
+will evaluate each rule in each anchor attached to the
+.Li spam
+anchor.
+Note that it will only evaluate anchors that are directly attached to the
+.Li spam
+anchor, and will not descend to evaluate anchors recursively.
+.Pp
+Since anchors are evaluated relative to the anchor in which they are
+contained, there is a mechanism for accessing the parent and ancestor
+anchors of a given anchor.
+Similar to file system path name resolution, if the sequence
+.Dq ..
+appears as an anchor path component, the parent anchor of the current
+anchor in the path evaluation at that point will become the new current
+anchor.
+As an example, consider the following:
+.Bd -literal -offset indent
+# echo ' anchor "spam/allowed" ' | pfctl -f -
+# echo -e ' anchor "../banned" \en pass' | \e
+      pfctl -a spam/allowed -f -
+.Ed
+.Pp
+Evaluation of the main ruleset will lead into the
+.Li spam/allowed
+anchor, which will evaluate the rules in the
+.Li spam/banned
+anchor, if any, before finally evaluating the
+.Ar pass
+rule.
+.Pp
+Since the parser specification for anchor names is a string, any
+reference to an anchor name containing solidus
+.Pq Sq /
+characters will require double quote
+.Pq Sq \&"
+characters around the anchor name.
 .Sh TRANSLATION EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which a daemon is running (because, for example, it is not run as root,
