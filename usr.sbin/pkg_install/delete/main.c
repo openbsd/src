@@ -1,8 +1,8 @@
-/*	$OpenBSD: main.c,v 1.7 1998/09/07 22:30:15 marc Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2001/04/08 16:45:47 espie Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.7 1998/09/07 22:30:15 marc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.8 2001/04/08 16:45:47 espie Exp $";
 #endif
 
 /*
@@ -89,13 +89,13 @@ main(int argc, char **argv)
 
     /* If no packages, yelp */
     if (pkgs == start)
-	warnx("missing package name(s)"), usage();
+	pwarnx("missing package name(s)"), usage();
     *pkgs = NULL;
     if (!Fake && getuid() != 0)
 	errx(1, "you must be root to delete packages");
     if ((error = pkg_perform(start)) != 0) {
 	if (Verbose)
-	    warnx("%d package deletion(s) failed", error);
+	    pwarnx("%d package deletion(s) failed", error);
 	return error;
     }
     else

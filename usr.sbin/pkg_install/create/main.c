@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.8 1998/10/13 23:09:50 marc Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2001/04/08 16:45:46 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: main.c,v 1.8 1998/10/13 23:09:50 marc Exp $";
+static const char *rcsid = "$OpenBSD: main.c,v 1.9 2001/04/08 16:45:46 espie Exp $";
 #endif
 
 /*
@@ -137,14 +137,14 @@ main(int argc, char **argv)
 
     /* If no packages, yelp */
     if (pkgs == start)
-	warnx("missing package name"), usage();
+	pwarnx("missing package name"), usage();
     *pkgs = NULL;
     if (start[1])
-	warnx("only one package name allowed ('%s' extraneous)", start[1]),
+	pwarnx("only one package name allowed ('%s' extraneous)", start[1]),
 	usage();
     if (!pkg_perform(start)) {
 	if (Verbose)
-	    warnx("package creation failed");
+	    pwarnx("package creation failed");
 	return 1;
     }
     else

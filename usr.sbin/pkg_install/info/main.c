@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.12 1999/02/28 18:55:25 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2001/04/08 16:45:47 espie Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.12 1999/02/28 18:55:25 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.13 2001/04/08 16:45:47 espie Exp $";
 #endif
 
 /*
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 
     /* If no packages, yelp */
     if (pkgs == start && !AllInstalled && !CheckPkg)
-	warnx("missing package name(s)"), usage();
+	pwarnx("missing package name(s)"), usage();
     *pkgs = NULL;
     return pkg_perform(start);
 }

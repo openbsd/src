@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.1 1999/10/04 21:46:29 espie Exp $ */
+/* $OpenBSD: sha1.c,v 1.2 2001/04/08 16:45:48 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -84,13 +84,13 @@ new_sha1_checker(h, sign, userid, envp, filename)
 	assert(sign->type == TAG_SHA1);
 	/* make sure data conforms to what we can handle */
 	if (sign->length > MAXID || sign->data[sign->length-1] != '\0') {
-		warnx("Corrupted SHA1 header in %s", filename);
+		pwarnx("Corrupted SHA1 header in %s", filename);
 		return 0;
 	}
 
 	n = malloc(sizeof *n);
 	if (n == NULL) {
-		warnx("Can't allocate sha1_checker");
+		pwarnx("Can't allocate sha1_checker");
 		return NULL;
 	}
 	SHA1Init(&n->context);
@@ -99,7 +99,7 @@ new_sha1_checker(h, sign, userid, envp, filename)
 
 	/* copy header, as this is a checksum, we don't strip our own marker */
 	if (gzip_copy_header(h, sign, sha1_add, n) == 0) {
-		warnx("Unexpected header in %s", filename);
+		pwarnx("Unexpected header in %s", filename);
 		free(n);
 		return 0;
 	}
@@ -145,10 +145,10 @@ sha1_sign_ok(arg)
 	}
 
 	if (tag_found) {
-		warnx("Checksum incorrect for %s (%s)", n->filename, n->id);
+		pwarnx("Checksum incorrect for %s (%s)", n->filename, n->id);
 		return PKG_BADSIG;
 	} else {
-		warnx("No checksum found for %s (%s)", n->filename, n->id);
+		pwarnx("No checksum found for %s (%s)", n->filename, n->id);
 		return PKG_SIGUNKNOWN;
 	}
 }
@@ -187,7 +187,7 @@ retrieve_sha1_marker(filename, sign, userid)
 		return 0;
 	}
 	if (gzip_read_header(f, &h, sign) == GZIP_NOT_GZIP) {
-		warnx("File %s is not a gzip file\n", filename);
+		pwarnx("File %s is not a gzip file\n", filename);
 		fclose(f);
 		free(n);
 		return 0;

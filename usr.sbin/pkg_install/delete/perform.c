@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.8 2000/04/28 21:08:16 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.9 2001/04/08 16:45:47 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.8 2000/04/28 21:08:16 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.9 2001/04/08 16:45:47 espie Exp $";
 #endif
 
 /*
@@ -120,6 +120,7 @@ pkg_do(char *pkg)
     plist_t *p;
     char *dbdir;
 
+    set_pkg(pkg);
     /* Reset some state */
     if (Plist.head)
 	free_plist(&Plist);
@@ -133,7 +134,7 @@ try_again:
 	if (trim_end(pkg))
 	    goto try_again;
 	else {
-	    warnx("no such package '%s' installed", pkg);
+	    pwarnx("no such package '%s' installed", pkg);
 	    return 1;
 	}
     }
@@ -142,12 +143,12 @@ try_again:
 	errx(2, "unable to get current working directory!");
     }
     if (chdir(LogDir) == FAIL) {
-	warnx("unable to change directory to %s! deinstall failed", LogDir);
+	pwarnx("unable to change directory to %s! deinstall failed", LogDir);
 	return 1;
     }
     if (!isemptyfile(REQUIRED_BY_FNAME)) {
 	char buf[512];
-	warnx("package `%s' is required by these other packages\n"
+	pwarnx("package `%s' is required by these other packages\n"
 		"and may not be deinstalled%s:",
 		pkg, Force ? " (but I'll delete it anyway)" : "" );
 	cfile = fopen(REQUIRED_BY_FNAME, "r");
@@ -156,14 +157,14 @@ try_again:
 		fprintf(stderr, "%s", buf);
 	    fclose(cfile);
 	} else
-	    warnx("cannot open requirements file `%s'", REQUIRED_BY_FNAME);
+	    pwarnx("cannot open requirements file `%s'", REQUIRED_BY_FNAME);
 	if (!Force)
 	    return 1;
     }
     sanity_check(LogDir);
     cfile = fopen(CONTENTS_FNAME, "r");
     if (!cfile) {
-	warnx("unable to open '%s' file", CONTENTS_FNAME);
+	pwarnx("unable to open '%s' file", CONTENTS_FNAME);
 	return 1;
     }
     /* If we have a prefix, add it now */
@@ -173,18 +174,18 @@ try_again:
     fclose(cfile);
     p = find_plist(&Plist, PLIST_CWD);
     if (!p) {
-	warnx("package '%s' doesn't have a prefix", pkg);
+	pwarnx("package '%s' doesn't have a prefix", pkg);
 	return 1;
     }
     {
 	struct statfs buffer;
 
 	if (statfs(p->name, &buffer) == -1) {
-	    warnx("package '%s' prefix (%s) does not exist", pkg, p->name);
+	    pwarnx("package '%s' prefix (%s) does not exist", pkg, p->name);
 	    return 1;
 	}
 	if (buffer.f_flags & MNT_RDONLY) {
-	    warnx("package'%s' mount point %s is read-only", pkg,
+	    pwarnx("package'%s' mount point %s is read-only", pkg,
 		buffer.f_mntonname);
 	    return 1;
 	}
@@ -196,7 +197,7 @@ try_again:
 	    printf("Executing 'require' script.\n");
 	vsystem("chmod +x %s", REQUIRE_FNAME);	/* be sure */
 	if (vsystem("./%s %s DEINSTALL", REQUIRE_FNAME, pkg)) {
-	    warnx("package %s fails requirements %s", pkg,
+	    pwarnx("package %s fails requirements %s", pkg,
 		   Force ? "" : "- not deleted");
 	    if (!Force)
 		return 1;
@@ -208,7 +209,7 @@ try_again:
 	else {
 	    vsystem("chmod +x %s", DEINSTALL_FNAME);	/* make sure */
 	    if (vsystem("./%s %s DEINSTALL", DEINSTALL_FNAME, pkg)) {
-		warnx("deinstall script returned error status");
+		pwarnx("deinstall script returned error status");
 		if (!Force)
 		    return 1;
 	    }
@@ -221,11 +222,11 @@ try_again:
     if (!Fake) {
 	/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
 	if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
-	    warnx(
+	    pwarnx(
 	"couldn't entirely delete package (perhaps the packing list is\n"
 	"incorrectly specified?)");
 	if (vsystem("%s -r %s", REMOVE_CMD, LogDir)) {
-	    warnx("couldn't remove log entry in %s, deinstall failed", LogDir);
+	    pwarnx("couldn't remove log entry in %s, deinstall failed", LogDir);
 	    if (!Force)
 		return 1;
 	}
@@ -277,21 +278,21 @@ undepend(const char *deppkgname, char *pkg2delname)
 	     deppkgname, REQUIRED_BY_FNAME);
      fp = fopen(fname, "r");
      if (fp == NULL) {
-	 warnx("couldn't open dependency file `%s'", fname);
+	 pwarnx("couldn't open dependency file `%s'", fname);
 	 return 0;
      }
      (void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXX", fname);
      s = mkstemp(ftmp);
      if (s == -1) {
 	 fclose(fp);
-	 warnx("couldn't open temp file `%s'", ftmp);
+	 pwarnx("couldn't open temp file `%s'", ftmp);
 	 return 0;
      }
      fpwr = fdopen(s, "w");
      if (fpwr == NULL) {
 	 close(s);
 	 fclose(fp);
-	 warnx("couldn't fdopen temp file `%s'", ftmp);
+	 pwarnx("couldn't fdopen temp file `%s'", ftmp);
 	 remove(ftmp);
 	 return 0;
      }
@@ -303,18 +304,18 @@ undepend(const char *deppkgname, char *pkg2delname)
      }
      (void) fclose(fp);
      if (fchmod(s, 0644) == FAIL) {
-	 warnx("error changing permission of temp file `%s'", ftmp);
+	 pwarnx("error changing permission of temp file `%s'", ftmp);
 	 fclose(fpwr);
 	 remove(ftmp);
 	 return 0;
      }
      if (fclose(fpwr) == EOF) {
-	 warnx("error closing temp file `%s'", ftmp);
+	 pwarnx("error closing temp file `%s'", ftmp);
 	 remove(ftmp);
 	 return 0;
      }
      if (rename(ftmp, fname) == -1)
-	 warnx("error renaming `%s' to `%s'", ftmp, fname);
+	 pwarnx("error renaming `%s' to `%s'", ftmp, fname);
      remove(ftmp);			/* just in case */
      
      return 0;

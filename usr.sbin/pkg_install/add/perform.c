@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.18 2001/04/02 10:13:38 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.19 2001/04/08 16:45:46 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.18 2001/04/02 10:13:38 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.19 2001/04/08 16:45:46 espie Exp $";
 #endif
 
 /*
@@ -85,6 +85,7 @@ pkg_do(char *pkg)
     plist_t *p;
     struct stat sb;
 
+    set_pkg(pkg);
     code = 0;
     zapLogDir = 0;
     LogDir[0] = '\0';
@@ -99,7 +100,7 @@ pkg_do(char *pkg)
 	fgets(playpen, FILENAME_MAX, stdin);
 	playpen[strlen(playpen) - 1] = '\0'; /* pesky newline! */
 	if (chdir(playpen) == FAIL) {
-	    warnx("add in SLAVE mode can't chdir to `%s'", playpen);
+	    pwarnx("add in SLAVE mode can't chdir to `%s'", playpen);
 	    return 1;
 	}
 	read_plist(&Plist, stdin);
@@ -110,14 +111,14 @@ pkg_do(char *pkg)
 	/* Is it an ftp://foo.bar.baz/file.tgz specification? */
 	if (isURL(pkg)) {
 	    if (ispkgpattern(pkg)) {
-		warnx("patterns not allowed in URLs, "
+		pwarnx("patterns not allowed in URLs, "
 		     "please install manually!");
 		/* ... until we come up with a better solution :-/  - HF */
 		goto bomb;
 	    }
 
 	    if (!(Home = fileGetURL(NULL, pkg))) {
-		warnx("unable to fetch `%s' by URL", pkg);
+		pwarnx("unable to fetch `%s' by URL", pkg);
 		return 1;
 	    }
 	    where_to = Home;
@@ -125,7 +126,7 @@ pkg_do(char *pkg)
 	    system(solve_deps);
 	    cfile = fopen(CONTENTS_FNAME, "r");
 	    if (!cfile) {
-		warnx(
+		pwarnx(
 		"unable to open table of contents file `%s' - not a package?",
 		CONTENTS_FNAME);
 		goto bomb;
@@ -137,7 +138,7 @@ pkg_do(char *pkg)
 	    if (strcmp(pkg, "-")) {
 		if (!ispkgpattern(pkg_fullname)
 		    && stat(pkg_fullname, &sb) == FAIL) {
-		    warnx("can't stat package file '%s'", pkg_fullname);
+		    pwarnx("can't stat package file '%s'", pkg_fullname);
 		    goto bomb;
 		}
 		snprintf(extract_contents, sizeof( extract_contents ),
@@ -150,11 +151,11 @@ pkg_do(char *pkg)
 	    }
 	    Home = make_playpen(playpen, sizeof(playpen), sb.st_size * 4);
 	    if (!Home)
-		warnx("unable to make playpen for %ld bytes",
+		pwarnx("unable to make playpen for %ld bytes",
 		    (long)(sb.st_size * 4));
 	    where_to = Home;
 	    if (unpack(pkg_fullname, extract)) {
-		warnx(
+		pwarnx(
 	"unable to extract table of contents from `%s'\n"
 	"Is this a Package, or a simple .tgz archive ?  See tar(1).",
 		pkg_fullname);
@@ -163,7 +164,7 @@ pkg_do(char *pkg)
 	    system(solve_deps);
 	    cfile = fopen(CONTENTS_FNAME, "r");
 	    if (!cfile) {
-		warnx(
+		pwarnx(
 	"unable to open table of contents file `%s'\n"
 	"Is this a Package, or a simple .tgz archive ?  See tar(1).",
 		CONTENTS_FNAME);
@@ -181,11 +182,11 @@ pkg_do(char *pkg)
 	     */
 
 	    if (!extract && min_free(playpen) < sb.st_size * 4) {
-		warnx("projected size of %ld exceeds available free space\n"
+		pwarnx("projected size of %ld exceeds available free space\n"
 		       "Please set your PKG_TMPDIR variable to point to a"
 		       "location with more\n"
 		       "free space and try again", (long)(sb.st_size * 4));
-		warnx("not extracting `%s'\ninto `%s', sorry!", pkg_fullname,
+		pwarnx("not extracting `%s'\ninto `%s', sorry!", pkg_fullname,
 		       where_to);
 		goto bomb;
 	    }
@@ -193,7 +194,7 @@ pkg_do(char *pkg)
 	    /* Finally unpack the whole mess.  If extract is null we already
 	       did so so don't bother doing it again. */
 	    if (extract && unpack(pkg_fullname, NULL)) {
-		warnx("unable to extract `%s'!", pkg_fullname);
+		pwarnx("unable to extract `%s'!", pkg_fullname);
 		goto bomb;
 	    }
 	} /* isURL(pkg) */
@@ -226,7 +227,7 @@ pkg_do(char *pkg)
     /* See if we're already registered */
     (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
     if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
-	warnx("package `%s' already recorded as installed", PkgName);
+	pwarnx("package `%s' already recorded as installed", PkgName);
 	code = 1;
 	goto success;	/* close enough for government work */
     }
@@ -251,9 +252,9 @@ pkg_do(char *pkg)
 	    strcpy(buf+(s-PkgName+1), isdigit(s[1]) ? "[0-9]*" : "*");
 
             if (findmatchingname(dbdir, buf, check_if_installed, installed)) {
-		warnx("other version '%s' already installed", installed);
+		pwarnx("other version '%s' already installed", installed);
 	    	if (find_plist_option(&Plist, "no-default-conflict") != NULL) {
-		    warnx("proceeding with installation anyway");
+		    pwarnx("proceeding with installation anyway");
 		} else {
 		    code = 1;
 		    goto success;	/* close enough for government work */
@@ -274,7 +275,7 @@ pkg_do(char *pkg)
 	/* was: */
         /* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {*/
 	if(findmatchingname(dbdir, p->name, check_if_installed, installed)){
-	    warnx("Conflicting package installed, please use\n\t\"pkg_delete %s\" first to remove it!\n",  installed); 
+	    pwarnx("Conflicting package installed, please use\n\t\"pkg_delete %s\" first to remove it!\n",  installed); 
 	    ++code;
 	}
     }
@@ -307,14 +308,14 @@ pkg_do(char *pkg)
                                      Prefix ? "-p " : "",
                                      Prefix ? Prefix : "",
 				     Verbose ? "-v " : "", cp)) {
-			    warnx("autoload of dependency `%s' failed%s",
+			    pwarnx("autoload of dependency `%s' failed%s",
 				cp, Force ? " (proceeding anyway)" : "!");
 			    if (!Force)
 				++code;
 			}
 		    }
 		    else {
-			warnx("add of dependency `%s' failed%s",
+			pwarnx("add of dependency `%s' failed%s",
 				p->name, Force ? " (proceeding anyway)" : "!");
 			     if (!Force)
 				++code;
@@ -323,7 +324,7 @@ pkg_do(char *pkg)
 		    /* install depending pkg via FTP */
 
 		    if (ispkgpattern(p->name)){
-			warnx("can't install dependent pkg '%s' via FTP, "
+			pwarnx("can't install dependent pkg '%s' via FTP, "
 			     "please install manually!", p->name);
 			/* ... until we come up with a better solution - HF */
 			goto bomb;
@@ -338,7 +339,7 @@ pkg_do(char *pkg)
 			    printf("Finished loading `%s' over FTP\n", p->name);
 			system(solve_deps);
 			if (!fexists(CONTENTS_FNAME)) {
-			    warnx("autoloaded package `%s' has no %s file?",
+			    pwarnx("autoloaded package `%s' has no %s file?",
 				  p->name, CONTENTS_FNAME);
 			    if (!Force)
 				++code;
@@ -348,7 +349,7 @@ pkg_do(char *pkg)
 					 Prefix ? "-p " : "",
 					 Prefix ? Prefix : "",
 					 Verbose ? "-v " : "")) {
-			    warnx("add of dependency `%s' failed%s",
+			    pwarnx("add of dependency `%s' failed%s",
 				  p->name, Force ? " (proceeding anyway)" : "!");
 			    if (!Force)
 				++code;
@@ -385,7 +386,7 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("Running requirements file first for `%s'\n", PkgName);
 	if (!Fake && vsystem("./%s %s INSTALL", REQUIRE_FNAME, PkgName)) {
-	    warnx("package `%s' fails requirements %s", pkg_fullname,
+	    pwarnx("package `%s' fails requirements %s", pkg_fullname,
 		   Force ? "installing anyway" : "- not installed");
 	    if (!Force) {
 		code = 1;
@@ -400,7 +401,7 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("Running install with PRE-INSTALL for `%s'\n", PkgName);
 	if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
-	    warnx("install script returned error status");
+	    pwarnx("install script returned error status");
 	    unlink(INSTALL_FNAME);
 	    code = 1;
 	    goto success;		/* nothing to uninstall yet */
@@ -420,7 +421,7 @@ pkg_do(char *pkg)
 
 	    if (vsystem("/usr/sbin/mtree -q -U -f %s -d -e -p %s", MTREE_FNAME,
 			p ? p->name : "/"))
-		warnx("mtree returned a non-zero status - continuing");
+		pwarnx("mtree returned a non-zero status - continuing");
 	}
 	unlink(MTREE_FNAME);
     }
@@ -430,7 +431,7 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("Running install with POST-INSTALL for `%s'\n", PkgName);
 	if (!Fake && vsystem("./%s %s POST-INSTALL", INSTALL_FNAME, PkgName)) {
-	    warnx("install script returned error status");
+	    pwarnx("install script returned error status");
 	    unlink(INSTALL_FNAME);
 	    code = 1;
 	    goto fail;
@@ -445,9 +446,9 @@ pkg_do(char *pkg)
 
 	umask(022);
 	if (getuid() != 0)
-	    warnx("not running as root - trying to record install anyway");
+	    pwarnx("not running as root - trying to record install anyway");
 	if (!PkgName) {
-	    warnx("no package name! can't record package, sorry");
+	    pwarnx("no package name! can't record package, sorry");
 	    code = 1;
 	    goto success;	/* well, partial anyway */
 	}
@@ -456,7 +457,7 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("Attempting to record package into `%s'\n", LogDir);
 	if (make_hierarchy(LogDir)) {
-	    warnx("can't record package into '%s', you're on your own!",
+	    pwarnx("can't record package into '%s', you're on your own!",
 		   LogDir);
 	    memset(LogDir, 0, FILENAME_MAX);
 	    code = 1;
@@ -471,7 +472,7 @@ pkg_do(char *pkg)
 	(void) snprintf(contents, sizeof(contents), "%s/%s", LogDir, CONTENTS_FNAME);
 	cfile = fopen(contents, "w");
 	if (!cfile) {
-	    warnx("can't open new contents file '%s'! can't register pkg",
+	    pwarnx("can't open new contents file '%s'! can't register pkg",
 		contents);
 	    goto success; /* can't log, but still keep pkg */
 	}
@@ -511,12 +512,12 @@ pkg_do(char *pkg)
  
 	    cfile = fopen(contents, "a");
 	    if (!cfile)
-		warnx("can't open dependency file '%s'!\n"
+		pwarnx("can't open dependency file '%s'!\n"
 		       "dependency registration is incomplete", contents);
 	    else {
 		fprintf(cfile, "%s\n", PkgName);
 		if (fclose(cfile) == EOF)
-		    warnx("cannot properly close file `%s'", contents);
+		    pwarnx("cannot properly close file `%s'", contents);
 	    }
 	}
 	if (Verbose)
@@ -534,7 +535,7 @@ pkg_do(char *pkg)
 
 	snprintf(buf, sizeof buf, "%s/%s", LogDir, p->name);
 	if (stat(buf,&sbuf) == -1 || vsystem("%s %s", Pager, buf)) 
-	    warnx("cannot open `%s' as display file", buf);
+	    pwarnx("cannot open `%s' as display file", buf);
     }
 
     goto success;
@@ -561,15 +562,15 @@ sanity_check(char *pkg)
     int code = 0;
 
     if (!fexists(CONTENTS_FNAME)) {
-	warnx("package `%s' has no CONTENTS file!", pkg);
+	pwarnx("package `%s' has no CONTENTS file!", pkg);
 	code = 1;
     }
     else if (!fexists(COMMENT_FNAME)) {
-	warnx("package `%s' has no COMMENT file!", pkg);
+	pwarnx("package `%s' has no COMMENT file!", pkg);
 	code = 1;
     }
     else if (!fexists(DESC_FNAME)) {
-	warnx("package `%s' has no DESC file!", pkg);
+	pwarnx("package `%s' has no DESC file!", pkg);
 	code = 1;
     }
     return code;

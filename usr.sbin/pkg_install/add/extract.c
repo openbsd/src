@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.11 2000/07/04 23:22:14 espie Exp $	*/
+/*	$OpenBSD: extract.c,v 1.12 2001/04/08 16:45:46 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.11 2000/07/04 23:22:14 espie Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.12 2001/04/08 16:45:46 espie Exp $";
 #endif
 
 /*
@@ -65,7 +65,7 @@ rollback(char *name, char *home, plist_t *start, plist_t *stop)
 		(void)chflags(try, 0);
 		(void)unlink(try);
 		if (rename(bup, try))
-		    warnx("rollback: unable to rename %s back to %s", bup, try);
+		    pwarnx("rollback: unable to rename %s back to %s", bup, try);
 	    }
 	}
 	else if (q->type == PLIST_CWD) {
@@ -88,7 +88,7 @@ preserve(const char *fname)
 	if (fexists(copy))
 		continue;
 	if (rename(fname, copy) == 0) {
-		warnx("conflict: renamed existing %s to %s", fname, copy);
+		pwarnx("conflict: renamed existing %s to %s", fname, copy);
 		return 0;
 	}
     }
@@ -154,7 +154,7 @@ extract_plist(char *home, package_t *pkg)
 		snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
 		if (fexists(try)) {
 		    if (preserve(try) == -1) {
-		    	warnx("unable to back up %s, aborting pkg_add", try);
+		    	pwarnx("unable to back up %s, aborting pkg_add", try);
 			rollback(PkgName, home, pkg->head, p);
 			return;
 		    }
@@ -224,7 +224,7 @@ extract_plist(char *home, package_t *pkg)
 	    if (Verbose)
 		printf("extract: execute '%s'\n", cmd);
 	    if (!Fake && system(cmd))
-		warnx("command '%s' failed", cmd);
+		pwarnx("command '%s' failed", cmd);
 	    break;
 
 	case PLIST_CHMOD:

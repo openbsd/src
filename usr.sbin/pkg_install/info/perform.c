@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.8 2000/04/10 18:44:31 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.9 2001/04/08 16:45:47 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.8 2000/04/10 18:44:31 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.9 2001/04/08 16:45:47 espie Exp $";
 #endif
 
 /* This is OpenBSD pkg_install, based on:
@@ -79,6 +79,8 @@ pkg_do(char *pkg)
 	int             code = 0;
 	char           *pkg2 = 0; /* hold full name of package, storage to free */
 
+	set_pkg(pkg);
+
 	if (isURL(pkg)) {
 		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
 			strcpy(fname, cp);
@@ -113,13 +115,13 @@ pkg_do(char *pkg)
 			 * be very optimistic.
 			 */
 			if (stat(fname, &sb) == FAIL) {
-				warnx("can't stat package file '%s'", fname);
+				pwarnx("can't stat package file '%s'", fname);
 				code = 1;
 				goto bail;
 			}
 			Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
 			if (unpack(fname, "+*")) {
-				warnx("error during unpacking, no info for '%s' available", pkg);
+				pwarnx("error during unpacking, no info for '%s' available", pkg);
 				code = 1;
 				goto bail;
 			}
@@ -139,13 +141,13 @@ pkg_do(char *pkg)
 			pkg);
 		if (!fexists(log_dir) && 
 			! (pkg2 = find_prefix(log_dir, sizeof(log_dir), tmp, pkg))) {
-			warnx("can't find package `%s' installed or in a file!", pkg);
+			pwarnx("can't find package `%s' installed or in a file!", pkg);
 			return 1;
 		}
 		if (pkg2) 
 			pkg = pkg2;
 		if (chdir(log_dir) == FAIL) {
-			warnx("can't change directory to '%s'!", log_dir);
+			pwarnx("can't change directory to '%s'!", log_dir);
 			free(pkg2);
 			return 1;
 		}
@@ -163,7 +165,7 @@ pkg_do(char *pkg)
 		plist.head = plist.tail = NULL;
 		fp = fopen(CONTENTS_FNAME, "r");
 		if (!fp) {
-			warnx("unable to open %s file", CONTENTS_FNAME);
+			pwarnx("unable to open %s file", CONTENTS_FNAME);
 			code = 1;
 			goto bail;
 		}

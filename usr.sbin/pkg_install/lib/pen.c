@@ -1,7 +1,7 @@
-/*	$OpenBSD: pen.c,v 1.8 1998/10/13 23:09:54 marc Exp $	*/
+/*	$OpenBSD: pen.c,v 1.9 2001/04/08 16:45:48 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pen.c,v 1.8 1998/10/13 23:09:54 marc Exp $";
+static const char *rcsid = "$OpenBSD: pen.c,v 1.9 2001/04/08 16:45:48 espie Exp $";
 #endif
 
 /*
@@ -152,7 +152,7 @@ leave_playpen(char *save)
             abort();
         }
 	if (vsystem("rm -rf %s", Current))
-	    warnx("couldn't remove temporary dir '%s'", Current);
+	    pwarnx("couldn't remove temporary dir '%s'", Current);
 	strcpy(Current, Previous);
     }
     if (save)

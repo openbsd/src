@@ -1,7 +1,7 @@
-/*	$OpenBSD: str.c,v 1.4 1998/10/13 23:09:54 marc Exp $	*/
+/*	$OpenBSD: str.c,v 1.5 2001/04/08 16:45:48 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: str.c,v 1.4 1998/10/13 23:09:54 marc Exp $";
+static const char *rcsid = "$OpenBSD: str.c,v 1.5 2001/04/08 16:45:48 espie Exp $";
 #endif
 
 /*
@@ -204,7 +204,7 @@ alternate_match(const char *pattern, const char *pkg)
 		}
 	}
 	if (cnt != 0) {
-		warnx("Malformed alternate `%s'", pattern);
+		pwarnx("Malformed alternate `%s'", pattern);
 		return 1;
 	}
 	for (found = 0, cp = sep + 1; *sep != '}'; cp = sep + 1) {
@@ -308,7 +308,7 @@ findmatchingname(const char *dir, const char *pattern, matchfn f, char *data)
     
     found = 0;
     if ((dirp = opendir(dir)) == NULL) {
-	/* warnx("can't opendir dir '%s'", dir); */
+	/* pwarnx("can't opendir dir '%s'", dir); */
 	return -1;
     }
     while ((dp = readdir(dirp)) != NULL) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.7 2001/04/02 10:13:40 espie Exp $ */
+/* $OpenBSD: lib.h,v 1.8 2001/04/08 16:45:47 espie Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -204,6 +204,10 @@ int		delete_package(Boolean, Boolean, package_t *);
 
 /* For all */
 int		pkg_perform(char **);
+
+
+void		set_pkg(const char *);
+void 		pwarnx(const char *, ...);
 
 /* Externs */
 extern Boolean	Verbose;

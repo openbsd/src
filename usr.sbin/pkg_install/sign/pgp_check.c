@@ -1,4 +1,4 @@
-/* $OpenBSD: pgp_check.c,v 1.2 1999/10/07 16:30:32 espie Exp $ */
+/* $OpenBSD: pgp_check.c,v 1.3 2001/04/08 16:45:48 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -105,12 +105,12 @@ new_pgp_checker(h, sign, userid, envp, filename)
 		struct stat sbuf;
 
 		if (stat(PGP, &sbuf) == -1) {
-			warnx("%s does not exist", PGP);
+			pwarnx("%s does not exist", PGP);
 			return NULL;
 		}
 	}
 	if (n == NULL) {
-		warnx("Can't allocate pgp_checker");
+		pwarnx("Can't allocate pgp_checker");
 		return NULL;
 	}
 
@@ -144,7 +144,7 @@ new_pgp_checker(h, sign, userid, envp, filename)
 
 	pgp_add(n, sign->data, sign->length);
 	if (gzip_copy_header(h, sign->next, pgp_add, n) == 0) {
-		warnx("Unexpected header in %s", filename);
+		pwarnx("Unexpected header in %s", filename);
 		n->status = PKG_SIGERROR;
 	}
 	return n;

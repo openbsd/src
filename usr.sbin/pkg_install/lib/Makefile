@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 1999/10/05 22:34:45 espie Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/04/08 16:45:47 espie Exp $
 LIB=	install
-SRCS=	file.c plist.c str.c exec.c global.c pen.c
+SRCS=	file.c plist.c str.c exec.c global.c pen.c pwarnx.c
 CFLAGS+= ${DEBUG}
 NOPROFILE= yes
 NOPIC=	yes

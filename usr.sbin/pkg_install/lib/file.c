@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.13 2001/03/11 13:22:31 wilfried Exp $	*/
+/*	$OpenBSD: file.c,v 1.14 2001/04/08 16:45:47 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.13 2001/03/11 13:22:31 wilfried Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.14 2001/04/08 16:45:47 espie Exp $";
 #endif
 
 /*
@@ -320,13 +320,13 @@ fileGetURL(char *base, char *spec)
 	strlcpy(fname, spec, sizeof fname);
     cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
     if (!*cp) {
-	warnx("URL `%s' has bad host part!", fname);
+	pwarnx("URL `%s' has bad host part!", fname);
 	return NULL;
     }
 
     cp = fileURLFilename(fname, file, FILENAME_MAX);
     if (!*cp) {
-	warnx("URL `%s' has bad filename part!", fname);
+	pwarnx("URL `%s' has bad filename part!", fname);
 	return NULL;
     }
 
@@ -610,7 +610,7 @@ unpack(char *pkg, char *flist)
 	strcpy(args, "z");
     strcat(args, "xpf");
     if (vsystem("tar %s %s %s", args, pkg, flist ? flist : "")) {
-	warnx("tar extract of %s failed!", pkg);
+	pwarnx("tar extract of %s failed!", pkg);
 	return 1;
     }
     return 0;
