@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aic.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
+.\"	$OpenBSD: aic.4,v 1.2 2002/09/03 16:34:49 mickey Exp $
 .\"	$NetBSD: aic.4,v 1.5 1998/06/07 09:08:45 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -33,7 +33,7 @@
 .Nd Adaptec AIC-6260 and AIC-6360 SCSI driver
 .Sh SYNOPSIS
 .Cd "aic0 at isa? port 0x340 irq 12"
-.\".Cd "aic* at isapnp?"
+.Cd "aic* at isapnp?"
 .Cd "aic* at pcmcia? function ?"
 .Cd "scsibus* at aic?"
 .Sh DESCRIPTION
@@ -60,14 +60,14 @@ Many
 .Tn ISA
 cards that use this chip do not have boot ROMs, and therefore cannot
 be used to connect the boot device.
-.\".Pp
-.\"The
-.\".Tn "ISA Plug-and-Play"
-.\"attachment of the
-.\".Nm
-.\"driver supports the
-.\".Tn Adaptec
-.\"AHA-1520B host adapter.
+.Pp
+The
+.Tn "ISA Plug-and-Play"
+attachment of the
+.Nm
+driver supports the
+.Tn Adaptec
+AHA-1520B host adapter.
 .Pp
 The
 .Tn PCMCIA
