@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6.h,v 1.4 2000/06/13 01:17:13 itojun Exp $	*/
+/*	$OpenBSD: ip6.h,v 1.5 2000/07/12 16:41:31 itojun Exp $	*/
 /*	$KAME: ip6.h,v 1.7 2000/03/25 07:23:36 sumikawa Exp $	*/
 
 /*
@@ -262,7 +262,6 @@ do {									\
 do {									\
 	struct mbuf *t;							\
 	int tmp;							\
-	ip6stat.ip6s_exthdrget++;					\
 	if ((m)->m_len >= (off) + (len))				\
 		(val) = (typ)(mtod((m), caddr_t) + (off));		\
 	else {								\
@@ -281,7 +280,6 @@ do {									\
 #define IP6_EXTHDR_GET0(val, typ, m, off, len) \
 do {									\
 	struct mbuf *t;							\
-	ip6stat.ip6s_exthdrget0++;					\
 	if ((off) == 0)							\
 		(val) = (typ)mtod(m, caddr_t);				\
 	else {								\
