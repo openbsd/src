@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.7 2000/11/20 07:34:51 deraadt Exp $ */
+/*	$OpenBSD: umass.c,v 1.8 2000/11/23 08:55:34 deraadt Exp $ */
 /*	$NetBSD: umass.c,v 1.33 2000/04/06 13:52:04 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -1084,7 +1084,7 @@ USB_ATTACH(umass)
 
 		sc->u.sc_link.adapter_buswidth = 2;
 		sc->u.sc_link.adapter_target = UMASS_SCSIID_HOST; 
-		sc->u.sc_link.maxlun = sc->maxlun;
+		sc->u.sc_link.luns = sc->maxlun + 1;
 #endif
 
 		sc->u.sc_link.adapter_softc = sc;

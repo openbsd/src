@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.24 2000/11/20 07:34:51 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.25 2000/11/23 08:55:35 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ struct scsi_link {
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
-	u_char	maxlun;
+	u_char	luns;
 };
 
 int	scsiprint __P((void *, const char *));
