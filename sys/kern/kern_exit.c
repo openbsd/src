@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.46 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.47 2003/08/03 19:25:49 millert Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ sys_wait4(q, v, retval)
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
-	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG))
+	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG|WCONTINUED))
 		return (EINVAL);
 
 loop:
@@ -462,6 +462,18 @@ loop:
 
 			if (SCARG(uap, status)) {
 				status = W_STOPCODE(p->p_xstat);
+				error = copyout(&status, SCARG(uap, status),
+				    sizeof(status));
+			} else
+				error = 0;
+			return (error);
+		}
+		if ((SCARG(uap, options) & WCONTINUED) && (p->p_flag & P_CONTINUED)) {
+			p->p_flag &= ~P_CONTINUED;
+			retval[0] = p->p_pid;
+
+			if (SCARG(uap, status)) {
+				status = _WCONTINUED;
 				error = copyout(&status, SCARG(uap, status),
 				    sizeof(status));
 			} else

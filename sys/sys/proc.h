@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.65 2003/06/21 00:42:58 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.66 2003/08/03 19:25:49 millert Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -255,12 +255,13 @@ struct	proc {
 #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
 #define P_INEXEC	0x200000	/* Process is doing an exec right now */
 #define P_SYSTRACE	0x400000	/* Process system call tracing active*/
+#define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
 
 #define	P_BITS \
     ("\20\01ADVLOCK\02CTTY\03INMEM\04NOCLDSTOP\05PPWAIT\06PROFIL\07SELECT" \
      "\010SINTR\011SUGID\012SYSTEM\013TIMEOUT\014TRACED\015WAITED\016WEXIT" \
      "\017EXEC\020PWEUPC\021FSTRACE\022SSTEP\023SUGIDEXEC\024NOCLDWAIT" \
-     "\025NOZOMBIE\026INEXEC\027SYSTRACE")
+     "\025NOZOMBIE\026INEXEC\027SYSTRACE\030CONTINUED")
 
 /* Macro to compute the exit signal to be delivered. */
 #define P_EXITSIG(p) \

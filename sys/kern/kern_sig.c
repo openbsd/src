@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.64 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.65 2003/08/03 19:25:49 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -818,8 +818,10 @@ psignal(p, signum)
 	if (prop & SA_CONT)
 		p->p_siglist &= ~stopsigmask;
 
-	if (prop & SA_STOP)
+	if (prop & SA_STOP) {
 		p->p_siglist &= ~contsigmask;
+		p->p_flag &= ~P_CONTINUED;
+	}
 
 	p->p_siglist |= mask;
 
@@ -907,6 +909,8 @@ psignal(p, signum)
 			 * an event, then it goes back to run state.
 			 * Otherwise, process goes back to sleep state.
 			 */
+			p->p_flag |= P_CONTINUED;
+			wakeup(p->p_pptr);
 			if (action == SIG_DFL)
 				p->p_siglist &= ~mask;
 			if (action == SIG_CATCH)
