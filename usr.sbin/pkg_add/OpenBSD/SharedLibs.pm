@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.2 2004/11/21 15:44:56 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.3 2004/11/22 01:56:13 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,20 @@
 
 use strict;
 use warnings;
+package OpenBSD::PackingElement;
+
+sub mark_available_lib
+{
+}
+
+package OpenBSD::PackingElement::Lib;
+
+sub mark_available_lib
+{
+	my ($self, $pkgname) = @_;
+	OpenBSD::SharedLibs::register_lib($self->fullname(), $pkgname);
+}
+
 package OpenBSD::SharedLibs;
 use File::Basename;
 use OpenBSD::Error;
@@ -72,28 +86,68 @@ our $registered_libs = {};
 
 sub register_lib
 {
-	my ($stem, $minor, $pkg) = @_;
-	if (!defined $registered_libs->{"$stem"} || $registered_libs->{"$stem"}->[0] < $minor) {
-		$registered_libs->{"$stem"} = [$minor, $pkg];
+	my ($name, $pkgname) = @_;
+	if ($name =~ m/^(.*\/lib.*?\.so\.\d+)\.(\d+)$/) {
+		my ($stem, $minor) = ($1, $2);
+		$registered_libs->{"$stem"} = [] 
+		    unless defined $registered_libs->{"$stem"};
+		push(@{$registered_libs->{"$stem"}}, [$minor, $pkgname]);
 	}
 }
 
-my $done_system = 0;
+my $done_plist = {};
 
 sub add_system_libs
 {
 	my ($destdir) = @_;
-	return if $done_system;
-	$done_system = 1;
+	return if $done_plist->{'system'};
+	$done_plist->{'system'} = 1;
 	for my $dirname ("/usr/lib", "/usr/X11R6/lib") {
 		opendir(my $dir, $destdir.$dirname) or next;
 		while (my $d = readdir($dir)) {
-			next unless $d =~ m/^(.*\.so\.\d+)\.(\d+)$/;
-			my ($stem, $minor) = ($1, $2);
-			$stem = "$dirname/$stem";
-			register_lib($stem, $minor, 'system');
+			register_lib("$dirname/$d", 'system');
 		}
 		closedir($dir);
 	}
 }
+
+sub add_package_libs
+{
+	my ($pkgname) = @_;
+	return if $done_plist->{$pkgname};
+	$done_plist->{$pkgname} = 1;
+	my $plist = OpenBSD::PackingList->from_installation($pkgname, 
+	    \&OpenBSD::PackingList::LibraryOnly);
+	$plist->visit('mark_available_lib', $pkgname);
+}
+
+sub _lookup_libspec
+{
+	my ($dir, $spec) = @_;
+	my @r;
+
+	if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
+		my ($libname, $major, $minor) = ($1, $2, $3);
+		my $exists = $registered_libs->{"$dir/lib$libname.so.$major"};
+		if (defined $exists) {
+			for my $e (@$exists) {
+				if ($e->[0] >= $minor) {
+					push(@r, $e->[1]);
+				}
+			}
+		}
+	}
+	return @r;
+}
+
+sub lookup_libspec
+{
+	my ($base, $libspec) = @_;
+	if ($libspec =~ m|(.*)/|) {
+		return _lookup_libspec("$base/$1", $');
+	} else {
+		return _lookup_libspec("$base/lib", $libspec);
+	}
+}
+
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.21 2004/11/18 21:48:02 espie Exp $
+# $OpenBSD: Add.pm,v 1.22 2004/11/22 01:56:13 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -145,10 +145,6 @@ use OpenBSD::Error;
 my ($uidcache, $gidcache);
 
 sub install
-{
-}
-
-sub available_lib
 {
 }
 
@@ -496,19 +492,6 @@ sub install
 	$self->SUPER::install($state);
 	return if $state->{do_faked};
 	$self->mark_ldconfig_directory($state->{destdir});
-}
-
-sub available_lib
-{
-	my ($self, $avail, $pkgname) = @_;
-	my $fullname = $self->fullname();
-
-	if ($fullname =~ m/^(.*\.so\.\d+)\.(\d+)$/) {
-		my ($stem, $minor) = ($1, $2);
-		if (!defined $avail->{"$stem"} || $avail->{"$stem"}->[0] < $minor) {
-			$avail->{"$stem"} = [$minor, $pkgname];
-		}
-	}
 }
 
 package OpenBSD::PackingElement::Arch;
