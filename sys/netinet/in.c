@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.5 1998/02/25 04:53:09 angelos Exp $	*/
+/*	$OpenBSD: in.c,v 1.6 1998/02/25 11:17:42 deraadt Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -440,13 +440,10 @@ in_broadcast(in, ifp)
 	if (ifp && ((ifp->if_flags & IFF_BROADCAST) == 0))
 		return 0;
 
-	if (ifp == NULL)
-	{
+	if (ifp == NULL) {
 	  	if_first = ifnet.tqh_first;
 		if_target = 0;
-	}
-	else
-	{
+	} else {
 		if_first = ifp;
 		if_target = ifp->if_list.tqe_next;
 	}
