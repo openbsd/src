@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.16 1996/12/09 07:06:56 tholo Exp $
+#	$OpenBSD: install.sh,v 1.17 1997/01/28 07:07:36 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -171,20 +171,32 @@ esac
 echo	"You will now enter the disk geometry information"
 echo	""
 
-echo -n	"Number of bytes per disk sector? [512] "
-getresp 512
+bytes_per_sect=`cat /kern/msgbuf \
+	         | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
+	         | awk '{ print $9 }'`
+echo -n	"Number of bytes per disk sector? [$bytes_per_sect] "
+getresp $bytes_per_sect
 bytes_per_sect="$resp"
 
-echo -n "Number of disk cylinders? "
-getresp
+cyls_per_disk=`cat /kern/msgbuf \
+	       | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
+	       | awk '{ print $3 }'`
+echo -n "Number of disk cylinders? [$cyls_per_disk]"
+getresp $cyls_per_disk
 cyls_per_disk="$resp"
 
-echo -n	"Number of disk tracks (heads) per disk cylinder? "
-getresp
+tracks_per_cyl=`cat /kern/msgbuf \
+	        | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
+	        | awk '{ print $5 }'`
+echo -n	"Number of disk tracks (heads) per disk cylinder? [$tracks_per_cyl]"
+getresp $tracks_per_cyl
 tracks_per_cyl="$resp"
 
-echo -n	"Number of disk sectors per disk track? "
-getresp
+sects_per_track=`cat /kern/msgbuf \
+	         | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
+	         | awk '{ print $7 }'`
+echo -n	"Number of disk sectors per disk track? [$sects_per_track]"
+getresp $sects_per_track
 sects_per_track="$resp"
 
 cylindersize=`expr $sects_per_track \* $tracks_per_cyl`
