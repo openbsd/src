@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.16 2004/12/16 17:16:18 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.17 2004/12/16 18:55:52 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -381,6 +381,8 @@ rcs_addsym(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 	/* first look for duplication */
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
 		if (strcmp(symp->rs_name, sym) == 0) {
+			cvs_log(LP_ERR, "attempt to add duplicate symbol `%s'",
+			    sym);
 			return (-1);
 		}
 	}
@@ -400,6 +402,7 @@ rcs_addsym(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 
 	symp->rs_num = rcsnum_alloc();
 	if (symp->rs_num == NULL) {
+		free(symp->rs_name);
 		free(symp);
 		return (-1);
 	}
@@ -437,16 +440,20 @@ rcs_patch(const char *data, const char *patch)
 		return (NULL);
 
 	dlines = rcs_splitlines(data);
-	if (dlines == NULL)
+	if (dlines == NULL) {
+		cvs_buf_free(res);
 		return (NULL);
+	}
 
 	plines = rcs_splitlines(patch);
 	if (plines == NULL) {
+		cvs_buf_free(res);
 		rcs_freefoo(dlines);
 		return (NULL);
 	}
 
 	if (rcs_patch_lines(dlines, plines) < 0) {
+		cvs_buf_free(res);
 		rcs_freefoo(plines);
 		rcs_freefoo(dlines);
 		return (NULL);
@@ -598,14 +605,19 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 			 * This will need some rework to support sub branches.
 			 */
 			crev = rcsnum_alloc();
-			if (crev == NULL)
+			if (crev == NULL) {
+				cvs_buf_free(rbuf);
 				return (NULL);
+			}
 			rcsnum_cpy(rfp->rf_head, crev, 0);
 			do {
 				crev->rn_id[crev->rn_len - 1]--;
 				rdp = rcs_findrev(rfp, crev);
-				if (rdp == NULL)
+				if (rdp == NULL) {
+					rcsnum_free(crev);
+					cvs_buf_free(rbuf);
 					return (NULL);
+				}
 
 				cvs_buf_putc(rbuf, '\0');
 				bp = cvs_buf_release(rbuf);
@@ -617,7 +629,6 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 			rcsnum_free(crev);
 		}
 	}
-
 
 	return (rbuf);
 }
