@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.3 2001/05/24 13:00:45 art Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.4 2002/02/08 21:21:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -167,9 +167,7 @@ static struct funmap functnames[] = {
 	{prefixregion, "prefix-region",},
 #endif /* PREFIXREGION */
 	{backline, "previous-line",},
-#ifdef GOSMACS
 	{prevwind, "previous-window",},
-#endif /* GOSEMACS */
 	{spawncli, "push-shell",},
 #ifndef NO_DIR
 	{showcwdir, "pwd",},
@@ -190,10 +188,8 @@ static struct funmap functnames[] = {
 	{quit, "save-buffers-kill-emacs",},
 	{savebuffers, "save-some-buffers",},
 	{backpage, "scroll-down",},
-#ifdef GOSMACS
 	{back1page, "scroll-one-line-down",},
 	{forw1page, "scroll-one-line-up",},
-#endif /* GOSMACS */
 	{pagenext, "scroll-other-window",},
 	{forwpage, "scroll-up",},
 	{searchagain, "search-again",},

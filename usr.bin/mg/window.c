@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.7 2001/05/24 03:05:27 mickey Exp $	*/
+/*	$OpenBSD: window.c,v 1.8 2002/02/08 21:21:11 deraadt Exp $	*/
 
 /*
  *		Window handling.
@@ -92,8 +92,6 @@ nextwind(f, n)
 	return TRUE;
 }
 
-#ifdef	GOSMACS
-
 /* not in Gnu Emacs */
 /*
  * This command makes the previous window (previous => up the screen) the
@@ -117,7 +115,6 @@ prevwind(f, n)
 	curbp = wp1->w_bufp;
 	return TRUE;
 }
-#endif /* GOSEMACS */
 
 /*
  * This command makes the current window the only window on the screen.  Try
