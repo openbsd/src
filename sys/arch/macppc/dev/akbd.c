@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.7 2002/03/28 01:05:18 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.8 2002/03/28 01:27:23 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -522,19 +522,19 @@ akbd_intr(event)
 
 	type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 
-	switch (key) {
-	case 57:	/* Caps Lock pressed */
-	case 185:	/* Caps Lock released */
+	switch (val) {
+	case ADBK_CAPSLOCK:
 		type = WSCONS_EVENT_KEY_DOWN;
 		wskbd_input(sc->sc_wskbddev, type, val);
 		type = WSCONS_EVENT_KEY_UP;
 		break;
+
 #if 0
 	/* not supported... */
-	case 245:
+	case ADBK_KEYVAL(245):
 		pm_eject_pcmcia(0);
 		break;
-	case 244:
+	case ADBK_KEYVAL(244):
 		pm_eject_pcmcia(1);
 		break;
 #endif
