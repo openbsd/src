@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.260 2003/07/04 10:42:52 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.261 2003/07/07 08:38:03 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1978,6 +1978,7 @@ and therefore lacks permission to bind to port 80).
 # map daemon on 8080 to appear to be on 80
 rdr on ne3 proto tcp from any to any port 80 -> 127.0.0.1 port 8080
 .Ed
+.Pp
 If the
 .Ar pass
 modifier is given, packets matching the translation rule are passed without
@@ -2028,51 +2029,52 @@ Interface fxp0 is the inside interface, and we are running
 listening for outbound ftp sessions captured to port 8021.
 .Bd -literal
 # NAT
-# translate outgoing packets' source addresses (any protocol)
-# in this case, any address but the gateway's external address is mapped
+# Translate outgoing packets' source addresses (any protocol). 
+# In this case, any address but the gateway's external address is mapped.
 nat on kue0 inet from ! (kue0) to any -> (kue0)
 
 # NAT PROXYING
-# map outgoing packets' source port to an assigned proxy port instead of
-# an arbitrary port
-# in this case, proxy outgoing isakmp with port 500 on the gateway
+# Map outgoing packets' source port to an assigned proxy port instead of
+# an arbitrary port.
+# In this case, proxy outgoing isakmp with port 500 on the gateway.
 nat on kue0 inet proto udp from any port = isakmp to any -> (kue0) \e
       port 500
 
 # BINAT
-# translate outgoing packets' source address (any protocol)
-# translate incoming packets' destination address to an internal machine
-# (bidirectional)
+# Translate outgoing packets' source address (any protocol).
+# Translate incoming packets' destination address to an internal machine
+# (bidirectional).
 binat on kue0 from 10.1.2.150 to any -> (kue0)
 
 # RDR
-# translate incoming packets' destination addresses
-# as an example, redirect a TCP and UDP port to an internal machine
+# Translate incoming packets' destination addresses.
+# As an example, redirect a TCP and UDP port to an internal machine.
 rdr on kue0 inet proto tcp from any to (kue0) port 8080 -> 10.1.2.151 \e
       port 22
 rdr on kue0 inet proto udp from any to (kue0) port 8080 -> 10.1.2.151 \e
       port 53
 
 # RDR
-# translate outgoing ftp control connections to send them to localhost
-# for proxying with ftp-proxy(8) running on port 8021
+# Translate outgoing ftp control connections to send them to localhost
+# for proxying with ftp-proxy(8) running on port 8021.
 rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8021
-
+.Ed
+.Pp
 In this example, a NAT gateway is set up to translate internal addresses
 using a pool of public addresses (192.0.2.16/28) and to redirect
 incoming web server connections to a group of web servers on the internal
 network.
 Interface fxp0 is the external interface.
-
+.Bd -literal
 # NAT LOAD BALANCE
-# translate outgoing packets' source addresses using an address pool.  A
-# given source address is always translated to the same pool address by
+# Translate outgoing packets' source addresses using an address pool.
+# A given source address is always translated to the same pool address by
 # using the source-hash keyword.
 nat on fxp0 inet from any to any -> 192.0.2.16/28 source-hash
 
 # RDR ROUND ROBIN
-# translate incoming web server connections to a group of web servers on
-# the internal network
+# Translate incoming web server connections to a group of web servers on
+# the internal network.
 rdr on fxp0 proto tcp from any to any port 80 \e
       -> { 10.1.2.155, 10.1.2.160, 10.1.2.161 } round-robin
 .Ed
