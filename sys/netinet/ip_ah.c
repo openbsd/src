@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.54 2001/05/27 03:48:32 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.55 2001/05/27 03:51:31 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -825,7 +825,7 @@ ah_input_cb(void *op)
 	  m->m_pkthdr.len -= rplen + ahx->authsize;
       }
 
-    err = ipsec_common_input_cb(m, tdb, skip, protoff);
+    err = ipsec_common_input_cb(m, tdb, skip, protoff, NULL);
     splx(s);
     return err;
 
@@ -1208,7 +1208,7 @@ ah_output_cb(void *op)
     FREE(ptr, M_XDATA);
     crypto_freereq(crp);
 
-    err =  ipsp_process_done(m, tdb, tdb2, NULL);
+    err =  ipsp_process_done(m, tdb, tdb2);
     splx(s);
     return err;
 
