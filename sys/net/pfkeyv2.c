@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.43 2000/09/20 19:13:16 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.44 2000/09/21 02:38:32 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1750,6 +1750,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    if ((sid = headers[SADB_EXT_IDENTITY_SRC]) != NULL)
 	    {
+		ipo->ipo_srcid_type = sid->sadb_ident_type;
+		ipo->ipo_srcid_len = (sid->sadb_ident_len * sizeof(u_int64_t)) -
+				     sizeof(struct sadb_ident);
+
 		MALLOC(ipo->ipo_srcid, u_int8_t *, ipo->ipo_srcid_len,
 		       M_TEMP, M_DONTWAIT);
 		if (ipo->ipo_srcid == NULL)
@@ -1766,17 +1770,15 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    goto ret;
 		}
 
-		ipo->ipo_srcid_type = sid->sadb_ident_type;
-		ipo->ipo_srcid_len = sid->sadb_ident_len -
-				     sizeof(struct sadb_ident);
-
-		bcopy(headers[SADB_EXT_IDENTITY_SRC] +
-		      sizeof(struct sadb_ident), ipo->ipo_srcid,
-		      ipo->ipo_srcid_len);
+		bcopy(sid + 1, ipo->ipo_srcid, ipo->ipo_srcid_len);
 	    }
 
 	    if ((sid = headers[SADB_EXT_IDENTITY_DST]) != NULL)
 	    {
+		ipo->ipo_dstid_type = sid->sadb_ident_type;
+		ipo->ipo_dstid_len = (sid->sadb_ident_len * sizeof(u_int64_t)) -
+				     sizeof(struct sadb_ident);
+
 		MALLOC(ipo->ipo_dstid, u_int8_t *, ipo->ipo_dstid_len,
 		       M_TEMP, M_DONTWAIT);
 		if (ipo->ipo_dstid == NULL)
@@ -1789,8 +1791,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    }
 		    else
 		    {
-			if (ipo->ipo_srcid)
-			  FREE(ipo->ipo_srcid, M_TEMP);
+			if (ipo->ipo_dstid)
+			  FREE(ipo->ipo_dstid, M_TEMP);
 			FREE(ipo, M_TDB);
 		    }
 
@@ -1798,13 +1800,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    goto ret;
 		}
 
-		ipo->ipo_dstid_type = sid->sadb_ident_type;
-		ipo->ipo_dstid_len = sid->sadb_ident_len -
-				     sizeof(struct sadb_ident);
-
-		bcopy(headers[SADB_EXT_IDENTITY_SRC] +
-		      sizeof(struct sadb_ident), ipo->ipo_dstid,
-		      ipo->ipo_dstid_len);
+		bcopy(sid + 1, ipo->ipo_dstid, ipo->ipo_dstid_len);
 	    }
 
 	    /* Flow type */
