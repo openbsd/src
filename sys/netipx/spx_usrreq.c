@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.5 1996/12/23 08:47:05 mickey Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.6 1998/03/18 21:30:06 mickey Exp $	*/
 
 /*-
  *
@@ -1153,7 +1153,7 @@ void
 spx_setpersist(cb)
 	register struct spxpcb *cb;
 {
-	register t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
+	register int t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
 
 	if (cb->s_timer[SPXT_REXMT] && spx_do_persist_panics)
 		panic("spx_output REXMT");
