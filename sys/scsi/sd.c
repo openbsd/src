@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.58 2003/05/06 11:40:34 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.59 2003/05/16 19:54:05 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -202,7 +202,7 @@ sdattach(parent, self, aux)
 	}
 
 	if (!(sc_link->inquiry_flags & SID_RelAdr))
-		sc_link->quirks |= SDEV_NOCDB6;
+		sc_link->quirks |= SDEV_ONLYBIG;
 
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
@@ -699,7 +699,7 @@ sdstart(v)
 		 *  fit in a "small" cdb, use it.
 		 */
 		if (!(sc_link->flags & SDEV_ATAPI) &&
-		    !(sc_link->quirks & SDEV_NOCDB6) && 
+		    !(sc_link->quirks & SDEV_ONLYBIG) && 
 		    ((blkno & 0x1fffff) == blkno) &&
 		    ((nblks & 0xff) == nblks)) {
 			/*

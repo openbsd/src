@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.37 2003/02/20 04:02:06 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.38 2003/05/16 19:54:05 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -182,10 +182,10 @@ struct scsi_link {
 #define	SDEV_NOSYNCCACHE	0x0100	/* no SYNCHRONIZE_CACHE */
 #define	ADEV_NOSENSE		0x0200	/* No request sense - ATAPI */
 #define	ADEV_LITTLETOC		0x0400	/* little-endian TOC - ATAPI */
-#define	ADEV_NOCAPACITY		0x0800
-#define	ADEV_NOTUR		0x1000
-#define	ADEV_NODOORLOCK		0x2000
-#define SDEV_NOCDB6		0x4000  /* does not support 6 byte CDB */
+#define	ADEV_NOCAPACITY		0x0800	/* no READ CD CAPACITY */
+#define	ADEV_NOTUR		0x1000	/* No TEST UNIT READY */
+#define	ADEV_NODOORLOCK		0x2000	/* can't lock door */
+#define SDEV_ONLYBIG		0x4000  /* always use READ_BIG and WRITE_BIG */
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	u_int8_t inquiry_flags2;	/* copy of flags2 from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */

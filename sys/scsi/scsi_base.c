@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.41 2003/05/03 02:20:32 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.42 2003/05/16 19:54:05 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -253,6 +253,9 @@ scsi_test_unit_ready(sc_link, retries, flags)
 	int flags;
 {
 	struct scsi_test_unit_ready scsi_cmd;
+
+	if (sc_link->quirks & ADEV_NOTUR)
+		return 0;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = TEST_UNIT_READY;

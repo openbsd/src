@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.70 2002/12/30 21:50:28 grange Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.71 2003/05/16 19:54:05 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -502,7 +502,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "NEC     ", "D3847           ", "0307"}, SDEV_NOLUNS},
 	{{T_DIRECT, T_REMOV,
-	 "OLYMPUS ", "C-", ""}, SDEV_NOCDB6|SDEV_NOSYNCCACHE},
+	 "OLYMPUS ", "C-", ""}, SDEV_ONLYBIG|SDEV_NOSYNCCACHE},
 	{{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "ELS85S          ", ""},	  SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
