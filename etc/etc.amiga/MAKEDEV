@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.amiga/MAKEDEV.md,v 1.5 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.31 2002/02/14 17:44:38 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.32 2002/02/15 21:13:47 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.56 2002/02/14 17:46:15 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.57 2002/02/15 21:16:02 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -440,15 +440,15 @@ local)
 	;;
 
 all)
-	R local kbd mouse0 mouse1 par0 grf0 grf1 grf2 grf3 grf4 grf5
-	R grf6 audio0 xfs0 ss0 ss1 uk0 rndrandom joy0 joy1 lpa0 lpa1
+	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
+	R sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
+	R xfs0 ss0 ss1 ch0 local kbd mouse0 mouse1 par0 grf0 grf1 grf2
+	R grf3 grf4 grf5 grf6 audio0 uk0 rndrandom joy0 joy1 lpa0 lpa1
 	R lpa2 lpt0 lpt1 lpt2 lkm ttye0 ttye1 ttye2 ttye3 ttye4 ttye5
-	R ttye6 tty00 tty01 tty02 tty03 ttyA0 ttyA1 pf altq tun0 tun1
-	R tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	R fd0 fd1 fd2 fd3 wd0 wd1 wd2 wd3 rd0 ccd0 ccd1 ccd2 ccd3 vnd0
-	R vnd1 vnd2 vnd3 std cd0 cd1 ch0 st0 st1 pty0 pty1 pty2 fd sd0
-	R sd1 sd2 sd3 sd4 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 sd5 sd6 sd7
-	R sd8 sd9
+	R ttye6 tty00 tty01 tty02 tty03 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4
+	R ttyA0 ttyA1 pf altq fd0 fd1 fd2 fd3 wd0 wd1 wd2 wd3 std st0
+	R st1 fd
 	;;
 
 wd*|sd*|ccd*)

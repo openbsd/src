@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.hp300/MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.31 2002/02/14 17:44:38 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.32 2002/02/15 21:13:47 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.42 2002/02/14 17:46:15 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.43 2002/02/15 21:16:02 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -422,10 +422,10 @@ local)
 
 all)
 	R ite0 ct0 ct1 hd0 hd1 hd2 dcm0 dcm1 dcm2 dcm3 dca0 dca1 st0
-	R st1 hil grf0 local ppi0 apci0 xfs0 rndrandom lkm pf altq
-	R tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	R bpf8 bpf9 rd0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std
-	R pty0 pty1 pty2 fd sd0 sd1 sd2 sd3 sd4
+	R st1 hil grf0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
+	R sd2 sd3 sd4 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 local ppi0
+	R apci0 rndrandom lkm pf altq std fd
 	;;
 
 sd*|hd*|ccd*)

@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sun3/MAKEDEV.md,v 1.2 2002/02/14 13:29:21 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.31 2002/02/14 17:44:38 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.32 2002/02/15 21:13:47 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.50 2002/02/14 17:46:15 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.51 2002/02/15 21:16:02 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -31,6 +31,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
@@ -332,11 +333,11 @@ local)
 	;;
 
 all)
-	R local cgfour0 cgtwo0 bwtwo0 xfs0 ss0 ss1 uk0 rndrandom ttya
-	R ttyb ttyc ttyd pf altq tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2
-	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 xd0 xd1 xd2 xd3 xy0 xy1
-	R xy2 xy3 rd0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0
-	R cd1 st0 st1 pty0 pty1 pty2 fd sd0 sd1 sd2 sd3 sd4
+	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
+	R cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0 bpf1
+	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0
+	R ss0 ss1 local cgfour0 cgtwo0 bwtwo0 uk0 rndrandom ttya ttyb
+	R ttyc ttyd pf altq xd0 xd1 xd2 xd3 std st0 st1 fd
 	;;
 
 xd*|xy*|sd*|ccd*)
