@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.63 2001/11/02 00:08:16 millert Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.64 2002/02/16 17:20:27 millert Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -546,6 +546,10 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
          "MICROP", "4421-07",		 ""},     SDEV_NOTAGS},
         {{T_DIRECT, T_FIXED,
          "SEAGATE", "ST150176LW",        "0002"}, SDEV_NOTAGS},
+        {{T_DIRECT, T_FIXED,
+         "HP", "C3725S",		 ""},     SDEV_NOTAGS},
+        {{T_DIRECT, T_FIXED,
+         "IBM", "DCAS",			 ""},     SDEV_NOTAGS},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
