@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.41 1999/02/24 23:45:52 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.42 1999/03/06 20:59:41 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -433,11 +433,9 @@ ip_output(m0, va_alist)
 			}
 
 			m = mp;
-			if (tdb->tdb_xform->xf_type == XF_IP4) {
-			        /* If IP-IP, calculate outter header cksum */
-			        ip = mtod(m, struct ip *);
-				ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-			}
+			ip = mtod(m, struct ip *);
+			if (tdb->tdb_xform->xf_type == XF_IP4)
+			  ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 
 			tdb = tdb->tdb_onext;
 		}
