@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.5 2001/12/08 02:24:06 art Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.6 2001/12/08 18:55:58 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1463,7 +1463,7 @@ pmap_kenter_pa(va, pa, prot)
 		splx(s);
 	}
 
-	pa = m68k_trunc_page(pa);
+	pa = trunc_page(pa);
 	pte = pmap_pte(pmap, va);
 
 	PMAP_DPRINTF(PDB_ENTER, ("enter: pte %p, *pte %x\n", pte, *pte));
