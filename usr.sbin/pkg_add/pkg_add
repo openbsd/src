@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.150 2004/12/18 14:40:27 espie Exp $
+# $OpenBSD: pkg_add,v 1.151 2004/12/19 14:09:53 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -38,46 +38,14 @@ our %forced = ();
 package main;
 our $not;
 
-sub fill_conflict_lists
-{
-	my $state = shift;
-	# first, find all possible potential conflicts
-	for my $pkg (installed_packages()) {
-		my $plist = OpenBSD::PackingList->from_installation($pkg, 
-		    \&OpenBSD::PackingList::ConflictOnly);
-		next unless defined $plist;
-		$state->{conflict_list}->{$plist->pkgname()} = 
-		    OpenBSD::PkgCfl->make_conflict_list($plist);
-	}
-}
-
 my $errors = 0;
 
-sub find_conflicts($$)
-{
-	my ($pkgname, $state) = @_;
-	my @bad = ();
-	if (is_installed $pkgname) {
-		push(@bad, $pkgname);
-	}
-	while (my ($name, $l) = each %{$state->{conflict_list}}) {
-		next if $name eq $pkgname;
-		if ($l->conflicts_with($pkgname)) {
-			push(@bad, $name);
-		}
-	}
-	return @bad;
-}
 
 sub can_install($$$)
 {
 	my ($plist, $state, $handle) = @_;
 	my $pkgname = $plist->pkgname();
-	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
-	$handle->{conflicts} = $l;
-
-	my @conflicts = find_conflicts($pkgname, $state);
-	push(@conflicts, $l->conflicts_with(installed_packages()));
+	my @conflicts = OpenBSD::PkgCfl::find_all($plist, $state);
 	return 1 if @conflicts == 0;
 
 	my %conflicts = map {($_,1)} @conflicts;
@@ -637,7 +605,7 @@ sub install_package
 		}
 	}
 	really_add($handle, $state);
-	$state->{conflict_list}->{$plist->pkgname()} = $handle->{conflicts};
+	OpenBSD::PkgCfl::register($plist, $state);
 	return ();
 }
 
@@ -717,7 +685,6 @@ if (defined $state->{destdir}) {
 }
 
 
-$state->{conflict_list} = {};
 $state->{not} = $opt_n;
 $not = $opt_n;
 $state->{quick} = $opt_q;
@@ -739,7 +706,6 @@ if ($< && !$forced{nonroot}) {
 	}
 }
 
-fill_conflict_lists($state);
 my @todo = (@ARGV);
 if (defined $state->{forced}->{kitchensink}) {
 	reorder(\@todo);
