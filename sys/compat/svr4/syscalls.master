@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.12 1997/03/28 22:03:49 kstailey Exp $
+	$OpenBSD: syscalls.master,v 1.13 1997/08/29 18:45:52 kstailey Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -274,8 +274,10 @@
 170	UNIMPL		lwp_cond_wait
 171	UNIMPL		lwp_cond_signal
 172	UNIMPL		lwp_cond_broadcast
-173	UNIMPL		pread
-174	UNIMPL		pwrite
+173	STD		{ ssize_t svr4_sys_pread(int fd, void *buf, \
+			    size_t nbyte, svr4_off_t off); }
+174	STD		{ ssize_t svr4_sys_pwrite(int fd, const void *buf, \
+			    size_t nbyte, svr4_off_t off); }
 175	UNIMPL		llseek
 176	UNIMPL		inst_sync
 177	UNIMPL
