@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.12 2000/10/09 23:27:31 niklas Exp $
-.\" $EOM: isakmpd.policy.5,v 1.21 2000/10/09 22:08:29 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.13 2000/10/16 23:27:55 niklas Exp $
+.\" $EOM: isakmpd.policy.5,v 1.22 2000/10/13 17:56:52 angelos Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
 .\"
@@ -300,6 +300,7 @@ otherwise.
 One of
 .Va md5 ,
 .Va sha ,
+.Va ripemd ,
 or
 .Va des ,
 based on the hash algorithm specified in the AH proposal.
@@ -335,16 +336,18 @@ One of
 .Va hmac-md5 ,
 .Va hmac-sha ,
 .Va des-mac ,
-or
 .Va kpdk ,
+or
+.Va hmac-ripemd .
 based on the authentication method specified in the AH proposal.
 .It esp_auth_alg
 One of
 .Va hmac-md5 ,
 .Va hmac-sha ,
 .Va des-mac ,
-or
 .Va kpdk ,
+or
+.Va hmac-ripemd
 based on the authentication method specified in the ESP proposal.
 .It ah_life_seconds, esp_life_seconds, comp_life_seconds
 Set to the lifetime of the AH, ESP, and compression proposal, in
