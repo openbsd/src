@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.170 2002/10/17 10:48:57 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.171 2002/10/17 11:22:42 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2209,11 +2209,6 @@ expand_nat(struct pf_nat *n,
 		else
 			memcpy(n->ifname, interface->ifname, sizeof(n->ifname));
 
-		if (!n->af && n->raddr.addr_dyn != NULL) {
-			yyerror("address family (inet/inet6) undefined");
-			continue;
-		}
-
 		n->ifnot = interface->not;
 		n->proto = proto->proto;
 		n->src.addr = src_host->addr;
@@ -2281,11 +2276,6 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 			r->af = src_host->af;
 		else if (!r->af && dst_host->af)
 			r->af = dst_host->af;
-		if (!r->af && (r->saddr.addr_dyn != NULL ||
-		    r->daddr.addr_dyn != NULL || r->raddr.addr_dyn)) {
-			yyerror("address family (inet/inet6) undefined");
-			continue;
-		}
 
 		if (if_indextoname(src_host->ifindex, ifname))
 			memcpy(r->ifname, ifname, sizeof(r->ifname));
