@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.87 1998/09/26 22:35:26 deraadt Exp $
+$OpenBSD: pcidevs,v 1.88 1998/09/27 20:34:23 marc Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -902,7 +902,7 @@ product	NEC XXX			0x0035	XXX USB
 product	NEC POWERVR2		0x0046	PowerVR PCX2
 
 /* NeoMagic */
-product NEOMAGIC NM3160		0x0004	NM3160
+product NEOMAGIC NM2160		0x0004	NM2160
 
 /* NetVin */
 product NETVIN NV5000		0x5000	NetVin 5000
@@ -1057,6 +1057,9 @@ product TI	PCI2030		0xac20	PCI2030
 /* Toshiba products */
 product TOSHIBA	R4X00		0x102f	R4x00 Host-PCI Bridge
 product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
+/* product TOSHIBA2 ??		0x0601	Host-PCI Bridge */
+/* product TOSHIBA2 ??		0x060f	PCI-CardBus Bridge */
+/* product TOSHIBA2 ??		0x0701	?? misc communications */
 
 /* Trident products */
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
