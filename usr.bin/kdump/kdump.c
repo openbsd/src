@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.24 2004/03/04 20:39:27 miod Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.25 2004/07/09 21:52:21 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.24 2004/03/04 20:39:27 miod Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.25 2004/07/09 21:52:21 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,16 +73,16 @@ pid_t pid = -1;
 
 #include <sys/syscall.h>
 
-#include "../../sys/compat/bsdos/bsdos_syscall.h"
-#include "../../sys/compat/freebsd/freebsd_syscall.h"
-#include "../../sys/compat/netbsd/netbsd_syscall.h"
-#include "../../sys/compat/hpux/hpux_syscall.h"
-#include "../../sys/compat/ibcs2/ibcs2_syscall.h"
-#include "../../sys/compat/linux/linux_syscall.h"
-#include "../../sys/compat/osf1/osf1_syscall.h"
-#include "../../sys/compat/sunos/sunos_syscall.h"
-#include "../../sys/compat/svr4/svr4_syscall.h"
-#include "../../sys/compat/ultrix/ultrix_syscall.h"
+#include <compat/bsdos/bsdos_syscall.h>
+#include <compat/freebsd/freebsd_syscall.h>
+#include <compat/netbsd/netbsd_syscall.h>
+#include <compat/hpux/hpux_syscall.h>
+#include <compat/ibcs2/ibcs2_syscall.h>
+#include <compat/linux/linux_syscall.h>
+#include <compat/osf1/osf1_syscall.h>
+#include <compat/sunos/sunos_syscall.h>
+#include <compat/svr4/svr4_syscall.h>
+#include <compat/ultrix/ultrix_syscall.h>
 
 #define KTRACE
 #define PTRACE
@@ -93,18 +93,18 @@ pid_t pid = -1;
 #define SYSVSHM
 #define LFS
 #define UFS_EXTATTR
-#include "../../sys/kern/syscalls.c"
+#include <kern/syscalls.c>
 
-#include "../../sys/compat/bsdos/bsdos_syscalls.c"
-#include "../../sys/compat/freebsd/freebsd_syscalls.c"
-#include "../../sys/compat/netbsd/netbsd_syscalls.c"
-#include "../../sys/compat/hpux/hpux_syscalls.c"
-#include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
-#include "../../sys/compat/linux/linux_syscalls.c"
-#include "../../sys/compat/osf1/osf1_syscalls.c"
-#include "../../sys/compat/sunos/sunos_syscalls.c"
-#include "../../sys/compat/svr4/svr4_syscalls.c"
-#include "../../sys/compat/ultrix/ultrix_syscalls.c"
+#include <compat/bsdos/bsdos_syscalls.c>
+#include <compat/freebsd/freebsd_syscalls.c>
+#include <compat/netbsd/netbsd_syscalls.c>
+#include <compat/hpux/hpux_syscalls.c>
+#include <compat/ibcs2/ibcs2_syscalls.c>
+#include <compat/linux/linux_syscalls.c>
+#include <compat/osf1/osf1_syscalls.c>
+#include <compat/sunos/sunos_syscalls.c>
+#include <compat/svr4/svr4_syscalls.c>
+#include <compat/ultrix/ultrix_syscalls.c>
 #undef KTRACE
 #undef PTRACE
 #undef NFSCLIENT
