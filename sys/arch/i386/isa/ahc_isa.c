@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.10 2002/06/28 00:34:54 smurph Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.11 2003/08/15 23:01:00 fgsch Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -516,6 +516,9 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 	u_int8_t  scsi_conf;
 	int	  have_seeprom;
 
+	sd.sd_tag = ahc->tag;
+	sd.sd_bsh = ahc->bsh;
+	sd.sd_regsize = 1;
 	sd.sd_control_offset = SEECTL_2840;
 	sd.sd_status_offset = STATUS_2840;
 	sd.sd_dataout_offset = STATUS_2840;		

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.276 2003/08/12 11:05:47 hin Exp $
+#	$OpenBSD: files,v 1.277 2003/08/15 23:01:01 fgsch Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -73,6 +73,10 @@ define	wskbddev {[console = -1], [mux = -1]}
 define	wsmousedev {[mux = -1]}
 define	wsrasteremulops
 
+# SMC 93Cx6 Serial EEPROM devices
+define	smc93cx6
+file	dev/ic/smc93cx6.c		smc93cx6
+
 # common PC display functions
 define	pcdisplayops
 file	dev/ic/pcdisplay_subr.c		pcdisplayops
@@ -103,10 +107,9 @@ file	dev/ic/wdc.c wdc_base
 # contain the cfdrivers.  Attachments are provided by files.<bus>
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
-device	ahc: scsi
+device	ahc: scsi, smc93cx6
 file	dev/ic/aic7xxx.c		ahc
 file	dev/ic/aic7xxx_openbsd.c	ahc
-file	dev/ic/smc93cx6.c		ahc
 
 # Adaptec AIC-6[23]60 SCSI controllers
 device	aic: scsi

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.39 2003/08/12 10:27:10 fgsch Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.40 2003/08/15 23:01:01 fgsch Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -948,7 +948,9 @@ check_extport(ahc, sxfrctl1)
 	int	have_seeprom;
 	int	have_autoterm;
 	
-	sd.sd_ahc = ahc;
+	sd.sd_tag = ahc->tag;
+	sd.sd_bsh = ahc->bsh;
+	sd.sd_regsize = 1;
 	sd.sd_control_offset = SEECTL;		
 	sd.sd_status_offset = SEECTL;		
 	sd.sd_dataout_offset = SEECTL;		
