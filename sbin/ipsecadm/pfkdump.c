@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.2 2003/02/26 09:41:43 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.3 2003/03/14 04:58:11 margarida Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -224,7 +224,7 @@ lookup_name(struct idname tab[], u_int8_t id)
 	struct idname *entry;
 
 	entry = lookup(tab, id);
-	return (entry ? entry->name : "unkown");
+	return (entry ? entry->name : "unknown");
 }
 
 void

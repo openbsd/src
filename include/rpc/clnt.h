@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.7 2002/02/17 19:42:21 millert Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.8 2003/03/14 04:58:10 margarida Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ enum clnt_stat {
 	 * callrpc & clnt_create errors
 	 */
 	RPC_UNKNOWNHOST=13,		/* unknown host name */
-	RPC_UNKNOWNPROTO=17,		/* unkown protocol */
+	RPC_UNKNOWNPROTO=17,		/* unknown protocol */
 
 	/*
 	 * _ create errors
