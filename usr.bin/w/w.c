@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.18 1997/05/30 18:40:46 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.19 1997/07/25 05:04:07 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -132,13 +132,14 @@ main(argc, argv)
 	p = __progname;
 	if (*p == '-')
 		p++;
-	if (*p == 'u') {
-		wcmd = 0;
-		p = "";
-	} else {
+	if (p[0] == 'w' && p[1] == '\0') {
 		wcmd = 1;
 		p = "hiflM:N:asuw";
-	}
+	} else if (!strcmp(p, "uptime")) {
+		wcmd = 0;
+		p = "";
+	} else
+		errx(1, "bad program name");
 
 	memf = nlistf = NULL;
 	while ((ch = getopt(argc, argv, p)) != -1)
@@ -402,7 +403,7 @@ pr_header(nowp, nusers)
 	size = sizeof(boottime);
 	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1) {
 		uptime = now - boottime.tv_sec;
-		if (boottime.tv_sec > 59) {
+		if (uptime > 59) {
 			uptime += 30;
 			days = uptime / SECSPERDAY;
 			uptime %= SECSPERDAY;
