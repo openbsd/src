@@ -34,7 +34,7 @@ mandir = @mandir@
 includedir = @includedir@
 oldincludedir = /usr/include
 
-DESTDIR =
+DESTDIR?=
 
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
@@ -100,34 +100,6 @@ TEXINFO_TEX = doc/texinfo.tex
 # Do doc/ last so makeinfo will be built when we get there.
 # Others are alphabetical.
 SUBDIRS = intl lib info makeinfo po util doc
-
-# XXX OpenBSD customizations
-# We need this as we have different installpaths depending on the
-# DESTDIR environment variable.  That means that the configure flags
-# like --infodir cannot be used.
-
-# Setup environment for subdir make invocations, right now only used
-# Flags to pass to recursive makes.
-# CC is set by configure.
-# ??? The choices here will need some experimenting with.
-FLAGS_TO_PASS = \
-	"exec_prefix=$(exec_prefix)" \
-	"prefix=$(prefix)" \
-	"bindir=$(bindir)" \
-	"sbindir=$(sbindir)" \
-	"libexecdir=$(libexecdir)" \
-	"datadir=$(datadir)" \
-	"sysconfdir=$(sysconfdir)" \
-	"sharedstatedir=$(sharedstatedir)" \
-	"localstatedir=$(localstatedir)" \
-	"libdir=$(libdir)" \
-	"infodir=$(infodir)" \
-	"mandir=$(mandir)" \
-	"includedir=$(includedir)" \
-	"oldincludedir=$(oldincludedir)"
-
-SUBDIRMAKE = $(MAKE) $(FLAGS_TO_PASS)
-# XXX end of OpenBSD customization
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
@@ -210,7 +182,7 @@ check-recursive installcheck-recursive info-recursive dvi-recursive:
 	  else \
 	    local_target="$$target"; \
 	  fi; \
-	  (cd $$subdir && $(SUBDIRMAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
 	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
 	done; \
 	if test "$$dot_seen" = "no"; then \
@@ -234,7 +206,7 @@ maintainer-clean-recursive:
 	  else \
 	    local_target="$$target"; \
 	  fi; \
-	  (cd $$subdir && $(SUBDIRMAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
 	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
 	done && test -z "$$fail"
 tags-recursive:

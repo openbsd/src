@@ -35,7 +35,7 @@ mandir = @mandir@
 includedir = @includedir@
 oldincludedir = /usr/include
 
-DESTDIR =
+DESTDIR?=
 
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
@@ -463,21 +463,21 @@ texinfo: $(srcdir)/texinfo.txi
 # Similarly, Do not try to install the info files from $(srcdir).
 install-info-am: $(INFO_DEPS)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(infodir)
+	$(mkinstalldirs) $(DESTDIR)$(infodir)
 	@for file in $(INFO_DEPS); do \
 	  d=.; \
 	  for ifile in `cd $$d && echo $$file $$file-[0-9] $$file-[0-9][0-9]`; do \
 	    if test -f $$d/$$ifile; then \
-	      echo " $(INSTALL_DATA) $$d/$$ifile $(infodir)/$$ifile"; \
-	      $(INSTALL_DATA) $$d/$$ifile $(infodir)/$$ifile; \
+	      echo " $(INSTALL_DATA) $$d/$$ifile $(DESTDIR)$(infodir)/$$ifile"; \
+	      $(INSTALL_DATA) $$d/$$ifile $(DESTDIR)$(infodir)/$$ifile; \
 	    else : ; fi; \
 	  done; \
 	done
 	@$(POST_INSTALL)
 	@if $(SHELL) -c '$(INSTALL_INFO) --version | sed 1q | fgrep -s -v -i debian' >/dev/null 2>&1; then \
 	  for file in $(INFO_DEPS); do \
-	    echo " $(INSTALL_INFO) --info-dir=$(infodir) $(infodir)/$$file";\
-	    $(INSTALL_INFO) --info-dir=$(infodir) $(infodir)/$$file || :;\
+	    echo " $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) $(DESTDIR)$(infodir)/$$file";\
+	    $(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) $(DESTDIR)$(infodir)/$$file || :;\
 	  done; \
 	else : ; fi
 
