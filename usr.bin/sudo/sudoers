@@ -1,3 +1,5 @@
+#	$OpenBSD: sudoers,v 1.4 2002/07/16 18:19:18 naddy Exp $
+# 
 # sudoers file.
 #
 # This file MUST be edited with the 'visudo' command as root.
