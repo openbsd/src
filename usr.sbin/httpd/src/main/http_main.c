@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.36 2004/12/02 19:42:47 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.37 2004/12/04 12:43:35 jmc Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1192,32 +1192,32 @@ static void usage(char *bin)
     for (i = 0; i < strlen(bin); i++)
 	pad[i] = ' ';
     pad[i] = '\0';
+    fprintf(stderr, "Usage: %s [-FhLlSTtuVvX] [-C directive] [-c directive] [-D parameter]\n", bin);
 #ifdef SHARED_CORE
-    fprintf(stderr, "Usage: %s [-R directory] [-D name] [-d directory] [-f file]\n", bin);
+    fprintf(stderr, "       %s [-d serverroot] [-f config] [-R libexecdir]\n", pad);
 #else
-    fprintf(stderr, "Usage: %s [-D name] [-d directory] [-f file]\n", bin);
+    fprintf(stderr, "       %s [-d serverroot] [-f config]\n", pad);
 #endif
-    fprintf(stderr, "       %s [-C \"directive\"] [-c \"directive\"]\n", pad);
-    fprintf(stderr, "       %s [-v] [-V] [-h] [-l] [-L] [-S] [-t] [-T] [-F] [-u]\n", pad);
     fprintf(stderr, "Options:\n");
-#ifdef SHARED_CORE
-    fprintf(stderr, "  -R directory     : specify an alternate location for shared object files\n");
-#endif
-    fprintf(stderr, "  -D name          : define a name for use in <IfDefine name> directives\n");
-    fprintf(stderr, "  -d directory     : specify an alternate initial ServerRoot\n");
-    fprintf(stderr, "  -f file          : specify an alternate ServerConfigFile\n");
-    fprintf(stderr, "  -C \"directive\"   : process directive before reading config files\n");
-    fprintf(stderr, "  -c \"directive\"   : process directive after  reading config files\n");
-    fprintf(stderr, "  -v               : show version number\n");
-    fprintf(stderr, "  -V               : show compile settings\n");
-    fprintf(stderr, "  -h               : list available command line options (this page)\n");
-    fprintf(stderr, "  -l               : list compiled-in modules\n");
-    fprintf(stderr, "  -L               : list available configuration directives\n");
-    fprintf(stderr, "  -S               : show parsed settings (currently only vhost settings)\n");
-    fprintf(stderr, "  -t               : run syntax check for config files (with docroot check)\n");
-    fprintf(stderr, "  -T               : run syntax check for config files (without docroot check)\n");
+    fprintf(stderr, "  -C directive     : process directive before reading config files\n");
+    fprintf(stderr, "  -c directive     : process directive after  reading config files\n");
+    fprintf(stderr, "  -D parameter     : define a parameter for use in <IfDefine name> directives\n");
+    fprintf(stderr, "  -d serverroot    : specify an alternate initial ServerRoot\n");
     fprintf(stderr, "  -F               : run main process in foreground, for process supervisors\n");
-    fprintf(stderr, "  -u               : Unsecure mode. Do not chroot into ServerRoot.\n");
+    fprintf(stderr, "  -f config        : specify an alternate ServerConfigFile\n");
+    fprintf(stderr, "  -h               : list available command line options (this page)\n");
+    fprintf(stderr, "  -L               : list available configuration directives\n");
+    fprintf(stderr, "  -l               : list compiled-in modules\n");
+#ifdef SHARED_CORE
+    fprintf(stderr, "  -R libexecdir    : specify an alternate location for shared object files\n");
+#endif
+    fprintf(stderr, "  -S               : show parsed settings (currently only vhost settings)\n");
+    fprintf(stderr, "  -T               : run syntax check for config files (without docroot check)\n");
+    fprintf(stderr, "  -t               : run syntax check for config files (with docroot check)\n");
+    fprintf(stderr, "  -u               : unsecure mode: do not chroot into ServerRoot\n");
+    fprintf(stderr, "  -V               : show compile settings\n");
+    fprintf(stderr, "  -v               : show version number\n");
+    fprintf(stderr, "  -X               : run in single-process mode\n");
 
     exit(1);
 }
