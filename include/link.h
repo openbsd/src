@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.5 1999/12/09 18:10:23 espie Exp $	*/
+/*	$OpenBSD: link.h,v 1.6 2001/05/31 14:04:52 art Exp $	*/
 /*	$NetBSD: link.h,v 1.10 1996/01/09 00:00:11 pk Exp $	*/
 
 /*
@@ -41,6 +41,11 @@
 
 #ifndef _LINK_H_
 #define _LINK_H_
+
+/* XXXART - ? */
+#ifndef DT_PROCNUM
+#define DT_PROCNUM 0
+#endif
 
 /*
  * A `Shared Object Descriptor' describes a shared object that is needed
