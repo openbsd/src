@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.37 1999/02/23 20:04:37 kjell Exp $	*/
+/*	$OpenBSD: ping.c,v 1.38 1999/02/24 21:02:41 kjell Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.37 1999/02/23 20:04:37 kjell Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.38 1999/02/24 21:02:41 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -343,7 +343,7 @@ main(argc, argv)
 	if (!(packet = (u_char *)malloc((u_int)packlen)))
 		err(1, "malloc");
 	if (!(options & F_PINGFILLED))
-		for (i = 8 + sizeof(struct tvi); i < datalen; ++i)
+		for (i = sizeof(struct tvi); i < datalen; ++i)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
