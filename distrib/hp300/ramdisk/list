@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.34 2002/05/27 02:58:40 deraadt Exp $
+#	$OpenBSD: list,v 1.35 2003/02/21 16:15:54 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -66,13 +66,16 @@ COPY	${CURDIR}/../../miniroot/services	etc/services
 SCRIPT	${DESTDIR}/etc/disktab			etc/disktab
 TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp300h,hp700-wy,hp70092	usr/share/misc/termcap
 
+# dhcp things
+SCRIPT    ${DESTDIR}/sbin/dhclient-script	sbin/dhclient-script
+
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
 SCRIPT	${CURDIR}/install.md			install.md
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade
+SPECIAL	chmod 755 install upgrade sbin/dhclient-script
 
 # so DNS can work
 SYMLINK /tmp/resolv.conf.shadow			etc/resolv.conf
