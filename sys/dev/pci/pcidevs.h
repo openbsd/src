@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.534 2002/07/29 19:09:54 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.535 2002/07/29 19:23:54 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2235,7 +2235,7 @@
 
 /* US Rebotics */
 #define	PCI_PRODUCT_USR_3CP5610	0x1008		/* 3CP5610 */
-#define	PCI_PRODUCT_USR2_USR11000P	0x3685		/* USR11000P */
+#define	PCI_PRODUCT_USR2_WL11000P	0x3685		/* WL11000P */
 
 /* V3 Semiconductor products */
 #define	PCI_PRODUCT_V3_V292PBC	0x0292		/* V292PBC AMD290x0 Host-PCI */
