@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.10 1997/08/16 16:31:18 mickey Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.11 1998/05/25 08:01:42 downsj Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -20,12 +20,23 @@
 #include <machine/psl.h>
 #include <machine/pctr.h>
 #include <machine/cpu.h>
+#include <machine/specialreg.h>
 
 pctrval pctr_idlcnt;  /* Gets incremented in locore.s */
 
-static int usetsc;
-static int usep5ctr;
-static int usep6ctr;
+/* Pull in the cpuid values from locore.s */
+extern int cpu_id;
+extern int cpu_feature;
+extern char cpu_vendor[];
+
+static int isintel;
+static int iscyrix;
+
+#define usetsc		(cpu_feature & CPUID_TSC)
+#define usep5ctr	(isintel && (((cpu_id >> 8) & 15) == 5) && \
+				(((cpu_id >> 4) & 15) > 0))
+/* I believe Cyrix supports RDPMC. */
+#define usep6ctr	((isintel || iscyrix) && ((cpu_id >> 8) & 15) == 6)
 
 void pctrattach __P((int));
 int pctropen __P((dev_t, int, int, struct proc *));
@@ -35,19 +46,12 @@ int pctrioctl __P((dev_t, int, caddr_t, int, struct proc *));
 void
 pctrattach (int num)
 {
-	pctrval id;
-
-	if (num > 1) {
-		printf ("Ignoring pctr device #%d\n", num);
-		printf ("(config file should read `pseudo-device pctr 1')\n");
+	if (num > 1)
 		return;
-	}
 
-	id = __cpuid ();
-	usetsc = __hastsc (id);
-	usep5ctr = __hasp5ctr (id);
-	usep6ctr = __hasp6ctr (id);
-	
+	isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
+	iscyrix = (strcmp(cpu_vendor, "CyrixInstead") == 0);
+
 	if (usep6ctr)
 		/* Enable RDTSC and RDPMC instructions from user-level. */
 		__asm __volatile (".byte 0xf,0x20,0xe0   # movl %%cr4,%%eax\n"
@@ -63,11 +67,9 @@ pctrattach (int num)
 				  :: "i" (~CR4_TSD) : "eax");
 
 	if (usep6ctr)
-		printf ("pctr: Pentium Pro user-level "
-			"performance counters enabled\n");
+		printf ("pctr: 686-class user-level performance counters enabled\n");
 	else if (usep5ctr)
-		printf ("pctr: Pentium performance counters and user-level "
-			"cycle counter enabled\n");
+		printf ("pctr: 586-class performance counters and user-level cycle counter enabled\n");
 	else if (usetsc)
 		printf ("pctr: user-level cycle counter enabled\n");
 	else
@@ -150,7 +152,7 @@ p6ctrsel (int fflag, u_int cmd, u_int fn)
 	wrmsr (msrsel, fn);
 	wrmsr (msrval, 0);
 
-  return 0;
+	return 0;
 }
 
 static __inline void
