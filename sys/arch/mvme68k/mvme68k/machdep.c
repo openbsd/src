@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 2001/09/19 20:50:56 mickey Exp $ */
+/*	$OpenBSD: machdep.c,v 1.54 2001/09/29 21:28:02 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -151,7 +151,6 @@ int   physmem = MAXMEM;	/* max supported memory, changes to actual */
  */
 int   safepri = PSL_LOWIPL;
 
-extern   u_int lowram;
 extern   short exframesize[];
 
 #ifdef COMPAT_HPUX
@@ -258,9 +257,8 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
-		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa((vm_offset_t)msgbufp,
+		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
@@ -342,7 +340,6 @@ again:
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, m68k_round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
@@ -356,6 +353,7 @@ again:
 	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+
 	for (i = 0; i < nbuf; i++) {
 		vsize_t curbufsize;
 		vaddr_t curbuf;
@@ -380,14 +378,16 @@ again:
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+
 	/*
-	 * Allocate a submap for physio
+	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
@@ -400,25 +400,6 @@ again:
 	printf("avail mem = %ld (%ld pages)\n", ptoa(uvmexp.free), uvmexp.free);
 	printf("using %d buffers containing %d bytes of memory\n",
 			 nbuf, bufpages * PAGE_SIZE);
-#ifdef MFS
-	/*
-	 * Check to see if a mini-root was loaded into memory. It resides
-	 * at the start of the next page just after the end of BSS.
-	 */
-	{
-		extern void *smini;
-
-		if (smini && (boothowto & RB_MINIROOT)) {
-			boothowto |= RB_DFLTROOT;
-			mfs_initminiroot(smini);
-		}
-	}
-#endif
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -442,10 +423,10 @@ again:
  */
 void
 setregs(p, pack, stack, retval)
-register struct proc *p;
-struct exec_package *pack;
-u_long stack;
-register_t *retval;
+	register struct proc *p;
+	struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
@@ -911,10 +892,6 @@ abort:
 int m68060_pcr_init = 0x21;	/* make this patchable */
 #endif
 
-initcpu()
-{
-}
-
 void
 initvectors()
 {
@@ -1102,7 +1079,7 @@ u_char   myea[6] = { 0x08, 0x00, 0x3e, 0xff, 0xff, 0xff};
 
 void
 myetheraddr(ether)
-u_char *ether;
+	u_char *ether;
 {
 	bcopy(myea, ether, sizeof myea);
 }
@@ -1213,8 +1190,6 @@ memsize1x7()
 }
 #endif
 
-int foodebug = 0;
-
 int
 memsize(void)
 {
@@ -1237,8 +1212,6 @@ memsize(void)
 		 look = (int*)((unsigned)look + STRIDE)) {
 		unsigned save;
 
-		/* if can't access, we've reached the end */
-		if (foodebug) printf("%x\n", look);
 		if (badvaddr((caddr_t)look, 2)) {
 #if defined(DEBUG)
 			printf("%x\n", look);
@@ -1270,33 +1243,31 @@ memsize(void)
 
 void
 bootcnprobe(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	cp->cn_dev = makedev(14, 0);
 	cp->cn_pri = CN_NORMAL;
-	return;
 }
 
 void
 bootcninit(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	/* Nothing to do */
 }
 
 int
 bootcngetc(dev)
-dev_t dev;
+	dev_t dev;
 {
 	return (bug_inchr());
 }
 
 void
 bootcnputc(dev, c)
-dev_t dev;
-int c;
+	dev_t dev;
+	int c;
 {
-	int s;
 	char cc = (char)c;
 	if (cc == '\n')
 		bug_outchr('\r');
