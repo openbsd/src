@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 2000/03/01 22:48:14 niklas Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 2001/01/26 23:05:29 mickey Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -54,8 +54,8 @@
  * the first level table (segment table?) is called a "page directory"
  * and it contains 1024 page directory entries (PDEs).   each PDE is
  * 4 bytes (an int), so a PD fits in a single 4K page.   this page is
- * the page directory page (PDP).  each PDE in a PDP maps 4MB of space 
- * (1024 * 4MB = 4GB).   a PDE contains the physical address of the 
+ * the page directory page (PDP).  each PDE in a PDP maps 4MB of space
+ * (1024 * 4MB = 4GB).   a PDE contains the physical address of the
  * second level table: the page table.   or, if 4MB pages are being used,
  * then the PDE contains the PA of the 4MB page being mapped.
  *
@@ -65,7 +65,7 @@
  * each PTE in a PTP maps one 4K page (1024 * 4K = 4MB).   a PTE contains
  * the physical address of the page it maps and some flag bits (described
  * below).
- * 
+ *
  * the processor has a special register, "cr3", which points to the
  * the PDP which is currently controlling the mappings of the virtual
  * address space.
@@ -92,7 +92,7 @@
  *                                                p h y s i c a l  a d d r
  *
  * the i386 caches PTEs in a TLB.   it is important to flush out old
- * TLB mappings when making a change to a mappings.   writing to the 
+ * TLB mappings when making a change to a mappings.   writing to the
  * %cr3 will flush the entire TLB.    newer processors also have an
  * instruction that will invalidate the mapping of a single page (which
  * is useful if you are changing a single mappings because it preserves
@@ -105,7 +105,7 @@
  *   10		n/a	available for OS use, hardware ignores it
  *   9		n/a	available for OS use, hardware ignores it
  *   8		G	global bit (see discussion below)
- *   7		PS	page size [for PDEs] (0=4k, 1=4M <if supported>) 
+ *   7		PS	page size [for PDEs] (0=4k, 1=4M <if supported>)
  *   6		D	dirty (modified) page
  *   5		A	accessed (referenced) page
  *   4		PCD	cache disable
@@ -114,16 +114,16 @@
  *   1		R/W	read/write bit (0=read only, 1=read-write)
  *   0		P	present (valid)
  *
- * notes: 
+ * notes:
  *  - on the i386 the R/W bit is ignored if processor is in supervisor
  *    state (bug!)
  *  - PS is only supported on newer processors
- *  - PTEs with the G bit are global in the sense that they are not 
- *    flushed from the TLB when %cr3 is written (to flush, use the 
+ *  - PTEs with the G bit are global in the sense that they are not
+ *    flushed from the TLB when %cr3 is written (to flush, use the
  *    "flush single page" instruction).   this is only supported on
  *    newer processors.    this bit can be used to keep the kernel's
  *    TLB entries around while context switching.   since the kernel
- *    is mapped into all processes at the same place it does not make 
+ *    is mapped into all processes at the same place it does not make
  *    sense to flush these entries when switching from one process'
  *    pmap to another.
  */
@@ -176,7 +176,8 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #endif
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
-#define	PG_FRAME	0xfffff000	/* page frame mask */
+#define PG_FRAME	0xfffff000	/* page frame mask */
+#define PG_LGFRAME	0xffc00000	/* large (4M) page frame mask */
 
 /*
  * various short-hand protection codes
