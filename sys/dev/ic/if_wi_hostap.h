@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.h,v 1.3 2002/03/30 22:40:26 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.h,v 1.4 2002/04/08 18:43:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -118,8 +118,7 @@ struct wihap_info {
 	int			inactivity_time;
 };
 
-#define WIHAP_INTERVAL			5
-#define WIHAP_DFLT_INACTIVITY_TIME	(120/WIHAP_INTERVAL) /* 2 minutes */
+#define WIHAP_DFLT_INACTIVITY_TIME	(120) /* 2 minutes */
 
 struct wi_softc;
 struct wi_frame;
