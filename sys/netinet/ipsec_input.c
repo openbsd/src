@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.65 2003/07/04 16:40:55 markus Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.66 2003/07/08 11:01:20 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -314,8 +314,15 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 		/* IP-in-IP encapsulation */
 		if (prot == IPPROTO_IPIP) {
+			if (m->m_pkthdr.len - skip < sizeof(struct ip)) {
+				m_freem(m);
+				IPSEC_ISTAT(espstat.esps_hdrops,
+				    ahstat.ahs_hdrops,
+				    ipcompstat.ipcomps_hdrops);
+				return EINVAL;
+			}
 			/* ipn will now contain the inner IPv4 header */
-			m_copydata(m, ip->ip_hl << 2, sizeof(struct ip),
+			m_copydata(m, skip, sizeof(struct ip),
 			    (caddr_t) &ipn);
 
 			/*
@@ -349,8 +356,15 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 #if INET6
 		/* IPv6-in-IP encapsulation. */
 		if (prot == IPPROTO_IPV6) {
+			if (m->m_pkthdr.len - skip < sizeof(struct ip6_hdr)) {
+				m_freem(m);
+				IPSEC_ISTAT(espstat.esps_hdrops,
+				    ahstat.ahs_hdrops,
+				    ipcompstat.ipcomps_hdrops);
+				return EINVAL;
+			}
 			/* ip6n will now contain the inner IPv6 header. */
-			m_copydata(m, ip->ip_hl << 2, sizeof(struct ip6_hdr),
+			m_copydata(m, skip, sizeof(struct ip6_hdr),
 			    (caddr_t) &ip6n);
 
 			/*
@@ -409,6 +423,13 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 #ifdef INET
 		/* IP-in-IP encapsulation */
 		if (prot == IPPROTO_IPIP) {
+			if (m->m_pkthdr.len - skip < sizeof(struct ip)) {
+				m_freem(m);
+				IPSEC_ISTAT(espstat.esps_hdrops,
+				    ahstat.ahs_hdrops,
+				    ipcompstat.ipcomps_hdrops);
+				return EINVAL;
+			}
 			/* ipn will now contain the inner IPv4 header */
 			m_copydata(m, skip, sizeof(struct ip), (caddr_t) &ipn);
 
@@ -443,6 +464,13 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 		/* IPv6-in-IP encapsulation */
 		if (prot == IPPROTO_IPV6) {
+			if (m->m_pkthdr.len - skip < sizeof(struct ip6_hdr)) {
+				m_freem(m);
+				IPSEC_ISTAT(espstat.esps_hdrops,
+				    ahstat.ahs_hdrops,
+				    ipcompstat.ipcomps_hdrops);
+				return EINVAL;
+			}
 			/* ip6n will now contain the inner IPv6 header. */
 			m_copydata(m, skip, sizeof(struct ip6_hdr),
 			    (caddr_t) &ip6n);
