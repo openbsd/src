@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.6 2002/10/21 23:10:30 marc Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.7 2002/12/11 23:21:19 marc Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -286,7 +286,7 @@ _thread_dump_entry(pthread, fd, verbose)
 		}
 		break;
 	default:
-		/* Nothing to do here. */
+	/* Nothing to do here. */
 		break;
 	}
 }
@@ -400,6 +400,65 @@ _thread_dump_info(void)
 	/* Close the dump file: */
 	_thread_sys_close(fd);
 	return;
+}
+
+/*
+ * Generic "dump some data to /dev/tty in hex format" function
+ * output format is:
+ *      0                     22                        48
+ *	0x0123456789abcdef:   00 11 22 33 44 55 66 77   01234567
+ */
+#define DUMP_BUFLEN 84
+#define DUMP_HEX_OFF 22
+#define DUMP_ASCII_OFF 48
+
+void
+_thread_dump_data(const void *addr, int len)
+{
+	int fd = -1;
+	unsigned char data[ DUMP_BUFLEN ];
+
+	if (getenv("PTHREAD_DEBUG") != NULL)
+		fd = _thread_sys_open(_PATH_TTY, O_WRONLY | O_APPEND);
+	if (fd != -1) {
+		memset(data, ' ', DUMP_BUFLEN);
+		while (len) {
+			const unsigned char *d;
+			unsigned char *h;
+			unsigned char *a;
+			int count;
+
+			d = addr;
+			h = &data[DUMP_HEX_OFF];
+			a = &data[DUMP_ASCII_OFF];
+
+			if (len > 8) {
+				count = 8;
+				len -= 8;
+			} else {
+				count = len;
+				len = 0;
+				memset(data, ' ', DUMP_BUFLEN);
+			}
+			addr += 8;
+
+			sprintf( data, "%18p:   ", d );
+			while (count--) {
+				if (isprint(*d))
+					*a++ = *d;
+				else
+					*a++ = '.';
+				*h++ = "0123456789abcdef"[(*d >> 4) & 0xf];
+				*h++ = "0123456789abcdef"[*d++ & 0xf];
+				*h++ = ' ';
+			}
+			*a++ = '\n';
+			*a = 0;
+			_thread_sys_write(fd, data, a - data);
+		}
+		writestring(fd, "\n");
+		_thread_sys_close(fd);
+	}
 }
 
 /* Set the thread name for debug: */
