@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 1998/04/06 20:27:29 pefo Exp $
+#	$OpenBSD: install.md,v 1.4 1998/07/19 00:38:51 rahnds Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ md_machine_arch() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	cat /kern/msgbuf | egrep "^[sw]d[0-9] " | cut -d" " -f1 | sort -u
+	cat /kern/msgbuf | egrep "^[sw]d[0-9]|ofdisk[0-9] " | cut -d" " -f1 | sort -u
 }
 
 md_get_cddevs() {
@@ -72,7 +72,7 @@ md_get_cddevs() {
 
 md_get_ifdevs() {
 	# return available network devices
-	cat /kern/msgbuf | egrep "^?de[0-9] " | cut -d" " -f1 | sort -u
+	cat /kern/msgbuf | egrep "^?de[0-9]|ofnet[0-9] " | cut -d" " -f1 | sort -u
 }
 
 md_get_partition_range() {
