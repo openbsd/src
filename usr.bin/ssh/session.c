@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.17 2000/06/05 19:53:40 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.18 2000/06/17 22:52:33 jakob Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1221,9 +1221,21 @@ session_subsystem_req(Session *s)
 	unsigned int len;
 	int success = 0;
 	char *subsys = packet_get_string(&len);
+	int i;
 
 	packet_done();
 	log("subsystem request for %s", subsys);
+
+	for (i = 0; i < options.num_subsystems; i++) {
+		if(strcmp(subsys, options.subsystem_name[i]) == 0) {
+			debug("subsystem: exec() %s", options.subsystem_command[i]);
+			do_exec_no_pty(s, options.subsystem_command[i], s->pw);
+			success = 1;
+		}
+	}
+
+	if (!success)
+		log("subsystem request for %s failed, subsystem not found", subsys);
 
 	xfree(subsys);
 	return success;
