@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.173 2003/02/01 14:37:04 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.174 2003/02/02 22:47:18 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -617,12 +617,12 @@ below).
 .Ic queue std bandwidth 10% cbq(default)
 .Ic queue http bandwidth 60% priority 2 cbq(borrow red) \e
 .Ic \  \  { employees, developers }
-.Ic queue developers bandwidth 75% cbq(borrow)
-.Ic queue employees bandwidth 15%
+.Ic queue \ developers bandwidth 75% cbq(borrow)
+.Ic queue \ employees bandwidth 15%
 .Ic queue mail bandwidth 10% priority 0 cbq(borrow ecn)
 .Ic queue ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
-.Ic queue ssh_interactive priority 7
-.Ic queue ssh_bulk priority 0
+.Ic queue \ ssh_interactive priority 7
+.Ic queue \ ssh_bulk priority 0
 .Pp
 .Ic block return out on dc0 inet all queue std
 .Xo Ic pass out on dc0 inet proto tcp from\ 
