@@ -920,6 +920,7 @@
 ./usr/share/man/cat3p/attrs.0
 ./usr/share/man/cat3p/autouse.0
 ./usr/share/man/cat3p/base.0
+./usr/share/man/cat3p/basename.0
 ./usr/share/man/cat3p/bigint.0
 ./usr/share/man/cat3p/bignum.0
 ./usr/share/man/cat3p/bigrat.0
@@ -928,8 +929,10 @@
 ./usr/share/man/cat3p/charnames.0
 ./usr/share/man/cat3p/constant.0
 ./usr/share/man/cat3p/diagnostics.0
+./usr/share/man/cat3p/dirname.0
 ./usr/share/man/cat3p/encoding.0
 ./usr/share/man/cat3p/fields.0
+./usr/share/man/cat3p/fileparse.0
 ./usr/share/man/cat3p/filetest.0
 ./usr/share/man/cat3p/getopt.0
 ./usr/share/man/cat3p/getopts.0
