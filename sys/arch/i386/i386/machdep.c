@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.298 2004/06/15 21:12:31 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.299 2004/06/15 23:36:55 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -951,7 +951,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"C3 Samuel",
 				"C3 Samuel 2/Ezra",
 				"C3 Ezra-T",
-				"C3 Nehemiah", 0, 0, 0, 0, 0, 0,
+				"C3 Nehemiah", "C3 Esther", 0, 0, 0, 0, 0,
 				"C3"		/* Default */
 			},
 			cyrix3_cpu_setup
@@ -1143,6 +1143,9 @@ cyrix3_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
+#ifdef CRYPTO
+	u_int64_t msreg;
+#endif
 #if defined(I686_CPU)
 	unsigned int val;
 #if !defined(SMALL_KERNEL)
@@ -1151,7 +1154,6 @@ cyrix3_cpu_setup(cpu_device, model, step)
 
 	pagezero = i686_pagezero;
 #endif
-
 
 	switch (model) {
 	case 6: /* C3 Samuel 1 */
@@ -1169,9 +1171,12 @@ cyrix3_cpu_setup(cpu_device, model, step)
 	case 9:
 		if (step < 3)
 			break;
-
 		/* 
-		 * C3 Nehemiah:
+		 * C3 Nehemiah: fall through.
+		 */
+	case 10:
+		/* 
+		 * C3 Nehemiah/Esther:
 		 * First we check for extended feature flags, and then
 		 * (if present) retrieve the ones at 0xC0000001.  In this
 		 * bit 2 tells us if the RNG is present.  Bit 3 tells us
@@ -1186,12 +1191,11 @@ cyrix3_cpu_setup(cpu_device, model, step)
 		if (val >= 0xC0000001) {
 			__asm __volatile("cpuid"
 			    : "=d" (val) : "a" (0xC0000001) : "cc");
-		} else {
+		} else
 			val = 0;
-		}
 
 		/* Enable RNG if present and disabled */
-		if (val & 0x44)
+		if (val & 0x44/*???*/)
 			printf("%s:", cpu_device);
 		if (val & 0x4) {
 			extern int viac3_rnd_present;
@@ -1210,20 +1214,43 @@ cyrix3_cpu_setup(cpu_device, model, step)
 		/* Enable AES engine if present and disabled */
 		if (val & 0x40) {
 #ifdef CRYPTO
-			extern int viac3_crypto_present;
-
 			if (!(val & 0x80)) {
-				u_int64_t msreg;
-
 				msreg = rdmsr(0x1107);
 				msreg |= (0x01 << 28);
 				wrmsr(0x1107, msreg);
 			}
-			viac3_crypto_present = 1;
+			i386_has_xcrypt |= C3_HAS_AES;
 #endif /* CRYPTO */
 			printf(" AES");
 		}
-
+#if 0
+		/* Enable SHA engine if present and disabled */
+		if (val & 0x40/**/) {
+#ifdef CRYPTO
+			if (!(val & 0x80/**/)) {
+				msreg = rdmsr(0x1107);
+				msreg |= (0x01 << 28/**/);
+				wrmsr(0x1107, msreg);
+			}
+			i386_has_xcrypt |= C3_HAS_SHA;
+#endif /* CRYPTO */
+			printf(" SHA1 SHA256");
+		}
+#endif
+#if 0
+		/* Enable MM engine if present and disabled */
+		if (val & 0x40/*???*/) {
+#ifdef CRYPTO
+			if (!(val & 0x80/**/)) {
+				msreg = rdmsr(0x1107);
+				msreg |= (0x01 << 28/**/);
+				wrmsr(0x1107, msreg);
+			}
+			i386_has_xcrypt |= C3_HAS_MM;
+#endif /* CRYPTO */
+			printf(" RSA");
+		}
+#endif
 		printf("\n");
 		break;
 	}

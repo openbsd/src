@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.53 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.54 2004/06/15 23:36:55 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -89,8 +89,8 @@ extern int	viac3_rnd_present;
 void		viac3_rnd(void *);
 
 #ifdef CRYPTO
-extern int	viac3_crypto_present;
 void		viac3_crypto_setup(void);
+extern int	i386_has_xcrypt;
 #endif /* CRYPTO */
 #endif
 
@@ -148,7 +148,7 @@ cpu_configure()
 	/*
 	 * Also, if the chip has crypto available, enable it.
 	 */
-	if (viac3_crypto_present)
+	if (i386_has_xcrypt)
 		viac3_crypto_setup();
 #endif /* CRYPTO */
 #endif
