@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.225 2003/03/23 18:45:34 marc Exp $
+#	$OpenBSD: rc,v 1.226 2003/04/08 01:53:43 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -328,7 +328,7 @@ dev_mkdb
 echo "."
 
 chmod 666 /dev/tty[pqrstuvwxyzPQRST]*
-chown root.wheel /dev/tty[pqrstuvwxyzPQRST]*
+chown root:wheel /dev/tty[pqrstuvwxyzPQRST]*
 
 # check the password temp/lock file
 if [ -f /etc/ptmp ]; then
