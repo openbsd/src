@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.9 2000/01/06 03:21:43 smurph Exp $
+#	$OpenBSD: Makefile,v 1.10 2000/01/24 05:20:56 smurph Exp $
 
 RELOC=0x3F0000
 SIZE?=	size
 
 S=	${.CURDIR}/../../../..
-DEFS= -DSUN_BOOTPARAMS
+DEFS= -DSUN_BOOTPARAMS -DRELOC=${RELOC}
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${S} -I${S}/lib/libsa
 CFLAGS=	-O2 ${DEFS} ${INCPATH} ${COPTS} -m68060

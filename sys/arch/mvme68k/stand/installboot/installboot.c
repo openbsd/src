@@ -422,7 +422,7 @@ char *bootproto;
 
 
 	pcpul->version = 1;
-	strcpy(pcpul->vid_id, "M88K");
+	strncpy(pcpul->vid_id, "M68K", 4);
 
 	fstat(exe_file, &stat);
 

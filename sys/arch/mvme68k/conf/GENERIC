@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.11 2000/01/09 22:00:21 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.12 2000/01/24 05:20:53 smurph Exp $
 
 machine		mvme68k m68k
 
@@ -33,7 +33,7 @@ clock0	at pcc0 ipl 5
 nvram0	at pcc0 offset 0x0000
 zs0	at pcc0 offset 0x3000 ipl 4
 zs1	at pcc0 offset 0x3800 ipl 4
-le0	at pcc0 offset 0x1800 ipl 1
+le*	at pcc0 offset 0x1800 ipl 1
 wdsc0	at pcc0 offset 0x4000 ipl 2
 lp0	at pcc0 ipl 1
 vme0	at pcc0 offset 0x2000
@@ -71,6 +71,11 @@ sram0	at mainbus0 addr 0xffe00000
 bugtty0 at mainbus0
 
 vmes0	at vme0
+le*	at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100
+le*	at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100
+le*	at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100
+le*	at vmes0 addr 0xffffd200 ipl 1 vec 0x76 len 0x100
+
 vmel0	at vme0
 
 scsibus* at wdsc?

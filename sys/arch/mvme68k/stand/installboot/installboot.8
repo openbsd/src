@@ -1,22 +1,22 @@
-.\"	$Id: installboot.8,v 1.6 2000/01/03 20:04:29 pjanzen Exp $
+.\"	$Id: installboot.8,v 1.7 2000/01/24 05:20:55 smurph Exp $
 .\"
 .Dd 31 May 1995
 .Dt INSTALLBOOT 8 mvme68k
 .Os
 .Sh NAME
 .Nm installboot
-.Nd install a bootstrap on a UFS disk
+.Nd install a bootstrap on a FFS disk
 .Sh SYNOPSIS
 .Nm installboot
 .Op Fl n
 .Op Fl v
-.Ar ufsboot
+.Ar bootsd
 .Ar bootxx
 .Ar rawdev
 .Sh DESCRIPTION
 .Nm installboot
 is used to install a "first-stage" boot program into the boot area
-of a UFS disk partition, and initialize the table of block numbers the
+of a FFS disk partition, and initialize the table of block numbers the
 .Ar bootxx
 program uses to load the second-stage boot program.
 .Pp
@@ -28,12 +28,12 @@ Do not actually write anything on the disk.
 Be verbose, printing out the block numbers that
 .Ar bootxx
 will use to load
-.Ar ufsboot .
+.Ar bootsd .
 .El
 .Pp
 The arguments are:
-.Bl -tag -width ufsboot
-.It Ar ufsboot
+.Bl -tag -width bootsd
+.It Ar bootsd
 the name of the second-stage boot program in the file system
 where the first-stage boot program is to be installed.
 .It Ar bootxx
@@ -42,9 +42,13 @@ the name of the prototype file for the first stage boot program.
 the name of the raw device in which the first-stage boot program
 is to be installed.  This should correspond to the block device
 on which the file system containing
-.Ar ufsboot
+.Ar bootsd
 is mounted.
 .El
+.Sh EXAMPLE
+.Bd -literal
+cp /usr/mdec/bootsd /
+/usr/mdec/installboot /bootsd /usr/mdec/bootxx /dev/rsd0a
 .Sh BUGS
 .Nm installboot
 requires simultaneous access to the mounted file system and

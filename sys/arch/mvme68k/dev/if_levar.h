@@ -48,8 +48,13 @@
 struct	le_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
-	struct	intrhand sc_ih;		/* interrupt vectoring */
-	struct	lereg1 *sc_r1;		/* LANCE registers */
+	struct	intrhand sc_ih;	/* interrupt vectoring */
+	void 	*sc_r1;		/* LANCE registers */
+	u_short	csr;        		/* Control/Status reg image */
 	struct	evcnt	sc_intrcnt;
 	struct	evcnt	sc_errcnt;
+	struct vme2reg	      *sc_vme2;
+	u_char               sc_ipl;
+	u_char               sc_vec;
 };
+

@@ -1,7 +1,8 @@
-/*	$OpenBSD: vme.c,v 1.9 1998/01/19 00:13:04 etheisen Exp $ */
+/*	$OpenBSD: vme.c,v 1.10 2000/01/24 05:20:54 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
+ * Copyright (c) 2000 Steve Murphree, Jr.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -363,7 +364,7 @@ vmeattach(parent, self, args)
 	case BUS_PCCTWO:
 		vme2 = (struct vme2reg *)sc->sc_vaddr;
 		scon = (vme2->vme2_tctl & VME2_TCTL_SCON);
-		printf(": %sscon\n", scon ? "" : "not ");
+		printf(": %ssystem controller\n", scon ? "" : "not ");
 		vme2chip_init(sc);
 		break;
 #endif
@@ -443,73 +444,37 @@ vme2chip_init(sc)
 	struct vmesoftc *sc;
 {
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
-	u_long ctl;
+	u_long ctl, addr, vasize;
 
 	/* turn off SYSFAIL LED */
 	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
 
 	ctl = vme2->vme2_masterctl;
-
-	/* unused decoders 1 */
-	vme2->vme2_master1 = 0;
-	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_1SHIFT);
-	printf("%s: 1phys 0x%08x-0x%08x to VMExxx 0x%08x-0x%08x\n",
+	printf("%s: using BUG parameters\n", sc->sc_dev.dv_xname);
+	/* setup a A32D16 space */
+	printf("%s: 1phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
 	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
 	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
 
-	/* unused decoders 2 */
-	vme2->vme2_master2 = 0;
-	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_2SHIFT);
-	printf("%s: 2phys 0x%08x-0x%08x to VMExxx 0x%08x-0x%08x\n",
+	/* setup a A32D32 space */
+	printf("%s: 2phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
 	    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
 	    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
 
 	/* setup a A24D16 space */
-	vme2->vme2_master3 = ((VME2_D16ENDPHYS-1) & 0xffff0000) |
-	    (VME2_D16STARTPHYS >> 16);
-	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_3SHIFT);
-	ctl |= (VME2_MASTERCTL_D16 | VME2_MASTERCTL_AM24UD) <<
-	    VME2_MASTERCTL_3SHIFT;
-	printf("%s: 3phys 0x%08x-0x%08x to VMED16 0x%08x-0x%08x\n",
+	printf("%s: 3phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
 	    vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000,
 	    vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000);
 
-	/* setup a A32D32 space */
-	vme2->vme2_master4 = ((VME2_D32ENDPHYS-1) & 0xffff0000) |
-	    (VME2_D32STARTPHYS >> 16);
-	vme2->vme2_master4mod = (VME2_D32STARTVME & 0xffff0000) |
-	    (VME2_D32BITSVME >> 16);
-	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_4SHIFT);
-	ctl |= (VME2_MASTERCTL_AM32UD) <<
-	    VME2_MASTERCTL_4SHIFT;
-	printf("%s: 4phys 0x%08x-0x%08x to VMED32 0x%08x-0x%08x\n",
+	/* setup a XXXXXX space */
+	printf("%s: 4phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
 	    vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
-	    vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000);
-
-	vme2->vme2_masterctl = ctl;
-	ctl = vme2->vme2_gcsrctl;
-
-	/* enable A16 short IO map decoder (0xffffxxxx) */
-	ctl &= ~(VME2_GCSRCTL_I1EN | VME2_GCSRCTL_I1D16 | VME2_GCSRCTL_I1WP |
-	    VME2_GCSRCTL_I1SU);
-	ctl |= VME2_GCSRCTL_I1EN | VME2_GCSRCTL_I1D16 | VME2_GCSRCTL_I1SU;
-
-	/* enable A24D16 (0xf0xxxxxx) and A32D16 (0xf[1-e]xxxxxx) decoders */
-	ctl &= ~(VME2_GCSRCTL_I2EN | VME2_GCSRCTL_I2WP | VME2_GCSRCTL_I2SU |
-	    VME2_GCSRCTL_I2PD);
-	ctl |= VME2_GCSRCTL_I2EN | VME2_GCSRCTL_I2SU | VME2_GCSRCTL_I2PD;
-
-	/* map decoders 3 & 4 which were just configured */
-	ctl &= ~(VME2_GCSRCTL_MDEN4 | VME2_GCSRCTL_MDEN3 | VME2_GCSRCTL_MDEN1 |
-	    VME2_GCSRCTL_MDEN2);
-	ctl |= VME2_GCSRCTL_MDEN4 | VME2_GCSRCTL_MDEN3;
-
-	vme2->vme2_gcsrctl = ctl;
-
+	    vme2->vme2_master4 << 16 + vme2->vme2_master4mod << 16,
+       vme2->vme2_master4 & 0xffff0000 + vme2->vme2_master4 & 0xffff0000);
 	/*
 	 * Map the VME irq levels to the cpu levels 1:1.
 	 * This is rather inflexible, but much easier.
@@ -518,11 +483,16 @@ vme2chip_init(sc)
 	    (6 << VME2_IRQL4_VME6SHIFT) | (5 << VME2_IRQL4_VME5SHIFT) |
 	    (4 << VME2_IRQL4_VME4SHIFT) | (3 << VME2_IRQL4_VME3SHIFT) |
 	    (2 << VME2_IRQL4_VME2SHIFT) | (1 << VME2_IRQL4_VME1SHIFT);
+	printf("%s: vme to cpu irq level 1:1\n",sc->sc_dev.dv_xname);
+	/*
 	printf("%s: vme2_irql4 = 0x%08x\n",	sc->sc_dev.dv_xname,
 	    vme2->vme2_irql4);
-
+	*/
 #if NPCCTWO > 0
 	if (vmebustype == BUS_PCCTWO) {
+		/* 
+		 * pseudo driver, abort interrupt handler
+		 */
 		sc->sc_abih.ih_fn = vme2abort;
 		sc->sc_abih.ih_arg = 0;
 		sc->sc_abih.ih_ipl = 7;
@@ -568,7 +538,7 @@ vme2abort(frame)
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
 
 	if (vme2->vme2_irqstat & VME2_IRQ_AB == 0) {
-		printf("%s: vme2chip irq not set\n", sc->sc_dev.dv_xname);
+		printf("%s: abort irq not set\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
 	vme2->vme2_irqclr = VME2_IRQ_AB;
@@ -576,5 +546,4 @@ vme2abort(frame)
 	return (1);
 }
 #endif
-
 #endif
