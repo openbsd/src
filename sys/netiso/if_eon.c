@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eon.c,v 1.15 2002/03/26 19:12:56 niklas Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.16 2002/07/31 00:13:37 itojun Exp $	*/
 /*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
@@ -305,7 +305,7 @@ eonrtrequest(cmd, rt, info)
 		el->el_rt = rt;
 		break;
 	}
-	if (info || (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
+	if (info && (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
 		switch (gate->sa_family) {
 		case AF_LINK:
 #define SDL(x) ((struct sockaddr_dl *)x)

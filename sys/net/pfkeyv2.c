@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.83 2002/06/07 04:47:06 ho Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.84 2002/07/31 00:13:36 itojun Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1631,11 +1631,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		MALLOC(ipo->ipo_srcid, struct ipsec_ref *, clen +
 		       sizeof(struct ipsec_ref), M_CREDENTIALS, M_DONTWAIT);
-		ipo->ipo_srcid->ref_type = sid->sadb_ident_type;
-		ipo->ipo_srcid->ref_len = clen;
-		ipo->ipo_srcid->ref_count = 1;
-		ipo->ipo_srcid->ref_malloctype = M_CREDENTIALS;
-
 		if (ipo->ipo_srcid == NULL)
 		{
 		    if (exists)
@@ -1646,7 +1641,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    rval = ENOBUFS;
 		    goto ret;
 		}
-
+		ipo->ipo_srcid->ref_type = sid->sadb_ident_type;
+		ipo->ipo_srcid->ref_len = clen;
+		ipo->ipo_srcid->ref_count = 1;
+		ipo->ipo_srcid->ref_malloctype = M_CREDENTIALS;
 		bcopy(sid + 1, ipo->ipo_srcid + 1, ipo->ipo_srcid->ref_len);
 	    }
 
@@ -1657,11 +1655,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		MALLOC(ipo->ipo_dstid, struct ipsec_ref *, clen +
 		       sizeof(struct ipsec_ref), M_CREDENTIALS, M_DONTWAIT);
-		ipo->ipo_dstid->ref_type = sid->sadb_ident_type;
-		ipo->ipo_dstid->ref_len = clen;
-		ipo->ipo_dstid->ref_count = 1;
-		ipo->ipo_dstid->ref_malloctype = M_CREDENTIALS;
-
 		if (ipo->ipo_dstid == NULL)
 		{
 		    if (exists)
@@ -1677,7 +1670,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    rval = ENOBUFS;
 		    goto ret;
 		}
-
+		ipo->ipo_dstid->ref_type = sid->sadb_ident_type;
+		ipo->ipo_dstid->ref_len = clen;
+		ipo->ipo_dstid->ref_count = 1;
+		ipo->ipo_dstid->ref_malloctype = M_CREDENTIALS;
 		bcopy(sid + 1, ipo->ipo_dstid + 1, ipo->ipo_dstid->ref_len);
 	    }
 
