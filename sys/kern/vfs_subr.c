@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.27 1998/12/05 16:50:40 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.28 1998/12/10 21:46:58 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -771,6 +771,7 @@ vput(vp)
 	vputonfreelist(vp);
 
 	VOP_INACTIVE(vp, p);
+
 	simple_unlock(&vp->v_interlock);
 }
 
@@ -1682,8 +1683,9 @@ void
 vfs_unmountall()
 {
 	register struct mount *mp, *nmp;
-	int allerror, error;
+	int allerror, error, again = 1;
 
+ retry:
 	for (allerror = 0,
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		nmp = mp->mnt_list.cqe_prev;
@@ -1693,8 +1695,15 @@ vfs_unmountall()
 			allerror = 1;
 		}
 	}
-	if (allerror)
+
+	if (allerror) {
 		printf("WARNING: some file systems would not unmount\n");
+		if (again) {
+			printf("retrying\n");
+			again = 0;
+			goto retry;
+		}
+	}
 }
 
 /*
