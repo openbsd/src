@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.79 2003/08/08 08:46:59 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.80 2003/09/02 18:15:55 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -780,7 +780,7 @@ ipsec_validate_id_information (u_int8_t type, u_int8_t *extra, u_int8_t *buf,
   u_int8_t proto = GET_IPSEC_ID_PROTO (extra);
   u_int16_t port = GET_IPSEC_ID_PORT (extra);
 
-  LOG_DBG ((LOG_MESSAGE, 0,
+  LOG_DBG ((LOG_MESSAGE, 40,
 	    "ipsec_validate_id_information: proto %d port %d type %d",
 	    proto, port, type));
   if (type < IPSEC_ID_IPV4_ADDR || type > IPSEC_ID_KEY_ID)
