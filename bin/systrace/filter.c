@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.17 2002/09/23 04:41:02 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.18 2002/10/08 03:06:45 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -502,7 +502,10 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 				continue;
 			}
 
-			action = filter_evaluate(tls, fls, pflags);
+			if (fls != NULL)
+				action = filter_evaluate(tls, fls, pflags);
+			else
+				action = ICPOLICY_PERMIT;
 			if (action == ICPOLICY_ASK) {
 				printf("Filter unmatched.\n");
 				continue;
