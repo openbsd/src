@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.18 2001/06/08 03:53:45 angelos Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.19 2001/06/08 10:37:46 art Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -227,6 +227,8 @@ in_gif_input(m, va_alist)
 
 	if (gifp) {
 		m->m_pkthdr.rcvif = gifp;
+		gifp->if_ipackets++;
+		gifp->if_ibytes += m->m_pkthdr.len;
 		ipip_input(m, off); /* We have a configured GIF */
 		return;
 	}
