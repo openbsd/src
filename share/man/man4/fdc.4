@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdc.4,v 1.3 2000/09/09 17:15:56 deraadt Exp $
+.\"	$OpenBSD: fdc.4,v 1.4 2002/07/20 15:43:48 fgsch Exp $
 .\"	$NetBSD: fdc.4,v 1.6 1996/03/22 01:55:14 andrew Exp $
 .\"
 .\" Copyright (c) 1996 Andrew C. Wheadon
@@ -43,7 +43,7 @@
 .Nd NEC765 compatible floppy disk driver
 .Sh SYNOPSIS
 .Cd "fdc0 at isa? port 0x3f0 irq 6 drq 2"
-.Cd "fd* at fdc? drive ? flags Z"
+.Cd "fd* at fdc? drive ? flags 0x00"
 .Sh DESCRIPTION
 The
 .Nm
