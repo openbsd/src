@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.14 2001/09/05 03:07:44 provos Exp $	*/
+/*	$OpenBSD: auich.c,v 1.15 2001/09/10 17:38:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -690,8 +690,7 @@ auich_allocm(v, size, pool, flags)
 	p = malloc(sizeof(*p), pool, flags);
 	if (!p)
 		return NULL;
-
-	bzero(p, sizeof(p));
+	bzero(p, sizeof(*p));
 
 	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->dmat, p->size, NBPG, 0, p->segs,
