@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.2 2001/08/19 05:22:37 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.3 2001/08/19 05:50:50 beck Exp $ */
 /*
  * Copyright (c) 1996-2001
  *	Obtuse Systems Corporation.  All rights reserved.
@@ -280,8 +280,7 @@ show_xfer_stats()
 				goto logit;
 			len -= i;
 				
-		}
-		else {
+		} else {
 			i = snprintf(tbuf, len, 
 			    "data transfer completed (%dm %ds", idelta / 60,
 			    idelta % 60);
@@ -471,15 +470,10 @@ do_client_cmd(struct csiob *client, struct csiob *server)
 			sendbuf = NULL;
 		} else 
 			sendbuf = client->line_buffer;
-	}
-
-		
-	/*
-	 * Watch out for EPRT commands.
-	 */
-	
-	else if ((strncasecmp((char *)client->line_buffer,"eprt ", 
+	} else if ((strncasecmp((char *)client->line_buffer,"eprt ", 
  	    strlen("eprt ")) == 0)) { 
+		
+		/* Watch out for EPRT commands */
 
 		char *line = NULL; 
 		char *q, *p;
