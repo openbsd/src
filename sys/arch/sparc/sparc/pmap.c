@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2000/01/17 21:06:44 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.61 2000/01/26 15:54:30 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -717,7 +717,14 @@ getptep4m(pm, va)
         if ((rm->rg_seg_ptps[vs] & SRMMU_TETYPE) == SRMMU_TEPTE)
                 return &rm->rg_seg_ptps[vs];
 #endif
+	if (rm->rg_segmap == NULL)
+		return NULL;
+
         sm = &rm->rg_segmap[vs];
+
+	if (sm->sg_pte == NULL)
+		return NULL;
+
         return &sm->sg_pte[VA_SUN4M_VPG(va)];
 }
 
@@ -2313,10 +2320,8 @@ pv_changepte4m(pv0, bis, bic)
 {
 	struct pvlist *pv;
 	struct pmap *pm;
-	int va, vr;
 	int ctx, s;
-	struct regmap *rp;
-	struct segmap *sp;
+	vaddr_t va;
 
 	write_user_windows();		/* paranoid? */
 
@@ -2328,18 +2333,16 @@ pv_changepte4m(pv0, bis, bic)
 	ctx = getcontext4m();
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		int tpte;
+		int *ptep;
+
 		pm = pv->pv_pmap;
+		va = pv->pv_va;
 #ifdef DIAGNOSTIC
 		if (pm == NULL)
-			panic("pv_changepte: pm == NULL");
+			panic("pv_changepte4m: pmap == NULL");
 #endif
-		va = pv->pv_va;
-		vr = VA_VREG(va);
-		rp = &pm->pm_regmap[vr];
-		if (rp->rg_segmap == NULL)
-			panic("pv_changepte: no segments");
 
-		sp = &rp->rg_segmap[VA_VSEG(va)];
+		ptep = getptep4m(pm, va);
 
 		if (pm->pm_ctx) {
 			/*
@@ -2375,23 +2378,21 @@ pv_changepte4m(pv0, bis, bic)
 
 		}
 
-		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE) {
-			printf("pv_changepte: invalid PTE for 0x%x\n", va);
-			continue;
-		}
+		tpte = *ptep;
+#ifdef DIAGNOSTIC
+		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
+			panic("pv_changepte: invalid PTE for 0x%x", va);
+#endif
 
 		pv0->pv_flags |= MR4M(tpte);
 		tpte = (tpte | bis) & ~bic;
-		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], tpte);
+		setpgt4m(ptep, tpte);
 
 		/* Update PV_C4M flag if required */
 		if (bis & SRMMU_PG_C)
 			pv->pv_flags |= PV_C4M;
 		if (bic & SRMMU_PG_C)
 			pv->pv_flags &= ~PV_C4M;
-
-
 	}
 	setcontext4m(ctx);
 	splx(s);
@@ -2409,10 +2410,8 @@ pv_syncflags4m(pv0)
 {
 	struct pvlist *pv;
 	struct pmap *pm;
-	int tpte, va, vr, vs, flags;
+	int tpte, va, flags;
 	int ctx, s;
-	struct regmap *rp;
-	struct segmap *sp;
 
 	write_user_windows();		/* paranoid? */
 
@@ -2424,16 +2423,13 @@ pv_syncflags4m(pv0)
 	ctx = getcontext4m();
 	flags = pv0->pv_flags;
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
+		int *ptep;
+
 		pm = pv->pv_pmap;
 		va = pv->pv_va;
-		vr = VA_VREG(va);
-		vs = VA_VSEG(va);
-		rp = &pm->pm_regmap[vr];
-		if (rp->rg_segmap == NULL)
-			panic("pv_syncflags: no segments");
-		sp = &rp->rg_segmap[vs];
 
-		if (sp->sg_pte == NULL)	/* invalid */
+		ptep = getptep4m(pm, va);
+		if (ptep == NULL)	/* invalid */
 			continue;
 
 		/*
@@ -2444,7 +2440,7 @@ pv_syncflags4m(pv0)
 			setcontext4m(pm->pm_ctxnum);
 			tlb_flush_page(va);
 		}
-		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
+		tpte = *ptep;
 
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE && /* if valid pte */
 		    (tpte & (SRMMU_PG_M|SRMMU_PG_R))) {	  /* and mod/refd */
@@ -2458,7 +2454,7 @@ pv_syncflags4m(pv0)
 
 			/* Clear mod/ref bits from PTE and write it back */
 			tpte &= ~(SRMMU_PG_M | SRMMU_PG_R);
-			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], tpte);
+			setpgt4m(ptep, tpte);
 		}
 	}
 	pv0->pv_flags = flags;
@@ -4960,6 +4956,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 	int wired;
 {
 	int tpte, newprot, ctx, s;
+	int *ptep;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
@@ -4978,33 +4975,32 @@ pmap_changeprot4m(pm, va, prot, wired)
 	pmap_stats.ps_changeprots++;
 
 	s = splpmap();		/* conservative */
-	ctx = getcontext4m();
+	ptep = getptep4m(pm, va);
 	if (pm->pm_ctx) {
+		ctx = getcontext4m();
+		setcontext4m(pm->pm_ctxnum);
+		tlb_flush_page(va);
 		/*
 		 * Use current context.
 		 * Flush cache if page has been referenced to
 		 * avoid stale protection bits in the cache tags.
 		 */
-		setcontext4m(pm->pm_ctxnum);
-		tpte = getpte4m(va);
+		tpte = *ptep;
 		if ((tpte & (SRMMU_PG_C|SRMMU_PGTYPE)) ==
 		    (SRMMU_PG_C|PG_SUN4M_OBMEM))
 			cache_flush_page(va);
+		setcontext4m(ctx);
 	} else {
-		tpte = getptesw4m(pm, va);
+		tpte = *ptep;
 	}
 	if ((tpte & SRMMU_PROT_MASK) == newprot) {
 		/* only wiring changed, and we ignore wiring */
 		pmap_stats.ps_useless_changeprots++;
 		goto out;
 	}
-	if (pm->pm_ctx)
-		setpte4m(va, (tpte & ~SRMMU_PROT_MASK) | newprot);
-	else
-		setptesw4m(pm, va, (tpte & ~SRMMU_PROT_MASK) | newprot);
+	setpgt4m(ptep, (tpte & ~SRMMU_PROT_MASK) | newprot);
 
 out:
-	setcontext4m(ctx);
 	splx(s);
 }
 #endif /* 4m */
@@ -6522,14 +6518,17 @@ kvm_setcache(va, npages, cached)
 
 		setcontext4m(0);
 		for (; --npages >= 0; va += NBPG) {
-			pte = getpte4m((vaddr_t) va);
+			int *ptep;
+
+			ptep = getptep4m(pmap_kernel(), (vaddr_t)va);
+			tlb_flush_page((vaddr_t)va);
+			pte = *ptep;
 #ifdef DIAGNOSTIC
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				panic("kvm_uncache: table entry not pte");
 #endif
 			pv = pvhead((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
-			/* XXX - we probably don't need check for OBMEM */
-			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM && pv) {
+			if (pv) {
 				if (cached)
 					pv_changepte4m(pv, SRMMU_PG_C, 0);
 				else
@@ -6539,7 +6538,7 @@ kvm_setcache(va, npages, cached)
 				pte |= SRMMU_PG_C;
 			else
 				pte &= ~SRMMU_PG_C;
-			setpte4m((vaddr_t) va, pte);
+			setpgt4m(ptep, pte);
 
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
 				cache_flush_page((int)va);
