@@ -146,7 +146,7 @@ do { \
 #undef TEXT_SECTION_ASM_OP
 #define TEXT_SECTION_ASM_OP "\t.text"
 #undef READONLY_DATA_ASM_OP
-#define READONLY_DATA_ASM_OP "\t.text"
+#define READONLY_DATA_ASM_OP "\t.section\t.rodata"
 #undef DATA_SECTION_ASM_OP
 #define DATA_SECTION_ASM_OP "\t.data"
 #undef BSS_SECTION_ASM_OP
