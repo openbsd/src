@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.83 2002/06/09 05:31:25 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.84 2002/06/09 20:20:58 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -373,18 +373,20 @@ print_nat(struct pf_nat *n)
 			printf("proto %u ", n->proto);
 	}
 	printf("from ");
-	if (!PF_AZERO(&n->saddr.addr, n->af) || !PF_AZERO(&n->smask, n->af)) {
-		if (n->snot)
+	if (!PF_AZERO(&n->src.addr.addr, n->af) ||
+	    !PF_AZERO(&n->src.mask, n->af)) {
+		if (n->src.not)
 			printf("! ");
-		print_addr(&n->saddr, &n->smask, n->af);
+		print_addr(&n->src.addr, &n->src.mask, n->af);
 		printf(" ");
 	} else
 		printf("any ");
 	printf("to ");
-	if (!PF_AZERO(&n->daddr.addr, n->af) || !PF_AZERO(&n->dmask, n->af)) {
-		if (n->dnot)
+	if (!PF_AZERO(&n->dst.addr.addr, n->af) ||
+	    !PF_AZERO(&n->dst.mask, n->af)) {
+		if (n->dst.not)
 			printf("! ");
-		print_addr(&n->daddr, &n->dmask, n->af);
+		print_addr(&n->dst.addr, &n->dst.mask, n->af);
 		printf(" ");
 	} else
 		printf("any ");

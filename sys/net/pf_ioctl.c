@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.1 2002/06/09 03:57:18 pb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.2 2002/06/09 20:20:58 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -480,8 +480,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_nat *nat;
 
 		while ((nat = TAILQ_FIRST(pf_nats_inactive)) != NULL) {
-			pf_dynaddr_remove(&nat->saddr);
-			pf_dynaddr_remove(&nat->daddr);
+			pf_dynaddr_remove(&nat->src.addr);
+			pf_dynaddr_remove(&nat->dst.addr);
 			pf_dynaddr_remove(&nat->raddr);
 			TAILQ_REMOVE(pf_nats_inactive, nat, entries);
 			pool_put(&pf_nat_pl, nat);
@@ -527,11 +527,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			nat->ifp = NULL;
-		if (pf_dynaddr_setup(&nat->saddr, nat->af) ||
-		    pf_dynaddr_setup(&nat->daddr, nat->af) ||
+		if (pf_dynaddr_setup(&nat->src.addr, nat->af) ||
+		    pf_dynaddr_setup(&nat->dst.addr, nat->af) ||
 		    pf_dynaddr_setup(&nat->raddr, nat->af)) {
-			pf_dynaddr_remove(&nat->saddr);
-			pf_dynaddr_remove(&nat->daddr);
+			pf_dynaddr_remove(&nat->src.addr);
+			pf_dynaddr_remove(&nat->dst.addr);
 			pf_dynaddr_remove(&nat->raddr);
 			pool_put(&pf_nat_pl, nat);
 			error = EINVAL;
@@ -561,8 +561,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		/* Purge the old nat list */
 		while ((nat = TAILQ_FIRST(old_nats)) != NULL) {
-			pf_dynaddr_remove(&nat->saddr);
-			pf_dynaddr_remove(&nat->daddr);
+			pf_dynaddr_remove(&nat->src.addr);
+			pf_dynaddr_remove(&nat->dst.addr);
 			pf_dynaddr_remove(&nat->raddr);
 			TAILQ_REMOVE(old_nats, nat, entries);
 			pool_put(&pf_nat_pl, nat);
@@ -605,8 +605,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(nat, &pn->nat, sizeof(struct pf_nat));
-		pf_dynaddr_copyout(&pn->nat.saddr);
-		pf_dynaddr_copyout(&pn->nat.daddr);
+		pf_dynaddr_copyout(&pn->nat.src.addr);
+		pf_dynaddr_copyout(&pn->nat.dst.addr);
 		pf_dynaddr_copyout(&pn->nat.raddr);
 		splx(s);
 		break;
@@ -652,11 +652,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 			} else
 				newnat->ifp = NULL;
-			if (pf_dynaddr_setup(&newnat->saddr, newnat->af) ||
-			    pf_dynaddr_setup(&newnat->daddr, newnat->af) ||
+			if (pf_dynaddr_setup(&newnat->src.addr, newnat->af) ||
+			    pf_dynaddr_setup(&newnat->dst.addr, newnat->af) ||
 			    pf_dynaddr_setup(&newnat->raddr, newnat->af)) {
-				pf_dynaddr_remove(&newnat->saddr);
-				pf_dynaddr_remove(&newnat->daddr);
+				pf_dynaddr_remove(&newnat->src.addr);
+				pf_dynaddr_remove(&newnat->dst.addr);
 				pf_dynaddr_remove(&newnat->raddr);
 				pool_put(&pf_nat_pl, newnat);
 				error = EINVAL;
@@ -683,8 +683,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if (pcn->action == PF_CHANGE_REMOVE) {
-			pf_dynaddr_remove(&oldnat->saddr);
-			pf_dynaddr_remove(&oldnat->daddr);
+			pf_dynaddr_remove(&oldnat->src.addr);
+			pf_dynaddr_remove(&oldnat->dst.addr);
 			pf_dynaddr_remove(&oldnat->raddr);
 			TAILQ_REMOVE(pf_nats_active, oldnat, entries);
 			pool_put(&pf_nat_pl, oldnat);

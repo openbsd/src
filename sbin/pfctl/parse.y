@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.89 2002/06/09 05:31:25 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.90 2002/06/09 20:20:58 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1194,11 +1194,11 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 					YYERROR;
 				}
 				nat.af = $7->af;
-				memcpy(&nat.saddr, &$7->addr,
-				    sizeof(nat.saddr));
-				memcpy(&nat.smask, &$7->mask,
-				    sizeof(nat.smask));
-				nat.snot = $7->not;
+				memcpy(&nat.src.addr, &$7->addr,
+				    sizeof(nat.src.addr));
+				memcpy(&nat.src.mask, &$7->mask,
+				    sizeof(nat.src.mask));
+				nat.src.not = $7->not;
 			}
 			if ($9 != NULL) {
 				if ($9->addr.addr_dyn != NULL) {
@@ -1214,11 +1214,11 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 					YYERROR;
 				}
 				nat.af = $9->af;
-				memcpy(&nat.daddr, &$9->addr,
-				    sizeof(nat.daddr));
-				memcpy(&nat.dmask, &$9->mask,
-				    sizeof(nat.dmask));
-				nat.dnot = $9->not;
+				memcpy(&nat.dst.addr, &$9->addr,
+				    sizeof(nat.dst.addr));
+				memcpy(&nat.dst.mask, &$9->mask,
+				    sizeof(nat.dst.mask));
+				nat.dst.not = $9->not;
 			}
 
 			if (nat.no) {
@@ -1940,8 +1940,8 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 {
 	int af = n->af, added = 0;
 
-	CHECK_ROOT(struct node_host, src_hosts)
-;	CHECK_ROOT(struct node_host, dst_hosts);
+	CHECK_ROOT(struct node_host, src_hosts);
+	CHECK_ROOT(struct node_host, dst_hosts);
 
 	LOOP_THROUGH(struct node_host, src_host, src_hosts,
 	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
@@ -1957,10 +1957,10 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 		else if (!n->af && dst_host->af)
 			n->af = dst_host->af;
 
-		n->saddr = src_host->addr;
-		n->smask = src_host->mask;
-		n->daddr = dst_host->addr;
-		n->dmask = dst_host->mask;
+		n->src.addr = src_host->addr;
+		n->src.mask = src_host->mask;
+		n->dst.addr = dst_host->addr;
+		n->dst.mask = dst_host->mask;
 
 		pfctl_add_nat(pf, n);
 		added++;

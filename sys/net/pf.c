@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.227 2002/06/09 10:55:59 pb Exp $ */
+/*	$OpenBSD: pf.c,v 1.228 2002/06/09 20:20:58 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -404,18 +404,22 @@ pf_compare_nats(struct pf_nat *a, struct pf_nat *b)
 {
 	if (a->proto != b->proto ||
 	    a->af != b->af ||
-	    a->snot != b->snot ||
-	    a->dnot != b->dnot ||
 	    a->ifnot != b->ifnot ||
 	    a->no != b->no)
 		return (1);
-	if (PF_ANEQ(&a->saddr.addr, &b->saddr.addr, a->af))
+	if (PF_ANEQ(&a->src.addr.addr, &b->src.addr.addr, a->af) ||
+	    PF_ANEQ(&a->src.mask, &b->src.mask, a->af) ||
+	    a->src.port[0] != b->src.port[0] ||
+	    a->src.port[1] != b->src.port[1] ||
+	    a->src.not != b->src.not ||
+	    a->src.port_op != b->src.port_op)
 		return (1);
-	if (PF_ANEQ(&a->smask, &b->smask, a->af))
-		return (1);
-	if (PF_ANEQ(&a->daddr.addr, &b->daddr.addr, a->af))
-		return (1);
-	if (PF_ANEQ(&a->dmask, &b->dmask, a->af))
+	if (PF_ANEQ(&a->dst.addr.addr, &b->dst.addr.addr, a->af) ||
+	    PF_ANEQ(&a->dst.mask, &b->dst.mask, a->af) ||
+	    a->dst.port[0] != b->dst.port[0] ||
+	    a->dst.port[1] != b->dst.port[1] ||
+	    a->dst.not != b->dst.not ||
+	    a->dst.port_op != b->dst.port_op)
 		return (1);
 	if (PF_ANEQ(&a->raddr.addr, &b->raddr.addr, a->af))
 		return (1);
@@ -1429,12 +1433,14 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 		    (n->ifp != ifp && n->ifnot)) &&
 		    (!n->proto || n->proto == proto) &&
 		    (!n->af || n->af == af) &&
-		    (n->saddr.addr_dyn == NULL ||
-		    !n->saddr.addr_dyn->undefined) &&
-		    PF_MATCHA(n->snot, &n->saddr.addr, &n->smask, saddr, af) &&
-		    (n->daddr.addr_dyn == NULL ||
-		    !n->daddr.addr_dyn->undefined) &&
-		    PF_MATCHA(n->dnot, &n->daddr.addr, &n->dmask, daddr, af))
+		    (n->src.addr.addr_dyn == NULL ||
+		    !n->src.addr.addr_dyn->undefined) &&
+		    PF_MATCHA(n->src.not, &n->src.addr.addr, &n->src.mask,
+		    saddr, af) &&
+		    (n->dst.addr.addr_dyn == NULL ||
+		    !n->dst.addr.addr_dyn->undefined) &&
+		    PF_MATCHA(n->dst.not, &n->dst.addr.addr, &n->dst.mask,
+		    daddr, af))
 			nm = n;
 		else
 			n = TAILQ_NEXT(n, entries);

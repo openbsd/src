@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.81 2002/06/09 08:53:08 pb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.82 2002/06/09 20:20:58 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -328,18 +328,14 @@ struct pf_tree_node {
 
 
 struct pf_nat {
+	struct pf_rule_addr	 src;
+	struct pf_rule_addr	 dst;
+	struct pf_addr_wrap	 raddr;
 	char			 ifname[IFNAMSIZ];
 	struct ifnet		*ifp;
 	TAILQ_ENTRY(pf_nat)	 entries;
-	struct pf_addr_wrap	 saddr;
-	struct pf_addr_wrap	 daddr;
-	struct pf_addr_wrap	 raddr;
-	struct pf_addr		 smask;
-	struct pf_addr		 dmask;
 	u_int8_t		 af;
 	u_int8_t		 proto;
-	u_int8_t		 snot;
-	u_int8_t		 dnot;
 	u_int8_t		 ifnot;
 	u_int8_t		 no;
 };
