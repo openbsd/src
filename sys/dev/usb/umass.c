@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.29 2004/07/21 07:43:41 dlg Exp $ */
+/*	$OpenBSD: umass.c,v 1.30 2004/07/21 07:46:55 dlg Exp $ */
 /*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -1049,6 +1049,8 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			}
 		}
 
+		/* FALLTHROUGH, err == 0 (no data phase or successful) */
+	case TSTATE_BBB_DCLEAR: /* stall clear after data phase */
 		if (sc->transfer_dir == DIR_IN)
 			memcpy(sc->transfer_data, sc->data_buffer,
 			       sc->transfer_actlen);
@@ -1058,7 +1060,6 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 						sc->transfer_datalen, 48));
 
 		/* FALLTHROUGH, err == 0 (no data phase or successful) */
-	case TSTATE_BBB_DCLEAR: /* stall clear after data phase */
 	case TSTATE_BBB_SCLEAR: /* stall clear after status phase */
 		/* Reading of CSW after bulk stall condition in data phase
 		 * (TSTATE_BBB_DATA2) or bulk-in stall condition after
