@@ -1,4 +1,4 @@
-$OpenBSD: IMPLEMENTATION,v 1.7 2000/06/03 13:50:51 itojun Exp $
+$OpenBSD: IMPLEMENTATION,v 1.8 2000/06/12 12:04:41 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -8,7 +8,7 @@ $OpenBSD: IMPLEMENTATION,v 1.7 2000/06/03 13:50:51 itojun Exp $
 
 			KAME Project
 			http://www.kame.net/
-			KAME Date: 2000/06/01 02:42:10
+			KAME Date: 2000/06/12 09:29:16
 
 1. IPv6
 
@@ -887,40 +887,50 @@ KAME/OpenBSD does not support connection initiation to IPv4 mapped address
 
 1.12.6 More issues
 
-The meaning of IPv4 mapped address is defined locally in a node.  It seems
-that there are people using IPv4 mapped address in native IPv6 header - namely
-SIIT.  The lack of concrete agreement adds many mess to IPv6 API.
-Here we would like to summarize couple of items we came to notice.
+IPv4 mapped address support adds a big requirement to EVERY userland codebase.
+Every userland code should check if an AF_INET6 sockaddr contains IPv4
+mapped address or not.  This adds many twists:
+
+- Access controls code becomes harder to write.
+  For example, if you would like to reject packets from 10.0.0.0/8,
+  you need to reject packets to AF_INET socket from 10.0.0.0/8,
+  and to AF_INET6 socket from ::ffff:10.0.0.0/104.
+- If a protocol on top of IPv4 is defined differently with IPv6, we need to be
+  really careful when we determine which protocol to use.
+  For example, with FTP protocol, we can not simply use sa_family to determine
+  FTP command sets.  The following example is incorrect:
+	if (sa_family == AF_INET)
+		use EPSV/EPRT or PASV/PORT;	/*IPv4*/
+	else if (sa_family == AF_INET6)
+		use EPSV/EPRT or LPSV/LPRT;	/*IPv6*/
+	else
+		error;
+  Under SIIT environment, the correct code would be:
+	if (sa_family == AF_INET)
+		use EPSV/EPRT or PASV/PORT;	/*IPv4*/
+	else if (sa_family == AF_INET6 && IPv4 mapped address)
+		use EPSV/EPRT or PASV/PORT;	/*IPv4 command set on AF_INET6*/
+	else if (sa_family == AF_INET6 && !IPv4 mapped address)
+		use EPSV/EPRT or LPSV/LPRT;	/*IPv6*/
+	else
+		error;
+  It is too much to ask for every body to be careful like this.
+  The problem is, we are not sure if the above code fragment is perfect for
+  all situations.
 - By enabling kernel support for IPv4 mapped address (outgoing direction),
   servers on the kernel can be hosed by IPv6 native packet that has IPv4
-  mapped address in IPv6 header source.  If we had concrete agreement,
-  we could have just rejected such packets.
+  mapped address in IPv6 header source, and can generate unwanted IPv4 packets.
   http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt
   talks more about this scenario.
-- If a protocol on top of IPv4 is defined differently with IPv6, we will get
-  very tricky situation.  FTP protocol is a good example.
-  FTP client needs to behave differently on nodes that interprets IPv4 mapped
-  address as "an IPv6 address that embeds IPv4 address", and on nodes that
-  interpret IPv4 mapped address as a native IPv6 address.
-  In the former case, if a user gives IPv4 mapped address to ftp(1), ftp(1)
-  needs to handle it as IPv4 address, and use PASV/PORT FTP subcommands to
-  talk with the peer.  In the latter case, ftp(1) needs to handle it as
-  native IPv6 address, and use EPSV/EPRT (or LPSV/LPRT) FTP subcommadns to
-  talk with the peer.  The only way to solve this issue is to have additional
-  getsockopt to get the "real" peername/sockname.  In the former case the
-  getsockopt would return an AF_INET address.  In the latter case the
-  getsockopt would return an AF_INET6 address.
 
 Due to the above twists, some of KAME userland programs has restrictions on
 the use of IPv4 mapped addresses:
 - rshd/rlogind do not accept connections from IPv4 mapped address.
   This is to avoid malicious use of IPv4 mapped address in IPv6 native
   packet, to bypass source-address based authentication.
-- ftpd/ftp assume that an IPv4 mapped address identifies IPv4 node, and
-  AF_INET socket is available for talking to that IPv4 node.
-  Hence, ftpd/ftp does not support network environment with SIIT translator.
-  To support SIIT environment, we need to pass IPv4 mapped address to AF_INET6
-  socket directly, AND use PASV/PORT.
+- ftp/ftpd does not support SIIT environment.  IPv4 mapped address will be
+  decoded in userland, and will be passed to AF_INET sockets
+  (SIIT client should pass IPv4 mapped address as is, to AF_INET6 sockets).
 
 1.13 sockaddr_storage
 
