@@ -1,0 +1,29 @@
+.\" $OpenBSD: mount_udf.8,v 1.1 2005/03/29 18:28:49 pedro Exp $
+.\" Written by Pedro Martelletto <pedro@openbsd.org> in March 2005.
+.\" Public domain.
+.Dd March 29, 2005
+.Dt MOUNT_UDF 8
+.Os
+.Sh NAME
+.Nm mount_udf
+.Nd mount an UDF filesystem
+.Sh SYNOPSIS
+.Nm mount_udf
+.Ar special node
+.Sh DESCRIPTION
+The
+.Nm
+command attaches an UDF filesystem residing on the device
+.Ar special
+to the global filesystem namespace at the location indicated by
+.Ar node .
+.Sh SEE ALSO
+.Xr mount 2 ,
+.Xr fstab 5 ,
+.Xr mount 8 ,
+.Xr umount 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Ox 3.8 .

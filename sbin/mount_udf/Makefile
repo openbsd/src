@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2005/03/29 17:54:52 pedro Exp $
+#	$OpenBSD: Makefile,v 1.2 2005/03/29 18:28:49 pedro Exp $
 
 PROG=	mount_udf
 SRCS=	mount_udf.c getmntopts.c
-MAN=
+MAN=	mount_udf.8
 
 MOUNT=	${.CURDIR}/../mount
 CFLAGS+= -I${MOUNT}
