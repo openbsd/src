@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.263 2002/11/24 22:45:48 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.264 2002/11/28 12:07:37 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -46,7 +46,6 @@
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/pool.h>
-#include <sys/md5k.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -227,6 +226,8 @@ void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
 			    struct pf_addr *, struct pf_addr *, u_int8_t);
 void			 pf_addr_inc(struct pf_addr *, sa_family_t);
 #endif /* INET6 */
+void			 pf_hash(struct pf_addr *, struct pf_addr *,
+			    struct pf_poolhashkey *, sa_family_t);
 int			 pf_map_addr(u_int8_t, struct pf_pool *,
 			    struct pf_addr *, struct pf_addr *,
 			    struct pf_addr *);
@@ -1282,11 +1283,67 @@ pf_addr_inc(struct pf_addr *addr, u_int8_t af)
 }
 #endif /* INET6 */
 
+#define mix(a,b,c) \
+	do {				    \
+		a -= b; a -= c; a ^= (c >> 13); \
+		b -= c; b -= a; b ^= (a << 8);  \
+		c -= a; c -= b; c ^= (b >> 13); \
+		a -= b; a -= c; a ^= (c >> 12); \
+		b -= c; b -= a; b ^= (a << 16); \
+		c -= a; c -= b; c ^= (b >> 5);  \
+		a -= b; a -= c; a ^= (c >> 3);  \
+		b -= c; b -= a; b ^= (a << 10); \
+		c -= a; c -= b; c ^= (b >> 15); \
+	} while(0)
+
+/*
+ * hash function based on bridge_hash in if_bridge.c
+ */
+void
+pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
+    struct pf_poolhashkey *key, sa_family_t af)
+{
+	u_int32_t a = 0x9e3779b9, b = 0x9e3779b9, c = key->key32[0];
+
+	switch (af) {
+#ifdef INET
+	case AF_INET:
+		a += inaddr->addr32[0];
+		b += key->key32[1];
+		mix(a, b, c);
+		hash->addr32[0] = c + key->key32[2];
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		a += inaddr->addr32[0];
+		b += inaddr->addr32[2];
+		mix(a, b, c);
+		hash->addr32[0] = c;
+		a += inaddr->addr32[1];
+		b += inaddr->addr32[3];
+		c += key->key32[1];
+		mix(a, b, c);
+		hash->addr32[1] = c;
+		a += inaddr->addr32[2];
+		b += inaddr->addr32[1];
+		c += key->key32[2];
+		mix(a, b, c);
+		hash->addr32[2] = c;
+		a += inaddr->addr32[3];
+		b += inaddr->addr32[0];
+		c += key->key32[3];
+		mix(a, b, c);
+		hash->addr32[3] = c;
+		break;
+#endif /* INET6 */
+	}
+}
+
 int
 pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
     struct pf_addr *naddr, struct pf_addr *init_addr)
 {
-	MD5_CTX context;
 	unsigned char hash[16];
 	struct pf_pooladdr *cur = rpool->cur;
 	struct pf_addr *raddr = &rpool->cur->addr.addr;
@@ -1339,28 +1396,7 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 		}
 		break;
 	case PF_POOL_SRCHASH:
-	case PF_POOL_SRCKEYHASH:
-		bzero(&context, sizeof(context));
-		MD5Init(&context);
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			MD5Update(&context, (unsigned char *)&saddr->v4,
-			    sizeof(saddr->v4));
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:
-			MD5Update(&context, (unsigned char *)&saddr->v6,
-			    sizeof(saddr->v6));
-			break;
-#endif /* INET6 */
-		}
-		if ((rpool->opts & PF_POOL_TYPEMASK) ==
-		    PF_POOL_SRCKEYHASH)
-			MD5Update(&context, (unsigned char *)&rpool->key,
-			    sizeof(rpool->key));
-		MD5Final(hash, &context);
+		pf_hash(saddr, (struct pf_addr *)&hash, &rpool->key, af);
 		PF_POOLMASK(naddr, raddr, rmask, (struct pf_addr *)&hash, af);
 		break;
 	case PF_POOL_ROUNDROBIN:
@@ -1383,7 +1419,7 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 		printf("pf_map_addr: selected address:");
 		pf_print_host(naddr, 0, af);
 		printf("\n");
-        }
+	}
 
 	return (0);
 }
@@ -1473,7 +1509,6 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_pool *rpool,
 			break;
 		case PF_POOL_NONE:
 		case PF_POOL_SRCHASH:
-		case PF_POOL_SRCKEYHASH:
 		case PF_POOL_BITMASK:
 		default:
 			return (1);

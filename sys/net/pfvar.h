@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.104 2002/11/26 11:28:13 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.105 2002/11/28 12:07:37 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -57,7 +57,7 @@ enum    { PF_POOL_RULE_RT=0, PF_POOL_NAT_R=1, PF_POOL_RDR_R=2 };
 #define PF_POOL_IDMASK		0x0f
 #define PF_POOL_LAST		0x10
 enum	{ PF_POOL_NONE=0, PF_POOL_BITMASK=1, PF_POOL_RANDOM=2,
-	  PF_POOL_SRCHASH=3, PF_POOL_SRCKEYHASH=4, PF_POOL_ROUNDROBIN=5 };
+	  PF_POOL_SRCHASH=3, PF_POOL_ROUNDROBIN=4 };
 #define PF_POOL_TYPEMASK	0x0f
 #define PF_POOL_STATICPORT	0x10
 
