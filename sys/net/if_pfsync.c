@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.17 2004/01/20 03:36:19 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.18 2004/01/20 17:40:31 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -111,7 +111,6 @@ pfsyncattach(int npfsync)
 	ifp->if_type = IFT_PFSYNC;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_hdrlen = PFSYNC_HDRLEN;
-	ifp->if_baudrate = IF_Mbps(100);
 	pfsync_setmtu(&pfsyncif, MCLBYTES);
 	timeout_set(&pfsyncif.sc_tmo, pfsync_timeout, &pfsyncif);
 	if_attach(ifp);
