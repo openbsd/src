@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.21 2003/04/19 12:59:13 krw Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.22 2003/10/21 05:24:40 jmc Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 /*
- * This implements a general-puspose RAM-disk.
+ * This implements a general-purpose RAM-disk.
  * See ramdisk.h for notes on the config types.
  *
  * Note that this driver provides the same functionality
@@ -75,7 +75,7 @@
  * XXX: the "control" unit is (base unit + 16).
  * We should just use the cdev as the "control", but
  * that interferes with the security stuff preventing
- * simulatneous use of raw and block devices.
+ * simultaneous use of raw and block devices.
  *
  * XXX Assumption: 16 RAM-disks are enough!
  */

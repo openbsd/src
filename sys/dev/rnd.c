@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.64 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.65 2003/10/21 05:24:40 jmc Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -343,7 +343,7 @@ int	rnd_debug = 0x0000;
  * decrease the uncertainty).
  *
  * The chosen system lets the state of the pool be (essentially) the input
- * modulo the generator polymnomial.  Now, for random primitive polynomials,
+ * modulo the generator polynomial.  Now, for random primitive polynomials,
  * this is a universal class of hash functions, meaning that the chance
  * of a collision is limited by the attacker's knowledge of the generator
  * polynomial, so if it is chosen at random, an attacker can never force

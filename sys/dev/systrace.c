@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.33 2003/10/08 16:30:01 sturm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.34 2003/10/21 05:24:40 jmc Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -1164,8 +1164,8 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *
 	 *      [Note: once P_SUGID gets set in execve(), it stays
 	 *	set until the process does another execve(). Hence
-	 *	this prevents a setuid process which revokes it's
-	 *	special privilidges using setuid() from being
+	 *	this prevents a setuid process which revokes its
+	 *	special privileges using setuid() from being
 	 *	traced. This is good security.]
 	 */
 	if ((proc->p_cred->p_ruid != p->p_cred->p_ruid ||
