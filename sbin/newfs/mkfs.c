@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.9 1997/06/03 11:00:09 grr Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.10 1997/06/03 22:27:17 grr Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.9 1997/06/03 11:00:09 grr Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.10 1997/06/03 22:27:17 grr Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,20 +110,22 @@ extern caddr_t	membase;	/* start address of memory based filesystem */
 static caddr_t	malloc(), calloc();
 static void	free();
 
-union {
+union fs_u {
 	struct fs fs;
 	char pad[SBSIZE];
-} fsun;
-#define	sblock	fsun.fs
+} *fsun;
+#define sblock	fsun->fs
+
 struct	csum *fscs;
 
-union {
+union cg_u {
 	struct cg cg;
 	char pad[MAXBSIZE];
-} cgun;
-#define	acg	cgun.cg
+} *cgun;
+#define acg	cgun->cg
 
-struct dinode zino[MAXBSIZE / sizeof(struct dinode)];
+struct dinode *zino;
+char	*buf;
 
 int	fsi, fso;
 daddr_t	alloc();
@@ -145,6 +147,14 @@ mkfs(pp, fsys, fi, fo)
 	void started();
 	int width;
 	char tmpbuf[100];	/* XXX this will break in about 2,500 years */
+
+	if ((fsun = (union fs_u *)calloc(1, sizeof (union fs_u))) == 0 ||
+	    (cgun = (union cg_u *)malloc(sizeof (union cg_u))) == 0 ||
+	    (zino = (struct dinode *)malloc(MAXBSIZE)) == 0 ||
+	    (buf = (char *)malloc(MAXBSIZE)) == 0) {
+		printf("buffer malloc failed\n");
+		exit(1);
+	}
 
 #ifndef STANDALONE
 	time(&utime);
@@ -557,7 +567,10 @@ next:
 	sblock.fs_csmask = ~(i - 1);
 	for (sblock.fs_csshift = 0; i > 1; i >>= 1)
 		sblock.fs_csshift++;
-	fscs = (struct csum *)calloc(1, sblock.fs_cssize);
+	if ((fscs = (struct csum *)calloc(1, sblock.fs_cssize)) == 0) {
+		printf("cg summary malloc failed\n");
+		exit(1);
+	}
 	sblock.fs_magic = FS_MAGIC;
 	sblock.fs_rotdelay = rotdelay;
 	sblock.fs_minfree = minfree;
@@ -855,7 +868,6 @@ struct odirect olost_found_dir[] = {
 	{ 0, DIRBLKSIZ, 0, 0 },
 };
 #endif
-char buf[MAXBSIZE];
 
 fsinit(utime)
 	time_t utime;
@@ -1095,8 +1107,8 @@ calloc(size, numelm)
 	caddr_t base;
 
 	size *= numelm;
-	base = malloc(size);
-	memset(base, 0, size);
+	if ((base = malloc(size)) != 0) 
+		memset(base, 0, size);
 	return (base);
 }
 
