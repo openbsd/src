@@ -244,10 +244,6 @@
 128.84.231.196			#ransom.msc.cornell.edu
 128.84.241.33			#ept.msc.cornell.edu
 128.84.249.240			#locutus.msc.cornell.edu
->theory.cornell.edu        # Cornell University Theory Center
-128.84.29.37                   #blynken.tc.cornell.edu
-128.84.29.56                   #nod.tc.cornell.edu
-128.84.29.77                   #wynken.tc.cornell.edu
 >kiewit.dartmouth.edu      # Dartmouth College, Kiewit
 129.170.16.42			#northservc.dartmouth.edu
 >northstar.dartmouth.edu    #Dartmouth College, Project Northstar
@@ -380,8 +376,8 @@
 171.64.7.222                    #afsdb1.stanford.edu
 171.64.7.234                    #afsdb2.stanford.edu
 171.64.7.246                    #afsdb3.stanford.edu
->olympia.stanford.edu     # Stanford DECathena AFS cell - local
-36.53.0.106                   #olympia.stanford.edu
+>olympia.stanford.edu     # Stanford DECathena AFS cell - local       
+36.53.0.106                   #olympia.stanford.edu           
 >slac.stanford.edu         # Stanford Linear Accelerator Center
 134.79.18.25                    #afsdb1.slac.stanford.edu
 134.79.18.26                    #afsdb2.slac.stanford.edu
@@ -477,8 +473,6 @@
 >eng.utah.edu   	#University of Utah College of Engineering
 155.99.222.40    		#afs1.eng.utah.edu
 155.99.222.41    		#afs2.eng.utah.edu
->mc.vanderbilt.edu      #Vanderbilt University Medical Center
-160.129.202.80                  #dbmi6000.mc.vanderbilt.edu
 >cs.washington.edu         # University of Washington Comp Sci Department
 128.95.2.238			#silk.cs.washington.edu
 128.95.2.239			#satin.cs.washington.edu
@@ -561,7 +555,7 @@
 >lngs.infn.it              # INFN, Laboratori Nazionali di Gran Sasso, Italia
 192.84.135.3                    #rsgs02.lngs.infn.it
 >pi.infn.it                # INFN Sezione di Pisa
-192.84.133.7                    #aix.pi.infn.it
+192.84.133.7                    #aix.pi.infn.it 
 192.84.133.50                   #aix1.pi.infn.it
 >dis.uniroma1.it           # DIS, Univ. "La Sapienza", Rome, area Buonarotti
 151.100.5.21                    #peano.dis.uniroma1.it
@@ -668,7 +662,6 @@
 130.237.48.8			#sonen.e.kth.se
 130.237.48.244			#fadern.e.kth.se
 >arla.e.kth.se             # KTH, Elektro, Arla cell
-130.237.48.94                   #colossus-of-rhodes.e.kth.se
 >hallf.kth.se		# Royal Institute of Technology, Solid Mechanics
 130.237.24.141                  #rasmus13.hallf.kth.se
 130.237.24.152                  #rasmus3.hallf.kth.se
@@ -732,3 +725,5 @@
 >extundo.com		# Simon Josefsson's cell
 >openafs.org		#OpenAFS project
 128.2.121.218                   #virtue.openafs.org
+>dynarc.se		# Dynarc
+62.65.1.17			#adder.dynarc.se
