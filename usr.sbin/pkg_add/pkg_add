@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.50 2004/08/12 19:18:03 brad Exp $
+# $OpenBSD: pkg_add,v 1.51 2004/09/14 22:46:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -27,6 +27,7 @@ use OpenBSD::PackageName;
 use OpenBSD::PkgCfl;
 use OpenBSD::Vstat;
 use Getopt::Std;
+use OpenBSD::Error;
 use File::Copy;
 
 our %forced = ();
@@ -38,12 +39,15 @@ sub ensure_ldconfig
 	return unless defined $OpenBSD::PackingElement::Lib::todo;
 	print "running ldconfig -m ", join(' ', keys %$OpenBSD::PackingElement::Lib::todo), "\n"
 	    if  $verbose;
-	system(@OpenBSD::PackingElement::Lib::ldconfig, "-m", 
+	VSystem($verbose, @OpenBSD::PackingElement::Lib::ldconfig, "-m", 
 	    keys %$OpenBSD::PackingElement::Lib::todo);
 	undef $OpenBSD::PackingElement::Lib::todo;
 }
 
 package OpenBSD::PackingElement;
+use OpenBSD::Error;
+
+my ($uidcache, $gidcache);
 
 sub install
 {
@@ -53,15 +57,29 @@ sub set_modes
 {
 	my ($self, $name) = @_;
 
-	if (defined $self->{owner} && defined $self->{group}) {
-		system('chown', $self->{owner}.':'.$self->{group}, $name);
-	} elsif (defined $self->{owner}) {
-		system('chown', $self->{owner}, $name);
-	} elsif (defined $self->{group}) {
-		system('chown', ':'.$self->{group}, $name);
+	if (defined $self->{owner} || defined $self->{group}) {
+		require OpenBSD::IdCache;
+
+		if (!defined $uidcache) {
+			$uidcache = OpenBSD::UidCache->new();
+			$gidcache = OpenBSD::GidCache->new();
+		}
+		my ($uid, $gid) = (stat $name)[4,5];
+		if (defined $self->{owner}) {
+			$uid = $uidcache->lookup($self->{owner}, $uid);
+		}
+		if (defined $self->{group}) {
+			$gid = $gidcache->lookup($self->{group}, $gid);
+		}
+		chown $uid, $gid, $name;
 	}
 	if (defined $self->{mode}) {
-		system('chmod', $self->{mode}, $name);
+		my $v = $self->{mode};
+		if ($v =~ m/^\d+$/) {
+			chmod oct($v), $name;
+		} else {
+			System('chmod', $self->{mode}, $name);
+		}
 	}
 }
 
