@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.md,v 1.1 1997/04/13 17:17:54 mickey Exp $
+#	$OpenBSD: install.md,v 1.2 1997/04/17 20:21:42 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -180,21 +180,21 @@ bytes_per_sect="$resp"
 
 cyls_per_disk=`cat /kern/msgbuf \
 	       | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	       | sed 's/\([^ ]*[ ]*\)\{3\}\([^ ]*\).*$/\2/'`
+	       | sed 's/\([^ ]*[ ]*\)\{2\}\([^ ]*\).*$/\2/'`
 echo -n "Number of disk cylinders? [$cyls_per_disk]"
 getresp $cyls_per_disk
 cyls_per_disk="$resp"
 
 tracks_per_cyl=`cat /kern/msgbuf \
 	        | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	        | sed 's/\([^ ]*[ ]*\)\{5\}\([^ ]*\).*$/\2/'`
+	        | sed 's/\([^ ]*[ ]*\)\{4\}\([^ ]*\).*$/\2/'`
 echo -n	"Number of disk tracks (heads) per disk cylinder? [$tracks_per_cyl]"
 getresp $tracks_per_cyl
 tracks_per_cyl="$resp"
 
 sects_per_track=`cat /kern/msgbuf \
 	         | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	         | sed 's/\([^ ]*[ ]*\)\{7\}\([^ ]*\).*$/\2/'`
+	         | sed 's/\([^ ]*[ ]*\)\{6\}\([^ ]*\).*$/\2/'`
 echo -n	"Number of disk sectors per disk track? [$sects_per_track]"
 getresp $sects_per_track
 sects_per_track="$resp"
