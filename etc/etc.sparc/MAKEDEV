@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.14 1997/03/28 20:10:35 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 1997/04/13 20:08:19 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -94,7 +94,7 @@ all)
 	;;
 
 floppy)
-	sh MAKEDEV std
+	sh MAKEDEV std random
 	sh MAKEDEV fd0 sd0 sd1
 	;;
 
