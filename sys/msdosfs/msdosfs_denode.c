@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.11 1998/01/11 20:39:07 provos Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.12 1998/08/21 22:36:11 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ u_long dehash;			/* size of hash table - 1 */
 				 & dehash)
 
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
-static void msdosfs_hashins __P((struct denode *));
+static int msdosfs_hashins __P((struct denode *));
 static void msdosfs_hashrem __P((struct denode *));
 
 /*ARGSUSED*/
@@ -114,7 +114,7 @@ msdosfs_hashget(dev, dirclust, diroff)
 	/* NOTREACHED */
 }
 
-static void
+static int
 msdosfs_hashins(dep)
 	struct denode *dep;
 {
@@ -122,11 +122,22 @@ msdosfs_hashins(dep)
 
 	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust,
 	    dep->de_diroffset)];
+
+	for (deq = *depp; deq; deq = deq->de_next) {
+		if (dep->de_dirclust == deq->de_dirclust &&
+		    dep->de_diroffset == deq->de_diroffset &&
+		    dep->de_dev == deq->de_dev &&
+		    deq->de_refcnt != 0) {
+			return (EEXIST);
+		}
+	}
+
 	if ((deq = *depp) != NULL)
 		deq->de_prev = &dep->de_next;
 	dep->de_next = deq;
 	dep->de_prev = depp;
 	*depp = dep;
+	return (0);
 }
 
 static void
@@ -134,6 +145,9 @@ msdosfs_hashrem(dep)
 	struct denode *dep;
 {
 	struct denode *deq;
+
+	if (dep->de_prev == NULL)
+	  return;
 
 	if ((deq = dep->de_next) != NULL)
 		deq->de_prev = dep->de_prev;
@@ -195,6 +209,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * entry that represented the file happens to be reused while the
 	 * deleted file is still open.
 	 */
+retry:
 	ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset);
 	if (ldep) {
 		*depp = ldep;
@@ -232,7 +247,16 @@ deget(pmp, dirclust, diroffset, depp)
 	 * need to it.
 	 */
 	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY, p);
-	msdosfs_hashins(ldep);
+	error = msdosfs_hashins(ldep);
+
+	if (error) {
+		vput (nvp);
+
+		if (error == EEXIST)
+			goto retry;
+
+		return (error);
+	}
 
 	ldep->de_pmp = pmp;
 	ldep->de_devvp = pmp->pm_devvp;
