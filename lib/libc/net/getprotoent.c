@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getprotoent.c,v 1.6 2004/10/17 20:24:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: getprotoent.c,v 1.7 2004/10/25 03:09:01 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ endprotoent_r(struct protoent_data *pd)
 	pd->stayopen = 0;
 }
 
-struct protoent *
+int
 getprotoent_r(struct protoent *pe, struct protoent_data *pd)
 {
 	char *p, *cp, **q, *endp;
@@ -74,10 +74,10 @@ getprotoent_r(struct protoent *pe, struct protoent_data *pd)
 	int serrno;
 
 	if (pd->fp == NULL && (pd->fp = fopen(_PATH_PROTOCOLS, "r" )) == NULL)
-		return (NULL);
+		return (-1);
 again:
 	if ((p = fgetln(pd->fp, &len)) == NULL)
-		return (NULL);
+		return (-1);
 	if (len == 0 || *p == '#' || *p == '\n')
 		goto again;
 	if (p[len-1] == '\n')
@@ -86,7 +86,7 @@ again:
 		len = cp - p;
 	cp = realloc(pd->line, len + 1);
 	if (cp == NULL)
-		return (NULL);
+		return (-1);
 	pd->line = pe->p_name = memcpy(cp, p, len);
 	cp[len] = '\0';
 	cp = strpbrk(cp, " \t");
@@ -109,7 +109,7 @@ again:
 			serrno = errno;
 			endprotoent_r(pd);
 			errno = serrno;
-			return (NULL);
+			return (-1);
 		}
 	}
 	q = pe->p_aliases = pd->aliases;
@@ -127,7 +127,7 @@ again:
 					serrno = errno;
 					endprotoent_r(pd);
 					errno = serrno;
-					return (NULL);
+					return (-1);
 				}
 				pd->maxaliases *= 2;
 				q = (char **)p + (q - pe->p_aliases);
@@ -140,7 +140,7 @@ again:
 		}
 	}
 	*q = NULL;
-	return (pe);
+	return (0);
 }
 
 struct protoent_data _protoent_data;	/* shared with getproto{,name}.c */
@@ -162,5 +162,7 @@ getprotoent(void)
 {
 	static struct protoent proto;
 
-	return getprotoent_r(&proto, &_protoent_data);
+	if (getprotoent_r(&proto, &_protoent_data) != 0)
+		return (NULL);
+	return (&proto);
 }

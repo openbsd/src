@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getprotoent.3,v 1.11 2004/10/17 20:24:23 millert Exp $
+.\"	$OpenBSD: getprotoent.3,v 1.12 2004/10/25 03:09:01 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,15 +46,15 @@
 .Fd #include <netdb.h>
 .Ft struct protoent *
 .Fn getprotoent "void"
-.Ft struct protoent *
+.Ft int
 .Fn getprotoent_r "struct protoent *protoent" "struct protoent_data *protoent_data"
 .Ft struct protoent *
 .Fn getprotobyname "const char *name"
-.Ft struct protoent *
+.Ft int
 .Fn getprotobyname_r "const char *name" "struct protoent *protoent" "struct protoent_data *protoent_data"
 .Ft struct protoent *
 .Fn getprotobynumber "int proto"
-.Ft struct protoent *
+.Ft int
 .Fn getprotobynumber_r "int proto" "struct protoent *protoent" "struct protoent_data *protoent_data"
 .Ft void
 .Fn setprotoent "int stayopen"
@@ -144,9 +144,23 @@ also take a pointer to a
 .Fa protoent
 structure which is used to store the results of the database lookup.
 .Sh RETURN VALUES
-Null pointer (0) returned on
-.Dv EOF
-or error.
+The
+.Fn getprotoent ,
+.Fn getprotobyport ,
+and
+.Fn getprotobyname
+functions return a pointer to a
+.Fa servent
+structure on success or a null pointer if end-of-file
+is reached or an error occurs.
+.Pp
+The
+.Fn getprotoent_r ,
+.Fn getprotobyport_r ,
+and
+.Fn getprotobyname_r
+functions return 0 on success or \-1 if end-of-file
+is reached or an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/protocols -compact
 .It Pa /etc/protocols

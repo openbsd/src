@@ -28,37 +28,37 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.8 2004/10/17 20:24:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.9 2004/10/25 03:09:01 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 
-struct servent *
+int
 getservbyname_r(const char *name, const char *proto, struct servent *se,
     struct servent_data *sd)
 {
-	struct servent *p;
 	char **cp;
+	int error;
 
 	setservent_r(sd->stayopen, sd);
-	while ((p = getservent_r(se, sd))) {
-		if (strcmp(name, p->s_name) == 0)
+	while ((error = getservent_r(se, sd)) == 0) {
+		if (strcmp(name, se->s_name) == 0)
 			goto gotname;
-		for (cp = p->s_aliases; *cp; cp++)
+		for (cp = se->s_aliases; *cp; cp++)
 			if (strcmp(name, *cp) == 0)
 				goto gotname;
 		continue;
 gotname:
-		if (proto == 0 || strcmp(p->s_proto, proto) == 0)
+		if (proto == 0 || strcmp(se->s_proto, proto) == 0)
 			break;
 	}
 	if (!sd->stayopen && sd->fp != NULL) {
 		fclose(sd->fp);
 		sd->fp = NULL;
 	}
-	return (p);
+	return (error);
 }
 
 struct servent *
@@ -67,5 +67,7 @@ getservbyname(const char *name, const char *proto)
 	extern struct servent_data _servent_data;
 	static struct servent serv;
 
-	return (getservbyname_r(name, proto, &serv, &_servent_data));
+	if (getservbyname_r(name, proto, &serv, &_servent_data) != 0)
+		return (NULL);
+	return (&serv);
 }

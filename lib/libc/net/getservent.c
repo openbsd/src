@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservent.c,v 1.8 2004/10/17 20:24:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: getservent.c,v 1.9 2004/10/25 03:09:01 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ endservent_r(struct servent_data *sd)
 	sd->stayopen = 0;
 }
 
-struct servent *
+int
 getservent_r(struct servent *se, struct servent_data *sd)
 {
 	char *p, *cp, **q, *endp;
@@ -74,10 +74,10 @@ getservent_r(struct servent *se, struct servent_data *sd)
 	int serrno;
 
 	if (sd->fp == NULL && (sd->fp = fopen(_PATH_SERVICES, "r" )) == NULL)
-		return (NULL);
+		return (-1);
 again:
 	if ((p = fgetln(sd->fp, &len)) == NULL)
-		return (NULL);
+		return (-1);
 	if (len == 0 || *p == '#' || *p == '\n')
 		goto again;
 	if (p[len-1] == '\n')
@@ -86,7 +86,7 @@ again:
 		len = cp - p;
 	cp = realloc(sd->line, len + 1);
 	if (cp == NULL)
-		return (NULL);
+		return (-1);
 	sd->line = se->s_name = memcpy(cp, p, len);
 	cp[len] = '\0';
 	p = strpbrk(cp, " \t");
@@ -111,7 +111,7 @@ again:
 			serrno = errno;
 			endservent_r(sd);
 			errno = serrno;
-			return (NULL);
+			return (-1);
 		}
 	}
 	q = se->s_aliases = sd->aliases;
@@ -130,7 +130,7 @@ again:
 				serrno = errno;
 				endservent_r(sd);
 				errno = serrno;
-				return (NULL);
+				return (-1);
 			}
 			sd->maxaliases *= 2;
 			q = (char **)p + (q - se->s_aliases);
@@ -142,7 +142,7 @@ again:
 			*cp++ = '\0';
 	}
 	*q = NULL;
-	return (se);
+	return (0);
 }
 
 struct servent_data _servent_data;	/* shared with getservby{name,port}.c */
@@ -164,5 +164,7 @@ getservent(void)
 {
 	static struct servent serv;
 
-	return getservent_r(&serv, &_servent_data);
+	if (getservent_r(&serv, &_servent_data) != 0)
+		return (NULL);
+	return (&serv);
 }

@@ -28,25 +28,25 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getprotoname.c,v 1.5 2004/10/17 20:24:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: getprotoname.c,v 1.6 2004/10/25 03:09:01 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 
-struct protoent *
+int
 getprotobyname_r(const char *name, struct protoent *pe,
     struct protoent_data *pd)
 {
-	struct protoent *p;
 	char **cp;
+	int error;
 
 	setprotoent_r(pd->stayopen, pd);
-	while ((p = getprotoent_r(pe, pd))) {
-		if (strcmp(p->p_name, name) == 0)
+	while ((error = getprotoent_r(pe, pd)) == 0) {
+		if (strcmp(pe->p_name, name) == 0)
 			break;
-		for (cp = p->p_aliases; *cp != 0; cp++)
+		for (cp = pe->p_aliases; *cp != 0; cp++)
 			if (strcmp(*cp, name) == 0)
 				goto found;
 	}
@@ -55,7 +55,7 @@ found:
 		fclose(pd->fp);
 		pd->fp = NULL;
 	}
-	return (p);
+	return (error);
 }
 
 struct protoent *
@@ -64,5 +64,7 @@ getprotobyname(const char *name)
 	extern struct protoent_data _protoent_data;
 	static struct protoent proto;
 
-	return getprotobyname_r(name, &proto, &_protoent_data);
+	if (getprotobyname_r(name, &proto, &_protoent_data) != 0)
+		return (NULL);
+	return (&proto);
 }

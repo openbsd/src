@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.20 2004/10/17 20:24:23 millert Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.21 2004/10/25 03:09:01 millert Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -238,10 +238,8 @@ struct rrsetinfo {
 };
 
 #ifndef POSIX_SOURCE
-struct __sFILE;
-
 struct servent_data {
-	struct __sFILE *fp;
+	void *fp;
 	char **aliases;
 	int maxaliases;
 	int stayopen;
@@ -249,7 +247,7 @@ struct servent_data {
 };
 
 struct protoent_data {
-	struct __sFILE *fp;
+	void *fp;
 	char **aliases;
 	int maxaliases;
 	int stayopen;
@@ -279,21 +277,21 @@ struct protoent	*getprotobyname(const char *);
 struct protoent	*getprotobynumber(int);
 struct protoent	*getprotoent(void);
 #ifndef POSIX_SOURCE
-struct protoent	*getprotobyname_r(const char *, struct protoent *,
+int		getprotobyname_r(const char *, struct protoent *,
 		    struct protoent_data *);
-struct protoent	*getprotobynumber_r(int, struct protoent *,
+int		getprotobynumber_r(int, struct protoent *,
 		    struct protoent_data *);
-struct protoent	*getprotoent_r(struct protoent *, struct protoent_data *);
+int		getprotoent_r(struct protoent *, struct protoent_data *);
 #endif
 struct servent	*getservbyname(const char *, const char *);
 struct servent	*getservbyport(int, const char *);
 struct servent	*getservent(void);
 #ifndef POSIX_SOURCE
-struct servent	*getservbyname_r(const char *, const char *, struct servent *,
+int		getservbyname_r(const char *, const char *, struct servent *,
 		    struct servent_data *);
-struct servent	*getservbyport_r(int, const char *, struct servent *,
+int		getservbyport_r(int, const char *, struct servent *,
 		    struct servent_data *);
-struct servent	*getservent_r(struct servent *, struct servent_data *);
+int		getservent_r(struct servent *, struct servent_data *);
 #endif
 void		herror(const char *);
 const char	*hstrerror(int);

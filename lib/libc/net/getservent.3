@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getservent.3,v 1.14 2004/10/17 20:24:23 millert Exp $
+.\"	$OpenBSD: getservent.3,v 1.15 2004/10/25 03:09:01 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,15 +46,15 @@
 .Fd #include <netdb.h>
 .Ft struct servent *
 .Fn getservent "void"
-.Ft struct servent *
+.Ft int
 .Fn getservent_r "struct servent *servent" "struct servent_data *servent_data"
 .Ft struct servent *
 .Fn getservbyname "const char *name" "const char *proto"
-.Ft struct servent *
+.Ft int
 .Fn getservbyname_r "const char *name" "const char *proto" "struct servent *servent" "struct servent_data *servent_data"
 .Ft struct servent *
 .Fn getservbyport "int port" "const char *proto"
-.Ft struct servent *
+.Ft int
 .Fn getservbyport_r "int port" "const char *proto" "struct servent *servent" "struct servent_data *servent_data"
 .Ft void
 .Fn setservent "int stayopen"
@@ -153,10 +153,24 @@ structure which is used to store the results of the database lookup.
 .Bl -tag -width /etc/services -compact
 .It Pa /etc/services
 .El
-.Sh DIAGNOSTICS
-Null pointer (0) returned on
-.Dv EOF
-or error.
+.Sh RETURN VALUES
+The
+.Fn getservent ,
+.Fn getservbyport ,
+and
+.Fn getservbyname
+functions return a pointer to a
+.Fa servent
+structure on success or a null pointer if end-of-file
+is reached or an error occurs.
+.Pp
+The
+.Fn getservent_r ,
+.Fn getservbyport_r ,
+and
+.Fn getservbyname_r
+functions return 0 on success or \-1 if end-of-file
+is reached or an error occurs.
 .Sh SEE ALSO
 .Xr getprotoent 3 ,
 .Xr services 5
