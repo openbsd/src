@@ -120,6 +120,7 @@
 ./usr/include/dev/i2o
 ./usr/include/dev/i2o/i2o.h
 ./usr/include/dev/i2o/iopio.h
+./usr/include/dev/i2o/ioprbsvar.h
 ./usr/include/dev/i2o/iopreg.h
 ./usr/include/dev/i2o/iopspvar.h
 ./usr/include/dev/i2o/iopvar.h
@@ -530,7 +531,6 @@
 ./usr/include/dev/sun/kbd_tables.h
 ./usr/include/dev/sun/kbd_xlate.h
 ./usr/include/dev/tc
-./usr/include/dev/tc/ascvar.h
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicvar.h
 ./usr/include/dev/tc/tcdevs.h
@@ -4326,9 +4326,9 @@
 ./usr/share/man/cat9/pgsignal.0
 ./usr/share/man/cat9/physio.0
 ./usr/share/man/cat9/pool.0
-./usr/share/man/cat9/pool_create.0
 ./usr/share/man/cat9/pool_destroy.0
 ./usr/share/man/cat9/pool_get.0
+./usr/share/man/cat9/pool_init.0
 ./usr/share/man/cat9/pool_prime.0
 ./usr/share/man/cat9/pool_put.0
 ./usr/share/man/cat9/pool_sethiwat.0

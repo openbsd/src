@@ -43,6 +43,7 @@
 ./bin/test
 ./dev
 ./dev/MAKEDEV
+./dev/altq
 ./dev/fd
 ./etc
 ./etc/afs
@@ -414,6 +415,7 @@
 ./usr/bin/ssh-agent
 ./usr/bin/ssh-keygen
 ./usr/bin/ssh-keyscan
+./usr/bin/string2key
 ./usr/bin/strings
 ./usr/bin/su
 ./usr/bin/sudo
@@ -1107,6 +1109,8 @@
 ./usr/libdata/perl5/warnings
 ./usr/libdata/perl5/warnings.pm
 ./usr/libdata/perl5/warnings/register.pm
+./usr/libdata/ssh
+./usr/libdata/ssh/Ssh.bin
 ./usr/libexec
 ./usr/libexec/afsd
 ./usr/libexec/atrun
