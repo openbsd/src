@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_var.h,v 1.5 1996/10/21 10:58:20 mickey Exp $	*/
+/*	$OpenBSD: ns_var.h,v 1.6 1996/10/21 11:07:12 mickey Exp $	*/
 
 #ifdef _KERNEL
 struct socket;
@@ -9,6 +9,7 @@ struct sockaddr_ns;
 struct mbuf;
 struct ns_addr;
 struct route;
+struct rtentry;
 struct ifnet_en;
 struct in_addr;
 struct sockaddr;
