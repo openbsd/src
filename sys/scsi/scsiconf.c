@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.21 1997/01/16 14:23:32 maja Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.22 1997/01/16 20:47:32 kstailey Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -107,14 +107,16 @@ scsiprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
+#ifndef __OpenBSD__
 	struct scsi_link *l = aux;
+#endif
 
 	/* only "scsibus"es can attach to "scsi"s; easy. */
 	if (pnp)
 		printf("scsibus at %s", pnp);
 
+#ifndef __OpenBSD__
 	/* don't print channel if the controller says there can be only one. */
-#ifdef 0
 	if (l->channel != SCSI_CHANNEL_ONLY_ONE)
 		printf(" channel %d", l->channel);
 #endif
