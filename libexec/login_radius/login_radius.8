@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_radius.8,v 1.5 2002/11/21 22:31:11 millert Exp $
+.\" $OpenBSD: login_radius.8,v 1.6 2003/03/06 20:19:52 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -48,7 +48,7 @@
 The
 .Nm
 utility contacts the
-.Xr radiusd 8
+.Nm radiusd
 daemon to authenticate a
 .Ar user .
 If no
@@ -59,7 +59,7 @@ When executed as the name
 .Pa login_ Ns Ar style ,
 .Nm
 will request
-.Xr radiusd 8
+.Nm radiusd
 use the authentication specified by
 .Ar style .
 .Pp
@@ -89,7 +89,7 @@ server shared_secret
 .Pp
 It is expected that rather than requesting the radius style directly
 (in which case the
-.Xr radiusd 8
+.Nm radiusd
 server uses a default style)
 that
 .Nm
@@ -105,7 +105,7 @@ to both of those names.
 Now when the user requests one of those authentication styles,
 .Nm
 will automatically forward the request to the remote
-.Xr radiusd 8
+.Nm radiusd
 and request it do the requested style of authentication.
 .Sh LOGIN.CONF VARIABLES
 The
