@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.2 1996/06/23 14:19:35 deraadt Exp $
+.\"	$OpenBSD: csh.1,v 1.3 1997/11/15 21:51:32 todd Exp $
 .\"	$NetBSD: csh.1,v 1.3 1995/03/21 09:03:33 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -222,7 +222,7 @@ The shell then executed the
 program with argument
 .I bill
 and went dormant waiting for it to complete.
-The mail program then read input from our terminal until we signalled
+The mail program then read input from our terminal until we signaled
 an end-of-file via typing a ^D after which the shell noticed
 that mail had completed
 and signaled us that it was ready to read from the terminal again by
@@ -953,8 +953,8 @@ more /etc/passwd
 .DE
 The
 .I more
-program pauses after each complete screenful and types `\-\-More\-\-'
-at which point you can hit a space to get another screenful, a return
+program pauses after each complete screen-full and types `\-\-More\-\-'
+at which point you can hit a space to get another screen full, a return
 to get another line, a `?' to get some help on other commands, or a `q' to end the
 .I more
 program.  You can also use more as a filter, i.e.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.1 1997/09/22 05:09:14 millert Exp $	*/
+/*	$OpenBSD: error.c,v 1.2 1997/11/15 21:51:28 todd Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.1 1997/09/22 05:09:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.2 1997/11/15 21:51:28 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -330,7 +330,7 @@ seterror(id, va_alist)
  *		  in bname
  *
  * This routine always resets or exits.  The flag haderr
- * is set so the routine who catches the unwind can propogate
+ * is set so the routine who catches the unwind can propagate
  * it if they want.
  *
  * Note that any open files at the point of error will eventually

@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.3 1997/07/25 18:58:17 mickey Exp $	*/
+/*	$OpenBSD: set.c,v 1.4 1997/11/15 21:51:30 todd Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: set.c,v 1.3 1997/07/25 18:58:17 mickey Exp $";
+static char rcsid[] = "$OpenBSD: set.c,v 1.4 1997/11/15 21:51:30 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ doset(v, t)
 	    cp = Strsave(value(vp));	/* get the old value back */
 
 	    /*
-	     * convert to cononical pathname (possibly resolving symlinks)
+	     * convert to canonical pathname (possibly resolving symlinks)
 	     */
 	    cp = dcanon(cp, cp);
 
@@ -746,7 +746,7 @@ balance(p, f, d)
 		break;
 	    case 1:		/* was already right heavy */
 		switch (p->v_right->v_bal) {
-		case 1:	/* sigle rotate */
+		case 1:	/* single rotate */
 		    pp->v_link[ff] = rleft(p);
 		    p->v_left->v_bal = 0;
 		    p->v_bal = 0;
@@ -784,7 +784,7 @@ balance(p, f, d)
 		    p->v_right->v_bal = 0;
 		    p->v_bal = 0;
 		    break;
-		case 0:	/* signle rotate */
+		case 0:	/* single rotate */
 		    pp->v_link[ff] = rright(p);
 		    p->v_right->v_bal = -1;
 		    p->v_bal = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.4 1997/07/25 18:58:04 mickey Exp $	*/
+/*	$OpenBSD: exec.c,v 1.5 1997/11/15 21:51:29 todd Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-static char rcsid[] = "$OpenBSD: exec.c,v 1.4 1997/07/25 18:58:04 mickey Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.5 1997/11/15 21:51:29 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -579,7 +579,7 @@ cont:
  * executable() examines the pathname obtained by concatenating dir and name
  * (dir may be NULL), and returns 1 either if it is executable by us, or
  * if dir_ok is set and the pathname refers to a directory.
- * This is a bit kludgy, but in the name of optimization...
+ * This is a bit kludgey, but in the name of optimization...
  */
 static int
 executable(dir, name, dir_ok)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.4 1997/07/25 18:58:19 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.5 1997/11/15 21:51:31 todd Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: time.c,v 1.4 1997/07/25 18:58:19 mickey Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.5 1997/11/15 21:51:31 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ prusage(r0, r1, e, b)
 		(void) fprintf(cshout, "%ld", r1->ru_oublock - r0->ru_oublock);
 		break;
 
-	    case 'r':		/* socket messages recieved */
+	    case 'r':		/* socket messages received */
 		(void) fprintf(cshout, "%ld", r1->ru_msgrcv - r0->ru_msgrcv);
 		break;
 
@@ -229,7 +229,7 @@ prusage(r0, r1, e, b)
 		(void) fprintf(cshout, "%ld", r1->ru_msgsnd - r0->ru_msgsnd);
 		break;
 
-	    case 'k':		/* number of signals recieved */
+	    case 'k':		/* number of signals received */
 		(void) fprintf(cshout, "%ld", r1->ru_nsignals-r0->ru_nsignals);
 		break;
 

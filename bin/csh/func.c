@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.6 1997/07/25 18:58:07 mickey Exp $       */
+/*    $OpenBSD: func.c,v 1.7 1997/11/15 21:51:30 todd Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.6 1997/07/25 18:58:07 mickey Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.7 1997/11/15 21:51:30 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -1417,7 +1417,7 @@ retry:
 /* This is the dreaded EVAL built-in.
  *   If you don't fiddle with file descriptors, and reset didfds,
  *   this command will either ignore redirection inside or outside
- *   its aguments, e.g. eval "date >x"  vs.  eval "date" >x
+ *   its arguments, e.g. eval "date >x"  vs.  eval "date" >x
  *   The stuff here seems to work, but I did it by trial and error rather
  *   than really knowing what was going on.  If tpgrp is zero, we are
  *   probably a background eval, e.g. "eval date &", and we want to
