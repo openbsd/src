@@ -1,8 +1,9 @@
-/*	$OpenBSD: cert.h,v 1.5 2000/06/08 20:49:44 niklas Exp $	*/
-/*	$EOM: cert.h,v 1.7 2000/05/19 05:47:52 angelos Exp $	*/
+/*	$OpenBSD: cert.h,v 1.6 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
+ * Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,7 +64,7 @@ struct cert_handler {
   void (*free_aca) (void *);
   int (*cert_obtain) (u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
   int (*cert_get_key) (void *, void *);
-  int (*cert_get_subject) (void *, u_int8_t **, u_int32_t *);
+  int (*cert_get_subjects) (void *, int *, u_int8_t ***, u_int32_t **);
 };
 
 /* the acceptable authority of cert request */
@@ -76,8 +77,9 @@ struct certreq_aca {
   void *data;			/* if NULL everything is acceptable */
 };
 
-struct cert_handler *cert_get (u_int16_t);
 struct certreq_aca *certreq_decode (u_int16_t, u_int8_t *, u_int32_t);
+void cert_free_subjects (int, u_int8_t **, u_int32_t *);
+struct cert_handler *cert_get (u_int16_t);
 int cert_init (void);
 
 #endif /* _CERT_H_ */

@@ -1,8 +1,8 @@
-/*	$OpenBSD: libcrypto.c,v 1.6 2000/04/07 22:06:20 niklas Exp $	*/
-/*	$EOM: libcrypto.c,v 1.13 2000/03/31 15:29:03 ho Exp $	*/
+/*	$OpenBSD: libcrypto.c,v 1.7 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$EOM: libcrypto.c,v 1.14 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
- * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -107,6 +107,7 @@ char *(*lc_X509_NAME_oneline) (X509_NAME *, char *, int);
 int (*lc_i2d_RSAPublicKey) (RSA *, unsigned char **);
 int (*lc_i2d_RSAPrivateKey) (RSA *, unsigned char **);
 int (*lc_i2d_X509) (X509 *, unsigned char **);
+int (*lc_i2d_X509_NAME) (X509_NAME *, unsigned char **);
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
 void (*lc_sk_X509_free) (STACK_OF (X509) *);
 STACK_OF (X509) *(*lc_sk_X509_new_null) ();
@@ -175,6 +176,7 @@ static struct dynload_script libcrypto_script[] = {
   SYMENTRY (i2d_RSAPublicKey),
   SYMENTRY (i2d_RSAPrivateKey),
   SYMENTRY (i2d_X509),
+  SYMENTRY (i2d_X509_NAME),
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
   SYMENTRY (sk_X509_free),
   SYMENTRY (sk_X509_new_null),

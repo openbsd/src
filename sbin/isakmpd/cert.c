@@ -1,5 +1,5 @@
-/*	$OpenBSD: cert.c,v 1.15 2000/06/08 20:51:55 niklas Exp $	*/
-/*	$EOM: cert.c,v 1.17 2000/05/17 16:46:35 angelos Exp $	*/
+/*	$OpenBSD: cert.c,v 1.16 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -66,7 +66,7 @@ struct cert_handler cert_handler[] = {
     x509_cert_init, x509_cert_get, x509_cert_validate, 
     x509_cert_insert, x509_cert_free,
     x509_certreq_validate, x509_certreq_decode, x509_free_aca,
-    x509_cert_obtain, x509_cert_get_key, x509_cert_get_subject
+    x509_cert_obtain, x509_cert_get_key, x509_cert_get_subjects
   },
 #endif
 #ifdef USE_KEYNOTE
@@ -75,7 +75,7 @@ struct cert_handler cert_handler[] = {
     keynote_cert_init, keynote_cert_get, keynote_cert_validate,
     keynote_cert_insert, keynote_cert_free,
     keynote_certreq_validate, keynote_certreq_decode, keynote_free_aca,
-    keynote_cert_obtain, keynote_cert_get_key, keynote_cert_get_subject
+    keynote_cert_obtain, keynote_cert_get_key, keynote_cert_get_subjects
   },
 #endif
 };
@@ -139,4 +139,15 @@ certreq_decode (u_int16_t type, u_int8_t *data, u_int32_t datalen)
   memcpy (ret, &aca, sizeof aca);
 
   return ret;
+}
+
+void
+cert_free_subjects (int n, u_int8_t **id, u_int32_t *len)
+{
+  int i;
+
+  for (i = 0; i < n; i++)
+    free (id[i]);
+  free (id);
+  free (len);
 }

@@ -1,9 +1,10 @@
-/*	$OpenBSD: x509.h,v 1.7 2000/06/08 20:49:44 niklas Exp $	*/
-/*	$EOM: x509.h,v 1.10 2000/05/19 05:47:53 angelos Exp $	*/
+/*	$OpenBSD: x509.h,v 1.8 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,8 +43,7 @@
 
 #define X509v3_RFC_NAME		1
 #define X509v3_DNS_NAME		2
-#define X509v3_IPV4_ADDR	7
-
+#define X509v3_IP_ADDR		7
 
 struct x509_attribval {
   char *type;
@@ -55,7 +55,6 @@ struct x509_attribval {
  * XXX We only support two names at the moment, as of ASN this can
  * be dynamic but we don't care for now.
  */
-
 struct x509_aca {
   struct x509_attribval name1;
   struct x509_attribval name2;
@@ -65,25 +64,24 @@ struct X509;
 
 /* Functions provided by cert handler.  */
 
-int x509_cert_init (void);
-void *x509_cert_get (u_int8_t *, u_int32_t);
-int x509_cert_validate (void *);
-void x509_cert_free (void *);
 int x509_certreq_validate (u_int8_t *, u_int32_t);
 void *x509_certreq_decode (u_int8_t *, u_int32_t);
-void x509_free_aca (void *);
-int x509_cert_obtain (u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
+void x509_cert_free (void *);
+void *x509_cert_get (u_int8_t *, u_int32_t);
 int x509_cert_get_key (void *, void *);
-int x509_cert_get_subject (void *, u_int8_t **, u_int32_t *);
+int x509_cert_get_subjects (void *, int *, u_int8_t ***, u_int32_t **);
+int x509_cert_init (void);
+int x509_cert_obtain (u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
+int x509_cert_validate (void *);
+void x509_free_aca (void *);
 
 /* Misc. X509 certificate functions.  */
 
 int x509_cert_insert (int, void *);
-int x509_read_from_dir (X509_STORE *, char *, int);
-
 int x509_cert_subjectaltname (X509 *cert, u_char **, u_int *);
 int x509_check_subjectaltname (u_char *, u_int, X509 *);
 X509 *x509_from_asn (u_char *, u_int);
-
 int x509_generate_kn(X509 *);
+int x509_read_from_dir (X509_STORE *, char *, int);
+
 #endif /* _X509_H_ */

@@ -1,8 +1,9 @@
-/*	$OpenBSD: policy.h,v 1.6 2000/06/08 20:50:52 niklas Exp $	*/
-/*	$EOM: policy.h,v 1.11 2000/05/21 04:24:54 angelos Exp $ */
+/*	$OpenBSD: policy.h,v 1.7 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
 
 /*
- * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,6 +101,7 @@ extern void *keynote_certreq_decode (u_int8_t *, u_int32_t);
 extern void keynote_free_aca (void *);
 extern int keynote_cert_obtain (u_int8_t *, size_t, void *,
 				u_int8_t **, u_int32_t *);
-extern int keynote_cert_get_subject (void *, u_int8_t **, u_int32_t *);
+extern int keynote_cert_get_subjects (void *, int *, u_int8_t ***,
+				      u_int32_t **);
 extern int keynote_cert_get_key (void *, void *);
 #endif /* _POLICY_H_ */
