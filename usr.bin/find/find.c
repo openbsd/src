@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.6 1999/10/03 19:07:35 millert Exp $	*/
+/*	$OpenBSD: find.c,v 1.7 1999/10/04 21:17:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: find.c,v 1.6 1999/10/03 19:07:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: find.c,v 1.7 1999/10/04 21:17:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -187,23 +187,12 @@ find_execute(plan, paths)
 		}
 
 		/*
-		 * Since fts does not chdir for the root node we
-		 * have to do this ourselves to make -execdir work.
-		 */
-		if (entry->fts_level == FTS_ROOTLEVEL)
-			chdir(entry->fts_accpath);
-		 
-		/*
 		 * Call all the functions in the execution plan until one is
 		 * false or all have been executed.  This is where we do all
 		 * the work specified by the user on the command line.
 		 */
 		for (p = plan; p && (p->eval)(p, entry); p = p->next)
 		    ;
-
-		/* Undo the chdir above to make fts happy. */
-		if (entry->fts_level == FTS_ROOTLEVEL)
-			fchdir(tree->fts_rfd);
 	}
 	(void)fts_close(tree);
 }
