@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugcrt.c,v 1.4 1998/12/15 06:12:50 smurph Exp $ */
+/*	$OpenBSD: bugcrt.c,v 1.5 1999/09/27 19:30:00 smurph Exp $ */
 #include <sys/types.h>
 #include <machine/prom.h>
 
@@ -25,10 +25,10 @@ start()
 
 	/* Do not use r10 to enable the SFU1. This wipes out 
 	   the netboot args.  Not cool at all... r25 seems free. */
-asm	("|	enable SFU1");
-asm	("	ldcr	r25,cr1");
-asm	("	xor	r25,r25,0x8");
-asm	("	stcr	r25,cr1");
+   asm("|	enable SFU1");
+   asm("	ldcr	r25,cr1");
+   asm("	xor	r25,r25,0x8");
+   asm("	stcr	r25,cr1");
 
 	bugargs.dev_lun = dev_lun;
 	bugargs.ctrl_lun = ctrl_lun;
@@ -41,12 +41,41 @@ asm	("	stcr	r25,cr1");
 	bugargs.nbarg_start = nbarg_start;
 	bugargs.nbarg_end = nbarg_end;
 	*bugargs.arg_end = 0;
-
-	memset(&edata, 0, ((int)&end - (int)&edata));
-
+/*
 	id = mvmeprom_brdid();
 	bugargs.cputyp = id->model;
-
+*/	
+   /* 
+    * Initialize PSR and CMMU to a known, stable state. 
+    * This has to be done early for MVME197.
+    * Per EB162 mc88110 engineering bulletin.
+    */
+   /*
+   if (bugargs.cputyp == 0x197) {
+      asm("|	init MVME197");
+      asm("|	1. PSR");
+      asm("or.u   r2,r0,0xA200");
+      asm("or     r2,r2,0x03E2");
+      asm("stcr   r2,cr1");
+      asm("|	2. ICTL");
+      asm("or     r2,r0,r0");
+      asm("or     r2,r2,0x8000");
+      asm("or     r2,r2,0x0040");
+      asm("stcr   r2,cr26");
+      asm("|	3. DCTL");
+      asm("or     r2,r0,r0");
+      asm("or     r2,r2,0x2000");
+      asm("or     r2,r2,0x0040");
+      asm("stcr   r2,cr41");
+      asm("|	4. init cache");
+      asm("or     r2,r0,0x01");
+      asm("stcr   r2,cr25");
+      asm("stcr   r2,cr40");
+   }
+   */
+   memset(&edata, 0, ((int)&end - (int)&edata));
+   
+   asm	("|	main()");
 	main();
 	mvmeprom_return();
 	/* NOTREACHED */

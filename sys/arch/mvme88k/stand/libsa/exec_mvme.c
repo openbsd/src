@@ -55,6 +55,10 @@ struct kernel {
 } kernel;
 
 #define RB_NOSYM 0x400
+#define RB_MULTI 0x4000
+#define RB_EXTRA 0x8000
+#define RB_ASKKERN 0x0010  /* ask kernel name  */
+
 /*ARGSUSED*/
 void
 exec_mvme(file, flag)
@@ -69,10 +73,11 @@ exec_mvme(file, flag)
 	register char *cp;
 	register int *ip;
 	int n;
+   int bootdev;
 
-#ifdef	DEBUG
-	printf("exec_mvme: file=%s flag=0x%x\n", file, flag);
-#endif
+   if (flag & RB_EXTRA) {
+   	printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, bugargs.cputyp);
+   }
 
 	io = open(file, 0);
 	if (io < 0)
@@ -201,8 +206,9 @@ exec_mvme(file, flag)
 	printf("Controler Address @ %x ...\n", bugargs.ctrl_addr);
 	if (flag & RB_HALT) mvmeprom_return();
     
-/*	(addr)(flag, 0, kernel.esym, kernel.smini, kernel.emini);*/
-	(*entry)(flag, 	bugargs.ctrl_addr, cp, kernel.smini, kernel.emini);
+	bootdev = (bugargs.ctrl_lun << 8) | (bugargs.dev_lun & 0xFF);
+
+   (*entry)(flag,	bugargs.ctrl_addr, cp, kernel.smini, kernel.emini, bootdev, bugargs.cputyp);
 	printf("exec: kernel returned!\n");
 	return;
 

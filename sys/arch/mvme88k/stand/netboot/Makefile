@@ -1,7 +1,8 @@
 
-#	$OpenBSD: Makefile,v 1.6 1999/05/29 04:41:48 smurph Exp $
+#	$OpenBSD: Makefile,v 1.7 1999/09/27 19:30:01 smurph Exp $
 
-RELOC=0xAF0000
+# 8Meg - 64K
+RELOC=0x7F0000
 SIZE?=	size
 STRIP?= strip
 
@@ -10,7 +11,7 @@ DEFS= -DSUN_BOOTPARAMS
 #-DNETIF_DEBUG
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${S} -I${S}/lib/libsa
-CFLAGS=	-O2 ${DEFS} ${INCPATH} ${COPTS}
+CFLAGS=-O2 ${DEFS} ${INCPATH} ${COPTS}
 CLEANFILES+=netboot netboot.bin
 
 .include "${S}/arch/mvme88k/stand/bugcrt/Makefile.inc"
@@ -19,7 +20,8 @@ CLEANFILES+=netboot netboot.bin
 .include "${S}/arch/mvme88k/stand/libz/Makefile.inc"
 
 SRCS=   boot.c conf.c version.c devopen.c dev_net.c
-SRCS+=	if_ie.c if_le.c
+SRCS+=	if_ie.c 
+#SRCS+=  if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS= ${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
 LDFLAGS+= -s -N -T ${RELOC} 

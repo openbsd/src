@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.1 1998/08/22 08:08:21 smurph Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.2 1999/09/27 19:30:01 smurph Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -43,18 +43,40 @@
 #define KERNEL_NAME "bsd"
 #define RB_NOSYM 0x400
 
+#define	RB_AUTOBOOT	0	/* flags for system auto-booting itself */
+
+#if 0
+#define	RB_ASKNAME	0x0001	/* ask for file name to reboot from */
+#define	RB_SINGLE	0x0002	/* reboot to single user only */
+#define	RB_NOSYNC	0x0004	/* dont sync before reboot */
+#define	RB_HALT		0x0008	/* don't reboot, just halt */
+#define	RB_INITNAME	0x0010	/* name given for /etc/init (unused) */
+#define	RB_DFLTROOT	0x0020	/* use compiled-in rootdev */
+#define	RB_KDB		0x0040	/* give control to kernel debugger */
+#define	RB_RDONLY	0x0080	/* mount root fs read-only */
+#define	RB_DUMP		0x0100	/* dump kernel memory before reboot */
+#define	RB_MINIROOT	0x0200	/* mini-root present in memory at boot time */
+#define	RB_CONFIG	0x0400	/* change configured devices */
+#define	RB_TIMEBAD	0x0800	/* don't call resettodr() in boot() */
+#define	RB_POWERDOWN	0x1000	/* attempt to power down machine */
+#define	RB_SERCONS	0x2000	/* use serial console if available */
+#endif 
+
 struct flags {
 	char c;
 	short bit;
 } bf[] = {
-	{ 'a', RB_ASKNAME },
+	{ 'a', RB_ASKNAME }, /* ask root */
 	{ 'b', RB_HALT },
 	{ 'c', RB_CONFIG },
-	{ 'y', RB_NOSYM },
 	{ 'd', RB_KDB },
+	{ 'e', 0x4000 },  /* spin slave cpus  */
+	{ 'f', 0x0010 },  /* ask kernel name  */
 	{ 'm', RB_MINIROOT },
 	{ 'r', RB_DFLTROOT },
 	{ 's', RB_SINGLE },
+	{ 'x', 0x8000 },  /* extra boot debug */
+	{ 'y', RB_NOSYM },
 };
 
 int
