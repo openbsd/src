@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.69 2003/06/21 09:07:01 djm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.70 2003/06/23 02:33:39 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -394,6 +394,15 @@ void
 pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 {
 	if (rulequeue != NULL) {
+		if (rule->states <= 0) {
+			/*
+			 * XXX - we need to remove the table *before* detaching
+			 * the rule to make sure the table code does not delete
+			 * the anchor under our feet.
+			 */
+			pf_tbladdr_remove(&rule->src.addr);
+			pf_tbladdr_remove(&rule->dst.addr);
+		}
 		TAILQ_REMOVE(rulequeue, rule, entries);
 		rule->entries.tqe_prev = NULL;
 		rule->nr = -1;
@@ -404,8 +413,10 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		return;
 	pf_dynaddr_remove(&rule->src.addr);
 	pf_dynaddr_remove(&rule->dst.addr);
-	pf_tbladdr_remove(&rule->src.addr);
-	pf_tbladdr_remove(&rule->dst.addr);
+	if (rulequeue == NULL) {
+		pf_tbladdr_remove(&rule->src.addr);
+		pf_tbladdr_remove(&rule->dst.addr);
+	}
 	pf_empty_pool(&rule->rpool.list);
 	pool_put(&pf_rule_pl, rule);
 }
