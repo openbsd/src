@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.4 1997/08/08 21:46:49 niklas Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.5 1997/09/29 18:55:13 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1996/09/30 16:34:22 ws Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #define	NMBRPART	4		/* # of partitions in MBR */
 #define	MBRMAGICOFF	510		/* Offset of magic number */
 #define	MBRMAGIC	0xaa55		/* Actual magic number */
+#define DOSMBR_SIGNATURE MBRMAGIC
 
 struct mbr_partition {
 	unsigned char	mbr_flag;	/* default boot flag */
@@ -85,6 +86,7 @@ struct mbr_partition {
 #define DOSPTYP_EXTEND	0x05		/* Extended; contains sub-partitions */
 #define	DOSPTYP_386BSD	MBR_NETBSD
 #define DOSPTYP_OPENBSD     0xa6            /* OpenBSD partition type */
+#define DOSACTIVE	0x80
 
 struct cpu_disklabel {
 	int cd_start;		/* Offset to NetBSD partition in blocks */
