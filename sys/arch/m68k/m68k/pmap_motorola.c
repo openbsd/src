@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.32 2003/12/26 18:54:24 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.33 2004/01/01 01:12:54 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1537,29 +1537,6 @@ pmap_extract(pmap, va, pap)
 }
 
 /*
- * pmap_copy:		[ INTERFACE ]
- *
- *	Copy the mapping range specified by src_addr/len
- *	from the source map to the range dst_addr/len
- *	in the destination map.
- *
- *	This routine is only advisory and need not do anything.
- */
-void
-pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	pmap_t		dst_pmap;
-	pmap_t		src_pmap;
-	vaddr_t		dst_addr;
-	vsize_t		len;
-	vaddr_t		src_addr;
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW,
-	    ("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
-	    dst_pmap, src_pmap, dst_addr, len, src_addr));
-}
-
-/*
  * pmap_collect:		[ INTERFACE ]
  *
  *	Garbage collects the physical map system for pages which are no
@@ -1896,22 +1873,6 @@ pmap_is_modified(pg)
 	return(pmap_testbit(pg, PG_M));
 }
 
-/*
- * pmap_phys_address:		[ INTERFACE ]
- *
- *	Return the physical address corresponding to the specified
- *	cookie.  Used by the device pager to decode a device driver's
- *	mmap entry point return value.
- *
- *	Note: no locking is necessary in this function.
- */
-paddr_t
-pmap_phys_address(ppn)
-	int ppn;
-{
-	return(m68k_ptob(ppn));
-}
-
 #ifdef M68K_MMU_HP
 /*
  * pmap_prefer:			[ INTERFACE ]
@@ -2138,7 +2099,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 */
 
 	pv = pg_to_pvh(pg);
-	ste = ST_ENTRY_NULL;
 	s = splvm();
 
 	/*
@@ -2300,8 +2260,8 @@ pmap_testbit(pg, bit)
 	pt_entry_t *pte;
 	int s;
 
-	pv = pg_to_pvh(pg);
 	s = splvm();
+	pv = pg_to_pvh(pg);
 
 	/*
 	 * Check saved info first
@@ -2361,8 +2321,8 @@ pmap_changebit(pg, set, mask)
 	PMAP_DPRINTF(PDB_BITS,
 	    ("pmap_changebit(%lx, %x, %x)\n", pg, set, mask));
 
-	pv = pg_to_pvh(pg);
 	s = splvm();
+	pv = pg_to_pvh(pg);
 
 	/*
 	 * Clear saved attributes (modify, reference)
