@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.519 2002/06/06 19:31:51 niklas Exp $
+	$OpenBSD: pcidevs,v 1.520 2002/06/06 20:50:16 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1710,6 +1710,16 @@ product NVIDIA GEFORCE2MX_100	0x0111	GeForce2 MX 100
 product NVIDIA GEFORCE2GO	0x0112	GeForce2 Go
 product NVIDIA GEFORCE2GTS	0x0150	GeForce2 GTS
 product NVIDIA GEFORCE2ULTRA	0x0152	GeForce2 Ultra
+product NVIDIA GEFORCE2_11	0x01a0	GeForce2 Crush11
+product NVIDIA NFORCE_PCHB	0x01a4	nForce PCI Host
+product NVIDIA NFORCE_DDR	0x01ab	nForce 420 DDR
+product NVIDIA NFORCE_MEM	0x01ac	nForce 220/420
+product NVIDIA NFORCE_MEM1	0x01ad	nForce 220/420
+product NVIDIA NFORCE_ISA	0x01b2	nForce PCI-ISA
+product NVIDIA NFORCE_SMB	0x01b4	nForce SMBus
+product NVIDIA NFORCE_AGP	0x01b7	nForce PCI-AGP
+product NVIDIA NFORCE_PPB	0x01b8	nForce PCI-PCI
+product NVIDIA NFORCE_IDE	0x01bc	nForce IDE
 
 /* Oak Technologies products */
 product OAKTECH OTI1007		0x0107	OTI107
