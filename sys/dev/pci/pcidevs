@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.782 2004/10/22 05:23:24 jsg Exp $
+$OpenBSD: pcidevs,v 1.783 2004/10/25 01:54:06 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2084,6 +2084,7 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* Ralink Technology Corporation */
 product RALINK RT2460A		0x0101	RT2460A
+product RALINK RT2560		0x0201	RT2560
 
 /* Realtek (Creative Labs?) products */
 product REALTEK RT8029		0x8029	8029
@@ -2349,7 +2350,9 @@ product TI PCI4451_FW		0x8027	PCI4451 FireWire
 product TI PCI4510_FW		0x8029	PCI4510 FireWire
 product TI PCI4520_FW		0x802A	PCI4520 FireWire
 product TI PCI7410_FW		0x802B	PCI7(4-6)10 FireWire
-product TI DWL520P		0x8400	DWL-520+
+product TI ACX100A		0x8400	ACX100A
+product TI ACX100B		0x8401	ACX100B
+product TI ACX111		0x9066	ACX111
 product TI PCI1130		0xac12	PCI1130 CardBus
 product TI PCI1031		0xac13	PCI1031 PCMCIA 
 product TI PCI1131		0xac15	PCI1131 CardBus
