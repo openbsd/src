@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.2 2004/07/13 22:21:11 jfb Exp $	*/
+/*	$OpenBSD: buf.c,v 1.3 2004/09/27 13:29:27 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -88,7 +88,7 @@ cvs_buf_alloc(size_t len, u_int flags)
 		free(b);
 		return (NULL);
 	}
-	memset(b->cb_buf, 0, sizeof(b->cb_buf));
+	memset(b->cb_buf, 0, len);
 
 	b->cb_flags = flags;
 	b->cb_size = len;
