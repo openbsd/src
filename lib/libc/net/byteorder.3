@@ -1,4 +1,4 @@
-.\"	$OpenBSD: byteorder.3,v 1.9 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: byteorder.3,v 1.10 2003/09/21 10:50:15 fgsch Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,14 +35,19 @@
 .Nm htons ,
 .Nm ntohl ,
 .Nm ntohs ,
+.Nm htobe64 ,
 .Nm htobe32 ,
 .Nm htobe16 ,
+.Nm betoh64 ,
 .Nm betoh32 ,
 .Nm betoh16 ,
+.Nm htole64 ,
 .Nm htole32 ,
 .Nm htole16 ,
+.Nm letoh64 ,
 .Nm letoh32 ,
 .Nm letoh16 ,
+.Nm swap64 ,
 .Nm swap32 ,
 .Nm swap16
 .Nd convert values between different byte orderings
@@ -57,28 +62,38 @@
 .Fn ntohl "u_int32_t net32"
 .Ft u_int16_t
 .Fn ntohs "u_int16_t net16"
+.Ft u_int64_t
+.Fn htobe64 "u_int64_t host64"
 .Ft u_int32_t
 .Fn htobe32 "u_int32_t host32"
 .Ft u_int16_t
 .Fn htobe16 "u_int16_t host16"
+.Ft u_int64_t
+.Fn betoh64 "u_int64_t big64"
 .Ft u_int32_t
 .Fn betoh32 "u_int32_t big32"
 .Ft u_int16_t
 .Fn betoh16 "u_int16_t big16"
+.Ft u_int64_t
+.Fn htole64 "u_int64_t host64"
 .Ft u_int32_t
 .Fn htole32 "u_int32_t host32"
 .Ft u_int16_t
 .Fn htole16 "u_int16_t host16"
+.Ft u_int64_t
+.Fn letoh64 "u_int64_t little64"
 .Ft u_int32_t
 .Fn letoh32 "u_int32_t little32"
 .Ft u_int16_t
 .Fn letoh16 "u_int16_t little16"
+.Ft u_int64_t
+.Fn swap64 "u_int32_t val64"
 .Ft u_int32_t
 .Fn swap32 "u_int32_t val32"
 .Ft u_int16_t
 .Fn swap16 "u_int16_t val16"
 .Sh DESCRIPTION
-These routines convert 16- and 32-bit quantities between different
+These routines convert 16, 32 and 64-bit quantities between different
 byte orderings.
 The
 .Dq swap
@@ -117,6 +132,8 @@ Short (16-bit, used in conjunction with forms involving
 16-bit.
 .It 32
 32-bit.
+.It 64
+64-bit.
 .El
 .Pp
 The swap functions are of the form: swap{size}.
@@ -149,7 +166,7 @@ The functions involving either
 or
 .Dq swap
 use the numbers
-16 and 32 for specifying the bitwidth of the quantities they operate on.
+16, 32 and 64 for specifying the bitwidth of the quantities they operate on.
 Currently all supported architectures are either big- or little-endian
 so either the
 .Dq be
