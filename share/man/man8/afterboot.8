@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.94 2004/07/08 11:02:03 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.95 2004/07/09 19:01:45 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -406,6 +406,21 @@ to
 .Pa master
 and editing it and creating other maps as needed.
 Alternatively, you can get your maps with YP.
+.Ss Clock synchronisation
+In order to make sure the system clock is synchronised
+to that of a publicly accessible NTP server,
+make sure that
+.Pa /etc/rc.conf.local
+contains the following:
+.Pp
+.Dl ntpd_flags=\&"\&"
+.Pp
+See
+.Xr ntpd 8 ,
+.Xr rdate 8 ,
+and
+.Xr timed 8
+for more information on setting the system's date.
 .Sh CHANGING /etc FILES
 The system should be usable now, but you may wish to do more customizing,
 such as adding users, etc.
@@ -879,13 +894,16 @@ boot time in the kernel image.
 .Xr named 8 ,
 .Xr netstart 8 ,
 .Xr newaliases 8 ,
+.Xr ntpd 8 ,
 .Xr portmap 8 ,
 .Xr rbootd 8 ,
 .Xr rc 8 ,
+.Xr rdate 8 ,
 .Xr rmt 8 ,
 .Xr route 8 ,
 .Xr sudo 8 ,
 .Xr telnetd 8 ,
+.Xr timed 8 ,
 .Xr umount 8 ,
 .Xr vipw 8 ,
 .Xr yp 8 ,
