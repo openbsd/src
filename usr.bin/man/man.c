@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.7 1998/03/09 23:20:13 millert Exp $	*/
+/*	$OpenBSD: man.c,v 1.8 1998/04/25 00:25:37 millert Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.7 1998/03/09 23:20:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.8 1998/04/25 00:25:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,8 @@ static char rcsid[] = "$OpenBSD: man.c,v 1.7 1998/03/09 23:20:13 millert Exp $";
 #include "pathnames.h"
 
 int f_all, f_where;
+
+extern char *__progname;
 
 static void	 build_page __P((char *, char **));
 static void	 cat __P((char *));
@@ -757,7 +759,7 @@ cleanup()
 static void
 usage()
 {
-	(void)fprintf(stderr,
-    "usage: man [-achw] [-C file] [-M path] [-m path] [section] title ...\n");
+	(void)fprintf(stderr, "usage: %s [-achw] [-C file] [-M path] [-m path] "
+	    "[-s section] [-S subsection] [section] title ...\n", __progname);
 	exit(1);
 }
