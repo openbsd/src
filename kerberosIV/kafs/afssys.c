@@ -1,8 +1,8 @@
-/*	$OpenBSD: afssys.c,v 1.4 1997/12/12 11:46:31 art Exp $	*/
-/* $KTH: afssys.c,v 1.53 1997/05/04 02:30:41 assar Exp $ */
+/*	$OpenBSD: afssys.c,v 1.5 1998/08/12 23:49:02 art Exp $	*/
+/*	$KTH: afssys.c,v 1.57 1998/05/09 17:19:03 joda Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -40,6 +40,8 @@
  */
 
 #include "kafs_locl.h"
+
+int _kafs_debug;
 
 #define NO_ENTRY_POINT		0
 #define SINGLE_ENTRY_POINT	1

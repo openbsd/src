@@ -1,8 +1,8 @@
-/*	$OpenBSD: common.c,v 1.4 1998/03/24 03:05:50 art Exp $	*/
-/* $KTH: common.c,v 1.3 1997/11/03 20:35:24 bg Exp $ */
+/*	$OpenBSD: common.c,v 1.5 1998/08/12 23:49:04 art Exp $	*/
+/*	$KTH: common.c,v 1.10 1998/04/04 13:08:31 assar Exp $	*/
 
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -40,6 +40,7 @@
  */
 
 #include "kafs_locl.h"
+#include <resolve.h>
 
 #define AUTH_SUPERUSER "afs"
 
@@ -76,14 +77,31 @@ kafs_settoken(const char *cell, uid_t uid, CREDENTIALS *c)
      */
     ct.AuthHandle = c->kvno;
     memcpy (ct.HandShakeKey, c->session, sizeof(c->session));
-    ct.ViceId = uid;	/* is this always valid? */
-    ct.BeginTimestamp = 1 + c->issue_date;
+    ct.ViceId = uid;
+    ct.BeginTimestamp = c->issue_date;
     ct.EndTimestamp = krb_life_to_time(c->issue_date, c->lifetime);
+    if(ct.EndTimestamp < time(NULL))
+	return 0; /* don't store tokens that has expired (and possibly
+		     overwriting valid tokens)*/
 
 #define ODD(x) ((x) & 1)
-    /* If we don't know the numerical ID lifetime should be even? */
-    if (uid == 0 && ODD(ct.EndTimestamp - ct.BeginTimestamp))
-	ct.BeginTimestamp--;
+    /* According to Transarc conventions ViceId is valid iff
+     * (EndTimestamp - BeginTimestamp) is odd. By decrementing EndTime
+     * the transformations:
+     *
+     * (issue_date, life) -> (StartTime, EndTime) -> (issue_date, life)
+     * preserves the original values.
+     */
+    if (uid != 0)		/* valid ViceId */
+      {
+	if (!ODD(ct.EndTimestamp - ct.BeginTimestamp))
+	  ct.EndTimestamp--;
+      }
+    else			/* not valid ViceId */
+      {
+	if (ODD(ct.EndTimestamp - ct.BeginTimestamp))
+	  ct.EndTimestamp--;
+      }
 
     t = buf;
     /*
@@ -127,11 +145,10 @@ kafs_settoken(const char *cell, uid_t uid, CREDENTIALS *c)
     return ret;
 }
 
-#if 0
 /* Try to get a db-server for an AFS cell from a AFSDB record */
 
 static int
-dns_find_cell(const char *cell, char *dbserver)
+dns_find_cell(const char *cell, char *dbserver, size_t len)
 {
     struct dns_reply *r;
     int ok = -1;
@@ -140,8 +157,8 @@ dns_find_cell(const char *cell, char *dbserver)
 	struct resource_record *rr = r->head;
 	while(rr){
 	    if(rr->type == T_AFSDB && rr->u.afsdb->preference == 1){
-		strncpy(dbserver, rr->u.afsdb->domain, MAXHOSTNAMELEN);
-		dbserver[MaxHostNameLen - 1] = 0;
+		strncpy(dbserver, rr->u.afsdb->domain, len);
+		dbserver[len - 1] = '\0';
 		ok = 0;
 		break;
 	    }
@@ -151,7 +168,6 @@ dns_find_cell(const char *cell, char *dbserver)
     }
     return ok;
 }
-#endif
 
 
 /*
@@ -266,21 +282,17 @@ realm_of_cell(kafs_data *data, const char *cell, char **realm)
 		  break;	/* No '#', give up */
 		p++;
 		if (buf[strlen(buf) - 1] == '\n')
-		  buf[strlen(buf) - 1] = 0;
+		    buf[strlen(buf) - 1] = '\0';
 		*realm = (*data->get_realm)(data, p);
-		if (*realm && **realm != 0)
+		if (*realm && **realm != '\0')
 		  ret = 0;
 		break;		/* Won't try any more */
 	      }
 	  }
 	fclose(F);
       }
-#if 0
-    if (realm == NULL) {
-	if (dns_find_cell(cell, buf) == 0)
-	    realm = krb_realmofhost(buf);
-    }
-#endif
+    if (*realm == NULL && dns_find_cell(cell, buf, sizeof(buf)) == 0)
+	*realm = strdup(krb_realmofhost(buf));
     return ret;
 }
 
@@ -341,11 +353,10 @@ _kafs_get_cred(kafs_data *data,
 	if (ret)
 	    ret = (*data->get_cred)(data, AUTH_SUPERUSER, "", vl_realm, c);
 	free(vl_realm);
-	vl_realm = NULL;
 	if (ret == 0) return 0;
     }
     
-    if (lrealm != NULL)
+    if (lrealm)
 	ret = (*data->get_cred)(data, AUTH_SUPERUSER, cell, lrealm, c);
     return ret;
 }
