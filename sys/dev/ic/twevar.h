@@ -1,4 +1,4 @@
-/*	$OpenBSD: twevar.h,v 1.1 2000/09/15 16:56:13 mickey Exp $	*/
+/*	$OpenBSD: twevar.h,v 1.2 2001/02/19 20:48:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -46,6 +46,7 @@ struct twe_ccb {
 	void			*ccb_data;
 	void			*ccb_realdata;
 	bus_dmamap_t		ccb_dmamap;
+	bus_dma_segment_t	ccb_2bseg;
 };
 
 typedef TAILQ_HEAD(twe_queue_head, twe_ccb)	twe_queue_head;
@@ -61,6 +62,7 @@ struct twe_softc {
 
 	void *sc_cmds;
 	bus_dmamap_t	sc_cmdmap;
+	bus_dma_segment_t sc_cmdseg;
 	struct twe_ccb	sc_ccbs[TWE_MAXCMDS];
 	twe_queue_head	sc_free_ccb;
 	twe_queue_head	sc_ccbq;
