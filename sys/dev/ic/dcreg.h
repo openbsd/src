@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.22 2002/03/14 01:26:54 millert Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.23 2002/04/16 21:29:54 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1008,6 +1008,9 @@ extern void dc_attach(struct dc_softc *);
 extern int dc_detach(struct dc_softc *);
 extern int dc_intr(void *);
 extern void dc_reset(struct dc_softc *);
+extern void dc_eeprom_width(struct dc_softc *);
+extern void dc_read_srom(struct dc_softc *, int);
+extern void dc_parse_21143_srom(struct dc_softc *);
 
 #if BYTE_ORDER == BIG_ENDIAN
 #define	DC_SP_FIELD_C(x)	((x) << 16)

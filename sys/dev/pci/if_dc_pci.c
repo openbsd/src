@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.30 2002/04/01 18:41:47 nate Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.31 2002/04/16 21:29:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -105,10 +105,6 @@ struct dc_type dc_devs[] = {
 int dc_pci_match(struct device *, void *, void *);
 void dc_pci_attach(struct device *, struct device *, void *);
 void dc_pci_acpi(struct device *, void *);
-
-extern void dc_eeprom_width(struct dc_softc *);
-extern void dc_read_srom(struct dc_softc *, int);
-extern void dc_parse_21143_srom(struct dc_softc *);
 
 /*
  * Probe for a 21143 or clone chip. Check the PCI vendor and device
