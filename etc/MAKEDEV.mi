@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.14 2002/01/08 03:26:04 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.15 2002/01/08 05:10:38 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -156,6 +156,7 @@ _dl({-std-},{-std-},
 {-wdt-},{-wdt0-},
 {-xfs-},{-xfs0-},
 {-au-},{-audio0-},
+{-speak-},{-speaker-},
 {-asc-},{-asc0-},
 {-music-},{-music0-},
 {-radio-},{-radio0-},
@@ -560,7 +561,7 @@ _mkdev(altq,altq,{-RMlist="mkdir -p altq;$RMlist"
 		U=Add($U,1)
 	done-})dnl
 __devitem(speak,speaker,pc speaker)dnl
-_mcdev(speak,speaker,speaker,{-major_speak_c-},600)dnl
+_mkdev(speak,speaker,{-M speaker c major_speak_c 0 600-})dnl
 __devitem(kbd,kbd,keyboard (provides events, for X11))dnl
 _cdev(kbd,kbd,{-major_kbd_c-},0,600)dnl
 __devitem(kbd_atari,kbd,Atari keyboard)dnl
@@ -604,6 +605,7 @@ __devitem(pci,pci,PCI bus device)dnl
 _mkdev(pci,pci,{-M pci c major_pci_c 0 664-},664)dnl
 __devitem(adb,adb,Apple Desktop bus event interface)dnl
 _mkdev(adb,adb,{-M adb c major_adb_c 0-})dnl
+__devitem(pdc,pdc,PDC device)dnl
 _mkdev(local,local,{-test -s $T.local && sh $T.local-},666)dnl
 dnl
 divert(1)dnl
