@@ -940,7 +940,8 @@ void *ffetarget_memcpy_ (void *dst, void *src, size_t len);
 #define ffetarget_convert_complex1_integer(res,l) \
   ({ REAL_VALUE_TYPE resi, resr; \
      ffetargetInteger1 lf = (l); \
-     REAL_VALUE_FROM_INT (resr, (long) lf, (long) ((lf < 0) ? -1 : 0)); \
+     REAL_VALUE_FROM_INT (resr, (long) lf, (long) ((lf < 0) ? -1 : 0), \
+			  XFmode); \
      resi = dconst0; \
      REAL_VALUE_TO_TARGET_SINGLE (resr, (res)->real); \
      REAL_VALUE_TO_TARGET_SINGLE (resi, (res)->imaginary); \
@@ -992,7 +993,8 @@ void *ffetarget_memcpy_ (void *dst, void *src, size_t len);
 #define ffetarget_convert_complex2_integer(res,l) \
   ({ REAL_VALUE_TYPE resi, resr; \
      ffetargetInteger1 lf = (l); \
-     REAL_VALUE_FROM_INT (resr, (long) lf, (long) ((lf < 0) ? -1 : 0)); \
+     REAL_VALUE_FROM_INT (resr, (long) lf, (long) ((lf < 0) ? -1 : 0), \
+			  XFmode); \
      resi = dconst0; \
      REAL_VALUE_TO_TARGET_DOUBLE (resr, (long *) &((res)->real.v[0])); \
      REAL_VALUE_TO_TARGET_DOUBLE (resi, (long *) &((res)->imaginary.v[0])); \
@@ -1212,7 +1214,8 @@ void *ffetarget_memcpy_ (void *dst, void *src, size_t len);
 #define ffetarget_convert_real1_integer1(res,l) \
   ({ REAL_VALUE_TYPE resr; \
      ffetargetInteger1 lf = (l); \
-     REAL_VALUE_FROM_INT (resr, (long) lf, (long) ((lf < 0) ? -1 : 0)); \
+     REAL_VALUE_FROM_INT (resr, (long) lf, (long) ((lf < 0) ? -1 : 0), \
+			  XFmode); \
      REAL_VALUE_TO_TARGET_SINGLE (resr, *(res)); \
      FFEBAD; })
 #else
@@ -1246,7 +1249,8 @@ void *ffetarget_memcpy_ (void *dst, void *src, size_t len);
 #define ffetarget_convert_real2_integer(res,l) \
   ({ REAL_VALUE_TYPE resr; \
      ffetargetInteger1 lf = (l); \
-     REAL_VALUE_FROM_INT (resr, (long) lf, (long) ((lf < 0) ? -1 : 0)); \
+     REAL_VALUE_FROM_INT (resr, (long) lf, (long) ((lf < 0) ? -1 : 0), \
+			  XFmode); \
      REAL_VALUE_TO_TARGET_DOUBLE (resr, (long *) &((res)->v[0])); \
      FFEBAD; })
 #define ffetarget_convert_real2_integer1 ffetarget_convert_real2_integer

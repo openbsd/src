@@ -1,13 +1,15 @@
-#ifndef _STDDEF_H
-#ifndef _STDDEF_H_
-#ifndef _ANSI_STDDEF_H
-#ifndef __STDDEF_H__
+#if (!defined(_STDDEF_H) && !defined(_STDDEF_H_) && !defined(_ANSI_STDDEF_H) \
+     && !defined(__STDDEF_H__)) \
+    || defined(__need_wchar_t) || defined(__need_size_t) \
+    || defined(__need_ptrdiff_t) || defined(__need_NULL) \
+    || defined(__need_wint_t)
 
 /* Any one of these symbols __need_* means that GNU libc
    wants us just to define one data type.  So don't define
    the symbols that indicate this file's entire job has been done.  */
 #if (!defined(__need_wchar_t) && !defined(__need_size_t)	\
-     && !defined(__need_ptrdiff_t) && !defined(__need_NULL))
+     && !defined(__need_ptrdiff_t) && !defined(__need_NULL)	\
+     && !defined(__need_wint_t))
 #define _STDDEF_H
 #define _STDDEF_H_
 /* snaroff@next.com says the NeXT needs this.  */
@@ -70,7 +72,7 @@
    not defined, and so that defining this macro defines _GCC_SIZE_T.
    If we find that the macros are still defined at this point, we must
    invoke them so that the type is defined as expected.  */
-#if defined (TYPE_ptrdiff_t) && (defined (__need_ptrdiff_t) || defined (_STDDEF_H_))
+#if defined (_TYPE_ptrdiff_t) && (defined (__need_ptrdiff_t) || defined (_STDDEF_H_))
 _TYPE_ptrdiff_t;
 #undef _TYPE_ptrdiff_t
 #endif
@@ -255,6 +257,18 @@ typedef __WCHAR_TYPE__ wchar_t;
 #undef	__need_wchar_t
 #endif /* _STDDEF_H or __need_wchar_t.  */
 
+#if defined (_STDDEF_H) || defined (__need_wint_t)
+#ifndef _WINT_T
+#define _WINT_T
+
+#ifndef __WINT_TYPE__
+#define __WINT_TYPE__ unsigned int
+#endif
+typedef __WINT_TYPE__ wint_t;
+#endif
+#undef __need_wint_t
+#endif
+
 /*  In 4.3bsd-net2, leave these undefined to indicate that size_t, etc.
     are already defined.  */
 #ifdef _ANSI_H_
@@ -293,7 +307,11 @@ typedef __WCHAR_TYPE__ wchar_t;
 
 #if defined (_STDDEF_H) || defined (__need_NULL)
 #undef NULL		/* in case <stdio.h> has defined it. */
+#ifdef __GNUG__
+#define NULL __null
+#else   /* G++ */
 #define NULL ((void *)0)
+#endif  /* G++ */
 #endif	/* NULL not defined and <stddef.h> or need NULL.  */
 #undef	__need_NULL
 
@@ -305,7 +323,5 @@ typedef __WCHAR_TYPE__ wchar_t;
 
 #endif /* _STDDEF_H was defined this time */
 
-#endif /* __STDDEF_H__ was not defined before */
-#endif /* _ANSI_STDDEF_H was not defined before */
-#endif /* _STDDEF_H_ was not defined before */
-#endif /* _STDDEF_H was not defined before */
+#endif /* !_STDDEF_H && !_STDDEF_H_ && !_ANSI_STDDEF_H && !__STDDEF_H__
+	  || __need_XXX was not defined before */

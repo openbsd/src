@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd.h,v 1.5 1997/09/17 08:06:47 deraadt Exp $	*/
+/*	$OpenBSD: openbsd.h,v 1.6 1998/03/03 21:21:16 niklas Exp $	*/
 
 /* OPENBSD_NATIVE is defined when gcc is integrated into the OpenBSD
    source tree so it can be configured appropriately when using the
@@ -8,14 +8,20 @@
 
 #ifdef OPENBSD_NATIVE
 
+#undef GPLUSPLUS_INCLUDE_DIR
+#define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
+
+#undef GCC_INCLUDE_DIR
+#define GCC_INCLUDE_DIR "/usr/include"
+
 /* Look for the include files in the system-defined places.  */
 
 #undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS		\
-  {					\
-    { GPLUSPLUS_INCLUDE_DIR, 1, 1 },	\
-    { STANDARD_INCLUDE_DIR, 0, 0 },	\
-    { 0, 0, 0 }				\
+#define INCLUDE_DEFAULTS			\
+  {						\
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
+    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
+    { 0, 0, 0, 0 }				\
   }
 
 /* Under OpenBSD, the normal location of the various *crt*.o files is the

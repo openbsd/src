@@ -10006,7 +10006,7 @@ ffecom_constantunion (ffebldConstantUnion *cu, ffeinfoBasictype bt,
 	  case FFEINFO_kindtypeANY:
 	    return error_mark_node;
 	  }
-	item = build_complex (build_real (el_type, real),
+	item = build_complex (NULL_TREE, build_real (el_type, real),
 			      build_real (el_type, imag));
 	TREE_TYPE (item) = tree_type;
       }
@@ -11791,7 +11791,6 @@ ffecom_ptr_to_expr (ffebld expr)
 	  || (TREE_CODE (item) == INDIRECT_REF)
 	  || (TREE_CODE (item) == ARRAY_REF)
 	  || (TREE_CODE (item) == COMPONENT_REF)
-	  || (TREE_CODE (item) == OFFSET_REF)
 	  || (TREE_CODE (item) == BUFFER_REF)
 	  || (TREE_CODE (item) == REALPART_EXPR)
 	  || (TREE_CODE (item) == IMAGPART_EXPR))

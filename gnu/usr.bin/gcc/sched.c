@@ -1,5 +1,5 @@
 /* Instruction scheduling pass.
-   Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93-96, 1997 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
    Enhanced by, and currently maintained by, Jim Wilson (wilson@cygnus.com)
 
@@ -111,12 +111,14 @@ Boston, MA 02111-1307, USA.  */
    reg_n_calls_crossed, and reg_live_length.  Also, basic_block_head,
    basic_block_end.
 
-   The information in the line number notes is carefully retained by this
-   pass.  All other NOTE insns are grouped in their same relative order at
-   the beginning of basic blocks that have been scheduled.  */
+   The information in the line number notes is carefully retained by
+   this pass.  Notes that refer to the starting and ending of
+   exception regions are also carefully retained by this pass.  All
+   other NOTE insns are grouped in their same relative order at the
+   beginning of basic blocks that have been scheduled.  */
 
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "basic-block.h"
 #include "regs.h"
@@ -133,7 +135,6 @@ Boston, MA 02111-1307, USA.  */
 
    Values of these arrays are copied at the end of this pass into the
    arrays set up by flow analysis.  */
-static short *sched_reg_n_deaths;
 static int *sched_reg_n_calls_crossed;
 static int *sched_reg_live_length;
 
@@ -288,8 +289,9 @@ static int *insn_tick;
 
 struct sometimes
 {
-  short offset; short bit;
-  short live_length; short calls_crossed;
+  int regno;
+  int live_length;
+  int calls_crossed;
 };
 
 /* Forward declarations.  */
@@ -313,7 +315,7 @@ static int insn_cost			PROTO((rtx, rtx, rtx));
 static int priority			PROTO((rtx));
 static void free_pending_lists		PROTO((void));
 static void add_insn_mem_dependence	PROTO((rtx *, rtx *, rtx, rtx));
-static void flush_pending_lists		PROTO((rtx));
+static void flush_pending_lists		PROTO((rtx, int));
 static void sched_analyze_1		PROTO((rtx, rtx));
 static void sched_analyze_2		PROTO((rtx, rtx));
 static void sched_analyze_insn		PROTO((rtx, rtx, rtx));
@@ -322,7 +324,7 @@ static void sched_note_set		PROTO((int, rtx, int));
 static int rank_for_schedule		PROTO((rtx *, rtx *));
 static void swap_sort			PROTO((rtx *, int));
 static void queue_insn			PROTO((rtx, int));
-static int birthing_insn		PROTO((rtx));
+static int birthing_insn_p		PROTO((rtx));
 static void adjust_priority		PROTO((rtx));
 static int schedule_insn		PROTO((rtx, rtx *, int, int));
 static int schedule_select		PROTO((rtx *, int, int, FILE *));
@@ -330,9 +332,9 @@ static void create_reg_dead_note	PROTO((rtx, rtx));
 static void attach_deaths		PROTO((rtx, rtx, int));
 static void attach_deaths_insn		PROTO((rtx));
 static rtx unlink_notes			PROTO((rtx, rtx));
-static int new_sometimes_live		PROTO((struct sometimes *, int, int,
-					       int));
+static int new_sometimes_live		PROTO((struct sometimes *, int, int));
 static void finish_sometimes_live	PROTO((struct sometimes *, int));
+static rtx reemit_notes			PROTO((rtx, rtx));
 static void schedule_block		PROTO((int, FILE *));
 static rtx regno_use_in			PROTO((int, rtx));
 static void split_hard_reg_notes	PROTO((rtx, rtx, rtx, rtx));
@@ -354,7 +356,7 @@ static rtx *reg_known_value;
 /* Vector recording for each reg_known_value whether it is due to a
    REG_EQUIV note.  Future passes (viz., reload) may replace the
    pseudo with the equivalent expression and so we account for the
-   dependences that would be introduced if that happens. */
+   dependences that would be introduced if that happens.  */
 /* ??? This is a problem only on the Convex.  The REG_EQUIV notes created in
    assign_parms mention the arg pointer, and there are explicit insns in the
    RTL that modify the arg pointer.  Thus we must ensure that such insns don't
@@ -371,9 +373,11 @@ static rtx
 canon_rtx (x)
      rtx x;
 {
+  /* Recursively look for equivalences.  */
   if (GET_CODE (x) == REG && REGNO (x) >= FIRST_PSEUDO_REGISTER
       && REGNO (x) <= reg_known_value_size)
-    return reg_known_value[REGNO (x)];
+    return reg_known_value[REGNO (x)] == x
+      ? x : canon_rtx (reg_known_value[REGNO (x)]);
   else if (GET_CODE (x) == PLUS)
     {
       rtx x0 = canon_rtx (XEXP (x, 0));
@@ -389,6 +393,16 @@ canon_rtx (x)
 	    return plus_constant_for_output (x0, INTVAL (x1));
 	  return gen_rtx (PLUS, GET_MODE (x), x0, x1);
 	}
+    }
+  /* This gives us much better alias analysis when called from
+     the loop optimizer.   Note we want to leave the original
+     MEM alone, but need to return the canonicalized MEM with
+     all the flags with their original values.  */
+  else if (GET_CODE (x) == MEM)
+    {
+      rtx copy = copy_rtx (x);
+      XEXP (copy, 0) = canon_rtx (XEXP (copy, 0));
+      x = copy;
     }
   return x;
 }
@@ -423,7 +437,7 @@ init_alias_analysis ()
 	&& GET_CODE (SET_DEST (set)) == REG
 	&& REGNO (SET_DEST (set)) >= FIRST_PSEUDO_REGISTER
 	&& (((note = find_reg_note (insn, REG_EQUAL, 0)) != 0
-	     && reg_n_sets[REGNO (SET_DEST (set))] == 1)
+	     && REG_N_SETS (REGNO (SET_DEST (set))) == 1)
 	    || (note = find_reg_note (insn, REG_EQUIV, NULL_RTX)) != 0)
 	&& GET_CODE (XEXP (note, 0)) != EXPR_LIST)
       {
@@ -630,8 +644,8 @@ memrefs_conflict_p (xsize, x, ysize, y, c)
     y = canon_rtx (y);
 
   if (rtx_equal_for_memref_p (x, y))
-    return (xsize == 0 || ysize == 0 ||
-	    (c >= 0 && xsize > c) || (c < 0 && ysize+c > 0));
+    return (xsize == 0 || ysize == 0
+	    || (c >= 0 && xsize > c) || (c < 0 && ysize+c > 0));
 
   if (y == frame_pointer_rtx || y == hard_frame_pointer_rtx
       || y == stack_pointer_rtx)
@@ -721,34 +735,30 @@ memrefs_conflict_p (xsize, x, ysize, y, c)
 	return 1;
     }
 
-  if (GET_CODE (x) == GET_CODE (y))
-    switch (GET_CODE (x))
-      {
-      case MULT:
-	{
-	  /* Handle cases where we expect the second operands to be the
-	     same, and check only whether the first operand would conflict
-	     or not.  */
-	  rtx x0, y0;
-	  rtx x1 = canon_rtx (XEXP (x, 1));
-	  rtx y1 = canon_rtx (XEXP (y, 1));
-	  if (! rtx_equal_for_memref_p (x1, y1))
-	    return 1;
-	  x0 = canon_rtx (XEXP (x, 0));
-	  y0 = canon_rtx (XEXP (y, 0));
-	  if (rtx_equal_for_memref_p (x0, y0))
-	    return (xsize == 0 || ysize == 0
-		    || (c >= 0 && xsize > c) || (c < 0 && ysize+c > 0));
+  if (GET_CODE (x) == GET_CODE (y) && GET_CODE (x) == MULT)
+    {
+      /* Handle cases where we expect the second operands to be the
+	 same, and check only whether the first operand would conflict
+	 or not.  */
+      rtx x0, y0;
+      rtx x1 = canon_rtx (XEXP (x, 1));
+      rtx y1 = canon_rtx (XEXP (y, 1));
+      if (! rtx_equal_for_memref_p (x1, y1))
+	return 1;
+      x0 = canon_rtx (XEXP (x, 0));
+      y0 = canon_rtx (XEXP (y, 0));
+      if (rtx_equal_for_memref_p (x0, y0))
+	return (xsize == 0 || ysize == 0
+		|| (c >= 0 && xsize > c) || (c < 0 && ysize+c > 0));
 
-	  /* Can't properly adjust our sizes.  */
-	  if (GET_CODE (x1) != CONST_INT)
-	    return 1;
-	  xsize /= INTVAL (x1);
-	  ysize /= INTVAL (x1);
-	  c /= INTVAL (x1);
-	  return memrefs_conflict_p (xsize, x0, ysize, y0, c);
-	}
-      }
+      /* Can't properly adjust our sizes.  */
+      if (GET_CODE (x1) != CONST_INT)
+	return 1;
+      xsize /= INTVAL (x1);
+      ysize /= INTVAL (x1);
+      c /= INTVAL (x1);
+      return memrefs_conflict_p (xsize, x0, ysize, y0, c);
+    }
 
   if (CONSTANT_P (x))
     {
@@ -794,11 +804,14 @@ memrefs_conflict_p (xsize, x, ysize, y, c)
    changed.  A volatile and non-volatile reference can be interchanged
    though. 
 
-   A MEM_IN_STRUCT reference at a non-QImode varying address can never
+   A MEM_IN_STRUCT reference at a non-QImode non-AND varying address can never
    conflict with a non-MEM_IN_STRUCT reference at a fixed address.   We must
    allow QImode aliasing because the ANSI C standard allows character
    pointers to alias anything.  We are assuming that characters are
-   always QImode here.  */
+   always QImode here.  We also must allow AND addresses, because they may
+   generate accesses outside the object being referenced.  This is used to
+   generate aligned addresses from unaligned addresses, for instance, the
+   alpha storeqi_unaligned pattern.  */
 
 /* Read dependence: X is read after read in MEM takes place.  There can
    only be a dependence here if both reads are volatile.  */
@@ -825,6 +838,8 @@ true_dependence (mem, x)
      both an unchanging read and an unchanging write.  This won't handle all
      cases optimally, but the possible performance loss should be
      negligible.  */
+  x = canon_rtx (x);
+  mem = canon_rtx (mem);
   if (RTX_UNCHANGING_P (x) && ! RTX_UNCHANGING_P (mem))
     return 0;
 
@@ -833,9 +848,11 @@ true_dependence (mem, x)
 				  SIZE_FOR_MODE (x), XEXP (x, 0), 0)
 	      && ! (MEM_IN_STRUCT_P (mem) && rtx_addr_varies_p (mem)
 		    && GET_MODE (mem) != QImode
+		    && GET_CODE (XEXP (mem, 0)) != AND
 		    && ! MEM_IN_STRUCT_P (x) && ! rtx_addr_varies_p (x))
 	      && ! (MEM_IN_STRUCT_P (x) && rtx_addr_varies_p (x)
 		    && GET_MODE (x) != QImode
+		    && GET_CODE (XEXP (x, 0)) != AND
 		    && ! MEM_IN_STRUCT_P (mem) && ! rtx_addr_varies_p (mem))));
 }
 
@@ -849,6 +866,8 @@ anti_dependence (mem, x)
   /* If MEM is an unchanging read, then it can't possibly conflict with
      the store to X, because there is at most one store to MEM, and it must
      have occurred somewhere before MEM.  */
+  x = canon_rtx (x);
+  mem = canon_rtx (mem);
   if (RTX_UNCHANGING_P (mem))
     return 0;
 
@@ -857,9 +876,11 @@ anti_dependence (mem, x)
 				  SIZE_FOR_MODE (x), XEXP (x, 0), 0)
 	      && ! (MEM_IN_STRUCT_P (mem) && rtx_addr_varies_p (mem)
 		    && GET_MODE (mem) != QImode
+		    && GET_CODE (XEXP (mem, 0)) != AND
 		    && ! MEM_IN_STRUCT_P (x) && ! rtx_addr_varies_p (x))
 	      && ! (MEM_IN_STRUCT_P (x) && rtx_addr_varies_p (x)
 		    && GET_MODE (x) != QImode
+		    && GET_CODE (XEXP (x, 0)) != AND
 		    && ! MEM_IN_STRUCT_P (mem) && ! rtx_addr_varies_p (mem))));
 }
 
@@ -870,14 +891,18 @@ output_dependence (mem, x)
      rtx mem;
      rtx x;
 {
+  x = canon_rtx (x);
+  mem = canon_rtx (mem);
   return ((MEM_VOLATILE_P (x) && MEM_VOLATILE_P (mem))
 	  || (memrefs_conflict_p (SIZE_FOR_MODE (mem), XEXP (mem, 0),
 				  SIZE_FOR_MODE (x), XEXP (x, 0), 0)
 	      && ! (MEM_IN_STRUCT_P (mem) && rtx_addr_varies_p (mem)
 		    && GET_MODE (mem) != QImode
+		    && GET_CODE (XEXP (mem, 0)) != AND
 		    && ! MEM_IN_STRUCT_P (x) && ! rtx_addr_varies_p (x))
 	      && ! (MEM_IN_STRUCT_P (x) && rtx_addr_varies_p (x)
 		    && GET_MODE (x) != QImode
+		    && GET_CODE (XEXP (x, 0)) != AND
 		    && ! MEM_IN_STRUCT_P (mem) && ! rtx_addr_varies_p (mem))));
 }
 
@@ -912,7 +937,8 @@ add_dependence (insn, elem, dep_type)
     next = NEXT_INSN (next);
 #endif
 
-  if (next && SCHED_GROUP_P (next))
+  if (next && SCHED_GROUP_P (next)
+      && GET_CODE (next) != CODE_LABEL)
     {
       /* Notes will never intervene here though, so don't bother checking
 	 for them.  */
@@ -964,17 +990,19 @@ remove_dependence (insn, elem)
   rtx prev, link;
   int found = 0;
 
-  for (prev = 0, link = LOG_LINKS (insn); link;
-       prev = link, link = XEXP (link, 1))
+  for (prev = 0, link = LOG_LINKS (insn); link; link = XEXP (link, 1))
     {
       if (XEXP (link, 0) == elem)
 	{
+	  RTX_INTEGRATED_P (link) = 1;
 	  if (prev)
 	    XEXP (prev, 1) = XEXP (link, 1);
 	  else
 	    LOG_LINKS (insn) = XEXP (link, 1);
 	  found = 1;
 	}
+      else
+	prev = link;
     }
 
   if (! found)
@@ -1452,6 +1480,11 @@ priority (insn)
 	{
 	  rtx x = XEXP (prev, 0);
 
+	  /* If this was a duplicate of a dependence we already deleted,
+	     ignore it.  */
+	  if (RTX_INTEGRATED_P (prev))
+	    continue;
+
 	  /* A dependence pointing to a note or deleted insn is always
 	     obsolete, because sched_analyze_insn will have created any
 	     necessary new dependences which replace it.  Notes and deleted
@@ -1608,15 +1641,17 @@ add_insn_mem_dependence (insn_list, mem_list, insn, mem)
 }
 
 /* Make a dependency between every memory reference on the pending lists
-   and INSN, thus flushing the pending lists.  */
+   and INSN, thus flushing the pending lists.  If ONLY_WRITE, don't flush
+   the read list.  */
 
 static void
-flush_pending_lists (insn)
+flush_pending_lists (insn, only_write)
      rtx insn;
+     int only_write;
 {
   rtx link;
 
-  while (pending_read_insns)
+  while (pending_read_insns && ! only_write)
     {
       add_dependence (insn, XEXP (pending_read_insns, 0), REG_DEP_ANTI);
 
@@ -1699,8 +1734,7 @@ sched_analyze_1 (x, insn)
 	      if (reg_last_sets[regno + i])
 		add_dependence (insn, reg_last_sets[regno + i],
 				REG_DEP_OUTPUT);
-	      reg_pending_sets[(regno + i) / REGSET_ELT_BITS]
-		|= (REGSET_ELT_TYPE) 1 << ((regno + i) % REGSET_ELT_BITS);
+	      SET_REGNO_REG_SET (reg_pending_sets, regno + i);
 	      if ((call_used_regs[i] || global_regs[i])
 		  && last_function_call)
 		/* Function calls clobber all call_used regs.  */
@@ -1716,8 +1750,7 @@ sched_analyze_1 (x, insn)
 	  reg_last_uses[regno] = 0;
 	  if (reg_last_sets[regno])
 	    add_dependence (insn, reg_last_sets[regno], REG_DEP_OUTPUT);
-	  reg_pending_sets[regno / REGSET_ELT_BITS]
-	    |= (REGSET_ELT_TYPE) 1 << (regno % REGSET_ELT_BITS);
+	  SET_REGNO_REG_SET (reg_pending_sets, regno);
 
 	  /* Pseudos that are REG_EQUIV to something may be replaced
 	     by that during reloading.  We need only add dependencies for
@@ -1729,7 +1762,7 @@ sched_analyze_1 (x, insn)
 
 	  /* Don't let it cross a call after scheduling if it doesn't
 	     already cross one.  */
-	  if (reg_n_calls_crossed[regno] == 0 && last_function_call)
+	  if (REG_N_CALLS_CROSSED (regno) == 0 && last_function_call)
 	    add_dependence (insn, last_function_call, REG_DEP_ANTI);
 	}
     }
@@ -1745,7 +1778,7 @@ sched_analyze_1 (x, insn)
 	     seems like a reasonable number.  When compiling GCC with itself,
 	     this flush occurs 8 times for sparc, and 10 times for m88k using
 	     the number 32.  */
-	  flush_pending_lists (insn);
+	  flush_pending_lists (insn, 0);
 	}
       else
 	{
@@ -1825,21 +1858,18 @@ sched_analyze_2 (x, insn)
       {
 	rtx link, prev;
 
+	/* User of CC0 depends on immediately preceding insn.  */
+	SCHED_GROUP_P (insn) = 1;
+
 	/* There may be a note before this insn now, but all notes will
 	   be removed before we actually try to schedule the insns, so
 	   it won't cause a problem later.  We must avoid it here though.  */
-
-	/* User of CC0 depends on immediately preceding insn.  */
-	SCHED_GROUP_P (insn) = 1;
+	prev = prev_nonnote_insn (insn);
 
 	/* Make a copy of all dependencies on the immediately previous insn,
 	   and add to this insn.  This is so that all the dependencies will
 	   apply to the group.  Remove an explicit dependence on this insn
 	   as SCHED_GROUP_P now represents it.  */
-
-	prev = PREV_INSN (insn);
-	while (GET_CODE (prev) == NOTE)
-	  prev = PREV_INSN (prev);
 
 	if (find_insn_list (prev, LOG_LINKS (insn)))
 	  remove_dependence (insn, prev);
@@ -1890,7 +1920,7 @@ sched_analyze_2 (x, insn)
 	    /* If the register does not already cross any calls, then add this
 	       insn to the sched_before_next_call list so that it will still
 	       not cross calls after scheduling.  */
-	    if (reg_n_calls_crossed[regno] == 0)
+	    if (REG_N_CALLS_CROSSED (regno) == 0)
 	      add_dependence (sched_before_next_call, insn, REG_DEP_ANTI);
 	  }
 	return;
@@ -1967,7 +1997,7 @@ sched_analyze_2 (x, insn)
 	      }
 	    reg_pending_sets_all = 1;
 
-	    flush_pending_lists (insn);
+	    flush_pending_lists (insn, 0);
 	  }
 
 	/* For all ASM_OPERANDS, we must traverse the vector of input operands.
@@ -1997,6 +2027,9 @@ sched_analyze_2 (x, insn)
       sched_analyze_2 (XEXP (x, 0), insn);
       sched_analyze_1 (x, insn);
       return;
+      
+    default:
+      break;
     }
 
   /* Other cases: walk the insn.  */
@@ -2050,7 +2083,7 @@ sched_analyze_insn (x, insn, loop_notes)
 	  sched_analyze_2 (XEXP (link, 0), insn);
       }
 
-  /* If there is a LOOP_{BEG,END} note in the middle of a basic block, then
+  /* If there is a {LOOP,EHREGION}_{BEG,END} note in the middle of a basic block, then
      we must be sure that no instructions are scheduled across it.
      Otherwise, the reg_n_refs info (which depends on loop_depth) would
      become incorrect.  */
@@ -2071,7 +2104,7 @@ sched_analyze_insn (x, insn, loop_notes)
 	}
       reg_pending_sets_all = 1;
 
-      flush_pending_lists (insn);
+      flush_pending_lists (insn, 0);
 
       link = loop_notes;
       while (XEXP (link, 1))
@@ -2101,18 +2134,12 @@ sched_analyze_insn (x, insn, loop_notes)
 	  sched_analyze_2 (XEXP (note, 0), insn);
     }
 
-  for (i = 0; i < regset_size; i++)
-    {
-      REGSET_ELT_TYPE sets = reg_pending_sets[i];
-      if (sets)
-	{
-	  register int bit;
-	  for (bit = 0; bit < REGSET_ELT_BITS; bit++)
-	    if (sets & ((REGSET_ELT_TYPE) 1 << bit))
-	      reg_last_sets[i * REGSET_ELT_BITS + bit] = insn;
-	  reg_pending_sets[i] = 0;
-	}
-    }
+  EXECUTE_IF_SET_IN_REG_SET (reg_pending_sets, 0, i,
+			     {
+			       reg_last_sets[i] = insn;
+			     });
+  CLEAR_REG_SET (reg_pending_sets);
+
   if (reg_pending_sets_all)
     {
       for (i = 0; i < maxreg; i++)
@@ -2212,8 +2239,13 @@ sched_analyze (head, tail)
 		}
 	      reg_pending_sets_all = 1;
 
-	      /* Add a fake REG_NOTE which we will later convert
-		 back into a NOTE_INSN_SETJMP note.  */
+	      /* Add a pair of fake REG_NOTEs which we will later
+		 convert back into a NOTE_INSN_SETJMP note.  See
+		 reemit_notes for why we use a pair of of NOTEs.  */
+
+	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_DEAD,
+					  GEN_INT (0),
+					  REG_NOTES (insn));
 	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_DEAD,
 					  GEN_INT (NOTE_INSN_SETJMP),
 					  REG_NOTES (insn));
@@ -2228,8 +2260,7 @@ sched_analyze (head, tail)
 		    reg_last_uses[i] = 0;
 		    if (reg_last_sets[i])
 		      add_dependence (insn, reg_last_sets[i], REG_DEP_ANTI);
-		    reg_pending_sets[i / REGSET_ELT_BITS]
-		      |= (REGSET_ELT_TYPE) 1 << (i % REGSET_ELT_BITS);
+		    SET_REGNO_REG_SET (reg_pending_sets, i);
 		  }
 	    }
 
@@ -2246,30 +2277,39 @@ sched_analyze (head, tail)
 	  sched_analyze_insn (PATTERN (insn), insn, loop_notes);
 	  loop_notes = 0;
 
-	  /* We don't need to flush memory for a function call which does
-	     not involve memory.  */
-	  if (! CONST_CALL_P (insn))
-	    {
-	      /* In the absence of interprocedural alias analysis,
-		 we must flush all pending reads and writes, and
-		 start new dependencies starting from here.  */
-	      flush_pending_lists (insn);
-	    }
+	  /* In the absence of interprocedural alias analysis, we must flush
+	     all pending reads and writes, and start new dependencies starting
+	     from here.  But only flush writes for constant calls (which may
+	     be passed a pointer to something we haven't written yet).  */
+	  flush_pending_lists (insn, CONST_CALL_P (insn));
 
 	  /* Depend this function call (actually, the user of this
 	     function call) on all hard register clobberage.  */
 	  last_function_call = insn;
 	  n_insns += 1;
 	}
+
+      /* See comments on reemit_notes as to why we do this.  */
       else if (GET_CODE (insn) == NOTE
 	       && (NOTE_LINE_NUMBER (insn) == NOTE_INSN_LOOP_BEG
-		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_LOOP_END))
-	loop_notes = gen_rtx (EXPR_LIST, REG_DEAD,
-			      GEN_INT (NOTE_LINE_NUMBER (insn)), loop_notes);
+		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_LOOP_END
+		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_EH_REGION_BEG
+		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_EH_REGION_END
+		   || (NOTE_LINE_NUMBER (insn) == NOTE_INSN_SETJMP
+		       && GET_CODE (PREV_INSN (insn)) != CALL_INSN)))
+	{
+	  loop_notes = gen_rtx (EXPR_LIST, REG_DEAD,
+				GEN_INT (NOTE_BLOCK_NUMBER (insn)), loop_notes);
+	  loop_notes = gen_rtx (EXPR_LIST, REG_DEAD,
+				GEN_INT (NOTE_LINE_NUMBER (insn)), loop_notes);
+	  CONST_CALL_P (loop_notes) = CONST_CALL_P (insn);
+	}
 
       if (insn == tail)
 	return n_insns;
     }
+
+  abort ();
 }
 
 /* Called when we see a set of a register.  If death is true, then we are
@@ -2313,10 +2353,6 @@ sched_note_set (b, x, death)
   regno = REGNO (reg);
   if (regno >= FIRST_PSEUDO_REGISTER || ! global_regs[regno])
     {
-      register int offset = regno / REGSET_ELT_BITS;
-      register REGSET_ELT_TYPE bit
-	= (REGSET_ELT_TYPE) 1 << (regno % REGSET_ELT_BITS);
-
       if (death)
 	{
 	  /* If we only set part of the register, then this set does not
@@ -2330,17 +2366,14 @@ sched_note_set (b, x, death)
 	      int j = HARD_REGNO_NREGS (regno, GET_MODE (reg));
 	      while (--j >= 0)
 		{
-		  offset = (regno + j) / REGSET_ELT_BITS;
-		  bit = (REGSET_ELT_TYPE) 1 << ((regno + j) % REGSET_ELT_BITS);
-		  
-		  bb_live_regs[offset] &= ~bit;
-		  bb_dead_regs[offset] |= bit;
+		  CLEAR_REGNO_REG_SET (bb_live_regs, regno + j);
+		  SET_REGNO_REG_SET (bb_dead_regs, regno + j);
 		}
 	    }
 	  else
 	    {
-	      bb_live_regs[offset] &= ~bit;
-	      bb_dead_regs[offset] |= bit;
+	      CLEAR_REGNO_REG_SET (bb_live_regs, regno);
+	      SET_REGNO_REG_SET (bb_dead_regs, regno);
 	    }
 	}
       else
@@ -2351,17 +2384,14 @@ sched_note_set (b, x, death)
 	      int j = HARD_REGNO_NREGS (regno, GET_MODE (reg));
 	      while (--j >= 0)
 		{
-		  offset = (regno + j) / REGSET_ELT_BITS;
-		  bit = (REGSET_ELT_TYPE) 1 << ((regno + j) % REGSET_ELT_BITS);
-		  
-		  bb_live_regs[offset] |= bit;
-		  bb_dead_regs[offset] &= ~bit;
+		  SET_REGNO_REG_SET (bb_live_regs, regno + j);
+		  CLEAR_REGNO_REG_SET (bb_dead_regs, regno + j);
 		}
 	    }
 	  else
 	    {
-	      bb_live_regs[offset] |= bit;
-	      bb_dead_regs[offset] &= ~bit;
+	      SET_REGNO_REG_SET (bb_live_regs, regno);
+	      CLEAR_REGNO_REG_SET (bb_dead_regs, regno);
 	    }
 	}
     }
@@ -2479,15 +2509,13 @@ birthing_insn_p (pat)
     {
       rtx dest = SET_DEST (pat);
       int i = REGNO (dest);
-      int offset = i / REGSET_ELT_BITS;
-      REGSET_ELT_TYPE bit = (REGSET_ELT_TYPE) 1 << (i % REGSET_ELT_BITS);
 
       /* It would be more accurate to use refers_to_regno_p or
 	 reg_mentioned_p to determine when the dest is not live before this
 	 insn.  */
 
-      if (bb_live_regs[offset] & bit)
-	return (reg_n_sets[i] == 1);
+      if (REGNO_REG_SET_P (bb_live_regs, i))
+	return (REG_N_SETS (i) == 1);
 
       return 0;
     }
@@ -2545,6 +2573,9 @@ adjust_priority (prev)
 	    }
 	  break;
 	}
+#ifdef ADJUST_PRIORITY
+      ADJUST_PRIORITY (prev);
+#endif
     }
 }
 
@@ -2811,16 +2842,15 @@ attach_deaths (x, insn, set_p)
 	/* This code is very similar to mark_used_1 (if set_p is false)
 	   and mark_set_1 (if set_p is true) in flow.c.  */
 
-	register int regno = REGNO (x);
-	register int offset = regno / REGSET_ELT_BITS;
-	register REGSET_ELT_TYPE bit
-	  = (REGSET_ELT_TYPE) 1 << (regno % REGSET_ELT_BITS);
-	REGSET_ELT_TYPE all_needed = (old_live_regs[offset] & bit);
-	REGSET_ELT_TYPE some_needed = (old_live_regs[offset] & bit);
+	register int regno;
+	int some_needed;
+	int all_needed;
 
 	if (set_p)
 	  return;
 
+	regno = REGNO (x);
+	all_needed = some_needed = REGNO_REG_SET_P (old_live_regs, regno);
 	if (regno < FIRST_PSEUDO_REGISTER)
 	  {
 	    int n;
@@ -2828,12 +2858,9 @@ attach_deaths (x, insn, set_p)
 	    n = HARD_REGNO_NREGS (regno, GET_MODE (x));
 	    while (--n > 0)
 	      {
-		some_needed |= (old_live_regs[(regno + n) / REGSET_ELT_BITS]
-				& ((REGSET_ELT_TYPE) 1
-				   << ((regno + n) % REGSET_ELT_BITS)));
-		all_needed &= (old_live_regs[(regno + n) / REGSET_ELT_BITS]
-			       & ((REGSET_ELT_TYPE) 1
-				  << ((regno + n) % REGSET_ELT_BITS)));
+		int needed = (REGNO_REG_SET_P (old_live_regs, regno + n));
+		some_needed |= needed;
+		all_needed &= needed;
 	      }
 	  }
 
@@ -2895,9 +2922,7 @@ attach_deaths (x, insn, set_p)
 			   register that is set in the insn.  */
 			for (i = HARD_REGNO_NREGS (regno, GET_MODE (x)) - 1;
 			     i >= 0; i--)
-			  if ((old_live_regs[(regno + i) / REGSET_ELT_BITS]
-			       & ((REGSET_ELT_TYPE) 1
-				  << ((regno +i) % REGSET_ELT_BITS))) == 0
+			  if (! REGNO_REG_SET_P (old_live_regs, regno + i)
 			      && ! dead_or_set_regno_p (insn, regno + i))
 			    create_reg_dead_note (gen_rtx (REG,
 							   reg_raw_mode[regno + i],
@@ -2912,18 +2937,14 @@ attach_deaths (x, insn, set_p)
 		int j = HARD_REGNO_NREGS (regno, GET_MODE (x));
 		while (--j >= 0)
 		  {
-		    offset = (regno + j) / REGSET_ELT_BITS;
-		    bit
-		      = (REGSET_ELT_TYPE) 1 << ((regno + j) % REGSET_ELT_BITS);
-
-		    bb_dead_regs[offset] &= ~bit;
-		    bb_live_regs[offset] |= bit;
+		    CLEAR_REGNO_REG_SET (bb_dead_regs, regno + j);
+		    SET_REGNO_REG_SET (bb_live_regs, regno + j);
 		  }
 	      }
 	    else
 	      {
-		bb_dead_regs[offset] &= ~bit;
-		bb_live_regs[offset] |= bit;
+		CLEAR_REGNO_REG_SET (bb_dead_regs, regno);
+		SET_REGNO_REG_SET (bb_live_regs, regno);
 	      }
 	  }
 	return;
@@ -3043,10 +3064,12 @@ unlink_notes (insn, tail)
       /* Don't save away NOTE_INSN_SETJMPs, because they must remain
 	 immediately after the call they follow.  We use a fake
 	 (REG_DEAD (const_int -1)) note to remember them.
-	 Likewise with NOTE_INSN_LOOP_BEG and NOTE_INSN_LOOP_END.  */
+	 Likewise with NOTE_INSN_{LOOP,EHREGION}_{BEG, END}.  */
       else if (NOTE_LINE_NUMBER (insn) != NOTE_INSN_SETJMP
 	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_LOOP_BEG
-	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_LOOP_END)
+	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_LOOP_END
+	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_EH_REGION_BEG
+	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_EH_REGION_END)
 	{
 	  /* Insert the note at the end of the notes list.  */
 	  PREV_INSN (insn) = note_list;
@@ -3063,13 +3086,12 @@ unlink_notes (insn, tail)
 /* Constructor for `sometimes' data structure.  */
 
 static int
-new_sometimes_live (regs_sometimes_live, offset, bit, sometimes_max)
+new_sometimes_live (regs_sometimes_live, regno, sometimes_max)
      struct sometimes *regs_sometimes_live;
-     int offset, bit;
+     int regno;
      int sometimes_max;
 {
   register struct sometimes *p;
-  register int regno = offset * REGSET_ELT_BITS + bit;
 
   /* There should never be a register greater than max_regno here.  If there
      is, it means that a define_split has created a new pseudo reg.  This
@@ -3079,8 +3101,7 @@ new_sometimes_live (regs_sometimes_live, offset, bit, sometimes_max)
     abort ();
 
   p = &regs_sometimes_live[sometimes_max];
-  p->offset = offset;
-  p->bit = bit;
+  p->regno = regno;
   p->live_length = 0;
   p->calls_crossed = 0;
   sometimes_max++;
@@ -3100,19 +3121,19 @@ finish_sometimes_live (regs_sometimes_live, sometimes_max)
   for (i = 0; i < sometimes_max; i++)
     {
       register struct sometimes *p = &regs_sometimes_live[i];
-      int regno;
-
-      regno = p->offset * REGSET_ELT_BITS + p->bit;
+      int regno = p->regno;
 
       sched_reg_live_length[regno] += p->live_length;
       sched_reg_n_calls_crossed[regno] += p->calls_crossed;
     }
 }
 
-/* Search INSN for fake REG_DEAD notes for NOTE_INSN_SETJMP,
-   NOTE_INSN_LOOP_BEG, and NOTE_INSN_LOOP_END; and convert them back
-   into NOTEs.  LAST is the last instruction output by the instruction
-   scheduler.  Return the new value of LAST.  */
+/* Search INSN for fake REG_DEAD note pairs for NOTE_INSN_SETJMP,
+   NOTE_INSN_{LOOP,EHREGION}_{BEG,END}; and convert them back into
+   NOTEs.  The REG_DEAD note following first one is contains the saved
+   value for NOTE_BLOCK_NUMBER which is useful for
+   NOTE_INSN_EH_REGION_{BEG,END} NOTEs.  LAST is the last instruction
+   output by the instruction scheduler.  Return the new value of LAST.  */
 
 static rtx
 reemit_notes (insn, last)
@@ -3127,9 +3148,19 @@ reemit_notes (insn, last)
 	  && GET_CODE (XEXP (note, 0)) == CONST_INT)
 	{
 	  if (INTVAL (XEXP (note, 0)) == NOTE_INSN_SETJMP)
-	    emit_note_after (INTVAL (XEXP (note, 0)), insn);
+	    {
+	      CONST_CALL_P (emit_note_after (INTVAL (XEXP (note, 0)), insn))
+		= CONST_CALL_P (note);
+	      remove_note (insn, note);
+	      note = XEXP (note, 1);
+	    }
 	  else
-	    last = emit_note_before (INTVAL (XEXP (note, 0)), last);
+	    {
+	      last = emit_note_before (INTVAL (XEXP (note, 0)), last);
+	      remove_note (insn, note);
+	      note = XEXP (note, 1);
+	      NOTE_BLOCK_NUMBER (last) = INTVAL (XEXP (note, 0));
+	    }
 	  remove_note (insn, note);
 	}
     }
@@ -3147,7 +3178,7 @@ schedule_block (b, file)
 {
   rtx insn, last;
   rtx *ready, link;
-  int i, j, n_ready = 0, new_ready, n_insns = 0;
+  int i, j, n_ready = 0, new_ready, n_insns;
   int sched_n_insns = 0;
   int clock;
 #define NEED_NOTHING	0
@@ -3178,8 +3209,8 @@ schedule_block (b, file)
   bzero ((char *) reg_last_uses, i * sizeof (rtx));
   reg_last_sets = (rtx *) alloca (i * sizeof (rtx));
   bzero ((char *) reg_last_sets, i * sizeof (rtx));
-  reg_pending_sets = (regset) alloca (regset_bytes);
-  bzero ((char *) reg_pending_sets, regset_bytes);
+  reg_pending_sets = ALLOCA_REG_SET ();
+  CLEAR_REG_SET (reg_pending_sets);
   reg_pending_sets_all = 0;
   clear_units ();
 
@@ -3230,7 +3261,7 @@ schedule_block (b, file)
      to schedule this block.  */
   if (head == tail
       && (GET_CODE (head) == NOTE || GET_CODE (head) == CODE_LABEL))
-    return;
+    goto ret;
 
 #if 0
   /* This short-cut doesn't work.  It does not count call insns crossed by
@@ -3243,7 +3274,7 @@ schedule_block (b, file)
      has one insn, so this won't slow down this pass by much.  */
 
   if (head == tail)
-    return;
+    goto ret;
 #endif
 
   /* Now HEAD through TAIL are the insns actually to be rearranged;
@@ -3264,11 +3295,11 @@ schedule_block (b, file)
 
   LOG_LINKS (sched_before_next_call) = 0;
 
-  n_insns += sched_analyze (head, tail);
+  n_insns = sched_analyze (head, tail);
   if (n_insns == 0)
     {
       free_pending_lists ();
-      return;
+      goto ret;
     }
 
   /* Allocate vector to hold insns to be rearranged (except those
@@ -3358,9 +3389,7 @@ schedule_block (b, file)
 	    {
 	      while (SCHED_GROUP_P (insn))
 		{
-		  insn = PREV_INSN (insn);
-		  while (GET_CODE (insn) == NOTE)
-		    insn = PREV_INSN (insn);
+		  insn = prev_nonnote_insn (insn);
 		  priority (insn);
 		}
 	      continue;
@@ -3400,7 +3429,7 @@ schedule_block (b, file)
 	  finish_sometimes_live (regs_sometimes_live, sometimes_max);
 	}
       free_pending_lists ();
-      return;
+      goto ret;
     }
 #endif
 
@@ -3414,9 +3443,8 @@ schedule_block (b, file)
 
   if (reload_completed == 0)
     {
-      bcopy ((char *) basic_block_live_at_start[b], (char *) bb_live_regs,
-	     regset_bytes);
-      bzero ((char *) bb_dead_regs, regset_bytes);
+      COPY_REG_SET (bb_live_regs, basic_block_live_at_start[b]);
+      CLEAR_REG_SET (bb_dead_regs);
 
       if (b == 0)
 	{
@@ -3455,6 +3483,22 @@ schedule_block (b, file)
 			sched_note_set (b, XVECEXP (PATTERN (insn), 0, j), 0);
 		  }
 
+		/* Each call clobbers (makes live) all call-clobbered regs
+		   that are not global or fixed.  Note that the function-value
+		   reg is a call_clobbered reg.  */
+
+		if (GET_CODE (insn) == CALL_INSN)
+		  {
+		    int j;
+		    for (j = 0; j < FIRST_PSEUDO_REGISTER; j++)
+		      if (call_used_regs[j] && ! global_regs[j]
+			  && ! fixed_regs[j])
+			{
+			  SET_REGNO_REG_SET (bb_live_regs, j);
+			  CLEAR_REGNO_REG_SET (bb_dead_regs, j);
+			}
+		  }
+
 		for (link = REG_NOTES (insn); link; link = XEXP (link, 1))
 		  {
 		    if ((REG_NOTE_KIND (link) == REG_DEAD
@@ -3463,9 +3507,6 @@ schedule_block (b, file)
 			&& GET_CODE (XEXP (link, 0)) == REG)
 		      {
 			register int regno = REGNO (XEXP (link, 0));
-			register int offset = regno / REGSET_ELT_BITS;
-			register REGSET_ELT_TYPE bit
-			  = (REGSET_ELT_TYPE) 1 << (regno % REGSET_ELT_BITS);
 
 			if (regno < FIRST_PSEUDO_REGISTER)
 			  {
@@ -3473,18 +3514,14 @@ schedule_block (b, file)
 						      GET_MODE (XEXP (link, 0)));
 			    while (--j >= 0)
 			      {
-				offset = (regno + j) / REGSET_ELT_BITS;
-				bit = ((REGSET_ELT_TYPE) 1
-				       << ((regno + j) % REGSET_ELT_BITS));
-
-				bb_live_regs[offset] &= ~bit;
-				bb_dead_regs[offset] |= bit;
+				CLEAR_REGNO_REG_SET (bb_live_regs, regno + j);
+				SET_REGNO_REG_SET (bb_dead_regs, regno + j);
 			      }
 			  }
 			else
 			  {
-			    bb_live_regs[offset] &= ~bit;
-			    bb_dead_regs[offset] |= bit;
+			    CLEAR_REGNO_REG_SET (bb_live_regs, regno);
+			    SET_REGNO_REG_SET (bb_dead_regs, regno);
 			  }
 		      }
 		  }
@@ -3556,6 +3593,22 @@ schedule_block (b, file)
 		  sched_note_set (b, XVECEXP (PATTERN (insn), 0, j), 0);
 	    }
 
+	  /* Each call clobbers (makes live) all call-clobbered regs that are
+	     not global or fixed.  Note that the function-value reg is a
+	     call_clobbered reg.  */
+
+	  if (GET_CODE (insn) == CALL_INSN)
+	    {
+	      int j;
+	      for (j = 0; j < FIRST_PSEUDO_REGISTER; j++)
+		if (call_used_regs[j] && ! global_regs[j]
+		    && ! fixed_regs[j])
+		  {
+		    SET_REGNO_REG_SET (bb_live_regs, j);
+		    CLEAR_REGNO_REG_SET (bb_dead_regs, j);
+		  }
+	    }
+
 	  /* Need to know what registers this insn kills.  */
 	  for (prev = 0, link = REG_NOTES (insn); link; link = next)
 	    {
@@ -3566,9 +3619,6 @@ schedule_block (b, file)
 		  && GET_CODE (XEXP (link, 0)) == REG)
 		{
 		  register int regno = REGNO (XEXP (link, 0));
-		  register int offset = regno / REGSET_ELT_BITS;
-		  register REGSET_ELT_TYPE bit
-		    = (REGSET_ELT_TYPE) 1 << (regno % REGSET_ELT_BITS);
 
 		  /* Only unlink REG_DEAD notes; leave REG_UNUSED notes
 		     alone.  */
@@ -3590,18 +3640,14 @@ schedule_block (b, file)
 						GET_MODE (XEXP (link, 0)));
 		      while (--j >= 0)
 			{
-			  offset = (regno + j) / REGSET_ELT_BITS;
-			  bit = ((REGSET_ELT_TYPE) 1
-				 << ((regno + j) % REGSET_ELT_BITS));
-
-			  bb_live_regs[offset] &= ~bit;
-			  bb_dead_regs[offset] |= bit;
+			  CLEAR_REGNO_REG_SET (bb_live_regs, regno + j);
+			  SET_REGNO_REG_SET (bb_dead_regs, regno + j);
 			}
 		    }
 		  else
 		    {
-		      bb_live_regs[offset] &= ~bit;
-		      bb_dead_regs[offset] |= bit;
+		      CLEAR_REGNO_REG_SET (bb_live_regs, regno);
+		      SET_REGNO_REG_SET (bb_dead_regs, regno);
 		    }
 		}
 	      else
@@ -3613,25 +3659,19 @@ schedule_block (b, file)
   if (reload_completed == 0)
     {
       /* Keep track of register lives.  */
-      old_live_regs = (regset) alloca (regset_bytes);
+      old_live_regs = ALLOCA_REG_SET ();
       regs_sometimes_live
 	= (struct sometimes *) alloca (max_regno * sizeof (struct sometimes));
       sometimes_max = 0;
 
       /* Start with registers live at end.  */
-      for (j = 0; j < regset_size; j++)
-	{
-	  REGSET_ELT_TYPE live = bb_live_regs[j];
-	  old_live_regs[j] = live;
-	  if (live)
-	    {
-	      register int bit;
-	      for (bit = 0; bit < REGSET_ELT_BITS; bit++)
-		if (live & ((REGSET_ELT_TYPE) 1 << bit))
-		  sometimes_max = new_sometimes_live (regs_sometimes_live, j,
-						      bit, sometimes_max);
-	    }
-	}
+      COPY_REG_SET (old_live_regs, bb_live_regs);
+      EXECUTE_IF_SET_IN_REG_SET (bb_live_regs, 0, j,
+				 {
+				   sometimes_max
+				     = new_sometimes_live (regs_sometimes_live,
+							   j, sometimes_max);
+				 });
     }
 
   SCHED_SORT (ready, n_ready, 1);
@@ -3795,18 +3835,15 @@ schedule_block (b, file)
 		{
 		  register struct sometimes *p;
 
-		  /* A call kills all call used and global registers, except
-		     for those mentioned in the call pattern which will be
-		     made live again later.  */
+		  /* A call kills all call used registers that are not
+		     global or fixed, except for those mentioned in the call
+		     pattern which will be made live again later.  */
 		  for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-		    if (call_used_regs[i] || global_regs[i])
+		    if (call_used_regs[i] && ! global_regs[i]
+			&& ! fixed_regs[i])
 		      {
-			register int offset = i / REGSET_ELT_BITS;
-			register REGSET_ELT_TYPE bit
-			  = (REGSET_ELT_TYPE) 1 << (i % REGSET_ELT_BITS);
-
-			bb_live_regs[offset] &= ~bit;
-			bb_dead_regs[offset] |= bit;
+			CLEAR_REGNO_REG_SET (bb_live_regs, i);
+			SET_REGNO_REG_SET (bb_dead_regs, i);
 		      }
 
 		  /* Regs live at the time of a call instruction must not
@@ -3817,8 +3854,7 @@ schedule_block (b, file)
 		     (below).  */
 		  p = regs_sometimes_live;
 		  for (i = 0; i < sometimes_max; i++, p++)
-		    if (bb_live_regs[p->offset]
-			& ((REGSET_ELT_TYPE) 1 << p->bit))
+		    if (REGNO_REG_SET_P (bb_live_regs, p->regno))
 		      p->calls_crossed += 1;
 		}
 
@@ -3827,20 +3863,13 @@ schedule_block (b, file)
 	      attach_deaths_insn (insn);
 
 	      /* Find registers now made live by that instruction.  */
-	      for (i = 0; i < regset_size; i++)
-		{
-		  REGSET_ELT_TYPE diff = bb_live_regs[i] & ~old_live_regs[i];
-		  if (diff)
-		    {
-		      register int bit;
-		      old_live_regs[i] |= diff;
-		      for (bit = 0; bit < REGSET_ELT_BITS; bit++)
-			if (diff & ((REGSET_ELT_TYPE) 1 << bit))
-			  sometimes_max
-			    = new_sometimes_live (regs_sometimes_live, i, bit,
-						  sometimes_max);
-		    }
-		}
+	      EXECUTE_IF_AND_COMPL_IN_REG_SET (bb_live_regs, old_live_regs, 0, i,
+					       {
+						 sometimes_max
+						   = new_sometimes_live (regs_sometimes_live,
+									 i, sometimes_max);
+					       });
+	      IOR_REG_SET (old_live_regs, bb_live_regs);
 
 	      /* Count lengths of all regs we are worrying about now,
 		 and handle registers no longer live.  */
@@ -3848,20 +3877,18 @@ schedule_block (b, file)
 	      for (i = 0; i < sometimes_max; i++)
 		{
 		  register struct sometimes *p = &regs_sometimes_live[i];
-		  int regno = p->offset*REGSET_ELT_BITS + p->bit;
+		  int regno = p->regno;
 
 		  p->live_length += 1;
 
-		  if ((bb_live_regs[p->offset]
-		       & ((REGSET_ELT_TYPE) 1 << p->bit)) == 0)
+		  if (!REGNO_REG_SET_P (bb_live_regs, p->regno))
 		    {
 		      /* This is the end of one of this register's lifetime
 			 segments.  Save the lifetime info collected so far,
 			 and clear its bit in the old_live_regs entry.  */
 		      sched_reg_live_length[regno] += p->live_length;
 		      sched_reg_n_calls_crossed[regno] += p->calls_crossed;
-		      old_live_regs[p->offset]
-			&= ~((REGSET_ELT_TYPE) 1 << p->bit);
+		      CLEAR_REGNO_REG_SET (old_live_regs, p->regno);
 
 		      /* Delete the reg_sometimes_live entry for this reg by
 			 copying the last entry over top of it.  */
@@ -3888,10 +3915,6 @@ schedule_block (b, file)
       sched_n_insns += 1;
       NEXT_INSN (insn) = last;
       PREV_INSN (last) = insn;
-      last = insn;
-
-      /* Check to see if we need to re-emit any notes here.  */
-      last = reemit_notes (insn, last);
 
       /* Everything that precedes INSN now either becomes "ready", if
 	 it can execute immediately before INSN, or "pending", if
@@ -3918,22 +3941,42 @@ schedule_block (b, file)
 
 	  /* Now handle each group insn like the main insn was handled
 	     above.  */
-	  while (SCHED_GROUP_P (insn))
+	  link = insn;
+	  while (SCHED_GROUP_P (link))
 	    {
-	      insn = PREV_INSN (insn);
+	      link = PREV_INSN (link);
 
 	      sched_n_insns += 1;
-	      NEXT_INSN (insn) = last;
-	      PREV_INSN (last) = insn;
-	      last = insn;
-
-	      last = reemit_notes (insn, last);
 
 	      /* ??? Why don't we set LAUNCH_PRIORITY here?  */
-	      new_ready = schedule_insn (insn, ready, new_ready, clock);
-	      INSN_PRIORITY (insn) = DONE_PRIORITY;
+	      new_ready = schedule_insn (link, ready, new_ready, clock);
+	      INSN_PRIORITY (link) = DONE_PRIORITY;
 	    }
 	}
+
+      /* Put back NOTE_INSN_SETJMP,
+         NOTE_INSN_{LOOP,EHREGION}_{BEGIN,END} notes.  */
+
+      /* To prime the loop.  We need to handle INSN and all the insns in the
+         sched group.  */
+      last = NEXT_INSN (insn);
+      do
+	{
+	  insn = PREV_INSN (last);
+
+	  /* Maintain a valid chain so emit_note_before works.
+	     This is necessary because PREV_INSN (insn) isn't valid
+	     (if ! SCHED_GROUP_P) and if it points to an insn already
+	     scheduled, a circularity will result.  */
+	  if (! SCHED_GROUP_P (insn))
+	    {
+	      NEXT_INSN (prev_head) = insn;
+	      PREV_INSN (insn) = prev_head;
+	    }
+
+	  last = reemit_notes (insn, insn);
+	}
+      while (SCHED_GROUP_P (insn));
     }
   if (q_size != 0)
     abort ();
@@ -3944,7 +3987,7 @@ schedule_block (b, file)
   /* HEAD is now the first insn in the chain of insns that
      been scheduled by the loop above.
      TAIL is the last of those insns.  */
-  head = insn;
+  head = last;
 
   /* NOTE_LIST is the end of a chain of notes previously found
      among the insns.  Insert them at the beginning of the insns.  */
@@ -4017,7 +4060,7 @@ schedule_block (b, file)
 	    prev = PREV_INSN (insn);
 	    if (LINE_NOTE (note))
 	      {
-		/* Re-use the original line-number note. */
+		/* Re-use the original line-number note.  */
 		LINE_NOTE (note) = 0;
 		PREV_INSN (note) = prev;
 		NEXT_INSN (prev) = note;
@@ -4029,6 +4072,7 @@ schedule_block (b, file)
 		notes++;
 		new = emit_note_after (NOTE_LINE_NUMBER (note), prev);
 		NOTE_SOURCE_FILE (new) = NOTE_SOURCE_FILE (note);
+		RTX_INTEGRATED_P (new) = RTX_INTEGRATED_P (note);
 	      }
 	  }
       if (file && notes)
@@ -4043,6 +4087,10 @@ schedule_block (b, file)
 
   /* Yow! We're done!  */
   free_pending_lists ();
+
+ret:
+  FREE_REG_SET (reg_pending_sets);
+  FREE_REG_SET (old_live_regs);
 
   return;
 }
@@ -4256,10 +4304,10 @@ update_n_sets (x, inc)
 	  int endregno = regno + HARD_REGNO_NREGS (regno, GET_MODE (dest));
 	  
 	  for (i = regno; i < endregno; i++)
-	    reg_n_sets[i] += inc;
+	    REG_N_SETS (i) += inc;
 	}
       else
-	reg_n_sets[regno] += inc;
+	REG_N_SETS (regno) += inc;
     }
 }
 
@@ -4321,6 +4369,7 @@ update_flow_info (notes, first, last, orig_insn)
 		  /* ??? This won't handle multiple word registers correctly,
 		     but should be good enough for now.  */
 		  if (REG_NOTE_KIND (note) == REG_UNUSED
+		      && GET_CODE (XEXP (note, 0)) != SCRATCH
 		      && ! dead_or_set_p (insn, XEXP (note, 0)))
 		    PUT_REG_NOTE_KIND (note, REG_DEAD);
 
@@ -4335,6 +4384,15 @@ update_flow_info (notes, first, last, orig_insn)
 		 pattern, so we can safely ignore it.  */
 	      if (insn == first)
 		{
+		  /* After reload, REG_DEAD notes come sometimes an
+		     instruction after the register actually dies.  */
+		  if (reload_completed && REG_NOTE_KIND (note) == REG_DEAD)
+		    {
+		      XEXP (note, 1) = REG_NOTES (insn);
+		      REG_NOTES (insn) = note;
+		      break;
+		    }
+			
 		  if (REG_NOTE_KIND (note) != REG_UNUSED)
 		    abort ();
 
@@ -4363,6 +4421,15 @@ update_flow_info (notes, first, last, orig_insn)
 		     uses it.  */
 		  break;
 		}
+	      /* If this note refers to a multiple word hard
+		 register, it may have been split into several smaller
+		 hard register references.  We could split the notes,
+		 but simply dropping them is good enough.  */
+	      if (GET_CODE (orig_dest) == REG
+		  && REGNO (orig_dest) < FIRST_PSEUDO_REGISTER
+		  && HARD_REGNO_NREGS (REGNO (orig_dest),
+				       GET_MODE (orig_dest)) > 1)
+		    break;
 	      /* It must be set somewhere, fail if we couldn't find where it
 		 was set.  */
 	      if (insn == last)
@@ -4399,7 +4466,22 @@ update_flow_info (notes, first, last, orig_insn)
 	      /* The original dest must still be set someplace.  Abort if we
 		 couldn't find it.  */
 	      if (insn == first)
-		abort ();
+		{
+		  /* However, if this note refers to a multiple word hard
+		     register, it may have been split into several smaller
+		     hard register references.  We could split the notes,
+		     but simply dropping them is good enough.  */
+		  if (GET_CODE (orig_dest) == REG
+		      && REGNO (orig_dest) < FIRST_PSEUDO_REGISTER
+		      && HARD_REGNO_NREGS (REGNO (orig_dest),
+					   GET_MODE (orig_dest)) > 1)
+		    break;
+		  /* Likewise for multi-word memory references.  */
+		  if (GET_CODE (orig_dest) == MEM
+		      && SIZE_FOR_MODE (orig_dest) > MOVE_MAX)
+		    break;
+		  abort ();
+		}
 	    }
 	  break;
 
@@ -4415,6 +4497,12 @@ update_flow_info (notes, first, last, orig_insn)
 	    XEXP (note, 0) = first;
 	  break;
 
+	case REG_EXEC_COUNT:
+	  /* Move a REG_EXEC_COUNT note to the first insn created.  */
+	  XEXP (note, 1) = REG_NOTES (first);
+	  REG_NOTES (first) = note;
+	  break;
+
 	case REG_RETVAL:
 	  /* Move a REG_RETVAL note to the last insn created, and update
 	     the corresponding REG_LIBCALL note.  */
@@ -4428,6 +4516,7 @@ update_flow_info (notes, first, last, orig_insn)
 	  break;
 
 	case REG_NONNEG:
+	case REG_BR_PROB:
 	  /* This should be moved to whichever instruction is a JUMP_INSN.  */
 
 	  for (insn = last; ; insn = PREV_INSN (insn))
@@ -4446,6 +4535,9 @@ update_flow_info (notes, first, last, orig_insn)
 	  break;
 
 	case REG_INC:
+	  /* reload sometimes leaves obsolete REG_INC notes around.  */
+	  if (reload_completed)
+	    break;
 	  /* This should be moved to whichever instruction now has the
 	     increment operation.  */
 	  abort ();
@@ -4496,10 +4588,7 @@ update_flow_info (notes, first, last, orig_insn)
   /* If any insn, except the last, uses the register set by the last insn,
      then we need a new REG_DEAD note on that insn.  In this case, there
      would not have been a REG_DEAD note for this register in the original
-     insn because it was used and set within one insn.
-
-     There is no new REG_DEAD note needed if the last insn uses the register
-     that it is setting.  */
+     insn because it was used and set within one insn.  */
 
   set = single_set (last);
   if (set)
@@ -4512,9 +4601,34 @@ update_flow_info (notes, first, last, orig_insn)
 	dest = XEXP (dest, 0);
 
       if (GET_CODE (dest) == REG
-	  && ! reg_overlap_mentioned_p (dest, SET_SRC (set)))
+	  /* Global registers are always live, so the code below does not
+	     apply to them.  */
+	  && (REGNO (dest) >= FIRST_PSEUDO_REGISTER
+	      || ! global_regs[REGNO (dest)]))
 	{
-	  for (insn = PREV_INSN (last); ; insn = PREV_INSN (insn))
+	  rtx stop_insn = PREV_INSN (first);
+
+	  /* If the last insn uses the register that it is setting, then
+	     we don't want to put a REG_DEAD note there.  Search backwards
+	     to find the first insn that sets but does not use DEST.  */
+
+	  insn = last;
+	  if (reg_overlap_mentioned_p (dest, SET_SRC (set)))
+	    {
+	      for (insn = PREV_INSN (insn); insn != first;
+		   insn = PREV_INSN (insn))
+		{
+		  if ((set = single_set (insn))
+		      && reg_mentioned_p (dest, SET_DEST (set))
+		      && ! reg_overlap_mentioned_p (dest, SET_SRC (set)))
+		    break;
+		}
+	    }
+
+	  /* Now find the first insn that uses but does not set DEST.  */
+
+	  for (insn = PREV_INSN (insn); insn != stop_insn;
+	       insn = PREV_INSN (insn))
 	    {
 	      if (GET_RTX_CLASS (GET_CODE (insn)) == 'i'
 		  && reg_mentioned_p (dest, PATTERN (insn))
@@ -4540,8 +4654,6 @@ update_flow_info (notes, first, last, orig_insn)
 		      break;
 		    }
 		}
-	      if (insn == first)
-		break;
 	    }
 	}
     }
@@ -4565,21 +4677,29 @@ update_flow_info (notes, first, last, orig_insn)
 
       for (insn = first; ; insn = NEXT_INSN (insn))
 	{
-	  set = single_set (insn);
-	  if (set)
+	  rtx pat = PATTERN (insn);
+	  int i = GET_CODE (pat) == PARALLEL ? XVECLEN (pat, 0) : 0;
+	  set = pat;
+	  for (;;)
 	    {
-	      if (GET_CODE (SET_DEST (set)) == REG
-		  && REGNO (SET_DEST (set)) == REGNO (orig_dest))
+	      if (GET_CODE (set) == SET)
 		{
-		  found_orig_dest = 1;
-		  break;
+		  if (GET_CODE (SET_DEST (set)) == REG
+		      && REGNO (SET_DEST (set)) == REGNO (orig_dest))
+		    {
+		      found_orig_dest = 1;
+		      break;
+		    }
+		  else if (GET_CODE (SET_DEST (set)) == SUBREG
+			   && SUBREG_REG (SET_DEST (set)) == orig_dest)
+		    {
+		      found_split_dest = 1;
+		      break;
+		    }
 		}
-	      else if (GET_CODE (SET_DEST (set)) == SUBREG
-		       && SUBREG_REG (SET_DEST (set)) == orig_dest)
-		{
-		  found_split_dest = 1;
-		  break;
-		}
+	      if (--i < 0)
+		break;
+	      set = XVECEXP (pat, 0, i);
 	    }
 
 	  if (insn == last)
@@ -4668,6 +4788,7 @@ schedule_insns (dump_file)
 {
   int max_uid = MAX_INSNS_PER_SPLIT * (get_max_uid () + 1);
   int b;
+  int i;
   rtx insn;
 
   /* Taking care of this degenerate case makes the rest of
@@ -4678,7 +4799,7 @@ schedule_insns (dump_file)
   /* Create an insn here so that we can hang dependencies off of it later.  */
   sched_before_next_call
     = gen_rtx (INSN, VOIDmode, 0, NULL_RTX, NULL_RTX,
-	       NULL_RTX, 0, NULL_RTX, 0);
+	       NULL_RTX, 0, NULL_RTX, NULL_RTX);
 
   /* Initialize the unused_*_lists.  We can't use the ones left over from
      the previous function, because gcc has freed that memory.  We can use
@@ -4707,20 +4828,16 @@ schedule_insns (dump_file)
 
   if (reload_completed == 0)
     {
-      sched_reg_n_deaths = (short *) alloca (max_regno * sizeof (short));
       sched_reg_n_calls_crossed = (int *) alloca (max_regno * sizeof (int));
       sched_reg_live_length = (int *) alloca (max_regno * sizeof (int));
-      bb_dead_regs = (regset) alloca (regset_bytes);
-      bb_live_regs = (regset) alloca (regset_bytes);
+      bb_dead_regs = ALLOCA_REG_SET ();
+      bb_live_regs = ALLOCA_REG_SET ();
       bzero ((char *) sched_reg_n_calls_crossed, max_regno * sizeof (int));
       bzero ((char *) sched_reg_live_length, max_regno * sizeof (int));
-      bcopy ((char *) reg_n_deaths, (char *) sched_reg_n_deaths,
-	     max_regno * sizeof (short));
       init_alias_analysis ();
     }
   else
     {
-      sched_reg_n_deaths = 0;
       sched_reg_n_calls_crossed = 0;
       sched_reg_live_length = 0;
       bb_dead_regs = 0;
@@ -4764,6 +4881,8 @@ schedule_insns (dump_file)
 
   /* ??? Add a NOTE after the last insn of the last basic block.  It is not
      known why this is done.  */
+  /* ??? Perhaps it's done to ensure NEXT_TAIL in schedule_block is a
+     valid insn.  */
 
   insn = basic_block_end[n_basic_blocks-1];
   if (NEXT_INSN (insn) == 0
@@ -4822,7 +4941,10 @@ schedule_insns (dump_file)
 
 	  /* Split insns here to get max fine-grain parallelism.  */
 	  prev = PREV_INSN (insn);
-	  if (reload_completed == 0)
+	  /* It is probably not worthwhile to try to split again in the
+	     second pass.  However, if flag_schedule_insns is not set,
+	     the first and only (if any) scheduling pass is after reload.  */
+	  if (reload_completed == 0 || ! flag_schedule_insns)
 	    {
 	      rtx last, first = PREV_INSN (insn);
 	      rtx notes = REG_NOTES (insn);
@@ -4916,35 +5038,35 @@ schedule_insns (dump_file)
 	  {
 	    if (dump_file)
 	      {
-		if (reg_live_length[regno] > sched_reg_live_length[regno])
+		if (REG_LIVE_LENGTH (regno) > sched_reg_live_length[regno])
 		  fprintf (dump_file,
 			   ";; register %d life shortened from %d to %d\n",
-			   regno, reg_live_length[regno],
+			   regno, REG_LIVE_LENGTH (regno),
 			   sched_reg_live_length[regno]);
 		/* Negative values are special; don't overwrite the current
 		   reg_live_length value if it is negative.  */
-		else if (reg_live_length[regno] < sched_reg_live_length[regno]
-			 && reg_live_length[regno] >= 0)
+		else if (REG_LIVE_LENGTH (regno) < sched_reg_live_length[regno]
+			 && REG_LIVE_LENGTH (regno) >= 0)
 		  fprintf (dump_file,
 			   ";; register %d life extended from %d to %d\n",
-			   regno, reg_live_length[regno],
+			   regno, REG_LIVE_LENGTH (regno),
 			   sched_reg_live_length[regno]);
 
-		if (! reg_n_calls_crossed[regno]
+		if (! REG_N_CALLS_CROSSED (regno)
 		    && sched_reg_n_calls_crossed[regno])
 		  fprintf (dump_file,
 			   ";; register %d now crosses calls\n", regno);
-		else if (reg_n_calls_crossed[regno]
+		else if (REG_N_CALLS_CROSSED (regno)
 			 && ! sched_reg_n_calls_crossed[regno]
-			 && reg_basic_block[regno] != REG_BLOCK_GLOBAL)
+			 && REG_BASIC_BLOCK (regno) != REG_BLOCK_GLOBAL)
 		  fprintf (dump_file,
 			   ";; register %d no longer crosses calls\n", regno);
 
 	      }
 	    /* Negative values are special; don't overwrite the current
 	       reg_live_length value if it is negative.  */
-	    if (reg_live_length[regno] >= 0)
-	      reg_live_length[regno] = sched_reg_live_length[regno];
+	    if (REG_LIVE_LENGTH (regno) >= 0)
+	      REG_LIVE_LENGTH (regno) = sched_reg_live_length[regno];
 
 	    /* We can't change the value of reg_n_calls_crossed to zero for
 	       pseudos which are live in more than one block.
@@ -4960,9 +5082,16 @@ schedule_insns (dump_file)
 	       Alternatively, we could try to correctly update basic block live
 	       at start here in sched, but that seems complicated.  */
 	    if (sched_reg_n_calls_crossed[regno]
-		|| reg_basic_block[regno] != REG_BLOCK_GLOBAL)
-	      reg_n_calls_crossed[regno] = sched_reg_n_calls_crossed[regno];
+		|| REG_BASIC_BLOCK (regno) != REG_BLOCK_GLOBAL)
+	      REG_N_CALLS_CROSSED (regno) = sched_reg_n_calls_crossed[regno];
 	  }
     }
+
+  if (reload_completed == 0)
+    {
+      FREE_REG_SET (bb_dead_regs);
+      FREE_REG_SET (bb_live_regs);
+    }
+
 }
 #endif /* INSN_SCHEDULING */

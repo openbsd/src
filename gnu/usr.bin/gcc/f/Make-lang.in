@@ -280,7 +280,7 @@ f/runtime/libF77/Makefile f/runtime/libI77/Makefile: \
   $(srcdir)/f/com.h f/proj.h $(srcdir)/f/runtime/Makefile.in \
   $(srcdir)/f/runtime/libF77/Makefile.in \
   $(srcdir)/f/runtime/libI77/Makefile.in \
-  $(GCC_PARTS)
+  $(GCC_PASSES)
 # The make "stage?" in compiler spec. is fully qualified as above
 	top=`pwd`; \
 	src=`cd $(srcdir); pwd`; \

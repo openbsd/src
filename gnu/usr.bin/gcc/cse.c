@@ -1,5 +1,5 @@
 /* Common subexpression elimination for GNU compiler.
-   Copyright (C) 1987, 88, 89, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 89, 92-7, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "real.h"
 #include "insn-config.h"
 #include "recog.h"
+#include "expr.h"
 
 #include <setjmp.h>
 
@@ -192,6 +193,11 @@ Related expressions:
 
 static int max_reg;
 
+/* One plus largest instruction UID used in this function at time of
+   cse_main call.  */
+
+static int max_insn_uid;
+
 /* Length of vectors indexed by quantity number.
    We know in advance we will not need a quantity number this big.  */
 
@@ -202,7 +208,7 @@ static int max_qty;
 
 static int next_qty;
 
-/* Indexed by quantity number, gives the first (or last) (pseudo) register 
+/* Indexed by quantity number, gives the first (or last) register 
    in the chain of registers that currently contain this quantity.  */
 
 static int *qty_first_reg;
@@ -267,13 +273,13 @@ static rtx prev_insn;
 
 static rtx this_insn;
 
-/* Index by (pseudo) register number, gives the quantity number
+/* Index by register number, gives the quantity number
    of the register's current contents.  */
 
 static int *reg_qty;
 
-/* Index by (pseudo) register number, gives the number of the next (or
-   previous) (pseudo) register in the chain of registers sharing the same
+/* Index by register number, gives the number of the next (or
+   previous) register in the chain of registers sharing the same
    value.
 
    Or -1 if this register is at the end of the chain.
@@ -283,12 +289,12 @@ static int *reg_qty;
 static int *reg_next_eqv;
 static int *reg_prev_eqv;
 
-/* Index by (pseudo) register number, gives the number of times
+/* Index by register number, gives the number of times
    that register has been altered in the current basic block.  */
 
 static int *reg_tick;
 
-/* Index by (pseudo) register number, gives the reg_tick value at which
+/* Index by register number, gives the reg_tick value at which
    rtx's containing this register are valid in the hash table.
    If this does not equal the current reg_tick value, such expressions
    existing in the hash table are invalid.
@@ -478,12 +484,12 @@ struct table_elt
   ((REG_USERVAR_P (N) && REGNO (N) < FIRST_PSEUDO_REGISTER)	\
    || CHEAP_REGNO (REGNO (N)))
 
-#define COST(X)						\
-  (GET_CODE (X) == REG					\
-   ? (CHEAP_REG (X) ? 0					\
-      : REGNO (X) >= FIRST_PSEUDO_REGISTER ? 1		\
-      : 2)						\
-   : rtx_cost (X, SET) * 2)
+#define COST(X)								\
+  (GET_CODE (X) == REG							\
+   ? (CHEAP_REG (X) ? 0							\
+      : REGNO (X) >= FIRST_PSEUDO_REGISTER ? 1				\
+      : 2)								\
+   : notreg_cost(X))
 
 /* Determine if the quantity number for register X represents a valid index
    into the `qty_...' variables.  */
@@ -534,7 +540,7 @@ static int constant_pool_entries_cost;
 
 struct write_data
 {
-  int sp : 1;			/* Invalidate stack pointer. */
+  int sp : 1;			/* Invalidate stack pointer.  */
   int var : 1;			/* Invalidate variable addresses.  */
   int nonscalar : 1;		/* Invalidate all but scalar variables.  */
   int all : 1;			/* Invalidate all memory refs.  */
@@ -559,7 +565,7 @@ struct cse_basic_block_data {
   int path_size;
   /* Current branch path, indicating which branches will be taken.  */
   struct branch_path {
-    /* The branch insn. */
+    /* The branch insn.  */
     rtx branch;
     /* Whether it should be taken or not.  AROUND is the same as taken
        except that it is used when the destination label is not preceded
@@ -582,7 +588,8 @@ struct cse_basic_block_data {
 	   || XEXP (X, 0) == hard_frame_pointer_rtx		\
 	   || XEXP (X, 0) == arg_pointer_rtx			\
 	   || XEXP (X, 0) == virtual_stack_vars_rtx		\
-	   || XEXP (X, 0) == virtual_incoming_args_rtx)))
+	   || XEXP (X, 0) == virtual_incoming_args_rtx))	\
+   || GET_CODE (X) == ADDRESSOF)
 
 /* Similar, but also allows reference to the stack pointer.
 
@@ -606,8 +613,10 @@ struct cse_basic_block_data {
    || (GET_CODE (X) == PLUS && GET_CODE (XEXP (X, 1)) == CONST_INT \
        && (XEXP (X, 0) == stack_pointer_rtx			\
 	   || XEXP (X, 0) == virtual_stack_dynamic_rtx		\
-	   || XEXP (X, 0) == virtual_outgoing_args_rtx)))
+	   || XEXP (X, 0) == virtual_outgoing_args_rtx))	\
+   || GET_CODE (X) == ADDRESSOF)
 
+static int notreg_cost		PROTO((rtx));
 static void new_basic_block	PROTO((void));
 static void make_new_qty	PROTO((int));
 static void make_regs_eqv	PROTO((int, int));
@@ -672,6 +681,28 @@ extern int rtx_equal_function_value_matters;
    One use is in cse, to decide which expression to keep in the hash table.
    Another is in rtl generation, to pick the cheapest way to multiply.
    Other uses like the latter are expected in the future.  */
+
+/* Internal function, to compute cost when X is not a register; called
+   from COST macro to keep it simple.  */
+
+static int
+notreg_cost (x)
+     rtx x;
+{
+  return ((GET_CODE (x) == SUBREG
+	   && GET_CODE (SUBREG_REG (x)) == REG
+	   && GET_MODE_CLASS (GET_MODE (x)) == MODE_INT
+	   && GET_MODE_CLASS (GET_MODE (SUBREG_REG (x))) == MODE_INT
+	   && (GET_MODE_SIZE (GET_MODE (x))
+	       < GET_MODE_SIZE (GET_MODE (SUBREG_REG (x))))
+	   && subreg_lowpart_p (x)
+	   && TRULY_NOOP_TRUNCATION (GET_MODE_BITSIZE (GET_MODE (x)),
+				     GET_MODE_BITSIZE (GET_MODE (SUBREG_REG (x)))))
+	  ? (CHEAP_REG (SUBREG_REG (x)) ? 0
+	     : (REGNO (SUBREG_REG (x)) >= FIRST_PSEUDO_REGISTER ? 1
+		: 2))
+	  : rtx_cost (x, SET) * 2);
+}
 
 /* Return the right cost to give to an operation
    to make the cost of the corresponding register-to-register instruction
@@ -850,11 +881,11 @@ make_regs_eqv (new, old)
       && ((new < FIRST_PSEUDO_REGISTER && FIXED_REGNO_P (new))
 	  || (new >= FIRST_PSEUDO_REGISTER
 	      && (firstr < FIRST_PSEUDO_REGISTER
-		  || ((uid_cuid[regno_last_uid[new]] > cse_basic_block_end
-		       || (uid_cuid[regno_first_uid[new]]
+		  || ((uid_cuid[REGNO_LAST_UID (new)] > cse_basic_block_end
+		       || (uid_cuid[REGNO_FIRST_UID (new)]
 			   < cse_basic_block_start))
-		      && (uid_cuid[regno_last_uid[new]]
-			  > uid_cuid[regno_last_uid[firstr]]))))))
+		      && (uid_cuid[REGNO_LAST_UID (new)]
+			  > uid_cuid[REGNO_LAST_UID (firstr)]))))))
     {
       reg_prev_eqv[firstr] = new;
       reg_next_eqv[new] = firstr;
@@ -1466,7 +1497,7 @@ merge_equiv_classes (class1, class2)
 
       /* Remove old entry, make a new one in CLASS1's class.
 	 Don't do this for invalid entries as we cannot find their
-	 hash code (it also isn't necessary). */
+	 hash code (it also isn't necessary).  */
       if (GET_CODE (exp) == REG || exp_equiv_p (exp, exp, 1, 0))
 	{
 	  hash_arg_in_memory = 0;
@@ -1886,18 +1917,16 @@ canon_hash (x, mode)
 	/* On some machines, we can't record any non-fixed hard register,
 	   because extending its life will cause reload problems.  We
 	   consider ap, fp, and sp to be fixed for this purpose.
-	   On all machines, we can't record any global registers. */
+	   On all machines, we can't record any global registers.  */
 
 	if (regno < FIRST_PSEUDO_REGISTER
 	    && (global_regs[regno]
-#ifdef SMALL_REGISTER_CLASSES
-		|| (! fixed_regs[regno]
+		|| (SMALL_REGISTER_CLASSES
+		    && ! fixed_regs[regno]
 		    && regno != FRAME_POINTER_REGNUM
 		    && regno != HARD_FRAME_POINTER_REGNUM
 		    && regno != ARG_POINTER_REGNUM
-		    && regno != STACK_POINTER_REGNUM)
-#endif
-		))
+		    && regno != STACK_POINTER_REGNUM)))
 	  {
 	    do_not_record = 1;
 	    return 0;
@@ -1945,7 +1974,7 @@ canon_hash (x, mode)
 	  do_not_record = 1;
 	  return 0;
 	}
-      if (! RTX_UNCHANGING_P (x))
+      if (! RTX_UNCHANGING_P (x) || FIXED_BASE_PLUS_P (XEXP (x, 0)))
 	{
 	  hash_arg_in_memory = 1;
 	  if (MEM_IN_STRUCT_P (x)) hash_arg_in_struct = 1;
@@ -1973,6 +2002,10 @@ canon_hash (x, mode)
 	  do_not_record = 1;
 	  return 0;
 	}
+      break;
+      
+    default:
+      break;
     }
 
   i = GET_RTX_LENGTH (code) - 1;
@@ -2009,6 +2042,8 @@ canon_hash (x, mode)
 	  register unsigned tem = XINT (x, i);
 	  hash += tem;
 	}
+      else if (fmt[i] == '0')
+	/* unused */;
       else
 	abort ();
     }
@@ -2147,6 +2182,9 @@ exp_equiv_p (x, y, validate, equal_values)
 			       validate, equal_values)
 		  && exp_equiv_p (XEXP (x, 1), XEXP (y, 0),
 				  validate, equal_values)));
+      
+    default:
+      break;
     }
 
   /* Compare the elements.  If any pair of corresponding elements
@@ -2375,6 +2413,9 @@ set_nonvarying_address_components (addr, size, pbase, pstart, pend)
 	      base = *pbase;
 	    }
 	  break;
+
+	default:
+	  break;
 	}
 
       break;
@@ -2572,6 +2613,9 @@ canon_reg (x, insn)
 		: REGNO_REG_CLASS (first) == NO_REGS ? x
 		: gen_rtx (REG, qty_mode[reg_qty[REGNO (x)]], first));
       }
+      
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);
@@ -2582,6 +2626,7 @@ canon_reg (x, insn)
       if (fmt[i] == 'e')
 	{
 	  rtx new = canon_reg (XEXP (x, i), insn);
+	  int insn_code;
 
 	  /* If replacing pseudo with hard reg or vice versa, ensure the
 	     insn remains valid.  Likewise if the insn has MATCH_DUPs.  */
@@ -2589,7 +2634,8 @@ canon_reg (x, insn)
 	      && GET_CODE (new) == REG && GET_CODE (XEXP (x, i)) == REG
 	      && (((REGNO (new) < FIRST_PSEUDO_REGISTER)
 		   != (REGNO (XEXP (x, i)) < FIRST_PSEUDO_REGISTER))
-		  || insn_n_dups[recog_memoized (insn)] > 0))
+		  || (insn_code = recog_memoized (insn)) < 0
+		  || insn_n_dups[insn_code] > 0))
 	    validate_change (insn, &XEXP (x, i), new, 1);
 	  else
 	    XEXP (x, i) = new;
@@ -2602,7 +2648,7 @@ canon_reg (x, insn)
   return x;
 }
 
-/* LOC is a location with INSN that is an operand address (the contents of
+/* LOC is a location within INSN that is an operand address (the contents of
    a MEM).  Find the best equivalent address to use that is valid for this
    insn.
 
@@ -2653,6 +2699,7 @@ find_best_addr (insn, loc)
 	  && (regno = REGNO (addr), regno == FRAME_POINTER_REGNUM
 	      || regno == HARD_FRAME_POINTER_REGNUM
 	      || regno == ARG_POINTER_REGNUM))
+      || GET_CODE (addr) == ADDRESSOF
       || CONSTANT_ADDRESS_P (addr))
     return;
 
@@ -2660,9 +2707,21 @@ find_best_addr (insn, loc)
      sometimes simplify the expression.  Many simplifications
      will not be valid, but some, usually applying the associative rule, will
      be valid and produce better code.  */
-  if (GET_CODE (addr) != REG
-      && validate_change (insn, loc, fold_rtx (addr, insn), 0))
-    addr = *loc;
+  if (GET_CODE (addr) != REG)
+    {
+      rtx folded = fold_rtx (copy_rtx (addr), NULL_RTX);
+
+      if (1
+#ifdef ADDRESS_COST
+	  && (ADDRESS_COST (folded) < ADDRESS_COST (addr)
+	      || (ADDRESS_COST (folded) == ADDRESS_COST (addr)
+		  && rtx_cost (folded, MEM) > rtx_cost (addr, MEM)))
+#else
+	  && rtx_cost (folded, MEM) < rtx_cost (addr, MEM)
+#endif
+	  && validate_change (insn, loc, folded, 0))
+	addr = folded;
+    }
 	
   /* If this address is not in the hash table, we can't look for equivalences
      of the whole address.  Also, ignore if volatile.  */
@@ -3016,7 +3075,7 @@ simplify_unary_operation (code, mode, op, op_mode)
 	lv = CONST_DOUBLE_LOW (op),  hv = CONST_DOUBLE_HIGH (op);
 
 #ifdef REAL_ARITHMETIC
-      REAL_VALUE_FROM_INT (d, lv, hv);
+      REAL_VALUE_FROM_INT (d, lv, hv, mode);
 #else
       if (hv < 0)
 	{
@@ -3061,7 +3120,7 @@ simplify_unary_operation (code, mode, op, op_mode)
 	hv = 0, lv &= GET_MODE_MASK (op_mode);
 
 #ifdef REAL_ARITHMETIC
-      REAL_VALUE_FROM_UNSIGNED_INT (d, lv, hv);
+      REAL_VALUE_FROM_UNSIGNED_INT (d, lv, hv, mode);
 #else
 
       d = (double) (unsigned HOST_WIDE_INT) hv;
@@ -3167,7 +3226,7 @@ simplify_unary_operation (code, mode, op, op_mode)
     }
 
   /* We can do some operations on integer CONST_DOUBLEs.  Also allow
-     for a DImode operation on a CONST_INT. */
+     for a DImode operation on a CONST_INT.  */
   else if (GET_MODE (op) == VOIDmode && width <= HOST_BITS_PER_INT * 2
 	   && (GET_CODE (op) == CONST_DOUBLE || GET_CODE (op) == CONST_INT))
     {
@@ -3401,6 +3460,9 @@ simplify_unary_operation (code, mode, op, op_mode)
 	    return convert_memory_address (Pmode, op);
 	  break;
 #endif
+	  
+	default:
+	  break;
 	}
 
       return 0;
@@ -3451,6 +3513,10 @@ simplify_binary_operation (code, mode, op0, op1)
       f1 = real_value_truncate (mode, f1);
 
 #ifdef REAL_ARITHMETIC
+#ifndef REAL_INFINITY
+      if (code == DIV && REAL_VALUES_EQUAL (f1, dconst0))
+	return 0;
+#endif
       REAL_ARITHMETIC (value, rtx_to_tree_code (code), f0, f1);
 #else
       switch (code)
@@ -3513,7 +3579,7 @@ simplify_binary_operation (code, mode, op0, op1)
 	  neg_double (l2, h2, &lv, &hv);
 	  l2 = lv, h2 = hv;
 
-	  /* .. fall through ... */
+	  /* .. fall through ...  */
 
 	case PLUS:
 	  add_double (l1, h1, l2, h2, &lv, &hv);
@@ -3866,6 +3932,11 @@ simplify_binary_operation (code, mode, op0, op1)
 	     we are still generating RTL.  This test is a kludge.  */
 	  if (GET_CODE (op1) == CONST_INT
 	      && (val = exact_log2 (INTVAL (op1))) >= 0
+	      /* If the mode is larger than the host word size, and the
+		 uppermost bit is set, then this isn't a power of two due
+		 to implicit sign extension.  */
+	      && (width <= HOST_BITS_PER_WIDE_INT
+		  || val != HOST_BITS_PER_WIDE_INT - 1)
 	      && ! rtx_equal_function_value_matters)
 	    return gen_rtx (ASHIFT, mode, op0, GEN_INT (val));
 
@@ -3945,7 +4016,7 @@ simplify_binary_operation (code, mode, op0, op1)
 	      && (arg1 = exact_log2 (INTVAL (op1))) > 0)
 	    return gen_rtx (LSHIFTRT, mode, op0, GEN_INT (arg1));
 
-	  /* ... fall through ... */
+	  /* ... fall through ...  */
 
 	case DIV:
 	  if (op1 == CONST1_RTX (mode))
@@ -3991,7 +4062,7 @@ simplify_binary_operation (code, mode, op0, op1)
 	      && exact_log2 (INTVAL (op1)) > 0)
 	    return gen_rtx (AND, mode, op0, GEN_INT (INTVAL (op1) - 1));
 
-	  /* ... fall through ... */
+	  /* ... fall through ...  */
 
 	case MOD:
 	  if ((op0 == const0_rtx || op1 == const1_rtx)
@@ -4007,7 +4078,7 @@ simplify_binary_operation (code, mode, op0, op1)
 	      && ! side_effects_p (op1))
 	    return op0;
 
-	  /* ... fall through ... */
+	  /* ... fall through ...  */
 
 	case ASHIFT:
 	case ASHIFTRT:
@@ -4323,6 +4394,9 @@ simplify_plus_minus (code, mode, op0, op1)
 	    if (negs[i])
 	      ops[i] = GEN_INT (- INTVAL (ops[i])), negs[i] = 0, changed = 1;
 	    break;
+
+	  default:
+	    break;
 	  }
     }
 
@@ -4556,7 +4630,7 @@ simplify_relational_operation (code, mode, op0, op1)
       else
 	{
 	  l0u = l0s = INTVAL (op0);
-	  h0u = 0, h0s = l0s < 0 ? -1 : 0;
+	  h0u = h0s = l0s < 0 ? -1 : 0;
 	}
 	  
       if (GET_CODE (op1) == CONST_DOUBLE)
@@ -4567,7 +4641,7 @@ simplify_relational_operation (code, mode, op0, op1)
       else
 	{
 	  l1u = l1s = INTVAL (op1);
-	  h1u = 0, h1s = l1s < 0 ? -1 : 0;
+	  h1u = h1s = l1s < 0 ? -1 : 0;
 	}
 
       /* If WIDTH is nonzero and smaller than HOST_BITS_PER_WIDE_INT,
@@ -4648,6 +4722,9 @@ simplify_relational_operation (code, mode, op0, op1)
 	      && INTEGRAL_MODE_P (mode))
 	    return const0_rtx;
 	  break;
+	  
+	default:
+	  break;
 	}
 
       return 0;
@@ -4677,9 +4754,9 @@ simplify_relational_operation (code, mode, op0, op1)
       return equal || op0ltu ? const_true_rtx : const0_rtx;
     case GEU:
       return equal || op1ltu ? const_true_rtx : const0_rtx;
+    default:
+      abort ();
     }
-
-  abort ();
 }
 
 /* Simplify CODE, an operation with result mode MODE and three operands,
@@ -4743,6 +4820,16 @@ simplify_ternary_operation (code, mode, op0_mode, op0, op1, op2)
     case IF_THEN_ELSE:
       if (GET_CODE (op0) == CONST_INT)
 	return op0 != const0_rtx ? op1 : op2;
+
+      /* Convert a == b ? b : a to "a".  */
+      if (GET_CODE (op0) == NE && ! side_effects_p (op0)
+	  && rtx_equal_p (XEXP (op0, 0), op1)
+	  && rtx_equal_p (XEXP (op0, 1), op2))
+	return op1;
+      else if (GET_CODE (op0) == EQ && ! side_effects_p (op0)
+	  && rtx_equal_p (XEXP (op0, 1), op1)
+	  && rtx_equal_p (XEXP (op0, 0), op2))
+	return op2;
       break;
 
     default:
@@ -4809,6 +4896,10 @@ fold_rtx (x, insn)
 	 since they are used only for lists of args
 	 in a function call's REG_EQUAL note.  */
     case EXPR_LIST:
+      /* Changing anything inside an ADDRESSOF is incorrect; we don't
+	 want to (e.g.,) make (addressof (const_int 0)) just because
+	 the location is known to be zero.  */
+    case ADDRESSOF:
       return x;
 
 #ifdef HAVE_cc0
@@ -5058,6 +5149,8 @@ fold_rtx (x, insn)
 	else if (GET_CODE (addr) == LO_SUM
 		 && GET_CODE (XEXP (addr, 1)) == SYMBOL_REF)
 	  base = XEXP (addr, 1);
+	else if (GET_CODE (addr) == ADDRESSOF)
+	  return change_address (x, VOIDmode, addr);
 
 	/* If this is a constant pool reference, we can fold it into its
 	   constant to allow better value tracking.  */
@@ -5143,6 +5236,15 @@ fold_rtx (x, insn)
 
 	return x;
       }
+
+    case ASM_OPERANDS:
+      for (i = XVECLEN (x, 3) - 1; i >= 0; i--)
+	validate_change (insn, &XVECEXP (x, 3, i),
+			 fold_rtx (XVECEXP (x, 3, i), insn), 0);
+      break;
+      
+    default:
+      break;
     }
 
   const_arg0 = 0;
@@ -5364,12 +5466,14 @@ fold_rtx (x, insn)
 	  if (mode_arg0 == VOIDmode || GET_MODE_CLASS (mode_arg0) == MODE_CC)
 	    break;
 
-	  /* If we do not now have two constants being compared, see if we
-	     can nevertheless deduce some things about the comparison.  */
+	  /* If we do not now have two constants being compared, see
+	     if we can nevertheless deduce some things about the
+	     comparison.  */
 	  if (const_arg0 == 0 || const_arg1 == 0)
 	    {
-	      /* Is FOLDED_ARG0 frame-pointer plus a constant?  Or non-explicit
-		 constant?  These aren't zero, but we don't know their sign. */
+	      /* Is FOLDED_ARG0 frame-pointer plus a constant?  Or
+		 non-explicit constant?  These aren't zero, but we
+		 don't know their sign.  */
 	      if (const_arg1 == const0_rtx
 		  && (NONZERO_BASE_PLUS_P (folded_arg0)
 #if 0  /* Sad to say, on sysvr4, #pragma weak can make a symbol address
@@ -5476,6 +5580,8 @@ fold_rtx (x, insn)
 		  if (has_sign)
 		    return false;
 		  break;
+		default:
+		  break;
 		}
 	    }
 	}
@@ -5541,11 +5647,17 @@ fold_rtx (x, insn)
 	  /* If second operand is a register equivalent to a negative
 	     CONST_INT, see if we can find a register equivalent to the
 	     positive constant.  Make a MINUS if so.  Don't do this for
-	     a negative constant since we might then alternate between
+	     a non-negative constant since we might then alternate between
 	     chosing positive and negative constants.  Having the positive
-	     constant previously-used is the more common case.  */
-	  if (const_arg1 && GET_CODE (const_arg1) == CONST_INT
-	      && INTVAL (const_arg1) < 0 && GET_CODE (folded_arg1) == REG)
+	     constant previously-used is the more common case.  Be sure
+	     the resulting constant is non-negative; if const_arg1 were
+	     the smallest negative number this would overflow: depending
+	     on the mode, this would either just be the same value (and
+	     hence not save anything) or be incorrect.  */
+	  if (const_arg1 != 0 && GET_CODE (const_arg1) == CONST_INT
+	      && INTVAL (const_arg1) < 0
+	      && - INTVAL (const_arg1) >= 0
+	      && GET_CODE (folded_arg1) == REG)
 	    {
 	      rtx new_const = GEN_INT (- INTVAL (const_arg1));
 	      struct table_elt *p
@@ -5572,7 +5684,7 @@ fold_rtx (x, insn)
 				 NULL_RTX);
 	    }
 
-	  /* ... fall through ... */
+	  /* ... fall through ...  */
 
 	from_plus:
 	case SMIN:    case SMAX:      case UMIN:    case UMAX:
@@ -5665,6 +5777,10 @@ fold_rtx (x, insn)
 
 	      return cse_gen_binary (code, mode, y, new_const);
 	    }
+	  break;
+
+	default:
+	  break;
 	}
 
       new = simplify_binary_operation (code, mode,
@@ -6103,7 +6219,7 @@ cse_insn (insn, in_libcall_block)
 
   /* Records what this insn does to set CC0.  */
   rtx this_insn_cc0 = 0;
-  enum machine_mode this_insn_cc0_mode;
+  enum machine_mode this_insn_cc0_mode = VOIDmode;
   struct write_data writes_memory;
   static struct write_data init = {0, 0, 0, 0};
 
@@ -6152,7 +6268,7 @@ cse_insn (insn, in_libcall_block)
 	 someplace else, so it isn't worth cse'ing (and on 80386 is unsafe)!
 	 Ensure we invalidate the destination register.  On the 80386 no
 	 other code would invalidate it since it is a fixed_reg.
-	 We need not check the return of apply_change_group; see canon_reg. */
+	 We need not check the return of apply_change_group; see canon_reg.  */
 
       else if (GET_CODE (SET_SRC (x)) == CALL)
 	{
@@ -6290,11 +6406,13 @@ cse_insn (insn, in_libcall_block)
       rtx dest = SET_DEST (sets[i].rtl);
       rtx src = SET_SRC (sets[i].rtl);
       rtx new = canon_reg (src, insn);
+      int insn_code;
 
       if ((GET_CODE (new) == REG && GET_CODE (src) == REG
 	   && ((REGNO (new) < FIRST_PSEUDO_REGISTER)
 	       != (REGNO (src) < FIRST_PSEUDO_REGISTER)))
-	  || insn_n_dups[recog_memoized (insn)] > 0)
+	  || (insn_code = recog_memoized (insn)) < 0
+	  || insn_n_dups[insn_code] > 0)
 	validate_change (insn, &SET_SRC (sets[i].rtl), new, 1);
       else
 	SET_SRC (sets[i].rtl) = new;
@@ -6428,6 +6546,21 @@ cse_insn (insn, in_libcall_block)
       sets[i].src_volatile = do_not_record;
       sets[i].src_in_memory = hash_arg_in_memory;
       sets[i].src_in_struct = hash_arg_in_struct;
+
+      /* If SRC is a MEM, there is a REG_EQUIV note for SRC, and DEST is
+	 a pseudo that is set more than once, do not record SRC.  Using
+	 SRC as a replacement for anything else will be incorrect in that
+	 situation.  Note that this usually occurs only for stack slots,
+	 in which case all the RTL would be referring to SRC, so we don't
+	 lose any optimization opportunities by not having SRC in the
+	 hash table.  */
+
+      if (GET_CODE (src) == MEM
+	  && find_reg_note (insn, REG_EQUIV, src) != 0
+	  && GET_CODE (dest) == REG
+	  && REGNO (dest) >= FIRST_PSEUDO_REGISTER
+	  && REG_N_SETS (REGNO (dest)) != 1)
+	sets[i].src_volatile = 1;
 
 #if 0
       /* It is no longer clear why we used to do this, but it doesn't
@@ -6699,6 +6832,18 @@ cse_insn (insn, in_libcall_block)
 	  if (code != REG && ! exp_equiv_p (p->exp, p->exp, 1, 0))
 	    continue;
 
+	  /* Also skip paradoxical subregs, unless that's what we're
+	     looking for.  */
+	  if (code == SUBREG
+	      && (GET_MODE_SIZE (GET_MODE (p->exp))
+		  > GET_MODE_SIZE (GET_MODE (SUBREG_REG (p->exp))))
+	      && ! (src != 0
+		    && GET_CODE (src) == SUBREG
+		    && GET_MODE (src) == GET_MODE (p->exp)
+		    && (GET_MODE_SIZE (GET_MODE (SUBREG_REG (src)))
+			< GET_MODE_SIZE (GET_MODE (SUBREG_REG (p->exp))))))
+	    continue;
+
           if (src && GET_CODE (src) == code && rtx_equal_p (src, p->exp))
 	    src = 0;
           else if (src_folded && GET_CODE (src_folded) == code
@@ -6724,7 +6869,7 @@ cse_insn (insn, in_libcall_block)
          that are when they are equal cost.  Note that we can never
          worsen an insn as the current contents will also succeed.
 	 If we find an equivalent identical to the destination, use it as best,
-	 since this insn will probably be eliminated in that case. */
+	 since this insn will probably be eliminated in that case.  */
       if (src)
 	{
 	  if (rtx_equal_p (src, dest))
@@ -6772,6 +6917,25 @@ cse_insn (insn, in_libcall_block)
           while (elt && GET_CODE (elt->exp) != REG
 	         && ! exp_equiv_p (elt->exp, elt->exp, 1, 0))
 	    elt = elt->next_same_value;	     
+
+	  /* A paradoxical subreg would be bad here: it'll be the right
+	     size, but later may be adjusted so that the upper bits aren't
+	     what we want.  So reject it.  */
+	  if (elt != 0
+	      && GET_CODE (elt->exp) == SUBREG
+	      && (GET_MODE_SIZE (GET_MODE (elt->exp))
+		  > GET_MODE_SIZE (GET_MODE (SUBREG_REG (elt->exp))))
+	      /* It is okay, though, if the rtx we're trying to match
+		 will ignore any of the bits we can't predict.  */
+	      && ! (src != 0
+		    && GET_CODE (src) == SUBREG
+		    && GET_MODE (src) == GET_MODE (elt->exp)
+		    && (GET_MODE_SIZE (GET_MODE (SUBREG_REG (src)))
+			< GET_MODE_SIZE (GET_MODE (SUBREG_REG (elt->exp))))))
+	    {
+	      elt = elt->next_same_value;
+	      continue;
+	    }
 	      
           if (elt) src_elt_cost = elt->cost;
 
@@ -7358,7 +7522,9 @@ cse_insn (insn, in_libcall_block)
 	elt = insert (dest, sets[i].src_elt,
 		      sets[i].dest_hash, GET_MODE (dest));
 	elt->in_memory = (GET_CODE (sets[i].inner_dest) == MEM
-			  && ! RTX_UNCHANGING_P (sets[i].inner_dest));
+			  && (! RTX_UNCHANGING_P (sets[i].inner_dest)
+			      || FIXED_BASE_PLUS_P (XEXP (sets[i].inner_dest,
+							  0))));
 
 	if (elt->in_memory)
 	  {
@@ -7546,7 +7712,7 @@ note_mem_written (written, writes_ptr)
     *writes_ptr = everything;
   else if (GET_CODE (written) == MEM)
     {
-      /* Pushing or popping the stack invalidates just the stack pointer. */
+      /* Pushing or popping the stack invalidates just the stack pointer.  */
       rtx addr = XEXP (written, 0);
       if ((GET_CODE (addr) == PRE_DEC || GET_CODE (addr) == PRE_INC
 	   || GET_CODE (addr) == POST_DEC || GET_CODE (addr) == POST_INC)
@@ -7558,19 +7724,21 @@ note_mem_written (written, writes_ptr)
 	}
       else if (GET_MODE (written) == BLKmode)
 	*writes_ptr = everything;
-      /* (mem (scratch)) means clobber everything.  */
-      else if (GET_CODE (addr) == SCRATCH)
-	*writes_ptr = everything;
       else if (cse_rtx_addr_varies_p (written))
 	{
 	  /* A varying address that is a sum indicates an array element,
 	     and that's just as good as a structure element
 	     in implying that we need not invalidate scalar variables.
 	     However, we must allow QImode aliasing of scalars, because the
-	     ANSI C standard allows character pointers to alias anything.  */
+	     ANSI C standard allows character pointers to alias anything.
+	     We must also allow AND addresses, because they may generate
+	     accesses outside the object being referenced.  This is used to
+	     generate aligned addresses from unaligned addresses, for instance,
+	     the alpha storeqi_unaligned pattern.  */
 	  if (! ((MEM_IN_STRUCT_P (written)
 		  || GET_CODE (XEXP (written, 0)) == PLUS)
-		 && GET_MODE (written) != QImode))
+		 && GET_MODE (written) != QImode
+		 && GET_CODE (XEXP (written, 0)) != AND))
 	    writes_ptr->all = 1;
 	  writes_ptr->nonscalar = 1;
 	}
@@ -7611,15 +7779,13 @@ invalidate_from_clobbers (w, x)
   if (GET_CODE (x) == CLOBBER)
     {
       rtx ref = XEXP (x, 0);
-      if (ref)
-	{
-	  if (GET_CODE (ref) == REG || GET_CODE (ref) == SUBREG
-	      || (GET_CODE (ref) == MEM && ! w->all))
-	    invalidate (ref, VOIDmode);
-	  else if (GET_CODE (ref) == STRICT_LOW_PART
-		   || GET_CODE (ref) == ZERO_EXTRACT)
-	    invalidate (XEXP (ref, 0), GET_MODE (ref));
-	}
+
+      if (GET_CODE (ref) == REG || GET_CODE (ref) == SUBREG
+	  || (GET_CODE (ref) == MEM && ! w->all))
+	invalidate (ref, VOIDmode);
+      else if (GET_CODE (ref) == STRICT_LOW_PART
+	       || GET_CODE (ref) == ZERO_EXTRACT)
+	invalidate (XEXP (ref, 0), GET_MODE (ref));
     }
   else if (GET_CODE (x) == PARALLEL)
     {
@@ -7688,6 +7854,7 @@ cse_process_notes (x, object)
 
     case SIGN_EXTEND:
     case ZERO_EXTEND:
+    case SUBREG:
       {
 	rtx new = cse_process_notes (XEXP (x, 0), object);
 	/* We don't substitute VOIDmode constants into these rtx,
@@ -7713,6 +7880,9 @@ cse_process_notes (x, object)
 
       /* Otherwise, canonicalize this register.  */
       return canon_reg (x, NULL_RTX);
+      
+    default:
+      break;
     }
 
   for (i = 0; i < GET_RTX_LENGTH (code); i++)
@@ -7777,10 +7947,16 @@ cse_around_loop (loop_start)
 
      The only thing we do with SET_DEST is invalidate entries, so we
      can safely process each SET in order.  It is slightly less efficient
-     to do so, but we only want to handle the most common cases.  */
+     to do so, but we only want to handle the most common cases.
+
+     The gen_move_insn call in cse_set_around_loop may create new pseudos.
+     These pseudos won't have valid entries in any of the tables indexed
+     by register number, such as reg_qty.  We avoid out-of-range array
+     accesses by not processing any instructions created after cse started.  */
 
   for (insn = NEXT_INSN (loop_start);
        GET_CODE (insn) != CALL_INSN && GET_CODE (insn) != CODE_LABEL
+       && INSN_UID (insn) < max_insn_uid
        && ! (GET_CODE (insn) == NOTE
 	     && NOTE_LINE_NUMBER (insn) == NOTE_INSN_LOOP_END);
        insn = NEXT_INSN (insn))
@@ -7811,13 +7987,6 @@ invalidate_skipped_set (dest, set)
      rtx set;
      rtx dest;
 {
-  if (GET_CODE (set) == CLOBBER
-#ifdef HAVE_cc0
-      || dest == cc0_rtx
-#endif
-      || dest == pc_rtx)
-    return;
-
   if (GET_CODE (dest) == MEM)
     note_mem_written (dest, &skipped_writes_memory);
 
@@ -7826,6 +7995,13 @@ invalidate_skipped_set (dest, set)
      the proper equivalences.  So promote "nonscalar" to be "all".  */
   if (skipped_writes_memory.nonscalar)
     skipped_writes_memory.all = 1;
+
+  if (GET_CODE (set) == CLOBBER
+#ifdef HAVE_cc0
+      || dest == cc0_rtx
+#endif
+      || dest == pc_rtx)
+    return;
 
   if (GET_CODE (dest) == REG || GET_CODE (dest) == SUBREG
       || (! skipped_writes_memory.all && ! cse_rtx_addr_varies_p (dest)))
@@ -7980,7 +8156,8 @@ cse_set_around_loop (x, insn, loop_start)
   if (writes_memory.var)
     invalidate_memory (&writes_memory);
 
-  /* See comment on similar code in cse_insn for explanation of these tests. */
+  /* See comment on similar code in cse_insn for explanation of these
+     tests.  */
   if (GET_CODE (SET_DEST (x)) == REG || GET_CODE (SET_DEST (x)) == SUBREG
       || (GET_CODE (SET_DEST (x)) == MEM && ! writes_memory.all
 	  && ! cse_rtx_addr_varies_p (SET_DEST (x))))
@@ -8236,6 +8413,8 @@ cse_main (f, nregs, after_loop, file)
 
   max_reg = nregs;
 
+  max_insn_uid = get_max_uid ();
+
   all_minus_one = (int *) alloca (nregs * sizeof (int));
   consec_ints = (int *) alloca (nregs * sizeof (int));
 
@@ -8255,7 +8434,7 @@ cse_main (f, nregs, after_loop, file)
 
   /* Allocate scratch rtl here.  cse_insn will fill in the memory reference
      and change the code and mode as appropriate.  */
-  memory_extend_rtx = gen_rtx (ZERO_EXTEND, VOIDmode, 0);
+  memory_extend_rtx = gen_rtx (ZERO_EXTEND, VOIDmode, NULL_RTX);
 #endif
 
   /* Discard all the free elements of the previous function
@@ -8404,6 +8583,7 @@ cse_basic_block (from, to, next_branch, around_loop)
   register rtx insn;
   int to_usage = 0;
   int in_libcall_block = 0;
+  int num_insns = 0;
 
   /* Each of these arrays is undefined before max_reg, so only allocate
      the space actually needed and adjust the start below.  */
@@ -8436,6 +8616,29 @@ cse_basic_block (from, to, next_branch, around_loop)
   for (insn = from; insn != to; insn = NEXT_INSN (insn))
     {
       register enum rtx_code code;
+      int i;
+      struct table_elt *p, *next;
+
+      /* If we have processed 1,000 insns, flush the hash table to avoid
+	 extreme quadratic behavior.
+
+	 ??? This is a real kludge and needs to be done some other way.
+	 Perhaps for 2.9.  */
+      if (num_insns++ > 1000)
+	{
+	  for (i = 0; i < NBUCKETS; i++)
+	    for (p = table[i]; p; p = next)
+	      {
+		next = p->next_same_hash;
+
+		if (GET_CODE (p->exp) == REG)
+		  invalidate (p->exp, p->mode);
+		else
+		  remove_from_table (p, i);
+	      }
+
+	  num_insns = 0;
+	}
 
       /* See if this is a branch that is part of the path.  If so, and it is
 	 to be taken, do so.  */
@@ -8659,6 +8862,9 @@ count_reg_usage (x, counts, dest, incr)
 	count_reg_usage (XEXP (x, 0), counts, NULL_RTX, incr);
       count_reg_usage (XEXP (x, 1), counts, NULL_RTX, incr);
       return;
+      
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);

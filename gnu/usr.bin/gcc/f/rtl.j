@@ -23,6 +23,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef _J_f_rtl
 #define _J_f_rtl
 #include "config.j"
+#include <stdio.h>
 #include "rtl.h"
 #endif
 #endif

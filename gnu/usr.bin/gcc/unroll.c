@@ -1,5 +1,5 @@
 /* Try to unroll loops, and split induction variables.
-   Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1994, 1995, 1997 Free Software Foundation, Inc.
    Contributed by James E. Wilson, Cygnus Support/UC Berkeley.
 
 This file is part of GNU CC.
@@ -147,13 +147,14 @@ struct _factor { int factor, count; } factors[NUM_FACTORS]
 enum unroll_types { UNROLL_COMPLETELY, UNROLL_MODULO, UNROLL_NAIVE };
 
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "insn-config.h"
 #include "integrate.h"
 #include "regs.h"
+#include "recog.h"
 #include "flags.h"
 #include "expr.h"
-#include <stdio.h>
 #include "loop.h"
 
 /* This controls which loops are unrolled, and by how much we unroll
@@ -191,6 +192,7 @@ static rtx loop_iteration_var;
 static rtx loop_initial_value;
 static rtx loop_increment;
 static rtx loop_final_value;
+static enum rtx_code loop_comparison_code;
 
 /* Forward declarations.  */
 
@@ -267,8 +269,12 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
      of block_beg and block_end notes, because that would unbalance the block
      structure of the function.  This can happen as a result of the
      "if (foo) bar; else break;" optimization in jump.c.  */
+  /* ??? Gcc has a general policy that -g is never supposed to change the code
+     that the compiler emits, so we must disable this optimization always,
+     even if debug info is not being output.  This is rare, so this should
+     not be a significant performance problem.  */
 
-  if (write_symbols != NO_DEBUG)
+  if (1 /* write_symbols != NO_DEBUG */)
     {
       int block_begins = 0;
       int block_ends = 0;
@@ -632,6 +638,23 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
       copy_end = last_loop_insn;
     }
 
+  if (unroll_type == UNROLL_NAIVE
+      && GET_CODE (last_loop_insn) == JUMP_INSN
+      && start_label != JUMP_LABEL (last_loop_insn))
+    {
+      /* ??? The loop ends with a conditional branch that does not branch back
+	 to the loop start label.  In this case, we must emit an unconditional
+	 branch to the loop exit after emitting the final branch.
+	 copy_loop_body does not have support for this currently, so we
+	 give up.  It doesn't seem worthwhile to unroll anyways since
+	 unrolling would increase the number of branch instructions
+	 executed.  */
+      if (loop_dump_stream)
+	fprintf (loop_dump_stream,
+		 "Unrolling failure: final conditional branch not to loop start\n");
+      return;
+    }
+
   /* Allocate a translation table for the labels and insn numbers.
      They will be filled in as we copy the insns in the loop.  */
 
@@ -743,12 +766,37 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
     if (copy_start == loop_start)
       copy_start_luid++;
 
+    /* If a pseudo's lifetime is entirely contained within this loop, then we
+       can use a different pseudo in each unrolled copy of the loop.  This
+       results in better code.  */
     for (j = FIRST_PSEUDO_REGISTER; j < max_reg_before_loop; ++j)
-      if (regno_first_uid[j] > 0 && regno_first_uid[j] <= max_uid_for_loop
-	  && uid_luid[regno_first_uid[j]] >= copy_start_luid
-	  && regno_last_uid[j] > 0 && regno_last_uid[j] <= max_uid_for_loop
-	  && uid_luid[regno_last_uid[j]] <= copy_end_luid)
-	local_regno[j] = 1;
+      if (REGNO_FIRST_UID (j) > 0 && REGNO_FIRST_UID (j) <= max_uid_for_loop
+	  && uid_luid[REGNO_FIRST_UID (j)] >= copy_start_luid
+	  && REGNO_LAST_UID (j) > 0 && REGNO_LAST_UID (j) <= max_uid_for_loop
+	  && uid_luid[REGNO_LAST_UID (j)] <= copy_end_luid)
+	{
+	  /* However, we must also check for loop-carried dependencies.
+	     If the value the pseudo has at the end of iteration X is
+	     used by iteration X+1, then we can not use a different pseudo
+	     for each unrolled copy of the loop.  */
+	  /* A pseudo is safe if regno_first_uid is a set, and this
+	     set dominates all instructions from regno_first_uid to
+	     regno_last_uid.  */
+	  /* ??? This check is simplistic.  We would get better code if
+	     this check was more sophisticated.  */
+	  if (set_dominates_use (j, REGNO_FIRST_UID (j), REGNO_LAST_UID (j),
+				 copy_start, copy_end))
+	    local_regno[j] = 1;
+
+	  if (loop_dump_stream)
+	    {
+	      if (local_regno[j])
+		fprintf (loop_dump_stream, "Marked reg %d as local\n", j);
+	      else
+		fprintf (loop_dump_stream, "Did not mark reg %d as local\n",
+			 j);
+	    }
+	}
   }
 
   /* If this loop requires exit tests when unrolled, check to see if we
@@ -853,18 +901,23 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
 	  for (i = 0; i < unroll_number; i++)
 	    labels[i] = gen_label_rtx ();
 
-	  /* Check for the case where the initial value is greater than or equal
-	     to the final value.  In that case, we want to execute exactly
-	     one loop iteration.  The code below will fail for this case.  */
+	  /* Check for the case where the initial value is greater than or
+	     equal to the final value.  In that case, we want to execute
+	     exactly one loop iteration.  The code below will fail for this
+	     case.  This check does not apply if the loop has a NE
+	     comparison at the end.  */
 
-	  emit_cmp_insn (initial_value, final_value, neg_inc ? LE : GE,
-			 NULL_RTX, mode, 0, 0);
-	  if (neg_inc)
-	    emit_jump_insn (gen_ble (labels[1]));
-	  else
-	    emit_jump_insn (gen_bge (labels[1]));
-	  JUMP_LABEL (get_last_insn ()) = labels[1];
-	  LABEL_NUSES (labels[1])++;
+	  if (loop_comparison_code != NE)
+	    {
+	      emit_cmp_insn (initial_value, final_value, neg_inc ? LE : GE,
+			     NULL_RTX, mode, 0, 0);
+	      if (neg_inc)
+		emit_jump_insn (gen_ble (labels[1]));
+	      else
+		emit_jump_insn (gen_bge (labels[1]));
+	      JUMP_LABEL (get_last_insn ()) = labels[1];
+	      LABEL_NUSES (labels[1])++;
+	    }
 
 	  /* Assuming the unroll_number is 4, and the increment is 2, then
 	     for a negative increment:	for a positive increment:
@@ -1105,6 +1158,10 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
 #endif
     }
 
+  /* Use our current register alignment and pointer flags.  */
+  map->regno_pointer_flag = regno_pointer_flag;
+  map->regno_pointer_align = regno_pointer_align;
+
   /* If the loop is being partially unrolled, and the iteration variables
      are being split, and are being renamed for the split, then must fix up
      the compare/jump instruction at the end of the loop to refer to the new
@@ -1319,7 +1376,7 @@ precondition_loop_p (initial_value, final_value, increment, loop_start,
   /* Fail if loop_iteration_var is not live before loop_start, since we need
      to test its value in the preconditioning code.  */
 
-  if (uid_luid[regno_first_uid[REGNO (loop_iteration_var)]]
+  if (uid_luid[REGNO_FIRST_UID (REGNO (loop_iteration_var))]
       > INSN_LUID (loop_start))
     {
       if (loop_dump_stream)
@@ -1413,10 +1470,11 @@ calculate_giv_inc (pattern, src_insn, regno)
       if (GET_CODE (increment) == LO_SUM)
 	increment = XEXP (increment, 1);
       else if (GET_CODE (increment) == IOR
-	       || GET_CODE (increment) == ASHIFT)
+	       || GET_CODE (increment) == ASHIFT
+	       || GET_CODE (increment) == PLUS)
 	{
 	  /* The rs6000 port loads some constants with IOR.
-	     The alpha port loads some constants with ASHIFT.  */
+	     The alpha port loads some constants with ASHIFT and PLUS.  */
 	  rtx second_part = XEXP (increment, 1);
 	  enum rtx_code code = GET_CODE (increment);
 
@@ -1431,6 +1489,8 @@ calculate_giv_inc (pattern, src_insn, regno)
 
 	  if (code == IOR)
 	    increment = GEN_INT (INTVAL (increment) | INTVAL (second_part));
+	  else if (code == PLUS)
+	    increment = GEN_INT (INTVAL (increment) + INTVAL (second_part));
 	  else
 	    increment = GEN_INT (INTVAL (increment) << INTVAL (second_part));
 	}
@@ -1602,10 +1662,15 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 	      for (tv = bl->giv; tv; tv = tv->next_iv)
 		if (tv->giv_type == DEST_ADDR && tv->same == v)
 		  {
-		    int this_giv_inc = INTVAL (giv_inc);
+		    int this_giv_inc;
+
+		    /* If this DEST_ADDR giv was not split, then ignore it.  */
+		    if (*tv->location != tv->dest_reg)
+		      continue;
 
 		    /* Scale this_giv_inc if the multiplicative factors of
 		       the two givs are different.  */
+		    this_giv_inc = INTVAL (giv_inc);
 		    if (tv->mult_val != v->mult_val)
 		      this_giv_inc = (this_giv_inc / INTVAL (v->mult_val)
 				      * INTVAL (tv->mult_val));
@@ -1950,8 +2015,8 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 
 	  /* Because the USAGE information potentially contains objects other
 	     than hard registers, we need to copy it.  */
-	  CALL_INSN_FUNCTION_USAGE (copy) =
-	     copy_rtx_and_substitute (CALL_INSN_FUNCTION_USAGE (insn), map);
+	  CALL_INSN_FUNCTION_USAGE (copy)
+	    = copy_rtx_and_substitute (CALL_INSN_FUNCTION_USAGE (insn), map);
 
 #ifdef HAVE_cc0
 	  if (cc0_insn)
@@ -2073,6 +2138,7 @@ back_branch_in_range_p (insn, loop_start, loop_end)
      rtx loop_start, loop_end;
 {
   rtx p, q, target_insn;
+  rtx orig_loop_end = loop_end;
 
   /* Stop before we get to the backward branch at the end of the loop.  */
   loop_end = prev_nonnote_insn (loop_end);
@@ -2084,8 +2150,10 @@ back_branch_in_range_p (insn, loop_start, loop_end)
   while (INSN_DELETED_P (insn))
     insn = NEXT_INSN (insn);
 
-  /* Check for the case where insn is the last insn in the loop.  */
-  if (insn == loop_end)
+  /* Check for the case where insn is the last insn in the loop.  Deal
+     with the case where INSN was a deleted loop test insn, in which case
+     it will now be the NOTE_LOOP_END.  */
+  if (insn == loop_end || insn == orig_loop_end)
     return 0;
 
   for (p = NEXT_INSN (insn); p != loop_end; p = NEXT_INSN (p))
@@ -2219,14 +2287,16 @@ iteration_info (iteration_var, initial_value, increment, loop_start, loop_end)
 		 "Loop unrolling: No reg_iv_type entry for iteration var.\n");
       return;
     }
-  /* Reject iteration variables larger than the host long size, since they
+
+  /* Reject iteration variables larger than the host wide int size, since they
      could result in a number of iterations greater than the range of our
-     `unsigned long' variable loop_n_iterations.  */
-  else if (GET_MODE_BITSIZE (GET_MODE (iteration_var)) > HOST_BITS_PER_LONG)
+     `unsigned HOST_WIDE_INT' variable loop_n_iterations.  */
+  else if ((GET_MODE_BITSIZE (GET_MODE (iteration_var))
+	    > HOST_BITS_PER_WIDE_INT))
     {
       if (loop_dump_stream)
 	fprintf (loop_dump_stream,
-		 "Loop unrolling: Iteration var rejected because mode larger than host long.\n");
+		 "Loop unrolling: Iteration var rejected because mode too large.\n");
       return;
     }
   else if (GET_MODE_CLASS (GET_MODE (iteration_var)) != MODE_INT)
@@ -2401,10 +2471,10 @@ find_splittable_regs (unroll_type, loop_start, loop_end, end_insert_before,
       if (unroll_type != UNROLL_COMPLETELY
 	  && (loop_number_exit_count[uid_loop_num[INSN_UID (loop_start)]]
 	      || unroll_type == UNROLL_NAIVE)
-	  && (uid_luid[regno_last_uid[bl->regno]] >= INSN_LUID (loop_end)
+	  && (uid_luid[REGNO_LAST_UID (bl->regno)] >= INSN_LUID (loop_end)
 	      || ! bl->init_insn
 	      || INSN_UID (bl->init_insn) >= max_uid_for_loop
-	      || (uid_luid[regno_first_uid[bl->regno]]
+	      || (uid_luid[REGNO_FIRST_UID (bl->regno)]
 		  < INSN_LUID (bl->init_insn))
 	      || reg_mentioned_p (bl->biv->dest_reg, SET_SRC (bl->init_set)))
 	  && ! (biv_final_value = final_biv_value (bl, loop_start, loop_end)))
@@ -2613,15 +2683,19 @@ find_splittable_givs (bl, unroll_type, loop_start, loop_end, increment,
 	  && (loop_number_exit_count[uid_loop_num[INSN_UID (loop_start)]]
 	      || unroll_type == UNROLL_NAIVE)
 	  && v->giv_type != DEST_ADDR
-	  && ((regno_first_uid[REGNO (v->dest_reg)] != INSN_UID (v->insn)
-	       /* Check for the case where the pseudo is set by a shift/add
-		  sequence, in which case the first insn setting the pseudo
-		  is the first insn of the shift/add sequence.  */
-	       && (! (tem = find_reg_note (v->insn, REG_RETVAL, NULL_RTX))
-		   || (regno_first_uid[REGNO (v->dest_reg)]
-		       != INSN_UID (XEXP (tem, 0)))))
+	  /* The next part is true if the pseudo is used outside the loop.
+	     We assume that this is true for any pseudo created after loop
+	     starts, because we don't have a reg_n_info entry for them.  */
+	  && (REGNO (v->dest_reg) >= max_reg_before_loop
+	      || (REGNO_FIRST_UID (REGNO (v->dest_reg)) != INSN_UID (v->insn)
+		  /* Check for the case where the pseudo is set by a shift/add
+		     sequence, in which case the first insn setting the pseudo
+		     is the first insn of the shift/add sequence.  */
+		  && (! (tem = find_reg_note (v->insn, REG_RETVAL, NULL_RTX))
+		      || (REGNO_FIRST_UID (REGNO (v->dest_reg))
+			  != INSN_UID (XEXP (tem, 0)))))
 	      /* Line above always fails if INSN was moved by loop opt.  */
-	      || (uid_luid[regno_last_uid[REGNO (v->dest_reg)]]
+	      || (uid_luid[REGNO_LAST_UID (REGNO (v->dest_reg))]
 		  >= INSN_LUID (loop_end)))
 	  && ! (final_value = v->final_value))
 	continue;
@@ -2776,7 +2850,7 @@ find_splittable_givs (bl, unroll_type, loop_start, loop_end, increment,
 			 Try to validate both the first and the last
 			 address resulting from loop unrolling, if
 			 one fails, then can't do const elim here.  */
-		      if (! verify_addresses (v, giv_inc, unroll_number))
+		      if (verify_addresses (v, giv_inc, unroll_number))
 			{
 			  /* Save the negative of the eliminated const, so
 			     that we can calculate the dest_reg's increment
@@ -2908,12 +2982,19 @@ find_splittable_givs (bl, unroll_type, loop_start, loop_end, increment,
 #endif
 	}
       
-      /* Givs are only updated once by definition.  Mark it so if this is
+      /* Unreduced givs are only updated once by definition.  Reduced givs
+	 are updated as many times as their biv is.  Mark it so if this is
 	 a splittable register.  Don't need to do anything for address givs
 	 where this may not be a register.  */
 
       if (GET_CODE (v->new_reg) == REG)
-	splittable_regs_updates[REGNO (v->new_reg)] = 1;
+	{
+	  int count = 1;
+	  if (! v->ignore)
+	    count = reg_biv_class[REGNO (v->src_reg)]->biv_count;
+
+	  splittable_regs_updates[REGNO (v->new_reg)] = count;
+	}
 
       result++;
       
@@ -2998,7 +3079,7 @@ reg_dead_after_loop (reg, loop_start, loop_end)
 	      if (GET_CODE (PATTERN (insn)) == RETURN)
 		break;
 	      else if (! simplejump_p (insn)
-		       /* Prevent infinite loop following infinite loops. */
+		       /* Prevent infinite loop following infinite loops.  */
 		       || jump_count++ > 20)
 		return 0;
 	      else
@@ -3135,9 +3216,14 @@ final_giv_value (v, loop_start, loop_end)
 	 determine whether giv's are replaceable so that we can use the
 	 biv value here if it is not eliminable.  */
 
+      /* We are emitting code after the end of the loop, so we must make
+	 sure that bl->initial_value is still valid then.  It will still
+	 be valid if it is invariant.  */
+
       increment = biv_total_increment (bl, loop_start, loop_end);
 
-      if (increment && invariant_p (increment))
+      if (increment && invariant_p (increment)
+	  && invariant_p (bl->initial_value))
 	{
 	  /* Can calculate the loop exit value of its biv as
 	     (loop_n_iterations * increment) + initial_value */
@@ -3321,6 +3407,7 @@ loop_iterations (loop_start, loop_end)
   loop_initial_value = initial_value;
   loop_increment = increment;
   loop_final_value = final_value;
+  loop_comparison_code = comparison_code;
 
   if (increment == 0)
     {
@@ -3485,6 +3572,10 @@ remap_split_bivs (x)
       if (REGNO (x) < max_reg_before_loop
 	  && reg_iv_type[REGNO (x)] == BASIC_INDUCT)
 	return reg_biv_class[REGNO (x)]->biv->src_reg;
+      break;
+      
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);
@@ -3500,4 +3591,66 @@ remap_split_bivs (x)
 	}
     }
   return x;
+}
+
+/* If FIRST_UID is a set of REGNO, and FIRST_UID dominates LAST_UID (e.g.
+   FIST_UID is always executed if LAST_UID is), then return 1.  Otherwise
+   return 0.  COPY_START is where we can start looking for the insns
+   FIRST_UID and LAST_UID.  COPY_END is where we stop looking for these
+   insns.
+
+   If there is no JUMP_INSN between LOOP_START and FIRST_UID, then FIRST_UID
+   must dominate LAST_UID.
+
+   If there is a CODE_LABEL between FIRST_UID and LAST_UID, then FIRST_UID
+   may not dominate LAST_UID.
+
+   If there is no CODE_LABEL between FIRST_UID and LAST_UID, then FIRST_UID
+   must dominate LAST_UID.  */
+
+int
+set_dominates_use (regno, first_uid, last_uid, copy_start, copy_end)
+     int regno;
+     int first_uid;
+     int last_uid;
+     rtx copy_start;
+     rtx copy_end;
+{
+  int passed_jump = 0;
+  rtx p = NEXT_INSN (copy_start);
+
+  while (INSN_UID (p) != first_uid)
+    {
+      if (GET_CODE (p) == JUMP_INSN)
+	passed_jump= 1;
+      /* Could not find FIRST_UID.  */
+      if (p == copy_end)
+	return 0;
+      p = NEXT_INSN (p);
+    }
+
+  /* Verify that FIRST_UID is an insn that entirely sets REGNO.  */
+  if (GET_RTX_CLASS (GET_CODE (p)) != 'i'
+      || ! dead_or_set_regno_p (p, regno))
+    return 0;
+
+  /* FIRST_UID is always executed.  */
+  if (passed_jump == 0)
+    return 1;
+
+  while (INSN_UID (p) != last_uid)
+    {
+      /* If we see a CODE_LABEL between FIRST_UID and LAST_UID, then we
+	 can not be sure that FIRST_UID dominates LAST_UID.  */
+      if (GET_CODE (p) == CODE_LABEL)
+	return 0;
+      /* Could not find LAST_UID, but we reached the end of the loop, so
+	 it must be safe.  */
+      else if (p == copy_end)
+	return 1;
+      p = NEXT_INSN (p);
+    }
+
+  /* FIRST_UID is always executed if LAST_UID is executed.  */
+  return 1;
 }

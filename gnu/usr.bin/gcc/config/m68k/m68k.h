@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Sun 68000/68020 version.
-   Copyright (C) 1987, 1988, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -50,37 +50,41 @@ extern int target_flags;
 /* Macros used in the machine description to test the flags.  */
 
 /* Compile for a 68020 (not a 68000 or 68010).  */
-#define TARGET_68020 (target_flags & 1)
+#define MASK_68020	1
+#define TARGET_68020 (target_flags & MASK_68020)
 
 /* Compile 68881 insns for floating point (not library calls).  */
-#define TARGET_68881 (target_flags & 2)
+#define MASK_68881	2
+#define TARGET_68881 (target_flags & MASK_68881)
 
 /* Compile using 68020 bitfield insns.  */
-#define TARGET_BITFIELD (target_flags & 4)
+#define MASK_BITFIELD	4
+#define TARGET_BITFIELD (target_flags & MASK_BITFIELD)
 
 /* Compile using rtd insn calling sequence.
    This will not work unless you use prototypes at least
    for all functions that can take varying numbers of args.  */
-#define TARGET_RTD (target_flags & 8)
+#define MASK_RTD	8
+#define TARGET_RTD (target_flags & MASK_RTD)
 
 /* Compile passing first two args in regs 0 and 1.
    This exists only to test compiler features that will
    be needed for RISC chips.  It is not usable
    and is not intended to be usable on this cpu.  */
-#define TARGET_REGPARM (target_flags & 020)
+#define MASK_REGPARM	16
+#define TARGET_REGPARM (target_flags & MASK_REGPARM)
 
 /* Compile with 16-bit `int'.  */
-#define TARGET_SHORT (target_flags & 040)
+#define MASK_SHORT	32
+#define TARGET_SHORT (target_flags & MASK_SHORT)
 
 /* Compile with special insns for Sun FPA.  */
-#ifdef SUPPORT_SUN_FPA
-#define TARGET_FPA (target_flags & 0100)
-#else
-#define TARGET_FPA 0
-#endif
+#define MASK_FPA	64
+#define TARGET_FPA (target_flags & MASK_FPA)
 
 /* Compile (actually, link) for Sun SKY board.  */
-#define TARGET_SKY (target_flags & 0200)
+#define MASK_SKY	128
+#define TARGET_SKY (target_flags & MASK_SKY)
 
 /* Optimize for 68040, but still allow execution on 68020
    (-m68020-40 or -m68040).
@@ -88,18 +92,36 @@ extern int target_flags;
    of them must be emulated in software by the OS.  When TARGET_68040 is
    turned on, these instructions won't be used.  This code will still
    run on a 68030 and 68881/2. */
-#define TARGET_68040 (target_flags & 01400)
+#define MASK_68040	256
+#define TARGET_68040 (target_flags & MASK_68040)
 
 /* Use the 68040-only fp instructions (-m68040 or -m68060).  */
-#define TARGET_68040_ONLY (target_flags & 01000)
+#define MASK_68040_ONLY	512
+#define TARGET_68040_ONLY (target_flags & MASK_68040_ONLY)
 
 /* Optimize for 68060, but still allow execution on 68020
-   (-m68060).
+   (-m68020-60 or -m68060).
    The 68060 will execute all 68030 and 68881/2 instructions, but some
    of them must be emulated in software by the OS.  When TARGET_68060 is
    turned on, these instructions won't be used.  This code will still
    run on a 68030 and 68881/2. */
-#define TARGET_68060 (target_flags & 02000)
+#define MASK_68060	1024
+#define TARGET_68060 (target_flags & MASK_68060)
+
+/* Compile for mcf5200 */
+#define MASK_5200	2048
+#define TARGET_5200 (target_flags & MASK_5200)
+
+/* Align ints to a word boundary.  This breaks compatibility with the 
+   published ABI's for structures containing ints, but produces faster
+   code on cpus with 32 bit busses (020, 030, 040, 060, CPU32+, coldfire).
+   It's required for coldfire cpus without a misalignment module.  */
+#define MASK_ALIGN_INT	4096
+#define TARGET_ALIGN_INT (target_flags & MASK_ALIGN_INT)
+
+/* Compile for a CPU32 */
+	/* A 68020 without bitfields is a good heuristic for a CPU32 */
+#define TARGET_CPU32	(TARGET_68020 && !TARGET_BITFIELD)
 
 /* Macro to define tables used to set the flags.
    This is a list in braces of pairs in braces,
@@ -108,62 +130,92 @@ extern int target_flags;
    An empty string NAME is used to identify the default VALUE.  */
 
 #define TARGET_SWITCHES  \
-  { { "68020", -03400},				\
-    { "c68020", -03400},			\
-    { "68020", 5},				\
-    { "c68020", 5},				\
-    { "68881", 2},				\
-    { "bitfield", 4},				\
-    { "68000", -03405},				\
-    { "c68000", -03405},			\
-    { "soft-float", -01102},			\
-    { "nobitfield", -4},			\
-    { "rtd", 8},				\
-    { "nortd", -8},				\
-    { "short", 040},				\
-    { "noshort", -040},				\
-    { "fpa", 0100},				\
-    { "nofpa", -0100},				\
-    { "sky", 0200},				\
-    { "nosky", -0200},				\
-    { "68020-40", 0407},			\
-    { "68030", -03400},				\
-    { "68030", 5},				\
-    { "68040", 01007},				\
-    { "68060", 03007},				\
-    { "68851", 0},	/* Affects *_SPEC and/or GAS.  */	\
-    { "no-68851", 0},	/* Affects *_SPEC and/or GAS.  */	\
-    { "68302", 0},	/* Affects *_SPEC and/or GAS.  */	\
-    { "no-68302", 0},	/* Affects *_SPEC and/or GAS.  */	\
-    { "68332", 0},	/* Affects *_SPEC and/or GAS.  */	\
-    { "no-68332", 0},	/* Affects *_SPEC and/or GAS.  */	\
-    SUBTARGET_SWITCHES				\
+  { { "68020", - (MASK_5200|MASK_68060|MASK_68040|MASK_68040_ONLY)},	\
+    { "c68020", - (MASK_5200|MASK_68060|MASK_68040|MASK_68040_ONLY)},	\
+    { "68020", (MASK_68020|MASK_BITFIELD)},				\
+    { "c68020", (MASK_68020|MASK_BITFIELD)},				\
+    { "68000", - (MASK_5200|MASK_68060|MASK_68040|MASK_68040_ONLY	\
+		|MASK_68020|MASK_BITFIELD)},				\
+    { "c68000", - (MASK_5200|MASK_68060|MASK_68040|MASK_68040_ONLY	\
+		|MASK_68020|MASK_BITFIELD)},				\
+    { "bitfield", MASK_BITFIELD},					\
+    { "nobitfield", - MASK_BITFIELD},					\
+    { "rtd", MASK_RTD},							\
+    { "nortd", - MASK_RTD},						\
+    { "short", MASK_SHORT},						\
+    { "noshort", - MASK_SHORT},						\
+    { "fpa", -(MASK_SKY|MASK_68040_ONLY|MASK_68881)},			\
+    { "fpa", MASK_FPA},							\
+    { "nofpa", - MASK_FPA},						\
+    { "sky", -(MASK_FPA|MASK_68040_ONLY|MASK_68881)},			\
+    { "sky", MASK_SKY},							\
+    { "nosky", - MASK_SKY},						\
+    { "68881" - (MASK_FPA|MASK_SKY)},					\
+    { "68881", MASK_68881},						\
+    { "soft-float", - (MASK_FPA|MASK_SKY|MASK_68040_ONLY|MASK_68881)},	\
+    { "68020-40", -(MASK_5200|MASK_68060)},				\
+    { "68020-40", (MASK_BITFIELD|MASK_68881|MASK_68020|MASK_68040)},	\
+    { "68020-60", -(MASK_5200|MASK_68040)},				\
+    { "68020-60", (MASK_BITFIELD|MASK_68881|MASK_68020|MASK_68060)},	\
+    { "68030", - (MASK_5200|MASK_68060|MASK_68040|MASK_68040_ONLY)},	\
+    { "68030", (MASK_68020|MASK_BITFIELD)},				\
+    { "68040", - (MASK_5200|MASK_68060)},				\
+    { "68040", (MASK_68020|MASK_68881|MASK_BITFIELD			\
+		|MASK_68040_ONLY|MASK_68040)},				\
+    { "68060", - (MASK_5200|MASK_68040)},				\
+    { "68060", (MASK_68020|MASK_68881|MASK_BITFIELD			\
+		|MASK_68040_ONLY|MASK_68060)},				\
+    { "5200", - (MASK_68060|MASK_68040|MASK_68020|MASK_BITFIELD|MASK_68881)}, \
+    { "5200", (MASK_5200)},						\
+    { "68851", 0},							\
+    { "no-68851", 0},							\
+    { "68302", - (MASK_5200|MASK_68060|MASK_68040|MASK_68020|MASK_BITFIELD)}, \
+    { "68332", - (MASK_5200|MASK_68060|MASK_68040|MASK_BITFIELD)},	\
+    { "68332", MASK_68020},						\
+    { "cpu32", - (MASK_5200|MASK_68060|MASK_68040|MASK_BITFIELD)},	\
+    { "cpu32", MASK_68020},						\
+    { "align-int", MASK_ALIGN_INT },					\
+    { "no-align-int", -MASK_ALIGN_INT },				\
+    SUBTARGET_SWITCHES							\
     { "", TARGET_DEFAULT}}
 /* TARGET_DEFAULT is defined in sun*.h and isi.h, etc.  */
 
-/* This is meant to be redefined in the host dependent files */
+/* This macro is similar to `TARGET_SWITCHES' but defines names of
+   command options that have values.  Its definition is an
+   initializer with a subgrouping for each command option.
+
+   Each subgrouping contains a string constant, that defines the
+   fixed part of the option name, and the address of a variable.  The
+   variable, type `char *', is set to the variable part of the given
+   option if the fixed part matches.  The actual option name is made
+   by appending `-m' to the specified name.  */
+#define TARGET_OPTIONS							\
+{ { "align-loops=",	&m68k_align_loops_string },			\
+  { "align-jumps=",	&m68k_align_jumps_string },			\
+  { "align-functions=",	&m68k_align_funcs_string },			\
+  SUBTARGET_OPTIONS							\
+}
+
+/* Sometimes certain combinations of command options do not make
+   sense on a particular target machine.  You can define a macro
+   `OVERRIDE_OPTIONS' to take account of this.  This macro, if
+   defined, is executed once just after all the command options have
+   been parsed.
+
+   Don't use this macro to turn on various extra optimizations for
+   `-O'.  That is what `OPTIMIZATION_OPTIONS' is for.  */
+
+#define OVERRIDE_OPTIONS		\
+{					\
+  override_options();			\
+  if (! TARGET_68020 && flag_pic == 2)	\
+    error("-fPIC is not currently supported on the 68000 or 68010\n");	\
+  SUBTARGET_OVERRIDE_OPTIONS;		\
+}
+
+/* These are meant to be redefined in the host dependent files */
 #define SUBTARGET_SWITCHES
-
-#ifdef SUPPORT_SUN_FPA
-/* Blow away 68881 flag silently on TARGET_FPA (since we can't clear
-   any bits in TARGET_SWITCHES above) */
-#define OVERRIDE_OPTIONS		\
-{					\
-  if (TARGET_FPA) target_flags &= ~2;	\
-  if (! TARGET_68020 && flag_pic == 2)	\
-    error("-fPIC is not currently supported on the 68000 or 68010\n");	\
-  SUBTARGET_OVERRIDE_OPTIONS;		\
-}
-#else
-#define OVERRIDE_OPTIONS		\
-{					\
-  if (! TARGET_68020 && flag_pic == 2)	\
-    error("-fPIC is not currently supported on the 68000 or 68010\n");	\
-  SUBTARGET_OVERRIDE_OPTIONS;		\
-}
-#endif /* defined SUPPORT_SUN_FPA */
-
-/* This is meant to be redefined in the host dependent files */
+#define SUBTARGET_OPTIONS
 #define SUBTARGET_OVERRIDE_OPTIONS
 
 /* target machine storage layout */
@@ -218,17 +270,30 @@ extern int target_flags;
 #define STACK_BOUNDARY 16
 
 /* Allocation boundary (in *bits*) for the code of a function.  */
-#define FUNCTION_BOUNDARY 16
+#define FUNCTION_BOUNDARY (1 << (m68k_align_funcs + 3))
 
 /* Alignment of field after `int : 0' in a structure.  */
 #define EMPTY_FIELD_BOUNDARY 16
 
-/* No data type wants to be aligned rounder than this.  */
-#define BIGGEST_ALIGNMENT 16
+/* No data type wants to be aligned rounder than this. 
+   Most published ABIs say that ints should be aligned on 16 bit
+   boundaries, but cpus with 32 bit busses get better performance
+   aligned on 32 bit boundaries.  Coldfires without a misalignment
+   module require 32 bit alignment. */
+#define BIGGEST_ALIGNMENT (TARGET_ALIGN_INT ? 32 : 16)
 
 /* Set this nonzero if move instructions will actually fail to work
    when given unaligned data.  */
 #define STRICT_ALIGNMENT 1
+
+/* Maximum power of 2 that code can be aligned to.  */
+#define MAX_CODE_ALIGN	2			/* 4 byte alignment */
+
+/* Align loop starts for optimal branching.  */
+#define ASM_OUTPUT_LOOP_ALIGN(FILE) ASM_OUTPUT_ALIGN ((FILE), m68k_align_loops)
+
+/* This is how to align an instruction for optimal branching. */
+#define ASM_OUTPUT_ALIGN_CODE(FILE) ASM_OUTPUT_ALIGN ((FILE), m68k_align_jumps)
 
 #define SELECT_RTX_SECTION(MODE, X)					\
 {									\
@@ -310,7 +375,7 @@ extern int target_flags;
    and are not available for the register allocator.
    On the 68000, only the stack pointer is such.  */
 
-/* fpa0 is also reserved so that it can be used to move shit back and
+/* fpa0 is also reserved so that it can be used to move data back and
    forth between high fpa regs and everything else. */
 
 #define FIXED_REGISTERS        \
@@ -642,13 +707,21 @@ extern enum reg_class regno_reg_class[];
    allowed as immediate shift counts and in addq.
    `J' is used for the range of signed numbers that fit in 16 bits.
    `K' is for numbers that moveq can't handle.
-   `L' is for range -8 to -1, range of values that can be added with subq.  */
+   `L' is for range -8 to -1, range of values that can be added with subq.
+   `M' is for numbers that moveq+notb can't handle.
+   'N' is for range 24 to 31, rotatert:SI 8 to 1 expressed as rotate.
+   'O' is for 16 (for rotate using swap).
+   'P' is for range 8 to 15, rotatert:HI 8 to 1 expressed as rotate.  */
 
-#define CONST_OK_FOR_LETTER_P(VALUE, C)  \
-  ((C) == 'I' ? (VALUE) > 0 && (VALUE) <= 8 :    \
-   (C) == 'J' ? (VALUE) >= -0x8000 && (VALUE) <= 0x7FFF :	\
-   (C) == 'K' ? (VALUE) < -0x80 || (VALUE) >= 0x80 :	\
-   (C) == 'L' ? (VALUE) < 0 && (VALUE) >= -8 : 0)
+#define CONST_OK_FOR_LETTER_P(VALUE, C) \
+  ((C) == 'I' ? (VALUE) > 0 && (VALUE) <= 8 : \
+   (C) == 'J' ? (VALUE) >= -0x8000 && (VALUE) <= 0x7FFF : \
+   (C) == 'K' ? (VALUE) < -0x80 || (VALUE) >= 0x80 : \
+   (C) == 'L' ? (VALUE) < 0 && (VALUE) >= -8 : \
+   (C) == 'M' ? (VALUE) < -0x100 && (VALUE) >= 0x100 : \
+   (C) == 'N' ? (VALUE) >= 24 && (VALUE) <= 31 : \
+   (C) == 'O' ? (VALUE) == 16 : \
+   (C) == 'P' ? (VALUE) >= 8 && (VALUE) <= 15 : 0)
 
 /*
  * A small bit of explanation:
@@ -666,6 +739,19 @@ extern enum reg_class regno_reg_class[];
   ((C) == 'G' ? ! (TARGET_68881 && standard_68881_constant_p (VALUE)) : \
    (C) == 'H' ? (TARGET_FPA && standard_sun_fpa_constant_p (VALUE)) : 0)
 #endif /* defined SUPPORT_SUN_FPA */
+
+/* A C expression that defines the optional machine-dependent constraint
+   letters that can be used to segregate specific types of operands,  
+   usually memory references, for the target machine.  It should return 1 if
+   VALUE corresponds to the operand type represented by the constraint letter
+   C.  If C is not defined as an extra constraint, the value returned should 
+   be 0 regardless of VALUE.  */
+
+/* For the m68k, `Q' means address register indirect addressing mode. */
+
+#define EXTRA_CONSTRAINT(OP, C)	\
+  ((C) == 'Q' ? (GET_CODE (OP) == MEM && GET_CODE (XEXP (OP, 0)) == REG) : \
+   0 )
 
 /* Given an rtx X being reloaded into a reg required to be
    in class CLASS, return the class of reg to actually use.
@@ -690,6 +776,16 @@ extern enum reg_class regno_reg_class[];
    ? (! CONST_DOUBLE_OK_FOR_LETTER_P (X, 'G')	\
       && (CLASS == FP_REGS || CLASS == DATA_OR_FP_REGS) \
       ? FP_REGS : NO_REGS)			\
+   : (CLASS))
+
+/* Force QImode output reloads from subregs to be allocated to data regs,
+   since QImode stores from address regs are not supported.  We make the
+   assumption that if the class is not ADDR_REGS, then it must be a superset
+   of DATA_REGS.  */
+
+#define LIMIT_RELOAD_CLASS(MODE, CLASS) \
+  (((MODE) == QImode && (CLASS) != ADDR_REGS)	\
+   ? DATA_REGS					\
    : (CLASS))
 
 /* Return the maximum number of consecutive registers
@@ -750,8 +846,9 @@ extern enum reg_class regno_reg_class[];
 
 /* If we generate an insn to push BYTES bytes,
    this says how many the stack pointer really advances by.
-   On the 68000, sp@- in a byte insn really pushes a word.  */
-#define PUSH_ROUNDING(BYTES) (((BYTES) + 1) & ~1)
+   On the 68000, sp@- in a byte insn really pushes a word.
+   On the 5200 (coldfire), sp@- in a byte insn pushes just a byte.  */
+#define PUSH_ROUNDING(BYTES) (TARGET_5200 ? BYTES : ((BYTES) + 1) & ~1)
 
 /* Offset of first parameter from the argument pointer register value.  */
 #define FIRST_PARM_OFFSET(FNDECL) 8
@@ -773,7 +870,7 @@ extern enum reg_class regno_reg_class[];
    the caller must always pop the args.  */
 
 #define RETURN_POPS_ARGS(FUNDECL,FUNTYPE,SIZE)   \
-  ((TARGET_RTD && TREE_CODE (FUNTYPE) != IDENTIFIER_NODE	\
+  ((TARGET_RTD && (!(FUNDECL) || TREE_CODE (FUNDECL) != IDENTIFIER_NODE)	\
     && (TYPE_ARG_TYPES (FUNTYPE) == 0				\
 	|| (TREE_VALUE (tree_last (TYPE_ARG_TYPES (FUNTYPE)))	\
 	    == void_type_node)))				\
@@ -833,7 +930,7 @@ extern enum reg_class regno_reg_class[];
 
    On the m68k, the offset starts at 0.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)	\
  ((CUM) = 0)
 
 /* Update the data in CUM to advance over an argument
@@ -889,15 +986,164 @@ extern enum reg_class regno_reg_class[];
 /* Output assembler code to FILE to initialize this source file's
    basic block profiling info, if that has not already been done.  */
 
-#define FUNCTION_BLOCK_PROFILER(FILE, LABELNO)  \
-  asm_fprintf (FILE, "\ttstl %LLPBX0\n\tbne %LLPI%d\n\tpea %LLPBX0\n\tjsr %U__bb_init_func\n\taddql %I4,%Rsp\n%LLPI%d:\n",  \
-	   LABELNO, LABELNO);
+#define FUNCTION_BLOCK_PROFILER(FILE, BLOCK_OR_LABEL)	\
+do							\
+  {							\
+    switch (profile_block_flag)				\
+      {							\
+      case 2:						\
+        asm_fprintf (FILE, "\tpea %d\n\tpea %LLPBX0\n\tjsr %U__bb_init_trace_func\n\taddql %I8,%Rsp\n", \
+                           (BLOCK_OR_LABEL)); \
+        break;						\
+							\
+      default:						\
+        asm_fprintf (FILE, "\ttstl %LLPBX0\n\tbne %LLPI%d\n\tpea %LLPBX0\n\tjsr %U__bb_init_func\n\taddql %I4,%Rsp\n%LLPI%d:\n", \
+                           (BLOCK_OR_LABEL), (BLOCK_OR_LABEL)); \
+        break;						\
+      }							\
+  }							\
+while(0)
 
-/* Output assembler code to FILE to increment the entry-count for
+/* Output assembler code to FILE to increment the counter for
    the BLOCKNO'th basic block in this source file.  */
 
 #define BLOCK_PROFILER(FILE, BLOCKNO)	\
-  asm_fprintf (FILE, "\taddql %I1,%LLPBX2+%d\n", 4 * BLOCKNO)
+do							\
+  {							\
+    switch (profile_block_flag)				\
+      {							\
+      case 2:						\
+        asm_fprintf (FILE, "\tmovel %Ra1,%Rsp@-\n\tlea ___bb,%Ra1\n\tmovel %I%d,%Ra1@(0)\n\tmovel %I%LLPBX0,%Ra1@(4)\n\tmovel %Rsp@+,%Ra1\n\tjsr %U__bb_trace_func\n", \
+                           BLOCKNO);			\
+        break;						\
+							\
+      default:						\
+        asm_fprintf (FILE, "\taddql %I1,%LLPBX2+%d\n", 4 * BLOCKNO); \
+        break;						\
+      }							\
+  }							\
+while(0)
+
+/* Output assembler code to FILE to indicate return from 
+   a function during basic block profiling. */
+
+#define FUNCTION_BLOCK_PROFILER_EXIT(FILE)		\
+  asm_fprintf (FILE, "\tjsr %U__bb_trace_ret\n");
+
+/* Save all registers which may be clobbered by a function call.
+   MACHINE_STATE_SAVE and MACHINE_STATE_RESTORE are target-code macros,
+   used in libgcc2.c.  They may not refer to TARGET_* macros !!! */
+#if defined (__mc68010__) || defined(mc68010) \
+	|| defined(__mc68020__) || defined(mc68020) \
+	|| defined(__mc68030__) || defined(mc68030) \
+	|| defined(__mc68040__) || defined(mc68040) \
+	|| defined(__mc68332__) || defined(mc68332)
+#define MACHINE_STATE_m68010_up
+#endif
+
+#ifdef MOTOROLA
+#if defined(__mcf5200__)
+#define MACHINE_STATE_SAVE(id)		\
+    {					\
+      asm ("sub.l 20,%sp");		\
+      asm ("movm.l &0x0303,4(%sp)");	\
+      asm ("move.w %ccr,%d0");		\
+      asm ("movm.l &0x0001,(%sp)");	\
+    }
+#else /* !__mcf5200__ */
+#if defined(MACHINE_STATE_m68010_up)
+#ifdef __HPUX_ASM__
+/* HPUX assembler does not accept %ccr.  */
+#define MACHINE_STATE_SAVE(id)		\
+    {					\
+      asm ("move.w %cc,-(%sp)");	\
+      asm ("movm.l &0xc0c0,-(%sp)");	\
+    }
+#else /* ! __HPUX_ASM__ */
+#define MACHINE_STATE_SAVE(id)		\
+    {					\
+      asm ("move.w %ccr,-(%sp)");	\
+      asm ("movm.l &0xc0c0,-(%sp)");	\
+    }
+#endif /* __HPUX_ASM__ */
+#else /* !MACHINE_STATE_m68010_up */
+#define MACHINE_STATE_SAVE(id)		\
+    {					\
+      asm ("move.w %sr,-(%sp)");	\
+      asm ("movm.l &0xc0c0,-(%sp)");	\
+    }
+#endif /* MACHINE_STATE_m68010_up */
+#endif /* __mcf5200__ */
+#else /* !MOTOROLA */
+#if defined(__mcf5200__)
+#define MACHINE_STATE_SAVE(id)		\
+    {					\
+      asm ("subl 20,sp");		\
+      asm ("movml d0/d1/a0/a1,sp@(4)");	\
+      asm ("movew cc,d0");		\
+      asm ("movml d0,sp@");		\
+    }
+#else /* !__mcf5200__ */
+#if defined(MACHINE_STATE_m68010_up)
+#define MACHINE_STATE_SAVE(id)		\
+    {					\
+      asm ("movew cc,sp@-");		\
+      asm ("moveml d0/d1/a0/a1,sp@-");	\
+    }
+#else /* !MACHINE_STATE_m68010_up */
+#define MACHINE_STATE_SAVE(id)		\
+    {					\
+      asm ("movew sr,sp@-");		\
+      asm ("moveml d0/d1/a0/a1,sp@-");	\
+    }
+#endif /* MACHINE_STATE_m68010_up */
+#endif /* __mcf5200__ */
+#endif /* MOTOROLA */
+
+/* Restore all registers saved by MACHINE_STATE_SAVE. */
+
+#ifdef MOTOROLA
+#if defined(__mcf5200__)
+#define MACHINE_STATE_RESTORE(id)	\
+    {					\
+      asm ("movm.l (%sp),&0x0001");	\
+      asm ("move.w %d0,%ccr");		\
+      asm ("movm.l 4(%sp),&0x0303");	\
+      asm ("add.l 20,%sp");		\
+    }
+#else /* !__mcf5200__ */
+#ifdef __HPUX_ASM__
+/* HPUX assembler does not accept %ccr.  */
+#define MACHINE_STATE_RESTORE(id)	\
+    {					\
+      asm ("movm.l (%sp)+,&0x0303");	\
+      asm ("move.w (%sp)+,%cc");	\
+    }
+#else /* ! __HPUX_ASM__ */
+#define MACHINE_STATE_RESTORE(id)	\
+    {					\
+      asm ("movm.l (%sp)+,&0x0303");	\
+      asm ("move.w (%sp)+,%ccr");	\
+    }
+#endif /* __HPUX_ASM__ */
+#endif /* __mcf5200__ */
+#else /* !MOTOROLA */
+#if defined(__mcf5200__)
+#define MACHINE_STATE_RESTORE(id)	\
+    {					\
+      asm ("movml sp@,d0");		\
+      asm ("movew d0,cc");		\
+      asm ("movml sp@(4),d0/d1/a0/a1");	\
+      asm ("addl 20,sp");		\
+    }
+#else /* !__mcf5200__ */
+#define MACHINE_STATE_RESTORE(id)	\
+    {					\
+      asm ("moveml sp@+,d0/d1/a0/a1");	\
+      asm ("movew sp@+,cc");		\
+    }
+#endif /* __mcf5200__ */
+#endif /* MOTOROLA */
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,
    the stack pointer does not matter.  The value is tested only in
@@ -944,56 +1190,61 @@ extern enum reg_class regno_reg_class[];
    of a trampoline, leaving space for the variable parts.  */
 
 /* On the 68k, the trampoline looks like this:
-     mov  @#.,a0
-     jsr  @#___trampoline
-     jsr  @#___trampoline
-     .long STATIC
-     .long FUNCTION
-The reason for having three jsr insns is so that an entire line
-of the instruction cache is filled in a predictable way
-that will always be the same.
+     movl #STATIC,a0
+     jmp  FUNCTION
 
-We always use the assembler label ___trampoline
-regardless of whether the system adds underscores.  */
+   WARNING: Targets that may run on 68040+ cpus must arrange for
+   the instruction cache to be flushed.  Previous incarnations of
+   the m68k trampoline code attempted to get around this by either
+   using an out-of-line transfer function or pc-relative data, but
+   the fact remains that the code to jump to the transfer function
+   or the code to load the pc-relative data needs to be flushed
+   just as much as the "variable" portion of the trampoline.  
+   Recognizing that a cache flush is going to be required anyway,
+   dispense with such notions and build a smaller trampoline.  */
 
-#define TRAMPOLINE_TEMPLATE(FILE)					\
-{									\
-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x207c));	\
-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x4eb9));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (SYMBOL_REF, SImode, "*___trampoline"));\
-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x4eb9));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (SYMBOL_REF, SImode, "*___trampoline"));\
-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-}
+/* Since more instructions are required to move a template into
+   place than to create it on the spot, don't use a template.  */
 
 /* Length in units of the trampoline for entering a nested function.  */
 
-#define TRAMPOLINE_SIZE 26
+#define TRAMPOLINE_SIZE 12
 
-/* Alignment required for a trampoline.  16 is used to find the
-   beginning of a line in the instruction cache.  */
+/* Alignment required for a trampoline in bits.  */
 
-#define TRAMPOLINE_ALIGN 16
+#define TRAMPOLINE_ALIGNMENT 16
+
+/* Targets redefine this to invoke code to either flush the cache,
+   or enable stack execution (or both).  */
+
+#ifndef FINALIZE_TRAMPOLINE
+#define FINALIZE_TRAMPOLINE(TRAMP)
+#endif
 
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.
-   CXT is an RTX for the static chain value for the function.  */
+   CXT is an RTX for the static chain value for the function.
+
+   We generate a two-instructions program at address TRAMP :
+	movea.l &CXT,%a0
+	jmp FNADDR					*/
 
 #define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
 {									\
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 2)), TRAMP); \
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 18)), CXT); \
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 22)), FNADDR); \
+  emit_move_insn (gen_rtx (MEM, HImode, TRAMP), GEN_INT(0x207C));	\
+  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 2)), CXT); \
+  emit_move_insn (gen_rtx (MEM, HImode, plus_constant (TRAMP, 6)),	\
+		  GEN_INT(0x4EF9));					\
+  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 8)), FNADDR); \
+  FINALIZE_TRAMPOLINE(TRAMP);						\
 }
 
 /* This is the library routine that is used
    to transfer control from the trampoline
-   to the actual nested function.  */
+   to the actual nested function.
+   It is defined for backward compatibility,
+   for linking with object code that used the old
+   trampoline definition.  */
 
 /* A colon is used with no explicit operands
    to cause the template string to be scanned for %-constructs.  */
@@ -1216,12 +1467,12 @@ __transfer_from_trampoline ()					\
 
 #define LEGITIMATE_INDEX_P(X)   \
    (LEGITIMATE_INDEX_REG_P (X)				\
-    || (TARGET_68020 && GET_CODE (X) == MULT		\
+    || ((TARGET_68020 || TARGET_5200) && GET_CODE (X) == MULT \
 	&& LEGITIMATE_INDEX_REG_P (XEXP (X, 0))		\
 	&& GET_CODE (XEXP (X, 1)) == CONST_INT		\
 	&& (INTVAL (XEXP (X, 1)) == 2			\
 	    || INTVAL (XEXP (X, 1)) == 4		\
-	    || INTVAL (XEXP (X, 1)) == 8)))
+	    || (INTVAL (XEXP (X, 1)) == 8 && !TARGET_5200))))
 
 /* If pic, we accept INDEX+LABEL, which is what do_tablejump makes.  */
 #define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)				\
@@ -1375,26 +1626,28 @@ __transfer_from_trampoline ()					\
    relative to an average of the time for add and the time for shift,
    taking away a little more because sometimes move insns are needed.  */
 /* div?.w is relatively cheaper on 68000 counted in COSTS_N_INSNS terms.  */
-#define MULL_COST (TARGET_68040 ? 5 : 13)
-#define MULW_COST (TARGET_68040 ? 3 : TARGET_68020 ? 8 : 5)
+#define MULL_COST (TARGET_68060 ? 2 : TARGET_68040 ? 5 : 13)
+#define MULW_COST (TARGET_68060 ? 2 : TARGET_68040 ? 3 : TARGET_68020 ? 8 : 5)
 #define DIVW_COST (TARGET_68020 ? 27 : 12)
 
 #define RTX_COSTS(X,CODE,OUTER_CODE)				\
   case PLUS:							\
     /* An lea costs about three times as much as a simple add.  */  \
     if (GET_MODE (X) == SImode					\
-	&& GET_CODE (XEXP (X, 0)) == REG			\
-	&& GET_CODE (XEXP (X, 1)) == MULT			\
-	&& GET_CODE (XEXP (XEXP (X, 1), 0)) == REG		\
-	&& GET_CODE (XEXP (XEXP (X, 1), 1)) == CONST_INT	\
-	&& (INTVAL (XEXP (XEXP (X, 1), 1)) == 2			\
-	    || INTVAL (XEXP (XEXP (X, 1), 1)) == 4		\
-	    || INTVAL (XEXP (XEXP (X, 1), 1)) == 8))		\
+	&& GET_CODE (XEXP (X, 1)) == REG			\
+	&& GET_CODE (XEXP (X, 0)) == MULT			\
+	&& GET_CODE (XEXP (XEXP (X, 0), 0)) == REG		\
+	&& GET_CODE (XEXP (XEXP (X, 0), 1)) == CONST_INT	\
+	&& (INTVAL (XEXP (XEXP (X, 0), 1)) == 2			\
+	    || INTVAL (XEXP (XEXP (X, 0), 1)) == 4		\
+	    || INTVAL (XEXP (XEXP (X, 0), 1)) == 8))		\
       return COSTS_N_INSNS (3);	 /* lea an@(dx:l:i),am */	\
     break;							\
   case ASHIFT:							\
   case ASHIFTRT:						\
-  case LSHIFTRT:							\
+  case LSHIFTRT:						\
+    if (TARGET_68060)						\
+      return COSTS_N_INSNS(1);					\
     if (! TARGET_68020)							\
       {									\
 	if (GET_CODE (XEXP (X, 1)) == CONST_INT)			\
@@ -1539,6 +1792,18 @@ __transfer_from_trampoline ()					\
    18 to 25, not 16 to 23 as they do in the compiler.  */
 
 #define DBX_REGISTER_NUMBER(REGNO) ((REGNO) < 16 ? (REGNO) : (REGNO) + 2)
+
+/* Before the prologue, RA is at 0(%sp).  */
+#define INCOMING_RETURN_ADDR_RTX \
+  gen_rtx (MEM, VOIDmode, gen_rtx (REG, VOIDmode, STACK_POINTER_REGNUM))
+
+/* We must not use the DBX register numbers for the DWARF 2 CFA column
+   numbers because that maps to numbers beyond FIRST_PSEUDO_REGISTER.
+   Instead use the identity mapping.  */
+#define DWARF_FRAME_REGNUM(REG) REG
+
+/* Before the prologue, the top of the frame is at 4(%sp).  */
+#define INCOMING_FRAME_SP_OFFSET 4
 
 /* This is how to output the definition of a user-level label named NAME,
    such as the label on a static function or variable NAME.  */
@@ -1841,6 +2106,9 @@ do { long l;						\
 #define BC_OUTPUT_COMMON(FP, NAME, SIZE, ROUNDED) \
   do { bc_emit_common(NAME, ROUNDED); bc_globalize_label(NAME); } while (0)
 
+#define BC_OUTPUT_BSS(FP, NAME, SIZE, ROUNDED) \
+  do { bc_data (); bc_emit_labeldef(NAME); bc_emit_skip (SIZE); } while (0)
+
 #define BC_OUTPUT_LOCAL(FP, NAME, SIZE, ROUNDED) \
   bc_emit_common(NAME, ROUNDED)
 
@@ -1965,11 +2233,31 @@ do { long l;						\
 /* Define functions defined in aux-output.c and used in templates.  */
 
 extern char *output_move_const_into_data_reg ();
+extern char *output_move_simode_const ();
+extern char *output_move_simode ();
+extern char *output_move_himode ();
+extern char *output_move_qimode ();
+extern char *output_move_stricthi ();
+extern char *output_move_strictqi ();
 extern char *output_move_double ();
 extern char *output_move_const_single ();
 extern char *output_move_const_double ();
 extern char *output_btst ();
 extern char *output_scc_di ();
+extern char *output_addsi3 ();
+extern char *output_andsi3 ();
+extern char *output_iorsi3 ();
+extern char *output_xorsi3 ();
+
+/* Variables in m68k.c */
+extern char *m68k_align_loops_string;
+extern char *m68k_align_jumps_string;
+extern char *m68k_align_funcs_string;
+extern int m68k_align_loops;
+extern int m68k_align_jumps;
+extern int m68k_align_funcs;
+extern int m68k_last_compare_had_fp_operands;
+
 
 /*
 Local variables:

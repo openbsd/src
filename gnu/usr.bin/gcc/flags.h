@@ -1,5 +1,5 @@
 /* Compilation switch flag definitions for GNU CC.
-   Copyright (C) 1987, 1988, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 94, 95, 96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -27,6 +27,7 @@ enum debug_info_type
   DBX_DEBUG,	    /* Write BSD .stabs for DBX (using dbxout.c).  */
   SDB_DEBUG,	    /* Write COFF for (old) SDB (using sdbout.c).  */
   DWARF_DEBUG,	    /* Write Dwarf debug info (using dwarfout.c).  */
+  DWARF2_DEBUG,	    /* Write Dwarf v2 debug info (using dwarf2out.c).  */
   XCOFF_DEBUG	    /* Write IBM/Xcoff debug info (using dbxout.c).  */
 };
 
@@ -131,6 +132,18 @@ extern int profile_flag;
 /* Nonzero if generating code to do profiling on the basis of basic blocks.  */
 
 extern int profile_block_flag;
+
+/* Nonzero if generating code to profile program flow graph arcs. */
+
+extern int profile_arc_flag;
+
+/* Nonzero if generating info for gcov to calculate line test coverage. */
+
+extern int flag_test_coverage;
+
+/* Nonzero indicates that branch taken probabilities should be calculated. */
+
+extern int flag_branch_probabilities;
 
 /* Nonzero for -pedantic switch: warn about anything
    that standard C forbids.  */
@@ -309,10 +322,6 @@ extern int flag_schedule_insns_after_reload;
 
 extern int flag_delayed_branch;
 
-/* Nonzero means to run cleanups after CALL_EXPRs. */
-
-extern int flag_short_temps;
-
 /* Nonzero means pretend it is OK to examine bits of target floats,
    even if that isn't true.  The resulting code will have incorrect constants,
    but the same series of instructions that the native compiler would make.  */
@@ -329,7 +338,13 @@ extern int flag_pedantic_errors;
 
 extern int flag_pic;
 
-/* Nonzero means place uninitialized global data in the bss section.  */
+/* Nonzero means generate extra code for exception handling and enable
+   exception handling.  */
+
+extern int flag_exceptions;
+
+/* Nonzero means don't place uninitialized global data in common storage
+   by default.  */
 
 extern int flag_no_common;
 
@@ -339,12 +354,28 @@ extern int flag_no_common;
    needed for crtstuff.c on other systems.  */
 extern int flag_inhibit_size_directive;
 
+/* Nonzero means place each function into its own section on those platforms
+   which support arbitrary section names and unlimited numbers of sections.  */
+
+extern int flag_function_sections;
+
 /* -fverbose-asm causes extra commentary information to be produced in
    the generated assembly code (to make it more readable).  This option
    is generally only of use to those who actually need to read the
-   generated assembly code (perhaps while debugging the compiler itself).  */
+   generated assembly code (perhaps while debugging the compiler itself).
+   -fno-verbose-asm, the default, causes the extra information
+   to not be added and is useful when comparing two assembler files.  */
 
 extern int flag_verbose_asm;
+
+/* -dA causes debug information to be produced in
+   the generated assembly code (to make it more readable).  This option
+   is generally only of use to those who actually need to read the
+   generated assembly code (perhaps while debugging the compiler itself).
+   Currently, this switch is only used by dwarfout.c; however, it is intended
+   to be a catchall for printing debug information in the assembler file.  */
+
+extern int flag_debug_asm;
 
 /* -fgnu-linker specifies use of the GNU linker for initializations.
    -fno-gnu-linker says that collect will be used.  */
@@ -352,6 +383,10 @@ extern int flag_gnu_linker;
 
 /* Tag all structures with __attribute__(packed) */
 extern int flag_pack_struct;
+
+/* Emit code to check for stack overflow; also may cause large objects
+   to be allocated dynamically.  */
+extern int flag_stack_check;
 
 /* Other basic status info about current function.  */
 
@@ -375,3 +410,15 @@ extern int current_function_has_nonlocal_label;
    function.  */
 
 extern int current_function_has_nonlocal_goto;
+
+/* Nonzero if GCC must add code to check memory access (used by Checker).  */
+
+extern int flag_check_memory_usage;
+
+/* Nonzero if GCC must prefix function names (used with
+   flag_check_memory_usage).  */
+
+extern int flag_prefix_function_name;
+/* Nonzero if the current function is a thunk, so we should try to cut
+   corners where we can.  */
+extern int current_function_is_thunk;

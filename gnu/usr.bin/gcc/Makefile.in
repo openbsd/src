@@ -1,5 +1,5 @@
 # Makefile for GNU C compiler.
-#   Copyright (C) 1987, 88, 90-94, 1995 Free Software Foundation, Inc.
+#   Copyright (C) 1987, 88, 90-96, 1997 Free Software Foundation, Inc.
 
 #This file is part of GNU CC.
 
@@ -26,16 +26,24 @@
 # Suppress smart makes who think they know how to automake Yacc files
 .y.c:
 
+# Directory where sources are, from where we are.
+srcdir = @srcdir@
+VPATH = @srcdir@
+
 # Variables that exist for you to override.
 # See below for how to change them for certain systems.
 
 # List of language subdirectories.
 # This is overridden by configure.
-SUBDIRS =
+SUBDIRS =@subdirs@
 
 # Selection of languages to be made.
 # This is overridden by configure.
-LANGUAGES = c objective-c proto
+LANGUAGES = c proto gcov @all_languages@
+
+# Selection of languages to be made during stage1 build.
+# This is overridden by configure.
+BOOT_LANGUAGES = c @all_boot_languages@
 
 ALLOCA =
 ALLOCA_FLAGS =
@@ -46,7 +54,9 @@ ALLOCA_FINISH = true
 # BOOT_CFLAGS is the value of CFLAGS to pass
 # to the stage2 and stage3 compilations
 # XCFLAGS is used for most compilations but not when using the GCC just built.
+# TCFLAGS is used for compilations with the GCC just built.
 XCFLAGS =
+TCFLAGS =
 CFLAGS = -g
 BOOT_CFLAGS = -O $(CFLAGS)
 # These exists to be overridden by the x-* and t-* files, respectively.
@@ -56,24 +66,27 @@ T_CFLAGS =
 X_CPPFLAGS =
 T_CPPFLAGS =
 
-CC = cc
+CC = @CC@
 BISON = bison
 BISONFLAGS =
 LEX = flex
 LEXFLAGS =
 AR = ar
-OLDAR_FLAGS = qc
 AR_FLAGS = rc
+LN = @symbolic_link@
+DLLTOOL = dlltool
 SHELL = /bin/sh
 # on sysV, define this as cp.
-INSTALL = install -c
+INSTALL = @INSTALL@
 # These permit overriding just for certain files.
 INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL)
 MAKEINFO = makeinfo
+MAKEINFOFLAGS =
 TEXI2DVI = texi2dvi
 # For GNUmake: let us decide what gets passed to recursive makes.
 MAKEOVERRIDES =
+@SET_MAKE@
 
 # Define this as & to perform parallel make on a Sequent.
 # Note that this has some bugs, and it seems currently necessary 
@@ -97,10 +110,11 @@ CCLIBFLAGS = -O
 
 # Version of ar to use when compiling libgcc1.a.
 OLDAR = ar
+OLDAR_FLAGS = qc
 
 # Target to use when installing include directory.  Either
 # install-headers-tar or install-headers-cpio.
-INSTALL_HEADERS_DIR = install-headers-tar
+INSTALL_HEADERS_DIR = @build_install_headers_dir@
 
 # Header files that are made available under the same name
 # to programs compiled with GCC.
@@ -108,11 +122,15 @@ USER_H = $(srcdir)/ginclude/stdarg.h $(srcdir)/ginclude/stddef.h \
     $(srcdir)/ginclude/varargs.h $(srcdir)/ginclude/va-alpha.h \
     $(srcdir)/ginclude/va-h8300.h $(srcdir)/ginclude/va-i860.h \
     $(srcdir)/ginclude/va-i960.h $(srcdir)/ginclude/va-mips.h \
-    $(srcdir)/ginclude/va-m88k.h $(srcdir)/ginclude/va-pa.h \
+    $(srcdir)/ginclude/va-m88k.h $(srcdir)/ginclude/va-mn10200.h \
+    $(srcdir)/ginclude/va-mn10300.h $(srcdir)/ginclude/va-pa.h \
     $(srcdir)/ginclude/va-pyr.h $(srcdir)/ginclude/va-sparc.h \
     $(srcdir)/ginclude/va-clipper.h $(srcdir)/ginclude/va-spur.h \
+    $(srcdir)/ginclude/va-m32r.h $(srcdir)/ginclude/va-sh.h \
+    $(srcdir)/ginclude/va-v850.h $(srcdir)/ginclude/va-arc.h \
     $(srcdir)/ginclude/iso646.h $(srcdir)/ginclude/va-ppc.h \
-    $(srcdir)/ginclude/proto.h $(EXTRA_HEADERS)
+    $(srcdir)/ginclude/proto.h $(EXTRA_HEADERS) \
+    $(LANG_EXTRA_HEADERS)
 
 # Target to use whe installing assert.h.  Some systems may
 # want to set this empty.
@@ -130,7 +148,7 @@ GCC_FOR_TARGET = ./xgcc -B./
 # This is used instead of ALL_CFLAGS when compiling with GCC_FOR_TARGET.
 # It omits XCFLAGS, and specifies -B./.
 # It also specifies -I./include to find, e.g., stddef.h.
-GCC_CFLAGS=$(INTERNAL_CFLAGS) $(X_CFLAGS) $(T_CFLAGS) $(CFLAGS) -I./include
+GCC_CFLAGS=$(INTERNAL_CFLAGS) $(X_CFLAGS) $(T_CFLAGS) $(CFLAGS) -I./include $(TCFLAGS)
 
 # Special flags for compiling enquire.
 # We disable optimization to make floating point more reliable.
@@ -139,7 +157,7 @@ ENQUIRE_LDFLAGS = $(LDFLAGS)
 
 # Sed command to transform gcc to installed name.  Overwritten by configure.
 program_transform_name = -e s,x,x,
-program_transform_cross_name = -e s,^,$(target)-,
+program_transform_cross_name = -e s,^,$(target_alias)-,
 
 # Tools to use when building a cross-compiler.
 # These are used because `configure' appends `cross-make'
@@ -157,6 +175,14 @@ SYSTEM_HEADER_DIR = /usr/include
 # Control whether to run fixproto.
 STMP_FIXPROTO = stmp-fixproto
 
+# Test to see whether <float.h> exists in the system header files,
+# and is not derived from GCC.
+FLOAT_H_TEST = \
+  [ -f $(SYSTEM_HEADER_DIR)/float.h ] && \
+  if grep 'ifndef _FLOAT_H___' $(SYSTEM_HEADER_DIR)/float.h >/dev/null; \
+  then false; \
+  else :; fi
+
 # Test to see whether <limits.h> exists in the system header files.
 LIMITS_H_TEST = [ -f $(SYSTEM_HEADER_DIR)/limits.h ]
 
@@ -167,59 +193,61 @@ LIMITS_H_TEST = [ -f $(SYSTEM_HEADER_DIR)/limits.h ]
 PREMADE_ATTRTAB_MD = Makefile  # Guaranteed not to cmp equal to md.
 PREMADE_ATTRTAB = 
 
-target= ... `configure' substitutes actual target name here.
-xmake_file= ... `configure' substitutes actual x- file name here.
-tmake_file= ... `configure' substitutes actual t- file name here.
-out_file= ... `configure' substitutes actual out file name here.
-out_object_file= ... `configure' substitutes actual out object file name here.
-md_file= ... `configure' substitutes actual md file name here.
-tm_file= ... `configure' substitutes actual tm file name here.
-build_xm_file= ... `configure' substitutes actual build xm- file name here.
-host_xm_file= ... `configure' substitutes actual host xm- file name here.
-lang_specs_files= ... `configure' substitutes actual lang spec file names here.
-lang_options_files= ... `configure' puts actual lang options file names here.
-version=`sed -e 's/.*\"\([^ \"]*\)[ \"].*/\1/' < $(srcdir)/version.c`
+target=@target@
+target_alias=@target_alias@
+xmake_file=@dep_host_xmake_file@
+tmake_file=@dep_tmake_file@
+out_file=$(srcdir)/config/@out_file@
+out_object_file=@out_object_file@
+md_file=$(srcdir)/config/@md_file@
+tm_file=@tm_file_list@
+build_xm_file=@build_xm_file_list@
+host_xm_file=@host_xm_file_list@
+lang_specs_files=@lang_specs_files@
+lang_options_files=@lang_options_files@
+GCC_THREAD_FILE=@thread_file@
+version=@version@
 mainversion=`sed -e 's/.*\"\([0-9]*\.[0-9]*\).*/\1/' < $(srcdir)/version.c`
 
-# Directory where sources are, from where we are.
-srcdir = .
 # Common prefix for installation directories.
 # NOTE: This directory must exist when you start installation.
-prefix = /usr/local
+prefix = @prefix@
 # Directory in which to put localized header files. On the systems with
 # gcc as the native cc, `local_prefix' may not be `prefix' which is
 # `/usr'.
 # NOTE: local_prefix *should not* default from prefix.
-local_prefix = /usr/local
+local_prefix = @local_prefix@
 # Directory in which to put host dependent programs and libraries
-exec_prefix = $(prefix)
+exec_prefix = @exec_prefix@
 # Directory in which to put the executable for the command `gcc'
-bindir = $(exec_prefix)/bin
+bindir = @bindir@
 # Directory in which to put the directories used by the compiler.
-libdir = $(exec_prefix)/lib
+libdir = @libdir@
 # Directory in which the compiler finds executables, libraries, etc.
-libsubdir = $(libdir)/gcc-lib/$(target)/$(version)
+libsubdir = $(libdir)/gcc-lib/$(target_alias)/$(version)
 # Directory in which the compiler finds g++ includes.
-gxx_include_dir= $(libdir)/g++-include
+gxx_include_dir= @gxx_include_dir@
+# Directory in which the old g++ header files may be found.
+old_gxx_include_dir= $(libdir)/g++-include
 # Directory to search for site-specific includes.
 includedir = $(local_prefix)/include
 # assertdir is overridden in cross-make.
 # (But this currently agrees with what is in cross-make.)
 assertdir = $(tooldir)/include
 # where the info files go
-infodir = $(prefix)/info
+infodir = @infodir@
 # where the info-files get built
 build_infodir = $(srcdir)
 # Extension (if any) to put in installed man-page filename.
 manext = .1
 objext = .o
-exeext =
+exeext = @build_exeext@
 
 # Directory in which to put man pages.
-mandir = $(prefix)/man/man1
+mandir = @mandir@/man1
 # Directory in which to find other cross-compilation tools and headers.
 # Used in install-cross.
-tooldir = $(exec_prefix)/$(target)
+tooldir = $(exec_prefix)/$(target_alias)
 # Dir for temp files.
 tmpdir = /tmp
 
@@ -251,7 +279,8 @@ LIBGCC2 = libgcc2.a
 # -g1 causes output of debug info only for file-scope entities.
 # we use this here because that should be enough, and also
 # so that -g1 will be tested.
-LIBGCC2_CFLAGS = -O2 $(LIBGCC2_INCLUDES) $(GCC_CFLAGS) $(TARGET_LIBGCC2_CFLAGS) -g1
+LIBGCC2_DEBUG_CFLAGS = -g1
+LIBGCC2_CFLAGS = -O2 $(LIBGCC2_INCLUDES) $(GCC_CFLAGS) $(TARGET_LIBGCC2_CFLAGS) $(LIBGCC2_DEBUG_CFLAGS) -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED -fexceptions
 
 # Additional options to use when compiling libgcc2.a.
 # Some targets override this to -Iinclude
@@ -274,29 +303,30 @@ LIBGCC1_TEST = libgcc1-test
 # List of extra executables that should be compiled for this target machine
 # that are used for compiling from source code to object code.
 # The rules for compiling them should be in the t-* file for the machine.
-EXTRA_PASSES =
+EXTRA_PASSES =@extra_passes@
 
 # Like EXTRA_PASSES, but these are used when linking.
-EXTRA_PROGRAMS = 
+EXTRA_PROGRAMS = @extra_programs@
 
 # List of extra object files that should be compiled for this target machine.
 # The rules for compiling them should be in the t-* file for the machine.
-EXTRA_PARTS =
+EXTRA_PARTS = @extra_parts@
 
 # List of extra object files that should be compiled and linked with
 # compiler proper (cc1, cc1obj, cc1plus).
-EXTRA_OBJS =
+EXTRA_OBJS = @extra_objs@
 
 # List of extra object files that should be compiled and linked with
 # the gcc driver.
-EXTRA_GCC_OBJS =
+EXTRA_GCC_OBJS =@host_extra_gcc_objs@
 
 # List of additional header files to install.
 # Often this is edited directly by `configure'.
-EXTRA_HEADERS =
+EXTRA_HEADERS =@extra_headers_list@
 
 # Set this to `ld' to enable use of collect2.
-# USE_COLLECT2 =
+USE_COLLECT2 = @will_use_collect2@
+MAYBE_USE_COLLECT2 = @maybe_use_collect2@
 # It is convenient for configure to add the assignment at the beginning,
 # so don't override it here.
 
@@ -309,7 +339,8 @@ LIB1FUNCS_EXTRA =
 LIB2FUNCS_EXTRA = 
 
 # Default float.h source to use for cross-compiler.
-CROSS_FLOAT_H=float.h-cross
+# This is overridden by configure.
+CROSS_FLOAT_H=$(srcdir)/config/float-@float_format@.h
 
 # Program to convert libraries.
 LIBCONVERT = 
@@ -322,7 +353,7 @@ TAROUTOPTS = xpBf
 
 # Select which version of fixincludes to use (I.E. regular versus SVR4)
 # This value is overridden directly by configure.
-FIXINCLUDES=fixincludes
+FIXINCLUDES = @fixincludes@
 
 # Additional directories of header files to run fixincludes on.
 # These should be directories searched automatically by default
@@ -331,6 +362,10 @@ FIXINCLUDES=fixincludes
 # header files, but are not searched automatically by default.
 # On most systems, this is empty.
 OTHER_FIXINCLUDES_DIRS=
+
+# A list of all the language-specific executables.
+# This is overridden by configure.
+COMPILERS = cc1$(exeext) @all_compilers@
 
 # List of things which should already be built whenever we try to use xgcc
 # to compile anything (without linking).
@@ -386,6 +421,12 @@ FIXPROTO_DEFINES =
 # Extra flags to use when compiling crt{begin,end}.o.
 CRTSTUFF_T_CFLAGS = 
 
+# Extra flags to use when compiling [m]crt0.o.
+CRT0STUFF_T_CFLAGS = 
+
+# "t" or nothing, for building multilibbed versions of, say, crtbegin.o.
+T =
+
 # End of variables for you to override.
 
 # Definition of `all' is here so that new rules inserted by sed
@@ -399,20 +440,29 @@ all: all.indirect
 
 # sed inserts variable overrides after the following line.
 ####target overrides
+@target_overrides@
+
 ####host overrides
+@host_overrides@
+
 ####cross overrides
+@cross_defines@
+@cross_overrides@
+
 ####build overrides
-
+@build_overrides@
+#
 # Now figure out from those variables how to compile and link.
 
 all.indirect: $(ALL)
 
 # IN_GCC tells obstack.h that we are using gcc's <stddef.h> file.
 # ??? IN_GCC should be obsolete now.
-INTERNAL_CFLAGS = $(CROSS) -DIN_GCC
+INTERNAL_CFLAGS = $(CROSS) -DIN_GCC @extra_c_flags@
 
 # This is the variable actually used when we compile.
-ALL_CFLAGS = $(INTERNAL_CFLAGS) $(X_CFLAGS) $(T_CFLAGS) $(CFLAGS) $(XCFLAGS)
+ALL_CFLAGS = $(INTERNAL_CFLAGS) $(X_CFLAGS) $(T_CFLAGS) $(CFLAGS) $(XCFLAGS) \
+	@DEFS@
 
 # Likewise.
 ALL_CPPFLAGS = $(CPPFLAGS) $(X_CPPFLAGS) $(T_CPPFLAGS)
@@ -459,14 +509,16 @@ INCLUDES = -I. -I$(srcdir) -I$(srcdir)/config
 # This tells GNU make version 3 not to export all the variables
 # defined in this file into the environment.
 .NOEXPORT:
-
+#
 # Support for additional languages (other than c and objc).
 # ??? objc can be supported this way too (leave for later).
 
 # These next lines are overridden by configure.
-LANG_MAKEFILES =
-LANG_STAGESTUFF =
-LANG_DIFF_EXCLUDES =
+LANG_MAKEFILES = @all_lang_makefiles@
+LANG_STAGESTUFF = @all_stagestuff@
+LANG_DIFF_EXCLUDES = @all_diff_excludes@
+LANG_LIB2FUNCS = @all_lib2funcs@
+LANG_EXTRA_HEADERS = @all_headers@
 
 # Flags to pass to recursive makes.
 # CC is set by configure.  Hosts without symlinks need special handling
@@ -478,17 +530,20 @@ FLAGS_TO_PASS = \
 	"AR_FOR_TARGET=$(AR_FOR_TARGET)" \
 	"BISON=$(BISON)" \
 	"BISONFLAGS=$(BISONFLAGS)" \
-	"CC=set-by-configure" \
+	"CC=@cc_set_by_configure@" \
 	"CFLAGS=$(CFLAGS)" \
+	"CLIB=$(CLIB)" \
 	"GCC_FOR_TARGET=$(GCC_FOR_TARGET)" \
 	"LDFLAGS=$(LDFLAGS)" \
 	"LEX=$(LEX)" \
 	"LEXFLAGS=$(LEXFLAGS)" \
+	"LN=$(LN)" \
 	"MAKEINFO=$(MAKEINFO)" \
 	"MAKEINFOFLAGS=$(MAKEINFOFLAGS)" \
 	"RANLIB_FOR_TARGET=$(RANLIB_FOR_TARGET)" \
 	"RANLIB_TEST_FOR_TARGET=$(RANLIB_TEST_FOR_TARGET)" \
 	"SHELL=$(SHELL)" \
+	"STAGE_PREFIX=@stage_prefix_set_by_configure@" \
 	"exeext=$(exeext)" \
 	"objext=$(objext)" \
 	"exec_prefix=$(exec_prefix)" \
@@ -496,20 +551,15 @@ FLAGS_TO_PASS = \
 	"tooldir=$(tooldir)" \
 	"bindir=$(bindir)" \
 	"libsubdir=$(libsubdir)"
-
+#
 # Lists of files for various purposes.
 
-# A list of all the language-specific executables.
-# This is overridden by configure.
-COMPILERS = cc1$(exeext) cc1obj$(exeext)
+# Language-specific object files for C and Objective C.
+C_AND_OBJC_OBJS = c-lex.o c-pragma.o c-decl.o c-typeck.o c-convert.o \
+  c-aux-info.o c-common.o c-iterate.o @extra_c_objs@
 
 # Language-specific object files for C.
-C_OBJS = c-parse.o c-lang.o c-lex.o c-pragma.o \
-   c-decl.o c-typeck.o c-convert.o c-aux-info.o c-common.o c-iterate.o
-
-# Language-specific object files for Objective C.
-OBJC_OBJS = objc-parse.o objc-act.o c-lex.o c-pragma.o \
-   c-decl.o c-typeck.o c-convert.o c-aux-info.o c-common.o c-iterate.o
+C_OBJS = c-parse.o c-lang.o $(C_AND_OBJC_OBJS)
 
 # Files specific to the C interpreter bytecode compiler(s).
 BC_OBJS = bc-emit.o bc-optab.o
@@ -519,14 +569,14 @@ BC_ALL = bc-arity.h bc-opcode.h bc-opname.h
 
 # Language-independent object files.
 OBJS = toplev.o version.o tree.o print-tree.o stor-layout.o fold-const.o \
- function.o stmt.o expr.o calls.o expmed.o explow.o optabs.o varasm.o \
- rtl.o print-rtl.o rtlanal.o emit-rtl.o real.o \
- dbxout.o sdbout.o dwarfout.o xcoffout.o \
+ function.o stmt.o except.o expr.o calls.o expmed.o explow.o optabs.o \
+ varasm.o rtl.o print-rtl.o rtlanal.o emit-rtl.o real.o \
+ dbxout.o sdbout.o dwarfout.o dwarf2out.o xcoffout.o bitmap.o \
  integrate.o jump.o cse.o loop.o unroll.o flow.o stupid.o combine.o \
  regclass.o local-alloc.o global.o reload.o reload1.o caller-save.o \
  insn-peep.o reorg.o sched.o final.o recog.o reg-stack.o \
  insn-opinit.o insn-recog.o insn-extract.o insn-output.o insn-emit.o \
- insn-attrtab.o $(out_object_file) getpwd.o convert.o $(EXTRA_OBJS)
+ profile.o insn-attrtab.o $(out_object_file) getpwd.o convert.o $(EXTRA_OBJS)
 
 # GEN files are listed separately, so they can be built before doing parallel
 #  makes for cc1 or cc1plus.  Otherwise sequent parallel make attempts to load
@@ -541,19 +591,21 @@ CCCP=cccp
 STAGESTUFF = *$(objext) insn-flags.h insn-config.h insn-codes.h \
  insn-output.c insn-recog.c insn-emit.c insn-extract.c insn-peep.c \
  insn-attr.h insn-attrtab.c insn-opinit.c \
- stamp-flags stamp-config stamp-codes \
+ stamp-flags stamp-config stamp-codes stamp-mlib \
  stamp-output stamp-recog stamp-emit stamp-extract stamp-peep \
- stamp-attr stamp-attrtab stamp-opinit stamp-proto stamp-crt stamp-crtS \
+ stamp-attr stamp-attrtab stamp-opinit stamp-proto stamp-crt stamp-crtS stamp-crt0 \
  genemit$(exeext) genoutput$(exeext) genrecog$(exeext) genextract$(exeext) \
  genflags$(exeext) gencodes$(exeext) genconfig$(exeext) genpeep$(exeext) \
  genattrtab$(exeext) genattr$(exeext) genopinit$(exeext) \
  $(BC_ALL) \
  stamp-bcarity stamp-bcopcode stamp-bcopname \
  bi-arity$(exeext) bi-opcode$(exeext) bi-opname$(exeext) \
- $(GCC_PASSES) $(EXTRA_PARTS) $(EXTRA_PROGRAMS) gcc-cross$(exeext) \
+ xgcc$(exeext) cc1$(exeext) cpp$(exeext) $(EXTRA_PASSES) \
+ $(EXTRA_PARTS) $(EXTRA_PROGRAMS) gcc-cross$(exeext) \
  $(CCCP)$(exeext) cc1obj$(exeext) enquire$(exeext) \
  protoize$(exeext) unprotoize$(exeext) \
  specs collect2$(exeext) $(USE_COLLECT2) underscore.c \
+ gcov$(exeext) *.bp \
  *.greg *.lreg *.combine *.flow *.cse *.jump *.rtl *.tree *.loop \
  *.dbr *.jump2 *.sched *.cse2 *.sched2 *.stack \
  *.[si] \
@@ -575,9 +627,9 @@ LIB2FUNCS = _muldi3 _divdi3 _moddi3 _udivdi3 _umoddi3 _negdi2 \
     _fixunsdfsi _fixunssfsi _fixunsdfdi _fixdfdi _fixunssfdi _fixsfdi \
     _fixxfdi _fixunsxfdi _floatdixf _fixunsxfsi \
     _fixtfdi _fixunstfdi _floatditf \
-    __gcc_bcmp _varargs _eprintf _op_new _op_vnew _new_handler _op_delete \
-    _op_vdel _bb _shtab _clear_cache _trampoline __main _exit _ctors _eh \
-    _pure
+    __gcc_bcmp _varargs __dummy _eprintf _op_new _op_vnew _new_handler \
+    _op_delete _op_vdel _bb _shtab _clear_cache _trampoline __main _exit \
+    _ctors _eh _eh_compat _pure
 
 # The files that "belong" in CONFIG_H are deliberately omitted
 # because having them there would not be useful in actual practice.
@@ -587,10 +639,13 @@ LIB2FUNCS = _muldi3 _divdi3 _moddi3 _udivdi3 _umoddi3 _negdi2 \
 # If it is, rm *.o is an easy way to do it.
 # CONFIG_H = $(host_xm_file) $(tm_file)
 CONFIG_H =
-RTL_H = rtl.h rtl.def machmode.h machmode.def
-TREE_H = tree.h real.h tree.def machmode.h machmode.def
+RTL_H = rtl.h rtl.def gansidecl.h machmode.h machmode.def
+TREE_H = tree.h real.h tree.def gansidecl.h machmode.h machmode.def
 BYTECODE_H = bytecode.h bc-emit.h bc-optab.h
-
+BASIC_BLOCK_H = basic-block.h bitmap.h
+DEMANGLE_H = demangle.h gansidecl.h
+RECOG_H = recog.h gansidecl.h
+#
 # Language makefile fragments.
 
 # The following targets define the interface between us and the languages.
@@ -607,21 +662,55 @@ BYTECODE_H = bytecode.h bc-emit.h bc-optab.h
 # Configure computes and adds these here.
 
 ####language hooks
+@language_hooks@
 
 # sed inserts language fragments after the following line.
 ####language fragments
+@language_fragments@
 
 # End of language makefile fragments.
-
+#
 # Avoid a lot of time thinking about remaking Makefile.in and *.def.
 .SUFFIXES: .in .def
 
-Makefile: $(srcdir)/Makefile.in $(srcdir)/configure $(srcdir)/version.c \
-   $(srcdir)/config/$(xmake_file) $(srcdir)/config/$(tmake_file) \
-   $(LANG_MAKEFILES)
+Makefile: $(srcdir)/Makefile.in config.status $(srcdir)/version.c \
+   $(xmake_file) $(tmake_file) $(LANG_MAKEFILES)
+	$(SHELL) $(srcdir)/configure.frag $(srcdir) "$(SUBDIRS)" \
+		"$(xmake_file)" "$(tmake_file)"
 	cp config.status config.run
 	$(SHELL) config.run
 	rm -f config.run
+
+$(srcdir)/configure: $(srcdir)/configure.in
+	cd $(srcdir); autoconf
+
+# cstamp-h.in controls rebuilding of config.in.
+# It is named cstamp-h.in and not stamp-h.in so the mostlyclean rule doesn't
+# delete it.  A stamp file is needed as autoheader won't update the file if
+# nothing has changed.
+# It remains in the source directory and is part of the distribution.
+# This follows what is done in shellutils, fileutils, etc.
+# "echo timestamp" is used instead of touch to be consistent with other
+# packages that use autoconf (??? perhaps also to avoid problems with patch?).
+# ??? Newer versions have a maintainer mode that may be useful here.
+$(srcdir)/config.in: $(srcdir)/cstamp-h.in
+$(srcdir)/cstamp-h.in: $(srcdir)/configure.in $(srcdir)/acconfig.h
+	cd $(srcdir) && autoheader
+	echo timestamp > $(srcdir)/cstamp-h.in
+auto-config.h: cstamp-h ; @true
+cstamp-h: config.in config.status
+	CONFIG_HEADERS=auto-config.h:config.in $(SHELL) config.status
+
+# Really, really stupid make features, such as SUN's KEEP_STATE, may force
+# a target to build even if it is up-to-date.  So we must verify that
+# config.status does not exist before failing.
+config.status: configure version.c
+	@if [ ! -f config.status ] ; then \
+	  echo You must configure gcc.  Look at the INSTALL file for details.; \
+	  false; \
+	else \
+	  $(SHELL) config.status --recheck; \
+	fi
 
 all.internal: start.encap rest.encap
 # This is what to compile if making a cross-compiler.
@@ -637,27 +726,15 @@ start.encap: native xgcc specs $(LIBGCC1) xlimits.h lang.start.encap
 rest.encap: stmp-headers $(LIBGCC) $(STMP_FIXPROTO) $(EXTRA_PARTS) lang.rest.encap
 # This is what is made with the host's compiler
 # whether making a cross compiler or not.
-native: config.status cpp $(LANGUAGES) $(EXTRA_PASSES) $(EXTRA_PROGRAMS) $(USE_COLLECT2)
+native: config.status auto-config.h cpp $(LANGUAGES) \
+	$(EXTRA_PASSES) $(EXTRA_PROGRAMS) $(USE_COLLECT2)
 
 # Define the names for selecting languages in LANGUAGES.
 C c: cc1
-OBJC objc: cc1obj objc-runtime
-OBJECTIVE-C objective-c: cc1obj objc-runtime
 PROTO: proto
 
 # Tell GNU make these are phony targets.
-.PHONY: C c OBJC objc OBJECTIVE-C objective-c PROTO proto
-
-# Really, really stupid make features, such as SUN's KEEP_STATE, may force
-# a target to build even if it is up-to-date.  So we must verify that
-# config.status does not exist before failing.
-config.status:
-	@if [ ! -f config.status ] ; then \
-	  echo You must configure gcc.  Look at the INSTALL file for details.; \
-	  false; \
-	else \
-	  true; \
-	fi
+.PHONY: C c PROTO proto
 
 # On the target machine, finish building a cross compiler.
 # This does the things that can't be done on the host machine.
@@ -678,14 +755,16 @@ compilations: ${OBJS}
 
 # Create a list of the language-independent object files so the language
 # subdirectories needn't mention their names explicitly.
-stamp-objlist: Makefile $(OBJS) $(BC_OBJS)
-	echo " $(OBJS) $(BC_OBJS)" | sed -e 's, \([a-z]\), ../\1,g' -e 's/\.o/$(objext)/g' >stamp-objlist
+stamp-objlist: $(OBJS) $(BC_OBJS)
+	echo " $(OBJS) $(BC_OBJS)" | sed -e 's, \([a-z0-9]\), ../\1,g' -e 's/\.o/$(objext)/g' >stamp-objlist
 
 # We call this executable `xgcc' rather than `gcc'
 # to avoid confusion if the current directory is in the path
 # and CC is `gcc'.  It is renamed to `gcc' when it is installed.
-xgcc: gcc.o version.o $(LIBDEPS) $(EXTRA_GCC_OBJS)
-	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ gcc.o version.o $(EXTRA_GCC_OBJS) $(LIBS)
+xgcc: gcc.o version.o choose-temp.o pexecute.o prefix.o version.o \
+   $(LIBDEPS) $(EXTRA_GCC_OBJS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ gcc.o prefix.o version.o \
+	  choose-temp.o pexecute.o $(EXTRA_GCC_OBJS) $(LIBS)
 
 # Dump a specs file to make -B./ read these specs over installed ones.
 specs: xgcc
@@ -701,22 +780,25 @@ gcc-cross: xgcc
 cc1: $(P) $(C_OBJS) $(OBJS) $(BC_OBJS) $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(C_OBJS) $(OBJS) $(BC_OBJS) $(LIBS)
 
-cc1obj: $(P) $(OBJC_OBJS) $(OBJS) $(BC_OBJS) $(LIBDEPS)
-	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(OBJC_OBJS) $(OBJS) $(BC_OBJS) $(LIBS)
-
 # Copy float.h from its source.
 gfloat.h: $(FLOAT_H)
 	-rm -f gfloat.h
 	cp $(FLOAT_H) gfloat.h
 
 # Create float.h source for the native machine.
+# Make it empty if we can use the system float.h without changes.
 float.h-nat: enquire
 	-./enquire -f > tmp-float.h
+	grep '#define [^_]' tmp-float.h >/dev/null || true > tmp-float.h
 	mv tmp-float.h float.h-nat
 
 # Create a dummy float.h source for a cross-compiler.
+# ??? This isn't used anymore.  Should we create config/float-unkn.h
+# and make that the default float_format in configure?
 float.h-cross:
-	echo "#error float.h values not known for cross-compiler" > t-float.h-cross
+	echo "#ifndef	__GCC_FLOAT_NOT_NEEDED" > t-float.h-cross
+	echo "#error float.h values not known for cross-compiler" >> t-float.h-cross
+	echo "#endif" >> t-float.h-cross
 	mv t-float.h-cross float.h-cross
 
 # Used to compile enquire with standard cc, but have forgotten why.
@@ -724,8 +806,15 @@ float.h-cross:
 enquire: enquire.o $(GCC_PARTS)
 	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(ENQUIRE_LDFLAGS) enquire.o -o $@
 enquire.o: $(srcdir)/enquire.c $(GCC_PASSES) stmp-int-hdrs
-# Breaking this line caused a problem with one version of GNU make.
-	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(ALL_CPPFLAGS) $(ENQUIRE_CFLAGS) -I. -c $(srcdir)/enquire.c
+	rm -f include/float.h
+	if $(FLOAT_H_TEST); then \
+	  SYS_FLOAT_H_WRAP=1; \
+	else :; \
+	  SYS_FLOAT_H_WRAP=0; \
+	fi; \
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(ALL_CPPFLAGS) $(ENQUIRE_CFLAGS) \
+	  -DSYS_FLOAT_H_WRAP=$$SYS_FLOAT_H_WRAP \
+	  -I. -c $(srcdir)/enquire.c
 
 # Build the version of limits.h that we will install.
 xlimits.h: glimits.h limitx.h limity.h
@@ -735,7 +824,7 @@ xlimits.h: glimits.h limitx.h limity.h
 	  cat $(srcdir)/glimits.h > tmp-xlimits.h; \
 	fi
 	mv tmp-xlimits.h xlimits.h
-
+#
 # Build libgcc.a.
 # This is done in two parts because some functions, in libgcc1.c,
 # must be compiled with something other than GCC,
@@ -766,6 +855,10 @@ libgcc1.cross:
 # Compile the library of arithmetic subroutines with the native compiler.
 # Don't compile it with GCC!
 # (That would cause most arithmetic functions to call themselves.)
+#
+# NOTE: If you modify these rules substantially, please be sure to
+# check at least config/i386/t-sco5 and possibly other makefile
+# fragments.
 libgcc1.a: libgcc1.c $(CONFIG_H) $(LIB1FUNCS_EXTRA) config.status
 	-rm -f tmplibgcc1.a
 # Actually build it in tmplibgcc1.a, then rename at end,
@@ -780,7 +873,7 @@ libgcc1.a: libgcc1.c $(CONFIG_H) $(LIB1FUNCS_EXTRA) config.status
 	do \
 	  echo $${name}; \
 	  rm -f $${name}$(objext); \
-	  $(OLDCC) $(CCLIBFLAGS) $(INCLUDES) -c -DL$${name} $(srcdir)/libgcc1.c; \
+	  $(OLDCC) -DIN_LIBGCC1 $(CCLIBFLAGS) $(INCLUDES) -c -DL$${name} $(srcdir)/libgcc1.c; \
 	  if [ $$? -eq 0 ] ; then true; else exit 1; fi; \
 	  mv libgcc1$(objext) $${name}$(objext); \
 	  $(OLDAR) $(OLDAR_FLAGS) tmplibgcc1.a $${name}$(objext); \
@@ -800,7 +893,7 @@ libgcc1.a: libgcc1.c $(CONFIG_H) $(LIB1FUNCS_EXTRA) config.status
 	    if [ $${name}.asm = $${file} ]; then \
 	      cp $${file} $${name}.s || exit 1; file=$${name}.s; \
 	    else true; fi; \
-	    $(OLDCC) $(CCLIBFLAGS) $(INCLUDES) -c $${file}; \
+	    $(OLDCC) -DIN_LIBGCC1 $(CCLIBFLAGS) $(INCLUDES) -c $${file}; \
 	    if [ $$? -eq 0 ] ; then true; else exit 1; fi; \
 	    $(OLDAR) $(OLDAR_FLAGS) tmplibgcc1.a $${name}$(objext); \
 	    if [ $$? -eq 0 ] ; then true; else exit 1; fi; \
@@ -846,7 +939,7 @@ libgcc1.S: libgcc1.c $(CONFIG_H) config.status
 	for name in $(LIB1FUNCS); \
 	do \
 	  echo $${name}; \
-	  $(OLDCC) $(CCLIBFLAGS) $(INCLUDES) -S -DL$${name} $(srcdir)/libgcc1.c; \
+	  $(OLDCC) -DIN_LIBGCC1 $(CCLIBFLAGS) $(INCLUDES) -S -DL$${name} $(srcdir)/libgcc1.c; \
 	  if [ $$? -eq 0 ] ; then true; else exit 1; fi; \
 	  echo '#ifdef ' L$${name} >> libgcc1.S; \
 	  cat  libgcc1.s >> libgcc1.S; \
@@ -864,8 +957,9 @@ libgcc2.ready: $(GCC_PASSES) $(LIBGCC2_DEPS) stmp-int-hdrs
 		touch libgcc2.ready; \
 	fi
 
-libgcc2.a: libgcc2.c libgcc2.ready $(CONFIG_H) $(LIB2FUNCS_EXTRA) \
-   machmode.h longlong.h gbl-ctors.h config.status
+LIB2ADD = $(srcdir)/frame.c $(LIB2FUNCS_EXTRA) $(LANG_LIB2FUNCS)
+libgcc2.a: libgcc2.c libgcc2.ready $(CONFIG_H) $(LIB2ADD) \
+   machmode.h longlong.h frame.h gansidecl.h gbl-ctors.h config.status
 # Actually build it in tmplibgcc2.a, then rename at end,
 # so that libgcc2.a itself remains nonexistent if compilation is aborted.
 	-rm -f tmplibgcc2.a
@@ -890,11 +984,23 @@ libgcc2.a: libgcc2.c libgcc2.ready $(CONFIG_H) $(LIB2FUNCS_EXTRA) \
 # We don't use -e here because there are if statements
 # that should not make the command give up when the if condition is false.
 # Instead, we test for failure after each command where it matters.
-	for file in .. $(LIB2FUNCS_EXTRA); \
-	do \
-	  if [ x$${file} != x.. ]; then \
-	    name=`echo $${file} | sed -e 's/[.][cS]$$//' -e 's/[.]asm$$//'`; \
-	    oname=` echo $${name} | sed -e 's,.*/,,'`; \
+	for file in $(LIB2ADD); do \
+	  name=`echo $${file} | sed -e 's/[.][cSo]$$//' -e 's/[.]asm$$//' -e 's/[.]txt$$//'`; \
+	  oname=` echo $${name} | sed -e 's,.*/,,'`; \
+	  if [ $${name}.txt = $${file} ]; then \
+	    for f in .. `cat $${file}`; do if [ x$${f} != x.. ]; then \
+	      $(MAKE) GCC_FOR_TARGET="$(GCC_FOR_TARGET)" \
+		AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" CC="$(CC)" \
+		CFLAGS="$(CFLAGS)" HOST_PREFIX="$(HOST_PREFIX)" \
+		HOST_PREFIX_1="$(HOST_PREFIX_1)" \
+		LANGUAGES="$(LANGUAGES)" \
+		LIBGCC2_CFLAGS="$(LIBGCC2_CFLAGS)" $${f}; \
+	      if [ $$? -eq 0 ] ; then true; else exit 1; fi; \
+	      $(AR) $(AR_FLAGS) tmplibgcc2.a $${f}; \
+	      rm -f $${f}; \
+	    else true; \
+	    fi; done; \
+	  else \
 	    echo $${name}; \
 	    if [ $${name}.asm = $${file} ]; then \
 	      cp $${file} $${name}.s || exit 1; file=$${name}.s; \
@@ -903,7 +1009,6 @@ libgcc2.a: libgcc2.c libgcc2.ready $(CONFIG_H) $(LIB2FUNCS_EXTRA) \
 	    if [ $$? -eq 0 ] ; then true; else exit 1; fi; \
 	    $(AR) $(AR_FLAGS) tmplibgcc2.a $${oname}$(objext); \
 	    rm -f $${name}.s $${oname}$(objext); \
-	  else true; \
 	  fi; \
 	done
 	-if [ x${HPUX_GAS} = x ] ; then \
@@ -942,21 +1047,31 @@ libgcc.a: $(LIBGCC1) $(LIBGCC2)
 # Use the genmultilib shell script to generate the information the gcc
 # driver program needs to select the library directory based on the
 # switches.
-multilib.h: $(srcdir)/genmultilib Makefile
-	$(SHELL) $(srcdir)/genmultilib "$(MULTILIB_OPTIONS)" \
-	  "$(MULTILIB_DIRNAMES)" "$(MULTILIB_MATCHES)" > multilib.h
+multilib.h: stamp-mlib; @true
+stamp-mlib: $(srcdir)/genmultilib Makefile
+	$(SHELL) $(srcdir)/genmultilib \
+	  "$(MULTILIB_OPTIONS)" \
+	  "$(MULTILIB_DIRNAMES)" \
+	  "$(MULTILIB_MATCHES)" \
+	  "$(MULTILIB_EXCEPTIONS)" \
+	  "$(MULTILIB_EXTRA_OPTS)" > tmp-mlib.h
+	$(srcdir)/move-if-change tmp-mlib.h multilib.h
+	touch stamp-mlib
 
 # Build multiple copies of libgcc.a, one for each target switch.
 stmp-multilib: $(LIBGCC1) libgcc2.c libgcc2.ready $(CONFIG_H) \
-   $(LIB2FUNCS_EXTRA) machmode.h longlong.h gbl-ctors.h config.status
+   frame.h gansidecl.h \
+   $(LIB2ADD) machmode.h longlong.h gbl-ctors.h config.status
 	for i in `$(GCC_FOR_TARGET) --print-multi-lib`; do \
 	  dir=`echo $$i | sed -e 's/;.*$$//'`; \
 	  flags=`echo $$i | sed -e 's/^[^;]*;//' -e 's/@/ -/g'`; \
 	  $(MAKE) GCC_FOR_TARGET="$(GCC_FOR_TARGET)" \
 	    AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" CC="$(CC)" CFLAGS="$(CFLAGS)" \
 	    RANLIB="$(RANLIB)" RANLIB_TEST="$(RANLIB_TEST)" \
+	    LANGUAGES="$(LANGUAGES)" \
 	    HOST_PREFIX="$(HOST_PREFIX)" HOST_PREFIX_1="$(HOST_PREFIX_1)" \
 	    LIBGCC2_CFLAGS="$(LIBGCC2_CFLAGS) $${flags}" \
+	    MULTILIB_CFLAGS="$${flags}" \
 	    LIBGCC1="$(LIBGCC1)" LIBGCC2="$(LIBGCC2)" \
 	    dir="$${dir}" stmp-multilib-sub; \
 	  if [ $$? -eq 0 ] ; then true; else exit 1; fi; \
@@ -965,10 +1080,16 @@ stmp-multilib: $(LIBGCC1) libgcc2.c libgcc2.ready $(CONFIG_H) \
 
 # Subroutine of stmp-multilib so make -n works.
 stmp-multilib-sub:
-	rm -f $(dir)/libgcc.a $(LIBGCC2)
+	rm -f $(LIBGCC2)
+	if [ -d $(dir) ]; then \
+	  cd $(dir); \
+	  rm -f libgcc.a $(EXTRA_MULTILIB_PARTS); \
+	else true; \
+	fi
 	$(MAKE) GCC_FOR_TARGET="$(GCC_FOR_TARGET)" \
 	  AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" CC="$(CC)" CFLAGS="$(CFLAGS)" \
 	  HOST_PREFIX="$(HOST_PREFIX)" HOST_PREFIX_1="$(HOST_PREFIX_1)" \
+	  LANGUAGES="$(LANGUAGES)" \
 	  LIBGCC2_CFLAGS="$(LIBGCC2_CFLAGS)" $(LIBGCC2)
 	if [ x$(LIBGCC1) != xlibgcc1-asm.a ]; \
 	then true; \
@@ -980,6 +1101,7 @@ stmp-multilib-sub:
 	  $(MAKE) GCC_FOR_TARGET="$(GCC_FOR_TARGET)" \
 	    AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" CC="$(CC)" CFLAGS="$(CFLAGS)" \
 	    HOST_PREFIX="$(HOST_PREFIX)" HOST_PREFIX_1="$(HOST_PREFIX_1)" \
+	    LANGUAGES="$(LANGUAGES)" \
 	    LIBGCC2_CFLAGS="$(LIBGCC2_CFLAGS)" $(LIBGCC1); \
 	fi
 	rm -rf tmplibgcc.a tmpcopy
@@ -994,65 +1116,57 @@ stmp-multilib-sub:
 	if $(RANLIB_TEST) ; then $(RANLIB) tmplibgcc.a; else true; fi
 	if [ -d $(dir) ]; then true; else mkdir $(dir); fi
 	mv tmplibgcc.a $(dir)/libgcc.a
-
-objc-runtime: libobjc.a
-
-# Build the Objective C runtime library.
-libobjc.a: cc1obj stmp-int-hdrs libgcc2.ready $(USE_COLLECT2) $(EXTRA_PARTS)
-	if [ -d objc ]; then true; else mkdir objc; fi
-	thisdir1=`pwd`; \
-	srcdir1=`cd $(srcdir); pwd`; \
-	cd objc; \
-	$(MAKE) -f $${srcdir1}/objc/Makefile libobjc.a \
-	  srcdir=$${srcdir1} tooldir=$(tooldir) AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" \
-	  GCC_FOR_TARGET="$${thisdir1}/xgcc -B$${thisdir1}/" \
-	  GCC_CFLAGS="$(GCC_CFLAGS)"
-	-rm -f libobjc.a
-	ln objc/libobjc.a . >/dev/null 2>&1 || cp objc/libobjc.a .
-	-if $(RANLIB_TEST) ; then $(RANLIB) libobjc.a; else true; fi
-
-# This is used by objc/Makefile if the user runs that directly.
-sublibobjc.a: cc1obj stmp-int-hdrs libgcc2.ready
-	thisdir1=`pwd`; \
-	srcdir1=`cd $(srcdir); pwd`; \
-	cd objc; \
-	$(MAKE) -f $$srcdir1/objc/Makefile libobjc.a \
-	  srcdir=$$srcdir1 tooldir=$(tooldir) AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" \
-	  GCC_FOR_TARGET="$$thisdir1/xgcc -B$$thisdir1/" \
-	  GCC_CFLAGS="$(GCC_CFLAGS)"
+	for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
+	  $(MAKE) GCC_FOR_TARGET="$(GCC_FOR_TARGET)" \
+	    AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" CC="$(CC)" CFLAGS="$(CFLAGS)" \
+	    HOST_PREFIX="$(HOST_PREFIX)" HOST_PREFIX_1="$(HOST_PREFIX_1)" \
+	    LANGUAGES="$(LANGUAGES)" \
+	    MULTILIB_CFLAGS="$(MULTILIB_CFLAGS)" T="t" t$${f}; \
+	  mv t$${f} $(dir)/$${f}; \
+	else true; \
+	fi; done
 
 # Compile two additional files that are linked with every program
 # linked using GCC on systems using COFF or ELF, for the sake of C++
 # constructors.
-crtbegin.o: stamp-crt ; @true
-crtend.o: stamp-crt; @true
+$(T)crtbegin.o: crtstuff.c $(GCC_PASSES) $(CONFIG_H) \
+  defaults.h frame.h gbl-ctors.h
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(MULTILIB_CFLAGS) -g0 \
+	  -finhibit-size-directive -fno-inline-functions -fno-exceptions $(CRTSTUFF_T_CFLAGS) \
+	  -c $(srcdir)/crtstuff.c -DCRT_BEGIN -o $(T)crtbegin$(objext)
 
-stamp-crt:	crtstuff.c $(GCC_PASSES) $(CONFIG_H) gbl-ctors.h
-	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(CRTSTUFF_T_CFLAGS) \
-	  -DCRT_BEGIN -finhibit-size-directive -fno-inline-functions \
-	  -g0 -c $(srcdir)/crtstuff.c
-	mv crtstuff$(objext) crtbegin$(objext)
-	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(CRTSTUFF_T_CFLAGS) \
-	  -DCRT_END -finhibit-size-directive -fno-inline-functions \
-	  -g0 -c $(srcdir)/crtstuff.c
-	mv crtstuff$(objext) crtend$(objext)
-	touch stamp-crt
+$(T)crtend.o: crtstuff.c $(GCC_PASSES) $(CONFIG_H) \
+  defaults.h frame.h gbl-ctors.h
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(MULTILIB_CFLAGS) -g0 \
+	  -finhibit-size-directive -fno-inline-functions -fno-exceptions $(CRTSTUFF_T_CFLAGS) \
+	  -c $(srcdir)/crtstuff.c -DCRT_END -o $(T)crtend$(objext)
 
 # On some systems we also want to install versions of these files
 # compiled using PIC for use in shared libraries.
 crtbeginS.o crtendS.o: stamp-crtS ; @true
 
-stamp-crtS:	crtstuff.c $(GCC_PASSES) $(CONFIG_H) gbl-ctors.h
-	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(CRTSTUFF_T_CFLAGS) \
+stamp-crtS: crtstuff.c $(GCC_PASSES) $(CONFIG_H) \
+  defaults.h frame.h gbl-ctors.h
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(CRTSTUFF_T_CFLAGS_S) \
 	  -DCRT_BEGIN -finhibit-size-directive -fno-inline-functions \
-	  -g0 -c $(srcdir)/crtstuff.c -fPIC
+	  -g0 -c $(srcdir)/crtstuff.c 
 	mv crtstuff$(objext) crtbeginS$(objext)
-	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(CRTSTUFF_T_CFLAGS) \
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(CRTSTUFF_T_CFLAGS_S) \
 	  -DCRT_END -finhibit-size-directive -fno-inline-functions \
-	  -g0 -c $(srcdir)/crtstuff.c -fPIC
-	mv crtstuff$(objext) crtendS$(objext)
+	  -g0 -c $(srcdir)/crtstuff.c -o crtendS$(objext)
 	touch stamp-crtS
-
+
+# Compile the start modules crt0.o and mcrt0.o that are linked with every program
+crt0.o: stamp-crt0 ; @true
+mcrt0.o: stamp-crt0; @true
+
+stamp-crt0:	$(CRT0_S) $(MCRT0_S) $(GCC_PASSES) $(CONFIG_H)
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(CRT0STUFF_T_CFLAGS) \
+	  -o crt0.o -c $(CRT0_S)
+	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(CRT0STUFF_T_CFLAGS) \
+	  -o mcrt0.o -c $(MCRT0_S)
+	touch stamp-crt0
+#
 # Compiling object files from source files.
 
 # Note that dependencies on obstack.h are not written
@@ -1067,9 +1181,10 @@ c-parse.h: c-parse.c
 c-parse.c: c-parse.y
 	$(BISON) $(BISONFLAGS) -d -o c-parse.c c-parse.y
 c-parse.y: c-parse.in
+	echo '/*WARNING: This file is automatically generated!*/' >tmp-c-parse.y
 	sed -e "/^ifobjc$$/,/^end ifobjc$$/d" \
 	  -e "/^ifc$$/d" -e "/^end ifc$$/d" \
-	  $(srcdir)/c-parse.in >tmp-c-parse.y
+	  $(srcdir)/c-parse.in >>tmp-c-parse.y
 	sh $(srcdir)/move-if-change tmp-c-parse.y c-parse.y
 
 # XXX OpenBSD
@@ -1085,7 +1200,8 @@ c-lex.o : c-lex.c $(CONFIG_H) $(TREE_H) c-lex.h c-tree.h c-parse.h \
     input.h flags.h $(srcdir)/c-gperf.h c-pragma.h
 c-aux-info.o : c-aux-info.c  $(CONFIG_H) $(TREE_H) c-tree.h flags.h
 c-convert.o : c-convert.c $(CONFIG_H) $(TREE_H) flags.h
-c-pragma.o: c-pragma.c $(CONFIG_H) $(TREE_H) c-pragma.h
+c-pragma.o: c-pragma.c $(CONFIG_H) $(TREE_H) except.h function.h \
+    defaults.h c-pragma.h
 c-iterate.o: c-iterate.c $(CONFIG_H) $(TREE_H) $(RTL_H) c-tree.h flags.h
 
 # To make a configuration always use collect2, set USE_COLLECT2 to ld.
@@ -1094,18 +1210,19 @@ ld: collect2
 	ln collect2$(exeext) ld$(exeext) > /dev/null 2>&1 \
 	   || cp collect2$(exeext) ld$(exeext)
 
-collect2 : collect2.o cplus-dem.o underscore.o version.o $(LIBDEPS)
+collect2 : collect2.o cplus-dem.o underscore.o version.o \
+	choose-temp.o $(LIBDEPS)
 # Don't try modifying collect2 (aka ld) in place--it might be linking this.
 	-rm -f collect2$(exeext)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ collect2.o \
-	  cplus-dem.o underscore.o version.o $(LIBS)
+	  cplus-dem.o underscore.o version.o choose-temp.o $(LIBS)
 
-collect2.o : collect2.c $(CONFIG_H) gstab.h obstack.h demangle.h
+collect2.o : collect2.c $(CONFIG_H) gansidecl.h gstab.h obstack.h $(DEMANGLE_H)
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES)  \
-	-DTARGET_MACHINE=\"$(target)\" $(MAYBE_USE_COLLECT2) \
+	-DTARGET_MACHINE=\"$(target_alias)\" $(MAYBE_USE_COLLECT2) \
 	-c `echo $(srcdir)/collect2.c | sed 's,^\./,,'`
 
-cplus-dem.o: cplus-dem.c demangle.h
+cplus-dem.o: cplus-dem.c $(DEMANGLE_H)
 
 underscore.c: stamp-under ; @true
 
@@ -1122,42 +1239,33 @@ stamp-under: $(GCC_PASSES)
 	-rm -f tmp-dum.c tmp-dum.s
 	touch stamp-under
 
-# Objective C language specific files.
-
-objc-parse.o : objc-parse.c $(CONFIG_H) $(TREE_H) c-lex.h \
-   c-tree.h input.h flags.h objc-act.h
-	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c objc-parse.c
-objc-parse.c : objc-parse.y
-	$(BISON) $(BISONFLAGS) -o objc-parse.c objc-parse.y
-objc-parse.y: c-parse.in
-	sed -e "/^ifc$$/,/^end ifc$$/d" \
-	  -e "/^ifobjc$$/d" -e "/^end ifobjc$$/d" \
-	  $(srcdir)/c-parse.in >tmp-objc-prs.y
-	sh $(srcdir)/move-if-change tmp-objc-prs.y objc-parse.y
-
-objc-act.o : objc-act.c $(CONFIG_H) $(TREE_H) $(RTL_H) c-tree.h c-lex.h \
-   flags.h objc-act.h input.h function.h c-parse.h
-
 # A file used by all variants of C.
 
 c-common.o : c-common.c $(CONFIG_H) $(TREE_H) c-tree.h c-lex.h flags.h
 
 # Language-independent files.
 
-gcc.o: gcc.c $(CONFIG_H) multilib.h config.status $(lang_specs_files)
-	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+DRIVER_DEFINES = \
   -DSTANDARD_STARTFILE_PREFIX=\"$(libdir)/\" \
   -DSTANDARD_EXEC_PREFIX=\"$(libdir)/gcc-lib/\" \
   -DDEFAULT_TARGET_VERSION=\"$(version)\" \
-  -DDEFAULT_TARGET_MACHINE=\"$(target)\" \
-  -DTOOLDIR_BASE_PREFIX=\"$(exec_prefix)/\" \
-  $(MAYBE_TARGET_DEFAULT) \
+  -DDEFAULT_TARGET_MACHINE=\"$(target_alias)\" \
+  -DTOOLDIR_BASE_PREFIX=\"$(exec_prefix)/\"
+gcc.o: gcc.c $(CONFIG_H) gansidecl.h multilib.h Makefile $(lang_specs_files)
+	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+  $(DRIVER_DEFINES) \
   -c `echo $(srcdir)/gcc.c | sed 's,^\./,,'`
 
 dumpvers: dumpvers.c
 
 version.o: version.c
-obstack.o: obstack.c
+obstack.o: obstack.c $(CONFIG_H)
+choose-temp.o: choose-temp.c $(CONFIG_H) gansidecl.h
+pexecute.o: pexecute.c $(CONFIG_H) gansidecl.h
+prefix.o: prefix.c $(CONFIG_H) gansidecl.h Makefile
+	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	-DPREFIX=\"$(prefix)\" \
+	  -c `echo $(srcdir)/prefix.c | sed 's,^\./,,'`
 
 convert.o: convert.c $(CONFIG_H) $(TREE_H) flags.h convert.h
 
@@ -1168,8 +1276,8 @@ fold-const.o : fold-const.c $(CONFIG_H) $(TREE_H) flags.h
 toplev.o : toplev.c $(CONFIG_H) $(TREE_H) $(RTL_H) bytecode.h bc-emit.h \
    flags.h input.h insn-attr.h xcoffout.h defaults.h output.h \
    $(lang_options_files)
-	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
-	  $(MAYBE_TARGET_DEFAULT) $(MAYBE_USE_COLLECT2) \
+	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(MAYBE_USE_COLLECT2) \
+	  -DTARGET_NAME=\"$(target_alias)\" \
 	  -c `echo $(srcdir)/toplev.c | sed 's,^\./,,'`
 
 rtl.o : rtl.c $(CONFIG_H) $(RTL_H)
@@ -1182,83 +1290,93 @@ varasm.o : varasm.c $(CONFIG_H) $(TREE_H) $(RTL_H) flags.h function.h \
    output.h bytecode.h c-pragma.h
 function.o : function.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h function.h  \
    insn-flags.h insn-codes.h expr.h regs.h hard-reg-set.h insn-config.h \
-   recog.h output.h bytecode.h
+   $(RECOG_H) output.h bytecode.h bc-emit.h
 stmt.o : stmt.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h function.h  \
-   insn-flags.h insn-config.h insn-codes.h hard-reg-set.h expr.h loop.h \
-   recog.h bytecode.h bc-typecd.h bc-typecd.def bc-opcode.h bc-optab.h \
-   bc-emit.h
+   insn-flags.h insn-config.h insn-codes.h hard-reg-set.h expr.h except.h \
+   loop.h $(RECOG_H) bytecode.h bc-typecd.h bc-typecd.def bc-opcode.h \
+   bc-optab.h bc-emit.h
+except.o : except.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h function.h  \
+   insn-flags.h insn-codes.h expr.h regs.h hard-reg-set.h insn-config.h \
+   $(RECOG_H) output.h except.h
 expr.o : expr.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h function.h regs.h \
-   insn-flags.h insn-codes.h expr.h insn-config.h recog.h output.h \
+   insn-flags.h insn-codes.h expr.h insn-config.h $(RECOG_H) output.h \
    typeclass.h bytecode.h bc-opcode.h bc-typecd.h bc-typecd.def bc-optab.h \
-   bc-emit.h modemap.def
+   bc-emit.h modemap.def hard-reg-set.h
 calls.o : calls.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h expr.h insn-codes.h \
-   insn-flags.h
+   insn-flags.h regs.h
 expmed.o : expmed.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h  \
-   insn-flags.h insn-config.h insn-codes.h expr.h recog.h real.h
+   insn-flags.h insn-config.h insn-codes.h expr.h $(RECOG_H) real.h
 explow.o : explow.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h hard-reg-set.h \
-   insn-config.h expr.h recog.h insn-flags.h insn-codes.h
+   insn-config.h expr.h $(RECOG_H) insn-flags.h insn-codes.h
 optabs.o : optabs.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h  \
-   insn-flags.h insn-config.h insn-codes.h expr.h recog.h reload.h
+   insn-flags.h insn-config.h insn-codes.h expr.h $(RECOG_H) reload.h
 dbxout.o : dbxout.c $(CONFIG_H) $(TREE_H) $(RTL_H) flags.h regs.h \
    insn-config.h reload.h gstab.h xcoffout.h defaults.h output.h
-sdbout.o : sdbout.c $(CONFIG_H) $(TREE_H) $(RTL_H) gsyms.h flags.h \
-   insn-config.h reload.h
+sdbout.o : sdbout.c $(CONFIG_H) $(TREE_H) $(RTL_H) flags.h except.h \
+   function.h expr.h output.h hard-reg-set.h regs.h defaults.h real.h \
+   insn-config.h bytecode.h obstack.h xcoffout.h c-pragma.h
 dwarfout.o : dwarfout.c $(CONFIG_H) $(TREE_H) $(RTL_H) dwarf.h flags.h \
    insn-config.h reload.h output.h defaults.h
+dwarf2out.o : dwarf2out.c $(CONFIG_H) $(TREE_H) $(RTL_H) dwarf2.h flags.h \
+   insn-config.h reload.h output.h defaults.h hard-reg-set.h regs.h expr.h
 xcoffout.o : xcoffout.c $(CONFIG_H) $(TREE_H) $(RTL_H) xcoffout.h flags.h
-emit-rtl.o : emit-rtl.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h \
-   function.h regs.h insn-config.h insn-codes.h real.h expr.h bytecode.h \
-   bc-opcode.h bc-typecd.h bc-typecd.def bc-optab.h bc-emit.h bc-opname.h
+emit-rtl.o : emit-rtl.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h except.h \
+   function.h regs.h insn-config.h $(RECOG_H) real.h expr.h obstack.h \
+   bytecode.h bc-opcode.h bc-typecd.h bc-typecd.def bc-optab.h bc-emit.h \
+   bc-opname.h
 real.o : real.c $(CONFIG_H) $(TREE_H)
 getpwd.o : getpwd.c $(CONFIG_H)
 
 integrate.o : integrate.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h integrate.h \
-   insn-flags.h insn-config.h insn-codes.h expr.h real.h function.h \
-   bytecode.h
+   insn-flags.h insn-config.h insn-codes.h expr.h real.h regs.h function.h \
+   bytecode.h output.h $(RECOG_H) except.h
 
 jump.o : jump.c $(CONFIG_H) $(RTL_H) flags.h hard-reg-set.h regs.h \
-   insn-config.h insn-flags.h insn-codes.h expr.h real.h
+   insn-config.h insn-flags.h $(RECOG_H) expr.h real.h except.h
 stupid.o : stupid.c $(CONFIG_H) $(RTL_H) regs.h hard-reg-set.h flags.h
 
 cse.o : cse.c $(CONFIG_H) $(RTL_H) regs.h hard-reg-set.h flags.h real.h \
-   insn-config.h recog.h
+   insn-config.h $(RECOG_H) expr.h
+profile.o : profile.c $(CONFIG_H) $(RTL_H) flags.h insn-flags.h gcov-io.h \
+   $(TREE_H) output.h regs.h
 loop.o : loop.c $(CONFIG_H) $(RTL_H) flags.h loop.h insn-config.h \
-   insn-flags.h insn-codes.h regs.h hard-reg-set.h recog.h expr.h real.h
-unroll.o : unroll.c $(CONFIG_H) $(RTL_H) insn-config.h insn-codes.h \
-   integrate.h regs.h flags.h expr.h loop.h
+   insn-flags.h insn-codes.h regs.h hard-reg-set.h $(RECOG_H) expr.h real.h
+unroll.o : unroll.c $(CONFIG_H) $(RTL_H) insn-config.h integrate.h regs.h \
+   $(RECOG_H) flags.h expr.h loop.h
 flow.o : flow.c $(CONFIG_H) $(RTL_H) flags.h insn-config.h \
-   basic-block.h regs.h hard-reg-set.h output.h
+   $(BASIC_BLOCK_H) regs.h hard-reg-set.h output.h
 combine.o : combine.c $(CONFIG_H) $(RTL_H) flags.h  \
    insn-config.h insn-flags.h insn-codes.h insn-attr.h regs.h expr.h \
-   basic-block.h recog.h real.h hard-reg-set.h
+   $(BASIC_BLOCK_H) $(RECOG_H) real.h hard-reg-set.h
 regclass.o : regclass.c $(CONFIG_H) $(RTL_H) hard-reg-set.h flags.h \
-   basic-block.h regs.h insn-config.h recog.h reload.h real.h bytecode.h
-local-alloc.o : local-alloc.c $(CONFIG_H) $(RTL_H) flags.h basic-block.h \
-   regs.h hard-reg-set.h insn-config.h recog.h output.h
+   $(BASIC_BLOCK_H) regs.h insn-config.h $(RECOG_H) reload.h real.h bytecode.h
+local-alloc.o : local-alloc.c $(CONFIG_H) $(RTL_H) flags.h $(BASIC_BLOCK_H) \
+   regs.h hard-reg-set.h insn-config.h $(RECOG_H) output.h
+bitmap.o : bitmap.c $(CONFIG_H) $(RTL_H) flags.h $(BASIC_BLOCK_H) regs.h
 global.o : global.c $(CONFIG_H) $(RTL_H) flags.h  \
-   basic-block.h regs.h hard-reg-set.h insn-config.h output.h
+   $(BASIC_BLOCK_H) regs.h hard-reg-set.h insn-config.h output.h
 
-reload.o : reload.c $(CONFIG_H) $(RTL_H) flags.h output.h \
-   reload.h recog.h hard-reg-set.h insn-config.h insn-codes.h regs.h real.h
+reload.o : reload.c $(CONFIG_H) $(RTL_H) flags.h output.h expr.h\
+   reload.h $(RECOG_H) hard-reg-set.h insn-config.h insn-codes.h regs.h real.h
 reload1.o : reload1.c $(CONFIG_H) $(RTL_H) real.h flags.h expr.h \
    reload.h regs.h hard-reg-set.h insn-config.h insn-flags.h insn-codes.h \
-   basic-block.h recog.h output.h
+   $(BASIC_BLOCK_H) $(RECOG_H) output.h
 caller-save.o : caller-save.c $(CONFIG_H) $(RTL_H) flags.h \
-   regs.h hard-reg-set.h insn-codes.h insn-config.h basic-block.h recog.h \
+   regs.h hard-reg-set.h insn-codes.h insn-config.h $(BASIC_BLOCK_H) $(RECOG_H) \
    reload.h expr.h
 reorg.o : reorg.c $(CONFIG_H) $(RTL_H) conditions.h hard-reg-set.h \
-   basic-block.h regs.h insn-config.h insn-attr.h insn-flags.h recog.h \
+   $(BASIC_BLOCK_H) regs.h insn-config.h insn-attr.h insn-flags.h $(RECOG_H) \
    flags.h output.h
-sched.o : sched.c $(CONFIG_H) $(RTL_H) basic-block.h regs.h hard-reg-set.h \
+sched.o : $(SCHED_PREFIX)sched.c $(CONFIG_H) $(RTL_H) $(BASIC_BLOCK_H) regs.h hard-reg-set.h \
    flags.h insn-config.h insn-attr.h
 final.o : final.c $(CONFIG_H) $(RTL_H) $(TREE_H) flags.h regs.h \
-   recog.h conditions.h insn-config.h insn-attr.h real.h output.h \
+   $(RECOG_H) conditions.h insn-config.h insn-attr.h except.h real.h output.h \
    hard-reg-set.h insn-flags.h insn-codes.h gstab.h xcoffout.h defaults.h
 recog.o : recog.c $(CONFIG_H) $(RTL_H)  \
-   regs.h recog.h hard-reg-set.h flags.h insn-config.h insn-attr.h \
+   regs.h $(RECOG_H) hard-reg-set.h flags.h insn-config.h insn-attr.h \
    insn-flags.h insn-codes.h real.h
 reg-stack.o : reg-stack.c $(CONFIG_H) $(RTL_H) $(TREE_H) \
-   regs.h hard-reg-set.h flags.h insn-config.h
+   regs.h hard-reg-set.h flags.h insn-config.h insn-flags.h
 
 $(out_object_file): $(out_file) $(CONFIG_H) $(TREE_H) \
    $(RTL_H) regs.h hard-reg-set.h real.h insn-config.h conditions.h \
@@ -1286,7 +1404,7 @@ alloca.o:	alloca.c
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(ALLOCA_FLAGS) \
 	  -c `echo $(srcdir)/alloca.c | sed 's,^\./,,'`
 	$(ALLOCA_FINISH)
-
+#
 # Generate header and source files from the machine description, 
 # and compile them.
 
@@ -1341,7 +1459,7 @@ stamp-emit : $(md_file) genemit $(srcdir)/move-if-change
 	sh $(srcdir)/move-if-change tmp-emit.c insn-emit.c
 	touch stamp-emit
 
-insn-recog.o : insn-recog.c $(CONFIG_H) $(RTL_H) insn-config.h recog.h \
+insn-recog.o : insn-recog.c $(CONFIG_H) $(RTL_H) insn-config.h $(RECOG_H) \
   real.h output.h flags.h
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c insn-recog.c
 
@@ -1352,7 +1470,7 @@ stamp-recog : $(md_file) genrecog $(srcdir)/move-if-change
 	touch stamp-recog
 
 insn-opinit.o : insn-opinit.c $(CONFIG_H) $(RTL_H) insn-codes.h insn-flags.h \
-  insn-config.h flags.h rtl.h recog.h expr.h reload.h
+  insn-config.h flags.h $(RECOG_H) expr.h reload.h
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c insn-opinit.c
 
 insn-opinit.c: stamp-opinit ; @true
@@ -1402,7 +1520,7 @@ stamp-attrtab : $(md_file) genattrtab $(srcdir)/move-if-change
 	touch stamp-attrtab
 
 insn-output.o : insn-output.c $(CONFIG_H) $(RTL_H) regs.h real.h conditions.h \
-    hard-reg-set.h insn-config.h insn-flags.h insn-attr.h output.h recog.h \
+    hard-reg-set.h insn-config.h insn-flags.h insn-attr.h output.h $(RECOG_H) \
     insn-codes.h
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c insn-output.c
 
@@ -1411,7 +1529,7 @@ stamp-output : $(md_file) genoutput $(srcdir)/move-if-change
 	./genoutput $(md_file) > tmp-output.c
 	sh $(srcdir)/move-if-change tmp-output.c insn-output.c
 	touch stamp-output
-
+#
 # Compile the programs that generate insn-* from the machine description.
 # They are compiled with $(HOST_CC), and associated libraries,
 # since they need to run on this machine
@@ -1504,7 +1622,7 @@ genoutput : genoutput.o $(HOST_RTL) $(HOST_LIBDEPS)
 
 genoutput.o : genoutput.c $(RTL_H) $(build_xm_file)
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) $(srcdir)/genoutput.c
-
+#
 # Compile the libraries to be used by gen*.
 # If we are not cross-building, gen* use the same .o's that cc1 will use,
 # and HOST_PREFIX_1 is `foobar', just to ensure these rules don't conflict
@@ -1543,7 +1661,7 @@ $(HOST_PREFIX_1)malloc.o: malloc.c
 # that does not need to compile alloca, malloc or whatever.
 $(HOST_PREFIX_1): 
 	touch $(HOST_PREFIX_1)
-
+#
 # Remake bytecode files.
 BI_OBJ=bi-parser.o bi-lexer.o bi-reverse.o
 
@@ -1612,7 +1730,7 @@ bytecode.distclean bytecode.clean:	bytecode.mostlyclean
 bytecode.maintainer-clean: bytecode.clean
 	-rm -f bi-parser.c bi-parser.h
 
-
+#
 # Remake cpp and protoize.
 
 # Making the preprocessor
@@ -1620,8 +1738,8 @@ cpp: $(CCCP)
 	-rm -f cpp$(exeext)
 	ln $(CCCP)$(exeext) cpp$(exeext) > /dev/null 2>&1 \
 	 || cp $(CCCP)$(exeext) cpp$(exeext)
-cccp: cccp.o cexp.o version.o $(LIBDEPS)
-	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ cccp.o cexp.o \
+cccp: cccp.o cexp.o version.o prefix.o $(LIBDEPS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ cccp.o cexp.o prefix.o \
 	  version.o $(LIBS)
 cexp.o: cexp.c $(CONFIG_H)
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c cexp.c
@@ -1634,20 +1752,24 @@ cccp.o: cccp.c $(CONFIG_H) pcp.h version.c config.status
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 	  -DGCC_INCLUDE_DIR=\"$(libsubdir)/include\" \
 	  -DGPLUSPLUS_INCLUDE_DIR=\"$(gxx_include_dir)\" \
+	  -DOLD_GPLUSPLUS_INCLUDE_DIR=\"$(old_gxx_include_dir)\" \
 	  -DLOCAL_INCLUDE_DIR=\"$(includedir)\" \
 	  -DCROSS_INCLUDE_DIR=\"$(libsubdir)/sys-include\" \
 	  -DTOOL_INCLUDE_DIR=\"$(tooldir)/include\" \
 	  -c `echo $(srcdir)/cccp.c | sed 's,^\./,,'`
 
 cppmain: cppmain.o cpplib.o cpphash.o cppalloc.o cpperror.o cppexp.o \
-  version.o $(LIBDEPS)
+  prefix.o version.o $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ cppmain.o cpplib.o cpphash.o \
-	  cppalloc.o cpperror.o cppexp.o version.o $(LIBS)
+	  cppalloc.o cpperror.o cppexp.o prefix.o version.o $(LIBS)
+
+cppmain.o: cppmain.c $(CONFIG_H) cpplib.h
 
 cpplib.o: cpplib.c $(CONFIG_H) cpplib.h cpphash.h config.status
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 	  -DGCC_INCLUDE_DIR=\"$(libsubdir)/include\" \
 	  -DGPLUSPLUS_INCLUDE_DIR=\"$(gxx_include_dir)\" \
+	  -DOLD_GPLUSPLUS_INCLUDE_DIR=\"$(old_gxx_include_dir)\" \
 	  -DLOCAL_INCLUDE_DIR=\"$(includedir)\" \
 	  -DCROSS_INCLUDE_DIR=\"$(libsubdir)/sys-include\" \
 	  -DTOOL_INCLUDE_DIR=\"$(tooldir)/include\" \
@@ -1666,14 +1788,18 @@ cppalloc.o: cppalloc.c $(CONFIG_H)
 
 proto: config.status protoize unprotoize SYSCALLS.c.X
 
-protoize: protoize.o getopt.o getopt1.o getpwd.o version.o $(LIBDEPS)
+protoize: protoize.o getopt.o getopt1.o getpwd.o version.o \
+    pexecute.o choose-temp.o $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
-	  protoize.o getopt.o getopt1.o getpwd.o version.o $(LIBS)
+	  protoize.o getopt.o getopt1.o getpwd.o version.o \
+	  pexecute.o choose-temp.o $(LIBS)
 protoize.o: stamp-proto ; @true
 
-unprotoize: unprotoize.o getopt.o getopt1.o getpwd.o version.o $(LIBDEPS)
+unprotoize: unprotoize.o getopt.o getopt1.o getpwd.o version.o \
+    pexecute.o choose-temp.o $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
-	  unprotoize.o getopt.o getopt1.o getpwd.o version.o $(LIBS)
+	  unprotoize.o getopt.o getopt1.o getpwd.o version.o \
+	  pexecute.o choose-temp.o $(LIBS)
 unprotoize.o:	stamp-proto ; @true
 
 stamp-proto: protoize.c getopt.h $(CONFIG_H)
@@ -1735,26 +1861,31 @@ test-protoize-simple: ./protoize ./unprotoize $(GCC_PASSES)
 	@echo Expect zero differences.
 	diff $(srcdir)/protoize.c tmp-proto.c | cat
 	-rm -f tmp-proto.[cs] tmp-proto$(objext)
-
+
+gcov.o: gcov.c gcov-io.h
+
+gcov: gcov.o $(LIBDEPS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) gcov.o $(LIBS) -o $@
+#
 # Build the include directory.  The stamp files are stmp-* rather than
 # stamp-* so that mostlyclean does not force the include directory to
 # be rebuilt.
 
 # Build the include directory except for float.h (which depends upon
 # enquire).
-stmp-int-hdrs: stmp-fixinc $(USER_H) xlimits.h objc-headers
+stmp-int-hdrs: stmp-fixinc $(USER_H) xlimits.h
 # Copy in the headers provided with gcc.
 # The sed command gets just the last file name component;
 # this is necessary because VPATH could add a dirname.
 # Using basename would be simpler, but some systems don't have it.
-	objdir=`pwd`; \
-	cd $(srcdir); \
+# The touch command is here to workaround an AIX/Linux NFS bug.
 	for file in .. $(USER_H); do \
 	  if [ X$$file != X.. ]; then \
 	    realfile=`echo $$file | sed -e 's|.*/\([^/]*\)$$|\1|'`; \
-	    rm -f $$objdir/include/$$realfile; \
-	    cp ginclude/$$realfile $$objdir/include; \
-	    chmod a+r $$objdir/include/$$realfile; \
+	    touch include/$$realfile; \
+	    rm -f include/$$realfile; \
+	    cp $$file include; \
+	    chmod a+r include/$$realfile; \
 	  fi; \
 	done
 	rm -f include/limits.h
@@ -1766,11 +1897,13 @@ stmp-int-hdrs: stmp-fixinc $(USER_H) xlimits.h objc-headers
 	chmod a+r include/README
 	touch stmp-int-hdrs
 
-# Build the complete include directory.
+# Build the complete include directory, including float.h.
 stmp-headers: stmp-int-hdrs gfloat.h
 	rm -f include/float.h
-	cp gfloat.h include/float.h
-	chmod a+r include/float.h
+	if [ -s gfloat.h ]; then \
+	  cp gfloat.h include/float.h && \
+	  chmod a+r include/float.h; \
+	else :; fi
 	touch stmp-headers
 
 # Build fixed copies of system files.
@@ -1795,19 +1928,6 @@ stmp-fixinc: $(FIXINCLUDES) gsyslimits.h
 	fi
 	chmod a+r include/syslimits.h
 	touch stmp-fixinc
-
-# copy objc header files into build directory
-objc-headers: stmp-fixinc
-	if [ -d include ]; then true; else mkdir include; fi
-	if [ -d objc ]; then true; else mkdir objc; fi
-	thisdir1=`pwd`; \
-	srcdir1=`cd $(srcdir); pwd`; \
-	cd objc; \
-	$(MAKE) -f $${srcdir1}/objc/Makefile copy-headers \
-	srcdir=$${srcdir1} tooldir=$(tooldir) AR="$(AR)" AR_FLAGS="$(AR_FLAGS)" \
-	GCC_FOR_TARGET="$${thisdir1}/xgcc -B$${thisdir1}/" \
-	GCC_CFLAGS="$(GCC_CFLAGS)" incinstalldir=$${thisdir1}/include
-	touch objc-headers
 
 # Files related to the fixproto script.
 
@@ -1837,10 +1957,10 @@ xsys-protos.h: $(GCC_PASSES) $(srcdir)/sys-protos.h deduced.h gen-protos Makefil
 	rm -rf fixtmp.c
 
 fix-header: fix-header.o scan-decls.o scan.o xsys-protos.h $(HOST_LIBDEPS) \
-   cpplib.o cpphash.o cppalloc.o cppexp.o cpperror.o version.o
+   cpplib.o cpphash.o cppalloc.o cppexp.o cpperror.o prefix.o version.o
 	$(HOST_CC) $(HOST_CFLAGS) $(HOST_LDFLAGS) -o $@ fix-header.o \
-	   scan-decls.o scan.o cpplib.o cpphash.o cppalloc.o version.o \
-	   cppexp.o $(HOST_LIBS)
+	   scan-decls.o scan.o cpplib.o cpphash.o cppalloc.o prefix.o \
+	   version.o cppexp.o $(HOST_LIBS)
 
 fix-header.o: fix-header.c obstack.h scan.h xsys-protos.h $(build_xm_file)
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) $(srcdir)/fix-header.c
@@ -1873,37 +1993,40 @@ stmp-fixproto: fixhdr.ready fixproto stmp-headers
 	  touch include/fixed; \
 	fi
 	touch stmp-fixproto
-
+#
 # Remake the info files.
 
 doc: info
 info: $(build_infodir)/cpp.info $(build_infodir)/gcc.info lang.info
 
 $(build_infodir)/cpp.info: cpp.texi
-	$(MAKEINFO) $(srcdir)/cpp.texi -o $(build_infodir)/cpp.info
+	$(MAKEINFO) $(MAKEINFOFLAGS) $(srcdir)/cpp.texi \
+		-o $(build_infodir)/cpp.info
 
 $(build_infodir)/gcc.info: gcc.texi extend.texi install.texi invoke.texi \
-		md.texi rtl.texi tm.texi 
-	$(MAKEINFO) -I$(srcdir) $(srcdir)/gcc.texi -o $(build_infodir)/gcc.info
+		md.texi rtl.texi tm.texi gcov.texi
+	$(MAKEINFO) $(MAKEINFOFLAGS) -I$(srcdir) $(srcdir)/gcc.texi \
+		-o $(build_infodir)/gcc.info
 
 dvi: gcc.dvi cpp.dvi lang.dvi
 
 # XXX OpenBSD
-## This works with GNU Make's default rule.
+# This works with GNU Make's default rule.
 #$(srcdir)/gcc.dvi: gcc.texi extend.texi install.texi invoke.texi \
-#		md.texi rtl.texi tm.texi 
+#		md.texi rtl.texi tm.texi gcov.texi
 #	$(TEXI2DVI) $<
 
 # XXX OpenBSD
-## This works with GNU Make's default rule.
+# This works with GNU Make's default rule.
 #$(srcdir)/cpp.dvi: cpp.texi
 #	$(TEXI2DVI) $<
 
 # XXX OpenBSD
 #$(srcdir)/INSTALL: install1.texi install.texi
-#	$(MAKEINFO) -D INSTALLONLY --no-header --no-split \
-#	  `echo $(srcdir)/install1.texi | sed 's,^\./,,'`
-
+#	cd $(srcdir); $(MAKEINFO) -D INSTALLONLY --no-header \
+#		--no-split install1.texi -o INSTALL
+
+#
 # Deletion of files made during compilation.
 # There are four levels of this:
 #   `mostlyclean', `clean', `distclean' and `maintainer-clean'.
@@ -1913,29 +2036,24 @@ dvi: gcc.dvi cpp.dvi lang.dvi
 # `clean' deletes everything made by running `make all'.
 # `distclean' also deletes the files made by config.
 # `maintainer-clean' also deletes everything that could be regenerated
-# automatically.  We remove as much from the language subdirectories as we can
+# automatically, except for `configure'.
+# We remove as much from the language subdirectories as we can
 # (less duplicated code).
 
 
 mostlyclean: bytecode.mostlyclean lang.mostlyclean
 	-rm -f $(STAGESTUFF)
-# Clean the objc subdir if we created one.
-	if [ -d objc ]; then \
-	  srcdir1=`cd $(srcdir); pwd`; \
-	  cd objc; $(MAKE) -f $$srcdir1/objc/Makefile mostlyclean; \
-	else true; fi
-	-rm -f libobjc.a
 # Delete the temporary source copies for cross compilation.
 	-rm -f $(HOST_PREFIX_1)rtl.c $(HOST_PREFIX_1)rtlanal.c
 	-rm -f $(HOST_PREFIX_1)alloca.c $(HOST_PREFIX_1)malloc.c
 	-rm -f $(HOST_PREFIX_1)obstack.c 
 # Delete the temp files made in the course of building libgcc.a.
-	-rm -f tmplibgcc* tmpcopy xlimits.h
+	-rm -f tmplibgcc* tmpcopy xlimits.h libgcc1-test
 	for name in $(LIB1FUNCS); do rm -f $${name}.c; done
 # Delete other temporary files.
 	-rm -f tmp-float.h tmp-gcc.xtar.gz
 	-rm -f tmp-foo1 tmp-foo2 tmp-proto.* tmp-unproto.1 tmp-SYSCALLS.s
-	-rm -f tmp-c-parse.y tmp-objc-prs.y tmp-gperf.h
+	-rm -f tmp-c-parse.y tmp-gperf.h
 	-rm -f tmp-specs t-float.h-cross tmp-xlimits.h
 	-rm -f tmp-fixtmp.c xsys-protos.hT
 # Delete the stamp files.
@@ -1943,7 +2061,7 @@ mostlyclean: bytecode.mostlyclean lang.mostlyclean
 	-rm -f */stamp-* */tmp-*
 # Delete debugging dump files.
 	-rm -f *.greg *.lreg *.combine *.flow *.cse *.jump *.rtl *.tree *.loop
-	-rm -f *.dbr *.jump2 *.sched *.cse2 *.sched2 *.stack
+	-rm -f *.dbr *.jump2 *.sched *.cse2 *.sched2 *.stack *.addressof
 	-rm -f */*.greg */*.lreg */*.combine */*.flow */*.cse */*.jump */*.rtl
 	-rm -f */*.tree */*.loop */*.dbr */*.jump2 */*.sched */*.cse2
 	-rm -f */*.sched2 */*.stack
@@ -1960,6 +2078,7 @@ mostlyclean: bytecode.mostlyclean lang.mostlyclean
 	-rm -f gcc.vrs gcc.kys gcc.tps gcc.pgs gcc.fns
 # Delete core dumps.
 	-rm -f core */core
+	-rm -f *.bp */*.bp
 
 # Delete all files made by compilation
 # that don't exist in the distribution.
@@ -1976,7 +2095,7 @@ clean: mostlyclean bytecode.clean lang.clean
 	  rm -f md ; \
 	fi
 # Delete the include directory.
-	-rm -rf stmp-* include objc-headers
+	-rm -rf stmp-* include
 	-rm -f */stmp-*
 # Delete files used by the "multilib" facility (including libgcc subdirs).
 	-rm -f multilib.h tmpmultilib*
@@ -1989,14 +2108,15 @@ clean: mostlyclean bytecode.clean lang.clean
 # Delete all files that users would normally create
 # while building and installing GCC.
 distclean: clean bytecode.distclean lang.distclean
-	-rm -f tm.h config.h tconfig.h hconfig.h md
-	-rm -f config.status config.run
+	-rm -f tm.h config.h auto-config.h tconfig.h hconfig.h md cstamp-h
+	-rm -f config.status config.run config.cache config.bak
+	-rm -f Make-lang Make-hooks Make-host Make-target
 	-rm -f Makefile specs.h options.h *.oaux
 	-rm -fr stage1 stage2 stage3 stage4
 	-rm -f */stage1 */stage2 */stage3 */stage4 */include
-	-rm -f objc-parse.output
 	-rm -f c-parse.output
 	-rm -f *.asm
+	-rm -f float.h
 
 # Delete anything likely to be found in the source directory
 # that shouldn't be in the distribution.
@@ -2015,16 +2135,18 @@ extraclean: distclean lang.extraclean
 	-rm -f */*.tar */*.xtar */*diff */*.diff.* */*.tar.* */*.xtar.* */*diffs
 	-rm -f */*lose */*.s */*.s[0-9] */*.i
 
-# Get rid of every file that's generated from some other file.
+# Get rid of every file that's generated from some other file, except for `configure'.
 # Most of these files ARE PRESENT in the GCC distribution.
-maintainer-clean: distclean bytecode.maintainer-clean lang.maintainer-clean
-	-rm -f c-parse.y c-gperf.h objc-parse.y
-	-rm -f objc-parse.c objc-parse.output
+maintainer-clean:
+	@echo 'This command is intended for maintainers to use; it'
+	@echo 'deletes files that may need special tools to rebuild.'
+	$(MAKE) distclean bytecode.maintainer-clean lang.maintainer-clean
+	-rm -f c-parse.y c-gperf.h
 	-rm -f c-parse.c c-parse.h c-parse.output
 	-rm -f cexp.c cexp.output TAGS 
 	-rm -f cpp.info* cpp.??s cpp.*aux
 	-rm -f gcc.info* gcc.??s gcc.*aux
-
+#
 # Entry points `install' and `uninstall'.
 # Also use `install-collect2' to install collect2 when the config files don't.
 
@@ -2037,7 +2159,7 @@ install: $(INSTALL_TARGET) ; @true
 # Install the driver last so that the window when things are
 # broken is small.
 install-normal: install-common $(INSTALL_HEADERS) $(INSTALL_LIBGCC) \
-    install-libobjc $(INSTALL_MAN) install-info lang.install-normal install-driver
+    $(INSTALL_MAN) install-info lang.install-normal install-driver
 
 # Do nothing while making gcc with a cross-compiler. The person who
 # makes gcc for the target machine has to know how to put a complete
@@ -2051,7 +2173,7 @@ install-cross-rest: install-float-h-cross
 
 # Install float.h for cross compiler.
 # Run this on the target machine!
-install-float-h-cross: install-dir
+install-float-h-cross: installdirs
 #	if [ -f enquire ] ; then true; else false; fi
 # Note: don't use -.  We should fail right away if enquire was not made.
 	./enquire -f > $(tmpdir)/float.h
@@ -2060,15 +2182,17 @@ install-float-h-cross: install-dir
 	-rm -f $(tmpdir)/float.h
 	chmod a-x $(libsubdir)/include/float.h
 
-# Create the installation directory.
-install-dir:
+# Create the installation directories.
+installdirs:
+	-if [ -d $(prefix) ] ; then true ; else mkdir $(prefix) ; chmod a+rx $(prefix) ; fi
+	-if [ -d $(exec_prefix) ] ; then true ; else mkdir $(exec_prefix) ; chmod a+rx $(exec_prefix) ; fi
 	-if [ -d $(libdir) ] ; then true ; else mkdir $(libdir) ; chmod a+rx $(libdir) ; fi
 	-if [ -d $(libdir)/gcc-lib ] ; then true ; else mkdir $(libdir)/gcc-lib ; chmod a+rx $(libdir)/gcc-lib ; fi
 # This dir isn't currently searched by cpp.
 #	-if [ -d $(libdir)/gcc-lib/include ] ; then true ; else mkdir $(libdir)/gcc-lib/include ; chmod a+rx $(libdir)/gcc-lib/include ; fi
-	-if [ -d $(libdir)/gcc-lib/$(target) ] ; then true ; else mkdir $(libdir)/gcc-lib/$(target) ; chmod a+rx $(libdir)/gcc-lib/$(target) ; fi
-	-if [ -d $(libdir)/gcc-lib/$(target)/$(version) ] ; then true ; else mkdir $(libdir)/gcc-lib/$(target)/$(version) ; chmod a+rx $(libdir)/gcc-lib/$(target)/$(version) ; fi
-	-if [ -d $(libdir)/gcc-lib/$(target)/$(version)/include ] ; then true ; else mkdir $(libdir)/gcc-lib/$(target)/$(version)/include ; chmod a+rx $(libdir)/gcc-lib/$(target)/$(version)/include ; fi
+	-if [ -d $(libdir)/gcc-lib/$(target_alias) ] ; then true ; else mkdir $(libdir)/gcc-lib/$(target_alias) ; chmod a+rx $(libdir)/gcc-lib/$(target_alias) ; fi
+	-if [ -d $(libdir)/gcc-lib/$(target_alias)/$(version) ] ; then true ; else mkdir $(libdir)/gcc-lib/$(target_alias)/$(version) ; chmod a+rx $(libdir)/gcc-lib/$(target_alias)/$(version) ; fi
+	-if [ -d $(libdir)/gcc-lib/$(target_alias)/$(version)/include ] ; then true ; else mkdir $(libdir)/gcc-lib/$(target_alias)/$(version)/include ; chmod a+rx $(libdir)/gcc-lib/$(target_alias)/$(version)/include ; fi
 	-if [ -d $(bindir) ] ; then true ; else mkdir $(bindir) ; chmod a+rx $(bindir) ; fi
 	-if [ -d $(includedir) ] ; then true ; else mkdir $(includedir) ; chmod a+rx $(includedir) ; fi
 	-if [ -d $(tooldir) ] ; then true ; else mkdir $(tooldir) ; chmod a+rx $(tooldir) ; fi
@@ -2084,7 +2208,7 @@ install-mandir:
 	-if [ -d $(mandir) ] ; then true ; else mkdir $(mandir) ; chmod a+rx $(mandir) ; fi
 
 # Install the compiler executables built during cross compilation.
-install-common: native install-dir $(EXTRA_PARTS) lang.install-common
+install-common: native installdirs $(EXTRA_PARTS) lang.install-common
 	for file in $(COMPILERS); do \
 	  if [ -f $$file ] ; then \
 	    rm -f $(libsubdir)/$$file; \
@@ -2102,12 +2226,14 @@ install-common: native install-dir $(EXTRA_PARTS) lang.install-common
 	  if [ x"$$file" != x.. ]; then \
 	    rm -f $(libsubdir)/$$file; \
 	    $(INSTALL_DATA) $$file $(libsubdir)/$$file; \
+	    chmod a-x $(libsubdir)/$$file; \
 	  else true; fi; \
 	done
 # Don't mess with specs if it doesn't exist yet.
 	-if [ -f specs ] ; then \
 	  rm -f $(libsubdir)/specs; \
 	  $(INSTALL_DATA) specs $(libsubdir)/specs; \
+	  chmod a-x $(libsubdir)/specs; \
 	fi
 # Install protoize if it was compiled.
 	-if [ -f protoize$(exeext) ]; \
@@ -2122,8 +2248,15 @@ install-common: native install-dir $(EXTRA_PARTS) lang.install-common
 	fi
 	-rm -f $(libsubdir)/cpp$(exeext)
 	$(INSTALL_PROGRAM) cpp$(exeext) $(libsubdir)/cpp$(exeext)
+# Install gcov if it was compiled.
+	-if [ -f gcov$(exeext) ]; \
+	then \
+	    rm -f $(bindir)/gcov$(exeext); \
+	    $(INSTALL_PROGRAM) gcov$(exeext) $(bindir)/gcov$(exeext); \
+	    chmod a+x $(bindir)/gcov$(exeext); \
+	fi
 
-# Install the driver program as $(target)-gcc
+# Install the driver program as $(target_alias)-gcc
 # and also as either gcc (if native) or $(tooldir)/bin/gcc.
 install-driver: xgcc
 	-if [ -f gcc-cross$(exeext) ] ; then \
@@ -2136,25 +2269,26 @@ install-driver: xgcc
 	else \
 	  rm -f $(bindir)/$(GCC_INSTALL_NAME)$(exeext); \
 	  $(INSTALL_PROGRAM) xgcc$(exeext) $(bindir)/$(GCC_INSTALL_NAME)$(exeext); \
-	  if [ X$(NO_TARGET_GCC) = X ]; then \
-	    rm -f $(bindir)/$(target)-gcc-1$(exeext); \
-	    ln $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target)-gcc-1$(exeext) \
-	      > /dev/null 2>&1 \
-	      || cp $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target)-gcc-1$(exeext); \
-	    mv $(bindir)/$(target)-gcc-1$(exeext) $(bindir)/$(target)-gcc$(exeext); \
-	  fi; \
+	  rm -f $(bindir)/$(target_alias)-gcc-1$(exeext); \
+	  ln $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target_alias)-gcc-1$(exeext) \
+	    > /dev/null 2>&1 \
+	    || cp $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target_alias)-gcc-1$(exeext); \
+	  mv $(bindir)/$(target_alias)-gcc-1$(exeext) $(bindir)/$(target_alias)-gcc$(exeext); \
 	fi
 
 # Install the info files.
-install-info: doc install-dir lang.install-info
+# $(INSTALL_DATA) might be a relative pathname, so we can't cd into srcdir
+# to do the install.  The sed rule was copied from stmp-int-hdrs.
+install-info: doc installdirs lang.install-info
 	-rm -f $(infodir)/cpp.info* $(infodir)/gcc.info*
-	cd $(build_infodir); for f in cpp.info* gcc.info*; \
-	do $(INSTALL_DATA) $$f $(infodir)/$$f; done
+	cd $(build_infodir); for f in cpp.info* gcc.info*; do \
+	    $(INSTALL_DATA) $$f $(infodir)/$$f; \
+	done
 	-chmod a-x $(infodir)/cpp.info* $(infodir)/gcc.info*
 
 # Install the man pages.
-install-man: install-dir install-mandir $(srcdir)/gcc.1 $(srcdir)/cccp.1 lang.install-man
-	-if [ -f gcc-cross ] ; then \
+install-man: installdirs $(srcdir)/gcc.1 $(srcdir)/cccp.1 lang.install-man
+	-if [ -f gcc-cross$(exeext) ] ; then \
 	  rm -f $(mandir)/$(GCC_CROSS_NAME)$(manext); \
 	  $(INSTALL_DATA) $(srcdir)/gcc.1 $(mandir)/$(GCC_CROSS_NAME)$(manext); \
 	  chmod a-x $(mandir)/$(GCC_CROSS_NAME)$(manext); \
@@ -2168,7 +2302,7 @@ install-man: install-dir install-mandir $(srcdir)/gcc.1 $(srcdir)/cccp.1 lang.in
 	-chmod a-x $(mandir)/cccp$(manext)
 
 # Install the library.
-install-libgcc: libgcc.a install-dir
+install-libgcc: libgcc.a installdirs
 	-if [ -f libgcc.a ] ; then \
 	  rm -f $(libsubdir)/libgcc.a; \
 	  $(INSTALL_DATA) libgcc.a $(libsubdir)/libgcc.a; \
@@ -2178,26 +2312,18 @@ install-libgcc: libgcc.a install-dir
 	else true; fi
 
 # Install multiple versions of libgcc.a.
-install-multilib: stmp-multilib install-dir
+install-multilib: stmp-multilib installdirs
 	for i in `$(GCC_FOR_TARGET) --print-multi-lib`; do \
 	  dir=`echo $$i | sed -e 's/;.*$$//'`; \
 	  if [ -d $(libsubdir)/$${dir} ]; then true; else mkdir $(libsubdir)/$${dir}; fi; \
-	  rm -f $(libsubdir)/$${dir}/libgcc.a; \
-	  $(INSTALL_DATA) $${dir}/libgcc.a $(libsubdir)/$${dir}/libgcc.a; \
+	  for f in libgcc.a $(EXTRA_MULTILIB_PARTS); do \
+	    rm -f $(libsubdir)/$${dir}/$${f}; \
+	    $(INSTALL_DATA) $${dir}/$${f} $(libsubdir)/$${dir}/$${f}; \
+	  done; \
 	  if $(RANLIB_TEST); then \
 	    (cd $(libsubdir)/$${dir}; $(RANLIB) libgcc.a); else true; fi; \
 	  chmod a-x $(libsubdir)/$${dir}/libgcc.a; \
 	done
-
-# Install the objc run time library.
-install-libobjc: install-dir
-	-if [ -f libobjc.a ] ; then \
-	  rm -f $(libsubdir)/libobjc.a; \
-	  $(INSTALL_DATA) libobjc.a $(libsubdir)/libobjc.a; \
-	  if $(RANLIB_TEST) ; then \
-	    (cd $(libsubdir); $(RANLIB) libobjc.a); else true; fi; \
-	  chmod a-x $(libsubdir)/libobjc.a; \
-	else true; fi
 
 # Install all the header files built in the include subdirectory.
 install-headers: install-include-dir $(INSTALL_HEADERS_DIR) $(INSTALL_ASSERT_H)
@@ -2216,7 +2342,7 @@ install-headers: install-include-dir $(INSTALL_HEADERS_DIR) $(INSTALL_ASSERT_H)
 	fi
 
 # Create or recreate the gcc private include file directory.
-install-include-dir: install-dir
+install-include-dir: installdirs
 	-rm -rf $(libsubdir)/include
 	mkdir $(libsubdir)/include
 	-chmod a+rx $(libsubdir)/include
@@ -2241,7 +2367,7 @@ install-headers-cpio: stmp-headers $(STMP_FIXPROTO) install-include-dir
 ## Don't replace the assert.h already there if it is not from GCC.
 ## This code would be simpler if it tested for -f ... && ! grep ...
 ## but supposedly the ! operator is missing in sh on some systems.
-install-assert-h: assert.h install-dir
+install-assert-h: assert.h installdirs
 	if [ -f $(assertdir)/assert.h ]; \
 	then \
 	  if grep "__eprintf" $(assertdir)/assert.h >/dev/null; \
@@ -2258,7 +2384,7 @@ install-assert-h: assert.h install-dir
 	fi
 
 # Use this target to install the program `collect2' under the name `ld'.
-install-collect2: collect2 install-dir
+install-collect2: collect2 installdirs
 	$(INSTALL_PROGRAM) collect2$(exeext) $(libsubdir)/ld$(exeext)
 # Install the driver program as $(libsubdir)/gcc for collect2.
 	$(INSTALL_PROGRAM) xgcc$(exeext) $(libsubdir)/gcc$(exeext)
@@ -2275,14 +2401,14 @@ uninstall: lang.uninstall
 	-rm -rf $(mandir)/cccp$(manext)
 	-rm -rf $(mandir)/protoize$(manext)
 	-rm -rf $(mandir)/unprotoize$(manext)
-
+#
 # These exist for maintenance purposes.
 
 # Update the tags table.
 TAGS: force
 	cd $(srcdir);							\
 	mkdir temp;							\
-	mv -f c-parse.[ch] objc-parse.c cexp.c =*.[chy] temp;		\
+	mv -f c-parse.[ch] cexp.c =*.[chy] temp;		\
 	etags *.y *.h *.c;						\
 	mv temp/* .;							\
 	rmdir temp
@@ -2306,8 +2432,7 @@ gcc.xtar: distdir
 # This target exists to do the initial work before the language specific
 # stuff gets done.
 distdir-start: doc $(srcdir)/INSTALL $(srcdir)/c-parse.y $(srcdir)/c-gperf.h \
-  $(srcdir)/objc-parse.y $(srcdir)/c-parse.c $(srcdir)/objc-parse.c \
-  $(srcdir)/cexp.c
+  $(srcdir)/c-parse.c $(srcdir)/cexp.c $(srcdir)/config.in
 	@if grep -s "for version ${mainversion}" gcc.texi > /dev/null; \
 	then true; \
 	else echo "You must update the version number in \`gcc.texi'"; sleep 10;\
@@ -2324,7 +2449,6 @@ distdir-start: doc $(srcdir)/INSTALL $(srcdir)/c-parse.y $(srcdir)/c-gperf.h \
 	mkdir tmp
 	mkdir tmp/config
 	mkdir tmp/ginclude
-	mkdir tmp/objc
 	for file in *[0-9a-zA-Z+]; do \
 	  ln $$file tmp > /dev/null 2>&1 || cp $$file tmp; \
 	done
@@ -2348,10 +2472,6 @@ distdir-start: doc $(srcdir)/INSTALL $(srcdir)/c-parse.y $(srcdir)/c-gperf.h \
 	  ln $$file ../tmp/ginclude >/dev/null 2>&1 \
 	   || cp $$file ../tmp/ginclude; \
 	done
-	cd objc; \
-	for file in *[0-9a-zA-Z+]; do \
-	  ln $$file ../tmp/objc >/dev/null 2>&1 || cp $$file ../tmp/objc; \
-	done
 	ln .gdbinit tmp
 
 # Finish making `distdir', after the languages have done their thing.
@@ -2370,7 +2490,7 @@ distdir: distdir-start lang.distdir distdir-finish
 diff:
 	diff -rc2P -x c-parse.y -x c-parse.c -x c-parse.h -x c-gperf.h \
 	  -x cexp.c -x bi-parser.c -x objc-parse.y -x objc-parse.c \
-	  -x TAGS \
+	  -x bi-parser.h -x TAGS \
 	  -x "gcc.??" -x "gcc.??s" -x gcc.aux -x "gcc.info*" \
 	  -x "cpp.??" -x "cpp.??s" -x cpp.aux -x "cpp.info*" \
 	  $(LANG_DIFF_EXCLUDES) \
@@ -2380,7 +2500,7 @@ bootstrap: force
 # Only build the C compiler for stage1, because that is the only one that
 # we can guarantee will build with the native compiler, and also it is the
 # only thing useful for building stage2.
-	$(MAKE) CC="$(CC)" libdir=$(libdir) LANGUAGES=c
+	$(MAKE) CC="$(CC)" libdir=$(libdir) LANGUAGES="$(BOOT_LANGUAGES)"
 	$(MAKE) stage1
 # This used to define ALLOCA as empty, but that would lead to bad results
 # for a subsequent `make install' since that would not have ALLOCA empty.
@@ -2477,12 +2597,16 @@ stage1-start:
 	-mv $(STAGESTUFF) stage1
 # Copy as/ld if they exist to stage dir, so that running xgcc from the stage
 # dir will work properly.
-	-if [ -f as$(exeext) ] ; then ln -s ../as$(exeext) stage1 || cp as$(exeext) stage1 ; else true ; fi
-	-if [ -f ld$(exeext) ] ; then ln -s ../ld$(exeext) stage1 || cp ld$(exeext) stage1 ; else true ; fi
-	-if [ -f collect-ld$(exeext) ] ; then ln -s ../collect-ld$(exeext) stage1 || cp collect-ld$(exeext) stage1 ; else true ; fi
+	-if [ -f as$(exeext) ] ; then $(LN) ../as$(exeext) stage1 ; else true ; fi
+	-if [ -f ld$(exeext) ] ; then $(LN) ../ld$(exeext) stage1 ; else true ; fi
+	-if [ -f collect-ld$(exeext) ] ; then $(LN) ../collect-ld$(exeext) stage1 ; else true ; fi
 	-rm -f stage1/libgcc.a
 	-cp libgcc.a stage1
 	-if $(RANLIB_TEST) ; then $(RANLIB) stage1/libgcc.a; else true; fi
+	-for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
+	  cp stage1/$${f} . ; \
+	else true; \
+	fi; done
 stage1: force stage1-start lang.stage1
 
 stage2-start:
@@ -2494,12 +2618,16 @@ stage2-start:
 	-mv $(STAGESTUFF) stage2
 # Copy as/ld if they exist to stage dir, so that running xgcc from the stage
 # dir will work properly.
-	-if [ -f as$(exeext) ] ; then ln -s ../as$(exeext) stage2 || cp as$(exeext) stage2 ; else true ; fi
-	-if [ -f ld$(exeext) ] ; then ln -s ../ld$(exeext) stage2 || cp ld$(exeext) stage2 ; else true ; fi
-	-if [ -f collect-ld ] ; then ln -s ../collect-ld$(exeext) stage2 || cp collect-ld$(exeext) stage2 ; else true ; fi
+	-if [ -f as$(exeext) ] ; then $(LN) ../as$(exeext) stage2 ; else true ; fi
+	-if [ -f ld$(exeext) ] ; then $(LN) ../ld$(exeext) stage2 ; else true ; fi
+	-if [ -f collect-ld ] ; then $(LN) ../collect-ld$(exeext) stage2 ; else true ; fi
 	-rm -f stage2/libgcc.a
 	-cp libgcc.a stage2
 	-if $(RANLIB_TEST) ; then $(RANLIB) stage2/libgcc.a; else true; fi
+	-for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
+	  cp stage2/$${f} . ; \
+	else true; \
+	fi; done
 stage2: force stage2-start lang.stage2
 
 stage3-start:
@@ -2511,12 +2639,16 @@ stage3-start:
 	-mv $(STAGESTUFF) stage3
 # Copy as/ld if they exist to stage dir, so that running xgcc from the stage
 # dir will work properly.
-	-if [ -f as$(exeext) ] ; then ln -s ../as$(exeext) stage3 || cp as$(exeext) stage3 ; else true ; fi
-	-if [ -f ld$(exeext) ] ; then ln -s ../ld$(exeext) stage3 || cp ld$(exeext) stage3 ; else true ; fi
-	-if [ -f collect-ld$(exeext) ] ; then ln -s ../collect-ld$(exeext) stage3 || cp collect-ld$(exeext) stage3 ; else true ; fi
+	-if [ -f as$(exeext) ] ; then $(LN) ../as$(exeext) stage3 ; else true ; fi
+	-if [ -f ld$(exeext) ] ; then $(LN) ../ld$(exeext) stage3 ; else true ; fi
+	-if [ -f collect-ld$(exeext) ] ; then $(LN) ../collect-ld$(exeext) stage3 ; else true ; fi
 	-rm -f stage3/libgcc.a
 	-cp libgcc.a stage3
 	-if $(RANLIB_TEST) ; then $(RANLIB) stage3/libgcc.a; else true; fi
+	-for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
+	  cp stage3/$${f} . ; \
+	else true; \
+	fi; done
 stage3: force stage3-start lang.stage3
 
 stage4-start:
@@ -2528,19 +2660,23 @@ stage4-start:
 	-mv $(STAGESTUFF) stage4
 # Copy as/ld if they exist to stage dir, so that running xgcc from the stage
 # dir will work properly.
-	-if [ -f as$(exeext) ] ; then ln -s ../as$(exeext) stage4 || cp as$(exeext) stage4 ; else true ; fi
-	-if [ -f ld$(exeext) ] ; then ln -s ../ld$(exeext) stage4 || cp ld$(exeext) stage4 ; else true ; fi
-	-if [ -f collect-ld$(exeext) ] ; then ln -s ../collect-ld$(exeext) stage4 || cp collect-ld$(exeext) stage4 ; else true ; fi
+	-if [ -f as$(exeext) ] ; then $(LN) ../as$(exeext) stage4 ; else true ; fi
+	-if [ -f ld$(exeext) ] ; then $(LN) ../ld$(exeext) stage4 ; else true ; fi
+	-if [ -f collect-ld$(exeext) ] ; then $(LN) ../collect-ld$(exeext) stage4 ; else true ; fi
 	-rm -f stage4/libgcc.a
 	-cp libgcc.a stage4
 	-if $(RANLIB_TEST) ; then $(RANLIB) stage4/libgcc.a; else true; fi
+	-for f in .. $(EXTRA_MULTILIB_PARTS); do if [ x$${f} != x.. ]; then \
+	  cp stage4/$${f} . ; \
+	else true; \
+	fi; done
 stage4: force stage4-start lang.stage4
 
 # Copy just the executable files from a particular stage into a subdirectory,
 # and delete the object files.  Use this if you're just verifying a version
 # that is pretty sure to work, and you are short of disk space.
 risky-stage1: stage1
-	- make clean
+	-make clean
 
 risky-stage2: stage2
 	-make clean

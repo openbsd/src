@@ -22,22 +22,11 @@ Boston, MA 02111-1307, USA.  */
 
 #define TARGET_ENDIAN_DEFAULT MASK_BIG_ENDIAN
 
-/* Look for the include files in the system-defined places.  */
-
 #ifndef CROSS_COMPILE
+/* Look for the G++ include files in the system-defined place.  */
+
 #undef GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
-
-#undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include"
-
-#undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS		\
-  {					\
-    { GPLUSPLUS_INCLUDE_DIR, 1, 1 },	\
-    { GCC_INCLUDE_DIR, 0, 0 },		\
-    { 0, 0, 0 }				\
-  }
 
 /* Under OpenBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -94,19 +83,7 @@ Boston, MA 02111-1307, USA.  */
 %{!mno-abicalls:    -mabicalls}"
 #endif
 
-/* Always uses gas.  */
-#ifndef ASM_SPEC
-#define ASM_SPEC "\
-%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} %{v} \
-%{noasmopt:-O0} \
-%{!noasmopt:%{O:-O2} %{O1:-O2} %{O2:-O2} %{O3:-O3}} \
-%{g} %{g0} %{g1} %{g2} %{g3} \
-%{ggdb:-g} %{ggdb0:-g0} %{ggdb1:-g1} %{ggdb2:-g2} %{ggdb3:-g3} \
-%{gstabs:-g} %{gstabs0:-g0} %{gstabs1:-g1} %{gstabs2:-g2} %{gstabs3:-g3} \
-%{gstabs+:-g} %{gstabs+0:-g0} %{gstabs+1:-g1} %{gstabs+2:-g2} %{gstabs+3:-g3} \
-%{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3} \
-%{membedded-pic} %{fPIC:-KPIC}"
-#endif
+#define SUBTARGET_ASM_SPEC "%{fPIC:-KPIC}"
 
 #ifndef CPP_SPEC
 #define CPP_SPEC "\

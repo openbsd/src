@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Vax version.
-   Copyright (C) 1987, 88, 91, 93, 94, 95 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 91, 93-96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -39,7 +39,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Print subsidiary information on the compiler version in use.  */
 
-#define TARGET_VERSION fprintf (stderr, " (vax)");
+#ifndef TARGET_NAME	/* A more specific value might be supplied via -D.  */
+#define TARGET_NAME "vax"
+#endif
+#define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME)
 
 /* Run-time compilation parameters selecting different hardware subsets.  */
 
@@ -411,7 +414,7 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
 
    On the vax, the offset starts at 0.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)	\
  ((CUM) = 0)
 
 /* Update the data in CUM to advance over an argument
@@ -442,7 +445,8 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
 
 /* This macro generates the assembly code for function entry.
    FILE is a stdio stream to output the code to.
-   SIZE is an int: how many units of temporary storage to allocate.
+   SIZE is an int: how many units of temporary storage to allocate,
+   adjusted by STARTING_FRAME_OFFSET to accommodate vms.h.
    Refer to the array `regs_ever_live' to determine which registers
    to save; `regs_ever_live[I]' is nonzero if register number I
    is ever used in the function.  This macro is responsible for
@@ -451,14 +455,15 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
 #define FUNCTION_PROLOGUE(FILE, SIZE)     \
 { register int regno;						\
   register int mask = 0;					\
+  register int size = SIZE - STARTING_FRAME_OFFSET;		\
   extern char call_used_regs[];					\
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)	\
     if (regs_ever_live[regno] && !call_used_regs[regno])	\
        mask |= 1 << regno;					\
   fprintf (FILE, "\t.word 0x%x\n", mask);			\
   MAYBE_VMS_FUNCTION_PROLOGUE(FILE)				\
-  if ((SIZE) >= 64) fprintf (FILE, "\tmovab %d(sp),sp\n", -SIZE);\
-  else if (SIZE) fprintf (FILE, "\tsubl2 $%d,sp\n", (SIZE)); }
+  if ((size) >= 64) fprintf (FILE, "\tmovab %d(sp),sp\n", -size);\
+  else if (size) fprintf (FILE, "\tsubl2 $%d,sp\n", (size)); }
 
 /* vms.h redefines this.  */
 #define MAYBE_VMS_FUNCTION_PROLOGUE(FILE)
@@ -563,7 +568,9 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
    can ignore COUNT.  */
 
 #define RETURN_ADDR_RTX(COUNT, FRAME)	\
-  gen_rtx (MEM, Pmode, plus_constant (FRAME, RETURN_ADDRESS_OFFSET))
+  ((COUNT == 0)				\
+   ? gen_rtx (MEM, Pmode, plus_constant (FRAME, RETURN_ADDRESS_OFFSET)) \
+   : (rtx) 0)
 
 
 /* Addressing modes, and classification of registers for them.  */
@@ -1071,10 +1078,9 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
 #define ASM_GLOBALIZE_LABEL(FILE,NAME)	\
   do { fputs (".globl ", FILE); assemble_name (FILE, NAME); fputs ("\n", FILE);} while (0)
 
-/* This is how to output a reference to a user-level label named NAME.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "_%s", NAME)
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -1202,6 +1208,21 @@ do { char dstr[30];							\
     if (write_symbols == DBX_DEBUG)				\
       fprintf (FILE, "___vax_%c_doubles:\n", ASM_DOUBLE_CHAR);	\
   } while (0)
+
+/* Output code to add DELTA to the first argument, and then jump to FUNCTION.
+   Used for C++ multiple inheritance.
+	.mask	^m<r2,r3,r4,r5,r6,r7,r8,r9,r10,r11>	#conservative entry mask
+	addl2	$DELTA, 4(ap)	#adjust first argument
+	jmp	FUNCTION+2	#jump beyond FUNCTION's entry mask
+ */
+#define ASM_OUTPUT_MI_THUNK(FILE, THUNK_FNDECL, DELTA, FUNCTION) \
+do {						\
+  fprintf (FILE, "\t.word 0x0ffc\n");		\
+  fprintf (FILE, "\taddl2 $%d,4(ap)\n", DELTA);	\
+  fprintf (FILE, "\tjmp ");			\
+  assemble_name (FILE, IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (FUNCTION))); \
+  fprintf (FILE, "+2\n");			\
+} while (0)
 
 /* Define the parentheses used to group arithmetic operations
    in assembler code.  */

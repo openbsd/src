@@ -22,22 +22,11 @@ Boston, MA 02111-1307, USA.  */
 
 #define TARGET_ENDIAN_DEFAULT 0
 
-/* Look for the include files in the system-defined places.  */
-
 #ifndef CROSS_COMPILE
+/* Look for the G++ include files in the system-defined place.  */
+
 #undef GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
-
-#undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include"
-
-#undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS		\
-  {					\
-    { GPLUSPLUS_INCLUDE_DIR, 1, 1 },	\
-    { GCC_INCLUDE_DIR, 0, 0 },		\
-    { 0, 0, 0 }				\
-  }
 
 /* Under OpenBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -62,7 +51,7 @@ Boston, MA 02111-1307, USA.  */
 
 #define TARGET_MEM_FUNCTIONS
 
-/* Define mips-specific OpenBSD predefines... */
+/* Define alpha-specific OpenBSD predefines... */
 #ifndef CPP_PREDEFINES
 #define CPP_PREDEFINES "-Dunix -D__ANSI_COMPAT -Asystem(unix) \
 -D__OpenBSD__ -D__alpha__ -D__alpha"

@@ -1,5 +1,5 @@
-/* Front-end tree definitions for GNU compiler.
-   Copyright (C) 1989, 1991, 1994 Free Software Foundation, Inc.
+/* Definitions of floating-point access for GNU compiler.
+   Copyright (C) 1989, 1991, 1994, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -136,10 +136,12 @@ extern REAL_VALUE_TYPE ereal_negate PROTO((REAL_VALUE_TYPE));
 extern HOST_WIDE_INT efixi	PROTO((REAL_VALUE_TYPE));
 extern unsigned HOST_WIDE_INT efixui PROTO((REAL_VALUE_TYPE));
 extern void ereal_from_int	PROTO((REAL_VALUE_TYPE *,
-				       HOST_WIDE_INT, HOST_WIDE_INT));
+				       HOST_WIDE_INT, HOST_WIDE_INT,
+				       enum machine_mode));
 extern void ereal_from_uint	PROTO((REAL_VALUE_TYPE *,
 				       unsigned HOST_WIDE_INT,
-				       unsigned HOST_WIDE_INT));
+				       unsigned HOST_WIDE_INT,
+				       enum machine_mode));
 extern void ereal_to_int	PROTO((HOST_WIDE_INT *, HOST_WIDE_INT *,
 				       REAL_VALUE_TYPE));
 extern REAL_VALUE_TYPE ereal_ldexp PROTO((REAL_VALUE_TYPE, int));
@@ -181,10 +183,11 @@ extern REAL_VALUE_TYPE real_value_truncate ();
 #define REAL_VALUE_TO_INT ereal_to_int
 
 /* Here the cast to HOST_WIDE_INT sign-extends arguments such as ~0.  */
-#define REAL_VALUE_FROM_INT(d, lo, hi) \
-  ereal_from_int (&d, (HOST_WIDE_INT) (lo), (HOST_WIDE_INT) (hi))
+#define REAL_VALUE_FROM_INT(d, lo, hi, mode) \
+  ereal_from_int (&d, (HOST_WIDE_INT) (lo), (HOST_WIDE_INT) (hi), mode)
 
-#define REAL_VALUE_FROM_UNSIGNED_INT(d, lo, hi) (ereal_from_uint (&d, lo, hi))
+#define REAL_VALUE_FROM_UNSIGNED_INT(d, lo, hi, mode) \
+  ereal_from_uint (&d, lo, hi, mode)
 
 /* IN is a REAL_VALUE_TYPE.  OUT is an array of longs. */
 #if LONG_DOUBLE_TYPE_SIZE == 96
@@ -282,6 +285,13 @@ do { REAL_VALUE_TYPE in = (IN);  /* Make sure it's not in a register.  */\
 #define REAL_VALUE_TO_TARGET_LONG_DOUBLE(a, b) REAL_VALUE_TO_TARGET_DOUBLE (a, b)
 #endif
 
+/* Compare two floating-point objects for bitwise identity.
+   This is not the same as comparing for equality on IEEE hosts:
+   -0.0 equals 0.0 but they are not identical, and conversely
+   two NaNs might be identical but they cannot be equal.  */
+#define REAL_VALUES_IDENTICAL(x, y) \
+  (!bcmp ((char *) &(x), (char *) &(y), sizeof (REAL_VALUE_TYPE)))
+
 /* Compare two floating-point values for equality.  */
 #ifndef REAL_VALUES_EQUAL
 #define REAL_VALUES_EQUAL(x, y) ((x) == (y))
@@ -349,7 +359,7 @@ extern double (atof) ();
    size and where `float' is SFmode.  */
 
 /* Don't use REAL_VALUE_TRUNCATE directly--always call real_value_truncate.  */
-extern REAL_VALUE_TYPE real_value_truncate ();
+extern REAL_VALUE_TYPE real_value_truncate PROTO((enum machine_mode, REAL_VALUE_TYPE));
 
 #ifndef REAL_VALUE_TRUNCATE
 #define REAL_VALUE_TRUNCATE(mode, x) \
@@ -371,6 +381,10 @@ extern REAL_VALUE_TYPE real_value_truncate ();
 #ifndef REAL_VALUE_NEGATIVE
 #define REAL_VALUE_NEGATIVE(x) (target_negative (x))
 #endif
+
+extern int target_isnan			PROTO ((REAL_VALUE_TYPE));
+extern int target_isinf			PROTO ((REAL_VALUE_TYPE));
+extern int target_negative		PROTO ((REAL_VALUE_TYPE));
 
 /* Determine whether a floating-point value X is minus 0. */
 #ifndef REAL_VALUE_MINUS_ZERO
@@ -435,4 +449,12 @@ extern struct rtx_def *immed_real_const_1	PROTO((REAL_VALUE_TYPE,
 #define REAL_VALUE_TO_DECIMAL(r, fmt, s) (sprintf (s, fmt, r))
 #endif
 
+/* Replace R by 1/R in the given machine mode, if the result is exact.  */
+extern int exact_real_inverse PROTO((enum machine_mode, REAL_VALUE_TYPE *));
+
+extern void debug_real			PROTO ((REAL_VALUE_TYPE));
+
+/* In varasm.c */
+extern void assemble_real		PROTO ((REAL_VALUE_TYPE,
+						enum machine_mode));
 #endif /* Not REAL_H_INCLUDED */

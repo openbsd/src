@@ -1,5 +1,5 @@
-/* Configuration for GNU C-compiler for hosts running OpenBSD.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+/* Definitions of target machine for GNU compiler, for DEC Alpha, osf[23].
+   Copyright (C) 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -18,10 +18,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* This file defines machine-independent things specific to a host
-   running OpenBSD.  This file should not be specified as $xm_file itself;
-   instead $xm_file should be CPU/xm-openbsd.h, which should include both
-   CPU/xm-CPU.h and this file xm-openbsd.h.  */
-   
-#define HAVE_STRERROR
-#define HAVE_VPRINTF
+/* In OSF 2 or 3, linking with -lprof1 doesn't require -lpdf.  */
+
+#undef LIB_SPEC
+#define LIB_SPEC "%{p:-lprof1} %{pg:-lprof1} %{a:-lprof2} -lc"

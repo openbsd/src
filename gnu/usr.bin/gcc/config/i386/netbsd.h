@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd.h,v 1.2 1996/04/29 07:09:47 niklas Exp $	*/
+/*	$OpenBSD: netbsd.h,v 1.3 1998/03/03 21:24:49 niklas Exp $	*/
 
 /* This goes away when the math-emulator is fixed */
 #define TARGET_CPU_DEFAULT 0400		/* TARGET_NO_FANCY_MATH_387 */
@@ -31,11 +31,6 @@
 
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
-
-/* There are conflicting reports about whether this system uses
-   a different assembler syntax.  wilson@cygnus.com says # is right.  */
-#undef COMMENT_BEGIN
-#define COMMENT_BEGIN "#"
 
 #undef ASM_APP_ON
 #define ASM_APP_ON "#APP\n"

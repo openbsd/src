@@ -136,22 +136,22 @@ c++.dvi:
 
 # C++ language-support library pieces for libgcc.
 tinfo.o: cc1plus $(srcdir)/cp/tinfo.cc
-	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) $(INCLUDES) \
+	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -I$(srcdir)/cp/inc $(INCLUDES) \
 	  -c $(srcdir)/cp/tinfo.cc
 tinfo2.o: cc1plus $(srcdir)/cp/tinfo2.cc
-	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) $(INCLUDES) \
+	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -I$(srcdir)/cp/inc $(INCLUDES) \
 	  -c $(srcdir)/cp/tinfo2.cc
 exception.o: cc1plus $(srcdir)/cp/exception.cc
-	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) $(INCLUDES) \
+	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -I$(srcdir)/cp/inc $(INCLUDES) \
 	  -c -fexceptions $(srcdir)/cp/exception.cc
 new.o: cc1plus $(srcdir)/cp/new.cc
-	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) $(INCLUDES) \
+	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -I$(srcdir)/cp/inc $(INCLUDES) \
 	  -c $(srcdir)/cp/new.cc
 new1.o: cc1plus $(srcdir)/cp/new1.cc
-	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) $(INCLUDES) \
+	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -I$(srcdir)/cp/inc $(INCLUDES) \
 	  -c $(srcdir)/cp/new1.cc
 new2.o: cc1plus $(srcdir)/cp/new2.cc
-	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) $(INCLUDES) \
+	$(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -I$(srcdir)/cp/inc $(INCLUDES) \
 	  -c $(srcdir)/cp/new2.cc
 
 # We want to update cplib2.txt if any of the source files change...
@@ -165,7 +165,7 @@ cplib2.txt: $(CXX_LIB2SRCS) $(CXX_EXTRA_HEADERS) cplib2.ready
 	mv -f cplib2.new cplib2.txt 
 
 # Or if it would be different.
-cplib2.ready: $(GCC_PASSES) $(LANGUAGES) $(LIBGCC2_DEPS) stmp-int-hdrs
+cplib2.ready: $(GCC_PASSES) $(LIBGCC2_DEPS) stmp-int-hdrs
 	@if [ -r cplib2.txt ]; then \
 	  case " $(LANGUAGES) " in \
 	  *" "[cC]"++ "*) \
