@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.15 2003/06/10 22:20:50 deraadt Exp $	*/
+/*	$OpenBSD: compile.c,v 1.16 2003/10/07 17:56:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.15 2003/06/10 22:20:50 deraadt Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.16 2003/10/07 17:56:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ static char	 *compile_text(void);
 static char	 *compile_tr(char *, char **);
 static struct s_command
 		**compile_stream(struct s_command **);
-static char	 *duptoeol(char *, char *);
+static char	 *duptoeol(char *, char *, char **);
 static void	  enterlabel(struct s_command *);
 static struct s_command
 		 *findlabel(char *);
@@ -259,7 +259,7 @@ nonsel:		/* Now parse the command */
 			EATSPACE();
 			if (*p == '\0')
 				err(COMPILE, "filename expected");
-			cmd->t = duptoeol(p, "w command");
+			cmd->t = duptoeol(p, "w command", NULL);
 			if (aflag)
 				cmd->u.fd = -1;
 			else if ((cmd->u.fd = open(p, 
@@ -270,7 +270,7 @@ nonsel:		/* Now parse the command */
 		case RFILE:			/* r */
 			p++;
 			EATSPACE();
-			cmd->t = duptoeol(p, "read command");
+			cmd->t = duptoeol(p, "read command", NULL);
 			break;
 		case BRANCH:			/* b t */
 			p++;
@@ -278,15 +278,23 @@ nonsel:		/* Now parse the command */
 			if (*p == '\0')
 				cmd->t = NULL;
 			else
-				cmd->t = duptoeol(p, "branch");
+				cmd->t = duptoeol(p, "branch", &p);
+			if (*p == ';') {
+				p++;
+				goto semicolon;
+			}
 			break;
 		case LABEL:			/* : */
 			p++;
 			EATSPACE();
-			cmd->t = duptoeol(p, "label");
-			if (strlen(p) == 0)
+			cmd->t = duptoeol(p, "label", &p);
+			if (strlen(cmd->t) == 0)
 				err(COMPILE, "empty label");
 			enterlabel(cmd);
+			if (*p == ';') {
+				p++;
+				goto semicolon;
+			}
 			break;
 		case SUBST:			/* s */
 			p++;
@@ -669,20 +677,29 @@ compile_addr(char *p, struct s_addr *a)
  *	Return a copy of all the characters up to \n or \0.
  */
 static char *
-duptoeol(char *s, char *ctype)
+duptoeol(char *s, char *ctype, char **semi)
 {
 	size_t len;
 	int ws;
 	char *start;
 
 	ws = 0;
-	for (start = s; *s != '\0' && *s != '\n'; ++s)
-		ws = isspace(*s);
-	*s = '\0';
+	if (semi) {
+		for (start = s; *s != '\0' && *s != '\n' && *s != ';'; ++s)
+			ws = isspace(*s);
+	} else {
+		for (start = s; *s != '\0' && *s != '\n'; ++s)
+			ws = isspace(*s);
+		*s = '\0';
+	}
 	if (ws)
 		err(WARNING, "whitespace after %s", ctype);
 	len = s - start + 1;
-	return (memmove(xmalloc(len), start, len));
+	if (semi)
+		*semi = s;
+	s = xmalloc(len);
+	strlcpy(s, start, len);
+	return (s);
 }
 
 /*
