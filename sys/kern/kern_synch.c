@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.56 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.57 2004/06/20 03:00:16 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@ scheduler_start()
 	 */
 
 #ifndef __HAVE_CPUINFO
-	timeout_set(&roundrobin_to, schedcpu, &roundrobin_to);
+	timeout_set(&roundrobin_to, roundrobin, &roundrobin_to);
 #endif
 	timeout_set(&schedcpu_to, schedcpu, &schedcpu_to);
 
