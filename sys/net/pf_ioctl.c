@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.59 2003/04/27 16:02:07 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.60 2003/04/30 12:30:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -609,9 +609,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		if (pf_dynaddr_setup(&rule->dst.addr, rule->af))
 			error = EINVAL;
-		if (pf_tbladdr_setup(&rule->src.addr))
+		if (pf_tbladdr_setup(ruleset, &rule->src.addr))
 			error = EINVAL;
-		if (pf_tbladdr_setup(&rule->dst.addr))
+		if (pf_tbladdr_setup(ruleset, &rule->dst.addr))
 			error = EINVAL;
 
 		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
@@ -848,9 +848,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 			if (pf_dynaddr_setup(&newrule->dst.addr, newrule->af))
 				error = EINVAL;
-			if (pf_tbladdr_setup(&newrule->src.addr))
+			if (pf_tbladdr_setup(ruleset, &newrule->src.addr))
 				error = EINVAL;
-			if (pf_tbladdr_setup(&newrule->dst.addr))
+			if (pf_tbladdr_setup(ruleset, &newrule->dst.addr))
 				error = EINVAL;
 
 			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.40 2003/04/27 16:02:08 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.41 2003/04/30 12:30:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -55,7 +55,8 @@
 #define BUF_SIZE 256
 
 extern void	usage(void);
-static int	pfctl_table(int, char *[], char *, const char *, char *, int);
+static int	pfctl_table(int, char *[], char *, const char *, char *,
+		    const char *, const char *, int);
 static void	grow_buffer(size_t, int);
 static void	print_table(struct pfr_table *, int, int);
 static void	print_tstats(struct pfr_tstats *, int);
@@ -105,29 +106,31 @@ static const char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 	} while(0)
 
 int
-pfctl_clear_tables(int opts)
+pfctl_clear_tables(const char *anchor, const char *ruleset, int opts)
 {
-	return pfctl_table(0, NULL, NULL, "-F", NULL, opts);
+	return pfctl_table(0, NULL, NULL, "-F", NULL, anchor, ruleset, opts);
 }
 
 int
-pfctl_show_tables(int opts)
+pfctl_show_tables(const char *anchor, const char *ruleset, int opts)
 {
-	return pfctl_table(0, NULL, NULL, "-s", NULL, opts);
+	return pfctl_table(0, NULL, NULL, "-s", NULL, anchor, ruleset, opts);
 }
 
 int
 pfctl_command_tables(int argc, char *argv[], char *tname,
-    const char *command, char *file, int opts)
+    const char *command, char *file, const char *anchor, const char *ruleset,
+    int opts)
 {
 	if (tname == NULL || command == NULL)
 		usage();
-	return pfctl_table(argc, argv, tname, command, file, opts);
+	return pfctl_table(argc, argv, tname, command, file, anchor, ruleset,
+	    opts);
 }
 
 int
 pfctl_table(int argc, char *argv[], char *tname, const char *command,
-    char *file, int opts)
+    char *file, const char *anchor, const char *ruleset, int opts)
 {
 	struct pfr_table  table;
 	int		  nadd = 0, ndel = 0, nchange = 0, nzero = 0;
@@ -145,6 +148,11 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		    sizeof(table.pfrt_name)) >= sizeof(table.pfrt_name))
 			errx(1, "pfctl_table: strlcpy");
 	}
+	if (strlcpy(table.pfrt_anchor, anchor,
+	    sizeof(table.pfrt_anchor)) >= sizeof(table.pfrt_anchor) ||
+	    strlcpy(table.pfrt_ruleset, ruleset,
+	    sizeof(table.pfrt_ruleset)) >= sizeof(table.pfrt_ruleset))
+		errx(1, "pfctl_table: strlcpy");
 	if (!strcmp(command, "-F")) {
 		if (argc || file != NULL)
 			usage();
@@ -336,13 +344,19 @@ print_table(struct pfr_table *ta, int verbose, int debug)
 	if (!debug && !(ta->pfrt_flags & PFR_TFLAG_ACTIVE))
 		return;
 	if (verbose) {
-		printf("%c%c%c%c%c\t%s\n",
+		printf("%c%c%c%c%c%c\t%s",
 		    (ta->pfrt_flags & PFR_TFLAG_CONST) ? 'c' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_PERSIST) ? 'p' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_ACTIVE) ? 'a' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_INACTIVE) ? 'i' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_REFERENCED) ? 'r' : '-',
+		    (ta->pfrt_flags & PFR_TFLAG_REFDANCHOR) ? 'h' : '-',
 		    ta->pfrt_name);
+		if (ta->pfrt_anchor[0])
+		    printf("\t%s", ta->pfrt_anchor);
+		if (ta->pfrt_ruleset[0])
+		    printf(":%s", ta->pfrt_ruleset);
+		puts("");
 	} else
 		puts(ta->pfrt_name);
 }
@@ -357,8 +371,10 @@ print_tstats(struct pfr_tstats *ts, int debug)
 		return;
 	print_table(&ts->pfrts_t, 1, debug);
 	printf("\tAddresses:   %d\n", ts->pfrts_cnt);
-	printf("\tReferences:  %d\n", ts->pfrts_refcnt[PFR_REFCNT_RULE]);
 	printf("\tCleared:     %s", ctime(&time));
+	printf("\tReferences:  [ Anchors: %-18d Rules: %-18d ]\n",
+	    ts->pfrts_refcnt[PFR_REFCNT_ANCHOR],
+	    ts->pfrts_refcnt[PFR_REFCNT_RULE]);
 	printf("\tEvaluations: [ NoMatch: %-18llu Match: %-18llu ]\n",
 	    ts->pfrts_nomatch, ts->pfrts_match);
 	for (dir = 0; dir < PFR_DIR_MAX; dir++)
@@ -598,14 +614,19 @@ pfctl_append_file(char *file)
 }
 
 void
-pfctl_define_table(char *name, int flags, int addrs, int noaction)
+pfctl_define_table(char *name, int flags, int addrs, int noaction,
+    const char *anchor, const char *ruleset)
 {
 	struct pfr_table tbl;
 
 	if (!noaction) {
 		bzero(&tbl, sizeof(tbl));
-		if (strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name)) >=
-		    sizeof(tbl.pfrt_name))
+		if (strlcpy(tbl.pfrt_name, name,
+		    sizeof(tbl.pfrt_name)) >= sizeof(tbl.pfrt_name) ||
+		    strlcpy(tbl.pfrt_anchor, anchor,
+		    sizeof(tbl.pfrt_anchor)) >= sizeof(tbl.pfrt_anchor) ||
+		    strlcpy(tbl.pfrt_ruleset, ruleset,
+		    sizeof(tbl.pfrt_ruleset)) >= sizeof(tbl.pfrt_ruleset))
 			errx(1, "pfctl_define_table: strlcpy");
 		tbl.pfrt_flags = flags;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.141 2003/04/27 16:02:08 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.142 2003/04/30 12:30:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -558,10 +558,13 @@ struct pfr_ktable {
 	struct radix_node_head	*pfrkt_ip4;
 	struct radix_node_head	*pfrkt_ip6;
 	struct pfr_ktable	*pfrkt_shadow;
+	struct pfr_ktable	*pfrkt_root;
 	int			 pfrkt_nflags;
 };
 #define pfrkt_t		pfrkt_ts.pfrts_t
 #define pfrkt_name	pfrkt_t.pfrt_name
+#define pfrkt_anchor    pfrkt_t.pfrt_anchor
+#define pfrkt_ruleset   pfrkt_t.pfrt_ruleset
 #define pfrkt_flags	pfrkt_t.pfrt_flags
 #define pfrkt_cnt	pfrkt_ts.pfrts_cnt
 #define pfrkt_refcnt	pfrkt_ts.pfrts_refcnt
@@ -960,7 +963,8 @@ extern struct pf_altqqueue	*pf_altqs_active;
 extern struct pf_altqqueue	*pf_altqs_inactive;
 extern struct pf_poolqueue	*pf_pools_active;
 extern struct pf_poolqueue	*pf_pools_inactive;
-extern int			 pf_tbladdr_setup(struct pf_addr_wrap *);
+extern int			 pf_tbladdr_setup(struct pf_ruleset *,
+				    struct pf_addr_wrap *);
 extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
@@ -1012,7 +1016,7 @@ int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
 struct pfr_ktable *
-	pfr_attach_table(char *);
+	pfr_attach_table(struct pf_ruleset *, char *);
 void	pfr_detach_table(struct pfr_ktable *);
 int	pfr_clr_tables(int *, int);
 int	pfr_add_tables(struct pfr_table *, int, int *, int);

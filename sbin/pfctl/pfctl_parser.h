@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.58 2003/04/15 11:29:24 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.59 2003/04/30 12:30:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -65,6 +65,8 @@ struct pfctl {
 	struct pfioc_rule *prule[PF_RULESET_MAX];
 	struct pfioc_altq *paltq;
 	struct pfioc_queue *pqueue;
+	const char *anchor;
+	const char *ruleset;
 };
 
 enum pfctl_iflookup_mode {
@@ -151,7 +153,7 @@ void	 print_queue(const struct pf_altq *, unsigned, struct node_queue_bw *,
 void	pfctl_begin_table(void);
 void	pfctl_append_addr(char *, int, int);
 void	pfctl_append_file(char *);
-void	pfctl_define_table(char *, int, int, int);
+void	pfctl_define_table(char *, int, int, int, const char *, const char *);
 void	pfctl_commit_table(void);
 
 struct icmptypeent {

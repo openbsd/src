@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.338 2003/04/25 17:41:25 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.339 2003/04/30 12:30:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -117,8 +117,6 @@ struct pf_state		*pf_find_state(struct pf_state_tree *,
 			    struct pf_tree_node *);
 void			 pf_purge_expired_states(void);
 void			 pf_purge_timeout(void *);
-int			 pf_tbladdr_setup(struct pf_addr_wrap *);
-void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 void			 pf_dynaddr_update(void *);
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 void			 pf_print_state(struct pf_state *);
@@ -492,11 +490,11 @@ pf_purge_expired_states(void)
 }
 
 int
-pf_tbladdr_setup(struct pf_addr_wrap *aw)
+pf_tbladdr_setup(struct pf_ruleset *rs, struct pf_addr_wrap *aw)
 {
 	if (aw->type != PF_ADDR_TABLE)
 		return (0);
-	if ((aw->p.tbl = pfr_attach_table(aw->v.tblname)) == NULL)
+	if ((aw->p.tbl = pfr_attach_table(rs, aw->v.tblname)) == NULL)
 		return (1);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.33 2003/04/27 16:02:08 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.34 2003/04/30 12:30:27 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1021,7 +1021,7 @@ int
 pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 {
 	struct pfr_ktableworkq	 addq, changeq;
-	struct pfr_ktable	*p, *q, key;
+	struct pfr_ktable	*p, *q, *r, key;
 	int			 i, rv, s, xadd = 0;
 	long			 tzero = time.tv_sec;
 
@@ -1040,14 +1040,37 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 			if (p == NULL)
 				senderr(ENOMEM);
 			SLIST_FOREACH(q, &addq, pfrkt_workq) {
-				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
+				if (!pfr_ktable_compare(p, q))
 					goto _skip;
 			}
 			SLIST_INSERT_HEAD(&addq, p, pfrkt_workq);
 			xadd++;
+			if (!key.pfrkt_anchor[0])
+				goto _skip;
+
+			/* find or create root table */
+			bzero(key.pfrkt_anchor, sizeof(key.pfrkt_anchor));
+			bzero(key.pfrkt_ruleset, sizeof(key.pfrkt_ruleset));
+			r = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
+			if (r != NULL) {
+				p->pfrkt_root = r;
+				goto _skip;
+			}
+			SLIST_FOREACH(q, &addq, pfrkt_workq) {
+				if (!pfr_ktable_compare(&key, q)) {
+					p->pfrkt_root = q;
+					goto _skip;
+				}
+			}
+			key.pfrkt_flags = 0;
+			r = pfr_create_ktable(&key.pfrkt_t, 0);
+			if (r == NULL)
+				senderr(ENOMEM);
+			SLIST_INSERT_HEAD(&addq, r, pfrkt_workq);
+			p->pfrkt_root = r;
 		} else if (!(p->pfrkt_flags & PFR_TFLAG_ACTIVE)) {
 			SLIST_FOREACH(q, &changeq, pfrkt_workq)
-				if (!strcmp(key.pfrkt_name, q->pfrkt_name))
+				if (!pfr_ktable_compare(&key, q))
 					goto _skip;
 			p->pfrkt_nflags = (p->pfrkt_flags &
 			    ~PFR_TFLAG_USRMASK) | key.pfrkt_flags;
@@ -1091,7 +1114,7 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p != NULL && (p->pfrkt_flags & PFR_TFLAG_ACTIVE)) {
 			SLIST_FOREACH(q, &workq, pfrkt_workq)
-				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
+				if (!pfr_ktable_compare(p, q))
 					goto _skip;
 			p->pfrkt_nflags = p->pfrkt_flags & ~PFR_TFLAG_ACTIVE;
 			SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
@@ -1239,7 +1262,7 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 			if (p->pfrkt_nflags == p->pfrkt_flags)
 				goto _skip;
 			SLIST_FOREACH(q, &workq, pfrkt_workq)
-				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
+				if (!pfr_ktable_compare(p, q))
 					goto _skip;
 			SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 			if ((p->pfrkt_flags & PFR_TFLAG_PERSIST) &&
@@ -1297,7 +1320,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 {
 	struct pfr_ktableworkq	 tableq;
 	struct pfr_kentryworkq	 addrq;
-	struct pfr_ktable	*kt, *shadow;
+	struct pfr_ktable	*kt, *rt, *shadow, key;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
 	int			 i, rv, xadd = 0, xaddr = 0;
@@ -1318,8 +1341,27 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 			return (ENOMEM);
 		SLIST_INSERT_HEAD(&tableq, kt, pfrkt_workq);
 		xadd++;
+		if (!tbl->pfrt_anchor[0])
+			goto _skip;
+
+		/* find or create root table */
+		bzero(&key, sizeof(key));
+		strlcpy(key.pfrkt_name, tbl->pfrt_name, sizeof(key.pfrkt_name));
+		rt = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
+		if (rt != NULL) {
+			kt->pfrkt_root = rt;
+			goto _skip;
+		}
+		rt = pfr_create_ktable(&key.pfrkt_t, 0);
+		if (rt == NULL) {
+			pfr_destroy_ktables(&tableq, 0);
+			return (ENOMEM);
+		}
+		SLIST_INSERT_HEAD(&tableq, rt, pfrkt_workq);
+		kt->pfrkt_root = rt;
 	} else if (!(kt->pfrkt_flags & PFR_TFLAG_INACTIVE))
 		xadd++;
+_skip:
 	shadow = pfr_create_ktable(tbl, 0);
 	if (shadow == NULL) {
 		pfr_destroy_ktables(&tableq, 0);
@@ -1499,6 +1541,10 @@ pfr_insert_ktable(struct pfr_ktable *kt)
 {
 	RB_INSERT(pfr_ktablehead, &pfr_ktables, kt);
 	pfr_ktable_cnt++;
+	if (kt->pfrkt_root != NULL)
+		if (!kt->pfrkt_root->pfrkt_refcnt[PFR_REFCNT_ANCHOR]++)
+			pfr_setflags_ktable(kt->pfrkt_root,
+			    kt->pfrkt_root->pfrkt_flags|PFR_TFLAG_REFDANCHOR);
 }
 
 void
@@ -1522,6 +1568,11 @@ pfr_setflags_ktable(struct pfr_ktable *kt, int newf)
 		newf &= ~PFR_TFLAG_USRMASK;
 	if (!(newf & PFR_TFLAG_SETMASK)) {
 		RB_REMOVE(pfr_ktablehead, &pfr_ktables, kt);
+		if (kt->pfrkt_root != NULL)
+			if (!--kt->pfrkt_root->pfrkt_refcnt[PFR_REFCNT_ANCHOR])
+				pfr_setflags_ktable(kt->pfrkt_root,
+				    kt->pfrkt_root->pfrkt_flags &
+					~PFR_TFLAG_REFDANCHOR);
 		pfr_destroy_ktable(kt, 1);
 		pfr_ktable_cnt--;
 		return;
@@ -1620,7 +1671,15 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 int
 pfr_ktable_compare(struct pfr_ktable *p, struct pfr_ktable *q)
 {
-	return (strncmp(p->pfrkt_name, q->pfrkt_name, PF_TABLE_NAME_SIZE));
+	int d;
+
+	if ((d = strncmp(p->pfrkt_name, q->pfrkt_name, PF_TABLE_NAME_SIZE)))
+		return (d);
+	if ((d = strncmp(p->pfrkt_anchor, q->pfrkt_anchor,
+	    PF_ANCHOR_NAME_SIZE)))
+		return (d);
+	return strncmp(p->pfrkt_ruleset, q->pfrkt_ruleset,
+	    PF_RULESET_NAME_SIZE);
 }
 
 struct pfr_ktable *
@@ -1635,6 +1694,11 @@ pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 {
 	struct pfr_kentry	*ke = NULL;
 	int			 match;
+
+	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
+		kt = kt->pfrkt_root;
+	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
+		return 0;
 
 	switch (af) {
 	case AF_INET:
@@ -1664,6 +1728,11 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 {
 	struct pfr_kentry	*ke = NULL;
 
+	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
+		kt = kt->pfrkt_root;
+	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
+		return;
+
 	switch (af) {
 	case AF_INET:
 		pfr_sin.sin_addr.s_addr = a->addr32[0];
@@ -1692,18 +1761,37 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 }
 
 struct pfr_ktable *
-pfr_attach_table(char *name)
+pfr_attach_table(struct pf_ruleset *rs, char *name)
 {
-	struct pfr_ktable	*kt;
+	struct pfr_ktable	*kt, *rt;
 	struct pfr_table	 tbl;
+	struct pf_anchor	*ac = rs->anchor;
 
 	bzero(&tbl, sizeof(tbl));
 	strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name));
+	if (ac != NULL) {
+		strlcpy(tbl.pfrt_anchor, ac->name, sizeof(tbl.pfrt_anchor));
+		strlcpy(tbl.pfrt_ruleset, rs->name, sizeof(tbl.pfrt_ruleset));
+	}
 	kt = pfr_lookup_table(&tbl);
 	if (kt == NULL) {
 		kt = pfr_create_ktable(&tbl, time.tv_sec);
 		if (kt == NULL)
-			return NULL;
+			return (NULL);
+		if (ac != NULL) {
+			bzero(tbl.pfrt_anchor, sizeof(tbl.pfrt_anchor));
+			bzero(tbl.pfrt_ruleset, sizeof(tbl.pfrt_ruleset));
+			rt = pfr_lookup_table(&tbl);
+			if (rt == NULL) {
+				rt = pfr_create_ktable(&tbl, 0);
+				if (rt == NULL) {
+					pfr_destroy_ktable(kt, 0);
+					return (NULL);
+				}
+				pfr_insert_ktable(rt);
+			}
+			kt->pfrkt_root = rt;
+		}
 		pfr_insert_ktable(kt);
 	}
 	if (!kt->pfrkt_refcnt[PFR_REFCNT_RULE]++)

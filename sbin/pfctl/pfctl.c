@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.167 2003/04/03 15:52:24 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.168 2003/04/30 12:30:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -988,6 +988,8 @@ pfctl_rules(int dev, char *filename, int opts)
 		pf.prule[i] = &pr[i];
 	}
 	pf.rule_nr = 0;
+	pf.anchor = anchorname;
+	pf.ruleset = rulesetname;
 	if (parse_rules(fin, &pf) < 0)
 		errx(1, "Syntax error in config file: pf rules not loaded");
 	if ((altqsupport && (loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0))
@@ -996,14 +998,17 @@ pfctl_rules(int dev, char *filename, int opts)
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
 			pr[PF_RULESET_NAT].rule.action = PF_NAT;
-			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_NAT]))
-				err(1, "DIOCCOMMITRULES");
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_NAT]) &&
+			    (errno != EINVAL || pf.rule_nr))
+				err(1, "DIOCCOMMITRULES NAT");
 			pr[PF_RULESET_RDR].rule.action = PF_RDR;
-			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_RDR]))
-				err(1, "DIOCCOMMITRULES");
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_RDR]) &&
+			    (errno != EINVAL || pf.rule_nr))
+				err(1, "DIOCCOMMITRULES RDR");
 			pr[PF_RULESET_BINAT].rule.action = PF_BINAT;
-			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_BINAT]))
-				err(1, "DIOCCOMMITRULES");
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_BINAT]) &&
+			    (errno != EINVAL || pf.rule_nr))
+				err(1, "DIOCCOMMITRULES BINAT");
 		}
 		if (((altqsupport && (loadopt &
 		    (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)) &&
@@ -1011,11 +1016,13 @@ pfctl_rules(int dev, char *filename, int opts)
 			err(1, "DIOCCOMMITALTQS");
 		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
 			pr[PF_RULESET_SCRUB].rule.action = PF_SCRUB;
-			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_SCRUB]))
-				err(1, "DIOCCOMMITRULES");
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_SCRUB]) &&
+			    (errno != EINVAL || pf.rule_nr))
+				err(1, "DIOCCOMMITRULES SCRUB");
 			pr[PF_RULESET_FILTER].rule.action = PF_PASS;
-			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_FILTER]))
-				err(1, "DIOCCOMMITRULES");
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_FILTER]) &&
+			    (errno != EINVAL || pf.rule_nr))
+				err(1, "DIOCCOMMITRULES FILTER");
 		}
 		if (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL))
 			pfctl_commit_table();
@@ -1438,6 +1445,7 @@ main(int argc, char *argv[])
 			loadopt &= ~PFCTL_FLAG_ALL;
 			loadopt |= PFCTL_FLAG_FILTER;
 			loadopt |= PFCTL_FLAG_NAT;
+			loadopt |= PFCTL_FLAG_TABLE;
 		}
 	}
 
@@ -1480,10 +1488,10 @@ main(int argc, char *argv[])
 			pfctl_clear_altq(dev, opts);
 			pfctl_clear_states(dev, opts);
 			pfctl_clear_stats(dev, opts);
-			pfctl_clear_tables(opts);
+			pfctl_clear_tables(anchorname, rulesetname, opts);
 			break;
 		case 'T':
-			pfctl_clear_tables(opts);
+			pfctl_clear_tables(anchorname, rulesetname, opts);
 			break;
 		default:
 			assert(0);
@@ -1494,7 +1502,7 @@ main(int argc, char *argv[])
 
 	if (tblcmdopt != NULL) {
 		error = pfctl_command_tables(argc, argv, tableopt,
-		    tblcmdopt, rulesopt, opts);
+		    tblcmdopt, rulesopt, anchorname, rulesetname, opts);
 		rulesopt = NULL;
 	}
 
@@ -1540,10 +1548,10 @@ main(int argc, char *argv[])
 			pfctl_show_rules(dev, opts, 1);
 			pfctl_show_timeouts(dev);
 			pfctl_show_limits(dev);
-			pfctl_show_tables(opts);
+			pfctl_show_tables(anchorname, rulesetname, opts);
 			break;
 		case 'T':
-			pfctl_show_tables(opts);
+			pfctl_show_tables(anchorname, rulesetname, opts);
 			break;
 		default:
 			assert(0);
