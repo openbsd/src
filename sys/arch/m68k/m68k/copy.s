@@ -1,5 +1,5 @@
-/*	$OpenBSD: copy.s,v 1.4 1997/01/13 11:51:11 niklas Exp $	*/
-/*	$NetBSD: copy.s,v 1.24 1996/07/20 01:53:42 jtc Exp $	*/
+/*	$OpenBSD: copy.s,v 1.5 1997/02/10 11:11:50 downsj Exp $	*/
+/*	$NetBSD: copy.s,v 1.25 1997/02/02 06:50:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -531,4 +531,59 @@ Lbccbbyte:
 Lbccbbloop:
 	movb	a0@-,a1@-		| copy bytes
 	dbf	d0,Lbccbbloop		| til done
+	rts
+
+/*
+ * copypage(fromaddr, toaddr)
+ *
+ * Optimized version of bcopy for a single page-aligned NBPG byte copy.
+ */
+ENTRY(copypage)
+	movl	sp@(4),a0		| source address
+	movl	sp@(8),a1		| destiniation address
+	movl	#NBPG/32-1,d0		| number of 32 byte chunks - 1
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+	cmpl	#CPU_68030,_cputype	| 68030 or less?
+	jle	Lmlloop			| yes, use movl
+#endif /* M68020 || M68030 */
+Lm16loop:
+	.long	0xf6209000		| move16 a0@+,a1@+
+	.long	0xf6209000		| move16 a0@+,a1@+
+	dbf	d0,Lm16loop
+	rts
+#endif /* M68040 || M68060 */
+#if defined(M68020) || defined(M68030)
+Lmlloop:
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	dbf	d0,Lmlloop
+#endif /* M68020 || M68030 */
+	rts
+
+/*
+ * zeropage(addr)
+ *
+ * Optimized version of bzero for a single page-aligned NBPG byte zero.
+ */
+ENTRY(zeropage)
+	movl	sp@(4),a0		| dest address
+	movl	#NBPG/32-1,d0		| number of 32 byte chunks - 1
+	movq	#0,d1
+Lzloop:
+	movl	d1,a0@+
+	movl	d1,a0@+
+	movl	d1,a0@+
+	movl	d1,a0@+
+	movl	d1,a0@+
+	movl	d1,a0@+
+	movl	d1,a0@+
+	movl	d1,a0@+
+	dbf	d0,Lzloop
 	rts
