@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.48 2005/03/11 16:12:29 otto Exp $
+.\"	$OpenBSD: mount.8,v 1.49 2005/03/12 13:28:37 jmc Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -325,15 +325,31 @@ manual page.
 file system table
 .El
 .Sh EXAMPLES
-.Bd -literal
-# mount -t cd9660 -r /dev/cd0a /mnt/cdrom
-
-# mount -t msdos /dev/fd0a /mnt/floppy
-
-# mount host:/path/name /mnt/nfs
-
-# mount -u -o dev /var
-.Ed
+Mount a CD-ROM on node
+.Pa /mnt/cdrom :
+.Pp
+.Dl # mount -t cd9660 -r /dev/cd0a /mnt/cdrom
+.Pp
+Mount an MS-DOS floppy on node
+.Pa /mnt/floppy :
+.Pp
+.Dl # mount -t msdos /dev/fd0a /mnt/floppy
+.Pp
+Graft a remote NFS file system on host
+.Ar host ,
+path
+.Pa /path/name ,
+on node
+.Pa /mnt/nfs :
+.Pp
+.Dl # mount host:/path/name /mnt/nfs
+.Pp
+Remount
+.Pa /var
+with option
+.Dq dev :
+.Pp
+.Dl # mount -u -o dev /var
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr fstab 5 ,
