@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2001/06/23 01:57:00 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 2001/06/24 05:14:38 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -31,7 +31,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
 #include "machine/ipkdb.h"
+*/
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -65,6 +67,10 @@
 #endif
 #include <net/netisr.h>
 
+#include <dev/cons.h>
+
+#include <dev/ofw/openfirm.h>
+
 #include <machine/bat.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
@@ -73,6 +79,13 @@
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include "adb.h"
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 /*
  * Global variables used here and there
@@ -147,22 +160,23 @@ int segment8_a_mapped = 0;
 
 extern int OF_stdout;
 extern int where;
+
+/* XXX, called from asm */
+void initppc(u_int startkernel, u_int endkernel, char *args);
+
 void
 initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
 	char *args;
 {
-	int phandle, qhandle;
-	char name[32];
-	struct machvec *mp;
-	extern trapcode, trapsize;
-	extern dsitrap, dsisize;
-	extern isitrap, isisize;
-	extern alitrap, alisize;
-	extern decrint, decrsize;
-	extern tlbimiss, tlbimsize;
-	extern tlbdlmiss, tlbdlmsize;
-	extern tlbdsmiss, tlbdsmsize;
+	extern void *trapcode; extern int trapsize;
+	extern void *dsitrap; extern int dsisize;
+	extern void *isitrap; extern int isisize;
+	extern void *alitrap; extern int alisize;
+	extern void *decrint; extern int decrsize;
+	extern void *tlbimiss; extern int tlbimsize;
+	extern void *tlbdlmiss; extern int tlbdlmsize;
+	extern void *tlbdsmiss; extern int tlbdsmsize;
 #if NIPKDB > 0
 	extern ipkdblow, ipkdbsize;
 #endif
@@ -356,10 +370,14 @@ where = 3;
 		}
 	}			
 	bootpath= &bootpathbuf[0];
-#if 1
+#if 0
 	bcopy(args +strlen(args) + 1, &startsym, sizeof(startsym));
 	bcopy(args +strlen(args) + 5, &endsym, sizeof(endsym)); 
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
+
+#ifdef DDB
+	ddb_init();
 #endif
 
 	/*
