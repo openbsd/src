@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.5 2003/03/19 20:06:28 millert Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.6 2004/01/20 19:23:06 grange Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -320,7 +320,7 @@ agp_i810_bind_page(struct vga_pci_softc *sc, off_t offset, bus_addr_t physical)
 		return (EINVAL);
 	}
 
-	if (isc->chiptype == CHIP_I810) {
+	if (isc->chiptype != CHIP_I810) {
 		if ((offset >> AGP_PAGE_SHIFT) < isc->stolen) {
 #ifdef DEBUG
 			printf("agp: trying to bind into stolen memory\n");
@@ -342,7 +342,7 @@ agp_i810_unbind_page(struct vga_pci_softc *sc, off_t offset)
 	if (offset < 0 || offset >= (isc->gatt->ag_entries << AGP_PAGE_SHIFT))
 		return (EINVAL);
 
-	if (isc->chiptype == CHIP_I830 ) {
+	if (isc->chiptype != CHIP_I810 ) {
 		if ((offset >> AGP_PAGE_SHIFT) < isc->stolen) {
 #ifdef DEBUG
 			printf("agp: trying to unbind from stolen memory\n");
