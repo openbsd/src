@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.28 2003/03/13 22:26:52 millert Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.29 2003/05/15 14:40:53 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.57 2002/09/20 21:59:55 itojun Exp $	*/
 
 /*
@@ -783,9 +783,6 @@ warnmsg(int priority, const char *func, const char *msg, ...)
 char **
 autoifprobe()
 {
-#ifndef HAVE_GETIFADDRS
-	errx(1, "-a is not available with the configuration");
-#else
 	static char **argv = NULL;
 	static int n = 0;
 	char **a;
@@ -856,5 +853,4 @@ autoifprobe()
 	}
 	freeifaddrs(ifap);
 	return argv;
-#endif
 }
