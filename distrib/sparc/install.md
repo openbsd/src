@@ -177,7 +177,7 @@ __md_prep_disklabel_1
 
 md_copy_kernel() {
 	echo -n "Copying kernel..."
-	cp -p /netbsd /mnt/netbsd
+	cp -p /bsd /mnt/bsd
 	echo "done."
 }
 
