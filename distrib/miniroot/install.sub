@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.290 2003/02/16 23:25:40 krw Exp $
+#	$OpenBSD: install.sub,v 1.291 2003/03/02 00:17:20 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1688,13 +1688,15 @@ donetconfig() {
 
 	# Get/Confirm the default route.
 	_dr=$(route -n show | sed -ne '/^default */{s///; s/ .*//; p;}')
-	route delete default > /dev/null 2>&1
 	while : ; do
 		ask_until "Default route? (IP address, 'dhcp' or 'none')" "$_dr"
 		case $resp in
 		none|dhcp) break ;;
 		esac
+		route delete default > /dev/null 2>&1
 		route -n add -host default "$resp" && { echo "$resp" > /tmp/mygate ; break ; }
+		# Put the old default route back. The new one did not work.
+		route -n add -host default $_dr > /dev/null 2>&2
 	done
 
 	edit_tmp_file hosts
