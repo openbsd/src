@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.26 2004/12/26 00:35:42 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.27 2005/01/08 18:14:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -126,7 +126,6 @@ int  ami_done(struct ami_softc *sc, int idx);
 void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 int  ami_inquire(struct ami_softc *sc, u_int8_t op);
 
-
 struct ami_ccb *
 ami_get_ccb(sc)
 	struct ami_softc *sc;
@@ -168,7 +167,7 @@ ami_read_inbound_db(sc)
 	struct ami_softc *sc;
 {
 	u_int32_t rv;
-	
+
 	bus_space_barrier(sc->iot, sc->ioh,
 	    AMI_QIDB, 4, BUS_SPACE_BARRIER_READ);
 	rv = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
