@@ -46,12 +46,9 @@ Things todo, in no particular order:
 
  - Make sure to not try krb5 auth when no ticket exists. (same goes for krb4)
    (i think this is actually ok, but it needs to be verified.)
- - hack krb5 support in our passwd - we should probably change to using
-   BSD authentication for password changing aswell.
  - Password quality checks in kpasswdd
  - krb5-config script
  - kx, kxd
- - BSD Auth support in xdm, xlock, sudo
  - rxtelnet, rxterm
  - pop-server and push
  - rsh, rshd
