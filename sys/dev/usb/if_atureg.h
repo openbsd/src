@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.18 2004/12/12 05:30:48 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.19 2004/12/13 08:09:51 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.18 2004/12/12 05:30:48 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.19 2004/12/13 08:09:51 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -193,8 +193,6 @@
 #define ATU_DEFAULT_SSID	""
 #define ATU_DEFAULT_CHANNEL	10
 
-
-
 enum atu_radio_type {
 	RadioRFMD = 0,
 	RadioRFMD2958,
@@ -208,7 +206,6 @@ struct atu_type {
 	enum atu_radio_type	atu_radio;
 	u_int16_t		atu_quirk;
 };
-
 
 struct atu_softc;
 
@@ -300,17 +297,11 @@ struct atu_softc {
 	u_int8_t		atu_wepkeys[4][13];
 };
 
-
-
-
-
-
 /* Commands for uploading the firmware (standard DFU interface) */
 #define DFU_DNLOAD		UT_WRITE_CLASS_INTERFACE, 0x01
 #define DFU_GETSTATUS		UT_READ_CLASS_INTERFACE, 0x03
 #define DFU_GETSTATE		UT_READ_CLASS_INTERFACE, 0x05
 #define DFU_REMAP		UT_WRITE_VENDOR_INTERFACE, 0x0a
-
 
 /* DFU states */
 #define DFUState_AppIdle	0
@@ -327,16 +318,12 @@ struct atu_softc {
 
 #define DFU_MaxBlockSize	1024
 
-
 /* AT76c503 operating modes */
-#define MODE_NONE		0x00
-#define MODE_NETCARD		0x01
-#define MODE_CONFIG		0x02
-#define MODE_DFU		0x03
-#define MODE_NOFLASHNETCARD	0x04
-
-
-
+#define MODE_NONE			0x00
+#define MODE_NETCARD			0x01
+#define MODE_CONFIG			0x02
+#define MODE_DFU			0x03
+#define MODE_NOFLASHNETCARD		0x04
 
 /* AT76c503 commands */
 #define CMD_SET_MIB			0x01
@@ -359,104 +346,102 @@ struct atu_softc {
 #define STATUS_HOST_FAILURE		0xff
 #define STATUS_SCAN_FAILED		0xf0
 
-
-
 /* AT76c503 command header */
 struct atu_cmd {
-	u_int8_t		Cmd;
-	u_int8_t		Reserved;
-	u_int16_t		Size;
-};
+	uByte			Cmd;
+	uByte			Reserved;
+	uWord			Size;
+} UPACKED;
 
 /* CMD_SET_MIB command (0x01) */
 struct atu_cmd_set_mib {
 	/* AT76c503 command header */
-	u_int8_t	AtCmd;
-	u_int8_t	AtReserved;
-	u_int16_t	AtSize;
+	uByte		AtCmd;
+	uByte		AtReserved;
+	uWord		AtSize;
 
 	/* MIB header */
-	u_int8_t	MIBType;
-	u_int8_t	MIBSize;
-	u_int8_t	MIBIndex;
-	u_int8_t	MIBReserved;
+	uByte		MIBType;
+	uByte		MIBSize;
+	uByte		MIBIndex;
+	uByte		MIBReserved;
 
 	/* MIB data */
-	u_int8_t	data[72];
-};
+	uByte		data[72];
+} UPACKED;
 
 /* CMD_STARTUP command (0x0b) */
 struct atu_cmd_card_config {
-	u_int8_t		Cmd;
-	u_int8_t		Reserved;
-	u_int16_t		Size;
+	uByte			Cmd;
+	uByte			Reserved;
+	uWord			Size;
 		
-	u_int8_t		ExcludeUnencrypted;
-	u_int8_t		PromiscuousMode;
-	u_int8_t		ShortRetryLimit;
-	u_int8_t		EncryptionType;
-	u_int16_t		RTS_Threshold;
-	u_int16_t		FragThreshold;		/* 256 .. 2346 */
-	u_int8_t		BasicRateSet[4];
-	u_int8_t		AutoRateFallback;
-	u_int8_t		Channel;
-	u_int8_t		PrivacyInvoked;		/* wep */
-	u_int8_t		WEP_DefaultKeyID;	/* 0 .. 3 */
-	u_int8_t		SSID[MAX_SSID_LEN];
-	u_int8_t		WEP_DefaultKey[4][13];
-	u_int8_t		SSID_Len;
-	u_int8_t		ShortPreamble;
-	u_int16_t		BeaconPeriod;
-};
+	uByte			ExcludeUnencrypted;
+	uByte			PromiscuousMode;
+	uByte			ShortRetryLimit;
+	uByte			EncryptionType;
+	uWord			RTS_Threshold;
+	uWord			FragThreshold;		/* 256 .. 2346 */
+	uByte			BasicRateSet[4];
+	uByte			AutoRateFallback;
+	uByte			Channel;
+	uByte			PrivacyInvoked;		/* wep */
+	uByte			WEP_DefaultKeyID;	/* 0 .. 3 */
+	uByte			SSID[MAX_SSID_LEN];
+	uByte			WEP_DefaultKey[4][13];
+	uByte			SSID_Len;
+	uByte			ShortPreamble;
+	uWord			BeaconPeriod;
+} UPACKED;
 
 /* CMD_SCAN command (0x03) */
 struct atu_cmd_do_scan {
-	u_int8_t		Cmd;
-	u_int8_t		Reserved;
-	u_int16_t		Size;
+	uByte			Cmd;
+	uByte			Reserved;
+	uWord			Size;
 	
-	u_int8_t		BSSID[ETHER_ADDR_LEN];
-	u_int8_t		SSID[MAX_SSID_LEN];
-	u_int8_t		ScanType;
-	u_int8_t		Channel;
-	u_int16_t		ProbeDelay;
-	u_int16_t		MinChannelTime;
-	u_int16_t		MaxChannelTime;
-	u_int8_t		SSID_Len;
-	u_int8_t		InternationalScan;  
-};
+	uByte			BSSID[ETHER_ADDR_LEN];
+	uByte			SSID[MAX_SSID_LEN];
+	uByte			ScanType;
+	uByte			Channel;
+	uWord			ProbeDelay;
+	uWord			MinChannelTime;
+	uWord			MaxChannelTime;
+	uByte			SSID_Len;
+	uByte			InternationalScan;  
+} UPACKED;
 
-#define ATU_SCAN_ACTIVE	0x00
+#define ATU_SCAN_ACTIVE		0x00
 #define ATU_SCAN_PASSIVE	0x01
 
 /* CMD_JOIN command (0x04) */
 struct atu_cmd_join {
-	u_int8_t		Cmd;
-	u_int8_t		Reserved;
-	u_int16_t		Size;
+	uByte			Cmd;
+	uByte			Reserved;
+	uWord			Size;
 	
-	u_int8_t		bssid[ETHER_ADDR_LEN];
-	u_int8_t		essid[32];
-	u_int8_t		bss_type;
-	u_int8_t		channel;
-	u_int16_t		timeout;
-	u_int8_t		essid_size;
-	u_int8_t		reserved;
-};
+	uByte			bssid[ETHER_ADDR_LEN];
+	uByte			essid[32];
+	uByte			bss_type;
+	uByte			channel;
+	uWord			timeout;
+	uByte			essid_size;
+	uByte			reserved;
+} UPACKED;
 
 /* CMD_START_IBSS (0x05) */
 struct atu_cmd_start_ibss {
-	u_int8_t	Cmd;
-	u_int8_t	Reserved;
-	u_int16_t	Size;
+	uByte		Cmd;
+	uByte		Reserved;
+	uWord		Size;
 	
-	u_int8_t	BSSID[ETHER_ADDR_LEN];
-	u_int8_t	SSID[32];
-	u_int8_t	BSSType; 
-	u_int8_t	Channel; 
-	u_int8_t	SSIDSize;
-	u_int8_t	Res[3];  
-};
+	uByte		BSSID[ETHER_ADDR_LEN];
+	uByte		SSID[32];
+	uByte		BSSType; 
+	uByte		Channel; 
+	uByte		SSIDSize;
+	uByte		Res[3];  
+} UPACKED;
 
 
 /*
@@ -477,7 +462,7 @@ struct atu_rfmd_conf {
 	u_int8_t		Reserved[3];
 	/* then we have 84 bytes, somehow Windows reads 95?? */
 	u_int8_t		Rest[11];
-};
+} UPACKED;
 
 /* The config structure of an Intersil radio */
 struct atu_intersil_conf {
@@ -490,7 +475,7 @@ struct atu_intersil_conf {
 	u_int8_t		PidVid[4];
 	u_int8_t		RegulatoryDomain;
 	u_int8_t		Reserved[1];
-};
+} UPACKED;
 
 
 /* Firmware information request */
@@ -499,7 +484,7 @@ struct atu_fw {
 	u_int8_t		minor;
 	u_int8_t		patch;
 	u_int8_t		build;
-};
+} UPACKED;
         
 
 /*
@@ -507,15 +492,15 @@ struct atu_fw {
  * data)
  */
 struct atu_rx_hdr {
-	u_int16_t		length;
-	u_int8_t		rx_rate;
-	u_int8_t		newbss;
-	u_int8_t		fragmentation;
-	u_int8_t		rssi;
-	u_int8_t		link_quality;
-	u_int8_t		noise_level;
-	u_int32_t		rx_time;
-};
+	uWord			length;
+	uByte			rx_rate;
+	uByte			newbss;
+	uByte			fragmentation;
+	uByte			rssi;
+	uByte			link_quality;
+	uByte			noise_level;
+	uDWord			rx_time;
+} UPACKED;
 #define ATU_RX_HDRLEN sizeof(struct atu_rx_hdr)
 
 /*
@@ -523,11 +508,11 @@ struct atu_rx_hdr {
  * AT76c503
  */
 struct atu_tx_hdr {
-	u_int16_t			length;
-	u_int8_t			tx_rate;
-	u_int8_t			padding;
-	u_int8_t			reserved[4];
-};
+	uWord				length;
+	uByte				tx_rate;
+	uByte				padding;
+	uByte				reserved[4];
+} UPACKED;
 #define ATU_TX_HDRLEN sizeof(struct atu_tx_hdr)
 
 #define NR(x)		(void *)((long)x)
@@ -572,8 +557,8 @@ struct atu_tx_hdr {
 #define  MIB_DOMAIN__CHANNELS		MIB_DOMAIN,	14,	14
 
 #define ATU_WEP_OFF			0
-#define ATU_WEP_40BITS		1
-#define ATU_WEP_104BITS		2
+#define ATU_WEP_40BITS			1
+#define ATU_WEP_104BITS			2
 
 #define POWER_MODE_ACTIVE		1
 #define POWER_MODE_SAVE			2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.44 2004/12/13 07:37:54 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.45 2004/12/13 08:09:51 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -154,7 +154,9 @@ int	atu_send_mib(struct atu_softc *sc, u_int8_t type,
 	    u_int8_t size, u_int8_t index, void *data);
 int	atu_get_mib(struct atu_softc *sc, u_int8_t type,
 	    u_int8_t size, u_int8_t index, u_int8_t *buf);
+#if 0
 int	atu_start_ibss(struct atu_softc *sc);
+#endif
 int	atu_start_scan(struct atu_softc *sc);
 int	atu_switch_radio(struct atu_softc *sc, int state);
 int	atu_initial_config(struct atu_softc *sc);
@@ -327,16 +329,17 @@ atu_send_mib(struct atu_softc *sc, u_int8_t type, u_int8_t size,
     u_int8_t index, void *data)
 {
 	int				err;
-	struct atu_cmd_set_mib	request;
+	struct atu_cmd_set_mib		request;
 
 	/*
 	 * We don't construct a MIB packet first and then memcpy it into an
 	 * Atmel-command-packet, we just construct it the right way at once :)
 	 */
 
+	memset(&request, 0, sizeof(request));
+
 	request.AtCmd = CMD_SET_MIB;
-	request.AtReserved = 0;
-	request.AtSize = size + 4;
+	USETW(request.AtSize, size + 4);
 
 	request.MIBType = type;
 	request.MIBSize = size;
@@ -362,9 +365,9 @@ atu_send_mib(struct atu_softc *sc, u_int8_t type, u_int8_t size,
 	}
 
 	err = atu_usb_request(sc, UT_WRITE_VENDOR_DEVICE, 0x0e, 0x0000,
-		0x0000, request.AtSize+4, (u_int8_t *)&request);
+		0x0000, size+8, (uByte *)&request);
 	if (err)
-		return err;
+		return (err);
 
 	DPRINTFN(15, ("%s: sendmib : waitcompletion...\n",
 	    USBDEVNAME(sc->atu_dev)));
@@ -381,6 +384,7 @@ atu_get_mib(struct atu_softc *sc, u_int8_t type, u_int8_t size,
 		type << 8, index, size, buf);
 }
 
+#if 0
 int
 atu_start_ibss(struct atu_softc *sc)
 {
@@ -430,17 +434,20 @@ atu_start_ibss(struct atu_softc *sc)
 		USBDEVNAME(sc->atu_dev), ether_sprintf(sc->atu_bssid)));
 	return 0;
 }
+#endif
 
 int
 atu_start_scan(struct atu_softc *sc)
 {
-	struct atu_cmd_do_scan	Scan;
+	struct atu_cmd_do_scan		Scan;
 	usbd_status			err;
 	int				Cnt;
 
+	memset(&Scan, 0, sizeof(Scan));
+
 	Scan.Cmd = CMD_START_SCAN;
 	Scan.Reserved = 0;
-	Scan.Size = sizeof(Scan) - 4;
+	USETW(Scan.Size, sizeof(Scan) - 4);
 
 	/* use the broadcast BSSID (in active scan) */
 	for (Cnt=0; Cnt<6; Cnt++)
@@ -456,16 +463,13 @@ atu_start_scan(struct atu_softc *sc)
 		Scan.Channel = (u_int8_t)sc->atu_desired_channel;
 	else
 		Scan.Channel = sc->atu_channel;
-	Scan.ProbeDelay = 3550;
-	Scan.MinChannelTime = 250;
-	Scan.MaxChannelTime = 3550;
 
 	/* we like scans to be quick :) */
 	/* the time we wait before sending probe's */
-	Scan.ProbeDelay = 0;
+	USETW(Scan.ProbeDelay, 0);
 	/* the time we stay on one channel */
-	Scan.MinChannelTime = 100;
-	Scan.MaxChannelTime = 200;
+	USETW(Scan.MinChannelTime, 100);
+	USETW(Scan.MaxChannelTime, 200);
 	/* wether or not we scan all channels */
 	Scan.InternationalScan = 0xc1;
 
@@ -499,7 +503,7 @@ int
 atu_switch_radio(struct atu_softc *sc, int state)
 {
 	usbd_status		err;
-	struct atu_cmd	CmdRadio = {CMD_RADIO_ON, 0, 0};
+	struct atu_cmd		CmdRadio;
 
 	if (sc->atu_radio == RadioIntersil) {
 		/*
@@ -508,6 +512,9 @@ atu_switch_radio(struct atu_softc *sc, int state)
 		 */
 		return 0;
 	}
+
+	memset(&CmdRadio, 0, sizeof(CmdRadio));
+	CmdRadio.Cmd = CMD_RADIO_ON;
 
 	if (sc->atu_radio_on != state) {
 		if (state == 0)
@@ -560,7 +567,7 @@ atu_initial_config(struct atu_softc *sc)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.Cmd = CMD_STARTUP;
 	cmd.Reserved = 0;
-	cmd.Size = sizeof(cmd) - 4;
+	USETW(cmd.Size, sizeof(cmd) - 4);
 
 	if (sc->atu_desired_channel != IEEE80211_CHAN_ANY)
 		cmd.Channel = (u_int8_t)sc->atu_desired_channel;
@@ -571,8 +578,8 @@ atu_initial_config(struct atu_softc *sc)
 
 	/* ShortRetryLimit should be 7 according to 802.11 spec */
 	cmd.ShortRetryLimit = 7;
-	cmd.RTS_Threshold = 2347;
-	cmd.FragThreshold = 2346;
+	USETW(cmd.RTS_Threshold, 2347);
+	USETW(cmd.FragThreshold, 2346);
 
 	/* Doesn't seem to work, but we'll set it to 1 anyway */
 	cmd.PromiscuousMode = 1;
@@ -597,7 +604,7 @@ atu_initial_config(struct atu_softc *sc)
 
 	cmd.ShortPreamble = 1;
 	cmd.ShortPreamble = 0;
-	cmd.BeaconPeriod = 100;
+	USETW(cmd.BeaconPeriod, 100);
 	/* cmd.BeaconPeriod = 65535; */
 
 	/*
@@ -676,9 +683,11 @@ atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 	u_int8_t			status;
 	usbd_status			err;
 
+	memset(&join, 0, sizeof(join));
+
 	join.Cmd = CMD_JOIN;
 	join.Reserved = 0x00;
-	join.Size = sizeof(join) - 4;
+	USETW(join.Size, sizeof(join) - 4);
 
 	DPRINTFN(15, ("%s: pre-join sc->atu_bssid=%s\n",
 	    USBDEVNAME(sc->atu_dev), ether_sprintf(sc->atu_bssid)));
@@ -694,7 +703,7 @@ atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 		join.bss_type = INFRASTRUCTURE_MODE;
 	join.channel = ieee80211_chan2ieee(&sc->sc_ic, node->ni_chan);
 
-	join.timeout = ATU_JOIN_TIMEOUT;
+	USETW(join.timeout, ATU_JOIN_TIMEOUT);
 	join.reserved = 0x00;
 
 	DPRINTFN(10, ("%s: trying to join BSSID=%s\n",
@@ -1637,7 +1646,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
 	h = (struct atu_rx_hdr *)c->atu_buf;
-	len = h->length - 4; /* XXX magic number */
+	len = UGETW(h->length) - 4; /* XXX magic number */
 
 	m = c->atu_mbuf;
 	memcpy(mtod(m, char *), c->atu_buf + ATU_RX_HDRLEN, len);
@@ -1662,7 +1671,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		BPF_MTAP(ifp, m);
 #endif
 
-	ieee80211_input(ifp, m, ni, h->rssi, h->rx_time);
+	ieee80211_input(ifp, m, ni, h->rssi, UGETDW(h->rx_time));
 
 	if (ni == ic->ic_bss)
 		ieee80211_unref_node(&ni);
@@ -1769,7 +1778,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 
 	h = (struct atu_tx_hdr *)c->atu_buf;
 	memset(h, 0, ATU_TX_HDRLEN);
-	h->length = len;
+	USETW(h->length, len);
 	h->tx_rate = 4; /* XXX rate = auto */
 	h->padding = 0;
 
