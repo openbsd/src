@@ -1,5 +1,5 @@
-/* $OpenBSD: machdep.c,v 1.15 1997/09/10 12:04:50 maja Exp $ */
-/* $NetBSD: machdep.c,v 1.41 1997/04/19 15:02:31 ragge Exp $	 */
+/* $OpenBSD: machdep.c,v 1.16 1997/09/12 09:30:56 maja Exp $ */
+/* $NetBSD: machdep.c,v 1.45 1997/07/26 10:12:49 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -124,7 +124,8 @@ int		nmcr, nmba, numuba, cold = 1;
 caddr_t		mcraddr[MAXNMCR];
 int		astpending;
 int		want_resched;
-char		machine[] = "vax";
+char		machine[] = MACHINE;		/* from <machine/param.h> */
+char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
 int		msgbufmapped = 0;
 struct msgbuf  *msgbufp;
@@ -599,10 +600,25 @@ boot(howto /* , bootstr */)
 	}
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
+		if (dep_call->cpu_halt)
+			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
-		for ( ; ; )
+		for (;;)
 			;
 	} else {
+		showto = howto;
+#ifdef notyet
+		/*
+		 * If we are provided with a bootstring, parse it and send
+		 * it to the boot program.
+		 */
+		if (b)
+			while (*b) {
+				showto |= (*b == 'a' ? RB_ASKBOOT : (*b == 'd' ?
+				    RB_DEBUG : (*b == 's' ? RB_SINGLE : 0)));
+				b++;
+			}
+#endif
 		/*
 		 * Now it's time to:
 		 *  0. Save some registers that are needed in new world.
@@ -614,6 +630,7 @@ boot(howto /* , bootstr */)
 		 * The RPB page is _always_ first page in memory, we can
 		 * rely on that.
 		 */
+#ifdef notyet
 		asm("	movl	sp, (0x80000200)
 			movl	0x80000200, sp
 			mfpr	$0x10, -(sp)	# PR_PCBB
@@ -622,18 +639,19 @@ boot(howto /* , bootstr */)
 			mfpr	$0xd, -(sp)	# PR_SLR
 			mtpr	$0, $0x38	# PR_MAPEN
 		");
+#endif
+
 		if (showto & RB_DUMP)
 			dumpsys();
-
-		asm("movl %0,r5":: "g" (showto)); /* How to boot */
+		if (dep_call->cpu_reboot)
+			(*dep_call->cpu_reboot)(showto);
 
 		switch (vax_cputype) {
 			int	state;
 
-#if VAX750 || VAX780 || VAX630
+#if VAX750 || VAX780
 		case VAX_780:
 		case VAX_750:
-		case VAX_TYP_UV2:
 			mtpr(GC_BOOT, PR_TXDB); /* boot command */
 			break;
 #endif
@@ -648,7 +666,8 @@ boot(howto /* , bootstr */)
 		}
 
 	}
-	asm("movl %0, r11":: "r"(showto));
+	asm("movl %0,r5":: "g" (showto)); /* How to boot */
+	asm("movl %0, r11":: "r"(showto)); /* ??? */
 	asm("halt");
 	panic("Halt sket sej");
 }

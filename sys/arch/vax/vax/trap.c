@@ -1,5 +1,5 @@
-/*      $OpenBSD: trap.c,v 1.7 1997/05/28 23:29:43 niklas Exp $     */
-/*      $NetBSD: trap.c,v 1.24 1996/11/06 20:19:55 cgd Exp $     */
+/*      $OpenBSD: trap.c,v 1.8 1997/09/12 09:30:57 maja Exp $     */
+/*      $NetBSD: trap.c,v 1.28 1997/07/28 21:48:33 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -96,7 +96,7 @@ userret(p, pc, psl)
                  */
                 s=splstatclock();
                 setrunqueue(curproc);
-                cpu_switch(0);
+                mi_switch();
                 splx(s);
                 while ((sig = CURSIG(curproc)) != 0)
                         postsig(sig);
@@ -110,7 +110,7 @@ char *traptypes[]={
 	"privileged instruction",
 	"reserved operand",
 	"breakpoint instruction",
-	"Nothing",
+	"XFC instruction",
 	"system call ",
 	"arithmetic trap",
 	"asynchronous system trap",
@@ -344,6 +344,12 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 		typ = ILL_ILLOPC;
 		v = (caddr_t)0xdeadbeef;		/* XXX */
 		sig = SIGILL;
+		break;
+
+	case T_XFCFLT|T_USER:
+		typ = 0; 				/* XXX/MAJA */
+		v = (caddr_t)0;				/* XXX/MAJA */
+		sig = SIGEMT;
 		break;
 
 	case T_ARITHFLT|T_USER:

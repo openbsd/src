@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscp.h,v 1.2 1997/05/29 00:05:02 niklas Exp $	*/
-/*	$NetBSD: mscp.h,v 1.2 1996/07/10 23:35:59 ragge Exp $	*/
+/*	$OpenBSD: mscp.h,v 1.3 1997/09/12 09:25:51 maja Exp $	*/
+/*	$NetBSD: mscp.h,v 1.3 1997/07/04 11:58:21 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -65,7 +65,7 @@
 #define	M_OP_COMPHD	0x20	/* Compare host data command */
 #define	M_OP_READ	0x21	/* Read command */
 #define	M_OP_WRITE	0x22	/* Write command */
-#define	M_OP_WRITM	0x23	/* Write mark command */
+#define	M_OP_WRITM	0x24	/* Write mark command */
 #define	M_OP_POS	0x25	/* Positioning command */
 #define	M_OP_AVAILATTN	0x40	/* Available attention message */
 #define	M_OP_DUPUNIT	0x41	/* Duplicate unit number attention message */

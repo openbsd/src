@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 1997/09/10 11:47:05 maja Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.3 1997/02/06 21:17:05 gwr Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 1997/09/12 09:21:19 maja Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.4 1997/06/26 01:27:01 thorpej Exp $	*/
 
 /* 
  * Mach Operating System

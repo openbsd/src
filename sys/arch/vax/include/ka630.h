@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka630.h,v 1.2 1997/05/29 00:04:42 niklas Exp $ */
-/*	$NetBSD: ka630.h,v 1.1 1996/07/20 17:58:17 ragge Exp $ */
+/*	$OpenBSD: ka630.h,v 1.3 1997/09/12 09:21:20 maja Exp $ */
+/*	$NetBSD: ka630.h,v 1.2 1997/07/26 10:12:41 ragge Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -95,6 +95,7 @@ struct uvaxIIcpu {
 #define	KA630CLK_RESTRT	01
 #define	KA630CLK_REBOOT	02
 #define	KA630CLK_HALT	03
+#define	KA630CLK_DOTHIS	040
 /* in progress flags */
 #define	KA630CLK_BOOT	04
 #define	KA630CLK_RSTRT	010

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.8 1997/09/10 12:04:51 maja Exp $ */
-/*	$NetBSD: pmap.c,v 1.35 1997/03/22 12:50:56 ragge Exp $	   */
+/*	$OpenBSD: pmap.c,v 1.9 1997/09/12 09:30:56 maja Exp $ */
+/*	$NetBSD: pmap.c,v 1.37 1997/07/25 21:54:48 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -184,22 +184,21 @@ pmap_bootstrap()
 	 * physical memory and that isn't managed by the vm system.
 	 */
 #ifdef DDB
-	MAPPHYS(junk, ((ROUND_PAGE(&etext)  - KERNBASE) >> PGSHIFT),
+	MAPPHYS(junk, btoc(ROUND_PAGE(&etext)  - KERNBASE),
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 #else
-	MAPPHYS(junk, ((ROUND_PAGE(&etext) - KERNBASE) >> PGSHIFT),
-	    VM_PROT_EXECUTE);
+	MAPPHYS(junk, btoc(ROUND_PAGE(&etext) - KERNBASE), VM_PROT_EXECUTE);
 #endif
-	MAPPHYS(junk, (((u_int)Sysmap - ROUND_PAGE(&etext)) >> PGSHIFT),
+	MAPPHYS(junk, btoc((u_int)Sysmap - ROUND_PAGE(&etext)),
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Map System Page Table and zero it,  Sysmap already set. */
 	mtpr(avail_start, PR_SBR);
-	MAPPHYS(junk, (ROUND_PAGE(sysptsize * 4) >> PGSHIFT),
+	MAPPHYS(junk, btoc(ROUND_PAGE(sysptsize * 4)),
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Map Interrupt stack and set red zone */
-	MAPPHYS(istack, (ISTACK_SIZE >> PGSHIFT), VM_PROT_READ|VM_PROT_WRITE);
+	MAPPHYS(istack, btoc(ISTACK_SIZE), VM_PROT_READ|VM_PROT_WRITE);
 	mtpr(istack + ISTACK_SIZE, PR_ISP);
 	kvtopte(istack)->pg_v = 0;
 
@@ -207,12 +206,12 @@ pmap_bootstrap()
 	MAPPHYS(scratch, 4, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Kernel message buffer */
-	MAPPHYS(msgbufp, ((u_int)ROUND_PAGE(sizeof(struct msgbuf)) >> PGSHIFT),
+	MAPPHYS(msgbufp, btoc(ROUND_PAGE(sizeof(struct msgbuf))),
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Physical-to-virtual translation table */
-	MAPPHYS(pv_table, ((avail_end / PAGE_SIZE ) * sizeof(struct pv_entry))
-	    >> PGSHIFT, VM_PROT_READ|VM_PROT_WRITE);
+	MAPPHYS(pv_table, btoc((avail_end / PAGE_SIZE ) *
+	    sizeof(struct pv_entry)), VM_PROT_READ|VM_PROT_WRITE);
 
 	/* zero all mapped physical memory from Sysmap to here */
 	blkclr((void *)istack, (avail_start | 0x80000000) - istack);

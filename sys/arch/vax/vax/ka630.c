@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka630.c,v 1.3 1997/09/10 12:04:47 maja Exp $	*/
-/*	$NetBSD: ka630.c,v 1.6 1997/04/18 18:49:36 ragge Exp $	*/
+/*	$OpenBSD: ka630.c,v 1.4 1997/09/12 09:30:55 maja Exp $	*/
+/*	$NetBSD: ka630.c,v 1.7 1997/07/26 10:12:46 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,6 +53,7 @@
 #include <machine/uvax.h>
 #include <machine/ka630.h>
 #include <machine/clock.h>
+#include <vax/vax/gencons.h>
 
 static struct uvaxIIcpu *uvaxIIcpu_ptr;
 
@@ -60,6 +61,10 @@ static void ka630_conf __P((struct device *, struct device *, void *));
 static void ka630_memerr __P((void));
 static int ka630_mchk __P((caddr_t));
 static void ka630_steal_pages __P((void));
+static void ka630_halt __P((void));
+static void ka630_reboot __P((int));
+
+extern	short *clk_page;
 
 struct	cpu_dep ka630_calls = {
 	ka630_steal_pages,
@@ -73,7 +78,9 @@ struct	cpu_dep ka630_calls = {
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
-
+	0,
+	ka630_halt,
+	ka630_reboot,
 };
 
 /*
@@ -140,7 +147,6 @@ void
 ka630_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
-	extern	short *clk_page;
 	extern	int clk_adrshift, clk_tweak;
 	int	junk;
 
@@ -176,4 +182,21 @@ ka630_steal_pages()
 	 */
 	UVAXIICPU->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
 	    UVAXIIMSER_LEB);
+}
+
+static void
+ka630_halt()
+{
+	((struct ka630clock *)clk_page)->cpmbx = KA630CLK_DOTHIS|KA630CLK_HALT;
+	asm("halt");
+}
+
+static void
+ka630_reboot(arg)
+	int arg;
+{
+	((struct ka630clock *)clk_page)->cpmbx =
+	    KA630CLK_DOTHIS | KA630CLK_REBOOT;
+	mtpr(GC_BOOT, PR_TXDB);
+	asm("movl %0,r5;halt"::"g"(arg));
 }

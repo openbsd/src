@@ -1,5 +1,5 @@
-/*      $OpenBSD: vm_machdep.c,v 1.10 1997/09/10 12:04:53 maja Exp $       */
-/*      $NetBSD: vm_machdep.c,v 1.31 1997/03/09 16:00:06 ragge Exp $       */
+/*      $OpenBSD: vm_machdep.c,v 1.11 1997/09/12 09:30:57 maja Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.33 1997/07/06 22:38:22 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -288,9 +288,12 @@ again:
 	return; /* New process! */
 
 idle:	
+	p = curproc;
+	curproc = NULL;		/* This is nice. /BQT */
 	spl0();
 	while (whichqs == 0)
 		;
+	curproc = p;
 	goto again;
 }
 

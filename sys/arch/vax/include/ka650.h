@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka650.h,v 1.6 1997/09/10 11:47:07 maja Exp $	*/
-/*	$NetBSD: ka650.h,v 1.5 1997/02/12 17:50:36 ragge Exp $	*/
+/*	$OpenBSD: ka650.h,v 1.7 1997/09/12 09:21:21 maja Exp $	*/
+/*	$NetBSD: ka650.h,v 1.6 1997/07/26 10:12:43 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -196,6 +196,7 @@ struct ka650_ssc {
 #define CPMB650_HALT	0x03	/* Halt */
 #define CPMB650_BIP	0x04	/* Bootstrap in progress */
 #define CPMB650_RIP	0x08	/* Restart in progress */
+#define	CPMB650_DOTHIS	0x30	/* Execute sommand */
 #define CPMB650_LANG	0xf0	/* Language field */
 
 /*

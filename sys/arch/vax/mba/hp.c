@@ -1,5 +1,5 @@
-/*	$OpenBSD: hp.c,v 1.7 1997/09/10 11:52:26 maja Exp $ */
-/*	$NetBSD: hp.c,v 1.14 1997/03/15 16:32:18 ragge Exp $ */
+/*	$OpenBSD: hp.c,v 1.8 1997/09/12 09:23:59 maja Exp $ */
+/*	$NetBSD: hp.c,v 1.15 1997/06/24 01:09:37 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

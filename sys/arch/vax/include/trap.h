@@ -1,5 +1,5 @@
-/*      $OpenBSD: trap.h,v 1.8 1997/09/10 11:47:11 maja Exp $     */
-/*      $NetBSD: trap.h,v 1.15 1997/02/16 20:37:29 ragge Exp $     */
+/*      $OpenBSD: trap.h,v 1.9 1997/09/12 09:21:25 maja Exp $     */
+/*      $NetBSD: trap.h,v 1.16 1997/07/28 21:48:36 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,6 +50,7 @@
 #define	T_PRIVINFLT	1	/* privileged instruction */
 #define	T_RESOPFLT	2	/* reserved operand */
 #define	T_BPTFLT	3	/* breakpoint instruction */
+#define	T_XFCFLT	4	/* Customer reserved instruction */
 #define	T_SYSCALL	5	/* system call (kcall) */
 #define	T_ARITHFLT	6	/* arithmetic trap */
 #define	T_ASTFLT	7	/* system forced exception */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscp_tape.c,v 1.2 1997/05/29 00:05:03 niklas Exp $ */
-/*	$NetBSD: mscp_tape.c,v 1.4 1997/01/11 11:20:35 ragge Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.3 1997/09/12 09:25:52 maja Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.5 1997/07/04 11:58:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,6 +65,7 @@ struct mt_softc {
 	int	mt_inuse;	/* Locks the tape drive for others */
 	int	mt_waswrite;	/* Last operation was a write op */
 	int	mt_serex;	/* Got serious exception */
+	int	mt_ioctlerr;	/* Error after last ioctl */
 };
 
 #define	MT_OFFLINE	0
@@ -85,7 +86,7 @@ int	mtread __P((dev_t, struct uio *));
 int	mtwrite __P((dev_t, struct uio *));
 int	mtioctl __P((dev_t, int, caddr_t, int, struct proc *));
 int	mtdump __P((dev_t, daddr_t, caddr_t, size_t));
-void	mtcmd __P((struct mt_softc *, int));
+int	mtcmd __P((struct mt_softc *, int, int, int));
 void	mtcmddone __P((struct device *, struct mscp *));
 
 struct	mscp_device mt_device = {
@@ -228,14 +229,14 @@ mtclose(dev, flags, fmt, p)
 	 * If we just have finished a writing, write EOT marks.
 	 */
 	if ((flags & FWRITE) && mt->mt_waswrite) {
-		mtcmd(mt, MTWEOF);
-		mtcmd(mt, MTWEOF);
-		mtcmd(mt, MTBSR);
+		mtcmd(mt, MTWEOF, 0, 0);
+		mtcmd(mt, MTWEOF, 0, 0);
+		mtcmd(mt, MTBSR, 1, 0);
 	}
 	if (mtnorewind(dev) == 0)
-		mtcmd(mt, MTREW);
+		mtcmd(mt, MTREW, 0, 1);
 	if (mt->mt_serex)
-		mtcmd(mt, -1);
+		mtcmd(mt, -1, 0, 0);
 
 	mt->mt_inuse = 0; /* Release the tape */
 	return 0;
@@ -257,6 +258,7 @@ mtstrategy(bp)
 		goto bad;
 	}
 
+	mt->mt_waswrite = bp->b_flags & B_READ ? 0 : 1;
 	mscp_strategy(bp, mt->mt_dev.dv_parent);
 	return;
 
@@ -419,17 +421,20 @@ mtioctl(dev, cmd, data, flag, p)
 	register struct mt_softc *mt = mt_cd.cd_devs[unit];
 	struct	mtop *mtop;
 	struct	mtget *mtget;
-	int error = 0, i;
+	int error = 0, i, count;
 
+	count = mtop->mt_count;
 
 	switch (cmd) {
 
 	case MTIOCTOP:
 		mtop = (void *)data;
-		i = mtop->mt_count;
-		while (i-- > 0)
-			mtcmd(mt, mtop->mt_op);
-		break;
+		if (mtop->mt_op == MTWEOF) {
+			while (mtop->mt_count-- > 0)
+				if ((error = mtcmd(mt, mtop->mt_op, 0, 0)))
+					break;
+		} else
+			error = mtcmd(mt, mtop->mt_op, mtop->mt_count, 0);
 
 	case MTIOCGET:
 		mtget = (void *)data;
@@ -460,11 +465,15 @@ mtdump(dev, blkno, va, size)
 /*
  * Send a command to the tape drive. Wait until the command is
  * finished before returning.
+ * This routine must only be called when there are no data transfer
+ * active on this device. Can we be sure of this? Or does the ctlr
+ * queue up all command packets and take them in sequential order?
+ * It sure would be nice if my manual stated this... /ragge
  */
-void
-mtcmd(mt, cmd)
+int
+mtcmd(mt, cmd, count, complete)
 	struct mt_softc *mt;
-	int cmd;
+	int cmd, count, complete;
 {
 	struct mscp *mp;
 	struct mscp_softc *mi = (void *)mt->mt_dev.dv_parent;
@@ -472,6 +481,7 @@ mtcmd(mt, cmd)
 
 	mp = mscp_getcp(mi, MSCP_WAIT);
 
+	mt->mt_ioctlerr = 0;
 	mp->mscp_unit = mt->mt_hwunit;
 	mp->mscp_cmdref = -1;
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
@@ -485,8 +495,7 @@ mtcmd(mt, cmd)
 		mp->mscp_modifier = M_MD_REVERSE;
 	case MTFSF:
 		mp->mscp_opcode = M_OP_POS;
-		mp->mscp_modifier |= M_MD_OBJCOUNT;
-		mp->mscp_seq.seq_buffer = 1;
+		mp->mscp_seq.seq_buffer = count;
 		break;
 
 	case MTBSR:
@@ -494,13 +503,25 @@ mtcmd(mt, cmd)
 	case MTFSR:
 		mp->mscp_opcode = M_OP_POS;
 		mp->mscp_modifier |= M_MD_OBJCOUNT;
-		mp->mscp_seq.seq_bytecount = 1;
+		mp->mscp_seq.seq_bytecount = count;
 		break;
 
 	case MTREW:
 		mp->mscp_opcode = M_OP_POS;
 		mp->mscp_modifier = M_MD_REWIND | M_MD_CLSEX;
+		if (complete)
+			mp->mscp_modifier |= M_MD_IMMEDIATE;
 		mt->mt_serex = 0;
+		break;
+
+	case MTOFFL:
+		mp->mscp_opcode = M_OP_AVAILABLE;
+		mp->mscp_modifier = M_MD_UNLOAD | M_MD_CLSEX;
+		mt->mt_serex = 0;
+		break;
+
+	case MTNOP:
+		mp->mscp_opcode = M_OP_GETUNITST;
 		break;
 
 	case -1: /* Clear serious exception only */
@@ -517,6 +538,7 @@ mtcmd(mt, cmd)
 
 	i = *mi->mi_ip;
 	tsleep(&mt->mt_inuse, PRIBIO, "mtioctl", 0);
+	return mt->mt_ioctlerr;
 }
 
 /*
@@ -529,8 +551,10 @@ mtcmddone(usc, mp)
 {
 	struct mt_softc *mt = (void *)usc;
 
-	if (mp->mscp_status)
+	if (mp->mscp_status) {
+		mt->mt_ioctlerr = EIO;
 		printf("%s: bad status %x\n", mt->mt_dev.dv_xname,
 		    mp->mscp_status);
+	}
 	wakeup(&mt->mt_inuse);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: disksubr.c,v 1.8 1997/08/08 21:46:57 niklas Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.11 1997/01/11 11:24:51 ragge Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.9 1997/09/12 09:30:54 maja Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 1997/07/06 22:38:26 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,11 +54,6 @@
 #include <arch/vax/mscp/mscp.h> /* For disk encoding scheme */
 
 #define b_cylin b_resid
-
-int	cpu_setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
-	    struct cpu_disklabel *));
-int	cpu_writedisklabel __P((dev_t, void (*)(struct buf *),
-	    struct disklabel *, struct cpu_disklabel *));
 
 /*
  * Determine the size of the transfer, and make sure it is
@@ -115,36 +110,6 @@ bad:
 }
 
 /*
- * Check new disk label for sensibility
- * before setting it.
- */
-int
-setdisklabel(olp, nlp, openmask, osdep)
-	register struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
-{
-	return cpu_setdisklabel(olp, nlp, openmask, osdep);
-}
-
-
-/*
- * Write disk label back to device after modification.
- */
-int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	register struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-{
-	return cpu_writedisklabel(dev, strat, lp, osdep);
-}
-/*
- *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- */
-
-/*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
  * The label must be partly set up before this:
@@ -163,12 +128,12 @@ readdisklabel(dev, strat, lp, osdep)
 	struct disklabel *dlp;
 	char *msg = NULL;
 
-	if (lp->d_secperunit == 0)
+	if (lp->d_npartitions == 0) { /* Assume no label */
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+		lp->d_npartitions = 3;
+		lp->d_partitions[2].p_size = 0x1fffffff;
+		lp->d_partitions[2].p_offset = 0;
+	}
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
@@ -208,7 +173,7 @@ readdisklabel(dev, strat, lp, osdep)
  * before setting it.
  */
 int
-cpu_setdisklabel(olp, nlp, openmask, osdep)
+setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
@@ -247,9 +212,10 @@ cpu_setdisklabel(olp, nlp, openmask, osdep)
 
 /*
  * Write disk label back to device after modification.
+ * Always allow writing of disk label; even if the disk is unlabeled.
  */
 int
-cpu_writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
@@ -257,37 +223,22 @@ cpu_writedisklabel(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	int labelpart;
 	int error = 0;
 
-	labelpart = DISKPART(dev);
-	if (lp->d_partitions[labelpart].p_offset != 0) {
-		if (lp->d_partitions[0].p_offset != 0)
-			return (EXDEV);			/* not quite right */
-		labelpart = 0;
-	}
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
+	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
 	if ((error = biowait(bp)))
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
-			*dlp = *lp;
-			bp->b_flags = B_WRITE;
-			(*strat)(bp);
-			error = biowait(bp);
-			goto done;
-		}
-	}
-	error = ESRCH;
+	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	bcopy(lp, dlp, sizeof(struct disklabel));
+	bp->b_flags = B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
+
 done:
 	brelse(bp);
 	return (error);

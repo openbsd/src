@@ -1,5 +1,5 @@
-/*      $OpenBSD: psl.h,v 1.3 1997/05/29 00:04:47 niklas Exp $      */
-/*      $NetBSD: psl.h,v 1.5 1996/01/28 12:32:21 ragge Exp $      */
+/*      $OpenBSD: psl.h,v 1.4 1997/09/12 09:21:23 maja Exp $      */
+/*      $NetBSD: psl.h,v 1.6 1997/06/07 12:15:28 ragge Exp $      */
 
 /*
  * Rewritten for the VAX port. Based on Berkeley code. /IC
@@ -87,7 +87,7 @@
 #define	PSL_S		0x02000000     	/* executive mode */
 #define	PSL_U		0x03000000	/* user mode */
 #define	PSL_IS		0x04000000	/* interrupt stack select */
-#define	PSL_FPD	        0x04000000	/* first part done flag */
+#define	PSL_FPD	        0x08000000	/* first part done flag */
 #define PSL_TP          0x40000000      /* trace pending */
 #define	PSL_CM		0x80000000	/* compatibility mode */
 
@@ -107,7 +107,7 @@
 #define	CLKF_USERMODE(framep)	((((framep)->ps) & (PSL_U)) == PSL_U)
 #define	CLKF_BASEPRI(framep)	((((framep)->ps) & (PSL_IPL1F)) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	0
+#define	CLKF_INTR(framep)	((((framep)->ps) & (PSL_IS)) == PSL_IS)
 #define PSL2IPL(ps)             ((ps) >> 16)
 
 #endif

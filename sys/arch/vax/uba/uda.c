@@ -1,5 +1,5 @@
-/*	$OpenBSD: uda.c,v 1.8 1997/09/10 11:58:35 maja Exp $	*/
-/*	$NetBSD: uda.c,v 1.24 1997/03/12 19:42:30 ragge Exp $	*/
+/*	$OpenBSD: uda.c,v 1.9 1997/09/12 09:28:14 maja Exp $	*/
+/*	$NetBSD: uda.c,v 1.25 1997/07/04 13:26:02 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -279,7 +279,7 @@ udaattach(parent, self, aux)
 	ma.ma_ip = &sc->sc_udadev->udaip;
 	ma.ma_sa = ma.ma_sw = &sc->sc_udadev->udasa;
 	ma.ma_ivec = ivec_no;
-	ma.ma_ctlrnr = (ua->ua_iaddr == 0772150 ? 0 : 1);	/* XXX */
+	ma.ma_ctlrnr = (ua->ua_iaddr == 0172150 ? 0 : 1);	/* XXX */
 	ma.ma_adapnr = uh->uh_nr;
 	config_found(&sc->sc_dev, &ma, udaprint);
 }

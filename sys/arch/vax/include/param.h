@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.8 1997/09/10 11:47:09 maja Exp $ */
-/*      $NetBSD: param.h,v 1.23 1997/02/24 23:23:06 fvdl Exp $    */
+/*	$OpenBSD: param.h,v 1.9 1997/09/12 09:21:22 maja Exp $ */
+/*      $NetBSD: param.h,v 1.24 1997/08/05 13:28:51 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -192,11 +192,13 @@
 #define vunmapbuf(p,q)
 #endif
 
+#ifdef _KERNEL
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
 void	delay __P((int));
 #endif
 
 #define	DELAY(x) delay(x)
+#endif /* _KERNEL */
 
 #endif /* _VAX_PARAM_H_ */

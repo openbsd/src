@@ -1,5 +1,5 @@
-/*      $OpenBSD: cpu.h,v 1.7 1997/09/10 11:47:05 maja Exp $      */
-/*      $NetBSD: cpu.h,v 1.23 1997/03/15 15:09:41 ragge Exp $      */
+/*      $OpenBSD: cpu.h,v 1.8 1997/09/12 09:21:19 maja Exp $      */
+/*      $NetBSD: cpu.h,v 1.24 1997/07/26 10:12:40 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -60,6 +60,8 @@ struct	cpu_dep {
 	u_char  *cpu_intclr;	/* Used on some VAXstations */
 	u_char  *cpu_intmsk;	/* Used on some VAXstations */
 	struct	uc_map *cpu_map; /* Map containing important addresses */
+	void	(*cpu_halt) __P((void)); /* Cpu dependent halt call */
+	void	(*cpu_reboot) __P((int)); /* Cpu dependent reboot call */
 };
 
 extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */

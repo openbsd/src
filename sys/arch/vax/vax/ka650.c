@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka650.c,v 1.5 1997/09/10 12:04:47 maja Exp $	*/
-/*	$NetBSD: ka650.c,v 1.9 1997/02/19 10:04:16 ragge Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.6 1997/09/12 09:30:55 maja Exp $	*/
+/*	$NetBSD: ka650.c,v 1.10 1997/07/26 10:12:48 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -58,6 +58,8 @@
 #include <machine/nexus.h>
 #include <machine/sid.h>
 
+#include <vax/vax/gencons.h>
+
 struct	ka650_merr *ka650merr_ptr;
 struct	ka650_cbd *ka650cbd_ptr;
 struct	ka650_ssc *ka650ssc_ptr;
@@ -69,6 +71,8 @@ static	int subtyp;
 #define	CACHEON		1
 
 void	ka650setcache __P((int));
+static void ka650_halt __P((void));
+static void ka650_reboot __P((int));
 
 struct	cpu_dep	ka650_calls = {
 	uvaxIII_steal_pages,
@@ -82,7 +86,9 @@ struct	cpu_dep	ka650_calls = {
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
-
+	0,
+	ka650_halt,
+	ka650_reboot,
 };
 
 /*
@@ -159,9 +165,9 @@ uvaxIII_steal_pages()
 	pmap_map((vm_offset_t)ka650cbd_ptr, (vm_offset_t)KA650_CBD,
 	    KA650_CBD + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	MAPVIRT(ka650ssc_ptr, 1); /* SSC regs (& console prog mail box) */
+	MAPVIRT(ka650ssc_ptr, 3); /* SSC regs (& console prog mail box) */
 	pmap_map((vm_offset_t)ka650ssc_ptr, (vm_offset_t)KA650_SSC,
-	    KA650_SSC + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    KA650_SSC + NBPG * 3, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(ka650ipcr_ptr, 1); /* InterProcessor Com Regs */
 	pmap_map((vm_offset_t)ka650ipcr_ptr, (vm_offset_t)KA650_IPCR,
@@ -325,3 +331,20 @@ ka650setcache(state)
 		mtpr(CADR_SEN2 | CADR_SEN1 | CADR_CENI | CADR_CEND, PR_CADR);
 	}
 }
+
+static void
+ka650_halt()
+{
+	ka650ssc_ptr->ssc_cpmbx = CPMB650_DOTHIS | CPMB650_HALT;
+	asm("halt");
+}
+
+static void
+ka650_reboot(arg)
+	int arg;
+{
+	ka650ssc_ptr->ssc_cpmbx = CPMB650_DOTHIS | CPMB650_REBOOT;
+	mtpr(GC_BOOT, PR_TXDB);
+	asm("movl %0,r5;halt"::"g"(arg));
+}
+

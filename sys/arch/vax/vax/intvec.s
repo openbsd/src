@@ -1,5 +1,5 @@
-/*	$OpenBSD: intvec.s,v 1.7 1997/09/10 12:04:45 maja Exp $   */
-/*	$NetBSD: intvec.s,v 1.22 1997/03/22 23:02:07 ragge Exp $   */
+/*	$OpenBSD: intvec.s,v 1.8 1997/09/12 09:30:54 maja Exp $   */
+/*	$NetBSD: intvec.s,v 1.23 1997/07/28 21:48:35 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -94,7 +94,7 @@ _rpb:
 	INTVEC(invkstk, ISTACK) # Kernel Stack Invalid., 8
 	INTVEC(stray0C, ISTACK) # Power Failed., C
 	INTVEC(privinflt, KSTACK)	# Privileged/Reserved Instruction.
-	INTVEC(stray14, ISTACK) # Customer Reserved Instruction, 14
+	INTVEC(xfcflt, KSTACK)		# Customer Reserved Instruction, 14
 	INTVEC(resopflt, KSTACK)	# Reserved Operand/Boot Vector(?), 18
 	INTVEC(resadflt, KSTACK)	# # Reserved Address Mode., 1C
 	INTVEC(access_v, KSTACK)	# Access Control Violation, 20
@@ -204,7 +204,7 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	STRAY(0,0C)
 
 	TRAPCALL(privinflt, T_PRIVINFLT)
-	STRAY(0,14)
+	TRAPCALL(xfcflt, T_XFCFLT);
 	TRAPCALL(resopflt, T_RESOPFLT)
 	TRAPCALL(resadflt, T_RESADFLT)
 
