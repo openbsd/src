@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.73 2003/10/27 20:58:17 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.74 2003/10/29 19:01:11 matthieu Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -100,7 +100,6 @@
 struct pool wdc_xfer_pool;
 
 void  __wdcerror(struct channel_softc *, char *);
-void  __wdcdo_reset(struct channel_softc *);
 int   __wdcwait_reset(struct channel_softc *, int);
 void  __wdccommand_done(struct channel_softc *, struct wdc_xfer *);
 void  __wdccommand_start(struct channel_softc *, struct wdc_xfer *);
@@ -658,7 +657,10 @@ wdcprobe(chp)
 	}
 
 	/* reset the channel */
-	__wdcdo_reset(chp);
+	CHP_WRITE_REG(chp,wdr_ctlr, WDCTL_RST | WDCTL_4BIT);
+	delay(10);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
+	delay(2000);
 
 	ret_value = __wdcwait_reset(chp, ret_value);
 	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
@@ -822,10 +824,9 @@ wdcattach(chp)
 		if (i == 1 && ((chp->ch_drive[0].drive_flags & DRIVE) == 0))
 			chp->ch_flags |= WDCF_ONESLAVE;
 		/*
-		 * Wait a bit, some devices are weird just after a reset.
-		 * Then issue a IDENTIFY command, to try to detect slave ghost.
+		 * Issue an IDENTIFY command in order to distinct ATA from OLD.
+		 * This also kill ATAPI ghost.
 		 */
-		delay(5000);
 		if (ata_get_params(&chp->ch_drive[i], at_poll, &drvp->id) ==
 		    CMD_OK) {
 			/* If IDENTIFY succeeded, this is not an OLD ctrl */
@@ -1032,7 +1033,10 @@ wdcreset(chp, verb)
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
-	__wdcdo_reset(chp);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_RST | WDCTL_4BIT);
+	delay(10);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
+	delay(2000);
 
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
@@ -1050,35 +1054,22 @@ wdcreset(chp, verb)
 	return (drv_mask1 != drv_mask2) ? 1 : 0;
 }
 
-void
-__wdcdo_reset(struct channel_softc *chp)
-{
-	wdc_set_drive(chp, 0);
-	DELAY(10);
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS | WDCTL_RST);
-	delay(10000);
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
-	delay(10000);
-}
-
 int
 __wdcwait_reset(chp, drv_mask)
 	struct channel_softc *chp;
 	int drv_mask;
 {
 	int timeout;
-	u_int8_t st0, er0, st1, er1;
+	u_int8_t st0, st1;
 
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST; timeout++) {
 		wdc_set_drive(chp, 0);
 		delay(10);
 		st0 = CHP_READ_REG(chp, wdr_status);
-		er0 = CHP_READ_REG(chp, wdr_error);
 		wdc_set_drive(chp, 1);
 		delay(10);
 		st1 = CHP_READ_REG(chp, wdr_status);
-		er1 = CHP_READ_REG(chp, wdr_error);
 
 		if ((drv_mask & 0x01) == 0) {
 			/* no master */
@@ -1106,10 +1097,10 @@ __wdcwait_reset(chp, drv_mask)
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 end:
-	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, er0=0x%x, "
-	    "st1=0x%x, er1=0x%x, reset time=%d msec\n",
+	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, st1=0x%x, "
+			"reset time=%d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-	    st0, er0, st1, er1, timeout * WDCDELAY / 1000), DEBUG_PROBE);
+	    st0, st1, timeout*WDCDELAY/1000), DEBUG_PROBE);
 
 	return drv_mask;
 }
@@ -1261,21 +1252,6 @@ wdc_probe_caps(drvp, params)
 	struct wdc_softc *wdc = chp->wdc;
 	int i, valid_mode_found;
 	int cf_flags = drvp->cf_flags;
-
-	if ((wdc->cap & WDC_CAPABILITY_SATA) != 0 &&
-	    (params->atap_sata_caps != 0x0000 &&
-	    params->atap_sata_caps != 0xffff)) {
-		WDCDEBUG_PRINT(("%s: atap_sata_caps=0x%x\n", __func__,
-		    params->atap_sata_caps), DEBUG_PROBE);
-
-		/* Skip ATA modes detection for native SATA drives */
-		drvp->PIO_mode = drvp->PIO_cap = 4;
-		drvp->DMA_mode = drvp->DMA_cap = 2;
-		drvp->UDMA_mode = drvp->UDMA_cap = 5;
-		drvp->drive_flags |= DRIVE_SATA | DRIVE_MODE | DRIVE_UDMA;
-		drvp->ata_vers = 4;
-		return;
-	}
 
 	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
