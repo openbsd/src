@@ -1164,7 +1164,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip6.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_ah.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_auth.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_compat.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_fil_compat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_ecn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_esp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_ether.ph

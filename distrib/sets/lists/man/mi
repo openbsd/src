@@ -2031,3 +2031,6 @@
 ./usr/share/man/cat4/usscanner.0
 ./usr/share/man/cat4/uyap.0
 ./usr/share/man/cat4/upl.0
+./usr/share/man/cat8/i386/wsconscfg.0
+./usr/share/man/cat8/i386/wsconsctl.0
+./usr/share/man/cat8/i386/wsfontload.0

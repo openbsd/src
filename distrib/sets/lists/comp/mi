@@ -851,7 +851,7 @@
 ./usr/include/netinet/ip6.h
 ./usr/include/netinet/ip_ah.h
 ./usr/include/netinet/ip_auth.h
-./usr/include/netinet/ip_compat.h
+./usr/include/netinet/ip_fil_compat.h
 ./usr/include/netinet/ip_ecn.h
 ./usr/include/netinet/ip_esp.h
 ./usr/include/netinet/ip_ether.h
