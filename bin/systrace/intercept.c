@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.21 2002/08/01 20:16:45 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.22 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/tree.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -485,7 +486,7 @@ intercept_replace(int fd, pid_t pid, struct intercept_replace *repl)
 char *
 intercept_get_string(int fd, pid_t pid, void *addr)
 {
-	static char name[MAXPATHLEN];
+	static char name[_POSIX2_LINE_MAX];
 	int off = 0, done = 0;
 
 	do {

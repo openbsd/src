@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.9 2002/07/30 06:07:06 itojun Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -190,6 +190,7 @@ get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 	int i, off = 0, len;
 	extern struct intercept_system intercept;
 
+	i = 0;
 	buf[0] = '\0';
 	while (1) {
 		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
@@ -209,6 +210,7 @@ get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 		strlcat(buf, p, sizeof(buf));
 
 		off += sizeof(char *);
+		i++;
 	}
 	
 	len = strlen(buf) + 1;
