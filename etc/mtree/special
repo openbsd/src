@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.30 2001/02/27 15:07:26 todd Exp $
+#	$OpenBSD: special,v 1.31 2001/03/16 15:39:08 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -32,7 +32,6 @@ group		type=file mode=0644 uname=root gname=wheel
 hosts		type=file mode=0644 uname=root gname=wheel
 hosts.equiv	type=file mode=0600 uname=root gname=wheel optional
 inetd.conf	type=file mode=0644 uname=root gname=wheel
-primes		type=file mode=0644 uname=root gname=wheel
 ipf.rules	type=file mode=0644 uname=root gname=wheel optional
 kerberosIV	type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#kerberosIV
@@ -53,18 +52,27 @@ special		type=file mode=0600 uname=root gname=wheel
 netstart	type=file mode=0644 uname=root gname=wheel
 passwd		type=file mode=0644 uname=root gname=wheel
 passwd.conf	type=file mode=0644 uname=root gname=wheel
+primes		type=file mode=0644 uname=root gname=wheel
 printcap	type=file mode=0644 uname=root gname=wheel
 rc		type=file mode=0644 uname=root gname=wheel
 rc.conf		type=file mode=0644 uname=root gname=wheel
 rc.local	type=file mode=0644 uname=root gname=wheel
 rc.securelevel	type=file mode=0644 uname=root gname=wheel
 rc.shutdown	type=file mode=0644 uname=root gname=wheel
-security	type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
+security	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 skeykeys	type=file mode=0600 uname=root gname=wheel optional
 spwd.db		type=file mode=0600 uname=root gname=wheel
+ssh_config	type=file mode=0644 uname=root gname=wheel
+ssh_host_dsa_key	type=file mode=0600 uname=root gname=wheel optional
+ssh_host_dsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
+ssh_host_key	type=file mode=0600 uname=root gname=wheel optional
+ssh_host_key.pub	type=file mode=0644 uname=root gname=wheel optional
+ssh_host_rsa_key	type=file mode=0600 uname=root gname=wheel optional
+ssh_host_rsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
+sshd_config	type=file mode=0644 uname=root gname=wheel
 syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
 weekly		type=file mode=0644 uname=root gname=wheel
