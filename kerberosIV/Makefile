@@ -1,17 +1,13 @@
-#	$OpenBSD: Makefile,v 1.7 1996/11/11 05:35:12 downsj Exp $
+#	$OpenBSD: Makefile,v 1.8 1996/11/15 09:21:23 downsj Exp $
 #	from @(#)Makefile	5.1 (Berkeley) 6/25/90
 
-# do mk_cmds first, used by other directories
-
-.ifnmake install
-SUBDIR=	mk_cmds
-.endif
+SUBDIR=
 
 .ifmake includes
 SUBDIR+=include
 .endif
 
-SUBDIR+=acl des krb kadm kafs kdb ss
+SUBDIR+=acl des krb kadm kafs kdb
 
 SUBDIR+=ext_srvtab kadmin kadmind kdb_destroy kdb_edit kdb_init kdb_util \
 	kdestroy kerberos kinit klist kpasswdd kprop kpropd ksrvtgt ksrvutil \
@@ -23,19 +19,12 @@ build:
 	(cd ${.CURDIR}/include && ${MAKE} includes)
 	${MAKE} cleandir
 	${MAKE} includes
-	(cd ${.CURDIR}/mk_cmds && ${MAKE} depend && ${MAKE})
 	(cd ${.CURDIR}/acl && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/des && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/krb && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/kadm && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/kafs && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/kdb && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-	(cd ${.CURDIR}/ss && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-
-# Since depending need to have some dynamically built sources available,
-# we need to build the generators first.
-beforedepend:
-	(cd ${.CURDIR}/mk_cmds && ${MAKE} depend && ${MAKE})
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
