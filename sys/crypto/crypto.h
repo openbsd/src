@@ -41,7 +41,8 @@
 #define BLOWFISH_BLOCK_LEN      8
 #define SKIPJACK_BLOCK_LEN      8
 #define CAST128_BLOCK_LEN       8
-#define EALG_MAX_BLOCK_LEN      8  /* Keep this updated */
+#define RIJNDAEL128_BLOCK_LEN  16
+#define EALG_MAX_BLOCK_LEN     16  /* Keep this updated */
 
 /* Maximum hash algorithm result length */
 #define AALG_MAX_RESULT_LEN     20 /* Keep this updated */
@@ -56,8 +57,9 @@
 #define CRYPTO_RIPEMD160_HMAC96 8
 #define CRYPTO_MD5_KPDK         9
 #define CRYPTO_SHA1_KPDK        10
+#define CRYPTO_RIJNDAEL128_CBC  11 /* 128 bit blocksize */
 
-#define CRYPTO_ALGORITHM_MAX    10 /* Keep this updated */
+#define CRYPTO_ALGORITHM_MAX    11 /* Keep this updated */
 
 /* Standard initialization structure beginning */
 struct cryptoini

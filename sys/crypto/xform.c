@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.1 2000/03/17 10:25:21 angelos Exp $	*/
+/*	$OpenBSD: xform.c,v 1.2 2000/06/18 08:37:11 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -50,6 +50,7 @@
 #include <crypto/blf.h>
 #include <crypto/cast.h>
 #include <crypto/skipjack.h>
+#include <crypto/rijndael.h>
 #include <crypto/crypto.h>
 #include <crypto/xform.h>
 
@@ -62,21 +63,25 @@ void des3_setkey(u_int8_t **, u_int8_t *, int);
 void blf_setkey(u_int8_t **, u_int8_t *, int);
 void cast5_setkey(u_int8_t **, u_int8_t *, int);
 void skipjack_setkey(u_int8_t **, u_int8_t *, int);
+void rijndael128_setkey(u_int8_t **, u_int8_t *, int);
 void des1_encrypt(caddr_t, u_int8_t *);
 void des3_encrypt(caddr_t, u_int8_t *);
 void blf_encrypt(caddr_t, u_int8_t *);
 void cast5_encrypt(caddr_t, u_int8_t *);
 void skipjack_encrypt(caddr_t, u_int8_t *);
+void rijndael128_encrypt(caddr_t, u_int8_t *);
 void des1_decrypt(caddr_t, u_int8_t *);
 void des3_decrypt(caddr_t, u_int8_t *);
 void blf_decrypt(caddr_t, u_int8_t *);
 void cast5_decrypt(caddr_t, u_int8_t *);
 void skipjack_decrypt(caddr_t, u_int8_t *);
+void rijndael128_decrypt(caddr_t, u_int8_t *);
 void des1_zerokey(u_int8_t **);
 void des3_zerokey(u_int8_t **);
 void blf_zerokey(u_int8_t **);
 void cast5_zerokey(u_int8_t **);
 void skipjack_zerokey(u_int8_t **);
+void rijndael128_zerokey(u_int8_t **);
 
 int MD5Update_int(void *, u_int8_t *, u_int16_t);
 int SHA1Update_int(void *, u_int8_t *, u_int16_t);
@@ -131,6 +136,16 @@ struct enc_xform enc_xform_skipjack =
     skipjack_decrypt,
     skipjack_setkey,
     skipjack_zerokey
+};
+
+struct enc_xform enc_xform_rijndael128 =
+{
+    CRYPTO_RIJNDAEL128_CBC, "Rijndael-128",
+    16, 8, 32, 16,
+    rijndael128_encrypt,
+    rijndael128_decrypt,
+    rijndael128_setkey,
+    rijndael128_zerokey,
 };
 
 /* Authentication instances */
@@ -323,6 +338,36 @@ skipjack_zerokey(u_int8_t **sched)
 	    FREE(((u_int8_t **)(*sched))[k], M_XDATA);
 	}
     bzero(*sched, 10 * sizeof(u_int8_t *));
+    FREE(*sched, M_XDATA);
+    *sched = NULL;
+}
+
+void
+rijndael128_encrypt(caddr_t key, u_int8_t *blk)
+{
+    rijndael_encrypt((rijndael_ctx *) key, (u4byte *) blk, (u4byte *) blk);
+}
+
+void
+rijndael128_decrypt(caddr_t key, u_int8_t *blk)
+{
+    rijndael_decrypt(((rijndael_ctx *) key) + 1, (u4byte *) blk,
+                     (u4byte *) blk);
+}
+
+void
+rijndael128_setkey(u_int8_t **sched, u_int8_t *key, int len)
+{
+    MALLOC(*sched, u_int8_t *, 2 * sizeof(rijndael_ctx), M_XDATA, M_WAITOK);
+    bzero(*sched, 2 * sizeof(rijndael_ctx));
+    rijndael_set_key((rijndael_ctx *) *sched, (u4byte *) key, len * 8, 1);
+    rijndael_set_key(((rijndael_ctx *) *sched) + 1, (u4byte *) key, len * 8, 0);
+}
+
+void
+rijndael128_zerokey(u_int8_t **sched)
+{
+    bzero(*sched, 2 * sizeof(rijndael_ctx));
     FREE(*sched, M_XDATA);
     *sched = NULL;
 }

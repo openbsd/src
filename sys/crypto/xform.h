@@ -64,6 +64,7 @@ extern struct enc_xform enc_xform_3des;
 extern struct enc_xform enc_xform_blf;
 extern struct enc_xform enc_xform_cast5;
 extern struct enc_xform enc_xform_skipjack;
+extern struct enc_xform enc_xform_rijndael128;
 
 extern struct auth_hash auth_hash_key_md5;
 extern struct auth_hash auth_hash_key_sha1;

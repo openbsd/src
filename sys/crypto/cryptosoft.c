@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.9 2000/06/06 06:49:47 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.10 2000/06/18 08:37:11 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -396,7 +396,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 	  swcr_sesnum *= 2;
 
 	MALLOC(swd, struct swcr_data **,
-	       swcr_sesnum * sizeof(struct swcr_data *), M_XDATA, M_DONTWAIT);
+	       swcr_sesnum * sizeof(struct swcr_data *), M_XDATA, M_NOWAIT);
 	if (swd == NULL)
 	{
 	    /* Reset session number */
@@ -427,7 +427,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
     while (cri)
     {
 	MALLOC(*swd, struct swcr_data *, sizeof(struct swcr_data), M_XDATA,
-	       M_DONTWAIT);
+	       M_NOWAIT);
 	if (*swd == NULL)
 	{
 	    swcr_freesession(i);
@@ -461,7 +461,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		txf->setkey(&((*swd)->sw_kschedule), cri->cri_key,
 			    cri->cri_klen / 8);
 		MALLOC((*swd)->sw_iv, u_int8_t *, txf->blocksize, M_XDATA,
-		       M_DONTWAIT);
+		       M_NOWAIT);
 		if ((*swd)->sw_iv == NULL)
 		{
 		    swcr_freesession(i);
@@ -486,7 +486,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 
 	authcommon:
 		MALLOC((*swd)->sw_ictx, u_int8_t *, axf->ctxsize, M_XDATA,
-		       M_DONTWAIT);
+		       M_NOWAIT);
 		if ((*swd)->sw_ictx == NULL)
 		{
 		    swcr_freesession(i);
@@ -494,7 +494,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		}
 
 		MALLOC((*swd)->sw_octx, u_int8_t *, axf->ctxsize, M_XDATA,
-		       M_DONTWAIT);
+		       M_NOWAIT);
 		if ((*swd)->sw_octx == NULL)
 		{
 		    swcr_freesession(i);
@@ -534,7 +534,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 
 	auth2common:
 		MALLOC((*swd)->sw_ictx, u_int8_t *, axf->ctxsize, M_XDATA,
-		       M_DONTWAIT);
+		       M_NOWAIT);
 		if ((*swd)->sw_ictx == NULL)
 		{
 		    swcr_freesession(i);

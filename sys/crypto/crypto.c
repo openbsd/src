@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.9 2000/06/18 03:08:56 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.10 2000/06/18 08:37:10 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -165,7 +165,7 @@ crypto_get_driverid(void)
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 	MALLOC(crypto_drivers, struct cryptocap *, 
 	       crypto_drivers_num * sizeof(struct cryptocap), M_XDATA,
-	       M_DONTWAIT);
+	       M_NOWAIT);
 	if (crypto_drivers == NULL)
 	{
 	    crypto_drivers_num = 0;
@@ -190,7 +190,7 @@ crypto_get_driverid(void)
 
 	MALLOC(newdrv, struct cryptocap *,
 	       2 * crypto_drivers_num * sizeof(struct cryptocap),
-	       M_XDATA, M_DONTWAIT);
+	       M_XDATA, M_NOWAIT);
 	if (newdrv == NULL)
 	  return -1;
 
@@ -409,7 +409,7 @@ crypto_getreq(int num)
     if (cryptop_queue == NULL)
     {
         MALLOC(crp, struct cryptop *, sizeof(struct cryptop), M_XDATA,
-	       M_DONTWAIT);
+	       M_NOWAIT);
         if (crp == NULL)
         {
             splx(s);
@@ -430,7 +430,7 @@ crypto_getreq(int num)
         if (cryptodesc_queue == NULL)
 	{
 	    MALLOC(crd, struct cryptodesc *, sizeof(struct cryptodesc),
-		   M_XDATA, M_DONTWAIT);
+		   M_XDATA, M_NOWAIT);
 	    if (crd == NULL)
 	    {
                 splx(s);
