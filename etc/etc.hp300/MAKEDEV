@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.8 2002/05/16 21:11:20 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.9 2002/09/06 21:48:34 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.51 2002/08/29 23:43:16 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -278,8 +278,7 @@ ite*)
 grf*)
 	case $U in
 	0|1|2|3)
-		M grf$U c 10 $U
-#		echo "grf$U: use MAKEDEV.hpux to make HP-UX names for device"
+		M grf$U c 10 $U 600
 		;;
 	*)
 		echo bad unit for grf in: $i
@@ -287,10 +286,10 @@ grf*)
 	esac
 	;;
 
-hil*)
+hil)
 	for U in 0 1 2 3 4 5 6 7
 	do
-		M hil$U c 14 $U
+		M hil$U c 14 $U 600
 	done
 	MKlist="$MKlist;ln hil1 keyboard"
 	MKlist="$MKlist;ln hil3 locator"
