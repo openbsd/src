@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.48 2004/11/26 14:02:00 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.49 2004/11/26 14:25:51 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -99,6 +99,13 @@ Configuration files for the authenticating gateway user shell (see
 .It disklabels/
 Backup disklabels (see
 .Xr disklabel 8 ) .
+.It firmware/
+Firmware files for various devices.
+.It fonts/
+Configuration files for X11 window system fonts.
+.It hotplug/
+Scripts for the hotplug daemon,
+.Xr hotplugd 8 .
 .It isakmpd/
 Configuration files for
 .Xr isakmpd 8 .
@@ -122,7 +129,7 @@ List of radius servers and their associated shared secrets for
 .Xr login_radius 8 .
 .It skel/
 Example
-.Dq \&.
+.Sq .\&
 (dot) files for new accounts.
 .It sliphome/
 Configuration files for
