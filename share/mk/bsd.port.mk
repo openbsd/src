@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.58 1999/01/08 23:45:48 pattonme Exp $
+#	$OpenBSD: bsd.port.mk,v 1.59 1999/01/24 02:04:20 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.58 1999/01/08 23:45:48 pattonme Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.59 1999/01/24 02:04:20 marc Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -1253,9 +1253,10 @@ do-configure:
 .if defined(HAS_CONFIGURE)
 	@(cd ${WRKSRC} && CC="${CC}" ac_cv_path_CC="${CC}" CFLAGS="${CFLAGS}" \
 		CXX="${CXX}" ac_cv_path_CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" \
-	    INSTALL="/usr/bin/install -c -o ${BINOWN} -g ${BINGRP}" \
-	    INSTALL_PROGRAM="${INSTALL_PROGRAM}" \
-	    ${CONFIGURE_ENV} ./${CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
+		INSTALL="/usr/bin/install -c -o ${BINOWN} -g ${BINGRP}" \
+		INSTALL_PROGRAM="${INSTALL_PROGRAM}" INSTALL_MAN="${INSTALL_MAN}" \
+		INSTALL_SCRIPT="${INSTALL_SCRIPT}" INSTALL_DATA="${INSTALL_DATA}" \
+		${CONFIGURE_ENV} ./${CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
 .endif
 .if defined(USE_IMAKE)
 	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${XMKMF})
