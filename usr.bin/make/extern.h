@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 1999/12/06 22:28:44 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 1999/12/06 23:16:56 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@ void For_Run  __P((void));
 
 /* main.c */
 void Main_ParseArgLine __P((char *));
-int main __P((int, char **));
 char *Cmd_Exec __P((char *, char **));
 void Error __P((char *, ...));
 void Fatal __P((char *, ...));
