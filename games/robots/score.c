@@ -1,3 +1,4 @@
+/*	$OpenBSD: score.c,v 1.3 1997/02/05 18:28:36 kstailey Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
