@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.146 2005/03/23 14:45:44 damien Exp $
+$OpenBSD: usbdevs,v 1.147 2005/03/25 18:09:15 mickey Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -637,6 +637,7 @@ product BBELECTRONICS USOTL4	0xAC01	uLinks RS-422/485
 /*product BELKIN F5U111		0x????	F5U111 Ethernet */
 product BELKIN2 F5U002		0x0002	F5U002 Parallel
 product BELKIN F5D6050		0x0050	F5D6050 802.11b Wireless adapter
+product BELKIN FBT003V		0x0084	FBT003v2 Bluetooth
 product BELKIN F5U103		0x0103	F5U103 Serial
 product BELKIN F5U109		0x0109	F5U109 Serial
 product BELKIN F5U409		0x0409	F5U409 Serial
@@ -1362,6 +1363,7 @@ product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet
 product NETGEAR2 MA101		0x4100	MA101
 product NETGEAR2 MA101B		0x4102	MA101 Rev B
 product NETGEAR MA111NA		0x4110  802.11b
+product NETGEAR MA111V2		0x4230  802.11b V2
 
 /* Nikon products */
 product NIKON E990		0x0102	E990
