@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.8 1998/03/12 04:53:15 art Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.9 1998/03/25 18:43:49 art Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.8 1998/03/12 04:53:15 art Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.9 1998/03/25 18:43:49 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,10 @@ struct	socket_security ss;
 #if	defined(AUTHENTICATION)
 #include <libtelnet/auth.h>
 int	auth_level = 0;
+#endif
+#if	defined(ENCRYPTION)
+#include <libtelnet/encrypt.h>
+#include <libtelnet/misc-proto.h>
 #endif
 #if	defined(SecurID)
 int	require_SecurID = 0;
@@ -539,6 +543,7 @@ main(argc, argv)
 	net = 0;
 	doit(&from);
 	/* NOTREACHED */
+	return (0);
 }  /* end of main */
 
 	void
@@ -810,7 +815,7 @@ extern void telnet P((int, int, char *));
 doit(who)
 	struct sockaddr_in *who;
 {
-	char *host, *inet_ntoa();
+	char *host = NULL, *inet_ntoa();
 	struct hostent *hp;
 	int level;
 	int ptynum;

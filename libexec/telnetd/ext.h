@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.4 1998/03/12 04:53:10 art Exp $	*/
+/*	$OpenBSD: ext.h,v 1.5 1998/03/25 18:43:44 art Exp $	*/
 /*	$NetBSD: ext.h,v 1.6 1996/02/28 20:38:13 thorpej Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ extern int
 	getpty P((int *)),
 #endif
 	login_tty P((int)),
+	output_data P((const char *, ...)),
 	spcset P((int, cc_t *, cc_t **)),
 	stilloob P((int)),
 	terminit P((void)),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: state.c,v 1.6 1998/03/12 04:53:12 art Exp $	*/
+/*	$OpenBSD: state.c,v 1.7 1998/03/25 18:43:46 art Exp $	*/
 /*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
 
 /*
@@ -39,13 +39,16 @@
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: state.c,v 1.6 1998/03/12 04:53:12 art Exp $";
+static char rcsid[] = "$OpenBSD: state.c,v 1.7 1998/03/25 18:43:46 art Exp $";
 #endif
 #endif /* not lint */
 
 #include "telnetd.h"
 #if	defined(AUTHENTICATION)
 #include <libtelnet/auth.h>
+#endif
+#if	defined(ENCRYPTION)
+#include <libtelnet/encrypt.h>
 #endif
 
 unsigned char	doopt[] = { IAC, DO, '%', 'c', 0 };

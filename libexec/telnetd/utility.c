@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.10 1998/03/12 04:53:17 art Exp $	*/
+/*	$OpenBSD: utility.c,v 1.11 1998/03/25 18:43:50 art Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,13 +39,19 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.10 1998/03/12 04:53:17 art Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.11 1998/03/25 18:43:50 art Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/utsname.h>
 #define PRINTOPTIONS
 #include "telnetd.h"
+#if defined(AUTHENTICATION)
+#include <libtelnet/auth.h>
+#endif
+#if defined(ENCRYPTION)
+#include <libtelnet/encrypt.h>
+#endif
 
 /*
  * utility functions performing io related tasks
@@ -548,7 +554,7 @@ printsub(direction, pointer, length)
     unsigned char	*pointer;	/* where suboption data sits */
     int			length;		/* length of suboption data */
 {
-    register int i;
+    register int i = 0;
     char buf[512];
 
 	if (!(diagnostic & TD_OPTIONS))
