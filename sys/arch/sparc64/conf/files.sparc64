@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.8 2001/08/21 21:42:30 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.9 2001/08/22 12:24:48 art Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -20,12 +20,24 @@ file	dev/ic/hme.c			hme
 
 include "dev/sun/files.sun"
 include "dev/sbus/files.sbus"
+include "dev/i2o/files.i2o"
+include "dev/mii/files.mii"
 
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
 
+device psycho: pcibus
+attach psycho at mainbus
+include "dev/pci/files.pci"
+file	arch/sparc64/dev/psycho.c		psycho
+file	arch/sparc64/dev/pci_machdep.c		psycho
+
 # IOMMU is for both
 file	arch/sparc64/dev/iommu.c		sbus | psycho
+
+device ebus {[addr = -1]}: pcibus
+attach ebus at pci
+file	arch/sparc64/dev/ebus.c			ebus
 
 device clock: mk48txx
 attach clock at mainbus, sbus with clock_sbus
@@ -117,11 +129,6 @@ file	arch/sparc64/sparc64/db_trace.c	ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
 
 file	arch/sparc64/dev/md_root.c	memory_disk_hooks
-
-#
-# Media Indepedent Interface (mii)
-#
-include "../../../dev/mii/files.mii"
 
 #
 # Machine-independent SCSI drivers

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 2001/08/21 21:42:30 jason Exp $
+#	$OpenBSD: GENERIC,v 1.10 2001/08/22 12:24:48 art Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -21,6 +21,11 @@ cpu0	at mainbus0
 # Bus types found on SPARC systems.
 
 sbus0	at mainbus0				# Ultra 1
+psycho*	at mainbus0
+pci*	at psycho?				# Ultra 5
+pci*	at ppb?
+ppb*	at pci? dev ? function ?
+ebus*	at pci?
 
 #### Standard system devices -- all required for a given architecture
 
