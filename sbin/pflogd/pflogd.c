@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.1 2001/08/21 22:29:14 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.2 2001/08/22 14:49:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -44,7 +44,6 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <fcntl.h>
-#include "util.h"
 
 #define DEF_SNAPLEN 96		/* default plus allow for larger header of pflog */
 #define PCAP_TO_MS 500		/* pcap read timeout (ms) */
@@ -170,7 +169,9 @@ reset_dump(void)
 		logmsg(LOG_ERR, "Error: %s\n", pcap_geterr(hpcap));
 		return 1;
 	}
-	if (st.st_size == 0)
+
+	dpcap = (pcap_dumper_t *)fp;
+	if (st.st_size != 0)
 		return (0);
 
 #define TCPDUMP_MAGIC 0xa1b2c3d4
@@ -183,8 +184,11 @@ reset_dump(void)
 	hdr.sigfigs = 0;
 	hdr.linktype = hpcap->linktype;
 
-	if (fwrite((char *)&hdr, sizeof(hdr), 1, fp) != 1)
+	if (fwrite((char *)&hdr, sizeof(hdr), 1, fp) != 1) {
+		dpcap = NULL;
+		fclose(fp);
 		return (-1);
+	}
 	return (0);
 }
 
