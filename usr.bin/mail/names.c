@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.9 1997/11/14 00:23:53 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.10 2000/03/23 19:32:13 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.9 1997/11/14 00:23:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.10 2000/03/23 19:32:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -504,12 +504,11 @@ unpack(np)
 		errx(1, "No names to unpack");
 	/*
 	 * Compute the number of extra arguments we will need.
-	 * We need at least two extra -- one for "mail" and one for
-	 * the terminating 0 pointer.  Additional spots may be needed
-	 * to pass along -f to the host mailer.
+	 * We need at least four extra -- one for "send-mail", one for the
+	 * "-i" flag, one for the "--" to signal end of command line
+	 * arguments, and one for the terminating 0 pointer.
 	 */
-	extra = 2;
-	extra++;
+	extra = 4;
 	metoo = value("metoo") != NULL;
 	if (metoo)
 		extra++;
@@ -524,6 +523,7 @@ unpack(np)
 		*ap++ = "-m";
 	if (verbose)
 		*ap++ = "-v";
+	*ap++ = "--";
 	for (; n != NIL; n = n->n_flink)
 		if ((n->n_type & GDEL) == 0)
 			*ap++ = n->n_name;
