@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: fabs.S,v 1.3 2003/01/07 22:01:29 miod Exp $"
+	.string "$OpenBSD: fabs.S,v 1.4 2004/07/22 08:52:36 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "DEFS.h"
@@ -40,11 +40,11 @@
  */
 
 ENTRY(fabs)
-	subu	r31,r31,40
-	st.d	r2,r31,32
-	ld.bu	r4,r31,32
+	subu	r31,r31,16
+	st.d	r2,r31,0
+	ld.bu	r4,r31,0
 	mask	r4,r4,0x7f	/* set sign bit to 0 */
-	st.b	r4,r31,32
-	ld.d	r2,r31,32
+	st.b	r4,r31,0
+	ld.d	r2,r31,0
 	jmp.n	r1
-	 addu	r31,r31,40
+	 addu	r31,r31,16
