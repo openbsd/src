@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wait.2,v 1.18 2004/01/12 15:25:37 jmc Exp $
+.\"	$OpenBSD: wait.2,v 1.19 2004/03/11 18:58:39 millert Exp $
 .\"	$NetBSD: wait.2,v 1.6 1995/02/27 12:39:37 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -63,8 +63,8 @@ On return from a successful
 .Fn wait
 call, the
 .Fa status
-area contains termination information about the process that exited
-as defined below.
+area, if non-zero, is filled in with termination information about the
+process that exited (see below).
 .Pp
 The
 .Fn wait4
