@@ -1,8 +1,11 @@
-.\"	$OpenBSD: mknod.8,v 1.7 1999/04/18 19:40:41 millert Exp $
-.\"	$NetBSD: mknod.8,v 1.9 1995/08/10 23:47:32 jtc Exp $
+.\"	$OpenBSD: mkfifo.1,v 1.1 1999/04/18 19:40:41 millert Exp $
+.\"	$NetBSD: mkfifo.1,v 1.4 1994/12/23 07:16:54 jtc Exp $
 .\"
-.\" Copyright (c) 1980, 1991, 1993
+.\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the Institute of Electrical and Electronics Engineers, Inc.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -32,81 +35,60 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)mknod.8	8.2 (Berkeley) 12/11/93
+.\"     @(#)mkfifo.1	8.2 (Berkeley) 1/5/94
 .\"
-.Dd April 18, 1999
-.Dt MKNOD 8
-.Os
+.Dd January 5, 1994
+.Dt MKFIFO 1
+.Os BSD 4.4
 .Sh NAME
-.Nm mknod
-.Nd build special file
+.Nm mkfifo
+.Nd make FIFOs
 .Sh SYNOPSIS
-.Nm mknod
+.Nm mkfifo
 .Op Fl m Ar mode
-.Ar name
-.Op Cm c | Cm b
-.Ar major minor
-.Nm mknod
-.Op Fl m Ar mode
-.Ar name
-.Cm p
+.Ar fifo_name  ...
 .Sh DESCRIPTION
+.Nm mkfifo
+creates the FIFOs requested, in the order specified,
+using mode
+.Li \&0666 
+modified by the current
+.Xr umask 2 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl m Ar mode
+Set the file permission bits of newly-created directories to
+.Ar mode .
+The mode is specified as in 
+.Xr chmod 1 .
+In symbolic mode strings, the 
+.Dq + 
+and 
+.Dq -
+operators are interpreted relative to an assumed initial mode of 
+.Dq a=rw .
+.El
+.Pp
+.Nm mkfifo
+requires write permission in the parent directory.
+.Pp
+The
+.Nm mkfifo
+utility exits 0 on success or >0 if an error occurred.
+.Sh SEE ALSO
+.Xr mkdir 1 ,
+.Xr rm 1 ,
+.Xr mkfifo 2 ,
+.Xr mknod 8
+.Sh STANDARDS
+The
+.Nm mkfifo
+utility is expected to be
+.St -p1003.2-92
+compliant.
+.Sh HISTORY
 The
 .Nm
-command creates device special files.
-Normally the shell script
-.Pa /dev/MAKEDEV
-is used to create special files for commonly known devices; it executes
-.Nm
-with the appropriate arguments and can make all the files required for the
-device.
-.Pp
-To make nodes manually, the arguments are:
-.Bl -tag -width majorx
-.It Ar name
-Device or FIFO name.  For example
-.Dq sd
-for a SCSI disk or a
-.Dq pty
-for pseudo-devices.  FIFOs may be named arbitrarily by the user.
-.It Cm b | Cm c | Cm p
-Type of device or FIFO. If the
-device is a block type device such as a tape or disk drive which needs
-both cooked and raw special files,
-the type is
-.Cm b .
-All other devices are character type devices, such as terminal
-and pseudo devices, and are type
-.Cm c .
-A FIFO (also known as a named pipe) is type
-.Cm p .
-.It Ar major
-The major device number is an integer number which tells the kernel
-which device driver entry point to use.  To learn what
-major device number to use for a particular device, check the file
-.Pa /dev/MAKEDEV
-to see if the device is known.
-.It Ar minor
-The minor device number tells the kernel which subunit
-the node corresponds to on the device; for example,
-a subunit may be a filesystem partition
-or a tty line.
-.Pp
-Major and minor device numbers can be given in any format acceptable to
-.Xr strtoul 3 ,
-so that a leading
-.Dq 0x
-indicates a hexadecimal number, and a leading
-.Dq 0
-will cause the number to be interpreted as octal.
-.El
-.Sh SEE ALSO
-.Xr mkfifo 1 ,
-.Xr mkfifo 2 ,
-.Xr mknod 2 ,
-.Xr MAKEDEV 8
-.Sh HISTORY
-A
-.Nm
 command appeared in
-.At v6 .
+.Bx 4.4 .
