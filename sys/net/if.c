@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.30 2000/03/22 11:28:42 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.31 2000/05/05 07:58:15 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -99,6 +99,7 @@
 #ifndef INET
 #include <netinet/in.h>
 #endif
+#include <netinet6/in6_ifattach.h>
 #endif
 
 #ifdef IPFILTER
@@ -325,6 +326,9 @@ if_detach(ifp)
 #ifdef MROUTING
 	vif_delete(ifp);
 #endif
+#endif
+#ifdef INET6
+	in6_ifdetach(ifp);
 #endif
 	/*
 	 * XXX transient ifp refs?  inpcb.ip_moptions.imo_multicast_ifp?
