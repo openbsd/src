@@ -1,4 +1,4 @@
-/* $OpenBSD: brooktree848.c,v 1.14 1999/11/20 18:51:59 espie Exp $ */
+/* $OpenBSD: brooktree848.c,v 1.15 1999/12/05 23:33:20 deraadt Exp $ */
 /* $Roger: brooktree848.c,v 1.85 1999/06/12 14:54:54 roger Exp $ */
 
 /* BT848 Driver for Brooktree's Bt848, Bt848A, Bt849A, Bt878, Bt879 based cards.
@@ -8578,9 +8578,6 @@ bktr_mmap( dev_t dev, vm_offset_t offset, int nprot )
 		return( -1 );
 
 	bktr = bktr_cd.cd_devs[unit];
-
-	if (nprot & PROT_EXEC)
-		return( -1 );
 
 	if (offset < 0)
 		return( -1 );
