@@ -1,4 +1,4 @@
-.\"     $OpenBSD: atw.4,v 1.3 2004/06/23 00:17:09 millert Exp $
+.\"     $OpenBSD: atw.4,v 1.4 2004/06/27 19:52:45 millert Exp $
 .\"	$NetBSD: atw.4,v 1.8 2004/06/06 04:05:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003
@@ -94,11 +94,17 @@ For more information on configuring this device, see
 and
 .Xr ifmedia 4 .
 .Sh HARDWARE
-Cards supported by the
+The
 .Nm
-driver include:
+driver supports PCI and Cardbus cards using revision 0x11 and 0x15
+of the ADM8211 (aka ADM8211A).
+This includes:
 .Pp
 .Bl -item -offset indent -compact
+.It
+Belkin F5D6001 PCI card
+.It
+Blitz NetWave Point Cardbus card
 .It
 D-Link DWL-650 Rev. L1 Cardbus card
 .It
@@ -110,6 +116,17 @@ TrendNet TEW-221PC Cardbus card
 .It
 Xterasys XN2511B PCI card
 .It
+.El
+.Pp
+The
+.Nm
+driver does not yet support cards using revision 0x20 (ADM8211B) or
+0x30 (ADM8211C).
+This includes:
+.Pp
+.Bl -item -offset indent -compact
+.It
+SMC 2635W Cardbus card
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
