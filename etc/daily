@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.45 2003/06/30 23:47:14 avsm Exp $
+#	$OpenBSD: daily,v 1.46 2003/07/28 20:58:48 jmc Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -73,10 +73,6 @@ fi
 
 if [ -d /var/msgs -a ! -L /var/msgs ]; then
 	msgs -c
-fi
-
-if [ -s /etc/news.expire ]; then
-	/etc/news.expire
 fi
 
 if [ -f /var/account/acct ]; then
