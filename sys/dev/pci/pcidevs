@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.411 2001/06/25 23:32:20 mickey Exp $
+	$OpenBSD: pcidevs,v 1.412 2001/06/26 21:25:35 smurph Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1382,7 +1382,7 @@ product MATROX MYSTIQUE		0x102b	MGA 1064SG
 /* Motorola products */
 product MOT MPC106		0x0002	MPC106 Host-PCI
 product MOT SM56		0x5600	SM56
-
+product MOT RAVEN		0x4801	Raven Host-PCI
 /* Mylex products */
 product MYLEX 960P		0x0001	DAC960P RAID
 

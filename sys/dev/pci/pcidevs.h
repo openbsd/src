@@ -1387,7 +1387,7 @@
 /* Motorola products */
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 Host-PCI */
 #define	PCI_PRODUCT_MOT_SM56	0x5600		/* SM56 */
-
+#define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host-PCI */
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID */
 

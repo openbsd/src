@@ -2539,6 +2539,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SM56",
 	},
 	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_RAVEN,
+	    "Raven Host-PCI",
+	},
+	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
 	    "DAC960P RAID",
 	},
