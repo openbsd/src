@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ping6.8,v 1.13 2000/11/11 00:45:38 itojun Exp $
-.\"	$KAME: ping6.8,v 1.31 2000/11/11 00:40:56 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.14 2001/03/12 03:45:30 itojun Exp $
+.\"	$KAME: ping6.8,v 1.36 2001/03/12 03:38:56 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -189,7 +189,7 @@ mode of behavior.
 Only the super-user may use this option.
 .It Fl n
 Numeric output only.
-No attempt will be made to lookup symbolic names for host addresses.
+No attempt will be made to lookup symbolic names from addresses in the reply.
 .It Fl N
 Probe node information multicast group
 .Pq Li ff02::2:xxxx:xxxx .
@@ -212,11 +212,6 @@ For example,
 .Dq Li \-p ff
 will cause the sent packet to be filled with all
 ones.
-.Fl Q
-flag,
-.Nm
-prints out any ICMP error messages caused by its own ECHO_REQUEST
-messages.
 .\" new ipsec
 .\".It Fl P Ar policy
 .\".Ar policy
