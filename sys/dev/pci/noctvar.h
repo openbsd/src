@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctvar.h,v 1.5 2002/07/16 03:59:17 jason Exp $	*/
+/*	$OpenBSD: noctvar.h,v 1.6 2002/07/21 05:09:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -74,6 +74,7 @@ struct noct_softc {
 	bus_space_handle_t sc_sh;
 	bus_dma_tag_t sc_dmat;
 	void *sc_ih;
+	bus_size_t sc_rar_last, sc_waw_last;
 	u_int sc_ramsize;
 	int32_t sc_cid;			/* cryptodev id */
 
@@ -101,13 +102,10 @@ struct noct_softc {
 	SIMPLEQ_HEAD(,noct_workq)	sc_outq;
 };
 
-#define	NOCT_READ_4(sc,r) \
-    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
-#define	NOCT_WRITE_4(sc,r,v) \
-    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (r), (v))
-
-#define	NOCT_READ_8(sc,r) noct_read_8(sc, r)
-#define	NOCT_WRITE_8(sc,r,v) noct_write_8(sc, r, v)
+#define	NOCT_READ_4(sc,r)	noct_read_4((sc), (r))
+#define	NOCT_WRITE_4(sc,r,v)	noct_write_4((sc), (r), (v))
+#define	NOCT_READ_8(sc,r)	noct_read_8((sc), (r))
+#define	NOCT_WRITE_8(sc,r,v)	noct_write_8((sc), (r), (v))
 
 #define	NOCT_CARD(sid)		(((sid) & 0xf0000000) >> 28)
 #define	NOCT_SESSION(sid)	( (sid) & 0x0fffffff)
