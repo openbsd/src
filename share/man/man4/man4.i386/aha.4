@@ -45,21 +45,8 @@ driver provides support for the following SCSI adapters:
 .It Tekram DC-320E
 .It Tekram DC-380
 .El
-.Sh BUGS
-The
-.Nm
-driver can not be used on systems with more than 16 megabytes of
-memory.
-.Pp
-Due to the 24 bit addressing limitation of the ISA bus, The SCSI
-adapter's onboard DMA controller is unable to access memory with
-addresses greater than 16 megabytes.  
-.Pp
-This restriction can be fixed with "bounce buffers", buffers in low
-memory which are used whenever data to be transfered to or from the
-SCSI adapter is above the 16 megabyte threshold.  The data is copied
-to the bounce buffer, then copied from the bounce buffer to its
-destination.
+This driver uses bounce buffers if the machine has more than 16
+megabytes of memory.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sd 4 ,
