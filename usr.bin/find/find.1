@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.42 2004/02/24 07:20:38 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.43 2005/02/07 20:45:40 jaredy Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -40,13 +40,13 @@
 .Sh SYNOPSIS
 .Nm find
 .Op Fl dHhLWXx
-.Op Fl f Ar file
-.Ar file Op Ar ...
+.Op Fl f Ar path
+.Ar path ...\&
 .Op Ar expression
 .Sh DESCRIPTION
 .Nm
 recursively descends the directory tree for each
-.Ar file
+.Ar path
 listed, evaluating an
 .Ar expression
 (composed of the
@@ -73,7 +73,7 @@ visits directories in pre-order, i.e., before their contents.
 Note, the default is
 .Em not
 a breadth-first traversal.
-.It Fl f Ar file
+.It Fl f Ar path
 Specifies a file hierarchy for
 .Nm
 to traverse.
@@ -493,31 +493,36 @@ Primaries which themselves take arguments expect each argument
 to be a separate argument to
 .Nm find .
 .Sh EXAMPLES
-The following examples are shown as given to the shell:
-.Bl -tag -width findx
-.It Li "$ find / \e! -name '*.c' -print"
 Print out a list of all the files whose names do not end in
-.Dq \&.c .
-.It Li "$ find / -newer ttt -user wnj -print"
+.Dq \&.c :
+.Pp
+.Dl "$ find / \e! -name '*.c' -print"
+.Pp
 Print out a list of all the files owned by user
 .Dq wnj
-that are newer
-than the file
-.Dq ttt .
-.It Li "$ find / \e! \e( -newer ttt -user wnj \e) -print"
+that are newer than the file
+.Dq ttt :
+.Pp
+.Dl "$ find / -newer ttt -user wnj -print"
+.Pp
 Print out a list of all the files which are not both newer than
 .Dq ttt
 and owned by
-.Dq wnj .
-.It Li "$ find / \e( -newer ttt -or -user wnj \e) -print"
+.Dq wnj :
+.Pp
+.Dl "$ find / \e! \e( -newer ttt -user wnj \e) -print"
+.Pp
 Print out a list of all the files that are either owned by
 .Dq wnj
 or
 that are newer than
-.Dq ttt .
-.It Li "$ find / \e! -fstype local -prune -or -name '*.core' -print"
-Print out a list of all core files on local file systems.
-.El
+.Dq ttt :
+.Pp
+.Dl "$ find / \e( -newer ttt -or -user wnj \e) -print"
+.Pp
+Print out a list of all core files on local file systems:
+.Pp
+.Dl "$ find / \e! -fstype local -prune -or -name '*.core' -print"
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chmod 1 ,
