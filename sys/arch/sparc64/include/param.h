@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2001/08/18 20:15:34 art Exp $	*/
+/*	$OpenBSD: param.h,v 1.4 2001/09/11 03:50:46 jason Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -68,7 +68,8 @@
  *
  */
 
-
+#ifndef _SPARC64_PARAM_H_
+#define _SPARC64_PARAM_H_
 
 #define	_MACHINE	sparc64
 #define	MACHINE		"sparc64"
@@ -311,3 +312,4 @@ extern int mmumod;
 #define PAGE_SIZE	(1 << PAGE_SHIFT)
 #define PAGE_MASK	(PAGE_SIZE - 1)
 
+#endif	/* _SPARC64_PARAM_H_ */
