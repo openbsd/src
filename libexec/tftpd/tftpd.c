@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.12 1998/07/10 08:06:26 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.13 1999/06/23 17:01:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.12 1998/07/10 08:06:26 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.13 1999/06/23 17:01:36 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -367,7 +367,7 @@ validate_access(filename, mode)
 			return (errno == ENOENT ? ENOTFOUND : EACCESS);
 		else {
 			if ((errno == ENOENT) && (mode != RRQ))
-				wmode = O_CREAT;
+				wmode |= O_CREAT;
 			else
 				return(EACCESS);
 		}
@@ -380,13 +380,13 @@ validate_access(filename, mode)
 				return (EACCESS);
 		}
 	}
-	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|wmode));
+	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|wmode), 0666);
 	if (fd < 0)
 		return (errno + 100);
 	/*
 	 * If the file was created, set default permissions.
 	 */
-	if ((wmode == O_CREAT) && fchmod(fd, 0666) < 0) {
+	if ((wmode & O_CREAT) && fchmod(fd, 0666) < 0) {
 		int serrno = errno;
 
 		close(fd);
