@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.7 2002/02/25 00:15:19 pvalchev Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.8 2002/02/25 00:18:48 pvalchev Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getpar.c,v 1.7 2002/02/25 00:15:19 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: getpar.c,v 1.8 2002/02/25 00:18:48 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ getcodpar(s, tab)
 		if (f)
 			getchar();		/* throw out the newline */
 		scanf("%*[ \t;]");
-		if ((c = scanf("%[^ \t;\n]", input)) < 0)
+		if ((c = scanf("%99[^ \t;\n]", input)) < 0)
 			exit(1);
 		if (c == 0)
 			continue;
