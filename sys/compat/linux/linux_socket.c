@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.19 2001/05/24 06:00:09 jasoni Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.20 2001/06/21 01:43:57 itojun Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -125,6 +125,8 @@ linux_to_bsd_domain(ldom)
 		return AF_IPX;
 	case LINUX_AF_APPLETALK:
 		return AF_APPLETALK;
+	case LINUX_AF_INET6:
+		return AF_INET6;
 	default:
 		return -1;
 	}

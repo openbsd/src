@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.h,v 1.5 2000/07/23 22:35:38 jasoni Exp $	*/
+/*	$OpenBSD: linux_socket.h,v 1.6 2001/06/21 01:43:57 itojun Exp $	*/
 /*	$NetBSD: linux_socket.h,v 1.3 1995/05/28 10:16:34 mycroft Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #define LINUX_AF_AX25		3
 #define LINUX_AF_IPX		4
 #define LINUX_AF_APPLETALK	5
+#define LINUX_AF_INET6		10
 
 /*
  * Option levels for [gs]etsockopt(2). Only SOL_SOCKET is different,
