@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.14 2002/05/22 06:35:44 deraadt Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.15 2002/06/09 04:06:42 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.14 2002/05/22 06:35:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.15 2002/06/09 04:06:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -372,7 +372,7 @@ rusers_service(rqstp, transp)
 		case RUSERSVERS_IDLE:
 		case RUSERSVERS_ORIG:
 			local = (char *(*)(void *, struct svc_req *))
-					rusers_num_svc;
+			    rusers_num_svc;
 			break;
 		default:
 			svcerr_progvers(transp, RUSERSVERS_IDLE, RUSERSVERS_3);
@@ -387,19 +387,19 @@ rusers_service(rqstp, transp)
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
 			local = (char *(*)(void *, struct svc_req *))
-					rusersproc_names_3_svc;
+			    rusersproc_names_3_svc;
 			break;
 
 		case RUSERSVERS_IDLE:
 			xdr_result = (xdrproc_t)xdr_utmpidlearr;
 			local = (char *(*)(void *, struct svc_req *))
-					rusersproc_names_2_svc;
+			    rusersproc_names_2_svc;
 			break;
 
 		case RUSERSVERS_ORIG:
 			xdr_result = (xdrproc_t)xdr_utmpidlearr;
 			local = (char *(*)(void *, struct svc_req *))
-					rusersproc_names_1_svc;
+			    rusersproc_names_1_svc;
 			break;
 
 		default:
@@ -415,19 +415,19 @@ rusers_service(rqstp, transp)
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
 			local = (char *(*)(void *, struct svc_req *))
-					rusersproc_allnames_3_svc;
+			    rusersproc_allnames_3_svc;
 			break;
 
 		case RUSERSVERS_IDLE:
 			xdr_result = (xdrproc_t)xdr_utmpidlearr;
 			local = (char *(*)(void *, struct svc_req *))
-					rusersproc_allnames_2_svc;
+			    rusersproc_allnames_2_svc;
 			break;
 
 		case RUSERSVERS_ORIG:
 			xdr_result = (xdrproc_t)xdr_utmpidlearr;
 			local = (char *(*)(void *, struct svc_req *))
-					rusersproc_allnames_1_svc;
+			    rusersproc_allnames_1_svc;
 			break;
 
 		default:
@@ -447,9 +447,9 @@ rusers_service(rqstp, transp)
 		goto leave;
 	}
 	result = (*local)(&argument, rqstp);
-	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
+	if (result != NULL && !svc_sendreply(transp, xdr_result, result))
 		svcerr_systemerr(transp);
-	}
+
 	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
 		syslog(LOG_ERR, "unable to free arguments");
 		exit(1);

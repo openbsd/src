@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.5 2001/01/28 19:34:32 niklas Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.6 2002/06/09 04:06:42 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusersd.c,v 1.5 2001/01/28 19:34:32 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rusersd.c,v 1.6 2002/06/09 04:06:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@ static char rcsid[] = "$OpenBSD: rusersd.c,v 1.5 2001/01/28 19:34:32 niklas Exp 
 #include <rpcsvc/rnusers.h>	/* Old version */
 #include <rpc/pmap_clnt.h>
 
-extern void rusers_service();
+extern void rusers_service(struct svc_req *, SVCXPRT *);
 
 int from_inetd = 1;
 
@@ -98,15 +98,21 @@ main(argc, argv)
 		exit(1);
 	}
 	if (!svc_register(transp, RUSERSPROG, RUSERSVERS_3, rusers_service, proto)) {
-		syslog(LOG_ERR, "unable to register (RUSERSPROG, RUSERSVERS_3, %s).", proto?"udp":"(inetd)");
+		syslog(LOG_ERR,
+		    "unable to register (RUSERSPROG, RUSERSVERS_3, %s).",
+		    proto ? "udp" : "(inetd)");
 		exit(1);
 	}
 	if (!svc_register(transp, RUSERSPROG, RUSERSVERS_IDLE, rusers_service, proto)) {
-		syslog(LOG_ERR, "unable to register (RUSERSPROG, RUSERSVERS_IDLE, %s).", proto?"udp":"(inetd)");
+		syslog(LOG_ERR,
+		    "unable to register (RUSERSPROG, RUSERSVERS_IDLE, %s).",
+		    proto ? "udp" : "(inetd)");
 		exit(1);
 	}
 	if (!svc_register(transp, RUSERSPROG, RUSERSVERS_ORIG, rusers_service, proto)) {
-		syslog(LOG_ERR, "unable to register (RUSERSPROG, RUSERSVERS_ORIG, %s).", proto?"udp":"(inetd)");
+		syslog(LOG_ERR,
+		    "unable to register (RUSERSPROG, RUSERSVERS_ORIG, %s).",
+		    proto ? "udp" : "(inetd)");
 		exit(1);
 	}
 
