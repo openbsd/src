@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2000/07/08 16:09:33 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2000/07/19 19:30:10 mickey Exp $
 
 PROG=	find
-SRCS=	find.c function.c ls.c main.c misc.c operator.c option.c stat_flags.c
-.PATH:  ${.CURDIR}/../../bin/ls
+SRCS=	find.c function.c ls.c main.c misc.c operator.c option.c
 
 .include <bsd.prog.mk>

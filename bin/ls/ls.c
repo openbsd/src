@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.13 1999/05/01 23:54:47 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.14 2000/07/19 19:27:36 mickey Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.13 1999/05/01 23:54:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.14 2000/07/19 19:27:36 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -495,8 +495,9 @@ display(p, list)
 				if ((glen = strlen(group)) > maxgroup)
 					maxgroup = glen;
 				if (f_flags) {
-					flags =
-					    flags_to_string(sp->st_flags, "-");
+					flags = fflagstostr(sp->st_flags);
+					if (*flags == '\0')
+						flags = "-";
 					if ((flen = strlen(flags)) > maxflags)
 						maxflags = flen;
 				} else
@@ -518,6 +519,8 @@ display(p, list)
 				if (f_flags) {
 					np->flags = &np->data[ulen + glen + 2];
 				  	(void)strcpy(np->flags, flags);
+					if (*flags != '-')
+						free(flags);
 				}
 				cur->fts_pointer = np;
 			}

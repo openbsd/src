@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.22 1999/08/04 18:24:09 mickey Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.23 2000/07/19 19:29:16 mickey Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.22 1999/08/04 18:24:09 mickey Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.23 2000/07/19 19:29:16 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,7 +86,6 @@ void	copy __P((int, char *, int, char *, off_t, int));
 int	compare __P((int, const char *, size_t, int, const char *, size_t));
 void	install __P((char *, char *, u_long, u_int));
 void	install_dir __P((char *));
-u_long	string_to_flags __P((char **, u_long *, u_long *));
 void	strip __P((char *));
 void	usage __P((void));
 int	create_newfile __P((char *, struct stat *));
@@ -100,7 +99,7 @@ main(argc, argv)
 {
 	struct stat from_sb, to_sb;
 	mode_t *set;
-	u_long fset;
+	u_int32_t fset;
 	u_int iflags;
 	int ch, no_target;
 	char *flags, *to_name, *group = NULL, *owner = NULL;
@@ -122,7 +121,7 @@ main(argc, argv)
 			break;
 		case 'f':
 			flags = optarg;
-			if (string_to_flags(&flags, &fset, NULL))
+			if (strtofflags(&flags, &fset, NULL))
 				errx(EX_USAGE, "%s: invalid flag", flags);
 			iflags |= SETFLAGS;
 			break;

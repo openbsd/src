@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2000/03/01 17:27:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2000/07/19 19:28:02 mickey Exp $
 #	$NetBSD: Makefile,v 1.13 1996/02/16 02:07:41 cgd Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
@@ -14,7 +14,7 @@ CLEANFILES+=ftpcmd.c y.tab.h
 
 LSDIR	= ${.CURDIR}/../../bin/ls
 .PATH:	${LSDIR}
-SRCS	+= ls.c cmp.c print.c stat_flags.c util.c
+SRCS	+= ls.c cmp.c print.c util.c
 CFLAGS	+= -I${LSDIR}
 
 # not really used

@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.19 2000/07/08 16:09:34 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.20 2000/07/19 19:30:10 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.19 2000/07/08 16:09:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.20 2000/07/19 19:30:10 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -575,7 +575,7 @@ c_flags(flags_str)
 	char *flags_str;
 {
 	PLAN *new;
-	u_int flags, notflags;
+	u_int32_t flags, notflags;
 
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -586,7 +586,7 @@ c_flags(flags_str)
 		++flags_str;
 	}
 
-	if (string_to_flags(&flags_str, &flags, &notflags) == 1)
+	if (strtofflags(&flags_str, &flags, &notflags) == 1)
 		errx(1, "-flags: %s: illegal flags string", flags_str);
 
 	new->fl_flags = flags;
