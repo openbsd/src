@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.432 2001/08/22 11:55:53 art Exp $
+	$OpenBSD: pcidevs,v 1.433 2001/08/23 05:41:14 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -182,7 +182,7 @@ vendor DG		0x1089	Data General
 vendor BIT3		0x108a	Bit3 Computer Corp.
 vendor ELONEX		0x108c	Elonex PLC c/o Oakleigh Systems
 vendor OLICOM		0x108d	Olicom
-vendor SUN		0x108e	Sun Microsystems
+vendor SUN		0x108e	Sun
 vendor SYSTEMSOFT	0x108f	Systemsoft
 vendor ENCORE		0x1090	Encore Computer
 vendor INTERGRAPH	0x1091	Intergraph
