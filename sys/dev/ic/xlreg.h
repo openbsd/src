@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.12 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.13 2002/06/15 05:14:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -460,12 +460,14 @@ struct xl_chain {
 	struct xl_chain		*xl_next;
 	struct xl_chain		*xl_prev;
 	u_int32_t		xl_phys;
+	bus_dmamap_t		map;
 };
 
 struct xl_chain_onefrag {
 	struct xl_list_onefrag	*xl_ptr;
 	struct mbuf		*xl_mbuf;
 	struct xl_chain_onefrag	*xl_next;
+	bus_dmamap_t		map;
 };
 
 struct xl_chain_data {
@@ -580,12 +582,18 @@ struct xl_softc {
 	u_int8_t		xl_stats_no_timeout;
 	u_int16_t		xl_tx_thresh;
 	int			xl_if_flags;
-	caddr_t			xl_ldata_ptr;
 	struct xl_list_data	*xl_ldata;
 	struct xl_chain_data	xl_cdata;
 	int			xl_flags;
 	void (*intr_ack)(struct xl_softc *);
 	void *			sc_sdhook, *sc_pwrhook;
+	bus_dma_tag_t		sc_dmat;
+	bus_dmamap_t		sc_listmap;
+	bus_dma_segment_t	sc_listseg[1];
+	int			sc_listnseg;
+	caddr_t			sc_listkva;
+	bus_dmamap_t		sc_rx_sparemap;
+	bus_dmamap_t		sc_tx_sparemap;
 };
 
 #define xl_rx_goodframes(x) \
@@ -715,11 +723,6 @@ struct xl_stats {
 #define XL_PSTATE_D3		0x0003
 #define XL_PME_EN		0x0010
 #define XL_PME_STATUS		0x8000
-
-#ifdef __alpha__
-#undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
-#endif
 
 #ifndef ETHER_ALIGN
 #define ETHER_ALIGN 2

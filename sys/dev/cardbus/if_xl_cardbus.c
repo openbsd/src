@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.10 2002/03/14 01:26:53 millert Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.11 2002/06/15 05:14:41 aaron Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -236,6 +236,7 @@ xl_cardbus_attach(parent, self, aux)
 	printf(": 3Com %s", ecp->ecp_name);
 
 	sc->xl_flags = ecp->ecp_flags;
+	sc->sc_dmat = ca->ca_dmat;
 
 	iob = adr;
 	sc->xl_bhandle = ioh;

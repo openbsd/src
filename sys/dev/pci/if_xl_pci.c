@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.11 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.12 2002/06/15 05:14:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -151,6 +151,7 @@ xl_pci_attach(parent, self, aux)
 	bus_size_t iosize;
 	u_int32_t command;
 
+	sc->sc_dmat = pa->pa_dmat;
 	sc->xl_unit = sc->sc_dev.dv_unit;
 
 	sc->xl_flags = 0;
