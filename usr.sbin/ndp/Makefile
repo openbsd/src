@@ -1,12 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 1999/12/10 07:26:56 itojun Exp $
-
-.PATH:	${.CURDIR}/../tcpdump
+# $OpenBSD: Makefile,v 1.2 2004/01/25 20:45:13 deraadt Exp $
 
 PROG=	ndp
 SRCS=	ndp.c gmt2local.c
 MAN=	ndp.8 # ndp.4
 
-CPPFLAGS+=-DINET6
-CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../tcpdump
+CPPFLAGS+=-DINET6 -I${.CURDIR}
 
 .include <bsd.prog.mk>
