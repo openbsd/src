@@ -240,7 +240,7 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	printf("total memory = %s\n", physmem);
+	printf("total memory = %d\n", physmem);
 
 	/*
 	 * Find out how much space we need, allocate it,
