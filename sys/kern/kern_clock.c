@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.27 2000/08/23 20:36:18 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.28 2001/08/19 06:10:09 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -296,13 +296,34 @@ int	shifthz;
 volatile struct	timeval time;
 volatile struct	timeval mono_time;
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+void	*softclock_si;
+void	generic_softclock(void *);
+
+void
+generic_softclock(void *ignore)
+{
+	/*
+	 * XXX - dont' commit, just a dummy wrapper until we learn everyone
+	 *       deal with a changed proto for softclock().
+	 */
+	softclock();
+}
+#endif
+
 /*
  * Initialize clock frequencies and start both clocks running.
  */
 void
 initclocks()
 {
-	register int i;
+	int i;
+
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	softclock_si = softintr_establish(IPL_SOFTCLOCK, generic_softclock, NULL);
+	if (softclock_si == NULL)
+		panic("initclocks: unable to register softclock intr");
+#endif
 
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
@@ -678,10 +699,15 @@ hardclock(frame)
 			 * Save the overhead of a software interrupt;
 			 * it will happen as soon as we return, so do it now.
 			 */
-			(void)spllowersoftclock();
+			spllowersoftclock();
 			softclock();
-		} else
+		} else {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+			softintr_schedule(softclock_si);
+#else
 			setsoftclock();
+#endif
+		}
 	}
 }
 
