@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.4 2000/02/01 17:39:33 fgsch Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.5 2000/02/03 18:47:06 angelos Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -873,17 +873,23 @@ cnw_activate(dev, act)
 	enum devact act;
 {
 	struct cnw_softc *sc = (struct cnw_softc *)dev;
+        struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
+		printf("%s:", sc->sc_dev.dv_xname);
 		sc->sc_ih =
 		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, cnw_intr, sc);
+		printf("\n");
+		cnw_init(sc);
 		break;
 
 	case DVACT_DEACTIVATE:
+		ifp->if_timer = 0;
+		ifp->if_flags &= ~IFF_RUNNING; /* XXX no cnw_stop() ? */
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 		break;
