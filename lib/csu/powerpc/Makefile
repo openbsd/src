@@ -7,7 +7,7 @@ SRCS=		crt0.c crtbegin.c crtbeginS.c crtend.c crtendS.c
 
 ELFDIR=		${.CURDIR}/../common_elf
 .PATH:		${ELFDIR}
-CFLAGS+=	-I${ELFDIR}
+CFLAGS+=	-I${ELFDIR} -I${.CURDIR}
 
 PICFLAG?=-fpic
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.4 2003/12/28 04:11:52 drahn Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.5 2004/01/08 14:59:15 drahn Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 
  */
 #include <stdlib.h>
+#include "md_init.h"
 
 static void (*__CTOR_LIST__[1])(void)
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
@@ -76,9 +77,20 @@ __ctors(void)
 		(**p++)();
 	}
 }
+void _init(void);
+void _fini(void);
+static void _do_init(void);
+static void _do_fini(void);
+
+MD_SECTION_PROLOGUE(".init", _init);
+
+MD_SECTION_PROLOGUE(".fini", _fini);
+
+MD_SECT_CALL_FUNC(".init", _do_init);
+MD_SECT_CALL_FUNC(".fini", _do_fini);
 
 void
-_init(void)
+_do_init(void)
 {
 	static int initialized = 0;
 
@@ -93,7 +105,7 @@ _init(void)
 }
 
 void
-_fini(void)
+_do_fini(void)
 {
 	/*
 	 * since the _init() function sets up the destructors to be called
