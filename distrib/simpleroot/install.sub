@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.8 1999/03/23 07:58:51 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.9 1999/12/05 20:13:40 mickey Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1088,7 +1088,7 @@ __install_tape_1
 		getresp ""
 		case "$resp" in
 			[1-9]*)
-				_nskip=`expr $resp - 1`
+				_nskip=$(( $resp - 1 ))
 				;;
 
 			*)
