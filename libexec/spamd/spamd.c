@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.14 2003/03/02 20:49:10 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.15 2003/03/02 22:30:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -163,6 +163,7 @@ parse_configline(char *line)
 			goto parse_error;
 		default:
 			prev = '\0';
+			break;
 		}
 	}
 
