@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.30 2002/07/20 00:16:21 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.31 2002/07/22 18:17:50 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -564,45 +564,224 @@ MANUALFILES= \
 	manual/vhosts/virtual-host.html
 	
 ICONFILES= \
-	icons/README icons/a.gif icons/alert.black.gif \
-	icons/alert.red.gif icons/apache_pb.gif icons/back.gif \
-	icons/ball.gray.gif icons/ball.red.gif icons/binary.gif \
-	icons/binhex.gif icons/blank.gif icons/bomb.gif icons/box1.gif \
-	icons/box2.gif icons/broken.gif icons/burst.gif icons/c.gif \
-	icons/comp.blue.gif icons/comp.gray.gif icons/compressed.gif \
-	icons/continued.gif icons/dir.gif icons/dvi.gif icons/down.gif \
-	icons/f.gif icons/folder.gif icons/folder.open.gif \
-	icons/folder.sec.gif icons/forward.gif icons/generic.gif \
-	icons/generic.red.gif icons/generic.sec.gif \
-	icons/hand.right.gif icons/hand.up.gif icons/icon.sheet.gif \
-	icons/image1.gif icons/image2.gif icons/image3.gif \
-	icons/index.gif icons/layout.gif icons/left.gif icons/link.gif \
-	icons/movie.gif icons/p.gif icons/patch.gif icons/pdf.gif \
-	icons/pie0.gif icons/pie1.gif icons/pie2.gif icons/pie3.gif \
-	icons/pie4.gif icons/pie5.gif icons/pie6.gif icons/pie7.gif \
-	icons/pie8.gif icons/portal.gif icons/ps.gif icons/quill.gif \
-	icons/right.gif icons/screw1.gif icons/screw2.gif \
-	icons/script.gif icons/sound1.gif icons/sound2.gif \
-	icons/sphere1.gif icons/sphere2.gif icons/tar.gif \
-	icons/tex.gif icons/text.gif icons/transfer.gif \
-	icons/unknown.gif icons/up.gif icons/uu.gif \
-	icons/uuencoded.gif icons/world1.gif icons/world2.gif \
-	icons/small/README.txt icons/small/back.gif \
-	icons/small/binary.gif icons/small/binhex.gif \
-	icons/small/blank.gif icons/small/broken.gif \
-	icons/small/burst.gif icons/small/comp1.gif \
-	icons/small/comp2.gif icons/small/compressed.gif \
-	icons/small/continued.gif icons/small/dir.gif \
-	icons/small/dir2.gif icons/small/doc.gif \
-	icons/small/forward.gif icons/small/generic.gif \
-	icons/small/generic2.gif icons/small/generic3.gif \
-	icons/small/image.gif icons/small/image2.gif \
-	icons/small/index.gif icons/small/key.gif \
-	icons/small/movie.gif icons/small/patch.gif icons/small/ps.gif \
-	icons/small/rainbow.gif icons/small/sound.gif \
-	icons/small/sound2.gif icons/small/tar.gif \
-	icons/small/text.gif icons/small/transfer.gif \
-	icons/small/unknown.gif icons/small/uu.gif  
+	icons/back.gif \
+	icons/README \
+	icons/a.gif \
+	icons/a.png \
+	icons/small/README.txt \
+	icons/small/back.gif \
+	icons/small/back.png \
+	icons/small/binary.gif \
+	icons/small/binary.png \
+	icons/small/binhex.gif \
+	icons/small/binhex.png \
+	icons/small/blank.gif \
+	icons/small/blank.png \
+	icons/small/broken.gif \
+	icons/small/broken.png \
+	icons/small/burst.gif \
+	icons/small/burst.png \
+	icons/small/comp1.gif \
+	icons/small/comp1.png \
+	icons/small/comp2.gif \
+	icons/small/comp2.png \
+	icons/small/compressed.gif \
+	icons/small/compressed.png \
+	icons/small/continued.gif \
+	icons/small/continued.png \
+	icons/small/dir.gif \
+	icons/small/dir.png \
+	icons/small/dir2.gif \
+	icons/small/dir2.png \
+	icons/small/doc.gif \
+	icons/small/doc.png \
+	icons/small/forward.gif \
+	icons/small/forward.png \
+	icons/small/generic.gif \
+	icons/small/generic.png \
+	icons/small/generic2.gif \
+	icons/small/generic2.png \
+	icons/small/generic3.gif \
+	icons/small/generic3.png \
+	icons/small/image.gif \
+	icons/small/image.png \
+	icons/small/image2.gif \
+	icons/small/image2.png \
+	icons/small/index.gif \
+	icons/small/index.png \
+	icons/small/key.gif \
+	icons/small/key.png \
+	icons/small/movie.gif \
+	icons/small/movie.png \
+	icons/small/patch.gif \
+	icons/small/patch.png \
+	icons/small/ps.gif \
+	icons/small/ps.png \
+	icons/small/rainbow.gif \
+	icons/small/rainbow.png \
+	icons/small/sound.gif \
+	icons/small/sound.png \
+	icons/small/sound2.gif \
+	icons/small/sound2.png \
+	icons/small/tar.gif \
+	icons/small/tar.png \
+	icons/small/text.gif \
+	icons/small/text.png \
+	icons/small/transfer.gif \
+	icons/small/transfer.png \
+	icons/small/unknown.gif \
+	icons/small/unknown.png \
+	icons/small/uu.gif \
+	icons/small/uu.png \
+	icons/alert.black.gif \
+	icons/alert.black.png \
+	icons/alert.red.gif \
+	icons/alert.red.png \
+	icons/apache_pb.gif \
+	icons/apache_pb.png \
+	icons/back.png \
+	icons/ball.gray.gif \
+	icons/ball.gray.png \
+	icons/ball.red.gif \
+	icons/ball.red.png \
+	icons/binary.gif \
+	icons/binary.png \
+	icons/binhex.gif \
+	icons/binhex.png \
+	icons/blank.gif \
+	icons/blank.png \
+	icons/bomb.gif \
+	icons/bomb.png \
+	icons/box1.gif \
+	icons/box1.png \
+	icons/box2.gif \
+	icons/box2.png \
+	icons/broken.gif \
+	icons/broken.png \
+	icons/burst.gif \
+	icons/burst.png \
+	icons/c.gif \
+	icons/c.png \
+	icons/comp.blue.gif \
+	icons/comp.blue.png \
+	icons/comp.gray.gif \
+	icons/comp.gray.png \
+	icons/compressed.gif \
+	icons/compressed.png \
+	icons/continued.gif \
+	icons/continued.png \
+	icons/dir.gif \
+	icons/dir.png \
+	icons/diskimg.gif \
+	icons/diskimg.png \
+	icons/dvi.gif \
+	icons/down.gif \
+	icons/down.png \
+	icons/dvi.png \
+	icons/f.gif \
+	icons/f.png \
+	icons/folder.gif \
+	icons/folder.open.gif \
+	icons/folder.open.png \
+	icons/folder.png \
+	icons/folder.sec.gif \
+	icons/folder.sec.png \
+	icons/forward.gif \
+	icons/forward.png \
+	icons/generic.gif \
+	icons/generic.png \
+	icons/generic.red.gif \
+	icons/generic.red.png \
+	icons/generic.sec.gif \
+	icons/generic.sec.png \
+	icons/hand.right.gif \
+	icons/hand.right.png \
+	icons/hand.up.gif \
+	icons/hand.up.png \
+	icons/icon.sheet.gif \
+	icons/icon.sheet.png \
+	icons/image1.gif \
+	icons/image1.png \
+	icons/image2.gif \
+	icons/image2.png \
+	icons/image3.gif \
+	icons/image3.png \
+	icons/index.gif \
+	icons/index.png \
+	icons/layout.gif \
+	icons/layout.png \
+	icons/left.gif \
+	icons/left.png \
+	icons/link.gif \
+	icons/link.png \
+	icons/movie.gif \
+	icons/movie.png \
+	icons/p.gif \
+	icons/p.png \
+	icons/patch.gif \
+	icons/patch.png \
+	icons/pdf.gif \
+	icons/pdf.png \
+	icons/pie0.gif \
+	icons/pie0.png \
+	icons/pie1.gif \
+	icons/pie1.png \
+	icons/pie2.gif \
+	icons/pie2.png \
+	icons/pie3.gif \
+	icons/pie3.png \
+	icons/pie4.gif \
+	icons/pie4.png \
+	icons/pie5.gif \
+	icons/pie5.png \
+	icons/pie6.gif \
+	icons/pie6.png \
+	icons/pie7.gif \
+	icons/pie7.png \
+	icons/pie8.gif \
+	icons/pie8.png \
+	icons/portal.gif \
+	icons/portal.png \
+	icons/ps.gif \
+	icons/ps.png \
+	icons/quill.gif \
+	icons/quill.png \
+	icons/right.gif \
+	icons/right.png \
+	icons/screw1.gif \
+	icons/screw1.png \
+	icons/screw2.gif \
+	icons/screw2.png \
+	icons/script.gif \
+	icons/script.png \
+	icons/sound1.gif \
+	icons/sound1.png \
+	icons/sound2.gif \
+	icons/sound2.png \
+	icons/sphere1.gif \
+	icons/sphere1.png \
+	icons/sphere2.gif \
+	icons/sphere2.png \
+	icons/tar.gif \
+	icons/tar.png \
+	icons/tex.gif \
+	icons/tex.png \
+	icons/text.gif \
+	icons/text.png \
+	icons/transfer.gif \
+	icons/transfer.png \
+	icons/unknown.gif \
+	icons/unknown.png \
+	icons/up.gif \
+	icons/up.png \
+	icons/uu.gif \
+	icons/uu.png \
+	icons/uuencoded.gif \
+	icons/uuencoded.png \
+	icons/world1.gif \
+	icons/world1.png \
+	icons/world2.gif \
+	icons/world2.png
 
 .include <bsd.own.mk>
 
