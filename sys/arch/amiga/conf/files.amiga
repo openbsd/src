@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.22 1997/09/18 13:39:40 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.23 1997/10/07 11:04:54 niklas Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -7,6 +7,17 @@ maxpartitions 16
 
 maxusers 2 8 64
 
+# Transient audio stuff that will end up in the MI parts
+define	new_audio {}
+define	auconv
+
+# audio device, attaches to audio hardware driver
+device	new_audio
+attach	new_audio at new_audio
+
+file dev/auconv.c			auconv
+file arch/amiga/dev/audio.c		new_audio		needs-flag
+	
 device	mainbus {}
 attach	mainbus at root
 
@@ -51,8 +62,8 @@ device	par
 attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
 
-# audio
-device aucc: audio
+# audio		XXX s/new_audio/audio/ after the new audio is generally used.
+device aucc: new_audio
 attach aucc at mainbus
 file   arch/amiga/dev/aucc.c		aucc needs-flag 
 

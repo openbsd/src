@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucc.c,v 1.1 1997/09/18 13:39:42 niklas Exp $	*/
+/*	$OpenBSD: aucc.c,v 1.2 1997/10/07 11:04:56 niklas Exp $	*/
 /*	$NetBSD: aucc.c,v 1.18 1997/08/24 22:31:23 augustss Exp $	*/
 #undef AUDIO_DEBUG
 /*
@@ -40,13 +40,15 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <machine/cpu.h>
 
-#include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <machine/cpu.h>
+#include <machine/audioio.h>
+
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/device.h>
+
+#include <amiga/dev/audio_if.h>
 #include <amiga/dev/auccvar.h>
 
 #ifdef LEV6_DEFER
