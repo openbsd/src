@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.41 2003/12/10 03:30:21 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ static void collate();
 
 static int get_sg_cnt(struct sioc_sg_req6 *);
 static int get_mif6_cnt(struct sioc_mif_req6 *);
-static int ip6_mrouter_init(struct socket *, struct mbuf *, int);
+static int ip6_mrouter_init(struct socket *, int, int);
 static int add_m6if(struct mif6ctl *);
 static int del_m6if(mifi_t *);
 static int add_m6fc(struct mf6cctl *);
@@ -265,20 +265,40 @@ ip6_mrouter_set(cmd, so, m)
 	struct mbuf *m;
 {
 	if (cmd != MRT6_INIT && so != ip6_mrouter)
-		return EACCES;
+		return (EACCES);
 
 	switch (cmd) {
 #ifdef MRT6_OINIT
-	case MRT6_OINIT:	return ip6_mrouter_init(so, m, cmd);
+	case MRT6_OINIT:
 #endif
-	case MRT6_INIT:		return ip6_mrouter_init(so, m, cmd);
-	case MRT6_DONE:		return ip6_mrouter_done();
-	case MRT6_ADD_MIF:	return add_m6if(mtod(m, struct mif6ctl *));
-	case MRT6_DEL_MIF:	return del_m6if(mtod(m, mifi_t *));
-	case MRT6_ADD_MFC:	return add_m6fc(mtod(m, struct mf6cctl *));
-	case MRT6_DEL_MFC:	return del_m6fc(mtod(m, struct mf6cctl *));
-	case MRT6_PIM:		return set_pim6(mtod(m, int *));
-	default:		return EOPNOTSUPP;
+	case MRT6_INIT:
+		if (m == NULL || m->m_len < sizeof(int))
+			return (EINVAL);
+		return (ip6_mrouter_init(so, *mtod(m, int *), cmd));
+	case MRT6_DONE:
+		return (ip6_mrouter_done());
+	case MRT6_ADD_MIF:
+		if (m == NULL || m->m_len < sizeof(struct mif6ctl))
+			return (EINVAL);
+		return (add_m6if(mtod(m, struct mif6ctl *)));
+	case MRT6_DEL_MIF:
+		if (m == NULL || m->m_len < sizeof(mifi_t))
+			return (EINVAL);
+		return (del_m6if(mtod(m, mifi_t *)));
+	case MRT6_ADD_MFC:
+		if (m == NULL || m->m_len < sizeof(struct mf6cctl))
+			return (EINVAL);
+		return (add_m6fc(mtod(m, struct mf6cctl *)));
+	case MRT6_DEL_MFC:
+		if (m == NULL || m->m_len < sizeof(struct mf6cctl))
+			return (EINVAL);
+		return (del_m6fc(mtod(m,  struct mf6cctl *)));
+	case MRT6_PIM:
+		if (m == NULL || m->m_len < sizeof(int))
+			return (EINVAL);
+		return (set_pim6(mtod(m, int *)));
+	default:
+		return (EOPNOTSUPP);
 	}
 }
 
@@ -404,13 +424,11 @@ set_pim6(i)
  * Enable multicast routing
  */
 static int
-ip6_mrouter_init(so, m, cmd)
+ip6_mrouter_init(so, v, cmd)
 	struct socket *so;
-	struct mbuf *m;
+	int v;
 	int cmd;
 {
-	int *v;
-
 #ifdef MRT6DEBUG
 	if (mrt6debug)
 		log(LOG_DEBUG,
@@ -420,16 +438,13 @@ ip6_mrouter_init(so, m, cmd)
 
 	if (so->so_type != SOCK_RAW ||
 	    so->so_proto->pr_protocol != IPPROTO_ICMPV6)
-		return EOPNOTSUPP;
+		return (EOPNOTSUPP);
 
-	if (!m || (m->m_len != sizeof(int *)))
-		return ENOPROTOOPT;
+	if (v != 1)
+		return (ENOPROTOOPT);
 
-	v = mtod(m, int *);
-	if (*v != 1)
-		return ENOPROTOOPT;
-
-	if (ip6_mrouter != NULL) return EADDRINUSE;
+	if (ip6_mrouter != NULL)
+		return (EADDRINUSE);
 
 	ip6_mrouter = so;
 	ip6_mrouter_ver = cmd;
