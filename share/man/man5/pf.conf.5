@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.133 2002/12/02 22:26:16 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.134 2002/12/03 10:47:53 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -39,38 +39,46 @@ The
 packet filter modifies, drops or passes packets according to rules or
 definitions specified in
 .Nm pf.conf .
-A variety of definitions activate features:
 .Pp
+There are six types of statement in 
+.Nm pf.conf :
 .Bl -tag -width xxxx
 .It Macros
-User-defined variables can be set and used later on, resulting in a
-file which is more easily comprehended.
+User-defined variables may be defined and later used, simplifying
+the configuration file.
 .It Options
-Various options can be changed to tune the default behaviour of the engine.
+Options tune the behaviour of the packet filtering engine.
 .It Traffic Normalization (e.g. Pa scrub No )
 Traffic normalization protects internal machines against inconsistancies
-in Internet protocols.
+in Internet protocols and implementations.
 .It Queueing
-A queuing engine allows for filtering rule based bandwidth control.
+Queuing provides rule-based bandwidth control.
 .It Translation (Various forms of NAT)
-Translation rules specify which addresses are to be mapped or redirected.
+Translation rules specify how addresses are to be mapped or redirected to 
+other addresses.
 .It Packet filtering
-Lastly, a stateful and stateless packet filtering can constrain packet flow.
+Stateful and stateless packet filtering provides rule-based blocking or
+passing of packets.
 .El
 .Pp
-In general, the above lines must occur in the order shown because this
-matches the semantics of the underlying engine; in most cases rules
-are evaluated in the order in which they are specified.
+The types of statement should be grouped and appear in
+.Nm pf.conf
+in the order shown above as this matches the operation of the underlying 
+packet filtering engine. By default
+.Xr pfctl 8
+enforces this order (see 
+.Pa set require-order 
+below).
 .Pp
 .Sh MACROS
-Much like in
+Much like
 .Xr cpp 1
 or
 .Xr m4 1 ,
-macros can be set and later expanded.
+macros can be defined that will later be expanded in context.
 Macro names must start with a letter and may contain letters, digits
 and underscores.
-Macro names may not be reserved words (e.g.
+Macro names may not be reserved words (for example
 .Pa pass ,
 .Pa in ,
 .Pa out Ns ).
@@ -85,9 +93,9 @@ For example,
 .Ed
 .Pp
 .Sh OPTIONS
-A variety of global options can be adjusted to tune
+
 .Xr pf 4
-so that it performs better in various situations, using the
+may be tuned for various situations with the
 .Pa set
 command.
 .Pp
@@ -101,14 +109,14 @@ Interval between purging expired states and fragments.
 Seconds before an unassembled fragment is expired.
 .El
 .Pp
-When a packet matches a stateful connection, the seconds to live of the
-connection will be updated to that of the proto.modifier which corresponds
-to the connection state.
+When a packet matches a stateful connection, the seconds to live for the
+connection will be updated to that of the proto.modifier which 
+corresponds to the connection state.
 Each packet which matches this state will reset the TTL.
 Tuning these values may improve the performance of the
-firewall at the risk of dropping valid idled connections.
+firewall at the risk of dropping valid idle connections.
 .Pp
-.Bl -tag -width "tcp.established " -compact
+.Bl -tag -width xxxx -compact
 .It Em tcp.first
 The state after the first packet.
 .It Em tcp.opening
@@ -127,10 +135,10 @@ such packets.
 The state after one endpoint sends a RST.
 .El
 .Pp
-ICMP and UDP are handled in a similar fashion to TCP but with a much more
+ICMP and UDP are handled in a fashion similar to TCP, but with a much more
 limited set of states:
 .Pp
-.Bl -tag -width "udp.multiple " -compact
+.Bl -tag -width xxxx -compact
 .It Em udp.first
 The state after the first packet.
 .It Em udp.single
@@ -146,7 +154,7 @@ The state after an icmp error came back in response to an icmp packet.
 .Pp
 Other protocols are handled similarly to UDP:
 .Pp
-.Bl -tag -width "other.multiple " -compact
+.Bl -tag -width xxxx -compact
 .It Em other.first
 .It Em other.single
 .It Em other.multiple
@@ -172,7 +180,7 @@ collects statistics on the interface named dc0:
     set loginterface dc0
 .Ed
 .Pp
-One can unset the loginterface using
+One can disable the loginterface using:
 .Bd -literal
     set loginterface none
 .Ed
@@ -203,10 +211,9 @@ These can be combined:
     set limit { states 20000, frags 20000 }
 .Ed
 .It Pa set optimization
-Optimize the engine to one of the following network topographies or
-environments:
+Optimize the engine for one of the following network environments:
 .Pp
-.Bl -tag -width "O high-latency " -compact
+.Bl -tag -width xxxx -compact
 .It Pa default
 A normal network environment.
 Suitable for almost all networks.
@@ -219,12 +226,12 @@ A high-latency environment (such as a satellite connection)
 Alias for
 .Pa high-latency
 .It Em aggressive
-Aggressively expire connections when they are likely no longer valid.
+Aggressively expire connections.
 This can greatly reduce the memory usage of the firewall at the cost of
 dropping idle connections early.
 .It Em conservative
 Extremely conservative settings.
-Pains will be taken to avoid dropping legitimate connections at the
+Avoid dropping legitimate connections at the
 expense of greater memory utilization (possibly much greater on a busy
 network) and slightly increased processor utilization.
 .El
@@ -237,16 +244,16 @@ For example:
 .It Pa set block-policy
 The
 .Pa block-policy
-option sets the default behaviour for the
+option sets the default behaviour for the packet
 .Pa block
 action:
 .Pp
-.Bl -tag -width return -compact
+.Bl -tag -width xxxx -compact
 .It Em drop
-Packet is dropped silently
+Packet is silently dropped
 .It Em return
-TCP packets are dropped with a TCP RST, UDP packets are dropped with an
-ICMP UNREACHABLE, and all other packets are dropped silently.
+a TCP RST is returned for blocked TCP packets, an ICMP UNREACHABLE is
+returned for blocked UDP packets, and all other packets are silently dropped.
 .El
 .Pp
 For example:
@@ -257,7 +264,7 @@ For example:
 .It Pa set require-order
 By default
 .Xr pfctl 8
-enforces an ordering of the ruleset to: options,
+enforces an ordering of the statement types in the ruleset to: options,
 .Pa scrub ,
 translation,
 .Pa queue ,
@@ -265,22 +272,23 @@ filter.
 Setting this option to
 .Pa no
 disables this enforcement.
-One has to be very careful about the implications of an out of order
-ruleset.
+There may be non-trivial and non-obvious implications to an out of 
+order ruleset. Consider carefully before disabling the order enforcement.
 .El
 .Pp
 .Sh TRAFFIC NORMALIZATION
 Traffic normalization is used to sanitize packet content in such
 a way that there are no ambiguities in packet interpretation on
 the receiving side.
-Packet normalization is invoked via the
-.Pa scrub
-directive.
 The normalizer does IP fragment reassembly to prevent attacks
 that confuse intrusion detection systems by sending overlapping
 IP fragments.
+Packet normalization is invoked with the
+.Pa scrub
+directive.
 .Pp
-A few options exist which affect scrub operation:
+.Pa scrub 
+has the following options:
 .Bl -tag -width xxxx
 .It Pa no-df
 Clears the
@@ -315,13 +323,13 @@ Unlike the
 .Pa fragment reassemble
 modifier, fragments are not buffered, they are passed as soon as they
 are received.
-This reassembly mechanism does not yet work with NAT.
+The crop reassembly mechanism does not yet work with NAT.
 .Pp
 .It Pa fragment drop-ovl
 This option is similar to the
 .Pa fragment crop
 modifier except that all overlapping or duplicate fragments will be
-dropped and will cause the following corresponding fragments to be
+dropped and all following corresponding fragments will be
 dropped as well.
 .El
 .Pp
@@ -331,12 +339,12 @@ For example,
 .Ed
 .Pp
 .Sh QUEUEING
-Filtering rules can also assign packets to a queue for the purpose of bandwidth
+Packets can be assigned to queues for the purpose of bandwidth
 control.
 At least two rules are required to configure queues, and later
 any packet filtering or rule can reference the defined
 queues by name.
-The queue name last referenced is where any packets from
+The last referenced queue name is where any packets from
 .Pa pass
 rules will be queued, while for
 .Pa block
@@ -344,13 +352,13 @@ rules it specifies where any resulting
 .Pa icmp
 or
 .Pa TCP RST
-packets should be enqueued.
+packets should be queued.
 .Pp
 .Pa altq on
 specifies on which interface queues will be set up.
 The
 .Pa scheduler
-type is required where currently only CBQ is supported.
+type is required where currently only CBQ is supported. (XXX)
 .Pa bandwidth
 is optional and specifies the maximum rate for all queues on this interface.
 If no value is given here, the interface's bandwidth is used.
@@ -374,19 +382,18 @@ should queue up to 5 Mbit/s in four queues using CBQ.
 .Pp
 Parameters for the queues are specified in
 .Pa queue
-rules. The queuename must match the definition in the
+rules. The queue name must match the definition in the
 .Pa altq
 rule.
 .Pa bandwidth
-sets the maximum bitrate that can be processed by this queue.
-The value must not exceed the value of the parent queue and can be specified
-in absolute and percentage values, the latter ones are relative to the parent
-queue's bandwidth.
+sets the maximum bitrate to be processed by this queue.
+This value must not exceed the value of the parent queue and can be specified
+as an absolute value or a percentage.
 Between queues a
 .Pa priority
 level can be set.
 For CBQ, the range is 0..7 with a default of 1.
-Queues with a higher priority level are preferred in the case of overload.
+Queues with a higher priority level are preferred in the case of overload. (XXX)
 .Pa qlimit
 specifies the maximum number of packets in this queue.
 The scheduler can get additional parameters with
@@ -400,9 +407,9 @@ Exactly one default queue is required.
 .It Em borrow
 The queue can borrow bandwidth from the parent.
 .It Em control
-Control class packets (RSVP, IGMP, ICMP) are assigned to this queue.
+Control-class packets (RSVP, IGMP, ICMP) are assigned to this queue.
 .It Em red
-Enables RED (Random Early Detection) on this queue.
+Enable RED (Random Early Detection) on this queue.
 RED drops packets with a probability proportional to the average
 queue length.
 .It Em rio
@@ -414,11 +421,12 @@ Enables ECN (Explicit Congestion Notification) on this queue.
 ECN implies RED.
 .El
 .Pp
-Furthermore child queues can be specified like in an
+Furthermore child queues can be specified as in an
 .Pa altq
 rule.
 .Pp
-Following the previous example, this would specify the four referenced
+To continue the previous example, the examples below would specify the 
+four referenced
 queues, plus a few child queues. The
 .Pa tos
 field is used to give interactive
@@ -426,7 +434,10 @@ field is used to give interactive
 sessions priority over bulk transfers like
 .Xr scp 1
 and
-.Xr sftp 1 Ns .
+.Xr sftp 1 Ns . 
+The queues may then be referenced by filtering rules (see 
+.Em Packet Filtering
+below).
 .Pp
 .Bd -literal
     queue std bandwidth 10% cbq(default)
@@ -456,20 +467,19 @@ Child queues must not exceed the bandwidth definition of the parent.
 Relative values are calculated against the bandwidth of the parent queue.
 .Pp
 .Sh TRANSLATION
-Translation rules modify either the source or destination address of all
-packets associated with a stateful connection which is automatically created
-for packets matching such a rule.
+Translation rules modify either the source or destination address of the
+packets associated with a stateful connection. A stateful connection is 
+automatically created to track packets matching such a rule.
 The translation engine modifies the specified address and/or port in the
 packet, recalculates IP, TCP and UDP checksums as necessary, and passes it to
-the packet filter for evaluation.
+the packet filter for evaluation. Translation occurs before filtering.
 .Pp
 The state entry created permits
 .Xr pf 4
 to keep track of the original address for traffic associated with that state
-and correctly direct return traffic on that connection.
+and correctly direct return traffic for that connection.
 .Pp
-A variety of translation types rules are available with pf:
-.Pp
+Various types of translation are possible with pf:
 .Bl -tag -width xxxx
 .It Em binat
 A
@@ -526,13 +536,13 @@ The
 option prefixed to a translation rule causes packets to remain untranslated,
 much in the same way as
 .Pa drop <direction> quick
-works in the packet filter.
+works in the packet filter (see below).
 .Pp
-If no rule matches the packet, the default action is to pass the packet
-up to the filter unmodified.
-Translation occurs before the other filters are applied.
-Hence, rules for redirected packets should specify the address and port
+If no rule matches the packet, the packet is passed to the filter unmodified.
+Translation occurs before the filter rules are applied;
+therefore rules for redirected packets should specify the address and port
 after translation.
+.Pp
 Translation rules apply only to packets that pass through
 the specified interface.
 For instance, redirecting port 80 on an external interface to an internal
@@ -550,7 +560,7 @@ has the ability to
 .Pa block
 and
 .Pa pass
-packets based on a variety of attributes of their layer 2 (see
+packets based on attributes of their layer 2 (see
 .Xr ip 4
 and
 .Xr ip6 4 Ns )
@@ -559,9 +569,9 @@ and layer 3 (see
 .Xr udp 4 ,
 .Xr icmp 4 ,
 and
-.Xr icmp6 4 Ns )
-headers.
-In addition, packets which are passed or blocked can be
+.Xr icmp6 4 Ns ) 
+headers. 
+In addition, packets may also be 
 assigned to queues for the purpose of bandwidth control.
 .Pp
 For each packet processed by the packet filter, the filter rules are
@@ -577,12 +587,12 @@ There are a number of ways in which a
 .Pa block
 rule can behave when blocking a packet. The default behaviour is to
 .Pa drop
-packets silently, however this can be overridden or made explicit
-globally by setting the
+packets silently, however this can be overridden or made 
+explicit either globally, by setting the
 .Pa block-policy
-option, or on a per-rule basis with the following options:
+option, or on a per-rule basis with one of the following options:
 .Pp
-.Bl -tag -width "return-icmp6" -compact -offset indent
+.Bl -tag -width xxxx -compact -offset indent
 .It Em  drop
 the packet is silently dropped.
 .It Em return-rst
@@ -591,8 +601,8 @@ connection.
 .It Em return-icmp
 .It Em return-icmp6
 return ICMP messages for packets which match the rule.
-By default this is an ICMP UNREACHABLE message, however the type
-of message can be overridden by specifying it as a code or number.
+By default this is an ICMP UNREACHABLE message, however the this
+can be overridden by specifying a message as a code or number.
 .It Em return
 returns a TCP RST for tcp packets, an ICMP UNREACHABLE for UDP packets,
 and silently drops all other packets.
@@ -613,14 +623,14 @@ that match explicit rules, one uses
 .Pp
 as the first two rules.
 .Sh PARAMETERS
-The rule parameters specify for what packets a rule applies.
+The rule parameters specify the packets to which a rule applies.
 A packet always comes in on or goes out through one interface.
 Most parameters are optional.
 If a parameter is specified, the rule only applies to packets with
 matching attributes.
 Certain parameters can be expressed as lists, in which case
 .Xr pfctl 8
-generates all needed rule combinations:
+generates all needed rule combinations.
 .Bl -tag -width xxxx
 .It Pa in No or Pa out
 The rule applies to incoming or outgoing packets.
@@ -632,8 +642,10 @@ must be specified.
 To cover both directions, two rules are needed.
 .It Em log
 In addition to the action specified, a log message is generated.
-Not only the packet that creates state is logged, but all packets of
-the connection.
+All packets for that connection are logged, unless the `keep state' 
+or `modulate state' options are specified, in which case only the
+packet that establishes the state is logged. (See `keep state' and
+`modulate state' below.)
 The logged packets are sent to the
 .Xr pflog 4
 interface.
@@ -649,13 +661,11 @@ Used with
 .Sq keep state
 or
 .Sq modulate state
-rules.
-The same rules as for
-.Pa log
-regarding
-.Xr pflog 4
-also apply to
-.Pa log-all .
+rules to force logging of all packets for a connection.
+As with
+.Pa log ,
+packets are logged to
+.Xr pflog 4 .
 .It Pa quick
 If a packet matches a rule which has the
 .Sq quick
@@ -670,10 +680,10 @@ The rule applies only to packets of this address family.
 Supported values are inet and inet6.
 .It Pa proto No <protocol>
 The rule applies only to packets of this protocol.
-Common protocols used here are tcp, udp, icmp and ipv6-icmp.
+Common protocols are tcp, udp, icmp and ipv6-icmp.
 .It Pa from <source> port <source> to <dest> port <dest>
 The rule applies only to packets with the specified source and destination
-addresses/ports.
+addresses and ports.
 .Pp
 Addresses can be specified in CIDR notation (matching netblocks), as
 symbolic host names or interface names, or as any of the following keywords:
@@ -687,14 +697,17 @@ means any address which is not currently routable.
 .Pp
 Host name resolution and interface to address translation are done at
 rule set load-time.
-When the address of an interface (or host name) changes (by DHCP or PPP,
+When the address of an interface (or host name) changes (under DHCP or PPP,
 for instance), the rule set must be reloaded for the change to be reflected
 in the kernel.
-Interface names surrounded by parentheses cause an automatic update of
-the rule whenever the referenced interface changes its address.
-Reloading the rule set is not required in this case.
+Surrounding the interface name in parentheses changes this behaviour.
+When the interface name is surrounded by parentheses, the rule is
+automatically updated whenever the interface changes its address.
+The rule set does not need to be reloaded. This is especially
+useful with
+.Pa nat .
 .Pp
-Ports can be specified using these operators
+Ports and ranges of ports can be specified using these operators:
 .Bd -literal
     = (equal), != (unequal), < (lesser), <= (lesser or equal),
     > (greater), >= (greater or equal),
@@ -714,8 +727,7 @@ means
 hence ports 1-1999 and 2005-65535.
 .El
 .Pp
-The host and port specifications are optional, as the following examples
-show:
+The host and port specifications are optional, as in the following examples:
 .Bd -literal
     pass in all
     pass in from any to any
