@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.2 1999/03/27 21:18:01 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.3 1999/03/31 20:33:45 niklas Exp $";
 #endif
 
 #include <time.h>
@@ -1354,7 +1354,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	       if (kernel_enable_spi(SPI->isrc, SPI->ismask,
 				     SPI->idst, SPI->idmask,
 				     SPI->address, spi, proto, 
-				     /* ENABLE_FLAG_REPLACE|*/ SADB_SAFLAGS_X_LOCALFLOW |
+				     SADB_SAFLAGS_X_REPLACEFLOW | SADB_SAFLAGS_X_LOCALFLOW |
 				     (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0)) == -1)
 		    log_error(0, "kernel_enable_spi() in kernel_insert_spi()");
 	  } else {
