@@ -1,6 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 2001/10/12 18:56:08 jason Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/10/12 21:55:59 jason Exp $
 
-TARGET=cd.fs
+TOP=	${.CURDIR}/..
+
+.include "${TOP}/Makefile.inc"
+
+TARGET=miniroot${REV}.fs
 
 .ifndef DESTDIR
 all ${TARGET}:
@@ -44,13 +48,11 @@ blank_filesystem:
 .endif
 
 install:
-	cp cd.fs ${DESTDIR}/snapshot/
+	cp ${TARGET} ${DESTDIR}/snapshot/
 
 clean:
 	rm -f ${TARGET}
 
-
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-
