@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 2000/11/24 20:49:24 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.38 2001/01/30 21:44:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -1534,6 +1534,7 @@ pmap_is_referenced(pg)
 	return pv != NULL;
 }
 
+#if 0
 void
 pmap_changebit(pg, set, reset)
 	vm_page_t pg;
@@ -1562,6 +1563,7 @@ pmap_changebit(pg, set, reset)
 	pmap_clear_pv(pa, NULL);
 	splx(s);
 }
+#endif
 
 void
 pmap_kenter_pa(va, pa, prot)
