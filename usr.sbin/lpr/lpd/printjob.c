@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.27 2001/10/29 18:13:51 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.28 2001/11/19 20:27:13 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -1174,7 +1174,7 @@ abortpr(signo)
 		kill(ofilter, SIGCONT);
 	while (wait(NULL) > 0)
 		;
-	exit(0);
+	_exit(0);
 }
 
 static void

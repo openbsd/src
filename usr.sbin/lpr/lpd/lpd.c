@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.21 2001/09/05 00:22:49 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.22 2001/11/19 20:27:13 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.21 2001/09/05 00:22:49 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.22 2001/11/19 20:27:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -317,8 +317,8 @@ static void
 reapchild(signo)
 	int signo;
 {
-	int status;
 	int save_errno = errno;
+	int status;
 
 	while (waitpid((pid_t)-1, &status, WNOHANG) > 0)
 		;
@@ -329,10 +329,12 @@ static void
 mcleanup(signo)
 	int signo;
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
+
 	if (lflag)
-		syslog(LOG_INFO, "exiting");
+		syslog_r(LOG_INFO, &sdata, "exiting");
 	unlink(_PATH_SOCKETNAME);
-	exit(0);
+	_exit(0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.15 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.16 2001/11/19 20:27:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.15 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.16 2001/11/19 20:27:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.15 2001/08/30 17:38:13 mill
 #include <dirent.h>
 #include <syslog.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "lp.h"
@@ -328,6 +329,8 @@ static void
 rcleanup(signo)
 	int signo;
 {
+	int save_errno = errno;
+
 	if (tfname[0] && strchr(tfname, '/') == NULL)
 		(void) unlink(tfname);
 	if (dfname[0] && strchr(dfname, '/') == NULL) {
@@ -339,6 +342,7 @@ rcleanup(signo)
 		} while (dfname[0]-- != 'd');
 	}
 	dfname[0] = '\0';
+	errno = save_errno;
 }
 
 #ifdef __STDC__
