@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.94 2004/04/28 01:36:56 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.95 2004/04/28 04:34:46 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -558,12 +558,19 @@ peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.auth.method = AUTH_MD5SIG;
 			free($4);
 		}
-		| IPSEC IKE {
+		| IPSEC ESP IKE {
 			if (curpeer->conf.auth.method) {
 				yyerror("auth method cannot be redefined");
 				YYERROR;
 			}
-			curpeer->conf.auth.method = AUTH_IPSEC_IKE;
+			curpeer->conf.auth.method = AUTH_IPSEC_IKE_ESP;
+		}
+		| IPSEC AH IKE {
+			if (curpeer->conf.auth.method) {
+				yyerror("auth method cannot be redefined");
+				YYERROR;
+			}
+			curpeer->conf.auth.method = AUTH_IPSEC_IKE_AH;
 		}
 		| IPSEC ESP inout SPI number STRING STRING encspec {
 			unsigned	i;

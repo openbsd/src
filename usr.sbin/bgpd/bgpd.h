@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.117 2004/04/28 02:57:27 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.118 2004/04/28 04:34:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,8 @@ enum auth_method {
 	AUTH_MD5SIG = 1,
 	AUTH_IPSEC_MANUAL_ESP,
 	AUTH_IPSEC_MANUAL_AH,
-	AUTH_IPSEC_IKE
+	AUTH_IPSEC_IKE_ESP,
+	AUTH_IPSEC_IKE_AH
 };
 
 struct peer_auth {
