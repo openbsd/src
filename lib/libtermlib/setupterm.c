@@ -1,4 +1,4 @@
-/*	$OpenBSD: setupterm.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: setupterm.c,v 1.2 1996/06/02 20:19:29 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: setupterm.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: setupterm.c,v 1.2 1996/06/02 20:19:29 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -73,10 +73,10 @@ setupterm(name, fd, errstat)
 	if (ret < 0)
 	    errx(1, "Terminal description database could not be found");
 	else
-	    errx(1, "Terminal type not found");
+	    errx(1, "Terminal '%s' not found", name);
     }
     else if (errstat != NULL)
-	*errstat = (ret == 1) ? OK : ERR;
+	*errstat = ret;
     (void) _ti_tty_init();
-    return ret == 1 ? OK : ERR;
+    return ret;
 }
