@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.45 2000/09/03 14:46:45 espie Exp $
+#	$OpenBSD: MAKEDEV,v 1.46 2001/04/10 03:03:50 brad Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -654,20 +654,22 @@ uk*)
 	;;
 
 audio*)
-        unit=${i#audio}                                               
-        audio=audio$unit                                                
-        sound=sound$unit                             
-        mixer=mixer$unit                                         
-        major=39                                
-        audioctl=audioctl$unit                                       
-        if [ "$unit" = "" ]; then unit=0; fi
+        major=39
+        audio=audio$unit
+        sound=sound$unit
+        mixer=mixer$unit
+        audioctl=audioctl$unit
         rm -f $audio $sound $mixer $audioctl                             
-        mknod $sound    c $major $(($unit + 0))
+        mknod $sound    c $major $unit
         mknod $audio    c $major $(($unit + 128))
         mknod $mixer    c $major $(($unit + 16))
         mknod $audioctl c $major $(($unit + 192))
         chown root.wheel $audio $sound $mixer $audioctl
         chmod 666 $audio $sound $mixer $audioctl
+        [ -e audio ] || ln -s $audio audio
+        [ -e mixer ] || ln -s $mixer mixer
+        [ -e sound ] || ln -s $sound sound
+        [ -e audioctl ] || ln -s $audioctl audioctl
         ;;
 
 

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.63 2000/05/06 20:30:58 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.64 2001/04/10 03:03:53 brad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -68,16 +68,16 @@
 #	uk*	SCSI Unknown device
 #	ses*	SCSI SES/SAF-TE device
 #	ss*	SCSI scanners
-#	audio	
-#	openprom	
-#	bwtwo*	
-#	cgtwo*	
-#	cgthree*	
-#	cgfour*	
-#	cgsix*	
-#	cgeight*	
-#	cgfourteen*	
-#	tcx*	
+#	audio*
+#	openprom
+#	bwtwo*
+#	cgtwo*
+#	cgthree*
+#	cgfour*
+#	cgsix*
+#	cgeight*
+#	cgfourteen*
+#	tcx*
 #	bpf*	Berkeley Packet Filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
@@ -202,7 +202,7 @@ all)
 	sh $this uk0 uk1
 	sh $this ss0 ss1
 	sh $this ses0
-	sh $this pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
+	sh $this pty0 vnd0 vnd1 vnd2 vnd3 audio0 tun0 tun1 tun2 tun3
 	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this raid0 raid1 raid2 raid3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.42 2001/03/29 19:57:35 drahn Exp $
+#	$OpenBSD: MAKEDEV,v 1.43 2001/04/10 03:03:52 brad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -436,12 +436,11 @@ cd*)
 	;;
 
 audio*)
-	[ "$unit" = "0" ] && n= || n=$unit
+	major=44
 	audio=audio$n
 	sound=sound$n
 	mixer=mixer$n
 	audioctl=audioctl$n
-	major=44
 	rm -f $audio $sound $mixer $audioctl
 	mknod $sound    c $major $unit
 	mknod $audio    c $major $(( $unit + 128 ))
@@ -449,6 +448,10 @@ audio*)
 	mknod $audioctl c $major $(( $unit + 192 ))
 	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
+	[ -e audio ] || ln -s $audio audio
+	[ -e mixer ] || ln -s $mixer mixer
+	[ -e sound ] || ln -s $sound sound
+	[ -e audioctl ] || ln -s $audioctl audioctl
 	;;
 
 usb*)
