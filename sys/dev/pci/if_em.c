@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.13 2003/10/13 21:19:29 jason Exp $ */
+/* $OpenBSD: if_em.c,v 1.14 2003/12/04 02:50:27 naddy Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1325,13 +1325,11 @@ em_set_multi(struct em_softc * sc)
 {
 	u_int32_t reg_rctl = 0;
 	u_int8_t  mta[MAX_NUM_MULTICAST_ADDRESSES * ETH_LENGTH_OF_ADDRESS];
-#ifdef __FreeBSD__
-	struct ifmultiaddr  *ifma;
-#endif
+	struct arpcom *ac = &sc->interface_data;
+	struct ether_multi *enm;
+	struct ether_multistep step;
 	int mcnt = 0;
-#ifdef __FreeBSD__
-	struct ifnet   *ifp = &sc->interface_data.ac_if;
-#endif
+	struct ifnet *ifp = &sc->interface_data.ac_if;
 
 	IOCTL_DEBUGOUT("em_set_multi: begin");
 
@@ -1345,22 +1343,19 @@ em_set_multi(struct em_softc * sc)
 		msec_delay(5);
 	}
 
-#ifdef __FreeBSD__
-#if __FreeBSD_version < 500000 
-	LIST_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-#else
-	TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-#endif
-		if (ifma->ifma_addr->sa_family != AF_LINK)
-			continue;
-
-		if (mcnt == MAX_NUM_MULTICAST_ADDRESSES) break;
-
-		bcopy(LLADDR((struct sockaddr_dl *)ifma->ifma_addr),
-		      &mta[mcnt*ETH_LENGTH_OF_ADDRESS], ETH_LENGTH_OF_ADDRESS);
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			mcnt = MAX_NUM_MULTICAST_ADDRESSES;
+		}
+		if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
+			break;
+		bcopy(enm->enm_addrlo, &mta[mcnt*ETH_LENGTH_OF_ADDRESS],
+		      ETH_LENGTH_OF_ADDRESS);
 		mcnt++;
+		ETHER_NEXT_MULTI(step, enm);
 	}
-#endif /* __FreeBSD__ */
 
 	if (mcnt >= MAX_NUM_MULTICAST_ADDRESSES) {
 		reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
