@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.6 2002/01/26 20:52:59 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.7 2002/03/02 17:44:58 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -84,7 +84,7 @@ void     mpc_intr_disestablish __P((void *, void *));
 int      mpc_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
 u_int32_t mpc_gen_config_reg __P((void *cpv, pcitag_t tag, int offset));
 int	of_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
-int	find_node_intr __P((int node, u_int32_t *addr, u_int32_t *intr));
+int	find_node_intr (int parent, u_int32_t *addr, u_int32_t *intr);
 u_int32_t pci_iack __P((void));
 
 struct cfattach mpcpcibr_ca = {
@@ -518,16 +518,14 @@ mpcpcibrattach(parent, self, aux)
 
 		for (node = OF_child(of_node); node; node = nn)
 		{
-			{
-				char name[32];
-				int len;
-				len = OF_getprop(node, "name", name,
-					sizeof(name));
-				name[len] = 0;
-#if 0
-				printf("checking node %s\n", name);
+			char name[32];
+			int len;
+			len = OF_getprop(node, "name", name,
+				sizeof(name));
+			name[len] = 0;
+#ifdef DEBUG_FIXUP
+			printf("checking node %s", name);
 #endif
-			}
 			fix_node_irq(node, &pba);
 
 			/* iterate section */
@@ -566,47 +564,66 @@ mpcpcibrattach(parent, self, aux)
  * Find PCI IRQ from OF
  */
 int
-find_node_intr(node, addr, intr)
-	int node;
-	u_int32_t *addr, *intr;
+find_node_intr(int parent, u_int32_t *addr, u_int32_t *intr)
 {
-	int parent, iparent, len, mlen;
-	int match, i;
-	u_int32_t map[64], *mp;
+	int iparent, len, mlen, n_mlen;
+	int match, i, step;
+	u_int32_t map[144], *mp, *mp1;
 	u_int32_t imask[8], maskedaddr[8];
-	u_int32_t icells;
 
-	len = OF_getprop(node, "AAPL,interrupts", intr, 4);
-	if (len == 4)
-		return 1;
-
-	parent = OF_parent(node);
 	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
 	mlen = OF_getprop(parent, "interrupt-map-mask", imask, sizeof(imask));
 
+#ifdef DEBUG_FIXUP
+	printf("parent %x len %x mlen %x\n", parent, len, mlen);
+#endif
 	if ((len == -1) || (mlen == -1))
 		goto nomap;
-	for (i = 0; i < (mlen / 4); i++) {
+	n_mlen = mlen/sizeof(u_int32_t);
+	for (i = 0; i < n_mlen; i++) {
 		maskedaddr[i] = addr[i] & imask[i];
 	}
 	mp = map;
+	/* calculate step size of interrupt-map
+	 * -- assumes that iparent will be same for all nodes
+	 */
+	iparent = mp[n_mlen];
+	step = 0;
+	for (i = (n_mlen)+1; i < len; i++) {
+		if (mp[i] == iparent) {
+			step = i - (n_mlen);
+			break;
+		}
+	}
+	if (step == 0) {
+		/* unable to determine step size */
+		return -1;
+	}
+
 	while (len > mlen) {
+#ifdef DEBUG_FIXUP
+		printf ("[%x %x %x %x] [%x %x %x %x] %x\n",
+		    maskedaddr[0], maskedaddr[1], maskedaddr[2], maskedaddr[3],
+		    mp[0], mp[1], mp[2], mp[3], step);
+#endif
 		match = bcmp(maskedaddr, mp, mlen);
-		mp += mlen / 4;
-		len -= mlen;
-		iparent = *mp++;
-		if (OF_getprop(iparent, "#interrupt-cells", &icells, 4) != 4)
-			return -1;
+		mp1 = mp + n_mlen;
 
 		if (match == 0) {
 			/* multiple irqs? */
-			*intr = *mp;
+			if (step == 9) {
+				/* pci-pci bridge */
+				iparent = *mp1;
+				/* recurse with new 'addr' */
+				return find_node_intr(iparent, &mp1[1], intr);
+			} else {
+				*intr = mp1[1];
+			}
 			return 1;
 		}
-		mp += icells;
-		len -= icells * 4;
+		len -= step * sizeof(u_int32_t);
+		mp += step;
 	}
-	return -1;
 nomap:
 	return -1;
 }
@@ -624,6 +641,7 @@ fix_node_irq(node, pba)
 	pcitag_t tag;
 	u_int32_t irq;
 	u_int32_t intr;
+	int parent;
 
 	pci_chipset_tag_t pc = pba->pba_pc;
 
@@ -631,18 +649,31 @@ fix_node_irq(node, pba)
 	if (len < sizeof(addr[0])) {
 		return;
 	}
-	tag = pci_make_tag(pc, pcibus(addr[0].phys_hi),
-		pcidev(addr[0].phys_hi),
-		pcifunc(addr[0].phys_hi));
+
+	/* if this node has a AAPL,interrupts property, firmware
+	 * has intialized the register correctly.
+	 */
+	len = OF_getprop(node, "AAPL,interrupts", &intr, 4);
+	if (len != 4) {
+
+		parent = OF_parent(node);
+
+		/* we want the first interrupt, set size_hi to 1 */
+		addr[0].size_hi = 1;
+		if (find_node_intr(parent, &addr[0].phys_hi, &irq) == -1)
+			return;
+	}
 	/* program the interrupt line register with the value
 	 * found in openfirmware
 	 */
-	if (find_node_intr(node, &addr[0].phys_hi, &irq) == -1)
-		return;
+
+	tag = pci_make_tag(pc, pcibus(addr[0].phys_hi),
+		pcidev(addr[0].phys_hi),
+		pcifunc(addr[0].phys_hi));
 
 	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-#if 0
-	printf("changing interrupt from %d to %d\n",
+#ifdef DEBUG_FIXUP
+	printf("changing interrupt from %x to %x\n",
 		intr & PCI_INTERRUPT_LINE_MASK,
 		irq & PCI_INTERRUPT_LINE_MASK);
 #endif
@@ -989,10 +1020,6 @@ mpc_intr_establish(lcv, ih, level, func, arg, name)
 {
 	return (*intr_establish_func)(lcv, ih, IST_LEVEL, level, func, arg,
 		name);
-#if 0
-	return isabr_intr_establish(NULL, ih, IST_LEVEL, level, func, arg,
-		name);
-#endif
 }
 
 void
@@ -1001,19 +1028,6 @@ mpc_intr_disestablish(lcv, cookie)
 {
 	/* XXX We should probably do something clever here.... later */
 }
-
-#if 0
-void
-mpc_print_pci_stat()
-{
-	u_int32_t stat;
-
-	stat = mpc_cfg_read_4(cp, MPC106_PCI_CMD);
-	printf("pci: status 0x%08x.\n", stat);
-	stat = mpc_cfg_read_2(cp, MPC106_PCI_STAT);
-	printf("pci: status 0x%04x.\n", stat);
-}
-#endif
 
 u_int32_t
 pci_iack()
