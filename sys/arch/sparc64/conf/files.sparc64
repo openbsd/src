@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.29 2002/02/01 21:48:23 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.30 2002/02/18 17:14:34 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -28,6 +28,7 @@ include "dev/i2o/files.i2o"
 include "dev/mii/files.mii"
 include "dev/atapiscsi/files.atapiscsi"
 include "dev/ata/files.ata"
+include "dev/pckbc/files.pckbc"
 
 # COMPAT_NETBSD
 include "compat/netbsd/files.netbsd"
@@ -107,6 +108,9 @@ file	arch/sparc64/dev/com_ebus.c		com_ebus
 
 define sunkbd
 file	dev/sun/sunkbd.c			sunkbd
+
+attach pckbc at ebus with pckbc_ebus
+file	arch/sparc64/dev/pckbc_ebus.c		pckbc_ebus
 
 device comkbd: tty, wskbddev, sunkbd
 attach comkbd at ebus
