@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.74 2002/09/26 07:26:19 deraadt Exp $
+.\"	$OpenBSD: afterboot.8,v 1.75 2002/10/02 17:38:38 miod Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -265,6 +265,18 @@ In both these cases, make sure that
 .Xr named 8
 is running
 (otherwise there are long waits for resolver timeouts).
+.Ss RPC-based network services
+Several services depend on the RPC portmapper,
+.Xr portmap 8 ,
+being running for proper operation.
+This includes YP and NFS exports, among other services.
+To get the RPC portmapper to start automatically on boot,
+you will need to have this line in
+.Pa /etc/rc.conf
+:
+.Bd -literal -offset indent
+portmap=YES
+.Ed
 .Ss YP Setup
 Check the YP domain name with the
 .Xr domainname 1
@@ -483,6 +495,9 @@ for authentication, and you already have a
 Kerberos
 master, change directory to
 .Pa /etc/kerberosIV
+or
+.Pa /etc/kerberosV
+depending on the kerberos version used,
 and configure.
 Remember to get a
 .Pa srvtab
