@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.16 1997/09/15 05:46:14 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.17 1998/02/22 01:00:25 niklas Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -126,7 +126,7 @@ struct	proc {
 #define	p_rlimit	p_limit->pl_rlimit
 
 	int	p_flag;			/* P_* flags. */
-	u_char	p_unused;		/* XXX: used to be emulation flag */
+	u_char	p_os;			/* OS tag */
 	char	p_stat;			/* S* process status. */
 	char	p_pad1[2];
 
