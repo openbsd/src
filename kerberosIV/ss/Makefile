@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1996/08/31 18:47:39 deraadt Exp $
+#	$Id: Makefile,v 1.6 1996/11/11 05:35:17 downsj Exp $
 
 LIB=	ss
 SRCS=	ss_err.c data.c error.c execute_cmd.c help.c invocation.c list_rqs.c \
@@ -10,7 +10,6 @@ CLEANFILES+=	ss_err.c ss_err.h std_rqs.c ss
 
 ss_err.h ss_err.c:	${.CURDIR}/ss_err.et
 	test -e ss_err.et || ln -s ${.CURDIR}/ss_err.et .
-	cd ${.CURDIR}/../compile_et; ${MAKE}
 	${COMPILE_ET} ss_err.et
 	-test -h ss_err.et && rm ss_err.et
 

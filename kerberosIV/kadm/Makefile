@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/08/31 18:47:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/11/11 05:35:15 downsj Exp $
 
 LIB=	kadm
 SRCS=	kadm_err.c kadm_cli_wrap.c kadm_stream.c kadm_supp.c
@@ -13,7 +13,6 @@ CLEANFILES+=	kadm_err.c kadm_err.h
 
 kadm_err.c kadm_err.h: kadm_err.et
 	test -e kadm_err.et || ln -s ${.CURDIR}/kadm_err.et .
-	cd ${.CURDIR}/../compile_et; ${MAKE}
 	${COMPILE_ET} kadm_err.et
 	-test -h kadm_err.et && rm kadm_err.et
 

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 1996/11/11 04:42:25 downsj Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/11/11 05:35:12 downsj Exp $
 #	from @(#)Makefile	5.1 (Berkeley) 6/25/90
 
-# do compile_et and mk_cmds first, used by other directories
+# do mk_cmds first, used by other directories
 
 .ifnmake install
-SUBDIR=	compile_et mk_cmds
+SUBDIR=	mk_cmds
 .endif
 
 .ifmake includes
@@ -22,7 +22,6 @@ SUBDIR+=man
 build:
 	(cd ${.CURDIR}/include && ${MAKE} includes)
 	${MAKE} cleandir
-	(cd ${.CURDIR}/compile_et && ${MAKE} depend && ${MAKE})
 	${MAKE} includes
 	(cd ${.CURDIR}/mk_cmds && ${MAKE} depend && ${MAKE})
 	(cd ${.CURDIR}/acl && ${MAKE} depend && ${MAKE} && ${MAKE} install)
@@ -36,7 +35,6 @@ build:
 # Since depending need to have some dynamically built sources available,
 # we need to build the generators first.
 beforedepend:
-	(cd ${.CURDIR}/compile_et && ${MAKE} depend && ${MAKE})
 	(cd ${.CURDIR}/mk_cmds && ${MAKE} depend && ${MAKE})
 
 .include <bsd.dep.mk>
