@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.3 2001/12/01 16:43:32 mickey Exp $	*/
+/*	$OpenBSD: autri.c,v 1.4 2001/12/05 10:00:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -242,7 +242,7 @@ autri_reg_clear_4(sc, no, mask)
 }
 
 /*
- * AC'97 codec
+ * AC97 codec
  */
 int
 autri_attach_codec(sc_, codec_if)
@@ -307,12 +307,12 @@ autri_read_codec(sc_, index, data)
 	}
 
 	if (count == 0xffff) {
-		printf("%s: Codec timeout. Busy reading AC'97 codec.\n",
+		printf("%s: Codec timeout. Busy reading AC97 codec.\n",
 		    sc->sc_dev.dv_xname);
 		return -1;
 	}
 
-	/* send Read Command to AC'97 */
+	/* send Read Command to AC97 */
 	TWRITE4(sc, addr, (index & 0x7f) | cmd);
 
 	/* wait for 'Returned data is avalable' */
@@ -323,7 +323,7 @@ autri_read_codec(sc_, index, data)
 	}
 
 	if (count == 0xffff) {
-		printf("%s: Codec timeout. Busy reading AC'97 codec.\n",
+		printf("%s: Codec timeout. Busy reading AC97 codec.\n",
 		    sc->sc_dev.dv_xname);
 		return -1;
 	}
@@ -382,12 +382,12 @@ autri_write_codec(sc_, index, data)
 	}
 
 	if (count == 0xffff) {
-		printf("%s: Codec timeout. Busy writing AC'97 codec\n",
+		printf("%s: Codec timeout. Busy writing AC97 codec\n",
 		    sc->sc_dev.dv_xname);
 		return -1;
 	}
 
-	/* send Write Command to AC'97 */
+	/* send Write Command to AC97 */
 	TWRITE4(sc, addr, (data << 16) | (index & 0x7f) | cmd);
 
 	return 0;
@@ -407,7 +407,7 @@ autri_reset_codec(sc_)
 
 	switch (sc->sc_devid) {
 	case AUTRI_DEVICE_ID_4DWAVE_DX:
-		/* warm reset AC'97 codec */
+		/* warm reset AC97 codec */
 		autri_reg_set_4(sc, AUTRI_DX_ACR2, 1);
 		delay(100);
 		/* release reset */
@@ -418,7 +418,7 @@ autri_reset_codec(sc_)
 		ready = AUTRI_DX_ACR2_CODEC_READY;
 		break;
 	case AUTRI_DEVICE_ID_4DWAVE_NX:
-		/* warm reset AC'97 codec */
+		/* warm reset AC97 codec */
 		autri_reg_set_4(sc, AUTRI_NX_ACR0, 1);
 		delay(100);
 		/* release reset */
@@ -429,7 +429,7 @@ autri_reset_codec(sc_)
 		ready = AUTRI_NX_ACR0_CODEC_READY;
 		break;
 	case AUTRI_DEVICE_ID_SIS_7018:
-		/* warm reset AC'97 codec */
+		/* warm reset AC97 codec */
 		autri_reg_set_4(sc, AUTRI_SIS_SCTRL, 1);
 		delay(100);
 		/* release reset (warm & cold) */
@@ -440,7 +440,7 @@ autri_reset_codec(sc_)
 		ready = AUTRI_SIS_SCTRL_CODEC_READY;
 		break;
 	case AUTRI_DEVICE_ID_ALI_M5451:
-		/* warm reset AC'97 codec */
+		/* warm reset AC97 codec */
 		autri_reg_set_4(sc, AUTRI_ALI_SCTRL, 1);
 		delay(100);
 		/* release reset (warm & cold) */
@@ -461,7 +461,7 @@ autri_reset_codec(sc_)
 	}
 
 	if (count == 0)
-		printf("%s: Codec timeout. AC'97 is not ready for operation.\n",
+		printf("%s: Codec timeout. AC97 is not ready for operation.\n",
 		    sc->sc_dev.dv_xname);
 }
 
@@ -562,7 +562,7 @@ autri_attach(parent, self, aux)
 	/* initialize the device */
 	autri_init(sc);
 
-	/* attach AC'97 codec */
+	/* attach AC97 codec */
 	codec = &sc->sc_codec;
 	memcpy(&codec->sc_dev, &sc->sc_dev, sizeof(codec->sc_dev));
 	codec->sc = sc;
