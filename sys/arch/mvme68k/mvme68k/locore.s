@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.16 1997/03/31 00:24:13 downsj Exp $ */
+/*	$OpenBSD: locore.s,v 1.17 1997/07/27 09:10:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -72,6 +72,7 @@
  */
 
 #include "assym.h"
+#include <machine/asm.h>
 #include <machine/prom.h>
 
 /*
@@ -936,13 +937,13 @@ Ltrap1:
  * Trap 1 - sigreturn
  */
 _trap1:
-	jra	sigreturn
+	jra	_ASM_LABEL(sigreturn)
 
 /*
  * Trap 2 - trace trap
  */
 _trap2:
-	jra	_trace
+	jra	_C_LABEL(trace)
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
@@ -1113,27 +1114,6 @@ Lnosir:
 	movl	sp@+,d0			| restore scratch register
 Ldorte:
 	rte				| real return
-
-/*
- * Primitives
- */ 
-
-#ifdef __STDC__
-#define EXPORT(name)		.globl _ ## name; _ ## name:
-#else
-#define EXPORT(name)		.globl _/**/name; _/**/name:
-#endif
-#ifdef GPROF
-#if __GNUC__ >= 2
-#define	ENTRY(name)		EXPORT(name) link a6,\#0; jbsr mcount; unlk a6
-#else
-#define	ENTRY(name)		EXPORT(name) link a6,#0; jbsr mcount; unlk a6
-#endif
-#define ALTENTRY(name, rname)	ENTRY(name); jra rname+12
-#else
-#define	ENTRY(name)		EXPORT(name)
-#define ALTENTRY(name, rname) 	ENTRY(name)
-#endif
 
 /* Use standard m68k support. */
 #include <m68k/m68k/support.s>
