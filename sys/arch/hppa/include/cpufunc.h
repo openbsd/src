@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.1 1998/07/07 21:32:40 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.2 1998/08/29 01:56:55 mickey Exp $	*/
 
 /*
  *  (c) Copyright 1988 HEWLETT-PACKARD COMPANY
@@ -14,7 +14,6 @@
  *  Hewlett-Packard Company makes no representations about the
  *  suitability of this software for any purpose.
  */
-
 /*
  * Copyright (c) 1990,1994 The University of Utah and
  * the Computer Systems Laboratory (CSL).  All rights reserved.
@@ -30,455 +29,120 @@
  *	Author: Bob Wheeler, University of Utah CSL
  */
 
-/*
- * hppa routines to move to and from control registers from C
- */
+#ifndef _HPPA_CPUFUNC_H_
+#define _HPPA_CPUFUNC_H_
+
+#include <machine/psl.h>
+#include <machine/pte.h>
+
+#define tlbbtop(b) (((b) & ~PGOFSET) >> (PGSHIFT - 5))
+#define tlbptob(p) ((p) << (PGSHIFT - 5))
 
 
-/*
- * Get space register for an address
- */
-
+/* Get space register for an address */
 static __inline u_int ldsid(vm_offset_t p) {
 	register u_int ret;
-	__asm __volatile("ldsid (%1),%0" : "=r" (p) : "r" (ret));
+	__asm __volatile("ldsid (%1),%0" : "=r" (ret) : "r" (p));
 	return ret;
 }
 
-/*
- * Move the specified value into the control register. The register is taken
- * modulo 32. If the register is invalid the operation is ignored.
- */
-static __inline void mtctl(int reg, int value) {
-	reg %= 32;
-	if (reg == 0)
-		__asm __volatile("mtctl %0, cr0" : : "r" (value));
-	else if (reg > 7)
-		;
-#if 0
-	bv 0(r2)
-	mtctl	arg1,cr8
-	bv 0(r2)
-	mtctl	arg1,cr9
-	bv 0(r2)
-	mtctl	arg1,cr10
-	bv 0(r2)
-	mtctl	arg1,cr11
-	bv 0(r2)
-	mtctl	arg1,cr12
-	bv 0(r2)
-	mtctl	arg1,cr13
-	bv 0(r2)
-	mtctl	arg1,cr14
-	bv 0(r2)
-	mtctl	arg1,cr15
-	bv 0(r2)
-	mtctl	arg1,cr16
-	bv 0(r2)
-	mtctl	arg1,cr17
-	bv 0(r2)
-	mtctl	arg1,cr18
-	bv 0(r2)
-	mtctl	arg1,cr19
-	bv 0(r2)
-	mtctl	arg1,cr20
-	bv 0(r2)
-	mtctl	arg1,cr21
-	bv 0(r2)
-	mtctl	arg1,cr22
-	bv 0(r2)
-	mtctl	arg1,cr23
-	bv 0(r2)
-	mtctl	arg1,cr24
-	bv 0(r2)
-	mtctl	arg1,cr25
-	bv 0(r2)
-	mtctl	arg1,cr26
-	bv 0(r2)
-	mtctl	arg1,cr27
-	bv 0(r2)
-	mtctl	arg1,cr28
-	bv 0(r2)
-	mtctl	arg1,cr29
-	bv 0(r2)
-	mtctl	arg1,cr30
-	bv 0(r2)
-	mtctl	arg1,cr31
-#endif
+/* Disable SID hashing and flush all caches for S-CHIP */
+static __inline u_int disable_S_sid_hashing(void) {
+	register u_int t, ret;
+	__asm ("mfcpu	(0,%1)\n\t"	/* get cpu diagnosic register */
+	       "mfcpu	(0,%1)\n\t"	/* black magic */
+	       "copy	%1,%0\n\t"
+	       "depi	0,20,3,%1\n\t"	/* clear DHE, domain and IHE bits */
+	       "depi	1,16,1,%1\n\t"	/* enable quad-word stores */
+	       "depi	0,10,1,%1\n\t"	/* do not clear the DHPMC bit */
+	       "depi	0,14,1,%1\n\t"	/* do not clear the ILPMC bit */
+	       "mtcpu	(%1,0)\n\t"	/* set the cpu disagnostic register */
+	       "mtcpu	(%1,0)\n\t"	/* black magic */
+	       : "=r" (ret) : "r" (t));
+	return ret;
 }
 
-/*
- * Return the contents of the specified control register. The register is taken
- * modulo 32. If the register is invalid the operation is ignored.
- */
+/* Disable SID hashing and flush all caches for T-CHIP */
+static __inline u_int disable_T_sid_hashing(void) {
+	register u_int t, ret;
+	__asm("mfcpu	(0,%1)\n\t"	/* get cpu diagnosic register */
+	      "mfcpu	(0,%1)\n\t"	/* black magic */
+	      "copy	%1,%0\n\t"
+	      "depi	0,18,1,%1\n\t"	/* clear DHE bit */
+	      "depi	0,20,1,%1\n\t"	/* clear IHE bit */
+	      "depi	0,10,1,%1\n\t"	/* do not clear the DHPMC bit */
+	      "depi	0,14,1,%1\n\t"	/* do not clear the ILPMC bit */
+	      "mtcpu	(%1,0)\n\t"	/* set the cpu disagnostic register */
+	      "mtcpu	(%1,0)\n\t"	/* black magic */
+	       : "=r" (ret) : "r" (t));
+	return ret;
+}
 
-static __inline u_int mfctl(int reg) {
+/* Disable SID hashing and flush all caches for L-CHIP */
+static __inline u_int disable_L_sid_hashing(void) {
+	register u_int t, ret;
+	__asm("mfcpu2	(0,%1)\n\t"	/* get cpu diagnosic register  */
+/*	      ".word	0x14160600\n\t" */
+	      "copy	%1,%0\n\t"
+	      "depi	0,27,1,%1\n\t"	/* clear DHE bit */
+	      "depi	0,28,1,%1\n\t"	/* clear IHE bit */
+	      "depi	0,6,1,%1\n\t"	/* do not clear the L2IHPMC bit */
+	      "depi	0,8,1,%1\n\t"	/* do not clear the L2DHPMC bit */
+	      "depi	0,10,1,%1\n\t"	/* do not clear the L1IHPMC bit */
+	      "mtcpu2	(%1,0)"		/* set the cpu disagnostic register */ 
+/*	      ".word	0x14160240\n\t" */
+	       : "=r" (ret) : "r" (t));
+	return ret;
+}
+
+static __inline u_int get_dcpu_reg(void) {
 	register u_int ret;
-	reg %= 32;
-	if (reg == 0)
-		__asm __volatile("mfctl cr0,%0" : "=r" (ret));
-	else if (reg > 7)
-		;
-#if 0
-	bv	0(r2)
-	mfctl	cr8,ret0
-	bv	0(r2)
-	mfctl	cr9,ret0
-	bv	0(r2)
-	mfctl	cr10,ret0
-	bv	0(r2)
-	mfctl	cr11,ret0
-	bv	0(r2)
-	mfctl	cr12,ret0
-	bv	0(r2)
-	mfctl	cr13,ret0
-	bv	0(r2)
-	mfctl	cr14,ret0
-	bv	0(r2)
-	mfctl	cr15,ret0
-	bv	0(r2)
-	mfctl	cr16,ret0
-	bv	0(r2)
-	mfctl	cr17,ret0
-	bv	0(r2)
-	mfctl	cr18,ret0
-	bv	0(r2)
-	mfctl	cr19,ret0
-	bv	0(r2)
-	mfctl	cr20,ret0
-	bv	0(r2)
-	mfctl	cr21,ret0
-	bv	0(r2)
-	mfctl	cr22,ret0
-	bv	0(r2)
-	mfctl	cr23,ret0
-	bv	0(r2)
-	mfctl	cr24,ret0
-	bv	0(r2)
-	mfctl	cr25,ret0
-	bv	0(r2)
-	mfctl	cr26,ret0
-	bv	0(r2)
-	mfctl	cr27,ret0
-	bv	0(r2)
-	mfctl	cr28,ret0
-	bv	0(r2)
-	mfctl	cr29,ret0
-	bv	0(r2)
-	mfctl	cr30,ret0
-	bv	0(r2)
-	mfctl	cr31,ret0
-#endif
+	__asm("mfcpu	(0,%0)\n\t"	/* Get cpu diagnostic register */
+	      "mfcpu	(0,%0)": "=r" (ret));	/* black magic */
 	return ret;
 }
 
-#if 0
-/*
- * int mtsp(sr, value)
- *	int	sr;
- *	int	value;
- *
- * Move the specified value into a space register. The space register is taken
- * modulo 8.
- */
+#define mtctl(v,r) __asm __volatile("mtctl %0,%1":: "r" (v), "i" (r))
+#define mfctl(r,v) __asm __volatile("mfctl %1,%0": "=r" (v): "i" (r))
 
-	.export	mtsp,entry
-	.proc
-	.callinfo
-mtsp
+#define mtcpu(v,r) __asm __volatile("mtcpu %0,%1":: "r" (v), "i" (r))
+#define mfcpu(r,v) __asm __volatile("mfcpu %1,%0": "=r" (v): "i" (r))
 
-/*
- * take the register number modulo 8
- */
-	ldi	7,t1
-	and	t1,arg0,arg0
+#define mtcpu2(v,r) __asm __volatile("mtcpu2 %0,%1":: "r" (v), "i" (r))
+#define mfcpu2(r,v) __asm __volatile("mfcpu2 %1,%0": "=r" (v): "i" (r))
 
-/*
- * write the value to the specified register
- */
+#define mtsp(v,r) __asm __volatile("mtsp %0,%1":: "r" (v), "i" (r))
+#define mfsp(r,v) __asm __volatile("mfsp %1,%0": "=r" (v): "i" (r))
 
-	blr,n	arg0,r0
-	nop
+#define ssm(v,r) __asm __volatile("ssm %1,%0": "=r" (r): "i" (v))
+#define rsm(v,r) __asm __volatile("rsm %1,%0": "=r" (r): "i" (v))
 
-	bv	0(r2)
-	mtsp	arg1,sr0
-	bv	0(r2)
-	mtsp	arg1,sr1
-	bv	0(r2)
-	mtsp	arg1,sr2
-	bv	0(r2)
-	mtsp	arg1,sr3
-	bv	0(r2)
-	mtsp	arg1,sr4
-	bv	0(r2)
-	mtsp	arg1,sr5
-	bv	0(r2)
-	mtsp	arg1,sr6
-	bv	0(r2)
-	mtsp	arg1,sr7
+/* Move to system mask. Old value of system mask is returned. */
+static __inline u_int mtsm(u_int mask) {
+	register u_int ret;
+	__asm __volatile("ssm 0,%0\n\t"
+			 "mtsm %1": "=r" (ret) : "r" (mask));
+	return ret;
+}
 
-	.procend
+static __inline void set_psw(u_int psw) {
+	__asm __volatile("mtctl %%r0, %%cr17\n\t"
+			 "mtctl %%r0, %%cr17\n\t"
+			 "ldil L%%.+32, %%r21\n\t"
+			 "ldo R%%.+28(%%r21), %%r21\n\t"
+			 "mtctl %%r21, %%cr17\n\t"
+			 "ldo 4(%%r21), %%r21\n\t"
+			 "mtctl %%r21, %%cr17\n\t"
+			 "mtctl %0, %%cr22\n\t"
+			 "rfi\n\t"
+			 "nop\n\tnop\n\tnop\n\tnop"
+			 :: "r" (psw): "r21");
+}
 
-
-/*
- * int mfsr(reg)
- *	int	reg;
- *
- * Return the contents of the specified space register. The space register is 
- * taken modulo 8.
- */
-
-	.export	mfsp,entry
-	.proc
-	.callinfo
-mfsp
-
-/*
- * take the register number modulo 8
- */
-	ldi	7,t1
-	and	t1,arg0,arg0
-
-/*
- * write the value to the specified register
- */
-
-	blr,n	arg0,r0
-	nop
-
-	bv	0(r2)
-	mfsp	sr0,ret0
-	bv	0(r2)
-	mfsp	sr1,ret0
-	bv	0(r2)
-	mfsp	sr2,ret0
-	bv	0(r2)
-	mfsp	sr3,ret0
-	bv	0(r2)
-	mfsp	sr4,ret0
-	bv	0(r2)
-	mfsp	sr5,ret0
-	bv	0(r2)
-	mfsp	sr6,ret0
-	bv	0(r2)
-	mfsp	sr7,ret0
-
-	.procend
-
-
-/*
- * int ssm(mask)
- *	int	mask;
- *
- * Set system mask. This call will not set the Q bit even if it is 
- * specified.
- *
- * Returns the old system mask
- */
-
-	.export	ssm,entry
-	.proc
-	.callinfo
-ssm
-
-/*
- * look at only the lower 5 bits of the mask
- */
-	ldi	31,t1
-	and	t1,arg0,arg0
-
-
-/*
- * Set System Mask and Return
- */
-
-	blr,n	arg0,r0
-	nop
-
-	bv	0(r2)
-	ssm	0,ret0
-	bv	0(r2)
-	ssm	1,ret0
-	bv	0(r2)
-	ssm	2,ret0
-	bv	0(r2)
-	ssm	3,ret0
-	bv	0(r2)
-	ssm	4,ret0
-	bv	0(r2)
-	ssm	5,ret0
-	bv	0(r2)
-	ssm	6,ret0
-	bv	0(r2)
-	ssm	7,ret0
-	bv	0(r2)
-	ssm	0,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	1,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	2,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	3,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	4,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	5,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	6,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	7,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	16,ret0
-	bv	0(r2)
-	ssm	17,ret0
-	bv	0(r2)
-	ssm	18,ret0
-	bv	0(r2)
-	ssm	19,ret0
-	bv	0(r2)
-	ssm	20,ret0
-	bv	0(r2)
-	ssm	21,ret0
-	bv	0(r2)
-	ssm	22,ret0
-	bv	0(r2)
-	ssm	23,ret0
-	bv	0(r2)
-	ssm	16,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	17,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	18,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	19,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	20,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	21,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	22,ret0		/* can't set Q bit with ssm */
-	bv	0(r2)
-	ssm	23,ret0		/* can't set Q bit with ssm */
-
-	.procend
-
-
-/*
- * int rsm(mask)
- *	int	mask;
- *
- * Reset system mask. 
- *
- * Returns the old system mask
- */
-
-	.export	rsm,entry
-	.proc
-	.callinfo
-rsm
-
-/*
- * look at only the lower 5 bits of the mask
- */
-	ldi	31,t1
-	and	t1,arg0,arg0
-
-/*
- * Set System Mask and Return
- */
-
-	blr,n	arg0,r0
-	nop
-
-	bv	0(r2)
-	rsm	0,ret0
-	bv	0(r2)
-	rsm	1,ret0
-	bv	0(r2)
-	rsm	2,ret0
-	bv	0(r2)
-	rsm	3,ret0
-	bv	0(r2)
-	rsm	4,ret0
-	bv	0(r2)
-	rsm	5,ret0
-	bv	0(r2)
-	rsm	6,ret0
-	bv	0(r2)
-	rsm	7,ret0
-	bv	0(r2)
-	rsm	8,ret0
-	bv	0(r2)
-	rsm	9,ret0
-	bv	0(r2)
-	rsm	10,ret0
-	bv	0(r2)
-	rsm	11,ret0
-	bv	0(r2)
-	rsm	12,ret0
-	bv	0(r2)
-	rsm	13,ret0
-	bv	0(r2)
-	rsm	14,ret0
-	bv	0(r2)
-	rsm	15,ret0
-	bv	0(r2)
-	rsm	16,ret0
-	bv	0(r2)
-	rsm	17,ret0
-	bv	0(r2)
-	rsm	18,ret0
-	bv	0(r2)
-	rsm	19,ret0
-	bv	0(r2)
-	rsm	20,ret0
-	bv	0(r2)
-	rsm	21,ret0
-	bv	0(r2)
-	rsm	22,ret0
-	bv	0(r2)
-	rsm	23,ret0
-	bv	0(r2)
-	rsm	24,ret0
-	bv	0(r2)
-	rsm	25,ret0
-	bv	0(r2)
-	rsm	26,ret0
-	bv	0(r2)
-	rsm	27,ret0
-	bv	0(r2)
-	rsm	28,ret0
-	bv	0(r2)
-	rsm	29,ret0
-	bv	0(r2)
-	rsm	30,ret0
-	bv	0(r2)
-	rsm	31,ret0
-
-	.procend
-
-
-/*
- * int mtsm(mask)
- *	int mask;
- *
- * Move to system mask. Old value of system mask is returned.
- */
-
-	.export	mtsm,entry
-	.proc
-	.callinfo
-mtsm
-
-/* 
- * Move System Mask and Return
- */
-	ssm	0,ret0
-	bv	0(r2)
-	mtsm	arg0
-
-	.procend
-#endif
+#define	fdce(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
+#define	fice(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
+#define sync_caches() \
+    __asm __volatile("sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop")
 
 static __inline void
 ficache(pa_space_t space, vm_offset_t off, vm_size_t size)
@@ -493,20 +157,184 @@ fdcache(pa_space_t space, vm_offset_t off, vm_size_t size)
 }
 
 static __inline void
+iitlba(u_int pg, pa_space_t sp, vm_offset_t off)
+{
+	mtsp(1, sp);
+	__asm volatile("iitlba %0,(%%sr1, %1)":: "r" (pg), "r" (off));
+}
+
+static __inline void
+idtlba(u_int pg, pa_space_t sp, vm_offset_t off)
+{
+	mtsp(sp, 1);
+	__asm volatile("idtlba %0,(%%sr1, %1)":: "r" (pg), "r" (off));
+}
+
+static __inline void
+iitlbp(u_int prot, pa_space_t sp, vm_offset_t off)
+{
+	mtsp(sp, 1);
+	__asm volatile("iitlbp %0,(%%sr1, %1)":: "r" (prot), "r" (off));
+}
+
+static __inline void
+idtlbp(u_int prot, pa_space_t sp, vm_offset_t off)
+{
+	mtsp(sp, 1);
+	__asm volatile("idtlbp %0,(%%sr1, %1)":: "r" (prot), "r" (off));
+}
+
+static __inline void
 pitlb(pa_space_t sp, vm_offset_t off)
 {
-
+	mtsp(sp, 1);
+	__asm volatile("pitlb %%r0(%%sr1, %0)":: "r" (off));
 }
 
 static __inline void
 pdtlb(pa_space_t sp, vm_offset_t off)
 {
+	mtsp(sp, 1);
+	__asm volatile("pdtlb %%r0(%%sr1, %0)":: "r" (off));
+}
+
+static __inline void
+pitlbe(pa_space_t sp, vm_offset_t off)
+{
+	mtsp(sp, 1);
+	__asm volatile("pitlbe %%r0(%%sr1, %0)":: "r" (off));
+}
+
+static __inline void
+pdtlbe(pa_space_t sp, vm_offset_t off)
+{
+	mtsp(sp, 1);
+	__asm volatile("pdtlbe %%r0(%%sr1, %0)":: "r" (off));
+}
+
+static __inline void
+ibitlb(int i, vm_offset_t pa, vm_offset_t va, vm_size_t sz, u_int prot)
+{
 
 }
 
-void phys_page_copy __P((vm_offset_t, vm_offset_t));
-void phys_bzero __P((vm_offset_t, vm_size_t));
-void lpage_copy __P((int, pa_space_t, vm_offset_t, vm_offset_t));
-void lpage_zero __P((int, vm_offset_t, pa_space_t));
+static __inline void
+pbitlb(int i)
+{
+}
+
+static __inline void
+ibdtlb(int i, vm_offset_t pa, vm_offset_t va, vm_size_t sz, u_int prot)
+{
+
+}
+
+static __inline void
+pbdtlb(int i)
+{
+}
+
+static __inline void
+ibctlb(int i, vm_offset_t pa, vm_offset_t va, vm_size_t sz, u_int prot)
+{
+	register u_int psw, t;
+
+	rsm(PSW_R|PSW_I,psw);
+
+	t = 0x7fc1|((i&15)<<1);	/* index 127, lockin, override, mismatch */
+	mtcpu(t,8);		/* move to the dtlb diag reg */
+	mtcpu(t,8);		/* black magic */
+
+	prot |= TLB_DIRTY;
+	sz = (~sz >> 7) & 0x7f000;
+	pa = (tlbbtop(pa) & 0x7f000) | sz;
+	va = (va & 0x7f000) | sz;
+
+	idtlba(pa, 0, va);
+	idtlbp(prot, 0, va);
+
+	t |= 0x2000;		/* no lockout, PE force-ins disable */
+	mtcpu2(t,8);		/* move to the dtlb diagnostic register */
+
+	mtsm(psw);
+}
+
+static __inline void
+pbctlb(int i)
+{
+	register u_int psw, t;
+
+	rsm(PSW_R|PSW_I,psw);
+
+	t = 0xffc1|((i&15)<<1);	/* index 127, lockin, override, mismatch */
+	mtcpu(t,8);		/* move to the dtlb diag reg */
+	mtcpu(t,8);		/* black magic */
+
+	idtlba(0,0,0);		/* address does not matter */
+	idtlbp(0,0,0);
+
+	t |= 0x7f << 7;
+	mtcpu(t,8);		/* move to the dtlb diagnostic register */
+	mtcpu(t,8);		/* black magic */
+
+	mtsm(psw);
+}
+
+static __inline void
+iLbctlb(int i, vm_offset_t pa, vm_offset_t va, vm_offset_t sz, u_int prot)
+{
+	register u_int psw, t;
+
+	rsm(PSW_R|PSW_I,psw);
+
+	t = 0x6041| ((i&7)<<1);	/* lockin, PE force-insert disable,
+				   PE LRU-ins dis, BE force-ins enable
+				   set the block enter select bit */
+	mtcpu2(t, 8);		/* move to the dtlb diagnostic register */
+
+	prot |= TLB_DIRTY;
+	sz = (~sz >> 7) & 0x7f000;
+	pa = (tlbbtop(pa) & 0x7f000) | sz;
+	va = (va & 0x7f000) | sz;
+
+	/* we assume correct address/size alignment */
+	idtlba(pa, 0, va);
+	idtlbp(prot, 0, va);
+
+	t |= 0x2000;		/* no lockin, PE force-ins disable */
+	mtcpu2(t, 8);		/* move to the dtlb diagnostic register */
+
+	mtsm(psw);
+}
+
+static __inline void
+pLbctlb(int i)
+{
+	register u_int psw, t;
+
+	rsm(PSW_R|PSW_I,psw);
+
+	t = 0xc041| ((i&7)<<1);	/* lockout, PE force-insert disable,
+				   PE LRU-ins dis, BE force-ins enable
+				   set the block enter select bit */
+	mtcpu2(t,8);		/* move to the dtlb diagnostic register */
+
+	idtlba(0,0,0);		/* address does not matter */
+	idtlbp(0,0,0);
+
+	t |= 0x2000;		/* no lockout, PE force-ins disable */
+	mtcpu2(t,8);		/* move to the dtlb diagnostic register */
+
+	mtsm(psw);
+}
+
+#ifdef _KERNEL
+struct pdc_cache;
+void fcacheall __P((struct pdc_cache *));
+void ptlball __P((struct pdc_cache *));
+#endif
+
+#endif /* _HPPA_CPUFUNC_H_ */
+
 
 
