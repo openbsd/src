@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.11 2002/06/28 22:59:20 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.12 2002/07/15 23:47:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.11 2002/06/28 22:59:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.12 2002/07/15 23:47:57 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,9 @@ main(int argc, char *argv[])
 	struct sockaddr_in from;
 	SVCXPRT *transp;
 
-	pw = getpwnam("nobody");
+	pw = getpwnam("_rstatd");
+	if (!pw)
+		pw = getpwnam("nobody");
 	if (chroot("/var/empty") == -1) {
 		syslog(LOG_ERR, "cannot chdir to /var/empty.");
 		exit(1);

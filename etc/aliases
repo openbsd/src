@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.9 2002/07/15 22:33:23 millert Exp $
+#	$OpenBSD: aliases,v 1.10 2002/07/15 23:47:57 deraadt Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -26,6 +26,11 @@ popa3d: root
 proxy:  root
 smmsp:  root
 sshd:   root
+_portmap: root
+_rstatd: root
+_identd: root
+_rusersd: root
+_fingerd: root
 
 # Well-known aliases -- these should be filled in!
 # root:

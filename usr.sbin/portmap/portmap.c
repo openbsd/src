@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.24 2002/07/09 22:20:43 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.25 2002/07/15 23:47:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.24 2002/07/09 22:20:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.25 2002/07/15 23:47:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,7 @@ main(int argc, char *argv[])
 	int sock, lsock, c, on = 1, len = sizeof(struct sockaddr_in);
 	struct sockaddr_in addr, laddr;
 	struct pmaplist *pml;
+	struct passwd *pw;
 	SVCXPRT *xprt;
 
 	while ((c = getopt(argc, argv, "d")) != -1) {
@@ -241,6 +242,22 @@ main(int argc, char *argv[])
 	pml->pml_map.pm_port = PMAPPORT;
 	pml->pml_next = pmaplist;
 	pmaplist = pml;
+
+	pw = getpwnam("_portmap");
+	if (!pw)
+		pw = getpwnam("nobody");
+	if (chroot("/var/empty") == -1) {
+		syslog(LOG_ERR, "cannot chdir to /var/empty.");
+		exit(1);
+	}
+	chdir("/");
+	if (pw) {
+		setgroups(1, &pw->pw_gid);
+		setegid(pw->pw_gid);
+		setgid(pw->pw_gid);
+		seteuid(pw->pw_uid);
+		setuid(pw->pw_uid);
+	}
 
 	(void)svc_register(xprt, PMAPPROG, PMAPVERS, reg_service, FALSE);
 

@@ -14,7 +14,12 @@ staff:*:20:root
 smmsp:*:25:
 popa3d:*:26:
 sshd:*:27:
+_portmap:*:28:
+_identd:*:29:
+_rstatd:*:30:
 guest:*:31:root
+_rusersd:*:32:
+_fingerd:*:33:
 utmp:*:45:
 crontab:*:66:
 www:*:67:

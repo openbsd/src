@@ -5,6 +5,11 @@ bin:*:3:7::0:0:Binaries Commands and Source,,,:/:/sbin/nologin
 smmsp:*:25:25::0:0:Sendmail Message Submission Program:/nonexistent:/sbin/nologin
 popa3d:*:26:26::0:0:POP3 server:/var/empty:/sbin/nologin
 sshd:*:27:27::0:0:sshd privsep:/var/empty:/sbin/nologin
+_portmap:*:28:28::0:0:portmap:/var/empty:/sbin/nologin
+_identd:*:29:29::0:0:identd:/var/empty:/sbin/nologin
+_rstatd:*:30:30::0:0:rpc.rstatd:/var/empty:/sbin/nologin
+_rusersd:*:32:32::0:0:rpc.rusersd:/var/empty:/sbin/nologin
+_fingerd:*:33:33::0:0:fingerd:/var/empty:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 www:*:67:67::0:0:HTTP server:/var/www:/sbin/nologin
 named:*:70:70::0:0:BIND Name Service Daemon:/var/named:/sbin/nologin
