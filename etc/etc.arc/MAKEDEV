@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.4 1996/08/28 08:55:21 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.5 1996/08/29 17:43:18 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -52,7 +52,7 @@ do
 case $i in
 
 all)        
-        sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 tty0 tty1 pty0 pty1
+        sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 tty00 tty01 pty0 pty1
         sh MAKEDEV ttyC0 lpt0 pms0 random bpf0 local
         ;;
 
@@ -214,9 +214,10 @@ lpt*)
 
 tty*)
 	unit=`expr $i : '...\(.*\)'`
-	rm -f tty0$unit
-	mknod tty0$unit c 17 $unit
-	chown uucp.wheel tty0$unit
+	rm -f tty$unit cua$unit
+	mknod tty$unit c 17 $unit
+	mknod cua$unit c 17 `expr $unit + 128`
+	chown uucp.wheel tty$unit cua$unit
 	;;
 
 pty*)
