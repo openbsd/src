@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.110 2001/07/13 01:52:10 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.111 2001/07/13 23:44:08 fgsch Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -2333,7 +2333,6 @@ pf_purge_expired_fragments(void)
 		DPFPRINTF((__FUNCTION__": expiring %p\n", frag));
 		pf_free_fragment(frag);
 	}
-
 }
 
 /*
@@ -2380,31 +2379,30 @@ pf_free_fragment(struct pf_fragment *frag)
 void
 pf_ip2key(struct pf_tree_key *key, struct ip *ip)
 {
-		key->proto = ip->ip_p;
-		key->addr[0] = ip->ip_src;
-		key->addr[1] = ip->ip_dst;
-		key->port[0] = ip->ip_id;
-		key->port[1] = 0;
+	key->proto = ip->ip_p;
+	key->addr[0] = ip->ip_src;
+	key->addr[1] = ip->ip_dst;
+	key->port[0] = ip->ip_id;
+	key->port[1] = 0;
 }
 
 struct pf_fragment *
 pf_find_fragment(struct ip *ip)
 {
-		struct pf_tree_key key;
-		struct pf_fragment *frag;
+	struct pf_tree_key key;
+	struct pf_fragment *frag;
 
-		pf_ip2key(&key, ip);
+	pf_ip2key(&key, ip);
 
-		frag = (struct pf_fragment *)pf_find_state(tree_fragment,
-		    &key);
+	frag = (struct pf_fragment *)pf_find_state(tree_fragment, &key);
 
-		if (frag != NULL) {
-			microtime(&frag->fr_timeout);
-			TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
-			TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
-		}
+	if (frag != NULL) {
+		microtime(&frag->fr_timeout);
+		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
+		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
+	}
 
-		return (frag);
+	return (frag);
 }
 
 /* Removes a fragment from the fragment queue and frees the fragment */
@@ -2412,18 +2410,18 @@ pf_find_fragment(struct ip *ip)
 void
 pf_remove_fragment(struct pf_fragment *frag)
 {
-		struct pf_tree_key key;
+	struct pf_tree_key key;
 
-		key.proto = frag->fr_p;
-		key.addr[0] = frag->fr_src;
-		key.addr[1] = frag->fr_dst;
-		key.port[0] = frag->fr_id;
-		key.port[1] = 0;
+	key.proto = frag->fr_p;
+	key.addr[0] = frag->fr_src;
+	key.addr[1] = frag->fr_dst;
+	key.port[0] = frag->fr_id;
+	key.port[1] = 0;
 
-		pf_tree_remove(&tree_fragment, NULL, &key);
-		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
+	pf_tree_remove(&tree_fragment, NULL, &key);
+	TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 
-		pool_put(&pf_frag_pl, frag);
+	pool_put(&pf_frag_pl, frag);
 }
 
 struct mbuf *
