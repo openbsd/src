@@ -1,4 +1,4 @@
-/*	$OpenBSD: bim.c,v 1.3 1997/01/15 23:41:09 millert Exp $	*/
+/*	$OpenBSD: bim.c,v 1.4 1997/01/16 00:35:52 millert Exp $	*/
 /*	$NetBSD: bim.c,v 1.4 1995/09/28 07:08:49 phil Exp $	*/
 
 /* 
@@ -610,7 +610,7 @@ char *argv[];
     char *argcmds[MAXARGCMDS];
     extern int optind, opterr;
     extern char *optarg;
-    char optchar;
+    int optchar;
     int index;
 
     /* Check the parameters.  */
