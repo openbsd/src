@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include <isc/buffer.h>
+#include <isc/random.h>
 #include <isc/util.h>
 
 #include <dns/name.h>
