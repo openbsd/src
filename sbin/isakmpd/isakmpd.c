@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.47 2002/11/27 15:29:20 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.48 2002/12/03 20:05:10 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -115,9 +115,10 @@ static void
 usage (void)
 {
   fprintf (stderr,
-	   "usage: %s [-c config-file] [-d] [-D class=level] [-f fifo]\n"
-	   "          [-i pid-file] [-n] [-p listen-port] [-P local-port]\n"
-	   "          [-L] [-l packetlog-file] [-r seed] [-R report-file]\n",
+	   "usage: %s [-4] [-6] [-c config-file] [-d] [-D class=level]\n"
+	   "          [-f fifo] [-i pid-file] [-n] [-p listen-port]\n"
+	   "          [-P local-port] [-L] [-l packetlog-file] [-r seed]\n"
+	   "          [-R report-file]\n",
 	   sysdep_progname ());
   exit (1);
 }
@@ -132,8 +133,16 @@ parse_args (int argc, char *argv[])
   int do_packetlog = 0;
 #endif
 
-  while ((ch = getopt (argc, argv, "c:dD:f:i:np:P:Ll:r:R:")) != -1) {
+  while ((ch = getopt (argc, argv, "46c:dD:f:i:np:P:Ll:r:R:")) != -1) {
     switch (ch) {
+    case '4':
+      bind_family |= BIND_FAMILY_INET4;
+      break;
+
+    case '6':
+      bind_family |= BIND_FAMILY_INET6;
+      break;
+
     case 'c':
       conf_path = optarg;
       break;

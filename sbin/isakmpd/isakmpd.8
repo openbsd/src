@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.46 2002/11/27 14:36:20 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.47 2002/12/03 20:05:10 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -43,6 +43,8 @@
 .Nd ISAKMP/Oakley a.k.a. IKE key management daemon
 .Sh SYNOPSIS
 .Nm isakmpd
+.Op Fl 4
+.Op Fl 6
 .Op Fl c Ar config-file
 .Op Fl d
 .Op Fl D Ar class=level
@@ -90,6 +92,10 @@ One source of information are the RFCs mentioned below.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 4 | Fl 6
+These options control what address family (AF_INET and/or AF_INET6)
+.Nm
+will use. Default is to use both IPv4 and IPv6.
 .It Fl c Ar config-file
 If given, the
 .Fl c

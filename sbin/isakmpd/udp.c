@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.56 2002/09/11 09:50:44 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.57 2002/12/03 20:05:10 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ static LIST_HEAD (udp_listen_list, udp_transport) udp_listen_list;
 
 char *udp_default_port = 0;
 char *udp_bind_port = 0;
+int bind_family = 0;
 static struct transport *default_transport, *default_transport6;
 
 /* Find an UDP transport listening on ADDR:PORT.  */
@@ -310,6 +311,24 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
       && (if_addr->sa_family != AF_INET6
 	  || sysdep_sa_len (if_addr) != sizeof (struct sockaddr_in6)))
     return;
+
+  /*
+   * Only create sockets for families we should listen to.
+   */
+  if (bind_family)
+    switch (if_addr->sa_family)
+      {
+      case AF_INET:
+	if ((bind_family & BIND_FAMILY_INET4) == 0)
+	  return;
+	break;
+      case AF_INET6:
+	if ((bind_family & BIND_FAMILY_INET6) == 0)
+	  return;
+	break;
+      default:
+	return;
+      }
 
   /*
    * These special addresses are not useable as they have special meaning
@@ -646,33 +665,41 @@ udp_init (void)
    * Packet reception on this transport is taken as a hint to reprobe the
    * interface list.
    */
-  memset (&dflt_stor, 0, sizeof dflt_stor);
-  dflt->sin_family = AF_INET;
-  ((struct sockaddr_in *)dflt)->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)dflt)->sin_port = htons (lport);
-
-  default_transport = udp_bind ((struct sockaddr *)&dflt_stor);
-  if (!default_transport)
+  if (!bind_family || (bind_family & BIND_FAMILY_INET4))
     {
-      log_error ("udp_init: could not allocate default IPv4 ISAKMP UDP port");
-      return;
+      memset (&dflt_stor, 0, sizeof dflt_stor);
+      dflt->sin_family = AF_INET;
+      ((struct sockaddr_in *)dflt)->sin_len = sizeof (struct sockaddr_in);
+      ((struct sockaddr_in *)dflt)->sin_port = htons (lport);
+
+      default_transport = udp_bind ((struct sockaddr *)&dflt_stor);
+      if (!default_transport)
+	{
+	  log_error ("udp_init: could not allocate default "
+		     "IPv4 ISAKMP UDP port");
+	  return;
+	}
+      LIST_INSERT_HEAD (&udp_listen_list,
+			(struct udp_transport *)default_transport, link);
     }
-  LIST_INSERT_HEAD (&udp_listen_list,
-		    (struct udp_transport *)default_transport, link);
-
-  memset (&dflt_stor, 0, sizeof dflt_stor);
-  dflt->sin_family = AF_INET6;
-  ((struct sockaddr_in6 *)dflt)->sin6_len = sizeof (struct sockaddr_in6);
-  ((struct sockaddr_in6 *)dflt)->sin6_port = htons (lport);
-
-  default_transport6 = udp_bind ((struct sockaddr *)&dflt_stor);
-  if (!default_transport6)
+  
+  if (!bind_family || (bind_family & BIND_FAMILY_INET6))
     {
-      log_error ("udp_init: could not allocate default IPv6 ISAKMP UDP port");
-      return;
+      memset (&dflt_stor, 0, sizeof dflt_stor);
+      dflt->sin_family = AF_INET6;
+      ((struct sockaddr_in6 *)dflt)->sin6_len = sizeof (struct sockaddr_in6);
+      ((struct sockaddr_in6 *)dflt)->sin6_port = htons (lport);
+
+      default_transport6 = udp_bind ((struct sockaddr *)&dflt_stor);
+      if (!default_transport6)
+	{
+	  log_error ("udp_init: could not allocate default "
+		     "IPv6 ISAKMP UDP port");
+	  return;
+	}
+      LIST_INSERT_HEAD (&udp_listen_list,
+			(struct udp_transport *)default_transport6, link);
     }
-  LIST_INSERT_HEAD (&udp_listen_list,
-		    (struct udp_transport *)default_transport6, link);
 }
 
 /*

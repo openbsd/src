@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.h,v 1.5 2001/06/29 19:41:43 ho Exp $	*/
+/*	$OpenBSD: udp.h,v 1.6 2002/12/03 20:05:10 ho Exp $	*/
 /*	$EOM: udp.h,v 1.4 1998/12/22 02:23:43 niklas Exp $	*/
 
 /*
@@ -39,6 +39,10 @@
 
 extern char *udp_default_port;
 extern char *udp_bind_port;
+extern int bind_family;
+
+#define BIND_FAMILY_INET4	0x0001
+#define BIND_FAMILY_INET6	0x0002
 
 #if 0
 extern in_port_t udp_decode_port (char *);
