@@ -28,10 +28,11 @@ gcc/egcs/binutils:					espie@ mickey@
 * move to binutils 2.9.1
 
 boots (sys/arch/hppa/stand/*):				mickey@ fries@
-* loading elf symbol table, i have some code, testing
 * almost could be considered working/done, fixes and such (;
 
 kernel (sys/arch/hppa/*):				mickey@
+* clkf_intr() is not accurate, but we can mark any
+  inner frame by looking at the top-level one in tlabel(all)
 * several harware problems (ie non-functional drivers)
 * fix kvtop for equ mapped regions virtual_avail < va < io (sti)
 * proper serial console
@@ -57,7 +58,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.8 2000/01/18 16:10:08 mickey Exp $
+$OpenBSD: TODO,v 1.9 2000/05/30 22:14:04 mickey Exp $
 
 --
 	paranoic mickey
