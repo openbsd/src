@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.9 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.10 2003/07/09 20:01:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -271,10 +271,8 @@ cscope_add(sp, cmdp, dname)
 	LIST_INSERT_HEAD(&exp->cscq, csc, q);
 
 	/* Read the initial prompt from the cscope to make sure it's okay. */
-	if (read_prompt(sp, csc)) {
-		terminate(sp, csc, 0);
+	if (read_prompt(sp, csc))
 		return (1);
-	}
 
 	return (0);
 
