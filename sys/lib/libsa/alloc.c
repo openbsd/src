@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.4 1997/02/06 14:22:33 mickey Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.5 1997/08/01 21:57:09 pefo Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1997/02/04 18:36:33 thorpej Exp $	*/
 
 /*
@@ -127,7 +127,9 @@ alloc(size)
 	unsigned size;
 {
 	register struct fl **f = &freelist, **bestf = NULL;
+#ifndef ALLOC_FIRST_FIT
 	unsigned bestsize = 0xffffffff;	/* greater than any real size */
+#endif
 	char *help;
 	int failed;
 
@@ -185,7 +187,9 @@ alloc(size)
 	/* we take the best fit */
 	f = bestf;
 
+#ifndef ALLOC_FIRST_FIT
 found:
+#endif
         /* remove from freelist */
         help = (char*)*f;
 	*f = (*f)->next;
