@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.23 2004/08/17 23:58:36 jaredy Exp $
+.\" $OpenBSD: vlan.4,v 1.24 2004/11/27 22:46:28 henning Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -170,8 +170,3 @@ Thus,
 .Xr bpf 4
 will show untagged packets on the parent interface, although frames
 are actually being transmitted and received with tags on the wire.
-.Pp
-This driver could be the basis for support of the Cisco ISL VLAN protocol,
-detailed at http://www.cisco.com/warp/public/473/741_4.html .
-Unfortunately, public reimplementation of this protocol is currently prevented
-by patent (at least in the USA).
