@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ax.c,v 1.3 1999/09/27 00:07:50 aaron Exp $ */
+/*	$OpenBSD: if_ax.c,v 1.4 1999/09/27 17:50:03 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1079,21 +1079,16 @@ ax_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE |
-		   PCI_COMMAND_MEM_ENABLE |
-		   PCI_COMMAND_MASTER_ENABLE;
+	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	    PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef AX_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf("%s: failed to enable i/o ports\n",
-		    sc->sc_dev.dv_xname);
+		printf(": failed to enable I/O ports!\n");
 		goto fail;
 	}
-	/*
-	 * Map control/status registers.
-	 */
 	if (pci_io_find(pc, pa->pa_tag, AX_PCI_LOIO, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
 		goto fail;
@@ -1109,7 +1104,7 @@ ax_attach(parent, self, aux)
 		goto fail;
 	}
 	if (pci_mem_find(pc, pa->pa_tag, AX_PCI_LOMEM, &iobase, &iosize, NULL)){
-		printf(": can't map mem space\n");
+		printf(": can't find mem space\n");
 		goto fail;
 	}
 	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->ax_bhandle)) {
@@ -1119,26 +1114,25 @@ ax_attach(parent, self, aux)
 	sc->ax_btag = pa->pa_memt;
 #endif
 
-	/*
-	 * Allocate our interrupt.
-	 */
+	/* Allocate interrupt */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail;
 	}
-
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ax_intr, sc,
 	    self->dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt\n");
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
+		printf("\n");
 		goto fail;
 	}
 	printf(": %s", intrstr);
 
+	/* Reset the adapter. */
 	ax_reset(sc);
 
 	/*
@@ -1150,13 +1144,12 @@ ax_attach(parent, self, aux)
 	sc->ax_ldata_ptr = malloc(sizeof(struct ax_list_data) + 8,
 				M_DEVBUF, M_NOWAIT);
 	if (sc->ax_ldata_ptr == NULL) {
-		free(sc, M_DEVBUF);
-		printf("ax%d: no memory for list buffers!\n", sc->ax_unit);
+		printf("%s: no memory for list buffers!\n",sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	sc->ax_ldata = (struct ax_list_data *)sc->ax_ldata_ptr;
-#if __alpha__
+#ifdef __alpha__
 	round = (u_int64_t)sc->ax_ldata_ptr & 0xF;
 #else
 	round = (u_int32_t)sc->ax_ldata_ptr & 0xF;
@@ -2119,11 +2112,15 @@ ax_probe(parent, match, aux)
 	return (0);
 }
 
+/*
+ * Stop all chip I/O so that the kernel's probe routines don't
+ * get confused by errant DMAs when rebooting.
+ */
 void
 ax_shutdown(v)
-	void *v;
+	void			*v;
 {
-	struct ax_softc *sc = (struct ax_softc *)v;
+	struct ax_softc		*sc = (struct ax_softc *)v;
 
 	ax_stop(sc);
 }
