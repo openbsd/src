@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.15 2002/11/26 04:38:40 nate Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.16 2002/11/26 05:09:36 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -189,6 +189,31 @@ int	bgedebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+/*
+ * Various supported device vendors/types and their names. Note: the
+ * spec seems to indicate that the hardware still has Alteon's vendor
+ * ID burned into it, though it will always be overriden by the vendor
+ * ID in the EEPROM. Just to be safe, we cover all possibilities.
+ */
+const struct pci_matchid bge_devices[] = {
+	{ PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5700 },
+	{ PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5701 },
+
+	{ PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC100X },
+	{ PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC9100 },
+
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5700 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5701 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702X },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703X },
+
+	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9D21 },
+
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996 },
+};
 
 u_int32_t
 bge_readmem_ind(sc, off)
@@ -1377,44 +1402,8 @@ bge_probe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	/*
-	 * Various supported device vendors/types and their
-	 * names. Note: the spec seems to indicate that the hardware
-	 * still has Alteon's vendor ID burned into it, though it will
-	 * always be overriden by the vendor ID in the EEPROM. Just to
-	 * be safe, we cover all possibilities.
-	 */
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTEON &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTEON_BCM5700 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTEON_BCM5701))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTIMA &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTIMA_AC100X ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTIMA_AC9100))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5700 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5701 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5702 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5703 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5702X ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5703X))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SCHNEIDERKOCH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SCHNEIDERKOCH_SK9D21)
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3COM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3COM_3C996)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, bge_devices,
+	    sizeof(bge_devices)/sizeof(bge_devices[0])));
 }
 
 void

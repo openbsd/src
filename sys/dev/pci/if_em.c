@@ -98,29 +98,20 @@ char em_driver_version[] = "1.3.14";
 /*********************************************************************
  *  PCI Device ID Table
  *********************************************************************/
-struct em_device
-{
-	u_int16_t	vendor_id;
-	u_int16_t	device_id;
-	int		match;
-};
-
-struct em_device em_devs[] =
-{
-	/* Intel(R) PRO/1000 Network Connection */
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542,		2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_SC,	2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC,		2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI,		2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_SC,	2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC,		2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_LX,	2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM,		2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM,		2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB,		2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_SC,	2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_SC,	2},
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_LX,	2},
+const struct pci_matchid em_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_SC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_SC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_LX },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_SC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_SC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_LX },
 };
 
 /*********************************************************************
@@ -208,18 +199,10 @@ struct cfdriver em_cd = {
 int
 em_probe(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	int i;
-
 	INIT_DEBUGOUT("em_probe: begin");
 
-	for (i = 0; i < sizeof(em_devs) / sizeof(em_devs[0]); i++) {
-		if (PCI_VENDOR(pa->pa_id) == em_devs[i].vendor_id &&
-		    PCI_PRODUCT(pa->pa_id) == em_devs[i].device_id)
-			return (em_devs[i].match);
-	}
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, em_devices,
+	    sizeof(em_devices)/sizeof(em_devices[0])));
 }
 
 /*********************************************************************
