@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.85 2000/06/01 04:24:26 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.86 2000/06/01 04:38:34 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -181,7 +181,7 @@ get_sa_require(struct inpcb *inp)
 
 /*
  * Check the socket policy and request a new SA with a key management
- * daemon. Sometime the inp does not contain the destination address;
+ * daemon. Sometimes inp does not contain the destination address;
  * in that case use dst.
  */
 int
