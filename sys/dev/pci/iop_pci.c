@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop_pci.c,v 1.3 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: iop_pci.c,v 1.4 2002/03/31 05:25:10 nate Exp $	*/
 /*	$NetBSD: iop_pci.c,v 1.4 2001/03/20 13:21:00 ad Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map the register window. */
 	if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_MEM, 0, &sc->sc_iot,
-	    &sc->sc_ioh, NULL, NULL, 0)) {
+	    &sc->sc_ioh, NULL, NULL, 0x40000)) {
 		printf("%s: can't map register window\n", sc->sc_dv.dv_xname);
 		return;
 	}
