@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.6 1999/08/23 23:58:23 aaron Exp $	*/
+/*	$OpenBSD: paste.c,v 1.7 1999/08/24 18:49:45 aaron Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.6 1999/08/23 23:58:23 aaron Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.7 1999/08/24 18:49:45 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,6 +116,7 @@ parallel(argv)
 	register char ch, *p;
 	LIST *head, *tmp;
 	int opencnt, output;
+	char *buf, *lbuf;
 	size_t len;
 
 	for (cnt = 0, head = NULL; (p = *argv); ++argv, ++cnt) {
@@ -142,6 +143,7 @@ parallel(argv)
 	}
 
 	for (opencnt = cnt; opencnt;) {
+		lbuf = NULL;
 		for (output = 0, lp = head; lp; lp = lp->next) {
 			if (!lp->fp) {
 				if (output && lp->cnt &&
@@ -149,7 +151,7 @@ parallel(argv)
 					putchar(ch);
 				continue;
 			}
-			if (!(p = fgetln(lp->fp, &len))) {
+			if (!(buf = fgetln(lp->fp, &len))) {
 				if (!--opencnt)
 					break;
 				lp->fp = NULL;
@@ -158,13 +160,13 @@ parallel(argv)
 					putchar(ch);
 				continue;
 			}
-			if (*(p + len - 1) == '\n')
-				*(p + len - 1) = '\0';
+			if (*(buf + len - 1) == '\n')
+				*(buf + len - 1) = '\0';
 			else {
-				(void)fprintf(stderr,
-				    "paste: %s: incomplete line.\n",
-				    lp->name);
-				exit(1);
+				lbuf = (char *)malloc(len + 1);
+				memcpy(lbuf, buf, len);
+				lbuf[len] = '\0';
+				buf = lbuf;
 			}
 			/*
 			 * make sure that we don't print any delimiters
@@ -177,7 +179,11 @@ parallel(argv)
 						putchar(ch);
 			} else if ((ch = delim[(lp->cnt - 1) % delimcnt]))
 				putchar(ch);
-			(void)printf("%s", p);
+			(void)printf("%s", buf);
+			if (lbuf != NULL) {
+				free(lbuf);
+				lbuf = NULL;
+			}
 		}
 		if (output)
 			putchar('\n');
@@ -191,8 +197,10 @@ sequential(argv)
 	register FILE *fp;
 	register int cnt;
 	register char ch, *p, *dp;
-	char buf[_POSIX2_LINE_MAX + 1];
+	char *buf, *lbuf;
+	size_t len;
 
+	lbuf = NULL;
 	for (; (p = *argv); ++argv) {
 		if (p[0] == '-' && !p[1])
 			fp = stdin;
@@ -201,17 +209,18 @@ sequential(argv)
 			    strerror(errno));
 			continue;
 		}
-		if (fgets(buf, sizeof(buf), fp)) {
+		if ((buf = fgetln(fp, &len))) {
 			for (cnt = 0, dp = delim;;) {
-				if (!(p = strchr(buf, '\n'))) {
-					(void)fprintf(stderr,
-					    "paste: %s: input line too long.\n",
-					    *argv);
-					exit(1);
+				if (*(buf + len - 1) == '\n')
+					*(buf + len - 1) = '\0';
+				else {
+					lbuf = (char *)malloc(len + 1);
+					memcpy(lbuf, buf, len);
+					lbuf[len] = '\0';
+					buf = lbuf;
 				}
-				*p = '\0';
 				(void)printf("%s", buf);
-				if (!fgets(buf, sizeof(buf), fp))
+				if (!(buf = fgetln(fp, &len)))
 					break;
 				if ((ch = *dp++))
 					putchar(ch);
@@ -224,6 +233,10 @@ sequential(argv)
 		}
 		if (fp != stdin)
 			(void)fclose(fp);
+		if (lbuf != NULL) {
+			free(lbuf);
+			lbuf = NULL;
+		}
 	}
 }
 
