@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.5 1996/09/01 22:33:04 millert Exp $
+.\"	$OpenBSD: rcmd.3,v 1.6 1996/09/02 21:36:58 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,14 @@ The
 function
 is used by the super-user to execute a command on
 a remote machine using an authentication scheme based
-on reserved port numbers.  If the user is not the super-user,
+on reserved port numbers.  If the
+.Li RSH
+environmental variable is set and inport is
+.Li shell/tcp ,
+.Xr rcmdsh 3
+is called instead with the value of
+.Li RSH .
+Alternately, if the user is not the super-user,
 .Fn rcmd
 will invoke
 .Xr rcmdsh 3
