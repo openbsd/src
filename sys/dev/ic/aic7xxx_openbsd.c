@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.26 2004/12/28 04:12:24 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.27 2005/01/08 03:44:36 kevlo Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -985,7 +985,7 @@ ahc_softc_comp(struct ahc_softc *lahc, struct ahc_softc *rahc)
 
 void
 ahc_send_async(struct ahc_softc *ahc, char channel, u_int target, u_int lun,
-		u_int code, void *opt_arg)
+		ac_code code, void *opt_arg)
 {
 	/* Nothing to do here for OpenBSD */
 }
