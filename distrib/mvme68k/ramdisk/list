@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 1997/05/01 09:07:25 deraadt Exp $
+#	$OpenBSD: list,v 1.4 1997/05/12 03:25:19 deraadt Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -47,6 +47,7 @@ LINK	raminst			usr/bin/egrep
 LINK	raminst			usr/bin/grep
 LINK	raminst			usr/bin/gzip
 LINK	raminst			usr/bin/more
+LINK	raminst			usr/bin/less
 LINK	raminst			usr/bin/sed
 LINK	raminst			usr/bin/sort
 LINK	raminst			usr/bin/pax
