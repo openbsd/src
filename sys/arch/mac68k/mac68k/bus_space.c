@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.16 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.17 2004/11/28 14:04:24 miod Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -171,9 +171,10 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
-	for (; pa < endpa; pa += NBPG, va += NBPG) {
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		pte = kvtopte(va);
 		if ((flags & BUS_SPACE_MAP_CACHEABLE))
 			*pte &= ~PG_CI;

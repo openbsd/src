@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.28 2003/05/09 00:59:26 art Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.29 2004/11/28 14:04:24 miod Exp $	*/
 /*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
 
 /*
@@ -822,10 +822,10 @@ nubus_mapin(paddr, sz)
 	/* Map it to the specified bus. */
 	do {
 		pmap_enter(pmap_kernel(), va, pa | pmt,
-			   VM_PROT_READ|VM_PROT_WRITE, 0);
-		va += NBPG;
-		pa += NBPG;
-	} while ((sz -= NBPG) > 0);
+		    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	} while ((sz -= PAGE_SIZE) > 0);
 	pmap_update(pmap_kernel());
 
 	return ((char *)retval);
