@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.58 2002/11/10 21:03:19 nate Exp $
+$OpenBSD: usbdevs,v 1.59 2002/12/01 13:57:10 todd Exp $
 /* $NetBSD: usbdevs,v 1.280 2002/11/05 12:13:40 cjs Exp $ */
 
 /*
@@ -204,6 +204,7 @@ vendor MACALLY		0x0618	Macally
 vendor ACTLABS		0x061c	Act Labs
 vendor ALARIS		0x0620	Alaris
 vendor APEX		0x0624	Apex
+vendor VIVITAR		0x0636  Vivitar
 vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
 vendor SGI		0x065e	Silicon Graphics
@@ -1323,6 +1324,9 @@ product UNIACCESS PANACHE	0x0101	Panache Surf ISDN
 
 /* Vision products */
 product VISION VC6452V002	0x0002	CPiA Camera
+
+/* Vivitar products */
+product VIVITAR DSC350		0x0003	DSC350 Camera
 
 /* Visioneer products */
 product VISIONEER 7600		0x0211	OneTouch 7600
