@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.7 2000/12/11 17:47:02 deraadt Exp $
+#	$OpenBSD: inter.phone,v 1.8 2001/07/13 22:16:57 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -362,7 +362,19 @@
 355:::Albania
 356:::Malta
 357:21:Nicosia:Cyprus
+358:2:Turku & Pori:Finland
+358:3:H\344me:Finland
+358:5:Kymi:Finland
+358:6:Vaasa:Finland
+358:8:Oulu:Finland
 358:9:Helsinki:Finland
+358:13:Pohjois-Karjala:Finland
+358:14:Keski-Suomi:Finland
+358:15:Mikkeli:Finland
+358:16:Lappi:Finland
+358:17:Kuopio:Finland
+358:18:Ahvenanmaa:Finland
+358:19:Uusimaa:Finland
 358:28::Aaland Islands
 359:2:Sofia:Bulgaria
 370:2:Vilnius:Lithuania
@@ -373,8 +385,46 @@
 375:17:Minsk:Belarus
 376:::Andorra
 378:549::San Marino
-380:44:Kiev:Ukraine
-380:::Turkmenistan
+380:31:Uzhhorod:Ukrane
+380:32:Lviv:Ukrane
+380:33:Lutsk:Ukrane
+380:34:Ivano-Frankivsk:Ukrane
+380:35:Ternopil:Ukrane
+380:36:Rivne:Ukrane
+380:37:Chernivtsi:Ukraine
+380:38:Khmelnytsky:Ukraine
+380:41:Zhytomyr:Ukraine
+380:43:Vinnytsya:Ukraine
+380:44:Kyiv:Ukraine
+380:46:Chernihiv:Ukraine
+380:47:Cherkasy:Ukraine
+380:4735:Korsun-Schevchenkovski:Ukraine
+380:48:Odessa:Ukraine
+380:4849:Bilhorod-Dnistrovsky:Ukraine
+380:50:Ukrainian:Ukraine
+380:51:Mykolayiv:Ukraine
+380:52:Kirovohrad:Ukraine
+380:53:Poltava:Ukraine
+380:54:Sumy:Ukraine
+380:55:Kherson:Ukraine
+380:56:Dnipropetrovsk:Ukraine
+380:564:Kryvy Rih:Ukraine
+380:5692:Dniprodzerzhynsk:Ukraine
+380:57:Kharkiv:Ukraine
+380:60:Yalta:Ukraine
+380:61:Zaporizhya:Ukraine
+380:6153:Berdyansk:Ukraine
+380:62:Donetsk:Ukraine
+380:629:Mariupol:Ukraine
+380:64:Luhansk:Ukraine
+380:65:Simferopol:Ukraine
+380:654:Yalta:Ukraine
+380:6554:Bakhchysaray:Ukraine
+380:6560:Alushta:Ukraine
+380:6561:Kerch:Ukraine
+380:6562:Feodosiya:Ukraine
+380:6564:Dzhankoy:Ukraine
+380:69:Sevastopol:Ukraine
 381:11:Belgrade:Yugoslavia
 381:11:Belgrade:Serbia
 381:81:Titograd:Montenegro
@@ -398,6 +448,7 @@
 507:::Panama, Rep. of
 508:::St. Pierre and Miquelon
 509:1:Port Au Prince:Haiti
+5399:::Guantanamo Bay (U.S. Naval Base)
 590:::Guadeloupe
 591:2:La Paz:Bolivia
 591:64:Sucre:Bolivia
@@ -482,18 +533,9 @@
 975:::Bhutan
 976:::Mongolia
 977:::Nepal
+993:12:Ashgabat:Turkmenistan
+993:422:Charjou:Turkmenistan
+993:522:Mary:Turkmenistan
+358:28::Aaland Islands
 994:::Azerbaijan
 995:::Georgia
-5399:::Guantanamo Bay (U.S. Naval Base)
-358:2:Turku & Pori:Finland
-358:3:H\344me:Finland
-358:5:Kymi:Finland
-358:6:Vaasa:Finland
-358:8:Oulu:Finland
-358:13:Pohjois-Karjala:Finland
-358:14:Keski-Suomi:Finland
-358:15:Mikkeli:Finland
-358:16:Lappi:Finland
-358:17:Kuopio:Finland
-358:18:Ahvenanmaa:Finland
-358:19:Uusimaa:Finland
