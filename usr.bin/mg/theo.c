@@ -78,7 +78,8 @@ static const char *talk[] = {
 	"i let you guys do whatever you wanted",
 	"you bring new meaning to the terms slackass. I will have to invent a new term.",
 	"if they cut you out, muddy their back yards",
-	"Make them want to start over, and play nice the next time."
+	"Make them want to start over, and play nice the next time.",
+	"It is clear that this has not been thought through."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
