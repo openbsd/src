@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.2 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: disklabel.h,v 1.3 2001/12/05 20:11:46 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1995 Dale Rahn.
@@ -31,7 +31,7 @@
  */  
 
 #ifndef _MACHINE_DISKLABEL_H_
-#define /* _MACHINE_DISKLABEL_H_ */
+#define _MACHINE_DISKLABEL_H_
 
 /* number of boot pieces , ie xxboot bootxx */
 #define NUMBOOT		2
@@ -134,4 +134,4 @@ struct cpu_disklabel {
 	u_long		magic2;
 	u_char		cfg_4[192];
 };
-#endif _MACHINE_DISKLABEL_H_
+#endif	/* _MACHINE_DISKLABEL_H_ */
