@@ -1,4 +1,4 @@
-M$OpenBSD: pcidevs,v 1.201 1999/12/10 01:47:51 jason Exp $
+M$OpenBSD: pcidevs,v 1.202 1999/12/13 06:18:53 csapuntz Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -828,6 +828,7 @@ product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
 /* Creative Labs */
 product CREATIVELABS SBLIVE	0x0002	SoundBlaster Live
 product CREATIVELABS DIGIN	0x7002	SoundBlaster Digital Input
+product CREATIVELABS EV1938     0x8938  Ectiva 1938
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
@@ -887,6 +888,7 @@ product EMULEX LPPFC		0x10df	Light Pulse FibreChannel
 /* Ensoniq products */
 product ENSONIQ	AUDIOPCI97	0x1371	AudioPCI97
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
+product ENSONIQ CT5880		0x5880  CT5880
 
 /* ESS Technology Inc products */
 product ESSTECH	MAESTROII	0x1968	Maestro II
