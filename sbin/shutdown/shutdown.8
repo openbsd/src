@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.26 2001/06/05 15:23:44 aaron Exp $
+.\"	$OpenBSD: shutdown.8,v 1.27 2001/08/07 15:57:41 heko Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -171,6 +171,13 @@ are placed in
 and should be used to
 inform the users about when the system will be back up
 and why it is going down (or anything else).
+.Pp
+You can cancel a scheduled shutdown with the
+.Xr kill 1
+command by killing the shutdown process. If shutdown has created
+the
+.Pa /etc/nologin
+file, you should manually delete it after killing the process.
 .Sh FILES
 .Bl -tag -width /etc/rc.shutdown -compact
 .It Pa /etc/nologin
@@ -187,6 +194,7 @@ run by
 before the system is shutdown
 .El
 .Sh SEE ALSO
+.Xr kill 1 ,
 .Xr login 1 ,
 .Xr wall 1 ,
 .Xr halt 8 ,
