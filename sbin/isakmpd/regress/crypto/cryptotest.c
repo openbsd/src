@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptotest.c,v 1.3 1998/12/21 01:02:29 niklas Exp $	*/
+/*	$OpenBSD: cryptotest.c,v 1.4 2001/01/26 12:04:19 niklas Exp $	*/
 /*	$EOM: cryptotest.c,v 1.5 1998/10/07 16:40:49 niklas Exp $	*/
 
 /*
@@ -78,7 +78,8 @@ special_test_blf (void)
   u_int8_t *akey = "0123456789ABCDEFF0E1D2C3B4A59687";
   u_int8_t *aiv = "FEDCBA9876543210";
   u_int8_t data[] = "7654321 Now is the time for \0\0\0"; /* len 29 */
-  u_int8_t *acipher = "6B77B4D63006DEE605B156E27403979358DEB9E7154616D959F1652BD5FF92CCE7";
+  u_int8_t *acipher
+    = "6B77B4D63006DEE605B156E27403979358DEB9E7154616D959F1652BD5FF92CCE7";
   u_int8_t key[16], cipher[32], iv[8];
   struct crypto_xf *xf;
   struct keystate *ks;
