@@ -1,9 +1,10 @@
-#	$OpenBSD: list,v 1.12 1999/10/01 01:45:52 deraadt Exp $
+#	$OpenBSD: list,v 1.13 1999/11/11 02:41:45 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/dmesg
+LINK	instbin			sbin/dhclient
 
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
