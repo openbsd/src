@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.606 2003/03/12 21:44:09 grange Exp 
+ *		OpenBSD: pcidevs,v 1.607 2003/03/19 20:00:54 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2951,7 +2951,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82845G/GL/GV/GE/PE Host-AGP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IV,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IGD,
 	    "82845G/GL Video",
 	},
 	{
