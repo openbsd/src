@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.12 2004/02/26 11:52:59 henning Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.13 2004/03/07 08:37:49 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -593,7 +593,7 @@ clear_config(struct ifsd_config *oconf)
 	struct ifsd_state *state;
 
 	external_evtimer_setup(&conf->always, IFSD_EVTIMER_DEL);
-	if (conf->curstate != NULL)
+	if (conf != NULL && conf->curstate != NULL)
 		external_evtimer_setup(conf->curstate, IFSD_EVTIMER_DEL);
 	while ((state = TAILQ_FIRST(&oconf->states)) != NULL) {
 		TAILQ_REMOVE(&oconf->states, state, entries);
@@ -686,7 +686,7 @@ logit(int level, const char *fmt, ...)
 	va_list	 ap;
 	char	*nfmt;
 
-	if (level > conf->loglevel)
+	if (conf == NULL || level > conf->loglevel)
 		return;
 
 	va_start(ap, fmt);
