@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)opts.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: opts.c,v 1.7 2003/04/07 23:45:45 tedu Exp $";
+static char *rcsid = "$Id: opts.c,v 1.8 2003/04/08 00:55:36 deraadt Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -636,7 +636,7 @@ out:
 		 * Finish off the expansion
 		 */
 		if (BUFSPACE(ep, strlen(cp))) {
-			strlcpy(ep, cp, envbuf + sizeof expbuf - ep);
+			strlcpy(ep, cp, expbuf + sizeof expbuf - ep);
 		} else {
 			plog(XLOG_ERROR, expand_error, *p->opt);
 		}
