@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.20 2003/12/26 16:34:05 espie Exp $
+# $OpenBSD: pkg_add,v 1.21 2004/01/01 17:20:54 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -370,12 +370,15 @@ sub really_add($)
 	if ($plist->has(INSTALL) && !$interrupted) {
 		print "Install script: $dir",INSTALL ,"$pkgname POST-INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
-			system($dir.INSTALL, $pkgname, "POST-INSTALL") == 0 or die "install script borked";
+			if (system($dir.INSTALL, $pkgname, "POST-INSTALL") != 0) {
+				print STDERR "install script for $pkgname borked\n";
+				$errors++;
+			}
 		}
 	}
 
 	unlink($dir.CONTENTS);
-	if ($interrupted) {
+	if ($interrupted || $errors) {
 		borked_installation($plist, $dir) unless $opt_n;
 		exit 1;
 	}
