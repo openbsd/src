@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.127 2004/05/11 04:00:46 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.128 2004/06/03 03:12:55 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -127,6 +127,8 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+#ahd*	at pci? disable dev ? function ?	# Adaptec 79?? SCSI controllers
+#scsibus* at ahd?
 #twe*	at pcu? dev ? function ?	# 3ware Escalade RAID controllers
 #scsibus* at twe?
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
