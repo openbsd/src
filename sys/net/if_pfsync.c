@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.35 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.36 2004/08/03 05:32:28 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -113,6 +113,7 @@ pfsyncattach(int npfsync)
 	pfsyncif.sc_statep.s = NULL;
 	pfsyncif.sc_statep_net.s = NULL;
 	pfsyncif.sc_maxupdates = 128;
+	pfsyncif.sc_sync_peer.s_addr = INADDR_PFSYNC_GROUP;
 	pfsyncif.sc_sendaddr.s_addr = INADDR_PFSYNC_GROUP;
 	pfsyncif.sc_ureq_received = 0;
 	pfsyncif.sc_ureq_sent = 0;
@@ -742,6 +743,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (sc->sc_sync_ifp)
 			strlcpy(pfsyncr.pfsyncr_syncif,
 			    sc->sc_sync_ifp->if_xname, IFNAMSIZ);
+		pfsyncr.pfsyncr_syncpeer = sc->sc_sync_peer;
 		pfsyncr.pfsyncr_maxupdates = sc->sc_maxupdates;
 		if ((error = copyout(&pfsyncr, ifr->ifr_data, sizeof(pfsyncr))))
 			return (error);
@@ -751,6 +753,12 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (error);
 		if ((error = copyin(ifr->ifr_data, &pfsyncr, sizeof(pfsyncr))))
 			return (error);
+
+		if (pfsyncr.pfsyncr_syncpeer.s_addr == 0)
+			sc->sc_sync_peer.s_addr = INADDR_PFSYNC_GROUP;
+		else
+			sc->sc_sync_peer.s_addr =
+			    pfsyncr.pfsyncr_syncpeer.s_addr;
 
 		if (pfsyncr.pfsyncr_maxupdates > 255)
 			return (EINVAL);
@@ -772,10 +780,9 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 			break;
 		}
+
 		if ((sifp = ifunit(pfsyncr.pfsyncr_syncif)) == NULL)
 			return (EINVAL);
-		else if (sifp == sc->sc_sync_ifp)
-			break;
 
 		s = splnet();
 		if (sifp->if_mtu < sc->sc_if.if_mtu ||
@@ -792,10 +799,17 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			imo->imo_multicast_ifp = NULL;
 		}
 
-		if (sc->sc_sync_ifp) {
+		if (sc->sc_sync_ifp &&
+		    sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP) {
 			struct in_addr addr;
 
+			if (!(sc->sc_sync_ifp->if_flags & IFF_MULTICAST)) {
+				splx(s);
+				return (EADDRNOTAVAIL);
+			}
+
 			addr.s_addr = INADDR_PFSYNC_GROUP;
+
 			if ((imo->imo_membership[0] =
 			    in_addmulti(&addr, sc->sc_sync_ifp)) == NULL) {
 				splx(s);
@@ -805,7 +819,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			imo->imo_multicast_ifp = sc->sc_sync_ifp;
 			imo->imo_multicast_ttl = PFSYNC_DFLTTL;
 			imo->imo_multicast_loop = 0;
+		}
 
+		if (sc->sc_sync_ifp ||
+		    sc->sc_sendaddr.s_addr != INADDR_PFSYNC_GROUP) {
 			/* Request a full state table update. */
 			sc->sc_ureq_sent = time_uptime;
 #if NCARP > 0
@@ -819,7 +836,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = pfsync_request_update(NULL, NULL);
 			if (error == ENOMEM) {
 				splx(s);
-				return(ENOMEM);
+				return (ENOMEM);
 			}
 			pfsync_sendout(sc);
 		}
@@ -934,7 +951,8 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 	 * If a packet falls in the forest and there's nobody around to
 	 * hear, does it make a sound?
 	 */
-	if (ifp->if_bpf == NULL && sc->sc_sync_ifp == NULL) {
+	if (ifp->if_bpf == NULL && sc->sc_sync_ifp == NULL &&
+	    sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP) {
 		/* Don't leave any stale pfsync packets hanging around. */
 		if (sc->sc_mbuf != NULL) {
 			m_freem(sc->sc_mbuf);
@@ -1318,9 +1336,8 @@ pfsync_sendout(sc)
 		sc->sc_statep_net.s = NULL;
 	}
 
-	if (sc->sc_sync_ifp) {
+	if (sc->sc_sync_ifp || sc->sc_sync_peer.s_addr != INADDR_PFSYNC_GROUP) {
 		struct ip *ip;
-		struct ifaddr *ifa;
 		struct sockaddr sa;
 
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
@@ -1340,16 +1357,12 @@ pfsync_sendout(sc)
 		ip->ip_sum = 0;
 
 		bzero(&sa, sizeof(sa));
-		sa.sa_family = AF_INET;
-		ifa = ifaof_ifpforaddr(&sa, sc->sc_sync_ifp);
-		if (ifa == NULL)
-			return (0);
-		ip->ip_src.s_addr = ifatoia(ifa)->ia_addr.sin_addr.s_addr;
+		ip->ip_src.s_addr = INADDR_ANY;
 
 		if (sc->sc_sendaddr.s_addr == INADDR_PFSYNC_GROUP)
 			m->m_flags |= M_MCAST;
 		ip->ip_dst = sc->sc_sendaddr;
-		sc->sc_sendaddr.s_addr = INADDR_PFSYNC_GROUP;
+		sc->sc_sendaddr.s_addr = sc->sc_sync_peer.s_addr;
 
 		pfsyncstats.pfsyncs_opackets++;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.15 2004/07/13 22:51:48 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.16 2004/08/03 05:32:28 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -150,6 +150,7 @@ struct pfsync_softc {
 	struct timeout		 sc_tmo;
 	struct timeout		 sc_bulk_tmo;
 	struct timeout		 sc_bulkfail_tmo;
+	struct in_addr		 sc_sync_peer;
 	struct in_addr		 sc_sendaddr;
 	struct mbuf		*sc_mbuf;	/* current cumulative mbuf */
 	struct mbuf		*sc_mbuf_net;	/* current cumulative mbuf */
@@ -184,7 +185,7 @@ struct pfsync_header {
 } __packed;
 
 #define PFSYNC_BULKPACKETS	1	/* # of packets per timeout */
-#define PFSYNC_MAX_BULKTRIES	12	
+#define PFSYNC_MAX_BULKTRIES	12
 #define PFSYNC_HDRLEN	sizeof(struct pfsync_header)
 #define	PFSYNC_ACTIONS \
 	"CLR ST", "INS ST", "UPD ST", "DEL ST", \
@@ -217,9 +218,10 @@ struct pfsyncstats {
  * Configuration structure for SIOCSETPFSYNC SIOCGETPFSYNC
  */
 struct pfsyncreq {
-	char	pfsyncr_syncif[IFNAMSIZ];
-	int	pfsyncr_maxupdates;
-	int	pfsyncr_authlevel;
+	char		 pfsyncr_syncif[IFNAMSIZ];
+	struct in_addr	 pfsyncr_syncpeer;
+	int		 pfsyncr_maxupdates;
+	int		 pfsyncr_authlevel;
 };
 #define SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)
 #define SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)
