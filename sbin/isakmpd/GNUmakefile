@@ -1,4 +1,4 @@
-#    $OpenBSD: GNUmakefile,v 1.7 2003/06/03 14:28:16 ho Exp $
+#    $OpenBSD: GNUmakefile,v 1.8 2004/08/02 15:30:33 ho Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -66,7 +66,7 @@ SRCS=		app.c attribute.c cert.c connection.c \
 		ipsec.c ipsec_fld.c ipsec_num.c isakmpd.c isakmp_doi.c \
 		isakmp_fld.c isakmp_num.c key.c libcrypto.c log.c message.c \
 		math_2n.c math_group.c prf.c sa.c sysdep.c timer.c \
-		transport.c udp.c ui.c util.c
+		transport.c udp.c ui.c util.c virtual.c
 
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 		isakmp_num.h
