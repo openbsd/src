@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.5 1997/04/09 08:39:15 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.6 1997/04/15 06:25:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -279,7 +279,8 @@ biosstrategy(void *devdata, int rw,
 
 	for (i = 0; error == 0 && i < nsect;
 	     i += n, blk += n, buf += n * DEV_BSIZE) {
-		register int	cyl, hd, sect;
+		register int	cyl, hd, sect, j;
+		void *bb;
 
 		btochs(blk, cyl, hd, sect, 
 			BIOSNHEADS(bd->dinfo), BIOSNSECTS(bd->dinfo));
@@ -287,28 +288,50 @@ biosstrategy(void *devdata, int rw,
 			n = BIOSNSECTS(bd->dinfo) - sect;
 		else
 			n = nsect - i;
+		
+		/* use a bounce buffer to not to cross 64k DMA boundary */
+		if ((((u_int32_t)buf) & ~0xffff) !=
+		    (((u_int32_t)buf + n * DEV_BSIZE) & ~0xffff)) {
+			bb = alloc(n * DEV_BSIZE);
+			if (rw != F_READ)
+				bcopy (buf, bb, n * DEV_BSIZE);
+		} else
+			bb = buf;
 #ifdef	BIOS_DEBUG
 		if (debug)
-			printf(" (%d,%d,%d,%d)@%p", cyl, hd, sect, n, buf);
+			printf(" (%d,%d,%d,%d)@%p", cyl, hd, sect, n, bb);
 #endif
-		if (rw == F_READ)
-			error = biosread (bd->biosdev, cyl, hd, sect, n, buf);
-		else
-			error = bioswrite(bd->biosdev, cyl, hd, sect, n, buf);
+		for (error = 1, j = 5; error && j--;) {
+			error = (rw == F_READ)?
+				  biosread (bd->biosdev, cyl, hd, sect, n, bb)
+				: bioswrite(bd->biosdev, cyl, hd, sect, n, bb);
 
-		if (error != 0) {
-			for (p = bd_errors; p < &bd_errors[bd_nents] &&
-			     p->bd_id != error; p++);
+			switch (error) {
+			case 0x06:	/* disk changed */
+				printf ("disk changed\n");
+			default:
+				continue;
 
-			if (error == 0x11) /* ECC corrected */
+			case 0x11:	/* ECC corrected */
 				error = 0;
+				break;
+			}
+		}
+
+		if (bb != buf) {
+			if (rw == F_READ)
+				bcopy (bb, buf, n * DEV_BSIZE);
+			free (bb, n * DEV_BSIZE);
 		}
 	}
 
 #ifdef	BIOS_DEBUG
 	if (debug) {
-		if (error != 0)
+		if (error != 0) {
+			for (p = bd_errors; p < &bd_errors[bd_nents] &&
+			     p->bd_id != error; p++);
 			printf("=%x(%s)", p->bd_id, p->msg);
+		}
 		putchar('\n');
 	}
 #endif
