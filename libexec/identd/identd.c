@@ -79,8 +79,33 @@ gethost(addr)
 	hp = gethostbyaddr((char *) addr, sizeof(struct in_addr), AF_INET);
 	if (hp)
 		return hp->h_name;
-	else
-		return inet_ntoa(*addr);
+	return inet_ntoa(*addr);
+}
+
+/*
+ * Return the name of the connecting host, or the IP number as a string.
+ */
+char   *
+gethost6(addr)
+	struct sockaddr_in6 *addr;
+{
+	static char hbuf[2][NI_MAXHOST];
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST;
+#endif
+	static int bb=0; 
+	int error;
+	
+	bb = (bb+1)%2;
+	error = getnameinfo((struct sockaddr *)addr, addr->sin6_len,
+	    hbuf[bb], sizeof(hbuf[bb]), NULL, 0, niflags);
+	if (error != 0) {
+		syslog(LOG_ERR, "getnameinfo failed (%s)", gai_strerror(error));
+		strlcpy(hbuf[bb], "UNKNOWN", sizeof(hbuf[bb]));
+	}
+	return(hbuf[bb]);
 }
 
 /*
@@ -103,8 +128,12 @@ main(argc, argv)
 	char   *argv[];
 {
 	int     len;
-	struct sockaddr_in sin;
+	struct sockaddr_storage sa, sa2;
+	/* 	struct sockaddr_in sin;*/
+	struct sockaddr_in * sin;
+	struct sockaddr_in6 * sin6;
 	struct in_addr laddr, faddr;
+	struct in6_addr laddr6, faddr6;
 	struct timeval tv;
 	struct passwd *pwd;
 	struct group *grp;
@@ -360,8 +389,8 @@ main(argc, argv)
 	/*
 	 * Get foreign internet address
 	 */
-	len = sizeof(sin);
-	if (getpeername(0, (struct sockaddr *) &sin, &len) == -1) {
+	len = sizeof(sa);
+	if (getpeername(0, (struct sockaddr *) &sa, &len) == -1) {
 		/*
 		 * A user has tried to start us from the command line or
 		 * the network link died, in which case this message won't
@@ -371,7 +400,14 @@ main(argc, argv)
 		perror("in.identd: getpeername()");
 		exit(1);
 	}
-	faddr = sin.sin_addr;
+	if (sa.ss_family == AF_INET6) {
+		sin6 = (struct sockaddr_in6 *)&sa;
+		faddr6 = sin6->sin6_addr;
+	}
+	else {
+		sin = (struct sockaddr_in *)&sa;
+		faddr = sin->sin_addr;
+	}
 
 	/*
 	 * Open the connection to the Syslog daemon if requested
@@ -387,8 +423,8 @@ main(argc, argv)
 	/*
 	 * Get local internet address
 	 */
-	len = sizeof(sin);
-	if (getsockname(0, (struct sockaddr *) &sin, &len) == -1) {
+	len = sizeof(sa2);
+	if (getsockname(0, (struct sockaddr *) &sa2, &len) == -1) {
 		/*
 		 * We can just die here, because if this fails then the
 		 * network has died and we haven't got anyone to return
@@ -396,11 +432,24 @@ main(argc, argv)
 		 */
 		exit(1);
 	}
-	laddr = sin.sin_addr;
+	/* are we V4 or V6? */
+	if (sa2.ss_family == AF_INET6) {
+		sin6 = (struct sockaddr_in6 *)&sa2;
+		laddr6 = sin6->sin6_addr;
+		/*
+		 * Get the local/foreign port pair from the luser
+		 */
+		parse6(STDIN_FILENO, (struct sockaddr_in6 *)&sa2,
+		    (struct sockaddr_in6 *)&sa);
+	}
+	else {
+		sin = (struct sockaddr_in *)&sa2;
+		laddr = sin->sin_addr;
+		/*
+		 * Get the local/foreign port pair from the luser
+		 */
+		parse(STDIN_FILENO, &laddr, &faddr);
+	}
 
-	/*
-	 * Get the local/foreign port pair from the luser
-	 */
-	parse(STDIN_FILENO, &laddr, &faddr);
 	exit(0);
 }

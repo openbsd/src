@@ -154,7 +154,8 @@ parse(fd, laddr, faddr)
 	uid_t	uid;
 
 	if (debug_flag && syslog_flag)
-		syslog(LOG_DEBUG, "In function parse()");
+		syslog(LOG_DEBUG, "In function parse(), from %s to %s", 
+		       gethost(faddr), gethost(laddr));
 
 	if (debug_flag && syslog_flag)
 		syslog(LOG_DEBUG, "  Before read from remote host");
@@ -295,6 +296,167 @@ parse(fd, laddr, faddr)
 	    charset_name ? charset_name : "", pw->pw_name);
 	if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 		syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+		return 1;
+	}
+	return 0;
+}
+
+
+/* Parse, a-la IPv6 */
+int
+parse6(fd, laddr, faddr)
+	int fd;
+	struct sockaddr_in6 *laddr, *faddr;
+{
+	char	buf[BUFSIZ], *p;
+	struct	sockaddr_in6 laddr2, faddr2;
+	struct	passwd *pw;
+	int	n;
+	uid_t	uid;
+
+	if (debug_flag && syslog_flag)
+		syslog(LOG_DEBUG, "In function parse6(), from %s to %s", 
+		       gethost6(faddr), gethost6(laddr));
+
+	if (debug_flag && syslog_flag)
+		syslog(LOG_DEBUG, "  Before read from remote host");
+	faddr2 = *faddr;
+	laddr2 = *laddr;
+	lport = fport = 0;
+
+	/* Read query from client */
+	if ((n = timed_read(fd, buf, sizeof(buf) - 1, IO_TIMEOUT)) <= 0) {
+		if (syslog_flag)
+			syslog(LOG_NOTICE, "read from %s: %m", gethost6(faddr));
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
+			return 1;
+		}
+		return 0;
+	}
+	buf[n] = '\0';
+
+	/* Pull out local and remote ports */
+	p = buf;
+	while (*p != '\0' && isspace(*p))
+		p++;
+	if ((p = strtok(p, " \t,"))) {
+		lport = atoi(p);
+		if ((p = strtok(NULL, " \t,")))
+			fport = atoi(p);
+	}
+
+	if (lport < 1 || lport > 65535 || fport < 1 || fport > 65535) {
+		if (syslog_flag)
+			syslog(LOG_NOTICE,
+			    "scanf: invalid-port(s): %d , %d from %s",
+			    lport, fport, gethost6(faddr));
+		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
+		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "INVALID-PORT");
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
+			return 1;
+		}
+		return 0;
+	}
+	if (syslog_flag && verbose_flag)
+		syslog(LOG_NOTICE, "request for (%d,%d) from %s",
+		    lport, fport, gethost6(faddr));
+
+	if (debug_flag && syslog_flag)
+		syslog(LOG_DEBUG, "  After fscanf(), before k_getuid6()");
+
+	/*
+	 * Next - get the specific TCP connection and return the
+	 * uid - user number.
+	 *
+	 */
+	if (k_getuid6(&faddr2, htons(fport), laddr,
+	    htons(lport), &uid) == -1) {
+		if (syslog_flag)
+			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",	
+			    lport, fport);
+		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
+		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
+			return 1;
+		}
+		return 0;
+	}
+	if (debug_flag && syslog_flag)
+		syslog(LOG_DEBUG, "  After k_getuid6(), before getpwuid()");
+
+	pw = getpwuid(uid);
+	if (!pw) {
+		if (syslog_flag)
+			syslog(LOG_WARNING,
+			    "getpwuid() could not map uid (%d) to name",
+			    uid);
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
+		    lport, fport, charset_name ? " , " : "",
+		    charset_name ? charset_name : "", uid);
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
+			return 1;
+		}
+		return 0;
+	}
+
+	if (syslog_flag)
+		syslog(LOG_DEBUG, "Successful lookup: %d , %d : %s",
+		    lport, fport, pw->pw_name);
+
+	if (noident_flag && check_noident(pw->pw_dir)) {
+		if (syslog_flag && verbose_flag)
+			syslog(LOG_NOTICE,
+			    "user %s requested HIDDEN-USER for host %s: %d, %d",
+			    pw->pw_name, gethost6(faddr), lport, fport);
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport);
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
+			return 1;
+		}
+		return 0;
+	}
+
+	if (token_flag) {
+		char token[21];
+
+		gentoken(token, sizeof token);
+		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
+		    pw->pw_name);
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : OTHER%s%s :%s\r\n",
+		    lport, fport, charset_name ? " , " : "",
+		    charset_name ? charset_name : "", token);
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
+			return 1;
+		}
+		return 0;
+	}
+	if (number_flag) {
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
+		    lport, fport, charset_name ? " , " : "",
+		    charset_name ? charset_name : "", uid);
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
+			return 1;
+		}
+		return 0;
+	}
+	n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
+	    lport, fport, other_flag ? "OTHER" : "UNIX",
+	    charset_name ? " , " : "",
+	    charset_name ? charset_name : "", pw->pw_name);
+	if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+		syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 		return 1;
 	}
 	return 0;
