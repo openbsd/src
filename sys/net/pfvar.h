@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.99 2002/10/20 13:08:29 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.100 2002/10/22 12:23:35 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -79,7 +79,7 @@ struct pf_addr_dyn {
 	char			 ifname[IFNAMSIZ];
 	struct ifnet		*ifp;
 	struct pf_addr		*addr;
-	u_int8_t		 af;
+	sa_family_t		 af;
 	void			*hook_cookie;
 	u_int8_t		 undefined;
 };
@@ -279,7 +279,7 @@ struct pf_rule {
 #define PF_STATE_NORMAL		0x1
 #define PF_STATE_MODULATE	0x2
 	u_int8_t		 keep_state;
-	u_int8_t		 af;
+	sa_family_t		 af;
 	u_int8_t		 proto;
 	u_int8_t		 type;
 	u_int8_t		 code;
@@ -332,7 +332,7 @@ struct pf_state {
 	u_int32_t	 expire;
 	u_int32_t	 packets;
 	u_int32_t	 bytes;
-	u_int8_t	 af;
+	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 	u_int8_t	 log;
@@ -345,7 +345,7 @@ struct pf_tree_node {
 	struct pf_state	*state;
 	struct pf_addr	 addr[2];
 	u_int16_t	 port[2];
-	u_int8_t	 af;
+	sa_family_t	 af;
 	u_int8_t	 proto;
 };
 
@@ -358,7 +358,7 @@ struct pf_nat {
 	struct ifnet		*ifp;
 	TAILQ_ENTRY(pf_nat)	 entries;
 	u_int16_t		 proxy_port[2];
-	u_int8_t		 af;
+	sa_family_t		 af;
 	u_int8_t		 proto;
 	u_int8_t		 ifnot;
 	u_int8_t		 no;
@@ -374,7 +374,7 @@ struct pf_binat {
 	struct pf_addr		 smask;
 	struct pf_addr		 dmask;
 	struct pf_addr		 rmask;
-	u_int8_t		 af;
+	sa_family_t		 af;
 	u_int8_t		 proto;
 	u_int8_t		 dnot;
 	u_int8_t		 no;
@@ -392,7 +392,7 @@ struct pf_rdr {
 	u_int16_t		 dport;
 	u_int16_t		 dport2;
 	u_int16_t		 rport;
-	u_int8_t		 af;
+	sa_family_t		 af;
 	u_int8_t		 proto;
 	u_int8_t		 snot;
 	u_int8_t		 dnot;
@@ -420,7 +420,7 @@ struct pf_pdesc {
 	u_int32_t	 p_len;		/* total length of payload */
 	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
 					 * state code. Easier than tags */
-	u_int8_t	 af;
+	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 tos;
 };
@@ -600,7 +600,7 @@ struct pfioc_natlook {
 	u_int16_t	 dport;
 	u_int16_t	 rsport;
 	u_int16_t	 rdport;
-	u_int8_t	 af;
+	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 };
@@ -636,7 +636,7 @@ struct pfioc_state {
 
 struct pfioc_state_kill {
 	/* XXX returns the number of states killed in psk_af */
-	int			psk_af;
+	sa_family_t		psk_af;
 	int			psk_proto;
 	struct pf_rule_addr	psk_src;
 	struct pf_rule_addr	psk_dst;
@@ -808,10 +808,10 @@ int	pf_test(int, struct ifnet *, struct mbuf **);
 int	pf_test6(int, struct ifnet *, struct mbuf **);
 #endif /* INET */
 
-int	pflog_packet(struct ifnet *, struct mbuf *, int, u_short, u_short,
-	    struct pf_rule *);
+int	pflog_packet(struct ifnet *, struct mbuf *, sa_family_t, u_short,
+	    u_short, struct pf_rule *);
 int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
-	    struct pf_addr *, int);
+	    struct pf_addr *, sa_family_t);
 int	pf_match(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 int	pf_match_uid(u_int8_t, uid_t, uid_t, uid_t);
@@ -820,7 +820,7 @@ int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
 void	pf_purge_expired_fragments(void);
-int	pf_routable(struct pf_addr *addr, int af);
+int	pf_routable(struct pf_addr *addr, sa_family_t af);
 
 extern struct pf_rulequeue *pf_rules_active;
 extern struct pf_status pf_status;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.256 2002/10/20 13:08:29 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.257 2002/10/22 12:23:35 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -153,7 +153,7 @@ struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl, pf_addr_pl;
 struct pool		 pf_altq_pl;
 
 void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
-			    u_int8_t);
+			    sa_family_t);
 int		 	 pf_insert_state(struct pf_state *);
 struct pf_state 	*pf_find_state(struct pf_state_tree *,
 			    struct pf_tree_node *);
@@ -169,7 +169,7 @@ u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
 			    u_int8_t);
 void			 pf_change_ap(struct pf_addr *, u_int16_t *,
 			    u_int16_t *, u_int16_t *, struct pf_addr *,
-			    u_int16_t, u_int8_t, int);
+			    u_int16_t, u_int8_t, sa_family_t);
 void			 pf_change_a(u_int32_t *, u_int16_t *, u_int32_t,
 			    u_int8_t);
 #ifdef INET6
@@ -179,19 +179,21 @@ void			 pf_change_a6(struct pf_addr *, u_int16_t *,
 void			 pf_change_icmp(struct pf_addr *, u_int16_t *,
 			    struct pf_addr *, struct pf_addr *, u_int16_t,
 			    u_int16_t *, u_int16_t *, u_int16_t *,
-			    u_int16_t *, u_int8_t, int);
+			    u_int16_t *, u_int8_t, sa_family_t);
 void			 pf_send_reset(int, struct tcphdr *,
-			    struct pf_pdesc *, int, u_int8_t);
-void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t, int);
+			    struct pf_pdesc *, sa_family_t, u_int8_t);
+void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
+			    sa_family_t);
 u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
 struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t,
 			    struct pf_addr *, u_int16_t,
-			    struct pf_addr *, u_int16_t, int);
+			    struct pf_addr *, u_int16_t, sa_family_t);
 struct pf_binat		*pf_get_binat(int, struct ifnet *, u_int8_t,
 			    struct pf_addr *, struct pf_addr *,
-			    struct pf_addr *, int);
+			    struct pf_addr *, sa_family_t);
 struct pf_rdr		*pf_get_rdr(struct ifnet *, u_int8_t,
-			    struct pf_addr *, struct pf_addr *, u_int16_t, int);
+			    struct pf_addr *, struct pf_addr *, u_int16_t,
+			    sa_family_t);
 int			 pf_test_tcp(struct pf_rule **, int, struct ifnet *,
 			    struct mbuf *, int, int, void *, struct pf_pdesc *);
 int			 pf_test_udp(struct pf_rule **, int, struct ifnet *,
@@ -214,13 +216,13 @@ int			 pf_test_state_icmp(struct pf_state **, int,
 int			 pf_test_state_other(struct pf_state **, int,
 			    struct ifnet *, struct pf_pdesc *);
 void			*pf_pull_hdr(struct mbuf *, int, void *, int,
-			    u_short *, u_short *, int);
+			    u_short *, u_short *, sa_family_t);
 void			 pf_calc_skip_steps(struct pf_rulequeue *);
 #ifdef INET6
 void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
-			    struct pf_addr *, struct pf_addr *, u_int8_t);
+			    struct pf_addr *, struct pf_addr *, sa_family_t);
 #endif /* INET6 */
-int			 pf_get_sport(u_int8_t, u_int8_t,
+int			 pf_get_sport(sa_family_t, u_int8_t,
 			    struct pf_addr *, struct pf_addr *,
 			    u_int16_t, u_int16_t *, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
@@ -229,8 +231,8 @@ void			 pf_route(struct mbuf **, struct pf_rule *, int,
 			    struct ifnet *);
 void			 pf_route6(struct mbuf **, struct pf_rule *, int,
 			    struct ifnet *);
-int			 pf_socket_lookup(uid_t *, gid_t *, int, int, int,
-			     struct pf_pdesc *);
+int			 pf_socket_lookup(uid_t *, gid_t *, int, sa_family_t,
+			    int, struct pf_pdesc *);
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = { { &pf_state_pl, UINT_MAX },
 	{ &pf_frent_pl, PFFRAG_FRENT_HIWAT } };
 
@@ -346,7 +348,7 @@ pf_state_compare(struct pf_tree_node *a, struct pf_tree_node *b)
 
 #ifdef INET6
 void
-pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, u_int8_t af)
+pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 {
 	switch(af) {
 #ifdef INET
@@ -365,7 +367,7 @@ pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, u_int8_t af)
 #endif
 
 int
-pflog_packet(struct ifnet *ifp, struct mbuf *m, int af, u_short dir,
+pflog_packet(struct ifnet *ifp, struct mbuf *m, sa_family_t af, u_short dir,
     u_short reason, struct pf_rule *rm)
 {
 #if NBPFILTER > 0
@@ -549,7 +551,7 @@ pf_purge_expired_states(void)
 }
 
 int
-pf_dynaddr_setup(struct pf_addr_wrap *aw, u_int8_t af)
+pf_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 {
 	if (aw->addr_dyn == NULL)
 		return (0);
@@ -646,7 +648,7 @@ pf_dynaddr_copyout(struct pf_addr_wrap *aw)
 }
 
 void
-pf_print_host(struct pf_addr *addr, u_int16_t p, u_int8_t af)
+pf_print_host(struct pf_addr *addr, u_int16_t p, sa_family_t af)
 {
 	switch(af) {
 #ifdef INET
@@ -836,7 +838,7 @@ pf_cksum_fixup(u_int16_t cksum, u_int16_t old, u_int16_t new, u_int8_t udp)
 
 void
 pf_change_ap(struct pf_addr *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc,
-    struct pf_addr *an, u_int16_t pn, u_int8_t u, int af)
+    struct pf_addr *an, u_int16_t pn, u_int8_t u, sa_family_t af)
 {
 	struct pf_addr ao;
 	u_int16_t po = *p;
@@ -914,7 +916,7 @@ pf_change_a6(struct pf_addr *a, u_int16_t *c, struct pf_addr *an, u_int8_t u)
 void
 pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
     struct pf_addr *na, u_int16_t np, u_int16_t *pc, u_int16_t *h2c,
-    u_int16_t *ic, u_int16_t *hc, u_int8_t u, int af)
+    u_int16_t *ic, u_int16_t *hc, u_int8_t u, sa_family_t af)
 {
 	struct pf_addr oia, ooa;
 	u_int32_t opc, oh2c = *h2c;
@@ -991,7 +993,7 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 }
 
 void
-pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af,
+pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, sa_family_t af,
     u_int8_t return_ttl)
 {
 	struct mbuf *m;
@@ -1118,7 +1120,7 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af,
 }
 
 void
-pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, int af)
+pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af)
 {
 	struct m_tag *mtag;
 	struct mbuf *m0;
@@ -1153,7 +1155,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, int af)
  */
 int
 pf_match_addr(u_int8_t n, struct pf_addr *a, struct pf_addr *m,
-    struct pf_addr *b, int af)
+    struct pf_addr *b, sa_family_t af)
 {
 	int match = 0;
 	switch (af) {
@@ -1243,7 +1245,7 @@ pf_match_gid(u_int8_t op, gid_t a1, gid_t a2, gid_t g)
 #ifdef INET6
 void
 pf_poolmask(struct pf_addr *naddr, struct pf_addr *raddr,
-    struct pf_addr *rmask, struct pf_addr *saddr, u_int8_t af)
+    struct pf_addr *rmask, struct pf_addr *saddr, sa_family_t af)
 {
 	switch (af) {
 #ifdef INET
@@ -1267,7 +1269,7 @@ pf_poolmask(struct pf_addr *naddr, struct pf_addr *raddr,
 #endif /* INET6 */
 
 int
-pf_get_sport(u_int8_t af, u_int8_t proto,
+pf_get_sport(sa_family_t af, u_int8_t proto,
     struct pf_addr *daddr, struct pf_addr *raddr,
     u_int16_t dport, u_int16_t *port, u_int16_t low, u_int16_t high)
 {
@@ -1331,7 +1333,7 @@ pf_get_sport(u_int8_t af, u_int8_t proto,
 
 struct pf_nat *
 pf_get_nat(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
-    u_int16_t sport, struct pf_addr *daddr, u_int16_t dport, int af)
+    u_int16_t sport, struct pf_addr *daddr, u_int16_t dport, sa_family_t af)
 {
 	struct pf_nat *n, *nm = NULL;
 
@@ -1369,7 +1371,8 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 
 struct pf_binat *
 pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
-    struct pf_addr *saddr, struct pf_addr *daddr, struct pf_addr *naddr, int af)
+    struct pf_addr *saddr, struct pf_addr *daddr, struct pf_addr *naddr,
+    sa_family_t af)
 {
 	struct pf_binat *b, *bm = NULL;
 
@@ -1426,7 +1429,7 @@ pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
 
 struct pf_rdr *
 pf_get_rdr(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
-    struct pf_addr *daddr, u_int16_t dport, int af)
+    struct pf_addr *daddr, u_int16_t dport, sa_family_t af)
 {
 	struct pf_rdr *r, *rm = NULL;
 
@@ -1468,8 +1471,8 @@ pf_map_port_range(struct pf_rdr *rdr, u_int16_t port)
 }
 
 int
-pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, int af, int proto,
-    struct pf_pdesc *pd)
+pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, sa_family_t af,
+    int proto, struct pf_pdesc *pd)
 {
 	struct pf_addr *saddr, *daddr;
 	u_int16_t sport, dport;
@@ -1527,7 +1530,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_rdr *rdr = NULL;
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr, naddr;
 	struct tcphdr *th = pd->hdr.tcp;
-	u_int16_t bport, nport = 0, af = pd->af;
+	u_int16_t bport, nport = 0;
+	sa_family_t af = pd->af;
 	int lookup = -1;
 	uid_t uid;
 	gid_t gid;
@@ -1793,7 +1797,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_rdr *rdr = NULL;
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr, naddr;
 	struct udphdr *uh = pd->hdr.udp;
-	u_int16_t bport, nport = 0, af = pd->af;
+	u_int16_t bport, nport = 0;
+	sa_family_t af = pd->af;
 	int lookup = -1;
 	uid_t uid;
 	gid_t gid;
@@ -2037,7 +2042,8 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr, naddr;
 	struct pf_rule *r;
 	u_short reason;
-	u_int16_t icmpid, af = pd->af;
+	u_int16_t icmpid;
+	sa_family_t af = pd->af;
 	u_int8_t icmptype, icmpcode;
 	int state_icmp = 0;
 #ifdef INET6
@@ -2300,7 +2306,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_binat *binat = NULL;
 	struct pf_rdr *rdr = NULL;
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr, naddr;
-	u_int8_t af = pd->af;
+	sa_family_t af = pd->af;
 	u_short reason;
 
 
@@ -2503,7 +2509,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
     struct mbuf *m, void *h, struct pf_pdesc *pd)
 {
 	struct pf_rule *r;
-	u_int8_t af = pd->af;
+	sa_family_t af = pd->af;
 
 	*rm = NULL;
 
@@ -3484,7 +3490,7 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
  */
 void *
 pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
-    u_short *actionp, u_short *reasonp, int af)
+    u_short *actionp, u_short *reasonp, sa_family_t af)
 {
 	switch (af) {
 #ifdef INET
@@ -3530,7 +3536,7 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 int
 pf_routable(addr, af)
 	struct pf_addr *addr;
-	int af;
+	sa_family_t af;
 {
 	struct sockaddr_in *dst;
 	struct route ro;
