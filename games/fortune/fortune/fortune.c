@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.16 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.17 2003/04/07 00:26:22 millert Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.16 2003/04/06 18:50:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.17 2003/04/07 00:26:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ int	 add_dir(FILEDESC *);
 int	 add_file(int,
 	    char *, char *, FILEDESC **, FILEDESC **, FILEDESC *);
 void	 all_forts(FILEDESC *, char *);
-char	*copy(char *, u_int);
+char	*copy(char *, char *);
 void	 display(FILEDESC *);
 void	 do_free(void *);
 void	*do_malloc(u_int);
@@ -610,8 +610,7 @@ off_name(file)
 {
 	char	*new;
 
-	new = copy(file, (unsigned int) (strlen(file) + 2));
-	return strcat(new, "-o");
+	new = copy(file, "-o");
 }
 
 /*
@@ -704,7 +703,7 @@ add_dir(fp)
 	while ((dirent = readdir(dir)) != NULL) {
 		if (dirent->d_namlen == 0)
 			continue;
-		name = copy(dirent->d_name, dirent->d_namlen);
+		name = copy(dirent->d_name, NULL);
 		if (add_file(NO_PROB, name, fp->path, &fp->child, &tailp, fp))
 			fp->num_children++;
 		else
@@ -785,8 +784,7 @@ is_fortfile(file, datp, posp, check_for_offend)
 			}
 	}
 
-	datfile = copy(file, (unsigned int) (strlen(file) + 4)); /* +4 for ".dat" */
-	strcat(datfile, ".dat");
+	datfile = copy(file, ".dat");
 	if (access(datfile, R_OK) < 0) {
 		free(datfile);
 		DPRINTF(2, (stderr, "FALSE (no \".dat\" file)\n"));
@@ -797,10 +795,8 @@ is_fortfile(file, datp, posp, check_for_offend)
 	else
 		free(datfile);
 #ifdef	OK_TO_WRITE_DISK
-	if (posp != NULL) {
-		*posp = copy(file, (unsigned int) (strlen(file) + 4)); /* +4 for ".pos" */
-		(void) strcat(*posp, ".pos");
-	}
+	if (posp != NULL)
+		*posp = copy(file, ".pos");
 #endif	/* OK_TO_WRITE_DISK */
 	DPRINTF(2, (stderr, "TRUE\n"));
 	return TRUE;
@@ -808,20 +804,17 @@ is_fortfile(file, datp, posp, check_for_offend)
 
 /*
  * copy:
- *	Return a malloc()'ed copy of the string
+ *	Return a malloc()'ed copy of the string + an optional suffix
  */
 char *
-copy(str, len)
-	char		*str;
-	unsigned int	len;
+copy(str, suf)
+	char	*str;
+	char	*suf;
 {
-	char	*new, *sp;
+	char	*new;
 
-	new = do_malloc(len + 1);
-	sp = new;
-	do {
-		*sp++ = *str;
-	} while (*str++);
+	if (asprintf(&new, "%s%s", str, suf ? suf : "") == -1)
+		return NULL;
 	return new;
 }
 
