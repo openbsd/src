@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.21 2003/06/15 16:24:44 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.22 2003/06/16 01:09:02 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -79,10 +79,6 @@ static int      max_topn;	/* maximum displayable processes */
 /* miscellaneous things */
 jmp_buf         jmp_int;
 
-/* routines that don't return int */
-
-extern char *__progname;
-
 extern int      (*proc_compares[])(const void *, const void *);
 int order_index;
 
@@ -136,10 +132,11 @@ char topn_specified = No;
 void
 usage(void)
 {
+	extern char *__progname;
+
 	fprintf(stderr,
-	    "Top version %s\n"
-	    "Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
-	    version_string(), __progname);
+	    "usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
+	    __progname);
 }
 
 void
@@ -183,10 +180,8 @@ parseargs(int ac, char **av)
 				displays = i;
 				break;
 			}				
-			fprintf(stderr,
-			    "%s: warning: display count should be positive "
-			    "-- option ignored\n",
-			    __progname);
+			warnx("warning: display count should be positive "
+			    "-- option ignored");
 			warnings++;
 			break;
 
@@ -196,10 +191,8 @@ parseargs(int ac, char **av)
 			if (delay > 0 && delay <= 1000000 && *endp == '\0')
 				break;
 
-			fprintf(stderr,
-			    "%s: warning: delay should be a non-negative number"
-			    " -- using default\n",
-			    __progname);
+			warnx("warning: delay should be a non-negative number"
+			    " -- using default");
 			delay = Default_DELAY;
 			warnings++;
 			break;
@@ -211,9 +204,7 @@ parseargs(int ac, char **av)
 				(void) nice(-20);
 				break;
 			}
-			fprintf(stderr,
-			    "%s: warning: `-q' option can only be used by root\n",
-			    __progname);
+			warnx("warning: `-q' option can only be used by root");
 			warnings++;
 			break;
 
@@ -230,10 +221,8 @@ parseargs(int ac, char **av)
 	/* get count of top processes to display (if any) */
 	if (optind < ac) {
 		if ((topn = atoiwi(av[optind])) == Invalid) {
-			fprintf(stderr,
-			    "%s: warning: process display count should "
-			    "be non-negative -- using default\n",
-			    __progname);
+			warnx("warning: process display count should "
+			    "be non-negative -- using default");
 			warnings++;
 		}
 #if Default_TOPN == Infinity
@@ -311,8 +300,8 @@ main(int argc, char *argv[])
 		    statics.order_names)) == -1) {
 			char **pp;
 
-			fprintf(stderr, "%s: '%s' is not a recognized sorting order.\n",
-			    __progname, order_name);
+			warnx("'%s' is not a recognized sorting order",
+			    order_name);
 			fprintf(stderr, "\tTry one of these:");
 			pp = statics.order_names;
 			while (*pp != NULL)
@@ -330,14 +319,13 @@ main(int argc, char *argv[])
 
 	/* initialize display interface */
 	if ((max_topn = display_init(&statics)) == -1) {
-		fprintf(stderr, "%s: can't allocate sufficient memory\n", __progname);
+		warnx("can't allocate sufficient memory");
 		exit(4);
 	}
 	/* print warning if user requested more processes than we can display */
 	if (topn > max_topn) {
-		fprintf(stderr,
-		    "%s: warning: this terminal can only display %d processes.\n",
-		    __progname, max_topn);
+		warnx("warning: this terminal can only display %d processes",
+		    max_topn);
 		warnings++;
 	}
 	/* adjust for topn == Infinity */

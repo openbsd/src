@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.11 2003/06/13 21:52:25 deraadt Exp $	 */
+/* $OpenBSD: screen.c,v 1.12 2003/06/16 01:09:02 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -51,32 +51,17 @@
 #include "screen.h"
 #include "boolean.h"
 
-extern char    *__progname;
+int	overstrike, screen_length, screen_width;
+char	ch_erase, ch_kill, smart_terminal, PC;
+char	string_buffer[1024], home[15], lower_left[15];
+char	*clear_line, *clear_scr, *clear_to_end;
+char	*cursor_motion, *start_standout, *end_standout;
+char	*terminal_init, *terminal_end;
+short	ospeed;
 
-int             overstrike;
-int             screen_length;
-int             screen_width;
-char            ch_erase;
-char            ch_kill;
-char            smart_terminal;
-char            PC;
-char            string_buffer[1024];
-char            home[15];
-char            lower_left[15];
-char           *clear_line;
-char           *clear_scr;
-char           *clear_to_end;
-char           *cursor_motion;
-char           *start_standout;
-char           *end_standout;
-char           *terminal_init;
-char           *terminal_end;
-short           ospeed;
+static struct termios old_settings, new_settings;
 
-static struct termios old_settings;
-static struct termios new_settings;
-
-static char     is_a_terminal = No;
+static char	is_a_terminal = No;
 
 void
 init_termcap(int interactive)
@@ -109,10 +94,9 @@ init_termcap(int interactive)
 	/* now get the termcap entry */
 	if ((status = tgetent(NULL, term_name)) != 1) {
 		if (status == -1)
-			fprintf(stderr, "%s: can't open termcap file\n", __progname);
+			warnx("can't open termcap file");
 		else
-			fprintf(stderr, "%s: no termcap entry for a `%s' terminal\n",
-			    __progname, term_name);
+			warnx("no termcap entry for a `%s' terminal", term_name);
 
 		/* pretend it's dumb and proceed */
 		smart_terminal = No;
