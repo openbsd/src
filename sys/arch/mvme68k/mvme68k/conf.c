@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 1997/02/11 14:51:28 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.16 1997/02/12 01:50:28 rahnds Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -199,7 +199,6 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
 	cdev_notdef(),			/* 17: concatenated disk */
-	cdev_notdef(),			/* 18 */
         cdev_disk_init(NRD,rd),         /* 18: ramdisk device */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
