@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 1996/05/03 19:34:11 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -60,3 +60,5 @@ cdev_decl(mms);
 cdev_decl(lms);
 
 cdev_decl(pms);
+
+cdev_decl(joy);
