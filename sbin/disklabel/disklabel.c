@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.12 1996/06/19 13:22:57 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.13 1996/06/19 13:24:27 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.12 1996/06/19 13:22:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.13 1996/06/19 13:24:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -913,7 +913,6 @@ edit(lp, f)
 int
 editit()
 {
-	int pstat;
 	int pid, xpid;
 	int stat;
 	extern char *getenv();
@@ -954,10 +953,10 @@ editit()
 	}
 	free(p);
 	for (;;) {
-		xpid = waitpid(pid, (int *)&pstat, WUNTRACED);
-		if (WIFSTOPPED(pstat))
-			raise(WSTOPSIG(pstat));
-		else if (WIFEXITED(pstat))
+		xpid = waitpid(pid, (int *)&stat, WUNTRACED);
+		if (WIFSTOPPED(stat))
+			raise(WSTOPSIG(stat));
+		else if (WIFEXITED(stat))
 			break;
 	}
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
