@@ -89,6 +89,7 @@ struct intrhand {
 	struct	intrhand *ih_next;
 	int	ih_level;
 	int	ih_irq;
+	char	*ih_what;
 };
 
  

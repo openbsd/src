@@ -249,12 +249,13 @@ fakeintr(arg)
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
  */
 void *
-isa_intr_establish(irq, type, level, ih_fun, ih_arg)
+isa_intr_establish(irq, type, level, ih_fun, ih_arg, ih_what)
 	int irq;
 	int type;
 	int level;
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
+	char *ih_what;
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
@@ -308,6 +309,7 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
+	ih->ih_what = ih_what;
 	*p = ih;
 
 	return (ih);

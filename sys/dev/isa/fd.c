@@ -308,7 +308,7 @@ fdcattach(parent, self, aux)
 	isa_establish(&fdc->sc_id, &fdc->sc_dev);
 #endif
 	fdc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, fdcintr,
-	    fdc);
+	    fdc, fdc->sc_dev.dv_xname);
 
 	/*
 	 * The NVRAM info only tells us about the first two disks on the

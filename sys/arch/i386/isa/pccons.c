@@ -471,7 +471,7 @@ pcattach(parent, self, aux)
 	do_async_update(1);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
-	    sc);
+	    sc, sc->sc_dev.dv_xname);
 }
 
 int
