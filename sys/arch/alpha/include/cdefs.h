@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.6 1999/02/04 23:30:18 niklas Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.7 2001/01/15 12:05:57 art Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
 
 /*
@@ -40,9 +40,9 @@
 #ifdef __STDC__
 
 #define	__weak_alias(alias,sym)						\
-    __asm__(".weak " #alias " ; " #alias " = " #sym)
+    __asm__(".weak " __STRING(alias) " ; " __STRING(alias) " = " __STRING(sym))
 #define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text")
+    __asm__(".section .gnu.warning." __STRING(sym) " ; .ascii \"" msg "\" ; .text")
 
 #else /* !__STDC__ */
 
@@ -60,7 +60,7 @@
  */
 
 #ifdef __STDC__
-#define	__weak_alias(alias,sym)		__asm__(".weakext " #alias ", " #sym)
+#define	__weak_alias(alias,sym)		__asm__(".weakext " __STRING(alias) ", " __STRING(sym))
 #else /* !__STDC__ */
 #define	__weak_alias(alias,sym)		__asm__(".weakext alias, sym")
 #endif /* !__STDC__ */
