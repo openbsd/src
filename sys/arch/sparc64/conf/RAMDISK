@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.36 2004/12/28 23:04:46 brad Exp $
+# 	$OpenBSD: RAMDISK,v 1.37 2004/12/30 02:18:16 dlg Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -131,8 +131,8 @@ ohci*	at pci?			# Open Host Controller
 uhci*	at pci?			# Universal Host Controller (Intel)
 
 # USB bus support
-usb*	at ohci? flags 0x1
-usb*	at uhci? flags 0x1
+usb*	at ohci?
+usb*	at uhci?
 
 # USB devices
 uhub*	at usb?			# USB Hubs
