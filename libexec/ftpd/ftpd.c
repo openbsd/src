@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.51 1998/12/29 07:00:58 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.52 1998/12/30 22:01:24 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -483,16 +483,16 @@ main(argc, argv, envp)
 	/* Make sure hostname is fully qualified. */
 	hp = gethostbyname(hostname);
 	if (hp != NULL)
-		strcpy (hostname, hp->h_name);
+		strcpy(hostname, hp->h_name);
 
 	if (multihome) {
 		hp = gethostbyaddr((char *) &ctrl_addr.sin_addr,
-				   sizeof (struct in_addr), AF_INET);
+		    sizeof (struct in_addr), AF_INET);
 		if (hp != NULL) {
-			strcpy (dhostname, hp->h_name);
+			strcpy(dhostname, hp->h_name);
 		} else {
 			/* Default. */
-			strcpy (dhostname, inet_ntoa(ctrl_addr.sin_addr));
+			strcpy(dhostname, inet_ntoa(ctrl_addr.sin_addr));
 		}
 	}
 
@@ -827,14 +827,14 @@ skip:
 			struct stat ts;
 
 			/* Compute root directory. */
-			snprintf (rootdir, sizeof(rootdir), "%s/%s",
+			snprintf(rootdir, sizeof(rootdir), "%s/%s",
 				  pw->pw_dir, dhostname);
 			if (stat(rootdir, &ts) < 0) {
-				snprintf (rootdir, sizeof(rootdir), "%s/%s",
+				snprintf(rootdir, sizeof(rootdir), "%s/%s",
 					  pw->pw_dir, hostname);
 			}
 		} else
-			strcpy (rootdir, pw->pw_dir);
+			strcpy(rootdir, pw->pw_dir);
 	}
 	if (guest) {
 		/*

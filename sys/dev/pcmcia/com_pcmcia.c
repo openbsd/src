@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.7 1998/12/21 14:59:31 niklas Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.8 1998/12/30 22:03:45 deraadt Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -158,7 +158,7 @@ com_dev_match(card)
 
 	for (i = 0; i < com_devs_size; i++) {
 		for (j = 0; j < 4; j++)
-		       	if (com_devs[i].cis1_info[j] &&
+			if (com_devs[i].cis1_info[j] &&
 			    strcmp(com_devs[i].cis1_info[j],
 				   card->cis1_info[j]))
 				break;
@@ -187,28 +187,28 @@ com_pcmcia_match(parent, match, aux)
 	comportmask = 0;
 	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
 	     cfe = cfe->cfe_list.sqe_next) {
-	  switch (cfe->iospace[0].start) {
-	  case IO_COM1:
-	    comportmask |= 1;
-	    break;
-	  case IO_COM2:
-	    comportmask |= 2;
-	    break;
-	  case IO_COM3:
-	    comportmask |= 4;
-	    break;
-	  case IO_COM4:
-	    comportmask |= 8;
-	    break;
-	  }
+		switch (cfe->iospace[0].start) {
+		case IO_COM1:
+			comportmask |= 1;
+			break;
+		case IO_COM2:
+			comportmask |= 2;
+			break;
+		case IO_COM3:
+			comportmask |= 4;
+			break;
+		case IO_COM4:
+			comportmask |= 8;
+			break;
+		}
 	}
 
 	if (comportmask == 15)
-	    return 1;
+		return 1;
 
 	/* 3. Is this a card we know about? */
 	if (com_dev_match(pa->card) != NULL)
-	    return 1;
+		return 1;
 
 	return 0;
 }
@@ -297,7 +297,7 @@ found:
 	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_TTY, comintr, sc);
 	if (psc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt\n",
-		       sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 
 #ifdef notyet
 	sc->enabled = 0;
@@ -317,7 +317,7 @@ com_pcmcia_enable(sc)
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_TTY, comintr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
-		       sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 	return com_pcmcia_enable1(sc);
