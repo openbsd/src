@@ -2485,7 +2485,9 @@
 ./usr/share/man/ps2
 ./usr/share/man/ps2/alpha
 ./usr/share/man/ps2/amd64
+./usr/share/man/ps2/cats
 ./usr/share/man/ps2/i386
+./usr/share/man/ps2/zaurus
 ./usr/share/man/ps3
 ./usr/share/man/ps3/alpha
 ./usr/share/man/ps3/amd64
