@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.2 2000/01/08 04:49:22 deraadt Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.3 2000/02/04 18:13:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -255,6 +255,7 @@ int nd6_options __P((union nd_opts *));
 struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
 void nd6_setmtu __P((struct ifnet *));
 void nd6_timer __P((void *));
+void nd6_purge __P((struct ifnet *));
 void nd6_free __P((struct rtentry *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,

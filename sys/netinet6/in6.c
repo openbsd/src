@@ -1,4 +1,4 @@
-/* $OpenBSD: in6.c,v 1.11 2000/02/02 17:53:52 itojun Exp $ */
+/* $OpenBSD: in6.c,v 1.12 2000/02/04 18:13:35 itojun Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -739,6 +739,7 @@ in6_control(so, cmd, data, ifp, p)
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
 		    (ifra->ifra_dstaddr.sin6_family == AF_INET6)) {
 			in6_ifscrub(ifp, ia);
+			oldaddr = ia->ia_dstaddr;
 			ia->ia_dstaddr = ifra->ifra_dstaddr;
 			/* link-local index check: should be a separate function? */
 			if (IN6_IS_ADDR_LINKLOCAL(&ia->ia_dstaddr.sin6_addr)) {
@@ -846,59 +847,7 @@ in6_control(so, cmd, data, ifp, p)
 		return(error);
 
 	case SIOCDIFADDR_IN6:
-		in6_ifscrub(ifp, ia);
-
-		if (ifp->if_flags & IFF_MULTICAST) {
-			/*
-			 * delete solicited multicast addr for deleting host id
-			 */
-			struct in6_multi *in6m;
-			struct in6_addr llsol;
-			bzero(&llsol, sizeof(struct in6_addr));
-			llsol.s6_addr16[0] = htons(0xff02);
-			llsol.s6_addr16[1] = htons(ifp->if_index);
-			llsol.s6_addr32[1] = 0;
-			llsol.s6_addr32[2] = htonl(1);
-			llsol.s6_addr32[3] =
-				ia->ia_addr.sin6_addr.s6_addr32[3];
-			llsol.s6_addr8[12] = 0xff;
-
-			IN6_LOOKUP_MULTI(llsol, ifp, in6m);
-			if (in6m)
-				in6_delmulti(in6m);
-		}
-		/* Leave dstaddr's solicited multicast if necessary. */
-		if (nd6_proxyall)
-			in6_ifremproxy(ia);
-
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-		oia = ia;
-		if (oia == (ia = in6_ifaddr))
-			in6_ifaddr = ia->ia_next;
-		else {
-			while (ia->ia_next && (ia->ia_next != oia))
-				ia = ia->ia_next;
-			if (ia->ia_next)
-				ia->ia_next = oia->ia_next;
-			else
-				printf("Didn't unlink in6_ifaddr from list\n");
-		}
-		{
-			int iilen;
-
-			iilen = (sizeof(oia->ia_prefixmask.sin6_addr) << 3) -
-				in6_mask2len(&oia->ia_prefixmask.sin6_addr);
-			in6_prefix_remove_ifid(iilen, oia);
-		}
-
-		if (oia->ia6_multiaddrs.lh_first == NULL) {
-			IFAFREE(&oia->ia_ifa);
-			break;
-		}
-		else
-			in6_savemkludge(oia);
-
-		IFAFREE((&oia->ia_ifa));
+		in6_purgeaddr(&ia->ia_ifa, ifp);
 		break;
 
 	default:
@@ -907,6 +856,65 @@ in6_control(so, cmd, data, ifp, p)
 		return((*ifp->if_ioctl)(ifp, cmd, data));
 	}
 	return(0);
+}
+
+void
+in6_purgeaddr(ifa, ifp)
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+{
+	struct in6_ifaddr *oia, *ia = (void *) ifa;
+
+	in6_ifscrub(ifp, ia);
+
+	if (ifp->if_flags & IFF_MULTICAST) {
+		/*
+		 * delete solicited multicast addr for deleting host id
+		 */
+		struct in6_multi *in6m;
+		struct in6_addr llsol;
+		bzero(&llsol, sizeof(struct in6_addr));
+		llsol.s6_addr16[0] = htons(0xff02);
+		llsol.s6_addr16[1] = htons(ifp->if_index);
+		llsol.s6_addr32[1] = 0;
+		llsol.s6_addr32[2] = htonl(1);
+		llsol.s6_addr32[3] =
+			ia->ia_addr.sin6_addr.s6_addr32[3];
+		llsol.s6_addr8[12] = 0xff;
+
+		IN6_LOOKUP_MULTI(llsol, ifp, in6m);
+		if (in6m)
+			in6_delmulti(in6m);
+	}
+	/* Leave dstaddr's solicited multicast if necessary. */
+	if (nd6_proxyall)
+		in6_ifremproxy(ia);
+
+	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
+	IFAFREE(&ia->ia_ifa);
+
+	oia = ia;
+	if (oia == (ia = in6_ifaddr))
+		in6_ifaddr = ia->ia_next;
+	else {
+		while (ia->ia_next && (ia->ia_next != oia))
+			ia = ia->ia_next;
+		if (ia->ia_next)
+			ia->ia_next = oia->ia_next;
+		else
+			printf("Didn't unlink in6_ifaddr from list\n");
+	}
+	{
+		int iilen;
+
+		iilen = (sizeof(oia->ia_prefixmask.sin6_addr) << 3) -
+			in6_mask2len(&oia->ia_prefixmask.sin6_addr);
+		in6_prefix_remove_ifid(iilen, oia);
+	}
+	if (oia->ia6_multiaddrs.lh_first != NULL)
+		in6_savemkludge(oia);
+
+	IFAFREE(&oia->ia_ifa);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_var.h,v 1.7 2000/02/02 17:16:52 itojun Exp $ */
+/* $OpenBSD: in6_var.h,v 1.8 2000/02/04 18:13:36 itojun Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -544,6 +544,7 @@ extern int in6_mask2len __P((struct in6_addr *));
 extern void in6_len2mask __P((struct in6_addr *, int));
 int	in6_control __P((struct socket *,
 			 u_long, caddr_t, struct ifnet *, struct proc *));
+void	in6_purgeaddr __P((struct ifaddr *, struct ifnet *));
 void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));
@@ -560,6 +561,7 @@ int	in6_prefix_ioctl __P((struct socket *so, u_long cmd, caddr_t data,
 			      struct ifnet *ifp));
 int	in6_prefix_add_ifid __P((int iilen, struct in6_ifaddr *ia));
 void	in6_prefix_remove_ifid __P((int iilen, struct in6_ifaddr *ia));
+void	in6_purgeprefix __P((struct ifnet *));
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_IN6_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.4 2000/01/08 05:49:41 angelos Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.5 2000/02/04 18:13:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -529,6 +529,94 @@ nd6_timer(ignored_arg)
 	splx(s);
 }
 
+/*
+ * Nuke neighbor cache/prefix/default router management table, right before
+ * ifp goes away.
+ */
+void
+nd6_purge(ifp)
+	struct ifnet *ifp;
+{
+	struct llinfo_nd6 *ln, *nln;
+	struct nd_defrouter *dr, *ndr, drany;
+	struct nd_prefix *pr, *npr;
+
+	/* Nuke default router list entries toward ifp */
+	if ((dr = nd_defrouter.lh_first) != NULL) {
+		/*
+		 * The first entry of the list may be stored in
+		 * the routing table, so we'll delete it later.
+		 */
+		for (dr = dr->dr_next; dr; dr = ndr) {
+			ndr = dr->dr_next;
+			if (dr->ifp == ifp)
+				defrtrlist_del(dr);
+		}
+		dr = nd_defrouter.lh_first;
+		if (dr->ifp == ifp)
+			defrtrlist_del(dr);
+	}
+
+	/* Nuke prefix list entries toward ifp */
+	for (pr = nd_prefix.lh_first; pr; pr = npr) {
+		npr = pr->ndpr_next;
+		if (pr->ndpr_ifp == ifp) {
+			if (!IN6_IS_ADDR_UNSPECIFIED(&pr->ndpr_addr))
+				in6_ifdel(pr->ndpr_ifp, &pr->ndpr_addr);
+			prelist_remove(pr);
+		}
+	}
+
+	/* refresh default router list */
+	bzero(&drany, sizeof(drany));
+	defrouter_delreq(&drany, 0);
+
+	/*
+	 * Nuke neighbor cache entries for the ifp.
+	 * Note that rt->rt_ifp may not be the same as ifp,
+	 * due to KAME goto ours hack.  See RTM_RESOLVE case in
+	 * nd6_rtrequest(), and ip6_input().
+	 */
+	ln = llinfo_nd6.ln_next;
+	while (ln && ln != &llinfo_nd6) {
+		struct rtentry *rt;
+		struct sockaddr_dl *sdl;
+
+		nln = ln->ln_next;
+		rt = ln->ln_rt;
+		if (rt && rt->rt_gateway &&
+		    rt->rt_gateway->sa_family == AF_LINK) {
+			sdl = (struct sockaddr_dl *)rt->rt_gateway;
+			if (sdl->sdl_index == ifp->if_index)
+				nd6_free(rt);
+		}
+		ln = nln;
+	}
+
+	/*
+	 * Neighbor cache entry for interface route will be retained
+	 * with ND6_LLINFO_WAITDELETE state, by nd6_free().  Nuke it.
+	 */
+	ln = llinfo_nd6.ln_next;
+	while (ln && ln != &llinfo_nd6) {
+		struct rtentry *rt;
+		struct sockaddr_dl *sdl;
+
+		nln = ln->ln_next;
+		rt = ln->ln_rt;
+		if (rt && rt->rt_gateway &&
+		    rt->rt_gateway->sa_family == AF_LINK) {
+			sdl = (struct sockaddr_dl *)rt->rt_gateway;
+			if (sdl->sdl_index == ifp->if_index) {
+				rtrequest(RTM_DELETE, rt_key(rt),
+				    (struct sockaddr *)0, rt_mask(rt), 0,
+				    (struct rtentry **)0);
+			}
+		}
+		ln = nln;
+	}
+}
+
 struct rtentry *
 nd6_lookup(addr6, create, ifp)
 	struct in6_addr *addr6;
@@ -952,14 +1040,10 @@ nd6_rtrequest(req, rt, sa)
 			ln->ln_expire = time_second;
 		}
 		rt->rt_flags |= RTF_LLINFO;
-#if 0
-		insque(ln, &llinfo_nd6);
-#else
 		ln->ln_next = llinfo_nd6.ln_next;
 		llinfo_nd6.ln_next = ln;
 		ln->ln_prev = &llinfo_nd6;
 		ln->ln_next->ln_prev = ln;
-#endif
 
 		/*
 		 * check if rt_key(rt) is one of my address assigned
@@ -998,13 +1082,9 @@ nd6_rtrequest(req, rt, sa)
 		if (!ln)
 			break;
 		nd6_inuse--;
-#if 0
-		remque(ln);
-#else
 		ln->ln_next->ln_prev = ln->ln_prev;
 		ln->ln_prev->ln_next = ln->ln_next;
 		ln->ln_prev = NULL;
-#endif
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 		if (ln->ln_hold)
@@ -1482,7 +1562,6 @@ nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
 	int s = splnet();
-
 	register int i;
 	register struct nd_ifinfo *nd6if;
 

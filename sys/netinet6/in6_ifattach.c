@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.4 2000/02/02 17:16:52 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.5 2000/02/04 18:13:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -625,6 +625,13 @@ in6_ifdetach(ifp)
 	struct rtentry *rt;
 	short rtflags;
 	struct sockaddr_in6 sin6;
+	struct in6_multi *in6m;
+
+	/* nuke prefix list.  this may try to remove some of ifaddrs as well */
+	in6_purgeprefix(ifp);
+
+	/* remove neighbor management table */
+	nd6_purge(ifp);
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 	{
@@ -634,6 +641,10 @@ in6_ifdetach(ifp)
 		}
 
 		ia = (struct in6_ifaddr *)ifa;
+
+		/* leave from all multicast groups joined */
+		while ((in6m = LIST_FIRST(&oia->ia6_multiaddrs)) != NULL)
+			in6_delmulti(in6m);
 
 		/* remove from the routing table */
 		if ((ia->ia_flags & IFA_ROUTE)
@@ -671,6 +682,9 @@ in6_ifdetach(ifp)
 
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
+
+	/* remove neighbor management table */
+	nd6_purge(ifp);
 
 	/* remove route to link-local allnodes multicast (ff02::1) */
 	bzero(&sin6, sizeof(sin6));

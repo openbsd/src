@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_prefix.h,v 1.1 1999/12/08 06:50:21 itojun Exp $	*/
+/*	$OpenBSD: in6_prefix.h,v 1.2 2000/02/04 18:13:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998 and 1999 WIDE Project.
@@ -84,5 +84,4 @@ LIST_HEAD(rr_prhead, rr_prefix);
 extern struct rr_prhead rr_prefix;
 
 void in6_rr_timer __P((void *));
-int delete_each_prefix  __P((struct socket *so, struct rr_prefix *rpp,
-			     u_char origin));
+int delete_each_prefix  __P((struct rr_prefix *rpp, u_char origin));
