@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 1998/05/13 08:59:10 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 1998/09/19 22:38:56 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.19 1998/05/13 08:59:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.20 1998/09/19 22:38:56 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -62,6 +62,8 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.19 1998/05/13 08:59:10 deraadt Exp $
 
 #include "ftp_var.h"
 #include "pathnames.h"
+
+static void updateprogressmeter __P((int));
 
 /*
  * Connect to peer server and
@@ -599,15 +601,14 @@ foregroundproc()
 	    ctty_pgrp == pgrp));
 }
 
-void updateprogressmeter __P((int));
-
-void
+static void
 updateprogressmeter(dummy)
 	int dummy;
 {
 	int save_errno = errno;
 
-	if (foregroundproc())
+	/* update progressmeter if foreground process or in -m mode */
+	if (foregroundproc() || progress == -1)
 		progressmeter(0);
 	errno = save_errno;
 }
