@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.9 2000/08/20 18:42:37 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.10 2000/12/05 19:41:29 deraadt Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -68,7 +68,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.9 2000/08/20 18:42:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.10 2000/12/05 19:41:29 deraadt Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -120,7 +120,7 @@ run_file(filename, uid, gid)
 	pid_t pid;
 	int fd_out, fd_in;
 	int queue;
-	char mailbuf[LOGNAMESIZE + 1], fmt[49];
+	char mailbuf[LOGNAMESIZE + 1], *fmt;
 	char *mailname = NULL;
 	FILE *stream;
 	int send_mail = 0;
@@ -205,14 +205,20 @@ run_file(filename, uid, gid)
 
 	(void)fcntl(fd_in, F_SETFD, fflags & ~FD_CLOEXEC);
 
-	(void)snprintf(fmt, sizeof(fmt),
+	(void) asprintf(&fmt,
 	    "#!/bin/sh\n# atrun uid=%%u gid=%%u\n# mail %%%ds %%d",
 	    LOGNAMESIZE);
+	if (fmt == NULL) {
+		syslog(LOG_ERR, "out of memory - aborting");
+		exit(EXIT_FAILURE);
+	}
 	if (fscanf(stream, fmt, &nuid, &ngid, mailbuf, &send_mail) != 4) {
 		syslog(LOG_ERR, "File %s is in wrong format - aborting",
 		    filename);
+		free(fmt);
 		exit(EXIT_FAILURE);
 	}
+	free(fmt);
 	if (mailbuf[0] == '-') {
 		syslog(LOG_ERR, "illegal mail name %s in %s", mailbuf, filename);
 		exit(EXIT_FAILURE);
