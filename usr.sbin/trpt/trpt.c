@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.16 2003/05/14 01:12:27 jason Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.17 2003/05/26 05:33:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ extern	char *__progname;
 
 void	dotrace(caddr_t);
 void	tcp_trace(short, short, struct tcpcb *, struct tcpcb *,
-	    struct tcpiphdr *, int);
+	    struct tcpiphdr *, struct tcpipv6hdr *, int);
 int	numeric(const void *, const void *);
 void	usage(void);
 
@@ -282,7 +282,7 @@ dotrace(caddr_t tcpcb)
 		ntime = ntohl(td->td_time);
 		tcp_trace(td->td_act, td->td_ostate,
 		    (struct tcpcb *)td->td_tcb, &td->td_cb, &td->td_ti,
-		    td->td_req);
+		    &td->td_ti6, td->td_req);
 		if (i == tcp_debx)
 			goto done;
 	}
@@ -293,7 +293,7 @@ dotrace(caddr_t tcpcb)
 		ntime = ntohl(td->td_time);
 		tcp_trace(td->td_act, td->td_ostate,
 		    (struct tcpcb *)td->td_tcb, &td->td_cb, &td->td_ti,
-		    td->td_req);
+		    &td->td_ti6, td->td_req);
 	}
  done:
 	if (follow) {
@@ -322,10 +322,17 @@ dotrace(caddr_t tcpcb)
 /*ARGSUSED*/
 void
 tcp_trace(short act, short ostate, struct tcpcb *atp,
-    struct tcpcb *tp, struct tcpiphdr *ti, int req)
+    struct tcpcb *tp, struct tcpiphdr *ti, struct tcpipv6hdr *ti6, int req)
 {
 	tcp_seq seq, ack;
 	int flags, len, win, timer;
+	struct tcphdr *th;
+	char hbuf[INET6_ADDRSTRLEN];
+
+	if (ti->ti_src.s_addr)
+		th = &ti->ti_t;
+	else
+		th = &ti6->ti6_t;
 
 	printf("%03d %s:%s ", (ntime/10) % 1000, tcpstates[ostate],
 	    tanames[act]);
@@ -334,15 +341,27 @@ tcp_trace(short act, short ostate, struct tcpcb *atp,
 	case TA_OUTPUT:
 	case TA_DROP:
 		if (aflag) {
-			printf("(src=%s,%u, ",
-			    inet_ntoa(ti->ti_src), ntohs(ti->ti_sport));
-			printf("dst=%s,%u)",
-			    inet_ntoa(ti->ti_dst), ntohs(ti->ti_dport));
+			if (ti->ti_src.s_addr) {
+				printf("(src=%s,%u, ",
+				    inet_ntoa(ti->ti_src), ntohs(ti->ti_sport));
+				printf("dst=%s,%u)",
+				    inet_ntoa(ti->ti_dst), ntohs(ti->ti_dport));
+			} else {
+				printf("(src=%s,%u, ",
+				    inet_ntop(AF_INET6, &ti6->ti6_src,
+				    hbuf, sizeof(hbuf)), ntohs(ti->ti_sport));
+				printf("dst=%s,%u)",
+				    inet_ntop(AF_INET6, &ti6->ti6_dst,
+				    hbuf, sizeof(hbuf)), ntohs(ti->ti_dport));
+			}
 		}
-		seq = ti->ti_seq;
-		ack = ti->ti_ack;
-		len = ti->ti_len;
-		win = ti->ti_win;
+		seq = th->th_seq;
+		ack = th->th_ack;
+		if (ti->ti_src.s_addr)
+			len = ti->ti_len;
+		else
+			len = ti6->ti6_plen;	/*XXX intermediate header*/
+		win = th->th_win;
 		if (act == TA_OUTPUT) {
 			NTOHL(seq);
 			NTOHL(ack);
@@ -358,11 +377,11 @@ tcp_trace(short act, short ostate, struct tcpcb *atp,
 		printf("@%x", ack);
 		if (win)
 			printf("(win=%x)", win);
-		flags = ti->ti_flags;
+		flags = th->th_flags;
 		if (flags) {
 			char *cp = "<";
 #define	pf(flag, string) { \
-	if (ti->ti_flags&flag) { \
+	if (th->th_flags & flag) { \
 		(void)printf("%s%s", cp, string); \
 		cp = ","; \
 	} \
