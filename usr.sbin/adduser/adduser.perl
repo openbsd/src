@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.32 2001/09/07 20:34:11 millert Exp $
+#	$OpenBSD: adduser.perl,v 1.33 2001/10/01 15:26:33 millert Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.32 2001/09/07 20:34:11 millert Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.33 2001/10/01 15:26:33 millert Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -116,10 +116,10 @@ sub variables {
     # group
     %groupname = ();		# $groupname{groupname} = gid
     %groupmembers = ();		# $groupmembers{gid} = members of group/kommalist
-    %gid = '';			# $gid{gid} = groupname;    gid form group db
+    %gid = ();			# $gid{gid} = groupname;    gid form group db
 
     # shell
-    %shell = '';		# $shell{`basename sh`} = sh
+    %shell = ();		# $shell{`basename sh`} = sh
 
     # only for me (=Wolfram)
     if ($test) {
@@ -136,10 +136,10 @@ sub variables {
     umask 022;			# don't give login group write access
 
     $ENV{'PATH'} = "/sbin:/bin:/usr/sbin:/usr/bin";
-    @passwd_backup = '';
-    @group_backup = '';
-    @message_buffer = '';
-    @user_variable_list = '';	# user variables in /etc/adduser.conf
+    @passwd_backup = ();
+    @group_backup = ();
+    @message_buffer = ();
+    @user_variable_list = ();	# user variables in /etc/adduser.conf
     $do_not_delete = '## DO NOT DELETE THIS LINE!';
 }
 
@@ -1096,7 +1096,7 @@ sub home_create {
     # copy files from  $dotdir to $homedir
     # rename 'dot.foo' files to '.foo'
     print "Copy files from $dotdir to $homedir\n" if $verbose;
-    system("cp", "-r", $dotdir, $homedir);
+    system("cp", "-R", $dotdir, $homedir);
     system("chmod", "-R", "u+wrX,go-w", $homedir);
     system("chown", "-R", "$name:$group", $homedir);
 
