@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.17 2001/06/23 19:44:46 deraadt Exp $
+#	$OpenBSD: upgrade.sh,v 1.18 2001/10/11 23:14:59 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -248,15 +248,6 @@ get_timezone
 
 # Copy in configuration information and make devices in target root.
 (
-	cd /tmp
-	for file in fstab; do
-		if [ -f $file ]; then
-			echo -n "Copying $file..."
-			cp $file /mnt/etc/$file
-			echo "done."
-		fi
-	done
-
 	echo "Installing timezone link."
 	rm -f /mnt/etc/localtime
 	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
