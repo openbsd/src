@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.5 2001/06/23 01:54:48 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.6 2001/07/06 17:22:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -128,6 +128,7 @@ static const struct wi_pci_product {
 	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P },
 	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02 },
 	{ PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A },
 	{ 0, 0 }
 };
 
