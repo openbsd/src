@@ -1,4 +1,4 @@
-/*	$Id: if_le.c,v 1.3 1995/11/07 08:51:02 deraadt Exp $ */
+/*	$Id: if_le.c,v 1.4 1995/12/26 17:44:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -350,7 +350,7 @@ le_put(desc, pkt, len)
 	while (tmd->tmd1_bits & LE_T1_OWN) {
 		printf("le%d: output buffer busy\n", desc->io_netif->nif_unit);
 	}
-	bcopy(pkt, ler2->ler2_tbuf[le_softc.next_tmd], len);
+	bcopy(pkt, (void *)ler2->ler2_tbuf[le_softc.next_tmd], len);
 	if (len < 64)
 		tmd->tmd2 = -64;
 	else
