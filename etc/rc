@@ -1,9 +1,28 @@
-#	$OpenBSD: rc,v 1.130 2000/02/28 17:28:35 itojun Exp $
+#	$OpenBSD: rc,v 1.131 2000/03/05 16:55:22 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
 # Output and error are redirected to console by init,
 # and the console is the controlling terminal.
+
+# Subroutines (have to come first).
+
+# Strip comments (and leading/trailing whitespace if IFS is set)
+# from a file and spew to stdout
+stripcom() {
+	local _file="$1"
+	local _line
+
+	{
+		while read _line ; do
+			_line=${_line%%#*}		# strip comments
+			test -z "$_line" && continue
+			echo $_line
+		done
+	} < $_file
+}
+
+# End subroutines
 
 stty status '^T'
 
@@ -108,14 +127,7 @@ fi
 if [ -f /etc/sysctl.conf ]; then
 (
 	# delete comments and blank lines
-	# we use ed here because /usr may not be mounted yet.
-	set -- `
-	ed -s /etc/sysctl.conf <<EOF
-1,\\\$s/#.*$//
-g/^..*/p
-Q
-EOF
-`
+	set -- `stripcom /etc/sysctl.conf`
 	while [ $# -ge 1 ] ; do
 		sysctl -w $1
 		shift
@@ -154,7 +166,7 @@ syslogd ${syslogd_flags}
 if [ -f /etc/ifaliases ]; then
 (
 	# delete comments and blank lines
-	set -- `sed -e 's/#.*$//' -e '/^$/d' /etc/ifaliases`
+	set -- `stripcom /etc/ifaliases`
 	while [ $# -ge 3 ] ; do
 		ifconfig $1 inet alias $2 netmask $3
 		route -n add -host $2 localhost
@@ -326,7 +338,7 @@ fi
 if [ ! -f /etc/motd ]; then
 	install -c -o root -g wheel -m 664 /dev/null /etc/motd
 fi
-T=`mktemp /tmp/_motd.XXXXXXXXXX` 
+T=`mktemp /tmp/_motd.XXXXXXXXXX`
 if [ $? -eq 0 ]; then
 	sysctl -n kern.version | sed 1q > $T
 	echo "" >> $T
