@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmonyreg.h,v 1.1 2003/01/27 08:12:32 jason Exp $	*/
+/*	$OpenBSD: harmonyreg.h,v 1.2 2003/01/30 01:23:24 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -81,6 +81,7 @@
 #define	CNTL_FORMAT_SLINEAR16BE	0x00000000	/*  16 bit signed linear be */
 #define	CNTL_FORMAT_ULAW	0x00000040	/*  8 bit ulaw */
 #define	CNTL_FORMAT_ALAW	0x00000080	/*  8 bit alaw */
+#define	CNTL_FORMAT_ULINEAR8	0x000000c0	/*  8 bit unsigned linear */
 #define	CNTL_CHANS_MASK		0x00000020	/* number of channels: */
 #define	CNTL_CHANS_MONO		0x00000000	/*  mono */
 #define	CNTL_CHANS_STEREO	0x00000020	/*  stereo */
@@ -137,3 +138,9 @@
 
 /* HARMONY_DIAG */
 #define	DIAG_CO			0x00000001	/* sclk from codec */
+
+/* CS4215_REV */
+#define	CS4215_REV_VER		0x0f
+#define	CS4215_REV_VER_C	0x00		/* CS4215 rev C */
+#define	CS4215_REV_VER_D	0x01		/* CS4215 rev D */
+#define	CS4215_REV_VER_E	0x02		/* CS4215 rev E/AD1849K */

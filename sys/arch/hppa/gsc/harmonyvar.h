@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmonyvar.h,v 1.1 2003/01/28 04:20:49 jason Exp $	*/
+/*	$OpenBSD: harmonyvar.h,v 1.2 2003/01/30 01:23:24 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -99,7 +99,7 @@ struct harmony_softc {
 	int sc_playing, sc_capturing;
 	struct harmony_channel sc_playback, sc_capture;
 	struct harmony_volume sc_monitor_lvl, sc_input_lvl, sc_output_lvl;
-	int sc_in_port, sc_out_port;
+	int sc_in_port, sc_out_port, sc_hasulinear8;
 };
 
 #define	READ_REG(sc, reg)		\

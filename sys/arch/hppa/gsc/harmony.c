@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.11 2003/01/29 00:52:23 mickey Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.12 2003/01/30 01:23:24 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -150,6 +150,7 @@ harmony_attach(parent, self, aux)
 {
 	struct harmony_softc *sc = (struct harmony_softc *)self;
 	struct gsc_attach_args *ga = aux;
+	u_int8_t rev;
 	u_int32_t cntl;
 	int i;
 
@@ -227,8 +228,11 @@ harmony_attach(parent, self, aux)
 	harmony_reset_codec(sc);
 
 	cntl = READ_REG(sc, HARMONY_CNTL);
-	printf(": rev %d\n",
-	    (cntl & CNTL_CODEC_REV_MASK) >> CNTL_CODEC_REV_SHIFT);
+	rev = (cntl & CNTL_CODEC_REV_MASK) >> CNTL_CODEC_REV_SHIFT;
+	printf(": rev %u\n", rev);
+
+	if ((rev & CS4215_REV_VER) >= CS4215_REV_VER_E)
+		sc->sc_hasulinear8 = 1;
 
 	audio_attach_mi(&harmony_sa_hw_if, sc, &sc->sc_dv);
 }
@@ -325,6 +329,7 @@ harmony_close(void *vsc)
 int
 harmony_query_encoding(void *vsc, struct audio_encoding *fp)
 {
+	struct harmony_softc *sc = vsc;
 	int err = 0;
 
 	switch (fp->index) {
@@ -358,6 +363,30 @@ harmony_query_encoding(void *vsc, struct audio_encoding *fp)
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
+	case 5:
+		strcpy(fp->name, AudioEulinear_le);
+		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		fp->precision = 16;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 6:
+		if (sc->sc_hasulinear8) {
+			strcpy(fp->name, AudioEulinear);
+			fp->encoding = AUDIO_ENCODING_ULINEAR;
+			fp->precision = 8;
+			fp->flags = 0;
+			break;
+		}
+		/*FALLTHROUGH*/
+	case 7:
+		if (sc->sc_hasulinear8) {
+			strcpy(fp->name, AudioEslinear);
+			fp->encoding = AUDIO_ENCODING_SLINEAR;
+			fp->precision = 8;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			break;
+		}
+		/*FALLTHROUGH*/
 	default:
 		err = EINVAL;
 	}
@@ -385,24 +414,62 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 		bits = CNTL_FORMAT_ALAW;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision != 16)
+		if (p->precision == 8) {
+			bits = CNTL_FORMAT_ULINEAR8;
+			rswcode = pswcode = change_sign8;
+			break;
+		}
+		if (p->precision == 16) {
+			bits = CNTL_FORMAT_SLINEAR16BE;
+			break;
+		}
+		return (EINVAL);
+	case AUDIO_ENCODING_ULINEAR:
+		if (p->precision != 8)
 			return (EINVAL);
-		bits = CNTL_FORMAT_SLINEAR16BE;
+		bits = CNTL_FORMAT_ULINEAR8;
 		break;
-
-	/* emulated formats */
+	case AUDIO_ENCODING_SLINEAR:
+		if (p->precision != 8)
+			return (EINVAL);
+		bits = CNTL_FORMAT_ULINEAR8;
+		rswcode = pswcode = change_sign8;
+		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision != 16)
-			return (EINVAL);
-		bits = CNTL_FORMAT_SLINEAR16BE;
-		rswcode = pswcode = swap_bytes;
-		break;
+		if (p->precision == 8) {
+			bits = CNTL_FORMAT_ULINEAR8;
+			rswcode = pswcode = change_sign8;
+			break;
+		}
+		if (p->precision == 16) {
+			bits = CNTL_FORMAT_SLINEAR16BE;
+			rswcode = pswcode = swap_bytes;
+			break;
+		}
+		return (EINVAL);
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision != 16)
-			return (EINVAL);
-		bits = CNTL_FORMAT_SLINEAR16BE;
-		rswcode = pswcode = change_sign16_be;
-		break;
+		if (p->precision == 8) {
+			bits = CNTL_FORMAT_ULINEAR8;
+			break;
+		}
+		if (p->precision == 16) {
+			bits = CNTL_FORMAT_SLINEAR16BE;
+			rswcode = pswcode = change_sign16_be;
+			break;
+		}
+		return (EINVAL);
+	case AUDIO_ENCODING_ULINEAR_LE:
+		if (p->precision == 8) {
+			bits = CNTL_FORMAT_ULINEAR8;
+			break;
+		}
+		if (p->precision == 16) {
+			bits = CNTL_FORMAT_SLINEAR16BE;
+			pswcode = change_sign16_swap_bytes_le;
+			rswcode = swap_bytes_change_sign16_le;
+			break;
+		}
+		return (EINVAL);
 	default:
 		return (EINVAL);
 	}
@@ -463,6 +530,7 @@ harmony_commit_settings(void *vsc)
 		quietchar = 0x55;
 		break;
 	case CNTL_FORMAT_SLINEAR16BE:
+	case CNTL_FORMAT_ULINEAR8:
 	default:
 		quietchar = 0;
 		break;
