@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.36 2001/10/01 16:55:57 gluk Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.37 2001/10/07 22:42:07 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -469,10 +469,6 @@ fdrelease(p, fd)
 	if (fp == NULL)
 		return (EBADF);
 	pf = &fdp->fd_ofileflags[fd];
-	if (*pf & UF_MAPPED) {
-		/* XXX: USELESS? XXXCDC check it */
-		p->p_fd->fd_ofileflags[fd] &= ~UF_MAPPED;
-	}
 	*fpp = NULL;
 	*pf = 0;
 	fd_unused(fdp, fd);
