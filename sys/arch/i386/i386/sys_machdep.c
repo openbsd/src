@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.25.2.1 1995/10/15 06:54:02 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.27 1996/01/08 13:51:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -65,6 +65,10 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/sysarch.h>
+
+#ifdef VM86
+#include <machine/vm86.h>
+#endif
 
 extern vm_map_t kernel_map;
 
@@ -270,6 +274,14 @@ i386_set_ldt(p, args, retval)
 			if (n == fsslot || n == gsslot)
 				return (EBUSY);
 			break;
+		case SDT_MEMEC:
+		case SDT_MEMEAC:
+		case SDT_MEMERC:
+		case SDT_MEMERAC:
+			/* Must be "present" if executable and conforming. */
+			if (desc.sd.sd_p == 0)
+				return (EACCES);
+			break;
 		case SDT_MEMRO:
 		case SDT_MEMROA:
 		case SDT_MEMRW:
@@ -410,6 +422,12 @@ sys_sysarch(p, v, retval)
 	case I386_SET_IOPERM: 
 		error = i386_set_ioperm(p, SCARG(uap, parms), retval);
 		break;
+
+#ifdef VM86
+	case I386_VM86:
+		error = i386_vm86(p, SCARG(uap, parms), retval);
+		break;
+#endif
 
 	default:
 		error = EINVAL;

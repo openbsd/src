@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.183 1996/01/04 22:22:01 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185 1996/01/08 20:12:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -91,6 +91,10 @@
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/nvram.h>
+
+#ifdef VM86
+#include <machine/vm86.h>
+#endif
 
 #include "isa.h"
 #include "npx.h"
@@ -537,6 +541,8 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
+	frame.sf_sc.sc_err = tf->tf_err;
+	frame.sf_sc.sc_trapno = tf->tf_trapno;
 	frame.sf_sc.sc_onstack = oonstack;
 	frame.sf_sc.sc_mask = mask;
 #ifdef VM86
@@ -545,6 +551,9 @@ sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
+		frame.sf_sc.sc_eflags = tf->tf_eflags;
+		SETFLAGS(frame.sf_sc.sc_eflags, VM86_EFLAGS(p),
+			 VM86_FLAGMASK(p)|PSL_VIF);
 	} else
 #endif
 	{
@@ -552,19 +561,19 @@ sendsig(catcher, sig, mask, code)
 		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
+		frame.sf_sc.sc_eflags = tf->tf_eflags;
 	}
-	frame.sf_sc.sc_edi    = tf->tf_edi;
-	frame.sf_sc.sc_esi    = tf->tf_esi;
-	frame.sf_sc.sc_ebp    = tf->tf_ebp;
-	frame.sf_sc.sc_ebx    = tf->tf_ebx;
-	frame.sf_sc.sc_edx    = tf->tf_edx;
-	frame.sf_sc.sc_ecx    = tf->tf_ecx;
-	frame.sf_sc.sc_eax    = tf->tf_eax;
-	frame.sf_sc.sc_eip    = tf->tf_eip;
-	frame.sf_sc.sc_cs     = tf->tf_cs;
-	frame.sf_sc.sc_eflags = tf->tf_eflags;
-	frame.sf_sc.sc_esp    = tf->tf_esp;
-	frame.sf_sc.sc_ss     = tf->tf_ss;
+	frame.sf_sc.sc_edi = tf->tf_edi;
+	frame.sf_sc.sc_esi = tf->tf_esi;
+	frame.sf_sc.sc_ebp = tf->tf_ebp;
+	frame.sf_sc.sc_ebx = tf->tf_ebx;
+	frame.sf_sc.sc_edx = tf->tf_edx;
+	frame.sf_sc.sc_ecx = tf->tf_ecx;
+	frame.sf_sc.sc_eax = tf->tf_eax;
+	frame.sf_sc.sc_eip = tf->tf_eip;
+	frame.sf_sc.sc_cs = tf->tf_cs;
+	frame.sf_sc.sc_esp = tf->tf_esp;
+	frame.sf_sc.sc_ss = tf->tf_ss;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -578,14 +587,16 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_esp = (int)fp;
+	__asm("movl %w0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
+	__asm("movl %w0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 #ifdef VM86
 	tf->tf_eflags &= ~PSL_VM;
 #endif
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
@@ -646,25 +657,28 @@ sys_sigreturn(p, v, retval)
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
+		tf->tf_eflags = context.sc_eflags;
+		SETFLAGS(VM86_EFLAGS(p), context.sc_eflags,
+			 VM86_FLAGMASK(p)|PSL_VIF);
 	} else
 #endif
 	{
 		/* %fs and %gs were restored by the trampoline. */
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
+		tf->tf_eflags = context.sc_eflags;
 	}
-	tf->tf_edi    = context.sc_edi;
-	tf->tf_esi    = context.sc_esi;
-	tf->tf_ebp    = context.sc_ebp;
-	tf->tf_ebx    = context.sc_ebx;
-	tf->tf_edx    = context.sc_edx;
-	tf->tf_ecx    = context.sc_ecx;
-	tf->tf_eax    = context.sc_eax;
-	tf->tf_eip    = context.sc_eip;
-	tf->tf_cs     = context.sc_cs;
-	tf->tf_eflags = context.sc_eflags;
-	tf->tf_esp    = context.sc_esp;
-	tf->tf_ss     = context.sc_ss;
+	tf->tf_edi = context.sc_edi;
+	tf->tf_esi = context.sc_esi;
+	tf->tf_ebp = context.sc_ebp;
+	tf->tf_ebx = context.sc_ebx;
+	tf->tf_edx = context.sc_edx;
+	tf->tf_ecx = context.sc_ecx;
+	tf->tf_eax = context.sc_eax;
+	tf->tf_eip = context.sc_eip;
+	tf->tf_cs = context.sc_cs;
+	tf->tf_esp = context.sc_esp;
+	tf->tf_ss = context.sc_ss;
 
 	return (EJUSTRETURN);
 }

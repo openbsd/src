@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 1995/12/09 05:00:27 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 1996/01/08 13:51:38 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -262,9 +262,15 @@ trap(frame)
 		frame.tf_eip = resume;
 		return;
 
+	case T_PROTFLT|T_USER:		/* protection fault */
+#ifdef VM86
+		if (frame.tf_eflags & PSL_VM) {
+			vm86_gpfault(p, type & ~T_USER);
+			goto out;
+		}
+#endif
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
-	case T_PROTFLT|T_USER:		/* protection fault */
 	case T_ALIGNFLT|T_USER:
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
@@ -520,6 +526,17 @@ syscall(frame)
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
 #endif
 	params = (caddr_t)frame.tf_esp + sizeof(int);
+
+#ifdef VM86
+	/*
+	 * VM86 mode application found our syscall trap gate by accident; let
+	 * it get a SIGSYS and have the VM86 handler in the process take care
+	 * of it.
+	 */
+	if (frame.tf_eflags & PSL_VM)
+		code = -1;
+	else
+#endif
 
 	switch (code) {
 	case SYS_syscall:

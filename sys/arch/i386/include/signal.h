@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 1995/05/01 14:14:11 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.6 1996/01/08 13:51:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -65,6 +65,7 @@ struct	sigcontext {
 	int	sc_edx;
 	int	sc_ecx;
 	int	sc_eax;
+	/* XXX */
 	int	sc_eip;
 	int	sc_cs;
 	int	sc_eflags;
@@ -73,6 +74,9 @@ struct	sigcontext {
 
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore */
+
+	int	sc_trapno;		/* XXX should be above */
+	int	sc_err;
 };
 
 #define sc_sp sc_esp

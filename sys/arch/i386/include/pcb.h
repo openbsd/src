@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.20 1995/10/11 04:20:16 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -53,6 +53,8 @@
 #include <machine/npx.h>
 #include <machine/sysarch.h>
 
+#define	NIOPORTS	1024		/* # of ports we allow to be mapped */
+
 struct pcb {
 	struct	i386tss pcb_tss;
 #define	pcb_cr3	pcb_tss.tss_cr3
@@ -73,7 +75,10 @@ struct pcb {
 	int	pcb_flags;
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
 	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
-	u_long	pcb_iomap[1024/32];	/* I/O bitmap */
+	int	vm86_eflags;		/* virtual eflags for vm86 mode */
+	int	vm86_flagmask;		/* flag mask for vm86 mode */
+	void	*vm86_userp;		/* XXX performance hack */
+	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 };
 
 /*    

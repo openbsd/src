@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.60 1995/10/11 04:19:29 mycroft Exp $
+#	$NetBSD: files.i386,v 1.61 1996/01/08 13:51:30 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -125,6 +125,9 @@ file	arch/i386/pci/pci_machdep.c	pci
 #
 # Compatibility modules
 #
+
+# VM86 mode
+file	arch/i386/i386/vm86.c			vm86
 
 # SVR4 binary compatibility (COMPAT_SVR4)
 include "../../../compat/svr4/files.svr4"
