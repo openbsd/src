@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.89 2004/08/22 23:39:00 jaredy Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.90 2004/11/06 00:54:19 reyk Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -283,6 +283,24 @@ Disable the use of ARP.
 Specify the address to use to represent broadcasts to the
 network.
 The default broadcast address is the address with a host part of all 1's.
+.It Cm bssid Ar bssid
+(IEEE 802.11 devices only)
+Set the desired BSSID for IEEE 802.11-based wireless network interfaces.
+.It Fl bssid
+(IEEE 802.11 devices only)
+Unset the desired BSSID for IEEE 802.11-based wireless network interfaces.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+(IEEE 802.11 devices only)
+Set the channel (radio frequency) to be used for IEEE 802.11-based
+wireless network interfaces from the given channel ID
+.Ar n .
+.It Fl chan
+(IEEE 802.11 devices only)
+Unset the desired channel to be used for IEEE 802.11-based wireless
+network interfaces.
+It doesn't affect the channel to be created for IBSS or hostap mode.
 .It Cm create
 Create the specified network pseudo-device.
 At least the following devices can be created on demand:
@@ -426,6 +444,18 @@ The routing metric is used by the routing protocol
 Higher metrics have the effect of making a route
 less favorable; metrics are counted as addition hops
 to the destination network or host.
+.It Cm mode Ar mode
+If the driver for the interface supports the media selection system,
+set the specified operating mode on the interface to the given
+.Ar mode .
+For IEEE 802.11 wireless interfaces that support multiple operating modes,
+this directive is used to select between 802.11a
+.Pq Dq 11a ,
+802.11b
+.Pq Dq 11b ,
+and 802.11g
+.Pq Dq 11g
+operating modes.
 .It Cm mtu Ar value
 Set the MTU for this device to the given
 .Ar value .
