@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2002/04/30 09:18:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2002/05/07 18:44:05 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,6 @@ TOP=		${.CURDIR}/..
 IMAGE=		ramdisk${REV}.fs
 CBIN?=		instbin
 LISTS?=		${.CURDIR}/list
-CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
 UTILS?=		${TOP}/../miniroot
 
 MOUNT_POINT=	/mnt
@@ -118,9 +117,12 @@ install:
 	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
 .endif
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+${CBIN}.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
-	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CRUNCHCONF}
+	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all

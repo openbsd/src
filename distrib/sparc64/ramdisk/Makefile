@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2002/04/30 09:18:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2002/05/07 18:44:05 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -112,6 +112,9 @@ unconfig:
 
 install:
 	cp ${FLOPPY} ${DESTDIR}/snapshot/
+
+${CBIN}.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
