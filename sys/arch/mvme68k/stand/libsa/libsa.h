@@ -14,5 +14,5 @@ int bugscstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 void exec_mvme __P((char *, int));
 
 /* parse_args.c */
-void parse_args __P((char **, int *));
+int parse_args __P((char **, int *));
 

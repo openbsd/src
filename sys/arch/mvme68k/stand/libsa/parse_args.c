@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.2 1996/07/27 11:28:15 deraadt Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.3 1997/04/17 19:16:42 gvf Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -56,7 +56,7 @@ struct flags {
 	{ 's', RB_SINGLE },
 };
 
-void
+int
 parse_args(filep, flagp)
 
 char **filep;
@@ -83,6 +83,8 @@ int *flagp;
 				continue;
 			}
 			while ((c = *++ptr) && c != ' ') {
+				if (c == 'q')
+					return (-1);
 				for (i = 0; i < sizeof(bf)/sizeof(bf[0]); i++)
 					if (bf[i].c == c) {
 						howto |= bf[i].bit;
@@ -92,4 +94,5 @@ int *flagp;
 	}
 	*flagp = howto;
 	*filep = name;
+	return (0);
 }
