@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.105 1999/08/05 08:12:10 millert Exp $
+#	$OpenBSD: rc,v 1.106 1999/08/19 13:58:07 kstailey Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -310,7 +310,7 @@ if [ $? -eq 0 ]; then
 	rm -f $T
 fi
 
-# nvi file recovery
+# vi file recovery
 if [ ! -d /var/tmp/vi.recover ]; then
 	if [ -e /var/tmp/vi.recover ]; then
 		echo "Warning!  /var/tmp/vi.recover is not a directory!"
@@ -322,7 +322,7 @@ fi
 vibackup=/var/tmp/vi.recover/vi.*
 if [ "$vibackup" != "/var/tmp/vi.recover/vi.*" ]; then
 	for i in $vibackup; do
-		# Unmodified nvi editor backup files either have the
+		# Unmodified vi editor backup files either have the
 		# execute bit set or are zero length.  Delete them.
 		if [ -x $i -o ! -s $i ]; then
 			rm $i
