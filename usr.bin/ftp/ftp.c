@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp.c,v 1.16 1997/03/21 20:59:29 millert Exp $	*/
-/*	$NetBSD: ftp.c,v 1.24 1997/03/16 14:24:19 lukem Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.17 1997/04/16 05:02:54 millert Exp $	*/
+/*	$NetBSD: ftp.c,v 1.25 1997/04/14 09:09:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.16 1997/03/21 20:59:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.17 1997/04/16 05:02:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,6 @@ static char rcsid[] = "$OpenBSD: ftp.c,v 1.16 1997/03/21 20:59:29 millert Exp $"
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -191,102 +190,6 @@ hookup(host, port)
 bad:
 	(void)close(s);
 	return ((char *)0);
-}
-
-int
-login(host)
-	const char *host;
-{
-	char tmp[80];
-	char *user, *pass, *acct;
-	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
-	char hostname[MAXHOSTNAMELEN];
-	int n, aflag = 0;
-
-	user = pass = acct = NULL;
-	if (ruserpass(host, &user, &pass, &acct) < 0) {
-		code = -1;
-		return (0);
-	}
-
-	/*
-	 * Set up arguments for an anonymous FTP session, if necessary.
-	 */
-	if ((user == NULL || pass == NULL) && anonftp) {
-		memset(anonpass, 0, sizeof(anonpass));
-		memset(hostname, 0, sizeof(hostname));
-
-		/*
-		 * Set up anonymous login password.
-		 */
-		user = getlogin();
-		gethostname(hostname, MAXHOSTNAMELEN);
-#ifndef DONT_CHEAT_ANONPASS
-		/*
-		 * Every anonymous FTP server I've encountered
-		 * will accept the string "username@", and will
-		 * append the hostname itself.  We do this by default
-		 * since many servers are picky about not having
-		 * a FQDN in the anonymous password. - thorpej@netbsd.org
-		 */
-		snprintf(anonpass, sizeof(anonpass) - 1, "%s@",
-		    user);
-#else
-		snprintf(anonpass, sizeof(anonpass) - 1, "%s@%s",
-		    user, hp->h_name);
-#endif
-		pass = anonpass;
-		user = "anonymous";
-	}
-
-	while (user == NULL) {
-		char *myname = getlogin();
-
-		if (myname == NULL) {
-			struct passwd *pp = getpwuid(getuid());
-
-			if (pp != NULL)
-				myname = pp->pw_name;
-		}
-		if (myname)
-			printf("Name (%s:%s): ", host, myname);
-		else
-			printf("Name (%s): ", host);
-		(void)fgets(tmp, sizeof(tmp) - 1, stdin);
-		tmp[strlen(tmp) - 1] = '\0';
-		if (*tmp == '\0')
-			user = myname;
-		else
-			user = tmp;
-	}
-	n = command("USER %s", user);
-	if (n == CONTINUE) {
-		if (pass == NULL)
-			pass = getpass("Password:");
-		n = command("PASS %s", pass);
-	}
-	if (n == CONTINUE) {
-		aflag++;
-		acct = getpass("Account:");
-		n = command("ACCT %s", acct);
-	}
-	if (n != COMPLETE) {
-		warnx("Login failed.");
-		return (0);
-	}
-	if (!aflag && acct != NULL)
-		(void)command("ACCT %s", acct);
-	if (proxy)
-		return (1);
-	for (n = 0; n < macnum; ++n) {
-		if (!strcmp("init", macros[n].mac_name)) {
-			(void)strcpy(line, "$init");
-			makeargv();
-			domacro(margc, margv);
-			break;
-		}
-	}
-	return (1);
 }
 
 void

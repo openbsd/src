@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp_var.h,v 1.10 1997/03/21 20:59:30 millert Exp $	*/
-/*	$NetBSD: ftp_var.h,v 1.15 1997/03/14 01:39:38 christos Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.11 1997/04/16 05:02:57 millert Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.16 1997/04/14 09:09:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -67,7 +67,7 @@ int	hash;			/* print # for each buffer transferred */
 int	mark;			/* number of bytes between hashes */
 int	sendport;		/* use PORT cmd for each data connection */
 int	verbose;		/* print messages coming back from server */
-int	connected;		/* connected to server */
+int	connected;		/* 1 = connected to server, -1 = logged in */
 int	fromatty;		/* input is from a terminal */
 int	interactive;		/* interactively prompt on m* cmds */
 int	confirmrest;		/* confirm rest of current m* cmd */

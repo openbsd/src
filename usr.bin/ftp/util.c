@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.5 1997/04/10 00:17:11 millert Exp $	*/
-/*	$NetBSD: util.c,v 1.6 1997/04/05 03:27:39 lukem Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 1997/04/16 05:02:59 millert Exp $	*/
+/*	$NetBSD: util.c,v 1.7 1997/04/14 09:09:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.5 1997/04/10 00:17:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.6 1997/04/16 05:02:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.5 1997/04/10 00:17:11 millert Exp $"
 #include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -111,7 +112,7 @@ setpeer(argc, argv)
 		(void)strcpy(structname, "file"), stru = STRU_F;
 		(void)strcpy(bytename, "8"), bytesize = 8;
 		if (autologin)
-			(void)login(argv[1]);
+			(void)login(argv[1], NULL, NULL);
 
 #if (defined(unix) || defined(BSD)) && NBBY == 8
 /*
@@ -167,6 +168,109 @@ setpeer(argc, argv)
 		verbose = overbose;
 #endif /* unix || BSD */
 	}
+}
+
+/*
+ * login to remote host, using given username & password if supplied
+ */
+int
+login(host, user, pass)
+	const char *host;
+	char *user, *pass;
+{
+	char tmp[80];
+	char *acct;
+	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
+	char hostname[MAXHOSTNAMELEN];
+	int n, aflag = 0;
+
+	acct = NULL;
+	if (user == NULL) {
+		if (ruserpass(host, &user, &pass, &acct) < 0) {
+			code = -1;
+			return (0);
+		}
+	}
+
+	/*
+	 * Set up arguments for an anonymous FTP session, if necessary.
+	 */
+	if ((user == NULL || pass == NULL) && anonftp) {
+		memset(anonpass, 0, sizeof(anonpass));
+		memset(hostname, 0, sizeof(hostname));
+
+		/*
+		 * Set up anonymous login password.
+		 */
+		user = getlogin();
+		gethostname(hostname, MAXHOSTNAMELEN);
+#ifndef DONT_CHEAT_ANONPASS
+		/*
+		 * Every anonymous FTP server I've encountered
+		 * will accept the string "username@", and will
+		 * append the hostname itself.  We do this by default
+		 * since many servers are picky about not having
+		 * a FQDN in the anonymous password. - thorpej@netbsd.org
+		 */
+		snprintf(anonpass, sizeof(anonpass) - 1, "%s@",
+		    user);
+#else
+		snprintf(anonpass, sizeof(anonpass) - 1, "%s@%s",
+		    user, hp->h_name);
+#endif
+		pass = anonpass;
+		user = "anonymous";
+	}
+
+	while (user == NULL) {
+		char *myname = getlogin();
+
+		if (myname == NULL) {
+			struct passwd *pp = getpwuid(getuid());
+
+			if (pp != NULL)
+				myname = pp->pw_name;
+		}
+		if (myname)
+			printf("Name (%s:%s): ", host, myname);
+		else
+			printf("Name (%s): ", host);
+		(void)fgets(tmp, sizeof(tmp) - 1, stdin);
+		tmp[strlen(tmp) - 1] = '\0';
+		if (*tmp == '\0')
+			user = myname;
+		else
+			user = tmp;
+	}
+	n = command("USER %s", user);
+	if (n == CONTINUE) {
+		if (pass == NULL)
+			pass = getpass("Password:");
+		n = command("PASS %s", pass);
+	}
+	if (n == CONTINUE) {
+		aflag++;
+		if (acct == NULL)
+			acct = getpass("Account:");
+		n = command("ACCT %s", acct);
+	}
+	if ((n != COMPLETE) ||
+	    (!aflag && acct != NULL && command("ACCT %s", acct) != COMPLETE)) {
+		warnx("Login failed.");
+		return (0);
+	}
+	if (proxy)
+		return (1);
+	connected = -1;
+	for (n = 0; n < macnum; ++n) {
+		if (!strcmp("init", macros[n].mac_name)) {
+			(void)strcpy(line, "$init");
+			makeargv();
+			domacro(margc, margv);
+			break;
+		}
+	}
+	return (1);
 }
 
 /*

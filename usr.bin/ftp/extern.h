@@ -1,5 +1,5 @@
-/*	$OpenBSD: extern.h,v 1.11 1997/04/10 00:17:08 millert Exp $	*/
-/*	$NetBSD: extern.h,v 1.14 1997/04/05 03:27:34 lukem Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 1997/04/16 05:02:46 millert Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 1997/04/14 09:09:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -82,7 +82,7 @@ int     initconn __P((void));
 void	intr __P((void));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
-int	login __P((const char *));
+int	login __P((const char *, char *, char *));
 void	lostpeer __P((void));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));

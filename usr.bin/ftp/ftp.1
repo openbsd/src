@@ -1,5 +1,5 @@
-.\" 	$OpenBSD: ftp.1,v 1.10 1997/04/10 00:17:09 millert Exp $
-.\" 	$NetBSD: ftp.1,v 1.19 1997/04/05 03:27:37 lukem Exp $
+.\" 	$OpenBSD: ftp.1,v 1.11 1997/04/16 05:02:50 millert Exp $
+.\" 	$NetBSD: ftp.1,v 1.20 1997/04/14 09:09:20 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ file transfer program
 .Op Fl V
 .Op Ar host Op Ar port
 .Nm ftp
-ftp://\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
+ftp://[\fIuser\fR:\fIpassword\fR@]\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
 .Nm ftp
 http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
 .Nm ftp
@@ -1012,18 +1012,26 @@ To enable auto-fetch, simply pass the list of hostnames/files
 on the command line.
 .Pp
 The following formats are valid syntax for an auto-fetch element:
-.Bl -tag -width "http://host[:port]/file"
+.Bl -tag -width "ftp://[user:password@]host[:port]/file"
 .It host:/file 
 .Dq Classic
 ftp format
-.It ftp://host[:port]/file
-FTP URL, using the ftp protocol if
+.It ftp://[user:password@]host[:port]/file
+An ftp URL, retrieved using the ftp protocol if
 .Ev ftp_proxy
 isn't defined.
 Otherwise, transfer using http via the proxy defined in
 .Ev ftp_proxy .
+If
+.Ar user:password@
+is given and
+.Ev ftp_proxy
+isn't defined, login as
+.Ar user
+with a password of
+.Ar password .
 .It http://host[:port]/file
-HTTP URL, using the http protocol.
+An http URL, retrieved using the http protocol.
 If
 .Ev http_proxy
 is defined, it is used as a URL to an HTTP proxy server.

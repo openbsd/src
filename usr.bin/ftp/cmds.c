@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmds.c,v 1.18 1997/04/10 00:17:07 millert Exp $	*/
-/*	$NetBSD: cmds.c,v 1.22 1997/04/05 03:27:32 lukem Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.19 1997/04/16 05:02:39 millert Exp $	*/
+/*	$NetBSD: cmds.c,v 1.23 1997/04/14 09:09:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.18 1997/04/10 00:17:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.19 1997/04/16 05:02:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -630,7 +630,8 @@ status(argc, argv)
 	int i;
 
 	if (connected)
-		printf("Connected to %s.\n", hostname);
+		printf("Connected %sto %s.\n",
+		    connected == -1 ? "and logged in" : "", hostname);
 	else
 		puts("Not connected.");
 	if (!proxy) {
@@ -1235,6 +1236,7 @@ user(argc, argv)
 	if (!aflag && argc == 4) {
 		(void)command("ACCT %s", argv[3]);
 	}
+	connected = -1;
 }
 
 /*
