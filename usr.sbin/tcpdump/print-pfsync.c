@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.3 2002/11/30 13:56:23 mickey Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.4 2002/12/20 22:25:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.3 2002/11/30 13:56:23 mickey Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.4 2002/12/20 22:25:59 mickey Exp $";
 #endif
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ struct rtentry;
 #include <pcap.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -104,13 +105,13 @@ pfsync_if_print(u_char *user, const struct pcap_pkthdr *h,
 	    i++, s++) {
 		struct pf_state st;
 
-		st.lan = s->lan; NTOHS(st.lan.port);
-		st.gwy = s->gwy; NTOHS(st.gwy.port);
-		st.ext = s->ext; NTOHS(st.ext.port);
+		bcopy(&s->lan, &st.lan, sizeof(st.lan)); NTOHS(st.lan.port);
+		bcopy(&s->gwy, &st.gwy, sizeof(st.gwy)); NTOHS(st.gwy.port);
+		bcopy(&s->ext, &st.ext, sizeof(st.ext)); NTOHS(st.ext.port);
 		pf_state_peer_ntoh(&s->src, &st.src);
 		pf_state_peer_ntoh(&s->dst, &st.dst);
 		st.rule.nr = ntohl(s->rule.nr);
-		st.rt_addr = s->rt_addr;
+		bcopy(&s->rt_addr, &st.rt_addr, sizeof(st.rt_addr));
 		st.creation = ntohl(s->creation);
 		st.expire = ntohl(s->expire);
 		st.packets = ntohl(s->packets);
