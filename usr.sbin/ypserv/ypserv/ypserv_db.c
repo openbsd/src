@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.8 1996/11/11 17:22:15 niklas Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.9 1996/12/02 21:14:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.8 1996/11/11 17:22:15 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.9 1996/12/02 21:14:16 deraadt Exp $";
 #endif
 
 /*
@@ -117,28 +117,32 @@ yp_private(key,ypprivate)
 {
 	int	result;
 
-  	if (ypprivate) return (FALSE);
+  	if (ypprivate)
+	    return (FALSE);
+
+	if (key.dsize == 0 || key.dptr == NULL)
+		return (FALSE);
 
 	if (key.dsize == YP_LAST_LEN &&
-			strncmp(key.dptr,YP_LAST_KEY,YP_LAST_LEN) == 0)
+	    strncmp(key.dptr,YP_LAST_KEY,YP_LAST_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_INPUT_LEN &&
-			strncmp(key.dptr,YP_INPUT_KEY,YP_INPUT_LEN) == 0)
+	    strncmp(key.dptr,YP_INPUT_KEY,YP_INPUT_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_OUTPUT_LEN &&
-			strncmp(key.dptr,YP_OUTPUT_KEY,YP_OUTPUT_LEN) == 0)
+	    strncmp(key.dptr,YP_OUTPUT_KEY,YP_OUTPUT_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_MASTER_LEN &&
-			strncmp(key.dptr,YP_MASTER_KEY,YP_MASTER_LEN) == 0)
+	    strncmp(key.dptr,YP_MASTER_KEY,YP_MASTER_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_DOMAIN_LEN &&
-			strncmp(key.dptr,YP_DOMAIN_KEY,YP_DOMAIN_LEN) == 0)
+	    strncmp(key.dptr,YP_DOMAIN_KEY,YP_DOMAIN_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_INTERDOMAIN_LEN &&
-		strncmp(key.dptr,YP_INTERDOMAIN_KEY,YP_INTERDOMAIN_LEN) == 0)
+	    strncmp(key.dptr,YP_INTERDOMAIN_KEY,YP_INTERDOMAIN_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_SECURE_LEN &&
-			strncmp(key.dptr,YP_SECURE_KEY,YP_SECURE_LEN) == 0)
+	    strncmp(key.dptr,YP_SECURE_KEY,YP_SECURE_LEN) == 0)
 		return(TRUE);
 	
 	return(FALSE);
