@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.47 2003/03/13 15:09:36 grange Exp $	*/
+/*	$OpenBSD: theo.c,v 1.48 2003/04/18 03:07:20 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -130,7 +130,9 @@ static const char *talk[] = {
 	"We are not hackers. We are turd polishing craftsmen.",
 	"if ya break cvs, we hunt ya and break yer legs",
 	"who cares.  style(9) can bite my ass",
-	"The argument is totally Linux."
+	"The argument is totally Linux.",
+	"noone is gonna add that thing to theo.c?  wow, i'm stunned.  no henning?"
+
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
