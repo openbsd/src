@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.4 1998/07/04 19:28:58 deraadt Exp $
+.\"	$OpenBSD: eeprom.8,v 1.5 1998/07/04 19:36:20 millert Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -221,11 +221,11 @@ of the OpenProm.
 If true, the old EEPROM-style interface will be used while in the monitor,
 rather than the OpenProm-style interface.
 .It selftest-#megs
-A 32-bit inteteger specifying the number of megabytes of memory to
+A 32-bit integer specifying the number of megabytes of memory to
 test upon power-up.
 .It oem-logo
 A 64bitx64bit bitmap in Sun Iconedit format.  To set the bitmap, give
-the pathname of the file containing the image.  NOTE: this proprty is
+the pathname of the file containing the image.  NOTE: this property is
 not yet supported.
 .It oem-logo?
 If true, enables the use of the bitmap stored in
@@ -234,7 +234,7 @@ rather than the default Sun logo.
 .It oem-banner
 A string to use at power up, rather than the default Sun banner.
 .It oem-banner?
-If true, emables the use of the banner stored in
+If true, enables the use of the banner stored in
 .Pa oem-banner 
 rather than the default Sun banner.
 .It ttya-mode
