@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.83 2003/04/25 21:24:15 grange Exp $
+#	$OpenBSD: files.isa,v 1.84 2003/05/20 20:26:27 grange Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -387,6 +387,11 @@ file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 # National Semiconductor LM7[89] and compatible hardware monitors
 attach	lm at isa with lm_isa
 file	dev/isa/lm_isa.c		lm_isa
+
+# IT8705F, IT8712F and SiS970 hardware monitors
+device	it
+attach	it at isa
+file	dev/isa/it.c			it
 
 #
 # PCMCIA PCIC (i82365SL and compatibles):
