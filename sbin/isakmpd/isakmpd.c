@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.30 2001/04/09 22:09:52 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.31 2001/06/29 19:41:43 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -160,15 +160,11 @@ parse_args (int argc, char *argv[])
       break;
 
     case 'p':
-      udp_default_port = udp_decode_port (optarg);
-      if (!udp_default_port)
-	exit (1);
+      udp_default_port = optarg;
       break;
 
     case 'P':
-      udp_bind_port = udp_decode_port (optarg);
-      if (!udp_bind_port)
-	exit (1);
+      udp_bind_port = optarg;
       break;
 
 #ifdef USE_DEBUG

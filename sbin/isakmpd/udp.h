@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.h,v 1.4 1998/12/22 02:25:15 niklas Exp $	*/
+/*	$OpenBSD: udp.h,v 1.5 2001/06/29 19:41:43 ho Exp $	*/
 /*	$EOM: udp.h,v 1.4 1998/12/22 02:23:43 niklas Exp $	*/
 
 /*
@@ -37,10 +37,12 @@
 #ifndef _UDP_H_
 #define _UDP_H_
 
-extern in_port_t udp_default_port;
-extern in_port_t udp_bind_port;
+extern char *udp_default_port;
+extern char *udp_bind_port;
 
+#if 0
 extern in_port_t udp_decode_port (char *);
+#endif
 extern void udp_init (void);
 
 #endif /* _UDP_H_ */
