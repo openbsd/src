@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.94 2002/10/25 22:02:19 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.95 2002/10/29 03:03:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1252,8 +1252,9 @@ EXIT(TLABEL(emu))
 	ldwax,s	r16(r24), r17		/* va -> pa:prot */		! \
 	sh2addl	r16, r24, r25						! \
 	combt,=,n r0, r17, TLABEL(all)					! \
+	copy	r17, r16						! \
 	depi	(bits), 21+bits, 1+bits, r17				! \
-	mfctl	tr7, r1							! \
+	sub,=	r16, r17, r0		/* do not store if unchanged */	! \
 	stwas	r17, 0(r25)		/* store back w/ the bits */	! \
 	shd	r17, r0, 13, r25					! \
 	dep	r8, 30, 15, r25		/* mix0r the pid from the sid */! \
@@ -1343,7 +1344,6 @@ $dtlbna_t
 	combt,=,n r0, r17, TLABEL(all)					! \
 	copy	r17, r16						! \
 	depi	(bits), 21+bits, 1+bits, r17				! \
-	mfctl	tr7, r1							! \
 	sub,=	r16, r17, r0		/* do not store if unchanged */	! \
 	stws	r17, 0(r25)		/* store back w/ the bits */	! \
 	shd	r17, r0, 13, r25					! \
