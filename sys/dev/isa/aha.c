@@ -1,4 +1,5 @@
 /*	$NetBSD: aha1542.c,v 1.53 1995/10/03 20:58:56 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
@@ -76,7 +77,6 @@
  * cannot be serviced at interrupt time.
  */
 #ifdef i386
-#include <machine/vmparam.h>
 #define VOLATILE_XS(xs) \
 	((xs)->datalen > 0 && (xs)->bp == NULL && \
 	((xs)->flags & SCSI_POLL) == 0)
@@ -223,8 +223,8 @@ struct aha_ccb {
 		u_char seg_len[3];
 		u_char seg_addr[3];
 	} scat_gath[AHA_NSEG];
-#define CCB_PHYS_SIZE ((int)&((struct aha_ccb *)0)->chain)
 	/*----------------------------------------------------------------*/
+#define CCB_PHYS_SIZE ((int)&((struct aha_ccb *)0)->chain)
 	TAILQ_ENTRY(aha_ccb) chain;
 	struct aha_ccb *nexthash;
 	struct scsi_xfer *xs;		/* the scsi_xfer for this cmd */
@@ -235,7 +235,7 @@ struct aha_ccb {
 	struct aha_mbx_out *mbx;	/* pointer to mail box */
 	struct isadma_seg ccb_phys[1];	/* phys segment of this ccb */
 	struct isadma_seg data_phys[AHA_NSEG];	/* phys segments of data */
-	int data_nseg;
+	int data_nseg;			/* number of phys segments of data */
 };
 
 /*
@@ -740,12 +740,26 @@ aha_free_ccb(aha, ccb, flags)
 	struct aha_ccb *ccb;
 	int flags;
 {
-	int s;
+	int s, hashnum;
+	struct aha_ccb **hashccb;
 
 	s = splbio();
 
 	if (ccb->ccb_phys[0].addr)
 		isadma_unmap((caddr_t)ccb, CCB_PHYS_SIZE, 1, ccb->ccb_phys);
+
+	/* remove from hash table */
+
+	hashnum = CCB_HASH(ccb->ccb_phys[0].addr);
+	hashccb = &aha->ccbhash[hashnum];
+
+	while (*hashccb) {
+		if ((*hashccb)->ccb_phys[0].addr == ccb->ccb_phys[0].addr) {
+			*hashccb = (*hashccb)->nexthash;
+			break;
+		}
+		(*hashccb) = (*hashccb)->nexthash;
+	}
 
 	ccb->flags = CCB_FREE;
 	TAILQ_INSERT_HEAD(&aha->free_ccb, ccb, chain);
@@ -765,8 +779,6 @@ aha_init_ccb(aha, ccb)
 	struct aha_softc *aha;
 	struct aha_ccb *ccb;
 {
-	int hashnum;
-
 	bzero(ccb, sizeof(struct aha_ccb));
 }
 
@@ -851,16 +863,13 @@ aha_ccb_phys_kv(aha, ccb_phys)
 	u_long ccb_phys;
 {
 	int hashnum = CCB_HASH(ccb_phys);
-	struct aha_ccb *res, **ccb = &aha->ccbhash[hashnum];
+	struct aha_ccb *res = aha->ccbhash[hashnum];
 
-	while (*ccb) {
-		if ((*ccb)->ccb_phys[0].addr == ccb_phys)
+	while (res) {
+		if (res->ccb_phys[0].addr == ccb_phys)
 			break;
-		(*ccb) = (*ccb)->nexthash;
+		res = res->nexthash;
 	}
-
-	if (res = *ccb)
-		*ccb = (*ccb)->nexthash;
 
 	return res;
 }
@@ -1333,8 +1342,7 @@ aha_scsi_cmd(xs)
 	if (VOLATILE_XS(xs)) {
 		timeout(aha_timeout, ccb, (xs->timeout * hz) / 1000);
 		while ((ccb->xs->flags & ITSDONE) == 0) {
-			tsleep(ccb, PRIBIO, "ahawait",
-			    (xs->timeout * hz) / 1000);
+			tsleep(ccb, PRIBIO, "ahawait", 0);
 		}
 		splx(s);
 		if (ccb->data_nseg) {
