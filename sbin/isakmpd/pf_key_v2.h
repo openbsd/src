@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.h,v 1.10 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: pf_key_v2.h,v 1.11 2004/06/26 06:07:03 hshoexer Exp $	 */
 /* $EOM: pf_key_v2.h,v 1.4 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -38,6 +38,8 @@
 struct proto;
 struct sa;
 struct sockaddr;
+
+extern int	pf_key_v2_socket;
 
 extern void     pf_key_v2_connection_check(char *);
 extern int      pf_key_v2_delete_spi(struct sa *, struct proto *, int);

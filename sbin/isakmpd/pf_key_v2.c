@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.145 2004/06/23 23:36:01 ho Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.146 2004/06/26 06:07:03 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -63,7 +63,6 @@
 #include "ipsec_num.h"
 #include "key.h"
 #include "log.h"
-#include "monitor.h"
 #include "pf_key_v2.h"
 #include "sa.h"
 #include "timer.h"
@@ -149,7 +148,7 @@ static int      pf_key_v2_conf_refinc(int, char *);
 #endif
 
 /* The socket to use for PF_KEY interactions.  */
-static int      pf_key_v2_socket;
+int      pf_key_v2_socket;
 
 #ifdef KAME
 static int
@@ -519,7 +518,7 @@ pf_key_v2_open(void)
 
 	/* Open the socket we use to speak to IPsec. */
 	pf_key_v2_socket = -1;
-	fd = monitor_socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
+	fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 	if (fd == -1) {
 		log_error("pf_key_v2_open: "
 		    "socket (PF_KEY, SOCK_RAW, PF_KEY_V2) failed");

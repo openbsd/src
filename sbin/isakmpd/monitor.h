@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.10 2004/06/25 00:58:39 hshoexer Exp $	 */
+/* $OpenBSD: monitor.h,v 1.11 2004/06/26 06:07:03 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -40,6 +40,7 @@
 
 enum monitor_reqtypes {
 	MONITOR_UI_INIT,
+	MONITOR_PFKEY_OPEN,
 	MONITOR_GET_FD,
 	MONITOR_GET_SOCKET,
 	MONITOR_SETSOCKOPT,
@@ -79,6 +80,7 @@ int             monitor_closedir(struct monitor_dirents *);
 void            monitor_init_done(void);
 
 void		monitor_ui_init(void);
+int		monitor_pf_key_v2_open(void);
 void		monitor_exit(int);
 
 #else				/* !USE_PRIVSEP */
@@ -96,6 +98,7 @@ void		monitor_exit(int);
 
 #define monitor_ui_init	ui_init
 #define monitor_exit	exit
+#define monitor_pf_key_v2_open pf_key_v2_open
 
 #endif				/* USE_PRIVSEP */
 #endif				/* _MONITOR_H_ */

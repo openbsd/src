@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.c,v 1.26 2004/04/15 18:39:30 deraadt Exp $	 */
+/* $OpenBSD: sysdep.c,v 1.27 2004/06/26 06:07:03 hshoexer Exp $	 */
 /* $EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -93,7 +93,11 @@ sysdep_sa_len(struct sockaddr *sa)
 int
 sysdep_app_open()
 {
+#ifdef USE_PRIVSEP
+	return monitor_pf_key_v2_open();
+#else
 	return KEY_API(open)();
+#endif
 }
 
 /*

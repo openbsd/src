@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.26 2004/06/25 00:58:39 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.27 2004/06/26 06:07:03 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -52,6 +52,7 @@
 #include "policy.h"
 #include "ui.h"
 #include "util.h"
+#include "pf_key_v2.h"
 
 struct monitor_state {
 	pid_t           pid;
@@ -81,6 +82,7 @@ static void     m_priv_increase_state(int);
 static void     m_priv_test_state(int);
 
 static void	m_priv_ui_init(int);
+static void	m_priv_pfkey_open(int);
 
 /*
  * Public functions, unprivileged.
@@ -179,6 +181,37 @@ monitor_ui_init(void)
 errout:
 	log_error("monitor_ui_init: problem talking to privileged process");
 	return;
+}
+
+int
+monitor_pf_key_v2_open(void)
+{
+	int32_t err;
+
+	if (m_write_int32(m_state.s, MONITOR_PFKEY_OPEN))
+		goto errout;
+
+	if (m_read_int32(m_state.s, &err))
+		goto errout;
+
+	if (err < 0) {
+		log_error("monitor_pf_key_v2_open: parent could not create "
+		    "PF_KEY socket");
+		return -1;
+	}
+
+	pf_key_v2_socket = mm_receive_fd(m_state.s);
+	if (pf_key_v2_socket < 0) {
+		log_error("monitor_pf_key_v2_open: mm_receive_fd() failed: %s",
+		    strerror(errno));
+		return -1;
+	}
+	return pf_key_v2_socket;
+
+errout:
+	log_error("monitor_pf_key_v2_open: problem talking to privileged "
+	    "process");
+	return -1;
 }
 
 int
@@ -604,6 +637,14 @@ monitor_loop(int debug)
 						m_priv_ui_init(m_state.s);
 						break;
 
+					case MONITOR_PFKEY_OPEN:
+						LOG_DBG((LOG_MISC, 80,
+						    "%s: MONITOR_PFKEY_OPEN",
+						    __func__));
+						m_priv_test_state(STATE_INIT);
+						m_priv_pfkey_open(m_state.s);
+						break;
+
 					case MONITOR_GET_SOCKET:
 						LOG_DBG((LOG_MISC, 80,
 						    "%s: MONITOR_GET_SOCKET",
@@ -686,6 +727,36 @@ m_priv_ui_init(int s)
 
 errout:
 	log_error("m_priv_ui_init: read/write operation failed");
+	return;
+}
+
+/* Privileged: called by monitor_loop.  */
+static void
+m_priv_pfkey_open(int s)
+{
+	int fd;
+	int32_t err;
+
+	fd = pf_key_v2_open();
+
+	if (fd < 0)
+		err = -1;
+	else
+		err = 0;
+
+	if (m_write_int32(s, err))
+		goto errout;
+
+	if (fd > 0 && mm_send_fd(s, fd)) {
+		close(fd);
+		goto errout;
+	}
+	close(fd);
+
+	return;
+
+errout:
+	log_error("m_priv_pfkey_open: read/write operation failed");
 	return;
 }
 
