@@ -191,6 +191,7 @@ includes:
 		$(INSTALL_FILE) $(srcdir)/readline.h $(includedir)/readline/readline.h
 		$(INSTALL_FILE) $(srcdir)/keymaps.h $(includedir)/readline/keymaps.h
 		$(INSTALL_FILE) $(srcdir)/chardefs.h $(includedir)/readline/chardefs.h
+		$(INSTALL_FILE) $(srcdir)/history.h $(includedir)/readline/history.h
 
 local-clean:
 	rm -f $(STAGESTUFF) *.a *.log *.cp *.tp *.vr *.fn
