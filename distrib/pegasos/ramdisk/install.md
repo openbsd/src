@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2003/12/04 20:17:03 deraadt Exp $
+#	$OpenBSD: install.md,v 1.3 2004/03/16 13:40:40 miod Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,18 +94,13 @@ __EOT
 	# hints and let the user rip.
 	cat << __EOT
 
-**** NOTE ****
+You will now create a single MBR partition to contain your OpenBSD data. This
+partition must have an id of 'A6'; must *NOT* overlap other partitions; and
+must be marked as the only active partition.
 
-A valid MBR for an OpenBSD bootable disk must contain at least:
-
-a) One OpenBSD (id 'A6') partition.
-
-**************
-
-Current partition information is:
+The 'manual' command describes all the fdisk commands in detail.
 
 $(fdisk $_disk)
-
 __EOT
 
 	fdisk -e $_disk
@@ -114,11 +109,6 @@ __EOT
 Here is the MBR configuration you chose:
 
 $(fdisk $_disk)
-
-Please take note of the offsets and sizes of any DOS partitions, the OpenBSD
-partition, and any other partitions you want to access from OpenBSD. You may
-need this information to fill in the OpenBSD disklabel.
-
 __EOT
 }
 
