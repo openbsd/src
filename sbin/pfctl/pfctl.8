@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.116 2004/12/13 23:59:28 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.117 2005/01/05 18:30:14 mcbride Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm pfctl
 .Bk -words
-.Op Fl AdeghNnOoqRrvz
+.Op Fl AdeghmNnOoqRrvz
 .Op Fl a Ar anchor
 .Xo
 .Oo Fl D
@@ -237,6 +237,13 @@ to
 .Li host2 :
 .Bd -literal -offset indent
 # pfctl -k host1 -k host2
+.Ed
+.It Fl m
+Merge in explicitly given options without reseting those
+which are omitted.
+Allows single options to be modified without disturbing the others:
+.Bd -literal -offset indent
+# echo "set loginterface fxp0" | pfctl -mf -
 .Ed
 .It Fl N
 Load only the NAT rules present in the rule file.
