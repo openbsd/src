@@ -429,9 +429,13 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280_image.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pciide_opti_reg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgareg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ifaddrs.ph
@@ -468,7 +472,3 @@
 ./usr/mipsel-unknown-openbsd2.7/bin
 ./usr/mipsel-unknown-openbsd2.7/lib
 ./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280_image.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280reg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgareg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgavar.ph

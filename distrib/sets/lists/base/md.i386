@@ -669,6 +669,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/brktree_reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cs4280_image.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cs4280reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esoreg.ph
@@ -714,6 +716,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/pcivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/tgareg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/tgavar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/ti_fw.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/ti_fw2.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/ubsecreg.ph
@@ -1734,7 +1738,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cs4280_image.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/cs4280reg.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/tgareg.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/tgavar.ph
