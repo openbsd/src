@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.67 1998/11/25 04:58:53 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.68 1999/01/01 23:53:15 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -119,7 +119,8 @@ all)
 	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr bktr0 tuner0
 	sh MAKEDEV fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
 	sh MAKEDEV fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
-	sh MAKEDEV xfs0
+	sh MAKEDEV xfs0 music
+	sh MAKEDEV rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -563,6 +564,29 @@ xfs*)
 	mknod xfs$unit c 51 $unit
 	chown root.wheel xfs$unit
 	chmod 600 xfs$unit
+	;;
+
+rmidi*)
+	unit=${i#rmidi}
+	major=52
+	rmidi=rmidi$unit
+	rm -f $rmidi
+	mknod $rmidi c $major $unit
+	chown root.wheel $rmidi
+	chmod 666 $rmidi
+	;;
+
+music*)
+	unit=${i#music}
+	music=music$unit
+	sequencer=sequencer$unit
+	major=53
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $sequencer $music
+	mknod $music     c $major $(($unit + 0))
+	mknod $sequencer c $major $(($unit + 128))
+	chown root.wheel $music $sequencer
+	chmod 666 $music $sequencer
 	;;
 
 apm*)
