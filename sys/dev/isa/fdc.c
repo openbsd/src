@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.9 1996/11/30 09:34:42 downsj Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.10 1998/08/08 22:39:10 millert Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -371,14 +371,14 @@ int
 fdcintr(arg)
 	void *arg;
 {
-	struct fdc_softc *fdc = arg;
-
 #if NFD > 0
+	struct fdc_softc *fdc = arg;
 	extern int fdintr __P((struct fdc_softc *));
 
 	/* Will switch on device type, shortly. */
 	return (fdintr(fdc));
 #else
 	printf("fdcintr: got interrupt, but no devices!\n");
+	return (1);
 #endif
 }
