@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.8 2004/11/11 14:29:00 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.9 2004/11/11 22:47:56 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -110,7 +110,7 @@
 #ifdef ATU_DEBUG
 #define DPRINTF(x)	do { if (atudebug) printf x; } while (0)
 #define DPRINTFN(n,x)	do { if (atudebug>(n)) printf x; } while (0)
-int atudebug = 1;
+int atudebug = 11;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -258,14 +258,13 @@ atu_usb_request(struct atu_softc *sc, u_int8_t type,
 #ifdef ATU_DEBUG
 	if (atudebug) {
 		if ((data == NULL) || (type & UT_READ)) {
-			DPRINTFN(10, ("%s: req=%02x val=%02x "
-			    "ind=%02x len=%02x\n", USBDEVNAME(sc->atu_dev),
-			    request, value, index, length));
+			DPRINTFN(20, ("%s: req=%02x val=%02x ind=%02x "
+			    "len=%02x\n", USBDEVNAME(sc->atu_dev), request,
+			    value, index, length));
 		} else {
-			DPRINTFN(10, ("%s: req=%02x val=%02x "
-			    "ind=%02x len=%02x [%8D]\n",
-			    USBDEVNAME(sc->atu_dev), request, value, index,
-			    length, data, " "));
+			DPRINTFN(20, ("%s: req=%02x val=%02x ind=%02x "
+			    "len=%02x [%8D]\n", USBDEVNAME(sc->atu_dev),
+			    request, value, index, length, data, " "));
 		}
 	}
 #endif /* ATU_DEBUG */
@@ -283,15 +282,14 @@ atu_usb_request(struct atu_softc *sc, u_int8_t type,
 #ifdef ATU_DEBUG
 	if (atudebug) {
 		if (type & UT_READ) {
-			DPRINTF(("%s: transfered 0x%x bytes"
-			    " in\n", USBDEVNAME(sc->atu_dev), total_len));
-			DPRINTF(("%s: dump [%10D]\n",
+			DPRINTFN(20, ("%s: transfered 0x%x bytes in\n",
+			    USBDEVNAME(sc->atu_dev), total_len));
+			DPRINTFN(20, ("%s: dump [%10D]\n",
 			    USBDEVNAME(sc->atu_dev), data, " "));
 		} else {
 			if (total_len != length)
-				DPRINTF(("%s: ARG! wrote "
-				    "only %x bytes\n", USBDEVNAME(sc->atu_dev),
-				    total_len));
+				DPRINTF(("%s: ARG! wrote only %x bytes\n",
+				    USBDEVNAME(sc->atu_dev), total_len));
 		}
 	}
 #endif /* ATU_DEBUG */
@@ -332,7 +330,7 @@ atu_wait_completion(struct atu_softc *sc, u_int8_t cmd, u_int8_t *status)
 	u_int8_t		statusreq[6];
 	int			idle_count = 0;
 
-	DPRINTF(("%s: wait-completion: cmd=%02x\n",
+	DPRINTFN(15, ("%s: wait-completion: cmd=%02x\n",
 	    USBDEVNAME(sc->atu_dev), cmd));
 
 	while (1) {
@@ -342,7 +340,7 @@ atu_wait_completion(struct atu_softc *sc, u_int8_t cmd, u_int8_t *status)
 
 #ifdef ATU_DEBUG
 		if (atudebug) {
-			DPRINTF(("%s: status=%s cmd=%02x\n",
+			DPRINTFN(20, ("%s: status=%s cmd=%02x\n",
 			    USBDEVNAME(sc->atu_dev),
 			ether_sprintf(statusreq), cmd));
 		}
@@ -412,7 +410,7 @@ u_int8_t index, void *data)
 	if (err)
 		return err;
 
-	DPRINTF(("%s: sendmib : waitcompletion...\n",
+	DPRINTFN(15, ("%s: sendmib : waitcompletion...\n",
 	    USBDEVNAME(sc->atu_dev)));
 	return atu_wait_completion(sc, CMD_SET_MIB, NULL);
 }
@@ -448,7 +446,8 @@ atu_start_ibss(struct atu_softc *sc)
 	/* Write config to adapter */
 	err = atu_send_command(sc, (u_int8_t *)&Request, sizeof(Request));
 	if (err) {
-		DPRINTF(("%s: start ibss failed!\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: start ibss failed!\n",
+		    USBDEVNAME(sc->atu_dev)));
 		return err;
 	}
 
@@ -463,7 +462,8 @@ atu_start_ibss(struct atu_softc *sc)
 	/* Get the current BSSID */
 	err = atu_get_mib(sc, MIB_MAC_MGMT__CURRENT_BSSID, sc->atu_bssid);
 	if (err) {
-		DPRINTF(("%s: could not get BSSID!\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: could not get BSSID!\n",
+		    USBDEVNAME(sc->atu_dev)));
 		return err;
 	}
 
@@ -509,10 +509,10 @@ atu_start_scan(struct atu_softc *sc)
 
 #ifdef ATU_DEBUG
 	if (atudebug) {
-		DPRINTF(("%s: scan cmd len=%02x\n",
+		DPRINTFN(20, ("%s: scan cmd len=%02x\n",
 		    USBDEVNAME(sc->atu_dev), sizeof(Scan)));
-		DPRINTF(("%s: scan cmd: %52D\n",
-		    USBDEVNAME(sc->atu_dev), (u_int8_t *)&Scan, " "));
+		DPRINTFN(20, ("%s: scan cmd: %52D\n", USBDEVNAME(sc->atu_dev),
+		    (u_int8_t *)&Scan, " "));
 	}
 #endif /* ATU_DEBUG */
 
@@ -560,7 +560,7 @@ atu_switch_radio(struct atu_softc *sc, int state)
 		if (err)
 			return err;
 
-		DPRINTF(("%s: radio turned %s\n",
+		DPRINTFN(10, ("%s: radio turned %s\n",
 		    USBDEVNAME(sc->atu_dev), state ? "on" : "off"));
 		sc->atu_radio_on = state;
 	}
@@ -576,10 +576,11 @@ atu_initial_config(struct atu_softc *sc)
 	struct atu_cmd_card_config	cmd;
 	u_int8_t			reg_domain;
 
-	DPRINTF(("%s: sending mac-addr\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(10, ("%s: sending mac-addr\n", USBDEVNAME(sc->atu_dev)));
 	err = atu_send_mib(sc, MIB_MAC_ADDR__ADDR, sc->atu_mac_addr);
 	if (err) {
-		DPRINTF(("%s: error setting mac-addr\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: error setting mac-addr\n",
+		    USBDEVNAME(sc->atu_dev)));
 		return err;
 	}
 
@@ -587,7 +588,8 @@ atu_initial_config(struct atu_softc *sc)
 	DPRINTF(("%s: sending reg-domain\n", USBDEVNAME(sc->atu_dev)));
 	err = atu_send_mib(sc, MIB_PHY__REG_DOMAIN, NR(0x30));
 	if (err) {
-		DPRINTF(("%s: error setting mac-addr\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: error setting mac-addr\n",
+		    USBDEVNAME(sc->atu_dev)));
 		return err;
 	}
 	*/
@@ -646,9 +648,9 @@ atu_initial_config(struct atu_softc *sc)
 
 #ifdef ATU_DEBUG
 	if (atudebug) {
-		DPRINTF(("%s: configlen=%02x\n",
-		    USBDEVNAME(sc->atu_dev), sizeof(cmd)));
-		DPRINTF(("%s: configdata= %108D\n",
+		DPRINTFN(20, ("%s: configlen=%02x\n", USBDEVNAME(sc->atu_dev),
+		    sizeof(cmd)));
+		DPRINTFN(20, ("%s: configdata= %108D\n",
 		    USBDEVNAME(sc->atu_dev), (u_int8_t *)&cmd, " "));
 	}
 #endif /* ATU_DEBUG */
@@ -693,8 +695,8 @@ atu_initial_config(struct atu_softc *sc)
 	if (err)
 		return err;
 
-	DPRINTF(("%s: completed initial config\n",
-	    USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(10, ("%s: completed initial config\n",
+	   USBDEVNAME(sc->atu_dev)));
 	return 0;
 }
 
@@ -709,9 +711,9 @@ atu_join(struct atu_softc *sc)
 	join.Reserved = 0x00;
 	join.Size = sizeof(join) - 4;
 
-	DPRINTF(("%s: pre-join sc->atu_bssid=%s\n",
+	DPRINTFN(15, ("%s: pre-join sc->atu_bssid=%s\n",
 	    USBDEVNAME(sc->atu_dev), ether_sprintf(sc->atu_bssid)));
-	DPRINTF(("%s: mode=%d\n", USBDEVNAME(sc->atu_dev),
+	DPRINTFN(15, ("%s: mode=%d\n", USBDEVNAME(sc->atu_dev),
 	    sc->atu_mode));
 	memcpy(join.bssid, sc->atu_bssid, ETHER_ADDR_LEN);
 	memset(join.essid, 0x00, 32);
@@ -723,7 +725,7 @@ atu_join(struct atu_softc *sc)
 	join.timeout = ATU_JOIN_TIMEOUT;
 	join.reserved = 0x00;
 
-	DPRINTF(("%s: trying to join BSSID=%s\n",
+	DPRINTFN(10, ("%s: trying to join BSSID=%s\n",
 	    USBDEVNAME(sc->atu_dev), ether_sprintf(join.bssid)));
 	err = atu_send_command(sc, (u_int8_t *)&join, sizeof(join));
 	if (err) {
@@ -742,7 +744,7 @@ atu_join(struct atu_softc *sc)
 		    USBDEVNAME(sc->atu_dev), status));
 		return status;
 	} else {
-		DPRINTF(("%s: joined BSS\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(10, ("%s: joined BSS\n", USBDEVNAME(sc->atu_dev)));
 	}
 	return err;
 }
@@ -776,7 +778,7 @@ atu_send_packet(struct atu_softc *sc, struct atu_chain *c)
 		return(EIO);
 	}
 
-	DPRINTF(("%s: tx packet...\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(10, ("%s: tx packet...\n", USBDEVNAME(sc->atu_dev)));
 	return 0;
 }
 
@@ -849,7 +851,7 @@ atu_authenticate(struct atu_softc *sc)
 	packet->auth_hdr.wi_seq = 1;
 	packet->auth_hdr.wi_status = 0;
 
-	DPRINTF(("%s: auth packet: %30D\n", USBDEVNAME(sc->atu_dev),
+	DPRINTFN(15, ("%s: auth packet: %30D\n", USBDEVNAME(sc->atu_dev),
 		((u_int8_t *)packet)+8, " "));
 
 	err = atu_send_mgmt_packet(sc, ch, sizeof(*packet));
@@ -868,12 +870,12 @@ atu_authenticate(struct atu_softc *sc)
 
 	memcpy(packet->challenge, the_challenge_text, the_challenge_length);
 
-	DPRINTF(("%s: auth packet: %30D\n", USBDEVNAME(sc->atu_dev),
+	DPRINTFN(15, ("%s: auth packet: %30D\n", USBDEVNAME(sc->atu_dev),
 		((u_int8_t *)packet)+8, " "));
 
 	if (sc->atu_encrypt & ATU_WEP_TX) {
 		packet->mgmt_hdr.frame_ctl |= WI_FCTL_WEP;
-		DPRINTF(("%s: ==> WEP on please\n",
+		DPRINTFN(20, ("%s: ==> WEP on please\n",
 		    USBDEVNAME(sc->atu_dev)));
 	}
 
@@ -930,7 +932,7 @@ atu_associate(struct atu_softc *sc)
 	*ptr++ = 0x8b;
 	*ptr++ = 0x96;
 
-	DPRINTF(("%s: associate packet: %50D\n",
+	DPRINTFN(15, ("%s: associate packet: %50D\n",
 	    USBDEVNAME(sc->atu_dev), (u_int8_t *)packet, " "));
 
 	err = atu_send_mgmt_packet(sc, ch, sizeof(*packet) + 2 +
@@ -1026,7 +1028,8 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 		    USBDEVNAME(sc->atu_dev)));
 		break;
 	default:
-		DPRINTF(("%s: unknown device type?\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: unknown device type?\n",
+		    USBDEVNAME(sc->atu_dev)));
 		bytes_left = 0;
 		break;
 	}
@@ -1055,7 +1058,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 				block_size = DFU_MaxBlockSize;
 			else
 				block_size = bytes_left;
-			DPRINTF(("%s: firmware block %d\n",
+			DPRINTFN(15, ("%s: firmware block %d\n",
 				USBDEVNAME(sc->atu_dev), block));
 
 			err = atu_usb_request(sc, DFU_DNLOAD, block++, 0,
@@ -1074,8 +1077,8 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 
 		default:
 			atu_msleep(sc, 100);
-			DPRINTF(("%s: sleeping for a while\n",
-				USBDEVNAME(sc->atu_dev)));
+			DPRINTFN(20, ("%s: sleeping for a while\n",
+			    USBDEVNAME(sc->atu_dev)));
 		}
 
 		state = atu_get_dfu_state(sc);
@@ -1088,11 +1091,12 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 
 	err = atu_usb_request(sc, DFU_GETSTATUS, 0, 0, 6, status);
 	if (err) {
-		DPRINTF(("%s: dfu_getstatus failed!\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: dfu_getstatus failed!\n",
+		    USBDEVNAME(sc->atu_dev)));
 		return err;
 	}
 
-	DPRINTF(("%s: sending remap\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(15, ("%s: sending remap\n", USBDEVNAME(sc->atu_dev)));
 	err = atu_usb_request(sc, DFU_REMAP, 0, 0, 0, NULL);
 	if ((err) && (! sc->atu_quirk & ATU_QUIRK_NO_REMAP)) {
 		DPRINTF(("%s: remap failed!\n", USBDEVNAME(sc->atu_dev)));
@@ -1107,7 +1111,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 	atu_msleep(sc, 56+100);
 
 	/* reset the device to get the firmware to boot */
-	DPRINTF(("%s: trying to reset device...\n",
+	DPRINTFN(10, ("%s: trying to reset device...\n",
 	    USBDEVNAME(sc->atu_dev)));
 	err = atu_reset(sc);
 	if (err) {
@@ -1115,7 +1119,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 		return err;
 	}
 
-	DPRINTF(("%s: internal firmware upload done\n",
+	DPRINTFN(10, ("%s: internal firmware upload done\n",
 	    USBDEVNAME(sc->atu_dev)));
 	return 0;
 }
@@ -1133,19 +1137,20 @@ atu_upload_external_firmware(struct atu_softc *sc)
 
 	err = atu_get_opmode(sc, &mode);
 	if (err) {
-		DPRINTF(("%s: could not get opmode\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: could not get opmode\n",
+		    USBDEVNAME(sc->atu_dev)));
 		return err;
 	}
-	DPRINTF(("%s: opmode: %d\n", USBDEVNAME(sc->atu_dev), mode));
+	DPRINTFN(20, ("%s: opmode: %d\n", USBDEVNAME(sc->atu_dev), mode));
 
 	if (mode == MODE_NETCARD) {
-		DPRINTF(("%s: device doesn't need external "
+		DPRINTFN(15, ("%s: device doesn't need external "
 		    "firmware\n", USBDEVNAME(sc->atu_dev)));
 		return 0;
 	}
 	if (mode != MODE_NOFLASHNETCARD) {
-		DPRINTF(("%s: EEK! unexpected opmode=%d\n", USBDEVNAME(sc->atu_dev),
-		    mode));
+		DPRINTF(("%s: EEK! unexpected opmode=%d\n",
+		    USBDEVNAME(sc->atu_dev), mode));
 	}
 
 	/*
@@ -1187,7 +1192,8 @@ atu_upload_external_firmware(struct atu_softc *sc)
 		    "firmware\n", USBDEVNAME(sc->atu_dev)));
 		break;
 	default:
-		DPRINTF(("%s: unknown device type?\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: unknown device type?\n",
+		    USBDEVNAME(sc->atu_dev)));
 		bytes_left = 0;
 		break;
 	}
@@ -1198,7 +1204,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 		else
 			block_size = bytes_left;
 
-		DPRINTF(("%s: block:%d size:%d\n",
+		DPRINTFN(15, ("%s: block:%d size:%d\n",
 		    USBDEVNAME(sc->atu_dev), block, block_size));
 		err = atu_usb_request(sc, UT_WRITE_VENDOR_DEVICE, 0x0e,
 		    0x0802, block, block_size, ptr);
@@ -1216,8 +1222,8 @@ atu_upload_external_firmware(struct atu_softc *sc)
 	err = atu_usb_request(sc, UT_WRITE_VENDOR_DEVICE, 0x0e, 0x0802,
 	    block, 0, NULL);
 	if (err) {
-		DPRINTF(("%s: could not load last zero-length firmware block\n",
-		    USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: could not load last zero-length firmware "
+		    "block\n", USBDEVNAME(sc->atu_dev)));
 		return err;
 	}
 
@@ -1230,7 +1236,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 		atu_msleep(sc, 21 + 100);
 	}
 
-	DPRINTF(("%s: external firmware upload done\n",
+	DPRINTFN(10, ("%s: external firmware upload done\n",
 	    USBDEVNAME(sc->atu_dev)));
 	return 0;
 }
@@ -1320,8 +1326,8 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 		vars->retry = 0;
 	}
 
-	DPRINTF(("%s: [state=%s, retry=%d, chan=%d "
-	    "enc=%d]\n", USBDEVNAME(sc->atu_dev), atu_mgmt_statename[vars->state],
+	DPRINTFN(5, ("%s: [state=%s, retry=%d, chan=%d enc=%d]\n",
+	    USBDEVNAME(sc->atu_dev), atu_mgmt_statename[vars->state],
 	    vars->retry, sc->atu_channel, sc->atu_encrypt));
 
 	/* Fall back to authentication if needed */
@@ -1365,13 +1371,13 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 			vars->retry = 0;
 		}
 		if (statusreq[5]==STATUS_IN_PROGRESS) {
-			DPRINTF(("%s: scanning in progress...\n",
+			DPRINTFN(10, ("%s: scanning in progress...\n",
 			    USBDEVNAME(sc->atu_dev)));
 		} else {
 			err = atu_start_scan(sc);
 			if (vars->retry++ > ATU_SCAN_RETRIES &&
 			    sc->atu_mode == AD_HOC_MODE) {
-				DPRINTF(("%s: scanned long enough\n",
+				DPRINTFN(10, ("%s: scanned long enough\n",
 				    USBDEVNAME(sc->atu_dev)));
 				sc->atu_mgmt_flags &= ~ATU_SEARCHING;
 				vars->state = STATE_CREATING_IBSS;
@@ -1387,7 +1393,7 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 		splx(s);
 		break;
 	case STATE_JOINING:
-		DPRINTF(("%s: going to join\n",
+		DPRINTFN(10, ("%s: going to join\n",
 		    USBDEVNAME(sc->atu_dev)));
 		err = atu_join(sc);
 		if (err) {
@@ -1415,7 +1421,7 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 			return 1;
 		}
 
-		DPRINTF(("%s: trying authentication\n",
+		DPRINTFN(10, ("%s: trying authentication\n",
 		    USBDEVNAME(sc->atu_dev)));
 		atu_authenticate(sc);
 		if (vars->retry++ > ATU_AUTH_RETRIES) {
@@ -1430,7 +1436,7 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 			vars->retry = 0;
 			return 1;
 		}
-		DPRINTF(("%s: trying to associate\n",
+		DPRINTFN(10, ("%s: trying to associate\n",
 		    USBDEVNAME(sc->atu_dev)));
 		atu_associate(sc);
 		if (vars->retry++ > ATU_ASSOC_RETRIES) {
@@ -1440,7 +1446,7 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 		}
 		break;
 	case STATE_CREATING_IBSS:
-		DPRINTF(("%s: trying to create IBSS\n",
+		DPRINTFN(10, ("%s: trying to create IBSS\n",
 		    USBDEVNAME(sc->atu_dev)));
 		err = atu_start_ibss(sc);
 		if (err) {
@@ -1485,7 +1491,8 @@ atu_mgmt_loop(void *arg)
 	int			again;
 	int s;
 
-	DPRINTF(("%s: mgmt task initialised\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(10, ("%s: mgmt task initialised\n",
+	    USBDEVNAME(sc->atu_dev)));
 
 	sc->atu_mgmt_vars.state = STATE_NONE;
 	sc->atu_mgmt_vars.retry = 0;
@@ -1505,7 +1512,7 @@ atu_mgmt_loop(void *arg)
 		tsleep(sc, PZERO | PCATCH, "atum", ATU_MGMT_INTERVAL);
 	}
 
-	DPRINTF(("%s: mgmt thread stops now...\n",
+	DPRINTFN(10, ("%s: mgmt thread stops now...\n",
 	    USBDEVNAME(sc->atu_dev)));
 	sc->atu_dying++;
 	sc->atu_mgmt_flags &= ~ATU_TASK_RUNNING;
@@ -1523,12 +1530,12 @@ atu_media_change(struct ifnet *ifp)
 
 	/* TODO: fully implement - see if_wi.c @ 1189 */
 
-	DPRINTF(("%s: subtype=%d %d\n", USBDEVNAME(sc->atu_dev),
+	DPRINTFN(10, ("%s: subtype=%d %d\n", USBDEVNAME(sc->atu_dev),
 	    IFM_SUBTYPE(ime->ifm_media), ime->ifm_media));
 
 	if ((ime->ifm_media & IFM_IEEE80211_ADHOC) &&
 	    (sc->atu_mode != AD_HOC_MODE)) {
-		DPRINTF(("%s: mode changed to adhoc\n",
+		DPRINTFN(10, ("%s: mode changed to adhoc\n",
 		    USBDEVNAME(sc->atu_dev)));
 		sc->atu_mode = AD_HOC_MODE;
 		sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
@@ -1537,14 +1544,14 @@ atu_media_change(struct ifnet *ifp)
 
 	if ((!(ime->ifm_media & IFM_IEEE80211_ADHOC)) &&
 	    (sc->atu_mode != INFRASTRUCTURE_MODE)) {
-		DPRINTF(("%s: mode changed to infra\n",
+		DPRINTFN(10, ("%s: mode changed to infra\n",
 		    USBDEVNAME(sc->atu_dev)));
 		sc->atu_mode = INFRASTRUCTURE_MODE;
 		sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
 		wakeup(sc);
 	}
 
-	DPRINTF(("%s: media_change...\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(10, ("%s: media_change...\n", USBDEVNAME(sc->atu_dev)));
 	return 0;
 }
 
@@ -1568,7 +1575,7 @@ atu_media_status(struct ifnet *ifp, struct ifmediareq *req)
 	if (sc->atu_mode == AD_HOC_MODE) {
 		req->ifm_active |= IFM_IEEE80211_ADHOC;
 	}
-	DPRINTF(("%s: atu_media_status\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(10, ("%s: atu_media_status\n", USBDEVNAME(sc->atu_dev)));
 }
 
 /*
@@ -1643,7 +1650,7 @@ USB_ATTACH(atu)
 	if (err || (mode != MODE_NETCARD &&
 	    mode != MODE_NOFLASHNETCARD)) {
 		DPRINTF(("%s: starting internal firmware download\n",
-			USBDEVNAME(sc->atu_dev)));
+		    USBDEVNAME(sc->atu_dev)));
 
 		/* upload internal firmware */
 		err = atu_upload_internal_firmware(sc);
@@ -1652,8 +1659,7 @@ USB_ATTACH(atu)
 			USB_ATTACH_ERROR_RETURN;
 		}
 
-		DPRINTF(("%s: done...\n",
-		    USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(10, ("%s: done...\n", USBDEVNAME(sc->atu_dev)));
 		splx(s);
 		printf("trying reset now\n");
 		USB_ATTACH_NEED_RESET;
@@ -1693,7 +1699,8 @@ USB_ATTACH(atu)
 	/* read device config & get MAC address */
 	err = atu_get_card_config(sc);
 	if (err) {
-		DPRINTF(("%s: could not get card cfg!\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: could not get card cfg!\n",
+		    USBDEVNAME(sc->atu_dev)));
 		splx(s);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -1703,8 +1710,8 @@ USB_ATTACH(atu)
 	    (u_int8_t *)&fw);
 	if (!err) {
 #if 0
-		DPRINTF(("%s: firmware: maj:%d min:%d patch:%d build:%d\n",
-		    USBDEVNAME(sc->atu_dev), fw.major, fw.minor,
+		DPRINTFN(15, ("%s: firmware: maj:%d min:%d patch:%d "
+		    "build:%d\n", USBDEVNAME(sc->atu_dev), fw.major, fw.minor,
 		    fw.patch, fw.build));
 #endif
 	} else {
@@ -1877,7 +1884,7 @@ atu_rx_list_init(struct atu_softc *sc)
 	struct atu_chain	*c;
 	int			i;
 
-	DPRINTFN(10, ("%s: atu_rx_list_init: enter\n",
+	DPRINTFN(15, ("%s: atu_rx_list_init: enter\n",
 	    USBDEVNAME(sc->atu_dev)));
 
 	for (i = 0; i < ATU_RX_LIST_CNT; i++) {
@@ -1912,7 +1919,7 @@ atu_xfer_list_init(struct atu_softc *sc, struct atu_chain *ch,
 
 	cd = &sc->atu_cdata;
 
-	DPRINTF(("%s: list init (%d entries of %d bytes)\n",
+	DPRINTFN(15, ("%s: list init (%d entries of %d bytes)\n",
 	    USBDEVNAME(sc->atu_dev), listlen, bufsize));
 
 	for (i = 0; i < listlen; i++) {
@@ -2006,15 +2013,15 @@ atu_print_beacon(struct atu_softc *sc, struct atu_rxpkt *pkt)
 
 			tmp = tlv->value[tlv->length];
 			tlv->value[tlv->length] = 0;
-			DPRINTF(("%s:  ssid=[%s]\n",
-			    USBDEVNAME(sc->atu_dev), tlv->value));
+			DPRINTF(("%s:  ssid=[%s]\n", USBDEVNAME(sc->atu_dev),
+			    tlv->value));
 			tlv->value[tlv->length] = tmp;
 			break;
 		case WI_VAR_SRATES: /* Supported rates */
 			for (rate=0; rate<tlv->length; rate++) {
 				tmp = tlv->value[rate] & (~0x80);
-				DPRINTF(("%s:  rate: %d kbps "
-				    "(%02x)\n", USBDEVNAME(sc->atu_dev), 500 * tmp,
+				DPRINTF(("%s:  rate: %d kbps (%02x)\n",
+				    USBDEVNAME(sc->atu_dev), 500 * tmp,
 				    tlv->value[rate]));
 			}
 			break;
@@ -2023,9 +2030,9 @@ atu_print_beacon(struct atu_softc *sc, struct atu_rxpkt *pkt)
 			    USBDEVNAME(sc->atu_dev), *tlv->value));
 			break;
 		default :
-			DPRINTF(("%s:  tlv: t=%02x l=%02x "
-			    "v[0]=%02x\n", USBDEVNAME(sc->atu_dev), tlv->type,
-			    tlv->length, tlv->value[0]));
+			DPRINTF(("%s:  tlv: t=%02x l=%02x v[0]=%02x\n",
+			    USBDEVNAME(sc->atu_dev), tlv->type, tlv->length,
+			    tlv->value[0]));
 		}
 
 		ptr += 2 + tlv->length;
@@ -2050,7 +2057,7 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 
 	switch (pkt->WiHeader.frame_ctl & WI_FCTL_STYPE) {
 	case WI_STYPE_MGMT_AUTH:
-		DPRINTF(("%s: received auth response...\n",
+		DPRINTFN(15, ("%s: received auth response...\n",
 		    USBDEVNAME(sc->atu_dev)));
 
 		auth = (struct wi_mgmt_auth_hdr *)pkt->WiHeader.addr4;
@@ -2078,14 +2085,14 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		/*
 		memcpy(the_challenge_text, ((u_int8_t *)&pkt->WiHeader) + 30,
 		    the_challenge_length);
-		DPRINTF(("%s: challenge= %100D\n",
+		DPRINTFN(15, ("%s: challenge= %100D\n",
 		    USBDEVNAME(sc->atu_dev), the_challende_text, " "));
 		*/
 		break;
 
 	case WI_STYPE_MGMT_DEAUTH:
-		DPRINTF(("%s: the AP has de-authenticated "
-		    "us\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: the AP has de-authenticated us\n",
+		    USBDEVNAME(sc->atu_dev)));
 
 		deauth = (struct wi_mgmt_deauth_hdr *)pkt->WiHeader.addr4;
 
@@ -2100,7 +2107,7 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		break;
 
 	case WI_STYPE_MGMT_ASRESP:
-		DPRINTF(("%s: received assoc response...\n",
+		DPRINTFN(15, ("%s: received assoc response...\n",
 		    USBDEVNAME(sc->atu_dev)));
 
 		assoc = (struct wi_mgmt_asresp_hdr *)pkt->WiHeader.addr4;
@@ -2136,7 +2143,7 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		break;
 
 	case WI_STYPE_MGMT_PROBERESP:
-		DPRINTF(("%s: PROBE RESPONSE\n",
+		DPRINTFN(20, ("%s: PROBE RESPONSE\n",
 		    USBDEVNAME(sc->atu_dev)));
 		/* FALLTHROUGH */
 	case WI_STYPE_MGMT_BEACON:
@@ -2144,13 +2151,13 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		beacon = (struct wi_80211_beacon *)&pkt->WiHeader.addr4;
 
 		/* Show beacon src MAC & signal strength */
-		DPRINTF(("%s: mgmt bssid=%s",
-		    USBDEVNAME(sc->atu_dev), ether_sprintf(pkt->WiHeader.addr3)));
-		DPRINTF((" mac=%s signal=%d\n",
-		    ether_sprintf(pkt->WiHeader.addr2), pkt->AtHeader.rssi));
+		DPRINTFN(18, ("%s: mgmt bssid=%s", USBDEVNAME(sc->atu_dev),
+		    ether_sprintf(pkt->WiHeader.addr3)));
+		DPRINTFN(18, (" mac=%s signal=%d\n",
+		   ether_sprintf(pkt->WiHeader.addr2), pkt->AtHeader.rssi));
 
 #ifdef ATU_DEBUG
-		if (atudebug & FLAG_SIGNAL) {
+		if (atudebug > 20) {
 			/*
 			 * calculate average signal strength, can be very
 			 *  usefull when precisely aiming antenna's
@@ -2165,18 +2172,18 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 			    pkt->AtHeader.rssi;
 			sc->atu_signalptr=(sc->atu_signalptr+1) %
 			    ATU_AVG_TIME;
-			DPRINTF(("%s: mgmt mac=%s signal=%02d"
-			    " ptr=%02d avg=%02d.%02d\n", USBDEVNAME(sc->atu_dev),
-			    ether_sprintf(pkt->WiHeader.addr2), pkt->AtHeader.rssi,
-			    sc->atu_signalptr,
+			DPRINTF(("%s: mgmt mac=%s signal=%02d ptr=%02d "
+			    "avg=%02d.%02d\n", USBDEVNAME(sc->atu_dev),
+			    ether_sprintf(pkt->WiHeader.addr2),
+			    pkt->AtHeader.rssi, sc->atu_signalptr,
 			    sc->atu_signaltotal / ATU_AVG_TIME,
 			    (sc->atu_signaltotal * 100 / ATU_AVG_TIME) %
 			    100));
 		}
 #endif
 
-		DPRINTF(("%s: mgmt capabilities=%04x "
-		    "(mode=%s, wep=%s, short-preamble=%s)\n", USBDEVNAME(sc->atu_dev),
+		DPRINTFN(18, ("%s: mgmt capabilities=%04x (mode=%s, wep=%s, "
+		    "short-preamble=%s)\n", USBDEVNAME(sc->atu_dev),
 		    beacon->flags,
 		    (beacon->flags & IEEE80211_CAPINFO_ESS) ?
 		    "infra" : "ad-hoc",
@@ -2253,7 +2260,8 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		if (match) {
 			DPRINTF(("%s: ==> MATCH! (BSSID=%s, ch=%d)\n",
 			    USBDEVNAME(sc->atu_dev),
-			    ether_sprintf(pkt->WiHeader.addr3), match_channel));
+			    ether_sprintf(pkt->WiHeader.addr3),
+			    match_channel));
 
 			/*
 			 * TODO: should do some channel-checking here instead
@@ -2271,8 +2279,8 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		break;
 
 	default:
-		DPRINTF(("%s: FIXME: unhandled mgmt type! "
-		    "(stype=%x)\n", USBDEVNAME(sc->atu_dev),
+		DPRINTF(("%s: FIXME: unhandled mgmt type! (stype=%x)\n",
+		    USBDEVNAME(sc->atu_dev),
 		    pkt->WiHeader.frame_ctl & WI_FCTL_STYPE));
 	}
 }
@@ -2296,7 +2304,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct ether_header	*eth_hdr;
 	int			offset;
 
-	DPRINTFN(10, ("%s: atu_rxeof: enter\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(25, ("%s: atu_rxeof: enter\n", USBDEVNAME(sc->atu_dev)));
 
 	if (sc->atu_dying)
 		return;
@@ -2304,7 +2312,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
 
-	DPRINTF(("%s: got a packet\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(25, ("%s: got a packet\n", USBDEVNAME(sc->atu_dev)));
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("%s: status != USBD_NORMAL_COMPLETION\n",
@@ -2354,14 +2362,14 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	pkt = mtod(m, struct atu_rxpkt *);
 
-	DPRINTFN(10, ("%s: -- RX (rate=%d enc=%d) mac=%s",
+	DPRINTFN(25, ("%s: -- RX (rate=%d enc=%d) mac=%s",
 	    USBDEVNAME(sc->atu_dev), pkt->AtHeader.rx_rate,
 	    (pkt->WiHeader.frame_ctl & WI_FCTL_WEP) != 0,
 	    ether_sprintf(pkt->WiHeader.addr3)));
-	DPRINTFN(10, (" bssid=%s\n", ether_sprintf(pkt->WiHeader.addr2)));
+	DPRINTFN(25, (" bssid=%s\n", ether_sprintf(pkt->WiHeader.addr2)));
 
 	if (pkt->WiHeader.frame_ctl & WI_FCTL_WEP) {
-		DPRINTF(("%s: WEP enabled on RX\n",
+		DPRINTFN(25, ("%s: WEP enabled on RX\n",
 		    USBDEVNAME(sc->atu_dev)));
 	}
 
@@ -2373,31 +2381,31 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	/* Everything but data packets we just ignore from here */
 	if ((pkt->WiHeader.frame_ctl & WI_FCTL_FTYPE) != WI_FTYPE_DATA) {
-		DPRINTF(("%s: ---- not a data packet? ---\n",
+		DPRINTFN(25, ("%s: ---- not a data packet? ---\n",
 		    USBDEVNAME(sc->atu_dev)));
 		goto done;
 	}
 
 	/* Woohaa! It's an ethernet packet! */
-	DPRINTF(("%s: received a packet! rx-rate: %d\n",
+	DPRINTFN(25, ("%s: received a packet! rx-rate: %d\n",
 	    USBDEVNAME(sc->atu_dev), pkt->AtHeader.rx_rate));
 
 	/* drop non-encrypted packets if wep-mode=on */
 	if ((!(pkt->WiHeader.frame_ctl & WI_FCTL_WEP)) &&
 	    (sc->atu_encrypt & ATU_WEP_RX)) {
-		DPRINTF(("%s: dropping RX packet. (wep=off)\n",
+		DPRINTFN(25, ("%s: dropping RX packet. (wep=off)\n",
 		    USBDEVNAME(sc->atu_dev)));
 		goto done;
 	}
 
-	DPRINTF(("%s: rx frag:%02x rssi:%02x q:%02x nl:%02x "
-	    "time:%d\n", USBDEVNAME(sc->atu_dev), pkt->AtHeader.fragmentation,
+	DPRINTFN(25, ("%s: rx frag:%02x rssi:%02x q:%02x nl:%02x time:%d\n",
+	    USBDEVNAME(sc->atu_dev), pkt->AtHeader.fragmentation,
 	    pkt->AtHeader.rssi, pkt->AtHeader.link_quality,
 	    pkt->AtHeader.noise_level, pkt->AtHeader.rx_time));
 
 	/* Do some sanity checking... */
 	if (total_len < sizeof(struct ether_header)) {
-		DPRINTF(("%s: Packet too small?? (size:%d)\n",
+		DPRINTFN(25, ("%s: Packet too small?? (size:%d)\n",
 		    USBDEVNAME(sc->atu_dev), total_len));
 		ifp->if_ierrors++;
 		goto done;
@@ -2432,14 +2440,14 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 		memcpy(eth_hdr->ether_dhost, pkt->WiHeader.addr1,
 		    ETHER_ADDR_LEN);
 
-		DPRINTF(("%s: infra decap (%d bytes)\n",
+		DPRINTFN(25, ("%s: infra decap (%d bytes)\n",
 		    USBDEVNAME(sc->atu_dev), pkt->AtHeader.wlength));
-		DPRINTF(("%s: RX: %50D\n", USBDEVNAME(sc->atu_dev),
+		DPRINTFN(25, ("%s: RX: %50D\n", USBDEVNAME(sc->atu_dev),
 		    (u_int8_t *)&pkt->WiHeader, " "));
 		break;
 
 	default:
-		DPRINTF(("%s: we shouldn't receive this (f_cntl=%02x)\n",
+		DPRINTFN(25, ("%s: we shouldn't receive this (f_cntl=%02x)\n",
 		    USBDEVNAME(sc->atu_dev), pkt->WiHeader.frame_ctl));
 	}
 
@@ -2520,8 +2528,8 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (sc->atu_cdata.atu_tx_inuse == 0) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
-	DPRINTF(("%s: txeof me=%d  status=%d\n", USBDEVNAME(sc->atu_dev),
-		c->atu_idx, status));
+	DPRINTFN(25, ("%s: txeof me=%d  status=%d\n", USBDEVNAME(sc->atu_dev),
+	    c->atu_idx, status));
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
@@ -2611,7 +2619,7 @@ atu_encap(struct atu_softc *sc, struct mbuf *m, struct atu_chain *c)
 		    ETHER_ADDR_LEN);
 		/* bssid */
 		memcpy(pkt->WiHeader.addr3, sc->atu_bssid, ETHER_ADDR_LEN);
-		DPRINTF(("%s: adhoc encap (bssid=%s)\n",
+		DPRINTFN(25, ("%s: adhoc encap (bssid=%s)\n",
 		    USBDEVNAME(sc->atu_dev), ether_sprintf(sc->atu_bssid)));
 		break;
 
@@ -2626,7 +2634,7 @@ atu_encap(struct atu_softc *sc, struct mbuf *m, struct atu_chain *c)
 		memcpy(pkt->WiHeader.addr3, eth_hdr->ether_dhost,
 		    ETHER_ADDR_LEN);
 
-		DPRINTF(("%s: infra encap (bssid=%s)\n",
+		DPRINTFN(25, ("%s: infra encap (bssid=%s)\n",
 		    USBDEVNAME(sc->atu_dev), ether_sprintf(sc->atu_bssid)));
 	}
 	memset(pkt->WiHeader.addr4, 0x00, ETHER_ADDR_LEN);
@@ -2634,7 +2642,7 @@ atu_encap(struct atu_softc *sc, struct mbuf *m, struct atu_chain *c)
 
 	if (sc->atu_encrypt & ATU_WEP_TX) {
 		pkt->WiHeader.frame_ctl |= WI_FCTL_WEP;
-		DPRINTF(("%s: turning WEP on on packet\n",
+		DPRINTFN(25, ("%s: turning WEP on on packet\n",
 		    USBDEVNAME(sc->atu_dev)));
 	}
 
@@ -2699,8 +2707,9 @@ atu_start(struct ifnet *ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 		cd->atu_tx_inuse++;
 
-		DPRINTF(("%s: index:%d (inuse=%d)\n",
-		    USBDEVNAME(sc->atu_dev), entry->atu_idx, cd->atu_tx_inuse));
+		DPRINTFN(25, ("%s: index:%d (inuse=%d)\n",
+		    USBDEVNAME(sc->atu_dev), entry->atu_idx,
+		    cd->atu_tx_inuse));
 
 		err = atu_encap(sc, m_head, entry);
 		if (err) {
@@ -2746,7 +2755,7 @@ atu_init(void *xsc)
 
 	s = splnet();
 
-	DPRINTF(("%s: atu_init\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(10, ("%s: atu_init\n", USBDEVNAME(sc->atu_dev)));
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		splx(s);
@@ -2756,7 +2765,8 @@ atu_init(void *xsc)
 	/* Init TX ring */
 	if (atu_xfer_list_init(sc, cd->atu_tx_chain, ATU_TX_LIST_CNT, 0,
 	    ATU_TX_BUFSZ, &cd->atu_tx_free)) {
-		DPRINTF(("%s: tx list init failed\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: tx list init failed\n",
+		    USBDEVNAME(sc->atu_dev)));
 	}
 
 	/* Init RX ring */
@@ -2767,7 +2777,8 @@ atu_init(void *xsc)
 	/* Init mgmt ring */
 	if (atu_xfer_list_init(sc, cd->atu_mgmt_chain,
 	    ATU_MGMT_LIST_CNT, 0, ATU_MGMT_BUFSZ, &cd->atu_mgmt_free)) {
-		DPRINTF(("%s: rx list init failed\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTF(("%s: rx list init failed\n",
+		    USBDEVNAME(sc->atu_dev)));
 	}
 
 	/* Load the multicast filter. */
@@ -2777,8 +2788,8 @@ atu_init(void *xsc)
 	err = usbd_open_pipe(sc->atu_iface, sc->atu_ed[ATU_ENDPT_RX],
 	    USBD_EXCLUSIVE_USE, &sc->atu_ep[ATU_ENDPT_RX]);
 	if (err) {
-		DPRINTF(("%s: open rx pipe failed: %s\n", USBDEVNAME(sc->atu_dev),
-		    usbd_errstr(err)));
+		DPRINTF(("%s: open rx pipe failed: %s\n",
+		    USBDEVNAME(sc->atu_dev), usbd_errstr(err)));
 		splx(s);
 		return;
 	}
@@ -2786,8 +2797,8 @@ atu_init(void *xsc)
 	err = usbd_open_pipe(sc->atu_iface, sc->atu_ed[ATU_ENDPT_TX],
 	    USBD_EXCLUSIVE_USE, &sc->atu_ep[ATU_ENDPT_TX]);
 	if (err) {
-		DPRINTF(("%s: open tx pipe failed: %s\n", USBDEVNAME(sc->atu_dev),
-		    usbd_errstr(err)));
+		DPRINTF(("%s: open tx pipe failed: %s\n",
+		    USBDEVNAME(sc->atu_dev), usbd_errstr(err)));
 		splx(s);
 		return;
 	}
@@ -2805,7 +2816,7 @@ atu_init(void *xsc)
 
 	bcopy((char *)&sc->arpcom.ac_enaddr, sc->atu_mac_addr,
 	    ETHER_ADDR_LEN);
-	DPRINTF(("%s: starting up using MAC=%s\n",
+	DPRINTFN(10, ("%s: starting up using MAC=%s\n",
 	    USBDEVNAME(sc->atu_dev), ether_sprintf(sc->atu_mac_addr)));
 
 	/* Do initial setup */
@@ -2816,11 +2827,11 @@ atu_init(void *xsc)
 		splx(s);
 		return;
 	}
-	DPRINTF(("%s: initialised transceiver\n",
+	DPRINTFN(10, ("%s: initialised transceiver\n",
 	    USBDEVNAME(sc->atu_dev)));
 
 	/* Fire up managment task */
-	DPRINTF(("%s: trying to start mgmt task...\n",
+	DPRINTFN(10, ("%s: trying to start mgmt task...\n",
 	    USBDEVNAME(sc->atu_dev)));
 	if (!(sc->atu_mgmt_flags & ATU_TASK_RUNNING)) {
 		sc->atu_dying = 0;
@@ -2859,28 +2870,28 @@ atu_print_a_bunch_of_debug_things(struct atu_softc *sc)
 	/* DEBUG */
 	err = atu_get_mib(sc, MIB_MAC_MGMT__CURRENT_BSSID, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: current BSSID=%s\n",
-	    USBDEVNAME(sc->atu_dev), ether_sprintf(tmp)));
+	DPRINTF(("%s: DEBUG: current BSSID=%s\n", USBDEVNAME(sc->atu_dev),
+	    ether_sprintf(tmp)));
 
 	err = atu_get_mib(sc, MIB_MAC_MGMT__BEACON_PERIOD, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: beacon period=%d\n",
-	    USBDEVNAME(sc->atu_dev), tmp[0]));
+	DPRINTF(("%s: DEBUG: beacon period=%d\n", USBDEVNAME(sc->atu_dev),
+	    tmp[0]));
 
 	err = atu_get_mib(sc, MIB_MAC_WEP__PRIVACY_INVOKED, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: privacy invoked=%d\n",
-	    USBDEVNAME(sc->atu_dev), tmp[0]));
+	DPRINTF(("%s: DEBUG: privacy invoked=%d\n", USBDEVNAME(sc->atu_dev),
+	    tmp[0]));
 
 	err = atu_get_mib(sc, MIB_MAC_WEP__ENCR_LEVEL, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: encr_level=%d\n",
-	    USBDEVNAME(sc->atu_dev), tmp[0]));
+	DPRINTF(("%s: DEBUG: encr_level=%d\n", USBDEVNAME(sc->atu_dev),
+	    tmp[0]));
 
 	err = atu_get_mib(sc, MIB_MAC_WEP__ICV_ERROR_COUNT, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: icv error count=%d\n",
-	     USBDEVNAME(sc->atu_dev), *(short *)tmp));
+	DPRINTF(("%s: DEBUG: icv error count=%d\n", USBDEVNAME(sc->atu_dev),
+	    *(short *)tmp));
 
 	err = atu_get_mib(sc, MIB_MAC_WEP__EXCLUDED_COUNT, tmp);
 	if (err) return;
@@ -2894,8 +2905,7 @@ atu_print_a_bunch_of_debug_things(struct atu_softc *sc)
 
 	err = atu_get_mib(sc, MIB_PHY__CHANNEL, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: channel=%d\n", USBDEVNAME(sc->atu_dev),
-	    tmp[0]));
+	DPRINTF(("%s: DEBUG: channel=%d\n", USBDEVNAME(sc->atu_dev), tmp[0]));
 
 	err = atu_get_mib(sc, MIB_PHY__REG_DOMAIN, tmp);
 	if (err) return;
@@ -2909,8 +2919,8 @@ atu_print_a_bunch_of_debug_things(struct atu_softc *sc)
 
 	err = atu_get_mib(sc, MIB_LOCAL__BEACON_ENABLE, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: beacon enable=%d\n",
-	    USBDEVNAME(sc->atu_dev), tmp[0]));
+	DPRINTF(("%s: DEBUG: beacon enable=%d\n", USBDEVNAME(sc->atu_dev),
+	    tmp[0]));
 
 	err = atu_get_mib(sc, MIB_LOCAL__AUTO_RATE_FALLBACK, tmp);
 	if (err) return;
@@ -2924,13 +2934,13 @@ atu_print_a_bunch_of_debug_things(struct atu_softc *sc)
 
 	err = atu_get_mib(sc, MIB_MAC__DESIRED_SSID, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: desired ssid=%s\n",
-	    USBDEVNAME(sc->atu_dev), tmp));
+	DPRINTF(("%s: DEBUG: desired ssid=%s\n", USBDEVNAME(sc->atu_dev),
+	    tmp));
 
 	err = atu_get_mib(sc, MIB_MAC_MGMT__CURRENT_ESSID, tmp);
 	if (err) return;
-	DPRINTF(("%s: DEBUG: current ESSID=%s\n",
-	    USBDEVNAME(sc->atu_dev), tmp));
+	DPRINTF(("%s: DEBUG: current ESSID=%s\n", USBDEVNAME(sc->atu_dev),
+	    tmp));
 
 }
 
@@ -2940,7 +2950,7 @@ atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len)
 	if ((len != 5) && (len != 13))
 		return EINVAL;
 
-	DPRINTF(("%s: changed wepkey %d (len=%d)\n",
+	DPRINTFN(10, ("%s: changed wepkey %d (len=%d)\n",
 	    USBDEVNAME(sc->atu_dev), nr, len));
 
 	memcpy(sc->atu_wepkeys[nr], key, len);
@@ -2974,11 +2984,12 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	ireq = (struct ieee80211req *)data;
 	change = ifp->if_flags ^ sc->atu_if_flags;
 
-	DPRINTF(("atu_ioctl: command=%lu\n", command));
+	DPRINTFN(15, ("%s: atu_ioctl: command=%lu\n", USBDEVNAME(sc->atu_dev),
+	    command));
 
 	switch (command) {
 	case SIOCSIFADDR:
-		DPRINTF(("%s: SIOCSIFADDR\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(15, ("%s: SIOCSIFADDR\n", USBDEVNAME(sc->atu_dev)));
 
 		ifp->if_flags |= IFF_UP;
 		atu_init(sc);
@@ -3001,7 +3012,7 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	case SIOCSIFFLAGS:
-		DPRINTF(("%s: SIOCSIFFLAGS\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(15, ("%s: SIOCSIFFLAGS\n", USBDEVNAME(sc->atu_dev)));
 
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
@@ -3026,8 +3037,8 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				atu_init(sc);
 
 #if 0
-			DPRINTF(("%s: ioctl calling "
-			    "atu_init()\n", USBDEVNAME(sc->atu_dev)));
+			DPRINTFN(15, ("%s: ioctl calling atu_init()\n",
+			    USBDEVNAME(sc->atu_dev)));
 			atu_init(sc);
 			err = atu_switch_radio(sc, 1);
 #endif
@@ -3042,19 +3053,20 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	case SIOCADDMULTI:
-		DPRINTF(("%s: SIOCADDMULTI\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(15, ("%s: SIOCADDMULTI\n", USBDEVNAME(sc->atu_dev)));
 		/* TODO: implement */
 		err = 0;
 		break;
 
 	case SIOCDELMULTI:
-		DPRINTF(("%s: SIOCDELMULTI\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(15, ("%s: SIOCDELMULTI\n", USBDEVNAME(sc->atu_dev)));
 		/* TODO: implement */
 		err = 0;
 		break;
 
 	case SIOCS80211NWID:
-		DPRINTF(("%s: SIOCS80211NWID\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(15, ("%s: SIOCS80211NWID\n",
+		    USBDEVNAME(sc->atu_dev)));
 		err = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
 		if (err)
 			break;
@@ -3069,11 +3081,15 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	case SIOCG80211NWID:
-		DPRINTF(("%s: SIOGS80211NWID\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(15, ("%s: SIOGS80211NWID\n",
+		    USBDEVNAME(sc->atu_dev)));
 		nwid.i_len = sc->atu_ssidlen;
 		memcpy(nwid.i_nwid, sc->atu_ssid, nwid.i_len);
 		err = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
-		atu_print_a_bunch_of_debug_things(sc);
+#ifdef ATU_DEBUG
+		if (atudebug > 20)
+			atu_print_a_bunch_of_debug_things(sc);
+#endif /* ATU_DEBUG */
 		break;
 
 #if 0
@@ -3096,7 +3112,10 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			 * every time the channel is requested, we errr...
 			 * print a bunch of debug things :)
 			 */
-			atu_print_a_bunch_of_debug_things(sc);
+#ifdef ATU_DEBUG
+			if (atudebug > 20)
+				atu_print_a_bunch_of_debug_things(sc);
+#endif /* ATU_DEBUG */
 			break;
 
 		case IEEE80211_IOC_AUTHMODE:
@@ -3145,8 +3164,8 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			break;
 
 		default:
-			DPRINTF(("%s: ioctl:  unknown 80211: "
-			    "%04x %d\n", USBDEVNAME(sc->atu_dev), ireq->i_type,
+			DPRINTF(("%s: ioctl:  unknown 80211: %04x %d\n",
+			    USBDEVNAME(sc->atu_dev), ireq->i_type,
 			    ireq->i_type));
 			err = EINVAL;
 		}
@@ -3261,7 +3280,7 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	case SIOCGWAVELAN:
-		DPRINTF(("%s: ioctl: get wavelan\n",
+		DPRINTFN(15, ("%s: ioctl: get wavelan\n",
 		    USBDEVNAME(sc->atu_dev)));
 		/*
 		err = ether_ioctl(ifp, &sc->arpcom, command, data);
@@ -3274,26 +3293,26 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		if (err)
 			break;
 
-		DPRINTF(("%s: SIOCGWAVELAN\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(15, ("%s: SIOCGWAVELAN\n", USBDEVNAME(sc->atu_dev)));
 		if (wreq.wi_len > WI_MAX_DATALEN) {
 			err = EINVAL;
 			break;
 		}
 
-		DPRINTF(("%s: ioctl: wi_type=%04x %d\n",
+		DPRINTFN(15, ("%s: ioctl: wi_type=%04x %d\n",
 		    USBDEVNAME(sc->atu_dev), wreq.wi_type, wreq.wi_type));
 		err = 0;
 		/* err = EINVAL; */
 		break;
 
 	case SIOCSWAVELAN:
-		DPRINTF(("%s: ioctl: wavset type=%x\n",
+		DPRINTFN(15, ("%s: ioctl: wavset type=%x\n",
 		    USBDEVNAME(sc->atu_dev), 0));
 		err = 0;
 		break;
 
 	default:
-		DPRINTF(("%s: ioctl: default\n",
+		DPRINTFN(15, ("%s: ioctl: default\n",
 		    USBDEVNAME(sc->atu_dev)));
 		err = ether_ioctl(ifp, &sc->arpcom, command, data);
 		break;
@@ -3364,7 +3383,7 @@ atu_stop(struct atu_softc *sc)
 	splx(s);
 
 	if (sc->atu_mgmt_flags & ATU_TASK_RUNNING) {
-		DPRINTF(("%s: waiting for mgmt task to die\n",
+		DPRINTFN(10, ("%s: waiting for mgmt task to die\n",
 		    USBDEVNAME(sc->atu_dev)));
 		wakeup(sc);
 		while (sc->atu_dying == 1) {
@@ -3372,7 +3391,7 @@ atu_stop(struct atu_softc *sc)
 		}
 	}
 	s = splnet();
-	DPRINTF(("%s: stopped managment thread\n",
+	DPRINTFN(10, ("%s: stopped managment thread\n",
 	    USBDEVNAME(sc->atu_dev)));
 
 	/* Stop transfers. */
