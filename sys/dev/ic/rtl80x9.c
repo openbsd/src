@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl80x9.c,v 1.4 2000/06/11 09:26:18 fgsch Exp $	*/
+/*	$OpenBSD: rtl80x9.c,v 1.5 2000/06/20 09:27:25 fgsch Exp $	*/
 /*	$NetBSD: rtl80x9.c,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
 
 /*-
@@ -48,18 +48,11 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
 #include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#ifdef __NetBSD__
-#include <netinet/if_inarp.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 #endif
 
 #include <machine/bus.h>
@@ -93,11 +86,7 @@ rtl80x9_mediastatus(sc, ifmr)
 	struct dp8390_softc *sc;
 	struct ifmediareq *ifmr;
 {
-#ifdef __NetBSD__
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif
 	u_int8_t cr_proto = sc->cr_proto |
 	    ((ifp->if_flags & IFF_RUNNING) ? ED_CR_STA : ED_CR_STP);
 
@@ -128,11 +117,7 @@ rtl80x9_init_card(sc)
 	struct dp8390_softc *sc;
 {
 	struct ifmedia *ifm = &sc->sc_media;
-#ifdef __NetBSD__
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif
 	u_int8_t cr_proto = sc->cr_proto |
 	    ((ifp->if_flags & IFF_RUNNING) ? ED_CR_STA : ED_CR_STP);
 	u_int8_t reg;
