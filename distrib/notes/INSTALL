@@ -30,7 +30,7 @@ making the emulation as accurate as possible.
 Cryptography components are part of OpenBSD.  OpenBSD is from Canada,
 and export of these pieces (such as kerberosIV) to the world is not
 restricted.  Note that it can not be re-exported from the US once it
-has entered US.  Because of this, take care NOT to get the distrib-
+has entered the US.  Because of this, take care NOT to get the distrib-
 ution from an FTP server in the US if you are outside of Canada and
 the US.
 
@@ -50,9 +50,8 @@ OpenBSD 2.3 Release Contents:
 -----------------------------
 
 The OpenBSD 2.3 release is organized in the following way.  In the
-.../2.3 directory, there is one sub-directory per architecture, for
-each of the architectures that OpenBSD 2.3 has a binary distribution
-for.  That is described further along in this document).
+.../2.3 directory, for each of the architectures having an OpenBSD 2.3
+binary distribution, there is a sub-directory.
 
 #include "contents"
 

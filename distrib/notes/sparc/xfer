@@ -86,7 +86,7 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 	multiples of 512-byte blocks.  The variations are endless and
 	beyond the scope of this document.
 
-	If you're doing this on the system you intend to be the floppy on,
+	If you're doing this on the system you intend to boot the floppy on,
 	copying the floppy back to a file and doing a compare or checksum
 	is a good way to verify that the floppy is readable and free of
 	read/write errors.
@@ -96,7 +96,7 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 Creating a bootable hard disk using SunOS or other Un*x-like system:
 
 	If you don't have a floppy drive you can copy the single floppy
-	installation image "floppy.fs" or the mini-root "miniroot.fs"
+	installation image "floppy23.fs" or the mini-root "miniroot23.fs"
 	onto the hard disk you intend to boot on.  Traditionally, the
 	way to do this is to use dd(1) to place the bootable filesystem
 	image in the "swap" partition of the disk (while running in
@@ -105,12 +105,12 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	Using the "b" partition allows you to boot without overwriting
 	any useful parts of the disk, you can also use another partition,
 	but don't used the "a" or "c" partition without understanding
-	the disklabel issues described below under "uncompatible systems".
+	the disklabel issues described below under "incompatible systems".
 
 	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
 	which have a compatible view of SunOS disk labels and partitions.
 
-	Use the dd(1) utility to copy the file to the floppy drive.
+	Use the dd(1) utility to copy the file to the hard drive.
 	Under SunOS, the command would be:
 
 		dd if=floppy23.fs of=/dev/rsd0b bs=36b
@@ -133,7 +133,7 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 
 	The floppy image is used only for booting, and can be placed in
 	a partition that will be overwritten during the install process,
-	since it actually runs of of a ram-disk image in the kernel.  In
+	since it actually runs off of a ram-disk image in the kernel.  In
 	contrast the miniroot is a normal unix root filesystem and you
 	must place in a partition that will not be overwritten until you've
 	completed the installation process.
@@ -177,7 +177,7 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 
 	The details of setting up a network bootable environment vary
 	considerably, depending on the networks host.  Extract the
-	OpenBSD diskless(8) man page from the share.tar.gz distribution
+	OpenBSD diskless(8) man page from the man23.tar.gz distribution
 	set or see the copy on the OpenBSD web page.  You will also
 	need to reference the relevant man pages or administrators guide
 	for the host system.
@@ -207,8 +207,8 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	contains the distribution set files, each in "tar" format or
 	in "gzipped tar format".  First you will need to transfer the
 	distribution sets to your local system, using ftp or by mounting
-	the CD-ROM containing the release.  Then you need to a tape
-	with the files.
+	the CD-ROM containing the release.  Then you need to make a tape
+	containing the files.
 
 	If you're making the tape on a UN*X-like system, the easiest way
 	to do so is make a shell script along the following lines, call it
@@ -217,7 +217,7 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	#! /bin/sh
 	tape=/dev/nrst0
 	mt -f ${tape} rewind
-	for file in base23 etc23 comp23 game23 man23 misc23 text23
+	for file in base23 etc23 comp23 game23 man23 misc23 text23 x*23
 	do
 		dd if=${file}.tar.gz of=${tape}
 	done

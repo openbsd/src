@@ -272,7 +272,7 @@ may be a better option.
 	"sd0") with the letter identifying the partition (eg. "d")
 	appended (eg. "sd0d").  Then it will ask where this partition is
 	to be mounted, eg. /usr.  This process will be repeated until
-	you just hit return.
+	you type "done".
 
 	At this point you will be asked to confirm that the file system
 	information you have entered is correct, and given an opportunity
@@ -606,7 +606,7 @@ Installing from SunOS.
 You need a SunOS machine to install OpenBSD.  You also need at
 least the following pieces:
 
-    the *.tar.gz files you want to install (as a minimum, base.tar.gz)
+    the *.tar.gz files you want to install (as a minimum, base23.tar.gz)
     gunzip (GNU gzip) SunOS binary
     gtar (GNU tar) SunOS binary
     a "/boot" file from a SunOS machine that matches your machine type
@@ -665,7 +665,8 @@ You can now extract the provided "*.tar.gz files onto your disk.
     sunos# ls -FC
     base23.tar.gz      etc23.tar.gz       man23.tar.gz       secr23.tar.gz
     comp23.tar.gz      games23.tar.gz     misc23.tar.gz      text23.tar.gz
-    bsd                bsd.scsi3
+    xbase23.tar.gz     xfont23.tar.gz     xserv23.tar.gz     bsd
+    bsd.scsi3
     sunos# gunzip < base23.tar.gz | (cd /mnt; gtar xvpf -)
     [...] for each set
 
@@ -747,15 +748,15 @@ kernel which is then read into memory.
 
 You will want export the miniroot23.fs filesystem to the client.  You
 can dd this filesystem image to some spare partition, mount and export
-tat partition or use tar to copy the contents to a more convenient spot.
+that partition or use tar to copy the contents to a more convenient spot.
 
-Alternatively you an build bootable partition from the distribution sets
+Alternatively you can build a bootable partition from the distribution sets
 as follows:
 
-Unpack `base.tar.gz' and `etc.tar.gz' on the server in the root directory
+Unpack `base23.tar.gz' and `etc23.tar.gz' on the server in the root directory
 for your target machine. If you elect to use a separately NFS-mounted
 filesystem for `/usr' with your diskless setup, make sure the "./usr" base
-files in base.tar.gz end up in the correct location. One way to do this is
+files in base23.tar.gz end up in the correct location. One way to do this is
 to temporarily use a loopback mount on the server, re-routing <root>/usr to
 your server's exported OpenBSD "/usr" directory. Also put the kernel and
 the install/upgrade scripts into the root directory.

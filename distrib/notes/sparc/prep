@@ -31,7 +31,7 @@ to eliminate SunOS altogether it may be best to correct the scsi-id's
 of your drives, while if you plan to leave SunOS installed, it may
 be better to install OpenBSD on a drive with scsi-id 1 or 0.
 
-Some OpenBoot proms provide and environment variable that controls
+Some OpenBoot proms provide an environment variable that controls
 the drive<->scsi-id mapping, you can change this to reflect the natural
 ordering or just set the boot related variables to boot from the
 correct drive, whatever the numbering.
