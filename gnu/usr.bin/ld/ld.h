@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.2 1996/03/30 15:30:02 niklas Exp $	*/
+/*	$OpenBSD: ld.h,v 1.3 1998/04/25 06:53:40 niklas Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -704,10 +704,10 @@ void	swap_longs __P((long *, int));
 void	swap_symbols __P((struct nlist *, int));
 void	swap_zsymbols __P((struct nzlist *, int));
 void	swap_ranlib_hdr __P((struct ranlib *, int));
-void	swap__dynamic __P((struct link_dynamic *));
+void	swap__dynamic __P((struct _dynamic *));
 void	swap_section_dispatch_table __P((struct section_dispatch_table *));
 void	swap_so_debug __P((struct so_debug *));
 void	swapin_sod __P((struct sod *, int));
 void	swapout_sod __P((struct sod *, int));
-void	swapout_fshash __P((struct fshash *, int));
+void	swap_rrs_hash __P((struct rrs_hash *, int));
 #endif
