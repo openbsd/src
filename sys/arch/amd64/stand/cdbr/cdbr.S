@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdbr.S,v 1.1 2004/08/21 18:48:37 tom Exp $	*/
+/*	$OpenBSD: cdbr.S,v 1.2 2004/08/24 15:33:25 tom Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
@@ -510,7 +510,7 @@ edd_len:	.byte	0x0			/* Num to read */
 edd_addr:	.word	0x0, 0x0		/* Seg:Off */
 edd_lba:	.quad	0x0			/* LBA */
 
-/* The data from here must be last in the file, only followed by zero bytes */
+/* The data from here must be last in the file, only followed by 0x00 bytes */
 
 loader:		.word	0			/* The path we end up using */
 
@@ -519,7 +519,11 @@ msg_failed:	.ascii	"Can't find "		/* This string runs into... */
 /* loader_paths is a list of ASCIZ strings followed by a term NUL byte */
 loader_paths:	.asciz  "/cdboot"
 		.asciz	"/CDBOOT"
-		.byte 0
+		.ascii	"/", OSREV, "/", MACH, "/cdboot"
+		.byte	0			/* NUL-term line above */
+		.ascii	"/", OSREV, "/", MACH_U, "/CDBOOT"
+		.byte	0			/* NUL-term line above */
+		.byte	0			/* Terminate the list */
 
 	. = BOOTSECTSIZE
 
