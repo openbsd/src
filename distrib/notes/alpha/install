@@ -1,41 +1,61 @@
 OpenBSDInstallPrelude
 
-OpenBSDInstallPart2
+dnl XXX document mopbooting from the SRM console.
+dnl XXX check if recent SRM console still can netboot, and if so, if they
+dnl XXX still use mop or a more recent protocol.
+There are several ways to install OpenBSD onto a disk.  The easiest way
+is to boot from the OpenBSD CD-ROM.  You can also use one of the OpenBSD
+installation floppies, if your machine has a floppy drive.
 
-	If you are using the floppy{:--:}OSrev.fs floppy, type "boot dva0"
-	and hit return when presented with the SRM console prompt.
+Booting from Floppy Disk installation media:
+
+	At the SRM console prompt, enter "boot dva0" and hit return.
 	You should see info about the primary and secondary boot
 	and then the kernel should start to load.  It will take a
 	while to load the kernel from the floppy, most likely more
 	than a minute.  If some action doesn't eventually happen,
 	or the spinning cursor has stopped and nothing further has
-	happened, either your boot floppy is bad or you are having
-	hardware problems.  Either you have a bad boot floppy (in
-	which case you should try another) or your alpha is not
-	currently supported by OpenBSD.
+	happened, or the machine spontaneously reboots, then either
+	either you have a bad boot floppy (in which case you should
+	try another) or your alpha is not currently supported by OpenBSD.
 
-	If you are booting from the CD-ROM, type "show device" and
-	hit return when presented with the SRM console prompt.
-	You should see a list of devices; the SCSI devices will
-	start with "DKA".  Find the SCSI device that is your CD-ROM
-	and enter "boot dka4 -fi OSREV/alpha/bsd", assuming that your
-	CD-ROM was listed as DKA4* (substitute the SCSI id of your
-	CD-ROM for the "4").  You should see info about the primary
-	and secondary boot and then the kernel should start to
-	load.  If the kernel fails to load or the spinning cursor
-	has stopped and nothing further has happened, you either
-	have a hardware problem or your alpha is not currently
-	supported by OpenBSD; try booting from a floppy instead.
+Booting from CD-ROM installation media:
+
+	At the SRM console prompt, enter "show device" and hit return
+	to find the device ID of your CD-ROM drive (the device ID is
+	in the second column and should start with DKA for a SCSI
+	CD-ROM drive).  If your drive shows up with a drive number
+	with trailing zeros, you will want to ignore them (unless
+	it is DKA0).  For example, if your CD-ROM drive is listed
+	as DKA600, you want to use dka6 (device ID's are case
+	insensitive).
+	Insert the OpenBSD/MACHINE CD and enter
+	"boot -fi OSREV/MACHINE/bsd.rd DEVICE"
+	where DEVICE is the dka device name.  Note that the argument
+	order is important here.
+	You should see info about the primary and secondary boot
+	and then the kernel should start to load.  If the kernel
+	fails to load or the spinning cursor has stopped and nothing
+	further has happened, you either have a hardware problem or
+	your alpha is not currently supported by OpenBSD; try booting
+	from a floppy instead.
+
+
+Installing using the Floppy or CD-ROM procedure:
+
+OpenBSDInstallPart2
+
+	Boot your machine from the installation media as described above.
 
 OpenBSDBootMsgs
 
-	While booting, you will probably see several warnings.  You
-	should be warned that the kernel can't figure out what device
-	it booted from and that no swap space is present.  Do not be
-	alarmed, these are completely normal.  The first warning
-	occurs because while OpenBSD/alpha can boot from the floppy
-	drive, the kernel itself lacks a floppy driver.  When you reach
-	the prompt asking you for a shell name, just hit return.
+	If you boot from a floppy, you will probably see several
+	warnings.  You should be warned that the kernel can't figure
+	out what device it booted from and that no swap space is
+	present.  Do not be alarmed, these are completely normal.
+	The first warning occurs because while OpenBSD/MACHINE can
+	boot from the floppy drive, the kernel itself lacks a floppy
+	driver.
 
 	You will next be asked for your terminal type.  If you are
 	installing from a non-serial console, the default of "sun"

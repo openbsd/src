@@ -9,73 +9,96 @@ Installation is supported from several media types, including:
 
 If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive)
 you can boot from it.  Otherwise, you will need to create a bootable
-disk.  This may be a floppy or a hard disk (floppy is simplest).
+floppy disk.
 
-To boot from CD-ROM:
 
-	At the SRM console enter "show device" to find the device
-	ID of your CD-ROM drive (the device ID is in the second
-	column and should start with DKA).  If your drive shows up
-	with a drive number with trailing zeros, you will want to
-	ignore them (unless it is DKA0).  For example, if your
-	cdrom is listed as DKA600, you want to use dka6 (device
-	ID's are case insensitive).  Insert the OpenBSD/alpha CD
-	and enter "boot -fi OSREV/alpha/bsd.rd DEVICE" where DEVICE is
-	the dka device.  Note that the argument order is important
-	here.  If this does not work, you'll have to create a boot
-	floppy or bootable hard disk; follow the directions below.
-	(A boot floppy image is included on the CD-ROM as
-	OSREV/{:--:}MACHINE/floppy{:--:}OSrev.fs.)
+Creating a bootable floppy disk using DOS/Windows:
 
-If you have a floppy drive on your alpha:
+	First you need to get access to the OpenBSD Bootable floppy
+	images.  If you can access the CD-ROM distribution under DOS
+	the bootable disks are in the OSREV/MACHINE directory, otherwise
+	you you will have to download them from one of the OpenBSD
+	ftp or http mirror sites, using ftp or a web-viewer.  In either
+	case, take care to do "binary" transfers, since these are
+	images files and any DOS cr/lf translations or control/z EOF
+	interpretations will result in corrupted transfers.
+	
+	You will also need to go to the "tools" directory and grab a
+	copy of the rawrite.exe utility and its documentation.  This
+	program is needed to correctly copy the bootable filesystem
+	image to the floppy, since it's an image of a unix partition
+	containing a ffs filesystem, not a MSDOS format diskette.
 
-	If you are using a UN*X-like system to write the floppy
-	image to disk, you should use the "dd" command to copy the
-	file system image (floppy{:--:}OSrev.fs) directly to the raw floppy
-	disk.  It is suggested that you read the dd(1) manual page
-	or ask your system administrator to determine the correct
-	set of arguments to use; it will be slightly different from
-	system to system, and a comprehensive list of the possibilities
-	is beyond the scope of this document.
+	Once you have installed rawrite.exe, just run it and specify the
+	name of the bootable image, such as "floppy.fs" and the name of
+	the floppy drive, such as "a:".  Be sure to use good quality HD
+	(1.44MB) floppies, formatted on the system you're using.  The
+	image copy and boot process is not especially tolerant of read
+	errors. 
 
-	If you are using a DOS PC to write the floppy image to
-	disk, you should use the "rawrite" utility, provided in
-	the "OSREV/tools" directory of the OpenBSD distribution.  It
-	will write the file system image (floppy{:--:}OSrev.fs) to a disk.
-	You can boot it using "boot dva0".
+	Note that if you are using NT to write the images to disk, you
+	will need to use ntrw.exe instead.  It is also available in the
+	"tools" directory.  Grab it and run in with the correct 
+	arguments like this "ntrw <image> <drive>:"
 
-	If you are using a NT to write the floppy image to
-	disk, you should use the "ntrw" utility, provided in
-	the "OSREV/tools" directory of the OpenBSD distribution, instead.  
+	Note that, when installing, the boot floppy can be write-protected
+	(i.e.  read-only).
 
-	Note that, when installing, the floppy can be write-protected (i.e.
-	read-only).
 
-If you don't have a floppy drive on your alpha:
+Creating a bootable floppy disk using SunOS or other Un*x-like system:
+
+	First, you will need obtain a local copy of the bootable filesystem
+	image as described above.  If possible use cksum or md5 to verify
+	the checksums of the images vs. the values in the CKSUM or MD5
+	files on the mirror site.
+
+	Next, use the dd(1) utility to copy the file to the floppy drive.
+	Under SunOS, the command would be:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
+
+	If you are using something other than SunOS, you may have to adapt
+	this to conform to local naming conventions for the floppy and
+	options suitable for copying to a "raw" floppy image.  The key
+	issue is that the device name used for the floppy *must* be one
+	that refers to the whole 2880 block image, not a partition or
+	compatibility mode, and the copy command needs to be compatible
+	with the requirement that writes to a raw device must be in
+	multiples of 512-byte blocks.  The variations are endless and
+	beyond the scope of this document.
+
+	If you're doing this on the system you intend to boot the floppy on,
+	copying the floppy back to a file and doing a compare or checksum
+	is a good way to verify that the floppy is readable and free of
+	read/write errors.
+
+
+If you neither have a floppy drive nor a CD-ROM drive on your alpha:
 
 	If you don't have a floppy drive you can copy the floppy
 	image onto the hard disk you intend to install OpenBSD on.
 	Doing so will overwrite the disk's old contents, however.
 
 	You must use a UN*X-like system to write the floppy image
-	to the hard disk you will be using for OpenBSD/alpha.  You
+	to the hard disk you will be using for OpenBSD/MACHINE.  You
 	should use the "dd" command to copy the file system image
-	(floppy{:--:}OSrev.fs) directly to the raw 'c' device (whole disk) of
-	the target hard disk.  It is suggested that you read the
-	dd(1) manual page or ask your system administrator to
-	determine the correct set of arguments to use; it will be
-	slightly different from system to system, and a comprehensive
-	list of the possibilities is beyond the scope of this
-	document.
+	(floppy{:--:}OSrev.fs or floppyB{:--:}OSrev.fs) directly to the raw 'c'
+	device (whole disk) of the target hard disk.  It is suggested
+	that you read the dd(1) manual page or ask your system
+	administrator to determine the correct set of arguments to use;
+	it will be slightly different from system to system, and a
+	comprehensive list of the possibilities is beyond the scope of
+	this document.
 
 	Please note that this will put a floppy disklabel on your
 	disk which will confuse the install script.  To fix this
-	you need to answer "n" to the first question when booting
-	your disk and do "dd if=/dev/zero of=/dev/rsd0c count=20"
-	assuming your booted from sd0.  After doing this you will
+	you need to ask for a shell (answer "s" to the first question)
+	when booting your disk and do "dd if=/dev/zero of=/dev/rsd0c
+	count=20" assuming your booted from sd0.  After doing this you will
 	not be able to boot that disk again unless you complete
 	the install.  You can now enter "install" and start the
 	actual install process.
+
 
 The steps necessary to prepare the distribution sets for installation
 depend on which method of installation you choose.  Some methods
@@ -115,6 +138,7 @@ following:
 	on preparing your hard disk, below.  If you're upgrading
 	an existing installation, go directly to the section on
 	upgrading.
+
 
 To install OpenBSD using a remote partition, mounted via
 NFS, you must do the following:

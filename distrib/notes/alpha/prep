@@ -3,37 +3,17 @@ the ARC firmware instead (this is what Windows NT uses).  It is
 fairly simple to replace the ARC firmware with the SRM version.
 You can get replacement firmware either from a firmware update
 CD or via ftp from ftp://ftp.digital.com/pub/DEC/Alpha/firmware/.
+Please refer to http://ftp.digital.com/pub/DEC/Alpha/firmware/readme.html
+for more information.
 
-AXPPCI33 Motherboard notes:
+AXPpci33 Motherboard specific notes:
     The 1994 version of the OEM guide has an incorrect pinout
     for the serial ports.  The newer version from
-    ftp://ftp.digital.com/pub/Digital/axppci/design_guide.ps.Z
+    ftp://gatekeeper.dec.com/pub/DEC/axppci/design_guide.ps.Z
     has a corrected pinout (as well as more information than
     the 1994 edition).  Note that there are two flavors
     of PC serial connectors.  If you have the wrong kind,
     you won't get any output from the serial console.
-
-Acquiring and updating firmware:
-    As of May, 1997, the latest firmware version available for
-    ftp is version 3.9.  To update an alpha with an axppci33
-    motherboard from ARC firmware to SRM one would ftp to
-    ftp.digital.com and download
-	/pub/DEC/Alpha/firmware/v3.9/decaxppci33/decaxppci33_v1_6.exe
-    then copy it to a FAT-formatted (ie: DOS) floppy with the name
-    FWUPDATE.EXE.  Now that you have your new firmware on a floppy
-    you just need to insert it into your machine's floppy drive and
-    turn on the machine.  To actually update the firmware you need to
-    choose the "Supplementary menu" from the ARC console and then
-    "Install new firmware".  After fwupdate.exe is done loading from
-    the floppy, enter "update srm" at the prompt and hit return.
-    After the update is complete you may want to verify the update
-    (if this was not done automatically) by entering "verify srm" at
-    the prompt.  Once this is done you can enter "exit" and cycle power
-    on your machine.  When it reboots you should be in the SRM console.
-
-    Note that the procedure for updating SRM firmware from an
-    existing version of the SRM console is different.  Please see
-    the README files that come with the firmware update for details.
 
 Using the SRM console:
     This is not intended to be an exhaustive guide on using the
@@ -66,7 +46,7 @@ Using the SRM console:
 
 
 On systems with no framebuffer supported, including all
-TurboChannel-based machines, OpenBSD/Alpha *must* be used with a
+TurboChannel-based machines, OpenBSD/MACHINE must be used with a
 serial console.  Setting an Alpha system to use a serial console
 is system-specific.  The procedure for most common hardware is:
 
@@ -77,7 +57,7 @@ is system-specific.  The procedure for most common hardware is:
 		Boot the machine with the keyboard/mouse connector
 		unplugged.
 
-	AlphaStations, AXPpci systems and most others:
+	Other machines running the SRM console on local display:
 		Get to the SRM console prompt.  Enter "set console serial",
 		then enter "init" or cycle power.
 
@@ -87,31 +67,11 @@ to use a serial console.
 Note that some MACHINE computers currently *require* a serial console
 and can't be used from a regular keyboard/display console, even though
 the motherboard has appropriate connectors.
-The following MACHINE models fall in this category:
-	- TurboChannel MACHINE computers listed above
-	- Personal Workstation (Miata)
+Currently, only the TurboChannel MACHINE computers (DEC 3000) require use
+of a serial console.
 
-If booting using the regular console aborts with ``not configured to use display
-&& keyboard console'', then you need to use a serial console. If your machine
-was not listed in the list above, please report this on alpha@openbsd.org.
+If booting using the regular console aborts with ``not configured to use
+display && keyboard console'', then you need to use a serial console.
+If your machine was not listed in the list above, please report this on
+<alpha@openbsd.org>.
 
-
-Alpha-related URL's:
-    ftp://ftp.digital.com/pub/Digital/Alpha/
-	Alpha related documents, software and firmware upgrades.
-
-    http://www.digital.com/info/semiconductor/alpha.htm
-	Alpha processor and support chip information.
-
-    http://www.brouhaha.com/~eric/computers/udb-man.ps.gz
-	The Multia Service manual, in postscript form.
-
-    http://www.alphalinux.org
-	Alpha linux notes with a good introduction to Alpha chips/systems.
-
-    http://www.redhat.com/support/mailing-lists/
-	The linux axp-list mailing list is probably the best source of
-	alpha hardware related info, there's a searchable archive too.
-
-    http://www.netbsd.org/Ports/alpha/
-	Pointers to documentation and supported systems.

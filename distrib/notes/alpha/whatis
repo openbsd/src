@@ -1,6 +1,3 @@
-OpenBSD/alpha OSREV is a port to Alpha processor-based machines,
+OpenBSD/MACHINE OSREV is a port to Alpha processor-based machines,
 such as some workstations manufactured by Digital (now Compaq), as well
 as OEM motherboards designed by Alpha Processor, Inc.
-
-This port is undergoing a lot of changes to improve stability and
-hardware coverage, although this release should be pretty usable.

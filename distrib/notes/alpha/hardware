@@ -5,8 +5,9 @@ here, please send mail to <alpha@openbsd.org> with as much information
 as possible.
 
 Supported hardware:
-    XP1000, DS10, 264DP, and other single processor EV6 machines using
+    XP1000, DS10, DS20, 264DP, and other single processor EV6 machines using
     the Tsunami chipset
+    (Only one processor on the DS20 will be used)
           Supported devices:
                Built-in serial and parallel ports.
                Built-in DEC21143 ethernet.
@@ -53,23 +54,30 @@ Supported hardware:
                ISA IDE controller on the EB164.
                ISA devices that require DMA operation.
     Alphastation 500 and 600
-       These systems should work, but we need to hear from people about
-       them.
           Supported devices:
                Built-in serial and parallel ports.
                Built-in DEC21040 ethernet.
                Built-in ISP SCSI.
-               Built-in IDE controller.
                PCI graphics card (TGA or VGA compatible).
                Most PCI devices (see below).
                Some ISA and EISA devices (see below).
           Unsupported devices:
                Floppy drive.
                Built-in audio.
+               ISA and EISA devices that require DMA operation.
+    Alphastation 200, 250, 255 and 400
+          Supported devices:
+               Built-in serial and parallel ports.
+               Built-in DEC21040 ethernet.
+               Built-in ISP SCSI.
+               PCI graphics card (TGA or VGA compatible).
+               Most PCI devices (see below).
+               Some ISA devices (see below).
+          Unsupported devices:
+               Floppy drive.
+               Built-in audio.
                ISA devices that require DMA operation.
     AXPpci based machines (including ``Noname'', UDB, Multia)
-       These systems should work, but we need to hear from people about  
-       them.
           Supported devices:
                Built-in serial and parallel ports.
                Built-in DEC21040 ethernet.
@@ -108,7 +116,7 @@ Supported hardware:
                Built-in framebuffer.
                Other TurboChannel cards.
     At this time none of the following systems are supported:
-          DS20, API UP2000, UP2000+ (mostly because we don't have any
+          API UP2000, UP2000+ (mostly because we don't have any
             to test on.)
           DECpc AXP150 (2000/300) systems (EISA-bus PC-like systems)
           AlphaServer systems, other than models 400 and 500, which
@@ -118,7 +126,7 @@ Supported hardware:
             based).
           EB64+ based systems.
           Samsung 164BX/UX. (No SRM)
-          Multiprocessor alpha systems.
+          Multiprocessor Alpha systems.
           VME Alpha systems.
                
     Supported Peripherals:
@@ -342,6 +350,6 @@ Supported hardware:
 
 
 Console frame buffers and keyboards are only supported on systems
-explicately mentioned above.  On other systems, including all
-TurboChannel-based machines, OpenBSD/Alpha *must* be used with a
+explicitely mentioned above.  On other systems, including all
+TurboChannel-based machines, OpenBSD/MACHINE *must* be used with a
 serial console.
