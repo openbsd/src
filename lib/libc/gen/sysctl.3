@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.62 2001/02/07 11:43:48 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.63 2001/02/08 16:07:58 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1023,6 +1023,7 @@ is used when we have verified ICMPv6 too big messages.
 .Li icmp6.mtudisc_lowat
 is used when we have unverified ICMPv6 too big messages.
 Verification is performed by using address/port pairs kept in connected pcbs.
+Negative value disables the upper limit.
 .It Li icmp6.nd6_debug
 If set to non-zero, kernel IPv6 neighbor discovery code will generate
 debugging messages.

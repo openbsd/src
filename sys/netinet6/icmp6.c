@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.c,v 1.30 2001/02/07 11:43:52 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.191 2001/02/07 08:07:38 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.31 2001/02/08 16:07:59 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.194 2001/02/08 15:19:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,7 +107,6 @@ extern u_char ip6_protox[];
 
 struct icmp6stat icmp6stat;
 
-extern struct in6pcb rawin6pcb;
 extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
 static struct timeval icmp6errppslim_last;
@@ -128,8 +127,17 @@ static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
 
 /* XXX do these values make any sense? */
-int icmp6_mtudisc_hiwat = 1280;
-int icmp6_mtudisc_lowat = 256;
+static int icmp6_mtudisc_hiwat = 1280;
+static int icmp6_mtudisc_lowat = 256;
+
+/*
+ * keep track of # of redirect routes.
+ */
+static struct rttimer_queue *icmp6_redirect_timeout_q = NULL;
+
+/* XXX experimental, turned off */
+static int icmp6_redirect_hiwat = -1;
+static int icmp6_redirect_lowat = -1;
 
 static void icmp6_errcount __P((struct icmp6errstat *, int, int));
 static int icmp6_ratelimit __P((const struct in6_addr *, const int, const int));
@@ -144,6 +152,7 @@ static int ni6_store_addrs __P((struct icmp6_nodeinfo *, struct icmp6_nodeinfo *
 				struct ifnet *, int));
 static struct rtentry *icmp6_mtudisc_clone __P((struct sockaddr *));
 static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
+static void icmp6_redirect_timeout __P((struct rtentry *, struct rttimer *));
 
 #ifdef COMPAT_RFC1885
 static struct route_in6 icmp6_reflect_rt;
@@ -154,6 +163,7 @@ icmp6_init()
 {
 	mld6_init();
 	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
+	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
 }
 
 static void
@@ -1045,15 +1055,16 @@ icmp6_mtudisc_update(ip6cp, validated)
 	 */
 	rtcount = rt_timer_count(icmp6_mtudisc_timeout_q);
 	if (validated) {
-		if (rtcount > icmp6_mtudisc_hiwat)
+		if (0 <= icmp6_mtudisc_hiwat && rtcount > icmp6_mtudisc_hiwat)
 			return;
-		else if (rtcount > icmp6_mtudisc_lowat) {
+		else if (0 <= icmp6_mtudisc_lowat &&
+		    rtcount > icmp6_mtudisc_lowat) {
 			/*
 			 * XXX nuke a victim, install the new one.
 			 */
 		}
 	} else {
-		if (rtcount > icmp6_mtudisc_lowat)
+		if (0 <= icmp6_mtudisc_lowat && rtcount > icmp6_mtudisc_lowat)
 			return;
 	}
 
@@ -1809,6 +1820,7 @@ icmp6_reflect(m, off)
 	int plen;
 	int type, code;
 	struct ifnet *outif = NULL;
+	struct sockaddr_in6 sa6_src, sa6_dst;
 #ifdef COMPAT_RFC1885
 	int mtu = IPV6_MMTU;
 	struct sockaddr_in6 *sin6 = &icmp6_reflect_rt.ro_dst;
@@ -1866,12 +1878,24 @@ icmp6_reflect(m, off)
 	 */
 	ip6->ip6_dst = ip6->ip6_src;
 
-	/* XXX hack for link-local addresses */
-	if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1] =
-			htons(m->m_pkthdr.rcvif->if_index);
-	if (IN6_IS_ADDR_LINKLOCAL(&t))
-		t.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+	/*
+	 * XXX: make sure to embed scope zone information, using
+	 * already embedded IDs or the received interface (if any).
+	 * Note that rcvif may be NULL.
+	 * TODO: scoped routing case (XXX).
+	 */
+	bzero(&sa6_src, sizeof(sa6_src));
+	sa6_src.sin6_family = AF_INET6;
+	sa6_src.sin6_len = sizeof(sa6_src);
+	sa6_src.sin6_addr = ip6->ip6_dst;
+	in6_recoverscope(&sa6_src, &ip6->ip6_dst, m->m_pkthdr.rcvif);
+	in6_embedscope(&ip6->ip6_dst, &sa6_src, NULL, NULL);
+	bzero(&sa6_dst, sizeof(sa6_dst));
+	sa6_dst.sin6_family = AF_INET6;
+	sa6_dst.sin6_len = sizeof(sa6_dst);
+	sa6_dst.sin6_addr = t;
+	in6_recoverscope(&sa6_dst, &t, m->m_pkthdr.rcvif);
+	in6_embedscope(&t, &sa6_dst, NULL, NULL);
 
 #ifdef COMPAT_RFC1885
 	/*
@@ -1926,19 +1950,27 @@ icmp6_reflect(m, off)
 		src = &t;
 	}
 
-	if (src == 0)
+	if (src == 0) {
+		int e;
+		struct route_in6 ro;
+
 		/*
 		 * This case matches to multicasts, our anycast, or unicasts
-		 * that we do not own. Select a source address which has the
-		 * same scope.
-		 * XXX: for (non link-local) multicast addresses, this might
-		 * not be a good choice.
+		 * that we do not own. Select a source address based on the
+		 * source address of the erroneous packet.
 		 */
-		if ((ia = in6_ifawithscope(m->m_pkthdr.rcvif, &t)) != 0)
-			src = &IA6_SIN6(ia)->sin6_addr;
-
-	if (src == 0)
-		goto bad;
+		bzero(&ro, sizeof(ro));
+		src = in6_selectsrc(&sa6_src, NULL, NULL, &ro, NULL, &e);
+		if (ro.ro_rt)
+			RTFREE(ro.ro_rt); /* XXX: we could use this */
+		if (src == NULL) {
+			nd6log((LOG_DEBUG,
+			    "icmp6_reflect: source can't be determined: "
+			    "dst=%s, error=%d\n",
+			    ip6_sprintf(&sa6_src.sin6_addr), e));
+			goto bad;
+		}
+	}
 
 	ip6->ip6_src = *src;
 
@@ -2162,6 +2194,24 @@ icmp6_redirect_input(m, off)
 		struct sockaddr_in6 sdst;
 		struct sockaddr_in6 sgw;
 		struct sockaddr_in6 ssrc;
+		unsigned long rtcount;
+		struct rtentry *newrt = NULL;
+
+		/*
+		 * do not install redirect route, if the number of entries
+		 * is too much (> hiwat).  note that, the node (= host) will
+		 * work just fine even if we do not install redirect route
+		 * (there will be additional hops, though).
+		 */
+		rtcount = rt_timer_count(icmp6_redirect_timeout_q);
+		if (0 <= icmp6_redirect_hiwat && rtcount > icmp6_redirect_hiwat)
+			return;
+		else if (0 <= icmp6_redirect_lowat &&
+		    rtcount > icmp6_redirect_lowat) {
+			/*
+			 * XXX nuke a victim, install the new one.
+			 */
+		}
 
 		bzero(&sdst, sizeof(sdst));
 		bzero(&sgw, sizeof(sgw));
@@ -2175,8 +2225,13 @@ icmp6_redirect_input(m, off)
 		rtredirect((struct sockaddr *)&sdst, (struct sockaddr *)&sgw,
 			   (struct sockaddr *)NULL, RTF_GATEWAY | RTF_HOST,
 			   (struct sockaddr *)&ssrc,
-			   (struct rtentry **)NULL
-			   );
+			   &newrt);
+
+		if (newrt) {
+			(void)rt_timer_add(newrt, icmp6_redirect_timeout,
+			    icmp6_redirect_timeout_q);
+			rtfree(newrt);
+		}
 	}
 	/* finally update cached route in each socket via pfctlinput */
     {
@@ -2563,6 +2618,20 @@ icmp6_mtudisc_timeout(rt, r)
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
 			rt->rt_rmx.rmx_mtu = 0;
 		}
+	}
+}
+
+static void
+icmp6_redirect_timeout(rt, r)
+	struct rtentry *rt;
+	struct rttimer *r;
+{
+	if (rt == NULL)
+		panic("icmp6_redirect_timeout: bad route to timeout");
+	if ((rt->rt_flags & (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) ==
+	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
+		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	}
 }
 
