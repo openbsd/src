@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.9 2005/03/01 02:19:30 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.10 2005/03/03 14:36:38 damien Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1269,14 +1269,11 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
-	struct ieee80211_frame *wh;
 	struct ath_buf *bf;
 	struct ath_desc *ds;
 	struct mbuf *m;
-	int error, pktlen;
-	u_int8_t *frm, rate;
-	u_int16_t capinfo;
-	struct ieee80211_rateset *rs;
+	int error;
+	u_int8_t rate;
 	const HAL_RATE_TABLE *rt;
 	u_int flags;
 
@@ -1292,85 +1289,13 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 	 * we assume the mbuf routines will return us something
 	 * with this alignment (perhaps should assert).
 	 */
-	rs = &ni->ni_rates;
-	pktlen = sizeof (struct ieee80211_frame)
-	    + 8 + 2 + 2 + 2+ni->ni_esslen + 2+rs->rs_nrates + 3 + 6;
-	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
-		pktlen += 2;
-	m = ath_getmbuf(M_DONTWAIT, MT_DATA, pktlen);
+	m = ieee80211_beacon_alloc(ic, ni);
 	if (m == NULL) {
-		DPRINTF(ATH_DEBUG_BEACON,
-		    ("%s: cannot get mbuf/cluster; size %u\n",
-		    __func__, pktlen));
+		DPRINTF(ATH_DEBUG_BEACON, ("%s: cannot get mbuf/cluster\n",
+		    __func__));
 		sc->sc_stats.ast_be_nombuf++;
 		return ENOMEM;
 	}
-
-	wh = mtod(m, struct ieee80211_frame *);
-	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
-	    IEEE80211_FC0_SUBTYPE_BEACON;
-	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(u_int16_t *)wh->i_dur = 0;
-	memcpy(wh->i_addr1, sc->sc_broadcast_addr, IEEE80211_ADDR_LEN);
-	memcpy(wh->i_addr2, ic->ic_myaddr, IEEE80211_ADDR_LEN);
-	memcpy(wh->i_addr3, ni->ni_bssid, IEEE80211_ADDR_LEN);
-	*(u_int16_t *)wh->i_seq = 0;
-
-	/*
-	 * beacon frame format
-	 *	[8] time stamp
-	 *	[2] beacon interval
-	 *	[2] cabability information
-	 *	[tlv] ssid
-	 *	[tlv] supported rates
-	 *	[tlv] parameter set (IBSS)
-	 *	[tlv] extended supported rates
-	 */
-	frm = (u_int8_t *)&wh[1];
-	memset(frm, 0, 8);	/* timestamp is set by hardware */
-	frm += 8;
-	*(u_int16_t *)frm = htole16(ni->ni_intval);
-	frm += 2;
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		capinfo = IEEE80211_CAPINFO_IBSS;
-	} else {
-		capinfo = IEEE80211_CAPINFO_ESS;
-	}
-	if (ic->ic_flags & IEEE80211_F_WEPON)
-		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-	*(u_int16_t *)frm = htole16(capinfo);
-	frm += 2;
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ni->ni_esslen;
-	memcpy(frm, ni->ni_essid, ni->ni_esslen);
-	frm += ni->ni_esslen;
-	frm = ieee80211_add_rates(frm, rs);
-	*frm++ = IEEE80211_ELEMID_DSPARMS;
-	*frm++ = 1;
-	*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
-		*frm++ = 2;
-		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
-	} else {
-		/* TODO: TIM */
-		*frm++ = IEEE80211_ELEMID_TIM;
-		*frm++ = 4;	/* length */
-		*frm++ = 0;	/* DTIM count */ 
-		*frm++ = 1;	/* DTIM period */
-		*frm++ = 0;	/* bitmap control */
-		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
-	}
-	frm = ieee80211_add_xrates(frm, rs);
-	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
-	KASSERT(m->m_pkthdr.len <= pktlen,
-		("beacon bigger than expected, len %u calculated %u",
-		m->m_pkthdr.len, pktlen));
 
 	DPRINTF(ATH_DEBUG_BEACON, ("%s: m %p len %u\n", __func__, m, m->m_len));
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_dmamap, m,

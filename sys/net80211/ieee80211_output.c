@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.6 2005/02/26 15:49:34 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.7 2005/03/03 14:36:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -803,6 +803,96 @@ bad:
 	}
 	return ret;
 #undef senderr
+}
+
+struct mbuf *
+ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct ieee80211_frame *wh;
+	struct mbuf *m;
+	int pktlen;
+	u_int8_t *frm;
+	u_int16_t capinfo;
+	struct ieee80211_rateset *rs;
+
+	rs = &ni->ni_rates;
+	pktlen = sizeof (struct ieee80211_frame)
+	    + 8 + 2 + 2 + 2+ni->ni_esslen + 2+rs->rs_nrates + 3 + 6;
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
+		pktlen += 2;
+	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
+		 2 + ic->ic_des_esslen
+	       + 2 + IEEE80211_RATE_SIZE
+	       + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
+	if (m == NULL)
+		return NULL;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    IEEE80211_FC0_SUBTYPE_BEACON;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(u_int16_t *)wh->i_dur = 0;
+	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
+	*(u_int16_t *)wh->i_seq = 0;
+
+	/*
+	 * beacon frame format
+	 *	[8] time stamp
+	 *	[2] beacon interval
+	 *	[2] cabability information
+	 *	[tlv] ssid
+	 *	[tlv] supported rates
+	 *	[tlv] parameter set (IBSS)
+	 *	[tlv] extended supported rates
+	 */
+	frm = (u_int8_t *)&wh[1];
+	bzero(frm, 8);	/* timestamp is set by hardware */
+	frm += 8;
+	*(u_int16_t *)frm = htole16(ni->ni_intval);
+	frm += 2;
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
+		capinfo = IEEE80211_CAPINFO_IBSS;
+	} else {
+		capinfo = IEEE80211_CAPINFO_ESS;
+	}
+	if (ic->ic_flags & IEEE80211_F_WEPON)
+		capinfo |= IEEE80211_CAPINFO_PRIVACY;
+	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
+	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
+	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
+	*(u_int16_t *)frm = htole16(capinfo);
+	frm += 2;
+	*frm++ = IEEE80211_ELEMID_SSID;
+	*frm++ = ni->ni_esslen;
+	memcpy(frm, ni->ni_essid, ni->ni_esslen);
+	frm += ni->ni_esslen;
+	frm = ieee80211_add_rates(frm, rs);
+	*frm++ = IEEE80211_ELEMID_DSPARMS;
+	*frm++ = 1;
+	*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
+		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
+		*frm++ = 2;
+		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
+	} else {
+		/* TODO: TIM */
+		*frm++ = IEEE80211_ELEMID_TIM;
+		*frm++ = 4;	/* length */
+		*frm++ = 0;	/* DTIM count */ 
+		*frm++ = 1;	/* DTIM period */
+		*frm++ = 0;	/* bitmap control */
+		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
+	}
+	frm = ieee80211_add_xrates(frm, rs);
+	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
+	IASSERT(m->m_pkthdr.len <= pktlen,
+		("beacon bigger than expected, len %u calculated %u",
+		m->m_pkthdr.len, pktlen));
+	return m;
 }
 
 void

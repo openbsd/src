@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.22 2005/03/02 11:14:12 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.23 2005/03/03 14:36:38 damien Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -2344,147 +2344,6 @@ allmulti:
 	return;
 }
 
-#define	IEEE80211_BEACON_TIMESTAMP_LEN		8
-#define	IEEE80211_BEACON_BINTVL_LEN		2
-#define	IEEE80211_BEACON_CAPINFO_LEN		2
-#define	IEEE80211_TLV_SSID_LEN(__esslen)	(2 + (__esslen))
-#define	IEEE80211_TLV_SUPRATES_LEN(__nrates)	(2 + (__nrates))
-#define	IEEE80211_TLV_XSUPRATES_LEN(__nrates)	(2 + (__nrates))
-#define	IEEE80211_TLV_DSPARMS_LEN		3
-#define	IEEE80211_TLV_IBSSPARMS			4
-#define	IEEE80211_TLV_MIN_TIM			6
-
-#define	IEEE80211_TLV_ALLRATES_LEN(__nrates)	\
-	(((__nrates) > IEEE80211_RATE_SIZE) ? 4 + (__nrates) : 2 + (__nrates))
-
-/* TBD factor with ieee80211_getmbuf */
-static struct mbuf *
-rtw_getmbuf(int flags, int type, u_int pktlen)
-{
-	struct mbuf *m;
-
-	KASSERT2(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
-	MGETHDR(m, flags, type);
-	if (m == NULL || pktlen <= MHLEN)
-		return m;
-	MCLGET(m, flags);
-	if ((m->m_flags & M_EXT) != 0)
-		return m;
-	m_free(m);
-	return NULL;
-}
-
-/* TBD factor with ath_beacon_alloc */
-static struct mbuf *
-rtw_beacon_alloc(struct rtw_softc *sc, struct ieee80211_node *ni)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_frame *wh;
-	struct mbuf *m;
-	int pktlen;
-	uint8_t *frm;
-	uint16_t capinfo;
-	struct ieee80211_rateset *rs;
-
-	/*
-	 * NB: the beacon data buffer must be 32-bit aligned;
-	 * we assume the mbuf routines will return us something
-	 * with this alignment (perhaps should assert).
-	 */
-	rs = &ni->ni_rates;
-	pktlen = sizeof(struct ieee80211_frame)
-	       + IEEE80211_BEACON_TIMESTAMP_LEN
-	       + IEEE80211_BEACON_BINTVL_LEN
-	       + IEEE80211_BEACON_CAPINFO_LEN
-	       + IEEE80211_TLV_SSID_LEN(ni->ni_esslen)
-	       + IEEE80211_TLV_ALLRATES_LEN(rs->rs_nrates)
-	       + IEEE80211_TLV_DSPARMS_LEN
-	       + MAX(IEEE80211_TLV_IBSSPARMS, IEEE80211_TLV_MIN_TIM);
-
-	m = rtw_getmbuf(M_DONTWAIT, MT_DATA, pktlen);
-	if (m == NULL) {
-		RTW_DPRINTF(RTW_DEBUG_BEACON,
-			("%s: cannot get mbuf/cluster; size %u\n",
-			__func__, pktlen));
-#if 0
-		sc->sc_stats.ast_be_nombuf++;
-#endif
-		return NULL;
-	}
-
-	wh = mtod(m, struct ieee80211_frame *);
-	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
-	    IEEE80211_FC0_SUBTYPE_BEACON;
-	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(u_int16_t *)wh->i_dur = 0;
-	memcpy(wh->i_addr1, etherbroadcastaddr, IEEE80211_ADDR_LEN);
-	memcpy(wh->i_addr2, ic->ic_myaddr, IEEE80211_ADDR_LEN);
-	memcpy(wh->i_addr3, ni->ni_bssid, IEEE80211_ADDR_LEN);
-	*(u_int16_t *)wh->i_seq = 0;
-
-	/*
-	 * beacon frame format
-	 *	[8] time stamp
-	 *	[2] beacon interval
-	 *	[2] cabability information
-	 *	[tlv] ssid
-	 *	[tlv] supported rates
-	 *	[tlv] parameter set (IBSS)
-	 *	[tlv] extended supported rates
-	 */
-	frm = (u_int8_t *)&wh[1];
-	/* timestamp is set by hardware */
-	memset(frm, 0, IEEE80211_BEACON_TIMESTAMP_LEN);
-	frm += IEEE80211_BEACON_TIMESTAMP_LEN;
-	*(u_int16_t *)frm = htole16(ni->ni_intval);
-	frm += IEEE80211_BEACON_BINTVL_LEN;
-	if (ic->ic_opmode == IEEE80211_M_IBSS)
-		capinfo = IEEE80211_CAPINFO_IBSS;
-	else
-		capinfo = IEEE80211_CAPINFO_ESS;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
-		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-	*(u_int16_t *)frm = htole16(capinfo);
-	frm += IEEE80211_BEACON_CAPINFO_LEN;
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ni->ni_esslen;
-	memcpy(frm, ni->ni_essid, ni->ni_esslen);
-	frm += ni->ni_esslen;
-	frm = ieee80211_add_rates(frm, rs);
-	*frm++ = IEEE80211_ELEMID_DSPARMS;
-	*frm++ = 1;
-	*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
-		*frm++ = 2;
-		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
-	} else {
-		/* TODO: TIM */
-		*frm++ = IEEE80211_ELEMID_TIM;
-		*frm++ = 4;	/* length */
-		*frm++ = 0;	/* DTIM count */ 
-		*frm++ = 1;	/* DTIM period */
-		*frm++ = 0;	/* bitmap control */
-		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
-	}
-	frm = ieee80211_add_xrates(frm, rs);
-	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
-	m->m_pkthdr.rcvif = (void *)ni;
-	KASSERT2(m->m_pkthdr.len <= pktlen,
-		("beacon bigger than expected, len %u calculated %u",
-		m->m_pkthdr.len, pktlen));
-
-	RTW_DPRINTF(RTW_DEBUG_BEACON,
-	    ("%s: m %p len %u\n", __func__, m, m->m_len));
-
-	return m;
-}
-
 /* Must be called at splnet. */
 int
 rtw_init(struct ifnet *ifp)
@@ -3384,7 +3243,7 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_HOSTAP:
 		case IEEE80211_M_IBSS:
-			m = rtw_beacon_alloc(sc, ic->ic_bss);
+			m = ieee80211_beacon_alloc(ic, ic->ic_bss);
 			if (m == NULL) {
 				printf("%s: could not allocate beacon\n",
 				    sc->sc_dev.dv_xname);
