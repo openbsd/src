@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_opts.c,v 1.4 1998/07/24 02:37:32 millert Exp $	*/
+/*	$OpenBSD: frm_opts.c,v 1.5 1999/02/24 06:30:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -34,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_opts.c,v 1.4 1998/02/11 12:13:43 tom Exp $")
+MODULE_ID("$From: frm_opts.c,v 1.6 1999/02/18 16:12:36 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -48,6 +48,7 @@ MODULE_ID("$From: frm_opts.c,v 1.4 1998/02/11 12:13:43 tom Exp $")
 +--------------------------------------------------------------------------*/
 int set_form_opts(FORM * form, Form_Options  opts)
 {
+  opts &= ALL_FORM_OPTS;
   if (opts & ~ALL_FORM_OPTS)
     RETURN(E_BAD_ARGUMENT);
   else
@@ -82,6 +83,7 @@ Form_Options form_opts(const FORM * form)
 +--------------------------------------------------------------------------*/
 int form_opts_on(FORM * form, Form_Options opts)
 {
+  opts &= ALL_FORM_OPTS;
   if (opts & ~ALL_FORM_OPTS)
     RETURN(E_BAD_ARGUMENT);
   else
@@ -103,6 +105,7 @@ int form_opts_on(FORM * form, Form_Options opts)
 +--------------------------------------------------------------------------*/
 int form_opts_off(FORM * form, Form_Options opts)
 {
+  opts &= ALL_FORM_OPTS;
   if (opts & ~ALL_FORM_OPTS)
     RETURN(E_BAD_ARGUMENT);
   else
