@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.87 2001/06/28 22:49:49 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.88 2001/06/29 12:57:02 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -81,7 +81,7 @@ struct pf_tree_node {
 };
 
 struct pf_frent {
-	TAILQ_ENTRY(pf_frent) fr_next;
+	LIST_ENTRY(pf_frent) fr_next;
 	struct ip *fr_ip;
 	struct mbuf *fr_m;
 };
@@ -97,7 +97,7 @@ struct pf_fragment {
 	u_int16_t	fr_id;		/* fragment id for reassemble */
 	u_int16_t	fr_max;		/* fragment data max */
 	struct timeval	fr_timeout;
-	TAILQ_HEAD(pf_fragq, pf_frent) fr_queue;
+	LIST_HEAD(pf_fragq, pf_frent) fr_queue;
 };
 
 /*
@@ -665,7 +665,7 @@ pfattach(int num)
                 0, NULL, NULL, 0);
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
-	pool_sethiwat(&pf_frent_pl, PFFRAG_FRENT_HIWAT);
+	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
 	
 	TAILQ_INIT(&pf_fragqueue);
 	TAILQ_INIT(&pf_rules[0]);
@@ -2228,15 +2228,17 @@ pf_flush_fragments(void)
 	}
 }
 
+/* Frees the fragments and all associated entries */
+
 void
 pf_free_fragment(struct pf_fragment *frag)
 {
 	struct pf_frent *frent;
 
 	/* Free all fragments */
-	for (frent = TAILQ_FIRST(&frag->fr_queue); frent;
-	    frent = TAILQ_FIRST(&frag->fr_queue)) {
-		TAILQ_REMOVE(&frag->fr_queue, frent, fr_next);
+	for (frent = LIST_FIRST(&frag->fr_queue); frent;
+	    frent = LIST_FIRST(&frag->fr_queue)) {
+		LIST_REMOVE(frent, fr_next);
 
 		m_freem(frent->fr_m);
 		pool_put(&pf_frent_pl, frent);
@@ -2244,7 +2246,6 @@ pf_free_fragment(struct pf_fragment *frag)
 	}
 
 	pf_remove_fragment(frag);
-	pool_put(&pf_frag_pl, frag);
 }
 
 void
@@ -2276,6 +2277,8 @@ pf_find_fragment(struct ip *ip)
 		return (frag);
 }
 
+/* Removes a fragment from the fragment queue and frees the fragment */
+
 void
 pf_remove_fragment(struct pf_fragment *frag)
 {
@@ -2289,6 +2292,8 @@ pf_remove_fragment(struct pf_fragment *frag)
 
 		tree_remove(&tree_fragment, NULL, &key);
 		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
+
+		pool_put(&pf_frag_pl, frag);
 }
 
 struct mbuf *
@@ -2323,7 +2328,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		frag->fr_dst = frent->fr_ip->ip_dst;
 		frag->fr_p = frent->fr_ip->ip_p;
 		frag->fr_id = frent->fr_ip->ip_id;
-		TAILQ_INIT(&frag->fr_queue);
+		LIST_INIT(&frag->fr_queue);
 
 		pf_ip2key(&key, frent->fr_ip);
 
@@ -2340,7 +2345,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	 * Find a fragment after the current one:
 	 *  - off contains the real shifted offset.
 	 */
-	TAILQ_FOREACH(frea, &frag->fr_queue, fr_next) {
+	LIST_FOREACH(frea, &frag->fr_queue, fr_next) {
 		if (frea->fr_ip->ip_off > off)
 			break;
 		frep = frea;
@@ -2374,9 +2379,9 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		}
 
 		/* This fragment is completely overlapped, loose it */
-		next = TAILQ_NEXT(frea, fr_next);
+		next = LIST_NEXT(frea, fr_next);
 		m_freem(frea->fr_m);
-		TAILQ_REMOVE(&frag->fr_queue, frea, fr_next);
+		LIST_REMOVE(frea, fr_next);
 		pool_put(&pf_frent_pl, frea);
 		pf_nfrents--;
 	}
@@ -2390,9 +2395,9 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		frag->fr_flags |= PFFRAG_SEENLAST;
 
 	if (frep == NULL)
-		TAILQ_INSERT_HEAD(&frag->fr_queue, frent, fr_next);
+		LIST_INSERT_HEAD(&frag->fr_queue, frent, fr_next);
 	else
-		TAILQ_INSERT_AFTER(&frag->fr_queue, frep, frent, fr_next);
+		LIST_INSERT_AFTER(frep, frent, fr_next);
 	
 	/* Check if we are completely reassembled */
 	if (!(frag->fr_flags & PFFRAG_SEENLAST))
@@ -2400,8 +2405,8 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 
 	/* Check if we have all the data */
 	off = 0;
-	for (frep = TAILQ_FIRST(&frag->fr_queue); frep; frep = next) {
-		next = TAILQ_NEXT(frep, fr_next);
+	for (frep = LIST_FIRST(&frag->fr_queue); frep; frep = next) {
+		next = LIST_NEXT(frep, fr_next);
 		
 		off += frep->fr_ip->ip_len;
 		if (off < frag->fr_max &&
@@ -2413,14 +2418,14 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		return (NULL);
 
 	/* We have all the data */
-	frent = TAILQ_FIRST(&frag->fr_queue);
+	frent = LIST_FIRST(&frag->fr_queue);
 	KASSERT(frent != NULL);
 	if ((frent->fr_ip->ip_hl << 2) + off > IP_MAXPACKET) {
 		DPFPRINTF((__FUNCTION__": drop: too big: %d\n", off));
 		pf_free_fragment(frag);
 		return (NULL);
 	}
-	next = TAILQ_NEXT(frent, fr_next);
+	next = LIST_NEXT(frent, fr_next);
 
 	/* Magic from ip_input */
 	ip = frent->fr_ip;
@@ -2429,9 +2434,10 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	m->m_next = NULL;
 	m_cat(m, m2);
 	pool_put(&pf_frent_pl, frent);
+	pf_nfrents--;
 	for (frent = next; frent != NULL; frent = next) {
 		DPFPRINTF((__FUNCTION__": frent %p\n", frent));
-		next = TAILQ_NEXT(frent, fr_next);
+		next = LIST_NEXT(frent, fr_next);
 
 		m2 = frent->fr_m;
 		pool_put(&pf_frent_pl, frent);
@@ -2541,8 +2547,6 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, struct ip *h,
 			return (PF_DROP);
 		}
 	}
-	if (pf_nfrents > PFFRAG_FRENT_HIWAT)
-		pf_flush_fragments();
 	pf_nfrents++;
 	frent->fr_ip = h;
 	frent->fr_m = m;
