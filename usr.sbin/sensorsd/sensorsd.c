@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.9 2004/03/15 15:53:19 henning Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.10 2004/04/11 20:02:00 otto Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -32,8 +32,8 @@
 
 #define	RFBUFSIZ	28	/* buffer size for print_sensor */
 #define	RFBUFCNT	4	/* ring buffers */
-#define REPORT_FREQ	60	/* report every n seconds */
-#define CHECK_FREQ	60	/* check every n seconds */
+#define REPORT_PERIOD	60	/* report every n seconds */
+#define CHECK_PERIOD	60	/* check every n seconds */
 
 int		 main(int, char *[]);
 void		 check_sensors(void);
@@ -129,14 +129,14 @@ main(int argc, char *argv[])
 				    watch_cnt);
 			reload = 0;
 		}
-		if (next_check < time(NULL)) {
+		if (next_check <= time(NULL)) {
 			check_sensors();
-			next_check = time(NULL) + CHECK_FREQ;
+			next_check = time(NULL) + CHECK_PERIOD;
 		}
-		if (next_report < time(NULL)) {
+		if (next_report <= time(NULL)) {
 			report(last_report);
 			last_report = next_report;
-			next_report = time(NULL) + REPORT_FREQ;
+			next_report = time(NULL) + REPORT_PERIOD;
 		}
 		if (next_report < next_check)
 			sleeptime = next_report - time(NULL);
