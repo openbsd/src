@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 1998/07/07 21:32:41 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 1998/07/14 17:47:28 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1992,1994 The University of Utah and
@@ -26,9 +26,6 @@
 
 #ifndef	_HPPA_INTR_H_
 #define	_HPPA_INTR_H_
-
-#include <machine/iodc.h>
-#include <machine/iomod.h>
 
 /*
  * While the original 8 SPL's were "plenty", the PA-RISC chip provides us
