@@ -1,0 +1,62 @@
+.\"	$OpenBSD: cac.4,v 1.1 2000/12/17 22:01:25 mickey Exp $
+.\"
+.\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
+.\"
+.\"
+.Dd December 17, 2000
+.Dt CAC 4
+.Os
+.Sh NAME
+.Nm cac
+.Nd Compaq Smart ARRAY RAID controllers
+.Sh SYNOPSIS
+.Cd "cac* at pci? dev ? function ?"
+.Cd "cac* at eisa? slot ?"
+.Cd "scsibus* at cac?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the following RAID controllers:
+.Tn Compaq Integrated Array ,
+.Tn Compaq IAES ,
+.Tn Compaq IDA ,
+.Tn Compaq IDA-2 ,
+.Tn Compaq RAID LC2 ,
+.Tn Compaq Smart Array 221 ,
+.Tn Compaq Smart Array 3100ES ,
+.Tn Compaq Smart Array 3200 ,
+.Tn Compaq Smart Array 4200 ,
+.Tn Compaq Smart Array 4250ES ,
+.Tn Compaq Smart Array 431 ,
+.Tn Compaq SMART ,
+.Tn Compaq SMART-2/E ,
+.Tn Compaq SMART-2/P ,
+.Tn Compaq SMART-2DH ,
+.Tn Compaq SMART-2SL .
+.Pp
+All the RAID set volume management is done via the card BIOS.
+.Pp
+The driver makes drives and/or RAID sets appear as
+.Xr sd 4 .
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Michael Shalayeff Aq mickey@opensbd.org ,
+inspired by the FreeBSD driver by
+.An Andrew Doran Aq ad@netbsd.org .
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.9 .
+.Sh BUGS
+The card provides a mechanism to receive asynchronous notifications
+about RAID set status change and so forth, unfortunately this
+information is not public.
+.Pp
+Only a few PCI cards were was tested, but others should work.
