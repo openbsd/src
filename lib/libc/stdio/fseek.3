@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fseek.3,v 1.4 1999/07/09 13:35:23 aaron Exp $
+.\"	$OpenBSD: fseek.3,v 1.5 2000/02/21 22:11:22 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,13 +35,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 4, 1993
+.Dd February 21, 2000
 .Dt FSEEK 3
 .Os
 .Sh NAME
 .Nm fgetpos ,
 .Nm fseek ,
+.Nm fseeko ,
 .Nm fsetpos ,
+.Nm ftello ,
 .Nm ftell ,
 .Nm rewind
 .Nd reposition a stream
@@ -49,8 +51,12 @@
 .Fd #include <stdio.h>
 .Ft int
 .Fn fseek "FILE *stream" "long offset" "int whence"
+.Ft int
+.Fn fseeko "FILE *stream" "off_t offset" "int whence"
 .Ft long
 .Fn ftell "FILE *stream"
+.Ft off_t
+.Fn ftello "FILE *stream"
 .Ft void
 .Fn rewind "FILE *stream"
 .Ft int
@@ -85,11 +91,27 @@ any effects of the
 function on the same stream.
 .Pp
 The
+.Fn fseeko
+function is identical to
+.Fn fseek
+except that it takes an
+.Dv off_t
+as its
+.Fa offset .
+.Pp
+The
 .Fn ftell
 function
 obtains the current value of the file position indicator for the
 stream pointed to by
 .Fa stream .
+.Pp
+The
+.Fn ftello
+function is identical to
+.Fn ftell
+except that its return value is of type
+.Dv off_t .
 .Pp
 The
 .Fn rewind
@@ -133,14 +155,18 @@ returns no value.
 Upon successful completion,
 .Fn fgetpos ,
 .Fn fseek ,
+.Fn fseeko ,
 .Fn fsetpos
-return 0,
-and
+return 0 and
 .Fn ftell
-returns the current offset.
+and
+.Fn ftello
+return the current offset.
 Otherwise,
 .Fn fseek
-returns \-1 and
+and
+.Fn fseeko
+return \-1 and
 the others
 return a nonzero value and the global variable
 .Va errno
@@ -167,9 +193,11 @@ or
 The function
 .Fn fgetpos ,
 .Fn fseek ,
+.Fn fseeko ,
 .Fn fsetpos ,
+.Fn ftell ,
 and
-.Fn ftell
+.Fn ftello
 may also fail and set
 .Va errno
 for any of the errors specified for the routines
@@ -190,4 +218,14 @@ and
 .Fn rewind
 functions
 conform to
-.St -ansiC .
+.St -ansiC
+and
+.St -xpg4 .
+.Pp
+The
+.Fn fseeko
+and
+.Fn ftello
+functions
+conform to
+.St -xpg4 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.11 1999/09/17 13:13:46 espie Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.12 2000/02/21 22:11:20 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -233,8 +233,10 @@ size_t	 fread __P((void *, size_t, size_t, FILE *));
 FILE	*freopen __P((const char *, const char *, FILE *));
 int	 fscanf __P((FILE *, const char *, ...));
 int	 fseek __P((FILE *, long, int));
+int	 fseeko __P((FILE *, off_t, int));
 int	 fsetpos __P((FILE *, const fpos_t *));
 long	 ftell __P((FILE *));
+off_t	 ftello __P((FILE *));
 size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
 int	 getc __P((FILE *));
 int	 getchar __P((void));
