@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.11 2000/11/29 21:31:27 aaron Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.12 2000/11/29 22:57:16 aaron Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -749,6 +749,7 @@ pccbb_chipinit(sc)
 	reg = pci_conf_read(pc, tag, PCI_BCR_INTR);
 	reg &= ~CB_BCR_INTR_IREQ_ENABLE;	/* use PCI Intr */
 	reg |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
+	reg |= CB_BCR_RESET_ENABLE;		/* assert reset */
 	pci_conf_write(pc, tag, PCI_BCR_INTR, reg);
 
 	switch (sc->sc_chipset) {
@@ -789,6 +790,15 @@ pccbb_chipinit(sc)
 	pci_conf_write(pc, tag, PCI_CB_IOLIMIT0, 0);
 	pci_conf_write(pc, tag, PCI_CB_IOBASE1, 0xffffffff);
 	pci_conf_write(pc, tag, PCI_CB_IOLIMIT1, 0);
+
+	/* reset 16-bit pcmcia bus */
+	bus_space_write_1(sc->sc_base_memt, sc->sc_base_memh,
+	    0x800 + PCIC_INTR,
+	    bus_space_read_1(sc->sc_base_memt, sc->sc_base_memh,
+		0x800 + PCIC_INTR) & ~PCIC_INTR_RESET);
+
+	/* turn off power */
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 }
 
 
