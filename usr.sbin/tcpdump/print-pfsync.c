@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.25 2004/02/20 20:03:05 mcbride Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.26 2004/03/22 08:13:10 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.25 2004/02/20 20:03:05 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.26 2004/03/22 08:13:10 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -115,7 +115,8 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	struct pfsync_state_del *d;
 	struct pfsync_state_clr *c;
 	struct pfsync_state_upd_req *r;
-	int i, flags = 0;
+	struct pfsync_state_bus *b;
+	int i, flags = 0, min, sec;
 	u_int64_t id;
 
 	if (eflag)
@@ -206,6 +207,28 @@ pfsync_print(struct pfsync_header *hdr, int len)
 			bcopy(&r->id, &id, sizeof(id));
 			printf("\n\tid: %016llx creatorid: %08x",
 			    betoh64(id), ntohl(r->creatorid));
+		}
+		break;
+	case PFSYNC_ACT_BUS:
+		if (sizeof(*b) <= len) {
+			b = (void *)((char *)hdr + PFSYNC_HDRLEN);
+			printf("\n\tcreatorid: %08x", htonl(b->creatorid));
+			sec = b->endtime % 60;
+			b->endtime /= 60;
+			min = b->endtime % 60;
+			b->endtime /= 60;
+			printf(" age %.2u:%.2u:%.2u", b->endtime, min, sec);
+			switch (b->status) {
+			case PFSYNC_BUS_START:
+				printf(" status: start");
+				break;
+			case PFSYNC_BUS_END:
+				printf(" status: end");
+				break;
+			default:
+				printf(" status: ?");
+				break;
+			}
 		}
 		break;
 	default:
