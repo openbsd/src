@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.43 2001/05/16 08:59:03 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.44 2001/05/20 00:09:57 angelos Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -290,7 +290,7 @@
 	"knote",	/* 107 M_KNOTE */ \
 	"crypto data",	/* 108 M_CRYPTO_DATA */ \
 	"SPD info",	/* 109 M_IPSEC_POLICY */ \
-	"IPsec credentials", /* 110 M_CREDENTIALS */ \
+	"IPsec creds",	/* 110 M_CREDENTIALS */ \
 	"packet tags",	/* 111 M_PACKET_TAGS */ \
 	"crypto ops",	/* 112 M_CRYPTO_OPS */ \
 	NULL, NULL, NULL, NULL, \
