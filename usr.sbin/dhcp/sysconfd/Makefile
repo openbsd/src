@@ -30,8 +30,11 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SRCS   = sysconfd.c
-PROG   = sysconfd
-MAN    = sysconfd.8
+SRCS=	sysconfd.c
+PROG=	sysconfd
+MAN=	sysconfd.8
+
+LDADD+=	-L${COMMONDIR} -ldhcp
+DPADD+=	${COMMONDIR}/libdhcp.a
 
 .include <bsd.prog.mk>

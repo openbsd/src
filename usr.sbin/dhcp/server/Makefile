@@ -30,8 +30,11 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c
-PROG   = dhcpd
-MAN    = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
+SRCS=	dhcpd.c dhcp.c bootp.c confpars.c db.c
+PROG=	dhcpd
+MAN=	dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
+
+LDADD+=	-L${COMMONDIR} -ldhcp
+DPADD+=	${COMMONDIR}/libdhcp.a
 
 .include <bsd.prog.mk>

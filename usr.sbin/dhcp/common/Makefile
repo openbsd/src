@@ -29,7 +29,17 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-NOPROG=
-MAN    = dhcp-options.5
+LIB=	dhcp
+MAN=	dhcp-options.5
 
-.include <bsd.prog.mk>
+SRCS=	alloc.c dispatch.c hash.c memory.c print.c bpf.c icmp.c options.c \
+	tree.c conflex.c errwarn.c inet.c packet.c socket.c convert.c \
+	ethernet.c tables.c parse.c
+
+NOPIC=	yes
+NOPROFILE=yes
+
+install: maninstall
+
+.include <bsd.lib.mk>
+.include <bsd.man.mk>

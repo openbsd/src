@@ -30,8 +30,11 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SRCS   = main.c
-PROG   = statmsg
-MAN    = statmsg.8
+SRCS=	main.c
+PROG=	statmsg
+MAN=	statmsg.8
+
+LDADD+=	-L${COMMONDIR} -ldhcp
+DPADD+=	${COMMONDIR}/libdhcp.a
 
 .include <bsd.prog.mk>

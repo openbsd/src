@@ -30,8 +30,11 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SRCS   = dhcrelay.c
-PROG   = dhcrelay
-MAN    = dhcrelay.8
+SRCS=	dhcrelay.c
+PROG=	dhcrelay
+MAN=	dhcrelay.8
+
+LDADD+=	-L${COMMONDIR} -ldhcp
+DPADD+=	${COMMONDIR}/libdhcp.a
 
 .include <bsd.prog.mk>
