@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.10 2001/03/12 07:38:32 smurph Exp $ */
+/*	$OpenBSD: mem.c,v 1.11 2001/04/05 20:39:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -83,9 +83,6 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
-#include <uvm/uvm_extern.h>
-#endif
 
 extern u_int lowram;
 static caddr_t devzeropage;
@@ -164,11 +161,11 @@ mmrw(dev, uio, flags)
 			}
 #endif
 			
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, 
-				   trunc_page(v), 
-				   uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE,
-				   TRUE, 
-				   uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE); 
+         pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			    trunc_page(v), 
+             uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE, 
+             TRUE, 
+             uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE); 
 
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
@@ -181,15 +178,9 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
-			if (!uvm_kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-#else
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#endif
 			if (v < NBPG)
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);

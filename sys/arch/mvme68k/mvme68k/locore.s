@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.23 2001/03/12 07:38:31 smurph Exp $ */
+/*	$OpenBSD: locore.s,v 1.24 2001/04/05 20:39:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -488,7 +488,7 @@ Lmmu_enable:
 	.long	0x4e7b1806		| movc d1,urp
 	jra	Lstploaddone
 Lmotommu1:
-   RELOC(_protorp, a0)
+	RELOC(_protorp, a0)
 	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
 	movl	d1,a0@(4)		| + segtable address
 	pmove	a0@,srp			| load the supervisor root pointer
@@ -1827,7 +1827,7 @@ _getdfc:
 /*
  * Load a new user segment table pointer.
  */
-ENTRY(loadustp)       /* XXX - smurph */
+ENTRY(loadustp)       /* XXX - smuprh */
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr

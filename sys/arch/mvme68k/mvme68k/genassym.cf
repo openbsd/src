@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2001/03/12 07:38:29 smurph Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2001/04/05 20:39:38 deraadt Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -83,10 +83,6 @@ include <machine/prom.h>
 include <machine/pte.h>
 include <vm/vm.h>
 
-ifdef UVM
-include <uvm/uvm_extern.h>
-endif
-
 define	__XXX_BUG_FODDER	0
 
 # CPU options
@@ -132,12 +128,7 @@ define	SRUN			SRUN
 
 # interrupt/fault metering
 define	V_SWTCH			offsetof(struct vmmeter, v_swtch)
-
-ifdef UVM	
-define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
 define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 # trap types (should just include trap.h?)
 define	T_BUSERR		T_BUSERR

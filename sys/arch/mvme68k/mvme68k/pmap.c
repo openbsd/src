@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2001/03/12 07:38:32 smurph Exp $ */
+/*	$OpenBSD: pmap.c,v 1.17 2001/04/05 20:39:40 deraadt Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -133,9 +133,6 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-#if defined(UVM)
-#include <uvm/uvm.h>
-#endif
 
 #include <machine/cpu.h>
 
@@ -289,10 +286,6 @@ vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
 vm_map_t	st_map, pt_map;
-#if defined(UVM)
-struct vm_map	pt_map_store;
-#endif
-
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
@@ -437,9 +430,7 @@ pmap_init(phys_start, phys_end)
 	char		*attr;
 	int		bank;
 #endif
-#if defined(UVM)
-	vm_map_entry_t *out_entry_list;
-#endif 
+
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -453,30 +444,6 @@ pmap_init(phys_start, phys_end)
 	 * Now that kernel map has been allocated, we can mark as
 	 * unavailable regions which we have mapped in pmap_bootstrap().
 	 */
-#if defined(UVM)
-	addr = (vm_offset_t) intiobase;
-	if (uvm_map(kernel_map, &addr,
-		    m68k_ptob(iiomapsize+EIOMAPSIZE),
-		    NULL, UVM_UNKNOWN_OFFSET,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS)
-		goto bogons;
-	addr = (vm_offset_t) Sysmap;
-	if (uvm_map(kernel_map, &addr, M68K_MAX_PTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
-		/*
-		 * If this fails, it is probably because the static
-		 * portion of the kernel page table isn't big enough
-		 * and we overran the page table map.
-		 */
-bogons:
-		panic("pmap_init: bogons in the VM system!\n");
-	}
-#else
 	addr = (vm_offset_t) intiobase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
 			   &addr, m68k_ptob(iiomapsize+EIOMAPSIZE), FALSE);
@@ -494,7 +461,7 @@ bogons:
 	if (addr != (vm_offset_t)Sysmap)
 bogons:
 		panic("pmap_init: bogons in the VM system!");
-#endif
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %x, Sysmap %x, Sysptmap %x\n",
@@ -518,11 +485,7 @@ bogons:
 	s += page_cnt * sizeof(struct pv_entry);        /* pv table */
 	s += page_cnt * sizeof(char);                   /* attribute table */
 	s = round_page(s);
-#if defined(UVM)
-	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, s);
-#else
-	addr = (vm_offset_t)kmem_alloc(kernel_map, s);
-#endif
+	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
 
 	Segtabzero = (st_entry_t *) addr;
 	Segtabzeropa = (st_entry_t *) pmap_extract(pmap_kernel(), addr);
@@ -579,32 +542,17 @@ bogons:
 	 * Verify that space will be allocated in region for which
 	 * we already have kernel PT pages.
 	 */
-#if defined(UVM)
-	addr = 0;
-	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET,
-		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
-	if (rv != KERN_SUCCESS || (addr + s) >= (vm_offset_t)Sysmap)
-		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s);
-	if (rv != KERN_SUCCESS)
-		panic("pmap_init: uvm_unmap failed");
-#else
 	addr = 0;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
 	if (rv != KERN_SUCCESS || addr + s >= (vm_offset_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-#endif 
+	vm_map_remove(kernel_map, addr, addr + s);
 
 	/*
 	 * Now allocate the space and link the pages together to
 	 * form the KPT free list.
 	 */
-#if defined(UVM)
-	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, s);
-#else
-	addr = (vm_offset_t)kmem_alloc(kernel_map, s);
-#endif
+	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
 	s = ptoa(npages);
 	addr2 = addr + s;
 	kpt_pages = &((struct kpt_page *)addr2)[npages];
@@ -632,25 +580,6 @@ bogons:
 		       atop(s), addr, addr + s);
 #endif
 
-#if defined(UVM)
-        /*
-	 * Allocate the segment table map and the page table map.
-	 */
-	addr = M68K_PTBASE;
-	if ((M68K_PTMAXSIZE / M68K_MAX_PTSIZE) < maxproc) {
-		s = M68K_PTMAXSIZE;
-		/*
-		 * XXX We don't want to hang when we run out of
-		 * page tables, so we lower maxproc so that fork()
-		 * will fail instead.  Note that root could still raise
-		 * this value via sysctl(2).
-		 */
-		maxproc = (M68K_PTMAXSIZE / M68K_MAX_PTSIZE);;
-	} else
-		s = (maxproc * M68K_MAX_PTSIZE);
-	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, VM_MAP_PAGEABLE,
-				 TRUE, &pt_map_store);
-#else	
 	/*
 	 * Allocate the segment table map
 	 */
@@ -684,7 +613,6 @@ bogons:
 	rv = vm_map_submap(kernel_map, addr, addr2, pt_map);
 	if (rv != KERN_SUCCESS)
 		panic("pmap_init: cannot map range to pt_map");
-#endif
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pmap_init: pt_map [%x - %x)\n", addr, addr2);
@@ -716,15 +644,9 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
-#if defined(UVM)
-		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG);
-		if (pvp == 0)
-			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
-#else
 		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: kmem_alloc() failed");
-#endif
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; i; i--, pv++)
 			pv->pv_next = pv + 1;
@@ -767,11 +689,7 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-#if defined(UVM)
-		uvm_km_free(kernel_map, (vm_offset_t)pvp, NBPG);
-#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
-#endif
 		break;
 	}
 }
@@ -829,11 +747,7 @@ pmap_collect_pv()
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
-#if defined(UVM)
-		uvm_km_free(kernel_map, (vm_offset_t)pvp, NBPG);
-#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
-#endif
 	}
 }
 
@@ -982,21 +896,13 @@ pmap_release(pmap)
 	if (pmap->pm_count != 1)
 		panic("pmap_release count");
 #endif
-#if defined(UVM)
-	if (pmap->pm_ptab)
-		uvm_km_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
-				 M68K_MAX_PTSIZE);
-	if (pmap->pm_stab != Segtabzero)
-		uvm_km_free_wakeup(kernel_map, (vm_offset_t)pmap->pm_stab,
-				 M68K_STSIZE);
-#else
+
 	if (pmap->pm_ptab)
 		kmem_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
 				 M68K_MAX_PTSIZE);
 	if (pmap->pm_stab != Segtabzero)
-		kmem_free_wakeup(kernel_map, (vm_offset_t)pmap->pm_stab,
+		kmem_free_wakeup(st_map, (vm_offset_t)pmap->pm_stab,
 				 M68K_STSIZE);
-#endif
 }
 
 /*
@@ -1301,11 +1207,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 */
 	if (pmap->pm_ptab == NULL)
 		pmap->pm_ptab = (pt_entry_t *)
-#if defined(UVM)
-			uvm_km_valloc_wait(pt_map, M68K_MAX_PTSIZE);
-#else
 			kmem_alloc_wait(pt_map, M68K_MAX_PTSIZE);
-#endif
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
@@ -1384,13 +1286,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
-#if defined(UVM)
-		(void) uvm_map_pageable(pt_map, trunc_page(pte),
-					round_page(pte+1), FALSE);
-#else
 		(void) vm_map_pageable(pt_map, trunc_page(pte),
 				       round_page(pte+1), FALSE);
-#endif
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -2127,13 +2024,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * PT page.
 	 */
 	if (pmap != pmap_kernel()) {
-#if defined(UVM)
-		(void) uvm_map_pageable(pt_map, trunc_page(pte),
-					round_page(pte+1), TRUE);
-#else
 		(void) vm_map_pageable(pt_map, trunc_page(pte),
 				       round_page(pte+1), TRUE);
-#endif
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
 			pmap_check_wiring("remove", trunc_page(pte));
@@ -2234,15 +2126,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 					printf("remove: free stab %x\n",
 					       ptpmap->pm_stab);
 #endif
-#if defined(UVM)
-				uvm_km_free_wakeup(st_map,
-						   (vm_offset_t)ptpmap->pm_stab,
-						   M68K_STSIZE);
-#else
 				kmem_free_wakeup(st_map,
 						 (vm_offset_t)ptpmap->pm_stab,
 						 M68K_STSIZE);
-#endif
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
 #if defined(M68040) || defined(M68060)
@@ -2378,15 +2264,10 @@ pmap_changebit(pa, bit, setem)
 			 * XXX don't write protect pager mappings
 			 */
 			if (bit == PG_RO) {
-#if defined(UVM)
-				if (va >= uvm.pager_sva && va < uvm.pager_eva)
-					continue;
-#else
 				extern vm_offset_t pager_sva, pager_eva;
 
 				if (va >= pager_sva && va < pager_eva)
 					continue;
-#endif
 			}
 
 			pte = pmap_pte(pv->pv_pmap, va);
@@ -2461,12 +2342,8 @@ pmap_enter_ptpage(pmap, va)
 	 * reference count drops to zero.
 	 */
 	if (pmap->pm_stab == Segtabzero) {
-                pmap->pm_stab = (st_entry_t *)
-#if defined(UVM)
-			uvm_km_zalloc(st_map, M68K_STSIZE);
-#else
+		pmap->pm_stab = (st_entry_t *)
 			kmem_alloc(st_map, M68K_STSIZE);
-#endif
 		pmap->pm_stpa = (st_entry_t *)
 			pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_stab);
 #if defined(M68040) || defined(M68060)
@@ -2609,15 +2486,11 @@ pmap_enter_ptpage(pmap, va)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter: about to fault UPT pg at %x\n", va);
 #endif
-#if defined(UVM)
-		if (uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE)
-		    != KERN_SUCCESS)
-			panic("pmap_enter: uvm_fault failed");
-#else
-		if (vm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE)
-		    != KERN_SUCCESS)
+		s = vm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE);
+		if (s != KERN_SUCCESS) {
+			printf("vm_fault(pt_map, %x, RW, 0) -> %d\n", va, s);
 			panic("pmap_enter: vm_fault failed");
-#endif
+		}
 		ptpa = pmap_extract(pmap_kernel(), va);
 		/*
 		 * Mark the page clean now to avoid its pageout (and
@@ -2625,10 +2498,8 @@ pmap_enter_ptpage(pmap, va)
 		 * is wired; i.e. while it is on a paging queue.
 		 */
 		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_CLEAN;
-#if !defined(UVM)
 #ifdef DEBUG
-		PHYS_TO_VM_PAGE(ptpa)->flags |=  PG_PTPAGE;
-#endif
+		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_PTPAGE;
 #endif
 	}
 #if defined(M68040) || defined(M68060)
@@ -2763,17 +2634,11 @@ pmap_check_wiring(str, va)
 	if (!pmap_ste_v(pmap_kernel(), va) ||
 	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
 		return;
-#if defined(UVM)
-	if (!uvm_map_lookup_entry(pt_map, va, &entry)) {
-		printf("wired_check: entry for %lx not found\n", va);
-		return;
-	}
-#else
+
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
-		printf("wired_check: entry for %lx not found\n", va);
+		printf("wired_check: entry for %x not found\n", va);
 		return;
 	}
-#endif
 	count = 0;
 	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + NBPG); pte++)
 		if (*pte)
