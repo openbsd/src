@@ -219,13 +219,6 @@
 ./usr/include/dev/isa/wssvar.h
 ./usr/include/dev/isa/wtreg.h
 ./usr/include/dev/isa/ymvar.h
-./usr/include/dev/microcode
-./usr/include/dev/microcode/aic7xxx
-./usr/include/dev/microcode/aic7xxx/aic7xxx_reg.h
-./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
-./usr/include/dev/microcode/isp
-./usr/include/dev/microcode/isp/asm_pci.h
-./usr/include/dev/microcode/isp/asm_sbus.h
 ./usr/include/dev/midi_if.h
 ./usr/include/dev/midisynvar.h
 ./usr/include/dev/midivar.h

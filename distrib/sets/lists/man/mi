@@ -124,6 +124,8 @@
 ./usr/share/info/gzip.info
 ./usr/share/info/history.info
 ./usr/share/info/info-stnd.info
+./usr/share/info/info-stnd.info-1
+./usr/share/info/info-stnd.info-2
 ./usr/share/info/info.info
 ./usr/share/info/kth-krb.info
 ./usr/share/info/mmalloc.info
@@ -277,8 +279,10 @@
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
 ./usr/share/man/cat1/indxbib.0
+./usr/share/man/cat1/info.0
 ./usr/share/man/cat1/infocmp.0
 ./usr/share/man/cat1/infotocap.0
+./usr/share/man/cat1/install-info.0
 ./usr/share/man/cat1/install.0
 ./usr/share/man/cat1/intro.0
 ./usr/share/man/cat1/ipcrm.0
@@ -331,6 +335,7 @@
 ./usr/share/man/cat1/mailq.0
 ./usr/share/man/cat1/mailx.0
 ./usr/share/man/cat1/make.0
+./usr/share/man/cat1/makeinfo.0
 ./usr/share/man/cat1/md5.0
 ./usr/share/man/cat1/merge.0
 ./usr/share/man/cat1/mesg.0
@@ -517,6 +522,8 @@
 ./usr/share/man/cat1/tee.0
 ./usr/share/man/cat1/telnet.0
 ./usr/share/man/cat1/test.0
+./usr/share/man/cat1/texi2dvi.0
+./usr/share/man/cat1/texindex.0
 ./usr/share/man/cat1/tfmtodit.0
 ./usr/share/man/cat1/tftp.0
 ./usr/share/man/cat1/tic.0
@@ -583,6 +590,9 @@
 ./usr/share/man/cat1/zgrep.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
+./usr/share/man/cat2/fhopen.0
+./usr/share/man/cat2/fhstat.0
+./usr/share/man/cat2/fhstatfs.0
 ./usr/share/man/cat3p/AnyDBM_File.0
 ./usr/share/man/cat3p/AutoLoader.0
 ./usr/share/man/cat3p/AutoSplit.0
@@ -825,6 +835,7 @@
 ./usr/share/man/cat4/dc.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/de.0
+./usr/share/man/cat4/dpt.0
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/ec.0
@@ -839,6 +850,7 @@
 ./usr/share/man/cat4/ffs_softupdates.0
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/fxp.0
+./usr/share/man/cat4/gdt.0
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/hp300/autoconf.0
 ./usr/share/man/cat4/hp300/cons.0
@@ -1064,6 +1076,7 @@
 ./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/tx.0
 ./usr/share/man/cat4/txphy.0
+./usr/share/man/cat4/uaudio.0
 ./usr/share/man/cat4/udp.0
 ./usr/share/man/cat4/ugen.0
 ./usr/share/man/cat4/uhid.0
@@ -1127,6 +1140,7 @@
 ./usr/share/man/cat4/wb.0
 ./usr/share/man/cat4/wd.0
 ./usr/share/man/cat4/we.0
+./usr/share/man/cat4/wx.0
 ./usr/share/man/cat4/xl.0
 ./usr/share/man/cat4/ym.0
 ./usr/share/man/cat4/zero.0
@@ -1168,6 +1182,7 @@
 ./usr/share/man/cat5/hosts_access.0
 ./usr/share/man/cat5/hosts_options.0
 ./usr/share/man/cat5/inetd.0
+./usr/share/man/cat5/info.0
 ./usr/share/man/cat5/inode.0
 ./usr/share/man/cat5/intro.0
 ./usr/share/man/cat5/ipf.0
@@ -1210,6 +1225,7 @@
 ./usr/share/man/cat5/term.0
 ./usr/share/man/cat5/termcap.0
 ./usr/share/man/cat5/terminfo.0
+./usr/share/man/cat5/texinfo.0
 ./usr/share/man/cat5/ttys.0
 ./usr/share/man/cat5/types.0
 ./usr/share/man/cat5/tzfile.0
@@ -1252,6 +1268,12 @@
 ./usr/share/man/cat8/afsd.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
+./usr/share/man/cat8/amiga/binpatch.0
+./usr/share/man/cat8/amiga/grfconfig.0
+./usr/share/man/cat8/amiga/installboot.0
+./usr/share/man/cat8/amiga/iteconfig.0
+./usr/share/man/cat8/amiga/loadbsd.0
+./usr/share/man/cat8/amiga/loadkmap.0
 ./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/apachectl.0
@@ -1529,6 +1551,7 @@
 ./usr/share/man/cat8/timed.0
 ./usr/share/man/cat8/timedc.0
 ./usr/share/man/cat8/traceroute.0
+./usr/share/man/cat8/traceroute6.0
 ./usr/share/man/cat8/trpt.0
 ./usr/share/man/cat8/trsp.0
 ./usr/share/man/cat8/ttyflags.0
@@ -1536,6 +1559,7 @@
 ./usr/share/man/cat8/umount.0
 ./usr/share/man/cat8/update.0
 ./usr/share/man/cat8/updatedb.0
+./usr/share/man/cat8/usbdevs.0
 ./usr/share/man/cat8/uucico.0
 ./usr/share/man/cat8/uucpd.0
 ./usr/share/man/cat8/uuxqt.0
@@ -1619,25 +1643,3 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat8/usbdevs.0
-./usr/share/man/cat4/wx.0
-./usr/share/man/cat8/amiga/binpatch.0
-./usr/share/man/cat8/amiga/grfconfig.0
-./usr/share/man/cat8/amiga/installboot.0
-./usr/share/man/cat8/amiga/iteconfig.0
-./usr/share/man/cat8/amiga/loadbsd.0
-./usr/share/man/cat8/amiga/loadkmap.0
-./usr/share/man/cat4/uaudio.0
-./usr/share/man/cat8/traceroute6.0
-./usr/share/man/cat5/info.0
-./usr/share/man/cat5/texinfo.0
-./usr/share/man/cat2/fhopen.0
-./usr/share/man/cat2/fhstat.0
-./usr/share/man/cat2/fhstatfs.0
-./usr/share/man/cat1/texi2dvi.0
-./usr/share/man/cat1/texindex.0
-./usr/share/man/cat1/makeinfo.0
-./usr/share/man/cat1/install-info.0
-./usr/share/man/cat1/info.0
-./usr/share/info/info-stnd.info-1
-./usr/share/info/info-stnd.info-2
