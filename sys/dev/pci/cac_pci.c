@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_pci.c,v 1.7 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.8 2001/12/31 21:11:01 mickey Exp $	*/
 /*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -171,6 +171,7 @@ cac_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t reg;
+	bus_size_t size;
 	int memr, ior, i;
 
 	sc = (struct cac_softc *)self;
@@ -198,14 +199,14 @@ cac_pci_attach(parent, self, aux)
 
 	if (memr != -1) {
 		if (pci_mapreg_map(pa, memr, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0))
+		    &sc->sc_iot, &sc->sc_ioh, NULL, &size, 0))
 			memr = -1;
 		else
 			ior = -1;
 	}
 	if (ior != -1)
 		if (pci_mapreg_map(pa, ior, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0))
+		    &sc->sc_iot, &sc->sc_ioh, NULL, &size, 0))
 			ior = -1;
 	if (memr == -1 && ior == -1) {
 		printf("%s: can't map i/o or memory space\n", self->dv_xname);
@@ -222,6 +223,7 @@ cac_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -232,6 +234,7 @@ cac_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		return;
 	}
 
