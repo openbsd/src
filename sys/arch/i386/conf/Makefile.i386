@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.i386,v 1.64 1996/02/09 02:21:25 mycroft Exp $
+#	$OpenBSD: Makefile.i386,v 1.6 1996/04/18 18:55:36 niklas Exp $
+#	$NetBSD: Makefile.i386,v 1.66 1996/02/29 20:56:16 cgd Exp $
 
 # Makefile for NetBSD
 #
@@ -21,13 +22,12 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS=	as
-AWK=	awk
-CC=	cc
-CPP=	cpp
-LD=	ld
-STRIP=	strip -d
-TOUCH=	touch -f -c
+AS?=	as
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..

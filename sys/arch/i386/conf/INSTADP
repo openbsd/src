@@ -1,3 +1,4 @@
+#	$OpenBSD: INSTADP,v 1.5 1996/04/18 18:55:36 niklas Exp $
 #	$NetBSD: INSTADP,v 1.3 1995/12/14 01:10:12 tls Exp $
 #
 #	INSTADP -- like GENERICADP.  This supports only Adaptec SCSI
@@ -14,6 +15,11 @@ options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
 
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
+
 #options	DUMMY_NOPS	# speed hack; recommended
 options		MACHINE_NONCONTIG
 
@@ -26,8 +32,6 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options		DIAGNOSTIC	# internally consistency checks
-options		KTRACE		# system call tracing, a la ktrace(1)
 
 options		COMPAT_10	# NetBSD 1.0,
 
@@ -48,8 +52,14 @@ options		INET		# IP + ICMP + TCP + UDP
 config		bsd	swap generic
 options		GENERIC
 
-isa0	at root
-pci0	at root
+mainbus0 at root
+
+isa0	at mainbus0
+eisa0	at mainbus0
+pci0	at mainbus0
+
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
@@ -61,7 +71,7 @@ com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
 #ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#com*	at ast? slave ? flags 1
+#com*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
@@ -76,9 +86,9 @@ lpt2	at isa? port 0x3bc
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
-ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
-ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 ahe0	at isa? port 0x1c00 irq ?	# Adaptec 284x SCSI controllers
 scsibus* at ahe?
@@ -108,9 +118,9 @@ el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
-le*	at pci? bus ? dev ?			# PCnet-PCI based ethernet cards
-de*	at pci? bus ? dev ?			# DC21X4X-based ethernet cards
-ep*	at pci? bus ? dev ?			# 3C590 ethernet cards
+le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP

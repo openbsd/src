@@ -1,9 +1,10 @@
-#	$NetBSD: files.i386,v 1.61 1996/01/08 13:51:30 mycroft Exp $
+#	$OpenBSD: files.i386,v 1.9 1996/04/18 18:55:38 niklas Exp $
+#	$NetBSD: files.i386,v 1.66 1996/03/16 06:09:16 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
 
-# maxpartitions must be first item in files.${ARCH}.newconf
+# maxpartitions must be first item in files.${ARCH}
 maxpartitions 8
 
 maxusers 2 16 64
@@ -44,15 +45,22 @@ major	{cd = 6}
 # System bus types
 #
 
-device	isa at root {[port = -1], [size = 0],
-		     [iomem = -1], [iosiz = 0],
-		     [irq = -1], [drq = -1]}
-#device	eisa at root {...}
-device	pci at root {[bus = -1], [dev = -1]}
+device mainbus at root: isabus, eisabus, pcibus
+file	arch/i386/i386/mainbus.c	mainbus
+
 #device	mca at root {...}
 
 #
-# ISA and mixed ISA+EISA or ISA+PCI drivers
+# PCI-only drivers
+# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
+# XXX devices to 'pci'.
+#
+
+include "../../../dev/pci/files.pci"
+file	arch/i386/pci/pci_machdep.c	pci
+
+#
+# ISA and mixed ISA+EISA or ISA+PCI or ISA+PCMCIA drivers
 #
 
 major	{mcd = 7}
@@ -60,6 +68,11 @@ major	{mcd = 7}
 major	{wd = 0}
 major	{wt = 3}
 
+#define pcic here until config issues are resolved
+#device pcic at isa: pcmciabus
+#file	dev/isa/pcmcia_pcic.c		pcic
+
+include "../../../dev/isa/files.isa"
 file	arch/i386/isa/isa_machdep.c	isa
 
 # PC clock
@@ -86,20 +99,12 @@ file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
-#define pcic here until config issues are resolved
-device pcic at isa
-file	dev/isa/pcmcia_pcic.c		pcic pcmciabus
-device	pcmciabus at isa {[port = -1], [size = 0],
-		[iomem = -1], [iosiz = 0],
-		[irq = -1], [drq = -1]}
-include "../../../dev/isa/files.isa"
-
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	lms at isa
 file	arch/i386/isa/lms.c		lms needs-flag
 device	mms at isa
 file	arch/i386/isa/mms.c		mms needs-flag
-device	pms at isa
+device	pms at pckbd
 file	arch/i386/isa/pms.c		pms needs-flag
 
 # Floppy disk controller
@@ -121,7 +126,7 @@ file	dev/isa/if_le.c			le
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 # XXX conflicts with other ports; can't be in files.isa
-device	ed at isa, pcmciabus: ether, ifnet
+device	ed at isa: ether, ifnet
 file	dev/isa/if_ed.c			ed needs-flag
 
 # Game adapter (joystick)
@@ -133,20 +138,6 @@ file	arch/i386/isa/joy.c			joy needs-flag
 #
 
 include "../../../dev/eisa/files.eisa"
-# XXX not yet:
-# file	arch/i386/eisa/eisa_machdep.c	eisa
-
-#
-# PCI-only drivers
-#
-
-include "../../../dev/pci/files.pci"
-file	arch/i386/pci/pci_machdep.c	pci
-
-#
-# Pcmcia
-#
-include "../../../dev/pcmcia/files.pcmcia"
 
 #
 # Compatibility modules

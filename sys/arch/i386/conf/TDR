@@ -1,4 +1,5 @@
-#	$NetBSD: TDR,v 1.54 1995/08/22 19:43:28 jtc Exp $
+#	$OpenBSD: TDR,v 1.5 1996/04/18 18:55:37 niklas Exp $
+#	$NetBSD: TDR,v 1.62 1996/03/16 06:09:12 thorpej Exp $
 #
 #	TDR -- Theo Deraadt's 486
 #
@@ -9,6 +10,11 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
@@ -23,7 +29,7 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 #options	DDB		# in-kernel debugger
-#options	DIAGNOSTIC	# internally consistency checks
+#options	DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 #options	SYSVMSG		# System V-like message queues
@@ -71,8 +77,14 @@ options		INET		# IP + ICMP + TCP + UDP
 config		bsd	root on sd0 swap on sd0 and sd1 and wd0
 #options	GENERIC
 
-isa0	at root
-#pci0	at root
+mainbus0 at root
+
+isa0	at mainbus0
+#eisa0	at mainbus0
+#pci0	at mainbus0
+
+#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+#pci*	at ppb? bus ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
@@ -85,7 +97,7 @@ com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 #com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
 ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-com*	at ast? slave ? flags 1
+com*	at ast? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 
@@ -99,12 +111,12 @@ com*	at ast? slave ? flags 1
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
+#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #scsibus* at aha?
-#ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+#ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
 #aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
@@ -112,7 +124,7 @@ bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt2	at isa? port ? irq ?
 scsibus* at bt?
-#ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
+#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5
 #scsibus* at sea?
@@ -149,7 +161,7 @@ ep2	at isa? port ? irq ?
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#spkr0	at isa? ...
+#spkr0	at isa? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 16		# packet filter
