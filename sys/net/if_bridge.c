@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.105 2002/12/09 10:11:52 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.106 2002/12/09 22:32:01 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2250,7 +2250,7 @@ bridge_ipsec(dir, af, hlen, m)
 			 * We don't need to do loop detection, the
 			 * bridge will do that for us.
 			 */
-#if NFP > 0
+#if NPF > 0
 			switch (af) {
 #ifdef INET
 			case AF_INET:
