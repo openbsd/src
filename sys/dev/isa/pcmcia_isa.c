@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_isa.c,v 1.5 1996/10/17 21:43:52 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_isa.c,v 1.6 1996/10/17 21:45:28 niklas Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -156,8 +156,8 @@ pcmcia_isa_probe(parent, match, aux, pc_link)
 	printf("devname = %s\n", dev->dv_xname);
 	printf("driver name = %s\n", cf->cf_driver->cd_name);
 #endif
-	if (probe == NULL ? (*cf->cf_attach->ca_match)(parent, dev, &ia) :
-	    (*probe)(parent, dev, &ia, pc_link) > 0) {
+	if ((probe == NULL ? (*cf->cf_attach->ca_match)(parent, dev, &ia) :
+	    (*probe)(parent, dev, &ia, pc_link)) > 0) {
 		config_attach(parent, dev, &ia, isaprint);
 #ifdef PCMCIA_ISA_DEBUG
 		printf("biomask %x netmask %x ttymask %x\n",
