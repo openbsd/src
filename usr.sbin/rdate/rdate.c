@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.8 1997/02/06 15:00:27 kstailey Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.9 1997/04/04 08:59:41 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.8 1997/02/06 15:00:27 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.9 1997/04/04 08:59:41 deraadt Exp $";
 #endif
 #endif				/* lint */
 
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: rdate.c,v 1.8 1997/02/06 15:00:27 kstailey Exp 
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <util.h>
 #include <time.h>
 
 /* seconds from midnight Jan 1900 - 1970 */
@@ -150,21 +151,23 @@ main(argc, argv)
 	tim = ntohl(tim) - DIFFERENCE;
 
 	if (!pr) {
-	    struct timeval  tv;
-	    if (!slidetime) {
-		    tv.tv_sec = tim;
-		    tv.tv_usec = 0;
-		    if (settimeofday(&tv, NULL) == -1)
-			    err(1, "Could not set time of day");
-	    } else {
-		    struct timeval tv_current;
-		    if (gettimeofday(&tv_current, NULL) == -1)
-			    err(1, "Could not get local time of day");
-		    adjustment = tv.tv_sec = tim - tv_current.tv_sec;
-		    tv.tv_usec = 0;
-		    if (adjtime(&tv, NULL) == -1)
-			    err(1, "Could not adjust time of day");
-	    }
+		struct timeval  tv;
+		if (!slidetime) {
+			logwtmp("|", "date", "");
+			tv.tv_sec = tim;
+			tv.tv_usec = 0;
+			if (settimeofday(&tv, NULL) == -1)
+				err(1, "Could not set time of day");
+			logwtmp("{", "date", "");
+		} else {
+			struct timeval tv_current;
+			if (gettimeofday(&tv_current, NULL) == -1)
+				err(1, "Could not get local time of day");
+			adjustment = tv.tv_sec = tim - tv_current.tv_sec;
+			tv.tv_usec = 0;
+			if (adjtime(&tv, NULL) == -1)
+				err(1, "Could not adjust time of day");
+		}
 	}
 
 	if (!silent) {
@@ -176,9 +179,9 @@ main(argc, argv)
 		(void) fputs(buf, stdout);
 
 		if (slidetime)
-		    (void) fprintf(stdout, 
-				   "%s: adjust local clock by %d seconds\n",
-				   __progname, adjustment);
+			(void) fprintf(stdout, 
+			   "%s: adjust local clock by %d seconds\n",
+			   __progname, adjustment);
 	}
 	return 0;
 }

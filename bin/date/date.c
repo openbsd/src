@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.2 1996/06/23 14:19:42 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.3 1997/04/04 08:59:38 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.2 1996/06/23 14:19:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.3 1997/04/04 08:59:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$OpenBSD: date.c,v 1.2 1996/06/23 14:19:42 deraadt Exp $"
 #include <locale.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "extern.h"
 
@@ -69,8 +70,6 @@ int retval, nflag;
 static void setthetime __P((char *));
 static void badformat __P((void));
 static void usage __P((void));
-
-int logwtmp __P((char *, char *, char *));
 
 int
 main(argc, argv)
