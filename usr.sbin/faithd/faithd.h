@@ -1,5 +1,5 @@
-/*	$OpenBSD: faithd.h,v 1.7 2002/02/16 21:28:02 millert Exp $	*/
-/*	$KAME: faithd.h,v 1.7 2001/07/02 14:36:48 itojun Exp $	*/
+/*	$OpenBSD: faithd.h,v 1.8 2002/05/09 14:12:17 itojun Exp $	*/
+/*	$KAME: faithd.h,v 1.9 2002/05/09 09:41:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -37,8 +37,6 @@ extern void tcp_relay(int, int, const char *);
 extern void ftp_relay(int, int);
 extern int ftp_active(int, int, int *, int *);
 extern int ftp_passive(int, int, int *, int *);
-extern void rsh_relay(int, int);
-extern void rsh_dual_relay(int, int);
 extern void exit_success(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 extern void exit_failure(const char *, ...)

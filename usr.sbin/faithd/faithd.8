@@ -1,5 +1,5 @@
-.\"	$OpenBSD: faithd.8,v 1.20 2002/05/06 23:34:33 millert Exp $
-.\"	$KAME: faithd.8,v 1.31 2001/06/30 00:57:01 itojun Exp $
+.\"	$OpenBSD: faithd.8,v 1.21 2002/05/09 14:12:17 itojun Exp $
+.\"	$KAME: faithd.8,v 1.36 2002/05/09 13:59:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -115,7 +115,6 @@ at
 .Pa http://www.vermicelli.pasta.cs.uit.no/ipv6/software.html .
 Make sure you do not propagate translated DNS records to normal DNS cloud,
 it is highly harmful.
-.Pp
 .\".Ss Daemon mode
 When
 .Nm
@@ -170,8 +169,6 @@ Use privileged TCP port number as source port,
 for IPv4 TCP connection toward final destination.
 For relaying
 .Xr ftp 1
-and
-.Xr rsh 1 ,
 this flag is not necessary as special program code is supplied.
 .El
 .Pp
@@ -180,9 +177,7 @@ will relay both normal and out-of-band TCP data.
 It is capable of emulating TCP half close as well.
 .Nm
 includes special support for protocols used by
-.Xr ftp 1
-and
-.Xr rsh 1 .
+.Xr ftp 1 .
 When translating FTP protocol,
 .Nm
 translates network level addresses in
@@ -190,13 +185,6 @@ translates network level addresses in
 and
 .Li PASV/LPSV/EPSV
 commands.
-For RLOGIN protocol,
-.Nm
-will relay back connection from
-.Nm rlogind
-on the server to
-.Nm rlogin
-on client.
 .Pp
 Inactive sessions will be disconnected in 30 minutes,
 to avoid stale sessions from chewing up resources.
@@ -244,9 +232,12 @@ permit the connection.
 .Pp
 The directives are evaluated in sequence,
 and the first matching entry will be effective.
+If there is no match
+.Pq if we reach the end of the ruleset
+the traffic will be denied.
 .\".Pp
 .\"With inetd mode,
-.\"traffic may be filtered by using access control functionality in 
+.\"traffic may be filtered by using access control functionality in
 .\".Xr inetd 8 .
 .Sh EXAMPLES
 Before invoking
@@ -261,7 +252,6 @@ interface has to be configured properly.
 # route add -inet6 3ffe:501:4819:ffff:: -prefixlen 96 ::1
 # route change -inet6 3ffe:501:4819:ffff:: -prefixlen 96 -ifp faith0
 .Ed
-.Pp
 .\".Ss Daemon mode samples
 To translate
 .Li telnet
@@ -289,18 +279,11 @@ If you would like to pass extra arguments to the local daemon:
 Here are some other examples.
 You may need
 .Fl p
-to translate rsh/rlogin services.
+if the service checks the source port range.
 .Bd -literal -offset
 # faithd ssh
-# faithd login /usr/libexec/rlogin rlogind
-# faithd shell /usr/libexec/rshd rshd
+# faithd telnet /usr/libexec/telnetd telnetd
 .Ed
-.Pp
-However, you should be careful when translating rlogin or rsh
-connections.
-See
-.Sx SECURITY CONSIDERATIONS
-for more details.
 .Ss Access control samples
 The following illustrates a simple
 .Pa faithd.conf
@@ -343,9 +326,7 @@ The
 command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh SECURITY CONSIDERATIONS
-It is very insecure to use
-.Xr rhosts 5
-and other IP-address based authentication, for connections relayed by
+It is very insecure to use IP-address based authentication, for connections relayed by
 .Nm Ns ,
 and any other TCP relaying services.
 .Pp

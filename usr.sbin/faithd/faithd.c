@@ -1,5 +1,5 @@
-/*	$OpenBSD: faithd.c,v 1.18 2002/02/16 21:28:02 millert Exp $	*/
-/*	$KAME: faithd.c,v 1.40 2001/07/02 14:36:48 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.19 2002/05/09 14:12:17 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.50 2002/05/09 14:06:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -439,7 +439,9 @@ again:
 		len = sizeof(srcaddr);
 		s_src = accept(s_wld, (struct sockaddr *)&srcaddr,
 			&len);
-		if (s_src == -1) {
+		if (s_src < 0) {
+			if (errno == ECONNABORTED)
+				goto again;
 			exit_failure("socket: %s", strerror(errno));
 			/*NOTREACHED*/
 		}
@@ -469,9 +471,9 @@ play_child(int s_src, struct sockaddr *srcaddr)
 {
 	struct sockaddr_storage dstaddr6;
 	struct sockaddr_storage dstaddr4;
-	char src[MAXHOSTNAMELEN];
-	char dst6[MAXHOSTNAMELEN];
-	char dst4[MAXHOSTNAMELEN];
+	char src[NI_MAXHOST];
+	char dst6[NI_MAXHOST];
+	char dst4[NI_MAXHOST];
 	int len = sizeof(dstaddr6);
 	int s_dst, error, hport, nresvport, on = 1;
 	struct timeval tv;
@@ -574,18 +576,10 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	else /* AF_INET */
 		hport = ntohs(((struct sockaddr_in *)&dstaddr4)->sin_port);
 
-	switch (hport) {
-	case RLOGIN_PORT:
-	case RSH_PORT:
+	if (pflag)
 		s_dst = rresvport_af(&nresvport, sa4->sa_family);
-		break;
-	default:
-		if (pflag)
-			s_dst = rresvport_af(&nresvport, sa4->sa_family);
-		else
-			s_dst = socket(sa4->sa_family, SOCK_STREAM, 0);
-		break;
-	}
+	else
+		s_dst = socket(sa4->sa_family, SOCK_STREAM, 0);
 	if (s_dst < 0) {
 		exit_failure("socket: %s", strerror(errno));
 		/*NOTREACHED*/
@@ -626,15 +620,6 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	case FTP_PORT:
 		ftp_relay(s_src, s_dst);
 		break;
-	case RSH_PORT:
-		syslog(LOG_WARNING,
-		    "WARINNG: it is insecure to relay rsh port");
-		rsh_relay(s_src, s_dst);
-		break;
-	case RLOGIN_PORT:
-		syslog(LOG_WARNING,
-		    "WARINNG: it is insecure to relay rlogin port");
-		/*FALLTHROUGH*/
 	default:
 		tcp_relay(s_src, s_dst, service);
 		break;
