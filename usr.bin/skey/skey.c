@@ -1,4 +1,4 @@
-/* * $OpenBSD: skey.c,v 1.3 1996/09/27 15:41:36 millert Exp $*/
+/* * $OpenBSD: skey.c,v 1.4 1996/09/29 04:33:58 millert Exp $*/
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -59,8 +59,18 @@ main(argc, argv)
 		}
 	}
 
-	/* could be in the form <number>/<seed> */
+	/* check for md4/md5 argument */
+	if (argv[optind]) {
+		if (strcmp(argv[optind], "MD4") == 0) {
+			skey_set_MDX(4);
+			optind++;
+		} else if (strcmp(argv[optind], "MD5") == 0) {
+			skey_set_MDX(5);
+			optind++;
+		}
+	}
 
+	/* could be in the form <number>/<seed> */
 	if (argc <= optind + 1) {
 		/* look for / in it */
 		if (argc <= optind)
@@ -118,6 +128,6 @@ void
 usage(s)
 	char   *s;
 {
-	(void)fprintf(stderr, "Usage: %s [-x] [-4|-5] [-n count] [-p password ] sequence# [/] key", s);
+	(void)fprintf(stderr, "Usage: %s [-x] [-4|-5] [-n count] [-p password] [MD4|MD5] sequence# [/] key", s);
 	exit(1);
 }

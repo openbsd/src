@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.6 1996/09/28 17:35:25 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.7 1996/09/29 04:34:08 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -47,7 +47,7 @@ main(argc, argv)
 	char	hostname[MAXHOSTNAMELEN];
 	char    seed[18], tmp[80], key[8], defaultseed[17];
 	char    passwd[256], passwd2[256], tbuf[27], buf[60];
-	char    lastc, me[UT_NAMESIZE], *salt, *p, *pw;
+	char    lastc, me[UT_NAMESIZE+1], *salt, *p, *pw;
 	struct skey skey;
 	struct passwd *pp;
 	struct tm *tm;
@@ -90,9 +90,23 @@ main(argc, argv)
 				break;
 		}
 	}
+
+	/* check for md4/md5 argument */
+	if (argv[optind]) {
+		if (strcmp(argv[optind], "MD4") == 0) {
+			md = 4;
+			optind++;
+		} else if (strcmp(argv[optind], "MD5") == 0) {
+			md = 5;
+			optind++;
+		}
+	}
+
+	/* check for optional user string */
 	if (argc - optind  > 1) {
 		(void)fprintf(stderr,
-			"Usage: %s [-s] [-x] [-z] [-4|-5] [user]\n", argv[0]);
+			"Usage: %s [-s] [-x] [-z] [-4|-5] [MD4|MD5] [user]\n",
+			argv[0]);
 		exit(1);
 	} else if (argv[optind]) {
 		if ((pp = getpwnam(argv[optind])) == NULL)
@@ -194,7 +208,7 @@ main(argc, argv)
 			if (i >= 2)
 				exit(1);
 
-			(void)printf("s/key %d %s\ns/key access password: ",
+			(void)printf("skey %d %s\nskey access password: ",
 			    n, seed);
 			(void)fgets(tmp, sizeof(tmp), stdin);
 			rip(tmp);
@@ -260,7 +274,7 @@ main(argc, argv)
 	(void)fprintf(skey.keyfile, "%s MD%d %04d %-16s %s %-21s\n",
 	    pp->pw_name, skey_get_MDX(), n, seed, skey.val, tbuf);
 	(void)fclose(skey.keyfile);
-	(void)printf("\nID %s s/key is %d %s\n", pp->pw_name, n, seed);
+	(void)printf("\nID %s skey is %d %s\n", pp->pw_name, n, seed);
 	(void)printf("Next login password: %s\n", hexmode ? put8(buf, key) : btoe(buf, key));
 
 	exit(0);
