@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.26 1997/06/04 11:03:15 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.27 1997/06/04 11:07:05 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.26 1997/06/04 11:03:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.27 1997/06/04 11:07:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -379,7 +379,7 @@ main(argc, argv, envp)
 	    if ((n = select(maxsock + 1, &readable, (fd_set *)0,
 		(fd_set *)0, (struct timeval *)0)) <= 0) {
 		    if (n < 0 && errno != EINTR)
-			syslog(LOG_WARNING, "select: %m\n");
+			syslog(LOG_WARNING, "select: %m");
 		    sleep(1);
 		    continue;
 	    }
@@ -431,7 +431,7 @@ main(argc, argv, envp)
 					sep->se_count = 1;
 				} else {
 					syslog(LOG_ERR,
-			"%s/%s server failing (looping), service terminated\n",
+			"%s/%s server failing (looping), service terminated",
 					    sep->se_service, sep->se_proto);
 					FD_CLR(sep->se_fd, &allsock);
 					(void) close(sep->se_fd);
@@ -908,7 +908,7 @@ unregister_rpc(sep)
 			fprintf(stderr, "pmap_unset(%u, %u)\n",
 			    sep->se_rpcprog, n);
 		if (!pmap_unset(sep->se_rpcprog, n))
-			syslog(LOG_ERR, "pmap_unset(%u, %u)\n",
+			syslog(LOG_ERR, "pmap_unset(%u, %u)",
 			    sep->se_rpcprog, n);
 	}
 }
@@ -1080,7 +1080,7 @@ more:
 			    strcmp(bi->bi_service, sep->se_service) == 0)
 				break;
 		if (bi->bi_service == 0) {
-			syslog(LOG_ERR, "internal service %s unknown\n",
+			syslog(LOG_ERR, "internal service %s unknown",
 				sep->se_service);
 			goto more;
 		}
