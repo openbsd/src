@@ -1,4 +1,4 @@
-#	$OpenBSD: USBMAC,v 1.3 2000/08/07 18:51:22 deraadt Exp $
+#	$OpenBSD: USBMAC,v 1.4 2000/09/06 02:41:59 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -13,6 +13,9 @@ option		SYS_TYPE=APPL
 
 option		FIREPOWERBUGS
 options		PPC_MPC106_BUG
+option           PCIVERBOSE
+
+option		WSEMUL_VT100
 
 include "../../../conf/GENERIC"
 
@@ -41,7 +44,7 @@ ncr*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
 #vme*		at pci? dev ? function ?
 #vga*		at pci? dev ? function ?	# PCI VGA graphics 
-#vgafb0		at pci? dev ? function ?	# PCI VGA graphics 
+vgafb0		at pci? dev ? function ?	# PCI VGA graphics 
 #ep*		at pci? dev ? function ?        # 3Com 3c59x
 #ne*		at pci? dev ? function ?        # NE2000-compatible Ethernet
 #adv*	at pci? dev ? function ?        # AdvanSys 1200[A,B], 9xx[U,UA] SCSI
@@ -76,7 +79,7 @@ bm*     at obio?                        # bmac ethernet
 #esp*    at obio? flags 0x00ff           # 53c9x SCSI
 #mesh*   at obio? flags 0xffff           # MESH SCSI
 #nvram*  at obio?                        # nvram
-#adb*    at obio?                        # Apple Desktop Bus
+adb*    at obio?                        # Apple Desktop Bus
 #aed*    at adb?                         # ADB Event Device
 #akbd*   at adb?                         # ADB keyboard
 #ams*    at adb?                         # ADB mouse
@@ -105,15 +108,18 @@ atapiscsi* at wdc? channel ? flags 0x0000
 scsibus* at atapiscsi?
 
 # PCI USB Controllers
-ohci*	at pci?				# Open Host Controller
+ohci*	at pci? 	# Open Host Controller
 
 # USB bus support
-usb*	at ohci?
+usb*	at ohci? flags 0x1
 uhub*	at usb?
 uhub*  at uhub? port ? configuration ? interface ?
 
 # USB Generic HID devices
 uhid*  at uhub? port ? configuration ? interface ?
+
+# USB HID Keyboard devices
+ukbd*  at uhub? port ? configuration ? interface ?
 
 # USB Generic driver
 ugen*  at uhub? port ? configuration ? interface ?
@@ -135,8 +141,9 @@ ugen*  at uhub? port ? configuration ? interface ?
 
 #### Workstation Console attachments
 
-#wscons*		at vga?
-#wscons*		at vgafb?
+#wsdisplay*	at vga?
+wsdisplay*	at vgafb?
+wskbd0		at ukbd? console 0
 
 #### SCSI Bus devices
  
@@ -154,4 +161,3 @@ ofrtc*		at openfirm?
 #ofdisk*		at openfirm?	 # used for floppy support
 #ofnet*		at openfirm?
 ofcons*	at openfirm?
-
