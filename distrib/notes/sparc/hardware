@@ -7,7 +7,8 @@ OpenBSD/sparc 2.1 runs on the following classes of machines:
 OpenBSD/sparc 2.1 does NOT run on these machines (yet):
 	- Sun 4/400 (lacking support for the I/O cache, and has
 			ethernet problems)
-	- sun4d (e.g. sparc center 2000)
+	- sun4m 4/6XX (may work, but un-tested)
+	- sun4d (e.g. SPARCcenter 2000, SPARCserver 1000)
 	- sun4u (e.g. Ultrasparcs)
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
@@ -15,7 +16,7 @@ To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended.  (OpenBSD with 4M of
 RAM feels like Solaris with 4M of RAM.) Note that until you have
 around 16M of RAM, getting more RAM is more important than getting a
-faster CPU.)
+faster CPU.)  Installation from "ramdisk" kernels requries 8M of RAM.
 
 Supported devices include:
 	sun4c and sun4m SBus video: 
@@ -73,18 +74,29 @@ about:
         SBus ZX framebuffer (aka Leo)
         S24 (ss5 only) framebuffer
 
-*** Note: sun4m caveats
-  There are some known difficulties with some configurations of 
-sun4m machines.  While the details have not been worked out fully,
-tests show that there are problems with some sun4m systems, depending
-on memory configuration and other factors.  The supplied GENERIC kernel
-is the best attempt at a configuration that works on the widest range of
-machinery (sun4m and otherwise).  Custom kernel configurations for sun4m
-may run into difficulties, GENERIC is your best bet for a stable sun4m. 
-Stability of the sun4m support in OpenBSD is improving, if you have
-problems with the kernel supplied in this OpenBSD 2.1 release, 
-visit the OpenBSD web page (http://www.openbsd.org/), use sendbug,
-and get on the openbsd mailing lists for current information.
 
+*** Note: sun4m and general sparc caveats
+
+As of of the OpenBSD 2.1 release there are still some outstanding problems
+with OpenBSD on the various Sparc architectures.  The sun4m architecture,
+particularly the Viking/SuperSPARC implementations, is probably the least
+stable and is also lacking useful floppy/audio support.  
+
+The supplied GENERIC kernel is the best attempt at a configuration that
+works on the widest range of machinery (sun4m and otherwise).  Custom
+kernel configurations for sun4m may run into difficulties, as of release
+GENERIC is your best bet for a stable sun4m kernel.
+
+There are a number of people actively working on improving the stability
+of OpenBSD/sparc in the sun4m area.  If you have problems with the
+OpenBSD 2.1 kernel in this distribution, please visit the OpenBSD web
+page (http://www.openbsd.org) and the mailing lists to review the current
+status and check for updates.
+
+Your support in terms of documenting previously unknown problems with
+OpenBSD/sparc, helping debug known problems, implementng missing pieces,
+and testing OpenBSD on various architectures is actively encouraged.
+The OpenBSD mailing lists, web-pages and sendbug utility are your best
+tools for helping make OpenBSD/sparc a better release.
 
 
