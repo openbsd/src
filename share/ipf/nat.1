@@ -1,3 +1,5 @@
+			  nat.rules examples
+
 # map all tcp connections from network 10 to the address of the first ppp0
 # interface (which can be dynamically assigned prior to use of ipnat)
 map ppp0 10.0.0.0/8 -> ppp0/32 portmap tcp/udp 10000:20000
