@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 2001/12/07 16:30:20 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 2001/12/07 19:09:00 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -100,8 +100,6 @@ extern u_int64_t cpu_clockrate;
 struct rtc_info {
 	bus_space_tag_t	rtc_bt;		/* bus tag & handle */
 	bus_space_handle_t rtc_bh;	/* */
-	u_int		rtc_year0;	/* What year is represented on the system
-					   by the chip's year counter at 0 */
 };
 
 struct cfdriver clock_cd = {
@@ -523,8 +521,6 @@ clockattach_rtc(parent, self, aux)
 	handle->todr_setwen = NULL;
 	rtc->rtc_bt = bt;
 	rtc->rtc_bh = ebi.ei_bh;
-	/* Our TOD clock year 0 is 1968 */
-	rtc->rtc_year0 = 1968;	/* XXX Really? */
 
 	/* Save info for the clock wenable call. */
 	ebi.ei_bt = bt;
@@ -1064,14 +1060,8 @@ rtc_gettime(handle, tv)
 	dt.dt_wday = rtc_read_reg(bt, bh, MC_DOW);
 	dt.dt_mon = rtc_read_reg(bt, bh, MC_MONTH);
 	year = rtc_read_reg(bt, bh, MC_YEAR);
-printf("rtc_gettime: read y %x/%d m %x/%d wd %d d %x/%d "
-	"h %x/%d m %x/%d s %x/%d\n",
-	year, year, dt.dt_mon, dt.dt_mon, dt.dt_wday,
-	dt.dt_day, dt.dt_day, dt.dt_hour, dt.dt_hour,
-	dt.dt_min, dt.dt_min, dt.dt_sec, dt.dt_sec);
 
-	year += rtc->rtc_year0;
-	if (year < POSIX_BASE_YEAR && rtc_auto_century_adjust != 0)
+	if ((year += 1900) < POSIX_BASE_YEAR)
 		year += 100;
 
 	dt.dt_year = year;
@@ -1111,9 +1101,7 @@ rtc_settime(handle, tv)
 	/* Note: we ignore `tv_usec' */
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
-	year = dt.dt_year - rtc->rtc_year0;
-	if (year > 99 && rtc_auto_century_adjust != 0)
-		year -= 100;
+	year = dt.dt_year % 100;
 
 	todr_wenable(handle, 1);
 	/* enable write */
