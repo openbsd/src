@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.23 2005/01/07 16:28:38 reyk Exp $
+.\"	$OpenBSD: bpf.4,v 1.24 2005/01/08 00:23:05 jmc Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -166,7 +166,8 @@ field.
 .Er ENOMEM
 is returned if there is not enough buffer space and
 .Er EFAULT
-is returned if a bad address is encountered. The
+is returned if a bad address is encountered.
+The
 .Va bfl_len
 field is modified on return to indicate the actual length in
 .Vt u_int
