@@ -1,4 +1,4 @@
-/*	$OpenBSD: testldt.c,v 1.3 2001/01/29 02:05:51 niklas Exp $	*/
+/*	$OpenBSD: testldt.c,v 1.4 2001/05/11 15:51:59 art Exp $	*/
 /*	$NetBSD: testldt.c,v 1.4 1995/04/20 22:42:38 cgd Exp $	*/
 
 #include <stdio.h>
@@ -198,7 +198,7 @@ main(int argc, char *argv[])
 	data = (void *) mmap( (char *)0x005f0000, 0x0fff,
 			     PROT_EXEC | PROT_READ | PROT_WRITE,
 			     MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-	if (data == NULL) {
+	if (data == MAP_FAILED) {
 		perror("mmap");
 		exit(1);
 	}
