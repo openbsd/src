@@ -35,7 +35,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: rnusers.x,v 1.3 1996/09/22 08:13:43 tholo Exp $";
+%static char rcsid[] = "$Id: rnusers.x,v 1.4 1996/09/22 08:39:59 tholo Exp $";
 %#endif /* not lint */
 #endif
 
@@ -68,7 +68,7 @@
 %typedef struct ru_utmp rutmp;
 %
 %struct utmparr {
-%	struct utmp **uta_arr;
+%	struct ru_utmp **uta_arr;
 %	int uta_cnt;
 %};
 %typedef struct utmparr utmparr;
@@ -132,7 +132,7 @@
 %bool_t
 %xdr_utmpptr(xdrs, objpp)
 %	XDR *xdrs;
-%	struct utmp **objpp;
+%	struct ru_utmp **objpp;
 %{
 %	if (!xdr_reference(xdrs, (char **) objpp, sizeof (struct ru_utmp), 
 %			   xdr_utmp)) {
@@ -147,7 +147,7 @@
 %	struct utmparr *objp;
 %{
 %	if (!xdr_array(xdrs, (char **)&objp->uta_arr, (u_int *)&objp->uta_cnt,
-%		       MAXUSERS, sizeof(struct utmp *), xdr_utmpptr)) {
+%		       MAXUSERS, sizeof(struct ru_utmp *), xdr_utmpptr)) {
 %		return (FALSE);
 %	}
 %	return (TRUE);
