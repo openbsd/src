@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.4 1998/08/16 20:24:53 millert Exp $	*/
+/*	$OpenBSD: map.c,v 1.5 2001/04/13 20:35:19 millert Exp $	*/
 /*	$NetBSD: map.c,v 1.3 1997/01/11 06:48:00 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: map.c,v 1.4 1998/08/16 20:24:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: map.c,v 1.5 2001/04/13 20:35:19 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -968,7 +968,7 @@ private void
 map_init_meta(el)
     EditLine *el;
 {
-    char    buf[3];
+    unsigned char buf[3];
     register int i;
     el_action_t *map = el->el_map.key;
     el_action_t *alt = el->el_map.alt;
@@ -987,7 +987,7 @@ map_init_meta(el)
 	else 
 	    map = alt;
     }
-    buf[0] = (char) i;
+    buf[0] = (unsigned char) i;
     buf[2] = 0;
     for (i = 0200; i <= 0377; i++) 
 	switch (map[i]) {
