@@ -1,3 +1,6 @@
+/*	$OpenBSD: lpd.c,v 1.3 1996/05/05 16:13:58 deraadt Exp $ */
+/*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
