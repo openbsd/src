@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: init.c,v 1.2 2004/07/14 00:46:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -72,7 +72,13 @@ struct cvsroot_file {
 
 
 
-
+/*
+ * cvs_init()
+ *
+ * Handler for the `cvs init' command which is used to initialize a CVS
+ * repository.
+ * Returns 0 on success, or the appropriate exit status on failure.
+ */
 
 int
 cvs_init(int argc, char **argv)
