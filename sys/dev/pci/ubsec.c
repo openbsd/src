@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.93 2002/05/02 18:20:50 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.94 2002/05/02 18:28:24 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1752,7 +1752,7 @@ ubsec_kprocess(krp)
 }
 
 /*
- * Start computation of cr[3] = (cr[0] ^ cr[1]) mod cr[2]
+ * Start computation of cr[C] = (cr[M] ^ cr[E]) mod cr[N]
  */
 int
 ubsec_kprocess_modexp(sc, krp)
@@ -1787,6 +1787,13 @@ ubsec_kprocess_modexp(sc, krp)
 		modbits = 2048;
 	else {
 		err = E2BIG;
+		goto errout;
+	}
+
+	/* Sanity check: result bits must be >= true modulus bits. */
+	if (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits <
+	    krp->krp_param[UBS_MODEXP_PAR_N].crp_nbits) {
+		err = ERANGE;
 		goto errout;
 	}
 
