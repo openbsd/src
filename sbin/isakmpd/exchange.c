@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.35 2000/12/02 02:08:17 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.36 2000/12/02 02:09:26 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.134 2000/10/16 18:16:58 provos Exp $	*/
 
 /*
@@ -1423,8 +1423,10 @@ exchange_finalize (struct message *msg)
 		      exchange->id_r_len);
 
       TAILQ_REMOVE (&exchange->sa_list, sa, next);
+
+      /* Only release the SA if it is time-expired */
       if (sa->refcnt > 1)
-        sa_release (sa);
+	sa_release (sa);
     }
 
   /* If we have nothing to retransmit we can safely remove ourselves.  */
