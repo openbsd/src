@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.7 2003/06/02 20:18:36 millert Exp $	*/
+/*	$OpenBSD: engine.c,v 1.8 2004/03/30 20:36:07 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -36,7 +36,7 @@
  */
 
 #if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.7 2003/06/02 20:18:36 millert Exp $";
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.8 2004/03/30 20:36:07 millert Exp $";
 #endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
@@ -56,6 +56,7 @@ static char enginercsid[] = "$OpenBSD: engine.c,v 1.7 2003/06/02 20:18:36 miller
 #define	print	sprint
 #define	at	sat
 #define	match	smat
+#define	nope	snope
 #endif
 #ifdef LNAMES
 #define	matcher	lmatcher
@@ -67,6 +68,7 @@ static char enginercsid[] = "$OpenBSD: engine.c,v 1.7 2003/06/02 20:18:36 miller
 #define	print	lprint
 #define	at	lat
 #define	match	lmat
+#define	nope	lnope
 #endif
 
 /* another structure passed up and down to avoid zillions of parameters */
@@ -126,6 +128,7 @@ static char *pchar(int ch);
 #define	SP(t, s, c)	print(m, t, s, c, stdout)
 #define	AT(t, p1, p2, s1, s2)	at(m, t, p1, p2, s1, s2)
 #define	NOTE(str)	{ if (m->eflags&REG_TRACE) (void)printf("=%s\n", (str)); }
+static int nope = 0;
 #else
 #define	SP(t, s, c)	/* nothing */
 #define	AT(t, p1, p2, s1, s2)	/* nothing */
@@ -1091,3 +1094,4 @@ int ch;
 #undef	print
 #undef	at
 #undef	match
+#undef	nope
