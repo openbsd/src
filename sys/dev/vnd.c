@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.36 2003/04/06 22:01:43 miod Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.37 2003/04/19 12:59:13 krw Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -302,9 +302,9 @@ vndgetdisklabel(dev, sc)
 		/* as long as it's not 0 - readdisklabel divides by it (?) */
 	}
 
-	strncpy(lp->d_typename, "vnd device", 16);
+	strncpy(lp->d_typename, "vnd device", sizeof(lp->d_typename));
 	lp->d_type = DTYPE_SCSI;
-	strncpy(lp->d_packname, "fictitious", 16);
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_secperunit = sc->sc_size;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
@@ -780,6 +780,14 @@ vndioctl(dev, cmd, addr, flag, p)
 		if ((error = vndlock(vnd)) != 0)
 			return (error);
 
+		bzero(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname));
+		if (snprintf(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname),
+		    "vnd%d", unit) >= sizeof(vnd->sc_dev.dv_xname)) {
+			printf("VNDIOCSET: device name too long\n");
+			vndunlock(vnd);
+			return(ENXIO);
+		}
+
 		/*
 		 * Always open for read and write.
 		 * This is probably bogus, but it lets vn_open()
@@ -837,8 +845,6 @@ vndioctl(dev, cmd, addr, flag, p)
 #endif
 
 		/* Attach the disk. */
-		bzero(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname));
-		sprintf(vnd->sc_dev.dv_xname, "vnd%d", unit);
 		vnd->sc_dk.dk_driver = &vnddkdriver;
 		vnd->sc_dk.dk_name = vnd->sc_dev.dv_xname;
 		disk_attach(&vnd->sc_dk);
