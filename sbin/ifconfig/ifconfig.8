@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.10 1995/03/18 14:56:23 cgd Exp $
+.\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)ifconfig.8	8.3 (Berkeley) 1/5/94
+.\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd January 5, 1994
+.Dd June 1, 1994
 .Dt IFCONFIG 8
 .Os BSD 4.2
 .Sh NAME
@@ -142,6 +142,7 @@ Enable driver dependent debugging code; usually, this turns on
 extra console error logging.
 .It Fl debug
 Disable driver dependent debugging code.
+.ne 1i
 .It Cm delete
 Remove the network address specified.
 This would be used if you incorrectly specified an alias, or it
@@ -244,6 +245,7 @@ they are in general used to select special modes of operation. An example
 of this is to enable SLIP compression, or to select the connector type
 for some ethernet cards.  Refer to the man page for the specific driver
 for more information.
+.ne 1i
 .It Fl link[0-2]
 Disable special processing at the link level with the specified interface.
 .It Cm up

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.21 1995/10/08 23:03:54 gwr Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.21 1995/10/08 23:03:54 gwr Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -333,7 +333,10 @@ printall()
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len; ) {
 		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		i += sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
+		i += sizeof(ifr->ifr_name) +
+			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
+				? ifr->ifr_addr.sa_len
+				: sizeof(struct sockaddr));
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
 			     sizeof(ifr->ifr_name)))
 			continue;
