@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.25 2001/03/20 17:42:34 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.26 2001/03/27 10:27:49 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ int ffs_freefile __P((struct vop_vfree_args *));
 
 /*
  * Allocate a block in the file system.
- * 
+ *
  * The size of the requested block is given, which must be some
  * multiple of fs_fsize and <= fs_bsize.
  * A preference may be optionally specified. If a preference is given
@@ -175,7 +175,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	struct buf *bp;
 	int cg, request, error;
 	daddr_t bprev, bno;
-	
+
 	*bpp = 0;
 	fs = ip->i_fs;
 #ifdef DIAGNOSTIC
