@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.4 2001/06/25 06:37:04 angelos Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.5 2001/06/25 06:40:52 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -243,7 +243,21 @@ returns the tag following
 .Va tag
 in packet
 .Va mbuf .
-.Sh CODE REFERENCS
+.Pp
+The
+.Fn M_COPY_PKTHDR
+and
+.Fn M_COPY_HDR
+macros defined in
+.Pa sys/sys/mbuf.h
+move the tags from the old to the new mbuf.
+The
+.Fn M_DUP_PKTHDR
+and
+.Fn M_DUP_HDR
+create a new copy of the tag chain for the new mbuf.
+.Pp
+.Sh CODE REFERENCES
 The tag-manipulating code is contained in the file
 .Pa sys/kern/uipc_mbuf2.c .
 .Sh SEE ALSO
