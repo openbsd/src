@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsakeygen.c,v 1.9 1999/08/26 22:30:46 niklas Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.10 2000/12/19 18:54:59 mickey Exp $	*/
 /*	$EOM: rsakeygen.c,v 1.9 1999/08/12 22:34:30 niklas Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <gmp.h>
 
 #include "libcrypto.h"
 #include "log.h"

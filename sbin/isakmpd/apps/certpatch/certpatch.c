@@ -1,4 +1,4 @@
-/*	$OpenBSD: certpatch.c,v 1.10 2000/10/26 22:28:07 niklas Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.11 2000/12/19 18:54:59 mickey Exp $	*/
 /*	$EOM: certpatch.c,v 1.10 2000/10/24 13:34:24 niklas Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <gmp.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
