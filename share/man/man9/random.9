@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.7 2000/04/11 21:00:47 mickey Exp $
+.\"	$OpenBSD: random.9,v 1.8 2000/04/26 19:15:13 mickey Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -71,7 +71,7 @@ is just mixed into the pool and does not increase entropy counter.
 .br
 .Nm add_true_randomness
 does not involve usuall timing calculations
-and cause passed data argument to added to the entropy pool
+and causes supplied data argument added to the entropy pool
 increasing the entropy counter by 32 bits.
 .br
 .Nm add_timer_randomness
@@ -92,4 +92,5 @@ the aRC4 algorithm, which appears to be faster and less abusive
 to the entropy pool.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
+.Xr pchb 4 ,
 .Xr random 4
