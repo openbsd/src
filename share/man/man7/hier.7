@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.33 2002/07/27 17:50:31 miod Exp $
+.\"	$OpenBSD: hier.7,v 1.34 2002/12/25 00:10:52 pvalchev Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -84,6 +84,12 @@ System configuration files and scripts.
 .It Li localtime
 Local timezone information (see
 .Xr ctime 3 ) .
+.It Li amd/
+Contains map files for
+.Xr amd 1 .
+.It Li authpf/
+Configuration files for the authenticating gateway user shell (see
+.Xr authpf 8 ) .
 .It Li disklabels/
 Backup disklabels (see
 .Xr disklabel 8 ) .
@@ -109,6 +115,18 @@ configuration files (see
 Example
 .Dq \&.
 (dot) files for new accounts.
+.It Li ssh/
+Configuration files for
+.Xr ssh 1
+and
+.Xr sshd 1 .
+.It Li ssl/
+OpenSSL configuration files (see
+.Xr openssl 1 ) .
+.It Li systrace/
+Sample
+.Xr systrace 1
+policies.
 .El
 .It Li /home/
 Default location for user home directories.
