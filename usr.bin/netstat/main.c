@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2004/06/06 16:55:31 cedric Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2004/06/06 22:08:59 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.46 2004/06/06 16:55:31 cedric Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.47 2004/06/06 22:08:59 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -649,11 +649,11 @@ usage(void)
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", __progname);
 	(void)fprintf(stderr,
-"       %s [-bdgilmnqrstu] [-f address_family] [-M core] [-N system]\n", __progname);
+"       %s [-bdgilmnqrSstu] [-f address_family] [-M core] [-N system]\n", __progname);
 	(void)fprintf(stderr,
 "       %s [-bdn] [-I interface] [-M core] [-N system] [-w wait]\n", __progname);
 	(void)fprintf(stderr,
-"       %s [-M core] [-N system] [-p protocol]\n", __progname);
+"       %s [-s] [-M core] [-N system] [-p protocol]\n", __progname);
 	(void)fprintf(stderr,
 "       %s [-a] [-f address_family] [-i | -I interface]\n", __progname);
 	exit(1);
