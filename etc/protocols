@@ -1,10 +1,10 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.14 2002/05/30 06:44:07 deraadt Exp $
+#	$OpenBSD: protocols,v 1.15 2002/12/11 12:35:53 henning Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
-# See also http://www.isi.edu/in-notes/iana/assignments/protocol-numbers
+# See also http://www.iana.org/assignments/protocol-numbers
 #
 ip	0	IP		# internet protocol, pseudo protocol number
 icmp	1	ICMP		# internet control message protocol
@@ -42,7 +42,7 @@ merit-inp 32	MERIT-INP	# MERIT Internodal Protocol
 sep	33	SEP		# Sequential Exchange Protocol
 3pc	34	3PC		# Third Party Connect Protocol
 idpr	35	IDPR		# Inter-Domain Policy Routing Protocol
-xtp	36	XTP		# Xpress Tranfer Protocol
+xtp	36	XTP		# Xpress Transfer Protocol
 ddp	37	DDP		# Datagram Delivery Protocol
 idpr-cmtp 38	IDPR-CMTP	# IDPR Control Message Transport Proto
 idpr-cmtp 39	IDPR-CMTP	# IDPR Control Message Transport
