@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.21 2004/12/08 08:05:44 dlg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.22 2004/12/19 16:59:16 krw Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -136,6 +136,8 @@ com2	at isa? port 0x3e8 irq 5
 #scsibus* at bha?
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+ahd*	at pci?			# Adaptec 79?? SCSI controllers
+scsibus* at ahd?
 mpt*	at pci?			# LSI Fusion-MPT SCSI/Fibre
 scsibus* at mpt?
 #dpt*	at pci?			# DPT SmartCache/SmartRAID PCI

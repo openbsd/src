@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 2004/12/19 16:09:16 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.43 2004/12/19 16:59:16 krw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -192,6 +192,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #scsibus* at bha?
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+ahd*	at pci?				# Adaptec 79?? SCSI controllers
+scsibus* at ahd?
 mpt*	at pci?				# LSI Fusion-MPT SCSI/Fibre
 scsibus* at mpt?
 #dpt*	at pci?				# DPT SmartCache/SmartRAID PCI
