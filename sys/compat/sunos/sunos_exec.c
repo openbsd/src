@@ -68,6 +68,10 @@ extern struct sysent sunos_sysent[];
 extern char *sunos_syscallnames[];
 #endif
 extern void sunos_sendsig __P((sig_t, int, int, u_long));
+#ifdef m68k
+extern void sunos_setregs __P((struct proc *, struct exec_package *, u_long,
+			       register_t *));
+#endif
 extern char sigcode[], esigcode[];
 const char sunos_emul_path[] = "/emul/sunos";
 
@@ -89,7 +93,11 @@ struct emul emul_sunos = {
 #endif
 	0,
 	copyargs,
+#ifdef m68k
+	sunos_setregs,
+#else
 	setregs,
+#endif
 	sigcode,
 	esigcode,
 };

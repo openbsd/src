@@ -50,4 +50,6 @@ struct mdproc {
 #define MDP_STACKADJ	0x0002	/* frame SP adjusted, might have to
 				   undo when system call returns
 				   ERESTART. */
+#define MDP_UNCACHE_WX	0x0004	/* The process might modify code, so
+				   don't cache writeable executable pages.  */
 #endif /* !_MACHINE_PROC_H_ */

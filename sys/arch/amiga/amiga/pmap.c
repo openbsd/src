@@ -1390,9 +1390,15 @@ validate:
 	 * AMIGA pages in a MACH page.
 	 */
 #ifdef M68040
-	if (mmutype == MMU_68040 && pmap == pmap_kernel() && va >= AMIGA_UPTBASE && 
-	    va < (AMIGA_UPTBASE + AMIGA_UPTMAXSIZE))
+	if (mmutype == MMU_68040 && pmap == pmap_kernel() &&
+	    va >= AMIGA_UPTBASE && va < (AMIGA_UPTBASE + AMIGA_UPTMAXSIZE))
 		cacheable = FALSE;	/* don't cache user page tables */
+
+	/* Don't cache if process can't take it, like SunOS ones.  */
+	if (mmutype == MMU_68040 && pmap != pmap_kernel() &&
+	    (curproc->p_md.md_flags & MDP_UNCACHE_WX) &&
+	    (prot & VM_PROT_EXECUTE) && (prot & VM_PROT_WRITE))
+		checkpv = cacheable = FALSE;
 #endif
 	npte = (pa & PG_FRAME) | pte_prot(pmap, prot) | PG_V;
 	npte |= (*(int *)pte & (PG_M|PG_U));
