@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbd.c,v 1.1 2003/01/31 22:50:19 miod Exp $	*/
+/*	$OpenBSD: gsckbd.c,v 1.2 2003/02/15 01:01:21 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -333,7 +333,7 @@ gsckbd_enable(v, on)
 	int res;
 
 	if (on) {
-		if (sc->sc_enabled)
+		if (sc->sc_enabled && !sc->id->t_isconsole)
 			return (EBUSY);
 
 		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
