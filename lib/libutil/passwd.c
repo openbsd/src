@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.13 1997/11/17 20:56:57 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.14 1997/11/17 21:12:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.13 1997/11/17 20:56:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.14 1997/11/17 21:12:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -270,6 +270,15 @@ pw_mkdb()
 	int pstat;
 	pid_t pid;
 	char *lock;
+	struct stat sb;
+
+	/* A zero length passwd file is never ok */
+	if (pw_lck && stat(pw_lck, &sb) == 0) {
+		if (sb.st_size == 0) {
+			warnx("%s is zero length", pw_lck);
+			return (-1);
+		}
+	}
 
 	pid = vfork();
 	if (pid == 0) {
