@@ -315,6 +315,7 @@ changequote([,])dnl
 	;;
   sparc-*-openbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   tahoe-*-*)
 	COREFILE=trad-core.o

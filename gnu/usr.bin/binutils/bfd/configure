@@ -1592,6 +1592,7 @@ EOF
 	;;
   alpha*-*-openbsd*)
 	COREFILE=netbsd-core.o
+	COREFLAG=-DNETBSD_CORE
 	;;
   alpha*-*-*)		COREFILE=osf-core.o ;;
   arm-*-riscix)		COREFILE=trad-core.o ;;

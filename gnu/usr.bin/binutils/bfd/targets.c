@@ -591,6 +591,7 @@ extern const bfd_target cisco_core_vec;
 extern const bfd_target hpux_core_vec;
 extern const bfd_target hppabsd_core_vec;
 extern const bfd_target irix_core_vec;
+extern const bfd_target netbsd_core_vec;
 extern const bfd_target osf_core_vec;
 extern const bfd_target sco_core_vec;
 extern const bfd_target trad_core_vec;
@@ -797,6 +798,9 @@ const bfd_target * const bfd_target_vector[] = {
 #endif
 #ifdef IRIX_CORE
 	&irix_core_vec,
+#endif
+#ifdef NETBSD_CORE
+	&netbsd_core_vec,
 #endif
 #ifdef OSF_CORE
 	&osf_core_vec,

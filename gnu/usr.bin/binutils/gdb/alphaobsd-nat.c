@@ -266,3 +266,18 @@ child_resume (pid, step, signal)
   if (errno)
     perror_with_name ("ptrace");
 }
+
+/* Register that we are able to handle alpha core file formats. */
+
+static struct core_fns alpha_core_fns =
+{
+  bfd_target_coff_flavour,
+  fetch_core_registers,
+  NULL
+};
+
+void
+_initialize_core_alpha ()
+{
+  add_core_fns (&alpha_core_fns);
+}
