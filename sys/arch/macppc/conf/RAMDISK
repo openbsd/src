@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.40 2005/02/17 14:40:29 dlg Exp $
+#	$OpenBSD: RAMDISK,v 1.41 2005/03/17 07:57:36 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -62,6 +62,7 @@ wdc*		at kauaiata?
 macobio0	at pci?
 gem*		at pci?		# GMAC ethernet
 hme*		at pci?		# HME ethernet
+vge*		at pci? 	# VIA VT612x
 dc*		at pci?		# DEC Tulip 21143 clones
 xl*		at pci?		# 3C9xx ethernet
 em*		at pci?		# Intel Pro/1000 ethernet
@@ -94,6 +95,7 @@ eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 rlphy*		at mii?		# Realtek 8139 internal PHYs
+ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 ukphy*		at mii?		# generic unknown PHYs
 
 macintr0	at macobio?	# old interrupt controller
