@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.15 1997/10/30 21:14:41 niklas Exp $
+#       $OpenBSD: install.md,v 1.16 1998/02/28 02:29:30 angelos Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -91,7 +91,7 @@ md_get_msgbuf() {
 }
 
 md_get_diskdevs() {
-	md_get_msgbuf | egrep "^sd[0-9] "
+	md_get_msgbuf | egrep "^[sw]d[0-9] "
 }
 
 md_get_cddevs() {
