@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.9 1997/01/17 07:14:24 millert Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.10 2000/02/01 03:24:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -189,7 +189,6 @@ repquota(fs, type, qfpathname)
 	static struct dqblk zerodqblk;
 	static int warned = 0;
 	static int multiple = 0;
-	extern int errno;
 
 	if (quotactl(fs->fs_file, QCMD(Q_SYNC, type), 0, 0) < 0 &&
 	    errno == EOPNOTSUPP && !warned && vflag) {

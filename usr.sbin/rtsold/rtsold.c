@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.5 2000/01/17 16:33:49 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.6 2000/02/01 03:24:11 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -211,7 +211,6 @@ main(argc, argv)
 	FD_ZERO(&fdset);
 	FD_SET(s, &fdset);
 	while (1) {		/* main loop */
-		extern int errno;
 		int e;
 		struct fd_set select_fd = fdset;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.22 2000/01/20 18:14:58 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.23 2000/02/01 03:23:32 deraadt Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.22 2000/01/20 18:14:58 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.23 2000/02/01 03:23:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,6 @@ static char rcsid[] = "$OpenBSD: job.c,v 1.22 2000/01/20 18:14:58 espie Exp $";
 # define STATIC static
 #endif
 
-extern int  errno;
 
 /*
  * error handling variables
@@ -1597,7 +1596,6 @@ JobRestart(job)
 	     * resume it.
 	     */
 	    Boolean error;
-	    extern int errno;
 	    int status;
 
 #ifdef RMT_WANTS_SIGNALS

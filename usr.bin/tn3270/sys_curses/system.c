@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.7 1998/07/12 08:54:29 deraadt Exp $	*/
+/*	$OpenBSD: system.c,v 1.8 2000/02/01 03:23:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.7 1998/07/12 08:54:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.8 2000/02/01 03:23:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,6 @@ static char rcsid[] = "$OpenBSD: system.c,v 1.7 1998/07/12 08:54:29 deraadt Exp 
 #include <sys/wait.h>
 
 #include <errno.h>
-extern int errno;
 
 #include <netdb.h>
 #include <signal.h>

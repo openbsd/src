@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.16 2000/01/21 00:26:48 millert Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.17 2000/02/01 03:23:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -191,7 +191,6 @@
 #define MSGFILE
 #include "supmsg.h"
 
-extern int errno;
 int maxchildren;
 
 /*

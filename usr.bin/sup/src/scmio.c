@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.3 1997/04/01 07:35:24 todd Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.4 2000/02/01 03:23:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -157,7 +157,6 @@
 #include "supextern.h"
 #include "supmsg.h"
 
-extern int errno;
 
 /*************************
  ***    M A C R O S    ***

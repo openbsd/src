@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.2 1999/12/10 07:26:56 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.3 2000/02/01 03:24:05 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -124,7 +124,6 @@
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
-extern int errno;
 static int pid;
 static int fflag;
 static int nflag;

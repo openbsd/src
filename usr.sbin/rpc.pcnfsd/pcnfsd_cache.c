@@ -33,7 +33,6 @@ extern char    *crypt();
 **---------------------------------------------------------------------
 */
 
-extern int      errno;
 
 #ifdef USER_CACHE
 #define CACHE_SIZE 16		/* keep it small, as linear searches are

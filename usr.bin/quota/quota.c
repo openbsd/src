@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.13 1999/08/06 20:41:07 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.14 2000/02/01 03:23:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.13 1999/08/06 20:41:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.14 2000/02/01 03:23:36 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -96,7 +96,7 @@ main(argc, argv)
 	int i, gflag = 0, uflag = 0;
 	int ch;
 	extern char *optarg;
-	extern int optind, errno;
+	extern int optind;
 
 	while ((ch = getopt(argc, argv, "ugvq")) != -1) {
 		switch(ch) {

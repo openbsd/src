@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.13 1999/06/23 17:01:36 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.14 2000/02/01 03:23:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.13 1999/06/23 17:01:36 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.14 2000/02/01 03:23:22 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -72,7 +72,6 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.13 1999/06/23 17:01:36 deraadt Exp 
 
 #define	TIMEOUT		5
 
-extern	int errno;
 extern	char *__progname;
 struct	sockaddr_in s_in = { AF_INET };
 int	peer;

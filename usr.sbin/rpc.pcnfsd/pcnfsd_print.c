@@ -88,7 +88,6 @@ pr_list		list_virtual_printers();
 **---------------------------------------------------------------------
 */
 
-extern int      errno;
 extern int	interrupted;	/* in pcnfsd_misc.c */
 struct stat     statbuf;
 char            pathname[MAXPATHLEN];

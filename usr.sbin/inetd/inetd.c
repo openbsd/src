@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.59 1999/12/10 16:19:29 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.60 2000/02/01 03:23:58 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.59 1999/12/10 16:19:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.60 2000/02/01 03:23:58 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -173,7 +173,6 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.59 1999/12/10 16:19:29 deraadt Exp 
 
 #define	SIGBLOCK	(sigmask(SIGCHLD)|sigmask(SIGHUP)|sigmask(SIGALRM))
 
-extern	int errno;
 
 void	config __P((int));
 void	reapchild __P((int));

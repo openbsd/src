@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.2 1997/03/12 10:41:57 downsj Exp $	*/
+/*	$OpenBSD: send.c,v 1.3 2000/02/01 03:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989 Regents of the University of California.
@@ -51,7 +51,6 @@ static char Version[] = "@(#)send.c	e07@nikhef.nl (Eric Wassenaar) 961013";
 #define bitset(a,b)	(((a) & (b)) != 0)
 #define setalarm(n)	(void) alarm((unsigned int)(n))
 
-extern int errno;
 extern res_state_t _res;	/* defined in res_init.c */
 
 char *dbprefix = DBPREFIX;	/* prefix for debug messages to stdout */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.8 1997/10/12 20:29:55 beck Exp $	*/
+/*	$OpenBSD: scm.c,v 1.9 2000/02/01 03:23:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -175,7 +175,6 @@
 #define	INADDR_LOOPBACK		(u_long)0x7f000001	/* 127.0.0.1 */
 #endif
 
-extern int errno;
 
 char scmversion[] = "4.3 BSD";
 extern int silent;

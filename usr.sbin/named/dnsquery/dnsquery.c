@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnsquery.c,v 1.4 1999/12/04 00:22:34 deraadt Exp $	*/
+/*	$OpenBSD: dnsquery.c,v 1.5 2000/02/01 03:24:02 deraadt Exp $	*/
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -11,7 +11,6 @@
 
 #include "../conf/portability.h"
 
-extern int errno;
 extern int h_errno;
 extern char *h_errlist[];
 

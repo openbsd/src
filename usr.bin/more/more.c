@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.10 1999/08/17 09:13:16 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.11 2000/02/01 03:23:34 deraadt Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -1634,7 +1634,6 @@ retry:
 readch ()
 {
 	char ch;
-	extern int errno;
 
 	errno = 0;
 	if (read (2, &ch, 1) <= 0)
