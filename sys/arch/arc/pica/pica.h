@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pica.h	8.1 (Berkeley) 6/10/93
- *      $Id: pica.h,v 1.2 1996/07/30 20:24:31 pefo Exp $
+ *      $Id: pica.h,v 1.3 1996/09/04 21:18:25 pefo Exp $
  */
 
 /*
@@ -155,10 +155,10 @@
 /*
  *  Addresses used by various display drivers.
  */
-#define MONO_BASE	(PICA_V_LOCAL_VIDEO_CTRL + 0x3B4)
-#define MONO_BUF	(PICA_V_LOCAL_VIDEO + 0xB0000)
-#define CGA_BASE	(PICA_V_LOCAL_VIDEO_CTRL + 0x3D4)
-#define CGA_BUF		(PICA_V_LOCAL_VIDEO + 0xB8000)
+#define PICA_MONO_BASE	(PICA_V_LOCAL_VIDEO_CTRL + 0x3B4)
+#define PICA_MONO_BUF	(PICA_V_LOCAL_VIDEO + 0xB0000)
+#define PICA_CGA_BASE	(PICA_V_LOCAL_VIDEO_CTRL + 0x3D4)
+#define PICA_CGA_BUF	(PICA_V_LOCAL_VIDEO + 0xB8000)
 
 /*
  *  Interrupt vector descriptor for device on pica bus.

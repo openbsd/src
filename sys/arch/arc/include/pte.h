@@ -1,4 +1,4 @@
-/*      $OpenBSD: pte.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
+/*      $OpenBSD: pte.h,v 1.2 1996/09/04 21:18:24 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,6 +106,7 @@ typedef union pt_entry {
 #define	PG_FRAME	0x3fffffc0
 #define PG_SHIFT	6
 #define vad_to_pfn(x) (((unsigned)(x) >> PG_SHIFT) & PG_FRAME)
+#define vad_to_pfn64(x) (((quad_t)(x) >> PG_SHIFT) & PG_FRAME)
 #define pfn_to_vad(x) (((x) & PG_FRAME) << PG_SHIFT)
 #define vad_to_vpn(x) ((unsigned)(x) & PG_SVPN)
 #define vpn_to_vad(x) ((x) & PG_SVPN)

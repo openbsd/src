@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 1996/09/02 21:33:29 imp Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 1996/09/04 21:18:19 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.8 1996/09/02 21:33:29 imp Exp $
+ *      $Id: machdep.c,v 1.9 1996/09/04 21:18:19 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -89,8 +89,9 @@
 
 #include <dev/cons.h>
 
-#include <arc/pica/pica.h>
 #include <arc/arc/arctype.h>
+#include <arc/pica/pica.h>
+#include <arc/desktech/desktech.h>
 
 #include <asc.h>
 
@@ -142,6 +143,9 @@ int	(*Mach_spltty)() = splhigh;
 int	(*Mach_splclock)() = splhigh;
 int	(*Mach_splstatclock)() = splhigh;
 
+static void tlb_init_pica();
+static void tlb_init_tyne();
+
 void vid_print_string(const char *str);
 void vid_putchar(dev_t dev, char c);
 
@@ -182,6 +186,8 @@ mips_init(argc, argv, code)
 
 	cputype = ACER_PICA_61; /* FIXME find systemtype */
 
+	cputype = DESKSTATION_TYNE; /* FIXME find systemtype */
+
 	/*
 	 * Get config register now as mapped from BIOS since we are
 	 * going to demap these addresses later. We want as may TLB
@@ -189,13 +195,21 @@ mips_init(argc, argv, code)
 	 */
 
 	switch (cputype) {
-	case ACER_PICA_61:	/* ALI PICA 61 */
-		memcfg = in32(PICA_MEMORY_SIZE_REG);
-		brdcfg = in32(PICA_CONFIG_REG);
-	picacommon:
+	case ACER_PICA_61:	/* ALI PICA 61 and MAGNUM is almost the */
+	case MAGNUM:		/* Same kind of hardware. NEC goes here too */
+		if(cputype == MAGNUM) {
+			/* XXX this is likely broken */
+			memcfg = in32(R4030_SYS_CONFIG);
+			strcpy(cpu_model, "MIPS Magnum");
+		}
+		else {
+			memcfg = in32(PICA_MEMORY_SIZE_REG);
+			brdcfg = in32(PICA_CONFIG_REG);
+			strcpy(cpu_model, "Acer Pica-61");
+		}
 		isa_io_base = PICA_V_ISA_IO;
 		isa_mem_base = PICA_V_ISA_MEM;
-		strcpy(cpu_model, "ACER PICA-61");
+
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
@@ -228,14 +242,6 @@ mips_init(argc, argv, code)
 		mem_layout[2].mem_start = 0x0;
 		break;
 
-	case MAGNUM:
-		strcpy(cpu_model, "MIPS MAGNUM");
-
-		/* XXX this is likely broken */
-		memcfg = in32(R4030_SYS_CONFIG);
-		goto picacommon;
-		break;
-
 	case DESKSTATION_RPC44:
 		strcpy(cpu_model, "Deskstation rPC44");
 
@@ -250,9 +256,11 @@ mips_init(argc, argv, code)
 
 	case DESKSTATION_TYNE:
 		strcpy(cpu_model, "Deskstation Tyne");
+		isa_io_base = TYNE_V_ISA_IO;
+		isa_mem_base = TYNE_V_ISA_MEM;
 
 		/*XXX Need to find out how to size mem */
-		physmem = 1024 * 1024 * 32;
+		physmem = 1024 * 1024 * 16;
 		mem_layout[0].mem_start = 0x00100000;
 		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
 		mem_layout[1].mem_start = 0x00020000;
@@ -261,12 +269,13 @@ mips_init(argc, argv, code)
 		break;
 
 	default:
+/*XXX printf doesn't work here .... use bios?? */
 		printf("kernel not configured for systype 0x%x\n", i);
 		boot(RB_HALT | RB_NOSYNC);
 	}
 	physmem = btoc(physmem);
 
-	/* look at argv[0] and compute bootdev */
+	/* look at argv[0] and compute bootdev for autoconfig setup */
 	makebootdev(argv[0]);
 
 	/*
@@ -326,41 +335,18 @@ mips_init(argc, argv, code)
 	R4K_SetWIRED(0);
 	R4K_TLBFlush();
 	R4K_SetWIRED(VMWIRED_ENTRIES);
+	
+	switch (cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+		tlb_init_pica();
+		break;
 
-	/*
-	 * Set up mapping for hardware the way we want it!
-	 */
+	case DESKSTATION_TYNE:
+		tlb_init_tyne();
+		break;
+	}
 
-	tlb.tlb_mask = PG_SIZE_256K;
-	tlb.tlb_hi = vad_to_vpn(R4030_V_LOCAL_IO_BASE);
-	tlb.tlb_lo0 = vad_to_pfn(R4030_P_LOCAL_IO_BASE) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | PG_IOPAGE;
-	R4K_TLBWriteIndexed(1, &tlb);
-
-	tlb.tlb_mask = PG_SIZE_1M;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | PG_IOPAGE;
-	R4K_TLBWriteIndexed(2, &tlb);
-	
-	tlb.tlb_mask = PG_SIZE_1M;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | PG_IOPAGE;
-	R4K_TLBWriteIndexed(3, &tlb);
-	
-	tlb.tlb_mask = PG_SIZE_4M;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | PG_IOPAGE;
-	R4K_TLBWriteIndexed(4, &tlb);
-	
-	tlb.tlb_mask = PG_SIZE_16M;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_ISA_IO);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | PG_IOPAGE;
-	R4K_TLBWriteIndexed(5, &tlb);
-	
 	/*
 	 * Init mapping for u page(s) for proc[0], pm_tlbpid 1.
 	 */
@@ -498,6 +484,66 @@ mips_init(argc, argv, code)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap((vm_offset_t)v);
+}
+
+void
+tlb_init_pica()
+{
+	struct tlb tlb;
+
+	tlb.tlb_mask = PG_SIZE_256K;
+	tlb.tlb_hi = vad_to_vpn(R4030_V_LOCAL_IO_BASE);
+	tlb.tlb_lo0 = vad_to_pfn(R4030_P_LOCAL_IO_BASE) | PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | PG_IOPAGE;
+	R4K_TLBWriteIndexed(1, &tlb);
+
+	tlb.tlb_mask = PG_SIZE_1M;
+	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | PG_IOPAGE;
+	R4K_TLBWriteIndexed(2, &tlb);
+	
+	tlb.tlb_mask = PG_SIZE_1M;
+	tlb.tlb_hi = vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | PG_IOPAGE;
+	R4K_TLBWriteIndexed(3, &tlb);
+	
+	tlb.tlb_mask = PG_SIZE_4M;
+	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | PG_IOPAGE;
+	R4K_TLBWriteIndexed(4, &tlb);
+	
+	tlb.tlb_mask = PG_SIZE_16M;
+	tlb.tlb_hi = vad_to_vpn(PICA_V_ISA_IO);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | PG_IOPAGE;
+	R4K_TLBWriteIndexed(5, &tlb);
+}
+
+void
+tlb_init_tyne()
+{
+	struct tlb tlb;
+
+	tlb.tlb_mask = PG_SIZE_64K;
+	tlb.tlb_hi = vad_to_vpn(TYNE_V_BOUNCE);
+	tlb.tlb_lo0 = vad_to_pfn64(TYNE_P_BOUNCE) | PG_IOPAGE;
+	tlb.tlb_lo1 = PG_G;
+	R4K_TLBWriteIndexed(1, &tlb);
+
+	tlb.tlb_mask = PG_SIZE_1M;
+	tlb.tlb_hi = vad_to_vpn(TYNE_V_ISA_IO);
+	tlb.tlb_lo0 = vad_to_pfn64(TYNE_P_ISA_IO) | PG_IOPAGE;
+	tlb.tlb_lo1 = PG_G;
+	R4K_TLBWriteIndexed(2, &tlb);
+
+	tlb.tlb_mask = PG_SIZE_1M;
+	tlb.tlb_hi = vad_to_vpn(TYNE_V_ISA_MEM);
+	tlb.tlb_lo0 = vad_to_pfn64(TYNE_P_ISA_MEM) | PG_IOPAGE;
+	tlb.tlb_lo1 = PG_G;
+	R4K_TLBWriteIndexed(3, &tlb);
 }
 
 /*

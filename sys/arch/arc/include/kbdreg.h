@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbdreg.h,v 1.2 1996/07/30 20:24:25 pefo Exp $	*/
+/*	$OpenBSD: kbdreg.h,v 1.3 1996/09/04 21:18:24 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -34,7 +34,7 @@
  *
  */
 
-#define	KBSTATP		(PICA_SYS_KBD + 0x61)	/* controller status port (I) */
+#define	KBSTATP		(0x61)	/* controller status port (I) */
 #define	 KBS_DIB	0x01	/* data in buffer */
 #define	 KBS_IBF	0x02	/* input buffer low */
 #define	 KBS_WARM	0x04	/* input buffer low */
@@ -44,9 +44,9 @@
 #define	 KBS_RERR	0x40	/* receive error */
 #define	 KBS_PERR	0x80	/* parity error */
 
-#define	KBCMDP		(PICA_SYS_KBD + 0x61)	/* controller port (O) */
-#define	KBDATAP		(PICA_SYS_KBD + 0x60)	/* data port (I) */
-#define	KBOUTP		(PICA_SYS_KBD + 0x60)	/* data port (O) */
+#define	KBCMDP		(0x61)	/* controller port (O) */
+#define	KBDATAP		(0x60)	/* data port (I) */
+#define	KBOUTP		(0x60)	/* data port (O) */
 
 #define	K_RDCMDBYTE	0x20
 #define	K_LDCMDBYTE	0x60

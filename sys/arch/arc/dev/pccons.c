@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.4 1996/09/01 19:41:16 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.5 1996/09/04 21:18:22 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -71,10 +71,14 @@
 #include <machine/autoconf.h>
 #include <machine/display.h>
 #include <machine/pccons.h>
+#include <arc/arc/arctype.h>
 #include <arc/pica/pica.h>
+#include <arc/desktech/desktech.h>
 
 #include <dev/isa/isavar.h>
 #include <machine/kbdreg.h>
+
+extern int cputype;
 
 #define	XFREE86_BUG_COMPAT
 
@@ -167,7 +171,12 @@ struct cfdriver pms_cd = {
 #define	ROW		25
 #define	CHR		2
 
-static unsigned int addr_6845 = MONO_BASE;
+static unsigned int addr_6845;
+static unsigned int mono_base;
+static unsigned int mono_buf;
+static unsigned int cga_base;
+static unsigned int cga_buf;
+static unsigned int kbd_base;
 
 char *sget __P((void));
 void sput __P((u_char *, int));
@@ -187,7 +196,7 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_IBF) == 0) {
+		if ((inb(kbd_base + KBSTATP) & KBS_IBF) == 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -200,7 +209,7 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+		if ((inb(kbd_base + KBSTATP) & KBS_DIB) != 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -212,12 +221,12 @@ kbd_flush_input()
 {
 	u_char c;
 
-	while (c = inb(KBSTATP) & 0x03)
+	while (c = inb(kbd_base + KBSTATP) & 0x03)
 		if ((c & KBS_DIB) == KBS_DIB) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) inb(KBDATAP);
+			(void) inb(kbd_base + KBDATAP);
 		}
 }
 
@@ -232,10 +241,10 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return -1;
-	outb(KBCMDP, K_RDCMDBYTE);
+	outb(kbd_base + KBCMDP, K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return -1;
-	return inb(KBDATAP);
+	return inb(kbd_base + KBDATAP);
 }
 #endif
 
@@ -249,10 +258,10 @@ kbc_put8042cmd(val)
 
 	if (!kbd_wait_output())
 		return 0;
-	outb(KBCMDP, K_LDCMDBYTE);
+	outb(kbd_base + KBCMDP, K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return 0;
-	outb(KBOUTP, val);
+	outb(kbd_base + KBOUTP, val);
 	return 1;
 }
 
@@ -270,7 +279,7 @@ kbd_cmd(val, polling)
 	if(!polling) {
 		i = spltty();
 		if(kb_oq_get == kb_oq_put) {
-			outb(KBOUTP, val);
+			outb(kbd_base + KBOUTP, val);
 		}
 		kb_oq[kb_oq_put] = val;
 		kb_oq_put = (kb_oq_put + 1) & 7;
@@ -280,13 +289,13 @@ kbd_cmd(val, polling)
 	else do {
 		if (!kbd_wait_output())
 			return 0;
-		outb(KBOUTP, val);
+		outb(kbd_base + KBOUTP, val);
 		for (i = 100000; i; i--) {
-			if (inb(KBSTATP) & KBS_DIB) {
+			if (inb(kbd_base + KBSTATP) & KBS_DIB) {
 				register u_char c;
 
 				KBD_DELAY;
-				c = inb(KBDATAP);
+				c = inb(kbd_base + KBDATAP);
 				if (c == KBR_ACK || c == KBR_ECHO) {
 					return 1;
 				}
@@ -425,11 +434,11 @@ pcprobe(parent, cfdata, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+		if ((inb(kbd_base + KBSTATP) & KBS_DIB) != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || inb(KBDATAP) != KBR_RSTDONE) {
+	if (i == 0 || inb(kbd_base + KBDATAP) != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
@@ -603,7 +612,7 @@ pcintr(arg)
 	register struct tty *tp = sc->sc_tty;
 	u_char *cp;
 
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
+	if ((inb(kbd_base + KBSTATP) & KBS_DIB) == 0)
 		return 0;
 	if (polling)
 		return 1;
@@ -615,7 +624,7 @@ pcintr(arg)
 			do
 				(*linesw[tp->t_line].l_rint)(*cp++, tp);
 			while (*cp);
-	} while (inb(KBSTATP) & KBS_DIB);
+	} while (inb(kbd_base + KBSTATP) & KBS_DIB);
 	return 1;
 }
 
@@ -776,6 +785,26 @@ pccninit(cp)
 	 * For now, don't screw with it.
 	 */
 	/* crtat = 0; */
+	switch(cputype) {
+
+	case ACER_PICA_61:
+		mono_base = PICA_MONO_BASE;
+		mono_buf = PICA_MONO_BUF;
+		cga_base = PICA_CGA_BASE;
+		cga_buf = PICA_CGA_BUF;
+		kbd_base = PICA_SYS_KBD;
+		break;
+
+	case DESKSTATION_TYNE:
+		mono_base = PICA_MONO_BASE;
+		mono_buf = PICA_MONO_BUF;
+		cga_base = PICA_CGA_BASE;
+		cga_buf = PICA_CGA_BUF;
+		kbd_base = PICA_SYS_KBD;
+		outb(TYNE_V_ISA_IO + 0x3ce, 6);		/* Correct video mode */
+		outb(TYNE_V_ISA_IO + 0x3cf, 0xe);
+		break;
+	}
 }
 
 /* ARGSUSED */
@@ -805,7 +834,7 @@ pccngetc(dev)
 
 	do {
 		/* wait for byte */
-		while ((inb(KBSTATP) & KBS_DIB) == 0);
+		while ((inb(kbd_base + KBSTATP) & KBS_DIB) == 0);
 		/* see if it's worthwhile */
 		cp = sget();
 	} while (!cp);
@@ -912,16 +941,16 @@ sput(cp, n)
 		u_short was;
 		unsigned cursorat;
 
-		cp = (u_short *)CGA_BUF;
+		cp = (u_short *)cga_buf;
 		was = *cp;
 		*cp = (u_short) 0xA55A;
 		if (*cp != 0xA55A) {
-			cp = (u_short *)MONO_BUF;
-			addr_6845 = MONO_BASE;
+			cp = (u_short *)mono_buf;
+			addr_6845 = mono_base;
 			vs.color = 0;
 		} else {
 			*cp = was;
-			addr_6845 = CGA_BASE;
+			addr_6845 = cga_base;
 			vs.color = 1;
 		}
 
@@ -1477,17 +1506,17 @@ sget()
 
 top:
 	KBD_DELAY;
-	dt = inb(KBDATAP);
+	dt = inb(kbd_base + KBDATAP);
 
 	switch (dt) {
 	case KBR_ACK: case KBR_ECHO:
 		kb_oq_get = (kb_oq_get + 1) & 7;
 		if(kb_oq_get != kb_oq_put) {
-			outb(KBOUTP, kb_oq[kb_oq_get]);
+			outb(kbd_base + KBOUTP, kb_oq[kb_oq_get]);
 		}
 		goto loop;
 	case KBR_RESEND:
-		outb(KBOUTP, kb_oq[kb_oq_get]);
+		outb(kbd_base + KBOUTP, kb_oq[kb_oq_get]);
 		goto loop;
 	}
 
@@ -1690,7 +1719,7 @@ printf("keycode %d\n",dt);
 
 	extended = 0;
 loop:
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
+	if ((inb(kbd_base + KBSTATP) & KBS_DIB) == 0)
 		return 0;
 	goto top;
 }
@@ -1773,9 +1802,9 @@ pms_dev_cmd(value)
 	u_char value;
 {
 	kbd_flush_input();
-	outb(KBCMDP, 0xd4);
+	outb(kbd_base + KBCMDP, 0xd4);
 	kbd_flush_input();
-	outb(KBDATAP, value);
+	outb(kbd_base + KBDATAP, value);
 }
 
 static inline void
@@ -1783,7 +1812,7 @@ pms_aux_cmd(value)
 	u_char value;
 {
 	kbd_flush_input();
-	outb(KBCMDP, value);
+	outb(kbd_base + KBCMDP, value);
 }
 
 static inline void
@@ -1791,9 +1820,9 @@ pms_pit_cmd(value)
 	u_char value;
 {
 	kbd_flush_input();
-	outb(KBCMDP, 0x60);
+	outb(kbd_base + KBCMDP, 0x60);
 	kbd_flush_input();
-	outb(KBDATAP, value);
+	outb(kbd_base + KBDATAP, value);
 }
 
 int
@@ -1811,7 +1840,7 @@ pmsprobe(parent, probe, aux)
 	pms_dev_cmd(KBC_RESET);
 	pms_aux_cmd(PMS_MAGIC_1);
 	delay(10000);
-	x = inb(KBDATAP);
+	x = inb(kbd_base + KBDATAP);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
 		return 0;
@@ -2019,20 +2048,20 @@ pmsintr(arg)
 	switch (state) {
 
 	case 0:
-		buttons = inb(KBDATAP);
+		buttons = inb(kbd_base + KBDATAP);
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		dx = inb(KBDATAP);
+		dx = inb(kbd_base + KBDATAP);
 		/* Bounding at -127 avoids a bug in XFree86. */
 		dx = (dx == -128) ? -127 : dx;
 		++state;
 		break;
 
 	case 2:
-		dy = inb(KBDATAP);
+		dy = inb(kbd_base + KBDATAP);
 		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 
