@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.3 2001/09/10 12:58:50 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -77,11 +77,8 @@ static int mapirq __P((int irq));
 int prog_switch __P((void *arg));
 void openpic_enable_irq_mask __P((int irq_mask));
 
-extern u_int32_t *heathrow_FCR;
-
 #define HWIRQ_MAX 27
 #define HWIRQ_MASK 0x0fffffff
-
 
 static __inline u_int openpic_read __P((int));
 static __inline void openpic_write __P((int, u_int));
@@ -132,7 +129,6 @@ openpic_match(parent, cf, aux)
 	return 0;
 }
 
-u_int8_t *interrupt_reg;
 typedef void  (void_f) (void);
 extern void_f *pending_int_f;
 
