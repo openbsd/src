@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.50 2003/04/13 23:22:21 miod Exp $
+dnl	$OpenBSD: hardware,v 1.51 2003/05/14 17:07:56 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -107,14 +107,16 @@ Supported devices {:-include-:}:
 	  + cgfourteen - 8/24-bit color, accelerated (but the driver does
 	    not support hardware acceleration)
 	  + Fujitsu AG-10e (agten) - 24-bit color, accelerated (currently
-	    only supported in 8 bit unaccelerated mode)
+	    only supported in 8-bit unaccelerated mode)
 	  + Parallax XVideo and PowerVideo (tvtwo) - 24-bit color,
 	    accelerated (but the driver does not support hardware
 	    acceleration)
-	  + p9100 ("pnozz") framebuffer found in Tapdole SPARCbook 3GS and
+	  + p9100 (pnozz) framebuffer found in Tapdole SPARCbook 3GS and
 	    3GX (8, 16 or 32-bit unaccelerated)
+	  + Southland Media Systems MGX and MGXPlus (mgx) - 24-bit color,
+	    accelerated (currently only supported in 8-bit unaccelerated mode)
 	  + TCX - 8/24-bit color
-	  + Vigra VS10 and VS12 framebuffers (8 bit color, selectable
+	  + Vigra VS10 and VS12 framebuffers (8-bit color, selectable
 	    VGA-compatible modes and connector)
 	  + ZX (aka Leo) - 8/24-bit color, overlay planes, double-buffered,
 	    3-D acceleration
