@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setscope.c,v 1.3 2002/01/19 23:49:32 fgsch Exp $	*/
+/*	$OpenBSD: uthread_attr_setscope.c,v 1.4 2002/02/19 01:13:08 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -42,16 +42,14 @@ pthread_attr_setscope(pthread_attr_t *attr, int contentionscope)
 {
 	int ret = 0;
 
-	if ((attr == NULL) || (*attr == NULL) ||
-	    (contentionscope != PTHREAD_SCOPE_PROCESS) ||
-	    (contentionscope != PTHREAD_SCOPE_SYSTEM))
+	if ((attr == NULL) || (*attr == NULL)) {
 		/* Return an invalid argument: */
 		ret = EINVAL;
-
-	else if (contentionscope == PTHREAD_SCOPE_SYSTEM)
-		/* We don't support system wide contention: */
+	} else if ((contentionscope != PTHREAD_SCOPE_PROCESS) ||
+	    (contentionscope == PTHREAD_SCOPE_SYSTEM)) {
+		/* We don't support PTHREAD_SCOPE_SYSTEM. */
 		ret = ENOTSUP;
-	else
+	} else
 		(*attr)->flags |= contentionscope;
 
 	return(ret);
