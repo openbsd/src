@@ -3483,6 +3483,16 @@ simplify_rtx (x, op0_mode, last, in_dest)
 	  rtx inner_op1 = XEXP (x, 1);
 	  rtx inner;
 	  
+#ifndef FRAME_GROWS_DOWNWARD
+	  if (flag_propolice_protection
+	      && code == PLUS
+	      && other == frame_pointer_rtx
+	      && GET_CODE (inner_op0) == CONST_INT
+	      && GET_CODE (inner_op1) == CONST_INT
+	      && INTVAL (inner_op0) > 0
+	      && INTVAL (inner_op0) + INTVAL (inner_op1) <= 0)
+	    return x;
+#endif
 	  /* Make sure we pass the constant operand if any as the second
 	     one if this is a commutative operation.  */
 	  if (CONSTANT_P (inner_op0) && GET_RTX_CLASS (code) == 'c')
