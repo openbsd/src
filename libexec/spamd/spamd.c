@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.67 2004/06/21 17:05:43 itojun Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.68 2004/06/29 11:19:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -44,8 +44,6 @@
 #include <unistd.h>
 
 #include <netdb.h>
-#include <sys/types.h>
-#include <machine/endian.h>
 
 #include "sdl.h"
 #include "grey.h"
