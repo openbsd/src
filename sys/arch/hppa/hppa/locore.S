@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.116 2003/10/15 18:54:55 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.117 2003/10/15 19:54:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1510,6 +1510,8 @@ $trap_from_kernel
 	stw	t2, TF_CR19(t3)
 	stw	r1, TF_FLAGS(t3)
 
+	mfctl	rctr, t1		/* gotta get it before R is up */
+
 	copy	sp, t3
 	ldo	HPPA_FRAME_SIZE+TRAPFRAME_SIZEOF(sp), sp
 	rfir
@@ -1519,6 +1521,10 @@ $trapnowvirt
 	 * t3 contains the virtual address of the trapframe
 	 * sp is loaded w/ the right VA (we did not need it being physical)
 	 */
+
+	mfctl	ccr, t2
+	stw	t1, TF_CR0(t3)
+	stw	t2, TF_CR10(t3)
 
 	mfsp	sr0, t1
 	mfsp	sr1, t2
@@ -1617,11 +1623,6 @@ $trapnowvirt
 	/*
 	 * Save the necessary control registers that have not already saved.
 	 */
-
-	mfctl	rctr, t1
-	mfctl	ccr, t2
-	stw	t1, TF_CR0(t3)
-	stw	t2, TF_CR10(t3)
 
 #ifdef DDB
 	/*
