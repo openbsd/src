@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.14 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.15 2002/09/04 22:08:06 fgsch Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -1726,7 +1726,6 @@ gotit:
 		break;
 
 	default:
-		sc_print_addr(ecb->xs->sc_link);
 		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
 		    sc->sc_dev.dv_xname);
 	reset:
