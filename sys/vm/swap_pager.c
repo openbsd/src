@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap_pager.c,v 1.13 1998/03/01 00:38:00 niklas Exp $	*/
+/*	$OpenBSD: swap_pager.c,v 1.14 1998/12/30 10:21:52 art Exp $	*/
 /*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
@@ -539,8 +539,10 @@ swap_pager_cluster(pager, offset, loffset, hoffset)
 		bsize = swap_pager_maxcluster;
 
 	loff = offset - (offset % bsize);
+#ifdef DIAGNOSTIC
 	if (loff >= swp->sw_osize)
 		panic("swap_pager_cluster: bad offset");
+#endif
 
 	hoff = loff + bsize;
 	if (hoff > swp->sw_osize)
@@ -750,13 +752,13 @@ swap_pager_io(swp, mlist, npages, flags)
 	 * and place a "cleaning" entry on the inuse queue.
 	 */
 	if ((flags & (B_READ|B_ASYNC)) == B_ASYNC) {
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		if (swap_pager_free.tqh_first == NULL)
 			panic("swpg_io: lost spc");
 #endif
 		spc = swap_pager_free.tqh_first;
 		TAILQ_REMOVE(&swap_pager_free, spc, spc_list);
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		if (spc->spc_flags != SPC_FREE)
 			panic("swpg_io: bad free spc");
 #endif
@@ -1001,7 +1003,7 @@ swap_pager_iodone(bp)
 	     spc = spc->spc_list.tqe_next)
 		if (spc->spc_bp == bp)
 			break;
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 	if (spc == NULL)
 		panic("swap_pager_iodone: bp not found");
 #endif
@@ -1144,7 +1146,7 @@ swap_pager_remove(pager, from, to)
 
 	/*	Adjust the page count and return the removed count.	*/
 	swp->sw_cnt -= cnt;
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 	if (swp->sw_cnt < 0)
 		panic("swap_pager_remove: sw_cnt < 0");
 #endif
