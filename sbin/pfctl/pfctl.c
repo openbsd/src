@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.162 2003/03/27 18:01:57 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.163 2003/03/27 20:21:34 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -429,7 +429,7 @@ pfctl_kill_states(int dev, int opts)
 			    ((struct sockaddr_in6 *)resp[0]->ai_addr)->
 			    sin6_addr;
 		else
-			errx(1, "Unknown address family!?!?!");
+			errx(1, "Unknown address family %d", psk.psk_af);
 
 		if (state_killers > 1) {
 			dests = 0;
@@ -464,7 +464,8 @@ pfctl_kill_states(int dev, int opts)
 					    ((struct sockaddr_in6 *)resp[1]->
 					    ai_addr)->sin6_addr;
 				else
-					errx(1, "Unknown address family!?!?!");
+					errx(1, "Unknown address family %d",
+					    psk.psk_af);
 
 				if (ioctl(dev, DIOCKILLSTATES, &psk))
 					err(1, "DIOCKILLSTATES");
@@ -979,12 +980,11 @@ pfctl_rules(int dev, char *filename, int opts)
 		fin = stdin;
 		infile = "stdin";
 	} else {
-		fin = fopen(filename, "r");
+		if ((fin = fopen(filename, "r")) == NULL) {
+			warn("%s", filename);
+			return (1);
+		}
 		infile = filename;
-	}
-	if (fin == NULL) {
-		warn("%s", filename);
-		return (1);
 	}
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
@@ -1024,7 +1024,7 @@ pfctl_rules(int dev, char *filename, int opts)
 	}
 	pf.rule_nr = 0;
 	if (parse_rules(fin, &pf) < 0)
-		errx(1, "Syntax error in file: pf rules not loaded");
+		errx(1, "Syntax error in config file: pf rules not loaded");
 	if ((altqsupport && (loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0))
 		if (check_commit_altq(dev, opts) != 0)
 			errx(1, "errors in altq config");
