@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.10 2001/01/12 23:37:01 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.11 2001/03/22 23:50:53 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -141,9 +141,11 @@
 #define	MACHINE_NEW_NONCONTIG	1	/* defined this until we rely on vm */
 #define	PMAP_NEW
 
+#ifdef _KERNEL
 struct pmap_physseg {
 	struct pv_entry *pvent;
 };
+#endif
 
 #endif	/* _MACHINE_VMPARAM_H_ */
 
