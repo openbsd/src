@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.6 2002/03/14 03:15:58 millert Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.7 2002/06/07 01:01:40 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -163,10 +163,8 @@ size_memory(void)
  */
 void
 PPC1_mem_regions(memp, availp)
-struct mem_region **memp, **availp;
+	struct mem_region **memp, **availp;
 {
-	extern int avail_start;
-
 	bzero(&PPC1mem[0], sizeof(struct mem_region) * PPC1_REGIONS);
 	bzero(&PPC1avail[0], sizeof(struct mem_region) * PPC1_REGIONS);
 	/*
@@ -175,8 +173,7 @@ struct mem_region **memp, **availp;
 	PPC1mem[0].start = 0;
 	PPC1mem[0].size = size_memory();
 
-	PPC1avail[0].start = avail_start;
-	PPC1avail[0].size = (PPC1mem[0].size - avail_start);
+	PPC1avail[0] = PPC1mem[0];
 
 	*memp = PPC1mem;
 	*availp = PPC1avail;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2002/03/23 13:28:34 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2002/06/07 01:01:40 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1073,6 +1073,8 @@ ppc_set_msr(msr)
 	return(msr);
 }
 
+vaddr_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;
+
 #if 0
 /* BUS functions */
 int
@@ -1185,9 +1187,12 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 		/* need to steal vm space before kernel vm is initialized */
 		alloc_size = trunc_page(size + NBPG);
-		ppc_kvm_size -= alloc_size;
 
-		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_size;
+		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
+		ppc_kvm_stolen -= alloc_size;
+		if (ppc_kvm_stolen > SEGMENT_LENGTH) {
+			panic("ppc_kvm_stolen, out of space");
+		}
 	} else {
 		vaddr = uvm_km_valloc_wait(phys_map, len);
 	}
