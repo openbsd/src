@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.19 1999/08/25 21:56:52 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.20 1999/10/31 17:53:47 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -124,7 +124,11 @@ struct ne2000dev {
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_AMBICOM_AMB8002T,
-      0, -1, { 0x00, 0x00, 0xb2 } },
+      0, -1, { 0x00, 0x10, 0x7a } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_PLANEX_FNW3600T,
+      0, -1, { 0x00, 0x90, 0xcc } },
 
     /*
      * You have to add new entries which contains
@@ -191,13 +195,21 @@ struct ne2000dev {
       PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
       0, -1, { 0x00, 0x80, 0x19 } },
 
-    { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_PCC_2,
-      PCMCIA_CIS_COREGA_PCC_2,
+    { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_PCC_T,
+      PCMCIA_CIS_COREGA_ETHER_PCC_T,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T,
+      PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
+      PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
       0, -1, { 0x00, 0x00, 0xf4 } },
 
     { PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
-      0, 0xd400, { 0x01, 0x03, 0xdc } },
+      0, 0x01c0, { 0x00, 0xa0, 0x0c } },
 
     { PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
       PCMCIA_CIS_KINGSTON_KNE_PC2,
@@ -214,6 +226,10 @@ struct ne2000dev {
     { PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
       PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
       0, 0x0ff0, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
+      PCMCIA_CIS_SOCKET_LP_ETHER_CF,
+      0, -1, { 0x00, 0xc0, 0x1b} },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
