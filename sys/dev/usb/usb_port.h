@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.48 2004/04/02 01:10:09 deraadt Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.49 2004/05/26 04:26:58 deraadt Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -251,9 +251,9 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 typedef struct proc *usb_proc_ptr;
 
-#define UCOMBUSCF_PORTNO		-1
+#define UCOMBUSCF_PORTNO		0
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
-#define UHIDBUSCF_REPORTID		-1
+#define UHIDBUSCF_REPORTID		0
 #define UHIDBUSCF_REPORTID_DEFAULT	-1
 
 #define bswap32(x)		swap32(x)
