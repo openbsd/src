@@ -1,7 +1,10 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:43:21 deraadt Exp $
+#	$Id: Makefile,v 1.2 1997/02/20 06:42:59 tholo Exp $
 
 PROG =	rpc.rstatd
-SRCS =	rstatd.c rstat_proc.c
+.PATH: ${.CURDIR}/../../usr.bin/vmstat
+
+CFLAGS+=-I${.CURDIR}/../../usr.bin/vmstat
+SRCS =	dkstats.c rstatd.c rstat_proc.c
 MAN =	rpc.rstatd.8
 MLINKS=	rpc.rstatd.8 rstatd.8
 
