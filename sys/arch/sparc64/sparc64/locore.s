@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.16 2002/06/08 21:54:49 mdw Exp $	*/
+/*	$OpenBSD: locore.s,v 1.17 2002/06/09 05:55:24 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3120,9 +3120,6 @@ Ldatafault_internal:
 	.text
 2:
 #endif
-	!! In the EMBEDANY memory model %g4 points to the start of the data segment.
-	!! In our case we need to clear it before calling any C-code
-	clr	%g4
 
 	/*
 	 * Right now the registers have the following values:
@@ -3364,10 +3361,6 @@ textfault:
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	flushw						! Get rid of any user windows so we don't deadlock
 	
-	!! In the EMBEDANY memory model %g4 points to the start of the data segment.
-	!! In our case we need to clear it before calling any C-code
-	clr	%g4
-
 	/* Use trap type to see what handler to call */
 	cmp	%o1, T_INST_ERROR
 	be,pn	%xcc, text_error
@@ -3484,9 +3477,6 @@ Lslowtrap_reenter:
 	movrlz	%g1, %g0, %g1
 	CHKPT(%g2,%g3,0x24)
 	wrpr	%g0, %g1, %tl		! Revert to kernel mode
-	!! In the EMBEDANY memory model %g4 points to the start of the data segment.
-	!! In our case we need to clear it before calling any C-code
-	clr	%g4
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
@@ -3866,9 +3856,6 @@ syscall_setup:
 	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
 	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 
-	!! In the EMBEDANY memory model %g4 points to the start of the data segment.
-	!! In our case we need to clear it before calling any C-code
-	clr	%g4
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 
 	call	_C_LABEL(syscall)		! syscall(&tf, code, pc)
@@ -4250,13 +4237,6 @@ _C_LABEL(sparc_interrupt):
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
-
-	/*
-	 * In the EMBEDANY memory model %g4 points to the start of the
-	 * data segment.  In our case we need to clear it before calling
-	 * any C-code.
-	 */
-	clr	%g4
 
 	flushw			! Do not remove this insn -- causes interrupt loss
 	rd	%y, %l6
