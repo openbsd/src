@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.154 2005/03/23 22:26:34 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.155 2005/03/28 15:39:32 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1683,12 +1683,17 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	}
 
 	if (errors) {
-		/* XXX more leaks in this case? */
+		/* XXX more leaks in this case */
 		while ((la = TAILQ_FIRST(listen_addrs)) != NULL) {
 			TAILQ_REMOVE(listen_addrs, la, entry);
 			free(la);
 		}
 		free(listen_addrs);
+
+		for (p = peer_l; p != NULL; p = pnext) {
+			pnext = p->next;
+			free(p);
+		}
 	} else {
 		errors += merge_config(xconf, conf, peer_l, listen_addrs);
 		errors += mrt_mergeconfig(xmconf, mrtconf);
