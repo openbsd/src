@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.160 2004/04/28 06:45:37 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.161 2004/04/28 17:42:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,7 @@ session_sighdlr(int sig)
 int
 setup_listener(struct sockaddr *sa)
 {
-	int			 fd, opt;
+	int	fd, opt;
 
 	if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
 		fatal("king bula sez: unknown address family");
@@ -324,8 +324,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 				events |= POLLOUT;
 
 			/* poll events */
-			if (p->sock != -1 && events != 0) {
-				pfd[i].fd = p->sock;
+			if (p->fd != -1 && events != 0) {
+				pfd[i].fd = p->fd;
 				pfd[i].events = events;
 				peer_l[i] = p;
 				i++;
@@ -420,7 +420,7 @@ init_conf(struct bgpd_config *c)
 void
 init_peer(struct peer *p)
 {
-	p->sock = p->wbuf.sock = -1;
+	p->fd = p->wbuf.sock = -1;
 	p->capa.announce = p->conf.capabilities;
 	p->capa.ann_mp = 1;
 	p->capa.ann_refresh = 1;
@@ -684,11 +684,11 @@ start_timer_keepalive(struct peer *peer)
 void
 session_close_connection(struct peer *peer)
 {
-	if (peer->sock != -1) {
-		shutdown(peer->sock, SHUT_RDWR);
-		close(peer->sock);
+	if (peer->fd != -1) {
+		shutdown(peer->fd, SHUT_RDWR);
+		close(peer->fd);
 	}
-	peer->sock = peer->wbuf.sock = -1;
+	peer->fd = peer->wbuf.sock = -1;
 }
 
 void
@@ -788,7 +788,7 @@ session_accept(int listenfd)
 
 	if (p != NULL &&
 	    (p->state == STATE_CONNECT || p->state == STATE_ACTIVE)) {
-		if (p->sock != -1) {
+		if (p->fd != -1) {
 			if (p->state == STATE_CONNECT)
 				session_close_connection(p);
 			else {
@@ -810,7 +810,7 @@ session_accept(int listenfd)
 				return;
 			}
 		}
-		p->sock = p->wbuf.sock = connfd;
+		p->fd = p->wbuf.sock = connfd;
 		if (session_setup_socket(p)) {
 			shutdown(connfd, SHUT_RDWR);
 			close(connfd);
@@ -836,10 +836,10 @@ session_connect(struct peer *peer)
 	 * describes; we simply make sure there is only ever one concurrent
 	 * tcp connection per peer.
 	 */
-	if (peer->sock != -1)
+	if (peer->fd != -1)
 		return (-1);
 
-	if ((peer->sock = socket(peer->conf.remote_addr.af, SOCK_STREAM,
+	if ((peer->fd = socket(peer->conf.remote_addr.af, SOCK_STREAM,
 	    IPPROTO_TCP)) == -1) {
 		log_peer_warn(&peer->conf, "session_connect socket");
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
@@ -847,19 +847,19 @@ session_connect(struct peer *peer)
 	}
 
 	if (peer->conf.auth.method == AUTH_MD5SIG)
-		if (setsockopt(peer->sock, IPPROTO_TCP, TCP_MD5SIG,
+		if (setsockopt(peer->fd, IPPROTO_TCP, TCP_MD5SIG,
 		    &opt, sizeof(opt)) == -1) {
 			log_peer_warn(&peer->conf, "setsockopt md5sig");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
 
-	peer->wbuf.sock = peer->sock;
+	peer->wbuf.sock = peer->fd;
 
 	/* if update source is set we need to bind() */
 	if (peer->conf.local_addr.af) {
 		sa = addr2sa(&peer->conf.local_addr, 0);
-		if (bind(peer->sock, sa, sa->sa_len) == -1) {
+		if (bind(peer->fd, sa, sa->sa_len) == -1) {
 			log_peer_warn(&peer->conf, "session_connect bind");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
@@ -871,10 +871,10 @@ session_connect(struct peer *peer)
 		return (-1);
 	}
 
-	session_socket_blockmode(peer->sock, BM_NONBLOCK);
+	session_socket_blockmode(peer->fd, BM_NONBLOCK);
 
 	sa = addr2sa(&peer->conf.remote_addr, BGP_PORT);
-	if (connect(peer->sock, sa, sa->sa_len) == -1) {
+	if (connect(peer->fd, sa, sa->sa_len) == -1) {
 		if (errno != EINPROGRESS) {
 			log_peer_warn(&peer->conf, "connect");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
@@ -895,7 +895,7 @@ session_setup_socket(struct peer *p)
 
 	if (p->conf.ebgp && p->sa_remote.ss_family == AF_INET)
 		/* set TTL to foreign router's distance - 1=direct n=multihop */
-		if (setsockopt(p->sock, IPPROTO_IP, IP_TTL, &ttl,
+		if (setsockopt(p->fd, IPPROTO_IP, IP_TTL, &ttl,
 		    sizeof(ttl)) == -1) {
 			log_peer_warn(&p->conf,
 			    "session_setup_socket setsockopt TTL");
@@ -904,7 +904,7 @@ session_setup_socket(struct peer *p)
 
 	if (p->conf.ebgp && p->sa_remote.ss_family == AF_INET6)
 		/* set hoplimit to foreign router's distance */
-		if (setsockopt(p->sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &ttl,
+		if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ttl,
 		    sizeof(ttl)) == -1) {
 			log_peer_warn(&p->conf,
 			    "session_setup_socket setsockopt hoplimit");
@@ -912,7 +912,7 @@ session_setup_socket(struct peer *p)
 		}
 
 	/* set TCP_NODELAY */
-	if (setsockopt(p->sock, IPPROTO_TCP, TCP_NODELAY, &nodelay,
+	if (setsockopt(p->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay,
 	    sizeof(nodelay)) == -1) {
 		log_peer_warn(&p->conf,
 		    "session_setup_socket setsockopt TCP_NODELAY");
@@ -921,7 +921,7 @@ session_setup_socket(struct peer *p)
 
 	/* set precedence, see rfc1771 appendix 5 */
 	if (p->sa_remote.ss_family == AF_INET &&
-	    setsockopt(p->sock, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) == -1) {
+	    setsockopt(p->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) == -1) {
 		log_peer_warn(&p->conf,
 		    "session_setup_socket setsockopt TOS");
 		return (-1);
@@ -953,11 +953,11 @@ session_tcp_established(struct peer *peer)
 	socklen_t	len;
 
 	len = sizeof(peer->sa_local);
-	if (getsockname(peer->sock, (struct sockaddr *)&peer->sa_local,
+	if (getsockname(peer->fd, (struct sockaddr *)&peer->sa_local,
 	    &len) == -1)
 		log_warn("getsockname");
 	len = sizeof(peer->sa_remote);
-	if (getpeername(peer->sock, (struct sockaddr *)&peer->sa_remote,
+	if (getpeername(peer->fd, (struct sockaddr *)&peer->sa_remote,
 	    &len) == -1)
 		log_warn("getpeername");
 }
@@ -1291,9 +1291,8 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 	}
 
 	if (pfd->revents & POLLIN) {
-		if ((n = read(p->sock, p->rbuf->buf + p->rbuf->wpos,
-			    sizeof(p->rbuf->buf) - p->rbuf->wpos)) ==
-			    -1) {
+		if ((n = read(p->fd, p->rbuf->buf + p->rbuf->wpos,
+		    sizeof(p->rbuf->buf) - p->rbuf->wpos)) == -1) {
 				if (errno != EINTR && errno != EAGAIN) {
 					log_peer_warn(&p->conf, "read error");
 					bgp_fsm(p, EVNT_CON_FATAL);
