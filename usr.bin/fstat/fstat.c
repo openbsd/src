@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.20 1998/09/08 20:49:33 art Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.21 1998/11/30 10:19:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.20 1998/09/08 20:49:33 art Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.21 1998/11/30 10:19:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -190,7 +190,7 @@ main(argc, argv)
 			if (uflg++)
 				usage();
 			if (!(passwd = getpwnam(optarg)))
-				err(1, "%s: unknown uid", optarg);
+				errx(1, "%s: unknown uid", optarg);
 			what = KERN_PROC_UID;
 			arg = passwd->pw_uid;
 			break;
@@ -230,13 +230,13 @@ main(argc, argv)
 	}
 
 	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL)
-		err(1, buf);
+		errx(1, "%s", buf);
 
 	setegid(getgid());
 	setgid(getgid());
 
 	if ((p = kvm_getprocs(kd, what, arg, &cnt)) == NULL)
-		err(1, kvm_geterr(kd));
+		errx(1, "%s", kvm_geterr(kd));
 	if (nflg)
 		printf("%s",
 "USER     CMD          PID   FD  DEV    INUM       MODE SZ|DV R/W");
