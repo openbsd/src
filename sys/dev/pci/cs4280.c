@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.2 2000/07/12 18:45:17 art Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.3 2000/07/12 22:10:33 fgsch Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -566,39 +566,34 @@ cs4280_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct cs4280_softc *sc = (struct cs4280_softc *)self;
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	struct cs4280_softc *sc = (struct cs4280_softc *) self;
+	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
-	char devinfo[256];
 	mixer_ctrl_t ctl;
 	u_int32_t mem;
     
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
-
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, CSCC_PCI_BA0, 
-			  PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-			  &sc->ba0t, &sc->ba0h, NULL, NULL)) {
-		printf("%s: can't map BA0 space\n", sc->sc_dev.dv_xname);
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &sc->ba0t, &sc->ba0h, NULL, NULL)) {
+		printf(": can't map BA0 space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, CSCC_PCI_BA1,
-			  PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-			  &sc->ba1t, &sc->ba1h, NULL, NULL)) {
-		printf("%s: can't map BA1 space\n", sc->sc_dev.dv_xname);
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &sc->ba1t, &sc->ba1h, NULL, NULL)) {
+		printf(": can't map BA1 space\n");
 		return;
 	}
 
 	sc->sc_dmatag = pa->pa_dmat;
 
 	/* Enable the device (set bus master flag) */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
+	   pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+	   PCI_COMMAND_MASTER_ENABLE);
 
 	/* LATENCY_TIMER setting */
 	mem = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
@@ -610,8 +605,8 @@ cs4280_attach(parent, self, aux)
 	
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+	    pa->pa_intrline, &ih)) {
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -619,13 +614,13 @@ cs4280_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, cs4280_intr, sc,
 				       sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(" %s\n", intrstr);
 
 	/* Initialization */
 	if(cs4280_init(sc, 1) != 0)
