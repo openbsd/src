@@ -1,4 +1,4 @@
-.\"     $OpenBSD: apropos.1,v 1.7 2000/11/09 17:52:01 aaron Exp $
+.\"     $OpenBSD: apropos.1,v 1.8 2003/03/10 05:51:29 millert Exp $
 .\"     $NetBSD: apropos.1,v 1.4 1995/09/04 20:46:17 tls Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -42,6 +42,7 @@
 .Nd locate commands by keyword lookup
 .Sh SYNOPSIS
 .Nm apropos
+.Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
 .Ar keyword
@@ -69,6 +70,12 @@ its documentation.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl C Ar file
+Specify an alternative configuration
+.Ar file
+in
+.Xr man.conf 5
+format.
 .It Fl M Ar path
 Override the list of standard directories
 .Nm
@@ -110,14 +117,20 @@ The format of the path is a colon
 separated list of directories.
 .El
 .Sh FILES
-.Bl -tag -width whatis.db -compact
+.Bl -tag -width /etc/man.conf -compact
 .It Pa whatis.db
 name of the apropos database
+.It Pa /etc/man.conf
+default
+.Xr man 1
+configuration file
 .El
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr whatis 1 ,
-.Xr whereis 1
+.Xr whereis 1 ,
+.Xr man.conf 5 ,
+.Xr makewhatis 8
 .Sh HISTORY
 The
 .Nm
