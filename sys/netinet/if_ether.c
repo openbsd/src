@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.22 2000/06/22 19:05:51 art Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.23 2000/11/27 14:57:52 ho Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -460,6 +460,13 @@ in_arpinput(m)
 
 	ea = mtod(m, struct ether_arp *);
 	op = ntohs(ea->arp_op);
+	if ((op != ARPOP_REQUEST) && (op != ARPOP_REPLY))
+		goto out;
+	if ((op == ARPOP_REPLY) && (m->m_flags & (M_BCAST|M_MCAST))) {
+		log(LOG_ERR,
+		    "arp: received reply to broadcast or multicast address\n");
+		goto out;
+	}
 	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof (itaddr));
 	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
@@ -477,11 +484,16 @@ in_arpinput(m)
 	if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)ac->ac_enaddr,
 	    sizeof (ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
-	if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
-	    sizeof (ea->arp_sha))) {
-		log(LOG_ERR,
-		    "arp: ether address is broadcast for IP address %s!\n",
-		    inet_ntoa(isaddr));
+	if (ea->arp_sha[0] & 1) {
+		if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
+		    sizeof (ea->arp_sha)))
+		    log(LOG_ERR,
+			"arp: ether address is broadcast for IP address %s!\n",
+			inet_ntoa(isaddr));
+		else
+		    log(LOG_ERR,
+			"arp: ether address is multicast for IP address %s!\n",
+			inet_ntoa(isaddr));
 		goto out;
 	}
 	if (isaddr.s_addr == myaddr.s_addr) {
@@ -493,8 +505,8 @@ in_arpinput(m)
 	}
 	la = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0);
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
-		if (sdl->sdl_alen &&
-		    bcmp((caddr_t)ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
+		if (sdl->sdl_alen) {
+		    if (bcmp((caddr_t)ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
 		  	if (rt->rt_flags & RTF_PERMANENT_ARP) {
 				log(LOG_WARNING,
 				   "arp: attempt to overwrite permanent "
@@ -519,6 +531,15 @@ in_arpinput(m)
 				   (&ac->ac_if)->if_xname);
 				rt->rt_expire = 1; /* no longer static */
 			}
+		    }
+		} else if (rt->rt_ifp != &ac->ac_if) {
+		    log(LOG_WARNING,
+			"arp: attempt to add entry for %s "
+			"on %s by %s on %s\n",
+			inet_ntoa(isaddr), rt->rt_ifp->if_xname,
+			ether_sprintf(ea->arp_sha),
+			(&ac->ac_if)->if_xname);
+		    goto out;
 		}
 		bcopy((caddr_t)ea->arp_sha, LLADDR(sdl),
 		    sdl->sdl_alen = sizeof(ea->arp_sha));
