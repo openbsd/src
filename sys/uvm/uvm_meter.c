@@ -48,6 +48,10 @@
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 
+#ifdef UVM_SWAP_ENCRYPT
+#include <uvm/uvm_swap_encrypt.h>
+#endif
+
 /*
  * maxslp: ???? XXXCDC
  */
@@ -148,7 +152,11 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case VM_PSSTRINGS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &_ps,
 		    sizeof(_ps)));
-
+#ifdef UVM_SWAP_ENCRYPT
+	case VM_SWAPENCRYPT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &uvm_doswapencrypt));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

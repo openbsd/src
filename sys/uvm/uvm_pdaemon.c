@@ -165,12 +165,12 @@ uvmpd_tune()
 {
 	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
 
-	uvmexp.freemin = uvmexp.npages / 20;
+	uvmexp.freemin = uvmexp.npages / 30;
 
-	/* between 16k and 256k */
+	/* between 16k and 512k */
 	/* XXX:  what are these values good for? */
 	uvmexp.freemin = max(uvmexp.freemin, (16*1024) >> PAGE_SHIFT);
-	uvmexp.freemin = min(uvmexp.freemin, (256*1024) >> PAGE_SHIFT);
+	uvmexp.freemin = min(uvmexp.freemin, (512*1024) >> PAGE_SHIFT);
 
 	uvmexp.freetarg = (uvmexp.freemin * 4) / 3;
 	if (uvmexp.freetarg <= uvmexp.freemin)

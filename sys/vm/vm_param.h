@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.17 1999/11/25 08:44:07 art Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.18 1999/12/30 18:21:56 provos Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -139,7 +139,8 @@ extern int		page_shift;
 #else
 
 #define VM_UVMEXP	4		/* struct uvmexp */
-#define	VM_MAXID	5		/* number of valid vm ids */
+#define VM_SWAPENCRYPT	5		/* int */
+#define	VM_MAXID	6		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -147,6 +148,7 @@ extern int		page_shift;
 	{ "loadavg", CTLTYPE_STRUCT }, \
 	{ "psstrings", CTLTYPE_STRUCT }, \
 	{ "uvmexp", CTLTYPE_STRUCT }, \
+	{ "swapencrypt", CTLTYPE_INT }, \
 }
 
 #endif

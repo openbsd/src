@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.142 1999/12/27 21:41:13 fgsch Exp $
+#	$OpenBSD: files,v 1.143 1999/12/30 18:21:56 provos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -504,7 +504,7 @@ file netinet/ip_ah_old.c		inet & ipsec
 file netinet/ip_ah_new.c		inet & ipsec
 file netinet/ip_rmd160.c		inet & ipsec
 file netinet/ip_sha1.c			inet & ipsec
-file netinet/ip_blf.c			inet & ipsec
+file netinet/ip_blf.c			(inet & ipsec) | uvm_swap_encrypt
 file netinet/ip_cast.c			inet & ipsec
 file netinet/ip_skipjack.c		inet & ipsec
 file netinet/libdeslite/ecb_enc.c	inet & ipsec
@@ -666,6 +666,7 @@ file uvm/uvm_pdaemon.c			uvm
 file uvm/uvm_pglist.c			uvm
 file uvm/uvm_stat.c			uvm
 file uvm/uvm_swap.c			uvm
+file uvm/uvm_swap_encrypt.c		uvm & uvm_swap_encrypt
 file uvm/uvm_unix.c			uvm
 file uvm/uvm_user.c			uvm
 file uvm/uvm_vnode.c			uvm

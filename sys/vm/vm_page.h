@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.9 1999/08/23 07:56:03 art Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.10 1999/12/30 18:21:56 provos Exp $	*/
 /*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
@@ -184,6 +184,7 @@ struct vm_page {
 #define PQ_AOBJ		0x0020		/* page is part of an anonymous
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
+#define PQ_ENCRYPT	0x0040		/* page needs {en,de}cryption */
 
 #else
 #define	PG_INACTIVE	0x0001		/* page is in inactive list (P) */
