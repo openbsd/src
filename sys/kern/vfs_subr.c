@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.44 2000/04/21 16:33:12 mickey Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.45 2000/04/25 22:41:57 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -265,8 +265,7 @@ vfs_getvfs(fsid)
 	register struct mount *mp;
 
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = mp->mnt_list.cqe_next) {
+	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (mp->mnt_stat.f_fsid.val[0] == fsid->val[0] &&
 		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1]) {
 			simple_unlock(&mountlist_slock);
