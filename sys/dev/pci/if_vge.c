@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.4 2004/12/26 05:58:25 pvalchev Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.5 2004/12/27 00:46:40 pvalchev Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1014,9 +1014,6 @@ vge_rxeof(struct vge_softc *sc)
 		 * or an intermediate fragment. Either way, we want to
 		 * accumulate the buffers.
 		 */
-		if (rxstat & VGE_RXPKT_MOF || rxstat & VGE_RXPKT_EOF ||
-		    rxstat & VGE_RXPKT_ONEFRAG)
-			printf("vge_rxeof: bizzarre!\n");
 		if (rxstat & VGE_RXPKT_SOF) {
 			DPRINTF(("vge_rxeof: SOF\n"));
 			m->m_len = MCLBYTES;
