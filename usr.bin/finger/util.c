@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 1996/06/26 05:33:19 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 1996/08/07 17:49:49 downsj Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.2 1996/06/26 05:33:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.3 1996/08/07 17:49:49 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,12 +58,13 @@ find_idle_and_ttywrite(w)
 	extern time_t now;
 	extern int errno;
 	struct stat sb;
-	char *strerror();
 
-	(void)sprintf(tbuf, "%s/%s", _PATH_DEV, w->tty);
+	(void)sprintf(tbuf, "%s%s", _PATH_DEV, w->tty);
 	if (stat(tbuf, &sb) < 0) {
-		(void)fprintf(stderr,
-		    "finger: %s: %s\n", tbuf, strerror(errno));
+		/* Don't bitch about it, just handle it... */
+		w->idletime = 0;
+		w->writable = 0;
+
 		return;
 	}
 	w->idletime = now < sb.st_atime ? 0 : now - sb.st_atime;
