@@ -1,11 +1,10 @@
 #
-#	$OpenBSD: ttys,v 1.11 1997/10/11 21:22:10 deraadt Exp $
+#	$OpenBSD: ttys,v 1.12 1998/04/07 06:02:56 deraadt Exp $
 #
 # name	getty				type	status		comments
 #
 console	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC0	"/usr/libexec/getty Pc"		vt220	on  secure
-#ttyC0	"/usr/X11R6/bin/xdm -nodaemon"	xterm	on  secure
 ttyC1	"/usr/libexec/getty Pc"		vt220	on secure
 ttyC2	"/usr/libexec/getty Pc"		vt220	on secure
 ttyC3	"/usr/libexec/getty Pc"		vt220	on secure
