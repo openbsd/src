@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.89 2002/06/11 18:03:25 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.90 2002/06/19 17:44:02 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -551,10 +551,19 @@ print_status(struct pf_status *s)
 
 	runtime = time(NULL) - s->since;
 
-	if ( s->running ) 
-		snprintf(statline, sizeof(statline), 
-		    "Status: Enabled for %us ", runtime);
-	else
+	if (s->running) {
+		unsigned sec, min, hrs, day = runtime;
+
+		sec = day % 60;
+		day /= 60;
+		min = day % 60;
+		day /= 60;
+		hrs = day % 24;
+		day /= 24;
+		snprintf(statline, sizeof(statline),
+		    "Status: Enabled for %u days %.2u:%.2u:%.2u",
+		    day, hrs, min, sec);
+	} else
 		snprintf(statline, sizeof(statline), "Status: Disabled");
 	printf("%-34s", statline);
 	switch (s->debug) {
@@ -595,7 +604,7 @@ print_status(struct pf_status *s)
 	for (i = 0; i < FCNT_MAX; i++) {
 		printf("  %-25s %14lld ", pf_fcounters[i],
 			    s->fcounters[i]);
-		if ( runtime > 0 )
+		if (runtime > 0)
 			printf("%14.1f/s\n",
 			    (double)s->fcounters[i] / (double)runtime);
 		else
@@ -605,7 +614,7 @@ print_status(struct pf_status *s)
 	for (i = 0; i < PFRES_MAX; i++) {
 		printf("  %-25s %14lld ", pf_reasons[i],
 		    s->counters[i]);
-		if ( runtime > 0 )
+		if (runtime > 0)
 			printf("%14.1f/s\n",
 			    (double)s->counters[i] / (double)runtime);
 		else
