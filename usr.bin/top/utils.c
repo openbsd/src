@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.11 2003/06/19 22:40:45 millert Exp $	 */
+/* $OpenBSD: utils.c,v 1.12 2003/06/20 16:53:15 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -43,7 +43,7 @@
 int
 atoiwi(char *str)
 {
-	int len;
+	size_t len;
 
 	len = strlen(str);
 	if (len != 0) {
@@ -310,11 +310,11 @@ char *
 format_k(int amt)
 {
 	static char retarray[NUM_STRINGS][16];
-	static int  index = 0;
+	static int  idx = 0;
 	char *ret, tag = 'K';
 
-	ret = retarray[index];
-	index = (index + 1) % NUM_STRINGS;
+	ret = retarray[idx];
+	idx = (idx + 1) % NUM_STRINGS;
 
 	if (amt >= 10000) {
 		amt = (amt + 512) / 1024;
