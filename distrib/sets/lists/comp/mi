@@ -2632,6 +2632,17 @@
 ./usr/include/g++/stack
 ./usr/include/g++/stack.h
 ./usr/include/g++/std
+./usr/include/g++/std/gslice.h
+./usr/include/g++/std/gslice_array.h
+./usr/include/g++/std/indirect_array.h
+./usr/include/g++/std/mask_array.h
+./usr/include/g++/std/slice.h
+./usr/include/g++/std/slice_array.h
+./usr/include/g++/std/std_valarray.h
+./usr/include/g++/std/valarray_array.h
+./usr/include/g++/std/valarray_array.tcc
+./usr/include/g++/std/valarray_meta.h
+./usr/include/g++/valarray
 ./usr/include/g++/std/bastring.cc
 ./usr/include/g++/std/bastring.h
 ./usr/include/g++/std/complext.cc
