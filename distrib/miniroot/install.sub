@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.64 1998/03/29 01:11:32 millert Exp $
+#	$OpenBSD: install.sub,v 1.65 1998/03/29 17:48:16 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -940,7 +940,7 @@ OOF
 
 	# Eww.
 	_matched=0
-	for _f in $_file_list; do
+	for _f in $_sets $_kernel; do
 		. $_tfile
 	done
 	rm -f $_tfile
@@ -1021,7 +1021,7 @@ OOF
 
 		# Eww.
 		_matched=0
-		for _f in $_file_list; do
+		for _f in $_failed_files; do
 			. $_tfile
 		done
 		rm -f $_tfile
@@ -1140,7 +1140,7 @@ OOF
 
 	# Eww.
 	_matched=0
-	for _f in `cd $1 && echo *`; do
+	for _f in $_sets $_kernel; do
 		. $_tfile
 	done
 	rm -f $_tfile
@@ -1221,7 +1221,7 @@ OOF
 
 		# Eww.
 		_matched=0
-		for _f in `cd $1 && echo *`; do
+		for _f in $_failed_files; do
 			. $_tfile
 		done
 		rm -f $_tfile
