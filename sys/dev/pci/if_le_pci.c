@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.6 1996/05/14 22:23:38 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.6.4.1 1996/06/03 20:32:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #ifdef __alpha__			/* XXX */
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
-#define vtophys(va)     (vtophys(va) | 0x40000000) 
+#define	vtophys(va)	__alpha_bus_XXX_dmamap(lesc->sc_bc, (void *)(va))
 #endif
 
 int le_pci_match __P((struct device *, void *, void *));

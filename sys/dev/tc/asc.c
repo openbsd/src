@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.19 1996/05/20 09:46:21 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.19.2.2 1996/06/04 21:21:44 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -469,7 +469,7 @@ struct cfattach asc_ca = {
 
 extern struct cfdriver asc_cd;
 struct cfdriver asc_cd = {
-	NULL, "as", DV_DULL
+	NULL, "asc", DV_DULL
 };
 
 
@@ -500,6 +500,8 @@ struct	pmax_driver ascdriver = {
 };
 
 
+extern struct cfdriver ioasic_cd; /* XXX */
+
 /*
  * Match driver based on name
  */
@@ -509,14 +511,19 @@ ascmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct ioasicdev_attach_args *d = aux;
+	struct tc_attach_args *t = aux;
 	void *ascaddr;
 
 	/*if (parent->dv_cfdata->cf_driver == &ioasic_cd) */
-	if (!TC_BUS_MATCHNAME(ca, "asc") && !TC_BUS_MATCHNAME(ca, "PMAZ-AA "))
+	if (strncmp(d->iada_modname, "asc", TC_ROM_LLEN) &&
+	    strncmp(d->iada_modname, "PMAZ-AA ", TC_ROM_LLEN))
 		return (0);
 
-	ascaddr = (void*)ca->ca_addr;
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd)
+		ascaddr = (void*)d->iada_addr;
+	else
+		ascaddr = (void*)t->ta_addr;
 
 	if (badaddr(ascaddr + ASC_OFFSET_53C94, 4))
 		return (0);
@@ -524,15 +531,14 @@ ascmatch(parent, match, aux)
 	return (1);
 }
 
-extern struct cfdriver ioasic_cd; /* XXX */
-
 void
 ascattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	register struct ioasicdev_attach_args *d = aux;
+	register struct tc_attach_args *t = aux;
 	register asc_softc_t asc = (asc_softc_t) self;
 	register asc_regmap_t *regs;
 	int id, s, i;
@@ -541,7 +547,11 @@ ascattach(parent, self, aux)
 	void *ascaddr;
 	int unit;
 
-	ascaddr = (void*)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
+	if (asc->sc_dev.dv_parent->dv_cfdata->cf_driver == &ioasic_cd) {
+		ascaddr = (void*)MACH_PHYS_TO_UNCACHED(d->iada_addr);
+	} else {
+		ascaddr = (void*)MACH_PHYS_TO_UNCACHED(t->ta_addr);
+	}
 	unit = asc->sc_dev.dv_unit;
 	
 	/*
@@ -648,7 +658,12 @@ ascattach(parent, self, aux)
 	(void) pmax_add_scsi(&ascdriver, unit);
 
 	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, asc_intr, asc);
+	if (asc->sc_dev.dv_parent->dv_cfdata->cf_driver == &ioasic_cd)
+		ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_BIO,
+		    asc_intr, asc);
+	else
+		tc_intr_establish(parent, t->ta_cookie, TC_IPL_BIO,
+		    asc_intr, asc);
 
 	printf(": target %d\n", id);
 
@@ -1043,17 +1058,9 @@ again:
 	printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
 					fifo, len, state->flags);
 				len += fifo;
-/*XXX*/ goto abort;
 			} else if (state->flags & DMA_IN) {
-				u_char *cp;
-
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
-				len += fifo;
-				cp = state->dmaBufAddr + (state->dmalen - len);
-				while (fifo-- > 0)
-					*cp++ = regs->asc_fifo;
-/*XXX*/ goto abort;
 			} else
 				printf("asc_intr: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
@@ -1475,6 +1482,17 @@ asc_dma_in(asc, status, ss, ir)
 		state->buflen -= len;
 	}
 
+	/*
+	 * If this is the first input (DMA_IN_PROGRESS == 0), make sure
+	 * the FIFO is empty.  There shouldn't be any input yet.
+	 */
+	if (!(state->flags & DMA_IN_PROGRESS) &&
+	    (regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0) {
+		printf("asc_dma_in: FIFO count %x flags %x\n",
+		    regs->asc_flags, state->flags);
+		while ((regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0)
+			regs->asc_fifo;
+	}
 	/* setup to start reading the next chunk */
 	len = state->buflen;
 #ifdef DEBUG
@@ -1642,6 +1660,15 @@ asc_dma_out(asc, status, ss, ir)
 		state->buflen -= len;
 	}
 
+	/*
+	 * Flush the fifo - sometimes there seems to be something left
+	 * in the fifo.  Since the dma output has not been started,
+	 * the fifo is supposed to be empty.
+	 */
+	if (regs->asc_flags & ASC_FLAGS_FIFO_CNT) {
+		while (regs->asc_flags & ASC_FLAGS_FIFO_CNT)
+			regs->asc_fifo;
+	}
 	/* setup for this chunk */
 	len = state->buflen;
 #ifdef DEBUG

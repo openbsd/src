@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr.c,v 1.9 1996/05/26 00:27:45 deraadt Exp $	*/
-/*	$NetBSD: ncr.c,v 1.35 1996/05/13 00:03:26 mycroft Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.10 1996/06/10 07:34:47 deraadt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -212,7 +212,7 @@ extern PRINT_ADDR();
 
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#define	vtophys(va)	(vtophys(va) | 0x40000000)
+#define	vtophys(va)	__alpha_bus_XXX_dmamap(np->sc_bc, (void *)(va))
 #endif
 
 /*==========================================================
@@ -1295,7 +1295,8 @@ static	void	ncb_profile	(ncb_p np, ccb_p cp);
 static	void	ncr_script_copy_and_bind
 				(struct script * script, ncb_p np);
 static  void    ncr_script_fill (struct script * scr);
-static	int	ncr_scatter	(struct dsb* phys,u_long vaddr,u_long datalen);
+static	int	ncr_scatter	(ncb_p np, struct dsb* phys,u_long vaddr,
+				    u_long datalen);
 static	void	ncr_setmaxtags	(tcb_p tp, u_long usrtags);
 static	void	ncr_setsync	(ncb_p np, ccb_p cp, u_char sxfer);
 static	void	ncr_settags     (tcb_p tp, lcb_p lp);
@@ -1329,7 +1330,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.35 1996/05/13 00:03:26 mycroft Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
@@ -4044,7 +4045,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	segments = ncr_scatter (&cp->phys, (vm_offset_t) xp->data,
+	segments = ncr_scatter (np, &cp->phys, (vm_offset_t) xp->data,
 					(vm_size_t) xp->datalen);
 
 	if (segments < 0) {
@@ -6602,7 +6603,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 */
 
 static	int	ncr_scatter
-	(struct dsb* phys, vm_offset_t vaddr, vm_size_t datalen)
+	(ncb_p np, struct dsb* phys, vm_offset_t vaddr, vm_size_t datalen)
 {
 	u_long	paddr, pnext;
 
