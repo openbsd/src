@@ -657,7 +657,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/timex.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/tprintf.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/sys/trace.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/tty.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ttychars.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ttycom.ph

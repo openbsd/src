@@ -57,6 +57,7 @@
 ./etc/mtree
 ./etc/ppp
 ./etc/sliphome
+./etc/tcfs
 ./etc/termcap
 ./etc/uucp
 ./home
@@ -1230,6 +1231,7 @@
 ./usr/sbin/ppp
 ./usr/sbin/pppctl
 ./usr/sbin/pppd
+./usr/sbin/pppoe
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
 ./usr/sbin/pstat

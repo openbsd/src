@@ -1175,7 +1175,6 @@
 ./usr/include/sys/times.h
 ./usr/include/sys/timex.h
 ./usr/include/sys/tprintf.h
-./usr/include/sys/trace.h
 ./usr/include/sys/tty.h
 ./usr/include/sys/ttychars.h
 ./usr/include/sys/ttycom.h

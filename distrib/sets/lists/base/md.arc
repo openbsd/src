@@ -384,7 +384,6 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/times.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/timex.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/tprintf.ph
-./usr/lib/perl5/site_perl/mips-openbsd/sys/trace.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/tty.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/ttychars.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/ttycom.ph
