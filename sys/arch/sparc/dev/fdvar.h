@@ -1,3 +1,4 @@
+/*	$OpenBSD: fdvar.h,v 1.4 1996/08/11 23:16:36 downsj Exp $	*/
 /*
  *	$NetBSD: fdvar.h,v 1.4 1996/02/01 22:32:29 mycroft Exp $
  *
@@ -62,7 +63,7 @@ struct fdcio {
 	/*
 	 * Statictics.
 	 */
-	struct	evcnt	fdcio_intrcnt;
+	struct	evcnt fdcio_intrcnt;
 };
 #endif /* _LOCORE */
 
@@ -72,5 +73,5 @@ struct fdcio {
 #define ISTATE_SENSEI		2	/* Do SENSEI on next HW interrupt */
 #define ISTATE_DMA		3	/* Pseudo-DMA in progress */
 
-#define FDIOCEJECT	_IO('f', 24)
+#define SUNOS_FDIOCEJECT	_IO('f', 24)
 
