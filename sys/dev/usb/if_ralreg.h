@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralreg.h,v 1.3 2005/03/17 12:46:54 damien Exp $  */
+/*	$OpenBSD: if_ralreg.h,v 1.4 2005/04/01 12:57:27 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -88,12 +88,12 @@
 
 
 #define RAL_DISABLE_RX		(1 << 0)
-#define RAL_DROP_CRC		(1 << 1)
-#define RAL_DROP_PHY		(1 << 2)
+#define RAL_DROP_CRC_ERROR	(1 << 1)
+#define RAL_DROP_PHY_ERROR	(1 << 2)
 #define RAL_DROP_CTL		(1 << 3)
 #define RAL_DROP_NOT_TO_ME	(1 << 4)
 #define RAL_DROP_TODS		(1 << 5)
-#define RAL_DROP_BAD_VERSION	(1 << 6)
+#define RAL_DROP_VERSION_ERROR	(1 << 6)
 #define RAL_DROP_MULTICAST	(1 << 9)
 #define RAL_DROP_BROADCAST	(1 << 10)
 
@@ -101,11 +101,10 @@
 #define RAL_RESET_ASIC	(1 << 0)
 #define RAL_RESET_BBP	(1 << 1)
 
-#define RAL_TSF_AUTOCOUNT	(1 << 0)
-#define RAL_TSF_SYNC_BSS	(1 << 1)
-#define RAL_TSF_SYNC_IBSS	(2 << 1)
-#define RAL_BCN_RELOAD		(1 << 3)
-#define RAL_GENERATE_BEACON	(1 << 4)
+#define RAL_ENABLE_TSF			(1 << 0)
+#define RAL_ENABLE_TSF_SYNC(x)		(((x) & 0x3) << 1)
+#define RAL_ENABLE_TBCN			(1 << 3)
+#define RAL_ENABLE_BEACON_GENERATOR	(1 << 4)
 
 #define RAL_RF_AWAKE	(3 << 7)
 #define RAL_BBP_AWAKE	(3 << 5)
@@ -140,23 +139,25 @@
 struct ural_tx_desc {
 	uint32_t	flags;
 #define RAL_TX_RETRY(x)		((x) << 4)
-#define RAL_TX_NOT_LAST		(1 << 8)
-#define RAL_TX_NEED_ACK		(1 << 9)
-#define RAL_TX_INSERT_TIMESTAMP	(1 << 10)
+#define RAL_TX_MORE_FRAG	(1 << 8)
+#define RAL_TX_ACK		(1 << 9)
+#define RAL_TX_TIMESTAMP	(1 << 10)
 #define RAL_TX_OFDM		(1 << 11)
 #define RAL_TX_NEWSEQ		(1 << 12)
 
 #define RAL_TX_IFS_MASK		0x00006000
 #define RAL_TX_IFS_BACKOFF	(0 << 13)
 #define RAL_TX_IFS_SIFS		(1 << 13)
-#define RAL_TX_IFS_NEW_BACKOFF	(2 << 13)
+#define RAL_TX_IFS_NEWBACKOFF	(2 << 13)
 #define RAL_TX_IFS_NONE		(3 << 13)
 
-	uint32_t	wme;
-#define RAL_WME_CWMAX_BITS_SHIFT	12
-#define RAL_WME_CWMIN_BITS_SHIFT	8
-#define RAL_WME_AIFSN_BITS_SHIFT	6
+	uint16_t	wme;
+#define RAL_LOGCWMAX(x)		(((x) & 0xf) << 12)
+#define RAL_LOGCWMIN(x)		(((x) & 0xf) << 8)
+#define RAL_AIFSN(x)		(((x) & 0x3) << 6)
+#define RAL_IVOFFSET(x)		(((x) & 0x3f))
 
+	uint16_t	reserved;
 	uint8_t		plcp_signal;
 	uint8_t		plcp_service;
 #define RAL_PLCP_LENGEXT	0x80

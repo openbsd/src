@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.20 2005/04/01 10:00:56 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.21 2005/04/01 12:57:27 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1038,10 +1038,7 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 	if (RAL_RATE_IS_OFDM(rate))
 		desc->flags |= htole32(RAL_TX_OFDM);
 
-	desc->wme = htole32(
-	    5 << RAL_WME_CWMAX_BITS_SHIFT |
-	    3 << RAL_WME_CWMIN_BITS_SHIFT |
-	    2 << RAL_WME_AIFSN_BITS_SHIFT);
+	desc->wme = htole16(RAL_LOGCWMAX(5) | RAL_LOGCWMIN(3) | RAL_AIFSN(2));
 
 	/*
 	 * Fill PLCP fields.
@@ -1119,8 +1116,8 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc = (struct ural_tx_desc *)buf;
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, buf + RAL_TX_DESC_SIZE);
-	ural_setup_tx_desc(sc, desc, RAL_TX_IFS_NEW_BACKOFF |
-	    RAL_TX_INSERT_TIMESTAMP, m0->m_pkthdr.len, rate);
+	ural_setup_tx_desc(sc, desc, RAL_TX_IFS_NEWBACKOFF | RAL_TX_TIMESTAMP,
+	    m0->m_pkthdr.len, rate);
 
 	DPRINTFN(10, ("sending beacon frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
@@ -1177,7 +1174,7 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		flags |= RAL_TX_NEED_ACK;
+		flags |= RAL_TX_ACK;
 
 		dur = ural_txtime(RAL_ACK_SIZE, rate, ic->ic_flags) + RAL_SIFS;
 		*(uint16_t *)wh->i_dur = htole16(dur);
@@ -1187,7 +1184,7 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		    IEEE80211_FC0_TYPE_MGT &&
 		    (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-			flags |= RAL_TX_INSERT_TIMESTAMP;
+			flags |= RAL_TX_TIMESTAMP;
 	}
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RAL_TX_DESC_SIZE);
@@ -1269,7 +1266,7 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		flags |= RAL_TX_NEED_ACK;
+		flags |= RAL_TX_ACK;
 		flags |= RAL_TX_RETRY(7);
 
 		dur = ural_txtime(RAL_ACK_SIZE, ural_ack_rate(rate),
@@ -1770,12 +1767,12 @@ ural_enable_tsf_sync(struct ural_softc *sc)
 	ural_write(sc, RAL_TXRX_CSR20, tmp);
 
 	/* finally, enable TSF synchronization */
+	tmp = RAL_ENABLE_TSF | RAL_ENABLE_TBCN;
 	if (ic->ic_opmode == IEEE80211_M_STA)
-		ural_write(sc, RAL_TXRX_CSR19, RAL_TSF_SYNC_BSS |
-		    RAL_TSF_AUTOCOUNT | RAL_BCN_RELOAD);
+		tmp |= RAL_ENABLE_TSF_SYNC(1);
 	else
-		ural_write(sc, RAL_TXRX_CSR19, RAL_TSF_SYNC_IBSS |
-		    RAL_TSF_AUTOCOUNT | RAL_BCN_RELOAD | RAL_GENERATE_BEACON);
+		tmp |= RAL_ENABLE_TSF_SYNC(2) | RAL_ENABLE_BEACON_GENERATOR;
+	ural_write(sc, RAL_TXRX_CSR19, tmp);
 
 	DPRINTF(("enabling TSF synchronization\n"));
 }
@@ -2058,9 +2055,9 @@ ural_init(struct ifnet *ifp)
 	}
 
 	/* kick Rx */
-	tmp = RAL_DROP_PHY | RAL_DROP_CRC;
+	tmp = RAL_DROP_PHY_ERROR | RAL_DROP_CRC_ERROR;
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		tmp |= RAL_DROP_CTL | RAL_DROP_BAD_VERSION;
+		tmp |= RAL_DROP_CTL | RAL_DROP_VERSION_ERROR;
 		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
 			tmp |= RAL_DROP_TODS;
 		if (!(ifp->if_flags & IFF_PROMISC))
