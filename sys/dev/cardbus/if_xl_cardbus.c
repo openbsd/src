@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.5 2000/07/06 21:17:44 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.6 2000/09/05 18:18:50 aaron Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -339,9 +339,7 @@ xl_cardbus_detach(self, arg)
 	}
 #endif
 
-#if 0
 	rv = xl_detach(sc);
-#endif
 	if (rv == 0) {
 		/*
 		 * Unhook the interrupt handler.

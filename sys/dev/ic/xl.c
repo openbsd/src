@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.5 2000/07/01 03:19:14 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.6 2000/09/05 18:18:49 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -160,6 +160,7 @@ void xl_start_90xB	__P((struct ifnet *));
 int xl_ioctl		__P((struct ifnet *, u_long, caddr_t));
 void xl_init		__P((void *));
 void xl_stop		__P((struct xl_softc *));
+void xl_freetxrx	__P((struct xl_softc *));
 void xl_watchdog	__P((struct ifnet *));
 void xl_shutdown	__P((void *));
 int xl_ifmedia_upd	__P((struct ifnet *));
@@ -2292,6 +2293,36 @@ void xl_watchdog(ifp)
 	return;
 }
 
+void
+xl_freetxrx(sc)
+	struct xl_softc *sc;
+{
+	int i;
+
+	/*
+	 * Free data in the RX lists.
+	 */
+	for (i = 0; i < XL_RX_LIST_CNT; i++) {
+		if (sc->xl_cdata.xl_rx_chain[i].xl_mbuf != NULL) {
+			m_freem(sc->xl_cdata.xl_rx_chain[i].xl_mbuf);
+			sc->xl_cdata.xl_rx_chain[i].xl_mbuf = NULL;
+		}
+	}
+	bzero((char *)&sc->xl_ldata->xl_rx_list,
+		sizeof(sc->xl_ldata->xl_rx_list));
+	/*
+	 * Free the TX list buffers.
+	 */
+	for (i = 0; i < XL_TX_LIST_CNT; i++) {
+		if (sc->xl_cdata.xl_tx_chain[i].xl_mbuf != NULL) {
+			m_freem(sc->xl_cdata.xl_tx_chain[i].xl_mbuf);
+			sc->xl_cdata.xl_tx_chain[i].xl_mbuf = NULL;
+		}
+	}
+	bzero((char *)&sc->xl_ldata->xl_tx_list,
+		sizeof(sc->xl_ldata->xl_tx_list));
+}
+
 /*
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
@@ -2299,7 +2330,6 @@ void xl_watchdog(ifp)
 void xl_stop(sc)
 	struct xl_softc *sc;
 {
-	int i;
 	struct ifnet *ifp;
 
 	ifp = &sc->arpcom.ac_if;
@@ -2332,28 +2362,7 @@ void xl_stop(sc)
 	/* Stop the stats updater. */
 	untimeout(xl_stats_update, sc);
 
-	/*
-	 * Free data in the RX lists.
-	 */
-	for (i = 0; i < XL_RX_LIST_CNT; i++) {
-		if (sc->xl_cdata.xl_rx_chain[i].xl_mbuf != NULL) {
-			m_freem(sc->xl_cdata.xl_rx_chain[i].xl_mbuf);
-			sc->xl_cdata.xl_rx_chain[i].xl_mbuf = NULL;
-		}
-	}
-	bzero((char *)&sc->xl_ldata->xl_rx_list,
-		sizeof(sc->xl_ldata->xl_rx_list));
-	/*
-	 * Free the TX list buffers.
-	 */
-	for (i = 0; i < XL_TX_LIST_CNT; i++) {
-		if (sc->xl_cdata.xl_tx_chain[i].xl_mbuf != NULL) {
-			m_freem(sc->xl_cdata.xl_tx_chain[i].xl_mbuf);
-			sc->xl_cdata.xl_tx_chain[i].xl_mbuf = NULL;
-		}
-	}
-	bzero((char *)&sc->xl_ldata->xl_tx_list,
-		sizeof(sc->xl_ldata->xl_tx_list));
+	xl_freetxrx(sc);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -2595,7 +2604,39 @@ xl_attach(sc)
 	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp,
 	    DLT_EN10MB, sizeof(struct ether_header));
 #endif
-	shutdownhook_establish(xl_shutdown, sc);
+	sc->sc_sdhook = shutdownhook_establish(xl_shutdown, sc);
+}
+
+int
+xl_detach(sc)
+	struct xl_softc *sc;
+{
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+
+	/* Unhook our tick handler. */
+	untimeout(xl_stats_update, sc);
+
+	xl_freetxrx(sc);
+
+	/* Detach all PHYs */
+	if (sc->xl_hasmii)
+	  mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	shutdownhook_disestablish(sc->sc_sdhook);
+
+	return (0);
 }
 
 void
