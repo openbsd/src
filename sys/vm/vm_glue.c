@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.33 1999/08/17 10:32:19 niklas Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.34 1999/08/17 18:48:59 niklas Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -281,7 +281,7 @@ vm_fork(p1, p2, stack, stacksize)
 	 * directly to user mode on its first time slice, and will
 	 * not return here.
 	 */
-	cpu_fork(p1, p2, stack, stack_size);
+	cpu_fork(p1, p2, stack, stacksize);
 #endif
 }
 
