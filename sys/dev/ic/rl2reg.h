@@ -1,4 +1,4 @@
-/*	$OpenBSD: rl2reg.h,v 1.1 1999/06/21 23:21:47 d Exp $	*/
+/*	$OpenBSD: rl2reg.h,v 1.2 1999/07/14 03:52:55 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -37,8 +37,7 @@
  *  +-------+-------+-------+-------+-------+-------+-------+-------+
  */
 
-/* Register offsets */
-
+/* Register offsets. */
 #define RL2_REG_DATA			0
 #define RL2_REG_STATUS			2
 #define RL2_REG_CONTROL			4
@@ -47,7 +46,7 @@
 #define RL2_NPORTS                      8
 
 /*
- * A short delay is needed (16ms?) after register writes.
+ * A short delay is needed (16ms?) after register writes on some cards.
  * XXX This is done by performing an innocent and harmless bus read. (i386)
  * This is what Proxim's driver does, anyway.
  */
@@ -59,9 +58,7 @@ static void	_rl2_register_write_1 __P((struct rl2_softc *, u_int8_t,
 static u_int8_t	_rl2_register_read_1 __P((struct rl2_softc *, u_int8_t));
 static int	rl2_status_rx_ready __P((struct rl2_softc *));
 
-/* Register access */
-
-/* Write to a register */
+/* Write to a register. */
 static inline void
 _rl2_register_write_1(sc, regoff, value)
 	struct rl2_softc *sc;
@@ -76,7 +73,7 @@ _rl2_register_write_1(sc, regoff, value)
 	_rl2_regacc_delay();
 }
 
-/* Read from a register */
+/* Read from a register. */
 static inline u_int8_t
 _rl2_register_read_1(sc, regoff)
 	struct rl2_softc *sc;
@@ -95,9 +92,7 @@ _rl2_register_read_1(sc, regoff)
 	return (ret);
 }
 
-/* Data register */
-
-/* 8-bit data access */
+/* 8-bit data register access. */
 #define rl2_data_write_1(sc, value) 					\
 		_rl2_register_write_1(sc, RL2_REG_DATA, (value))
 #define rl2_data_read_1(sc) 						\
@@ -109,7 +104,7 @@ _rl2_register_read_1(sc, regoff)
 		bus_space_read_multi_1((sc)->sc_iot, (sc)->sc_ioh,	\
 			RL2_REG_DATA, (buf), (len))
 
-/* 16-bit data access */
+/* 16-bit data register access. */
 #define rl2_data_write_2(sc, value) 					\
 		bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh,		\
 			RL2_REG_DATA, (value))
@@ -123,12 +118,10 @@ _rl2_register_read_1(sc, regoff)
 		bus_space_read_multi_2((sc)->sc_iot, (sc)->sc_ioh,	\
 			RL2_REG_DATA, (buf), (len))
 
-/* Status register */
-
+/* Status register. */
 #define RL2_STATUS_CLRNAK		0x08
 #define RL2_STATUS_WAKEUP		0x80
 
-/* Status codes */
 #define RL2_STATUS_TX_IDLE		0x00
 #define RL2_STATUS_TX_HILEN_AVAIL	0x01
 #define RL2_STATUS_TX_HILEN_ACCEPT	0x02
@@ -182,7 +175,9 @@ rl2_status_rx_ready(sc)
 	u_int8_t status;
 
 	status = rl2_status_rx_read(sc);
-	return (status == 0x60 || status == 0x10 || status == 0x50);
+	return (status == RL2_STATUS_RX_LOLEN_AVAIL ||
+	    status == RL2_STATUS_RX_HILEN_AVAIL ||
+	    status == RL2_STATUS_RX_ERROR);
 }
 
 #define rl2_status_tx_int(sc) do { 					\
@@ -200,8 +195,7 @@ rl2_status_rx_ready(sc)
 		splx(_s);						\
 } while (0)
 
-/* Control register */
-
+/* Control register. */
 #define RL2_CONTROL_RXINT		0x01
 #define RL2_CONTROL_TXINT		0x02
 #define RL2_CONTROL_BIT2		0x04
@@ -225,8 +219,7 @@ rl2_status_rx_ready(sc)
 		rl2_control_write(sc, (sc)->sc_control);		\
 } while (0)
 
-/* IntSel register */
-
+/* Interrupt selection register. */
 #define RL2_INTSEL_IRQMASK		0x07
 #define RL2_INTSEL_ENABLE		0x10
 #define RL2_INTSEL_BIT7			0x80
@@ -247,20 +240,11 @@ rl2_status_rx_ready(sc)
 			(sc)->sc_intsel |= RL2_INTSEL_ENABLE);		\
 		splx(_s);						\
 } while (0)
-
 #define rl2_intsel_write(sc, value) 					\
 		_rl2_register_write_1(sc, RL2_REG_INTSEL, 		\
 		    (sc)->sc_intsel |= (value))
 
-/* End of interrupt signal (used on some newer cards?) */
-
+/* End of interrupt signal, used on some newer cards. */
 #define rl2_eoi(sc)							\
 		(void) _rl2_register_read_1(sc, RL2_REG_EOI)
 
-/* Strings useful for debugging with printf("%b") */
-
-#ifdef RL2DEBUG
-#define RL2_BSTR_STATUS		"\20\4BIT3\10BIT7"
-#define RL2_BSTR_CONTROL	"\20\1RXINT\2TXINT\3BIT2\4BIT3\5RESET\6BUS16"
-#define RL2_BSTR_INTSEL		"\20\5ENABLE"
-#endif
