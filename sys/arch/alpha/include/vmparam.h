@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.8 2001/11/30 17:37:43 art Exp $ */
+/* $OpenBSD: vmparam.h,v 1.9 2001/12/05 16:25:44 art Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -123,7 +123,6 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*NBPG)
 #define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 /* some Alpha-specific constants */
