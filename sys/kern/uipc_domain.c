@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.18 2004/09/15 17:46:44 grange Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.19 2004/11/25 21:40:46 markus Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -192,9 +192,7 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/*
 	 * All sysctl names at this level are nonterminal.
-	 * PF_KEY: next component is protocol family, and then at least one
-	 *	additional component.
-	 * usually: next two components are protocol family and protocol
+	 * Usually: next two components are protocol family and protocol
 	 *	number, then at least one addition component.
 	 */
 	if (namelen < 2)
@@ -213,20 +211,6 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	return (ENOPROTOOPT);
 found:
-	switch (family) {
-#ifdef IPSEC
-#ifdef __KAME__
-	case PF_KEY:
-		pr = dp->dom_protosw;
-		if (pr->pr_sysctl)
-			return ((*pr->pr_sysctl)(name + 1, namelen - 1,
-				oldp, oldlenp, newp, newlen));
-		return (ENOPROTOOPT);
-#endif
-#endif
-	default:
-		break;
-	}
 	if (namelen < 3)
 		return (EISDIR);		/* overloaded */
 	protocol = name[1];
