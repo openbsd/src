@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.19 2000/02/25 17:23:42 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.47 2000/02/20 19:58:42 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.20 2000/03/08 08:43:16 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.48 2000/03/07 21:37:52 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -362,6 +362,11 @@ udp_create (char *name)
   port = htons (port);
 
   addr_str = conf_get_str (name, "Address");
+  if (!addr_str)
+    {
+      log_print ("udp_create: no address configured for \"%s\"", name);
+      return 0;
+    }
   addr = inet_addr (addr_str);
   if (addr == INADDR_NONE)
     {
