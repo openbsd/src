@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 1997/04/02 18:28:09 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 1997/04/06 06:09:25 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -297,44 +297,44 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-#define dkpart(dev) DISKPART(dev)
-
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int maxsz = p->p_size;
-	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
 	/* XXX this assumes everything <=LABELSECTOR is label! */
 	/*     But since LABELSECTOR is 0, that's ok for now. */
-	if ((bp->b_blkno + p->p_offset <= LABELSECTOR) &&
+	if ((bp->b_blkno + blockpersec(p->p_offset, lp) <= LABELSECTOR) &&
 	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0)) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
 	/* beyond partition? */
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		/* if exactly at end of disk, return an EOF */
-		if (bp->b_blkno == maxsz) {
+	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
+		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return an EOF */
 			bp->b_resid = bp->b_bcount;
-			return(0);
+			return (0);
 		}
-		/* or truncate if part of it fits */
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0) {
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
 			goto bad;
 		}
+		/* Or truncate if part of it fits */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_resid = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
-	return(1);
+	bp->b_resid = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	    lp->d_secpercyl;
+	return (1);
 bad:
 	bp->b_flags |= B_ERROR;
-	return(-1);
+	return (-1);
 }
 
 /************************************************************************
