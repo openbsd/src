@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.279 2003/08/21 19:12:07 frantzen Exp $
+#	$OpenBSD: files,v 1.280 2003/09/26 00:19:23 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -213,7 +213,7 @@ file	dev/ic/fxp.c		fxp
 
 # Myson MTD803
 device	mtd: ether, ifnet, ifmedia, mii
-file	dev/ic/mtd803.c		mtd
+file	dev/ic/mtd8xx.c		mtd
 
 # RealTek 8129/8139
 device	rl: ether, ifnet, ifmedia, mii
