@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.82 2002/03/02 00:55:59 provos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.83 2002/03/27 16:39:44 mpech Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,7 +133,7 @@ listed here, and described in separate sections below.
 .It Dv CTL_MACHDEP No "	sys/sysctl.h	Machine dependent"
 .It Dv CTL_NET No "	sys/socket.h	Networking"
 .It Dv CTL_USER No "	sys/sysctl.h	User-level"
-.It Dv CTL_VM No "	vm/vm_param.h	Virtual memory"
+.It Dv CTL_VM No "	uvm/uvm_param.h	Virtual memory"
 .El
 .Pp
 For example, the following retrieves the maximum number of processes allowed
