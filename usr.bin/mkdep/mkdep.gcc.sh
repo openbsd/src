@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.10 2000/07/23 22:22:07 millert Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.11 2002/02/25 03:37:45 pvalchev Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -68,18 +68,13 @@ if [ $# = 0 ] ; then
 	exit 1
 fi
 
-DTMP=/tmp/mkdep$$
-TMP=$DTMP/mkdep
-
 um=`umask`
 umask 022
-if ! mkdir $DTMP ; then
-	echo failed to create tmp dir $DTMP
-	exit 1
-fi
+
+TMP=`mktemp /tmp/mkdep.XXXXXXXXXX` || exit 1
 
 umask $um
-trap 'rm -rf $DTMP ; trap 2 ; kill -2 $$' 1 2 3 13 15
+trap 'rm -f $TMP ; trap 2 ; kill -2 $$' 1 2 3 13 15
 
 if [ x$pflag = x ]; then
 	${CC:-cc} -M "$@" | sed -e 's; \./; ;g' > $TMP
@@ -89,7 +84,7 @@ fi
 
 if [ $? != 0 ]; then
 	echo 'mkdep: compile failed.'
-	rm -rf $DTMP
+	rm -f $TMP
 	exit 1
 fi
 
@@ -97,17 +92,17 @@ if [ $append = 1 ]; then
 	cat $TMP >> $D
 	if [ $? != 0 ]; then
 		echo 'mkdep: append failed.'
-		rm -rf $DTMP
+		rm -f $TMP
 		exit 1
 	fi
 else
 	mv -f $TMP $D
 	if [ $? != 0 ]; then
 		echo 'mkdep: rename failed.'
-		rm -rf $DTMP
+		rm -f $TMP
 		exit 1
 	fi
 fi
 
-rm -rf $DTMP
+rm -f $TMP
 exit 0
