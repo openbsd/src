@@ -1,4 +1,6 @@
-# $OpenBSD: PackingOld.pm,v 1.1 2004/06/21 16:33:45 espie Exp $
+# ex:ts=8 sw=4:
+# $OpenBSD: PackingOld.pm,v 1.2 2004/08/06 07:51:17 espie Exp $
+#
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
