@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_irc.c,v 1.7 2001/08/21 04:09:15 brian Exp $
+ * $OpenBSD: alias_irc.c,v 1.8 2001/08/21 04:09:16 brian Exp $
  */
 
 /* Alias_irc.c intercepts packages contain IRC CTCP commands, and
@@ -267,8 +267,8 @@ lFOUND_CTCP:
 				 }
 				 alias_port = GetAliasPort(dcc_link);
 				 n = snprintf(&newpacket[iCopy],
-								  sizeof(newpacket)-iCopy, 
-								  "%u", htons(alias_port) );
+										 sizeof(newpacket)-iCopy, 
+										 "%u", htons(alias_port) );
 				 if( n < 0 ) {
 					 DBprintf(("DCC packet construct failure.\n"));
 					 goto lBAD_CTCP;
