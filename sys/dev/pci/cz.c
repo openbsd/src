@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.3 2001/08/25 10:13:29 art Exp $ */
+/*	$OpenBSD: cz.c,v 1.4 2001/09/04 04:01:42 nate Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -854,7 +854,7 @@ cz_wait_pci_doorbell(struct cz_softc *cz, char *wstring)
  * Cyclades-Z TTY code starts here...
  *****************************************************************************/
 
-#define CZTTYDIALOUT_MASK	0x80000
+#define CZTTYDIALOUT_MASK	0x80
 
 #define	CZTTY_DIALOUT(dev)	(minor((dev)) & CZTTYDIALOUT_MASK)
 #define	CZTTY_CZ(sc)		((sc)->sc_parent)
