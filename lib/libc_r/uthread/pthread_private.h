@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.6 1998/12/23 22:49:46 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.7 1999/01/08 04:59:50 d Exp $
  *
  */
 
@@ -461,7 +461,7 @@ struct pthread {
  */
 
 /* Kernel thread structure used when there are no running threads: */
-extern struct pthread   _thread_kern_thread;
+extern struct pthread   * volatile _thread_kern_thread;
 
 /* Ptr to the thread structure for the running thread: */
 extern struct pthread   * volatile _thread_run;
@@ -751,6 +751,11 @@ pid_t   _thread_sys_wait(int *);
 pid_t   _thread_sys_waitpid(pid_t, int *, int);
 pid_t   _thread_sys_wait3(int *, int, struct rusage *);
 pid_t   _thread_sys_wait4(pid_t, int *, int, struct rusage *);
+#endif
+
+/* #include <sys/poll.h> */
+#ifdef _SYS_POLL_H_
+int	_thread_sys_poll(struct pollfd[], int, int);
 #endif
 
 __END_DECLS
