@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ses.4,v 1.1 2000/02/22 23:35:27 mjacob Exp $
+.\" $OpenBSD: ses.4,v 1.2 2000/03/14 21:47:38 deraadt Exp $
 .\"
 .Dd February 22, 2000
 .Dt SES 4
@@ -31,7 +31,6 @@
 .Sh NAME
 .Nm ses
 .Nd SCSI Environmental Services Driver
-.Sh SYNOPSIS
 .Sh SYNOPSIS
 .Cd ses* at scsibus? target ? lun ?
 .Sh DESCRIPTION
@@ -54,7 +53,7 @@ Host
 adapter must also be separately configured into the system
 before a
 .Tn SCSI
-SCSI Environmental Services device can be configured.
+Environmental Services device can be configured.
 .Sh IOCTLS
 The following
 .Xr ioctl 2
