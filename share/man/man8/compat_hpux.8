@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_hpux.8,v 1.4 2003/03/18 13:01:36 david Exp $
+.\"	$OpenBSD: compat_hpux.8,v 1.5 2003/08/06 12:06:55 jmc Exp $
 .\"	$NetBSD: compat_hpux.8,v 1.2 2001/12/16 23:47:19 wiz Exp $
 .\"     from: compat_linux.8,v 1.23 2001/10/07 10:12:05 mbw Exp
 .\"
@@ -132,23 +132,16 @@ Copy these files to the
 system, and extract them into
 .Pa /emul/hpux .
 The following files should be present:
-.Pp
-.Bl -item -compact
-.It
-.Pa /emul/hpux/lib/dld.sl
-.It
-.Pa /emul/hpux/lib/libc.sl
-.It
-.Pa /emul/hpux/lib/libm.sl
-.It
-.Pa /emul/hpux/lib/libM.sl
-.It
-.Pa /emul/hpux/lib/libcurses.sl
-.It
+.Bd -unfilled -offset indent
+/emul/hpux/lib/dld.sl
+/emul/hpux/lib/libc.sl
+/emul/hpux/lib/libm.sl
+/emul/hpux/lib/libM.sl
+/emul/hpux/lib/libcurses.sl
+.Ed
 .Pp
 And a whole bunch of files in
 .Pa /emul/hpux/usr/lib .
-.El
 Overall, HP-UX 9.10 has about 10 MB of shared libraries that will need to
 be copied to the
 .Ox
@@ -177,49 +170,26 @@ Although the
 based X11R5 server is the preferred way to run X, it is
 possible to run the HP-UX X11R5 server instead.
 To do so, a few additional files are necessary:
-.Pp
-.Bl -item -compact
-.It
-.Pa /usr/bin/X11/X
-.It
-.Pa /usr/lib/grmd
-.It
-The shared libraries in
-.Pa /usr/lib/X11R5 .
-.It
-.Pa /usr/lib/Motif1.2/libXm.sl
-.It
-All the subdirectories and files in
-.Pa /usr/lib/X11/fonts .
-.It
-All the files in
-.Pa /usr/lib/X11/nls/Xhp .
-.It
-All the files in
-.Pa /usr/lib/X11/extensions .
-.It
-.Pa /usr/lib/X11/XHPKeymaps
-.It
-.Pa /usr/lib/X11/XHPmodmap
-.It
-.Pa /usr/lib/X11/XPCmodmap
-.It
-.Pa /usr/lib/X11/XKeysymDB
-.It
-.Pa /usr/lib/X11/Xconsoles
-.It
-.Pa /usr/lib/X11/X0screens
-.It
-.Pa /usr/lib/X11/X0devices
-.It
-.Pa /usr/lib/X11/X0pointerkeys
-.It
-.Pa /usr/lib/X11/rgb.txt
-.It
-.Pa /usr/lib/X11/rgb.dir
-.It
-.Pa /usr/lib/X11/rgb.pag
-.El
+.Bd -unfilled -offset indent
+/usr/bin/X11/X
+/usr/lib/grmd
+The shared libraries in /usr/lib/X11R5.
+/usr/lib/Motif1.2/libXm.sl
+All the subdirectories and files in /usr/lib/X11/fonts.
+All the files in /usr/lib/X11/nls/Xhp.
+All the files in /usr/lib/X11/extensions.
+/usr/lib/X11/XHPKeymaps
+/usr/lib/X11/XHPmodmap
+/usr/lib/X11/XPCmodmap
+/usr/lib/X11/XKeysymDB
+/usr/lib/X11/Xconsoles
+/usr/lib/X11/X0screens
+/usr/lib/X11/X0devices
+/usr/lib/X11/X0pointerkeys
+/usr/lib/X11/rgb.txt
+/usr/lib/X11/rgb.dir
+/usr/lib/X11/rgb.pag
+.Ed
 .Pp
 The following configuration steps will also need to be performed:
 .Bl -enum

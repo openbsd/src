@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_freebsd.8,v 1.14 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: compat_freebsd.8,v 1.15 2003/08/06 12:06:55 jmc Exp $
 .\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -111,9 +111,8 @@ Basically, there are 3 possibilities.
 (When following these instructions, root privileges are required on the
 .Ox
 system to perform the necessary installation steps).
-.Pp
-.Bl -tag -width 123 -compact
-.It 1.
+.Bl -enum
+.It
 Access to the
 .Ox
 .Xr ports 7
@@ -129,8 +128,7 @@ port contains the shared libraries, binaries, and other related files
 necessary to run
 .Fx
 applications.
-.Pp
-.It 2.
+.It
 Access to a
 .Fx
 system:
@@ -146,31 +144,28 @@ Put it on the
 system, and check which shared libraries it needs by running
 `ldd sim':
 .Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@freebsd% ldd /usr/local/lib/SimCity/res/sim
-.nf
+.Dl me@freebsd% ldd /usr/local/lib/SimCity/res/sim
+.Bd -unfilled -offset indent
 /usr/local/lib/SimCity/res/sim:
 	-lXext.6 => /usr/X11R6/lib/libXext.so.6.0 (0x100c1000)
 	-lX11.6 => /usr/X11R6/lib/libX11.so.6.0 (0x100c9000)
 	-lc.2 => /usr/lib/libc.so.2.1 (0x10144000)
 	-lm.2 => /usr/lib/libm.so.2.0 (0x101a7000)
 	-lgcc.261 => /usr/lib/libgcc.so.261.0 (0x101bf000)
-.fi
-.El
+.Ed
 .Pp
 All the files from the last column should be placed under
 .Pa /emul/freebsd .
 The following files would therefore be required on the
 .Ox
 system:
-.Pp
-.nf
-.Pa /emul/freebsd/usr/X11R6/lib/libXext.so.6.0
-.Pa /emul/freebsd/usr/X11R6/lib/libX11.so.6.0
-.Pa /emul/freebsd/usr/lib/libc.so.2.1
-.Pa /emul/freebsd/usr/lib/libm.so.2.0
-.Pa /emul/freebsd/usr/lib/libgcc.so.261.0
-.fi
+.Bd -unfilled -offset indent
+/emul/freebsd/usr/X11R6/lib/libXext.so.6.0
+/emul/freebsd/usr/X11R6/lib/libX11.so.6.0
+/emul/freebsd/usr/lib/libc.so.2.1
+/emul/freebsd/usr/lib/libm.so.2.0
+/emul/freebsd/usr/lib/libgcc.so.261.0
+.Ed
 .Pp
 Note that if a
 .Fx
@@ -183,15 +178,11 @@ It is advisable to copy the shared library anyway, if it is a newer version.
 The old one can be removed.
 So, if this library exists on the system:
 .Pp
-.nf
-.Pa /emul/freebsd/usr/lib/libc.so.2.0
-.fi
+.D1 /emul/freebsd/usr/lib/libc.so.2.0
 .Pp
 and the ldd output for a new binary is:
-.nf
 .Pp
-	-lc.2 => /usr/lib/libc.so.2.1 (0x10144000)
-.fi
+.D1 -lc.2 => /usr/lib/libc.so.2.1 (0x10144000)
 .Pp
 it isn't necessary to copy
 .Pa /usr/lib/libc.so.2.1
@@ -200,9 +191,7 @@ because the program should work fine with the slightly older version.
 .Pa libc.so
 can be replaced anyway, and that should leave:
 .Pp
-.nf
-.Pa /emul/freebsd/usr/lib/libc.so.2.1
-.fi
+.D1 /emul/freebsd/usr/lib/libc.so.2.1
 .Pp
 Finally, the
 .Fx
@@ -214,15 +203,13 @@ system to their appropriate place on the
 system (in the
 .Pa /emul/freebsd
 tree):
-.Pp
-.nf
-.Pa usr/libexec/ld-elf.so.1
-.Pa usr/libexec/ld.so
-.Pa var/run/ld-elf.so.hints
-.Pa var/run/ld.so.hints
-.fi
-.Pp
-.It 3.
+.Bd -unfilled -offset indent
+usr/libexec/ld-elf.so.1
+usr/libexec/ld.so
+var/run/ld-elf.so.hints
+var/run/ld.so.hints
+.Ed
+.It
 No access to a
 .Fx
 system:
@@ -237,14 +224,13 @@ any version mismatches), and install them under
 .Pa foo/bar
 is installed as
 .Pa /emul/freebsd/foo/bar ) :
-.Pp
-.nf
-.Pa sbin/ldconfig
-.Pa usr/bin/ldd
-.Pa usr/lib/libc.so.x.y.z
-.Pa usr/libexec/ld-elf.so.1
-.Pa usr/libexec/ld.so
-.fi
+.Bd -unfilled -offset indent
+sbin/ldconfig
+usr/bin/ldd
+usr/lib/libc.so.x.y.z
+usr/libexec/ld-elf.so.1
+usr/libexec/ld.so
+.Ed
 .Pp
 ldconfig and ldd don't necessarily need to be under
 .Pa /emul/freebsd ,
@@ -264,13 +250,12 @@ runtime linker should look for shared libs.
 .Pa /usr/lib
 is standard.
 For example:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@openbsd% mkdir -p /emul/freebsd/var/run
-.It me@openbsd% touch /emul/freebsd/var/run/ld-elf.so.hints
-.It me@openbsd% touch /emul/freebsd/var/run/ld.so.hints
-.It me@openbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
-.El
+.Bd -literal -offset indent
+me@openbsd% mkdir -p /emul/freebsd/var/run
+me@openbsd% touch /emul/freebsd/var/run/ld-elf.so.hints
+me@openbsd% touch /emul/freebsd/var/run/ld.so.hints
+me@openbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
+.Ed
 .Pp
 Note that argument directories of ldconfig are
 mapped to
@@ -305,13 +290,11 @@ ldd on itself.
 Suppose that it is installed as ldd-freebsd, it should produce
 something like:
 .Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@openbsd% ldd-freebsd `which ldd-freebsd`
-.nf
+.Dl me@openbsd% ldd-freebsd `which ldd-freebsd`
+.Bd -unfilled -offset indent
 /usr/local/bin/ldd-freebsd:
 	-lc.2 => /usr/lib/libc.so.2.1 (0x1001a000)
-.fi
-.El
+.Ed
 .Pp
 This being done, new
 .Fx
@@ -343,7 +326,7 @@ the minor number(s) <mm> are less important,
 though it is advised to take the most recent version.
 .El
 .Ss Finding the necessary files
-.Sy Note:
+.Sy Note :
 the information below is valid as of Feb 2003, but certain details
 such as names of ftp sites, directories and distribution names
 may have changed since then.
@@ -356,15 +339,11 @@ are stored in distribution sets, usually consisting of subdirectories
 with gzipped tar files in them.
 The primary ftp site for the distribution is:
 .Pp
-.nf
-ftp.freebsd.org:/pub/FreeBSD
-.fi
+.D1 Pa ftp.freebsd.org:/pub/FreeBSD
 .Pp
 Mirror sites are described at:
 .Pp
-.nf
-www.freebsdmirrors.org
-.fi
+.D1 Pa www.freebsdmirrors.org
 .Pp
 This distribution consists of a number of tar-ed and gzipped files.
 Normally, they're controlled by an install program, but the files can
@@ -373,24 +352,23 @@ The way to look something up is to retrieve all
 the files in the distribution, and ``tar ztvf'' through them for the files
 needed.
 Here is an example of a list of files that might be needed:
-.Pp
 .Bd -unfilled -offset indent
-Needed                 Files
+Needed          Files
 
-ld.so                  5.0-RELEASE/base/base.??
-ldconfig               5.0-RELEASE/base/base.??
-ldd                    5.0-RELEASE/base/base.??
-libc.so.6              5.0-RELEASE/base/base.??
-libX11.so.6            5.0-RELEASE/packages/x11/XFree86-libraries-??
-libXt.so.6             5.0-RELEASE/packages/x11/XFree86-libraries-??
+ld.so           5.0-RELEASE/base/base.??
+ldconfig        5.0-RELEASE/base/base.??
+ldd             5.0-RELEASE/base/base.??
+libc.so.6       5.0-RELEASE/base/base.??
+libX11.so.6     5.0-RELEASE/packages/x11/XFree86-libraries-??
+libXt.so.6      5.0-RELEASE/packages/x11/XFree86-libraries-??
 .Ed
 .Pp
 The files called ``base.??'' are tar-ed, gzipped and split,
 so they can be extracted with ``cat base.?? | tar zpxf -''.
 .Pp
 The XFree86 libraries are compressed with bzip2 and can be
-extracted with ``bzcat2 <file> | tar pxf -''. Note: The bzip2
-utilities are not part of a base
+extracted with ``bzcat2 <file> | tar pxf -''.
+Note: The bzip2 utilities are not part of a base
 .Ox
 system.
 bzip2 can be added via
