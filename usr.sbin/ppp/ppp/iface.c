@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: iface.c,v 1.2 1999/02/06 03:22:37 brian Exp $
+ *	$Id: iface.c,v 1.3 1999/04/26 08:54:50 brian Exp $
  */
 
 #include <sys/param.h>
@@ -37,12 +37,12 @@
 #include <netinet/ip.h>
 #include <sys/un.h>
 
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/sysctl.h>
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sys/sysctl.h>
 #include <termios.h>
 #include <unistd.h>
 

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: defs.c,v 1.3 1999/02/25 20:07:36 brian Exp $
+ *	$Id: defs.c,v 1.4 1999/04/26 08:54:50 brian Exp $
  */
 
 
@@ -34,9 +34,9 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/errno.h>
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <time.h>
 #endif
