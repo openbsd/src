@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.7 1999/10/01 01:08:30 angelos Exp $ */
+/* $OpenBSD: signature.c,v 1.8 1999/10/09 06:59:37 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -40,6 +40,7 @@
 #include <limits.h>
 #endif /* HAVE_LIMITS_H */
 
+#include "header.h"
 #include "keynote.h"
 #include "assertion.h"
 #include "signature.h"

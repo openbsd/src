@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.6 1999/10/01 01:08:30 angelos Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.7 1999/10/09 06:59:37 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -43,8 +43,8 @@
 #include <unistd.h>
 #endif /* HAVE_IO_H */
 
-#include "keynote.h"
 #include "header.h"
+#include "keynote.h"
 
 void
 signusage(void)
