@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.48 2000/03/21 20:46:30 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.49 2000/04/10 19:50:50 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.48 2000/03/21 20:46:30 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.49 2000/04/10 19:50:50 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -648,18 +648,25 @@ parse(string, flags)
 		if (!nflag)
 			(void)printf("%s = ", string);
 		(void)printf(
-		    "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
-		    rndstats->rnd_total, rndstats->rnd_used,
-		    rndstats->arc4_reads, rndstats->rnd_timer,
-		    rndstats->rnd_mouse, rndstats->rnd_tty,
-		    rndstats->rnd_disk, rndstats->rnd_net,
-		    rndstats->rnd_reads, rndstats->rnd_waits,
+		"%qu %qu %qu %qu %qu %qu %qu %qu %qu %qu %qu %qu %qu %qu %qu %qu",
+		    rndstats->rnd_total,
+		    rndstats->rnd_used, rndstats->rnd_reads,
+		    rndstats->arc4_reads, rndstats->arc4_nstirs,
+		    rndstats->arc4_stirs,
+		    rndstats->rnd_pad[0],
+		    rndstats->rnd_pad[1],
+		    rndstats->rnd_pad[2],
+		    rndstats->rnd_pad[3],
+		    rndstats->rnd_pad[4],
+		    rndstats->rnd_waits,
 		    rndstats->rnd_enqs, rndstats->rnd_deqs,
-		    rndstats->rnd_drops, rndstats->rnd_drople,
-		    rndstats->rnd_asleep, rndstats->rnd_queued,
-		    rndstats->arc4_stirs);
+		    rndstats->rnd_drops, rndstats->rnd_drople);
 		for (i = 0; i < sizeof(rndstats->rnd_ed)/sizeof(rndstats->rnd_ed[0]); i++)
-			(void)printf(" %lu", rndstats->rnd_ed[i]);
+			(void)printf(" %qu", rndstats->rnd_ed[i]);
+		for (i = 0; i < sizeof(rndstats->rnd_sc)/sizeof(rndstats->rnd_sc[0]); i++)
+			(void)printf(" %qu", rndstats->rnd_sc[i]);
+		for (i = 0; i < sizeof(rndstats->rnd_sb)/sizeof(rndstats->rnd_sb[0]); i++)
+			(void)printf(" %qu", rndstats->rnd_sb[i]);
 		printf("\n");
 		return;
 	}
