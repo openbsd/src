@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.18 2001/01/10 17:43:38 angelos Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.19 2001/01/11 06:45:25 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.18 2001/01/10 17:43:38 angelos Exp $";
+	"$OpenBSD: if_wi.c,v 1.19 2001/01/11 06:45:25 angelos Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1060,7 +1060,8 @@ wi_ioctl(ifp, command, data)
 		return(ENODEV);
 	}
 
-	DPRINTF (WID_IOCTL, ("wi_ioctl: command %lu data %p", command, data));
+	DPRINTF (WID_IOCTL, ("wi_ioctl: command %lu data %p\n",
+			     command, data));
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
