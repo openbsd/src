@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.16 1998/06/30 20:51:12 millert Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.17 1998/07/12 18:56:06 weingart Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -317,11 +317,13 @@ kbd_wait_output()
 {
 	u_int i;
 
-	for (i = 100000; i; i--)
+	for (i = 100000; i; i--) {
+		PCVT_KBD_DELAY();
 		if ((inb(CONTROLLER_CTRL) & STATUS_INPBF) == 0) {
 			PCVT_KBD_DELAY();
 			return 1;
 		}
+	}
 	return 0;
 }
 
@@ -330,11 +332,13 @@ kbd_wait_input()
 {
 	u_int i;
 
-	for (i = 100000; i; i--)
+	for (i = 100000; i; i--) {
+		PCVT_KBD_DELAY();
 		if ((inb(CONTROLLER_CTRL) & STATUS_OUTPBF) != 0) {
 			PCVT_KBD_DELAY();
 			return 1;
 		}
+	}
 	return 0;
 }
 
