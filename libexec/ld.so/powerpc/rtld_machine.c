@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.28 2003/07/28 03:11:00 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.29 2003/08/19 04:15:54 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -118,6 +118,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	/* for plt relocation usage */
 	if (object->Dyn.info[DT_JMPREL] != 0) {
 		/* resolver stub not set up */
+		int nplt;
 
 		/* Need to construct table to do jumps */
 		pltresolve = (Elf32_Addr *)(object->Dyn.info[DT_PLTGOT]);
@@ -125,10 +126,15 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		pltinfo = (Elf32_Addr *)(pltresolve) + PLT_INFO_OFFSET;
 		first_rela =  (Elf32_Addr *)(pltresolve) + PLT_1STRELA_OFFSET;
 
-		plttable = (Elf32_Addr *)
-		    ((Elf32_Addr)first_rela) + (2 *
-		    (object->Dyn.info[DT_PLTRELSZ]/sizeof(Elf32_Rela)));
+		nplt = object->Dyn.info[DT_PLTRELSZ]/sizeof(Elf32_Rela);
 
+		if (nplt >= (2<<12)) {
+			plttable = (Elf32_Addr *) ((Elf32_Addr)first_rela)
+			    + (2 * (2<<12)) + (4 * (nplt - (2<<12)));
+		} else {
+			plttable = (Elf32_Addr *) ((Elf32_Addr)first_rela)
+			    + (2 * nplt);
+		}
 
 		pltinfo[0] = (Elf32_Addr)plttable;
 
@@ -255,7 +261,7 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 				/* if offset is > RELOC_24 deal with it */
 				index = (r_addr - first_rela) >> 1;
 
-				if (index > (2 << 14)) {
+				if (index >= (2 << 12)) {
 					/* addis r11,r11,.PLTtable@ha*/
 					r_addr[0] = ADDIS_R11_R0 | HA(index*4);
 					r_addr[1] = ADDI_R11_R11 | L(index*4);
@@ -514,14 +520,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	r_addr = (Elf32_Addr *)(relas->r_offset + object->load_offs);
 
 	for (i = 0, index = 0; i < numrela; i++, r_addr+=2, index++) {
-		if (index > (2 << 14)) {
+		if (index >= (2 << 12)) {
 			/* addis r11,r11,.PLTtable@ha*/
 			r_addr[0] = ADDIS_R11_R0 | HA(index*4);
 			r_addr[1] = ADDI_R11_R11 | L(index*4);
 			BR(r_addr[2], pltresolve);
-			/* only every other slot is used after 2^14 entries */
+			/* only every other slot is used after index == 2^14 */
 			r_addr += 2;
-			index++;
 		} else {
 			r_addr[0] = LI_R11 | (index * 4);
 			BR(r_addr[1], pltresolve);
@@ -600,7 +605,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		plttable = (Elf32_Addr *)pltinfo[0];
 		plttable[index] = val;
 
-		if (index > (2 << 14)) {
+		if (index >= (2 << 12)) {
 			/* r_addr[0,1] is initialized to correct
 			 * value in reloc_got.
 			 */
