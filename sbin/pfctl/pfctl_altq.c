@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.34 2003/01/20 19:07:50 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.35 2003/01/24 10:53:32 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -78,7 +78,6 @@ static int		 gsc_add_seg(struct gen_sc *, double, double, double,
 			     double);
 static double		 sc_x2y(struct service_curve *, double);
 
-static char	*rate2str(double);
 u_int32_t	 getifspeed(char *);
 u_long		 getifmtu(char *);
 
@@ -1008,7 +1007,7 @@ sc_x2y(struct service_curve *sc, double x)
 #define	R2S_BUFS	8
 #define	RATESTR_MAX	16
 
-static char *
+char *
 rate2str(double rate)
 {
 	char		*buf;
