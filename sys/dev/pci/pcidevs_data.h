@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.409 2001/06/21 09:24:26 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.410 2001/06/23 12:56:33 maja Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -705,6 +705,34 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO,
 	    "Keylargo",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC2,
+	    "GMAC",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_MACIO,
+	    "Pangea",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_OHCI,
+	    "Pangea USB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_AGP,
+	    "Pangea AGP",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI1,
+	    "Pangea Host-PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI2,
+	    "Pangea Host-PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_FW,
+	    "Pangea FireWire",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,

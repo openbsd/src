@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.409 2001/06/21 09:24:26 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.410 2001/06/23 12:56:33 maja Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -783,6 +783,13 @@
 #define	PCI_PRODUCT_APPLE_UNINORTHAGP	0x0020		/* Uni-North AGP */
 #define	PCI_PRODUCT_APPLE_GMAC	0x0021		/* GMAC */
 #define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* Keylargo */
+#define	PCI_PRODUCT_APPLE_GMAC2	0x0024		/* GMAC */
+#define	PCI_PRODUCT_APPLE_PANGEA_MACIO	0x0025		/* Pangea */
+#define	PCI_PRODUCT_APPLE_PANGEA_OHCI	0x0026		/* Pangea USB */
+#define	PCI_PRODUCT_APPLE_PANGEA_AGP	0x0027		/* Pangea AGP */
+#define	PCI_PRODUCT_APPLE_PANGEA_PCI1	0x0028		/* Pangea Host-PCI */
+#define	PCI_PRODUCT_APPLE_PANGEA_PCI2	0x0029		/* Pangea Host-PCI */
+#define	PCI_PRODUCT_APPLE_PANGEA_FW	0x0030		/* Pangea FireWire */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
