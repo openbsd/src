@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.14 2003/12/31 11:18:25 cedric Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.15 2004/01/19 07:24:07 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -195,7 +195,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 
 	bcopy(&sp->rt_addr, &st->rt_addr, sizeof(st->rt_addr));
 	secs = time.tv_sec;
-	st->creation = secs + ntohl(sp->creation);
+	st->creation = ntohl(sp->creation) + secs;
 
 	st->af = sp->af;
 	st->proto = sp->proto;
@@ -207,11 +207,10 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	st->creatorid = sp->creatorid;
 	st->sync_flags = sp->sync_flags | PFSTATE_FROMSYNC;
 
-	secs = time.tv_sec;
 	if (sp->expire)
-		st->expire = 0;
-	else
 		st->expire = ntohl(sp->expire) + secs;
+	else
+		st->expire = 0;
 
 	if (pf_insert_state(kif, st)) {
 		pfi_maybe_destroy(kif);
