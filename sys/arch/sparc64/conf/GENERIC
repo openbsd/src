@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.96 2004/06/21 04:41:07 miod Exp $
+#	$OpenBSD: GENERIC,v 1.97 2004/08/01 21:46:37 deraadt Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -125,6 +125,7 @@ aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
 kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+cdce*	at uhub? port ?			# CDC Ethernet
 upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
 url*	at uhub? port ?			# Realtek RTL8150L based adapters
 wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
