@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.36 2003/10/17 09:35:30 jmc Exp $
+.\"	$OpenBSD: newfs.8,v 1.37 2004/06/26 18:21:36 otto Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -68,6 +68,7 @@
 .Pp
 .Nm mount_mfs
 .Bk -words
+.Op Fl P Ar file
 .Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cylinders
@@ -286,11 +287,22 @@ The options to the
 command are as described for the
 .Nm
 command, except for the
+.Fl P
+option and the
 .Fl o
 option.
 .Pp
-That option is as follows:
+These options are as follows:
 .Bl -tag -width indent
+.It Fl P Ar file
+If
+.Ar file
+is a directory, populate the created mfs file system with the contents
+of the directory.
+If
+.Ar file
+is a block device, populate the created mfs file system with
+the contents of the FFS file system contained on the device.
 .It Fl o
 Options are specified with a
 .Fl o
@@ -299,6 +311,11 @@ See the
 .Xr mount 8
 man page for possible options and their meanings.
 .El
+.Pp
+If the
+.Fl P Ar file
+option is not used, the owner and mode of the created mfs file system will
+be the same as the owner and mode of the mount point.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr fs 5 ,

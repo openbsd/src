@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.40 2004/06/22 01:58:59 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.41 2004/06/26 18:21:35 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.40 2004/06/22 01:58:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.41 2004/06/26 18:21:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ static char rcsid[] = "$OpenBSD: mkfs.c,v 1.40 2004/06/22 01:58:59 millert Exp $
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
+#include <err.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -130,14 +131,15 @@ daddr_t		alloc(int, int);
 static int	charsperline(void);
 void		initcg(int, time_t);
 void		wtfs(daddr_t, int, void *);
-void		fsinit(time_t);
+void		fsinit(time_t, mode_t, uid_t, gid_t);
 int		makedir(struct direct *, int);
 void		iput(struct ufs1_dinode *, ino_t);
 void		setblock(struct fs *, unsigned char *, int);
 void		clrblock(struct fs *, unsigned char *, int);
 int		isblock(struct fs *, unsigned char *, int);
 void		rdfs(daddr_t, int, void *);
-void		mkfs(struct partition *pp, char *fsys, int fi, int fo);
+void		mkfs(struct partition *, char *, int, int,
+		    mode_t, uid_t, gid_t);
 
 #ifndef STANDALONE
 volatile sig_atomic_t cur_cylno;
@@ -157,7 +159,8 @@ siginfo(int sig)
 #endif
 
 void
-mkfs(struct partition *pp, char *fsys, int fi, int fo)
+mkfs(struct partition *pp, char *fsys, int fi, int fo,
+    mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	long i, mincpc, mincpg, inospercg;
 	long cylno, rpos, blk, j, warn = 0;
@@ -666,7 +669,7 @@ next:
 	 * Now construct the initial file system,
 	 * then write out the super-block.
 	 */
-	fsinit(utime);
+	fsinit(utime, mfsmode, mfsuid, mfsgid);
 	sblock.fs_time = utime;
 	/* don't write magic until we are done */
 	sblock.fs_magic = 0;
@@ -889,7 +892,7 @@ struct odirect olost_found_dir[] = {
 #endif
 
 void
-fsinit(time_t utime)
+fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	/*
 	 * initialize the node
@@ -927,10 +930,15 @@ fsinit(time_t utime)
 	/*
 	 * create the root directory
 	 */
-	if (mfs)
-		node.di_mode = IFDIR | 01777;
-	else
+	if (mfs) {
+		node.di_mode = IFDIR | mfsmode;
+		node.di_uid = mfsuid;
+		node.di_gid = mfsgid;
+	} else {
 		node.di_mode = IFDIR | UMASK;
+		node.di_uid = geteuid();
+		node.di_gid = getegid();
+	}
 	node.di_nlink = PREDEFDIR;
 	if (Oflag)
 		node.di_size = makedir((struct direct *)oroot_dir, PREDEFDIR);

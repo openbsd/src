@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.47 2003/11/03 05:40:09 tedu Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.48 2004/06/26 18:21:36 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.47 2003/11/03 05:40:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.48 2004/06/26 18:21:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.47 2003/11/03 05:40:09 tedu Exp $";
  * newfs: friendly front end to mkfs
  */
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
@@ -60,6 +61,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.47 2003/11/03 05:40:09 tedu Exp $";
 #include <ufs/ffs/fs.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -71,7 +73,6 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.47 2003/11/03 05:40:09 tedu Exp $";
 #include <unistd.h>
 #include <signal.h>
 #include <util.h>
-#include <err.h>
 
 #include "mntopts.h"
 #include "pathnames.h"
@@ -85,7 +86,7 @@ struct mntopt mopts[] = {
 
 void	fatal(const char *fmt, ...);
 void	usage(void);
-void	mkfs(struct partition *, char *, int, int);
+void	mkfs(struct partition *, char *, int, int, mode_t, uid_t, gid_t);
 void	rewritelabel(char *, int, struct disklabel *);
 u_short	dkcksum(struct disklabel *);
 
@@ -188,6 +189,11 @@ char	device[MAXPATHLEN];
 extern	char *__progname;
 struct disklabel *getdisklabel(char *, int);
 
+static int do_exec(const char *, const char *, char *const[]);
+static int isdir(const char *);
+static void copy(char *, char *);
+static int gettmpmnt(char *, size_t);
+
 int
 main(int argc, char *argv[])
 {
@@ -203,10 +209,15 @@ main(int argc, char *argv[])
 	char *cp, *s1, *s2, *special, *opstring;
 #ifdef MFS
 	char mountfromname[BUFSIZ];
+	char *pop = NULL;
 	pid_t pid, res;
 	struct statfs sf;
+	struct stat mountpoint;
 	int status;
 #endif
+	uid_t mfsuid;
+	gid_t mfsgid;
+	mode_t mfsmode;
 	char *fstype = NULL;
 	char **saveargv = argv;
 	int ffs = 1;
@@ -219,7 +230,7 @@ main(int argc, char *argv[])
 		fatal("insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "T:a:b:c:d:e:f:i:m:o:s:" :
+	    "P:T:a:b:c:d:e:f:i:m:o:s:" :
 	    "NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
@@ -267,7 +278,7 @@ main(int argc, char *argv[])
 			break;
 		case 'g':
 			if ((avgfilesize = atoi(optarg)) <= 0)
-			       fatal("%s: bad average file size", optarg);
+				fatal("%s: bad average file size", optarg);
 			break;
 		case 'h':
 			if ((avgfilesperdir = atoi(optarg)) <= 0)
@@ -341,6 +352,11 @@ main(int argc, char *argv[])
 				fatal("%s: bad spare sectors per cylinder",
 				    optarg);
 			break;
+#ifdef MFS
+		case 'P':
+			pop = optarg;
+			break;
+#endif
 		case '?':
 		default:
 			usage();
@@ -596,7 +612,17 @@ havelabel:
 		printf("Number of cylinders restricts cylinders per group "
 		    "to %d.\n", cpg);
 	}
-	mkfs(pp, special, fsi, fso);
+#ifdef MFS
+	if (mfs) {
+		if (stat(argv[1], &mountpoint) < 0)
+			err(88, "stat %s", argv[1]);
+		mfsuid = mountpoint.st_uid;
+		mfsgid = mountpoint.st_gid;
+		mfsmode = mountpoint.st_mode & ALLPERMS;
+	}
+#endif
+
+	mkfs(pp, special, fsi, fso, mfsmode, mfsuid, mfsgid);
 	if (realsectorsize < DEV_BSIZE)
 		pp->p_size *= DEV_BSIZE / realsectorsize;
 	else if (realsectorsize > DEV_BSIZE)
@@ -637,9 +663,11 @@ havelabel:
 				if (!strcmp(sf.f_mntfromname, mountfromname) &&
 				    !strncmp(sf.f_mntonname, argv[1],
 					     MNAMELEN) &&
-				    !strcmp(sf.f_fstypename, "mfs"))
+				    !strcmp(sf.f_fstypename, "mfs")) {
+					if (pop != NULL)
+						copy(pop, argv[1]);
 					exit(0);
-
+				}
 				res = waitpid(pid, &status, WNOHANG);
 				if (res == -1)
 					err(11, "waitpid");
@@ -783,6 +811,9 @@ struct fsoptions {
 } fsopts[] = {
 	{ "-N do not create file system, just print out parameters", 0 },
 	{ "-O create a 4.3BSD format filesystem", 0 },
+#ifdef MFS
+	{ "-P src populate mfs filesystem", 2 },
+#endif
 	{ "-S sector size", 0 },
 #ifdef COMPAT
 	{ "-T disktype", 0 },
@@ -826,8 +857,124 @@ usage(void)
 	}
 	fprintf(stderr, "where fsoptions are:\n");
 	for (fsopt = fsopts; fsopt->str; fsopt++) {
-		if (!mfs || fsopt->mfs_too)
+		if (!mfs || fsopt->mfs_too == 1 || (mfs && fsopt->mfs_too == 2))
 			fprintf(stderr, "\t%s\n", fsopt->str);
 	}
 	exit(1);
 }
+
+#ifdef MFS
+
+static int
+do_exec(const char *dir, const char *cmd, char *const argv[])
+{
+	pid_t pid;
+	int ret, status;
+	sig_t intsave, quitsave;
+
+	switch (pid = fork()) {
+	case -1:
+		err(1, "fork");
+	case 0:
+		if (dir != NULL && chdir(dir) != 0)
+			err(1, "chdir");
+		if (execv(cmd, argv) != 0)
+			err(1, "%s", cmd);
+		break;
+	default:
+		intsave = signal(SIGINT, SIG_IGN);
+		quitsave = signal(SIGQUIT, SIG_IGN);
+		for (;;) {
+			ret = waitpid(pid, &status, 0);
+			if (ret == -1)
+				err(11, "waitpid");
+			if (WIFEXITED(status)) {
+				status = WEXITSTATUS(status);
+				if (status != 0)
+					warnx("%s: exited", cmd);
+				break;
+			} else if (WIFSIGNALED(status)) {
+				warnx("%s: %s", cmd,
+				    strsignal(WTERMSIG(status)));
+				status = 1;
+				break;
+			}
+		}
+		signal(SIGINT, intsave);
+		signal(SIGQUIT, quitsave);
+		return (status);
+	}
+	/* NOTREACHED */
+	return (-1);
+}
+
+static int
+isdir(const char *path)
+{
+	struct stat st;
+
+	if (stat(path, &st) != 0)
+		err(1, "cannot stat %s", path);
+	if (!S_ISDIR(st.st_mode) && !S_ISBLK(st.st_mode))
+		errx(1, "%s: not a dir or a block device", path);
+	return (S_ISDIR(st.st_mode));
+}
+
+static void
+copy(char *src, char *dst)
+{
+	int ret, dir, created = 0;
+	struct ufs_args mount_args;
+	char mountpoint[MNAMELEN];
+	char *const argv[] = { "pax", "-rw", "-pe", ".", dst, NULL } ;
+
+	dir = isdir(src);
+	if (dir)
+		strlcpy(mountpoint, src, sizeof(mountpoint));
+	else {
+		created = gettmpmnt(mountpoint, sizeof(mountpoint));
+		memset(&mount_args, 0, sizeof(mount_args));
+		mount_args.fspec = src;
+		ret = mount(MOUNT_FFS, mountpoint, MNT_RDONLY, &mount_args);
+		if (ret != 0) {
+			if (created && rmdir(mountpoint) != 0)
+				warn("rmdir %s", mountpoint);
+			if (unmount(dst, 0) != 0)
+				warn("unmount %s", dst);
+			err(1, "mount %s %s", src, mountpoint);
+		}
+	}
+	ret = do_exec(mountpoint, "/bin/pax", argv);
+	if (!dir && unmount(mountpoint, 0) != 0)
+		warn("unmount %s", mountpoint);
+	if (created && rmdir(mountpoint) != 0)
+		warn("rmdir %s", mountpoint);
+	if (ret != 0) {
+		if (unmount(dst, 0) != 0)
+			warn("unmount %s", dst);
+		errx(1, "copy %s to %s failed", mountpoint, dst);
+	}
+}
+
+static int
+gettmpmnt(char *mountpoint, size_t len)
+{
+	struct statfs fs;
+
+	if (statfs("/tmp", &fs) != 0)
+		err(1, "statfs /tmp");
+	if (fs.f_flags & MNT_RDONLY) {
+		if (statfs("/mnt", &fs) != 0)
+			err(1, "statfs /mnt");
+		if (strcmp(fs.f_mntonname, "/") != 0)
+			errx(1, "temp mountpoint /mnt busy");
+		strlcpy(mountpoint, "/mnt", len);
+		return (0);
+	}
+	strlcpy(mountpoint, "/tmp/mntXXXXXXXXXXX", len);
+	if (mkdtemp(mountpoint) == NULL)
+		err(1, "mkdtemp %s", mountpoint);
+	return (1);
+}
+
+#endif /* MFS */
