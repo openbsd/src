@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.3 2001/07/17 02:23:59 pvalchev Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.4 2001/07/18 22:26:00 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -48,17 +48,17 @@ static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 
 #define ARGNAME "arg"
 
-static void isdefined __P((definition *));
-static void def_struct __P((definition *));
-static void def_program __P((definition *));
-static void def_enum __P((definition *));
-static void def_const __P((definition *));
-static void def_union __P((definition *));
-static void def_typedef __P((definition *));
-static void get_declaration __P((declaration *, defkind));
-static void get_prog_declaration __P((declaration *, defkind, int));
-static void get_type __P((char **, char **, defkind));
-static void unsigned_dec __P((char **));
+static isdefined __P((definition *));
+static def_struct __P((definition *));
+static def_program __P((definition *));
+static def_enum __P((definition *));
+static def_const __P((definition *));
+static def_union __P((definition *));
+static def_typedef __P((definition *));
+static get_declaration __P((declaration *, defkind));
+static get_prog_declaration __P((declaration *, defkind, int));
+static get_type __P((char **, char **, defkind));
+static unsigned_dec __P((char **));
 
 /*
  * return the next definition you see
@@ -100,14 +100,14 @@ get_definition()
 	return (defp);
 }
 
-static void
+static
 isdefined(defp)
 	definition *defp;
 {
 	STOREVAL(&defined, defp);
 }
 
-static void
+static
 def_struct(defp)
 	definition *defp;
 {
@@ -135,7 +135,7 @@ def_struct(defp)
 	*tailp = NULL;
 }
 
-static void
+static
 def_program(defp)
 	definition *defp;
 {
@@ -241,7 +241,7 @@ def_program(defp)
 }
 
 
-static void
+static
 def_enum(defp)
 	definition *defp;
 {
@@ -271,7 +271,7 @@ def_enum(defp)
 	*tailp = NULL;
 }
 
-static void
+static
 def_const(defp)
 	definition *defp;
 {
@@ -285,13 +285,13 @@ def_const(defp)
 	defp->def.co = tok.str;
 }
 
-static void
+static
 def_union(defp)
 	definition *defp;
 {
   token tok;
   declaration dec;
-  case_list *cases;
+  case_list *cases,*tcase;
   case_list **tailp;
   int flag;
 
@@ -383,10 +383,9 @@ static char* reserved_types[] = {
 
 /* check that the given name is not one that would eventually result in
    xdr routines that would conflict with internal XDR routines. */
-static void
-check_type_name( name, new_type )
-	int new_type;
-	char* name;
+static check_type_name( name, new_type )
+int new_type;
+char* name;
 {
   int i;
   char tmp[100];
@@ -409,7 +408,7 @@ check_type_name( name, new_type )
   }
 }
 
-static void
+static
 def_typedef(defp)
 	definition *defp;
 {
@@ -425,7 +424,7 @@ def_typedef(defp)
 	defp->def.ty.array_max = dec.array_max;
 }
 
-static void
+static
 get_declaration(dec, dkind)
 	declaration *dec;
 	defkind dkind;
@@ -478,7 +477,7 @@ get_declaration(dec, dkind)
 	}
 }
 
-static void
+static
 get_prog_declaration(dec, dkind, num)
 	declaration *dec;
 	defkind dkind;
@@ -547,7 +546,7 @@ get_prog_declaration(dec, dkind, num)
 
 
 
-static void
+static
 get_type(prefixp, typep, dkind)
 	char **prefixp;
 	char **typep;
@@ -599,7 +598,7 @@ get_type(prefixp, typep, dkind)
 	}
 }
 
-static void
+static
 unsigned_dec(typep)
 	char **typep;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.4 2001/07/17 02:23:59 pvalchev Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.5 2001/07/18 22:26:00 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,7 +40,6 @@
 #include <sys/cdefs.h>
 #include <stdio.h>
 #include <string.h>
-#include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
@@ -52,22 +51,22 @@ static char ROUTINE[] = "local";
 
 char _errbuf[256];	/* For all messages */
 
-static void internal_proctype __P((proc_list *));
-static void write_real_program __P((definition *));
-static void write_program __P((definition *, char *));
-static void printerr __P((char *, char *));
-static void printif __P((char *, char *, char *, char *));
-static void write_inetmost __P((char *));
-static void print_return __P((char *));
-static void print_pmapunset __P((char *));
-static void print_err_message __P((char *));
-static void write_timeout_func __P((void));
-static void write_pm_most __P((char *, int));
-static void write_caller_func __P((void));
-static void write_rpc_svc_fg __P((char *, char *));
-static void open_log_file __P((char *, char *));
+void internal_proctype __P((proc_list *));
+static write_real_program __P((definition *));
+static write_program __P((definition *, char *));
+static printerr __P((char *, char *));
+static printif __P((char *, char *, char *, char *));
+static write_inetmost __P((char *));
+static print_return __P((char *));
+static print_pmapunset __P((char *));
+static print_err_message __P((char *));
+static write_timeout_func __P((void));
+static write_pm_most __P((char *, int));
+static write_caller_func __P((void));
+static write_rpc_svc_fg __P((char *, char *));
+static open_log_file __P((char *, char *));
 
-static void
+static
 p_xdrfunc( rname, typename )
 char* rname;
 char* typename;
@@ -79,7 +78,7 @@ char* typename;
     f_print(fout, "\t\txdr_%s = xdr_%s;\n", rname, stringfix(typename) );
 }    
 
-static void
+void
 internal_proctype(plist)
 	proc_list *plist;
 {
@@ -169,7 +168,7 @@ write_netid_register(transp)
 	f_print(fout, "%s\t\texit(1);\n", sp);
 	f_print(fout, "%s\t}\n", sp);
 	f_print(fout, "%s\t%s = svc_tli_create(RPC_ANYFD, nconf, 0, 0, 0);\n",
-			sp, TRANSP);
+			sp, TRANSP, transp);
 	f_print(fout, "%s\tif (%s == NULL) {\n", sp, TRANSP);
 	(void) sprintf(_errbuf, "cannot create %s service.", transp);
 	print_err_message(tmpbuf);
@@ -291,7 +290,7 @@ write_programs(storage)
    which calls server's defintion of actual function (e.g. printmsg_1(...)).
    Unpacks single user argument of printmsg_1 to call-by-value format
    expected by printmsg_1. */
-static void
+static
 write_real_program(def)
 	definition *def;
 {
@@ -346,7 +345,7 @@ write_real_program(def)
 	}
 }
 
-static void
+static 
 write_program(def, storage)
 	definition *def;
 	char *storage;
@@ -489,7 +488,7 @@ write_program(def, storage)
 	}
 }
 
-static void
+static
 printerr(err, transp)
 	char *err;
 	char *transp;
@@ -497,7 +496,7 @@ printerr(err, transp)
 	f_print(fout, "\t\tsvcerr_%s(%s);\n", err, transp);
 }
 
-static void
+static
 printif(proc, transp, prefix, arg)
 	char *proc;
 	char *transp;
@@ -508,7 +507,6 @@ printif(proc, transp, prefix, arg)
 		proc, transp, arg, prefix, arg);
 }
 
-int
 nullproc(proc)
 	proc_list *proc;
 {
@@ -520,7 +518,7 @@ nullproc(proc)
 	return (0);
 }
 
-static void
+static
 write_inetmost(infile)
 	char *infile;
 {
@@ -549,7 +547,7 @@ write_inetmost(infile)
 	f_print(fout, "\t}\n");
 }
 
-static void
+static
 print_return(space)
 	char *space;
 {
@@ -562,7 +560,7 @@ print_return(space)
 	}
 }
 
-static void
+static
 print_pmapunset(space)
 	char *space;
 {
@@ -582,7 +580,7 @@ print_pmapunset(space)
 	}
 }
 
-static void
+static
 print_err_message(space)
 	char *space;
 {
@@ -613,7 +611,6 @@ write_svc_aux( nomain )
  * Write the _msgout function
  */
 
-void
 write_msg_out()
 {
 	f_print(fout, "\n");
@@ -640,7 +637,7 @@ write_msg_out()
 /*
  * Write the timeout function
  */
-static void
+static
 write_timeout_func()
 {
 	if (!timerflag)
@@ -670,7 +667,7 @@ write_timeout_func()
 	f_print(fout, "}\n");
 }
 
-static void
+static
 write_caller_func()			/*EVAS*/
 {
 #define	P(s)	f_print(fout, s);
@@ -708,7 +705,7 @@ P("}\n");
 /*
  * Write the most of port monitor support
  */
-static void
+static
 write_pm_most(infile, netflag)
 	char *infile;
 	int netflag;
@@ -795,7 +792,7 @@ write_pm_most(infile, netflag)
 /*
  * Support for backgrounding the server if self started.
  */
-static void
+static
 write_rpc_svc_fg(infile, sp)
 	char *infile;
 	char *sp;
@@ -846,7 +843,7 @@ write_rpc_svc_fg(infile, sp)
 		open_log_file(infile, sp);
 }
 
-static void
+static
 open_log_file(infile, sp)
 	char *infile;
 	char *sp;

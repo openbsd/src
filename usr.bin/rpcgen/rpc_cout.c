@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.5 2001/07/17 02:23:59 pvalchev Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.6 2001/07/18 22:26:00 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,28 +41,27 @@ static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <err.h>
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static int findtype __P((definition *, char *));
-static int undefined __P((char *));
-static void print_generic_header __P((char *, int));
-static void print_header __P((definition *));
-static void print_prog_header __P((proc_list *));
-static void print_trailer __P((void));
-static void print_ifopen __P((int, char *));
-static void print_ifarg __P((char *));
-static void print_ifsizeof __P((char *, char *));
-static void print_ifclose __P((int));
-static void print_ifstat __P((int, char *, char *, relation, char *, char *, char *));
-static void emit_program __P((definition *));
-static void emit_enum __P((definition *));
-static void emit_union __P((definition *));
-static void emit_struct __P((definition *));
-static void emit_typedef __P((definition *));
-static void print_stat __P((int, declaration *));
+static findtype __P((definition *, char *));
+static undefined __P((char *));
+static print_generic_header __P((char *, int));
+static print_header __P((definition *));
+static print_prog_header __P((proc_list *));
+static print_trailer __P((void));
+static print_ifopen __P((int, char *));
+static print_ifarg __P((char *));
+static print_ifsizeof __P((char *, char *));
+static print_ifclose __P((int));
+static print_ifstat __P((int, char *, char *, relation, char *, char *, char *));
+static emit_num __P((definition *));
+static emit_program __P((definition *));
+static emit_enum __P((definition *));
+static emit_union __P((definition *));
+static emit_struct __P((definition *));
+static emit_typedef __P((definition *));
+static print_stat __P((int, declaration *));
 
 
 /*
@@ -102,16 +101,11 @@ emit(def)
 	case DEF_TYPEDEF:
 		emit_typedef(def);
 		break;
-	case DEF_CONST:
-	case DEF_PROGRAM:
-		errx(1, "Internal error %s, %d: Case %d not handled\n",
-		    __FILE__, __LINE__, def->def_kind);
-		break;
 	}
 	print_trailer();
 }
 
-static int
+static
 findtype(def, type)
 	definition *def;
 	char   *type;
@@ -124,7 +118,7 @@ findtype(def, type)
 	}
 }
 
-static int
+static
 undefined(type)
 	char   *type;
 {
@@ -136,7 +130,7 @@ undefined(type)
 	return (def == NULL);
 }
 
-static void
+static
 print_generic_header(procname, pointerp)
 	char   *procname;
 	int     pointerp;
@@ -160,10 +154,15 @@ print_generic_header(procname, pointerp)
 	}
 }
 
-static void
+static
 print_header(def)
 	definition *def;
 {
+
+	decl_list *dl;
+	bas_type *ptr;
+	int     i;
+
 
 	print_generic_header(def->def_name,
 	    def->def_kind != DEF_TYPEDEF ||
@@ -179,14 +178,14 @@ print_header(def)
 
 }
 
-static void
+static
 print_prog_header(plist)
 	proc_list *plist;
 {
 	print_generic_header(plist->args.argname, 1);
 }
 
-static void
+static
 print_trailer()
 {
 	f_print(fout, "\treturn (TRUE);\n");
@@ -194,7 +193,7 @@ print_trailer()
 }
 
 
-static void
+static
 print_ifopen(indent, name)
 	int     indent;
 	char   *name;
@@ -203,14 +202,14 @@ print_ifopen(indent, name)
 	f_print(fout, " if (!xdr_%s(xdrs", name);
 }
 
-static void
+static
 print_ifarg(arg)
 	char   *arg;
 {
 	f_print(fout, ", %s", arg);
 }
 
-static void
+static
 print_ifsizeof(prefix, type)
 	char   *prefix;
 	char   *type;
@@ -226,7 +225,7 @@ print_ifsizeof(prefix, type)
 	}
 }
 
-static void
+static
 print_ifclose(indent)
 	int     indent;
 {
@@ -237,7 +236,7 @@ print_ifclose(indent)
 	f_print(fout, " }\n");
 }
 
-static void
+static
 print_ifstat(indent, prefix, type, rel, amax, objname, name)
 	int     indent;
 	char   *prefix;
@@ -315,7 +314,7 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 }
 
 /* ARGSUSED */
-static void
+static
 emit_enum(def)
 	definition *def;
 {
@@ -324,7 +323,7 @@ emit_enum(def)
 	print_ifclose(1);
 }
 
-static void
+static
 emit_program(def)
 	definition *def;
 {
@@ -346,7 +345,7 @@ emit_program(def)
 }
 
 
-static void
+static
 emit_union(def)
 	definition *def;
 {
@@ -408,7 +407,7 @@ emit_union(def)
 	f_print(fout, "\t}\n");
 }
 
-static void
+static
 emit_struct(def)
 	definition *def;
 {
@@ -515,7 +514,7 @@ emit_struct(def)
 				}
 
 			} else {
-				if (i > 0) {
+				if (i > 0)
 					if (sizestr == NULL && size < doinline) {
 						/* don't expand into inline
 						 * code if size < doinline */
@@ -560,7 +559,6 @@ emit_struct(def)
 
 						f_print(fout, "\t  }\n");
 					}
-				}
 				size = 0;
 				i = 0;
 				sizestr = NULL;
@@ -568,7 +566,7 @@ emit_struct(def)
 			}
 
 		}
-		if (i > 0) {
+		if (i > 0)
 			if (sizestr == NULL && size < doinline) {
 				/* don't expand into inline code if size <
 				 * doinline */
@@ -612,7 +610,6 @@ emit_struct(def)
 
 			}
 		flag = GET;
-		}
 	}
 	f_print(fout, "\t return(TRUE);\n\t}\n\n");
 
@@ -622,7 +619,7 @@ emit_struct(def)
 		print_stat(1, &dl->decl);
 }
 
-static void
+static
 emit_typedef(def)
 	definition *def;
 {
@@ -635,7 +632,7 @@ emit_typedef(def)
 	print_ifstat(1, prefix, type, rel, amax, "objp", def->def_name);
 }
 
-static void
+static
 print_stat(indent, dec)
 	declaration *dec;
 	int     indent;
@@ -658,7 +655,6 @@ print_stat(indent, dec)
 char   *upcase __P((char *));
 
 
-void
 emit_inline(decl, flag)
 	declaration *decl;
 	int     flag;
@@ -676,15 +672,10 @@ emit_inline(decl, flag)
 		    decl->name, decl->array_max);
 		emit_single_in_line(decl, flag, REL_VECTOR);
 		f_print(fout, "\t\t   }\n\t\t };\n");
-	case REL_ARRAY:
-	case REL_POINTER:
-		errx(1, "Internal error %s, %d: Case %d not handled\n",
-		    __FILE__, __LINE__, decl->rel);
 
 	}
 }
 
-void
 emit_single_in_line(decl, flag, rel)
 	declaration *decl;
 	int     flag;

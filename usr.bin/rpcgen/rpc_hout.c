@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_hout.c,v 1.5 2001/07/17 02:23:59 pvalchev Exp $	*/
+/*	$OpenBSD: rpc_hout.c,v 1.6 2001/07/18 22:26:00 deraadt Exp $	*/
 /*	$NetBSD: rpc_hout.c,v 1.4 1995/06/11 21:49:55 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -43,18 +43,18 @@ static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static void pconstdef __P((definition *));
-static void pargdef __P((definition *));
-static void pstructdef __P((definition *));
-static void puniondef __P((definition *));
-static void pprogramdef __P((definition *));
-static void penumdef __P((definition *));
-static void ptypedef __P((definition *));
-static void pdefine __P((char *, char *));
-static void puldefine __P((char *, char *));
-static int define_printed __P((proc_list *, version_list *));
-static int undefined2 __P((char *, char *));
-static void parglist __P((proc_list *, char *));
+static pconstdef __P((definition *));
+static pargdef __P((definition *));
+static pstructdef __P((definition *));
+static puniondef __P((definition *));
+static pprogramdef __P((definition *));
+static penumdef __P((definition *));
+static ptypedef __P((definition *));
+static pdefine __P((char *, char *));
+static puldefine __P((char *, char *));
+static define_printed __P((proc_list *, version_list *));
+static undefined2 __P((char *, char *));
+static parglist __P((proc_list *, char *));
 
 /*
  * Print the C-version of an xdr definition 
@@ -108,19 +108,12 @@ print_funcdef(def)
 		f_print(fout, "\n");
 		pprogramdef(def);
 		break;
-	case DEF_CONST:
-	case DEF_STRUCT:
-	case DEF_UNION:
-	case DEF_ENUM:
-	case DEF_TYPEDEF:
-		break;
-	}
+	      }
 }
 
-void
 pxdrfuncdecl( name, pointerp )
-	char* name;
-	int pointerp;
+char* name;
+int pointerp;
 {
 
   f_print(fout,"#ifdef __cplusplus\n");
@@ -137,7 +130,7 @@ pxdrfuncdecl( name, pointerp )
 }
 
 
-static void
+static
 pconstdef(def)
 	definition *def;
 {
@@ -147,7 +140,7 @@ pconstdef(def)
 /* print out the definitions for the arguments of functions in the 
    header file 
 */
-static void
+static 
 pargdef(def)
 	definition *def;
 {
@@ -180,7 +173,7 @@ pargdef(def)
 }
 
 
-static void
+static 
 pstructdef(def)
 	definition *def;
 {
@@ -195,7 +188,7 @@ pstructdef(def)
 	f_print(fout, "typedef struct %s %s;\n", name, name);
 }
 
-static void
+static
 puniondef(def)
 	definition *def;
 {
@@ -224,7 +217,7 @@ puniondef(def)
 	f_print(fout, "typedef struct %s %s;\n", name, name);
 }
 
-static void
+static
 pdefine(name, num)
 	char *name;
 	char *num;
@@ -232,7 +225,7 @@ pdefine(name, num)
 	f_print(fout, "#define %s %s\n", name, num);
 }
 
-static void
+static
 puldefine(name, num)
 	char *name;
 	char *num;
@@ -240,7 +233,7 @@ puldefine(name, num)
 	f_print(fout, "#define %s ((u_long)%s)\n", name, num);
 }
 
-static int
+static
 define_printed(stop, start)
 	proc_list *stop;
 	version_list *start;
@@ -261,7 +254,7 @@ define_printed(stop, start)
 	/* NOTREACHED */
 }
 
-static void
+static
 pprogramdef(def)
 	definition *def;
 {
@@ -316,7 +309,6 @@ pprogramdef(def)
 	}
 }
 
-void
 pprocdef(proc, vp, addargtype, server_p,mode)
 	proc_list *proc;
 	version_list *vp;
@@ -343,7 +335,7 @@ pprocdef(proc, vp, addargtype, server_p,mode)
 
 
 /* print out argument list of procedure */
-static void
+static 
 parglist(proc, addargtype)
 	proc_list *proc;
 	char* addargtype;
@@ -368,7 +360,7 @@ parglist(proc, addargtype)
 	f_print(fout, "%s);\n", addargtype);
 }
 
-static void
+static
 penumdef(def)
 	definition *def;
 {
@@ -400,7 +392,7 @@ penumdef(def)
 	f_print(fout, "typedef enum %s %s;\n", name, name);
 }
 
-static void
+static
 ptypedef(def)
 	definition *def;
 {
@@ -447,7 +439,6 @@ ptypedef(def)
 	}
 }
 
-void
 pdeclaration(name, dec, tab, separator)
 	char *name;
 	declaration *dec;
@@ -505,7 +496,7 @@ pdeclaration(name, dec, tab, separator)
 	f_print(fout, separator );
 }
 
-static int
+static
 undefined2(type, stop)
 	char *type;
 	char *stop;

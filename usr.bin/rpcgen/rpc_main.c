@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_main.c,v 1.6 2001/07/17 02:23:59 pvalchev Exp $	*/
+/*	$OpenBSD: rpc_main.c,v 1.7 2001/07/18 22:26:00 deraadt Exp $	*/
 /*	$NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.6 2001/07/17 02:23:59 pvalchev Exp $";
+static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.7 2001/07/18 22:26:00 deraadt Exp $";
 #endif
 
 /*
@@ -44,14 +44,12 @@ static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.6 2001/07/17 02:23:59 pvalchev E
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <sys/types.h>
 #ifdef __TURBOC__
 #define	MAXPATHLEN	80
 #include <process.h>
 #include <dir.h>
 #else
-#include <unistd.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #endif
@@ -129,31 +127,24 @@ int tirpcflag = 0;       /* generating code for tirpc, by default */
 static char *dos_cppfile = NULL;
 #endif
 
-static char *extendfile __P((char *, char *));
-static void open_output __P((char *, char *));
-static void add_warning __P((void));
-static void clear_args __P((void));
-static void find_cpp __P((void));
-static void open_input __P((char *, char *));
-static int check_nettype __P((char *, char *[]));
-static void c_output __P((char *, char *, int, char *));
-static void c_initialize __P((void));
-static char *generate_guard __P((char *));
-static void h_output __P((char *, char *, int, char *));
-static void s_output __P((int, char *[], char *, char *, int, char *, int, int));
-static void l_output __P((char *, char *, int, char *));
-static void t_output __P((char *, char *, int, char *));
-static void svc_output __P((char *, char *, int, char *));
-static void clnt_output __P((char *, char *, int, char *));
-static int do_registers __P((int, char *[]));
+static c_output __P((char *, char *, int, char *));
+static h_output __P((char *, char *, int, char *));
+static s_output __P((int, char **, char *, char *, int, char *, int, int));
+static l_output __P((char *, char *, int, char *));
+static t_output __P((char *, char *, int, char *));
+static svc_output __P((char *, char *, int, char *));
+static clnt_output __P((char *, char *, int, char *));
+static do_registers __P((int, char **));
 static void addarg __P((char *));
 static void putarg __P((int, char *));
+static void clear_args __P((void));
 static void checkfiles __P((char *, char *));
-static int parseargs __P((int, char *[], struct commandline *));
-static void usage __P((void));
-static void options_usage __P((void));
+static int parseargs __P((int, char **, struct commandline *));
+static usage __P((void));
+static options_usage __P((void));
 
-int
+
+
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -257,7 +248,7 @@ extendfile(path, ext)
 /*
  * Open output file with given extension 
  */
-static void
+static
 open_output(infile, outfile)
 	char *infile;
 	char *outfile;
@@ -283,7 +274,7 @@ open_output(infile, outfile)
 
 }
 
-static void
+static
 add_warning()
 {
 	f_print(fout, "/*\n");
@@ -323,7 +314,7 @@ static void find_cpp()
 /*
  * Open input file with given define for C-preprocessor 
  */
-static void
+static
 open_input(infile, define)
 	char *infile;
 	char *define;
@@ -441,7 +432,7 @@ char* list_to_check[];
  * Compile into an XDR routine output file
  */
 
-static void
+static
 c_output(infile, define, extend, outfile)
 	char *infile;
 	char *define;
@@ -474,7 +465,6 @@ c_output(infile, define, extend, outfile)
 }
 
 
-static void
 c_initialize()
 {
 
@@ -524,7 +514,7 @@ char* generate_guard( pathname )
  * Compile into an XDR header file
  */
 
-static void
+static
 h_output(infile, define, extend, outfile)
 	char *infile;
 	char *define;
@@ -572,7 +562,7 @@ h_output(infile, define, extend, outfile)
 /*
  * Compile into an RPC service
  */
-static void
+static
 s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	int argc;
 	char *argv[];
@@ -680,7 +670,7 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 /*
  * generate client side stubs
  */
-static void
+static
 l_output(infile, define, extend, outfile)
 	char *infile;
 	char *define;
@@ -716,7 +706,7 @@ l_output(infile, define, extend, outfile)
 /*
  * generate the dispatch table
  */
-static void
+static
 t_output(infile, define, extend, outfile)
 	char *infile;
 	char *define;
@@ -742,7 +732,7 @@ t_output(infile, define, extend, outfile)
 }
 
 /* sample routine for the server template */
-static void
+static 
 svc_output(infile, define, extend, outfile)
      char *infile;
      char *define;
@@ -778,7 +768,7 @@ svc_output(infile, define, extend, outfile)
 
 
 /* sample main routine for client */
-static void
+static 
 clnt_output(infile, define, extend, outfile)
      char *infile;
      char *define;
@@ -820,8 +810,8 @@ clnt_output(infile, define, extend, outfile)
  * Perform registrations for service output 
  * Return 0 if failed; 1 otherwise.
  */
-static int
-do_registers(argc, argv)
+static
+int do_registers(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -889,8 +879,8 @@ putarg(where, cp)
 
 static void
 checkfiles(infile, outfile) 
-	char *infile;
-	char *outfile;
+char *infile;
+char *outfile;
 {
 
   struct stat buf;
@@ -925,7 +915,7 @@ parseargs(argc, argv, cmd)
 {
 	int i;
 	int j;
-	int c;
+	char c;
 	char flag[(1 << 8 * sizeof(char))];
 	int nflags;
 
@@ -1120,7 +1110,7 @@ parseargs(argc, argv, cmd)
 	return (1);
 }
 
-static void
+static
 usage()
 {
 	f_print(stderr, "usage:  %s infile\n", cmdname);
@@ -1134,7 +1124,7 @@ usage()
 	exit(1);
 }
 
-static void
+static
 options_usage()
 {
 	f_print(stderr, "options:\n");
