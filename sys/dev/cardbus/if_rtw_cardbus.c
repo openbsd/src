@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.2 2005/01/04 04:54:56 jsg Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.3 2005/02/09 22:08:29 jsg Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -179,6 +179,9 @@ const struct rtw_cardbus_product {
 
 	{ PCI_VENDOR_BELKIN2,		PCI_PRODUCT_BELKIN2_F5D6020V3,
 	  "Belkin F5D6020v3 802.11b (RTL8180 MAC/BBP)" },
+
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DWL610,
+	  "D-Link DWL-610" },
 
 	{ 0,				0,	NULL },
 };
