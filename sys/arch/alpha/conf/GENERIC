@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.107 2002/05/09 15:06:29 nate Exp $
+#	$OpenBSD: GENERIC,v 1.108 2002/06/16 22:12:22 miod Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -300,7 +300,7 @@ audio*	at uaudio?
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
 #wsdisplay*	at	sfb?
-#wsdisplay*	at	vga?
+wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
