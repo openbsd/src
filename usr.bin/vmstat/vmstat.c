@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.70 2002/06/19 08:45:52 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.71 2002/09/05 04:05:53 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -557,6 +557,7 @@ dosum()
 	(void)printf("%11u pages inactive\n", uvmexp.inactive);
 	(void)printf("%11u pages being paged out\n", uvmexp.paging);
 	(void)printf("%11u pages wired\n", uvmexp.wired);
+	(void)printf("%11u pages zeroed\n", uvmexp.zeropages);
 	(void)printf("%11u pages reserved for pagedaemon\n",
 		     uvmexp.reserve_pagedaemon);
 	(void)printf("%11u pages reserved for kernel\n",
