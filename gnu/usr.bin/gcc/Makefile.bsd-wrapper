@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.41 2004/01/15 17:46:53 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.42 2004/01/15 17:48:03 espie Exp $
 
 #MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
 MAN=		gcc.1 cpp.1 gcov.1
@@ -62,6 +62,9 @@ GCCINC=	/usr/lib/gcc-lib/${GCCARCH}/$V/include
 
 all:	config.status
 	exec ${MAKE} ${MAKE_FLAGS} all doc
+
+tconfig.h: config.status
+	exec ${MAKE} ${MAKE_FLAGS} tconfig.h
 
 tree-check.h: config.status
 	exec ${MAKE} ${MAKE_FLAGS} $@
