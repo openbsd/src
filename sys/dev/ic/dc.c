@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.80 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.81 2005/03/31 15:38:15 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -157,6 +157,7 @@ void dc_eeprom_idle(struct dc_softc *);
 void dc_eeprom_putbyte(struct dc_softc *, int);
 void dc_eeprom_getword(struct dc_softc *, int, u_int16_t *);
 void dc_eeprom_getword_pnic(struct dc_softc *, int, u_int16_t *);
+void dc_eeprom_getword_xircom(struct dc_softc *, int, u_int16_t *);
 void dc_read_eeprom(struct dc_softc *, caddr_t, int, int, int);
 
 void dc_mii_writebit(struct dc_softc *, int);
@@ -375,6 +376,26 @@ dc_eeprom_getword_pnic(sc, addr, dest)
 
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
+ * The Xircom X3201 has its own non-standard way to read
+ * the EEPROM, too.
+ */
+void
+dc_eeprom_getword_xircom(struct dc_softc *sc, int addr, u_int16_t *dest)
+{
+	SIO_SET(DC_SIO_ROMSEL | DC_SIO_ROMCTL_READ);
+
+	addr *= 2;
+	CSR_WRITE_4(sc, DC_ROM, addr | 0x160);
+	*dest = (u_int16_t)CSR_READ_4(sc, DC_SIO) & 0xff;
+	addr += 1;
+	CSR_WRITE_4(sc, DC_ROM, addr | 0x160);
+	*dest |= ((u_int16_t)CSR_READ_4(sc, DC_SIO) & 0xff) << 8;
+
+	SIO_CLR(DC_SIO_ROMSEL | DC_SIO_ROMCTL_READ);
+}
+
+/*
+ * Read a word of data stored in the EEPROM at address 'addr.'
  */
 void
 dc_eeprom_getword(sc, addr, dest)
@@ -436,6 +457,8 @@ void dc_read_eeprom(sc, dest, off, cnt, swap)
 	for (i = 0; i < cnt; i++) {
 		if (DC_IS_PNIC(sc))
 			dc_eeprom_getword_pnic(sc, off + i, &word);
+		else if (DC_IS_XIRCOM(sc))
+			dc_eeprom_getword_xircom(sc, off + i, &word);
 		else
 			dc_eeprom_getword(sc, off + i, &word);
 		ptr = (u_int16_t *)(dest + (i * 2));
@@ -568,8 +591,10 @@ dc_mii_readreg(sc, frame)
 	}
 
 	for (i = 0x8000; i; i >>= 1) {
-		if (dc_mii_readbit(sc))
-			frame->mii_data |= i;
+		if (!ack) {
+			if (dc_mii_readbit(sc))
+				frame->mii_data |= i;
+		}
 	}
 
 fail:
@@ -1565,9 +1590,8 @@ dc_parse_21143_srom(sc)
 {
 	struct dc_leaf_hdr *lhdr;
 	struct dc_eblock_hdr *hdr;
-	int i, loff;
+	int have_mii, i, loff;
 	char *ptr;
-	int have_mii;
 
 	have_mii = 0;
 	loff = sc->dc_srom[27];
@@ -1662,11 +1686,11 @@ dc_attach(sc)
 		*(u_int16_t *)(&sc->sc_arpcom.ac_enaddr[4]) =
 			CSR_READ_4(sc, DC_AL_PAR1);
 		break;
-	case DC_TYPE_XIRCOM:
-		break;
 	case DC_TYPE_CONEXANT:
 		bcopy(&sc->dc_srom + DC_CONEXANT_EE_NODEADDR,
 		    &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+		break;
+	case DC_TYPE_XIRCOM:
 		break;
 	default:
 		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr,
@@ -2513,9 +2537,6 @@ dc_intr(arg)
 	int claimed = 0;
 
 	sc = arg;
-
-	if ( (CSR_READ_4(sc, DC_ISR) & DC_INTRS) == 0)
-		return (0);
 
 	ifp = &sc->sc_arpcom.ac_if;
 
