@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.47 2002/04/06 21:58:12 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.48 2002/04/06 23:48:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.47 2002/04/06 21:58:12 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.48 2002/04/06 23:48:38 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -229,6 +229,7 @@ wi_attach(sc)
 	sc->wi_max_sleep = WI_DEFAULT_MAX_SLEEP;
 	sc->wi_roaming = WI_DEFAULT_ROAMING;
 	sc->wi_authtype = WI_DEFAULT_AUTHTYPE;
+	sc->wi_diversity = WI_DEFAULT_DIVERSITY;
 
 	/*
 	 * Read the default channel from the NIC. This may vary
@@ -1155,6 +1156,9 @@ wi_setdef(sc, wreq)
 	case WI_RID_ROAMING_MODE:
 		sc->wi_roaming = letoh16(wreq->wi_val[0]);
 		break;
+	case WI_RID_SYMBOL_DIVERSITY:
+		sc->wi_diversity = letoh16(wreq->wi_val[0]);
+		break;
 	case WI_RID_ENCRYPTION:
 		sc->wi_use_wep = letoh16(wreq->wi_val[0]);
 		break;
@@ -1320,9 +1324,15 @@ wi_ioctl(ifp, command, data)
 			error = wi_mgmt_xmit(sc, (caddr_t)&wreq.wi_val,
 			    wreq.wi_len);
 			break;
+		case WI_RID_SYMBOL_DIVERSITY:
 		case WI_RID_ROAMING_MODE:
+			/* Only Symbol cards support antenna diversity */
+			if (wreq.wi_type == WI_RID_SYMBOL_DIVERSITY &&
+			    sc->sc_firmware_type != WI_SYMBOL)
+				break;
 			/* Symbol cards use 0xFC2D for something else. */
-			if (sc->sc_firmware_type == WI_SYMBOL)
+			if (wreq.wi_type == WI_RID_ROAMING_MODE &&
+			    sc->sc_firmware_type == WI_SYMBOL)
 				break;
 			/* FALLTHROUGH */
 		default:
@@ -1447,6 +1457,10 @@ wi_init(sc)
 	/* Set Roaming Mode unless this is a Symbol card. */
 	if (sc->sc_firmware_type != WI_SYMBOL)
 		WI_SETVAL(WI_RID_ROAMING_MODE, sc->wi_roaming);
+
+	/* Set Antenna Diversity if this is a Symbol card. */
+	if (sc->sc_firmware_type == WI_SYMBOL)
+		WI_SETVAL(WI_RID_SYMBOL_DIVERSITY, sc->wi_diversity);
 
 	/* Specify the network name */
 	WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);

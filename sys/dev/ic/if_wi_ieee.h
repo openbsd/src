@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.5 2002/04/06 20:31:56 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.6 2002/04/06 23:48:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -207,6 +207,7 @@ struct wi_counters {
 #define	WI_RID_MCAST_PM_BUF	0xFC17 /* PM buffering of mcast */
 #define	WI_RID_ENCRYPTION	0xFC20 /* enable/disable WEP */
 #define	WI_RID_AUTHTYPE		0xFC21 /* specify authentication type */
+#define	WI_RID_SYMBOL_MANDATORYBSSID 0xFC21
 #define	WI_RID_P2_TX_CRYPT_KEY	0xFC23
 #define	WI_RID_P2_CRYPT_KEY0	0xFC24
 #define	WI_RID_P2_CRYPT_KEY1	0xFC25
@@ -224,9 +225,13 @@ struct wi_counters {
 #define HOST_DECRYPT		0x80
 #define	WI_RID_WEP_MAPTABLE	0xFC29
 #define	WI_RID_CNFAUTHMODE	0xFC2A
+#define	WI_RID_SYMBOL_KEYLENGTH	0xFC2B
+#define	WI_RID_SYMBOL_PREAMBLE	0xFC2C /* Enable/disable short preamble */
 #define	WI_RID_ROAMING_MODE	0xFC2D /* Roaming mode (1:firm,3:disable) */
 #define	WI_RID_BASIC_RATE	0xFCB3
 #define	WI_RID_SUPPORT_RATE	0xFCB4
+#define WI_RID_SYMBOL_DIVERSITY	0xFC87 /* Symbol antenna diversity */
+#define WI_RID_SYMBOL_BASIC_RATE 0xFC90
 
 /*
  * Network parameters, dynamic configuration entities

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.17 2002/04/06 20:31:56 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.18 2002/04/06 23:48:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -75,6 +75,8 @@
 #define	WI_DEFAULT_ROAMING	1
 
 #define	WI_DEFAULT_AUTHTYPE	1
+
+#define	WI_DEFAULT_DIVERSITY	0
 
 /*
  * register space access macros

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.7 2002/04/06 20:31:56 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.8 2002/04/06 23:48:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -65,6 +65,7 @@ struct wi_softc	{
 	u_int16_t		wi_authtype;
 	u_int16_t		wi_roaming;
 	u_int16_t		wi_supprates;
+	u_int16_t		wi_diversity;
 
 	struct ieee80211_nwid	wi_node_name;
 	struct ieee80211_nwid	wi_net_name;
