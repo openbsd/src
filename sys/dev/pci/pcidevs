@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.462 2001/11/09 00:49:41 millert Exp $
+	$OpenBSD: pcidevs,v 1.463 2001/11/16 21:41:12 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -682,11 +682,11 @@ product ALI M1451		0x1451	M1451 Host-PCI
 product ALI M1461		0x1461	M1461 Host-PCI
 product ALI M1489		0x1489	M1489 Host-PCI
 product ALI M1521		0x1521	M1523 Host-PCI
-product ALI M1531		0x1531	M1531 Host-PCI
-product ALI M1541		0x1541	M1543 Host-PCI
-product ALI M1621		0x1621	M1621 Host-PCI
 product ALI M1523		0x1523	M1523 PCI-ISA
+product ALI M1531		0x1531	M1531 Host-PCI
 product ALI M1543		0x1533	M1543 PCI-ISA
+product ALI M1541		0x1541	M1541 Host-PCI
+product ALI M1621		0x1621	M1621 Host-PCI
 product ALI M1647		0x1647	M1647 PCI
 product ALI M3309		0x3309	M3309 MPEG Accelerator
 product ALI M4803		0x5215	M4803
