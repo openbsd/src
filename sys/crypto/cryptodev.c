@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.22 2001/08/24 17:19:18 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.23 2001/08/28 12:20:43 ben Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -63,7 +63,7 @@ struct csession {
 
 	caddr_t		mackey;
 	int		mackeylen;
-	u_char		tmp_mac[16];		/* XXX MAX_MAC_SIZE */
+	u_char		tmp_mac[CRYPTO_MAX_MAC_LEN];
 
 	struct iovec	iovec[IOV_MAX];
 	struct uio	uio;
@@ -105,8 +105,9 @@ static struct fileops cryptofops = {
 struct	csession *csefind(struct fcrypt *, u_int);
 int	csedelete(struct fcrypt *, struct csession *);
 struct	csession *cseadd(struct fcrypt *, struct csession *);
-struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, u_int64_t, caddr_t, u_int32_t,
-	    u_int32_t, struct enc_xform *, struct auth_hash *);
+struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, u_int64_t,
+    caddr_t, u_int64_t, u_int32_t, u_int32_t, struct enc_xform *,
+    struct auth_hash *);
 void	csefree(struct csession *);
 
 int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
@@ -195,6 +196,12 @@ cryptof_ioctl(fp, cmd, data, p)
 		case CRYPTO_RIPEMD160_HMAC:
 			thash = &auth_hash_hmac_ripemd_160_96;
 			break;
+		case CRYPTO_MD5:
+			thash = &auth_hash_md5;
+			break;
+		case CRYPTO_SHA1:
+			thash = &auth_hash_sha1;
+			break;
 		default:
 			return (EINVAL);
 		}
@@ -247,7 +254,8 @@ bail:
 		}
 
 		cse = csecreate(fcr, sid, crie.cri_key, crie.cri_klen,
-		    cria.cri_key, sop->cipher, sop->mac, txform, thash);
+		    cria.cri_key, cria.cri_klen, sop->cipher, sop->mac, txform,
+		    thash);
 		sop->ses = cse->ses;
 		break;
 	case CIOCFSESSION:
@@ -369,7 +377,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		crde->crd_skip = 0;
 	} else if (cse->cipher == CRYPTO_ARC4) { /* XXX use flag? */
 		crde->crd_skip = 0;
-	} else {
+	} else if (crde) {
 		crde->crd_flags |= CRD_F_IV_PRESENT;
 		crde->crd_skip = cse->txform->blocksize;
 		crde->crd_len -= cse->txform->blocksize;
@@ -380,9 +388,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 			error = EINVAL;
 			goto bail;
 		}
-		if ((error = copyin(cop->mac, cse->tmp_mac, 16)))    /* XXX */
-			goto bail;
-		crp->crp_mac_trunc_len = 16;	/* XXX */
+		crp->crp_mac=cse->tmp_mac;
 	}
 
 	crypto_dispatch(crp);
@@ -401,7 +407,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		goto bail;
 
 	if (cop->mac &&
-	    (error = copyout(crp->crp_mac, cop->mac, crp->crp_mac_trunc_len)))
+	    (error = copyout(crp->crp_mac, cop->mac, cse->thash->hashsize)))
 		goto bail;
 
 bail:
@@ -597,9 +603,9 @@ cseadd(struct fcrypt *fcr, struct csession *cse)
 }
 
 struct csession *
-csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, u_int64_t keylen, caddr_t mackey,
-    u_int32_t cipher, u_int32_t mac, struct enc_xform *txform,
-    struct auth_hash *thash)
+csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, u_int64_t keylen,
+    caddr_t mackey, u_int64_t mackeylen, u_int32_t cipher, u_int32_t mac,
+    struct enc_xform *txform, struct auth_hash *thash)
 {
 	struct csession *cse;
 
@@ -608,6 +614,7 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, u_int64_t keylen, cadd
 	cse->key = key;
 	cse->keylen = keylen/8;
 	cse->mackey = mackey;
+	cse->mackeylen = mackeylen/8;
 	cse->sid = sid;
 	cse->cipher = cipher;
 	cse->mac = mac;

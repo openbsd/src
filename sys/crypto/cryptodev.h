@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.13 2001/08/22 17:34:35 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.14 2001/08/28 12:20:43 ben Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -289,7 +289,6 @@ struct cryptop {
 
 	struct cryptop	*crp_next;
 	caddr_t		crp_mac;
-	int		crp_mac_trunc_len;
 };
 
 #define CRYPTO_BUF_CONTIG	0x1
@@ -329,7 +328,7 @@ struct session_op {
 	int		mackeylen;	/* mac key */
 	caddr_t		mackey;
 
-	u_int32_t	ses;		/* returns: session # */
+  	u_int32_t	ses;		/* returns: session # */ 
 };
 
 struct crypt_op {
@@ -339,9 +338,11 @@ struct crypt_op {
 
 	u_int		len;
 	caddr_t		src, dst;	/* become iov[] inside kernel */
-	caddr_t		mac;
+	caddr_t		mac;		/* must be big enough for chosen MAC */
 	caddr_t		iv;
 };
+
+#define CRYPTO_MAX_MAC_LEN	20
 
 #define COP_ENCRYPT	1
 #define COP_DECRYPT	2
