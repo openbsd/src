@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.6 1997/04/07 10:12:07 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.7 1997/04/09 18:47:53 felix Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.6 1997/04/07 10:12:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.7 1997/04/09 18:47:53 felix Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,8 @@ static char rcsid[] = "$OpenBSD: rmail.c,v 1.6 1997/04/07 10:12:07 deraadt Exp $
 
 void err __P((int, const char *, ...));
 void usage __P((void));
+
+#define TAYLOR_ENV /* use UU_MACHINE if present */
 
 int
 main(argc, argv)
@@ -244,6 +246,15 @@ main(argc, argv)
 	args[i++] = "-oi";		/* Ignore '.' on a line by itself. */
 
 	/* set from system and protocol used */
+#ifdef TAYLOR_ENV
+	{
+		char *uu_machine;
+		uu_machine = getenv("UU_MACHINE");
+		/* set by Taylor UUCP's uuxqt */
+		if (uu_machine)
+			from_sys = uu_machine;
+	}
+#endif
 	if (from_sys == NULL)
 		(void)snprintf(buf, sizeof(buf), "-p%s", domain);
 	else if (strchr(from_sys, '.') == NULL)
