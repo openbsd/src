@@ -425,10 +425,10 @@ raw_mode(on)
 		 */
 		s = save_term;
 	}
+	tcsetattr(tty, TCSASOFT | TCSADRAIN, &s);
 #if HAVE_FSYNC
 	fsync(tty);
 #endif
-	tcsetattr(tty, TCSADRAIN, &s);
 #if MUST_SET_LINE_DISCIPLINE
 	if (!on)
 	{
