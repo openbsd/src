@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.111 2001/03/28 20:03:04 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.112 2001/03/28 20:34:03 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -750,7 +750,8 @@ tdb_alloc(void)
 	bzero((caddr_t) tdbp, sizeof(struct tdb));
 
 	/* Init Incoming SA-Binding Queues */
-	TAILQ_INIT(&tdbp->tdb_inp);
+	TAILQ_INIT(&tdbp->tdb_inp_out);
+	TAILQ_INIT(&tdbp->tdb_inp_in);
 
 	TAILQ_INIT(&tdbp->tdb_policy_head);
 
