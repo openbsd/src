@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.34 2001/08/22 16:34:47 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.35 2001/08/27 21:57:52 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -101,6 +101,25 @@ struct hifn_session {
 	int hs_prev_op; /* XXX collapse into hs_flags? */
 	u_int8_t hs_iv[HIFN_IV_LENGTH];
 };
+
+#define	HIFN_RING_SYNC(sc, r, i, f)					\
+	hifn_bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
+	    offsetof(struct hifn_dma, r[i]), sizeof(struct hifn_desc), (f))
+
+#define	HIFN_CMDR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), cmdr, (i), (f))
+#define	HIFN_RESR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), resr, (i), (f))
+#define	HIFN_SRCR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), srcr, (i), (f))
+#define	HIFN_DSTR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), dstr, (i), (f))
+
+#define	HIFN_CMD_SYNC(sc, i, f)						\
+	hifn_bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
+	    offsetof(struct hifn_dma, command_bufs[(i)][0]),		\
+	    HIFN_MAX_COMMAND, (f))
+
+#define	HIFN_RES_SYNC(sc, i, f)						\
+	hifn_bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
+	    offsetof(struct hifn_dma, result_bufs[(i)][0]),		\
+	    HIFN_MAX_RESULT, (f))
 
 /* We use a state machine to on sessions */
 #define	HS_STATE_FREE	0		/* unused session entry */
