@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.58 2002/04/18 14:15:11 jason Exp $
+#	$OpenBSD: GENERIC,v 1.59 2002/05/09 15:06:29 nate Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -60,11 +60,12 @@ usb*	at ohci? flags 0x1
 # USB devices
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ?
-ukbd*	at uhub?				# USB keyboard
-wskbd*	at ukbd? console ?
-ums*	at uhub? port ? configuration ?		# USB mouse
-wsmouse* at ums?
-uhid*	at uhub? port ? configuration ?		# USB generic human interface
+uhidev*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+uhid*	at uhidev? reportid ?
 ugen*	at uhub? port ? configuration ?		# USB generic device
 
 #### Standard system devices -- all required for a given architecture

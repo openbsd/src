@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2002/04/08 17:02:44 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.23 2002/05/09 15:06:29 nate Exp $g
 #
 # PPC GENERIC config file
 #
@@ -143,9 +143,10 @@ usb*		at ohci? flags 0x1
 uhub*		at usb?
 uhub*		at uhub? port ? configuration ? interface ?
 
-uhid*		at uhub? port ? configuration ?	# USB Generic HID devices
-ukbd*		at uhub? port ? configuration ?	# USB HID Keyboard devices
-ums*		at uhub? port ? configuration ?	# USB Mice
+uhidev*		at uhub? port ? configuration ? interface ?
+uhid*		at uhidev? reportid ?		# USB Generic HID devices
+ukbd*		at uhidev? reportid ?		# USB HID Keyboard devices
+ums*		at uhidev? reportid ?		# USB Mice
 wsmouse*	at ums? mux 0
 uaudio* 	at uhub? port ? configuration ? # USB Audio
 ulpt*		at uhub? port ? configuration ?	# USB Printer

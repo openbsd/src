@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.17 2002/05/07 18:29:18 nate Exp $ */
+/*	$OpenBSD: usb.h,v 1.18 2002/05/09 15:06:29 nate Exp $ */
 /*	$NetBSD: usb.h,v 1.52 2001/07/23 15:17:50 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -588,6 +588,7 @@ struct usb_event {
 #define USB_SET_IMMED		_IOW ('U', 22, int)
 #define USB_GET_REPORT		_IOWR('U', 23, struct usb_ctl_report)
 #define USB_SET_REPORT		_IOW ('U', 24, struct usb_ctl_report)
+#define USB_GET_REPORT_ID	_IOR ('U', 25, int)
 
 /* Generic USB device */
 #define USB_GET_CONFIG		_IOR ('U', 100, int)

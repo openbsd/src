@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.37 2002/05/07 18:29:18 nate Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.38 2002/05/09 15:06:29 nate Exp $ */
 /*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -190,6 +190,7 @@ __CONCAT(dname,_detach)(self, flags) \
  */
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
+#define UHIDEV_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
@@ -235,6 +236,8 @@ __CONCAT(dname,_detach)(self, flags) \
 #define show_scsipi_cmd         show_scsi_cmd
 #define xs_control		flags
 #define xs_status		status
+#define UHIDBUSCF_REPORTID		-1
+#define UHIDBUSCF_REPORTID_DEFAULT	-1
 
 #define bswap32(x)		swap32(x)
 #define bswap16(x)		swap16(x)

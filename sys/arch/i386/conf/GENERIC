@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.297 2002/05/07 19:42:34 nate Exp $
+#	$OpenBSD: GENERIC,v 1.298 2002/05/09 15:06:29 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -91,7 +91,6 @@ usb*	at ohci?
 
 uhub*	at usb?				# USB Hubs
 uhub*	at uhub? port ? configuration ?	# USB Hubs
-uhid*	at uhub? port ? configuration ?	# USB Generic HID devices
 umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
 ucom*	at umodem?
 uvisor*	at uhub? port ? configuration ?	# Handspring Visor
@@ -103,12 +102,14 @@ ucom*   at uplcom? portno ?
 
 uaudio* at uhub? port ? configuration ?	# USB Audio
 ulpt*	at uhub? port ? configuration ? # USB Printers
-ukbd*	at uhub? port ? configuration ?	# USB Keyboards
-wskbd*	at ukbd? console ? mux 1
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
-ums*	at uhub? port ? configuration ?	# USB Mice
+uhidev*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+uhid*	at uhidev? reportid ?
 aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
 kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
