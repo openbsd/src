@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.30 2004/08/27 13:05:55 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.31 2004/08/27 14:00:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -496,6 +496,8 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 		ep = fbuf + (size_t)ret;
 		while (dp < ep) {
 			ent = (struct dirent *)dp;
+			if (ent->d_fileno == 0)
+				continue;
 			dp += ent->d_reclen;
 
 			if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
