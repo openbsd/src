@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.31 2001/08/06 14:40:47 jakob Exp $
+#	$OpenBSD: Makefile.inc,v 1.32 2004/02/10 18:11:58 jmc Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -37,9 +37,11 @@ MAN+=	byteorder.3 ethers.3 getaddrinfo.3 gethostbyname.3 getifaddrs.3 \
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3 byteorder.3 htobe16.3 byteorder.3 htobe32.3 \
-	byteorder.3 betoh16.3 byteorder.3 betoh32.3 byteorder.3 htole16.3 \
-	byteorder.3 htole32.3 byteorder.3 letoh16.3 byteorder.3 letoh32.3 \
-	byteorder.3 swap16.3 byteorder.3 swap32.3
+	byteorder.3 htobe64.3 byteorder.3 betoh16.3 byteorder.3 betoh32.3 \
+	byteorder.3 betoh64.3 byteorder.3 htole16.3 byteorder.3 htole32.3 \
+	byteorder.3 htole64.3 byteorder.3 letoh16.3 byteorder.3 letoh32.3 \
+	byteorder.3 letoh64.3 byteorder.3 swap16.3 byteorder.3 swap32.3 \
+	byteorder.3 swap64.3
 MLINKS+=ethers.3 ether_aton.3 ethers.3 ether_hostton.3 ethers.3 ether_line.3 \
 	ethers.3 ether_ntoa.3 ethers.3 ether_ntohost.3 ethers.3 ether_addr.3
 MLINKS+= getaddrinfo.3 freeaddrinfo.3 getaddrinfo.3 gai_strerror.3
