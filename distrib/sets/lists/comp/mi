@@ -142,7 +142,6 @@
 ./usr/include/dev/isa/isadmareg.h
 ./usr/include/dev/isa/isadmavar.h
 ./usr/include/dev/isa/isapnpreg.h
-./usr/include/dev/isa/isapnpvar.h
 ./usr/include/dev/isa/isareg.h
 ./usr/include/dev/isa/isavar.h
 ./usr/include/dev/isa/mcdreg.h
