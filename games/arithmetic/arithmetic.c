@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.5 1995/03/21 11:59:32 cgd Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.6 1996/03/21 18:30:19 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: arithmetic.c,v 1.5 1995/03/21 11:59:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: arithmetic.c,v 1.6 1996/03/21 18:30:19 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ time_t qtime;
  * bound is 10.  After every NQUESTS questions, statistics on the performance
  * so far are printed.
  */
-void
+int
 main(argc, argv)
 	int argc;
 	char **argv;

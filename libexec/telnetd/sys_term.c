@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys_term.c,v 1.3 1996/03/28 23:22:00 niklas Exp $	*/
-/*	$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.4 1996/04/23 03:03:47 deraadt Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.3 1996/03/28 23:22:00 niklas Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.4 1996/04/23 03:03:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1556,6 +1556,13 @@ start_login(host, autologin, name)
 	register char **argv;
 	char **addarg();
 	extern char *getenv();
+	extern char *getstr();
+	extern char *gettyname;
+#define	TABBUFSIZ	512
+	char	defent[TABBUFSIZ];
+	char	defstrs[TABBUFSIZ];
+#undef	TABBUFSIZ
+	char *loginprog;
 #ifdef	UTMPX
 	register int pid = getpid();
 	struct utmpx utmpx;
@@ -1777,6 +1784,13 @@ start_login(host, autologin, name)
 	if (pty > 2)
 		close(pty);
 #endif
+        if (getent(defent, gettyname) == 1) {
+                char *cp = defstrs;
+
+                loginprog = getstr("lo", &cp);
+        }
+        if (loginprog == NULL)
+                loginprog = _PATH_LOGIN;
 	closelog();
 	/*
 	 * This sleep(1) is in here so that telnetd can
@@ -1784,10 +1798,10 @@ start_login(host, autologin, name)
 	 * the login banner message gets lost...
 	 */
 	sleep(1);
-	execv(_PATH_LOGIN, argv);
+        execv(loginprog, argv);
 
-	syslog(LOG_ERR, "%s: %m\n", _PATH_LOGIN);
-	fatalperror(net, _PATH_LOGIN);
+        syslog(LOG_ERR, "%s: %m\n", loginprog);
+        fatalperror(net, loginprog);
 	/*NOTREACHED*/
 }
 

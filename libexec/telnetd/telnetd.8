@@ -1,5 +1,5 @@
-.\"	$OpenBSD: telnetd.8,v 1.3 1996/03/28 23:22:02 niklas Exp $
-.\"	$NetBSD: telnetd.8,v 1.7 1996/02/28 20:30:33 thorpej Exp $
+.\"	$OpenBSD: telnetd.8,v 1.4 1996/04/23 03:03:50 deraadt Exp $
+.\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,6 +51,7 @@ protocol server
 .Op Fl X Ar authtype
 .Op Fl a Ar authmode
 .Op Fl edebug
+.Op Fl g Ar gettyent
 .Op Fl r Ns Ar lowpty-highpty
 .Op Fl u Ar len
 .Op Fl debug Op Ar port
@@ -179,6 +180,12 @@ If
 has been compiled with support for data encryption, then the
 .Fl edebug
 option may be used to enable encryption debugging code.
+.It Fl g Ar gettyent
+Specifies which entry from
+.Pa /etc/gettytab
+should be used to get banner strings, login program and
+other information.  The default entry is
+.Dv default.
 .It Fl h
 Disables the printing of host-specific information before
 login has been completed.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: telnetd.c,v 1.2 1996/03/28 23:22:03 niklas Exp $	*/
-/*	$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.3 1996/04/23 03:03:55 deraadt Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.2 1996/03/28 23:22:03 niklas Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.3 1996/04/23 03:03:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,7 @@ int	lowpty = 0, highpty;	/* low, high pty numbers */
 
 int debug = 0;
 int keepalive = 1;
+char *gettyname = "default";
 char *progname;
 
 extern void usage P((void));
@@ -144,7 +145,7 @@ extern void usage P((void));
  * passed off to getopt().
  */
 char valid_opts[] = {
-	'd', ':', 'h', 'k', 'n', 'S', ':', 'u', ':', 'U',
+	'd', ':', 'g', ':', 'h', 'k', 'n', 'S', ':', 'u', ':', 'U',
 #ifdef	AUTHENTICATION
 	'a', ':', 'X', ':',
 #endif
@@ -263,6 +264,9 @@ main(argc, argv)
 			break;
 #endif /* DIAGNOSTICS */
 
+		case 'g':
+			gettyname = optarg;
+			break;
 
 		case 'h':
 			hostinfo = 0;
@@ -1106,7 +1110,7 @@ telnet(f, p, host)
 		hostinfo = 0;
 #endif
 
-	if (getent(defent, "default") == 1) {
+	if (getent(defent, gettyname) == 1) {
 		char *getstr();
 		char *cp=defstrs;
 
