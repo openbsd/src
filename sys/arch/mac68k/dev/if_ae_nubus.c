@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae_nubus.c,v 1.10 2004/11/26 21:21:24 miod Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.11 2004/12/01 21:19:11 miod Exp $	*/
 /*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
@@ -426,13 +426,15 @@ ae_nb_watchdog(ifp)
 	struct ifnet *ifp;
 {
 	struct ae_softc *sc = ifp->if_softc;
+	extern struct intrhand via2intrs[7];
 
 /*
  * This is a kludge!  The via code seems to miss slot interrupts
  * sometimes.  This kludges around that by calling the handler
  * by hand if the watchdog is activated. -- XXX (akb)
  */
-	(*via2itab[1])((void *) 1);
+	if (via2intrs[1].ih_fn != NULL)
+		(void)(*via2intrs[1].ih_fn)(via2intrs[1].ih_arg);
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;

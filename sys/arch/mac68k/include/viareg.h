@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.11 2004/11/26 21:21:27 miod Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.12 2004/12/01 21:19:12 miod Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -198,9 +198,6 @@ void	add_nubus_intr(int, int (*)(void *), void *, const char *);
 void	enable_nubus_intr(void);
 void	via1_register_irq(int, int (*)(void *), void *, const char *);
 void	via2_register_irq(int, int (*)(void *), void *, const char *);
-
-extern void	(*via1itab[7])(void *);
-extern void	(*via2itab[7])(void *);
 #endif	/* _KERNEL */
 
 #endif	/* _MAC68K_VIAREG_H_ */
