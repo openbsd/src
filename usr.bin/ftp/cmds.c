@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.37 2001/07/12 05:17:07 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.38 2001/10/01 14:58:49 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.37 2001/07/12 05:17:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.38 2001/10/01 14:58:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -2060,7 +2060,7 @@ restart(argc, argv)
 	if (argc != 2)
 		fputs("restart: offset not specified.\n", ttyout);
 	else {
-		restart_point = strtoq(argv[1], &ep, 10);
+		nrestart_point = strtoq(argv[1], &ep, 10);
 		if (nrestart_point == QUAD_MAX || *ep != '\0')
 			fputs("restart: invalid offset.\n", ttyout);
 		else {
