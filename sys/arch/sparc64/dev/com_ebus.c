@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.2 2002/01/17 05:17:10 jason Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.3 2002/01/23 20:16:05 jason Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -57,7 +57,6 @@ cdev_decl(com); /* XXX this belongs elsewhere */
 
 int	com_ebus_match __P((struct device *, void *, void *));
 void	com_ebus_attach __P((struct device *, struct device *, void *));
-int	com_ebus_isconsole __P((int node));
 
 struct cfattach com_ebus_ca = {
 	sizeof(struct com_softc), com_ebus_match, com_ebus_attach
@@ -98,20 +97,6 @@ com_ebus_match(parent, match, aux)
 	return (0);
 }
 
-int
-com_ebus_isconsole(node)
-	int node;
-{
-	if (node == OF_instance_to_package(OF_stdin())) {
-		return (1);
-	}
-
-	if (node == OF_instance_to_package(OF_stdout())) { 
-		return (1);
-	}
-	return (0);
-}
-
 /* XXXART - was 1846200 */
 #define BAUD_BASE       (1843200)
 
@@ -122,7 +107,7 @@ com_ebus_attach(parent, self, aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
-	int i;
+	int i, com_is_input, com_is_output;
 
 	sc->sc_iot = ea->ea_bustag;
 	sc->sc_iobase = EBUS_PADDR_FROM_REG(&ea->ea_regs[0]);
@@ -155,14 +140,31 @@ com_ebus_attach(parent, self, aux)
 		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i],
 		    IPL_TTY, 0, comintr, sc);
 
-	if (com_ebus_isconsole(ea->ea_node)) {
+	/* Figure out if we're the console. */
+	com_is_input = (ea->ea_node == OF_instance_to_package(OF_stdin()));
+	com_is_output = (ea->ea_node == OF_instance_to_package(OF_stdout()));
+
+	if (com_is_input || com_is_output) {
+		struct consdev *cn_orig;
+
 		comconsioh = sc->sc_ioh;
+		cn_orig = cn_tab;
 		/* Attach com as the console. */
 		if (comcnattach(sc->sc_iot, sc->sc_iobase, 9600,
 		    sc->sc_frequency,
 		    ((TTYDEF_CFLAG & ~(CSIZE | PARENB))|CREAD | CS8 | HUPCL))) {
 			printf("Error: comcnattach failed\n");
 		}
+		cn_tab = cn_orig;
+		if (com_is_input) {
+			cn_tab->cn_dev = /*XXX*/makedev(36, sc->sc_dev.dv_unit);
+			cn_tab->cn_probe = comcnprobe;
+			cn_tab->cn_init = comcninit;
+			cn_tab->cn_getc = comcngetc;
+			cn_tab->cn_pollc = comcnpollc;
+		}
+		if (com_is_output)
+			cn_tab->cn_putc = comcnputc;
 	}
 	/* Now attach the driver */
 	com_attach_subr(sc);
