@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2001/05/05 22:33:34 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2001/05/10 01:34:54 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem  = %d\n", ctob(physmem));
+	printf("real mem  = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -428,12 +428,14 @@ cpu_startup()
 	pmapdebug = opmapdebug;
 #endif
 #if defined(UVM)
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
+	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024);
 #else
-	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %lu  (%uK)\n", ptoa(cnt.v_free_count),
+	    ptoa(cnt.v_free_count)/1024));
 #endif
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * PAGE_SIZE);
+	printf("using %d buffers containing %u bytes (%uK) of memory\n",
+		nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
 	/*
 	 * Tell the VM system that page 0 isn't mapped.
@@ -614,32 +616,39 @@ extern	char version[];
 struct hp300_model {
 	int id;
 	const char *name;
-	const char *designation;
 	const char *speed;
 };
 
+/*
+ * Note that we examine the cpuspeed variable instead of using the speed
+ * in this table for 68040-based models since the CPU and/or oscillator
+ * may have been replaced.  The table below lists the default values.
+ */
 struct hp300_model hp300_models[] = {
-	{ HP_320,	"320",		"        ", "16.67"	},
-	{ HP_330,	"318/319/330",	"        ", "16.67"	},
-	{ HP_340,	"340",		"        ", "16.67"	},
-	{ HP_345,	"345",		"        ", "50"	},
-	{ HP_350,	"350",		"        ", "25"	},
-	{ HP_360,	"360",		"        ", "25"	},
-	{ HP_370,	"370",		"        ", "33.33"	},
-	{ HP_375,	"375",		"	 ", "50"	},
-	{ HP_380,	"380",		"        ", "25"	},
-	{ HP_385,	"385",		"        ", "33"	},
-	{ HP_400,	"400",		"        ", "50"	},
-	{ HP_425,	"425",		"     t s", "25"	},
-	{ HP_433,	"433",		"    t s ", "33"	},
-	{ 0,		NULL,		NULL,	    NULL	},
+	{ HP_320,	"320",		"16.67"	},
+	{ HP_330,	"318/319/330",	"16.67"	},
+	{ HP_340,	"340",		"16.67"	},
+	{ HP_345,	"345",		"50"	},
+	{ HP_350,	"350",		"25"	},
+	{ HP_360,	"360",		"25"	},
+	{ HP_370,	"370",		"33.33"	},
+	{ HP_375,	"375",		"50"	},
+	{ HP_380,	"380",		"25"	},
+	{ HP_385,	"385",		"33"	},
+	{ HP_400,	"400",		"50"	},
+	{ HP_425,	"425",		"25"	},
+	{ HP_433,	"433",		"33"	},
+	{ 0,		NULL,		NULL	},
 };
+
+/* Map mmuid to single letter designation in 4xx models (e.g. 425s, 425t) */
+char hp300_designations[] = "    ttss e";
 
 void
 identifycpu()
 {
 	const char *t, *mc, *s;
-	char td;
+	char *td;
 	int i, len;
 
 	/*
@@ -649,27 +658,7 @@ identifycpu()
 		if (hp300_models[i].id == machineid) {
 			t = hp300_models[i].name;
 			s = hp300_models[i].speed;
-
-			if (mmuid < strlen(hp300_models[i].designation)) {
-				td = (hp300_models[i].designation)[mmuid];
-			} else {
-				td = (hp300_models[i].designation)[0];
-			}
-
-			/*
-			 * Adjust speed if the machine appears to be
-			 * running at a different clock rate.  Dividing
-			 * cpuspeed by 2.67 and truncating it works on my
-			 * systems, but I don't want to use floating point.
-			 */
-			if (cputype == CPU_68040) {
-				if (cpuspeed > 100)
-					s = "40";
-				else if (cpuspeed > 80)
-					s = "33";
-				else
-					s = "25";
-			}
+			break;
 		}
 	}
 	if (t == NULL) {
@@ -678,7 +667,17 @@ identifycpu()
 	}
 
 	/*
-	 * ...and the CPU type.
+	 * Look up special designation (425s, 425t, etc) by mmuid.
+	 */
+	if (mmuid < strlen(hp300_designations) &&
+	    hp300_designations[mmuid] != ' ') {
+		td = &hp300_designations[mmuid];
+		td[1] = '\0';
+	} else
+		td = "";
+
+	/*
+	 * ...and the CPU type (XXX - not used for 68040).
 	 */
 	switch (cputype) {
 	case CPU_68040:
@@ -695,9 +694,14 @@ identifycpu()
 		goto lose;
 	}
 
-	if (td != ' ')
-		sprintf(cpu_model, "HP 9000/%s%c (%sMHz MC680%s CPU", t, td,
-		    s, mc);
+	/*
+	 * On the 68040 we need to multiply cpuspeed by 3/8.
+	 * We do this rather than use hard-coded strings since
+	 * the CPU and/or oscillator may have been upgraded.
+	 */
+	if (cputype == CPU_68040)
+		sprintf(cpu_model, "HP 9000/%s%s (%dMHz MC68040 CPU", t, td,
+		    cpuspeed * 3 / 8);
 	else
 		sprintf(cpu_model, "HP 9000/%s (%sMHz MC680%s CPU", t, s, mc);
 
@@ -760,9 +764,8 @@ identifycpu()
 		}
 	}
 
-	strcat(cpu_model, ")");
-	printf("%s\n", cpu_model);
-#if 0
+	printf("%s)\n", cpu_model);
+#ifdef DEBUG
 	printf("cpu: delay divisor %d", delay_divisor);
 	if (mmuid)
 		printf(", mmuid %d", mmuid);
