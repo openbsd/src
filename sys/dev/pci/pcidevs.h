@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.429 2001/08/20 21:58:59 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.430 2001/08/20 22:28:25 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -871,9 +871,9 @@
 #define	PCI_PRODUCT_ATRONICS_IDE_2015PL	0x2015		/* IDE-2015PL */
 
 /* Aureal products */
-#define	PCI_PRODUCT_AUREAL_AU8820	0x0001		/* AU8820 Vortex1 */
-#define	PCI_PRODUCT_AUREAL_AU8830	0x0002		/* AU8830 Vortex2 */
-#define	PCI_PRODUCT_AUREAL_AU8810	0x0003		/* AU8810 Advantage */
+#define	PCI_PRODUCT_AUREAL_AU8820	0x0001		/* Vortex 1 */
+#define	PCI_PRODUCT_AUREAL_AU8830	0x0002		/* Vortex 2 */
+#define	PCI_PRODUCT_AUREAL_AU8810	0x0003		/* Vortex Advantage */
 
 /* Avance Logic products */
 #define	PCI_PRODUCT_AVANCE_AVL2301	0x2301		/* AVL2301 */
