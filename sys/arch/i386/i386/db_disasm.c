@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.11 2004/06/15 17:31:35 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.12 2004/06/23 00:08:50 andreas Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -561,7 +561,7 @@ struct inst db_inst_table[256] = {
 /*24*/	{ "and",   FALSE, BYTE,  op2(I, A),  0 },
 /*25*/	{ "and",   FALSE, LONG,  op2(I, A),  0 },
 /*26*/	{ "",      FALSE, NONE,  0,	     0 },
-/*27*/	{ "aaa",   FALSE, NONE,  0,	     0 },
+/*27*/	{ "daa",   FALSE, NONE,  0,	     0 },
 
 /*28*/	{ "sub",   TRUE,  BYTE,  op2(R, E),  0 },
 /*29*/	{ "sub",   TRUE,  LONG,  op2(R, E),  0 },
@@ -579,7 +579,7 @@ struct inst db_inst_table[256] = {
 /*34*/	{ "xor",   FALSE, BYTE,  op2(I, A),  0 },
 /*35*/	{ "xor",   FALSE, LONG,  op2(I, A),  0 },
 /*36*/	{ "",      FALSE, NONE,  0,	     0 },
-/*37*/	{ "daa",   FALSE, NONE,  0,	     0 },
+/*37*/	{ "aaa",   FALSE, NONE,  0,	     0 },
 
 /*38*/	{ "cmp",   TRUE,  BYTE,  op2(R, E),  0 },
 /*39*/	{ "cmp",   TRUE,  LONG,  op2(R, E),  0 },
