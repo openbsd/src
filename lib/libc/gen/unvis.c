@@ -62,10 +62,14 @@ static char rcsid[] = "$NetBSD: unvis.c,v 1.5 1995/02/25 17:18:31 cgd Exp $";
  * unvis - decode characters previously encoded by vis
  */
 int
+#if __STDC__
+unvis(char *cp, char c, int *astate, int flag)
+#else
 unvis(cp, c, astate, flag)
 	char *cp;
 	char c;
 	int *astate, flag;
+#endif
 {
 
 	if (flag & UNVIS_END) {

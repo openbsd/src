@@ -49,9 +49,10 @@ static char rcsid[] = "$NetBSD: initgroups.c,v 1.11 1995/06/03 02:27:19 mycroft 
 int
 initgroups(uname, agroup)
 	const char *uname;
-	int agroup;
+	gid_t agroup;
 {
-	int groups[NGROUPS], ngroups;
+	gid_t groups[NGROUPS];
+	int ngroups;
 
 	ngroups = NGROUPS;
 	if (getgrouplist(uname, agroup, groups, &ngroups) < 0)

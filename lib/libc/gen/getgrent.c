@@ -56,7 +56,8 @@ static char rcsid[] = "$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $
 static FILE *_gr_fp;
 static struct group _gr_group;
 static int _gr_stayopen;
-static int grscan(), start_gr();
+static int grscan __P((int, gid_t, const char *));
+static int start_gr __P((void));
 
 #define	MAXGRP		200
 static char *members[MAXGRP];
@@ -159,8 +160,9 @@ endgrent()
 
 static int
 grscan(search, gid, name)
-	register int search, gid;
-	register char *name;
+	register int search;
+	register gid_t gid;
+	register const char *name;
 {
 	register char *cp, **m;
 	char *bp;

@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: setmode.c,v 1.12 1995/03/23 19:51:13 jtc Exp $";
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #ifdef SETMODE_DEBUG
 #include <stdio.h>
@@ -72,7 +73,7 @@ typedef struct bitcmd {
 #define	CMD2_UBITS	0x10
 
 static BITCMD	*addcmd __P((BITCMD *, int, int, int, u_int));
-static int	 compress_mode __P((BITCMD *));
+static void	 compress_mode __P((BITCMD *));
 #ifdef SETMODE_DEBUG
 static void	 dumpmode __P((BITCMD *));
 #endif
@@ -84,9 +85,13 @@ static void	 dumpmode __P((BITCMD *));
  * bits) followed by a '+' (set bits).
  */
 mode_t
+#if __STDC__
+getmode(const void *bbox, mode_t omode)
+#else
 getmode(bbox, omode)
-	void *bbox;
+	const void *bbox;
 	mode_t omode;
+#endif
 {
 	register BITCMD *set;
 	register mode_t clrval, newmode, value;
@@ -170,7 +175,7 @@ common:			if (set->cmd2 & CMD2_CLR) {
 
 void *
 setmode(p)
-	register char *p;
+	register const char *p;
 {
 	register int perm, who;
 	register char op;
@@ -368,7 +373,7 @@ addcmd(set, op, who, oparg, mask)
 			set->cmd2 = ((who & S_IRUSR) ? CMD2_UBITS : 0) |
 				    ((who & S_IRGRP) ? CMD2_GBITS : 0) |
 				    ((who & S_IROTH) ? CMD2_OBITS : 0);
-			set->bits = ~0;
+			set->bits = (mode_t)~0;
 		} else {
 			set->cmd2 = CMD2_UBITS | CMD2_GBITS | CMD2_OBITS;
 			set->bits = mask;
@@ -407,7 +412,7 @@ dumpmode(set)
  * 'g' and 'o' commands continue to be separate.  They could probably be 
  * compacted, but it's not worth the effort.
  */
-static int
+static void
 compress_mode(set)
 	register BITCMD *set;
 {

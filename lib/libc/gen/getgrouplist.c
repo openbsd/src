@@ -51,8 +51,8 @@ static char rcsid[] = "$NetBSD: getgrouplist.c,v 1.5 1995/06/01 22:51:17 jtc Exp
 int
 getgrouplist(uname, agroup, groups, grpcnt)
 	const char *uname;
-	int agroup;
-	register int *groups;
+	gid_t agroup;
+	register gid_t *groups;
 	int *grpcnt;
 {
 	register struct group *grp;
