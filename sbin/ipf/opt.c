@@ -1,3 +1,4 @@
+/*	$OpenBSD: opt.c,v 1.7 1997/06/23 17:11:28 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -23,7 +24,7 @@
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: opt.c,v 1.6 1996/10/08 07:33:31 niklas Exp $";
+static	char	rcsid[] = "$DRId: opt.c,v 2.0.1.1 1997/01/09 15:14:44 darrenr Exp $";
 #endif
 
 extern	int	opts;
