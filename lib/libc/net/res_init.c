@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.18 1999/09/03 21:14:51 deraadt Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.19 2000/06/22 07:31:18 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -55,12 +55,16 @@
  * --Copyright--
  */
 
+#ifndef INET6
+#define INET6
+#endif
+
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.18 1999/09/03 21:14:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.19 2000/06/22 07:31:18 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +82,9 @@ static char rcsid[] = "$OpenBSD: res_init.c,v 1.18 1999/09/03 21:14:51 deraadt E
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef INET6
+#include <netdb.h>
+#endif /* INET6 */
 
 /*-------------------------------------- info about "sortlist" --------------
  * Marc Majka		1994/04/16
@@ -119,6 +126,9 @@ struct __res_state _res
 	= { RES_TIMEOUT, }	/* Motorola, et al. */
 # endif
 	;
+#ifdef INET6
+struct __res_state_ext _res_ext;
+#endif /* INET6 */
 
 /*
  * Set up default settings.  If the configuration file exist, the values
@@ -193,6 +203,11 @@ res_init()
 #endif
 	_res.nsaddr.sin_family = AF_INET;
 	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
+	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
+#ifdef INET6
+	if (sizeof(_res_ext.nsaddr) >= _res.nsaddr.sin_len)
+		memcpy(&_res_ext.nsaddr, &_res.nsaddr, _res.nsaddr.sin_len);
+#endif
 	_res.nscount = 1;
 	_res.ndots = 1;
 	_res.pfcode = 0;
@@ -336,23 +351,69 @@ res_init()
 		}
 		/* read nameservers to query */
 		if (MATCH(buf, "nameserver") && nserv < MAXNS) {
+#ifdef INET6
+		    char *q;
+		    struct addrinfo hints, *res;
+		    char pbuf[NI_MAXSERV];
+#else
 		    struct in_addr a;
+#endif /* INET6 */
 
 		    cp = buf + sizeof("nameserver") - 1;
 		    while (*cp == ' ' || *cp == '\t')
 			cp++;
+#ifdef INET6
+		    if ((*cp == '\0') || (*cp == '\n'))
+			continue;
+		    for (q = cp; *q; q++) {
+			if (isspace(*q)) {
+			    *q = '\0';
+			    break;
+			}
+		    }
+		    memset(&hints, 0, sizeof(hints));
+		    hints.ai_flags = AI_NUMERICHOST;
+		    hints.ai_socktype = SOCK_DGRAM;
+		    snprintf(pbuf, sizeof(pbuf), "%d", NAMESERVER_PORT);
+		    if (getaddrinfo(cp, pbuf, &hints, &res) == 0 &&
+			    res->ai_next == NULL) {
+			if (res->ai_addrlen <= sizeof(_res_ext.nsaddr_list[nserv])) {
+			    memcpy(&_res_ext.nsaddr_list[nserv], res->ai_addr,
+				res->ai_addrlen);
+			} else {
+			    memset(&_res_ext.nsaddr_list[nserv], 0,
+				sizeof(_res_ext.nsaddr_list[nserv]));
+			}
+			if (res->ai_addrlen <= sizeof(_res.nsaddr_list[nserv])) {
+			    memcpy(&_res.nsaddr_list[nserv], res->ai_addr,
+				res->ai_addrlen);
+			} else {
+			    memset(&_res.nsaddr_list[nserv], 0,
+				sizeof(_res.nsaddr_list[nserv]));
+			}
+			nserv++;
+		    }
+#else /* INET6 */
 		    if ((*cp != '\0') && (*cp != '\n') && inet_aton(cp, &a)) {
 			_res.nsaddr_list[nserv].sin_addr = a;
 			_res.nsaddr_list[nserv].sin_family = AF_INET;
 			_res.nsaddr_list[nserv].sin_port =
 				htons(NAMESERVER_PORT);
+			_res.nsaddr_list[nserv].sin_len =
+				sizeof(struct sockaddr_in);
 			nserv++;
 		    }
+#endif /* INET6 */
 		    continue;
 		}
 #ifdef RESOLVSORT
 		if (MATCH(buf, "sortlist")) {
 		    struct in_addr a;
+#ifdef INET6
+		    struct in6_addr a6;
+		    int m, i;
+		    u_char *u;
+#endif /* INET6 */
 
 		    cp = buf + sizeof("sortlist") - 1;
 		    while (nsort < MAXRESOLVSORT) {
@@ -386,8 +447,58 @@ res_init()
 				_res.sort_list[nsort].mask = 
 				    net_mask(_res.sort_list[nsort].addr);
 			    }
+#ifdef INET6
+			    _res_ext.sort_list[nsort].af = AF_INET;
+			    _res_ext.sort_list[nsort].addr.ina =
+				_res.sort_list[nsort].addr;
+			    _res_ext.sort_list[nsort].mask.ina.s_addr =
+				_res.sort_list[nsort].mask;
+#endif /* INET6 */
 			    nsort++;
 			}
+#ifdef INET6
+			else if (inet_pton(AF_INET6, net, &a6) == 1) {
+			    _res_ext.sort_list[nsort].af = AF_INET6;
+			    _res_ext.sort_list[nsort].addr.in6a = a6;
+			    u = (u_char *)&_res_ext.sort_list[nsort].mask.in6a;
+			    *cp++ = n;
+			    net = cp;
+			    while (*cp && *cp != ';' &&
+				    isascii(*cp) && !isspace(*cp))
+				cp++;
+			    m = n;
+			    n = *cp;
+			    *cp = 0;
+			    switch (m) {
+			    case '/':
+				m = atoi(net);
+				break;
+			    case '&':
+				if (inet_pton(AF_INET6, net, u) == 1) {
+				    m = -1;
+				    break;
+				}
+				/*FALLTHRU*/
+			    default:
+				m = sizeof(struct in6_addr) * NBBY;
+				break;
+			    }
+			    if (m >= 0) {
+				for (i = 0; i < sizeof(struct in6_addr); i++) {
+				    if (m <= 0) {
+					*u = 0;
+				    } else {
+					m -= NBBY;
+					*u = (u_char)~0;
+					if (m < 0)
+					    *u <<= -m;
+				    }
+				    u++;
+				}
+			    }
+			    nsort++;
+			}
+#endif /* INET6 */
 			*cp = n;
 		    }
 		    continue;
