@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.1 2003/01/04 00:01:34 deraadt Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.2 2003/01/04 22:42:14 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,6 +58,9 @@ int	 pfctl_command_tables(int, char *[], char *, char *, char *, int);
 
 #ifndef DEFAULT_PRIORITY
 #define DEFAULT_PRIORITY	1
+#endif
+
+#ifndef DEFAULT_QLIMIT
 #define DEFAULT_QLIMIT		50
 #endif
 
@@ -94,10 +97,10 @@ char		*qid_to_qname(u_int32_t, const char *);
 void	 print_altq(const struct pf_altq *, unsigned);
 void	 print_queue(const struct pf_altq *, unsigned);
 
-void	print_addr(struct pf_addr_wrap *, sa_family_t);
-void	print_host(struct pf_state_host *, sa_family_t, int);
-void	print_seq(struct pf_state_peer *);
-void	print_state(struct pf_state *s, int);
-int	unmask(struct pf_addr *, sa_family_t);
+void	 print_addr(struct pf_addr_wrap *, sa_family_t);
+void	 print_host(struct pf_state_host *, sa_family_t, int);
+void	 print_seq(struct pf_state_peer *);
+void	 print_state(struct pf_state *s, int);
+int	 unmask(struct pf_addr *, sa_family_t);
 
 #endif /* _PFCTL_H_ */
