@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.9 1997/06/18 13:26:45 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.10 1997/06/18 15:49:25 kstailey Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.9 1997/06/18 13:26:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.10 1997/06/18 15:49:25 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,8 @@ main(argc, argv)
 	char *conf;
 	int mntflags = 0;
 	char tag[32];
+	fd_set *fdsp;
+	int fdssize;
 
 	qelem q;
 	int rc;
@@ -210,6 +212,9 @@ main(argc, argv)
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGTERM, sigterm);
 
+	fdssize = howmany(so+1, NFDBITS) * sizeof(fd_mask);
+	fdsp = (fd_set *)malloc(fdssize);
+
 	/*
 	 * Just loop waiting for new connections and activating them
 	 */
@@ -218,7 +223,6 @@ main(argc, argv)
 		int len2 = sizeof(un2);
 		int so2;
 		pid_t pid;
-		fd_set fdset;
 		int rc;
 
 		/*
@@ -235,9 +239,9 @@ main(argc, argv)
 		 * Will get EINTR if a signal has arrived, so just
 		 * ignore that error code
 		 */
-		FD_ZERO(&fdset);
-		FD_SET(so, &fdset);
-		rc = select(so+1, &fdset, (fd_set *)0, (fd_set *)0,
+		memset(fdsp, 0, fdssize);
+		FD_SET(so, fdsp);
+		rc = select(so+1, fdsp, (fd_set *)0, (fd_set *)0,
 		    (struct timeval *)0);
 		if (rc < 0) {
 			if (errno == EINTR)
@@ -283,6 +287,7 @@ main(argc, argv)
 			break;
 		}
 	}
+	free(fdsp);
 	syslog(LOG_INFO, "%s unmounted", mountpt);
 	exit(0);
 }
