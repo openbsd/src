@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.5 2004/07/14 19:22:43 vincent Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.6 2004/07/14 19:40:10 vincent Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -616,19 +616,25 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 	u_int cmplen;
 	struct rcs_delta *rdp;
 	struct rcs_dlist *hp;
-
+	int found;
+	
 	cmplen = 2;
 	hp = &(rfp->rf_delta);
 
-	TAILQ_FOREACH(rdp, hp, rd_list) {
-		if (rcsnum_cmp(rdp->rd_num, rev, cmplen) == 0) {
-			if (cmplen == rev->rn_len)
-				return (rdp);
+	do {
+		found = 0;
+		TAILQ_FOREACH(rdp, hp, rd_list) {
+			if (rcsnum_cmp(rdp->rd_num, rev, cmplen) == 0) {
+				if (cmplen == rev->rn_len)
+					return (rdp);
 
-			hp = &(rdp->rd_snodes);
-			cmplen += 2;
+				hp = &(rdp->rd_snodes);
+				cmplen += 2;
+				found = 1;
+				break;
+			}
 		}
-	}
+	} while (found && cmplen < rev->rn_len);
 
 	return (NULL);
 }
