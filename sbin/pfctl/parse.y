@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.266 2002/12/19 10:58:21 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.267 2002/12/20 19:57:37 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2220,7 +2220,6 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				    sizeof(binat.ifname));
 				free($3);
 			}
-			binat.af = $4;
 			if ($5 != NULL) {
 				binat.proto = $5->proto;
 				free($5);
