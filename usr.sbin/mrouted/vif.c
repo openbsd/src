@@ -40,7 +40,7 @@ static void start_vif2(vifi_t vifi);
 static void stop_vif(vifi_t vifi);
 static void age_old_hosts(void);
 static void send_probe_on_vif(struct uvif *v);
-static int info_version(char *p);
+static int info_version(char *p, int);
 static void DelVif(void *arg);
 static int SetTimer(int vifi, struct listaddr *g);
 static int DeleteTimer(int id);
@@ -903,7 +903,7 @@ accept_info_request(u_int32_t src, u_int32_t dst, char *p, int datalen)
 	len = 0;
 	switch (*p) {
 	    case DVMRP_INFO_VERSION:
-		len = info_version(q);
+		len = info_version(q, (u_char *)send_buf + RECV_BUF_SIZE - q);
 		break;
 
 	    case DVMRP_INFO_NEIGHBORS:
@@ -928,18 +928,19 @@ accept_info_request(u_int32_t src, u_int32_t dst, char *p, int datalen)
  * Information response -- return version string
  */
 static int
-info_version(char *p)
+info_version(char *p, int len)
 {
-    int len;
     extern char versionstring[];
 
+    if (len < 5)
+	return (0);
     *p++ = DVMRP_INFO_VERSION;
     p++;	/* skip over length */
     *p++ = 0;	/* zero out */
     *p++ = 0;	/* reserved fields */
-    strcpy(p, versionstring);	/* XXX strncpy!!! */
+    strlcpy(p, versionstring, len - 4);
 
-    len = strlen(versionstring);
+    len = strlen(p);
     return ((len + 3) / 4);
 }
 
