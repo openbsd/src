@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.31 2002/04/21 22:54:10 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.32 2002/04/22 01:49:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -894,6 +894,10 @@ mbsubmatch(parent, match, aux)
 	register struct cfdata *cf = match;
 	register struct confargs *ca = aux;
 	register int ret;
+
+	if (autoconf_verbose)
+		printf(">> hpa %x off %x cf_off %x\n",
+		    ca->ca_hpa, ca->ca_hpa & ~ca->ca_hpamask, cf->hppacf_off);
 
 	if (ca->ca_hpa && ~ca->ca_hpamask && cf->hppacf_off != -1 &&
 	    ((ca->ca_hpa & ~ca->ca_hpamask) != cf->hppacf_off))

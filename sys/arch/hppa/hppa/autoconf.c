@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.18 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.19 2002/04/22 01:49:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -395,11 +395,9 @@ pdc_scanbus(self, ca, bus, maxmod)
 			    dp.dp_flags, PZF_BITS,
 			    dp.dp_bc[0], dp.dp_bc[1], dp.dp_bc[2],
 			    dp.dp_bc[3], dp.dp_bc[4], dp.dp_bc[5]);
-			printf("mod %x layers %x/%x/%x/%x/%x/%x\n",
-			    dp.dp_mod,
-			    dp.dp_layers[0], dp.dp_layers[1],
-			    dp.dp_layers[2], dp.dp_layers[3],
-			    dp.dp_layers[4], dp.dp_layers[5]);
+			printf("mod %x hpa %x type %x sv %x\n",
+			    dp.dp_mod, pdc_memmap.hpa,
+			    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 		}
 
 		config_found_sm(self, &nca, mbprint, mbsubmatch);
