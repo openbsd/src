@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.13 1996/10/04 15:04:51 niklas Exp $
-#	$NetBSD: GENERIC,v 1.57.4.3 1996/06/04 10:32:59 is Exp $
+#	$OpenBSD: GENERIC,v 1.14 1996/10/04 23:34:46 niklas Exp $
+#	$NetBSD: GENERIC,v 1.57.4.4 1996/09/06 00:34:18 jtc Exp $
 
 #
 # GENERIC AMIGA
@@ -97,6 +97,8 @@ option		GRF_AGA		# AGA Chip Set
 #option		RH_64BIT_SPRITE
 # enables fast scroll code appears to now work on 040 systems.
 #option		RETINA_SPEED_HACK
+# enables the Hardwarecursor which does not work on some systems.
+#option		RH_HARDWARECURSOR
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II

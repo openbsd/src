@@ -1,5 +1,5 @@
-/*	$OpenBSD: loadbsd.c,v 1.6 1996/08/15 13:00:37 niklas Exp $	*/
-/*	$NetBSD: loadbsd.c,v 1.19 1996/05/04 01:23:37 mhitch Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.7 1996/10/04 23:34:58 niklas Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.19.4.2 1996/08/03 00:51:46 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -109,11 +109,19 @@ void warnx __P((const char *, ...));
  *		Add -s flag for compatibility to bootblock loader.
  *		05/02/96 - Add a maximum startup interface version level
  *		to allow future kernel compatibility.
+ *	2.14	06/26/96 is - Add first version of kludges needed to
+ *		boot on DraCos. This can probably be done a bit more cleanly
+ *		using TTRs, but it works for now.
+ *	2.15	07/28/96 is - Add first version of kludges needed to
+ *		get FusionForty kickrom'd memory back. Hope this doesn't
+ *		break anything else.
+ *
  *	2.13.1	OpenBSD branch: changed old -c to -C so new -c can be the
  *		architecture-independent bootflag for user-controlled
  *		startup configuration.
+ *	2.15.1	Merge of changes from 2.13 -> 2.15
  */
-static const char _version[] = "$VER: LoadBSD 2.13.1 (OpenBSD 15.8.96)";
+static const char _version[] = "$VER: LoadBSD 2.15.1 (OpenBSD 04.10.96)";
 
 /*
  * Kernel startup interface version
@@ -124,6 +132,9 @@ static const char _version[] = "$VER: LoadBSD 2.13.1 (OpenBSD 15.8.96)";
  */
 #define KERNEL_STARTUP_VERSION	3
 #define	KERNEL_STARTUP_VERSION_MAX	9
+
+#define DRACOREVISION (*(UBYTE *)0x02000009)
+#define DRACOMMUMARGIN 0x200000
 
 #define MAXMEMSEG	16
 struct boot_memlist {
@@ -168,7 +179,8 @@ char *program_name;
 char *kname;
 struct ExpansionBase *ExpansionBase;
 struct GfxBase *GfxBase;
-
+u_char *kp;
+int ksize;
 
 int
 main(argc, argv)
@@ -178,10 +190,9 @@ main(argc, argv)
 	struct exec e;
 	struct ConfigDev *cd, *kcd;
 	u_long fmemsz, cmemsz;
-	int fd, boothowto, ksize, textsz, stringsz, ncd, i, mem_ix, ch;
+	int fd, boothowto, textsz, stringsz, ncd, i, mem_ix, ch;
 	u_short *kvers;
 	int *nkcd;
-	u_char *kp;
 	void *fmem;
 	char *esym;
 	void (*start_it) __P((void *, u_long, u_long, void *, u_long, u_long,
@@ -275,8 +286,8 @@ main(argc, argv)
 
 	for (cd = 0, ncd = 0; cd = FindConfigDev(cd, -1, -1); ncd++)
 		;
-	get_mem_config(&fmem, &fmemsz, &cmemsz);
 	get_cpuid();
+	get_mem_config(&fmem, &fmemsz, &cmemsz);
 	get_eclock();
 	get_AGA();
 
@@ -297,7 +308,8 @@ main(argc, argv)
 		ksize += e.a_syms + 4 + ((stringsz + 3) & ~3);
 	}
 
-	kp = (u_char *)malloc(ksize + ((char *)startit_end - (char *)startit) + 256);
+	kp = (u_char *)AllocMem(ksize + ((char *)startit_end - (char *)startit) + 256,
+	    MEMF_FAST|MEMF_REVERSE);
 	if (t_flag) {
 		for (i = 0; i < memlist.m_nseg; ++i) {
 			printf("mem segment %d: start=%08lx size=%08lx"
@@ -368,8 +380,20 @@ main(argc, argv)
 	*nkcd = ncd;
 
 	kcd = (struct ConfigDev *)(nkcd + 1); 
-	while(cd = FindConfigDev(cd, -1, -1))
-		*kcd++ = *cd;
+	while(cd = FindConfigDev(cd, -1, -1)) {
+		*kcd = *cd;
+		if (((cpuid >> 24) == 0x7d) &&
+		    ((u_long)kcd->cd_BoardAddr < 0x1000000)) {
+			if (t_flag)
+				printf("Transformed Z2 device from %08lx ",
+				    kcd->cd_BoardAddr);
+			kcd->cd_BoardAddr += 0x3000000;
+
+			if (t_flag)
+				printf("to %08lx\n", kcd->cd_BoardAddr);
+		}
+		++kcd;
+	}
 
 	kmemlist = (struct boot_memlist *)kcd;
 	kmemlist->m_nseg = memlist.m_nseg;
@@ -382,6 +406,11 @@ main(argc, argv)
 		 * option was not specified.  Copy startup code to end
 		 * of kernel image and set start_it.
 		 */
+		if ((void *)kp < fmem) {
+			printf("Kernel at %08lx, Fastmem used at %08lx\n",
+			    kp, fmem);
+			errx(20, "Can't copy downwards yet.");
+		}
 		memcpy(kp + ksize + 256, (char *)startit,
 		    (char *)startit_end - (char *)startit);
 		CacheClearU();
@@ -407,8 +436,12 @@ main(argc, argv)
 	/*
 	 * if test option set, done
 	 */
-	if (t_flag)
+	if (t_flag) {
+		if (kp)
+			FreeMem(kp, ksize + ((char *)startit_end 
+			    - (char *)startit) + 256);
 		exit(0);
+	}
 		
 	/*
 	 * XXX AGA startup - may need more
@@ -425,7 +458,8 @@ get_mem_config(fmem, fmemsz, cmemsz)
 	u_long *fmemsz, *cmemsz;
 {
 	struct MemHeader *mh, *nmh;
-	u_int segsz, seg, eseg, nmem;
+	u_int segsz, seg, eseg, nmem, nseg, nsegsz;
+	u_int tseg, tsegsz;
 	char mempri;
 
 	nmem = 0;
@@ -437,70 +471,129 @@ get_mem_config(fmem, fmemsz, cmemsz)
 	 * walk thru the exec memory list
 	 */
 	Forbid();
-	for (mh  = (void *) SysBase->MemList.lh_Head; 
-	    nmh = (void *) mh->mh_Node.ln_Succ; mh = nmh, nmem++) {
-		memlist.m_seg[nmem].ms_attrib = mh->mh_Attributes;
-		memlist.m_seg[nmem].ms_pri = mh->mh_Node.ln_Pri;
-		seg = (u_int)mh->mh_Lower;
-		eseg = (u_int)mh->mh_Upper;
-		segsz = eseg - seg;
-		memlist.m_seg[nmem].ms_size = segsz;
-		memlist.m_seg[nmem].ms_start = seg;
+	for (mh  = (void *) SysBase->MemList.lh_Head;
+	    nmh = (void *) mh->mh_Node.ln_Succ; mh = nmh) {
 
-		if (mh->mh_Attributes & MEMF_CHIP) {
-			/* 
-			 * there should hardly be more than one entry for 
-			 * chip mem, but handle it the same nevertheless 
-			 * cmem always starts at 0, so include vector area
-			 */
-			memlist.m_seg[nmem].ms_start = seg = 0;
-			/*
-			 * round to multiple of 512K
-			 */
-			segsz = (segsz + 512 * 1024 - 1) & -(512 * 1024);
+		nseg = (u_int)mh->mh_Lower;
+		nsegsz = (u_int)mh->mh_Upper - nseg;
+
+		segsz = nsegsz;
+		seg = (u_int)CachePreDMA((APTR)nseg, (LONG *)&segsz, 0L);
+		nsegsz -= segsz, nseg += segsz;
+		for (;segsz;
+		    segsz = nsegsz, 
+		    seg = (u_int)CachePreDMA((APTR)nseg, (LONG *)&segsz, DMA_Continue),
+		    nsegsz -= segsz, nseg += segsz, ++nmem) {
+
+			if (t_flag)
+				printf("Translated %08x sz %08x to %08x sz %08x\n",
+				    nseg - segsz, nsegsz + segsz, seg, segsz);
+		
+			eseg = seg + segsz;
+
+	
+			if ((cpuid >> 24) == 0x7D) {
+				/* DraCo MMU table kludge */
+				
+				segsz = ((segsz -1) | 0xfffff) + 1;
+				seg = eseg - segsz;
+
+				/* 
+				 * Only use first SIMM to boot; we know it is VA==PA. 
+				 * Enter into table and continue. Yes,
+				 * this is ugly.
+				 */
+				if (seg != 0x40000000) {
+					memlist.m_seg[nmem].ms_attrib = mh->mh_Attributes;
+					memlist.m_seg[nmem].ms_pri = mh->mh_Node.ln_Pri;
+					memlist.m_seg[nmem].ms_size = segsz;
+					memlist.m_seg[nmem].ms_start = seg;
+					++nmem;
+					continue; 
+				}
+
+				memlist.m_seg[nmem].ms_attrib = mh->mh_Attributes;
+				memlist.m_seg[nmem].ms_pri = mh->mh_Node.ln_Pri;
+				memlist.m_seg[nmem].ms_size = DRACOMMUMARGIN;
+				memlist.m_seg[nmem].ms_start = seg;
+
+				++nmem;
+				seg += DRACOMMUMARGIN;
+				segsz -= DRACOMMUMARGIN;						
+			}
+
+			memlist.m_seg[nmem].ms_attrib = mh->mh_Attributes;
+			memlist.m_seg[nmem].ms_pri = mh->mh_Node.ln_Pri;
 			memlist.m_seg[nmem].ms_size = segsz;
-			if (segsz > *cmemsz)
-				*cmemsz = segsz;
-			continue;
-		}
-		/* 
-		 * some heuristics..
-		 */
-		seg &= -__LDPGSZ;
-		eseg = (eseg + __LDPGSZ - 1) & -__LDPGSZ;
+			memlist.m_seg[nmem].ms_start = seg;
+		
+			if ((mh->mh_Attributes & (MEMF_CHIP|MEMF_FAST)) == MEMF_CHIP) {
+				/* 
+				 * there should hardly be more than one entry for 
+				 * chip mem, but handle it the same nevertheless 
+				 * cmem always starts at 0, so include vector area
+				 */
+				memlist.m_seg[nmem].ms_start = seg = 0;
+				/*
+				 * round to multiple of 512K
+				 */
+				segsz = (segsz + 512 * 1024 - 1) & -(512 * 1024);
+				memlist.m_seg[nmem].ms_size = segsz;
+				if (segsz > *cmemsz)
+					*cmemsz = segsz;
+				continue;
+			}
+			/* 
+			 * some heuristics..
+			 */
+			seg &= -__LDPGSZ;
+			eseg = (eseg + __LDPGSZ - 1) & -__LDPGSZ;
+	
+			/*
+			 * get the mem back stolen by incore kickstart on 
+			 * A3000 with V36 bootrom.
+			 */
+			if (eseg == 0x07f80000)
+				eseg = 0x08000000;
+	
+			/*
+			 * or by zkick on a A2000.
+			 */
+			if (seg == 0x280000 &&
+			    strcmp(mh->mh_Node.ln_Name, "zkick memory") == 0)
+				seg = 0x200000;
+			/*
+			 * or by Fusion Forty fastrom
+			 */
+			if ((seg & ~(1024*1024-1)) == 0x11000000) {
+				/* 
+				 * XXX we should test the name.
+				 * Unfortunately, the memory is just called
+				 * "32 bit memory" which isn't very specific.
+				 */
+				seg = 0x11000000;
+			}
+	
+			segsz = eseg - seg;
+			memlist.m_seg[nmem].ms_start = seg;
+			memlist.m_seg[nmem].ms_size = segsz;
+			/*
+			 *  If this segment is smaller than 2M,
+			 *  don't use it to load the kernel
+			 */
+			if (segsz < 2 * 1024 * 1024)
+				continue;
+			/*
+			 * if p_flag is set, select memory by priority 
+			 * instead of size
+			 */
+			if ((!p_flag && segsz > *fmemsz) || (p_flag &&
+			   mempri <= mh->mh_Node.ln_Pri && segsz > *fmemsz)) {
+				*fmemsz = segsz;
+				*fmem = (void *)seg;
+				mempri = mh->mh_Node.ln_Pri;
+			}
 
-		/*
-		 * get the mem back stolen by incore kickstart on 
-		 * A3000 with V36 bootrom.
-		 */
-		if (eseg == 0x07f80000)
-			eseg = 0x08000000;
-
-		/*
-		 * or by zkick on a A2000.
-		 */
-		if (seg == 0x280000 &&
-		    strcmp(mh->mh_Node.ln_Name, "zkick memory") == 0)
-			seg = 0x200000;
-
-		segsz = eseg - seg;
-		memlist.m_seg[nmem].ms_start = seg;
-		memlist.m_seg[nmem].ms_size = segsz;
-		/*
-		 *  If this segment is smaller than 2M,
-		 *  don't use it to load the kernel
-		 */
-		if (segsz < 2 * 1024 * 1024)
-			continue;
-		/*
-		 * if p_flag is set, select memory by priority 
-		 * instead of size
-		 */
-		if ((!p_flag && segsz > *fmemsz) || (p_flag &&
-		   mempri <= mh->mh_Node.ln_Pri && segsz > *fmemsz)) {
-			*fmemsz = segsz;
-			*fmem = (void *)seg;
-			mempri = mh->mh_Node.ln_Pri;
 		}
 	}
 	memlist.m_nseg = nmem;
@@ -520,6 +613,9 @@ get_cpuid()
 
 	cpuid |= SysBase->AttnFlags;	/* get FPU and CPU flags */
 	if (cpuid & 0xffff0000) {
+		if ((cpuid & 0xff000000) == 0x7D)
+			return;
+
 		switch (cpuid >> 16) {
 		case 500:
 		case 600:
@@ -543,6 +639,8 @@ get_cpuid()
 	else if (OpenResource("card.resource")) {
 		/* Test for AGA? */
 		cpuid |= 1200 << 16;
+	} else if (OpenResource("draco.resource")) {
+		cpuid |= (32000 | DRACOREVISION) << 16;
 	}
 	/*
 	 * Nothing found, it's probably an A2000 or A500
@@ -580,7 +678,7 @@ asm("
 _startit:
 	movel	sp,a3
 	movel	4:w,a6
-	lea	pc@(start_super-.+2),a5
+	lea	pc@(start_super),a5
 	jmp	a6@(-0x1e)		| supervisor-call
 
 start_super:
@@ -598,11 +696,12 @@ start_super:
 	| a2:  Inhibit sync flags
 	| All other registers zeroed for possible future requirements.
 
-	lea	pc@(_startit-.+2),sp	| make sure we have a good stack ***
+	lea	pc@(_startit),sp	| make sure we have a good stack ***
+
 	movel	a3@(4),a1		| loaded kernel
 	movel	a3@(8),d2		| length of loaded kernel
 |	movel	a3@(12),sp		| entry point in stack pointer
-	movel	a3@(12),sp@-		| push entry point		***
+	movel	a3@(12),a6		| push entry point		***
 	movel	a3@(16),a0		| fastmem-start
 	movel	a3@(20),d0		| fastmem-size
 	movel	a3@(24),d1		| chipmem-size
@@ -615,57 +714,132 @@ start_super:
 	movel	a3@(52),d6		| Load to fastmem flag
 	subl	a5,a5			| target, load to 0
 
-	btst	#3,(ABSEXECBASE)@(0x129) | AFB_68040,SysBase->AttnFlags
+	cmpb	#0x7D,a3@(36)		| is it DraCo?
+	beq	nott			| yes, switch off MMU later
+
+					| no, it is an Amiga:
+
+|	movew	#0xf00,0xdff180		|red
+|	moveb	#0,0x200003c8
+|	moveb	#63,0x200003c9
+|	moveb	#0,0x200003c9
+|	moveb	#0,0x200003c9
+
+	movew	#(1<<9),0xdff096	| disable DMA on Amigas.
+
+| ------ mmu off start -----
+
+	btst	#3,d5			| AFB_68040,SysBase->AttnFlags
 	beq	not040
 
-| Turn off 68040 MMU
+| Turn off 68040/060 MMU
 
-	.word 0x4e7b,0xd003		| movec a5,tc
-	.word 0x4e7b,0xd806		| movec a5,urp
-	.word 0x4e7b,0xd807		| movec a5,srp
-	.word 0x4e7b,0xd004		| movec a5,itt0
-	.word 0x4e7b,0xd005		| movec a5,itt1
-	.word 0x4e7b,0xd006		| movec a5,dtt0
-	.word 0x4e7b,0xd007		| movec a5,dtt1
+	subl	a3,a3
+	.word 0x4e7b,0xb003		| movec a3,tc
+	.word 0x4e7b,0xb806		| movec a3,urp
+	.word 0x4e7b,0xb807		| movec a3,srp
+	.word 0x4e7b,0xb004		| movec a3,itt0
+	.word 0x4e7b,0xb005		| movec a3,itt1
+	.word 0x4e7b,0xb006		| movec a3,dtt0
+	.word 0x4e7b,0xb007		| movec a3,dtt1
 	bra	nott
 
 not040:
-	lea	pc@(zero-.+2),a3
+	lea	pc@(zero),a3
 	pmove	a3@,tc			| Turn off MMU
-	lea	pc@(nullrp-.+2),a3
+	lea	pc@(nullrp),a3
 	pmove	a3@,crp			| Turn off MMU some more
 	pmove	a3@,srp			| Really, really, turn off MMU
 
 | Turn off 68030 TT registers
 
-	btst	#2,(ABSEXECBASE)@(0x129) | AFB_68030,SysBase->AttnFlags
+	btst	#2,d5			| AFB_68030,SysBase->AttnFlags
 	beq	nott			| Skip TT registers if not 68030
-	lea	pc@(zero-.+2),a3
+	lea	pc@(zero),a3
 	.word 0xf013,0x0800		| pmove a3@,tt0 (gas only knows about 68851 ops..)
 	.word 0xf013,0x0c00		| pmove a3@,tt1 (gas only knows about 68851 ops..)
 
 nott:
+| ---- mmu off end ----
+|	movew	#0xf60,0xdff180		| orange
+|	moveb	#0,0x200003c8
+|	moveb	#63,0x200003c9
+|	moveb	#24,0x200003c9
+|	moveb	#0,0x200003c9
 
-	movew	#(1<<9),0xdff096	| disable DMA
+| ---- copy kernel start ----
 
 	tstl	d6			| Can we load to fastmem?
 	beq	L0			| No, leave destination at 0
 	movl	a0,a5			| Move to start of fastmem chunk
-	movl	a0,d6			|   and relocate kernel entry
-	addl	d6,sp@			|   address (on top of stack)
+	addl	a0,a6			| relocate kernel entry point
 L0:
 	movl	a1@+,a5@+
 	subl	#4,d2
 	bcc	L0
 
+	lea	pc@(ckend:w),a1
+	movl	a5,sp@-
+	movl	#_startit_end - ckend,d2
+L2:
+	movl	a1@+,a5@+
+	subl	#4,d2
+	bcc	L2
+
+	btst	#3,d5
+	jeq	L1
+	.word	0xf4f8
+L1:	movql	#0,d2			| switch off cache to ensure we use
+	movec	d2,cacr			| valid kernel data
+
+|	movew	#0xFF0,0xdff180		| yellow
+|	moveb	#0,0x200003c8
+|	moveb	#63,0x200003c9
+|	moveb	#0,0x200003c9
+|	moveb	#0,0x200003c9
+	rts
+
+| ---- copy kernel end ----
+
+ckend:
+|	movew	#0x0ff,0xdff180		| petrol
+|	moveb	#0,0x200003c8
+|	moveb	#0,0x200003c9
+|	moveb	#63,0x200003c9
+|	moveb	#63,0x200003c9
+
+	movl	d5,d2
+	roll	#8,d2
+	cmpb	#0x7D,d2
+	jne	noDraCo
+
+| DraCo: switch off MMU now:
+
+	subl	a3,a3
+	.word 0x4e7b,0xb003		| movec a3,tc
+	.word 0x4e7b,0xb806		| movec a3,urp
+	.word 0x4e7b,0xb807		| movec a3,srp
+	.word 0x4e7b,0xb004		| movec a3,itt0
+	.word 0x4e7b,0xb005		| movec a3,itt1
+	.word 0x4e7b,0xb006		| movec a3,dtt0
+	.word 0x4e7b,0xb007		| movec a3,dtt1
+	
+noDraCo:
 	moveq	#0,d2			| zero out unused registers
 	moveq	#0,d6			| (might make future compatibility
 	movel	d6,a1			|  would have known contents)
 	movel	d6,a3
 	movel	d6,a5
+	movel	a6,sp			| entry point into stack pointer
 	movel	d6,a6
-|	jmp	sp@			| jump to kernel entry point
-	rts				| enter kernel at address on stack ***
+
+|	movew	#0x0F0,0xdff180		| green
+|	moveb	#0,0x200003c8
+|	moveb	#0,0x200003c9
+|	moveb	#63,0x200003c9
+|	moveb	#0,0x200003c9
+
+	jmp	sp@			| jump to kernel entry point
 
 
 | A do-nothing MMU root pointer (includes the following long as well)
@@ -700,7 +874,7 @@ OPTIONS
 \t-b  Ask for which root device.
 \t    Its possible to have multiple roots and choose between them.
 \t-c  Enter user-controlled startup-configuration mode.
-\t-C  Set machine type. [e.g 3000]
+\t-C  Set machine type. [e.g 3000; use 32000+N for DraCo rev. N]
 \t-D  Enter debugger
 \t-h  This help message.
 \t-I  Inhibit sync negotiation. Option value is bit-encoded targets.
@@ -742,15 +916,21 @@ _Vdomessage(doexit, eval, doerrno, fmt, args)
 	}
 	if (doerrno && errno < sys_nerr) {
 		fprintf(stderr, "%s", strerror(errno));
+#if 0
 		if (errno == EINTR || errno == 0) {
 			int  sigs;
 			sigpending((sigset_t *)&sigs);
 			printf("%x\n", sigs);
 		}
+#endif
 	}
 	fprintf(stderr, "\n");
-	if (doexit)
+	if (doexit) {
+		if (kp)
+			FreeMem(kp, ksize + ((char *)startit_end 
+			    - (char *)startit) + 256);
 		exit(eval);
+	}
 }
 
 void
@@ -788,3 +968,12 @@ warnx(const char *fmt, ...)
 	_Vdomessage(0, 0, 0, fmt, ap);
 	va_end(ap);
 }
+
+
+u_int
+sleep(u_int n)
+{
+	(void)TimeDelay(0L, n, 0L);
+}
+
+

@@ -1,5 +1,5 @@
-#	$OpenBSD: DRACO,v 1.5 1996/10/04 15:05:39 niklas Exp $
-#	$NetBSD: DRACO,v 1.2.4.1 1996/05/30 21:25:55 is Exp $
+#	$OpenBSD: DRACO,v 1.6 1996/10/04 23:34:44 niklas Exp $
+#	$NetBSD: DRACO,v 1.2.4.2 1996/09/06 00:28:31 jtc Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -123,6 +123,8 @@ option		RETINACONSOLE	# enable code to allow retina to be console
 #option		RH_64BIT_SPRITE
 # enables fast scroll code appears to now work on 040 systems.
 #option		RETINA_SPEED_HACK
+# enables the Hardwarecursor which does not work on some systems.
+#option		RH_HARDWARECURSOR
 
 grfrh0		at zbus0		# Altais looks just like the Retina Z3
 grf2		at grfrh0

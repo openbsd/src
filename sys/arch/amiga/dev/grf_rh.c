@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rh.c,v 1.8 1996/08/23 18:52:46 niklas Exp $	*/
-/*	$NetBSD: grf_rh.c,v 1.17.4.1 1996/05/26 17:26:45 is Exp $	*/
+/*	$OpenBSD: grf_rh.c,v 1.9 1996/10/04 23:34:53 niklas Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.17.4.3 1996/09/06 00:40:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1276,6 +1276,8 @@ static struct MonDef monitor_defs[] = {
      match the physical ones
    */
 
+#ifdef RH_HARDWARECURSOR
+
   /* 640 x 480, 8 Bit, 31862 Hz, 63 Hz */
   { 26000000,  0,  640, 480,  161,175,188,200,199, 481, 483, 491, 502, 502,
       8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
@@ -1309,9 +1311,11 @@ static struct MonDef monitor_defs[] = {
   {104000000, 0, 1280,1024,  321,323,348,399,398,1025,1026,1043,1073,1073,
      8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
-/* WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
-            HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
-            MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!     */
+/*
+ * WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
+ *          HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
+ *          MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!
+ */
   /* 1280 x 1024, 8 Bit, 75436 Hz, 70 Hz */
   {121000000, 0, 1280,1024,  321,322,347,397,396,1025,1026,1043,1073,1073,
      8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
@@ -1335,9 +1339,11 @@ static struct MonDef monitor_defs[] = {
   {109000000,  0,  864, 648,  433,434,468,537,536, 649, 650, 661, 678, 678,
       16,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
 
-/* WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
-            HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
-            MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!     */
+/*
+ * WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
+ *          HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
+ *          MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!
+ */
   /* 1024 x 768, 16 Bit, 48437 Hz, 60 Hz */
   {124000000,  0, 1024, 768,  513,537,577,636,635, 769, 770, 783, 804, 804,
       16,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
@@ -1368,6 +1374,107 @@ static struct MonDef monitor_defs[] = {
   /*1024 x 768, 24 Bit, 32051 Hz, 79 Hz i */
   {110000000,  2, 1024, 768,  769,770,824,854,853, 385, 386, 392, 401, 401,
       24,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+#else /* RH_HARDWARECURSOR */
+
+  /* 640 x 480, 8 Bit, 31862 Hz, 63 Hz */
+  { 26000000,  0,  640, 480,  161,175,188,200,199, 481, 483, 491, 502, 502,
+      8, RZ3StdPalette,  640,  480,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+  /* This is the logical  ^     ^    screen size */
+
+  /* 640 x 480, 8 Bit, 38366 Hz, 76 Hz */
+ { 31000000,  0,  640, 480,  161,169,182,198,197, 481, 482, 490, 502, 502,
+     8, RZ3StdPalette,  640,  480,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 800 x 600, 8 Bit, 38537 Hz, 61 Hz */
+  { 39000000,  0,  800, 600,  201,211,227,249,248, 601, 603, 613, 628, 628,
+      8, RZ3StdPalette,  800,  600,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 1024 x 768, 8 Bit, 63862 Hz, 79 Hz */
+  { 82000000,  0, 1024, 768,  257,257,277,317,316, 769, 771, 784, 804, 804,
+      8, RZ3StdPalette, 1024,  768,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 1120 x 896, 8 Bit, 64000 Hz, 69 Hz */
+  { 97000000,  0, 1120, 896,  281,283,306,369,368, 897, 898, 913, 938, 938,
+      8, RZ3StdPalette, 1120,  896,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 1152 x 910, 8 Bit, 76177 Hz, 79 Hz */
+  {110000000,  0, 1152, 910,  289,310,333,357,356, 911, 923, 938, 953, 953,
+      8, RZ3StdPalette, 1152,  910,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 1184 x 848, 8 Bit, 73529 Hz, 82 Hz */
+  {110000000,  0, 1184, 848,  297,319,342,370,369, 849, 852, 866, 888, 888,
+      8, RZ3StdPalette, 1184,  848,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 1280 x 1024, 8 Bit, 64516 Hz, 60 Hz */
+  {104000000, 0, 1280,1024,  321,323,348,399,398,1025,1026,1043,1073,1073,
+     8, RZ3StdPalette, 1280, 1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+
+/*
+ * WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
+ *            HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
+ *            MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!
+ */
+  /* 1280 x 1024, 8 Bit, 75436 Hz, 70 Hz */
+  {121000000, 0, 1280,1024,  321,322,347,397,396,1025,1026,1043,1073,1073,
+     8, RZ3StdPalette, 1280, 1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
+
+
+  /* 16-bit gfx-mode definitions */
+
+  /* 640 x 480, 16 Bit, 31795 Hz, 63 Hz */
+  { 51000000, 0,  640, 480,  321,344,369,397,396, 481, 482, 490, 502, 502,
+      16,           0,  640,  480,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 800 x 600, 16 Bit, 38500 Hz, 61 Hz */
+  { 77000000, 0,  800, 600,  401,418,449,496,495, 601, 602, 612, 628, 628,
+      16,           0,  800,  600,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 1024 x 768, 16 Bit, 42768 Hz, 53 Hz */
+  {110000000,  0, 1024, 768,  513,514,554,639,638, 769, 770, 783, 804, 804,
+      16,           0, 1024,  768,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 864 x 648, 16 Bit, 50369 Hz, 74 Hz */
+  {109000000,  0,  864, 648,  433,434,468,537,536, 649, 650, 661, 678, 678,
+      16,           0,  864,  648,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+/*
+ * WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
+ *          HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
+ *          MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!
+ */
+  /* 1024 x 768, 16 Bit, 48437 Hz, 60 Hz */
+  {124000000,  0, 1024, 768,  513,537,577,636,635, 769, 770, 783, 804, 804,
+      16,           0, 1024,  768,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+
+  /* 24-bit gfx-mode definitions */
+
+  /* 320 x 200, 24 Bit, 35060 Hz, 83 Hz d */
+  { 46000000,  1,  320, 200,  241,268,287,324,323, 401, 405, 412, 418, 418,
+      24,           0,  320,  200,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 640 x 400, 24 Bit, 31404 Hz, 75 Hz */
+  { 76000000,  0,  640, 400,  481,514,552,601,600, 401, 402, 409, 418, 418,
+      24,           0,  640,  400,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 724 x 482, 24 Bit, 36969 Hz, 73 Hz */
+  {101000000,  0,  724, 482,  544,576,619,682,678, 483, 487, 495, 495, 504,
+      24,           0,  724,  482,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 800 x 600, 24 Bit, 37826 Hz, 60 Hz */
+  {110000000,  0,  800, 600,  601,602,647,723,722, 601, 602, 612, 628, 628,
+      24,           0,  800,  600,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 800 x 600, 24 Bit, 43824 Hz, 69 Hz */ 
+  {132000000,  0,  800, 600,  601,641,688,749,748, 601, 611, 621, 628, 628,  
+      24,           0,  800,  600,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /*1024 x 768, 24 Bit, 32051 Hz, 79 Hz i */
+  {110000000,  2, 1024, 768,  769,770,824,854,853, 385, 386, 392, 401, 401,
+      24,           0, 1024,  768,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+#endif /* RH_HARDWARECURSOR */
 };
 #undef KERNEL_FONT
 #undef FX
@@ -1662,6 +1769,7 @@ rh_ioctl (gp, cmd, data)
 	void *data;
 {
 	switch (cmd) {
+#ifdef RH_HARDWARECURSOR
 	    case GRFIOCGSPRITEPOS:
 		return(rh_getspritepos (gp, (struct grf_position *) data));
 
@@ -1676,6 +1784,13 @@ rh_ioctl (gp, cmd, data)
 
 	    case GRFIOCGSPRITEMAX:
 		return(rh_getspritemax (gp, (struct grf_position *) data));
+#else /* RH_HARDWARECURSOR */
+	    case GRFIOCGSPRITEPOS:
+	    case GRFIOCSSPRITEPOS:
+	    case GRFIOCSSPRITEINF:
+	    case GRFIOCGSPRITEMAX:
+		break;
+#endif /* RH_HARDWARECURSOR */
 
 	    case GRFIOCGETCMAP:
 		return(rh_getcmap (gp, (struct grf_colormap *) data));
@@ -2063,7 +2178,7 @@ rh_blank(gp, on)
 
 	r = 0x01 | ((md->FLG & MDF_CLKDIV2)/ MDF_CLKDIV2 * 8);
 
-	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? r : 0x21);
+	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? r : 0x21);
 
 	return(0);
 }
