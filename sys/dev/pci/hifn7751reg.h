@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.25 2001/06/25 22:03:08 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.26 2001/06/26 03:43:25 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -307,11 +307,6 @@ typedef struct hifn_desc {
 
 /* Random number generator config register (HIFN_1_RNG_CONFIG) */
 #define	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
-
-#define	WRITE_REG_0(sc,reg,val) \
-    bus_space_write_4((sc)->sc_st0, (sc)->sc_sh0, reg, val)
-#define	READ_REG_0(sc,reg) \
-    bus_space_read_4((sc)->sc_st0, (sc)->sc_sh0, reg)
 
 /*
  * Register offsets in register set 1
