@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.23 1998/10/13 16:42:01 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.24 1998/11/12 04:30:02 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1838,11 +1838,22 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	struct buf *nbp, *blist;
 	int s, error;
 
-	if ((flags & V_SAVE) && vp->v_dirtyblkhd.lh_first != NULL) {
-		if ((error = VOP_FSYNC(vp, cred, MNT_WAIT, p)) != 0)
-			return (error);
-		if (vp->v_dirtyblkhd.lh_first != NULL)
-			panic("vinvalbuf: dirty bufs");
+	if (flags & V_SAVE) {
+		s = splbio();
+		while (vp->v_numoutput) {
+			vp->v_flag |= VBWAIT;
+			sleep((caddr_t)&vp->v_numoutput, PRIBIO + 1);
+		}
+		if (vp->v_dirtyblkhd.lh_first != NULL) {
+			splx(s);
+			if ((error = VOP_FSYNC(vp, cred, MNT_WAIT, p)) != 0)
+				return (error);
+			s = splbio();
+			if (vp->v_numoutput > 0 ||
+			    vp->v_dirtyblkhd.lh_first != NULL)
+				panic("vinvalbuf: dirty bufs");
+		}
+		splx(s);
 	}
 	for (;;) {
 		if ((blist = vp->v_cleanblkhd.lh_first) && 

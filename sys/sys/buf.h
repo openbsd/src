@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.13 1998/08/04 22:01:49 millert Exp $	*/
+/*	$OpenBSD: buf.h,v 1.14 1998/11/12 04:30:02 csapuntz Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #define NOLIST ((struct buf *)0x87654321)
 
 struct buf;
+struct vnode;
 
 /*
  * To avoid including <ufs/ffs/softdep.h>
@@ -66,6 +67,7 @@ extern struct bio_ops {
 	void	(*io_start) __P((struct buf *));
 	void	(*io_complete) __P((struct buf *));
  	void	(*io_deallocate) __P((struct buf *));
+	int     (*io_fsync) __P((struct vnode *));
  	int	(*io_sync) __P((struct mount *));
 } bioops;
  

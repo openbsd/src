@@ -52,7 +52,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_softdep.c	9.27 (McKusick) 6/12/98
+ *	@(#)ffs_softdep.c	9.30 (McKusick) 10/3/98
  */
 
 #ifdef FFS_SOFTUPDATES
@@ -175,6 +175,7 @@ struct bio_ops bioops = {
 	softdep_disk_io_initiation,		/* io_start */
 	softdep_disk_write_complete,		/* io_complete */
 	softdep_deallocate_dependencies,	/* io_deallocate */
+	softdep_fsync,                          /* io_fsync */
 	softdep_process_worklist,		/* io_sync */
 };
 
@@ -938,8 +939,20 @@ softdep_mount(devvp, mp, fs, cred)
 		brelse(bp);
 	}
 #ifdef DEBUG
-	if (!bcmp(&cstotal, &fs->fs_cstotal, sizeof cstotal))
+	if (bcmp(&cstotal, &fs->fs_cstotal, sizeof cstotal)) {
 		printf("ffs_mountfs: superblock updated\n");
+		printf ("%d %d %d %d\n", 
+			cstotal.cs_nffree,
+			cstotal.cs_nbfree,
+			cstotal.cs_nifree,
+			cstotal.cs_ndir);
+
+		printf ("%d %d %d %d\n", 
+			fs->fs_cstotal.cs_nffree,
+			fs->fs_cstotal.cs_nbfree,
+			fs->fs_cstotal.cs_nifree,
+			fs->fs_cstotal.cs_ndir);
+	}
 #endif
 	bcopy(&cstotal, &fs->fs_cstotal, sizeof cstotal);
 	return (0);
@@ -2179,6 +2192,15 @@ softdep_change_directoryentry_offset(dp, base, oldloc, newloc, entrysize)
 		    dap, da_pdlist);
 		break;
 	}
+	if (dap == NULL) {
+		for (dap = LIST_FIRST(&pagedep->pd_pendinghd);
+		     dap; dap = LIST_NEXT(dap, da_pdlist)) {
+			if (dap->da_offset == oldoffset) {
+				dap->da_offset = newoffset;
+				break;
+			}
+		}
+	}
 done:
 	bcopy(oldloc, newloc, entrysize);
 	FREE_LOCK(&lk);
@@ -2208,6 +2230,7 @@ free_diradd(dap)
 	} else {
 		dirrem = dap->da_previous;
 		pagedep = dirrem->dm_pagedep;
+		dirrem->dm_dirinum = pagedep->pd_ino;
 		add_to_worklist(&dirrem->dm_list);
 	}
 	if (inodedep_lookup(VFSTOUFS(pagedep->pd_mnt)->um_fs, dap->da_newinum,
@@ -2373,7 +2396,7 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 	offset = blkoff(dp->i_fs, dp->i_offset);
 
 	/*
-	 * Whiteouts do not need addition dependencies.
+	 * Whiteouts do not need diradd dependencies.
 	 */
 	if (newinum != WINO) {
 		MALLOC(dap, struct diradd *, sizeof(struct diradd),
@@ -2390,6 +2413,20 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 	 */
 	dirrem = newdirrem(bp, dp, ip, isrmdir);
 	pagedep = dirrem->dm_pagedep;
+	/*
+	 * The possible values for isrmdir:
+	 *      0 - non-directory file rename
+	 *      1 - directory rename within same directory
+	 *   inum - directory rename to new directory of given inode number
+	 * When renaming to a new directory, we are both deleting and
+	 * creating a new directory entry, so the link count on the new
+	 * directory should not change. Thus we do not need the followup
+	 * dirrem which is usually done in handle_workitem_remove. We set
+	 * the DIRCHG flag to tell handle_workitem_remove to skip the 
+	 * followup dirrem.
+	 */
+	if (isrmdir > 1)
+		dirrem->dm_state |= DIRCHG;
 
 	/*
 	 * Whiteouts have no additional dependencies,
@@ -2405,7 +2442,7 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 		}
 		FREE_LOCK(&lk);
 		return;
- 	}
+	}
 
 	/*
 	 * Link into its inodedep. Put it on the id_bufwait list if the inode
@@ -2433,9 +2470,9 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 		dap->da_state &= ~DIRCHG;
 		dap->da_pagedep = pagedep;
 		dirrem->dm_dirinum = pagedep->pd_ino;
- 		add_to_worklist(&dirrem->dm_list);
- 	}
- 	FREE_LOCK(&lk);
+		add_to_worklist(&dirrem->dm_list);
+	}
+	FREE_LOCK(&lk);
 }
 
 /*
@@ -2499,6 +2536,16 @@ handle_workitem_remove(dirrem)
 	ip->i_flag |= IN_CHANGE;
 	if ((error = VOP_TRUNCATE(vp, (off_t)0, 0, p->p_ucred, p)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
+	/*
+	 * Rename a directory to a new parent. Since, we are both deleting
+	 * and creating a new directory entry, the link count on the new
+	 * directory should not change. Thus we skip the followup dirrem.
+	 */
+	if (dirrem->dm_state & DIRCHG) {
+		vput(vp);
+		WORKITEM_FREE(dirrem, D_DIRREM);
+		return;
+	}
 	ACQUIRE_LOCK(&lk);
 	(void) inodedep_lookup(ip->i_fs, dirrem->dm_oldinum, DEPALLOC,
 	    &inodedep);

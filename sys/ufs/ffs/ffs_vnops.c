@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.7 1998/08/06 19:35:07 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.8 1998/11/12 04:30:02 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -157,6 +157,7 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
+	{ &vop_vfree_desc, ffs_vfree },                 /* vfree */
 	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, spec_valloc },		/* valloc */
 	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
@@ -209,6 +210,7 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
+	{ &vop_vfree_desc, ffs_vfree },                 /* vfree */
 	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
 	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
@@ -318,10 +320,7 @@ loop2:
         }
         splx(s);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	if ((error = VOP_UPDATE(vp, &ts, &ts, ap->a_waitfor == MNT_WAIT)) != 0)               return (error);
-	if (DOINGSOFTDEP(vp) && ap->a_waitfor == MNT_WAIT)
-		error = softdep_fsync(vp);
-	return (error);
+	return (VOP_UPDATE(vp, &ts, &ts, ap->a_waitfor == MNT_WAIT));
 }
 
 /*
