@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.9 2001/02/26 06:19:34 tholo Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.10 2001/02/27 08:38:36 tholo Exp $	*/
 /*
  * Copyright 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -707,8 +707,6 @@ an_dumpconfig(iface)
 		printf("open");
 	if ((cfg->an_authtype & AN_AUTHTYPE_MASK) == AN_AUTHTYPE_SHAREDKEY)
 		printf("shared key");
-	if ((cfg->an_authtype & AN_AUTHTYPE_MASK) == AN_AUTHTYPE_EXCLUDE_UNENCRYPTED)
-		printf("exclude unencrypted");
 	printf(" ]");
 	printf("\nAssociation timeout:\t\t\t");
 	an_printwords(&cfg->an_assoc_timeout, 1);
