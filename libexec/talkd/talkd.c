@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.10 2002/02/19 18:38:02 mpech Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.11 2002/05/16 12:16:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.10 2002/02/19 18:38:02 mpech Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.11 2002/05/16 12:16:16 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -98,14 +98,14 @@ main(argc, argv)
 	init_table();
 	signal(SIGALRM, timeout);
 	alarm(TIMEOUT);
+
 	for (;;) {
-		CTL_MSG		request;
-		CTL_RESPONSE	response;
-		int		cc;
-		int		len = sizeof(response.addr);
+		CTL_RESPONSE response;
+		int cc, len = sizeof(response.addr);
+		CTL_MSG	request;
 
 		cc = recvfrom(0, (char *)&request, sizeof (request), 0,
-			(struct sockaddr *)&response.addr, &len);
+		    (struct sockaddr *)&response.addr, &len);
 		if (cc != sizeof (request)) {
 			if (cc < 0 && errno != EINTR)
 				syslog(LOG_WARNING, "recvfrom: %m");
