@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.5 2001/04/14 23:43:32 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.6 2001/04/16 03:19:52 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -7,15 +7,9 @@ option		UVM		# required
 option		PMAP_NEW	# required
 
 # CPU Support; at least one is REQUIRED
-#option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
-#option		DEC_3000_300	# Pelican etc:	3000/300*
-#option		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
-#option		DEC_KN20AA	# KN20AA:	AlphaStation 600
-#option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
-#option		DEC_EB164	# EB164:	AlphaPC 164
-#option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 option          DEC_550		# Miata:	Digital Personal Workstation
 option		DEC_6600	# EV6:		264DP OEM Board
+option		API_UP1000	# EV6:		Alpha Processor UP1000
 
 # Enable the hooks used for initializing the ram-disk.
 option		RAMDISK_HOOKS
@@ -47,14 +41,16 @@ cpu*	at	mainbus0
 # PCI host bus adapter support
 #apecs*	at	mainbus?
 cia*	at	mainbus?
-lca*	at	mainbus?
+#lca*	at	mainbus?
+irongate* at	mainbus?
 tsc*	at	mainbus0
 tsp*	at	tsc?
 
 # PCI bus support
 #pci*	at	apecs?
 pci*	at	cia?
-pci*	at	lca?
+#pci*	at	lca?
+pci*	at	irongate?
 pci*	at	tsp?
 pci*	at	ppb?
 
