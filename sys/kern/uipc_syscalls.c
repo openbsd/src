@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.13 1998/09/14 23:35:01 provos Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.14 1999/02/11 05:33:09 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -159,6 +159,8 @@ sys_accept(p, v, retval)
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
 	    (caddr_t)&namelen, sizeof (namelen))))
 		return (error);
+	if (namelen < 0)
+		return (EFAULT);
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	s = splsoftnet();
@@ -675,7 +677,7 @@ recvit(p, s, mp, namelenp, retsize)
 				    mtod(from, struct sockaddr *)->sa_family;
 #endif
 			error = copyout(mtod(from, caddr_t),
-					(caddr_t)mp->msg_name, (unsigned)len);
+			    (caddr_t)mp->msg_name, (unsigned)len);
 			if (error)
 				goto out;
 		}
@@ -816,6 +818,8 @@ sys_getsockopt(p, v, retval)
 			return (error);
 	} else
 		valsize = 0;
+	if (valsize < 0)
+		return (EFAULT);
 	if ((error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), &m)) == 0 && SCARG(uap, val) && valsize &&
 	    m != NULL) {
@@ -905,6 +909,8 @@ sys_getsockname(p, v, retval)
 	error = copyin((caddr_t)SCARG(uap, alen), (caddr_t)&len, sizeof (len));
 	if (error)
 		return (error);
+	if (len < 0)
+		return (EFAULT);
 	so = (struct socket *)fp->f_data;
 	m = m_getclr(M_WAIT, MT_SONAME);
 	if (m == NULL)
@@ -951,6 +957,8 @@ sys_getpeername(p, v, retval)
 	error = copyin((caddr_t)SCARG(uap, alen), (caddr_t)&len, sizeof (len));
 	if (error)
 		return (error);
+	if (len < 0)
+		return (EFAULT);
 	m = m_getclr(M_WAIT, MT_SONAME);
 	if (m == NULL)
 		return (ENOBUFS);
@@ -960,9 +968,9 @@ sys_getpeername(p, v, retval)
 	if (len > m->m_len)
 		len = m->m_len;
 	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), (u_int)len);
-	if (error)
-		goto bad;
-	error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen), sizeof (len));
+	if (error == 0)
+		error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen),
+		    sizeof (len));
 bad:
 	m_freem(m);
 	return (error);
