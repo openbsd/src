@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.28 2002/01/18 08:38:26 kjell Exp $	*/
+/*	$OpenBSD: part.c,v 1.29 2002/02/12 17:56:35 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -73,6 +73,7 @@ static const struct part_type {
 	{ 0x17, "OS/2 hidden ", "OS/2 BM: hidden IFS"},
 	{ 0x18, "AST swap    ", "AST Windows swapfile"},
 	{ 0x19, "Willowtech  ", "Willowtech Photon coS"},
+	{ 0x1C, "Thinkpad Rec", "IBM Thinkpad recovery partition"},
 	{ 0x20, "Willowsoft  ", "Willowsoft OFS1"},
 	{ 0x24, "NEC DOS     ", "NEC DOS"},
 	{ 0x38, "Theos       ", "Theos"},
@@ -131,6 +132,7 @@ static const struct part_type {
 	{ 0xC6, "DRDOSs >=32M", "DRDOS/sec (FAT-16, >= 32M)"},
 	{ 0xC7, "HPFS Disbled", "Syrinx (Cyrnix?) or HPFS disabled"},
 	{ 0xDB, "CPM/C.DOS/C*", "Concurrent CPM or C.DOS or CTOS"},
+	{ 0xDE, "Dell Maint  ", "Dell maintenance partition"},
 	{ 0xE1, "SpeedStor   ", "DOS access or SpeedStor 12-bit FAT extended partition"},
 	{ 0xE3, "SpeedStor   ", "DOS R/O or SpeedStor or Storage Dimensions"},
 	{ 0xE4, "SpeedStor   ", "SpeedStor 16-bit FAT extended partition < 1024 cyl."},
