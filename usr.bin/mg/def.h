@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.9 2001/05/03 20:40:22 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.10 2001/05/04 22:00:35 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -328,7 +328,6 @@ int	 poptofile		__P((int, int));
 BUFFER  *findbuffer		__P((char *));
 int	 readin			__P((char *));
 int	 insertfile		__P((char *, char *, int));
-VOID     makename		__P((char *, char *));
 int	 filewrite		__P((int, int));
 int	 filesave		__P((int, int));
 int	 buffsave		__P((BUFFER *));

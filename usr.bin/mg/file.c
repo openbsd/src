@@ -1,12 +1,11 @@
-/*	$OpenBSD: file.c,v 1.5 2001/01/29 01:58:07 niklas Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 2001/05/04 22:00:35 art Exp $	*/
 
 /*
  *	File commands.
  */
 
+#include <libgen.h>
 #include "def.h"
-
-static char	*itos	__P((char *, unsigned int));
 
 /*
  * Insert a file into the current buffer.  Real easy - just call the
@@ -100,35 +99,15 @@ findbuffer(fname)
 	unsigned int	 count = 1;
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
-		if (fncmp(bp->b_fname, fname) == 0)
+		if (strcmp(bp->b_fname, fname) == 0)
 			return bp;
 	}
 	/* new buffer name */
-	makename(bname, fname);
+	strcpy(bname, basename(fname));
 	cp = bname + strlen(bname);
-	while (bfind(bname, FALSE) != NULL) {
-		/* add "<count>" to the name */
-		*cp = '<';
-		(VOID)strcpy(itos(cp, ++count) + 1, ">");
-	}
+	for (count = 1; bfind(bname, FALSE) != NULL; count++)
+		sprintf(cp, "<%d>", count);
 	return bfind(bname, TRUE);
-}
-
-/*
- * Put the decimal representation of num into a buffer.  Hacked to be
- * faster, smaller, and less general.
- */
-static char *
-itos(bufp, num)
-	char		*bufp;
-	unsigned int	 num;
-{
-	if (num >= 10) {
-		bufp = itos(bufp, num / 10);
-		num %= 10;
-	}
-	*++bufp = '0' + num;
-	return bufp;
 }
 
 /*
@@ -337,44 +316,6 @@ out:		lp2 = NULL;
 	}
 	/* return false if error */
 	return s != FIOERR;
-}
-
-/*
- * Fabriacte a buffer name from a given filename.  This routing knows
- * about the syntax of file names on the target system.
- * BDC1		left scan delimiter.
- * BDC2		optional second left scan delimiter.
- * BDC3		optional right scan delimiter.
- */
-VOID
-makename(bname, fname)
-	char *bname, *fname;
-{
-	char *cp1, *cp2;
-
-	cp1 = &fname[0];
-	while (*cp1 != 0)
-		++cp1;
-
-	/* insure at least 1 character */
-	--cp1;
-#ifdef BDC2
-	while (cp1 != &fname[0] && cp1[-1] != BDC1 && cp1[-1] != BDC2)
-		--cp1;
-#else /* BDC2 */
-	while (cp1 != &fname[0] && cp1[-1] != BDC1)
-		--cp1;
-#endif /* BDC2 */
-	cp2 = &bname[0];
-
-#ifdef BDC3
-	while (cp2 != &bname[NBUFN - 1] && *cp1 != 0 && *cp1 != BDC3)
-		*cp2++ = *cp1++;
-#else /* BDC3 */
-	while (cp2 != &bname[NBUFN - 1] && *cp1 != 0)
-		*cp2++ = *cp1++;
-#endif /* BDC3 */
-	*cp2 = 0;
 }
 
 /*

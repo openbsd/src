@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.6 2001/05/04 21:47:41 art Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.7 2001/05/04 22:00:35 art Exp $	*/
 
 /*
  *		Buffer handling.
@@ -390,7 +390,7 @@ bfind(bname, cflag)
 
 	bp = bheadp;
 	while (bp != NULL) {
-		if (fncmp(bname, bp->b_bname) == 0)
+		if (strcmp(bname, bp->b_bname) == 0)
 			return bp;
 		bp = bp->b_bufp;
 	}
