@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.6 2004/05/20 16:42:54 miod Exp $ */
+/*	$OpenBSD: vsreg.h,v 1.7 2004/05/21 10:24:42 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,8 +88,11 @@ typedef struct LONGV
 #define NUM_CQE                 10
 #define MAX_IOPB                64
 #define NUM_IOPB                NUM_CQE
+
 #define S_IOPB_RES              (MAX_IOPB - sizeof(M328_short_IOPB))
+
 #define S_SHORTIO               2048
+
 #define S_IOPB                  sizeof(M328_IOPB)
 #define S_CIB                   sizeof(M328_CIB)
 #define S_MCSB                  sizeof(M328_MCSB)
@@ -104,8 +107,6 @@ typedef struct LONGV
 #define S_HUS_FREE              (S_SHORTIO - S_NOT_HOST)
 
 #define S_WQCF                  sizeof(M328_WQCF)
-
-#define HOST_ID                 0x4321
 
 
 /****************     Master Control Status Block (MCSB) *******************/
@@ -291,12 +292,8 @@ typedef struct cqe
 #define M_CRSW_CC               0x0002  /* command complete */
 #define M_CRSW_CRBV             0x0001  /* cmd response block valid/clear */
 
-#define CRB_CLR_DONE(crsw)      ((crsw) = 0)
-#define CRB_CLR_ER(crsw)        ((crsw) &= ~M_CRSW_ER)
-#define CRB_CLR_SC(crsw)	((crsw) &= ~M_CRSW_SC)
-#define CRB_CLR_SE(crsw)	((crsw) &= ~M_CRSW_SE)
-#define CRB_CLR_RST(crsw)	((crsw) &= ~M_CRSW_RST)
-#define CRB_CLR(crsw)		((crsw) &= ~(x))
+#define CRB_CLR_DONE		((CRSW) = 0)
+#define CRB_CLR_ER		((CRSW) &= ~M_CRSW_ER)
 
 typedef struct crb
 {                                       /* Command Response Block */
@@ -553,13 +550,12 @@ struct vsreg
     M328_CSB    sh_CSS;            /* Controller Specific Space/Block */
 };
 
-#define CRSW sc->sc_vsreg->sh_CRB.crb_CRSW
-#define THAW_REG sc->sc_vsreg->sh_MCSB.mcsb_THAW
-#define THAW(x) THAW_REG=((u_char)x << 8);THAW_REG |= M_THAW_TWQE
-#define QUEUE_FZN(x) (sc->sc_vsreg->sh_CSS.csb_FWQR & (1 << x))
+#define CRSW		sc->sc_vsreg->sh_CRB.crb_CRSW
+#define THAW_REG	sc->sc_vsreg->sh_MCSB.mcsb_THAW
+#define THAW(x)		THAW_REG = (((x) << 8) | M_THAW_TWQE)
+
 #define SELECTION_TIMEOUT               250     /* milliseconds */
 #define VME_BUS_TIMEOUT                 0xF     /* units of 30ms */
-#define M328_INFINITE_TIMEOUT           0       /* wait forever */
 
 /**************** END Short I/O Format                   *******************/
 

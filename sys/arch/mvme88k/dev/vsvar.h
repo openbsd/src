@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.9 2004/05/20 16:42:54 miod Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.10 2004/05/21 10:24:42 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,6 @@
 #define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
 #define  HI(x) (u_short)((unsigned long)x >> 16)
 #define  OFF(x) (u_short)((vaddr_t)x - (vaddr_t)sc->sc_vsreg)
-#define  vs_name(sc)	(sc)->sc_dev.dv_xname
 
 /****************     Scater/Gather Stuff                *******************/
 
