@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.24 2004/03/02 13:00:02 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.25 2004/03/02 13:39:44 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -103,24 +103,13 @@ int		save_scripts;
 int		unknown_ok = 1;
 int		routefd;
 
+struct interface_info	*ifi;
+
 void	 usage(void);
 int	 check_option(struct client_lease *l, int option);
 int	 ipv4addrs(char * buf);
 int	 res_hnok(const char *dn);
 char	*option_as_string(unsigned int code, unsigned char *data, int len);
-
-
-struct interface_info *
-isours(u_int16_t index)
-{
-	struct interface_info *ip;
-
-	for (ip = interfaces; ip; ip = ip->next)
-		if (index == ip->index)
-			return (ip);
-
-	return (NULL);
-}
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -164,7 +153,6 @@ routehandler(struct protocol *p)
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
-	struct interface_info *ip;
 	ssize_t n;
 
 	n = read(routefd, &msg, sizeof(msg));
@@ -176,7 +164,7 @@ routehandler(struct protocol *p)
 	switch (rtm->rtm_type) {
 	case RTM_NEWADDR:
 		ifam = (struct ifa_msghdr *)rtm;
-		if ((ip = isours(ifam->ifam_index)) == NULL)
+		if (ifam->ifam_index != ifi->index)
 			break;
 		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
 			break;
@@ -184,7 +172,7 @@ routehandler(struct protocol *p)
 		break;
 	case RTM_DELADDR:
 		ifam = (struct ifa_msghdr *)rtm;
-		if ((ip = isours(ifam->ifam_index)) == NULL)
+		if (ifam->ifam_index != ifi->index)
 			break;
 		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
 			break;
@@ -192,7 +180,7 @@ routehandler(struct protocol *p)
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		if ((ip = isours(ifm->ifm_index)) == NULL)
+		if (ifm->ifm_index != ifi->index)
 			break;
 		if ((rtm->rtm_flags & RTF_UP) == 0)
 			goto die;
@@ -200,7 +188,7 @@ routehandler(struct protocol *p)
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
 		if (ifan->ifan_what == IFAN_DEPARTURE &&
-		    (ip = isours(ifan->ifan_index)) != NULL)
+		    ifan->ifan_index == ifi->index)
 			goto die;
 		break;
 	default:
@@ -209,10 +197,10 @@ routehandler(struct protocol *p)
 	return;
 
 die:
-	script_init(ip, "FAIL", NULL);
-	if (ip->client->alias)
-		script_write_params(ip, "alias_", ip->client->alias);
-	script_go(ip);
+	script_init(ifi, "FAIL", NULL);
+	if (ifi->client->alias)
+		script_write_params(ifi, "alias_", ifi->client->alias);
+	script_go(ifi);
 	exit(1);
 }
 
@@ -220,8 +208,7 @@ int
 main(int argc, char *argv[])
 {
 	extern char		*__progname;
-	struct interface_info	*ip = NULL;
-	int			 ch, fd, seed, quiet = 0;
+	int			 ch, fd, quiet = 0;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
@@ -257,11 +244,10 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	if ((ip = calloc(1, sizeof(struct interface_info))) == NULL)
+	if ((ifi = calloc(1, sizeof(struct interface_info))) == NULL)
 		error("calloc");
-	strlcpy(ip->name, argv[0], IFNAMSIZ);
-	ip->flags = INTERFACE_REQUESTED;
-	interfaces = ip;
+	strlcpy(ifi->name, argv[0], IFNAMSIZ);
+	ifi->flags = INTERFACE_REQUESTED;
 
 	if (quiet)
 		log_perror = 0;
@@ -283,47 +269,30 @@ main(int argc, char *argv[])
 	rewrite_client_leases();
 	close(fd);
 
-	if (interface_link_status(ip->name)) {
-		script_init(ip, "PREINIT", NULL);
-		if (ip->client->alias)
-			script_write_params(ip, "alias_", ip->client->alias);
-		script_go(ip);
+	if (interface_link_status(ifi->name)) {
+		script_init(ifi, "PREINIT", NULL);
+		if (ifi->client->alias)
+			script_write_params(ifi, "alias_", ifi->client->alias);
+		script_go(ifi);
 	} else
-		error("no link on interface %s", ip->name);
+		error("no link on interface %s", ifi->name);
 
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
-		add_protocol("AF_ROUTE", routefd, routehandler, interfaces);
+		add_protocol("AF_ROUTE", routefd, routehandler, ifi);
 
-	/* set up the interfaces. */
-	discover_interfaces(ip);
+	/* set up the interface */
+	discover_interfaces(ifi);
 
-	/* Make up a seed for the random number generator from current
-	   time plus the sum of the last four bytes of each
-	   interface's hardware address interpreted as an integer.
-	   Not much entropy, but we're booting, so we're not likely to
-	   find anything better. */
-	seed = 0; /* Unfortunately, what's on the stack isn't random. :') */
-	for (ip = interfaces; ip; ip = ip->next) {
-		int junk;
-		memcpy(&junk, &ip->hw_address.haddr[ip->hw_address.hlen -
-		    sizeof(seed)], sizeof(seed));
-		seed += junk;
-	}
-	srandom(seed + cur_time);
+	srandom(arc4random());
 
-	/* Start a configuration state machine for each interface. */
-	for (ip = interfaces; ip; ip = ip->next) {
-		ip->client->state = S_INIT;
-		state_reboot(ip);
-	}
+	ifi->client->state = S_INIT;
+	state_reboot(ifi);
 
-	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
 
-	/* Start dispatching packets and timeouts... */
 	dispatch();
 
-	/*NOTREACHED*/
+	/* not reached */
 	return (0);
 }
 
@@ -1691,7 +1660,6 @@ FILE *leaseFile;
 void
 rewrite_client_leases(void)
 {
-	struct interface_info *ip;
 	struct client_lease *lp;
 
 	if (leaseFile)
@@ -1700,14 +1668,10 @@ rewrite_client_leases(void)
 	if (!leaseFile)
 		error("can't create %s: %m", path_dhclient_db);
 
-	/* Write out all the leases attached to configured interfaces that
-	   we know about. */
-	for (ip = interfaces; ip; ip = ip->next) {
-		for (lp = ip->client->leases; lp; lp = lp->next)
-			write_client_lease(ip, lp, 1);
-		if (ip->client->active)
-			write_client_lease(ip, ip->client->active, 1);
-	}
+	for (lp = ifi->client->leases; lp; lp = lp->next)
+		write_client_lease(ifi, lp, 1);
+	if (ifi->client->active)
+		write_client_lease(ifi, ifi->client->active, 1);
 
 	fflush(leaseFile);
 }

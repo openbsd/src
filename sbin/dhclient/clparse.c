@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.9 2004/03/02 12:56:30 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.10 2004/03/02 13:39:44 henning Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -45,6 +45,7 @@
 
 struct client_config top_level_config;
 struct interface_info *dummy_interfaces;
+extern struct interface_info *ifi;
 
 char client_script_name[] = "/sbin/dhclient-script";
 
@@ -61,7 +62,6 @@ read_client_conf(void)
 	char			*val;
 	int			 token;
 	struct client_config	*config;
-	struct interface_info	*ip;
 
 	new_parse(path_dhclient_conf);
 
@@ -112,23 +112,21 @@ read_client_conf(void)
 	 * have per-interface configuration declarations.
 	 */
 	config = NULL;
-	for (ip = interfaces; ip; ip = ip->next) {
-		if (!ip->client) {
-			ip->client = malloc(sizeof(struct client_state));
-			if (!ip->client)
-				error("no memory for client state.");
-			memset(ip->client, 0, sizeof(*(ip->client)));
+	if (!ifi->client) {
+		ifi->client = malloc(sizeof(struct client_state));
+		if (!ifi->client)
+			error("no memory for client state.");
+		memset(ifi->client, 0, sizeof(*(ifi->client)));
+	}
+	if (!ifi->client->config) {
+		if (!config) {
+			config = malloc(sizeof(struct client_config));
+			if (!config)
+				error("no memory for client config.");
+			memcpy(config, &top_level_config,
+				sizeof(top_level_config));
 		}
-		if (!ip->client->config) {
-			if (!config) {
-				config = malloc(sizeof(struct client_config));
-				if (!config)
-					error("no memory for client config.");
-				memcpy(config, &top_level_config,
-					sizeof(top_level_config));
-			}
-			ip->client->config = config;
-		}
+		ifi->client->config = config;
 	}
 
 	return (!warnings_occurred);
@@ -429,30 +427,25 @@ interface_or_dummy(char *name)
 	struct interface_info	*ip;
 
 	/* Find the interface (if any) that matches the name. */
-	for (ip = interfaces; ip; ip = ip->next)
-		if (!strcmp(ip->name, name))
-			break;
+	if (!strcmp(ifi->name, name))
+		return (ifi);
 
 	/* If it's not a real interface, see if it's on the dummy list. */
-	if (!ip)
-		for (ip = dummy_interfaces; ip; ip = ip->next)
-			if (!strcmp(ip->name, name))
-				break;
+	for (ip = dummy_interfaces; ip; ip = ip->next)
+		if (!strcmp(ip->name, name))
+			return (ip);
 
 	/*
 	 * If we didn't find an interface, make a dummy interface as a
 	 * placeholder.
 	 */
-	if (!ip) {
-		ip = malloc(sizeof(*ip));
-		if (!ip)
-			error("Insufficient memory to record interface %s",
-			    name);
-		memset(ip, 0, sizeof(*ip));
-		strlcpy(ip->name, name, IFNAMSIZ);
-		ip->next = dummy_interfaces;
-		dummy_interfaces = ip;
-	}
+	ip = malloc(sizeof(*ip));
+	if (!ip)
+		error("Insufficient memory to record interface %s", name);
+	memset(ip, 0, sizeof(*ip));
+	strlcpy(ip->name, name, IFNAMSIZ);
+	ip->next = dummy_interfaces;
+	dummy_interfaces = ip;
 	return (ip);
 }
 
