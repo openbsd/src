@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.79 2000/07/20 21:45:19 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.80 2000/08/04 16:00:56 ericj Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -24,8 +24,8 @@ device	tga: wsemuldisplaydev, wsrasteremulops
 attach	tga at pci
 file	dev/pci/tga.c			tga		needs-flag
 file	dev/pci/tga_conf.c		tga
-file	dev/pci/tga_bt463.c		tga
-file	dev/pci/tga_bt485.c		tga
+file	dev/ic/bt463.c			tga
+file	dev/ic/bt485.c			tga
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:

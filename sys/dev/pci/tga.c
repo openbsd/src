@@ -47,6 +47,7 @@
 #include <dev/pci/tgareg.h>
 #include <dev/pci/tgavar.h>
 #include <dev/ic/bt485reg.h>
+#include <dev/ic/bt485var.h>
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
@@ -67,8 +68,8 @@ struct cfattach tga_ca = {
 
 int	tga_identify __P((tga_reg_t *));
 const struct tga_conf *tga_getconf __P((int));
-void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
-	    pcitag_t tag, struct tga_devconfig *dc));
+void    tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
+            pcitag_t tag, struct tga_devconfig *dc));
 
 struct tga_devconfig tga_console_dc;
 
@@ -88,6 +89,18 @@ static int tga_rop_htov __P((struct raster *, int, int, int, int,
 	int, struct raster *, int, int ));
 static int tga_rop_vtov __P((struct raster *, int, int, int, int,
 	int, struct raster *, int, int ));
+
+void tga2_init __P((struct tga_devconfig *, int));
+
+/* RAMDAC interface functions */
+int             tga_sched_update __P((void *, void (*)(void *)));
+void            tga_ramdac_wr __P((void *, u_int, u_int8_t));
+u_int8_t        tga_ramdac_rd __P((void *, u_int));
+void            tga2_ramdac_wr __P((void *, u_int, u_int8_t));
+u_int8_t        tga2_ramdac_rd __P((void *, u_int));
+
+/* Interrupt handler */
+int     tga_intr __P((void *));
 
 struct wsdisplay_emulops tga_emulops = {
 	rcons_cursor,			/* could use hardware cursor; punt */
@@ -137,11 +150,17 @@ tgamatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_DEC ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_DEC_21030)
-		return (0);
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_DEC)
+                return (0);
 
-	return (10);
+        switch (PCI_PRODUCT(pa->pa_id)) {
+        case PCI_PRODUCT_DEC_21030:
+        case PCI_PRODUCT_DEC_PBXGB:
+                return 10;
+        default:
+                return 0;
+        }
+        return (0);
 }
 
 void
@@ -152,7 +171,6 @@ tga_getdevconfig(memt, pc, tag, dc)
 	struct tga_devconfig *dc;
 {
 	const struct tga_conf *tgac;
-	const struct tga_ramdac_conf *tgar;
 	struct raster *rap;
 	struct rcons *rcp;
 	bus_size_t pcisize;
@@ -182,6 +200,7 @@ printf("bus_space_map(%x, %x, %x, 0, %p): %d\n", memt, dc->dc_pcipaddr, pcisize,
 
 	dc->dc_regs = (tga_reg_t *)(dc->dc_vaddr + TGA_MEM_CREGS);
 	dc->dc_tga_type = tga_identify(dc->dc_regs);
+
 	tgac = dc->dc_tgaconf = tga_getconf(dc->dc_tga_type);
 	if (tgac == NULL) {
 printf("tgac==0\n");
@@ -194,7 +213,28 @@ printf("tgac==0\n");
 		panic("tga_getdevconfig: memory size mismatch?");
 #endif
 
-	tgar = tgac->tgac_ramdac;
+	switch (dc->dc_regs[TGA_REG_GREV] & 0xff) {
+	case 0x01:
+	case 0x02:
+	case 0x03:
+	case 0x04:
+		dc->dc_tga2 = 0;
+		break;
+	case 0x20:
+	case 0x21:
+	case 0x22:
+		dc->dc_tga2 = 1;
+		break;
+	default:
+		panic("tga_getdevconfig: TGA Revision not recognized");
+	}
+
+	if (dc->dc_tga2) {
+		int        monitor;
+
+		monitor = (~dc->dc_regs[TGA_REG_GREV] >> 16) & 0x0f;
+		tga2_init(dc, monitor);
+	}
 
 	switch (dc->dc_regs[TGA_REG_VHCR] & 0x1ff) {		/* XXX */
 	case 0:
@@ -291,74 +331,95 @@ tgaattach(parent, self, aux)
 		sc->sc_dc = (struct tga_devconfig *)
 		    malloc(sizeof(struct tga_devconfig), M_DEVBUF, M_WAITOK);
 		bzero(sc->sc_dc, sizeof(struct tga_devconfig));
-		tga_getdevconfig(pa->pa_memt, pa->pa_pc, pa->pa_tag, sc->sc_dc);
+		tga_getdevconfig(pa->pa_memt, pa->pa_pc, pa->pa_tag, 
+			sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
 		printf(": couldn't map memory space; punt!\n");
 		return;
 	}
 
-	/* XXX say what's going on. */
-	intrstr = NULL;
-	if (sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_intr != NULL) {
-		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-		    pa->pa_intrline, &intrh)) {
-			printf(": couldn't map interrupt");
-			return;
-		}
-		intrstr = pci_intr_string(pa->pa_pc, intrh);
-		sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY,
-		    sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_intr, sc->sc_dc,
-		    sc->sc_dev.dv_xname);
-		if (sc->sc_intr == NULL) {
-			printf(": couldn't establish interrupt");
-			if (intrstr != NULL)
-				printf("at %s", intrstr);
-			printf("\n");
-			return;
-		}
-	}
+        /* XXX say what's going on. */
+        intrstr = NULL;
+        if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
+            pa->pa_intrline, &intrh)) {
+                printf(": couldn't map interrupt");
+                return;
+        }
+        intrstr = pci_intr_string(pa->pa_pc, intrh);
+        sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY, tga_intr,
+            sc->sc_dc, sc->sc_dev.dv_xname);
+        if (sc->sc_intr == NULL) {
+                printf(": couldn't establish interrupt");
+                if (intrstr != NULL)
+                        printf("at %s", intrstr);
+                printf("\n");
+                return;
+        }
 
-	/*
-	 * Initialize the RAMDAC and allocate any private storage it needs.
-	 * Initialization includes disabling cursor, setting a sane
-	 * colormap, etc.
-	 */
-	(*sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_init)(sc->sc_dc, 1);
+        rev = PCI_REVISION(pa->pa_class);
+        switch (rev) {
+        case 0x1:
+        case 0x2:
+        case 0x3:
+                printf(": DC21030 step %c", 'A' + rev - 1);
+                break;
+        case 0x20:
+                printf(": TGA2 abstract software model");
+                break;
+        case 0x21: 
+	case 0x22:
+                printf(": TGA2 pass %d", rev - 0x20);
+                break;
 
-	printf(": DC21030 ");
-	rev = PCI_REVISION(pa->pa_class);
-	switch (rev) {
-	case 1: case 2: case 3:
-		printf("step %c", 'A' + rev - 1);
-		break;
+        default:
+                printf("unknown stepping (0x%x)", rev);
+                break;
+        }
+        printf(", ");
 
-	default:
-		printf("unknown stepping (0x%x)", rev);
-		break;
-	}
-	printf(", ");
+        /*
+         * Get RAMDAC function vectors and call the RAMDAC functions
+         * to allocate its private storage and pass that back to us.
+         */
+        sc->sc_dc->dc_ramdac_funcs = bt485_funcs();
+        if (!sc->sc_dc->dc_tga2) {
+                sc->sc_dc->dc_ramdac_cookie = bt485_register(
+                    sc->sc_dc, tga_sched_update, tga_ramdac_wr,
+                    tga_ramdac_rd);
+        } else {
+                sc->sc_dc->dc_ramdac_cookie = bt485_register(
+                    sc->sc_dc, tga_sched_update, tga2_ramdac_wr,
+                    tga2_ramdac_rd);
+        }
 
-	if (sc->sc_dc->dc_tgaconf == NULL) {
-		printf("unknown board configuration\n");
-		return;
-	}
-	printf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
-	printf("%s: %d x %d, %dbpp, %s RAMDAC\n", sc->sc_dev.dv_xname,
-	    sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
-	    sc->sc_dc->dc_tgaconf->tgac_phys_depth,
-	    sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_name);
+        /*
+         * Initialize the RAMDAC.  Initialization includes disabling
+         * cursor, setting a sane colormap, etc.
+         */
+        (*sc->sc_dc->dc_ramdac_funcs->ramdac_init)(sc->sc_dc->dc_ramdac_cookie);
+        sc->sc_dc->dc_regs[TGA_REG_SISR] = 0x00000001;                 /* XXX */
 
-	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
-		    intrstr);
+        if (sc->sc_dc->dc_tgaconf == NULL) {
+                printf("unknown board configuration\n");
+                return;
+        }
+        printf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
+        printf("%s: %d x %d, %dbpp, %s RAMDAC\n", sc->sc_dev.dv_xname,
+            sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
+            sc->sc_dc->dc_tgaconf->tgac_phys_depth,
+            sc->sc_dc->dc_ramdac_funcs->ramdac_name);
 
-	aa.console = console;
-	aa.scrdata = &tga_screenlist;
-	aa.accessops = &tga_accessops;
-	aa.accesscookie = sc;
+        if (intrstr != NULL)
+                printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+                    intrstr);
 
-	config_found(self, &aa, wsemuldisplaydevprint);
+        aa.console = console;
+        aa.scrdata = &tga_screenlist;
+        aa.accessops = &tga_accessops;
+        aa.accesscookie = sc;
+
+        config_found(self, &aa, wsemuldisplaydevprint);
 }
 
 int
@@ -371,63 +432,91 @@ tga_ioctl(v, cmd, data, flag, p)
 {
 	struct tga_softc *sc = v;
 	struct tga_devconfig *dc = sc->sc_dc;
-	const struct tga_ramdac_conf *tgar = dc->dc_tgaconf->tgac_ramdac;
+        struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
+        struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
 
-	switch (cmd) {
-	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_TGA;
-		return (0);
+        switch (cmd) {
+        case WSDISPLAYIO_GTYPE:
+                *(u_int *)data = WSDISPLAY_TYPE_TGA;
+                return (0);
 
-	case WSDISPLAYIO_GINFO:
-#define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
-		wsd_fbip->height = sc->sc_dc->dc_ht;
-		wsd_fbip->width = sc->sc_dc->dc_wid;
-		wsd_fbip->depth = sc->sc_dc->dc_tgaconf->tgac_phys_depth;
-		wsd_fbip->cmsize = 256;		/* XXX ??? */
+        case WSDISPLAYIO_GINFO:
+#define wsd_fbip ((struct wsdisplay_fbinfo *)data)
+                wsd_fbip->height = sc->sc_dc->dc_ht;
+                wsd_fbip->width = sc->sc_dc->dc_wid;
+                wsd_fbip->depth = sc->sc_dc->dc_tgaconf->tgac_phys_depth;
+                wsd_fbip->cmsize = 256;                /* XXX ??? */
 #undef wsd_fbip
-		return (0);
+                return (0);
 
-	case WSDISPLAYIO_GETCMAP:
-		return (*tgar->tgar_get_cmap)(dc,
-		    (struct wsdisplay_cmap *)data);
+        case WSDISPLAYIO_GETCMAP:
+                return (*dcrf->ramdac_get_cmap)(dcrc,
+                    (struct wsdisplay_cmap *)data);
 
-	case WSDISPLAYIO_PUTCMAP:
-		return (*tgar->tgar_set_cmap)(dc,
-		    (struct wsdisplay_cmap *)data);
+        case WSDISPLAYIO_PUTCMAP:
+                return (*dcrf->ramdac_set_cmap)(dcrc,
+                    (struct wsdisplay_cmap *)data);
 
-	case WSDISPLAYIO_SVIDEO:
-		if (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF)
-			tga_blank(sc->sc_dc);
-		else
-			tga_unblank(sc->sc_dc);
-		return (0);
+        case WSDISPLAYIO_SVIDEO:
+                if (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF)
+                        tga_blank(sc->sc_dc);
+                else
+                        tga_unblank(sc->sc_dc);
+                return (0);
 
-	case WSDISPLAYIO_GVIDEO:
-		*(u_int *)data = dc->dc_blanked ?
-		    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
-		return (0);
+        case WSDISPLAYIO_GVIDEO:
+                *(u_int *)data = dc->dc_blanked ?
+                    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
+                return (0);
 
-	case WSDISPLAYIO_GCURPOS:
-		return (*tgar->tgar_get_curpos)(dc,
-		    (struct wsdisplay_curpos *)data);
+        case WSDISPLAYIO_GCURPOS:
+                return (*dcrf->ramdac_get_curpos)(dcrc,
+                    (struct wsdisplay_curpos *)data);
 
-	case WSDISPLAYIO_SCURPOS:
-		return (*tgar->tgar_set_curpos)(dc,
-		    (struct wsdisplay_curpos *)data);
+        case WSDISPLAYIO_SCURPOS:
+                return (*dcrf->ramdac_set_curpos)(dcrc,
+                    (struct wsdisplay_curpos *)data);
 
-	case WSDISPLAYIO_GCURMAX:
-		return (*tgar->tgar_get_curmax)(dc,
-		    (struct wsdisplay_curpos *)data);
+        case WSDISPLAYIO_GCURMAX:
+                return (*dcrf->ramdac_get_curmax)(dcrc,
+                    (struct wsdisplay_curpos *)data);
 
-	case WSDISPLAYIO_GCURSOR:
-		return (*tgar->tgar_get_cursor)(dc,
-		    (struct wsdisplay_cursor *)data);
+        case WSDISPLAYIO_GCURSOR:
+                return (*dcrf->ramdac_get_cursor)(dcrc,
+                    (struct wsdisplay_cursor *)data);
 
-	case WSDISPLAYIO_SCURSOR:
-		return (*tgar->tgar_set_cursor)(dc,
-		    (struct wsdisplay_cursor *)data);
-	}
-	return (-1);
+        case WSDISPLAYIO_SCURSOR:
+                return (*dcrf->ramdac_set_cursor)(dcrc,
+                    (struct wsdisplay_cursor *)data);
+        }
+        return (-1);
+}
+
+int
+tga_sched_update(v, f)
+        void        *v;
+        void        (*f) __P((void *));
+{
+        struct tga_devconfig *dc = v;
+
+        dc->dc_regs[TGA_REG_SISR] = 0x00010000;
+        dc->dc_ramdac_intr = f;
+        return 0;
+}
+
+int
+tga_intr(v)
+        void *v;
+{
+        struct tga_devconfig *dc = v;
+        struct ramdac_cookie *dcrc= dc->dc_ramdac_cookie;
+
+        if ((dc->dc_regs[TGA_REG_SISR] & 0x00010001) != 0x00010001)
+                return 0;
+        dc->dc_ramdac_intr(dcrc);
+        dc->dc_ramdac_intr = NULL;
+        dc->dc_regs[TGA_REG_SISR] = 0x00000001;
+        return (1);
 }
 
 int
@@ -507,8 +596,9 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	struct tga_devconfig *dcp = &tga_console_dc;
 	long defattr;
 
-	tga_getdevconfig(memt, pc,
-	    pci_make_tag(pc, bus, device, function), dcp);
+        /* XXX -- we know this isn't a TGA2 for now.  rcd */
+        tga_getdevconfig(memt, pc,
+            pci_make_tag(pc, bus, device, function), dcp);
 
 	/* sanity checks */
 	if (dcp->dc_vaddr == NULL)
@@ -523,7 +613,16 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	 * Initialization includes disabling cursor, setting a sane
 	 * colormap, etc.  It will be reinitialized in tgaattach().
 	 */
-	(*dcp->dc_tgaconf->tgac_ramdac->tgar_init)(dcp, 0);
+
+        /* XXX -- this only works for bt485, but then we only support that,
+         *  currently. 
+         */
+	if (dcp->dc_tga2) 
+		bt485_cninit(dcp, tga_sched_update, tga2_ramdac_wr,
+			tga2_ramdac_rd);
+	else
+		bt485_cninit(dcp, tga_sched_update, tga_ramdac_wr,
+			tga_ramdac_rd);
 
 	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
 
@@ -566,12 +665,13 @@ tga_builtin_set_cursor(dc, cursorp)
 	struct tga_devconfig *dc;
 	struct wsdisplay_cursor *cursorp;
 {
+        struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
+        struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
 	int count, error, v;
 
 	v = cursorp->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		error = (*dc->dc_tgaconf->tgac_ramdac->tgar_check_curcmap)(dc,
-		    cursorp);
+		error = dcrf->ramdac_check_curcmap(dcrc, cursorp);
 		if (error)
 			return (error);
 	}
@@ -605,7 +705,7 @@ tga_builtin_set_cursor(dc, cursorp)
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		/* can't fail. */
-		(*dc->dc_tgaconf->tgac_ramdac->tgar_set_curcmap)(dc, cursorp);
+		dcrf->ramdac_set_curcmap(dcrc, cursorp);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		count = ((64 * 2) / NBBY) * cursorp->size.y;
@@ -624,27 +724,29 @@ tga_builtin_get_cursor(dc, cursorp)
 	struct tga_devconfig *dc;
 	struct wsdisplay_cursor *cursorp;
 {
-	int count, error;
+        struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
+        struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
+        int count, error;
 
-	cursorp->which = WSDISPLAY_CURSOR_DOALL &
-	    ~(WSDISPLAY_CURSOR_DOHOT | WSDISPLAY_CURSOR_DOCMAP);
-	cursorp->enable = (dc->dc_regs[TGA_REG_VVVR] & 0x04) != 0;
-	cursorp->pos.x = dc->dc_regs[TGA_REG_CXYR] & 0xfff;
-	cursorp->pos.y = (dc->dc_regs[TGA_REG_CXYR] >> 12) & 0xfff;
-	cursorp->size.x = 64;
-	cursorp->size.y = (dc->dc_regs[TGA_REG_CCBR] >> 10) & 0x3f;
+        cursorp->which = WSDISPLAY_CURSOR_DOALL &
+            ~(WSDISPLAY_CURSOR_DOHOT | WSDISPLAY_CURSOR_DOCMAP);
+        cursorp->enable = (dc->dc_regs[TGA_REG_VVVR] & 0x04) != 0;
+        cursorp->pos.x = dc->dc_regs[TGA_REG_CXYR] & 0xfff;
+        cursorp->pos.y = (dc->dc_regs[TGA_REG_CXYR] >> 12) & 0xfff;
+        cursorp->size.x = 64;
+        cursorp->size.y = (dc->dc_regs[TGA_REG_CCBR] >> 10) & 0x3f;
 
-	if (cursorp->image != NULL) {
-		count = (cursorp->size.y * 64 * 2) / NBBY;
-		error = copyout((char *)(dc->dc_vaddr +
-		      (dc->dc_regs[TGA_REG_CCBR] & 0x3ff)),
-		    cursorp->image, count);
-		if (error)
-			return (error);
-		/* No mask */
-	}
-	error = (*dc->dc_tgaconf->tgac_ramdac->tgar_get_curcmap)(dc, cursorp);
-	return (error);
+        if (cursorp->image != NULL) {
+                count = (cursorp->size.y * 64 * 2) / NBBY;
+                error = copyout((char *)(dc->dc_vaddr +
+                      (dc->dc_regs[TGA_REG_CCBR] & 0x3ff)),
+                    cursorp->image, count);
+                if (error)
+                        return (error);
+                /* No mask */
+        }
+        error = dcrf->ramdac_get_curcmap(dcrc, cursorp);
+        return (error);
 }
 
 int
@@ -888,4 +990,194 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	regs0[TGA_REG_GOPR] = 0x0003;		/* op -> dst = src */
 	regs0[TGA_REG_GMOR] = 0x0000;		/* Simple mode */
 	return 0;
+}
+
+void
+tga_ramdac_wr(v, btreg, val)
+        void *v;
+        u_int btreg;
+        u_int8_t val;
+{
+        struct tga_devconfig *dc = v;
+        volatile tga_reg_t *tgaregs = dc->dc_regs;
+
+        if (btreg > BT485_REG_MAX)
+                panic("tga_ramdac_wr: reg %d out of range\n", btreg);
+
+        tgaregs[TGA_REG_EPDR] = (btreg << 9) | (0 << 8 ) | val; /* XXX */
+#ifdef __alpha__
+        alpha_mb();
+#endif
+}
+
+void
+tga2_ramdac_wr(v, btreg, val)
+        void *v;
+        u_int btreg;
+        u_int8_t val;
+{
+        struct tga_devconfig *dc = v;
+        volatile tga_reg_t *ramdac;
+
+        if (btreg > BT485_REG_MAX)
+                panic("tga_ramdac_wr: reg %d out of range\n", btreg);
+
+        ramdac = (tga_reg_t *)(dc->dc_vaddr + TGA2_MEM_RAMDAC +
+            (0xe << 12) + (btreg << 8));
+        *ramdac = val & 0xff;
+#ifdef __alpha__
+        alpha_mb();
+#endif
+}
+
+u_int8_t
+tga_ramdac_rd(v, btreg)
+        void *v;
+        u_int btreg;
+{
+        struct tga_devconfig *dc = v;
+        volatile tga_reg_t *tgaregs = dc->dc_regs;
+        tga_reg_t rdval;
+
+        if (btreg > BT485_REG_MAX)
+                panic("tga_ramdac_rd: reg %d out of range\n", btreg);
+
+        tgaregs[TGA_REG_EPSR] = (btreg << 1) | 0x1;                /* XXX */
+#ifdef __alpha__
+        alpha_mb();
+#endif
+
+        rdval = tgaregs[TGA_REG_EPDR];
+        return (rdval >> 16) & 0xff;                                /* XXX */
+}
+
+u_int8_t
+tga2_ramdac_rd(v, btreg)
+        void *v;
+        u_int btreg;
+{
+        struct tga_devconfig *dc = v;
+        volatile tga_reg_t *ramdac;
+        u_int8_t retval;
+
+        if (btreg > BT485_REG_MAX)
+                panic("tga_ramdac_rd: reg %d out of range\n", btreg);
+
+        ramdac = (tga_reg_t *)(dc->dc_vaddr + TGA2_MEM_RAMDAC +
+            (0xe << 12) + (btreg << 8));
+        retval = (u_int8_t)(*ramdac & 0xff);
+#ifdef __alpha__
+        alpha_mb();
+#endif
+        return retval;
+}
+
+#include <dev/ic/decmonitors.c>
+void tga2_ics9110_wr __P((
+        struct tga_devconfig *dc,
+        int dotclock
+));
+
+void
+tga2_init(dc, m)
+        struct tga_devconfig *dc;
+        int m;
+{
+
+        tga2_ics9110_wr(dc, decmonitors[m].dotclock);
+        dc->dc_regs[TGA_REG_VHCR] =
+             ((decmonitors[m].hbp / 4) << 21) |
+             ((decmonitors[m].hsync / 4) << 14) |
+#if 0
+            (((decmonitors[m].hfp - 4) / 4) << 9) |
+             ((decmonitors[m].cols + 4) / 4);
+#else
+            (((decmonitors[m].hfp) / 4) << 9) |
+             ((decmonitors[m].cols) / 4);
+#endif
+        dc->dc_regs[TGA_REG_VVCR] =
+            (decmonitors[m].vbp << 22) |
+            (decmonitors[m].vsync << 16) |
+            (decmonitors[m].vfp << 11) |
+            (decmonitors[m].rows);
+        dc->dc_regs[TGA_REG_VVBR] = 1;          alpha_mb();
+        dc->dc_regs[TGA_REG_VVVR] |= 1;                alpha_mb();
+        dc->dc_regs[TGA_REG_GPMR] = 0xffffffff;        alpha_mb();
+}
+
+void
+tga2_ics9110_wr(dc, dotclock)
+        struct tga_devconfig *dc;
+        int dotclock;
+{
+        volatile tga_reg_t *clock;
+        u_int32_t valU;
+        int N, M, R, V, X;
+        int i;
+
+        switch (dotclock) {
+        case 130808000:
+                N = 0x40; M = 0x7; V = 0x0; X = 0x1; R = 0x1; break;
+        case 119840000:
+                N = 0x2d; M = 0x2b; V = 0x1; X = 0x1; R = 0x1; break;
+        case 108180000:
+                N = 0x11; M = 0x9; V = 0x1; X = 0x1; R = 0x2; break;
+        case 103994000:
+                N = 0x6d; M = 0xf; V = 0x0; X = 0x1; R = 0x1; break;
+        case 175000000:
+                N = 0x5F; M = 0x3E; V = 0x1; X = 0x1; R = 0x1; break;
+        case  75000000:
+                N = 0x6e; M = 0x15; V = 0x0; X = 0x1; R = 0x1; break;
+        case  74000000:
+                N = 0x2a; M = 0x41; V = 0x1; X = 0x1; R = 0x1; break;
+        case  69000000:
+                N = 0x35; M = 0xb; V = 0x0; X = 0x1; R = 0x1; break;
+        case  65000000:
+                N = 0x6d; M = 0x0c; V = 0x0; X = 0x1; R = 0x2; break;
+        case  50000000:
+                N = 0x37; M = 0x3f; V = 0x1; X = 0x1; R = 0x2; break;
+        case  40000000:
+                N = 0x5f; M = 0x11; V = 0x0; X = 0x1; R = 0x2; break;
+        case  31500000:
+                N = 0x16; M = 0x05; V = 0x0; X = 0x1; R = 0x2; break;
+        case  25175000:
+                N = 0x66; M = 0x1d; V = 0x0; X = 0x1; R = 0x2; break;
+        case 135000000:
+                N = 0x42; M = 0x07; V = 0x0; X = 0x1; R = 0x1; break;
+        case 110000000:
+                N = 0x60; M = 0x32; V = 0x1; X = 0x1; R = 0x2; break;
+        case 202500000:
+                N = 0x60; M = 0x32; V = 0x1; X = 0x1; R = 0x2; break;
+        default:
+                panic("unrecognized clock rate %d\n", dotclock);
+        }
+
+        /* XXX -- hard coded, bad */
+        valU  = N | ( M << 7 ) | (V << 14);
+        valU |= (X << 15) | (R << 17);
+        valU |= 0x17 << 19;
+
+
+        clock = (tga_reg_t *)(dc->dc_vaddr + TGA2_MEM_EXTDEV +
+            TGA2_MEM_CLOCK + (0xe << 12)); /* XXX */
+
+        for (i=24; i>0; i--) {
+                u_int32_t       writeval;
+                
+                writeval = valU & 0x1;
+                if (i == 1)  
+                        writeval |= 0x2; 
+                valU >>= 1;
+                *clock = writeval;
+#ifdef __alpha__
+                alpha_mb();
+#endif
+        }       
+        clock = (tga_reg_t *)(dc->dc_vaddr + TGA2_MEM_EXTDEV +
+            TGA2_MEM_CLOCK + (0xe << 12) + (0x1 << 11)); /* XXX */
+        clock += 0x1 << 9;
+        *clock = 0x0;
+#ifdef __alpha__
+                alpha_mb();
+#endif
 }
