@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.8 1997/06/05 10:15:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.9 1997/07/07 17:52:10 kstailey Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ fork1(p1, forktype, rforkflags, retval)
 	register struct proc *p2;
 	register uid_t uid;
 	struct proc *newproc;
+	struct vmspace *vm;
 	int count;
 	static int pidchecked = 0;
 	int dupfd = 1, cleanfd = 0;
@@ -319,16 +320,20 @@ again:
 	 */
 	vm_fork(p1, p2);
 #endif
+	vm = p2->p_vmspace;
 
 	switch (forktype) {
 		case ISFORK:
 			forkstat.cntfork++;
+			forkstat.sizfork += vm->vm_dsize + vm->vm_ssize;
 			break;
 		case ISVFORK:
 			forkstat.cntvfork++;
+			forkstat.sizvfork += vm->vm_dsize + vm->vm_ssize;
 			break;
 		case ISRFORK:
 			forkstat.cntrfork++;
+			forkstat.sizrfork += vm->vm_dsize + vm->vm_ssize;
 			break;
 	}
 
