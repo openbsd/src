@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.4 2001/10/03 18:20:12 deraadt Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.5 2001/10/31 11:00:24 art Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -140,7 +140,7 @@ int cmpci_query_devinfo __P((void *, mixer_devinfo_t *));
 void *cmpci_malloc __P((void *, u_long, int, int));
 void cmpci_free __P((void *, void *, int));
 u_long cmpci_round_buffersize __P((void *, u_long));
-int cmpci_mappage __P((void *, void *, int, int));
+paddr_t cmpci_mappage __P((void *, void *, off_t, int));
 int cmpci_get_props __P((void *));
 int cmpci_trigger_output __P((void *, void *, void *, int,
                               void (*)(void *), void *,
@@ -1464,11 +1464,11 @@ cmpci_round_buffersize(handle, bufsize)
 	return bufsize;
 }
 
-int
+paddr_t
 cmpci_mappage(handle, addr, offset, prot)
 	void *handle;
 	void *addr;
-	int   offset;
+	off_t offset;
 	int   prot;
 {
 	struct cmpci_softc *sc = handle;

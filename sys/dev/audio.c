@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.29 2001/09/20 17:02:31 mpech Exp $	*/
+/*	$OpenBSD: audio.c,v 1.30 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ int	audio_read __P((dev_t, struct uio *, int));
 int	audio_write __P((dev_t, struct uio *, int));
 int	audio_ioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	audio_select __P((dev_t, int, struct proc *));
-int	audio_mmap __P((dev_t, int, int));
+paddr_t	audio_mmap __P((dev_t, off_t, int));
 
 int	mixer_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
 int	mixer_close __P((dev_t, int, int, struct proc *));
@@ -796,7 +796,7 @@ audiommap(dev, off, prot)
 {
         int unit = AUDIOUNIT(dev);
         struct audio_softc *sc;
-	int error;
+	int ret;
 
         if (unit >= audio_cd.cd_ndevs ||
             (sc = audio_cd.cd_devs[unit]) == NULL)
@@ -809,20 +809,20 @@ audiommap(dev, off, prot)
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		error = audio_mmap(dev, off, prot);
+		ret = audio_mmap(dev, off, prot);
 		break;
 	case AUDIOCTL_DEVICE:
 	case MIXER_DEVICE:
-		error = -1;
+		ret = -1;
 		break;
 	default:
-		error = -1;
+		ret = -1;
 		break;
 	}
 
 	if (--sc->sc_refcnt < 0)
 	        wakeup(&sc->sc_refcnt);
-	return (error);
+	return (ret);
 }
 
 /*
@@ -1820,10 +1820,11 @@ audio_select(dev, rw, p)
 	return (0);
 }
 
-int
+paddr_t
 audio_mmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	int s;
 	int unit = AUDIOUNIT(dev);

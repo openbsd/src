@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.12 2001/10/01 06:09:24 jason Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.13 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ struct audio_hw_if {
 	void	*(*allocm_old)__P((void *, unsigned long, int, int));
 	void	(*freem)__P((void *, void *, int));
 	unsigned long (*round_buffersize_old)__P((void *, unsigned long));
-	int	(*mappage)__P((void *, void *, int, int));
+	paddr_t	(*mappage)__P((void *, void *, off_t, int));
 
 	int 	(*get_props)__P((void *)); /* device properties */
 

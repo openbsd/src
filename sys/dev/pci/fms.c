@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.4 2001/08/25 10:13:29 art Exp $ */
+/*	$OpenBSD: fms.c,v 1.5 2001/10/31 11:00:24 art Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ int	fms_query_devinfo __P((void *, mixer_devinfo_t *));
 void	*fms_malloc __P((void *, int, size_t, int, int));
 void	fms_free __P((void *, void *, int));
 size_t	fms_round_buffersize __P((void *, int, size_t));
-int	fms_mappage __P((void *, void *, int, int));
+paddr_t	fms_mappage __P((void *, void *, off_t, int));
 int	fms_get_props __P((void *));
 int	fms_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 				void *, struct audio_params *));
@@ -852,11 +852,11 @@ fms_round_buffersize(addr, direction, size)
 	return size;
 }
 
-int
+paddr_t
 fms_mappage(addr, mem, off, prot)
 	void *addr;
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct fms_softc *sc = addr;

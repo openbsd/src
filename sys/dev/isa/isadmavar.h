@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadmavar.h,v 1.11 1998/01/20 18:40:31 niklas Exp $	*/
+/*	$OpenBSD: isadmavar.h,v 1.12 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: isadmavar.h,v 1.10 1997/08/04 22:13:33 augustss Exp $	*/
 
 /*-
@@ -109,4 +109,4 @@ int	   isa_drq_isfree __P((struct device *, int));
 
 void      *isa_malloc __P((struct device *, int, size_t, int, int));
 void	   isa_free __P((void *, int));
-int	   isa_mappage __P((void *, int, int));
+paddr_t	   isa_mappage __P((void *, off_t, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.3 2001/10/24 23:23:44 ho Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.4 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -197,7 +197,7 @@ int	emuxki_query_devinfo    __P((void *, mixer_devinfo_t *));
 void   *emuxki_allocm           __P((void *, int, size_t, int, int));
 void	emuxki_freem            __P((void *, void *, int));
 
-int	emuxki_mappage          __P((void *, void *, int, int));
+paddr_t	emuxki_mappage          __P((void *, void *, off_t, int));
 int	emuxki_get_props        __P((void *));
 
 /* Interrupt handler */
@@ -1958,8 +1958,8 @@ emuxki_round_buffersize(void *addr, int direction, size_t bsize)
 	return (bsize);
 }
 
-int
-emuxki_mappage(void *addr, void *ptr, int off, int prot)
+paddr_t
+emuxki_mappage(void *addr, void *ptr, off_t off, int prot)
 {
 	struct emuxki_softc *sc = addr;
 	struct emuxki_mem *mem;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.21 2001/04/12 07:51:56 csapuntz Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.22 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -1670,11 +1670,11 @@ ad1848_round(addr, size)
 	return size;
 }
 
-int
+paddr_t
 ad1848_mappage(addr, mem, off, prot)
 	void *addr;
         void *mem;
-        int off;
+        off_t off;
 	int prot;
 {
 	return isa_mappage(mem, off, prot);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.6 2001/08/26 03:32:22 jason Exp $	*/
+/*	$OpenBSD: yds.c,v 1.7 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ int	yds_mixer_get_port __P((void *, mixer_ctrl_t *));
 void   *yds_malloc __P((void *, u_long, int, int));
 void	yds_free __P((void *, void *, int));
 u_long	yds_round_buffersize __P((void *, u_long));
-int	yds_mappage __P((void *, void *, int, int));
+paddr_t	yds_mappage __P((void *, void *, off_t, int));
 int	yds_get_props __P((void *));
 int	yds_query_devinfo __P((void *addr, mixer_devinfo_t *dip));
 
@@ -1794,11 +1794,11 @@ yds_round_buffersize(addr, size)
 	return (size);
 }
 
-int
+paddr_t
 yds_mappage(addr, mem, off, prot)
 	void *addr;
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct yds_softc *sc = addr;

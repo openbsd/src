@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.13 2001/09/21 17:55:43 miod Exp $	*/
+/*	$OpenBSD: eso.c,v 1.14 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ HIDE int	eso_query_devinfo __P((void *, mixer_devinfo_t *));
 HIDE void *	eso_allocm __P((void *, int, size_t, int, int));
 HIDE void	eso_freem __P((void *, void *, int));
 HIDE size_t	eso_round_buffersize __P((void *, int, size_t));
-HIDE int	eso_mappage __P((void *, void *, int, int));
+HIDE paddr_t	eso_mappage __P((void *, void *, off_t, int));
 HIDE int	eso_get_props __P((void *));
 HIDE int	eso_trigger_output __P((void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *));
@@ -1579,11 +1579,11 @@ eso_round_buffersize(hdl, direction, bufsize)
 	return (bufsize);
 }
 
-HIDE int
+HIDE paddr_t
 eso_mappage(hdl, addr, offs, prot)
 	void *hdl;
 	void *addr;
-	int offs;
+	off_t offs;
 	int prot;
 {
 	struct eso_softc *sc = hdl;

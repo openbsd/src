@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.8 1999/01/07 06:14:46 niklas Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.9 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ void     ad1848_mute_channel __P((struct ad1848_softc *, int device, int mute));
 void   *ad1848_malloc __P((void *, unsigned long, int, int));
 void	ad1848_free __P((void *, void *, int));
 unsigned long ad1848_round __P((void *, unsigned long));
-int	ad1848_mappage __P((void *, void *, int, int));
+paddr_t	ad1848_mappage __P((void *, void *, off_t, int));
 
 int	ad1848_get_props __P((void *));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.8 2001/10/03 00:59:27 kevlo Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.9 2001/10/31 11:00:24 art Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ int cs4281_query_devinfo	__P((void *, mixer_devinfo_t *));
 void *cs4281_malloc		__P((void *, u_long, int, int));
 u_long cs4281_round_buffersize	__P((void *, u_long));
 void cs4281_free		__P((void *, void *, int));
-int cs4281_mappage		__P((void *, void *, int, int));
+paddr_t cs4281_mappage		__P((void *, void *, off_t, int));
 
 int cs4281_allocmem		__P((struct cs4281_softc *, size_t, int, int,
 				     struct cs4281_dma *));
@@ -1418,8 +1418,8 @@ cs4281_round_buffersize(void *addr, u_long size)
 	return (size);
 }
 
-int
-cs4281_mappage(void *addr, void *mem, int off, int prot)
+paddr_t
+cs4281_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct cs4281_softc *sc;
 	struct cs4281_dma *p;

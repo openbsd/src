@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.11 2001/09/21 17:55:44 miod Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.12 2001/10/31 11:00:24 art Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -180,7 +180,7 @@ int	maestro_query_devinfo __P((void *, mixer_devinfo_t *));
 void	*maestro_malloc __P((void *, int, size_t, int, int));
 void	maestro_free __P((void *, void *, int));
 size_t	maestro_round_buffersize __P((void *, int, size_t));
-int	maestro_mappage __P((void *, void *, int, int));
+paddr_t	maestro_mappage __P((void *, void *, off_t, int));
 int	maestro_get_props __P((void *));
 int	maestro_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 				void *, struct audio_params *));
@@ -603,10 +603,11 @@ maestro_free(self, ptr, pool)
 	salloc_free(sc->dmapool, ptr);
 }
 
-int
+paddr_t
 maestro_mappage(self, mem, off, prot)
 	void *self, *mem;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct maestro_softc *sc = (struct maestro_softc *)self;
 

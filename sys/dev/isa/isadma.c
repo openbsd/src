@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.22 1999/01/11 01:49:00 millert Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.23 2001/10/31 11:00:24 art Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -726,10 +726,10 @@ isa_free(addr, pool)
 	free(m, pool);
 }
 
-int
+paddr_t
 isa_mappage(mem, off, prot)
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct isa_mem *m;
