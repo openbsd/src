@@ -1,4 +1,4 @@
-$OpenBSD: README.ss,v 1.5 1997/03/11 03:40:49 kstailey Exp $
+$OpenBSD: README.ss,v 1.6 1997/03/11 15:46:01 kstailey Exp $
 
 If you think SCSI tape drives are quirky you haven't seen anything.
 
@@ -34,7 +34,14 @@ common code for ssread() in ss.c could be used.
 Other Considerations
 
 SCSI disconnect is missing from many scanners.  Sucks huh?  A slow
-peripheral that also monopolizes the bus.
+peripheral that also monopolizes the bus.  This means that if your
+scanner does not support disconnect you need a second SCSI controller
+for it since access of the controller by any other devices will be
+locked out while you are scanning.  Scanners that do this include
+MUSTEK flatbed scanners MFS 06000CX and MFS 12000CX, UMAX UC-630 &
+UG-630.  Over time, as multi-tasking becomes more important to
+commoners^H^H^H^H^H^H^H^H^HWindoze users, scanner vendors often supply
+new ROMs that can do disconnect.
 
 The image data from the scanner driver is currently supposed to resemble
 headerless PBM "rawbits".  Depending on this is probably a bad idea
