@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.2 2002/06/07 05:26:36 hin Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/06/09 18:53:45 hin Exp $
 
 AFSTOPDIR=	../..
 .include <../../Makefile.inc>
 
 PROG	= afsd
-MAN	= afsd.8 CellServDB.5 ThisCell.5 SuidCells.5
+MAN	= afsd.8 CellServDB.5 ThisCell.5 SuidCells.5 afsd.conf.5 DynRootDB.5
 BINDIR	= /usr/libexec
 LDADD	+= ${LIBARLA} ${LIBROKEN} -lkafs -lkrb -ldes
 DPADD	+= ${LIBARLA} ${LIBROKEN}
@@ -36,9 +36,11 @@ SRCS	= adir.c \
 
 .PATH: ${AFSSRC}/arlad
 
-# XXX This is a kludge but i don't know how to handle this
 afsd.8:
 	ln -s ${AFSSRC}/arlad/arlad.8 afsd.8
-CLEANFILES+=afsd.8 fbuf.h fdir.h afs_dir.h
+afsd.conf.5:
+	ln -s ${AFSSRC}/arlad/arla.conf.5 afsd.conf.5
+
+CLEANFILES+=afsd.8 fbuf.h fdir.h afs_dir.h afsd.conf.5
 
 .include <bsd.prog.mk>
