@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.33 1998/03/10 08:43:50 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.34 1998/03/11 08:20:31 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -345,6 +345,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ALG2302",
 	},
 	{
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
+	    0,
+	    "Bit3 Computer Corp.",
+	    "PCI-VME Interface Mod. 617",
+	},
+	{
 	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC,
 	    0,
 	    "BusLogic",
@@ -465,10 +471,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CL-GD7541",
 	},
 	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640A,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
 	    0,
 	    "CMD Technology",
-	    "PCI640A",
+	    "PCI640",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_642,

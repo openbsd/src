@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.33 1998/03/10 08:43:50 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.34 1998/03/11 08:20:31 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -600,6 +600,9 @@
 #define	PCI_PRODUCT_AVANCE2_ALG2301	0x2301		/* ALG2301 */
 #define	PCI_PRODUCT_AVANCE2_ALG2302	0x2302		/* ALG2302 */
 
+/* Bit3 products */
+#define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* PCI-VME Interface Mod. 617 */
+
 /* BusLogic products */
 #define	PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC	0x0140		/* MultiMaster NC */
 #define	PCI_PRODUCT_BUSLOGIC_MULTIMASTER	0x1040		/* MultiMaster */
@@ -628,8 +631,8 @@
 #define	PCI_PRODUCT_CIRRUS_CL_GD7543	0x1202		/* CL-GD7543 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7541	0x1204		/* CL-GD7541 */
 
-/* CMD Technology products */
-#define	PCI_PRODUCT_CMDTECH_640A	0x0640		/* PCI640A */
+/* CMD Technology products -- info gleaned from their web site */
+#define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI640 */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
 #define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 */
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
