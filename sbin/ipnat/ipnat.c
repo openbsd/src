@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.26 1999/02/05 05:58:48 deraadt Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.27 1999/06/03 17:53:11 deraadt Exp $    */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.26 1999/02/05 05:58:48 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.27 1999/06/03 17:53:11 deraadt Exp $";
 #endif
 
 
@@ -599,13 +599,13 @@ int	*resolved;
 	if (isdigit(*host))
 		return inet_addr(host);
 
+#if defined(__OpenBSD__)
+	/* attempt a map from interface name to address */
+	if ((addr = if_addr(host)) != INADDR_NONE)
+		return addr;
+#endif
 	if (!(hp = gethostbyname(host))) {
 		if (!(np = getnetbyname(host))) {
-#if defined(__OpenBSD__)
-			/* attempt a map from interface name to address */
-			if ((addr = if_addr(host)) != INADDR_NONE)
-				return addr;
-#endif
 			*resolved = -1;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
