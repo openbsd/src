@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.344 2003/03/27 15:49:47 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.345 2003/03/27 15:58:11 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -358,7 +358,6 @@ typedef struct {
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ BANDWIDTH TBRSIZE
 %token	QUEUE PRIORITY QLIMIT
-%token	DEFAULT BORROW RED ECN RIO
 %token	<v.string>		STRING
 %token	<v.i>			PORTUNARY PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
@@ -1029,21 +1028,34 @@ cbqflags_list	: cbqflags_item				{ $$ |= $1; }
 		| cbqflags_list comma cbqflags_item	{ $$ |= $3; }
 		;
 
-cbqflags_item	: DEFAULT	{ $$ = CBQCLF_DEFCLASS; }
-		| BORROW	{ $$ = CBQCLF_BORROW; }
-		| RED		{ $$ = CBQCLF_RED; }
-		| ECN		{ $$ = CBQCLF_RED|CBQCLF_ECN; }
-		| RIO		{ $$ = CBQCLF_RIO; }
+cbqflags_item	: STRING	{
+			if (!strcmp($1, "default"))
+				$$ = CBQCLF_DEFCLASS;
+			else if (!strcmp($1, "borrow"))
+				$$ = CBQCLF_BORROW;
+			else if (!strcmp($1, "red"))
+				$$ = CBQCLF_RED;
+			else if (!strcmp($1, "ecn"))
+				$$ = CBQCLF_RED|CBQCLF_ECN;
+			else if (!strcmp($1, "rio"))
+				$$ = CBQCLF_RIO;
+		}
 		;
 
 priqflags_list	: priqflags_item			{ $$ |= $1; }
 		| priqflags_list comma priqflags_item	{ $$ |= $3; }
 		;
 
-priqflags_item	: DEFAULT	{ $$ = PRCF_DEFAULTCLASS; }
-		| RED		{ $$ = PRCF_RED; }
-		| ECN		{ $$ = PRCF_RED|PRCF_ECN; }
-		| RIO		{ $$ = PRCF_RIO; }
+priqflags_item	: STRING	{
+			if (!strcmp($1, "default"))
+				$$ = PRCF_DEFAULTCLASS;
+			else if (!strcmp($1, "red"))
+				$$ = PRCF_RED;
+			else if (!strcmp($1, "ecn"))
+				$$ = PRCF_RED|PRCF_ECN;
+			else if (!strcmp($1, "rio"))
+				$$ = PRCF_RIO;
+		}
 		;
 
 qassign		: /* empty */		{ $$ = NULL; }
@@ -3431,15 +3443,12 @@ lookup(char *s)
 		{ "bitmask",		BITMASK},
 		{ "block",		BLOCK},
 		{ "block-policy",	BLOCKPOLICY},
-		{ "borrow",		BORROW},
 		{ "cbq",		CBQ},
 		{ "code",		CODE},
 		{ "crop",		FRAGCROP},
-		{ "default",		DEFAULT},
 		{ "drop",		DROP},
 		{ "drop-ovl",		FRAGDROP},
 		{ "dup-to",		DUPTO},
-		{ "ecn",		ECN},
 		{ "fastroute",		FASTROUTE},
 		{ "file",		FILENAME},
 		{ "flags",		FLAGS},
@@ -3483,14 +3492,12 @@ lookup(char *s)
 		{ "rdr",		RDR},
 		{ "rdr-anchor",		RDRANCHOR},
 		{ "reassemble",		FRAGNORM},
-		{ "red",		RED},
 		{ "reply-to",		REPLYTO},
 		{ "require-order",	REQUIREORDER},
 		{ "return",		RETURN},
 		{ "return-icmp",	RETURNICMP},
 		{ "return-icmp6",	RETURNICMP6},
 		{ "return-rst",		RETURNRST},
-		{ "rio",		RIO},
 		{ "round-robin",	ROUNDROBIN},
 		{ "route-to",		ROUTETO},
 		{ "scrub",		SCRUB},
