@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.19 2003/07/02 21:04:09 deraadt Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.20 2003/11/23 19:00:27 otto Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -194,7 +194,8 @@ main(int argc, char **argv)
 		char line[BUFSIZ], *string;
 
 		if (prompt) {
-			string = getpass("Enter string: ");
+			if ((string = getpass("Enter string: ")) == NULL)
+				err(1, "getpass");
 			print_passwd(string, operation, extra);
 			(void)fputc('\n', stdout);
 		} else {
