@@ -109,19 +109,13 @@ To generate an encrypted private key, you would use:
   -out /etc/ssl/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
 .Ed
 .Sh GENERATING RSA SERVER CERTIFICATES FOR WEB SERVERS
-To generate
-.Ar RSA
-certificates, you will first need to upgrade your
-shared libraries to support
-.Ar RSA
-as described above.
-Once that is done, you can generate
-.Ar RSA
-certificates that will be usable by
-.Xr httpd 8
-for
+To support
 .Ar https
-transactions.
+transactions in
+.Xr httpd 8
+you will need to generate an
+.Ar RSA
+certificate.
 .Bd -literal -offset indent
 # openssl genrsa -out /etc/ssl/private/server.key 1024
 .Ed
@@ -193,9 +187,6 @@ capable
 and
 .Ar SSH
 services.
-.Pp
-According to "Applied Cryptography: Schneier"
-the RSA patent will expire September 20th, 2000.
 .Sh SEE ALSO
 .Xr httpd 8 ,
 .Xr ssh 1 ,
