@@ -1,4 +1,12 @@
-			  nat.rules examples
+Example NAT Rules
+
+# Scenario: Two network interfaces; one connected to internal 192.168.0.XXX
+# network, other connected externally to the Internet. Suppose the internal
+# interface is named ep1 and the external interface is named xl0. The
+# following mapping will provide the internal network with Internet
+# connectivity for tcp/udp traffic (note the ep1 name is not used; instead
+# its network address is used):
+map xl0 192.168.0.0/24 -> xl0/32 portmap tcp/udp 10000:20000
 
 # map all tcp connections from network 10 to the address of the first ppp0
 # interface (which can be dynamically assigned prior to use of ipnat)

@@ -3,29 +3,37 @@
 .Os
 .Sh NAME
 .Nm ipnat
-.Nd user interface to the NAT
+.Nd manage IP network address translation rules
 .Sh SYNOPSIS
 .Nm ipnat
 .Op Fl CFlnrsv
 .Op Fl f Ar filename
 .Sh DESCRIPTION
+The
 .Nm
-provides control over the kernel's network address translation (NAT). The NAT
-remaps IP addresses from one range to another. In other words, when properly
-configured on a gateway, the NAT provides Internet access to connected
-computers lacking officially assigned IP addresses. It is discussed in RFC
-1631.
+utility
+provides control over the kernel's network address translation (NAT).
+The NAT facility remaps IP addresses from one range the another.
+It can be used to provide internal networks with Internet connectivity by
+mapping several private IP addresses to a single routeable
+.Pq i.e., Dq real
+Internet address.
+.Pp
+In other words, when properly configured on a gateway, the NAT provides
+Internet access to connected computers lacking officially assigned IP
+addresses.
+It is discussed in RFC 1631.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl f Ar filename
-File from which rules are read from.
+File from which rules are read.
 .It Fl C
 Delete all entries in the NAT list.
 .It Fl F
 Flush all active mappings from the NAT table.
 .It Fl l
-Display the current entries and mappings.
+Display the current rule list and active mappings.
 .It Fl n
 Do not alter the NAT table.
 .It Fl r
@@ -38,15 +46,54 @@ Verbosity. Displays detailed information pertaining to rule processing.
 .Pp
 Certain configuration requirements must be met before
 .Nm
-will work. These are listed in
-.Pa /usr/share/ipf/nat.2 .
-.Pp
+will work:
+.Bl -enum -offset indent
+.It
+Network address translation requires packet forwarding capabilities.
+Ensure the
+.Pa /etc/sysctl.conf
+file contains the assignment
+.Cm net.inet.ip.forwarding=1 .
+.It
+Packet filtering (see
+.Xr ipf 8 )
+must be enabled, even if it's not being used. Check the
+.Pa /etc/rc.conf
+file and make sure it contains the assignment
+.Cm ipfilter=YES .
+.It
+The kernel must be configured with
+.Cm option IPFILTER
+(and
+.Cm option IPFILTER_LOG
+if
+.Xr ipmon 8
+is needed).
+Both options are compiled into the default (GENERIC) kernel that comes with
+the system.
+.It
+Finally, enable NAT itself by setting
+.Cm ipnat=YES
+in
+.Pa /etc/rc.conf .
+This will cause
+.Pa /etc/netstart
+to run
 .Nm
-operates on a list of rules, specified by
-.Ar filename .
+at boot-time with
+.Pa /etc/ipnat.rules
+as the rule list to install.
+.El
+.Pp
+The
+.Nm
+utility operates on a list of rules, specified by
+.Fl f Ar filename .
 This file is typically
 .Pa /etc/ipnat.rules ;
-stdin is represented by "\-". Each rule is parsed, then sequentially added to
+standard input is represented by a single dash
+.Pq Ql - .
+Each rule is parsed, then sequentially added to
 the kernel's internal NAT list. Like
 .Xr ipf 8 ,
 if an entry contradicts another previously added, the newer will take
@@ -62,7 +109,10 @@ begin with either
 .Em bimap ,
 or
 .Em rdr .
-.Pp
+See below for rule syntax, or refer to
+.Pa /usr/share/ipf/nat.1
+for sample rule entries.
+.Ss Mapping rules
 .Em map
 tells the NAT how a range of addresses should be translated. The entries use
 the following format:
@@ -81,6 +131,22 @@ or
 while an Ethernet connection would instead have the name of its device.
 In the presence of multiple network devices, you wish to use the device
 which is on the external side.
+.Pp
+As a quick example:
+.Bd -literal -offset indent
+map ep1 10.1.1.0/24 -> ep1/32 portmap tcp/udp 10000:20000
+.Ed
+.Pp
+This rule would remap all connections originating from 10.1.1.0 through
+10.1.1.254 to the externally-connected network.
+Note that
+.Dq ep1
+is the name of the
+.Em outside
+interface on the gateway; that is, the interface with the external
+.Pq i.e., Dq real
+IP address.
+Do not specify internal interface names, use their addresses instead.
 .Pp
 The address range of the LAN goes in the
 .Em internal
@@ -141,6 +207,7 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 .Pp
 That will cut the number down from ~16,000,000 addresses short to only 527,566.
 .Pp
+.Ss Bidirectional mapping rules
 .Em bimap
 is used to create static, bidirectional NAT mappings. Standard
 .Em map
@@ -187,6 +254,7 @@ ifconfig fxp0 alias 209.1.2.3 netmask 255.255.255.255
 ifconfig fxp0 alias 209.1.2.4 netmask 255.255.255.255
 .Ed
 .Pp
+.Ss Redirection rules
 .Em rdr
 tells the NAT how to redirect incoming packets. It is useful if one wishes to
 redirect a connection through a proxy, or to another box on the private
@@ -222,13 +290,14 @@ or
 (the last two have the same effect) to the end of the line. TCP is the default.
 .Sh FILES
 .Bl -tag -width /usr/share/ipf/nat.1 -compact
-.It Pa /dev/ipnat
+.It Pa /etc/ipnat.rules
+default system rule list
 .It Pa /usr/share/ipf/nat.1
 example rules
 .It Pa /usr/share/ipf/nat.2
 system requirements for use of the NAT
-.It Pa /etc/ipnat.rules
-actual rule list
+.It Pa /dev/ipnat
+device file
 .El
 .Sh BUGS
 .Em bimap
@@ -236,7 +305,6 @@ should really only be used with single IP addresses (x.x.x.x/32). Bimapping
 other CIDR ranges will result in unexpected, and possibly random mappings
 into the destination address block.
 .Sh SEE ALSO
-.Xr ipf 4 ,
 .Xr ipnat 4 ,
 .Xr ipnat 5 ,
 .Xr ipf 8
