@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2000/03/28 21:56:00 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2001/01/29 16:56:10 espie Exp $
 
 MAN=		cccp.1 gcc.1 
 MLINKS+=	gcc.1 cc.1
@@ -107,7 +107,7 @@ install:	maninstall target_path
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/f2c.h; \
 		chmod 444 ${DESTDIR}/usr/include/f2c.h; \
 	fi
-	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xcpp \
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 cpp \
 	   ${DESTDIR}/usr/libexec/cpp
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xgcc \
 	   ${DESTDIR}/usr/bin/gcc
