@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1999/01/10 17:55:03 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1999/04/27 18:18:19 millert Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -80,7 +80,9 @@ static const char *const initcoms [] = {
 #ifdef KSH
 	 /* Aliases that are builtin commands in at&t */
 	  "login=exec login",
+#ifndef __OpenBSD__
 	  "newgrp=exec newgrp",
+#endif /* __OpenBSD__ */
 #endif /* KSH */
 	  NULL,
 	/* this is what at&t ksh seems to track, with the addition of emacs */
