@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.5 1998/03/07 23:13:47 millert Exp $
+.\"	$OpenBSD: com.4,v 1.6 1998/07/12 09:37:54 downsj Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd August 6, 1993
+.Dd July 12, 1998
 .Dt COM 4 i386
 .Os
 .Sh NAME
@@ -47,17 +47,36 @@ serial communications interface
 .Sh SYNOPSIS
 .Cd "com0 at isa? port" \&"IO_COM1\&" irq 4
 .Cd "com1 at isa? port" \&"IO_COM2\&" irq 3
+.Pp
+.Cd "pccom0 at isa? port" \&"IO_COM1\&" irq 4
+.Cd "pccom1 at isa? port" \&"IO_COM2\&" irq 3
+.Cd "pccom* at isapnp?"
 .Sh DESCRIPTION
 The
-.Nm
-driver provides support for NS8250-, NS16450-, NS16550- and ST16650-based
+.Nm com
+and
+.Nm pccom
+drivers provide support for NS8250-, NS16450-, NS16550- and ST16650-based
 .Tn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
-communications interfaces.  The NS8250 and NS16450 have single
+communications interfaces.
+The
+.Nm pccom
+driver also supports the XR16850 UART.
+.Pp
+The NS8250 and NS16450 have single
 character buffers, the NS16550 has a 16 character buffer, while
-the ST16650 has a 32 character buffer.
+the ST16650 has a 32 character buffer.  The XR16850 has a 128 character
+buffer.
+.Pp
+The
+.Nm com
+and
+.Nm pccom
+drivers are mutually exclusive; both may not be present in the same system at
+the same time.  Attempting to compile such a system will fail.
 .Pp
 Input and output for each line may set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
@@ -67,7 +86,8 @@ of 115200.
 .Bl -tag -width Pa
 .It Pa /dev/tty00
 .It Pa /dev/tty01
-.It Pa /dev/tty02
+.It Pa /dev/cua00
+.It Pa /dev/cua01
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
