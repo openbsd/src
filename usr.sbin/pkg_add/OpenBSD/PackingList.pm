@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.14 2004/08/02 12:12:36 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.15 2004/08/03 12:29:45 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -73,7 +73,7 @@ sub DirrmOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-		next unless m/^\@cwd\b/ || m/^\@dirrm\b/ || m/^\@dir\b/ || m/^\@name\b/ || m/^[^\@].*\/$/;
+		next unless m/^\@cwd\b/ || m/^\@dirrm\b/ || m/^\@dir\b/ || m/^\@fontdir\b/ || m/^\@name\b/ || m/^[^\@].*\/$/;
 		&$cont($_);
 	}
 }

@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.15 2004/08/02 12:12:36 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.16 2004/08/03 12:29:45 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -271,6 +271,17 @@ sub make_hardlink
 sub IsFile() { 1 }
 
 sub NoDuplicateNames() { 1 }
+
+package OpenBSD::PackingElement::Sample;
+our @ISA=qw(OpenBSD::PackingElement);
+__PACKAGE__->setKeyword('sample');
+sub keyword() { "sample" }
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->{copyfrom} = $state->{lastfile};
+	$self->compute_modes($state);
+}
 
 package OpenBSD::PackingElement::InfoFile;
 our @ISA=qw(OpenBSD::PackingElement::File);
@@ -676,6 +687,18 @@ sub stringize($)
 {
 	return $_[0]->{name}."/";
 }
+
+package OpenBSD::PackingElement::Fontdir;
+our @ISA=qw(OpenBSD::PackingElement::Dir);
+__PACKAGE__->setKeyword('fontdir');
+sub keyword() { "fontdir" }
+sub needs_keyword { 1 }
+
+package OpenBSD::PackingElement::Mandir;
+our @ISA=qw(OpenBSD::PackingElement::Dir);
+__PACKAGE__->setKeyword('mandir');
+sub keyword() { "mandir" }
+sub needs_keyword { 1 }
 
 package OpenBSD::PackingElement::Extra;
 our @ISA=qw(OpenBSD::PackingElement);
