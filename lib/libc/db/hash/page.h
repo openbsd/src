@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: page.h,v 1.3 1996/08/19 08:20:43 tholo Exp $
+ *	$OpenBSD: page.h,v 1.4 1997/07/23 21:00:28 kstailey Exp $
  */
 
 /*
@@ -51,7 +51,7 @@
  *	+--------+---------------------+
  *	|	 F R E E A R E A       |
  *	+--------------+---------------+
- *	|  <---- - - - | data          |
+ *	|  <---- - - - | data	       |
  *	+--------+-----+----+----------+
  *	|  key   | data     | key      |
  *	+--------+----------+----------+

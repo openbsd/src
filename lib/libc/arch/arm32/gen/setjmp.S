@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.3 1996/08/19 08:11:45 tholo Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.4 1997/07/23 20:55:19 kstailey Exp $"
 #endif
 
 	.text
@@ -51,20 +51,20 @@ ENTRY(setjmp)
 
 	str	r1, [r0], #0x0004
  
-/*        LDR     a4,[pc,#|__fpflag_ptr|-.-8]
-        LDR     a4,[a4,#0]
-        CMP     a4,#0
-        ADDEQ   a1,a1,#48
-        BEQ     |__setjmp_l1|
-        STFE    f4,[a1],#12
-        STFE    f5,[a1],#12
-        STFE    f6,[a1],#12
-        STFE    f7,[a1],#12
+/*	  LDR	  a4,[pc,#|__fpflag_ptr|-.-8]
+	LDR	a4,[a4,#0]
+	CMP	a4,#0
+	ADDEQ	a1,a1,#48
+	BEQ	|__setjmp_l1|
+	STFE	f4,[a1],#12
+	STFE	f5,[a1],#12
+	STFE	f6,[a1],#12
+	STFE	f7,[a1],#12
 |__setjmp_l1|*/
 	add	r0, r0, #48
-        stmia	r0, {r4-r9, r11, r13, r14}
-        mov	r0, #0x00000000
-        mov	r15, r14
+	stmia	r0, {r4-r9, r11, r13, r14}
+	mov	r0, #0x00000000
+	mov	r15, r14
 
 ENTRY(longjmp)
 	ldr	r2, [r0], #0x0004
@@ -74,18 +74,18 @@ ENTRY(longjmp)
 	bl	_sigsetmask
 
 	ldmfd	r13!, {r0, r1, r14} 
-/*        LDR     a4,[pc,#|__fpflag_ptr|-.-8]
-        LDR     a4,[a4,#0]
-        CMP     a4,#0
-        ADDEQ   a1,a1,#48
-        BEQ     |__longjmp_l1|
-        LDFE    f4,[a1],#12
-        LDFE    f5,[a1],#12
-        LDFE    f6,[a1],#12
-        LDFE    f7,[a1],#12
+/*	  LDR	  a4,[pc,#|__fpflag_ptr|-.-8]
+	LDR	a4,[a4,#0]
+	CMP	a4,#0
+	ADDEQ	a1,a1,#48
+	BEQ	|__longjmp_l1|
+	LDFE	f4,[a1],#12
+	LDFE	f5,[a1],#12
+	LDFE	f6,[a1],#12
+	LDFE	f7,[a1],#12
 |__longjmp_l1|*/
 	add	r2, r0, #48
-        ldmia	r2, {r4-r9, r11, r13, r14}
+	ldmia	r2, {r4-r9, r11, r13, r14}
 	mov	r0, r1
 	teq	r0, #0x00000000
 	moveq	r0, #0x00000001

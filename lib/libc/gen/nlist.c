@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.20 1997/07/01 05:59:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.21 1997/07/23 21:04:06 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -294,49 +294,49 @@ __elf_fdnlist(fd, list)
 	Elf32_Sym *s;
 	Elf32_Ehdr ehdr;
 	Elf32_Shdr *shdr = NULL;
-        Elf32_Word shdr_size;
+	Elf32_Word shdr_size;
 	struct stat st;
 
-        /* Make sure obj is OK */
+	/* Make sure obj is OK */
 	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
 	    read(fd, &ehdr, sizeof(Elf32_Ehdr)) != sizeof(Elf32_Ehdr) ||
 	    !__elf_is_okay__(&ehdr) ||
 	    fstat(fd, &st) < 0)
 		return (-1);
 
-        /* calculate section header table size */
-        shdr_size = ehdr.e_shentsize * ehdr.e_shnum;
+	/* calculate section header table size */
+	shdr_size = ehdr.e_shentsize * ehdr.e_shnum;
 
-        /* Make sure it's not too big to mmap */
+	/* Make sure it's not too big to mmap */
 	if (shdr_size > SIZE_T_MAX) {
 		errno = EFBIG;
 		return (-1);
 	}
 
-        /* mmap section header table */
+	/* mmap section header table */
 	shdr = (Elf32_Shdr *)mmap(NULL, (size_t)shdr_size,
-                                  PROT_READ, 0, fd, (off_t) ehdr.e_shoff);
+				  PROT_READ, 0, fd, (off_t) ehdr.e_shoff);
 	if (shdr == (Elf32_Shdr *)-1)
 		return (-1);
 
-        /*
-         * Find the symbol table entry and it's corresponding
-         * string table entry.  Version 1.1 of the ABI states
-         * that there is only one symbol table but that this
-         * could change in the future.
-         */
-        for (i = 0; i < ehdr.e_shnum; i++) {
-                if (shdr[i].sh_type == SHT_SYMTAB) {
-                        symoff = shdr[i].sh_offset;
-                        symsize = shdr[i].sh_size;
-                        symstroff = shdr[shdr[i].sh_link].sh_offset;
-                        symstrsize = shdr[shdr[i].sh_link].sh_size;
-                        break;
-                }
-        }
+	/*
+	 * Find the symbol table entry and it's corresponding
+	 * string table entry.	Version 1.1 of the ABI states
+	 * that there is only one symbol table but that this
+	 * could change in the future.
+	 */
+	for (i = 0; i < ehdr.e_shnum; i++) {
+		if (shdr[i].sh_type == SHT_SYMTAB) {
+			symoff = shdr[i].sh_offset;
+			symsize = shdr[i].sh_size;
+			symstroff = shdr[shdr[i].sh_link].sh_offset;
+			symstrsize = shdr[shdr[i].sh_link].sh_size;
+			break;
+		}
+	}
 
-        /* Flush the section header table */
-        munmap((caddr_t)shdr, shdr_size);
+	/* Flush the section header table */
+	munmap((caddr_t)shdr, shdr_size);
 
 	/* Check for files too large to mmap. */
 	/* XXX is this really possible? */
@@ -372,16 +372,16 @@ __elf_fdnlist(fd, list)
 		++nent;
 	}
 
-        /* Don't process any further if object is stripped. */
-        /* ELFism - dunno if stripped by looking at header */
-        if (symoff == 0)
-                goto done;
-                
+	/* Don't process any further if object is stripped. */
+	/* ELFism - dunno if stripped by looking at header */
+	if (symoff == 0)
+		goto done;
+		
 	if (lseek(fd, (off_t) symoff, SEEK_SET) == -1) {
-                nent = -1;
-                goto done;
-        }
-        
+		nent = -1;
+		goto done;
+	}
+
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(sbuf));
 		if (read(fd, sbuf, cc) != cc)
@@ -393,36 +393,36 @@ __elf_fdnlist(fd, list)
 			if (soff == 0)
 				continue;
 			for (p = list; !ISLAST(p); p++) {
-                                /*
-                                 * XXX - ABI crap, they
-                                 * really fucked this up
-                                 * for MIPS and PowerPC
-                                 */
+				/*
+				 * XXX - ABI crap, they
+				 * really fucked this up
+				 * for MIPS and PowerPC
+				 */
 				if (!strcmp(&strtab[soff],
 				    ((ehdr.e_machine == EM_MIPS) ||
-				     (ehdr.e_machine == EM_PPC)) ? 
+				     (ehdr.e_machine == EM_PPC)) ?
 				    p->n_un.n_name+1 :
 				    p->n_un.n_name)) {
 					p->n_value = s->st_value;
 
-                                        /* XXX - type conversion */
-                                        /*       is pretty rude. */
+					/* XXX - type conversion */
+					/*	 is pretty rude. */
 					switch(ELF32_ST_TYPE(s->st_info)) {
-                                                case STT_NOTYPE:
-                                                        p->n_type = N_UNDF;
-                                                        break;
-                                                case STT_OBJECT:
-                                                        p->n_type = N_DATA;
-                                                        break;
-                                                case STT_FUNC:
-                                                        p->n_type = N_TEXT;
-                                                        break;
-                                                case STT_FILE:
-                                                        p->n_type = N_FN;
-                                                        break;
+						case STT_NOTYPE:
+							p->n_type = N_UNDF;
+							break;
+						case STT_OBJECT:
+							p->n_type = N_DATA;
+							break;
+						case STT_FUNC:
+							p->n_type = N_TEXT;
+							break;
+						case STT_FILE:
+							p->n_type = N_FN;
+							break;
 					}
 					if (ELF32_ST_BIND(s->st_info) ==
-                                            STB_LOCAL)
+					    STB_LOCAL)
 						p->n_type = N_EXT;
 					p->n_desc = 0;
 					p->n_other = 0;

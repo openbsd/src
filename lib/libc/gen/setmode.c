@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.5 1997/03/07 02:15:18 millert Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.6 1997/07/23 21:04:07 kstailey Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.5 1997/03/07 02:15:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.6 1997/07/23 21:04:07 kstailey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -195,10 +195,10 @@ setmode(p)
 	 * as best we can.
 	 */
 	sigfillset(&sigset);
-        (void)sigprocmask(SIG_BLOCK, &sigset, &sigoset);
+	(void)sigprocmask(SIG_BLOCK, &sigset, &sigoset);
 	(void)umask(mask = umask(0));
 	mask = ~mask;
-        (void)sigprocmask(SIG_SETMASK, &sigoset, NULL);
+	(void)sigprocmask(SIG_SETMASK, &sigoset, NULL);
 
 	setlen = SET_LEN + 2;
 	

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: frexp.c,v 1.2 1996/08/19 08:18:24 tholo Exp $";
+static char rcsid[] = "$OpenBSD: frexp.c,v 1.3 1997/07/23 20:55:31 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,15 +44,15 @@ frexp(value, eptr)
 	int *eptr;
 {
 	union {
-                double v;
-                struct {
+		double v;
+		struct {
 			u_int u_mant1 :  7;
 			u_int   u_exp :  8;
 			u_int  u_sign :  1;
 			u_int u_mant2 : 16;
 			u_int u_mant3 : 32;
-                } s;
-        } u;
+		} s;
+	} u;
 
 	if (value) {
 		u.v = value;

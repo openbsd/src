@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.2 1996/08/19 08:14:41 tholo Exp $"
+	.asciz "$OpenBSD: sigsetjmp.S,v 1.3 1997/07/23 20:55:24 kstailey Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -58,7 +58,7 @@
 
 ENTRY(sigsetjmp)
 	movl	sp@(8),d1	/* grab the mask */
-        movl	sp@(4),a0	/* grab the area pointer */
+	movl	sp@(4),a0	/* grab the area pointer */
 	movl	d1,a0@(_JBLEN * 4 )	/* save at end of area */
 	tstl	d1
 	bne	dosig

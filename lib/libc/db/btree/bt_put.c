@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_put.c,v 1.3 1996/08/19 08:20:11 tholo Exp $";
+static char rcsid[] = "$OpenBSD: bt_put.c,v 1.4 1997/07/23 21:00:26 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -105,7 +105,7 @@ __bt_put(dbp, key, data, flags)
 		 */
 		if (F_ISSET(&t->bt_cursor, CURS_INIT) &&
 		    !F_ISSET(&t->bt_cursor,
-		        CURS_ACQUIRE | CURS_AFTER | CURS_BEFORE))
+			CURS_ACQUIRE | CURS_AFTER | CURS_BEFORE))
 			break;
 		/* FALLTHROUGH */
 	default:

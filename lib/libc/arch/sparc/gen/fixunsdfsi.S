@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: fixunsdfsi.S,v 1.2 1996/08/19 08:17:27 tholo Exp $"
+	.asciz "$OpenBSD: fixunsdfsi.S,v 1.3 1997/07/23 20:55:29 kstailey Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -68,7 +68,7 @@ ENTRY(__fixunsdfsi)
 	fcmped	%f0, %f2		! d < 2^31, or NaN, or -Inf?
 	nop				! (fpop2 delay)
 	fbul,a	1f			! if so, use fdtoi to convert to int
-	fdtoi	%f0, %f0		!        (this includes negatives!)
+	fdtoi	%f0, %f0		!	 (this includes negatives!)
 
 	! d does not fit in an int, so subtract 2^31, convert,
 	! and add 2^31 again (sigh).  Just hope the intermediate

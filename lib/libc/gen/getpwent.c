@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.10 1997/04/18 18:55:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.11 1997/07/23 21:04:06 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -797,7 +797,7 @@ pwuid_netgrp:
 							    free(__ypcurrent);
 							__ypcurrent = NULL;
 							/*
-                                                         * just because this
+							 * just because this
 							 * user is bad, doesn't
 							 * mean they all are.
 							 */

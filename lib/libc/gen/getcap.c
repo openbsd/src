@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcap.c,v 1.5 1997/06/10 21:44:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.6 1997/07/23 21:04:04 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -80,18 +80,18 @@ cgetset(ent)
 	if (ent == NULL) {
 		if (toprec)
 			free(toprec);
-                toprec = NULL;
-                topreclen = 0;
-                return (0);
-        }
-        topreclen = strlen(ent);
-        if ((toprec = malloc (topreclen + 1)) == NULL) {
+		toprec = NULL;
+		topreclen = 0;
+		return (0);
+	}
+	topreclen = strlen(ent);
+	if ((toprec = malloc (topreclen + 1)) == NULL) {
 		errno = ENOMEM;
-                return (-1);
+		return (-1);
 	}
 	gottoprec = 0;
-        (void)strcpy(toprec, ent);
-        return (0);
+	(void)strcpy(toprec, ent);
+	return (0);
 }
 
 /*
@@ -207,7 +207,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 
 	/*
 	 * Check if we have a top record from cgetset().
-         */
+	 */
 	if (depth == 0 && toprec != NULL && cgetmatch(toprec, name) == 0) {
 		if ((record = malloc (topreclen + BFRAG)) == NULL) {
 			errno = ENOMEM;
@@ -643,7 +643,7 @@ cgetclose()
  */
 int
 cgetnext(bp, db_array)
-        register char **bp;
+	register char **bp;
 	char **db_array;
 {
 	size_t len;

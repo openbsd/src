@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: hash.c,v 1.4 1996/09/15 09:30:47 tholo Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.5 1997/07/23 21:00:27 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -224,8 +224,8 @@ __hash_open(file, flags, mode, info, dflags)
 	    "LAST FREED      ", hashp->LAST_FREED,
 	    "HIGH MASK       ", hashp->HIGH_MASK,
 	    "LOW  MASK       ", hashp->LOW_MASK,
-	    "NSEGS           ", hashp->nsegs,
-	    "NKEYS           ", hashp->NKEYS);
+	    "NSEGS	     ", hashp->nsegs,
+	    "NKEYS	     ", hashp->NKEYS);
 #endif
 #ifdef HASH_STATISTICS
 	hash_overflows = hash_accesses = hash_collisions = hash_expansions = 0;

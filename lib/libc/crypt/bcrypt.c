@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.7 1997/07/09 01:08:18 millert Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.8 1997/07/23 20:58:26 kstailey Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -218,17 +218,17 @@ bcrypt(key, salt)
 
 	/* Check for minor versions */
 	if (salt[1] != '$') {
-	         switch(salt[1]) {
+		 switch(salt[1]) {
 		 case 'a':
-		         /* 'ab' should not yield the same as 'abab' */
-		         minor = salt[1];
+			 /* 'ab' should not yield the same as 'abab' */
+			 minor = salt[1];
 			 salt++;
 			 break;
 		 default:
-		         return error;
+			 return error;
 		 }
 	} else
-	         minor = 0;
+		 minor = 0;
 
 	/* Discard version + "$" identifier */
 	salt += 2;
@@ -282,7 +282,7 @@ bcrypt(key, salt)
 	encrypted[i++] = '$';
 	encrypted[i++] = BCRYPT_VERSION;
 	if (minor)
-	        encrypted[i++] = minor;
+		encrypted[i++] = minor;
 	encrypted[i++] = '$';
 
 	snprintf(encrypted + i, 4, "%2.2u$", logr);

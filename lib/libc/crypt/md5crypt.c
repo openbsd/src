@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5crypt.c,v 1.8 1997/06/29 05:48:02 deraadt Exp $	*/
+/*	$OpenBSD: md5crypt.c,v 1.9 1997/07/23 20:58:27 kstailey Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -13,7 +13,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.8 1997/06/29 05:48:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.9 1997/07/23 20:58:27 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -146,7 +146,7 @@ md5crypt(pw, salt)
 	l = (final[ 2]<<16) | (final[ 8]<<8) | final[14]; to64(p,l,4); p += 4;
 	l = (final[ 3]<<16) | (final[ 9]<<8) | final[15]; to64(p,l,4); p += 4;
 	l = (final[ 4]<<16) | (final[10]<<8) | final[ 5]; to64(p,l,4); p += 4;
-	l =                    final[11]                ; to64(p,l,2); p += 2;
+	l =		       final[11]		; to64(p,l,2); p += 2;
 	*p = '\0';
 
 	/* Don't leave anything around in vm they could use. */

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: frexp.c,v 1.1 91/07/07 04:45:01 torek Exp
- * $Id: frexp.c,v 1.1 1997/03/25 17:07:01 rahnds Exp $
+ * $Id: frexp.c,v 1.2 1997/07/23 20:55:26 kstailey Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -56,7 +56,7 @@ frexp(value, eptr)
 	int *eptr;
 {
 	union {
-                double v;
+		double v;
 		struct ieee_double s;
 	} u;
 

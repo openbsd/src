@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rec_open.c,v 1.3 1996/08/19 08:21:05 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rec_open.c,v 1.4 1997/07/23 21:00:29 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -205,7 +205,7 @@ slow:			if ((t->bt_rfp = fdopen(rfd, "r")) == NULL)
 	if (openinfo && openinfo->flags & R_SNAPSHOT &&
 	    !F_ISSET(t, R_EOF | R_INMEM) &&
 	    t->bt_irec(t, MAX_REC_NUMBER) == RET_ERROR)
-                goto err;
+		goto err;
 	return (dbp);
 
 einval:	errno = EINVAL;

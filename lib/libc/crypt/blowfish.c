@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.4 1997/04/30 05:57:05 tholo Exp $ */
+/* $OpenBSD: blowfish.c,v 1.5 1997/07/23 20:58:27 kstailey Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -429,13 +429,13 @@ Blowfish_initstate(c)
 			0x90d4f869, 0xa65cdea0, 0x3f09252d, 0xc208e69f,
 		0xb74e6132, 0xce77e25b, 0x578fdfe3, 0x3ac372e6}
 	},
-        {
-                0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344,
-                0xa4093822, 0x299f31d0, 0x082efa98, 0xec4e6c89,
-                0x452821e6, 0x38d01377, 0xbe5466cf, 0x34e90c6c,
-                0xc0ac29b7, 0xc97c50dd, 0x3f84d5b5, 0xb5470917,
-                0x9216d5d9, 0x8979fb1b
-        } };
+	{
+		0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344,
+		0xa4093822, 0x299f31d0, 0x082efa98, 0xec4e6c89,
+		0x452821e6, 0x38d01377, 0xbe5466cf, 0x34e90c6c,
+		0xc0ac29b7, 0xc97c50dd, 0x3f84d5b5, 0xb5470917,
+		0x9216d5d9, 0x8979fb1b
+	} };
 
 	*c = initstate;
 
@@ -475,44 +475,43 @@ Blowfish_expand0state(blf_ctx *c, const u_int8_t *key, u_int16_t keybytes)
 #else
 void
 Blowfish_expand0state(c, key, keybytes)
-        blf_ctx *c;
-        const u_int8_t *key;
-        u_int16_t keybytes;
+	blf_ctx *c;
+	const u_int8_t *key;
+	u_int16_t keybytes;
 #endif
 {
-        u_int16_t i;
-        u_int16_t j;
-        u_int16_t k;
-        u_int32_t temp;
-        u_int32_t datal;
-        u_int32_t datar;
- 
-        j = 0;
-        for (i = 0; i < BLF_N + 2; i++) {
-                /* Extract 4 int8 to 1 int32 from keystream */
-                temp = Blowfish_stream2word(key, keybytes, &j);
-                c->P[i] = c->P[i] ^ temp;
-        }
- 
-        j = 0;
-        datal = 0x00000000;
-        datar = 0x00000000;
-        for (i = 0; i < BLF_N + 2; i += 2) {
-                Blowfish_encipher(c, &datal, &datar);
- 
-                c->P[i] = datal;
-                c->P[i + 1] = datar;
-        }
- 
-        for (i = 0; i < 4; i++) {
-                for (k = 0; k < 256; k += 2) {
-                        Blowfish_encipher(c, &datal, &datar);
- 
-                        c->S[i][k] = datal;
-                        c->S[i][k + 1] = datar;
-                }
-        }
- 
+	u_int16_t i;
+	u_int16_t j;
+	u_int16_t k;
+	u_int32_t temp;
+	u_int32_t datal;
+	u_int32_t datar;
+
+	j = 0;
+	for (i = 0; i < BLF_N + 2; i++) {
+		/* Extract 4 int8 to 1 int32 from keystream */
+		temp = Blowfish_stream2word(key, keybytes, &j);
+		c->P[i] = c->P[i] ^ temp;
+	}
+
+	j = 0;
+	datal = 0x00000000;
+	datar = 0x00000000;
+	for (i = 0; i < BLF_N + 2; i += 2) {
+		Blowfish_encipher(c, &datal, &datar);
+
+		c->P[i] = datal;
+		c->P[i + 1] = datar;
+	}
+
+	for (i = 0; i < 4; i++) {
+		for (k = 0; k < 256; k += 2) {
+			Blowfish_encipher(c, &datal, &datar);
+
+			c->S[i][k] = datal;
+			c->S[i][k + 1] = datar;
+		}
+	}
 }
 
 

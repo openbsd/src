@@ -2,8 +2,8 @@
  * COPYRIGHT
  */
 #if defined(SYSLIBC_SCCS)
-        .text
-        .asciz "$OpenBSD: syscall.S,v 1.1.1.1 1996/12/21 20:42:24 rahnds Exp $"
+	.text
+	.asciz "$OpenBSD: syscall.S,v 1.2 1997/07/23 20:55:29 kstailey Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_open.c,v 1.4 1996/08/26 00:17:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bt_open.c,v 1.5 1997/07/23 21:00:25 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -424,7 +424,7 @@ byteorder()
 
 int
 __bt_fd(dbp)
-        const DB *dbp;
+	const DB *dbp;
 {
 	BTREE *t;
 

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.2 1996/08/19 08:19:44 tholo Exp $
+.\"	$OpenBSD: sigvec.3,v 1.3 1997/07/23 20:58:26 kstailey Exp $
 .\"
 .Dd April 29, 1991
 .Dt SIGVEC 3
@@ -41,7 +41,7 @@
 .Fd #include <signal.h>
 .Bd -literal
 struct sigvec {
-        void     (*sv_handler)();
+	void	 (*sv_handler)();
 	sigset_t sv_mask;
 	int      sv_flags;
 };
@@ -134,7 +134,7 @@ The following is a list of all signals
 with names as in the include file
 .Aq Pa signal.h :
 .Bl -column SIGVTALARMXX "create core imagexxx"
-.It Sy "  NAME  " "	  Default Action  " "	              Description"
+.It Sy "  NAME	" "	  Default Action  " "		      Description"
 .It Dv SIGHUP No "	terminate process" "	terminal line hangup"
 .It Dv SIGINT No "	terminate process" "	interrupt program"
 .It Dv SIGQUIT No "	create core image" "	quit program"
