@@ -1,6 +1,5 @@
 ./usr/bin/gdb
 ./usr/bin/objdump
-./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h

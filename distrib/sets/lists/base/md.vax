@@ -32,7 +32,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/altq/altq_wfq.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/altq/altqconf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/altq/if_altq.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ansidecl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/arpa
 ./usr/libdata/perl5/site_perl/vax-openbsd/arpa/ftp.ph

@@ -470,7 +470,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/vmparam.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/ansidecl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/arpa
 ./usr/libdata/perl5/site_perl/m68k-openbsd/arpa/ftp.ph

@@ -439,7 +439,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/altq/altq_wfq.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/altq/altqconf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/altq/if_altq.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ansidecl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/arpa
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/arpa/ftp.ph

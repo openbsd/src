@@ -493,7 +493,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/altq/altq_wfq.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/altq/altqconf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/altq/if_altq.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/ansidecl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/arpa
 ./usr/libdata/perl5/site_perl/alpha-openbsd/arpa/ftp.ph

@@ -40,7 +40,6 @@
 ./usr/include/amiga/types.h
 ./usr/include/amiga/varargs.h
 ./usr/include/amiga/vmparam.h
-./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h

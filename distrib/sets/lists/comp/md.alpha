@@ -62,7 +62,6 @@
 ./usr/include/alpha/vmparam.h
 ./usr/include/alpha/vuid_event.h
 ./usr/include/alpha/wsconsio.h
-./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h

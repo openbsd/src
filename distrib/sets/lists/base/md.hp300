@@ -429,7 +429,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/altq/altq_wfq.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/altq/altqconf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/altq/if_altq.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/ansidecl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/arpa
 ./usr/libdata/perl5/site_perl/m68k-openbsd/arpa/ftp.ph

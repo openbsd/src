@@ -90,7 +90,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_wfq.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altqconf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/if_altq.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/ansidecl.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/arpa
 ./usr/libdata/perl5/site_perl/sparc-openbsd/arpa/ftp.ph
