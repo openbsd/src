@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.33 2005/04/04 16:31:52 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.34 2005/04/04 16:37:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -781,7 +781,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 		tap->wr_chan_flags =
 		    htole16(ic->ic_channels[frame->chan].ic_flags);
 		tap->wr_antsignal = frame->signal;
-		tap->wr_antnoise = frame->noise;
 		tap->wr_antenna = frame->antenna;
 
 		M_DUP_PKTHDR(&mb, m);
@@ -1666,7 +1665,6 @@ iwi_config(struct iwi_softc *sc)
 	bzero(&config, sizeof config);
 	config.bluetooth_coexistence = 1;
 	config.multicast_enabled = 1;
-	config.noise_reported = 1;
 	DPRINTF(("Configuring adapter\n"));
 	error = iwi_cmd(sc, IWI_CMD_SET_CONFIGURATION, &config, sizeof config,
 	    0);
@@ -1808,7 +1806,6 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		config.bluetooth_coexistence = 1;
 		config.multicast_enabled = 1;
 		config.bg_autodetection = 1;
-		config.noise_reported = 1;
 		DPRINTF(("Configuring adapter\n"));
 		error = iwi_cmd(sc, IWI_CMD_SET_CONFIGURATION, &config,
 		    sizeof config, 1);
