@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.4 1997/02/18 08:12:11 tholo Exp $
+#	$OpenBSD: sendbug.sh,v 1.5 1997/05/30 07:31:41 deraadt Exp $
 
 # The version of this send-pr.
 VERSION=3.97
@@ -68,6 +68,9 @@ if [ ! -f "$MAILER" ]; then
   echo "$COMMAND: Please fix the MAIL_AGENT entry in the $COMMAND file."
   exit 1
 fi
+
+um=`umask`
+umask 077
 
 # How to read the passwd database.
 if [ -f /bin/domainname ]; then
