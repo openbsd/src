@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.58 2001/06/14 23:56:54 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.59 2001/06/18 10:23:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -235,9 +235,6 @@ ubsec_intr(arg)
 
 	WRITE_REG(sc, BS_STAT, stat);		/* IACK */
 
-#ifdef UBSEC_DEBUG
-	printf("ubsec intr %x\n", stat);
-#endif
 	if ((stat & BS_STAT_MCR1_DONE)) {
 		while (!SIMPLEQ_EMPTY(&sc->sc_qchip)) {
 			q = SIMPLEQ_FIRST(&sc->sc_qchip);
