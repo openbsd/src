@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.14 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: asc.c,v 1.15 2002/06/24 22:14:47 miod Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -356,4 +356,15 @@ asc_stop_bell(arg)
 
 	if (--sc->sc_ringing == 0)	/* disable ASC */
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 0);
+}
+
+int asckqfilter(dev_t, struct knote *);
+
+int
+asckqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+
+	return (1);
 }
