@@ -1,11 +1,11 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.4 2002/04/28 18:28:33 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2002/04/30 09:18:20 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
 
-CBIN?=		raminst
+CBIN?=		instbin
 COMMONDIR=	${TOP}/ramdisk
 UTILS?=		${TOP}/../miniroot
 
@@ -26,6 +26,7 @@ do_files:
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c

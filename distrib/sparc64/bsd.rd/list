@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.10 2002/04/30 01:31:20 deraadt Exp $
+#	$OpenBSD: list,v 1.11 2002/04/30 09:18:20 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -47,7 +47,6 @@ LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
-SPECIAL /bin/rm instbin
 
 ARGVLINK ksh					-sh
 

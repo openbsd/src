@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.14 2002/04/30 01:31:20 deraadt Exp $
+#	$OpenBSD: list,v 1.15 2002/04/30 09:18:20 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin			instbin
@@ -43,7 +43,6 @@ LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/sed
-SPECIAL	rm instbin
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2002/04/28 18:28:34 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2002/04/30 09:18:20 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -95,6 +95,7 @@ do_files:
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    sh ${TOP}/../miniroot/runlist.sh ${LISTS}
+	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \

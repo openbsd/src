@@ -1,56 +1,56 @@
-#	$OpenBSD: list,v 1.16 2002/04/30 07:35:52 deraadt Exp $
+#	$OpenBSD: list,v 1.17 2002/04/30 09:18:20 deraadt Exp $
 
-COPY	${OBJDIR}/raminst			raminst
-LINK	raminst					bin/cat
-LINK	raminst					bin/chmod bin/chgrp sbin/chown
-LINK	raminst					bin/cp
-LINK	raminst					bin/df
-LINK	raminst					bin/dd
-LINK	raminst					bin/ed
-LINK	raminst					bin/expr
-LINK	raminst					bin/ln
-LINK	raminst					bin/ls
-LINK	raminst					bin/kill
-LINK	raminst					bin/hostname
-LINK	raminst					bin/mkdir
-LINK	raminst					bin/mt
-LINK	raminst					bin/mv
-LINK	raminst					bin/pwd
-LINK	raminst					bin/rm
-LINK	raminst					bin/sh
+COPY	${OBJDIR}/instbin			instbin
+LINK	instbin					bin/cat
+LINK	instbin					bin/chmod bin/chgrp sbin/chown
+LINK	instbin					bin/cp
+LINK	instbin					bin/df
+LINK	instbin					bin/dd
+LINK	instbin					bin/ed
+LINK	instbin					bin/expr
+LINK	instbin					bin/ln
+LINK	instbin					bin/ls
+LINK	instbin					bin/kill
+LINK	instbin					bin/hostname
+LINK	instbin					bin/mkdir
+LINK	instbin					bin/mt
+LINK	instbin					bin/mv
+LINK	instbin					bin/pwd
+LINK	instbin					bin/rm
+LINK	instbin					bin/sh
 LINK	bin/sh					bin/-sh
 LINK	bin/sh					bin/bash
-LINK	raminst					bin/stty
-LINK	raminst					bin/sleep
-LINK	raminst					bin/sync
-LINK	raminst					bin/test
-LINK	raminst					bin/pax bin/tar bin/cpio
-LINK	raminst					bin/[
-LINK	raminst					sbin/disklabel
-LINK	raminst					sbin/dmesg
-LINK	raminst					sbin/fsck
-LINK	raminst					sbin/halt
-LINK	raminst					sbin/ifconfig
-LINK	raminst					sbin/init
-LINK	raminst					sbin/mknod
-LINK	raminst					sbin/mount
-LINK	raminst					sbin/mount_cd9660
-LINK	raminst					sbin/mount_ffs
-LINK	raminst					sbin/mount_nfs
-LINK	raminst					sbin/mount_mfs
-LINK	raminst					sbin/newfs
-LINK	raminst					sbin/reboot
-LINK	raminst					sbin/route
-LINK	raminst					sbin/umount
-LINK	raminst					usr/bin/ftp
-LINK	raminst					usr/bin/egrep
-LINK	raminst					usr/bin/grep
-LINK	raminst					usr/bin/gzip
-LINK	raminst					usr/bin/more
-LINK	raminst					usr/bin/less
-LINK	raminst					usr/bin/sed
-LINK	raminst					usr/bin/tar
-LINK	raminst					usr/bin/pax
+LINK	instbin					bin/stty
+LINK	instbin					bin/sleep
+LINK	instbin					bin/sync
+LINK	instbin					bin/test
+LINK	instbin					bin/pax bin/tar bin/cpio
+LINK	instbin					bin/[
+LINK	instbin					sbin/disklabel
+LINK	instbin					sbin/dmesg
+LINK	instbin					sbin/fsck
+LINK	instbin					sbin/halt
+LINK	instbin					sbin/ifconfig
+LINK	instbin					sbin/init
+LINK	instbin					sbin/mknod
+LINK	instbin					sbin/mount
+LINK	instbin					sbin/mount_cd9660
+LINK	instbin					sbin/mount_ffs
+LINK	instbin					sbin/mount_nfs
+LINK	instbin					sbin/mount_mfs
+LINK	instbin					sbin/newfs
+LINK	instbin					sbin/reboot
+LINK	instbin					sbin/route
+LINK	instbin					sbin/umount
+LINK	instbin					usr/bin/ftp
+LINK	instbin					usr/bin/egrep
+LINK	instbin					usr/bin/grep
+LINK	instbin					usr/bin/gzip
+LINK	instbin					usr/bin/more
+LINK	instbin					usr/bin/less
+LINK	instbin					usr/bin/sed
+LINK	instbin					usr/bin/tar
+LINK	instbin					usr/bin/pax
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

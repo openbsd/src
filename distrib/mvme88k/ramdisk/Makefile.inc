@@ -1,10 +1,10 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.4 2002/04/30 07:35:52 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2002/04/30 09:18:20 deraadt Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
 
-CBIN?=		raminst
+CBIN?=		instbin
 COMMONDIR=	${TOP}/ramdisk
 UTILS?=		${TOP}/../miniroot
 
