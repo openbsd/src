@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.28 2004/04/09 12:12:44 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.29 2004/10/04 21:45:59 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1831,9 +1831,13 @@ Announce error messages with a bell.
 .It Cm exrc , ex Bq off
 Read the startup files in the local directory.
 .It Cm extended Bq off
-Regular expressions are extended (i.e.\&
-.Xr egrep 1
-style) expressions.
+Use extended regular expressions
+.Pq EREs
+rather than basic regular expressions
+.Pq BREs .
+See
+.Xr re_format 7
+for more information on regular expressions.
 .It Cm filec Bq no default
 Set the character to perform file path completion on the colon command line.
 .It Cm flash Bq on
@@ -2206,7 +2210,7 @@ Second choice for local directory startup file.
 .El
 .Sh SEE ALSO
 .Xr ctags 1 ,
-.Xr egrep 1
+.Xr re_format 7
 .Pp
 The
 .Qq Vi Quick Reference
