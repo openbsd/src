@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.72 2004/09/18 07:29:38 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.73 2004/10/05 15:20:30 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -481,7 +481,7 @@ nomatch:
 		    nreply, cp->addr, nreply, nreply);
 	else
 		asprintf(&cp->obuf,
-		    "450 Temporary failure, please try again later.\r\n");
+		    "451 Temporary failure, please try again later.\r\n");
 	if (cp->obuf != NULL)
 		cp->osize = strlen(cp->obuf) + 1;
 	else
