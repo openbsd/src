@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.7 2001/09/08 15:36:01 heko Exp $
+u\" $OpenBSD: wsconsctl.8,v 1.8 2001/09/30 06:00:52 mickey Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,6 +126,28 @@ For a full list of keysyms, and keycodes, please refer
 to the
 .Ar /usr/include/dev/wscons/wsksymdef.h
 file.
+.Pp
+.Cm wsconsctl -w keyboard.map+="keycode 184=Mode_switch"
+.Pp
+Assigns the
+.Ar Right Alt
+key to be the group modifier (layout is changed while the key is pressed).
+.Pp
+.Cm wsconsctl -w keyboard.map+="keycode 157=Mode_Lock"
+.Pp
+Assigns the
+.Ar Right Control
+key to be the lock for the group modifier.
+.Pp
+The effect of
+.Ar Mode_Lock
+and
+.Ar Mode_switch
+is not mutually exclusive, to be consistant with
+.Ar Caps Lock
+and
+.Ar Shift
+behaviour.
 .Pp
 .Cm wsconsctl -w keyboard.encoding=us.swapctrlcaps
 .Pp
