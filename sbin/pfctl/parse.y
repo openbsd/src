@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.340 2003/03/09 19:07:21 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.341 2003/03/10 14:46:09 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3146,7 +3146,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 	}
 
 	if (queues == NULL) {
-		yyerror("queue has no parent");
+		yyerror("queue %s has no parent", a->qname);
 		FREE_LIST(struct node_queue, nqueues);
 		return (1);
 	}
