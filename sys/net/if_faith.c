@@ -75,8 +75,6 @@
 
 #include "bpfilter.h"
 
-#include <net/net_osdep.h>
-
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
 int faithoutput __P((struct ifnet *, register struct mbuf *, struct sockaddr *,
 	register struct rtentry *));
