@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.22 2001/03/31 23:03:37 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.23 2001/05/15 22:02:07 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -132,12 +132,6 @@ struct mbuf {
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define M_CONF		0x0400  /* packet was encrypted (ESP-transport) */
 #define M_AUTH		0x0800  /* packet was authenticated (AH) */
-
-#if 0 /* NRL IPv6 */
-#define M_TUNNEL       	0x1000  /* packet was tunneled */
-#define M_DAD		0x2000	/* Used on outbound packets to indicate that
-				 * this is for duplicate address detection */
-#endif
 
 /* KAME IPv6 */
 #define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
