@@ -1,3 +1,5 @@
+/*	$OpenBSD: mplock.h,v 1.3 2004/06/20 17:46:11 pedro Exp $	*/
+
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
  *
