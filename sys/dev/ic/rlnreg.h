@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlnreg.h,v 1.1 1999/07/30 13:43:36 d Exp $	*/
+/*	$OpenBSD: rlnreg.h,v 1.2 1999/08/19 06:15:38 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -55,7 +55,10 @@
 
 static void	_rln_register_write_1 __P((struct rln_softc *, u_int8_t, 
 			u_int8_t));
+static void	_rln_register_write_2 __P((struct rln_softc *, u_int8_t, 
+			u_int16_t));
 static u_int8_t	_rln_register_read_1 __P((struct rln_softc *, u_int8_t));
+static u_int16_t _rln_register_read_2 __P((struct rln_softc *, u_int8_t));
 static int	rln_status_rx_ready __P((struct rln_softc *));
 
 /* Write to a register. */
@@ -70,6 +73,20 @@ _rln_register_write_1(sc, regoff, value)
 	printf(" %c<%02x", "DDS3CEI7"[regoff], value);
 #endif
 	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (regoff), (value));
+	_rln_regacc_delay();
+}
+
+static inline void
+_rln_register_write_2(sc, regoff, value)
+	struct rln_softc *sc;
+	u_int8_t regoff;
+	u_int16_t value;
+{
+
+#ifdef RLNDEBUG_REG
+	printf(" %c<%04x", "DDS3CEI7"[regoff], value);
+#endif
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (regoff), (value));
 	_rln_regacc_delay();
 }
 
@@ -92,6 +109,24 @@ _rln_register_read_1(sc, regoff)
 	return (ret);
 }
 
+
+static inline u_int16_t
+_rln_register_read_2(sc, regoff)
+	struct rln_softc *sc;
+	u_int8_t regoff;
+{
+	u_int16_t ret;
+
+	ret = bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (regoff));
+#ifdef RLNDEBUG_REG
+	if (ret != (sc)->dbg_oreg[regoff]) {
+		printf(" %c>%04x", "DDS3CEI7"[regoff], ret);
+		(sc)->dbg_oreg[regoff] = ret;
+	}
+#endif
+	return (ret);
+}
+
 /* 8-bit data register access. */
 #define rln_data_write_1(sc, value) 					\
 		_rln_register_write_1(sc, RLN_REG_DATA, (value))
@@ -106,11 +141,9 @@ _rln_register_read_1(sc, regoff)
 
 /* 16-bit data register access. */
 #define rln_data_write_2(sc, value) 					\
-		bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh,		\
-			RLN_REG_DATA, (value))
+		_rln_register_write_2(sc, RLN_REG_DATA, (value))
 #define rln_data_read_2(sc) 						\
-		bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, 		\
-			RLN_REG_DATA)
+		_rln_register_read_2(sc, RLN_REG_DATA)
 #define rln_data_write_multi_2(sc, buf, len) 				\
 		bus_space_write_multi_2((sc)->sc_iot, (sc)->sc_ioh,	\
 			RLN_REG_DATA, (buf), (len))
