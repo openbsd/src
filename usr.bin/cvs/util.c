@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2004/12/06 21:03:13 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2004/12/06 21:13:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -393,12 +393,13 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 			i = 0;
 			memset(qbuf, 0, sizeof(qbuf));
 			while (*lp != '"') {
+				if (*lp == '\\')
+					lp++;
 				if (*lp == '\0') {
 					cvs_log(LP_ERR, "no terminating quote");
 					err++;
 					break;
-				} else if (*lp == '\\')
-					lp++;
+				}
 
 				qbuf[i++] = *lp++;
 				if (i == sizeof(qbuf)) {
@@ -416,6 +417,11 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 				continue;
 
 			arg = cp;
+		}
+
+		if (argc == argvlen) {
+			err++;
+			break;
 		}
 
 		argv[argc] = strdup(arg);
@@ -450,7 +456,8 @@ cvs_freeargv(char **argv, int argc)
 	int i;
 
 	for (i = 0; i < argc; i++)
-		free(argv[i]);
+		if (argv[i] != NULL)
+			free(argv[i]);
 }
 
 
