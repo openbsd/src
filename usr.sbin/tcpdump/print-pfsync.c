@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.22 2004/01/21 12:49:18 mcbride Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.23 2004/02/10 09:21:55 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.22 2004/01/21 12:49:18 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.23 2004/02/10 09:21:55 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -115,6 +115,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	struct pfsync_state_clr *c;
 	struct pfsync_state_upd_req *r;
 	int i, flags;
+	u_int64_t id;
 
 	if (eflag)
 		printf("version %d count %d: ",
@@ -147,7 +148,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 			struct pf_state st;
 
 			bzero(&st, sizeof(st));
-			st.id = s->id;
+			bcopy(&s->id, &st.id, sizeof(st.id));
 			strlcpy(st.u.ifname, s->ifname, sizeof(st.u.ifname));
 			pf_state_host_ntoh(&s->lan, &st.lan);
 			pf_state_host_ntoh(&s->gwy, &st.gwy);
@@ -179,22 +180,25 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	case PFSYNC_ACT_UPD_C:
 		for (i = 1, u = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*u) <= len; i++, u++) {
+			bcopy(&u->id, &id, sizeof(id));
 			printf("\tid: %016llx creatorid: %08x\n",
-			    betoh64(u->id), ntohl(u->creatorid));
+			    betoh64(id), ntohl(u->creatorid));
 		}
 		break;
 	case PFSYNC_ACT_DEL_C:
 		for (i = 1, d = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*d) <= len; i++, d++) {
+			bcopy(&d->id, &id, sizeof(id));
 			printf("\tid: %016llx creatorid: %08x\n",
-			    betoh64(d->id), ntohl(d->creatorid));
+			    betoh64(id), ntohl(d->creatorid));
 		}
 		break;
 	case PFSYNC_ACT_UREQ:
 		for (i = 1, r = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*r) <= len; i++, r++) {
+			bcopy(&r->id, &id, sizeof(id));
 			printf("\tid: %016llx creatorid: %08x\n",
-			    betoh64(r->id), ntohl(r->creatorid));
+			    betoh64(id), ntohl(r->creatorid));
 		}
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.10 2004/01/22 09:25:25 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.11 2004/02/10 09:21:54 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -29,6 +29,9 @@
 #ifndef _NET_IF_PFSYNC_H_
 #define _NET_IF_PFSYNC_H_
 
+
+#define PFSYNC_ID_LEN	sizeof(u_int64_t)
+
 struct pfsync_state_scrub {
 	u_int16_t	pfss_flags;
 	u_int8_t	pfss_ttl;	/* stashed TTL		*/
@@ -56,7 +59,7 @@ struct pfsync_state_peer {
 } __packed;
 
 struct pfsync_state {
-	u_int64_t	 id;
+	u_int32_t	 id[2];
 	char		 ifname[IFNAMSIZ];
 	struct pfsync_state_host lan;
 	struct pfsync_state_host gwy;
@@ -83,7 +86,7 @@ struct pfsync_state {
 } __packed;
 
 struct pfsync_state_upd {
-	u_int64_t		id;
+	u_int32_t		id[2];
 	struct pfsync_state_peer	src;
 	struct pfsync_state_peer	dst;
 	u_int32_t		creatorid;
@@ -94,7 +97,7 @@ struct pfsync_state_upd {
 } __packed;
 
 struct pfsync_state_del {
-	u_int64_t		id;
+	u_int32_t		id[2];
 	u_int32_t		creatorid;
 	struct {
 		u_int8_t	state;
@@ -106,7 +109,7 @@ struct pfsync_state_del {
 } __packed;
 
 struct pfsync_state_upd_req {
-	u_int64_t		id;
+	u_int32_t		id[2];
 	u_int32_t		creatorid;
 	u_int32_t		pad;
 } __packed;
