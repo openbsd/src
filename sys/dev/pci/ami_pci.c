@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.1 2001/03/09 11:14:22 mickey Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.2 2001/03/27 19:17:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -152,23 +152,21 @@ ami_pci_attach(parent, self, aux)
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_EBCR) | 0x20);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, AMI_WAKEUP, 0);
 #endif
-	if (!pci_mapreg_map(pa, AMI_BAR, PCI_MAPREG_TYPE_IO, 0,
+	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AMI_BAR);
+	if (pci_mapreg_map(pa, AMI_BAR, csr, 0,
 	    &sc->iot, &sc->ioh, NULL, &size)) {
+		printf(": can't map controller pci space\n");
+		return;
+	}
 
+	if (csr == PCI_MAPREG_TYPE_IO) {
 		sc->sc_init = ami_schwartz_init;
 		sc->sc_exec = ami_schwartz_exec;
 		sc->sc_done = ami_schwartz_done;
-
-	} else if (!pci_mapreg_map(pa, AMI_BAR, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->iot, &sc->ioh, NULL, &size)) {
-
+	} else {
 		sc->sc_init = ami_quartz_init;
 		sc->sc_exec = ami_quartz_exec;
 		sc->sc_done = ami_quartz_done;
-
-	} else {
-		printf(": can't map controller pci space\n");
-		return;
 	}
 	sc->dmat = pa->pa_dmat;
 
