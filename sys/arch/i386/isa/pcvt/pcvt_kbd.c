@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.30 1999/11/25 21:00:36 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.31 1999/11/27 21:39:29 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -203,9 +203,8 @@ update_led(void)
 		ledstate = LEDSTATE_UPDATE_PENDING;
 
 		if (kbd_cmd(KEYB_C_LEDS) != 0) {
-			printf("Keyboard LED command timeout\n");
-			splx(opri);
-			return;
+			printf("pcvt: kbd led cmd timeout\n");
+			goto bail;
 		}
 
 		/*
@@ -232,28 +231,27 @@ update_led(void)
 		response1 = kbd_response();
 
 		if (kbd_cmd(new_ledstate) != 0) {
-			printf("Keyboard LED data timeout\n");
-			splx(opri);
-			return;
+			printf("pcvt: kbd led data timeout\n");
+			goto bail;
 		}
 		response2 = kbd_response();
 
 		if (response1 == KEYB_R_ACK && response2 == KEYB_R_ACK)
 			ledstate = new_ledstate;
-		else
-			printf(
-			"Keyboard LED command not ACKed (responses %#x %#x)\n",
-				response1, response2);
+		else {
+			printf("pcvt: kbd led cmd not ack'd (resp %#x %#x)\n",
+			    response1, response2);
+		}
 
 #if PCVT_UPDLED_LOSES_INTR
 		if (lost_intr_timeout_queued)
-			untimeout (check_for_lost_intr, (void *)NULL);
+			untimeout(check_for_lost_intr, (void *)NULL);
 
-		timeout (check_for_lost_intr, (void *)NULL, hz);
+		timeout(check_for_lost_intr, (void *)NULL, hz);
 		lost_intr_timeout_queued = 1;
 #endif /* PCVT_UPDLED_LOSES_INTR */
-
 	}
+bail:
 	splx(opri);
 #endif /* !PCVT_NO_LED_UPDATE */
 }
@@ -268,26 +266,25 @@ settpmrate(int rate)
 
 	opri = spltty();
 	tpmrate = rate & 0x7f;
+
 	if (kbd_cmd(KEYB_C_TYPEM) != 0) {
-		printf("Keyboard TYPEMATIC command timeout\n");
+		printf("pcvt: kbd tpm cmd timeout\n");
 		goto fail;
 	}
 	response1 = kbd_response();		/* wait for ACK */
 
 	if (kbd_cmd(tpmrate) != 0) {
-		printf("Keyboard TYPEMATIC data timeout\n");
+		printf("pcvt: kbd tpm data timeout\n");
 		goto fail;
 	}
 	response2 = kbd_response();		/* wait for ACK */
 
 	if (response1 != KEYB_R_ACK || response2 != KEYB_R_ACK) {
-		printf(
-		   "Keyboard TYPEMATIC command not ACKed (responses %#x %#x)\n",
+		printf("pcvt: kbd tpm cmd not ack'd (resp %#x %#x)\n",
 		   response1, response2);
 	}
 fail:
 	splx(opri);
-	return;
 }
 
 /*---------------------------------------------------------------------------*
@@ -302,11 +299,11 @@ kbd_wait_output()
 	for (i = 100; i; i--) {
 		if ((inb(CONTROLLER_CTRL) & STATUS_INPBF) == 0) {
 			PCVT_KBD_DELAY();
-			return 1;
+			return (1);
 		}
 		DELAY(1000);
 	}
-	return 0;
+	return (0);
 }
 
 static inline int
@@ -318,11 +315,11 @@ kbd_wait_input()
 	for (i = 500; i; i--) {
 		if ((inb(CONTROLLER_CTRL) & STATUS_OUTPBF) != 0) {
 			PCVT_KBD_DELAY();
-			return 1;
+			return (1);
 		}
 		DELAY(1000);
 	}
-	return 0;
+	return (0);
 }
 
 static int
@@ -361,7 +358,7 @@ kbd_response(void)
 		return (-1);
 	ch = inb(CONTROLLER_DATA);
 
-	return ch;
+	return (ch);
 }
 
 /*---------------------------------------------------------------------------*
@@ -408,7 +405,7 @@ void doreset(void)
 
 	/* Enable interrupts and keyboard, etc. */
 	if (kbc_8042cmd(CONTR_WRITE) != 0)
-		printf("pcvt: doreset() - timeout controller write command\n");
+		printf("pcvt: timeout controller write cmd\n");
 
 #if PCVT_USEKBDSEC		/* security enabled */
 
@@ -430,7 +427,7 @@ void doreset(void)
 #endif /* PCVT_USEKBDSEC */
 
 	if (kbd_cmd(KBDINITCMD) != 0)
-		printf("pcvt: doreset() - timeout writing keyboard init command\n");
+		printf("pcvt: timeout writing kbd init cmd\n");
 
 	/*
 	 * Discard any stale keyboard activity.  The 0.1 boot code isn't
@@ -450,21 +447,21 @@ void doreset(void)
 	opri = spltty();
 
 	if (kbd_cmd(KEYB_C_RESET) != 0)
-		printf("pcvt: doreset() - keyboard reset command timeout\n");
+		printf("pcvt: kbd reset cmd timeout\n");
 
 	/* Wait for the first response to reset and handle retries */
 	while ((response = kbd_response()) != KEYB_R_ACK) {
 		if (response < 0) {
 			if (!again)	/* print message only once ! */
-				printf("pcvt: doreset() - response != ack and response < 0 [one time only msg]\n");
+				printf("pcvt: response != ack\n");
 			response = KEYB_R_RESEND;
 		}
 		if (response == KEYB_R_RESEND) {
 			if (!again)	/* print message only once ! */
-				printf("pcvt: doreset() - got KEYB_R_RESEND response ... [one time only msg]\n");
+				printf("pcvt: got KEYB_R_RESEND\n");
 
 			if (++again > PCVT_NONRESP_KEYB_TRY) {
-				printf("pcvt: doreset() - Caution - no PC keyboard detected!\n");
+				printf("pcvt: no kbd detected\n");
 				keyboard_type = KB_UNKNOWN;
 				splx(opri);
 				return;
@@ -472,7 +469,7 @@ void doreset(void)
 
 			if ((kbd_cmd(KEYB_C_RESET) != 0) && (once == 0)) {
 				once++;		/* print message only once ! */
-				printf("pcvt: doreset() - timeout for loop keyboard reset command [one time only msg]\n");
+				printf("pcvt: timeout for loop\n");
 			}
 		}
 	}
@@ -493,7 +490,7 @@ void doreset(void)
 			seen_negative_response = 1;
 
 		if (seen_negative_response && (wait_retries >= 10)) {
-			printf("pcvt: doreset() - response != OK and response < 0\n");
+			printf("pcvt: response != OK\n");
 
 			/*
 			 * If KEYB_R_SELFOK never arrives, the loop will
@@ -517,24 +514,22 @@ void doreset(void)
 
 	if (!(response & COMMAND_PCSCAN)) {
 		if (kbd_cmd(KEYB_C_SCANSET) != 0)
-			printf("pcvt: doreset() - keyboard SCANSET command timeout\n");
+			printf("pcvt: kbd SCANSET cmd timeout\n");
 		else if (kbd_cmd(1) != 0)
-			printf("pcvt: doreset() - keyboard SCANSET data timeout\n");
+			printf("pcvt: kbd SCANSET data timeout\n");
 		else
-			printf("pcvt: doreset() - keyboard set to XT mode\n");
+			printf("pcvt: kbd set to XT mode\n");
 	 }
 #endif
-
 	splx(opri);
 
 #if PCVT_KEYBDID
 
 query_kbd_id:
-
 	opri = spltty();
 
 	if (kbd_cmd(KEYB_C_ID) != 0) {
-		printf("pcvt: doreset() - timeout for keyboard ID command\n");
+		printf("pcvt: timeout for kbd ID cmd\n");
 		keyboard_type = KB_UNKNOWN;
 	}
 	else {
@@ -558,7 +553,7 @@ r_entry:
 				break;
 
 			default:
-				printf("\npcvt: doreset() - kbdid, response 2 = [%d]\n", response);
+				printf("pcvt: kbdid (resp 2 = %d)\n", response);
 				keyboard_type = KB_UNKNOWN;
 				break;
 			}
@@ -567,10 +562,8 @@ r_entry:
 			goto r_entry;
 		else if (response == -1)
 			keyboard_type = KB_AT;
-		else {
-			printf("\npcvt: doreset() - kbdid, response 1 = [%d]\n",
-			    response);
-		}
+		else
+			printf("pcvt: kbdid (resp 1 = %d)\n", response);
 	}
 	splx(opri);
 
@@ -628,8 +621,9 @@ void ovlinit(int force)
 			ovltbl[i].subc =
 			ovltbl[i].suba = KBD_SUBT_STR;	/* just strings .. */
 		}
-		for(i=0; i<=MAXKEYNUM; i++)
+		for(i = 0; i <= MAXKEYNUM; i++)
 			key2ascii[i].type &= KBD_MASK;
+
 		ovlinitflag = 1;
 	}
 }
@@ -641,7 +635,7 @@ static int
 getokeydef(unsigned key, Ovl_tbl *thisdef)
 {
 	if (key == 0 || key > MAXKEYNUM)
-		return EINVAL;
+		return (EINVAL);
 
 	thisdef->keynum = key;
 	thisdef->type = key2ascii[key].type;
@@ -677,7 +671,6 @@ getokeydef(unsigned key, Ovl_tbl *thisdef)
 	}
 
 	/* deliver at least anything for ALTGR settings ... */
-
 	if (key2ascii[key].unshift.subtype == STR) {
 		bcopy((u_char *)(key2ascii[key].unshift.what.string),
 		    thisdef->altgr, CODE_SIZE);
@@ -687,7 +680,7 @@ getokeydef(unsigned key, Ovl_tbl *thisdef)
 		bcopy("", thisdef->altgr, CODE_SIZE);
 		thisdef->suba = KBD_SUBT_FNC;
 	}
-	return 0;
+	return (0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -699,14 +692,14 @@ getckeydef(unsigned key, Ovl_tbl *thisdef)
 	u_short type = key2ascii[key].type;
 
 	if (key > MAXKEYNUM)
-		return EINVAL;
+		return (EINVAL);
 
 	if (type & KBD_OVERLOAD)
 		*thisdef = ovltbl[key2ascii[key].ovlindex];
 	else
 		getokeydef(key,thisdef);
 
-	return 0;
+	return (0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -730,7 +723,7 @@ xlatkey2ascii(U_short key)
 
 	/* ignore the NON-KEY */
 	if (key == 0)
-		return 0;
+		return (0);
 
 	/* get the current ASCII value */
 	getckeydef(key & 0x7F, &thisdef);
@@ -744,10 +737,10 @@ xlatkey2ascii(U_short key)
 				capchar[0] = altkpval;
 				altkpflag = 0;
 				altkpval = 0;
-				return capchar;
+				return (capchar);
 			}
 		}
-		return 0;
+		return (0);
 	}
 
 	switch (thisdef.type) {		/* convert the keys */
@@ -842,7 +835,7 @@ xlatkey2ascii(U_short key)
 			}
 			else
 				altkpflag = 0;
-			return 0;
+			return (0);
 		}
 
 		if (!vsp->num_lock) {
@@ -925,7 +918,7 @@ xlatkey2ascii(U_short key)
 	case KBD_CTL:
 	case KBD_NONE:
 	default:
-		return 0;
+		return (0);
 	}
 }
 
@@ -1050,7 +1043,7 @@ loop:
 
 	else {
 		if (noblock)
-			return NULL;
+			return (NULL);
 		else
 			goto loop;
 	}
@@ -1088,7 +1081,7 @@ loop:
 	}
 
 	if (noblock)
-		return NULL;
+		return (NULL);
 	else
 		goto loop;
 
@@ -1180,7 +1173,7 @@ scroll_reset:
 		}
 
 		if (noblock == 31337)
-			return NULL;
+			return (NULL);
 
 		if (key != 86)
 			goto regular;
@@ -1212,7 +1205,7 @@ scroll_reset:
  			in_Debugger = 0;
 
  			if (noblock)
- 				return NULL;
+ 				return (NULL);
  			else
  				goto loop;
  		}
@@ -1274,7 +1267,7 @@ scroll_reset:
 
 	if (!kbrepflag && key == kbd_lastkey && !kbd_status.breakseen) {
 		if (noblock)
-			return NULL;
+			return (NULL);
 		else
 			goto loop;
 	}
@@ -1343,7 +1336,7 @@ scroll_reset:
 	if (cp == NULL && !noblock)
 		goto loop;
 
-	return cp;
+	return (cp);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1367,7 +1360,7 @@ rmkeydef(int key)
 	register Ovl_tbl *ref;
 
 	if (key == 0 || key > MAXKEYNUM)
-		return EINVAL;
+		return (EINVAL);
 
 	if (key2ascii[key].type & KBD_OVERLOAD) {
 		ref = &ovltbl[key2ascii[key].ovlindex];
@@ -1379,7 +1372,7 @@ rmkeydef(int key)
 		ref->altgr[0] = 0;
 		key2ascii[key].type &= KBD_MASK;
 	}
-	return 0;
+	return (0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1393,7 +1386,7 @@ setkeydef(Ovl_tbl *data)
 	if ( data->keynum > MAXKEYNUM		 ||
 	    (data->type & KBD_MASK) == KBD_BREAK ||
 	    (data->type & KBD_MASK) > KBD_SHFTLOCK)
-		return EINVAL;
+		return (EINVAL);
 
 	data->unshift[KBDMAXOVLKEYSIZE] =
 	data->shift[KBDMAXOVLKEYSIZE] =
@@ -1417,7 +1410,7 @@ setkeydef(Ovl_tbl *data)
 				break;
 
 		if (i == OVLTBL_SIZE)
-			return ENOSPC;	/* no space, abuse of ENOSPC(!) */
+			return (ENOSPC); /* no space, abuse of ENOSPC(!) */
 	}
 
 	ovltbl[i] = *data;		/* copy new data string */
@@ -1425,7 +1418,7 @@ setkeydef(Ovl_tbl *data)
 	key2ascii[data->keynum].type |= KBD_OVERLOAD; 	/* mark key */
 	key2ascii[data->keynum].ovlindex = i;
 
-	return 0;
+	return (0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1471,19 +1464,19 @@ kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
 
 	case KBDGCKEY:
 		key = ((Ovl_tbl *)data)->keynum;
-		return getckeydef(key,(Ovl_tbl *)data);
+		return (getckeydef(key,(Ovl_tbl *)data));
 
 	case KBDSCKEY:
 		key = ((Ovl_tbl *)data)->keynum;
-		return setkeydef((Ovl_tbl *)data);
+		return (setkeydef((Ovl_tbl *)data));
 
 	case KBDGOKEY:
 		key = ((Ovl_tbl *)data)->keynum;
-		return getokeydef(key,(Ovl_tbl *)data);
+		return (getokeydef(key,(Ovl_tbl *)data));
 
 	case KBDRMKEY:
 		key = *(int *)data;
-		return rmkeydef(key);
+		return (rmkeydef(key));
 
 	case KBDDEFAULT:
 		ovlinit(1);
@@ -1491,9 +1484,9 @@ kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
 
 	default:
 		/* proceed with vga ioctls */
-		return -1;
+		return (-1);
 	}
-	return 0;
+	return (0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1503,8 +1496,8 @@ static inline u_char
 iso2ibm(u_char c)
 {
 	if (c < 0x80)
-		return c;
-	return iso2ibm437[c - 0x80];
+		return (c);
+	return (iso2ibm437[c - 0x80]);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1582,8 +1575,7 @@ get_usl_keymap(keymap_t *map)
 
 		case KBD_CTL:
 			c = 9;
-			goto special;
-		special:
+special:
 			for(j = 0; j < NUM_STATES; j++)
 				map->key[idx].map[j] = c;
 			map->key[idx].spcl = 0xff;
