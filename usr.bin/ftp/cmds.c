@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmds.c,v 1.6 1996/11/09 19:53:59 kstailey Exp $      */
+/*      $OpenBSD: cmds.c,v 1.7 1996/12/17 02:11:46 michaels Exp $      */
 /*      $NetBSD: cmds.c,v 1.8 1995/09/08 01:06:05 tls Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.6 1996/11/09 19:53:59 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.7 1996/12/17 02:11:46 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -1079,7 +1079,7 @@ setdebug(argc, argv)
  * Set current working directory
  * on remote machine.
  */
-void
+int
 cd(argc, argv)
 	int argc;
 	char *argv[];
@@ -1090,11 +1090,17 @@ cd(argc, argv)
 		code = -1;
 		return;
 	}
-	if (command("CWD %s", argv[1]) == ERROR && code == 500) {
-		if (verbose)
-			printf("CWD command not recognized, trying XCWD\n");
-		(void) command("XCWD %s", argv[1]);
+	if (command("CWD %s", argv[1]) == ERROR) {
+		if (code == 500) {
+			if (verbose)
+		  		printf("CWD command not recognized, "
+				       "trying XCWD\n");
+			return(command("XCWD %s", argv[1]));
+		}
+		else
+			return(-1);
 	}
+	return(0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.3 1996/09/03 18:00:05 deraadt Exp $      */
+/*      $OpenBSD: extern.h,v 1.4 1996/12/17 02:11:46 michaels Exp $      */
 /*      $NetBSD: extern.h,v 1.4 1995/09/08 01:06:19 tls Exp $      */
 
 /*-
@@ -46,7 +46,7 @@ void    abortsend __P(());
 void	account __P((int, char **));
 int	another __P((int *, char ***, char *));
 void	blkfree __P((char **));
-void	cd __P((int, char **));
+int	cd __P((int, char **));
 void	cdup __P((int, char **));
 void	changetype __P((int, int));
 void	cmdabort __P(());

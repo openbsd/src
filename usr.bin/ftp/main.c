@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1996/11/09 19:58:59 kstailey Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1996/12/17 02:11:45 michaels Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1996/11/09 19:58:59 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1996/12/17 02:11:45 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,6 +163,7 @@ main(argc, argv)
 		home = homedir;
 		(void) strcpy(home, pw->pw_dir);
 	}
+
 	if (argc > 0 && strchr(argv[0], ':')) {
 		int ret = 0;
 		anonftp = 1;
@@ -172,7 +173,7 @@ main(argc, argv)
 			extern char *__progname;
 			char portstr[20], *p, *bufp = NULL;
 			char *host = NULL, *dir = NULL, *file = NULL;
-			int xargc = 2;
+			int xargc = 2, tmp;
 
 			if (setjmp(toplevel))
 				exit(0);
@@ -220,14 +221,28 @@ main(argc, argv)
 				goto bail;
 			}
 
-			setbinary(NULL, 0);
-
-			if (dir) {
+			if (dir != NULL && *dir != '\0') {
 				xargv[1] = dir;
 				xargv[2] = NULL;
 				xargc = 2;
 				cd(xargc, xargv);
 			}
+			/*
+		 	 * either "file" is the file user wants, or he wants
+			 * to cd to "file" aswell, so try cd first, after
+			 * switcing of verbose (already got a CWD from above).
+			*/
+			xargv[1] = *file == '\0' ? "/" : file;
+			xargv[2] = NULL;
+			xargc = 2;
+			tmp = verbose;
+			verbose = 0;
+			if (cd(xargc, xargv) == 0) {
+				verbose = tmp;
+				goto CLINE_CD;
+			}
+			verbose = tmp;
+			setbinary(NULL, 0);
 
 			/* fetch file */
 			xargv[1] = file;
@@ -272,6 +287,7 @@ bail:
 			}
 		} while (!connected);
 	}
+CLINE_CD:
 	top = setjmp(toplevel) == 0;
 	if (top) {
 		(void) signal(SIGINT, intr);
