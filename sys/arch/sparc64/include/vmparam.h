@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2002/02/11 01:23:36 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2002/02/17 22:59:53 maja Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2001/05/01 02:19:19 thorpej Exp $ */
 
 /*
@@ -151,8 +151,6 @@
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERNEND)
-
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH

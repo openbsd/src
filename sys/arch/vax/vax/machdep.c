@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.52 2002/01/23 17:51:52 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.53 2002/02/17 22:59:53 maja Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -137,6 +137,7 @@ int bufpages = BUFPAGES;
 #else
 int bufpages = 0;
 #endif
+int bufcachepercent = BUFCACHEPERCENT;
 
 extern int *chrtoblktbl;
 extern int virtual_avail, virtual_end;
@@ -809,7 +810,7 @@ allocsys(v)
 	        bufpages = physmem / 10;
 	    else
 		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-		    BUFCACHEPERCENT / 100;
+		    bufcachepercent / 100;
 	}
     if (nbuf == 0) 
         nbuf = bufpages < 16 ? 16 : bufpages;

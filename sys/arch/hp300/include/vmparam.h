@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.11 2001/12/05 16:25:44 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.12 2002/02/17 22:59:52 maja Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1998/08/20 08:33:48 kleink Exp $	*/
 
 /*
@@ -136,7 +136,6 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFF000)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.56 2002/01/25 15:50:23 art Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.57 2002/02/17 22:59:53 maja Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -529,7 +529,7 @@ struct mbstat {
 
 #ifdef	_KERNEL
 struct	mbstat mbstat;
-extern	int nmbclusters;		/* limit on the # of clusters */
+extern	int nmbclust;			/* limit on the # of clusters */
 extern	int mblowat;			/* mbuf low water mark */
 extern	int mcllowat;			/* mbuf cluster low water mark */
 int	max_linkhdr;			/* largest link-level header */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.20 2001/12/05 16:25:44 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.21 2002/02/17 22:59:52 maja Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -92,7 +92,6 @@
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xf0000000)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define	VM_PHYSSEG_MAX	8	/* this many physmem segments */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.50 2002/01/23 17:51:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.51 2002/02/17 22:59:53 maja Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -110,6 +110,10 @@ struct vm_map *phys_map = NULL;
  */
 int	safepri = PSL_LOWIPL;
 
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
+
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -123,6 +127,7 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
+int	bufcachepercent = BUFCACHEPERCENT;
 
 static caddr_t allocsys __P((caddr_t));
 static void identifycpu __P((void));
@@ -195,9 +200,6 @@ allocsys(v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
 	/*
 	 * Determine how many buffers to allocate. By default we allocate
 	 * the BSD standard of use 10% of memory for the first 2 Meg,
@@ -210,7 +212,7 @@ allocsys(v)
 	if (bufpages == 0) {
 		/* We always have more than 2MB of memory. */
 		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-		    BUFCACHEPERCENT / 100;
+		    bufcachepercent / 100;
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;

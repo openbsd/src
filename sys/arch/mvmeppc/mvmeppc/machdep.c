@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2002/01/23 17:51:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 2002/02/17 22:59:53 maja Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -124,11 +124,17 @@ int	nbuf = NBUF;
 #else
 int	nbuf = 0;
 #endif
+
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
+
 #ifdef BUFPAGES
 int bufpages = BUFPAGES;
 #else
 int bufpages = 0;
 #endif
+int bufcachepercent = BUFCACHEPERCENT;
 
 struct bat battable[16];
 
@@ -604,14 +610,11 @@ allocsys(v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
 	/*
 	 * Decide on buffer space to use.
 	 */
 	if (bufpages == 0)
-		bufpages = physmem * BUFCACHEPERCENT / 100;
+		bufpages = physmem * bufcachepercent / 100;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)

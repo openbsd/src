@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2002/01/07 05:31:27 drahn Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.8 2002/02/17 22:59:52 maja Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -97,7 +97,6 @@
 #define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)((KERNEL_SR << ADDR_SR_SHFT) \
 						+ VM_KERN_ADDRESS_SIZE))
 
-#define	VM_MBUF_SIZE		(NMBCLUSTERS * PAGE_SIZE)
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 
 #define __HAVE_PMAP_PHYSSEG

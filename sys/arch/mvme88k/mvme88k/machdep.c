@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.88 2002/01/23 17:51:52 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.89 2002/02/17 22:59:53 maja Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -210,11 +210,17 @@ int   nbuf = NBUF;
 #else
 int   nbuf = 0;
 #endif
+
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
+
 #ifdef	BUFPAGES
 int   bufpages = BUFPAGES;
 #else
 int   bufpages = 0;
 #endif
+int   bufcachepercent = BUFCACHEPERCENT;
 
 caddr_t allocsys __P((caddr_t));
 
@@ -714,9 +720,6 @@ allocsys(v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
 	/*
 	 * Determine how many buffers to allocate.  We use 10% of the
 	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
@@ -728,7 +731,7 @@ allocsys(v)
 			bufpages = physmem / 10;
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-			    BUFCACHEPERCENT / 100;
+			    bufcachepercent / 100;
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;

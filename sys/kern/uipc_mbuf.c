@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.54 2002/02/05 22:06:43 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.55 2002/02/17 22:59:53 maja Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ mbinit()
 	vaddr_t minaddr, maxaddr;
 
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclust*(MCLBYTES), VM_MAP_INTRSAFE, FALSE, NULL);
 
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", &mclpool_allocator);
@@ -130,7 +130,7 @@ mbinit()
 	 * mbuf clusters the kernel is to support.  Log the limit
 	 * reached message max once a minute.
 	 */
-	pool_sethardlimit(&mclpool, nmbclusters, mclpool_warnmsg, 60);
+	pool_sethardlimit(&mclpool, nmbclust, mclpool_warnmsg, 60);
 
 	/*
 	 * Set a low water mark for both mbufs and clusters.  This should

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2002/02/12 06:42:26 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.59 2002/02/17 22:59:52 maja Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -100,11 +100,17 @@ int nbuf = NBUF;
 #else
 int nbuf = 0;
 #endif
+
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 10
+#endif /* BUFCACHEPERCENT */
+
 #ifdef BUFPAGES
 int bufpages = BUFPAGES;
 #else
 int bufpages = 0;
 #endif
+int bufcachepercent = BUFCACHEPERCENT;
 
 /*
  * Different kinds of flags used throughout the kernel.
@@ -456,12 +462,9 @@ hppa_init(start)
 	 */
 
 	/* buffer cache parameters */
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 10
-#endif /* BUFCACHEPERCENT */
 	if (bufpages == 0)
 		bufpages = totalphysmem / 100 *
-		    (totalphysmem <= 0x1000? 5 : BUFCACHEPERCENT);
+		    (totalphysmem <= 0x1000? 5 : bufcachepercent);
 
 	if (nbuf == 0)
 		nbuf = bufpages < 16? 16 : bufpages;

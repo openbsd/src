@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.65 2002/01/23 17:51:52 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.66 2002/02/17 22:59:52 maja Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -142,11 +142,17 @@ int	nbuf = NBUF;
 #else
 int	nbuf = 0;
 #endif
+
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 10
+#endif
+
 #ifdef	BUFPAGES
 int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
+int	bufcachepercent = BUFCACHEPERCENT;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -815,16 +821,13 @@ allocsys(v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 10
-#endif
 	/*
 	 * Determine how many buffers to allocate.
 	 * We allocate 10% of memory for buffer space.  Insure a
 	 * minimum of 16 buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = (physmem / (100/BUFCACHEPERCENT));
+		bufpages = (physmem / (100/bufcachepercent));
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)

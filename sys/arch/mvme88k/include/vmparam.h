@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.19 2001/12/24 04:12:37 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.20 2002/02/17 22:59:53 maja Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -90,7 +90,6 @@
 #define INTSTACK_SIZE		(3 * PAGE_SIZE)	/* interrupt stack size */
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS * MCLBYTES)
 #define VM_PHYS_SIZE		(1 * NPTEPG * PAGE_SIZE)
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 2002/02/05 18:34:39 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 2002/02/17 22:59:53 maja Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -149,6 +149,12 @@ int bus_space_debug = 0; /* This may be used by macros elsewhere. */
 
 struct vm_map *exec_map = NULL;
 extern vaddr_t avail_end;
+
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
+
+int	bufcachepercent = BUFCACHEPERCENT;
 
 int	physmem;
 u_long	_randseed;
@@ -358,16 +364,13 @@ allocsys(caddr_t v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
         /*
 	 * Determine how many buffers to allocate (enough to
 	 * hold 5% of total physical memory, but at least 16).
 	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	 if (bufpages == 0)
-	 	bufpages = physmem * BUFCACHEPERCENT / 100;
+	 	bufpages = physmem * bufcachepercent / 100;
 	 if (nbuf == 0) {
 	 	nbuf = bufpages;
 		if (nbuf < 16)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.196 2002/01/28 23:14:24 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.197 2002/02/17 22:59:52 maja Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -211,11 +211,17 @@ int	nbuf = NBUF;
 #else
 int	nbuf = 0;
 #endif
+
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
+
 #ifdef	BUFPAGES
 int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
+int	bufcachepercent = BUFCACHEPERCENT;
 
 extern int	boothowto;
 int	physmem;
@@ -479,9 +485,6 @@ allocsys(v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
 	/*
 	 * Determine how many buffers to allocate.  We use 10% of the
 	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
@@ -493,7 +496,7 @@ allocsys(v)
 			bufpages = physmem / 10;
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-			    BUFCACHEPERCENT / 100;
+			    bufcachepercent / 100;
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;

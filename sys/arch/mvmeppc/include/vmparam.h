@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.8 2001/12/05 16:25:44 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.9 2002/02/17 22:59:53 maja Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -98,7 +98,6 @@ extern vm_offset_t ppc_kvm_size;
 #define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)((KERNEL_SR << ADDR_SR_SHFT) \
 						+ SEGMENT_LENGTH))
 
-#define	VM_MBUF_SIZE		(NMBCLUSTERS * PAGE_SIZE)
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 
 #define __HAVE_PMAP_PHYSSEG
