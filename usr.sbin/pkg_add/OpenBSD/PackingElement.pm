@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.31 2004/10/04 12:16:31 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.32 2004/10/04 12:23:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -212,6 +212,7 @@ sub new { die "Can't create annotation objects" }
 package OpenBSD::PackingElement::Object;
 our @ISA=qw(OpenBSD::PackingElement);
 
+# concrete objects with file-like behavior
 package OpenBSD::PackingElement::FileObject;
 our @ISA=qw(OpenBSD::PackingElement::Object);
 
@@ -226,6 +227,19 @@ our @ISA=qw(OpenBSD::PackingElement::Object);
 # meta information, stored elsewhere
 package OpenBSD::PackingElement::Meta;
 our @ISA=qw(OpenBSD::PackingElement);
+
+package OpenBSD::PackingElement::Unique;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+sub add 
+{
+	my ($class, $plist, @args) = @_;
+
+	my $self = $class->new(@args);
+	$self->destate($plist->{state});
+	$plist->addunique($self);
+	return $self;
+}
 
 # all dependency information
 package OpenBSD::PackingElement::Depend;
@@ -304,6 +318,7 @@ sub NoDuplicateNames() { 1 }
 
 package OpenBSD::PackingElement::File;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
+
 use OpenBSD::PackageInfo qw(is_info_name);
 __PACKAGE__->setKeyword('file');
 sub keyword() { "file" }
@@ -333,6 +348,7 @@ sub add_object
 
 package OpenBSD::PackingElement::Sample;
 our @ISA=qw(OpenBSD::PackingElement);
+
 sub NoDuplicateNames() { 1 }
 __PACKAGE__->setKeyword('sample');
 sub keyword() { "sample" }
@@ -348,6 +364,7 @@ sub dirclass() { "OpenBSD::PackingElement::Sampledir" }
 
 package OpenBSD::PackingElement::Sampledir;
 our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::Sample);
+
 sub destate
 {
 	my ($self, $state) = @_;
@@ -357,17 +374,20 @@ sub destate
 
 package OpenBSD::PackingElement::InfoFile;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
+
 __PACKAGE__->setKeyword('info');
 sub keyword() { "info" }
 sub dirclass() { "OpenBSD::PackingElement::Infodir" }
 
 package OpenBSD::PackingElement::Shell;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
+
 __PACKAGE__->setKeyword('shell');
 sub keyword() { "shell" }
 
 package OpenBSD::PackingElement::Manpage;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
+
 __PACKAGE__->setKeyword('man');
 sub keyword() { "man" }
 
@@ -450,6 +470,7 @@ sub add_object
 # Comment is very special
 package OpenBSD::PackingElement::Comment;
 our @ISA=qw(OpenBSD::PackingElement);
+
 __PACKAGE__->setKeyword('comment');
 sub keyword() { "comment" }
 
@@ -475,6 +496,7 @@ sub add
 
 package OpenBSD::PackingElement::md5;
 our @ISA=qw(OpenBSD::PackingElement);
+
 __PACKAGE__->setKeyword('md5');
 
 sub add
@@ -487,10 +509,12 @@ sub add
 
 package OpenBSD::PackingElement::CVSTag;
 our @ISA=qw(OpenBSD::PackingElement OpenBSD::PackingElement::Comment);
+
 sub category() { 'cvstags'}
 
 package OpenBSD::PackingElement::symlink;
 our @ISA=qw(OpenBSD::PackingElement);
+
 __PACKAGE__->setKeyword('symlink');
 
 sub add
@@ -503,6 +527,7 @@ sub add
 
 package OpenBSD::PackingElement::hardlink;
 our @ISA=qw(OpenBSD::PackingElement);
+
 __PACKAGE__->setKeyword('link');
 
 sub add
@@ -515,6 +540,7 @@ sub add
 
 package OpenBSD::PackingElement::size;
 our @ISA=qw(OpenBSD::PackingElement);
+
 __PACKAGE__->setKeyword('size');
 
 sub add
@@ -527,6 +553,7 @@ sub add
 
 package OpenBSD::PackingElement::Option;
 our @ISA=qw(OpenBSD::PackingElement);
+
 __PACKAGE__->setKeyword('option');
 sub keyword() { 'option' }
 
@@ -546,6 +573,7 @@ sub add
 
 package OpenBSD::PackingElement::NoDefaultConflict;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
+
 sub category() { 'no-default-conflict' }
 sub keyword() { 'option' }
 
@@ -562,6 +590,7 @@ sub new
 
 package OpenBSD::PackingElement::ManualInstallation;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
+
 sub category() { 'manual-installation' }
 sub keyword() { 'option' }
 
@@ -578,7 +607,7 @@ sub new
 
 # The special elements that don't end in the right place
 package OpenBSD::PackingElement::ExtraInfo;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Unique);
 
 sub keyword() { 'comment' }
 sub category() { 'extrainfo' }
@@ -590,14 +619,6 @@ sub new
 	bless { subdir => $subdir, cdrom => $cdrom, ftp => $ftp}, $class;
 }
 
-sub add
-{
-	my ($class, $plist, @args) = @_;
-	my $self = $class->new(@args);
-	$plist->addunique($self);
-	return $self;
-}
-
 sub stringize($)
 {
 	my $self = $_[0];
@@ -606,21 +627,21 @@ sub stringize($)
 }
 
 package OpenBSD::PackingElement::PkgDep;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Depend);
 
 __PACKAGE__->setKeyword('pkgdep');
 sub keyword() { "pkgdep" }
 sub category() { "pkgdep" }
 
 package OpenBSD::PackingElement::PkgConflict;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Meta);
 
 __PACKAGE__->setKeyword('pkgcfl');
 sub keyword() { "pkgcfl" }
 sub category() { "pkgcfl" }
 
 package OpenBSD::PackingElement::Conflict;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Meta);
 
 __PACKAGE__->setKeyword('conflict');
 sub keyword() { "conflict" }
@@ -628,8 +649,7 @@ sub category() { "conflict" }
 
 
 package OpenBSD::PackingElement::NewDepend;
-
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Depend);
 
 __PACKAGE__->setKeyword('newdepend');
 sub category() { "newdepend" }
@@ -745,8 +765,7 @@ sub stringize($)
 }
 
 package OpenBSD::PackingElement::LibDepend;
-
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Depend);
 
 __PACKAGE__->setKeyword('libdepend');
 sub category() { "libdepend" }
@@ -774,29 +793,16 @@ sub stringize($)
 	    ':'.$self->{libspec}.':'.$self->{pattern}.':'.$self->{def};
 }
 
-package OpenBSD::PackingElement::Unique;
-our @ISA=qw(OpenBSD::PackingElement);
-
-sub add 
-{
-	my ($class, $plist, @args) = @_;
-
-	my $self = $class->new(@args);
-	$self->destate($plist->{state});
-	$plist->addunique($self);
-	return $self;
-}
-
 package OpenBSD::PackingElement::Name;
 use File::Spec;
-our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Unique);
 
 __PACKAGE__->setKeyword('name');
 sub keyword() { "name" }
 sub category() { "name" }
 
 package OpenBSD::PackingElement::LocalBase;
-our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Unique);
 
 __PACKAGE__->setKeyword('localbase');
 sub keyword() { "localbase" }
@@ -1092,6 +1098,7 @@ sub category() { OpenBSD::PackageInfo::MTREE_DIRS }
 
 package OpenBSD::PackingElement::Arch;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
+
 __PACKAGE__->setKeyword('arch');
 sub category() { 'arch' }
 sub keyword() { 'arch' }
