@@ -274,6 +274,7 @@
 ./usr/share/man/cat1/hp300
 ./usr/share/man/cat1/hpftodit.0
 ./usr/share/man/cat1/hppa
+./usr/share/man/cat1/hppa64
 ./usr/share/man/cat1/htdigest.0
 ./usr/share/man/cat1/htpasswd.0
 ./usr/share/man/cat1/i386
@@ -686,6 +687,7 @@
 ./usr/share/man/cat3/cats
 ./usr/share/man/cat3/hp300
 ./usr/share/man/cat3/hppa
+./usr/share/man/cat3/hppa64
 ./usr/share/man/cat3/i386
 ./usr/share/man/cat3/luna88k
 ./usr/share/man/cat3/mac68k
@@ -1230,6 +1232,7 @@
 ./usr/share/man/cat4/hppa/runway.0
 ./usr/share/man/cat4/hppa/uturn.0
 ./usr/share/man/cat4/hppa/wax.0
+./usr/share/man/cat4/hppa64
 ./usr/share/man/cat4/hsq.0
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/i386/apm.0
@@ -1766,6 +1769,7 @@
 ./usr/share/man/cat5/hosts_options.0
 ./usr/share/man/cat5/hp300
 ./usr/share/man/cat5/hppa
+./usr/share/man/cat5/hppa64
 ./usr/share/man/cat5/i386
 ./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/info.0
@@ -2018,6 +2022,10 @@
 ./usr/share/man/cat8/hppa/wsconscfg.0
 ./usr/share/man/cat8/hppa/wsconsctl.0
 ./usr/share/man/cat8/hppa/wsfontload.0
+./usr/share/man/cat8/hppa64
+./usr/share/man/cat8/hppa64/boot.0
+./usr/share/man/cat8/hppa64/boot.conf.0
+./usr/share/man/cat8/hppa64/mkboot.0
 ./usr/share/man/cat8/hprop.0
 ./usr/share/man/cat8/hpropd.0
 ./usr/share/man/cat8/httpd.0
@@ -2376,6 +2384,7 @@
 ./usr/share/man/cat9/cats
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa
+./usr/share/man/cat9/hppa64
 ./usr/share/man/cat9/i386
 ./usr/share/man/cat9/luna88k
 ./usr/share/man/cat9/mac68k
@@ -2394,6 +2403,7 @@
 ./usr/share/man/man1/cats
 ./usr/share/man/man1/hp300
 ./usr/share/man/man1/hppa
+./usr/share/man/man1/hppa64
 ./usr/share/man/man1/i386
 ./usr/share/man/man1/luna88k
 ./usr/share/man/man1/mac68k
@@ -2415,6 +2425,7 @@
 ./usr/share/man/man4/cats
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/hppa
+./usr/share/man/man4/hppa64
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/luna88k
 ./usr/share/man/man4/mac68k
@@ -2436,6 +2447,7 @@
 ./usr/share/man/man8/cats
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hppa
+./usr/share/man/man8/hppa64
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/luna88k
 ./usr/share/man/man8/mac68k
@@ -2455,6 +2467,7 @@
 ./usr/share/man/ps1/cats
 ./usr/share/man/ps1/hp300
 ./usr/share/man/ps1/hppa
+./usr/share/man/ps1/hppa64
 ./usr/share/man/ps1/i386
 ./usr/share/man/ps1/luna88k
 ./usr/share/man/ps1/mac68k
@@ -2477,6 +2490,7 @@
 ./usr/share/man/ps3/cats
 ./usr/share/man/ps3/hp300
 ./usr/share/man/ps3/hppa
+./usr/share/man/ps3/hppa64
 ./usr/share/man/ps3/i386
 ./usr/share/man/ps3/luna88k
 ./usr/share/man/ps3/mac68k
@@ -2496,6 +2510,7 @@
 ./usr/share/man/ps4/cats
 ./usr/share/man/ps4/hp300
 ./usr/share/man/ps4/hppa
+./usr/share/man/ps4/hppa64
 ./usr/share/man/ps4/i386
 ./usr/share/man/ps4/luna88k
 ./usr/share/man/ps4/mac68k
@@ -2514,6 +2529,7 @@
 ./usr/share/man/ps5/cats
 ./usr/share/man/ps5/hp300
 ./usr/share/man/ps5/hppa
+./usr/share/man/ps5/hppa64
 ./usr/share/man/ps5/i386
 ./usr/share/man/ps5/luna88k
 ./usr/share/man/ps5/mac68k
@@ -2534,6 +2550,7 @@
 ./usr/share/man/ps8/cats
 ./usr/share/man/ps8/hp300
 ./usr/share/man/ps8/hppa
+./usr/share/man/ps8/hppa64
 ./usr/share/man/ps8/i386
 ./usr/share/man/ps8/luna88k
 ./usr/share/man/ps8/mac68k
@@ -2552,6 +2569,7 @@
 ./usr/share/man/ps9/cats
 ./usr/share/man/ps9/hp300
 ./usr/share/man/ps9/hppa
+./usr/share/man/ps9/hppa64
 ./usr/share/man/ps9/i386
 ./usr/share/man/ps9/luna88k
 ./usr/share/man/ps9/mac68k
