@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.2 2000/06/20 04:55:25 jason Exp $	*/
+/*	$OpenBSD: client.c,v 1.3 2000/06/20 04:57:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -490,7 +490,7 @@ recv_pads(bfd, srv, sysname, myea, rmea, eh, ph, len, pkt)
 
 	timer_clr();
 
-	pppfd = runppp(bfd, sysname);
+	pppfd = fileno(stdin);
 	if (pppfd < 0) {
 		send_padt(bfd, myea, rmea, ph->sessionid);
 		return (-1);
