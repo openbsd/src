@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME167,v 1.10 1997/03/31 00:23:54 downsj Exp $
+#	$OpenBSD: MVME167,v 1.11 2000/01/25 04:18:17 smurph Exp $
 
 machine		mvme68k m68k
 
@@ -92,6 +92,19 @@ sram0	at mainbus0 addr 0xffe00000
 #bugtty0 at mainbus0
 
 vmes0	at vme0
+
+vs*	at vmes0 addr 0xffff9000 ipl 2 vec 0x80 len 0x800
+vs*	at vmes0 addr 0xffff9800 ipl 2 vec 0x82 len 0x800
+vs*	at vmes0 addr 0xffff4800 ipl 2 vec 0x84 len 0x800
+vs*	at vmes0 addr 0xffff5800 ipl 2 vec 0x86 len 0x800
+vs*	at vmes0 addr 0xffff7000 ipl 2 vec 0x88 len 0x800
+vs*	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
+
+le*	at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100
+le*	at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100
+le*	at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100
+le*	at vmes0 addr 0xffffd200 ipl 1 vec 0x77 len 0x100
+
 vmel0	at vme0
 
 #si0	at vmes0 addr 0xff200000 ipl 2 vec 0x40

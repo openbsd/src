@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.12 2000/01/24 05:20:53 smurph Exp $
+#	$OpenBSD: files.mvme68k,v 1.13 2000/01/25 04:18:17 smurph Exp $
 
 # config file for mvme68k
 
@@ -142,3 +142,9 @@ device wl: tty
 attach wl at vmes
 file arch/mvme68k/dev/wl.c			wl needs-count
 
+file	arch/mvme88k/dev/memdevs.c			nvram | sram
+
+device vs: scsi
+attach vs at vmes
+file	arch/mvme68k/dev/vs.c				vs
+file	arch/mvme68k/dev/vsdma.c			vs
