@@ -61,7 +61,7 @@ add_import (const char *module)
 {
     struct import *tmp = malloc (sizeof(*tmp));
     if(tmp == NULL)
-	errx(1, "Out of memory");
+	err(1, NULL);
 
     tmp->module = module;
     tmp->next   = imports;
@@ -79,8 +79,13 @@ init_generate (const char *filename, const char *base)
 {
     orig_filename = filename;
     if(base)
-	asprintf(&headerbase, "%s", base);
+	if((headerbase = strdup(base)) == NULL)
+             err(1, NULL);
+
     asprintf(&header, "%s.h", headerbase);
+    if(header == NULL)
+        err(1, NULL);
+
     headerfile = fopen (header, "w");
     if (headerfile == NULL)
 	err (1, "open %s", header);
