@@ -5,6 +5,7 @@ Installation is supported from several media types, including:
 	Tape
 	Remote NFS partition
 	FTP
+	HTTP
 	rsh & restore
 
 No matter which installation medium you choose, you'll need to have
