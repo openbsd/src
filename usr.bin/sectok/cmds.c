@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.12 2001/07/26 16:10:01 rees Exp $ */
+/* $Id: cmds.c,v 1.13 2001/07/26 20:00:16 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -266,6 +266,10 @@ int selfid(int ac, char *av[])
 	    /* aid */
 	    sel = 4;
 	    fidlen = sectok_parse_input(fname, fid, sizeof fid);
+	    if (fname[0] == '#') {
+		/* Prepend 0xfc to the aid to make it a "proprietary aid". */
+		fid[0] = 0xfc;
+	    }
 	}
     }
 

@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.12 2001/07/26 16:10:01 rees Exp $ */
+/* $Id: cyberflex.c,v 1.13 2001/07/26 20:00:16 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -328,7 +328,7 @@ sectok_fmt_aidname(char *aidname, int aidlen, unsigned char *aid)
 {
     int i, istext = 1;
 
-    for (i = 0; i < aidlen; i++)
+    for (i = 1; i < aidlen; i++)
 	if (!myisprint(aid[i])) {
 	    istext = 0;
 	    break;
@@ -336,6 +336,8 @@ sectok_fmt_aidname(char *aidname, int aidlen, unsigned char *aid)
     if (istext) {
 	memmove(aidname, aid, aidlen);
 	aidname[aidlen] = '\0';
+	if (aid[0] == 0xfc)
+	    aidname[0] = '#';
     } else {
 	for (i = 0; i < aidlen; i++)
 	    sprintf(&aidname[i * 2], "%02x", aid[i]);
@@ -533,31 +535,16 @@ int jdelete(int ac, char *av[])
 #define BLOCK_SIZE 8
 #define MAXTOKENS 16
 
-unsigned char *app_name;
-unsigned char progID[2], contID[2], aid[MAX_BUF_SIZE];
-int cont_size, inst_size;
-int aid_len;
-
-void load_default_options()
-{
-    memmove(progID, "ww", 2);
-    memmove(contID, "wx", 2);
-    memset(aid, 'w', sizeof aid);
-    aid_len = 5;
-}
+unsigned char progID[2], contID[2];
 
 int jload(int ac, char *av[])
 {
-    char progname[5], contname[5];
-    unsigned char app_data[MAX_APP_SIZE],
-    data[MAX_BUF_SIZE];
-    int i, j, vflag = 0, fd_app, size, sw;
+    char *cp, *filename, progname[5], contname[5];
+    unsigned char aid[16], app_data[MAX_APP_SIZE], data[MAX_BUF_SIZE];
+    int i, j, vflag = 0, gotprog = 0, gotcont = 0, fd_app, size, aidlen = 0, sw;
+    int cont_size = 1152, inst_size = 1024;
     des_cblock tmp;
     des_key_schedule schedule;
-
-    load_default_options();
-    cont_size = 1152;
-    inst_size = 1024;
 
     optind = optreset = 1;
 
@@ -565,9 +552,11 @@ int jload(int ac, char *av[])
 	switch (i) {
 	case 'p':
 	    sectok_parse_input(optarg, progID, 2);
+	    gotprog = 1;
 	    break;
 	case 'c':
 	    sectok_parse_input(optarg, contID, 2);
+	    gotcont = 1;
 	    break;
 	case 's':
 	    sscanf(optarg, "%d", &cont_size);
@@ -576,7 +565,7 @@ int jload(int ac, char *av[])
 	    sscanf(optarg, "%d", &inst_size);
 	    break;
 	case 'a':
-	    aid_len = sectok_parse_input(optarg, aid, sizeof aid);
+	    aidlen = sectok_parse_input(optarg, aid, sizeof aid);
 	    break;
 	case 'v':
 	    vflag = 1;
@@ -591,7 +580,36 @@ int jload(int ac, char *av[])
 	printf("missing file name\n");
 	return -1;
     }
-    app_name = av[optind++];
+    filename = av[optind++];
+
+    /*
+     * We prepend 0xfc to the aid to make it a "proprietary aid".
+     * See 7816-5 sec 5.2.4.
+     */
+    if (aidlen <= 0) {
+	/* No aid given, derive from file name */
+	cp = strrchr(filename, '/');
+	if (cp)
+	    cp++;
+	else
+	    cp = filename;
+	aid[0] = 0xfc;
+	strncpy(&aid[1], cp, sizeof aid - 1);
+	aidlen = (aid[15] == '\0') ? strlen(aid) : 16;
+    } else if (aid[0] == '#')
+	aid[0] = 0xfc;
+
+    if (!gotprog) {
+	/* No progID given, derive from aid */
+	progID[0] = aid[1];
+	progID[1] = 'p';
+    }
+
+    if (!gotcont) {
+	/* No contID given, derive from aid */
+	contID[0] = aid[1];
+	contID[1] = 'c';
+    }
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
@@ -602,38 +620,34 @@ int jload(int ac, char *av[])
     sectok_fmt_fid(contname, contID[0], contID[1]);
 
     if (vflag) {
-	printf ("applet file             \"%s\"\n", app_name);
+	printf ("applet file             \"%s\"\n", filename);
 	printf ("program ID              %s\n", progname);
 	printf ("container ID            %s\n", contname);
 	printf ("instance container size %d\n", cont_size);
 	printf ("instance data size      %d\n", inst_size);
 	printf ("AID                     ");
-	for (i = 0 ; i < aid_len ; i ++ )
-	    printf ("%02x", aid[i]);
+	for (i = 0 ; i < aidlen ; i ++ )
+	    printf ("%02x ", aid[i]);
 	printf ("\n");
     }
 
     /* open the input file */
-    fd_app = open (app_name, O_RDONLY, NULL);
+    fd_app = open (filename, O_RDONLY, NULL);
     if (fd_app == -1) {
-	fprintf (stderr, "cannot open file \"%s\"\n", app_name);
+	fprintf (stderr, "cannot open file \"%s\"\n", filename);
 	return -1;
     }
 
     /* read the input file */
     size = read (fd_app, app_data, MAX_APP_SIZE);
-    if (size == 0) {
-	fprintf (stderr, "file %s size 0??\n", app_name);
-	return -1;
-    }
-    if (size == -1) {
-	fprintf (stderr, "error reading file %s\n", app_name);
+    if (size <= 0) {
+	fprintf (stderr, "error reading file %s\n", filename);
 	return -1;
     }
 
     /* size must be able to be divided by BLOCK_SIZE */
     if (size % BLOCK_SIZE != 0) {
-	fprintf (stderr, "file \"%s\" size %d not divisible by %d\n", app_name, size, BLOCK_SIZE);
+	fprintf (stderr, "file \"%s\" size %d not divisible by %d\n", filename, size, BLOCK_SIZE);
 	return -1;
     }
 
@@ -656,7 +670,7 @@ int jload(int ac, char *av[])
 	/* print out the signature */
 	printf ("signature ");
 	for (j = 0; j < BLOCK_SIZE; j++ )
-	    printf ("%02x", tmp[j]);
+	    printf ("%02x ", tmp[j]);
 	printf ("\n");
     }
 
@@ -714,29 +728,22 @@ int jload(int ac, char *av[])
     }
 
     /* execute method -- call the install() method in the cardlet.
-       cardlet type 01 (applet, not application)
-       program ID (7777)
-       instance container size (0800 (1152))
-       instance container ID (7778)
-       instance data size (0400 (1024))
-       AID length (0005 (5 byte))
-       AID (7777777777) */
+       cardlet type 01 (applet, not application) */
 
     data[0] = 0x01;		/* cardlet type = 1 (applet, not application) */
     data[1] = progID[0];	/* FID, upper */
     data[2] = progID[1];	/* FID, lower */
-    data[3] = cont_size / 256;	/* instance container size 0x0800 (1152) byte, upper */
-    data[4] = cont_size % 256;	/* instance container size 0x0800 (1152) byte, lower */
+    data[3] = cont_size >> 8;	/* instance container size 0x0800 (1152) byte, upper */
+    data[4] = cont_size & 0xff;	/* instance container size 0x0800 (1152) byte, lower */
     data[5] = contID[0];	/* container ID (7778), upper */
     data[6] = contID[1];	/* container ID (7778), lower */
-    data[7] = inst_size / 256;	/* instance size 0x0400 (1024) byte, upper */
-    data[8] = inst_size % 256;	/* instance size 0x0400 (1024) byte, lower */
+    data[7] = inst_size >> 8;	/* instance size 0x0400 (1024) byte, upper */
+    data[8] = inst_size & 0xff;	/* instance size 0x0400 (1024) byte, lower */
     data[9] = 0x00;		/* AID length 0x0005, upper */
-    data[10] = aid_len;		/* AID length 0x0005, lower */
-    for (i = 0; i < aid_len; i++)
-	data[i + 11] = aid[i];
+    data[10] = aidlen;		/* AID length 0x0005, lower */
+    memmove(&data[11], aid, aidlen);
 
-    sectok_apdu(fd, cla, 0x0c, 0x13, 0, 11 + aid_len, data, 0, NULL, &sw);
+    sectok_apdu(fd, cla, 0x0c, 0x13, 0, 11 + aidlen, data, 0, NULL, &sw);
     if (!sectok_swOK(sw)) {
 	/* error */
 	printf("executing install() method in applet %s: %s\n", progname, sectok_get_sw(sw));
@@ -752,7 +759,11 @@ int junload(int ac, char *av[])
     char progname[5], contname[5];
     int i, vflag = 0, sw;
 
-    load_default_options();
+    /* Use old defaults */
+    if (progID[0] == 0)
+	memmove(progID, "ww", 2);
+    if (contID[0] == 0)
+	memmove(contID, "wx", 2);
 
     optind = optreset = 1;
 
