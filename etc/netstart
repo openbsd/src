@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.37 1998/03/28 00:11:00 deraadt Exp $
+#	$OpenBSD: netstart,v 1.38 1998/05/22 04:25:50 deraadt Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -35,8 +35,8 @@ fi
 ifconfig lo0 inet localhost
 
 # use loopback, not the wire
-route add -host $hostname localhost
-route add -net 127 127.0.0.1 -reject
+route -n add -host $hostname localhost
+route -n add -net 127 127.0.0.1 -reject
 
 # configure all of the non-loopback interfaces which we know about.
 # do this by reading /etc/hostname.* files, where * is the name
@@ -96,8 +96,8 @@ route add -net 127 127.0.0.1 -reject
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
-	route add -host default `cat /etc/mygate`
+	route -n add -host default `cat /etc/mygate`
 fi
 
 # default multicast route
-route add -net 224.0.0.0 -interface $hostname
+route -n add -net 224.0.0.0 -interface $hostname
