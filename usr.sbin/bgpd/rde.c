@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.71 2004/02/02 16:44:05 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.72 2004/02/02 18:56:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -594,11 +594,15 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	struct prefix	*p;
 	enum imsg_type	 type;
 
-	if ((old == NULL || old->aspath->nexthop == NULL ||
-	    old->aspath->nexthop->state != NEXTHOP_REACH ||
-	    old->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) &&
-	    (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state != NEXTHOP_REACH ||
+	ENSURE(old == NULL || old->aspath->nexthop != NULL);
+	ENSURE(new == NULL || new->aspath->nexthop != NULL);
+	/*
+	 * If old is != NULL we know it was active and should be removed.
+	 * On the other hand new may be UNREACH and then we should not
+	 * generate an update.
+	 */
+	if ((old == NULL || old->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) &&
+	    (new == NULL || new->aspath->nexthop->state != NEXTHOP_REACH ||
 	    new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE))
 		return;
 
@@ -649,9 +653,14 @@ rde_generate_updates(struct prefix *new, struct prefix *old)
 {
 	struct rde_peer			*peer;
 
-	if ((old == NULL || old->aspath->nexthop == NULL ||
-	    old->aspath->nexthop->state != NEXTHOP_REACH) &&
-	    (new == NULL || new->aspath->nexthop == NULL ||
+	ENSURE(old == NULL || old->aspath->nexthop != NULL);
+	ENSURE(new == NULL || new->aspath->nexthop != NULL);
+	/*
+	 * If old is != NULL we know it was active and should be removed.
+	 * On the other hand new may be UNREACH and then we should not
+	 * generate an update.
+	 */
+	if (old == NULL && (new == NULL || 
 	    new->aspath->nexthop->state != NEXTHOP_REACH))
 		return;
 

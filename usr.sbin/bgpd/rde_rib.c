@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.29 2004/02/02 16:46:16 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.30 2004/02/02 18:56:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -783,14 +783,18 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* create new prefix node */
 	np = prefix_alloc();
 	np->aspath = asp;
-	memcpy(&np->prefix, &p->prefix, sizeof(np->prefix));
+	/* peer and prefix pointers are still equal */
+	np->prefix = p->prefix;
 	np->peer = p->peer;
 	np->lastchange = time(NULL);
 
 	/* add to new as path */
 	LIST_INSERT_HEAD(&asp->prefix_h, np, path_l);
 	asp->prefix_cnt++;
-	asp->peer->prefix_cnt++;
+	/*
+	 * no need to update the peer prefix count because we are only moving
+	 * the prefix without changing the peer.
+	 */
 	/* XXX for debugging */
 	if (asp->prefix_cnt == MAX_PREFIX_PER_AS)
 		log_warnx("RDE: prefix hog, prefix %s/%d",
@@ -802,6 +806,8 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	 * afterwards run the route decision for new prefix node.
 	 * Because of this only one update is generated if the prefix
 	 * was active.
+	 * This is save because we create a new prefix and so the change
+	 * is noticed by prefix_evaluate().
 	 */
 	LIST_REMOVE(p, prefix_l);
 	prefix_evaluate(np, p->prefix);
@@ -812,7 +818,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	ENSURE(oasp->prefix_cnt > 0);
 	ENSURE(oasp->peer->prefix_cnt > 0);
 	oasp->prefix_cnt--;
-	oasp->peer->prefix_cnt--;
+	/* as before peer count needs no update because of move */
 
 	/* destroy all references to other objects and free the old prefix */
 	p->aspath = NULL;
@@ -887,6 +893,16 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
 		/* redo the route decision */
 		LIST_REMOVE(p, prefix_l);
+		/*
+		 * If the prefix is the active one remove it first,
+		 * this has to be done because we can not detect when
+		 * the active prefix changes it's state. In this case
+		 * we know that this is a withdrawl and so the second
+		 * prefix_evaluate() will generate no update because
+		 * the nexthop is unreachable or ineligible. 
+		 */
+		if (p == p->prefix->active)
+			prefix_evaluate(NULL, p->prefix);
 		prefix_evaluate(p, p->prefix);
 	}
 }
