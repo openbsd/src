@@ -1,4 +1,4 @@
-/*	$OpenBSD: pickmove.c,v 1.5 1998/03/26 21:16:51 pjanzen Exp $	*/
+/*	$OpenBSD: pickmove.c,v 1.6 2002/04/20 00:58:32 espie Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$OpenBSD: pickmove.c,v 1.5 1998/03/26 21:16:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pickmove.c,v 1.6 2002/04/20 00:58:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ static char rcsid[] = "$OpenBSD: pickmove.c,v 1.5 1998/03/26 21:16:51 pjanzen Ex
 #include <stdlib.h>
 #include <string.h>
 #include <curses.h>
-#include <machine/limits.h>
+#include <limits.h>
 
 #define BITS_PER_INT	(sizeof(int) * CHAR_BIT)
 #define MAPSZ		(BAREA / BITS_PER_INT)
