@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.22 2003/07/30 21:50:38 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.23 2003/08/07 19:47:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -108,7 +108,7 @@ gscattach(parent, self, aux)
 	printf ("\n");
 
 	sc->sc_ih = cpu_intr_establish(IPL_NESTED, ga->ga_irq,
-	    gsc_intr, (void *)sc->sc_ic->gsc_base, &sc->sc_dev);
+	    gsc_intr, (void *)sc->sc_ic->gsc_base, sc->sc_dev.dv_xname);
 
 	/* DMA guts */
 	sc->sc_dmatag._cookie = sc;
@@ -144,18 +144,18 @@ gscprint(aux, pnp)
 }
 
 void *
-gsc_intr_establish(sc, pri, irq, handler, arg, dv)
+gsc_intr_establish(sc, pri, irq, handler, arg, name)
 	struct gsc_softc *sc;
 	int pri;
 	int irq;
 	int (*handler)(void *v);
 	void *arg;
-	struct device *dv;
+	const char *name;
 {
 	volatile u_int32_t *r = sc->sc_ic->gsc_base;
 	void *iv;
 
-	if ((iv = cpu_intr_map(sc->sc_ih, pri, irq, handler, arg, dv)))
+	if ((iv = cpu_intr_map(sc->sc_ih, pri, irq, handler, arg, name)))
 		r[1] |= (1 << irq);
 	else {
 #ifdef GSCDEBUG

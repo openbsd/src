@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.10 2003/08/05 02:04:58 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.11 2003/08/07 19:47:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -156,7 +156,7 @@ cpu_intr_init(void)
 
 void *
 cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
-    struct device *dv)
+    const char *name)
 {
 	struct hppa_iv *iv, *pv = v, *ivb = pv->next;
 
@@ -188,7 +188,7 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
 
 void *
 cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
-    struct device *dv)
+    const char *name)
 {
 	struct hppa_iv *iv, *ev;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.12 2003/05/11 19:41:09 deraadt Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.13 2003/08/07 19:47:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -251,7 +251,7 @@ mg_isa_attach_hook(struct device *parent, struct device *self,
 
 void *
 mg_intr_establish(void *v, int irq, int type, int pri,
-	int (*handler)(void *), void *arg, char *name)
+	int (*handler)(void *), void *arg, const char *name)
 {
 	struct hppa_isa_iv *iv;
 	struct mongoose_softc *sc = v;
@@ -652,7 +652,7 @@ mgattach(parent, self, aux)
 
 	/* attach interrupt */
 	sc->sc_ih = cpu_intr_establish(IPL_HIGH, ca->ca_irq,
-				       mg_intr, sc, &sc->sc_dev);
+				       mg_intr, sc, sc->sc_dev.dv_xname);
 }
 
 int

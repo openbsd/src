@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.19 2003/06/02 19:54:29 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.20 2003/08/07 19:47:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -224,7 +224,7 @@ harmony_attach(parent, self, aux)
 	    PLAYBACK_EMPTYS * HARMONY_BUFSIZE, BUS_DMASYNC_PREWRITE);
 
 	(void)gsc_intr_establish((struct gsc_softc *)parent,
-	    IPL_AUDIO, ga->ga_irq, harmony_intr, sc, &sc->sc_dv);
+	    IPL_AUDIO, ga->ga_irq, harmony_intr, sc, sc->sc_dv.dv_xname);
 
 	/* set defaults */
 	sc->sc_in_port = HARMONY_IN_LINE;

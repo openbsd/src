@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.20 2003/08/03 21:28:24 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.21 2003/08/07 19:47:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -394,5 +394,5 @@ ie_gsc_attach(parent, self, aux)
 		      ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
 
 	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_NET,
-	    ga->ga_irq, i82596_intr, sc, &sc->sc_dev);
+	    ga->ga_irq, i82596_intr, sc, sc->sc_dev.dv_xname);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.15 2003/01/25 07:22:01 jason Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.16 2003/08/07 19:47:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -102,6 +102,6 @@ com_gsc_attach(parent, self, aux)
 	com_attach_subr(sc);
 
 	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
-				       ga->ga_irq, comintr, sc, &sc->sc_dev);
+	    ga->ga_irq, comintr, sc, sc->sc_dev.dv_xname);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.1 2002/12/20 01:56:32 mickey Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.2 2003/08/07 19:47:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -43,7 +43,7 @@ struct hppa_isa_chipset {
 	void	(*ic_attach_hook)(struct device *, struct device *,
 		    struct isabus_attach_args *);
 	void	*(*ic_intr_establish)(void *, int, int, int,
-		    int (*)(void *), void *, char *);
+		    int (*)(void *), void *, const char *);
 	void	(*ic_intr_disestablish)(void *, void *);
 	int	(*ic_intr_check)(void *, int, int);
 };
