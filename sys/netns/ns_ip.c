@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ip.c,v 1.2 1996/03/04 08:20:27 niklas Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.3 1996/04/24 08:46:19 mickey Exp $	*/
 /*	$NetBSD: ns_ip.c,v 1.14 1996/02/13 22:13:58 christos Exp $	*/
 
 /*
@@ -65,6 +65,8 @@
 #include <netns/ns_if.h>
 #include <netns/idp.h>
 
+#include <machine/stdarg.h>
+
 struct ifnet_en {
 	struct ifnet ifen_ifnet;
 	struct route ifen_route;
@@ -75,6 +77,7 @@ struct ifnet_en {
 
 int	nsipoutput(), nsipioctl();
 void	nsipstart();
+void	nsip_rtchange __P((register struct in_addr *dst));
 #define LOMTU	(1024+512);
 
 struct ifnet nsipif;
@@ -156,14 +159,19 @@ struct mbuf *nsip_badlen;
 struct mbuf *nsip_lastin;
 int nsip_hold_input;
 
-idpip_input(m, ifp)
-	register struct mbuf *m;
-	struct ifnet *ifp;
+void
+idpip_input(struct mbuf *m, ...)
 {
+	struct ifnet *ifp;
 	register struct ip *ip;
 	register struct idp *idp;
 	register struct ifqueue *ifq = &nsintrq;
 	int len, s;
+	va_list	ap;
+
+	va_start(ap, m);
+	ifp = va_arg(ap, struct ifnet *);
+	va_end(ap);
 
 	if (nsip_hold_input) {
 		if (nsip_lastin) {
@@ -348,9 +356,9 @@ nsip_route(m)
 		    ia = ia->ia_list.tqe_next)
 			if (ia->ia_ifp == ifp)
 				break;
-		if (ia == 0)
-			ia = in_ifaddr;
-		if (ia == 0) {
+		if (ia == NULL)
+			ia = in_ifaddr.tqh_first;
+		if (ia == NULL) {
 			RTFREE(ro.ro_rt);
 			return (EADDRNOTAVAIL);
 		}
