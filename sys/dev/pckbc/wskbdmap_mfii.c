@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.1 2000/11/13 20:12:35 aaron Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.2 2000/11/15 19:53:58 aaron Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -143,12 +143,12 @@ static const keysym_t pckbd_keydesc_us[] = {
 #endif
     KC(199),			KS_Home,
     KC(200),			KS_Up,
-    KC(201),			KS_Prior,
+    KC(201), KS_Cmd_ScrollBack,	KS_Prior,
     KC(203),			KS_Left,
     KC(205),			KS_Right,
     KC(207),			KS_End,
     KC(208),			KS_Down,
-    KC(209),			KS_Next,
+    KC(209), KS_Cmd_ScrollFwd,	KS_Next,
     KC(210),			KS_Insert,
     KC(211),			KS_KP_Delete,
     KC(219),			KS_Meta_L,

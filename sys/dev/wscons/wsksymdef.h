@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.3 2000/08/01 13:51:18 mickey Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.4 2000/11/15 19:53:57 aaron Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -421,6 +421,8 @@
 #define KS_Cmd_Debugger		0xf420
 #define KS_Cmd_ResetEmul	0xf421
 #define KS_Cmd_ResetClose	0xf422
+#define KS_Cmd_ScrollBack	0xf423
+#define KS_Cmd_ScrollFwd	0xf424
 
 /*
  * Group 5 (internal)
