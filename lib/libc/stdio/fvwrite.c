@@ -35,11 +35,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fvwrite.c,v 1.3 1996/10/26 06:58:58 tholo Exp $";
+static char rcsid[] = "$OpenBSD: fvwrite.c,v 1.4 1996/10/26 08:16:07 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "local.h"
 #include "fvwrite.h"
 
