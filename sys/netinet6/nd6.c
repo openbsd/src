@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.13 2000/04/27 10:46:17 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.56 2000/04/19 06:17:43 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.14 2000/05/15 11:29:14 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.62 2000/05/09 11:35:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1164,7 +1164,7 @@ nd6_rtrequest(req, rt, sa)
 				 * of the loopback address.
 				 */
 				if (ifa != rt->rt_ifa) {
-					rt->rt_ifa->ifa_refcnt--;
+					IFAFREE(rt->rt_ifa);
 					ifa->ifa_refcnt++;
 					rt->rt_ifa = ifa;
 				}
