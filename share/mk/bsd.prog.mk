@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.23 2001/01/31 06:41:18 art Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.24 2001/07/18 13:23:03 espie Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -10,7 +10,12 @@
 
 .SUFFIXES: .out .o .c .cc .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
+.if ${WARNINGS:L} == "yes"
+CFLAGS+=       ${CDIAGFLAGS}
+CXXFLAGS+=     ${CXXDIAGFLAGS}
+.endif
 CFLAGS+=	${COPTS}
+CXXFLAGS+=     ${CXXOPTS}
 
 .if (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "alpha")
 CRTBEGIN?=       ${DESTDIR}/usr/lib/crtbegin.o

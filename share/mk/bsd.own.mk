@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.50 2001/06/27 18:09:26 drahn Exp $
+#	$OpenBSD: bsd.own.mk,v 1.51 2001/07/18 13:23:03 espie Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -8,6 +8,8 @@
 .include "/etc/mk.conf"
 .endif
 
+# Set `WARNINGS' to `yes' to add appropriate warnings to each compilation
+WARNINGS?=	no
 # Set `SKEY' to `yes' to build with support for S/key authentication.
 SKEY?=		yes
 # Set `KERBEROS' to `yes' to build with support for Kerberos authentication.
