@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.9 1997/12/19 09:22:55 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.10 1997/12/19 09:36:50 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.9 1997/12/19 09:22:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.10 1997/12/19 09:36:50 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -400,7 +400,7 @@ inetprint(in, port, proto)
 		    ntohs((u_short)port));
 	/* pad to full column to clear any garbage */
 	cp = strchr(line, '\0');
-	while (cp - line < 22)
+	while (cp - line < 22 && cp - line < sizeof line-1)
 		*cp++ = ' ';
 	*cp = '\0';
 	waddstr(wnd, line);
