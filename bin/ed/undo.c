@@ -1,4 +1,4 @@
-/*	$OpenBSD: undo.c,v 1.3 1996/09/15 22:25:58 millert Exp $	*/
+/*	$OpenBSD: undo.c,v 1.4 1996/10/12 19:38:43 millert Exp $	*/
 /*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: undo.c,v 1.3 1996/09/15 22:25:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: undo.c,v 1.4 1996/10/12 19:38:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,8 @@ push_undo_stack(type, from, to)
 #if defined(sun) || defined(NO_REALLOC_NULL)
 	if (ustack == NULL &&
 	    (ustack = (undo_t *) malloc((usize = USIZE) * sizeof(undo_t))) == NULL) {
-		fprintf(stderr, "%s\n", strerror(errno));
-		snprintf(errmsg, sizeof(errmsg), "out of memory");
+		perror(NULL);
+		strcpy(errmsg, "out of memory");
 		return NULL;
 	}
 #endif
@@ -71,8 +71,8 @@ push_undo_stack(type, from, to)
 		return ustack + u_p++;
 	}
 	/* out of memory - release undo stack */
-	fprintf(stderr, "%s\n", strerror(errno));
-	snprintf(errmsg, sizeof(errmsg), "out of memory");
+	perror(NULL);
+	strcpy(errmsg, "out of memory");
 	clear_undo_stack();
 	free(ustack);
 	ustack = NULL;
@@ -100,7 +100,7 @@ pop_undo_stack()
 	long o_addr_last = addr_last;
 
 	if (u_current_addr == -1 || u_addr_last == -1) {
-		snprintf(errmsg, sizeof(errmsg), "nothing to undo");
+		strcpy(errmsg, "nothing to undo");
 		return ERR;
 	} else if (u_p)
 		modified = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.3 1996/09/15 22:25:58 millert Exp $	*/
+/*	$OpenBSD: sub.c,v 1.4 1996/10/12 19:38:42 millert Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed 
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: sub.c,v 1.3 1996/09/15 22:25:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: sub.c,v 1.4 1996/10/12 19:38:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ extract_subst_template()
 	if (*ibufp == '%' && *(ibufp + 1) == delimiter) {
 		ibufp++;
 		if (!rhbuf)
-			snprintf(errmsg, sizeof(errmsg), "no previous substitution");
+			strcpy(errmsg, "no previous substitution");
 		return rhbuf;
 	}
 	while (*ibufp != delimiter) {
@@ -166,7 +166,7 @@ search_and_replace(pat, gflag, kth)
 	}
 	current_addr = xa;
 	if  (nsubs == 0 && !(gflag & GLB)) {
-		snprintf(errmsg, sizeof(errmsg), "no match");
+		strcpy(errmsg, "no match");
 		return ERR;
 	} else if ((gflag & (GPR | GLS | GNP)) &&
 	    display_lines(current_addr, current_addr, gflag) < 0)
@@ -224,7 +224,7 @@ substitute_matching_text(pat, lp, gflag, kth)
 		i = eot - txt;
 		REALLOC(rbuf, rbufsz, off + i + 2, ERR);
 		if (i > 0 && !rm[0].rm_eo && (gflag & GSG)) {
-			snprintf(errmsg, sizeof(errmsg), "infinite substitution loop");
+			strcpy(errmsg, "infinite substitution loop");
 			return  ERR;
 		}
 		if (isbinary)

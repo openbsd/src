@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.3 1996/09/15 22:25:56 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.4 1996/10/12 19:38:36 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.3 1996/09/15 22:25:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.4 1996/10/12 19:38:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,14 +53,14 @@ read_file(fn, n)
 
 	fp = (*fn == '!') ? popen(fn + 1, "r") : fopen(strip_escapes(fn), "r");
 	if (fp == NULL) {
-		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
-		snprintf(errmsg, sizeof(errmsg), "cannot open input file");
+		perror(fn);
+		strcpy(errmsg, "cannot open input file");
 		return ERR;
 	} else if ((size = read_stream(fp, n)) < 0)
 		return ERR;
 	 else if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
-		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
-		snprintf(errmsg, sizeof(errmsg), "cannot close input file");
+		perror(fn);
+		strcpy(errmsg, "cannot close input file");
 		return ERR;
 	}
 	fprintf(stderr, !scripted ? "%lu\n" : "", size);
@@ -143,8 +143,8 @@ get_stream_line(fp)
 	if (c == '\n')
 		sbuf[i++] = c;
 	else if (ferror(fp)) {
-		fprintf(stderr, "%s\n", strerror(errno));
-		snprintf(errmsg, sizeof(errmsg), "cannot read input file");
+		perror(NULL);
+		strcpy(errmsg, "cannot read input file");
 		return ERR;
 	} else if (i) {
 		sbuf[i++] = '\n';
@@ -168,14 +168,14 @@ write_file(fn, mode, n, m)
 
 	fp = (*fn == '!') ? popen(fn+1, "w") : fopen(strip_escapes(fn), mode);
 	if (fp == NULL) {
-		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
-		snprintf(errmsg, sizeof(errmsg), "cannot open output file");
+		perror(fn);
+		strcpy(errmsg, "cannot open output file");
 		return ERR;
 	} else if ((size = write_stream(fp, n, m)) < 0)
 		return ERR;
 	 else if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
-		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
-		snprintf(errmsg, sizeof(errmsg), "cannot close output file");
+		perror(fn);
+		strcpy(errmsg, "cannot close output file");
 		return ERR;
 	}
 	fprintf(stderr, !scripted ? "%lu\n" : "", size);
@@ -224,8 +224,8 @@ put_stream_line(fp, s, len)
 {
 	while (len--)
 		if ((des ? put_des_char(*s++, fp) : fputc(*s++, fp)) < 0) {
-			fprintf(stderr, "%s\n", strerror(errno));
-			snprintf(errmsg, sizeof(errmsg), "cannot write file");
+			perror(NULL);
+			strcpy(errmsg, "cannot write file");
 			return ERR;
 		}
 	return 0;
@@ -258,7 +258,7 @@ get_extended_line(sizep, nonl)
 		if ((n = get_tty_line()) < 0)
 			return NULL;
 		else if (n == 0 || ibuf[n - 1] != '\n') {
-			snprintf(errmsg, sizeof(errmsg), "unexpected end-of-file");
+			strcpy(errmsg, "unexpected end-of-file");
 			return NULL;
 		}
 		REALLOC(cvbuf, cvbufsz, l + n, NULL);
@@ -298,8 +298,8 @@ get_tty_line()
 			return i;
 		case EOF:
 			if (ferror(stdin)) {
-				fprintf(stderr, "stdin: %s\n", strerror(errno));
-				snprintf(errmsg, sizeof(errmsg), "cannot read stdin");
+				perror(stdin);
+				strcpy(errmsg, "cannot read stdin");
 				clearerr(stdin);
 				ibufp = NULL;
 				return ERR;

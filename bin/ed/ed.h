@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.4 1996/09/15 22:25:55 millert Exp $	*/
+/*	$OpenBSD: ed.h,v 1.5 1996/10/12 19:38:33 millert Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -116,7 +116,7 @@ if (--mutex == 0) { \
 #define STRTOL(i, p) { \
 	if (((i = strtol(p, &p, 10)) == LONG_MIN || i == LONG_MAX) && \
 	    errno == ERANGE) { \
-		snprintf(errmsg, sizeof(errmsg), "number out of range"); \
+		strcpy(errmsg, "number out of range"); \
 	    	i = 0; \
 		return ERR; \
 	} \
@@ -131,15 +131,15 @@ if ((i) > (n)) { \
 	SPL1(); \
 	if ((b) != NULL) { \
 		if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
-			fprintf(stderr, "%s\n", strerror(errno)); \
-			snprintf(errmsg, sizeof(errmsg), "out of memory"); \
+			perror(NULL); \
+			strcpy(errmsg, "out of memory"); \
 			SPL0(); \
 			return err; \
 		} \
 	} else { \
 		if ((ts = (char *) malloc(ti += max((i), MINBUFSZ))) == NULL) { \
-			fprintf(stderr, "%s\n", strerror(errno)); \
-			snprintf(errmsg, sizeof(errmsg), "out of memory"); \
+			perror(NULL); \
+			strcpy(errmsg, "out of memory"); \
 			SPL0(); \
 			return err; \
 		} \
@@ -156,8 +156,8 @@ if ((i) > (n)) { \
 	char *ts; \
 	SPL1(); \
 	if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
-		fprintf(stderr, "%s\n", strerror(errno)); \
-		snprintf(errmsg, sizeof(errmsg), "out of memory"); \
+		perror(NULL); \
+		strcpy(errmsg, "out of memory"); \
 		SPL0(); \
 		return err; \
 	} \
