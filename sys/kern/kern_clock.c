@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.35 2002/04/24 21:53:12 espie Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.36 2002/06/07 08:16:26 nordin Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -691,20 +691,11 @@ hardclock(frame)
 	 * relatively high clock interrupt priority any longer than necessary.
 	 */
 	if (timeout_hardclock_update()) {
-		if (CLKF_BASEPRI(frame)) {
-			/*
-			 * Save the overhead of a software interrupt;
-			 * it will happen as soon as we return, so do it now.
-			 */
-			spllowersoftclock();
-			softclock();
-		} else {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-			softintr_schedule(softclock_si);
+		softintr_schedule(softclock_si);
 #else
-			setsoftclock();
+		setsoftclock();
 #endif
-		}
 	}
 }
 
