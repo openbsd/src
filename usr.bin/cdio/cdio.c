@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.25 2002/04/18 22:17:04 espie Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.26 2002/10/24 20:03:07 fgsch Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -98,7 +98,7 @@ struct cmdtab {
 { CMD_STOP,     "stop",         3, "" },
 { CMD_VOLUME,   "volume",       1, "<l> <r> | left | right | mute | mono | stereo" },
 { CMD_CDDB,   	"cddbinfo",     2, "[n]" },
-{ CMD_CDID,	"cdid",		2, "" },
+{ CMD_CDID,	"cdid",		3, "" },
 { 0, 0, 0, 0}
 };
 

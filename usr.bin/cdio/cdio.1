@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.24 2002/05/19 12:39:54 espie Exp $
+.\" $OpenBSD: cdio.1,v 1.25 2002/10/24 20:03:07 fgsch Exp $
 .\"
 .Dd July 3, 1995
 .Dt CDIO 1
@@ -136,6 +136,8 @@ Print the table of contents.
 Print the table of contents after matching the disc with the cddb.
 In case of multiple matches, reissue the command with
 .Ar n
+.It Ic cdid
+Print the disc id that will be used for matching with the cddb.
 .It Ic status
 Print information about the disc:
 the current playing status and position,
