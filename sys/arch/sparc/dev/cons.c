@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.7 2000/06/28 20:22:14 mjacob Exp $	*/
+/*	$OpenBSD: cons.c,v 1.8 2000/07/05 13:16:12 art Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1997/07/07 23:30:23 pk Exp $	*/
 
 /*
@@ -465,19 +465,21 @@ cnstart(tp)
 	} else
 		putc.v1 = promvec->pv_putchar;
 	while (tp->t_outq.c_cc) {
+		int ss;
+
 		c = getc(&tp->t_outq);
 		/*
 		 * *%&!*& ROM monitor console putchar is not reentrant!
 		 * splhigh/tty around it so as not to run so long with
 		 * clock interrupts blocked.
 		 */
-		(void) splhigh();
+		ss = splhigh();
 		if (v > 2) {
 			unsigned char c0 = c & 0177;
 			(*putc.v3)(fd, &c0, 1);
 		} else
 			(*putc.v1)(c & 0177);
-		(void) spltty();
+		splx(ss);
 	}
 	if (tp->t_state & TS_ASLEEP) {		/* can't happen? */
 		tp->t_state &= ~TS_ASLEEP;
@@ -525,6 +527,9 @@ cnfbstart(tp)
 	}
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_BUSY;
+		/*
+		 * XXX - this is just too ugly.
+		 */
 		if (s == 0) {
 			(void) splsoftclock();
 			cnfbdma((void *)tp);
