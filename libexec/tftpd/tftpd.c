@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tftpd.c,v 1.2 1996/08/11 23:22:00 deraadt Exp $";
+static char rcsid[] = "$Id: tftpd.c,v 1.3 1996/08/12 08:29:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -66,6 +66,7 @@ static char rcsid[] = "$Id: tftpd.c,v 1.2 1996/08/11 23:22:00 deraadt Exp $";
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pwd.h>
 
 #define	TIMEOUT		5
 
@@ -94,12 +95,13 @@ usage()
 	exit(1);
 }
 
+int
 main(argc, argv)
 	int    argc;
 	char **argv;
 {
 	register struct tftphdr *tp;
-	struct pwent *pw;
+	struct passwd *pw;
 	register int n = 0;
 	int on = 1;
 	int fd = 0;
