@@ -369,7 +369,7 @@ static char *ptsname(int fd)
 
 int getpty(int *ptynum)
 {
-#ifdef __osf__ /* XXX */
+#if defined(__osf__) || defined(HAVE_OPENPTY)
     int master;
     int slave;
     if(openpty(&master, &slave, line, 0, 0) == 0){

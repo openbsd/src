@@ -47,6 +47,8 @@
 #define HAVE_UNISTD_H
 #define HAVE_SYS_UTSNAME_H
 #define HAVE_UNAME
+#define HAVE_UTIL_H
+#define HAVE_OPENPTY
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
