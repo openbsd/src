@@ -1,4 +1,4 @@
-/*    $OpenBSD: ip_fil.c,v 1.27 1999/12/15 05:20:21 kjell Exp $    */
+/*    $OpenBSD: ip_fil.c,v 1.28 1999/12/17 06:17:08 kjell Exp $    */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.27 1999/12/15 05:20:21 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.28 1999/12/17 06:17:08 kjell Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -762,15 +762,15 @@ caddr_t data;
 	}
 
 	if (!f) {
-		if (req == SIOCINAFR || req == SIOCINIFR) {
-			ftail = fprev;
-			if (fp->fr_hits) {
-				while (--fp->fr_hits && (f = *ftail)) {
+		if (req != SIOCINAFR || req != SIOCINIFR)
+			while ((f = *ftail))
+				ftail = &f->fr_next;
+		else {
+			if (fp->fr_hits)
+				while (--fp->fr_hits && (f = *ftail))
 					ftail = &f->fr_next;
-				}
-			}
+			f = NULL;
 		}
-		f = NULL;
 	}
 
 	if (req == SIOCDELFR || req == SIOCRMIFR) {
@@ -795,7 +795,7 @@ caddr_t data;
 			error = EEXIST;
 		else {
 			if (unit == IPL_LOGAUTH)
-				return fr_auth_ioctl(data, req, f, ftail);
+				return fr_auth_ioctl(data, req, fp, ftail);
 			KMALLOC(f, frentry_t *);
 			if (f != NULL) {
 				if (fg && fg->fg_head)
@@ -1018,7 +1018,7 @@ int send_icmp_err(oip, type, code, ifp, dst)
 ip_t *oip;
 int type, code;
 void *ifp;
-struct in_addr	dst;
+struct in_addr dst;
 {
 	struct icmp *icmp;
 	struct mbuf *m;
@@ -1053,7 +1053,6 @@ struct in_addr	dst;
 	if (dst.s_addr == 0) {
 		if (fr_ifpaddr(ifp, &dst) == -1)
 			return -1;
-		dst.s_addr = htonl(dst.s_addr);
 	}
 	nip->ip_src = dst;
 	nip->ip_dst = oip->ip_src;
@@ -1320,19 +1319,9 @@ done:
 		RTFREE(ro->ro_rt);
 	return 0;
 bad:
-# if BSD >= 199306
-	if (error == EMSGSIZE) {
-		/* Send ICMP error here */
-		struct mbuf *mcopy;
-
-		mcopy = m_copy(m, 0, imin((int)ip->ip_len, 68));
-		if (mcopy) {
-			mcopy->m_pkthdr.rcvif = (struct ifnet *)ifp;
-			icmp_error(mcopy, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG,
-				   ip->ip_dst.s_addr, ifp);
-		}
-	}
-# endif
+	if (error == EMSGSIZE)
+		(void) send_icmp_err(ip, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG,
+				     ifp, ip->ip_dst);
 	m_freem(m);
 	goto done;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.c,v 1.28 1999/12/16 07:38:45 kjell Exp $ */
+/* $OpenBSD: parse.c,v 1.29 1999/12/17 06:17:08 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: parse.c,v 1.28 1999/12/16 07:38:45 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: parse.c,v 1.29 1999/12/17 06:17:08 kjell Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -266,6 +266,39 @@ int     linenum;
 				return NULL;
 			}
 			fil.fr_flags |= FR_LOGORBLOCK;
+			cpp++;
+		}
+		if (!strcasecmp(*cpp, "level")) {
+			int fac, pri;
+			char *s;
+
+			fac = 0;
+			pri = 0;
+			cpp++;
+			s = index(*cpp, '.');
+			if (s) {
+				*s++ = '\0';
+				fac = fac_findname(*cpp);
+				if (fac == -1) {
+					fprintf(stderr, "%d: %s %s\n", linenum,
+						"Unknown facility", *cpp);
+					return NULL;
+				}
+				pri = pri_findname(s);
+				if (pri == -1) {
+					fprintf(stderr, "%d: %s %s\n", linenum,
+						"Unknown priority", s);
+					return NULL;
+				}
+			} else {
+				pri = pri_findname(*cpp);
+				if (pri == -1) {
+					fprintf(stderr, "%d: %s %s\n", linenum,
+						"Unknown priority", *cpp);
+					return NULL;
+				}
+			}
+			fil.fr_loglevel = fac|pri;
 			cpp++;
 		}
 	}
@@ -1391,9 +1424,9 @@ struct	frentry	*fp;
 			if (u == NULL)
 				u = "!!!";
 			if (*s)
-				printf("%s.%s ", s, u);
+				printf("level %s.%s ", s, u);
 			else
-				printf("%s ", u);
+				printf("level %s ", u);
 		}
 			
 	}

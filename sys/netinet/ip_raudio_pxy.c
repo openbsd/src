@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_raudio_pxy.c,v 1.1 1999/12/14 04:17:17 kjell Exp $ */
+/* $OpenBSD: ip_raudio_pxy.c,v 1.2 1999/12/17 06:17:08 kjell Exp $ */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
 #endif
@@ -57,7 +57,7 @@ ap_session_t *aps;
 nat_t *nat;
 {
 	raudio_t *rap = aps->aps_data;
-	char membuf[512 + 1], *s;
+	unsigned char membuf[512 + 1], *s;
 	u_short id = 0;
 	tcphdr_t *tcp;
 	int off, dlen;
@@ -83,14 +83,14 @@ nat_t *nat;
 	dlen = msgdsize(m) - off;
 	if (dlen <= 0)
 		return 0;
-	copyout_mblk(m, off, MIN(sizeof(membuf), dlen), membuf);
+	copyout_mblk(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
 #else
 	m = *(mb_t **)fin->fin_mp;
 
 	dlen = mbufchainlen(m) - off;
 	if (dlen <= 0)
 		return 0;
-	m_copydata(m, off, MIN(sizeof(membuf), dlen), membuf);
+	m_copydata(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
 #endif
 	/*
 	 * In all the startup parsing, ensure that we don't go outside
@@ -100,7 +100,7 @@ nat_t *nat;
 	 * Look for the start of connection "PNA" string if not seen yet.
 	 */
 	if (rap->rap_seenpna == 0) {
-		s = memstr("PNA", membuf, 3, dlen);
+		s = (u_char *)memstr("PNA", (char *)membuf, 3, dlen);
 		if (s == NULL)
 			return 0;
 		s += 3;
@@ -164,7 +164,7 @@ ip_t *ip;
 ap_session_t *aps;
 nat_t *nat;
 {
-	char membuf[IPF_MAXPORTLEN + 1], *s;
+	unsigned char membuf[IPF_MAXPORTLEN + 1], *s;
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	raudio_t *rap = aps->aps_data;
 	struct in_addr swa, swb;
@@ -199,13 +199,13 @@ nat_t *nat;
 	if (dlen <= 0)
 		return 0;
 	bzero(membuf, sizeof(membuf));
-	copyout_mblk(m, off, MIN(sizeof(membuf), dlen), membuf);
+	copyout_mblk(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
 #else
 	dlen = mbufchainlen(m) - off;
 	if (dlen <= 0)
 		return 0;
 	bzero(membuf, sizeof(membuf));
-	m_copydata(m, off, MIN(sizeof(membuf), dlen), membuf);
+	m_copydata(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
 #endif
 
 	seq = ntohl(tcp->th_seq);
@@ -214,7 +214,7 @@ nat_t *nat;
 	 * We only care for the first 19 bytes coming back from the server.
 	 */
 	if (rap->rap_sseq == 0) {
-		s = memstr("PNA", membuf, 3, dlen);
+		s = (u_char *)memstr("PNA", (char *)membuf, 3, dlen);
 		if (s == NULL)
 			return 0;
 		a1 = s - membuf;
@@ -243,50 +243,57 @@ nat_t *nat;
 		return 0;
 	rap->rap_sdone = 1;
 
-	s = rap->rap_svr + 13;
-	rap->rap_srport = (*s << 8) | *(s + 1);
+	s = (u_char *)rap->rap_svr + 11;
+	if (((*s << 8) | *(s + 1)) == RA_ID_ROBUST) {
+		s += 2;
+		rap->rap_srport = (*s << 8) | *(s + 1);
+	}
+
 	swp = ip->ip_p;
 	swa = ip->ip_src;
 	swb = ip->ip_dst;
+
 	ip->ip_p = IPPROTO_UDP;
+	ip->ip_src = nat->nat_inip;
+	ip->ip_dst = nat->nat_oip;
+
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
 	bzero((char *)tcp2, sizeof(*tcp2));
 	fi.fin_dp = (char *)tcp2;
 	fi.fin_fr = &raudiofr;
 	tcp2->th_win = htons(8192);
 
-	if ((rap->rap_mode & RAP_M_UDP_ROBUST) == RAP_M_UDP_ROBUST) {
-		ip->ip_src = nat->nat_inip;
-		ip->ip_dst = nat->nat_oip;
-		sp = rap->rap_srport;
-		dp = rap->rap_prport;
-		tcp2->th_sport = htons(dp);
-		tcp2->th_dport = htons(sp);
+	if (((rap->rap_mode & RAP_M_UDP_ROBUST) == RAP_M_UDP_ROBUST) &&
+	    (rap->rap_srport != 0)) {
+		dp = rap->rap_srport;
+		sp = rap->rap_prport;
+		tcp2->th_sport = htons(sp);
+		tcp2->th_dport = htons(dp);
 		fi.fin_data[0] = dp;
 		fi.fin_data[1] = sp;
-		ipn = nat_new(nat->nat_ptr, ip, &fi, IPN_UDP, NAT_OUTBOUND);
+		ipn = nat_new(nat->nat_ptr, ip, &fi, 
+			      IPN_UDP | (sp ? 0 : FI_W_SPORT),
+			      NAT_OUTBOUND);
 		if (ipn != NULL) {
 			ipn->nat_age = fr_defnatage;
-			(void) fr_addstate(ip, &fi, 0);
+			(void) fr_addstate(ip, &fi, sp ? 0 : FI_W_SPORT);
 		}
-		ip->ip_src = swa;
-		ip->ip_dst = swb;
 	}
 
-	sp = rap->rap_plport;
-
-	tcp2->th_sport = htons(sp);
-	tcp2->th_dport = 0; /* XXX - don't specify remote port */
-	fi.fin_data[0] = sp;
-	fi.fin_data[1] = 0;
-	ip->ip_src = nat->nat_inip;
-	ip->ip_src = nat->nat_oip;
-	ipn = nat_new(nat->nat_ptr, ip, &fi, IPN_UDP|FI_W_DPORT, NAT_OUTBOUND);
-	if (ipn != NULL) {
-		ipn->nat_age = fr_defnatage;
-		(void) fr_addstate(ip, &fi, FI_W_DPORT);
+	if ((rap->rap_mode & RAP_M_UDP) == RAP_M_UDP) {
+		sp = rap->rap_plport;
+		tcp2->th_sport = htons(sp);
+		tcp2->th_dport = 0; /* XXX - don't specify remote port */
+		fi.fin_data[0] = sp;
+		fi.fin_data[1] = 0;
+		ipn = nat_new(nat->nat_ptr, ip, &fi, IPN_UDP|FI_W_DPORT,
+			      NAT_OUTBOUND);
+		if (ipn != NULL) {
+			ipn->nat_age = fr_defnatage;
+			(void) fr_addstate(ip, &fi, FI_W_DPORT);
+		}
 	}
-
+		
 	ip->ip_p = swp;
 	ip->ip_src = swa;
 	ip->ip_dst = swb;

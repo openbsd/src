@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_nat.c,v 1.23 1999/12/15 05:20:22 kjell Exp $ */
+/* $OpenBSD: ip_nat.c,v 1.24 1999/12/17 06:17:08 kjell Exp $ */
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -10,7 +10,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.23 1999/12/15 05:20:22 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.24 1999/12/17 06:17:08 kjell Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -791,6 +791,7 @@ int direction;
 					KFREE(nat);
 					return NULL;
 				}
+				in.s_addr = ntohl(in.s_addr);
 			} else if (!in.s_addr && !np->in_outmsk) {
 				/*
 				 * 0/0 - use the original source address/port.
@@ -1727,7 +1728,7 @@ void *ifp;
 			 */
 			sum1 = nat->nat_outip.s_addr;
 			if (fr_ifpaddr(ifp2, &in) != -1)
-				nat->nat_outip.s_addr = htonl(in.s_addr);
+				nat->nat_outip = in;
 			sum2 = nat->nat_outip.s_addr;
 
 			if (sum1 == sum2)
