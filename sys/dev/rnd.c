@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.28 1997/06/22 04:58:05 flipk Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.29 1997/06/22 05:05:00 flipk Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -447,7 +447,7 @@ randomattach(void)
 
 	bzero(&event_space, sizeof(event_space));
 	event_free = event_space;
-	for (rep = event_space; rep < &event_space[QEVLEN]; rep++)
+	for (rep = event_space; rep < &event_space[QEVLEN-1]; rep++)
 		rep->re_next = rep + 1;
 	for (i = 0; i < 256; i++)
 		arc4_state.s[i] = i;
