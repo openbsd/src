@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.24 2000/04/25 19:11:48 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.25 2000/07/19 19:26:05 mickey Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -13,8 +13,9 @@ SRCS+=	alarm.c assert.c basename.c clock.c closedir.c confstr.c ctermid.c \
 	lockf.c nice.c nlist.c opendir.c pause.c popen.c psignal.c pwcache.c \
 	raise.c readdir.c rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c siginterrupt.c \
-	siglist.c signal.c signame.c sigsetops.c sleep.c sysconf.c sysctl.c \
-	syslog.c telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
+	siglist.c signal.c signame.c sigsetops.c sleep.c strtofflags.c \
+	sysconf.c sysctl.c syslog.c \
+	telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
 	ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c utime.c \
 	valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c vwarn.c \
 	vwarnx.c verr.c verrx.c
@@ -53,7 +54,7 @@ MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 lockf.3 \
 	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
-	signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 syslog.3 \
+	signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 strtofflags.3 syslog.3 \
 	time.3 times.3 timezone.3 toascii.3 \
 	tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 \
 	usleep.3 utime.3 valloc.3 vis.3
@@ -97,6 +98,7 @@ MLINKS+=setmode.3 getmode.3
 MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigaddset.3 sigsetops.3 sigdelset.3 \
 	sigsetops.3 sigismember.3
+MLINKS+=strtofflags.3 fflagstostr.3
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
 MLINKS+=tolower.3 _tolower.3
