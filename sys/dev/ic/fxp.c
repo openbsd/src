@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.48 2004/04/15 21:16:34 mcbride Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.49 2004/04/26 03:00:44 mcbride Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -320,18 +320,19 @@ fxp_attach_common(sc, enaddr, intrstr)
 	bzero(sc->sc_ctrl, sizeof(struct fxp_ctrl));
 
 	/*
-	 * Pre-allocate our receive buffers.
+	 * Pre-allocate some receive buffers.
 	 */
 	sc->sc_rxfree = 0;
-	for (i = 0; i < FXP_NRFABUFS; i++) {
+	for (i = 0; i < FXP_NRFABUFS_MIN; i++) {
 		if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxmaps[i])) != 0) {
 			printf("%s: unable to create rx dma map %d, error %d\n",
 			    sc->sc_dev.dv_xname, i, err);
 			goto fail;
 		}
+		sc->rx_bufs++;
 	}
-	for (i = 0; i < FXP_NRFABUFS; i++)
+	for (i = 0; i < FXP_NRFABUFS_MIN; i++)
 		if (fxp_add_rfabuf(sc, NULL) != 0)
 			goto fail;
 
@@ -1025,10 +1026,11 @@ fxp_stop(sc, drain)
 			bus_dmamap_unload(sc->sc_dmat, rxmap);
 			FXP_RXMAP_PUT(sc, rxmap);
 			m = m_free(m);
+			sc->rx_bufs--;
 		}
 		sc->rfa_headm = NULL;
 		sc->rfa_tailm = NULL;
-		for (i = 0; i < FXP_NRFABUFS; i++) {
+		for (i = 0; i < FXP_NRFABUFS_MIN; i++) {
 			if (fxp_add_rfabuf(sc, NULL) != 0) {
 				/*
 				 * This "can't happen" - we're at splimp()
@@ -1037,6 +1039,7 @@ fxp_stop(sc, drain)
 				 */
 				panic("fxp_stop: no buffers!");
 			}
+			sc->rx_bufs++;
 		}
 	}
 }
@@ -1084,8 +1087,9 @@ fxp_init(xsc)
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
+	struct mbuf *m;
 	bus_dmamap_t rxmap;
-	int i, prm, allm, s;
+	int i, prm, allm, s, bufs;
 
 	s = splimp();
 
@@ -1275,6 +1279,32 @@ fxp_init(xsc)
 	/*
 	 * Initialize receiver buffer area - RFA.
 	 */
+	if (ifp->if_flags & IFF_UP)
+		bufs = FXP_NRFABUFS_MAX;
+	else
+		bufs = FXP_NRFABUFS_MIN;
+	if (sc->rx_bufs > bufs) {
+		while (sc->rfa_headm != NULL && sc->rx_bufs-- > bufs) {
+			rxmap = *((bus_dmamap_t *)m->m_ext.ext_buf);
+			bus_dmamap_unload(sc->sc_dmat, rxmap);
+			FXP_RXMAP_PUT(sc, rxmap);
+			sc->rfa_headm = m_free(m);
+		}
+	} else if (sc->rx_bufs < bufs) {
+		int err, tmp_rx_bufs = sc->rx_bufs;
+		for (i = sc->rx_bufs; i < bufs; i++) {
+			if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+			    MCLBYTES, 0, 0, &sc->sc_rxmaps[i])) != 0) {
+				printf("%s: unable to create rx dma map %d, "
+				  "error %d\n", sc->sc_dev.dv_xname, i, err);
+				break;
+			}
+			sc->rx_bufs++;
+		}
+		for (i = tmp_rx_bufs; i < sc->rx_bufs; i++)
+			if (fxp_add_rfabuf(sc, NULL) != 0)
+				break;
+	}
 	fxp_scb_wait(sc);
 	rxmap = *((bus_dmamap_t *)sc->rfa_headm->m_ext.ext_buf);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
