@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.9 1999/11/22 12:53:23 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.10 2000/01/09 22:43:18 mjacob Exp $	*/
 /* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -137,8 +137,9 @@ isp_sbus_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	int freq;
+	int freq, storebp = 0;
 	struct confargs *ca = aux;
+	struct bootpath *bp;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
 	struct ispsoftc *isp = &sbc->sbus_isp;
 	ISP_LOCKVAL_DECL;
@@ -173,6 +174,18 @@ isp_sbus_attach(parent, self, aux)
 	}
 	sbc->sbus_mdvec.dv_clock = freq;
 
+	if ((bp = ca->ca_ra.ra_bp) != NULL) {
+		if (bp->val[0] == ca->ca_slot &&
+		    bp->val[1] == ca->ca_offset) {
+			if (strcmp("isp", bp->name) == 0 ||
+			    strcmp("QLGC,isp", bp->name) == 0 ||
+			    strcmp("PTI,isp", bp->name) == 0 ||
+			    strcmp("ptisp", bp->name) == 0) {
+				storebp = 1;
+			}
+		}
+	}
+
 	/*
 	 * XXX: Now figure out what the proper burst sizes, etc., to use.
 	 */
@@ -185,7 +198,7 @@ isp_sbus_attach(parent, self, aux)
 	 */
 	if (strcmp("PTI,ptisp", ca->ca_ra.ra_name) == 0 ||
 	    strcmp("ptisp", ca->ca_ra.ra_name) == 0) {
-		sbc->sbus_mdvec.dv_fwlen = 0;
+		sbc->sbus_mdvec.dv_ispfw = NULL;
 	}
 
 	isp->isp_mdvec = &sbc->sbus_mdvec;
@@ -220,9 +233,25 @@ isp_sbus_attach(parent, self, aux)
 	/*
 	 * do generic attach.
 	 */
+	if (storebp) {
+		/*
+		 * We're the booting HBA.
+		 *
+		 * Override the bootpath name with our driver name
+		 * so we will do the correct matching and and store
+		 * the next component's boot path entry, also so a
+		 * successful match will occur.
+		 */
+		bcopy("isp", bp->name, 4);
+		bp++;
+		bootpath_store(1, bp);
+	}
 	isp_attach(isp);
 	if (isp->isp_state != ISP_RUNSTATE) {
 		isp_uninit(isp);
+	}
+	if (storebp) {
+		bootpath_store(1, NULL);
 	}
 	ISP_UNLOCK(isp);
 }
