@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.19 2001/09/05 01:27:13 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.20 2001/11/17 19:49:00 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.73 2001/09/05 01:12:34 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.19 2001/09/05 01:27:13 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.20 2001/11/17 19:49:00 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -201,7 +201,6 @@ int logopened = 0;
 
 static	u_long	seq = 0;
 
-volatile int signo;
 volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenquit;
 volatile sig_atomic_t seenusr1;
@@ -462,7 +461,6 @@ main(argc, argv)
 		}
 
 		FD_COPY(&sockvec, &recvec);
-		signo = 0;
 		switch (select(maxfd + 1, &recvec, 0, 0, 0)) {
 		case -1:
 			if (errno != EINTR) {
@@ -488,11 +486,10 @@ main(argc, argv)
 }
 
 void
-sighandler(sig)
-	int sig;
+sighandler(signo)
+	int signo;
 {
 
-	signo = sig;
 	switch (signo) {
 	case SIGALRM:
 		seenalrm++;
