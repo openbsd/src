@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.3 1996/08/27 03:18:00 dm Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.4 1996/08/27 20:33:41 dm Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -207,7 +207,7 @@ retry:
 			err(NOTFATAL, "%s: %s", path, strerror(errno));
 			goto bad;
 		}
-		if ((mbfd = open(path, O_APPEND|O_CREAT|O_WRONLY|O_EXLOCK,
+		if ((mbfd = open(path, O_APPEND|O_CREAT|O_EXCL|O_WRONLY|O_EXLOCK,
 		     S_IRUSR|S_IWUSR)) < 0) {
 			if (errno == EEXIST) {
 				/* file appeared since lstat */
