@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.52 1999/03/02 08:12:44 deraadt Exp $
+#	$OpenBSD: files.isa,v 1.53 1999/06/22 16:20:04 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -282,6 +282,13 @@ file	dev/isa/wss.c			wss needs-flag
 
 attach	wss at isa with wss_isa
 file	dev/isa/wss_isa.c		wss & (wss_isa | wss_isapnp) needs-flag
+
+# ESS Technology ES1887/ES888/ES1888
+device	ess { } : audio, isa_dma, mulaw, auconv, midibus
+file	dev/isa/ess.c			ess needs-flag
+
+attach	opl at ess with opl_ess
+file	dev/isa/opl_ess.c		opl_ess
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
