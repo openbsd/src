@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.12 1997/11/11 12:49:21 niklas Exp $	*/
+/*	$OpenBSD: fb.c,v 1.13 1997/11/11 13:04:22 niklas Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -414,9 +414,8 @@ fbrcons_init(fb)
 
 		rc->rc_maxcol = min(rc->rc_maxcol,
 		    (eep && eep->eeTtyCols) ? eep->eeTtyCols : 80);
-		rc->rc_maxcol = min(rc->rc_maxcol,
+		rc->rc_maxrow = min(rc->rc_maxrow,
 		    (eep && eep->eeTtyRows) ? eep->eeTtyRows : 34);
-		}
 	}
 #endif /* SUN4 */
 
