@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcwd.c,v 1.6 2000/07/19 15:25:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getcwd.c,v 1.7 2002/11/24 01:52:27 cloder Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -132,7 +132,7 @@ getcwd(pt, size)
 		/*
 		 * Build pointer to the parent directory, allocating memory
 		 * as necessary.  Max length is 3 for "../", the largest
-		 * possible component name, plus a trailing NULL.
+		 * possible component name, plus a trailing NUL.
 		 */
 		if (bup + 3  + MAXNAMLEN + 1 >= eup) {
 			char *nup;
