@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.33 2002/04/11 19:48:04 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.34 2002/04/30 08:13:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.33 2002/04/11 19:48:04 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.34 2002/04/30 08:13:49 deraadt Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -720,9 +720,8 @@ usage()
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s interface [-ol]"
-	    "       [-t tx rate] [-n network name] [-s station name]\n"
-	    "       [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
+	    "usage: %s [interface] [-ol] [-t tx rate] [-n network name]\n"
+	    "       [-s station name] [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
 	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
 	    "       [-f frequency] [-M 0|1] [-P 0|1] [-S max sleep duration]\n"
