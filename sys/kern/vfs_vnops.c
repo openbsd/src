@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.37 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.38 2001/12/10 18:45:34 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -521,6 +521,10 @@ vn_lock(vp, flags, p)
 		if ((flags & LK_INTERLOCK) == 0)
 			simple_lock(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK) {
+			if (flags & LK_NOWAIT) {
+				simple_unlock(&vp->v_interlock);
+				return (EBUSY);
+			}
 			vp->v_flag |= VXWANT;
 			simple_unlock(&vp->v_interlock);
 			tsleep((caddr_t)vp, PINOD, "vn_lock", 0);
