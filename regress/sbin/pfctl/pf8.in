@@ -1,0 +1,2 @@
+extern = "{ ! 10.0.0.0/8, 10.1.2.3  }"
+block out log on rl0 from $extern to any

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2001/08/28 09:54:14 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2001/08/28 12:17:04 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -140,7 +140,7 @@ typedef struct {
 %type	<v.proto>	proto proto_list proto_item
 %type	<v.fromto>	fromto
 %type	<v.peer>	ipportspec
-%type	<v.host>	ipspec host address host_list
+%type	<v.host>	ipspec xhost host address host_list
 %type	<v.port>	portspec port_list port_item
 %%
 
@@ -309,19 +309,17 @@ ipportspec	: ipspec			{ $$.host = $1; $$.port = NULL; }
 		;
 
 ipspec		: ANY				{ $$ = NULL; }
-		| '!' host			{ $$ = $2; $$->not = 1; }
-		| host				{ $$ = $1; }
+		| xhost				{ $$ = $1; }
 		| '{' host_list '}'		{ $$ = $2; }
 		;
 
-host_list	: '!' host			{ $$ = $2; $$->not = 1; } 
+host_list	: xhost				{ $$ = $1; }
+		| host_list ',' xhost		{ $3->next = $1; $$ = $3; }
+		;
+
+xhost		: '!' host			{ $$ = $2; $$->not = 1; }
 		| host				{ $$ = $1; }
-		| host_list ',' '!' host	{
-			$4->next = $1;
-			$4->not = 1;
-			$$ = $4;
-		}
-		| host_list ',' host		{ $3->next = $1; $$ = $3; }
+		;
 
 host		: address			{
 			$$ = $1;
