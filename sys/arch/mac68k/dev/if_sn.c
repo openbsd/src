@@ -1,5 +1,5 @@
 /*	$NetBSD: if_sn.c,v 1.7 1997/03/20 17:47:51 scottr Exp $	*/
-/*	$OpenBSD: if_sn.c,v 1.21 1997/04/18 11:58:34 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.22 1997/04/25 03:29:15 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -176,14 +176,6 @@ snsetup(sc)
 
 	p = (unsigned char *)SOALIGN(sc, p);
 
-	for (i = 0; i < NRDA; i++) {
-		sc->p_rda[i] = (void *) p;
-		sc->v_rda[i] = kvtop(p);
-		p += RXPKT_SIZE(sc);
-	}
-
-	p = (unsigned char *)SOALIGN(sc, p);
-
 	for (i = 0; i < NTDA; i++) {
 		struct mtd *mtdp = &sc->mtda[i];
 		mtdp->mtd_txp = (void *)p;
@@ -195,15 +187,32 @@ snsetup(sc)
 
 	if ((p - pp) > NBPG) {
 		printf ("%s: sizeof RRA (%ld) + CDA (%ld) +"
-			"RDA (%ld) + TDA (%ld) > NBPG (%d). Punt!\n",
+			"TDA (%ld) > NBPG (%d). Punt!\n",
 			sc->sc_dev.dv_xname,
 			(ulong)sc->p_cda - (ulong)sc->p_rra[0],
-			(ulong)sc->p_rda[0] - (ulong)sc->p_cda,
-			(ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_rda[0],
+			(ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_cda,
 			(ulong)p - (ulong)sc->mtda[0].mtd_txp,
 			NBPG);
 		return(1);
 	}
+
+	p = pp + NBPG;
+	pp = p;
+
+	if ((NRDA * RXPKT_SIZE(sc)) > NBPG) {
+		printf ("%s: sizeof NRDA (%d) > NBPG (%d). Punt!\n",
+			sc->sc_dev.dv_xname,
+			NRDA * RXPKT_SIZE(sc), NBPG);
+		return (1);
+	}
+
+	for (i = 0; i < NRDA; i++) {
+		sc->p_rda[i] = (void *) p;
+		sc->v_rda[i] = kvtop(p);
+		p += RXPKT_SIZE(sc);
+	}
+
+	p = (unsigned char *)SOALIGN(sc, p);
 
 	p = pp + NBPG;
 

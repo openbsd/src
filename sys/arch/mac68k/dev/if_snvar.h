@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_snvar.h,v 1.6 1997/04/23 00:28:22 gene Exp $       */
+/*      $OpenBSD: if_snvar.h,v 1.7 1997/04/25 03:29:14 briggs Exp $       */
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -40,19 +40,22 @@
 
 /*
  * buffer sizes in 32 bit mode
- * 1 TXpkt is 4 hdr words + (3 * FRAGMAX) + 1 link word
- * FRAGMAX == 16 => 54 words == 216 bytes
+ * 1 TXpkt is 4 hdr words + (3 * FRAGMAX) + 1 link word == 23 words == 92 bytes
  *
  * 1 RxPkt is 7 words == 28 bytes
  * 1 Rda   is 4 words == 16 bytes
+ *
+ * The CDA is 17 words == 68 bytes
+ *
+ * total space in page 0 = NTDA * 92 + NRRA * 16 + NRDA * 28 + 68
  */
 
 #define NRBA    8		/* # receive buffers < NRRA */
 #define RBAMASK (NRBA-1)
-#define NRDA    NRBA*4
-#define NTDA    4		/* # transmit descriptors */
-#define NRRA    32		/* # receive resource descriptors */
-#define RRAMASK (NRRA-1)	/* the reason why it must be power of two */
+#define NRDA    146
+#define NTDA    8		/* # transmit descriptors */
+#define NRRA    16		/* # receive resource descriptors */
+#define RRAMASK (NRRA-1)	/* the reason why NRRA must be power of two */
 
 #define FCSSIZE 4		/* size of FCS appended to packets */
 
@@ -66,10 +69,10 @@
 /*
  * transmit buffer area
  */
-#define NTXB    10      /* Number of xmit buffers */
+#define NTXB    NTDA	/* Number of xmit buffers */
 #define TXBSIZE 1536    /* 6*2^8 -- the same size as the 8390 TXBUF */
 
-#define	SN_NPAGES	1 + 8 + 5
+#define	SN_NPAGES	2 + 8 + 4
 
 /*
  * Statistics collected over time
