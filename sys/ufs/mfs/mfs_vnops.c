@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.21 2002/03/14 01:27:15 millert Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.22 2002/05/13 14:16:42 art Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -157,10 +157,11 @@ mfs_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	register struct buf *bp = ap->a_bp;
-	register struct mfsnode *mfsp;
+	struct buf *bp = ap->a_bp;
+	struct mfsnode *mfsp;
 	struct vnode *vp;
 	struct proc *p = curproc;		/* XXX */
+	int s;
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
@@ -175,7 +176,9 @@ mfs_strategy(v)
 			bcopy(base, bp->b_data, bp->b_bcount);
 		else
 			bcopy(bp->b_data, base, bp->b_bcount);
+		s = splbio();
 		biodone(bp);
+		splx(s);
 	} else if (p !=  NULL && mfsp->mfs_pid == p->p_pid) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else {
@@ -193,9 +196,10 @@ mfs_strategy(v)
  */
 void
 mfs_doio(bp, base)
-	register struct buf *bp;
+	struct buf *bp;
 	caddr_t base;
 {
+	int s;
 
 	base += (bp->b_blkno << DEV_BSHIFT);
 	if (bp->b_flags & B_READ)
@@ -206,7 +210,9 @@ mfs_doio(bp, base)
 		bp->b_flags |= B_ERROR;
 	else
 		bp->b_resid = 0;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 /*
