@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.118 2002/09/28 23:35:12 krw Exp $
+#	$OpenBSD: install.sh,v 1.119 2002/10/03 00:56:44 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -73,9 +73,6 @@
 # A list of devices holding filesystems and the associated mount points
 # is kept in the file named FILESYSTEMS.
 FILESYSTEMS=/tmp/filesystems
-
-# The Fully Qualified Domain Name
-FQDN=
 
 # install.sub needs to know the MODE
 MODE=install
@@ -318,11 +315,23 @@ fi
 
 mount_fs "-o async"
 
+ask_until "\nEnter system hostname (short form, e.g. 'foo'):"
+HOSTNAME=$resp
+FQDN=my.domain
+hostname $HOSTNAME.$FQDN
+
 # Get network configuration information, and store it for placement in the
 # root filesystem later.
-ask "\nConfigure the network?" y
+ask "Configure the network?" y
 case $resp in
 y*|Y*)	donetconfig
+	;;
+*)	cat > /tmp/hosts << __EOT
+::1 localhost.$FQDN localhost
+127.0.0.1 localhost.$FQDN localhost
+::1 $HOSTNAME.$FQDN $HOSTNAME
+127.0.0.1 $HOSTNAME.$FQDN $HOSTNAME
+__EOT
 	;;
 esac
 
@@ -348,7 +357,7 @@ install_sets $THESETS
 set_machdep_apertureallowed
 	
 # Copy configuration files to /mnt/etc.
-cfgfiles="fstab hostname.* hosts myname mygate resolv.conf kbdtype sysctl.conf"
+cfgfiles="fstab hostname.* mygate resolv.conf kbdtype sysctl.conf"
 
 echo -n "Saving configuration files..."
 if [ -f /etc/dhclient.conf ]; then
@@ -361,7 +370,14 @@ if [ -f /etc/dhclient.conf ]; then
 	cfgfiles=`echo $cfgfiles | sed -e 's/ mygate / /'`
 fi
 
+hostname > /mnt/etc/myname
+
 cd /tmp
+
+# Try to retain useful leading comments in /etc/hosts file.
+grep "^#" /mnt/etc/hosts > hosts.comment
+cat hosts.comment hosts > /mnt/etc/hosts
+
 for file in $cfgfiles; do
 	if [ -f $file ]; then
 		cp $file /mnt/etc/$file

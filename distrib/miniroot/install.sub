@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.263 2002/09/30 07:07:55 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.264 2002/10/03 00:56:44 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -530,7 +530,7 @@ configure_all_interfaces() {
 
 configure_ifs() {
 	local _up _if_name=$1 _if_ip _if_mask
-	local _if_symname _if_extra _hostname
+	local _if_symname _if_extra
 	local _dhcp_prompt _mediaopts
 
 	set -- `ifconfig $_if_name | sed -n '
@@ -563,8 +563,7 @@ configure_ifs() {
 	_if_ip=$resp
 
 	# Get symbolic name
-	_hostname=`hostname`
-	ask_until "Symbolic (host) name?" "$_hostname"
+	ask_until "Symbolic (host) name?" "$HOSTNAME"
 	_if_symname=$resp
 
 	# Get netmask
@@ -599,7 +598,7 @@ __EOT
 		ifconfig ${_if_name} down ${_if_extra}
 		cat > /etc/dhclient.conf << __EOT
 initial-interval 1;
-send host-name "$_hostname";
+send host-name "$HOSTNAME";
 request subnet-mask, broadcast-address, routers,
 	domain-name, domain-name-servers, host-name;
 __EOT
@@ -678,23 +677,20 @@ isalphanumeric() {
 
 # Much of this is gratuitously stolen from /etc/netstart.
 enable_network() {
-	# Check for required network related files
-	for _netfile in hosts myname; do
-		if [ ! -f /mnt/etc/${_netfile} ]; then
-			echo "ERROR: no /mnt/etc/${_netfile}!"
-			return 1
-		fi
-	done
+	local _netfile
+
+	# Check for required hosts file.
+	if [ ! -f /mnt/etc/hosts ]; then
+		echo "ERROR: no /mnt/etc/hosts!"
+		return 1
+	fi
 
 	# Copy any required or optional files found
-	for _netfile in hosts myname dhclient.conf resolv.conf resolv.conf.tail protocols services; do
+	for _netfile in hosts dhclient.conf resolv.conf resolv.conf.tail protocols services; do
 		if [ -f /mnt/etc/${_netfile} ]; then
 			cp /mnt/etc/${_netfile} /etc/${_netfile}
 		fi
 	done
-
-	hostname=`cat /etc/myname`
-	hostname $hostname
 
 	DIDNET=y
 
@@ -702,7 +698,7 @@ enable_network() {
 	ifconfig lo0 inet localhost
 
 	# use loopback, not the wire
-	route -n add -host $hostname localhost > /dev/null
+	route -n add -host `hostname` localhost > /dev/null
 	route -n add -net 127 127.0.0.1 -reject > /dev/null
 
 	# configure all of the non-loopback interfaces which we know about.
@@ -803,9 +799,6 @@ enable_network() {
 		route delete default > /dev/null 2>&1
 		route -n add -host default `cat /mnt/etc/mygate`
 	fi
-
-	# Get FQDN after any DHCP manipulation of resolv.conf is done
-	get_fqdn /etc/resolv.conf
 
 	# Display results...
 	echo "Network interface configuration:"
@@ -1112,7 +1105,7 @@ install_url() {
 		_ftp_server_login=$resp
 
 		# Get password unless anonymous
-		_ftp_server_password=root@`hostname`.$FQDN
+		_ftp_server_password=root@`hostname`
 		if [ "$_ftp_server_login" != "anonymous" ]; then
 			resp=
 			while [ -z "$resp" ] ; do
@@ -1746,16 +1739,26 @@ check_fs() {
 }
 
 # Find LAST instance of DOMAIN or SEARCH and extract first domain name
-# on that line as FQDN. Then ask user, just to be sure.
+# on that line as FQDN.
+# $1 = resolv.conf file name
+get_resolv_fqdn () {
+	if [[ ! -f $1 ]]; then
+		FQDN=
+		return
+	fi
+
+	FQDN=`sed -n \
+		-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
+		-e '/^search[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
+		-e '${g;p;}' $1`
+}
+
+# Find FQDN in resolv.conf. If we aren't updating a hosts file, ask
+# user to confirm the domain name. Else just fix hosts file
 # $1 = resolv.conf file to search for FQDN
 # $2 = hosts file to add FQDN information to
 get_fqdn() {
-	if [ -f "$1" ]; then
-		FQDN=`sed -n \
-			-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
-			-e '/^search[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
-			-e '${g;p;}' $1`
-	fi
+	get_resolv_fqdn $1
 
 	if [ -f "$2" -a -n "$FQDN" ]; then
 		# Add FQDN to hosts file entries created by addhostent, changing
@@ -1777,15 +1780,6 @@ donetconfig() {
 	[ "$DIDNET" ] && return
 
 	DIDNET=y
-
-	[ -f /tmp/myname ] && _nam=`cat /tmp/myname`
-
-	# chop off any fqdn that may be present in /tmp/myname.
-	_nam=${_nam%%.*}
-
-	ask_until "Enter system hostname (short form, e.g. 'foo'):" "$_nam"
-	hostname $resp
-	echo $resp > /tmp/myname
 
 	# Always create new hosts file. If install.sh has been
 	# restarted, an existing one may contain information which
@@ -1811,7 +1805,6 @@ information that will be supplied via DHCP, e.g. the DNS domain name.
 
 __EOT
 
-	FQDN=
 	get_fqdn /tmp/resolv.conf
 
 	configure_all_interfaces
@@ -1831,11 +1824,7 @@ __EOT
 	# override a user supplied (or previous DHCP supplied) FQDN.
 	get_fqdn /tmp/resolv.conf /tmp/hosts
 
-	# Also add FQDN to myname
-	if [ "$FQDN" ]; then
-		sed "s/\\(.*\\)\$/\\1.${FQDN}/" /tmp/myname > /tmp/myname.new
-		mv /tmp/myname.new /tmp/myname
-	fi
+	hostname $HOSTNAME.$FQDN
 
 	resp=`route -n show | sed -ne '/^default */{
 		s///
@@ -1993,6 +1982,12 @@ SETS=
 SETSDIR=
 SETSDONE=
 GET_FILES=
+
+# The Fully Qualified Domain Name.
+FQDN=
+
+# The system hostname (short form).
+HOSTNAME=
 
 # decide upon an editor
 if [ -z "$EDITOR" ] ; then

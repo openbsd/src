@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.42 2002/09/17 12:28:54 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.43 2002/10/03 00:56:44 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -82,14 +82,23 @@ if ! mount -o ro /dev/$ROOTDEV /mnt; then
 fi
 echo	"Done."
 
-# fstab and hosts are required for upgrade
-for _file in fstab hosts; do
+# The fstab, hosts and myname files are required.
+for _file in fstab hosts myname; do
 	if [ ! -f /mnt/etc/$_file ]; then
 		echo "ERROR: no /etc/${_file}!"
 		exit
 	fi
 	cp /mnt/etc/$_file /tmp/$_file
 done
+
+# Set the FQDN and system hostname (short form).
+HOSTNAME=`cat /tmp/myname`
+FQDN=$HOSTNAME
+HOSTNAME=${HOSTNAME%%.*}
+FQDN=${FQDN#${HOSTNAME}}
+FQDN=${FQDN#.}
+[[ -n $FQDN ]] || get_resolv_fqdn /mnt/etc/resolv.conf
+hostname $HOSTNAME.$FQDN
 
 # Start up the network in same/similar configuration as the installed system
 # uses.
