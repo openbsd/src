@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 2002/03/20 18:58:13 jason Exp $
+#	$OpenBSD: GENERIC,v 1.55 2002/03/27 15:12:22 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -10,6 +10,7 @@ option		_LP64
 
 option		PCIVERBOSE
 option		USER_PCICONF	# user-space PCI configuration
+option		APERTURE
 
 maxusers	64
 

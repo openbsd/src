@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2002/03/23 13:28:34 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2002/03/27 15:12:22 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -169,6 +169,14 @@ extern	caddr_t msgbufaddr;
 #if NAUXIO > 0
 #include <sparc64/dev/auxiovar.h>
 int sparc_led_blink;
+#endif
+
+#ifdef APERTURE
+#ifdef INSECURE
+int allowaperture = 1;
+#else
+int allowaperture = 0;
+#endif
 #endif
 
 /*
@@ -592,6 +600,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (ret);
 #else
 		return (EOPNOTSUPP);
+#endif
+	case CPU_ALLOWAPERTURE:
+#ifdef APERTURE
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
+			    allowaperture));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    &allowaperture));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
 	default:
 		return (EOPNOTSUPP);
