@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.44 2001/05/14 07:18:05 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.45 2001/05/14 08:03:14 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -81,18 +81,27 @@ extern struct nchstats nchstats;
 extern int nselcoll;
 extern struct disklist_head disklist;
 
-int sysctl_diskinit(int);
+int sysctl_diskinit(int, struct proc *);
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
  * at the same time.
  */
-struct lock sysctl_lock;
+struct lock sysctl_lock, sysctl_disklock;
+
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
+struct lock sysctl_kmemlock;
+#endif
 
 void
 sysctl_init()
 {
 	lockinit(&sysctl_lock, PLOCK|PCATCH, "sysctl", 0, 0);
+	lockinit(&sysctl_disklock, PLOCK|PCATCH, "sysctl_disklock", 0, 0);
+
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
+	lockinit(&sysctl_kmemlock, PLOCK|PCATCH, "sysctl_kmemlock", 0, 0);
+#endif
 }
 
 int
@@ -222,7 +231,6 @@ int domainnamelen;
 long hostid;
 char *disknames = NULL;
 struct disk *diskstats = NULL;
-
 #ifdef INSECURE
 int securelevel = -1;
 #else
@@ -378,7 +386,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, msgbufp->msg_bufs));
 	case KERN_MALLOCSTATS:
 		return (sysctl_malloc(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
+		    newp, newlen, p));
 	case KERN_CPTIME:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cp_time,
 		    sizeof(cp_time)));
@@ -439,12 +447,12 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case HW_PAGESIZE:
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_DISKNAMES:
-		err = sysctl_diskinit(0);
+		err = sysctl_diskinit(0, p);
 		if (err)
 			return err;
 		return (sysctl_rdstring(oldp, oldlenp, newp, disknames));
 	case HW_DISKSTATS:
-		err = sysctl_diskinit(1);
+		err = sysctl_diskinit(1, p);
 		if (err)
 			return err;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, diskstats,
@@ -952,11 +960,15 @@ fill_eproc(p, ep)
  * then we simply update the disk statistics information.
  */
 int
-sysctl_diskinit(update)
+sysctl_diskinit(update, p)
 	int update;
+	struct proc *p;
 {
 	struct disk *dk, *ndk;
 	int i, tlen, l;
+
+	if ((i = lockmgr(&sysctl_disklock, LK_EXCLUSIVE, NULL, p)) != 0)
+		return i;
 
 	if (disk_change) {
 		for (dk = TAILQ_FIRST(&disklist), tlen = 0; dk;
@@ -970,15 +982,9 @@ sysctl_diskinit(update)
 		diskstats = NULL;
 		disknames = NULL;
 		diskstats = malloc(disk_count * sizeof(struct disk),
-		    M_SYSCTL, M_NOWAIT);
-		if (diskstats == NULL)
-			return ENOMEM;
-		disknames = malloc(tlen, M_SYSCTL, M_NOWAIT);
-		if (disknames == NULL) {
-			free(diskstats, M_SYSCTL);
-			diskstats = NULL;
-			return ENOMEM;
-		}
+		    M_SYSCTL, M_WAITOK);
+		disknames = malloc(tlen, M_SYSCTL, M_WAITOK);
+
 		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
 			l += sprintf(disknames + l, "%s,",
@@ -1017,5 +1023,6 @@ sysctl_diskinit(update)
 			ndk->dk_cpulabel = NULL;
 		}
 	}
+	lockmgr(&sysctl_disklock, LK_RELEASE, NULL, p);
 	return 0;
 }

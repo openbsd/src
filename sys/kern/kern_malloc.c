@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.30 2001/05/14 07:01:37 angelos Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.31 2001/05/14 08:03:13 angelos Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ int buckstring_init = 0;
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
 char *memname[] = INITKMEMNAMES;
 char *memall = NULL;
+extern struct lock sysctl_kmemlock;
 #endif
 
 #ifdef MALLOC_DEBUG
@@ -477,13 +478,14 @@ kmeminit()
  * Return kernel malloc statistics information.
  */
 int
-sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
+sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
+	struct proc *p;
 {
         struct kmembuckets kb;
         int i, siz;
@@ -525,15 +527,17 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 	        if (memall == NULL) {
 			int totlen;
 
+			i = lockmgr(&sysctl_kmemlock, LK_EXCLUSIVE, NULL, p);
+			if (i)
+				return (i);
+
 			/* Figure out how large a buffer we need */
 			for (totlen = 0, i = 0; i < M_LAST; i++) {
 				if (memname[i])
 					totlen += strlen(memname[i]);
 				totlen++;
 			}
-			memall = malloc(totlen + M_LAST, M_SYSCTL, M_NOWAIT);
-			if (memall == NULL)
-				return (ENOMEM);
+			memall = malloc(totlen + M_LAST, M_SYSCTL, M_WAITOK);
 			bzero(memall, totlen + M_LAST);
 		        for (siz = 0, i = 0; i < M_LAST; i++)
 			        siz += sprintf(memall + siz, "%s,",
@@ -547,6 +551,7 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 			for (i = 0; i < totlen; i++)
 				if (memall[i] == ' ')
 					memall[i] = '_';
+			lockmgr(&sysctl_kmemlock, LK_RELEASE, NULL, p);
 		}
 	        return (sysctl_rdstring(oldp, oldlenp, newp, memall));
 #else
