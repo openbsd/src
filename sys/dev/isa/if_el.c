@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.17 2002/03/14 01:26:56 millert Exp $       */
+/*    $OpenBSD: if_el.c,v 1.18 2003/01/27 19:09:12 jason Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -342,7 +342,10 @@ elstart(ifp)
 		/* Copy the datagram to the buffer. */
 		for (m = m0; m != 0; m = m->m_next)
 			outsb(iobase+EL_BUF, mtod(m, caddr_t), m->m_len);
-
+		for (i = 0;
+		    i < ETHER_MIN_LEN - ETHER_CRC_LEN - m0->m_pkthdr.len; i++)
+			outb(iobase+EL_BUF, 0);
+			
 		m_freem(m0);
 
 		/* Now transmit the datagram. */

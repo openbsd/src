@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.23 2002/03/14 03:16:05 millert Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.24 2003/01/27 19:09:12 jason Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -581,6 +581,8 @@ loop:
 		bcopy(mtod(m, caddr_t), buffer, m->m_len);
 		buffer += m->m_len;
 	}
+	if (len > m0->m_pkthdr.len)
+		bzero(buffer, len - m0->m_pkthdr.len);
 
 	/* set direction bit: host -> adapter */
 	bus_space_write_1(bst, bsh, EG_CONTROL,
