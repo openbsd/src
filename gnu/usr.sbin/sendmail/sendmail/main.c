@@ -288,13 +288,20 @@ main(argc, argv, envp)
 	SyslogPrefixLen = PIDLEN + (MAXQFNAME - 3) + SL_FUDGE + SLDLL;
 	if (MissingFds != 0)
 	{
+		bool err = false;
 		char mbuf[MAXLINE];
 
 		mbuf[0] = '\0';
 		if (bitset(1 << STDIN_FILENO, MissingFds))
+		{
+			err = true;
 			(void) sm_strlcat(mbuf, ", stdin", sizeof mbuf);
+		}
 		if (bitset(1 << STDOUT_FILENO, MissingFds))
+		{
+			err = true;
 			(void) sm_strlcat(mbuf, ", stdout", sizeof mbuf);
+		}
 		if (bitset(1 << STDERR_FILENO, MissingFds))
 			(void) sm_strlcat(mbuf, ", stderr", sizeof mbuf);
 
@@ -309,8 +316,16 @@ main(argc, argv, envp)
 		*/
 
 		errno = save_errno;
-		LogLevel = 1;
-		syserr("File descriptors missing on startup: %s", &mbuf[2]);
+		if (err)
+		{
+			LogLevel = 1;
+			syserr("File descriptors missing on startup: %s",
+				&mbuf[2]);
+		}
+		else
+			sm_syslog(LOG_WARNING, NOQID,
+				  "File descriptors missing on startup: %s",
+				  &mbuf[2]);
 	}
 
 	/* reset status from syserr() calls for missing file descriptors */
