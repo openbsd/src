@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.138 2001/11/02 21:42:19 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.139 2001/11/24 19:29:06 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -697,9 +697,9 @@ sendit:
 		 * them, there is no way for one to update all its
 		 * routes when the MTU is changed.
 		 */
-		if ((ro->ro_rt->rt_flags & (RTF_UP | RTF_HOST))
-		    && !(ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU)
-		    && (ro->ro_rt->rt_rmx.rmx_mtu > ifp->if_mtu)) {
+		if ((ro->ro_rt->rt_flags & (RTF_UP | RTF_HOST)) &&
+		    !(ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) &&
+		    (ro->ro_rt->rt_rmx.rmx_mtu > ifp->if_mtu)) {
 			ro->ro_rt->rt_rmx.rmx_mtu = ifp->if_mtu;
 		}
 		ipstat.ips_cantfrag++;
@@ -1175,9 +1175,9 @@ ip_ctloutput(op, so, level, optname, mp)
 			switch (optname) {
 			case IP_IPSEC_LOCAL_ID:
 				/* Check valid types and NUL-termination */
-				if (ipr->ref_type < IPSP_IDENTITY_PREFIX
-				    || ipr->ref_type > IPSP_IDENTITY_CONNECTION
-				    || ((char *)(ipr + 1))[ipr->ref_len - 1]) {
+				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
+				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
+				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
 					FREE(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
@@ -1188,9 +1188,9 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			case IP_IPSEC_REMOTE_ID:
 				/* Check valid types and NUL-termination */
-				if (ipr->ref_type < IPSP_IDENTITY_PREFIX
-				    || ipr->ref_type > IPSP_IDENTITY_CONNECTION
-				    || ((char *)(ipr + 1))[ipr->ref_len - 1]) {
+				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
+				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
+				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
 					FREE(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {

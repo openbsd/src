@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.43 2001/06/25 01:59:29 angelos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.44 2001/11/24 19:29:07 deraadt Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1102,8 +1102,8 @@ out:
 			tcp_mtudisc(tp->t_inpcb, 0);
 			return (0);
 		}
-		if ((error == EHOSTUNREACH || error == ENETDOWN)
-		    && TCPS_HAVERCVDSYN(tp->t_state)) {
+		if ((error == EHOSTUNREACH || error == ENETDOWN) &&
+		    TCPS_HAVERCVDSYN(tp->t_state)) {
 			tp->t_softerror = error;
 			return (0);
 		}
