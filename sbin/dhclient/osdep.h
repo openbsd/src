@@ -1,4 +1,4 @@
-/*	$OpenBSD: osdep.h,v 1.6 2004/02/08 22:34:19 naddy Exp $	*/
+/*	$OpenBSD: osdep.h,v 1.7 2004/02/23 18:21:15 henning Exp $	*/
 
 /* Operating system dependencies... */
 
@@ -36,18 +36,6 @@
  * under a contract with Vixie Laboratories.
  */
 
-#if !defined (USE_SOCKETS) && \
-    !defined (USE_SOCKET_SEND) && \
-    !defined (USE_SOCKET_RECEIVE) && \
-    !defined (USE_RAW_SOCKETS) && \
-    !defined (USE_RAW_SEND) && \
-    !defined (USE_SOCKET_RECEIVE) && \
-    !defined (USE_BPF) && \
-    !defined (USE_BPF_SEND) && \
-    !defined (USE_BPF_RECEIVE)
-#  define USE_DEFAULT_NETWORK
-#endif
-
 #include <syslog.h>
 #include <sys/types.h>
 #include <string.h>
@@ -84,8 +72,6 @@ extern int h_errno;
 #define HAVE_SA_LEN
 #define HAVE_MKSTEMP
 
-#define USE_BPF
-
 #if defined(__alpha__) || (defined(__sparc64__) && defined(__arch64__))
 #define PTRSIZE_64BIT
 #endif
@@ -94,65 +80,8 @@ extern int h_errno;
 # define TIME_MAX 2147483647
 #endif
 
-/* Porting::
-
-   If you add a new network API, and have it set up so that it can be
-   used for sending or receiving, but doesn't have to be used for both,
-   then set up an ifdef like the ones below: */
-
-#ifdef USE_SOCKETS
-#  define USE_SOCKET_SEND
-#  define USE_SOCKET_RECEIVE
-#endif
-
-#ifdef USE_RAW_SOCKETS
-#  define USE_RAW_SEND
-#  define USE_SOCKET_RECEIVE
-#endif
-
-#ifdef USE_BPF
-#  define USE_BPF_SEND
-#  define USE_BPF_RECEIVE
-#endif
-
-/* Porting::
-
-   If you add support for sending packets directly out an interface,
-   and your support does not do ARP or routing, you must use a fallback
-   mechanism to deal with packets that need to be sent to routers.
-   Currently, all low-level packet interfaces use BSD sockets as a
-   fallback. */
-
-#if defined(USE_BPF_SEND) || defined(USE_NIT_SEND) || \
-    defined(USE_DLPI_SEND) || defined(USE_UPF_SEND) || defined(USE_LPF_SEND)
-#  define USE_SOCKET_FALLBACK
-#  define USE_FALLBACK
-#endif
-
-/* Porting::
-
-   If you add support for sending packets directly out an interface
-   and need to be able to assemble packets, add the USE_XXX_SEND
-   definition for your interface to the list tested below. */
-
-#if defined(USE_RAW_SEND) || defined(USE_BPF_SEND) || \
-    defined(USE_NIT_SEND) || defined(USE_UPF_SEND) || \
-    defined(USE_DLPI_SEND) || defined(USE_LPF_SEND)
-#  define PACKET_ASSEMBLY
-#endif
-
-/* Porting::
-
-   If you add support for receiving packets directly from an interface
-   and need to be able to decode raw packets, add the USE_XXX_RECEIVE
-   definition for your interface to the list tested below. */
-
-#if defined(USE_RAW_RECEIVE) || defined(USE_BPF_SEND) || \
-    defined(USE_NIT_RECEIVE) || defined(USE_UPF_RECEIVE) || \
-    defined(USE_DLPI_RECEIVE) || defined(USE_LPF_SEND) || \
-    (defined(USE_SOCKET_SEND) && defined(SO_BINDTODEVICE))
-#  define PACKET_DECODING
-#endif
+#define PACKET_ASSEMBLY
+#define PACKET_DECODING
 
 /* jmp_buf is assumed to be a struct unless otherwise defined in the
    system header. */

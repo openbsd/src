@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.7 2004/02/10 13:12:48 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.8 2004/02/23 18:21:15 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -288,8 +288,6 @@ discover_interfaces(int state)
 		add_protocol(tmp->name, tmp->rfdesc, got_one, tmp);
 
 	freeifaddrs(ifap);
-
-	maybe_setup_fallback();
 }
 
 struct interface_info *

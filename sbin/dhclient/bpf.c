@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.5 2004/02/07 17:59:22 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.6 2004/02/23 18:21:15 henning Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -223,10 +223,6 @@ send_packet(struct interface_info *interface, struct packet *packet,
 	struct iovec	iov[2];
 	int		result;
 
-	if (!strcmp(interface->name, "fallback"))
-		return (send_fallback(interface, packet, raw,
-		    len, from, to, hto));
-
 	/* Assemble the headers... */
 	assemble_hw_header(interface, buf, &bufp, hto);
 	assemble_udp_ip_header(interface, buf, &bufp, from.s_addr,
@@ -368,17 +364,4 @@ int
 can_receive_unicast_unconfigured(struct interface_info *ip)
 {
 	return (1);
-}
-
-void
-maybe_setup_fallback(void)
-{
-	struct interface_info	*fbi;
-
-	fbi = setup_fallback();
-	if (fbi) {
-		if_register_fallback(fbi);
-		add_protocol("fallback", fallback_interface->wfdesc,
-		    fallback_discard, fallback_interface);
-	}
 }

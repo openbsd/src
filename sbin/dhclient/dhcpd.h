@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.5 2004/02/10 13:12:48 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.6 2004/02/23 18:21:15 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -612,76 +612,20 @@ void dump_raw(unsigned char *, int);
 void dump_packet(struct packet *);
 void hash_dump(struct hash_table *);
 
-/* socket.c */
-#if defined(USE_SOCKET_SEND) || defined(USE_SOCKET_RECEIVE) \
-	|| defined(USE_SOCKET_FALLBACK)
-int if_register_socket(struct interface_info *);
-#endif
-
-#if defined(USE_SOCKET_FALLBACK) && !defined(USE_SOCKET_SEND)
-void if_reinitialize_fallback(struct interface_info *);
-void if_register_fallback(struct interface_info *);
-ssize_t send_fallback(struct interface_info *,
-    struct packet *, struct dhcp_packet *, size_t, struct in_addr,
-    struct sockaddr_in *, struct hardware *);
-#endif
-
-#ifdef USE_SOCKET_SEND
-void if_reinitialize_send(struct interface_info *);
-void if_register_send(struct interface_info *);
-ssize_t send_packet(struct interface_info *,
-    struct packet *, struct dhcp_packet *, size_t, struct in_addr,
-    struct sockaddr_in *, struct hardware *);
-#endif
-#ifdef USE_SOCKET_FALLBACK
-void fallback_discard(struct protocol *);
-#endif
-#ifdef USE_SOCKET_RECEIVE
-void if_reinitialize_receive(struct interface_info *);
-void if_register_receive(struct interface_info *);
-ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
-    struct sockaddr_in *, struct hardware *);
-#endif
-#ifdef USE_SOCKET_SEND
-int can_unicast_without_arp(void);
-int can_receive_unicast_unconfigured(struct interface_info *);
-void maybe_setup_fallback(void);
-#endif
-
 /* bpf.c */
-#if defined(USE_BPF_SEND) || defined(USE_BPF_RECEIVE)
 int if_register_bpf(struct interface_info *);
-#endif
-#ifdef USE_BPF_SEND
 void if_reinitialize_send(struct interface_info *);
 void if_register_send(struct interface_info *);
 ssize_t send_packet(struct interface_info *,
     struct packet *, struct dhcp_packet *, size_t, struct in_addr,
     struct sockaddr_in *, struct hardware *);
-#endif
-#ifdef USE_BPF_RECEIVE
 void if_reinitialize_receive(struct interface_info *);
 void if_register_receive(struct interface_info *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
     struct sockaddr_in *, struct hardware *);
-#endif
-#ifdef USE_BPF_SEND
 int can_unicast_without_arp(void);
 int can_receive_unicast_unconfigured(struct interface_info *);
 void maybe_setup_fallback(void);
-#endif
-
-/* raw.c */
-#ifdef USE_RAW_SEND
-void if_reinitialize_send(struct interface_info *);
-void if_register_send(struct interface_info *);
-ssize_t send_packet(struct interface_info *,
-    struct packet *, struct dhcp_packet *, size_t, struct in_addr,
-    struct sockaddr_in *, struct hardware *);
-int can_unicast_without_arp(void);
-int can_receive_unicast_unconfigured(struct interface_info *);
-void maybe_setup_fallback(void);
-#endif
 
 /* dispatch.c */
 extern struct interface_info *interfaces,
