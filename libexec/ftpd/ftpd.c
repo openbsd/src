@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.157 2004/11/28 19:12:31 henning Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.158 2004/11/28 19:36:48 henning Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.157 2004/11/28 19:12:31 henning Exp $";
+    "$OpenBSD: ftpd.c,v 1.158 2004/11/28 19:36:48 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ static const char rcsid[] =
 #include "extern.h"
 #include "monitor.h"
 
-static char version[] = "Version 6.5/OpenBSD";
+static char version[] = "Version 6.6/OpenBSD";
 
 extern	off_t restart_point;
 extern	char cbuf[];
