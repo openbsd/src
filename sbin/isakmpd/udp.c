@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.47 2001/08/12 15:48:44 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.48 2001/08/13 14:33:35 itojun Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ udp_clone (struct udp_transport *u, struct sockaddr *raddr)
  * system-wide pools of known ISAKMP transports.
  */
 static struct transport *
-udp_bind (struct sockaddr *addr)
+udp_bind (const struct sockaddr *addr)
 {
   struct sockaddr *src = malloc (addr->sa_len);
 
@@ -282,10 +282,10 @@ udp_bind (struct sockaddr *addr)
  * create an UDP server socket bound to it.
  */
 static void
-udp_bind_if (struct ifreq *ifrp, void *arg)
+udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
 {
   char *port = (char *)arg;
-  struct sockaddr *if_addr = &ifrp->ifr_addr, saddr;
+  struct sockaddr saddr;
   struct conf_list *listen_on;
   struct udp_transport *u;
   struct conf_list_node *address;
@@ -352,7 +352,7 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
 		 if_addr->sa_family);
       return;
     }
-  strncpy (flags_ifr.ifr_name, ifrp->ifr_name, sizeof flags_ifr.ifr_name - 1);
+  strncpy (flags_ifr.ifr_name, ifname, sizeof flags_ifr.ifr_name - 1);
   if (ioctl (s, SIOCGIFFLAGS, (caddr_t)&flags_ifr) == -1)
     {
       log_error ("udp_bind_if: ioctl (%d, SIOCGIFFLAGS, ...) failed", s);

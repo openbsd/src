@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.8 2001/07/18 20:56:35 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.9 2001/08/13 14:33:35 itojun Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -40,12 +40,16 @@
 #include <net/if.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef HAVE_GETIFADDRS
+#include <ifaddrs.h>
+#endif
 
 #include "sysdep.h"
 
 #include "log.h"
 #include "if.h"
 
+#ifndef HAVE_GETIFADDRS
 /* XXX Unsafe if either x or y has side-effects.  */
 #ifndef MAX
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
@@ -112,10 +116,24 @@ err:
   close (s);
   return -1;
 }
+#endif
 
 int
-if_map (void (*func) (struct ifreq *, void *), void *arg)
+if_map (void (*func) (char *, struct sockaddr *, void *), void *arg)
 {
+#ifdef HAVE_GETIFADDRS
+  struct ifaddrs *ifap, *ifa;
+
+  if (getifaddrs(&ifap) < 0)
+    return -1;
+
+  for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+    {
+      (*func) (ifa->ifa_name, ifa->ifa_addr, arg);
+    }
+  freeifaddrs(ifap);
+  return 0;
+#else
   struct ifconf ifc;
   struct ifreq *ifrp;
   caddr_t limit, p;
@@ -128,7 +146,7 @@ if_map (void (*func) (struct ifreq *, void *), void *arg)
   for (p = ifc.ifc_buf; p < limit; p += len)
     {
       ifrp = (struct ifreq *)p;
-      (*func) (ifrp, arg);
+      (*func) (ifrp->ifr_name, &ifrp->ifr_addr, arg);
 #ifdef USE_OLD_SOCKADDR
       len = sizeof ifrp->ifr_name + sizeof ifrp->ifr_addr;
 #else
@@ -138,4 +156,5 @@ if_map (void (*func) (struct ifreq *, void *), void *arg)
     }
   free (ifc.ifc_buf);
   return 0;
+#endif
 }

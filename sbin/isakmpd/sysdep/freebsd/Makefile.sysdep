@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.4 2001/06/29 22:18:58 itojun Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.5 2001/08/13 14:33:35 itojun Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -45,7 +45,7 @@ LIBSYSDEPDIR=	${.CURDIR}/sysdep/common/libsysdep
 LDADD+=		-lgmp ${LIBSYSDEPDIR}/libsysdep.a -L/usr/local/lib 
 DPADD+=		${LIBGMP} ${LIBSYSDEPDIR}/libsysdep.a
 
-CFLAGS+=	-DHAVE_GETNAMEINFO \
+CFLAGS+=	-DHAVE_GETNAMEINFO -DHAVE_GETIFADDRS \
 		-I${.CURDIR}/sysdep/common -I/usr/include \
 		-I/usr/local/include -I/usr/local/include/openssl
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.6 2001/06/29 22:18:59 itojun Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.7 2001/08/13 14:33:35 itojun Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -40,6 +40,7 @@ LDADD+=		${LIBGMP} ${LIBSYSDEPDIR}/libsysdep.a -lipsec
 DPADD+=		${LIBGMP} ${LIBSYSDEPDIR}/libsysdep.a ${LIBIPSEC}
 
 CFLAGS+=	-DNO_RSA -DNO_IDEA -DNO_RC5 -DHAVE_GETNAMEINFO \
+		-DHAVE_GETIFADDRS \
 		-I${.CURDIR}/sysdep/common
 .if exists(/usr/pkg/include/openssl/rsa.h)
 CFLAGS+=	-I/usr/pkg/include/openssl
