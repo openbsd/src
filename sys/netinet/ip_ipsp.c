@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.55 1999/11/04 11:20:05 ho Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.56 1999/12/04 23:20:21 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -202,6 +202,7 @@ get_sa_require(struct inpcb *inp)
  * in that case use dst.
  */
 
+/* XXX Make IPv6 compliant */
 int
 check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 {
@@ -285,9 +286,16 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
     /* If necessary try to notify keymanagement three times */
     while (i < 3)
     {
-	/* XXX address */
-	DPRINTF(("ipsec: send SA request (%d), remote ip: %s, SA type: %d\n",
-		 i + 1, inet_ntoa4(dst->sen_ip_dst), sa_require));
+	switch (dst->sen_type)
+	{
+	    case SENT_IPSP:
+		DPRINTF(("ipsec: send SA request (%d), remote IPv4 address: %s, SA type: %d\n", i + 1, inet_ntoa4(dst->sen_ip_dst), sa_require));
+		break;
+
+	    case SENT_IPSP6:
+		DPRINTF(("ipsec: send SA request (%d), remote IPv6 address: %s, SA type: %d\n", i + 1, inet6_ntoa4(dst->sen_ip6_dst), sa_require));
+		break;
+	}
 
 	/* Send notify */
 	/* XXX PF_KEYv2 Notify */
@@ -326,6 +334,7 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
  * Add an inpcb to the list of inpcb which reference this tdb directly.
  */
 
+/* XXX Make IPv6 compliant */
 void
 tdb_add_inp(struct tdb *tdb, struct inpcb *inp)
 {
@@ -1049,29 +1058,70 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
         bzero(&encapdst, sizeof(struct sockaddr_encap));
         bzero(&encapnetmask, sizeof(struct sockaddr_encap));
 
-        encapdst.sen_len = SENT_IP4_LEN;
         encapdst.sen_family = PF_KEY;
-        encapdst.sen_type = SENT_IP4;
-        encapdst.sen_ip_src = tdbp->tdb_flow->flow_src.sin.sin_addr;
-        encapdst.sen_ip_dst = tdbp->tdb_flow->flow_dst.sin.sin_addr;
-        encapdst.sen_proto = tdbp->tdb_flow->flow_proto;
-        encapdst.sen_sport = tdbp->tdb_flow->flow_src.sin.sin_port;
-        encapdst.sen_dport = tdbp->tdb_flow->flow_dst.sin.sin_port;
-
-        encapnetmask.sen_len = SENT_IP4_LEN;
         encapnetmask.sen_family = PF_KEY;
-        encapnetmask.sen_type = SENT_IP4;
-        encapnetmask.sen_ip_src = tdbp->tdb_flow->flow_srcmask.sin.sin_addr;
-        encapnetmask.sen_ip_dst = tdbp->tdb_flow->flow_dstmask.sin.sin_addr;
 
-        if (tdbp->tdb_flow->flow_proto)
-        {
-            encapnetmask.sen_proto = 0xff;
-            if (tdbp->tdb_flow->flow_src.sin.sin_port)
-              encapnetmask.sen_sport = 0xffff;
-            if (tdbp->tdb_flow->flow_dst.sin.sin_port)
-              encapnetmask.sen_dport = 0xffff;
-        }
+	switch (tdbp->tdb_flow->flow_src.sa.sa_family)
+	{
+	    case AF_INET:
+		encapdst.sen_len = SENT_IP4_LEN;
+		encapdst.sen_type = SENT_IP4;
+		encapdst.sen_ip_src = tdbp->tdb_flow->flow_src.sin.sin_addr;
+		encapdst.sen_ip_dst = tdbp->tdb_flow->flow_dst.sin.sin_addr;
+		encapdst.sen_proto = tdbp->tdb_flow->flow_proto;
+		encapdst.sen_sport = tdbp->tdb_flow->flow_src.sin.sin_port;
+		encapdst.sen_dport = tdbp->tdb_flow->flow_dst.sin.sin_port;
+
+		encapnetmask.sen_ip_src = tdbp->tdb_flow->flow_srcmask.sin.sin_addr;
+		encapnetmask.sen_ip_dst = tdbp->tdb_flow->flow_dstmask.sin.sin_addr;
+
+		/* Mask transport protocol and ports if applicable */
+		if (tdbp->tdb_flow->flow_proto)
+		{
+		    encapnetmask.sen_proto = 0xff;
+		    if (tdbp->tdb_flow->flow_src.sin.sin_port)
+		      encapnetmask.sen_sport = 0xffff;
+		    if (tdbp->tdb_flow->flow_dst.sin.sin_port)
+		      encapnetmask.sen_dport = 0xffff;
+		}
+		break;
+
+#if INET6
+	    case AF_INET6:
+		encapdst.sen_len = SENT_IP6_LEN;
+		encapdst.sen_type = SENT_IP6;
+		encapdst.sen_ip6_src = tdbp->tdb_flow->flow_src.sin6.sin6_addr;
+		encapdst.sen_ip6_dst = tdbp->tdb_flow->flow_dst.sin6.sin6_addr;
+		encapdst.sen_ip6_proto = tdbp->tdb_flow->flow_proto;
+		encapdst.sen_ip6_sport = tdbp->tdb_flow->flow_src.sin6.sin6_port;
+		encapdst.sen_ip6_dport = tdbp->tdb_flow->flow_dst.sin6.sin6_port;
+
+		encapnetmask.sen_ip6_src = tdbp->tdb_flow->flow_srcmask.sin6.sin6_addr;
+		encapnetmask.sen_ip6_dst = tdbp->tdb_flow->flow_dstmask.sin6.sin6_addr;
+
+		/* Mask transport protocol and ports if applicable */
+		if (tdbp->tdb_flow->flow_proto)
+		{
+		    encapnetmask.sen_ip6_proto = 0xff;
+		    if (tdbp->tdb_flow->flow_src.sin6.sin6_port)
+		      encapnetmask.sen_ip6_sport = 0xffff;
+		    if (tdbp->tdb_flow->flow_dst.sin6.sin6_port)
+		      encapnetmask.sen_ip6_dport = 0xffff;
+		}
+		break;
+#endif /* INET6 */
+
+	    default:
+#ifdef DIAGNOSTIC
+		panic("tdb_delete(): SA %s/%08x/%d has flow of unknown type %d", ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi), tdbp->tdb_sproto, tdbp->tdb_flow->flow_src.sa.sa_family);
+#endif /* DIAGNOSTIC */		
+		delete_flow(tdbp->tdb_flow, tdbp);
+		continue;
+	}
+
+	/* Always the same type for address and netmask */
+	encapnetmask.sen_len = encapdst.sen_len;
+	encapnetmask.sen_type = encapdst.sen_type;
 
         rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
                   (struct sockaddr *) 0,
@@ -1396,7 +1446,7 @@ ipsp_kern(int off, char **bufp, int len)
 char *
 inet_ntoa4(struct in_addr ina)
 {
-    static char buf[4][4 * sizeof "123"];
+    static char buf[4][4 * sizeof "123" + 4];
     unsigned char *ucp = (unsigned char *) &ina;
     static int i = 3;
  
@@ -1405,6 +1455,22 @@ inet_ntoa4(struct in_addr ina)
             ucp[2] & 0xff, ucp[3] & 0xff);
     return (buf[i]);
 }
+
+#if INET6
+char *
+inet6_ntoa4(struct in6_addr ina)
+{
+    static char buf[4][8 * sizeof "abcd" + 8];
+    unsigned char *ucp = (unsigned char *) &ina;
+    static int i = 3;
+
+    i = (i + 1) % 4;
+    sprintf(buf[i], "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+	    ucp[0] & 0xff, ucp[1] & 0xff, ucp[2] & 0xff, ucp[3] & 0xff,
+	    ucp[4] & 0xff, ucp[5] & 0xff, ucp[6] & 0xff, ucp[7] & 0xff);
+    return (buf[i]);
+}
+#endif /* INET6 */
 
 char *
 ipsp_address(union sockaddr_union sa)
@@ -1415,7 +1481,8 @@ ipsp_address(union sockaddr_union sa)
 	    return inet_ntoa4(sa.sin.sin_addr);
 
 #if INET6
-	    /* XXX Add AF_INET6 support here */
+	case AF_INET6:
+	    return inet_ntoa6(sa.sin6.s6_addr);
 #endif /* INET6 */
 
 	default:

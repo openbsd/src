@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.47 1999/10/29 02:10:01 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.48 1999/12/04 23:20:21 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -36,8 +36,7 @@
  */
 
 /*
- * Based on draft-ietf-ipsec-esp-v2-00.txt and
- * draft-ietf-ipsec-ciph-{des,3des}-{derived,expiv}-00.txt
+ * RFC 2406.
  */
 
 #include <sys/param.h>
@@ -261,6 +260,9 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     u_int32_t btsx;
     union authctx ctx;
     u_char buf[AH_ALEN_MAX], buf2[AH_ALEN_MAX];
+#if INET6
+    struct ipv6 *ipv6, ipv6o;
+#endif /* INET6 */
 
     blks = espx->blocksize;
 

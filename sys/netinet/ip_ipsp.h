@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.46 1999/10/29 05:20:46 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.47 1999/12/04 23:20:21 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -123,6 +123,16 @@ struct sockaddr_encap
 	    u_int8_t Filler[3];
 	} Sip4;
 
+	struct				/* SENT_IP6 */
+	{
+	    struct in6_addr Src;
+	    struct in6_addr Dst;
+	    u_int16_t Sport;
+	    u_int16_t Dport;
+	    u_int8_t Proto;
+	    u_int8_t Filler[3];
+	} Sip6;
+
 	struct				/* SENT_IPSP */
 	{
 	    struct in_addr Dst;
@@ -130,18 +140,34 @@ struct sockaddr_encap
 	    u_int8_t Sproto;
 	    u_int8_t Filler[7];
 	} Sipsp;
+
+	struct				/* SENT_IPSP6 */
+	{
+	    struct in6_addr Dst;
+	    u_int32_t Spi;
+	    u_int8_t Sproto;
+	    u_int8_t Filler[7];
+	} Sipsp6;
     } Sen;
 };
 
-#define sen_data	Sen.Data
-#define sen_ip_src	Sen.Sip4.Src
-#define sen_ip_dst	Sen.Sip4.Dst
-#define sen_proto	Sen.Sip4.Proto
-#define sen_sport	Sen.Sip4.Sport
-#define sen_dport	Sen.Sip4.Dport
-#define sen_ipsp_dst	Sen.Sipsp.Dst
-#define sen_ipsp_spi	Sen.Sipsp.Spi
-#define sen_ipsp_sproto	Sen.Sipsp.Sproto
+#define sen_data	  Sen.Data
+#define sen_ip_src	  Sen.Sip4.Src
+#define sen_ip_dst	  Sen.Sip4.Dst
+#define sen_proto	  Sen.Sip4.Proto
+#define sen_sport	  Sen.Sip4.Sport
+#define sen_dport	  Sen.Sip4.Dport
+#define sen_ip6_src	  Sen.Sip6.Src
+#define sen_ip6_dst	  Sen.Sip6.Dst
+#define sen_ip6_proto	  Sen.Sip6.Proto
+#define sen_ip6_sport	  Sen.Sip6.Sport
+#define sen_ip6_dport	  Sen.Sip6.Dport
+#define sen_ipsp_dst	  Sen.Sipsp.Dst
+#define sen_ipsp_spi	  Sen.Sipsp.Spi
+#define sen_ipsp_sproto	  Sen.Sipsp.Sproto
+#define sen_ipsp6_dst	  Sen.Sipsp6.Dst
+#define sen_ipsp6_spi	  Sen.Sipsp6.Spi
+#define sen_ipsp6_sproto  Sen.Sipsp6.Sproto
 
 /*
  * The "type" is really part of the address as far as the routing
@@ -152,7 +178,9 @@ struct sockaddr_encap
  */
 
 #define SENT_IP4	0x0001		/* data is two struct in_addr */
-#define SENT_IPSP	0x0002		/* data as in IP4 plus SPI */
+#define SENT_IPSP	0x0002		/* data as in IP4/6 plus SPI */
+#define SENT_IP6        0x0004
+#define SENT_IPSP6      0x0008
 
 /*
  * SENT_HDRLEN is the length of the "header"
@@ -165,8 +193,13 @@ struct sockaddr_encap
 #define SENT_IP4_SRCOFF	(0)
 #define SENT_IP4_DSTOFF (sizeof (struct in_addr))
 
+#define SENT_IP6_SRCOFF (0)
+#define SENT_IP6_DSTOFF (sizeof (struct in6_addr))
+
 #define SENT_IP4_LEN	20
 #define SENT_IPSP_LEN	20
+#define SENT_IP6_LEN    44
+#define SENT_IPSP6_LEN  32
 
 #define NOTIFY_SOFT_EXPIRE      0       /* Soft expiration of SA */
 #define NOTIFY_HARD_EXPIRE      1       /* Hard expiration of SA */
@@ -434,6 +467,11 @@ extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 /* Misc. */
 extern char *inet_ntoa4(struct in_addr);
+
+#if INET6
+extern char *inet6_ntoa4(struct in6_addr);
+#endif /* INET6 */
+
 extern char *ipsp_address(union sockaddr_union);
 
 /* TDB management routines */
