@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2003/10/16 05:03:22 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 2003/10/20 02:45:10 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ start:
 	stw	%r8,_C_LABEL(proc0paddr)@l(%r9)
 	addi	%r1,%r8,USPACE-FRAMELEN	/* stackpointer for proc0 */
 	mr	%r4,%r1			/* end of mem reserved for kernel */
-	xor	%r0,%r0,%r0
+	li	%r0,0
 	stwu	%r0,-16(%r1)		/* end of stack chain */
 
 	li	%r0, 2
@@ -203,13 +203,13 @@ _ENTRY(_C_LABEL(cpu_switch))
 
 	mr	%r30,%r3
 	lis	%r3,_C_LABEL(curproc)@ha
-	xor	%r31,%r31,%r31
+	li	%r31,0
 	/* Zero to not accumulate cpu time */
 	stw	%r31,_C_LABEL(curproc)@l(%r3)
 	lis	%r3,_C_LABEL(curpcb)@ha
 	lwz	%r31,_C_LABEL(curpcb)@l(%r3)
 
-	xor	%r3,%r3,%r3
+	li	%r3,0
 	bl	_C_LABEL(lcsplx)
 	stw	%r3,PCB_SPL(%r31)	/* save spl */
 
@@ -232,12 +232,12 @@ _C_LABEL(sw1):
 	slwi	%r3,%r10,3
 	add	%r3,%r3,%r4		/* select queue */
 
-	lwz	%r31,P_FORW(%r3)		/* unlink first proc from queue */
+	lwz	%r31,P_FORW(%r3)	/* unlink first proc from queue */
 	lwz	%r4,P_FORW(%r31)
 	stw	%r4,P_FORW(%r3)
 	stw	%r3,P_BACK(%r4)
 
-	cmpl	0,%r3,%r4			/* queue empty? */
+	cmpl	0,%r3,%r4		/* queue empty? */
 	bne	1f
 
 	lis	%r3,0x80000000@ha
@@ -247,7 +247,7 @@ _C_LABEL(sw1):
 
 1:
 	/* just did this resched thing, clear resched */
-	xor	%r3,%r3,%r3
+	li	%r3,0
 	lis	%r4,_C_LABEL(want_resched)@ha
 	stw	%r3,_C_LABEL(want_resched)@l(%r4)
 
@@ -321,7 +321,7 @@ switch_return:
 	lwz	%r3,PCB_SPL(%r4)
 	bl	_C_LABEL(lcsplx)
 
-	mr	%r3,%r30		/* get curproc for special fork returns */
+	mr	%r3,%r30		/* curproc for special fork returns */
 
 	lwz	%r31,12(%r1)
 	lwz	%r30,8(%r1)
@@ -360,7 +360,8 @@ _C_LABEL(trapcode):
 	stmw	%r28,tempsave(%r0)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
-/* Test whether we already had PR set */
+
+	/* Test whether we already had PR set */
 	mfsrr1	%r31
 	mtcr	%r31
 	bc	4,17,1f			/* branch if PSL_PR is clear */
@@ -383,7 +384,8 @@ _C_LABEL(alitrap):
 	stmw    %r30,tempsave+16(0)
 	mflr    %r28			/* save LR */
 	mfcr    %r29			/* save CR */
-/* Test whether we already had PR set */
+
+	/* Test whether we already had PR set */
 	mfsrr1  %r31
 	mtcr    %r31
 	bc      4,17,1f			/* branch if PSL_PR is clear */
@@ -687,7 +689,7 @@ _C_LABEL(tlbdsmiss):
 	beq+	8f
 9:	/* found, but protection violation (PP==00)*/
 	mfsrr1	%r3
-	lis	%r1,0xa00		/* indicate protection violation on store */
+	lis	%r1,0xa00	/* indicate protection violation on store */
 	b	1f
 7:	/* found, PP=1x */
 	mfspr	%r3,DMISS		/* get the miss address */
@@ -860,7 +862,7 @@ disitrap:
 	mfdsisr	%r31
 	stmw	%r30,tempsave+16(0)
 realtrap:
-/* Test whether we already had PR set */
+	/* Test whether we already had PR set */
 	mfsrr1	%r1
 	mtcr	%r1
 	/* restore SP (might have been overwritten) */
@@ -917,7 +919,7 @@ trapexit:
 	.globl	_C_LABEL(fork_trampoline)
 	.type	_C_LABEL(fork_trampoline),@function
 _C_LABEL(fork_trampoline):
-	xor	%r3,%r3,%r3
+	li	%r3,0
 	bl	_C_LABEL(lcsplx)
 	mtlr	%r31
 	mr	%r3,%r30
@@ -983,14 +985,14 @@ s_pte_spill:
  * ISI second stage fault handler
  */
 s_isitrap:
-	mfsrr1	%r31			/* test whether this may be a spill fault */
+	mfsrr1	%r31			/* test if this may be a spill fault */
 	mtcr	%r31
 	mtsprg	1,%r1			/* save SP */
 	bc	4,%r1,disitrap		/* branch if table miss is false */
 	lis	%r1,spillstk+SPILLSTK@ha
 	addi	%r1,%r1,spillstk+SPILLSTK@l	/* get spill stack */
 	stwu	%r1,-52(%r1)
-	stw	%r0,48(%r1)			/* save non-volatile registers */
+	stw	%r0,48(%r1)		/* save non-volatile registers */
 	stw	%r3,44(%r1)
 	stw	%r4,40(%r1)
 	stw	%r5,36(%r1)
@@ -1238,7 +1240,7 @@ _C_LABEL(ipkdbsbyte):
 	sync
 	icbi	0,%r9			/* and instruction caches */
 	mr	%r6,%r3
-	xor	%r3,%r3,%r3
+	li	%r3,0
 	stb	4,0(%r6)
 	dcbst	0,%r6			/* Now do appropriate flushes to data... */
 	sync
@@ -1271,7 +1273,7 @@ _C_LABEL(setfault):
 	stw	%r2,4(%r3)
 	stw	%r1,8(%r3)
 	stmw	%r12,12(%r3)
-	xor	%r3,%r3,%r3
+	li	%r3,0
 	blr
 
 /*
