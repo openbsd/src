@@ -105,12 +105,9 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4/2.8.1/soft-float/libgcc.a
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4/2.8.1/specs
 ./usr/lib/libbfd.a
-./usr/lib/libcrypto_pic.a
 ./usr/lib/libmmalloc.a
 ./usr/lib/libopcodes.a
-./usr/lib/libotermcap_pic.a
 ./usr/lib/libreadline.a
-./usr/lib/libssl_pic.a
 ./usr/powerpc-unknown-openbsd2.4/bin/ar
 ./usr/powerpc-unknown-openbsd2.4/bin/as
 ./usr/powerpc-unknown-openbsd2.4/bin/dlltool

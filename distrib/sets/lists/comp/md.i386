@@ -1,3 +1,4 @@
+./usr/lib/libc_r_pic.a
 ./usr/bin/gdb
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h
