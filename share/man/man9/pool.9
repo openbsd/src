@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.14 2001/10/04 16:56:52 mpech Exp $
+.\"	$OpenBSD: pool.9,v 1.15 2001/10/29 12:43:44 espie Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 .Fa "u_int align"
 .Fa "u_int align_offset"
 .Fa "int nitems"
-.Fa "char *wchan"
+.Fa "char *wmesg"
 .Fa "u_int pagesz"
 .Fa "void *(*palloc)(unsigned long sz, int flags, int tag)"
 .Fa "void (*prelease)(void *v, unsigned long sz, int tag)"
@@ -119,9 +119,7 @@ in which case
 .Fn pool_prime
 can be used at a later time to add permanent items to the pool.
 .It Fa wchan
-The
-.Sq wait channel
-passed on to
+The message passed on to
 .Xr tsleep 9
 if
 .Fn pool_get
