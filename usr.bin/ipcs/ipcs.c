@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.8 1998/07/08 22:14:13 deraadt Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.9 1999/08/16 16:58:22 millert Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
@@ -479,7 +479,6 @@ main(argc, argv)
 					char    ctime_buf[100], otime_buf[100];
 					struct semid_ds *semaptr = &xsema[i];
 					int     j, value;
-					union semun junk;
 
 					cvt_time(semaptr->sem_otime, otime_buf);
 					cvt_time(semaptr->sem_ctime, ctime_buf);
