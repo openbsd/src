@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.2 2004/01/27 00:04:36 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -43,7 +43,7 @@ sub list($)
 	my $l = [];
 	return $l unless -f $$self;
 	open(my $fh, '<', $$self) or 
-	    die "Problem opening required list: $$self\n";
+	    die "Problem opening required list: $$self: $!";
 	local $_;
 	while(<$fh>) {
 		chomp $_;
@@ -59,7 +59,7 @@ sub delete
 {
 	my ($self, $pkgname) = @_;
 	my @lines = grep { $_ ne $pkgname } @{$self->list()};
-	unlink($$self) or die "Can't erase $$self";
+	unlink($$self) or die "Can't erase $$self: $!";
 	if (@lines > 0) {
 		$self->add(@lines);
 	} 
@@ -69,7 +69,7 @@ sub add
 {
 	my ($self, @pkgnames) = @_;
 	open(my $fh, '>>', $$self) or
-	    die "Can't add dependencies to $$self";
+	    die "Can't add dependencies to $$self: $!";
 	print $fh join("\n", @pkgnames), "\n";
 	close($fh);
 }
