@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.71 2002/07/30 11:21:46 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.72 2002/07/30 11:55:31 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -964,7 +964,8 @@ option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
 				"high-latency" | "satellite" | 
 				"aggressive" | "conservative" ] ]
                        [ "limit" ( limit | "{" limit-list "}" ) ] |
-		       [ "loginterface" interface-name ] ) .
+                       [ "loginterface" ( interface-name | "none" ) ] ) .
+
 rule           = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
                  [ "on" ( interface-name | "{" interface-list "}" ) ]
@@ -996,10 +997,10 @@ af	       = "inet" | "inet6" .
 proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
 
 hosts          = "all" |
-                 "from" ( "any" | "no-route" | host | "{" host-list "}" )
-                     [ port ]
-                 "to"   ( "any" | "no-route" | host | "{" host-list "}" )
-                     [ port ] .
+                 "from" ( "any" | "no-route" | "self" | host |
+                 "{" host-list "}" ) [ port ]
+                 "to"   ( "any" | "no-route" | "self" | host |
+                 "{" host-list "}" ) [ port ] .
 
 host           = [ "!" ] address [ "/" mask-bits ] .
 address        = ( interface-name | "(" interface-name ")" | host-name |
