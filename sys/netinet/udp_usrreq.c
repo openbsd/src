@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.48 2000/09/19 03:21:00 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.49 2000/09/22 17:51:46 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -91,10 +91,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/icmp6.h>
 #include <netinet6/ip6protosw.h>
 
-#define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
-
 extern int ip6_defhlim;
 #endif /* INET6 */
+
+#define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
 
 /*
  * UDP protocol implementation.
