@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.9 2002/01/13 02:06:45 jason Exp $	*/
+/*	$OpenBSD: conf.h,v 1.10 2002/01/30 23:58:03 jason Exp $	*/
 /*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
@@ -47,8 +47,18 @@ cdev_decl(ksyms);
 
 cdev_decl(openprom);
 
+
 /* open, close, ioctl */
 #define cdev_openprom_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
+cdev_decl(uperf);
+
+/* open, close, ioctl */
+#define cdev_uperf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2002/01/24 03:38:56 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.26 2002/01/30 23:58:03 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -85,6 +85,7 @@
 #endif
 #include "magma.h"		/* has NMTTY and NMBPP */
 #include "spif.h"		/* has NSTTY and NSBPP */
+#include "uperf.h"
 
 #ifdef notyet
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
@@ -178,7 +179,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(NFB,fb),		/* 22: /dev/fb indirect driver */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
-	cdev_notdef(),			/* 25 */
+	cdev_uperf_init(NUPERF,uperf),	/* 25: performance counters */
 	cdev_disk_init(NWD,wd),		/* 26: IDE disk */
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */

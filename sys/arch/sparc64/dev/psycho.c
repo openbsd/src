@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.11 2002/01/29 20:33:19 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.12 2002/01/30 23:58:02 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -34,6 +34,8 @@
  * UltraSPARC IIi and IIe `sabre' PCI controllers.
  */
 
+#include "uperf_psycho.h"
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -55,6 +57,9 @@
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
+#if NUPERF_PSYCHO > 0
+#include <sparc64/dev/uperf_psychovar.h>
+#endif
 #include <sparc64/sparc64/cache.h>
 
 #undef DEBUG
@@ -410,6 +415,16 @@ psycho_attach(parent, self, aux)
 	 * arrive here, start up the IOMMU and get a config space tag.
 	 */
 	if (osc == NULL) {
+#if NUPERF_PSYCHO > 0
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
+			struct uperf_psycho_attach_args upaa;
+
+			upaa.upaa_name = "uperf";
+			upaa.upaa_regs = &sc->sc_regs->psy_pm;
+
+			(void)config_found(self, &upaa, psycho_print);
+		}
+#endif
 
 		/*
 		 * Establish handlers for interesting interrupts....

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.7 2002/01/25 23:51:04 jason Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.8 2002/01/30 23:58:02 jason Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.6.4.2 2001/09/13 01:14:40 thorpej Exp $ */
 
 /*
@@ -311,6 +311,39 @@ struct psychoreg {
 #define	PSY_PCIAFSR_RESV2	0x0000000040000000	/* reserved */
 #define	PSY_PCIAFSR_MID		0x000000003e000000	/* mid causing error */
 #define	PSY_PCIAFSR_RESV3	0x0000000001ffffff	/* reserved */
+
+/* performance counter control */
+#define	PSY_PMCR_CLR1		0x0000000000008000	/* clear cnt 1 */
+#define	PSY_PMCR_SEL1		0x0000000000001f00	/* set cnt 1 src */
+#define	PSY_PMCR_CLR0		0x0000000000000080	/* clear cnt 0 */
+#define	PSY_PMCR_SEL0		0x000000000000001f	/* set cnt 0 src */
+
+#define	PSY_PMCRSEL_SDVRA	0x0000000000000000	/* stream dvma read, A */
+#define	PSY_PMCRSEL_SDVWA	0x0000000000000001	/* stream dvma write, A */
+#define	PSY_PMCRSEL_CDVRA	0x0000000000000002	/* consist dvma read, A */
+#define	PSY_PMCRSEL_CDVWA	0x0000000000000003	/* consist dvma write, A */
+#define	PSY_PMCRSEL_SBMA	0x0000000000000004	/* stream buf miss, A */
+#define	PSY_PMCRSEL_DVA		0x0000000000000005	/* dvma cycles, A */
+#define	PSY_PMCRSEL_DVWA	0x0000000000000006	/* dvma words, A */
+#define	PSY_PMCRSEL_PIOA	0x0000000000000007	/* pio cycles, A */
+#define	PSY_PMCRSEL_SDVRB	0x0000000000000008	/* stream dvma read, B */
+#define	PSY_PMCRSEL_SDVWB	0x0000000000000009	/* stream dvma write, B */
+#define	PSY_PMCRSEL_CDVRB	0x000000000000000a	/* consist dvma read, B */
+#define	PSY_PMCRSEL_CDVWB	0x000000000000000b	/* consist dvma write, B */
+#define	PSY_PMCRSEL_SBMB	0x000000000000000c	/* stream buf miss, B */
+#define	PSY_PMCRSEL_DVB		0x000000000000000d	/* dvma cycles, B */
+#define	PSY_PMCRSEL_DVWB	0x000000000000000e	/* dvma words, B */
+#define	PSY_PMCRSEL_PIOB	0x000000000000000f	/* pio cycles, B */
+#define	PSY_PMCRSEL_TLBMISS	0x0000000000000010	/* tlb misses */
+#define	PSY_PMCRSEL_NINTRS	0x0000000000000011	/* interrupts */
+#define	PSY_PMCRSEL_INACK	0x0000000000000012	/* intr nacks */
+#define	PSY_PMCRSEL_PIOR	0x0000000000000013	/* pio read xfers */
+#define	PSY_PMCRSEL_PIOW	0x0000000000000014	/* pio write xfers */
+#define	PSY_PMCRSEL_MERGE	0x0000000000000015	/* merge buffer xacts */
+#define	PSY_PMCRSEL_TBLA	0x0000000000000016	/* tbl walk retries, A */
+#define	PSY_PMCRSEL_STCA	0x0000000000000017	/* stc retries, A */
+#define	PSY_PMCRSEL_TBLB	0x0000000000000018	/* tbl walk retries, B */
+#define	PSY_PMCRSEL_STCB	0x0000000000000019	/* stc retries, B */
 
 /*
  * these are the PROM structures we grovel

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.27 2002/01/25 03:24:53 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.28 2002/01/30 23:58:02 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -18,6 +18,9 @@ file	arch/sparc64/dev/pcons.c		pcons needs-flag
 device	hme: ether, ifnet, mii, ifmedia
 file	dev/ic/hme.c			hme
 
+device	uperf
+file	arch/sparc64/dev/uperf.c		uperf needs-flag
+
 include "dev/sun/files.sun"
 include "dev/wscons/files.wscons"
 include "dev/sbus/files.sbus"
@@ -33,11 +36,15 @@ file	arch/sparc64/sparc64/netbsd_machdep.c	compat_netbsd
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
 
+define psycho {}
 device psycho: pcibus
 attach psycho at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
 file	arch/sparc64/dev/pci_machdep.c		psycho
+
+attach	uperf at psycho with uperf_psycho
+file	arch/sparc64/dev/uperf_psycho.c		uperf_psycho needs-flag
 
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c		hme_pci

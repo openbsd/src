@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.12 2002/01/13 02:06:45 jason Exp $
+#	$OpenBSD: files.sbus,v 1.13 2002/01/30 23:58:03 jason Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -75,3 +75,6 @@ attach stty at spif
 device sbpp
 attach sbpp at spif
 file	dev/sbus/spif.c			spif | stty | sbpp needs-flag
+
+attach	uperf at sbus with uperf_sbus
+file	dev/sbus/uperf_sbus.c		uperf_sbus
