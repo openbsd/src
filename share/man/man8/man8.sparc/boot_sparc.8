@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.2 2001/10/04 16:56:52 mpech Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.3 2001/10/04 23:36:41 miod Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -103,14 +103,18 @@ incantation in new-mode to force the ROM to always start in new-mode:
 setenv sunmon-compat? false
 .Pp
 The ROM will normally load the kernel from
+.Dq sd(0,0,0)vmunix ,
+except on the sun4 machines, where it will look for
 .Dq sd(0,0,0)bsd .
-To change the
-default so that
-.Ox
-will be loaded, type the following:
+The OpenBSD bootloader will look for a kernel named
+.Dq bsd
+by default, unless (on sun4c or sun4m only) the
+.Dq boot-file
+environment variable is set.
+To reset this variable to its default, empty, value, type the following:
 .Pp
 .Em \	ok
-setenv boot-from sd(0,0,0)bsd
+set-default boot-file
 .Pp
 If the
 .Xr sysctl 8
