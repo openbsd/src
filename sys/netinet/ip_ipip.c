@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.9 2000/09/19 03:20:58 angelos Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.10 2001/02/28 01:24:55 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -325,8 +325,9 @@ ipip_input(struct mbuf *m, int iphlen)
     }
 
     /* Check for local address spoofing. */
-    if (m->m_pkthdr.rcvif == NULL ||
-	!(m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK))
+    if ((m->m_pkthdr.rcvif == NULL ||
+	!(m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK)) &&
+	ipip_allow != 2)
     {
         for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 	{
