@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.68 2004/11/12 23:26:41 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.69 2004/11/13 11:39:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -150,6 +150,11 @@ sub new { die "Can't create annotation objects" }
 package OpenBSD::PackingElement::Object;
 our @ISA=qw(OpenBSD::PackingElement);
 
+sub cwd
+{
+	return ${$_[0]->{cwd}};
+}
+
 sub compute_fullname
 {
 	my ($self, $state, $absolute_okay) = @_;
@@ -167,8 +172,8 @@ sub fullname($)
 {
 	my $self = $_[0];
 	my $fullname = $self->{name};
-	if ($fullname !~ m|^/| && ${$self->{cwd}} ne '.') {
-		$fullname = ${$self->{cwd}}."/".$fullname;
+	if ($fullname !~ m|^/| && $self->cwd() ne '.') {
+		$fullname = $self->cwd()."/".$fullname;
 	}
 	return $fullname;
 }

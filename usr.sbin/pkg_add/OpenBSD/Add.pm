@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.16 2004/11/13 10:47:21 espie Exp $
+# $OpenBSD: Add.pm,v 1.17 2004/11/13 11:39:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -329,7 +329,7 @@ sub prepare_to_extract
 		}
 		my $linkname = $file->{linkname};
 		if (defined $self->{cwd}) {
-			$linkname = $self->{cwd}.'/'.$linkname;
+			$linkname = $self->cwd().'/'.$linkname;
 		}
 		if ($self->{link} ne $linkname) {
 			Fatal "Error: archive hl does not match ", $linkname, "!=",
@@ -338,7 +338,7 @@ sub prepare_to_extract
 	}
 
 	$file->{name} = $fullname;
-	$file->{cwd} = $self->{cwd};
+	$file->{cwd} = $self->cwd();
 	$file->{destdir} = $destdir;
 	# faked installation are VERY weird
 	if (defined $self->{symlink} && $state->{do_faked}) {
