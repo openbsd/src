@@ -60,7 +60,7 @@
 #endif /* HAVE_UNISTD_H */
 #ifdef HAVE_FNMATCH
 # include <fnmatch.h>
-#endif /* HAVE_FNMATCH_H */
+#endif /* HAVE_FNMATCH */
 #ifdef HAVE_NETGROUP_H
 # include <netgroup.h>
 #endif /* HAVE_NETGROUP_H */
@@ -96,7 +96,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.140 2003/03/15 20:31:02 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.141 2003/04/02 18:25:19 millert Exp $";
 #endif /* lint */
 
 /*

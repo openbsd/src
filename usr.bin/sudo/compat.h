@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: compat.h,v 1.65 2003/03/15 20:31:02 millert Exp $
+ * $Sudo: compat.h,v 1.66 2003/04/02 18:25:19 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -226,5 +226,18 @@ typedef struct sigaction sigaction_t;
 #ifndef RLIM_INFINITY
 # define RLIM_INFINITY	(-1)
 #endif
+
+/*
+ * If we lack getprogname(), emulate with __progname if possible.
+ * Otherwise, add a prototype for use with our own getprogname.c.
+ */
+#ifndef HAVE_GETPROGNAME
+# ifdef HAVE___PROGNAME
+extern const char *__progname;
+#  define getprogname()          (__progname)
+# else
+const char *getprogname __P((void));
+#endif /* HAVE___PROGNAME */
+#endif /* !HAVE_GETPROGNAME */
 
 #endif /* _SUDO_COMPAT_H */

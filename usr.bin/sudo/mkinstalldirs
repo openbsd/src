@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Sudo: mkinstalldirs,v 1.4 2003/01/20 19:39:04 millert Exp $
+# $Sudo: mkinstalldirs,v 1.5 2003/04/03 15:16:22 millert Exp $
 
 umask 022
 errstatus=0
@@ -39,34 +39,6 @@ while test $# -gt 0 ; do
       ;;
   esac
 done
-
-for file
-do
-  if test -d "$file"; then
-    shift
-  else
-    break
-  fi
-done
-
-case $# in
-  0) exit 0 ;;
-esac
-
-case $dirmode in
-  '')
-    if mkdir -p -- . 2>/dev/null; then
-      echo "mkdir -p -- $*"
-      exec mkdir -p -- "$@"
-    fi
-    ;;
-  *)
-    if mkdir -m "$dirmode" -p -- . 2>/dev/null; then
-      echo "mkdir -m $dirmode -p -- $*"
-      exec mkdir -m "$dirmode" -p -- "$@"
-    fi
-    ;;
-esac
 
 for file
 do

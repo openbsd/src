@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: sudo.h,v 1.192 2003/03/15 20:31:02 millert Exp $
+ * $Sudo: sudo.h,v 1.193 2003/04/02 18:25:19 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -236,12 +236,10 @@ int pam_prep_user	__P((struct passwd *));
 YY_DECL;
 
 /* Only provide extern declarations outside of sudo.c. */
-#ifndef _SUDO_SUDO_C
+#ifndef _SUDO_MAIN
 extern struct sudo_user sudo_user;
 extern struct passwd *auth_pw;
 
-extern int Argc;
-extern char **Argv;
 extern FILE *sudoers_fp;
 extern int tgetpass_flags;
 extern uid_t timestamp_uid;

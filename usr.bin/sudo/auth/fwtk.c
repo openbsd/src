@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,11 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <pwd.h>
 
 #include <auth.h>
@@ -64,7 +69,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: fwtk.c,v 1.17 2003/03/15 20:37:44 millert Exp $";
+static const char rcsid[] = "$Sudo: fwtk.c,v 1.18 2003/04/02 18:25:29 millert Exp $";
 #endif /* lint */
 
 int
@@ -77,25 +82,22 @@ fwtk_init(pw, promptp, auth)
     char resp[128];			/* Response from the server */
 
     if ((confp = cfg_read("sudo")) == (Cfg *)-1) {
-	(void) fprintf(stderr, "%s: cannot read fwtk config.\n", Argv[0]);
+	warnx("cannot read fwtk config");
 	return(AUTH_FATAL);
     }
 
     if (auth_open(confp)) {
-	(void) fprintf(stderr, "%s: cannot connect to authentication server.\n",
-	    Argv[0]);
+	warnx("cannot connect to authentication server");
 	return(AUTH_FATAL);
     }
 
     /* Get welcome message from auth server */
     if (auth_recv(resp, sizeof(resp))) {
-	(void) fprintf(stderr,
-	    "%s: lost connection to authentication server.\n", Argv[0]);
+	warnx("lost connection to authentication server");
 	return(AUTH_FATAL);
     }
     if (strncmp(resp, "Authsrv ready", 13) != 0) {
-	(void) fprintf(stderr,
-	    "%s: authentication server error.\n%s\n", Argv[0], resp);
+	warnx("authentication server error:\n%s", resp);
 	return(AUTH_FATAL);
     }
 
@@ -117,8 +119,7 @@ fwtk_verify(pw, prompt, auth)
     /* Send username to authentication server. */
     (void) snprintf(buf, sizeof(buf), "authorize %s 'sudo'", pw->pw_name);
     if (auth_send(buf) || auth_recv(resp, sizeof(resp))) {
-	(void) fprintf(stderr,
-	    "%s: lost connection to authentication server.\n", Argv[0]);
+	warnx("lost connection to authentication server");
 	return(AUTH_FATAL);
     }
 
@@ -134,7 +135,7 @@ fwtk_verify(pw, prompt, auth)
 	pass = tgetpass(prompt, def_ival(I_PASSWD_TIMEOUT) * 60,
 	    tgetpass_flags);
     } else {
-	(void) fprintf(stderr, "%s: %s\n", Argv[0], resp);
+	warnx("%s", resp);
 	return(AUTH_FATAL);
     }
     if (!pass) {			/* ^C or error */
@@ -146,8 +147,7 @@ fwtk_verify(pw, prompt, auth)
     /* Send the user's response to the server */
     (void) snprintf(buf, sizeof(buf), "response '%s'", pass);
     if (auth_send(buf) || auth_recv(resp, sizeof(resp))) {
-	(void) fprintf(stderr,
-	    "%s: lost connection to authentication server.\n", Argv[0]);
+	warnx("lost connection to authentication server");
 	error = AUTH_FATAL;
 	goto done;
     }
@@ -159,7 +159,7 @@ fwtk_verify(pw, prompt, auth)
 
     /* Main loop prints "Permission Denied" or insult. */
     if (strcmp(resp, "Permission Denied.") != 0)
-	fprintf(stderr, "%s: %s\n", Argv[0], resp);
+	warnx("%s", resp);
     error = AUTH_FAILURE;
 done:
     memset(pass, 0, strlen(pass));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,12 +55,17 @@
 # ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <ctype.h>
 
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: defaults.c,v 1.38 2001/12/30 18:40:09 millert Exp $";
+static const char rcsid[] = "$Sudo: defaults.c,v 1.39 2003/04/02 18:25:19 millert Exp $";
 #endif /* lint */
 
 /*
@@ -219,8 +224,7 @@ set_default(var, val, op)
 	    break;
     }
     if (!cur->name) {
-	(void) fprintf(stderr,
-	    "%s: unknown defaults entry `%s' referenced near line %d\n", Argv[0],
+	warnx("unknown defaults entry `%s' referenced near line %d",
 	    var, sudolineno);
 	return(FALSE);
     }
@@ -229,12 +233,9 @@ set_default(var, val, op)
 	case T_LOGFAC:
 	    if (!store_syslogfac(val, cur, op)) {
 		if (val)
-		    (void) fprintf(stderr,
-			"%s: value '%s' is invalid for option '%s'\n", Argv[0],
-			val, var);
+		    warnx("value `%s' is invalid for option `%s'", val, var);
 		else
-		    (void) fprintf(stderr,
-			"%s: no value specified for `%s' on line %d\n", Argv[0],
+		    warnx("no value specified for `%s' on line %d",
 			var, sudolineno);
 		return(FALSE);
 	    }
@@ -242,12 +243,9 @@ set_default(var, val, op)
 	case T_LOGPRI:
 	    if (!store_syslogpri(val, cur, op)) {
 		if (val)
-		    (void) fprintf(stderr,
-			"%s: value '%s' is invalid for option '%s'\n", Argv[0],
-			val, var);
+		    warnx("value `%s' is invalid for option `%s'", val, var);
 		else
-		    (void) fprintf(stderr,
-			"%s: no value specified for `%s' on line %d\n", Argv[0],
+		    warnx("no value specified for `%s' on line %d",
 			var, sudolineno);
 		return(FALSE);
 	    }
@@ -255,12 +253,9 @@ set_default(var, val, op)
 	case T_PWFLAG:
 	    if (!store_pwflag(val, cur, op)) {
 		if (val)
-		    (void) fprintf(stderr,
-			"%s: value '%s' is invalid for option '%s'\n", Argv[0],
-			val, var);
+		    warnx("value `%s' is invalid for option `%s'", val, var);
 		else
-		    (void) fprintf(stderr,
-			"%s: no value specified for `%s' on line %d\n", Argv[0],
+		    warnx("no value specified for `%s' on line %d",
 			var, sudolineno);
 		return(FALSE);
 	    }
@@ -269,22 +264,17 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!(cur->type & T_BOOL) || op != FALSE) {
-		    (void) fprintf(stderr,
-			"%s: no value specified for `%s' on line %d\n", Argv[0],
+		    warnx("no value specified for `%s' on line %d",
 			var, sudolineno);
 		    return(FALSE);
 		}
 	    }
 	    if ((cur->type & T_PATH) && val && *val != '/') {
-		(void) fprintf(stderr,
-		    "%s: values for `%s' must start with a '/'\n", Argv[0],
-		    var);
+		warnx("values for `%s' must start with a '/'", var);
 		return(FALSE);
 	    }
 	    if (!store_str(val, cur, op)) {
-		(void) fprintf(stderr,
-		    "%s: value '%s' is invalid for option '%s'\n", Argv[0],
-		    val, var);
+		warnx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
@@ -292,16 +282,13 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!(cur->type & T_BOOL) || op != FALSE) {
-		    (void) fprintf(stderr,
-			"%s: no value specified for `%s' on line %d\n", Argv[0],
+		    warnx("no value specified for `%s' on line %d",
 			var, sudolineno);
 		    return(FALSE);
 		}
 	    }
 	    if (!store_int(val, cur, op)) {
-		(void) fprintf(stderr,
-		    "%s: value '%s' is invalid for option '%s'\n", Argv[0],
-		    val, var);
+		warnx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
@@ -309,16 +296,13 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!(cur->type & T_BOOL) || op != FALSE) {
-		    (void) fprintf(stderr,
-			"%s: no value specified for `%s' on line %d\n", Argv[0],
+		    warnx("no value specified for `%s' on line %d",
 			var, sudolineno);
 		    return(FALSE);
 		}
 	    }
 	    if (!store_uint(val, cur, op)) {
-		(void) fprintf(stderr,
-		    "%s: value '%s' is invalid for option '%s'\n", Argv[0],
-		    val, var);
+		warnx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
@@ -326,24 +310,20 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!(cur->type & T_BOOL) || op != FALSE) {
-		    (void) fprintf(stderr,
-			"%s: no value specified for `%s' on line %d\n", Argv[0],
+		    warnx("no value specified for `%s' on line %d",
 			var, sudolineno);
 		    return(FALSE);
 		}
 	    }
 	    if (!store_mode(val, cur, op)) {
-		(void) fprintf(stderr,
-		    "%s: value '%s' is invalid for option '%s'\n", Argv[0],
-		    val, var);
+		warnx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
 	    break;
 	case T_FLAG:
 	    if (val) {
-		(void) fprintf(stderr,
-		    "%s: option `%s' does not take a value on line %d\n",
-		    Argv[0], var, sudolineno);
+		warnx("option `%s' does not take a value on line %d",
+		    var, sudolineno);
 		return(FALSE);
 	    }
 	    cur->sd_un.flag = op;
@@ -356,16 +336,13 @@ set_default(var, val, op)
 	    if (!val) {
 		/* Check for bogus boolean usage or lack of a value. */
 		if (!(cur->type & T_BOOL) || op != FALSE) {
-		    (void) fprintf(stderr,
-			"%s: no value specified for `%s' on line %d\n", Argv[0],
+		    warnx("no value specified for `%s' on line %d",
 			var, sudolineno);
 		    return(FALSE);
 		}
 	    }
 	    if (!store_list(val, cur, op)) {
-		(void) fprintf(stderr,
-		    "%s: value '%s' is invalid for option '%s'\n", Argv[0],
-		    val, var);
+		warnx("value `%s' is invalid for option `%s'", val, var);
 		return(FALSE);
 	    }
     }

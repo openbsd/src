@@ -57,6 +57,11 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <pwd.h>
 #include <signal.h>
 #include <time.h>
@@ -65,7 +70,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: logging.c,v 1.159 2003/03/24 21:09:27 millert Exp $";
+static const char rcsid[] = "$Sudo: logging.c,v 1.160 2003/04/02 18:25:19 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -107,9 +112,9 @@ mysyslog(pri, fmt, va_alist)
     va_start(ap);
 #endif
 #ifdef LOG_NFACILITIES
-    openlog(Argv[0], 0, def_ival(I_LOGFAC));
+    openlog("sudo", 0, def_ival(I_LOGFAC));
 #else
-    openlog(Argv[0], 0);
+    openlog("sudo", 0);
 #endif
     vsnprintf(buf, sizeof(buf), fmt, ap);
 #ifdef BROKEN_SYSLOG
@@ -400,10 +405,10 @@ log_error(va_alist)
     /*
      * Tell the user.
      */
-    (void) fprintf(stderr, "%s: %s", Argv[0], message);
     if (flags & USE_ERRNO)
-	(void) fprintf(stderr, ": %s", strerror(serrno));
-    (void) fputc('\n', stderr);
+	warn("%s", message);
+    else
+	warnx("%s", message);
 
     /*
      * Send a copy of the error via mail.
@@ -459,18 +464,13 @@ send_mail(line)
     (void) sigaddset(&set, SIGCHLD);
     (void) sigprocmask(SIG_BLOCK, &set, &oset);
 
-    if (pipe(pfd) == -1) {
-	(void) fprintf(stderr, "%s: cannot open pipe: %s\n",
-	    Argv[0], strerror(errno));
-	exit(1);
-    }
+    if (pipe(pfd) == -1)
+	err(1, "cannot open pipe");
 
     switch (pid = fork()) {
 	case -1:
 	    /* Error. */
-	    (void) fprintf(stderr, "%s: cannot fork: %s\n",
-		Argv[0], strerror(errno));
-	    exit(1);
+	    err(1, "cannot fork");
 	    break;
 	case 0:
 	    {

@@ -65,7 +65,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: kerb5.c,v 1.13 2003/03/15 20:37:44 millert Exp $";
+static const char rcsid[] = "$Sudo: kerb5.c,v 1.14 2003/04/02 18:57:34 millert Exp $";
 #endif /* lint */
 
 static int verify_krb_v5_tgt __P((krb5_context, krb5_ccache, char *));
@@ -266,8 +266,8 @@ verify_krb_v5_tgt(sudo_context, ccache, auth_name)
 	return(-1);
     }
 
-    /* Extract the name directly. 
-    strlcpy(phost, krb5_principal_get_realm(sudo_context, princ, 1),
+    /* Extract the name directly. */
+    strlcpy(phost, krb5_principal_get_realm(sudo_context, princ),
 	    sizeof(phost));
 
     /*

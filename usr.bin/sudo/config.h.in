@@ -75,6 +75,9 @@
 /* Define to 1 if you have the `dispcrypt' function. */
 #undef HAVE_DISPCRYPT
 
+/* Define to 1 if you have the <err.h> header file. */
+#undef HAVE_ERR_H
+
 /* Define to 1 if you have the `flock' function. */
 #undef HAVE_FLOCK
 
@@ -102,6 +105,9 @@
 
 /* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
+
+/* Define to 1 if you have the `getprogname' function. */
+#undef HAVE_GETPROGNAME
 
 /* Define if you have the `getprpwnam' function. (SecureWare-style shadow
    passwords) */
@@ -323,6 +329,9 @@
 
 /* Define to 1 if you have the `_innetgr' function. */
 #undef HAVE__INNETGR
+
+/* Define if your crt0.o defines the __progname symbol for you. */
+#undef HAVE___PROGNAME
 
 /* Define if you want the hostname to be entered into the log file. */
 #undef HOST_IN_LOG

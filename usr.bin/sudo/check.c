@@ -57,6 +57,11 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -67,7 +72,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.211 2003/04/01 14:58:55 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.212 2003/04/02 18:25:19 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -269,9 +274,7 @@ expand_prompt(old_prompt, user, host)
 
 oflow:
     /* We pre-allocate enough space, so this should never happen. */
-    (void) fprintf(stderr, "%s: internal error, expand_prompt() overflow\n",
-	Argv[0]);
-    exit(1);
+    errx(1, "internal error, expand_prompt() overflow");
 }
 
 /*
@@ -543,15 +546,13 @@ remove_timestamp(remove)
 	    else
 		status = rmdir(timestampdir);
 	    if (status == -1 && errno != ENOENT) {
-		log_error(NO_EXIT, "can't remove %s (%s), will reset to epoch",
+		log_error(NO_EXIT, "can't remove %s (%s), will reset to Epoch",
 		    ts, strerror(errno));
 		remove = FALSE;
 	    }
 	}
-	if (!remove && touch(ts, 0) == -1) {
-	    (void) fprintf(stderr, "%s: can't reset %s to epoch: %s\n",
-		Argv[0], ts, strerror(errno));
-	}
+	if (!remove && touch(ts, 0) == -1)
+	    err(1, "can't reset %s to Epoch", ts);
     }
 
     free(timestampdir);

@@ -35,7 +35,7 @@
  * with this distribution.
  */
 
-#define _SUDO_SUDO_C
+#define _SUDO_MAIN
 
 #include "config.h"
 
@@ -69,6 +69,11 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <pwd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -98,14 +103,14 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.334 2003/04/01 15:02:49 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.335 2003/04/02 18:25:19 millert Exp $";
 #endif /* lint */
 
 /*
  * Prototypes
  */
 static int init_vars			__P((int));
-static int parse_args			__P((void));
+static int parse_args			__P((int, char **));
 static void check_sudoers		__P((void));
 static void initial_setup		__P((void));
 static void set_loginclass		__P((struct passwd *));
@@ -121,13 +126,11 @@ extern struct passwd *sudo_getpwuid	__P((uid_t));
 /*
  * Globals
  */
-int Argc;
-char **Argv;
-int NewArgc = 0;
-char **NewArgv = NULL;
+int Argc, NewArgc;
+char **Argv, **NewArgv;
 struct sudo_user sudo_user;
 struct passwd *auth_pw;
-FILE *sudoers_fp = NULL;
+FILE *sudoers_fp;
 struct interface *interfaces;
 int num_interfaces;
 int tgetpass_flags;
@@ -161,9 +164,12 @@ main(argc, argv, envp)
     extern int printmatches;
     extern char **environ;
 
+    Argc = argc;
+    Argv = argv;
+
     /* Must be done as the first thing... */
 #if defined(HAVE_GETPRPWNAM) && defined(HAVE_SET_AUTH_PARAMETERS)
-    (void) set_auth_parameters(argc, argv);
+    (void) set_auth_parameters(Argc, Argv);
 # ifdef HAVE_INITPRIVS
     initprivs();
 # endif
@@ -172,13 +178,8 @@ main(argc, argv, envp)
     /* Zero out the environment. */
     environ = zero_env(envp);
 
-    Argv = argv;
-    Argc = argc;
-
-    if (geteuid() != 0) {
-	(void) fprintf(stderr, "Sorry, %s must be setuid root.\n", Argv[0]);
-	exit(1);
-    }
+    if (geteuid() != 0)
+	errx(1, "must be setuid root");
 
     /*
      * Signal setup:
@@ -202,7 +203,7 @@ main(argc, argv, envp)
     setpwent();
 
     /* Parse our arguments. */
-    sudo_mode = parse_args();
+    sudo_mode = parse_args(Argc, Argv);
 
     /* Setup defaults data structures. */
     init_defaults();
@@ -322,7 +323,7 @@ main(argc, argv, envp)
     if (user_uid == 0 && !def_flag(I_ROOT_SUDO)) {
 	(void) fprintf(stderr,
 	    "Sorry, %s has been configured to not allow root to run it.\n",
-	    Argv[0]);
+	    getprogname());
 	exit(1);
     }
 
@@ -360,11 +361,10 @@ main(argc, argv, envp)
     if (validated & VALIDATE_OK) {
 	/* Finally tell the user if the command did not exist. */
 	if (cmnd_status == NOT_FOUND_DOT) {
-	    (void) fprintf(stderr, "%s: ignoring `%s' found in '.'\nUse `sudo ./%s' if this is the `%s' you wish to run.\n", Argv[0], user_cmnd, user_cmnd, user_cmnd);
+	    warnx("ignoring `%s' found in '.'\nUse `sudo ./%s' if this is the `%s' you wish to run.", user_cmnd, user_cmnd, user_cmnd);
 	    exit(1);
 	} else if (cmnd_status == NOT_FOUND) {
-	    (void) fprintf(stderr, "%s: %s: command not found\n", Argv[0],
-		user_cmnd);
+	    warnx("%s: command not found", user_cmnd);
 	    exit(1);
 	}
 
@@ -420,8 +420,7 @@ main(argc, argv, envp)
 	/*
 	 * If we got here then the exec() failed...
 	 */
-	(void) fprintf(stderr, "%s: unable to exec %s: %s\n",
-	    Argv[0], safe_cmnd, strerror(errno));
+	warn("unable to execute %s", safe_cmnd);
 	exit(127);
     } else if ((validated & FLAG_NO_USER) || (validated & FLAG_NO_HOST)) {
 	log_auth(validated, 1);
@@ -438,10 +437,9 @@ main(argc, argv, envp)
 	    log_auth(validated,
 		!(cmnd_status == NOT_FOUND_DOT || cmnd_status == NOT_FOUND));
 	    if (cmnd_status == NOT_FOUND)
-		(void) fprintf(stderr, "%s: %s: command not found\n", Argv[0],
-		    user_cmnd);
+		warnx("%s: command not found", user_cmnd);
 	    else if (cmnd_status == NOT_FOUND_DOT)
-		(void) fprintf(stderr, "%s: ignoring `%s' found in '.'\nUse `sudo ./%s' if this is the `%s' you wish to run.\n", Argv[0], user_cmnd, user_cmnd, user_cmnd);
+		warnx("ignoring `%s' found in '.'\nUse `sudo ./%s' if this is the `%s' you wish to run.", user_cmnd, user_cmnd, user_cmnd);
 	} else {
 	    /* Just tell the user they are not allowed to run foo. */
 	    log_auth(validated, 1);
@@ -467,11 +465,8 @@ init_vars(sudo_mode)
     int nohostname, rval;
 
     /* Sanity check command from user. */
-    if (user_cmnd == NULL && strlen(NewArgv[0]) >= MAXPATHLEN) {
-	(void) fprintf(stderr, "%s: %s: Pathname too long\n", Argv[0],
-	    NewArgv[0]);
-	exit(1);
-    }
+    if (user_cmnd == NULL && strlen(NewArgv[0]) >= MAXPATHLEN)
+	errx(1, "%s: File name too long", NewArgv[0]);
 
 #ifdef HAVE_TZSET
     (void) tzset();		/* set the timezone if applicable */
@@ -554,8 +549,7 @@ init_vars(sudo_mode)
     if (!getcwd(user_cwd, sizeof(user_cwd))) {
 	set_perms(PERM_ROOT);
 	if (!getcwd(user_cwd, sizeof(user_cwd))) {
-	    (void) fprintf(stderr, "%s: Can't get working directory!\n",
-			   Argv[0]);
+	    warnx("cannot get working directory");
 	    (void) strlcpy(user_cwd, "unknown", sizeof(user_cwd));
 	}
     } else
@@ -571,12 +565,10 @@ init_vars(sudo_mode)
 	NewArgv = (char **) emalloc2((++NewArgc + 1), sizeof(char *));
 	if (user_shell && *user_shell) {
 	    NewArgv[0] = user_shell;
-	} else {
-	    (void) fprintf(stderr, "%s: Unable to determine shell.", Argv[0]);
-	    exit(1);
-	}
+	} else
+	    errx(1, "unable to determine shell");
 
-	/* copy the args from Argv */
+	/* copy the args from NewArgv */
 	for (dst = NewArgv + 1; (*dst = *src) != NULL; ++src, ++dst)
 	    ;
     }
@@ -613,11 +605,8 @@ init_vars(sudo_mode)
 	    user_args = (char *) emalloc(size);
 	    for (to = user_args, from = NewArgv + 1; *from; from++) {
 		n = strlcpy(to, *from, size - (to - user_args));
-		if (n >= size - (to - user_args)) {
-		    (void) fprintf(stderr,
-			"%s: internal error, init_vars() overflow\n", Argv[0]);
-		    exit(1);
-		}
+		if (n >= size - (to - user_args))
+		    errx(1, "internal error, init_vars() overflow");
 		to += n;
 		*to++ = ' ';
 	    }
@@ -633,13 +622,15 @@ init_vars(sudo_mode)
  * Command line argument parsing, can't use getopt(3).
  */
 static int
-parse_args()
+parse_args(argc, argv)
+    int argc;
+    char **argv;
 {
     int rval = MODE_RUN;		/* what mode is sudo to be run in? */
     int excl = 0;			/* exclusive arg, no others allowed */
 
-    NewArgv = Argv + 1;
-    NewArgc = Argc - 1;
+    NewArgv = argv + 1;
+    NewArgc = argc - 1;
 
     if (NewArgc == 0) {			/* no options and no command */
 	rval |= (MODE_IMPLIED_SHELL | MODE_SHELL);
@@ -647,11 +638,8 @@ parse_args()
     }
 
     while (NewArgc > 0 && NewArgv[0][0] == '-') {
-	if (NewArgv[0][1] != '\0' && NewArgv[0][2] != '\0') {
-	    (void) fprintf(stderr, "%s: Please use single character options\n",
-		Argv[0]);
-	    usage(1);
-	}
+	if (NewArgv[0][1] != '\0' && NewArgv[0][2] != '\0')
+	    warnx("please use single character options");
 
 	switch (NewArgv[0][1]) {
 	    case 'p':
@@ -661,7 +649,6 @@ parse_args()
 
 		user_prompt = NewArgv[1];
 
-		/* Shift Argv over and adjust Argc. */
 		NewArgc--;
 		NewArgv++;
 		break;
@@ -672,7 +659,6 @@ parse_args()
 
 		user_runas = &NewArgv[1];
 
-		/* Shift Argv over and adjust Argc. */
 		NewArgc--;
 		NewArgv++;
 		break;
@@ -684,7 +670,6 @@ parse_args()
 
 		login_style = NewArgv[1];
 
-		/* Shift Argv over and adjust Argc. */
 		NewArgc--;
 		NewArgv++;
 		break;
@@ -698,7 +683,6 @@ parse_args()
 		login_class = NewArgv[1];
 		def_flag(I_USE_LOGINCLASS) = TRUE;
 
-		/* Shift Argv over and adjust Argc. */
 		NewArgc--;
 		NewArgv++;
 		break;
@@ -770,12 +754,10 @@ parse_args()
 		    rval |= (MODE_IMPLIED_SHELL | MODE_SHELL);
 		return(rval);
 	    case '\0':
-		(void) fprintf(stderr, "%s: '-' requires an argument\n",
-		    Argv[0]);
+		warnx("'-' requires an argument");
 		usage(1);
 	    default:
-		(void) fprintf(stderr, "%s: Illegal option %s\n", Argv[0],
-		    NewArgv[0]);
+		warnx("illegal option `%s'", NewArgv[0]);
 		usage(1);
 	}
 	NewArgc--;
@@ -808,23 +790,17 @@ check_sudoers()
 	(statbuf.st_mode & 0007777) == 0400) {
 
 	if (chmod(_PATH_SUDOERS, SUDOERS_MODE) == 0) {
-	    (void) fprintf(stderr, "%s: fixed mode on %s\n",
-		Argv[0], _PATH_SUDOERS);
+	    warnx("fixed mode on %s", _PATH_SUDOERS);
 	    statbuf.st_mode |= SUDOERS_MODE;
 	    if (statbuf.st_gid != SUDOERS_GID) {
 		if (!chown(_PATH_SUDOERS,(uid_t) -1,SUDOERS_GID)) {
-		    (void) fprintf(stderr, "%s: set group on %s\n",
-			Argv[0], _PATH_SUDOERS);
+		    warnx("set group on %s", _PATH_SUDOERS);
 		    statbuf.st_gid = SUDOERS_GID;
-		} else {
-		    (void) fprintf(stderr,"%s: Unable to set group on %s: %s\n",
-			Argv[0], _PATH_SUDOERS, strerror(errno));
-		}
+		} else
+		    warn("unable to set group on %s", _PATH_SUDOERS);
 	    }
-	} else {
-	    (void) fprintf(stderr, "%s: Unable to fix mode on %s: %s\n",
-		Argv[0], _PATH_SUDOERS, strerror(errno));
-	}
+	} else
+	    warn("unable to fix mode on %s", _PATH_SUDOERS);
     }
 
     /*
@@ -945,11 +921,8 @@ set_loginclass(pw)
 	errflags = NO_MAIL|MSG_ONLY|NO_EXIT;
 
     if (login_class && strcmp(login_class, "-") != 0) {
-	if (strcmp(*user_runas, "root") != 0 && user_uid != 0) {
-	    (void) fprintf(stderr, "%s: only root can use -c %s\n",
-		Argv[0], login_class);
-	    exit(1);
-	}
+	if (strcmp(*user_runas, "root") != 0 && user_uid != 0)
+	    errx(1, "only root can use -c %s", login_class);
     } else {
 	login_class = pw->pw_class;
 	if (!login_class || !*login_class)

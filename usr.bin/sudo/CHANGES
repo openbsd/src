@@ -1605,3 +1605,13 @@ Sudo 1.6.7 released.
 503) Fixed false positives in the overflow detection of expand_prompt().
 
 Sudo 1.6.7p1 released.
+
+504) An unterminated comment broke Kerberos V authentication.
+
+505) The krb5-config script is used to determine Kerberos V CPPFLAGS
+     and LDFLAGS/LIBS if it exists.
+
+506) Backed out changes to mkinstalldirs from autoconf 2.57 that
+     caused problems on Tru64 Unix.
+
+Sudo 1.6.7p2 released.

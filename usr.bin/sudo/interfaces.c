@@ -73,13 +73,16 @@ struct rtentry;
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <netdb.h>
-#include <errno.h>
 #ifdef _ISC
 # include <sys/stream.h>
 # include <sys/sioctl.h>
 # include <sys/stropts.h>
-# include <net/errno.h>
 # define STRSET(cmd, param, len) {strioctl.ic_cmd=(cmd);\
 				 strioctl.ic_dp=(param);\
 				 strioctl.ic_timout=0;\
@@ -99,7 +102,7 @@ struct rtentry;
 #include "interfaces.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: interfaces.c,v 1.68 2003/03/15 20:31:02 millert Exp $";
+static const char rcsid[] = "$Sudo: interfaces.c,v 1.69 2003/04/02 18:25:19 millert Exp $";
 #endif /* lint */
 
 
@@ -186,11 +189,8 @@ load_interfaces()
 #endif /* _ISC */
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0) {
-	(void) fprintf(stderr, "%s: cannot open socket: %s\n",
-	    Argv[0], strerror(errno));
-	exit(1);
-    }
+    if (sock < 0)
+	err(1, "cannot open socket");
 
     /*
      * Get interface configuration or return (leaving num_interfaces == 0)
@@ -324,5 +324,5 @@ dump_interfaces()
     puts("Local IP address and netmask pairs:");
     for (i = 0; i < num_interfaces; i++)
 	printf("\t%s / 0x%x\n", inet_ntoa(interfaces[i].addr),
-	    ntohl(interfaces[i].netmask.s_addr));
+	    (unsigned int)ntohl(interfaces[i].netmask.s_addr));
 }

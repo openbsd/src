@@ -34,7 +34,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.230 2003/03/15 20:31:02 millert Exp $
+# $Sudo: Makefile.in,v 1.232 2003/04/02 18:45:35 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -109,8 +109,8 @@ SHELL = /bin/sh
 
 PROGS = @PROGS@
 
-SRCS = alloc.c alloca.c check.c def_data.c defaults.c env.c fileops.c \
-       find_path.c fnmatch.c getcwd.c getspwuid.c goodpath.c \
+SRCS = alloc.c alloca.c check.c def_data.c defaults.c env.c err.c fileops.c \
+       find_path.c fnmatch.c getcwd.c getprogname.c getspwuid.c goodpath.c \
        interfaces.c lex.yy.c lsearch.c logging.c parse.c parse.lex \
        parse.yacc set_perms.c sigaction.c snprintf.c strcasecmp.c strerror.c \
        strlcat.c strlcpy.c sudo.c sudo.tab.c testsudoers.c tgetpass.c utime.c \
@@ -123,7 +123,8 @@ AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 
 HDRS = compat.h def_data.h defaults.h ins_2001.h ins_classic.h ins_csops.h \
        ins_goons.h insults.h interfaces.h logging.h parse.h sudo.h sudo.tab.h \
-       version.h auth/sudo_auth.h emul/fnmatch.h emul/search.h emul/utime.h
+       version.h auth/sudo_auth.h emul/err.h emul/fnmatch.h emul/search.h \
+       emul/utime.h
 
 AUTH_OBJS = sudo_auth.o @AUTH_OBJS@
 
@@ -139,7 +140,7 @@ TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6.7p1
+VERSION = 1.6.7p2
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES HISTORY INSTALL INSTALL.configure \
 	    LICENSE Makefile.in PORTING README RUNSON TODO TROUBLESHOOTING \
@@ -206,8 +207,10 @@ testsudoers: $(TESTOBJS) $(LIBOBJS)
 alloc.o: alloc.c $(SUDODEP)
 check.o: check.c $(SUDODEP)
 env.o: env.c $(SUDODEP)
+err.o: err.c config.h compat.h emul/err.h
 fileops.o: fileops.c $(SUDODEP)
 find_path.o: find_path.c $(SUDODEP)
+getprogname.o: getprogname.c config.h
 getspwuid.o: getspwuid.c $(SUDODEP)
 goodpath.o: goodpath.c $(SUDODEP)
 logging.o: logging.c $(SUDODEP)

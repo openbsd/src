@@ -34,6 +34,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _SUDO_MAIN
+
 #include "config.h"
 
 #include <sys/param.h>
@@ -61,10 +63,15 @@
 #endif /* HAVE_UNISTD_H */
 #ifdef HAVE_FNMATCH
 # include <fnmatch.h>
-#endif /* HAVE_FNMATCH_H */
+#endif /* HAVE_FNMATCH */
 #ifdef HAVE_NETGROUP_H
 # include <netgroup.h>
 #endif /* HAVE_NETGROUP_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <ctype.h>
 #include <pwd.h>
 #include <grp.h>
@@ -82,7 +89,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: testsudoers.c,v 1.80 2003/04/01 15:02:49 millert Exp $";
+static const char rcsid[] = "$Sudo: testsudoers.c,v 1.81 2003/04/02 18:25:19 millert Exp $";
 #endif /* lint */
 
 
@@ -96,15 +103,15 @@ void set_perms_dummy	__P((int));
 /*
  * Globals
  */
-char **Argv, **NewArgv;
 int  Argc, NewArgc;
+char **Argv, **NewArgv;
 int parse_error = FALSE;
 int num_interfaces;
 struct interface *interfaces;
 struct sudo_user sudo_user;
-void (*set_perms) __P((int)) = set_perms_dummy;
 extern int clearaliases;
 extern int pedantic;
+void (*set_perms) __P((int)) = set_perms_dummy;
 
 /*
  * Returns TRUE if "s" has shell meta characters in it,
@@ -361,7 +368,7 @@ main(argc, argv)
 	NewArgc = Argc - 3;
     } else {
 	(void) fprintf(stderr,
-	    "usage: %s [-u user] <user> <host> <command> [args]\n", Argv[0]);
+	    "usage: sudo [-u user] <user> <host> <command> [args]\n");
 	exit(1);
     }
 
@@ -385,11 +392,8 @@ main(argc, argv)
 	user_args = (char *) emalloc(size);
 	for (to = user_args, from = NewArgv + 1; *from; from++) {
 	    n = strlcpy(to, *from, size - (to - user_args));
-	    if (n >= size - (to - user_args)) {
-		(void) fprintf(stderr,
-		    "%s: internal error, init_vars() overflow\n", Argv[0]);
-		exit(1);
-	    }
+	    if (n >= size - (to - user_args))
+		    errx(1, "internal error, init_vars() overflow");
 	    to += n;
 	    *to++ = ' ';
 	}

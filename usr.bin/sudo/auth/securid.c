@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Giles Todd
@@ -58,6 +58,11 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <pwd.h>
 
 #include <sdi_athd.h>
@@ -68,7 +73,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: securid.c,v 1.9 2003/03/16 03:03:32 millert Exp $";
+static const char rcsid[] = "$Sudo: securid.c,v 1.10 2003/04/02 18:25:30 millert Exp $";
 #endif /* lint */
 
 union config_record configure;
@@ -103,7 +108,7 @@ securid_setup(pw, promptp, auth)
 	strlcpy(sd->username, pw->pw_name, 32);
 	return(AUTH_SUCCESS);
     } else {
-	(void) fprintf(stderr, "%s: Cannot contact SecurID server\n", Argv[0]);
+	warnx("unable to contact the SecurID server");
 	return(AUTH_FATAL);
     }
 }

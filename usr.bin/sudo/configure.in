@@ -1,15 +1,15 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.378 2003/03/24 16:05:59 millert Exp $
+dnl $Sudo: configure.in,v 1.381 2003/04/02 18:45:35 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT(sudo, 1.6.7)
+AC_INIT(sudo, 1.6.7p2)
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-AC_MSG_NOTICE([Configuring Sudo version 1.6.7])
+AC_MSG_NOTICE([Configuring Sudo version 1.6.7p2])
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
@@ -1587,6 +1587,7 @@ dnl
 AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(malloc.h paths.h utime.h netgroup.h sys/sockio.h sys/bsdtypes.h sys/select.h)
+AC_CHECK_HEADERS(err.h, , [AC_LIBOBJ(err)])
 dnl ultrix termio/termios are broken
 if test "$OS" != "ultrix"; then
     AC_SYS_POSIX_TERMIOS
@@ -1692,7 +1693,21 @@ dnl
 if test "$with_DCE" = "yes" -o "$ac_cv_prog_YACC" = "bison -y"; then
     AC_FUNC_ALLOCA
 fi
-
+dnl
+dnl Check for getprogname() or __progname
+dnl
+AC_CHECK_FUNCS(getprogname, , [
+    AC_MSG_CHECKING([for __progname])
+    AC_CACHE_VAL(sudo_cv___progname, [
+    AC_TRY_LINK(, [extern char *__progname; (void)puts(__progname);],
+    [sudo_cv___progname=yes], [sudo_cv___progname=no])])
+    if test "$sudo_cv___progname" = "yes"; then
+	AC_DEFINE(HAVE___PROGNAME, 1, [Define if your crt0.o defines the __progname symbol for you.])
+    else
+	AC_LIBOBJ(getprogname)
+    fi
+    AC_MSG_RESULT($sudo_cv___progname)
+])
 dnl
 dnl Kerberos IV
 dnl
@@ -1755,8 +1770,18 @@ fi
 
 dnl
 dnl Kerberos V
+dnl There is an easy way and a hard way...
 dnl
-if test -n "$with_kerb5"; then
+if test "$with_kerb5" = "yes"; then
+    AC_CHECK_PROG(KRB5CONFIG, krb5-config, yes, "")
+    if test -n "$KRB5CONFIG"; then
+	AC_DEFINE(HAVE_KERB5, 1, [Define if you use Kerberos V.])
+	AUTH_OBJS="${AUTH_OBJS} kerb5.o"
+	CPPFLAGS="$CPPFLAGS `krb5-config --cflags`"
+	SUDO_LIBS="$SUDO_LIBS `krb5-config --libs`"
+    fi
+fi
+if test -n "$with_kerb5" -a -z "$KRB5CONFIG"; then
     AC_DEFINE(HAVE_KERB5, 1, [Define if you use Kerberos V.])
     dnl
     dnl Use the specified directory, if any, else search for correct inc dir

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2002 Michael Stroucken <michael@stroucken.org>
  * All rights reserved.
  *
@@ -59,6 +59,11 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <pwd.h>
 
 /* Needed for SecurID v5.0 Authentication on UNIX */
@@ -70,7 +75,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: securid5.c,v 1.2 2002/05/20 20:51:23 millert Exp $";
+static const char rcsid[] = "$Sudo: securid5.c,v 1.3 2003/04/02 18:25:30 millert Exp $";
 #endif /* lint */
 
 /*
@@ -99,7 +104,7 @@ securid_init(pw, promptp, auth)
     if (AceInitialize() != SD_FALSE)
 	return(AUTH_SUCCESS);
 
-    fprintf(stderr, "Failed to initialise ACE API library.\n");
+    warnx("failed to initialise the ACE API library");
     return(AUTH_FATAL);
 }
 
@@ -127,7 +132,7 @@ securid_setup(pw, promptp, auth)
 
     /* Re-initialize SecurID every time. */
     if (SD_Init(sd) != ACM_OK) {
-	(void) fprintf(stderr, "%s: Cannot contact SecurID server\n", Argv[0]);
+	warnx("unable to contact the SecurID server");
 	return(AUTH_FATAL);
     }
 
@@ -136,19 +141,19 @@ securid_setup(pw, promptp, auth)
 
     switch (retval) {
         case ACE_UNDEFINED_USERNAME:
-		fprintf(stderr, "Invalid username length for SecurID\n");
+		warnx("invalid username length for SecurID");
 		return(AUTH_FATAL);
 
 	case ACE_ERR_INVALID_HANDLE:
-		fprintf(stderr, "Invalid Authentication Handle for SecurID\n");
+		warnx("invalid Authentication Handle for SecurID");
 		return(AUTH_FATAL);
 
 	case ACM_ACCESS_DENIED:
-		fprintf(stderr, "SecurID communication has failed\n");
+		warnx("SecurID communication failed");
 		return(AUTH_FATAL);
 
 	case ACM_OK:
-		fprintf(stderr, "User ID locked for SecurID Authentication\n");
+		warnx("User ID locked for SecurID Authentication");
 		return(AUTH_SUCCESS);
 	}
 }
@@ -180,17 +185,17 @@ securid_verify(pw, pass, auth)
     /* Have ACE verify password */
     switch (SD_Check(*sd, pass, pw->pw_name)) {
 	case ACE_UNDEFINED_PASSCODE:
-		fprintf(stderr, "Invalid passcode length for SecurID\n");
+		warnx("invalid passcode length for SecurID");
 		rval = AUTH_FATAL;
 		break;
 
 	case ACE_UNDEFINED_USERNAME:
-		fprintf(stderr, "Invalid username length for SecurID\n");
+		warnx("invalid username length for SecurID");
 		rval = AUTH_FATAL;
 		break;
 
 	case ACE_ERR_INVALID_HANDLE:
-		fprintf(stderr, "Invalid Authentication Handle for SecurID\n");
+		warnx("invalid Authentication Handle for SecurID");
 		rval = AUTH_FATAL;
 
 	case ACM_ACCESS_DENIED:

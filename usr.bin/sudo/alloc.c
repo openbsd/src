@@ -55,12 +55,17 @@
 #if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
 # include <malloc.h>
 #endif /* HAVE_MALLOC_H && !STDC_HEADERS */
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "emul/err.h"
+#endif /* HAVE_ERR_H */
 #include <limits.h>
 
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: alloc.c,v 1.18 2003/03/15 20:31:01 millert Exp $";
+static const char rcsid[] = "$Sudo: alloc.c,v 1.19 2003/04/02 18:25:19 millert Exp $";
 #endif /* lint */
 
 /*
@@ -81,8 +86,6 @@ static const char rcsid[] = "$Sudo: alloc.c,v 1.18 2003/03/15 20:31:01 millert E
 # endif /* SIZE_T_MAX */
 #endif /* SIZE_MAX */
 
-extern char **Argv;		/* from sudo.c */
-
 /*
  * emalloc() calls the system malloc(3) and exits with an error if
  * malloc(3) fails.
@@ -93,15 +96,11 @@ emalloc(size)
 {
     VOID *ptr;
 
-    if (size == 0) {
-	(void) fprintf(stderr, "%s: internal error, tried to emalloc(0)\n",
-	    Argv[0]);
-	exit(1);
-    }
-    if ((ptr = (VOID *) malloc(size)) == NULL) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    if (size == 0)
+	errx(1, "internal error, tried to emalloc(0)");
+
+    if ((ptr = (VOID *) malloc(size)) == NULL)
+	errx(1, "unable to allocate memory");
     return(ptr);
 }
 
@@ -116,21 +115,14 @@ emalloc2(nmemb, size)
 {
     VOID *ptr;
 
-    if (nmemb == 0 || size == 0) {
-	(void) fprintf(stderr, "%s: internal error, tried to emalloc2(0)\n",
-	    Argv[0]);
-	exit(1);
-    }
-    if (nmemb > SIZE_MAX / size) {
-	(void) fprintf(stderr, "%s: internal error, emalloc2() overflow\n",
-	    Argv[0]);
-	exit(1);
-    }
+    if (nmemb == 0 || size == 0)
+	errx(1, "internal error, tried to emalloc2(0)");
+    if (nmemb > SIZE_MAX / size)
+	errx(1, "internal error, emalloc2() overflow");
+
     size *= nmemb;
-    if ((ptr = (VOID *) malloc(size)) == NULL) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    if ((ptr = (VOID *) malloc(size)) == NULL)
+	errx(1, "unable to allocate memory");
     return(ptr);
 }
 
@@ -145,16 +137,12 @@ erealloc(ptr, size)
     size_t size;
 {
 
-    if (size == 0) {
-	(void) fprintf(stderr, "%s: internal error, tried to erealloc(0)\n",
-	    Argv[0]);
-	exit(1);
-    }
+    if (size == 0)
+	errx(1, "internal error, tried to erealloc(0)");
+
     ptr = ptr ? (VOID *) realloc(ptr, size) : (VOID *) malloc(size);
-    if (ptr == NULL) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    if (ptr == NULL)
+	errx(1, "unable to allocate memory");
     return(ptr);
 }
 
@@ -171,22 +159,15 @@ erealloc3(ptr, nmemb, size)
     size_t size;
 {
 
-    if (nmemb == 0 || size == 0) {
-	(void) fprintf(stderr, "%s: internal error, tried to erealloc3(0)\n",
-	    Argv[0]);
-	exit(1);
-    }
-    if (nmemb > SIZE_MAX / size) {
-	(void) fprintf(stderr, "%s: internal error, erealloc3() overflow\n",
-	    Argv[0]);
-	exit(1);
-    }
+    if (nmemb == 0 || size == 0)
+	errx(1, "internal error, tried to erealloc3(0)");
+    if (nmemb > SIZE_MAX / size)
+	errx(1, "internal error, erealloc3() overflow");
+
     size *= nmemb;
     ptr = ptr ? (VOID *) realloc(ptr, size) : (VOID *) malloc(size);
-    if (ptr == NULL) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    if (ptr == NULL)
+	errx(1, "unable to allocate memory");
     return(ptr);
 }
 
@@ -236,10 +217,8 @@ easprintf(va_alist)
     len = vasprintf(ret, fmt, ap);
     va_end(ap);
 
-    if (len == -1) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    if (len == -1)
+	errx(1, "unable to allocate memory");
     return(len);
 }
 
@@ -255,9 +234,7 @@ evasprintf(ret, format, args)
 {
     int len;
 
-    if ((len = vasprintf(ret, format, args)) == -1) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    if ((len = vasprintf(ret, format, args)) == -1)
+	errx(1, "unable to allocate memory");
     return(len);
 }
