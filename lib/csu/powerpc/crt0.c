@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.2 2003/02/28 18:05:51 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 2003/08/25 17:59:42 drahn Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -46,6 +46,9 @@ extern unsigned char _etext, _eprol;
 
 static inline char * _strrchr(const char *p, char ch);
 
+__asm(".globl __start");
+__asm(".type __start@function");
+__asm("__start = _start");
 void
 _start(int argc, char **argv, char **envp, void *aux, void (*cleanup)(void))
 {
