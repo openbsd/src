@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.16 2004/08/27 16:45:45 espie Exp $
+# $OpenBSD: pkg_create,v 1.17 2004/09/15 18:54:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,10 +20,12 @@ use strict;
 use warnings;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
-use Getopt::Std;
+use OpenBSD::Getopt;
 use OpenBSD::md5;
 use OpenBSD::Temp;
-use File::Copy;
+use OpenBSD::Error;
+use Symbol;
+use File::Basename;
 
 # Extra stuff needed to archive files
 package OpenBSD::PackingElement;
@@ -154,12 +156,78 @@ sub avert_duplicates
 
 package main;
 
+my %defines;
+
+sub dosubst
+{
+	local $_ = shift;
+	while (my ($k, $v) = each %defines) {
+		s/\$\{\Q$k\E\}/$v/g;
+	}
+	s/\$\\/\$/g;
+	return $_;
+}
+
+sub copy_subst
+{
+	my ($srcname, $destname) = @_;
+	open my $src, '<', $srcname or die "can't open $srcname";
+	open my $dest, '>', $destname or die "can't open $destname";
+	local $_;
+	while (<$src>) {
+		print $dest dosubst($_);
+	}
+}
+
+sub deduce_name
+{
+	my ($o, $frag, $not) = @_;
+
+	my $noto = $o;
+	my $nofrag = "no-$frag";
+
+	$o =~ s/PFRAG\./PFRAG.$frag-/ or
+	    $o =~ s/PLIST/PFRAG.$frag/;
+
+	$noto =~ s/PFRAG\./PFRAG.no-$frag-/ or
+	    $noto =~ s/PLIST/PFRAG.no-$frag/;
+	unless (-e $o or -e $noto) {
+		die "Missing fragments for $frag";
+	}
+	if ($not) {
+		print "Switching to $noto\n";
+		return $noto if -e $noto;
+    	} else {
+		print "Switching to $o\n";
+		return $o if -e $o;
+	}
+	return;
+}
+
 our $errors = 0;
 
-our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, $opt_D,
+our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
 	$opt_S, $opt_m, $opt_h, $opt_s, $opt_O, $opt_P, $opt_C, $opt_A, $opt_L,
+	$opt_M,
 	$opt_B);
-getopts('p:f:c:d:vi:k:r:D:S:m:hs:OP:C:A:L:B:');
+
+my @contents;
+
+getopts('p:f:c:d:vi:k:r:M:S:m:hs:OP:C:A:L:B:D:', 
+	{'D' => 
+		sub { 
+			local $_ = shift;
+			if (m/\=/) {
+				$defines{$`} = $';
+			} else {
+				$defines{$_} = 1;
+			}
+		},
+	 'f' =>
+	 	sub {
+			push(@contents, shift);
+		}
+	});
 
 if (@ARGV != 1) {
 	die "Exactly one single package name is required";
@@ -175,13 +243,7 @@ if (defined $opt_O) {
 	die "Option O is no longer supported";
 }
 
-if (defined $opt_f) {
-	if ($opt_f eq '-') {
-	    copy(\*STDIN, $dir.CONTENTS);
-	} else {
-	    copy($opt_f, $dir.CONTENTS);
-	}
-} else {
+if (!@contents) {
 	die "Packing list required";
 }
 
@@ -191,7 +253,7 @@ if (defined $opt_c) {
 	print $fh $';
 	close($fh);
     } else {
-	copy($opt_c, $dir.COMMENT);
+	copy_subst($opt_c, $dir.COMMENT);
     }
 } else {
 	die "Comment required";
@@ -203,7 +265,7 @@ if (defined $opt_d) {
 	print $fh $';
 	close($fh);
     } else {
-	copy($opt_d, $dir.DESC);
+	copy_subst($opt_d, $dir.DESC);
     }
 } else {
 	die "Description required";
@@ -245,7 +307,50 @@ if (defined $opt_L) {
 	OpenBSD::PackingElement::LocalBase->add($plist, $opt_L);
 }
 
-$plist->fromfile($dir.CONTENTS) or die "Can't open packing list";
+for my $contentsfile (@contents) {
+    $plist->fromfile($contentsfile,
+	sub {
+		my ($fh, $cont) = @_;
+		local $_;
+		my (@fhstack, @namestack);
+		push(@fhstack, $fh);
+		push(@namestack, $contentsfile);
+		while($fh = pop @fhstack) {
+			my $fname = pop @namestack;
+			GETLINE:
+			while (<$fh>) {
+				if (m/^(\!)?\%\%(.*)\%\%$/) {
+					my ($not, $frag) = ($1, $2);
+					my $def = $frag;
+					if ($frag eq 'SHARED') {
+						$def = 'SHARED_LIBS';
+						$frag = 'shared';
+					}
+					if (!defined $defines{$def}) {
+						die "Error: unknown fragment $frag";
+					} elsif ($defines{$def} == 1) {
+						next GETLINE if defined $not;
+					} elsif ($defines{$def} == 0) {
+						next GETLINE unless defined $not;
+					} else {
+						die "Incorrect define for $frag";
+					}
+					my $newname = deduce_name($fname, $frag, $not);
+					if (defined $newname) {
+						push(@fhstack, $fh);
+						push(@namestack, $fname);
+						$fname = $newname;
+						$fh = gensym;
+						open($fh, '<', $fname) or die "missing file $fname";
+					}
+					next GETLINE;
+				}
+				&$cont(dosubst($_));
+			}
+		}
+	}
+    ) or die "Can't open packing list $contentsfile";
+}
 
 
 my $base = '/';
@@ -266,23 +371,23 @@ if ($errors) {
 my @cmd = $plist->archive_cmd($dir, $base);
 
 if (defined $opt_i) {
-    copy($opt_i, $dir.INSTALL);
+    copy_subst($opt_i, $dir.INSTALL);
 }
 	
 if (defined $opt_k) {
-    copy($opt_k, $dir.DEINSTALL);
+    copy_subst($opt_k, $dir.DEINSTALL);
 }
 
 if (defined $opt_r) {
-    copy($opt_r, $dir.REQUIRE);
+    copy_subst($opt_r, $dir.REQUIRE);
 }
 
-if (defined $opt_D) {
-    copy($opt_D, $dir.DISPLAY);
+if (defined $opt_M) {
+    copy_subst($opt_M, $dir.DISPLAY);
 }
 
 if (defined $opt_m) {
-    copy($opt_m, $dir.MTREE_DIRS);
+    copy_subst($opt_m, $dir.MTREE_DIRS);
 }
 
 
@@ -291,8 +396,6 @@ OpenBSD::PackingElement::Cwd->add($plist, '.');
 for my $special (info_names()) {
     next unless -f $dir.$special;
     push(@extra_files, $special);
-    # Do not record contents in itself...
-    next if $special eq CONTENTS;
     my $f = OpenBSD::PackingElement::File->add($plist, $special);
     $f->{ignore} = 1;
     $f->{md5} = OpenBSD::md5::fromfile($dir.$special);
@@ -305,6 +408,6 @@ if (!defined $plist->{name}) {
 $plist->tofile($dir.CONTENTS) or die "Can't write packing list";
 
 print "Creating gzip'd tar ball in '$ARGV[0]'\n" if $opt_v;
-system('tar', $opt_h ? "zcfh" : "zcf", $ARGV[0], "-C", $dir, 
+System('tar', $opt_h ? "zcfh" : "zcf", $ARGV[0], "-C", $dir, CONTENTS,
     @extra_files, @cmd) == 0 or
 	die "tar failed";

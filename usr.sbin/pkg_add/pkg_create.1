@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.11 2004/08/10 12:50:14 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.12 2004/09/15 18:54:17 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -36,6 +36,7 @@
 .Op Fl hv
 .Op Fl A Ar arches
 .Op Fl B Ar pkg-destdir
+.Op Fl D Ar name=value
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
@@ -43,7 +44,7 @@
 .Op Fl k Ar dscript
 .Op Fl r Ar rscript
 .Op Fl S Ar pkg-destdir
-.Op Fl D Ar displayfile
+.Op Fl M Ar displayfile
 .Op Fl L Ar localbase
 .Fl c Ar comment
 .Fl d Ar description
@@ -84,11 +85,9 @@ to mean any architecture (e.g., arch-independent packages).
 Fetch
 .Dq packing list
 for package from the file
-.Ar packinglist
-or stdin if
-.Ar packinglist
-is a dash
-.Dq \&- .
+.Ar packinglist .
+Several packing-lists can be mentioned, in which case they will be 
+concatenated together.
 .It Fl c [ Ar \&- ] Ns Ar desc
 Fetch package
 .Dq one line description
@@ -106,6 +105,8 @@ Fetch long description for package from file
 or, if preceded by
 .Dq \&- ,
 the argument itself.
+.It Fl D Ar name=value
+Define name to value, for substitution and fragment inclusion purpose.
 .It Fl v
 Turn on verbose output.
 .It Fl h
@@ -169,7 +170,7 @@ This can be any executable program (or shell script).
 It will be invoked automatically
 at installation/deinstallation time to determine whether or not
 installation/deinstallation should proceed.
-.It Fl D Ar displayfile
+.It Fl M Ar displayfile
 Display the file (using
 .Xr more 1 )
 after installing the package.
@@ -183,6 +184,9 @@ format (see
 .Fl f )
 is fairly simple, being basically a list of filenames and directory names
 to include in the package.
+.Pp
+Substitution of variables and inclusion of fragments is documented in the
+next section.
 .Pp
 Directory names are denoted by a trailing slash.
 .Pp
@@ -396,7 +400,7 @@ it refers to a configuration directory instead.
 Declare
 .Pa name
 as the file to be displayed at install time (see
-.Fl D
+.Fl M
 above).
 .It Cm @pkgdep Ar pkgname
 Declare a dependency on the
@@ -437,6 +441,14 @@ With this option, the older package version will still be noticed, but the
 installation will proceed anyway.
 .El
 .El
+.Sh VARIABLE SUBSTITUTION AND FRAGMENT INCLUSION
+In packing-lists, installation, deinstallation and requirement scripts,
+description and message files,
+constructs like
+.Li ${VAR}
+will be replaced with the variable value, according to
+.Fl D Ar name=value
+options.
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
 .It Ev PKG_DESTDIR
