@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.11 2004/03/02 19:27:37 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.12 2004/03/04 11:26:36 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -52,11 +52,11 @@ int	up_prefix_cmp(struct update_prefix *, struct update_prefix *);
 int	up_attr_cmp(struct update_attr *, struct update_attr *);
 int	up_add(struct rde_peer *, struct update_prefix *, struct update_attr *);
 
-RB_PROTOTYPE(uptree_prefix, update_prefix, entry, up_prefix_cmp);
-RB_GENERATE(uptree_prefix, update_prefix, entry, up_prefix_cmp);
+RB_PROTOTYPE(uptree_prefix, update_prefix, entry, up_prefix_cmp)
+RB_GENERATE(uptree_prefix, update_prefix, entry, up_prefix_cmp)
 
-RB_PROTOTYPE(uptree_attr, update_attr, entry, up_attr_cmp);
-RB_GENERATE(uptree_attr, update_attr, entry, up_attr_cmp);
+RB_PROTOTYPE(uptree_attr, update_attr, entry, up_attr_cmp)
+RB_GENERATE(uptree_attr, update_attr, entry, up_attr_cmp)
 
 void
 up_init(struct rde_peer *peer)
