@@ -1,6 +1,7 @@
-/*	$OpenBSD: dhcpd.c,v 1.5 2004/04/14 02:18:41 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.6 2004/04/14 03:59:17 henning Exp $ */
 
 /*
+ * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
  * The Internet Software Consortium.  All rights reserved.
  *
@@ -38,10 +39,9 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-
 #include "dhcpd.h"
 
-static void usage(char *);
+void usage(void);
 
 time_t cur_time;
 struct group root_group;
@@ -57,31 +57,25 @@ int log_perror = 1;
 char *path_dhcpd_conf = _PATH_DHCPD_CONF;
 char *path_dhcpd_db = _PATH_DHCPD_DB;
 
-int main (argc, argv)
-	int argc;
-	char **argv;
+int
+main(int argc, char *argv[])
 {
 	int i, status;
 	struct servent *ent;
-	char *s, *appname;
+	char *s;
 	int cftest = 0;
 	int quiet = 0;
 	int daemonize = 1;
-
-	appname = strrchr (argv [0], '/');
-	if (!appname)
-		appname = argv [0];
-	else
-		appname++;
+	extern char *__progname;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog (appname, LOG_NDELAY, DHCPD_LOG_FACILITY);
-	setlogmask (LOG_UPTO (LOG_INFO));
+	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
+	setlogmask(LOG_UPTO (LOG_INFO));
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {
 			if (++i == argc)
-				usage (appname);
+				usage();
 			for (s = argv [i]; *s; s++)
 				if (!isdigit (*s))
 					error ("%s: not a valid UDP port",
@@ -100,11 +94,11 @@ int main (argc, argv)
 			log_perror = -1;
 		} else if (!strcmp (argv [i], "-cf")) {
 			if (++i == argc)
-				usage (appname);
+				usage();
 			path_dhcpd_conf = argv [i];
 		} else if (!strcmp (argv [i], "-lf")) {
 			if (++i == argc)
-				usage (appname);
+				usage();
 			path_dhcpd_db = argv [i];
                 } else if (!strcmp (argv [i], "-t")) {
 			/* test configurations only */
@@ -115,7 +109,7 @@ int main (argc, argv)
 			quiet = 1;
 			quiet_interface_discovery = 1;
 		} else if (argv [i][0] == '-') {
-			usage (appname);
+			usage();
 		} else {
 			struct interface_info *tmp =
 				((struct interface_info *)
@@ -181,18 +175,15 @@ int main (argc, argv)
 	return (0);
 }
 
-/* Print usage message. */
-
-static void
-usage(char *appname)
+void
+usage(void)
 {
-	warn ("Usage: %s [-p <UDP port #>] [-d] [-f] [-cf config-file]",
-	      appname);
-	error("            [-lf lease-file] [-pf pidfile] [if0 [...ifN]]");
-}
+	extern char *__progname;
 
-void cleanup ()
-{
+	fprintf(stderr, "usage: %s [-df] [-p <port>] [-c config-file]",
+	   __progname);
+	fprintf(stderr, " [-l lease-file] [if0 [...ifN]]\n");
+	exit(1);
 }
 
 void lease_pinged (from, packet, length)
