@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.16 2003/06/17 21:56:24 millert Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.17 2004/02/16 19:41:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,7 +23,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.16 2003/06/17 21:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.17 2004/02/16 19:41:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -53,13 +53,6 @@ ether_ntoa(e)
 	struct ether_addr *e;
 {
 	static char a[] = "xx:xx:xx:xx:xx:xx";
-
-	if (e->ether_addr_octet[0] > 0xFF || e->ether_addr_octet[1] > 0xFF ||
-	    e->ether_addr_octet[2] > 0xFF || e->ether_addr_octet[3] > 0xFF ||
-	    e->ether_addr_octet[4] > 0xFF || e->ether_addr_octet[5] > 0xFF) {
-		errno = EINVAL;
-		return (NULL);
-	}
 
 	(void)snprintf(a, sizeof a, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
@@ -118,13 +111,6 @@ ether_ntohost(hostname, e)
 	char trybuf[sizeof("xx:xx:xx:xx:xx:xx")];
 	int trylen;
 #endif
-
-	if (e->ether_addr_octet[0] > 0xFF || e->ether_addr_octet[1] > 0xFF ||
-	    e->ether_addr_octet[2] > 0xFF || e->ether_addr_octet[3] > 0xFF ||
-	    e->ether_addr_octet[4] > 0xFF || e->ether_addr_octet[5] > 0xFF) {
-		errno = EINVAL;
-		return (-1);
-	}
 
 #ifdef YP
 	snprintf(trybuf, sizeof trybuf, "%x:%x:%x:%x:%x:%x", 
