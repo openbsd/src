@@ -1,7 +1,7 @@
-/*	$OpenBSD: show.c,v 1.9 2001/04/08 16:45:47 espie Exp $	*/
+/*	$OpenBSD: show.c,v 1.10 2001/11/07 20:57:23 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: show.c,v 1.9 2001/04/08 16:45:47 espie Exp $";
+static const char *rcsid = "$OpenBSD: show.c,v 1.10 2001/11/07 20:57:23 espie Exp $";
 #endif
 
 /*
@@ -53,8 +53,6 @@ static show_t	showv[] = {
 	{	PLIST_PKGDEP,	"@pkgdep %s",	"\tPackage depends on: %s" },
 	{	PLIST_MTREE,	"@mtree %s",	"\tPackage mtree file: %s" },
 	{	PLIST_DIR_RM,	"@dirrm %s",	"\tDeinstall directory remove: %s" },
-	{	PLIST_IGNORE_INST,	"@ignore_inst ??? doesn't belong here",
-		"\tIgnore next file installation directive (doesn't belong)" },
 	{	PLIST_OPTION,	"@option %s",	"\tPackage has option: %s" },
 	{	PLIST_PKGCFL,	"@pkgcfl %s",	"\tPackage conflicts with: %s" },
 	{	-1,		NULL,		 NULL }
@@ -138,10 +136,6 @@ show_plist(char *title, package_t *plist, pl_ent_t type)
 				p->name ? p->name : "(clear default)");
 			break;
 		case PLIST_IGNORE:
-			ign = TRUE;
-			break;
-		case PLIST_IGNORE_INST:
-			printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose, p->name);
 			ign = TRUE;
 			break;
 		case PLIST_CWD:
