@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.14 2004/09/29 07:35:52 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.15 2004/12/16 16:48:44 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -182,12 +182,6 @@ dmainit()
 	    rev, (rev == 'B') ? 16 : 32);
 
 	/*
-	 * Our interrupt level must be as high as the highest
-	 * device using DMA (i.e. splbio).
-	 */
-	sc->sc_isr.isr_ipl = PSLTOIPL(hp300_bioipl);
-
-	/*
 	 * Defer hooking up our interrupt until the first
 	 * DMA-using controller has hooked up theirs.
 	 */
@@ -207,6 +201,12 @@ dmacomputeipl()
 
 	if (sc->sc_isr.isr_func != NULL)
 		intr_disestablish(&sc->sc_isr);
+
+	/*
+	 * Our interrupt level must be as high as the highest
+	 * device using DMA (i.e. splbio).
+	 */
+	sc->sc_isr.isr_ipl = PSLTOIPL(hp300_bioipl);
 
 	sc->sc_isr.isr_func = dmaintr;
 	intr_establish(&sc->sc_isr, "dma");
