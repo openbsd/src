@@ -1,4 +1,4 @@
-.\"     $OpenBSD: kgdb.7,v 1.3 2001/08/25 03:16:43 hugh Exp $
+.\"     $OpenBSD: kgdb.7,v 1.4 2001/08/25 04:12:27 hugh Exp $
 .\"
 .\" Copyright (c) 2001 Hugh Graham
 .\"
@@ -64,8 +64,7 @@ On the control system, run gdb on the kernel just copied.
 Issue the command "target remote /dev/<serial port>" within gdb.
 The target system should enter kgdb at this point.
 .It
-Debug as normal, with the understanding that the remote connection
-will introduce certain latencies a local debugger would not see.
+Debug as normal and detach when done, the target should resume normal operation.
 .El
 .Sh SEE ALSO
 .Xr gdb 1 ,
@@ -79,4 +78,7 @@ The
 manual page was written by Hugh Graham, with subsequent modifications
 by Aaron Campbell.
 .Sh CAVEATS
+The remote connection will introduce certain latencies a local debugger
+would not see.
+.Pp
 Not available on all architectures.
