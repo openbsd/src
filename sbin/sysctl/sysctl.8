@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.112 2004/01/07 19:51:25 markus Exp $
+.\"	$OpenBSD: sysctl.8,v 1.113 2004/01/08 00:49:02 tedu Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -362,6 +362,9 @@ privilege can change the value.
 .It vfs.ffs.sd_inode_bitmap	integer	no
 .It vfs.ffs.sd_direct_blk_ptrs	integer	no
 .It vfs.ffs.sd_dir_entry	integer	no
+.It vfs.ffs.dirhash_dirsize	integer	yes
+.It vfs.ffs.dirhash_maxmem	integer	yes
+.It vfs.ffs.dirhash_mem	integer	no
 .It vfs.nfs.iothreads	integer	yes
 .El
 .Pp
