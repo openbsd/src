@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.1 2004/07/28 17:15:12 tholo Exp $
+ * $OpenBSD: kern_tc.c,v 1.2 2004/08/04 15:36:44 art Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -89,8 +89,8 @@ static struct timehands *volatile timehands = &th0;
 struct timecounter *timecounter = &dummy_timecounter;
 static struct timecounter *timecounters = &dummy_timecounter;
 
-time_t time_second = 1;
-time_t time_uptime = 0;
+volatile time_t time_second = 1;
+volatile time_t time_uptime = 0;
 
 extern struct timeval adjtimedelta;
 static struct bintime boottimebin;
@@ -268,14 +268,12 @@ tc_init(struct timecounter *tc)
 	u *= 11;
 	u /= 10;
 	if (tc->tc_quality >= 0) {
-		printf("Timecounter \"%s\" frequency %lu Hz",
-		    tc->tc_name, (unsigned long)tc->tc_frequency);
 		if (u > hz) {
 			tc->tc_quality = -2000;
+			printf("Timecounter \"%s\" frequency %lu Hz",
+			    tc->tc_name, (unsigned long)tc->tc_frequency);
 			printf(" -- Insufficient hz, needs at least %u\n", u);
 		}
-		else
-			printf(" quality %d\n", tc->tc_quality);
 	}
 
 	tc->tc_next = timecounters;
@@ -549,7 +547,9 @@ inittimecounter(void)
 	else
 		tc_tick = 1;
 	p = (tc_tick * 1000000) / hz;
+#ifdef DEBUG
 	printf("Timecounters tick every %d.%03u msec\n", p / 1000, p % 1000);
+#endif
 
 	/* warm up new timecounter (again) and get rolling. */
 	(void)timecounter->tc_get_timecount(timecounter);
