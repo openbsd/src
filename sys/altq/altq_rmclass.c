@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.4 2002/11/26 01:03:34 henning Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.5 2002/11/29 07:52:31 kjc Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -199,13 +199,17 @@ rmc_newclass(pri, ifd, nsecPerByte, action, maxq, parent, borrow,
 		return (NULL);
 #ifndef ALTQ_RED
 	if (flags & RMCF_RED) {
+#ifdef ALTQ_DEBUG
 		printf("rmc_newclass: RED not configured for CBQ!\n");
+#endif
 		return (NULL);
 	}
 #endif
 #ifndef ALTQ_RIO
 	if (flags & RMCF_RIO) {
+#ifdef ALTQ_DEBUG
 		printf("rmc_newclass: RIO not configured for CBQ!\n");
+#endif
 		return (NULL);
 	}
 #endif
