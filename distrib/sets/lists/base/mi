@@ -135,6 +135,7 @@
 ./sbin/startkey
 ./sbin/swapctl
 ./sbin/swapon
+./sbin/sysctl
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
