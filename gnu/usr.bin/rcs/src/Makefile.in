@@ -1,6 +1,6 @@
 # Make RCS.
 
-#	$Id: Makefile.in,v 1.1 1996/08/12 04:08:00 millert Exp $
+#	$Id: Makefile.in,v 1.2 1996/08/19 22:37:53 millert Exp $
 
 # Copyright 1982, 1988, 1989 Walter Tichy
 # Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
@@ -110,7 +110,7 @@ all :: $(PROGRAMS)
 	$(CC) -c $(ALL_CFLAGS) $<
 
 installdirs :: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(bindir)
+	sh $(srcdir)/../mkinstalldirs $(bindir)
 
 install :: all installdirs
 	for p in $(PROGRAMS); do \

@@ -1,6 +1,6 @@
 # Make RCS man pages.
 
-#	$Id: Makefile.in,v 1.1 1996/08/12 04:07:45 millert Exp $
+#	$Id: Makefile.in,v 1.2 1996/08/19 22:37:54 millert Exp $
 
 # Copyright 1995 Paul Eggert
 #   Distributed under license by the Free Software Foundation, Inc.
@@ -49,7 +49,7 @@ rcsfile.5 : rcsfile.5in
 check dvi info TAGS ::
 
 installdirs :: ../mkinstalldirs
-	-$(srcdir)/../mkinstalldirs $(man1dir) $(man5dir)
+	-sh $(srcdir)/../mkinstalldirs $(man1dir) $(man5dir)
 
 man1pages = ci co ident merge rcs rcsclean rcsdiff rcsintro rcsmerge rlog
 
