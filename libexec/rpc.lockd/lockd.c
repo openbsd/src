@@ -43,6 +43,9 @@ extern void nlm_prog_3 __P((struct svc_req, register SVCXPRT));
 
 int debug_level = 0;	/* Zero means no debugging syslog() calls	*/
 
+#if 1
+int _rpcsvcdirty;
+#endif
 
 main(int argc, char **argv)
 {

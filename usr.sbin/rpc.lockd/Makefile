@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.1 1996/07/20 05:02:34 deraadt Exp $
+#	$Id: Makefile,v 1.2 1996/07/20 05:03:44 deraadt Exp $
 
 PROG =	rpc.lockd
 SRCS =	nlm_prot_svc.c lockd.c procs.c
-MAN8 =	rpc.lockd.8
+MAN =	rpc.lockd.8
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
