@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.7 2002/05/06 22:23:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2002/05/09 18:44:45 millert Exp $
 
 PROG=	rcp
 SRCS=	rcp.c util.c
 BINOWN=	root
-BINMODE=4555
+BINMODE=555
 #INSTALLFLAGS=-fschg
 
 .include <bsd.own.mk>	# For KERBEROS

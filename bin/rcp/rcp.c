@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.28 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.29 2002/05/09 18:44:46 millert Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -185,6 +185,8 @@ main(argc, argv)
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
 		errx(1, "unknown user %d", (int)userid);
 
+	unsetenv("RSH");		/* Force the use of /usr/bin/rsh */
+
 	rem = STDIN_FILENO;		/* XXX */
 
 	if (fflag) {			/* Follow "protocol", send data. */
@@ -311,7 +313,8 @@ toremote(targ, argc, argv)
 					exit(1);
 				tos = IPTOS_THROUGHPUT;
 				if (setsockopt(rem, IPPROTO_IP, IP_TOS,
-				    &tos, sizeof(int)) < 0)
+				    &tos, sizeof(int)) < 0 &&
+				    errno != ENOPROTOOPT)
 					warn("TOS (ignored)");
 				if (response() < 0)
 					exit(1);
@@ -381,7 +384,8 @@ tolocal(argc, argv)
 		}
 		(void)seteuid(userid);
 		tos = IPTOS_THROUGHPUT;
-		if (setsockopt(rem, IPPROTO_IP, IP_TOS, &tos, sizeof(int)) < 0)
+		if (setsockopt(rem, IPPROTO_IP, IP_TOS, &tos, sizeof(int)) < 0
+		    && errno != ENOPROTOOPT)
 			warn("TOS (ignored)");
 		sink(1, argv + argc - 1);
 		(void)seteuid(0);
