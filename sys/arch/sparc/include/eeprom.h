@@ -36,6 +36,15 @@
  * a ROM section, and a software section (defined in detail elsewhere).
  */
 
+/*
+ * Note that most places where the PROM stores a "true/false" flag,
+ * the true value is 0x12 and false is the usual zero.  Such flags
+ * all take the values EE_TRUE or EE_FALSE so this file does not
+ * need to define so many value macros.
+ */
+#define EE_TRUE		0x12
+#define EE_FALSE	0x00
+
 struct ee_keymap {
 	u_char	keymap[128];	/* PROM/EEPROM are 7 bit */
 };
