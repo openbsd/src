@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.157 2005/03/14 12:25:50 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.158 2005/03/14 17:32:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -540,7 +540,9 @@ struct filter_rule {
 
 enum action_types {
 	ACTION_SET_LOCALPREF,
+	ACTION_SET_RELATIVE_LOCALPREF,
 	ACTION_SET_MED,
+	ACTION_SET_RELATIVE_MED,
 	ACTION_SET_PREPEND_SELF,
 	ACTION_SET_PREPEND_PEER,
 	ACTION_SET_NEXTHOP,
@@ -557,6 +559,7 @@ struct filter_set {
 	union {
 		u_int8_t		prepend;
 		u_int32_t		metric;
+		int32_t			relative;
 		struct bgpd_addr	nexthop;
 		struct filter_community	community;
 		char			pftable[PFTABLE_LEN];

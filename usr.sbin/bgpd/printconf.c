@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.36 2005/03/11 12:54:19 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.37 2005/03/14 17:32:04 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -86,8 +86,14 @@ print_set(struct filter_set_head *set)
 		case ACTION_SET_LOCALPREF:
 			printf("localpref %u ", s->action.metric);
 			break;
+		case ACTION_SET_RELATIVE_LOCALPREF:
+			printf("localpref %+d ", s->action.relative);
+			break;
 		case ACTION_SET_MED:
 			printf("metric %u ", s->action.metric);
+			break;
+		case ACTION_SET_RELATIVE_MED:
+			printf("metric %+d ", s->action.relative);
 			break;
 		case ACTION_SET_NEXTHOP:
 			printf("nexthop %s ", log_addr(&s->action.nexthop));

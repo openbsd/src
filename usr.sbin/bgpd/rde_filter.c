@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.25 2005/03/11 12:54:20 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.26 2005/03/14 17:32:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -96,9 +96,40 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		case ACTION_SET_LOCALPREF:
 			asp->lpref = set->action.metric;
 			break;
+		case ACTION_SET_RELATIVE_LOCALPREF:
+			if (set->action.relative > 0) {
+				if (set->action.relative + asp->lpref <
+				    asp->lpref)
+					asp->lpref = UINT_MAX;
+				else
+					asp->lpref += set->action.relative;
+			} else {
+				if ((u_int32_t)-set->action.relative >
+				    asp->lpref)
+					asp->lpref = 0;
+				else
+					asp->lpref += set->action.relative;
+			}
+			break;
 		case ACTION_SET_MED:
 			asp->flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
 			asp->med = set->action.metric;
+			break;
+		case ACTION_SET_RELATIVE_MED:
+			asp->flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
+			if (set->action.relative > 0) {
+				if (set->action.relative + asp->med <
+				    asp->med)
+					asp->med = UINT_MAX;
+				else
+					asp->med += set->action.relative;
+			} else {
+				if ((u_int32_t)-set->action.relative >
+				    asp->med)
+					asp->med = 0;
+				else
+					asp->med += set->action.relative;
+			}
 			break;
 		case ACTION_SET_PREPEND_SELF:
 			/* don't apply if this is a incoming default override */
