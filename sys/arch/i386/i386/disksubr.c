@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.43 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.44 2004/03/17 14:16:04 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	int dospartoff, cyl, i, ourpart = -1;
 
 	/* minimal requirements for archtypal disk label */
-	if (lp->d_secsize == 0)
+	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secpercyl == 0) {
 		msg = "invalid geometry";

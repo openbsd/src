@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.38 2003/10/18 20:14:40 jmc Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.39 2004/03/17 14:16:00 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	struct disklabel minilabel, fallbacklabel;
 
 	/* minimal requirements for archetypal disk label */
-	if (lp->d_secsize == 0)
+	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
