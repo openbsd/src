@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.806 2004/12/06 16:06:01 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.807 2004/12/07 11:06:56 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1709,6 +1709,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
 	    "PRI T1 ISDN",
+	},
+	{
+	    PCI_VENDOR_BELKIN2, PCI_PRODUCT_BELKIN2_F5D6001,
+	    "F5D6001",
+	},
+	{
+	    PCI_VENDOR_BELKIN2, PCI_PRODUCT_BELKIN2_F5D6020V3,
+	    "F5D6020V3",
 	},
 	{
 	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6000,
@@ -8961,6 +8969,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_CAVIUM,
 	    "Cavium",
+	},
+	{
+	    PCI_VENDOR_BELKIN2,
+	    "Belkin",
 	},
 	{
 	    PCI_VENDOR_LANERGY,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.806 2004/12/06 16:06:01 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.807 2004/12/07 11:06:56 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -253,6 +253,7 @@
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
+#define	PCI_VENDOR_BELKIN2	0x1799		/* Belkin */
 #define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
@@ -782,6 +783,8 @@
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* PRI T1 ISDN */
 
 /* Belkin Components products */
+#define	PCI_PRODUCT_BELKIN2_F5D6001	0x6001		/* F5D6001 */
+#define	PCI_PRODUCT_BELKIN2_F5D6020V3	0x6020		/* F5D6020V3 */
 #define	PCI_PRODUCT_BELKIN_F5D6000	0xec00		/* F5D6000 */
 
 /* Bit3 products */
