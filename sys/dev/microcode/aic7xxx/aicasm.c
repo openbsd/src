@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm.c,v 1.9 2002/11/19 18:36:18 jason Exp $ */
+/* $OpenBSD: aicasm.c,v 1.10 2003/08/12 20:27:02 mickey Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aicasm.c,v 1.9 2002/11/19 18:36:18 jason Exp $
+ * $Id: aicasm.c,v 1.10 2003/08/12 20:27:02 mickey Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.34 2002/06/05 22:51:54 gibbs Exp $
  */
@@ -336,7 +336,7 @@ output_code()
 " *\n"
 "%s */\n", versions);
 
-	fprintf(ofile, "static u_int8_t seqprog[] = {\n");
+	fprintf(ofile, "static const u_int8_t seqprog[] = {\n");
 	for(cur_instr = seq_program.tqh_first;
 	    cur_instr != NULL;
 	    cur_instr = cur_instr->links.tqe_next) {
@@ -390,7 +390,7 @@ output_code()
 "	uint32_t	begin	   :10,\n"
 "			skip_instr :10,\n"
 "			skip_patch :12;\n"
-"} patches[] = {\n", patch_arg_list);
+"} const patches[] = {\n", patch_arg_list);
 
 	for(cur_patch = TAILQ_FIRST(&patches);
 	    cur_patch != NULL;
@@ -407,7 +407,7 @@ output_code()
 "static struct cs {\n"
 "	u_int16_t	begin;\n"
 "	u_int16_t	end;\n"
-"} critical_sections[] = {\n");
+"} const critical_sections[] = {\n");
 
         for(cs = TAILQ_FIRST(&cs_tailq);
             cs != NULL;

@@ -28,10 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.c,v 1.47 2003/04/27 11:22:52 ho Exp $
+ * $Id: aic7xxx.c,v 1.48 2003/08/12 20:27:03 mickey Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.80 2001/12/16 17:38:30 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.47 2003/04/27 11:22:52 ho Exp $
+ * $OpenBSD: aic7xxx.c,v 1.48 2003/08/12 20:27:03 mickey Exp $
  */
 
 #ifdef __OpenBSD__
@@ -230,7 +230,7 @@ static void		ahc_dumpseq(struct ahc_softc *ahc);
 #endif
 static void		ahc_loadseq(struct ahc_softc *ahc);
 static int		ahc_check_patch(struct ahc_softc *ahc,
-					struct patch **start_patch,
+					const struct patch **start_patch,
 					u_int start_instr, u_int *skip_addr);
 static void		ahc_download_instr(struct ahc_softc *ahc,
 					   u_int instrptr, uint8_t *dconsts);
@@ -562,6 +562,22 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			hscb->datacnt = sg->len;
 			hscb->sgptr = scb->sg_list_phys | SG_FULL_RESID;
 			hscb->sgptr = ahc_htole32(hscb->sgptr);
+#ifdef __OpenBSD__
+			bus_dmamap_sync(ahc->scb_data->sense_dmat,
+			    ahc->scb_data->sense_dmamap,
+			    (scb - ahc->scb_data->scbarray) *
+			    sizeof(struct scsi_sense_data),
+			    sizeof(struct scsi_sense_data),
+			    BUS_DMASYNC_PREREAD);
+			bus_dmamap_sync(ahc->scb_data->sg_dmat,
+			    scb->sg_map->sg_dmamap,
+			    0, scb->sg_map->sg_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREWRITE);
+			bus_dmamap_sync(ahc->scb_data->hscb_dmat,
+			    ahc->scb_data->hscb_dmamap,
+			    0, ahc->scb_data->hscb_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+#endif
 			scb->sg_count = 1;
 			scb->flags |= SCB_SENSE;
 			ahc_qinfifo_requeue_tail(ahc, scb);
@@ -4577,6 +4593,8 @@ ahc_init(struct ahc_softc *ahc)
 	for (i = 0; i < 256; i++)
 		ahc->qinfifo[i] = SCB_LIST_NULL;
 
+	ahc_sync_qinfifo(ahc, BUS_DMASYNC_PREWRITE);
+
 	if ((ahc->features & AHC_MULTI_TID) != 0) {
 		ahc_outb(ahc, TARGID, 0);
 		ahc_outb(ahc, TARGID + 1, 0);
@@ -5044,7 +5062,11 @@ ahc_qinfifo_requeue(struct ahc_softc *ahc, struct scb *prev_scb,
 		ahc_sync_scb(ahc, prev_scb, 
 			     BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
-	ahc->qinfifo[ahc->qinfifonext++] = scb->hscb->tag;
+	ahc->qinfifo[ahc->qinfifonext] = scb->hscb->tag;
+	ahc_dmamap_sync(ahc, ahc->shared_data_dmat, ahc->shared_data_dmamap,
+			/*offset*/ahc->qinfifonext+256, /*len*/1,
+			BUS_DMASYNC_PREWRITE);
+	ahc->qinfifonext++;
 	scb->hscb->next = ahc->next_queued_scb->hscb->tag;
 	ahc_sync_scb(ahc, scb, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 }
@@ -5080,6 +5102,8 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 	int	maxtarget;
 	int	i;
 	int	have_qregs;
+
+	ahc_sync_qinfifo(ahc, BUS_DMASYNC_POSTWRITE);
 
 	qintail = ahc->qinfifonext;
 	have_qregs = (ahc->features & AHC_QUEUE_REGS) != 0;
@@ -6015,7 +6039,7 @@ ahc_loadseq(struct ahc_softc *ahc)
 	struct	cs cs_table[num_critical_sections];
 	u_int	begin_set[num_critical_sections];
 	u_int	end_set[num_critical_sections];
-	struct	patch *cur_patch;
+	const struct	patch *cur_patch;
 	u_int	cs_count;
 	u_int	cur_cs;
 	u_int	i;
@@ -6104,11 +6128,11 @@ ahc_loadseq(struct ahc_softc *ahc)
 }
 
 static int
-ahc_check_patch(struct ahc_softc *ahc, struct patch **start_patch,
+ahc_check_patch(struct ahc_softc *ahc, const struct patch **start_patch,
 		u_int start_instr, u_int *skip_addr)
 {
-	struct	patch *cur_patch;
-	struct	patch *last_patch;
+	const struct	patch *cur_patch;
+	const struct	patch *last_patch;
 	u_int	num_patches;
 
 	num_patches = sizeof(patches)/sizeof(struct patch);
@@ -6167,7 +6191,7 @@ ahc_download_instr(struct ahc_softc *ahc, u_int instrptr, uint8_t *dconsts)
 	case AIC_OP_JE:
 	case AIC_OP_JZ:
 	{
-		struct patch *cur_patch;
+		const struct patch *cur_patch;
 		int address_offset;
 		u_int address;
 		u_int skip_addr;
