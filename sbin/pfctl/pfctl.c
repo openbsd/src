@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.225 2004/12/27 13:35:57 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.226 2004/12/27 15:47:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1676,8 +1676,6 @@ main(int argc, char *argv[])
 				pfctl_clear_src_nodes(dev, opts);
 				pfctl_clear_stats(dev, opts);
 				pfctl_clear_fingerprints(dev, opts);
-				pfctl_set_interface_flags(pf, "",
-				    PFI_IFLAG_SKIP, 0);
 			}
 			break;
 		case 'o':
@@ -1696,10 +1694,6 @@ main(int argc, char *argv[])
 		    tblcmdopt, rulesopt, anchorname, opts);
 		rulesopt = NULL;
 	}
-
-	if ((rulesopt != NULL) && !*anchorname)
-		if (pfctl_set_interface_flags(pf, "", PFI_IFLAG_SKIP, 0))
-			error = 1;
 
 	if (rulesopt != NULL)
 		if (pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
