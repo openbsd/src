@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.38 1999/02/26 01:38:23 art Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.39 1999/09/10 23:31:54 art Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -990,8 +990,8 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 			    cbp->cb_sgcnt, addr, bcount, old_bcount);
 #endif
 		pagemove(addr, nbp->b_data + old_bcount,
-		    roundup(bcount, CLBYTES));
-		nbp->b_bufsize += roundup(bcount, CLBYTES);
+		    clrnd(round_page(bcount)));
+		nbp->b_bufsize += clrnd(round_page(bcount));
 		cbp->cb_sg[cbp->cb_sgcnt].cs_sgaddr = addr;
 		cbp->cb_sg[cbp->cb_sgcnt].cs_sglen = bcount;
 		cbp->cb_sgcnt++;
@@ -1087,7 +1087,7 @@ ccdiodone(vbp)
 				    cbp->cb_sg[i].cs_sglen, off);
 #endif
 			pagemove(vbp->b_data + off, cbp->cb_sg[i].cs_sgaddr,
-			    roundup(cbp->cb_sg[i].cs_sglen, CLBYTES));
+			    clrnd(round_page(cbp->cb_sg[i].cs_sglen)));
 			off += cbp->cb_sg[i].cs_sglen;
 		}
 
