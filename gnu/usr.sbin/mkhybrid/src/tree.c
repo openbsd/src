@@ -20,7 +20,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: tree.c,v 1.1 2000/10/10 20:40:21 beck Exp $";
+static char rcsid[] ="$Id: tree.c,v 1.2 2003/05/08 21:04:17 vincent Exp $";
 
 /* ADD_FILES changes made by Ross Biro biro@yggdrasil.com 2/23/95 */
 
@@ -1572,7 +1572,7 @@ FDECL3(insert_file_entry,struct directory *, this_dir,
 	case S_IFLNK:
 	  nchar = readlink(whole_path, 
 			   (char *)symlink_buff, 
-			   sizeof(symlink_buff));
+			   sizeof(symlink_buff)-1);
 	  symlink_buff[nchar < 0 ? 0 : nchar] = 0;
 	  sprintf(buffer,"L\t%s\t%s\n",
 		  s_entry->name, symlink_buff);

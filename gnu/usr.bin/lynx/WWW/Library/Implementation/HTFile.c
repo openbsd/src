@@ -274,7 +274,7 @@ PRIVATE void LYListFmtParse ARGS5(
 			*buf = '\0';
 #ifdef S_IFLNK
 			if (c != 'A' && S_ISLNK(st.st_mode) &&
-			    (len = readlink(file, tmp, sizeof(tmp))) >= 0) {
+			    (len = readlink(file, tmp, sizeof(tmp) - 1)) >= 0) {
 				PUTS(" -> ");
 				tmp[len] = '\0';
 				PUTS(tmp);
