@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.30 2002/07/16 10:24:04 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.31 2002/07/16 10:36:10 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -53,8 +53,6 @@ int     fport;
 const  char *opsys_name = "UNIX";
 const  char *charset_sep = "";
 char   *charset_name = "";
-char   *indirect_host = NULL;
-char   *indirect_password = NULL;
 
 static pid_t child_pid;
 
@@ -216,9 +214,6 @@ main(int argc, char *argv[])
 		case 'c':
 			charset_name = optarg;
 			charset_sep = " , ";
-			break;
-		case 'r':
-			indirect_host = optarg;
 			break;
 		case 'l':	/* Use the Syslog daemon for logging */
 			syslog_flag++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.h,v 1.12 2002/07/16 10:21:20 deraadt Exp $*/
+/*	$OpenBSD: identd.h,v 1.13 2002/07/16 10:36:10 deraadt Exp $*/
 
 /*
 **
@@ -28,8 +28,6 @@ extern int userident_flag;
 extern const char *opsys_name;
 extern const char *charset_sep;
 extern char *charset_name;
-extern char *indirect_host;
-extern char *indirect_password;
 
 extern int lport;
 extern int fport;
