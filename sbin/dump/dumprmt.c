@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.2 1996/03/21 00:15:35 niklas Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.3 1996/08/06 17:02:06 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $	*/
 
 /*-
@@ -197,7 +197,7 @@ rmtopen(tape, mode)
 {
 	char buf[256];
 
-	(void)sprintf(buf, "O%s\n%d\n", tape, mode);
+	(void)snprintf(buf, sizeof buf, "O%s\n%d\n", tape, mode);
 	rmtstate = TS_OPEN;
 	return (rmtcall(tape, buf));
 }
