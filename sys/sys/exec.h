@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.9 2001/02/22 16:08:01 art Exp $	*/
+/*	$OpenBSD: exec.h,v 1.10 2001/04/01 21:30:32 art Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -209,7 +209,14 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
         vcp->ev_offset = (offset); \
         vcp->ev_prot = (prot); \
 }
-#endif /* EXEC_DEBUG */
+#endif /* DEBUG */
+
+/* Initialize an empty vmcmd set */
+#define VMCMDSET_INIT(vmc) do { \
+	(vmc)->evs_cnt = EXEC_DEFAULT_VMCMD_SETSIZE; \
+	(vmc)->evs_cmds = (vmc)->evs_start; \
+	(vmc)->evs_used = 0; \
+} while (0)	
 
 /*
  * Exec function switch:

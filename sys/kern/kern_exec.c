@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.47 2001/02/22 16:08:01 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.48 2001/04/01 21:30:33 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -269,9 +269,7 @@ sys_execve(p, v, retval)
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
 	pack.ep_emul_arg = NULL;
-	pack.ep_vmcmds.evs_cnt = EXEC_DEFAULT_VMCMD_SETSIZE;
-	pack.ep_vmcmds.evs_cmds = pack.ep_vmcmds.evs_start;
-	pack.ep_vmcmds.evs_used = 0;
+	VMCMDSET_INIT(&pack.ep_vmcmds);
 	pack.ep_vap = &attr;
 	pack.ep_emul = &emul_native;
 	pack.ep_flags = 0;

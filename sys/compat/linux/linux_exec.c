@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.14 2000/11/10 15:33:09 provos Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.15 2001/04/01 21:30:33 art Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -478,8 +478,7 @@ linux_sys_uselib(p, v, retval)
         }
 	vp->v_flag |= VTEXT;
 
-	vcset.evs_cnt = 0;
-	vcset.evs_used = 0;
+	VMCMDSET_INIT(&vcset);
 
 	NEW_VMCMD(
 	    &vcset, magic == ZMAGIC ? vmcmd_map_readvn : vmcmd_map_pagedvn,
