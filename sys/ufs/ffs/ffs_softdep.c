@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.38 2002/06/08 04:44:01 art Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.39 2002/06/08 04:51:05 art Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -39,13 +39,6 @@
  *	from: @(#)ffs_softdep.c	9.59 (McKusick) 6/21/00
  * $FreeBSD: src/sys/ufs/ffs/ffs_softdep.c,v 1.86 2001/02/04 16:08:18 phk Exp $
  */
-
-/*
- * For now we want the safety net that the DIAGNOSTIC flag provide.
- */
-#ifndef DIAGNOSTIC
-#define DIAGNOSTIC
-#endif
 
 #include <sys/param.h>
 #include <sys/buf.h>
