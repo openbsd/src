@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 2003/05/12 20:54:49 jsyn Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 2003/05/12 21:42:01 jsyn Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -312,6 +312,8 @@ void	showall(Char **, struct command *);
  * str.c:
  */
 #ifdef SHORT_STRINGS
+size_t	  s_strlcpy(Char *, const Char *, size_t);
+size_t	  s_strlcat(Char *, const Char *, size_t);
 Char	 *s_strchr(Char *, int);
 Char	 *s_strrchr(Char *, int);
 Char	 *s_strspl(Char *, Char *);
