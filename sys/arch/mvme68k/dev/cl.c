@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.39 2004/07/31 22:28:58 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.40 2004/08/09 06:04:18 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1604,7 +1604,9 @@ cl_rxintr(arg)
 	int i;
 	u_char reoir;
 	u_char buffer[CL_FIFO_MAX +1];
+#ifdef DDB
 	int wantddb = 0;
+#endif
 	
 	rir = sc->cl_reg->cl_rir;
 	if((rir & 0x40) == 0x0) {
