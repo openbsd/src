@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.10 1999/12/10 20:47:54 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.11 2000/01/09 01:16:25 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.8 1999/12/10 20:47:26 jason Exp 
+ *	OpenBSD: miidevs,v 1.9 2000/01/09 01:15:16 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -82,6 +82,9 @@
 /* Don't know what's going on here. */
 #define	MII_OUI_xxDAVICOM	0x006040	/* Davicom Semiconductor */
 
+/* Contrived vendor for dcphy */
+#define	MII_OUI_xxDEC	0x040440	/* Digital Clone */
+
 /*
  * List of known models.  Grouped by oui.
  */
@@ -95,6 +98,10 @@
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 10/100 media interface"
+
+/* Contrived vendor/model for dcphy */
+#define	MII_MODEL_xxDEC_xxDC	0x0001
+#define	MII_STR_xxDEC_xxDC	"DC"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_xxICS_1890	0x0002
