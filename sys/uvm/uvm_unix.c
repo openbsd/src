@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.16 2001/11/07 01:18:01 art Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.17 2001/11/07 02:55:51 art Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ sys_obreak(p, v, retval)
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
 	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
-		return(ENOMEM);
+		return (ENOMEM);
 
 	old = round_page(old + ptoa(vm->vm_dsize));
 	diff = new - old;
@@ -112,9 +112,9 @@ sys_obreak(p, v, retval)
 	}
 
 	uprintf("sbrk: %s %ld failed, return = %d\n",
-		diff > 0 ? "grow" : "shrink",
-		(long)(diff > 0 ? diff : -diff), rv);
-	return(ENOMEM);
+	    diff > 0 ? "grow" : "shrink",
+	    (long)(diff > 0 ? diff : -diff), rv);
+	return (ENOMEM);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.h,v 1.8 2001/07/26 19:37:13 art Exp $	*/
+/*	$OpenBSD: uvm_swap.h,v 1.9 2001/11/07 02:55:51 art Exp $	*/
 /*	$NetBSD: uvm_swap.h,v 1.5 2000/01/11 06:57:51 chs Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #ifndef _UVM_UVM_SWAP_H_
 #define _UVM_UVM_SWAP_H_
 
-#define SWSLOT_BAD	(-1)
+#define	SWSLOT_BAD	(-1)
 
 #ifdef _KERNEL
 

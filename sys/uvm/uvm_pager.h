@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.h,v 1.12 2001/11/06 00:20:22 art Exp $	*/
-/*	$NetBSD: uvm_pager.h,v 1.16 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.13 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.18 2000/11/24 22:41:39 chs Exp $	*/
 
 /*
  *
@@ -116,8 +116,6 @@ struct uvm_pagerops {
 	int			(*pgo_get)	/* get/read page */
 			 __P((struct uvm_object *, voff_t,
 				 vm_page_t *, int *, int, vm_prot_t, int, int));
-	int			(*pgo_asyncget)	/* start async get */
-			 __P((struct uvm_object *, voff_t, int));
 	int			(*pgo_put)	/* put/write page */
 			 __P((struct uvm_object *, vm_page_t *, 
 				 int, boolean_t));
@@ -128,8 +126,6 @@ struct uvm_pagerops {
 			 __P((struct uvm_object *, struct vm_page **,
 				 int *, struct vm_page *, int, voff_t,
 				 voff_t));
-	void			(*pgo_aiodone)		/* async iodone */
-			 __P((struct uvm_aiodesc *));
 	boolean_t		(*pgo_releasepg)	/* release page */
 			 __P((struct vm_page *, struct vm_page **));
 };
@@ -212,6 +208,14 @@ struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 #define VM_PAGER_AGAIN		5
 #define VM_PAGER_UNLOCK		6
 #define VM_PAGER_REFAULT	7
+
+/*
+ * XXX
+ * this is needed until the device strategy interface
+ * is changed to do physically-addressed i/o.
+ */
+
+#define PAGER_MAP_SIZE       (16 * 1024 * 1024)
 
 #endif /* _KERNEL */
 

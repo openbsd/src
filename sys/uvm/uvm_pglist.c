@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.8 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_pglist.c,v 1.11 2000/06/27 17:29:34 mrg Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.9 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.12 2000/11/25 06:28:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -128,18 +128,19 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
-	s = uvm_lock_fpageq();		/* lock free page queue */
+	s = uvm_lock_fpageq();
 
 	/* Are there even any free pages? */
-	if (uvmexp.free <= (uvmexp.reserve_pagedaemon +
-	    uvmexp.reserve_kernel))
+	if (uvmexp.free <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
 		goto out;
 
 	for (;; try += alignment) {
 		if (try + size > high) {
+
 			/*
 			 * We've run past the allowable range.
 			 */
+
 			goto out;
 		}
 
@@ -159,39 +160,34 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 		/*
 		 * Found a suitable starting page.  See of the range is free.
 		 */
+
 		for (; idx < end; idx++) {
 			if (VM_PAGE_IS_FREE(&pgs[idx]) == 0) {
-				/*
-				 * Page not available.
-				 */
 				break;
 			}
-
 			idxpa = VM_PAGE_TO_PHYS(&pgs[idx]);
-
 			if (idx > tryidx) {
 				lastidxpa = VM_PAGE_TO_PHYS(&pgs[idx - 1]);
-
 				if ((lastidxpa + PAGE_SIZE) != idxpa) {
+
 					/*
 					 * Region not contiguous.
 					 */
+
 					break;
 				}
 				if (boundary != 0 &&
 				    ((lastidxpa ^ idxpa) & pagemask) != 0) {
+
 					/*
 					 * Region crosses boundary.
 					 */
+
 					break;
 				}
 			}
 		}
-
 		if (idx == end) {
-			/*
-			 * Woo hoo!  Found one.
-			 */
 			break;
 		}
 	}
@@ -210,7 +206,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 		pgflidx = (m->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
 #ifdef DEBUG
 		for (tp = TAILQ_FIRST(&uvm.page_free[
-		  free_list].pgfl_queues[pgflidx]);
+			free_list].pgfl_queues[pgflidx]);
 		     tp != NULL;
 		     tp = TAILQ_NEXT(tp, pageq)) {
 			if (tp == m)
@@ -228,8 +224,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 		m->pqflags = 0;
 		m->uobject = NULL;
 		m->uanon = NULL;
-		m->wire_count = 0;
-		m->loan_count = 0;
+		m->version++;
 		TAILQ_INSERT_TAIL(rlist, m, pageq);
 		idx++;
 		STAT_INCR(uvm_pglistalloc_npages);
@@ -237,18 +232,18 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	error = 0;
 
 out:
-	uvm_unlock_fpageq(s);
-
 	/*
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
-	 * XXX: we read uvm.free without locking
 	 */
 	 
-	if (uvmexp.free < uvmexp.freemin ||
-	    (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.inactive < uvmexp.inactarg)) 
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
+	     uvmexp.inactive < uvmexp.inactarg)) {
 		wakeup(&uvm.pagedaemon);
+	}
+
+	uvm_unlock_fpageq(s);
 
 	return (error);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_meter.c,v 1.13 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_meter.c,v 1.13 2000/06/27 17:29:27 mrg Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.14 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.14 2000/11/24 18:54:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -59,7 +59,7 @@
  */
 
 int maxslp = MAXSLP;	/* patchable ... */
-struct loadavg averunnable; /* decl. */
+struct loadavg averunnable;
 
 /*
  * constants for averages over 1, 5, and 15 minutes when sampling at 
@@ -87,7 +87,7 @@ uvm_meter()
 	if ((time.tv_sec % 5) == 0)
 		uvm_loadav(&averunnable);
 	if (proc0.p_slptime > (maxslp / 2))
-		wakeup((caddr_t)&proc0);
+		wakeup(&proc0);
 }
 
 /*
@@ -101,7 +101,8 @@ uvm_loadav(avg)
 	int i, nrun;
 	struct proc *p;
 
-	for (nrun = 0, p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	nrun = 0;
+	LIST_FOREACH(p, &allproc, p_list) {
 		switch (p->p_stat) {
 		case SSLEEP:
 			if (p->p_priority > PZERO || p->p_slptime > 1)
@@ -194,7 +195,7 @@ uvm_total(totalp)
 	 * calculate process statistics
 	 */
 
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		if (p->p_flag & P_SYSTEM)
 			continue;
 		switch (p->p_stat) {

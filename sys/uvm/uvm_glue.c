@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.24 2001/11/06 18:41:10 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.40 2000/08/21 02:29:32 thorpej Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.25 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.43 2000/11/25 06:27:59 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -119,7 +119,7 @@ uvm_kernacc(addr, len, rw)
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
 	saddr = trunc_page((vaddr_t)addr);
-	eaddr = round_page((vaddr_t)addr+len);
+	eaddr = round_page((vaddr_t)addr + len);
 	vm_map_lock_read(kernel_map);
 	rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
 	vm_map_unlock_read(kernel_map);
@@ -160,7 +160,7 @@ uvm_useracc(addr, len, rw)
 
 	vm_map_lock_read(map);
 	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
-	    round_page((vaddr_t)addr+len), prot);
+	    round_page((vaddr_t)addr + len), prot);
 	vm_map_unlock_read(map);
 
 	return(rv);
@@ -246,7 +246,7 @@ uvm_vsunlock(p, addr, len)
 	size_t	len;
 {
 	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr),
-		round_page((vaddr_t)addr+len));
+		round_page((vaddr_t)addr + len));
 }
 
 /*
@@ -276,9 +276,10 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	struct user *up = p2->p_addr;
 	int rv;
 
-	if (shared == TRUE)
+	if (shared == TRUE) {
+		p2->p_vmspace = NULL;
 		uvmspace_share(p1, p2);			/* share vmspace */
-	else
+	} else
 		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
 
 	/*
@@ -301,11 +302,11 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	 */
 	p2->p_stats = &up->u_stats;
 	memset(&up->u_stats.pstat_startzero, 0,
-	(unsigned) ((caddr_t)&up->u_stats.pstat_endzero -
-		    (caddr_t)&up->u_stats.pstat_startzero));
+	       ((caddr_t)&up->u_stats.pstat_endzero -
+		(caddr_t)&up->u_stats.pstat_startzero));
 	memcpy(&up->u_stats.pstat_startcopy, &p1->p_stats->pstat_startcopy,
-	((caddr_t)&up->u_stats.pstat_endcopy -
-	 (caddr_t)&up->u_stats.pstat_startcopy));
+	       ((caddr_t)&up->u_stats.pstat_endcopy -
+		(caddr_t)&up->u_stats.pstat_startcopy));
 	
 	/*
 	 * cpu_fork() copy and update the pcb, and make the child ready
@@ -329,9 +330,12 @@ void
 uvm_exit(p)
 	struct proc *p;
 {
+	vaddr_t va = (vaddr_t)p->p_addr;
 
 	uvmspace_free(p->p_vmspace);
-	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
+	p->p_flag &= ~P_INMEM;
+	uvm_fault_unwire(kernel_map, va, va + USPACE);
+	uvm_km_free(kernel_map, va, USPACE);
 	p->p_addr = NULL;
 }
 
@@ -412,16 +416,15 @@ uvm_scheduler()
 	int pri;
 	struct proc *pp;
 	int ppri;
-	UVMHIST_FUNC("uvm_scheduler"); UVMHIST_CALLED(maphist);
 
 loop:
 #ifdef DEBUG
 	while (!enableswap)
-		tsleep((caddr_t)&proc0, PVM, "noswap", 0);
+		tsleep(&proc0, PVM, "noswap", 0);
 #endif
 	pp = NULL;		/* process to choose */
 	ppri = INT_MIN;	/* its priority */
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 
 		/* is it a runnable swapped out process? */
 		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
@@ -442,7 +445,7 @@ loop:
 	 * Nothing to do, back to sleep
 	 */
 	if ((p = pp) == NULL) {
-		tsleep((caddr_t)&proc0, PVM, "scheduler", 0);
+		tsleep(&proc0, PVM, "scheduler", 0);
 		goto loop;
 	}
 
@@ -518,7 +521,7 @@ uvm_swapout_threads()
 	 */
 	outp = outp2 = NULL;
 	outpri = outpri2 = 0;
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		if (!swappable(p))
 			continue;
 		switch (p->p_stat) {
@@ -532,7 +535,7 @@ uvm_swapout_threads()
 		case SSLEEP:
 		case SSTOP:
 			if (p->p_slptime >= maxslp) {
-				uvm_swapout(p);			/* zap! */
+				uvm_swapout(p);
 				didswap++;
 			} else if (p->p_slptime > outpri) {
 				outp = p;
@@ -558,6 +561,7 @@ uvm_swapout_threads()
 		if (p)
 			uvm_swapout(p);
 	}
+	pmap_update();
 }
 
 /*
@@ -589,13 +593,6 @@ uvm_swapout(p)
 	cpu_swapout(p);
 
 	/*
-	 * Unwire the to-be-swapped process's user struct and kernel stack.
-	 */
-	addr = (vaddr_t)p->p_addr;
-	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
-	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
-
-	/*
 	 * Mark it as (potentially) swapped out.
 	 */
 	s = splstatclock();
@@ -605,5 +602,12 @@ uvm_swapout(p)
 	splx(s);
 	p->p_swtime = 0;
 	++uvmexp.swapouts;
+
+	/*
+	 * Unwire the to-be-swapped process's user struct and kernel stack.
+	 */
+	addr = (vaddr_t)p->p_addr;
+	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
+	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }
 

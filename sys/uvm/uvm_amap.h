@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.h,v 1.6 2001/05/10 14:51:21 art Exp $	*/
-/*	$NetBSD: uvm_amap.h,v 1.12 1999/07/07 05:31:40 thorpej Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.7 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.13 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
  *
@@ -84,7 +84,7 @@ struct vm_amap;
 AMAP_INLINE
 void		amap_add 	/* add an anon to an amap */
 			__P((struct vm_aref *, vaddr_t,
-			     struct vm_anon *, int));
+			     struct vm_anon *, boolean_t));
 struct vm_amap	*amap_alloc	/* allocate a new amap */
 			__P((vaddr_t, vaddr_t, int));
 void		amap_copy	/* clear amap needs-copy flag */
@@ -111,7 +111,7 @@ void		amap_lookups	/* lookup multiple anons */
 			     struct vm_anon **, int));
 AMAP_INLINE
 void		amap_ref	/* add a reference to an amap */
-			__P((vm_map_entry_t, int));
+			__P((struct vm_amap *, vaddr_t, vsize_t, int));
 int		amap_refs	/* get number of references of amap */
 			__P((struct vm_amap *));
 void		amap_share_protect /* protect pages in a shared amap */
@@ -126,7 +126,7 @@ void		amap_unlock	/* unlock amap */
 			__P((struct vm_amap *));
 AMAP_INLINE
 void		amap_unref	/* drop reference to an amap */
-			 __P((vm_map_entry_t, int));
+			 __P((struct vm_amap *, vaddr_t, vsize_t, int));
 void		amap_wipeout	/* remove all anons from amap */
 			__P((struct vm_amap *));
 

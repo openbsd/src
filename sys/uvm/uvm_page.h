@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.h,v 1.10 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_page.h,v 1.16 2000/06/27 09:00:14 mrg Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.11 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.17 2000/10/03 20:50:49 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -195,8 +195,7 @@ struct vm_page {
  *	- VM_PSTRAT_BSEARCH:  binary search (sorted by address)
  *	- VM_PSTRAT_BIGFIRST: linear search (sorted by largest segment first)
  *      - others?
- *   XXXCDC: eventually we should remove contig and old non-contig cases
- *   and purge all left-over global variables...
+ *   XXXCDC: eventually we should purge all left-over global variables...
  */
 #define VM_PSTRAT_RANDOM	1
 #define VM_PSTRAT_BSEARCH	2

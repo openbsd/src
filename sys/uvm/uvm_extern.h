@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.29 2001/11/07 01:18:01 art Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.49 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.30 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.51 2000/09/28 19:05:06 eeh Exp $	*/
 
 /*
  *
@@ -307,6 +307,8 @@ struct uvmexp {
 				   was available */
 	int pga_zeromiss;	/* pagealloc where zero wanted and zero
 				   not available */
+	int zeroaborts;		/* number of times page zeroing was
+				   aborted */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -383,6 +385,7 @@ struct vmspace {
 	caddr_t	vm_taddr;	/* user virtual address of text XXX */
 	caddr_t	vm_daddr;	/* user virtual address of data XXX */
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
+	caddr_t vm_minsaddr;	/* user VA at top of stack */
 };
 
 #ifdef _KERNEL
@@ -425,6 +428,19 @@ struct vnode;
 struct core;
 
 #ifdef _KERNEL
+
+/* vm_machdep.c */
+void		vmapbuf __P((struct buf *, vsize_t));
+void		vunmapbuf __P((struct buf *, vsize_t));
+void		pagemove __P((caddr_t, caddr_t, size_t));
+#ifndef	cpu_swapin
+void		cpu_swapin __P((struct proc *));
+#endif
+#ifndef	cpu_swapout
+void		cpu_swapout __P((struct proc *));
+#endif
+void		cpu_fork __P((struct proc *, struct proc *, void *, size_t,
+			void (*)(void *), void *));
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create __P((vsize_t, int));
@@ -565,20 +581,6 @@ void			kmeminit_nkmempages __P((void));
 void			kmeminit __P((void));
 extern int		nkmempages;
 
-void		swstrategy __P((struct buf *));
-
-/* Machine dependent portion */
-void		vmapbuf __P((struct buf *, vsize_t));
-void		vunmapbuf __P((struct buf *, vsize_t));
-void		pagemove __P((caddr_t, caddr_t, size_t));
-void		cpu_fork __P((struct proc *, struct proc *, void *, size_t,
-			void (*)(void *), void *));
-#ifndef	cpu_swapin
-void		cpu_swapin __P((struct proc *));
-#endif
-#ifndef	cpu_swapout
-void		cpu_swapout __P((struct proc *));
-#endif
-
 #endif /* _KERNEL */
+
 #endif /* _UVM_UVM_EXTERN_H_ */

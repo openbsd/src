@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.13 2001/11/07 01:18:01 art Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.14 2001/11/07 02:55:50 art Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.22 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /* 
@@ -113,7 +113,7 @@
 #include <uvm/uvm_anon.h>
 
 /*
- *	Types defined:
+ * types defined:
  *
  *	vm_map_t		the high-level address map data structure.
  *	vm_map_entry_t		an entry in an address map.
@@ -121,9 +121,8 @@
  */
 
 /*
- *	Objects which live in maps may be either VM objects, or
- *	another map (called a "sharing map") which denotes read-write
- *	sharing with other maps.
+ * Objects which live in maps may be either VM objects, or another map
+ * (called a "sharing map") which denotes read-write sharing with other maps.
  *
  * XXXCDC: private pager data goes here now
  */
@@ -134,10 +133,10 @@ union vm_map_object {
 };
 
 /*
- *	Address map entries consist of start and end addresses,
- *	a VM object (or sharing map) and offset into that object,
- *	and user-exported inheritance and protection information.
- *	Also included is control information for virtual copy operations.
+ * Address map entries consist of start and end addresses,
+ * a VM object (or sharing map) and offset into that object,
+ * and user-exported inheritance and protection information.
+ * Also included is control information for virtual copy operations.
  */
 struct vm_map_entry {
 	struct vm_map_entry	*prev;		/* previous entry */

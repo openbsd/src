@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.h,v 1.1 2001/08/12 17:55:56 mickey Exp $	*/
+/*	$OpenBSD: uvm_pglist.h,v 1.2 2001/11/07 02:55:50 art Exp $	*/
 /*	$NetBSD: uvm_pglist.h,v 1.3 2001/05/02 01:22:20 thorpej Exp $	*/
 
 /*-
@@ -58,4 +58,4 @@ struct pgfreelist {
 	struct pglist pgfl_queues[PGFL_NQUEUES];
 };
 
-#endif /* _PGLIST_H_ */
+#endif

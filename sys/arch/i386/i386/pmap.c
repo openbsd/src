@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.46 2001/11/06 01:43:48 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.47 2001/11/07 02:55:50 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2113,7 +2113,7 @@ pmap_zero_page(pa)
  * pmap_zero_page_uncached: the same, except uncached.
  */
 
-void
+boolean_t
 pmap_zero_page_uncached(pa)
 	paddr_t pa;
 {
@@ -2129,6 +2129,8 @@ pmap_zero_page_uncached(pa)
 	*zero_pte = 0;					/* zap! */
 	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
 	simple_unlock(&pmap_zero_page_lock);
+
+	return (TRUE);
 }
 
 /*

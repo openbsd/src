@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.c,v 1.19 2001/11/07 01:18:01 art Exp $	*/
-/*	$NetBSD: uvm_pager.c,v 1.33 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.20 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.34 2000/11/24 22:41:39 chs Exp $	*/
 
 /*
  *
@@ -64,7 +64,6 @@ struct uvm_pagerops *uvmpagerops[] = {
  * the pager map: provides KVA for I/O
  */
 
-#define PAGER_MAP_SIZE       (4 * 1024 * 1024)
 vm_map_t pager_map;		/* XXX */
 simple_lock_data_t pager_map_wanted_lock;
 boolean_t pager_map_wanted;	/* locked by pager map */

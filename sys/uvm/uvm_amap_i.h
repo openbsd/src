@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap_i.h,v 1.9 2001/07/18 10:47:05 art Exp $	*/
-/*	$NetBSD: uvm_amap_i.h,v 1.14 1999/09/12 01:17:34 chs Exp $	*/
+/*	$OpenBSD: uvm_amap_i.h,v 1.10 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.15 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
  *
@@ -119,7 +119,7 @@ amap_add(aref, offset, anon, replace)
 	struct vm_aref *aref;
 	vaddr_t offset;
 	struct vm_anon *anon;
-	int replace;
+	boolean_t replace;
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
@@ -195,14 +195,16 @@ amap_unadd(aref, offset)
  * amap_ref: gain a reference to an amap
  *
  * => amap must not be locked (we will lock)
+ * => "offset" and "len" are in units of pages
  * => called at fork time to gain the child's reference
  */
 AMAP_INLINE void
-amap_ref(entry, flags)
-	vm_map_entry_t entry;
+amap_ref(amap, offset, len, flags)
+	struct vm_amap *amap;
+	vaddr_t offset;
+	vsize_t len;
 	int flags;
 {
-	struct vm_amap *amap = entry->aref.ar_amap;
 	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
 
 	amap_lock(amap);
@@ -211,14 +213,13 @@ amap_ref(entry, flags)
 		amap->am_flags |= AMAP_SHARED;
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref == NULL && (flags & AMAP_REFALL) == 0 &&
-	    (entry->start - entry->end) >> PAGE_SHIFT != amap->am_nslot)
+	    len != amap->am_nslot)
 		amap_pp_establish(amap);
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 		if (flags & AMAP_REFALL)
-			amap_pp_adjref(amap, 0, amap->am_nslot << PAGE_SHIFT, 1);
+			amap_pp_adjref(amap, 0, amap->am_nslot, 1);
 		else
-			amap_pp_adjref(amap, entry->aref.ar_pageoff, 
-			 	entry->end - entry->start, 1);
+			amap_pp_adjref(amap, offset, len, 1);
 	}
 #endif
 	amap_unlock(amap);
@@ -235,20 +236,20 @@ amap_ref(entry, flags)
  * => amap must be unlocked (we will lock it).
  */
 AMAP_INLINE void
-amap_unref(entry, all)
-	vm_map_entry_t entry;
-	int all;
+amap_unref(amap, offset, len, all)
+	struct vm_amap *amap;
+	vaddr_t offset;
+	vsize_t len;
+	boolean_t all;
 {
-	struct vm_amap *amap = entry->aref.ar_amap;
 	UVMHIST_FUNC("amap_unref"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * lock it
 	 */
 	amap_lock(amap);
-
-	UVMHIST_LOG(maphist,"(entry=0x%x)  amap=0x%x  refs=%d, nused=%d",
-	    entry, amap, amap->am_ref, amap->am_nused);
+	UVMHIST_LOG(maphist,"  amap=0x%x  refs=%d, nused=%d",
+	    amap, amap->am_ref, amap->am_nused, 0);
 
 	/*
 	 * if we are the last reference, free the amap and return.
@@ -268,15 +269,13 @@ amap_unref(entry, all)
 	if (amap->am_ref == 1 && (amap->am_flags & AMAP_SHARED) != 0)
 		amap->am_flags &= ~AMAP_SHARED;	/* clear shared flag */
 #ifdef UVM_AMAP_PPREF
-	if (amap->am_ppref == NULL && all == 0 &&
-	    (entry->start - entry->end) >> PAGE_SHIFT != amap->am_nslot)
+	if (amap->am_ppref == NULL && all == 0 && len != amap->am_nslot)
 		amap_pp_establish(amap);
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 		if (all)
-			amap_pp_adjref(amap, 0, amap->am_nslot << PAGE_SHIFT, -1);
+			amap_pp_adjref(amap, 0, amap->am_nslot, -1);
 		else
-			amap_pp_adjref(amap, entry->aref.ar_pageoff, 
-			    entry->end - entry->start, -1);
+			amap_pp_adjref(amap, offset, len, -1);
 	}
 #endif
 	amap_unlock(amap);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager_i.h,v 1.7 2001/08/11 10:57:22 art Exp $	*/
-/*	$NetBSD: uvm_pager_i.h,v 1.9 2000/05/08 23:13:42 thorpej Exp $	*/
+/*	$OpenBSD: uvm_pager_i.h,v 1.8 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_pager_i.h,v 1.10 2000/11/25 06:28:00 chs Exp $	*/
 
 /*
  *
@@ -57,11 +57,15 @@ PAGER_INLINE struct vm_page *
 uvm_pageratop(kva)
 	vaddr_t kva;
 {
+	struct vm_page *pg;
 	paddr_t pa;
+	boolean_t rv;
  
-	if (__predict_false(pmap_extract(pmap_kernel(), kva, &pa) == FALSE))
-		panic("uvm_pageratop");
-	return (PHYS_TO_VM_PAGE(pa));
+	rv = pmap_extract(pmap_kernel(), kva, &pa);
+	KASSERT(rv);
+	pg = PHYS_TO_VM_PAGE(pa);
+	KASSERT(pg != NULL);
+	return (pg);
 } 
 
 #endif /* defined(UVM_PAGER_INLINE) || defined(UVM_PAGER) */

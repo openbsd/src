@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.28 2001/11/07 01:18:01 art Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.40 2000/08/02 20:25:11 thorpej Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.29 2001/11/07 02:55:50 art Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.43 2000/11/09 19:15:28 christos Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -256,7 +256,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 */
 
 	if (vm_nphysseg == 0)
-		panic("vm_page_bootstrap: no memory pre-allocated");
+		panic("uvm_page_bootstrap: no memory pre-allocated");
 	
 	/*
 	 * first calculate the number of free pages...  
@@ -495,7 +495,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 	{
 
 		if (uvm.page_init_done == TRUE)
-			panic("vm_page_physget: called _after_ bootstrap");
+			panic("uvm_page_physget: called _after_ bootstrap");
 
 		if (vm_physmem[lcv].free_list != freelist)
 			continue;
@@ -510,7 +510,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 			if (vm_physmem[lcv].avail_start ==
 			    vm_physmem[lcv].end) {
 				if (vm_nphysseg == 1)
-				    panic("vm_page_physget: out of memory!");
+				    panic("vum_page_physget: out of memory!");
 				vm_nphysseg--;
 				for (x = lcv ; x < vm_nphysseg ; x++)
 					/* structure copy */
@@ -529,7 +529,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 			if (vm_physmem[lcv].avail_end ==
 			    vm_physmem[lcv].start) {
 				if (vm_nphysseg == 1)
-				    panic("vm_page_physget: out of memory!");
+				    panic("uvm_page_physget: out of memory!");
 				vm_nphysseg--;
 				for (x = lcv ; x < vm_nphysseg ; x++)
 					/* structure copy */
@@ -560,7 +560,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 		/* nothing left?   nuke it */
 		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].end) {
 			if (vm_nphysseg == 1)
-				panic("vm_page_physget: out of memory!");
+				panic("uvm_page_physget: out of memory!");
 			vm_nphysseg--;
 			for (x = lcv ; x < vm_nphysseg ; x++)
 				/* structure copy */
@@ -622,6 +622,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 		    "segment\n");
 		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
+		printf("\tincrease VM_PHYSSEG_MAX\n");
 		return;
 	}
 
@@ -1330,7 +1331,21 @@ uvm_pageidlezero()
 		uvm_unlock_fpageq(s);
 
 #ifdef PMAP_PAGEIDLEZERO
-		PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg));
+		if (PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg)) == FALSE) {
+			/*
+			 * The machine-dependent code detected some
+			 * reason for us to abort zeroing pages,
+			 * probably because there is a process now
+			 * ready to run.
+			 */
+			s = uvm_lock_fpageq();
+			TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_UNKNOWN],
+			    pg, pageq);
+			uvmexp.free++;
+			uvmexp.zeroaborts++;
+			uvm_unlock_fpageq(s);
+			return;
+		}
 #else
 		/*
 		 * XXX This will toast the cache unless the pmap_zero_page()
