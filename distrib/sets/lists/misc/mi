@@ -4,6 +4,7 @@
 ./usr/share/dict/web2
 ./usr/share/dict/web2a
 ./usr/share/dict/words
+./usr/share/doc/html/bind
 ./usr/share/doc/html/bind/Bv9ARM.ch01.html
 ./usr/share/doc/html/bind/Bv9ARM.ch02.html
 ./usr/share/doc/html/bind/Bv9ARM.ch03.html
@@ -14,6 +15,7 @@
 ./usr/share/doc/html/bind/Bv9ARM.ch08.html
 ./usr/share/doc/html/bind/Bv9ARM.ch09.html
 ./usr/share/doc/html/bind/Bv9ARM.html
+./usr/share/doc/html/curses
 ./usr/share/doc/html/curses/hackguide.html
 ./usr/share/doc/html/curses/ncurses-intro.html
 ./usr/share/doc/html/lynx_help
