@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 1997/11/17 04:56:18 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.30 1998/03/08 01:52:13 millert Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -102,7 +102,7 @@ ed2	at	isa? port 0x300 iomem 0xcc000 irq 10
 ep*	at	isa? port ? irq ?		# 3C509 ethernet cards
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 wdc0	at	isa? port 0x1f0 irq 14		# ST506, ESDI, and IDE
-#wdc1	at	isa? port 0x170 irq 15		# controllers
+wdc1	at	isa? port 0x170 irq 15		# controllers
 cy0     at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
 #aic0	at	isa? port 0x340 irq 11		# Adaptec 152[02] SCSI
 # option for using CD1400 handshaking for incoming data
