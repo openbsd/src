@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.66 1999/07/14 23:16:26 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.67 2000/02/21 14:28:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.66 1999/07/14 23:16:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.67 2000/02/21 14:28:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2057,7 +2057,7 @@ get_offset(lp, partno)
 #ifdef AAT0
 		else if (partno == 0 && ui != 0)
 			fprintf(stderr, "This architecture requires that "
-			    "partition 'a' start at sector 0.");
+			    "partition 'a' start at sector 0.\n");
 #endif
 		else
 			break;
