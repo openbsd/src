@@ -1,7 +1,7 @@
-/*	$OpenBSD: rusers.c,v 1.20 2002/06/02 19:06:39 deraadt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.21 2003/01/11 18:26:08 millert Exp $	*/
 
 /*
- * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.20 2002/06/02 19:06:39 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.21 2003/01/11 18:26:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ struct host_info {
 	rusers_utmp *users;
 } *hostinfo;
 
-void print_entry(struct host_info *);
+void print_entry(struct host_info *, int);
 void fmt_idle(int, char *, size_t);
 void onehost(char *);
 void allhosts(void);
@@ -171,8 +171,11 @@ main(int argc, char **argv)
 		} else
 			allhosts();
 	} else {
+		aflag = 1;
 		for (; optind < argc; optind++)
 			(void) onehost(argv[optind]);
+		if (hflag || iflag || uflag)
+			sorthosts();
 	}
 
 	exit(0);
@@ -224,8 +227,8 @@ fmt_idle(int idle, char *idle_time, size_t idle_time_len)
 		seconds %= 60;
 		if (idle >= (24*60*60))
 			snprintf(idle_time, idle_time_len,
-			    "%d days, %d:%02d:%02d",
-			    days, hours, minutes, seconds);
+			    "%d day%s, %d:%02d:%02d", days,
+			    days > 1 ? "s" : "", hours, minutes, seconds);
 		else if (idle >= (60*60))
 			snprintf(idle_time, idle_time_len, "%2d:%02d:%02d",
 			    hours, minutes, seconds);
@@ -260,7 +263,9 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 	if ((entry = add_host(host)) == NULL)
 		return(0);
 
-	if ((ut = malloc(up->uia_cnt * sizeof(*ut))) == NULL)
+	if (up->uia_cnt == 0)
+		ut = NULL;
+	else if ((ut = malloc(up->uia_cnt * sizeof(*ut))) == NULL)
 		err(1, NULL);
 	entry->users = ut;
 	entry->count = up->uia_cnt;
@@ -279,7 +284,7 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 	}
 	
 	if (!hflag && !iflag && !uflag) {
-		print_entry(entry);
+		print_entry(entry, lflag && entry->count);
 		for (i = 0, ut = entry->users; i < entry->count; i++, ut++) {
 			free(ut->ut_user);
 			free(ut->ut_line);
@@ -301,7 +306,7 @@ rusers_reply_3(char *replyp, struct sockaddr_in *raddrp)
 	char *host;
 	int i;
 	
-	if (!aflag && !up3->utmp_array_len)
+	if (!aflag && up3->utmp_array_len == 0)
 		return(0);
 
 	hp = gethostbyaddr((char *)&raddrp->sin_addr,
@@ -313,7 +318,9 @@ rusers_reply_3(char *replyp, struct sockaddr_in *raddrp)
 	if ((entry = add_host(host)) == NULL)
 		return(0);
 
-	if ((ut = malloc(up3->utmp_array_len * sizeof(*ut))) == NULL)
+	if (up3->utmp_array_len == 0)
+		ut = NULL;
+	else if ((ut = malloc(up3->utmp_array_len * sizeof(*ut))) == NULL)
 		err(1, NULL);
 	entry->users = ut;
 	entry->count = up3->utmp_array_len;
@@ -332,7 +339,7 @@ rusers_reply_3(char *replyp, struct sockaddr_in *raddrp)
 	}
 	
 	if (!hflag && !iflag && !uflag) {
-		print_entry(entry);
+		print_entry(entry, lflag && entry->count);
 		for (i = 0, ut = entry->users; i < entry->count; i++, ut++) {
 			free(ut->ut_user);
 			free(ut->ut_line);
@@ -634,18 +641,18 @@ cleanup:
 }
 
 void
-print_entry(struct host_info *entry)
+print_entry(struct host_info *entry, int longfmt)
 {
 	char date[32], idle_time[64];
 	char remote[RUSERS_MAXHOSTLEN + 3];
 	struct rusers_utmp *ut;
 	int i, len;
 
-	if (!lflag)
+	if (!longfmt)
 		printf("%-*.*s ", HOST_WIDTH, HOST_WIDTH, entry->host);
 
 	for (i = 0, ut = entry->users; i < entry->count; i++, ut++) {
-		if (lflag) {
+		if (longfmt) {
 			strftime(date, sizeof(date), "%h %d %R",
 			    localtime((time_t *)&ut->ut_time));
 			date[sizeof(date) - 1] = '\0';
@@ -670,7 +677,7 @@ print_entry(struct host_info *entry)
 			putchar(' ');
 		}
 	}
-	if (!lflag)
+	if (!longfmt)
 		putchar('\n');
 }
 
@@ -719,7 +726,7 @@ sorthosts()
 	qsort(hostinfo, nentries, sizeof(*hostinfo), compar);
 
 	for (i = 0; i < nentries; i++)
-		print_entry(&hostinfo[i]);
+		print_entry(&hostinfo[i], lflag && hostinfo[i].count);
 }
 
 int
