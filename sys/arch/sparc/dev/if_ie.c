@@ -226,6 +226,7 @@ const char *ie_hardware_names[] = {
 struct ie_softc {
 	struct device sc_dev;   /* device structure */
 	struct intrhand sc_ih;  /* interrupt info */
+	struct evcnt sc_intrcnt; /* # of interrupts, per ie */
 
 	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
 	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
@@ -397,7 +398,6 @@ iematch(parent, cf, aux)
 		/*
 		 * XXX need better probe here so we can figure out what we've got
 		 */
-		ra->ra_len = NBPG;
 		if (ca->ca_bustype == BUS_OBIO) {
 			if (probeget(ra->ra_vaddr, 1) == -1)
 				return (0);
@@ -655,7 +655,6 @@ ieattach(parent, self, aux)
 		intr_establish(pri, &sc->sc_ih);
 		break;
 	case BUS_VME16:
-	case BUS_VME32:
 		sc->sc_ih.ih_fun = ieintr;
 		sc->sc_ih.ih_arg = sc;
 		vmeintr_establish(ca->ca_ra.ra_intr[0].int_vec, pri,
@@ -663,6 +662,8 @@ ieattach(parent, self, aux)
 		break;
 #endif /* SUN4 */
 	}
+
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	bp = ca->ca_ra.ra_bp;
 	if (bp != NULL && strcmp(bp->name, "ie") == 0 &&
@@ -704,8 +705,8 @@ void *v;
          * check for parity error
          */
         if (sc->hard_type == IE_VME) {
-                volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg
-;
+                volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
+
                 if (iev->status & IEVME_PERR) {
                         printf("%s: parity error (ctrl %x @ %02x%04x)\n",
                             iev->pectrl, iev->pectrl & IEVME_HADDR,
@@ -757,6 +758,7 @@ loop:
 	if ((status = sc->scb->ie_status) & IE_ST_WHENCE)
 		goto loop;
 
+	sc->sc_intrcnt.ev_count++;
 	return 1;
 }
 
