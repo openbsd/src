@@ -302,9 +302,31 @@ protect it and the "root" account with good passwords.
 Some of the files in the OpenBSD 2.1 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified.  If you are unfamiliar with UN*X-like
-system administration, it's recommended that you buy a book that
-discusses it.
+probably need to be modified.  If you will be running your OpenBSD 
+system from a serial console, you may need to edit /etc/ttys and
+change the terminal type, and getty method from "sun" and "suncons"
+to "vt100" and "std.9600" or something similar.  Also when running
+from a serial console, you may wish to adjust the eeprom settings
+for input-device, output-device, screen-#columns, and scree-#rows
+as appropriate.  
+
+If you plan on using the extra serial ports on 4/300 systems, 
+you'll need to make sure you have device nodes for them e.g.:
+  mknod /dev/ttyc c 12 4
+  mknod /dev/ttyc d 12 5
+To use these ports for terminals etc, you will want to add them to
+/etc/ttys.
+
+In order to use 'tip' on OpenBSD/sparc, you'll need to edit /etc/ttys
+and add "local" to the end of the tty configuration line, and run 
+'ttyflags -a' to put your changes into effect.
+
+On installing X11 for OpenBSD/sparc, you may wish to add a line similar to
+'ldconfig /usr/X11R6/lib' to the end of your /etc/rc.local file.  This will
+add the X libraries to your dynamic linking search path at boot time.
+
+If you are unfamiliar with UN*X-like system administration, 
+it's recommended that you buy a book that discusses it.
 
 
 
