@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.10 1996/11/12 08:42:09 niklas Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.11 1997/01/17 23:13:57 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -140,6 +140,8 @@ struct pms_softc {		/* driver status information */
 	u_char sc_state;	/* mouse driver state */
 #define	PMS_OPEN	0x01	/* device is open */
 #define	PMS_ASLP	0x02	/* waiting for mouse data */
+	u_char sc_flags;
+#define	PMS_RAW 	0x01
 	u_char sc_status;	/* mouse button status */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
@@ -170,7 +172,8 @@ struct cfdriver pms_cd = {
 	NULL, "pms", DV_TTY, NULL, 0
 };
 
-#define	PMSUNIT(dev)	(minor(dev))
+#define	PMSUNIT(dev)	(minor(dev) / 2)
+#define	PMSTYPE(dev)	(minor(dev) % 2)
 
 #define	CHR		2
 
@@ -1844,13 +1847,31 @@ pcmmap(dev, offset, nprot)
 	int nprot;
 {
 
-	if (offset >= 0xa0000 && offset < 0xc0000)
-		return mips_btop(PICA_P_LOCAL_VIDEO + offset);
-	if (offset >= 0x0000 && offset < 0x10000)
-		return mips_btop(PICA_P_LOCAL_VIDEO_CTRL + offset);
-	if (offset >= 0x40000000 && offset < 0x40800000)
-		return mips_btop(PICA_P_LOCAL_VIDEO + offset - 0x40000000);
-	return -1;
+	switch(cputype) {
+
+	case ACER_PICA_61:
+		if (offset >= 0xa0000 && offset < 0xc0000)
+			return mips_btop(PICA_P_LOCAL_VIDEO + offset);
+		if (offset >= 0x0000 && offset < 0x10000)
+			return mips_btop(PICA_P_LOCAL_VIDEO_CTRL + offset);
+		if (offset >= 0x40000000 && offset < 0x40800000)
+			return mips_btop(PICA_P_LOCAL_VIDEO + offset - 0x40000000);
+		return -1;
+
+	case DESKSTATION_TYNE:
+		/* Addresses returned are a fake to be able to handle >32 bit
+		 * physical addresses used by the tyne. The real physical adr
+		 * processing is done in pmap.c. Until we are a real 64 bit
+		 * port this is how it will be done.
+		 */
+		if (offset >= 0xa0000 && offset < 0xc0000)
+			return mips_btop(TYNE_V_ISA_MEM + offset);
+		if (offset >= 0x0000 && offset < 0x10000)
+			return mips_btop(TYNE_V_ISA_IO + offset);
+		if (offset >= 0x40000000 && offset < 0x40800000)
+			return mips_btop(TYNE_V_ISA_MEM + offset - 0x40000000);
+		return -1;
+	}
 }
 
 pc_xmode_on()
@@ -1908,6 +1929,7 @@ pc_xmode_off()
 #define	PMS_CHUNK	128	/* chunk size for read */
 #define	PMS_BSIZE	1020	/* buffer size */
 
+#define	FLUSHQ(q) { if((q)->c_cc) ndflush(q, (q)->c_cc); }
 
 static __inline void
 pms_dev_cmd(value)
@@ -1998,6 +2020,7 @@ pmsopen(dev, flag)
 
 	sc->sc_state |= PMS_OPEN;
 	sc->sc_status = 0;
+	sc->sc_flags = (PMSTYPE(dev) ? PMS_RAW : 0 );
 	sc->sc_x = sc->sc_y = 0;
 
 	/* Enable interrupts. */
@@ -2125,7 +2148,20 @@ pmsioctl(dev, cmd, addr, flag)
 		splx(s);
 		error = copyout(&info, addr, sizeof(struct mouseinfo));
 		break;
-
+	case MOUSEIOCSRAW:
+		if (!(sc->sc_flags & PMS_RAW)) {
+			FLUSHQ(&sc->sc_q);
+			sc->sc_flags |= PMS_RAW;
+		}
+		error = 0;
+		break;
+	case MOUSEIOCSCOOKED:
+		if (sc->sc_flags & PMS_RAW) {
+			FLUSHQ(&sc->sc_q);
+			sc->sc_flags &= ~PMS_RAW;
+		}
+		error = 0;
+		break;
 	default:
 		error = EINVAL;
 		break;
@@ -2147,7 +2183,6 @@ pmsintr(arg)
 	static int state = 0;
 	static u_char buttons;
 	u_char changed;
-	u_char mbutt;
 	static char dx, dy;
 	u_char buffer[5];
 
@@ -2157,58 +2192,105 @@ pmsintr(arg)
 		return 0;
 	}
 
-	switch (state) {
+	if(!(sc->sc_flags & PMS_RAW)) {
+		switch (state) {
 
-	case 0:
-		buttons = inb(kbd_datap);
-		if ((buttons & 0xc0) == 0)
+		case 0:
+			buttons = inb(kbd_datap);
+			if ((buttons & 0xc0) == 0)
+				++state;
+			break;
+
+		case 1:
+			dx = inb(kbd_datap);
+			/* Bounding at -127 avoids a bug in XFree86. */
+			dx = (dx == -128) ? -127 : dx;
 			++state;
-		break;
+			break;
 
-	case 1:
-		dx = inb(kbd_datap);
-		/* Bounding at -127 avoids a bug in XFree86. */
-		dx = (dx == -128) ? -127 : dx;
-		++state;
-		break;
+		case 2:
+			dy = inb(kbd_datap);
+			dy = (dy == -128) ? -127 : dy;
+			state = 0;
 
-	case 2:
-		dy = inb(kbd_datap);
-		dy = (dy == -128) ? -127 : dy;
-		state = 0;
+			buttons = ((buttons & PS2LBUTMASK) << 2) |
+				  ((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
+			changed = ((buttons ^ sc->sc_status) & BUTSTATMASK) << 3;
+			sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
 
-		mbutt = buttons;
-		buttons = ((buttons & PS2LBUTMASK) << 2) |
-			  ((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
-		changed = ((buttons ^ sc->sc_status) & BUTSTATMASK) << 3;
-		sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
+			if (dx || dy || changed) {
+				/* Update accumulated movements. */
+				sc->sc_x += dx;
+				sc->sc_y += dy;
 
-		if (dx || dy || changed) {
-			/* Update accumulated movements. */
-			sc->sc_x += dx;
-			sc->sc_y += dy;
+				/* Add this event to the queue. */
+				buffer[0] = 0x80 | (buttons & BUTSTATMASK);
+				if(dx < 0)
+					buffer[0] |= 0x10;
+				buffer[1] = dx & 0x7f;
+				if(dy < 0)
+					buffer[0] |= 0x20;
+				buffer[2] = dy & 0x7f;
+				buffer[3] = buffer[4] = 0;
+				(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
 
-			/* Add this event to the queue. */
-			buffer[0] = 0x80 | (mbutt & BUTSTATMASK);
-			if(dx < 0)
-				buffer[0] |= 0x10;
-			buffer[1] = dx & 0x7f;
-			if(dy < 0)
-				buffer[0] |= 0x20;
-			buffer[2] = dy & 0x7f;
-			buffer[3] = buffer[4] = 0;
-			(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
-
-			if (sc->sc_state & PMS_ASLP) {
-				sc->sc_state &= ~PMS_ASLP;
-				wakeup((caddr_t)sc);
+				if (sc->sc_state & PMS_ASLP) {
+					sc->sc_state &= ~PMS_ASLP;
+					wakeup((caddr_t)sc);
+				}
+				selwakeup(&sc->sc_rsel);
 			}
-			selwakeup(&sc->sc_rsel);
+
+			break;
+		}
+	}
+	else {
+		/* read data port */
+		buffer[0] = inb(kbd_datap);
+
+		/* emulate old state machine for the ioctl's sake. */
+		switch (state) {
+		case 0:
+			buttons = buffer[0];
+			if ((buttons & 0xc0) == 0) {
+				++state;
+			    buttons = ((buttons & PS2LBUTMASK) << 2) |
+			  	((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
+			    buffer[0] &= ~BUTSTATMASK;
+			    buffer[0] |= buttons ^ BUTSTATMASK;	/* XXX Why? */
+			}
+			break;
+		case 1:
+			dx = buffer[0];
+			/* Bounding at -127 avoids a bug in XFree86. */
+			dx = (dx == -128) ? -127 : dx;
+			++state;
+			break;
+		case 2:
+			dy = buffer[0];
+			dy = (dy == -128) ? -127 : dy;
+			state = 0;
+
+			changed = ((buttons ^ sc->sc_status) & BUTSTATMASK) << 3;
+			sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
+
+			if (dx || dy || changed) {
+				/* Update accumulated movements. */
+				sc->sc_x += dx;
+				sc->sc_y += dy;
+			}
+			break;
 		}
 
-		break;
-	}
+		/* add raw data to the queue. */
+		(void) b_to_q(buffer, 1, &sc->sc_q);
 
+		if (sc->sc_state & PMS_ASLP) {
+			sc->sc_state &= ~PMS_ASLP;
+			wakeup((caddr_t)sc);
+		}
+		selwakeup(&sc->sc_rsel);
+	}
 	return -1;
 }
 
