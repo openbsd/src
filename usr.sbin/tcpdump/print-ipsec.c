@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-ipsec.c,v 1.5 2000/10/03 14:21:56 ho Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
  *      The Regents of the University of California.  All rights reserved.
@@ -26,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.4 2000/04/26 21:35:41 jakob Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.5 2000/10/03 14:21:56 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -59,8 +61,9 @@ struct esp_hdr {
 	u_int esp_seq;
 };
 
-void esp_print(register const u_char *bp, register u_int len,
-	       register const u_char *bp2)
+void 
+esp_print (register const u_char *bp, register u_int len,
+	   register const u_char *bp2)
 {
 	const struct ip *ip;
 	const struct esp_hdr *esp;
@@ -86,8 +89,9 @@ struct ah_hdr {
 	u_int   ah_seq;
 };
 
-ah_print(register const u_char *bp, register u_int len,
-	 register const u_char *bp2)
+void
+ah_print (register const u_char *bp, register u_int len,
+	  register const u_char *bp2)
 {
 	const struct ip *ip;
 	const struct ah_hdr *ah;

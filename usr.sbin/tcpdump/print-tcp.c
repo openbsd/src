@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-tcp.c,v 1.12 2000/10/03 14:21:56 ho Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -21,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.11 2000/04/26 21:35:43 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.12 2000/10/03 14:21:56 ho Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -172,8 +174,8 @@ tcp_print(register const u_char *bp, register u_int length,
 	register u_char flags;
 	register int hlen;
 	register char ch;
-	register struct tcp_seq_hash *th;
-	register int rev;
+	register struct tcp_seq_hash *th = NULL;
+	register int rev = 0;
 	u_int16_t sport, dport, win, urp;
 	tcp_seq seq, ack;
 #ifdef INET6
@@ -475,7 +477,7 @@ tcp_print(register const u_char *bp, register u_int length,
 							e -= th->ack;
 						}
 					}
-					(void) printf("{%u:%u} ", s, e);
+					(void) printf("{%lu:%lu} ", s, e);
 				}
 				break;
 			}

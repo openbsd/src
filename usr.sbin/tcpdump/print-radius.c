@@ -1,5 +1,8 @@
+/*	$OpenBSD: print-radius.c,v 1.4 2000/10/03 14:21:56 ho Exp $	*/
+
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -63,11 +66,11 @@ struct radius_atable {
 
 static struct radius_atable radius_atts[] = {
 
-{ RADIUS_ATT_USER_NAME, 	RD_STRING, 	"Name", 	NULL },
-{ RADIUS_ATT_PASSWORD, 		RD_HEX, 	"Pass", 	NULL },
-{ RADIUS_ATT_CHAP_PASS, 	RD_HEX, 	"CPass",	NULL },
-{ RADIUS_ATT_NAS_IP, 		RD_ADDRESS, 	"NAS-IP", 	NULL },
-{ RADIUS_ATT_NAS_PORT, 		RD_INT, 	"NAS-Pt", 	NULL },
+{ RADIUS_ATT_USER_NAME, 	RD_STRING, 	"Name", 	{ NULL } },
+{ RADIUS_ATT_PASSWORD, 		RD_HEX, 	"Pass", 	{ NULL } },
+{ RADIUS_ATT_CHAP_PASS, 	RD_HEX, 	"CPass",	{ NULL } },
+{ RADIUS_ATT_NAS_IP, 		RD_ADDRESS, 	"NAS-IP", 	{ NULL } },
+{ RADIUS_ATT_NAS_PORT, 		RD_INT, 	"NAS-Pt", 	{ NULL } },
 
 { RADIUS_ATT_USER_SERVICE, 	RD_INT, 	"USvc", 	
 { "", "Login", "Framed", "DB-Lgn", "DB-Frm", "Out", "Shell", NULL } },
@@ -75,38 +78,38 @@ static struct radius_atable radius_atts[] = {
 { RADIUS_ATT_PROTOCOL, 		RD_INT, 	"FProt", 
 { "", "PPP", "SLIP", NULL } },
 
-{ RADIUS_ATT_FRAMED_ADDRESS, 	RD_ADDRESS, 	"F-IP", 	NULL },
-{ RADIUS_ATT_NETMASK, 		RD_ADDRESS, 	"F-Msk", 	NULL },
-{ RADIUS_ATT_ROUTING, 		RD_INT, 	"F-Rtg", 	NULL },
-{ RADIUS_ATT_FILTER, 		RD_STRING, 	"FltID", 	NULL },
-{ RADIUS_ATT_MTU, 		RD_INT, 	"F-MTU", 	NULL },
-{ RADIUS_ATT_COMPRESSION, 	RD_INT, 	"F-Comp", 	NULL },
-{ RADIUS_ATT_LOGIN_HOST, 	RD_ADDRESS, 	"L-Hst", 	NULL },
+{ RADIUS_ATT_FRAMED_ADDRESS, 	RD_ADDRESS, 	"F-IP", 	{ NULL } },
+{ RADIUS_ATT_NETMASK, 		RD_ADDRESS, 	"F-Msk", 	{ NULL } },
+{ RADIUS_ATT_ROUTING, 		RD_INT, 	"F-Rtg", 	{ NULL } },
+{ RADIUS_ATT_FILTER, 		RD_STRING, 	"FltID", 	{ NULL } },
+{ RADIUS_ATT_MTU, 		RD_INT, 	"F-MTU", 	{ NULL } },
+{ RADIUS_ATT_COMPRESSION, 	RD_INT, 	"F-Comp", 	{ NULL } },
+{ RADIUS_ATT_LOGIN_HOST, 	RD_ADDRESS, 	"L-Hst", 	{ NULL } },
 
 { RADIUS_ATT_LOGIN_SERVICE, 	RD_INT, 	"L-Svc", 
 { "", "Telnt", "Rlog", "Clear", "PortM", NULL }				},
 
-{ RADIUS_ATT_LOGIN_TCP_PORT, 	RD_INT, 	"L-Pt", 	NULL },
-{ RADIUS_ATT_OLD_PASSWORD, 	RD_HEX, 	"OPass", 	NULL },
-{ RADIUS_ATT_PORT_MESSAGE, 	RD_STRING, 	"PMsg", 	NULL },
-{ RADIUS_ATT_DIALBACK_NO, 	RD_STRING, 	"DB#", 		NULL },
-{ RADIUS_ATT_DIALBACK_NAME, 	RD_STRING, 	"DBNm", 	NULL },	
-{ RADIUS_ATT_EXPIRATION, 	RD_DATE, 	"PExp", 	NULL },
-{ RADIUS_ATT_FRAMED_ROUTE, 	RD_STRING, 	"F-Rt", 	NULL },
-{ RADIUS_ATT_FRAMED_IPX, 	RD_ADDRESS, 	"F-IPX", 	NULL },
-{ RADIUS_ATT_CHALLENGE_STATE, 	RD_STRING, 	"CState", 	NULL },
-{ RADIUS_ATT_CLASS, 		RD_STRING, 	"Class", 	NULL },
-{ RADIUS_ATT_VENDOR_SPECIFIC, 	RD_HEX, 	"Vendor", 	NULL },
-{ RADIUS_ATT_SESSION_TIMEOUT, 	RD_INT, 	"S-TO", 	NULL },
-{ RADIUS_ATT_IDLE_TIMEOUT, 	RD_INT, 	"I-TO", 	NULL },
-{ RADIUS_ATT_TERMINATE_ACTION, 	RD_INT, 	"TermAct", 	NULL },
-{ RADIUS_ATT_CALLED_ID, 	RD_STRING, 	"Callee", 	NULL },
-{ RADIUS_ATT_CALLER_ID, 	RD_STRING, 	"Caller", 	NULL },
+{ RADIUS_ATT_LOGIN_TCP_PORT, 	RD_INT, 	"L-Pt", 	{ NULL } },
+{ RADIUS_ATT_OLD_PASSWORD, 	RD_HEX, 	"OPass", 	{ NULL } },
+{ RADIUS_ATT_PORT_MESSAGE, 	RD_STRING, 	"PMsg", 	{ NULL } },
+{ RADIUS_ATT_DIALBACK_NO, 	RD_STRING, 	"DB#", 		{ NULL } },
+{ RADIUS_ATT_DIALBACK_NAME, 	RD_STRING, 	"DBNm", 	{ NULL } },
+{ RADIUS_ATT_EXPIRATION, 	RD_DATE, 	"PExp", 	{ NULL } },
+{ RADIUS_ATT_FRAMED_ROUTE, 	RD_STRING, 	"F-Rt", 	{ NULL } },
+{ RADIUS_ATT_FRAMED_IPX, 	RD_ADDRESS, 	"F-IPX", 	{ NULL } },
+{ RADIUS_ATT_CHALLENGE_STATE, 	RD_STRING, 	"CState", 	{ NULL } },
+{ RADIUS_ATT_CLASS, 		RD_STRING, 	"Class", 	{ NULL } },
+{ RADIUS_ATT_VENDOR_SPECIFIC, 	RD_HEX, 	"Vendor", 	{ NULL } },
+{ RADIUS_ATT_SESSION_TIMEOUT, 	RD_INT, 	"S-TO", 	{ NULL } },
+{ RADIUS_ATT_IDLE_TIMEOUT, 	RD_INT, 	"I-TO", 	{ NULL } },
+{ RADIUS_ATT_TERMINATE_ACTION, 	RD_INT, 	"TermAct", 	{ NULL } },
+{ RADIUS_ATT_CALLED_ID, 	RD_STRING, 	"Callee", 	{ NULL } },
+{ RADIUS_ATT_CALLER_ID, 	RD_STRING, 	"Caller", 	{ NULL } },
 
 { RADIUS_ATT_STATUS_TYPE, 	RD_INT, 	"Stat", 
 { "", "Start", "Stop", NULL }					},
 
-{ -1,				-1,		NULL, 		NULL }
+{ -1,				-1,		NULL, 		{ NULL } }
 
 };
 
@@ -236,6 +239,7 @@ void radius_print(register const u_char *data, u_int len) {
 	else
 		pp = data + RADFIXEDSZ;
 
+	i = 0; /* XXX I don't see what 'i' is supposed to do here. */
 	while(l) {
 		if(!i) fputc(',', stdout); i = 0;
 

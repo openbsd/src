@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-udp.c,v 1.14 2000/10/03 14:21:57 ho Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -21,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.13 2000/05/05 17:12:08 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.14 2000/10/03 14:21:57 ho Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -450,7 +452,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 				cp = rtcp_print(cp, ep);
 			break;
 		case PT_CNFP:
-			cnfp_print(cp, length, ip);
+			cnfp_print(cp, length, (u_char *)ip);
 			break;
 		}
 		return;

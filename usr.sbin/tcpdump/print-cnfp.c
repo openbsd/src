@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cnfp.c,v 1.2 1998/06/25 20:26:59 mickey Exp $	*/
+/*	$OpenBSD: print-cnfp.c,v 1.3 2000/10/03 14:21:56 ho Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -39,6 +39,7 @@
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -55,9 +56,9 @@ struct nfhdr {
 };
 
 struct nfrec {
-	in_addr_t	src_ina;
-	in_addr_t	dst_ina;
-	in_addr_t	nhop_ina;
+	struct in_addr  src_ina;
+	struct in_addr  dst_ina;
+	struct in_addr  nhop_ina;
 	u_int32_t	ifaces;		/* src,dst ifaces */
 	u_int32_t	packets;
 	u_int32_t	octets;
@@ -79,7 +80,6 @@ cnfp_print(register const u_char *cp, u_int len, register const u_char *bp)
 	struct protoent *pent;
 	int nrecs, ver;
 	time_t t;
-	char *p;
 
 	ip = (struct ip *)bp;
 	nh = (struct nfhdr *)cp;
