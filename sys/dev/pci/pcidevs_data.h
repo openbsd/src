@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.60 1998/06/26 01:50:42 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.61 1998/06/29 20:51:29 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -61,6 +61,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c905B 100Base-T4",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
+	    0,
+	    "3DFX Interactive",
+	    "Voodoo",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO2,
+	    0,
+	    "3DFX Interactive",
+	    "Voodoo2",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
@@ -4950,6 +4962,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSENTIAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Essential Communications",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_3DFX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "3DFX Interactive",
 	    NULL,
 	},
 	{
