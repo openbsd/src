@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.33 2003/05/16 22:30:15 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.34 2003/05/17 02:41:19 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -482,7 +482,7 @@ setlog(char *p, size_t len, char *f)
 	char *s;
 
 	s = strsep(&f, ":");
-	if (!s)
+	if (!f)
 		return;
 	while (*f == ' ' || *f == '\t')
 		f++;
