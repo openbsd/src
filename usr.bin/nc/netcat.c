@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.32 2001/08/02 21:00:14 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.33 2001/08/25 21:50:13 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -518,7 +518,7 @@ build_ports(p)
 
 		/* Load ports sequentially */
 		for (cp = lo; cp <= hi; cp++) {
-			portlist[x] = malloc(sizeof(PORT_MAX));
+			portlist[x] = calloc(1, PORT_MAX);
 			sprintf(portlist[x], "%d", cp);
 			x++;
 		}
@@ -539,7 +539,7 @@ build_ports(p)
 		hi = (int)strtoul(p, &endp, 10);
 		if (hi <= 0 || hi > PORT_MAX || *endp != '\0')
 			errx(1, "port range not valid");
-		portlist[0] = malloc(sizeof(PORT_MAX));
+		portlist[0] = calloc(1, PORT_MAX);
 		portlist[0] = p;
 	}
 }
