@@ -1,4 +1,4 @@
-/*	$OpenBSD: cread.c,v 1.1 1997/02/06 02:56:45 downsj Exp $	*/
+/*	$OpenBSD: cread.c,v 1.2 1997/02/06 06:19:58 mickey Exp $	*/
 /*	$NetBSD: cread.c,v 1.2 1997/02/04 18:38:20 thorpej Exp $	*/
 
 /*
@@ -47,9 +47,11 @@
  */
 
 #include "stand.h"
-#include "../libz/zlib.h"
+#include "zlib.h"
 
 #define EOF (-1) /* needed by compression code */
+
+#define zmemcpy	memcpy
 
 #ifdef SAVE_MEMORY
 #define Z_BUFSIZE 1024
@@ -89,19 +91,12 @@ unsigned size;
   return(alloc(items * size));
 }
 
-void  zcfree (opaque, ptr)
+void  zfree (opaque, ptr)
 void *opaque;
 void *ptr;
+size_t size;
 {
-  free(ptr, 0); /* XXX works only with modified allocator */
-}
-
-void zmemcpy(dest, source, len)
-unsigned char *dest;
-unsigned char *source;
-unsigned int len;
-{
-  bcopy(source, dest, len);
+  free(ptr, size);
 }
 
 static int get_byte(s)
