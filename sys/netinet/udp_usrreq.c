@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.19 1999/01/11 02:01:36 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.20 1999/01/11 16:05:46 niklas Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -259,21 +259,21 @@ udp_input(m, va_alist)
 
 	switch (srcsa.sa.sa_family) {
 	  case AF_INET:
-	    memset(&srcsa, 0, sizeof(struct sockaddr_in));
+	    bzero(&srcsa, sizeof(struct sockaddr_in));
 	    srcsa.sin.sin_len = sizeof(struct sockaddr_in);
 	    srcsa.sin.sin_family = AF_INET;
 	    srcsa.sin.sin_port = uh->uh_sport;
 	    srcsa.sin.sin_addr = ip->ip_src;
 
 #ifdef INET6
-	    memset(&src_v4mapped, 0, sizeof(struct sockaddr_in6));
+	    bzero(&src_v4mapped, sizeof(struct sockaddr_in6));
 	    src_v4mapped.sin6_len = sizeof(struct sockaddr_in6);
 	    src_v4mapped.sin6_family = AF_INET6;
 	    src_v4mapped.sin6_port = uh->uh_sport;
 	    CREATE_IPV6_MAPPED(src_v4mapped.sin6_addr, ip->ip_src.s_addr);
 #endif /* INET6 */
 
-	    memset(&dstsa, 0, sizeof(struct sockaddr_in));
+	    bzero(&dstsa, sizeof(struct sockaddr_in));
 	    dstsa.sin.sin_len = sizeof(struct sockaddr_in);
 	    dstsa.sin.sin_family = AF_INET;
 	    dstsa.sin.sin_port = uh->uh_dport;
@@ -281,14 +281,14 @@ udp_input(m, va_alist)
 	    break;
 #ifdef INET6
 	  case AF_INET6:
-	    memset(&srcsa, 0, sizeof(struct sockaddr_in6));
+	    bzero(&srcsa, sizeof(struct sockaddr_in6));
 	    srcsa.sin6.sin6_len = sizeof(struct sockaddr_in6);
 	    srcsa.sin6.sin6_family = AF_INET6;
 	    srcsa.sin6.sin6_port = uh->uh_sport;
 	    srcsa.sin6.sin6_flowinfo = htonl(0x0fffffff) & ipv6->ipv6_versfl;
 	    srcsa.sin6.sin6_addr = ipv6->ipv6_src;
 
-	    memset(&dstsa, 0, sizeof(struct sockaddr_in6));
+	    bzero(&dstsa, sizeof(struct sockaddr_in6));
 	    dstsa.sin6.sin6_len = sizeof(struct sockaddr_in6);
 	    dstsa.sin6.sin6_family = AF_INET6;
 	    dstsa.sin6.sin6_port = uh->uh_dport;
