@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 2002/12/29 19:10:04 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 2003/01/14 11:03:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -653,9 +653,9 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			if (p->dir_type == LIF_DIR_FS)
 				fsoff = lifstodb(p->dir_addr);
 
-		/* if no suitable lifdir entry found assume LIF_FILESTART */
+		/* if no suitable lifdir entry found assume zero */
 		if (fsoff < 0)
-			fsoff = btodb(LIF_FILESTART);
+			fsoff = 0;
 	}
 
 	if (partoffp)
