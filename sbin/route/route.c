@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.75 2004/09/22 01:07:10 jaredy Exp $	*/
+/*	$OpenBSD: route.c,v 1.76 2004/09/23 20:20:19 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.75 2004/09/22 01:07:10 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.76 2004/09/23 20:20:19 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -976,6 +976,7 @@ monitor(void)
 {
 	int n;
 	char msg[2048];
+	time_t now;
 
 	verbose = 1;
 	if (debugonly) {
@@ -983,8 +984,11 @@ monitor(void)
 		exit(0);
 	}
 	for(;;) {
-		time_t now;
-		n = read(s, msg, 2048);
+		if ((n = read(s, msg, sizeof(msg))) == -1) {
+			if (errno == EINTR)
+				continue;
+			err(1, "read");
+		}
 		now = time(NULL);
 		(void) printf("got message of size %d on %s", n, ctime(&now));
 		print_rtmsg((struct rt_msghdr *)msg, n);
@@ -1047,7 +1051,7 @@ rtmsg(int cmd, int flags)
 		print_rtmsg(&rtm, l);
 	if (debugonly)
 		return (0);
-	if (write(s, (char *)&m_rtmsg, l) < 0) {
+	if (write(s, (char *)&m_rtmsg, l) != l) {
 		if (qflag == 0)
 			perror("writing to routing socket");
 		return (-1);
@@ -1056,7 +1060,7 @@ rtmsg(int cmd, int flags)
 		do {
 			l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
 		} while (l > 0 && (rtm.rtm_seq != seq || rtm.rtm_pid != pid));
-		if (l < 0)
+		if (l == -1)
 			(void) fprintf(stderr,
 			    "route: read from routing socket: %s\n",
 			    strerror(errno));
