@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.2 2002/12/13 21:35:11 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.3 2002/12/13 22:25:31 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -870,6 +870,8 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	if (data_elm != NULL) {
 		data_ab = data_elm->data_ab;
 		if (data_ab) {
+			data_ab->ab_addr = SBP2_CMD_DATA +
+			    ((u_int64_t)data_elm->data_hash << 8);
 			sc->sc_fwnode->sc1394_unreg(data_ab, TRUE);
 			if ((void *)data_ab->ab_data > (void *)1) { /* XXX */
 				free(data_ab->ab_data, M_1394DATA);
