@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka48.h,v 1.1 2000/04/26 06:08:27 bjc Exp $	*/
+/*	$OpenBSD: ka48.h,v 1.2 2001/02/25 15:55:28 hugh Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 /* memory addresses of interest */
 #define	KA48_INVFLT	0x20200000
-#define	KA48_INVFLTSZ	32768
+#define	KA48_INVFLTSZ	16384
 #define	KA48_CCR	0x23000000
 #define	KA48_TAGST	0x2d000000
 #define	KA48_TAGSZ	32768
@@ -53,3 +53,10 @@
 
 #define	KA48_BWF0	0x20080014
 #define	BWF0_FEN	0x01000000
+
+/* From OpenVMS $IO440DEF & $KA440DEF */
+#define	KA48_PARCTL	0x20080014
+#define	KA48_PARCTL_CPEN	0x00000001	/* CPU Parity Eanble? */
+#define	KA48_PARCTL_NPEN	0x00000100	/* ?? Parity Enable */
+#define	KA48_PARCTL_INVENA	0x01000000	/* Invalid ? Enable */
+#define	KA48_PARCTL_AGS		0x02000000	/* ??? */
