@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.86 2004/09/16 18:34:05 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.87 2005/01/31 15:06:31 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -168,11 +168,11 @@ main(int argc, char *argv[])
 	}
 
 	if ((n = snprintf(rulesetname, sizeof(rulesetname), "%s(%ld)",
-	    luser, (long)getpid())) < 0 || n >= sizeof(rulesetname)) {
+	    luser, (long)getpid())) < 0 || (u_int)n >= sizeof(rulesetname)) {
 		syslog(LOG_INFO, "%s(%ld) too large, ruleset name will be %ld",
 		    luser, (long)getpid(), (long)getpid());
 		if ((n = snprintf(rulesetname, sizeof(rulesetname), "%ld",
-		    (long)getpid())) < 0 || n >= sizeof(rulesetname)) {
+		    (long)getpid())) < 0 || (u_int)n >= sizeof(rulesetname)) {
 			syslog(LOG_ERR, "pid too large for ruleset name");
 			goto die;
 		}
