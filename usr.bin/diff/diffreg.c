@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.23 2003/06/27 20:28:13 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.24 2003/07/02 18:54:13 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -241,7 +241,8 @@ diffreg(void)
 		file1 = splice(file1, file2);
 		if (stat(file1, &stb1) < 0)
 			error("%s", file1);
-	} else if (!S_ISREG(stb1.st_mode) || strcmp(file1, "-") == 0) {
+	} else if (strcmp(file1, "-") == 0 ||
+	    (!S_ISREG(stb1.st_mode) && strcmp(file1, _PATH_DEVNULL) != 0)) {
 		file1 = copytemp(file1, 1);
 		if (stat(file1, &stb1) < 0)
 			error("%s", file1);
@@ -250,7 +251,8 @@ diffreg(void)
 		file2 = splice(file2, file1);
 		if (stat(file2, &stb2) < 0)
 			error("%s", file2);
-	} else if (!S_ISREG(stb2.st_mode) || strcmp(file2, "-") == 0) {
+	} else if (strcmp(file2, "-") == 0 ||
+	    (!S_ISREG(stb2.st_mode) && strcmp(file2, _PATH_DEVNULL) != 0)) {
 		file2 = copytemp(file2, 2);
 		if (stat(file2, &stb2) < 0)
 			error("%s", file2);
@@ -259,7 +261,7 @@ diffreg(void)
 		error("%s", file1);
 	if ((f2 = fopen(file2, "r")) == NULL)
 		error("%s", file2);
-	if (S_ISREG(stb1.st_mode) && S_ISREG(stb2.st_mode) &&
+	if ((stb1.st_mode & S_IFMT) != (stb2.st_mode & S_IFMT) ||
 	    stb1.st_size != stb2.st_size)
 		goto notsame;
 	for (;;) {
