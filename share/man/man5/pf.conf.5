@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.128 2002/11/26 23:18:36 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.129 2002/11/27 17:04:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -440,8 +440,7 @@ and
 	keep state queue mail
 .Ed
 .Pp
-Please note that child queues must not exceed the bandwidth definition
-of the parent.
+Child queues must not exceed the bandwidth definition of the parent.
 Relative values are calculated against the bandwidth of the parent queue.
 .Pp
 .Sh TRANSLATION
@@ -458,132 +457,8 @@ to keep track of the original address for traffic associated with that state
 and correctly direct return traffic on that connection.
 .Pp
 A variety of translation types rules are available with pf:
+.Pp
 .Bl -tag -width xxxx
-.It Em nat
-rules operate on outgoing connections, translating the source address.
-.It Em rdr
-rules operate on incoming connections, translating the destination address.
-.It binat
-rules (Bidirection NAT) behave somewhat like a combination of both
-.Pa nat
-and
-.Pa rdr
-and create a one-to-one mapping between two netblocks of equal size.
-.El
-.Pp
-In addition to modifying the address, some translation rules may modify
-source or destination ports for
-.Xr tcp
-or
-.Xr udp
-connections; implicitly in the case of
-.Pa nat
-rules and explicitly in the case of
-.Pa rdr
-rules.
-Port numbers are never translated with a
-.Pa binat
-rule.
-.Pp
-For each packet processed by the translator, the translation rules are
-evaluated in sequential order, from first to last.
-Each rule either matches the packet or doesn't.
-The first matching rule decides what action is taken.
-.Pp
-The
-.Pa no
-option prefixed to a translation rule causes packets to remain untranslated,
-much in the same way as
-.Pa drop <direction> quick
-works in the packet filter.
-.Pp
-If no rule matches the packet, the default action is to pass the packet
-up to the filter unmodified.
-It should be noted that all translations of packets occur before
-the filters are applied.
-Hence, rules for redirected packets should specify the address and port
-after translation.
-Note that all translation rules apply only to packets that pass through
-the specified interface.
-For instance, redirecting port 80 on an external interface to an internal
-web server will only work for connections originating from the outside.
-Connections to the address of the external interface from local hosts will
-not be redirected, since such packets do not actually pass through the
-external interface.
-Redirections can't reflect packets back through the interface they arrive
-on, they can only be redirected to hosts connected to different interfaces
-or to the firewall itself.
-.Pp
-.Sh PACKET FILTERING
-.Xr pf 4
-has the ability to
-.Pa block
-and
-.Pa pass
-packets based on a variety of attributes of their layer 2 (see
-.Xr ip 4
-and
-.Xr ip6 4
-) and layer 3 (see
-.Xr tcp 4 ,
-.Xr udp 4 ,
-.Xr icmp 4 ,
-and
-.Xr icmp6 4
-) headers. In addition, packets which are passed or blocked can be
-assigned to queues for the purpose of bandwidth control.
-.Pp
-For each packet processed by the packet filter, the filter rules are
-evaluated in sequential order, from first to last.
-Each rule either matches the packet or doesn't.
-The last matching rule decides what action is taken.
-.Pp
-If no rule matches the packet, the default action is
-.Pa pass .
-.Pp
-To block everything by default and only pass packets
-that match explicit rules, one uses
-.Bd -literal
-    block in all
-    block out all
-.Ed
-.Pp
-as the first two rules.
-.Pp
-.Sh ACTIONS
-.Bl -tag -width Fl
-.It Em block
-The packet is blocked.
-There are a number of ways in which a
-.Pa block
-rule can behave when blocking a packet. The default behaviour is to
-.Pa drop
-packets silently, however this can be overridden or made explicit
-globally by setting the
-.Pa block-policy
-option, or on a per-rule basis with the following options:
-.Pp
-.Bl -tag -width "return-icmp6" -compact -offset indent
-.It Em  drop
-the packet is silently dropped.
-.It Em return-rst
-applies only to tcp packets, and issues a TCP RST which closes the
-connection.
-.It Em return-icmp
-.It Em return-icmp6
-return ICMP messages for packets which match the rule.
-By default this is an ICMP UNREACHABLE message, however the type
-of message can be overridden by specifying it as a code or number.
-.It Em return
-returns a TCP RST for tcp packets, an ICMP UNREACHABLE for UDP packets,
-and silently drops all other packets.
-.El
-.It Em pass
-The packet is passed.
-.It Em scrub
-The packet is run through normalization/defragmentation.
-Scrub rules are not considered last matching rules.
-IPv6 packets are not defragmented.
 .It Em binat
 A
 .Pa binat
@@ -615,6 +490,116 @@ rules can optionally specify port ranges instead of single ports.
 \'rdr ... port 2000:2999 -> ... port 4000:*\' redirects port 2000 to 4000,
 2001 to 4001, ..., 2999 to 4999.
 .El
+.Pp
+In addition to modifying the address, some translation rules may modify
+source or destination ports for
+.Xr tcp
+or
+.Xr udp
+connections; implicitly in the case of
+.Pa nat
+rules and explicitly in the case of
+.Pa rdr
+rules.
+Port numbers are never translated with a
+.Pa binat
+rule.
+.Pp
+For each packet processed by the translator, the translation rules are
+evaluated in sequential order, from first to last.
+The first matching rule decides what action is taken.
+.Pp
+The
+.Pa no
+option prefixed to a translation rule causes packets to remain untranslated,
+much in the same way as
+.Pa drop <direction> quick
+works in the packet filter.
+.Pp
+If no rule matches the packet, the default action is to pass the packet
+up to the filter unmodified.
+Translation occurs before the other filters are applied.
+Hence, rules for redirected packets should specify the address and port
+after translation.
+Translation rules apply only to packets that pass through
+the specified interface.
+For instance, redirecting port 80 on an external interface to an internal
+web server will only work for connections originating from the outside.
+Connections to the address of the external interface from local hosts will
+not be redirected, since such packets do not actually pass through the
+external interface.
+Redirections cannot reflect packets back through the interface they arrive
+on, they can only be redirected to hosts connected to different interfaces
+or to the firewall itself.
+.Pp
+.Sh PACKET FILTERING
+.Xr pf 4
+has the ability to
+.Pa block
+and
+.Pa pass
+packets based on a variety of attributes of their layer 2 (see
+.Xr ip 4
+and
+.Xr ip6 4 Ns )
+and layer 3 (see
+.Xr tcp 4 ,
+.Xr udp 4 ,
+.Xr icmp 4 ,
+and
+.Xr icmp6 4 Ns )
+headers.
+In addition, packets which are passed or blocked can be
+assigned to queues for the purpose of bandwidth control.
+.Pp
+For each packet processed by the packet filter, the filter rules are
+evaluated in sequential order, from first to last.
+The last matching rule decides what action is taken.
+.Pp
+The following actions can be used in the filter:
+.Pp
+.Bl -tag -width xxxx
+.It Em block
+The packet is blocked.
+There are a number of ways in which a
+.Pa block
+rule can behave when blocking a packet. The default behaviour is to
+.Pa drop
+packets silently, however this can be overridden or made explicit
+globally by setting the
+.Pa block-policy
+option, or on a per-rule basis with the following options:
+.Pp
+.Bl -tag -width "return-icmp6" -compact -offset indent
+.It Em  drop
+the packet is silently dropped.
+.It Em return-rst
+applies only to tcp packets, and issues a TCP RST which closes the
+connection.
+.It Em return-icmp
+.It Em return-icmp6
+return ICMP messages for packets which match the rule.
+By default this is an ICMP UNREACHABLE message, however the type
+of message can be overridden by specifying it as a code or number.
+.It Em return
+returns a TCP RST for tcp packets, an ICMP UNREACHABLE for UDP packets,
+and silently drops all other packets.
+.El
+.It Em pass
+The packet is passed.
+.El
+.Pp
+If no rule matches the packet, the default action is
+.Pa pass .
+.Pp
+To block everything by default and only pass packets
+that match explicit rules, one uses
+.Bd -literal
+    block in all
+    block out all
+.Ed
+.Pp
+as the first two rules.
 .Sh PARAMETERS
 The rule parameters specify for what packets a rule applies.
 A packet always comes in on or goes out through one interface.
@@ -705,7 +690,7 @@ Ports can be specified using these operators
 .Ed
 .Pp
 >< and <> are binary operators (they take two arguments), and the range
-doesn't include the limits, for instance:
+does not include the limits, for instance:
 .Bl -tag -width Fl
 .It Em port 2000 >< 2004
 means
@@ -734,7 +719,7 @@ For outgoing connections initiated from the firewall, this is the user
 that opened the connection.
 For incoming connections to the firewall itself, this is the user that
 listens on the destination port.
-For forwarded connections, where the firewall isn't a connection endpoint,
+For forwarded connections, where the firewall is not a connection endpoint,
 the user and group are
 .Pa unknown .
 .Pp
@@ -745,10 +730,10 @@ these parameters are ignored.
 .Pp
 User and group refer to the effective (as opposed to the real) IDs, in
 case the socket is created by a setuid/setgid process.
-Note that user and group IDs are stored when a socket is created;
-when a process creates a listening socket as root (for instance, because
-it wants to bind to a privileged port) and subsequently sets another
-user ID (to drop privileges), the socket's uid remains root.
+User and group IDs are stored when a socket is created;
+when a process creates a listening socket as root (for instance, by
+binding to a privileged port) and subsequently changes to another
+user ID (to drop privileges), the credentials will remain root.
 .Pp
 User and group IDs can be specified as either numbers or names, the
 syntax is similar to the one for ports.
@@ -782,7 +767,7 @@ Flag SYN is set.
 The other flags are ignored.
 .It Em flags S/SA
 Of SYN and ACK, exactly SYN is set.
-SYN, SYN+PSH, SYN+RST match, but SYN+ACK, ACK and ACK+RST don't.
+SYN, SYN+PSH, SYN+RST match, but SYN+ACK, ACK and ACK+RST do not.
 This is more restrictive than the previous example.
 .It Em flags /SFRA
 If the first set is not specified, it defaults to none.
@@ -807,7 +792,7 @@ For packets that match state, the rule that initially created the
 state is used.
 The implicit
 .Pa pass
-rule that is used when a packet doesn't match any rules does not
+rule that is used when a packet does not match any rules does not
 allow IP options.
 .It Pa label <string>
 Adds a label (name) to the rule, which can be used to identify the rule.
@@ -850,7 +835,7 @@ expands to
 	label "1.2.3.5:>1023"
 .Ed
 .Pp
-Note that evaluation takes place at parse time.
+Variable expansion takes place at configuration file parse time.
 .It Pa queue <string>
 Packets matching this rule will be assigned to the specified queue.
 See QUEUE RULES for setup details.
@@ -975,7 +960,7 @@ Comparing a packet to a state involves checking its sequence numbers.
 If the sequence numbers are outside the narrow windows of expected
 values, the packet is dropped.
 This prevents spoofing attacks, where the attacker sends packets with
-a fake source address/port but doesn't know the connection's sequence
+a fake source address/port but does not know the connection's sequence
 numbers.
 .Pp
 Also, looking up states is usually faster than evaluating rules.
@@ -1081,7 +1066,7 @@ Both sides of the connection will notice, that its peer has suddenly
 shifted its sequence by a random amount.
 Neither side
 will be able to recover and the connection will stall and eventually close.
-.Sh STATEFUL OPTIONS
+.Sh STATEFUL TRACKING OPTIONS
 Both
 .Pa keep state
 and
@@ -1145,15 +1130,6 @@ Caveat: Rules created by the
 directive interfere with packets sent over loopback interfaces
 to local addresses.
 One should pass these explicitly.
-.Sh FILTERING ON LOOPBACK INTERFACES
-There's hardly a point in filtering on loopback interfaces such as lo0.
-Every packet seen there is sent from and to the local host.
-One may want to include these rules at the very beginning
-of their ruleset to pass all traffic on lo0:
-.Bd -literal
-    pass in quick on lo0 all
-    pass out quick on lo0 all
-.Ed
 .Sh FRAGMENT HANDLING
 The size of IP datagrams (packets) can be significantly larger than the
 the maximum transmission unit (MTU) of the network.
@@ -1195,7 +1171,7 @@ For instance, the rule
 .Pp never applies to a fragment, even if the fragment is part of a TCP
 packet with destination port 80, because without reassembly, this information
 is not available for each fragment.
-This also means that fragments can't create new or match existing
+This also means that fragments cannot create new or match existing
 state table entries, which makes stateful filtering and address
 translations (NAT, redirection) for fragments impossible.
 .Pp
@@ -1217,76 +1193,6 @@ also be adjusted.
 .Pp
 Currently, only IPv4 fragments are supported and IPv6 fragments
 are blocked unconditionally.
-.Sh FILTER EXAMPLES
-.Bd -literal
-# The external interface is kue0
-# (157.161.48.183, the only routable address)
-# and the private network is 10.0.0.0/8, for which we are doing NAT.
-
-# use a macro for the interface name, so it can be changed easily
-ext_if = "kue0"
-
-# normalize all incoming traffic
-scrub in on $ext_if all fragment reassemble
-
-# block and log everything by default
-block             out log on $ext_if           all
-block             in  log on $ext_if           all
-block return-rst  out log on $ext_if proto tcp all
-block return-rst  in  log on $ext_if proto tcp all
-block return-icmp out log on $ext_if proto udp all
-block return-icmp in  log on $ext_if proto udp all
-
-# block anything coming from source we have no back routes for
-block in from no-route to any
-
-# block and log outgoing packets that don't have our address as source,
-# they are either spoofed or something is misconfigured (NAT disabled,
-# for instance), we want to be nice and don't send out garbage.
-block out log quick on $ext_if from ! 157.161.48.183 to any
-
-# silently drop broadcasts (cable modem noise)
-block in quick on $ext_if from any to 255.255.255.255
-
-# block and log incoming packets from reserved address space and invalid
-# addresses, they are either spoofed or misconfigured, we can't reply to
-# them anyway (hence, no return-rst).
-block in log quick on $ext_if from { 10.0.0.0/8, 172.16.0.0/12, \\
-        192.168.0.0/16, 255.255.255.255/32 } to any
-
-# ICMP
-
-# pass out/in certain ICMP queries and keep state (ping)
-# state matching is done on host addresses and ICMP id (not type/code),
-# so replies (like 0/0 for 8/0) will match queries
-# ICMP error messages (which always refer to a TCP/UDP packet) are
-# handled by the TCP/UDP states
-pass out on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
-pass in  on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
-
-# UDP
-
-# pass out all UDP connections and keep state
-pass out on $ext_if proto udp all keep state
-
-# pass in certain UDP connections and keep state (DNS)
-pass in on $ext_if proto udp from any to any port domain keep state
-
-# TCP
-
-# pass out all TCP connections and modulate state
-pass out on $ext_if proto tcp all modulate state
-
-# pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
-pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \\
-        auth } flags S/SA keep state
-
-# pass in data mode connections for ftp-proxy running on this host.
-# (see ftp-proxy(8) for details)
-pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \\
-        flags S/SA keep state
-
-.Ed
 .Sh TRANSLATION EXAMPLES
 .Pa Binat
 This example maps incoming requests on port 80 to port 8080, on
@@ -1368,6 +1274,76 @@ rdr on kue0 inet proto udp from any to (kue0) port 8080 -> 10.1.2.151 \\
 # translate outgoing ftp control connections to send them to localhost
 # for proxying with ftp-proxy(8) running on port 8081
 rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8081
+.Ed
+.Sh FILTER EXAMPLES
+.Bd -literal
+# The external interface is kue0
+# (157.161.48.183, the only routable address)
+# and the private network is 10.0.0.0/8, for which we are doing NAT.
+
+# use a macro for the interface name, so it can be changed easily
+ext_if = "kue0"
+
+# normalize all incoming traffic
+scrub in on $ext_if all fragment reassemble
+
+# block and log everything by default
+block             out log on $ext_if           all
+block             in  log on $ext_if           all
+block return-rst  out log on $ext_if proto tcp all
+block return-rst  in  log on $ext_if proto tcp all
+block return-icmp out log on $ext_if proto udp all
+block return-icmp in  log on $ext_if proto udp all
+
+# block anything coming from source we have no back routes for
+block in from no-route to any
+
+# block and log outgoing packets that do not have our address as source,
+# they are either spoofed or something is misconfigured (NAT disabled,
+# for instance), we want to be nice and do not send out garbage.
+block out log quick on $ext_if from ! 157.161.48.183 to any
+
+# silently drop broadcasts (cable modem noise)
+block in quick on $ext_if from any to 255.255.255.255
+
+# block and log incoming packets from reserved address space and invalid
+# addresses, they are either spoofed or misconfigured, we cannot reply to
+# them anyway (hence, no return-rst).
+block in log quick on $ext_if from { 10.0.0.0/8, 172.16.0.0/12, \\
+        192.168.0.0/16, 255.255.255.255/32 } to any
+
+# ICMP
+
+# pass out/in certain ICMP queries and keep state (ping)
+# state matching is done on host addresses and ICMP id (not type/code),
+# so replies (like 0/0 for 8/0) will match queries
+# ICMP error messages (which always refer to a TCP/UDP packet) are
+# handled by the TCP/UDP states
+pass out on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
+pass in  on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
+
+# UDP
+
+# pass out all UDP connections and keep state
+pass out on $ext_if proto udp all keep state
+
+# pass in certain UDP connections and keep state (DNS)
+pass in on $ext_if proto udp from any to any port domain keep state
+
+# TCP
+
+# pass out all TCP connections and modulate state
+pass out on $ext_if proto tcp all modulate state
+
+# pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
+pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \\
+        auth } flags S/SA keep state
+
+# pass in data mode connections for ftp-proxy running on this host.
+# (see ftp-proxy(8) for details)
+pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \\
+        flags S/SA keep state
+
 .Ed
 .Sh GRAMMAR
 Syntax for
