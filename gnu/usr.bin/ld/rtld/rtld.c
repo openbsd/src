@@ -732,7 +732,7 @@ reloc_map(smp)
 
 			np = lookup(sym, &src_map, 0/*XXX-jumpslots!*/);
 			if (np == NULL)
-				errx(1, "Undefined symbol \"%s\" in %s:%s\n",
+				errx(1, "Undefined symbol \"%s\" in %s:%s",
 					sym, main_progname, smp->som_path);
 
 			/*
@@ -776,7 +776,7 @@ reloc_map(smp)
 				LD_TEXTSZ(smp->som_dynamic),
 				PROT_READ|PROT_EXEC) == -1) {
 
-			err(1, "Cannot disable writes to %s:%s\n",
+			err(1, "Cannot disable writes to %s:%s",
 						main_progname, smp->som_path);
 		}
 		smp->som_write = 0;
@@ -1054,7 +1054,7 @@ binder(jsp)
 	}
 
 	if (smp == NULL)
-		errx(1, "Call to binder from unknown location: %#x\n", jsp);
+		errx(1, "Call to binder from unknown location: %#x", jsp);
 
 	index = jsp->reloc_index & JMPSLOT_RELOC_MASK;
 
