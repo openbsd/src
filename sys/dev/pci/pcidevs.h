@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.782 2004/10/22 05:23:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.783 2004/10/25 01:54:06 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2089,6 +2089,7 @@
 
 /* Ralink Technology Corporation */
 #define	PCI_PRODUCT_RALINK_RT2460A	0x0101		/* RT2460A */
+#define	PCI_PRODUCT_RALINK_RT2560	0x0201		/* RT2560 */
 
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */
@@ -2354,7 +2355,9 @@
 #define	PCI_PRODUCT_TI_PCI4510_FW	0x8029		/* PCI4510 FireWire */
 #define	PCI_PRODUCT_TI_PCI4520_FW	0x802A		/* PCI4520 FireWire */
 #define	PCI_PRODUCT_TI_PCI7410_FW	0x802B		/* PCI7(4-6)10 FireWire */
-#define	PCI_PRODUCT_TI_DWL520P	0x8400		/* DWL-520+ */
+#define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A */
+#define	PCI_PRODUCT_TI_ACX100B	0x8401		/* ACX100B */
+#define	PCI_PRODUCT_TI_ACX111	0x9066		/* ACX111 */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 CardBus */
 #define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 PCMCIA */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 CardBus */

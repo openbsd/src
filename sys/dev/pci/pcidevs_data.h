@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.782 2004/10/22 05:23:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.783 2004/10/25 01:54:06 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5927,6 +5927,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RT2460A",
 	},
 	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560,
+	    "RT2560",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
 	    "8029",
 	},
@@ -6763,8 +6767,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI7(4-6)10 FireWire",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_DWL520P,
-	    "DWL-520+",
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
+	    "ACX100A",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100B,
+	    "ACX100B",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX111,
+	    "ACX111",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
