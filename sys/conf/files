@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.102 1999/01/02 00:02:48 niklas Exp $
+#	$OpenBSD: files,v 1.103 1999/01/11 01:00:05 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -527,3 +527,25 @@ file vm/vm_swap.c
 file vm/vm_unix.c
 file vm/vm_user.c
 file vm/vnode_pager.c
+
+# ... IPv6
+file netinet6/in6.c			inet6
+file netinet6/ipv6_icmp.c		inet6
+file netinet6/in6_cksum.c		inet6
+file netinet6/in6_pcb.c			inet6
+file netinet6/raw_ipv6.c		inet6
+file netinet6/ipv6_input.c   		inet6
+file netinet6/ipv6_discovery.c		inet6
+file netinet6/ipv6_addrconf.c		inet6
+file netinet6/ipv6_rtrequest.c		inet6
+file netinet6/ipv6_output.c  		inet6
+file netinet6/in6_proto.c		inet6
+file netinet6/ipv6_trans.c   		inet6
+
+# ... PF_KEY
+file netsec/sadb.c			key
+file netsec/pfkey.c			key
+file netsec/pfkeyv2.c			key
+file netsec/pfkeyv2_parsemessage.c	key
+
+file kern/nbuf.c			nrl_ipsec
