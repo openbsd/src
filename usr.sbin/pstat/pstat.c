@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.48 2004/09/14 22:33:00 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.49 2005/02/08 14:48:08 pat Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.48 2004/09/14 22:33:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.49 2005/02/08 14:48:08 pat Exp $";
 #endif
 #endif /* not lint */
 
@@ -957,6 +957,7 @@ getfiles(char **abuf, size_t *alen)
 		err(1, "malloc: KERN_FILE");
 	if (sysctl(mib, 2, buf, &len, NULL, 0) == -1) {
 		warn("sysctl: KERN_FILE");
+		free(buf);
 		return (-1);
 	}
 	*abuf = buf;
@@ -1037,6 +1038,7 @@ swapmode(void)
 		    (double)used / (double)xsize * 100.0,
 		    swdev[i].se_priority);
 	}
+	free(swdev);
 
 	/*
 	 * If only one partition has been set up via swapon(8), we don't
@@ -1054,8 +1056,6 @@ swapmode(void)
 		    "Total", hlen, avail / div, used / div, nfree / div,
 		    (double)used / (double)avail * 100.0);
 	}
-
-	free(swdev);
 }
 
 void
