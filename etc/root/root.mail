@@ -11,12 +11,13 @@ this message for later reference.
 
 For more information on how to set up your OpenBSD system, refer to the
 "afterboot" man page (ie. after you exit the mail subsystem, type
-"man afterboot" ).  If you are not familiar with how to read man pages, type
+"man afterboot").  If you are not familiar with how to read man pages, type
 "man man" at a shell prompt and read the entire thing.  Pay specific
 attention to the "man -k keyword" option, which will permit you to find the
-man page you are looking for easier.  The GNU "info" subsystem is also
-installed with further documentation resources; to read info pages type "info".
-(The info subsystem behaves like the popular emacs editor).
+man page you are looking for easier, for instance "man -k ethernet".  The
+GNU "info" subsystem is also installed with further documentation resources;
+to read info pages type "info".  (The info subsystem behaves like the
+popular emacs editor).
 
 Again, PLEASE READ THE MANUAL PAGES.  Our developers have spent countless
 hours improving them so that they are clear and precise.
@@ -1031,17 +1032,16 @@ something you need missing.
   zsh-zftp-4.1.0dev5.tgz                zsnes-1.36.tgz
 
 These and many other packages are also available via ftp at
-      ftp://ftp.openbsd.org/pub/OpenBSD/3.3/packages/
+      ftp://ftp.openbsd.org/pub/OpenBSD/3.4/packages/
 If you do not find a package you want on the CD, please go look at your
 nearest FTP mirror site.
 
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute:
-  # mount /dev/cd0a /cdrom
-  # pkg_add -v /cdrom/3.3/packages/i386/emacs-20.7.tgz
+ # mount /dev/cd0a /cdrom
+ # pkg_add -v /cdrom/3.4/packages/i386/emacs-20.7.tgz
 or alternatively install them via FTP this way:
-  # pkg_add -v \
-    ftp://ftp.openbsd.org/pub/OpenBSD/3.3/packages/i386/emacs-20.7.tgz
+ # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/3.4/packages/i386/emacs-20.7.tgz
 
 You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh!  ssh is
 included in all OpenBSD systems.  The implementation is OpenSSH, which we are
@@ -1074,7 +1074,7 @@ OpenBSD continues.
 
 If you wish to ensure that OpenBSD runs better on your machines, please do us
 a favor (after you have your mail system configured!) and type something like:
-    dmesg | mail -s "Sony VAIO 505R laptop, apm works OK" dmesg@openbsd.org
+ # dmesg | mail -s "Sony VAIO 505R laptop, apm works OK" dmesg@openbsd.org
 so that we can see what kinds of configurations people are running.  As shown,
 including a bit of information about your machine in the subject or the body
 can help us even further.  We will use this information to improve device driver
