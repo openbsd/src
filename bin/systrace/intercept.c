@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.19 2002/07/30 03:16:40 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.20 2002/07/30 16:09:48 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -660,7 +660,7 @@ intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 {
 	struct intercept_pid *icpid;
 
-	if (result)
+	if (result > 0)
 		goto out;
 
 	icpid = intercept_getpid(pid);
