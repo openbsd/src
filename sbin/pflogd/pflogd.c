@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.27 2004/02/13 19:01:57 otto Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.28 2004/04/28 06:59:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -255,16 +255,19 @@ reset_dump(void)
 	fp = fdopen(fd, "a+");
 
 	if (fp == NULL) {
+		close(fd);
 		logmsg(LOG_ERR, "Error: %s: %s", filename, strerror(errno));
 		return (1);
 	}
 	if (fstat(fileno(fp), &st) == -1) {
+		fclose(fp);
 		logmsg(LOG_ERR, "Error: %s: %s", filename, strerror(errno));
 		return (1);
 	}
 
 	/* set FILE unbuffered, we do our own buffering */
 	if (setvbuf(fp, NULL, _IONBF, 0)) {
+		fclose(fp);
 		logmsg(LOG_ERR, "Failed to set output buffers");
 		return (1);
 	}
@@ -275,6 +278,7 @@ reset_dump(void)
 		if (snaplen != cur_snaplen) {
 			logmsg(LOG_NOTICE, "Using snaplen %d", snaplen);
 			if (set_snaplen(snaplen)) {
+				fclose(fp);
 				logmsg(LOG_WARNING,
 				    "Failed, using old settings");
 			}
