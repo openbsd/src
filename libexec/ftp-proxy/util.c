@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2003/12/22 21:53:40 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.18 2004/01/22 16:10:30 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -58,6 +58,7 @@
 
 int Debug_Level;
 int Use_Rdns;
+in_addr_t Bind_Addr = INADDR_NONE;
 
 void		debuglog(int debug_level, const char *fmt, ...);
 
@@ -258,10 +259,13 @@ get_backchannel_socket(int type, int min_port, int max_port, int start_port,
 
 		bzero(&sa, sizeof sa);
 		sa.sin_family = AF_INET;
-		if (sap == NULL)
-			sa.sin_addr.s_addr = INADDR_ANY;
+		if (Bind_Addr == INADDR_NONE)
+			if (sap == NULL)
+				sa.sin_addr.s_addr = INADDR_ANY;
+			else
+				sa.sin_addr.s_addr = sap->sin_addr.s_addr;
 		else
-			sa.sin_addr.s_addr = sap->sin_addr.s_addr;
+			sa.sin_addr.s_addr = Bind_Addr;
 
 		/*
 		 * Indicate that we want to reuse a port if it happens that the
