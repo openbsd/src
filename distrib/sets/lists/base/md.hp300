@@ -585,7 +585,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tropicvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/uhareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/uhavar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/vgafbvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/vgavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/wdcreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/wdcvar.ph
@@ -729,7 +728,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ubsecreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ubsecvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/vga_pcivar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/vgafb_pcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/wdt50x.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/xmaciireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia

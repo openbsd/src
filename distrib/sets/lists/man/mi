@@ -129,6 +129,7 @@
 ./usr/share/info/info-stnd.info-1
 ./usr/share/info/info-stnd.info-2
 ./usr/share/info/info.info
+./usr/share/info/kth-krb.info
 ./usr/share/info/mmalloc.info
 ./usr/share/info/readline.info
 ./usr/share/info/stabs.info
@@ -1486,7 +1487,6 @@
 ./usr/share/man/cat8/i386/bad144.0
 ./usr/share/man/cat8/i386/biosboot.0
 ./usr/share/man/cat8/i386/boot.0
-./usr/share/man/cat8/i386/boot.com.0
 ./usr/share/man/cat8/i386/boot.conf.0
 ./usr/share/man/cat8/i386/fdisk.0
 ./usr/share/man/cat8/i386/installboot.0

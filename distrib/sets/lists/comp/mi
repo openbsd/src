@@ -206,7 +206,6 @@
 ./usr/include/dev/ic/tropicvar.h
 ./usr/include/dev/ic/uhareg.h
 ./usr/include/dev/ic/uhavar.h
-./usr/include/dev/ic/vgafbvar.h
 ./usr/include/dev/ic/vgavar.h
 ./usr/include/dev/ic/wdcreg.h
 ./usr/include/dev/ic/wdcvar.h
@@ -350,7 +349,6 @@
 ./usr/include/dev/pci/ubsecreg.h
 ./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
-./usr/include/dev/pci/vgafb_pcivar.h
 ./usr/include/dev/pci/wdt50x.h
 ./usr/include/dev/pci/xmaciireg.h
 ./usr/include/dev/pcmcia
