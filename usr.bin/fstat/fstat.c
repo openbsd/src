@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.17 1998/07/09 20:28:00 mickey Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.18 1998/09/06 22:48:46 art Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.17 1998/07/09 20:28:00 mickey Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.18 1998/09/06 22:48:46 art Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,6 +69,8 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.17 1998/07/09 20:28:00 mickey Exp $"
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
 #undef NFS
+
+#include <xfs/xfs_node.h>
 
 #include <net/route.h>
 #include <netinet/in.h>
@@ -399,6 +401,10 @@ vtrans(vp, i, flag)
 			if (!msdos_filestat(&vn, &fst))
 				badtype = "error";
 			break;
+		case VT_XFS:
+			if (!xfs_filestat(&vn, &fst))
+				badtype = "error";
+			break;
 		default: {
 			static char unknown[30];
 			sprintf(badtype = unknown, "?(%x)", vn.v_tag);
@@ -571,6 +577,25 @@ nfs_filestat(vp, fsp)
 	return 1;
 }
 
+int
+xfs_filestat(vp, fsp)
+	struct vnode *vp;
+	struct filestat *fsp;
+{
+	struct xfs_node xfs_node;
+
+	if (!KVM_READ(VNODE_TO_XNODE(vp), &xfs_node, sizeof (xfs_node))) {
+		dprintf("can't read xfs_node at %p for pid %d", VTOI(vp), Pid);
+		return 0;
+	}
+	fsp->fsid = xfs_node.attr.va_fsid;
+	fsp->fileid = (long)xfs_node.attr.va_fileid;
+	fsp->mode = xfs_node.attr.va_mode;
+	fsp->size = xfs_node.attr.va_size;
+	fsp->rdev = xfs_node.attr.va_rdev;
+
+	return 1;
+}
 
 char *
 getmnton(m)
