@@ -5,6 +5,8 @@ Australia:
 ftp://ftp.aba.net.au/pub/OpenBSD ==
 	ftp://ftp.au.openbsd.org/pub/OpenBSD
 
+ftp://ftp.wiretapped.net/pub/OpenBSD/
+
 France:
 
 ftp://ftp.lip6.fr/pub/OpenBSD == 
