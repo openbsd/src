@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2004/01/12 18:11:46 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2004/01/14 23:40:01 millert Exp $
 
 
 DIR=	usd/13.viref
@@ -15,7 +15,8 @@ vi.ref.txt: vi.ref index.so
 
 index.so: vi.ref
 	# Build index.so, side-effect of building the paper.
-	soelim vi.ref | ${TBL} | ${ROFF} -U > /dev/null
+	sed '/^\.so index.so/s/^/.\\\" /' vi.ref | soelim | \
+	    ${TBL} | ${ROFF} -U > /dev/null
 	sed -e 's/MINUSSIGN/\\-/' \
 	    -e 's/DOUBLEQUOTE/""/' \
 	    -e "s/SQUOTE/'/" \
