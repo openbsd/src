@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.y,v 1.6 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: keynote.y,v 1.7 2000/06/13 19:03:11 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -824,7 +824,7 @@ isfloatstring(char *s)
     int i, point = 0;
     
     for (i = strlen(s) - 1; i >= 0; i--)
-      if (!isdigit(s[i]))
+      if (!isdigit((int) s[i]))
       {
 	  if (s[i] == '.')
 	  {
