@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.8 1997/04/16 05:02:48 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.9 1997/04/18 18:56:49 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.6 1997/04/14 09:09:19 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.8 1997/04/16 05:02:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.9 1997/04/18 18:56:49 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -244,9 +244,7 @@ url_get(line, proxyenv)
 	}
 	buf[buflen - 1] = '\0';		/* sanity */
 
-	/*
-	 * Look for the "Content-length: " header.
-	 */
+	/* Look for the "Content-length: " header.  */
 #define CONTENTLEN "Content-Length: "
 	for (cp = buf; *cp != '\0'; cp++) {
 		if (tolower(*cp) == 'c' &&
@@ -433,8 +431,10 @@ auto_fetch(argc, argv)
 			/* Look for [user:pass@]host[:port] */
 			user = host;
 			pass = strpbrk(user, ":@/");
-			if (pass == NULL || *pass == '/')
+			if (pass == NULL || *pass == '/') {
+				user = pass = NULL;
 				goto parsed_url;
+			}
 			if (*pass == '@') {
 				warnx("Bad ftp URL: %s", argv[argpos]);
 				rval = argpos + 1;
@@ -467,7 +467,7 @@ parsed_url:
 		}
 
 		/*
-		 * If cp is NULL, the file wasn't specified
+		 * If dir is NULL, the file wasn't specified
 		 * (URL looked something like ftp://host)
 		 */
 		if (dir != NULL)
