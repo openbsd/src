@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.4 1996/09/14 15:58:20 pefo Exp $
+#	$OpenBSD: files.arc,v 1.5 1996/09/15 09:46:08 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -7,7 +7,6 @@ maxpartitions 16
 maxusers 2 8 64
 
 #	Required files
-
 
 file	arch/arc/arc/autoconf.c
 file	arch/arc/arc/conf.c
@@ -28,14 +27,11 @@ file	arch/arc/arc/arcbios.c
 #
 #	Machine-independent ATAPI drivers 
 #
-
 include "../../../dev/atapi/files.atapi"
-
 
 #
 #	System BUS types
 #
-
 define	mainbus {}
 device	mainbus
 attach	mainbus at root
@@ -50,8 +46,16 @@ file arch/arc/arc/cpu.c			cpu
 #	PICA bus autoconfiguration devices
 #
 device	pica {}
-attach	pica at mainbus			# { slot = -1, offset = -1 }
+attach	pica at mainbus			# 
 file	arch/arc/pica/picabus.c		pica
+
+#
+#	ISA Bus bridge
+#
+device	isabr {} : isabus
+attach	isabr at mainbus
+file	arch/arc/isa/isabus.c		isabr
+file    arch/arc/isa/isadma.c		isadma needs-flag
 
 #	Ethernet chip
 device	sn
@@ -75,15 +79,6 @@ device	fd: disk
 attach	fd at fdc
 file	arch/arc/dev/fd.c		fdc	needs-flag
 major	{fd = 7}
-
-
-#
-#	ISA
-#
-device	isabr {} : isabus
-attach	isabr at mainbus
-file	arch/arc/isa/isabus.c		isabr
-file    arch/arc/isa/isadma.c		isadma needs-flag
 
 #
 #	Stock ISA bus support

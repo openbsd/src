@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.2 1996/09/14 15:58:11 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.3 1996/09/15 09:46:06 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -28,6 +28,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/memconf.h>
@@ -43,18 +44,35 @@ extern int	physmem;		/* Total physical memory size */
 char buf[100];	/*XXX*/
 arc_dsp_stat_t	displayinfo;		/* Save area for display status info. */
 
+static struct systypes {
+	char *sys_vend;		/* Vendor ID if name is ambigous */
+	char *sys_name;		/* May be left NULL if name is sufficient */
+	int  sys_type;
+} sys_types[] = {
+    { NULL,		"PICA-61",			ACER_PICA_61 },
+    { NULL,		"DESKTECH-TYNE",		DESKSTATION_TYNE }, 
+    { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
+    { NULL,		"Microsoft-Jazz",		MAGNUM },
+};
+
+#define KNOWNSYSTEMS (sizeof(sys_types) / sizeof(struct systypes))
+
 /*
  *	ARC Bios trampoline code.
  */
 #define ARC_Call(Name,Offset)	\
 __asm__("\n"			\
+"	.text\n"		\
+"	.ent	" #Name "\n"	\
+"	.align	3\n"		\
 "	.set	noreorder\n"	\
 "	.globl	" #Name "\n" 	\
 #Name":\n"			\
 "	lw	$2, 0x80001020\n"\
 "	lw	$2," #Offset "($2)\n"\
 "	jr	$2\n"		\
-"	nop\n"		);
+"	nop\n"			\
+"	.end	" #Name "\n"	);
 
 ARC_Call(Bios_Load,			0x00);
 ARC_Call(Bios_Invoke,			0x04);
@@ -138,6 +156,14 @@ char *s;
 	}
 }
 
+/*
+ * Get memory descriptor for the memory configuration and
+ * create a layout database used by pmap init to set up
+ * the memory system. Note that kernel option "MACHINE_NONCONTIG"
+ * must be set for systems with non contigous physical memory.
+ *
+ * Concatenate obvious adjecent segments.
+ */
 bios_configure_memory()
 {
 	arc_mem_t *descr = 0;
@@ -201,25 +227,65 @@ bios_configure_memory()
 	}
 
 	for( i = 0; i < MAXMEMSEGS; i++) {
+	    if(mem_layout[i].mem_size) {
 		sprintf(buf, "MEM %d, 0x%x, 0x%x\n",i,
 			mem_layout[i].mem_start,
 			mem_layout[i].mem_size);
 		bios_putstring(buf);
+	    }
 	}
 }
+
+/*
+ * Find out system type.
+ */
+int
+get_cpu_type()
+{
+	arc_config_t	*cf;
+	arc_sid_t	*sid;
+	int		i;
+
+	sid = (arc_sid_t *)Bios_GetSystemId();
+	cf = (arc_config_t *)Bios_GetChild(NULL);
+	if(cf) {
+		for(i = 0; i < KNOWNSYSTEMS; i++) {
+			if(strcmp(sys_types[i].sys_name, cf->id) != 0)
+				continue;
+			if(sys_types[i].sys_vend &&
+			    strncmp(sys_types[i].sys_vend, sid->vendor, 8) != 0)
+				continue;
+			return(sys_types[i].sys_type);	/* Found it. */
+		}
+	}
+
+	bios_putstring("UNIDENTIFIED ARC SYSTEM `");
+	if(cf)
+		bios_putstring(cf->id);
+	else
+		bios_putstring("????????");
+	bios_putstring("' VENDOR `");
+	sid->vendor[8] = 0;
+	bios_putstring("sid->vendor");
+	bios_putstring("'. Please contact OpenBSD (www.openbsd.org).\n");
+	while(1);
+}
+
 /*
  * Incomplete version of bios_ident
  */
 void
 bios_ident()
 {
-	bios_putstring("calling bios_ident\n");
+	cputype = get_cpu_type();
 	bios_configure_memory();
 	displayinfo = *(arc_dsp_stat_t *)Bios_GetDisplayStatus(1);
-	cputype = ACER_PICA_61;
 }
 
-
+/*
+ * Return geometry of the display. Used by pccons.c to set up the
+ * display configuration.
+ */
 void
 bios_display_info(xpos, ypos, xsize, ysize)
     int	*xpos;
