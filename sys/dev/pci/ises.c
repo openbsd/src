@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.20 2002/03/14 03:16:06 millert Exp $	*/
+/*	$OpenBSD: ises.c,v 1.21 2002/07/05 21:03:46 jason Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -1127,7 +1127,7 @@ ises_freesession(u_int64_t tsid)
 {
 	struct ises_softc *sc;
 	int card, sesn;
-	u_int32_t sid = ((u_int32_t) tsid) & 0xffffffff;
+	u_int32_t sid = ((u_int32_t)tsid) & 0xffffffff;
 
 	card = ISES_CARD(sid);
 	if (card >= ises_cd.cd_ndevs || ises_cd.cd_devs[card] == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.105 2002/07/03 00:24:29 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.106 2002/07/05 21:03:46 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -705,7 +705,7 @@ ubsec_freesession(tid)
 {
 	struct ubsec_softc *sc;
 	int card, session;
-	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
+	u_int32_t sid = ((u_int32_t)tid) & 0xffffffff;
 
 	card = UBSEC_CARD(sid);
 	if (card >= ubsec_cd.cd_ndevs || ubsec_cd.cd_devs[card] == NULL)
