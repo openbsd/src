@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.4 2004/02/07 11:35:59 henning Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.5 2004/02/24 15:35:55 henning Exp $	*/
 
 /* Memory allocation... */
 
@@ -65,24 +65,6 @@ dfree(void *ptr, char *name)
 	free(ptr);
 }
 
-struct packet *
-new_packet(char *name)
-{
-	struct packet *rval;
-
-	rval = dmalloc(sizeof(struct packet), name);
-	return (rval);
-}
-
-struct dhcp_packet *
-new_dhcp_packet(char *name)
-{
-	struct dhcp_packet *rval;
-
-	rval = dmalloc(sizeof(struct dhcp_packet), name);
-	return (rval);
-}
-
 struct tree *
 new_tree(char *name)
 {
@@ -140,154 +122,6 @@ new_hash_bucket(char *name)
 	struct hash_bucket *rval = dmalloc(sizeof(struct hash_bucket), name);
 
 	return (rval);
-}
-
-struct lease *
-new_leases(int n, char *name)
-{
-	struct lease *rval = dmalloc(n * sizeof(struct lease), name);
-
-	return (rval);
-}
-
-struct lease *
-new_lease(char *name)
-{
-	struct lease *rval = dmalloc(sizeof(struct lease), name);
-
-	return (rval);
-}
-
-struct subnet *
-new_subnet(char *name)
-{
-	struct subnet *rval = dmalloc(sizeof(struct subnet), name);
-
-	return (rval);
-}
-
-struct class *
-new_class(char *name)
-{
-	struct class *rval = dmalloc(sizeof(struct class), name);
-
-	return (rval);
-}
-
-struct shared_network *
-new_shared_network(char *name)
-{
-	struct shared_network *rval =
-	    dmalloc(sizeof(struct shared_network), name);
-
-	return (rval);
-}
-
-struct group *
-new_group(char *name)
-{
-	struct group *rval = dmalloc(sizeof(struct group), name);
-
-	return (rval);
-}
-
-struct protocol *
-new_protocol(char *name)
-{
-	struct protocol *rval = dmalloc(sizeof(struct protocol), name);
-
-	return (rval);
-}
-
-struct lease_state *free_lease_states;
-
-struct lease_state *
-new_lease_state(char *name)
-{
-	struct lease_state *rval;
-
-	if (free_lease_states) {
-		rval = free_lease_states;
-		free_lease_states =
-		    (struct lease_state *)(free_lease_states->next);
-	} else
-		rval = dmalloc(sizeof(struct lease_state), name);
-	return (rval);
-}
-
-struct domain_search_list *
-new_domain_search_list(char *name)
-{
-	struct domain_search_list *rval =
-	    dmalloc(sizeof(struct domain_search_list), name);
-
-	return (rval);
-}
-
-struct name_server *
-new_name_server(char *name)
-{
-	struct name_server *rval =
-	    dmalloc(sizeof(struct name_server), name);
-
-	return (rval);
-}
-
-void
-free_name_server(struct name_server *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_domain_search_list(struct domain_search_list *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_lease_state(struct lease_state *ptr, char *name)
-{
-	if (ptr->prl)
-		dfree(ptr->prl, name);
-	ptr->next = free_lease_states;
-	free_lease_states = ptr;
-}
-
-void
-free_protocol(struct protocol *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_group(struct group *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_shared_network(struct shared_network *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_class(struct class *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_subnet(struct subnet *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_lease(struct lease *ptr, char *name)
-{
-	dfree(ptr, name);
 }
 
 void

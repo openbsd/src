@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.4 2004/02/07 13:59:45 henning Exp $	*/
+/*	$OpenBSD: print.c,v 1.5 2004/02/24 15:35:56 henning Exp $	*/
 
 /* Turn data structures into printable text. */
 
@@ -71,34 +71,6 @@ bad:
 	strlcpy(habuf, "<null>", sizeof(habuf));
 	return (habuf);
 
-}
-
-void
-print_lease(struct lease *lease)
-{
-	struct tm *t;
-	char tbuf[32];
-
-	debug("      Lease %s", piaddr(lease->ip_addr));
-
-	t = gmtime(&lease->starts);
-	strftime(tbuf, sizeof(tbuf), "%Y/%m/%d %H:%M:%S", t);
-	debug("        start %s", tbuf);
-
-	t = gmtime(&lease->ends);
-	strftime(tbuf, sizeof(tbuf), "%Y/%m/%d %H:%M:%S", t);
-	debug("        end %s", tbuf);
-
-	t = gmtime(&lease->timestamp);
-	strftime(tbuf, sizeof(tbuf), "%Y/%m/%d %H:%M:%S", t);
-	debug("        stamp %s", tbuf);
-
-	debug("        hardware addr = %s", print_hw_addr(
-	    lease->hardware_addr.htype,
-	    lease->hardware_addr.hlen,
-	    lease->hardware_addr.haddr));
-	debug("        host %s  ",
-	    lease->host ? lease->host->name : "<none>");
 }
 
 void

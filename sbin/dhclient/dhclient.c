@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.18 2004/02/24 14:49:08 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.19 2004/02/24 15:35:56 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -662,12 +662,6 @@ state_bound(void *ipp)
 
 int
 commit_leases(void)
-{
-	return (0);
-}
-
-int
-write_lease(struct lease *lease)
 {
 	return (0);
 }

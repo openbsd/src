@@ -1,8 +1,9 @@
-/*	$OpenBSD: dispatch.c,v 1.13 2004/02/24 14:49:08 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.14 2004/02/24 15:35:56 henning Exp $	*/
 
 /* Network input dispatcher... */
 
 /*
+ * Copyright 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
  * The Internet Software Consortium.   All rights reserved.
  *
@@ -177,25 +178,6 @@ discover_interfaces(void)
 		add_protocol(tmp->name, tmp->rfdesc, got_one, tmp);
 
 	freeifaddrs(ifap);
-}
-
-struct interface_info *
-setup_fallback(void)
-{
-	fallback_interface =
-		 dmalloc(sizeof(*fallback_interface), "discover_interfaces");
-	if (!fallback_interface)
-		error("Insufficient memory to record fallback interface.");
-	memset(fallback_interface, 0, sizeof(*fallback_interface));
-	strlcpy(fallback_interface->name, "fallback", IFNAMSIZ);
-	fallback_interface->shared_network =
-	    new_shared_network("parse_statement");
-	if (!fallback_interface->shared_network)
-		error("No memory for shared subnet");
-	memset(fallback_interface->shared_network, 0,
-	    sizeof(struct shared_network));
-	fallback_interface->shared_network->name = "fallback-net";
-	return (fallback_interface);
 }
 
 void
