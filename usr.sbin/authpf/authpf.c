@@ -283,7 +283,7 @@ main(int argc, char *argv[])
 }
 
 /* read_config:
- * reads config file in PATH_CONFILE to set optional behaviours up
+ * reads config file in PATH_CONFFILE to set optional behaviours up
  */
 
 static void
