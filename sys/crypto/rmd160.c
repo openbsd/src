@@ -1,422 +1,362 @@
-/*       $OpenBSD: rmd160.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $       */
-
-/********************************************************************\
+/*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
+/*
+ * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
- *      FILE:     rmd160.c
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- *      CONTENTS: A sample C-implementation of the RIPEMD-160
- *		  hash-function.
- *      TARGET:   any computer with an ANSI C compiler
- *
- *      AUTHOR:   Antoon Bosselaers, ESAT-COSIC
- *		  (Arranged for libc by Todd C. Miller)
- *      DATE:     1 March 1996
- *      VERSION:  1.0
- *
- *      Copyright (c) Katholieke Universiteit Leuven
- *      1996, All Rights Reserved
- *
-\********************************************************************/
-
-/*  header files */
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * Preneel, Bosselaers, Dobbertin, "The Cryptographic Hash Function RIPEMD-160",
+ * RSA Laboratories, CryptoBytes, Volume 3, Number 2, Autumn 1997,
+ * ftp://ftp.rsasecurity.com/pub/cryptobytes/crypto3n2.pdf
+ */
 #include <sys/param.h>
 #include <sys/systm.h>
-
+#include <sys/endian.h>
 #include <crypto/rmd160.h>
 
-/********************************************************************/
+#define PUT_64BIT_LE(cp, value) do { \
+	(cp)[7] = (value) >> 56; \
+	(cp)[6] = (value) >> 48; \
+	(cp)[5] = (value) >> 40; \
+	(cp)[4] = (value) >> 32; \
+	(cp)[3] = (value) >> 24; \
+	(cp)[2] = (value) >> 16; \
+	(cp)[1] = (value) >> 8; \
+	(cp)[0] = (value); } while (0)
 
-/* macro definitions */
+#define PUT_32BIT_LE(cp, value) do { \
+	(cp)[3] = (value) >> 24; \
+	(cp)[2] = (value) >> 16; \
+	(cp)[1] = (value) >> 8; \
+	(cp)[0] = (value); } while (0)
 
-/* collect four bytes into one word: */
-#define BYTES_TO_DWORD(strptr)			\
-    (((u_int32_t) *((strptr)+3) << 24) |	\
-    ((u_int32_t) *((strptr)+2) << 16) |		\
-    ((u_int32_t) *((strptr)+1) <<  8) |		\
-    ((u_int32_t) *(strptr)))
+#define	H0	0x67452301U
+#define	H1	0xEFCDAB89U
+#define	H2	0x98BADCFEU
+#define	H3	0x10325476U
+#define	H4	0xC3D2E1F0U
 
-/* ROL(x, n) cyclically rotates x over n bits to the left */
-/* x must be of an unsigned 32 bits type and 0 <= n < 32. */
-#define ROL(x, n)	(((x) << (n)) | ((x) >> (32-(n))))
+#define	K0	0x00000000U
+#define	K1	0x5A827999U
+#define	K2	0x6ED9EBA1U
+#define	K3	0x8F1BBCDCU
+#define	K4	0xA953FD4EU
 
-/* the three basic functions F(), G() and H() */
-#define F(x, y, z)	((x) ^ (y) ^ (z))
-#define G(x, y, z)	(((x) & (y)) | (~(x) & (z)))
-#define H(x, y, z)	(((x) | ~(y)) ^ (z))
-#define I(x, y, z)	(((x) & (z)) | ((y) & ~(z)))
-#define J(x, y, z)	((x) ^ ((y) | ~(z)))
+#define	KK0	0x50A28BE6U
+#define	KK1	0x5C4DD124U
+#define	KK2	0x6D703EF3U
+#define	KK3	0x7A6D76E9U
+#define	KK4	0x00000000U
 
-/* the eight basic operations FF() through III() */
-#define FF(a, b, c, d, e, x, s)	{			\
-      (a) += F((b), (c), (d)) + (x);			\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define GG(a, b, c, d, e, x, s)	{			\
-      (a) += G((b), (c), (d)) + (x) + 0x5a827999U;	\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define HH(a, b, c, d, e, x, s)	{			\
-      (a) += H((b), (c), (d)) + (x) + 0x6ed9eba1U;	\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define II(a, b, c, d, e, x, s)	{			\
-      (a) += I((b), (c), (d)) + (x) + 0x8f1bbcdcU;	\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define JJ(a, b, c, d, e, x, s)	{			\
-      (a) += J((b), (c), (d)) + (x) + 0xa953fd4eU;	\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define FFF(a, b, c, d, e, x, s)	{		\
-      (a) += F((b), (c), (d)) + (x);			\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define GGG(a, b, c, d, e, x, s)	{		\
-      (a) += G((b), (c), (d)) + (x) + 0x7a6d76e9U;	\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define HHH(a, b, c, d, e, x, s)	{		\
-      (a) += H((b), (c), (d)) + (x) + 0x6d703ef3U;	\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define III(a, b, c, d, e, x, s)	{		\
-      (a) += I((b), (c), (d)) + (x) + 0x5c4dd124U;	\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
-#define JJJ(a, b, c, d, e, x, s)	{		\
-      (a) += J((b), (c), (d)) + (x) + 0x50a28be6U;	\
-      (a) = ROL((a), (s)) + (e);			\
-      (c) = ROL((c), 10);				\
-}
+/* rotate x left n bits.  */
+#define ROL(n, x) (((x) << (n)) | ((x) >> (32-(n))))
 
-/********************************************************************/
+#define F0(x, y, z) ((x) ^ (y) ^ (z))
+#define F1(x, y, z) (((x) & (y)) | ((~x) & (z)))
+#define F2(x, y, z) (((x) | (~y)) ^ (z))
+#define F3(x, y, z) (((x) & (z)) | ((y) & (~z)))
+#define F4(x, y, z) ((x) ^ ((y) | (~z)))
 
-void RMD160Init(context)
-	RMD160_CTX *context;
+#define R(a, b, c, d, e, Fj, Kj, sj, rj) \
+	do { \
+		a = ROL(sj, a + Fj(b,c,d) + X(rj) + Kj) + e; \
+		c = ROL(10, c); \
+	} while(0)
+
+#define X(i)	x[i]
+
+static u_char PADDING[64] = {
+	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+void
+RMD160Init(RMD160_CTX *ctx)
 {
-
-	/* ripemd-160 initialization constants */
-	context->state[0] = 0x67452301U;
-	context->state[1] = 0xefcdab89U;
-	context->state[2] = 0x98badcfeU;
-	context->state[3] = 0x10325476U;
-	context->state[4] = 0xc3d2e1f0U;
-	context->length[0] = context->length[1] = 0;
-	context->buflen = 0;
+	ctx->count = 0;
+	ctx->state[0] = H0;
+	ctx->state[1] = H1;
+	ctx->state[2] = H2;
+	ctx->state[3] = H3;
+	ctx->state[4] = H4;
 }
 
-/********************************************************************/
-
-void RMD160Transform(state, block)
-	u_int32_t state[5];
-	const u_int32_t block[16];
+void
+RMD160Update(RMD160_CTX *ctx, const u_char *input, u_int32_t len)
 {
-	u_int32_t aa = state[0],  bb = state[1],  cc = state[2],
-	    dd = state[3],  ee = state[4];
-	u_int32_t aaa = state[0], bbb = state[1], ccc = state[2],
-	    ddd = state[3], eee = state[4];
+	u_int32_t have, off, need;
 
-	/* round 1 */
-	FF(aa, bb, cc, dd, ee, block[ 0], 11);
-	FF(ee, aa, bb, cc, dd, block[ 1], 14);
-	FF(dd, ee, aa, bb, cc, block[ 2], 15);
-	FF(cc, dd, ee, aa, bb, block[ 3], 12);
-	FF(bb, cc, dd, ee, aa, block[ 4],  5);
-	FF(aa, bb, cc, dd, ee, block[ 5],  8);
-	FF(ee, aa, bb, cc, dd, block[ 6],  7);
-	FF(dd, ee, aa, bb, cc, block[ 7],  9);
-	FF(cc, dd, ee, aa, bb, block[ 8], 11);
-	FF(bb, cc, dd, ee, aa, block[ 9], 13);
-	FF(aa, bb, cc, dd, ee, block[10], 14);
-	FF(ee, aa, bb, cc, dd, block[11], 15);
-	FF(dd, ee, aa, bb, cc, block[12],  6);
-	FF(cc, dd, ee, aa, bb, block[13],  7);
-	FF(bb, cc, dd, ee, aa, block[14],  9);
-	FF(aa, bb, cc, dd, ee, block[15],  8);
+	have = (ctx->count/8) % 64;
+	need = 64 - have;
+	ctx->count += 8 * len;
+	off = 0;
 
-	/* round 2 */
-	GG(ee, aa, bb, cc, dd, block[ 7],  7);
-	GG(dd, ee, aa, bb, cc, block[ 4],  6);
-	GG(cc, dd, ee, aa, bb, block[13],  8);
-	GG(bb, cc, dd, ee, aa, block[ 1], 13);
-	GG(aa, bb, cc, dd, ee, block[10], 11);
-	GG(ee, aa, bb, cc, dd, block[ 6],  9);
-	GG(dd, ee, aa, bb, cc, block[15],  7);
-	GG(cc, dd, ee, aa, bb, block[ 3], 15);
-	GG(bb, cc, dd, ee, aa, block[12],  7);
-	GG(aa, bb, cc, dd, ee, block[ 0], 12);
-	GG(ee, aa, bb, cc, dd, block[ 9], 15);
-	GG(dd, ee, aa, bb, cc, block[ 5],  9);
-	GG(cc, dd, ee, aa, bb, block[ 2], 11);
-	GG(bb, cc, dd, ee, aa, block[14],  7);
-	GG(aa, bb, cc, dd, ee, block[11], 13);
-	GG(ee, aa, bb, cc, dd, block[ 8], 12);
-
-	/* round 3 */
-	HH(dd, ee, aa, bb, cc, block[ 3], 11);
-	HH(cc, dd, ee, aa, bb, block[10], 13);
-	HH(bb, cc, dd, ee, aa, block[14],  6);
-	HH(aa, bb, cc, dd, ee, block[ 4],  7);
-	HH(ee, aa, bb, cc, dd, block[ 9], 14);
-	HH(dd, ee, aa, bb, cc, block[15],  9);
-	HH(cc, dd, ee, aa, bb, block[ 8], 13);
-	HH(bb, cc, dd, ee, aa, block[ 1], 15);
-	HH(aa, bb, cc, dd, ee, block[ 2], 14);
-	HH(ee, aa, bb, cc, dd, block[ 7],  8);
-	HH(dd, ee, aa, bb, cc, block[ 0], 13);
-	HH(cc, dd, ee, aa, bb, block[ 6],  6);
-	HH(bb, cc, dd, ee, aa, block[13],  5);
-	HH(aa, bb, cc, dd, ee, block[11], 12);
-	HH(ee, aa, bb, cc, dd, block[ 5],  7);
-	HH(dd, ee, aa, bb, cc, block[12],  5);
-
-	/* round 4 */
-	II(cc, dd, ee, aa, bb, block[ 1], 11);
-	II(bb, cc, dd, ee, aa, block[ 9], 12);
-	II(aa, bb, cc, dd, ee, block[11], 14);
-	II(ee, aa, bb, cc, dd, block[10], 15);
-	II(dd, ee, aa, bb, cc, block[ 0], 14);
-	II(cc, dd, ee, aa, bb, block[ 8], 15);
-	II(bb, cc, dd, ee, aa, block[12],  9);
-	II(aa, bb, cc, dd, ee, block[ 4],  8);
-	II(ee, aa, bb, cc, dd, block[13],  9);
-	II(dd, ee, aa, bb, cc, block[ 3], 14);
-	II(cc, dd, ee, aa, bb, block[ 7],  5);
-	II(bb, cc, dd, ee, aa, block[15],  6);
-	II(aa, bb, cc, dd, ee, block[14],  8);
-	II(ee, aa, bb, cc, dd, block[ 5],  6);
-	II(dd, ee, aa, bb, cc, block[ 6],  5);
-	II(cc, dd, ee, aa, bb, block[ 2], 12);
-
-	/* round 5 */
-	JJ(bb, cc, dd, ee, aa, block[ 4],  9);
-	JJ(aa, bb, cc, dd, ee, block[ 0], 15);
-	JJ(ee, aa, bb, cc, dd, block[ 5],  5);
-	JJ(dd, ee, aa, bb, cc, block[ 9], 11);
-	JJ(cc, dd, ee, aa, bb, block[ 7],  6);
-	JJ(bb, cc, dd, ee, aa, block[12],  8);
-	JJ(aa, bb, cc, dd, ee, block[ 2], 13);
-	JJ(ee, aa, bb, cc, dd, block[10], 12);
-	JJ(dd, ee, aa, bb, cc, block[14],  5);
-	JJ(cc, dd, ee, aa, bb, block[ 1], 12);
-	JJ(bb, cc, dd, ee, aa, block[ 3], 13);
-	JJ(aa, bb, cc, dd, ee, block[ 8], 14);
-	JJ(ee, aa, bb, cc, dd, block[11], 11);
-	JJ(dd, ee, aa, bb, cc, block[ 6],  8);
-	JJ(cc, dd, ee, aa, bb, block[15],  5);
-	JJ(bb, cc, dd, ee, aa, block[13],  6);
-
-	/* parallel round 1 */
-	JJJ(aaa, bbb, ccc, ddd, eee, block[ 5],  8);
-	JJJ(eee, aaa, bbb, ccc, ddd, block[14],  9);
-	JJJ(ddd, eee, aaa, bbb, ccc, block[ 7],  9);
-	JJJ(ccc, ddd, eee, aaa, bbb, block[ 0], 11);
-	JJJ(bbb, ccc, ddd, eee, aaa, block[ 9], 13);
-	JJJ(aaa, bbb, ccc, ddd, eee, block[ 2], 15);
-	JJJ(eee, aaa, bbb, ccc, ddd, block[11], 15);
-	JJJ(ddd, eee, aaa, bbb, ccc, block[ 4],  5);
-	JJJ(ccc, ddd, eee, aaa, bbb, block[13],  7);
-	JJJ(bbb, ccc, ddd, eee, aaa, block[ 6],  7);
-	JJJ(aaa, bbb, ccc, ddd, eee, block[15],  8);
-	JJJ(eee, aaa, bbb, ccc, ddd, block[ 8], 11);
-	JJJ(ddd, eee, aaa, bbb, ccc, block[ 1], 14);
-	JJJ(ccc, ddd, eee, aaa, bbb, block[10], 14);
-	JJJ(bbb, ccc, ddd, eee, aaa, block[ 3], 12);
-	JJJ(aaa, bbb, ccc, ddd, eee, block[12],  6);
-
-	/* parallel round 2 */
-	III(eee, aaa, bbb, ccc, ddd, block[ 6],  9);
-	III(ddd, eee, aaa, bbb, ccc, block[11], 13);
-	III(ccc, ddd, eee, aaa, bbb, block[ 3], 15);
-	III(bbb, ccc, ddd, eee, aaa, block[ 7],  7);
-	III(aaa, bbb, ccc, ddd, eee, block[ 0], 12);
-	III(eee, aaa, bbb, ccc, ddd, block[13],  8);
-	III(ddd, eee, aaa, bbb, ccc, block[ 5],  9);
-	III(ccc, ddd, eee, aaa, bbb, block[10], 11);
-	III(bbb, ccc, ddd, eee, aaa, block[14],  7);
-	III(aaa, bbb, ccc, ddd, eee, block[15],  7);
-	III(eee, aaa, bbb, ccc, ddd, block[ 8], 12);
-	III(ddd, eee, aaa, bbb, ccc, block[12],  7);
-	III(ccc, ddd, eee, aaa, bbb, block[ 4],  6);
-	III(bbb, ccc, ddd, eee, aaa, block[ 9], 15);
-	III(aaa, bbb, ccc, ddd, eee, block[ 1], 13);
-	III(eee, aaa, bbb, ccc, ddd, block[ 2], 11);
-
-	/* parallel round 3 */
-	HHH(ddd, eee, aaa, bbb, ccc, block[15],  9);
-	HHH(ccc, ddd, eee, aaa, bbb, block[ 5],  7);
-	HHH(bbb, ccc, ddd, eee, aaa, block[ 1], 15);
-	HHH(aaa, bbb, ccc, ddd, eee, block[ 3], 11);
-	HHH(eee, aaa, bbb, ccc, ddd, block[ 7],  8);
-	HHH(ddd, eee, aaa, bbb, ccc, block[14],  6);
-	HHH(ccc, ddd, eee, aaa, bbb, block[ 6],  6);
-	HHH(bbb, ccc, ddd, eee, aaa, block[ 9], 14);
-	HHH(aaa, bbb, ccc, ddd, eee, block[11], 12);
-	HHH(eee, aaa, bbb, ccc, ddd, block[ 8], 13);
-	HHH(ddd, eee, aaa, bbb, ccc, block[12],  5);
-	HHH(ccc, ddd, eee, aaa, bbb, block[ 2], 14);
-	HHH(bbb, ccc, ddd, eee, aaa, block[10], 13);
-	HHH(aaa, bbb, ccc, ddd, eee, block[ 0], 13);
-	HHH(eee, aaa, bbb, ccc, ddd, block[ 4],  7);
-	HHH(ddd, eee, aaa, bbb, ccc, block[13],  5);
-
-	/* parallel round 4 */
-	GGG(ccc, ddd, eee, aaa, bbb, block[ 8], 15);
-	GGG(bbb, ccc, ddd, eee, aaa, block[ 6],  5);
-	GGG(aaa, bbb, ccc, ddd, eee, block[ 4],  8);
-	GGG(eee, aaa, bbb, ccc, ddd, block[ 1], 11);
-	GGG(ddd, eee, aaa, bbb, ccc, block[ 3], 14);
-	GGG(ccc, ddd, eee, aaa, bbb, block[11], 14);
-	GGG(bbb, ccc, ddd, eee, aaa, block[15],  6);
-	GGG(aaa, bbb, ccc, ddd, eee, block[ 0], 14);
-	GGG(eee, aaa, bbb, ccc, ddd, block[ 5],  6);
-	GGG(ddd, eee, aaa, bbb, ccc, block[12],  9);
-	GGG(ccc, ddd, eee, aaa, bbb, block[ 2], 12);
-	GGG(bbb, ccc, ddd, eee, aaa, block[13],  9);
-	GGG(aaa, bbb, ccc, ddd, eee, block[ 9], 12);
-	GGG(eee, aaa, bbb, ccc, ddd, block[ 7],  5);
-	GGG(ddd, eee, aaa, bbb, ccc, block[10], 15);
-	GGG(ccc, ddd, eee, aaa, bbb, block[14],  8);
-
-	/* parallel round 5 */
-	FFF(bbb, ccc, ddd, eee, aaa, block[12] ,  8);
-	FFF(aaa, bbb, ccc, ddd, eee, block[15] ,  5);
-	FFF(eee, aaa, bbb, ccc, ddd, block[10] , 12);
-	FFF(ddd, eee, aaa, bbb, ccc, block[ 4] ,  9);
-	FFF(ccc, ddd, eee, aaa, bbb, block[ 1] , 12);
-	FFF(bbb, ccc, ddd, eee, aaa, block[ 5] ,  5);
-	FFF(aaa, bbb, ccc, ddd, eee, block[ 8] , 14);
-	FFF(eee, aaa, bbb, ccc, ddd, block[ 7] ,  6);
-	FFF(ddd, eee, aaa, bbb, ccc, block[ 6] ,  8);
-	FFF(ccc, ddd, eee, aaa, bbb, block[ 2] , 13);
-	FFF(bbb, ccc, ddd, eee, aaa, block[13] ,  6);
-	FFF(aaa, bbb, ccc, ddd, eee, block[14] ,  5);
-	FFF(eee, aaa, bbb, ccc, ddd, block[ 0] , 15);
-	FFF(ddd, eee, aaa, bbb, ccc, block[ 3] , 13);
-	FFF(ccc, ddd, eee, aaa, bbb, block[ 9] , 11);
-	FFF(bbb, ccc, ddd, eee, aaa, block[11] , 11);
-
-	/* combine results */
-	ddd += cc + state[1];		/* final result for state[0] */
-	state[1] = state[2] + dd + eee;
-	state[2] = state[3] + ee + aaa;
-	state[3] = state[4] + aa + bbb;
-	state[4] = state[0] + bb + ccc;
-	state[0] = ddd;
-}
-
-/********************************************************************/
-
-void RMD160Update(context, data, nbytes)
-	RMD160_CTX *context;
-	const u_char *data;
-	u_int32_t nbytes;
-{
-	u_int32_t X[16];
-	u_int32_t ofs = 0;
-	u_int32_t i;
-#if BYTE_ORDER != LITTLE_ENDIAN
-	u_int32_t j;
-#endif
-
-	/* update length[] */
-	if (context->length[0] + nbytes < context->length[0])
-		context->length[1]++;		/* overflow to msb of length */
-	context->length[0] += nbytes;
-
-	bzero(X, sizeof(X));
-
-        if ( context->buflen + nbytes < 64 )
-        {
-		bcopy(data, context->bbuffer + context->buflen, nbytes);
-                context->buflen += nbytes;
-        }
-        else
-        {
-                /* process first block */
-                ofs = 64 - context->buflen;
-		bcopy(data, context->bbuffer + context->buflen, ofs);
-#if BYTE_ORDER == LITTLE_ENDIAN
-		bcopy(context->bbuffer, X, sizeof(X));
-#else
-                for (j=0; j < 16; j++)
-                        X[j] = BYTES_TO_DWORD(context->bbuffer + (4 * j));
-#endif
-                RMD160Transform(context->state, X);
-                nbytes -= ofs;
-
-                /* process remaining complete blocks */
-                for (i = 0; i < (nbytes >> 6); i++) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-			bcopy(data + (64 * i) + ofs, X, sizeof(X));
-#else
-                        for (j=0; j < 16; j++)
-                                X[j] = BYTES_TO_DWORD(data + (64 * i) + (4 * j) + ofs);
-#endif
-                        RMD160Transform(context->state, X);
-                }
-
-                /*
-                 * Put last bytes from data into context's buffer
-                 */
-                context->buflen = nbytes & 63;
-		bcopy(data + (64 * i) + ofs, context->bbuffer, context->buflen);
-        }
-}
-
-/********************************************************************/
-
-void RMD160Final(digest, context)
-	u_char digest[20];
-	RMD160_CTX *context;
-{
-	u_int32_t i;
-	u_int32_t X[16];
-#if BYTE_ORDER != LITTLE_ENDIAN
-	u_int32_t j;
-#endif
-
-	/* append the bit m_n == 1 */
-	context->bbuffer[context->buflen] = '\200';
-
-
-	bzero(context->bbuffer + context->buflen + 1, 63 - context->buflen);
-#if BYTE_ORDER == LITTLE_ENDIAN
-	bcopy(context->bbuffer, X, sizeof(X));
-#else
-	for (j=0; j < 16; j++)
-		X[j] = BYTES_TO_DWORD(context->bbuffer + (4 * j));
-#endif
-	if ((context->buflen) > 55) {
-		/* length goes to next block */
-		RMD160Transform(context->state, X);
-		bzero(X, sizeof(X));
-	}
-
-	/* append length in bits */
-	X[14] = context->length[0] << 3;
-	X[15] = (context->length[0] >> 29) |
-	    (context->length[1] << 3);
-	RMD160Transform(context->state, X);
-
-	if (digest != NULL) {
-		for (i = 0; i < 20; i += 4) {
-			/* extracts the 8 least significant bits. */
-			digest[i]     =  context->state[i>>2];
-			digest[i + 1] = (context->state[i>>2] >>  8);
-			digest[i + 2] = (context->state[i>>2] >> 16);
-			digest[i + 3] = (context->state[i>>2] >> 24);
+	if (len >= need) {
+		if (have) {
+			memcpy(ctx->buffer + have, input, need);
+			RMD160Transform(ctx->state, ctx->buffer);
+			off = need;
+			have = 0;
+		}
+		/* now the buffer is empty */
+		while (off + 64 <= len) {
+			RMD160Transform(ctx->state, input+off);
+			off += 64;
 		}
 	}
+	if (off < len)
+		memcpy(ctx->buffer + have, input+off, len-off);
 }
 
-/************************ end of file rmd160.c **********************/
+void
+RMD160Final(u_char digest[20], RMD160_CTX *ctx)
+{
+	int i;
+	u_char size[8];
+	u_int32_t padlen;
+
+	PUT_64BIT_LE(size, ctx->count);
+
+	/*
+	 * pad to 64 byte blocks, at least one byte from PADDING plus 8 bytes
+	 * for the size
+	 */
+	padlen = 64 - ((ctx->count/8) % 64);
+	if (padlen < 1 + 8)
+		padlen += 64;
+	RMD160Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
+	RMD160Update(ctx, size, 8);
+
+	if (digest != NULL)
+		for (i = 0; i < 5; i++)
+			PUT_32BIT_LE(digest + i*4, ctx->state[i]);
+
+	memset(ctx, 0, sizeof (*ctx));
+}
+
+void
+RMD160Transform(u_int32_t state[5], const u_char block[64])
+{
+	u_int32_t a, b, c, d, e, aa, bb, cc, dd, ee, t, x[16];
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+	memcpy(x, block, 64);
+#else
+	int i;
+
+	for (i = 0; i < 16; i++)
+		x[i] = swap32(*(u_int32_t*)(block+i*4));
+#endif
+
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
+	e = state[4];
+
+	/* Round 1 */
+	R(a, b, c, d, e, F0, K0, 11,  0);
+	R(e, a, b, c, d, F0, K0, 14,  1);
+	R(d, e, a, b, c, F0, K0, 15,  2);
+	R(c, d, e, a, b, F0, K0, 12,  3);
+	R(b, c, d, e, a, F0, K0,  5,  4);
+	R(a, b, c, d, e, F0, K0,  8,  5);
+	R(e, a, b, c, d, F0, K0,  7,  6);
+	R(d, e, a, b, c, F0, K0,  9,  7);
+	R(c, d, e, a, b, F0, K0, 11,  8);
+	R(b, c, d, e, a, F0, K0, 13,  9);
+	R(a, b, c, d, e, F0, K0, 14, 10);
+	R(e, a, b, c, d, F0, K0, 15, 11);
+	R(d, e, a, b, c, F0, K0,  6, 12);
+	R(c, d, e, a, b, F0, K0,  7, 13);
+	R(b, c, d, e, a, F0, K0,  9, 14);
+	R(a, b, c, d, e, F0, K0,  8, 15); /* #15 */
+	/* Round 2 */
+	R(e, a, b, c, d, F1, K1,  7,  7);
+	R(d, e, a, b, c, F1, K1,  6,  4);
+	R(c, d, e, a, b, F1, K1,  8, 13);
+	R(b, c, d, e, a, F1, K1, 13,  1);
+	R(a, b, c, d, e, F1, K1, 11, 10);
+	R(e, a, b, c, d, F1, K1,  9,  6);
+	R(d, e, a, b, c, F1, K1,  7, 15);
+	R(c, d, e, a, b, F1, K1, 15,  3);
+	R(b, c, d, e, a, F1, K1,  7, 12);
+	R(a, b, c, d, e, F1, K1, 12,  0);
+	R(e, a, b, c, d, F1, K1, 15,  9);
+	R(d, e, a, b, c, F1, K1,  9,  5);
+	R(c, d, e, a, b, F1, K1, 11,  2);
+	R(b, c, d, e, a, F1, K1,  7, 14);
+	R(a, b, c, d, e, F1, K1, 13, 11);
+	R(e, a, b, c, d, F1, K1, 12,  8); /* #31 */
+	/* Round 3 */
+	R(d, e, a, b, c, F2, K2, 11,  3);
+	R(c, d, e, a, b, F2, K2, 13, 10);
+	R(b, c, d, e, a, F2, K2,  6, 14);
+	R(a, b, c, d, e, F2, K2,  7,  4);
+	R(e, a, b, c, d, F2, K2, 14,  9);
+	R(d, e, a, b, c, F2, K2,  9, 15);
+	R(c, d, e, a, b, F2, K2, 13,  8);
+	R(b, c, d, e, a, F2, K2, 15,  1);
+	R(a, b, c, d, e, F2, K2, 14,  2);
+	R(e, a, b, c, d, F2, K2,  8,  7);
+	R(d, e, a, b, c, F2, K2, 13,  0);
+	R(c, d, e, a, b, F2, K2,  6,  6);
+	R(b, c, d, e, a, F2, K2,  5, 13);
+	R(a, b, c, d, e, F2, K2, 12, 11);
+	R(e, a, b, c, d, F2, K2,  7,  5);
+	R(d, e, a, b, c, F2, K2,  5, 12); /* #47 */
+	/* Round 4 */
+	R(c, d, e, a, b, F3, K3, 11,  1);
+	R(b, c, d, e, a, F3, K3, 12,  9);
+	R(a, b, c, d, e, F3, K3, 14, 11);
+	R(e, a, b, c, d, F3, K3, 15, 10);
+	R(d, e, a, b, c, F3, K3, 14,  0);
+	R(c, d, e, a, b, F3, K3, 15,  8);
+	R(b, c, d, e, a, F3, K3,  9, 12);
+	R(a, b, c, d, e, F3, K3,  8,  4);
+	R(e, a, b, c, d, F3, K3,  9, 13);
+	R(d, e, a, b, c, F3, K3, 14,  3);
+	R(c, d, e, a, b, F3, K3,  5,  7);
+	R(b, c, d, e, a, F3, K3,  6, 15);
+	R(a, b, c, d, e, F3, K3,  8, 14);
+	R(e, a, b, c, d, F3, K3,  6,  5);
+	R(d, e, a, b, c, F3, K3,  5,  6);
+	R(c, d, e, a, b, F3, K3, 12,  2); /* #63 */
+	/* Round 5 */
+	R(b, c, d, e, a, F4, K4,  9,  4);
+	R(a, b, c, d, e, F4, K4, 15,  0);
+	R(e, a, b, c, d, F4, K4,  5,  5);
+	R(d, e, a, b, c, F4, K4, 11,  9);
+	R(c, d, e, a, b, F4, K4,  6,  7);
+	R(b, c, d, e, a, F4, K4,  8, 12);
+	R(a, b, c, d, e, F4, K4, 13,  2);
+	R(e, a, b, c, d, F4, K4, 12, 10);
+	R(d, e, a, b, c, F4, K4,  5, 14);
+	R(c, d, e, a, b, F4, K4, 12,  1);
+	R(b, c, d, e, a, F4, K4, 13,  3);
+	R(a, b, c, d, e, F4, K4, 14,  8);
+	R(e, a, b, c, d, F4, K4, 11, 11);
+	R(d, e, a, b, c, F4, K4,  8,  6);
+	R(c, d, e, a, b, F4, K4,  5, 15);
+	R(b, c, d, e, a, F4, K4,  6, 13); /* #79 */
+
+	aa = a ; bb = b; cc = c; dd = d; ee = e;
+
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
+	e = state[4];
+
+	/* Parallel round 1 */
+	R(a, b, c, d, e, F4, KK0,  8,  5);
+	R(e, a, b, c, d, F4, KK0,  9, 14);
+	R(d, e, a, b, c, F4, KK0,  9,  7);
+	R(c, d, e, a, b, F4, KK0, 11,  0);
+	R(b, c, d, e, a, F4, KK0, 13,  9);
+	R(a, b, c, d, e, F4, KK0, 15,  2);
+	R(e, a, b, c, d, F4, KK0, 15, 11);
+	R(d, e, a, b, c, F4, KK0,  5,  4);
+	R(c, d, e, a, b, F4, KK0,  7, 13);
+	R(b, c, d, e, a, F4, KK0,  7,  6);
+	R(a, b, c, d, e, F4, KK0,  8, 15);
+	R(e, a, b, c, d, F4, KK0, 11,  8);
+	R(d, e, a, b, c, F4, KK0, 14,  1);
+	R(c, d, e, a, b, F4, KK0, 14, 10);
+	R(b, c, d, e, a, F4, KK0, 12,  3);
+	R(a, b, c, d, e, F4, KK0,  6, 12); /* #15 */
+	/* Parallel round 2 */
+	R(e, a, b, c, d, F3, KK1,  9,  6);
+	R(d, e, a, b, c, F3, KK1, 13, 11);
+	R(c, d, e, a, b, F3, KK1, 15,  3);
+	R(b, c, d, e, a, F3, KK1,  7,  7);
+	R(a, b, c, d, e, F3, KK1, 12,  0);
+	R(e, a, b, c, d, F3, KK1,  8, 13);
+	R(d, e, a, b, c, F3, KK1,  9,  5);
+	R(c, d, e, a, b, F3, KK1, 11, 10);
+	R(b, c, d, e, a, F3, KK1,  7, 14);
+	R(a, b, c, d, e, F3, KK1,  7, 15);
+	R(e, a, b, c, d, F3, KK1, 12,  8);
+	R(d, e, a, b, c, F3, KK1,  7, 12);
+	R(c, d, e, a, b, F3, KK1,  6,  4);
+	R(b, c, d, e, a, F3, KK1, 15,  9);
+	R(a, b, c, d, e, F3, KK1, 13,  1);
+	R(e, a, b, c, d, F3, KK1, 11,  2); /* #31 */
+	/* Parallel round 3 */
+	R(d, e, a, b, c, F2, KK2,  9, 15);
+	R(c, d, e, a, b, F2, KK2,  7,  5);
+	R(b, c, d, e, a, F2, KK2, 15,  1);
+	R(a, b, c, d, e, F2, KK2, 11,  3);
+	R(e, a, b, c, d, F2, KK2,  8,  7);
+	R(d, e, a, b, c, F2, KK2,  6, 14);
+	R(c, d, e, a, b, F2, KK2,  6,  6);
+	R(b, c, d, e, a, F2, KK2, 14,  9);
+	R(a, b, c, d, e, F2, KK2, 12, 11);
+	R(e, a, b, c, d, F2, KK2, 13,  8);
+	R(d, e, a, b, c, F2, KK2,  5, 12);
+	R(c, d, e, a, b, F2, KK2, 14,  2);
+	R(b, c, d, e, a, F2, KK2, 13, 10);
+	R(a, b, c, d, e, F2, KK2, 13,  0);
+	R(e, a, b, c, d, F2, KK2,  7,  4);
+	R(d, e, a, b, c, F2, KK2,  5, 13); /* #47 */
+	/* Parallel round 4 */
+	R(c, d, e, a, b, F1, KK3, 15,  8);
+	R(b, c, d, e, a, F1, KK3,  5,  6);
+	R(a, b, c, d, e, F1, KK3,  8,  4);
+	R(e, a, b, c, d, F1, KK3, 11,  1);
+	R(d, e, a, b, c, F1, KK3, 14,  3);
+	R(c, d, e, a, b, F1, KK3, 14, 11);
+	R(b, c, d, e, a, F1, KK3,  6, 15);
+	R(a, b, c, d, e, F1, KK3, 14,  0);
+	R(e, a, b, c, d, F1, KK3,  6,  5);
+	R(d, e, a, b, c, F1, KK3,  9, 12);
+	R(c, d, e, a, b, F1, KK3, 12,  2);
+	R(b, c, d, e, a, F1, KK3,  9, 13);
+	R(a, b, c, d, e, F1, KK3, 12,  9);
+	R(e, a, b, c, d, F1, KK3,  5,  7);
+	R(d, e, a, b, c, F1, KK3, 15, 10);
+	R(c, d, e, a, b, F1, KK3,  8, 14); /* #63 */
+	/* Parallel round 5 */
+	R(b, c, d, e, a, F0, KK4,  8, 12);
+	R(a, b, c, d, e, F0, KK4,  5, 15);
+	R(e, a, b, c, d, F0, KK4, 12, 10);
+	R(d, e, a, b, c, F0, KK4,  9,  4);
+	R(c, d, e, a, b, F0, KK4, 12,  1);
+	R(b, c, d, e, a, F0, KK4,  5,  5);
+	R(a, b, c, d, e, F0, KK4, 14,  8);
+	R(e, a, b, c, d, F0, KK4,  6,  7);
+	R(d, e, a, b, c, F0, KK4,  8,  6);
+	R(c, d, e, a, b, F0, KK4, 13,  2);
+	R(b, c, d, e, a, F0, KK4,  6, 13);
+	R(a, b, c, d, e, F0, KK4,  5, 14);
+	R(e, a, b, c, d, F0, KK4, 15,  0);
+	R(d, e, a, b, c, F0, KK4, 13,  3);
+	R(c, d, e, a, b, F0, KK4, 11,  9);
+	R(b, c, d, e, a, F0, KK4, 11, 11); /* #79 */
+
+	t =        state[1] + cc + d;
+	state[1] = state[2] + dd + e;
+	state[2] = state[3] + ee + a;
+	state[3] = state[4] + aa + b;
+	state[4] = state[0] + bb + c;
+	state[0] = t;
+}
