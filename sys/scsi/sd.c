@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.45 2000/09/21 17:57:19 mickey Exp $	*/
+/*	$OpenBSD: sd.c,v 1.46 2000/10/13 17:55:00 mickey Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -81,6 +81,10 @@
 #include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #include <sys/vnode.h>
+
+#ifndef	SDOUTSTANDING
+#define	SDOUTSTANDING	4
+#endif
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define	SDMINOR(unit, part)		DISKMINOR(unit, part)
@@ -180,6 +184,8 @@ sdattach(parent, self, aux)
 	sd->type = (sa->sa_inqbuf->device & SID_TYPE);
 	sc_link->device = &sd_switch;
 	sc_link->device_softc = sd;
+	if (sc_link->openings > SDOUTSTANDING)
+		sc_link->openings = SDOUTSTANDING;
 
 	/*
 	 * Initialize and attach the disk structure.
