@@ -44,7 +44,7 @@
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
 .Op Fl p Ar log_socket
-.Op Fl s
+.Op Fl u
 .Sh DESCRIPTION
 .Nm Syslogd
 reads and logs messages to the system console, log files, other
@@ -61,13 +61,11 @@ the default is
 .It Fl m
 Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
-.It Fl s
-Select ``secure'' mode, in which syslogd does not open a UDP socket but
-only communicates over a UNIX domain socket.
-This is valuable when the machine on
-which syslogd runs is subject to attack over the network and it is desired
-that the machine be protected from attempts to remotely fill logs
-and similar attacks.
+.It Fl u
+Select the historical ``insecure'' mode, in which syslogd will
+open a UDP socket and accept input over it as well.
+Some software wants this, but you can be subjected to a variety of
+attacks over the network, including attackers remotely filling logs.
 .It Fl p
 Specify the pathname of an alternate log socket;
 the default is

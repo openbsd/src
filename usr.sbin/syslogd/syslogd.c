@@ -187,7 +187,7 @@ int	LogPort;		/* port number for INET connections */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
-int	SecureMode = 0;		/* when true, speak only unix domain socks */
+int	SecureMode = 1;		/* when true, speak only unix domain socks */
 
 void	cfline __P((char *, struct filed *));
 char   *cvthname __P((struct sockaddr_in *));
@@ -216,7 +216,7 @@ main(argc, argv)
 	FILE *fp;
 	char *p, line[MSG_BSIZE + 1];
 
-	while ((ch = getopt(argc, argv, "dsf:m:p:")) != EOF)
+	while ((ch = getopt(argc, argv, "duf:m:p:")) != EOF)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -230,8 +230,8 @@ main(argc, argv)
 		case 'p':		/* path */
 			LogName = optarg;
 			break;
-		case 's':		/* no network mode */
-			SecureMode++;
+		case 'u':		/* allow udp input port */
+			SecureMode = 0;
 			break;
 		case '?':
 		default:
@@ -271,7 +271,7 @@ main(argc, argv)
 	if (funix < 0 ||
 	    bind(funix, (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
 	    chmod(LogName, 0666) < 0) {
-		(void) sprintf(line, "cannot create %s", LogName);
+		(void) snprintf(line, sizeof line, "cannot create %s", LogName);
 		logerror(line);
 		dprintf("cannot create %s (%d)\n", LogName, errno);
 		die(0);
@@ -593,7 +593,7 @@ fprintlog(f, flags, msg)
 	v = iov;
 	if (f->f_type == F_WALL) {
 		v->iov_base = greetings;
-		v->iov_len = snprintf(greetings, 500,
+		v->iov_len = snprintf(greetings, sizeof(greetings),
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
 		    f->f_prevhost, ctime(&now));
 		v++;
@@ -638,7 +638,7 @@ fprintlog(f, flags, msg)
 
 	case F_FORW:
 		dprintf(" %s\n", f->f_un.f_forw.f_hname);
-		l = snprintf(line, MAXLINE, "<%d>%.15s %s", f->f_prevpri,
+		l = snprintf(line, sizeof(line) - 1, "<%d>%.15s %s", f->f_prevpri,
 		    iov[0].iov_base, iov[4].iov_base);
 		if (l > MAXLINE)
 			l = MAXLINE;
@@ -835,8 +835,8 @@ logerror(type)
 	char buf[100];
 
 	if (errno)
-		(void)snprintf(buf,
-		    sizeof(buf), "syslogd: %s: %s", type, strerror(errno));
+		(void)snprintf(buf, sizeof(buf), "syslogd: %s: %s",
+		    type, strerror(errno));
 	else
 		(void)snprintf(buf, sizeof(buf), "syslogd: %s", type);
 	errno = 0;
@@ -1018,7 +1018,7 @@ cfline(line, f)
 		else {
 			pri = decode(buf, prioritynames);
 			if (pri < 0) {
-				(void)sprintf(ebuf,
+				(void)snprintf(ebuf, sizeof ebuf,
 				    "unknown priority name \"%s\"", buf);
 				logerror(ebuf);
 				return;
@@ -1036,7 +1036,7 @@ cfline(line, f)
 			else {
 				i = decode(buf, facilitynames);
 				if (i < 0) {
-					(void)sprintf(ebuf,
+					(void)snprintf(ebuf, sizeof(ebuf),
 					    "unknown facility name \"%s\"",
 					    buf);
 					logerror(ebuf);
@@ -1065,7 +1065,7 @@ cfline(line, f)
 		if (hp == NULL) {
 			extern int h_errno;
 
-			logerror(hstrerror(h_errno));
+			logerror((char *)hstrerror(h_errno));
 			break;
 		}
 		memset(&f->f_un.f_forw.f_addr, 0,
