@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.18 2002/10/24 17:13:36 drahn Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.19 2003/05/16 21:13:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -45,6 +45,7 @@ static char *rcsid = "$OpenBSD: vfprintf.c,v 1.18 2002/10/24 17:13:36 drahn Exp 
  */
 
 #include <sys/types.h>
+#include <sys/mman.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,7 +56,8 @@ static char *rcsid = "$OpenBSD: vfprintf.c,v 1.18 2002/10/24 17:13:36 drahn Exp 
 #include "local.h"
 #include "fvwrite.h"
 
-static void __find_arguments(const char *fmt0, va_list ap, va_list **argtable);
+static void __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
+    size_t *argtablesiz);
 static int __grow_type_table(unsigned char **typetable, int *tablesize);
 
 /*
@@ -197,6 +199,7 @@ vfprintf(fp, fmt0, ap)
 	char ox[2];		/* space for 0x hex-prefix */
 	va_list *argtable;	/* args, built due to positional arg */
 	va_list statargtable[STATIC_ARG_TBL_SIZE];
+	size_t argtablesiz;
 	int nextarg;		/* 1-based argument index */
 	va_list orgap;		/* original argument pointer */
 
@@ -271,7 +274,7 @@ vfprintf(fp, fmt0, ap)
 		int hold = nextarg; \
 		if (argtable == NULL) { \
 			argtable = statargtable; \
-			__find_arguments(fmt0, orgap, &argtable); \
+			__find_arguments(fmt0, orgap, &argtable, &argtablesiz); \
 		} \
 		nextarg = n2; \
 		val = GETARG(int); \
@@ -384,7 +387,7 @@ reswitch:	switch (ch) {
 				if (argtable == NULL) {
 					argtable = statargtable;
 					__find_arguments(fmt0, orgap,
-					    &argtable);
+					    &argtable, &argtablesiz);
 				}
 				goto rflag;
 			}
@@ -410,7 +413,7 @@ reswitch:	switch (ch) {
 				if (argtable == NULL) {
 					argtable = statargtable;
 					__find_arguments(fmt0, orgap,
-					    &argtable);
+					    &argtable, &argtablesiz);
 				}
 				goto rflag;
 			}
@@ -757,8 +760,10 @@ number:			if ((dprec = prec) >= 0)
 done:
 	FLUSH();
 error:
-	if (argtable != NULL && argtable != statargtable)
-		free(argtable);
+	if (argtable != NULL && argtable != statargtable) {
+		munmap(argtable, argtablesiz);
+		argtable = NULL;
+	}
 	return (__sferror(fp) ? EOF : ret);
 	/* NOTREACHED */
 }
@@ -791,10 +796,11 @@ error:
  * It will be replaces with a malloc-ed on if it overflows.
  */
 static void
-__find_arguments(fmt0, ap, argtable)
+__find_arguments(fmt0, ap, argtable, argtablesiz)
 	const char *fmt0;
 	va_list ap;
 	va_list **argtable;
+	size_t *argtablesiz;
 {
 	register char *fmt;	/* format string */
 	register int ch;	/* character from fmt */
@@ -988,8 +994,9 @@ done:
 	 * Build the argument table.
 	 */
 	if (tablemax >= STATIC_ARG_TBL_SIZE) {
-		*argtable = (va_list *)
-		    malloc(sizeof (va_list) * (tablemax + 1));
+		*argtablesiz = sizeof (va_list) * (tablemax + 1);
+		*argtable = (va_list *)mmap(NULL, *argtablesiz,
+		    PROT_WRITE|PROT_READ, MAP_ANON|MAP_PRIVATE, -1, 0);
 	}
 
 #if 0
@@ -1053,8 +1060,10 @@ done:
 		}
 	}
 
-	if (typetable != NULL && typetable != stattypetable)
-		free(typetable);
+	if (typetable != NULL && typetable != stattypetable) {
+		munmap(typetable, *argtablesiz);
+		typetable = NULL;
+	}
 }
 
 /*
@@ -1069,13 +1078,18 @@ __grow_type_table(typetable, tablesize)
 	int newsize = *tablesize * 2;
 
 	if (*tablesize == STATIC_ARG_TBL_SIZE) {
-		*typetable = (unsigned char *)
-		    malloc(sizeof (unsigned char) * newsize);
+		*typetable = (unsigned char *)mmap(NULL,
+		    sizeof (unsigned char) * newsize, PROT_WRITE|PROT_READ,
+		    MAP_ANON|MAP_PRIVATE, -1, 0);
 		/* XXX unchecked */
 		bcopy(oldtable, *typetable, *tablesize);
 	} else {
-		*typetable = (unsigned char *)
-		    realloc(*typetable, sizeof (unsigned char) * newsize);
+		char *new = (unsigned char *)mmap(NULL,
+		    sizeof (unsigned char) * newsize, PROT_WRITE|PROT_READ,
+		    MAP_ANON|MAP_PRIVATE, -1, 0);
+		memmove(new, *typetable, *tablesize);
+		munmap(*typetable, *tablesize);
+		*typetable = new;
 		/* XXX unchecked */
 	}
 	memset(*typetable + *tablesize, T_UNUSED, (newsize - *tablesize));
