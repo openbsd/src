@@ -44,7 +44,6 @@
 ./dev/MAKEDEV
 ./dev/fd
 ./etc
-./etc/dhclient-script
 ./etc/disklabels
 ./etc/kerberosIV
 ./etc/mtree
@@ -133,6 +132,7 @@
 ./usr/bin
 ./usr/bin/Mail
 ./usr/bin/a2p
+./usr/bin/afslog
 ./usr/bin/apply
 ./usr/bin/apropos
 ./usr/bin/arch
@@ -178,6 +178,7 @@
 ./usr/bin/cvs
 ./usr/bin/cvsbug
 ./usr/bin/dc
+./usr/bin/dhclient-script
 ./usr/bin/diff
 ./usr/bin/diff3
 ./usr/bin/dirname
@@ -683,6 +684,7 @@
 ./usr/libdata
 ./usr/libdata/lint
 ./usr/libexec
+./usr/libexec/afsd
 ./usr/libexec/atrun
 ./usr/libexec/comsat
 ./usr/libexec/cpp
@@ -787,6 +789,7 @@
 ./usr/sbin/dnsquery
 ./usr/sbin/edquota
 ./usr/sbin/ext_srvtab
+./usr/sbin/fs
 ./usr/sbin/fsinfo
 ./usr/sbin/host
 ./usr/sbin/httpd
@@ -844,6 +847,7 @@
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
 ./usr/sbin/pstat
+./usr/sbin/pts
 ./usr/sbin/pwd_mkdb
 ./usr/sbin/quot
 ./usr/sbin/quotaoff
@@ -885,6 +889,7 @@
 ./usr/sbin/vipw
 ./usr/sbin/visudo
 ./usr/sbin/vnconfig
+./usr/sbin/vos
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit
 ./usr/sbin/yppoll
@@ -2173,8 +2178,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/bin/afslog
-./usr/libexec/afsd
-./usr/sbin/fs
-./usr/sbin/pts
-./usr/sbin/vos
