@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.46 2003/06/11 20:33:08 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.47 2003/08/14 18:53:06 jason Exp $g
 #
 # PPC GENERIC config file
 #
@@ -91,6 +91,7 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 lofn*		at pci? dev ? function ?	# Hifn6500
 hifn*		at pci? dev ? function ?	# Hifn7751/7811/7951
 ubsec*		at pci? dev ? function ?	# Broadcom 58xx
+safe*		at pci? dev ? function ?	# SafeNet SafeXcel 1141/1741
 
 macintr0	at macobio?			# old interrupt controller
 openpic0	at macobio?			# openpic interrupt controller
