@@ -1,4 +1,4 @@
-#	$OpenBSD: README,v 1.3 1996/08/19 08:20:28 tholo Exp $
+#	$OpenBSD: README,v 1.4 2002/02/24 21:24:06 millert Exp $
 
 This package implements a superset of the hsearch and dbm/ndbm libraries.
 
@@ -43,10 +43,6 @@ Test Programs:
 		correct.
 
 NOTES:
-
-The file search.h is provided for using the hsearch compatible interface
-on BSD systems.  On System V derived systems, search.h should appear in 
-/usr/include.
 
 The man page ../man/db.3 explains the interface to the hashing system.
 The file hash.ps is a postscript copy of a paper explaining
