@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.c,v 1.2 2005/03/12 21:53:49 tom Exp $ */
+/*	$OpenBSD: pxe.c,v 1.3 2005/03/13 22:07:23 tom Exp $ */
 /*	$NetBSD: pxe.c,v 1.5 2003/03/11 18:29:00 drochner Exp $	*/
 
 /*
@@ -399,7 +399,7 @@ pxe_init(int quiet)
 		}
 	}
 
-	if (pxe != NULL) {
+	if (pxenv == NULL) {
 		pxe_call = pxecall_bangpxe;
 		bangpxe_off = pxe->EntryPointSP.offset;
 		bangpxe_seg = pxe->EntryPointSP.segment;
