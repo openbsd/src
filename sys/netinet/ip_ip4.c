@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.38 1999/12/09 09:07:54 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.39 1999/12/09 09:10:05 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -340,7 +340,9 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			   sizeof(u_int16_t), (caddr_t) &ipo->ip_off);
 		ipo->ip_off &= ~(IP_DF | IP_MF | IP_OFFMASK);
 	    }
-	    else
+
+#ifdef INET6
+	    if (tp == IPPROTO_IPV6)
 	    {
 		/* Save ECN notification */
 		m_copydata(m, sizeof(struct ip) +
@@ -351,6 +353,7 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		ipo->ip_p = IPPROTO_IPV6;
 		ipo->ip_off = 0;
 	    }
+#endif /* INET6 */
 
 	    ip_ecn_ingress(ECN_ALLOWED, &ipo->ip_tos, &itos);
 	    break;
@@ -384,6 +387,7 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    ip6o->ip6_dst = tdb->tdb_dst.sin6.sin6_addr;
 	    ip6o->ip6_src = tdb->tdb_src.sin6.sin6_addr;
 
+#ifdef INET
 	    if (tp == IPVERSION)
 	    {
 		/* Save ECN notification */
@@ -393,7 +397,9 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 		ip6o->ip6_nxt = IPPROTO_IPIP; /* This is really IPVERSION */
 	    }
-	    else
+#endif /* INET */
+
+	    if (tp == IPPROTO_IPV6)
 	    {
 		/* Save ECN notification */
 		m_copydata(m, sizeof(struct ip6_hdr) +
