@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.245 2002/09/27 17:57:53 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.246 2002/10/04 17:45:55 ish Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -217,8 +217,10 @@ int			 pf_get_sport(u_int8_t, u_int8_t,
 			    u_int16_t, u_int16_t *, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			    int, int, void *, struct pf_pdesc *);
-void			 pf_route(struct mbuf **, struct pf_rule *, int);
-void			 pf_route6(struct mbuf **, struct pf_rule *, int);
+void			 pf_route(struct mbuf **, struct pf_rule *, int,
+			    struct ifnet *);
+void			 pf_route6(struct mbuf **, struct pf_rule *, int,
+			    struct ifnet *);
 int			 pf_socket_lookup(uid_t *, gid_t *, int, int, int,
 			     struct pf_pdesc *);
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = { { &pf_state_pl, UINT_MAX },
@@ -3601,7 +3603,7 @@ pf_routable(addr, af)
 
 #ifdef INET
 void
-pf_route(struct mbuf **m, struct pf_rule *r, int dir)
+pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp)
 {
 	struct mbuf *m0, *m1;
 	struct route iproute;
@@ -3653,7 +3655,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 	if (ifp == NULL)
 		goto bad;
 
-	if (r->ifp != ifp) {
+	if (oifp != ifp) {
 		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
 		if (mtag == NULL) {
 			if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
@@ -3738,7 +3740,7 @@ bad:
 
 #ifdef INET6
 void
-pf_route6(struct mbuf **m, struct pf_rule *r, int dir)
+pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp)
 {
 	struct mbuf *m0;
 	struct m_tag *mtag;
@@ -3787,7 +3789,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir)
 	if (ifp == NULL)
 		goto bad;
 
-	if (r->ifp != ifp) {
+	if (oifp != ifp) {
 		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
 		if (mtag == NULL) {
 			if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
@@ -3989,7 +3991,7 @@ done:
 
 	/* pf_route can free the mbuf causing *m0 to become NULL */
 	if (r && r->rt)
-		pf_route(m0, r, dir);
+		pf_route(m0, r, dir, ifp);
 
 	return (action);
 }
@@ -4161,7 +4163,7 @@ done:
 
 	/* pf_route6 can free the mbuf causing *m0 to become NULL */
 	if (r && r->rt)
-		pf_route6(m0, r, dir);
+		pf_route6(m0, r, dir, ifp);
 
 	return (action);
 }
