@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.23 2001/02/23 14:42:38 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.24 2001/06/23 02:15:24 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -730,22 +730,6 @@ msdosfs_select(v)
 	return (1);             /* DOS filesystems never block? */
 }
 
-int
-msdosfs_mmap(v)
-	void *v;
-{
-#if 0
-	struct vop_mmap_args /* {
-		struct vnode *a_vp;
-		int a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap;
-#endif
-
-	return (EINVAL);
-}
-
 /*
  * Flush the blocks of a file to disk.
  *
@@ -766,66 +750,6 @@ msdosfs_fsync(v)
 
 	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
 	return (deupdat(VTODE(vp), ap->a_waitfor == MNT_WAIT));
-}
-
-/*
- * Now the whole work of extending a file is done in the write function.
- * So nothing to do here.
- */
-int
-msdosfs_seek(v)
-	void *v;
-{
-#if 0
-	struct vop_seek_args /* {
-		struct vnode *a_vp;
-		off_t a_oldoff;
-		off_t a_newoff;
-		struct ucred *a_cred;
-	} */ *ap = v;
-#endif
-
-	return (0);
-}
-
-int
-msdosfs_update(v)
-	void *v;
-{
-	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_access;
-		struct timespec *a_modify;
-		int a_waitfor;
-	} */ *ap = v;
-	struct buf *bp;
-	struct direntry *dirp;
-	struct denode *dep;
-	int error;
-	struct timespec ts;
-
-	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
-		return (0);
-	dep = VTODE(ap->a_vp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(dep, ap->a_access, ap->a_modify, &ts);
-	if ((dep->de_flag & DE_MODIFIED) == 0)
-		return (0);
-	dep->de_flag &= ~DE_MODIFIED;
-	if (dep->de_Attributes & ATTR_DIRECTORY)
-		return (0);
-	if (dep->de_refcnt <= 0)
-		return (0);
-	error = readde(dep, &bp, &dirp);
-	if (error)
-		return (error);
-	DE_EXTERNALIZE(dirp, dep);
-	if (ap->a_waitfor)
-		return (bwrite(bp));
-	else {
-		bdwrite(bp);
-		return (0);
-	}
 }
 
 /*
@@ -1976,9 +1900,7 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_lease_desc, msdosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
 	{ &vop_select_desc, msdosfs_select },		/* select */
-	{ &vop_mmap_desc, msdosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */
-	{ &vop_seek_desc, msdosfs_seek },		/* seek */
 	{ &vop_remove_desc, msdosfs_remove },		/* remove */
 	{ &vop_link_desc, msdosfs_link },		/* link */
 	{ &vop_rename_desc, msdosfs_rename },		/* rename */
@@ -1999,7 +1921,6 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, msdosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, msdosfs_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, msdosfs_reallocblks },	/* reallocblks */
-	{ &vop_update_desc, msdosfs_update },		/* update */
 	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc *)NULL, (int (*) __P((void *)))NULL }
 };
