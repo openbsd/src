@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.27 2005/01/08 03:44:36 kevlo Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.28 2005/01/12 00:50:17 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -379,10 +379,10 @@ ahc_action(struct scsi_xfer *xs)
 		hscb->cdb_len = 0;
 		scb->flags |= SCB_DEVICE_RESET;
 		hscb->control |= MK_MESSAGE;
-		ahc_execute_scb(scb, NULL, 0);
+		return (ahc_execute_scb(scb, NULL, 0));
 	}
 
-	return ahc_setup_data(ahc, xs, scb);
+	return (ahc_setup_data(ahc, xs, scb));
 }
 
 int
