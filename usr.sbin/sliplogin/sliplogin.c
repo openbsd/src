@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.2 1996/07/16 06:57:43 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.3 1996/08/05 12:01:32 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ findid(name)
 	char user[16], *p;
 	int i, j, n;
 
-	(void)strcpy(loginname, name);
+	(void)strncpy(loginname, sizeof loginname, name);
 	if ((fp = fopen(_PATH_ACCESS, "r")) == NULL) {
 		syslog(LOG_ERR, "%s: %m\n", _PATH_ACCESS);
 		err(1, "%s", _PATH_ACCESS);
