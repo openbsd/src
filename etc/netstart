@@ -1,9 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.29 1997/09/04 01:12:23 deraadt Exp $
-
-# pick up option configuration
-. /etc/rc.conf
+#	$OpenBSD: netstart,v 1.30 1997/10/14 20:34:55 deraadt Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -12,6 +9,9 @@ hostname $hostname
 if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
 fi
+
+# pick up option configuration
+. /etc/rc.conf
 
 # Configure the IP filter before configuring network interfaces
 #
