@@ -1,4 +1,4 @@
-/* $OpenBSD*/
+/* $OpenBSD: strtol.c,v 1.2 1998/02/24 22:12:27 weingart Exp $ */
 /* Modified strtol() from stdlib */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
