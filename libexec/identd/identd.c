@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.38 2004/08/08 19:32:45 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.39 2004/09/14 22:14:29 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -132,6 +132,7 @@ volatile sig_atomic_t alarm_fired;
 /*
  * Exit cleanly after our time's up.
  */
+/* ARGSUSED */
 static void
 alarm_handler(int notused)
 {

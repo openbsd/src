@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.24 2004/05/10 15:26:49 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.25 2004/09/14 22:09:52 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.24 2004/05/10 15:26:49 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.25 2004/09/14 22:09:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -336,6 +336,7 @@ usage(void)
 	exit(1);
 }
 
+/* ARGSUSED */
 void
 nonfs(int signo)
 {
@@ -346,6 +347,7 @@ nonfs(int signo)
 	errno = save_errno;
 }
 
+/* ARGSUSED */
 void
 reapchild(int signo)
 {

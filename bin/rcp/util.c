@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2003/09/26 00:48:44 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.15 2004/09/14 22:06:19 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: util.c,v 1.14 2003/09/26 00:48:44 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.15 2004/09/14 22:06:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,6 +156,7 @@ allocbuf(BUF *bp, int fd, int blksize)
 	return (bp);
 }
 
+/* ARGSUSED */
 void
 lostconn(int signo)
 {
