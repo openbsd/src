@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.22 2002/05/11 18:41:20 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.23 2002/05/11 21:37:13 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.22 2002/05/11 18:41:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.23 2002/05/11 21:37:13 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -253,8 +253,7 @@ writefile(runtimer, queue)
 	 * their r bit.  Yes, this is a kluge.
 	 */
 	cmask = umask(S_IRUSR | S_IWUSR | S_IXUSR);
-	if ((fdes = open(atfile, O_WRONLY|O_CREAT|O_TRUNC|O_NONBLOCK|O_NOFOLLOW,
-	    S_IRUSR)) == -1)
+	if ((fdes = open(atfile, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR)) == -1)
 		perr("Cannot create atjob file");
 
 	if ((fd2 = dup(fdes)) < 0)
