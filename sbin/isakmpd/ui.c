@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.22 2001/10/05 08:18:37 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.23 2001/11/22 11:10:45 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -333,9 +333,7 @@ ui_handle_command (char *line)
     case 'D':
       ui_debug (line);
       break;
-#endif
 
-#ifdef USE_DEBUG
     case 'p':
       ui_packetlog (line);
       break;
