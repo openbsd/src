@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.35 2000/01/19 23:03:04 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.36 2000/01/20 01:16:50 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -506,23 +506,39 @@ sys_execve(p, v, retval)
 		p->p_flag |= P_SUGIDEXEC;
 
 		/*
-		 * XXX For setuid processes, attempt to ensure that
-		 * stdin, stdout, and stderr are already allocated.
-		 * We do not want userland to accidentally allocate
-		 * descriptors in this range which has implied meaning
-		 * to libc.
+		 * For setuid processes, a few caveats apply to stdin, stdout,
+		 * and stderr.
 		 */
 		for (i = 0; i < 3; i++) {
-			extern struct fileops vnops;
-			struct nameidata nd;
-			struct file *fp;
-			int indx;
-			short flags;
+			struct file *fp = NULL;
 
-			flags = FREAD | (i == 0 ? 0 : FWRITE);
+			if (i < p->p_fd->fd_nfiles)
+				fp = p->p_fd->fd_ofiles[i];
 
-			if (i < p->p_fd->fd_nfiles ||
-			    p->p_fd->fd_ofiles[i] == NULL) {
+#ifdef PROCFS
+			/*
+			 * Close descriptors that are writing to procfs.
+			 */
+			if (fp && fp->f_type == DTYPE_VNODE &&
+			    ((struct vnode *)(fp->f_data))->v_tag == VT_PROCFS &&
+			    (fp->f_flag & FWRITE)) {
+				fdrelease(p, i);
+				fp = NULL;
+			}
+#endif
+
+			/*
+			 * Ensure that stdin, stdout, and stderr are already
+			 * allocated.  We do not want userland to accidentally
+			 * allocate descriptors in this range which has implied
+			 * meaning to libc.
+			 */
+			if (fp == NULL) {
+				short flags = FREAD | (i == 0 ? 0 : FWRITE);
+				extern struct fileops vnops;
+				struct nameidata nd;
+				int indx;
+
 				if ((error = falloc(p, &fp, &indx)) != 0)
 					continue;
 				NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
@@ -539,7 +555,6 @@ sys_execve(p, v, retval)
 				VOP_UNLOCK(nd.ni_vp, 0, p);
 			}
 		}
-
 	} else
 		p->p_flag &= ~P_SUGID;
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
