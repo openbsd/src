@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1997/05/04 20:52:48 tholo Exp $
+#	$OpenBSD: Makefile,v 1.13 1997/05/07 04:46:52 deraadt Exp $
 
 # Revision is 2.1
 REV=           21
@@ -35,7 +35,7 @@ ${FS}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} floppy3
-	newfs -m 0 -o space -i 6500 -c 80 ${VND_RDEV} floppy3
+	newfs -m 0 -o space -i 32768 -c 80 ${VND_RDEV} floppy3
 .endif
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -61,7 +61,9 @@ NBLKS=          4046
 NEWFSARGS= -m 0 -o space -c 16 -i 4096
 
 bsd.gz: bsd.rd
-	gzip -c9 bsd.rd > bsd.gz
+	cp bsd.rd bsd.strip
+	strip bsd.strip
+	gzip -c9 bsd.strip > bsd.gz
 
 bsd.rd:	${IMAGE} bsd rdsetroot
 	cp bsd bsd.rd
