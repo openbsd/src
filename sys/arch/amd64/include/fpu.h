@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.2 2004/02/28 22:26:05 deraadt Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
@@ -7,7 +7,7 @@
 #include <sys/types.h>
 
 /*
- * NetBSD/amd64 only uses the extended save/restore format used
+ * amd64 only uses the extended save/restore format used
  * by fxsave/fsrestore, to always deal with the SSE registers,
  * which are part of the ABI to pass floating point values.
  * Must be stored in memory on a 16-byte boundary.
@@ -42,8 +42,8 @@ struct savefpu {
 #define __INITIAL_MXCSR__ 	0x1f80
 #define __INITIAL_MXCSR_MASK__	0xffbf
 
-/* NetBSD uses IEEE double precision. */
-#define	__NetBSD_NPXCW__	0x127f
+/* OpenBSD uses IEEE double precision. */
+#define	__OpenBSD_NPXCW__	0x127f
 /* Linux just uses the default control word. */
 #define	__Linux_NPXCW__		0x037f
 
