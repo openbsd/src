@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_termios.c,v 1.5 1997/12/10 13:35:53 provos Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.6 1999/07/18 00:12:04 deraadt Exp $	*/
 /*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
@@ -453,6 +453,7 @@ linux_ioctl_termios(p, uap, retval)
 	struct linux_termio tmplt;
 	struct linux_termios tmplts;
 	struct termios tmpbts;
+	caddr_t sg;
 	int idat;
 	struct sys_ioctl_args ia;
 	int error;
@@ -602,6 +603,18 @@ linux_ioctl_termios(p, uap, retval)
 	case LINUX_TIOCSWINSZ:
 		SCARG(&ia, com) = TIOCSWINSZ;
 		break;
+	case LINUX_TIOCMGET:
+		SCARG(&ia, com) = TIOCMGET;
+		break;
+	case LINUX_TIOCMBIS:
+		SCARG(&ia, com) = TIOCMBIS;
+		break;
+	case LINUX_TIOCMBIC:
+		SCARG(&ia, com) = TIOCMBIC;
+		break;
+	case LINUX_TIOCMSET:
+		SCARG(&ia, com) = TIOCMSET;
+		break;
 	case LINUX_TIOCGPGRP:
 		SCARG(&ia, com) = TIOCGPGRP;
 		break;
@@ -631,6 +644,45 @@ linux_ioctl_termios(p, uap, retval)
 		break;
 	case LINUX_TIOCNOTTY:
 		SCARG(&ia, com) = TIOCNOTTY;
+		break;
+	case LINUX_TCXONC:
+		switch ((int)SCARG(uap, data)) {
+		case LINUX_TCOOFF:
+			SCARG(&ia, com) = TIOCSTOP;
+			break;
+		case LINUX_TCOON:
+			SCARG(&ia, com) = TIOCSTART;
+			break;
+		case LINUX_TCIOFF:
+		case LINUX_TCION: {
+			u_char c, *cp;
+			struct sys_write_args wa;
+
+			error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA,
+			    (caddr_t)&tmpbts, p);
+			if (error)
+				return error;
+			if ((int)SCARG(uap, data) == LINUX_TCIOFF)
+				c = tmpbts.c_cc[VSTOP];
+			else
+				c = tmpbts.c_cc[VSTART];
+			if (c == _POSIX_VDISABLE)
+				return 0;
+
+			sg = stackgap_init(p->p_emul);
+			cp = (char *) stackgap_alloc(&sg, 1);
+			if ((error = copyout(&c, cp, 1)))
+				return error;
+
+			SCARG(&wa, fd) = SCARG(uap, fd);
+			SCARG(&wa, buf) = cp;
+			SCARG(&wa, nbyte) = 1;
+			return sys_write(p, &wa, retval);
+		    }
+		default:
+			return EINVAL;
+		}
+		SCARG(uap, data) = 0;
 		break;
 	default:
 		return EINVAL;
