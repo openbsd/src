@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.8 1995/10/07 06:27:07 mycroft Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.8.2.1 1995/11/16 18:45:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -540,7 +540,7 @@ linux_sys_ioctl(p, v, retval)
 			SCARG(&ia, com) = TIOCSETAF;
 			break;
 		}
-		if ((error = copyin(&tmplt, data, sizeof tmplt)))
+		if ((error = copyin(data, &tmplt, sizeof tmplt)))
 			return error;
 		abts = stackgap_alloc(&sg, sizeof tmpbts);
 		/*
