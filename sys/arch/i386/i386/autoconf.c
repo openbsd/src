@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 1996/09/29 08:00:41 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 1996/10/16 23:11:44 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -59,6 +59,8 @@
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+
+#include <dev/cons.h>
 
 void swapconf __P((void));
 void setroot __P((void));
