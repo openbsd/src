@@ -1,4 +1,4 @@
-/*	$OpenBSD: bad144.c,v 1.16 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: bad144.c,v 1.17 2003/06/26 22:11:01 deraadt Exp $	*/
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.16 2003/06/02 23:36:52 millert Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.17 2003/06/26 22:11:01 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -92,9 +92,7 @@ void	shift(int, int, int);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct bt_bad *bt;
 	daddr_t	sn, bn[NBT_BAD];
@@ -297,9 +295,7 @@ main(argc, argv)
 }
 
 daddr_t
-getold(f, bad)
-	int f;
-	struct dkbad *bad;
+getold(int f, struct dkbad *bad)
 {
 	int i;
 	daddr_t sn;
@@ -326,7 +322,7 @@ getold(f, bad)
 }
 
 int
-checkold()
+checkold(void)
 {
 	int i;
 	struct bt_bad *bt;
@@ -380,8 +376,7 @@ checkold()
  * new is the new number of bad sectors, old is the previous count.
  */
 void
-shift(f, new, old)
-	int f, new, old;
+shift(int f, int new, int old)
 {
 	daddr_t repl;
 
@@ -418,9 +413,7 @@ char *buf;
  *  Copy disk sector s1 to s2.
  */
 int
-blkcopy(f, s1, s2)
-	int f;
-	daddr_t s1, s2;
+blkcopy(int f, daddr_t s1, daddr_t s2)
 {
 	int tries, n;
 
@@ -454,9 +447,7 @@ blkcopy(f, s1, s2)
 char *zbuf;
 
 void
-blkzero(f, sn)
-	int f;
-	daddr_t sn;
+blkzero(int f, daddr_t sn)
 {
 
 	if (zbuf == NULL) {
@@ -475,8 +466,7 @@ blkzero(f, sn)
 }
 
 int
-compare(v1, v2)
-	const void *v1, *v2;
+compare(const void *v1, const void *v2)
 {
 	const struct bt_bad *b1 = v1, *b2 = v2;
 
@@ -490,8 +480,7 @@ compare(v1, v2)
 }
 
 daddr_t
-badsn(bt)
-	const struct bt_bad *bt;
+badsn(const struct bt_bad *bt)
 {
 	return ((bt->bt_cyl*dp->d_ntracks + (bt->bt_trksec>>8)) * dp->d_nsectors
 		+ (bt->bt_trksec&0xff));
@@ -539,12 +528,8 @@ struct	formats {
 };
 
 /*ARGSUSED*/
-hpupformat(fp, dp, blk, buf, count)
-	struct formats *fp;
-	struct disklabel *dp;
-	daddr_t blk;
-	char *buf;
-	int count;
+hpupformat(struct formats *fp, struct disklabel *dp, daddr_t blk,
+    char *buf, int count)
 {
 	struct hpuphdr *hdr = (struct hpuphdr *)buf;
 	int sect;
@@ -560,12 +545,8 @@ hpupformat(fp, dp, blk, buf, count)
 }
 
 /*ARGSUSED*/
-rp06format(fp, dp, blk, buf, count)
-	struct formats *fp;
-	struct disklabel *dp;
-	daddr_t blk;
-	char *buf;
-	int count;
+rp06format(struct formats *fp, struct disklabel *dp, daddr_t blk,
+    char *buf, int count)
 {
 
 	if (count < sizeof(struct rp06hdr)) {
@@ -576,9 +557,7 @@ rp06format(fp, dp, blk, buf, count)
 	return (0);
 }
 
-format(fd, blk)
-	int fd;
-	daddr_t blk;
+format(int fd, daddr_t blk)
 {
 	struct formats *fp;
 	static char *buf;
@@ -647,7 +626,7 @@ format(fd, blk)
 #endif
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 		  "usage: bad144 [-c] [-n] [-v] disk [snum [bn ...]]\n");
