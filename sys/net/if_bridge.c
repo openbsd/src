@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.82 2002/01/01 22:39:45 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.83 2002/01/02 20:06:03 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1426,12 +1426,13 @@ bridge_broadcast(sc, ifp, eh, m)
 			m2 = m_copym2(m, sizeof(struct ether_header),
 			    M_COPYALL, M_DONTWAIT);
 			if (m2 == NULL) {
+				m_freem(m1);
 				sc->sc_if.if_oerrors++;
 				continue;
 			}
 
 			for (mx = m1; mx->m_next != NULL; mx = mx->m_next)
-				;
+				/*EMPTY*/;
 			mx->m_next = m2;
 
 			if (m1->m_flags & M_PKTHDR) {
