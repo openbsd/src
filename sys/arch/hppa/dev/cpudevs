@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.1 1998/09/29 07:00:46 mickey Exp $
+$OpenBSD: cpudevs,v 1.2 1998/10/29 17:47:45 mickey Exp $
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -40,17 +40,17 @@ board	HP710		0x300	710 (Bushmaster)
 
 board	HP712_60	0x600	712/60 (Gekko)
 board	HP712_80	0x601	712/80 (Gekko)
-board	HP712_3		0x602	712 (Gekko)
+board	HP712_3		0x602	712/?? (Gekko)
 board	HP712_100	0x605	712/100 (Gekko)
 
 board	HP715_33	0x311	715/33 (Scorpio)
 board	HP715_50	0x310	715/50 (Scorpio)
-board	HP715T_50	0x312	715T/50 (Scorpio (up 4XXt))
-board	HP715S_50	0x314	715S/50 (Scorpio (up 4XXs))
+board	HP715T_50	0x312	715T/50 (Scorpio (4XXt up))
+board	HP715S_50	0x314	715S/50 (Scorpio (4XXs up))
 board	HP715_75	0x316	715/75 (Scorpio)
 
 #board	HP720		0x200	720 (Cobra)
-#board	HP725		0xFFF	725 (Scorpio ?)
+board	HP725		0xFFF	725 (Scorpio ?)
 
 #board	HP730		0x202	730 (King Cobra)
 #board	HP735		0x203	735 (Hardball)
@@ -62,8 +62,8 @@ board	HP715_75	0x316	715/75 (Scorpio)
 #board	HP743v_1	0x617	743v1
 #board	HP743v_2	0x618	743v2
 
-#board	HP750		0x201	750	Coral
-#board	HP755		0xFFD	755	Coral II ?
+#board	HP750		0x201	750 (Coral)
+#board	HP755		0xFFD	755 (Coral II ?)
 
 #board	HP7GL_1		0x606	7GL1
 #board	HP7GL_2		0x607	7GL2
@@ -74,19 +74,19 @@ board	HP715_75	0x316	715/75 (Scorpio)
 #board	HP777_100	0x592   C-class C200
 #board	HP777_120	0x58E   C-class C210
 
-#board	HP810		0x100
-#board	HP815		0x103
-#board	HP822		0x101
-#board	HP825		0x008
-#board	HP827		0x102
-#board	HP835		0x00a
-#board	HP840		0x004
+#board	HP810		0x100	810 (Burgundy)
+#board	HP815		0x103	808/815
+#board	HP820		0x101	82[02]
+#board	HP825		0x008	825 (FireFox)
+#board	HP827		0x102	827/832
+#board	HP835		0x00a	83[456]
+#board	HP840		0x004	840 (Indigo)
 #board	HP842		0x104
-#board	HP845		0x00b
-#board	HP850		0x080
-#board	HP850_OPDC	0x00C
+#board	HP845		0x00b	84[456]
+#board	HP850		0x080	850 (Cheetah)
+#board	HP850_OPDC	0x00C	850 (Cheetah)
 #board	HP852		0x105
-#board	HP855		0x081
+#board	HP855		0x081	855 (Jaguar)
 #board	HP860		0x082	PN10C
 #board	HP870		0x083
 
@@ -95,10 +95,10 @@ board	HP715_75	0x316	715/75 (Scorpio)
  */
 type	cpu	 0	native processor
 type	memory	 1	memory
-type	b_dma	 2	Type-B DMA (NIO Transit, Parallel, ... )
-type	b_direct 3	Type-B Direct
-type	a_dma	 4	Type-A DMA (NIO HPIB, LAN, ... )
-type	a_direct 5	Type-A Direct (RS232, HIL, ... )
+type	bdma	 2	Type-B DMA (NIO Transit, Parallel, ... )
+type	bdirect	 3	Type-B Direct
+type	adma	 4	Type-A DMA (NIO HPIB, LAN, ... )
+type	adirect	 5	Type-A Direct (RS232, HIL, ... )
 type	other	 6	other
 type	bcp	 7	Bus Converter Port
 type	cio	 8	CIO adapter
@@ -116,30 +116,39 @@ memory	PDEP	0x9	processor-dependent memory module
 other	SPECFB	0x48	Spectograph frame buffer
 other	SPECCTL	0x49	Spectograph control
 
+bha	DIO	0x03	DIO Bus Adapter
+bha	SGC	0x05	SGC Bus Adapter
+bha	GSC	0x07	GSC Bus AdapteR
 bha	ASP	0x70	Core Bus Adapter (ASP/Hardball)
 bha	EISA	0x76	EISA Bus Adapter
 bha	VME	0x78	VME Bus Adapter
 bha	LASI	0x81	LASI Bus Adapter
 bha	WAX	0x8e	WAX ??? Bus Adapter
+bha	WEISA	0x90	WAX EISA Bus Adapter ???
+
+adma	FWSCSI	0x89	Core FW SCSI
+adma	MYRI	0x95	Hamlyn GSC+ Network Card
 
 fio	SCSI	0x71	Core SCSI
-fio	FWSCSI	0x7c	Core FW SCSI
 fio	LAN	0x72	Core LAN
-fio	FDDI	0x7d	Core FDDI
 fio	HIL	0x73	Core HIL
 fio	CENT	0x74	Core Centronics
-fio	RS232	0x75	Core RS-232
+fio	RS232	0x75	Core RS-232C
 fio	SGC	0x77	SGC Graphics
-fio	A1	0x7a	Core audio (type 1)
-fio	A1NB	0x7e	Core audio (type 1, no beeper)
-fio	A2	0x7f	Core audio (type 2)
-fio	A2NB	0x7b	Core audio (type 2, no beeper)
+fio	A1	0x7a	Core audio
+fio	A2NB	0x7b	Advanced audio (no beeper)
+fio	FWSCSI	0x7c	Core FW SCSI
+fio	FDDI	0x7d	Core FDDI
+fio	A1NB	0x7e	Core audio (no beeper)
+fio	A2	0x7f	Advanced audio
 fio	HPIB	0x80	Core HPIB
 
-fio	GSCSI	0x82	Gekko Core SCSI
-fio	GPCFD	0x83	Gekko PC floppy controller
-fio	GPCIO	0x84	Gekko PS/2 port
-fio	GSGC	0x85	Gekko SGC Graphics
-fio	GLAN	0x8a	Gekko Core LAN
-fio	GRS232	0x8c	Gekko Core RS232
+# Gekko section
+fio	GSCSI	0x82	Core SCSI
+fio	GPCFD	0x83	floppy controller
+fio	GPCIO	0x84	PS/2 port
+fio	GSGC	0x85	SGC Graphics
+fio	GSCSCSI	0x89	GSC SCSI
+fio	GLAN	0x8a	Core LAN
+fio	GRS232	0x8c	Core RS-232C
 
