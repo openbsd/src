@@ -1,4 +1,4 @@
-/* $OpenBSD: endian.h,v 1.2 1996/11/25 13:11:18 niklas Exp $ */
+/* $OpenBSD: endian.h,v 1.3 1997/04/04 03:05:30 millert Exp $ */
 /* $NetBSD: endian.h,v 1.2 1996/03/14 23:11:10 mark Exp $ */
 
 /*
@@ -58,6 +58,9 @@
 #define	BYTE_ORDER	LITTLE_ENDIAN
 
 #include <sys/cdefs.h>
+
+typedef u_int32_t in_addr_t;
+typedef u_int16_t in_port_t;
 
 __BEGIN_DECLS
 u_int32_t		htonl __P((u_int32_t));
