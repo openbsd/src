@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.13 2003/06/03 03:01:37 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.14 2003/09/25 22:31:43 aaron Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.13 2003/06/03 03:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.14 2003/09/25 22:31:43 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -332,7 +332,7 @@ rdesc(sect)			/* read description-format msgs */
 				ptext[oldloc].txtlen = maystart - seekstart;
 				break;
 			case 6:	/* random messages		*/
-				if (oldloc > RTXSIZ)
+				if (oldloc >= RTXSIZ)
 					errx(1, "Too many random msgs");
 				rtext[oldloc].seekadr = seekhere;
 				rtext[oldloc].txtlen = maystart - seekstart;
@@ -343,7 +343,7 @@ rdesc(sect)			/* read description-format msgs */
 				cval[clsses++] = oldloc;
 				break;
 			case 12:/* magic messages		*/
-				if (oldloc > MAGSIZ)
+				if (oldloc >= MAGSIZ)
 					errx(1, "Too many magic msgs");
 				mtext[oldloc].seekadr = seekhere;
 				mtext[oldloc].txtlen = maystart - seekstart;
