@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.49 1999/11/09 23:14:19 angelos Exp $	*/
+/*	$OpenBSD: cd.c,v 1.50 1999/11/11 19:15:19 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1655,7 +1655,7 @@ dvd_auth(cd, a)
 		dvd_copy_challenge(&buf[4], a->hsc.chal);
 		error = scsi_scsi_cmd(cd->sc_link, &cmd, sizeof(cmd), buf, 16,
 				      CDRETRIES, 30000, NULL,
-				      SCSI_DATA_OUT|SCSI_DATA_IN);
+				      SCSI_DATA_OUT);
 		if (error)
 			return (error);
 		a->type = DVD_LU_SEND_KEY1;
@@ -1669,7 +1669,7 @@ dvd_auth(cd, a)
 		dvd_copy_key(&buf[4], a->hsk.key);
 		error = scsi_scsi_cmd(cd->sc_link, &cmd, sizeof(cmd), buf, 12,
 				      CDRETRIES, 30000, NULL,
-				      SCSI_DATA_OUT|SCSI_DATA_IN);
+				      SCSI_DATA_OUT);
 		if (error) {
 			a->type = DVD_AUTH_FAILURE;
 			return (error);
