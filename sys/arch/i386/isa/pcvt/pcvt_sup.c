@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.6 1998/06/25 00:40:31 millert Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.7 1999/09/14 18:21:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -422,6 +422,7 @@ vgasetfontattr(struct vgafontattr *data)
 	int lines_per_character;
 	int totscanlines;
 	int size;
+	int charset_flag = 0;
 
 	vga_character_set = data->character_set;
 	vga_character_set = (vga_character_set < 0) ? 0 :
@@ -520,7 +521,34 @@ vgasetfontattr(struct vgafontattr *data)
 	for (i = 0;i < PCVT_NSCREENS;i++)
 	{
 		if(vga_character_set == vs[i].vga_charset)
+		{
 			set_charset(&(vs[i]),vga_character_set);
+			charset_flag = i;
+		}
+	}
+	if (charset_flag && Scrollbuffer)
+	{
+		free(Scrollbuffer, M_DEVBUF);
+		if ((Scrollbuffer = (u_short *)malloc(vs[i].maxcol *
+		     vs[i].screen_rowsize  * SCROLLBACK_PAGES * CHR * 2,
+		     M_DEVBUF, M_NOWAIT)) == NULL)
+		{
+			printf("pcvt: scrollback memory malloc failed\n");
+		}
+		else
+		{
+			for (i = 0; i < PCVT_NSCREENS; i++)
+			{
+				vs[i].Scrollback = Scrollbuffer;
+				vs[i].scr_offset = 0;
+				vs[i].scrolling = 0;
+				vs[i].max_off = vs[i].screen_rowsize *
+						SCROLLBACK_PAGES - 1;
+			}
+			bcopy(vsp->Crtat, vsp->Scrollback, vsp->screen_rows *
+			      vsp->maxcol * CHR);
+			vsp->scr_offset = vsp->row - 1;
+		}
 	}
 	switch_screen(current_video_screen, 0, 0);
 }
