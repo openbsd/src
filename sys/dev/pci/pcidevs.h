@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.124 1999/03/04 15:27:30 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.125 1999/03/04 22:32:21 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -569,8 +569,8 @@
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI */
-#define	PCI_PRODUCT_ACC_2051_HB	0x2051		/* 2051 PCI Host-PCI */
-#define	PCI_PRODUCT_ACC_2051_ISA	0x5842		/* 2051 PCI Host-ISA */
+#define	PCI_PRODUCT_ACC_2051_HB	0x2051		/* 2051 Host-PCI */
+#define	PCI_PRODUCT_ACC_2051_ISA	0x5842		/* 2051 Host-ISA */
 
 /* Accton products */
 #define	PCI_PRODUCT_ACCTON_5030	0x1211		/* MPX 5030/5038 */
@@ -1156,9 +1156,12 @@
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 Host-PCI */
 #define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (Meteor) */
-/* product TOSHIBA2 ??		0x0601	Host-PCI */
-/* product TOSHIBA2 ??		0x060f	PCI-CardBus */
-/* product TOSHIBA2 ??		0x0701	?? misc communications */
+
+/* Toshiba (2nd ID) products */
+#define	PCI_PRODUCT_TOSHIBA2_THB	0x0601		/* Host-PCI */
+#define	PCI_PRODUCT_TOSHIBA2_TOPIC95	0x060a		/* PCI-CardBus */
+#define	PCI_PRODUCT_TOSHIBA2_TCB	0x060f		/* PCI-CardBus */
+#define	PCI_PRODUCT_TOSHIBA2_TFIRO	0x0701		/* PCI-FIRO */
 
 /* Trident products */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9320	0x9320		/* TGUI 9320 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.124 1999/03/04 15:27:30 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.125 1999/03/04 22:32:21 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -162,13 +162,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_HB,
 	    0,
 	    "ACC Microelectronics",
-	    "2051 PCI Host-PCI",
+	    "2051 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_ISA,
 	    0,
 	    "ACC Microelectronics",
-	    "2051 PCI Host-ISA",
+	    "2051 Host-ISA",
 	},
 	{
 	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_5030,
@@ -2527,6 +2527,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba",
 	    "TC35856F ATM (Meteor)",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_THB,
+	    0,
+	    "Toshiba (2nd ID)",
+	    "Host-PCI",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TOPIC95,
+	    0,
+	    "Toshiba (2nd ID)",
+	    "PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TCB,
+	    0,
+	    "Toshiba (2nd ID)",
+	    "PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TFIRO,
+	    0,
+	    "Toshiba (2nd ID)",
+	    "PCI-FIRO",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
