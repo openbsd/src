@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.51 2003/04/14 09:53:34 jakob Exp $
+#	$OpenBSD: services,v 1.52 2003/06/19 23:20:59 pvalchev Exp $
 #
 # Network services, Internet style
 #
@@ -130,6 +130,8 @@ svrloc		427/tcp				# Server Location
 svrloc		427/udp
 nnsp		433/tcp		usenet		# Network News Transfer
 https		443/tcp				# secure http (SSL)
+microsoft-ds	445/tcp				# Microsoft-DS
+microsoft-ds	445/udp				# Microsoft-DS
 kpasswd		464/tcp				# Kerberos 5 password changing
 kpasswd		464/udp				# Kerberos 5 password changing
 photuris	468/tcp				# Photuris Key Management
