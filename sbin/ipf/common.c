@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.1 2001/01/17 05:00:57 fgsch Exp $	*/
+/*	$OpenBSD: common.c,v 1.2 2001/01/30 04:26:01 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -36,14 +36,10 @@
 #include <resolv.h>
 #include <ctype.h>
 #include <syslog.h>
-#include <netinet/ip_compat.h>
+#include <netinet/ip_fil_compat.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"
 #include "facpri.h"
-
-#if defined(__OpenBSD__)
-#include "ifaddr.h"
-#endif
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-2000 Darren Reed";
@@ -55,11 +51,16 @@ extern	int	opts;
 #ifdef	USE_INET6
 extern	int	use_inet6;
 #endif
+#if defined(__OpenBSD__)
+extern	int	if_addr __P((char *, struct in_addr *));
+#endif
+
 
 
 char	*proto = NULL;
-char	flagset[] = "FSRPAU";
-u_char	flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH, TH_ACK, TH_URG };
+char	flagset[] = "FSRPAUEC";
+u_char	flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH, TH_ACK, TH_URG,
+		    TH_ECN, TH_CWR };
 
 #ifdef	USE_INET6
 void fill6bits __P((int, u_32_t *));
@@ -72,7 +73,6 @@ static	char	thishost[MAXHOSTNAMELEN];
 void initparse()
 {
 	gethostname(thishost, sizeof(thishost));
-	thishost[sizeof(thishost) - 1] = '\0';
 }
 
 
@@ -252,8 +252,11 @@ int     linenum;
 		host = thishost;
 
 #if defined(__OpenBSD__)
-	if (if_addr(host, &ip))
-		return *ipa = ip.s_addr;
+	/* attempt a map from interface name to address */
+	if (if_addr(host, &ip)) {
+		*ipa = ip.s_addr;
+		return 0;
+	}
 #endif
 
 	if (!(hp = gethostbyname(host))) {
@@ -420,8 +423,12 @@ int    linenum;
 	if (s && *s == '0')
 		tcpfm = strtol(s, NULL, 0);
 
-	if (!tcpfm)
-		tcpfm = 0xff;
+	if (!tcpfm) {
+		if (tcpf == TH_SYN)
+			tcpfm = 0xff & ~(TH_ECN|TH_CWR);
+		else
+			tcpfm = 0xff & ~(TH_ECN);
+	}
 	*mask = tcpfm;
 	return tcpf;
 }

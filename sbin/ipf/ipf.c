@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipf.c,v 1.25 2001/01/17 05:00:58 fgsch Exp $	*/
+/*	$OpenBSD: ipf.c,v 1.26 2001/01/30 04:26:01 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -36,10 +36,9 @@
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-#include <netinet/ip_compat.h>
+#include <netinet/ip_fil_compat.h>
 #include <netinet/ip_fil.h>
 #include <netinet/ip_nat.h>
-#include <netinet/ip_state.h>
 #include "ipf.h"
 #include <netinet/ipl.h>
 
@@ -79,10 +78,19 @@ static	void	usage __P((void));
 static	void	showversion __P((void));
 static	int	get_flags __P((void));
 
+#if SOLARIS
+#define OPTS	"6AdDEf:F:Il:noPrsUvVyzZ"
+#else
+#define OPTS	"6AdDEf:F:Il:noPrsvVyzZ"
+#endif
 
 static void usage()
 {
+#if SOLARIS
 	fprintf(stderr, "usage: ipf [-6AdDEInoPrsUvVyzZ] %s %s %s\n",
+#else
+	fprintf(stderr, "usage: ipf [-6AdDEInoPrsvVyzZ] %s %s %s\n",
+#endif
 		"[-l block|pass|nomatch]", "[-F i|o|a|s|S]", "[-f filename]");
 	exit(1);
 }
@@ -94,11 +102,15 @@ char *argv[];
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "6AdDEf:F:Il:noPrsUvVyzZ")) != -1) {
+	while ((c = getopt(argc, argv, OPTS)) != -1)
+		if (c == '?')
+			usage();
+
+	optreset=1;
+	optind=1;
+	while ((c = getopt(argc, argv, OPTS)) != -1) {
 		switch (c)
 		{
-		case '?' :
-			usage();
 #ifdef	USE_INET6
 		case '6' :
 			use_inet6 = 1;
