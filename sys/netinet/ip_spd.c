@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.10 2001/02/28 04:16:57 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.11 2001/02/28 05:27:37 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -872,10 +872,7 @@ ipsp_clear_acquire(struct tdb *tdb)
 			case IPSP_DIRECTION_OUT:
 			    ip = mtod(ipa->ipa_packet, struct ip *);
 			    if (ipa->ipa_packet->m_len < sizeof(struct ip))
-			    {
-				m_freem(ipa->ipa_packet);
-				break;
-			    }
+			      break;
 
 			    /* Same as in ip_output() -- massage the header */
 			    ip->ip_len = htons((u_short) ip->ip_len);
@@ -893,9 +890,10 @@ ipsp_clear_acquire(struct tdb *tdb)
 			    if (IF_QFULL(ifq))
 			    {
 				IF_DROP(ifq);
-				m_freem(ipa->ipa_packet);
+				break;
 			    }
 			    IF_ENQUEUE(ifq, ipa->ipa_packet);
+			    ipa->ipa_packet = NULL;
 			    schednetisr(NETISR_IP);
 			    splx(s);
 			    break;
@@ -921,9 +919,10 @@ ipsp_clear_acquire(struct tdb *tdb)
 			    if (IF_QFULL(ifq))
 			    {
 				IF_DROP(ifq);
-				m_freem(ipa->ipa_packet);
+				break;
 			    }
 			    IF_ENQUEUE(ifq, ipa->ipa_packet);
+			    ipa->ipa_packet = NULL;
 			    schednetisr(NETISR_IPV6);
 			    splx(s);
 			    break;
@@ -1002,9 +1001,11 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
     /* Check whether request has been made already. */
     if ((ipa = ipsp_pending_acquire(gw)) != NULL)
     {
-	if (ipa->ipa_packet)
-	  m_freem(ipa->ipa_packet);
-	ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+	if (ipa->ipa_packet && m)
+	{
+	    m_freem(ipa->ipa_packet);
+	    ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+	}
 	return 0;
     }
 
