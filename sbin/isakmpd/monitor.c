@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.34 2005/02/27 13:12:12 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.35 2005/03/03 22:05:58 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -1118,7 +1118,7 @@ static void
 m_priv_increase_state(int state)
 {
 	if (state <= cur_state)
-		log_print("m_priv_increase_state: attempt to decrase state "
+		log_print("m_priv_increase_state: attempt to decrease state "
 		    "or match current state");
 	if (state < STATE_INIT || state > STATE_QUIT)
 		log_print("m_priv_increase_state: attempt to switch to "
