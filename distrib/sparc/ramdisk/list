@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.20 2003/01/03 18:36:08 krw Exp $
+#	$OpenBSD: list,v 1.21 2003/01/30 22:09:56 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -9,7 +9,6 @@ LINK	instbin				usr/sbin/installboot
 
 SRCDIRS	sys/arch/sparc/stand
 
-# Minimize use of MFS
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 2003/01/30 21:05:01 mickey Exp $
+#	$OpenBSD: list,v 1.2 2003/01/30 22:09:56 deraadt Exp $
 
 # hppa extra's
 LINK	instbin				sbin/disklabel
@@ -7,7 +7,6 @@ LINK	instbin				usr/bin/less usr/bin/more
 
 SRCDIRS	sys/arch/hppa/stand
 
-# Minimize use of MFS
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.17 2002/05/01 19:21:28 mickey Exp $
+#	$OpenBSD: list,v 1.18 2003/01/30 22:09:56 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
@@ -6,7 +6,6 @@ LINK	instbin					sbin/disklabel
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/less usr/bin/more
 
-# Minimize use of MFS
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
