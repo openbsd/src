@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.66 2003/06/03 01:52:41 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.67 2003/06/03 21:09:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -27,13 +27,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Jason Downs for the
- *      OpenBSD system.
- * 4. Neither the name(s) of the author(s) nor the name OpenBSD
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -75,7 +68,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.66 2003/06/03 01:52:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.67 2003/06/03 21:09:02 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF

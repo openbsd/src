@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.22 2003/06/02 20:18:35 millert Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.23 2003/06/03 21:09:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -11,13 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Jason Downs for the
- *      OpenBSD system.
- * 4. Neither the name(s) of the author(s) nor the name OpenBSD
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -73,7 +66,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.22 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.23 2003/06/03 21:09:00 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
