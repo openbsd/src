@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.16 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.17 2002/10/12 01:09:43 krw Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -544,7 +544,7 @@ of_display_console()
 		len = OF_getprop(display_node, "assigned-addresses",
 			addr, sizeof(addr));
 		if (len < sizeof(addr[0])) {
-			panic(": no address\n");
+			panic(": no address");
 		}
 	}
 	len = OF_getprop(display_node, "backlight-control",

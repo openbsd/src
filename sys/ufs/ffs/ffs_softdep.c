@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.41 2002/07/16 22:54:42 millert Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.42 2002/10/12 01:09:45 krw Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -1454,7 +1454,7 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 		/*
 		 * XXXUBC - Yes, I know how to fix this, but not right now.
 		 */
-		panic("softdep_setup_allocdirect: Bonk art in the head\n");
+		panic("softdep_setup_allocdirect: Bonk art in the head");
 	}
 	WORKLIST_INSERT(&bp->b_dep, &adp->ad_list);
 	if (lbn >= NDADDR) {
@@ -1689,7 +1689,7 @@ softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 		/*
 		 * XXXUBC - Yes, I know how to fix this, but not right now.
 		 */
-		panic("softdep_setup_allocindir_page: Bonk art in the head\n");
+		panic("softdep_setup_allocindir_page: Bonk art in the head");
 	}
 	WORKLIST_INSERT(&nbp->b_dep, &aip->ai_list);
 	FREE_LOCK(&lk);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.26 2002/07/09 18:19:58 nate Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.27 2002/10/12 01:09:44 krw Exp $	*/
 /*	$NetBSD: uhci.c,v 1.142 2001/10/25 02:08:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1507,7 +1507,7 @@ uhci_waitintr(uhci_softc_t *sc, usbd_xfer_handle xfer)
 		;
 #ifdef DIAGNOSTIC
 	if (ii == NULL)
-		panic("uhci_waitintr: lost intr_info\n");
+		panic("uhci_waitintr: lost intr_info");
 #endif
 	uhci_idone(ii);
 }
@@ -1790,7 +1790,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("uhci_device_bulk_transfer: a request\n");
+		panic("uhci_device_bulk_transfer: a request");
 #endif
 
 	len = xfer->length;
@@ -1946,7 +1946,7 @@ uhci_device_ctrl_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_device_ctrl_transfer: not a request\n");
+		panic("uhci_device_ctrl_transfer: not a request");
 #endif
 
 	err = uhci_device_request(xfer);
@@ -1995,7 +1995,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("uhci_device_intr_transfer: a request\n");
+		panic("uhci_device_intr_transfer: a request");
 #endif
 
 	err = uhci_alloc_std_chain(upipe, sc, xfer->length, 1, xfer->flags,
@@ -2623,7 +2623,7 @@ uhci_device_ctrl_done(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_ctrl_done: not a request\n");
+		panic("uhci_ctrl_done: not a request");
 #endif
 
 	uhci_del_intr_info(ii);	/* remove from active list */
@@ -2945,7 +2945,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_root_ctrl_transfer: not a request\n");
+		panic("uhci_root_ctrl_transfer: not a request");
 #endif
 	req = &xfer->request;
 

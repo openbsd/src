@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.91 2002/09/09 17:45:26 gluk Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.92 2002/10/12 01:09:44 krw Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -938,7 +938,7 @@ pciide_compat_intr(arg)
 #ifdef DIAGNOSTIC
 	/* should only be called for a compat channel */
 	if (cp->compat == 0)
-		panic("pciide compat intr called for non-compat chan %p\n", cp);
+		panic("pciide compat intr called for non-compat chan %p", cp);
 #endif
 	return (wdcintr(&cp->wdc_channel));
 }

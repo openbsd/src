@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.22 2002/10/07 18:35:56 mickey Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.23 2002/10/12 01:09:43 krw Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ iommu_tsb_entry(is, dva)
 	tte = is->is_tsb[IOTSBSLOT(dva,is->is_tsbsize)];
 
 	if ((tte & IOTTE_V) == 0)
-		panic("iommu_tsb_entry: invalid entry %llx\n", (long long)dva);
+		panic("iommu_tsb_entry: invalid entry %llx", (long long)dva);
 
 	return (tte);
 }

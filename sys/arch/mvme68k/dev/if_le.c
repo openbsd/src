@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.19 2002/04/29 06:26:50 pvalchev Exp $ */
+/*	$OpenBSD: if_le.c,v 1.20 2002/10/12 01:09:43 krw Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -339,7 +339,7 @@ leattach(parent, self, aux)
 		}
 		sc->sc_mem = (void *)mapiodev(addr, VLEMEMSIZE);
 		if (sc->sc_mem == NULL)
-			panic("\nle: no more memory in external I/O map\n");
+			panic("le: no more memory in external I/O map");
 		lesc->sc_r1 = (void *)ca->ca_vaddr;
 		lesc->sc_ipl = ca->ca_ipl;
 		lesc->sc_vec = ca->ca_vec;
@@ -377,7 +377,7 @@ leattach(parent, self, aux)
 		myetheraddr(sc->sc_arpcom.ac_enaddr);
 		break;
 	default:
-		panic("\nle: unknown bus type.\n");
+		panic("le: unknown bus type.");
 	}
 	evcnt_attach(&sc->sc_dev, "intr", &lesc->sc_intrcnt);
 	evcnt_attach(&sc->sc_dev, "errs", &lesc->sc_errcnt);

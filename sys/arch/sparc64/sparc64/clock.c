@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2002/06/15 17:23:31 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2002/10/12 01:09:43 krw Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -321,7 +321,7 @@ sbus_wenable(handle, onoff)
 			8192, prot, (vaddr_t)sbi->si_bh, &newaddr);
 		/* We can panic now or take a datafault later... */
 		if (sbi->si_bh != newaddr)
-			panic("sbus_wenable: address %p changed to %p\n",
+			panic("sbus_wenable: address %p changed to %p",
 			      (void *)(u_long)sbi->si_bh,
 			      (void *)(u_long)newaddr);
 	}
@@ -397,7 +397,7 @@ ebus_wenable(handle, onoff)
 			(vaddr_t)ebi->ei_bh, &newaddr);
 		/* We can panic now or take a datafault later... */
 		if (ebi->ei_bh != newaddr)
-			panic("ebus_wenable: address %p changed to %p\n",
+			panic("ebus_wenable: address %p changed to %p",
 			      (void *)(u_long)ebi->ei_bh,
 			      (void *)(u_long)newaddr);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.6 2002/08/17 20:55:30 millert Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.7 2002/10/12 01:09:45 krw Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -524,7 +524,7 @@ wsfont_unlock(cookie)
 	
 	if ((ent = wsfont_find0(cookie)) != NULL) {
 		if (ent->lockcount == 0)
-			panic("wsfont_unlock: font not locked\n");
+			panic("wsfont_unlock: font not locked");
 		lc = --ent->lockcount;
 	} else	
 		lc = -1;

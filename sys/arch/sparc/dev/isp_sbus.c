@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.22 2002/05/17 01:19:00 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.23 2002/10/12 01:09:43 krw Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -412,7 +412,7 @@ isp_sbus_dmasetup(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *rq,
 	}
 
 	if (sbc->sbus_kdma_allocs[isp_handle_index(rq->req_handle)] != 0) {
-		panic("%s: kdma handle already allocated\n", isp->isp_name);
+		panic("%s: kdma handle already allocated", isp->isp_name);
 		/* NOTREACHED */
 	}
 	if (XS_CDBLEN(xs) > 12) {
@@ -468,7 +468,7 @@ isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 		cpuinfo.cache_flush(xs->data, xs->datalen - xs->resid);
 	}
 	if (sbc->sbus_kdma_allocs[isp_handle_index(handle)] == (vaddr_t) 0) {
-		panic("%s: kdma handle not already allocated\n", isp->isp_name);
+		panic("%s: kdma handle not already allocated", isp->isp_name);
 		/* NOTREACHED */
 	}
 	kdvma = sbc->sbus_kdma_allocs[isp_handle_index(handle)];

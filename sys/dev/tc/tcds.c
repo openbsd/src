@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.1 2002/05/02 22:56:06 miod Exp $ */
+/* $OpenBSD: tcds.c,v 1.2 2002/10/12 01:09:44 krw Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -176,7 +176,7 @@ tcdsattach(parent, self, aux)
 
 	td = tcds_lookup(ta->ta_modname);
 	if (td == NULL)
-		panic("\ntcdsattach: impossible");
+		panic("tcdsattach: impossible");
 
 	printf(": TurboChannel Dual SCSI");
 	if (td->td_flags & TCDSF_BASEBOARD)
@@ -394,7 +394,7 @@ tcds_intrnull(val)
 	void *val;
 {
 
-	panic("tcds_intrnull: uncaught TCDS intr for chip %lu\n",
+	panic("tcds_intrnull: uncaught TCDS intr for chip %lu",
 	    (u_long)val);
 }
 

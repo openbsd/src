@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.5 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.6 2002/10/12 01:09:44 krw Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -455,7 +455,7 @@ iopsp_scsi_cmd(xs)
 
 #if defined(I2ODEBUG) || defined(SCSIDEBUG)
 	if (xs->cmdlen > sizeof(mf->cdb))
-		panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
+		panic("%s: CDB too large", sc->sc_dv.dv_xname);
 #endif
 
 	im = iop_msg_alloc(iop, &sc->sc_ii, IM_POLL_INTR |

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.54 2002/07/02 19:38:55 nate Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.55 2002/10/12 01:09:45 krw Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1152,7 +1152,7 @@ swap_off(p, sdp)
 	uvmexp.swpages -= sdp->swd_npages;
 
 	if (swaplist_find(sdp->swd_vp, 1) == NULL)
-		panic("swap_off: swapdev not in list\n");
+		panic("swap_off: swapdev not in list");
 	swaplist_trim();
 
 	/*

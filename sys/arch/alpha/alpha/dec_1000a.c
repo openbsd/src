@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_1000a.c,v 1.1 2002/06/30 16:24:37 miod Exp $ */
+/* $OpenBSD: dec_1000a.c,v 1.2 2002/10/12 01:09:43 krw Exp $ */
 /* $NetBSD: dec_1000a.c,v 1.14 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
@@ -235,7 +235,7 @@ dec_1000a_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 #ifdef KGDB

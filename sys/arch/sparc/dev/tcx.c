@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.12 2002/10/01 20:55:14 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.13 2002/10/12 01:09:43 krw Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -218,7 +218,7 @@ tcxattach(parent, self, args)
 	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 
 	if (ca->ca_ra.ra_nreg < TCX_NREG)
-		panic("\ntcx: expected %d registers, got %d", TCX_NREG,
+		panic("tcx: expected %d registers, got %d", TCX_NREG,
 		    ca->ca_ra.ra_nreg);
 
 	/* Copy register address spaces */

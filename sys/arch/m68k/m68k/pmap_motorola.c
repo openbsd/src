@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.20 2002/09/10 18:29:43 art Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.21 2002/10/12 01:09:43 krw Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -419,7 +419,7 @@ pmap_init()
 		 * portion of the kernel page table isn't big enough
 		 * and we overran the page table map.
 		 */
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 	}
 
 	PMAP_DPRINTF(PDB_INIT,

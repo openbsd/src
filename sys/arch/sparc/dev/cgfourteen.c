@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.17 2002/10/01 07:09:59 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.18 2002/10/12 01:09:43 krw Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -246,10 +246,10 @@ cgfourteenattach(parent, self, args)
 	 * Sanity checks
 	 */
 	if (ca->ca_ra.ra_len < 0x10000)
-		panic("\ncgfourteen: expected %x bytes of control "
+		panic("cgfourteen: expected %x bytes of control "
 		    "registers, got %x", 0x10000, ca->ca_ra.ra_len);
 	if (ca->ca_ra.ra_nreg < CG14_NREG)
-		panic("\ncgfourteen: expected %d registers, got %d",
+		panic("cgfourteen: expected %d registers, got %d",
 		    CG14_NREG, ca->ca_ra.ra_nreg);
 
 	printf(", %dMB", ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len >> 20);

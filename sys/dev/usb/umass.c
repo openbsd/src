@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.18 2002/07/25 02:18:10 nate Exp $ */
+/*	$OpenBSD: umass.c,v 1.19 2002/10/12 01:09:44 krw Exp $ */
 /*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -1116,7 +1116,7 @@ USB_ATTACH(umass)
 		sc->state = umass_cbi_state;
 #ifdef UMASS_DEBUG
 	} else {
-		panic("%s:%d: Unknown proto 0x%02x\n",
+		panic("%s:%d: Unknown proto 0x%02x",
 		      __FILE__, __LINE__, sc->proto);
 #endif
 	}
@@ -1804,7 +1804,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		} else if (sc->transfer_actlen > sc->transfer_datalen) {
 			/* Buffer overrun! Don't let this go by unnoticed */
-			panic("%s: transferred %d bytes instead of %d bytes\n",
+			panic("%s: transferred %d bytes instead of %d bytes",
 				USBDEVNAME(sc->sc_dev),
 				sc->transfer_actlen, sc->transfer_datalen);
 		}
@@ -1882,7 +1882,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	/***** Default *****/
 	default:
-		panic("%s: Unknown state %d\n",
+		panic("%s: Unknown state %d",
 		      USBDEVNAME(sc->sc_dev), sc->transfer_state);
 	}
 }
@@ -2290,7 +2290,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	/***** Default *****/
 	default:
-		panic("%s: Unknown state %d\n",
+		panic("%s: Unknown state %d",
 		      USBDEVNAME(sc->sc_dev), sc->transfer_state);
 	}
 }
@@ -2860,7 +2860,7 @@ umass_cam_cb(struct umass_softc *sc, void *priv, int residue, int status)
 					     umass_cam_sense_cb, (void *) ccb);
 			} else {
 #ifdef UMASS_DEBUG
-				panic("transform(REQUEST_SENSE) failed\n");
+				panic("transform(REQUEST_SENSE) failed");
 #else
 				csio->resid = sc->transfer_datalen;
 				ccb->ccb_h.status = CAM_REQ_CMP_ERR;
@@ -2874,7 +2874,7 @@ umass_cam_cb(struct umass_softc *sc, void *priv, int residue, int status)
 			xpt_done(ccb);
 			break;
 		default:
-			panic("umass_cam_cb called for func_code %d\n",
+			panic("umass_cam_cb called for func_code %d",
 			      ccb->ccb_h.func_code);
 		}
 		break;
@@ -2889,7 +2889,7 @@ umass_cam_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		break;
 
 	default:
-		panic("%s: Unknown status %d in umass_cam_cb\n",
+		panic("%s: Unknown status %d in umass_cam_cb",
 			USBDEVNAME(sc->sc_dev), status);
 	}
 }
@@ -3376,7 +3376,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		break;
 
 	default:
-		panic("%s: Unknown status %d in umass_scsipi_cb\n",
+		panic("%s: Unknown status %d in umass_scsipi_cb",
 			USBDEVNAME(sc->sc_dev), status);
 	}
 

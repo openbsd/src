@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.9 2002/04/30 23:01:55 mickey Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.10 2002/10/12 01:09:44 krw Exp $	*/
 /*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ wsmux_setmax(n)
 			wsmuxdevs_tmp = malloc(nwsmux * sizeof(*wsmuxdevs_tmp),
 			    M_DEVBUF, M_NOWAIT);
 			if (wsmuxdevs_tmp == 0)
-				panic("wsmux_setmax: no mem\n");
+				panic("wsmux_setmax: no mem");
 			for (i = 0; i < nwsmux; i++)
 				wsmuxdevs_tmp[i] = wsmuxdevs[i];
 			free(wsmuxdevs, M_DEVBUF);
@@ -125,7 +125,7 @@ wsmux_setmax(n)
 		wsmuxdevs = malloc((n + 1) * sizeof(*wsmuxdevs), 
 		    M_DEVBUF, M_NOWAIT);
 		if (wsmuxdevs == NULL)
-			panic("wsmux_setmax: no memory\n");
+			panic("wsmux_setmax: no memory");
 		memset(wsmuxdevs, 0, (n + 1) * sizeof(*wsmuxdevs));
 		if (wsmuxdevs_tmp != NULL) {
 			for (i = 0; i < nwsmux; i++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.2 2002/06/08 10:01:38 jason Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.3 2002/10/12 01:09:44 krw Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ rl_cardbus_detach(self, flags)
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 	rv = rl_detach(sc);
 	if (rv)

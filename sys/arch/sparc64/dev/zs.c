@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.10 2002/09/23 18:43:18 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.11 2002/10/12 01:09:43 krw Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -377,7 +377,7 @@ zs_attach(zsc, zsd, pri)
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0, zshard, zsc);
 	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
-		panic("zsattach: could not establish soft interrupt\n");
+		panic("zsattach: could not establish soft interrupt");
 
 	evcnt_attach(&zsc->zsc_dev, "intr", &zsc->zsc_intrcnt);
 

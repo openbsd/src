@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.45 2002/09/12 12:56:16 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.46 2002/10/12 01:09:45 krw Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -613,7 +613,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 		panic("uvm_page_physload: page size not set!");
 
 	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
-		panic("uvm_page_physload: bad free list %d\n", free_list);
+		panic("uvm_page_physload: bad free list %d", free_list);
 
 	if (start >= end)
 		panic("uvm_page_physload: start >= end");
@@ -1106,7 +1106,7 @@ uvm_pagefree(pg)
 #ifdef DEBUG
 	if (pg->uobject == (void *)0xdeadbeef &&
 	    pg->uanon == (void *)0xdeadbeef) {
-		panic("uvm_pagefree: freeing free page %p\n", pg);
+		panic("uvm_pagefree: freeing free page %p", pg);
 	}
 #endif
 

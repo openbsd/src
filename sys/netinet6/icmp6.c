@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.64 2002/09/11 03:15:36 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.65 2002/10/12 01:09:45 krw Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2670,7 +2670,7 @@ icmp6_redirect_output(m0, rt)
 	 * and truncates if not.
 	 */
 	if (m0->m_next || m0->m_pkthdr.len != m0->m_len)
-		panic("assumption failed in %s:%d\n", __FILE__, __LINE__);
+		panic("assumption failed in %s:%d", __FILE__, __LINE__);
 
 	if (len - sizeof(*nd_opt_rh) < m0->m_pkthdr.len) {
 		/* not enough room, truncate */

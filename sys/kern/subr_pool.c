@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.32 2002/07/23 15:31:36 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.33 2002/10/12 01:09:45 krw Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -558,7 +558,7 @@ pool_destroy(struct pool *pp)
 #ifdef DIAGNOSTIC
 	if (pp->pr_nout != 0) {
 		pr_printlog(pp, NULL, printf);
-		panic("pool_destroy: pool busy: still out: %u\n",
+		panic("pool_destroy: pool busy: still out: %u",
 		    pp->pr_nout);
 	}
 #endif
@@ -708,7 +708,7 @@ pool_get(struct pool *pp, int flags)
 			simple_unlock(&pp->pr_slock);
 			printf("pool_get: %s: curpage NULL, nitems %u\n",
 			    pp->pr_wchan, pp->pr_nitems);
-			panic("pool_get: nitems inconsistent\n");
+			panic("pool_get: nitems inconsistent");
 		}
 #endif
 
@@ -778,7 +778,7 @@ pool_get(struct pool *pp, int flags)
 		simple_unlock(&pp->pr_slock);
 		printf("pool_get: %s: items on itemlist, nitems %u\n",
 		    pp->pr_wchan, pp->pr_nitems);
-		panic("pool_get: nitems inconsistent\n");
+		panic("pool_get: nitems inconsistent");
 	}
 #endif
 

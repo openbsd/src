@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.117 2002/10/10 17:46:35 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.118 2002/10/12 01:09:44 krw Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1970,10 +1970,10 @@ ubsec_kprocess_modexp_sw(sc, krp)
 #ifdef DIAGNOSTIC
 	/* Misaligned output buffer will hang the chip. */
 	if ((letoh32(mcr->mcr_opktbuf.pb_addr) & 3) != 0)
-		panic("%s: modexp invalid addr 0x%x\n",
+		panic("%s: modexp invalid addr 0x%x",
 		    sc->sc_dv.dv_xname, letoh32(mcr->mcr_opktbuf.pb_addr));
 	if ((letoh32(mcr->mcr_opktbuf.pb_len) & 3) != 0)
-		panic("%s: modexp invalid len 0x%x\n",
+		panic("%s: modexp invalid len 0x%x",
 		    sc->sc_dv.dv_xname, letoh32(mcr->mcr_opktbuf.pb_len));
 #endif
 
@@ -2172,10 +2172,10 @@ ubsec_kprocess_modexp_hw(sc, krp)
 #ifdef DIAGNOSTIC
 	/* Misaligned output buffer will hang the chip. */
 	if ((letoh32(mcr->mcr_opktbuf.pb_addr) & 3) != 0)
-		panic("%s: modexp invalid addr 0x%x\n",
+		panic("%s: modexp invalid addr 0x%x",
 		    sc->sc_dv.dv_xname, letoh32(mcr->mcr_opktbuf.pb_addr));
 	if ((letoh32(mcr->mcr_opktbuf.pb_len) & 3) != 0)
-		panic("%s: modexp invalid len 0x%x\n",
+		panic("%s: modexp invalid len 0x%x",
 		    sc->sc_dv.dv_xname, letoh32(mcr->mcr_opktbuf.pb_len));
 #endif
 

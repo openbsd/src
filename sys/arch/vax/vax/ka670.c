@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.6 2002/09/28 06:25:11 hugh Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.7 2002/10/12 01:09:44 krw Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -140,7 +140,7 @@ ka670_mchk(addr)
 	 */
 	if (mfpr(PR_PCSTS) & KA670_PCS_TRAP2) {
 		printf("TRAP2 (double error) in ka670_mchk.\n");
-		panic("unrecoverable state in ka670_mchk.\n");
+		panic("unrecoverable state in ka670_mchk.");
 		return (-1);
 	}
 	if ((mcf->mc670_code & KA670_MC_RESTART) || 

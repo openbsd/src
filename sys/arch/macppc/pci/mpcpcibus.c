@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.15 2002/10/07 05:39:48 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.16 2002/10/12 01:09:43 krw Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -239,7 +239,7 @@ mpcpcibrattach(parent, self, aux)
 			if ( bus_space_map(&(sc->sc_iobus_space), 0, NBPG, 0,
 				&lcp->ioh_cf8) != 0 )
 			{
-				panic("mpcpcibus: unable to map self\n");
+				panic("mpcpcibus: unable to map self");
 			}
 			lcp->ioh_cfc = lcp->ioh_cf8;
 		} else {
@@ -252,12 +252,12 @@ mpcpcibrattach(parent, self, aux)
 			if ( bus_space_map(&(sc->sc_iobus_space), 0xfec00000,
 				NBPG, 0, &lcp->ioh_cf8) != 0 )
 			{
-				panic("mpcpcibus: unable to map self\n");
+				panic("mpcpcibus: unable to map self");
 			}
 			if ( bus_space_map(&(sc->sc_iobus_space), 0xfee00000,
 				NBPG, 0, &lcp->ioh_cfc) != 0 )
 			{
-				panic("mpcpcibus: unable to map self\n");
+				panic("mpcpcibus: unable to map self");
 			}
 		}
 
@@ -462,12 +462,12 @@ mpcpcibrattach(parent, self, aux)
 			if ( bus_space_map(&(sc->sc_iobus_space), addr_offset,
 				NBPG, 0, &lcp->ioh_cf8) != 0 )
 			{
-				panic("mpcpcibus: unable to map self\n");
+				panic("mpcpcibus: unable to map self");
 			}
 			if ( bus_space_map(&(sc->sc_iobus_space), data_offset,
 				NBPG, 0, &lcp->ioh_cfc) != 0 )
 			{
-				panic("mpcpcibus: unable to map self\n");
+				panic("mpcpcibus: unable to map self");
 			}
 			of_node = ca->ca_node;
 

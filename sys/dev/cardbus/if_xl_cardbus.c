@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.11 2002/06/15 05:14:41 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.12 2002/10/12 01:09:44 krw Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ xl_cardbus_detach(self, arg)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL) {
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 	}
 #endif
 

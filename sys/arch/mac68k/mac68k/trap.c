@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2002/06/23 03:03:15 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2002/10/12 01:09:43 krw Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ trap(type, code, v, frame)
 		p = &proc0;
 #ifdef DIAGNOSTIC
 	if (p->p_addr == NULL)
-		panic("trap: type 0x%x, code 0x%x, v 0x%x -- no pcb\n",
+		panic("trap: type 0x%x, code 0x%x, v 0x%x -- no pcb",
 			type, code, v);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.17 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: si.c,v 1.18 2002/10/12 01:09:43 krw Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -408,7 +408,7 @@ si_attach(parent, self, args)
 		break;
 
 	default:
-		panic("\nsi_attach: impossible bus type 0x%x", ca->ca_bustype);
+		panic("si_attach: impossible bus type 0x%x", ca->ca_bustype);
 		/* NOTREACHED */
 	}
 
