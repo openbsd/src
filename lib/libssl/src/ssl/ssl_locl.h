@@ -510,7 +510,7 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 
 int ssl2_enc_init(SSL *s, int client);
-void ssl2_generate_key_material(SSL *s);
+int ssl2_generate_key_material(SSL *s);
 void ssl2_enc(SSL *s,int send_data);
 void ssl2_mac(SSL *s,unsigned char *mac,int send_data);
 SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p);
@@ -616,8 +616,5 @@ int ssl_ok(SSL *s);
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 
-/* die if we have to */
-void OpenSSLDie(const char *file,int line,const char *assertion);
-#define die(e)	((e) ? (void)0 : OpenSSLDie(__FILE__, __LINE__, #e))
 
 #endif

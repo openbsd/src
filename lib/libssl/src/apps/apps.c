@@ -798,7 +798,7 @@ end:
 	return(x);
 	}
 
-EVP_PKEY *load_key(BIO *err, const char *file, int format,
+EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	const char *pass, ENGINE *e, const char *key_descrip)
 	{
 	BIO *key=NULL;
@@ -808,7 +808,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format,
 	cb_data.password = pass;
 	cb_data.prompt_info = file;
 
-	if (file == NULL)
+	if (file == NULL && (!maybe_stdin || format == FORMAT_ENGINE))
 		{
 		BIO_printf(err,"no keyfile specified\n");
 		goto end;
@@ -828,12 +828,19 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format,
 		ERR_print_errors(err);
 		goto end;
 		}
-	if (BIO_read_filename(key,file) <= 0)
+	if (file == NULL && maybe_stdin)
 		{
-		BIO_printf(err, "Error opening %s %s\n", key_descrip, file);
-		ERR_print_errors(err);
-		goto end;
+		setvbuf(stdin, NULL, _IONBF, 0);
+		BIO_set_fp(key,stdin,BIO_NOCLOSE);
 		}
+	else
+		if (BIO_read_filename(key,file) <= 0)
+			{
+			BIO_printf(err, "Error opening %s %s\n",
+				key_descrip, file);
+			ERR_print_errors(err);
+			goto end;
+			}
 	if (format == FORMAT_ASN1)
 		{
 		pkey=d2i_PrivateKey_bio(key, NULL);
@@ -867,7 +874,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format,
 	return(pkey);
 	}
 
-EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
+EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	const char *pass, ENGINE *e, const char *key_descrip)
 	{
 	BIO *key=NULL;
@@ -877,7 +884,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 	cb_data.password = pass;
 	cb_data.prompt_info = file;
 
-	if (file == NULL)
+	if (file == NULL && (!maybe_stdin || format == FORMAT_ENGINE))
 		{
 		BIO_printf(err,"no keyfile specified\n");
 		goto end;
@@ -897,11 +904,18 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 		ERR_print_errors(err);
 		goto end;
 		}
-	if (BIO_read_filename(key,file) <= 0)
+	if (file == NULL && maybe_stdin)
 		{
-		BIO_printf(err, "Error opening %s %s\n", key_descrip, file);
-		ERR_print_errors(err);
-		goto end;
+		setvbuf(stdin, NULL, _IONBF, 0);
+		BIO_set_fp(key,stdin,BIO_NOCLOSE);
+		}
+	else
+		if (BIO_read_filename(key,file) <= 0)
+			{
+			BIO_printf(err, "Error opening %s %s\n",
+				key_descrip, file);
+			ERR_print_errors(err);
+			goto end;
 		}
 	if (format == FORMAT_ASN1)
 		{
@@ -1074,6 +1088,7 @@ int set_cert_ex(unsigned long *flags, const char *arg)
 		{ "no_extensions", X509_FLAG_NO_EXTENSIONS, 0},
 		{ "no_sigdump", X509_FLAG_NO_SIGDUMP, 0},
 		{ "no_aux", X509_FLAG_NO_AUX, 0},
+		{ "no_attributes", X509_FLAG_NO_ATTRIBUTES, 0},
 		{ "ext_default", X509V3_EXT_DEFAULT, X509V3_EXT_UNKNOWN_MASK},
 		{ "ext_error", X509V3_EXT_ERROR_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
 		{ "ext_parse", X509V3_EXT_PARSE_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},

@@ -231,7 +231,7 @@ $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
 	"rand_vms"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
-$ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
+$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
 	"e_des,e_bf,e_idea,e_des3,"+ -
 	"e_rc4,e_aes,names,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
@@ -265,14 +265,14 @@ $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_prn,v3_utl,v3err,v3_genn,v3_alt,v3_skey,v3_akey,v3_pku,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info,"+ -
 	"v3_ocsp,v3_akeya"
-$ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall"
+$ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall,conf_sap"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -
 	"pk7_mime"
 $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_init,p12_key,p12_kiss,p12_mutl,"+ -
 	"p12_utl,p12_npas,pk12err,p12_p8d,p12_p8e"
-$ LIB_COMP = "comp_lib,"+ -
+$ LIB_COMP = "comp_lib,comp_err,"+ -
 	"c_rle,c_zlib"
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 	"ocsp_srv,ocsp_prn,ocsp_vfy,ocsp_err"
@@ -1325,7 +1325,7 @@ $   CC4 = CC - CCDISABLEWARNINGS + CC4DISABLEWARNINGS
 $!
 $!  Show user the result
 $!
-$   WRITE SYS$OUTPUT "Main C Compiling Command: ",CC
+$   WRITE/SYMBOL SYS$OUTPUT "Main C Compiling Command: ",CC
 $!
 $!  Else The User Entered An Invalid Arguement.
 $!
@@ -1356,7 +1356,7 @@ $ IF ARCH .EQS. "AXP" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE
 $!
 $!  Show user the result
 $!
-$   WRITE SYS$OUTPUT "Main MACRO Compiling Command: ",MACRO
+$   WRITE/SYMBOL SYS$OUTPUT "Main MACRO Compiling Command: ",MACRO
 $!
 $! Time to check the contents, and to make sure we get the correct library.
 $!

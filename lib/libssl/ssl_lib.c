@@ -1405,13 +1405,24 @@ void SSL_CTX_free(SSL_CTX *a)
 		abort(); /* ok */
 		}
 #endif
+
+	/*
+	 * Free internal session cache. However: the remove_cb() may reference
+	 * the ex_data of SSL_CTX, thus the ex_data store can only be removed
+	 * after the sessions were flushed.
+	 * As the ex_data handling routines might also touch the session cache,
+	 * the most secure solution seems to be: empty (flush) the cache, then
+	 * free ex_data, then finally free the cache.
+	 * (See ticket [openssl.org #212].)
+	 */
+	if (a->sessions != NULL)
+		SSL_CTX_flush_sessions(a,0);
+
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
 
 	if (a->sessions != NULL)
-		{
-		SSL_CTX_flush_sessions(a,0);
 		lh_free(a->sessions);
-		}
+
 	if (a->cert_store != NULL)
 		X509_STORE_free(a->cert_store);
 	if (a->cipher_list != NULL)
@@ -2289,10 +2300,3 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int con
 
 IMPLEMENT_STACK_OF(SSL_CIPHER)
 IMPLEMENT_STACK_OF(SSL_COMP)
-
-void OpenSSLDie(const char *file,int line,const char *assertion)
-    {
-    fprintf(stderr,"%s(%d): OpenSSL internal error, assertion failed: %s\n",
-	    file,line,assertion);
-    abort();
-    }

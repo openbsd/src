@@ -63,5 +63,5 @@
 # define OPENSSL_EXTERN OPENSSL_EXPORT
 #endif
 
-OPENSSL_EXTERN char *DES_version;	/* SSLeay version string */
-OPENSSL_EXTERN char *libdes_version;	/* old libdes version string */
+OPENSSL_EXTERN const char *DES_version;	/* SSLeay version string */
+OPENSSL_EXTERN const char *libdes_version;	/* old libdes version string */
