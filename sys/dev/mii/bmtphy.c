@@ -1,5 +1,5 @@
-/*	$OpenBSD: bmtphy.c,v 1.11 2005/01/28 18:27:55 brad Exp $	*/
-/*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.12 2005/02/04 23:23:56 brad Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.17 2005/01/17 13:17:45 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Theo de Raadt
@@ -27,8 +27,9 @@
  */
 
 /*
- * driver for Broadcom BCM5201/5202 Mini-Theta ethernet 10/100 PHY
- * Data Sheet available from Broadcom
+ * Driver for Broadcom BCM5201/BCM5202 "Mini-Theta" PHYs.  This also
+ * drives the PHY on the 3Com 3c905C.  The 3c905C's PHY is described in
+ * the 3c905C data sheet.
  */
 
 #include <sys/param.h>
@@ -61,10 +62,29 @@ struct cfdriver bmtphy_cd = {
 
 int	bmtphy_service(struct mii_softc *, struct mii_data *, int);
 void	bmtphy_status(struct mii_softc *);
-void	bmtphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs bmtphy_funcs = {
-	bmtphy_service, bmtphy_status, bmtphy_reset,
+	bmtphy_service, bmtphy_status, mii_phy_reset,
+};
+
+static const struct mii_phydesc bmtphys[] = {
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_3C905B,
+	  MII_STR_BROADCOM_3C905B },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_3C905C,
+	  MII_STR_BROADCOM_3C905C },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM4401,
+	  MII_STR_BROADCOM_BCM4401 },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5201,
+	  MII_STR_BROADCOM_BCM5201 },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5214,
+	  MII_STR_BROADCOM_BCM5214 },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5221,
+	  MII_STR_BROADCOM_BCM5221 },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5222,
+	  MII_STR_BROADCOM_BCM5222 },
+
+	{ 0,				0,
+	  NULL },
 };
 
 int
@@ -72,20 +92,7 @@ bmtphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM4401)
-		return (10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5201)
-		return (10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5214)
-		return (10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5221)
-		return (10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5222)
+	if (mii_phy_match(ma, bmtphys) != NULL)
 		return (10);
 
 	return (0);
@@ -97,20 +104,10 @@ bmtphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
-	char *model;
+	const struct mii_phydesc *mpd;
 
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM4401)
-		model = MII_STR_BROADCOM_BCM4401;
-	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5201)
-		model = MII_STR_BROADCOM_BCM5201;
-	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5214)
-		model = MII_STR_BROADCOM_BCM5214;
-	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5221)
-		model = MII_STR_BROADCOM_BCM5221;
-	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5222)
-		model = MII_STR_BROADCOM_BCM5222;
-
-	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, bmtphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -198,13 +195,12 @@ bmtphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, auxc;
+	int bmsr, bmcr, aux_csr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) |
-	    PHY_READ(sc, MII_BMSR);
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
@@ -229,30 +225,14 @@ bmtphy_status(struct mii_softc *sc)
 			return;
 		}
 
-		auxc = PHY_READ(sc, MII_BMTPHY_AUXC);
-		if (auxc & AUXC_SP100)
+		aux_csr = PHY_READ(sc, MII_BMTPHY_AUX_CSR);
+		if (aux_csr & AUX_CSR_SPEED)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
-		if (auxc & AUXC_FDX)
+		if (aux_csr & AUX_CSR_FDX)
 			mii->mii_media_active |= IFM_FDX;
 
 	} else
 		mii->mii_media_active = ife->ifm_media;
-}
-
-void
-bmtphy_reset(struct mii_softc *sc)
-{
-	int anar;
-
-	mii_phy_reset(sc);
-
-	anar = PHY_READ(sc, MII_ANAR);
-	anar |= BMSR_MEDIA_TO_ANAR(PHY_READ(sc, MII_BMSR));
-	PHY_WRITE(sc, MII_ANAR, anar);
-
-        /* Chip resets with FDX bit not set */
-        PHY_WRITE(sc, MII_BMCR, PHY_READ(sc, MII_BMCR) |
-	    BMCR_S100|BMCR_AUTOEN|BMCR_STARTNEG|BMCR_FDX);
 }

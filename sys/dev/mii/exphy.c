@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.17 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.18 2005/02/04 23:23:56 brad Exp $	*/
 /*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -108,11 +108,6 @@ exphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
-	    (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_3C905B ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_3C905C))
-		return (10);
-
 	/*
 	 * Since 3com's PHY for some xl adapters is braindead and doesn't
 	 * report the proper OUI/MODEL information, we have this stupid
@@ -135,20 +130,7 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == 0 ||
-	     MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_3COM) &&
-	    MII_MODEL(ma->mii_id2) == 0)
-		printf(": 3Com internal media interface\n");
-	else if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_3C905B)
-		printf(": %s, rev. %d\n", MII_STR_BROADCOM_3C905B,
-		    MII_REV(ma->mii_id2));
-	else if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_3C905C)
-		printf(": %s, rev. %d\n", MII_STR_BROADCOM_3C905C,
-		    MII_REV(ma->mii_id2));
-	else
-		printf(": unknown phy\n");
+	printf(": 3Com internal media interface\n");
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
