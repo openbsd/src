@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.13 2001/12/08 14:51:36 fgsch Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.14 2002/01/10 00:45:30 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -207,7 +207,8 @@ __BEGIN_DECLS
 int		pthread_attr_destroy __P((pthread_attr_t *));
 int		pthread_attr_getstacksize __P((pthread_attr_t *, size_t *));
 int		pthread_attr_getstackaddr __P((pthread_attr_t *, void **));
-int		pthread_attr_getdetachstate __P((pthread_attr_t *, int *));
+int		pthread_attr_getdetachstate __P((const pthread_attr_t *,
+			int *));
 int		pthread_attr_init __P((pthread_attr_t *));
 int		pthread_attr_setstacksize __P((pthread_attr_t *, size_t));
 int		pthread_attr_setstackaddr __P((pthread_attr_t *, void *));
