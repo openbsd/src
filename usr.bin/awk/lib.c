@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.13 2003/04/28 03:07:40 tedu Exp $	*/
+/*	$OpenBSD: lib.c,v 1.14 2003/12/01 15:34:26 grange Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -481,7 +481,7 @@ int	errorflag	= 0;
 
 void yyerror(const char *s)
 {
-	SYNTAX(s);
+	SYNTAX("%s", s);
 }
 
 void SYNTAX(const char *fmt, ...)

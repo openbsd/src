@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_hout.c,v 1.15 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: rpc_hout.c,v 1.16 2003/12/01 15:34:26 grange Exp $	*/
 /*	$NetBSD: rpc_hout.c,v 1.4 1995/06/11 21:49:55 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -482,7 +482,7 @@ pdeclaration(name, dec, tab, separator)
 			break;
 		}
 	}
-	fprintf(fout, separator);
+	fprintf(fout, "%s", separator);
 }
 
 static int

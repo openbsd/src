@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.19 2001/11/29 00:33:06 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.20 2003/12/01 15:34:26 grange Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -170,7 +170,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.19 2001/11/29 00:33:06 millert Exp $";
+  "$OpenBSD: fmt.c,v 1.20 2003/12/01 15:34:26 grange Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -200,7 +200,7 @@ get_positive(const char *s, const char *err_mess, int fussyP) {
   char *t;
   long result = strtol(s,&t,0);
   if (*t) { if (fussyP) goto Lose; else return 0; }
-  if (result<=0) { Lose: errx(EX_USAGE, err_mess); }
+  if (result<=0) { Lose: errx(EX_USAGE, "%s", err_mess); }
   return (size_t) result;
 }
 
