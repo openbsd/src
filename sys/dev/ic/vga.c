@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.29 2002/03/14 03:16:05 millert Exp $ */
+/* $OpenBSD: vga.c,v 1.30 2002/07/12 20:17:03 mickey Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -497,7 +497,6 @@ vga_common_attach(self, iot, memt, type)
 	bus_space_tag_t iot, memt;
 	int type;
 {
-#ifdef arc
 	vga_extended_attach(self, iot, memt, type, NULL);
 }
 
@@ -506,9 +505,8 @@ vga_extended_attach(self, iot, memt, type, map)
 	struct device *self;
 	bus_space_tag_t iot, memt;
 	int type;
-	int (*map)(void *, vaddr_t, int);
+	paddr_t (*map)(void *, off_t, int);
 {
-#endif /* arc */
 	int console;
 	struct vga_config *vc;
 	struct wsemuldisplaydev_attach_args aa;
@@ -528,9 +526,7 @@ vga_extended_attach(self, iot, memt, type, map)
 
 	vc->vc_softc = self;
 	vc->vc_type = type;
-#ifdef arc
 	vc->vc_mmap = map;
-#endif
 
 	aa.console = console;
 	aa.scrdata = (vc->hdl.vh_mono ? &vga_screenlist_mono : &vga_screenlist);
@@ -628,15 +624,11 @@ vga_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-
-#ifdef arc
 	struct vga_config *vc = v;
 
 	if (vc->vc_mmap != NULL)
 		return (*vc->vc_mmap)(v, offset, prot);
-#else
-	/* XXX */
-#endif
+
 	return -1;
 }
 

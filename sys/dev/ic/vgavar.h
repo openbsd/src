@@ -1,4 +1,4 @@
-/* $OpenBSD: vgavar.h,v 1.7 2002/03/14 03:16:05 millert Exp $ */
+/* $OpenBSD: vgavar.h,v 1.8 2002/07/12 20:17:03 mickey Exp $ */
 /* $NetBSD: vgavar.h,v 1.4 2000/06/17 07:11:50 soda Exp $ */
 
 /*
@@ -57,9 +57,7 @@ struct vga_config {
 	void (*switchcb)(void *, int, int);
 	void *switchcbarg;
 
-#ifdef arc
 	paddr_t (*vc_mmap)(void *, off_t, int);
-#endif
 
 	struct timeout vc_switch_timeout;
 };
@@ -164,14 +162,10 @@ static inline void _vga_gdc_write(vh, reg, val)
 
 int	vga_common_probe(bus_space_tag_t, bus_space_tag_t);
 void	vga_common_attach(struct device *, bus_space_tag_t,
-			  bus_space_tag_t, int);
-#ifdef arc
+			       bus_space_tag_t, int);
 void	vga_extended_attach(struct device *, bus_space_tag_t,
-			    bus_space_tag_t, int,
-			    int (*)(void *, off_t, int));
-#endif
+    bus_space_tag_t, int, paddr_t (*)(void *, off_t, int));
 int	vga_is_console(bus_space_tag_t, int);
-
 int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 
 struct wsscreen_descr;

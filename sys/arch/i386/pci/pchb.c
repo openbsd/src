@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.34 2002/06/12 15:52:54 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.35 2002/07/12 20:17:03 mickey Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -165,6 +165,21 @@ pchbattach(parent, self, aux)
 	 */
 
 	switch (PCI_VENDOR(pa->pa_id)) {
+#ifdef PCIAGP
+	case PCI_VENDOR_ALI:
+	case PCI_VENDOR_SIS:
+	case PCI_VENDOR_VIATECH:
+		pciagp_set_pchb(pa);
+		break;
+	case PCI_VENDOR_AMD:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_AMD_SC751_SC:
+		case PCI_PRODUCT_AMD_762_PCHB:
+			pciagp_set_pchb(pa);
+			break;
+		}
+		break;
+#endif
 	case PCI_VENDOR_RCC:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_RCC_CNB20HE:
@@ -195,6 +210,9 @@ pchbattach(parent, self, aux)
 		}
 		break;
 	case PCI_VENDOR_INTEL:
+#ifdef PCIAGP
+		pciagp_set_pchb(pa);
+#endif
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82443BX_AGP:     /* 82443BX AGP (PAC) */
 		case PCI_PRODUCT_INTEL_82443BX_NOAGP:   /* 82443BX Host-PCI (no AGP) */
@@ -286,13 +304,13 @@ pchbattach(parent, self, aux)
 				printf(": disabled CPU-PCI write posting");
 			}
 			break;
-		case PCI_PRODUCT_INTEL_82810E_MCH:
-		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
 		case PCI_PRODUCT_INTEL_82810_MCH:
+		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		case PCI_PRODUCT_INTEL_82810E_MCH:
 		case PCI_PRODUCT_INTEL_82815_DC100_HUB:
-		case PCI_PRODUCT_INTEL_82815_NOAGP_HUB:
 		case PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB:
 		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+		case PCI_PRODUCT_INTEL_82815_NOAGP_HUB:
 		case PCI_PRODUCT_INTEL_82820_MCH:
 		case PCI_PRODUCT_INTEL_82840_HB:
 		case PCI_PRODUCT_INTEL_82850_HB:
