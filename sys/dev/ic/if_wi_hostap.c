@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.1 2002/03/28 18:21:06 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.2 2002/03/28 21:22:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -192,13 +192,14 @@ wihap_init(struct wi_softc *sc)
  *	Send a disassociation frame to a specified station.
  */
 static void
-wihap_sta_disassoc(struct wi_softc *sc, u_int8_t sta_addr[], u_int16_t reason)
+wihap_sta_disassoc(struct wi_softc *sc,
+    struct wihap_sta_info *sta, u_int16_t reason)
 {
 	struct wi_80211_hdr 	*resp_hdr;
 	caddr_t			pkt;
 
 	if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
-		printf("Sending disassoc to sta %s\n", ether_sprintf(sta_addr));
+		printf("Sending disassoc to sta %s\n", ether_sprintf(sta->addr));
 
 	/* Send disassoc packet. */
 	resp_hdr = (struct wi_80211_hdr *) sc->wi_txbuf;
@@ -206,7 +207,7 @@ wihap_sta_disassoc(struct wi_softc *sc, u_int8_t sta_addr[], u_int16_t reason)
 	resp_hdr->frame_ctl = WI_FTYPE_MGMT | WI_STYPE_MGMT_DISAS;
 	pkt = sc->wi_txbuf + sizeof(struct wi_80211_hdr);
 
-	bcopy(sta_addr, resp_hdr->addr1, ETHER_ADDR_LEN);
+	bcopy(sta->addr, resp_hdr->addr1, ETHER_ADDR_LEN);
 	bcopy(sc->arpcom.ac_enaddr, resp_hdr->addr2, ETHER_ADDR_LEN);
 	bcopy(sc->arpcom.ac_enaddr, resp_hdr->addr3, ETHER_ADDR_LEN);
 
@@ -267,10 +268,12 @@ wihap_shutdown(struct wi_softc *sc)
 	sta = LIST_FIRST(&whi->sta_list);
 	while (sta) {
 
+		timeout_del(&sta->tmo);
+
 		if (!sc->wi_gone) {
 			/* Disassociate station. */
 			if (sta->flags & WI_SIFLAGS_ASSOC)
-				wihap_sta_disassoc(sc, sta->addr,
+				wihap_sta_disassoc(sc, sta,
 					   IEEE80211_REASON_ASSOC_LEAVE);
 			/* Deauth station. */
 			if (sta->flags & WI_SIFLAGS_AUTHEN)
@@ -321,8 +324,10 @@ wihap_sta_timeout(void *v)
 			    ether_sprintf(sta->addr));
 
 		/* Disassoc station. */
-		wihap_sta_disassoc(sc, sta->addr, IEEE80211_REASON_ASSOC_EXPIRE);
+		wihap_sta_disassoc(sc, sta, IEEE80211_REASON_ASSOC_EXPIRE);
 		sta->flags &= ~WI_SIFLAGS_ASSOC;
+
+		timeout_add(&sta->tmo, hz * whi->inactivity_time);
 
 	} else if (sta->flags & WI_SIFLAGS_AUTHEN) {
 
@@ -1029,7 +1034,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 		else {
 			/* Disassociate station. */
 			if (sta->flags & WI_SIFLAGS_ASSOC)
-				wihap_sta_disassoc(sc, sta->addr,
+				wihap_sta_disassoc(sc, sta,
 					   IEEE80211_REASON_ASSOC_LEAVE);
 			/* Deauth station. */
 			if (sta->flags & WI_SIFLAGS_AUTHEN)
