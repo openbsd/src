@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.24 2003/07/09 10:00:09 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.25 2004/02/10 18:51:31 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -77,10 +77,27 @@ sub write_uniques
     }
 }
 
-sub found
+sub found($$)
 {
-    my @candidates = glob shift;
-    return @candidates > 1 || @candidates == 1 && -e $candidates[0];
+    my ($regexp, $filename) = @_;
+    my @candidates = glob $regexp;
+    if (@candidates > 0) {
+    	# quick check of inode, dev number
+    	my ($dev_cmp, $inode_cmp) = (stat $filename)[0,1];
+    	for my $f (@candidates) {
+	    my ($dev, $inode) = (stat $f)[0, 1];
+	    if ($dev == $dev_cmp && $inode == $inode_cmp) {
+		return 1;
+	    }
+	}
+	# slow check with File::Compare
+	for my $f (@candidates) {
+	    if (compare($f, $filename) == 0) {
+		return 1;
+	    }
+	}
+    }
+    return 0;
 }
 
 # verify_subject($subject, $filename):
@@ -101,17 +118,23 @@ sub verify_subject
 	} else {
 		$base = '.';
 	}
-	for my $i (@mans) {
-	    next if found("$base/$i.*");
+	my @notfound = ();
+	for my $func (@mans) {
+	    my $i = $func;
+	    next if found("$base/$i.*", $filename);
 	    # try harder
 	    $i =~ s/\(\)//;
 	    $i =~ s/\-//g;
 	    $i =~ s,^etc/,,;
-	    next if found("$base/$i.*");
+	    next if found("$base/$i.*", $filename);
 	    # and harder...
 	    $i =~ tr/[A-Z]/[a-z]/;
-	    next if found("$base/$i.*");
-	    print STDERR "Couldn't find $i in $filename:\n$_\n" 
+	    next if found("$base/$i.*", $filename);
+	    push(@notfound, $func);
+	}
+	if (@notfound > 0) {
+	    print STDERR "Couldn't find ", join(', ', @notfound), 
+	    	" in $filename:\n$_\n" 
 	}
     }
 }
@@ -350,7 +373,7 @@ sub add_formated_subject
 	s/([-+.\w\d,])\s+/$1 /g;
 	s/([a-z][A-z])-\s+/$1/g;
 	# some twits use: func -- description
-	if (m/^[^-+.\w\d]*(.*) -(?:-?)\s+(.*)/) {
+	if (m/^[^-+.\w\d]*(.*?) -(?:-?)\s+(.*)/) {
 	    my ($func, $descr) = ($1, $2);
 	    $func =~ s/,\s*$//;
 	    # nroff will tend to cut function names at the weirdest places
@@ -437,6 +460,11 @@ sub handle_formated
 		    # deal with troff hyphenations
 		    if (defined $subject and $subject =~ m/\xad\s*$/) {
 		    	$subject =~ s/(?:\xad\cH)*\xad\s*$//;
+			s/^\s*//;
+		    }
+		    # more troff hyphenation
+		    if (defined $subject and $subject =~ m/\S(?:\-\cH)*\-$/) {
+		    	$subject =~ s/(?:\-\cH)*\-$//;
 			s/^\s*//;
 		    }
 		    $subject.=$_;
