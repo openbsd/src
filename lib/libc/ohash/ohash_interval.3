@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_interval.3,v 1.6 2004/06/22 20:00:16 espie Exp $
+.\"	$OpenBSD: ohash_interval.3,v 1.7 2004/06/26 13:32:33 jmc Exp $
 .\" Copyright (c) 2001 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -46,7 +46,7 @@ by setting
 .Pc
 or memory ranges
 .Po
-deliminated by
+delimited by
 .Fa start
 and
 .Fa *pend
@@ -65,8 +65,8 @@ In that case,
 the alloc field of
 .Fa info
 should point to a
-.Xr malloc 3
--like function to allocate the storage.
+.Xr malloc 3 Ns -like
+function to allocate the storage.
 .Pp
 .Fn ohash_qlookupi
 is a wrapper function that simply calls
