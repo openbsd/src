@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_meter.c,v 1.2 1996/03/03 17:45:32 niklas Exp $	*/
+/*	$OpenBSD: vm_meter.c,v 1.3 1996/10/23 15:38:36 deraadt Exp $	*/
 /*	$NetBSD: vm_meter.c,v 1.18 1996/02/05 01:53:59 christos Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/kernel.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+#include <sys/exec.h>
 
 struct	loadavg averunnable;		/* load average, of runnable procs */
 
@@ -111,6 +112,7 @@ vm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	struct vmtotal vmtotals;
+	struct _ps_strings _ps = { PS_STRINGS };
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -125,6 +127,9 @@ vm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		vmtotal(&vmtotals);
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &vmtotals,
 		    sizeof(vmtotals)));
+	case VM_PSSTRINGS:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &_ps,
+		    sizeof _ps));
 	default:
 		return (EOPNOTSUPP);
 	}

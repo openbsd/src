@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.6 1996/05/28 12:16:32 deraadt Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.7 1996/10/23 15:38:38 deraadt Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -105,13 +105,19 @@ extern int		page_shift;
  */
 #define	VM_METER	1		/* struct vmmeter */
 #define	VM_LOADAVG	2		/* struct loadavg */
-#define	VM_MAXID	3		/* number of valid vm ids */
+#define	VM_PSSTRINGS	3		/* PSSTRINGS */
+#define	VM_MAXID	4		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
 	{ "vmmeter", CTLTYPE_STRUCT }, \
 	{ "loadavg", CTLTYPE_STRUCT }, \
+	{ "psstrings", CTLTYPE_STRUCT }, \
 }
+
+struct _ps_strings {
+	void	*val;
+};
 
 /* 
  *	Return values from the VM routines.
