@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.22 1999/05/21 18:52:09 deraadt Exp $	*/
+/*	$OpenBSD: pms.c,v 1.23 1999/05/22 02:11:25 deraadt Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -204,7 +204,7 @@ pmsprobe(parent, match, aux)
 
 	/*pms_dev_cmd(PMS_RESET);*/
 	pms_aux_cmd(PMS_AUX_TEST);
-	delay(6000);
+	delay(2000);
 	x = inb(PMS_DATA);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
