@@ -2,7 +2,7 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$OpenBSD: nat_cmd.c,v 1.7 2000/03/29 00:14:20 brian Exp $
+ *	$OpenBSD: nat_cmd.c,v 1.8 2000/03/29 09:32:37 brian Exp $
  */
 
 #include <sys/param.h>
@@ -50,6 +50,7 @@
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ip.h"
 #include "bundle.h"
 
 
@@ -421,6 +422,15 @@ nat_LayerPull(struct bundle *bundle, struct link *l, struct mbuf *bp,
       log_Printf(LogDEBUG, "Found a frag header (%lu) - plus %d more frags (no"
                  "w %d)\n", (unsigned long)((struct ip *)MBUF_CTOP(bp))->ip_id,
                  nfrags, gfrags);
+      break;
+
+    case PKT_ALIAS_IGNORED:
+      if (log_IsKept(LogTCPIP)) {
+        log_Printf(LogTCPIP, "NAT engine ignored data:\n");
+        PacketCheck(bundle, (char *)pip, ntohs(pip->ip_len), NULL);
+      }
+      m_freem(bp);
+      bp = NULL;
       break;
 
     default:
