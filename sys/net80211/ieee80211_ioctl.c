@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.6 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.7 2005/02/27 22:27:56 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung 
 #endif
 
 /*
- * IEEE 802.11 ioctl support (FreeBSD-specific)
+ * IEEE 802.11 ioctl support
  */
 
 #ifdef __NetBSD__
@@ -59,17 +59,15 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung 
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_media.h>
-#if defined(__FreeBSD__)
-#include <net/ethernet.h>
-#elif defined(__NetBSD__)
+#if defined(__NetBSD__)
 #include <net/if_ether.h>
 #endif
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#endif /* __FreeBSD__ */
+#endif
 #ifndef __OpenBSD__
 #include <netinet/if_inarp.h>
 #endif
@@ -78,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
 
-#if defined(__FreeBSD__)
-#include <dev/wi/if_wavelan_ieee.h>
-#elif defined(__OpenBSD__)
+#if defined(__OpenBSD__)
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wi_hostap.h>
 #else
@@ -805,319 +801,6 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-#ifdef __FreeBSD__
-int
-ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
-{
-	struct ieee80211com *ic = (void *)ifp;
-	int error = 0;
-	u_int kid, len;
-	struct ieee80211req *ireq;
-	struct ifreq *ifr;
-	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
-	char tmpssid[IEEE80211_NWID_LEN];
-	struct ieee80211_channel *chan;
-	struct ifaddr *ifa;			/* XXX */
-
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, (struct ifreq *) data,
-				&ic->ic_media, cmd);
-		break;
-	case SIOCG80211:
-		ireq = (struct ieee80211req *) data;
-		switch (ireq->i_type) {
-		case IEEE80211_IOC_SSID:
-			switch (ic->ic_state) {
-			case IEEE80211_S_INIT:
-			case IEEE80211_S_SCAN:
-				ireq->i_len = ic->ic_des_esslen;
-				memcpy(tmpssid, ic->ic_des_essid, ireq->i_len);
-				break;
-			default:
-				ireq->i_len = ic->ic_bss->ni_esslen;
-				memcpy(tmpssid, ic->ic_bss->ni_essid,
-					ireq->i_len);
-				break;
-			}
-			error = copyout(tmpssid, ireq->i_data, ireq->i_len);
-			break;
-		case IEEE80211_IOC_NUMSSIDS:
-			ireq->i_val = 1;
-			break;
-		case IEEE80211_IOC_WEP:
-			if ((ic->ic_caps & IEEE80211_C_WEP) == 0) {
-				ireq->i_val = IEEE80211_WEP_NOSUP;
-			} else {
-				if (ic->ic_flags & IEEE80211_F_WEPON) {
-					ireq->i_val =
-					    IEEE80211_WEP_MIXED;
-				} else {
-					ireq->i_val =
-					    IEEE80211_WEP_OFF;
-				}
-			}
-			break;
-		case IEEE80211_IOC_WEPKEY:
-			if ((ic->ic_caps & IEEE80211_C_WEP) == 0) {
-				error = EINVAL;
-				break;
-			}
-			kid = (u_int) ireq->i_val;
-			if (kid >= IEEE80211_WEP_NKID) {
-				error = EINVAL;
-				break;
-			}
-			len = (u_int) ic->ic_nw_keys[kid].wk_len;
-			/* NB: only root can read WEP keys */
-			if (suser(curthread) == 0) {
-				bcopy(ic->ic_nw_keys[kid].wk_key, tmpkey, len);
-			} else {
-				bzero(tmpkey, len);
-			}
-			ireq->i_len = len;
-			error = copyout(tmpkey, ireq->i_data, len);
-			break;
-		case IEEE80211_IOC_NUMWEPKEYS:
-			if ((ic->ic_caps & IEEE80211_C_WEP) == 0)
-				error = EINVAL;
-			else
-				ireq->i_val = IEEE80211_WEP_NKID;
-			break;
-		case IEEE80211_IOC_WEPTXKEY:
-			if ((ic->ic_caps & IEEE80211_C_WEP) == 0)
-				error = EINVAL;
-			else
-				ireq->i_val = ic->ic_wep_txkey;
-			break;
-		case IEEE80211_IOC_AUTHMODE:
-			ireq->i_val = IEEE80211_AUTH_OPEN;
-			break;
-		case IEEE80211_IOC_CHANNEL:
-			switch (ic->ic_state) {
-			case IEEE80211_S_INIT:
-			case IEEE80211_S_SCAN:
-				if (ic->ic_opmode == IEEE80211_M_STA)
-					chan = ic->ic_des_chan;
-				else
-					chan = ic->ic_ibss_chan;
-				break;
-			default:
-				chan = ic->ic_bss->ni_chan;
-				break;
-			}
-			ireq->i_val = ieee80211_chan2ieee(ic, chan);
-			break;
-		case IEEE80211_IOC_POWERSAVE:
-			if (ic->ic_flags & IEEE80211_F_PMGTON)
-				ireq->i_val = IEEE80211_POWERSAVE_ON;
-			else
-				ireq->i_val = IEEE80211_POWERSAVE_OFF;
-			break;
-		case IEEE80211_IOC_POWERSAVESLEEP:
-			ireq->i_val = ic->ic_lintval;
-			break;
-		case IEEE80211_IOC_RTSTHRESHOLD:
-			ireq->i_val = ic->ic_rtsthreshold;
-			break;
-		case IEEE80211_IOC_PROTMODE:
-			ireq->i_val = ic->ic_protmode;
-			break;
-		case IEEE80211_IOC_TXPOWER:
-			if ((ic->ic_caps & IEEE80211_C_TXPMGT) == 0)
-				error = EINVAL;
-			else
-				ireq->i_val = ic->ic_txpower;
-			break;
-		default:
-			error = EINVAL;
-			break;
-		}
-		break;
-	case SIOCS80211:
-		error = suser(curproc, 0);
-		if (error)
-			break;
-		ireq = (struct ieee80211req *) data;
-		switch (ireq->i_type) {
-		case IEEE80211_IOC_SSID:
-			if (ireq->i_val != 0 ||
-			    ireq->i_len > IEEE80211_NWID_LEN) {
-				error = EINVAL;
-				break;
-			}
-			error = copyin(ireq->i_data, tmpssid, ireq->i_len);
-			if (error)
-				break;
-			memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
-			ic->ic_des_esslen = ireq->i_len;
-			memcpy(ic->ic_des_essid, tmpssid, ireq->i_len);
-			error = ENETRESET;
-			break;
-		case IEEE80211_IOC_WEP:
-			/*
-			 * These cards only support one mode so
-			 * we just turn wep on if what ever is
-			 * passed in is not OFF.
-			 */
-			if (ireq->i_val == IEEE80211_WEP_OFF) {
-				ic->ic_flags &= ~IEEE80211_F_WEPON;
-			} else {
-				ic->ic_flags |= IEEE80211_F_WEPON;
-			}
-			error = ENETRESET;
-			break;
-		case IEEE80211_IOC_WEPKEY:
-			if ((ic->ic_caps & IEEE80211_C_WEP) == 0) {
-				error = EINVAL;
-				break;
-			}
-			kid = (u_int) ireq->i_val;
-			if (kid >= IEEE80211_WEP_NKID) {
-				error = EINVAL;
-				break;
-			}
-			if (ireq->i_len > sizeof(tmpkey)) {
-				error = EINVAL;
-				break;
-			}
-			memset(tmpkey, 0, sizeof(tmpkey));
-			error = copyin(ireq->i_data, tmpkey, ireq->i_len);
-			if (error)
-				break;
-			memcpy(ic->ic_nw_keys[kid].wk_key, tmpkey,
-				sizeof(tmpkey));
-			ic->ic_nw_keys[kid].wk_len = ireq->i_len;
-			error = ENETRESET;
-			break;
-		case IEEE80211_IOC_WEPTXKEY:
-			kid = (u_int) ireq->i_val;
-			if (kid >= IEEE80211_WEP_NKID) {
-				error = EINVAL;
-				break;
-			}
-			ic->ic_wep_txkey = kid;
-			error = ENETRESET;
-			break;
-#if 0
-		case IEEE80211_IOC_AUTHMODE:
-			sc->wi_authmode = ireq->i_val;
-			break;
-#endif
-		case IEEE80211_IOC_CHANNEL:
-			/* XXX 0xffff overflows 16-bit signed */
-			if (ireq->i_val == 0 ||
-			    ireq->i_val == (int16_t) IEEE80211_CHAN_ANY)
-				ic->ic_des_chan = IEEE80211_CHAN_ANYC;
-			else if ((u_int) ireq->i_val > IEEE80211_CHAN_MAX ||
-			    isclr(ic->ic_chan_active, ireq->i_val)) {
-				error = EINVAL;
-				break;
-			} else
-				ic->ic_ibss_chan = ic->ic_des_chan =
-					&ic->ic_channels[ireq->i_val];
-			switch (ic->ic_state) {
-			case IEEE80211_S_INIT:
-			case IEEE80211_S_SCAN:
-				error = ENETRESET;
-				break;
-			default:
-				if (ic->ic_opmode == IEEE80211_M_STA) {
-					if (ic->ic_des_chan != IEEE80211_CHAN_ANYC &&
-					    ic->ic_bss->ni_chan != ic->ic_des_chan)
-						error = ENETRESET;
-				} else {
-					if (ic->ic_bss->ni_chan != ic->ic_ibss_chan)
-						error = ENETRESET;
-				}
-				break;
-			}
-			break;
-		case IEEE80211_IOC_POWERSAVE:
-			switch (ireq->i_val) {
-			case IEEE80211_POWERSAVE_OFF:
-				if (ic->ic_flags & IEEE80211_F_PMGTON) {
-					ic->ic_flags &= ~IEEE80211_F_PMGTON;
-					error = ENETRESET;
-				}
-				break;
-			case IEEE80211_POWERSAVE_ON:
-				if ((ic->ic_caps & IEEE80211_C_PMGT) == 0)
-					error = EINVAL;
-				else if ((ic->ic_flags & IEEE80211_F_PMGTON) == 0) {
-					ic->ic_flags |= IEEE80211_F_PMGTON;
-					error = ENETRESET;
-				}
-				break;
-			default:
-				error = EINVAL;
-				break;
-			}
-			break;
-		case IEEE80211_IOC_POWERSAVESLEEP:
-			if (ireq->i_val < 0) {
-				error = EINVAL;
-				break;
-			}
-			ic->ic_lintval = ireq->i_val;
-			error = ENETRESET;
-			break;
-		case IEEE80211_IOC_RTSTHRESHOLD:
-			if (!(IEEE80211_RTS_MIN < ireq->i_val &&
-			      ireq->i_val <= IEEE80211_RTS_MAX + 1)) {
-				error = EINVAL;
-				break;
-			}
-			ic->ic_rtsthreshold = ireq->i_val;
-			error = ENETRESET;
-			break;
-		case IEEE80211_IOC_PROTMODE:
-			if (ireq->i_val > IEEE80211_PROT_RTSCTS) {
-				error = EINVAL;
-				break;
-			}
-			ic->ic_protmode = ireq->i_val;
-			/* NB: if not operating in 11g this can wait */
-			if (ic->ic_curmode == IEEE80211_MODE_11G)
-				error = ENETRESET;
-			break;
-		case IEEE80211_IOC_TXPOWER:
-			if ((ic->ic_caps & IEEE80211_C_TXPMGT) == 0) {
-				error = EINVAL;
-				break;
-			}
-			if (!(IEEE80211_TXPOWER_MIN < ireq->i_val &&
-			      ireq->i_val < IEEE80211_TXPOWER_MAX)) {
-				error = EINVAL;
-				break;
-			}
-			ic->ic_txpower = ireq->i_val;
-			error = ENETRESET;
-			break;
-		default:
-			error = EINVAL;
-			break;
-		}
-		break;
-	case SIOCGIFGENERIC:
-		error = ieee80211_cfgget(ifp, cmd, data);
-		break;
-	case SIOCSIFGENERIC:
-		error = suser(curproc, 0);
-		if (error)
-			break;
-		error = ieee80211_cfgset(ifp, cmd, data);
-		break;
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		break;
-	}
-	return error;
-}
-
-#else /* !__FreeBSD__ */
-
 int
 ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -1479,7 +1162,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 	return error;
 }
-#endif /* !__FreeBSD__ */
 
 #if defined(__OpenBSD__)
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.2 2005/02/15 19:44:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.3 2005/02/27 22:27:56 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -85,57 +85,6 @@ struct ieee80211_stats {
 	u_int32_t	is_crypto_nomem;	/* no memory for crypto ctx */
 };
 
-#ifdef __FreeBSD__
-/*
- * FreeBSD-style ioctls.
- */
-/* the first member must be matched with struct ifreq */
-struct ieee80211req {
-	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
-	u_int16_t	i_type;			/* req type */
-	int16_t		i_val;			/* Index or simple value */
-	int16_t		i_len;			/* Index or simple value */
-	void		*i_data;		/* Extra data */
-};
-#define	SIOCS80211		 _IOW('i', 234, struct ieee80211req)
-#define	SIOCG80211		_IOWR('i', 235, struct ieee80211req)
-
-#define IEEE80211_IOC_SSID		1
-#define IEEE80211_IOC_NUMSSIDS		2
-#define IEEE80211_IOC_WEP		3
-#define 	IEEE80211_WEP_NOSUP	-1
-#define 	IEEE80211_WEP_OFF	0
-#define 	IEEE80211_WEP_ON	1
-#define 	IEEE80211_WEP_MIXED	2
-#define IEEE80211_IOC_WEPKEY		4
-#define IEEE80211_IOC_NUMWEPKEYS	5
-#define IEEE80211_IOC_WEPTXKEY		6
-#define IEEE80211_IOC_AUTHMODE		7
-#define IEEE80211_IOC_STATIONNAME	8
-#define IEEE80211_IOC_CHANNEL		9
-#define IEEE80211_IOC_POWERSAVE		10
-#define 	IEEE80211_POWERSAVE_NOSUP	-1
-#define 	IEEE80211_POWERSAVE_OFF		0
-#define 	IEEE80211_POWERSAVE_CAM		1
-#define 	IEEE80211_POWERSAVE_PSP		2
-#define 	IEEE80211_POWERSAVE_PSP_CAM	3
-#define 	IEEE80211_POWERSAVE_ON		IEEE80211_POWERSAVE_CAM
-#define IEEE80211_IOC_POWERSAVESLEEP	11
-#define	IEEE80211_IOC_RTSTHRESHOLD	12
-#define IEEE80211_IOC_PROTMODE		13
-#define 	IEEE80211_PROTMODE_OFF		0
-#define 	IEEE80211_PROTMODE_CTS		1
-#define 	IEEE80211_PROTMODE_RTSCTS	2
-#define IEEE80211_IOC_TXPOWER		14
-
-#ifndef IEEE80211_CHAN_ANY
-#define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
-#endif
-
-#define	SIOCG80211STATS		_IOWR('i', 236, struct ifreq)
-#endif /* __FreeBSD__ */
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 /* nwid is pointed at by ifr.ifr_data */
 struct ieee80211_nwid {
 	u_int8_t	i_len;
@@ -217,7 +166,5 @@ struct ieee80211_txpower {
 
 #define IEEE80211_TXPOWER_MODE_FIXED	0	/* fixed tx power value */
 #define IEEE80211_TXPOWER_MODE_AUTO	1	/* auto level control */
-
-#endif
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */
