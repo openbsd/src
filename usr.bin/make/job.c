@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.10 1998/06/03 17:00:05 deraadt Exp $	*/
+/*	$OpenBSD: job.c,v 1.11 1998/07/13 02:11:37 millert Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.10 1998/06/03 17:00:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.11 1998/07/13 02:11:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1058,7 +1058,7 @@ Job_Touch(gn, silent)
 		 * modification time, then close the file.
 		 */
 		if (read(streamID, &c, 1) == 1) {
-		    (void) lseek(streamID, 0L, L_SET);
+		    (void) lseek(streamID, 0, SEEK_SET);
 		    (void) write(streamID, &c, 1);
 		}
 
@@ -1227,7 +1227,7 @@ JobExec(job, argv)
 	if (dup2(FILENO(job->cmdFILE), 0) == -1)
 	    Punt("Cannot dup2: %s", strerror(errno));
 	(void) fcntl(0, F_SETFD, 0);
-	(void) lseek(0, 0, L_SET);
+	(void) lseek(0, 0, SEEK_SET);
 
 	if (usePipes) {
 	    /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.47 1998/06/08 16:55:34 mickey Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.48 1998/07/13 02:11:15 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -738,6 +738,11 @@ pass(passwd)
 	askpasswd = 0;
 	if (!guest) {		/* "ftp" is only account allowed no password */
 		if (pw == NULL) {
+			useconds_t us;
+
+			/* Sleep between 1 and 3 seconds to emulate a crypt. */
+			us = arc4random() % 3000000;
+			usleep(us);
 			rval = 1;	/* failure below */
 			goto skip;
 		}
@@ -754,8 +759,8 @@ pass(passwd)
 		}
 #endif
 		/* the strcmp does not catch null passwords! */
-		if (pw == NULL || *pw->pw_passwd == '\0' ||
-		    strcmp(crypt(passwd, (pw ? pw->pw_passwd : "xx")), pw->pw_passwd)) {
+		if (strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd) ||
+		    *pw->pw_passwd == '\0') {
 			rval = 1;	 /* failure */
 			goto skip;
 		}
@@ -970,7 +975,7 @@ retrieve(cmd, name)
 				if (c == '\n')
 					i++;
 			}
-		} else if (lseek(fileno(fin), restart_point, L_SET) < 0) {
+		} else if (lseek(fileno(fin), restart_point, SEEK_SET) < 0) {
 			perror_reply(550, name);
 			goto done;
 		}
@@ -1044,11 +1049,11 @@ store(name, mode, unique)
 			 * because we are changing from reading to
 			 * writing.
 			 */
-			if (fseek(fout, 0L, L_INCR) < 0) {
+			if (fseek(fout, 0L, SEEK_CUR) < 0) {
 				perror_reply(550, name);
 				goto done;
 			}
-		} else if (lseek(fileno(fout), restart_point, L_SET) < 0) {
+		} else if (lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
 			perror_reply(550, name);
 			goto done;
 		}

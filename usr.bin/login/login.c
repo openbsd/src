@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.25 1998/07/05 20:30:46 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.26 1998/07/13 02:11:36 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.25 1998/07/05 20:30:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.26 1998/07/13 02:11:36 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -691,7 +691,7 @@ dolastlog(quiet)
 	int fd;
 
 	if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
-		(void)lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), L_SET);
+		(void)lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), SEEK_SET);
 		if (!quiet) {
 			if (read(fd, (char *)&ll, sizeof(ll)) == sizeof(ll) &&
 			    ll.ll_time != 0) {
@@ -706,7 +706,8 @@ dolastlog(quiet)
 					    ll.ll_host);
 				(void)putchar('\n');
 			}
-			(void)lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), L_SET);
+			(void)lseek(fd, (off_t)pwd->pw_uid * sizeof(ll),
+			    SEEK_SET);
 		}
 		memset((void *)&ll, 0, sizeof(ll));
 		(void)time(&ll.ll_time);

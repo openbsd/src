@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.11 1998/07/10 08:50:35 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.12 1998/07/13 02:11:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.11 1998/07/10 08:50:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.12 1998/07/13 02:11:41 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -547,7 +547,7 @@ getufsquota(fst, fs, qup, id, quotatype)
 			perror(qfpathname);
 			return (0);
 		}
-		(void) lseek(fd, (off_t)(id * sizeof(struct dqblk)), L_SET);
+		(void) lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET);
 		switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
 		case 0:				/* EOF */
 			/*

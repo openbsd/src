@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.14 1998/07/10 08:06:23 deraadt Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.15 1998/07/13 02:11:20 millert Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.14 1998/07/10 08:06:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.15 1998/07/13 02:11:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -2268,7 +2268,8 @@ rmut()
 				if (SCMPN(u->ut_line, line+5) ||
 				    u->ut_name[0]==0)
 					continue;
-				(void) lseek(f, ((off_t)u)-((off_t)utmp), L_SET);
+				(void) lseek(f, ((off_t)u)-((off_t)utmp),
+				    SEEK_SET);
 				SCPYN(u->ut_name, "");
 				SCPYN(u->ut_host, "");
 				(void) time(&u->ut_time);

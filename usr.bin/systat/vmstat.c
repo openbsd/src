@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.15 1998/06/12 22:09:23 marc Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.16 1998/07/13 02:11:42 millert Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.15 1998/06/12 22:09:23 marc Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.16 1998/07/13 02:11:42 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -585,7 +585,7 @@ ucount()
 		if (utmp.ut_name[0] != '\0')
 			nusers++;
 
-	lseek(ut, 0L, L_SET);
+	lseek(ut, 0, SEEK_SET);
 	return (nusers);
 }
 

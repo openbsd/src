@@ -267,7 +267,8 @@ getfsquota(id, path, dqblk)
 			syslog(LOG_ERR, "open error: %s: %m", fs->qfpathname);
 			return (0);
 		}
-		if (lseek(fd, (off_t)(id * sizeof(struct dqblk)), L_SET) == (off_t)-1) {
+		if (lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET) ==
+		    (off_t)-1) {
 			close(fd);
 			return (1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.8 1997/06/17 20:42:54 kstailey Exp $	*/
+/*	$OpenBSD: more.c,v 1.9 1998/07/13 02:11:39 millert Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -419,7 +419,7 @@ magic(f, fs)
 			(void)fclose(f);
 			return(1);
 		}
-	(void)fseek(f, 0L, L_SET);		/* rewind() not necessary */
+	(void)fseek(f, 0L, SEEK_SET);		/* rewind() not necessary */
 	return(0);
 }
 

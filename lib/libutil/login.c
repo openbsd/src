@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.4 1998/07/10 21:40:20 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.5 1998/07/13 02:11:12 millert Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: login.c,v 1.4 1998/07/10 21:40:20 millert Exp $";
+static char *rcsid = "$Id: login.c,v 1.5 1998/07/13 02:11:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ login(utp)
 
 	tty = ttyslot();
 	if (tty > 0 && (fd = open(_PATH_UTMP, O_RDWR|O_CREAT, 0644)) >= 0) {
-		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), L_SET);
+		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), SEEK_SET);
 		/*
 		 * Prevent luser from zero'ing out ut_host.
 		 * If the new ut_line is empty but the old one is not
@@ -69,7 +69,7 @@ login(utp)
 		    strncmp(old_ut.ut_line, utp->ut_line, UT_LINESIZE) == 0 &&
 		    strncmp(old_ut.ut_name, utp->ut_name, UT_NAMESIZE) == 0)
 			(void)memcpy(utp->ut_host, old_ut.ut_host, UT_HOSTSIZE);
-		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), L_SET);
+		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), SEEK_SET);
 		(void)write(fd, utp, sizeof(struct utmp));
 		(void)close(fd);
 	}

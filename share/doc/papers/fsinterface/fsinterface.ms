@@ -988,7 +988,7 @@ A file offset of type \fIoff_t\fP.
 .IP offp
 A pointer to file offset of type \fIoff_t\fP.
 .IP whence
-One of L_SET, L_INCR, or L_XTND.
+One of SEEK_SET, SEEK_CUR, or SEEK_END.
 .IP fhp
 A pointer to a file handle buffer.
 .sp

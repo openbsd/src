@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.41 1998/04/25 07:14:47 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.42 1998/07/13 02:11:30 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1264,12 +1264,12 @@ sys_lseek(p, v, retval)
 	else
 		special = 0;
 	switch (SCARG(uap, whence)) {
-	case L_INCR:
+	case SEEK_CUR:
 		if (!special && fp->f_offset + SCARG(uap, offset) < 0)
 			return (EINVAL);
 		fp->f_offset += SCARG(uap, offset);
 		break;
-	case L_XTND:
+	case SEEK_END:
 		error = VOP_GETATTR((struct vnode *)fp->f_data, &vattr,
 				    cred, p);
 		if (error)
@@ -1278,7 +1278,7 @@ sys_lseek(p, v, retval)
 			return (EINVAL);
 		fp->f_offset = SCARG(uap, offset) + vattr.va_size;
 		break;
-	case L_SET:
+	case SEEK_SET:
 		if (!special && SCARG(uap, offset) < 0)
 			return (EINVAL);
 		fp->f_offset = SCARG(uap, offset);

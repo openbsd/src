@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.3 1998/05/11 18:28:20 deraadt Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.4 1998/07/13 02:11:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.3 1998/05/11 18:28:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.4 1998/07/13 02:11:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -177,7 +177,7 @@ getent(cap, len, db_array, fd, name, depth)
 		 */
 
 		if (fd >= 0) {
-			(void)lseek(fd, (off_t)0, L_SET);
+			(void)lseek(fd, (off_t)0, SEEK_SET);
 			myfd = 0;
 		} else {
 			fd = open(*db_p, O_RDONLY, 0);

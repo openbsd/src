@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.10 1998/04/25 00:40:18 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.11 1998/07/13 02:11:33 millert Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.10 1998/04/25 00:40:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.11 1998/07/13 02:11:33 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -256,7 +256,7 @@ wtmp()
 	(void)signal(SIGQUIT, onintr);
 
 	while (--bl >= 0) {
-		if (lseek(wfd, bl * sizeof(buf), L_SET) == -1 ||
+		if (lseek(wfd, bl * sizeof(buf), SEEK_SET) == -1 ||
 		    (bytes = read(wfd, buf, sizeof(buf))) == -1)
 			err(1, "%s", file);
 		for (bp = &buf[bytes / sizeof(buf[0]) - 1]; bp >= buf; --bp) {

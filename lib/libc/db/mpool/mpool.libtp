@@ -1,6 +1,6 @@
 /******************************************************************************
 
-VERSION $Id: mpool.libtp,v 1.1 1996/05/07 09:02:01 deraadt Exp $
+VERSION $Id: mpool.libtp,v 1.2 1998/07/13 02:11:10 millert Exp $
 PACKAGE: 	User Level Shared Memory Manager
 
 DESCRIPTION: 	
@@ -578,7 +578,7 @@ BUFHDR_T	*bhp;
 	int	nbytes;
 
 	assert ( (bhp-bufhdr_table) < NUM_BUFS );
-	if ( lseek ( fd, bhp->id.obj_id << BUFSHIFT, L_SET ) < 0 ) {
+	if ( lseek ( fd, bhp->id.obj_id << BUFSHIFT, SEEK_SET ) < 0 ) {
 	    return(-1);
 	}
 	bhp->flags |= BUF_IO_IN_PROGRESS;
@@ -646,7 +646,7 @@ int	*len;		/* Number of bytes read */
 	if (RELEASE_MASTER) {
 		return(NULL);
 	}
-	if ( lseek ( fd, obj->obj_id << BUFSHIFT, L_SET ) < -1 ) {
+	if ( lseek ( fd, obj->obj_id << BUFSHIFT, SEEK_SET ) < -1 ) {
 	    error_log2 ("Unable to perform seek on file: %d  to page %d",
 			obj->file_id, obj->obj_id );
 	    bhp->flags &= ~BUF_IO_IN_PROGRESS;

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.3 1997/07/27 02:33:35 deraadt Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.4 1998/07/13 02:11:45 millert Exp $";
 #endif not lint
 
 /*
@@ -302,7 +302,7 @@ usage:
 		i = badfile * 2;
 	for (; i < 10 && i < dp->d_nsectors; i += 2) {
 		if (lseek(f, dp->d_secsize * (size - dp->d_nsectors + i),
-		    L_SET) < 0)
+		    SEEK_SET) < 0)
 			Perror("lseek");
 		if (verbose)
 			printf("write badsect file at %d\n",
@@ -352,7 +352,7 @@ struct dkbad *bad;
 		i = badfile * 2;
 	for (; i < 10 && i < dp->d_nsectors; i += 2) {
 		sn = size - dp->d_nsectors + i;
-		if (lseek(f, sn * dp->d_secsize, L_SET) < 0)
+		if (lseek(f, sn * dp->d_secsize, SEEK_SET) < 0)
 			Perror("lseek");
 		if (read(f, (char *) bad, dp->d_secsize) == dp->d_secsize) {
 			if (i > 0)
@@ -478,7 +478,7 @@ daddr_t s1, s2;
 		}
 	}
 	for (tries = 0; tries < RETRIES; tries++) {
-		if (lseek(f, dp->d_secsize * s1, L_SET) < 0)
+		if (lseek(f, dp->d_secsize * s1, SEEK_SET) < 0)
 			Perror("lseek");
 		if ((n = read(f, buf, dp->d_secsize)) == dp->d_secsize)
 			break;
@@ -489,7 +489,7 @@ daddr_t s1, s2;
 			perror((char *)0);
 		return(0);
 	}
-	if (lseek(f, dp->d_secsize * s2, L_SET) < 0)
+	if (lseek(f, dp->d_secsize * s2, SEEK_SET) < 0)
 		Perror("lseek");
 	if (verbose)
 		printf("copying %d to %d\n", s1, s2);
@@ -516,7 +516,7 @@ daddr_t sn;
 			exit(20);
 		}
 	}
-	if (lseek(f, dp->d_secsize * sn, L_SET) < 0)
+	if (lseek(f, dp->d_secsize * sn, SEEK_SET) < 0)
 		Perror("lseek");
 	if (verbose)
 		printf("zeroing %d\n", sn);

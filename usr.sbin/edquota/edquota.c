@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.19 1998/05/18 19:09:52 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.20 1998/07/13 02:11:47 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -274,7 +274,7 @@ getprivs(id, quotatype)
 				    getentry(quotagroup, GRPQUOTA));
 				(void)fchmod(fd, 0640);
 			}
-			lseek(fd, (off_t)(id * sizeof(struct dqblk)), L_SET);
+			lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET);
 			switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
 			case 0:			/* EOF */
 				/*
@@ -409,7 +409,7 @@ writeprivs(quplist, outfd, name, quotatype)
 	FILE *fd;
 
 	ftruncate(outfd, 0);
-	lseek(outfd, 0, L_SET);
+	lseek(outfd, 0, SEEK_SET);
 	if ((fd = fdopen(dup(outfd), "w")) == NULL)
 		err(1, tmpfil);
 	(void)fprintf(fd, "Quotas for %s %s:\n", qfextension[quotatype], name);
@@ -442,7 +442,7 @@ readprivs(quplist, infd)
 	struct dqblk dqblk;
 	char *fsp, line1[BUFSIZ], line2[BUFSIZ];
 
-	lseek(infd, 0, L_SET);
+	lseek(infd, 0, SEEK_SET);
 	fd = fdopen(dup(infd), "r");
 	if (fd == NULL) {
 		warnx("can't re-read temp file!!");
@@ -549,7 +549,7 @@ writetimes(quplist, outfd, quotatype)
 	FILE *fd;
 
 	ftruncate(outfd, 0);
-	lseek(outfd, 0, L_SET);
+	lseek(outfd, 0, SEEK_SET);
 	if ((fd = fdopen(dup(outfd), "w")) == NULL)
 		err(1, tmpfil);
 	(void)fprintf(fd,
@@ -582,7 +582,7 @@ readtimes(quplist, infd)
 	time_t itime, btime, iseconds, bseconds;
 	char *fsp, bunits[10], iunits[10], line1[BUFSIZ];
 
-	lseek(infd, 0, L_SET);
+	lseek(infd, 0, SEEK_SET);
 	fd = fdopen(dup(infd), "r");
 	if (fd == NULL) {
 		warnx("can't re-read temp file!!");
