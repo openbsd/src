@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.11 2004/12/21 17:50:40 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.12 2004/12/30 20:37:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -121,19 +121,16 @@ cvs_add_file(CVSFILE *cf, void *arg)
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-				ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-				    CVS_FILE_NAME(cf));
-			else
-				ret = cvs_senddir(root, cf);
-		}
+		if (root->cr_method != CVS_METHOD_LOCAL)
+			ret = cvs_senddir(root, cf);
 
 		return (ret);
 	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		ret = cvs_sendreq(root, CVS_REQ_ADD, CVS_FILE_NAME(cf));
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED,
+			    CVS_FILE_NAME(cf));
 	} else {
 		cvs_log(LP_INFO, "scheduling file `%s' for addition",
 		    CVS_FILE_NAME(cf));
