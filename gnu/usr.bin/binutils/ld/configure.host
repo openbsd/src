@@ -154,6 +154,15 @@ m88*-motorola-sysv3)
   HOSTING_LIBS='`if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else gcc -print-libgcc-file-name; fi` -lc `if [ -f ../gcc/crtend.o ]; then echo ../gcc/crtend.o; else gcc -print-file-name=crtend.o; fi` `if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else gcc -print-libgcc-file-name; fi`'
   ;;
 
+powerpc-*-*bsd*)
+  # The new BSD `make' has a bug: it doesn't pass empty arguments in
+  # shell commands.  So we need to make this value non-empty in order
+  # for the genscripts.sh call to work.  There's nothing magic about
+  # the value `/lib'; it's just a dummy.
+  NATIVE_LIB_DIRS=/lib
+  HOSTING_CRT0=/usr/lib/crt0.o
+  ;;
+
 romp-*-*)
   HDEFINES=-DNO_VARARGS
   ;;

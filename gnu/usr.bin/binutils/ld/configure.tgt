@@ -154,7 +154,7 @@ z8k-*-coff) 		targ_emul=z8002; targ_extra_emuls=z8001 ;;
 ns32k-pc532-mach* | ns32k-pc532-ux*)	targ_emul=pc532macha ;;
 ns32k-pc532-netbsd* | ns32k-pc532-lites*) targ_emul=ns32knbsd ;;
 ns32k-pc532-openbsd*)	targ_emul=ns32knbsd ;;
-powerpc-*-elf* | powerpc-*-eabi* | powerpc-*-linux* | powerpc-*-sysv*)
+powerpc-*-*bsd* | powerpc-*-elf* | powerpc-*-eabi* | powerpc-*-linux* | powerpc-*-sysv*)
 	targ_emul=elf32ppc ;;
 powerpcle-*-elf* | powerpcle-*-eabi* | powerpcle-*-solaris* | powerpcle-*-sysv*)	targ_emul=elf32lppc ;;
 powerpc-*-rtems*)	targ_emul=elf32ppc ;;

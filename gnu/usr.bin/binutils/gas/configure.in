@@ -240,7 +240,7 @@ changequote([,])dnl
 			    esac
                             ;;
       ppc-*-aix*)           fmt=coff ;;
-      ppc-*-elf* | ppc-*-eabi* | ppc-*-sysv4*)
+      ppc-*-*bsd* | ppc-*-elf* | ppc-*-eabi* | ppc-*-sysv4*)
 			    fmt=elf
 			    case "$endian" in
 			    big)  targ=ppc-big ;;
