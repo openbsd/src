@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.37 2004/08/09 20:52:11 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.38 2004/08/25 08:00:08 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -405,6 +405,34 @@ GLOBAL(spin_cpu)
 	or	r9,   r0,  0x100		/* .FORKMPU */
 	tb0	0,    r0,  0x200-16		/* call 188Bug */
 	jmp	r1
+
+#ifdef MVME188
+/* 
+ * void m188_delay(int us)
+ *
+ * The processor loops (busy waits) for the given number of microseconds:
+ * Thus, delay(1000000) will delay for one second.
+ * (originally from Mach 2.5) 
+ * 
+ * REGISTER USAGE:
+ *  IN	r1   - return address
+ *  IN	r2   - number of microseconds
+ *	r3   - cpu speed in MHz
+ *	r4   - number of cycles to delay
+ */
+GLOBAL(m188_delay)
+	or.u	r3, r0, hi16(_cpuspeed)
+	ld	r3, r3, lo16(_cpuspeed)
+	mul	r4, r2, r3
+	subu	r4, r4, 4	/* overhead of these instructions */
+
+	/* now loop for the given number of cycles */
+1: 
+	bcnd.n	gt0, r4, 1b
+	 subu	r4, r4, 2	/* two cycles per iteration */
+
+	jmp	r1
+#endif
 
 /*****************************************************************************/
 

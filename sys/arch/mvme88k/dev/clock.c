@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.38 2004/08/24 22:01:29 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.39 2004/08/25 08:00:06 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -580,15 +580,9 @@ void
 delay(int us)
 {
 	if (brdtyp == BRD_188) {
-		extern int cpuspeed;
+		extern void m188_delay(int);
 
-		/*
-		 * Unable to use a real timer, use a tight loop.
-		 * XXX not accurate!
-		 */
-		volatile int c = (3 * us) / (cpuspeed == 25 ? 4 : 5);
-		while (--c > 0)
-			;
+		m188_delay(us);
 	} else {
 		/*
 		 * On MVME187 and MVME197, use the VMEchip for the

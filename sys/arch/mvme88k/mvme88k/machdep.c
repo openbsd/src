@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.154 2004/08/02 14:38:42 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.155 2004/08/25 08:00:09 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -233,12 +233,12 @@ char  cpu_model[120];
 extern char *esym;
 #endif
 
-int boothowto;	/* set in locore.S */
-int bootdev;	/* set in locore.S */
-int cputyp;	/* set in locore.S */
-int brdtyp;	/* set in locore.S */
-int cpumod;	/* set in mvme_bootstrap() */
-int cpuspeed;
+int boothowto;					/* set in locore.S */
+int bootdev;					/* set in locore.S */
+int cputyp;					/* set in locore.S */
+int brdtyp;					/* set in locore.S */
+int cpumod;					/* set in mvme_bootstrap() */
+int cpuspeed = 25;				/* safe guess */
 
 vaddr_t first_addr;
 vaddr_t last_addr;
