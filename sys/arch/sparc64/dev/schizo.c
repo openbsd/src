@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.2 2002/06/08 23:31:30 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.3 2002/06/12 01:14:42 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -81,8 +81,9 @@ void schizo_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 paddr_t schizo_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 int _schizo_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
     bus_size_t, int, vaddr_t, bus_space_handle_t *);
-void *schizo_intr_establish(bus_space_tag_t, int, int, int,
+void *_schizo_intr_establish(bus_space_tag_t, int, int, int,
     int (*)(void *), void *);
+paddr_t _schizo_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 int schizo_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
     bus_size_t, struct proc *, int);
@@ -233,10 +234,8 @@ schizo_alloc_bus_tag(pbm, type)
 	bt->parent = sc->sc_bust;
 	bt->type = type;
 	bt->sparc_bus_map = _schizo_bus_map;
-#if XXX
-	bt->sparc_bus_mmap = schizo_bus_mmap;
-	bt->sparc_intr_establish = schizo_intr_establish;
-#endif
+	bt->sparc_bus_mmap = _schizo_bus_mmap;
+	bt->sparc_intr_establish = _schizo_intr_establish;
 	return (bt);
 }
 
@@ -465,6 +464,36 @@ _schizo_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	return (EINVAL);
 }
 
+paddr_t
+_schizo_bus_mmap(t, paddr, off, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t paddr;
+	off_t off;
+	int prot;
+	int flags;
+{
+	bus_addr_t offset = paddr;
+	struct schizo_pbm *pbm = t->cookie;
+	struct schizo_softc *sc = pbm->sp_sc;
+	int i, ss;
+
+	ss = schizo_get_childspace(t->type);
+
+	for (i = 0; i < pbm->sp_nrange; i++) {
+		bus_addr_t paddr;
+
+		if (((pbm->sp_range[i].cspace >> 24) & 0x03) != ss)
+			continue;
+
+		paddr = pbm->sp_range[i].phys_lo + offset;
+		paddr |= ((bus_addr_t)pbm->sp_range[i].phys_hi<<32);
+		return (bus_space_mmap(sc->sc_bustag, paddr, off,
+		    prot, flags));
+	}
+
+	return (-1);
+}
+
 pcireg_t
 schizo_pci_conf_read(pc, tag, reg)
 	pci_chipset_tag_t pc;
@@ -511,4 +540,16 @@ schizo_read(adr)
 	    : "r" (adr), "i" (ASI_PHYS_NON_CACHED)
 	    : "memory");
 	return (r);
+}
+
+void *
+_schizo_intr_establish(t, ihandle, level, flags, handler, arg)
+	bus_space_tag_t t;
+	int ihandle;
+	int level;
+	int flags;
+	int (*handler)(void *);
+	void *arg;
+{
+	return (NULL);
 }
