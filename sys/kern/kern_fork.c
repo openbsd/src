@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.16 1999/02/23 18:50:22 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.17 1999/02/23 18:55:09 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -128,10 +128,9 @@ fork1(p1, forktype, rforkflags, retval)
 
 	/*
 	 * Although process entries are dynamically created, we still keep
-	 * a global limit on the maximum number we will create.  Don't allow
-	 * a nonprivileged user to use the last process; don't let root
-	 * exceed the limit. The variable nprocs is the current number of
-	 * processes, maxproc is the limit.
+	 * a global limit on the maximum number we will create. We reserve
+	 * the last 5 processes to root. The variable nprocs is the current
+	 * number of processes, maxproc is the limit.
 	 */
 	uid = p1->p_cred->p_ruid;
 	if ((nprocs >= maxproc - 5 && uid != 0) || nprocs >= maxproc) {
