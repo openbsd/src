@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2001/11/28 16:13:28 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2001/11/28 16:24:26 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.80 1999/09/16 14:52:06 chs Exp $	*/
 
 /*-
@@ -2561,7 +2561,7 @@ pmap_enter_ptpage(pmap, va)
 	vaddr_t va;
 {
 	paddr_t ptpa;
-	vm_page_t pg;
+	struct vm_page *pg;
 	struct pv_entry *pv;
 	st_entry_t *ste;
 	int s;
@@ -2795,7 +2795,7 @@ void
 pmap_ptpage_addref(ptpva)
 	vaddr_t ptpva;
 {
-	vm_page_t pg;
+	struct vm_page *pg;
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
 	pg = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
@@ -2814,7 +2814,7 @@ int
 pmap_ptpage_delref(ptpva)
 	vaddr_t ptpva;
 {
-	vm_page_t pg;
+	struct vm_page *pg;
 	int rv;
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
@@ -2862,7 +2862,7 @@ pmap_check_wiring(str, va)
 {
 	pt_entry_t *pte;
 	paddr_t pa;
-	vm_page_t pg;
+	struct vm_page *pg;
 	int count;
 
 	if (!pmap_ste_v(pmap_kernel(), va) ||

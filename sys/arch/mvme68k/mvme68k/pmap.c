@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2001/11/28 16:13:28 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.35 2001/11/28 16:24:26 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -2317,7 +2317,7 @@ void
 pmap_ptpage_addref(ptpva)
 	vaddr_t ptpva;
 {
-	vm_page_t m;
+	struct vm_page *m;
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
 	m = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
@@ -2334,7 +2334,7 @@ int
 pmap_ptpage_delref(ptpva)
 	vaddr_t ptpva;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	int rv;
 
 	simple_lock(&uvm.kernel_object->vmobjlock);

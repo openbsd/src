@@ -412,7 +412,7 @@ struct vop_getpages_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 	voff_t a_offset;
-	vm_page_t *a_m;
+	struct vm_page **a_m;
 	int *a_count;
 	int a_centeridx;
 	vm_prot_t a_access_type;
@@ -420,19 +420,19 @@ struct vop_getpages_args {
 	int a_flags;
 };
 extern struct vnodeop_desc vop_getpages_desc;
-int VOP_GETPAGES __P((struct vnode *, voff_t, vm_page_t *, int *, int, 
+int VOP_GETPAGES __P((struct vnode *, voff_t, struct vm_page **, int *, int, 
     vm_prot_t, int, int));
 
 struct vop_putpages_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	vm_page_t *a_m;
+	struct vm_page **a_m;
 	int a_count;
 	int a_flags;
 	int *a_rtvals;
 };
 extern struct vnodeop_desc vop_putpages_desc;
-int VOP_PUTPAGES __P((struct vnode *, vm_page_t *, int, int, int *));
+int VOP_PUTPAGES __P((struct vnode *, struct vm_page **, int, int, int *));
 
 struct vop_size_args {
 	struct vnodeop_desc *a_desc;

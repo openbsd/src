@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.14 2001/11/27 05:27:12 art Exp $
+#	$OpenBSD: vnode_if.src,v 1.15 2001/11/28 16:24:26 art Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -485,7 +485,7 @@ vop_ballocn {
 vop_getpages {
 	IN struct vnode *vp;
 	IN voff_t offset;
-	IN vm_page_t *m;
+	IN struct vm_page **m;
 	IN int *count;
 	IN int centeridx;
 	IN vm_prot_t access_type;
@@ -498,7 +498,7 @@ vop_getpages {
 #
 vop_putpages {
 	IN struct vnode *vp;
-	IN vm_page_t *m;
+	IN struct vm_page **m;
 	IN int count;
 	IN int flags;
 	IN int *rtvals;

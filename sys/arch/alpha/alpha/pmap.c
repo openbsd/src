@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.28 2001/11/28 15:34:16 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.29 2001/11/28 16:24:26 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1515,7 +1515,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t dowired)
  *	the permissions specified.
  */
 void
-pmap_page_protect(vm_page_t pg, vm_prot_t prot)
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	pmap_t pmap;
 	struct pv_head *pvh;
@@ -2412,7 +2412,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  *	Clear the modify bits on the specified physical page.
  */
 boolean_t
-pmap_clear_modify(vm_page_t pg)
+pmap_clear_modify(struct vm_page *pg)
 {
 	struct pv_head *pvh;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -2447,7 +2447,7 @@ pmap_clear_modify(vm_page_t pg)
  *	Clear the reference bit on the specified physical page.
  */
 boolean_t
-pmap_clear_reference(vm_page_t pg)
+pmap_clear_reference(struct vm_page *pg)
 {
 	struct pv_head *pvh;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -2483,7 +2483,7 @@ pmap_clear_reference(vm_page_t pg)
  *	by any physical maps.
  */
 boolean_t
-pmap_is_referenced(vm_page_t pg)
+pmap_is_referenced(struct vm_page *pg)
 {
 	struct pv_head *pvh;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -2506,7 +2506,7 @@ pmap_is_referenced(vm_page_t pg)
  *	by any physical maps.
  */
 boolean_t
-pmap_is_modified(vm_page_t pg)
+pmap_is_modified(struct vm_page *pg)
 {
 	struct pv_head *pvh;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);

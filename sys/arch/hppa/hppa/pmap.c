@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.50 2001/11/28 14:20:16 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.51 2001/11/28 16:24:26 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -1142,7 +1142,7 @@ pmap_remove(pmap, sva, eva)
  */
 void
 pmap_page_protect(pg, prot)
-	vm_page_t pg;
+	struct vm_page *pg;
 	vm_prot_t prot;
 {
 	register struct pv_entry *pv;
@@ -1425,7 +1425,7 @@ pmap_copy_page(spa, dpa)
  */
 boolean_t
 pmap_clear_modify(pg)
-	vm_page_t pg;
+	struct vm_page *pg;
 {
 	register struct pv_entry *pv;
 	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1458,7 +1458,7 @@ pmap_clear_modify(pg)
  */
 boolean_t
 pmap_is_modified(pg)
-	vm_page_t pg;
+	struct vm_page *pg;
 {
 	register struct pv_entry *pv;
 	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1487,7 +1487,7 @@ pmap_is_modified(pg)
  */
 boolean_t
 pmap_clear_reference(pg)
-	vm_page_t pg;
+	struct vm_page *pg;
 {
 	register struct pv_entry *pv;
 	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1520,7 +1520,7 @@ pmap_clear_reference(pg)
  */
 boolean_t
 pmap_is_referenced(pg)
-	vm_page_t pg;
+	struct vm_page *pg;
 {
 	register struct pv_entry *pv;
 	register paddr_t pa = VM_PAGE_TO_PHYS(pg);

@@ -1282,7 +1282,7 @@ struct vnodeop_desc vop_getpages_desc = {
 int VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, advice, flags)
 	struct vnode *vp;
 	voff_t offset;
-	vm_page_t *m;
+	struct vm_page **m;
 	int *count;
 	int centeridx;
 	vm_prot_t access_type;
@@ -1320,7 +1320,7 @@ struct vnodeop_desc vop_putpages_desc = {
 
 int VOP_PUTPAGES(vp, m, count, flags, rtvals)
 	struct vnode *vp;
-	vm_page_t *m;
+	struct vm_page **m;
 	int count;
 	int flags;
 	int *rtvals;
