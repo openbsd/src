@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.31 2004/04/28 00:28:43 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.32 2004/04/30 22:08:18 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -675,8 +675,10 @@ pfsync_input(struct mbuf *m, ...)
 				sc->sc_ureq_sent = 0;
 				sc->sc_bulk_tries = 0;
 				timeout_del(&sc->sc_bulkfail_tmo);
+#if NCARP > 0
 				if (!pfsync_sync_ok)
 					carp_suppress_preempt--;
+#endif
 				pfsync_sync_ok = 1;
 				if (pf_status.debug >= PF_DEBUG_MISC)
 					printf("pfsync: received valid "
@@ -804,8 +806,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 			/* Request a full state table update. */
 			sc->sc_ureq_sent = mono_time.tv_sec;
+#if NCARP > 0
 			if (pfsync_sync_ok)
 				carp_suppress_preempt++;
+#endif
 			pfsync_sync_ok = 0;
 			if (pf_status.debug >= PF_DEBUG_MISC)
 				printf("pfsync: requesting bulk update\n");
@@ -1272,8 +1276,10 @@ pfsync_bulkfail(void *v)
 		/* Pretend like the transfer was ok */
 		sc->sc_ureq_sent = 0;
 		sc->sc_bulk_tries = 0;
+#if NCARP > 0
 		if (!pfsync_sync_ok)
 			carp_suppress_preempt--;
+#endif
 		pfsync_sync_ok = 1;
 		if (pf_status.debug >= PF_DEBUG_MISC)
 			printf("pfsync: failed to receive "
