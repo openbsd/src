@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.7 2002/04/29 17:13:38 deraadt Exp $
+#	$OpenBSD: list2sh.awk,v 1.8 2002/04/30 01:30:41 deraadt Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -66,6 +66,12 @@ $1 == "SPECIAL" {
 $1 == "TERMCAP" {
 	printf("echo '%s'\n", $0);
 	printf("(cd ${TARGDIR}; tic -C -x -r -e %s ${UTILS}/../../share/termtypes/termtypes.master | sed -e '/^#.*/d' -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' > %s)\n",
+	    $2, $3);
+	next;
+}
+$1 == "SCRIPT" {
+	printf("echo '%s'\n", $0);
+	printf("sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e \"s/^ARCH=ARCH$/ARCH=`arch -ks`/\" < %s > ${TARGDIR}/%s\n",
 	    $2, $3);
 	next;
 }
