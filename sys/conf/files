@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.80 1998/07/10 19:56:55 mickey Exp $
+#	$OpenBSD: files,v 1.81 1998/08/24 05:26:50 millert Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -56,6 +56,10 @@ file	dev/ic/isp.c			isp
 device	uha: scsi
 file	dev/ic/uha.c		uha
 
+# National Semiconductor DP8390 Ethernet controller
+device	ed: ether, ifnet
+file	dev/ic/dp8390.c		ed
+
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet
 file	dev/ic/elink3.c		ep
@@ -108,6 +112,9 @@ pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device random
 pseudo-device enc: ifnet
+
+pseudo-device ksyms
+file	dev/ksyms.c	ksyms needs-flag
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
