@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2001/11/28 16:13:28 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2002/02/02 03:07:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -31,7 +31,7 @@
  */
 
 /* #define INTRDEBUG */
-/* #define TRAPDEBUG */
+#define TRAPDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,14 +146,14 @@ trap(type, frame)
 	struct vmspace *vm;
 	register vm_prot_t vftype;
 	register pa_space_t space;
-	u_int opcode;
-	int ret;
 	union sigval sv;
-	int s, si;
+	u_int opcode;
+	int ret, s, si, trapnum;
 	const char *tts;
 
+	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (type == T_ITLBMISS || type == T_ITLBMISSNA) {
+	if (trapnum == T_ITLBMISS || trapnum == T_ITLBMISSNA) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_READ;	/* XXX VM_PROT_EXECUTE ??? */
@@ -167,16 +167,16 @@ trap(type, frame)
 		p->p_md.md_regs = frame;
 
 #ifdef TRAPDEBUG
-	if ((type & ~T_USER) > trap_types)
+	if (trapnum > trap_types)
 		tts = "reserved";
 	else
-		tts = trap_type[type & ~T_USER];
+		tts = trap_type[trapnum];
 
-	if (type != T_INTERRUPT && (type & ~T_USER) != T_IBREAK)
+	if (trapnum != T_INTERRUPT && trapnum != T_IBREAK)
 		db_printf("trap: %d, %s for %x:%x at %x:%x, fl=%x, fp=%p\n",
 		    type, tts, space, va, frame->tf_iisq_head,
 		    frame->tf_iioq_head, frame->tf_flags, frame);
-	else if ((type & ~T_USER) == T_IBREAK)
+	else if (trapnum  == T_IBREAK)
 		db_printf("trap: break instruction %x:%x at %x:%x, fp=%p\n",
 		    break5(opcode), break13(opcode),
 		    frame->tf_iisq_head, frame->tf_iioq_head, frame);
@@ -510,8 +510,8 @@ syscall(frame, args)
 		frame->tf_t1 = 0;
 		break;
 	case ERESTART:
-		frame->tf_iioq_head -= 4; /* right? XXX */
-		frame->tf_iioq_tail -= 4; /* right? XXX */
+		frame->tf_iioq_head -= 12;
+		frame->tf_iioq_tail -= 12;
 		break;
 	case EJUSTRETURN:
 		p = curproc;
