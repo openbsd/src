@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.3 2000/04/28 14:03:45 aaron Exp $
+.\"	$OpenBSD: crypto.9,v 1.4 2000/06/06 04:32:23 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -72,10 +72,7 @@ struct cryptop
     int                crp_etype;
     int                crp_flags;
     caddr_t            crp_buf;
-    caddr_t            crp_opaque1;
-    caddr_t            crp_opaque2;
-    caddr_t            crp_opaque3;
-    caddr_t            crp_opaque4;
+    caddr_t            crp_opaque;
     struct cryptodesc *crp_desc;
     int              (*crp_callback) (struct cryptop *);
 };
@@ -248,8 +245,8 @@ chain or a contiguous buffer (of a type identified by
 .Fa crp_alloctype ) ,
 depending on
 .Fa crp_flags .
-.It Fa crp_opaque1 , crp_opaque2 , crp_opaque3 , crp_opaque4
-These are passed through the crypto framework untouched and are
+.It Fa crp_opaque
+This is passed through the crypto framework untouched and is
 intended for the invoking application's use.
 .It Fa crp_desc
 This is a linked list of descriptors.
@@ -349,7 +346,7 @@ and any
 structures linked to it.
 Note that it is the responsibility of the
 callback routine to do the necessary cleanups associated with the
-opaque fields in the
+opaque field in the
 .Fa cryptop
 structure.
 .Pp
