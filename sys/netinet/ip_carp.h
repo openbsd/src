@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.5 2004/04/28 00:28:43 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.6 2004/04/28 01:53:45 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -63,24 +63,24 @@ struct carp_header {
  * Statistics.
  */
 struct carpstats {
-	u_long	carps_ipackets;		/* total input packets, IPv4 */
-	u_long	carps_ipackets6;	/* total input packets, IPv6 */
-	u_long	carps_badif;		/* wrong interface */
-	u_long	carps_badttl;		/* TTL is not CARP_DFLTTL */
-	u_long	carps_hdrops;		/* packets shorter than header */
-	u_long	carps_badsum;		/* bad checksum */
-	u_long	carps_badver;		/* bad (incl unsupp) version */
-	u_long	carps_badlen;		/* data length does not match */
-	u_long	carps_badauth;		/* bad authentication */
-	u_long	carps_badvhid;		/* bad VHID */
-	u_long	carps_badaddrs;		/* bad address list */
+	u_int64_t	carps_ipackets;		/* total input packets, IPv4 */
+	u_int64_t	carps_ipackets6;	/* total input packets, IPv6 */
+	u_int64_t	carps_badif;		/* wrong interface */
+	u_int64_t	carps_badttl;		/* TTL is not CARP_DFLTTL */
+	u_int64_t	carps_hdrops;		/* packets shorter than hdr */
+	u_int64_t	carps_badsum;		/* bad checksum */
+	u_int64_t	carps_badver;		/* bad (incl unsupp) version */
+	u_int64_t	carps_badlen;		/* data length does not match */
+	u_int64_t	carps_badauth;		/* bad authentication */
+	u_int64_t	carps_badvhid;		/* bad VHID */
+	u_int64_t	carps_badaddrs;		/* bad address list */
 
-	u_long	carps_opackets;		/* total output packets, IPv4 */
-	u_long	carps_opackets6;	/* total output packets, IPv6 */
-	u_long	carps_onomem;		/* no memory for an mbuf for a send */
-	u_long	carps_ostates;		/* total state updates sent */
+	u_int64_t	carps_opackets;		/* total output packets, IPv4 */
+	u_int64_t	carps_opackets6;	/* total output packets, IPv6 */
+	u_int64_t	carps_onomem;		/* no memory for an mbuf */
+	u_int64_t	carps_ostates;		/* total state updates sent */
 
-	u_long	carps_preempt;		/* if enabled, high-pri preemptions */
+	u_int64_t	carps_preempt;		/* if enabled, preemptions */
 };
 
 /*
