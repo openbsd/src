@@ -1,10 +1,16 @@
 ./usr/bin/gdb
 ./usr/include/dlfcn.h
 ./usr/include/link.h
+./usr/include/m68k/param.h
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
 ./usr/include/m68k/cdefs.h
+./usr/include/m68k/cacheops.h
+./usr/include/m68k/cacheops_20.h
+./usr/include/m68k/cacheops_30.h
+./usr/include/m68k/cacheops_40.h
+./usr/include/m68k/cacheops_60.h
 ./usr/include/m68k/cpu.h
 ./usr/include/m68k/db_machdep.h
 ./usr/include/m68k/endian.h
