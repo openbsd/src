@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.21 2000/03/17 10:25:21 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.22 2000/04/08 16:55:58 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -244,8 +244,11 @@ struct ifnet *ifp;
 	if (m == NULL) /* Empty queue */
 	  return;
 
-	/* First, we encapsulate in etherip */
-	err = etherip_output(m, tdb, &mp, 0, 0); /* Last 2 args not used */
+	/* Encapsulate in etherip or ip-in-ip, depending on interface flag */
+	if (ifp->if_flags & IFF_LINK0)
+	  err = ipip_output(m, tdb, &mp, 0, 0); /* Last 2 args not used */
+	else
+	  err = etherip_output(m, tdb, &mp, 0, 0); /* Last 2 args not used */
 	if ((mp == NULL) || err)
 	{
 	    /* Just skip this frame */
@@ -265,7 +268,11 @@ struct ifnet *ifp;
 	/* IPsec packet processing -- skip encapsulation */
 	ipsp_process_packet(m, tdb, protoflag, 1);
 
-	/* XXX Should find a way to avoid bridging-loops, some mbuf flag ? */
+	/*
+	 * XXX
+	 * Should find a way to avoid bridging/routing-loops,
+	 * perhaps use some mbuf flag ?
+	 */
     }
 #endif /* IPSEC */
 }
