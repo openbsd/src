@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.13 2004/10/26 17:23:15 espie Exp $
+# $OpenBSD: Makefile,v 1.14 2004/10/31 10:26:17 espie Exp $
 
 MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1
 
 PACKAGES= \
+    OpenBSD/Delete.pm \
     OpenBSD/Error.pm \
     OpenBSD/Getopt.pm \
     OpenBSD/IdCache.pm \
@@ -22,8 +23,9 @@ PACKAGES= \
     OpenBSD/Temp.pm \
     OpenBSD/Update.pm \
     OpenBSD/Ustar.pm \
+    OpenBSD/Vstat.pm \
     OpenBSD/md5.pm \
-    OpenBSD/Vstat.pm
+
 
 SCRIPTS= \
     pkg_add \
