@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_bigkey.c,v 1.7 2000/10/03 18:16:48 mickey Exp $	*/
+/*	$OpenBSD: hash_bigkey.c,v 1.8 2002/02/01 18:15:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-static char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.7 2000/10/03 18:16:48 mickey Exp $";
+static char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.8 2002/02/01 18:15:24 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,18 +128,30 @@ __big_insert(hashp, bufp, key, val)
 			return (-1);
 		n = p[0];
 		if (!key_size) {
-			if (FREESPACE(p)) {
-				move_bytes = MIN(FREESPACE(p), val_size);
+			space = FREESPACE(p);
+			if (space) {
+				move_bytes = MIN(space, val_size);
+				/*
+				 * If the data would fit exactly in the
+				 * remaining space, we must overflow it to the
+				 * next page; otherwise the invariant that the
+				 * data must end on a page with FREESPACE
+				 * non-zero would fail.
+				 */
+				if (space == val_size && val_size == val->size)
+					goto toolarge;
 				off = OFFSET(p) - move_bytes;
-				p[n] = off;
 				memmove(cp + off, val_data, move_bytes);
 				val_data += move_bytes;
 				val_size -= move_bytes;
+				p[n] = off;
 				p[n - 2] = FULL_KEY_DATA;
 				FREESPACE(p) = FREESPACE(p) - move_bytes;
 				OFFSET(p) = off;
-			} else
+			} else {
+			toolarge:
 				p[n - 2] = FULL_KEY;
+			}
 		}
 		p = (u_int16_t *)bufp->page;
 		cp = bufp->page;
@@ -251,7 +263,7 @@ __big_delete(hashp, bufp)
 	n -= 2;
 	bp[0] = n;
 	FREESPACE(bp) = hashp->BSIZE - PAGE_META(n);
-	OFFSET(bp) = hashp->BSIZE - 1;
+	OFFSET(bp) = hashp->BSIZE;
 
 	bufp->flags |= BUF_MOD;
 	if (rbufp)
