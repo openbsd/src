@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.60 2003/02/21 20:10:33 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.61 2003/06/25 17:53:10 henric Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -95,7 +95,7 @@
 #if 0
 /* If you enable this, it will report any delays more than WDCDELAY * N long. */
 #define WDCNDELAY_DEBUG	50
-#endif
+#endif /* 0 */
 
 struct pool wdc_xfer_pool;
 
@@ -125,7 +125,7 @@ int wdc_nxfer = 0;
 } while (0)
 #else
 #define WDCDEBUG_PRINT(args, level)
-#endif
+#endif /* WDCDEBUG */
 
 int at_poll = AT_POLL;
 
@@ -284,7 +284,7 @@ wdc_default_read_reg(chp, reg)
 	if (reg & _WDC_WRONLY) {
 		printf ("wdc_default_read_reg: reading from a write-only register %d\n", reg);
 	}
-#endif
+#endif /* DIAGNOSTIC */
 
 	if (reg & _WDC_AUX) 
 		return (bus_space_read_1(chp->ctl_iot, chp->ctl_ioh,
@@ -304,7 +304,7 @@ wdc_default_write_reg(chp, reg, val)
 	if (reg & _WDC_RDONLY) {
 		printf ("wdc_default_write_reg: writing to a read-only register %d\n", reg);
 	}
-#endif
+#endif /* DIAGNOSTIC */
 
 	if (reg & _WDC_AUX) 
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh,
@@ -605,6 +605,9 @@ wdcprobe(chp)
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
+#ifdef WDCDEBUG
+	int savedmask = wdcdebug_mask;
+#endif
 
 	if (chp->_vtbl == 0) {
 		int s = splbio();
@@ -617,7 +620,7 @@ wdcprobe(chp)
 	    (chp->wdc &&
 	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
 		wdcdebug_mask |= DEBUG_PROBE;	
-#endif
+#endif /* WDCDEBUG */
 
 	if (chp->wdc == NULL ||
 	    (chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
@@ -713,10 +716,7 @@ wdcprobe(chp)
 	}
 
 #ifdef WDCDEBUG
-	if ((chp->ch_flags & WDCF_VERBOSE_PROBE) ||
-	    (chp->wdc &&
-	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
-		wdcdebug_mask &= ~DEBUG_PROBE;
+	wdcdebug_mask = savedmask;
 #endif
 	return (ret_value);	
 }
@@ -764,7 +764,7 @@ wdcattach(chp)
 		    chp->wdc->sc_dev.dv_xname);
 		return;
 	}
-#endif
+#endif /* __OpenBSD__ */
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
@@ -790,7 +790,7 @@ wdcattach(chp)
 	    (chp->ch_drive[1].drive_flags & DRIVE_ATAPI)) {
 		wdcdebug_mask = DEBUG_PROBE;
 	}
-#endif
+#endif /* WDCDEBUG */
 
 	/* initialise global data */
 	if (inited == 0) {
@@ -879,9 +879,6 @@ wdcattach(chp)
 
  exit:
 #ifdef WDCDEBUG
-	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
-		wdcdebug_mask &= ~DEBUG_PROBE;
-
 	wdcdebug_mask = savedmask;
 #endif
 	return;
@@ -914,7 +911,7 @@ wdcstart(chp)
 #ifdef DIAGNOSTIC
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
 		panic("wdcstart: channel waiting for irq");
-#endif
+#endif /* DIAGNOSTIC */
 	if (chp->wdc->cap & WDC_CAPABILITY_HWLOCK)
 		if (!(chp->wdc->claim_hw)(chp, 0))
 			return;
@@ -1153,7 +1150,7 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 			    xfer->drive,
 			    WDCDELAY * time);
 	}
-#endif
+#endif /* WDCNDELAY_DEBUG */
 	return time;
 }
 
@@ -1237,7 +1234,7 @@ wdc_probe_caps(drvp, params)
 			}
 		}
 	} else 
-#endif
+#endif /* 0 */
 	/* Use PIO mode 3 as a default value for ATAPI devices */
 	if (drvp->drive_flags & DRIVE_ATAPI)
 		drvp->PIO_mode = 3;
@@ -1512,7 +1509,7 @@ wdc_print_caps(drvp)
 	}
 			
 	printf("\n");
-#endif
+#endif /* 0 */
 }
 
 void
@@ -1639,7 +1636,7 @@ wdc_exec_command(drvp, wdc_c)
 	if ((wdc_c->flags & AT_POLL) != 0 &&
 	    (wdc_c->flags & AT_DONE) == 0)
 		panic("wdc_exec_command: polled command not done");
-#endif
+#endif /* DIAGNOSTIC */
 	if (wdc_c->flags & AT_DONE) {
 		ret = WDC_COMPLETE;
 	} else {
