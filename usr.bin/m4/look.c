@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.6 1999/11/20 17:48:59 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.7 1999/11/25 00:54:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@ unsigned
 hash(name)
 	const char *name;
 {
-	unsigned h = 0;
+	unsigned int h = 0;
 	while (*name)
 		h = (h << 5) + h + *name++;
 	return (h);
@@ -75,7 +75,7 @@ lookup(name)
 	const char *name;
 {
 	ndptr p;
-	unsigned h;
+	unsigned int h;
 
 	h = hash(name);
 	for (p = hashtab[h % HASHSIZE]; p != nil; p = p->nxtptr)
@@ -92,7 +92,7 @@ ndptr
 addent(name)
 	const char *name;
 {
-	unsigned h;
+	unsigned int h;
 	ndptr p;
 
 	h = hash(name);
@@ -124,7 +124,7 @@ remhash(name, all)
 	const char *name;
 	int all;
 {
-	int h;
+	unsigned int h;
 	ndptr xp, tp, mp;
 
 	h = hash(name);
