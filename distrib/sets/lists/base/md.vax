@@ -1704,3 +1704,4 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/machine
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pcscpreg.ph

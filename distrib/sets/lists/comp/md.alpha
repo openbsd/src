@@ -51,7 +51,6 @@
 ./usr/include/alpha/signal.h
 ./usr/include/alpha/spinlock.h
 ./usr/include/alpha/stdarg.h
-./usr/include/alpha/tgareg.h
 ./usr/include/alpha/types.h
 ./usr/include/alpha/varargs.h
 ./usr/include/alpha/vmparam.h

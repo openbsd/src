@@ -1762,3 +1762,4 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/machine
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pcscpreg.ph

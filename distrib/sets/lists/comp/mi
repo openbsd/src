@@ -4064,3 +4064,4 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/include/dev/pci/pcscpreg.h

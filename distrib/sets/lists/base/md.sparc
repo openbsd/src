@@ -1767,3 +1767,4 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pcscpreg.ph
