@@ -245,6 +245,8 @@ awacs_attach(parent, self, aux)
 {
 	struct awacs_softc *sc = (struct awacs_softc *)self;
 	struct confargs *ca = aux;
+	int cirq, oirq, iirq;
+	int cirq_type, oirq_type, iirq_type;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	ca->ca_reg[2] += ca->ca_baseaddr;
@@ -257,21 +259,34 @@ awacs_attach(parent, self, aux)
 	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
 	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
 
-	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_AUDIO, awacs_intr,
+	if (ca->ca_nintr == 24) {
+		cirq = ca->ca_intr[0];
+		oirq = ca->ca_intr[2];
+		iirq = ca->ca_intr[4];
+		cirq_type = ca->ca_intr[1] ? IST_LEVEL : IST_EDGE;
+		oirq_type = ca->ca_intr[3] ? IST_LEVEL : IST_EDGE;
+		iirq_type = ca->ca_intr[5] ? IST_LEVEL : IST_EDGE;
+	} else {
+		cirq = ca->ca_intr[0];
+		oirq = ca->ca_intr[1];
+		iirq = ca->ca_intr[2];
+		cirq_type = oirq_type = iirq_type = IST_LEVEL;
+	}
+	mac_intr_establish(parent, cirq, cirq_type, IPL_AUDIO, awacs_intr,
 		sc, "awacs");
-	mac_intr_establish(parent, ca->ca_intr[2], IST_LEVEL, IPL_AUDIO, awacs_tx_intr,
+	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO, awacs_tx_intr,
 		sc, "awacs/tx");
 #if 0
 	/* do not use this for now, since both are tied to same freq
 	 * we can service both in the same interrupt, lowering
 	 * interrupt load by half
 	 */
-	mac_intr_establish(parent, ca->ca_intr[4], IST_LEVEL, IPL_AUDIO, awacs_intr,
+	mac_intr_establish(parent, iirq, irq_type, IPL_AUDIO, awacs_intr,
 		sc, "awacs/rx");
 #endif
 
-	printf(": irq %d,%d,%d\n",
-		ca->ca_intr[0], ca->ca_intr[2], ca->ca_intr[4]);
+	printf(": irq %d,%d,%d",
+		cirq, oirq, iirq);
 
 	sc->sc_soundctl = AWACS_INPUT_SUBFRAME0 | AWACS_OUTPUT_SUBFRAME0 |
 		AWACS_RATE_44100 | AWACS_INT_PORTCHG;
@@ -287,17 +302,29 @@ awacs_attach(parent, self, aux)
 
 	/* Set initial volume[s] */
 	awacs_set_speaker_volume(sc, 80, 80);
+	awacs_set_ext_volume(sc, 80, 80);
 
 	/* Set loopback (for CD?) */
 	/* sc->sc_codecctl1 |= 0x440; */
 	sc->sc_codecctl1 |= 0x40;
 	awacs_write_codec(sc, sc->sc_codecctl1);
 
-	/* default output to speakers */
-	sc->sc_output_mask = 1 << 0;
-	sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
-	sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
-	awacs_write_codec(sc, sc->sc_codecctl1);
+	/* check for headphone present */
+	if (awacs_read_reg(sc, AWACS_CODEC_STATUS) & 0x8) {
+		/* default output to speakers */
+		printf(" headphones");
+		sc->sc_output_mask = 1 << 1;
+		sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+		sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+		awacs_write_codec(sc, sc->sc_codecctl1);
+	} else {
+		/* default output to speakers */
+		printf(" speaker");
+		sc->sc_output_mask = 1 << 0;
+		sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
+		sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
+		awacs_write_codec(sc, sc->sc_codecctl1);
+	}
 
 	/* default input from CD */
 	sc->sc_record_source = 1 << 0;
@@ -309,6 +336,7 @@ awacs_attach(parent, self, aux)
 	/* XXX ... */
 	awacs_halt_output(sc);
 	awacs_halt_input(sc);
+	printf("\n");
 
 	audio_attach_mi(&awacs_hw_if, sc, &sc->sc_dev);
 }
@@ -356,12 +384,23 @@ awacs_intr(v)
 		printf("should change inputs\n");
 	}
 	if (reason & AWACS_CTL_PORTCHG) {
-		error =  (awacs_read_reg(sc, AWACS_CODEC_STATUS) >> 16) && 0xf;
-		if (error != 0) {
-			printf("AWACS error 0x%x\n", error);
+		if (awacs_read_reg(sc, AWACS_CODEC_STATUS) & 0x8) {
+			/* default output to speakers */
+			printf(" headphones");
+			sc->sc_output_mask = 1 << 1;
+			sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+			sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+			awacs_write_codec(sc, sc->sc_codecctl1);
+		} else {
+			/* default output to speakers */
+			printf(" speaker");
+			sc->sc_output_mask = 1 << 0;
+			sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
+			sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
+			awacs_write_codec(sc, sc->sc_codecctl1);
 		}
-
 	}
+
 	awacs_write_reg(sc, AWACS_SOUND_CTRL, reason); /* clear interrupt */
 	return 1;
 }
@@ -573,6 +612,8 @@ awacs_round_blocksize(h, size)
 	void *h;
 	int size;
 {
+	if (size < NBPG)
+		size = NBPG;
 	return size & ~PGOFSET;
 }
 
