@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.14 2001/08/13 15:04:29 millert Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.15 2001/08/13 15:10:21 millert Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
@@ -130,6 +130,13 @@ main(argc, argv)
 	int     argc;
 	char   *argv[];
 {
+	struct  semid_ds *sema;
+	struct  seminfo seminfo;
+	int     semu;
+	struct  msginfo msginfo;
+	struct  msqid_ds *msqids;
+	struct  shminfo shminfo;
+	struct  shmid_ds *shmsegs;
 	int     display = SHMINFO | MSGINFO | SEMINFO;
 	int     option = 0;
 	char   *core = NULL, *namelist = NULL;
