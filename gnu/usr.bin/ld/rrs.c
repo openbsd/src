@@ -1,4 +1,4 @@
-/* *	$OpenBSD: rrs.c,v 1.3 1998/05/11 20:27:14 niklas Exp $*/
+/*	$OpenBSD: rrs.c,v 1.4 1999/08/24 19:08:47 niklas Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -144,6 +144,32 @@ RRS data segment:
 		|                   |
 		+-------------------+
 */
+
+static int
+dlopen_is_used()
+{
+	symbol *sym;
+	struct localsymbol *lsp;
+
+#ifdef nounderscore
+	sym = getsym_soft("dlopen");
+#else
+	sym = getsym_soft("_dlopen");
+#endif
+	if (!sym)
+		return 0;
+
+	/*
+	 * A use is charcterized as being an entry on the "refs" list
+	 * that is not in the text section, because such an entry is the
+	 * definition.
+	 */
+	if (sym)
+		for (lsp = sym->refs; lsp; lsp = lsp->next)
+			if (!(lsp->nzlist.nlist.n_type & N_TEXT))
+				return 1;
+	return 0;
+}
 
 /*
  * Add NAME to the list of needed run-time objects.
@@ -690,7 +716,8 @@ consider_rrs_section_lengths()
 		rrs_section_type = RRS_NONE;
 	else if (link_mode & SHAREABLE)
 		rrs_section_type = RRS_FULL;
-	else if (number_of_shobjs == 0 /*&& !(link_mode & DYNAMIC)*/) {
+	else if (number_of_shobjs == 0 && !dlopen_is_used()
+		 /*&& !(link_mode & DYNAMIC)*/) {
 		/*
 		 * First slots in both tables are reserved
 		 * hence the "> 1" condition
