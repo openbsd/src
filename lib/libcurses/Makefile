@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2002/11/14 00:50:19 millert Exp $
+#	$OpenBSD: Makefile,v 1.53 2003/05/19 19:05:06 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -194,8 +194,9 @@ CLEANFILES+= ${GENERATED}
 SUBDIR+= doc
 .endif
 
-beforedepend: init_keytry.h nomacros.h codes.c comp_captab.c expanded.c \
-	fallback.c lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
+all: ${GENERATED}
+
+beforedepend: ${GENERATED}
 
 includes:
 	@cmp -s ${DESTDIR}/usr/include/ncurses.h ${.CURDIR}/curses.h || \
