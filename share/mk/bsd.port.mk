@@ -1,3 +1,4 @@
+.include <bsd.own.mk>
 PORTSDIR?=	/usr/ports
 .include	"${PORTSDIR}/infrastructure/mk/bsd.port.mk"
 
