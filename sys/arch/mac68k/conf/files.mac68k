@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.37 1995/11/21 05:06:28 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.39 1996/02/07 16:34:28 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -36,6 +36,9 @@ file	arch/mac68k/dev/ite.c		ite needs-flag
 device	ae at nubus: ifnet, ether
 file	arch/mac68k/dev/if_ae.c		ae needs-flag
 
+device	sn at mainbus: ifnet, ether
+file	arch/mac68k/dev/if_sn.c		sn needs-flag
+
 include "../../../scsi/files.scsi"
 
 device	ncrscsi at mainbus: scsi
@@ -44,11 +47,15 @@ file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 device	ncr96scsi at mainbus: scsi
 file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
 
+device	sbc at mainbus: scsi, ncr5380sbc
+file	arch/mac68k/dev/ncr_sbc.c	sbc
+
 file	arch/m68k/m68k/copy.s
 include "../../m68k/fpe/files.fpe"
 
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/clock.c
+file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c
