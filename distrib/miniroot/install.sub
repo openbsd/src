@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.270 2002/11/07 01:28:52 krw Exp $
+#	$OpenBSD: install.sub,v 1.271 2002/11/09 04:41:56 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -261,9 +261,11 @@ ask_which () {
 		# Put both lines in ask prompt, rather than use a
 		# separate 'echo', to ensure entire question is
 		# re-ask'ed after a '!' '!foo' shell escape.
-		ask "Available ${_name}s are: ${_devs}.\nWhich one $_query (or done)" "$_defdev"
+		ask "Available ${_name}s are: ${_devs}.\nWhich one $_query (or 'done')" "$_defdev"
 
-		if isin $resp $_devs ; then
+		# Quote $resp to prevent user from confusing isin() by
+		# entering something like 'a a'.
+		if isin "$resp" $_devs ; then
 			makedev $resp || resp=
 		elif [ "$resp" != "done" ]; then
 			echo "'$resp' is not a valid choice."
@@ -1203,11 +1205,10 @@ __EOT
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
+# Mount a disk on /mnt2. The set of disk devices to choose from
+# is $DKDEVS.
+# returns 0 on success, 1 on failure
 mount_a_disk() {
-	# Mount a disk on /mnt2. The set of disk devices to choose from
-	# is $DKDEVS.
-	# returns 0 on success, 1 on failure
-
 	local _drive _def_partition _partition_range _partition
 	local _fstype _fsopts
 
@@ -1442,8 +1443,7 @@ set_timezone() {
 		_zonepath=${_zonepath}${resp}
 
 		while [ -d "$_zonepath" ]; do
-			echo -n "Select a sub-timezone of "
-			ask "'${_zonepath#$_zoneroot}' ('?' for list):"
+			ask "Select a sub-timezone of '${_zonepath#$_zoneroot}' ('?' for list):"
 			if [ "$resp" = "?" ]; then
 				ls -F ${_zonepath}
 			else
