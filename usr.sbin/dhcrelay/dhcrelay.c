@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.13 2004/04/13 23:16:17 henning Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.14 2004/04/15 00:36:37 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("getpwnam: %m");
-	if (chroot("/var/empty") == -1)
+	if (chroot(_PATH_VAREMPTY) == -1)
 		error("chroot: %m");
 	if (chdir("/") == -1)
 		error("chdir(\"/\"): %m");
