@@ -1189,6 +1189,7 @@
 ./usr/share/man/cat4/hppa/kmem.0
 ./usr/share/man/cat4/hppa/lasi.0
 ./usr/share/man/cat4/hppa/mem.0
+./usr/share/man/cat4/hppa/mongoose.0
 ./usr/share/man/cat4/hppa/phantomas.0
 ./usr/share/man/cat4/hppa/power.0
 ./usr/share/man/cat4/hppa/wax.0
