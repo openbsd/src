@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.c,v 1.5 2003/03/29 00:01:46 mickey Exp $	*/
+/*	$OpenBSD: core.c,v 1.6 2003/08/17 23:43:45 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Jean-Francois Brousseau <krapht@secureops.com>
  * All rights reserved. 
@@ -183,7 +183,7 @@ core_write(struct pstate *ps, off_t to, void *from, size_t size)
 		cs = ps->ps_core->segs[i];
 		if ((to > cs->c_addr) && (to < (cs->c_addr + cs->c_size))) {
 			written = size;
-			fp = cs + sizeof(*cs) + (to - cs->c_addr);
+			fp = (void *)cs + sizeof(*cs) + (to - cs->c_addr);
 			memcpy(fp, from, written);
 			return (written);
 		}
