@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2001/08/22 21:52:01 jason Exp $
+#	$OpenBSD: GENERIC,v 1.13 2001/08/23 10:54:21 art Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -28,7 +28,7 @@ pci*	at ppb?
 ppb*	at pci? dev ? function ?
 ebus*	at pci?
 
-#hme*	at pci? dev ? function ?
+hme*	at pci? dev ? function ?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -58,6 +58,11 @@ qe*		at qec?
 be*		at qec?
 
 hme*		at sbus? slot ? offset ?
+
+#pciide*	at pci? dev ? function ? flags 0x0000
+#wd*	at pciide? channel ? drive ? flags 0x0000
+#atapiscsi* at pciide? channel ?
+#scsibus* at atapiscsi?
 
 #
 # Note the flags on the esp entries below, that work around
