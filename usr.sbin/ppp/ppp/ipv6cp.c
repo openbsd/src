@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipv6cp.c,v 1.2 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: ipv6cp.c,v 1.3 2004/11/23 15:55:21 brad Exp $
  */
 
 #include <sys/param.h>
@@ -137,7 +137,7 @@ ipcp_SetIPv6address(struct ipv6cp *ipv6cp, u_int32_t mytok, u_int32_t histok)
 
   ncpaddr_setip6(&ipv6cp->myaddr, &myaddr);
   ncpaddr_setip6(&ipv6cp->hisaddr, &hisaddr);
-  ncprange_sethost(&myrange, &ipv6cp->myaddr);
+  ncprange_set(&myrange, &ipv6cp->myaddr, 64);
 
   if (!iface_Add(bundle->iface, &bundle->ncp, &myrange, &ipv6cp->hisaddr,
                  IFACE_ADD_FIRST|IFACE_FORCE_ADD|IFACE_SYSTEM))
