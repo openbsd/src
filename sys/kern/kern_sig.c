@@ -1,7 +1,8 @@
-/*	$OpenBSD: kern_sig.c,v 1.17 1997/08/31 20:42:18 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.18 1997/09/12 02:47:34 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
+ * Copyright (c) 1997 Theo de Raadt. All rights reserved. 
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
