@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.7 1999/01/20 22:08:59 art Exp $	*/
+/*	$OpenBSD: uio.h,v 1.8 2000/04/20 06:34:17 deraadt Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -75,6 +75,10 @@ struct uio {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+ssize_t preadv __P((int, const struct iovec *, int, off_t));
+ssize_t pwritev __P((int, const struct iovec *, int, off_t));
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 ssize_t	readv __P((int, const struct iovec *, int));
 ssize_t	writev __P((int, const struct iovec *, int));
 __END_DECLS
