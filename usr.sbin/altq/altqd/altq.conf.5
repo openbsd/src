@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.conf.5,v 1.3 2001/07/20 19:09:47 mpech Exp $
+.\"	$OpenBSD: altq.conf.5,v 1.4 2001/07/25 10:04:56 mpech Exp $
 .\"	$KAME: altq.conf.5,v 1.8 2001/04/09 16:26:28 thorpej Exp $
 .\"
 .\" Copyright (C) 2000
@@ -49,6 +49,7 @@ HFSC (Hierarchical Fair Service Curve), PRIQ (Priority Queueing),
 RED (Random Early Detection), RIO (RED with IN/OUT),
 WFQ (Weighted Fair Queueing),
 and CDNR (Diffserv Traffic Conditioner) can be configured in this file.
+.Pp
 .Sh Interface Commands
 .Bl -tag -width interface -offset indent
 .It Nm interface
@@ -96,6 +97,7 @@ or
 If the interface has only traffic conditioners and no queueing
 discipline, sched_type can be omitted.
 .El
+.Pp
 .Sh Class Command
 .Bl -tag -width class -offset indent
 .It Nm class
@@ -139,6 +141,7 @@ class queue (experimental implementation).  ECN implies RED.
 .It Sy cleardscp
 Clear diffserv codepoint in the IP header.
 .El
+.Pp
 .Sh Filter Commands
 .Bl -tag -width filter -offset indent
 .It Nm filter
@@ -258,6 +261,7 @@ keyword can be used to specify the Security Parameter Index value for
 IPSec.
 .Pp
 When filter value 0 is used, it is taken as a wildcard.
+.Pp
 .Sh CBQ Commands
 CBQ (Class Based Queueing) achieves both partitioning and sharing of
 link bandwidth  by hierarchically structured classes.
@@ -423,6 +427,7 @@ enables RED/flow-valve (a.k.a. red-penalty-box) on this class queue.
 .It Sy cleardscp
 clears diffserv codepoint in the IP header.
 .El
+.Pp
 .Sh HFSC Commands
 HFSC (Hierarchical Fair Service Curve) supports both link-sharing and
 guaranteed real-time services.  H-FSC employs a service curve based QoS
@@ -558,6 +563,7 @@ enables RED/ECN on this class queue.
 .It Sy cleardscp
 clears diffserv codepoint in the IP header.
 .El
+.Pp
 .Sh PRIQ Commands
 PRIQ (Priority Queueing) implements a simple priority-based queueing.
 A higher priority class is always served first.
@@ -630,6 +636,7 @@ enables RED/ECN on this class queue.
 .It Sy cleardscp
 clears diffserv codepoint in the IP header.
 .El
+.Pp
 .Sh WFQ Commands
 WFQ (Weighted Fair Queueing) implements a weighted-round robin
 scheduler for a set of queue.
@@ -674,6 +681,7 @@ specifies a hashing policy by IP addresses and ports.
 specifies a hashing policy by IP source port number.  Default is
 .Sy dstaddr
 .El
+.Pp
 .Sh FIFOQ Commands
 FIFOQ (First-In First-Out Queueing) is a simple tail-drop FIFO queue.
 FIFOQ is the simplest possible implementation of a queueing discipline
@@ -704,6 +712,7 @@ for FIFOQ.
 The maxium queue size in number of packets.
 Default value is 50.
 .El
+.Pp
 .Sh RED Commands
 RED (Random Early Detection) is an implicit congestion notification
 mechanism that exercises packet dropping or packet marking
@@ -773,6 +782,7 @@ enables ECN.
 .It Sy flowvalve
 enables flowvalve.
 .El
+.Pp
 .Sh RIO Commands
 ALTQ/RIO has 3 drop precedence levels defined for the Assured
 Forwarding of DiffServ (RFC2597).
@@ -871,6 +881,7 @@ The inverse of the maximum drop probability for high drop precedence.
 .It Sy ecn
 enables ECN.
 .El
+.Pp
 .Sh BLUE Commands
 .Bl -tag -width interface -offset indent
 .It Nm interface
@@ -908,6 +919,7 @@ specifies the hold time in usec.
 .It Sy ecn
 enables ECN.
 .El
+.Pp
 .Sh CDNR Commands
 The
 .Sy conditioner
@@ -1036,6 +1048,7 @@ rate, and is specified in milli-second.  500 msec is ok for normal
 settings.
 .El
 .El
+.Pp
 .Sh EXAMPLES
 .nf
 
@@ -1153,6 +1166,7 @@ conditioner fxp0 af1x_cdnr <trtcm 3M 32K 10M 64K <mark 0x28><mark 0x30><mark 0x3
         filter fxp0 af1x_cdnr 0 0 192.168.0.178 0 0
 
 .fi
+.Pp
 .Sh SEE ALSO
 .Xr altqd 8
 .Sh BUGS
