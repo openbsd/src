@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.123 2001/06/25 02:54:44 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.124 2001/06/25 06:09:42 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -275,9 +275,18 @@ ip_output(m0, va_alist)
 	    !bcmp(&inp->inp_tdb_out->tdb_dst.sin.sin_addr,
 	        &ip->ip_dst, sizeof(ip->ip_dst)))
 	        tdb = inp->inp_tdb_out;
-	else
-	        tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
-		    IPSP_DIRECTION_OUT, NULL, inp);
+	else {
+		/* Do we have any pending SAs to apply ? */
+		mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
+		if (mtag != NULL) {
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+			m_tag_delete(m, mtag);
+		}
+		else
+			tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
+			    IPSP_DIRECTION_OUT, NULL, inp);
+	}
 
 	if (tdb == NULL) {
 	        splx(s);
