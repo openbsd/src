@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.8 2005/03/01 18:37:07 mcbride Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.9 2005/03/13 10:47:24 brad Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -186,8 +186,8 @@ static sdlahw_t* sdla_aft_hw_select (sdlahw_card_t *, int, int,
 static void sdla_save_hw_probe (sdlahw_t*, int);
 
 /* SDLA PCI device relative entry point */
-int	san_match	__P((struct device *, void *, void *));
-void	san_attach	__P((struct device *, struct device *, void *));
+int	san_match(struct device *, void *, void *);
+void	san_attach(struct device *, struct device *, void *);
 
 
 struct cfdriver san_cd = {
