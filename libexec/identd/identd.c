@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.17 2001/04/13 20:16:53 millert Exp $	*/
+/*	$OpenBSD: identd.c,v 1.18 2001/04/15 23:48:15 hugh Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -41,7 +41,6 @@ int     verbose_flag = 0;
 int     debug_flag = 0;
 int     syslog_flag = 0;
 int     multi_flag = 0;
-int     other_flag = 0;
 int     unknown_flag = 0;
 int     number_flag = 0;
 int     noident_flag = 0;
@@ -51,7 +50,9 @@ int	token_flag = 0;
 int     lport = 0;
 int     fport = 0;
 
-char   *charset_name = NULL;
+const  char *opsys_name = "UNIX";
+const  char *charset_sep = "";
+char   *charset_name = "";
 char   *indirect_host = NULL;
 char   *indirect_password = NULL;
 
@@ -203,6 +204,7 @@ main(argc, argv)
 			break;
 		case 'c':
 			charset_name = optarg;
+			charset_sep = " , ";
 			break;
 		case 'r':
 			indirect_host = optarg;
@@ -211,7 +213,7 @@ main(argc, argv)
 			syslog_flag++;
 			break;
 		case 'o':
-			other_flag = 1;
+			opsys_name = "OTHER";
 			break;
 		case 'e':
 			unknown_flag = 1;

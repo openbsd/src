@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.22 2001/04/14 02:49:19 hugh Exp $	*/
+/*	$OpenBSD: parse.c,v 1.23 2001/04/15 23:48:16 hugh Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -280,9 +280,7 @@ parse(fd, laddr, faddr)
 			    uid);
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%d\r\n",
-		    lport, fport, other_flag ? "OTHER" : "UNIX",
-		    charset_name ? " , " : "",
-		    charset_name ? charset_name : "", uid);
+		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
@@ -313,9 +311,7 @@ parse(fd, laddr, faddr)
 		    token, uid, pw->pw_name);
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%s\r\n",
-		    lport, fport, other_flag ? "OTHER" : "UNIX",
-		    charset_name ? " , " : "",
-		    charset_name ? charset_name : "", token);
+		    lport, fport, opsys_name, charset_sep, charset_name, token);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
@@ -329,9 +325,7 @@ parse(fd, laddr, faddr)
 		    pw->pw_name);
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%s\r\n",
-		    lport, fport, other_flag ? "OTHER" : "UNIX",
-		    charset_name ? " , " : "",
-		    charset_name ? charset_name : "", token);
+		    lport, fport, opsys_name, charset_sep, charset_name, token);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
@@ -342,9 +336,7 @@ parse(fd, laddr, faddr)
 	if (number_flag) {
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%d\r\n",
-		    lport, fport, other_flag ? "OTHER" : "UNIX",
-		    charset_name ? " , " : "",
-		    charset_name ? charset_name : "", uid);
+		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
@@ -352,9 +344,7 @@ parse(fd, laddr, faddr)
 		return 0;
 	}
 	n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
-	    lport, fport, other_flag ? "OTHER" : "UNIX",
-	    charset_name ? " , " : "",
-	    charset_name ? charset_name : "", pw->pw_name);
+	    lport, fport, opsys_name, charset_sep, charset_name, pw->pw_name);
 	if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 		syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 		return 1;
@@ -458,9 +448,7 @@ parse6(fd, laddr, faddr)
 			    uid);
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%d\r\n",
-		    lport, fport, other_flag ? "OTHER" : "UNIX",
-		    charset_name ? " , " : "",
-		    charset_name ? charset_name : "", uid);
+		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -491,9 +479,7 @@ parse6(fd, laddr, faddr)
 		    token, uid, pw->pw_name);
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%s\r\n",
-		    lport, fport, other_flag ? "OTHER" : "UNIX",
-		    charset_name ? " , " : "",
-		    charset_name ? charset_name : "", token);
+		    lport, fport, opsys_name, charset_sep, charset_name, token);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -507,9 +493,7 @@ parse6(fd, laddr, faddr)
 		    pw->pw_name);
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%s\r\n",
-		    lport, fport, other_flag ? "OTHER" : "UNIX",
-		    charset_name ? " , " : "",
-		    charset_name ? charset_name : "", token);
+		    lport, fport, opsys_name, charset_sep, charset_name, token);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -520,9 +504,7 @@ parse6(fd, laddr, faddr)
 	if (number_flag) {
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%d\r\n",
-		    lport, fport, other_flag ? "OTHER" : "UNIX",
-		    charset_name ? " , " : "",
-		    charset_name ? charset_name : "", uid);
+		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -531,9 +513,7 @@ parse6(fd, laddr, faddr)
 	}
 
 	n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
-	    lport, fport, other_flag ? "OTHER" : "UNIX",
-	    charset_name ? " , " : "",
-	    charset_name ? charset_name : "", pw->pw_name);
+	    lport, fport, opsys_name, charset_sep, charset_name, pw->pw_name);
 	if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 		syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 		return 1;

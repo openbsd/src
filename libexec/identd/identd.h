@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.h,v 1.7 2001/04/13 20:16:53 millert Exp $*/
+/*	$OpenBSD: identd.h,v 1.8 2001/04/15 23:48:16 hugh Exp $*/
 
 /*
 **
@@ -24,13 +24,14 @@ extern int verbose_flag;
 extern int debug_flag;
 extern int syslog_flag;
 extern int multi_flag;
-extern int other_flag;
 extern int unknown_flag;
 extern int number_flag;
 extern int noident_flag;
 extern int token_flag;
 extern int userident_flag;
 
+extern const char *opsys_name;
+extern const char *charset_sep;
 extern char *charset_name;
 extern char *indirect_host;
 extern char *indirect_password;
