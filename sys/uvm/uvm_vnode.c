@@ -1850,7 +1850,7 @@ uvm_vnp_uncache(vp)
 	 */
 	if (!VOP_ISLOCKED(vp)) {
 		boolean_t is_ok_anyway = FALSE;
-#if defined(NFSSERVER) || defined(NFSCLIENT)
+#if defined(NFSCLIENT)
 		extern int (**nfsv2_vnodeop_p) __P((void *));
 		extern int (**spec_nfsv2nodeop_p) __P((void *));
 		extern int (**fifo_nfsv2nodeop_p) __P((void *));

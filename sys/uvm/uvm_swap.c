@@ -944,9 +944,9 @@ swap_on(p, sdp)
 #ifdef SWAP_TO_FILES
 	struct vattr va;
 #endif
-#if defined(NFSSERVER) || defined(NFSCLIENT)
+#if defined(NFSCLIENT)
 	extern int (**nfsv2_vnodeop_p) __P((void *));
-#endif /* defined(NFSSERVER) || defined(NFSCLIENT) */
+#endif /* defined(NFSCLIENT) */
 	dev_t dev;
 	char *name;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
@@ -1007,11 +1007,11 @@ swap_on(p, sdp)
 		 * limit the max # of outstanding I/O requests we issue
 		 * at any one time.   take it easy on NFS servers.
 		 */
-#if defined(NFSSERVER) || defined(NFSCLIENT)
+#if defined(NFSCLIENT)
 		if (vp->v_op == nfsv2_vnodeop_p)
 			sdp->swd_maxactive = 2; /* XXX */
 		else
-#endif /* defined(NFSSERVER) || defined(NFSCLIENT) */
+#endif /* defined(NFSCLIENT) */
 			sdp->swd_maxactive = 8; /* XXX */
 		break;
 #endif
