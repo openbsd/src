@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2001/08/25 21:54:26 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2001/08/26 07:58:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -759,8 +759,8 @@ lookup(char *s)
 		{ "keep",	KEEP},
 		{ "log",	LOG},
 		{ "log-all",	LOGALL},
-		{ "modulate",	MODULATE},
 		{ "min-ttl",	MINTTL},
+		{ "modulate",	MODULATE},
 		{ "nat",	NAT},
 		{ "no-df",	NODF},
 		{ "on",		ON},
