@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.10 2003/12/19 20:34:53 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.11 2003/12/19 21:06:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -834,24 +834,27 @@ void
 session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
     u_char *data, size_t datalen)
 {
-	struct msg_notification	 msg;
+	struct msg_header	 msg;
 	struct buf		*buf;
 	size_t		 len;
 	int		 errs = 0;
 
 	len = MSGSIZE_NOTIFICATION_MIN + datalen;
 
-	memset(&msg.header.marker, 0xff, sizeof(msg.header.marker));
-	msg.header.len = htons(len);
-	msg.header.type = NOTIFICATION;
+	memset(&msg.marker, 0xff, sizeof(msg.marker));
+	msg.len = htons(len);
+	msg.type = NOTIFICATION;
 
 	if ((buf = buf_open(peer, peer->sock, len)) == NULL)
 		bgp_fsm(peer, EVNT_CON_FATAL);
-	errs += buf_add(buf, (u_char *)&msg.header.marker,
-	    sizeof(msg.header.marker));
-	errs += buf_add(buf, (u_char *)&msg.header.len, sizeof(msg.header.len));
-	errs += buf_add(buf, (u_char *)&msg.header.type,
-	    sizeof(msg.header.type));
+	errs += buf_add(buf, (u_char *)&msg.marker,
+	    sizeof(msg.marker));
+	errs += buf_add(buf, (u_char *)&msg.len, sizeof(msg.len));
+	errs += buf_add(buf, (u_char *)&msg.type,
+	    sizeof(msg.type));
+	errs += buf_add(buf, (u_char *)&errcode, sizeof(errcode));
+	errs += buf_add(buf, (u_char *)&subcode, sizeof(subcode));
+
 	if (datalen > 0)
 		errs += buf_add(buf, data, datalen);
 
