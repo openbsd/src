@@ -62,12 +62,12 @@ passwd_to_key(user, instance, realm, passwd, key)
 {
 #ifdef NOENCRYPTION
     if (!passwd)
-	placebo_read_password(key, "Password: ", 0);
+	placebo_read_password(key, "Kerberos Password: ", 0);
 #else
     if (passwd)
 	des_string_to_key(passwd,key);
     else
-	des_read_password(key,"Password: ",0);
+	des_read_password(key,"Kerberos Password: ",0);
 #endif
     return (0);
 }
@@ -83,12 +83,12 @@ afs_passwd_to_key(user, instance, realm, passwd, key)
 {
 #ifdef NOENCRYPTION
     if (!passwd)
-        placebo_read_password(key, "Password: ", 0);
+        placebo_read_password(key, "Kerberos Password: ", 0);
 #else /* Do encyryption */
     if (passwd)
         afs_string_to_key(passwd, realm, key);
     else {
-        des_read_password(key, "Password: ", 0);
+        des_read_password(key, "Kerberos Password: ", 0);
     }
 #endif /* NOENCRYPTION */
     return (0);
@@ -126,7 +126,7 @@ krb_get_pw_in_tkt(user, instance, realm, service, sinstance, life, password)
 
     /* Only request password once! */
     if (!password) {
-        if (des_read_pw_string(pword, sizeof(pword)-1, "Password: ", 0))
+        if (des_read_pw_string(pword, sizeof(pword)-1, "Kerberos Password: ", 0))
             pword[0] = '\0'; /* something wrong */
         password = pword;
     }
@@ -165,7 +165,7 @@ krb_get_pw_in_tkt(user, instance, realm, service, sinstance, life, password)
 
 #ifndef	lint
 static char rcsid_read_password_c[] =
-"Bones$Header: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v 1.1.1.1 1995/12/14 06:52:39 tholo Exp $";
+"Bones$Header: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v 1.2 1996/02/05 10:06:40 tholo Exp $";
 #endif /* lint */
 
 #include <des.h>
