@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.20 1998/02/22 01:23:29 niklas Exp $	*/
+/*	$OpenBSD: encap.c,v 1.21 1998/04/08 10:58:03 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -888,7 +888,8 @@ encap_sendnotify(int subtype, struct tdb *tdbp)
 	  log(LOG_ERR, "encap_sendnotify(): m_gethdr() returned NULL\n");
 	return;
     }
-    
+   
+    m->m_len = min(MLEN, em.em_msglen); 
     m_copyback(m, 0, em.em_msglen, (caddr_t) &em);
     raw_input(m, &encap_proto, &encap_src, &encap_dst);
 
