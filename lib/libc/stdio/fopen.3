@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fopen.3,v 1.4 1996/12/04 02:14:27 deraadt Exp $
+.\"	$OpenBSD: fopen.3,v 1.5 1999/05/24 16:37:16 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,10 +113,7 @@ as modified by the process'
 umask value (see
 .Xr umask 2 ) .
 .Pp
-Reads and writes may be intermixed on read/write streams in any order,
-and do not require an intermediate seek as in previous versions of
-.Em stdio .
-This is not portable to other systems, however;
+Reads and writes cannot be arbitrarily intermixed on read/write streams.
 .Tn ANSI C
 requires that
 a file positioning function intervene between output and input, unless
