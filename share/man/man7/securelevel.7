@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.5 2000/02/27 04:29:44 hugh Exp $
+.\"     $OpenBSD: securelevel.7,v 1.6 2000/02/27 04:59:10 hugh Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -40,11 +40,11 @@ kernel provides four levels of system security:
 .Xr init 8
 will not attempt to raise the securelevel
 .It
-otherwise identical to securelevel 0
-.It
 may only be set with
 .Xr sysctl 8
 while the system is insecure
+.It
+otherwise identical to securelevel 0
 .El
 .It \ 0 Em Insecure mode
 .Bl -hyphen -compact
@@ -87,6 +87,13 @@ may not set the time backwards
 and
 .Xr ipnat 8
 rules may not be altered
+.It
+the
+.Va ddb.console
+and
+.Va ddb.panic
+.Xr sysctl 8
+variables may not be raised
 .El
 .El
 .Sh DESCRIPTION
@@ -115,6 +122,17 @@ by prohibiting the modification of packet filter rules. Preventing
 the system clock from being set backwards aids in post-mortem analysis
 and helps ensure the integrity of logs. Precision timekeeping is not
 affected because the clock may still be slowed.
+.Pp
+Because securelevel can be modified with the in-kernel debugger
+.Xr ddb 4 ,
+a convenient means of locking it off (if present) is provided
+on highly secure systems. This is accomplished by setting
+.Va ddb.console
+and
+.Va ddb.panic
+to 0 with the
+.Xr sysctl 8
+utility.
 .Sh FILES
 .Bl -tag -compact
 .It Pa /etc/rc.securelevel
