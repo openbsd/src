@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.13 1998/01/05 03:15:22 deraadt Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.14 1999/06/01 17:54:32 pefo Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -134,9 +134,9 @@ extern char *ultrix_syscallnames[];
 /*
  * Select the appropriate setregs callback for the target architecture.
  */
-#ifdef mips
+#ifdef __mips__
 #define ULTRIX_EXEC_SETREGS cpu_exec_ecoff_setregs
-#endif /* mips */
+#endif /* __mips__ */
 
 #ifdef vax
 #define ULTRIX_EXEC_SETREGS setregs

@@ -109,21 +109,24 @@ _dl_mmap (void *addr, unsigned int size, unsigned int prot,
                     "move  $7,%3\n\t"
 		    "sw    %4,16($29)\n\t"
 		    "sw    %5,20($29)\n\t"
-#ifdef MIPSEL
+#ifdef __MIPSEL__
 		    "li    $4,197\n\t"
                     "li    $5,0\n\t"
 		    "sw    %6,24($29)\n\t"
 		    "sw    $0,28($29)\n\t"
 		    "sw    %7,32($29)\n\t"
 		    "sw    $0,36($29)\n\t"
-#endif
-#ifdef MIPSEB
+#else
+#ifdef __MIPSEB__
                     "li    $4,0\n\t"
 		    "li    $5,197\n\t"
 		    "sw    %6,24($29)\n\t"
 		    "sw    $0,28($29)\n\t"
 		    "sw    $0,32($29)\n\t"
 		    "sw    %7,36($29)\n\t"
+#else
+#error "__MIPSEB__ or __MIPSEL__ not defined!"
+#endif
 #endif
                     "syscall\n\t"
 		    "addiu $29,40"

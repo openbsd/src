@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.24 1999/02/10 08:07:20 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.25 1999/06/01 17:54:31 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -402,7 +402,7 @@ elf_load_file(p, path, epp, ap, last)
 	for (i = 0; i < eh.e_phnum; i++) {
 		u_long size = 0;
 		int prot = 0;
-#ifdef mips
+#if defined(__mips__)
 		if (*last == ELF32_NO_ADDR)
 			addr = ELF32_NO_ADDR;	/* GRRRRR!!!!! */
 #endif
@@ -598,7 +598,7 @@ exec_elf_makecmds(p, epp)
 		}
 	}
 
-#if !defined(mips)
+#if !defined(__mips__)
 	/*
 	 * If no position to load the interpreter was set by a probe
 	 * function, pick the same address that a non-fixed mmap(0, ..)
