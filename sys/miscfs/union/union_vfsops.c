@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.16 2003/08/14 07:46:40 mickey Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.17 2004/04/25 19:40:51 tedu Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -113,15 +113,12 @@ union_mount(mp, path, data, ndp, p)
 	/*
 	 * Find upper node.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW|WANTPARENT,
-	       UIO_USERSPACE, args.target, p);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.target, p);
 
 	if ((error = namei(ndp)) != 0)
 		goto bad;
 
 	upperrootvp = ndp->ni_vp;
-	vrele(ndp->ni_dvp);
-	ndp->ni_dvp = NULL;
 
 	if (upperrootvp->v_type != VDIR) {
 		error = EINVAL;
