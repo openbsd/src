@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.9 2001/02/28 19:12:40 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.10 2001/05/25 05:48:54 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ void	vgafb_copyrows __P((void *, int, int, int));
 void	vgafb_eraserows __P((void *, int, int));
 void	vgafb_alloc_attr __P((void *c, int fg, int bg, int flags, long *));
 
+void vgafb_setcolor __P((unsigned int index, u_int8_t r, u_int8_t g, u_int8_t b));
 static void drawChar ( struct vgafb_config *vc, char ch, int cx,
 	int cy, char at);
 static void setPixel( struct vgafb_config *vc, int x, int y, int v);
@@ -503,7 +504,30 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 		}
 	}
 	#endif
+	{ 
+	  int i;
+	  for (i = 0; i < 256; i++) {
+	     vgafb_setcolor(i, 255,255,255);
+	  }
+	}
+	vgafb_setcolor(WSCOL_BLACK, 0, 0, 0);
+	vgafb_setcolor(255, 255, 255, 255);
+	vgafb_setcolor(WSCOL_RED, 255, 0, 0);
+	vgafb_setcolor(WSCOL_GREEN, 0, 255, 0);
+	vgafb_setcolor(WSCOL_BROWN, 154, 85, 46);
+	vgafb_setcolor(WSCOL_BLUE, 0, 0, 255);
+	vgafb_setcolor(WSCOL_MAGENTA, 255, 255, 0);
+	vgafb_setcolor(WSCOL_CYAN, 0, 255, 255);
+	vgafb_setcolor(WSCOL_WHITE, 255, 255, 255);
 	wsdisplay_cnattach(&vgafb_stdscreen, ri, 0, 0, defattr);
+}
+
+void
+vgafb_setcolor(index, r, g, b) 
+	unsigned int index;
+	u_int8_t r, g, b;
+{
+	OF_call_method_1("color!", cons_display_ofh, 4, r, g, b, index);
 }
 
 int
