@@ -37,7 +37,7 @@
 #include <util.h>
 #include <time.h>
 
-void to64( char *, long, int n);
+void to64 __P((char *, int32_t, int n));
 
 int
 pwd_gensalt(salt, max, pwd, type)
@@ -64,19 +64,19 @@ pwd_gensalt(salt, max, pwd, type)
 	next = option;
 	now = strsep(&next, ",");
 	if (!strcmp(now, "old")) {
-		if( max < 3 )
+		if (max < 3)
 			return 0;
 		to64(&salt[0], arc4random(), 2);
 		salt[2] = '\0';
 	} else if (!strcmp(now, "newsalt")) {
-		if( max < 10 )
+		if (max < 10)
 			return 0;
 		salt[0] = _PASSWORD_EFMT1;
-		to64(&salt[1], (long) (29 * 25), 4);
+		to64(&salt[1], (int32_t) (29 * 25), 4);
 		to64(&salt[5], arc4random(), 4);
 		salt[9] = '\0';
 	} else if (!strcmp(now, "md5")) {
-		if( max < 13 )  /* $1$8salt$\0 */
+		if (max < 13)  /* $1$8salt$\0 */
 			return 0;
 		strcpy(salt, "$1$");
 		to64(&salt[3], arc4random(), 4);
@@ -95,16 +95,17 @@ pwd_gensalt(salt, max, pwd, type)
 	return 1;
 }
 
-static unsigned char itoa64[] =         /* 0 ... 63 => ascii - 64 */
-        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+static unsigned char itoa64[] =	 /* 0 ... 63 => ascii - 64 */
+	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-void to64(s, v, n)
-        register char *s;
-        register long v;
-        register int n;
+void
+to64(s, v, n)
+	register char *s;
+	register int32_t v;
+	register int n;
 {
-        while (--n >= 0) {
-                *s++ = itoa64[v&0x3f];
-                v >>= 6;
-        }
+	while (--n >= 0) {
+		*s++ = itoa64[v&0x3f];
+		v >>= 6;
+	}
 }
