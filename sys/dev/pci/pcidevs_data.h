@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.611 2003/04/02 22:25:41 jason Exp 
+ *		OpenBSD: pcidevs,v 1.612 2003/04/02 22:32:04 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5279,8 +5279,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Simba PCI-PCI",
 	},
 	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K2,
-	    "Crypto 1K2",
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_5821,
+	    "Crypto 5821",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K,
