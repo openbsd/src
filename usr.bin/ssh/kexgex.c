@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexgex.c,v 1.1 2001/04/03 19:53:29 markus Exp $");
+RCSID("$OpenBSD: kexgex.c,v 1.2 2001/04/03 23:32:12 markus Exp $");
 
 #include <openssl/bn.h>
 
@@ -34,25 +34,10 @@ RCSID("$OpenBSD: kexgex.c,v 1.1 2001/04/03 19:53:29 markus Exp $");
 #include "key.h"
 #include "kex.h"
 #include "log.h"
-#include "dispatch.h"
 #include "packet.h"
 #include "dh.h"
 #include "ssh2.h"
 #include "compat.h"
-
-extern u_char *session_id2;
-extern int session_id2_len;
-
-typedef struct State State;
-struct State {
-	DH *dh;
-	int min, nbits, max;
-};
-
-dispatch_fn kexgex_input_request;	/* C -> S */
-dispatch_fn kexgex_input_group;		/* S -> C */
-dispatch_fn kexgex_input_init;		/* C -> S */
-dispatch_fn kexgex_input_reply;		/* S -> C */
 
 u_char *
 kexgex_hash(
@@ -117,52 +102,43 @@ kexgex_hash(
 void
 kexgex_client(Kex *kex)
 {
-	State *state;
+	BIGNUM *dh_server_pub = NULL, *shared_secret = NULL;
+	BIGNUM *p = NULL, *g = NULL;
+	Key *server_host_key;
+	u_char *kbuf, *hash, *signature = NULL, *server_host_key_blob = NULL;
+	u_int klen, kout, slen, sbloblen;
+	int dlen, plen, min, max, nbits;
+	DH *dh;
 
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_GROUP, &kexgex_input_group);
-
-	state = xmalloc(sizeof(*state));
-	state->nbits = dh_estimate(kex->we_need * 8);
-	kex->state = state;
+	nbits = dh_estimate(kex->we_need * 8);
 
 	if (datafellows & SSH_OLD_DHGEX) {
 		debug("SSH2_MSG_KEX_DH_GEX_REQUEST_OLD sent");
 
 		/* Old GEX request */
 		packet_start(SSH2_MSG_KEX_DH_GEX_REQUEST_OLD);
-		packet_put_int(state->nbits);
-		state->min = DH_GRP_MIN;
-		state->max = DH_GRP_MAX;
+		packet_put_int(nbits);
+		min = DH_GRP_MIN;
+		max = DH_GRP_MAX;
 	} else {
 		debug("SSH2_MSG_KEX_DH_GEX_REQUEST sent");
 
 		/* New GEX request */
-		state->min = DH_GRP_MIN;
-		state->max = DH_GRP_MAX;
+		min = DH_GRP_MIN;
+		max = DH_GRP_MAX;
 		packet_start(SSH2_MSG_KEX_DH_GEX_REQUEST);
-		packet_put_int(state->min);
-		packet_put_int(state->nbits);
-		packet_put_int(state->max);
+		packet_put_int(min);
+		packet_put_int(nbits);
+		packet_put_int(max);
 	}
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "\nmin = %d, nbits = %d, max = %d\n",
-	    state->min, state->nbits, state->max);
+	    min, nbits, max);
 #endif
 	packet_send();
-}
 
-void   
-kexgex_input_group(int type, int plen, void *ctxt)
-{
-	DH *dh;
-	int dlen;
-	BIGNUM *p = 0, *g = 0;
-	Kex *kex = (Kex*) ctxt;
-	State *state = (State *) kex->state;
-
-	debug("SSH2_MSG_KEX_DH_GEX_GROUP receivied");
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_GROUP, &kex_protocol_error);
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_REPLY, &kexgex_input_reply);
+	debug("expecting SSH2_MSG_KEX_DH_GEX_GROUP");
+	packet_read_expect(&plen, SSH2_MSG_KEX_DH_GEX_GROUP);
 
 	if ((p = BN_new()) == NULL)
 		fatal("BN_new");
@@ -170,15 +146,14 @@ kexgex_input_group(int type, int plen, void *ctxt)
 	if ((g = BN_new()) == NULL)
 		fatal("BN_new");
 	packet_get_bignum2(g, &dlen);
+	packet_done();
 
-	if (BN_num_bits(p) < state->min || BN_num_bits(p) > state->max)
+	if (BN_num_bits(p) < min || BN_num_bits(p) > max)
 		fatal("DH_GEX group out of range: %d !< %d !< %d",
-		    state->min, BN_num_bits(p), state->max);
+		    min, BN_num_bits(p), max);
 
 	dh = dh_new_group(g, p);
 	dh_gen_key(dh, kex->we_need * 8);
-
-	state->dh = dh;
 
 #ifdef DEBUG_KEXDH
 	DHparams_print_fp(stderr, dh);
@@ -192,22 +167,9 @@ kexgex_input_group(int type, int plen, void *ctxt)
 	packet_start(SSH2_MSG_KEX_DH_GEX_INIT);
 	packet_put_bignum2(dh->pub_key);
 	packet_send();
-}
 
-void   
-kexgex_input_reply(int type, int plen, void *ctxt)
-{
-	BIGNUM *dh_server_pub = NULL, *shared_secret = NULL;
-	Key *server_host_key;
-	Kex *kex = (Kex*) ctxt;
-	State *state = (State *) kex->state;
-	DH *dh = state->dh;
-	u_char *kbuf, *hash, *signature = NULL, *server_host_key_blob = NULL;
-	u_int klen, kout, slen, sbloblen;
-	int dlen, min, max;
-
-	debug("SSH2_MSG_KEX_DH_GEX_REPLY received");
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_REPLY, &kex_protocol_error);
+	debug("expecting SSH2_MSG_KEX_DH_GEX_REPLY");
+	packet_read_expect(&plen, SSH2_MSG_KEX_DH_GEX_REPLY);
 
 	/* key, cert */
 	server_host_key_blob = packet_get_string(&sbloblen);
@@ -250,12 +212,8 @@ kexgex_input_reply(int type, int plen, void *ctxt)
 	memset(kbuf, 0, klen);
 	xfree(kbuf);
 
-	if (datafellows & SSH_OLD_DHGEX) {
+	if (datafellows & SSH_OLD_DHGEX)
 		min = max = -1;
-	} else {
-		min = state->min;
-		max = state->max;
-	}
 
 	/* calc and verify H */
 	hash = kexgex_hash(
@@ -264,7 +222,7 @@ kexgex_input_reply(int type, int plen, void *ctxt)
 	    buffer_ptr(&kex->my), buffer_len(&kex->my),
 	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
 	    server_host_key_blob, sbloblen,
-	    min, state->nbits, max,
+	    min, nbits, max,
 	    dh->p, dh->g,
 	    dh->pub_key,
 	    dh_server_pub,
@@ -278,21 +236,20 @@ kexgex_input_reply(int type, int plen, void *ctxt)
 	key_free(server_host_key);
 	xfree(signature);
 
+	/* save session id */
+	if (kex->session_id == NULL) {
+		kex->session_id_len = 20;
+		kex->session_id = xmalloc(kex->session_id_len);
+		memcpy(kex->session_id, hash, kex->session_id_len);
+	}
+
 	kex_derive_keys(kex, hash, shared_secret);
 	BN_clear_free(shared_secret);
-	packet_set_kex(kex);
-
-	/* save session id */
-	session_id2_len = 20;
-	session_id2 = xmalloc(session_id2_len);
-	memcpy(session_id2, hash, session_id2_len);
 
 	kex_send_newkeys();
 
 	/* have keys, free DH */
 	DH_free(dh);
-	xfree(state);
-	kex->state = NULL;
 }
 
 /* server */
@@ -300,81 +257,12 @@ kexgex_input_reply(int type, int plen, void *ctxt)
 void
 kexgex_server(Kex *kex)
 {
-	State *state;
-
-	state = xmalloc(sizeof(*state));
-	kex->state = state;
-	
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_REQUEST, &kexgex_input_request);
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_REQUEST_OLD, &kexgex_input_request);
-}
-
-void
-kexgex_input_request(int type, int plen, void *ctxt)
-{
-	Kex *kex = (Kex*) ctxt;
-	State *state = (State *) kex->state;
-	int min = -1, max = -1;
-
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_REQUEST, &kex_protocol_error);
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_REQUEST_OLD, &kex_protocol_error);
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_INIT, &kexgex_input_init);
-
-	switch(type){
-	case SSH2_MSG_KEX_DH_GEX_REQUEST:
-		debug("SSH2_MSG_KEX_DH_GEX_REQUEST received");
-		min = packet_get_int();
-		state->nbits = packet_get_int();
-		max = packet_get_int();
-		min = MAX(DH_GRP_MIN, min);
-		max = MIN(DH_GRP_MAX, max);
-		state->min = min;
-		state->max = max;
-		break;
-	case SSH2_MSG_KEX_DH_GEX_REQUEST_OLD:
-		debug("SSH2_MSG_KEX_DH_GEX_REQUEST_OLD received");
-		state->nbits = packet_get_int();
-		min = DH_GRP_MIN;
-		max = DH_GRP_MAX;
-		/* unused for old GEX */
-		state->min = -1;
-		state->max = -1;
-		break;
-	}
-	packet_done();
-
-	if (max < min || state->nbits < min || max < state->nbits)
-		fatal("DH_GEX_REQUEST, bad parameters: %d !< %d !< %d",
-		    min, state->nbits, max);
-
-	state->dh = choose_dh(min, state->nbits, max);
-	if (state->dh == NULL)
-		packet_disconnect("Protocol error: no matching DH grp found");
-
-	debug("SSH2_MSG_KEX_DH_GEX_GROUP sent");
-	packet_start(SSH2_MSG_KEX_DH_GEX_GROUP);
-	packet_put_bignum2(state->dh->p);
-	packet_put_bignum2(state->dh->g);
-	packet_send();
-
-	/* flush */
-	packet_write_wait();
-
-	/* Compute our exchange value in parallel with the client */
-	dh_gen_key(state->dh, kex->we_need * 8);
-}
-
-void
-kexgex_input_init(int type, int plen, void *ctxt)
-{
 	BIGNUM *shared_secret = NULL, *dh_client_pub = NULL;
 	Key *server_host_key;
-	Kex *kex = (Kex*) ctxt;
-	State *state = (State *) kex->state;
-	DH *dh = state->dh;
+	DH *dh = dh;
 	u_char *kbuf, *hash, *signature = NULL, *server_host_key_blob = NULL;
 	u_int sbloblen, klen, kout;
-	int dlen, slen;
+	int min = -1, max = -1, nbits = -1, type, plen, dlen, slen;
 
 	if (kex->load_host_key == NULL)
 		fatal("Cannot load hostkey");
@@ -382,8 +270,50 @@ kexgex_input_init(int type, int plen, void *ctxt)
 	if (server_host_key == NULL)
 		fatal("Unsupported hostkey type %d", kex->hostkey_type);
 
-	dispatch_set(SSH2_MSG_KEX_DH_GEX_INIT, &kex_protocol_error);
-	debug("SSH2_MSG_KEX_DH_GEX_INIT received");
+	type = packet_read(&plen);
+	switch(type){
+	case SSH2_MSG_KEX_DH_GEX_REQUEST:
+		debug("SSH2_MSG_KEX_DH_GEX_REQUEST received");
+		min = packet_get_int();
+		nbits = packet_get_int();
+		max = packet_get_int();
+		min = MAX(DH_GRP_MIN, min);
+		max = MIN(DH_GRP_MAX, max);
+		break;
+	case SSH2_MSG_KEX_DH_GEX_REQUEST_OLD:
+		debug("SSH2_MSG_KEX_DH_GEX_REQUEST_OLD received");
+		nbits = packet_get_int();
+		min = DH_GRP_MIN;
+		max = DH_GRP_MAX;
+		/* unused for old GEX */
+		break;
+	default:
+		fatal("protocol error during kex, no DH_GEX_REQUEST");
+	}
+	packet_done();
+
+	if (max < min || nbits < min || max < nbits)
+		fatal("DH_GEX_REQUEST, bad parameters: %d !< %d !< %d",
+		    min, nbits, max);
+
+	dh = choose_dh(min, nbits, max);
+	if (dh == NULL)
+		packet_disconnect("Protocol error: no matching DH grp found");
+
+	debug("SSH2_MSG_KEX_DH_GEX_GROUP sent");
+	packet_start(SSH2_MSG_KEX_DH_GEX_GROUP);
+	packet_put_bignum2(dh->p);
+	packet_put_bignum2(dh->g);
+	packet_send();
+
+	/* flush */
+	packet_write_wait();
+
+	/* Compute our exchange value in parallel with the client */
+	dh_gen_key(dh, kex->we_need * 8);
+
+	debug("expecting SSH2_MSG_KEX_DH_GEX_INIT");
+	packet_read_expect(&plen, SSH2_MSG_KEX_DH_GEX_INIT);
 
 	/* key, cert */
 	dh_client_pub = BN_new();
@@ -420,6 +350,9 @@ kexgex_input_init(int type, int plen, void *ctxt)
 
 	key_to_blob(server_host_key, &server_host_key_blob, &sbloblen);
 
+	if (type == SSH2_MSG_KEX_DH_GEX_REQUEST_OLD)
+		min = max = -1;
+
 	/* calc H */			/* XXX depends on 'kex' */
 	hash = kexgex_hash(
 	    kex->client_version_string,
@@ -427,7 +360,7 @@ kexgex_input_init(int type, int plen, void *ctxt)
 	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
 	    buffer_ptr(&kex->my), buffer_len(&kex->my),
 	    (char *)server_host_key_blob, sbloblen,
-	    state->min, state->nbits, state->max,
+	    min, nbits, max,
 	    dh->p, dh->g,
 	    dh_client_pub,
 	    dh->pub_key,
@@ -437,9 +370,11 @@ kexgex_input_init(int type, int plen, void *ctxt)
 
 	/* save session id := H */
 	/* XXX hashlen depends on KEX */
-	session_id2_len = 20;
-	session_id2 = xmalloc(session_id2_len);
-	memcpy(session_id2, hash, session_id2_len);
+	if (kex->session_id == NULL) {
+		kex->session_id_len = 20;
+		kex->session_id = xmalloc(kex->session_id_len);
+		memcpy(kex->session_id, hash, kex->session_id_len);
+	}
 
 	/* sign H */
 	/* XXX hashlen depends on KEX */
@@ -456,18 +391,14 @@ kexgex_input_init(int type, int plen, void *ctxt)
 	packet_send();
 	xfree(signature);
 	xfree(server_host_key_blob);
-	/* packet_write_wait(); */
 
 	kex_derive_keys(kex, hash, shared_secret);
 	BN_clear_free(shared_secret);
-	packet_set_kex(kex);
 
 	kex_send_newkeys();
 
 	/* have keys, free DH */
 	DH_free(dh);
-	xfree(state);
-	kex->state = NULL;
 }
 
 void

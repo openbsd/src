@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexdh.c,v 1.1 2001/04/03 19:53:29 markus Exp $");
+RCSID("$OpenBSD: kexdh.c,v 1.2 2001/04/03 23:32:12 markus Exp $");
 
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
@@ -34,21 +34,9 @@ RCSID("$OpenBSD: kexdh.c,v 1.1 2001/04/03 19:53:29 markus Exp $");
 #include "key.h"
 #include "kex.h"
 #include "log.h"
-#include "dispatch.h"
 #include "packet.h"
 #include "dh.h"
 #include "ssh2.h"
-
-extern u_char *session_id2;
-extern int session_id2_len;
-
-dispatch_fn kexdh_input_init;		/* C -> S */
-dispatch_fn kexdh_input_reply;		/* S -> C */
-
-typedef struct State State;
-struct State {
-	DH *dh;
-};
 
 u_char *
 kex_dh_hash(
@@ -103,43 +91,31 @@ kex_dh_hash(
 void
 kexdh_client(Kex *kex)
 {
-	State *state;
-
-	dispatch_set(SSH2_MSG_KEXDH_REPLY, &kexdh_input_reply);
-
-	state = xmalloc(sizeof(State));
-	kex->state = state;
-
-	/* generate and send 'e', client DH public key */
-	state->dh = dh_new_group1();
-	dh_gen_key(state->dh, kex->we_need * 8);
-	packet_start(SSH2_MSG_KEXDH_INIT);
-	packet_put_bignum2(state->dh->pub_key);
-	packet_send();
-
-	debug("SSH2_MSG_KEXDH_INIT sent");
-#ifdef DEBUG_KEXDH
-	DHparams_print_fp(stderr, state->dh);
-	fprintf(stderr, "pub= ");
-	BN_print_fp(stderr, state->dh->pub_key);
-	fprintf(stderr, "\n");
-#endif
-}
-
-void   
-kexdh_input_reply(int type, int plen, void *ctxt)
-{
 	BIGNUM *dh_server_pub = NULL, *shared_secret = NULL;
+	DH *dh;
 	Key *server_host_key;
 	char *server_host_key_blob = NULL, *signature = NULL;
 	u_char *kbuf, *hash;
 	u_int klen, kout, slen, sbloblen;
-	int dlen;
-	Kex *kex = (Kex *)ctxt;
-	State *state = (State *)kex->state;
+	int dlen, plen;
 
-	debug("SSH2_MSG_KEXDH_REPLY received");
-	dispatch_set(SSH2_MSG_KEXDH_REPLY, &kex_protocol_error);
+	/* generate and send 'e', client DH public key */
+	dh = dh_new_group1();
+	dh_gen_key(dh, kex->we_need * 8);
+	packet_start(SSH2_MSG_KEXDH_INIT);
+	packet_put_bignum2(dh->pub_key);
+	packet_send();
+
+	debug("sending SSH2_MSG_KEXDH_INIT");
+#ifdef DEBUG_KEXDH
+	DHparams_print_fp(stderr, dh);
+	fprintf(stderr, "pub= ");
+	BN_print_fp(stderr, dh->pub_key);
+	fprintf(stderr, "\n");
+#endif
+
+	debug("expecting SSH2_MSG_KEXDH_REPLY");
+	packet_read_expect(&plen, SSH2_MSG_KEXDH_REPLY);
 
 	/* key, cert */
 	server_host_key_blob = packet_get_string(&sbloblen);
@@ -168,12 +144,12 @@ kexdh_input_reply(int type, int plen, void *ctxt)
 	signature = packet_get_string(&slen);
 	packet_done();
 
-	if (!dh_pub_is_valid(state->dh, dh_server_pub))
+	if (!dh_pub_is_valid(dh, dh_server_pub))
 		packet_disconnect("bad server public DH value");
 
-	klen = DH_size(state->dh);
+	klen = DH_size(dh);
 	kbuf = xmalloc(klen);
-	kout = DH_compute_key(kbuf, dh_server_pub, state->dh);
+	kout = DH_compute_key(kbuf, dh_server_pub, dh);
 #ifdef DEBUG_KEXDH
 	dump_digest("shared secret", kbuf, kout);
 #endif
@@ -189,12 +165,12 @@ kexdh_input_reply(int type, int plen, void *ctxt)
 	    buffer_ptr(&kex->my), buffer_len(&kex->my),
 	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
 	    server_host_key_blob, sbloblen,
-	    state->dh->pub_key,
+	    dh->pub_key,
 	    dh_server_pub,
 	    shared_secret
 	);
 	xfree(server_host_key_blob);
-	DH_free(state->dh);
+	DH_free(dh);
 	BN_free(dh_server_pub);
 
 	if (key_verify(server_host_key, (u_char *)signature, slen, hash, 20) != 1)
@@ -202,18 +178,16 @@ kexdh_input_reply(int type, int plen, void *ctxt)
 	key_free(server_host_key);
 	xfree(signature);
 
+	/* save session id */
+	if (kex->session_id == NULL) {
+		kex->session_id_len = 20;
+		kex->session_id = xmalloc(kex->session_id_len);
+		memcpy(kex->session_id, hash, kex->session_id_len);
+	}
+
 	kex_derive_keys(kex, hash, shared_secret);
 	BN_clear_free(shared_secret);
-	packet_set_kex(kex);
 	kex_send_newkeys();
-
-	/* save session id */
-	session_id2_len = 20;
-	session_id2 = xmalloc(session_id2_len);
-	memcpy(session_id2, hash, session_id2_len);
-
-	xfree(state);
-	kex->state = NULL;
 }
 
 /* server */
@@ -221,32 +195,19 @@ kexdh_input_reply(int type, int plen, void *ctxt)
 void
 kexdh_server(Kex *kex)
 {
-	State *state;
-
-	dispatch_set(SSH2_MSG_KEXDH_INIT, &kexdh_input_init);
-
-	state = xmalloc(sizeof(*state));
-	kex->state = state;
-
-	/* generate server DH public key */
-	state->dh = dh_new_group1();
-	dh_gen_key(state->dh, kex->we_need * 8);
-}
-
-void   
-kexdh_input_init(int type, int plen, void *ctxt)
-{
 	BIGNUM *shared_secret = NULL, *dh_client_pub = NULL;
+	DH *dh;
 	Key *server_host_key;
 	u_char *kbuf, *hash, *signature = NULL, *server_host_key_blob = NULL;
 	u_int sbloblen, klen, kout;
-	int dlen, slen;
-	Kex *kex = (Kex*) ctxt;
-	State *state = (State*) kex->state;
-	DH *dh = state->dh;
+	int dlen, slen, plen;
 
-	debug("SSH2_MSG_KEXDH_INIT received");
-	dispatch_set(SSH2_MSG_KEXDH_INIT, &kex_protocol_error);
+	/* generate server DH public key */
+	dh = dh_new_group1();
+	dh_gen_key(dh, kex->we_need * 8);
+
+	debug("expecting SSH2_MSG_KEXDH_INIT");
+	packet_read_expect(&plen, SSH2_MSG_KEXDH_INIT);
 
 	if (kex->load_host_key == NULL)
 		fatal("Cannot load hostkey");
@@ -304,9 +265,11 @@ kexdh_input_init(int type, int plen, void *ctxt)
 
 	/* save session id := H */
 	/* XXX hashlen depends on KEX */
-	session_id2_len = 20;
-	session_id2 = xmalloc(session_id2_len);
-	memcpy(session_id2, hash, session_id2_len);
+	if (kex->session_id == NULL) {
+		kex->session_id_len = 20;
+		kex->session_id = xmalloc(kex->session_id_len);
+		memcpy(kex->session_id, hash, kex->session_id_len);
+	}
 
 	/* sign H */
 	/* XXX hashlen depends on KEX */
@@ -325,13 +288,10 @@ kexdh_input_init(int type, int plen, void *ctxt)
 
 	kex_derive_keys(kex, hash, shared_secret);
 	BN_clear_free(shared_secret);
-	packet_set_kex(kex);
 	kex_send_newkeys();
 
 	/* have keys, free DH */
 	DH_free(dh);
-	xfree(state);
-	kex->state = NULL;
 }
 
 void
