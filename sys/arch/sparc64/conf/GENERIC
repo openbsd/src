@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2001/10/28 02:21:47 jason Exp $
+#	$OpenBSD: GENERIC,v 1.28 2001/12/04 20:15:12 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -111,6 +111,8 @@ nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
+#cgsix*		at sbus? slot ? offset ?
+#wsdisplay*	at cgsix?
+
 audiocs*	at sbus? slot ? offset ?
 audio*		at audiocs?
-
