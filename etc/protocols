@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.2 1996/05/26 10:25:26 deraadt Exp $
+#	$OpenBSD: protocols,v 1.3 1997/02/21 09:30:35 deraadt Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 #
@@ -21,6 +21,8 @@ rdp	27	RDP		# "reliable datagram" protocol
 iso-tp4	29	ISO-TP4		# ISO Transport Protocol class 4
 xtp	36	XTP		# Xpress Tranfer Protocol
 idpr-cmtp 39	IDPR-CMTP	# IDPR Control Message Transport
+sipp-esp 50	SIPP-ESP	# SIPP Encap Security Payload
+sipp-ah	51	SIPP-AH		# SIPP Authentication Header
 vmtp	81	VMTP		# Versatile Message Transport
 ospf	89	OSPFIGP		# Open Shortest Path First IGP
 ipip	94	IPIP		# Yet Another IP encapsulation
