@@ -1,4 +1,5 @@
-.\"	$NetBSD: end.3,v 1.4 1994/11/30 15:24:33 jtc Exp $
+.\"	$OpenBSD: end.3,v 1.2 1996/03/29 10:16:00 niklas Exp $
+.\"	$NetBSD: end.3,v 1.5 1996/03/01 00:17:49 jtc Exp $
 .\"
 .\" Copyright (c) 1986
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,14 +52,11 @@ The global variables
 and
 .Va edata
 correspond to the
-the next address following the end
-of the text segment,
-the initialized data segment and the
-end of the data segment
+the next address following 
+the end of the text segment,
+the end of initialized data segment and 
+the end of the data segment
 .Pq Tn BSS .
-These values are initially set at execution time
-by
-.Xr brk 2 .
 .Sh SEE ALSO
 .Xr brk 2 ,
 .Xr malloc 3

@@ -1,3 +1,6 @@
+.\"	$OpenBSD: com.4,v 1.2 1996/03/29 10:16:09 niklas Exp $
+.\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -33,7 +36,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
-.\"	$Id: com.4,v 1.1.1.1 1995/10/18 08:44:29 deraadt Exp $
 .\"
 .Dd August 6, 1993
 .Dt COM 4 i386
@@ -45,7 +47,6 @@ serial communications interface
 .Sh SYNOPSIS
 .Cd "com0 at isa? port" \&"IO_COM1\&" irq 4
 .Cd "com1 at isa? port" \&"IO_COM2\&" irq 3
-.Cd "com2 at ast? slave ? flags 1"
 .Sh DESCRIPTION
 The
 .Nm
@@ -61,14 +62,6 @@ Input and output for each line may set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
 19200, 38400, 57600, or 115200, or any other baud rate which is a factor
 of 115200.
-.Pp
-If
-.Dq flags 1
-is specified, the
-.Nm
-driver will not set the MCR_IENABLE bit on the UART.  This is mainly for
-use on AST multiport boards, where the MCR_IENABLE bit is used to control
-whether or not the devices use a shared interrupt.
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /dev/tty00

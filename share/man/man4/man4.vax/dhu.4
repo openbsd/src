@@ -1,3 +1,6 @@
+.\"	$OpenBSD: dhu.4,v 1.2 1996/03/29 10:16:35 niklas Exp $
+.\"	$NetBSD: dhu.4,v 1.4 1996/03/05 15:28:48 ragge Exp $
+.\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -30,7 +33,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)dhu.4	6.3 (Berkeley) 3/27/91
-.\"	$Id: dhu.4,v 1.1.1.1 1995/10/18 08:44:34 deraadt Exp $
 .\"
 .Dd March 27, 1991
 .Dt DHU 4 vax
@@ -38,31 +40,14 @@
 .Sh NAME
 .Nm dhu
 .Nd
-.Tn DHU-11
+.Tn DHU-11/DHV-11
 communications multiplexer
 .Sh SYNOPSIS
-.Cd "device dhu0 at uba0 csr 0160440 vector dhurint dhuxint"
+.Cd "dhu0 at uba0 csr 0160440"
 .Sh DESCRIPTION
 A
 .Tn DHU-11
 provides 16 communication lines.
-.Pp
-An optional argument
-.Ar flags
-may be supplied with the device specification
-in the config file indicating
-that the line corresponding to
-bit number
-.Ar i
-is not properly
-connected, and should be treated as hard-wired with carrier
-always present.  Thus specifying
-.Ql flags 0x0004
-for
-.Li dhu0
-would cause line
-.Pa ttyS2
-to be treated in this way.
 .Pp
 Normal I/O
 control parameters for individual lines are managed by
@@ -80,7 +65,7 @@ or may be communicated by other programs which
 utilize
 .Xr ioctl
 such as
-.Xr ifcongif 8 ,
+.Xr ifconfig 8 ,
 see
 .Xr tty 4 .
 .Pp
@@ -92,33 +77,6 @@ rather than taking an interrupt on each input character.
 .Sh FILES
 .Bl -tag -width /dev/tty[S-Z][0-9a-f]xx -compact
 .It Pa /dev/tty[S-Z][0-9a-f]
-.El
-.Sh DIAGNOSTICS
-.Bl -diag
-.It dhu(%d,%d): NXM fault.
-No response from
-.Tn UNIBUS
-on a
-.Tn DMA
-transfer
-within a timeout period.  This is often followed by a
-.Tn UNIBUS
-adapter
-error.  This occurs most frequently when the
-.Tn UNIBUS
-is heavily loaded
-and when devices which hog the bus (such as
-.Tn RK07 Ns s )
-are present.
-It is not serious.
-.Pp
-.It dhu%d: silo overflow.
-The character input silo overflowed
-before it could be serviced.  This can happen if a hard error occurs
-when the
-.Tn CPU
-is running with elevated priority, as the system may
-then print a message on the console with interrupts disabled.
 .El
 .Sh NOTES
 The driver currently does not make full use of the hardware
@@ -144,3 +102,13 @@ The
 .Nm
 driver appeared in
 .Bx 4.3 .
+.br
+A new
+.Nm
+driver showed up in NetBSD 1.1A.
+.Sh BUGS
+Even if the
+.Nm
+hardware supports
+.Tn DMA,
+the driver cannot make use of this capability.

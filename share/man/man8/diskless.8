@@ -1,4 +1,5 @@
-.\"	$NetBSD: diskless.8,v 1.6 1995/09/02 17:12:32 thorpej Exp $
+.\"	$OpenBSD: diskless.8,v 1.2 1996/03/29 10:17:52 niklas Exp $
+.\"	$NetBSD: diskless.8,v 1.7 1996/02/18 01:10:55 hpeyerl Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
@@ -253,7 +254,7 @@ Export the required filesystems in
 # for SunOS:
 # /export/myclient -rw=myclient,root=myclient
 # for NetBSD:
-/export/myclient -maproot=root myclient
+/export/myclient -maproot=root -alldirs myclient
 .Ed
 .Pp
 If the server and client are of the same architecture, then the client

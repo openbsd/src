@@ -1,5 +1,5 @@
-#	$OpenBSD: sys.mk,v 1.5 1996/03/09 01:33:31 niklas Exp $
-#	$NetBSD: sys.mk,v 1.22 1995/09/24 23:49:09 christos Exp $
+#	$OpenBSD: sys.mk,v 1.6 1996/03/29 10:17:55 niklas Exp $
+#	$NetBSD: sys.mk,v 1.25 1996/02/29 19:06:57 jtc Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run OpenBSD.
@@ -32,9 +32,7 @@ COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CPP?=		cpp
-.if defined(DESTDIR)
-CPPFLAGS+=	-nostdinc -idirafter ${DESTDIR}/usr/include
-.endif
+CPPFLAGS?=	
 
 FC?=		f77
 FFLAGS?=		-O
@@ -74,10 +72,12 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${LINK.c} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .c.o:
 	${COMPILE.c} ${.IMPSRC}
+.if (${MACHINE_ARCH} != "alpha")
 .c.a:
 	${COMPILE.c} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
 	rm -f $*.o
+.endif
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
@@ -142,7 +142,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 .s:
 	${LINK.s} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .s.o:
-	${COMPILE.s} ${.IMPSRC}
+	${COMPILE.s} -o ${.TARGET} ${.IMPSRC} 
 .s.a:
 	${COMPILE.s} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
@@ -150,7 +150,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 .S:
 	${LINK.S} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .S.o:
-	${COMPILE.S} ${.IMPSRC}
+	${COMPILE.S} -o ${.TARGET} ${.IMPSRC}
 .S.a:
 	${COMPILE.S} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o

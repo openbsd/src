@@ -1,3 +1,5 @@
+.\"	$OpenBSD: ast.4,v 1.2 1996/03/29 10:16:07 niklas Exp $
+.\"	$NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -35,7 +37,6 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
-.\"	$Id: ast.4,v 1.1.1.1 1995/10/18 08:44:29 deraadt Exp $
 .\"
 .Dd March 30, 1994
 .Dt AST 4 i386
@@ -46,10 +47,10 @@
 multiplexing serial communications interface
 .Sh SYNOPSIS
 .Cd "ast0 at isa? port 0x1a0 irq 5"
-.Cd "com2 at ast? slave ? flags 1"
-.Cd "com3 at ast? slave ? flags 1"
-.Cd "com4 at ast? slave ? flags 1"
-.Cd "com5 at ast? slave ? flags 1"
+.Cd "com2 at ast? slave ?"
+.Cd "com3 at ast? slave ?"
+.Cd "com4 at ast? slave ?"
+.Cd "com5 at ast? slave ?"
 .Sh DESCRIPTION
 The
 .Nm ast
