@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.50 2003/12/30 13:06:00 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.51 2003/12/30 19:54:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -969,8 +969,10 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 				}
 				return (1);
 			}
-			if (n == 0) /* connection closed */
+			if (n == 0) {	/* connection closed */
 				bgp_fsm(peer, EVNT_CON_CLOSED);
+				return (1);
+			}
 
 			rpos = 0;
 			av = peer->rbuf->wpos + n;
