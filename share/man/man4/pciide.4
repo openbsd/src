@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.6 2000/03/24 17:49:05 chris Exp $
+.\"	$OpenBSD: pciide.4,v 1.7 2000/03/24 17:52:00 chris Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -51,28 +51,28 @@ functions for the
 and
 .Xr atapiscsi 4
 drivers. This driver includes specific, enhanced support for the CMD Tech
-PCI0640 controller and IDE DMA/UltraDMA support for the following
+PCI0640 controller and IDE DMA/UltraDMA support for the following PCI IDE
 controllers:
 .Pp
 .Bl -item -compact -offset indent
 .It
-Acer Labs M5229 IDE controller
+Acer Labs M5229
 .It
-Advanced Micro Devices AMD-756 IDE Controllers
+Advanced Micro Devices AMD-756
 .It
-CMD Tech PCI0643 and PCI0646 IDE controllers
+CMD Tech PCI0643 and PCI0646
 .It
-Contaq Microsystems/Cypress CY82C693 IDE controller
+Contaq Microsystems/Cypress CY82C693
 .It
-Intel PIIX, PIIX3, and PIIX4 IDE controllers
+Intel PIIX, PIIX3, and PIIX4
 .It
-Intel 82801 (ICH/ICH0) IDE controllers
+Intel 82801 (ICH/ICH0)
 .It
-Promise PDC20246 (Ultra/33) and PDC20262 (Ultra/66) PCI IDE controllers
+Promise PDC20246 (Ultra/33) and PDC20262 (Ultra/66)
 .It
-Silicon Integrated System 5597/5598 IDE controller
+Silicon Integrated System 5513 (5597/5598)
 .It
-VIA Technologies VT82C586 and VT82C586A IDE controllers
+VIA Technologies VT82C586 and VT82C586A
 .El 
 .Pp
 Some of these controllers are only available in multifunction PCI chips.
