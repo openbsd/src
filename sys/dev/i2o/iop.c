@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.14 2001/06/27 05:44:59 nate Exp $	*/
+/*	$OpenBSD: iop.c,v 1.15 2001/06/27 06:11:09 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -643,7 +643,7 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 			if ((letoh16(le->classid) & I2O_CLASS_MASK) !=
 			    I2O_CLASS_BUS_ADAPTER_PORT)
 				continue;
-			tid = letoh32(le->localtid) & I2O_CLASS_MASK;
+			tid = letoh16(le->localtid) & I2O_CLASS_MASK;
 
 			im = iop_msg_alloc(sc, NULL, IM_WAIT);
 
@@ -757,7 +757,7 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 	nent = sc->sc_nlctent;
 	for (i = 0, le = sc->sc_lct->entry; i < nent; i++, le++) {
 		sc->sc_tidmap[i].it_tid =
-		    letoh32(le->localtid) & I2O_LCT_ENTRY_TID_MASK;
+		    letoh16(le->localtid) & I2O_LCT_ENTRY_TID_MASK;
 
 		/* Ignore the device if it's in use. */
 		usertid = letoh32(le->usertid) & I2O_LCT_ENTRY_TID_MASK;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.3 2001/06/27 02:15:41 niklas Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.4 2001/06/27 06:11:09 mickey Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -273,18 +273,18 @@ iopsp_reconfig(struct device *dv)
 	for (le = iop->sc_lct->entry; nent != 0; nent--, le++)
 		if ((letoh16(le->classid) & 4095) ==
 		    I2O_CLASS_BUS_ADAPTER_PORT &&
-		    (letoh16(le->usertid) & 4095) == bptid) {
-			bptid = letoh32(le->localtid) & 4095;
+		    (letoh32(le->usertid) & 4095) == bptid) {
+			bptid = letoh16(le->localtid) & 4095;
 			break;
 		}
 
 	nent = iop->sc_nlctent;
 	for (i = 0, le = iop->sc_lct->entry; i < nent; i++, le++) {
-		if ((letoh16(le->classid) & 4095) != I2O_CLASS_SCSI_PERIPHERAL)
+		if ((letoh16(le->classid) & I2O_CLASS_MASK) !=
+		    I2O_CLASS_SCSI_PERIPHERAL ||
+		    ((letoh32(le->usertid) >> 12) & 4095) != bptid)
 			continue;
-		if (((letoh32(le->usertid) >> 12) & 4095) != bptid)
-			continue;
-		tid = letoh32(le->localtid) & 4095;
+		tid = letoh16(le->localtid) & I2O_LCT_ENTRY_TID_MASK;
 
 		rv = iop_param_op(iop, tid, NULL, 0, I2O_PARAM_SCSI_DEVICE_INFO,
 		    &param, sizeof(param));
