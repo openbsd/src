@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.19 2002/02/15 02:37:51 art Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.20 2002/03/06 16:42:43 jason Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -147,25 +147,20 @@ case SYNC_REQUEST:						\
 case SYNC_RESULT:						\
 {								\
 	off_t off = (off_t) offset * QENTRY_LEN;		\
-	off += ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));		\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_rsdmap,	\
 	    off, size, BUS_DMASYNC_POSTREAD);			\
 	break;							\
 }								\
 case SYNC_SFORDEV:						\
 {								\
-	off_t off =						\
-	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
-	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	off_t off = (off_t) offset;				\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
 	    off, size, BUS_DMASYNC_PREWRITE);			\
 	break;							\
 }								\
 case SYNC_SFORCPU:						\
 {								\
-	off_t off =						\
-	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
-	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	off_t off = (off_t) offset;				\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
 	    off, size, BUS_DMASYNC_POSTREAD);			\
 	break;							\
