@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.9 2005/04/01 16:52:25 uwe Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.10 2005/04/02 22:00:49 uwe Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -1094,6 +1094,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			txpower->i_val = ic->ic_txpower;
 		break;
 	case SIOCSIFMTU:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		ifr = (struct ifreq *)data;
 		if (!(IEEE80211_MTU_MIN <= ifr->ifr_mtu &&
 		    ifr->ifr_mtu <= IEEE80211_MTU_MAX))
