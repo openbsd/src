@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.39 2001/06/25 16:18:37 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.40 2001/06/28 22:49:42 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.39 2001/06/25 16:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.40 2001/06/28 22:49:42 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -414,8 +414,8 @@ main(argc, argv)
 			quickexit(1);
 		}
 		rootlogin = 0;
-		if ((instance = strchr(username, '.')) != NULL) {
-			if (strncmp(instance, ".root", 5) == 0)
+		if ((instance = strpbrk(username, "./")) != NULL) {
+			if (strncmp(instance + 1, "root", 4) == 0)
 				rootlogin = 1;
 			*instance++ = '\0';
 		} else
