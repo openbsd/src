@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.22 2004/01/12 13:33:16 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.23 2004/01/13 13:45:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -777,6 +777,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* add to new as path */
 	LIST_INSERT_HEAD(&asp->prefix_h, np, path_l);
 	asp->prefix_cnt++;
+	asp->peer->prefix_cnt++;
 	/* XXX for debugging */
 	if (asp->prefix_cnt == MAX_PREFIX_PER_AS)
 		logit(LOG_INFO, "RDE: prefix hog, prefix %s/%d",
@@ -796,7 +797,9 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	oasp = p->aspath;
 	LIST_REMOVE(p, path_l);
 	ENSURE(oasp->prefix_cnt > 0);
+	ENSURE(oasp->peer->prefix_cnt > 0);
 	oasp->prefix_cnt--;
+	oasp->peer->prefix_cnt--;
 
 	/* destroy all references to other objects and free the old prefix */
 	p->aspath = NULL;
@@ -906,6 +909,7 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
 	asp->prefix_cnt++;
+	asp->peer->prefix_cnt++;
 
 	/* XXX for debugging */
 	if (asp->prefix_cnt == MAX_PREFIX_PER_AS)
@@ -938,7 +942,9 @@ prefix_unlink(struct prefix *pref)
 
 	LIST_REMOVE(pref, path_l);
 	ENSURE(pref->aspath->prefix_cnt > 0);
+	ENSURE(pref->aspath->peer->prefix_cnt > 0);
 	pref->aspath->prefix_cnt--;
+	pref->aspath->peer->prefix_cnt--;
 
 	/* destroy all references to other objects */
 	pref->aspath = NULL;

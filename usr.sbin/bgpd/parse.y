@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2004/01/06 23:36:40 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.34 2004/01/13 13:45:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,6 +56,7 @@ int	 lungetc(int);
 int	 findeol(void);
 int	 yylex(void);
 
+struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t);
@@ -87,7 +88,7 @@ typedef struct {
 %token	SET
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON NO FIBUPDATE
 %token	GROUP NEIGHBOR
-%token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE
+%token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	ERROR
 %token	DUMP MSG IN TABLE
 %token	LOG UPDATES
@@ -317,6 +318,21 @@ peeropts	: REMOTEAS number	{
 			}
 			curpeer->conf.min_holdtime = $3;
 		}
+		| ANNOUNCE STRING {
+			if (!strcmp($2, "self"))
+				curpeer->conf.announce_type = ANNOUNCE_SELF;
+			else if (!strcmp($2, "none"))
+				curpeer->conf.announce_type = ANNOUNCE_NONE;
+			else if (!strcmp($2, "all"))
+				curpeer->conf.announce_type = ANNOUNCE_ALL;
+			else {
+				yyerror("unknown announcement type");
+				YYERROR;
+			}
+		}
+		| MAXPREFIX number {
+			curpeer->conf.max_prefix = $2;
+		}
 		;
 
 %%
@@ -354,6 +370,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "AS",			AS},
+		{ "announce",		ANNOUNCE},
 		{ "descr",		DESCR},
 		{ "dump",		DUMP},
 		{ "fib-update",		FIBUPDATE},
@@ -363,6 +380,7 @@ lookup(char *s)
 		{ "listen",		LISTEN},
 		{ "local-address",	LOCALADDR},
 		{ "log",		LOG},
+		{ "max-prefix",		MAXPREFIX},
 		{ "min",		YMIN},
 		{ "msg",		MSG},
 		{ "multihop",		MULTIHOP},
@@ -729,12 +747,31 @@ atoul(char *s, u_long *ulvalp)
 }
 
 struct peer *
-new_peer(void)
+alloc_peer(void)
 {
 	struct peer	*p;
 
 	if ((p = calloc(1, sizeof(struct peer))) == NULL)
 		fatal("new_peer");
+	
+	/* some sane defaults */
+	p->state = STATE_NONE;
+	p->next = NULL;
+	p->conf.distance = 1;
+	p->conf.announce_type = ANNOUNCE_SELF;
+	p->conf.max_prefix = ULONG_MAX;
+	p->conf.local_addr.sin_len = sizeof(p->conf.local_addr);
+	p->conf.local_addr.sin_family = AF_INET;
+
+	return (p);
+}
+
+struct peer *
+new_peer(void)
+{
+	struct peer	*p;
+
+	p = alloc_peer();
 
 	if (curgroup != NULL) {
 		memcpy(p, curgroup, sizeof(struct peer));
@@ -748,6 +785,8 @@ new_peer(void)
 	p->state = STATE_NONE;
 	p->next = NULL;
 	p->conf.distance = 1;
+	p->conf.announce_type = ANNOUNCE_SELF;
+	p->conf.max_prefix = ULONG_MAX;
 	p->conf.local_addr.sin_len = sizeof(p->conf.local_addr);
 	p->conf.local_addr.sin_family = AF_INET;
 
@@ -757,12 +796,7 @@ new_peer(void)
 struct peer *
 new_group(void)
 {
-	struct peer	*p;
-
-	if ((p = calloc(1, sizeof(struct peer))) == NULL)
-		fatal("new_group");
-
-	return (p);
+	return (alloc_peer());
 }
 
 int

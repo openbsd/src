@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.62 2004/01/13 13:34:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.63 2004/01/13 13:45:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -385,6 +385,12 @@ rde_update_dispatch(struct imsg *imsg)
 		p += pos;
 		nlri_len -= pos;
 		rde_update_log("update", peer, &attrs, &prefix, prefixlen);
+		if (peer->prefix_cnt >= peer->conf.max_prefix) {
+			logit(LOG_CRIT, "peer %s max prefix limit reached",
+			    peer->conf.descr);
+			rde_update_err(peer, ERR_UPD_UNSPECIFIC);
+			break;
+		}
 		path_update(peer, &attrs, &prefix, prefixlen);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.67 2004/01/13 13:34:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.68 2004/01/13 13:45:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -115,18 +115,26 @@ struct buf_read {
 	ssize_t			 wpos;
 };
 
+enum announce_type {
+	ANNOUNCE_SELF,
+	ANNOUNCE_NONE,
+	ANNOUNCE_ALL
+};
+
 struct peer_config {
 	u_int32_t		 id;
 	char			 group[PEER_DESCR_LEN];
 	char			 descr[PEER_DESCR_LEN];
 	struct sockaddr_in	 remote_addr;
 	struct sockaddr_in	 local_addr;
+	u_long			 max_prefix;
 	u_int16_t		 remote_as;
 	u_int8_t		 ebgp;		/* 1 = ebgp, 0 = ibgp */
 	u_int8_t		 distance;	/* 1 = direct, >1 = multihop */
 	u_int8_t		 passive;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
+	enum announce_type	 announce_type;
 	enum reconf_action	 reconf_action;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.18 2004/01/13 13:18:03 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.19 2004/01/13 13:45:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -428,6 +428,22 @@ up_generate_updates(struct rde_peer *peer,
 			/* Do not send routes back to sender */
 			return;
 
+		/* announce type handling */
+		switch (peer->conf.announce_type) {
+		case ANNOUNCE_NONE:
+			return;
+		case ANNOUNCE_ALL:
+			break;
+		case ANNOUNCE_SELF:
+			/*
+			 * pass only prefix that have a aspath count
+			 * of zero this is equal to the ^$ regex.
+			 */
+			if (old->aspath->flags.aspath->hdr.as_cnt != 0)
+				return;
+			break;
+		}
+
 		/* withdraw prefix */
 		p = calloc(1, sizeof(struct update_prefix));
 		if (p == NULL)
@@ -441,6 +457,22 @@ up_generate_updates(struct rde_peer *peer,
 		if (peer == new->peer)
 			/* Do not send routes back to sender */
 			return;
+
+		/* announce type handling */
+		switch (peer->conf.announce_type) {
+		case ANNOUNCE_NONE:
+			return;
+		case ANNOUNCE_ALL:
+			break;
+		case ANNOUNCE_SELF:
+			/*
+			 * pass only prefix that have a aspath count
+			 * of zero this is equal to the ^$ regex.
+			 */
+			if (new->aspath->flags.aspath->hdr.as_cnt != 0)
+				return;
+			break;
+		}
 
 		/* generate update */
 		p = calloc(1, sizeof(struct update_prefix));
