@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.14 2005/03/10 08:30:55 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.15 2005/03/18 14:36:39 reyk Exp $        */
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -2323,6 +2323,9 @@ ar5k_ar5210_getPendingInterrupts(hal, interrupt_mask)
 	if (((*interrupt_mask) & AR5K_AR5210_ISR_RXPHY) &&
 	    hal->ah_radar.r_enabled == AH_TRUE)
 		ar5k_radar_alert(hal);
+
+	/* XXX BMISS interrupts may occur after association */
+	*interrupt_mask &= ~HAL_INT_BMISS;
 
 	return (AH_TRUE);
 }
