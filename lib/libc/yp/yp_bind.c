@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.4 1996/07/01 07:09:10 deraadt Exp $	 */
+/*	$OpenBSD: yp_bind.c,v 1.5 1996/08/05 13:38:54 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_bind.c,v 1.4 1996/07/01 07:09:10 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yp_bind.c,v 1.5 1996/08/05 13:38:54 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -173,7 +173,8 @@ trynet:
 				free(ysd);
 			return YPERR_YPBIND;
 		}
-		if (ntohs(clnt_sin.sin_port) >= IPPORT_RESERVED) {
+		if (ntohs(clnt_sin.sin_port) >= IPPORT_RESERVED ||
+		    ntohs(clnt_sin.sin_port) == 20) {
 			/*
 			 * YP was not running, but someone has registered
 			 * ypbind with portmap -- this simply means YP is
@@ -202,7 +203,8 @@ trynet:
 gotdata:
 		bn = &ypbr.ypbind_resp_u.ypbind_bindinfo;
 		memcpy(&port, &bn->ypbind_binding_port, sizeof port);
-		if (ntohs(port) >= IPPORT_RESERVED) {
+		if (ntohs(port) >= IPPORT_RESERVED ||
+		    ntohs(port) == 20) {
 			/*
 			 * This is bullshit -- the ypbind wants me to
 			 * communicate to an insecure ypserv.  We are
