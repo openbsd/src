@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.805 2004/11/24 03:44:43 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.806 2004/12/06 16:06:01 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -291,6 +291,8 @@
 #define	PCI_PRODUCT_O2MICRO_OZ6922	0x6925		/* OZ6922 CardBus */
 #define	PCI_PRODUCT_O2MICRO_OZ6933	0x6933		/* OZ6933 CardBus */
 #define	PCI_PRODUCT_O2MICRO_OZ6972	0x6972		/* OZ69[17]2 CardBus */
+#define	PCI_PRODUCT_O2MICRO_OZ7114	0x7114		/* OZ711M1 CardBus */
+#define	PCI_PRODUCT_O2MICRO_OZ7110	0x7110		/* OZ711Mx CardBus Accelerator */
 
 /* 3Com Products */
 #define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 */
