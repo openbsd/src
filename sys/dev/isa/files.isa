@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.25 1996/06/26 20:07:52 dm Exp $
+#	$OpenBSD: files.isa,v 1.26 1996/07/27 07:20:06 deraadt Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -55,10 +55,8 @@ attach	com at pcmcia with com_pcmcia
 file	dev/isa/com.c			com & (com_isa | com_commulti | com_pcmcia) needs-flag
 
 # Cyclades Cyclom multiport serial cards
-device	cy: tty
 attach	cy at isa with cy_isa
-attach	cy at pci with cy_pci
-file	dev/isa/cy.c			cy needs-count
+file	dev/isa/cy_isa.c		cy_isa
 
 # PC parallel ports (XXX what chip?)
 device	lpt

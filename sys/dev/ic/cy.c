@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.4 1996/06/23 13:11:05 deraadt Exp $	*/
+/*	$OpenBSD: cy.c,v 1.1 1996/07/27 07:20:03 deraadt Exp $	*/
 
 /*
  * cy.c
@@ -59,117 +59,13 @@
 #include <dev/pci/pcidevs.h>
 #endif /* NPCI > 0 */
 
-#include <dev/isa/cyreg.h>
 #include <dev/ic/cd1400reg.h>
+#include <dev/ic/cyreg.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
-
-/*
- * Maximum number of ports per card 
- */
-#define	CY_MAX_PORTS		(CD1400_NO_OF_CHANNELS * CY_MAX_CD1400s)
-
-#define RX_FIFO_THRESHOLD  6
-
-/* Automatic RTS (or actually DTR, the RTS and DTR lines need to be exchanged)
- * handshake threshold used if CY_HW_RTS is defined
- */
-#define RX_DTR_THRESHOLD   9
-
-/*
- * Port number on card encoded in low 5 bits
- * card number in next 2 bits (only space for 4 cards)
- * high bit reserved for dialout flag
- */
-#define CY_PORT(x) (minor(x) & 0xf)
-#define CY_CARD(x) ((minor(x) >> 5) & 3)
-#define CY_DIALOUT(x) ((minor(x) & 0x80) != 0)
-#define CY_DIALIN(x) (!CY_DIALOUT(x))
-
-/*
- * read/write cd1400 registers (when cy_port-structure is available)
- */
-#define cd_read_reg(cy,reg)  bus_mem_read_1(cy->cy_bc, cy->cy_memh, \
-			     cy->cy_chip_offs+(((reg<<1))<<cy->cy_bustype))
-
-#define cd_write_reg(cy,reg,val) bus_mem_write_1(cy->cy_bc, cy->cy_memh, \
-			  cy->cy_chip_offs+(((reg<<1))<<cy->cy_bustype), \
-			  (val))
-
-/*
- * read/write cd1400 registers (when sc_softc-structure is available)
- */
-#define cd_read_reg_sc(sc,chip,reg) bus_mem_read_1(sc->sc_bc, \
-				 sc->sc_memh, \
-				 sc->sc_cd1400_offs[chip]+\
-				 (((reg<<1))<<sc->sc_bustype))
-
-#define cd_write_reg_sc(sc,chip,reg,val) bus_mem_write_1(sc->sc_bc, \
-				 sc->sc_memh, \
-				 sc->sc_cd1400_offs[chip]+\
-				 (((reg<<1))<<sc->sc_bustype), \
-				 (val))
-
-/*
- * ibuf is a simple ring buffer. It is always used two
- * bytes at a time (status and data)
- */
-#define IBUF_SIZE (2*512)
-
-/* software state for one port */
-struct cy_port {
-  int cy_port_num;
-  bus_chipset_tag_t cy_bc;
-  bus_mem_handle_t cy_memh;
-  int cy_chip_offs;
-  int cy_bustype;
-  struct tty *cy_tty;
-  int cy_openflags;
-  int cy_fifo_overruns;
-  int cy_ibuf_overruns;
-  u_char cy_channel_control; /* last CCR channel control command bits */
-  u_char cy_carrier_stat;      /* copied from MSVR2 */
-  u_char cy_flags;
-  u_char *cy_ibuf, *cy_ibuf_end;
-  u_char *cy_ibuf_rd_ptr, *cy_ibuf_wr_ptr;
-#ifdef CY_DEBUG1
-  int cy_rx_int_count;
-  int cy_tx_int_count;
-  int cy_modem_int_count;
-  int cy_start_count;
-#endif /* CY_DEBUG1 */
-};
-
-#define CYF_CARRIER_CHANGED  0x01
-#define CYF_START_BREAK      0x02
-#define CYF_END_BREAK        0x04
-#define CYF_STOP             0x08
-#define CYF_SEND_NUL         0x10
-#define CYF_START            0x20
-
-/* software state for one card */
-struct cy_softc {
-  struct device sc_dev;
-  void *sc_ih;
-  bus_chipset_tag_t sc_bc;
-  bus_mem_handle_t sc_memh;
-  int sc_bustype;
-  int sc_nports; /* number of ports on this card */
-  int sc_cd1400_offs[CY_MAX_CD1400s];
-  struct cy_port sc_ports[CY_MAX_PORTS];
-#ifdef CY_DEBUG1
-  int sc_poll_count1;
-  int sc_poll_count2;
-#endif
-};
-
-int cy_probe_isa __P((struct device *, void *, void *));
-int cy_probe_pci __P((struct device *, void *, void *));
-int cy_probe_common __P((int card, bus_chipset_tag_t,
-			 bus_mem_handle_t, int bustype));
 
 void cyattach __P((struct device *, struct device *, void *));
 
@@ -182,18 +78,6 @@ static void cy_enable_transmitter __P((struct cy_port *));
 static void cd1400_channel_cmd __P((struct cy_port *, int));
 static int cy_speed __P((speed_t, int *, int *));
 
-#if NISA > 0
-struct cfattach cy_isa_ca = {
-  sizeof(struct cy_softc), cy_probe_isa, cyattach
-};
-#endif
-
-#if NPCI > 0
-struct cfattach cy_pci_ca = {
-  sizeof(struct cy_softc), cy_probe_pci, cyattach
-};
-#endif
-
 struct cfdriver cy_cd = {
   NULL, "cy", DV_TTY
 };
@@ -203,117 +87,6 @@ static int cy_bus_types[NCY];
 static bus_mem_handle_t cy_card_memh[NCY];
 static int cy_open = 0;
 static int cy_events = 0;
-
-#if NISA > 0
-/*
- * ISA probe
- */
-int
-cy_probe_isa(parent, match, aux)
-     struct device *parent;
-     void *match, *aux;
-{
-  int card = ((struct device *)match)->dv_unit;
-  struct isa_attach_args *ia = aux;
-  bus_chipset_tag_t bc;
-  bus_mem_handle_t memh;
-
-  if(ia->ia_irq == IRQUNK) {
-    printf("cy%d error: interrupt not defined\n", card);
-    return 0;
-  }
-
-  bc = ia->ia_bc;
-  if(bus_mem_map(bc, ia->ia_maddr, 0x2000, 0, &memh) != 0)
-    return 0;
-
-  if(cy_probe_common(card, bc, memh, CY_BUSTYPE_ISA) == 0) {
-    bus_mem_unmap(bc, memh, 0x2000);
-    return 0;
-  }
-
-  ia->ia_iosize = 0;
-  ia->ia_msize = 0x2000;
-  return 1;
-}
-#endif /* NISA > 0 */
-
-#if NPCI > 0
-/*
- * PCI probe
- */
-int
-cy_probe_pci(parent, match, aux)
-     struct device *parent;
-     void *match, *aux;
-{
-  vm_offset_t v_addr, p_addr;
-  int card = ((struct device *)match)->dv_unit;
-  struct pci_attach_args *pa = aux;
-  bus_chipset_tag_t bc;
-  bus_mem_handle_t memh;
-  bus_mem_addr_t memaddr;
-  bus_mem_size_t memsize;
-  bus_io_handle_t ioh;
-  bus_io_addr_t iobase;
-  bus_io_size_t iosize;
-  int cacheable;
-
-  if(!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CYCLADES &&
-       (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CYCLADES_CYCLOMY_1 ||
-	PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CYCLADES_CYCLOMY_2)))
-    return 0;
-
-#ifdef CY_DEBUG
-  printf("cy: Found Cyclades PCI device, id = 0x%x\n", pa->pa_id);
-#endif
-
-  bc = pa->pa_bc;
-
-  if(pci_mem_find(pa->pa_pc, pa->pa_tag, 0x18,
-		  &memaddr, &memsize, &cacheable) != 0) {
-    printf("cy%d: can't find PCI card memory", card);
-    return 0;
-  }
-
-  /* map the memory (non-cacheable) */
-  if(bus_mem_map(bc, memaddr, memsize, 0, &memh) != 0) {
-    printf("cy%d: couldn't map PCI memory region\n", card);
-    return 0;
-  }
-
-  /* the PCI Cyclom IO space is only used for enabling interrupts */
-  if(pci_io_find(pa->pa_pc, pa->pa_tag, 0x14, &iobase, &iosize) != 0) {
-    bus_mem_unmap(bc, memh, memsize);
-    printf("cy%d: couldn't find PCI io region\n", card);
-    return 0;
-  }
-
-  if(bus_io_map(bc, iobase, iosize, &ioh) != 0) {
-    bus_mem_unmap(bc, memh, memsize);
-    printf("cy%d: couldn't map PCI io region\n", card);
-    return 0; 
-  }
-
-#ifdef CY_DEBUG
-  printf("cy%d: pci mapped mem 0x%lx (size %d), io 0x%x (size %d)\n",
-	 card, memaddr, memsize, iobase, iosize);
-#endif
-
-  if(cy_probe_common(card, bc, memh, CY_BUSTYPE_PCI) == 0) {
-    bus_mem_unmap(bc, memh, memsize);
-    bus_io_unmap(bc, ioh, iosize);
-    printf("cy%d: PCI Cyclom card with no CD1400s!?\n", card);
-    return 0;
-  }
-
-  /* Enable PCI card interrupts */
-  bus_io_write_2(bc, ioh, CY_PCI_INTENA,
-		 bus_io_read_2(bc, ioh, CY_PCI_INTENA) | 0x900);
-
-  return 1;
-}
-#endif /* NPCI > 0 */
 
 /*
  * Common probe routine

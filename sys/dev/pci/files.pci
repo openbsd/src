@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.8 1996/06/21 15:34:53 chuck Exp $
+#	$OpenBSD: files.pci,v 1.9 1996/07/27 07:20:07 deraadt Exp $
 #	$NetBSD: files.pci,v 1.16 1996/05/16 03:44:16 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -51,3 +51,7 @@ device	en: atm, ifnet
 attach	en at pci with en_pci
 file    dev/pci/if_en_pci.c		en
 file    dev/ic/midway.c			en
+
+# Cyclades Cyclom multiport serial cards
+attach	cy at pci with cy_pci
+file	dev/pci/cy_pci.c		cy_pci
