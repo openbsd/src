@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.26 1999/07/24 03:18:32 brian Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.27 1999/09/29 04:30:39 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -140,6 +140,8 @@ tunattach(unused)
 		ifp->if_oerrors = 0;
 		ifp->if_ipackets = 0;
 		ifp->if_opackets = 0;
+		ifp->if_ibytes = 0;
+		ifp->if_obytes = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
 		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int32_t));
@@ -362,10 +364,10 @@ tun_output(ifp, m0, dst, rt)
 		return (ENOBUFS);
 	}
 	IF_ENQUEUE(&ifp->if_snd, m0);
-	splx(s);
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m0->m_pkthdr.len + sizeof(*af);
+	splx(s);
 
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
@@ -650,7 +652,7 @@ tunwrite(dev, uio, ioflag)
 	IF_ENQUEUE(ifq, top);
 	schednetisr(isr);
 	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
+	ifp->if_ibytes += top->m_pkthdr.len;
 	splx(s);
 	return error;
 }
