@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.24 2000/06/30 15:27:25 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.25 2000/07/05 03:10:34 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1303,7 +1303,7 @@ check_scroll(struct video_state *svsp)
 	{
 		/* we write within scroll region */
 
-		if(svsp->row + 1 == svsp->scrr_len)
+		if(svsp->row == svsp->scrr_end)
 		{
 			/* the following piece of code has to be protected */
 			/* from trying to switch to another virtual screen */
