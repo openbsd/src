@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.9 2004/04/20 05:35:33 henning Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.10 2004/04/21 09:11:58 canacar Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -97,7 +97,8 @@ extern int h_errno;
 #include "dhcp.h"
 #include "tree.h"
 
-#define LOCAL_PORT	68
+#define SERVER_PORT	67
+#define CLIENT_PORT	68
 
 struct iaddr {
 	int len;
@@ -556,8 +557,8 @@ int	parse_warn(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 extern time_t		cur_time;
 extern struct group	root_group;
 
-extern u_int16_t	local_port;
-extern u_int16_t	remote_port;
+extern u_int16_t	server_port;
+extern u_int16_t	client_port;
 extern int		log_priority;
 extern int		log_perror;
 

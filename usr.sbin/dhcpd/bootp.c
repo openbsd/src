@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.6 2004/04/18 01:32:40 deraadt Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.7 2004/04/21 09:11:58 canacar Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -330,7 +330,7 @@ lose:
 	/* If this was gatewayed, send it back to the gateway... */
 	if (raw.giaddr.s_addr) {
 		to.sin_addr = raw.giaddr;
-		to.sin_port = local_port;
+		to.sin_port = server_port;
 
 		if (fallback_interface) {
 			result = send_packet(fallback_interface, NULL, &raw,
@@ -347,11 +347,11 @@ lose:
 	 */
 	else if (!(raw.flags & htons(BOOTP_BROADCAST))) {
 		to.sin_addr = raw.yiaddr;
-		to.sin_port = remote_port;
+		to.sin_port = client_port;
 	} else {
 		/* Otherwise, broadcast it on the local network. */
 		to.sin_addr.s_addr = INADDR_BROADCAST;
-		to.sin_port = remote_port; /* XXX */
+		to.sin_port = client_port; /* XXX */
 	}
 
 	errno = 0;

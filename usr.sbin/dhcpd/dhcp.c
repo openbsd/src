@@ -565,7 +565,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	 */
 	if (raw.giaddr.s_addr) {
 		to.sin_addr = raw.giaddr;
-		to.sin_port = local_port;
+		to.sin_port = server_port;
 
 		if (fallback_interface) {
 			result = send_packet(fallback_interface, packet, &raw,
@@ -576,7 +576,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 		}
 	} else {
 		to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-		to.sin_port = remote_port;
+		to.sin_port = client_port;
 	}
 
 	errno = 0;
@@ -1230,7 +1230,7 @@ dhcp_reply(struct lease *lease)
 	/* If this was gatewayed, send it back to the gateway... */
 	if (raw.giaddr.s_addr) {
 		to.sin_addr = raw.giaddr;
-		to.sin_port = local_port;
+		to.sin_port = server_port;
 
 		if (fallback_interface) {
 			result = send_packet(fallback_interface, NULL,
@@ -1259,7 +1259,7 @@ dhcp_reply(struct lease *lease)
 	    (state->shared_network == lease->shared_network)) &&
 	    state->offer == DHCPACK) {
 		to.sin_addr = raw.ciaddr;
-		to.sin_port = remote_port;
+		to.sin_port = client_port;
 
 		if (fallback_interface) {
 			result = send_packet(fallback_interface, NULL,
@@ -1275,12 +1275,12 @@ dhcp_reply(struct lease *lease)
 	   directly to that client. */
 	} else if (!(raw.flags & htons (BOOTP_BROADCAST))) {
 		to.sin_addr = raw.yiaddr;
-		to.sin_port = remote_port;
+		to.sin_port = client_port;
 
 	/* Otherwise, broadcast it on the local network. */
 	} else {
 		to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-		to.sin_port = remote_port;
+		to.sin_port = client_port;
 	}
 
 	memcpy(&from, state->from.iabuf, sizeof from);

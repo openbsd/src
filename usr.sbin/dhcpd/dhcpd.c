@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.16 2004/04/21 01:44:33 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.17 2004/04/21 09:11:58 canacar Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -50,8 +50,8 @@ struct group root_group;
 struct iaddr server_identifier;
 int server_identifier_matched;
 
-u_int16_t local_port;
-u_int16_t remote_port;
+u_int16_t server_port;
+u_int16_t client_port;
 
 int log_priority;
 int log_perror = 1;
@@ -115,8 +115,9 @@ main(int argc, char *argv[])
 	if (quiet)
 		log_perror = 0;
 
-	local_port = htons(67);
-	remote_port = htons(68);
+	/* Default DHCP/BOOTP ports. */
+	server_port = htons(SERVER_PORT);
+	client_port = htons(CLIENT_PORT);
 
 	time(&cur_time);
 	if (!readconf())

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.2 2004/04/15 23:17:19 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.3 2004/04/21 09:11:58 canacar Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -95,10 +95,7 @@ if_register_send(struct interface_info *info)
 }
 
 /*
- * Packet filter program...
- *
- * XXX: Changes to the filter program may require changes to the
- * constant offsets used in if_register_send to patch the BPF program!
+ * Packet read filter program: 'ip and udp and dst port bootps'
  */
 struct bpf_insn dhcp_bpf_filter[] = {
 	/* Make sure this is an IP packet... */
@@ -118,7 +115,7 @@ struct bpf_insn dhcp_bpf_filter[] = {
 
 	/* Make sure it's to the right port... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 16),
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 67, 0, 1),		/* patch */
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SERVER_PORT, 0, 1),
 
 	/* If we passed all the tests, ask for the whole packet. */
 	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
@@ -129,12 +126,51 @@ struct bpf_insn dhcp_bpf_filter[] = {
 
 int dhcp_bpf_filter_len = sizeof(dhcp_bpf_filter) / sizeof(struct bpf_insn);
 
+
+/*
+ * Packet write filter program:
+ * 'ip and udp and src port bootps and dst port (bootps or bootpc)'
+ */
+struct bpf_insn dhcp_bpf_wfilter[] = {
+	/* Make sure this is an IP packet... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 11),
+
+	/* Make sure it's a UDP packet... */
+	BPF_STMT(BPF_LD + BPF_B + BPF_ABS, 23),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
+
+	/* Make sure this isn't a fragment... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
+	BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
+
+	/* Get the IP header length... */
+	BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, 14),
+
+	/* Make sure it's from the right port... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 14),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SERVER_PORT, 0, 4),
+
+	/* Make sure it is to the right ports ... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 16),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, CLIENT_PORT, 1, 0),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SERVER_PORT, 0, 1),
+
+	/* If we passed all the tests, ask for the whole packet. */
+	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+
+	/* Otherwise, drop it. */
+	BPF_STMT(BPF_RET+BPF_K, 0),
+};
+
+int dhcp_bpf_wfilter_len = sizeof(dhcp_bpf_wfilter) / sizeof(struct bpf_insn);
+
 void
 if_register_receive(struct interface_info *info)
 {
 	struct bpf_version v;
 	struct bpf_program p;
-	int flag = 1, sz;
+	int flag = 1, sz, cmplt = 0;
 
 	/* Open a BPF device and hang it on this interface... */
 	info->rfdesc = if_register_bpf(info);
@@ -155,6 +191,10 @@ if_register_receive(struct interface_info *info)
 	if (ioctl(info->rfdesc, BIOCIMMEDIATE, &flag) < 0)
 		error("Can't set immediate mode on bpf device: %m");
 
+	/* make sure kernel fills in the source ethernet address */
+	if (ioctl(info->rfdesc, BIOCSHDRCMPLT, &cmplt) < 0)
+		error("Can't set header complete flag on bpf device: %m");
+
 	/* Get the required BPF buffer length from the kernel. */
 	if (ioctl(info->rfdesc, BIOCGBLEN, &sz) < 0)
 		error("Can't get bpf buffer length: %m");
@@ -170,15 +210,19 @@ if_register_receive(struct interface_info *info)
 	p.bf_len = dhcp_bpf_filter_len;
 	p.bf_insns = dhcp_bpf_filter;
 
-	/* Patch the server port into the BPF program...
-	 *
-	 * XXX: changes to filter program may require changes to the
-	 * insn number(s) used below!
-	 */
-	dhcp_bpf_filter[8].k = ntohs(local_port);
-
 	if (ioctl(info->rfdesc, BIOCSETF, &p) < 0)
 		error("Can't install packet filter program: %m");
+
+	/* Set up the bpf write filter program structure. */
+	p.bf_len = dhcp_bpf_wfilter_len;
+	p.bf_insns = dhcp_bpf_wfilter;
+
+	if (ioctl(info->rfdesc, BIOCSETWF, &p) < 0)
+		error("Can't install write filter program: %m");
+
+	/* make sure these settings cannot be changed after dropping privs */
+	if (ioctl(info->rfdesc, BIOCLOCK) < 0)
+		error("Failed to lock bpf descriptor: %m");
 }
 
 ssize_t

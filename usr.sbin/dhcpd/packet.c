@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.2 2004/04/14 00:56:02 henning Exp $	*/
+/*	$OpenBSD: packet.c,v 1.3 2004/04/21 09:11:58 canacar Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -49,10 +49,8 @@
 
 #define ETHER_HEADER_SIZE (ETHER_ADDR_LEN * 2 + sizeof(u_int16_t))
 
-void	assemble_ethernet_header(struct interface_info *, unsigned char *,
-	    int *, struct hardware *);
-ssize_t	decode_ethernet_header(struct interface_info *, unsigned char *,
-	    int bufix, struct hardware *);
+u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
+u_int32_t	wrapsum(u_int32_t);
 
 u_int32_t
 checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)
@@ -97,11 +95,9 @@ assemble_hw_header(struct interface_info *interface, unsigned char *buf,
 		memcpy(eh.ether_dhost, to->haddr, sizeof(eh.ether_dhost));
 	else
 		memset(eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
-	if (interface->hw_address.hlen == sizeof(eh.ether_shost))
-		memcpy(eh.ether_shost, interface->hw_address.haddr,
-		    sizeof(eh.ether_shost));
-	else
-		memset(eh.ether_shost, 0x00, sizeof(eh.ether_shost));
+
+	/* source address is filled in by the kernel */
+	memset(eh.ether_shost, 0x00, sizeof(eh.ether_shost));
 
 	eh.ether_type = htons(ETHERTYPE_IP);
 
@@ -133,7 +129,7 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	memcpy(&buf[*bufix], &ip, sizeof(ip));
 	*bufix += sizeof(ip);
 
-	udp.uh_sport = htons(LOCAL_PORT);	/* XXX */
+	udp.uh_sport = server_port;	/* XXX */
 	udp.uh_dport = port;			/* XXX */
 	udp.uh_ulen = htons(sizeof(udp) + len);
 	memset(&udp.uh_sum, 0, sizeof(udp.uh_sum));
