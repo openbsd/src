@@ -1,10 +1,11 @@
-/*	$OpenBSD: perform.c,v 1.6 1998/11/19 04:12:55 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.7 1999/02/27 13:40:24 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.6 1998/11/19 04:12:55 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.7 1999/02/27 13:40:24 espie Exp $";
 #endif
 
-/*
+/* This is OpenBSD pkg_install, based on:
+ *
  * FreeBSD install - a package for the installation and maintainance
  * of non-core utilities.
  *
@@ -37,6 +38,34 @@ static const char *rcsid = "$OpenBSD: perform.c,v 1.6 1998/11/19 04:12:55 espie 
 
 static char    *Home;
 
+/* retrieve info on installed packages from the base name:
+ * find a full name of the form pkg-xxx.
+ */
+static char *
+find_prefix(char *buffer, int bufsize, char *base, char *pkg)
+{
+	DIR 		*dirp;
+	struct dirent 	*dp;
+	char 		*res;
+	int 		 pkg_length = strlen(pkg);
+
+
+	if (! (dirp = opendir(base)) )
+		return 0;
+	while ( (dp = readdir(dirp)) ) {
+		if (strncmp(dp->d_name, pkg, pkg_length) == 0
+		    && dp->d_name[pkg_length] == '-') {
+			snprintf(buffer, bufsize, "%s/%s", base, dp->d_name);
+			  /* pedantic: need to dup res before closedir() */
+			res = strdup(dp->d_name);
+			(void)closedir(dirp);
+			return res;
+		}
+	}
+	(void)closedir(dirp);
+	return 0;
+}
+
 static int
 pkg_do(char *pkg)
 {
@@ -48,6 +77,7 @@ pkg_do(char *pkg)
 	struct stat     sb;
 	char           *cp = NULL;
 	int             code = 0;
+	char           *pkg2 = 0; /* hold full name of package, storage to free */
 
 	if (isURL(pkg)) {
 		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
@@ -102,14 +132,21 @@ pkg_do(char *pkg)
 	else {
 		char           *tmp;
 
-		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+		if (!(tmp = getenv(PKG_DBDIR)))
+			tmp = DEF_LOG_DIR;
+
+		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s", tmp,
 			pkg);
-		if (!fexists(log_dir)) {
+		if (!fexists(log_dir) && 
+			! (pkg2 = find_prefix(log_dir, sizeof(log_dir), tmp, pkg))) {
 			warnx("can't find package `%s' installed or in a file!", pkg);
 			return 1;
 		}
+		if (pkg2) 
+			pkg = pkg2;
 		if (chdir(log_dir) == FAIL) {
 			warnx("can't change directory to '%s'!", log_dir);
+			free(pkg2);
 			return 1;
 		}
 		installed = TRUE;
@@ -162,6 +199,7 @@ pkg_do(char *pkg)
 	}
 	free_plist(&plist);
 bail:
+	free(pkg2);
 	leave_playpen(Home);
 	if (isTMP)
 		unlink(fname);
