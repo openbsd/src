@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.8 2004/05/19 13:05:16 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.9 2004/07/05 09:22:40 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -120,6 +120,10 @@ MAINLOOP:
 sub write
 {
 	my ($self, $fh) = @_;
+	if (!defined $self->{name}) {
+		print STDERR "Can't write unnamed packing list\n";
+		exit 1;
+	}
 	$self->{name}->write($fh);
 	if (defined $self->{'no-default-conflict'}) {
 		$self->{'no-default-conflict'}->write($fh);
