@@ -54,6 +54,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -800,6 +801,9 @@ cdioctl(dev, cmd, addr, flag, p)
 		return scsi_start(cd->sc_link, SSS_START, 0);
 	case CDIOCSTOP:
 		return scsi_start(cd->sc_link, SSS_STOP, 0);
+	case MTIOCTOP:
+		if (((struct mtop *)addr)->mt_op != MTOFFL)
+			return EIO;
 	case CDIOCEJECT:
 		return scsi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0);
 	case CDIOCALLOW:
