@@ -1,3 +1,5 @@
+/*	$OpenBSD: chroot.c,v 1.3 2000/08/17 15:28:36 mickey Exp $	*/
+
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chroot.c	5.8 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: chroot.c,v 1.2 1996/08/29 03:32:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chroot.c,v 1.3 2000/08/17 15:28:36 mickey Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
