@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.16 2004/11/16 08:57:29 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.17 2004/11/17 01:44:29 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1664,7 +1664,6 @@ USB_ATTACH(atu)
 
 		DPRINTFN(10, ("%s: done...\n", USBDEVNAME(sc->atu_dev)));
 		splx(s);
-		printf("trying reset now\n");
 		USB_ATTACH_NEED_RESET;
 	}
 
