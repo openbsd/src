@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.1 2000/04/26 19:03:11 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.2 2000/04/26 22:57:27 chris Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -498,12 +498,11 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFMTU:
 		/*
-		 * Set the interface MTU.
+		 * XXX Set the interface MTU.
 		 * This is bogus. The underlying interface might support
-	 	 * jumbo frames.
+	 	 * jumbo frames.  It would be nice to replace ETHERMTU
+		 * with the parent interface's MTU in the following statement.
 		 */
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			break;
 		if (ifr->ifr_mtu > ETHERMTU) {
 			error = EINVAL;
 		} else {
