@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.67 2002/06/03 16:13:17 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.68 2002/06/06 22:22:44 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -50,6 +50,7 @@
 #include <unistd.h>
 
 #include "pfctl_parser.h"
+#include "pf_print_state.h"
 
 void	 usage(void);
 int	 pfctl_enable(int, int);
@@ -499,7 +500,7 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 	p = ps.ps_states;
 	for (i = 0; i < ps.ps_len; i += sizeof(*p)) {
 		if (!proto || (p->proto == proto))
-			print_state(p, opts);
+			print_state(p, opts & PF_OPT_VERBOSE);
 		p++;
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.75 2002/06/01 04:06:47 hugh Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.76 2002/06/06 22:22:44 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -38,8 +38,6 @@
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
-#define TCPSTATES
-#include <netinet/tcp_fsm.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
@@ -53,11 +51,8 @@
 #include <err.h>
 
 #include "pfctl_parser.h"
+#include "pf_print_state.h"
 
-int		 unmask (struct pf_addr *, u_int8_t);
-void		 print_addr (struct pf_addr_wrap *, struct pf_addr *, u_int8_t);
-void		 print_host (struct pf_state_host *, u_int8_t, int);
-void		 print_seq (struct pf_state_peer *);
 void		 print_op (u_int8_t, const char *, const char *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
 void		 print_uid (u_int8_t, uid_t, uid_t, const char *);
@@ -253,100 +248,6 @@ geticmpcodebyname(u_long type, char *w, u_int8_t af)
 		}
 	}
 	return (NULL);
-}
-
-int
-unmask(struct pf_addr *m, u_int8_t af)
-{
-	int i = 31, j = 0, b = 0, msize;
-	u_int32_t tmp;
-
-	if (af == AF_INET)
-		msize = 1;
-	else
-		msize = 4;
-	while (j < msize && m->addr32[j] == 0xffffffff) {
-		b += 32;
-		j++;
-	}
-	if (j < msize) {
-		tmp = ntohl(m->addr32[j]);
-		for (i = 31; tmp & (1 << i); --i)
-			b++;
-	}
-	return (b);
-}
-
-void
-print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, u_int8_t af)
-{
-	char buf[48];
-
-	if (addr->addr_dyn != NULL)
-		printf("(%s)", addr->addr.pfa.ifname);
-	else {
-		if (inet_ntop(af, &addr->addr, buf, sizeof(buf)) == NULL)
-			printf("?");
-		else
-			printf("%s", buf);
-	}
-	if (mask != NULL) {
-		int bits = unmask(mask, af);
-
-		if (bits != (af == AF_INET ? 32 : 128))
-			printf("/%u", bits);
-	}
-}
-
-void
-print_name(struct pf_addr *addr, struct pf_addr *mask, int af)
-{
-	char buf[48];
-	struct hostent *hp;
-
-	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
-		printf("?");
-	else {
-		hp = getpfhostname(buf);
-		printf("%s", hp->h_name);
-	}
-	if (mask != NULL) {
-		if (!PF_AZERO(mask, af))
-			printf("/%u", unmask(mask, af));
-	}
-}
-
-void
-print_host(struct pf_state_host *h, u_int8_t af, int opts)
-{
-	u_int16_t p = ntohs(h->port);
-
-	if (opts & PF_OPT_USEDNS)
-		print_name(&h->addr, NULL, af);
-	else {
-		struct pf_addr_wrap aw;
-
-		aw.addr = h->addr;
-		aw.addr_dyn = NULL;
-		print_addr(&aw, NULL, af);
-	}
-
-	if (p) {
-		if (af == AF_INET)
-			printf(":%u", p);
-		else
-			printf("[%u]", p);
-	}
-}
-
-void
-print_seq(struct pf_state_peer *p)
-{
-	if (p->seqdiff)
-		printf("[%u + %u](+%u)", p->seqlo, p->seqhi - p->seqlo,
-		    p->seqdiff);
-	else
-		printf("[%u + %u]", p->seqlo, p->seqhi - p->seqlo);
 }
 
 void
@@ -627,79 +528,6 @@ print_status(struct pf_status *s)
 }
 
 void
-print_state(struct pf_state *s, int opts)
-{
-	struct pf_state_peer *src, *dst;
-	struct protoent *p;
-	u_int8_t hrs, min, sec;
-
-	if (s->direction == PF_OUT) {
-		src = &s->src;
-		dst = &s->dst;
-	} else {
-		src = &s->dst;
-		dst = &s->src;
-	}
-	if ((p = getprotobynumber(s->proto)) != NULL)
-		printf("%s ", p->p_name);
-	else
-		printf("%u ", s->proto);
-	if (PF_ANEQ(&s->lan.addr, &s->gwy.addr, s->af) ||
-	    (s->lan.port != s->gwy.port)) {
-		print_host(&s->lan, s->af, opts);
-		if (s->direction == PF_OUT)
-			printf(" -> ");
-		else
-			printf(" <- ");
-	}
-	print_host(&s->gwy, s->af, opts);
-	if (s->direction == PF_OUT)
-		printf(" -> ");
-	else
-		printf(" <- ");
-	print_host(&s->ext, s->af, opts);
-
-	printf("    ");
-	if (s->proto == IPPROTO_TCP) {
-		if (src->state <= TCPS_TIME_WAIT &&
-		    dst->state <= TCPS_TIME_WAIT) {
-			printf("   %s:%s\n", tcpstates[src->state],
-			    tcpstates[dst->state]);
-		} else {
-			printf("   <BAD STATE LEVELS>\n");
-		}
-		if (opts & PF_OPT_VERBOSE) {
-			printf("   ");
-			print_seq(src);
-			printf("  ");
-			print_seq(dst);
-			printf("\n");
-		}
-	} else {
-		printf("   %u:%u\n", src->state, dst->state);
-	}
-
-	if (opts & PF_OPT_VERBOSE) {
-		sec = s->creation % 60;
-		s->creation /= 60;
-		min = s->creation % 60;
-		s->creation /= 60;
-		hrs = s->creation;
-		printf("   age %.2u:%.2u:%.2u", hrs, min, sec);
-		sec = s->expire % 60;
-		s->expire /= 60;
-		min = s->expire % 60;
-		s->expire /= 60;
-		hrs = s->expire;
-		printf(", expires in %.2u:%.2u:%.2u", hrs, min, sec);
-		printf(", %u pkts, %u bytes", s->packets, s->bytes);
-		if (s->rule.nr != USHRT_MAX)
-			printf(", rule %u", s->rule.nr);
-		printf("\n");
-	}
-}
-
-void
 print_rule(struct pf_rule *r)
 {
 	printf("@%d ", r->nr);
@@ -883,25 +711,4 @@ parse_flags(char *s)
 			f |= 1 << (q - tcpflags);
 	}
 	return (f ? f : PF_TH_ALL);
-}
-
-struct hostent *
-getpfhostname(const char *addr_str)
-{
-	in_addr_t		 addr_num;
-	struct hostent		*hp;
-	static struct hostent	 myhp;
-
-	addr_num = inet_addr(addr_str);
-	if (addr_num == INADDR_NONE) {
-		myhp.h_name = (char *)addr_str;
-		hp = &myhp;
-		return (hp);
-	}
-	hp = gethostbyaddr((char *)&addr_num, sizeof(addr_num), AF_INET);
-	if (hp == NULL) {
-		myhp.h_name = (char *)addr_str;
-		hp = &myhp;
-	}
-	return (hp);
 }
