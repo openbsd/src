@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.23 2003/02/05 19:20:22 mickey Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.24 2003/02/11 19:49:47 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -105,12 +105,13 @@ struct wscons_event {
 #define		WSKBD_TYPE_PC_AT	4	/* PC-ish, AT scancode */
 #define		WSKBD_TYPE_USB		5	/* USB, XT scancode */
 #define		WSKBD_TYPE_NEXT		6	/* NeXT keyboard */
-#define		WSKBD_TYPE_HPC_KBD	7	/* HPC bultin keyboard */
+#define		WSKBD_TYPE_HPC_KBD	7	/* HPC builtin keyboard */
 #define		WSKBD_TYPE_HPC_BTN	8	/* HPC/PsPC buttons */
 #define		WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
 #define		WSKBD_TYPE_ADB		10	/* Apple ADB keyboard */
 #define		WSKBD_TYPE_SUN		11	/* Sun Type3/4 */
 #define		WSKBD_TYPE_SUN5		12	/* Sun Type5 */
+#define		WSKBD_TYPE_HIL		13	/* HP HIL */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
