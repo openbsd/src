@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.6 2005/01/13 17:59:32 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.7 2005/01/17 04:27:20 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -452,7 +452,9 @@ pxa2x0_intr_establish(int irqno, int level,
 	ih->ih_irq = irqno;
 	extirq_level[irqno] = level;
 
-	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq, &evcount_intr);
+	if (name != NULL)
+		evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
+		    &evcount_intr);
 
 	pxa2x0_update_intr_masks(irqno, level);
 
@@ -478,7 +480,8 @@ pxa2x0_intr_disestablish(void *cookie)
 	psw = disable_interrupts(I32_bit);
 
 	ih = &handler[irqno];
-	evcount_detach(&ih->ih_count);
+	if (ih->name != NULL)
+		evcount_detach(&ih->ih_count);
 
 	ih->arg = (void *) irqno;
 	ih->func = pxa2x0_stray_interrupt;

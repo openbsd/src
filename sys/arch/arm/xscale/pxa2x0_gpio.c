@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.10 2005/01/13 20:46:28 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.11 2005/01/17 04:27:20 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	sc->sc_irqcookie[2] = pxa2x0_intr_establish(PXA2X0_INT_GPION, IPL_BIO,
-	    gpio_intrN, sc, sc->sc_dev.dv_xname);
+	    gpio_intrN, sc, NULL);
 	if (sc->sc_irqcookie[2] == NULL) {
 		printf("%s: failed to hook main GPIO interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -260,13 +260,13 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	if (gpio == 0) {
 		KDASSERT(sc->sc_irqcookie[0] == NULL);
 		sc->sc_irqcookie[0] = pxa2x0_intr_establish(PXA2X0_INT_GPIO0,
-		    spl, gpio_intr0, sc, sc->sc_dev.dv_xname);
+		    spl, gpio_intr0, sc, NULL);
 		KDASSERT(sc->sc_irqcookie[0]);
 	} else
 	if (gpio == 1) {
 		KDASSERT(sc->sc_irqcookie[1] == NULL);
 		sc->sc_irqcookie[1] = pxa2x0_intr_establish(PXA2X0_INT_GPIO1,
-		    spl, gpio_intr1, sc, sc->sc_dev.dv_xname);
+		    spl, gpio_intr1, sc, NULL);
 		KDASSERT(sc->sc_irqcookie[1]);
 	}
 
@@ -334,6 +334,7 @@ static int
 gpio_intr0(void *arg)
 {
 	struct pxagpio_softc *sc = arg;
+	int ret;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_handlers[0] == NULL) {
@@ -346,13 +347,17 @@ gpio_intr0(void *arg)
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_REG(GPIO_GEDR0, 0),
 	    GPIO_BIT(0));
 
-	return ((sc->sc_handlers[0]->gh_func)(sc->sc_handlers[0]->gh_arg));
+	ret = (sc->sc_handlers[0]->gh_func)(sc->sc_handlers[0]->gh_arg);
+	if (ret != 0)
+		sc->sc_handlers[0]->gh_count.ec_count++;
+	return ret;
 }
 
 static int
 gpio_intr1(void *arg)
 {
 	struct pxagpio_softc *sc = arg;
+	int ret;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_handlers[1] == NULL) {
@@ -365,7 +370,10 @@ gpio_intr1(void *arg)
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_REG(GPIO_GEDR0, 1),
 	    GPIO_BIT(1));
 
-	return ((sc->sc_handlers[1]->gh_func)(sc->sc_handlers[1]->gh_arg));
+	ret =  (sc->sc_handlers[1]->gh_func)(sc->sc_handlers[1]->gh_arg);
+	if (ret != 0)
+		sc->sc_handlers[0]->gh_count.ec_count++;
+	return ret;
 }
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
