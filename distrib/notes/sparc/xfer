@@ -266,7 +266,7 @@ NFS, you must do the following:
 	Place the OpenBSD distribution sets you wish to install into a
 	directory on an NFS server, and make that directory mountable
 	by the machine on which you are installing or upgrading OpenBSD.
-	This will probably require modifying the /etc/exports file on
+	This will probably require modifying the /etc/exports file
 	of the NFS server and resetting its mount daemon (mountd).
 	(Both of these actions will probably require superuser
 	privileges on the server.)
