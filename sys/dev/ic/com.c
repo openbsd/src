@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.54 2000/01/11 04:08:45 mickey Exp $	*/
+/*	$OpenBSD: com.c,v 1.55 2000/01/27 09:05:33 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -91,8 +91,6 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/isa/isavar.h>	/* XXX */
-
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #include <dev/ic/ns16550reg.h>
@@ -102,6 +100,10 @@
 #define	com_lcr	com_cfcr
 
 #include "com.h"
+
+#if NCOM_ISA || NCOM_ISAPNP
+#include <dev/isa/isavar.h>	/* XXX */
+#endif
 
 /* XXX: These belong elsewhere */
 cdev_decl(com);
@@ -377,7 +379,10 @@ comattach(parent, self, aux)
 	void *aux;
 {
 	struct com_softc *sc = (void *)self;
-	int iobase, irq;
+	int iobase;
+#if NCOM_ISA || NCOM_ISAPNP || NCOM_COMMULTI
+	int irq;
+#endif
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 #ifdef COM_HAYESP
@@ -589,6 +594,7 @@ comattach(parent, self, aux)
 	bus_space_write_1(iot, ioh, com_ier, 0);
 	bus_space_write_1(iot, ioh, com_mcr, 0);
 
+#if NCOM_ISA || NCOM_ISAPNP || NCOM_COMMULTI
 	if (irq != IRQUNK) {
 #if NCOM_ISA || NCOM_ISAPNP
 		if (IS_ISA(parent) || IS_ISAPNP(parent)) {
@@ -601,7 +607,7 @@ comattach(parent, self, aux)
 #endif
 			panic("comattach: IRQ but can't have one");
 	}
-
+#endif
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
