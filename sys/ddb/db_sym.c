@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.25 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.26 2002/05/13 15:38:58 art Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -571,13 +571,13 @@ db_printsym(off, strategy)
 
 
 boolean_t
-db_line_at_pc( sym, filename, linenum, pc)
+db_line_at_pc(sym, filename, linenum, pc)
 	db_sym_t	sym;
 	char		**filename;
 	int		*linenum;
 	db_expr_t	pc;
 {
-	return X_db_line_at_pc( db_last_symtab, sym, filename, linenum, pc);
+	return X_db_line_at_pc(db_last_symtab, sym, filename, linenum, pc);
 }
 
 int
