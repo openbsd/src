@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.29 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: log.c,v 1.30 2002/08/08 13:25:28 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -330,7 +330,9 @@ void
 log_packet_init (char *newname)
 {
   struct pcap_file_header sf_hdr;
+  struct stat st;
   mode_t old_umask;
+  char *mode;
 
   /* Allocate packet buffer first time through.  */
   if (!packet_buf)
@@ -352,37 +354,63 @@ log_packet_init (char *newname)
       return;
     }
 
+  /* Does the file already exist?  XXX lstat() or stat()?  */
+  if (lstat (pcaplog_file, &st) == 0)
+    {
+      /* Sanity checks.  */
+      if ((st.st_mode & S_IFMT) != S_IFREG)
+	{
+	  log_print ("log_packet_init: existing capture file is "
+		     "not a regular file");
+	  return;
+	}
+
+      if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)
+	{
+	  log_print ("log_packet_init: existing capture file has bad modes");
+	  return;
+	}
+
+      /* XXX It would be nice to check if it actually is a pcap file... */
+
+      mode = "a";
+    }
+  else
+    mode = "w";
+
   old_umask = umask (S_IRWXG | S_IRWXO);
-  packet_log = fopen (pcaplog_file, "w");
+  packet_log = fopen (pcaplog_file, mode);
   umask (old_umask);
 
   if (!packet_log)
     {
-      log_error ("log_packet_init: fopen (\"%s\", \"w\") failed",
-		 pcaplog_file);
+      log_error ("log_packet_init: fopen (\"%s\", \"%s\") failed",
+		 pcaplog_file, mode);
       return;
     }
 
   log_print ("log_packet_init: starting IKE packet capture to file \"%s\"",
 	     pcaplog_file);
 
-  sf_hdr.magic = TCPDUMP_MAGIC;
-  sf_hdr.version_major = PCAP_VERSION_MAJOR;
-  sf_hdr.version_minor = PCAP_VERSION_MINOR;
-  sf_hdr.thiszone = 0;
-  sf_hdr.snaplen = SNAPLEN;
-  sf_hdr.sigfigs = 0;
-  sf_hdr.linktype = DLT_LOOP;
+  /* If this is a new file, we need to write a PCAP header to it.  */
+  if (*mode == 'w')
+    {
+      sf_hdr.magic = TCPDUMP_MAGIC;
+      sf_hdr.version_major = PCAP_VERSION_MAJOR;
+      sf_hdr.version_minor = PCAP_VERSION_MINOR;
+      sf_hdr.thiszone = 0;
+      sf_hdr.snaplen = SNAPLEN;
+      sf_hdr.sigfigs = 0;
+      sf_hdr.linktype = DLT_LOOP;
 
-  fwrite ((char *)&sf_hdr, sizeof sf_hdr, 1, packet_log);
-  fflush (packet_log);
+      fwrite ((char *)&sf_hdr, sizeof sf_hdr, 1, packet_log);
+      fflush (packet_log);
+    }
 }
 
 void
 log_packet_restart (char *newname)
 {
-  struct stat st;
-
   if (packet_log)
     {
       log_print ("log_packet_restart: capture already active on file \"%s\"",
@@ -391,28 +419,11 @@ log_packet_restart (char *newname)
     }
 
   if (newname)
-    {
-      if (stat (newname, &st) == 0)
-	log_print ("log_packet_restart: won't overwrite existing \"%s\"",
-		   newname);
-      else
-	log_packet_init (newname);
-    }
+    log_packet_init (newname);
   else if (!pcaplog_file)
     log_packet_init (PCAP_FILE_DEFAULT);
-  else if (stat (pcaplog_file, &st) != 0)
-    log_packet_init (pcaplog_file);
   else
-    {
-      /* Re-activate capture on current file.  */
-      packet_log = fopen (pcaplog_file, "a");
-      if (!packet_log)
-	log_error ("log_packet_restart: fopen (\"%s\", \"a\") failed",
-		   pcaplog_file);
-      else
-	log_print ("log_packet_restart: capture restarted on file \"%s\"",
-		   pcaplog_file);
-    }
+    log_packet_init (pcaplog_file);
 }
 
 void
