@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.6 2001/12/07 23:55:35 millert Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.7 2001/12/15 15:37:51 millert Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -132,6 +132,8 @@ SIGHUP
 SIGQUIT
 SIGTERM
 SIGTSTP
+SIGTTIN
+SIGTTOU
 .Ed
 .Pp
 When one of the above signals is intercepted, terminal echo will
@@ -144,8 +146,11 @@ default action is taken as per
 .Xr sigaction 2 .
 .Pp
 The
-.Dv SIGTSTP
-signal (stop signal generated from keyboard) is treated specially.
+.Dv SIGTSTP ,
+.Dv SIGTTIN ,
+.Dv SIGTTOU ,
+signals (stop signal generated from keyboard or due to terminal I/O
+from a background proccess) are treated specially.
 When the process is resumed after it has been stopped,
 .Fn readpassphrase
 will reprint the prompt and the user may then enter a passphrase.
