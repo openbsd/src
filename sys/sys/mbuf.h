@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.19 2001/03/18 17:15:35 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.20 2001/03/18 18:51:10 aaron Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -134,6 +134,7 @@ struct mbuf {
 #if 0 /* NRL IPv6 */
 #define M_TUNNEL       	0x1000  /* packet was tunneled */
 #define M_DAD		0x2000	/* Used on outbound packets to indicate that
+				 * this is for duplicate address detection */
 #endif
 
 /* KAME IPv6 */
