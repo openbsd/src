@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.25 2002/06/30 13:04:36 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.26 2003/01/20 01:34:26 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -298,6 +298,9 @@ gif_ioctl(ifp, cmd, data)
 				&(((struct if_laddrreq *)data)->addr);
 			dst = (struct sockaddr *)
 				&(((struct if_laddrreq *)data)->dstaddr);
+			break;
+		default:
+			return EINVAL;
 		}
 
 		/* sa_family must be equal */
