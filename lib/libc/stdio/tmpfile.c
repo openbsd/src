@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tmpfile.c,v 1.3 1997/02/12 20:44:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tmpfile.c,v 1.4 1997/04/03 05:31:38 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ tmpfile()
 	sigset_t set, oset;
 	FILE *fp;
 	int fd, sverrno;
-#define	TRAILER	"tmp.XXXXXXXXX"
+#define	TRAILER	"tmp.XXXXXXXXXX"
 	char buf[sizeof(_PATH_TMP) + sizeof(TRAILER)];
 
 	(void)memcpy(buf, _PATH_TMP, sizeof(_PATH_TMP) - 1);

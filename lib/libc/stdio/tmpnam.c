@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tmpnam.c,v 1.5 1997/01/20 07:46:57 graichen Exp $";
+static char rcsid[] = "$OpenBSD: tmpnam.c,v 1.6 1997/04/03 05:31:38 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ tmpnam(s)
 
 	if (s == NULL)
 		s = buf;
-	(void)snprintf(s, L_tmpnam, "%stmp.%lu.XXXXXX", P_tmpdir, tmpcount);
+	(void)snprintf(s, L_tmpnam, "%stmp.%lu.XXXXXXXXX", P_tmpdir, tmpcount);
 	++tmpcount;
 	return (_mktemp(s));
 }

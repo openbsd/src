@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tempnam.c,v 1.8 1997/02/12 20:44:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tempnam.c,v 1.9 1997/04/03 05:31:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -62,14 +62,14 @@ tempnam(dir, pfx)
 		pfx = "tmp.";
 
 	if (issetugid() == 0 && (f = getenv("TMPDIR"))) {
-		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXX", f,
+		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if (f = _mktemp(name))
 			return(f);
 	}
 
 	if (f = (char *)dir) {
-		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXX", f,
+		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if (f = _mktemp(name))
 			return(f);
