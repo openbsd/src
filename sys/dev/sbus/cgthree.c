@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.9 2002/02/23 05:47:50 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.10 2002/02/24 18:51:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -289,7 +289,7 @@ cgthreeattach(parent, self, aux)
 	for (i = 0; i < 256 * 3 / 4; i++)
 		sc->sc_cmap.cm_chip[i] = BT_READ(sc, BT_CMAP);
 
-	cgthree_burner(sc, 0, 0);
+	cgthree_burner(sc, 1, 0);
 
 	sc->sc_rcons.rc_sp = &sc->sc_raster;
 	sc->sc_raster.width = sc->sc_width;
@@ -633,7 +633,7 @@ cgthree_burner(vsc, on, flags)
 
 	s = splhigh();
 	fbc = FBC_READ(sc, CG3_FBC_CTRL);
-	if (!on)
+	if (on)
 		fbc |= FBC_CTRL_VENAB;
 	else
 		fbc &= ~FBC_CTRL_VENAB;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.12 2002/02/23 05:47:50 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.13 2002/02/24 18:51:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -343,7 +343,7 @@ cgsixattach(parent, self, aux)
 		sc->sc_cmap.cm_map[i][2] = BT_READ(sc, BT_CMAP) >> 24;
 	}
 
-	cgsix_burner(sc, 0, 0);
+	cgsix_burner(sc, 1, 0);
 
 	sc->sc_depth = getpropint(sa->sa_node, "depth", 8);
 	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
@@ -742,7 +742,7 @@ cgsix_burner(vsc, on, flags)
 
 	s = splhigh();
 	thcm = THC_READ(sc, CG6_THC_MISC);
-	if (!on)
+	if (on)
 		thcm |= THC_MISC_VIDEN | THC_MISC_SYNCEN;
 	else {
 		thcm &= ~THC_MISC_VIDEN;
