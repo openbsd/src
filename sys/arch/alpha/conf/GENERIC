@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.73 2001/04/16 03:19:41 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.74 2001/04/17 04:25:22 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -130,8 +130,10 @@ ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI (old)
 scsibus* at ncr?
+#siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI (new)
+#scsibus* at siop?
 
 #UNTESTED: the following three drivers are untested.
 adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
