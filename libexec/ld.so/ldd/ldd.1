@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldd.1,v 1.4 2003/03/06 20:19:52 jmc Exp $
+.\"	$OpenBSD: ldd.1,v 1.5 2003/06/02 13:48:25 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Per Fogelstrom
 .\"
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 .Nm
 displays the shared objects needed to run
-.Ar program.
+.Ar program .
 .Nm
 uses the
 .Dv DT_NEEDED
@@ -62,9 +62,6 @@ is invoked with the
 flag, the tags from
 .Ar program
 are listed without using current ldconfig configuration.
-.Sh SEE ALSO
-.Xr ld.so 1 ,
-.Xr ldconfig 8
 .Sh DIAGNOSTICS
 Exit status 0 if no error.
 Exit status 1 if arg error.
@@ -74,3 +71,6 @@ can't be read.
 If
 .Nm
 fails to open the program file a message is printed.
+.Sh SEE ALSO
+.Xr ld.so 1 ,
+.Xr ldconfig 8
