@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.9 1997/07/14 15:56:23 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.10 1997/07/22 18:26:24 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.9 1997/07/14 15:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.10 1997/07/22 18:26:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,8 +152,16 @@ collect(hp, printheaders)
 	longline = 0;
 
 	if (!sigsetjmp(colljmp, 1)) {
-		if (getsub)
-			grabh(hp, GSUBJECT);
+		if (getsub && grabh(hp, GSUBJECT) == SIGINT) {
+			fflush(stdout);
+			fputs("\n(Interrupt -- one more to kill letter)\n",
+			    stderr);
+			if (grabh(hp, GSUBJECT) == SIGINT) {
+				hadintr++;
+				collint(SIGINT);
+				exit(1);
+			}
+		}
 	} else {
 		/*
 		 * Come here for printing the after-signal message.
