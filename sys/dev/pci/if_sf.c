@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.22 2004/04/09 21:52:17 henning Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.23 2004/04/26 19:00:35 tedu Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -837,7 +837,7 @@ int sf_newbuf(sc, c, m)
 	m_adj(m_new, sizeof(u_int64_t));
 
 	c->sf_mbuf = m_new;
-	c->sf_addrlo = SF_RX_HOSTADDR(vtophys(mtod(m_new, caddr_t)));
+	c->sf_addrlo = SF_RX_HOSTADDR(vtophys(mtod(m_new, vaddr_t)));
 	c->sf_valid = 1;
 
 	return(0);
@@ -1089,7 +1089,7 @@ void sf_init(xsc)
 
 	/* Init the RX completion queue */
 	csr_write_4(sc, SF_RXCQ_CTL_1,
-	    vtophys(sc->sf_ldata->sf_rx_clist) & SF_RXCQ_ADDR);
+	    vtophys((vaddr_t)sc->sf_ldata->sf_rx_clist) & SF_RXCQ_ADDR);
 	SF_SETBIT(sc, SF_RXCQ_CTL_1, SF_RXCQTYPE_3);
 
 	/* Init RX DMA control. */
@@ -1097,17 +1097,17 @@ void sf_init(xsc)
 
 	/* Init the RX buffer descriptor queue. */
 	csr_write_4(sc, SF_RXDQ_ADDR_Q1,
-	    vtophys(sc->sf_ldata->sf_rx_dlist_big));
+	    vtophys((vaddr_t)sc->sf_ldata->sf_rx_dlist_big));
 	csr_write_4(sc, SF_RXDQ_CTL_1, (MCLBYTES << 16) | SF_DESCSPACE_16BYTES);
 	csr_write_4(sc, SF_RXDQ_PTR_Q1, SF_RX_DLIST_CNT - 1);
 
 	/* Init the TX completion queue */
 	csr_write_4(sc, SF_TXCQ_CTL,
-	    vtophys(sc->sf_ldata->sf_tx_clist) & SF_RXCQ_ADDR);
+	    vtophys((vaddr_t)sc->sf_ldata->sf_tx_clist) & SF_RXCQ_ADDR);
 
 	/* Init the TX buffer descriptor queue. */
 	csr_write_4(sc, SF_TXDQ_ADDR_HIPRIO,
-		vtophys(sc->sf_ldata->sf_tx_dlist));
+		vtophys((vaddr_t)sc->sf_ldata->sf_tx_dlist));
 	SF_SETBIT(sc, SF_TX_FRAMCTL, SF_TXFRMCTL_CPLAFTERTX);
 	csr_write_4(sc, SF_TXDQ_CTL,
 	    SF_TXBUFDESC_TYPE0|SF_TXMINSPACE_128BYTES|SF_TXSKIPLEN_8BYTES);
@@ -1186,7 +1186,7 @@ int sf_encap(sc, c, m_head)
 		m_head = m_new;
 		f = &c->sf_frags[0];
 		f->sf_fraglen = f->sf_pktlen = m_head->m_pkthdr.len;
-		f->sf_addr = vtophys(mtod(m_head, caddr_t));
+		f->sf_addr = vtophys(mtod(m_head, vaddr_t));
 		frag = 1;
 	}
 
