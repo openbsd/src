@@ -3,20 +3,26 @@ drives for use with OpenBSD/amiga.  HDToolBox is provided with the
 system software and on floppy installation disks since Release 2.0
 of AmigaDOS so we will provide instructions for its use.
 
-Preparing you hard disk with HDToolBox:
+Preparing your hard disk with HDToolBox:
+
+	If you intend to use a harddisk larger than 4 Gb, or partitions 
+	larger than 2Gb be advised to either get HDToolBox for AmigaDOS 3.5 
+	or a third party harddisk preparation tool (such as HdInstTools) 
+	from Aminet, together with the appropriate patches from 
+	www.amiga.com to let AmigaDOS see the full size of the drive.
 
 	A full explanation of HDToolBox can be found with your
 	AmigaDOS manuals and is beyond the scope of this document.
 
-	Note you will be modifying your HD's if you mess something 
-	up here you could lose everything on all the drives that 
-	you configure.  It is therefore advised that you:
+	Note that you will be modifying your HD. If you mess something 
+	up here you could lose *EVERYTHING* on all the drives that 
+	you configure.  You are therefore advised to:
 
 		Write down your current configuration.  Do this
 		by examining each partition on the drive and the
 		drives parameters (from Change drive type.)
 
-		Back up the partitions you are keeping.
+		Back up all partitions you want to keep.
 
 	What you need to do is partition your drives; creating at least
 	root, swap and /usr partitions and possibly some more for
@@ -60,9 +66,9 @@ Preparing you hard disk with HDToolBox:
 		- Turn off `Automount' if on.
 		- Set the dostype to one of these three choices:
 
-			root partition  : 0x4e425207
-			swap partition  : 0x4e425301
-			other partitions: 0x4e425507
+			root partition  : 0x4e425207 ("NBR\7")
+			swap partition  : 0x4e425301 ("NBS\1")
+			other partitions: 0x4e425507 ("NBU\7")
 
 		Here `other' refers to other partitions you will
 		format for reading and writing under OpenBSD (e.g.
