@@ -1,4 +1,4 @@
-.\" $OpenBSD: term.7,v 1.2 1999/01/24 20:06:45 millert Exp $
+.\" $OpenBSD: term.7,v 1.3 2000/04/17 02:32:46 aaron Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\"***************************************************************************
 .\"
 .\" $From: term.7,v 1.11 1999/01/24 02:35:14 Todd.Miller Exp $
-.\" $OpenBSD: term.7,v 1.2 1999/01/24 20:06:45 millert Exp $
+.\" $OpenBSD: term.7,v 1.3 2000/04/17 02:32:46 aaron Exp $
 .TH TERM 7
 .ds n 5
 .ds d /usr/share/terminfo
@@ -55,7 +55,7 @@ Modern telnets pass your \fBTERM\fR environment variable from the local side to
 the remote one.  There can be problems if the remote terminfo or termcap entry
 for your type is not compatible with yours, but this situation is rare and
 can almost always be avoided by explicitly exporting `vt100' (assuming you
-are in fact using a VT100-superset console, terminal, or terminal emulator.)
+are in fact using a VT100-superset console, terminal, or terminal emulator).
 .PP
 In any case, you are free to override the system \fBTERM\fR setting to your
 taste in your shell profile.  The \fBtset\fP(1) utility may be of assistance;

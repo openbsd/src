@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndc.8,v 1.4 1999/06/05 22:17:44 aaron Exp $
+.\"	$OpenBSD: ndc.8,v 1.5 2000/04/17 02:32:49 aaron Exp $
 .\" Copyright (c) 1994
 .\"    The Regents of the University of California.  All rights reserved.
 .\"
@@ -54,20 +54,20 @@ Causes
 .B named
 to dump its database and cache to
 .B /etc/namedb/tmp/named_dump.db
-(uses the INT signal.)
+(uses the INT signal).
 .TP
 .B reload
 Causes
 .B named
 to check the serial numbers of all primary and secondary zones
-and to reload those that have changed (uses the HUP signal.)
+and to reload those that have changed (uses the HUP signal).
 .TP
 .B stats
 Causes
 .B named
 to dump its statistics to
 .B /etc/namedb/tmp/named.stats
-(uses the IOT or ABRT signal.)
+(uses the IOT or ABRT signal).
 .TP
 .B trace
 Causes
@@ -75,22 +75,22 @@ Causes
 to increment its ``tracing level'' by one.  Whenever the tracing level
 is nonzero, trace information will be written to
 .BR /etc/namedb/tmp/named.run .
-Higher tracing levels result in more detailed information.
-(Uses the USR1 signal.)
+Higher tracing levels result in more detailed information
+(uses the USR1 signal).
 .TP
 .B notrace
 Causes
 .B named
 to set its ``tracing level'' to zero, closing
 .B /etc/namedb/tmp/named.run
-if it is open (uses the USR2 signal.)
+if it is open (uses the USR2 signal).
 .TP
 .B querylog
 Causes
 .B named
 to toggle the ``query logging'' feature, which while on will result in a
 .BR syslog (3)
-of each incoming query (uses the WINCH signal.)  Note that query logging
+of each incoming query (uses the WINCH signal).  Note that query logging
 consumes quite a lot of log file space.  This directive may also be given as
 .BR qrylog .
 .TP
