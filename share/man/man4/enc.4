@@ -1,0 +1,58 @@
+.\"	$OpenBSD: enc.4,v 1.1 1999/10/07 20:51:13 angelos Exp $
+.Dd October 7, 1999
+.Dt ENC 4
+.Os
+.Sh NAME
+.Nm enc
+.Nd Encapsulating Interface
+.Sh SYNOPSIS
+.Cd "pseudo-device enc 1"
+.Sh DESCRIPTION
+The
+.Nm enc
+interface is a software loopback mechanism that allows hosts or
+firewalls to filter
+.Xr ipsec 4
+traffic using
+.Xr ipf 5 .
+The
+.Xr vpn 8
+manpage shows an example of such a setup.
+.Pp
+The other use of the
+.Nm enc
+interface is to allow an administrator to see outgoing packets before
+they have been processed by
+.Xr ipsec 4 ,
+or incoming packets after they have been similarly processed, via
+.Xr tcpdump 1 .
+.Pp
+There is only one
+.Nm enc
+interface, named
+.Sy enc Ns Ar 0 ,
+regardless of the argument given on the
+.Sy pseudo-device
+line in the kernel configuration file.
+.Sh EXAMPLES
+To see all outgoing packets before they have been processed via
+.Xr ipsec 4 ,
+or all incoming packets after they have been similarly processed:
+.Bd -literal
+#> ifconfig enc0 up
+#> tcpdump -i enc0
+.Ed
+.Sh SEE ALSO
+.Xr bpf 4 ,
+.Xr inet 4 ,
+.Xr ipf 5 ,
+.Xr ipsec 4 ,
+.Xr netintro 4 ,
+.Xr tcpdump 1 ,
+.Xr vpn 8
+.Sh BUGS
+The
+.Fa PROMISC
+flag is not cleared on the
+.Sy enc Ns Ar 0
+interface after tcpdump is stopped.
