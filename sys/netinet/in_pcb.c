@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.20 1998/02/01 18:09:22 mickey Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.21 1998/02/01 21:46:02 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ in_pcbbind(v, nam)
 				reuseport = SO_REUSEADDR|SO_REUSEPORT;
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */
-			if (in_iawithaddr(sin->sin_addr, NULL) == 0)
+			if (ifa_ifwithaddr(sintosa(sin)) == 0)
 				return (EADDRNOTAVAIL);
 		}
 		if (lport) {
@@ -206,7 +206,7 @@ in_pcbbind(v, nam)
 					return (EADDRINUSE);
 			}
 			t = in_pcblookup(table, zeroin_addr, 0,
-					 sin->sin_addr, lport, wild);
+			    sin->sin_addr, lport, wild);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
 				return (EADDRINUSE);
 		}
@@ -265,7 +265,7 @@ portloop:
 				lport = htons(*lastport);
 			} while (baddynamic(*lastport, so->so_proto->pr_protocol) ||
 			    in_pcblookup(table, zeroin_addr, 0,
-					 inp->inp_laddr, lport, wild));
+			    inp->inp_laddr, lport, wild));
 		} else {
 			/*
 			 * counting up
@@ -292,7 +292,7 @@ portloop:
 				lport = htons(*lastport);
 			} while (baddynamic(*lastport, so->so_proto->pr_protocol) ||
 			    in_pcblookup(table, zeroin_addr, 0,
-			    		 inp->inp_laddr, lport, wild));
+			    inp->inp_laddr, lport, wild));
 		}
 	}
 	inp->inp_lport = lport;
@@ -656,10 +656,12 @@ in_pcblookup(table, faddr, fport_arg, laddr, lport_arg, flags)
 			if (laddr.s_addr != INADDR_ANY)
 				wildcard++;
 		}
-		if ((!wildcard || (flags & INPLOOKUP_WILDCARD)) &&
-		    wildcard < matchwild) {
+		if (wildcard && (flags & INPLOOKUP_WILDCARD) == 0)
+			continue;
+		if (wildcard < matchwild) {
 			match = inp;
-			if ((matchwild = wildcard) == 0)
+			matchwild = wildcard;
+			if (matchwild == 0)
 				break;
 		}
 	}
