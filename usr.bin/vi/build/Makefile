@@ -33,6 +33,7 @@ MLINKS= vi.1 ex.1 vi.1 view.1
 .include "../../Makefile.inc"
 
 cat=	dutch english german ru_SU.KOI8-R swedish
-datadir=	/usr/share
+datadir=	${DESTDIR}/usr/share
 afterinstall:
+	install -d ${datadir}/vi/catalog
 	(cd ${.CURDIR}/../catalog && install -m $(NONBINMODE) -c $(cat) $(datadir)/vi/catalog )
