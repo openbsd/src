@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.8 1998/06/10 23:57:10 provos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.9 1998/06/28 18:49:40 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -82,37 +82,35 @@ void	encrtrequest __P((int, struct rtentry *, struct sockaddr *));
 void
 encattach(int nenc)
 {
-    struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
-    bzero(&enc_softc, sizeof(struct ifnet));
+	bzero(&enc_softc, sizeof(struct ifnet));
 
-    /* We only need one interface anyway under the new mode of operation */
-    enc_softc.if_index = 0;
+	/* We only need one interface anyway under the new mode of operation */
+	enc_softc.if_index = 0;
 
-    sprintf(enc_softc.if_xname, "enc0");
-
-    enc_softc.if_list.tqe_next = NULL;
-    enc_softc.if_mtu = ENCMTU;
-    enc_softc.if_flags = IFF_LOOPBACK;
-    enc_softc.if_type = IFT_ENC;
-    enc_softc.if_ioctl = encioctl;
-    enc_softc.if_output = encoutput;
-    enc_softc.if_hdrlen = ENC_HDRLEN;
-    enc_softc.if_addrlen = 0;
-
-    if_attach(&enc_softc);
+	sprintf(enc_softc.if_xname, "enc0");
+	enc_softc.if_list.tqe_next = NULL;
+	enc_softc.if_mtu = ENCMTU;
+	enc_softc.if_flags = IFF_LOOPBACK;
+	enc_softc.if_type = IFT_ENC;
+	enc_softc.if_ioctl = encioctl;
+	enc_softc.if_output = encoutput;
+	enc_softc.if_hdrlen = ENC_HDRLEN;
+	enc_softc.if_addrlen = 0;
+	if_attach(&enc_softc);
 
 #if NBPFILTER > 0
-    bpfattach(&(enc_softc.if_bpf), &enc_softc, DLT_ENC, ENC_HDRLEN);
+	bpfattach(&enc_softc.if_bpf, &enc_softc, DLT_ENC, ENC_HDRLEN);
 #endif
 
-    /* Just a bogus entry */
-    ifa = (struct ifaddr *) malloc(sizeof(struct ifaddr) + 
-			           sizeof(struct sockaddr), M_IFADDR, M_WAITOK);
-    bzero(ifa, sizeof(struct ifaddr) + sizeof(struct sockaddr));
-    ifa->ifa_addr = ifa->ifa_dstaddr = (struct sockaddr *) (ifa + 1);
-    ifa->ifa_ifp = &enc_softc;
-    TAILQ_INSERT_HEAD(&(enc_softc.if_addrlist), ifa, ifa_list);
+	/* Just a bogus entry */
+	ifa = (struct ifaddr *) malloc(sizeof(struct ifaddr) + 
+	    sizeof(struct sockaddr), M_IFADDR, M_WAITOK);
+	bzero(ifa, sizeof(struct ifaddr) + sizeof(struct sockaddr));
+	ifa->ifa_addr = ifa->ifa_dstaddr = (struct sockaddr *) (ifa + 1);
+	ifa->ifa_ifp = &enc_softc;
+	TAILQ_INSERT_HEAD(&(enc_softc.if_addrlist), ifa, ifa_list);
 }
 
 /*
@@ -125,115 +123,99 @@ register struct mbuf *m;
 struct sockaddr *dst;
 register struct rtentry *rt;
 {
-    register struct ifqueue *ifq = 0;
-    int s, isr;
+	register struct ifqueue *ifq = 0;
+	int s, isr;
 
-    if ((m->m_flags & M_PKTHDR) == 0)
-      panic("encoutput(): no HDR");
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("encoutput(): no HDR");
 
-    ifp->if_lastchange = time;
-
-    m->m_pkthdr.rcvif = ifp;
+	ifp->if_lastchange = time;
+	m->m_pkthdr.rcvif = ifp;
     
-    if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) 
-    {
-	m_freem(m);
-	return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
-		rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
-    }
+	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
+		m_freem(m);
+		return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
+		    rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
+	}
 
-    ifp->if_opackets++;
-    ifp->if_obytes += m->m_pkthdr.len;
+	ifp->if_opackets++;
+	ifp->if_obytes += m->m_pkthdr.len;
 
-    switch (dst->sa_family) 
-    {
+	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
-	    ifq = &ipintrq;
-	    isr = NETISR_IP;
-	    break;
+		ifq = &ipintrq;
+		isr = NETISR_IP;
+		break;
 #endif
 #ifdef NS
 	case AF_NS:
-	    ifq = &nsintrq;
-	    isr = NETISR_NS;
-	    break;
+		ifq = &nsintrq;
+		isr = NETISR_NS;
+		break;
 #endif
 #ifdef ISO
 	case AF_ISO:
-	    ifq = &clnlintrq;
-	    isr = NETISR_ISO;
+		ifq = &clnlintrq;
+		isr = NETISR_ISO;
 		break;
 #endif
 	default:
-	    m_freem(m);
-	    return (EAFNOSUPPORT);
-    }
+		m_freem(m);
+		return (EAFNOSUPPORT);
+	}
     
-    s = splimp();
-
-    if (IF_QFULL(ifq)) 
-    {
-	IF_DROP(ifq);
-	m_freem(m);
-	splx(s);
-	return (ENOBUFS);
-    }
+	s = splimp();
+	if (IF_QFULL(ifq)) {
+		IF_DROP(ifq);
+		m_freem(m);
+		splx(s);
+		return (ENOBUFS);
+	}
 	
-    IF_ENQUEUE(ifq, m);
-    schednetisr(isr);
+	IF_ENQUEUE(ifq, m);
+	schednetisr(isr);
 
-    /* Statistics */
-    ifp->if_ipackets++;
-    ifp->if_ibytes += m->m_pkthdr.len;
-
-    splx(s);
-
-    return (0);
+	/* Statistics */
+	ifp->if_ipackets++;
+	ifp->if_ibytes += m->m_pkthdr.len;
+	splx(s);
+	return (0);
 }
 
 /* ARGSUSED */
 void
 encrtrequest(cmd, rt, sa)
-int cmd;
-struct rtentry *rt;
-struct sockaddr *sa;
+	int cmd;
+	struct rtentry *rt;
+	struct sockaddr *sa;
 {
-    if (rt)
-      rt->rt_rmx.rmx_mtu = ENCMTU;
+	if (rt)
+		rt->rt_rmx.rmx_mtu = ENCMTU;
 }
-
-
-/*
- * Process an ioctl request.
- * Also shamelessly stolen from loioctl()
- */
 
 /* ARGSUSED */
 int
 encioctl(ifp, cmd, data)
-register struct ifnet *ifp;
-u_long cmd;
-caddr_t data;
+	register struct ifnet *ifp;
+	u_long cmd;
+	caddr_t data;
 {
-    register struct ifaddr *ifa;
-    register int error = 0;
+	register struct ifaddr *ifa;
+	register int error = 0;
 
-    switch (cmd)
-    {
+	switch (cmd) {
 	case SIOCSIFADDR:
-	    /*
-	     * Everything else is done at a higher level.
-	     */
-
-	    ifp->if_flags |= IFF_UP;
-	    ifa = (struct ifaddr *) data;
-
-	    break;
+		/*
+		 * Everything else is done at a higher level.
+		 */
+		ifp->if_flags |= IFF_UP;
+		ifa = (struct ifaddr *) data;
+		break;
 
 	default:
-	    error = EINVAL;
-    }
-
-    return error;
+		error = EINVAL;
+		break;
+	}
+	return (error);
 }
