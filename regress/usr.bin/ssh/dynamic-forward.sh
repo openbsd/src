@@ -1,4 +1,4 @@
-#	$OpenBSD: dynamic-forward.sh,v 1.2 2003/07/03 08:21:46 markus Exp $
+#	$OpenBSD: dynamic-forward.sh,v 1.3 2004/02/28 12:16:57 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="dynamic forwarding"
@@ -6,9 +6,9 @@ tid="dynamic forwarding"
 PORT=4242
 FWDPORT=4243
 
-if [ -x `which nc` ] && nc -h 2>&1 | grep "x proxy address" >/dev/null; then
+if [ -x "`which nc`" ] && nc -h 2>&1 | grep "proxy address" >/dev/null; then
 	proxycmd="nc -x 127.0.0.1:$FWDPORT -X"
-elif [ -x `which connect` ]; then
+elif [ -x "`which connect`" ]; then
 	proxycmd="connect -S 127.0.0.1:$FWDPORT -"
 else
 	echo "skipped (no suitable ProxyCommand found)"
