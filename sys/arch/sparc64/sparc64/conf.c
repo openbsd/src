@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2001/12/11 23:19:02 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 2001/12/14 23:14:02 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -101,6 +101,9 @@
 #define NFDC 0
 
 #include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+#include "wsmux.h"
 
 #include "rd.h"
 #include "ses.h"
@@ -234,9 +237,9 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NSABTTY,sabtty),	/* 77: sab82532 serial ports */
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 78: frame buffers, etc. */
 	    wsdisplay),
-	cdev_notdef(),			/* 79 */
-	cdev_notdef(),			/* 80 */
-	cdev_notdef(),			/* 81 */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 79: keyboards */
+	cdev_mouse_init(NWSMOUSE, wsmouse), /* 80: mice */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 81: ws multiplexor */
 	cdev_notdef(),			/* 82 */
 	cdev_notdef(),			/* 83 */
 	cdev_notdef(),			/* 84 */
