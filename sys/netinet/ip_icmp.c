@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.20 1999/12/28 07:43:40 itojun Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.21 2000/05/15 11:07:32 itojun Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -594,8 +594,11 @@ icmp_reflect(m)
 			    if (opt == IPOPT_NOP)
 				    len = 1;
 			    else {
+				    if (cnt < IPOPT_OLEN + sizeof(*cp))
+					    break;
 				    len = cp[IPOPT_OLEN];
-				    if (len <= 0 || len > cnt)
+				    if (len < IPOPT_OLEN + sizeof(*cp) ||
+				        len > cnt)
 					    break;
 			    }
 			    /*
