@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.164 2003/01/10 10:08:54 cedric Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.165 2003/01/15 23:19:19 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -362,12 +362,16 @@ the
 .Pa altq on
 declaration.
 The
-scheduler type is required but currently only
+scheduler type is required. Currently
 .Pa cbq
-is supported.
+and
+.Pa priq
+are supported.
 The maximum rate for all queues on this interface is specified using the
 .Pa bandwidth
 directive; if not specified the interface's bandwidth is used.
+.Pa priq
+does not support bandwidth specification.
 The value must not exceed the interface bandwidth and can be specified
 in absolute and percentage values, where the latter is relative to the
 interface bandwidth.
@@ -384,7 +388,8 @@ directive.
 .Pp
 In the following example, the interface
 .Pa dc0
-should queue up to 5 Mbit/s in four second-level queues using CBQ.
+should queue up to 5 Mbit/s in four second-level queues using
+.Pa cbq .
 Those four queues will be shown in a later example.
 .Bd -literal
     altq on dc0 cbq bandwidth 5Mb queue { std, http, mail, ssh }
