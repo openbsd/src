@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 // for malloc() & free()
-#if !defined(__linux__) && !defined(__unix__)
+#if !defined(__linux__) && !defined(__unix__) || defined(__OpenBSD__)
 #include <stdlib.h>
 #else
 #include <malloc.h>

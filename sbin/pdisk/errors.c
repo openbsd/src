@@ -78,7 +78,7 @@ extern const char * const sys_errlist[];
 void
 init_program_name(char **argv)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__OpenBSD__)
     if ((program_name = strrchr(argv[0], '/')) != (char *)NULL) {
 	program_name++;
     } else {
@@ -93,11 +93,19 @@ init_program_name(char **argv)
 void
 do_help()
 {
+#ifndef __OpenBSD__
     printf("\t%s [-h|--help]\n", program_name);
     printf("\t%s [-v|--version]\n", program_name);
     printf("\t%s [-l|--list [name ...]]\n", program_name);
     printf("\t%s [-r|--readonly] name ...\n", program_name);
     printf("\t%s [-i|--interactive]\n", program_name);
+#else
+    printf("\t%s [-h]\n", program_name);
+    printf("\t%s [-v]\n", program_name);
+    printf("\t%s [-l [name ...]]\n", program_name);
+    printf("\t%s [-r] name ...\n", program_name);
+    printf("\t%s [-i]\n", program_name);
+#endif
     printf("\t%s name ...\n", program_name);
 }
 
@@ -125,7 +133,7 @@ fatal(int value, char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     va_end(ap);
 
-#if defined(__linux__) || defined(NeXT)
+#if defined(__linux__) || defined(NeXT) || defined(__OpenBSD__)
     if (value > 0 && value < sys_nerr) {
 	fprintf(stderr, "  (%s)\n", sys_errlist[value]);
     } else {
@@ -135,7 +143,7 @@ fatal(int value, char *fmt, ...)
     fprintf(stderr, "\n");
 #endif
 
-#ifndef __linux__
+#if !defined(__linux__) && !defined(__OpenBSD__)
     printf("Processing stopped: Choose 'Quit' from the file menu to quit.\n\n");
 #endif
     exit(value);
@@ -157,7 +165,7 @@ error(int value, char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     va_end(ap);
 
-#if defined(__linux__) || defined(NeXT)
+#if defined(__linux__) || defined(NeXT) || defined(__OpenBSD__)
     if (value > 0 && value < sys_nerr) {
 	fprintf(stderr, "  (%s)\n", sys_errlist[value]);
     } else {

@@ -33,6 +33,8 @@
 #ifdef __linux__
 #include <getopt.h>
 #include <malloc.h>
+#elif defined(__OpenBSD__)
+#include <stdlib.h>
 #else
 // for malloc() & free()
 #include <stdlib.h>
@@ -139,7 +141,7 @@ void print_top_notes();
 int
 main(int argc, char **argv)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined (__OpenBSD__)
     int name_index;
 #else
     printf("This app uses the SIOUX console library\n");
@@ -167,7 +169,7 @@ main(int argc, char **argv)
 		VERSION, get_version_string());
     }
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__OpenBSD__)
     name_index = get_options(argc, argv);
 
     if (vflag) {
@@ -432,6 +434,68 @@ get_options(int argc, char **argv)
 	    pflag = (PFLAG_DEFAULT)?0:1;
 	    break;
 	case kBadOption:
+	default:
+	    flag = 1;
+	    break;
+	}
+    }
+    if (flag) {
+	usage("bad arguments");
+    }
+    return optind;
+}
+#endif
+
+#ifdef __OpenBSD__
+int
+get_options(int argc, char **argv)
+{
+    int c;
+    extern int optind;
+    extern char *optarg;
+    int flag = 0;
+
+    lflag = LFLAG_DEFAULT;
+    lfile = NULL;
+    vflag = VFLAG_DEFAULT;
+    hflag = HFLAG_DEFAULT;
+    dflag = DFLAG_DEFAULT;
+    rflag = RFLAG_DEFAULT;
+    aflag = AFLAG_DEFAULT;
+    pflag = PFLAG_DEFAULT;
+    interactive = INTERACT_DEFAULT;
+    cflag = CFLAG_DEFAULT;
+
+    optind = 1;	// reset option scanner logic
+    while ((c = getopt(argc, argv, "hlvdric")) != -1) {
+	switch (c) {
+	case 'h':
+	    hflag = (HFLAG_DEFAULT)?0:1;
+	    break;
+	case 'l':
+	    lflag = (LFLAG_DEFAULT)?0:1;
+	    break;
+	case 'v':
+	    vflag = (VFLAG_DEFAULT)?0:1;
+	    break;
+	case 'd':
+	    dflag = (DFLAG_DEFAULT)?0:1;
+	    break;
+	case 'c':
+	    cflag = (CFLAG_DEFAULT)?0:1;
+	    break;
+	case 'r':
+	    rflag = (RFLAG_DEFAULT)?0:1;
+	    break;
+	case 'i':
+	    interactive = (INTERACT_DEFAULT)?0:1;
+	    break;
+	case 'a':
+	    aflag = (AFLAG_DEFAULT)?0:1;
+	    break;
+	case kLogicalOption:
+	    pflag = (PFLAG_DEFAULT)?0:1;
+	    break;
 	default:
 	    flag = 1;
 	    break;
@@ -872,7 +936,9 @@ do_expert(partition_map_header *map, char *name)
 	    do_examine_patch_partition(map);
 	    break;
 	default:
+#ifndef __OpenBSD__
 	do_error:
+#endif
 	    bad_input("No such command (%c)", command);
 	    break;
 	}

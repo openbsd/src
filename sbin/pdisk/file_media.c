@@ -45,6 +45,10 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef __OpenBSD__
+#include <sys/stat.h>
+#endif
+
 #include "file_media.h"
 #include "errors.h"
 
@@ -195,7 +199,7 @@ open_file_as_media(char *file, int oflag)
     FILE_MEDIA	a;
     int			fd;
     loff_t off;
-#ifdef __linux__
+#if defined(__linux__) || defined(__OpenBSD__)
     struct stat info;
 #endif
 	
@@ -224,7 +228,7 @@ open_file_as_media(char *file, int oflag)
 	    a->m.do_os_reload = os_reload_file_media;
 	    a->fd = fd;
 	    a->regular_file = 0;
-#ifdef __linux__
+#if defined(__linux__) || defined(__OpenBSD__)
 	    if (fstat(fd, &info) < 0) {
 		error(errno, "can't stat file '%s'", file);
 	    } else {
@@ -489,13 +493,25 @@ step_file_iterator(MEDIA_ITERATOR m)
 		     */
 		    switch (a->style) {
 		    case kSCSI_Disks:
+#ifdef __OpenBSD__
+			sprintf(result, "/dev/sd%dc", (int)a->index);
+#else
 			sprintf(result, "/dev/sd%c", 'a'+(int)a->index);
+#endif
 			break;
 		    case kATA_Devices:
+#ifdef __OpenBSD__
+			sprintf(result, "/dev/wd%dc", (int)a->index);
+#else
 			sprintf(result, "/dev/hd%c", 'a'+(int)a->index);
+#endif
 			break;
 		    case kSCSI_CDs:
+#ifdef __OpenBSD__
+			sprintf(result, "/dev/cd%dc", (int)a->index);
+#else
 			sprintf(result, "/dev/scd%c", '0'+(int)a->index);
+#endif
 			break;
 		    }
 		    if (stat(result, &info) < 0) {
