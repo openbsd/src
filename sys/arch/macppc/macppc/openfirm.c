@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.4 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.5 2003/10/15 17:50:16 drahn Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -43,8 +43,7 @@ extern void ofw_stack(void);
 extern void ofbcopy(const void *, void *, size_t);
 
 int
-OF_peer(phandle)
-	int phandle;
+OF_peer(int phandle)
 {
 	static struct {
 		char *name;
@@ -57,7 +56,7 @@ OF_peer(phandle)
 		1,
 		1,
 	};
-	
+
 	ofw_stack();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
@@ -66,8 +65,7 @@ OF_peer(phandle)
 }
 
 int
-OF_child(phandle)
-	int phandle;
+OF_child(int phandle)
 {
 	static struct {
 		char *name;
@@ -80,7 +78,7 @@ OF_child(phandle)
 		1,
 		1,
 	};
-	
+
 	ofw_stack();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
@@ -89,8 +87,7 @@ OF_child(phandle)
 }
 
 int
-OF_parent(phandle)
-	int phandle;
+OF_parent(int phandle)
 {
 	static struct {
 		char *name;
@@ -103,7 +100,7 @@ OF_parent(phandle)
 		1,
 		1,
 	};
-	
+
 	ofw_stack();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
@@ -112,11 +109,7 @@ OF_parent(phandle)
 }
 
 int
-OF_getprop(handle, prop, buf, buflen)
-	int handle;
-	char *prop;
-	void *buf;
-	int buflen;
+OF_getprop(int handle, char *prop, void *buf, int buflen)
 {
 	static struct {
 		char *name;
@@ -153,10 +146,10 @@ OF_interpret(char *cmd, int nreturns, ...)
 	va_list ap;
 	int i;
 	static struct {
-		char *name;  
+		char *name;
 		int nargs;
 		int nreturns;
-		char *cmd; 
+		char *cmd;
 		int status;
 		int results[8];
 	} args = {
@@ -185,8 +178,7 @@ OF_interpret(char *cmd, int nreturns, ...)
 
 
 int
-OF_finddevice(name)
-	char *name;
+OF_finddevice(char *name)
 {
 	static struct {
 		char *name;
@@ -198,7 +190,7 @@ OF_finddevice(name)
 		"finddevice",
 		1,
 		1,
-	};	
+	};
 
 	ofw_stack();
 	args.device = name;
@@ -209,8 +201,7 @@ OF_finddevice(name)
 static void OF_rboot(char *bootspec);
 
 static void
-OF_rboot(bootspec)
-	char *bootspec;
+OF_rboot(char *bootspec)
 {
 	static struct {
 		char *name;
@@ -222,7 +213,7 @@ OF_rboot(bootspec)
 		0,
 	};
 	int l;
-	
+
 	if ((l = strlen(bootspec)) >= NBPG)
 		panic("OF_boot");
 	ofw_stack();
@@ -232,8 +223,7 @@ OF_rboot(bootspec)
 
 
 void
-OF_boot(bootspec)
-	char *bootspec;
+OF_boot(char *bootspec)
 {
 	OF_rboot(bootspec);
 	printf ("OF_boot returned!");		/* just in case */
@@ -262,18 +252,15 @@ OF_exit()
 
 /* XXX What is the reason to have this instead of bcopy/memcpy? */
 void
-ofbcopy(src, dst, len)
-        const void *src;    
-        void *dst;         
-        size_t len;
+ofbcopy(const void *src, void *dst, size_t len)
 {
         const char *sp = src;
         char *dp = dst;
 
         if (src == dst)
-                return; 
-                
-        while (len-- > 0)                     
+                return;
+
+        while (len-- > 0)
                 *dp++ = *sp++;
 }
 

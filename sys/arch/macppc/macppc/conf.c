@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2003/06/27 16:57:14 nate Exp $ */
+/*	$OpenBSD: conf.c,v 1.24 2003/10/15 17:50:16 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -250,8 +250,7 @@ dev_t swapdev = makedev(1, 0);
  * Check whether dev is /dev/mem or /dev/kmem.
  */
 int
-iskmemdev(dev)
-	dev_t dev;
+iskmemdev(dev_t dev)
 {
 	return major(dev) == mem_no && minor(dev) < 2;
 }
@@ -260,8 +259,7 @@ iskmemdev(dev)
  * Check whether dev is /dev/zero.
  */
 int
-iszerodev(dev)
-	dev_t dev;
+iszerodev(dev_t dev)
 {
 	return major(dev) == mem_no && minor(dev) == 12;
 }

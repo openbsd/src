@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2003/09/06 17:13:17 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2003/10/15 17:50:16 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.11 2003/09/06 17:13:17 drahn Exp $
+ *      $Id: autoconf.c,v 1.12 2003/10/15 17:50:16 drahn Exp $
  */
 
 /*
@@ -136,8 +136,8 @@ diskconf()
 void
 swapconf()
 {
-	register struct swdevt *swp;
-	register int nblks;
+	struct swdevt *swp;
+	int nblks;
 
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
@@ -211,21 +211,20 @@ static	struct nam2blk {
 };
 
 int
-findblkmajor(dv)
-	struct device *dv;
+findblkmajor(struct device *dv)
 {
 	char *name = dv->dv_xname;
 	int i;
 
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
-		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)) == 0)
+		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)) ==
+		    0)
 			return (nam2blk[i].maj);
 	 return (-1);
 }
 
 char *
-findblkname(maj)
-	int maj;
+findblkname(int maj)
 {
 	int i;
 
@@ -236,12 +235,9 @@ findblkname(maj)
 }
 
 static struct device *
-getdisk(str, len, defpart, devp)
-	char *str;
-	int len, defpart;
-	dev_t *devp;
+getdisk(char *str, int len, int defpart, dev_t *devp)
 {
-	register struct device *dv;
+	struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -265,8 +261,8 @@ parsedisk(str, len, defpart, devp)
 	int len, defpart;
 	dev_t *devp;
 {
-	register struct device *dv;
-	register char *cp, c;
+	struct device *dv;
+	char *cp, c;
 	int majdev, part;
 
 	if (len == 0)
@@ -352,10 +348,8 @@ setroot()
 		printf("boot device: lookup '%s' failed.\n", bootdev);
 		boothowto |= RB_ASKNAME; /* Don't Panic :-) */
 		/* boothowto |= RB_SINGLE; */
-	}
-	else {
+	} else
 		printf("boot device: %s.\n", bootdv->dv_xname);
-	}
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
@@ -395,9 +389,9 @@ setroot()
 		 * because swap must be on same device as root, for
 		 * network devices this is easy.
 		 */
-		if (bootdv->dv_class == DV_IFNET) {
+		if (bootdv->dv_class == DV_IFNET)
 			goto gotswap;
-		}
+
 		for (;;) {
 			printf("swap device ");
 			if (bootdv != NULL)
@@ -458,8 +452,7 @@ gotswap:
 			rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit, 0);
 			nswapdev = MAKEDISKDEV(majdev, bootdv->dv_unit, 1);
 			dumpdev = nswapdev;
-		}
-		else {
+		} else {
 			/*
 			 *  Root and Swap are on net.
 			 */	
@@ -525,9 +518,7 @@ gotswap:
  * find a device matching "name" and unit number
  */
 struct device *
-getdevunit(name, unit)
-	char *name;
-	int unit;
+getdevunit(char *name, int unit)
 {
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
@@ -542,10 +533,10 @@ getdevunit(name, unit)
 	strlcpy(fullname, name, sizeof fullname);
 	strlcat(fullname, num, sizeof fullname);
 
-	while (strcmp(dev->dv_xname, fullname) != 0) {
+	while (strcmp(dev->dv_xname, fullname) != 0)
 		if ((dev = dev->dv_list.tqe_next) == NULL)
 			return NULL;
-	}
+
 	return dev;
 }
 
@@ -562,8 +553,7 @@ struct devmap {
 #define	T_DISK	0x21
 
 static struct devmap *
-findtype(s)
-	char **s;
+findtype(char **s)
 {
 	static struct devmap devmap[] = {
 		{ "/pci@",	NULL, T_BUS },
@@ -589,9 +579,9 @@ findtype(s)
 		}
 		dp++;
 	}
-	if (dp->att == NULL) {
+	if (dp->att == NULL)
 		printf("string [%s] not found\n", *s);
-	}
+
 	return(dp);
 }
 
@@ -602,8 +592,7 @@ findtype(s)
  *                       '/pci/mac-io/ide/disk/bsd
  */
 void
-makebootdev(bp)
-	char *bp;
+makebootdev(char *bp)
 {
 	int	unit;
 	char   *dev, *cp;
@@ -611,9 +600,9 @@ makebootdev(bp)
 
 	cp = bp;
 	do {
-		while(*cp && *cp != '/') {
+		while(*cp && *cp != '/')
 			cp++;
-		}
+
 		dp = findtype(&cp);
 		if (!dp->att) {
 			printf("Warning: boot device unrecognized: %s\n", bp);
@@ -634,8 +623,7 @@ makebootdev(bp)
 }
 
 int
-getpno(cp)
-	char **cp;
+getpno(char **cp)
 {
 	int val = 0;
 	char *cx = *cp;

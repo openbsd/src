@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.10 2003/08/15 20:32:13 tedu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.11 2003/10/15 17:50:16 drahn Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -63,10 +63,7 @@ extern int allowaperture;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	switch (minor(dev)) {
@@ -94,10 +91,7 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 #ifdef APERTURE
 	if (minor(dev) == 4)
@@ -108,10 +102,7 @@ mmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vm_offset_t v;
 	vm_size_t c;
@@ -183,22 +174,14 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-        dev_t dev;
-        off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	return (-1);
 }
 
 /*ARGSUSED*/
 int
-mmioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }

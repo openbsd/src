@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.19 2003/06/02 18:14:16 jason Exp $	*/
+/*	$OpenBSD: dma.c,v 1.20 2003/10/15 17:50:16 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -56,22 +56,17 @@
 
 #include <machine/bus.h>
 int _dmamem_alloc_range( bus_dma_tag_t t, bus_size_t size,
-	bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
-	int nsegs, int *rsegs, int flags, vm_offset_t low, vm_offset_t high);
-
+    bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
+    int nsegs, int *rsegs, int flags, vm_offset_t low, vm_offset_t high);
+int _dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int, bus_addr_t *, int *, int);
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
  */
 int
-_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct powerpc_bus_dmamap *map;
 	void *mapstore;
@@ -114,28 +109,17 @@ _dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * DMA map destruction functions.
  */
 void
-_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	free(map, M_DEVBUF);
 }
 
-int _dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-    struct proc *, int, bus_addr_t *, int *, int);
 
 int
-_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-	bus_addr_t *lastaddrp;
-	int *segp;
-	int first;
+_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, bus_addr_t *lastaddrp,
+    int *segp, int first)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
@@ -222,13 +206,8 @@ _dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
  * be called by bus-specific DMA map load functions.
  */
 int
-_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen,
+    struct proc *p, int flags)
 {
 	bus_addr_t lastaddr;
 	int seg, error;
@@ -256,11 +235,8 @@ _dmamap_load(t, map, buf, buflen, p, flags)
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
-_dmamap_load_mbuf(t, map, m0, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m0;
-	int flags;
+_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
+    int flags)
 {
 	bus_addr_t lastaddr;
 	int seg, error, first;
@@ -299,11 +275,7 @@ _dmamap_load_mbuf(t, map, m0, flags)
  * Like _bus_dmamap_load(), but for uios.
  */
 int
-_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
 {
 	bus_addr_t lastaddr;
 	int seg, i, error, first;
@@ -361,13 +333,8 @@ _dmamap_load_uio(t, map, uio, flags)
  * bus_dmamem_alloc().
  */
 int
-_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
+    int nsegs, bus_size_t size, int flags)
 {
 	if (nsegs > map->_dm_segcnt || size > map->_dm_size)
 		return (EINVAL);
@@ -399,9 +366,7 @@ _dmamap_load_raw(t, map, segs, nsegs, size, flags)
  * bus-specific DMA map unload functions.
  */
 void
-_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	/*
@@ -417,12 +382,8 @@ _dmamap_unload(t, map)
  * by bus-specific DMA map synchronization functions.
  */
 void
-_dmamap_sync(t, map, offset, len, op)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int op;
+_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+bus_size_t len, int op)
 {
 
 	/* Nothing to do here. */
@@ -433,13 +394,9 @@ _dmamap_sync(t, map, offset, len, op)
  * by bus-specific DMA memory allocation functions.
  */
 int
-_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 	return (_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, 0xf0000000));
@@ -450,10 +407,7 @@ _dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
  * bus-specific DMA memory free functions.
  */
 void
-_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	struct vm_page *m;
 	bus_addr_t addr;
@@ -481,13 +435,8 @@ _dmamem_free(t, segs, nsegs)
  * bus-specific DMA memory map functions.
  */
 int
-_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
+    caddr_t *kvap, int flags)
 {
 	vm_offset_t va;
 	bus_addr_t addr;
@@ -521,10 +470,7 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
  * bus-specific DMA memory unmapping functions.
  */
 void
-_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -541,12 +487,8 @@ _dmamem_unmap(t, kva, size)
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
-_dmamem_mmap(t, segs, nsegs, off, prot, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot, flags;
+_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
+    int prot, int flags)
 {
 	int i;
 
@@ -581,16 +523,9 @@ _dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * Called by DMA-safe memory allocation methods.
  */
 int
-_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
-    flags, low, high)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-	vm_offset_t low;
-	vm_offset_t high;
+_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags, vm_offset_t low, vm_offset_t high)
 {
 	vm_offset_t curaddr, lastaddr;
 	struct vm_page *m;

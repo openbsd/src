@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.19 2003/07/02 21:30:13 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.20 2003/10/15 17:50:16 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -88,8 +88,7 @@ static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
  * to provide space for two additional entry beyond the terminating one.
  */
 void
-ofw_mem_regions(memp, availp)
-	struct mem_region **memp, **availp;
+ofw_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	int phandle;
 	
@@ -98,17 +97,18 @@ ofw_mem_regions(memp, availp)
 	 */
 	if ((phandle = OF_finddevice("/memory")) == -1
 	    || OF_getprop(phandle, "reg",
-			  OFmem, sizeof OFmem[0] * OFMEM_REGIONS)
-	       <= 0
+	    OFmem, sizeof OFmem[0] * OFMEM_REGIONS) <= 0
 	    || OF_getprop(phandle, "available",
-			  OFavail, sizeof OFavail[0] * OFMEM_REGIONS)
-	       <= 0)
+	    OFavail, sizeof OFavail[0] * OFMEM_REGIONS) <= 0)
 		panic("no memory?");
+
 	*memp = OFmem;
+
 	/* HACK */
 	if (OFmem[0].size == 0) {
 		*memp = OFavail;
 	}
+
 	*availp = OFavail;
 }
 
@@ -136,6 +136,7 @@ static struct {
 	vm_offset_t pa;
 	int mode;
 } ofw_mapping[256];
+
 int
 save_ofw_mapping()
 {
@@ -149,11 +150,13 @@ save_ofw_mapping()
 	if (OF_getprop(chosen, "stdin", &stdin, sizeof stdin) != sizeof stdin) {
 		return 0;
 	}
+
 	OF_stdin = stdin;
 	if (OF_getprop(chosen, "stdout", &stdout, sizeof stdout)
 	    != sizeof stdout) {
 		return 0;
 	}
+
 	if (stdout == 0) {
 		/* If the screen is to be console, but not active, open it */
 		stdout = OF_open("screen");
@@ -307,9 +310,7 @@ static pcitag_t ofw_make_tag( void *cpv, int bus, int dev, int fnc);
 
 /* ARGSUSED */
 static pcitag_t 
-ofw_make_tag(cpv, bus, dev, fnc)
-        void *cpv;
-        int bus, dev, fnc;
+ofw_make_tag(void *cpv, int bus, int dev, int fnc)
 {
         return (bus << 16) | (dev << 11) | (fnc << 8);
 }
@@ -600,8 +601,7 @@ of_display_console()
 }
 
 void
-of_setbrightness(brightness)
-	int brightness;
+of_setbrightness(int brightness)
 {
 
 #if NVGAFB_PCI > 0
@@ -615,7 +615,10 @@ of_setbrightness(brightness)
 
 	cons_brightness = brightness;
 
-	/* The OF method is called "set-contrast" but affects brightness. Don't ask. */
+	/*
+	 * The OF method is called "set-contrast" but affects brightness.
+	 * Don't ask.
+	 */
 	OF_call_method_1("set-contrast", cons_display_ofh, 1, cons_brightness);
 
 	/* XXX this routine should also save the brightness settings in the nvram */
@@ -630,29 +633,24 @@ cons_decl(ofw);
  * Console support functions
  */
 void
-ofwcnprobe(cd)
-        struct consdev *cd;
+ofwcnprobe(struct consdev *cd)
 {
 	cd->cn_pri = CN_DEAD;
 }
 
 void
-ofwcninit(cd)
-        struct consdev *cd;
+ofwcninit(struct consdev *cd)
 {
 }
 void
-ofwcnputc(dev, c)
-	dev_t dev;
-	int c;
+ofwcnputc(dev_t dev, int c)
 {
 	char ch = c;
  
 	OF_write(OF_stdout, &ch, 1);
 }
 int
-ofwcngetc(dev)
-	dev_t dev;
+ofwcngetc(dev_t dev)
 {
         unsigned char ch = '\0';
         int l;
@@ -664,9 +662,7 @@ ofwcngetc(dev)
 }
 
 void
-ofwcnpollc(dev, on)
-	dev_t dev;
-	int on;
+ofwcnpollc(dev_t dev, int on)
 {
 }
 

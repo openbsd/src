@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.8 2003/10/15 17:50:16 drahn Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -59,10 +59,7 @@ int	mb_matchname(struct confargs *, char *);
 
 /*ARGSUSED*/
 static int
-mbmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+mbmatch(struct device *parent, void *cfdata, void *aux)
 {
 
 	/*
@@ -72,10 +69,7 @@ mbmatch(parent, cfdata, aux)
 }
 
 static void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
@@ -151,9 +145,7 @@ mbattach(parent, self, aux)
 }
 
 static int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mbprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		return (QUIET);
@@ -161,33 +153,25 @@ mbprint(aux, pnp)
 }
 
 void
-mb_intr_establish(ca, handler, val)
-	struct confargs *ca;
-	int (*handler)(void *);
-	void *val;
+mb_intr_establish(struct confargs *ca, int (*handler)(void *), void *val)
 {
 	panic("can never mb_intr_establish");
 }
 
 void
-mb_intr_disestablish(ca)
-	struct confargs *ca;
+mb_intr_disestablish(struct confargs *ca)
 {
 	panic("can never mb_intr_disestablish");
 }
 
 caddr_t
-mb_cvtaddr(ca)
-	struct confargs *ca;
+mb_cvtaddr(struct confargs *ca)
 {
-
 	return (NULL);
 }
 
 int
-mb_matchname(ca, name)
-	struct confargs *ca;
-	char *name;
+mb_matchname(struct confargs *ca, char *name)
 {
 	return (strcmp(name, ca->ca_name) == 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.5 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.6 2003/10/15 17:50:16 drahn Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -43,8 +43,7 @@ extern void ofw_stack(void);
 extern void ofbcopy(const void *, void *, size_t);
 
 int
-OF_instance_to_package(ihandle)
-	int ihandle;
+OF_instance_to_package(int ihandle)
 {
 	static struct {
 		char *name;
@@ -66,10 +65,7 @@ OF_instance_to_package(ihandle)
 }
 
 int
-OF_package_to_path(phandle, buf, buflen)
-	int phandle;
-	char *buf;
-	int buflen;
+OF_package_to_path(int phandle, char *buf, int buflen)
 {
 	static struct {
 		char *name;
@@ -176,8 +172,7 @@ OF_call_method_1(char *method, int ihandle, int nargs, ...)
 }
 
 int
-OF_open(dname)
-	char *dname;
+OF_open(char *dname)
 {
 	static struct {
 		char *name;
@@ -203,8 +198,7 @@ OF_open(dname)
 }
 
 void
-OF_close(handle)
-	int handle;
+OF_close(int handle)
 {
 	static struct {
 		char *name;
@@ -226,10 +220,7 @@ OF_close(handle)
  * This assumes that character devices don't read in multiples of PAGE_SIZE.
  */
 int
-OF_read(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
+OF_read(int handle, void *addr, int len)
 {
 	static struct {
 		char *name;
@@ -270,10 +261,7 @@ OF_read(handle, addr, len)
 }
 
 int
-OF_write(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
+OF_write(int handle, void *addr, int len)
 {
 	static struct {
 		char *name;
@@ -306,9 +294,7 @@ OF_write(handle, addr, len)
 }
 
 int
-OF_seek(handle, pos)
-	int handle;
-	u_quad_t pos;
+OF_seek(int handle, u_quad_t pos)
 {
 	static struct {
 		char *name;

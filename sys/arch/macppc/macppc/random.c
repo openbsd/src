@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.1 2001/09/01 15:44:20 drahn Exp $	*/
+/*	$OpenBSD: random.c,v 1.2 2003/10/15 17:50:16 drahn Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -79,10 +79,9 @@ random()
 	value = 16807 * _randseed;
 	p = value & (long long) (0xffffffff);
 	q = (value >> 32) & (long long) (0xffffffff);
-	if (((long long) p + q) < 0x3fffffff) {
+	if (((long long) p + q) < 0x3fffffff)
 		_randseed = p + q;
-	} else {
+	else
 		_randseed = (int)(((long long)p + q ) & 0x3ffffffe) +1;
-	}
 	return _randseed;
 }

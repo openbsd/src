@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 2003/07/02 21:30:13 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.14 2003/10/15 17:50:16 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -100,10 +100,7 @@ cpumatch(parent, cfdata, aux)
 }
 
 void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpuattach(struct device *parent, struct device *dev, void *aux)
 {
 	unsigned int cpu, pvr, hid0;
 	char name[32];
@@ -167,7 +164,7 @@ cpuattach(parent, dev, aux)
                 if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
                     && !strcmp(name, "cpu")
                     && OF_getprop(qhandle, "clock-frequency",
-                                  &clock_freq , sizeof clock_freq ) >= 0)
+                        &clock_freq , sizeof clock_freq ) >= 0)
 		{
 			break;
 		}
@@ -210,6 +207,7 @@ cpuattach(parent, dev, aux)
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
 		if (cpu == MPC7450 && (pvr & 0xffff) < 0x0200)
 			hid0 &= ~HID0_BTIC;
+		break;
 	}
 	ppc_mthid0(hid0);
 
