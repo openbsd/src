@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.73 2002/12/16 01:57:04 tdeval Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.74 2003/01/13 06:06:13 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -830,8 +830,95 @@ dointr(void)
 	printf("Total            %10lu %8lu\n", inttotal, inttotal / uptime);
 }
 #else
+static void dointr_sysctl(void);
+static void dointr_kvm(void);
+
 void
 dointr(void)
+{
+	if (nlistf == NULL && memf == NULL)
+		dointr_sysctl();
+	else
+		dointr_kvm();
+}
+
+static void
+dointr_sysctl(void)
+{
+	struct evcntlist allevents;
+	struct evcnt evcnt, *evptr;
+	struct device dev;
+
+	time_t uptime;
+	long inttotal;
+	int nintr;
+	char intrname[128];
+	int mib[4];
+	size_t siz;
+	int i;
+
+	uptime = getuptime();
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_INTRCNT;
+	mib[2] = KERN_INTRCNT_NUM;
+	siz = sizeof(nintr);
+	if (sysctl(mib, 3, &nintr, &siz, NULL, 0) < 0) {
+		warnx("could not read kern.intrcnt.nintrcnt");
+		return;
+	}
+
+	inttotal = 0;
+	for (i = 0; i < nintr; i++) {
+		int cnt;
+
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_INTRCNT;
+		mib[2] = KERN_INTRCNT_NAME;
+		mib[3] = i;
+		siz = sizeof(intrname);
+		if (sysctl(mib, 4, intrname, &siz, NULL, 0) < 0) {
+			warnx("could not read kern.intrcnt.name.%d", i);
+			return ;
+		}
+
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_INTRCNT;
+		mib[2] = KERN_INTRCNT_CNT;
+		mib[3] = i;
+		siz = sizeof(cnt);
+		if (sysctl(mib, 4, &cnt, &siz, NULL, 0) < 0) {
+			warnx("could not read kern.intrcnt.name.%d", i);
+			return ;
+		}
+		if (cnt)
+			(void)printf("%-14s %12ld %8ld\n", intrname,
+			    cnt, cnt / uptime);
+		inttotal += cnt;
+	}
+
+	kread(X_ALLEVENTS, &allevents, sizeof allevents);
+	evptr = allevents.tqh_first;
+	while (evptr) {
+		if (kvm_read(kd, (long)evptr, (void *)&evcnt,
+		    sizeof evcnt) != sizeof evcnt)
+			errx(1, "event chain trashed: %s", kvm_geterr(kd));
+		if (strcmp(evcnt.ev_name, "intr") == 0) {
+			if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
+			    sizeof dev) != sizeof dev)
+				errx(1, "event chain trashed: %s", kvm_geterr(kd));
+			if (evcnt.ev_count)
+				(void)printf("%-14s %12d %8ld\n", dev.dv_xname,
+				    evcnt.ev_count, (long)(evcnt.ev_count / uptime));
+			inttotal += evcnt.ev_count++;
+		}
+		evptr = evcnt.ev_list.tqe_next;
+	}
+	(void)printf("Total          %12ld %8ld\n", inttotal, inttotal / uptime);
+}
+
+static void
+dointr_kvm(void)
 {
 	long *intrcnt, inttotal;
 	time_t uptime;
