@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.4 2001/03/01 03:43:12 aaron Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.5 2001/03/09 15:25:01 aaron Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -382,6 +382,38 @@ static const keysym_t pckbd_keydesc_es[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t pckbd_keydesc_be[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(2),   KS_ampersand,	KS_1,		KS_bar,
+    KC(3),   KS_eacute,		KS_2,		KS_at,
+    KC(4),   KS_quotedbl,	KS_3,		KS_numbersign,
+    KC(5),   KS_apostrophe,	KS_4,
+    KC(6),   KS_parenleft,	KS_5,
+    KC(7),   KS_currency,	KS_6,		KS_asciicircum,
+    KC(8),   KS_egrave,		KS_7,
+    KC(9),   KS_exclam,		KS_8,
+    KC(10),  KS_ccedilla,	KS_9,		KS_braceleft,
+    KC(11),  KS_agrave,		KS_0,		KS_braceright,
+    KC(12),  KS_parenright,	KS_degree,
+    KC(13),  KS_minus,		KS_underscore,
+    KC(16),  KS_a,
+    KC(17),  KS_z,
+    KC(26),  KS_dead_circumflex, KS_dead_diaeresis, KS_bracketleft,
+    KC(27),  KS_dollar,		KS_asterisk,	KS_bracketright,
+    KC(30),  KS_q,
+    KC(39),  KS_m,
+    KC(40),  KS_ugrave,		KS_percent,	KS_section,
+    KC(41),  KS_twosuperior,
+    KC(43),  KS_mu,		KS_sterling,	KS_grave,
+    KC(44),  KS_w,
+    KC(50),  KS_comma,		KS_question,
+    KC(51),  KS_semicolon,	KS_period,
+    KC(52),  KS_colon,		KS_slash,
+    KC(53),  KS_equal,		KS_plus,	KS_asciitilde,
+    KC(86),  KS_less,		KS_greater,	KS_backslash,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
 static const keysym_t pckbd_keydesc_us_declk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
@@ -503,11 +535,13 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_IOPENER, KB_US,	pckbd_keydesc_iopener),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP, pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_BE | KB_SWAPCTRLCAPS, KB_BE, pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
+	KBD_MAP(KB_ES,			KB_US,	pckbd_keydesc_es),
+	KBD_MAP(KB_BE,			KB_US,	pckbd_keydesc_be),
 	{0, 0, 0, 0}
 };
 
