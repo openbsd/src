@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.78 2004/01/10 17:04:07 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.79 2004/01/10 17:10:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1459,6 +1459,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("ctl kroute request not from parent");
 			control_imsg_relay(&imsg);
+			break;
 		case IMSG_UPDATE:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("update request not from RDE");
