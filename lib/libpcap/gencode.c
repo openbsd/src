@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.12 2000/04/26 21:25:52 jakob Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.13 2001/06/25 23:03:32 provos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.12 2000/04/26 21:25:52 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.13 2001/06/25 23:03:32 provos Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -615,6 +615,11 @@ init_linktype(type)
 		off_nl = 12;
 		return;
 
+	case DLT_PFLOG:
+		off_linktype = -1;
+		off_nl = 28;
+		return;
+
 	case DLT_RAW:
 		off_linktype = -1;
 		off_nl = 0;
@@ -714,6 +719,7 @@ gen_linktype(proto)
 
 	case DLT_LOOP:
 	case DLT_ENC:
+	case DLT_PFLOG:
 	case DLT_NULL:
 		/* XXX */
 		if (proto == ETHERTYPE_IP)
