@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.10 1997/03/14 14:15:22 briggs Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.11 1997/03/18 05:37:50 briggs Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <machine/viareg.h>
 
 #include "nubus.h"
+#include "obiovar.h"
 #include "grfvar.h"
 
 extern u_int32_t	mac68k_vidlog;
@@ -64,8 +65,6 @@ static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
 static int	grfiv_match __P((struct device *, void *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
-
-static void	grfiv_q700intr __P((void *client_data, int slot));
 
 struct cfdriver intvid_cd = {
 	NULL, "intvid", DV_DULL
@@ -80,16 +79,7 @@ struct cfattach intvid_ca = {
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
-static void
-grfiv_q700intr(client_data, slot)
-	void *client_data;
-	int slot;
-{
-	long	*addr;
-
-	addr = (long *) ((char *) client_data + 0x10c);
-	*addr = 0;
-}
+#define QUADRA_DAFB_BASE	0xF9800000
 
 static int
 grfiv_match(parent, vcf, aux)
@@ -97,29 +87,58 @@ grfiv_match(parent, vcf, aux)
 	void *vcf;
 	void *aux;
 {
-	char		*addr = NULL;
+	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
+	bus_space_handle_t	bsh;
+	int			found, sense;
 
-	if (mac68k_vidlog == 0) {
-		return 0;
-	}
+	found = 1;
 
-	switch (mac68k_machine.machineid) {
-	case MACH_MACQ700:
-		addr = nubus_mapin(0xf9800000, 0x1000);
-		add_nubus_intr(15, grfiv_q700intr, addr);
+        switch (current_mac_model->class) {
+        case MACH_CLASSQ:
+        case MACH_CLASSQ2:
+
+		/* Assume DAFB for all of these */
+
+		if (bus_space_map(oa->oa_tag, QUADRA_DAFB_BASE, 0x1000,
+					0, &bsh)) {
+			panic("failed to map space for DAFB regs.\n");
+		}
+
+		sense = (bus_space_read_4(oa->oa_tag, bsh, 0x1C) & 7);
+
+		if (sense == 0)
+			found = 0;
+
+		/* Disable interrupts */
+		bus_space_write_4(oa->oa_tag, bsh, 0x104, 0);
+
+		/* Clear any interrupts */
+		bus_space_write_4(oa->oa_tag, bsh, 0x10C, 0);
+		bus_space_write_4(oa->oa_tag, bsh, 0x110, 0);
+		bus_space_write_4(oa->oa_tag, bsh, 0x114, 0);
+
+		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
+
 		break;
 	default:
+		if (mac68k_vidlog == 0) {
+			found = 0;
+		}
+
 		break;
 	}
 
-	return 1;
+	return found;
 }
+
+#define R4(sc, o) (bus_space_read_4((sc)->sc_tag, (sc)->sc_regh, o) & 0xfff)
 
 static void
 grfiv_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
+	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
 	struct grfbus_softc	*sc;
 	struct grfmode		*gm;
 
@@ -127,7 +146,24 @@ grfiv_attach(parent, self, aux)
 
 	sc->card_id = 0;
 
-	printf(": Internal Video\n");
+        switch (current_mac_model->class) {
+        case MACH_CLASSQ:
+        case MACH_CLASSQ2:
+		sc->sc_tag = oa->oa_tag;
+		if (bus_space_map(sc->sc_tag, QUADRA_DAFB_BASE, 0x1000,
+					0, &sc->sc_regh)) {
+			panic("failed to map space for DAFB regs.\n");
+		}
+		/* Show off a bit -- no need to really set these. */
+		mac68k_vidphys = (R4(sc, 0) << 9) | ((R4(sc, 4) & 0xf) << 5);
+		mac68k_vidphys += 0xF9000000;
+		videorowbytes = R4(sc,8) << 2;
+		printf(": DAFB: Monitor sense %x.\n", R4(sc,0x1C)&7);
+		break;
+	default:
+		printf(": Internal Video\n");
+		break;
+	}
 
 	gm = &(sc->curr_mode);
 	gm->mode_id = 0;
