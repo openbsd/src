@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt,v 1.6 2002/02/16 21:27:40 millert Exp $	*/
+/*	$OpenBSD: getopt,v 1.7 2002/07/22 20:13:14 pvalchev Exp $	*/
 /*
  * Main/getopt(3) fragment.
  *
@@ -11,9 +11,7 @@
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 
