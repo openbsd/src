@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.5 2000/11/10 15:33:13 provos Exp $
+ *	$Id: amq_subr.c,v 1.6 2002/06/11 05:29:54 itojun Exp $
  */
 
 /*
@@ -189,7 +189,7 @@ struct svc_req *rqstp;
 	      sin->sin_addr.s_addr == myipaddr.s_addr)) {
 		char dq[20];
 		plog(XLOG_INFO, "AMQ request from %s.%d DENIED",
-		     inet_dquad(dq, sin->sin_addr.s_addr),
+		     inet_dquad(dq, sizeof(dq), sin->sin_addr.s_addr),
 		     ntohs(sin->sin_port));
 		return(0);
 	}

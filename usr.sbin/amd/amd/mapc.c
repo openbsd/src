@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mapc.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mapc.c,v 1.3 2002/05/29 18:39:00 deraadt Exp $";
+static char *rcsid = "$Id: mapc.c,v 1.4 2002/06/11 05:29:54 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -316,7 +316,7 @@ char *val;
 		/*
 		 * Make sure the string is bound to the start and end
 		 */
-		sprintf(keyb, "^%s$", key);
+		snprintf(keyb, sizeof(keyb), "^%s$", key);
 		re = regcomp(keyb);
 		if (re == 0) {
 			plog(XLOG_USER, "error compiling RE \"%s\": %s", keyb, reg_error);
@@ -818,7 +818,7 @@ char *map;
 	 */
 	dir = strdup(dir);
 	if (map)
-		sprintf(str, "cache:=mapdefault;type:=toplvl;fs:=\"%s\";%s",
+		snprintf(str, sizeof(str), "cache:=mapdefault;type:=toplvl;fs:=\"%s\";%s",
 			map, opts ? opts : "");
 	else
 		strcpy(str, opts);

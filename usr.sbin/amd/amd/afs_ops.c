@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.4 2002/05/26 02:49:50 deraadt Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.5 2002/06/11 05:29:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -176,10 +176,10 @@ char *opts;
 #define	SHORT_MOUNT_NAME
 #endif /* HOSTNAMESZ */
 #ifdef SHORT_MOUNT_NAME
-	sprintf(fs_hostname, "amd:%ld",
+	snprintf(fs_hostname, sizeof(fs_hostname), "amd:%ld",
 	    foreground ? (long)mypid : (long)getppid());
 #else
-	sprintf(fs_hostname, "pid%ld@%s:%s",
+	snprintf(fs_hostname, sizeof(fs_hostname), "pid%ld@%s:%s",
 	    foreground ? (long)mypid : (long)getppid(), hostname, dir);
 #endif /* SHORT_MOUNT_NAME */
 	nfs_args.hostname = fs_hostname;
@@ -370,7 +370,7 @@ am_node *mp;
 	/*
 	 * Construct some mount options
 	 */
-	sprintf(opts,
+	snprintf(opts, sizeof(opts),
 #ifdef MNTOPT_INTR
 		"%s,%s,%s=%d,%s=%d,%s=%d,%s",
 		MNTOPT_INTR,
@@ -1366,7 +1366,7 @@ in_progrss:
 	 * map for it.
 	 */
 	if (mp->am_pref) {
-		sprintf(path_name, "%s%s", mp->am_pref, fname);
+		snprintf(path_name, sizeof(path_name), "%s%s", mp->am_pref, fname);
 		pfname = path_name;
 	} else {
 		pfname = fname;
@@ -1475,7 +1475,9 @@ in_progrss:
 			 */
 			if (*auto_opts && *dfl) {
 				char *nopts = (char *) xmalloc(strlen(auto_opts)+strlen(dfl)+2);
-				sprintf(nopts, "%s;%s", dfl, auto_opts);
+				snprintf(nopts,
+				    strlen(auto_opts) + strlen(dfl) + 2,
+				    "%s;%s", dfl, auto_opts);
 				free(auto_opts);
 				auto_opts = nopts;
 			} else if (*dfl) {

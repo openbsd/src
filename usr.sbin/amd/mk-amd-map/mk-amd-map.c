@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93
- *	$Id: mk-amd-map.c,v 1.3 1997/04/04 18:41:42 deraadt Exp $
+ *	$Id: mk-amd-map.c,v 1.4 2002/06/11 05:29:55 itojun Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: mk-amd-map.c,v 1.3 1997/04/04 18:41:42 deraadt Exp $";
+static char rcsid[] = "$Id: mk-amd-map.c,v 1.4 2002/06/11 05:29:55 itojun Exp $";
 static char sccsid[] = "@(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93";
 #endif /* not lint */
 
@@ -284,7 +284,7 @@ char *argv[];
 			exit(1);
 		}
 		mktemp(maptmp);
-		sprintf(maptpag, "%s%s", maptmp, DBM_SUFFIX);
+		snprintf(maptpag, sizeof(maptpag), "%s%s", maptmp, DBM_SUFFIX);
 		if (remove_file(maptpag) < 0) {
 			fprintf(stderr, "Can't remove existing temporary file");
 			perror(maptpag);
@@ -298,8 +298,8 @@ char *argv[];
 			exit(1);
 		}
 		mktemp(maptmp);
-		sprintf(maptpag, "%s.pag", maptmp);
-		sprintf(maptdir, "%s.dir", maptmp);
+		snprintf(maptpag, sizeof(maptpag), "%s.pag", maptmp);
+		snprintf(maptdir, sizeof(maptdir), "%s.dir", maptmp);
 		if (remove_file(maptpag) < 0 || remove_file(maptdir) < 0) {
 			fprintf(stderr, "Can't remove existing temporary files; %s and", maptpag);
 			perror(maptdir);
@@ -334,7 +334,7 @@ char *argv[];
 				rc = 1;
 			} else {
 #ifdef USING_DB
-				sprintf(mappag, "%s%s", map, DBM_SUFFIX);
+				snprintf(mappag, sizeof(mappag), "%s%s", map, DBM_SUFFIX);
 				if (rename(maptpag, mappag) < 0) {
 					fprintf(stderr, "Couldn't rename %s to ", maptpag);
 					perror(mappag);
@@ -343,8 +343,8 @@ char *argv[];
 					rc = 1;
 				}
 #else
-				sprintf(mappag, "%s.pag", map);
-				sprintf(mapdir, "%s.dir", map);
+				snprintf(mappag, sizeof(mappag), "%s.pag", map);
+				snprintf(mapdir, sizeof(mapdir), "%s.dir", map);
 				if (rename(maptpag, mappag) < 0) {
 					fprintf(stderr, "Couldn't rename %s to ", maptpag);
 					perror(mappag);

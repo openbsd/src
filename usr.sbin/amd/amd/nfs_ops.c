@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.11 2002/06/10 21:07:14 itojun Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.12 2002/06/11 05:29:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.11 2002/06/10 21:07:14 itojun Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.12 2002/06/11 05:29:54 itojun Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -438,7 +438,8 @@ am_opts *fo;
 	 * Determine magic cookie to put in mtab
 	 */
 	xmtab = (char *) xmalloc(strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2);
-	sprintf(xmtab, "%s:%s", fo->opt_rhost, fo->opt_rfs);
+	snprintf(xmtab, strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2,
+		"%s:%s", fo->opt_rhost, fo->opt_rfs);
 #ifdef DEBUG
 	dlog("NFS: mounting remote server \"%s\", remote fs \"%s\" on \"%s\"",
 		fo->opt_rhost, fo->opt_rfs, fo->opt_fs);

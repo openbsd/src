@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_hes.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_hes.c,v 1.6 2002/06/10 21:07:14 itojun Exp $
+ *	$Id: info_hes.c,v 1.7 2002/06/11 05:29:54 itojun Exp $
  */
 
 /*
@@ -98,7 +98,7 @@ time_t *tp;
  * call to hes_resolve("/defaults", "home.automount");
  */
 #ifdef notdef
-#define MAKE_HES_NAME(dest, src) sprintf(dest, "%s%s", src + HES_PREFLEN, ".automount")
+#define MAKE_HES_NAME(dest, src) snprintf(dest, sizeof(dest), "%s%s", src + HES_PREFLEN, ".automount")
 #endif
 
 /*
@@ -120,7 +120,7 @@ time_t *tp;
 	dlog("hesiod_search(m=%x, map=%s, key=%s, pval=%x tp=%x)", m, map, key, pval, tp);
 #endif
 	/*MAKE_HES_NAME(hes_map, map);*/
-	sprintf(hes_key, "%s.%s", key, map+HES_PREFLEN);
+	snprintf(hes_key, sizeof(hes_key), "%s.%s", key, map+HES_PREFLEN);
 
 	/*
 	 * Call the resolver
@@ -435,7 +435,7 @@ char *msg, *eom;
 	if (hp->rcode != NOERROR || hp->opcode != QUERY) {
 		char dq[20];
 #ifdef DEBUG
-		dlog("Bad response (%d) from nameserver %s", hp->rcode, inet_dquad(dq, hs_server_addr(servernum)->s_addr));
+		dlog("Bad response (%d) from nameserver %s", hp->rcode, inet_dquad(dq, sizeof(dq), hs_server_addr(servernum)->s_addr));
 #endif /* DEBUG */
 		return(-1);
 	}
@@ -586,7 +586,7 @@ struct in_addr *addr;
 	char dq[20];
 	bcopy((char *)addr, nsaddr_list[hs_nscount++], sizeof(struct in_addr));
 #ifdef DEBUG
-	dlog("Adding NS address %s", inet_dquad(dq, addr->s_addr));
+	dlog("Adding NS address %s", inet_dquad(dq, sizeof(dq), addr->s_addr));
 #endif /* DEBUG */
 }
 

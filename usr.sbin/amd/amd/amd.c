@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.6 2002/05/29 18:39:00 deraadt Exp $
+ *	$Id: amd.c,v 1.7 2002/06/11 05:29:54 itojun Exp $
  */
 
 #ifndef lint
@@ -323,7 +323,7 @@ char *argv[];
 #endif /* DEBUG */
 	ppid = daemon_mode();
 
-	sprintf(pid_fsname, "%s:(pid%ld)", hostname, (long)mypid);
+	snprintf(pid_fsname, sizeof(pid_fsname), "%s:(pid%ld)", hostname, (long)mypid);
 
 	do_mapc_reload = clocktime() + ONE_HOUR;
 

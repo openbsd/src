@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_analyze.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_analyze.c,v 1.2 2002/06/10 21:07:14 itojun Exp $
+ *	$Id: fsi_analyze.c,v 1.3 2002/06/11 05:29:55 itojun Exp $
  */
 
 /*
@@ -222,7 +222,7 @@ disk_fs *dk;
 		log("Mount %s:", mp->m_name);
 		if (parent) {
 			char n[MAXPATHLEN];
-			sprintf(n, "%s/%s", parent->m_name, mp->m_name);
+			snprintf(n, sizeof(n), "%s/%s", parent->m_name, mp->m_name);
 			if (*mp->m_name == '/')
 				lerror(mp->m_ioloc, "sub-directory %s of %s starts with '/'", mp->m_name, parent->m_name);
 			else if (STREQ(mp->m_name, "default"))
@@ -282,7 +282,7 @@ qelem *q;
 	if (STREQ(mp2->m_name, "default")) {
 		if (ISSET(mp2->m_mask, DM_VOLNAME)) {
 			char nbuf[1024];
-			compute_automount_point(nbuf, dk->d_host, mp2->m_volname);
+			compute_automount_point(nbuf, sizeof(nbuf), dk->d_host, mp2->m_volname);
 			free(mp2->m_name);
 			mp2->m_name = strdup(nbuf);
 			log("%s:%s has default mount on %s", dk->d_host->h_hostname, dk->d_dev, mp2->m_name);
@@ -609,7 +609,7 @@ int lvl;
 		if (lvl > 0 || ap->a_mount)
 			if (ap->a_name[1] && strchr(ap->a_name+1, '/'))
 				lerror(ap->a_ioloc, "not allowed '/' in a directory name");
-		sprintf(nname, "%s/%s", pref, ap->a_name);
+		snprintf(nname, sizeof(nname), "%s/%s", pref, ap->a_name);
 		free(ap->a_name);
 		ap->a_name = strdup(nname[1] == '/' ? nname+1 : nname);
 		log("automount point %s:", ap->a_name);

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rpc_fwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: rpc_fwd.c,v 1.1.1.1 1995/10/18 08:47:12 deraadt Exp $
+ *	$Id: rpc_fwd.c,v 1.2 2002/06/11 05:29:54 itojun Exp $
  */
 
 /*
@@ -292,7 +292,7 @@ fwd_fun cb;
 	 */
 #ifdef DEBUG
 	{ char dq[20]; 
-	dlog("Sending packet id %#x to %s.%d", p->rf_xid, inet_dquad(dq, fwdto->sin_addr.s_addr), ntohs(fwdto->sin_port));
+	dlog("Sending packet id %#x to %s.%d", p->rf_xid, inet_dquad(dq, sizeof(dq), fwdto->sin_addr.s_addr), ntohs(fwdto->sin_port));
 	}
 #endif /* DEBUG */
 	if (sendto(fwd_sock, (char *) pkt, len, 0,

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_passwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_passwd.c,v 1.2 2002/06/10 21:07:14 itojun Exp $
+ *	$Id: info_passwd.c,v 1.3 2002/06/11 05:29:54 itojun Exp $
  */
 
 /*
@@ -143,7 +143,7 @@ time_t *tp;
 		q = strchr(rhost, '.');
 		if (q)
 			*q = '\0';
-		sprintf(val, "rfs:=%s/%s;rhost:=%s;sublink:=%s;fs:=${autodir}%s",
+		snprintf(val, sizeof(val), "rfs:=%s/%s;rhost:=%s;sublink:=%s;fs:=${autodir}%s",
 			dir, rhost, rhost, user, pw->pw_dir);
 		if (q)
 			*q = '.';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.5 2002/06/10 21:07:14 itojun Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.6 2002/06/11 05:29:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -74,7 +74,7 @@
 			if (strcmp((ex)->ex_dir, "/") == 0) \
 				strcpy((mntpt), (mf)->mf_mount); \
 			else \
-				sprintf((mntpt), "%s%s", (mf)->mf_mount, (ex)->ex_dir); \
+				snprintf((mntpt), sizeof(mntpt), "%s%s", (mf)->mf_mount, (ex)->ex_dir); \
 }
 
 /*

@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_util.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_util.c,v 1.5 2001/01/02 20:01:35 mickey Exp $
+ *	$Id: fsi_util.c,v 1.6 2002/06/11 05:29:55 itojun Exp $
  */
 
 #include "../fsinfo/fsinfo.h"
@@ -168,7 +168,7 @@ static void show_total()
 		int len;
 		if (total_mmm < 0)
 			fputc('*', stdout);
-		sprintf(n, "%d", total_shown);
+		snprintf(n, sizeof(n), "%d", total_shown);
 		len = strlen(n);
 		if (col_output(len))
 			fputc(' ', stdout);
@@ -247,7 +247,7 @@ char *arg;
 {
 	char p[MAXPATHLEN];
 	FILE *ef;
-	sprintf(p, "%s%s", pref, hn);
+	snprintf(p, sizeof(p), "%s%s", pref, hn);
 	log("Writing %s info for %s to %s", pref, hn, p);
 	ef = fopen(p, "w");
 	if (ef) {
@@ -269,15 +269,16 @@ FILE *fp;
 /*
  * Determine where Amd would automount the host/volname pair
  */
-void compute_automount_point(buf, hp, vn)
+void compute_automount_point(buf, buflen, hp, vn)
 char *buf;
+size_t buflen;
 host *hp;
 char *vn;
 {
 #ifdef AMD_USES_HOSTPATH
-	sprintf(buf, "%s/%s%s", autodir, hp->h_hostpath, vn);
+	snprintf(buf, buflen, "%s/%s%s", autodir, hp->h_hostpath, vn);
 #else
-	sprintf(buf, "%s/%s%s", autodir, hp->h_lochost, vn);
+	snprintf(buf, buflen, "%s/%s%s", autodir, hp->h_lochost, vn);
 #endif
 }
 

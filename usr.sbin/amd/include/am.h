@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.4 2002/05/26 02:49:50 deraadt Exp $	*/
+/*	$OpenBSD: am.h,v 1.5 2002/06/11 05:29:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -259,7 +259,7 @@ extern char *hasmntopt P((struct mntent*, char*));
 #endif /* NEED_MNTOPT_PARSER */
 extern int hasmntval P((struct mntent*, char*));
 extern void host_normalize P((char **));
-extern char *inet_dquad P((char*, u_int32_t));
+extern char *inet_dquad P((char*, size_t, u_int32_t));
 extern void init_map P((am_node*, char*));
 extern void insert_am P((am_node*, am_node*));
 extern void ins_que P((qelem*, qelem*));
