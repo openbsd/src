@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 1998/08/25 08:02:23 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 1998/09/09 04:54:43 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -328,10 +328,27 @@ printf("pgm iar %x\n", frame->srr0);
 		}
 		if (frame->srr1 && (1<<14)) {
 			/* trap instruction exception */
+			/*
+				instr = copyin (srr0)
+				if (instr == BKPT_INST && uid == 0) {
+					db_trap(T_BREAKPOINT?)
+					break;
+				}
+			*/
 		}
 		sv.sival_int = frame->srr0;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
+	case EXC_PGM:
+		/* should check for correct byte here or panic */
+#ifdef DDB
+		db_save_regs(frame);
+		db_trap(T_BREAKPOINT);
+#else
+		panic("trap");
+#endif
+		break;
+
 	case EXC_AST|EXC_USER:
 		/* This is just here that we trap */
 		break;
