@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.13 1999/06/02 06:31:54 niklas Exp $
-$EOM: TO-DO,v 1.39 1999/05/25 07:52:01 niklas Exp $
+$OpenBSD: TO-DO,v 1.14 1999/07/07 22:14:56 niklas Exp $
+$EOM: TO-DO,v 1.40 1999/06/15 11:33:36 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -63,7 +63,7 @@ the program is far from ready in any area.
 
 * Validate incoming attribute according to policy, main mode. [done]
 
-* Validate incoming attribute according to policy, quick mode.
+* Validate incoming attribute according to policy, quick mode. [done]
 
 * Cleanup reserved SPIs on cleanup of associated SAs. [done]
 
@@ -96,8 +96,7 @@ the program is far from ready in any area.
 * INITIAL CONTACT notification handling. [done]
 
 * IPsec SAs could also do with timers protecting its lifetime, if say,
-  someone changed the lifetime of the IPsec SA in stack under us.
-  [done for KLIPS]
+  someone changed the lifetime of the IPsec SA in stack under us. [done]
 
 * Handle notifications showing the peer did not want to continue this exchange.
 
@@ -105,4 +104,7 @@ the program is far from ready in any area.
 
 * Remove referring flows when a SPI is removed.
 
-* IPCOMP?  (PGP's new client defaults to using this...)
+* IPCOMP.
+
+* Remove log_fatals from policy code, if error in policy file reading fall
+  back to check policy against connections.
