@@ -26,8 +26,10 @@
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/cpp
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/include/objc
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/specs
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.26.0
 ./usr/lib/libcrypto.so.3.0

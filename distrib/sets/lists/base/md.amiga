@@ -26,7 +26,10 @@
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/collect2
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/include
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/specs
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libc.so.26.0
 ./usr/lib/libc_r.so.4.0

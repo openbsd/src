@@ -61,7 +61,6 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cc1
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cc1obj
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cc1plus
-./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cpp
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/f771
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/include
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/include/README
@@ -83,7 +82,6 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/libf2c.a
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/libgcc.a
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/libobjc.a
-./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/specs
 ./usr/lib/gcrt0.o
 ./usr/lib/libbfd.a
 ./usr/lib/libmmalloc.a

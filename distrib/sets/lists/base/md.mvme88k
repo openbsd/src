@@ -5,6 +5,8 @@
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h
 ./usr/include/readline/readline.h
+./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cpp
+./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/specs
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.8
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.8/2.95.1
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.8/2.95.1/include

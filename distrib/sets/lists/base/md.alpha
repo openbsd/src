@@ -6,7 +6,10 @@
 ./usr/include/readline
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/collect2
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/include
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/specs
 ./usr/libdata/perl5/alpha-openbsd
 ./usr/libdata/perl5/alpha-openbsd/5.6.0
 ./usr/libdata/perl5/alpha-openbsd/5.6.0/.packlist

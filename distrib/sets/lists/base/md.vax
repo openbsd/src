@@ -6,7 +6,10 @@
 ./usr/include/vax
 ./usr/lib/gcc-lib/vax-unknown-openbsd2.8
 ./usr/lib/gcc-lib/vax-unknown-openbsd2.8/2.95.3
+./usr/lib/gcc-lib/vax-unknown-openbsd2.8/2.95.3/collect2
+./usr/lib/gcc-lib/vax-unknown-openbsd2.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/vax-unknown-openbsd2.8/2.95.3/include
+./usr/lib/gcc-lib/vax-unknown-openbsd2.8/2.95.3/specs
 ./usr/libdata/perl5/site_perl/vax-openbsd
 ./usr/libdata/perl5/site_perl/vax-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/a.out.ph

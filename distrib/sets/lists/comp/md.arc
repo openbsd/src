@@ -103,7 +103,6 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/cc1
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/cc1obj
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/cc1plus
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/cpp
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/f771
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/include/README
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/include/f2c.h
@@ -124,7 +123,6 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/libf2c.a
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/libgcc.a
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/libobjc.a
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/specs
 ./usr/lib/libbfd.a
 ./usr/lib/libc_r_pic.a
 ./usr/lib/libcrypto_pic.a

@@ -70,8 +70,6 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cc1
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cc1obj
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cc1plus
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/collect2
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/f771
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/ieee
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/ieee/libgcc.a
@@ -110,7 +108,6 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/include/va-v850.h
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/include/varargs.h
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/libgcc.a
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/specs
 ./usr/lib/libbfd.a
 ./usr/lib/libmmalloc.a
 ./usr/lib/libopcodes.a
