@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.10 1998/01/28 17:21:46 jason Exp $	*/
+/*	$OpenBSD: dma.c,v 1.11 1998/02/05 19:02:30 jason Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -285,9 +285,6 @@ espsearch:
 } while (0)
 
 #define DMA_DRAIN(sc, dontpanic) do {					\
-									\
-	if (sc->sc_rev == DMAREV_0)					\
-		DMACSR(sc) |= D_INVALIDATE;				\
 	/*								\
 	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
 	 *     and "drain" bits while it is still thinking about a	\
@@ -310,13 +307,27 @@ espsearch:
 	DMAWAIT(sc, sc->sc_regs->csr & D_DRAINING, "DRAINING", dontpanic);\
 } while(0)
 
+#define DMA_FLUSH(sc, dontpanic) do {					\
+	int csr;							\
+	/*								\
+	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
+	 *     and "drain" bits while it is still thinking about a	\
+	 *     request.							\
+	 * other revs: D_R_PEND bit reads as 0				\
+	 */								\
+	DMAWAIT(sc, sc->sc_regs->csr & D_R_PEND, "R_PEND", dontpanic);	\
+	csr = DMACSR(sc);						\
+	csr &= ~(D_WRITE|D_EN_DMA);					\
+	csr |= D_INVALIDATE;						\
+	DMACSR(sc) = csr;						\
+} while(0)
+
 void
 dma_reset(sc, isledma)
 	struct dma_softc *sc;
 	int isledma;
 {
-	DMA_DRAIN(sc, 1);
-	DMACSR(sc) &= ~D_EN_DMA;		/* Stop DMA */
+	DMA_FLUSH(sc, 1);
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
 	DELAY(200);				/* what should this be ? */
 	/*DMAWAIT1(sc); why was this here? */
@@ -393,7 +404,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 {
 	u_long csr;
 
-	DMA_DRAIN(sc, 0);
+	DMA_FLUSH(sc, 0);
 
 #if 0
 	DMACSR(sc) &= ~D_INT_EN;
