@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getprotoent.3,v 1.12 2004/10/25 03:09:01 millert Exp $
+.\"	$OpenBSD: getprotoent.3,v 1.13 2004/10/26 15:52:50 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -167,6 +167,26 @@ is reached or an error occurs.
 .El
 .Sh SEE ALSO
 .Xr protocols 5
+.Sh STANDARDS
+The
+.Fn getprotoent ,
+.Fn getprotobynumber ,
+.Fn getprotobyname ,
+.Fn setprotoent ,
+and
+.Fn endprotoent
+functions conform to
+.St -p1003.1-2003 .
+.Pp
+The
+.Fn getprotoent_r ,
+.Fn getprotobyport_r ,
+.Fn getprotobyname_r ,
+.Fn setprotoent_r ,
+and
+.Fn endprotoent_r
+functions are not currently standardized.
+This implementation follows the API used by HP, IBM and Digital.
 .Sh HISTORY
 The
 .Fn getprotoent ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getservent.3,v 1.15 2004/10/25 03:09:01 millert Exp $
+.\"	$OpenBSD: getservent.3,v 1.16 2004/10/26 15:52:50 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,6 +174,26 @@ is reached or an error occurs.
 .Sh SEE ALSO
 .Xr getprotoent 3 ,
 .Xr services 5
+.Sh STANDARDS
+The
+.Fn getservent ,
+.Fn getservbynumber ,
+.Fn getservbyname ,
+.Fn setservent ,
+and
+.Fn endservent
+functions conform to
+.St -p1003.1-2003 .
+.Pp
+The
+.Fn getservent_r ,
+.Fn getservbyport_r ,
+.Fn getservbyname_r ,
+.Fn setservent_r ,
+and
+.Fn endservent_r
+functions are not currently standardized.
+This implementation follows the API used by HP, IBM and Digital.
 .Sh HISTORY
 The
 .Fn getservent ,
