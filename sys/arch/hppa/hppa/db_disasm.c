@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.1 1999/02/14 15:21:00 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.2 1999/02/15 21:13:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -979,13 +979,13 @@ static BOOL ariDasm __P((const struct inst *i, OFS, WORD));
 /*##################### Local Variables ####################################*/
 
 /*static	WORD	w;	* temp for saving passed instruction */
-static	const char	fcoprUndef[] = "COPR\t(rsvd or undef.)";
-static	const char	fmtStrTbl[][5] = { "SGL", "DBL", "SGL", "QUAD" };
+static	const char	fcoprUndef[] = "copr\t(rsvd or undef.)";
+static	const char	fmtStrTbl[][5] = { "sgl", "dbl", "sgl", "quad" };
 static	const char	condStrTbl[][7] = {
-	    "false?", "false", "?", "!<=>", "=", "=T", "?=", "!<>",
+	    "false?", "false", "?", "!<=>", "=", "=t", "?=", "!<>",
 	    "!?>=", "<", "?<", "!>=", "!?>", "<=", "?<=", "!>",
 	    "!?<=", ">", "?>", "!<=", "!?<", ">=", "?>=", "!<",
-	    "!?=", "<>", "!=", "!=T", "!?", "<=>", "true?", "true"
+	    "!?=", "<>", "!=", "!=t", "!?", "<=>", "true?", "true"
 };
 static	const char	fsreg[][5] = {
 	    "r0L",  "r0R",  "r1L",  "r1R",  "r2L",  "r2R",  "r3L",  "r3R",
@@ -1352,7 +1352,7 @@ unitDasm(i, ofs, w)
 	WORD w;
 {
 	printf(unitDCond(Cond4(w)));
-	if (Match("DCOR") || Match("IDCOR"))
+	if (Match("dcor") || Match("idcor"))
 		printf("\t%%r%d,%%r%d",Rsb(w),Rtc(w));
 	else
 		printf("\t%%r%d,%%r%d,%%r%d",Rsa(w),Rsb(w),Rtc(w));
@@ -1366,7 +1366,7 @@ iaDasm(i, ofs, w)
 	OFS ofs;
 	WORD w;
 {
-	if (Match("ADDI"))
+	if (Match("addi"))
 		printf("%s\t%d,%%r%d,%%r%d",
 		       addDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
 	else
@@ -1382,7 +1382,7 @@ shdDasm(i, ofs, w)
 	OFS ofs;
 	WORD w;
 {
-	if (Match("VSHD"))
+	if (Match("vshd"))
 		printf("%s\t%%r%d,%%r%d,%%r%d",
 		       edDCond(Cond(w)), Rsa(w),Rsb(w),Rtc(w));
 	else
@@ -1481,16 +1481,16 @@ subDCond(cond)
 	case LE:	return(",<=");
 	case LLT:	return(",<<");
 	case LLE:	return(",<<=");
-	case SV:	return(",SV");
-	case OD:	return(",OD");
+	case SV:	return(",sv");
+	case OD:	return(",od");
 	case NEQZ:	return(",<>");
 	case GE:	return(",>=");
 	case GT:	return(",>");
 	case LGE:	return(",>>=");
 	case LGT:	return(",>>");
-	case NSV:	return(",NSV");
-	case EV:	return(",EV");
-	case TR:	return(",TR");
+	case NSV:	return(",nsv");
+	case EV:	return(",ev");
+	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
 		panic("subDCond: unknown condition");
@@ -1511,18 +1511,18 @@ addDCond(cond)
 	case EQZ:	return(",=");
 	case LT:	return(",<");
 	case LE:	return(",<=");
-	case NUV:	return(",NUV");
-	case ZNV:	return(",ZNV");
-	case SV:	return(",SV");
-	case OD:	return(",OD");
+	case NUV:	return(",nuv");
+	case ZNV:	return(",znv");
+	case SV:	return(",sv");
+	case OD:	return(",od");
 	case NEQZ:	return(",<>");
 	case GE:	return(",>=");
 	case GT:	return(",>");
-	case UV:	return(",UV");
-	case VNZ:	return(",VNZ");
-	case NSV:	return(",NSV");
-	case EV:	return(",EV");
-	case TR:	return(",TR");
+	case UV:	return(",uv");
+	case VNZ:	return(",vnz");
+	case NSV:	return(",nsv");
+	case EV:	return(",ev");
+	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
 		panic("addDCond: unknown condition");
@@ -1534,17 +1534,17 @@ unitDCond(cond)
 	FAST u_int cond;
 {
 	switch(cond) {
-	case SHC:	return(",SHC");
-	case SHZ:	return(",SHZ");
-	case SBC:	return(",SBC");
-	case SBZ:	return(",SBZ");
-	case SDC:	return(",SDC");
-	case NHC:	return(",NHC");
-	case NHZ:	return(",NHZ");
-	case NBC:	return(",NBC");
-	case NBZ:	return(",NBZ");
-	case NDC:	return(",NDC");
-	case TR:	return(",TR");
+	case SHC:	return(",shc");
+	case SHZ:	return(",shz");
+	case SBC:	return(",sbc");
+	case SBZ:	return(",sbz");
+	case SDC:	return(",sdc");
+	case NHC:	return(",nhc");
+	case NHZ:	return(",nhz");
+	case NBC:	return(",nbc");
+	case NBZ:	return(",nbz");
+	case NDC:	return(",ndc");
+	case TR:	return(",tr");
 	case NEV:	return("");
 	default:
 		panic("unitDCond: unknown condition");
@@ -1556,13 +1556,13 @@ edDCond(cond)
 	FAST u_int cond;
 {
 	switch(cond) {
-	case XOD:	return(",OD");
-	case XTR:	return(",TR");
+	case XOD:	return(",od");
+	case XTR:	return(",tr");
 	case XNE:	return(",<>");
 	case XLT:	return(",<");
 	case XEQ:	return(",=");
 	case XGE:	return(",>=");
-	case XEV:	return(",EV");
+	case XEV:	return(",ev");
 	case NEV:	return("");
 	default:
 		panic("edDCond: unknown condition");
@@ -1585,8 +1585,8 @@ ldDasm(i, ofs, w)
 {
 	FAST u_int d = Disp(w);
 
-	if (Rsb(w) == 0 && Match("LDO")) {
-		printf("LDI\t%D,%%r%d",d,Rta(w));
+	if (Rsb(w) == 0 && Match("ldo")) {
+		printf("ldi\t%D,%%r%d",d,Rta(w));
 		return(YES);
 	}
 	if (d < 2048)
@@ -1629,25 +1629,20 @@ ldxDasm(i, ofs, w)
 	WORD w;
 {
 	if (ShortDisp(w)) {
-		printf("S");
-		if (Modify(w)) {
-			if (ModBefore(w)) printf(",MB");
-			else printf(",MA");
-		}
+		printf("s");
+		if (Modify(w))
+			printf(",m%s", ModBefore(w)? "b": "a");
 	}
 	else {
-		printf("X");
-		if (Modify(w)) {
-			if (IndxShft(w)) printf(",SM");
-			else printf(",M");
-		}
-		else if (IndxShft(w)) printf(",S");
+		printf("x");
+		if (Modify(w))
+			printf(",%sm", IndxShft(w)? "s":"");
 	}
 	switch (CacheCtrl(w)) {
-		case NOACTION:	break;
-		case STACKREF:	printf(",C"); break;
-		case SEQPASS:	printf(",Q"); break;
-		case PREFETCH:	printf(",P"); break;
+	case NOACTION:	break;
+	case STACKREF:	printf(",c"); break;
+	case SEQPASS:	printf(",q"); break;
+	case PREFETCH:	printf(",p"); break;
 	}
 	if (ShortDisp(w))
 		printf("\t%d",Ima5(w));
@@ -1667,15 +1662,14 @@ stsDasm(i, ofs, w)
 	OFS ofs;
 	WORD w;
 {
-	if (Modify(w)) {
-		if (ModBefore(w)) printf(",MB");
-		else printf(",MA");
-	}
+	if (Modify(w))
+		printf(",m%s", ModBefore(w)? "b":"a");
+
 	switch (CacheCtrl(w)) {
-		case NOACTION:	break;
-		case STACKREF:	printf(",C"); break;
-		case SEQPASS:	printf(",Q"); break;
-		case PREFETCH:	printf(",P"); break;
+	case NOACTION:	break;
+	case STACKREF:	printf(",c"); break;
+	case SEQPASS:	printf(",q"); break;
+	case PREFETCH:	printf(",p"); break;
 	}
 	printf("\t%%r%d,",Rta(w));
 	if (Dss(w))
@@ -1692,14 +1686,17 @@ stbysDasm(i, ofs, w)
 	OFS ofs;
 	WORD w;
 {
-	if (ModBefore(w)) printf(",E");
-	else printf(",B");
-	if (Modify(w)) printf(",M");
+	if (ModBefore(w))
+		printf(",e");
+	else
+		printf(",b");
+	if (Modify(w))
+		printf(",m");
 	switch (CacheCtrl(w)) {
-		case NOACTION:	break;
-		case STACKREF:	printf(",F"); break;
-		case SEQPASS:	printf(",R"); break;
-		case PREFETCH:	printf(",Z"); break;
+	case NOACTION:	break;
+	case STACKREF:	printf(",f"); break;
+	case SEQPASS:	printf(",r"); break;
+	case PREFETCH:	printf(",z"); break;
 	}
 	printf("\t%%r%d,",Rta(w));
 	if (Dss(w))
@@ -1731,11 +1728,13 @@ blDasm(i, ofs, w)
 	FAST OFS tgtofs = ofs + 8 + Bdisp(w);
 	FAST u_int link = Rtb(w);
 
-	if (link && !Match("GATE")) printf("L");
-	if (Nu(w)) printf(",N");
+	if (link && !Match("gate"))
+		printf("l");
+	if (Nu(w))
+		printf(",n");
 	printf("\t");
 	psymoff(tgtofs, ISYM, "");
-	if (link || Match("GATE")) printf(",%%r%d",link);
+	if (link || Match("gate")) printf(",%%r%d",link);
 	return(YES);
 }
 
@@ -1746,7 +1745,8 @@ brDasm(i, ofs, w)
 	OFS ofs;
 	WORD w;
 {
-	if (Nu(w)) printf(",N");
+	if (Nu(w))
+		printf(",n");
 	printf("\t%%r%d,%%r%d",Rsa(w),Rtb(w));
 	return(YES);
 }
@@ -1759,7 +1759,7 @@ bvDasm(i, ofs, w)
 	WORD w;
 {
 	if (Nu(w))
-		printf(",N");
+		printf(",n");
 	printf("\t%%r%d(%%r%d)",Rsa(w),Rsb(w));
 	return(YES);
 }
@@ -1774,7 +1774,7 @@ beDasm(i, ofs, w)
 	FAST u_int d = Bdisp(w);
 
 	if (Nu(w))
-		printf(",N");
+		printf(",n");
 	if (d < 2048)
 		printf("\tR'%X(%%sr%d,%%r%d)",d,Sr(w),Rsb(w));
 	else
@@ -1792,10 +1792,14 @@ cbDasm(i, ofs, w)
 {
 	FAST OFS tgtofs = ofs + 8 + Cbdisp(w);
 
-	if (Match("MOVB")) printf(edDCond(Cond(w)));
-	else if (Match("ADDB")) printf(addDCond(Cond(w) << 1));
-	else printf(subDCond(Cond(w) << 1));
-	if (Nu(w)) printf(",N");
+	if (Match("movb"))
+		printf(edDCond(Cond(w)));
+	else if (Match("addb"))
+		printf(addDCond(Cond(w) << 1));
+	else
+		printf(subDCond(Cond(w) << 1));
+	if (Nu(w))
+		printf(",n");
 	printf("\t%%r%d,%%r%d,",Rsa(w),Rsb(w));
 	psymoff(tgtofs, ISYM, "");
 	return(YES);
@@ -1810,10 +1814,14 @@ cbiDasm(i, ofs, w)
 {
 	FAST OFS tgtofs = ofs + 8 + Cbdisp(w);
 
-	if (Match("MOVIB")) printf(edDCond(Cond(w)));
-	else if (Match("ADDIB")) printf(addDCond(Cond(w) << 1));
-	else printf(subDCond(Cond(w) << 1));
-	if (Nu(w)) printf(",N");
+	if (Match("movib"))
+		printf(edDCond(Cond(w)));
+	else if (Match("addib"))
+		printf(addDCond(Cond(w) << 1));
+	else
+		printf(subDCond(Cond(w) << 1));
+	if (Nu(w))
+		printf(",n");
 	printf("\t%d,%%r%d,",Ima5(w),Rsb(w));
 	psymoff(tgtofs, ISYM, "");
 	return(YES);
@@ -1829,9 +1837,12 @@ bbDasm(i, ofs, w)
 	FAST OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	printf(edDCond(Cond(w)));
-	if (Nu(w)) printf(",N");
-	if (Match("BVB")) printf("\t%%r%d,",Rta(w));
-	else printf("\t%%r%d,%d,",Rsa(w),Imb5(w));
+	if (Nu(w))
+		printf(",n");
+	if (Match("bvb"))
+		printf("\t%%r%d,",Rta(w));
+	else
+		printf("\t%%r%d,%d,",Rsa(w),Imb5(w));
 	psymoff(tgtofs, ISYM, "");
 	return(YES);
 }
@@ -1843,11 +1854,11 @@ ariDasm(i, ofs, w)
 	OFS ofs;
 	WORD w;
 {
-	if (Match("OR") && Rsb(w) == 0 && Cond4(w) == NEV) {
+	if (Match("or") && Rsb(w) == 0 && Cond4(w) == NEV) {
 		if (Rsa(w) == 0 && Rtc(w) == 0)
-			printf("NOP");
+			printf("nop");
 		else
-			printf("COPY\t%%r%d,%%r%d",Rsa(w),Rtc(w));
+			printf("copy\t%%r%d,%%r%d",Rsa(w),Rtc(w));
 		return(YES);
 	}
 	printf(i->mnem);
@@ -1863,21 +1874,22 @@ scDasm(i, ofs, w)
 	OFS ofs;
 	WORD w;
 {
-	if (Match("MTCTL")) {
+	if (Match("mtctl")) {
 		if (Rtb(w) == 11)
-			printf("MTSAR\t%%r%d",Rsa(w));
+			printf("mtsar\t%%r%d",Rsa(w));
 		else
-			printf("MTCTL\t%%r%d,%%cr%d",Rsa(w),Rtb(w));
+			printf("mtctl\t%%r%d,%%cr%d",Rsa(w),Rtb(w));
 		return(YES);
 	}
 	printf(i->mnem);
-	if (Match("SSM") || Match("RSM")) printf("\t%d,%%r%d",Ima5A(w),Rtc(w));
-	else if (Match("MTSM")) printf("\t%%r%d",Rsa(w));
-	else if (Match("LDPRID")) printf("\t%%r%d",Rtc(w));
-	else if (Match("MTSP")) printf("\t%%r%d,%%sr%d",Rsa(w),Sr(w));
-	else if (Match("MFSP")) printf("\t%%sr%d,%%r%d",Sr(w),Rtc(w));
-	else if (Match("MFCTL")) printf("\t%%cr%d,%%r%d",Rsb(w),Rtc(w));
-	else if (Match("LDSID")) {
+	if (Match("ssm") || Match("rsm"))
+		printf("\t%d,%%r%d",Ima5A(w),Rtc(w));
+	else if (Match("mtsm")) printf("\t%%r%d",Rsa(w));
+	else if (Match("ldprid")) printf("\t%%r%d",Rtc(w));
+	else if (Match("mtsp")) printf("\t%%r%d,%%sr%d",Rsa(w),Sr(w));
+	else if (Match("mfsp")) printf("\t%%sr%d,%%r%d",Sr(w),Rtc(w));
+	else if (Match("mfctl")) printf("\t%%cr%d,%%r%d",Rsb(w),Rtc(w));
+	else if (Match("ldsid")) {
 		if (Dss(w))
 			printf("\t(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rtc(w));
 		else
@@ -1896,13 +1908,13 @@ mmgtDasm(i, ofs, w)
 	OFS ofs;
 	WORD w;
 {
-	if (Match("PROBE")) {
+	if (Match("probe")) {
 		if (ProbeI(w)) {
 			if (Dss(w))
-				printf("I\t(%%sr%d,%%r%d),%d,%%r%d",
+				printf("i\t(%%sr%d,%%r%d),%d,%%r%d",
 				       Dss(w),Rsb(w),Rsa(w),Rtc(w));
 			else
-				printf("I\t(%%r%d),%d,%%r%d",
+				printf("i\t(%%r%d),%d,%%r%d",
 				       Rsb(w),Rsa(w),Rtc(w));
 		} else {
 			if (Dss(w))
@@ -1913,32 +1925,34 @@ mmgtDasm(i, ofs, w)
 				       Rsb(w),Rsa(w),Rtc(w));
 		}
 	}
-	else if (Match("LHA") || Match("LPA")) {
-		if (Modify(w)) printf(",M");
+	else if (Match("lha") || Match("lpa")) {
+		if (Modify(w))
+			printf(",m");
 		if (Dss(w))
 			printf("\t%%r%d(%%sr%d,%%r%d),%%r%d",
 			       Rsa(w),Dss(w),Rsb(w),Rtc(w));
 		else
 			printf("\t%%r%d(%%r%d),%%r%d",Rsa(w),Rsb(w),Rtc(w));
 	}
-	else if (Match("PDTLB") || Match("PDC") || Match("FDC")) {
-		if (Modify(w)) printf(",M");
+	else if (Match("pdtlb") || Match("pdc") || Match("fdc")) {
+		if (Modify(w)) printf(",m");
 		if (Dss(w))
 			printf("\t%%r%d(%%sr%d,%%r%d)",Rsa(w),Dss(w),Rsb(w));
 		else
 			printf("\t%%r%d(%%r%d)",Rsa(w),Rsb(w));
 	}
-	else if (Match("PITLB") || Match("FIC")) {
-		if (Modify(w)) printf(",M");
+	else if (Match("pitlb") || Match("fic")) {
+		if (Modify(w))
+			printf(",m");
 		printf("\t%%r%d(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
 	}
-	else if (Match("IDTLB")) {
+	else if (Match("idtlb")) {
 		if (Dss(w))
 			printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Dss(w),Rsb(w));
 		else
 			printf("\t%%r%d,(%%r%d)",Rsa(w),Rsb(w));
 	}
-	else if (Match("IITLB"))
+	else if (Match("iitlb"))
 		printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
 	else {
 		printf("?????");
@@ -1993,7 +2007,7 @@ floatDasm(i, ofs, w)
 			/* Opclass 2: 2 sources, no destination */
 			switch((op1 >> 4) & 7) {
 			case 0:
-				p = "CMP";
+				p = "cmp";
 				break;
 			default:
 				printf(fcoprUndef);
@@ -2012,14 +2026,14 @@ floatDasm(i, ofs, w)
 			t++;
 		/* Opclass 3: 2 sources, 1 destination */
 		switch((op1 >> 4) & 7) {
-		    case 0: p = "ADD"; break;
-		    case 1: p = "SUB"; break;
-		    case 2: p = (Fpi(w)) ? "MPYI" : "MPY"; break;
-		    case 3: p = "DIV"; break;
-		    case 4: p = "REM"; break;
-		    default: printf(fcoprUndef); return(NO);
+		case 0: p = "add"; break;
+		case 1: p = "sub"; break;
+		case 2: p = (Fpi(w)) ? "mpyi" : "mpy"; break;
+		case 3: p = "div"; break;
+		case 4: p = "rem"; break;
+		default: printf(fcoprUndef); return(NO);
 		}
-		printf("%s,%s",p,fmtStrTbl[fmt]);
+		printf("%s,%s", p, fmtStrTbl[fmt]);
 		printf("\t%%f%s,%%f%s,%%f%s",ST(r1),ST(r2),ST(t));
 	} else if (op1 & 1) {			/* class 1 */
 		dfmt = (op1 >> 4) & 3;
@@ -2033,12 +2047,12 @@ floatDasm(i, ofs, w)
 			t++;
 		/* Opclass 1: 1 source, 1 destination conversions */
 		switch((op1 >> 6) & 3) {
-		    case 0: p = "FF"; break;
-		    case 1: p = "XF"; break;
-		    case 2: p = "FX"; break;
-		    case 3: p = "FXT"; break;
+		case 0: p = "ff"; break;
+		case 1: p = "xf"; break;
+		case 2: p = "fx"; break;
+		case 3: p = "fxt"; break;
 		}
-		printf("%s,%s",p,fmtStrTbl[fmt]);
+		printf("%s,%s", p, fmtStrTbl[fmt]);
 		printf(",%s\t%%f%s,%%f%s",fmtStrTbl[dfmt],ST(r1),DT(t));
 	} else {				/* class 0 */
 		/*
@@ -2049,12 +2063,12 @@ floatDasm(i, ofs, w)
 			t++;
 		/* Opclass 0: 1 source, 1 destination */
 		switch((op1 >> 4) & 7) {
-		    case 1: p = "RSQRT"; break;
-		    case 2: p = "CPY"; break;
-		    case 3: p = "ABS"; break;
-		    case 4: p = "SQRT"; break;
-		    case 5: p = "RND"; break;
-		    default: printf(fcoprUndef); return(NO);
+		case 1: p = "rsqrt"; break;
+		case 2: p = "cpy"; break;
+		case 3: p = "abs"; break;
+		case 4: p = "sqrt"; break;
+		case 5: p = "rnd"; break;
+		default: printf(fcoprUndef); return(NO);
 		}
 		printf("%s,%s",p,fmtStrTbl[fmt]);
 		printf("\t%%f%s,%%f%s",ST(r1),ST(t));
@@ -2071,68 +2085,70 @@ fcoprDasm(w, op1, op2)
 	FAST char *p;
 
 	if (AstNu(w) && op1 == ((1<<4) | 2)) {
-		if (op2 == 0) {
-			printf("FTEST"); return(YES);
-		}
-		if (op2 == 1) {
-			printf("FTEST,ACC"); return(YES);
-		}
-		if (op2 == 2) {
-			printf("FTEST,REJ"); return(YES);
+		if (op2 == 0 || op2 == 1 || op2 == 2) {
+			printf("ftest");
+			if (op2 == 1)
+				printf(",acc");
+			else if (op2 == 2)
+				printf(",rej");
+			return(YES);
 		}
 		return(NO);
 	} else if (0 == op1 && 0 == op2) {
-		printf("FCOPR IDENTIFY"); return(YES);
+		printf("fcopr identify"); return(YES);
 	}
 	switch(op1 & 3) {
 	    case 0:
 		/* Opclass 0: 1 source, 1 destination */
 		r1 = (op1 >> 12) & 0x1f; t = op2; fmt = (op1 >> 2) & 3;
 		switch((op1 >> 4) & 7) {
-		    case 1: p = "FRSQRT"; break;
-		    case 2: p = "FCPY"; break;
-		    case 3: p = "FABS"; break;
-		    case 4: p = "FSQRT"; break;
-		    case 5: p = "FRND"; break;
-		    default: printf(fcoprUndef); return(NO);
+		case 1: p = "rsqrt"; break;
+		case 2: p = "cpy"; break;
+		case 3: p = "abs"; break;
+		case 4: p = "sqrt"; break;
+		case 5: p = "rnd"; break;
+		default: printf(fcoprUndef); return(NO);
 		}
-		printf("%s,%s\t%%fr%d,%%fr%d",p,fmtStrTbl[fmt],r1,t);
+		printf("f%s,%s\t%%fr%d,%%fr%d", p, fmtStrTbl[fmt], r1, t);
 		return(YES);
 	    case 1:
 		/* Opclass 1: 1 source, 1 destination conversions */
 		r1 = (op1 >> 12) & 0x1f; t = op2;
 		fmt = (op1 >> 2) & 3; dfmt = (op1 >> 4) & 3;
 		switch((op1 >> 6) & 3) {
-		    case 0: p = "FCNVFF"; break;
-		    case 1: p = "FCNVXF"; break;
-		    case 2: p = "FCNVFX"; break;
-		    case 3: p = "FCNVFXT"; break;
+		case 0: p = "ff"; break;
+		case 1: p = "xf"; break;
+		case 2: p = "fx"; break;
+		case 3: p = "fxt"; break;
 		}
-		printf("%s,%s,%s\t%%fr%d,%%fr%d",p,fmtStrTbl[fmt],fmtStrTbl[dfmt],r1,t);
+		printf("fcnv%s,%s,%s\t%%fr%d,%%fr%d",
+		       p, fmtStrTbl[fmt], fmtStrTbl[dfmt], r1, t);
 		return(YES);
 	    case 2:
 		/* Opclass 2: 2 sources, no destination */
 		r1 = (op1 >> 12) & 0x1f; r2 = (op1 >> 7) & 0x1f;
 		fmt = (op1 >> 2) & 3;
 		switch((op1 >> 4) & 7) {
-		    case 0: p = "FCMP"; break;
-		    default: printf(fcoprUndef); return(NO);
+		case 0: p = "fcmp"; break;
+		default: printf(fcoprUndef); return(NO);
 		}
-		printf("%s,%s,%s\t%%fr%d,%%fr%d",p,fmtStrTbl[fmt],condStrTbl[op2],r1,r2);
+		printf("%s,%s,%s\t%%fr%d,%%fr%d",
+		       p,fmtStrTbl[fmt],condStrTbl[op2],r1,r2);
 		return(YES);
 	    case 3:
 		/* Opclass 3: 2 sources, 1 destination */
 		r1 = (op1 >> 12) & 0x1f; r2 = (op1 >> 7) & 0x1f; t = op2;
 		fmt = (op1 >> 2) & 3;
 		switch((op1 >> 4) & 7) {
-		    case 0: p = "FADD"; break;
-		    case 1: p = "FSUB"; break;
-		    case 2: p = "FMPY"; break;
-		    case 3: p = "FDIV"; break;
-		    case 4: p = "FREM"; break;
-		    default: printf(fcoprUndef); return(NO);
+		case 0: p = "add"; break;
+		case 1: p = "sub"; break;
+		case 2: p = "mpy"; break;
+		case 3: p = "div"; break;
+		case 4: p = "rem"; break;
+		default: printf(fcoprUndef); return(NO);
 		}
-		printf("%s,%s\t%%fr%d,%%fr%d,%%fr%d",p,fmtStrTbl[fmt],r1,r2,t);
+		printf("f%s,%s\t%%fr%d,%%fr%d,%%fr%d",
+		       p, fmtStrTbl[fmt], r1, r2, t);
 		return(YES);
 	    default: printf(fcoprUndef); return(NO);
 	}
@@ -2147,39 +2163,40 @@ coprDasm(i, ofs, w)
 {
 	FAST u_int uid = Uid(w);
 	FAST BOOL load = NO;
-	FAST char *pfx = uid > 1 ? "C" : "F";
+	FAST char *pfx = uid > 1 ? "c" : "f";
 	FAST BOOL dreg;
 
-	if (Match("COPR")) {
+	if (Match("copr")) {
 		if (uid) {
-			printf("COPR,%d,0x%x",uid,CoprExt(w));
-			if (AstNu(w)) printf(",N");
+			printf("copr,%d,0x%x",uid,CoprExt(w));
+			if (AstNu(w))
+				printf(",n");
 			return(YES);
 		}
 		return fcoprDasm(w, CoprExt1(w),CoprExt2(w));
 	}
-	if (Match("CLDD")) { dreg = YES; load = YES; printf("%sLDD",pfx); }
-	else if (Match("CLDW")) { load = YES; printf("%sLDW",pfx); }
-	else if (Match("CSTD")) { dreg = YES; printf("%sSTD",pfx); }
-	else if (Match("CSTW")) printf("%sSTW",pfx);
-	else { printf("COPR???"); return(NO); }
+	if (Match("cldd")) { dreg = YES; load = YES; printf("%sldd",pfx); }
+	else if (Match("cldw")) { load = YES; printf("%sldw",pfx); }
+	else if (Match("cstd")) { dreg = YES; printf("%sstd",pfx); }
+	else if (Match("cstw")) printf("%sstw",pfx);
+	else { printf("copr???"); return(NO); }
 	if (ShortDisp(w)) {
-		printf("S");
+		printf("s");
 		if (AstNu(w))
-			printf(ModBefore(w)?",MB":",MA");
+			printf(",m%s", ModBefore(w)?"b":"a");
 	}
 	else {
-		printf("X");
+		printf("x");
 		if (AstNu(w))
-			printf(IndxShft(w)?",SM":",M");
+			printf(",%sm", IndxShft(w)?"s":"");
 		else if (IndxShft(w))
-			printf(",S");
+			printf(",s");
 	}
 	switch (CacheCtrl(w)) {
-		case NOACTION:	break;
-		case STACKREF:	printf(",C"); break;
-		case SEQPASS:	printf(",Q"); break;
-		case PREFETCH:	printf(",P"); break;
+	case NOACTION:	break;
+	case STACKREF:	printf(",c"); break;
+	case SEQPASS:	printf(",q"); break;
+	case PREFETCH:	printf(",p"); break;
 	}
 	if (load) {
 		FAST const char *p;
@@ -2228,22 +2245,19 @@ lpkDasm(i, ofs, w)
 	 * Short or Indexed
 	 */
 	if (ShortDisp(w)) {
-		if (Modify(w)) {
-			if (ModBefore(w)) printf(",MB");
-			else printf(",MA");
-		}
+		if (Modify(w))
+			printf(",m%s", ModBefore(w)?"b":"a");
 	} else {
-		if (Modify(w)) {
-			if (IndxShft(w)) printf(",SM");
-			else printf(",M");
-		}
-		else if (IndxShft(w)) printf(",S");
+		if (Modify(w))
+			printf(",%sm", IndxShft(w)? "s":"");
+		else if (IndxShft(w))
+			printf(",s");
 	}
 	switch (CacheCtrl(w)) {
-		case NOACTION:	break;
-		case STACKREF:	printf(",C"); break;
-		case SEQPASS:	printf(",Q"); break;
-		case PREFETCH:	printf(",P"); break;
+	case NOACTION:	break;
+	case STACKREF:	printf(",c"); break;
+	case SEQPASS:	printf(",q"); break;
+	case PREFETCH:	printf(",p"); break;
 	}
 	if (ShortDisp(w))
 		printf("\t%%fr%d,%d",Rsc(w),Ima5(w));
@@ -2263,16 +2277,16 @@ diagDasm(i, ofs, w)
 	WORD w;
 {
 	if (0x0b0 == BitfR(w,19,8,_b198)) {	/* mtcpu */
-		printf("MTCPU\t%%r%d,%%dr%d", Rsa(w), Rtb(w));
+		printf("mtcpu\t%%r%d,%%dr%d", Rsa(w), Rtb(w));
 		return(YES);
 	}
 	if (0x0d0 == BitfR(w,19,8,_b198)) {	/* mfcpu */
-		printf("MFCPU\t%%dr%d,%%r%d", Rsb(w), Rta(w));
+		printf("mfcpu\t%%dr%d,%%r%d", Rsb(w), Rta(w));
 		return(YES);
 	}
 
 	printf(i->mnem);
-	if (Match("DIAG")) {
+	if (Match("diag")) {
 		printf("\t0x%X",w & 0x03ffffff);
 		return(YES);
 	}
@@ -2311,12 +2325,12 @@ fmpyaddDasm(i, ofs, w)
 		*ad  = SinglePrec(w) ? fsreg[Ad(w)]  : fdreg[Ad(w)];
 
 	if (Rsd(w) == 0)
-		printf("\t%%f%s,%%f%s,%%f%s,%%f%s",
-		       ((SinglePrec(w)) ? "CFXT,SGL" : "CFXT,DBL"),
+		printf("\t%%fcfxt,%s,%%f%s,%%f%s,%%f%s",
+		       ((SinglePrec(w)) ? "sgl" : "dbl"),
 		       ms1, ms2, mt, ad);
 	else
-		printf("%s\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
-		       ((SinglePrec(w)) ? "ADD,SGL" : "ADD,DBL"),
+		printf("add%s\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
+		       ((SinglePrec(w)) ? "sgl" : "dbl"),
 		       ms1, ms2, mt, as, ad);
 
 	return(YES);
