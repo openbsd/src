@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.43 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.44 2004/06/22 20:45:33 deraadt Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -639,7 +639,7 @@ sunos_sys_uname(p, v, retval)
 	bcopy(hostname, sut.nodename, sizeof(sut.nodename));
 	sut.nodename[sizeof(sut.nodename)-1] = '\0';
 	bcopy(osrelease, sut.release, sizeof(sut.release) - 1);
-	bcopy("1", sut.version, sizeof(sut.version) - 1);
+	strlcpy(sut.version, "1", sizeof(sut.version));
 	bcopy(machine, sut.machine, sizeof(sut.machine) - 1);
 
 	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
