@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2002/05/24 03:44:37 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2002/05/24 18:37:38 drahn Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -48,8 +48,10 @@ char *
 _dl_strdup(const char *orig)
 {
 	char *newstr;
-	newstr = _dl_malloc(_dl_strlen(orig)+1);
-	_dl_strcpy(newstr, orig);
+	int len;
+	len = _dl_strlen(orig)+1;
+	newstr = _dl_malloc(len);
+	_dl_strlcpy(newstr, orig, len);
 	return (newstr);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.12 2002/05/24 04:17:00 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.13 2002/05/24 18:37:38 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -145,7 +145,7 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 	 *  Check '/usr/lib'
 	 */
 
-	_dl_strcpy(lp, "/usr/lib/");
+	_dl_strlcpy(lp, "/usr/lib/", sizeof(lp));
 	path = lp + sizeof("/usr/lib/") - 1;
 	while (path < lp + PATH_MAX && (*path++ = *libname++))
 		;

@@ -1,6 +1,8 @@
-/*	$OpenBSD: util.h,v 1.3 2002/05/24 03:44:37 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.4 2002/05/24 18:37:38 drahn Exp $	*/
 
 /*
+ * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * All rights reserved.
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,14 +75,30 @@ _dl_strlen(const char *p)
 	return(s - p);
 }
 
-static inline char *
-_dl_strcpy(char *d, const char *s)
+static inline size_t
+_dl_strlcpy(char *dst, const char *src, int siz)
 {
-	char *rd = d;
+	char *d = dst;
+	const char *s = src;
+	size_t n = siz;
 
-	while ((*d++ = *s++) != '\0')
-		;
-	return(rd);
+	/* Copy as many bytes as will fit */
+	if (n != 0 && --n != 0) {
+		do {
+			if ((*d++ = *s++) == 0)
+				break;
+		} while (--n != 0);
+	}
+
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (siz != 0)
+			*d = '\0';		/* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
 }
 
 static inline int
