@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.19 1998/12/19 19:07:32 millert Exp $
+#	$OpenBSD: bsd.README,v 1.20 1999/05/15 15:45:08 kstailey Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -228,6 +228,10 @@ PIPE		If set to "-pipe" gcc will be given the -pipe option
 		which can speed up compiles on machines with memory
 		to spare.  Instead of using temp files, gcc uses pipes
 		for the temporary data.
+
+GLOBAL_AUTOCONF_CACHE
+		Set to the name of a file that all cached GNU autoconf
+		test results will be saved in.	Reduces redundant tests.
 
 bsd.own.mk is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
