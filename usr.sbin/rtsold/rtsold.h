@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.h,v 1.8 2002/02/17 19:42:39 millert Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.9 2002/05/31 10:11:14 itojun Exp $	*/
 /*	$KAME: rtsold.h,v 1.11 2000/10/10 06:18:04 itojun Exp $	*/
 
 /*
@@ -63,27 +63,27 @@ struct ifinfo {
 extern struct timeval tm_max;
 extern int dflag;
 struct ifinfo *find_ifinfo(int ifindex);
-void rtsol_timer_update(struct ifinfo *ifinfo);
+void rtsol_timer_update(struct ifinfo *);
 extern void warnmsg(int, const char *, const char *, ...)
      __attribute__((__format__(__printf__, 3, 4)));
 
 /* if.c */
 extern int ifinit(void);
-extern int interface_up(char *name);
-extern int interface_status(struct ifinfo*);
-extern int lladdropt_length(struct sockaddr_dl *sdl);
-extern void lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt);
-extern struct sockaddr_dl *if_nametosdl(char *name);
-extern int getinet6sysctl(int code);
+extern int interface_up(char *);
+extern int interface_status(struct ifinfo *);
+extern int lladdropt_length(struct sockaddr_dl *);
+extern void lladdropt_fill(struct sockaddr_dl *, struct nd_opt_hdr *);
+extern struct sockaddr_dl *if_nametosdl(char *);
+extern int getinet6sysctl(int);
 
 /* rtsol.c */
 extern int sockopen(void);
-extern void sendpacket(struct ifinfo *ifinfo);
-extern void rtsol_input(int s);
+extern void sendpacket(struct ifinfo *);
+extern void rtsol_input(int);
 
 /* probe.c */
 extern int probe_init(void);
-extern void defrouter_probe(int ifindex);
+extern void defrouter_probe(int);
 
 /* dump.c */
 extern void rtsold_dump_file(char *);

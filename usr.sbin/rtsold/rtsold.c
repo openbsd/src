@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.19 2002/05/31 09:53:26 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.20 2002/05/31 10:11:14 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -88,19 +88,17 @@ static int mobile_node = 0;
 volatile sig_atomic_t do_dump;
 static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
 
-static int ifconfig(char *ifname);
+static int ifconfig(char *);
 #if 0
-static int ifreconfig(char *ifname);
+static int ifreconfig(char *);
 #endif
-static int make_packet(struct ifinfo *ifinfo);
+static int make_packet(struct ifinfo *);
 static struct timeval *rtsol_check_timer(void);
-static void TIMEVAL_ADD(struct timeval *a, struct timeval *b,
-    struct timeval *result);
-static void TIMEVAL_SUB(struct timeval *a, struct timeval *b,
-    struct timeval *result);
+static void TIMEVAL_ADD(struct timeval *, struct timeval *, struct timeval *);
+static void TIMEVAL_SUB(struct timeval *, struct timeval *, struct timeval *);
 
 static void rtsold_set_dump_file(void);
-static void usage(char *progname);
+static void usage(char *);
 static char **autoifprobe(void);
 
 int
