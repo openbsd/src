@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.11 1999/10/11 21:48:29 markus Exp $
+.\" $Id: sshd.8,v 1.12 1999/10/11 22:24:33 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -400,8 +400,10 @@ Note that s/key authentication is enabled only if
 .Cm PasswordAuthentication
 is allowed, too.
 .It Cm StrictModes
-Specifies whether SSH should check file modes and ownership of the
-user's home directory and rhosts files before accepting login.  This
+Specifies whether
+.Nm
+should check file modes and ownership of the
+user's files and home directory before accepting login.  This
 is normally desirable because novices sometimes accidentally leave their
 directory or files world-writable.  The default is
 .Dq yes .
