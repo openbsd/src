@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.h,v 1.2 2004/07/25 03:29:35 jfb Exp $	*/
+/*	$OpenBSD: cvsd.h,v 1.3 2004/09/24 14:28:07 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -35,6 +35,7 @@
 #include <netinet/in.h>
 
 #include <pwd.h>
+#include <grp.h>
 #include <signal.h>
 
 #include "cvs.h"
@@ -115,6 +116,8 @@ struct cvsd_addr {
 extern volatile sig_atomic_t running;
 extern volatile sig_atomic_t restart;
 
+extern uid_t    cvsd_uid;
+extern gid_t    cvsd_gid;
 
 
 
