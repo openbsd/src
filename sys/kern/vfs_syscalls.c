@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.43 1998/07/13 05:43:10 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.44 1998/08/17 22:19:06 csapuntz Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -630,6 +630,7 @@ sys_getfsstat(p, v, retval)
 	caddr_t sfsp;
 	long count, maxcount, error;
 	struct statfs sb;
+	int  flags = SCARG(uap, flags);
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct statfs);
 	sfsp = (caddr_t)SCARG(uap, buf);
@@ -642,19 +643,16 @@ sys_getfsstat(p, v, retval)
 		}
 		if (sfsp && count < maxcount) {
 			sp = &mp->mnt_stat;
-			/*
- 			 * If MNT_NOWAIT or MNT_LAZY is specified, do not
- 			 * refresh the fsstat cache. MNT_NOWAIT or MNT_LAZY
- 			 * overrides MNT_WAIT.
-  			 */
- 			if (((SCARG(uap, flags) & (MNT_LAZY|MNT_NOWAIT)) == 0 ||
-			    (SCARG(uap, flags) & MNT_WAIT)) &&
+
+			/* Refresh stats unless MNT_NOWAIT is specified */
+			if ((flags != MNT_NOWAIT) &&
 			    (error = VFS_STATFS(mp, sp, p))) {
 				simple_lock(&mountlist_slock);
 				nmp = mp->mnt_list.cqe_next;
 				vfs_unbusy(mp, p);
  				continue;
 			}
+
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 			if (suser(p->p_ucred, &p->p_acflag)) {
 				bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
