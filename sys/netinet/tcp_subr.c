@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.6 1996/07/29 06:22:14 tholo Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.7 1996/07/29 22:01:50 niklas Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -94,8 +94,6 @@ tcp_init()
 #ifdef TCP_COMPAT_42
 	tcp_iss = 1;		/* wrong */
 #else /* TCP_COMPAT_42 */
-	u_int random __P((void));
-
 	tcp_iss = random() + 1;
 #endif /* !TCP_COMPAT_42 */
 	in_pcbinit(&tcbtable, tcbhashsize);

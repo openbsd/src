@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.4 1996/07/29 06:22:12 tholo Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.5 1996/07/29 22:01:50 niklas Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -243,9 +243,6 @@ tcp_input(m, va_alist)
 	register struct mbuf *m;
 #endif
 {
-#ifndef TCP_COMPAT_42
-	u_int random __P((void));
-#endif /* !TCP_COMPAT_42 */
 	register struct tcpiphdr *ti;
 	register struct inpcb *inp;
 	caddr_t optp = NULL;

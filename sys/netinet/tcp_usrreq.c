@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.5 1996/07/29 06:22:15 tholo Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.6 1996/07/29 22:01:51 niklas Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -85,9 +85,6 @@ tcp_usrreq(so, req, m, nam, control)
 	int req;
 	struct mbuf *m, *nam, *control;
 {
-#ifndef TCP_COMPAT_42
-	u_int random __P((void));
-#endif /* !TCP_COMPAT_42 */
 	register struct inpcb *inp;
 	register struct tcpcb *tp = NULL;
 	int s;
