@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpcib.c,v 1.1 2004/06/03 18:22:21 grange Exp $	*/
+/*	$OpenBSD: gscpcib.c,v 1.2 2004/06/05 15:21:01 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -36,8 +36,6 @@
 #include <dev/gpio/gpiovar.h>
 
 #include <i386/pci/gscpcibreg.h>
-
-#include "gpio.h"
 
 struct gscpcib_softc {
 	struct device sc_dev;
@@ -88,7 +86,7 @@ gscpcib_match(struct device *parent, void *match, void *aux)
 void
 gscpcib_attach(struct device *parent, struct device *self, void *aux)
 {
-#if NGPIO > 0
+#ifndef SMALL_KERNEL
 	struct gscpcib_softc *sc = (struct gscpcib_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct gpiobus_attach_args gba;
@@ -134,18 +132,18 @@ gscpcib_attach(struct device *parent, struct device *self, void *aux)
 	gpio_present = 1;
 
 corepcib:
-#endif
+#endif	/* !SMALL_KERNEL */
 	/* Provide core pcib(4) functionality */
 	pcibattach(parent, self, aux);
 
-#if NGPIO > 0
+#ifndef SMALL_KERNEL
 	/* Attach GPIO framework */
 	if (gpio_present)
 		config_found(&sc->sc_dev, &gba, gpiobus_print);
-#endif
+#endif	/* !SMALL_KERNEL */
 }
 
-#if NGPIO > 0
+#ifndef SMALL_KERNEL
 static __inline void
 gscpcib_gpio_pin_select(struct gscpcib_softc *sc, int pin)
 {
@@ -205,4 +203,4 @@ gscpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
 	    GSCGPIO_CONF, conf);
 }
-#endif
+#endif	/* !SMALL_KERNEL */
