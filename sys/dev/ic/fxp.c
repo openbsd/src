@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.51 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.52 2004/05/18 21:19:35 beck Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -847,6 +847,14 @@ rcvloop:
 						m_freem(m);
 						goto rcvloop;
 					}
+					if (*(u_int16_t *)(rfap +
+					    offsetof(struct fxp_rfa,
+					    rfa_status)) &
+					    htole16(FXP_RFA_STATUS_CRC)) {
+						m_freem(m);
+						goto rcvloop;
+					}
+
 					m->m_pkthdr.rcvif = ifp;
 					m->m_pkthdr.len = m->m_len =
 					    total_len;
