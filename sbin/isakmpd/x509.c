@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.26 2000/03/08 08:42:15 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.37 2000/03/07 16:09:36 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.27 2000/04/07 22:04:16 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.38 2000/04/07 19:22:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -104,7 +104,7 @@ int
 x509_generate_kn (X509 *cert)
 {
   char *fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s\"\n";
-  char *ikey, *skey, *buf, isname[256], subname[256], *buf2;
+  char *ikey, *skey, *buf, isname[256], subname[256];
   char *fmt2 = "Authorizer: \"DN:%s\"\nLicensees: \"DN:%s\"\n";
   X509_NAME *issuer, *subject;
   struct keynote_deckey dc;
@@ -127,15 +127,19 @@ x509_generate_kn (X509 *cert)
     }
 
   dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
-  dc.dec_key = (void *) key;
+  dc.dec_key = key;
   ikey = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
 			     KEYNOTE_PUBLIC_KEY));
   if (LKV (keynote_errno) == ERROR_MEMORY)
-      log_fatal ("x509_generate_kn: failed to get memory for public key");
-  if (ikey == NULL)
     {
-      return 0;
+      log_print ("x509_generate_kn: failed to get memory for public key");
       LC (RSA_free, (key));
+      return 0;
+    }
+  if (!ikey)
+    {
+      LC (RSA_free, (key));
+      return 0;
     }
   LC (RSA_free, (key));
 
@@ -159,28 +163,33 @@ x509_generate_kn (X509 *cert)
 
   if (icert == NULL)
     {
-      free(ikey);
       log_print ("x509_generate_kn: "
 		 "missing certificates, cannot construct X509 chain");
+      free(ikey);
       return 0;
     }
 
   if (!x509_cert_get_key (icert, &key))
     {
-      free (ikey);
       log_print ("x509_generate_kn: failed to get public key from cert");
+      free (ikey);
       return 0;
     }
 
   LC (X509_OBJECT_free_contents, (&obj));
 
   dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
-  dc.dec_key = (void *) key;
+  dc.dec_key = key;
   skey = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
 			     KEYNOTE_PUBLIC_KEY));
   if (LKV (keynote_errno) == ERROR_MEMORY)
-      log_fatal ("x509_generate_kn: failed to get memory for public key");
-  if (skey == NULL)
+    {
+      log_error ("x509_generate_kn: failed to get memory for public key");
+      free (ikey);
+      LC (RSA_free, (key));
+      return 0;
+    }
+  if (!skey)
     {
       free (ikey);
       LC (RSA_free, (key));
@@ -190,7 +199,13 @@ x509_generate_kn (X509 *cert)
 
   buf = calloc (strlen (fmt) + strlen (ikey) + strlen (skey), sizeof (char));
   if (buf == NULL)
-    log_fatal ("x509_generate_kn: failed to allocate memory for KeyNote credential");
+    {
+      log_error ("x509_generate_kn: "
+		 "failed to allocate memory for KeyNote credential");
+      free (ikey);
+      free (skey);
+      return 0;
+    }
 
   sprintf (buf, fmt, skey, ikey);
   free (ikey);
@@ -203,24 +218,29 @@ x509_generate_kn (X509 *cert)
       free (buf);
       return 0;
     }
+  free (buf);
 
   LC (X509_NAME_oneline, (issuer, isname, 256));
   LC (X509_NAME_oneline, (subject, subname, 256));
 
-  buf2 = calloc(strlen (fmt2) + strlen (isname) + strlen (subname),
-		sizeof(char));
-  if (buf == NULL)
-    log_fatal ("x509_generate_kn: failed to allocate memory for KeyNote credential");
+  buf = malloc (strlen (fmt2) + strlen (isname) + strlen (subname));
+  if (!buf)
+    {
+      log_error ("x509_generate_kn: malloc (%d) failed",
+		 strlen (fmt2) + strlen (isname) + strlen (subname));
+      return 0;
+    }
 
-  sprintf (buf2, fmt2, isname, subname);
+  sprintf (buf, fmt2, isname, subname);
 
-  if (LK (kn_add_assertion, (keynote_sessid, buf2, strlen(buf2),
+  if (LK (kn_add_assertion, (keynote_sessid, buf, strlen (buf),
 			     ASSERT_FLAG_LOCAL)) == -1)
     {
       log_error ("x509_generate_kn: failed to add new KeyNote credential");
-      free (buf2);
+      free (buf);
       return 0;
     }
+  free (buf);
 
   /* 
    * XXX
@@ -232,7 +252,6 @@ x509_generate_kn (X509 *cert)
    * XXX
    */
 
-  free (buf);
   return 1;
 }
 #endif /* USE_POLICY */
