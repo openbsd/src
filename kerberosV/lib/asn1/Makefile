@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.7 2003/05/11 20:54:39 mho Exp $
+# $OpenBSD: Makefile,v 1.8 2003/05/11 22:41:10 hin Exp $
 
 LIB=	asn1
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
-INCLUDE_FILES=	krb5_asn1.h asn1_err.h ${KRB5SRC}/lib/asn1/{der.h,asn1-common.h}
+INCLUDE_FILES=	$(.CURDIR)/krb5_asn1.h asn1_err.h ${KRB5SRC}/lib/asn1/{der.h,asn1-common.h}
 
 includes:	krb5_asn1.h asn1_err.h
 
@@ -65,7 +65,7 @@ gen_files= \
 	asn1_TransitedEncoding.c	\
 	asn1_UNSIGNED.c
 
-CLEANFILES=	${gen_files} *.x asn1_files asn1_err.[ch]
+CLEANFILES=	asn1_err.[ch]
 
 BUILT_SOURCES= \
 	${gen_files} \
@@ -84,10 +84,7 @@ CFLAGS+=	-I${KRB5SRC}/lib/asn1 -I.
 asn1_err.h asn1_err.c:	${KRB5SRC}/lib/asn1/asn1_err.et
 	compile_et ${KRB5SRC}/lib/asn1/asn1_err.et
 
-${gen_files} krb5_asn1.h: asn1_files
-
-asn1_files:	${KRB5SRC}/lib/asn1/k5.asn1
+regen:	${KRB5SRC}/lib/asn1/k5.asn1
 	asn1_compile ${KRB5SRC}/lib/asn1/k5.asn1 krb5_asn1
-	for f in *.x; do mv $$f `echo $$f | sed s,.x$$,.c,g`; done
 
 .include <bsd.lib.mk>
