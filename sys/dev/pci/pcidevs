@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.313 2000/09/14 10:08:40 niklas Exp $
+	$OpenBSD: pcidevs,v 1.314 2000/09/14 11:04:51 niklas Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -761,6 +761,7 @@ product ATI MACH64_GU		0x4755  Mach64 GU
 product ATI MACH64_GV		0x4756  Mach64 GV
 product ATI MACH64_GW		0x4757  Mach64 GW
 product ATI MACH64_GX		0x4758  Mach64 GX
+product ATI MACH64_GY		0x4759  Mach64 GY
 product ATI MACH64_GZ		0x475A  Mach64 GZ
 product ATI MACH64_LB		0x4C42  Mach64 LB
 product ATI MACH64_LD		0x4c44  Mach64 LD
