@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.160 2003/03/11 11:53:28 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.161 2003/03/11 13:20:17 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -258,6 +258,35 @@ pfctl_clear_rules(int dev, int opts)
 {
 	struct pfioc_rule pr;
 
+	if (*anchorname && !*rulesetname) {
+		struct pfioc_ruleset pr;
+		int mnr, nr, r;
+
+		memset(&pr, 0, sizeof(pr));
+		memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+		if (ioctl(dev, DIOCGETRULESETS, &pr)) {
+			if (errno == EINVAL)
+				fprintf(stderr, "No rulesets in anchor '%s'.\n",
+				    anchorname);
+			else
+				err(1, "DIOCGETRULESETS");
+			return (-1);
+		}
+		mnr = pr.nr;
+		for (nr = mnr - 1; nr >= 0; --nr) {
+			pr.nr = nr;
+			if (ioctl(dev, DIOCGETRULESET, &pr))
+				err(1, "DIOCGETRULESET");
+			memcpy(rulesetname, pr.name, sizeof(rulesetname));
+			r = pfctl_clear_rules(dev, opts | PF_OPT_QUIET);
+			memset(rulesetname, 0, sizeof(rulesetname));
+			if (r)
+				return (r);
+		}
+		if ((opts & PF_OPT_QUIET) == 0)
+			fprintf(stderr, "rules cleared\n");
+		return (0);
+	}
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
 	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
@@ -281,6 +310,35 @@ pfctl_clear_nat(int dev, int opts)
 {
 	struct pfioc_rule pr;
 
+	if (*anchorname && !*rulesetname) {
+		struct pfioc_ruleset pr;
+		int mnr, nr, r;
+
+		memset(&pr, 0, sizeof(pr));
+		memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+		if (ioctl(dev, DIOCGETRULESETS, &pr)) {
+			if (errno == EINVAL)
+				fprintf(stderr, "No rulesets in anchor '%s'.\n",
+				    anchorname);
+			else
+				err(1, "DIOCGETRULESETS");
+			return (-1);
+		}
+		mnr = pr.nr;
+		for (nr = mnr - 1; nr >= 0; --nr) {
+			pr.nr = nr;
+			if (ioctl(dev, DIOCGETRULESET, &pr))
+				err(1, "DIOCGETRULESET");
+			memcpy(rulesetname, pr.name, sizeof(rulesetname));
+			r = pfctl_clear_nat(dev, opts | PF_OPT_QUIET);
+			memset(rulesetname, 0, sizeof(rulesetname));
+			if (r)
+				return (r);
+		}
+		if ((opts & PF_OPT_QUIET) == 0)
+			fprintf(stderr, "nat cleared\n");
+		return (0);
+	}
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
 	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
@@ -527,16 +585,14 @@ pfctl_show_rules(int dev, int opts, int format)
 				fprintf(stderr, "No rulesets in anchor '%s'.\n",
 				    anchorname);
 			else
-				warn("DIOCGETRULESETS");
+				err(1, "DIOCGETRULESETS");
 			return (-1);
 		}
 		mnr = pr.nr;
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
-			if (ioctl(dev, DIOCGETRULESET, &pr)) {
-				warn("DIOCGETRULESET");
-				return (-1);
-			}
+			if (ioctl(dev, DIOCGETRULESET, &pr))
+				err(1, "DIOCGETRULESET");
 			memcpy(rulesetname, pr.name, sizeof(rulesetname));
 			r = pfctl_show_rules(dev, opts, format);
 			memset(rulesetname, 0, sizeof(rulesetname));
@@ -633,16 +689,14 @@ pfctl_show_nat(int dev, int opts)
 				fprintf(stderr, "No rulesets in anchor '%s'.\n",
 				    anchorname);
 			else
-				warn("DIOCGETRULESETS");
+				err(1, "DIOCGETRULESETS");
 			return (-1);
 		}
 		mnr = pr.nr;
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
-			if (ioctl(dev, DIOCGETRULESET, &pr)) {
-				warn("DIOCGETRULESET");
-				return (-1);
-			}
+			if (ioctl(dev, DIOCGETRULESET, &pr))
+				err(1, "DIOCGETRULESET");
 			memcpy(rulesetname, pr.name, sizeof(rulesetname));
 			r = pfctl_show_nat(dev, opts);
 			memset(rulesetname, 0, sizeof(rulesetname));
@@ -1222,17 +1276,15 @@ pfctl_show_anchors(int dev, int opts)
 				fprintf(stderr, "No rulesets in anchor '%s'.\n",
 				    anchorname);
 			else
-				warn("DIOCGETRULESETS");
+				err(1, "DIOCGETRULESETS");
 			return (-1);
 		}
 		mnr = pr.nr;
 		printf("%u rulesets in anchor %s:\n", mnr, anchorname);
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
-			if (ioctl(dev, DIOCGETRULESET, &pr)) {
-				warn("DIOCGETRULESET");
-				return (-1);
-			}
+			if (ioctl(dev, DIOCGETRULESET, &pr))
+				err(1, "DIOCGETRULESET");
 			printf("  %s:%s\n", pr.anchor, pr.name);
 		}
 	}
