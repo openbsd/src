@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.26 2004/07/25 13:36:08 millert Exp $	*/
+/*	$OpenBSD: atw.c,v 1.27 2004/12/31 04:27:52 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -284,6 +284,10 @@ void	atw_si4126_write(struct atw_softc *, u_int, u_int);
 
 const struct atw_txthresh_tab atw_txthresh_tab_lo[] = ATW_TXTHRESH_TAB_LO_RATE;
 const struct atw_txthresh_tab atw_txthresh_tab_hi[] = ATW_TXTHRESH_TAB_HI_RATE;
+
+struct cfdriver atw_cd = {
+    NULL, "atw", DV_IFNET
+};
 
 const char *atw_tx_state[] = {
 	"STOPPED",

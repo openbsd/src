@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.3 2004/07/25 13:50:49 millert Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.4 2004/12/31 04:27:52 jsg Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -101,9 +101,6 @@ void	atw_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach atw_pci_ca = {
     sizeof (struct atw_softc), atw_pci_match, atw_pci_attach
-};
-struct cfdriver atw_cd = {
-    0, "atw", DV_IFNET
 };
 
 const struct atw_pci_product {
