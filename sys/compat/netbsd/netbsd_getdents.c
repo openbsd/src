@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_getdents.c,v 1.3 2001/01/15 11:39:36 art Exp $	*/
+/*	$OpenBSD: netbsd_getdents.c,v 1.4 2001/09/05 23:38:28 art Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -49,6 +49,7 @@
 #include <sys/vnode.h>
 #include <sys/stat.h>
 
+#include <compat/netbsd/netbsd_types.h>
 #include <compat/netbsd/netbsd_signal.h>
 #include <compat/netbsd/netbsd_syscallargs.h>
 
