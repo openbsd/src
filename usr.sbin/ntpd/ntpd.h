@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.8 2004/07/04 11:01:49 alexander Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.9 2004/07/04 22:24:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,8 +33,11 @@
 #define	IDX2PEER_RESERVE	5
 #define	PFD_RESERVE		10
 
-#define	NTPD_OPT_VERBOSE		0x0001
-#define	NTPD_OPT_VERBOSE2		0x0002
+#define	NTPD_OPT_VERBOSE	0x0001
+#define	NTPD_OPT_VERBOSE2	0x0002
+
+#define	INTERVAL_QUERY		60	/* sync with peers every n seconds */
+#define	QUERYTIME_MAX		30	/* single query might take n secs max */
 
 enum client_state {
 	STATE_NONE,

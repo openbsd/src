@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.6 2004/07/04 11:01:49 alexander Exp $ */
+/*	$OpenBSD: ntp.h,v 1.7 2004/07/04 22:24:20 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -145,7 +145,5 @@ struct ntp_query {
 #define	JAN_1970	2208988800UL	/* 1970 - 1900 in seconds */
 
 #define	NTP_VERSION	4
-#define	MAX_QUERYTIME	30	/* max seconds a single query might take */
-#define	QUERY_INTERVAL	60	/* sync with peers every n seconds */
 
 #endif	/* _NTP_H_ */
