@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_extern.h,v 1.1 2001/09/08 22:33:51 jason Exp $	*/
+/*	$OpenBSD: fpu_extern.h,v 1.2 2001/09/09 22:44:44 jason Exp $	*/
 /*	$NetBSD: fpu_extern.h,v 1.4 2000/08/03 18:32:08 eeh Exp $	*/
 
 /*-
@@ -86,7 +86,6 @@ u_int fpu_ftox __P((struct fpemu *, struct fpn *, u_int *));
 u_int fpu_ftos __P((struct fpemu *, struct fpn *));
 u_int fpu_ftod __P((struct fpemu *, struct fpn *, u_int *));
 u_int fpu_ftoq __P((struct fpemu *, struct fpn *, u_int *));
-void fpu_implode __P((struct fpemu *, struct fpn *, int, u_int *));
 
 /* fpu_mul.c */
 struct fpn *fpu_mul __P((struct fpemu *));
