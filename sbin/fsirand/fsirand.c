@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.8 1997/02/22 06:46:23 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.9 1997/02/28 00:46:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.8 1997/02/22 06:46:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.9 1997/02/28 00:46:33 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/types.h>
@@ -86,12 +86,13 @@ main(argc, argv)
 	if (argc - optind < 1)
 		usage(1);
 
-	/* Increase our max data size */
-	if (getrlimit(RLIMIT_DATA, &rl) < 0)
-		warn("getrlimit");
-	rl.rlim_cur = rl.rlim_max;
-	if (setrlimit(RLIMIT_DATA, &rl) < 0)
-		warn("setrlimit");
+	/* Increase our data size to the max */
+	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
+		rl.rlim_cur = rl.rlim_max;
+		if (setrlimit(RLIMIT_DATA, &rl) < 0)
+			warn("Can't get resource limit to max data size");
+	} else
+		warn("Can't get resource limit for data size");
 
 	for (n = optind; n < argc; n++) {
 		if (argc - optind != 1)
