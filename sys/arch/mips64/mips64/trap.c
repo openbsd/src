@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 2004/09/21 05:51:15 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 2004/09/21 08:53:51 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -148,7 +148,7 @@ extern void MipsSwitchFPState(struct proc *, struct trap_frame *);
 extern void MipsSwitchFPState16(struct proc *, struct trap_frame *);
 extern void MipsFPTrap(u_int, u_int, u_int);
 
-u_int trap(struct trap_frame *);
+register_t trap(struct trap_frame *);
 int cpu_singlestep(struct proc *);
 u_long MipsEmulateBranch(struct trap_frame *, long, int, long);
 
@@ -157,7 +157,7 @@ u_long MipsEmulateBranch(struct trap_frame *, long, int, long);
  * In the case of a kernel trap, we return the pc where to resume if
  * pcb_onfault is set, otherwise, return old pc.
  */
-unsigned
+register_t
 trap(trapframe)
 	struct trap_frame *trapframe;
 {
@@ -1013,7 +1013,7 @@ int
 cpu_singlestep(p)
 	struct proc *p;
 {
-	unsigned va;
+	vaddr_t va;
 	struct trap_frame *locr0 = p->p_md.md_regs;
 	int i;
 	int bpinstr = BREAK_SSTEP;
@@ -1155,9 +1155,9 @@ loop:
 
 #if 0
 	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (unsigned)MipsKernIntr && pc < (unsigned)MipsUserIntr) {
+	if (pc >= (vaddr_t)MipsKernIntr && pc < (vaddr_t)MipsUserIntr) {
 		(*printfn)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)MipsKernIntr, a0, a1, a2);
+		       pc-(vaddr_t)MipsKernIntr, a0, a1, a2);
 		regs = (struct trap_frame *)(sp + STAND_ARG_SIZE);
 		a0 = kdbpeek(&regs->a0);
 		a1 = kdbpeek(&regs->a1);
@@ -1175,7 +1175,7 @@ loop:
 # define Between(x, y, z) \
 		( ((x) <= (y)) && ((y) < (z)) )
 # define pcBetween(a,b) \
-		Between((unsigned)a, pc, (unsigned)b)
+		Between((vaddr_t)a, pc, (vaddr_t)b)
 
 	/* check for bad PC */
 	if (pc & 3 || pc < KSEG0_BASE || pc >= (unsigned)edata) {
