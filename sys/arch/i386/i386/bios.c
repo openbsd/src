@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.31 2000/08/17 22:08:09 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.32 2000/08/18 01:23:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -120,7 +120,9 @@ biosattach(parent, self, aux)
 	void *aux;
 {
 	struct bios_softc *sc = (struct bios_softc *) self;
+#if (NPCI > 0 && NPCIBIOS > 0) || NAPM > 0
 	struct bios_attach_args *bia = aux;
+#endif
 	u_int8_t *va;
 	char *str;
 	int flags;
