@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 1997/12/17 08:54:48 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 1997/12/17 10:27:32 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -191,7 +191,6 @@ extern u_int extmem;	/* BIOS's extended memory size */
 
 void	cyrix6x86_cpu_setup __P((const char *));
 void	intel586_cpu_setup __P((const char *));
-void	intel686_cpu_setup __P((const char *));
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 static __inline u_char
@@ -529,7 +528,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro"	/* Default */
 			},
-			intel686_cpu_setup
+			NULL
 		} }
 	},
 	{
@@ -626,7 +625,7 @@ cyrix6x86_cpu_setup(cpu_device)
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
 
-	printf("\n%s: Cyrix workaround performed\n", cpu_device);
+	printf("%s: Cyrix workaround performed\n", cpu_device);
 #endif
 }
 
@@ -635,21 +634,8 @@ intel586_cpu_setup(cpu_device)
 	const char *cpu_device;
 {
 #if defined(I586_CPU) || defined(I686_CPU)
-	calibrate_cyclecounter();
-	printf(" %d MHz\n", pentium_mhz);
-
 	fix_f00f();
 	printf("%s: F00F bug workaround installed\n", cpu_device);
-#endif
-}
-
-void
-intel686_cpu_setup(cpu_device)
-	const char *cpu_device;
-{
-#if defined(I586_CPU) || defined(I686_CPU)
-	calibrate_cyclecounter();
-	printf(" %d MHz\n", pentium_mhz);
 #endif
 }
 
@@ -657,7 +643,7 @@ void
 identifycpu()
 {
 	extern char cpu_vendor[];
-	extern int cpu_id;
+	extern int cpu_id, cpu_feature;
 	const char *name, *modifier, *vendorname;
 	const char *cpu_device = "cpu0";
 	int class = CPUCLASS_386, vendor, i, max;
@@ -732,6 +718,14 @@ identifycpu()
 		classnames[class]);
 	printf("%s: %s", cpu_device, cpu_model);
 
+#if defined(I586_CPU) || defined(I686_CPU)
+	if (cpu_feature && (cpu_feature & 0x10) >> 4) {	/* Has TSC */
+		calibrate_cyclecounter();
+		printf(" %d MHz", pentium_mhz);
+	}
+#endif
+	printf("\n");
+
 	cpu_class = class;
 
 	/*
@@ -781,8 +775,6 @@ identifycpu()
 	/* configure the CPU if needed */
 	if (cpu_setup != NULL)
 		cpu_setup(cpu_device);
-	else
-		printf("\n");
 
 	if (cpu == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
