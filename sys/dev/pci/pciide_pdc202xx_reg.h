@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.2 2000/01/10 22:54:46 chris Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.3 2001/03/16 09:16:06 chris Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.1 1999/08/29 17:20:10 bouyer Exp $ */
 
 /*
@@ -73,7 +73,7 @@
 
 /* Ultra-DMA mode 3/4 control (PDC20262 only, 1 byte) */
 #define PDC262_U66	0x11
-#define PDC262_U66_EN(chan) (0x1 << ((chan) *2))
+#define PDC262_U66_EN(chan) (0x2 << ((chan) *2))
 /* primary mode (1 byte) */
 #define PDC2xx_PM	0x1a
 /* secondary mode (1 byte) */
@@ -110,7 +110,7 @@
 
 static int8_t pdc2xx_pa[] = {0x9, 0x5, 0x3, 0x2, 0x1};
 static int8_t pdc2xx_pb[] = {0x13, 0xc, 0x8, 0x6, 0x4};
-static int8_t pdc2xx_dma_mb[] = {0x7, 0x3, 0x3};
-static int8_t pdc2xx_dma_mc[] = {0xf, 0x4, 0x3};
-static int8_t pdc2xx_udma_mb[] = {0x3, 0x2, 0x1, 0x2, 0x1};
-static int8_t pdc2xx_udma_mc[] = {0x3, 0x2, 0x1, 0x2, 0x1};
+static int8_t pdc2xx_dma_mb[] = {0x3, 0x3, 0x3};
+static int8_t pdc2xx_dma_mc[] = {0x5, 0x4, 0x3};
+static int8_t pdc2xx_udma_mb[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
+static int8_t pdc2xx_udma_mc[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
