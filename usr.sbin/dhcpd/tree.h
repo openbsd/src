@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.3 2004/04/14 01:09:52 henning Exp $	*/
+/*	$OpenBSD: tree.h,v 1.4 2004/04/15 21:47:13 hshoexer Exp $	*/
 
 /* Definitions for address trees... */
 
@@ -41,8 +41,8 @@
 
 /* A pair of pointers, suitable for making a linked list. */
 typedef struct _pair {
-	caddr_t car;
-	struct _pair *cdr;
+	caddr_t		 car;
+	struct _pair	*cdr;
 } *pair;
 
 /* Tree node types... */
@@ -53,55 +53,55 @@ typedef struct _pair {
 
 /* Tree structure for deferred evaluation of changing values. */
 struct tree {
-	int op;
+	int	op;
 	union {
 		struct concat {
-			struct tree *left;
-			struct tree *right;
+			struct tree	*left;
+			struct tree	*right;
 		} concat;
 		struct host_lookup {
 			struct dns_host_entry *host;
 		} host_lookup;
 		struct const_val {
-			unsigned char *data;
-			int len;
+			unsigned char	*data;
+			int		 len;
 		} const_val;
 		struct limit {
-			struct tree *tree;
-			int limit;
+			struct tree	*tree;
+			int		 limit;
 		} limit;
 	} data;
 };
 
 /* DNS host entry structure... */
 struct dns_host_entry {
-	char *hostname;
-	unsigned char *data;
-	int data_len;
-	int buf_len;
-	time_t timeout;
+	char		*hostname;
+	unsigned char	*data;
+	int		 data_len;
+	int		 buf_len;
+	time_t		 timeout;
 };
 
 struct tree_cache {
-	unsigned char *value;
-	int len;
-	int buf_size;
-	time_t timeout;
-	struct tree *tree;
-	int flags;
+	unsigned char	*value;
+	int		 len;
+	int		 buf_size;
+	time_t		 timeout;
+	struct tree	*tree;
+	int		 flags;
 #define	TC_AWAITING_RESOLUTION	1
 #define TC_TEMPORARY		2
 };
 
 struct universe {
-	char *name;
+	char		*name;
 	struct hash_table *hash;
-	struct option *options[256];
+	struct option	*options[256];
 };
 
 struct option {
-	char *name;
-	char *format;
-	struct universe *universe;
-	unsigned char code;
+	char		*name;
+	char		*format;
+	struct universe	*universe;
+	unsigned char	code;
 };
