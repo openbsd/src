@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.7 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.8 2002/05/29 18:57:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -172,7 +172,7 @@ main(argc, argv)
 		 * challenge, even if it has to cons one up.
 		 */
 		haskey = (skeychallenge(&skey, username, skeyprompt) == 0);
-		strcat(skeyprompt, "\nS/Key Password: ");
+		strlcat(skeyprompt, "\nS/Key Password: ", sizeof skeyprompt);
 		if (mode == 1) {
 			fprintf(back, BI_VALUE " challenge %s\n",
 			    auth_mkvalue(skeyprompt));

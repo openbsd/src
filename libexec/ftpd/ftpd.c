@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.126 2002/05/26 09:32:07 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.127 2002/05/29 18:57:05 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.126 2002/05/26 09:32:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.127 2002/05/29 18:57:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ curdir()
 	if (getcwd(path, sizeof(path)-1) == NULL)
 		return ("");
 	if (path[1] != '\0')		/* special case for root dir. */
-		strcat(path, "/");
+		strlcat(path, "/", sizeof path);
 	/* For guest account, skip / since it's chrooted */
 	return (guest ? path+1 : path);
 }
