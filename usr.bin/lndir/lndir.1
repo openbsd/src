@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.4 1997/06/22 23:10:56 downsj Exp $
+.\" $OpenBSD: lndir.1,v 1.5 1997/06/23 10:47:15 downsj Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -175,11 +175,13 @@ You need to use something like
 .Bd -unfilled -offset indent
 find todir \|\-type l \|\-print \||\| xargs rm
 .Ed
+.Pp
 to clear out all files before you can relink (if fromdir moved, for instance).
 Something like
 .Bd -unfilled -offset indent
 find . \|\\! \|\-type d \|\-print
 .Ed
+.Pp
 will find all files that are not directories.
 .Sh SEE ALSO
 .Xr find 1 ,
