@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.4 1996/03/03 21:07:04 niklas Exp $	*/
+/*	$OpenBSD: if.c,v 1.5 1996/03/05 02:29:37 dm Exp $	*/
 /*	$NetBSD: if.c,v 1.24 1996/02/13 22:00:09 christos Exp $	*/
 
 /*
@@ -510,7 +510,8 @@ ifioctl(so, cmd, data, p)
 			return (EOPNOTSUPP);
 #ifndef COMPAT_43
 		return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-			cmd, data, ifp));
+			(struct mbuf *) cmd, (struct mbuf *) data,
+			(struct mbuf *) ifp));
 #else
 	    {
 		int ocmd = cmd;
