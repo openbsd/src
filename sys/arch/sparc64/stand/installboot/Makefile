@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/09/06 19:24:47 jason Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/09/06 19:49:17 jason Exp $
 #	$NetBSD: Makefile,v 1.13 2000/08/16 08:24:01 mrg Exp $
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 WARNS?=1
 PROG=	installboot
 SRCS=	installboot.c loadfile.c
-NOMAN=
+MAN=	installboot.8
 
 LIBSA_I=${.CURDIR}/../../../../lib/libsa
 
