@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sdb.h,v 1.12 2001/01/09 21:53:26 bwelling Exp $ */
+/* $ISC: sdb.h,v 1.12.12.3 2004/03/08 09:04:39 marka Exp $ */
 
 #ifndef DNS_SDB_H
 #define DNS_SDB_H 1
@@ -112,7 +112,10 @@ dns_sdb_register(const char *drivername, const dns_sdbmethods_t *methods,
  * ns_sdb_putrr().
  *
  * The lookup function returns the lookup results to the name server
- * by calling ns_sdb_putrr() once for each record found.
+ * by calling ns_sdb_putrr() once for each record found.  On success,
+ * the return value of the lookup function should be ISC_R_SUCCESS.
+ * If the domain name 'name' does not exist, the lookup function should
+ * ISC_R_NOTFOUND.  Any other return value is treated as an error.
  *
  * Lookups at the zone apex will cause the server to also call the
  * function 'authority' (if non-NULL), which must provide an SOA record
@@ -162,17 +165,28 @@ dns_sdb_unregister(dns_sdbimplementation_t **sdbimp);
 isc_result_t
 dns_sdb_putrr(dns_sdblookup_t *lookup, const char *type, dns_ttl_t ttl,
 	      const char *data);
+isc_result_t
+dns_sdb_putrdata(dns_sdblookup_t *lookup, dns_rdatatype_t type, dns_ttl_t ttl,
+		 const unsigned char *rdata, unsigned int rdlen);
 /*
- * Add a single resource record to the lookup structure to be later
- * parsed into a query response.
+ * Add a single resource record to the lookup structure to be
+ * returned in the query response.  dns_sdb_putrr() takes the
+ * resource record in master file text format as a null-terminated
+ * string, and dns_sdb_putrdata() takes the raw RDATA in
+ * uncompressed wire format.
  */
 
 isc_result_t
 dns_sdb_putnamedrr(dns_sdballnodes_t *allnodes, const char *name,
 		   const char *type, dns_ttl_t ttl, const char *data);
+isc_result_t
+dns_sdb_putnamedrdata(dns_sdballnodes_t *allnodes, const char *name,
+		      dns_rdatatype_t type, dns_ttl_t ttl,
+		      const void *rdata, unsigned int rdlen);
 /*
- * Add a single resource record to the allnodes structure to be later
- * parsed into a zone transfer response.
+ * Add a single resource record to the allnodes structure to be
+ * included in a zone transfer response, in text or wire
+ * format as above.
  */
 
 isc_result_t

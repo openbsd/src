@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lwdgabn.c,v 1.13 2001/01/22 22:12:16 bwelling Exp $ */
+/* $ISC: lwdgabn.c,v 1.13.12.3 2004/03/08 04:04:19 marka Exp $ */
 
 #include <config.h>
 
@@ -546,11 +546,11 @@ init_gabn(ns_lwdclient_t *client) {
 	 * Initialize the real name and alias arrays in the reply we're
 	 * going to build up.
 	 */
-	for (i = 0 ; i < LWRES_MAX_ALIASES ; i++) {
+	for (i = 0; i < LWRES_MAX_ALIASES; i++) {
 		client->aliases[i] = NULL;
 		client->aliaslen[i] = 0;
 	}
-	for (i = 0 ; i < LWRES_MAX_ADDRS ; i++) {
+	for (i = 0; i < LWRES_MAX_ADDRS; i++) {
 		client->addrs[i].family = 0;
 		client->addrs[i].length = 0;
 		memset(client->addrs[i].address, 0, LWRES_ADDR_MAXLEN);

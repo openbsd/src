@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: mutex.h,v 1.23 2001/01/09 21:58:07 bwelling Exp $ */
+/* $ISC: mutex.h,v 1.23.26.3 2004/03/08 09:04:55 marka Exp $ */
 
 #ifndef ISC_MUTEX_H
 #define ISC_MUTEX_H 1
@@ -65,9 +65,14 @@ typedef pthread_mutex_t	isc_mutex_t;
 #define isc_mutex_init(mp) \
 	isc_mutex_init_profile((mp), __FILE__, __LINE__)
 #else
+#if ISC_MUTEX_DEBUG && defined(PTHREAD_MUTEX_ERRORCHECK)
+#define isc_mutex_init(mp) \
+        isc_mutex_init_errcheck((mp))
+#else
 #define isc_mutex_init(mp) \
 	((pthread_mutex_init((mp), ISC__MUTEX_ATTRS) == 0) ? \
 	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+#endif
 #endif
 
 #if ISC_MUTEX_PROFILE
@@ -125,6 +130,9 @@ isc_mutex_unlock_profile(isc_mutex_t *mp, const char * _file, int _line);
 
 void
 isc_mutex_statsprofile(FILE *fp);
+
+isc_result_t
+isc_mutex_init_errcheck(isc_mutex_t *mp);
 
 #endif /* ISC_MUTEX_PROFILE */
 

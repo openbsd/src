@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lwres_gnba.c,v 1.20.2.2 2002/08/05 06:57:16 marka Exp $ */
+/* $ISC: lwres_gnba.c,v 1.20.2.2.8.4 2004/03/08 09:05:11 marka Exp $ */
 
 #include <config.h>
 
@@ -110,7 +110,7 @@ lwres_gnbaresponse_render(lwres_context_t *ctx, lwres_gnbaresponse_t *req,
 	payload_length = 4;			       /* flags */
 	payload_length += 2;			       /* naliases */
 	payload_length += 2 + req->realnamelen + 1;    /* real name encoding */
-	for (x = 0 ; x < req->naliases ; x++)	       /* each alias */
+	for (x = 0; x < req->naliases; x++)	       /* each alias */
 		payload_length += 2 + req->aliaslen[x] + 1;
 
 	buflen = LWRES_LWPACKET_LENGTH + payload_length;
@@ -146,7 +146,7 @@ lwres_gnbaresponse_render(lwres_context_t *ctx, lwres_gnbaresponse_t *req,
 	lwres_buffer_putuint8(b, 0);
 
 	/* encode the aliases */
-	for (x = 0 ; x < req->naliases ; x++) {
+	for (x = 0; x < req->naliases; x++) {
 		datalen = req->aliaslen[x];
 		lwres_buffer_putuint16(b, datalen);
 		lwres_buffer_putmem(b, (unsigned char *)req->aliases[x],
@@ -264,7 +264,7 @@ lwres_gnbaresponse_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 	/*
 	 * Parse off the aliases.
 	 */
-	for (x = 0 ; x < gnba->naliases ; x++) {
+	for (x = 0; x < gnba->naliases; x++) {
 		ret = lwres_string_parse(b, &gnba->aliases[x],
 					 &gnba->aliaslen[x]);
 		if (ret != LWRES_R_SUCCESS)

@@ -1,19 +1,19 @@
+# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.25 2001/07/10 18:25:37 gson Exp $
+# $ISC: Makefile.in,v 1.25.12.6 2004/08/28 06:25:23 marka Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -23,7 +23,7 @@ top_srcdir =	@top_srcdir@
 
 @LIBLWRES_API@
 
-@BIND9_INCLUDES@
+@BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I${srcdir}/unix/include \
 		-I. -I./include -I${srcdir}/include ${ISC_INCLUDES}
@@ -35,14 +35,14 @@ OBJS =		context.@O@ gai_strerror.@O@ getaddrinfo.@O@ gethost.@O@ \
 		getipnode.@O@ getnameinfo.@O@ getrrset.@O@ herror.@O@ \
 		lwbuffer.@O@ lwconfig.@O@ lwpacket.@O@ lwresutil.@O@ \
 		lwres_gabn.@O@ lwres_gnba.@O@ lwres_grbn.@O@ lwres_noop.@O@ \
-		lwinetaton.@O@ lwinetpton.@O@ lwinetntop.@O@
+		lwinetaton.@O@ lwinetpton.@O@ lwinetntop.@O@ print.@O@
 
 # Alphabetically
 SRCS =		context.c gai_strerror.c getaddrinfo.c gethost.c \
 		getipnode.c getnameinfo.c getrrset.c herror.c \
 		lwbuffer.c lwconfig.c lwpacket.c lwresutil.c \
 		lwres_gabn.c lwres_gnba.c lwres_grbn.c lwres_noop.c \
-		lwinetaton.c lwinetpton.c lwinetntop.c
+		lwinetaton.c lwinetpton.c lwinetntop.c print.c
 
 LIBS =		@LIBS@
 
@@ -52,7 +52,7 @@ TARGETS =	timestamp
 @BIND9_MAKE_RULES@
 
 version.@O@: version.c
-	${LIBTOOL} ${CC} ${ALL_CFLAGS} \
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
 		-DVERSION=\"${VERSION}\" \
 		-DLIBINTERFACE=${LIBINTERFACE} \
 		-DLIBREVISION=${LIBREVISION} \
@@ -64,8 +64,8 @@ liblwres.@SA@: ${OBJS} version.@O@
 	${RANLIB} $@
 
 liblwres.la: ${OBJS} version.@O@
-	${LIBTOOL} --mode=link \
-		${CC} ${ALL_CFLAGS} -o liblwres.la -rpath ${libdir} \
+	${LIBTOOL_MODE_LINK} \
+		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o liblwres.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} version.@O@ ${LIBS}
 
@@ -76,7 +76,7 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}
 
 install:: timestamp installdirs
-	${LIBTOOL} ${INSTALL_DATA} liblwres.@A@ ${DESTDIR}${libdir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_DATA} liblwres.@A@ ${DESTDIR}${libdir}
 
 clean distclean::
 	rm -f liblwres.@A@ liblwres.la timestamp

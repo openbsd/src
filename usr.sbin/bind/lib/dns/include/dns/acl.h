@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: acl.h,v 1.20 2001/08/28 03:58:11 marka Exp $ */
+/* $ISC: acl.h,v 1.20.52.3 2004/03/08 09:04:34 marka Exp $ */
 
 #ifndef DNS_ACL_H
 #define DNS_ACL_H 1
@@ -197,6 +197,23 @@ dns_aclelement_match(isc_netaddr_t *reqaddr,
  * caller should examine e->negative.  Since the element 'e' may be
  * a reference to a named ACL or a nested ACL, the matching element
  * returned through 'matchelt' is not necessarily 'e' itself.
+ */
+
+isc_result_t
+dns_acl_elementmatch(dns_acl_t *acl,
+		     dns_aclelement_t *elt,
+		     dns_aclelement_t **matchelt);
+/*
+ * Search for an ACL element in 'acl' which is exactly the same as 'elt'.
+ * If there is one, and 'matchelt' is non NULL, then '*matchelt' will point
+ * to the entry.
+ *
+ * This function is intended to be used for avoiding duplicated ACL entries
+ * before adding an entry.
+ *
+ * Returns:
+ *	ISC_R_SUCCESS		Match succeeds.
+ *	ISC_R_NOTFOUND		Match fails.
  */
 
 ISC_LANG_ENDDECLS

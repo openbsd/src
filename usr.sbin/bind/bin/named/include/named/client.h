@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: client.h,v 1.60.2.2 2001/11/15 02:51:46 marka Exp $ */
+/* $ISC: client.h,v 1.60.2.2.10.8 2004/07/23 02:56:52 marka Exp $ */
 
 #ifndef NAMED_CLIENT_H
 #define NAMED_CLIENT_H 1
@@ -68,10 +68,13 @@
 #include <isc/stdtime.h>
 #include <isc/quota.h>
 
-#include <dns/name.h>
-#include <dns/types.h>
-#include <dns/tcpmsg.h>
 #include <dns/fixedname.h>
+#include <dns/name.h>
+#include <dns/rdataclass.h>
+#include <dns/rdatatype.h>
+#include <dns/tcpmsg.h>
+#include <dns/types.h>
+
 #include <named/types.h>
 #include <named/query.h>
 
@@ -91,6 +94,7 @@ struct ns_client {
 	int			nreads;
 	int			nsends;
 	int			nrecvs;
+	int			nupdates;
 	int			nctls;
 	int			references;
 	unsigned int		attributes;
@@ -153,6 +157,8 @@ struct ns_client {
 #define NS_CLIENTATTR_RA		0x02 /* Client gets recusive service */
 #define NS_CLIENTATTR_PKTINFO		0x04 /* pktinfo is valid */
 #define NS_CLIENTATTR_MULTICAST		0x08 /* recv'd from multicast */
+#define NS_CLIENTATTR_WANTDNSSEC	0x10 /* include dnssec records */
+
 
 /***
  *** Functions
@@ -304,7 +310,28 @@ ns_client_log(ns_client_t *client, isc_logcategory_t *category,
 	      const char *fmt, ...) ISC_FORMAT_PRINTF(5, 6);
 
 void
-ns_client_aclmsg(const char *msg, dns_name_t *name, dns_rdataclass_t rdclass,
-                 char *buf, size_t len);
+ns_client_logv(ns_client_t *client, isc_logcategory_t *category,
+	       isc_logmodule_t *module, int level, const char *fmt, va_list ap) ISC_FORMAT_PRINTF(5, 0);
+
+void
+ns_client_aclmsg(const char *msg, dns_name_t *name, dns_rdatatype_t type,
+		 dns_rdataclass_t rdclass, char *buf, size_t len);
+
+#define NS_CLIENT_ACLMSGSIZE(x) \
+	(DNS_NAME_FORMATSIZE + DNS_RDATATYPE_FORMATSIZE + \
+	 DNS_RDATACLASS_FORMATSIZE + sizeof(x) + sizeof("'/'"))
+
+void
+ns_client_recursing(ns_client_t *client, isc_boolean_t killoldest);
+/*
+ * Add client to end of recursing list.  If 'killoldest' is true
+ * kill the oldest recursive client (list head). 
+ */
+
+void
+ns_client_dumprecursing(FILE *f, ns_clientmgr_t *manager);
+/*
+ * Dump the outstanding recursive queries to 'f'.
+ */
 
 #endif /* NAMED_CLIENT_H */

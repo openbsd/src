@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: interfacemgr.h,v 1.23 2001/08/28 03:58:00 marka Exp $ */
+/* $ISC: interfacemgr.h,v 1.23.24.7 2004/04/29 01:31:22 marka Exp $ */
 
 #ifndef NAMED_INTERFACEMGR_H
 #define NAMED_INTERFACEMGR_H 1
@@ -65,6 +65,8 @@
 #define IFACE_MAGIC		ISC_MAGIC('I',':','-',')')
 #define NS_INTERFACE_VALID(t)	ISC_MAGIC_VALID(t, IFACE_MAGIC)
 
+#define NS_INTERFACEFLAG_ANYADDR	0x01U	/* bound to "any" address */
+
 struct ns_interface {
 	unsigned int		magic;		/* Magic number. */
 	ns_interfacemgr_t *	mgr;		/* Interface manager. */
@@ -72,6 +74,7 @@ struct ns_interface {
 	int			references;	/* Locked */
 	unsigned int		generation;     /* Generation number. */
 	isc_sockaddr_t		addr;           /* Address and port. */
+	unsigned int		flags;		/* Interface characteristics */
 	char 			name[32];	/* Null terminated. */
 	dns_dispatch_t *	udpdispatch;	/* UDP dispatcher. */
 	isc_socket_t *		tcpsocket;	/* TCP socket. */
@@ -121,6 +124,20 @@ ns_interfacemgr_scan(ns_interfacemgr_t *mgr, isc_boolean_t verbose);
  */
 
 void
+ns_interfacemgr_adjust(ns_interfacemgr_t *mgr, ns_listenlist_t *list,
+		       isc_boolean_t verbose);
+/*
+ * Similar to ns_interfacemgr_scan(), but this function also tries to see the
+ * need for an explicit listen-on when a list element in 'list' is going to
+ * override an already-listening a wildcard interface.
+ *
+ * This function does not update localhost and localnets ACLs.
+ *
+ * This should be called once on server startup, after configuring views and
+ * zones.
+ */
+
+void
 ns_interfacemgr_setlistenon4(ns_interfacemgr_t *mgr, ns_listenlist_t *value);
 /*
  * Set the IPv4 "listen-on" list of 'mgr' to 'value'.
@@ -149,5 +166,8 @@ ns_interface_shutdown(ns_interface_t *ifp);
  * Stop listening for queries on interface 'ifp'.
  * May safely be called multiple times.
  */
+
+void
+ns_interfacemgr_dumprecursing(FILE *f, ns_interfacemgr_t *mgr);
 
 #endif /* NAMED_INTERFACEMGR_H */

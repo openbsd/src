@@ -1,21 +1,21 @@
 #!/usr/bin/perl -w
 #
+# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: start.pl,v 1.3 2001/02/15 00:07:03 nelsonm Exp $
+# $ISC: start.pl,v 1.3.206.2 2004/03/10 02:55:53 marka Exp $
 
 # Framework for starting test servers.
 # Based on the type of server specified, check for port availability, remove
@@ -129,7 +129,7 @@ sub start_server {
 		if ($options) {
 			$command .= "$options";
 		} else {
-			$command .= "-c named.conf -d 99 -g";
+			$command .= "-m record -c named.conf -d 99 -g";
 		}
 		$command .= " >named.run 2>&1 &";
 		$pid_file = "named.pid";
@@ -139,7 +139,7 @@ sub start_server {
 		if ($options) {
 			$command .= "$options";
 		} else {
-			$command .= "-C resolv.conf -d 99 -g -i lwresd.pid -P 9210 -p 5300";
+			$command .= "-m record -C resolv.conf -d 99 -g -i lwresd.pid -P 9210 -p 5300";
 		}
 		$command .= " >lwresd.run 2>&1 &";
 		$pid_file = "lwresd.pid";

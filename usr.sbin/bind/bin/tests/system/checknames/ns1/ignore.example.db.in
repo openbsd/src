@@ -1,0 +1,23 @@
+; Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; $ISC: ignore.example.db.in,v 1.2.2.2 2004/03/06 10:21:51 marka Exp $
+
+$TTL 300
+@	SOA ns1.ignore.example. hostmaster.ignore.example. (
+	    1 3600 1200 604800 3600 )
+	NS  ns1.ignore.example.
+ns1.ignore.example. A 10.53.0.1
+yy_yy.ignore.example. A 10.53.0.1
+mx.ignore.example. MX 10 zz_zz.ignore.example.

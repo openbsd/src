@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: netaddr.h,v 1.18 2001/03/26 21:33:06 bwelling Exp $ */
+/* $ISC: netaddr.h,v 1.18.12.7 2004/03/08 09:04:52 marka Exp $ */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
@@ -32,6 +32,7 @@ struct isc_netaddr {
     		struct in_addr in;
 		struct in6_addr in6;
 	} type;
+	isc_uint32_t zone;
 };
 
 isc_boolean_t
@@ -72,7 +73,7 @@ isc_netaddr_totext(const isc_netaddr_t *netaddr, isc_buffer_t *target);
  */
 
 void
-isc_netaddr_format(isc_netaddr_t *na, char *array, unsigned int size);
+isc_netaddr_format(const isc_netaddr_t *na, char *array, unsigned int size);
 /*
  * Format a human-readable representation of the network address '*na'
  * into the character array 'array', which is of size 'size'.
@@ -95,6 +96,12 @@ void
 isc_netaddr_fromin6(isc_netaddr_t *netaddr, const struct in6_addr *ina6);
 
 void
+isc_netaddr_setzone(isc_netaddr_t *netaddr, isc_uint32_t zone);
+
+isc_uint32_t
+isc_netaddr_getzone(const isc_netaddr_t *netaddr);
+
+void
 isc_netaddr_any(isc_netaddr_t *netaddr);
 /*
  * Return the IPv4 wildcard address.
@@ -109,7 +116,25 @@ isc_netaddr_any6(isc_netaddr_t *netaddr);
 isc_boolean_t
 isc_netaddr_ismulticast(isc_netaddr_t *na);
 /*
- * Returns ISC_TRUE if the address is a multicast address
+ * Returns ISC_TRUE if the address is a multicast address.
+ */
+
+isc_boolean_t
+isc_netaddr_isexperimental(isc_netaddr_t *na);
+/*
+ * Returns ISC_TRUE if the address is a experimental (CLASS E) address.
+ */
+
+isc_boolean_t
+isc_netaddr_islinklocal(isc_netaddr_t *na);
+/*
+ * Returns ISC_TRUE if the address is a link local address.
+ */
+
+isc_boolean_t
+isc_netaddr_issitelocal(isc_netaddr_t *na);
+/*
+ * Returns ISC_TRUE if the address is a site local address.
  */
 
 void

@@ -1,23 +1,22 @@
 /*
- * Portions Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
- * NETWORK ASSOCIATES DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
- * SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE CONSORTIUM OR NETWORK
- * ASSOCIATES BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
- * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
- * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dst_internal.h,v 1.38 2001/08/28 03:58:25 marka Exp $ */
+/* $ISC: dst_internal.h,v 1.38.12.3 2004/03/08 09:04:45 marka Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -27,6 +26,7 @@
 #include <isc/int.h>
 #include <isc/magic.h>
 #include <isc/region.h>
+#include <isc/types.h>
 
 #include <dst/dst.h>
 
@@ -37,6 +37,8 @@ ISC_LANG_BEGINDECLS
 
 #define VALID_KEY(x) ISC_MAGIC_VALID(x, KEY_MAGIC)
 #define VALID_CTX(x) ISC_MAGIC_VALID(x, CTX_MAGIC)
+
+extern isc_mem_t *dst__memory_pool;
 
 /***
  *** Types
@@ -86,14 +88,16 @@ struct dst_func {
 				      const dst_key_t *key2);
 	isc_result_t (*generate)(dst_key_t *key, int parms);
 	isc_boolean_t (*isprivate)(const dst_key_t *key);
-	isc_boolean_t (*issymmetric)(void);
 	void (*destroy)(dst_key_t *key);
 
 	/* conversion functions */
 	isc_result_t (*todns)(const dst_key_t *key, isc_buffer_t *data);
 	isc_result_t (*fromdns)(dst_key_t *key, isc_buffer_t *data);
 	isc_result_t (*tofile)(const dst_key_t *key, const char *directory);
-	isc_result_t (*fromfile)(dst_key_t *key, const char *filename);
+	isc_result_t (*parse)(dst_key_t *key, isc_lex_t *lexer);
+
+	/* cleanup */
+	void (*cleanup)(void);
 };
 
 /*
@@ -112,12 +116,6 @@ isc_result_t dst__gssapi_init(struct dst_func **funcp);
  */
 void dst__openssl_destroy(void);
 
-void dst__hmacmd5_destroy(void);
-void dst__opensslrsa_destroy(void);
-void dst__openssldsa_destroy(void);
-void dst__openssldh_destroy(void);
-void dst__gssapi_destroy(void);
-
 /*
  * Memory allocators using the DST memory pool.
  */
@@ -130,13 +128,6 @@ void * dst__mem_realloc(void *ptr, size_t size);
  */
 isc_result_t dst__entropy_getdata(void *buf, unsigned int len,
 				  isc_boolean_t pseudo);
-
-/*
- * Generic helper functions.
- */
-isc_result_t
-dst__file_addsuffix(char *filename, unsigned int len,
-		    const char *ofilename, const char *suffix);
 
 ISC_LANG_ENDDECLS
 

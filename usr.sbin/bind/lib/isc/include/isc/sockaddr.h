@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sockaddr.h,v 1.35 2001/01/09 21:57:33 bwelling Exp $ */
+/* $ISC: sockaddr.h,v 1.35.12.6 2004/03/08 09:04:53 marka Exp $ */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
@@ -64,6 +64,9 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only);
 /*
  * Return a hash value for the socket address 'sockaddr'.  If 'address_only'
  * is ISC_TRUE, the hash value will not depend on the port.
+ *
+ * IPv6 addresses containing mapped IPv4 addresses generate the same hash
+ * value as the equivalent IPv4 address.
  */
 
 void
@@ -157,7 +160,7 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target);
  */
 
 void
-isc_sockaddr_format(isc_sockaddr_t *sa, char *array, unsigned int size);
+isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size);
 /*
  * Format a human-readable representation of the socket address '*sa'
  * into the character array 'array', which is of size 'size'.
@@ -167,7 +170,25 @@ isc_sockaddr_format(isc_sockaddr_t *sa, char *array, unsigned int size);
 isc_boolean_t
 isc_sockaddr_ismulticast(isc_sockaddr_t *sa);
 /*
- * Returns ISC_TRUE if the address is a multicast address
+ * Returns ISC_TRUE if the address is a multicast address.
+ */
+
+isc_boolean_t
+isc_sockaddr_isexperimental(isc_sockaddr_t *sa);
+/*
+ * Returns ISC_TRUE if the address is a experimental (CLASS E) address.
+ */
+
+isc_boolean_t
+isc_sockaddr_islinklocal(isc_sockaddr_t *sa);
+/*
+ * Returns ISC_TRUE if the address is a link local addresss.
+ */
+
+isc_boolean_t
+isc_sockaddr_issitelocal(isc_sockaddr_t *sa);
+/*
+ * Returns ISC_TRUE if the address is a sitelocal address.
  */
 
 #define ISC_SOCKADDR_FORMATSIZE \

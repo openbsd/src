@@ -1,21 +1,21 @@
 #!/bin/sh
 #
-# Copyright (C) 2000, 2001  Internet Software Consortium.
+# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: sign.sh,v 1.15 2001/01/09 21:42:55 bwelling Exp $
+# $ISC: sign.sh,v 1.15.12.4 2004/03/10 02:55:54 marka Exp $
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -26,34 +26,21 @@ zone=example.
 infile=example.db.in
 zonefile=example.db
 
-keyname=`$KEYGEN -r $RANDFILE -a RSA -b 768 -n zone $zone`
-
-# Have the child generate a zone key and pass it to us,
-# sign it, and pass it back
+# Have the child generate a zone key and pass it to us.
 
 ( cd ../ns3 && sh sign.sh )
 
-cp ../ns3/keyset-secure.example. .
+for subdomain in secure bogus dynamic keyless
+do
+	cp ../ns3/keyset-$subdomain.example. .
+done
 
-$KEYSIGNER -r $RANDFILE keyset-secure.example. $keyname > /dev/null
+keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone`
+keyname2=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone`
 
-# This will leave two copies of the child's zone key in the signed db file;
-# that shouldn't cause any problems.
-cat signedkey-secure.example. >>../ns3/secure.example.db.signed
+cat $infile $keyname1.key $keyname2.key >$zonefile
 
-cp ../ns3/keyset-bogus.example. .
-
-$KEYSIGNER -r $RANDFILE keyset-bogus.example. $keyname > /dev/null
-
-# This will leave two copies of the child's zone key in the signed db file;
-# that shouldn't cause any problems.
-cat signedkey-bogus.example. >>../ns3/bogus.example.db.signed
-
-$KEYSETTOOL -r $RANDFILE -t 3600 $keyname > /dev/null
-
-cat $infile $keyname.key >$zonefile
-
-$SIGNER -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 # Sign the privately secure file
 
@@ -65,4 +52,17 @@ privkeyname=`$KEYGEN -r $RANDFILE -a RSA -b 768 -n zone $privzone`
 
 cat $privinfile $privkeyname.key >$privzonefile
 
-$SIGNER -r $RANDFILE -o $privzone $privzonefile > /dev/null
+$SIGNER -g -r $RANDFILE -o $privzone -l dlv $privzonefile > /dev/null
+
+# Sign the DLV secure zone.
+
+
+dlvzone=dlv.
+dlvinfile=dlv.db.in
+dlvzonefile=dlv.db
+
+dlvkeyname=`$KEYGEN -r $RANDFILE -a RSA -b 768 -n zone $dlvzone`
+
+cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
+
+$SIGNER -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null

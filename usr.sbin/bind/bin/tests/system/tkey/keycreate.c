@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: keycreate.c,v 1.7 2001/04/16 17:23:34 gson Exp $ */
+/* $ISC: keycreate.c,v 1.7.12.5 2004/06/11 00:30:53 marka Exp $ */
 
 #include <config.h>
 
@@ -25,6 +25,7 @@
 #include <isc/app.h>
 #include <isc/base64.h>
 #include <isc/entropy.h>
+#include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/sockaddr.h>
@@ -65,6 +66,7 @@ static dns_tsig_keyring_t *ring;
 static unsigned char noncedata[16];
 static isc_buffer_t nonce;
 static dns_requestmgr_t *requestmgr;
+static const char *ownername_str = ".";
 
 static void
 recvquery(isc_task_t *task, isc_event_t *event) {
@@ -73,6 +75,7 @@ recvquery(isc_task_t *task, isc_event_t *event) {
 	dns_message_t *query, *response;
 	char keyname[256];
 	isc_buffer_t keynamebuf;
+	int type;
 
 	UNUSED(task);
 
@@ -113,8 +116,8 @@ recvquery(isc_task_t *task, isc_event_t *event) {
 	CHECK("dst_key_buildfilename", result);
 	printf("%.*s\n", (int)isc_buffer_usedlength(&keynamebuf),
 	       (char *)isc_buffer_base(&keynamebuf));
-	result = dst_key_tofile(tsigkey->key,
-				DST_TYPE_PRIVATE | DST_TYPE_PUBLIC, "");
+	type = DST_TYPE_PRIVATE | DST_TYPE_PUBLIC | DST_TYPE_KEY;
+	result = dst_key_tofile(tsigkey->key, type, "");
 	CHECK("dst_key_tofile", result);
 
 	dns_message_destroy(&query);
@@ -132,6 +135,7 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 	isc_region_t r;
 	isc_result_t result;
 	dns_fixedname_t keyname;
+	dns_fixedname_t ownername;	
 	isc_buffer_t namestr, keybuf;
 	unsigned char keydata[9];
 	dns_message_t *query;
@@ -147,6 +151,13 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 	isc_buffer_init(&namestr, "tkeytest.", 9);
 	isc_buffer_add(&namestr, 9);
 	result = dns_name_fromtext(dns_fixedname_name(&keyname), &namestr,
+				   NULL, ISC_FALSE, NULL);
+	CHECK("dns_name_fromtext", result);
+
+	dns_fixedname_init(&ownername);
+	isc_buffer_init(&namestr, ownername_str, strlen(ownername_str));
+	isc_buffer_add(&namestr, strlen(ownername_str));
+	result = dns_name_fromtext(dns_fixedname_name(&ownername), &namestr,
 				   NULL, ISC_FALSE, NULL);
 	CHECK("dns_name_fromtext", result);
 
@@ -169,7 +180,8 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &query);
 	CHECK("dns_message_create", result);
 
-	result = dns_tkey_builddhquery(query, ourkey, dns_rootname,
+	result = dns_tkey_builddhquery(query, ourkey,
+				       dns_fixedname_name(&ownername),
 				       DNS_TSIG_HMACMD5_NAME, &nonce, 3600);
 	CHECK("dns_tkey_builddhquery", result);
 
@@ -198,6 +210,7 @@ main(int argc, char *argv[]) {
 	isc_logconfig_t *logconfig;
 	isc_task_t *task;
 	isc_result_t result;
+	int type;
 
 	RUNCHECK(isc_app_start());
 
@@ -207,6 +220,9 @@ main(int argc, char *argv[]) {
 	}
 	ourkeyname = argv[1];
 
+	if (argc >= 3)
+		ownername_str = argv[2];
+
 	dns_result_register();
 
 	mctx = NULL;
@@ -215,6 +231,7 @@ main(int argc, char *argv[]) {
 	ectx = NULL;
 	RUNCHECK(isc_entropy_create(mctx, &ectx));
 	RUNCHECK(isc_entropy_createfilesource(ectx, "random.data"));
+	RUNCHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
 
 	log = NULL;
 	logconfig = NULL;
@@ -265,9 +282,8 @@ main(int argc, char *argv[]) {
 	RUNCHECK(isc_app_onrun(mctx, task, sendquery, NULL));
 
 	ourkey = NULL;
-	result = dst_key_fromnamedfile(ourkeyname, 
-				       DST_TYPE_PUBLIC | DST_TYPE_PRIVATE,
-				       mctx, &ourkey);
+	type = DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY;
+	result = dst_key_fromnamedfile(ourkeyname, type, mctx, &ourkey);
 	CHECK("dst_key_fromnamedfile", result);
 
 	isc_buffer_init(&nonce, noncedata, sizeof(noncedata));
@@ -300,6 +316,7 @@ main(int argc, char *argv[]) {
 	isc_log_destroy(&log);
 
 	dst_lib_destroy();
+	isc_hash_destroy();
 	isc_entropy_detach(&ectx);
 
 	isc_mem_destroy(&mctx);

@@ -1,19 +1,19 @@
-; Copyright (C) 2000, 2001  Internet Software Consortium.
+; Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2000-2002  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
 ; copyright notice and this permission notice appear in all copies.
 ;
-; THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-; DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-; INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-; FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-; NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-; WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
 
-; $ISC: example1.db,v 1.2 2001/01/09 21:44:07 bwelling Exp $
+; $ISC: example1.db,v 1.2.12.4 2004/03/08 04:04:42 marka Exp $
 
 $ORIGIN .
 $TTL 300	; 5 minutes
@@ -36,10 +36,7 @@ a			TXT	"foo foo foo"
 $TTL 3600	; 1 hour
 a01			A	0.0.0.0
 a02			A	255.255.255.255
-a601			A6	0 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-			A6	64 ::ffff:ffff:ffff:ffff foo.
-			A6	127 ::1 foo.
-			A6	128  .
+a601			AAAA	ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 afsdb01			AFSDB	0 hostname
 afsdb02			AFSDB	65535 .
 $TTL 300	; 5 minutes
@@ -89,10 +86,6 @@ loc01			LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 loc02			LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 mb01			MG	madname
 mb02			MG	.
-md01			MD	madname
-			MD	.
-mf01			MF	madname
-			MF	.
 mg01			MG	mgmname
 mg02			MG	.
 minfo01			MINFO	rmailbx emailbx

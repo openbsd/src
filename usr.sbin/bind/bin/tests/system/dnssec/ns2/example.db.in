@@ -1,19 +1,19 @@
-; Copyright (C) 2000, 2001  Internet Software Consortium.
+; Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2000-2002  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
 ; copyright notice and this permission notice appear in all copies.
 ;
-; THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-; DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-; INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-; FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-; NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-; WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
 
-; $ISC: example.db.in,v 1.8 2001/02/20 18:33:50 bwelling Exp $
+; $ISC: example.db.in,v 1.8.12.5 2004/05/05 01:32:15 marka Exp $
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (
@@ -58,9 +58,25 @@ ns.secure		A	10.53.0.3
 insecure		NS	ns.insecure
 ns.insecure		A	10.53.0.3
 
-
 ; A secure subdomain we're going to inject bogus data into
 bogus			NS	ns.bogus
 ns.bogus		A	10.53.0.3
 
+; A dynamic secure subdomain
+dynamic			NS	dynamic
+dynamic			A	10.53.0.3
+
+; A insecure subdomain
+mustbesecure		NS	ns.mustbesecure
+ns.mustbesecure		A	10.53.0.3
+
+; A rfc2535 signed zone w/ CNAME
+rfc2535			NS	ns.rfc2535
+ns.rfc2535		A	10.53.0.3
+
 z			A	10.0.0.26
+
+keyless			NS	ns.keyless
+ns.keyless		A	10.53.0.3
+
+*.wild			A	10.0.0.27

@@ -4,6 +4,3 @@
 # format is: <dbfile> <command> <testname> <exp_result>
 #
 dns_rbt.data	search	not.used.here	ISC_R_NOTFOUND
-dns_rbt.data	search	\[x42/7].vix.com	ISC_R_NOTFOUND
-dns_rbt.data	search	a.\[x42/7].com	ISC_R_NOTFOUND
-dns_rbt.data	search	a.vix.\[x42/7]	ISC_R_NOTFOUND

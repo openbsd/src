@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: symtab.c,v 1.24 2001/06/04 19:33:27 tale Exp $ */
+/* $ISC: symtab.c,v 1.24.12.3 2004/03/08 09:04:50 marka Exp $ */
 
 #include <config.h>
 
@@ -64,13 +64,13 @@ isc_symtab_create(isc_mem_t *mctx, unsigned int size,
 	REQUIRE(symtabp != NULL && *symtabp == NULL);
 	REQUIRE(size > 0);	/* Should be prime. */
 
-	symtab = (isc_symtab_t *)isc_mem_get(mctx, sizeof *symtab);
+	symtab = (isc_symtab_t *)isc_mem_get(mctx, sizeof(*symtab));
 	if (symtab == NULL)
 		return (ISC_R_NOMEMORY);
 	symtab->table = (eltlist_t *)isc_mem_get(mctx,
-						 size * sizeof (eltlist_t));
+						 size * sizeof(eltlist_t));
 	if (symtab->table == NULL) {
-		isc_mem_put(mctx, symtab, sizeof *symtab);
+		isc_mem_put(mctx, symtab, sizeof(*symtab));
 		return (ISC_R_NOMEMORY);
 	}
 	for (i = 0; i < size; i++)
@@ -105,13 +105,13 @@ isc_symtab_destroy(isc_symtab_t **symtabp) {
 							 elt->type,
 							 elt->value,
 							 symtab->undefine_arg);
-			isc_mem_put(symtab->mctx, elt, sizeof *elt);
+			isc_mem_put(symtab->mctx, elt, sizeof(*elt));
 		}
 	}
 	isc_mem_put(symtab->mctx, symtab->table,
-		    symtab->size * sizeof (eltlist_t));
+		    symtab->size * sizeof(eltlist_t));
 	symtab->magic = 0;
-	isc_mem_put(symtab->mctx, symtab, sizeof *symtab);
+	isc_mem_put(symtab->mctx, symtab, sizeof(*symtab));
 
 	*symtabp = NULL;
 }
@@ -202,7 +202,7 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 						  elt->value,
 						  symtab->undefine_arg);
 	} else {
-		elt = (elt_t *)isc_mem_get(symtab->mctx, sizeof *elt);
+		elt = (elt_t *)isc_mem_get(symtab->mctx, sizeof(*elt));
 		if (elt == NULL)
 			return (ISC_R_NOMEMORY);
 		ISC_LINK_INIT(elt, link);
@@ -244,7 +244,7 @@ isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type) {
 		(symtab->undefine_action)(elt->key, elt->type,
 					  elt->value, symtab->undefine_arg);
 	UNLINK(symtab->table[bucket], elt, link);
-	isc_mem_put(symtab->mctx, elt, sizeof *elt);
+	isc_mem_put(symtab->mctx, elt, sizeof(*elt));
 
 	return (ISC_R_SUCCESS);
 }

@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: acl.c,v 1.23 2001/05/31 10:43:37 tale Exp $ */
+/* $ISC: acl.c,v 1.23.52.4 2004/03/09 05:21:08 marka Exp $ */
 
 #include <config.h>
 
@@ -147,6 +147,29 @@ dns_acl_match(isc_netaddr_t *reqaddr,
 	/* No match. */
 	*match = 0;
 	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_acl_elementmatch(dns_acl_t *acl,
+		     dns_aclelement_t *elt,
+		     dns_aclelement_t **matchelt)
+{
+	unsigned int i;
+
+	REQUIRE(elt != NULL);
+	REQUIRE(matchelt == NULL || *matchelt == NULL);
+	
+	for (i = 0; i < acl->length; i++) {
+		dns_aclelement_t *e = &acl->elements[i];
+
+		if (dns_aclelement_equal(e, elt) == ISC_TRUE) {
+			if (matchelt != NULL)
+				*matchelt = e;
+			return (ISC_R_SUCCESS);
+		}
+	}
+
+	return (ISC_R_NOTFOUND);
 }
 
 isc_boolean_t
@@ -297,8 +320,9 @@ dns_aclelement_equal(dns_aclelement_t *ea, dns_aclelement_t *eb) {
 		if (ea->u.ip_prefix.prefixlen !=
 		    eb->u.ip_prefix.prefixlen)
 			return (ISC_FALSE);
-		return (isc_netaddr_equal(&ea->u.ip_prefix.address,
-					  &eb->u.ip_prefix.address));
+		return (isc_netaddr_eqprefix(&ea->u.ip_prefix.address,
+					     &eb->u.ip_prefix.address,
+					     ea->u.ip_prefix.prefixlen));
 	case dns_aclelementtype_keyname:
 		return (dns_name_equal(&ea->u.keyname, &eb->u.keyname));
 	case dns_aclelementtype_nestedacl:

@@ -1,19 +1,19 @@
-; Copyright (C) 2000, 2001  Internet Software Consortium.
+; Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2000-2003  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
 ; copyright notice and this permission notice appear in all copies.
 ;
-; THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-; DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-; INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-; FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-; NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-; WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
 
-; $ISC: example.db,v 1.6 2001/01/09 21:46:05 bwelling Exp $
+; $ISC: example.db,v 1.6.12.5 2004/03/08 09:04:20 marka Exp $
 
 $ORIGIN .
 $TTL 300	; 5 minutes
@@ -36,10 +36,7 @@ a			TXT	"foo foo foo"
 $TTL 3600	; 1 hour
 a01			A	0.0.0.0
 a02			A	255.255.255.255
-a601			A6	0 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-			A6	64 ::ffff:ffff:ffff:ffff foo.
-			A6	127 ::1 foo.
-			A6	128  .
+a601			AAAA	ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 afsdb01			AFSDB	0 hostname
 afsdb02			AFSDB	65535 .
 $TTL 300	; 5 minutes
@@ -78,7 +75,7 @@ isdn01			ISDN	"isdn-address"
 isdn02			ISDN	"isdn-address" "subaddress"
 isdn03			ISDN	"isdn-address"
 isdn04			ISDN	"isdn-address" "subaddress"
-key01			KEY	512 255 1 (
+dnskey01		DNSKEY	512 255 1 (
 				AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aR
 				yzWZriO6i2odGWWQVucZqKVsENW91IOW4vqudngPZsY3
 				GvQ/xVA8/7pyFj6b7Esga60zyGW6LFe9r8n6paHrlG5o
@@ -89,10 +86,6 @@ loc01			LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 loc02			LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 mb01			MG	madname
 mb02			MG	.
-md01			MD	madname
-			MD	.
-mf01			MF	madname
-			MF	.
 mg01			MG	mgmname
 mg02			MG	.
 minfo01			MINFO	rmailbx emailbx
@@ -107,10 +100,10 @@ nsap-ptr01		NSAP-PTR foo.
 			NSAP-PTR .
 nsap01			NSAP	0x47000580005a0000000001e133ffffff00016100
 nsap02			NSAP	0x47000580005a0000000001e133ffffff00016100
-nxt01			NXT	a.secure ( NS SOA MX SIG KEY LOC NXT )
-nxt02			NXT	. ( NSAP-PTR NXT )
-nxt03			NXT	. ( A )
-nxt04			NXT	. ( 127 )
+nsec01			NSEC	a.secure ( NS SOA MX RRSIG DNSKEY LOC NSEC )
+nsec02			NSEC	. ( NSAP-PTR NSEC )
+nsec03			NSEC	. ( A )
+nsec04			NSEC	. ( 127 )
 ptr01			PTR	example.
 px01			PX	65535 foo. bar.
 px02			PX	65535 . .
@@ -124,7 +117,7 @@ $ORIGIN s.example.
 ns			A	73.80.65.49
 $ORIGIN example.
 $TTL 3600	; 1 hour
-sig01			SIG	NXT 1 3 3600 20000102030405 (
+rrsig01			RRSIG	NSEC 1 3 3600 20000102030405 (
 				19961211100908 2143 foo
 				MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45IkskceFGgi
 				WCn/GxHhai6VAuHAoNUz4YoU1tVfSCSqQYn6//11U6Nl
@@ -147,7 +140,7 @@ txt10			TXT	"foo bar"
 txt11			TXT	"\"foo\""
 txt12			TXT	"\"foo\""
 $TTL 300	; 5 minutes
-u			TXT	"txt-not-in-nxt"
+u			TXT	"txt-not-in-nsec"
 $ORIGIN u.example.
 a			A	73.80.65.49
 b			A	73.80.65.49

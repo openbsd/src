@@ -4,6 +4,3 @@
 # format is: <dbfile> <command> <testname> <exp_result>
 #
 dns_rbt.data	add	new.name	ISC_R_SUCCESS
-dns_rbt.data	add	\[x42/7].name	ISC_R_SUCCESS
-dns_rbt.data	add	\[b11011].name	ISC_R_SUCCESS
-dns_rbt.data	add	\[o033/9].name	ISC_R_SUCCESS

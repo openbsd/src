@@ -1,27 +1,28 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: peer.c,v 1.14.2.1 2001/11/13 18:57:09 gson Exp $ */
+/* $ISC: peer.c,v 1.14.2.1.10.4 2004/03/06 08:13:41 marka Exp $ */
 
 #include <config.h>
 
 #include <isc/mem.h>
 #include <isc/string.h>
 #include <isc/util.h>
+#include <isc/sockaddr.h>
 
 #include <dns/bit.h>
 #include <dns/fixedname.h>
@@ -38,11 +39,11 @@
 #define REQUEST_IXFR_BIT		4
 #define SUPPORT_EDNS_BIT		5
 
-static isc_result_t
-dns_peerlist_delete(dns_peerlist_t **list);
+static void
+peerlist_delete(dns_peerlist_t **list);
 
-static isc_result_t
-dns_peer_delete(dns_peer_t **peer);
+static void
+peer_delete(dns_peer_t **peer);
 
 isc_result_t
 dns_peerlist_new(isc_mem_t *mem, dns_peerlist_t **list) {
@@ -50,10 +51,9 @@ dns_peerlist_new(isc_mem_t *mem, dns_peerlist_t **list) {
 
 	REQUIRE(list != NULL);
 
-	l = isc_mem_get(mem, sizeof *l);
-	if (l == NULL) {
+	l = isc_mem_get(mem, sizeof(*l));
+	if (l == NULL)
 		return (ISC_R_NOMEMORY);
-	}
 
 	ISC_LIST_INIT(l->elements);
 	l->mem = mem;
@@ -94,16 +94,14 @@ dns_peerlist_detach(dns_peerlist_t **list) {
 
 	plist->refs--;
 
-	if (plist->refs == 0) {
-		dns_peerlist_delete(&plist);
-	}
+	if (plist->refs == 0)
+		peerlist_delete(&plist);
 }
 
-static isc_result_t
-dns_peerlist_delete(dns_peerlist_t **list) {
+static void
+peerlist_delete(dns_peerlist_t **list) {
 	dns_peerlist_t *l;
 	dns_peer_t *server, *stmp;
-	isc_result_t r;
 
 	REQUIRE(list != NULL);
 	REQUIRE(DNS_PEERLIST_VALID(*list));
@@ -116,20 +114,14 @@ dns_peerlist_delete(dns_peerlist_t **list) {
 	while (server != NULL) {
 		stmp = ISC_LIST_NEXT(server, next);
 		ISC_LIST_UNLINK(l->elements, server, next);
-		r = dns_peer_detach(&server);
-		if (r != ISC_R_SUCCESS) {
-			return (r);
-		}
-
+		dns_peer_detach(&server);
 		server = stmp;
 	}
 
 	l->magic = 0;
-	isc_mem_put(l->mem, l, sizeof *l);
+	isc_mem_put(l->mem, l, sizeof(*l));
 
 	*list = NULL;
-
-	return (ISC_R_SUCCESS);
 }
 
 void
@@ -153,9 +145,8 @@ dns_peerlist_peerbyaddr(dns_peerlist_t *servers,
 
 	server = ISC_LIST_HEAD(servers->elements);
 	while (server != NULL) {
-		if (isc_netaddr_equal(addr, &server->address)) {
+		if (isc_netaddr_equal(addr, &server->address))
 			break;
-		}
 
 		server = ISC_LIST_NEXT(server, next);
 	}
@@ -189,10 +180,9 @@ dns_peer_new(isc_mem_t *mem, isc_netaddr_t *addr, dns_peer_t **peerptr) {
 
 	REQUIRE(peerptr != NULL);
 
-	peer = isc_mem_get(mem, sizeof *peer);
-	if (peer == NULL) {
+	peer = isc_mem_get(mem, sizeof(*peer));
+	if (peer == NULL)
 		return (ISC_R_NOMEMORY);
-	}
 
 	peer->magic = DNS_PEER_MAGIC;
 	peer->address = *addr;
@@ -204,8 +194,9 @@ dns_peer_new(isc_mem_t *mem, isc_netaddr_t *addr, dns_peer_t **peerptr) {
 	peer->provide_ixfr = ISC_FALSE;
 	peer->key = NULL;
 	peer->refs = 1;
+	peer->transfer_source = NULL;
 
-	memset(&peer->bitflags, 0x0, sizeof peer->bitflags);
+	memset(&peer->bitflags, 0x0, sizeof(peer->bitflags));
 
 	ISC_LINK_INIT(peer, next);
 
@@ -214,7 +205,7 @@ dns_peer_new(isc_mem_t *mem, isc_netaddr_t *addr, dns_peer_t **peerptr) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
+void
 dns_peer_attach(dns_peer_t *source, dns_peer_t **target) {
 	REQUIRE(DNS_PEER_VALID(source));
 	REQUIRE(target != NULL);
@@ -225,11 +216,9 @@ dns_peer_attach(dns_peer_t *source, dns_peer_t **target) {
 	ENSURE(source->refs != 0xffffffffU);
 
 	*target = source;
-
-	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
+void
 dns_peer_detach(dns_peer_t **peer) {
 	dns_peer_t *p;
 
@@ -244,15 +233,12 @@ dns_peer_detach(dns_peer_t **peer) {
 	*peer = NULL;
 	p->refs--;
 
-	if (p->refs == 0) {
-		dns_peer_delete(&p);
-	}
-
-	return (ISC_R_SUCCESS);
+	if (p->refs == 0)
+		peer_delete(&p);
 }
 
-static isc_result_t
-dns_peer_delete(dns_peer_t **peer) {
+static void
+peer_delete(dns_peer_t **peer) {
 	dns_peer_t *p;
 	isc_mem_t *mem;
 
@@ -272,11 +258,14 @@ dns_peer_delete(dns_peer_t **peer) {
 		isc_mem_put(mem, p->key, sizeof(dns_name_t));
 	}
 
-	isc_mem_put(mem, p, sizeof *p);
+	if (p->transfer_source != NULL) {
+		isc_mem_put(mem, p->transfer_source,
+			    sizeof(*p->transfer_source));
+	}
+
+	isc_mem_put(mem, p, sizeof(*p));
 
 	*peer = NULL;
-
-	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -499,4 +488,35 @@ dns_peer_setkeybycharp(dns_peer_t *peer, const char *keyval) {
 		isc_mem_put(peer->mem, name, sizeof(dns_name_t));
 
 	return (result);
+}
+
+isc_result_t
+dns_peer_settransfersource(dns_peer_t *peer, isc_sockaddr_t *transfer_source) {
+	REQUIRE(DNS_PEER_VALID(peer));
+
+	if (peer->transfer_source != NULL) {
+		isc_mem_put(peer->mem, peer->transfer_source,
+			    sizeof(*peer->transfer_source));
+		peer->transfer_source = NULL;
+	}
+	if (transfer_source != NULL) {
+		peer->transfer_source = isc_mem_get(peer->mem,
+					        sizeof(*peer->transfer_source));
+		if (peer->transfer_source == NULL)
+			return (ISC_R_NOMEMORY);
+
+		*peer->transfer_source = *transfer_source;
+	}
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_gettransfersource(dns_peer_t *peer, isc_sockaddr_t *transfer_source) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(transfer_source != NULL);
+
+	if (peer->transfer_source == NULL)
+		return (ISC_R_NOTFOUND);
+	*transfer_source = *peer->transfer_source;
+	return (ISC_R_SUCCESS);
 }

@@ -1,3 +1,4 @@
+Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2000, 2001  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
@@ -165,4 +166,4 @@ Future Directions
 A future release may support dynamic loading of sdb drivers.
 
 
-$ISC: sdb,v 1.5 2001/05/30 23:02:03 bwelling Exp $
+$ISC: sdb,v 1.5.206.1 2004/03/06 13:16:20 marka Exp $

@@ -3,6 +3,6 @@
 # format is:
 #	<testname> <tab> <expected value>
 #
-\[x42/7].	1
-a.b.c.\[x42/7]	0
-\[o033/9].z.	1
+x.	1
+a.b.c.d	0
+x.z.	1

@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: minfo_14.c,v 1.40 2001/07/16 03:06:17 marka Exp $ */
+/* $ISC: minfo_14.c,v 1.40.12.4 2004/03/08 09:04:41 marka Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -30,6 +30,7 @@ fromtext_minfo(ARGS_FROMTEXT) {
 	dns_name_t name;
 	isc_buffer_t buffer;
 	int i;
+	isc_boolean_t ok;
 
 	REQUIRE(type == 14);
 
@@ -37,7 +38,7 @@ fromtext_minfo(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	for (i = 0; i < 2 ; i++) {
+	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string,
 					      ISC_FALSE));
@@ -45,7 +46,14 @@ fromtext_minfo(ARGS_FROMTEXT) {
 		buffer_fromregion(&buffer, &token.value.as_region);
 		origin = (origin != NULL) ? origin : dns_rootname;
 		RETTOK(dns_name_fromtext(&name, &buffer, origin,
-					 downcase, target));
+					 options, target));
+		ok = ISC_TRUE;
+		if ((options & DNS_RDATA_CHECKNAMES) != 0)
+			ok = dns_name_ismailbox(&name);
+		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+			RETTOK(DNS_R_BADNAME);
+		if (!ok && callbacks != NULL)
+			warn_badname(&name, lexer, callbacks);
 	}
 	return (ISC_R_SUCCESS);
 }
@@ -98,8 +106,8 @@ fromwire_minfo(ARGS_FROMWIRE) {
         dns_name_init(&rmail, NULL);
         dns_name_init(&email, NULL);
 
-        RETERR(dns_name_fromwire(&rmail, source, dctx, downcase, target));
-        return (dns_name_fromwire(&email, source, dctx, downcase, target));
+        RETERR(dns_name_fromwire(&rmail, source, dctx, options, target));
+        return (dns_name_fromwire(&email, source, dctx, options, target));
 }
 
 static inline isc_result_t
@@ -271,6 +279,46 @@ digest_minfo(ARGS_DIGEST) {
 	dns_name_fromregion(&name, &r);
 
 	return (dns_name_digest(&name, digest, arg));
+}
+
+static inline isc_boolean_t
+checkowner_minfo(ARGS_CHECKOWNER) {
+
+	REQUIRE(type == 14);
+
+	UNUSED(name);
+	UNUSED(type);
+	UNUSED(rdclass);
+	UNUSED(wildcard);
+
+	return (ISC_TRUE);
+}
+
+static inline isc_boolean_t
+checknames_minfo(ARGS_CHECKNAMES) {
+	isc_region_t region;
+	dns_name_t name;
+
+	REQUIRE(rdata->type == 14);
+
+	UNUSED(owner);
+
+	dns_rdata_toregion(rdata, &region);
+	dns_name_init(&name, NULL);
+	dns_name_fromregion(&name, &region);
+	if (!dns_name_ismailbox(&name)) {
+		if (bad != NULL)
+			dns_name_clone(&name, bad);
+		return (ISC_FALSE);
+	}
+	isc_region_consume(&region, name_length(&name));
+	dns_name_fromregion(&name, &region);
+	if (!dns_name_ismailbox(&name)) {
+		if (bad != NULL)
+			dns_name_clone(&name, bad);
+		return (ISC_FALSE);
+	}
+	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_GENERIC_MINFO_14_C */

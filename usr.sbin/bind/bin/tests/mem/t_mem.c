@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: t_mem.c,v 1.9 2001/01/09 21:42:00 bwelling Exp $ */
+/* $ISC: t_mem.c,v 1.9.12.3 2004/03/08 04:04:30 marka Exp $ */
 
 #include <config.h>
 
@@ -88,7 +88,7 @@ memtest(void) {
 	/*
 	 * Allocate MP1_MAXALLOC items from the pool.  This is our max.
 	 */
-	for (i = 0 ; i < MP1_MAXALLOC ; i++) {
+	for (i = 0; i < MP1_MAXALLOC; i++) {
 		items1[i] = isc_mempool_get(mp1);
 		if (items1[i] == NULL) {
 			t_info("isc_mempool_get unexpectedly failed\n");
@@ -110,7 +110,7 @@ memtest(void) {
 	 * the free list (which is our max).
 	 */
 
-	for (i = 0 ; i < 11 ; i++) {
+	for (i = 0; i < 11; i++) {
 		isc_mempool_put(mp1, items1[i]);
 		items1[i] = NULL;
 	}
@@ -143,15 +143,15 @@ memtest(void) {
 	isc_mempool_setfillcount(mp2, 25);
 
 	t_info("exercising the memory pool\n");
-	for (j = 0 ; j < 500000 ; j++) {
-		for (i = 0 ; i < 50 ; i++) {
+	for (j = 0; j < 500000; j++) {
+		for (i = 0; i < 50; i++) {
 			items2[i] = isc_mempool_get(mp2);
 			if (items2[i] == NULL) {
 				t_info("items2[%d] is unexpectedly null\n", i);
 				++nfails;
 			}
 		}
-		for (i = 0 ; i < 50 ; i++) {
+		for (i = 0; i < 50; i++) {
 			isc_mempool_put(mp2, items2[i]);
 			items2[i] = NULL;
 		}
@@ -162,7 +162,7 @@ memtest(void) {
 	/*
 	 * Free all the other items and blow away this pool.
 	 */
-	for (i = 11 ; i < MP1_MAXALLOC ; i++) {
+	for (i = 11; i < MP1_MAXALLOC; i++) {
 		isc_mempool_put(mp1, items1[i]);
 		items1[i] = NULL;
 	}

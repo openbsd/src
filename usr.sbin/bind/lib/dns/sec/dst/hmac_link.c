@@ -1,25 +1,24 @@
 /*
- * Portions Copyright (C) 1999-2001  Internet Software Consortium.
+ * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
- * NETWORK ASSOCIATES DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
- * SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE CONSORTIUM OR NETWORK
- * ASSOCIATES BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
- * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
- * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
  * Principal Author: Brian Wellington
- * $ISC: hmac_link.c,v 1.53.2.1 2001/12/19 01:29:33 marka Exp $
+ * $ISC: hmac_link.c,v 1.53.2.1.8.5 2004/03/08 09:04:46 marka Exp $
  */
 
 #include <config.h>
@@ -156,11 +155,6 @@ hmacmd5_isprivate(const dst_key_t *key) {
 	return (ISC_TRUE);
 }
 
-static isc_boolean_t
-hmacmd5_issymmetric(void) {
-        return (ISC_TRUE);
-}
-
 static void
 hmacmd5_destroy(dst_key_t *key) {
 	HMAC_Key *hkey = key->opaque;
@@ -241,14 +235,14 @@ hmacmd5_tofile(const dst_key_t *key, const char *directory) {
 }
 
 static isc_result_t
-hmacmd5_fromfile(dst_key_t *key, const char *filename) {
+hmacmd5_parse(dst_key_t *key, isc_lex_t *lexer) {
 	dst_private_t priv;
 	isc_result_t ret;
 	isc_buffer_t b;
 	isc_mem_t *mctx = key->mctx;
 
 	/* read private key file */
-	ret = dst__privstruct_parsefile(key, filename, mctx, &priv);
+	ret = dst__privstruct_parse(key, DST_ALG_HMACMD5, lexer, mctx, &priv);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 
@@ -271,21 +265,18 @@ static dst_func_t hmacmd5_functions = {
 	NULL, /* paramcompare */
 	hmacmd5_generate,
 	hmacmd5_isprivate,
-	hmacmd5_issymmetric,
 	hmacmd5_destroy,
 	hmacmd5_todns,
 	hmacmd5_fromdns,
 	hmacmd5_tofile,
-	hmacmd5_fromfile,
+	hmacmd5_parse,
+	NULL, /* cleanup */
 };
 
 isc_result_t
 dst__hmacmd5_init(dst_func_t **funcp) {
-	REQUIRE(funcp != NULL && *funcp == NULL);
-	*funcp = &hmacmd5_functions;
+	REQUIRE(funcp != NULL);
+	if (*funcp == NULL)
+		*funcp = &hmacmd5_functions;
 	return (ISC_R_SUCCESS);
-}
-
-void
-dst__hmacmd5_destroy(void) {
 }

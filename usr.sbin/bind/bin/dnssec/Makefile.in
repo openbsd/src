@@ -1,19 +1,19 @@
-# Copyright (C) 2000, 2001  Internet Software Consortium.
+# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.19 2001/06/01 00:44:58 bwelling Exp $
+# $ISC: Makefile.in,v 1.19.12.9 2004/07/20 07:01:48 marka Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -21,14 +21,14 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_VERSION@
 
-@BIND9_INCLUDES@
+@BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES}
 
-CDEFINES =
+CDEFINES =	-DVERSION=\"${VERSION}\" 
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_OPENSSL_LIBS@ @DNS_GSSAPI_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 ISCLIBS =	../../lib/isc/libisc.@A@
 
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
@@ -39,45 +39,30 @@ DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
 LIBS =		${DNSLIBS} ${ISCLIBS} @LIBS@
 
 # Alphabetically
-TARGETS =	dnssec-keygen \
-		dnssec-makekeyset \
-		dnssec-signkey \
-		dnssec-signzone
+TARGETS =	dnssec-keygen@EXEEXT@ dnssec-signzone@EXEEXT@
 
 OBJS =		dnssectool.@O@
 
-SRCS =		dnssec-keygen.c dnssec-makekeyset.c \
-		dnssec-signkey.c dnssec-signzone.c \
-		dnssectool.c
+SRCS =		dnssec-keygen.c dnssec-signzone.c dnssectool.c
 
-MANPAGES =	dnssec-keygen.8 \
-		dnssec-makekeyset.8 \
-		dnssec-signkey.8 \
-		dnssec-signzone.8
+MANPAGES =	dnssec-keygen.8 dnssec-signzone.8
 
-HTMLPAGES =	dnssec-keygen.html \
-		dnssec-makekeyset.html \
-		dnssec-signkey.html \
-		dnssec-signzone.html
+HTMLPAGES =	dnssec-keygen.html dnssec-signzone.html
 
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
-dnssec-keygen: dnssec-keygen.@O@ ${OBJS} ${DEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ dnssec-keygen.@O@ ${OBJS} ${LIBS}
-
-dnssec-makekeyset: dnssec-makekeyset.@O@ ${OBJS} ${DEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ dnssec-makekeyset.@O@ ${OBJS} ${LIBS}
-
-dnssec-signkey: dnssec-signkey.@O@ ${OBJS} ${DEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ dnssec-signkey.@O@ ${OBJS} ${LIBS}
+dnssec-keygen@EXEEXT@: dnssec-keygen.@O@ ${OBJS} ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+	dnssec-keygen.@O@ ${OBJS} ${LIBS}
 
 dnssec-signzone.@O@: dnssec-signzone.c
-	${LIBTOOL} ${PURIFY} ${CC} ${ALL_CFLAGS} -DVERSION=\"${VERSION}\" -c $<
+	${LIBTOOL_MODE_COMPILE} ${PURIFY} ${CC} ${ALL_CFLAGS} -c $<
 
-dnssec-signzone: dnssec-signzone.@O@ ${OBJS} ${DEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ dnssec-signzone.@O@ ${OBJS} ${LIBS}
+dnssec-signzone@EXEEXT@: dnssec-signzone.@O@ ${OBJS} ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+	dnssec-signzone.@O@ ${OBJS} ${LIBS}
 
 doc man:: ${MANOBJS}
 
@@ -89,7 +74,7 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
-	for t in ${TARGETS}; do ${LIBTOOL} ${INSTALL_PROGRAM} $$t ${DESTDIR}${sbindir}; done
+	for t in ${TARGETS}; do ${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} $$t ${DESTDIR}${sbindir}; done
 	for m in ${MANPAGES}; do ${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man8; done
 
 clean distclean::

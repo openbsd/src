@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: mem.h,v 1.54 2001/07/12 05:58:25 mayer Exp $ */
+/* $ISC: mem.h,v 1.54.12.3 2004/03/08 09:04:52 marka Exp $ */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1
@@ -37,18 +37,20 @@ typedef void * (*isc_memalloc_t)(void *, size_t);
 typedef void (*isc_memfree_t)(void *, void *);
 
 /*
- * ISC_MEM_DEBUG is enabled by default; set ISC_MEM_DEBUG=0 to disable it.
+ * Define ISC_MEM_DEBUG=1 to make all functions that free memory
+ * set the pointer being freed to NULL after being freed.
+ * This is the default; set ISC_MEM_DEBUG=0 to disable it.
  */
 #ifndef ISC_MEM_DEBUG
 #define ISC_MEM_DEBUG 1
 #endif
 
 /*
- * Define ISC_MEM_TRACKLINES=1 to turn on detailed tracing of memory allocation
- * and freeing by file and line number.
+ * Define ISC_MEM_TRACKLINES=1 to turn on detailed tracing of memory
+ * allocation and freeing by file and line number.
  */
 #ifndef ISC_MEM_TRACKLINES
-#define ISC_MEM_TRACKLINES 0
+#define ISC_MEM_TRACKLINES 1
 #endif
 
 /*
@@ -60,7 +62,7 @@ typedef void (*isc_memfree_t)(void *, void *);
 #endif
 
 /*
- * Define ISC_MEM_FILL to fill each block of memory returned to the system
+ * Define ISC_MEM_FILL=1 to fill each block of memory returned to the system
  * with the byte string '0xbe'.  This helps track down uninitialized pointers
  * and the like.  On freeing memory, the space is filled with '0xde' for
  * the same reasons.
@@ -70,27 +72,36 @@ typedef void (*isc_memfree_t)(void *, void *);
 #endif
 
 /*
- * Define this to turn on memory pool names.
+ * Define ISC_MEMPOOL_NAMES=1 to make memory pools store a symbolic
+ * name so that the leaking pool can be more readily identified in
+ * case of a memory leak.
  */
 #ifndef ISC_MEMPOOL_NAMES
 #define ISC_MEMPOOL_NAMES 1
 #endif
 
-/*
- * _DEBUGTRACE
- *	log (to isc_lctx) each allocation and free.
- *
- * _DEBUGRECORD
- *	remember each allocation, and match them up on free.  Crash if
- *	a free doesn't match an allocation
- * _DEBUGUSAGE
- *	if a hi_water mark is set print the maximium inuse memory every
- *	time it is raised once it exceeds the hi_water mark
- */
 LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
 #define ISC_MEM_DEBUGTRACE		0x00000001U
 #define ISC_MEM_DEBUGRECORD		0x00000002U
 #define ISC_MEM_DEBUGUSAGE		0x00000004U
+/*
+ * The variable isc_mem_debugging holds a set of flags for
+ * turning certain memory debugging options on or off at
+ * runtime.  Its is intialized to the value ISC_MEM_DEGBUGGING,
+ * which is 0 by default but may be overridden at compile time.
+ * The following flags can be specified:
+ *
+ * ISC_MEM_DEBUGTRACE
+ *	Log each allocation and free to isc_lctx.
+ *
+ * ISC_MEM_DEBUGRECORD
+ *	Remember each allocation, and match them up on free.
+ *	Crash if a free doesn't match an allocation.
+ *
+ * ISC_MEM_DEBUGUSAGE
+ *	If a hi_water mark is set, print the maximium inuse memory
+ *	every time it is raised once it exceeds the hi_water mark.
+ */
 
 #if ISC_MEM_TRACKLINES
 #define _ISC_MEM_FILELINE	, __FILE__, __LINE__
@@ -161,12 +172,12 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
 
 isc_result_t 
 isc_mem_create(size_t max_size, size_t target_size,
-			    isc_mem_t **mctxp);
+	       isc_mem_t **mctxp);
 
 isc_result_t 
 isc_mem_createx(size_t max_size, size_t target_size,
-			     isc_memalloc_t memalloc, isc_memfree_t memfree,
-			     void *arg, isc_mem_t **mctxp);
+		isc_memalloc_t memalloc, isc_memfree_t memfree,
+		void *arg, isc_mem_t **mctxp);
 /*
  * Create a memory context.
  *
@@ -176,8 +187,12 @@ isc_mem_createx(size_t max_size, size_t target_size,
  * 'target_size' from the system allocator and breaking them up into
  * pieces; larger allocations will use the system allocator directly.
  * If 'max_size' and/or 'target_size' are zero, default values will be
- * used.  When ISC_MEM_USE_INTERNAL_MALLOC is false, 'max_size' and
- * 'target_size' are ignored.
+ * used.  When ISC_MEM_USE_INTERNAL_MALLOC is false, 'target_size' is
+ * ignored.
+ *
+ * 'max_size' is also used to size the statistics arrays and the array
+ * used to record active memory when ISC_MEM_DEBUGRECORD is set.  Settin
+ * 'max_size' too low can have detrimental effects on performance.
  *
  * A memory context created using isc_mem_createx() will obtain
  * memory from the system by calling 'memalloc' and 'memfree',
@@ -213,8 +228,8 @@ isc_mem_destroy(isc_mem_t **);
 
 isc_result_t 
 isc_mem_ondestroy(isc_mem_t *ctx,
-			       isc_task_t *task,
-			       isc_event_t **event);
+		  isc_task_t *task,
+		  isc_event_t **event);
 /*
  * Request to be notified with an event when a memory context has
  * been successfully destroyed.
@@ -228,7 +243,7 @@ isc_mem_stats(isc_mem_t *mctx, FILE *out);
 
 void 
 isc_mem_setdestroycheck(isc_mem_t *mctx,
-			     isc_boolean_t on);
+			isc_boolean_t on);
 /*
  * Iff 'on' is ISC_TRUE, 'mctx' will check for memory leaks when
  * destroyed and abort the program if any are present.

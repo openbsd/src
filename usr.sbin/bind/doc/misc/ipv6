@@ -1,3 +1,4 @@
+Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2000, 2001  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
@@ -28,27 +29,40 @@ In the original drafts of the ipv6 RFC documents, binding an ipv6
 socket to the ipv6 wildcard address would also cause the socket to
 accept ipv4 connections and datagrams.  When an ipv4 packet is
 received on these systems, it is mapped into an ipv6 address.  For
-example, 1.2.3.4 would be mapped into ffff::1.2.3.4.  The intent of
+example, 1.2.3.4 would be mapped into ::ffff:1.2.3.4.  The intent of
 this mapping was to make transition from an ipv4-only application into
 ipv6 easier, by only requiring one socket to be open on a given port.
 
 Later, it was discovered that this was generally a bad idea.  For one,
 many firewalls will block connection to 1.2.3.4, but will let through
-ffff::1.2.3.4.  This, of course, is bad.  Also, access control lists
+::ffff:1.2.3.4.  This, of course, is bad.  Also, access control lists
 written to accept only ipv4 addresses were suddenly ignored unless
 they were rewritten to handle the ipv6 mapped addresses as well.
 
-In bind9, we always bind to the ipv6 wildcard port for both TCP and
-UDP, and specific addresses for ipv4 sockets.  This causes some
-interesting behavior depending on the system implementation of ipv6.
+Partly because of these problems, the latest IPv6 API introduces an
+explicit knob (the "IPV6_V6ONLY" socket option ) to turn off the ipv6
+mapped address usage.
+
+In bind9, we first check if both the advanced API and the IPV6_V6ONLY
+socket option are available.  If both of them are available, bind9
+named will bind to the ipv6 wildcard port for both TCP and UDP.
+Otherwise named will make a warning and try to bind to all available
+ipv6 addresses separately.
+
+In any case, bind9 named binds to specific addresses for ipv4 sockets.
+
+The followings are historical notes when we always bound to the ipv6
+wildcard port regardless of the availability of the API support.
+These problems should not happen with the closer checks above.
 
 
 IPV6 Sockets Accept IPV4, Specific IPV4 Addresses Bindings Fail
 ---------------------------------------------------------------
 
-The only OS which seems to do this is linux.  If an ipv6 socket is
-bound to the ipv6 wildcard socket, and a specific ipv4 socket is
-later bound (say, to 1.2.3.4 port 53) the ipv4 binding will fail.
+The only OS which seems to do this is (some kernel versions of) linux.
+If an ipv6 socket is bound to the ipv6 wildcard socket, and a specific
+ipv4 socket is later bound (say, to 1.2.3.4 port 53) the ipv4 binding
+will fail.
 
 What this means to bind9 is that the application will log warnings
 about being unable to bind to a socket because the address is already
@@ -89,11 +103,11 @@ packets.
 RELEVANT RFCs
 -------------
 
-2373:  IP Version 6 Addressing Architecture
+3513:  Internet Protocol Version 6 (IPv6) Addressing Architecture
 
-2553:  Basic Socket Interface Extensions for IPv6
+3493:  Basic Socket Interface Extensions for IPv6
 
-draft-ietf-ipngwg-rfc2292bis-01:  Advanced Sockets API for IPv6 (draft)
+3542:  Advanced Sockets Application Program Interface (API) for IPv6
 
 
-$ISC: ipv6,v 1.5 2001/01/09 21:50:27 bwelling Exp $
+$ISC: ipv6,v 1.5.206.4 2004/08/10 04:28:15 jinmei Exp $

@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: config.h,v 1.4 2001/08/09 17:21:06 gson Exp $ */
+/* $ISC: config.h,v 1.4.12.4 2004/04/20 14:12:10 marka Exp $ */
 
 #ifndef NAMED_CONFIG_H
 #define NAMED_CONFIG_H 1
@@ -31,12 +31,19 @@ ns_config_parsedefaults(cfg_parser_t *parser, cfg_obj_t **conf);
 isc_result_t
 ns_config_get(cfg_obj_t **maps, const char* name, cfg_obj_t **obj);
 
+isc_result_t
+ns_checknames_get(cfg_obj_t **maps, const char* name, cfg_obj_t **obj);
+
 int
 ns_config_listcount(cfg_obj_t *list);
 
 isc_result_t
 ns_config_getclass(cfg_obj_t *classobj, dns_rdataclass_t defclass,
 		   dns_rdataclass_t *classp);
+
+isc_result_t
+ns_config_gettype(cfg_obj_t *typeobj, dns_rdatatype_t deftype,
+		  dns_rdatatype_t *typep);
 
 dns_zonetype_t
 ns_config_getzonetype(cfg_obj_t *zonetypeobj);

@@ -4,4 +4,3 @@
 # format is: <dbfile> <command> <testname> <exp_result>
 #
 dns_rbt.data	search	a.b.vix.com	DNS_R_PARTIALMATCH
-dns_rbt_bitstring.data	search	b.a.\[x42/7].com	DNS_R_PARTIALMATCH

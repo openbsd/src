@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: resolver.h,v 1.34 2001/01/09 21:53:22 bwelling Exp $ */
+/* $ISC: resolver.h,v 1.34.12.7 2004/04/15 23:56:31 marka Exp $ */
 
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
@@ -96,6 +96,9 @@ typedef struct dns_fetchevent {
  * _dns_resolver_create()).
  */
 
+#define DNS_RESOLVER_CHECKNAMES		0x01
+#define DNS_RESOLVER_CHECKNAMESFAIL	0x02
+
 isc_result_t
 dns_resolver_create(dns_view_t *view,
 		    isc_taskmgr_t *taskmgr, unsigned int ntasks,
@@ -106,6 +109,7 @@ dns_resolver_create(dns_view_t *view,
 		    dns_dispatch_t *dispatchv4,
 		    dns_dispatch_t *dispatchv6,
 		    dns_resolver_t **resp);
+
 /*
  * Create a resolver.
  *
@@ -348,6 +352,79 @@ dns_resolver_setlamettl(dns_resolver_t *resolver, isc_uint32_t lame_ttl);
  * Requires:
  *	'resolver' to be valid.
  */
+
+unsigned int
+dns_resolver_nrunning(dns_resolver_t *resolver);
+/*
+ * Return the number of currently running resolutions in this
+ * resolver.  This is may be less than the number of outstanding
+ * fetches due to multiple identical fetches, or more than the
+ * number of of outstanding fetches due to the fact that resolution
+ * can continue even though a fetch has been canceled.
+ */
+
+isc_result_t
+dns_resolver_addalternate(dns_resolver_t *resolver, isc_sockaddr_t *alt,
+			  dns_name_t *name, in_port_t port);
+/*
+ * Add alternate addresses to be tried in the event that the nameservers
+ * for a zone are not available in the address families supported by the
+ * operating system.
+ *
+ * Require:
+ * 	only one of 'name' or 'alt' to be valid.
+ */
+
+void
+dns_resolver_setudpsize(dns_resolver_t *resolver, isc_uint16_t udpsize);
+/*
+ * Set the EDNS UDP buffer size advertised by the server.
+ */
+
+isc_uint16_t
+dns_resolver_getudpsize(dns_resolver_t *resolver);
+/*
+ * Get the current EDNS UDP buffer size.
+ */
+
+void
+dns_resolver_reset_algorithms(dns_resolver_t *resolver);
+/*
+ * Clear the disabled DNSSEC algorithms.
+ */
+
+isc_result_t
+dns_resolver_disable_algorithm(dns_resolver_t *resolver, dns_name_t *name,
+			       unsigned int alg);
+/*
+ * Mark the give DNSSEC algorithm as disabled and below 'name'.
+ * Valid algorithms are less than 256.
+ *
+ * Returns:
+ *	ISC_R_SUCCESS
+ *	ISC_R_RANGE
+ *	ISC_R_NOMEMORY
+ */
+
+isc_boolean_t
+dns_resolver_algorithm_supported(dns_resolver_t *resolver, dns_name_t *name,
+				 unsigned int alg);
+/*
+ * Check if the given algorithm is supported by this resolver.
+ * This checks if the algorithm has been disabled via
+ * dns_resolver_disable_algorithm() then the underlying
+ * crypto libraries if not specifically disabled.
+ */
+
+void
+dns_resolver_resetmustbesecure(dns_resolver_t *resolver);
+
+isc_result_t
+dns_resolver_setmustbesecure(dns_resolver_t *resolver, dns_name_t *name,
+			     isc_boolean_t value);
+
+isc_boolean_t
+dns_resolver_getmustbesecure(dns_resolver_t *resolver, dns_name_t *name);
 
 ISC_LANG_ENDDECLS
 

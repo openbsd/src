@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dst.h,v 1.42.2.1 2001/12/19 01:09:58 marka Exp $ */
+/* $ISC: dst.h,v 1.42.2.1.8.6 2004/06/11 00:31:01 marka Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -45,6 +45,8 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_RSA		DST_ALG_RSAMD5	/* backwards compatibility */
 #define DST_ALG_DH		2
 #define DST_ALG_DSA		3
+#define DST_ALG_ECC		4
+#define DST_ALG_RSASHA1		5
 #define DST_ALG_HMACMD5		157
 #define DST_ALG_GSSAPI		160
 #define DST_ALG_PRIVATE		254
@@ -61,6 +63,7 @@ typedef struct dst_context 	dst_context_t;
 #define DST_KEY_MAXTEXTSIZE	2048
 
 /* 'Type' for dst_read_key() */
+#define DST_TYPE_KEY		0x1000000	/* KEY key */
 #define DST_TYPE_PRIVATE	0x2000000
 #define DST_TYPE_PUBLIC		0x4000000
 
@@ -215,6 +218,7 @@ dst_key_fromfile(dns_name_t *name, dns_keytag_t id, unsigned int alg, int type,
  *	"id" is a valid key tag identifier.
  *	"alg" is a supported key algorithm.
  *	"type" is DST_TYPE_PUBLIC, DST_TYPE_PRIVATE, or the bitwise union.
+ *		  DST_TYPE_KEY look for a KEY record otherwise DNSKEY
  *	"mctx" is a valid memory context.
  *	"keyp" is not NULL and "*keyp" is NULL.
  *
@@ -237,6 +241,7 @@ dst_key_fromnamedfile(const char *filename, int type, isc_mem_t *mctx,
  * Requires:
  * 	"filename" is not NULL
  *	"type" is DST_TYPE_PUBLIC, DST_TYPE_PRIVATE, or the bitwise union
+ *		  DST_TYPE_KEY look for a KEY record otherwise DNSKEY
  *	"mctx" is a valid memory context
  *	"keyp" is not NULL and "*keyp" is NULL.
  *
@@ -343,6 +348,26 @@ dst_key_tobuffer(const dst_key_t *key, isc_buffer_t *target);
  * Ensures:
  *	If successful, the used pointer in 'target' is advanced.
  */
+
+isc_result_t
+dst_key_privatefrombuffer(dst_key_t *key, isc_buffer_t *buffer);
+/*
+ * Converts a public key into a private key, reading the private key
+ * information from the buffer.  The buffer should contain the same data
+ * as the .private key file would.
+ *
+ * Requires:
+ * 	"key" is a valid public key.
+ *	"buffer" is not NULL.
+ *
+ * Returns:
+ * 	ISC_R_SUCCESS
+ * 	any other result indicates failure
+ *
+ * Ensures:
+ *	If successful, key will contain a valid private key.
+ */
+
 
 isc_result_t
 dst_key_fromgssapi(dns_name_t *name, void *opaque, isc_mem_t *mctx,

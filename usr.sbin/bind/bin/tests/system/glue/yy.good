@@ -13,6 +13,5 @@ yy.			172800	IN	NS	ns.zz.
 
 ;; ADDITIONAL SECTION:
 ns.zz.			3463	IN	A	10.0.0.1
-ns.zz.			86263	IN	A6	0 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 ns.zz.			86263	IN	AAAA	10::1
 

@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: compress_test.c,v 1.24 2001/01/09 21:40:56 bwelling Exp $ */
+/* $ISC: compress_test.c,v 1.24.12.4 2004/03/08 04:04:25 marka Exp $ */
 
 #include <config.h>
 
@@ -72,42 +72,42 @@ main(int argc, char *argv[]) {
 
 	dns_name_init(&name1, NULL);
 	region.base = plain1;
-	region.length = sizeof plain1;
+	region.length = sizeof(plain1);
 	dns_name_fromregion(&name1, &region);
 
 	dns_name_init(&name2, NULL);
 	region.base = plain2;
-	region.length = sizeof plain2;
+	region.length = sizeof(plain2);
 	dns_name_fromregion(&name2, &region);
 
 	dns_name_init(&name3, NULL);
 	region.base = plain3;
-	region.length = sizeof plain3;
+	region.length = sizeof(plain3);
 	dns_name_fromregion(&name3, &region);
 
-	test(DNS_COMPRESS_NONE, &name1, &name2, &name3, plain, sizeof plain);
+	test(DNS_COMPRESS_NONE, &name1, &name2, &name3, plain, sizeof(plain));
 	test(DNS_COMPRESS_GLOBAL14, &name1, &name2, &name3, plain,
-	     sizeof plain);
-	test(DNS_COMPRESS_ALL, &name1, &name2, &name3, plain, sizeof plain);
+	     sizeof(plain));
+	test(DNS_COMPRESS_ALL, &name1, &name2, &name3, plain, sizeof(plain));
 
 	dns_name_init(&name1, NULL);
 	region.base = bit1;
-	region.length = sizeof bit1;
+	region.length = sizeof(bit1);
 	dns_name_fromregion(&name1, &region);
 
 	dns_name_init(&name2, NULL);
 	region.base = bit2;
-	region.length = sizeof bit2;
+	region.length = sizeof(bit2);
 	dns_name_fromregion(&name2, &region);
 
 	dns_name_init(&name3, NULL);
 	region.base = bit3;
-	region.length = sizeof bit3;
+	region.length = sizeof(bit3);
 	dns_name_fromregion(&name3, &region);
 
-	test(DNS_COMPRESS_NONE, &name1, &name2, &name3, bit, sizeof bit);
-	test(DNS_COMPRESS_GLOBAL14, &name1, &name2, &name3, bit, sizeof bit);
-	test(DNS_COMPRESS_ALL, &name1, &name2, &name3, bit, sizeof bit);
+	test(DNS_COMPRESS_NONE, &name1, &name2, &name3, bit, sizeof(bit));
+	test(DNS_COMPRESS_GLOBAL14, &name1, &name2, &name3, bit, sizeof(bit));
+	test(DNS_COMPRESS_ALL, &name1, &name2, &name3, bit, sizeof(bit));
 
 	return (0);
 }
@@ -158,7 +158,7 @@ test(unsigned int allowed, dns_name_t *name1, dns_name_t *name2,
 
 	if (raw) {
 		unsigned int i;
-		for (i = 0 ; i < source.used ; /* */ ) {
+		for (i = 0; i < source.used; /* */ ) {
 			fprintf(stdout, "%02x",
 				((unsigned char *)source.base)[i]);
 			if ((++i % 20) == 0)
@@ -195,7 +195,7 @@ test(unsigned int allowed, dns_name_t *name1, dns_name_t *name2,
 
 	if (raw) {
 		unsigned int i;
-		for (i = 0 ; i < target.used ; /* */ ) {
+		for (i = 0; i < target.used; /* */ ) {
 			fprintf(stdout, "%02x",
 				((unsigned char *)target.base)[i]);
 			if ((++i % 20) == 0)

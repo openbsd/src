@@ -10,4 +10,3 @@
 #	case insensitive hash of testname2, otherwise cishm != 0
 #
 a.b.c.d	a.b.c.d.	0	0
-\[x42/7].A.	\[x42/7].a.	0	1

@@ -1,22 +1,22 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <!--
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2001, 2002  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: named-checkzone.docbook,v 1.3.2.2 2002/08/05 06:57:01 marka Exp $ -->
+<!-- $ISC: named-checkzone.docbook,v 1.3.2.2.8.7 2004/06/03 02:25:00 marka Exp $ -->
 
 <refentry>
   <refentryinfo>
@@ -42,6 +42,12 @@
       <arg><option>-q</option></arg>
       <arg><option>-v</option></arg>
       <arg><option>-c <replaceable class="parameter">class</replaceable></option></arg>
+      <arg><option>-k <replaceable class="parameter">mode</replaceable></option></arg>
+      <arg><option>-n <replaceable class="parameter">mode</replaceable></option></arg>
+      <arg><option>-o <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg><option>-w <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg><option>-D</option></arg>
       <arg choice="req">zonename</arg>
       <arg choice="req">filename</arg>
     </cmdsynopsis>
@@ -108,6 +114,71 @@
       </varlistentry>
 
       <varlistentry>
+        <term>-k <replaceable class="parameter">mode</replaceable></term>
+	<listitem>
+	  <para>
+	      Perform <command>"check-name"</command> checks with the specified failure mode.
+	      Possible modes are <command>"fail"</command>,
+	      <command>"warn"</command> (default) and
+	      <command>"ignore"</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-n <replaceable class="parameter">mode</replaceable></term>
+	<listitem>
+	  <para>
+	      Specify whether NS records should be checked to see if they
+	      are addresses.  Possible modes are <command>"fail"</command>,
+	      <command>"warn"</command> (default) and
+	      <command>"ignore"</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-o <replaceable class="parameter">filename</replaceable></term>
+        <listitem>
+          <para>
+	      Write zone output to <filename>directory</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-t <replaceable class="parameter">directory</replaceable></term>
+        <listitem>
+          <para>
+              chroot to <filename>directory</filename> so that include
+              directives in the configuration file are processed as if
+              run by a similarly chrooted named.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-w <replaceable class="parameter">directory</replaceable></term>
+        <listitem>
+          <para>
+              chdir to <filename>directory</filename> so that relative
+	      filenames in master file $INCLUDE directives work.  This
+	      is similar to the directory clause in
+	      <filename>named.conf</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-D</term>
+	<listitem>
+	  <para>
+	      Dump zone file in canonical format.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>zonename</term>
 	<listitem>
 	  <para>
@@ -151,7 +222,7 @@
   <refsect1>
     <title>AUTHOR</title>
     <para>
-        <corpauthor>Internet Software Consortium</corpauthor>
+        <corpauthor>Internet Systems Consortium</corpauthor>
     </para>
   </refsect1>
 

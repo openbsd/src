@@ -1,22 +1,22 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
- * $ISC: dbtable.c,v 1.25 2001/06/04 19:33:00 tale Exp $
+ * $ISC: dbtable.c,v 1.25.12.4 2004/03/09 05:21:08 marka Exp $
  */
 
 /*
@@ -211,12 +211,12 @@ dns_dbtable_remove(dns_dbtable_t *dbtable, dns_db_t *db) {
 	RWLOCK(&dbtable->tree_lock, isc_rwlocktype_write);
 
 	result = dns_rbt_findname(dbtable->rbt, name, 0, NULL,
-				  (void **)&stored_data);
+				  (void **) (void *)&stored_data);
 
 	if (result == ISC_R_SUCCESS) {
 		INSIST(stored_data == db);
 
-		dns_rbt_deletename(dbtable->rbt, name, ISC_FALSE);
+		(void)dns_rbt_deletename(dbtable->rbt, name, ISC_FALSE);
 	}
 
 	RWUNLOCK(&dbtable->tree_lock, isc_rwlocktype_write);
@@ -275,7 +275,7 @@ dns_dbtable_find(dns_dbtable_t *dbtable, dns_name_t *name,
 	RWLOCK(&dbtable->tree_lock, isc_rwlocktype_read);
 
 	result = dns_rbt_findname(dbtable->rbt, name, rbtoptions, NULL,
-				  (void **)&stored_data);
+				  (void **) (void *)&stored_data);
 
 	if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH)
 		dns_db_attach(stored_data, dbp);

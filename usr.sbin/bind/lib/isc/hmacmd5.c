@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: hmacmd5.c,v 1.5 2001/01/09 21:56:05 bwelling Exp $ */
+/* $ISC: hmacmd5.c,v 1.5.12.3 2004/03/08 09:04:48 marka Exp $ */
 
 /*
  * This code implements the HMAC-MD5 keyed hash algorithm
@@ -45,7 +45,7 @@ isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 	unsigned char ipad[PADLEN];
 	int i;
 
-	memset(ctx->key, 0, sizeof (ctx->key));
+	memset(ctx->key, 0, sizeof(ctx->key));
 	if (len > sizeof(ctx->key)) {
 		isc_md5_t md5ctx;
 		isc_md5_init(&md5ctx);
@@ -55,7 +55,7 @@ isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 		memcpy(ctx->key, key, len);
 
 	isc_md5_init(&ctx->md5ctx);
-	memset(ipad, IPAD, sizeof (ipad));
+	memset(ipad, IPAD, sizeof(ipad));
 	for (i = 0; i < PADLEN; i++)
 		ipad[i] ^= ctx->key[i];
 	isc_md5_update(&ctx->md5ctx, ipad, sizeof(ipad));
@@ -64,8 +64,8 @@ isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 void
 isc_hmacmd5_invalidate(isc_hmacmd5_t *ctx) {
 	isc_md5_invalidate(&ctx->md5ctx);
-	memset(ctx->key, 0, sizeof (ctx->key));
-	memset(ctx, 0, sizeof (ctx));
+	memset(ctx->key, 0, sizeof(ctx->key));
+	memset(ctx, 0, sizeof(ctx));
 }
 
 /*
@@ -89,7 +89,7 @@ isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
 
 	isc_md5_final(&ctx->md5ctx, digest);
 
-	memset(opad, OPAD, sizeof (opad));
+	memset(opad, OPAD, sizeof(opad));
 	for (i = 0; i < PADLEN; i++)
 		opad[i] ^= ctx->key[i];
 

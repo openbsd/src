@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: mempool_test.c,v 1.12 2001/01/09 21:41:19 bwelling Exp $ */
+/* $ISC: mempool_test.c,v 1.12.12.4 2004/03/08 04:04:26 marka Exp $ */
 
 #include <config.h>
 
@@ -36,7 +36,7 @@ main(int argc, char *argv[]) {
 	UNUSED(argc);
 	UNUSED(argv);
 
-	isc_mem_debugging = 2;
+	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 
 	RUNTIME_CHECK(isc_mutex_init(&lock) == ISC_R_SUCCESS);
 
@@ -61,7 +61,7 @@ main(int argc, char *argv[]) {
 	/*
 	 * Allocate 30 items from the pool.  This is our max.
 	 */
-	for (i = 0 ; i < 30 ; i++) {
+	for (i = 0; i < 30; i++) {
 		items1[i] = isc_mempool_get(mp1);
 		RUNTIME_CHECK(items1[i] != NULL);
 	}
@@ -77,7 +77,7 @@ main(int argc, char *argv[]) {
 	 * the free list (which is our max).
 	 */
 
-	for (i = 0 ; i < 11 ; i++) {
+	for (i = 0; i < 11; i++) {
 		isc_mempool_put(mp1, items1[i]);
 		items1[i] = NULL;
 	}
@@ -93,12 +93,12 @@ main(int argc, char *argv[]) {
 	 */
 	isc_mempool_setfreemax(mp2, 25);
 	isc_mempool_setfillcount(mp2, 25);
-	for (j = 0 ; j < 5000 ; j++) {
-		for (i = 0 ; i < 50 ; i++) {
+	for (j = 0; j < 5000; j++) {
+		for (i = 0; i < 50; i++) {
 			items2[i] = isc_mempool_get(mp2);
 			RUNTIME_CHECK(items2[i] != NULL);
 		}
-		for (i = 0 ; i < 50 ; i++) {
+		for (i = 0; i < 50; i++) {
 			isc_mempool_put(mp2, items2[i]);
 			items2[i] = NULL;
 		}
@@ -107,7 +107,7 @@ main(int argc, char *argv[]) {
 	/*
 	 * Free all the other items and blow away this pool.
 	 */
-	for (i = 11 ; i < 30 ; i++) {
+	for (i = 11; i < 30; i++) {
 		isc_mempool_put(mp1, items1[i]);
 		items1[i] = NULL;
 	}

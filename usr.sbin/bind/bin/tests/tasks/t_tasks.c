@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: t_tasks.c,v 1.29 2001/08/08 22:54:33 gson Exp $ */
+/* $ISC: t_tasks.c,v 1.29.12.5 2004/06/21 06:57:59 marka Exp $ */
 
 #include <config.h>
 
@@ -41,7 +41,7 @@ isc_boolean_t threaded = ISC_FALSE;
 static void
 require_threads(void) {
 	t_info("This test requires threads\n");
-	t_result(T_UNTESTED);
+	t_result(T_THREADONLY);
 	return;
 }
 
@@ -216,7 +216,7 @@ t_tasks1(void) {
 	 * program.
 	 */
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -225,7 +225,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -234,7 +234,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -243,7 +243,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -252,7 +252,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -261,7 +261,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -270,7 +270,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -279,7 +279,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -288,7 +288,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -297,7 +297,7 @@ t_tasks1(void) {
 	isc_task_send(task1, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "2",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -306,7 +306,7 @@ t_tasks1(void) {
 	isc_task_send(task2, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "3",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -315,7 +315,7 @@ t_tasks1(void) {
 	isc_task_send(task3, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "4",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -324,7 +324,7 @@ t_tasks1(void) {
 	isc_task_send(task4, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "2",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -333,7 +333,7 @@ t_tasks1(void) {
 	isc_task_send(task2, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "3",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -342,7 +342,7 @@ t_tasks1(void) {
 	isc_task_send(task3, &event);
 
 	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "4",
-				   sizeof *event);
+				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -350,7 +350,7 @@ t_tasks1(void) {
 
 	isc_task_send(task4, &event);
 
-	isc_task_purge(task3, NULL, 0, 0);
+	(void)isc_task_purge(task3, NULL, 0, 0);
 
 	isc_task_detach(&task1);
 	isc_task_detach(&task2);
@@ -532,7 +532,7 @@ t_tasks2(void) {
 	}
 
 	T2_event = isc_event_allocate(T2_mctx, (void *)1, 1, t2_callback,
-					(void *)ntasks, sizeof *event);
+					(void *)ntasks, sizeof(*event));
 	if (T2_event == NULL) {
 		t_info("isc_event_allocate failed\n");
 		return(T_UNRESOLVED);
@@ -2222,7 +2222,7 @@ t_tasks14(void) {
 		}
 
 		event = isc_event_allocate(mctx, NULL, 1, t14_callback,
-					   (void *)i, sizeof *event);
+					   (void *)i, sizeof(*event));
 		if (event == NULL) {
 			t_info("isc_event_allocate failed\n");
 			return(T_UNRESOLVED);

@@ -4,6 +4,3 @@
 # format is: <dbfile> <command> <testname> <exp_result>
 #
 dns_rbt.data	delete	new.name	ISC_R_NOTFOUND
-dns_rbt.data	delete	\[x42/7].vix.com	ISC_R_NOTFOUND
-dns_rbt.data	delete	a.\[x42/7].com	ISC_R_NOTFOUND
-dns_rbt.data	delete	a.vix.\[x42/7]	ISC_R_NOTFOUND

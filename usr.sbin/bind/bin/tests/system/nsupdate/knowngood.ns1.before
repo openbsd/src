@@ -6,10 +6,7 @@ a.example.nil.		300	IN	TXT	"foo foo foo"
 a.example.nil.		300	IN	PTR	foo.net.
 a01.example.nil.	3600	IN	A	0.0.0.0
 a02.example.nil.	3600	IN	A	255.255.255.255
-a601.example.nil.	3600	IN	A6	0 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-a601.example.nil.	3600	IN	A6	64 ::ffff:ffff:ffff:ffff foo.
-a601.example.nil.	3600	IN	A6	127 ::1 foo.
-a601.example.nil.	3600	IN	A6	128  .
+a601.example.nil.	3600	IN	AAAA	ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 afsdb01.example.nil.	3600	IN	AFSDB	0 hostname.example.nil.
 afsdb02.example.nil.	3600	IN	AFSDB	65535 .
 b.example.nil.		300	IN	CNAME	foo.net.
@@ -46,10 +43,6 @@ loc01.example.nil.	3600	IN	LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 loc02.example.nil.	3600	IN	LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
 mb01.example.nil.	3600	IN	MG	madname.example.nil.
 mb02.example.nil.	3600	IN	MG	.
-md01.example.nil.	3600	IN	MD	madname.example.nil.
-md01.example.nil.	3600	IN	MD	.
-mf01.example.nil.	3600	IN	MF	madname.example.nil.
-mf01.example.nil.	3600	IN	MF	.
 mg01.example.nil.	3600	IN	MG	mgmname.example.nil.
 mg02.example.nil.	3600	IN	MG	.
 minfo01.example.nil.	3600	IN	MINFO	rmailbx.example.nil. emailbx.example.nil.

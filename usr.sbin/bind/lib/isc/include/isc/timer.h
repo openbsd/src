@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: timer.h,v 1.28 2001/01/09 21:57:41 bwelling Exp $ */
+/* $ISC: timer.h,v 1.28.12.4 2004/03/08 09:04:53 marka Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -37,6 +37,9 @@
  *	long, and generate a life timeout event if their lifetime expires.
  *	They are used to implement both (possibly expiring) idle timers and
  *	'one-shot' timers.
+ *
+ *	'limited' timers generate a periodic tick event until they reach
+ *	their lifetime when they generate a life timeout event.
  *
  *	'inactive' timers generate no events.
  *
@@ -87,7 +90,8 @@ ISC_LANG_BEGINDECLS
 typedef enum {
 	isc_timertype_ticker = 0,
 	isc_timertype_once = 1,
-	isc_timertype_inactive = 2
+	isc_timertype_limited = 2,
+	isc_timertype_inactive = 3
 } isc_timertype_t;
 
 typedef struct isc_timerevent {
@@ -274,6 +278,9 @@ isc_timer_detach(isc_timer_t **timerp);
  */
 
 isc_result_t
+isc_timer_gettype(isc_timer_t *timer);
+
+isc_result_t
 isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
 /*
  * Create a timer manager.
@@ -321,6 +328,8 @@ isc_timermgr_destroy(isc_timermgr_t **managerp);
  *
  *	All resources used by the manager have been freed.
  */
+
+void isc_timermgr_poke(isc_timermgr_t *m);
 
 ISC_LANG_ENDDECLS
 

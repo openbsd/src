@@ -1,3 +1,6 @@
+Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2000, 2001  Internet Software Consortium.
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
 This is a simple test environment for running bind9 system tests
 involving multiple name servers.
@@ -48,4 +51,4 @@ The tests can be run individually like this:
 To run all the tests, just type "make test".
 
 
-$ISC: README,v 1.9.4.2 2001/09/17 21:43:09 gson Exp $
+$ISC: README,v 1.9.4.2.10.1 2004/03/08 04:04:32 marka Exp $

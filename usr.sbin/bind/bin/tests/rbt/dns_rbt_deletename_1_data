@@ -4,6 +4,3 @@
 # format is: <dbfile> <command> <testname> <exp_result>
 #
 dns_rbt.data	delete	a.vix.com	ISC_R_SUCCESS
-dns_rbt_bitstring.data	delete	\[x42/7].vix.com	ISC_R_SUCCESS
-dns_rbt_bitstring.data	delete	a.\[x42/7].com	ISC_R_SUCCESS
-dns_rbt_bitstring.data	delete	a.vix.\[x42/7]	ISC_R_SUCCESS

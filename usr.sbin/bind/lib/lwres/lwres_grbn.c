@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lwres_grbn.c,v 1.4 2001/06/30 04:13:50 mayer Exp $ */
+/* $ISC: lwres_grbn.c,v 1.4.12.3 2004/03/08 09:05:11 marka Exp $ */
 
 #include <config.h>
 
@@ -124,9 +124,9 @@ lwres_grbnresponse_render(lwres_context_t *ctx, lwres_grbnresponse_t *req,
 	/* real name encoding */
 	payload_length += 2 + req->realnamelen + 1;
 	/* each rr */
-	for (x = 0 ; x < req->nrdatas ; x++)
+	for (x = 0; x < req->nrdatas; x++)
 		payload_length += 2 + req->rdatalen[x];
-	for (x = 0 ; x < req->nsigs ; x++)
+	for (x = 0; x < req->nsigs; x++)
 		payload_length += 2 + req->siglen[x];
 
 	buflen = LWRES_LWPACKET_LENGTH + payload_length;
@@ -171,14 +171,14 @@ lwres_grbnresponse_render(lwres_context_t *ctx, lwres_grbnresponse_t *req,
 	lwres_buffer_putuint8(b, 0);
 
 	/* encode the rdatas */
-	for (x = 0 ; x < req->nrdatas ; x++) {
+	for (x = 0; x < req->nrdatas; x++) {
 		datalen = req->rdatalen[x];
 		lwres_buffer_putuint16(b, datalen);
 		lwres_buffer_putmem(b, req->rdatas[x], datalen);
 	}
 
 	/* encode the signatures */
-	for (x = 0 ; x < req->nsigs ; x++) {
+	for (x = 0; x < req->nsigs; x++) {
 		datalen = req->siglen[x];
 		lwres_buffer_putuint16(b, datalen);
 		lwres_buffer_putmem(b, req->sigs[x], datalen);
@@ -335,7 +335,7 @@ lwres_grbnresponse_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 	/*
 	 * Parse off the rdatas.
 	 */
-	for (x = 0 ; x < grbn->nrdatas ; x++) {
+	for (x = 0; x < grbn->nrdatas; x++) {
 		ret = lwres_data_parse(b, &grbn->rdatas[x],
 					 &grbn->rdatalen[x]);
 		if (ret != LWRES_R_SUCCESS)
@@ -345,7 +345,7 @@ lwres_grbnresponse_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 	/*
 	 * Parse off the signatures.
 	 */
-	for (x = 0 ; x < grbn->nsigs ; x++) {
+	for (x = 0; x < grbn->nsigs; x++) {
 		ret = lwres_data_parse(b, &grbn->sigs[x], &grbn->siglen[x]);
 		if (ret != LWRES_R_SUCCESS)
 			goto out;

@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
- * $ISC: gssapi_link.c,v 1.7 2001/03/21 20:45:55 bwelling Exp $
+ * $ISC: gssapi_link.c,v 1.7.12.4 2004/03/08 09:04:46 marka Exp $
  */
 
 #ifdef GSSAPI
@@ -182,12 +182,6 @@ gssapi_isprivate(const dst_key_t *key) {
         return (ISC_TRUE);
 }
 
-static isc_boolean_t
-gssapi_issymmetric(const dst_key_t *key) {
-	UNUSED(key);
-        return (ISC_TRUE);
-}
-
 static void
 gssapi_destroy(dst_key_t *key) {
 	UNUSED(key);
@@ -205,23 +199,20 @@ static dst_func_t gssapi_functions = {
 	NULL, /* paramcompare */
 	gssapi_generate,
 	gssapi_isprivate,
-	gssapi_issymmetric,
 	gssapi_destroy,
 	NULL, /* todns */
 	NULL, /* fromdns */
 	NULL, /* tofile */
-	NULL, /* fromfile */
+	NULL, /* parse */
+	NULL, /* cleanup */
 };
 
 isc_result_t
 dst__gssapi_init(dst_func_t **funcp) {
-	REQUIRE(funcp != NULL && *funcp == NULL);
-	*funcp = &gssapi_functions;
+	REQUIRE(funcp != NULL);
+	if (*funcp == NULL)
+		*funcp = &gssapi_functions;
 	return (ISC_R_SUCCESS);
-}
-
-void
-dst__gssapi_destroy(void) {
 }
 
 #else

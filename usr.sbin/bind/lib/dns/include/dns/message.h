@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: message.h,v 1.100.2.3 2002/02/19 22:13:00 gson Exp $ */
+/* $ISC: message.h,v 1.100.2.3.8.7 2004/03/08 02:08:00 marka Exp $ */
 
 #ifndef DNS_MESSAGE_H
 #define DNS_MESSAGE_H 1
@@ -99,7 +99,7 @@
 
 #define DNS_MESSAGEEXTFLAG_DO		0x8000U
 
-#define DNS_MESSAGE_REPLYPRESERVE	(DNS_MESSAGEFLAG_RD)
+#define DNS_MESSAGE_REPLYPRESERVE	(DNS_MESSAGEFLAG_RD|DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)
 
 #define DNS_MESSAGE_HEADERLEN		12 /* 6 isc_uint16_t's */
@@ -161,6 +161,11 @@ typedef int dns_messagetextflag_t;
  */
 #define DNS_MESSAGERENDER_ORDERED	0x0001	/* don't change order */
 #define DNS_MESSAGERENDER_PARTIAL	0x0002	/* allow a partial rdataset */
+#define DNS_MESSAGERENDER_OMITDNSSEC	0x0004	/* omit DNSSEC records */
+#define DNS_MESSAGERENDER_PREFER_A	0x0008	/* prefer A records in
+						 * additional section. */
+#define DNS_MESSAGERENDER_PREFER_AAAA	0x0010	/* prefer AAAA records in
+						 * additional section. */
 
 typedef struct dns_msgblock dns_msgblock_t;
 
@@ -217,14 +222,14 @@ struct dns_message {
 
 	dns_rcode_t			tsigstatus;
 	dns_rcode_t			querytsigstatus;
-	dns_name_t		       *tsigname;
+	dns_name_t		       *tsigname; /* Owner name of TSIG, if any */
 	dns_rdataset_t		       *querytsig;
 	dns_tsigkey_t		       *tsigkey;
 	dst_context_t		       *tsigctx;
 	int				sigstart;
 	int				timeadjust;
 
-	dns_name_t		       *sig0name;
+	dns_name_t		       *sig0name; /* Owner name of SIG0, if any */
 	dst_key_t		       *sig0key;
 	dns_rcode_t			sig0status;
 	isc_region_t			query;
@@ -623,7 +628,7 @@ dns_message_nextname(dns_message_t *msg, dns_section_t section);
  *
  * Returns:
  *	ISC_R_SUCCESS		-- All is well.
- *	ISC_R_NOMORE		-- No names in given section.
+ *	ISC_R_NOMORE		-- No more names in given section.
  */
 
 void
@@ -675,7 +680,7 @@ dns_message_findname(dns_message_t *msg, dns_section_t section,
  *
  *	'type' be a valid type.
  *
- *	If 'type' is dns_rdatatype_sig, 'covers' must be a valid type.
+ *	If 'type' is dns_rdatatype_rrsig, 'covers' must be a valid type.
  *	Otherwise it should be 0.
  *
  * Returns:
@@ -697,7 +702,7 @@ dns_message_findtype(dns_name_t *name, dns_rdatatype_t type,
  *
  *	'type' be a valid type, and NOT dns_rdatatype_any.
  *
- *	If 'type' is dns_rdatatype_sig, 'covers' must be a valid type.
+ *	If 'type' is dns_rdatatype_rrsig, 'covers' must be a valid type.
  *	Otherwise it should be 0.
  *
  * Returns:
@@ -736,7 +741,7 @@ dns_message_addname(dns_message_t *msg, dns_name_t *name,
  *
  *	'msg' be valid, and be a renderable message.
  *
- *	'name' be a valid name.
+ *	'name' be a valid absolute name.
  *
  *	'section' be a named section.
  */
@@ -974,9 +979,8 @@ dns_message_setopt(dns_message_t *msg, dns_rdataset_t *opt);
  *
  * Requires:
  *
- *	'msg' is a valid message with rendering intent,
- *	dns_message_renderbegin() has been called, and no sections have been
- *	rendered.
+ *	'msg' is a valid message with rendering intent
+ *	and no sections have been rendered.
  *
  *	'opt' is a valid OPT record.
  *
@@ -1186,7 +1190,7 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer);
  *	DNS_R_SIGINVALID	- the message was signed by a SIG(0), but
  *				  the signature failed to verify
  *
- *	DNS_R_SIGNOTVERIFIEDYET	- the message was signed by a TSIG or SIG(0),
+ *	DNS_R_NOTVERIFIEDYET	- the message was signed by a TSIG or SIG(0),
  *				  but the signature has not been verified yet
  */
 
@@ -1208,6 +1212,36 @@ dns_message_checksig(dns_message_t *msg, dns_view_t *view);
  *	DNS_R_EXPECTEDTSIG	- A TSIG was expected, but not seen
  *	DNS_R_UNEXPECTEDTSIG	- A TSIG was seen but not expected
  *	DNS_R_TSIGVERIFYFAILURE - The TSIG failed to verify
+ */
+
+isc_result_t
+dns_message_rechecksig(dns_message_t *msg, dns_view_t *view);
+/*
+ * Reset the signature state and then if the message was signed,
+ * verify the message.
+ *
+ * Requires:
+ *
+ *	msg is a valid parsed message.
+ *	view is a valid view or NULL
+ *
+ * Returns:
+ *
+ *	ISC_R_SUCCESS		- the message was unsigned, or the message
+ *				  was signed correctly.
+ *
+ *	DNS_R_EXPECTEDTSIG	- A TSIG was expected, but not seen
+ *	DNS_R_UNEXPECTEDTSIG	- A TSIG was seen but not expected
+ *	DNS_R_TSIGVERIFYFAILURE - The TSIG failed to verify
+ */
+
+void
+dns_message_resetsig(dns_message_t *msg);
+/*
+ * Reset the signature state.
+ *
+ * Requires:
+ *	'msg' is a valid parsed message.
  */
 
 isc_region_t *

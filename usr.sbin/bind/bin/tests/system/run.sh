@@ -1,21 +1,21 @@
 #!/bin/sh
 #
+# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: run.sh,v 1.38 2001/02/14 00:14:24 nelsonm Exp $
+# $ISC: run.sh,v 1.38.12.3 2004/03/08 04:04:33 marka Exp $
 
 #
 # Run a system test.
@@ -43,14 +43,14 @@ echo "A:System test $test" >&2
 
 if [ x$PERL = x ]
 then
-    echo "I:Perl not available.  Not trying system tests." >&2
+    echo "I:Perl not available.  Skipping test." >&2
     echo "R:UNTESTED" >&2
     echo "E:$test:`date`" >&2
     exit 0;
 fi
 
 $PERL testsock.pl || {
-    echo "I:Interfaces not set up.  Not trying system tests." >&2;
+    echo "I:Network interface aliases not set up.  Skipping test." >&2;
     echo "R:UNTESTED" >&2;
     echo "E:$test:`date`" >&2;
     exit 0;
