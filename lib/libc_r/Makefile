@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1999/01/17 23:43:17 d Exp $
+#	$OpenBSD: Makefile,v 1.6 1999/01/20 22:42:10 d Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -20,7 +20,6 @@ LINTFLAGS=	-z
 CFLAGS+=	-DPTHREAD_KERNEL -D_POSIX_THREADS -D_THREAD_SAFE 
 CFLAGS+=	-DNOPOLL -I${.CURDIR}/uthread
 CFLAGS+=	-I${.CURDIR}/include
-DEBUG=		-ggdb -Wall
 
 # Uncomment this if you want libc_r to contain debug information for
 # thread locking.
@@ -33,12 +32,13 @@ CFLAGS+=	-D_LOCK_DEBUG
 HIDDEN_SYSCALLS= accept.o bind.o close.o connect.o dup.o dup2.o \
 	execve.o fchflags.o fchmod.o fchown.o fcntl.o \
 	flock.o fpathconf.o fstat.o fstatfs.o fsync.o getdirentries.o \
-	getpeername.o getsockname.o getsockopt.o ioctl.o listen.o \
-	msync.o nanosleep.o open.o poll.o read.o readv.o recvfrom.o \
+	getlogin.o getpeername.o getsockname.o getsockopt.o ioctl.o listen.o \
+	msync.o nanosleep.o open.o pipe.o poll.o read.o readv.o recvfrom.o \
 	recvmsg.o sched_yield.o select.o sendmsg.o sendto.o \
 	setsockopt.o shutdown.o sigaction.o sigaltstack.o \
+	sigprocmask.o sigsuspend.o \
 	socket.o socketpair.o wait4.o write.o writev.o \
-	_exit.o getlogin.o
+	_exit.o 
 
 LIBCSRCDIR = ${.CURDIR}/../libc
 .include "${LIBCSRCDIR}/Makefile.inc"
