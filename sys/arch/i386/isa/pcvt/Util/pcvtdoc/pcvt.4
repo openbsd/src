@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcvt.4,v 1.13 1999/07/14 13:34:59 millert Exp $
+.\" $OpenBSD: pcvt.4,v 1.14 1999/09/14 18:43:30 aaron Exp $
 .\"
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
 .\"                           Joerg Wunsch and Holger Veit.
@@ -130,6 +130,8 @@ Display function codes functionality
 Support for MDA, CGA, EGA and VGA display adaptors
 .It
 Support for 132 column operation on VGA chipsets
+.It
+Scrollback buffer
 .It
 X Window Support for XFree86 >= 1.2 using the pccons model, or
 for XFree86 >= 2.0 using the syscons model
@@ -759,6 +761,24 @@ kind of adaptor if configured in by the
 .Xr config 8
 option
 .Dq PCVT_SCREENSAVER
+
+.Em Scrollback buffer
+
+It is often useful to be able to review text that has already scrolled off the
+screen.
+By default, 8 pages of scrollback buffer are available by navigating with the
+.Em LEFT_SHIFT+PGUP/PGDN
+keys.
+The scrollback buffer is destroyed when
+switching virtual terminals or loading new character sets.
+To increase the number of pages stored, increase the value of
+.Dv SCROLLBACK_PAGES
+in
+.Pa arch/i386/isa/pcvt/pcvt_hdr.h
+and recompile your kernel.
+
+Scrollback support was added in
+.Ox 2.6 .
 
 .Em Compatibility commands for USL-style VT's
 
