@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.54 2001/09/12 00:23:33 art Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.55 2002/01/02 06:17:26 nordin Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -573,7 +573,6 @@ struct mbuf *m_devget __P((char *, int, int, struct ifnet *,
 void	m_zero __P((struct mbuf *));
 int	m_apply __P((struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t));
-void	mbinit __P((void));
 
 /* Packet tag routines */
 struct m_tag *m_tag_get __P((int, int, int));
