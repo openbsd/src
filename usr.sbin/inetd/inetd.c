@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.75 2001/01/29 11:23:28 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.76 2001/01/29 21:06:43 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.75 2001/01/29 11:23:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.76 2001/01/29 21:06:43 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -309,7 +309,7 @@ fd_grow(fd_set **fdsp, int *bytes, int fd)
 		new = realloc(*fdsp, newbytes);
 		if (new == NULL) {
 			syslog(LOG_ERR, "Out of memory.");
-			exit(-1);
+			exit(1);
 		}
 		memset(new + *bytes, 0, newbytes - *bytes);
 		*fdsp = (fd_set *)new;
@@ -457,7 +457,7 @@ main(argc, argv, envp)
 		readablep = (fd_set *)calloc(allsockn, 1);
 		if (readablep == NULL) {
 		    syslog(LOG_ERR, "Out of memory.");
-		    exit(-1);
+		    exit(1);
 		}
 		readablen = allsockn;
 	    }
@@ -1185,7 +1185,7 @@ enter(cp)
 	sep = (struct servtab *)malloc(sizeof (*sep));
 	if (sep == NULL) {
 		syslog(LOG_ERR, "Out of memory.");
-		exit(-1);
+		exit(1);
 	}
 	*sep = *cp;
 	sep->se_fd = -1;
@@ -1284,7 +1284,7 @@ getconfigent()
 	sep = (struct servtab *) malloc(sizeof(struct servtab));
 	if (sep == NULL) {
 		syslog(LOG_ERR, "malloc: %m");
-		exit(-1);
+		exit(1);
 	}
 
 	memset(sep, 0, sizeof *sep);
@@ -1645,7 +1645,7 @@ newstr(cp)
 	if ((cp = strdup(cp ? cp : "")))
 		return(cp);
 	syslog(LOG_ERR, "strdup: %m");
-	exit(-1);
+	exit(1);
 }
 
 struct servtab *
