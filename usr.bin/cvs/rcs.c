@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.37 2005/03/26 08:09:54 tedu Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.38 2005/04/06 17:09:05 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2134,8 +2134,10 @@ rcs_splitlines(const char *fcont)
 	 * in rcs_patch().
 	 */
 	lp = (struct rcs_line *)malloc(sizeof(*lp));
-	if (lp == NULL)
+	if (lp == NULL) {
+		rcs_freefoo(foo);
 		return (NULL);
+	}
 
 	lp->rl_line = NULL;
 	lp->rl_lineno = 0;
@@ -2145,6 +2147,7 @@ rcs_splitlines(const char *fcont)
 	for (dcp = foo->rl_data; *dcp != '\0';) {
 		lp = (struct rcs_line *)malloc(sizeof(*lp));
 		if (lp == NULL) {
+			rcs_freefoo(foo);
 			cvs_log(LP_ERR, "failed to allocate line entry");
 			return (NULL);
 		}
