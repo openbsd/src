@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.781 2004/10/20 22:25:53 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.782 2004/10/22 05:23:24 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2096,6 +2096,7 @@
 #define	PCI_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 */
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169 */
+#define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 */
 
 /* RICOH products */
 #define	PCI_PRODUCT_RICOH_RF5C465	0x0465		/* 5C465 CardBus */
