@@ -1,4 +1,4 @@
-.\" $OpenBSD: more.1,v 1.7 2003/09/04 22:14:42 jmc Exp $
+.\" $OpenBSD: more.1,v 1.8 2004/02/20 22:00:26 jmc Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm more , page
-.Nd file perusal filter for crt viewing
+.Nd file perusal filter for CRT viewing
 .Sh SYNOPSIS
 .Nm more
 .Op Fl cdflpsu
@@ -123,8 +123,8 @@ Normally,
 .Nm
 will handle underlining such as produced by
 .Xr nroff 1
-in a manner appropriate to the particular terminal:  if the terminal can
-perform underlining or has a stand-out mode,
+in a manner appropriate to the particular terminal:
+if the terminal can perform underlining or has a stand-out mode,
 .Nm
 will output appropriate escape sequences to enable underlining or stand-out
 mode for underlined information in the source file.
@@ -164,7 +164,6 @@ In the following list,
 .Em i
 is an optional integer argument, defaulting to 1.
 In the following descriptions, ^X means control-X.
-.Pp
 .Bl -tag -width Ds
 .It Em i Ns Aq space
 Display
@@ -242,7 +241,7 @@ Invoke a shell with
 The characters
 .Sq %
 and
-.Sq \&!
+.Sq !\&
 in
 .Ar command
 are replaced with the current file name and the previous shell command
@@ -250,7 +249,15 @@ respectively.
 If there is no current file name,
 .Sq %
 is not expanded.
-The sequences "\\%" and "\\!" are replaced by "%" and "!" respectively.
+The sequences
+.Sq \e%
+and
+.Sq \e!
+are replaced by
+.Sq %
+and
+.Sq !\&
+respectively.
 .It Em i : Ns Ar n
 Skip to the
 .Ar i Ns -th
@@ -291,7 +298,7 @@ In addition, the user may hit the erase character to redisplay the
 --More--(xx%) message.
 .Pp
 At any time when output is being sent to the terminal, the user can
-hit the quit key (normally control\-\\).
+hit the quit key (normally control\-\e).
 .Nm
 will stop sending output, and will display the usual --More--
 prompt.
@@ -347,7 +354,8 @@ A sample usage of
 in previewing
 .Xr nroff 1
 output would be:
-.Dl nroff \-ms doc.n | more -s
+.Pp
+.Dl nroff -ms doc.n | more -s
 .Sh SEE ALSO
 .Xr cat 1 ,
 .Xr nroff 1 ,
