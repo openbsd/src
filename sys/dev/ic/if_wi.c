@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.93 2003/02/13 20:45:09 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.94 2003/03/10 00:59:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.93 2003/02/13 20:45:09 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.94 2003/03/10 00:59:54 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1619,6 +1619,11 @@ wi_ioctl(ifp, command, data)
 			wreq.wi_val[0] = htole16(sc->sc_firmware_type ==
 			    WI_LUCENT ? 0 : 1);
 			break;
+		case WI_FRID_CRYPTO_ALG:
+			wreq.wi_val[0] =
+			    htole16((u_int16_t)sc->wi_crypto_algorithm);
+			wreq.wi_len = 1;
+			break;
 		case WI_RID_SCAN_RES:
 			if (sc->sc_firmware_type == WI_LUCENT) {
 				memcpy((char *)wreq.wi_val,
@@ -1627,11 +1632,7 @@ wi_ioctl(ifp, command, data)
 				wreq.wi_len = sc->wi_scanbuf_len;
 				break;
 			}
-		case WI_FRID_CRYPTO_ALG:
-			wreq.wi_val[0] =
-			    htole16((u_int16_t)sc->wi_crypto_algorithm);
-			wreq.wi_len = 1;
-			break;
+			/* FALLTHROUGH */
 		default:
 			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
 				error = EINVAL;
