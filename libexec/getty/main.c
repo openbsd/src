@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.10 1997/08/05 23:37:35 angelos Exp $";
+static char rcsid[] = "$Id: main.c,v 1.11 1997/11/20 07:39:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ static void	prompt __P((void));
 static void	putchr __P((int));
 static void	putf __P((char *));
 static void	putpad __P((char *));
-static void	puts __P((char *));
+static void	xputs __P((char *));
 
 int
 main(argc, argv)
@@ -307,7 +307,7 @@ main(argc, argv)
 			alarm(0);
 			signal(SIGALRM, SIG_DFL);
 			if (name[0] == '-') {
-				puts("user names may not start with '-'.");
+				xputs("user names may not start with '-'.");
 				continue;
 			}
 			if (!(upper || lower || digit))
@@ -429,7 +429,7 @@ getname()
 			if (np > name) {
 				np--;
 				if (cfgetospeed(&tmode) >= 1200)
-					puts("\b \b");
+					xputs("\b \b");
 				else
 					putchr(cs);
 			}
@@ -441,7 +441,7 @@ getname()
 				putchr('\n');
 			/* this is the way they do it down under ... */
 			else if (np > name)
-				puts("                                     \r");
+				xputs("                                     \r");
 			prompt();
 			np = name;
 			continue;
@@ -482,7 +482,7 @@ putpad(s)
 		}
 	}
 
-	puts(s);
+	xputs(s);
 	/*
 	 * If no delay needed, or output speed is
 	 * not comprehensible, then don't try to delay.
@@ -502,7 +502,7 @@ putpad(s)
 }
 
 static void
-puts(s)
+xputs(s)
 	register char *s;
 {
 	while (*s)
@@ -567,13 +567,13 @@ putf(cp)
 		case 't':
 			slash = strrchr(ttyn, '/');
 			if (slash == (char *) 0)
-				puts(ttyn);
+				xputs(ttyn);
 			else
-				puts(&slash[1]);
+				xputs(&slash[1]);
 			break;
 
 		case 'h':
-			puts(editedhost);
+			xputs(editedhost);
 			break;
 
 		case 'd': {
@@ -582,23 +582,23 @@ putf(cp)
 			fmt[4] = 'M';		/* I *hate* SCCS... */
 			(void)time(&t);
 			(void)strftime(db, sizeof(db), fmt, localtime(&t));
-			puts(db);
+			xputs(db);
 			break;
 
 		case 's':
-			puts(kerninfo.sysname);
+			xputs(kerninfo.sysname);
 			break;
 
 		case 'm':
-			puts(kerninfo.machine);
+			xputs(kerninfo.machine);
 			break;
 
 		case 'r':
-			puts(kerninfo.release);
+			xputs(kerninfo.release);
 			break;
 
 		case 'v':
-			puts(kerninfo.version);
+			xputs(kerninfo.version);
 			break;
 		}
 
