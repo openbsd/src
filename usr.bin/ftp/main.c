@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.10 1995/09/15 00:32:33 pk Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.11 1996/05/07 00:16:55 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -287,6 +287,9 @@ getcmd(name)
 	char *p, *q;
 	struct cmd *c, *found;
 	int nmatches, longest;
+
+	if (name == NULL)
+		return (0);
 
 	longest = 0;
 	nmatches = 0;
