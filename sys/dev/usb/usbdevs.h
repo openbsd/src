@@ -1,10 +1,10 @@
-/*	$OpenBSD: usbdevs.h,v 1.4 1999/08/29 10:32:21 fgsch Exp $	*/
+/*	$OpenBSD: usbdevs.h,v 1.5 1999/08/29 12:59:37 maja Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: usbdevs,v 1.4 1999/08/29 10:31:13 fgsch Exp 
+ *		OpenBSD: usbdevs,v 1.5 1999/08/29 12:58:22 maja Exp 
  */
 /*	$NetBSD: usbdevs,v 1.40 1999/08/28 10:00:56 augustss Exp $	*/
 
@@ -189,6 +189,7 @@
 
 /* ATen products */
 #define	USB_PRODUCT_ATEN_UC1284	0x2001		/* Parallel printer adapter */
+#define	USB_PRODUCT_ATEN_UC10T	0x2002		/* Ethernet adapter */
 
 /* Peracom products */
 #define	USB_PRODUCT_PERACOM_SERIAL1	0x0001		/* Serial Converter */
