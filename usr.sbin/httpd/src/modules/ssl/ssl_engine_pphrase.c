@@ -343,6 +343,16 @@ void ssl_pphrase_Handle(server_rec *s, pool *p)
                 nPassPhrase++;
             }
 
+	    /*
+	     * For RSA keys, add blinding.
+	     */
+	    if (at == SSL_ALGO_RSA)
+		    if (RSA_blinding_on (pPrivateKey->pkey.rsa, NULL) != 1) {
+			    ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
+				    "Init: RSA blinding failed for private key");
+			    ssl_die();
+		    }		
+    
             /*
              * Insert private key into the global module configuration
              * (we convert it to a stand-alone DER byte sequence
