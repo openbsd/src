@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.5 2005/02/16 22:25:18 drahn Exp $ */
+/* $OpenBSD: zts.c,v 1.6 2005/03/15 00:35:11 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -132,18 +132,20 @@ zts_irq(void *v)
 {
 	struct zts_softc *sc = v;
 	u_int32_t cmd;
-	u_int32_t t0, t1, xv, x[NSAMPLES], yv, y[NSAMPLES];
+	u_int32_t t0, tn[NSAMPLES], xv, x[NSAMPLES], yv, y[NSAMPLES];
 	int i, diff[NSAMPLES];
-	int down;
+	int down = 1;
 	int mindiff, mindiffv;
 	extern int zkbd_modstate;
 
-	for (i = 0; i < NSAMPLES; i++) {
-		/* check that pen is down */
-		cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
-		    (3 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
+	/* check that pen is down */
+	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
+	    (3 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
 
-		t0 = pxa2x0_ssp_read_val(cmd);
+	t0 = pxa2x0_ssp_read_val(cmd);
+	down &= !(t0 < 10);
+
+	for (i = 0; i < NSAMPLES; i++) {
 
 		/* X */
 		cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
@@ -161,7 +163,8 @@ zts_irq(void *v)
 		cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
 		    (3 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
 
-		t1 = pxa2x0_ssp_read_val(cmd);
+		tn[i] = pxa2x0_ssp_read_val(cmd);
+		down &= !(tn[i] < 10);
 	}
 
 	/* X */
@@ -228,7 +231,6 @@ zts_irq(void *v)
 		break;
 	}
 	
-	down = (t0 > 10 && t1 > 10);
 	if (zkbd_modstate != 0 && down) {
 		if(zkbd_modstate & (1 << 1)) {
 			/* Fn */
