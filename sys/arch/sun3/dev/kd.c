@@ -1,4 +1,4 @@
-/*	$OpenBSD: kd.c,v 1.7 1997/01/16 04:03:49 kstailey Exp $	*/
+/*	$OpenBSD: kd.c,v 1.8 2000/07/06 15:42:49 ho Exp $	*/
 /*	$NetBSD: kd.c,v 1.21 1996/11/20 18:56:55 gwr Exp $	*/
 
 /*-
@@ -296,7 +296,7 @@ kdstart(tp)
 			tp->t_state |= TS_BUSY;
 			if ((s & PSL_IPL) == 0) {
 				/* called at level zero - update screen now. */
-				(void) splsoftclock();
+				(void) spllowersoftclock();
 				kd_putfb(tp);
 				(void) spltty();
 				tp->t_state &= ~TS_BUSY;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.8 2000/07/05 13:16:12 art Exp $	*/
+/*	$OpenBSD: cons.c,v 1.9 2000/07/06 15:42:48 ho Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1997/07/07 23:30:23 pk Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ cnfbstart(tp)
 		 * XXX - this is just too ugly.
 		 */
 		if (s == 0) {
-			(void) splsoftclock();
+			(void) spllowersoftclock();
 			cnfbdma((void *)tp);
 		} else
 			timeout(cnfbdma, tp, 1);

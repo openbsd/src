@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppi.c,v 1.6 1997/04/16 11:56:14 downsj Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.7 2000/07/06 15:42:48 ho Exp $	*/
 /*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ again:
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */
-		(void) splsoftclock();
+		(void) spllowersoftclock();
 		if ((sc->sc_flags & PPIF_UIO) == 0) {
 #ifdef DEBUG
 			if (ppidebug & PDB_IO)
