@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.126 2004/06/06 17:38:10 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.127 2004/06/20 17:49:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -83,6 +83,7 @@ struct buf {
 	ssize_t			 size;
 	ssize_t			 wpos;
 	ssize_t			 rpos;
+	int			 fd;
 };
 
 struct msgbuf {
@@ -109,6 +110,7 @@ struct bgpd_addr {
 };
 
 #define DEFAULT_LISTENER	0x01
+#define LISTENER_LISTENING	0x02
 
 struct listen_addr {
 	TAILQ_ENTRY(listen_addr)	 entry;
@@ -238,11 +240,17 @@ struct network {
 #define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
 #define	MAX_IMSGSIZE		8192
 
-struct imsgbuf {
+struct imsg_fd {
+	TAILQ_ENTRY(imsg_fd)	entry;
 	int			fd;
-	pid_t			pid;
-	struct buf_read		r;
-	struct msgbuf		w;
+};
+
+struct imsgbuf {
+	int				fd;
+	pid_t				pid;
+	TAILQ_HEAD(fds, imsg_fd)	fds;	
+	struct buf_read			r;
+	struct msgbuf			w;
 };
 
 enum imsg_type {
@@ -565,11 +573,13 @@ int	 imsg_read(struct imsgbuf *);
 int	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, int, u_int32_t, void *, u_int16_t);
 int	 imsg_compose_pid(struct imsgbuf *, int, pid_t, void *, u_int16_t);
+int	 imsg_compose_fdpass(struct imsgbuf *, int, int, void *, u_int16_t);
 struct buf *imsg_create(struct imsgbuf *, int, u_int32_t, u_int16_t);
 struct buf *imsg_create_pid(struct imsgbuf *, int, pid_t, u_int16_t);
 int	 imsg_add(struct buf *, void *, u_int16_t);
 int	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
+int	 imsg_get_fd(struct imsgbuf *);
 
 /* kroute.c */
 int	kr_init(int);

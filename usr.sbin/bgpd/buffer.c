@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.18 2004/04/29 19:56:04 deraadt Exp $ */
+/*	$OpenBSD: buffer.c,v 1.19 2004/06/20 17:49:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,6 +45,7 @@ buf_open(ssize_t len)
 		return (NULL);
 	}
 	buf->size = len;
+	buf->fd = -1;
 
 	return (buf);
 }
@@ -142,17 +143,36 @@ msgbuf_write(struct msgbuf *msgbuf)
 	struct buf	*buf, *next;
 	int		 i = 0;
 	ssize_t		 n;
+	struct msghdr	 msg;
+	struct cmsghdr	*cmsg;
+	char		 cmsgbuf[CMSG_SPACE(sizeof(int))];
 
 	bzero(&iov, sizeof(iov));
+	bzero(&msg, sizeof(msg));
 	TAILQ_FOREACH(buf, &msgbuf->bufs, entries) {
 		if (i >= IOV_MAX)
 			break;
 		iov[i].iov_base = buf->buf + buf->rpos;
 		iov[i].iov_len = buf->size - buf->rpos;
 		i++;
+		if (buf->fd != -1)
+			break;
 	}
 
-	if ((n = writev(msgbuf->fd, iov, i)) == -1) {
+	msg.msg_iov = iov;
+	msg.msg_iovlen = i;
+
+	if (buf != NULL && buf->fd != -1) {
+		msg.msg_control = (caddr_t)cmsgbuf;
+		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		cmsg = CMSG_FIRSTHDR(&msg);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		*(int *)CMSG_DATA(cmsg) = buf->fd;
+	}
+
+	if ((n = sendmsg(msgbuf->fd, &msg, 0)) == -1) {
 		if (errno == EAGAIN)	/* cannot write immediately */
 			return (0);
 		else
@@ -162,6 +182,11 @@ msgbuf_write(struct msgbuf *msgbuf)
 	if (n == 0) {			/* connection closed */
 		errno = 0;
 		return (-2);
+	}
+
+	if (buf != NULL && buf->fd != -1) {
+		shutdown(buf->fd, SHUT_RDWR);
+		close(buf->fd);
 	}
 
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;

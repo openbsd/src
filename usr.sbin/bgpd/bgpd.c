@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.95 2004/06/06 17:38:10 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.96 2004/06/20 17:49:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -176,21 +176,23 @@ main(int argc, char *argv[])
 
 	log_info("startup");
 
-	if (pipe(pipe_m2s) == -1)
-		fatal("pipe");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
+		fatal("socketpair");
 	if (fcntl(pipe_m2s[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_m2s[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl");
-	if (pipe(pipe_m2r) == -1)
-		fatal("pipe");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2r) == -1)
+		fatal("socketpair");
 	if (fcntl(pipe_m2r[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_m2r[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl");
-	if (pipe(pipe_s2r) == -1)
-		fatal("pipe");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2r) == -1)
+		fatal("socketpair");
 	if (fcntl(pipe_s2r[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_s2r[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl");
+
+	prepare_listeners(&conf);
 
 	/* fork children */
 	rde_pid = rde_main(&conf, &net_l, rules_l, &mrt_l, pipe_m2r, pipe_s2r);
@@ -382,6 +384,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		return (-1);
 	}
 
+	prepare_listeners(conf);
+
 	if (imsg_compose(&ibuf_se, IMSG_RECONF_CONF, 0,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
@@ -407,7 +411,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		free(r);
 	}
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
-		if (imsg_compose(&ibuf_se, IMSG_RECONF_LISTENER, 0,
+		if (imsg_compose_fdpass(&ibuf_se, IMSG_RECONF_LISTENER, la->fd,
 		    la, sizeof(struct listen_addr)) == -1)
 			return (-1);
 		TAILQ_REMOVE(conf->listen_addrs, la, entry);

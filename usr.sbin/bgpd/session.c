@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.174 2004/06/09 13:01:44 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.175 2004/06/20 17:49:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -114,38 +114,18 @@ setup_listeners(u_int *la_cnt)
 	struct listen_addr	*la;
 	u_int			 cnt = 0;
 
-	if (TAILQ_EMPTY(conf->listen_addrs)) {
-		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
-			fatal("setup_listeners calloc");
-		la->fd = -1;
-		la->flags = DEFAULT_LISTENER;
-		la->sa.ss_len = sizeof(struct sockaddr_in);
-		((struct sockaddr_in *)&la->sa)->sin_family = AF_INET;
-		((struct sockaddr_in *)&la->sa)->sin_addr.s_addr =
-		    htonl(INADDR_ANY);
-		((struct sockaddr_in *)&la->sa)->sin_port = htons(BGP_PORT);
-		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
-
-		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
-			fatal("setup_listeners calloc");
-		la->fd = -1;
-		la->flags = DEFAULT_LISTENER;
-		la->sa.ss_len = sizeof(struct sockaddr_in6);
-		((struct sockaddr_in6 *)&la->sa)->sin6_family = AF_INET6;
-		((struct sockaddr_in6 *)&la->sa)->sin6_port = htons(BGP_PORT);
-		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
-	}
-
 	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
 		la->reconf = RECONF_NONE;
 		cnt++;
 
-		if (la->fd != -1)
+		if (la->flags & LISTENER_LISTENING)
 			continue;
 
-		if ((la->fd = socket(la->sa.ss_family, SOCK_STREAM,
-		    IPPROTO_TCP)) == -1)
-			fatal("socket");
+		if (la->fd == -1) {
+			log_warn("cannot establish listener on %s: invalid fd",
+			    log_sockaddr((struct sockaddr *)&la->sa));
+			continue;
+		}
 
 		opt = 1;
 		if (setsockopt(la->fd, IPPROTO_TCP, TCP_MD5SIG,
@@ -157,24 +137,14 @@ setup_listeners(u_int *la_cnt)
 				fatal("setsockopt TCP_MD5SIG");
 		}
 
-		if (bind(la->fd, (struct sockaddr *)&la->sa, la->sa.ss_len) ==
-		    -1) {
-			if (errno == EACCES) {
-				log_warnx("can't establish listener on %s",
-				    log_sockaddr((struct sockaddr *)&la->sa));
-				close(la->fd);
-				la->fd = -1;
-				return (-1);
-			} else
-				fatal("bind");
-		}
-
 		session_socket_blockmode(la->fd, BM_NONBLOCK);
 
 		if (listen(la->fd, MAX_BACKLOG)) {
 			close(la->fd);
 			fatal("listen");
 		}
+
+		la->flags |= LISTENER_LISTENING;
 
 		log_info("listening on %s",
 		    log_sockaddr((struct sockaddr *)&la->sa));
@@ -234,9 +204,6 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
 
-	listener_cnt = 0;
-	setup_listeners(&listener_cnt);
-
 	if (pfkey_init(&sysdep) == -1)
 		fatalx("pfkey setup failed");
 
@@ -246,6 +213,9 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		fatal("can't drop privileges");
 
 	endpwent();
+
+	listener_cnt = 0;
+	setup_listeners(&listener_cnt);
 
 	signal(SIGTERM, session_sighdlr);
 	signal(SIGINT, session_sighdlr);
@@ -2066,18 +2036,25 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 					break;
 			}
 
+			if ((nla->fd = imsg_get_fd(ibuf)) == -1)
+				log_warnx("expected to receive fd for %s "
+				    "but didn't receive any",
+				    log_sockaddr((struct sockaddr *)&la->sa));
+
 			if (la == NULL) {
 				la = calloc(1, sizeof(struct listen_addr));
 				if (la == NULL)
 					fatal(NULL);
 				memcpy(&la->sa, &nla->sa, sizeof(la->sa));
-				la->fd = nla->fd;
 				la->flags = nla->flags;
+				la->fd = nla->fd;
 				la->reconf = RECONF_REINIT;
 				TAILQ_INSERT_TAIL(nconf->listen_addrs, la,
 				    entry);
 			} else {
 				la->reconf = RECONF_KEEP;
+				shutdown(nla->fd, SHUT_RDWR);
+				close(nla->fd);
 			}
 			break;
 		case IMSG_RECONF_DONE:
@@ -2118,6 +2095,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 					    (struct sockaddr *)&la->sa));
 					TAILQ_REMOVE(conf->listen_addrs, la,
 					    entry);
+					shutdown(la->fd, SHUT_RDWR);
 					close(la->fd);
 					free(la);
 				}

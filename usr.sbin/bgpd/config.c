@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.38 2004/06/06 17:38:10 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.39 2004/06/20 17:49:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -223,4 +223,52 @@ host_v6(const char *s, struct bgpd_addr *h)
 	}
 
 	return (0);
+}
+
+void
+prepare_listeners(struct bgpd_config *conf)
+{
+	struct listen_addr	*la;
+	int			 opt = 1;
+
+	if (TAILQ_EMPTY(conf->listen_addrs)) {
+		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
+			fatal("setup_listeners calloc");
+		la->fd = -1;
+		la->flags = DEFAULT_LISTENER;
+		la->sa.ss_len = sizeof(struct sockaddr_in);
+		((struct sockaddr_in *)&la->sa)->sin_family = AF_INET;
+		((struct sockaddr_in *)&la->sa)->sin_addr.s_addr =
+		    htonl(INADDR_ANY);
+		((struct sockaddr_in *)&la->sa)->sin_port = htons(BGP_PORT);
+		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
+
+		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
+			fatal("setup_listeners calloc");
+		la->fd = -1;
+		la->flags = DEFAULT_LISTENER;
+		la->sa.ss_len = sizeof(struct sockaddr_in6);
+		((struct sockaddr_in6 *)&la->sa)->sin6_family = AF_INET6;
+		((struct sockaddr_in6 *)&la->sa)->sin6_port = htons(BGP_PORT);
+		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
+	}
+
+	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+		if ((la->fd = socket(la->sa.ss_family, SOCK_STREAM,
+		    IPPROTO_TCP)) == -1)
+			fatal("socket");
+
+		opt = 1;
+		if (setsockopt(la->fd, SOL_SOCKET, SO_REUSEPORT,
+		    &opt, sizeof(opt)) == -1)
+			fatal("setsockopt SO_REUSEPORT");
+
+		if (bind(la->fd, (struct sockaddr *)&la->sa, la->sa.ss_len) ==
+		    -1) {
+			log_warn("cannot bind to %s",
+			    log_sockaddr((struct sockaddr *)&la->sa));
+			close(la->fd);
+			la->fd = -1;
+		}
+	}
 }
