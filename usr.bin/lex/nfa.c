@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfa.c,v 1.2 1996/06/26 05:35:40 deraadt Exp $	*/
+/*	$OpenBSD: nfa.c,v 1.3 1996/07/13 22:22:10 millert Exp $	*/
 
 /* nfa - NFA construction routines */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/nfa.c,v 1.2 1996/06/26 05:35:40 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/nfa.c,v 1.3 1996/07/13 22:22:10 millert Exp $ */
 
 #include "flexdef.h"
 

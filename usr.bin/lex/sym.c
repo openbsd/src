@@ -1,4 +1,4 @@
-/*	$OpenBSD: sym.c,v 1.2 1996/06/26 05:35:42 deraadt Exp $	*/
+/*	$OpenBSD: sym.c,v 1.3 1996/07/13 22:22:13 millert Exp $	*/
 
 /* sym - symbol table routines */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/sym.c,v 1.2 1996/06/26 05:35:42 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/sym.c,v 1.3 1996/07/13 22:22:13 millert Exp $ */
 
 #include "flexdef.h"
 

@@ -1,6 +1,6 @@
-/*	$OpenBSD: FlexLexer.h,v 1.2 1996/06/26 05:35:27 deraadt Exp $	*/
+/*	$OpenBSD: FlexLexer.h,v 1.3 1996/07/13 22:21:55 millert Exp $	*/
 
-// $Header: /home/cvs/src/usr.bin/lex/FlexLexer.h,v 1.2 1996/06/26 05:35:27 deraadt Exp $
+// $Header: /home/cvs/src/usr.bin/lex/FlexLexer.h,v 1.3 1996/07/13 22:21:55 millert Exp $
 
 // FlexLexer.h -- define interfaces for lexical analyzer classes generated
 //		  by flex
@@ -180,6 +180,8 @@ protected:
 
 	int yy_more_flag;
 	int yy_more_len;
+	int yy_more_offset;
+	int yy_prev_more_offset;
 };
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen.c,v 1.2 1996/06/26 05:35:34 deraadt Exp $	*/
+/*	$OpenBSD: gen.c,v 1.3 1996/07/13 22:22:01 millert Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/gen.c,v 1.2 1996/06/26 05:35:34 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/gen.c,v 1.3 1996/07/13 22:22:01 millert Exp $ */
 
 #include "flexdef.h"
 
@@ -715,12 +715,20 @@ void gen_NUL_trans()
 		(void) sprintf( NUL_ec_str, "%d", NUL_ec );
 		gen_next_compressed_state( NUL_ec_str );
 
-		if ( reject )
-			indent_puts( "*yy_state_ptr++ = yy_current_state;" );
-
 		do_indent();
-
 		out_dec( "yy_is_jam = (yy_current_state == %d);\n", jamstate );
+
+		if ( reject )
+			{
+			/* Only stack this state if it's a transition we
+			 * actually make.  If we stack it on a jam, then
+			 * the state stack and yy_c_buf_p get out of sync.
+			 */
+			indent_puts( "if ( ! yy_is_jam )" );
+			indent_up();
+			indent_puts( "*yy_state_ptr++ = yy_current_state;" );
+			indent_down();
+			}
 		}
 
 	/* If we've entered an accepting state, back up; note that
@@ -1060,7 +1068,7 @@ void make_tables()
 	 */
 	set_indent( 1 );
 
-	if ( yymore_used )
+	if ( yymore_used && ! yytext_is_array )
 		{
 		indent_puts( "yytext_ptr -= yy_more_len; \\" );
 		indent_puts( "yyleng = (int) (yy_cp - yytext_ptr); \\" );
@@ -1073,13 +1081,31 @@ void make_tables()
 	skelout();
 	if ( yytext_is_array )
 		{
-		indent_puts( "if ( yyleng >= YYLMAX ) \\" );
+		if ( yymore_used )
+			indent_puts(
+				"if ( yyleng + yy_more_offset >= YYLMAX ) \\" );
+		else
+			indent_puts( "if ( yyleng >= YYLMAX ) \\" );
+
 		indent_up();
 		indent_puts(
 		"YY_FATAL_ERROR( \"token too large, exceeds YYLMAX\" ); \\" );
 		indent_down();
-		indent_puts(
+
+		if ( yymore_used )
+			{
+			indent_puts(
+"yy_flex_strncpy( &yytext[yy_more_offset], yytext_ptr, yyleng + 1 ); \\" );
+			indent_puts( "yyleng += yy_more_offset; \\" );
+			indent_puts(
+				"yy_prev_more_offset = yy_more_offset; \\" );
+			indent_puts( "yy_more_offset = 0; \\" );
+			}
+		else
+			{
+			indent_puts(
 		"yy_flex_strncpy( yytext, yytext_ptr, yyleng + 1 ); \\" );
+			}
 		}
 
 	set_indent( 0 );
@@ -1238,18 +1264,46 @@ void make_tables()
 		{
 		if ( ! C_plus_plus )
 			{
-			indent_puts( "static int yy_more_flag = 0;" );
-			indent_puts( "static int yy_more_len = 0;" );
+			if ( yytext_is_array )
+				{
+				indent_puts( "static int yy_more_offset = 0;" );
+				indent_puts(
+					"static int yy_prev_more_offset = 0;" );
+				}
+			else
+				{
+				indent_puts( "static int yy_more_flag = 0;" );
+				indent_puts( "static int yy_more_len = 0;" );
+				}
 			}
 
-		indent_puts( "#define yymore() (yy_more_flag = 1)" );
-		indent_puts( "#define YY_MORE_ADJ yy_more_len" );
+		if ( yytext_is_array )
+			{
+			indent_puts(
+	"#define yymore() (yy_more_offset = yy_flex_strlen( yytext ))" );
+			indent_puts( "#define YY_NEED_STRLEN" );
+			indent_puts( "#define YY_MORE_ADJ 0" );
+			indent_puts( "#define YY_RESTORE_YY_MORE_OFFSET \\" );
+			indent_up();
+			indent_puts( "{ \\" );
+			indent_puts( "yy_more_offset = yy_prev_more_offset; \\" );
+			indent_puts( "yyleng -= yy_more_offset; \\" );
+			indent_puts( "}" );
+			indent_down();
+			}
+		else
+			{
+			indent_puts( "#define yymore() (yy_more_flag = 1)" );
+			indent_puts( "#define YY_MORE_ADJ yy_more_len" );
+			indent_puts( "#define YY_RESTORE_YY_MORE_OFFSET" );
+			}
 		}
 
 	else
 		{
 		indent_puts( "#define yymore() yymore_used_but_not_detected" );
 		indent_puts( "#define YY_MORE_ADJ 0" );
+		indent_puts( "#define YY_RESTORE_YY_MORE_OFFSET" );
 		}
 
 	if ( ! C_plus_plus )
@@ -1333,13 +1387,13 @@ void make_tables()
 
 	set_indent( 2 );
 
-	if ( yymore_used )
+	if ( yymore_used && ! yytext_is_array )
 		{
 		indent_puts( "yy_more_len = 0;" );
 		indent_puts( "if ( yy_more_flag )" );
 		indent_up();
 		indent_puts( "{" );
-		indent_puts( "yy_more_len = yyleng;" );
+		indent_puts( "yy_more_len = yy_c_buf_p - yytext_ptr;" );
 		indent_puts( "yy_more_flag = 0;" );
 		indent_puts( "}" );
 		indent_down();
