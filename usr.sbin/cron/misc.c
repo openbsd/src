@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.16 2002/05/22 16:39:39 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.17 2002/05/22 18:17:53 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.16 2002/05/22 16:39:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.17 2002/05/22 18:17:53 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -795,6 +795,7 @@ open_socket()
 		log_it("CRON", getpid(), "DEATH", "can't set non-block");
 		exit(ERROR_EXIT);
 	}
+	(void) fcntl(sock, F_SETFD, 1);
 
 	if (!glue_strings(sun.sun_path, sizeof sun.sun_path, SPOOL_DIR,
 	    CRONSOCK, '/')) {
