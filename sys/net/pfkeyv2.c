@@ -775,7 +775,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 					    sizeof(struct sadb_address)),
 		   SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
       if (sa2 == NULL) {
-	rval = EEXIST;
+	rval = ESRCH;
 	goto ret;
       }
       
@@ -973,7 +973,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 					      sizeof(struct sadb_address)),
 		     SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
 	if (sa2 == NULL) {
-	    rval = EEXIST;
+	    rval = ESRCH;
 	    goto ret;
 	}
       
@@ -987,7 +987,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 					    sizeof(struct sadb_address)),
 		   SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
       if (sa2 == NULL) {
-	rval = EEXIST;
+	rval = ESRCH;
 	goto ret;
       }
       
@@ -1072,7 +1072,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    sa2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi, (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] + sizeof(struct sadb_address)), SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
 
 	    if (sa2 == NULL) {
-		rval = EEXIST;
+		rval = ESRCH;
 		goto ret;
 	    }
 	}
@@ -1102,7 +1102,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	if ((delflag && (flow == NULL)) ||
 	    (!delflag && (flow != NULL)))
 	{
-	    rval = EEXIST;
+	    rval = delflag ? ESRCH : EEXIST;
 	    goto ret;
 	}
 
@@ -1118,7 +1118,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    if ((delflag && (flow2 == NULL)) ||
 		(!delflag && (flow2 != NULL)))
 	    {
-		rval = EEXIST;
+		rval = delflag ? ESRCH : EEXIST;
 		goto ret;
 	    }
 	}
@@ -1269,7 +1269,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 					      sizeof(struct sadb_address)),
 		     SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
 	if (tdb1 == NULL) {
-	    rval = EEXIST;
+	    rval = ESRCH;
 	    goto ret;
 	}
 
@@ -1279,7 +1279,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		     SADB_GETSPROTO(((struct sadb_protocol *)headers[SADB_EXT_X_PROTOCOL])->sadb_protocol_proto));
 
 	if (tdb2 == NULL) {
-	    rval = EEXIST;
+	    rval = ESRCH;
 	    goto ret;
 	}
 
