@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.22 2004/03/02 12:46:44 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.23 2004/03/02 12:56:30 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -1292,15 +1292,9 @@ cancel:
 	note("DHCPREQUEST on %s to %s port %d", ip->name,
 	    inet_ntoa(destination.sin_addr), ntohs(destination.sin_port));
 
-	if (destination.sin_addr.s_addr != INADDR_BROADCAST &&
-	    fallback_interface)
-		result = send_packet(fallback_interface, NULL,
-		    &ip->client->packet, ip->client->packet_length, from,
-		    &destination, NULL);
-	else
-		/* Send out a packet. */
-		result = send_packet(ip, NULL, &ip->client->packet,
-		    ip->client->packet_length, from, &destination, NULL);
+	/* Send out a packet. */
+	result = send_packet(ip, NULL, &ip->client->packet,
+	    ip->client->packet_length, from, &destination, NULL);
 
 	add_timeout(cur_time + ip->client->interval, send_request, ip);
 }
@@ -1708,14 +1702,6 @@ rewrite_client_leases(void)
 			write_client_lease(ip, ip->client->active, 1);
 	}
 
-	/* Write out any leases that are attached to interfaces that aren't
-	   currently configured. */
-	for (ip = dummy_interfaces; ip; ip = ip->next) {
-		for (lp = ip->client->leases; lp; lp = lp->next)
-			write_client_lease(ip, lp, 1);
-		if (ip->client->active)
-			write_client_lease(ip, ip->client->active, 1);
-	}
 	fflush(leaseFile);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.8 2004/02/24 13:21:32 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.9 2004/03/02 12:56:30 henning Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -44,6 +44,7 @@
 #include "dhctoken.h"
 
 struct client_config top_level_config;
+struct interface_info *dummy_interfaces;
 
 char client_script_name[] = "/sbin/dhclient-script";
 

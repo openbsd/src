@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.19 2004/03/02 12:46:44 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.20 2004/03/02 12:56:30 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -47,7 +47,7 @@
 #include <ifaddrs.h>
 #include <poll.h>
 
-struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
+struct interface_info *interfaces;
 struct protocol *protocols;
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
