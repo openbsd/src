@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.253 2002/12/13 20:02:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.254 2002/12/13 21:51:25 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -177,6 +177,11 @@ struct node_queue_bw {
 	u_int16_t	bw_percent;
 };
 
+struct node_qassign {
+	char		*qname;
+	char		*pqname;
+};
+
 struct filter_opts {
 	int			 marker;
 #define FOM_FLAGS	0x01
@@ -200,7 +205,7 @@ struct filter_opts {
 	int			 fragment;
 	int			 allowopts;
 	char			*label;
-	char			*qname;
+	struct node_qassign	 queues;
 } filter_opts;
 
 struct scrub_opts {
@@ -339,6 +344,7 @@ typedef struct {
 		struct node_queue	*queue;
 		struct node_queue_opt	queue_options;
 		struct node_queue_bw	queue_bwspec;
+		struct node_qassign	qassign;
 		struct filter_opts	filter_opts;
 		struct queue_opts	queue_opts;
 		struct scrub_opts	scrub_opts;
@@ -401,7 +407,7 @@ typedef struct {
 %type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>	logquick
 %type	<v.interface>	antispoof_ifspc antispoof_iflst
-%type	<v.string>	qname
+%type	<v.qassign>	qname
 %type	<v.queue>	qassign qassign_list qassign_item
 %type	<v.queue_options>	scheduler
 %type	<v.number>	cbqflags_list cbqflags_item
@@ -1049,14 +1055,23 @@ pfrule		: action dir logquick interface route af proto fromto
 				free($9.label);
 			}
 
-			if ($9.qname) {
-				if (strlcpy(r.qname, $9.qname,
+			if ($9.queues.qname != NULL) {
+				if (strlcpy(r.qname, $9.queues.qname,
 				    sizeof(r.qname)) >= PF_QNAME_SIZE) {
 					yyerror("rule qname too long (max "
 					    "%d chars)", PF_QNAME_SIZE-1);
 					YYERROR;
 				}
-				free($9.qname);
+				free($9.queues.qname);
+			}
+			if ($9.queues.pqname != NULL) {
+				if (strlcpy(r.pqname, $9.queues.pqname,
+				    sizeof(r.pqname)) >= PF_QNAME_SIZE) {
+					yyerror("rule pqname too long (max "
+					    "%d chars)", PF_QNAME_SIZE-1);
+					YYERROR;
+				}
+				free($9.queues.pqname);
 			}
 
 			expand_rule(&r, $4, $5.host, $7,
@@ -1138,11 +1153,11 @@ filter_opt	: USER uids {
 			filter_opts.label = $1;
 		}
 		| qname	{
-			if (filter_opts.qname) {
+			if (filter_opts.queues.qname) {
 				yyerror("queue cannot be redefined");
 				YYERROR;
 			}
-			filter_opts.qname = $1;
+			filter_opts.queues = $1;
 		}
 		;
 
@@ -1858,11 +1873,18 @@ label		: LABEL STRING			{
 		}
 		;
 
-qname		: QUEUE STRING			{
-			if (($$ = strdup($2)) == NULL) {
-				yyerror("qname strdup() failed");
-				YYERROR;
-			}
+qname		: QUEUE STRING				{
+			if (($$.qname = strdup($2)) == NULL)
+				err(1, "qname strdup() failed");
+		}
+		| QUEUE '(' STRING ')'			{
+			if (($$.qname = strdup($3)) == NULL)
+				err(1, "qname strdup() failed");
+		}
+		| QUEUE '(' STRING comma STRING ')'	{
+			if (($$.qname = strdup($3)) == NULL ||
+			    ($$.pqname = strdup($5)) == NULL)
+				err(1, "qname strdup() failed");
 		}
 		;
 
