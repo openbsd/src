@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.9 2005/03/09 09:45:02 jmc Exp $
+.\"	$OpenBSD: rtw.4,v 1.10 2005/03/11 23:46:45 jsg Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -171,11 +171,27 @@ This is the default mode of operation.
 Enable WEP encryption with the persistent key stored in the network card.
 .El
 .Sh HARDWARE
-The following adapters are known to be supported:
+The following adapters should work:
 .Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Corega CG-WLCB11V3 CardBus
-.It Netgear MA521 CardBus
+.Bl -column "Card                        " "Bus" -compact -offset 6n
+.It Em "Card	Bus"
+.\".It Li "Acer Aspire 1357 LMi" Ta mini-PCI
+.\".It Li "Belkin F5D6001 V3" Ta PCI
+.It Li "Belkin F5D6020 V3" Ta CardBus
+.It Li "Corega CG-WLCB11V3" Ta CardBus
+.\".It Li "D-Link DWL-510" Ta PCI
+.\".It Li "D-Link DWL-520 rev D" Ta PCI
+.It Li "D-Link DWL-610" Ta CardBus
+.\".It Li "Encore ENLWI-PCI1-NT" Ta PCI
+.\".It Li "Gigabyte GN-WLMR101" Ta PCI
+.It Li "Level-One WPC-0101" Ta CardBus
+.It Li "Linksys WPC11 v4" Ta CardBus
+.It Li "Netgear MA521" Ta CardBus
+.It Li "Ovislink AirLive WL-1120PCM" Ta CardBus
+.It Li "Planet WL-3553" Ta CardBus
+.It Li "TrendNET TEW-266PC" Ta CardBus
+.\".It Li "TrendNET TEW-288PI" Ta PCI
+.It Li "VCTnet PC-11B1" Ta CardBus
 .El
 .Sh EXAMPLES
 The following
