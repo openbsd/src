@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.5 2000/06/26 22:43:21 art Exp $	*/
+/*	$OpenBSD: midi.c,v 1.6 2001/03/23 00:13:23 mickey Exp $	*/
 /*	$NetBSD: midi.c,v 1.10 1998/12/20 14:26:44 drochner Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
  */
 
 #include "midi.h"
+#include "audio.h"
 #include "sequencer.h"
 
 #include <sys/param.h>
@@ -743,7 +744,7 @@ midi_getinfo(dev, mi)
 
 #endif /* NMIDI > 0 */
 
-#if NMIDI > 0 || NMIDIBUS > 0
+#if (NMIDI > 0 || NMIDIBUS > 0) && NAUDIO > 0
 
 int	midiprint __P((void *, const char *));
 
