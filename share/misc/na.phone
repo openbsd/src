@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.25 2001/08/15 18:09:46 aaron Exp $
+	$OpenBSD: na.phone,v 1.26 2002/04/29 15:00:43 mickey Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -147,8 +147,6 @@
 313:Dearborn:Michigan:MI
 313:Detroit:Michigan:MI
 313:Redford:Michigan:MI
-314:Ballwin:Missouri:MO
-314:Fenton:Missouri:MO
 314:St. Louis:Missouri:MO
 315:Auburn:New York:NY
 315:Rome:New York:NY
@@ -580,6 +578,9 @@
 626:Pasadena:California:CA
 626:West Covina:California:CA
 630:Chicago Suburbs (Cellular and Pagers):Illinois:IL
+636:Ballwin:Missouri:MO
+636:Chesterfield:Missouri:MO
+636:Fenton:Missouri:MO
 646:Manhattan:New York:NY
 646:New York City Cellular and Pagers:New York:NY
 647:Toronto:Ontario:ON
