@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.23 2004/11/22 04:32:14 deraadt Exp $
+.\"	$OpenBSD: ti.4,v 1.24 2004/11/22 22:49:22 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -151,6 +151,15 @@ Force half duplex operation
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh FILES
+Two firmware files are neccessary, for Tigon 1 and Tigon 2 devices.
+These are loaded on demand
+when the device is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/tigon1
+.It Pa /etc/firmware/tigon2
+.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ti%d: couldn't map memory"
@@ -184,14 +193,6 @@ and has firmware only for those devices.
 .It "ti%d: watchdog timeout"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
-.El
-.Sh FILES
-Two firmware files are neccessary, for Tigon 1 and Tigon 2 devices.
-These are loaded on demand.
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/tigon1
-.It Pa /etc/firmware/tigon2
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,

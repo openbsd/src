@@ -1,4 +1,4 @@
-.\" $OpenBSD: kue.4,v 1.11 2004/11/22 18:49:03 deraadt Exp $
+.\" $OpenBSD: kue.4,v 1.12 2004/11/22 22:49:22 jmc Exp $
 .\" $NetBSD: kue.4,v 1.5 2000/03/20 01:34:22 augustss Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2000
@@ -86,6 +86,13 @@ modes to select.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh FILES
+The driver need a firmware file,
+which is loaded on demand when the device is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/kue
+.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "kue%d: watchdog timeout"
@@ -94,13 +101,6 @@ issued, however the device failed to acknowledge the transmission
 before a timeout expired.
 .It "kue%d: no memory for rx list"
 The driver failed to allocate an mbuf for the receiver ring.
-.El
-.Sh FILES
-The driver need to load a firmware files which is loaded on
-demand when the device is attached.
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/kue
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
