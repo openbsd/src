@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.12 1999/10/11 04:39:01 angelos Exp $
+.\" $OpenBSD: keynote.4,v 1.13 1999/10/11 04:45:25 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -251,13 +251,9 @@ will be used by them.
 .Pp
 Action attribute names and values are represented by arbitrary-length
 strings. KeyNote guarantees support of attribute names and values up
-to 2048 characters long. The handling of longer attribute names or
-values is not specified and is KeyNote-implementation-dependent.
-Applications and assertions should therefore avoid depending on the
-the use of attributes with names or values longer than 2048
-characters. The length of an attribute value is represented by an
-implementation-specific mechanism (e.g., NUL-terminated strings, an
-explicit length field, etc.).
+to 2048 characters long. Applications and assertions should therefore
+avoid depending on the the use of attributes with names or values
+longer than 2048 characters.
 .Pp
 Attribute values are inherently untyped and are represented as
 character strings by default. Attribute values may contain any non-
