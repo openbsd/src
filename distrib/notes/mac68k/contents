@@ -1,21 +1,20 @@
-dnl	$OpenBSD: contents,v 1.36 2002/10/07 19:32:00 miod Exp $
+dnl	$OpenBSD: contents,v 1.37 2002/10/30 21:37:40 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
-		bsd-generic.tgz The OpenBSD/MACHINE OSREV kernel binary.
+		bsd.tgz		The OpenBSD/MACHINE OSREV kernel binary.
 				You MUST install either this file or
-				bsd-genericsbic.tgz blow.  It is the kernel
+				bsd-sbc.tgz below. It is the kernel
 				that you need to boot the system.
 
-		bsd-genericsbc.tgz
-				Another OpenBSD/MACHINE OSREV kernel binary.
+		bsd-sbc.tgz	Another OpenBSD/MACHINE OSREV kernel binary.
 				This is identical in every way to
-				bsd-generic.tgz accept that it enables a
+				bsd.tgz except that it enables a
 				different SCSI driver which may allow
 				some otherwise incompatible SCSI disks to
 				function with OpenBSD/MACHINE.  You must
-				install either this or bsd-generic.tgz.
+				install either this or bsd.tgz.
 
 		utils/		The MACHINE installation utilities for MacOS.
 

@@ -10,4 +10,4 @@ You will then have an etc directory with current system configuration files
 in it.  Use this to carefully upgrade your files in the running /etc and
 reboot the system.  Also, it is highly recommended that when upgrading your
 kernel binary (/bsd) you backup the old, working kernel and extract
-bsd-generic.tgz into / only from OpenBSD.
+bsd.tgz into / only from OpenBSD.

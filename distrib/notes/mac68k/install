@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.20 2002/06/09 05:53:54 todd Exp $
+dnl	$OpenBSD: install,v 1.21 2002/10/30 21:37:40 miod Exp $
 OpenBSDInstallPrelude
 
 The installation can be broken down into four basic steps:
@@ -82,7 +82,7 @@ If you are installing onto a single root partition, proceed to the
 Installation of base files:
 
 	Select the "Install" menu item from the "File" menu and install
-	base{:--:}OSrev.tgz, bsd-generic.tgz, comp{:--:}OSrev.tgz, and any other
+	base{:--:}OSrev.tgz, bsd.tgz, comp{:--:}OSrev.tgz, and any other
 	packages you wish to install at this time (see the contents section
 	for information about what's in each package).  The installer will
 	print out the filename of each file as it is installed and will
