@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.100 2004/01/05 13:33:11 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.101 2004/02/04 10:43:18 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -119,8 +119,8 @@ pfattach(int num)
 	pfi_initialize();
 	pf_osfp_initialize();
 
-	pool_sethardlimit(&pf_state_pl, pf_pool_limits[PF_LIMIT_STATES].limit,
-	    NULL, 0);
+	pool_sethardlimit(pf_pool_limits[PF_LIMIT_STATES].pp,
+	    pf_pool_limits[PF_LIMIT_STATES].limit, NULL, 0);
 
 	RB_INIT(&tree_src_tracking);
 	TAILQ_INIT(&pf_anchors);
@@ -1532,7 +1532,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_limit	*pl = (struct pfioc_limit *)addr;
 		int			 old_limit;
 
-		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX) {
+		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX ||
+		    pf_pool_limits[pl->index].pp == NULL) {
 			error = EINVAL;
 			goto fail;
 		}
@@ -1543,8 +1544,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		old_limit = pf_pool_limits[pl->index].limit;
 		pf_pool_limits[pl->index].limit = pl->limit;
-		if (pl->index == PF_LIMIT_SRC_NODES)
-			pf_default_rule.max_src_nodes = pl->limit;
 		pl->limit = old_limit;
 		break;
 	}

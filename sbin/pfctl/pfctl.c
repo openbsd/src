@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.199 2004/01/29 01:25:13 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.200 2004/02/04 10:43:18 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -103,6 +103,7 @@ static const struct {
 	int		index;
 } pf_limits[] = {
 	{ "states",	PF_LIMIT_STATES },
+	{ "src-nodes",	PF_LIMIT_SRC_NODES },
 	{ "frags",	PF_LIMIT_FRAGS },
 	{ NULL,		0 }
 };
@@ -894,7 +895,7 @@ pfctl_show_limits(int dev, int opts)
 		pfctl_print_title("LIMITS:");
 	memset(&pl, 0, sizeof(pl));
 	for (i = 0; pf_limits[i].name; i++) {
-		pl.index = i;
+		pl.index = pf_limits[i].index;
 		if (ioctl(dev, DIOCGETLIMIT, &pl))
 			err(1, "DIOCGETLIMIT");
 		printf("%-10s ", pf_limits[i].name);
@@ -1150,7 +1151,7 @@ pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 	memset(&pl, 0, sizeof(pl));
 	for (i = 0; pf_limits[i].name; i++) {
 		if (strcasecmp(opt, pf_limits[i].name) == 0) {
-			pl.index = i;
+			pl.index = pf_limits[i].index;
 			pl.limit = limit;
 			if ((pf->opts & PF_OPT_NOACTION) == 0) {
 				if (ioctl(pf->dev, DIOCSETLIMIT, &pl)) {
