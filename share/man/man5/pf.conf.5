@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.261 2003/07/07 08:38:03 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.262 2003/07/07 08:42:38 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -871,11 +871,11 @@ Since translation occurs before filtering the filter
 engine will see packets as they look after any
 addresses and ports have been translated. Filter rules
 will therefore have to filter based on the translated
-address and port number. In addition, packets that
-match a translation rule are not automatically passed
-through the packet filter unless the
+address and port number.
+Packets that match a translation rule are only automatically passed if
+the
 .Ar pass
-modifier is given; translated packets are
+modifier is given, otherwise they are
 still subject to
 .Ar block
 and
