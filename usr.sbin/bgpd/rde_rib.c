@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.5 2003/12/22 06:42:19 deraadt Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.6 2003/12/24 11:39:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,7 @@
  *
  * The RIB is build with one aspect in mind. Speed -- actually update speed.
  * Therefor one thing needs to be absolutely avoided, long table walks.
- * This is achieved by heavily linking the different parts toghether.
+ * This is achieved by heavily linking the different parts together.
  */
 
 struct rib_stats {
@@ -69,8 +69,8 @@ struct rib_stats {
 #define RIB_STAT(x)	(ribstats.x++)
 
 /*
- * maximum number of perfixes we allow per prefix. The number should
- * be not to big and ensures only that the prefix count is propperly
+ * Maximum number of prefixes we allow per prefix. The number should
+ * not be too big and ensure only that the prefix count is properly
  * increased and decreased. Only useful if ENSURE is active.
  */
 #define MAX_PREFIX_PER_AS 1500
@@ -210,14 +210,14 @@ attr_dump(void *p, u_int16_t len, struct attr_flags *a)
 /* aspath specific functions */
 
 /* TODO
- * aspath loop detection (partialy done I think),
+ * aspath loop detection (partially done I think),
  * aspath regexp search,
  * aspath to string converter
  */
 static u_int16_t	aspath_extract(void *, int);
 
 /*
- * Extract the asnum out of the as segement at the specified position.
+ * Extract the asnum out of the as segment at the specified position.
  * Direct access is not possible because of non-aligned reads.
  */
 static u_int16_t
@@ -567,7 +567,7 @@ path_unlink(struct rde_aspath *asp)
 	 */
 }
 
-/* alloc and initalize new entry. May not fail. */
+/* alloc and initialize new entry. May not fail. */
 static struct rde_aspath *
 path_alloc(void)
 {
@@ -626,7 +626,7 @@ prefix_get(struct rde_aspath *asp, struct in_addr prefix, int prefixlen)
 
 /*
  * Adds or updates a prefix. Returns 1 if a new routing decision needs
- * to be done -- which is acctually always.
+ * to be done -- which is actually always.
  */
 struct pt_entry *
 prefix_add(struct rde_aspath *asp, struct in_addr prefix, int prefixlen)
@@ -742,7 +742,7 @@ prefix_remove(struct rde_peer *peer, struct in_addr prefix, int prefixlen)
 }
 
 /*
- * seraches in the prefix list of specified pt_entry for a prefix entry
+ * Searches in the prefix list of specified pt_entry for a prefix entry
  * belonging to the peer peer. Returns NULL if no match found.
  */
 struct prefix *
@@ -845,8 +845,8 @@ prefix_unlink(struct prefix *pref)
 	pref->peer = NULL;
 
 	/*
-	 * It's the caller duty to remove empty aspath respectivly pt_entry
-	 * structures. Also freeing the unlinked prefix is callers duty.
+	 * It's the caller's duty to remove empty aspath respectively pt_entry
+	 * structures. Also freeing the unlinked prefix is the caller's duty.
 	 */
 }
 
@@ -884,7 +884,7 @@ prefix_free(struct prefix *pref)
  * the nexthops in a hash is not optimal. An (in)validate needs to do a table
  * walk to find all candidates.
  * Currently I think that there are many more adds and removes so that a
- * hash table has more benefits and the table walk shoulds not happen to often.
+ * hash table has more benefits and the table walk should not happen too often.
  */
 
 static struct nexthop	*nexthop_get(struct in_addr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.3 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.4 2003/12/24 11:39:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -39,7 +39,7 @@
  * pt_empty:  returns true if there is no bgp prefix linked to the pt_entry.
  * pt_init:   initialize prefix table.
  * pt_alloc:  allocate a pt_entry. Internal function.
- * pt_free:   free a pt_entry. Internal funktion.
+ * pt_free:   free a pt_entry. Internal function.
  */
 
 /* internal prototypes */
@@ -48,7 +48,7 @@ static void		 pt_free(struct pt_entry *);
 
 /*
  * currently we are using a hash list to store the prefixes. This may be
- * replaced with a red-black trie if neccesary.
+ * replaced with a red-black trie if necessary.
  */
 LIST_HEAD(pt_entryhead, pt_entry);
 
@@ -61,7 +61,7 @@ struct pt_table {
 #define MAX_PREFIX 32
 
 /*
- * size of the hashtable per prefixlen. The sizes where choosen from a bgp
+ * size of the hashtable per prefixlen. The sizes were chosen from a bgp
  * dump done on Nov 4. 2003.
  */
 u_long pthashsize[MAX_PREFIX + 1 - MIN_PREFIX] = {
@@ -79,7 +79,7 @@ struct pt_table	pttable[MAX_PREFIX + 1 - MIN_PREFIX];
 
 /*
  * Statistics collector.
- * Collected to tune the preifx table. Currently only a few counters where
+ * Collected to tune the prefix table. Currently only a few counters were
  * added. More to come as soon as we see where we are going.
  * TODO: add a function that dumps the stats after a specified period of time.
  */
@@ -92,7 +92,7 @@ struct pt_stats {
 	u_int64_t		 pt_lookup;
 	u_int64_t		 pt_dump;
 } ptstats;
-/* simple macros to update statisic */
+/* simple macros to update statistics */
 #define PT_STAT(x)	(ptstats.x++)
 #define PT_STAT2(x, p)	(ptstats.x[p]++)
 
@@ -195,7 +195,7 @@ pt_lookup(struct in_addr prefix)
 }
 
 /*
- * XXX We need a redblack tree to get a ordered output.
+ * XXX We need a redblack tree to get an ordered output.
  * XXX A nicer upcall interface wouldn't be luxus too.
  */
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.3 2003/12/23 18:52:46 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.4 2003/12/24 11:39:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -88,13 +88,13 @@
  * Decision Engine OUR implementation:
  * Our implementation has only one RIB. The filtering is done first. The
  * filtering calculates the preference and stores it in LOCAL_PREF (Phase 1).
- * Ineligible routes are flaged as ineligible via nexthop_add(). The flags
+ * Ineligible routes are flagged as ineligible via nexthop_add(). The flags
  * are inherited from the nexthop descriptor.
  * Phase 3 is done together with Phase 2 -- the output filtering is done in
  * the session engine.
  * In following cases a prefix needs to be reevaluated:
  *  - update of a prefix (path_update)
- *  - withdraw of a preifx (prefix_remove)
+ *  - withdraw of a prefix (prefix_remove)
  *  - state change of the nexthop (nexthop-{in}validate)
  *  - state change of session (session down)
  *
@@ -102,7 +102,7 @@
 
 /*
  * compare two prefixes with equal pt_entry. Returns an integer greater than or
- * less than 0, according to whether the prefix p1 is more or less prefered
+ * less than 0, according to whether the prefix p1 is more or less preferred
  * than the prefix p2. p1 should be used for the new prefix and p2 for a
  * already added prefix.
  */
@@ -148,7 +148,7 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 
 	/* 6. EBGP is cooler than IBGP */
 	/*
-	 * It is absolutly important that the ebgp value in peer_config.ebgp
+	 * It is absolutely important that the ebgp value in peer_config.ebgp
 	 * is bigger than all other ones (IBGP, confederations)
 	 */
 	if ((p1->peer->conf.ebgp - p2->peer->conf.ebgp) != 0) {
