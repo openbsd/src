@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.15 1999/04/29 22:25:04 alex Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.16 1999/07/19 00:16:38 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.15 1999/04/29 22:25:04 alex Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.16 1999/07/19 00:16:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: shutdown.c,v 1.15 1999/04/29 22:25:04 alex Exp 
 
 #include <ctype.h>
 #include <fcntl.h>
+#include <sys/termios.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -397,13 +398,33 @@ die_you_gravy_sucking_pig_dog()
 	}
 	if (access(_PATH_RCSHUTDOWN, R_OK) != -1) {
 		pid_t pid;
+		struct termios t;
+		int fd;
 
 		switch ((pid = fork())) {
 		case -1:
 			break;
 		case 0:
+			if (revoke(_PATH_CONSOLE) == -1)
+				perror("revoke");
+			if (setsid() == -1)
+				perror("setsid");
+			fd = open(_PATH_CONSOLE, O_RDWR);
+			if (fd == -1)
+				perror("open");
+			dup2(fd, 0);
+			dup2(fd, 1);
+			dup2(fd, 2);
+			if (fd > 2)
+				close(fd);
+
+			/* At a minimum... */
+			tcgetattr(0, &t);
+			t.c_oflag |= (ONLCR | OPOST);
+			tcsetattr(0, TCSANOW, &t);
+
 			execl(_PATH_BSHELL, "sh", _PATH_RCSHUTDOWN, NULL);
-			exit(1);
+			_exit(1);
 		default:
 			waitpid(pid, NULL, 0);
 		}
