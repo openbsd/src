@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator_upa.c,v 1.3 2002/07/26 16:39:04 jason Exp $	*/
+/*	$OpenBSD: creator_upa.c,v 1.4 2002/12/03 19:25:54 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -121,10 +121,10 @@ creator_upa_attach(parent, self, aux)
 	return;
 
 fail:
-	if (sc->sc_fbc_h != 0)
+	if (bus_space_vaddr(sc->sc_bt, sc->sc_fbc_h))
 		bus_space_unmap(sc->sc_bt, sc->sc_fbc_h,
 		    ma->ma_reg[FFB_REG_FBC].ur_len);
-	if (sc->sc_pixel_h != 0)
+	if (bus_space_vaddr(sc->sc_bt, sc->sc_pixel_h))
 		bus_space_unmap(sc->sc_bt, sc->sc_pixel_h,
 		    ma->ma_reg[FFB_REG_DFB24].ur_len);
 }
