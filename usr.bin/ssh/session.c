@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.32 2000/08/31 22:05:42 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.33 2000/09/04 19:03:40 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -144,7 +144,7 @@ void
 do_authenticated(struct passwd * pw)
 {
 	Session *s;
-	int type;
+	int type, fd;
 	int compression_level = 0, enable_compression_after_reply = 0;
 	int have_pty = 0;
 	char *command;
@@ -299,7 +299,9 @@ do_authenticated(struct passwd * pw)
 				break;
 			}
 			strlcat(xauthfile, "/cookies", MAXPATHLEN);
-			open(xauthfile, O_RDWR|O_CREAT|O_EXCL, 0600);
+			fd = open(xauthfile, O_RDWR|O_CREAT|O_EXCL, 0600);
+			if (fd >= 0)
+				close(fd);
 			restore_uid();
 			fatal_add_cleanup(xauthfile_cleanup_proc, NULL);
 			success = 1;
@@ -1289,6 +1291,7 @@ session_subsystem_req(Session *s)
 int
 session_x11_req(Session *s)
 {
+	int fd;
 	if (no_x11_forwarding_flag) {
 		debug("X11 forwarding disabled in user configuration file.");
 		return 0;
@@ -1333,7 +1336,9 @@ session_x11_req(Session *s)
 		return 0;
 	}
 	strlcat(xauthfile, "/cookies", MAXPATHLEN);
-	open(xauthfile, O_RDWR|O_CREAT|O_EXCL, 0600);
+	fd = open(xauthfile, O_RDWR|O_CREAT|O_EXCL, 0600);
+	if (fd >= 0)
+		close(fd);
 	restore_uid();
 	fatal_add_cleanup(xauthfile_cleanup_proc, s);
 	return 1;
