@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.30 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.31 2002/11/20 19:57:19 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.30 2002/07/15 19:13:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.31 2002/11/20 19:57:19 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -146,6 +146,7 @@ newjob(time_t runtimer, int queue)
 		fd = open(atfile, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR);
 		if (fd >= 0)
 			return (fd);
+		runtimer++;
 	}
 	return (-1);
 }
