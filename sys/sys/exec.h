@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.14 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: exec.h,v 1.15 2002/07/19 01:06:18 jason Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ struct ps_strings {
 #if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || \
     defined(COMPAT_IBCS2) || defined(COMPAT_SVR4) || defined(COMPAT_OSF1) || \
     defined(COMPAT_LINUX) || defined(COMPAT_FREEBSD) || \
-    defined(COMPAT_HPUX)  || defined(COMPAT_NETBSD)
+    defined(COMPAT_HPUX)  || defined(COMPAT_NETBSD) || defined(__sparc64__)
 #define	STACKGAPLEN	512	/* plenty enough for now */
 #else
 #define	STACKGAPLEN	0
