@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypbind.8,v 1.17 2001/08/02 18:37:35 mpech Exp $
+.\"	$OpenBSD: ypbind.8,v 1.18 2002/11/21 21:02:28 deraadt Exp $
 .\"	$NetBSD: ypbind.8,v 1.2 1996/02/28 01:21:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -136,13 +136,13 @@ exists, YP is started automatically at boot time by
 .Pp
 Once
 .Nm ypbind
-is running you should look at the following pages to see how to enable YP
-support for each of the following maps:
-.Xr passwd 5 ,
+is running, the following pages should be reviewed in order to see how to
+enable YP support for each of the following maps:
+.Xr ethers 5 ,
 .Xr group 5 ,
 .Xr hosts 5 ,
-.Xr resolv.conf 5 ,
-.Xr ethers 3 ,
 .Xr networks 5
+.Xr passwd 5 ,
+.Xr resolv.conf 5 ,
 .Sh AUTHORS
 Theo de Raadt
