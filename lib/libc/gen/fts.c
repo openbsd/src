@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.28 2001/08/03 22:23:48 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.29 2001/08/27 21:42:06 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.28 2001/08/03 22:23:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.29 2001/08/27 21:42:06 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,7 +95,7 @@ fts_open(argv, options, compar)
 	}
 
 	/* Allocate/initialize the stream */
-	if ((sp = malloc((u_int)sizeof(FTS))) == NULL)
+	if ((sp = malloc(sizeof(FTS))) == NULL)
 		return (NULL);
 	memset(sp, 0, sizeof(FTS));
 	sp->fts_compar = compar;
@@ -958,19 +958,14 @@ fts_alloc(sp, name, namelen)
 	if ((p = malloc(len)) == NULL)
 		return (NULL);
 
-	/* Copy the name and guarantee NUL termination. */
-	memmove(p->fts_name, name, namelen);
-	p->fts_name[namelen] = '\0';
-
+	memset(p, 0, len);
+	p->fts_path = sp->fts_path;
+	p->fts_namelen = namelen;
+	p->fts_instr = FTS_NOINSTR;
 	if (!ISSET(FTS_NOSTAT))
 		p->fts_statp = (struct stat *)ALIGN(p->fts_name + namelen + 2);
-	p->fts_namelen = namelen;
-	p->fts_path = sp->fts_path;
-	p->fts_errno = 0;
-	p->fts_flags = 0;
-	p->fts_instr = FTS_NOINSTR;
-	p->fts_number = 0;
-	p->fts_pointer = NULL;
+	memcpy(p->fts_name, name, namelen);
+
 	return (p);
 }
 
