@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.33 2001/05/25 22:09:44 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.34 2001/05/26 06:58:30 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ extern void *ipsp_copy_ident(void *);
 
 /* Packet tags structure */
 struct m_tag {
-	TAILQ_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
+	LIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
 	u_int16_t		m_tag_id;	/* Tag ID */
 	u_int16_t		m_tag_len;	/* Length of data */
 };
@@ -84,7 +84,7 @@ struct m_hdr {
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
-	TAILQ_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
+	LIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int	len;			/* total packet length */
 };
 
@@ -227,7 +227,7 @@ struct mbuf *_sk_mget(int, int);
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
-		TAILQ_INIT(&(m)->m_pkthdr.tags); \
+		LIST_INIT(&(m)->m_pkthdr.tags); \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
 } while (/* CONSTCOND */ 0)
@@ -400,11 +400,13 @@ void _sk_mclget(struct mbuf *, int);
 
 /*
  * Copy just m_pkthdr from from to to.
+ * XXX Ugly exposure of tag specifics, and it actually breaks tag copying.
  */
 #define M_COPY_HDR(to, from) { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
-	if (TAILQ_EMPTY(&(from)->m_pkthdr.tags)) \
-		TAILQ_INIT(&(to)->m_pkthdr.tags); \
+	if (!LIST_EMPTY(&(to)->m_pkthdr.tags)) \
+		LIST_FIRST(&(to)->m_pkthdr.tags)->m_tag_link.le_prev = \
+		    &(to)->m_pkthdr.tags.lh_first; \
 }
 
 /*
@@ -412,7 +414,7 @@ void _sk_mclget(struct mbuf *, int);
  */
 #define M_DUP_HDR(to, from) { \
 	M_COPY_HDR((to), (from)); \
-	TAILQ_INIT(&(to)->m_pkthdr.tags); \
+	LIST_INIT(&(to)->m_pkthdr.tags); \
 	m_tag_copy_chain((to), (from)); \
 }
 
@@ -561,13 +563,13 @@ void	mbinit __P((void));
 struct m_tag *m_tag_get __P((int, int, int));
 void	m_tag_free __P((struct m_tag *));
 void	m_tag_prepend __P((struct mbuf *, struct m_tag *));
-void	m_tag_append __P((struct mbuf *, struct m_tag *));
 void	m_tag_unlink __P((struct mbuf *, struct m_tag *));
 void	m_tag_delete __P((struct mbuf *, struct m_tag *));
 void	m_tag_delete_chain __P((struct mbuf *, struct m_tag *));
 struct m_tag *m_tag_find __P((struct mbuf *, int, struct m_tag *));
 struct m_tag *m_tag_copy __P((struct m_tag *));
 int	m_tag_copy_chain __P((struct mbuf *, struct mbuf *));
+void	m_tag_init __P((struct mbuf *));
 
 /* Packet tag types */
 #define	PACKET_TAG_NONE			0
