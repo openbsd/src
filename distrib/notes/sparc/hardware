@@ -1,20 +1,21 @@
 OpenBSD/sparc 2.2 runs on the following classes of machines:
-	- sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
-	- sun4 (e.g. the 4/100, 4/200, and 4/300.   note that support
-		for the 4/400 processor is incomplete)
-	- sun4m (e.g. sparc classic, 4, 5, 10, and 20) *** See Notes Below
+	- sun4  -- 4/100, 4/200, and 4/300.   (note that support
+		   for the 4/400 processor is incomplete)
+	- sun4c -- SS1, SS1+, SS2, IPC, ELC, IPX, and SLC
+	- sun4m -- Sparc Classic, LX, 4, 5, 10, and 20. *** See Notes Below
 	- faithful clones of the above Sun systems (e.g. Integrix)
 
 OpenBSD/sparc 2.2 does NOT run on these machines (yet):
 	- Sun 4/400 --  Lacking support for the I/O cache, and related
 			ethernet problems.
-	- sun4m 4/6XX (e.g Sparcserver 600MP) -- Different registers (auxio
-			vs. leds), VMEbus on sun4m arch, I/O cache???
-	- sun4d (e.g. SPARCcenter 2000, SPARCserver 1000) -- X-bus vs. M-bus
-			multi-processor issues.
-	- sun4u (e.g. Ultrasparcs) --  currently no support for 64-bit Sparc
-			architecture extensions.
-	- clones that are different from the Sun systems (e.g. Solbourne)
+	- Sun 4/6xx -- Sparcserver 600MP, Different registers (auxio
+			vs. leds), VMEbus on sun4m arch, iommu issues.
+	- sun4d -- SPARCcenter 2000, SPARCserver 1000,  XDBus and
+			multiprocessor support issues.
+	- sun4u (Ultrasparcs) --  currently no support for 64-bit Sparc
+			architecture extensions.  sun4u will have its own port.
+	- clones that are significantly different from the Sun systems 
+			(e.g. Solbourne)
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
@@ -46,7 +47,7 @@ Supported devices include:
 
 	SCSI: 
 		on-board "esp" SCSI controller (sun4c's, and the 4/300),
-		SBus "esp" SCSI controller, 
+		SBus "esp" SCSI controller (including 3rd party compatibles), 
 		Sun "SUN-3"/"si" VME SCSI controller (polled mode only, slow),
 		Sun "SCSI Weird"/"sw" on-board controller (4/110 only, polled)
 
@@ -62,12 +63,11 @@ Supported devices include:
 	sun4c audio.
 
 
-Hardware the we do NOT currently support, but get many questions
-about:
-	multiprocessor machines (ignores other CPUs..)
-	audio driver for sun4m machines
-	floppy driver for sun4m (can boot/install from ramdisk floppies though)
-	interrupt driven SCSI driver for Sun 4/100's and 4/200's
+Hardware the we do NOT currently support, but get many questions about:
+	Multiprocessor machines (Will not boot correctly on multiple CPU sun4m)
+	Audio driver for sun4m machines
+	Floppy driver for sun4m (can boot/install from ramdisk floppies though)
+	Interrupt driven SCSI driver for Sun 4/100's and 4/200's
         VME mti 16-port serial card
         VME alm2 16-port serial card
         VME mcp 4-port serial card 
@@ -89,15 +89,11 @@ particularly the Viking/SuperSPARC implementations, is probably the least
 stable and is also lacking useful floppy/audio support.  
 
 The supplied GENERIC kernel is the best attempt at a configuration that
-works on the widest range of machinery (sun4m and otherwise).  Custom
-kernel configurations for sun4m may run into difficulties, as of release
-GENERIC is your best bet for a stable sun4m kernel.
-
-There are a number of people actively working on improving the stability
-of OpenBSD/sparc in the sun4m area.  If you have problems with the
-OpenBSD 2.2 kernel in this distribution, please visit the OpenBSD web
-page (http://www.openbsd.org) and the mailing lists to review the current
-status and check for updates.
+works on the widest range of machinery (sun4, sun4c, and sun4m).  
+If you have problems with the OpenBSD 2.2 kernel in this distribution, 
+please visit the OpenBSD web page (http://www.openbsd.org) and the mailing 
+lists to review the current status and check for updates and distribution
+errata.
 
 If you have Sparc hardware you can donate or make available at nominal
 cost, please mention this on the lists, many things aren't being tested
