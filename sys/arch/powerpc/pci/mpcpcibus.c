@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.14 2000/03/24 06:56:41 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.15 2000/03/31 04:25:41 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -386,6 +386,7 @@ mpcpcibrattach(parent, self, aux)
 			} else
 #endif
 			{
+				int found;
 
 				/* mac configs */
 
@@ -395,29 +396,31 @@ mpcpcibrattach(parent, self, aux)
 				sc->sc_iobus_space.bus_reverse = 1;
 
 				/* find io(config) base, flag == 0x01000000 */
+				found = 0;
 				for (i = 0; prange[i].flags != 0; i++) {
 					if (prange[i].flags == 0x01000000) {
-						/* find first? */
-						break;
+						/* find last? */
+						found = i;
 					}
 				}
 				/* found the io space ranges */
-				if (prange[i].flags == 0x01000000) {
+				if (prange[found].flags == 0x01000000) {
 					sc->sc_iobus_space.bus_base =
-						prange[i].base;
+						prange[found].base;
 				}
 
+				found = 0;
 				/* find mem base, flag == 0x02000000 */
 				for (i = 0; prange[i].flags != 0; i++) {
 					if (prange[i].flags == 0x02000000) {
-						/* find first? */
-						break;
+						/* find last? */
+						found = i;
 					}
 				}
 				/* found the mem space ranges */
-				if (prange[i].flags == 0x02000000) {
+				if (prange[found].flags == 0x02000000) {
 					sc->sc_membus_space.bus_base =
-						prange[i].base;
+						prange[found].base;
 				}
 				if ( (sc->sc_iobus_space.bus_base == 0) ||
 					(sc->sc_membus_space.bus_base == 0)) {
