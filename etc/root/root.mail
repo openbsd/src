@@ -1317,9 +1317,9 @@ nearest FTP mirror site.
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute:
  # mount /dev/cd0a /cdrom
- # pkg_add -v /cdrom/3.6/packages/i386/emacs-20.7.tgz
+ # pkg_add -v /cdrom/3.6/packages/i386/emacs-21.3.tgz
 or alternatively install them via FTP this way:
- # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/3.6/packages/i386/emacs-20.7.tgz
+ # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/3.6/packages/i386/emacs-21.3.tgz
 
 You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh!  ssh is
 included in all OpenBSD systems.  The implementation is OpenSSH, which we are
