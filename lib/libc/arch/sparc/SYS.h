@@ -34,15 +34,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.10 2002/02/19 19:39:36 millert Exp $
+ *	$OpenBSD: SYS.h,v 1.11 2002/02/19 22:12:37 millert Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 #include <machine/trap.h>
 
+#ifdef __STDC__
 #define _CAT(x,y) x##y
 #define __ENTRY(p,x) ENTRY(p##x)
+#else
+#define _CAT(x,y) x/**/y
+#define __ENTRY(p,x) ENTRY(p/**/x)
+#endif
 
 /*
  * ERROR branches to cerror.  This is done with a macro so that I can

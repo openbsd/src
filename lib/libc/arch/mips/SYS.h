@@ -33,19 +33,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.8 2002/02/19 19:39:36 millert Exp $ 
+ *      $OpenBSD: SYS.h,v 1.9 2002/02/19 22:12:36 millert Exp $ 
  */
 
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#define __ENTRY(p,x)	ENTRY(p ## x)
-#define __DO_SYSCALL(x)				\
+#ifdef __STDC__
+# define __ENTRY(p,x)	ENTRY(p ## x)
+# define __DO_SYSCALL(x)	\
 			li	v0,SYS_ ## x;	\
 			syscall
-#define __LEAF2(p,x)	LEAF(p ## x)
-#define __END2(p,x)	END(p ## x)
-#define __CLABEL2(p,x)	_C_LABEL(p ## x)
+# define __LEAF2(p,x)	LEAF(p ## x)
+# define __END2(p,x)	END(p ## x)
+# define __CLABEL2(p,x)	_C_LABEL(p ## x)
+#else
+# define __ENTRY(p,x)	ENTRY(p/**/x)
+# define __DO_SYSCALL(x)	\
+			li	v0,SYS_/**/x;	\
+			syscall
+# define __LEAF2(p,x)	LEAF(p/**/x)
+# define __END2(p,x)	END(p/**/x)
+# define __CLABEL2(p,x)	_C_LABEL(p/**/x)
+#endif
 
 #define __PSEUDO_NOERROR(p,x,y)				\
 		__LEAF2(p,x);				\
