@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.52 2003/12/23 00:15:14 mickey Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.53 2003/12/23 09:37:57 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -707,7 +707,7 @@ mi_switch()
 	 */
 	microtime(&tv);
 	if (timercmp(&tv, &runtime, <)) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		printf("time is not monotonic! "
 		    "tv=%ld.%06ld, runtime=%ld.%06ld\n",
 		    tv.tv_sec, tv.tv_usec, runtime.tv_sec, runtime.tv_usec);
