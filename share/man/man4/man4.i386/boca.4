@@ -35,7 +35,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
-.\"	$Id: boca.4,v 1.2 1996/08/08 17:11:20 deraadt Exp $
+.\"	$Id: boca.4,v 1.3 1996/08/29 12:25:28 deraadt Exp $
 .\"
 .Dd January 3, 1995
 .Dt BOCA 4 i386
@@ -49,43 +49,18 @@ multiplexing serial communications interface
 For 4-port BB1004 boards:
 .Pp
 .Cd "boca0 at isa? port 0x100 irq 5"
-.Cd "com2 at boca? slave ?"
-.Cd "com3 at boca? slave ?"
-.Cd "com4 at boca? slave ?"
-.Cd "com5 at boca? slave ?"
+.Cd "com* at boca? slave ?"
 .Pp
 For 8-port BB1008 boards:
 .Pp
 .Cd "boca0 at isa? port 0x100 irq 5"
-.Cd "com2 at boca? slave ?"
-.Cd "com3 at boca? slave ?"
-.Cd "com4 at boca? slave ?"
-.Cd "com5 at boca? slave ?"
-.Cd "com6 at boca? slave ?"
-.Cd "com7 at boca? slave ?"
-.Cd "com8 at boca? slave ?"
-.Cd "com9 at boca? slave ?"
+.Cd "com* at boca? slave ?"
 .Pp
 For 16-port BB2016 boards:
 .Pp
 .Cd "boca0 at isa? port 0x100 irq 5"
-.Cd "com2 at boca? slave ?"
-.Cd "com3 at boca? slave ?"
-.Cd "com4 at boca? slave ?"
-.Cd "com5 at boca? slave ?"
-.Cd "com6 at boca? slave ?"
-.Cd "com7 at boca? slave ?"
-.Cd "com8 at boca? slave ?"
-.Cd "com9 at boca? slave ?"
 .Cd "boca1 at isa? port 0x140 irq 5"
-.Cd "com10 at boca? slave ?"
-.Cd "com11 at boca? slave ?"
-.Cd "com12 at boca? slave ?"
-.Cd "com13 at boca? slave ?"
-.Cd "com14 at boca? slave ?"
-.Cd "com15 at boca? slave ?"
-.Cd "com16 at boca? slave ?"
-.Cd "com17 at boca? slave ?"
+.Cd "com* at boca? slave ?"
 .Pp
 (The BB2016 is functionally equivalent to two BB1008 boards,
 and is configured as such.)
