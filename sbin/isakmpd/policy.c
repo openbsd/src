@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.3 1999/10/26 22:32:28 angelos Exp $	*/
-/*	$EOM: policy.c,v 1.7 1999/08/26 11:21:47 niklas Exp $ */
+/*	$OpenBSD: policy.c,v 1.4 2000/01/26 15:24:03 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.12 2000/01/25 02:21:10 angelos Exp $ */
 
 /*
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
@@ -77,7 +77,7 @@
 #include "policy.h"
 
 #ifndef POLICY_FILE_DEFAULT
-#define POLICY_FILE_DEFAULT "/etc/isakmpd.policy"
+#define POLICY_FILE_DEFAULT "/etc/isakmpd/isakmpd.policy"
 #endif /* POLICY_FILE_DEFAULT */
 
 #if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE)
@@ -162,6 +162,8 @@ policy_callback (char *name)
   in_addr_t net, subnet;
   u_int16_t len, type;
   size_t id_sz;
+  time_t tt;
+  static char mytimeofday[15];
 
   /* We use all these as a cache.  */
   static char *esp_present, *ah_present, *comp_present;
@@ -179,7 +181,7 @@ policy_callback (char *name)
   static char *remote_id_type, remote_id_addr_upper[64];
   static char remote_id_addr_lower[64], *remote_id_proto, remote_id_port[32];
   static char remote_filter_port[32], local_filter_port[32];
-  static char *remote_filter_proto, *local_filter_proto;
+  static char *remote_filter_proto, *local_filter_proto, *pfs;
 
   /* Allocated.  */
   static char *remote_filter = 0, *local_filter = 0, *remote_id = 0;
@@ -190,7 +192,7 @@ policy_callback (char *name)
   if (strcmp (name, KEYNOTE_CALLBACK_CLEANUP) == 0
       || strcmp (name, KEYNOTE_CALLBACK_INITIALIZE) == 0)
     {
-      esp_present = ah_present = comp_present = "no";
+      esp_present = ah_present = comp_present = pfs = "no";
       ah_hash_alg = ah_auth_alg = "";
       esp_auth_alg = esp_enc_alg = comp_alg = ah_encapsulation = "";
       esp_encapsulation = comp_encapsulation = remote_filter_type = "";
@@ -252,6 +254,9 @@ policy_callback (char *name)
   if (dirty)
     {
       ie = policy_exchange->data;
+
+      if (ie->pfs)
+	pfs = "yes";
 
       for (proto = TAILQ_FIRST (&policy_sa->protos); proto;
 	   proto = TAILQ_NEXT (proto, link))
@@ -1092,11 +1097,29 @@ policy_callback (char *name)
       printf ("remote_id_proto == %s\n", remote_id_proto);
       printf ("remote_ike_address == %s\n", remote_ike_address);
       printf ("local_ike_address == %s\n", local_ike_address);
+      printf ("pfs == %s\n", pfs);
 #endif /* 0 */
 
       /* Unset dirty now.  */
       dirty = 0;
     }
+
+  if (strcmp (name, "GMTTimeOfDay") == 0)
+    {
+	tt = time((time_t) NULL);
+	strftime (mytimeofday, 14, "%G%m%d%H%M%S", gmtime(&tt));
+	return mytimeofday;
+    }
+
+  if (strcmp (name, "LocalTimeOfDay") == 0)
+    {
+	tt = time((time_t) NULL);
+	strftime (mytimeofday, 14, "%G%m%d%H%M%S", localtime(&tt));
+	return mytimeofday;
+    }
+
+  if (strcmp (name, "pfs") == 0)
+    return pfs;
 
   if (strcmp (name, "app_domain") == 0)
     return "IPsec policy";
