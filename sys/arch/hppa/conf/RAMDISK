@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.38 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.39 2004/09/30 19:04:33 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -226,13 +226,15 @@ scsibus* at siop?
 #fpa*	at pci?			# DEC DEFPA FDDI
 dc*	at pci?			# 21143, "tulip" clone ethernet
 #dc*	at cardbus?
+#rl*	at pci?			# RealTek 81[23]9 ethernet
+#rl*	at cardbus?
 #ep*	at pci?			# 3c59x
 #ep*	at cardbus?
 #xl*	at pci?			# 3C9xx ethernet
 #xl*	at cardbus?
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 #fxp*	at cardbus?
-#ne*	at pci?			# NE2000-compatible Ethernet
+ne*	at pci?			# NE2000-compatible Ethernet
 ne*	at pcmcia?
 #an*	at pci?			# Cisco/Aironet 802.11DS
 an*	at pcmcia?
