@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.108 2004/02/17 08:48:29 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.109 2004/02/27 10:42:00 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -304,7 +304,8 @@ interface statistics are also shown.
 .Fl i
 can be used to select an interface or a group of interfaces.
 .It Fl s Ar all
-Show all of the above.
+Show all of the above, except for the lists of interfaces and operating
+system fingerprints.
 .El
 .It Fl T Ar command Op Ar address ...
 Specify the

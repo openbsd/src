@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.209 2004/02/26 15:43:51 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.210 2004/02/27 10:42:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1685,7 +1685,6 @@ main(int argc, char *argv[])
 			pfctl_show_limits(dev, opts);
 			pfctl_show_tables(anchorname, rulesetname, opts);
 			pfctl_show_fingerprints(opts);
-			pfctl_show_ifaces(ifaceopt, opts);
 			break;
 		case 'T':
 			pfctl_show_tables(anchorname, rulesetname, opts);

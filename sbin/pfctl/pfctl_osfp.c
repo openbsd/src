@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.7 2004/02/10 22:26:56 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.8 2004/02/27 10:42:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -310,13 +310,15 @@ void
 pfctl_show_fingerprints(int opts)
 {
 	if (LIST_FIRST(&classes) != NULL) {
-		if (opts & PF_OPT_SHOWALL)
+		if (opts & PF_OPT_SHOWALL) {
 			pfctl_print_title("OS FINGERPRINTS:");
-
-		printf("Class\tVersion\tSubtype(subversion)\n");
-		printf("-----\t-------\t-------------------\n");
-		sort_name_list(opts, &classes);
-		print_name_list(opts, &classes, "");
+			printf("%u fingerprints loaded\n", fingerprint_count);
+		} else {
+			printf("Class\tVersion\tSubtype(subversion)\n");
+			printf("-----\t-------\t-------------------\n");
+			sort_name_list(opts, &classes);
+			print_name_list(opts, &classes, "");
+		}
 	}
 }
 
