@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.4 1999/03/31 20:30:38 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.4 1999/03/31 20:24:25 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.5 1999/03/31 23:48:19 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.5 1999/03/31 23:34:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -60,9 +60,15 @@
 #define ROUNDUP(a) \
   ((a) > 0 ? (1 + (((a) - 1) | (sizeof (long) - 1))) : sizeof (long))
 
+/*
+ * PF_KEY v2 always work with 64-bit entities and aligns on 64-bit boundaries.
+ */
 #define PF_KEY_V2_CHUNK 8
 #define PF_KEY_V2_ROUND(x)						\
   (((x) + PF_KEY_V2_CHUNK - 1) & ~(PF_KEY_V2_CHUNK - 1))
+
+/* How often should we check that connections we require to be up, are up?  */
+#define PF_KEY_V2_CHECK_FREQ 60
 
 struct pf_key_v2_node {
   TAILQ_ENTRY (pf_key_v2_node) link;
@@ -1282,9 +1288,22 @@ pf_key_v2_stayalive (void *vconn)
 
 /* Establish the connection in VCONN and set the stayalive flag for it.  */
 void
-pf_key_v2_startup (void *vconn)
+pf_key_v2_checker (void *vconn)
 {
-  exchange_establish ((char *)vconn, pf_key_v2_stayalive, vconn);
+  struct timeval now;
+  char *conn = vconn;
+
+  gettimeofday (&now, 0);
+  now.tv_sec += PF_KEY_V2_CHECK_FREQ;
+  if (!timer_add_event ("pf_key_v2_checker", pf_key_v2_checker, conn, &now))
+    log_print ("pf_key_v2_checker: could not add timer event");
+  if (!sa_lookup_by_name (conn, 2))
+    {
+      log_debug (LOG_SYSDEP, 70, "pf_key_v2_checker: SA for %s missing", conn);
+      exchange_establish (conn, pf_key_v2_stayalive, vconn);
+    }
+  else
+    log_debug (LOG_SYSDEP, 70, "pf_key_v2_checker: SA for %s exists", conn);
 }
 
 /*
@@ -1303,7 +1322,7 @@ pf_key_v2_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
    * the connection as soon as possible.
    */
   gettimeofday (&now, 0);
-  if (!timer_add_event ("pf_key_v2_startup", pf_key_v2_startup, conn, &now))
+  if (!timer_add_event ("pf_key_v2_checker", pf_key_v2_checker, conn, &now))
     log_print ("pf_key_v2_route: could not add timer event");
   return 0;
 }
