@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.13 1998/04/07 20:01:06 art Exp $	*/
+/*	$OpenBSD: commands.c,v 1.14 1998/05/15 01:26:09 art Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1680,6 +1680,8 @@ env_init()
 		}
 
 		asprintf (&cp, "%s%s", hbuf, cp2);
+		if (cp == NULL)
+			err(1, "asprintf");
 
 		free(ep->value);
 		ep->value = (unsigned char *)cp;
@@ -1710,7 +1712,8 @@ env_define(var, value)
 		if (ep->value)
 			free(ep->value);
 	} else {
-		ep = (struct env_lst *)malloc(sizeof(struct env_lst));
+		if ((ep = malloc(sizeof(struct env_lst))) == NULL)
+			err(1, "malloc");
 		ep->next = envlisthead.next;
 		envlisthead.next = ep;
 		ep->prev = &envlisthead;
@@ -1719,8 +1722,10 @@ env_define(var, value)
 	}
 	ep->welldefined = opt_welldefined((char *)var);
 	ep->export = 1;
-	ep->var = (unsigned char *)strdup((char *)var);
-	ep->value = (unsigned char *)strdup((char *)value);
+	if ((ep->var = strdup((char *)var)) == NULL)
+		err(1, "strdup");
+	if ((ep->value = strdup((char *)value)) == NULL)
+		err(1, "strdup");
 	return(ep);
 }
 
@@ -2303,7 +2308,8 @@ tn(argc, argv)
 	    --argc; ++argv;
 	    if (argc == 0)
 		goto usage;
-	    user = strdup(*argv++);
+	    if ((user = strdup(*argv++)) == NULL)
+		err(1, "strdup");
 	    --argc;
 	    continue;
 	}
