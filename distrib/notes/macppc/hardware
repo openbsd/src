@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.37 2004/10/05 07:45:13 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.38 2004/10/12 07:05:21 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -109,6 +109,11 @@ Supported devices {:-include-:}:
 			(PWLA8492MF)
 			Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
 			Intel PRO/1000MT Quad PCI-X Adapter (PWLA8494MT)
+		Realtek 8169/8169S/8110S based PCI adapters, including:
+			Buffalo LGY-PCI-GT (8169S)
+			Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S) 
+			PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
+			Xterasys XN-152 10/100/1000 NIC (8169)
 		3Com 3c9xx EtherLink XL adapters (xl), including:
 			3Com 3c900/3c900B PCI adapters
 			3Com 3c905/3c905B/3c905C PCI adapters
