@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.5 2004/04/02 04:39:50 deraadt Exp $ */
+/* $OpenBSD: ega.c,v 1.6 2004/12/26 00:01:16 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -29,10 +29,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -49,7 +49,7 @@
 #include <dev/wscons/wsdisplayvar.h>
 
 static struct egafont {
-	char name[16];
+	char name[WSFONT_NAME_SIZE];
 	int height;
 	int encoding;
 	int slot;
@@ -84,7 +84,7 @@ struct ega_config {
 	void (*switchcb)(void *, int, int);
 	void *switchcbarg;
 
-	struct callout switch_callout;
+	struct timeout switch_timeout;
 };
 
 struct ega_softc {
@@ -97,7 +97,7 @@ static int egaconsole, ega_console_attached;
 static struct egascreen ega_console_screen;
 static struct ega_config ega_console_dc;
 
-int	ega_match(struct device *, struct cfdata *, void *);
+int	ega_match(struct device *, void *, void *);
 void	ega_attach(struct device *, struct device *, void *);
 
 static int ega_is_console(bus_space_tag_t);
@@ -116,6 +116,10 @@ void ega_copyrows(void *, int, int, int);
 
 struct cfattach ega_ca = {
 	sizeof(struct ega_softc), ega_match, ega_attach,
+};
+
+struct cfdriver ega_cd = {
+	NULL, "ega", DV_DULL,
 };
 
 const struct wsdisplay_emulops ega_emulops = {
@@ -432,7 +436,6 @@ ega_init(vc, iot, memt, mono)
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
 	vc->currenttype = vh->vh_mono ? &ega_stdscreen_mono : &ega_stdscreen;
-	callout_init(&vc->switch_callout);
 
 	vc->vc_fonts[0] = &ega_builtinfont;
 	for (i = 1; i < 4; i++)
@@ -444,7 +447,7 @@ ega_init(vc, iot, memt, mono)
 int
 ega_match(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
+	void *match;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
@@ -636,13 +639,24 @@ ega_free_screen(v, cookie)
 	struct ega_config *vc = vs->cfg;
 
 	LIST_REMOVE(vs, next);
-	if (vs != &ega_console_screen)
+	if (vs != &ega_console_screen) {
+		/*
+		 * deallocating the one but last screen
+		 * removes backing store for the last one
+		 */
+		if (vc->nscreens == 1)
+			free(vc->screens.lh_first->pcs.mem, M_DEVBUF);
+
+		/* Last screen has no backing store */
+		if (vc->nscreens != 0)
+			free(vs->pcs.mem, M_DEVBUF);
+
 		free(vs, M_DEVBUF);
-	else
+	} else
 		panic("ega_free_screen: console");
 
 	if (vc->active == vs)
-		vc->active = 0;
+		vc->active = NULL;
 }
 
 static void
@@ -682,8 +696,9 @@ ega_show_screen(v, cookie, waitok, cb, cbarg)
 	vc->switchcb = cb;
 	vc->switchcbarg = cbarg;
 	if (cb) {
-		callout_reset(&vc->switch_callout, 0,
-		    (void(*)(void *))ega_doswitch);
+		timeout_set(&vc->switch_timeout,
+		    (void(*)(void *))ega_doswitch, vc);
+		timeout_add(&vc->switch_timeout, 0);
 		return (EAGAIN);
 	}
 
@@ -774,9 +789,12 @@ ega_load_font(v, cookie, data)
 	struct egafont *f;
 
 	if (scr) {
-		name2 = strchr(data->name, ',');
-		if (name2)
-			*name2++ = '\0';
+		if ((name2 = data->name) != NULL) {
+			while (*name2 && *name2 != ',')
+				name2++;
+			if (name2)
+				*name2++ = '\0';
+		}
 		res = ega_selectfont(vc, scr, data->name, name2);
 		if (!res)
 			ega_setfont(vc, scr);
@@ -794,14 +812,22 @@ ega_load_font(v, cookie, data)
 	}
 #endif
 
-	for (slot = 0; slot < 4; slot++)
-		if (!vc->vc_fonts[slot])
-			break;
-	if (slot == 4)
+	if (data->index < 0) {
+		for (slot = 0; slot < 4; slot++)
+			if (!vc->vc_fonts[slot])
+				break;
+	} else
+		slot = data->index;
+
+	if (slot >= 4)
 		return (ENOSPC);
 
+	if (vc->vc_fonts[slot] != NULL)
+		return (EEXIST);
 	f = malloc(sizeof(struct egafont), M_DEVBUF, M_WAITOK);
-	strncpy(f->name, data->name, sizeof(f->name));
+	if (f == NULL)
+		return (ENOMEM);
+	strlcpy(f->name, data->name, sizeof(f->name));
 	f->height = data->fontheight;
 	f->encoding = data->encoding;
 #ifdef notyet
@@ -815,6 +841,8 @@ ega_load_font(v, cookie, data)
 	vga_loadchars(&vc->hdl, 2 * slot, 0, 256, f->height, data->data);
 	f->slot = slot;
 	vc->vc_fonts[slot] = f;
+	data->cookie = f;
+	data->index = slot;
 
 	return (0);
 }
@@ -883,7 +911,7 @@ ega_copyrows(id, srcrow, dstrow, nrows)
 			    <= scr->maxdispoffset) {
 				scr->pcs.dispoffset += srcrow * ncols * 2;
 			} else {
-				bus_space_copy_region_2(memt, memh,
+				bus_space_copy_2(memt, memh,
 					scr->pcs.dispoffset + srcoff * 2,
 					memh, scr->mindispoffset,
 					nrows * ncols);
@@ -899,7 +927,7 @@ ega_copyrows(id, srcrow, dstrow, nrows)
 				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
 #endif
 		} else {
-			bus_space_copy_region_2(memt, memh,
+			bus_space_copy_2(memt, memh,
 					scr->pcs.dispoffset + srcoff * 2,
 					memh, scr->pcs.dispoffset + dstoff * 2,
 					nrows * ncols);
