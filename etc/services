@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.19 1999/01/08 17:06:23 art Exp $
+#	$OpenBSD: services,v 1.20 1999/08/08 21:35:47 d Exp $
 #
 # Network services, Internet style
 #
@@ -222,6 +222,7 @@ radacct		1646/udp		# radius accounting
 webster		2627/tcp		# Network dictionary
 webster		2627/udp
 icb		7326/tcp		# Internet Citizen's Band
+hunt		26740/udp		# hunt(6)
 #
 # Appletalk
 #
