@@ -1,7 +1,7 @@
-/*	$OpenBSD: pcb.h,v 1.5 1999/11/25 18:28:06 mickey Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.6 2000/01/12 07:24:35 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1999-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,7 @@
 #include <machine/reg.h>
 
 struct pcb {
-	u_int64_t pcb_fpregs[HPPA_NFPREGS];	/* not in the trapframe */
-	paddr_t pcb_upaddrs[UPAGES];	/* cached PAs for the U-area */
+	u_int64_t pcb_fpregs[HPPA_NFPREGS+1];	/* not in the trapframe */
 	u_int pcb_onfault;		/* SW copy fault handler */
 	pa_space_t pcb_space;		/* copy pmap_space, for asm's sake */
 	vaddr_t pcb_uva;		/* KVA for U-area */
