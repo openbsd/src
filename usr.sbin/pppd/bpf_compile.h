@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_compile.h,v 1.1 1996/03/25 15:55:31 niklas Exp $	*/
+/*	$OpenBSD: bpf_compile.h,v 1.2 1997/06/27 02:16:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -52,8 +52,8 @@ char	*bpf_geterr __P((void));
 unsigned int bpf_filter __P((struct bpf_insn *, unsigned char *,
 			     unsigned int, unsigned int));
 
-unsigned long	**pcap_nametoaddr __P((const char *));
-unsigned long	pcap_nametonetaddr __P((const char *));
+u_int32_t	**pcap_nametoaddr __P((const char *));
+u_int32_t	pcap_nametonetaddr __P((const char *));
 
 int	pcap_nametoport __P((const char *, int *, int *));
 int	pcap_nametoproto __P((const char *));
@@ -67,6 +67,6 @@ int	pcap_nametopppproto __P((const char *));
  */
 #define PROTO_UNDEF		-1
 
-unsigned long	__pcap_atoin __P((const char *));
+u_int32_t	__pcap_atoin __P((const char *));
 
 #endif /* _BPF_COMPILE_H */

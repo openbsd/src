@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.3 1996/08/22 22:52:52 niklas Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.4 1997/06/27 02:16:23 deraadt Exp $	*/
 /*	From NetBSD: nametoaddr.c,v 1.3 1995/04/29 05:42:23 cgd Exp */
 
 /*
@@ -30,7 +30,7 @@
 from: static char rcsid[] =
     "@(#) Header: nametoaddr.c,v 1.21 94/06/20 19:07:54 leres Exp (LBL)";
 #else
-static char rcsid[] = "$OpenBSD: nametoaddr.c,v 1.3 1996/08/22 22:52:52 niklas Exp $";
+static char rcsid[] = "$OpenBSD: nametoaddr.c,v 1.4 1997/06/27 02:16:23 deraadt Exp $";
 #endif
 #endif
 
@@ -65,24 +65,24 @@ static char rcsid[] = "$OpenBSD: nametoaddr.c,v 1.3 1996/08/22 22:52:52 niklas E
  *  Convert host name to internet address.
  *  Return 0 upon failure.
  */
-u_long **
+u_int32_t **
 pcap_nametoaddr(const char *name)
 {
 #ifndef h_addr
-	static u_long *hlist[2];
+	static u_int32_t *hlist[2];
 #endif
-	u_long **p;
+	u_int32_t **p;
 	struct hostent *hp;
 
 	if ((hp = gethostbyname(name)) != NULL) {
 #ifndef h_addr
-		hlist[0] = (u_long *)hp->h_addr;
+		hlist[0] = (u_int32_t *)hp->h_addr;
 		NTOHL(hp->h_addr);
 		return hlist;
 #else
-		for (p = (u_long **)hp->h_addr_list; *p; ++p)
+		for (p = (u_int32_t **)hp->h_addr_list; *p; ++p)
 			NTOHL(**p);
-		return (u_long **)hp->h_addr_list;
+		return (u_int32_t **)hp->h_addr_list;
 #endif
 	}
 	else
@@ -93,7 +93,7 @@ pcap_nametoaddr(const char *name)
  *  Convert net name to internet address.
  *  Return 0 upon failure.
  */
-u_long
+u_int32_t
 pcap_nametonetaddr(const char *name)
 {
 	struct netent *np;
@@ -170,10 +170,10 @@ pcap_nametoproto(const char *str)
 		return PROTO_UNDEF;
 }
 
-u_long
+u_int32_t
 __pcap_atoin(const char *s)
 {
-	u_long addr = 0;
+	u_int32_t addr = 0;
 	u_int n;
 
 	while (1) {

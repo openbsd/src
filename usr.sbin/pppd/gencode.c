@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.1 1996/03/25 15:55:40 niklas Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.2 1997/06/27 02:16:22 deraadt Exp $	*/
 /*	From NetBSD: gencode.c,v 1.2 1995/03/06 11:38:21 mycroft Exp */
 
 /*
@@ -26,7 +26,7 @@
 from: static char rcsid[] =
     "@(#) Header: gencode.c,v 1.55 94/06/20 19:07:53 leres Exp (LBL)";
 #else
-static char rcsid[] = "$OpenBSD: gencode.c,v 1.1 1996/03/25 15:55:40 niklas Exp $";
+static char rcsid[] = "$OpenBSD: gencode.c,v 1.2 1997/06/27 02:16:22 deraadt Exp $";
 #endif
 #endif
 
@@ -137,8 +137,8 @@ struct block *gen_portop(int, int, int);
 static struct block *gen_port(int, int, int);
 static int lookup_proto(char *, int);
 static struct block *gen_proto(int, int, int);
-static u_long net_mask(u_long *);
-static u_long net_mask(u_long *);
+static u_int32_t net_mask(u_int32_t *);
+static u_int32_t net_mask(u_int32_t *);
 static struct slist *xfer_to_x(struct arth *);
 static struct slist *xfer_to_a(struct arth *);
 static struct block *gen_len(int, int);
@@ -773,11 +773,11 @@ gen_proto(v, proto, dir)
 /*
  * Left justify 'addr' and return its resulting network mask.
  */
-static unsigned long
+static u_int32_t
 net_mask(addr)
-	unsigned long *addr;
+	u_int32_t *addr;
 {
-	register unsigned long m = 0xffffffff;
+	register u_int32_t m = 0xffffffff;
 
 	if (*addr)
 		while ((*addr & 0xff000000) == 0)
@@ -793,7 +793,7 @@ gen_scode(name, q)
 {
 	int proto = q.proto;
 	int dir = q.dir;
-	unsigned long mask, addr, **alist;
+	u_int32_t mask, addr, **alist;
 	struct block *b, *tmp;
 	int port, real_proto;
 
@@ -863,10 +863,10 @@ gen_scode(name, q)
 
 struct block *
 gen_ncode(v, q)
-	unsigned long v;
+	u_int32_t v;
 	struct qual q;
 {
-	unsigned long mask;
+	u_int32_t mask;
 	int proto = q.proto;
 	int dir = q.dir;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.1 1996/03/25 15:55:41 niklas Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.2 1997/06/27 02:16:22 deraadt Exp $	*/
 /*	$NetBSD: gencode.h,v 1.1 1996/03/15 03:09:12 paulus Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ void gen_not __P((struct block *));
 
 struct block *gen_scode __P((char *, struct qual));
 struct block *gen_ecode __P((unsigned char *, struct qual));
-struct block *gen_ncode __P((unsigned long, struct qual));
+struct block *gen_ncode __P((u_int32_t, struct qual));
 struct block *gen_proto_abbrev __P((int));
 struct block *gen_relation __P((int, struct arth *, struct arth *, int));
 struct block *gen_less __P((int));
