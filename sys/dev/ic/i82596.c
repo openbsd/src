@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.7 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.8 2002/03/08 08:49:42 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -257,7 +257,7 @@ i82596_probe(sc)
 	}
 
 	if (sc->port) {
-		(sc->ie_bus_write24)(sc, sc->sc_maddr + sc->scp, 0);
+		(sc->ie_bus_write24)(sc, sc->scp, 0);
 		(sc->ie_bus_write24)(sc, IE_SCP_TEST(sc->scp), -1);
 		FLUSH(sc->sc_maddr, sc->sc_msize);
 		(sc->port)(sc, IE_PORT_TEST);
@@ -568,7 +568,8 @@ loop:
 	 * Interrupt ACK was posted asynchronously; wait for
 	 * completion here before reading SCB status again.
 	 */
-	i82596_cmd_wait(sc);
+	if (i82596_cmd_wait(sc))
+		goto out;
 
 	PURGE(sc->bh + off, 2);
 	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_READ);
@@ -782,7 +783,7 @@ i82596_tint(sc, scbstatus)
 			status, IE_XS_BITS);
 #endif
 
-	if ((status & IE_STAT_COMPL) == 0 || (status & IE_STAT_BUSY)) {
+	if ((status & (IE_STAT_COMPL|IE_STAT_BUSY)) == IE_STAT_BUSY) {
 		printf("%s: i82596_tint: command still busy;"
 		       "status=%b; tail=%d\n", sc->sc_dev.dv_xname,
 		       status, IE_XS_BITS, sc->xctail);
