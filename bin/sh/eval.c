@@ -1,4 +1,5 @@
-/*	$NetBSD: eval.c,v 1.27 1995/09/11 17:05:41 christos Exp $	*/
+/*	$OpenBSD: eval.c,v 1.2 1996/03/08 22:00:58 niklas Exp $	*/
+/*	$NetBSD: eval.c,v 1.29 1996/03/06 14:49:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.27 1995/09/11 17:05:41 christos Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.29 1996/03/06 14:49:29 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,17 +231,15 @@ evaltree(n, flags)
 		evalsubshell(n, flags);
 		break;
 	case NIF: {
-		int status; 
-
 		evaltree(n->nif.test, EV_TESTED);
-		status = exitstatus;
-		exitstatus = 0;
 		if (evalskip)
 			goto out;
-		if (status == 0)
+		if (exitstatus == 0)
 			evaltree(n->nif.ifpart, flags);
 		else if (n->nif.elsepart)
 			evaltree(n->nif.elsepart, flags);
+		else
+			exitstatus = 0;
 		break;
 	}
 	case NWHILE:
