@@ -1,4 +1,4 @@
-#	$OpenBSD: agent.sh,v 1.4 2002/02/16 01:09:47 markus Exp $
+#	$OpenBSD: agent.sh,v 1.5 2002/02/17 22:22:45 markus Exp $
 #	Placed in the Public Domain.
 
 tid="simple agent test"
@@ -48,6 +48,19 @@ else
 		ssh -$p -F $OBJ/ssh_proxy somehost exit 5$p
 		if [ $? -ne 5$p ]; then
 			fail "ssh connect with protocol $p failed (exit code $?)"
+		fi
+	done
+
+	trace "agent forwarding"
+	for p in 1 2; do
+		ssh -A -$p -F $OBJ/ssh_proxy somehost ssh-add -l > /dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			fail "ssh-add -l via agent fwd proto $p failed (exit code $?)"
+		fi
+		ssh -A -$p -F $OBJ/ssh_proxy somehost \
+			"ssh -$p -F $OBJ/ssh_proxy somehost exit 5$p"
+		if [ $? -ne 5$p ]; then
+			fail "agent fwd proto $p failed (exit code $?)"
 		fi
 	done
 
