@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.102 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.103 2004/08/10 15:59:10 ho Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -47,6 +47,9 @@
 #include "crypto.h"
 #include "dh.h"
 #include "doi.h"
+#if defined (USE_DPD)
+#include "dpd.h"
+#endif
 #include "exchange.h"
 #include "hash.h"
 #include "ike_aggressive.h"
@@ -928,11 +931,13 @@ ipsec_initiator(struct message *msg)
 
 	/* Check that the SA is coherent with the IKE rules.  */
 	if (exchange->type != ISAKMP_EXCH_TRANSACTION
-	    && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
-		&& exchange->type != ISAKMP_EXCH_AGGRESSIVE
-		&& exchange->type != ISAKMP_EXCH_INFO)
-	    || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE
-		&& exchange->type != ISAKMP_EXCH_INFO))) {
+	    && ((exchange->phase == 1 &&
+		exchange->type != ISAKMP_EXCH_ID_PROT &&
+		exchange->type != ISAKMP_EXCH_AGGRESSIVE &&
+		exchange->type != ISAKMP_EXCH_INFO)
+	    || (exchange->phase == 2 &&	
+		exchange->type != IKE_EXCH_QUICK_MODE &&
+		exchange->type != ISAKMP_EXCH_INFO))) {
 		log_print("ipsec_initiator: unsupported exchange type %d "
 		    "in phase %d", exchange->type, exchange->phase);
 		return -1;
@@ -1023,11 +1028,13 @@ ipsec_responder(struct message *msg)
 
 	/* Check that a new exchange is coherent with the IKE rules.  */
 	if (exchange->step == 0 && exchange->type != ISAKMP_EXCH_TRANSACTION
-	    && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
-		&& exchange->type != ISAKMP_EXCH_AGGRESSIVE
-		&& exchange->type != ISAKMP_EXCH_INFO)
-	    || (exchange->phase == 2 && exchange->type ==
-		ISAKMP_EXCH_ID_PROT))) {
+	    && ((exchange->phase == 1 &&
+		exchange->type != ISAKMP_EXCH_ID_PROT &&
+		exchange->type != ISAKMP_EXCH_AGGRESSIVE &&
+		exchange->type != ISAKMP_EXCH_INFO)
+	    || (exchange->phase == 2 &&
+		exchange->type != IKE_EXCH_QUICK_MODE &&
+		exchange->type != ISAKMP_EXCH_INFO))) {
 		message_drop(msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE,
 		    0, 1, 0);
 		return -1;
@@ -1038,19 +1045,16 @@ ipsec_responder(struct message *msg)
 	case ISAKMP_EXCH_ID_PROT:
 		script = ike_main_mode_responder;
 		break;
-
 #ifdef USE_AGGRESSIVE
 	case ISAKMP_EXCH_AGGRESSIVE:
 		script = ike_aggressive_responder;
 		break;
 #endif
-
 #ifdef USE_ISAKMP_CFG
 	case ISAKMP_EXCH_TRANSACTION:
 		script = isakmp_cfg_responder;
 		break;
 #endif
-
 	case ISAKMP_EXCH_INFO:
 		for (p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY); p;
 		    p = TAILQ_NEXT(p, link)) {
@@ -1064,6 +1068,13 @@ ipsec_responder(struct message *msg)
 				/* Handled by leftover logic. */
 				break;
 
+#if defined (USE_DPD)
+			case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE:
+			case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE_ACK:
+				dpd_handle_notify(msg, p);
+				break;
+#endif
+
 			default:
 				p->flags |= PL_MARK;
 				break;
@@ -1074,7 +1085,6 @@ ipsec_responder(struct message *msg)
 		 * If any DELETEs are in here, let the logic of leftover
 		 * payloads deal with them.
 	         */
-
 		return 0;
 
 	case IKE_EXCH_QUICK_MODE:

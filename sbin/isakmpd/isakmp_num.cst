@@ -1,4 +1,4 @@
-#	$OpenBSD: isakmp_num.cst,v 1.9 2004/06/20 15:20:07 ho Exp $
+#	$OpenBSD: isakmp_num.cst,v 1.10 2004/08/10 15:59:10 ho Exp $
 #	$EOM: isakmp_num.cst,v 1.3 2000/05/17 03:09:50 angelos Exp $
 
 #
@@ -78,8 +78,7 @@ ISAKMP_EXCH
   INFO				5
 # XXX the following are not quite legitimate according to the IETF process
   TRANSACTION			6
-  DPD				7
-  FUTURE_MIN			8
+  FUTURE_MIN			7
   FUTURE_MAX			31
   DOI_MIN			32
   DOI_MAX			255

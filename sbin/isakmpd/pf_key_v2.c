@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.147 2004/08/08 19:11:06 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.148 2004/08/10 15:59:10 ho Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -680,7 +680,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 		break;
 	}
 	if (pf_key_v2_msg_add(getspi, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -772,6 +772,203 @@ cleanup:
 		free(addr);
 	if (getspi)
 		pf_key_v2_msg_free(getspi);
+	if (ret)
+		pf_key_v2_msg_free(ret);
+	return 0;
+}
+
+/* Fetch SA information from the kernel. XXX OpenBSD only?  */
+struct sa_kinfo *
+pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
+    struct sockaddr *dst)
+{
+	struct sadb_msg msg;
+	struct sadb_sa *ssa;
+	struct sadb_address *addr = 0;
+	struct sockaddr *sa;
+	struct sadb_lifetime *life;
+	struct pf_key_v2_msg *gettdb = 0, *ret = 0;
+	struct pf_key_v2_node *ext;
+	static struct sa_kinfo ksa;
+#if defined (SADB_X_EXT_UDPENCAP)
+	struct sadb_x_udpencap *udpencap;
+#endif
+	int len, err;
+
+	if (spi_sz != sizeof (ssa->sadb_sa_spi))
+		return 0;
+
+	msg.sadb_msg_type = SADB_GET;
+	switch (proto) {
+	case IPSEC_PROTO_IPSEC_ESP:
+		msg.sadb_msg_satype = SADB_SATYPE_ESP;
+		break;
+	case IPSEC_PROTO_IPSEC_AH:
+		msg.sadb_msg_satype = SADB_SATYPE_AH;
+		break;
+#ifdef SADB_X_SATYPE_IPCOMP
+	case IPSEC_PROTO_IPCOMP:
+		msg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+		break;
+#endif
+	default:
+		log_print("pf_key_v2_get_kernel_sa: invalid proto %d", proto);
+		goto cleanup;
+	}
+
+	gettdb = pf_key_v2_msg_new(&msg, 0);
+	if (!gettdb)
+		goto cleanup;
+
+	/* SPI */
+	ssa = (struct sadb_sa *)calloc(1, sizeof *ssa);
+	if (!ssa) {
+		log_print("pf_key_v2_get_kernel_sa: calloc(1, %lu) failed",
+		    (unsigned long)sizeof *ssa);
+		goto cleanup;
+	}
+	
+	ssa->sadb_sa_exttype = SADB_EXT_SA;
+	ssa->sadb_sa_len = sizeof *ssa / PF_KEY_V2_CHUNK;
+	memcpy(&ssa->sadb_sa_spi, spi, sizeof ssa->sadb_sa_spi);
+	ssa->sadb_sa_state = SADB_SASTATE_MATURE;
+	if (pf_key_v2_msg_add(gettdb, (struct sadb_ext *)ssa,
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
+		goto cleanup;
+	ssa = 0;
+
+	/* XXX KAME SADB_X_EXT_xyz here? */
+
+	/* Address */
+	len =
+	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(dst));
+	addr = calloc(1, len);
+	if (!addr)
+		goto cleanup;
+	addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+	addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+#ifndef __OpenBSD__
+	addr->sadb_address_proto = 0;
+	addr->sadb_address_prefixlen = 0;
+#endif
+	addr->sadb_address_reserved = 0;
+	memcpy(addr + 1, dst, sysdep_sa_len(dst));
+	switch (((struct sockaddr *) (addr + 1))->sa_family) {
+	case AF_INET:
+		((struct sockaddr_in *) (addr + 1))->sin_port = 0;
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *) (addr + 1))->sin6_port = 0;
+		break;
+	}
+	if (pf_key_v2_msg_add(gettdb, (struct sadb_ext *)addr,
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
+		goto cleanup;
+	addr = 0;
+
+	ret = pf_key_v2_call(gettdb);
+	pf_key_v2_msg_free(gettdb);
+	gettdb = 0;
+	if (!ret)
+		goto cleanup;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	if (err) {
+		log_print("pf_key_v2_get_kernel_sa: SADB_GET: %s",
+		    strerror(err));
+		goto cleanup;
+	}
+
+	/* Extract the data.  */
+	memset(&ksa, 0, sizeof ksa);
+
+	ext = pf_key_v2_find_ext(ret, SADB_EXT_SA);
+	if (!ext)
+		goto cleanup;
+	
+	ssa = (struct sadb_sa *)ext;
+	ksa.spi = ssa->sadb_sa_spi;
+	ksa.wnd = ssa->sadb_sa_replay;
+	ksa.flags = ssa->sadb_sa_flags;
+
+	ext = pf_key_v2_find_ext(ret, SADB_EXT_LIFETIME_CURRENT);
+	if (ext) {
+		life = (struct sadb_lifetime *)ext->seg;
+		ksa.cur_allocations = life->sadb_lifetime_allocations;
+		ksa.cur_bytes =	life->sadb_lifetime_bytes;
+		ksa.first_use = life->sadb_lifetime_usetime;
+		ksa.established = life->sadb_lifetime_addtime;
+	}
+
+	ext = pf_key_v2_find_ext(ret, SADB_EXT_LIFETIME_SOFT);
+	if (ext) {
+		life = (struct sadb_lifetime *)ext->seg;
+		ksa.soft_allocations = life->sadb_lifetime_allocations;
+		ksa.soft_bytes = life->sadb_lifetime_bytes;
+		ksa.soft_timeout = life->sadb_lifetime_addtime;
+		ksa.soft_first_use = life->sadb_lifetime_usetime;
+	}
+	
+	ext = pf_key_v2_find_ext(ret, SADB_EXT_LIFETIME_HARD);
+	if (ext) {
+		life = (struct sadb_lifetime *)ext->seg;
+		ksa.exp_allocations = life->sadb_lifetime_allocations;
+		ksa.exp_bytes = life->sadb_lifetime_bytes;
+		ksa.exp_timeout = life->sadb_lifetime_addtime;
+		ksa.exp_first_use = life->sadb_lifetime_usetime;
+	}
+
+#if defined (SADB_X_EXT_LIFETIME_LASTUSE)	
+	ext = pf_key_v2_find_ext(ret, SADB_X_EXT_LIFETIME_LASTUSE);
+	if (ext) {
+		life = (struct sadb_lifetime *)ext->seg;
+		ksa.last_used = life->sadb_lifetime_usetime;
+	}
+#endif
+
+	ext = pf_key_v2_find_ext(ret, SADB_EXT_ADDRESS_SRC);
+	if (ext) {
+		sa = (struct sockaddr *)ext->seg;
+		memcpy(&ksa.src, sa,
+		    sa->sa_family == AF_INET ? sizeof(struct sockaddr_in) :
+		    sizeof(struct sockaddr_in6));
+	}
+	
+	ext = pf_key_v2_find_ext(ret, SADB_EXT_ADDRESS_DST);
+	if (ext) {
+		sa = (struct sockaddr *)ext->seg;
+		memcpy(&ksa.dst, sa,
+		    sa->sa_family == AF_INET ? sizeof(struct sockaddr_in) :
+		    sizeof(struct sockaddr_in6));
+	}
+
+	ext = pf_key_v2_find_ext(ret, SADB_EXT_ADDRESS_PROXY);
+	if (ext) {
+		sa = (struct sockaddr *)ext->seg;
+		memcpy(sa, &ksa.proxy,
+		    sa->sa_family == AF_INET ? sizeof(struct sockaddr_in) :
+		    sizeof(struct sockaddr_in6));
+	}
+
+#if defined (SADB_X_EXT_UDPENCAP)
+	ext = pf_key_v2_find_ext(ret, SADB_X_EXT_UDPENCAP);
+	if (ext) {
+		udpencap = (struct sadb_x_udpencap *)ext->seg;
+		ksa.udpencap_port = udpencap->sadb_x_udpencap_port;
+	}
+#endif
+
+	pf_key_v2_msg_free(ret);
+
+	LOG_DBG_BUF((LOG_SYSDEP, 50, "pf_key_v2_get_kernel_sa: spi", spi,
+	    spi_sz));
+
+	return &ksa;
+	
+  cleanup:
+	if (addr)
+		free (addr);
+	if (gettdb)
+		pf_key_v2_msg_free(gettdb);
 	if (ret)
 		pf_key_v2_msg_free(ret);
 	return 0;

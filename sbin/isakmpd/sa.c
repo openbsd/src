@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.85 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.86 2004/08/10 15:59:10 ho Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -799,8 +799,8 @@ sa_release(struct sa *sa)
 		timer_remove_event(sa->nat_t_keepalive);
 #endif
 #if defined (USE_DPD)
-	if (sa->dpd_nextev)
-		timer_remove_event(sa->dpd_nextev);
+	if (sa->dpd_event)
+		timer_remove_event(sa->dpd_event);
 #endif
 	if (sa->transport)
 		transport_release(sa->transport);

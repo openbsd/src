@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.93 2004/07/08 10:37:12 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.94 2004/08/10 15:59:10 ho Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -170,7 +170,11 @@ Thus
 .Nm isakmpd
 only takes care of the SA establishment.
 .It Em Check-interval
-The interval between watchdog checks of connections we want up at all times.
+The interval between watchdog checks of connections we want up at all
+times.
+.It Em DPD-check-interval
+The interval between RFC 3706 (Dead Peer Detection) messages.
+The default value is 0 (zero), which means DPD is disabled.
 .It Em Exchange-max-time
 How many seconds should an exchange maximally take to set up before we
 give up.

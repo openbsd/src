@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.3 2004/08/08 19:11:06 deraadt Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.4 2004/08/10 15:59:10 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -29,14 +29,17 @@
 
 #include "sysdep.h"
 
+#include "conf.h"
 #include "dpd.h"
 #include "exchange.h"
+#include "hash.h"
 #include "ipsec.h"
 #include "isakmp_fld.h"
 #include "log.h"
 #include "message.h"
 #include "sa.h"
 #include "timer.h"
+#include "transport.h"
 #include "util.h"
 
 /* From RFC 3706.  */
@@ -51,30 +54,16 @@ static const char dpd_vendor_id[] = {
 	DPD_MINOR
 };
 
-int16_t script_dpd[] = {
-	ISAKMP_PAYLOAD_NOTIFY,	/* Initiator -> responder.  */
-	ISAKMP_PAYLOAD_HASH,
-	EXCHANGE_SCRIPT_SWITCH,
-	ISAKMP_PAYLOAD_NOTIFY,	/* Responder -> initiator.  */
-	ISAKMP_PAYLOAD_HASH,
-	EXCHANGE_SCRIPT_END
-};
+#define DPD_RETRANS_MAX		5	/* max number of retries.  */
+#define DPD_RETRANS_WAIT	5	/* seconds between retries.  */
 
-static int	dpd_initiator_send_notify(struct message *);
-static int	dpd_initiator_recv_ack(struct message *);
-static int	dpd_responder_recv_notify(struct message *);
-static int	dpd_responder_send_ack(struct message *);
-static void	dpd_event(void *);
+/* DPD Timer State */
+enum dpd_tstate { DPD_TIMER_NORMAL, DPD_TIMER_CHECK };
 
-int (*isakmp_dpd_initiator[])(struct message *) = {
-	dpd_initiator_send_notify,
-	dpd_initiator_recv_ack
-};
-
-int (*isakmp_dpd_responder[])(struct message *) = {
-	dpd_responder_recv_notify,
-	dpd_responder_send_ack
-};
+static void	 dpd_check_event(void *);
+static void	 dpd_event(void *);
+static u_int32_t dpd_timer_interval(u_int32_t);
+static void	 dpd_timer_reset(struct sa *, u_int32_t, enum dpd_tstate);
 
 /* Add the DPD VENDOR ID payload.  */
 int
@@ -127,225 +116,256 @@ dpd_check_vendor_payload(struct message *msg, struct payload *p)
 
 	if (memcmp(dpd_vendor_id, pbuf + ISAKMP_GEN_SZ, vlen) == 0) {
 		/* This peer is DPD capable.  */
-		msg->exchange->flags |= EXCHANGE_FLAG_DPD_CAP_PEER;
-		LOG_DBG((LOG_EXCHANGE, 10, "dpd_check_vendor_payload: "
-		    "DPD capable peer detected"));
+		if (msg->isakmp_sa) {
+			msg->exchange->flags |= EXCHANGE_FLAG_DPD_CAP_PEER;
+			LOG_DBG((LOG_EXCHANGE, 10, "dpd_check_vendor_payload: "
+			    "DPD capable peer detected"));
+			if (dpd_timer_interval(0) != 0) {
+				LOG_DBG((LOG_EXCHANGE, 10,
+				    "dpd_check_vendor_payload: enabling"));
+				msg->isakmp_sa->flags |= SA_FLAG_DPD;
+				dpd_timer_reset(msg->isakmp_sa, 0,
+				    DPD_TIMER_NORMAL);
+			}
+		}
 		p->flags |= PL_MARK;
-		return;
 	}
-
 	return;
 }
 
-static int
-dpd_add_notify(struct message *msg, u_int16_t type, u_int32_t seqno)
+/*
+ * All incoming DPD Notify messages enter here. Message has been validated. 
+ */
+void
+dpd_handle_notify(struct message *msg, struct payload *p)
 {
-	struct sa *isakmp_sa = msg->isakmp_sa;
-	char *buf;
-	u_int32_t buflen;
-
-	if (!isakmp_sa)	{
-		log_print("dpd_add_notify: no isakmp_sa");
-		return -1;
-	}
-
-	buflen = ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN + DPD_SEQNO_SZ;
-	buf = malloc(buflen);
-	if (!buf) {
-		log_error("dpd_add_notify: malloc(%d) failed",
-		    ISAKMP_NOTIFY_SZ + DPD_SEQNO_SZ);
-		return -1;
-	}
-
-	SET_ISAKMP_NOTIFY_DOI(buf, IPSEC_DOI_IPSEC);
-	SET_ISAKMP_NOTIFY_PROTO(buf, ISAKMP_PROTO_ISAKMP);
-	SET_ISAKMP_NOTIFY_SPI_SZ(buf, ISAKMP_HDR_COOKIES_LEN);
-	SET_ISAKMP_NOTIFY_MSG_TYPE(buf, type);
-	memcpy(buf + ISAKMP_NOTIFY_SPI_OFF, isakmp_sa->cookies,
-	    ISAKMP_HDR_COOKIES_LEN);
-
-	memcpy(buf + ISAKMP_NOTIFY_SPI_OFF + ISAKMP_HDR_COOKIES_LEN, &seqno,
-	    sizeof (u_int32_t));
-
-	if (message_add_payload(msg, ISAKMP_PAYLOAD_NOTIFY, buf, buflen, 1)) {
-		free(buf);
-		return -1;
-	}
-
-	return 0;
-}
-
-static int
-dpd_initiator_send_notify(struct message *msg)
-{
-	if (!msg->isakmp_sa) {
-		log_print("dpd_initiator_send_notify: no isakmp_sa");
-		return -1;
-	}
-
-	if (msg->isakmp_sa->dpd_seq == 0) {
-		/* RFC 3706: first seq# should be random, with MSB zero. */
-		getrandom((u_int8_t *)&msg->isakmp_sa->seq,
-		    sizeof msg->isakmp_sa->seq);
-		msg->isakmp_sa->dpd_seq &= 0x7FFF;
-	} else
-		msg->isakmp_sa->dpd_seq++;
-
-	return dpd_add_notify(msg, ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE,
-	    msg->isakmp_sa->dpd_seq);
-}
-
-static int
-dpd_initiator_recv_ack(struct message *msg)
-{
-	struct payload	*p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY);
 	struct sa	*isakmp_sa = msg->isakmp_sa;
-	struct timeval	 tv;
-	u_int32_t	 rseq;
+	u_int16_t	 notify = GET_ISAKMP_NOTIFY_MSG_TYPE(p->p);
+	u_int32_t	 p_seq;
 
-	if (msg->exchange->phase != 2) {
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_EXCHANGE_TYPE, 0, 1,
-		    0);
-		return -1;
-	}
+	/* Extract the sequence number.  */
+	memcpy(&p_seq, p->p + ISAKMP_NOTIFY_SPI_OFF + ISAKMP_HDR_COOKIES_LEN,
+	    sizeof p_seq);
+	p_seq = ntohl(p_seq);
 
-	if (GET_ISAKMP_NOTIFY_MSG_TYPE(p->p)
-	    != ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE_ACK) {
-		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
-		return -1;
-	}
+	LOG_DBG((LOG_MESSAGE, 40, "dpd_handle_notify: got %s seq %u",
+	    constant_name(isakmp_notify_cst, notify), p_seq));
 
-	/* Presumably, we've been through message_validate_notify().  */
+	switch (notify) {
+	case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE:
+		/* The other peer wants to know we're alive.  */
+		if (p_seq <= isakmp_sa->dpd_rseq) {
+			log_print("dpd_handle_notify: bad R_U_THERE seqno "
+			    "%u <= %u", p_seq, isakmp_sa->dpd_rseq);
+			return;
+		}
+		isakmp_sa->dpd_rseq = p_seq;
+		message_send_dpd_notify(isakmp_sa,
+		    ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE_ACK, p_seq);
+		break;
 
-	/* Validate the SPI. Perhaps move to message_validate_notify().  */
-	if (memcmp(p->p + ISAKMP_NOTIFY_SPI_OFF, isakmp_sa->cookies,
-	    ISAKMP_HDR_COOKIES_LEN) != 0) {
-		log_print("dpd_initiator_recv_ack: bad cookies");
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_SPI, 0, 1, 0);
-		return -1;
-	}
-
-	/* Check the seqno.  */
-	memcpy(p->p + ISAKMP_NOTIFY_SPI_OFF + ISAKMP_HDR_COOKIES_LEN, &rseq,
-	    sizeof rseq);
-	rseq = ntohl(rseq);
-
-	if (isakmp_sa->seq != rseq) {
-		log_print("dpd_initiator_recv_ack: bad seqno %u, expected %u",
-		    rseq, isakmp_sa->seq);
-		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
-		return -1;
-	}
-
-	/* Peer is alive. Reset timer.  */
-	gettimeofday(&tv, 0);
-	tv.tv_sec += DPD_DEFAULT_WORRY_METRIC; /* XXX Configurable */
-
-	isakmp_sa->dpd_nextev = timer_add_event("dpd_event", dpd_event,
-	    isakmp_sa, &tv);
-	if (!isakmp_sa->dpd_nextev)
-		log_print("dpd_initiator_recv_ack: timer_add_event "
-		    "failed");
-	else
-		sa_reference(isakmp_sa);
-
-	/* Mark handled.  */
-	p->flags |= PL_MARK;
-
-	return 0;
-}
-
-static int
-dpd_responder_recv_notify(struct message *msg)
-{
-	struct payload	*p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY);
-	struct sa	*isakmp_sa = msg->isakmp_sa;
-	struct timeval	 tv;
-	u_int32_t	 rseq;
-
-	if (msg->exchange->phase != 2) {
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_EXCHANGE_TYPE, 0, 1,
-		    0);
-		return -1;
-	}
-
-	if (GET_ISAKMP_NOTIFY_MSG_TYPE(p->p) !=
-	    ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE)	{
-		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
-		return -1;
-	}
-
-	/* Presumably, we've gone through message_validate_notify().  */
-	/* XXX */
-
-	/* Validate the SPI. Perhaps move to message_validate_notify().  */
-	if (memcmp(p->p + ISAKMP_NOTIFY_SPI_OFF, isakmp_sa->cookies,
-	    ISAKMP_HDR_COOKIES_LEN) != 0) {
-		log_print("dpd_initiator_recv_notify: bad cookies");
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_SPI, 0, 1, 0);
-		return -1;
-	}
-
-	/* Get the seqno.  */
-	memcpy(p->p + ISAKMP_NOTIFY_SPI_OFF + ISAKMP_HDR_COOKIES_LEN, &rseq,
-	    sizeof rseq);
-	rseq = ntohl(rseq);
-
-	/* Check increasing seqno.  */
-	if (rseq <= isakmp_sa->dpd_rseq) {
-		log_print("dpd_initiator_recv_notify: bad seqno (%u <= %u)",
-		    rseq, isakmp_sa->dpd_rseq);
-		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
-		return -1;
-	}
-	isakmp_sa->dpd_rseq = rseq;
-
-	/*
-	 * Ok, now we know the peer is alive, in case we're wondering.
-	 * If so, reset timers, etc... here.
-	 */
-	if (isakmp_sa->dpd_nextev) {
-		timer_remove_event(isakmp_sa->dpd_nextev);
-		sa_release(isakmp_sa);
-
-		gettimeofday(&tv, 0);
-		tv.tv_sec += DPD_DEFAULT_WORRY_METRIC; /* XXX Configurable */
-
-		isakmp_sa->dpd_nextev = timer_add_event("dpd_event", dpd_event,
-		    isakmp_sa, &tv);
-		if (!isakmp_sa->dpd_nextev)
-			log_print("dpd_responder_recv_notify: timer_add_event "
-			    "failed");
-		else
-			sa_reference(isakmp_sa);
+	case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE_ACK:
+		/* This should be a response to a R_U_THERE we've sent.  */
+		if (isakmp_sa->dpd_seq != p_seq) {
+			log_print("dpd_handle_notify: got bad ACK seqno %u, "
+			    "expected %u", p_seq, isakmp_sa->dpd_seq);
+			/* XXX Give up? Retry? */
+			return;
+		}
+		break;
+	default:
 	}
 
 	/* Mark handled.  */
 	p->flags |= PL_MARK;
 
-	return 0;
+	/* The other peer is alive, so we can safely wait a while longer.  */
+	if (isakmp_sa->flags & SA_FLAG_DPD)
+		dpd_timer_reset(isakmp_sa, 0, DPD_TIMER_NORMAL);
 }
 
-static int
-dpd_responder_send_ack(struct message *msg)
+/* Calculate the time until next DPD exchange.  */
+static u_int32_t
+dpd_timer_interval(u_int32_t offset)
 {
-	if (!msg->isakmp_sa)
-		return -1;
+	int32_t v = 0;
 
-	return dpd_add_notify(msg, ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE_ACK,
-	    msg->isakmp_sa->dpd_rseq);
+#ifdef notyet
+	v = ...; /* XXX Per-peer specified DPD intervals?  */
+#endif
+	if (!v)
+		v = conf_get_num("General", "DPD-check-interval", 0);
+	if (v < 1)
+		return 0;	/* DPD-Check-Interval < 1 means disable DPD */
+
+	v -= offset;
+	return v < 1 ? 1 : v;
 }
 
 static void
+dpd_timer_reset(struct sa *sa, u_int32_t time_passed, enum dpd_tstate mode)
+{
+	struct timeval	tv;
+
+	if (sa->dpd_event)
+		timer_remove_event(sa->dpd_event);
+
+	gettimeofday(&tv, 0);
+	switch (mode) {
+	case DPD_TIMER_NORMAL:
+		tv.tv_sec += dpd_timer_interval(time_passed);
+		sa->dpd_event = timer_add_event("dpd_event", dpd_event, sa,
+		    &tv);
+		break;
+	case DPD_TIMER_CHECK:
+		tv.tv_sec += DPD_RETRANS_WAIT;
+		sa->dpd_event = timer_add_event("dpd_check_event",
+		    dpd_check_event, sa, &tv);
+		break;
+	default:
+	}
+	if (!sa->dpd_event) 
+		log_print("dpd_timer_reset: timer_add_event failed");
+}
+
+/* Helper function for dpd_exchange_finalization().  */
+static int
+dpd_find_sa(struct sa *sa, void *v_sa)
+{
+	struct sa	*isakmp_sa = v_sa;
+
+	return (sa->phase == 2 && 
+	    memcmp(sa->id_i, isakmp_sa->id_i, sa->id_i_len) == 0 &&
+	    memcmp(sa->id_r, isakmp_sa->id_r, sa->id_r_len) == 0);
+}
+
+struct dpd_args {
+	struct sa	*isakmp_sa;
+	u_int32_t	 interval;
+};
+
+/* Helper function for dpd_event().  */
+static int
+dpd_check_time(struct sa *sa, void *v_arg) 
+{
+	struct dpd_args *args = v_arg;
+	struct sockaddr *dst;
+	struct proto *proto;
+	struct sa_kinfo *ksa;
+	struct timeval tv;
+
+	if (sa->phase == 1 || (args->isakmp_sa->flags & SA_FLAG_DPD) == 0 ||
+	    dpd_find_sa(sa, args->isakmp_sa) == 0)
+		return 0;
+
+	proto = TAILQ_FIRST(&sa->protos);
+	if (!proto || !proto->data)
+		return 0;
+	sa->transport->vtbl->get_src(sa->transport, &dst);
+
+	gettimeofday(&tv, 0);
+	ksa = sysdep_ipsec_get_kernel_sa(proto->spi[1], proto->spi_sz[1],
+	    proto->proto, dst);
+
+	if (!ksa || !ksa->last_used)
+		return 0;
+
+	LOG_DBG((LOG_MESSAGE, 80, "dpd_check_time: "
+	    "SA %p last use %u second(s) ago", sa,
+	    (u_int32_t)(tv.tv_sec - ksa->last_used)));
+
+	if ((u_int32_t)(tv.tv_sec - ksa->last_used) < args->interval) {
+		args->interval = (u_int32_t)(tv.tv_sec - ksa->last_used);
+		return 1;
+	}
+	
+	return 0;
+}
+	
+/* Called by the timer.  */
+static void
 dpd_event(void *v_sa)
 {
-	struct sa	*sa = v_sa;
+	struct sa	*isakmp_sa = v_sa;
+	struct dpd_args args;
+#if defined (USE_DEBUG)
+	struct sockaddr *dst;
+	char *addr;
+#endif
 
-	sa->dpd_nextev = 0;
-	sa_release(sa);
+	isakmp_sa->dpd_event = 0;
 
-	if ((sa->flags & SA_FLAG_DPD) == 0)
+	/* Check if there's been any incoming SA activity since last time.  */
+	args.isakmp_sa = isakmp_sa;
+	args.interval = dpd_timer_interval(0);
+	if (sa_find(dpd_check_time, &args)) {
+		if (args.interval > dpd_timer_interval(0))
+			args.interval = 0;
+		dpd_timer_reset(isakmp_sa, args.interval, DPD_TIMER_NORMAL);
 		return;
+	}
 
-	/* Create a new DPD exchange.  XXX */
+	/* No activity seen, do a DPD exchange.  */
+	if (isakmp_sa->dpd_seq == 0) {
+		/*
+		 * RFC 3706: first seq# should be random, with MSB zero,
+		 * otherwise we just increment it.
+		 */
+		getrandom((u_int8_t *)&isakmp_sa->dpd_seq,
+		    sizeof isakmp_sa->dpd_seq);
+		isakmp_sa->dpd_seq &= 0x7FFF;
+	} else
+		isakmp_sa->dpd_seq++;
+
+#if defined (USE_DEBUG)
+	isakmp_sa->transport->vtbl->get_dst(isakmp_sa->transport, &dst);
+	if (sockaddr2text(dst, &addr, 0) == -1)
+		addr = 0;
+	LOG_DBG((LOG_MESSAGE, 30, "dpd_event: sending R_U_THERE to %s seq %u",
+	    addr ? addr : "<unknown>", isakmp_sa->dpd_seq));
+	if (addr)
+		free(addr);
+#endif
+	message_send_dpd_notify(isakmp_sa, ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE,
+	    isakmp_sa->dpd_seq);
+
+	/* And set the short timer.  */
+	dpd_timer_reset(isakmp_sa, 0, DPD_TIMER_CHECK);
+}
+
+/*
+ * Called by the timer. If this function is called, it means we did not
+ * recieve any R_U_THERE_ACK confirmation from the other peer.
+ */
+static void
+dpd_check_event(void *v_sa)
+{
+	struct sa	*isakmp_sa = v_sa;
+	struct sa	*sa;
+
+	isakmp_sa->dpd_event = 0;
+
+	if (++isakmp_sa->dpd_failcount < DPD_RETRANS_MAX) {
+		LOG_DBG((LOG_MESSAGE, 10, "dpd_check_event: "
+		    "peer not responding, retry %u of %u",
+		    isakmp_sa->dpd_failcount, DPD_RETRANS_MAX));
+		message_send_dpd_notify(isakmp_sa,
+		    ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE, isakmp_sa->dpd_seq);
+		dpd_timer_reset(isakmp_sa, 0, DPD_TIMER_CHECK);
+		return;
+	}
+	
+	/* 
+	 * Peer is considered dead. Delete all SAs created under isakmp_sa.
+	 */
+	LOG_DBG((LOG_MESSAGE, 10, "dpd_check_event: peer is dead, "
+	    "deleting all SAs connected to SA %p", isakmp_sa));
+	while ((sa = sa_find(dpd_find_sa, isakmp_sa)) != 0) {
+		LOG_DBG((LOG_MESSAGE, 30, "dpd_check_event: deleting SA %p",
+		    sa));
+		sa_delete(sa, 0);
+	}
+	LOG_DBG((LOG_MESSAGE, 30, "dpd_check_event: deleting ISAKMP SA %p",
+	    isakmp_sa));
+	sa_delete(isakmp_sa, 0);
 }

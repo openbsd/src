@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.h,v 1.11 2004/06/26 06:07:03 hshoexer Exp $	 */
+/* $OpenBSD: pf_key_v2.h,v 1.12 2004/08/10 15:59:10 ho Exp $	 */
 /* $EOM: pf_key_v2.h,v 1.4 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -38,6 +38,7 @@
 struct proto;
 struct sa;
 struct sockaddr;
+struct kernel_sa;
 
 extern int	pf_key_v2_socket;
 
@@ -45,13 +46,16 @@ extern void     pf_key_v2_connection_check(char *);
 extern int      pf_key_v2_delete_spi(struct sa *, struct proto *, int);
 extern int      pf_key_v2_enable_sa(struct sa *, struct sa *);
 extern int	pf_key_v2_enable_spi(in_addr_t, in_addr_t, in_addr_t,
-		    in_addr_t, u_int8_t *, u_int8_t, in_addr_t);
+    in_addr_t, u_int8_t *, u_int8_t, in_addr_t);
+extern struct sa_kinfo *pf_key_v2_get_kernel_sa(u_int8_t *, size_t, u_int8_t,
+    struct sockaddr *);
 extern u_int8_t *pf_key_v2_get_spi(size_t *, u_int8_t, struct sockaddr *,
-		    struct sockaddr *, u_int32_t);
+    struct sockaddr *, u_int32_t);
 extern int	pf_key_v2_group_spis(struct sa *, struct proto *,
-		    struct proto *, int);
+    struct proto *, int);
 extern void     pf_key_v2_handler(int);
 extern int      pf_key_v2_open(void);
-extern int      pf_key_v2_set_spi(struct sa *, struct proto *, int, struct sa *);
+extern int      pf_key_v2_set_spi(struct sa *, struct proto *, int,
+    struct sa *);
 
 #endif				/* _PF_KEY_V2_H_ */

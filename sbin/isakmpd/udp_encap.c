@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.6 2004/08/08 19:11:06 deraadt Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.7 2004/08/10 15:59:10 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -381,7 +381,7 @@ udp_encap_handle_message(struct transport *t)
 	/* Check NULL-ESP marker.  */
 	if (n < (ssize_t)sizeof(u_int32_t) || *(u_int32_t *)buf != 0) {
 		/* Should never happen.  */
-		log_print ("udp_encap_handle_message: "
+		log_print("udp_encap_handle_message: "
 		    "Null-ESP marker not NULL or short message");
 		return;
 	}
@@ -389,11 +389,11 @@ udp_encap_handle_message(struct transport *t)
 	msg = message_alloc(t, buf + sizeof (u_int32_t),
 	    n - sizeof (u_int32_t));
 	if (!msg) {
-		log_error ("failed to allocate message structure, dropping "
+		log_error("failed to allocate message structure, dropping "
 		    "packet received on transport %p", u);
 		return;
 	}
-	message_recv (msg);
+	message_recv(msg);
 }
 
 /*

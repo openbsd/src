@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.c,v 1.27 2004/06/26 06:07:03 hshoexer Exp $	 */
+/* $OpenBSD: sysdep.c,v 1.28 2004/08/10 15:59:11 ho Exp $	 */
 /* $EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -131,6 +131,15 @@ sysdep_ipsec_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 		return (u_int8_t *)strdup("\x12\x34\x56\x78");
 	}
 	return KEY_API(get_spi)(sz, proto, src, dst, seq);
+}
+
+struct sa_kinfo *
+sysdep_ipsec_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
+    struct sockaddr *dst)
+{
+	if (app_none)
+		return 0;
+	return KEY_API(get_kernel_sa)(spi, spi_sz, proto, dst);
 }
 
 /* Force communication on socket FD to go in the clear.  */

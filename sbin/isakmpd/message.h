@@ -1,4 +1,4 @@
-/* $OpenBSD: message.h,v 1.21 2004/06/20 17:17:35 ho Exp $	 */
+/* $OpenBSD: message.h,v 1.22 2004/08/10 15:59:10 ho Exp $	 */
 /* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -197,5 +197,9 @@ extern void     message_setup_header(struct message *, u_int8_t, u_int8_t,
 		    u_int8_t *);
 struct payload *payload_first(struct message *, u_int8_t);
 struct payload *payload_last(struct message *, u_int8_t);
+
+#if defined (USE_DPD)
+extern void	message_send_dpd_notify(struct sa*, u_int16_t, u_int32_t);
+#endif
 
 #endif				/* _MESSAGE_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.86 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.87 2004/08/10 15:59:10 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -888,7 +888,16 @@ message_validate_notify(struct message *msg, struct payload *p)
 		message_free(msg);
 		return -1;
 	}
-	/* XXX Validate the SPI.  */
+
+	/* Validate the SPI. XXX Just ISAKMP for now.  */
+	if (proto == ISAKMP_PROTO_ISAKMP && 
+	    GET_ISAKMP_NOTIFY_SPI_SZ(p->p) == ISAKMP_HDR_COOKIES_LEN &&
+	    memcmp(p->p + ISAKMP_NOTIFY_SPI_OFF, msg->isakmp_sa->cookies,
+		ISAKMP_HDR_COOKIES_LEN) != 0) {
+		log_print("message_validate_notify: bad cookies");
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_SPI, 0, 1, 0);
+		return -1;
+	}
 
 	if (type < ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE
 	    || (type >= ISAKMP_NOTIFY_RESERVED_MIN
@@ -904,6 +913,7 @@ message_validate_notify(struct message *msg, struct payload *p)
 		message_free(msg);
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -1521,6 +1531,8 @@ message_send(struct message *msg)
 	    && exchange->flags & EXCHANGE_FLAG_ENCRYPT) {
 		if (!exchange->keystate) {
 			exchange->keystate = exchange->doi->get_keystate(msg);
+			if (!exchange->keystate)
+				return;
 			exchange->crypto = exchange->keystate->xf;
 			exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
 		}
@@ -1647,6 +1659,13 @@ struct info_args {
 			u_int16_t       nspis;
 			u_int8_t       *spis;
 		} d;
+#if defined (USE_DPD)
+		struct {
+			u_int16_t	msg_type;
+			u_int8_t	*spi;
+			u_int32_t	seq;
+		} dpd;
+#endif
 	} u;
 };
 
@@ -1714,12 +1733,30 @@ message_send_delete(struct sa *sa)
 	}
 }
 
+#if defined (USE_DPD)
+void
+message_send_dpd_notify(struct sa* isakmp_sa, u_int16_t notify, u_int32_t seq)
+{
+	struct info_args args;
+
+	args.discr = 'P';
+	args.doi = IPSEC_DOI_IPSEC;
+	args.proto = ISAKMP_PROTO_ISAKMP;
+	args.spi_sz = ISAKMP_HDR_COOKIES_LEN;
+	args.u.dpd.msg_type = notify;
+	args.u.dpd.spi = isakmp_sa->cookies;
+	args.u.dpd.seq = htonl(seq);
+
+	exchange_establish_p2(isakmp_sa, ISAKMP_EXCH_INFO, 0, &args, 0, 0);
+}
+#endif
+
 /* Build the informational message into MSG.  */
 int
 message_send_info(struct message *msg)
 {
 	u_int8_t       *buf;
-	size_t          sz;
+	size_t          sz = 0;
 	struct info_args *args = msg->extra;
 	u_int8_t	payload;
 
@@ -1728,8 +1765,21 @@ message_send_info(struct message *msg)
 		if (msg->exchange->doi->informational_pre_hook(msg))
 			return -1;
 
-	sz = (args->discr == 'N' ? ISAKMP_NOTIFY_SPI_OFF + args->spi_sz
-	    : ISAKMP_DELETE_SPI_OFF + args->u.d.nspis * args->spi_sz);
+	switch (args->discr) {
+#if defined (USE_DPD)
+	case 'P':
+		sz = sizeof args->u.dpd.seq;
+		/* FALLTHROUGH */
+#endif
+	case 'N':
+		sz += ISAKMP_NOTIFY_SPI_OFF + args->spi_sz;
+		break;
+	case 'D':
+	default:	/* Silence gcc */
+		sz = ISAKMP_DELETE_SPI_OFF + args->u.d.nspis * args->spi_sz;
+		break;
+	}
+	
 	buf = calloc(1, sz);
 	if (!buf) {
 		log_error("message_send_info: calloc (1, %lu) failed",
@@ -1738,6 +1788,12 @@ message_send_info(struct message *msg)
 		return -1;
 	}
 	switch (args->discr) {
+#if defined (USE_DPD)
+	case 'P':
+		memcpy(buf + ISAKMP_NOTIFY_SPI_OFF + args->spi_sz,
+		    &args->u.dpd.seq, sizeof args->u.dpd.seq);
+		/* FALLTHROUGH */
+#endif
 	case 'N':
 		/* Build the NOTIFY payload.  */
 		payload = ISAKMP_PAYLOAD_NOTIFY;

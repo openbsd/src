@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.40 2004/06/21 23:27:10 ho Exp $	 */
+/* $OpenBSD: sa.h,v 1.41 2004/08/10 15:59:10 ho Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -212,7 +212,8 @@ struct sa {
 	/* IKE DPD (RFC3706) message sequence number.  */
 	u_int32_t	dpd_seq;	/* sent */
 	u_int32_t	dpd_rseq;	/* recieved */
-	struct event   *dpd_nextev;	/* time of next event */
+	u_int32_t	dpd_failcount;	/* # of subsequent failures */
+	struct event   *dpd_event;	/* time of next event */
 #endif
 };
 
@@ -272,4 +273,46 @@ extern void     sa_report(void);
 extern void     sa_dump(int, int, char *, struct sa *);
 extern void     sa_report_all(FILE *);
 extern int      sa_setup_expirations(struct sa *);
+
+/*
+ * This structure contains most of the data of the in-kernel SA.
+ * Currently only used to collect the tdb_last_used time for DPD.
+ */
+struct sa_kinfo {
+	u_int32_t	flags;		/* /usr/include/netinet/ip_ipsp.h */
+
+	u_int32_t	exp_allocations;
+	u_int32_t	soft_allocations;
+	u_int32_t	cur_allocations;
+
+	u_int64_t	exp_bytes;
+	u_int64_t	soft_bytes;
+	u_int64_t	cur_bytes;
+
+	u_int64_t	exp_timeout;
+	u_int64_t	soft_timeout;
+	
+	u_int64_t	first_use;
+	u_int64_t	established;
+	u_int64_t	soft_first_use;
+	u_int64_t	exp_first_use;
+
+	u_int64_t	last_used;
+	u_int64_t	last_marked;
+
+	struct sockaddr_storage	dst;
+	struct sockaddr_storage	src;
+	struct sockaddr_storage	proxy;
+
+	u_int32_t	spi;
+	u_int32_t	rpl;
+	u_int16_t	udpencap_port;
+	u_int16_t	amxkeylen;
+	u_int16_t	emxkeylen;
+	u_int16_t	ivlen;
+	u_int8_t	sproto;
+	u_int8_t	wnd;
+	u_int8_t	satype;
+};
+
 #endif				/* _SA_H_ */
