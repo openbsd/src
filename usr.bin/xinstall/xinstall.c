@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.32 2003/05/07 22:38:06 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.33 2003/05/11 18:18:33 tedu Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.32 2003/05/07 22:38:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.33 2003/05/11 18:18:33 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -91,6 +91,7 @@ void	usage(void);
 int	create_newfile(char *, struct stat *);
 int	create_tempfile(char *, char *, size_t);
 int	file_write(int, char *, size_t, int *, int *, int);
+void	file_flush(int, int);
 
 int
 main(argc, argv)
@@ -483,6 +484,8 @@ copy(from_fd, from_name, to_fd, to_name, size, sparse)
 				    to_name, strerror(nw > 0 ? EIO : serrno));
 			}
 		}
+		if (sparse)
+			file_flush(to_fd, isem);
 		if (nr != 0) {
 			serrno = errno;
 			(void)unlink(to_name);
@@ -796,4 +799,36 @@ file_write(fd, str, cnt, rem, isempt, sz)
 		st += wcnt;
 	}
 	return(st - str);
+}
+
+/*
+ * file_flush()
+ *	when the last file block in a file is zero, many file systems will not
+ *	let us create a hole at the end. To get the last block with zeros, we
+ *	write the last BYTE with a zero (back up one byte and write a zero).
+ */
+
+void
+file_flush(int fd, int isempt)
+{
+	static char blnk[] = "\0";
+
+	/*
+	 * silly test, but make sure we are only called when the last block is
+	 * filled with all zeros.
+	 */
+	if (!isempt)
+		return;
+
+	/*
+	 * move back one byte and write a zero
+	 */
+	if (lseek(fd, (off_t)-1, SEEK_CUR) < 0) {
+		warn("Failed seek on file");
+		return;
+	}
+
+	if (write(fd, blnk, 1) < 0)
+		warn("Failed write to file");
+	return;
 }
