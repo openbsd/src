@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.23 2000/03/26 23:31:56 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.24 2000/07/19 13:45:09 art Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -827,7 +827,7 @@ pcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		timeout_add(&tp->t_rstrt_to, 1);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

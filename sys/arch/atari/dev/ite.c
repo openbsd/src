@@ -545,7 +545,7 @@ itestart(tp)
 		/* we have characters remaining. */
 		if (rbp->c_cc) {
 			tp->t_state |= TS_TIMEOUT;
-			timeout(ttrstrt, tp, 1);
+			timeout_add(&tp->t_rstrt_to, 1);
 		}
 		/* wakeup we are below */
 		if (rbp->c_cc <= tp->t_lowat) {
