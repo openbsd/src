@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.15 2002/12/08 16:27:17 millert Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.16 2003/04/16 01:45:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -193,7 +193,7 @@ dodir(char *dir, int silent)
 			continue;
 
 		/* Copy the entry minus prefix */
-		(void)strcpy(name, dp->d_name + 3);
+		(void)strlcpy(name, dp->d_name + 3, sizeof name);
 		n = strlen(name);
 		if (n < 4)
 			continue;
