@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.101 2001/06/08 03:53:46 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.102 2001/06/12 10:59:53 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -801,7 +801,8 @@ ip_ctloutput(op, so, level, optname, mp)
 	register struct mbuf *m = *mp;
 	register int optval = 0;
 #ifdef IPSEC
-	struct proc *p = curproc; /* XXX */
+	struct ipsec_ref *ipr;
+	u_int16_t opt16val;
 #endif
 	int error = 0;
 
@@ -919,7 +920,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			switch (optname) {
 			case IP_AUTH_LEVEL:
 			        if (optval < ipsec_auth_default_level &&
-				    suser(p->p_ucred, &p->p_acflag)) {
+				    (so->so_state & SS_PRIV)) {
 					error = EACCES;
 					break;
 				}
@@ -928,7 +929,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_ESP_TRANS_LEVEL:
 			        if (optval < ipsec_esp_trans_default_level &&
-				    suser(p->p_ucred, &p->p_acflag)) {
+				    (so->so_state & SS_PRIV)) {
 					error = EACCES;
 					break;
 				}
@@ -937,7 +938,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_ESP_NETWORK_LEVEL:
 			        if (optval < ipsec_esp_network_default_level &&
-				    suser(p->p_ucred, &p->p_acflag)) {
+				    (so->so_state & SS_PRIV)) {
 					error = EACCES;
 					break;
 				}
@@ -949,29 +950,125 @@ ip_ctloutput(op, so, level, optname, mp)
 #endif
 			break;
 
+		case IP_IPSEC_REMOTE_CRED:
+		case IP_IPSEC_REMOTE_AUTH:
+			/* Can't set the remote credential or key */
+			error = EOPNOTSUPP;
+			break;
+
 		case IP_IPSEC_LOCAL_ID:
 		case IP_IPSEC_REMOTE_ID:
 		case IP_IPSEC_LOCAL_CRED:
-		case IP_IPSEC_REMOTE_CRED:
-		case IP_IPSEC_AUTH:
+		case IP_IPSEC_LOCAL_AUTH:
 #ifndef IPSEC
 			error = EOPNOTSUPP;
 #else
+			if (m->m_len < 2) {
+				error = EINVAL;
+				break;
+			}
+
+			m_copydata(m, 0, 2, (caddr_t) &opt16val);
+
+			/* If the type is 0, then we cleanup and return */
+			if (opt16val == 0) {
+				switch (optname) {
+				case IP_IPSEC_LOCAL_ID:
+					if (inp->inp_ipsec_localid != NULL)
+						ipsp_reffree(inp->inp_ipsec_localid);
+					inp->inp_ipsec_localid = NULL;
+					break;
+
+				case IP_IPSEC_REMOTE_ID:
+					if (inp->inp_ipsec_remoteid != NULL)
+						ipsp_reffree(inp->inp_ipsec_remoteid);
+					inp->inp_ipsec_remoteid = NULL;
+					break;
+
+				case IP_IPSEC_LOCAL_CRED:
+					if (inp->inp_ipsec_localcred != NULL)
+						ipsp_reffree(inp->inp_ipsec_localcred);
+					inp->inp_ipsec_localcred = NULL;
+					break;
+
+				case IP_IPSEC_LOCAL_AUTH:
+					if (inp->inp_ipsec_localauth != NULL)
+						ipsp_reffree(inp->inp_ipsec_localauth);
+					inp->inp_ipsec_localauth = NULL;
+					break;
+				}
+
+				error = 0;
+				break;
+			}
+
+			/* Can't have an empty payload */
+			if (m->m_len == 2) {
+				error = EINVAL;
+				break;
+			}
+
+			MALLOC(ipr, struct ipsec_ref *,
+			       sizeof(struct ipsec_ref) + m->m_len - 2,
+			       M_CREDENTIALS, M_NOWAIT);
+			if (ipr == NULL) {
+				error = ENOBUFS;
+				break;
+			}
+			ipr->ref_count = 1;
+			ipr->ref_malloctype = M_CREDENTIALS;
+			ipr->ref_len = m->m_len - 2;
+			ipr->ref_type = opt16val;
+			m_copydata(m, 2, m->m_len - 2, (caddr_t)(ipr + 1));
+
 			switch (optname) {
 			case IP_IPSEC_LOCAL_ID:
-				/* XXX */
+				/* Check valid types and NUL-termination */
+				if (ipr->ref_type < IPSP_IDENTITY_PREFIX
+				    || ipr->ref_type > IPSP_IDENTITY_CONNECTION
+				    || ((char *)(ipr + 1))[ipr->ref_len - 1]) {
+					FREE(ipr, M_CREDENTIALS);
+					error = EINVAL;
+				} else {
+					if (inp->inp_ipsec_localid != NULL)
+						ipsp_reffree(inp->inp_ipsec_localid);
+					inp->inp_ipsec_localid = ipr;
+				}
 				break;
 			case IP_IPSEC_REMOTE_ID:
-				/* XXX */
+				/* Check valid types and NUL-termination */
+				if (ipr->ref_type < IPSP_IDENTITY_PREFIX
+				    || ipr->ref_type > IPSP_IDENTITY_CONNECTION
+				    || ((char *)(ipr + 1))[ipr->ref_len - 1]) {
+					FREE(ipr, M_CREDENTIALS);
+					error = EINVAL;
+				} else {
+					if (inp->inp_ipsec_remoteid != NULL)
+						ipsp_reffree(inp->inp_ipsec_remoteid);
+					inp->inp_ipsec_remoteid = ipr;
+				}
 				break;
 			case IP_IPSEC_LOCAL_CRED:
-				/* XXX */
+				if (ipr->ref_type < IPSP_CRED_KEYNOTE ||
+				    ipr->ref_type > IPSP_CRED_X509) {
+					FREE(ipr, M_CREDENTIALS);
+					error = EINVAL;
+				} else {
+					if (inp->inp_ipsec_localcred != NULL)
+						ipsp_reffree(inp->inp_ipsec_localcred);
+					inp->inp_ipsec_localcred = ipr;
+				}
 				break;
-			case IP_IPSEC_REMOTE_CRED:
-				/* XXX */
-				break;
-			case IP_IPSEC_AUTH:
-				/* XXX */
+			case IP_IPSEC_LOCAL_AUTH:
+				if (ipr->ref_type < IPSP_AUTH_PASSPHRASE ||
+				    ipr->ref_type > IPSP_AUTH_RSA) {
+					FREE(ipr, M_CREDENTIALS);
+					error = EINVAL;
+				} else {
+					if (inp->inp_ipsec_localauth != NULL)
+						ipsp_reffree(inp->inp_ipsec_localauth);
+					inp->inp_ipsec_localauth = ipr;
+				}
 				break;
 			}
 #endif
@@ -1081,26 +1178,44 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_IPSEC_REMOTE_ID:
 		case IP_IPSEC_LOCAL_CRED:
 		case IP_IPSEC_REMOTE_CRED:
-		case IP_IPSEC_AUTH:
+		case IP_IPSEC_LOCAL_AUTH:
+		case IP_IPSEC_REMOTE_AUTH:
 #ifndef IPSEC
 			error = EOPNOTSUPP;
 #else
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(u_int16_t);
 			switch (optname) {
 			case IP_IPSEC_LOCAL_ID:
-				/* XXX */
+				ipr = inp->inp_ipsec_localid;
+				opt16val = IPSP_IDENTITY_NONE;
 				break;
 			case IP_IPSEC_REMOTE_ID:
-				/* XXX */
+				ipr = inp->inp_ipsec_remoteid;
+				opt16val = IPSP_IDENTITY_NONE;
 				break;
 			case IP_IPSEC_LOCAL_CRED:
-				/* XXX */
+				ipr = inp->inp_ipsec_localcred;
+				opt16val = IPSP_CRED_NONE;
 				break;
 			case IP_IPSEC_REMOTE_CRED:
-				/* XXX */
+				ipr = inp->inp_ipsec_remotecred;
+				opt16val = IPSP_CRED_NONE;
 				break;
-			case IP_IPSEC_AUTH:
-				/* XXX */
+			case IP_IPSEC_LOCAL_AUTH:
+				ipr = inp->inp_ipsec_localauth;
 				break;
+			case IP_IPSEC_REMOTE_AUTH:
+				ipr = inp->inp_ipsec_remoteauth;
+				break;
+			}
+			if (ipr == NULL)
+				*mtod(m, u_int16_t *) = opt16val;
+			else {
+				m->m_len += ipr->ref_len;
+				*mtod(m, u_int16_t *) = ipr->ref_type;
+				m_copyback(m, sizeof(u_int16_t), ipr->ref_len,
+					   (caddr_t)(ipr + 1));
 			}
 #endif
 			break;

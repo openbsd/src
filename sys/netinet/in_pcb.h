@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.36 2001/06/09 07:03:40 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.37 2001/06/12 10:59:53 angelos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -140,7 +140,8 @@ struct inpcb {
 	struct ipsec_ref *inp_ipsec_remoteid;
 	struct ipsec_ref *inp_ipsec_localcred;
 	struct ipsec_ref *inp_ipsec_remotecred;
-	struct ipsec_ref *inp_ipsec_auth;
+	struct ipsec_ref *inp_ipsec_localauth;
+	struct ipsec_ref *inp_ipsec_remoteauth;
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
 
 	int	in6p_cksum;

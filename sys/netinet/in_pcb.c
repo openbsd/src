@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.54 2001/06/08 03:53:45 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.55 2001/06/12 10:59:53 angelos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -578,8 +578,10 @@ in_pcbdetach(v)
 		ipsp_reffree(inp->inp_ipsec_localcred);
 	if (inp->inp_ipsec_remotecred)
 		ipsp_reffree(inp->inp_ipsec_remotecred);
-	if (inp->inp_ipsec_auth)
-		ipsp_reffree(inp->inp_ipsec_auth);
+	if (inp->inp_ipsec_localauth)
+		ipsp_reffree(inp->inp_ipsec_localauth);
+	if (inp->inp_ipsec_remoteauth)
+		ipsp_reffree(inp->inp_ipsec_remoteauth);
 	splx(s);
 #endif
 	s = splnet();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.93 2001/06/08 03:53:46 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.94 2001/06/12 10:59:53 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -734,9 +734,15 @@ findpcb:
 			  	newinp->inp_ipsec_remotecred = inp->inp_ipsec_remotecred;
 				inp->inp_ipsec_remotecred->ref_count++;
 			  }
-			  if (inp->inp_ipsec_auth != NULL) {
-			  	newinp->inp_ipsec_auth = inp->inp_ipsec_auth;
-				inp->inp_ipsec_auth->ref_count++;
+			  if (inp->inp_ipsec_localauth != NULL) {
+			  	newinp->inp_ipsec_localauth
+				  = inp->inp_ipsec_localauth;
+				inp->inp_ipsec_localauth->ref_count++;
+			  }
+			  if (inp->inp_ipsec_remoteauth != NULL) {
+			  	newinp->inp_ipsec_remoteauth
+				  = inp->inp_ipsec_remoteauth;
+				inp->inp_ipsec_remoteauth->ref_count++;
 			  }
 			}
 #endif /* IPSEC */
