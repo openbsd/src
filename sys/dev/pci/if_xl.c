@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.5 1998/09/04 12:58:12 maja Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.6 1998/09/08 03:02:57 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.6 1998/08/30 22:24:18 wpaul Exp $
+ *	$FreeBSD: if_xl.c,v 1.10 1998/09/06 14:58:46 wpaul Exp $
  */
 
 /*
@@ -45,9 +45,12 @@
  * 3Com 3c900-COMBO	10Mbps/RJ-45,AUI,BNC
  * 3Com 3c905-TX	10/100Mbps/RJ-45
  * 3Com 3c905-T4	10/100Mbps/RJ-45
+ * 3Com 3c900B-TPO	10Mbps/RJ-45
+ * 3Com 3c900B-COMBO	10Mbps/RJ-45,AUI,BNC
  * 3Com 3c905B-TX	10/100Mbps/RJ-45
  * 3Com 3c905B-FL/FX	10/100Mbps/Fiber-optic
- * Dell Optiplex GX1 on-board 3c905B 10/100Mbps/RJ-45
+ * 3Com 3c980-TX	10/100Mbps server adapter
+ * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
  * Dell Precision on-board 3c905B 10/100Mbps/RJ-45
  * Dell Latitude laptop docking station embedded 3c905-TX
  *
@@ -165,7 +168,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static char rcsid[] =
-	"$Id: if_xl.c,v 1.5 1998/09/04 12:58:12 maja Exp $";
+	"$FreeBSD: if_xl.c,v 1.10 1998/09/06 14:58:46 wpaul Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -182,13 +185,15 @@ static struct xl_type xl_devs[] = {
 	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_100BT4,
 		"3Com 3c905 Fast Etherlink XL 10/100BaseT4" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10BT,
-		"3Com 3c905B Etherlink XL 10BaseT" },
+		"3Com 3c900B Etherlink XL 10BaseT" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10BT_COMBO,
-		"3Com 3c905B Etherlink XL 10BaseT Combo" },
+		"3Com 3c900B Etherlink XL 10BaseT Combo" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT,
 		"3Com 3c905B Fast Etherlink XL 10/100BaseTX" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT4,
 		"3Com 3c905B Fast Etherlink XL 10/100BaseT4" },
+	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT_SERV,
+		"3Com 3c980 Fast Etherlink XL 10/100BaseTX" },
 	{ 0, 0, NULL }
 };
 #endif
@@ -1251,15 +1256,28 @@ static void xl_mediacheck(sc)
 	 * XXX I should check for 10baseFL, but I don't have an adapter
 	 * to test with.
 	 */
-	if (sc->xl_media & (XL_MEDIAOPT_MASK & ~XL_MEDIAOPT_VCO))
-		return;
+	if (sc->xl_media & (XL_MEDIAOPT_MASK & ~XL_MEDIAOPT_VCO)) {
+		/*
+	 	* Check the XCVR value. If it's not in the normal range
+	 	* of values, we need to fake it up here.
+	 	*/
+		if (sc->xl_xcvr <= XL_XCVR_AUTO)
+			return;
+		else {
+			printf("xl%d: bogus xcvr value "
+			"in EEPROM (%x)\n", sc->xl_unit, sc->xl_xcvr);
+			printf("xl%d: choosing new default based "
+				"on card type\n", sc->xl_unit);
+		}
+	} else {
+		printf("xl%d: WARNING: no media options bits set in "
+			"the media options register!!\n", sc->xl_unit);
+		printf("xl%d: this could be a manufacturing defect in "
+			"your adapter or system\n", sc->xl_unit);
+		printf("xl%d: attempting to guess media type; you "
+			"should probably consult your vendor\n", sc->xl_unit);
+	}
 
-	printf("xl%d: WARNING: no media options bits set in "
-		"the media options register!!\n", sc->xl_unit);
-	printf("xl%d: this could be a manufacturing defect in "
-		"your adapter or system\n", sc->xl_unit);
-	printf("xl%d: attempting to guess media type; you "
-		"should probably consult your vendor\n", sc->xl_unit);
 
 	/*
 	 * Read the device ID from the EEPROM.
@@ -1270,29 +1288,32 @@ static void xl_mediacheck(sc)
 
 	switch(devid) {
 	case TC_DEVICEID_BOOMERANG_10BT:	/* 3c900-TP */
-	case TC_DEVICEID_CYCLONE_10BT:		/* 3c905B-TP */
+	case TC_DEVICEID_CYCLONE_10BT:		/* 3c900B-TP */
 		sc->xl_media = XL_MEDIAOPT_BT;
+		sc->xl_xcvr = XL_XCVR_10BT;
 		printf("xl%d: guessing 10BaseT transceiver\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_10BT_COMBO:	/* 3c900-COMBO */
-	case TC_DEVICEID_CYCLONE_10BT_COMBO:	/* 3c905B-COMBO */
+	case TC_DEVICEID_CYCLONE_10BT_COMBO:	/* 3c900B-COMBO */
 		sc->xl_media = XL_MEDIAOPT_BT|XL_MEDIAOPT_BNC|XL_MEDIAOPT_AUI;
+		sc->xl_xcvr = XL_XCVR_10BT;
 		printf("xl%d: guessing COMBO (AUI/BNC/TP)\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_10_100BT:	/* 3c905-TX */
 		sc->xl_media = XL_MEDIAOPT_MII;
+		sc->xl_xcvr = XL_XCVR_MII;
 		printf("xl%d: guessing MII\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_100BT4:	/* 3c905-T4 */
 	case TC_DEVICEID_CYCLONE_10_100BT4:	/* 3c905B-T4 */
 		sc->xl_media = XL_MEDIAOPT_BT4;
+		sc->xl_xcvr = XL_XCVR_MII;
 		printf("xl%d: guessing 100BaseT4/MII\n", sc->xl_unit);
 		break;
-#if defined(__OpenBSD__)
-	case PCI_PRODUCT_3COM_3C980TX:		/* 3c980-TX */
-#endif 
 	case TC_DEVICEID_CYCLONE_10_100BT:	/* 3c905B-TX */
+	case TC_DEVICEID_CYCLONE_10_100BT_SERV:	/* 3c980-TX */
 		sc->xl_media = XL_MEDIAOPT_BTX;
+		sc->xl_xcvr = XL_XCVR_AUTO;
 		printf("xl%d: guessing 10/100 internal\n", sc->xl_unit);
 		break;
 	default:
@@ -1369,7 +1390,7 @@ xl_attach(config_id, unit)
 			irq = pci_conf_read(config_id, XL_PCI_INTLINE);
 
 			/* Reset the power state. */
-			printf("xl%d: chip is is in D%d power mode "
+			printf("xl%d: chip is in D%d power mode "
 			"-- setting to D0\n", unit, command & XL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			pci_conf_write(config_id, XL_PCI_PWRMGMTCTRL, command);
@@ -1493,11 +1514,12 @@ xl_attach(config_id, unit)
 		printf("xl%d: media options word: %x\n", sc->xl_unit,
 							 sc->xl_media);
 
-	xl_mediacheck(sc);
-
 	xl_read_eeprom(sc, (char *)&sc->xl_xcvr, XL_EE_ICFG_0, 2, 0);
 	sc->xl_xcvr &= XL_ICFG_CONNECTOR_MASK;
 	sc->xl_xcvr >>= XL_ICFG_CONNECTOR_BITS;
+
+	xl_mediacheck(sc);
+
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX
 			|| sc->xl_media & XL_MEDIAOPT_BT4) {
 		/*
@@ -1721,7 +1743,8 @@ static int xl_list_rx_init(sc)
 	for (i = 0; i < XL_RX_LIST_CNT; i++) {
 		cd->xl_rx_chain[i].xl_ptr =
 			(struct xl_list_onefrag *)&ld->xl_rx_list[i];
-		xl_newbuf(sc, &cd->xl_rx_chain[i]);
+		if (xl_newbuf(sc, &cd->xl_rx_chain[i]) == ENOBUFS)
+			return(ENOBUFS);
 		if (i == (XL_RX_LIST_CNT - 1)) {
 			cd->xl_rx_chain[i].xl_next = &cd->xl_rx_chain[0];
 			ld->xl_rx_list[i].xl_next =
@@ -1749,14 +1772,15 @@ static int xl_newbuf(sc, c)
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
-		printf("xl%d: no memory for rx list",
-				sc->xl_unit);
+		printf("xl%d: no memory for rx list -- packet dropped!\n",
+								sc->xl_unit);
 		return(ENOBUFS);
 	}
 
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
-		printf("xl%d: no memory for rx list", sc->xl_unit);
+		printf("xl%d: no memory for rx list -- packet dropped!\n",
+								sc->xl_unit);
 		m_freem(m_new);
 		return(ENOBUFS);
 	}
@@ -1789,6 +1813,8 @@ again:
 
 	while((rxstat = sc->xl_cdata.xl_rx_head->xl_ptr->xl_status)) {
 		cur_rx = sc->xl_cdata.xl_rx_head;
+		sc->xl_cdata.xl_rx_head = cur_rx->xl_next;
+
 		/*
 		 * If an error occurs, update stats, clear the
 		 * status word and leave the mbuf cluster in place:
@@ -1798,7 +1824,6 @@ again:
 		if (rxstat & XL_RXSTAT_UP_ERROR) {
 			ifp->if_ierrors++;
 			cur_rx->xl_ptr->xl_status = 0;
-			sc->xl_cdata.xl_rx_head = cur_rx->xl_next;
 			continue;
 		}
 
@@ -1812,15 +1837,25 @@ again:
 							sc->xl_unit);
 			ifp->if_ierrors++;
 			cur_rx->xl_ptr->xl_status = 0;
-			sc->xl_cdata.xl_rx_head = cur_rx->xl_next;
 			continue;
 		}
 
 		/* No errors; receive the packet. */	
-		sc->xl_cdata.xl_rx_head = cur_rx->xl_next;
 		m = cur_rx->xl_mbuf;
 		total_len = cur_rx->xl_ptr->xl_status & XL_RXSTAT_LENMASK;
-		xl_newbuf(sc, cur_rx);
+
+		/*
+		 * Try to conjure up a new mbuf cluster. If that
+		 * fails, it means we have an out of memory condition and
+		 * should leave the buffer in place and continue. This will
+		 * result in a lost packet, but there's little else we
+		 * can do in this situation.
+		 */
+		if (xl_newbuf(sc, cur_rx) == ENOBUFS) {
+			ifp->if_ierrors++;
+			cur_rx->xl_ptr->xl_status = 0;
+			continue;
+		}
 
 		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
@@ -1957,7 +1992,8 @@ static void xl_txeoc(sc)
 						sc->xl_unit, txstat);
 			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 			xl_wait(sc);
-			CSR_WRITE_4(sc, XL_DOWNLIST_PTR,
+			if (sc->xl_cdata.xl_tx_head != NULL)
+				CSR_WRITE_4(sc, XL_DOWNLIST_PTR,
 				vtophys(sc->xl_cdata.xl_tx_head->xl_ptr));
 			/*
 			 * Remember to set this for the
@@ -2365,8 +2401,10 @@ static void xl_init(xsc)
 	xl_wait(sc);
 
 	/* Init circular RX list. */
-	if (xl_list_rx_init(sc)) {
-		printf("xl%d: failed to set up rx lists\n", sc->xl_unit);
+	if (xl_list_rx_init(sc) == ENOBUFS) {
+		printf("xl%d: initialization failed: no "
+			"memory for rx buffers\n", sc->xl_unit);
+		xl_stop(sc);
 		return;
 	}
 
@@ -2799,6 +2837,8 @@ xl_probe(parent, match, aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C900TPO:
 	case PCI_PRODUCT_3COM_3C900COMBO:
+	case PCI_PRODUCT_3COM_3C900B:
+	case PCI_PRODUCT_3COM_3C900BCOMBO:
 	case PCI_PRODUCT_3COM_3C905TX:
 	case PCI_PRODUCT_3COM_3C905T4:
 	case PCI_PRODUCT_3COM_3C905BTX:
@@ -2858,7 +2898,7 @@ xl_attach(parent, self, aux)
 		    XL_PCI_PWRMGMTCTRL);
 		if (command & XL_PSTATE_MASK) {
 			/* Reset the power state. */
-			printf("%s: chip is is in D%d power mode "
+			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n",
 			    sc->sc_dev.dv_xname, command & XL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
@@ -2975,11 +3015,13 @@ xl_attach(parent, self, aux)
 	if (bootverbose)
 		printf("xl%d: media options word: %x\n",
 		    sc->xl_unit, sc->xl_media);
-	xl_mediacheck(sc);
 
 	xl_read_eeprom(sc, (char *)&sc->xl_xcvr, XL_EE_ICFG_0, 2, 0);
 	sc->xl_xcvr &= XL_ICFG_CONNECTOR_MASK;
 	sc->xl_xcvr >>= XL_ICFG_CONNECTOR_BITS;
+
+	xl_mediacheck(sc);
+
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX
 			|| sc->xl_media & XL_MEDIAOPT_BT4) {
 		/*
