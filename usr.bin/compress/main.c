@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2000/06/30 16:00:12 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2000/12/12 16:23:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 2000/06/30 16:00:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 2000/12/12 16:23:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ main(argc, argv)
 	}
 
 	outfile[0] = '\0';
-	while ((ch = getopt(argc, argv, "0123456789b:cdfghlnOo:qStv")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789b:cdfghlnOo:qS:tv")) != -1)
 		switch(ch) {
 		case '0':
 		case '1':
