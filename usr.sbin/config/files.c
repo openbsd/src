@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)files.c	8.1 (Berkeley) 6/6/93
- *	$Id: files.c,v 1.1.1.1 1995/10/18 08:48:33 deraadt Exp $
+ *	$Id: files.c,v 1.2 1996/02/22 00:32:55 niklas Exp $
  */
 
 #include <sys/param.h>
@@ -141,7 +141,7 @@ addfile(path, opts, flags, rule)
 	if ((fi = ht_lookup(basetab, base)) != NULL) {
 		if (fi->fi_srcfile != yyfile) {
 			showprev("note: ", fi);
-			error("is overriden by %s", path);
+			error("is overridden by %s", path);
 			errors--;	/* take it away */
 			fi->fi_flags |= FI_HIDDEN;
 		} else {
