@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.3 1997/06/14 04:16:58 downsj Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.4 1997/06/14 05:04:12 downsj Exp $	*/
 /*	$NetBSD: pass5.c,v 1.1 1997/06/11 11:21:58 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #if 0
 static char rcsid[] = "$NetBSD: pass5.c,v 1.1 1997/06/11 11:21:58 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.3 1997/06/14 04:16:58 downsj Exp $";
+static char rcsid[] = "$OpenBSD: pass5.c,v 1.4 1997/06/14 05:04:12 downsj Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -53,8 +53,8 @@ static char rcsid[] = "$OpenBSD: pass5.c,v 1.3 1997/06/14 04:16:58 downsj Exp $"
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <string.h>
-#include <malloc.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "fsutil.h"
 #include "fsck.h"
