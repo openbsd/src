@@ -1,3 +1,4 @@
+.\"   $OpenBSD: reboot.2,v 1.2 1996/10/08 01:20:13 michaels Exp $
 .\"	$NetBSD: reboot.2,v 1.5 1995/02/27 12:36:02 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -64,7 +65,7 @@ The default, causing the system to reboot in its usual fashion.
 Interpreted by the bootstrap program itself, causing it to
 prompt on the console as to what file should be booted.
 Normally, the system is booted from the file
-.Dq Em xx Ns No (0,0)netbsd ,
+.Dq Em xx Ns No (0,0)bsd ,
 where
 .Em xx
 is the default disk name,
@@ -125,7 +126,7 @@ program in the newly booted system.
 When no options are given (i.e.,
 .Dv RB_AUTOBOOT
 is used), the system is
-rebooted from file ``netbsd'' in the root file system of unit 0
+rebooted from file ``bsd'' in the root file system of unit 0
 of a disk chosen in a processor specific way.
 An automatic consistency check of the disks is normally performed
 (see
