@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2002/03/23 13:28:34 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 2002/03/25 20:46:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -121,7 +121,7 @@ int msgbufmapped;	/* set when safe to use msgbuf */
 /*
  * cache configuration, for most machines is the same
  * numbers, so it makes sense to do defines w/ numbers depending
- * on cofigured cpu types in the kernel
+ * on configured cpu types in the kernel
  */
 int icache_stride, icache_line_mask;
 int dcache_stride, dcache_line_mask;

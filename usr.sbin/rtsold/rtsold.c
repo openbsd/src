@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.17 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.18 2002/03/25 20:46:49 deraadt Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ ifconfig(char *ifname)
 	}
 	if (find_ifinfo(sdl->sdl_index)) {
 		warnmsg(LOG_ERR, __FUNCTION__,
-			"interface %s was already cofigured", ifname);
+			"interface %s was already configured", ifname);
 		free(sdl);
 		return(-1);
 	}
