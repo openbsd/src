@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 2004/09/09 22:11:39 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.11 2004/09/16 19:38:30 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -185,8 +185,8 @@ mips_init(int argc, int32_t *argv)
 	/*
 	 *  Reserve symol table space. If invalid pointers no table.
 	 */
-	ssym = (char *)(long)*(int *)end;
-	esym = (char *)(long)*((int *)end + 1);
+	ssym = (char *)*(u_int64_t *)end;
+	esym = (char *)*((u_int64_t *)end + 1);
 	ekern = esym;
 	if (((long)ssym - (long)end) < 0 ||
 	    ((long)ssym - (long)end) > 0x1000 ||
