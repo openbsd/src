@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.21 2000/04/18 03:01:34 aaron Exp $
+.\"	$OpenBSD: mktemp.3,v 1.22 2000/04/20 01:39:32 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,11 +53,9 @@
 .Sh DESCRIPTION
 The
 .Fn mktemp
-function
-takes the given file name template and overwrites a portion of it
+function takes the given file name template and overwrites a portion of it
 to create a file name.
-This file name is unique and suitable for use
-by the application.
+This file name is unique and suitable for use by the application.
 The template may be any file name with some number of
 .So Li X
 .Sc Ns s
@@ -119,8 +117,7 @@ functions return a pointer to the template on success and
 on failure.
 The
 .Fn mkstemp
-function
-returns \-1 if no suitable file could be created.
+function returns \-1 if no suitable file could be created.
 If either call fails an error code is placed in the global variable
 .Va errno .
 .Sh ERRORS
@@ -141,8 +138,7 @@ The
 .Fn mkstemp
 and
 .Fn mkdtemp
-functions
-may also set
+functions may also set
 .Va errno
 to any value specified by the
 .Xr stat 2
@@ -150,8 +146,7 @@ function.
 .Pp
 The
 .Fn mkstemp
-function
-may also set
+function may also set
 .Va errno
 to any value specified by the
 .Xr open 2
@@ -159,8 +154,7 @@ function.
 .Pp
 The
 .Fn mkstemps
-function
-may also set
+function may also set
 .Va errno
 to any value specified by the
 .Xr open 2
@@ -172,8 +166,7 @@ The suffix length is longer than the template length.
 .Pp
 The
 .Fn mkdtemp
-function
-may also set
+function may also set
 .Va errno
 to any value specified by the
 .Xr mkdir 2
@@ -184,8 +177,9 @@ For
 there is an obvious race between file name selection and file
 creation and deletion: the program is typically written to call
 .Xr tmpnam 3 ,
-.Xr tempnam 3 , or
-.Ns Fn mktemp .
+.Xr tempnam 3 ,
+or
+.Fn mktemp .
 Subsequently, the program calls
 .Xr open 2
 or
@@ -212,16 +206,14 @@ The
 .Fn mkdtemp
 and
 .Fn mkstemps
-functions are nonstandard and should not be used if portability
-is required.
+functions are nonstandard and should not be used if portability is required.
 .Sh EXAMPLES
 Quite often a programmer will want to replace a use of
 .Fn mktemp
 with
 .Fn mkstemp ,
 usually to avoid the problems described above.
-Doing this correctly requires a good understanding of the
-code in question.
+Doing this correctly requires a good understanding of the code in question.
 .Pp
 For instance, code of this form:
 .Bd -literal -offset indent

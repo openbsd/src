@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setbuf.3,v 1.8 1999/07/09 13:35:23 aaron Exp $
+.\"	$OpenBSD: setbuf.3,v 1.9 2000/04/20 01:39:32 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,21 +55,22 @@
 .Ft int
 .Fn setvbuf "FILE *stream" "char *buf" "int mode" "size_t size"
 .Sh DESCRIPTION
-The three types of buffering available are unbuffered, block buffered,
+The three types of stream buffering available are unbuffered, block buffered,
 and line buffered.
 When an output stream is unbuffered, information appears on the
 destination file or terminal as soon as written;
-when it is block buffered many characters are saved up and written as a block;
-when it is line buffered characters are saved up until a newline is
-output or input is read from any stream attached to a terminal device
-(typically stdin).
-The function
-.Xr fflush 3
-may be used to force the block out early.
-(See
-.Xr fclose 3 . )
+when it is block buffered, many characters are saved up and written as a block;
+when line buffered, characters are saved up until a newline
+.Pq Ql \en
+is output or input is read from any stream attached to a terminal device
+(typically
+.Em stdin ) .
 .Pp
-Normally all files are block buffered.
+The
+.Xr fflush 3
+function may be used to force the block out early.
+.Pp
+Normally, all files are block buffered.
 When the first
 .Tn I/O
 operation occurs on a file,
@@ -79,15 +80,15 @@ and an optimally sized buffer is obtained.
 If a stream refers to a terminal
 (as
 .Em stdout
-normally does) it is line buffered.
+normally does), it is line buffered.
+.Pp
 The standard error stream
 .Em stderr
 is initially unbuffered.
 .Pp
 The
 .Fn setvbuf
-function
-may be used to alter the buffering behavior of a stream.
+function may be used to alter the buffering behavior of a stream.
 The
 .Fa mode
 parameter must be one of the following three macros:
@@ -104,8 +105,7 @@ The
 .Fa size
 parameter may be given as zero
 to obtain deferred optimal-size buffer allocation as usual.
-If it is not zero,
-then except for unbuffered files, the
+If it is not zero, then except for unbuffered files, the
 .Fa buf
 argument should point to a buffer at least
 .Fa size
@@ -130,7 +130,8 @@ The
 function may be used at any time,
 but may have peculiar side effects
 (such as discarding input or flushing output)
-if the stream is ``active''.
+if the stream is
+.Dq active .
 Portable applications should call it only once on any given stream,
 and before any
 .Tn I/O
@@ -146,14 +147,12 @@ function is exactly equivalent to the call
 .Pp
 The
 .Fn setbuffer
-function
-is the same, except that the size of the buffer is up to the caller,
+function is the same, except that the size of the buffer is up to the caller,
 rather than being determined by the default
 .Dv BUFSIZ .
 The
 .Fn setlinebuf
-function
-is exactly equivalent to the call:
+function is exactly equivalent to the call:
 .Pp
 .Dl "setvbuf(stream, NULL, _IOLBF, 0);"
 .Sh RETURN VALUES
@@ -181,8 +180,7 @@ The
 .Fn setbuf
 and
 .Fn setvbuf
-functions
-conform to
+functions conform to
 .St -ansiC .
 .Sh BUGS
 The

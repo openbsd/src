@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tmpnam.3,v 1.7 2000/01/09 09:36:17 deraadt Exp $
+.\"	$OpenBSD: tmpnam.3,v 1.8 2000/04/20 01:39:32 aaron Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,9 +54,8 @@
 .Sh DESCRIPTION
 The
 .Fn tmpfile
-function
-returns a pointer to a stream associated with a file descriptor returned
-by the routine
+function returns a pointer to a stream associated with a file descriptor
+returned by the routine
 .Xr mkstemp 3 .
 The created file is unlinked before
 .Fn tmpfile
@@ -65,7 +64,7 @@ reference to it is closed.
 Since
 .Xr mkstemp 3
 creates the file with mode
-.Em "S_IRUSR|S_IWUSR",
+.Dv S_IRUSR | S_IWUSR ,
 after the unlink
 .Xr fchown 2
 and
@@ -76,20 +75,16 @@ The file is opened with the access value
 .Pp
 The
 .Fn tmpnam
-function
-returns a pointer to a file name, in the
+function returns a pointer to a file name, in the
 .Dv P_tmpdir
-directory, which
-did not reference an existing file at some indeterminate point in the
-past.
+directory, which did not reference an existing file at some
+indeterminate point in the past.
 .Dv P_tmpdir
 is defined in the include file
 .Aq Pa stdio.h .
 If the argument
 .Fa str
-is
-.Pf non- Dv NULL ,
-the file name is copied to the buffer it references.
+is non-null, the file name is copied to the buffer it references.
 Otherwise, the file name is copied to a static buffer.
 In either case,
 .Fn tmpnam
@@ -106,8 +101,7 @@ is defined in the include file
 .Pp
 The
 .Fn tempnam
-function
-is similar to
+function is similar to
 .Fn tmpnam ,
 but provides the ability to specify the directory which will
 contain the temporary file and the file name prefix.
@@ -116,8 +110,7 @@ The environment variable
 .Ev TMPDIR
 (if set), the argument
 .Fa tmpdir
-(if
-.Pf non- Dv NULL ) ,
+(if non-null),
 the directory
 .Dv P_tmpdir ,
 and the directory
@@ -127,9 +120,7 @@ temporary file.
 .Pp
 The argument
 .Fa prefix ,
-if
-.Pf non- Dv NULL ,
-is used to specify a file name prefix, which will be the
+if non-null, is used to specify a file name prefix, which will be the
 first part of the created file name.
 .Fn tempnam
 allocates memory in which to store the file name; the returned pointer
@@ -138,26 +129,19 @@ may be used as a subsequent argument to
 .Sh RETURN VALUES
 The
 .Fn tmpfile
-function
-returns a pointer to an open file stream on success, and a
-.Dv NULL
-pointer
-on error.
+function returns a pointer to an open file stream on success, and a null
+pointer on error.
 .Pp
 The
 .Fn tmpnam
 and
 .Fn tempfile
-functions
-return a pointer to a file name on success, and a
-.Dv NULL
-pointer
+functions return a pointer to a file name on success, and a null pointer
 on error.
 .Sh ERRORS
 The
 .Fn tmpfile
-function
-may fail and set the global variable
+function may fail and set the global variable
 .Va errno
 for any of the errors specified for the library functions
 .Xr fdopen 3
@@ -166,16 +150,14 @@ or
 .Pp
 The
 .Fn tmpnam
-function
-may fail and set
+function may fail and set
 .Va errno
 for any of the errors specified for the library function
 .Xr mktemp 3 .
 .Pp
 The
 .Fn tempnam
-function
-may fail and set
+function may fail and set
 .Va errno
 for any of the errors specified for the library functions
 .Xr malloc 3
@@ -189,8 +171,7 @@ The
 .Fn tmpfile
 and
 .Fn tmpnam
-functions
-conform to
+functions conform to
 .St -ansiC .
 .Sh BUGS
 .Fn tmpnam
@@ -241,8 +222,7 @@ cannot depend on that.
 .Pp
 For these reasons,
 .Xr ld 8
-will output a warning message whenever it links code that uses the
-functions
+will output a warning message whenever it links code that uses the functions
 .Fn tmpnam
 or
 .Fn tempnam .

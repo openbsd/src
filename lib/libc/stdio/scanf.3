@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.6 2000/04/18 03:01:35 aaron Exp $
+.\"	$OpenBSD: scanf.3,v 1.7 2000/04/20 01:39:32 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,31 +64,29 @@
 .Sh DESCRIPTION
 The
 .Fn scanf
-family of functions scans input according to a
+family of functions read input according to the given
 .Fa format
 as described below.
 This format may contain
-.Em conversion specifiers ;
-the results from such conversions, if any,
-are stored through the
-.Em pointer
+.Dq conversion specifiers ;
+the results of such conversions, if any, are stored through a set of pointer
 arguments.
+.Pp
 The
 .Fn scanf
-function
-reads input from the standard input stream
+function reads input from the standard input stream
 .Em stdin ,
 .Fn fscanf
-reads input from the stream pointer
+reads input from the supplied stream pointer
 .Fa stream ,
 and
 .Fn sscanf
 reads its input from the character string pointed to by
 .Fa str .
+.Pp
 The
 .Fn vfscanf
-function
-is analogous to
+function is analogous to
 .Xr vfprintf 3
 and reads input from the stream pointer
 .Fa stream
@@ -96,21 +94,20 @@ using a variable argument list of pointers (see
 .Xr stdarg 3 ) .
 The
 .Fn vscanf
-function scans a variable argument list from the standard input and
-the
+function scans a variable argument list from the standard input and the
 .Fn vsscanf
-function scans it from a string;
-these are analogous to
-the
+function scans it from a string; these are analogous to the
 .Fn vprintf
 and
 .Fn vsprintf
-functions respectively.
+functions, respectively.
+.Pp
 Each successive
 .Em pointer
-argument must correspond properly with
-each successive conversion specifier
-(but see `suppression' below).
+argument must correspond properly with each successive conversion specifier
+(but see
+.Dq suppression
+below).
 All conversions are introduced by the
 .Cm %
 (percent sign) character.
@@ -118,20 +115,16 @@ The
 .Fa format
 string
 may also contain other characters.
-White space (such as blanks, tabs, or newlines) in the
+Whitespace (such as blanks, tabs, or newlines) in the
 .Fa format
 string match any amount of whitespace, including none, in the input.
-Everything else
-matches only itself.
-Scanning stops
-when an input character does not match such a format character.
-Scanning also stops
-when an input conversion cannot be made (see below).
+Everything else matches only itself.
+Scanning stops when an input character does not match such a format character.
+Scanning also stops when an input conversion cannot be made (see below).
 .Sh CONVERSIONS
 Following the
 .Cm %
-character introducing a conversion
-there may be a number of
+character introducing a conversion there may be a number of
 .Em flag
 characters, as follows:
 .Bl -tag -width indent
@@ -145,65 +138,67 @@ Indicates that the conversion will be one of
 or
 .Cm n
 and the next pointer is a pointer to a
-.Em short int
+.Li short int
 (rather than
-.Em int ) .
+.Li int ) .
 .It Cm l
 Indicates either that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to a
-.Em long int
+.Li long int
 (rather than
-.Em int ) ,
+.Li int ) ,
 or that the conversion will be one of
 .Cm efg
 and the next pointer is a pointer to
-.Em double
+.Li double
 (rather than
-.Em float ) .
+.Li float ) .
 .It Cm q
 Indicates that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to a
-.Em quad_t
+.Li quad_t
 (rather than
-.Em int ) .
+.Li int ) .
 .It Cm L
 Indicates that the conversion will be
 .Cm efg
 and the next pointer is a pointer to
-.Em long double .
+.Li long double .
 .El
 .Pp
-In addition to these flags,
-there may be an optional maximum field width,
-expressed as a decimal integer,
-between the
+In addition to these flags, there may be an optional maximum field width,
+expressed as a decimal integer, between the
 .Cm %
 and the conversion.
 If no width is given,
-a default of `infinity' is used (with one exception, below);
-otherwise at most this many characters are scanned
-in processing the conversion.
-Before conversion begins,
-most conversions skip whitespace;
+a default of
+.Dq infinity
+is used (with one exception, below);
+otherwise at most this many characters are scanned in processing the
+conversion.
+Before conversion begins, most conversions skip whitespace;
 this whitespace is not counted against the field width.
 .Pp
 The following conversions are available:
 .Bl -tag -width XXXX
 .It Cm %
 Matches a literal `%'.
-That is, `%\&%' in the format string
-matches a single input `%' character.
+That is,
+.Ql %\&%
+in the format string matches a single input
+.Ql %
+character.
 No conversion is done, and assignment does not occur.
 .It Cm d
 Matches an optionally signed decimal integer;
 the next pointer must be a pointer to
-.Em int .
+.Li int .
 .It Cm D
 Equivalent to
 .Cm ld ;
@@ -211,7 +206,7 @@ this exists only for backwards compatibility.
 .It Cm i
 Matches an optionally signed integer;
 the next pointer must be a pointer to
-.Em int .
+.Li int .
 The integer is read in base 16 if it begins
 with
 .Ql 0x
@@ -224,7 +219,7 @@ Only characters that correspond to the base are used.
 .It Cm o
 Matches an octal integer;
 the next pointer must be a pointer to
-.Em unsigned int .
+.Li unsigned int .
 .It Cm O
 Equivalent to
 .Cm lo ;
@@ -232,18 +227,18 @@ this exists for backwards compatibility.
 .It Cm u
 Matches an optionally signed decimal integer;
 the next pointer must be a pointer to
-.Em unsigned int .
+.Li unsigned int .
 .It Cm x
 Matches an optionally signed hexadecimal integer;
 the next pointer must be a pointer to
-.Em unsigned int .
+.Li unsigned int .
 .It Cm X
 Equivalent to
 .Cm x .
 .It Cm f
 Matches an optionally signed floating-point number;
 the next pointer must be a pointer to
-.Em float .
+.Li float .
 .It Cm e
 Equivalent to
 .Cm f .
@@ -259,23 +254,22 @@ Equivalent to
 .It Cm s
 Matches a sequence of non-whitespace characters;
 the next pointer must be a pointer to
-.Em char ,
+.Li char ,
 and the array must be large enough to accept all the sequence and the
 terminating
-.Dv NUL
+.Tn NUL
 character.
 The input string stops at whitespace
 or at the maximum field width, whichever occurs first.
 .It Cm c
 Matches a sequence of
-.Em width
-count
-characters (default 1);
+.Li width
+count characters (default 1);
 the next pointer must be a pointer to
-.Em char ,
+.Li char ,
 and there must be enough room for all the characters
 (no terminating
-.Dv NUL
+.Tn NUL
 is added).
 The usual skip of leading whitespace is suppressed.
 To skip whitespace first, use an explicit space in the format.
@@ -283,10 +277,10 @@ To skip whitespace first, use an explicit space in the format.
 Matches a nonempty sequence of characters from the specified set
 of accepted characters;
 the next pointer must be a pointer to
-.Em char ,
+.Li char ,
 and there must be enough room for all the characters in the string,
 plus a terminating
-.Dv NUL
+.Tn NUL
 character.
 The usual skip of leading whitespace is suppressed.
 The string is to be made up of characters in
@@ -298,9 +292,7 @@ character
 and a close bracket
 .Cm ]
 character.
-The set
-.Em excludes
-those characters
+The set excludes those characters
 if the first character after the open bracket is a circumflex
 .Cm ^ .
 To include a close bracket in the set,
@@ -327,13 +319,13 @@ Matches a pointer value (as printed by
 in
 .Xr printf 3 ) ;
 the next pointer must be a pointer to
-.Em void .
+.Li void .
 .It Cm n
 Nothing is expected;
 instead, the number of characters consumed thus far from the input
 is stored through the next pointer,
 which must be a pointer to
-.Em int .
+.Li int .
 This is
 .Em not
 a conversion, although it can be suppressed with the

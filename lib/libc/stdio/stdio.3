@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdio.3,v 1.12 2000/04/18 03:01:35 aaron Exp $
+.\"	$OpenBSD: stdio.3,v 1.13 2000/04/20 01:39:32 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
 .Nd standard input/output library functions
 .Sh SYNOPSIS
 .Fd #include <stdio.h>
+.Pp
 .Fd FILE *stdin;
 .Fd FILE *stdout;
 .Fd FILE *stderr;
@@ -48,21 +49,20 @@ The standard
 library provides a simple and efficient buffered stream
 .Tn I/O
 interface.
-Input and output is mapped into logical data streams
-and the physical
+Input and output is mapped into logical data streams and the physical
 .Tn I/O
 characteristics are concealed.
-The functions and macros are listed
-below; more information is available from the individual man pages.
+The functions and macros are listed below;
+more information is available from the individual man pages.
 .Pp
 A stream is associated with an external file (which may be a physical
 device) by
-.Em opening
+.Dq opening
 a file, which may involve creating a new file.
 Creating an existing file causes its former contents to be discarded.
 If a file can support positioning requests (such as a disk file, as opposed
 to a terminal) then a
-.Em file position indicator
+.Dq file position indicator
 associated with the stream is positioned at the start of the file (byte
 zero), unless the file is opened with append mode.
 If append mode
@@ -78,8 +78,8 @@ written by successive calls to the
 function.
 .Pp
 A file is disassociated from a stream by
-.Em closing
-the file.
+.Dq closing
+it.
 Output streams are flushed (any unwritten buffer contents are transferred
 to the host environment) before the stream is disassociated from the file.
 The value of a pointer to a
@@ -114,6 +114,7 @@ No translation is performed and no extra padding appears on any stream.
 .Pp
 At program startup, three streams are predefined and need not be
 opened explicitly:
+.Pp
 .Bl -bullet -compact -offset indent
 .It
 .Em standard input
@@ -125,8 +126,10 @@ opened explicitly:
 .Em standard error
 (for writing diagnostic output).
 .El
+.Pp
 These streams are abbreviated
-.Em stdin , stdout
+.Em stdin ,
+.Em stdout ,
 and
 .Em stderr .
 Initially, the standard error stream
@@ -209,22 +212,6 @@ and
 .Xr putchar
 exist and will be used if the macro
 definitions are explicitly removed.
-.Sh SEE ALSO
-.Xr close 2 ,
-.Xr open 2 ,
-.Xr read 2 ,
-.Xr write 2
-.Sh BUGS
-The standard buffered functions do not interact well with certain other
-library and system functions, especially
-.Xr vfork
-and
-.Xr abort .
-.Sh STANDARDS
-The
-.Nm stdio
-library conforms to
-.St -ansiC .
 .Sh LIST OF FUNCTIONS
 .Bl -column "Description"
 .Sy Function	Description
@@ -291,3 +278,19 @@ vsnprintf	formatted output conversion
 vsprintf	formatted output conversion
 vsscanf	input format conversion
 .El
+.Sh SEE ALSO
+.Xr close 2 ,
+.Xr open 2 ,
+.Xr read 2 ,
+.Xr write 2
+.Sh BUGS
+The standard buffered functions do not interact well with certain other
+library and system functions, especially
+.Xr vfork
+and
+.Xr abort .
+.Sh STANDARDS
+The
+.Nm stdio
+library conforms to
+.St -ansiC .

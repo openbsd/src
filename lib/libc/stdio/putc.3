@@ -1,4 +1,4 @@
-.\"	$OpenBSD: putc.3,v 1.4 2000/04/18 03:01:35 aaron Exp $
+.\"	$OpenBSD: putc.3,v 1.5 2000/04/20 01:39:32 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,10 +57,10 @@
 .Sh DESCRIPTION
 The
 .Fn fputc
-function
-writes the character
+function writes the character
 .Fa c
-(converted to an ``unsigned char'')
+(converted to an
+.Li unsigned char )
 to the output stream pointed to by
 .Fa stream .
 .Pp
@@ -82,15 +82,15 @@ with an output stream of
 .Pp
 The
 .Fn putw
-function
-writes the specified
-.Em int
+function writes the specified
+.Li int
+.Fa w
 to the named output
 .Fa stream .
 .Sh RETURN VALUES
 The functions,
 .Fn fputc ,
-.Fn putc
+.Fn putc ,
 and
 .Fn putchar
 return the character written.
@@ -102,8 +102,7 @@ The
 function
 returns 0 on success;
 .Dv EOF
-is returned if
-a write error occurs,
+is returned if a write error occurs,
 or if an attempt is made to write a read-only stream.
 .Sh SEE ALSO
 .Xr ferror 3 ,
@@ -123,8 +122,8 @@ A function
 function appeared in
 .At v6 .
 .Sh BUGS
-The size and byte order of an
-.Em int
-varies from one machine to another, and
+Since the size and byte order of an
+.Li int
+varies from one machine to another,
 .Fn putw
 is not recommended for portable applications.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fopen.3,v 1.8 2000/04/12 21:48:01 aaron Exp $
+.\"	$OpenBSD: fopen.3,v 1.9 2000/04/20 01:39:31 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -221,24 +221,6 @@ for any of the errors specified for the routines
 .Xr fclose 3
 and
 .Xr fflush 3 .
-.Sh SEE ALSO
-.Xr open 2 ,
-.Xr fclose 3 ,
-.Xr fseek 3 ,
-.Xr funopen 3
-.Sh STANDARDS
-The
-.Fn fopen
-and
-.Fn freopen
-functions
-conform to
-.St -ansiC .
-The
-.Fn fdopen
-function
-conforms to
-.St -p1003.1-88 .
 .Sh CAVEATS
 Proper code using
 .Fn fdopen
@@ -260,4 +242,21 @@ the resulting FILE * in case of success.
 		close(fd);
 	}
 .Ed
-		
+.Sh SEE ALSO
+.Xr open 2 ,
+.Xr fclose 3 ,
+.Xr fseek 3 ,
+.Xr funopen 3
+.Sh STANDARDS
+The
+.Fn fopen
+and
+.Fn freopen
+functions
+conform to
+.St -ansiC .
+The
+.Fn fdopen
+function
+conforms to
+.St -p1003.1-88 .

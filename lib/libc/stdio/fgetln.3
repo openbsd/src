@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgetln.3,v 1.6 1999/09/21 01:47:08 aaron Exp $
+.\"	$OpenBSD: fgetln.3,v 1.7 2000/04/20 01:39:31 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@ returns a pointer to the next line from the stream referenced by
 This line is
 .Em not
 a C string as it does not end with a terminating
-.Dv NUL
+.Tn NUL
 character.
 The length of the line, including the final newline,
 is stored in the memory location to which
@@ -69,6 +69,7 @@ or as soon as the stream is closed.
 Otherwise,
 .Dv NULL
 is returned.
+.Pp
 The
 .Fn fgetln
 function

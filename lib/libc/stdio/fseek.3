@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fseek.3,v 1.6 2000/04/15 02:15:23 aaron Exp $
+.\"	$OpenBSD: fseek.3,v 1.7 2000/04/20 01:39:32 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,31 +43,30 @@
 .Nm fseek ,
 .Nm fseeko ,
 .Nm fsetpos ,
-.Nm ftello ,
 .Nm ftell ,
+.Nm ftello ,
 .Nm rewind
 .Nd reposition a stream
 .Sh SYNOPSIS
 .Fd #include <stdio.h>
 .Ft int
+.Fn fgetpos "FILE *stream" "fpos_t *pos"
+.Ft int
 .Fn fseek "FILE *stream" "long offset" "int whence"
 .Ft int
 .Fn fseeko "FILE *stream" "off_t offset" "int whence"
+.Ft int
+.Fn fsetpos "FILE *stream" "const fpos_t *pos"
 .Ft long
 .Fn ftell "FILE *stream"
 .Ft off_t
 .Fn ftello "FILE *stream"
 .Ft void
 .Fn rewind "FILE *stream"
-.Ft int
-.Fn fgetpos "FILE *stream" "fpos_t *pos"
-.Ft int
-.Fn fsetpos "FILE *stream" "const fpos_t *pos"
 .Sh DESCRIPTION
 The
 .Fn fseek
-function sets the file position indicator for the stream pointed
-to by
+function sets the file position indicator for the stream pointed to by
 .Fa stream .
 The new position, measured in bytes, is obtained by adding
 .Fa offset
@@ -95,14 +94,13 @@ The
 function is identical to
 .Fn fseek
 except that it takes an
-.Dv off_t
+.Li off_t
 as its
 .Fa offset .
 .Pp
 The
 .Fn ftell
-function
-obtains the current value of the file position indicator for the
+function obtains the current value of the file position indicator for the
 stream pointed to by
 .Fa stream .
 .Pp
@@ -111,7 +109,7 @@ The
 function is identical to
 .Fn ftell
 except that its return value is of type
-.Dv off_t .
+.Li off_t .
 .Pp
 The
 .Fn rewind
@@ -131,8 +129,7 @@ The
 .Fn fgetpos
 and
 .Fn fsetpos
-functions
-are alternate interfaces equivalent to
+functions are alternate interfaces equivalent to
 .Fn ftell
 and
 .Fn fseek
@@ -150,8 +147,7 @@ and these routines may be the only way to portably reposition a text stream.
 .Sh RETURN VALUES
 The
 .Fn rewind
-function
-returns no value.
+function returns no value.
 Upon successful completion,
 .Fn fgetpos ,
 .Fn fseek ,
@@ -166,9 +162,7 @@ Otherwise,
 .Fn fseek
 and
 .Fn fseeko
-return \-1 and
-the others
-return a nonzero value and the global variable
+return \-1 and the others return a nonzero value and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -176,8 +170,7 @@ is set to indicate the error.
 .It Bq Er EBADF
 The
 .Fa stream
-specified
-is not a seekable stream.
+specified is not a seekable stream.
 .It Bq Er EINVAL
 The
 .Fa whence
