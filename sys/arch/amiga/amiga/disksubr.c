@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 1996/06/10 19:37:05 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.7 1996/12/20 16:48:09 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.25 1996/04/30 05:00:51 mhitch Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ readdisklabel(dev, strat, lp, clp)
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
+	struct disklabel *dlp;
 	struct adostype adt;
 	struct partition *pp = NULL;
 	struct partblock *pbp;
@@ -165,12 +166,36 @@ readdisklabel(dev, strat, lp, clp)
 			if (rdbchksum(rbp) == 0)
 				break;
 			else
-				msg = "rdb bad checksum";
+				msg = "bad rdb checksum";
 		}
 	}
 	if (nextb == RDB_MAXBLOCKS) {
-		if (msg == NULL)
-			msg = "no rdb found";
+		/*
+		 * No RDB found, let's look for an OpenBSD label instead.
+		 */
+		bp->b_dev = dev;
+		bp->b_blkno = LABELSECTOR;
+		bp->b_resid = 0;			/* was b_cylin */
+		bp->b_bcount = lp->d_secsize;
+		bp->b_flags = B_BUSY | B_READ;
+		(*strat)(bp);  
+
+		/* if successful, find disk label within block and validate */
+		if (biowait(bp)) {
+			msg = "disklabel read error";
+			goto done;
+		}
+
+		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+		if (dlp->d_magic == DISKMAGIC) {
+			if (dkcksum(dlp)) {
+				msg = "OpenBSD disk label corrupted";
+				goto done;
+			}
+			*lp = *dlp;
+			goto done;
+		}
+		msg = "no rdb nor BSD disklabel found";
 		goto done;
 	} else if (msg) {
 		/*
