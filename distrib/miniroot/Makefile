@@ -1,7 +1,8 @@
+#	$OpenBSD: Makefile,v 1.6 1997/04/29 20:37:09 niklas Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
-# Revision is 1.2
-REV=		20
+# Revision is 2.1
+REV=		21
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
@@ -11,9 +12,10 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 .endif
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0a
-VND_DEV=	/dev/${VND}
-VND_RDEV=	/dev/r${VND}
+VND?=		vnd0
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
+DISKTYPE=	miniroot
 PID!=		echo $$$$
 REALIMAGE!=	echo /tmp/image.${PID}
 IMAGE?=		miniroot${REV}.fs
@@ -38,8 +40,9 @@ bsd:
 
 all: ${CBIN} bsd
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
-	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} miniroot
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w -r ${VND} ${DISKTYPE}
+	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
@@ -51,6 +54,7 @@ all: ${CBIN} bsd
 	vnconfig -u ${VND_DEV}
 	cat /*bin/* > /dev/null
 	cp ${REALIMAGE} ${IMAGE}
+	rm ${REALIMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
