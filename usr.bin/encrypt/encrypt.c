@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.17 2003/04/06 21:22:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -94,15 +94,15 @@ print_passwd(char *string, int operation, void *extra)
 			/* To be compatible... */
 			errx(1, "%s", strerror(EFTYPE));
 		}
-		strcpy(msalt, &string[8]);
+		strlcpy(msalt, &string[8], sizeof msalt);
 		salt = msalt;
 		break;
 
 	case DO_MD5:
-		strcpy(buffer, "$1$");
+		strlcpy(buffer, "$1$", sizeof buffer);
 		to64(&buffer[3], arc4random(), 4);
 		to64(&buffer[7], arc4random(), 4);
-		strcpy(buffer + 11, "$");
+		strlcpy(buffer + 11, "$", sizeof buffer - 11);
 		salt = buffer;
 		break;
 
