@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.12 1999/03/04 15:37:58 mickey Exp $
+$OpenBSD: eisadevs,v 1.13 1999/06/23 04:55:09 mickey Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -46,6 +46,7 @@ vendor INP		Interphase
 vendor INT		Intel
 vendor ETI		Microdyne
 vendor MLX		Mylex
+vendor MDG		Madge Networks
 vendor SMC		Standard Microsystems Corp.
 vendor TCM		3Com
 vendor USC		UltraStor
@@ -96,10 +97,14 @@ product INT 1010	EtherExpress 32 Flash Ethernet
 /* ETI products */
 product ETI 1001	NE3300 Ethernet Rev. C & D
 
+/* Madge products */
+product MDG 0002	Smart 16/4 EISA Ringnode
+
 /* HP products */
 product HWP 0C70	HP-IB Host Adapter
 product HWP 0C80	SCSI Host Adapter (Cirrus-II) -- 25525A
 product HWP 1850	LAN AdapterCard -- 25567A
+product HWP 1980	ATM Adapter -- J2802A
 product HWP 2051	EISA Test Adapter Card
 product HWP C000	Series 700 EISA System Board
 product HWP C010	Series 700 EISA System Board
