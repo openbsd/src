@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2004/02/08 23:44:57 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.54 2004/02/09 00:00:41 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -865,7 +865,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 {
 	struct sym		*sym, *next;
 	struct peer		*p, *pnext;
-	struct filter_rule	*r;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
@@ -915,10 +914,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 			free(sym);
 		}
 	}
-
-	if (xconf->opts & BGPD_OPT_VERBOSE)
-		TAILQ_FOREACH(r, filter_l, entries)
-			print_rule(peer_l, r);
 
 	errors += merge_config(xconf, conf, peer_l);
 	errors += mrt_mergeconfig(xmconf, mrtconf);
