@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.21 2001/03/03 21:40:30 millert Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.22 2001/03/03 22:07:50 deraadt Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -57,6 +57,7 @@ int
 errno_to_portable(int unixerrno)
 {
 	int ret = 0;
+
 	switch (unixerrno) {
 	case 0:
 		ret = SSH2_FX_OK;
@@ -87,6 +88,7 @@ int
 flags_from_portable(int pflags)
 {
 	int flags = 0;
+
 	if ((pflags & SSH2_FXF_READ) &&
 	    (pflags & SSH2_FXF_WRITE)) {
 		flags = O_RDWR;
@@ -119,17 +121,20 @@ struct Handle {
 	int fd;
 	char *name;
 };
+
 enum {
 	HANDLE_UNUSED,
 	HANDLE_DIR,
 	HANDLE_FILE
 };
+
 Handle	handles[100];
 
 void
 handle_init(void)
 {
 	int i;
+
 	for(i = 0; i < sizeof(handles)/sizeof(Handle); i++)
 		handles[i].use = HANDLE_UNUSED;
 }
@@ -138,6 +143,7 @@ int
 handle_new(int use, char *name, int fd, DIR *dirp)
 {
 	int i;
+
 	for(i = 0; i < sizeof(handles)/sizeof(Handle); i++) {
 		if (handles[i].use == HANDLE_UNUSED) {
 			handles[i].use = use;
@@ -172,6 +178,7 @@ int
 handle_from_string(char *handle, u_int hlen)
 {
 	int val;
+
 	if (hlen != sizeof(int32_t))
 		return -1;
 	val = GET_32BIT(handle);
@@ -210,6 +217,7 @@ int
 handle_close(int handle)
 {
 	int ret = -1;
+
 	if (handle_is_ok(handle, HANDLE_FILE)) {
 		ret = close(handles[handle].fd);
 		handles[handle].use = HANDLE_UNUSED;
@@ -228,6 +236,7 @@ get_handle(void)
 	char *handle;
 	int val = -1;
 	u_int hlen;
+
 	handle = get_string(&hlen);
 	if (hlen < 256)
 		val = handle_from_string(handle, hlen);
@@ -241,6 +250,7 @@ void
 send_msg(Buffer *m)
 {
 	int mlen = buffer_len(m);
+
 	buffer_put_int(&oqueue, mlen);
 	buffer_append(&oqueue, buffer_ptr(m), mlen);
 	buffer_consume(m, mlen);
@@ -250,6 +260,7 @@ void
 send_status(u_int32_t id, u_int32_t error)
 {
 	Buffer msg;
+
 	TRACE("sent status id %d error %d", id, error);
 	buffer_init(&msg);
 	buffer_put_char(&msg, SSH2_FXP_STATUS);
@@ -262,6 +273,7 @@ void
 send_data_or_handle(char type, u_int32_t id, char *data, int dlen)
 {
 	Buffer msg;
+
 	buffer_init(&msg);
 	buffer_put_char(&msg, type);
 	buffer_put_int(&msg, id);
@@ -282,6 +294,7 @@ send_handle(u_int32_t id, int handle)
 {
 	char *string;
 	int hlen;
+
 	handle_to_string(handle, &string, &hlen);
 	TRACE("sent handle id %d handle %d", id, handle);
 	send_data_or_handle(SSH2_FXP_HANDLE, id, string, hlen);
@@ -293,6 +306,7 @@ send_names(u_int32_t id, int count, Stat *stats)
 {
 	Buffer msg;
 	int i;
+
 	buffer_init(&msg);
 	buffer_put_char(&msg, SSH2_FXP_NAME);
 	buffer_put_int(&msg, id);
@@ -311,6 +325,7 @@ void
 send_attrib(u_int32_t id, Attrib *a)
 {
 	Buffer msg;
+
 	TRACE("sent attrib id %d have 0x%x", id, a->flags);
 	buffer_init(&msg);
 	buffer_put_char(&msg, SSH2_FXP_ATTRS);
@@ -527,6 +542,7 @@ struct timeval *
 attrib_to_tv(Attrib *a)
 {
 	static struct timeval tv[2];
+
 	tv[0].tv_sec = a->atime;
 	tv[0].tv_usec = 0;
 	tv[1].tv_sec = a->mtime;
