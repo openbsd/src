@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.24 2003/04/02 16:04:19 jmc Exp $
+.\"	$OpenBSD: malloc.9,v 1.25 2003/04/17 05:08:39 jmc Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ Note that
 .Dv M_WAITOK
 is conveniently defined to be 0, and hence maybe or'ed into the
 .Fa flags
-argument to indicate that it's Ok to wait for resources.
+argument to indicate that it's OK to wait for resources.
 .El
 .Pp
 Currently, only one flag is defined.
@@ -355,7 +355,7 @@ should be set to the memory size to debug.
 .Va debug_malloc_size_lo
 and
 .Va debug_malloc_size_hi
-Can be used to specify a range of sizes if the exact size to debug is not
+can be used to specify a range of sizes if the exact size to debug is not
 known.
 When those are used,
 .Va debug_malloc_size

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hardclock.9,v 1.4 2003/03/08 23:17:18 jmc Exp $
+.\"	$OpenBSD: hardclock.9,v 1.5 2003/04/17 05:08:39 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kenneth R Westerback
 .\" All rights reserved.
@@ -58,7 +58,7 @@ If there is no separate statistics clock, execute
 .It
 Increment the time of day, implementing any adjustments requested by
 .Xr adjtime 2
-or required as a result of running a ntp daemon or other configured
+or required as a result of running an NTP daemon or other configured
 external clock.
 .It
 Update the real-time timeout queue, calling

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.10 2003/03/14 19:44:32 jason Exp $
+.\"     $OpenBSD: mbuf.9,v 1.11 2003/04/17 05:08:39 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -69,7 +69,7 @@
 .Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
 .Ft void
 .Fn m_freem "struct mbuf *m"
-.Ft void 
+.Ft void
 .Fn m_reclaim "void"
 .Ft void
 .Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
@@ -286,8 +286,8 @@ The data part has then the following elements:
 .Bl -tag -width foobarmoocow
 .It Fa m_pkthdr
 packet header, containing the length of the data, a pointer to the
-interface onwhich the data was received and a generic pointer to a
-structure containing information for IPsec processing. 
+interface on which the data was received and a generic pointer to a
+structure containing information for IPsec processing.
 .It Fa m_pktdat
 buffer holding the data (size MHLEN).
 .El
@@ -311,9 +311,9 @@ cluster.
 .Pp
 When both the M_EXT and M_PKTHDR flags are set, an external storage buffer
 is being used to store the data and this data contains a packet header.
-The structure used is the same than the previous one except that the
+The structure used is the same as the previous one except that the
 .Fa m_pkthdr
-element is not empty, it contains the same information than when
+element is not empty, it contains the same information as when
 M_PKTHDR is used alone.
 .Pp
 .Bl -tag -width compact
@@ -342,7 +342,7 @@ It does not copy clusters, it just increases their reference count.
 .It Fn m_copym2 "struct mbuf *m" "int off0" "int len" "int wait"
 The same as
 .Fn m_copym
-except that it copies cluster mbufs, where
+except that it copies cluster mbufs, whereas
 .Fn m_copym
 just increases the reference count of the clusters.
 .It Fn m_free "struct mbuf *m"
@@ -368,7 +368,9 @@ argument is
 the function may call
 .Xr sleep 9
 to await resources.
-If how is
+If
+.Fa how
+is
 .Fa M_DONTWAIT
 and resources are not available,
 .Fn m_get
@@ -552,7 +554,7 @@ copy.
 Returns NULL on failure.
 .It Fn m_zero "struct mbuf *m"
 Zeroize the data part of the mbufs in the mbuf chain pointed to by
-.Fa m
+.Fa m .
 .It Fn m_apply "struct mbuf *m" "int off" "int len" \
 "int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
 Apply the function
@@ -567,7 +569,7 @@ bytes.
 .It Fn mtod "struct mbuf *m" "datatype"
 Return a pointer to the data contained in the specified mbuf
 .Fa m
-casted to
+cast to
 .Fa datatype .
 .It Fn MCLGET "struct mbuf *m" "int how"
 Allocate and add an mbuf cluster to the mbuf pointed to by
@@ -634,11 +636,11 @@ to
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr mbuf_tags 9 ,
-.Pa /usr/share/doc/smm/18.net.
+.Pa /usr/share/doc/smm/18.net .
 .Rs
 .%A Jun-Ichiro Hagino
-.%T "Mbuf issues in 4.4BSD IPv6/IPsec support (experiences from KAME IPv6/IPsec implementation)"
-.%B "Proceedings of the Freenix Track: 2000 USENIX Annual Technical Conference"
+.%T Mbuf issues in 4.4BSD IPv6/IPsec support (experiences from KAME IPv6/IPsec implementation)
+.%B Proceedings of the Freenix Track: 2000 USENIX Annual Technical Conference
 .%D June 2000
 .Re
 .Sh CODE REFERENCES

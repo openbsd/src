@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.9,v 1.6 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: md5.9,v 1.7 2003/04/17 05:08:39 jmc Exp $
 .\"
 .\" Copyright (c) 1996	Michael Shalayeff
 .\" All rights reserved.
@@ -36,10 +36,10 @@
 .Nd message digest routines
 .Sh SYNOPSIS
 .Fd #include <sys/kernel.h>
-.Va void MD5Init(u_int32_t buf[4]);
-.br
-.Va void MD5Transform(u_int32_t buf[4], u_int32_t const in[16]);
-.br
+.Ft void
+.Fn MD5Init "u_int32_t buf[4]"
+.Ft void
+.Fn MD5Transform "u_int32_t buf[4]" "u_int32_t const in[16]"
 .Sh DESCRIPTION
 The
 .Nm
