@@ -1,4 +1,4 @@
-/* $OpenBSD: lowparse.h,v 1.1 2000/06/23 16:39:45 espie Exp $ */
+/* $OpenBSD: lowparse.h,v 1.2 2000/06/23 16:40:50 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -34,22 +34,7 @@ extern Boolean Parse_NextFile __P((void));
 extern void LowParse_Init __P((void));
 extern void LowParse_End __P((void));
 #endif
+extern char *ParseReadLine __P((void));
+extern char *ParseSkipLine __P((int));
 extern void Finish_Errors __P((void));
-extern void ParseUnreadc __P((char));
-
-/* Definitions for handling #include specifications */
-typedef struct IFile_ {
-    char           	*fname;	/* name of file */
-    unsigned long      	lineno;	/* line number */
-    FILE 		*F;	/* open stream */
-    char 		*str;	/* read from char area */	
-    char 		*ptr;	/* where we are */
-    char 		*end;	/* don't overdo it */
-} IFile;
-
-IFile	*current;
-
-int newline __P((void));
-#define ParseReadc()	current->ptr < current->end ? *current->ptr++ : newline()
-
 #endif
