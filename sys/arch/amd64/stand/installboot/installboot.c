@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.2 2004/02/21 00:48:59 tom Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.3 2004/02/22 09:03:05 tom Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -534,11 +534,5 @@ pbr_set_symbols(char *fname, char *proto, struct sym_data *sym_list)
 		}
 
 		free(nl);
-
-#if 0
-		if (verbose)
-			fprintf(stderr, "%s = %u\n",
-			    sym->sym_name, sym->sym_value);
-#endif
 	}
 }
