@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.30 2002/01/16 18:16:56 marc Exp $
+.\"	$OpenBSD: pax.1,v 1.31 2002/02/11 18:43:51 mpech Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -1047,17 +1047,17 @@ options are specified along with the
 option, a file is not considered selected unless it is newer
 than the file to which it is compared.
 .Sh EXAMPLES
-.Cm pax -w -f /dev/rst0 \&.
+.Cm $ pax -w -f /dev/rst0 \&.
 .Pp
 Copies the contents of the current directory to the device
 .Pa /dev/rst0 .
 .Pp
-.Cm pax -v -f filename
+.Cm $ pax -v -f filename
 .Pp
 Gives the verbose table of contents for an archive stored in
 .Pa filename .
 .Pp
-.Cm mkdir newdir ;
+.Cm $ mkdir newdir ;
 .Cm cd olddir ;
 .Cm pax -rw \&. newdir
 .Pp
@@ -1066,7 +1066,7 @@ This sequence of commands will copy the entire
 directory hierarchy to
 .Pa newdir .
 .Pp
-.Cm pax -r -s ',^//*usr//*,,' -f a.pax
+.Cm $ pax -r -s ',^//*usr//*,,' -f a.pax
 .Pp
 Reads the archive
 .Pa a.pax ,
@@ -1074,13 +1074,13 @@ with all files rooted in
 .Pa /usr
 into the archive extracted relative to the current directory.
 .Pp
-.Cm pax -rw -i \&. dest_dir
+.Cm $ pax -rw -i \&. dest_dir
 .Pp
 Can be used to interactively select the files to copy from the current
 directory to
 .Pa dest_dir .
 .Pp
-.Cm pax -r -pe -U root -G bin -f a.pax
+.Cm $ pax -r -pe -U root -G bin -f a.pax
 .Pp
 Extract all files from the archive
 .Pa a.pax
@@ -1090,7 +1090,7 @@ with group
 .Em bin
 and preserve all file permissions.
 .Pp
-.Cm "pax -r -w -v -Y -Z home /backup"
+.Cm "$ pax -r -w -v -Y -Z home /backup"
 .Pp
 Update (and list) only those files in the destination directory
 .Pa /backup

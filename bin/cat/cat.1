@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.20 2000/10/18 06:55:06 aaron Exp $
+.\"	$OpenBSD: cat.1,v 1.21 2002/02/11 18:43:50 mpech Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -109,13 +109,13 @@ The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-.Cm cat file1
+.Cm $ cat file1
 .Pp
 Print the contents of
 .Ar file1
 to the standard output.
 .Pp
-.Cm cat file1 file2 > file3
+.Cm $ cat file1 file2 > file3
 .Pp
 Sequentially print the contents of
 .Ar file1
@@ -130,7 +130,7 @@ See the manual page for your shell (i.e.,
 .Xr sh 1 )
 for more information on redirection.
 .Pp
-.Cm cat file1 - file2 - file3
+.Cm $ cat file1 - file2 - file3
 .Pp
 Print the contents of
 .Ar file1 ,

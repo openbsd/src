@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.35 2002/01/24 21:32:05 mickey Exp $
+.\"	$OpenBSD: mount.8,v 1.36 2002/02/11 18:43:51 mpech Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -218,14 +218,14 @@ For example, the
 .Nm
 command:
 .Bd -literal -offset indent
-mount -t mfs -o nosuid,-N,-s=4000 /dev/dk0b /tmp
+# mount -t mfs -o nosuid,-N,-s=4000 /dev/dk0b /tmp
 .Ed
 .Pp
 causes
 .Nm
 to execute the equivalent of:
 .Bd -literal -offset indent
-/sbin/mount_mfs -o nosuid -N -s 4000 /dev/dk0b /tmp
+# /sbin/mount_mfs -o nosuid -N -s 4000 /dev/dk0b /tmp
 .Ed
 .It Fl r
 The file system is to be mounted read-only.
@@ -257,7 +257,7 @@ For example, the
 .Nm
 command:
 .Bd -literal -offset indent
-mount -a -t nonfs,mfs
+# mount -a -t nonfs,mfs
 .Ed
 .Pp
 mounts all filesystems except those of type
@@ -308,9 +308,9 @@ Fast File Systems are described in the
 manual page.
 .Sh EXAMPLES
 .Bd -literal
-mount -t cd9660 -r /dev/cd0a /mnt/cdrom
-mount -t msdos /dev/fd0a /mnt/floppy
-mount host:/path/name /mnt/nfs
+# mount -t cd9660 -r /dev/cd0a /mnt/cdrom
+# mount -t msdos /dev/fd0a /mnt/floppy
+# mount host:/path/name /mnt/nfs
 .Ed
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact

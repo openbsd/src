@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmccontrol.8,v 1.9 2001/12/21 11:41:50 mpech Exp $
+.\"	$OpenBSD: lmccontrol.8,v 1.10 2002/02/11 18:43:51 mpech Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -121,7 +121,7 @@ power).
 To set a SSI card for a speed of 2048000 bits/sec with HDLC keepalive off,
 one could use:
 .Bd -unfilled -offset indent
-lmccontrol lmc0 -l 2048000 -K
+# lmccontrol lmc0 -l 2048000 -K
 .Ed
 .Sh SEE ALSO
 .Xr lmc 4 ,

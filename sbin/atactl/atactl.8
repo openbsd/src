@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.11 2001/12/21 11:41:50 mpech Exp $
+.\"	$OpenBSD: atactl.8,v 1.12 2002/02/11 18:43:51 mpech Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -283,13 +283,13 @@ The
 .Xr wd 4
 driver performs a cache flush automatically before shutdown.
 .Sh EXAMPLES
-.Cm atactl /dev/wd0c identify
+.Cm # atactl /dev/wd0c identify
 .Pp
 Displays the vendor, product, revision strings and capabilities (such as
 support for SMART) as reported by
 .Pa /dev/wd0 .
 .Pp
-.Cm atactl /dev/wd1c smartenable
+.Cm # atactl /dev/wd1c smartenable
 .Pp
 Enables the SMART support on
 .Pa /dev/wd1

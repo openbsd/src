@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_null.8,v 1.15 2000/11/09 17:53:00 aaron Exp $
+.\"	$OpenBSD: mount_null.8,v 1.16 2002/02/11 18:43:51 mpech Exp $
 .\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -149,7 +149,7 @@ vnode before returning it to the caller.
 .Pp
 For example, imagine mounting a null layer with
 .Bd -literal -offset indent
-mount_null /usr/include /dev/layer/null
+# mount_null /usr/include /dev/layer/null
 .Ed
 .Pp
 Changing directory to

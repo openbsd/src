@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.76 2002/02/10 22:09:24 nate Exp $
+.\"	$OpenBSD: sysctl.8,v 1.77 2002/02/11 18:43:51 mpech Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -74,7 +74,7 @@ suppress printing of the field name, only output the field value.
 Useful for setting shell variables.
 For example:
 .Bd -literal -offset indent -compact
-set psize=`sysctl -n hw.pagesize`
+# set psize=`sysctl -n hw.pagesize`
 .Ed
 .Pp
 If just a MIB style name is given,
@@ -329,23 +329,23 @@ flag lists all the filesystems compiled into the running kernel.
 For example, to retrieve the maximum number of processes allowed
 in the system, one would use the follow request:
 .Bd -literal -offset indent -compact
-sysctl kern.maxproc
+$ sysctl kern.maxproc
 .Ed
 .Pp
 To set the maximum number of processes allowed
 in the system to 1000, one would use the follow request:
 .Bd -literal -offset indent -compact
-sysctl -w kern.maxproc=1000
+# sysctl -w kern.maxproc=1000
 .Ed
 .Pp
 Information about the system clock rate may be obtained with:
 .Bd -literal -offset indent -compact
-sysctl kern.clockrate
+$ sysctl kern.clockrate
 .Ed
 .Pp
 Information about the load average history may be obtained with
 .Bd -literal -offset indent -compact
-sysctl vm.loadavg
+$ sysctl vm.loadavg
 .Ed
 .Pp
 To make the
@@ -353,7 +353,7 @@ To make the
 system call use traditional BSD semantics (don't clear setuid/setgid bits),
 one would do the following:
 .Bd -literal -offset indent -compact
-sysctl -w fs.posix.setuid=0
+# sysctl -w fs.posix.setuid=0
 .Ed
 .Pp
 Set the list of reserved TCP ports that should not be allocated
@@ -362,13 +362,13 @@ This can be used to keep daemons
 from stealing a specific port that another program needs to function.
 List elements may be separated by commas and/or whitespace.
 .Bd -literal -offset indent -compact
-sysctl -w net.inet.tcp.baddynamic=749,750,751,760,761,871
+# sysctl -w net.inet.tcp.baddynamic=749,750,751,760,761,871
 .Ed
 .Pp
 It is also possible to add or remove ports from the current list.
 .Bd -literal -offset indent -compact
-sysctl -w net.inet.tcp.baddynamic=+748
-sysctl -w net.inet.tcp.baddynamic=-871
+# sysctl -w net.inet.tcp.baddynamic=+748
+# sysctl -w net.inet.tcp.baddynamic=-871
 .Ed
 .Pp
 To adjust the number of kernel
@@ -376,7 +376,7 @@ To adjust the number of kernel
 threads used to service asynchronous
 I/O requests on an NFS client machine use
 .Bd -literal -offset indent -compact
-sysctl -w vfs.nfs.iothreads=4
+# sysctl -w vfs.nfs.iothreads=4
 .Ed
 .Pp
 The number of 4 is the default, where the 20 is the maximum.

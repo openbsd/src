@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ls.1,v 1.32 2002/01/24 20:33:45 mickey Exp $
+.\"	$OpenBSD: ls.1,v 1.33 2002/02/11 18:43:51 mpech Exp $
 .\"	$NetBSD: ls.1,v 1.14 1995/12/05 02:44:01 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -394,18 +394,18 @@ The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-.Cm ls -l
+.Cm $ ls -l
 .Pp
 List the contents of the current working directory in long format.
 .Pp
-.Cm ls -lioF
+.Cm $ ls -lioF
 .Pp
 In addition to listing the contents of the current working directory in
 long format, show inode numbers, file flags (see
 .Xr chflags 1 ) ,
 and suffix each filename with a symbol representing its file type.
 .Pp
-.Cm ls -lt /var/log
+.Cm $ ls -lt /var/log
 .Pp
 List the files in
 .Pa /var/log ,

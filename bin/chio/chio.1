@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.17 2001/08/26 17:51:29 deraadt Exp $
+.\"	$OpenBSD: chio.1,v 1.18 2002/02/11 18:43:50 mpech Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -197,11 +197,11 @@ Element supports passing media (exporting) to an outside human operator.
 Element supports receiving media (importing) from an outside human operator.
 .El
 .Sh EXAMPLES
-.Cm chio move slot 3 drive 0
+.Cm # chio move slot 3 drive 0
 .Pp
 Moves the media in slot 3 (fourth slot) to drive 0 (first drive).
 .Pp
-.Cm chio setpicker 2
+.Cm # chio setpicker 2
 .Pp
 Configures the changer to use picker 2 (third picker) for operations.
 .Sh FILES

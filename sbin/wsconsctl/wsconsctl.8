@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.11 2001/12/21 11:41:50 mpech Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.12 2002/02/11 18:43:52 mpech Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,11 +111,11 @@ Use the
 utility to determine which keyboard encodings are available for your
 country.
 .Sh EXAMPLES
-.Cm wsconsctl -w keyboard.encoding=uk
+.Cm # wsconsctl -w keyboard.encoding=uk
 .Pp
 Sets a UK keyboard encoding.
 .Pp
-.Cm wsconsctl -w keyboard.map+="keysym Caps_Lock = Control_L"
+.Cm # wsconsctl -w keyboard.map+="keysym Caps_Lock = Control_L"
 .Pp
 Modifies the current keyboard encoding so that, when the
 .Ar Caps Lock
@@ -127,13 +127,13 @@ to the
 .Ar /usr/include/dev/wscons/wsksymdef.h
 file.
 .Pp
-.Cm wsconsctl -w keyboard.map+="keycode 184=Mode_switch"
+.Cm # wsconsctl -w keyboard.map+="keycode 184=Mode_switch"
 .Pp
 Assigns the
 .Ar Right Alt
 key to be the group modifier (layout is changed while the key is pressed).
 .Pp
-.Cm wsconsctl -w keyboard.map+="keycode 157=Mode_Lock"
+.Cm # wsconsctl -w keyboard.map+="keycode 157=Mode_Lock"
 .Pp
 Assigns the
 .Ar Right Control
@@ -149,7 +149,7 @@ and
 .Ar Shift
 behaviour.
 .Pp
-.Cm wsconsctl -w keyboard.encoding=us.swapctrlcaps
+.Cm # wsconsctl -w keyboard.encoding=us.swapctrlcaps
 .Pp
 Sets a US keyboard encoding, with the
 .Ar Caps Lock
@@ -164,11 +164,11 @@ by the
 .Ar Caps Lock
 key is enough - see the previous example for details.
 .Pp
-.Cm wsconsctl -w keyboard.bell.pitch=1200
+.Cm # wsconsctl -w keyboard.bell.pitch=1200
 .Pp
 Sets the bell pitch to be 1200.
 .Pp
-.Cm wsconsctl -w keyboard.bell.pitch+=200
+.Cm # wsconsctl -w keyboard.bell.pitch+=200
 .Pp
 Adds 200 to the current pitch of the bell.
 .Sh FILES

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.39 2002/01/09 11:30:53 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.40 2002/02/11 18:43:51 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -238,11 +238,11 @@ Other protocols are handled similarly to UDP:
 .El
 .Bd -literal
 Example:
-    # Timeout established connections after an hour of inactivity
-    pfctl -t tcp.established=3600
+      Timeout established connections after an hour of inactivity
+    # pfctl -t tcp.established=3600
 
-    # Display the current established idle timeout
-    pfctl -t tcp.established
+      Display the current established idle timeout
+    # pfctl -t tcp.established
 .Ed
 .It Fl v
 Produce more verbose output.

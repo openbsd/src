@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.16 2002/01/24 20:33:45 mickey Exp $
+.\"	$OpenBSD: ln.1,v 1.17 2002/02/11 18:43:51 mpech Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -127,14 +127,14 @@ makes links in
 to all the named source files.
 The links made will have the same name as the files being linked to.
 .Sh EXAMPLES
-.Cm ln -s /var/www /home/www
+.Cm # ln -s /var/www /home/www
 .Pp
 Creates a symbolic link named
 .Pa /home/www
 and points it to
 .Pa /var/www .
 .Pp
-.Cm ln /usr/local/bin/fooprog-1.0 /usr/local/bin/fooprog
+.Cm # ln /usr/local/bin/fooprog-1.0 /usr/local/bin/fooprog
 .Pp
 Hard link
 .Pa /usr/local/bin/fooprog
@@ -159,7 +159,7 @@ may be invoked from shell scripts, for example, using the
 .Cm "if [ ]"
 construct.
 .Pp
-.Cm "mkdir bar baz; ln -s bar foo; ln -shf baz foo"
+.Cm "$ mkdir bar baz; ln -s bar foo; ln -shf baz foo"
 .Pp
 The second call to
 .Nm

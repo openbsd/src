@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.20 2002/01/05 13:47:37 tdeval Exp $
+.\"	$OpenBSD: raidctl.8,v 1.21 2002/02/11 18:43:51 mpech Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -550,7 +550,7 @@ The first time a RAID set is configured, the
 .Fl C
 option must be used:
 .Bd -unfilled -offset indent
-raidctl -C raid0.conf raid0
+# raidctl -C raid0.conf raid0
 .Ed
 .Pp
 where 
@@ -568,14 +568,14 @@ appropriate component labels are added with the
 .Fl I
 option) then raid0 can be configured normally with:
 .Bd -unfilled -offset indent
-raidctl -c raid0.conf raid0
+# raidctl -c raid0.conf raid0
 .Ed
 .Pp
 When the RAID set is configured for the first time, it is
 necessary to initialize the component labels, and to initialize the
 parity on the RAID set.  Initializing the component labels is done with:
 .Bd -unfilled -offset indent
-raidctl -I 112341 raid0
+# raidctl -I 112341 raid0
 .Ed
 .Pp
 where
@@ -602,7 +602,7 @@ quite time-consuming, the
 option may be also used in conjunction with
 .Fl i :
 .Bd -unfilled -offset indent
-raidctl -iv raid0
+# raidctl -iv raid0
 .Ed
 .Pp
 This will give more verbose output on the
@@ -675,14 +675,14 @@ resumed.
 .Ss Maintenance of the RAID set
 After the parity has been initialized for the first time, the command:
 .Bd -unfilled -offset indent
-raidctl -p raid0
+# raidctl -p raid0
 .Ed
 .Pp
 can be used to check the current status of the parity.  To check the
 parity and rebuild it necessary (for example, after an unclean
 shutdown) the command:
 .Bd -unfilled -offset indent
-raidctl -P raid0
+# raidctl -P raid0
 .Ed
 .Pp
 is used.  Note that re-writing the parity can be done while
@@ -695,7 +695,7 @@ data on the set is modified.
 To see how the RAID set is doing, the following command can be used to
 show the RAID set's status:
 .Bd -unfilled -offset indent
-raidctl -s raid0
+# raidctl -s raid0
 .Ed
 .Pp
 The output will look something like:
@@ -728,7 +728,7 @@ The
 option may be also used in conjunction with
 .Fl s :
 .Bd -unfilled -offset indent
-raidctl -sv raid0
+# raidctl -sv raid0
 .Ed
 .Pp
 In this case, the components' label information (see the
@@ -773,7 +773,7 @@ Copyback is 100% complete.
 .Pp
 To check the component label of /dev/sd1e, the following is used:
 .Bd -unfilled -offset indent
-raidctl -g /dev/sd1e raid0
+# raidctl -g /dev/sd1e raid0
 .Ed
 .Pp
 The output of this command will look something like:
@@ -793,7 +793,7 @@ If for some reason
 (perhaps to test reconstruction) it is necessary to pretend a drive
 has failed, the following will perform that function:
 .Bd -unfilled -offset indent
-raidctl -f /dev/sd2e raid0
+# raidctl -f /dev/sd2e raid0
 .Ed
 .Pp
 The system will then be performing all operations in degraded mode,
@@ -815,7 +815,7 @@ start a reconstruction, the
 .Fl F
 option must be used:
 .Bd -unfilled -offset indent
-raidctl -F /dev/sd2e raid0
+# raidctl -F /dev/sd2e raid0
 .Ed
 .Pp
 The
@@ -917,7 +917,7 @@ No spares.
 In this case there are a number of options.  The first option is to add a hot
 spare using:
 .Bd -unfilled -offset indent
-raidctl -a /dev/sd4e raid0
+# raidctl -a /dev/sd4e raid0
 .Ed
 .Pp
 After the hot add, the status would then be:
@@ -937,7 +937,7 @@ as describe above.
 A second option is to rebuild directly onto /dev/sd2e.  Once the disk 
 containing /dev/sd2e has been replaced, one can simply use:
 .Bd -unfilled -offset indent
-raidctl -R /dev/sd2e raid0
+# raidctl -R /dev/sd2e raid0
 .Ed
 .Pp
 to rebuild the /dev/sd2e component.  As the rebuilding is in progress,
@@ -976,8 +976,8 @@ can be used anywhere a normal component name would be used.  For
 example, to add a hot spare to the above set, and rebuild to that hot
 spare, the following could be done:
 .Bd -unfilled -offset indent
-raidctl -a /dev/sd3e raid0
-raidctl -F component1 raid0
+# raidctl -a /dev/sd3e raid0
+# raidctl -F component1 raid0
 .Ed
 .Pp
 at which point the data missing from 
@@ -1017,13 +1017,13 @@ RAID sets can also be auto-configured at boot.  To make a set
 auto-configurable, simply prepare the RAID set as above, and then do
 a:
 .Bd -unfilled -offset indent
-raidctl -A yes raid0
+# raidctl -A yes raid0
 .Ed
 .Pp
 to turn on auto-configuration for that set.  To turn off
 auto-configuration, use:
 .Bd -unfilled -offset indent
-raidctl -A no raid0
+# raidctl -A no raid0
 .Ed
 .Pp
 RAID sets which are auto-configurable will be configured before the
@@ -1044,7 +1044,7 @@ partition of such a RAID set being used for
 .Pa / .
 To use raid0a as the root file system, simply use:
 .Bd -unfilled -offset indent
-raidctl -A root raid0
+# raidctl -A root raid0
 .Ed
 .Pp
 To return raid0a to be just an auto-configuring set simply use the
@@ -1133,7 +1133,7 @@ is to unconfigure a
 .Xr raid 4
 device.  This is accomplished via a simple:
 .Bd -unfilled -offset indent
-raidctl -u raid0
+# raidctl -u raid0
 .Ed
 .Pp
 at which point the device is ready to be reconfigured.
@@ -1234,55 +1234,55 @@ Construct a RAID configuration file: e.g.
 .It 
 Configure the RAID set with: 
 .Bd -unfilled -offset indent
-raidctl -C raid0.conf raid0
+# raidctl -C raid0.conf raid0
 .Ed
 .Pp
 .It 
 Initialize the component labels with: 
 .Bd -unfilled -offset indent
-raidctl -I 123456 raid0
+# raidctl -I 123456 raid0
 .Ed
 .Pp
 .It 
 Initialize other important parts of the set with: 
 .Bd -unfilled -offset indent
-raidctl -i raid0
+# raidctl -i raid0
 .Ed
 .Pp
 .It
 Get the default label for the RAID set: 
 .Bd -unfilled -offset indent
-disklabel raid0 > /tmp/label
+# disklabel raid0 > /tmp/label
 .Ed
 .Pp
 .It 
 Edit the label: 
 .Bd -unfilled -offset indent
-vi /tmp/label
+# vi /tmp/label
 .Ed
 .Pp
 .It 
 Put the new label on the RAID set: 
 .Bd -unfilled -offset indent
-disklabel -R -r raid0 /tmp/label
+# disklabel -R -r raid0 /tmp/label
 .Ed
 .Pp
 .It 
 Create the file system: 
 .Bd -unfilled -offset indent
-newfs /dev/rraid0e 
+# newfs /dev/rraid0e 
 .Ed
 .Pp
 .It
 Mount the file system: 
 .Bd -unfilled -offset indent
-mount /dev/raid0e /mnt
+# mount /dev/raid0e /mnt
 .Ed
 .Pp
 .It
 Use:
 .Bd -unfilled -offset indent
-raidctl -c raid0.conf raid0
+# raidctl -c raid0.conf raid0
 .Ed
 .Pp
 To re-configure the RAID set the next time it is needed, or put

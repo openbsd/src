@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.26 2001/12/13 20:16:48 mpech Exp $
+.\"	$OpenBSD: dump.8,v 1.27 2002/02/11 18:43:51 mpech Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -318,7 +318,7 @@ to minimize the number of tapes follows:
 .It
 Always start with a level 0 backup, for example:
 .Bd -literal -offset indent
-/sbin/dump -0u -f /dev/nrst1 /usr/src
+# /sbin/dump -0u -f /dev/nrst1 /usr/src
 .Ed
 .Pp
 This should be done at set intervals, say once a month or once every two months,
