@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpt.4,v 1.4 2004/05/23 05:44:59 marco Exp $
+.\"	$OpenBSD: mpt.4,v 1.5 2004/08/24 05:37:26 david Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -88,7 +88,7 @@ host driver.
 The MPI (Message Passing Interface) defintion includes a register-level
 transport mechanism and a messaging protocol.
 A system doorbell and message queues define the MPI transport interface.
-Inbound Message Frames (MF), allocated in host memory, indentify I/O operations
+Inbound Message Frames (MF), allocated in host memory, identify I/O operations
 to be performed by the IO Controller (IOC).
 These operations are queued on the Request Queue by the host driver.
 Outbound Message Frames, also in host memory, track I/O operations as they
