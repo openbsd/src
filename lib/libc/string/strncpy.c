@@ -1,3 +1,5 @@
+/*	$OpenBSD: strncpy.c,v 1.5 2004/11/28 07:16:54 mickey Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,10 +33,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strncpy.c,v 1.4 2003/06/11 21:08:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strncpy.c,v 1.5 2004/11/28 07:16:54 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 /*
  * Copy src to dst, truncating or null-padding to always copy n bytes.
