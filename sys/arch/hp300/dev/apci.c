@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.1 1997/07/06 08:01:44 downsj Exp $	*/
+/*	$OpenBSD: apci.c,v 1.2 1997/07/14 04:25:12 downsj Exp $	*/
 /*	$NetBSD: apci.c,v 1.1 1997/05/12 08:12:36 thorpej Exp $	*/
 
 /*      
@@ -94,6 +94,7 @@ struct apci_softc {
 		sc_oflow,
 		sc_toterr;		/* stats */
 	int	sc_flags;
+	u_char	sc_cua;			/* callout mode */
 };
 
 /* sc_flags */
@@ -125,7 +126,8 @@ int	apcicheckdca __P((void));
 
 cdev_decl(apci);
 
-#define	APCIUNIT(x)	minor(x)
+#define	APCIUNIT(x)	(minor(x) & 0x7f)
+#define APCICUA(x)	(minor(x) & 0x80)
 
 int	apcidefaultrate = TTYDEF_SPEED;
 
@@ -266,11 +268,14 @@ apciopen(dev, flag, mode, p)
 
 	apci = sc->sc_apci;
 
+	s = spltty();
 	if (sc->sc_tty == NULL) {
 		tp = sc->sc_tty = ttymalloc();
 		tty_attach(tp);
 	} else
 		tp = sc->sc_tty;
+	splx(s);
+
 	tp->t_oproc = apcistart;
 	tp->t_param = apciparam;
 	tp->t_dev = dev;
@@ -315,18 +320,36 @@ apciopen(dev, flag, mode, p)
 	(void) apcimctl(sc, MCR_DTR | MCR_RTS, DMSET);
 
 	/* Set soft-carrier if so configured. */
-	if ((sc->sc_flags & APCI_SOFTCAR) ||
+	if ((sc->sc_flags & APCI_SOFTCAR) || APCICUA(dev) ||
 	    (apcimctl(sc, 0, DMGET) & MSR_DCD))
 		tp->t_state |= TS_CARR_ON;
-	
+
+	if (APCICUA(dev)) {
+		if (tp->t_state & TS_ISOPEN) {
+			/* Ah, but someone already is dialed in... */
+			splx(s);
+			return (EBUSY);
+		}
+		sc->sc_cua = 1;		/* We go into CUA mode */
+	}
+		
 	/* Wait for carrier if necessary. */
-	if ((flag & O_NONBLOCK) == 0) {
-		while ((tp->t_cflag & CLOCAL) == 0 &&
+	if (flag & O_NONBLOCK) {
+		if (!APCICUA(dev) && sc->sc_cua) {
+			/* Opening TTY non-blocking... but the CUA is busy */
+			splx(s);
+			return (EBUSY);
+		}
+	} else {
+		while (!(APCICUA(dev) && sc->sc_cua) &&
+		    (tp->t_cflag & CLOCAL) == 0 &&
 		    (tp->t_state & TS_CARR_ON) == 0) {
 			tp->t_state |= TS_WOPEN;
 			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 			    TTIPRI | PCATCH, ttopen, 0);
 			if (error) {
+				if (APCICUA(dev))
+					sc->sc_cua = 0;
 				splx(s);
 				return (error);
 			}
@@ -375,6 +398,7 @@ apciclose(dev, flag, mode, p)
 		(void) apcimctl(sc, 0, DMSET);
 	}
 	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
+	sc->sc_cua = 0;
 	splx(s);
 	ttyclose(tp);
 #if 0

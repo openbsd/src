@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.9 1997/07/06 08:01:46 downsj Exp $	*/
+/*	$OpenBSD: dca.c,v 1.10 1997/07/14 04:25:13 downsj Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ struct	dca_softc {
 	struct tty		*sc_tty;	/* our tty instance */
 	int			sc_oflows;	/* overflow counter */
 	short			sc_flags;	/* state flags */
+	u_char			sc_cua;		/* callout mode */
 
 	/*
 	 * Bits for sc_flags.
@@ -155,7 +156,8 @@ extern int kgdb_rate;
 extern int kgdb_debug_init;
 #endif
 
-#define	DCAUNIT(x)		minor(x)
+#define	DCAUNIT(x)		(minor(x) & 0x7f)
+#define DCACUA(x)		(minor(x) & 0x80)
 
 #ifdef DEBUG
 long	fifoin[17];
@@ -302,11 +304,14 @@ dcaopen(dev, flag, mode, p)
 
 	dca = sc->sc_dca;
 
+	s = spltty();
 	if (sc->sc_tty == NULL) {
 		tp = sc->sc_tty = ttymalloc();
 		tty_attach(tp);
 	} else
 		tp = sc->sc_tty;
+	splx(s);
+
 	tp->t_oproc = dcastart;
 	tp->t_param = dcaparam;
 	tp->t_dev = dev;
@@ -352,21 +357,41 @@ dcaopen(dev, flag, mode, p)
 	(void) dcamctl(sc, MCR_DTR | MCR_RTS, DMSET);
 
 	/* Set soft-carrier if so configured. */
-	if ((sc->sc_flags & DCA_SOFTCAR) || (dcamctl(sc, 0, DMGET) & MSR_DCD))
+	if ((sc->sc_flags & DCA_SOFTCAR) || DCACUA(dev) ||
+	    (dcamctl(sc, 0, DMGET) & MSR_DCD))
 		tp->t_state |= TS_CARR_ON;
 
+	if (DCACUA(dev)) {
+		if (tp->t_state & TS_ISOPEN) {
+			/* Ah, but someone already is dialed in... */
+			splx(s);
+			return (EBUSY);
+		}
+		sc->sc_cua = 1;		/* We go into CUA mode */
+	}
+
 	/* Wait for carrier if necessary. */
-	if ((flag & O_NONBLOCK) == 0)
-		while ((tp->t_cflag & CLOCAL) == 0 &&
+	if (flag & O_NONBLOCK) {
+		if (!DCACUA(dev) && sc->sc_cua) {
+			/* Opening TTY non-blocking... but the CUA is busy */
+			splx(s);
+			return (EBUSY);
+		}
+	} else {
+		while (!(DCACUA(dev) && sc->sc_cua) &&
+		    (tp->t_cflag & CLOCAL) == 0 &&
 		    (tp->t_state & TS_CARR_ON) == 0) {
 			tp->t_state |= TS_WOPEN; 
 			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 			    TTIPRI | PCATCH, ttopen, 0);
 			if (error) {
+				if (DCACUA(dev))
+					sc->sc_cua = 0;
 				splx(s);
 				return (error);
 			}
 		}
+	}
 	splx(s);
 
 	if (error == 0)
@@ -409,6 +434,7 @@ dcaclose(dev, flag, mode, p)
 		(void) dcamctl(sc, 0, DMSET);
 	}
 	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
+	sc->sc_cua = 0;
 	splx(s);
 	ttyclose(tp);
 #if 0
