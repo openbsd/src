@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_once.c,v 1.3 1999/11/25 07:01:40 d Exp $	*/
+/*	$OpenBSD: uthread_once.c,v 1.4 2000/01/06 07:20:01 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -39,8 +39,11 @@
 int
 pthread_once(pthread_once_t * once_control, void (*init_routine) (void))
 {
+	int ret;
+
 	if (once_control->state == PTHREAD_NEEDS_INIT) {
-		pthread_mutex_lock(&(once_control->mutex));
+		if ((ret = pthread_mutex_lock(&(once_control->mutex))) != 0)
+			return ret;
 		if (once_control->state == PTHREAD_NEEDS_INIT) {
 			init_routine();
 			once_control->state = PTHREAD_DONE_INIT;
