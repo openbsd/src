@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.95 2002/10/29 03:03:38 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.96 2002/11/14 01:41:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -102,7 +102,7 @@
 
 #define	EXIT_STACKSIZE	(2*NBPG)
 #define	EMRG_STACKSIZE	(2*NBPG)
-#define	FPEMU_STACKSIZE	(2*NBPG)
+#define	FPEMU_STACKSIZE	(4*NBPG)
 
 	.data
 $trap_tmp_save			/* XXX assumed to be aligned on 2048 */
@@ -1036,37 +1036,35 @@ hpmc_v
 ENTRY(TLABEL(excpt),0)
 	/* assume we never get this one w/o fpu [enabled] */
 	copy	rp, r1
-	mtctl	arg0, tr5
+	copy	arg0, r8
+	mfctl	cr30, r9
 	.import	fpu_save, code
 	.call
 	bl	fpu_save, rp
-	mfctl	cr30, arg0
+	copy	r9, arg0
 	copy	r1, rp
+	copy	r8, arg0
 	mtctl	r0, ccr		/* cause a reload after exception */
 	ldil	L%fpu_curpcb, r1
-	mfctl	cr30, arg0
 	stw	r0, R%fpu_curpcb(r1)
 
 	/* now, check for trap */
-	ldw	0(arg0), r1
+	ldw	0(r9), r1
 	bb,>=,n	r1, HPPA_FPU_T_POS, excpt_notrap
-	ldw	8(arg0), r1
+	ldw	8(r9), r1
 	extru	r1, 5, 6, r1
 	comib,<>,n HPPA_FPU_UNMPL, r1, excpt_notrap
 
-	ldw	0(arg0), r1
+	ldw	0(r9), r1
 	depi	0, HPPA_FPU_T_POS, 1, r1
-	stw	r1, 0(arg0)
-	ldw	8(arg0), r1
-	stw	r0, 8(arg0)
-	fdc	r0(arg0)
+	stw	r1, 0(r9)
+	ldw	8(r9), r1
+	stw	r0, 8(r9)
 	.import	$fpu_emulate, code
 	b	$fpu_emulate
-	mfctl	tr5, arg0
+	fdc	r0(r9)
 
 excpt_notrap
-	fdc	r0(arg0)
-	mfctl	tr5, arg0
 	sync
 	b	TLABEL(all)
 	ldi	T_EXCEPTION, r1
@@ -1504,7 +1502,6 @@ $trap_from_kernel
 	mfctl	iir, t2
 	stw	t2, TF_CR19(t3)
 	stw	r1, TF_FLAGS(t3)
-	mfctl	tr7, r1
 
 	copy	sp, t3
 	ldo	HPPA_FRAME_SIZE+TRAPFRAME_SIZEOF(sp), sp
@@ -1895,34 +1892,30 @@ EXIT(hppa_pfr)
 	.align	32
 	.export	TLABEL(ibrk), entry
 ENTRY(TLABEL(ibrk),0)
-	mtctl	t1, tr2
-	mtctl	t2, tr3
-
 	/* If called by a user process then always pass it to trap() */
-	mfctl	pcoq, t1
-	extru,=	t1, 31, 2, r0
+	mfctl	pcoq, r8
+	extru,=	r8, 31, 2, r0
 	b,n	$ibrk_bad
 
 	/* don't accept breaks from data segments */
 	.import etext
-	ldil	L%etext, t2
-	ldo	R%etext(t2), t2
-	comb,>>=,n t1, t2, $ibrk_bad
+	ldil	L%etext, r9
+	ldo	R%etext(r9), r9
+	comb,>>=,n r8, r9, $ibrk_bad
 
-	mfctl	iir, t1
-	extru	t1, 31, 5, t2
-	comib,<>,n HPPA_BREAK_KERNEL, t2, $ibrk_bad
+	mfctl	iir, r8
+	extru	r8, 31, 5, r9
+	comib,<>,n HPPA_BREAK_KERNEL, r9, $ibrk_bad
 
 	/* now process all those `break' calls we make */
-	extru	t1, 18, 13, t2
-	comib,=,n HPPA_BREAK_GET_PSW, t2, $ibrk_getpsw
-	comib,=,n HPPA_BREAK_SET_PSW, t2, $ibrk_setpsw
+	extru	r8, 18, 13, r9
+	comib,=,n HPPA_BREAK_GET_PSW, r9, $ibrk_getpsw
+	comib,=,n HPPA_BREAK_SET_PSW, r9, $ibrk_setpsw
 
 $ibrk_bad
 	/* illegal (unimplemented) break entry point */
-	mfctl	tr3, t2
 	b	TLABEL(all)
-	mfctl	tr2, t1
+	nop
 
 $ibrk_getpsw
 	b	$ibrk_exit
@@ -1944,13 +1937,10 @@ $ibrk_setpsw_tovirt
 $ibrk_exit
 	/* skip the break */
 	mtctl	r0, pcoq
-	mfctl	pcoq, t1
-	mtctl	t1, pcoq
-	ldo	4(t1), t1
-	mtctl	t1, pcoq
-	mfctl	tr3, t2
-	mfctl	tr2, t1
-	mfctl	tr7, r1
+	mfctl	pcoq, r8
+	mtctl	r8, pcoq
+	ldo	4(r8), r8
+	mtctl	r8, pcoq
 	rfir
 	nop
 EXIT(TLABEL(ibrk))
@@ -1989,7 +1979,7 @@ LEAF_ENTRY(fpu_save)
 	fstds,ma %fr30, 8(arg0)
 	fstds    %fr31, 0(arg0)
 	fdc	r0(arg0)
-	ldo	-60(arg0), arg0
+	ldo	-56(arg0), arg0
 	fdc	r0(arg0)
 	ldo	-32(arg0), arg0
 	fdc	r0(arg0)
@@ -2014,8 +2004,7 @@ EXIT(fpu_save)
 	 * iisq:iioq - exception triggered instruction
 	 */
 ENTRY($fpu_emulate,320)
-	mtctl	sp, tr3
-	mtctl	r31, tr2
+	copy	r31, r9
 
 	ldil	L%fpemu_stack, r31
 	ldw	R%fpemu_stack(r31), r31
@@ -2027,16 +2016,16 @@ ENTRY($fpu_emulate,320)
 	stw	r5 , TF_R5 (r31)
 	stw	r6 , TF_R6 (r31)
 	stw	r7 , TF_R7 (r31)
-	stw	r8 , TF_R8 (r31)
-	stw	r9 , TF_R9 (r31)
+	/* stw	r8 , TF_R8 (r31) shadowed */
+	/* stw	r9 , TF_R9 (r31) shadowed */
 	stw	r10, TF_R10(r31)
 	stw	r11, TF_R11(r31)
 	stw	r12, TF_R12(r31)
 	stw	r13, TF_R13(r31)
 	stw	r14, TF_R14(r31)
 	stw	r15, TF_R15(r31)
-	stw	r16, TF_R16(r31)
-	stw	r17, TF_R17(r31)
+	/* stw	r16, TF_R16(r31) shadowed */
+	/* stw	r17, TF_R17(r31) shadowed */
 	stw	r18, TF_R18(r31)
 #endif
 	stw	r19, TF_R19(r31)
@@ -2044,16 +2033,14 @@ ENTRY($fpu_emulate,320)
 	stw	r21, TF_R21(r31)
 	stw	r22, TF_R22(r31)
 	stw	r23, TF_R23(r31)
-	stw	r24, TF_R24(r31)
-	stw	r25, TF_R25(r31)
+	/* stw	r24, TF_R24(r31) shadowed */
+	/* stw	r25, TF_R25(r31) shadowed */
 	stw	r26, TF_R26(r31)
 	stw	r27, TF_R27(r31)
 	stw	r28, TF_R28(r31)
 	stw	r29, TF_R29(r31)
-	mfctl	tr2, t2
-	mfctl	tr3, t1
-	stw	t1, TF_R30(r31)
-	stw	t2, TF_R31(r31)
+	stw	sp, TF_R30(r31)
+	stw	r9, TF_R31(r31)
 	copy	r1, arg0
 	mfctl	sar, r1
 	stw	r1, TF_CR11(r31)
@@ -2095,25 +2082,25 @@ ENTRY($fpu_emulate,320)
 	ldw	R%fpemu_stack(r31), r31
 
 	ldw	TF_CR11(r31), r1
-	mtsar	r1
 	ldw	TF_R2 (r31), r2
 	ldw	TF_R3 (r31), r3
+	mtsar	r1
 	copy	ret0, r1
-#ifdef DDB
+#ifdef DDB1
 	ldw	TF_R4 (r31), r4
 	ldw	TF_R5 (r31), r5
 	ldw	TF_R6 (r31), r6
 	ldw	TF_R7 (r31), r7
-	ldw	TF_R8 (r31), r8
-	ldw	TF_R9 (r31), r9
+	/* ldw	TF_R8 (r31), r8 shadowed */
+	/* ldw	TF_R9 (r31), r9 shadowed */
 	ldw	TF_R10(r31), r10
 	ldw	TF_R11(r31), r11
 	ldw	TF_R12(r31), r12
 	ldw	TF_R13(r31), r13
 	ldw	TF_R14(r31), r14
 	ldw	TF_R15(r31), r15
-	ldw	TF_R16(r31), r16
-	ldw	TF_R17(r31), r17
+	/* ldw	TF_R16(r31), r16 shadowed */
+	/* ldw	TF_R17(r31), r17 shadowed */
 	ldw	TF_R18(r31), r18
 #endif
 	ldw	TF_R19(r31), r19
@@ -2121,8 +2108,8 @@ ENTRY($fpu_emulate,320)
 	ldw	TF_R21(r31), r21
 	ldw	TF_R22(r31), r22
 	ldw	TF_R23(r31), r23
-	ldw	TF_R24(r31), r24
-	ldw	TF_R25(r31), r25
+	/* ldw	TF_R24(r31), r24 shadowed */
+	/* ldw	TF_R25(r31), r25 shadowed */
 	ldw	TF_R26(r31), r26
 	ldw	TF_R27(r31), r27
 	ldw	TF_R28(r31), r28
