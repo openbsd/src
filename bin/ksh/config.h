@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.12 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.13 2004/12/18 22:42:26 millert Exp $	*/
 
 /* config.h.  NOT generated automatically. */
 
@@ -10,13 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
-
-
-
-/* Define if C compiler groks __attribute__((...)) (const, noreturn, format) */
-#define HAVE_GCC_FUNC_ATTR 1
-
 
 /* Include emacs editing? */
 #define EMACS 1
@@ -66,13 +59,5 @@
 #if defined(EDIT) && !defined(HISTORY)
 # define HISTORY
 #endif /* EDIT */
-
-#ifdef HAVE_GCC_FUNC_ATTR
-# define GCC_FUNC_ATTR(x)	__attribute__((x))
-# define GCC_FUNC_ATTR2(x,y)	__attribute__((x,y))
-#else
-# define GCC_FUNC_ATTR(x)
-# define GCC_FUNC_ATTR2(x,y)
-#endif /* HAVE_GCC_FUNC_ATTR */
 
 #endif /* CONFIG_H */

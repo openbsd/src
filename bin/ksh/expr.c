@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.12 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.13 2004/12/18 22:42:26 millert Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -129,7 +129,7 @@ enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
 		  ET_LVALUE, ET_RDONLY, ET_STR };
 
 static void        evalerr(Expr_state *es, enum error_type type,
-				  const char *str) GCC_FUNC_ATTR(noreturn);
+		    const char *str) __attribute__((__noreturn__));
 static struct tbl *evalexpr(Expr_state *es, enum prec prec);
 static void        token(Expr_state *es);
 static struct tbl *do_ppmm(Expr_state *es, enum token op,

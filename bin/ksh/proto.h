@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.18 2004/12/18 22:35:41 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.19 2004/12/18 22:42:26 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -98,22 +98,22 @@ char  **hist_get_newest(int allow_cur);
 #endif /* HISTORY */
 /* io.c */
 void 	errorf(const char *fmt, ...)
-	    GCC_FUNC_ATTR2(noreturn, format(printf, 1, 2));
+	    __attribute__((__noreturn__, __format__ (printf, 1, 2)));
 void 	warningf(int fileline, const char *fmt, ...)
-	    GCC_FUNC_ATTR(format(printf, 2, 3));
+	    __attribute__((__format__ (printf, 2, 3)));
 void 	bi_errorf(const char *fmt, ...)
-	    GCC_FUNC_ATTR(format(printf, 1, 2));
+	    __attribute__((__format__ (printf, 1, 2)));
 void 	internal_errorf(int jump, const char *fmt, ...)
-	    GCC_FUNC_ATTR(format(printf, 2, 3));
+	    __attribute__((__format__ (printf, 2, 3)));
 void	error_prefix(int fileline);
 void 	shellf(const char *fmt, ...)
-	    GCC_FUNC_ATTR(format(printf, 1, 2));
+	    __attribute__((__format__ (printf, 1, 2)));
 void 	shprintf(const char *fmt, ...)
-	    GCC_FUNC_ATTR(format(printf, 1, 2));
+	    __attribute__((__format__ (printf, 1, 2)));
 #ifdef KSH_DEBUG
 void 	kshdebug_init_(void);
 void 	kshdebug_printf_(const char *fmt, ...)
-	    GCC_FUNC_ATTR(format(printf, 1, 2));
+	    __attribute__((__format__ (printf, 1, 2)));
 void 	kshdebug_dump_(const char *str, const void *mem, int nbytes);
 #endif /* KSH_DEBUG */
 int	can_seek(int fd);
@@ -149,7 +149,7 @@ int 	j_stopped_running(void);
 /* lex.c */
 int 	yylex(int cf);
 void 	yyerror(const char *fmt, ...)
-	    GCC_FUNC_ATTR2(noreturn, format(printf, 1, 2));
+	    __attribute__((__noreturn__, __format__ (printf, 1, 2)));
 Source * pushs(int type, Area *areap);
 void	set_prompt(int to, Source *s);
 void 	pprompt(const char *cp, int ntruncate);
@@ -162,13 +162,13 @@ void 	mpset(char *mptoparse);
 int 	include(const char *name, int argc, char **argv, int intr_ok);
 int 	command(const char *comm);
 int 	shell(Source *volatile s, int volatile toplevel);
-void 	unwind(int i) GCC_FUNC_ATTR(noreturn);
+void 	unwind(int i) __attribute__((__noreturn__));
 void 	newenv(int type);
 void 	quitenv(void);
 void	cleanup_parents_env(void);
 void	cleanup_proc_env(void);
 void 	aerror(Area *ap, const char *msg)
-	    GCC_FUNC_ATTR(noreturn);
+	    __attribute__((__noreturn__));
 /* misc.c */
 void 	setctypes(const char *s, int t);
 void 	initctypes(void);

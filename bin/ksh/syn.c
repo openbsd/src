@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.17 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: syn.c,v 1.18 2004/12/18 22:42:26 millert Exp $	*/
 
 /*
  * shell parser (C version)
@@ -27,11 +27,10 @@ static struct op *caselist(void);
 static struct op *casepart(int endtok);
 static struct op *function_body(char *name, int ksh_func);
 static char **	wordlist(void);
-static struct op *block(int type, struct op *t1, struct op *t2,
-				      char **wp);
+static struct op *block(int type, struct op *t1, struct op *t2, char **wp);
 static struct op *newtp(int type);
 static void	syntaxerr(const char *what)
-						GCC_FUNC_ATTR(noreturn);
+		    __attribute__((__noreturn__));
 static void	nesting_push(struct nesting_state *save, int tok);
 static void	nesting_pop(struct nesting_state *saved);
 static int	assign_command(char *s);
