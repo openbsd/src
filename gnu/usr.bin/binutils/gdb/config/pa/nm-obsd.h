@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include "somsolib.h"
-
 #define U_REGS_OFFSET 0
 
 #define KERNEL_U_ADDR 0
@@ -30,11 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* 3rd argument to ptrace is supposed to be a caddr_t.  */
 
 #define	PTRACE_ARG3_TYPE caddr_t
-
-/* HPUX 8.0, in its infinite wisdom, has chosen to prototype ptrace
-   with five arguments, so programs written for normal ptrace lose.  */
-#define FIVE_ARG_PTRACE
-
 
 /* This macro defines the register numbers (from REGISTER_NAMES) that
    are effectively unavailable to the user through ptrace().  It allows

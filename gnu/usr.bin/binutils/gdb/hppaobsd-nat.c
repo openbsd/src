@@ -61,11 +61,11 @@ fetch_register (regno)
 
   offset = U_REGS_OFFSET;
 
-  regaddr = register_addr (regno, offset);
+  /* regaddr = register_addr (regno, offset); */
   for (i = 0; i < REGISTER_RAW_SIZE (regno); i += sizeof (int))
     {
       errno = 0;
-      *(int *) &buf[i] = ptrace (PT_RUREGS, inferior_pid,
+      *(int *) &buf[i] = ptrace (PT_GETREGS, inferior_pid,
 				 (PTRACE_ARG3_TYPE) regaddr, 0);
       regaddr += sizeof (int);
       if (errno != 0)
@@ -115,12 +115,12 @@ store_inferior_registers (regno)
     {
       if (CANNOT_STORE_REGISTER (regno))
 	return;
-      regaddr = register_addr (regno, offset);
+      /* regaddr = register_addr (regno, offset); */
       errno = 0;
       if (regno == PCOQ_HEAD_REGNUM || regno == PCOQ_TAIL_REGNUM)
         {
           scratch = *(int *) &registers[REGISTER_BYTE (regno)] | 0x3;
-          ptrace (PT_WUREGS, inferior_pid, (PTRACE_ARG3_TYPE) regaddr,
+          ptrace (PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) regaddr,
                   scratch);
           if (errno != 0)
             {
@@ -134,7 +134,7 @@ store_inferior_registers (regno)
 	for (i = 0; i < REGISTER_RAW_SIZE (regno); i += sizeof(int))
 	  {
 	    errno = 0;
-	    ptrace (PT_WUREGS, inferior_pid, (PTRACE_ARG3_TYPE) regaddr,
+	    ptrace (PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) regaddr,
 		    *(int *) &registers[REGISTER_BYTE (regno) + i]);
 	    if (errno != 0)
 	      {
