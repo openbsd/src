@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.105 2004/01/11 22:19:18 grange Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.106 2004/01/19 01:09:06 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.105 2004/01/11 22:19:18 grange Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.106 2004/01/19 01:09:06 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -1997,7 +1997,7 @@ sysctl_emul(char *string, char *newval, int flags)
 	head = "kern.emul.";
 
 	if (aflag || strcmp(string, "kern.emul") == 0) {
-		if (strcmp(string, "kern.emul") == 0) {
+		if (newval) {
 			warnx("%s: specification is incomplete", string);
 			return (1);
 		}
