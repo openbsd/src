@@ -7,8 +7,18 @@ Installation is supported from several media types, including:
 	FTP
 	HTTP
 
-The first thing you will need to do is create a bootable disk.
-This may be a floppy or a hard disk (floppy is simplest).
+If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive)
+you can boot from it.  Otherwise, you will need to create a bootable
+disk.  This may be a floppy or a hard disk (floppy is simplest).
+
+To boot from CD-ROM:
+
+	At the SRM console enter "show device" to find the name of your
+	CD-ROM drive (should be pka*), then insert the OpenBSD/alpha CD
+	and enter "boot DEVICE" where DEVICE is the pka device.  If this
+	does not work, you'll have to create a boot floppy or bootable
+	hard disk; follow the directions below.  (A boot floppy image
+	is included on the CD-ROM as 2.1/alpha/floppy.fs.)
 
 If you have a floppy drive on your alpha:
 
