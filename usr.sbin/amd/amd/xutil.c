@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.6 2002/05/26 02:49:50 deraadt Exp $
+ *	$Id: xutil.c,v 1.7 2002/07/18 02:03:00 deraadt Exp $
  */
 
 #include "config.h"
@@ -240,7 +240,7 @@ extern char **gargv;
 
 	switch (lvl) {
 	case XLOG_FATAL:	sev = "fatal:"; break;
-	case XLOG_ERROR: 	sev = "error:"; break;
+	case XLOG_ERROR:	sev = "error:"; break;
 	case XLOG_USER:		sev = "user: "; break;
 	case XLOG_WARNING:	sev = "warn: "; break;
 	case XLOG_INFO:		sev = "info: "; break;
@@ -301,7 +301,7 @@ char *j, *s, *_, *p, *e, *n, *d, *r, *y;
 	if (syslogging) {
 		switch(lvl) {	/* from mike <mcooper@usc.edu> */
 		case XLOG_FATAL:	lvl = LOG_CRIT; break;
-		case XLOG_ERROR: 	lvl = LOG_ERR; break;
+		case XLOG_ERROR:	lvl = LOG_ERR; break;
 		case XLOG_USER:		lvl = LOG_WARNING; break;
 		case XLOG_WARNING:	lvl = LOG_WARNING; break;
 		case XLOG_INFO:		lvl = LOG_INFO; break;

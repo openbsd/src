@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mapc.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mapc.c,v 1.4 2002/06/11 05:29:54 itojun Exp $";
+static char *rcsid = "$Id: mapc.c,v 1.5 2002/07/18 02:03:00 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -163,7 +163,7 @@ qelem map_list_head = { &map_list_head, &map_list_head };
 /*
  * Configuration
  */
- 
+
 /* ROOT MAP */
 static int root_init P((char*, time_t*));
 

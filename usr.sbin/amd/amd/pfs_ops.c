@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pfs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: pfs_ops.c,v 1.2 2001/03/02 06:22:04 deraadt Exp $
+ *	$Id: pfs_ops.c,v 1.3 2002/07/18 02:03:00 deraadt Exp $
  */
 
 #include "am.h"
@@ -106,7 +106,7 @@ char *info;
 		char **cp = xivec;
 		plog(XLOG_DEBUG, "executing (un)mount command...");
 		while (*cp) {
-	  		plog(XLOG_DEBUG, "arg[%d] = '%s'", cp-xivec, *cp);
+			plog(XLOG_DEBUG, "arg[%d] = '%s'", cp-xivec, *cp);
 			cp++;
 		}
 	}

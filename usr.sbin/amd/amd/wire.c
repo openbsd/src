@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wire.c	8.1 (Berkeley) 6/6/93
- *	$Id: wire.c,v 1.8 2002/06/11 05:29:54 itojun Exp $
+ *	$Id: wire.c,v 1.9 2002/07/18 02:03:00 deraadt Exp $
  */
 
 /*
@@ -186,9 +186,9 @@ char *getwire()
 			 * Figure out the subnet's network address
 			 */
 			subnet = address & netmask;
-		  
+
 #ifdef IN_CLASSA
-			subnet = ntohl(subnet); 
+			subnet = ntohl(subnet);
 
 			if (IN_CLASSA(subnet)) {
 				mask = IN_CLASSA_NET;
@@ -244,7 +244,7 @@ char *getwire()
 
 out:
 	if (sk >= 0)
-		(void) close(sk); 
+		(void) close(sk);
 	if (netname)
 		return netname;
 	return strdup(NO_SUBNET);

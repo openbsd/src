@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)restart.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: restart.c,v 1.1.1.1 1995/10/18 08:47:12 deraadt Exp $";
+static char *rcsid = "$Id: restart.c,v 1.2 2002/07/18 02:03:00 deraadt Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -120,7 +120,7 @@ void restart()
 				mo.opt_rfs = strdup(cp+1);
 				*cp = ':';
 			} else if (fs_ops->ffserver == find_nfs_srvr) {
-				/* 
+				/*
 				 * Prototype 4.4 BSD used to end up here -
 				 * might as well keep the workaround for now
 				 */

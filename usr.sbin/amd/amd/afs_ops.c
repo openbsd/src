@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.5 2002/06/11 05:29:54 itojun Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.6 2002/07/18 02:03:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -136,7 +136,6 @@ char *opts;
 	/*
 	 * get fhandle of remote path for automount point
 	 */
-	
 	fhp = root_fh(dir);
 	if (!fhp) {
 		plog(XLOG_FATAL, "Can't find root file handle for %s", dir);
@@ -252,9 +251,9 @@ mntfs *mf;
 	 */
 	char *cache;
 	if (mf->mf_fo && mf->mf_fo->opt_cache)
-	  	cache = mf->mf_fo->opt_cache;
+		cache = mf->mf_fo->opt_cache;
 	else
-	  	cache = "none";
+		cache = "none";
 	mf->mf_private = (voidp) mapc_find(mf->mf_info, cache);
 	mf->mf_prfree = mapc_free;
 }
@@ -426,7 +425,7 @@ static void union_mounted(mf)
 mntfs *mf;
 {
 	int i;
-	
+
 	afs_mkcacheref(mf);
 
 	/*
@@ -1436,7 +1435,7 @@ in_progrss:
 	dlog("searching for /defaults entry");
 #endif /* DEBUG */
 	if (mapc_search((mnt_map*) mf->mf_private, "/defaults", &dflts) == 0) {
-	  	char *dfl;
+		char *dfl;
 		char **rvec;
 #ifdef DEBUG
 		dlog("/defaults gave %s", dflts);
@@ -1620,10 +1619,10 @@ int count;
 		 * Check for enough room.  This is extremely
 		 * approximate but is more than enough space.
 		 * Really need 2 times:
-		 * 	4byte fileid
-		 * 	4byte cookie
-		 * 	4byte name length
-		 * 	4byte name
+		 *	4byte fileid
+		 *	4byte cookie
+		 *	4byte name length
+		 *	4byte name
 		 * plus the dirlist structure
 		 */
 		if (count <

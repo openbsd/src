@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.4 2002/06/10 21:07:14 itojun Exp $
+ *	$Id: get_args.c,v 1.5 2002/07/18 02:03:00 deraadt Exp $
  */
 
 /*
@@ -174,7 +174,7 @@ char *v[];
 			afs_timeo = atoi(optarg);
 		  }
 		  if (dot) {
-		  	afs_retrans = atoi(dot+1);
+			afs_retrans = atoi(dot+1);
 			*dot = '.';
 		  }
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.6 2002/06/11 05:29:54 itojun Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.7 2002/07/18 02:03:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -97,7 +97,6 @@ am_opts *fo;
 	if (!fo->opt_rfs)
 		fo->opt_rfs = "/";
 
-	
 	return (*nfs_ops.fs_match)(fo);
 }
 
@@ -614,7 +613,7 @@ char *opts;
 		char **cp = argv;
 		plog(XLOG_DEBUG, "executing (un)mount command...");
 		while (*cp) {
-	  		plog(XLOG_DEBUG, "arg[%d] = '%s'", cp-argv, *cp);
+			plog(XLOG_DEBUG, "arg[%d] = '%s'", cp-argv, *cp);
 			cp++;
 		}
 	}

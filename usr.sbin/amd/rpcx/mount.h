@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.2 1996/03/25 15:54:56 niklas Exp $	*/
+/*	$OpenBSD: mount.h,v 1.3 2002/07/18 02:03:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -55,7 +55,7 @@ typedef struct fhstatus {
 typedef char fhandle[NFSX_V3FHMAX];
 typedef struct fhstatus {
 	u_long		fhs_stat;
- 	long		fhs_vers;
+	long		fhs_vers;
 	long		fhs_auth;
 	long		fhs_size;
 	fhandle		fhs_fhandle;

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.8 2002/07/18 00:50:23 pvalchev Exp $
+ *	$Id: nfs_start.c,v 1.9 2002/07/18 02:03:00 deraadt Exp $
  */
 
 #include "am.h"
@@ -315,7 +315,7 @@ static serv_state run_rpc(P_void)
 #ifdef FD_SET
 			if (FD_ISSET(fwd_sock, fdsp)) {
 				FD_CLR(fwd_sock, fdsp);
-				--nsel;	
+				--nsel;
 				do {
 					fwd_reply();
 				} while (rpc_pending_now() > 0);
@@ -323,7 +323,7 @@ static serv_state run_rpc(P_void)
 #else
 			if (readfds & (1 << fwd_sock)) {
 				readfds &= ~(1 << fwd_sock);
-				--nsel;	
+				--nsel;
 				do {
 					fwd_reply();
 				} while (rpc_pending_now() > 0);
@@ -390,7 +390,7 @@ int mount_automounter(pid_t ppid)
 		return 1;
 	}
 
-	if ((nfsxprt = svcudp_create(so)) == NULL || 
+	if ((nfsxprt = svcudp_create(so)) == NULL ||
 			(amqp = svcudp_create(so)) == NULL) {
 		plog(XLOG_FATAL, "cannot create rpc/udp service");
 		return 2;

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_passwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_passwd.c,v 1.4 2002/07/18 00:50:23 pvalchev Exp $
+ *	$Id: info_passwd.c,v 1.5 2002/07/18 02:03:00 deraadt Exp $
  */
 
 /*
@@ -102,7 +102,7 @@ int passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 		*user++ = '\0';
 		/*
 		 * Find start of host "path".  If no / then Invalid...
-		 */ 
+		 */
 		p = strchr(dir+1, '/');
 		if (!p)
 			goto enoent;

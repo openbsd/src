@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.13 2002/07/18 00:50:23 pvalchev Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.14 2002/07/18 02:03:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.13 2002/07/18 00:50:23 pvalchev Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.14 2002/07/18 02:03:00 deraadt Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -432,7 +432,7 @@ static int nfs_init(mntfs *mf)
 	if (!mf->mf_private) {
 		int error;
 		fhstatus fhs;
-	
+
 		char *colon = strchr(mf->mf_info, ':');
 		if (colon == 0)
 			return ENOENT;
@@ -568,7 +568,7 @@ int mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf)
  * This isn't supported by the ping algorithm yet.
  * In any case, it is all done in nfs_init().
  */
- 	if (port = hasmntval(&mnt, "port"))
+	if (port = hasmntval(&mnt, "port"))
 		sin.sin_port = htons(port);
 	else
 		sin.sin_port = htons(NFS_PORT);	/* XXX should use portmapper */

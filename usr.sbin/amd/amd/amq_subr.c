@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.6 2002/06/11 05:29:54 itojun Exp $
+ *	$Id: amq_subr.c,v 1.7 2002/07/18 02:03:00 deraadt Exp $
  */
 
 /*
@@ -251,9 +251,9 @@ struct svc_req *rqstp;
 {
 	static int rc;
 	char *s = *(amq_string *) argp;
-  
+
 	plog(XLOG_ERROR, "amq requested mount of %s, but code is disabled", s);
-   
+
 	rc = EACCES;
 	return &rc;
 }

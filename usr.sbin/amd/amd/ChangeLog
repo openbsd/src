@@ -129,7 +129,7 @@ Fri Apr  5 19:23:50 1991  Jan-Simon Pendry  (jsp at forest)
 	* (srvr_nfs.c) calls make_nfs_auth() as required.
 
 	* (host_ops.c) calls make_nfs_auth() as required.
-	
+
 	* (afs_ops.c) allow foreground mounts to return pending.  This is
 	used by nfsx_ops.c.
 

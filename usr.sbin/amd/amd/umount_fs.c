@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)umount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: umount_fs.c,v 1.1.1.1 1995/10/18 08:47:12 deraadt Exp $
+ *	$Id: umount_fs.c,v 1.2 2002/07/18 02:03:00 deraadt Exp $
  */
 
 #include "am.h"
@@ -187,7 +187,7 @@ char *fs_name;
 		if (!error) {
 		        free_mntlist(mlist);
 			mp = mlist = read_mtab(fs_name);
-			
+
 			/*
 			 * Search the mount table looking for
 			 * the correct (ie last) matching entry
@@ -199,7 +199,7 @@ char *fs_name;
 					mp_save = mp;
 				mp = mp->mnext;
 			}
-			
+
 			if (mp_save) {
 				mnt_free(mp_save->mnt);
 				mp_save->mnt = 0;

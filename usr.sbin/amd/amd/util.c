@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.6 2002/06/11 05:29:54 itojun Exp $
+ *	$Id: util.c,v 1.7 2002/07/18 02:03:00 deraadt Exp $
  */
 
 /*
@@ -144,7 +144,7 @@ int qc;
 				 */
 				s++;
 				while (*s && *s != qc)
-				 	s++;
+					s++;
 				if (*s == qc)
 					s++;
 			}

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsx_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfsx_ops.c,v 1.2 2001/03/02 06:22:04 deraadt Exp $
+ *	$Id: nfsx_ops.c,v 1.3 2002/07/18 02:03:00 deraadt Exp $
  */
 
 #include "am.h"
@@ -200,9 +200,9 @@ mntfs *mf;
 		  char *fs = mf->mf_fo->opt_fs;
 		  char *rfs = 0;
 		  for (i = 0; i < nx->nx_c; i++) {
-		  	char *path = ivec[i+1];
+			char *path = ivec[i+1];
 			rfs = str3cat(rfs, pref, "/", path);
-		  	/*
+			/*
 			 * Determine the mount point.
 			 * If this is the root, then don't remove
 			 * the trailing slash to avoid mntfs name clashes.
