@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.5 1997/09/26 04:13:28 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.6 1997/10/24 00:08:25 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.6 1995/03/18 14:54:43 cgd Exp $	*/
 
 /*
@@ -39,3 +39,4 @@
 #include <paths.h>
 
 #define	_PATH_TMPFILE	"/tmp/EdDk.aXXXXXXXXXX"
+#define	_PATH_LESS	"/usr/bin/less"

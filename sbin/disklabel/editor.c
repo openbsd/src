@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.21 1997/10/20 07:09:43 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.22 1997/10/24 00:08:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.21 1997/10/20 07:09:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.22 1997/10/24 00:08:24 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,8 @@ static char rcsid[] = "$OpenBSD: editor.c,v 1.21 1997/10/20 07:09:43 deraadt Exp
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "pathnames.h"
 
 /* flags for getuint() */
 #define	DO_CONVERSIONS	0x00000001
@@ -92,6 +94,9 @@ struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 int	writelabel __P((int, char *, struct disklabel *));
 extern	char *bootarea, *specname;
 extern	int donothing;
+#ifdef DOSLABEL
+struct dos_partition *dosdp;	/* DOS partition, if found */
+#endif
 
 /*
  * Simple partition editor.  Primarily intended for new labels.
@@ -225,7 +230,7 @@ editor(lp, f)
 			break;
 
 		case 'M':
-			fp = popen("/usr/bin/less", "w");
+			fp = popen(_PATH_LESS, "w");
 			if (fp) {
 				extern char manpage[];
 
@@ -400,13 +405,6 @@ editor_add(lp, freep, p)
 	pp->p_cpg = 16;
 	pp->p_size = *freep;
 	pp->p_offset = next_offset(lp, pp);	/* must be computed last */
-#ifdef DOSLABEL
-	/* Don't clobber the MBR */
-	if (pp->p_offset == 0) {
-		pp->p_offset = 32;
-		pp->p_size -= 32;
-	}
-#endif
 	old_offset = pp->p_offset;
 	old_size = pp->p_size;
 
@@ -473,19 +471,14 @@ getoff1:
 		else
 			break;
 	}
-#ifdef DOSLABEL
-	if (pp->p_offset == 32 && ui % lp->d_secpercyl == 0) {
-		ui -= 32;
-		puts("Adjusting size by 32 to maintain cylinder boundaries");
-	}
-#endif
 	pp->p_size = ui;
 	if (pp->p_size == 0)
 		return;
 
 	/* Check for overlap */
 	if (has_overlap(lp, freep, 0)) {
-		puts("\nPlease re-enter an offset and size");
+		printf("\nPlease re-enter an offset and size for partition "
+		    "%c.\n", 'a' + partno);
 		pp->p_offset = old_offset;
 		pp->p_size = old_size;
 		goto getoff1;		/* Yeah, I know... */
@@ -936,10 +929,11 @@ next_offset(lp, pp)
 		 * Is new_offset inside this partition?  If so,
 		 * make it the next sector after the partition ends.
 		 */
-		if ((new_offset >= spp[i]->p_offset &&
+		if (spp[i]->p_offset + spp[i]->p_size < ending_sector &&
+		    ((new_offset >= spp[i]->p_offset &&
 		    new_offset < spp[i]->p_offset + spp[i]->p_size) ||
 		    (new_offset + pp->p_size >= spp[i]->p_offset && new_offset
-		    + pp->p_size <= spp[i]->p_offset + spp[i]->p_size))
+		    + pp->p_size <= spp[i]->p_offset + spp[i]->p_size)))
 			new_offset = spp[i]->p_offset + spp[i]->p_size;
 	}
 
@@ -963,9 +957,15 @@ next_offset(lp, pp)
 			    new_offset = chunks[i].start;
 			}
 		}
-		/* XXX - if new_size is 0 here then there was no space at all */
+		/* XXX - should do something intelligent if new_size == 0 */
 		pp->p_size = new_size;
 	}
+
+#if 0
+	/* If we ran out of space, use an offset of zero */
+	if (new_offset >= ending_sector)
+		new_offset = 0;
+#endif
 
 	(void)free(spp);
 	return(new_offset);
@@ -1585,6 +1585,7 @@ getdisktype(lp, banner)
 /*
  * Get beginning and ending sectors of the OpenBSD portion of the disk
  * from the user.
+ * XXX - should mention MBR values if DOSLABEL
  */
 void
 set_bounds(lp)
@@ -1604,154 +1605,18 @@ set_bounds(lp)
 	} while (ui >= lp->d_secperunit);
 	start_temp = ui;
 
-	/* Ending sector */
+	/* Size */
 	do {
-		ui = getuint(lp, 0, "Ending sector",
-		  "The end of the OpenBSD portion of the disk.",
-		  ending_sector, lp->d_secperunit, 0);
+		ui = getuint(lp, 0, "Size",
+		  "The size of the OpenBSD portion of the disk.",
+		  ending_sector - starting_sector, lp->d_secperunit, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return;
 		}
 	} while (ui > lp->d_secperunit);
-	ending_sector = ui;
+	ending_sector = start_temp + ui;
 	starting_sector = start_temp;
-}
-
-/*
- * Find the possible/likely start/stop of the OpenBSD portion of the disk.
- * Sets starting_sector and ending_sector globals.
- * XXX - assumes first OpenBSD partition is 4.2/swap or unused space.
- */
-void
-find_bounds(lp)
-	struct disklabel *lp;
-{
-	u_int16_t npartitions;
-	struct partition **spp;
-	struct diskchunk chunks[2 * MAXPARTITIONS + 1];
-	int i, j, numchunks, ourchunk = -1;
-
-	/* Sort the partitions based on offset */
-	spp = sort_partitions(lp, &npartitions);
-
-	/* If there are no partitions, we get it all. */
-	if (spp == NULL) {
-		starting_sector = 0;
-		ending_sector = lp->d_secperunit;
-		puts("OpenBSD will use the entire disk.");
-		return;
-	}
-
-	/* Find chunks of free space */
-	numchunks = 0;
-	if (spp && spp[0]->p_offset > 0) {
-		chunks[0].start = 0;
-		chunks[0].stop = spp[0]->p_offset;
-		numchunks++;
-	}
-	for (i = 0; i < npartitions; i++) {
-		if (i + 1 < npartitions) {
-			if (spp[i]->p_offset + spp[i]->p_size < spp[i+1]->p_offset) {
-				chunks[numchunks].start =
-				    spp[i]->p_offset + spp[i]->p_size;
-				chunks[numchunks].stop = spp[i+1]->p_offset;
-				numchunks++;
-			}
-		} else {
-			/* Last partition */
-			if (spp[i]->p_offset + spp[i]->p_size < lp->d_secperunit) {
-
-				chunks[numchunks].start =
-				    spp[i]->p_offset + spp[i]->p_size;
-				chunks[numchunks].stop = lp->d_secperunit;
-				numchunks++;
-			}
-		}
-	}
-
-	/* Now find the OpenBSD partitions and add them in to "chunks" */
-	for (i = 0; i < npartitions; i++) {
-		if (spp[i]->p_fstype == FS_BSDFFS || spp[i]->p_fstype == FS_SWAP) {
-			/* Look for a consecutive chunk to add to */
-			for (j = 0; j < numchunks; j++) {
-				if (chunks[j].stop == spp[i]->p_offset) {
-					chunks[j].stop += spp[i]->p_size;
-					if (ourchunk == -1)
-						ourchunk = j + 1;
-					break;
-				} else if (chunks[j].start ==
-				    spp[i]->p_offset + spp[i]->p_size) {
-					chunks[j].start -= spp[i]->p_size;
-					if (ourchunk == -1)
-						ourchunk = j + 1;
-					break;
-				}
-			}
-
-			/* Else add a new one */
-			if (j >= numchunks) {
-				chunks[numchunks].start = spp[i]->p_offset;
-				chunks[numchunks].stop =
-				    spp[i]->p_offset + spp[i]->p_size;
-				numchunks++;
-				if (ourchunk == -1)
-					ourchunk = numchunks;
-			}
-		}
-	}
-
-	/* If we ended up with consecutive chunks, collapse them. */
-	check_chunks:
-	for (i = 0; i < numchunks; i++) {
-		for (j = 0; j < numchunks; j++) {
-			if (j == i)
-				continue;
-			if (chunks[i].stop == chunks[j].start) {
-				/* Collapse i and j */
-				chunks[i].stop +=
-				    chunks[j].stop - chunks[j].start;
-				for (i = j; i < numchunks - 1; i++)
-					chunks[i] = chunks[i+1];
-				numchunks--;
-				goto check_chunks;
-			}
-		}
-	}
-
-	/*
-	 * Prompt user to choose which one for OpenBSD (if more than one)
-	 * Note: we assume that the first chunk with BSD partitions is ours.
-	 */
-	if (numchunks > 1) {
-		printf("#        size   offset    fstype   [fsize bsize   cpg]\n");
-		for (i = 0; i < lp->d_npartitions; i++)
-			display_partition(stdout, lp, i, 0, 0);
-		puts("Several chunks of unused or BSD space exist, which one is for OpenBSD?");
-		if (ourchunk != -1)
-			printf("It looks like the OpenBSD portion is chunk "
-			    "number %d\n", ourchunk);
-		else
-			ourchunk = 1;
-
-		for (i = 0; i < numchunks; i++) {
-			printf("%6d: start = %d, stop = %d\n", i + 1,
-			    chunks[i].start, chunks[i].stop);
-		}
-		do {
-			ourchunk = getuint(lp, 0, "Choose one",
-			  "The portion of the disk you will use for OpenBSD.",
-			  ourchunk, numchunks, 0);
-		} while (ourchunk < 1 || ourchunk > numchunks);
-	}
-	ourchunk--;
-
-	starting_sector = chunks[ourchunk].start;
-	ending_sector = chunks[ourchunk].stop;
-	printf("Treating sectors %u-%u as the OpenBSD portion of the disk.\n",
-	    starting_sector, ending_sector);
-
-	(void)free(spp);
 }
 
 /*
@@ -1808,4 +1673,30 @@ free_chunks(lp)
 	chunks[numchunks].start = chunks[numchunks].stop = 0;
 	(void)free(spp);
 	return(chunks);
+}
+
+/*
+ * What is the OpenBSD portion of the disk?  Uses the MBR if applicable.
+ */
+void
+find_bounds(lp)
+	struct disklabel *lp;
+{
+
+	/* Defaults */
+	/* XXX - reserve a cylinder for hp300? */
+	starting_sector = 0;
+	ending_sector = lp->d_secperunit;
+
+#ifdef DOSLABEL
+	/* If we have an MBR, use values from the OpenBSD/386BSD parition. */
+	if (dosdp && lp->d_partitions[2].p_size &&
+	    (dosdp->dp_typ == DOSPTYP_OPENBSD || dosdp->dp_typ == DOSPTYP_386BSD)) {
+		starting_sector = get_le(&dosdp->dp_start);
+		ending_sector = starting_sector + get_le(&dosdp->dp_size);
+		printf("Treating sectors %u-%u as the OpenBSD portion of the "
+		    "disk.\nYou can use the 'b' command to change this.\n",
+		    starting_sector, ending_sector);
+	}
+#endif
 }
