@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.31 2003/04/07 23:37:05 tedu Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.32 2003/05/11 01:47:00 tedu Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -542,7 +542,7 @@ kernfs_lookup(v)
 		return(error);
 	}
 
-	vn_lock(*vpp, LK_SHARED | LK_RETRY, p);
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY, p);
 
 	if (wantpunlock) {
 		VOP_UNLOCK(dvp, 0, p);
