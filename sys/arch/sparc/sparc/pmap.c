@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2000/01/27 00:03:09 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.65 2000/01/27 00:18:43 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -533,7 +533,6 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 u_int	*getptep4m __P((struct pmap *, vaddr_t));
 static __inline void	setpgt4m __P((int *, int));
 static __inline void	setptesw4m __P((struct pmap *pm, vaddr_t va, int pte));
-static __inline u_int	getptesw4m __P((struct pmap *pm, vaddr_t va));
 __inline void	setpte4m __P((vaddr_t va, int pte));
 #endif
 
@@ -737,26 +736,6 @@ setpgt4m(ptep, pte)
 	int pte;
 {
 	swap(ptep, pte);
-}
-
-/*
- * Get the page table entry (PTE) for va by looking it up in the software
- * page tables. These are the same tables that are used by the MMU; this
- * routine allows easy access to the page tables even if the context
- * corresponding to the table is not loaded or selected.
- * This routine should NOT be used if there is any chance that the desired
- * pte is in the TLB cache, since it will return stale data in that case.
- * For that case, and for general use, use getpte4m, which is much faster
- * and avoids walking in-memory page tables if the page is in the cache.
- * Note also that this routine only works if a kernel mapping has been
- * installed for the given page!
- */
-static __inline u_int
-getptesw4m(pm, va)
-	struct pmap *pm;
-	vaddr_t va;
-{
-	return *getptep4m(pm, va);
 }
 
 /*
