@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.20 1997/10/21 23:47:26 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.21 1997/10/22 00:05:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -64,6 +64,8 @@ bios_E820(mp)
 				break;
 			gotcha++;
 			mp->size >>= 10; /* / 1024 */
+			if (mp->type == 0)
+				mp->type = BIOS_MAP_RES;
 			mp++;
 	} while (off);
 
