@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.39 2004/01/12 21:33:10 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.40 2004/01/13 18:40:47 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -55,7 +55,7 @@
 
 extern label_t *db_recover;
 extern unsigned db_trace_get_val(vaddr_t, unsigned *);
-extern int frame_is_sane(db_regs_t *);
+extern int frame_is_sane(db_regs_t *, int);
 extern void cnpollc(int);
 void kdbprinttrap(int, int);
 
@@ -216,15 +216,9 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		return;
 	}
 
-	if (!frame_is_sane((db_regs_t *)s)) {  /* see db_trace.c */
-		db_printf("frame seems insane (");
-
-		if (force)
-			db_printf("forging ahead anyway...)\n");
-		else {
-			db_printf("use /f to force)\n");
+	if (frame_is_sane((db_regs_t *)s, 0) == 0) {	/* see db_trace.c */
+		if (force == 0)
 			return;
-		}
 	}
 
 #define R(i) s->tf_r[i]
@@ -604,9 +598,6 @@ m88k_db_frame_search(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-#if 1
-	db_printf("sorry, frame search currently disabled.\n");
-#else
 	if (have_addr)
 		addr &= ~3; /* round to word */
 	else
@@ -614,15 +605,12 @@ m88k_db_frame_search(addr, have_addr, count, modif)
 
 	/* walk back up stack until 8k boundry, looking for 0 */
 	while (addr & ((8 * 1024) - 1)) {
-		int i;
-		db_read_bytes(addr, 4, &i);
-		if (i == 0 && frame_is_sane((db_regs_t *)i))
-			db_printf("frame found at 0x%x\n", i);
+		if (frame_is_sane((db_regs_t *)addr, 1) != 0)
+			db_printf("frame found at 0x%x\n", addr);
 		addr += 4;
 	}
 
 	db_printf("(Walked back until 0x%x)\n",addr);
-#endif
 }
 
 /* flush icache */

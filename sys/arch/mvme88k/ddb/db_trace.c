@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.25 2004/01/12 21:33:10 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.26 2004/01/13 18:40:47 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -97,7 +97,7 @@ static inline unsigned br_dest(unsigned addr, union instruction inst)
 
 #define TRACE_DEBUG	/* undefine to disable debugging */
 
-int frame_is_sane(db_regs_t *regs);
+int frame_is_sane(db_regs_t *regs, int);
 char *m88k_exception_name(unsigned vector);
 unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
 
@@ -276,26 +276,26 @@ hex_value_needs_0x(unsigned value)
  *   0 if this looks like neither.
  */
 int
-frame_is_sane(db_regs_t *regs)
+frame_is_sane(db_regs_t *regs, int quiet)
 {
 	/* no good if we can't read the whole frame */
 	if (badwordaddr((vaddr_t)regs) || badwordaddr((vaddr_t)&regs->fpit)) {
-		db_printf("[WARNING: frame at %p : unreadable]\n", regs);
+		if (quiet == 0)
+			db_printf("[WARNING: frame at %p : unreadable]\n", regs);
 		return 0;
 	}
 
-#ifndef DIAGNOSTIC
-	/* disabled for now  -- see fpu_enable in luna88k/eh.s */
 	/* r0 must be 0 (obviously) */
 	if (regs->r[0] != 0) {
-		db_printf("[WARNING: frame at %p : r[0] != 0]\n", regs);
+		if (quiet == 0)
+			db_printf("[WARNING: frame at %p : r[0] != 0]\n", regs);
 		return 0;
 	}
-#endif
 
-	/* stack sanity ... r31 must be nonzero, but must be word aligned */
+	/* stack sanity ... r31 must be nonzero, and must be word aligned */
 	if (regs->r[31] == 0 || (regs->r[31] & 3) != 0) {
-		db_printf("[WARNING: frame at %p : r[31] == 0 or not word aligned]\n", regs);
+		if (quiet == 0)
+			db_printf("[WARNING: frame at %p : r[31] == 0 or not word aligned]\n", regs);
 		return 0;
 	}
 
@@ -316,17 +316,16 @@ frame_is_sane(db_regs_t *regs)
 	/* epsr sanity */
 	if ((regs->epsr & PSR_MODE)) { /* kernel mode */
 		if (regs->epsr & PSR_BO)
-			db_printf("[WARNING: byte order in kernel frame at %p "
-				  "is little-endian!]\n", regs);
+			return 0;
 		return 1;
 	}
 	if (!(regs->epsr & PSR_MODE)) {	/* user mode */
 		if (regs->epsr & PSR_BO)
-			db_printf("[WARNING: byte order in user frame at %p "
-				  "is little-endian!]\n", regs);
+			return 0;
 		return 2;
 	}
-	db_printf("[WARNING: not an exception frame?]\n");
+	if (quiet == 0)
+		db_printf("[WARNING: not an exception frame?]\n");
 	return 0;
 }
 
@@ -799,7 +798,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	 *      (in the current task).
 	 *   0 if this looks like neither.
 	 */
-	if (ft = frame_is_sane(regs), ft == 0) {
+	if ((ft = frame_is_sane(regs, 1)) == 0) {
 		(*pr)("Register frame 0x%x is suspicous; skipping trace\n", regs);
 		return;
 	}
@@ -936,7 +935,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 				*/
 			}
 
-			else if (frame_is_sane((db_regs_t*)pair[0])) {
+			else if (frame_is_sane((db_regs_t*)pair[0], 1) != 0) {
 				struct trapframe *frame =
 				    (struct trapframe *)pair[0];
 
@@ -981,7 +980,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		/* have a hit */
 		user = *((struct trapframe **)stack);
 
-		if (frame_is_sane(&user->tf_regs) == 2) {
+		if (frame_is_sane(&user->tf_regs, 1) == 2) {
 			(*pr)("---------------- %s [EF : 0x%x] -------------\n",
 			    m88k_exception_name(user->tf_vector), user);
 			db_stack_trace_cmd2(&user->tf_regs, pr);
