@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.17 2002/08/21 15:51:08 espie Exp $	*/
+/*	$OpenBSD: strip.c,v 1.18 2002/08/21 15:53:12 espie Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.17 2002/08/21 15:51:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.18 2002/08/21 15:53:12 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -224,11 +224,16 @@ s_stab(fn, fd, ep, sp, sz)
 	off_t *sz;
 {
 	int cnt, len;
-	char *nstr, *nstrbase, *p, *strbase;
+	char *nstr, *nstrbase=0, *used=0, *p, *strbase;
 	NLIST *sym, *nsym;
 	u_long allocsize;
 	int mid;
 	NLIST *symbase;
+	unsigned int *mapping=0;
+	int error=1;
+	unsigned int nsyms;
+	struct relocation_info *reloc_base;
+	unsigned int i, j;
 
 	/* Quit if no symbols. */
 	if (ep->a_syms == 0)
@@ -257,22 +262,72 @@ s_stab(fn, fd, ep, sp, sz)
 	allocsize = fix_long_order(*(u_long *)strbase, mid);
 	if ((nstrbase = malloc((u_int) allocsize)) == NULL) {
 		warnx("%s", strerror(ENOMEM));
-		return 1;
+		goto end;
 	}
 	nstr = nstrbase + sizeof(u_long);
+
+	/* okay, so we also need to keep symbol numbers for relocations. */
+	nsyms = ep->a_syms/ sizeof(NLIST);
+	used = calloc(nsyms, 1);
+	if (!used) {
+		warnx("%s", strerror(ENOMEM));
+		goto end;
+	}
+	mapping = malloc(nsyms * sizeof(unsigned int));
+	if (!mapping) {
+		warnx("%s", strerror(ENOMEM));
+		goto end;
+	}
+
+	if ((ep->a_trsize || ep->a_drsize) && byte_sex(mid) != BYTE_ORDER) {
+		warnx("%s: cross-stripping not supported", fn);
+		goto end;
+	}
+
+	/* first check the relocations for used symbols, and mark them */
+	/* text */
+	reloc_base = (struct relocation_info *) ((char *)ep + N_TRELOFF(*ep));
+	if (N_TRELOFF(*ep) + ep->a_trsize > sp->st_size) {
+		warnx("%s: bad text relocation", fn);
+		goto end;
+	}
+	for (i = 0; i < ep->a_trsize / sizeof(struct relocation_info); i++) {
+		if (!reloc_base[i].r_extern)
+			continue;
+		if (reloc_base[i].r_symbolnum > nsyms) {
+			warnx("%s: bad symbol number in text relocation", fn);
+			goto end;
+		}
+		used[reloc_base[i].r_symbolnum] = 1;
+	}
+	/* data */
+	reloc_base = (struct relocation_info *) ((char *)ep + N_DRELOFF(*ep));
+	if (N_DRELOFF(*ep) + ep->a_drsize > sp->st_size) {
+		warnx("%s: bad data relocation", fn);
+		goto end;
+	}
+	for (i = 0; i < ep->a_drsize / sizeof(struct relocation_info); i++) {
+		if (!reloc_base[i].r_extern)
+			continue;
+		if (reloc_base[i].r_symbolnum > nsyms) {
+			warnx("%s: bad symbol number in data relocation", fn);
+			goto end;
+		}
+		used[reloc_base[i].r_symbolnum] = 1;
+	}
 
 	/*
 	 * Read through the symbol table.  For each non-debugging symbol,
 	 * copy it and save its string in the new string table.  Keep
 	 * track of the number of symbols.
 	 */
-	for (cnt = ep->a_syms / sizeof(NLIST); cnt--; ++sym) {
+	for (cnt = nsyms, i = 0, j = 0; cnt--; ++sym, ++i) {
 		fix_nlist_order(sym, mid);
 		if (!(sym->n_type & N_STAB) && sym->strx) {
 			*nsym = *sym;
 			nsym->strx = nstr - nstrbase;
 			p = strbase + sym->strx;
-                        if (xflag && 
+                        if (xflag && !used[i] &&
                             (!(sym->n_type & N_EXT) ||
                              (sym->n_type & ~N_EXT) == N_FN ||
                              strcmp(p, "gcc_compiled.") == 0 ||
@@ -281,14 +336,31 @@ s_stab(fn, fd, ep, sp, sz)
                                 continue;
                         }
 			len = strlen(p) + 1;
+			mapping[i] = j++;
 			if (N_STROFF(*ep) + sym->strx + len > sp->st_size) {
 				warnx("%s: bad symbol table", fn);
-				return 1;
+				goto end;
 			}
 			bcopy(p, nstr, len);
 			nstr += len;
 			fix_nlist_order(nsym++, mid);
 		}
+	}
+
+	/* renumber symbol relocations */
+	/* text */
+	reloc_base = (struct relocation_info *) ((char *)ep + N_TRELOFF(*ep));
+	for (i = 0; i < ep->a_trsize / sizeof(struct relocation_info); i++) {
+		if (!reloc_base[i].r_extern)
+			continue;
+		reloc_base[i].r_symbolnum = mapping[reloc_base[i].r_symbolnum];
+	}
+	/* data */
+	reloc_base = (struct relocation_info *) ((char *)ep + N_DRELOFF(*ep));
+	for (i = 0; i < ep->a_drsize / sizeof(struct relocation_info); i++) {
+		if (!reloc_base[i].r_extern)
+			continue;
+		reloc_base[i].r_symbolnum = mapping[reloc_base[i].r_symbolnum];
 	}
 
 	/* Fill in new symbol table size. */
@@ -303,12 +375,16 @@ s_stab(fn, fd, ep, sp, sz)
 	 * at the address past the last symbol entry.
 	 */
 	bcopy(nstrbase, (void *)nsym, len);
+	error = 0;
+end:
 	free(nstrbase);
+	free(used);
+	free(mapping);
 
 	/* Truncate to the current length. */
 	*sz = (char *)nsym + len - (char *)ep;
 
-	return 0;
+	return error;
 }
 
 void
