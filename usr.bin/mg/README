@@ -1,0 +1,197 @@
+Mg 2a README  May 15, 1988
+
+Mg (mg) is a Public Domain EMACS style editor.  It is "broadly"
+compatible with GNU Emacs, the latest creation of Richard M.
+Stallman, Chief GNUisance and inventor of Emacs.  GNU Emacs (and other
+portions of GNU as they are released) are essentially free, (there are
+handling charges for obtaining it) and so is Mg.  You may never have
+to learn another editor.  (But probably will, at least long enough to
+port Mg...)  Mg was formerly named MicroGnuEmacs, the name change was
+done at the request of Richard Stallman. 
+
+Mg is not associated with the GNU project, and most of it does not
+have the copyright restrictions present in GNU Emacs.  (However, some
+of the system dependent modules and the regular expression module do
+have copyright notices, specificly the VMS/primos termcap routines and
+the amiga specific routines.  Look at the source code for exact
+copyright restrictions.)  The Mg authors individually may or may not
+agree with the opinions expressed by Richard Stallman in "The GNU
+Manifesto".
+
+To avoid GNU copyright restrictions, replace the re_search.c, regex.h
+and regex.c files with empty files.
+
+Documentation of Mg is in the TeX file mg.tex.  This should be
+formatted with the TeX text formatter and printed.  A start twords a mg
+programmers guied in in mgprog.doc, and some of the changes from 1b
+are mentioned briefly in mg2a.change.
+
+This program is intended to be a small, fast, and portable editor for
+people who can't (or don't want to) run real Emacs thing for one
+reason or another.  It is compatible with GNU because there shouldn't
+be any reason to learn more than one Emacs flavor.  We have excised
+most MicroEMACS features that were incompatible with the big brother,
+and added missing features that seemed essential.
+
+There are at least two other major versions of MicroEMACS in
+circulation.  One comes from Daniel Lawrence, (based on an old version
+from Dave Conroy) and is several versions have been posted to usenet.
+It uses a 3.x version numbering scheme, and the latest I know about is
+3.9i.  It has some features not found in Mg, missing others, is
+bigger, and is incompatible with GNU Emacs.  It might be a better
+choice for you if you *must* have something not present here and can't
+run GNU.
+
+Another variety uses a different numbering scheme, and is up to v30.
+This also comes from mod.sources, and is the latest version from the
+original MicroEMACS author Dave Conroy.  Mg is derived from this
+version, and for the most part has replaced it.
+
+Mg is continuing to diverge from other MicroEmacs varients.
+Significant modifacations would me nessisary to adapt code from either
+the 3.x strains or v30.  Command functions and key mapping, for
+instance, are completely different.
+
+This is the third distribution release of Mg.  (It went through four
+beta releases to iron out the changes made by the various authors.)
+Prior releases were known as MicroGnuEmacs 1a and MicroGnuEmacs 1b.
+Beyond the work of Dave Conroy, author of the original public domain
+v30, the current version contains the work of:
+
+	blarson@ecla.usc.edu		Bob Larson
+	mic@emx.utexas.edu		Mic Kaczmarczik
+	mwm@violet.berkeley.edu		Mike Meyer
+	sandra@cs.utah.edu		Sandra Loosemore
+	mp1u+@andrew.cmu.edu		Michael Portuesi
+	RCKG01M@CALSTATE.BITNET		Stephen Walton
+	hakanson@mist.cs.orst.edu	Marion Hakanson
+
+People who have worked on previos versions of Mg:
+
+	rtech!daveb@sun.com		Dave Brower
+
+These systems are known to work in the current version:
+
+	4.2 & 4.3 BSD Unix, SunOs 3.2, Ultrix-32
+	System V
+	OS9/68k
+	VMS
+	Amiga
+	Primos
+	Atari ST
+
+Ms-Dos support is planned, but did not get done in time for this
+release.  (Jeff Siegal <jbs@eddie.mit.edu> was the one doing it.)
+The Ms-Dos files will probably be distributed seperatly when it
+becomes available.
+
+Cpm/68k support was dropped due to compiler bugs.  Eunice support was
+dropped because of lack of interest.  Mg 1b does support those
+systems.
+
+One change to late to make it into mg.tex is readding bsmap-mode (only
+if BSMAP is #defined when compiling).  This is a toggle that controls
+input mapping to exchange the ^H (backspace) and DEL characters.  Like
+GNU emacs input keymaps, it is not displayed on the mode line and will
+cause them to be treated as each other for echoing.  (With bsmap-mode
+enabled, DEL will echo ^H in the echo line.)
+
+
+How to Make a Mg
+---------------------------
+
+On UNIX at least, it's easy.  (Note that even on these systems you may
+want to change a compile time option.)  If you have BSD UNIX, do:
+
+	ln sys/bsd/Makefile .
+	make
+
+For System V, do:
+
+	ln sys/sysv/Makefile .
+	make
+
+There are several other directories under sys: osk, vms, amiga, atari,
+prime.  You should follow the directions contained therein to make one
+of those versions.
+
+For most systems (everyting except the amiga, and atari currently),
+the termcap terminal definition is used.  There is a readme file in
+the default subdirectory of the sys directory explaining what entries
+are used and how.  (Termcap is a way to do display manipulation in a
+terminal independent manner.) Besides the normal startup file (usually
+.mg) terminal specific initialization files may be used.  (For
+example, in .mg.vt100 you may want to (global-set-key "\e[A"
+'previous-line) to have the up arrow key work.)
+
+Some changes made to make this version more like Gnu Emacs may break
+startup files.	Gnu Emacs 18 has both backward-delete-char and
+delete-backward-char that apperently do the same thing.	 This version
+has only the latter because that is what is documented in my manual
+(version 17) and bound by Gnu Emacs to DEL.
+
+----------------------------------------------------------------------
+
+Known limitaions:
+
+Recursive bindings may cause help and key rebinding code to go into
+an infinite loop, aborting with a stack overflow.
+
+Overwrite mode does not work in macros.	 (Characters are inserted
+rather than overwriting.)
+
+Dired mode has some problems:  Rename does not update the buffer.
+Doing a dired again will update the buffer (whether it needs it or
+not) and will lose any marks for deletion.  .. and . are not
+recognized as special cases.
+
+On systems with 16 bit integers, the kill buffer cannot exceed 32767
+bytes.
+
+
+
+New implementation oddities:
+
+insert and define-key are new commands corresponding to the mocklisp
+functions in Gnu Emacs.	 (Mg does not have non-command functions.)
+(Mg's insert will only insert one string.)
+
+The display wrap code does not work at all like that of GNU emacs.
+
+------------------------------------------------------------------------
+
+If you have a change to make that you think should be incorporated
+into the next version of Mg, send it the mg-support mail
+list. Addresses are:
+
+	mg-support%ais1@ecla.usc.edu
+	{cit-vax,sdcrdcf,trwrb}!oberon!ais1!mg-support
+
+Support for additional systems and terminals should include being
+available for beta testing as other changes are made.  (Send a short
+note to mg-support.)  Currently, beta test copies of Mg are made
+available via Internet ftp, so beta testers need access to the
+Internet.  (UUCP sites that are customers of uunet can get it via
+them.  Contact uunet!uunet-request for details.) If you can't reach
+one of us via a computer network, I suppose you could send a change to
+my snail mail address below on 5" os9 format disks or 9 track tape
+(ANSI variable label or Prime magsav format), but this effectivly
+rules you out as a potential beta tester.  (Don't expect the disk or
+tape back unless you inculude a SASE with sufficent postage.)  I will
+not be sending out copies on magnetic media, so please don't ask.  If
+you somehow got an incomplete or non-standard copy, (i.e. missing one
+of the sys directories mentioned here as working) complain to who you
+got it from not to me.
+
+	Robert Larson
+	309 S. Alexandria Ave.
+	Apt. 117
+	Los Angeles, CA  90020
+
+Alternatively, and under the same conditions, you can send either a 3"
+AmigaDOS format disk or a 9 track tape (Unix tar format) to:
+
+	Mike Meyer
+	P.O. Box 4730
+	Berkeley, CA 94704
+	

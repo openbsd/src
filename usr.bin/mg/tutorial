@@ -1,0 +1,604 @@
+Copyright (c) 1985 Richard M. Stallman.  See end for copying conditions.
+
+You are looking at the Emacs tutorial.
+
+Emacs commands generally involve the CONTROL key or the META (ESC)
+key.  Rather than write out META or CONTROL each time we want you to
+prefix a character, we'll use the following abbreviations:
+
+ C-<chr>  means hold the CONTROL key while typing the character <chr>
+	  Thus, C-f would be: hold the CONTROL key and type f.
+ M-<chr>  means type <ESC>, release it, then type the character <chr>.
+
+The characters ">>" at the left margin indicate directions for you to
+try using a command.  For instance:
+
+>>  Now type C-v (View next screen) to move to the next screen.
+	(go ahead, do it by depressing the control key and v together).
+	From now on, you'll be expected to do this whenever you finish
+	reading the screen.
+
+Note that there is an overlap when going from screen to screen; this
+provides some continuity when moving through the file.
+
+The first thing that you need to know is how to move around from
+place to place in the file.  You already know how to move forward a
+screen, with C-v.  To move backwards a screen, type M-v (type <ESC>v).
+
+>>  Try typing M-v and then C-v to move back and forth a few times.
+
+
+SUMMARY
+-------
+
+The following commands are useful for viewing screenfuls:
+
+	C-v	Move forward one screenful
+	M-v	Move backward one screenful
+	C-l	Clear screen and redisplay everything
+		 putting the text near the cursor at the center.
+		 (That's control-L, not control-1.
+		  There is no such character as control-1.)
+
+>> Find the cursor and remember what text is near it.
+   Then type a C-l.
+   Find the cursor again and see what text is near it now.
+
+
+BASIC CURSOR CONTROL
+--------------------
+
+Getting from screenful to screenful is useful, but how do you
+reposition yourself within a given screen to a specific place?  There
+are several ways you can do this.  One way (not the best, but the most
+basic) is to use the commands previous, backward, forward and next.
+As you can imagine these commands (which are given to Emacs as C-p,
+C-b, C-f, and C-n respectively) move the cursor from where it
+currently is to a new place in the given direction.  It is also
+possible to move the cursor with the arrow keys, but this requires you
+move your hand from the keyboard, it is also not supported on other
+machines that do support Emacs.  Emacs runs on everything from a CP/M
+machine to large mainframes. Here then, in a more graphical form are
+the commands:
+ 
+			  Previous line, C-p
+				  :
+				  :
+   Backward, C-b .... Current cursor position .... Forward, C-f
+				  :
+				  :
+			  Next line, C-n
+
+>> Move the cursor to the line in the middle of that diagram
+   and type C-l to see the whole diagram centered in the screen.
+
+You'll probably find it easy to think of these by letter.  P for
+previous, N for next, B for backward and F for forward.  These are
+the basic cursor positioning commands and you'll be using them ALL
+the time so it would be of great benefit if you learn them now.
+
+>> Do a few C-n's to bring the cursor down to this line.
+
+>> Move into the line with C-f's and then up with C-p's.
+   See what C-p does when the cursor is in the middle of the line.
+
+>> Try to C-b at the beginning of a line.  Do a few more C-b's.
+   Then do C-f's back to the end of the line and beyond.
+
+When you go off the top or bottom of the screen, the text beyond
+the edge is shifted onto the screen so that your instructions can
+be carried out while keeping the cursor on the screen.
+
+>> Try to move the cursor off the bottom of the screen with C-n and
+   see what happens.
+
+If moving by characters is too slow, you can move by words.  M-f
+(ESC-f) moves forward a word and M-b moves back a word.
+
+>> Type a few M-f's and M-b's.  Intersperse them with C-f's and C-b's.
+
+Notice the parallel between C-f and C-b on the one hand, and M-f and
+M-b on the other hand.  Very often Meta characters are used for
+operations related to English text whereas Control characters operate
+on the basic textual units that are independent of what you are
+editing (characters, lines, etc). C-a and C-e move to the beginning or
+end of a line.
+
+>> Try a couple of C-a's, and then a couple of C-e's.
+   See how repeated C-a's do nothing.
+
+Two other simple cursor motion commands are M-< (Meta Less-than),
+which moves to the beginning of the file, and M-> (Meta Greater-than),
+which moves to the end of the file.  You probably don't need to try
+them, since finding this spot again will be boring.  On most terminals
+the "<" is above the comma and you must use the shift key to type it.
+On these terminals you must use the shift key to type M-< also;
+without the shift key, you would be typing M-comma.
+
+The location of the cursor in the text is also called "point".  To
+paraphrase, the cursor shows on the screen where point is located in
+the text.
+
+Here is a summary of simple moving operations including the word and
+sentence moving commands:
+
+	C-f	Move forward a character
+	C-b	Move backward a character
+
+	M-f	Move forward a word
+	M-b	Move backward a word
+
+	c-n	Move to next line
+	C-p	Move to previous line
+
+	C-a	Move to beginning of line
+	C-e	Move to end of line
+
+	M-<	Go to beginning of file
+	M->	Go to end of file
+
+>> Try all of these commands now a few times for practice.
+   Since the last two will take you away from this screen,
+   you can come back here with M-v's and C-v's.  These are
+   the most often used commands.
+
+Like all other commands in Emacs, these commands can be given
+arguments which cause them to be executed repeatedly.  The way you
+give a command a repeat count is by typing C-u and then the digits
+before you type the command.  
+
+For instance, C-u 8 C-f moves forward eight characters.
+	
+>> Try giving a suitable argument to C-n or C-p to come as close
+   as you can to this line in one jump.
+
+The only apparent exception to this is the screen moving commands,
+C-v and M-v.  When given an argument, they scroll the screen up or
+down by that many lines, rather than screenfuls.  This proves to be
+much more useful.
+
+>> Try typing C-u 8 C-v now.
+
+Did it scroll the screen up by 8 lines?  If you would like to
+scroll it down you can give an argument to M-v.
+
+
+WHEN EMACS IS HUNG
+-----------------
+
+If Emacs gets into an infinite (or simply very long) computation which
+you don't want to finish, you can stop it safely by typing C-g.
+You can also use C-g to discard a numeric argument or the beginning of
+a command that you don't want to finish.
+
+>> Type C-u 100 to make a numeric arg of 100, then type C-g.
+   Now type C-f.  How many characters does it move?
+   If you have typed an <ESC> by mistake, you can get rid of it
+   with a C-g.
+
+WINDOWS
+-------
+
+Emacs can have several windows, each displaying its own text.
+At this stage it is better not to go into the techniques of
+using multiple windows.  But you do need to know how to get
+rid of extra windows that may appear to display help or
+output from certain commands.  It is simple:
+
+	C-x 1	One window (i.e., kill all other windows).
+
+That is Control-x followed by the digit 1.
+C-x 1 makes the window which the cursor is in become
+the full screen, by getting rid of any other windows.
+
+>> Move the cursor to this line and type C-l (Control-L).
+>> Type M-x. The cursor will move to the bottom of the screen.
+>> Type the words "describe-bindings" and hit return.
+   See how this window shrinks, while a new one appears
+   to display which functions are connected to which keys.
+
+>> Type C-x 1 and see the documentation listing window disappear.
+
+
+INSERTING AND DELETING
+----------------------
+
+If you want to insert text, just type it.  Characters which you can
+see, such as A, 7, *, etc. are taken by Emacs as text and inserted
+immediately.  Type <Return> (the carriage-return key) to insert a
+Newline character.
+
+You can delete the last character you typed by typing <DEL>.  More
+generally, <DEL> deletes the character immediately before the current
+cursor position.
+
+>> Do this now, type a few characters and then delete them
+   by typing <DEL> a few times.  Don't worry about this file
+   being changed; you won't affect the master tutorial.  This is just
+   a copy of it.
+
+>> Now start typing text until you reach the right margin, and keep
+   typing.  When a line of text gets too big for one line on the
+   screen, the line of text is "continued" off the edge of the screen.
+   The dollar sign at the right margin indicates a line which has
+   been continued.
+>> Use <DEL>s to delete the text until the line fits on one screen
+   line again.  The continuation mark goes away.
+
+>> Move the cursor to the beginning of a line and type <DEL>.  This
+   deletes the newline before the line and merges the line onto
+   the previous line.  The resulting line may be too long to fit, in
+   which case it has a continuation mark.
+>> Type <Return> to reinsert the Newline you deleted.
+
+Remember that most Emacs commands can be given a repeat count;
+this includes characters which insert themselves.
+
+>>  Try that now -- type C-u 8 * and see what happens.
+
+You've now learned the most basic way of typing something in
+Emacs and correcting errors.  You can delete by words or lines
+as well.  Here is a summary of the delete operations:
+
+	<DEL>        delete the character just before the cursor
+	C-d   	     delete the next character after the cursor
+
+	M-<DEL>      kill the word immediately before the cursor
+	M-d	     kill the next word after the cursor
+
+	C-k	     kill from the cursor position to end of line
+
+Notice that <DEL> and C-d vs M-<DEL> and M-d extend the parallel
+started by C-f and M-f (well, <DEL> isn't really a control
+character, but let's not worry about that).
+
+Now suppose you kill something, and then you decide that you want to
+get it back?  Well, whenever you kill something bigger than a
+character, Emacs saves it for you.  To yank it back, use C-y.  You
+can kill text in one place, move elsewhere, and then do C-y; this is
+a good way to move text around.  Note that the difference
+between "Killing" and "Deleting" something is that "Killed" things
+can be yanked back, and "Deleted" things cannot.  Generally, the
+commands that can destroy a lot of text save it, while the ones that
+attack only one character, or nothing but blank lines and spaces, do
+not save.
+
+For instance, type C-n a couple times to postion the cursor
+at some line on this screen.
+
+>> Do this now, move the cursor and kill that line with C-k.
+
+Note that a single C-k kills the contents of the line, and a second
+C-k kills the line itself, and make all the other lines move up.  If
+you give C-k a repeat count, it kills that many lines AND their
+contents.
+
+The text that has just disappeared is saved so that you can
+retrieve it.  To retrieve the last killed text and put it where
+the cursor currently is, type C-y.
+
+>> Try it; type C-y to yank the text back.
+
+Think of C-y as if you were yanking something back that someone
+took away from you.  Notice that if you do several C-k's in a row
+the text that is killed is all saved together so that one C-y will
+yank all of the lines.
+
+>> Do this now, type C-k several times.
+
+Now to retrieve that killed text:
+
+>> Type C-y.  Then move the cursor down a few lines and type C-y
+   again.  You now see how to copy some text.
+
+
+FILES
+-----
+
+In order to make the text you edit permanent, you must put it in a
+file.  Otherwise, it will go away when your invocation of Emacs goes
+away.  You put your editing in a file by "finding" the file.  What
+finding means is that you see the contents of the file in your Emacs;
+and, loosely speaking, what you are editing is the file itself.
+However, the changes still don't become permanent until you "save" the
+file.  This is so you can have control to avoid leaving a half-changed
+file around when you don't want to.
+
+If you look near the bottom of the screen you will see a line that
+begins and ends with dashes, and contains the string:
+     "Mg: TUTORIAL"
+Your copy of the Emacs tutorial is called "TUTORIAL".  Whatever
+file you find, that file's name will appear in that precise
+spot.
+
+The commands for finding and saving files are unlike the other
+commands you have learned in that they consist of two characters.
+They both start with the character Control-x.  There is a whole series
+of commands that start with Control-x; many of them have to do with
+files, buffers, and related things, and all of them consist of
+Control-x followed by some other character.
+
+Another thing about the command for finding a file is that you have
+to say what file name you want.  We say the command "reads an argument
+from the terminal" (in this case, the argument is the name of the
+file).  After you type the command
+
+	C-x C-f   Find a file
+
+Emacs asks you to type the file name.  It echoes on the bottom line of
+the screen.  When you type <Return> to end the file name it disappears. 
+
+>> Type C-x C-f, then type C-g.  This cancels the  C-x C-f command 
+   that was using the minibuffer.  So you do not find any file.
+
+In a little while the file contents appear on the screen.  You can
+edit the contents.  When you wish to make the changes permanent,
+issue the command
+
+	C-x C-s   Save the file
+
+The contents of Emacs are written into the file.  
+
+When saving is finished, Emacs prints the name of the file written.
+You should save fairly often, so that you will not lose very much
+work if the system should crash.
+
+>> Type C-x C-s, saving your copy of the tutorial.
+   This should print "Wrote TUTORIAL" at the bottom of the screen.
+
+To make a new file, just find it "as if" it already existed.  Then
+start typing in the text.  When you ask to "save" the file, Emacs
+will really create the file with the text that you have inserted.
+>From then on, you can consider yourself to be editing an already
+existing file.
+
+
+BUFFERS
+-------
+
+If you find a second file with C-x C-f, the first file remains inside
+Emacs.  This way you can get quite a number of files inside Emacs. 
+
+The object inside Emacs which holds the text read from one file
+is called a "buffer."  Finding a file makes a new buffer inside Emacs.
+To see a list of the buffers that exist in Emacs, type
+
+	C-x C-b   List buffers
+
+>> Try C-x C-b now.
+
+See how each buffer has a name, and it may also have a file name
+for the file whose contents it holds.  Some buffers do not correspond
+to files.  For example, the buffer named "*Buffer List*" does
+not have any file.  It is the buffer which contains the buffer
+list that was made by C-x C-b.  ANY text you see in an Emacs window
+has to be in some buffer.
+
+>> Type C-x 1 to get rid of the buffer list.
+
+If you make changes to the text of one file, then find another file,
+this does not save the first file.  Its changes remain inside Emacs,
+in that file's buffer.  The creation or editing of the second file's
+buffer has no effect on the first file's buffer.  This is very useful,
+but it also means that you need a convenient way to save the first
+file's buffer.  It would be a nuisance to have to switch back to
+it with C-x C-f in order to save it with C-x C-s.  So we have
+
+	C-x s     Save some buffers
+
+C-x s goes through the list of all the buffers you have
+and finds the ones that contain files you have changed.
+For each such buffer, C-x s asks you whether to save it.
+
+
+EXTENDING THE COMMAND SET
+-------------------------
+
+There are many, many more Emacs commands than could possibly be put
+on all the control and meta characters.  Emacs gets around this with
+the X (eXtend) command.  This comes in two flavors:
+
+	C-x	Character eXtend.  Followed by one character.
+	M-x	Named command eXtend.  Followed by a long name.
+
+These are commands that are generally useful but used less than the
+commands you have already learned about.  You have already seen two
+of them: the file commands C-x C-f to Find and C-x C-s to Save.
+Another example is the command to tell Emacs that you'd like to stop
+editing and get rid of Emacs.  The command to do this is C-x C-c.
+(Don't worry; it offers to save each changed file before it kills the
+Emacs.)
+
+C-z is the usual way to exit Emacs, because it is always better not to
+kill the Emacs if you are going to do any more editing.  On systems
+which allow it, C-z exits from Emacs to a CLI but does not destroy the
+Emacs; you can resume editing by ending that CLI or depth arranging.
+
+You would use C-x C-c if you were running out of memory.  You would
+also use it to exit an Emacs invoked under mail handling programs and
+other random utilities, since they may not believe you have really
+finished using the Emacs if it continues to exist. 
+
+There are many C-x commands.  The ones you know are:
+
+	C-x C-f		Find file.
+	C-x C-s		Save file.
+	C-x C-b		List buffers.
+	C-x C-c		Quit Emacs.
+
+Named eXtended commands are commands which are used even less
+frequently, or commands which are used only in certain modes.  These
+commands are usually called "functions".  An example is the function
+replace-string, which globally replaces one string with another.  When
+you type M-x, Emacs prompts you at the bottom of the screen with
+M-x and you should type the name of the function you wish to call; in
+this case, "query-replace".  Just type "que<TAB>" and Emacs will
+complete the name.  End the command name with <Return>.
+Then type the two "arguments"--the string to be replaced, and the string
+to replace it with--each one ended with a Return.
+
+>> Move the cursor to the blank line two lines below this one.
+   Then type M-x repl s<Return>changed<Return>altered<Return>.
+
+   Notice how this line has changed: you've replaced
+   the word c-h-a-n-g-e-d with "altered" wherever it occured
+   after the cursor.
+
+
+MODE LINE
+---------
+
+If Emacs sees that you are typing commands slowly it shows them to you
+at the bottom of the screen in an area called the "echo area."  The echo
+area contains the bottom line of the screen.  The line immediately above
+it is called the MODE LINE.  The mode line says something like
+
+--**-Mg: TUTORIAL		  	   (fundamental)------------------------
+
+This is a very useful "information" line.
+
+The stars near the front mean that you have made changes to the text.
+Right after you visit or save a file, there are no stars, just dashes.
+
+The part of the mode line inside the parentheses is to tell you what
+modes you are in.  The default mode is fundamental which is what you
+are in now.  It is an example of a "mode".  There are several modes in
+Emacs for editing different styles of text, such as indent, bsmap,
+fill, etc.  Each mode makes a few commands behave differently.
+
+One mode which is very useful, especially for editing English text, is
+Auto Fill mode.  When this mode is on, Emacs breaks the line in
+between words automatically whenever the line gets too long.  You can
+turn this mode on by doing M-x auto-fill-mode<Return>.  When the mode
+is on, you can turn it off by doing M-x auto-fill-mode<Return>.
+
+>> Type M-x auto-fill-mode<Return> now.  Then insert a line of "asdf "
+   over again until you see it divide into two lines.  You must put in
+   spaces between them because Auto Fill breaks lines only at spaces.
+
+The margin is usually set at 70 characters, but you can change it
+with the C-x f command.  You should give the margin setting you want
+as a numeric argument.
+
+>> Type C-x f with an argument of 20.  (C-u 2 0 C-x f).
+   Then type in some text and see Emacs fill lines of 20
+   characters with it.  Then set the margin back to 70 using
+   C-x f again.
+
+If you make changes in the middle of a paragraph, Auto Fill mode
+does not re-fill it for you.
+To re-fill the paragraph, type M-q (Meta-q) with the cursor inside
+that paragraph.
+
+>> Move the cursor into the previous paragraph and type M-q.
+
+SEARCHING
+---------
+
+Emacs can do searches for strings (these are groups of contiguous
+characters or words) either forward through the file or backward
+through it.  To search for the string means that you are trying to
+locate it somewhere in the file and have Emacs show you where the
+occurrences of the string exist.  This type of search is somewhat
+different from what you may be familiar with.  It is a search that is
+performed as you type in the thing to search for.  The command to
+initiate a search is C-s for forward search, and C-r for reverse
+search.  BUT WAIT!  Don't do them now.  When you type C-s you'll
+notice that the string "I-search" appears as a prompt in the echo
+area.  This tells you that Emacs is in what is called an incremental
+search waiting for you to type the thing that you want to search for.
+<ESC> terminates a search.
+
+>> Now type C-s to start a search.  SLOWLY, one letter at a time,
+   type the word 'cursor', pausing after you type each
+   character to notice what happens to the cursor.
+>> Type C-s to find the next occurrence of "cursor".
+>> Now type <DEL> four times and see how the cursor moves.
+>> Type <ESC> to terminate the search.
+
+Did you see what happened?  Emacs, in an incremental search, tries to
+go to the occurrence of the string that you've typed out so far.  To go
+to the next occurrence of 'cursor' just type C-s again.  If no such
+occurrence exists Emacs beeps and tells you that it is a failing
+search.  C-g would also terminate the search.
+
+If you are in the middle of an incremental search and type <DEL>,
+you'll notice that the last character in the search string is erased
+and the search backs up to the last place of the search.  For
+instance, suppose you currently have typed 'cu' and you see that your
+cursor is at the first occurrence of 'cu'.  If you now type <DEL>,
+the 'u' on the search line is erased and you'll be repositioned in the
+text to the occurrence of 'c' where the search took you before you
+typed the 'u'.  This provides a useful means for backing up while you
+are searching. 
+
+If you are in the middle of a search and happen to type a control
+character (other than a C-s or C-r, which tell Emacs to search for the
+next occurrence of the string), the search is terminated.
+
+The C-s starts a search that looks for any occurrence of the search
+string AFTER the current cursor position.  But what if you want to
+search for something earlier in the text?  To do this, type C-r for
+Reverse search.  Everything that applies to C-s applies to C-r except
+that the direction of the search is reversed.
+
+
+GETTING MORE HELP
+-----------------
+
+In this tutorial we have tried to supply just enough information to
+get you started using Emacs.  There is so much available in Emacs that
+it would be impossible to explain it all here.  However, you may want
+to learn more about Emacs since it has numerous desirable features
+that you don't know about yet.  
+
+
+CONCLUSION
+----------
+
+Remember, to exit Emacs permanently use C-x C-c.  To exit to a shell
+temporarily, so that you can come back in, use C-z.
+
+This tutorial is meant to be understandable to all new users, so if
+you found something unclear, don't sit and blame yourself - complain!
+
+
+COPYING
+-------
+
+This tutorial, like all of GNU Emacs, is copyrighted, and comes with
+permission to distribute copies on certain conditions:
+
+Copyright (c) 1985 Richard M. Stallman
+
+   Permission is granted to anyone to make or distribute verbatim copies
+   of this document as received, in any medium, provided that the
+   copyright notice and permission notice are preserved,
+   and that the distributor grants the recipient permission
+   for further redistribution as permitted by this notice.
+
+   Permission is granted to distribute modified versions
+   of this document, or of portions of it,
+   under the above conditions, provided also that they
+   carry prominent notices stating who last altered them.
+
+The conditions for copying Emacs itself are slightly different
+but in the same spirit.  Please read the file COPYING and then
+do give copies of GNU Emacs to your friends.
+Help stamp out ownership of software by using, writing,
+and sharing free software!
+
+Mg itself is public domain, and may be given away freely.  See the
+README file about differences from GNU emacs, and why Mg exists.
+
+*******************************************************************************
+***        This document heavily cut by Randy M. Spencer to apply to        ***
+***      Mg written my Mike Meyer and gang.  It was released		    ***
+***      at the AAA users group meeting in Lafayette CA, an Amiga Users     ***
+***      Group.  My profound thanks to Richard Stallman for his work, I     ***
+***      am proud to carry his initials.                                    ***
+***	 Additional modifacations were done by Robert A. Larson for Mg	    ***
+***	 version 2a, mainly the name change from MicroGnuEmacs to Mg.	    ***
+*******************************************************************************
+
+See other files accompanying this for more system specific information.

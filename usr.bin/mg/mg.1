@@ -1,0 +1,139 @@
+.TH MG 1
+.SH NAME
+mg \- Micro Gnu emacs
+.SH SYNOPSIS
+.B mg
+[
+.I files
+]
+.SH DESCRIPTION
+.B Mg
+is intended as a micro version of Gnu Emacs.  It is intended primarily
+for use on PC's of various kinds, where it may not be practical to
+run Gnu Emacs because of its size.  However it is also useful on
+larger systems for some purposes.  Because it is about 1/10 the size
+of Gnu Emacs, it starts much faster, and is much less likely to
+cause paging.
+.LP
+Normal editing commands should be identical to Gnu Emacs.  It differs
+primarily in not having special modes for tasks other than straight
+editing, e.g. mail and news, and in not having special modes that
+support various programming languages.  It does have text justification
+and auto-fill mode.  It is written directly in C, so there is no
+language in which you can write extensions.  However you can rebind
+keys and change some parameters.  There are no limits to line length
+or format.  Command, buffer, and file name completion and listing can
+be done using space and ? respectively.
+.LP
+.B Mg
+is close enough to Gnu Emacs that you can learn it the same way:
+using the program
+.BR teach-emacs .
+.B Teach-emacs
+will invoke Gnu Emacs, however the features that it teaches should
+work identically on
+.BR mg .
+.LP
+The one major difference is in configuration files.  Gnu Emacs uses
+a configuration file 
+.IR .emacs ,
+which is written in Lisp.
+.B Mg
+uses its own configuration files, which contain extend mode Emacs
+commands (i.e. commands that you could type after doing m-x).
+There are two configuration files, 
+.IR .mg ,
+and
+.IR .mg-TERM .
+TERM here represents the name of you terminal type.  E.g. if
+your terminal type is set to vt100,
+.B mg
+will use
+.I .mg-vt100
+as a startup file.  The terminal type startup file is used
+first.  If either of these files does not exist, 
+.B mg
+will look for a file by the same name (but without the leading
+dot) in
+.IR /usr/local/lib/mg .
+.LP
+See the manual for a full list of the commands that can
+go in the files. The most commonly  
+used ones are probably key binding.  The following example is
+part of a configuration file used to set make
+.B mg
+respond to the keypad on a Microport SV/AT system.  The normal
+keys send a sequence of the form <ESC> [ <letter>.  I also
+want to use keys prefixed by <ESC> as having different meaning.
+In order to deal with multi-character sequences, the initial
+subsequences must be defined as prefixes.  To allow for this,
+three prefixes are left undefined in the initial setup.  They
+are called "extra prefix 1", etc.
+.br
+  ;allow normal pad
+.br
+  global-set-key ^[[ "extra prefix 1"
+.br
+  ;allow prefixed pad
+.br
+  global-set-key ^[^[ "extra prefix 2"
+.br
+  global-set-key ^[^[[ "extra prefix 3"
+.br
+  ;keypad
+.br
+  global-set-key ^[[A previous-line
+.br
+  global-set-key ^[[H scroll-down
+.br
+  ...etc
+.br
+  ;escaped keypad
+.br
+  global-set-key ^[^[[A exchange-point-and-mark
+.br
+  global-set-key ^[^[[H beginning-of-buffer
+.br
+  ...etc
+.LP
+Here's another example sequence that you may find useful.  By default ()
+and [] are recognized as brackets, so bracket matching can be done.
+The following defines {} as brackets, and turns on the mode that causes
+the cursor to "blink" to show you matching brackets.
+.br
+  global-set-key } blink-matching-paren-hack
+.br
+  blink-matching-paren
+.br
+  set-default-mode blink
+.SH ARGUMENTS
+.B Mg
+does not take any options.  The only arguments you can pass it are
+file names.  It will do a find-file on each one, reading it into
+a buffer.  It will leave the last buffer on the screen.  If you call
+.B mg
+from
+.BR vnews ,
+both the original article and your reply will be in separate buffers.
+The original article will be showing.  Use "c-x b" to switch to the
+buffer for your reply.
+.SH "SEE ALSO"
+.BR gnuemacs (1),
+.BR teach-emacs (1)
+.SH BUGS
+When you type ? to list possible file names, buffer names, etc.,
+a help buffer is created for the possibilities.  In Gnu Emacs,
+this buffer goes away the next time you type a real command.
+In
+.BR mg ,
+you must use "m-x 1" to get rid of it.
+.SH FILES
+.LP
+.mg -  normal startup file
+.LP
+.mg-TERM - terminal-specific startup file
+.LP
+/usr/local/lib/mg - directory for system-wide startup files.  Files in
+this directory do not have the leading dot.
+.LP
+/usr/doc/mg.doc - full manual
