@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.34 2002/06/30 19:19:49 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.35 2002/07/05 05:41:02 smurph Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -405,8 +405,9 @@ void *aux;
 	}
 
 	/* setup the PCI interrupt */
-	ahc->platform_data->pci_intr_func = ahc_pci_intr;
-	
+	ahc->bus_intr = ahc_pci_intr;
+	ahc->unsolicited_ints = 0; 
+
 	if(ahc_do_pci_config(ahc)){
 		ahc_free(ahc);
 		return;
@@ -1623,14 +1624,14 @@ release_seeprom(sd)
 #define	PCI_PRINT(Printstuff)
 #endif
 
-int
+void
 ahc_pci_intr(ahc)
 	struct ahc_softc *ahc;
 {
 	pcireg_t status1;
 
 	if ((ahc_inb(ahc, ERROR) & PCIERRSTAT) == 0)
-		return 0;
+		return;
   	PCI_PRINT(("%s: PCI error Interrupt at seqaddr = 0x%x\n",
 		   ahc_name(ahc), 
 		   ahc_inb(ahc, SEQADDR0) | (ahc_inb(ahc, SEQADDR1) << 8)));
@@ -1672,5 +1673,5 @@ ahc_pci_intr(ahc)
 	
 	ahc_unpause(ahc);
 
-	return 1;
+	return;
 }

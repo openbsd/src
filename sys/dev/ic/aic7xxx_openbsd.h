@@ -30,10 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.h,v 1.6 2002/07/01 23:31:05 smurph Exp $
+ * $Id: aic7xxx_openbsd.h,v 1.7 2002/07/05 05:41:03 smurph Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.h,v 1.12 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.h,v 1.6 2002/07/01 23:31:05 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.h,v 1.7 2002/07/05 05:41:03 smurph Exp $
  */
 
 #ifndef _AIC7XXX_OPENBSD_H_
@@ -253,9 +253,6 @@ struct ahc_platform_data {
 	void			*ih;
 	int			channel_b_primary;
 	
-	/* for pci error interrupts  */
-	int(*pci_intr_func)(struct ahc_softc *);
-        
 	/* queue management */
 	int			queue_blocked;
 	u_int16_t		devqueue_blocked[AHC_NUM_TARGETS];
@@ -311,6 +308,7 @@ struct scb_platform_data {
 #define ahc_insb(ahc, port, valp, count)		\
 	bus_space_read_multi_1((ahc)->tag, (ahc)->bsh, port, valp, count)
 
+
 static __inline void ahc_flush_device_writes(struct ahc_softc *);
 
 static __inline void
@@ -323,6 +321,7 @@ ahc_flush_device_writes(ahc)
 
 /**************************** Locking Primitives ******************************/
 /* Lock protecting internal data structures */
+#ifdef AHC_INLINES
 static __inline void ahc_lockinit(struct ahc_softc *);
 static __inline void ahc_lock(struct ahc_softc *, int *flags);
 static __inline void ahc_unlock(struct ahc_softc *, int *flags);
@@ -379,15 +378,37 @@ ahc_done_unlock(ahc, flags)
 	/* Nothing to do here for OpenBSD */
 }
 
+#else
+
+#define ahc_lockinit(ahc);	
+#define ahc_lock(ahc, flags)    *(flags) = splbio()
+#define ahc_unlock(ahc, flags)	splx(*(flags))
+#define ahc_done_lockinit(ahc);
+#define ahc_done_lock(ahc, flags);
+#define ahc_done_unlock(ahc, flags);
+
+#endif 
+
 /****************************** OS Primitives *********************************/
 #define ahc_delay delay
 
 /************************** Transaction Operations ****************************/
+
+#ifdef AHC_INLINES
 static __inline void ahc_set_transaction_status(struct scb *, uint32_t);
+static __inline void ahc_set_transaction_tag(struct scb *, int, u_int);
+static __inline void ahc_platform_scb_free(struct ahc_softc *ahc,
+					   struct scb *scb);
+#else 
+void ahc_set_transaction_status(struct scb *, uint32_t);
+void ahc_set_transaction_tag(struct scb *, int, u_int);
+void ahc_platform_scb_free(struct ahc_softc *ahc,
+			   struct scb *scb);
+#endif
+
 static __inline void ahc_set_scsi_status(struct scb *, uint32_t);
 static __inline uint32_t ahc_get_transaction_status(struct scb *);
 static __inline uint32_t ahc_get_scsi_status(struct scb *);
-static __inline void ahc_set_transaction_tag(struct scb *, int, u_int);
 static __inline u_long ahc_get_transfer_length(struct scb *);
 static __inline int ahc_get_transfer_dir(struct scb *);
 static __inline void ahc_set_residual(struct scb *, u_long);
@@ -398,16 +419,14 @@ static __inline uint32_t ahc_get_sense_bufsize(struct ahc_softc*, struct scb*);
 static __inline void ahc_freeze_scb(struct scb *scb);
 static __inline void ahc_platform_freeze_devq(struct ahc_softc *, struct scb *);
 static __inline int  ahc_platform_abort_scbs(struct ahc_softc *ahc, int target,
-						  char channel, int lun, u_int tag,
+					     char channel, int lun, u_int tag,
 					     role_t role, uint32_t status);
-static __inline void ahc_platform_scb_free(struct ahc_softc *ahc,
-					   struct scb *scb);
-
 /* 
  * This is a hack to keep from modifying the main
  * driver code as much as possible.  This function
  * does CAM to SCSI api stuff.
  */
+#ifdef AHC_INLINES
 static __inline
 void ahc_set_transaction_status(scb, status)
 	struct scb *scb;
@@ -447,7 +466,7 @@ void ahc_set_transaction_status(scb, status)
 	}
 	scb->io_ctx->error = status;
 }
-
+#endif 
 static __inline
 void ahc_set_scsi_status(scb, status)
 	struct scb *scb;
@@ -476,6 +495,7 @@ uint32_t ahc_get_scsi_status(scb)
 	return (scb->io_ctx->status);
 }
 
+#ifdef AHC_INLINE
 static __inline
 void ahc_set_transaction_tag(scb, enabled, type)
 	struct scb *scb;
@@ -492,7 +512,7 @@ void ahc_set_transaction_tag(scb, enabled, type)
 		break;
 	}
 }
-
+#endif 
 static __inline
 u_long ahc_get_transfer_length(scb)
 	struct scb *scb;
@@ -582,6 +602,7 @@ ahc_platform_abort_scbs(ahc, target, channel, lun, tag, role, status)
 	return (0);
 }
 
+#ifdef AHC_INLINE
 static __inline void
 ahc_platform_scb_free(ahc, scb)
 	struct ahc_softc *ahc;
@@ -601,6 +622,7 @@ ahc_platform_scb_free(ahc, scb)
 	
 	ahc_unlock(ahc, &s);
 }
+#endif 
 
 /********************************** PCI ***************************************/
 #ifdef AHC_PCI_CONFIG

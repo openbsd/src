@@ -28,10 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.c,v 1.40 2002/06/28 00:34:54 smurph Exp $
+ * $Id: aic7xxx.c,v 1.41 2002/07/05 05:41:03 smurph Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.80 2001/12/16 17:38:30 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.40 2002/06/28 00:34:54 smurph Exp $
+ * $OpenBSD: aic7xxx.c,v 1.41 2002/07/05 05:41:03 smurph Exp $
  */
 
 #ifdef __OpenBSD__
@@ -596,7 +596,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		printf("%s:%c:%d: no active SCB for reconnecting "
 		       "target - issuing BUS DEVICE RESET\n",
 		       ahc_name(ahc), devinfo.channel, devinfo.target);
-		printf("SAVED_SCSIID == 0x%x, SAVED_LUN == 0x%x, "
+		printf("SAVED_SCSIID == 0x%02x, SAVED_LUN == 0x%x, "
 		       "ARG_1 == 0x%x ACCUM = 0x%x\n",
 		       ahc_inb(ahc, SAVED_SCSIID), ahc_inb(ahc, SAVED_LUN),
 		       ahc_inb(ahc, ARG_1), ahc_inb(ahc, ACCUM));

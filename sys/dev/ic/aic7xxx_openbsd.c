@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.7 2002/07/01 23:31:05 smurph Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.8 2002/07/05 05:41:03 smurph Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.7 2002/07/01 23:31:05 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.8 2002/07/05 05:41:03 smurph Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -100,14 +100,11 @@ void		ahc_check_tags(struct ahc_softc *ahc,
  * have to pause the sequencer for chips that don't have the
  * auto-pause feature.  XXX smurph
  */
-static __inline u_int	ahc_pause_index_busy_tcl(struct ahc_softc *ahc, 
-						 u_int tcl);
-static __inline void	ahc_pause_unbusy_tcl(struct ahc_softc *ahc,
-					     u_int tcl);
-static __inline void	ahc_pause_busy_tcl(struct ahc_softc *ahc,
-					   u_int tcl, u_int busyid);
+u_int ahc_pause_index_busy_tcl(struct ahc_softc *ahc, u_int tcl);
+void  ahc_pause_unbusy_tcl(struct ahc_softc *ahc, u_int tcl);
+void  ahc_pause_busy_tcl(struct ahc_softc *ahc, u_int tcl, u_int busyid);
 
-static __inline u_int
+u_int
 ahc_pause_index_busy_tcl(ahc, tcl)
 	struct ahc_softc *ahc;
 	u_int tcl;
@@ -123,7 +120,7 @@ ahc_pause_index_busy_tcl(ahc, tcl)
 	return retval;
 }
 
-static __inline void
+void
 ahc_pause_unbusy_tcl(ahc, tcl)
 	struct ahc_softc *ahc;
 	u_int tcl;
@@ -137,7 +134,7 @@ ahc_pause_unbusy_tcl(ahc, tcl)
 	}
 }
 					     
-static __inline void
+void
 ahc_pause_busy_tcl(ahc, tcl, busyid)
 	struct ahc_softc *ahc;
 	u_int tcl;
@@ -199,7 +196,6 @@ ahc_createdmamem(ahc, dmat, size, mapp, vaddr, baddr, seg, nseg, what)
 {
 	int error, level = 0;
 	int dma_flags = BUS_DMA_NOWAIT;
-	const char *myname = ahc_name(ahc);
 
 	dmat = ahc->parent_dmat;
 	
@@ -208,32 +204,32 @@ ahc_createdmamem(ahc, dmat, size, mapp, vaddr, baddr, seg, nseg, what)
 	
 	if ((error = bus_dmamem_alloc(dmat, size, NBPG, 0,
 			seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
-			myname, what, error);
+		printf("%s: failed to %s DMA map for %s, error = %d\n",
+			"allocate", ahc_name(ahc), what, error);
 		goto out;
 	}
 	level++;
 
 	if ((error = bus_dmamem_map(dmat, seg, *nseg, size, vaddr,
 			BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: failed to map DMA mem for %s, error = %d\n",
-			myname, what, error);
+		printf("%s: failed to %s DMA map for %s, error = %d\n",
+			"map", ahc_name(ahc), what, error);
 		goto out;
 	}
 	level++;
 
 	if ((error = bus_dmamap_create(dmat, size, 1, size, 0,
 			dma_flags, mapp)) != 0) {
-		printf("%s: failed to create DMA map for %s, error = %d\n",
-			myname, what, error);
+		printf("%s: failed to %s DMA map for %s, error = %d\n",
+			"create", ahc_name(ahc), what, error);
 		goto out;
 	}
 	level++;
 
 	if ((error = bus_dmamap_load(dmat, *mapp, *vaddr, size, NULL,
 			BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: failed to load DMA map for %s, error = %d\n",
-			myname, what, error);
+		printf("%s: failed to %s DMA map for %s, error = %d\n",
+			"load", ahc_name(ahc), what, error);
 		goto out;
 	}
 
@@ -428,8 +424,7 @@ ahc_init_scbdata(ahc)
 	ahc_alloc_scbs(ahc);
 
 	if (scb_data->numscbs == 0) {
-		printf("%s: ahc_init_scbdata - "
-		       "Unable to allocate initial scbs\n",
+		printf("%s: Unable to allocate initial scbs\n",
 		       ahc_name(ahc));
 		goto error_exit;
 	}
@@ -519,7 +514,7 @@ ahc_attach(ahc)
 	ahc_lock(ahc, &s);
 	
 	ahc_controller_info(ahc, ahc_info);
-	printf("%s: %s %s\n", ahc_name(ahc), ahc_info, (ahc->flags & AHC_SCB_BTT) ? "BTT" : "");
+	printf("%s: %s\n", ahc_name(ahc), ahc_info);
 	/*
 	 * Initialize the software queue.
 	 */
@@ -595,26 +590,18 @@ ahc_platform_intr(arg)
 	intstat = ahc_inb(ahc, INTSTAT);
 	
 	if ((intstat & INT_PEND) == 0) {
-		if (ahc->platform_data->pci_intr_func && 
-		    (int)ahc->platform_data->pci_intr_func(ahc)) {
-#ifdef AHC_DEBUG
-			printf("%s: bus intr: CCHADDR %x HADDR %x SEQADDR %x\n",
-			    ahc_name(ahc),
-			    ahc_inb(ahc, CCHADDR) |
-			    (ahc_inb(ahc, CCHADDR+1) << 8)
-			    | (ahc_inb(ahc, CCHADDR+2) << 16)
-			    | (ahc_inb(ahc, CCHADDR+3) << 24),
-			    ahc_inb(ahc, HADDR) | (ahc_inb(ahc, HADDR+1) << 8)
-			    | (ahc_inb(ahc, HADDR+2) << 16)
-			    | (ahc_inb(ahc, HADDR+3) << 24),
-			    ahc_inb(ahc, SEQADDR0) |
-			    (ahc_inb(ahc, SEQADDR1) << 8));
-#endif
-			return 1;
-		}
-		return 0;
-	}
+		if (ahc->unsolicited_ints > 500) {
+			ahc->unsolicited_ints = 0;
+			if ((ahc->chip & AHC_PCI) != 0
+			 && (ahc_inb(ahc, ERROR) & PCIERRSTAT) != 0){
+				ahc->bus_intr(ahc);
 
+			}
+		}
+		ahc->unsolicited_ints++;
+		return 1;
+	}
+	
 	ahc_intr(ahc);
 	return 1; 
 }
@@ -636,6 +623,16 @@ ahc_done(ahc, scb)
 	int lun;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahc_done\n"));
+	
+#ifdef maybe_not_such_a_good_idea
+	/* Don't smash a disconnected SCB */
+	if ((scb->hscb->control & DISCONNECTED) != 0){
+		printf("disconnected sbc (tag %d) in ahc_done(ahc)!!!\n");
+		if ((xs = ahc->platform_data->sc_xxxq.lh_first) != NULL)
+			(void) ahc_action(xs);
+		return;
+	}
+#endif	
 	
 	LIST_REMOVE(scb, pending_links);
 	if ((scb->flags & SCB_UNTAGGEDQ) != 0) {
@@ -926,9 +923,9 @@ get_scb:
 		panic("ahc: queuing for busy target");
 #endif
 	
-	scb->flags = SCB_FREE;
 	scb->io_ctx = xs;
 	hscb = scb->hscb;
+	
 	hscb->control = 0;
 	
 	timeout_set(&xs->stimeout, ahc_timeout, scb);
@@ -1117,6 +1114,18 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 	
 	LIST_INSERT_HEAD(&ahc->pending_scbs, scb, pending_links);
 
+#ifdef AHC_DEBUG
+	if ((ahc_debug & AHC_SHOWCMDS)) {
+		ahc_print_path(ahc, scb);
+		printf("opcode 0x%x tag %x len %d flags %x "
+		       "control %x fpos %u rate %x\n",
+		       xs->cmdstore.opcode, scb->hscb->tag, 
+		       scb->hscb->cdb_len, scb->flags, 
+		       scb->hscb->control, ahc->qinfifonext,
+		       scb->hscb->scsirate);
+	}
+#endif
+
 	/*
 	 * We only allow one untagged transaction
 	 * per target in the initiator role unless
@@ -1138,7 +1147,7 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 		scb->flags |= SCB_UNTAGGEDQ;
 		if (TAILQ_FIRST(untagged_q) != scb) {
 			ahc_unlock(ahc, &s);
-			return (COMPLETE);
+			return (SUCCESSFULLY_QUEUED);
 		}
 	}
 	
@@ -1160,17 +1169,6 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 		ahc_queue_scb(ahc, scb);
 	}
 
-#ifdef AHC_DEBUG
-	if ((ahc_debug & AHC_SHOWCMDS)) {
-		ahc_print_path(ahc, scb);
-		printf("opcode 0x%x tag %x len %d flags %x "
-		       "control %x fpos %u rate %x\n",
-		       xs->cmdstore.opcode, scb->hscb->tag, 
-		       scb->hscb->cdb_len, scb->flags, 
-		       scb->hscb->control, ahc->qinfifonext,
-		       scb->hscb->scsirate);
-	}
-#endif
 
 	if (!(xs->flags & SCSI_POLL)) {
 		ahc_unlock(ahc, &s);
@@ -1199,9 +1197,9 @@ ahc_poll(ahc, wait)
 	int	wait;	/* in msec */
 {
 	while (--wait) {
-		if (ahc->platform_data->pci_intr_func) 
-		    (void)ahc->platform_data->pci_intr_func(ahc);
 		DELAY(1000);
+		if ((ahc->chip & AHC_PCI) != 0 && (ahc_inb(ahc, ERROR) & PCIERRSTAT) != 0)
+			ahc->bus_intr(ahc);
 		if (ahc_inb(ahc, INTSTAT) & INT_PEND)
 			break;
 	}
@@ -1602,7 +1600,6 @@ ahc_platform_alloc(ahc, platform_arg)
 	/* Just do some initialization... */
 	ahc->scb_data = NULL;
 	ahc->platform_data->ih = NULL;
-	ahc->platform_data->pci_intr_func = NULL;
 	ahc->platform_data->channel_b_primary = FALSE;
 
 	return (0);
@@ -1638,18 +1635,18 @@ ahc_check_tags(ahc, xs)
 		return;
 
 	ahc_compile_devinfo(&devinfo,
-	    SCSI_SCSI_ID(ahc, xs->sc_link),
-	    XS_SCSI_ID(xs),
-	    XS_LUN(xs),
-	    SCSI_CHANNEL(ahc, xs->sc_link),
-	    ROLE_INITIATOR);
+			    SCSI_SCSI_ID(ahc, xs->sc_link),
+			    XS_SCSI_ID(xs),
+			    XS_LUN(xs),
+			    SCSI_CHANNEL(ahc, xs->sc_link),
+			    ROLE_INITIATOR);
 
 	ahc_set_tags(ahc, &devinfo, AHC_QUEUE_TAGGED);
 
 	printf("%s: target %d using tagged queuing\n",
-	    ahc_name(ahc), XS_SCSI_ID(xs));
+	       ahc_name(ahc), XS_SCSI_ID(xs));
 
-	if (ahc->scb_data->maxhscbs >= 16 ||
+	if (ahc->scb_data->maxhscbs >= 16 || 
 	    (ahc->flags & AHC_PAGESCBS)) {
 		/* Default to 16 tags */
 		xs->sc_link->openings += 14;
@@ -1729,3 +1726,83 @@ ahc_dump_targcmd(cmd)
 }
 #endif
 
+#ifndef AHC_INLINES
+/* 
+ * This is a hack to keep from modifying the main
+ * driver code as much as possible.  This function
+ * does CAM to SCSI api stuff.
+ */
+void ahc_set_transaction_status(scb, status)
+	struct scb *scb;
+	uint32_t status;
+{
+	/* don't wipe the error */
+	if (scb->io_ctx->error == XS_NOERROR){
+		switch (status) {
+		case CAM_CMD_TIMEOUT:
+			status = XS_TIMEOUT;
+			break;
+		case CAM_BDR_SENT:
+		case CAM_SCSI_BUS_RESET:
+			status = XS_RESET;
+			break;
+		case CAM_UNEXP_BUSFREE:
+		case CAM_REQ_TOO_BIG:
+		case CAM_REQ_ABORTED:
+		case CAM_AUTOSENSE_FAIL:
+		case CAM_NO_HBA:
+			status = XS_DRIVER_STUFFUP;
+			break;
+		case CAM_SEL_TIMEOUT:
+			status = XS_SELTIMEOUT;
+			break;
+		case CAM_REQUEUE_REQ:
+			scb->platform_data->flags |= SCB_REQUEUE;
+			scb->io_ctx->error = XS_NOERROR;
+			break;
+		case CAM_SCSI_STATUS_ERROR:
+		default:
+			status = scb->io_ctx->error;
+			break;
+		}
+	} else {
+		status = scb->io_ctx->error;
+	}
+	scb->io_ctx->error = status;
+}
+
+void ahc_set_transaction_tag(scb, enabled, type)
+	struct scb *scb;
+	int enabled;
+	u_int type;
+{
+	struct scsi_xfer *xs = scb->io_ctx;
+	switch (type) {
+	case MSG_SIMPLE_TASK:
+		if (enabled)
+			xs->sc_link->quirks &= ~SDEV_NOTAGS;
+		else
+			xs->sc_link->quirks |= SDEV_NOTAGS;
+		break;
+	}
+}
+
+void ahc_platform_scb_free(ahc, scb)
+	struct ahc_softc *ahc;
+	struct scb *scb;
+{
+	int s;
+
+	ahc_lock(ahc, &s);
+	
+	if ((ahc->flags & AHC_RESOURCE_SHORTAGE) != 0 ||
+	    (scb->flags & SCB_RECOVERY_SCB) != 0) {
+		ahc->flags &= ~AHC_RESOURCE_SHORTAGE;
+		ahc->platform_data->queue_blocked = 0;
+	}
+	
+	timeout_del(&scb->io_ctx->stimeout);
+	
+	ahc_unlock(ahc, &s);
+}
+#endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.seq,v 1.12 2002/06/30 18:25:58 smurph Exp $ */
+/* $OpenBSD: aic7xxx.seq,v 1.13 2002/07/05 05:41:03 smurph Exp $ */
 /*
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
  *
@@ -32,7 +32,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.seq,v 1.119 2001/08/05 22:20:12 gibbs Exp $
  */
 
-VERSION = "$Id: aic7xxx.seq,v 1.12 2002/06/30 18:25:58 smurph Exp $"
+VERSION = "$Id: aic7xxx.seq,v 1.13 2002/07/05 05:41:03 smurph Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 
 #include <dev/microcode/aic7xxx/aic7xxx.reg>
@@ -335,8 +335,10 @@ if ((ahc->flags & AHC_INITIATORROLE) != 0) {
  */
 initiator_reselect:
         /* XXX test for and handle ONE BIT condition */
-        or      SXFRCTL0, SPIOEN|CLRSTCNT|CLRCHN;
-        and     SAVED_SCSIID, SELID_MASK, SELID;
+	test    SELID, ONEBIT jnz await_busfree;
+
+	or      SXFRCTL0, SPIOEN|CLRSTCNT|CLRCHN;
+	and     SAVED_SCSIID, SELID_MASK, SELID;
         if ((ahc->features & AHC_ULTRA2) != 0) {
                 and     A, OID, SCSIID_ULTRA2;
         } else {
@@ -1647,6 +1649,7 @@ mesgin_disconnect:
         test    SCSISIGI, ATNI jnz mesgin_done;
          */
 
+        test    SCSISIGI, ATNI jnz mesgin_done;
 	or	SCB_CONTROL,DISCONNECTED;
         if ((ahc->flags & AHC_PAGESCBS) != 0) {
                 call    add_scb_to_disc_list;

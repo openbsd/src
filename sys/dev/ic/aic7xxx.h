@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: aic7xxx.h,v 1.4 2002/06/28 00:34:54 smurph Exp $
+ * $OpenBSD: aic7xxx.h,v 1.5 2002/07/05 05:41:03 smurph Exp $
  * Core definitions and data structures shareable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.h,v 1.4 2002/06/28 00:34:54 smurph Exp $
+ * $Id: aic7xxx.h,v 1.5 2002/07/05 05:41:03 smurph Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.40 2001/07/18 21:39:47 gibbs Exp $
  */
@@ -438,8 +438,8 @@ struct hardware_scb {
 					 */
 /*20*/	uint32_t sgptr;
 #define SG_PTR_MASK	0xFFFFFFF8
-/*24*/	uint8_t  control;	/* See SCB_CONTROL in aic7xxx.reg for details */
-/*25*/	uint8_t  scsiid;	/* what to load in the SCSIID register */
+/*24*/	uint8_t  control;		/* See SCB_CONTROL in aic7xxx.reg for details */
+/*25*/	uint8_t  scsiid;		/* what to load in the SCSIID register */
 /*26*/	uint8_t  lun;
 /*27*/	uint8_t  tag;			/*
 					 * Index into our kernel SCB array.
@@ -1116,11 +1116,7 @@ int			 ahc_reset(struct ahc_softc *ahc);
 void			 ahc_shutdown(void *arg);
 
 /*************************** Interrupt Services *******************************/
-#ifdef __OpenBSD__
-int			ahc_pci_intr(struct ahc_softc *ahc);
-#else
 void			ahc_pci_intr(struct ahc_softc *ahc);
-#endif 
 void			ahc_clear_intstat(struct ahc_softc *ahc);
 void			ahc_run_qoutfifo(struct ahc_softc *ahc);
 #ifdef AHC_TARGET_MODE
