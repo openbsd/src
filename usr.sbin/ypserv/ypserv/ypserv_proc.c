@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.7 1996/09/30 21:03:56 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.8 1996/10/03 19:50:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.7 1996/09/30 21:03:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.8 1996/10/03 19:50:57 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -309,13 +309,8 @@ ypproc_clear_2_svc(argp, rqstp)
 #endif
 	);
 
-	if (ok) {
-		if (caller->sin_family != AF_INET ||
-		    caller->sin_port >= IPPORT_RESERVED ||
-		    caller->sin_port < IPPORT_RESERVED/2) {
-			ok = FALSE;
-		}
-	}
+	if (ntohs(caller->sin_port) >= IPPORT_RESERVED)
+		ok = FALSE;
 
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
