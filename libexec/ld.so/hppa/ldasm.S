@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2004/05/25 21:48:00 mickey Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.2 2004/05/25 21:56:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -263,10 +263,10 @@ _dl_sigprocmask$call
 	SYSCALL(sigprocmask)
 
 	ldw	HPPA_FRAME_ARG(2)(sp), arg2
-	add,=   r0, arg2, r0
-	stw     ret0, 0(arg2)
-	bv      r0(rp)
-	copy    r0, ret0
+	add,=	r0, arg2, r0
+	stw	ret0, 0(arg2)
+	bv	r0(rp)
+	copy	r0, ret0
 EXIT(_dl_sigprocmask)
 
 	.end

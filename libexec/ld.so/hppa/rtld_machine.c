@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1 2004/05/25 21:48:00 mickey Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.2 2004/05/25 21:56:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -290,7 +290,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
  * Resolve a symbol at run-time.
  */
 Elf_Addr
-_dl_bind(elf_object_t *object, int reloff) 
+_dl_bind(elf_object_t *object, int reloff)
 {
 	const elf_object_t *sobj;
 	const Elf_Sym *sym, *this;
