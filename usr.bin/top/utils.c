@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.13 2003/07/07 21:36:52 deraadt Exp $	 */
+/* $OpenBSD: utils.c,v 1.14 2004/10/07 06:26:12 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -32,13 +32,15 @@
  *  This file contains various handy utilities used by top.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "top.h"
+#include "machine.h"
 #include "utils.h"
 
 int
@@ -327,4 +329,19 @@ format_k(int amt)
 	}
 	snprintf(ret, sizeof(retarray[0]), "%d%c", amt, tag);
 	return (ret);
+}
+
+int
+find_pid(pid_t pid)
+{
+	struct kinfo_proc2 *pbase, *cur;
+	int i, nproc;
+
+	if ((pbase = getprocs(KERN_PROC_KTHREAD, 0, &nproc)) == NULL)
+		quit(23);
+
+	for (i = 0, cur = pbase; i < nproc; i++, cur++)
+		if (cur->p_pid == pid)
+			return 1;
+	return 0;
 }

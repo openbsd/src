@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.24 2004/05/10 20:26:08 millert Exp $
+.\"	$OpenBSD: top.1,v 1.25 2004/10/07 06:26:12 otto Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -34,6 +34,7 @@
 .Op Fl biInqSu
 .Op Fl d Ar count
 .Op Fl o Ar field
+.Op Fl p Ar pid
 .Op Fl s Ar time
 .Op Fl U Ar username
 .Op Ar number
@@ -127,6 +128,9 @@ version of top supports
 .Ar time ,
 and
 .Ar pri .
+.It Fl p Ar pid
+Show only the process
+.Ar pid .
 .It Fl q
 Renice
 .Nm
@@ -271,6 +275,11 @@ Change the sorting order of the processes
 Values are the same as for the
 .Fl o
 flag, as detailed above.
+.It p
+Display a specific process (prompt for pid).
+If the pid specified is simply
+.Dq + ,
+then processes belonging to all users will be displayed.
 .It r
 Change the priority (the
 .Em nice )

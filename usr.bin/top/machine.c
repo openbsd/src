@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.43 2004/06/13 18:49:02 otto Exp $	 */
+/* $OpenBSD: machine.c,v 1.44 2004/10/07 06:26:12 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -264,7 +264,7 @@ get_system_info(struct system_info *si)
 
 static struct handle handle;
 
-static struct kinfo_proc2 *
+struct kinfo_proc2 *
 getprocs(int op, int arg, int *cnt)
 {
 	size_t size;
@@ -307,7 +307,7 @@ caddr_t
 get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
-	int show_idle, show_system, show_uid;
+	int show_idle, show_system, show_uid, show_pid;
 	int total_procs, active_procs, i;
 	struct kinfo_proc2 **prefp, *pp;
 
@@ -329,6 +329,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	show_idle = sel->idle;
 	show_system = sel->system;
 	show_uid = sel->uid != (uid_t)-1;
+	show_pid = sel->pid != (pid_t)-1;
 
 	/* count up process states and get pointers to interesting procs */
 	total_procs = 0;
@@ -349,7 +350,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			if (pp->p_stat != SZOMB &&
 			    (show_idle || pp->p_pctcpu != 0 ||
 			    pp->p_stat == SRUN) &&
-			    (!show_uid || pp->p_ruid == sel->uid)) {
+			    (!show_uid || pp->p_ruid == sel->uid) &&
+			    (!show_pid || pp->p_pid == sel->pid)) {
 				*prefp++ = pp;
 				active_procs++;
 			}

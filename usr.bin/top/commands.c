@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.15 2004/06/27 00:48:22 marc Exp $	 */
+/* $OpenBSD: commands.c,v 1.16 2004/10/07 06:26:12 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -92,7 +92,8 @@ show_help(void)
 		    "k       - kill processes; send a signal to a list of processes\n"
 		    "n or #  - change number of processes to display\n", stdout);
 		fputs(
-		    "o       - specify sort order (size, res, cpu, time)\n",
+		    "o       - specify sort order (size, res, cpu, time)\n"
+		    "p       - display one process (+ selects all processes)\n",
 		    stdout);
 		fputs(
 		    "r       - renice a process\n"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.34 2004/09/14 22:55:48 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.35 2004/10/07 06:26:12 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -40,6 +40,7 @@ const char	copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <string.h>
 #include <poll.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <unistd.h>
 
 /* includes specific to top */
@@ -94,6 +95,7 @@ double delay = Default_DELAY;
 char *order_name = NULL;
 int topn = Default_TOPN;
 int no_command = Yes;
+int old_system = No;
 
 #if Default_TOPN == Infinity
 char topn_specified = No;
@@ -121,6 +123,7 @@ char topn_specified = No;
 #define CMD_user	14
 #define CMD_system	15
 #define CMD_order	16
+#define CMD_pid		17
 
 static void
 usage(void)
@@ -128,7 +131,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-biInqSu] [-d count] [-o field] [-s time] [-U username] [number]\n",
+	    "usage: %s [-biInqSu] [-d count] [-o field] [-p pid] [-s time] [-U username] [number]\n",
 	    __progname);
 }
 
@@ -138,7 +141,7 @@ parseargs(int ac, char **av)
 	char *endp;
 	int i;
 
-	while ((i = getopt(ac, av, "SIbinqus:d:U:o:")) != -1) {
+	while ((i = getopt(ac, av, "SIbinqus:d:p:U:o:")) != -1) {
 		switch (i) {
 		case 'u':	/* toggle uid/username display */
 			do_unames = !do_unames;
@@ -151,8 +154,23 @@ parseargs(int ac, char **av)
 			}
 			break;
 
+		case 'p': {	/* display only process id */
+			unsigned long long num;
+			const char *errstr;
+
+			num = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL || !find_pid(num)) {
+				fprintf(stderr, "%s: unknown pid\n", optarg);
+				exit(1);
+			}
+			ps.pid = (pid_t)num;
+			ps.system = Yes;
+			break;
+		}
+
 		case 'S':	/* show system processes */
-			ps.system = !ps.system;
+			ps.system = Yes;
+			old_system = Yes;
 			break;
 
 		case 'I':	/* show idle processes */
@@ -249,6 +267,7 @@ main(int argc, char *argv[])
 	ps.idle = Yes;
 	ps.system = No;
 	ps.uid = (uid_t)-1;
+	ps.pid = (pid_t)-1;
 	ps.command = NULL;
 
 	/* get preset options from the environment */
@@ -492,7 +511,7 @@ rundisplay(void)
 	int change, i;
 	struct pollfd pfd[1];
 	uid_t uid;
-	static char command_chars[] = "\f qh?en#sdkriIuSo";
+	static char command_chars[] = "\f qh?en#sdkriIuSop";
 
 	/*
 	 * assume valid command unless told
@@ -772,6 +791,7 @@ rundisplay(void)
 
 		case CMD_system:
 			ps.system = !ps.system;
+			old_system = ps.system;
 			new_message(MT_standout | MT_delayed,
 			    " %sisplaying system processes.",
 			    ps.system ? "D" : "Not d");
@@ -790,6 +810,37 @@ rundisplay(void)
 					no_command = Yes;
 				} else
 					order_index = i;
+				if (putchar('\r') == EOF)
+					exit(1);
+			} else
+				clear_message();
+			break;
+
+		case CMD_pid:
+			new_message(MT_standout, "Process id to show: ");
+			if (readline(tempbuf2, sizeof(tempbuf2), No) > 0) {
+				if (tempbuf2[0] == '+' &&
+				    tempbuf2[1] == '\0') {
+					ps.pid = (pid_t)-1;
+					ps.system = old_system;
+				} else {
+					unsigned long long num;
+					const char *errstr;
+
+					num = strtonum(tempbuf2, 0, INT_MAX,
+					    &errstr);
+					if (errstr != NULL || !find_pid(num)) {
+						new_message(MT_standout,
+						    " %s: unknown pid",
+						    tempbuf2);
+						no_command = Yes;
+					} else {
+						if (ps.system == No)
+							old_system = No;
+						ps.pid = (pid_t)num;
+						ps.system = Yes;
+					}
+				}
 				if (putchar('\r') == EOF)
 					exit(1);
 			} else
