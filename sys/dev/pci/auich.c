@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.8 2001/04/16 03:18:18 deraadt Exp $	*/
+/*	$OpenBSD: auich.c,v 1.9 2001/05/16 06:29:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -109,40 +109,11 @@
 #define		AUICH_GSCI	0x00001	/* gpi status change */
 #define		AUICH_GSTS_BITS	"\020\01gsci\02miict\03moint\06piint\07point\010mint\011pcr\012scr\013pri\014sri\015b1s12\016b2s12\017b3s12\020rcs\021ad3\022md3"
 #define	AUICH_CAS		0x34	/* 1/8 bit */
-#define	AUICH_SEMATIMO	1000	/* us */
+#define	AUICH_SEMATIMO		1000	/* us */
 
-#define	AUICH_MIXER_RESET		0x00
-#define	AUICH_MIXER_MUTE		0x02
-#define	AUICH_MIXER_HDFMUTE	0x04
-#define	AUICH_MIXER_MONOMUTE	0x06
-#define	AUICH_MIXER_TONE		0x08
-#define	AUICH_MIXER_BEEPMUTE	0x0a
-#define	AUICH_MIXER_PHONEMUTE	0x0c
-#define	AUICH_MIXER_MICMUTE	0x0e
-#define	AUICH_MIXER_LINEMUTE	0x10
-#define	AUICH_MIXER_CDMUTE	0x12
-#define	AUICH_MIXER_VDMUTE	0x14
-#define	AUICH_MIXER_AUXMUTE	0x16
-#define	AUICH_MIXER_PCMMUTE	0x18
-#define	AUICH_MIXER_RECSEL	0x1a
-#define	AUICH_MIXER_RECGAIN	0x1c
-#define	AUICH_MIXER_RECGAINMIC	0x1e
-#define	AUICH_MIXER_GP		0x20
-#define	AUICH_MIXER_3DCTRL	0x22
-#define	AUICH_MIXER_RESERVED	0x24
-#define	AUICH_PM			0x26
-#define		AUICH_PM_PCMI	0x100
-#define		AUICH_PM_PCMO	0x200
-#define		AUICH_PM_MICI	0x400
-#define	AUICH_EXTAUDIO		0x28
-#define	AUICH_EXTAUCTRL		0x2a
-#define	AUICH_PCMRATE		0x2c
-#define	AUICH_PCM3dRATE		0x2e
-#define	AUICH_PCMLFERATE		0x30
-#define	AUICH_PCMLRRATE		0x32
-#define	AUICH_MICADCRATE		0x34
-#define	AUICH_CLFEMUTE		0x36
-#define	AUICH_LR3DMUTE		0x38
+#define	AUICH_PM_PCMI		0x100
+#define	AUICH_PM_PCMO		0x200
+#define	AUICH_PM_MICI		0x400
 
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
@@ -589,14 +560,15 @@ auich_set_params(v, setmode, usemode, play, rec)
 			return EINVAL;
 		}
 
-		auich_read_codec(sc, AUICH_PM, &val);
-		auich_write_codec(sc, AUICH_PM, val | AUICH_PM_PCMO);
+		auich_read_codec(sc, AC97_REG_POWER, &val);
+		auich_write_codec(sc, AC97_REG_POWER, val | AUICH_PM_PCMO);
 
-		auich_write_codec(sc, AUICH_PCMRATE, play->sample_rate);
-		auich_read_codec(sc, AUICH_PCMRATE, &rate);
+		auich_write_codec(sc, AC97_REG_FRONT_DAC_RATE,
+		    play->sample_rate);
+		auich_read_codec(sc, AC97_REG_FRONT_DAC_RATE, &rate);
 		play->sample_rate = rate;
 
-		auich_write_codec(sc, AUICH_PM, val);
+		auich_write_codec(sc, AC97_REG_POWER, val);
 	}
 
 	if (setmode & AUMODE_RECORD) {
@@ -631,14 +603,14 @@ auich_set_params(v, setmode, usemode, play, rec)
 			return EINVAL;
 		}
 
-		auich_read_codec(sc, AUICH_PM, &val);
-		auich_write_codec(sc, AUICH_PM, val | AUICH_PM_PCMI);
+		auich_read_codec(sc, AC97_REG_POWER, &val);
+		auich_write_codec(sc, AC97_REG_POWER, val | AUICH_PM_PCMI);
 
-		auich_write_codec(sc, AUICH_PCMLFERATE, play->sample_rate);
-		auich_read_codec(sc, AUICH_PCMLFERATE, &rate);
+		auich_write_codec(sc, AC97_REG_PCM_DAC_RATE, play->sample_rate);
+		auich_read_codec(sc, AC97_REG_PCM_DAC_RATE, &rate);
 		play->sample_rate = rate;
 
-		auich_write_codec(sc, AUICH_PM, val);
+		auich_write_codec(sc, AC97_REG_POWER, val);
 	}
 
 	return 0;
