@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.29 2002/09/11 03:15:36 itojun Exp $	*/
+/*	$OpenBSD: in.c,v 1.30 2002/10/04 05:23:39 henric Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -226,6 +226,7 @@ in_control(so, cmd, data, ifp)
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
 	int newifaddr;
+	int s;
 
 	switch (cmd) {
 	case SIOCALIFADDR:
@@ -273,6 +274,7 @@ in_control(so, cmd, data, ifp)
 			ia = (struct in_ifaddr *)
 				malloc(sizeof *ia, M_IFADDR, M_WAITOK);
 			bzero((caddr_t)ia, sizeof *ia);
+			s = splsoftnet();
 			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			    ifa_list);
@@ -288,6 +290,7 @@ in_control(so, cmd, data, ifp)
 			LIST_INIT(&ia->ia_multiaddrs);
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				in_interfaces++;
+			splx(s);
 
 			newifaddr = 1;
 		} else
@@ -344,11 +347,13 @@ in_control(so, cmd, data, ifp)
 	case SIOCSIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
+		s = splsoftnet();
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satosin(&ifr->ifr_dstaddr);
 		if (ifp->if_ioctl && (error = (*ifp->if_ioctl)
 					(ifp, SIOCSIFDSTADDR, (caddr_t)ia))) {
 			ia->ia_dstaddr = oldaddr;
+			splx(s);
 			return (error);
 		}
 		if (ia->ia_flags & IFA_ROUTE) {
@@ -357,6 +362,7 @@ in_control(so, cmd, data, ifp)
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 			rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
 		}
+		splx(s);
 		break;
 
 	case SIOCSIFBRDADDR:
@@ -366,9 +372,11 @@ in_control(so, cmd, data, ifp)
 		break;
 
 	case SIOCSIFADDR:
+		s = splsoftnet();
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
+		splx(s);
 		return error;
 
 	case SIOCSIFNETMASK:
@@ -380,6 +388,7 @@ in_control(so, cmd, data, ifp)
 		maskIsNew = 0;
 		hostIsNew = 1;
 		error = 0;
+		s = splsoftnet();
 		if (ia->ia_addr.sin_family == AF_INET) {
 			if (ifra->ifra_addr.sin_len == 0) {
 				ifra->ifra_addr = ia->ia_addr;
@@ -409,14 +418,23 @@ in_control(so, cmd, data, ifp)
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
+		splx(s);
 		return (error);
 
 	case SIOCDIFADDR:
+		/*
+		 * Even if the individual steps were safe, shouldn't
+		 * these kinds of changes happen atomically?  What 
+		 * should happen to a packet that was routed after
+		 * the scrub but before the other steps? 
+		 */
+		s = splsoftnet();
 		in_ifscrub(ifp, ia);
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 		IFAFREE((&ia->ia_ifa));
 		dohooks(ifp->if_addrhooks, 0);
+		splx(s);
 		break;
 
 #ifdef MROUTING
@@ -658,6 +676,15 @@ in_ifinit(ifp, ia, sin, scrub)
 		return (error);
 	}
 	splx(s);
+
+	/*
+	 * How should a packet be routed during
+	 * an address change--and is it safe?
+	 * Is the "ifp" even in a consistent state?
+	 * Be safe for now.
+	 */
+	splassert(IPL_SOFTNET);
+
 	if (scrub) {
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
 		in_ifscrub(ifp, ia);
