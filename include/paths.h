@@ -59,7 +59,7 @@
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_SHELLS	"/etc/shells"
 #define	_PATH_TTY	"/dev/tty"
-#define	_PATH_UNIX	"/netbsd"
+#define	_PATH_UNIX	"/bsd"
 #define	_PATH_VI	"/usr/bin/vi"
 
 /* Provide trailing slash, since mostly used for building pathnames. */
