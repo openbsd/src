@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.18 1999/05/23 14:10:47 aaron Exp $
+.\"	$OpenBSD: ed.1,v 1.19 1999/06/04 02:45:13 aaron Exp $
 .\"
 .Dd May 2, 1993
 .Dt ED 1
@@ -536,7 +536,7 @@ and
 .Em V Ns No .
 A newline alone in
 .Em command-list
-is equivalent to a 
+is equivalent to a
 .Em p
 command.
 .It (1,$) Ns Em G/re/
@@ -545,7 +545,7 @@ Interactively edits the addressed lines matching a regular expression
 For each matching line,
 the line is printed,
 the current address is set,
-and the user is prompted to enter a 
+and the user is prompted to enter a
 .Em command-list Ns No .
 At the end of the
 .Em g
@@ -593,10 +593,10 @@ Prints the addressed lines unambiguously.
 If a single line fills more than one screen (as might be the case
 when viewing a binary file, for instance), a
 .Dq --More--
-prompt is printed on the last line. 
+prompt is printed on the last line.
 .Nm
 waits until the RETURN key is pressed
-before displaying the next screen. 
+before displaying the next screen.
 The current address is set to the last line
 printed.
 .It (.,.) Ns Em m Ns No (.)
@@ -894,7 +894,7 @@ printed with the
 .Em h
 (help) command.
 .Pp
-Since the 
+Since the
 .Em g
 (global) command masks any errors from failed searches and substitutions,
 it can be used to perform conditional operations in scripts; e.g.,

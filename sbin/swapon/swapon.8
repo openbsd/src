@@ -1,11 +1,8 @@
-.\"	$OpenBSD: mkfifo.1,v 1.3 1999/06/04 02:45:17 aaron Exp $
-.\"	$NetBSD: mkfifo.1,v 1.4 1994/12/23 07:16:54 jtc Exp $
+.\"	$OpenBSD: swapon.8,v 1.10 1999/06/04 02:45:24 aaron Exp $
+.\"	$NetBSD: swapon.8,v 1.8 1995/08/18 14:51:35 pk Exp $
 .\"
-.\" Copyright (c) 1990, 1993
+.\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
-.\"
-.\" This code is derived from software contributed to Berkeley by
-.\" the Institute of Electrical and Electronics Engineers, Inc.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -23,7 +20,7 @@
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS `AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 .\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
@@ -35,60 +32,64 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)mkfifo.1	8.2 (Berkeley) 1/5/94
+.\"     @(#)swapon.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd January 5, 1994
-.Dt MKFIFO 1
-.Os BSD 4.4
+.Dd June 5, 1993
+.Dt SWAPON 8
+.Os
 .Sh NAME
-.Nm mkfifo
-.Nd make FIFOs
+.Nm swapon
+.Nd "specify additional device for paging and swapping"
 .Sh SYNOPSIS
-.Nm mkfifo
-.Op Fl m Ar mode
-.Ar fifo_name  ...
+.Nm swapon
+.Fl a
+.Nm swapon
+.Ar special_file ...
 .Sh DESCRIPTION
-.Nm mkfifo
-creates the FIFOs requested, in the order specified,
-using mode
-.Li \&0666
-modified by the current
-.Xr umask 2 .
+.Nm
+is used to specify additional devices on which paging and swapping
+are to take place.
+The system begins by swapping and paging on only a single device
+so that only one disk is required at bootstrap time.
+Calls to
+.Nm
+normally occur in the system multi-user initialization file
+.Pa /etc/rc
+making all swap devices available, so that the paging and swapping
+activity is interleaved across several devices.
 .Pp
-The options are as follows:
+Normally, the first form is used:
 .Bl -tag -width Ds
-.It Fl m Ar mode
-Set the file permission bits of newly created directories to
-.Ar mode .
-The mode is specified as in
-.Xr chmod 1 .
-In symbolic mode strings, the
-.Dq +
-and
-.Dq -
-operators are interpreted relative to an assumed initial mode of
-.Dq a=rw .
+.It Fl a
+All devices marked as
+.Dq sw
+swap devices in
+.Pa /etc/fstab
+are made available.
 .El
 .Pp
-.Nm mkfifo
-requires write permission in the parent directory.
-.Pp
-The
-.Nm mkfifo
-utility exits 0 on success or >0 if an error occurred.
+The second form gives individual block devices as given
+in the system swap configuration table.  The call makes only this space
+available to the system for swap allocation.
+.Sh FILES
+.Bl -tag -width /dev/[ru][pk]?b -compact
+.It Pa /dev/[ru][pk]?b
+standard paging devices
+.It Pa /etc/fstab
+ASCII filesystem description table
+.El
 .Sh SEE ALSO
-.Xr mkdir 1 ,
-.Xr rm 1 ,
-.Xr mkfifo 2 ,
-.Xr mknod 8
-.Sh STANDARDS
-The
-.Nm mkfifo
-utility is expected to be
-.St -p1003.2-92
-compliant.
+.Xr swapon 2 ,
+.Xr fstab 5 ,
+.Xr init 8 ,
+.Xr rc 8 ,
+.Xr vnconfig 8
+.Sh BUGS
+There is no way to stop paging and swapping on a device.
+It is therefore not possible to make use of devices which may be
+dismounted during system operation.
 .Sh HISTORY
 The
 .Nm
 command appeared in
-.Bx 4.4 .
+.Bx 4.0 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_mac68k.8,v 1.8 1998/11/11 22:19:59 aaron Exp $
+.\"	$OpenBSD: boot_mac68k.8,v 1.9 1999/06/04 02:45:23 aaron Exp $
 .\"	$NetBSD: boot_mac68k.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -76,8 +76,9 @@ switch can be physically rotated and locked in the
 position.
 The native OS can be configured to automatically start the
 .Ox
-boot program.  Additionally, the OpenBSD boot program can be configured
-to boot
+boot program.  Additionally, the
+.Ox
+boot program can be configured to boot
 .Ox
 without intervention.  When a system is so configured, it can crash
 or lose power and reboot back to a fully multi-user state without
@@ -114,8 +115,8 @@ in native OS rather than from the usual location in the
 file system.  A radio button is supplied for this purpose.  Note that
 some programs will not run properly if the kernel is not found as
 .Pa /bsd
-within the 
-.Tn OpenBSD
+within the
+.Ox
 file system.
 .Sh FILES
 .Bl -tag -width /bsd -compact

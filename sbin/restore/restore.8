@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.14 1999/05/23 14:11:20 aaron Exp $
+.\"	$OpenBSD: restore.8,v 1.15 1999/06/04 02:45:23 aaron Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -124,7 +124,7 @@ added to the extraction list
 flag is specified on the command line).
 Files that are on the extraction list are prepended with a
 .Dq \&*
-when they are listed by 
+when they are listed by
 .Ic ls .
 .It Ic \&cd Ar arg
 Change the current working directory to the specified argument.
@@ -136,7 +136,7 @@ deleted from the extraction list
 (unless the
 .Fl h
 flag is specified on the command line).
-The most expedient way to extract most of the files from a directory 
+The most expedient way to extract most of the files from a directory
 is to add the directory to the extraction list and then delete
 those files that are not needed.
 .It Ic extract
@@ -167,10 +167,10 @@ have their owner, modes, and times set;
 nothing is extracted from the dump.
 This is useful for cleaning up after a restore has been prematurely aborted.
 .It Ic verbose
-The sense of the 
+The sense of the
 .Fl v
 flag is toggled.
-When set, the verbose flag causes the 
+When set, the verbose flag causes the
 .Ic ls
 command to list the inode numbers of all entries.
 It also causes
@@ -210,9 +210,9 @@ cd /mnt
 restore rf /dev/rst8
 .Ed
 .Pp
-Note that 
+Note that
 .Nm
-leaves a file 
+leaves a file
 .Pa restoresymtable
 in the root directory to pass information between incremental
 restore passes.
@@ -244,7 +244,7 @@ program.
 .ne 1i
 .It Fl x
 The named files are read from the given media.
-If a named file matches a directory whose contents 
+If a named file matches a directory whose contents
 are on the backup
 and the
 .Fl h
@@ -301,7 +301,7 @@ reads from the named file on the remote host using
 .Xr rmt 8 .
 .Pp
 .It Fl h
-Extract the actual directory, 
+Extract the actual directory,
 rather than the files that it references.
 This prevents hierarchical restoration of complete subtrees
 from the dump.
@@ -330,7 +330,7 @@ Always try to skip over the bad block(s) and continue.
 .El
 .Sh DIAGNOSTICS
 Complains if it gets a read error.
-If 
+If
 .Fl y
 has been specified, or the user responds
 .Dq y ,
@@ -378,7 +378,7 @@ or that has too low an incremental level has been loaded.
 .Pp
 .It Incremental dump too high
 When doing an incremental restore,
-a dump that does not begin its coverage where the previous incremental 
+a dump that does not begin its coverage where the previous incremental
 dump left off,
 or that has too high an incremental level has been loaded.
 .Pp
@@ -393,7 +393,7 @@ no extracted files have been corrupted,
 though files may not be found on the tape.
 .Pp
 .It resync restore, skipped <num> blocks
-After a dump read error, 
+After a dump read error,
 .Nm
 may have to resynchronize itself.
 This message lists the number of blocks that were skipped over.
@@ -454,7 +454,7 @@ and
 are generated with a unique name based on the date of the dump
 and the process ID (see
 .Xr mktemp 3 ),
-except when 
+except when
 .Fl r
 or
 .Fl R

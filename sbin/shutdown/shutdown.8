@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.13 1999/05/23 14:11:21 aaron Exp $
+.\"	$OpenBSD: shutdown.8,v 1.14 1999/06/04 02:45:24 aaron Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -42,7 +42,7 @@
 .Nd "close down the system at a given time"
 .Sh SYNOPSIS
 .Nm shutdown
-.Op Fl 
+.Op Fl
 .Op Fl dfhkrnp
 .Ar time
 .Op Ar warning-message ...
@@ -83,7 +83,7 @@ system multi-user with logins disabled (for all but super-user).
 Prevent the normal
 .Xr sync 2
 before stopping.
-.It Fl r 
+.It Fl r
 .Nm
 execs
 .Xr reboot 8

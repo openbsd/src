@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_pmax.8,v 1.11 1999/05/16 19:56:17 alex Exp $
+.\"	$OpenBSD: boot_pmax.8,v 1.12 1999/06/04 02:45:23 aaron Exp $
 .\"	$NetBSD: boot_pmax.8,v 1.1 1995/04/25 23:55:11 mellon Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -45,7 +45,7 @@
 system bootstrapping procedures
 .Sh DESCRIPTION
 The
-.Tn OpenBSD
+.Ox
 kernel is started by placing it at the beginning of physical memory
 and transferring to the entry point.
 Since the system is not reenterable,
@@ -73,7 +73,7 @@ the ROM attempts to autoboot.
 On the DECstation 2100 and 3100, the path used for automatic booting is
 stored in the
 .Nm bootpath
-environment variable.  The path is made up of a 
+environment variable.  The path is made up of a
 device type specifier (e.g., rz, tz, mop or tftp), followed by
 a triplet in the form (x,y,z), followed by a filename to load.
 .Pp
@@ -109,10 +109,10 @@ For automatic boots, the ROM automatically passes a
 .Fl a
 argument to the bootloader,
 requesting that
-.Tn OpenBSD
+.Ox
 attempt to come up to multi-user mode.  At the boot ROM prompt,
 the user may boot
-.Tn OpenBSD
+.Ox
 with either the
 .Nm auto
 or the
@@ -125,7 +125,7 @@ argument is passed to the kernel, requesting a multi-user boot; otherwise
 the
 .Fl s
 argument is passed, requesting that
-.Tn OpenBSD
+.Ox
 boot to single user mode.
 .Pp
 When either the
@@ -181,7 +181,7 @@ devices, the option-specific protocol identifier is either mop or tftp.
 Filename requirements are as for the DECstation 2100 and 3100.
 .Pp
 To start
-.Tn OpenBSD
+.Ox
 from the boot prompt, the
 .Nm boot
 command must be used.  With no arguments, this simply boots the default

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ext2fs.8,v 1.8 1998/12/15 01:20:30 aaron Exp $
+.\"	$OpenBSD: fsck_ext2fs.8,v 1.9 1999/06/04 02:45:16 aaron Exp $
 .\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
@@ -101,7 +101,7 @@ Without the
 .Fl p
 option,
 .Nm
-audits and interactively repairs inconsistent conditions for filesystems. 
+audits and interactively repairs inconsistent conditions for filesystems.
 If the filesystem is inconsistent the operator is prompted for concurrence
 before each correction is attempted.
 It should be noted that some of the corrective actions which are not
@@ -117,7 +117,7 @@ or
 .Dq no .
 If the operator does not have write permission on the filesystem,
 .Nm
-will default to a 
+will default to a
 .Fl n
 action.
 .Pp
@@ -150,7 +150,7 @@ set of permissions such as 700.
 .It Fl n
 Assume a
 .Dq no
-response to all questions asked by 
+response to all questions asked by
 .Nm
 except for
 .Dq CONTINUE? ,
@@ -163,7 +163,7 @@ mode, described above.
 .It Fl y
 Assume a
 .Dq yes
-response to all questions asked by 
+response to all questions asked by
 .Nm fsck_ext2fs ;
 this should be used with great caution as this is a free license
 to continue after essentially unlimited trouble has been encountered.
@@ -181,7 +181,7 @@ Incorrect link counts.
 .It
 Size checks:
 .Bl -item -indent indent -compact
-.It 
+.It
 Directory size not a multiple of filesystem block size.
 .It
 Partially truncated file.
@@ -193,7 +193,7 @@ Blocks not accounted for anywhere.
 .It
 Directory checks:
 .Bl -item -indent indent -compact
-.It 
+.It
 File pointing to unallocated inode.
 .It
 Inode number out of range.
@@ -204,7 +204,7 @@ or having the wrong inode number.
 .It
 Super Block checks:
 .Bl -item -indent indent -compact
-.It 
+.It
 More blocks for inodes than there are in the filesystem.
 .It
 Bad free block map format.
@@ -215,7 +215,7 @@ Total free block and/or free inode count incorrect.
 .Pp
 Orphaned files and directories (allocated but unreferenced) are,
 with the operator's concurrence, reconnected by
-placing them in the 
+placing them in the
 .Pa lost+found
 directory.
 The name assigned is the inode number.
@@ -227,7 +227,7 @@ If there is insufficient space its size is increased.
 Because of inconsistencies between the block device and the buffer cache,
 the raw device should always be used.
 .Sh DIAGNOSTICS
-The diagnostics produced by 
+The diagnostics produced by
 .Nm
 are fully enumerated and explained in Appendix A of
 .Rs

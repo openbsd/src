@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.17 1999/05/23 14:11:19 aaron Exp $
+.\"	$OpenBSD: ping.8,v 1.18 1999/06/04 02:45:22 aaron Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -163,13 +163,13 @@ This option can be used to ping a local host through an interface
 that has no route through it (e.g., after the interface was dropped by
 .Xr routed 8 ) .
 .It Fl s Ar packetsize
-Specifies the number of data bytes to be sent.  
+Specifies the number of data bytes to be sent.
 The default is 56, which translates into 64
 .Tn ICMP
 data bytes when combined
 with the 8 bytes of
 .Tn ICMP
-header data. If the 
+header data. If the
 .Fl D
 or
 .Fl T

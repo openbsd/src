@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_atari.8,v 1.6 1998/11/28 19:56:32 aaron Exp $
+.\"	$OpenBSD: boot_atari.8,v 1.7 1999/06/04 02:45:22 aaron Exp $
 .\"	$NetBSD: boot_atari.8,v 1.1 1996/06/27 11:07:56 leo Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -49,7 +49,7 @@ system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
 When the
-.Tn OpenBSD
+.Ox
 kernel is booted normally (using one of the two methods discussed below),
 it initializes itself and proceeds to boot the system.  An automatic
 consistency check of the file systems takes place, and unless this
@@ -69,10 +69,12 @@ or not), the system will attempt a reboot.
 .Pp
 .Ss Booting OpenBSD using the bootloader
 When a bootable
-.Tn OpenBSD
+.Ox
 partition is created by means of
 .Xr installboot 8 ,
-the Atari BIOS will automatically start the OpenBSD bootloader. By default,
+the Atari BIOS will automatically start the
+.Ox
+bootloader. By default,
 it will load the kernel image
 .Pa /bsd
 and attempt to boot it into multi-user mode. This behaviour can be changed by
@@ -132,14 +134,16 @@ Enter the kernel debugger.
 .El
 .Pp
 .Ss Booting using the loadbsd program
-When you want (or have to) start OpenBSD from GEM, you have to use the
+When you want (or have to) start
+.Ox
+from GEM, you have to use the
 .Xr loadbsd
 program that is supplied on the kernel-floppy. The
 .Xr loadbsd
 command line
 specification is:
 .Bd -ragged -offset indent
-.Nm loadbsd 
+.Nm loadbsd
 .Op Fl abdhstwDV
 .Op Fl S Ar amount
 .Op Fl T Ar amount
@@ -161,9 +165,12 @@ here.
 Write all output to the file
 .Ar outputfile .
 .It Fl s
-Tell OpenBSD only to use ST compatible RAM. 
+Tell
+.Ox
+only to use ST compatible RAM.
 .It Fl t
-Test loading of the kernel but don't start OpenBSD.
+Test loading of the kernel but don't start
+.Ox .
 .It Fl w
 Wait for a keypress before exiting loadbsd. This is useful when starting this
 program under GEM.

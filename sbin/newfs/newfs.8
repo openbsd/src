@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.16 1999/05/23 14:11:19 aaron Exp $
+.\"	$OpenBSD: newfs.8,v 1.17 1999/06/04 02:45:19 aaron Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -84,11 +84,11 @@
 replaces the more obtuse
 .Xr mkfs 8
 program.
-Before running 
+Before running
 .Nm
 or
 .Nm mount_mfs ,
-the disk must be labeled using 
+the disk must be labeled using
 .Xr disklabel 8 .
 .Nm
 builds a file system on the specified
@@ -163,7 +163,7 @@ See
 .Xr tunefs 8
 for more details on how to set this option.
 .It Fl b Ar block-size
-The block size of the file system, in bytes.  
+The block size of the file system, in bytes.
 .It Fl c Ar #cylinders/group
 The number of cylinders per cylinder group in a file system.
 The default value is 16.
@@ -215,7 +215,7 @@ for more details on how to set this option.
 The size of the file system in sectors.
 .El
 .Pp
-The following options override the standard sizes for the disk geometry. 
+The following options override the standard sizes for the disk geometry.
 Their default values are taken from the disk label.
 Changing these defaults is useful only when using
 .Nm
@@ -223,7 +223,7 @@ to build a file system whose raw image will eventually be used on a
 different type of disk than the one on which it is initially created
 (for example on a write-once disk).
 Note that changing any of these values from their defaults will make
-it impossible for 
+it impossible for
 .Xr fsck 8
 to find the alternate superblocks if the standard superblock is lost.
 .Bl -tag -width Fl

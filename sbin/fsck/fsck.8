@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.14 1999/05/28 22:59:58 aaron Exp $
+.\"	$OpenBSD: fsck.8,v 1.15 1999/06/04 02:45:15 aaron Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -38,14 +38,14 @@
 .Nm fsck
 .Op Fl dvplfyn
 .Op Fl l Ar maxparallel
-.Op Fl t Ar fstype 
-.Op Fl T Ar fstype:fsoptions 
+.Op Fl t Ar fstype
+.Op Fl T Ar fstype:fsoptions
 .Ar special | node ...
 .Sh DESCRIPTION
 The
 .Nm
-command invokes filesystem-specific programs to check the 
-special devices listed in the 
+command invokes filesystem-specific programs to check the
+special devices listed in the
 .Xr fstab 5
 file or in the command line for consistency.
 The options are as follows:
@@ -77,7 +77,7 @@ mounted writeable.
 Enter preen mode.
 .It Fl t Ar fstype
 Invoke fsck only in the comma separated list of filesystem types. If the
-list starts with 
+list starts with
 .Dq no ,
 invoke fsck only in the filesystem types that are
 .Em not

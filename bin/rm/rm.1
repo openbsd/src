@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.6 1998/12/15 01:20:26 aaron Exp $
+.\"	$OpenBSD: rm.1,v 1.7 1999/06/04 02:45:14 aaron Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -69,7 +69,7 @@ the exit status to reflect an error.
 The
 .Fl f
 option overrides any previous
-.Fl i 
+.Fl i
 options.
 .It Fl i
 Request confirmation before attempting to remove each file, regardless of
@@ -78,7 +78,7 @@ terminal.
 The
 .Fl i
 option overrides any previous
-.Fl f 
+.Fl f
 options.
 .It Fl P
 Overwrite regular files before deleting them.
@@ -86,14 +86,14 @@ Files are overwritten three times, first with the byte pattern 0xff,
 then 0x00, and then 0xff again, before they are deleted.
 .It Fl R
 Attempt to remove the file hierarchy rooted in each file argument.
-The 
+The
 .Fl R
 option implies the
 .Fl d
 option.
 If the
 .Fl i
-option is specified, the user is prompted for confirmation before 
+option is specified, the user is prompted for confirmation before
 each directory's contents are processed (as well as before the attempt
 is made to remove the directory).
 If the user does not respond affirmatively, the file hierarchy rooted in

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.17 1999/05/31 17:43:22 millert Exp $
+.\"	$OpenBSD: init.8,v 1.18 1999/06/04 02:45:17 aaron Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -83,13 +83,13 @@ flag, then
 .Nm
 will require that the super-user password be
 entered before the system will start a single-user shell.
-The password check is skipped if the 
+The password check is skipped if the
 .Ar console
 is marked as
 .Dq secure .
 .Pp
 The kernel runs with four different levels of security.
-Any super-user process can raise the security level, but only 
+Any super-user process can raise the security level, but only
 .Nm
 can lower it.
 Security levels are defined as follows:
@@ -130,7 +130,7 @@ the administrator must build a kernel with
 .Dq option INSECURE
 in the config file.
 .Pp
-In multi-user operation, 
+In multi-user operation,
 .Nm
 maintains
 processes for the terminal ports found in the file
@@ -197,7 +197,7 @@ executes a new
 to enable a new login.
 If the getty or window field for a line is changed,
 the change takes effect at the end of the current
-login session (e.g., the next time 
+login session (e.g., the next time
 .Nm
 starts a process on the line).
 If a line is commented out or deleted from

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: badsect.8,v 1.7 1999/05/23 14:11:18 aaron Exp $
+.\"	$OpenBSD: badsect.8,v 1.8 1999/06/04 02:45:14 aaron Exp $
 .\"	$NetBSD: badsect.8,v 1.8 1995/03/18 14:54:27 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -67,7 +67,7 @@ currently requires the running of the standard
 formatter.
 Thus to deal with a newly bad block
 or on disks where the drivers
-do not support the bad-blocking standard 
+do not support the bad-blocking standard
 .Nm
 may be used to good effect.
 .Pp
@@ -91,7 +91,7 @@ and run
 on the file system.  The bad sectors should show up in two files
 or in the bad sector files and the free list.  Have
 .Xr fsck
-remove files containing the offending bad sectors, but 
+remove files containing the offending bad sectors, but
 .Em do not
 have it remove the
 .Pa BAD/ Ns Em nnnnn
@@ -106,11 +106,11 @@ works by giving the specified sector numbers in a
 system call,
 creating an illegal file whose first block address is the block containing
 bad sector and whose name is the bad sector number.
-When it is discovered by 
+When it is discovered by
 .Xr fsck
 it will ask
 .Dq Li "HOLD BAD BLOCK ?"
-A positive response will cause 
+A positive response will cause
 .Xr fsck
 to convert the inode to a regular file containing the bad block.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.28 1999/06/03 09:50:31 aaron Exp $
+.\"	$OpenBSD: csh.1,v 1.29 1999/06/04 02:45:12 aaron Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -62,7 +62,7 @@ login shell and a shell script command processor.
 If the first argument (argument 0) to the shell is a dash
 .Pq Sq \- ,
 then this is a login shell.
-A login shell also can be specified by invoking the shell with the 
+A login shell also can be specified by invoking the shell with the
 .Fl l
 flag as the only argument.
 .Pp
@@ -1756,7 +1756,7 @@ option lists process IDs in addition to the normal information.
 .Pp
 .It Ic kill % Ns Ar job
 .It Ic kill
-.Op Fl s Ar signal_name 
+.Op Fl s Ar signal_name
 .Ar pid
 .It Ic kill Fl sig Ar pid ...
 .It Ic kill Fl l Op exit_status
@@ -1939,7 +1939,7 @@ being ignored, all forms of
 have no meaning and interrupts
 continue to be ignored by the shell and all invoked commands.
 Finally,
-.Ic onintr 
+.Ic onintr
 statements are ignored in the system startup files where interrupts
 are disabled
 .Pq Pa /etc/csh.cshrc , /etc/csh.login .
@@ -1955,13 +1955,13 @@ entry in the stack.
 The members of the directory stack are numbered from the top starting at 0.
 .Pp
 .It Ic printf Ar format-string values
-Invokes a built-in version of 
-.Ic printf 
-after evaluating the 
-.Ar format-string 
-and 
-.Ar values . 
-See the 
+Invokes a built-in version of
+.Ic printf
+after evaluating the
+.Ar format-string
+and
+.Ar values .
+See the
 .Xr printf 1
 manpage for details.
 .Pp
@@ -2484,7 +2484,7 @@ is given.
 Default is
 .Dq %\  ,
 or
-.Dq #\  
+.Dq #\
 for the super-user.
 .It Ic savehist
 Is given a numeric value to control the number of entries of the

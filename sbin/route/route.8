@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.16 1999/05/23 14:11:20 aaron Exp $
+.\"	$OpenBSD: route.8,v 1.17 1999/06/04 02:45:23 aaron Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -61,7 +61,7 @@ The
 utility supports a limited number of general options,
 but a rich command language enables the user to specify
 any arbitrary request that could be delivered via the
-programmatic interface discussed in 
+programmatic interface discussed in
 .Xr route 4 .
 .Bl -tag -width Ds
 .It Fl d
@@ -116,9 +116,9 @@ The flush command has the syntax
 .Op Ar family
 .Ed
 .Pp
-If the 
+If the
 .Cm flush
-command is specified, 
+command is specified,
 .Nm
 will
 .Dq flush
@@ -155,7 +155,7 @@ The optional modifiers
 and
 .Fl host
 force the destination to be interpreted as a network or a host, respectively.
-Otherwise, if the 
+Otherwise, if the
 .Ar destination
 has a
 .Dq local address part
@@ -177,7 +177,7 @@ is interpreted as
 .Fl net Li 128.32
 is interpreted as
 .Li 128.32.0.0;
-and 
+and
 .Fl net Li 128.32.130
 is interpreted as
 .Li 128.32.130.0 .
@@ -188,7 +188,7 @@ is interpreted to specify that the high 20 bits of the address
 .Pp
 If the destination is directly reachable
 via an interface requiring
-no intermediary system to act as a gateway, the 
+no intermediary system to act as a gateway, the
 .Fl interface
 modifier should be specified;
 the gateway given is the address of this host on the common network,
@@ -198,7 +198,7 @@ The optional modifiers
 .Fl xns ,
 .Fl osi ,
 and
-.Fl link 
+.Fl link
 specify that all subsequent addresses are in the
 .Tn XNS
 .Tn OSI
@@ -257,7 +257,7 @@ These may be individually locked by preceding each such modifier to
 be locked by
 the
 .Fl lock
-meta-modifier, or one can 
+meta-modifier, or one can
 specify that all ensuing metrics may be locked by the
 .Fl lockrest
 meta-modifier.
@@ -278,7 +278,7 @@ modifiers may be used to determine the interface or interface address.
 .Pp
 All symbolic names specified for a
 .Ar destination
-or 
+or
 .Ar gateway
 are looked up first as a host name using
 .Xr gethostbyname 3 .
@@ -300,17 +300,17 @@ the routing tables.
 .It Sy "add [host \&| network ] %s: gateway %s flags %x"
 The specified route is being added to the tables.  The
 values printed are from the routing table entry supplied
-in the 
+in the
 .Xr ioctl 2
 call.
 If the gateway address used was not the primary address of the gateway
 (the first one returned by
 .Xr gethostbyname 3 ) ,
 the gateway address is printed numerically as well as symbolically.
-.It Sy "delete [ host &| network ] %s: gateway %s flags %x" 
+.It Sy "delete [ host &| network ] %s: gateway %s flags %x"
 As above, but when deleting an entry.
 .It Sy "%s %s done"
-When the 
+When the
 .Cm flush
 command is specified, each routing table entry deleted
 is indicated with a message of this form.

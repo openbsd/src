@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.12 1999/02/05 05:58:41 deraadt Exp $
+.\"	$OpenBSD: ipf.5,v 1.13 1999/06/04 02:45:17 aaron Exp $
 .TH IPF 5
 .SH NAME
 ipf \- IP packet filter rule syntax
@@ -126,7 +126,7 @@ reset may only be used with a rule which is being applied to TCP
 packets.
 .TP
 .B pass
-will flag the packet to be let through the filter.  
+will flag the packet to be let through the filter.
 .TP
 .B log
 causes the packet to be logged (as described in the LOGGING section
@@ -207,7 +207,7 @@ construct a firewall that behaves transparently, like a filtering hub
 or switch, rather than a router. The \fBfastroute\fP keyword is a
 synonym for this option.
 .SH MATCHING PARAMETERS
-.PP 
+.PP
 The keywords described in this section are used to describe attributes
 of the packet to be used when determining whether rules match or don't
 match. The following general-purpose attributes are provided for
@@ -239,7 +239,7 @@ duplication of otherwise-identical rules.
 The \fBfrom\fP and \fBto\fP keywords are used to match against IP
 addresses (and optionally port numbers). Rules must specify BOTH
 source and destination parameters.
-.PP 
+.PP
 IP addresses may be specified in one of two ways: as a numerical
 address\fB/\fPmask, or as a hostname \fBmask\fP netmask.  The hostname
 may either be a valid hostname, from either the hosts file or DNS
@@ -392,7 +392,7 @@ following qualifiers may be used (in order):
 .TP
 .B body
 indicates that the first 128 bytes of the packet contents will be
-logged after the headers. 
+logged after the headers.
 .TP
 .B first
 ??

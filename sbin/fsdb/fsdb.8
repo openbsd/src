@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsdb.8,v 1.10 1998/12/15 01:20:31 aaron Exp $
+.\"	$OpenBSD: fsdb.8,v 1.11 1999/06/04 02:45:16 aaron Exp $
 .\"	$NetBSD: fsdb.8,v 1.5 1997/01/11 05:51:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 .Fl f Ar fsname
 .Sh DESCRIPTION
 .Nm
-opens 
+opens
 .Ar fsname
 (usually a raw disk partition) and runs a command loop
 allowing manipulation of the file system's inode data.  You are prompted
@@ -69,7 +69,7 @@ option enables additional debugging output (which comes primarily from
 .Xr fsck 8 -derived
 code).
 .Sh COMMANDS
-Besides the built-in 
+Besides the built-in
 .Xr editline 3
 commands,
 .Nm
@@ -119,7 +119,7 @@ Set the active inode's link count to
 .Pp
 .It Cm ls
 List the current inode's directory entries.  This command is valid only
-if the current inode is a directory. 
+if the current inode is a directory.
 .Pp
 .It Cm rm Ar name
 .It Cm del Ar name
@@ -176,7 +176,7 @@ Change the file flags of the current inode to
 Change the owner of the current inode to
 .Ar uid .
 .Pp
-.It Cm chlen Ar length 
+.It Cm chlen Ar length
 Change the length of the current inode to
 .Ar length .
 .Pp
@@ -192,7 +192,7 @@ Change the generation number of the current inode to
 .It Cm ctime Ar time
 .It Cm atime Ar time
 Change the modification, change, or access time (respectively) on the
-current inode to 
+current inode to
 .Ar time .
 .Ar Time
 should be in the format
@@ -203,7 +203,7 @@ is an optional nanosecond specification.  If no nanoseconds are specified, the
 .Va mtimensec ,
 .Va ctimensec ,
 or
-.Va atimensec 
+.Va atimensec
 field will be set to zero.
 .Pp
 .It Cm quit, Cm q, Cm exit, Em <EOF>
@@ -231,10 +231,10 @@ uses the source code for
 .Xr fsck 8
 to implement most of the file system manipulation code.  The remainder of
 .Nm
-first appeared in 
+first appeared in
 .Nx 1.1 .
 .Sh WARNING
 Use this tool with extreme caution--you can damage an FFS file system
 beyond what
 .Xr fsck 8
-can repair. 
+can repair.

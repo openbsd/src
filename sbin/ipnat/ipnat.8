@@ -21,17 +21,17 @@ Options are as follows:
 .It Fl C
 Delete all entries in the NAT list.
 .It Fl F
-Flush all active mappings from the NAT table. 
+Flush all active mappings from the NAT table.
 .It Fl l
 Display the current entries and mappings.
 .It Fl n
 Do not alter the NAT table.
 .It Fl r
-Remove, rather than add, entries specified in the rule list. 
+Remove, rather than add, entries specified in the rule list.
 .It Fl s
 Display statistics.
 .It Fl v
-Verbosity. Displays detailed information pertaining to rule processing. 
+Verbosity. Displays detailed information pertaining to rule processing.
 .El
 .Pp
 Certain configuration requirements must be met before
@@ -40,12 +40,12 @@ will work. These are listed in
 .Pa /usr/share/ipf/nat.2 .
 .Pp
 .Nm
-operates on a list of rules, specified by 
+operates on a list of rules, specified by
 .Ar filename .
-This file is typically 
+This file is typically
 .Pa /etc/ipnat.rules ;
 stdin is represented by "\-". Each rule is parsed, then sequentially added to
-the kernel's internal NAT list. Like 
+the kernel's internal NAT list. Like
 .Xr ipf 8 ,
 if an entry contradicts another previously added, the newer will take
 precedence.
@@ -58,9 +58,9 @@ parses the file. Entries may be separated by spaces or tabs. Each rule must
 begin with either
 .Em map
 or
-.Em rdr .  
+.Em rdr .
 .Pp
-.Em map 
+.Em map
 tells the NAT how a range of addresses should be translated. The entries use
 the following format:
 .Pp
@@ -69,7 +69,7 @@ map ifname internal/mask -> external/mask options
 .Ed
 .Pp
 The
-.Em ifname 
+.Em ifname
 field is the interface to which packets are sent. A gateway with a PPP link
 would probably use
 .Dq ppp0
@@ -105,8 +105,8 @@ four 8-bit numbers.
 The number of bits set in the mask is placed following the IP address.
 .Pp
 Both
-.Em internal 
-and 
+.Em internal
+and
 .Em external
 may be an actual IP address, the name of an interface, or a hostname. If it is
 a network number, however, a problem may arise. For example:
@@ -117,22 +117,22 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 .Pp
 16,000,000 IP addresses are being squeezed into an address space of only 254.
 This is solved by the
-.Em portmap 
+.Em portmap
 option, which remaps ports instead of IP addresses. The protocol is specified
 by following the option with either
-.Em tcp , 
+.Em tcp ,
 .Em udp ,
 .Em tcp/udp ,
-or 
+or
 .Em tcpudp
 (the last two have the same effect). The syntax to assign a range of ports is
 .Dq portnumber:portnumber .
 This looks like:
 .Pp
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 map ppp0 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
 map ppp0 10.0.0.0/8 -> 209.1.2.0/24
-.Ed 
+.Ed
 .Pp
 That will cut the number down from ~16,000,000 addresses short to only 527,566.
 .Pp
@@ -146,24 +146,24 @@ rdr ifname external/mask port service -> internal port service protocol
 This setup is best described by an example of an actual entry:
 .Pp
 .Bd -unfilled -offset indent -compact
-rdr xl0 0.0.0.0/0 port 25 -> 204.213.176.10 port smtp 
+rdr xl0 0.0.0.0/0 port 25 -> 204.213.176.10 port smtp
 .Ed
 .Pp
 This redirects all smtp packets received on xl0 to 204.213.176.10, port 25. A
 netmask is not needed on the
 .Em internal
-address; it is always 32. The 
+address; it is always 32. The
 .Em external
-and 
+and
 .Em internal
 fields, similar to the
 .Em map
-directive, may be actual addresses, hostnames, or interfaces. Likewise, the 
+directive, may be actual addresses, hostnames, or interfaces. Likewise, the
 .Em service
-field may be the name of a service, or a port number. The 
+field may be the name of a service, or a port number. The
 .Em protocol
-of the service may be selected by appending 
-.Em tcp , 
+of the service may be selected by appending
+.Em tcp ,
 .Em udp ,
 .Em tcp/udp ,
 or

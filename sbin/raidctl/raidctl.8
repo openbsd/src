@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.3 1999/04/02 15:12:18 aaron Exp $
+.\"	$OpenBSD: raidctl.8,v 1.4 1999/06/04 02:45:25 aaron Exp $
 .\"
 .\"     $NetBSD: raidctl.8,v 1.3 1999/02/04 14:50:31 oster Exp $
 .\"
@@ -39,29 +39,29 @@
 .\"
 .\" Copyright (c) 1995 Carnegie-Mellon University.
 .\" All rights reserved.
-.\" 
+.\"
 .\" Author: Mark Holland
-.\" 
+.\"
 .\" Permission to use, copy, modify and distribute this software and
 .\" its documentation is hereby granted, provided that both the copyright
 .\" notice and this permission notice appear in all copies of the
 .\" software, derivative works or modified versions, and any portions
 .\" thereof, and that both notices appear in supporting documentation.
-.\" 
+.\"
 .\" CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
 .\" CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
 .\" FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
-.\" 
+.\"
 .\" Carnegie Mellon requests users of this software to return to
-.\" 
+.\"
 .\"  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
 .\"  School of Computer Science
 .\"  Carnegie Mellon University
 .\"  Pittsburgh PA 15213-3890
-.\" 
+.\"
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
-.\" 
+.\"
 .Dd November 6, 1998
 .Dt RAIDCTL 8
 .Os
@@ -82,15 +82,15 @@
 .Nm raidctl
 .Fl R Ar dev
 .Nm raidctl
-.Fl s Ar dev 
+.Fl s Ar dev
 .Nm raidctl
 .Fl u Ar dev
 .Sh DESCRIPTION
 .Nm
 is the user-land control program for
 .Xr raid 4 ,
-the RAIDframe disk device.  
-.Nm 
+the RAIDframe disk device.
+.Nm
 is primarily used to dynamically configure and unconfigure RAIDframe disk
 devices.  For more information about the RAIDframe disk device, see
 .Xr raid 4 .
@@ -98,55 +98,55 @@ devices.  For more information about the RAIDframe disk device, see
 This document assumes the reader has at least rudimentary knowledge of
 RAID and RAID concepts.
 .Pp
-The command-line options for 
+The command-line options for
 .Nm
 are as follows:
 .Bl -tag -width indent
 .It Fl c Ar config_file Ar dev
-Configure the RAIDframe device 
+Configure the RAIDframe device
 .Ar dev
 according to the configuration given in
 .Ar config_file .
-A description of the contents of 
+A description of the contents of
 .Ar config_file
 is given later.
 .It Fl C Ar dev
-Initiate a copyback of reconstructed data from a spare disk to 
-its original disk.  This is performed after a component has failed, 
+Initiate a copyback of reconstructed data from a spare disk to
+its original disk.  This is performed after a component has failed,
 and the failed drive has been reconstructed onto a spare drive.
 .It Fl f Ar component Ar dev
-This marks the specified 
+This marks the specified
 .Ar component
 as having failed, but does not initiate a reconstruction of that
-component.  
+component.
 .It Fl F Ar component Ar dev
-Fails the specified 
+Fails the specified
 .Ar component
 of the device, and immediately beginis a reconstruction of the failed
 disk onto an available hot spare.  This is the mechanism used to start
 the reconstruction process if a component does have a hardware failure.
 .It Fl r Ar dev
-Re-write the parity on the device.  This 
+Re-write the parity on the device.  This
 .Em must
 be done before the RAID device is labeled and before
 filesystems are created on the RAID device, and is normally used after
-a system crash (and before a 
+a system crash (and before a
 .Xr fsck 8 ) Ns
 to ensure the integrity of the parity.
 .It Fl R Ar dev
-Check the status of component reconstruction.  The output indicates 
+Check the status of component reconstruction.  The output indicates
 the amount of progress achieved in reconstructing a failed component.
 .It Fl s Ar dev
 Display the status of the RAIDframe device for each of the components
-and spares.  
+and spares.
 .It Fl u Ar dev
 Unconfigure the RAIDframe device.
 .El
 .Pp
-The device used by 
+The device used by
 .Nm
-is specified by 
-.Ar dev .  
+is specified by
+.Ar dev .
 .Ar dev
 may be either the full name of the device (e.g.,
 .Pa /dev/rraid0d
@@ -158,31 +158,31 @@ or just simply raid0 (for
 .Pp
 The format of the configuration file is complex, and
 only an abbreviated treatment is given here.  In the configuration
-files, a 
+files, a
 .Sq #
 indicates the beginning of a comment.
 .Pp
 There are 4 required sections of a configuration file, and 2
-optional components.  Each section begins with a 
-.Dq START , 
+optional components.  Each section begins with a
+.Dq START ,
 followed by
 the section name, and the confuration parameters associated with that
-section.  The first section is the 
+section.  The first section is the
 .Dq array
 section, and it specifies
 the number of rows, columns, and spare disks in the RAID array.  For
-example: 
+example:
 .Bd -unfilled -offset indent
 START array
 1 3 0
 .Ed
 .Pp
 indicates an array with 1 row, 3 columns, and 0 spare disks.  Note
-that although multi-dimensional arrays may be specified, they are 
+that although multi-dimensional arrays may be specified, they are
 .Em not
 supported in the driver.
 .Pp
-The second section, the 
+The second section, the
 .Dq disks
 section, specifies the actual
 components of the device.  For example:
@@ -195,15 +195,15 @@ START disks
 .Pp
 specifies the three component disks to be used in the RAID device.  If
 any of the specified drives cannot be found when the RAID device is
-configured, then they will be marked as 
-.Dq failed , 
+configured, then they will be marked as
+.Dq failed ,
 and the system will
 operate in degraded mode.  Note that it is
 .Em imperative
 that the order of the components in the configuration file does not
 change between configurations of a RAID device.  Changing the order
 of the components (at least at the time of this writing) will result in
-data loss.  
+data loss.
 .Pp
 The next section,
 .Dq spare ,
@@ -211,20 +211,20 @@ is optional, and if present specifies the devices to be used as
 .Dq hot spares
 -- devices
 which are on-line, but are not actively used by the RAID driver unless
-one of the main components fail.  A simple 
+one of the main components fail.  A simple
 .Dq spare
 section might be:
 .Bd -unfilled -offset indent
-START spare 
+START spare
 /dev/sd3e
 .Ed
 .Pp
 for a configuration with a single spare component.  If no spare drives
-are to be used in the configuration, then the 
+are to be used in the configuration, then the
 .Dq spare
-section may be omitted.  
+section may be omitted.
 .Pp
-The next section is the 
+The next section is the
 .Dq layout
 section.  This section describes the
 general layout parameters for the RAID device, and provides such
@@ -247,9 +247,9 @@ While certain values above 1 are permitted, a discussion of valid
 values and the consequences of using anything other than 1 are outside
 the scope of this document.  The last value in this section (5 in this
 example) indicates the parity configuration desired.  Valid entries
-include: 
+include:
 .Bl -tag -width inde
-.It 0 
+.It 0
 RAID level 0.  No parity, only simple striping.
 .It 1
 RAID level 1.  Mirroring.
@@ -262,12 +262,12 @@ all components.
 .El
 .Pp
 There are other valid entries here, including those for Even-Odd
-parity, RAID level 5 with rotated sparing, Chained declustering, 
+parity, RAID level 5 with rotated sparing, Chained declustering,
 and Interleaved declustering, but as of this writing the code for
-those parity operations has not been tested with 
+those parity operations has not been tested with
 .Ox .
 .Pp
-The next required section is the 
+The next required section is the
 .Dq queue
 section.  This is most often
 specified as:
@@ -279,15 +279,15 @@ fifo 1
 where the queuing method is specified as FIFO (first-in, first-out),
 and the size of the per-component queue is limited to 1 request.  A
 value of 1 is quite conservative here, and values of 100 or more may
-been used to increase the driver performance. 
+been used to increase the driver performance.
 Other queuing methods may also be specified, but a discussion of them
 is beyond the scope of this document.
 .Pp
-The final section, the 
+The final section, the
 .Dq debug
 section, is optional.  For more details
 on this the reader is referred to the RAIDframe documentation
-dissussed in the 
+dissussed in the
 .Sx HISTORY
 section.
 See
@@ -297,19 +297,19 @@ for a more complete configuration file example.
 The examples in this section will focus on a RAID 5 configuration.
 Other RAID configurations will behave similarly.  It is highly
 recommended that before using the RAID driver for real filesystems
-that the system administrator(s) have used 
+that the system administrator(s) have used
 .Em all
-of the options for 
+of the options for
 .Nm ,
 and that they understand how the component reconstruction process
 works.  While this example is not created as a tutorial, the steps
 shown here can be easily dupilicated using four equal-sized partitions
-from any number of disks (including all four from a single disk).  
+from any number of disks (including all four from a single disk).
 .Pp
-The primary use of 
+The primary use of
 .Nm
 is to configure and unconfigure
-.Xr raid 4 
+.Xr raid 4
 devices.  To configure a device, a configuration
 file which looks something like:
 .Bd -unfilled -offset indent
@@ -341,13 +341,13 @@ and
 .Pa /dev/sd3e ,
 with
 .Pa /dev/sd4e
-available as a 
+available as a
 .Dq hot spare
 in case one of
 the three main drives should fail.  If the above configuration is in a
-file called 
-.Pa rfconfig , 
-raid device 0 can be configured with: 
+file called
+.Pa rfconfig ,
+raid device 0 can be configured with:
 .Bd -unfilled -offset indent
 raidctl -c rfconfig raid0
 .Ed
@@ -411,16 +411,16 @@ Spares:
            /dev/sd4e [0][0]: spare
 .Ed
 .Pp
-Note that with the use of 
+Note that with the use of
 .Fl f
 a reconstruction has not been started.  To both fail the disk and
-start a reconstruction, the 
+start a reconstruction, the
 .Fl F
-option must be used.  (The 
+option must be used.  (The
 .Fl f
 option may be used first, and then the
 .Fl F
-option used later, on the same disk, if desired.)  
+option used later, on the same disk, if desired.)
 Immediately after the reconstruction is started, the status will report:
 .Bd -unfilled -offset indent
 Components:
@@ -432,7 +432,7 @@ Spares:
 .Ed
 .Pp
 This indicates that a reconstruction is in progress.  To find out how
-the reconstruction is progressing the 
+the reconstruction is progressing the
 .Fl R
 option may be used.  This will indicate the progress in terms of the
 percentage of the reconstruction that is completed.  When the
@@ -450,12 +450,12 @@ Spares:
 .Pp
 At this point there are at least two options.  First, if
 .Pa /dev/sd2e
-is known to be good (i.e., the failure was either caused by 
+is known to be good (i.e., the failure was either caused by
 .Fl f
-or 
+or
 .Fl F ,
-or the failed disk was replaced), then a copyback of the data can 
-be initiated with the 
+or the failed disk was replaced), then a copyback of the data can
+be initiated with the
 .Fl C
 option.  In this example, this would copy the entire contents of
 .Pa /dev/sd4e
@@ -493,17 +493,17 @@ This can be done as
 .Pa /dev/sd4e
 is completely interchangeable with
 .Pa /dev/sd2e
-at this point.  Note that extreme care must be taken when 
+at this point.  Note that extreme care must be taken when
 changing the order of the drives in a configuration.  This is one of
 the few instances where the devices and/or their orderings can be
 changed without loss of data!  In general, the ordering of components
-in a configuration file should 
-.Em never 
+in a configuration file should
+.Em never
 be changed.
 .Pp
-The final operation performed by 
+The final operation performed by
 .Nm
-is to unconfigure a 
+is to unconfigure a
 .Xr raid 4
 device.  This is accomplished via a simple:
 .Bd -unfilled -offset indent
@@ -516,11 +516,11 @@ Certain RAID levels (1, 4, 5, 6, and others) can protect against some
 data loss due to component failure.  However the loss of two
 components of a RAID 4 or 5 system, or the loss of a single component
 of a RAID 0 system will result in the entire filesystem being lost.
-RAID is 
+RAID is
 .Em not
 a substitute for good backup practices.
 .Pp
-Recomputation of parity 
+Recomputation of parity
 .Em must
 be performed whenever there is a chance that it may have been
 compromised.  This includes after system crashes, or before a RAID
@@ -544,7 +544,7 @@ device special files
 .Sh HISTORY
 RAIDframe is a framework for rapid prototyping of RAID structures
 developed by the folks at the Parallel Data Laboratory at Carnegie
-Mellon University (CMU).  
+Mellon University (CMU).
 A more complete description of the internals and functionality of
 RAIDframe is found in the paper "RAIDframe: A Rapid Prototyping Tool
 for RAID Systems", by William V. Courtright II, Garth Gibson, Mark

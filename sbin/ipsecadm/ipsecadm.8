@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.6 1999/05/16 19:56:14 alex Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.7 1999/06/04 02:45:24 aaron Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -77,7 +77,7 @@ encryption algorithms can be applied. Allowed modifiers are:
 .Fl spi ,
 .Fl enc ,
 .Fl halfiv ,
-.Fl forcetunnel , 
+.Fl forcetunnel ,
 and
 .Fl key .
 .It new ah
@@ -223,7 +223,7 @@ at your own risk.
 We suggest using 3DES instead. DES support is kept for interoperability
 (with old implementations) purposes only.  See
 .Xr des_cipher 3 .
-.It Nm 3des 
+.It Nm 3des
 This is available for both old and new esp.  It is considered
 more secure than straight DES, since it uses larger keys.
 .It Nm blf
@@ -290,7 +290,7 @@ may only be used with old ESP.
 .It proto
 The security protocol needed by
 .Nm delspi ,
-.Nm flow , 
+.Nm flow ,
 .Nm group
 or
 .Nm bind
