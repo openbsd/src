@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.277 2003/11/07 20:29:54 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.278 2003/11/08 00:45:34 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1737,6 +1737,10 @@ support the following options:
 Limits the number of concurrent states the rule may create.
 When this limit is reached, further packets matching the rule that would
 create state are dropped, until existing states time out.
+.It Ar no-sync
+Prevent state changes for states created by this rule from appearing on the
+.Xr pfsync 4
+interface.
 .It Ar <timeout> <seconds>
 Changes the timeout values used for states created by this rule.
 For a list of all valid timeout names, see
@@ -2421,7 +2425,7 @@ tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
                  [ "0x" ] number )
 
 state-opts     = state-opt [ [ "," ] state-opts ]
-state-opt      = ( "max" number ) | ( timeout )
+state-opt      = ( "max" number | "no-sync" | timeout )
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
                  "fragment drop-ovl" ]
@@ -2478,6 +2482,7 @@ Example rulesets.
 .Xr ip 4 ,
 .Xr ip6 4 ,
 .Xr pf 4 ,
+.Xr pfsync 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr hosts 5 ,

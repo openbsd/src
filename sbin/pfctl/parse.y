@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.420 2003/11/06 15:16:50 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.421 2003/11/08 00:45:34 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -112,7 +112,7 @@ struct node_icmp {
 	struct node_icmp	*tail;
 };
 
-enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_TIMEOUT=1 };
+enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_NOSYNC=1, PF_STATE_OPT_TIMEOUT=2 };
 struct node_state_opt {
 	int			 type;
 	union {
@@ -367,7 +367,7 @@ typedef struct {
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
-%token	REQUIREORDER SYNPROXY FINGERPRINTS
+%token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
@@ -1408,6 +1408,14 @@ pfrule		: action dir logquick interface route af proto fromto
 					}
 					r.max_states = o->data.max_states;
 					break;
+				case PF_STATE_OPT_NOSYNC:
+					if (r.rule_flag & PFRULE_NOSYNC) {
+						yyerror("state option 'sync' "
+						    "multiple definitions");
+						YYERROR;
+					}
+					r.rule_flag |= PFRULE_NOSYNC;
+					break;
 				case PF_STATE_OPT_TIMEOUT:
 					if (r.timeout[o->data.timeout.number]) {
 						yyerror("state timeout %s "
@@ -2395,6 +2403,14 @@ state_opt_item	: MAXIMUM number		{
 				err(1, "state_opt_item: calloc");
 			$$->type = PF_STATE_OPT_MAX;
 			$$->data.max_states = $2;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| NOSYNC				{
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_NOSYNC;
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -3950,6 +3966,7 @@ lookup(char *s)
 		{ "no",			NO},
 		{ "no-df",		NODF},
 		{ "no-route",		NOROUTE},
+		{ "no-sync",		NOSYNC},
 		{ "on",			ON},
 		{ "optimization",	OPTIMIZATION},
 		{ "os",			OS},

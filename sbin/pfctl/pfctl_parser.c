@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.179 2003/11/06 15:18:12 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.180 2003/11/08 00:45:34 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -704,6 +704,8 @@ print_rule(struct pf_rule *r, int verbose)
 	opts = 0;
 	if (r->max_states)
 		opts = 1;
+	if (r->rule_flag & PFRULE_NOSYNC)
+		opts = 1;
 	for (i = 0; !opts && i < PFTM_MAX; ++i)
 		if (r->timeout[i])
 			opts = 1;
@@ -711,6 +713,12 @@ print_rule(struct pf_rule *r, int verbose)
 		printf(" (");
 		if (r->max_states) {
 			printf("max %u", r->max_states);
+			opts = 0;
+		}
+		if (r->rule_flag & PFRULE_NOSYNC) {
+			if (!opts)
+				printf(", ");
+			printf("no-sync");
 			opts = 0;
 		}
 		for (i = 0; i < PFTM_MAX; ++i)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.2 2002/12/11 18:31:26 mickey Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.3 2003/11/08 00:45:34 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -76,9 +76,18 @@ struct pfsync_header {
 #ifdef _KERNEL
 int pfsync_clear_state(struct pf_state *);
 int pfsync_pack_state(u_int8_t, struct pf_state *);
-#define pfsync_insert_state(st)	pfsync_pack_state(PFSYNC_ACT_INS, (st))
-#define pfsync_update_state(st)	pfsync_pack_state(PFSYNC_ACT_UPD, (st))
-#define pfsync_delete_state(st)	pfsync_pack_state(PFSYNC_ACT_DEL, (st))
+#define pfsync_insert_state(st)	do {			\
+	if (!(st->rule.ptr->rule_flag & PFRULE_NOSYNC))	\
+		pfsync_pack_state(PFSYNC_ACT_INS, (st));\
+} while (0)
+#define pfsync_update_state(st) do {			\
+	if (!(st->rule.ptr->rule_flag & PFRULE_NOSYNC))	\
+		pfsync_pack_state(PFSYNC_ACT_UPD, (st));\
+} while (0)
+#define pfsync_delete_state(st) do {			\
+	if (!(st->rule.ptr->rule_flag & PFRULE_NOSYNC))	\
+		pfsync_pack_state(PFSYNC_ACT_DEL, (st));\
+} while (0)
 #endif
 
 #endif /* _NET_IF_PFSYNC_H_ */
