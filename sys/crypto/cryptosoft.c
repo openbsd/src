@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.32 2002/03/19 23:24:53 angelos Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.33 2002/04/03 23:22:36 fgsch Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -108,8 +108,11 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 			/* Get random IV */
 			for (i = 0;
 			    i + sizeof (u_int32_t) < EALG_MAX_BLOCK_LEN;
-			    i += sizeof (u_int32_t))
-				*((u_int32_t *) (iv + i)) = arc4random();
+			    i += sizeof (u_int32_t)) {
+				u_int32_t temp = arc4random();
+
+				bcopy(&temp, iv + i, sizeof(u_int32_t));
+			}
 			/*
 			 * What if the block size is not a multiple
 			 * of sizeof (u_int32_t), which is the size of
