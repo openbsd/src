@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.c,v 1.2 2002/07/22 01:20:50 art Exp $	*/
+/*	$OpenBSD: core.c,v 1.3 2002/07/22 02:55:54 art Exp $	*/
 /*
  * Copyright (c) 2002 Jean-Francois Brousseau <krapht@secureops.com>
  * All rights reserved. 
@@ -61,7 +61,7 @@ read_core(const char *path, struct pstate *ps)
 	if (cf->cfstat.st_mtimespec.tv_sec < ps->exec_stat.st_mtimespec.tv_sec)
 		warnx("executable is more recent than core file!");
 
-	core_map = mmap(NULL, cf->cfstat.st_size, PROT_READ, MAP_SHARED,
+	core_map = mmap(NULL, cf->cfstat.st_size, PROT_READ, MAP_PRIVATE,
 	    cfd, 0);
 	if (core_map == MAP_FAILED)
 		err(1, "mmap() failed on core");
@@ -144,18 +144,18 @@ core_printregs(struct corefile *cf)
 ssize_t
 core_read(struct pstate *ps, off_t from, void *to, size_t size)
 {
-	int i;
+	struct coreseg *cs;
 	size_t read;
 	void *fp;
-	struct coreseg *cs;
+	int i;
 
 	for (i = 0; i < ps->ps_core->chdr->c_nseg; i++) {
 		cs = ps->ps_core->segs[i];
 		if ((from >= cs->c_addr) && (from < (cs->c_addr + cs->c_size))) {
 			read = size;
-			fp = cs + sizeof(*cs) + (from - cs->c_addr);
+			fp = cs + sizeof(*cs) + ((u_long)from - cs->c_addr);
 			memcpy(to, fp, read);
-			return read;
+			return (read);
 		}
 	}
 
@@ -166,10 +166,10 @@ core_read(struct pstate *ps, off_t from, void *to, size_t size)
 ssize_t
 core_write(struct pstate *ps, off_t to, void *from, size_t size)
 {
-	int i;
+	struct coreseg *cs;
 	size_t written;
 	void *fp;
-	struct coreseg *cs;
+	int i;
 
 	for (i = 0; i < ps->ps_core->chdr->c_nseg; i++) {
 		cs = ps->ps_core->segs[i];
@@ -177,7 +177,7 @@ core_write(struct pstate *ps, off_t to, void *from, size_t size)
 			written = size;
 			fp = cs + sizeof(*cs) + (to - cs->c_addr);
 			memcpy(fp, from, written);
-			return written;
+			return (written);
 		}
 	}
 
