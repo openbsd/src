@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.34 2003/03/24 11:33:51 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.35 2003/03/25 19:57:56 miod Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -39,11 +39,6 @@ iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris, and Ultrix compatibility),
 aiming at making the emulation as accurate as possible so that it is
 transparent to the user.
 
-Many new user programs and device drivers have been added in OpenBSD
-OSREV, as well, bringing it closer to our goal of supplying a complete
-and modern UN*X-like environment.  Tools like perl and an improved ksh
-are standard, as are numerous other useful tools.
-
 Because OpenBSD is from Canada, the export of Cryptography pieces
 (such as SSH, IPsec, and Kerberos) to the world is not restricted.
 
@@ -51,6 +46,12 @@ Because OpenBSD is from Canada, the export of Cryptography pieces
 the US.  Because of this, take care NOT to get the distribution from
 an FTP server in the US if you are outside of Canada and the US.)
 
+The OSREV release features more user programs and device drivers,
+extensive firewalling and network bandwidth management capabilities,
+as well as numerous security mechanisms (stricter control over memory
+execute and write permissions, compiler built-in stack protection,
+privilege separation or early revocation of privileges in more and
+more executables, etc).
 
 includeit(whatis)dnl
 
@@ -126,8 +127,9 @@ are denoted by 'name(section)'.  Some examples of this are
 	intro(1),
 	man(1),
 	apropos(1),
-	passwd(1), and
-	passwd(5).
+	passwd(1),
+	passwd(5) and
+	afterboot(8).
 
 The section numbers group the topics into several categories, but three
 are of primary interest: user commands are in section 1, file formats
