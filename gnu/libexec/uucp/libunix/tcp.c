@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char tcp_rcsid[] = "$Id: tcp.c,v 1.1.1.1 1995/10/18 08:38:31 deraadt Exp $";
+const char tcp_rcsid[] = "$Id: tcp.c,v 1.2 1998/04/26 09:59:21 deraadt Exp $";
 #endif
 
 #if HAVE_TCP
@@ -231,7 +231,7 @@ ftcp_open (qconn, ibaud, fwait)
 
   while (! FGOT_SIGNAL ())
     {
-      size_t clen;
+      int clen;
       int onew;
       pid_t ipid;
 
@@ -370,7 +370,7 @@ ftcp_dial (qconn, puuconf, qsys, zphone, qdialer, ptdialer)
 
       s.sin_family = AF_INET;
       s.sin_addr.s_addr = inet_addr ((char *) zhost);
-      if ((long) s.sin_addr.s_addr == (long) -1)
+      if (s.sin_addr.s_addr == INADDR_NONE)
 	{
 	  ulog (LOG_ERROR, "%s: unknown host name", zhost);
 	  return FALSE;
