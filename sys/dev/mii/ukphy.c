@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.4 1999/07/23 12:39:11 deraadt Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.5 1999/09/17 01:38:56 jason Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.1.6.1 1999/04/23 15:39:00 perry Exp $	*/
 
 /*-
@@ -142,7 +142,7 @@ ukphyattach(parent, self, aux)
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst),
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
 	    BMCR_ISO);
 #if 0
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
