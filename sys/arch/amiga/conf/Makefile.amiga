@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.15 1996/06/02 18:55:43 niklas Exp $
+#	$OpenBSD: Makefile.amiga,v 1.16 1996/08/19 00:15:51 niklas Exp $
 #	$NetBSD: Makefile.amiga,v 1.45 1996/05/16 17:07:08 is Exp $
 
 # Makefile for OpenBSD
@@ -181,9 +181,7 @@ depend:: .depend
 autoconf.o conf.o: Makefile
  
 # depend on network or filesystem configuration 
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
-if_tun.o if_loop.o if_ethersubr.o: Makefile
-in_proto.o: Makefile
+uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
 genassym.o machdep.o: Makefile
