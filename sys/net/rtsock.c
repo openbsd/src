@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.22 2002/07/02 19:38:55 nate Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.23 2002/07/03 02:31:00 mickey Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -815,6 +815,8 @@ sysctl_iflist(af, w)
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		ifa = TAILQ_FIRST(&ifp->if_addrlist);
+		if (!ifa)
+			continue;
 		ifpaddr = ifa->ifa_addr;
 		len = rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w);
 		ifpaddr = 0;
