@@ -1,5 +1,5 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.2 1996/02/27 07:51:41 niklas Exp $	*/
-/*	$NetBSD: fdesc_vnops.c,v 1.31 1996/02/13 13:12:52 mycroft Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.3 1996/04/17 04:46:59 mickey Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
@@ -185,8 +186,13 @@ struct vnodeopv_desc fdesc_vnodeop_opv_desc =
 void
 fdesc_init()
 {
+	int cttymajor;
 
-	devctty = makedev(nchrdev, 0);
+	/* locate the major number */
+	for (cttymajor = 0; cttymajor < nchrdev; cttymajor++)
+		if (cdevsw[cttymajor].d_open == cttyopen)
+			break;
+	devctty = makedev(cttymajor, 0);
 	fdhashtbl = hashinit(NFDCACHE, M_CACHE, &fdhash);
 }
 
@@ -309,7 +315,7 @@ fdesc_lookup(v)
 			if (error)
 				goto bad;
 			*vpp = fvp;
-			fvp->v_type = VFIFO;
+			fvp->v_type = VCHR;
 			VOP_LOCK(fvp);
 			return (0);
 		}
@@ -512,13 +518,15 @@ fdesc_getattr(v)
 		case Flink:
 			vap->va_mode = R_ALL|X_ALL;
 			vap->va_type = VLNK;
+			vap->va_rdev = 0;
 			vap->va_nlink = 1;
 			vap->va_size = strlen(VTOFDESC(vp)->fd_link);
 			break;
 
 		case Fctty:
 			vap->va_mode = R_ALL|W_ALL;
-			vap->va_type = VFIFO;
+			vap->va_type = VCHR;
+			vap->va_rdev = devctty;
 			vap->va_nlink = 1;
 			vap->va_size = 0;
 			break;
@@ -526,6 +534,7 @@ fdesc_getattr(v)
 		default:
 			vap->va_mode = R_ALL|X_ALL;
 			vap->va_type = VDIR;
+			vap->va_rdev = 0;
 			vap->va_nlink = 2;
 			vap->va_size = DEV_BSIZE;
 			break;
@@ -540,7 +549,6 @@ fdesc_getattr(v)
 		vap->va_ctime = vap->va_mtime;
 		vap->va_gen = 0;
 		vap->va_flags = 0;
-		vap->va_rdev = 0;
 		vap->va_bytes = 0;
 		break;
 
