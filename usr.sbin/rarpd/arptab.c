@@ -62,7 +62,6 @@ static char sccsid[] = "@(#)arp.c	8.2 (Berkeley) 1/2/94";
 
 #include <netdb.h>
 #include <errno.h>
-#include <nlist.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.19 2004/09/21 21:17:02 jaredy Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.20 2005/04/04 09:03:08 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.19 2004/09/21 21:17:02 jaredy Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.20 2005/04/04 09:03:08 deraadt Exp $";
 #endif
 
 #define INET
@@ -66,7 +66,6 @@ static char rcsid[] = "$OpenBSD: slstats.c,v 1.19 2004/09/21 21:17:02 jaredy Exp
 #include <stdio.h>
 #include <stdlib.h>
 #include <paths.h>
-#include <nlist.h>
 #include <string.h>
 #include <unistd.h>
 

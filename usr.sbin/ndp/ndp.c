@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.35 2004/05/24 03:56:22 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.36 2005/04/04 09:03:08 deraadt Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -99,7 +99,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <nlist.h>
 #include <paths.h>
 #include <stdlib.h>
 #include <string.h>

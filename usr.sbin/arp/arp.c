@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.34 2005/03/29 23:55:18 henning Exp $ */
+/*	$OpenBSD: arp.c,v 1.35 2005/04/04 09:03:07 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -53,7 +53,6 @@
 #include <netdb.h>
 #include <errno.h>
 #include <err.h>
-#include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
