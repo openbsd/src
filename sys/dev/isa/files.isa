@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.74 2002/01/27 21:03:53 mickey Exp $
+#	$OpenBSD: files.isa,v 1.75 2002/02/12 19:02:22 mickey Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -71,7 +71,7 @@ file	dev/isa/cy_isa.c		cy_isa
 
 # ISA PC keyboard controller
 attach	pckbc at isa with pckbc_isa
-file	dev/isa/pckbc_isa.c		pckbc	needs-flag
+file	dev/isa/pckbc_isa.c		pckbc_isa	needs-flag
 
 # Generic ISA VGA
 attach	vga at isa with vga_isa
