@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 1996/06/26 05:33:11 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/10/24 03:46:04 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.2 1996/06/26 05:33:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1996/10/24 03:46:04 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,6 +45,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.2 1996/06/26 05:33:11 deraadt Exp $"
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -66,10 +67,13 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	struct sigaction sa = {	show_path, SA_RESTART, NULL };
 	register char **p, **start;
 	int ch;
 
 	(void)time(&now);	/* initialize the time-of-day */
+
+	sigaction(SIGINFO, &sa, NULL);
 
 	p = start = argv;
 	ftsoptions = FTS_NOSTAT|FTS_PHYSICAL;

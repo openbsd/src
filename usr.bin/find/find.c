@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.2 1996/06/26 05:33:09 deraadt Exp $	*/
+/*	$OpenBSD: find.c,v 1.3 1996/10/24 03:46:04 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: find.c,v 1.2 1996/06/26 05:33:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: find.c,v 1.3 1996/10/24 03:46:04 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -149,12 +149,14 @@ FTS *tree;			/* pointer to top of FTS hierarchy */
  *	take a search plan and an array of search paths and executes the plan
  *	over all FTSENT's returned for the given search paths.
  */
+
+FTSENT *entry;			/* shared with SIGINFO handler */
+
 void
 find_execute(plan, paths)
 	PLAN *plan;		/* search plan */
 	char **paths;		/* array of pathnames to traverse */
 {
-	register FTSENT *entry;
 	PLAN *p;
     
 	if (!(tree = fts_open(paths, ftsoptions, (int (*)())NULL)))
