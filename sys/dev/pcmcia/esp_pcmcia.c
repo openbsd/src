@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_pcmcia.c,v 1.1 2000/06/19 07:22:10 fgsch Exp $	*/
+/*	$OpenBSD: esp_pcmcia.c,v 1.2 2000/06/20 04:56:57 niklas Exp $	*/
 /*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
@@ -131,8 +131,9 @@ struct esp_pcmcia_product {
 	u_int16_t	app_product;		/* PCMCIA product ID */
 	int		app_expfunc;		/* expected function number */
 } esp_pcmcia_prod[] = {
-	{ PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002,
-	  0 }
+	{ PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002, 0 },
+	{ PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KME, 0 },
+	{ PCMCIA_VENDOR_NEWMEDIA2, PCMCIA_PRODUCT_NEWMEDIA2_BUSTOASTER, 0 }
 };
 
 int
