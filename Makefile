@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 1997/09/21 11:46:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 1997/12/09 19:45:29 niklas Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -75,6 +75,9 @@ build:
 .endif
 .if (${KERBEROS} == "yes")
 	(cd ${.CURDIR}/kerberosIV && ${MAKE} build)
+.endif
+.if (${MACHINE_ARCH} == "mips")
+	ldconfig
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 
