@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka49.c,v 1.5 2002/06/11 09:36:24 hugh Exp $	*/
+/*	$OpenBSD: ka49.c,v 1.6 2002/07/21 06:12:28 hugh Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -74,6 +74,9 @@ ka49_conf()
 
 /* Why??? */
 { volatile int *hej = (void *)mfpr(PR_ISP); *hej = *hej; hej[-1] = hej[-1];}
+
+	/* This vector shows up during shutdown, ignore it for now. */
+	scb_vecalloc(0x0, (void *)nullop, NULL, SCB_ISTACK, NULL);
 
 	/*
 	 * Setup parameters necessary to read time from clock chip.
