@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.6 2000/04/20 07:52:18 angelos Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.7 2000/04/20 07:57:41 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1264,6 +1264,6 @@ usage()
 {
 	(void)fprintf(stderr,
 "usage: traceroute6 [-dlnrv] [-m max_hops] [-p port#] [-q nqueries]\n\t\
-[-s src_addr] [-g gateway] [-w wait] [ -b min_hops] host [data size]\n");
+[-s src_addr] [-g gateway] [-w wait] [-b min_hops] host [data size]\n");
 	exit(1);
 }
