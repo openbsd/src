@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.7 1996/08/12 12:33:34 niklas Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.8 1996/08/13 22:26:18 niklas Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.34 1996/02/28 22:35:35 gwr Exp $	*/
 
 /* 
@@ -1167,11 +1167,8 @@ vm_object_collapse_aux(object)
 			 */
 			if (object->pager != NULL &&
 			    vm_object_remove_from_pager(backing_object,
-			    backing_offset, backing_offset + PAGE_SIZE)) {
+			    backing_offset, backing_offset + PAGE_SIZE))
 				backing_page->flags &= ~PG_CLEAN;
-				if (backing_page->flags & PG_INACTIVE)
-					backing_page->flags |= PG_LAUNDRY;
-			}
 		}
 	}
 
@@ -1301,15 +1298,8 @@ vm_object_collapse_aux(object)
 				 *	persistant store of the page, make
 				 *	sure it will be paged out in the
 				 *	front pager by dirtying it.
-				 *
-				 *	XXX these flag adjustments may be
-				 *	overkill, look into them some time.
 				 */
-				backing_page->flags &= ~(PG_FAKE|PG_CLEAN);
-				if (backing_page->flags & PG_INACTIVE)
-					backing_page->flags |= PG_LAUNDRY;
-				pmap_clear_modify(VM_PAGE_TO_PHYS(
-				    backing_page));
+				backing_page->flags &= ~PG_CLEAN;
 
 				/*
 				 *	Fourth, move it up front, and wake up
