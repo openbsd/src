@@ -7,9 +7,9 @@
 #	ns	#sectors/track
 #	nt	#tracks/cylinder
 #	nc	#cylinders/disk
-#	p[a-h]	partition sizes in sectors
-#	b[a-h]	partition block sizes in bytes
-#	f[a-h]	partition fragment sizes in bytes
+#	p[a-p]	partition sizes in sectors
+#	b[a-p]	partition block sizes in bytes
+#	f[a-p]	partition fragment sizes in bytes
 #
 # All partition sizes contain space for bad sector tables unless
 # the device drivers fail to support this.

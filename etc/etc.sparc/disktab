@@ -1,4 +1,4 @@
-# $Id: disktab,v 1.5 1995/12/15 02:33:11 deraadt Exp $
+# $Id: disktab,v 1.6 1996/09/30 15:20:17 deraadt Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -12,9 +12,9 @@
 #	se	sector size, 512 default
 #	sf	supports bad144-style bad sector forwarding
 #	so	partition offsets in sectors
-#	p[a-h]	partition sizes in sectors
-#	b[a-h]	partition block sizes in bytes
-#	f[a-h]	partition fragment sizes in bytes
+#	p[a-p]	partition sizes in sectors
+#	b[a-p]	partition block sizes in bytes
+#	f[a-p]	partition fragment sizes in bytes
 #
 
 # pseudo-geometry taken from rd7945
