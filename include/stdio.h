@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.18 2001/09/04 22:17:44 fgsch Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.19 2001/11/02 00:19:10 espie Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -303,7 +303,8 @@ __END_DECLS
 #if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 __BEGIN_DECLS
 int	 asprintf __P((char **, const char *, ...))
-		__attribute__((__format__ (printf, 2, 3)));
+		__attribute__((__format__ (printf, 2, 3)))
+		__attribute__((__nonnull__ (2)));
 char	*fgetln __P((FILE *, size_t *));
 int	 fpurge __P((FILE *));
 int	 getw __P((FILE *));
@@ -314,15 +315,20 @@ void	 setbuffer __P((FILE *, char *, int));
 int	 setlinebuf __P((FILE *));
 char	*tempnam __P((const char *, const char *));
 int	 snprintf __P((char *, size_t, const char *, ...))
-		__attribute__((__format__ (printf, 3, 4)));
+		__attribute__((__format__ (printf, 3, 4)))
+		__attribute__((__nonnull__ (3)));
 int	 vasprintf __P((char **, const char *, _BSD_VA_LIST_))
-		__attribute__((__format__ (printf, 2, 0)));
+		__attribute__((__format__ (printf, 2, 0)))
+		__attribute__((__nonnull__ (2)));
 int	 vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_))
-		__attribute__((__format__ (printf, 3, 0)));
+		__attribute__((__format__ (printf, 3, 0)))
+		__attribute__((__nonnull__ (3)));
 int	 vscanf __P((const char *, _BSD_VA_LIST_))
-		__attribute__((__format__ (scanf, 1, 0)));
+		__attribute__((__format__ (scanf, 1, 0)))
+		__attribute__((__nonnull__ (1)));
 int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_))
-		__attribute__((__format__ (scanf, 2, 0)));
+		__attribute__((__format__ (scanf, 2, 0)))
+		__attribute__((__nonnull__ (2)));
 __END_DECLS
 
 /*
