@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.22 2002/06/11 09:31:33 mdw Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.23 2002/06/14 07:45:23 mdw Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -44,15 +44,34 @@
 #include <dev/cons.h>
 #include <dev/rndvar.h>
 
+#define ABC_ISCLR(c)	sabc->abc[(c)-'a']==0
+#define ABC_ISWRONG(c)	sabc->abc[(c)-'a']=='_'
+#define ABC_SETWRONG(c)		(sabc->abc[(c)-'a']='_')
+#define ABC_SETRIGHT(c)		(sabc->abc[(c)-'a']='+')
+#define ABC_CLR()	memset(sabc->abc,0,sizeof sabc->abc)
+struct _abc {
+	char	abc[26+2];	/* for int32 alignment */
+};
+
 #define	TOLOWER(c)	(('A'<=(c)&&(c)<='Z')?(c)-'A'+'a':(c))
 #define	ISALPHA(c)	(('a'<=(c)&&(c)<='z')||('A'<=(c)&&(c)<='Z'))
 
-void	 db_hang(int, char *, char *);
+void	 db_hang(int, char *, struct _abc *);
 
-static int	skill;
 u_long		db_plays, db_guesses;
 
-static __inline size_t
+static const char hangpic[]=
+	"\n88888\r\n"
+	"9 7 6\r\n"
+	"97  5\r\n"
+	"9  423\r\n"
+	"9   2\r\n"
+	"9  1 0\r\n"
+	"9\r\n"
+	"9  ";
+static const char substchar[]="\\/|\\/O|/-|";
+
+static size_t
 db_random(size_t mod)
 {
 	if (cold)
@@ -82,7 +101,7 @@ db_hang_forall(stab, sym, name, suff, pre, varg)
 {
 	struct db_hang_forall_arg *arg = (struct db_hang_forall_arg *)varg;
 
-	if (--arg->cnt == 0)
+	if (arg->cnt-- == 0)
 		arg->sym = sym;
 }
 
@@ -103,11 +122,9 @@ db_randomsym(size_t *lenp)
 
 	stab = &db_symtabs[db_random(nsymtabs)];
 
-	dfa.cnt = 1000000;
+	dfa.cnt = 0;
 	X_db_forall(stab, db_hang_forall, &dfa);
-	if (dfa.cnt <= 0)
-		return (NULL);
-	nsyms = 1000000 - dfa.cnt;
+	nsyms = -dfa.cnt;
 
 	if (nsyms == 0)
 		return (NULL);
@@ -129,105 +146,44 @@ db_randomsym(size_t *lenp)
 	return (q);
 }
 
-static const char hangpic[]=
-	"\n88888 \r\n"
-	"9 7 6 \r\n"
-	"97  5 \r\n"
-	"9  423\r\n"
-	"9   2 \r\n"
-	"9  1 0\r\n"
-	"9\r\n"
-	"9  ";
-static const char substchar[]="\\/|\\/O|/-|";
-
 void
-db_hang(tries, word, abc)
+db_hang(tries, word, sabc)
 	int	tries;
 	register char	*word;
-	register char	*abc;
+	register struct _abc *sabc;
 {
 	register const char	*p;
+	int i;
+	int c;
+#ifdef ABC_BITMASK
+	int m;
+#endif
 
 	for(p = hangpic; *p; p++)
 		cnputc((*p >= '0' && *p <= '9') ? ((tries <= (*p) - '0') ?
 		    substchar[(*p) - '0'] : ' ') : *p);
 
-	for (p = word; *p; p++)
-		cnputc(ISALPHA(*p) && abc[TOLOWER(*p) - 'a'] == '-'? '-' : *p);
+	for (p = word; (c = TOLOWER(*p)); p++)
+		cnputc(ISALPHA(c) && ABC_ISCLR(c) ? '-' : *p);
 
+#ifdef ABC_WRONGSTR
+	db_printf(" (%s)\r", ABC_WRONGSTR);
+#else
 	db_printf(" (");
 
-	for (p = abc; *p; p++)
-		if (*p == '_')
-			cnputc('a' + (p - abc));
+#ifdef ABC_BITMASK
+	m = sabc->wrong;
+	for (i = 'a'; i <= 'z'; ++i, m >>= 1)
+		if (m&1)
+			cnputc(i);
+#else
+	for (i = 'a'; i <= 'z'; ++i)
+		if (ABC_ISWRONG(i))
+			cnputc(i);
+#endif
 
 	db_printf(")\r");
-}
-
-
-static __inline int
-db_hangon(void)
-{
-	static size_t	len;
-	static size_t	tries;
-	static char	*word;
-	static char	abc[26+1];	/* for '\0' */
-
-	if (word == NULL) {
-		register char	*p;
-
-		for (p = abc; p < &abc[sizeof(abc)-1]; p++)
-			*p = '-';
-		*p = '\0';
-
-		tries = skill + 1;
-		word = db_randomsym(&len);
-		if (word == NULL)
-			return (0);
-
-		db_plays++;
-	}
-
-	{
-		register char	c;
-
-		db_hang(tries, word, abc);
-		c = cngetc();
-		c = TOLOWER(c);
-
-		if (ISALPHA(c) && abc[c - 'a'] == '-') {
-			register char	*p;
-			register size_t	n;
-
-				/* strchr(word,c) */
-			for (n = 0, p = word; *p ; p++)
-				if (TOLOWER(*p) == c)
-					n++;
-
-			if (n) {
-				abc[c - 'a'] = c;
-				len -= n;
-			} else {
-				abc[c - 'a'] = '_';
-				tries--;
-			}
-		}
-	}
-
-	if (tries && len)
-		return (1);
-
-	if (!tries && skill > 2) {
-		register char	*p = word;
-		for (; *p; p++)
-			if (ISALPHA(*p))
-				abc[TOLOWER(*p) - 'a'] = *p;
-	}
-	db_hang(tries, word, abc);
-	db_printf("\nScore: %lu/%lu\n", db_plays, ++db_guesses);
-	word = NULL;
-
-	return (!tries);
+#endif
 }
 
 void
@@ -237,10 +193,67 @@ db_hangman(addr, haddr, count, modif)
 	db_expr_t count;
 	char	*modif;
 {
-	if (modif[0] == 's' && '0' <= modif[1] && modif[1] <= '9')
-		skill = modif[1] - '0';
-	else
-		skill = 3;
+	char	*word;
+	size_t	tries;
+	size_t	len;
+	struct _abc sabc[1];
+	int	skill;
 
-	while (db_hangon());
+	if (modif[0] != 's' || (skill = modif[1] - '0') > 9U)
+		skill = 3;
+	word = NULL;
+	tries = 0;
+	for (;;) {
+
+		if (word == NULL) {
+			ABC_CLR();
+
+			tries = skill + 1;
+			word = db_randomsym(&len);
+			if (word == NULL)
+				break;
+
+			db_plays++;
+		}
+
+		{
+			register int c;
+
+			db_hang(tries, word, sabc);
+			c = cngetc();
+			c = TOLOWER(c);
+
+			if (ISALPHA(c) && ABC_ISCLR(c)) {
+				register char	*p;
+				register size_t	n;
+
+					/* strchr(word,c) */
+				for (n = 0, p = word; *p ; p++)
+					if (TOLOWER(*p) == c)
+						n++;
+
+				if (n) {
+					ABC_SETRIGHT(c);
+					len -= n;
+				} else {
+					ABC_SETWRONG(c);
+					tries--;
+				}
+			}
+		}
+
+		if (tries && len)
+			continue;
+
+		if (!tries && skill > 2) {
+			register char	*p = word;
+			for (; *p; p++)
+				if (ISALPHA(*p))
+					ABC_SETRIGHT(TOLOWER(*p));
+		}
+		db_hang(tries, word, sabc);
+		db_printf("\nScore: %lu/%lu\n", db_plays, ++db_guesses);
+		word = NULL;
+		if (tries) break;
+	}
 }
