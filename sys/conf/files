@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.117 1999/06/18 07:23:57 deraadt Exp $
+#	$OpenBSD: files,v 1.118 1999/06/21 23:21:44 d Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -85,6 +85,11 @@ file	dev/ic/elink3.c		ep
 
 # WaveLan
 # device wlp: ether, ifnet
+
+# RangeLAN2
+device	rln: ether, ifnet
+file	dev/ic/rl2.c		rln
+file	dev/ic/rl2subr.c	rln
 
 # LANCE and PCnet Ethernet controllers
 device	le: ether, ifnet, ifmedia
