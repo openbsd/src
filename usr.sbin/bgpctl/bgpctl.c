@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.17 2004/01/05 16:29:20 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.18 2004/01/06 18:01:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -334,7 +334,7 @@ print_neighbor_msgstats(struct peer *p)
 void
 print_neighbor_timers(struct peer *p)
 {
-	print_timer("StartTimer:", p->StartTimer);
+	print_timer("IdleHoldTimer:", p->IdleHoldTimer);
 	print_timer("ConnectRetryTimer:", p->ConnectRetryTimer);
 	print_timer("HoldTimer:", p->HoldTimer);
 	print_timer("KeepaliveTimer:", p->KeepaliveTimer);
