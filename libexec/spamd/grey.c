@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.20 2005/03/11 23:09:52 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.21 2005/03/12 00:02:07 beck Exp $	*/
 
 /*
  * Copyright (c) 2004,2005 Bob Beck.  All rights reserved.
@@ -405,7 +405,7 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		return(-1);
 	if (asprintf(&key, "%s\n%s\n%s", ip, from, to) == -1)
 		goto bad;
-	if (asprintf(&trap, "%s",to) == -1)
+	if ((trap = strdup(to)) == NULL)
 		goto bad;
 	for (i = 0; trap[i] != '\0'; i++)
 		if (isupper(trap[i]))
