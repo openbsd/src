@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.9 1997/09/01 18:29:17 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.10 1997/09/20 17:34:34 millert Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.9 1997/09/01 18:29:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.10 1997/09/20 17:34:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(argc, argv)
 	struct stat to_stat, tmp_stat;
 	enum op type;
 	int Hflag, Lflag, Pflag, ch, fts_options, r;
-	char *p, **av;
+	char *target;
 
 	Hflag = Lflag = Pflag = Rflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1)
@@ -179,10 +179,10 @@ main(argc, argv)
 	(void)umask(myumask);
 
 	/* Save the target base in "to". */
-	p = argv[--argc];
-	if (strlen(p) >= sizeof(to.p_path))
-		errx(1, "%s: name too long", p);
-	(void)strcpy(to.p_path, p);
+	target = argv[--argc];
+	if (strlen(target) >= sizeof(to.p_path))
+		errx(1, "%s: name too long", target);
+	(void)strcpy(to.p_path, target);
 	to.p_end = to.p_path + strlen(to.p_path);
 	if (to.p_path == to.p_end) {
 		*to.p_end++ = '.';
@@ -193,13 +193,6 @@ main(argc, argv)
 
 	/* Set end of argument list for fts(3). */
 	argv[argc] = NULL;
-
-	/* Strip trailing slashes from source files */
-	for (av = argv; *av != NULL; av++) {
-		p = *av + strlen(*av);
-		while (p > *av + 1 && p[-1] == '/')
-			*--p = '\0';
-	}
 
 	/*
 	 * Cp has two distinct cases:
