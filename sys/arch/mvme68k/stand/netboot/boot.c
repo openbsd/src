@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.9 2003/06/04 04:11:37 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.10 2003/08/20 00:26:00 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -70,7 +70,7 @@
 extern   char *version;
 char  line[80];
 
-main()
+main(int argc, char *argv[])
 {
 	char *cp, *file;
 	int ask = 0, howto, ret;

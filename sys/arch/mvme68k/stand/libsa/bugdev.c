@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.2 2002/03/14 01:26:38 millert Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.3 2003/08/20 00:26:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -50,10 +50,7 @@ struct bugsc_softc {
 } bugsc_softc[1];
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	register struct bugsc_softc *pp = &bugsc_softc[0];
 	int	error, i, dn = 0, pn = 0;
@@ -98,14 +95,10 @@ devopen(f, fname, file)
 /* silly block scale factor */
 #define BUG_BLOCK_SIZE 256
 #define BUG_SCALE (512/BUG_BLOCK_SIZE)
+
 int
-bugscstrategy(devdata, func, dblk, size, buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+bugscstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *buf,
+    size_t *rsize)
 {
 	struct mvmeprom_dskio dio;
 	register struct bugsc_softc *pp = (struct bugsc_softc *)devdata;
@@ -138,8 +131,7 @@ printf("rsize %d status %x\n", *rsize, dio.status);
 }
 
 int
-bugscopen(f)
-	struct open_file *f;
+bugscopen(struct open_file *f)
 {
 #ifdef DEBUG
 	printf("bugscopen:\n");
@@ -156,25 +148,19 @@ bugscopen(f)
 }
 
 int
-bugscclose(f)
-	struct open_file *f;
+bugscclose(struct open_file *f)
 {
 	return (EIO);
 }
 
 int
-bugscioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+bugscioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return (EIO);
 }
 
 void
-cputobsdlabel(lp, clp)
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int i;
 
@@ -233,6 +219,6 @@ cputobsdlabel(lp, clp)
 	lp->d_bbsize = clp->bbsize;
 	lp->d_sbsize = clp->sbsize;
 	bcopy(clp->vid_4, &(lp->d_partitions[0]),sizeof (struct partition) * 4);
-	bcopy(clp->cfg_4, &(lp->d_partitions[4]), sizeof (struct partition) 
-		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
+	bcopy(clp->cfg_4, &(lp->d_partitions[4]), sizeof (struct partition) *
+	    ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 }
