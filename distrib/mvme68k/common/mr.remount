@@ -1,0 +1,34 @@
+#!/bin/sh
+# $NetBSD: mr.remount,v 1.1 1995/11/01 23:53:29 gwr Exp $
+#
+# Find out what the root is mounted on,
+# remount the root read/write, then
+# create a valid /etc/fstab for it.
+#
+# Uses: dmesg, grep, mount
+
+# Given a sequence of lines like: "root on sd0b"
+# print the last part of the last line: "sd0b"
+findroot() {
+	name='??'
+	while read a b c d
+	do
+		name="$c"
+	done
+	echo "$name"
+}
+
+if [ -f /etc/fstab ]
+then
+	echo "root already mounted read/write"
+	exit 1
+fi
+
+echo "Determining current root device..."
+root=`/sbin/dmesg |grep '^root on ' |findroot`
+
+echo "Remounting root device $root"
+/sbin/mount -u "/dev/$root" /
+
+echo "/dev/$root / ufs rw 1 1" > /etc/fstab
+exit 0
