@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.3 2005/02/04 07:40:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -67,14 +67,14 @@ send_packet(struct iface *iface, char *pkt, int len, struct sockaddr_in *dst)
 	/* set outgoing interface for multicast traffic */
 	if (IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
 		if (if_set_mcast(iface) == -1) {
-			log_debug("send_packet: error setting multicast "
+			log_warn("send_packet: error setting multicast "
 			    "interface, %s", iface->name);
 			return (-1);
 		}
 
 	if (sendto(iface->fd, pkt, len, 0,
 	    (struct sockaddr *)dst, sizeof(*dst)) == -1 ) {
-		log_warnx("send_packet: error sending packet on interface %s",
+		log_warn("send_packet: error sending packet on interface %s",
 		    iface->name);
 		return (-1);
 	}
