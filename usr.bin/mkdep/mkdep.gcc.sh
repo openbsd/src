@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.9 2000/02/10 11:39:48 d Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.10 2000/07/23 22:22:07 millert Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -101,7 +101,7 @@ if [ $append = 1 ]; then
 		exit 1
 	fi
 else
-	mv $TMP $D
+	mv -f $TMP $D
 	if [ $? != 0 ]; then
 		echo 'mkdep: rename failed.'
 		rm -rf $DTMP

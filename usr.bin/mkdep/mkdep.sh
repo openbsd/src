@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.sh,v 1.6 1997/01/25 14:27:44 niklas Exp $
+#	$OpenBSD: mkdep.sh,v 1.7 2000/07/23 22:22:07 millert Exp $
 #	$NetBSD: mkdep.sh,v 1.3 1994/12/23 07:35:02 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -114,7 +114,7 @@ if [ $append = 1 ]; then
 	cat $TMP >> $D
 	rm -rf $DTMP
 else
-	mv $TMP $D
+	mv -f $TMP $D
 	rm -rf $DTMP
 fi
 
