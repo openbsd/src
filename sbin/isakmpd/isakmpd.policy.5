@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.8 2000/04/07 22:49:54 niklas Exp $
-.\" $EOM: isakmpd.policy.5,v 1.14 2000/04/07 22:41:29 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.9 2000/05/02 14:35:40 niklas Exp $
+.\" $EOM: isakmpd.policy.5,v 1.16 2000/04/25 06:49:19 angelos Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
 .\"
@@ -419,7 +419,7 @@ or
 these contain the lowest address in the specified subnet.
 .It remote_filter, local_filter, remote_id
 When the corresponding filter_type specifies an address (or range, or
-subnet), theseares set to the upper and lower part of the address
+subnet), these are set to the upper and lower part of the address
 space separated by a dash ('-') character (if the type specifies a
 single address, both parts are set to the same address).
 For FQDN and User FQDN types, these are set to the respective string.
@@ -427,10 +427,11 @@ For FQDN and User FQDN types, these are set to the respective string.
 Set to the transport protocol port.
 .It remote_filter_proto, local_filter_proto, remote_id_proto
 Set to
+.Va etherip ,
 .Va tcp ,
 .Va udp ,
-or nothing, depending on the transport protocol set in the IDci, IDcr,
-and Main Mode peer ID respectively.
+or the transport protocol number, depending on the transport protocol set
+in the IDci, IDcr, and Main Mode peer ID respectively.
 .It remote_negotiation_address
 Set to the IPv4 address of the remote IKE daemon.
 .It local_negotiation_address
