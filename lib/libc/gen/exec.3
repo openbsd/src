@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.11 2000/08/31 16:24:38 deraadt Exp $
+.\"	$OpenBSD: exec.3,v 1.12 2001/03/14 04:02:00 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,6 @@
 .Nm execl ,
 .Nm execlp ,
 .Nm execle ,
-.Nm exect ,
 .Nm execv ,
 .Nm execvp
 .Nd execute a file
@@ -51,8 +50,6 @@
 .Fn execlp "const char *file" "const char *arg" ...
 .Ft int
 .Fn execle "const char *path" "const char *arg" ... "char *const envp[]"
-.Ft int
-.Fn exect "const char *path" "char *const argv[]" "char *const envp[]"
 .Ft int
 .Fn execv "const char *path" "char *const argv[]"
 .Ft int
@@ -93,8 +90,7 @@ The list of arguments
 be terminated by a null pointer.
 .Pp
 The
-.Fn exect ,
-.Fn execv ,
+.Fn execv
 and
 .Fn execvp
 functions provide an array of pointers to
@@ -108,9 +104,7 @@ be terminated by a null pointer itself.
 .Pp
 The
 .Fn execle
-and
-.Fn exect
-functions also specify the environment of the executed process by following
+function also specifies the environment of the executed process by following
 the null
 pointer that terminates the list of arguments in the parameter list
 or the pointer to the
@@ -172,10 +166,6 @@ returned
 these functions will sleep for several seconds,
 periodically re-attempting to execute the file.
 .Pp
-The function
-.Fn exect
-executes a file with the program tracing facilities enabled (see
-.Xr ptrace 2 ) .
 .Sh RETURN VALUES
 If any of the
 .Xr exec
@@ -191,7 +181,7 @@ default shell program
 .Sh ERRORS
 .Fn execl ,
 .Fn execle ,
-.Fn execlp
+.Fn execlp ,
 and
 .Fn execvp
 may fail and set
@@ -201,8 +191,6 @@ for any of the errors specified for the library functions
 and
 .Xr malloc 3 .
 .Pp
-.Fn exect
-and
 .Fn execv
 may fail and set
 .Va errno

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.42 2001/03/09 15:13:48 art Exp $
+#	$OpenBSD: Makefile.inc,v 1.43 2001/03/14 04:01:59 aaron Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -197,6 +197,7 @@ MLINKS+=chown.2 fchown.2
 MLINKS+=chown.2 lchown.2
 MLINKS+=clock_gettime.2 clock_settime.2
 MLINKS+=clock_gettime.2 clock_getres.2
+MLINKS+=execve.2 exect.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatfs.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
