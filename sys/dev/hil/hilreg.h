@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilreg.h,v 1.1 2003/02/11 19:39:30 miod Exp $	*/
+/*	$OpenBSD: hilreg.h,v 1.2 2003/02/12 01:42:31 miod Exp $	*/
 /*	$NetBSD: hilreg.h,v 1.6 1997/02/02 09:39:21 thorpej Exp $	*/
 
 /*
@@ -147,3 +147,14 @@
 #define	ar_format(x)	~((x - 10) / 10)
 #define	KBD_ARD		400	/* initial delay in msec (10 - 2560) */
 #define	KBD_ARR		60	/* rate (10 - 2550 msec, 2551 == off) */
+
+/* Device information bits */
+#define	HIL_ABSOLUTE	0x40	/* absolute positioning data */
+#define	HIL_16_BITS	0x20	/* 16 bit position accuracy */
+#define	HIL_IOB		0x10	/* I/O description byte follows */
+#define	HIL_AXMASK	0x03	/* Number of axes supported */
+
+#define	HILIOB_PROMPT	0x80	/* prompt and acknowledge (leds) supported */
+#define	HILIOB_PMASK	0x70	/* number of prompt & acknowledge supported */
+#define	HILIOB_PIO	0x08	/* proximity in/out (pressure) supported */
+#define	HILIOB_BMASK	0x07	/* number of buttons supported */

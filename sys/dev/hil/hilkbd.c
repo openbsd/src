@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.1 2003/02/11 19:39:30 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.2 2003/02/12 01:42:31 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -55,9 +55,6 @@ struct hilkbd_softc {
 
 	struct device	*sc_wskbddev;
 };
-
-#define	HILKBD_LEDS	0xf0	/* keyboard has leds */
-#define	HILKBD_NLEDS	0x70	/* keyboard led mask */
 
 int	hilkbdprobe(struct device *, void *, void *);
 void	hilkbdattach(struct device *, struct device *, void *);
@@ -144,11 +141,11 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	printf(", layout %x", layoutcode);
 
 	/*
-	 * Interpret the extended id information, if any
+	 * Interpret the identification bytes, if any
 	 */
-	if (ha->ha_infolen > 2) {
-		if (ha->ha_info[2] & HILKBD_LEDS) {
-			sc->sc_numleds = (ha->ha_info[2] & HILKBD_NLEDS) >> 4;
+	if (ha->ha_infolen > 2 && (ha->ha_info[1] & HIL_IOB) != 0) {
+		if (ha->ha_info[2] & HILIOB_PROMPT) {
+			sc->sc_numleds = (ha->ha_info[2] & HILIOB_PMASK) >> 4;
 			printf(", %d leds", sc->sc_numleds);
 		}
 	}
