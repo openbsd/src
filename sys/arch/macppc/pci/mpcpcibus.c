@@ -1,8 +1,8 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.21 2003/10/15 23:00:57 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.22 2003/10/21 17:18:14 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -58,20 +58,20 @@
 
 #include <dev/ofw/openfirm.h>
 
-int	 mpcpcibrmatch(struct device *, void *, void *);
-void	 mpcpcibrattach(struct device *, struct device *, void *);
+int	mpcpcibrmatch(struct device *, void *, void *);
+void	mpcpcibrattach(struct device *, struct device *, void *);
 
-void	 mpc_attach_hook(struct device *, struct device *,
+void	mpc_attach_hook(struct device *, struct device *,
 				struct pcibus_attach_args *);
-int	 mpc_bus_maxdevs(void *, int);
+int	mpc_bus_maxdevs(void *, int);
 pcitag_t mpc_make_tag(void *, int, int, int);
-void	 mpc_decompose_tag(void *, pcitag_t, int *, int *, int *);
+void	mpc_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t mpc_conf_read(void *, pcitag_t, int);
-void	 mpc_conf_write(void *, pcitag_t, int, pcireg_t);
+void	mpc_conf_write(void *, pcitag_t, int, pcireg_t);
 
 int      mpc_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *mpc_intr_string(void *, pci_intr_handle_t);
-int	 mpc_intr_line(void *, pci_intr_handle_t);
+int	mpc_intr_line(void *, pci_intr_handle_t);
 void     *mpc_intr_establish(void *, pci_intr_handle_t,
             int, int (*func)(void *), void *, char *);
 void     mpc_intr_disestablish(void *, void *);
@@ -106,8 +106,8 @@ struct pcibr_config mpc_config;
  */
 struct {
 	char * compat;
-	u_int32_t addr;	 /* offset */
-	u_int32_t data;	 /* offset */
+	u_int32_t addr;	/* offset */
+	u_int32_t data;	/* offset */
 	int config_type;
 } config_offsets[] = {
 	{"grackle",		0x00c00cf8, 0x00e00cfc, 0 },
