@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.27 2001/07/15 04:29:32 pvalchev Exp $
+.\"	$OpenBSD: boot.8,v 1.28 2001/09/03 11:34:17 deraadt Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -134,7 +134,7 @@ timeout period has expired.
 The following commands are accepted at the
 .Nm
 prompt:
-.Bl -tag -width stty_device_speed_____
+.Bl -tag -width shorten
 .It boot Op Ar image Op Fl acds
 Boots the kernel image specified by
 .Ar image
@@ -173,7 +173,7 @@ commands, if any.
 .It machine Op Ar command
 Issues machine-dependent commands.
 These are defined for i386 architecture:
-.Bl -tag -width diskinfo_
+.Bl -tag -width diskinfo
 .It Nm diskinfo
 Prints a list of hard disks installed on your system including:
 BIOS device number, and the BIOS geometry.
