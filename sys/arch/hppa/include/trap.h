@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.6 1999/09/18 20:39:55 mickey Exp $	*/
+/*	$OpenBSD: trap.h,v 1.7 2000/01/17 00:02:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -78,9 +78,11 @@
  */
 #define	TFF_LAST_POS	0
 #define	TFF_ITLB_POS	1
+#define	TFF_SYS_POS	2
 
 #define	TFF_LAST	(1 << (31 - TFF_LAST_POS))
 #define	TFF_ITLB	(1 << (31 - TFF_ITLB_POS))
+#define	TFF_SYS		(1 << (31 - TFF_SYS_POS))
 
 /*
  * Definre this for pretty printings of trapflags.
