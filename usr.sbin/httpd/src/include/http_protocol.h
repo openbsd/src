@@ -221,6 +221,7 @@ API_EXPORT(int) ap_getline(char *s, int n, BUFF *in, int fold);
 
 API_EXPORT(long) ap_get_chunk_size(char *b);
 
+API_EXPORT(void) ap_init_etag(pool *pconf);
 
 #ifdef __cplusplus
 }

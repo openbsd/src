@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.21 2003/02/21 18:41:09 henning Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.22 2003/07/08 09:51:23 david Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -3226,18 +3226,6 @@ int ap_create_etag_state(pool *pconf)
     close (fd);
 }
 
-API_EXPORT(void) ap_init_etag(pool *pconf)
-{
-    if (ap_read_etag_state(pconf) == -1) {
-        ap_create_etag_state(pconf);
-        if (ap_read_etag_state(pconf) == -1) {
-            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
-              "could not initialize etag state");
-            exit(-1);
-        }
-    }			
-}
-
 int ap_read_etag_state(pool *pconf)
 {
     struct stat st;
@@ -3284,6 +3272,18 @@ int ap_read_etag_state(pool *pconf)
           "could not properly close %s", filename);
         exit(-1);
     }
+}
+
+API_EXPORT(void) ap_init_etag(pool *pconf)
+{
+    if (ap_read_etag_state(pconf) == -1) {
+        ap_create_etag_state(pconf);
+        if (ap_read_etag_state(pconf) == -1) {
+            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+              "could not initialize etag state");
+            exit(-1);
+        }
+    }			
 }
 
 API_EXPORT(char *) ap_make_etag(request_rec *r, int force_weak)

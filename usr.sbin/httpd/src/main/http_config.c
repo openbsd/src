@@ -1,4 +1,4 @@
-/* $OpenBSD: http_config.c,v 1.12 2002/10/07 20:23:06 henning Exp $ */
+/* $OpenBSD: http_config.c,v 1.13 2003/07/08 09:51:23 david Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -79,6 +79,7 @@
 #include "http_config.h"
 #include "http_core.h"
 #include "http_log.h"		/* for errors in parse_htaccess */
+#include "http_main.h"
 #include "http_request.h"	/* for default_handler (see invoke_handler) */
 #include "http_conf_globals.h"	/* Sigh... */
 #include "http_vhost.h"

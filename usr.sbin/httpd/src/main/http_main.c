@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.29 2003/04/08 20:13:08 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.30 2003/07/08 09:51:23 david Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -104,6 +104,7 @@ int ap_main(int argc, char *argv[]);
 #include "http_vhost.h"
 #include "util_script.h"	/* to force util_script.c linking */
 #include "util_uri.h"
+#include "fdcache.h"
 #include "scoreboard.h"
 #include "multithread.h"
 #include <sys/stat.h>
