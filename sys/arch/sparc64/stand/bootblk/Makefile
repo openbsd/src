@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2001/09/06 18:36:41 jason Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/09/06 19:12:34 jason Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -30,18 +30,17 @@ SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM ${SVR4}
 
-all: bootblk.text bootblk
+.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(kernlibdir) && !make(obj)
+.BEGIN:
+	@([ -h machine ] || ln -s ${.CURDIR}/../../include machine)
+.endif
 
-#clean:: 
-#	rm assym.fth.h bootblk.text machine bootblk
+all: bootblk.text bootblk
 
 sparc:
 	ln -s ${.CURDIR}/../../../sparc/include sparc
 
-machine:
-	ln -s ${.CURDIR}/../../../${MACHINE}/include machine
-
-assym.fth.h: ${.CURDIR}/genassym.sh genfth.cf machine
+assym.fth.h: ${.CURDIR}/genassym.sh genfth.cf
 	sh ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} \
 	    ${CPPFLAGS} ${PROF} <${.CURDIR}/genfth.cf >assym.fth.h.tmp && \
 	    mv -f assym.fth.h.tmp assym.fth.h
