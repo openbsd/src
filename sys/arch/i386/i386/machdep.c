@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.278 2004/02/08 20:58:01 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.279 2004/02/19 21:40:24 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1645,7 +1645,7 @@ amd_family6_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
-#if !defined(SMALL_KERNEL) && defined (I686_CPU)
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 	extern void (*pagezero)(void *, size_t);
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
@@ -1689,7 +1689,7 @@ intel686_cpu_setup(cpu_device, model, step)
 		cpu_feature &= ~CPUID_SER;
 		cpuid_level = 2;
 	}
-#if !defined(SMALL_KERNEL) && defined (I686_CPU)
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(cpu_device);
@@ -1719,7 +1719,7 @@ tm86_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
-#if !defined(SMALL_KERNEL) && defined (I586_CPU)
+#if !defined(SMALL_KERNEL) && defined(I586_CPU)
 	longrun_init();
 #endif
 }
