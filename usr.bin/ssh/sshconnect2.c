@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.43 2001/02/08 10:47:05 itojun Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.44 2001/02/09 12:28:35 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -970,7 +970,7 @@ authmethod_clear(void)
 	}
 	if (authname_current != NULL) {
 		xfree(authname_current);
-		authlist_state = NULL;
+		authname_current = NULL;
 	}
 	if (authlist_state != NULL)
 		authlist_state = NULL;
