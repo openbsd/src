@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.22 2000/01/27 05:27:42 itojun Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.23 2001/07/03 23:47:05 jasoni Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.22 2000/01/27 05:27:42 itojun Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.23 2001/07/03 23:47:05 jasoni Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ void		sendwindow __P((void));
 void		setsignal __P((int));
 void		sigwinch __P((int));
 void		stop __P((int));
-__dead void	usage __P((void));
+__dead void	usage __P((void)) __attribute__((__noreturn__));
 void		writer __P((void));
 void		writeroob __P((int));
 
@@ -214,9 +214,8 @@ main(argc, argv)
 			break;
 #ifdef KERBEROS
 		case 'k':
-			(void)strncpy(dst_realm_buf, optarg,
-			    sizeof dst_realm_buf-1);
-			dst_realm_buf[sizeof dst_realm_buf-1] = '\0';
+			(void)strlcpy(dst_realm_buf, optarg, 
+			    sizeof(dst_realm_buf));
 			dest_realm = dst_realm_buf;
 			break;
 #endif
@@ -269,9 +268,8 @@ main(argc, argv)
 		exit(1);
 	}
 
-	(void)strncpy(term, (p = getenv("TERM")) ? p : "network",
-	    sizeof(term) - 1);
-	term[sizeof(term) - 1] = '\0';
+	(void)strlcpy(term, (p = getenv("TERM")) ? p : "network",
+	    sizeof(term));
 
 	/*
 	 * Add "/baud" only if there is room left; ie. do not send "/19"
