@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.14 2004/10/01 05:49:00 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 2004/10/03 19:47:25 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,6 +42,19 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  *
+ * CARNEGIE MELLON AND OMRON ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON AND OMRON DISCLAIM ANY LIABILITY OF ANY KIND
+ * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
  */
 
 #include <sys/param.h>
@@ -68,7 +81,8 @@
 
 #include <net/netisr.h>
 
-#include <machine/asm_macro.h>   /* enable/disable interrupts */
+#include <machine/asm.h>
+#include <machine/asm_macro.h>
 #include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
@@ -93,26 +107,31 @@
 #include <ddb/db_output.h>		/* db_printf()		*/
 #endif /* DDB */
 
-#if DDB
-#define DEBUG_MSG db_printf
-#else
-#define DEBUG_MSG printf
-#endif /* DDB */
+typedef struct {
+	unsigned word_one, word_two;
+} m88k_exception_vector_area;
 
-vaddr_t interrupt_stack[MAX_CPUS];
+caddr_t	allocsys(caddr_t);
+void	bugsyscall(void);
+void	consinit(void);
+void	dosoftint(void);
+void	dumpconf(void);
+void	dumpsys(void);
+int	getcpuspeed(void);
+vaddr_t	get_slave_stack(void);
+void	identifycpu(void);
+void	luna88k_bootstrap(void);
+u_int	safe_level(u_int, u_int);
+void	savectx(struct pcb *);
+void	setlevel(unsigned int);
+void	slave_pre_main(void);
+int	slave_main(void);
+void	vector_init(m88k_exception_vector_area *, unsigned *);
 
-/* machine dependent function pointers. */
-struct md_p md;
+extern void load_u_area(struct proc *);
+extern void save_u_area(struct proc *, vaddr_t);
 
-/* prototypes */
-void dumpsys(void);
-void consinit(void);
 vaddr_t size_memory(void);
-int getcpuspeed(void);
-void identifycpu(void);
-void save_u_area(struct proc *, vaddr_t);
-void load_u_area(struct proc *);
-void dumpconf(void);
 void luna88k_ext_int(u_int v, struct trapframe *eframe);
 void powerdown(void);
 void get_fuse_rom_data(void);
@@ -120,6 +139,11 @@ void get_nvram_data(void);
 char *nvram_by_symbol(char *);
 void get_autoboot_device(void);			/* in disksubr.c */
 int clockintr(void *);				/* in clock.c */
+
+vaddr_t interrupt_stack[MAX_CPUS];
+
+/* machine dependent function pointers. */
+struct md_p md;
 
 /*
  * *int_mask_reg[CPU]
@@ -130,6 +154,30 @@ unsigned int *volatile int_mask_reg[MAX_CPUS] = {
 	(unsigned int *)INT_ST_MASK1,
 	(unsigned int *)INT_ST_MASK2,
 	(unsigned int *)INT_ST_MASK3
+};
+
+unsigned int luna88k_curspl[MAX_CPUS] = {0, 0, 0, 0};
+
+unsigned int int_mask_val[INT_LEVEL] = {
+	INT_MASK_LV0,
+	INT_MASK_LV1,
+	INT_MASK_LV2,
+	INT_MASK_LV3,
+	INT_MASK_LV4,
+	INT_MASK_LV5,
+	INT_MASK_LV6,
+	INT_MASK_LV7
+};
+
+unsigned int int_set_val[INT_LEVEL] = {
+	INT_SET_LV0,
+	INT_SET_LV1,
+	INT_SET_LV2,
+	INT_SET_LV3,
+	INT_SET_LV4,
+	INT_SET_LV5,
+	INT_SET_LV6,
+	INT_SET_LV7
 };
 
 /*
@@ -160,7 +208,7 @@ struct nvram_t {
 	char value[NVVALLEN];
 } nvram[NNVSYM];
 
-volatile vaddr_t obiova;
+vaddr_t obiova;
 
 int ssir;
 int want_ast;
@@ -187,9 +235,9 @@ struct vm_map *iomap_map;
  * Declare these as initialized data so we can patch them.
  */
 #ifdef	NBUF
-int   nbuf = NBUF;
+int nbuf = NBUF;
 #else
-int   nbuf = 0;
+int nbuf = 0;
 #endif
 
 #ifndef BUFCACHEPERCENT
@@ -197,13 +245,11 @@ int   nbuf = 0;
 #endif
 
 #ifdef	BUFPAGES
-int   bufpages = BUFPAGES;
+int bufpages = BUFPAGES;
 #else
-int   bufpages = 0;
+int bufpages = 0;
 #endif
-int   bufcachepercent = BUFCACHEPERCENT;
-
-caddr_t allocsys(caddr_t);
+int bufcachepercent = BUFCACHEPERCENT;
 
 /*
  * Info for CTL_HW
@@ -226,9 +272,6 @@ int hwplanebits;		/* set in locore.S */
 
 int netisr;
 
-extern char *etext;
-extern char *edata;
-extern char *end;
 extern struct consdev syscons;	/* in dev/siotty.c */
 
 extern void greeting(void);	/* in dev/lcd.c */
@@ -236,8 +279,8 @@ extern void syscnattach(int);	/* in dev/siotty.c */
 extern int omfb_cnattach(void);	/* in dev/lunafb.c */
 extern void ws_cnattach(void);	/* in dev/lunaws.c */
 
-vaddr_t first_addr = 0;
-vaddr_t last_addr = 0;
+vaddr_t first_addr;
+vaddr_t last_addr;
 
 vaddr_t avail_start, avail_end;
 vaddr_t virtual_avail, virtual_end;
@@ -261,7 +304,7 @@ struct consdev romttycons = {
 	romttycnputc,
 	nullcnpollc,
 	NULL,
-	makedev(14,0),
+	makedev(14, 0),
 	CN_NORMAL,
 };
 
@@ -378,12 +421,12 @@ cpu_startup()
 	 * avail_end was pre-decremented in luna88k_bootstrap() to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa((paddr_t)msgbufp + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa((paddr_t)msgbufp + i * PAGE_SIZE,
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
-	/* Determine the machine type from FUSE ROM data */
+	/* Determine the machine type from FUSE ROM data.  */
 	get_fuse_rom_data();
 	if (strncmp(fuse_rom_data, "MNAME=LUNA88K+", 14) == 0) {
 		machtype = LUNA_88K2;
@@ -403,7 +446,9 @@ cpu_startup()
 	/*
 	 * Check front DIP switch setting
 	 */
+#ifdef DEBUG
 	printf("dipsw = 0x%x\n", dipswitch);
+#endif
 
 	/* Check DIP switch 1 - 1 */
 	if ((0x8000 & dipswitch) == 0) {
@@ -875,15 +920,13 @@ get_slave_stack()
  * Determine CPU number and set it.
  *
  * Running on an interrupt stack here; do nothing fancy.
- *
- * Called from "luna88k/locore.S"
  */
 void
 slave_pre_main()
 {
-   set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
-   splhigh();
-   enable_interrupt();
+	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
+	splhigh();
+	enable_interrupt();
 }
 
 /* dummy main routine for slave processors */
@@ -897,16 +940,7 @@ slave_main()
 
 /*
  *	Device interrupt handler for LUNA88K
- *
- *      when we enter, interrupts are disabled;
- *      when we leave, they should be disabled,
- *      but they need not be disabled throughout
- *      the routine.
  */
-
-#define GET_MASK(cpu, val)	*int_mask_reg[cpu] & (val)
-extern unsigned int luna88k_curspl[MAX_CPUS];	/* XXX sould be here? */
-extern unsigned int int_mask_val[INT_LEVEL];	/* XXX sould be here? */
 
 void 
 luna88k_ext_int(u_int v, struct trapframe *eframe)
@@ -924,7 +958,7 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 	if (cur_int == 0) {
 		/*
 		 * Spurious interrupts - may be caused by debug output clearing
-		 * DUART interrupts.
+		 * serial port interrupts.
 		 */
 		printf("luna88k_ext_int(): Spurious interrupts?\n");
 		flush_pipeline();
@@ -961,9 +995,11 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 			for(;;) ;
 		}
 
+#ifdef DEBUG
 		if (level > 7 || (char)level < 0) {
 			panic("int level (%x) is not between 0 and 7", level);
 		}
+#endif
 
 		setipl(level);
 	  
@@ -1059,8 +1095,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/*NOTREACHED*/
 }
 
-/* dummys for now */
-
 void
 bugsyscall()
 {
@@ -1109,19 +1143,19 @@ spl0()
  * Called from locore.S during boot,
  * this is the first C code that's run.
  */
-
 void
 luna88k_bootstrap()
 {
 	extern int kernelstart;
 	extern struct consdev *cn_tab;
 	extern struct cmmu_p cmmu8820x;
+	extern char *end;
 
 	/*
 	 * Must initialize p_addr before autoconfig or
 	 * the fault handler will get a NULL reference.
 	 * Do this early so that we can take a data or 
-	 * instruction fault and survive it. XXX smurph
+	 * instruction fault and survive it.
 	 */
 	proc0.p_addr = proc0paddr;
 	curproc = &proc0;
@@ -1148,10 +1182,10 @@ luna88k_bootstrap()
 	/* startup fake console driver.  It will be replaced by consinit() */
 	cn_tab = &romttycons;
 
-	uvmexp.pagesize = NBPG;
+	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
-	first_addr = round_page((vaddr_t) &end);	/* XXX: Is this OK? */
+	first_addr = round_page((vaddr_t)&end);	/* XXX temp until symbols */
 	last_addr = size_memory();
 	physmem = btoc(last_addr);
 
@@ -1178,13 +1212,15 @@ luna88k_bootstrap()
 
 	avail_start = first_addr;
 	avail_end = last_addr;
+
 	/*
 	 * Steal MSGBUFSIZE at the top of physical memory for msgbuf
 	 */
 	avail_end -= round_page(MSGBUFSIZE);
 
 #ifdef DEBUG
-	printf("LUNA88K boot: memory from 0x%x to 0x%x\n", avail_start, avail_end);
+	printf("LUNA88K boot: memory from 0x%x to 0x%x\n",
+	    avail_start, avail_end);
 #endif
 	pmap_bootstrap((vaddr_t)trunc_page((unsigned)&kernelstart));
 
@@ -1204,7 +1240,7 @@ luna88k_bootstrap()
 	load_u_area(&proc0);
 
 	/* Initialize the "u-area" pages. */
-	bzero((caddr_t)UADDR, UPAGES*NBPG);
+	bzero((caddr_t)UADDR, UPAGES * PAGE_SIZE);
 #ifdef DEBUG
 	printf("leaving luna88k_bootstrap()\n");
 #endif
@@ -1391,4 +1427,140 @@ nvram_by_symbol(symbol)
 	}
 
 	return value;
+}
+
+#define SIGSYS_MAX	501
+#define SIGTRAP_MAX	510
+
+#define EMPTY_BR	0xc0000000	/* empty "br" instruction */
+#define NO_OP 		0xf4005800	/* "or r0, r0, r0" */
+
+#define BRANCH(FROM, TO) \
+	(EMPTY_BR | ((unsigned)(TO) - (unsigned)(FROM)) >> 2)
+
+#define SET_VECTOR(NUM, VALUE) \
+	do { \
+		vector[NUM].word_one = NO_OP; \
+		vector[NUM].word_two = BRANCH(&vector[NUM].word_two, VALUE); \
+	} while (0)
+
+/*
+ * vector_init(vector, vector_init_list)
+ *
+ * This routine sets up the m88k vector table for the running processor.
+ * It is called with a very little stack, and interrupts disabled,
+ * so don't call any other functions!
+ */
+void
+vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
+{
+	unsigned num;
+	unsigned vec;
+	extern void bugtrap(void);
+
+	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST;
+	    num++) {
+		if (vec != UNKNOWN_HANDLER)
+			SET_VECTOR(num, vec);
+	}
+
+	for (; num <= SIGSYS_MAX; num++)
+		SET_VECTOR(num, sigsys);
+
+	for (; num <= SIGTRAP_MAX; num++)
+		SET_VECTOR(num, sigtrap);
+
+	SET_VECTOR(450, syscall_handler);
+	SET_VECTOR(504, stepbpt);
+	SET_VECTOR(511, userbpt);
+
+	/* GCC will by default produce explicit trap 503 for division by zero */
+	SET_VECTOR(503, vector_init_list[T_ZERODIV]);
+}
+
+/*
+ * return next safe spl to reenable interrupts.
+ */
+u_int
+safe_level(u_int mask, u_int curlevel)
+{
+	int i;
+
+	for (i = curlevel; i < 8; i++)
+		if (!(int_mask_val[i] & mask))
+			return i;
+
+	panic("safe_level: no safe level for mask 0x%08x level %d found",
+	       mask, curlevel);
+	/* NOTREACHED */
+}
+
+void
+setlevel(unsigned int level)
+{
+	unsigned int set_value;
+	int cpu = cpu_number();
+
+	set_value = int_set_val[level];
+
+	if (cpu != master_cpu)
+		set_value &= INT_SLAVE_MASK;
+
+	*int_mask_reg[cpu] = set_value;
+	luna88k_curspl[cpu] = level;
+}
+
+unsigned
+getipl(void)
+{
+	unsigned curspl;
+	m88k_psr_type psr;
+
+	psr = disable_interrupts_return_psr();
+	curspl = luna88k_curspl[cpu_number()];
+	set_psr(psr);
+	return curspl;
+}
+
+unsigned
+setipl(unsigned level)
+{
+	unsigned curspl;
+	m88k_psr_type psr;
+
+	psr = disable_interrupts_return_psr();
+	curspl = luna88k_curspl[cpu_number()];
+	setlevel(level);
+
+	/*
+	 * The flush pipeline is required to make sure the above write gets
+	 * through the data pipe and to the hardware; otherwise, the next
+	 * bunch of instructions could execute at the wrong spl protection.
+	 */
+	flush_pipeline();
+
+	set_psr(psr);
+	return curspl;
+}
+
+unsigned
+raiseipl(unsigned level)
+{
+	unsigned curspl;
+	m88k_psr_type psr;
+
+	psr = disable_interrupts_return_psr();
+	curspl = luna88k_curspl[cpu_number()];
+	if (curspl < level)
+		setlevel(level);
+
+	/*
+	 * The flush pipeline is required to make sure the above write gets
+	 * through the data pipe and to the hardware; otherwise, the next
+	 * bunch of instructions could execute at the wrong spl protection.
+	 */
+	flush_pipeline();
+
+	set_psr(psr);
+	return curspl;
 }

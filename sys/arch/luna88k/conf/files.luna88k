@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.6 2004/07/25 11:06:39 miod Exp $
+#	$OpenBSD: files.luna88k,v 1.7 2004/10/03 19:47:23 miod Exp $
 #	
 maxpartitions 16
 
@@ -79,7 +79,6 @@ file	arch/luna88k/luna88k/m8820x.c
 file	arch/luna88k/luna88k/disksubr.c
 file	arch/luna88k/luna88k/eh.S
 file	arch/luna88k/luna88k/isr.c
-file	arch/luna88k/luna88k/locore_c_routines.c
 file	arch/luna88k/luna88k/machdep.c
 file	arch/luna88k/luna88k/mem.c
 file	arch/luna88k/luna88k/pmap_table.c
