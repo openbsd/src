@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2001/12/06 18:53:01 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.75 2002/01/16 20:51:45 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
+#include <sys/extent.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
@@ -147,6 +147,12 @@ extern struct emul emul_hpux;
 extern struct emul emul_sunos;
 #endif
 
+/*
+ * XXX some storage space must be allocated statically because of
+ * early console init
+ */
+char	extiospace[EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16)];
+
 /* prototypes for local functions */
 caddr_t	allocsys __P((caddr_t));
 void	parityenable __P((void));
@@ -210,7 +216,8 @@ hp300_init()
 void
 consinit()
 {
-	extern struct map extiomap[];
+	extern struct extent *extio;
+	extern char *extiobase;
 
 	/*
 	 * Initialize some variables for sanity.
@@ -223,8 +230,10 @@ consinit()
 	/*
 	 * Initialize the DIO resource map.
 	 */
-	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
-
+	extio = extent_create("extio",
+	    (u_long)extiobase, (u_long)extiobase + ctob(EIOMAPSIZE),
+	    M_DEVBUF, extiospace, sizeof(extiospace), EX_NOWAIT);
+	    
 	/*
 	 * Initialize the console before we print anything out.
 	 */
