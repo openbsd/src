@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl2_pcmcia.c,v 1.2 1999/06/23 04:48:49 d Exp $	*/
+/*	$OpenBSD: if_rl2_pcmcia.c,v 1.3 1999/07/14 03:55:22 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -53,8 +53,9 @@ struct cfattach rln_pcmcia_ca = {
 	sizeof(struct rl2_pcmcia_softc), rl2_pcmcia_match, rl2_pcmcia_attach
 };
 
-/* Apparently this is the "7200 PC card"? */
-#define PCMCIA_CIS_RANGELAN2  { "PROXIM", "LAN CARD", "RANGELAN2", NULL }
+#define PCMCIA_CIS_RANGELAN2_7200 { "PROXIM", "LAN CARD",    "RANGELAN2", NULL }
+#define PCMCIA_CIS_RANGELAN2_7400 { "PROXIM", "LAN PC CARD", "RANGELAN2", NULL }
+#define PCMCIA_CIS_SYMPHONY       { "PROXIM", "LAN PC CARD", "SYMPHONY", NULL }
 
 static struct rl2_pcmcia_product {
 	u_int32_t	manufacturer;
@@ -98,15 +99,22 @@ rl2_pcmcia_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
-	const char *cis1_info[4] = PCMCIA_CIS_RANGELAN2;
+	static const char *cis_7200[] = PCMCIA_CIS_RANGELAN2_7200;
+	static const char *cis_7400[] = PCMCIA_CIS_RANGELAN2_7400;
+	static const char *cis_symp[] = PCMCIA_CIS_SYMPHONY;
+	static const char **cis_info[] = { cis_7200, cis_7400, cis_symp, NULL };
+	const char ***cis;
 	int i;
 
-	for (i = 0; i < 4; i++)
-		if (cis1_info[i] &&
-		    strcmp(cis1_info[i], pa->card->cis1_info[i]) != 0)
-			return (0);
-
-	return (1);
+	for (cis = cis_info; *cis; cis++) {
+		for (i = 0; ; i++) {
+			if ((*cis)[i] == NULL)
+				return (1);
+			if (strcmp((*cis)[i], pa->card->cis1_info[i]) != 0)
+				break;
+		}
+	}
+	return (0);
 }
 
 /* Attach and configure */
