@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.381 2003/05/14 22:54:39 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.382 2003/05/14 23:51:28 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -187,6 +187,7 @@ struct scrub_opts {
 	int			maxmss;
 	int			fragcache;
 	int			randomid;
+	int			reassemble_tcp;
 } scrub_opts;
 
 struct queue_opts {
@@ -358,7 +359,7 @@ typedef struct {
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
-%token	FRAGNORM FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
+%token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	REQUIREORDER
 %token	ANTISPOOF FOR
@@ -663,6 +664,14 @@ scrubrule	: SCRUB dir logquick interface af proto fromto scrub_opts
 				r.rule_flag |= PFRULE_NODF;
 			if ($8.randomid)
 				r.rule_flag |= PFRULE_RANDOMID;
+			if ($8.reassemble_tcp) {
+				if (r.direction != PF_INOUT) {
+					yyerror("reassmble tcp rules can not "
+					    "specify direction");
+					YYERROR;
+				}
+				r.rule_flag |= PFRULE_REASSEMBLE_TCP;
+			}
 			if ($8.minttl)
 				r.min_ttl = $8.minttl;
 			if ($8.maxmss)
@@ -726,6 +735,15 @@ scrub_opt	: NODF	{
 			scrub_opts.marker |= SOM_FRAGCACHE;
 			scrub_opts.fragcache = $1;
 		}
+		| REASSEMBLE STRING {
+			if (strcasecmp($2, "tcp") != 0)
+				YYERROR;
+			if (scrub_opts.reassemble_tcp) {
+				yyerror("reassemble tcp cannot be respecified");
+				YYERROR;
+			}
+			scrub_opts.reassemble_tcp = 1;
+		}
 		| RANDOMID {
 			if (scrub_opts.randomid) {
 				yyerror("random-id cannot be respecified");
@@ -735,7 +753,7 @@ scrub_opt	: NODF	{
 		}
 		;
 
-fragcache	: FRAGMENT FRAGNORM	{ $$ = 0; /* default */ }
+fragcache	: FRAGMENT REASSEMBLE	{ $$ = 0; /* default */ }
 		| FRAGMENT FRAGCROP	{ $$ = PFRULE_FRAGCROP; }
 		| FRAGMENT FRAGDROP	{ $$ = PFRULE_FRAGDROP; }
 		;
@@ -3692,7 +3710,7 @@ lookup(char *s)
 		{ "rdr",		RDR},
 		{ "rdr-anchor",		RDRANCHOR},
 		{ "realtime",		REALTIME},
-		{ "reassemble",		FRAGNORM},
+		{ "reassemble",		REASSEMBLE},
 		{ "reply-to",		REPLYTO},
 		{ "require-order",	REQUIREORDER},
 		{ "return",		RETURN},

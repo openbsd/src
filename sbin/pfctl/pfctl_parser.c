@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.155 2003/05/14 00:56:38 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.156 2003/05/14 23:51:29 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -727,6 +727,9 @@ print_rule(struct pf_rule *r, int verbose)
 	if (r->allow_opts)
 		printf("allow-opts ");
 	if (r->action == PF_SCRUB) {
+		if (r->rule_flag & PFRULE_REASSEMBLE_TCP)
+			printf("reassemble tcp ");
+
 		if (r->rule_flag & PFRULE_FRAGDROP)
 			printf("fragment drop-ovl ");
 		else if (r->rule_flag & PFRULE_FRAGCROP)
