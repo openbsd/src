@@ -1,15 +1,16 @@
-#	$OpenBSD: Makefile,v 1.1 1998/06/23 19:47:28 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 1999/05/28 03:50:54 mickey Exp $
 
 LIB=	kern
 
 S=	${.CURDIR}/../../../..
+M=	${KERNDIR}/arch/${MACHINE_ARCH}
 SADIR=	${.CURDIR}/..
-DIR_KERN=$S/lib/libkern
+KERNDIR=$S/lib/libkern
 
 NOPIC=		nopic
 NOPROFILE=	noprofile
 
-.PATH:	${DIR_KERN}
+.PATH:	${KERNDIR}
 
 .include "arch/hppa/Makefile.inc"
 
