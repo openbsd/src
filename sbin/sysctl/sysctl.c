@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.7 1997/04/06 20:19:22 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.8 1997/06/14 21:37:12 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.7 1997/04/06 20:19:22 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.8 1997/06/14 21:37:12 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.7 1997/04/06 20:19:22 millert Exp $
 #include <netipx/ipx_var.h>
 #include <netipx/spx_var.h>
 #include <ddb/db_var.h>
+#include <dev/rndvar.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -123,6 +124,7 @@ int	Aflag, aflag, nflag, wflag;
 #define	CLOCK		0x00000001
 #define	BOOTTIME	0x00000002
 #define	CONSDEV		0x00000004
+#define RNDSTATS	0x00000008
 
 /* prototypes */
 void usage();
@@ -272,7 +274,7 @@ parse(string, flags)
 					return;
 				if (!nflag)
 					fprintf(stdout, "%s: ", string);
-				fprintf(stderr,
+				fprintf(stdout,
 				    "kernel is not compiled for profiling\n");
 				return;
 			}
@@ -304,6 +306,9 @@ parse(string, flags)
 			break;
 		case KERN_BOOTTIME:
 			special |= BOOTTIME;
+			break;
+		case KERN_RND:
+			special |= RNDSTATS;
 			break;
 		}
 		break;
@@ -451,6 +456,21 @@ parse(string, flags)
 			    devname(dev, S_IFCHR));
 		else
 			fprintf(stdout, "0x%x\n", dev);
+		return;
+	}
+	if (special & RNDSTATS) {
+		struct rndstats *rndstats = (struct rndstats *)buf;
+		if (!nflag)
+			fprintf(stdout, "%s: ", string);
+		fprintf(stdout,
+		        "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu\n",
+			rndstats->rnd_total, rndstats->rnd_used,
+			rndstats->arc4_reads, rndstats->rnd_timer,
+			rndstats->rnd_mouse, rndstats->rnd_tty,
+			rndstats->rnd_disk, rndstats->rnd_net,
+			rndstats->rnd_reads, rndstats->rnd_waits,
+			rndstats->rnd_enqs, rndstats->rnd_deqs,
+			rndstats->rnd_drops);
 		return;
 	}
 	switch (type) {

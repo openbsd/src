@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.22 1997/06/12 02:18:39 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.23 1997/06/14 21:37:08 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -239,6 +239,7 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/md5k.h>
+#include <sys/sysctl.h>
 
 #include <net/netisr.h>
 
@@ -274,6 +275,10 @@ int	rnd_debug = 0x0000;
 #error No primitive polynomial available for chosen POOLWORDS
 #endif
 
+#define QEVLEN 32
+#define QEVSLOW 16
+#define QEVSBITS 4
+
 /* There is actually only one of these, globally. */
 struct random_bucket {
 	u_int	add_ptr;
@@ -295,11 +300,20 @@ struct arc4_stream {
 	u_char	s[256];
 };
 
+struct rand_event {
+	struct rand_event *re_next;
+	struct timer_rand_state *re_state;
+	u_char re_nbits;
+	u_long re_time;
+	u_int re_val;
+};
+
 /* tags for different random sources */
 #define	ENT_NET		0x100
 #define	ENT_DISK	0x200
 #define ENT_TTY		0x300
 
+struct rndstats rndstats;
 static struct random_bucket random_state;
 static int arc4random_uninitialized = 2;
 static struct arc4_stream arc4random_state;
@@ -308,15 +322,20 @@ static struct timer_rand_state extract_timer_state;
 static struct timer_rand_state disk_timer_state;
 static struct timer_rand_state net_timer_state;
 static struct timer_rand_state tty_timer_state;
+static struct rand_event event_space[QEVLEN];
 static int rnd_sleep = 0;
 static int rnd_attached = 0;
+static int rnd_enqueued = 0;
+static struct rand_event *event_q = NULL;
+static struct rand_event *event_free;
 
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
 static __inline void add_entropy_word __P((const u_int32_t));
-void	add_timer_randomness __P((struct timer_rand_state *, u_int));
+static void enqueue_randomness __P((register struct timer_rand_state*, u_int));
+void dequeue_randomness __P((void *));
 static __inline int extract_entropy __P((register char *, int));
 void	arc4_init __P((struct arc4_stream *, u_char *, int));
 static __inline void arc4_stir (register struct arc4_stream *);
@@ -361,6 +380,7 @@ arc4_getbyte (register struct arc4_stream *as)
 {
 	register u_char si, sj;
 
+	rndstats.arc4_reads++;
 	as->i = (as->i + 1) & 0xff;
 	si = as->s[as->i];
 	as->j = (as->j + si) & 0xff;
@@ -370,7 +390,7 @@ arc4_getbyte (register struct arc4_stream *as)
 	return (as->s[(si + sj) & 0xff]);
 }
 
-static inline void
+static __inline void
 arc4maybeinit (void)
 {
 	if (arc4random_uninitialized) {
@@ -385,11 +405,11 @@ arc4maybeinit (void)
 u_int32_t
 arc4random (void)
 {
-  arc4maybeinit ();
-  return ((arc4_getbyte (&arc4random_state) << 24)
-	  | (arc4_getbyte (&arc4random_state) << 16)
-	  | (arc4_getbyte (&arc4random_state) << 8)
-	  | arc4_getbyte (&arc4random_state));
+	arc4maybeinit ();
+	return ((arc4_getbyte (&arc4random_state) << 24)
+		| (arc4_getbyte (&arc4random_state) << 16)
+		| (arc4_getbyte (&arc4random_state) << 8)
+		| arc4_getbyte (&arc4random_state));
 }
 
 void
@@ -397,11 +417,18 @@ randomattach(void)
 {
 	int i;
 	struct timeval tv;
+	struct rand_event *rep;
 
 	random_state.add_ptr = 0;
 	random_state.entropy_count = 0;
 	extract_timer_state.dont_count_entropy = 1;
 
+	bzero(&rndstats, sizeof(rndstats));
+
+	bzero(&event_space, sizeof(event_space));
+	event_free = event_space;
+	for (rep = event_space; rep < &event_space[QEVLEN]; rep++)
+		rep->re_next = rep + 1;
 	for (i = 0; i < 256; i++)
 		arc4random_state.s[i] = i;
 	microtime (&tv);
@@ -488,22 +515,22 @@ add_entropy_word(input)
  * are used for a high-resolution timer.
  *
  */
-void
-add_timer_randomness(state, num)
-	struct timer_rand_state	*state;
-	u_int	num;
+static void
+enqueue_randomness(state, val)
+	register struct timer_rand_state *state;
+	u_int	val;
 {
 	int	delta, delta2;
 	u_int	nbits;
-	u_long	time;
 	struct timeval	tv;
+	register struct rand_event *rep;
+	int s;
+	u_long	time;
+
+	rndstats.rnd_enqs++;
 
 	microtime(&tv);
 	time = tv.tv_usec ^ tv.tv_sec;
-
-	add_entropy_word((u_int32_t)num);
-	add_entropy_word(time);
-
 	/*
 	 * Calculate number of bits of randomness we probably
 	 * added.  We take into account the first and second order
@@ -522,22 +549,83 @@ add_timer_randomness(state, num)
 		for (nbits = 0; delta; nbits++)
 			delta >>= 1;
 
-		random_state.entropy_count += nbits;
-	
+		if (rnd_enqueued > QEVSLOW && nbits < QEVSBITS) {
+			rndstats.rnd_drops++;
+			return;
+		}
+	}
+
+	s = splhigh();
+	if ((rep = event_free) == NULL) {
+		splx(s);
+		rndstats.rnd_drops++;
+		return;
+	}
+	event_free = rep->re_next;
+
+	rep->re_state = state;
+	rep->re_nbits = nbits;
+	rep->re_time = time;
+	rep->re_val = val;
+
+	rep->re_next = event_q;
+	event_q = rep;
+	rep = rep->re_next;
+	splx(s);
+	rndstats.rnd_timer++;
+	rnd_enqueued++;
+
+	if (rep == NULL)
+		timeout(dequeue_randomness, NULL, 1);
+
+}
+
+void
+dequeue_randomness(v)
+	void *v;
+{
+	register struct rand_event *rep;
+	int s;
+
+	rndstats.rnd_deqs++;
+
+	do {
+		s = splhigh();
+		if (event_q == NULL) {
+			splx(s);
+			return;
+		}
+		rep = event_q;
+		event_q = rep->re_next;
+		splx(s);
+
+		add_entropy_word((u_int32_t)rep->re_val);
+		add_entropy_word(rep->re_time);
+
+		random_state.entropy_count += rep->re_nbits;
+		rndstats.rnd_total += rep->re_nbits;
+
 		/* Prevent overflow */
 		if (random_state.entropy_count > POOLBITS)
 			random_state.entropy_count = POOLBITS;
-	}
 
-	if (random_state.entropy_count > 8 && rnd_sleep != 0) {
-		rnd_sleep--;
+		s = splhigh();
+		rep->re_next = event_free;
+		event_free = rep;
+		splx(s);
+		rnd_enqueued--;
+
+		if (random_state.entropy_count > 8 && rnd_sleep != 0) {
+			rnd_sleep--;
 #ifdef	DEBUG
-		if (rnd_debug & RD_WAIT)
-			printf("rnd: wakeup[%d]{%u}\n",
-				rnd_sleep, random_state.entropy_count);
+			if (rnd_debug & RD_WAIT)
+				printf("rnd: wakeup[%d]{%u}\n",
+				       rnd_sleep, random_state.entropy_count);
 #endif
-		wakeup(&rnd_sleep);
-	}
+			wakeup(&rnd_sleep);
+		}
+	} while(1);
+
 }
 
 void
@@ -548,7 +636,8 @@ add_mouse_randomness(mouse_data)
 	if (!rnd_attached)
 		return;
 
-	add_timer_randomness(&mouse_timer_state, mouse_data);
+	rndstats.rnd_mouse++;
+	enqueue_randomness(&mouse_timer_state, mouse_data);
 }
 
 void
@@ -559,7 +648,8 @@ add_net_randomness(isr)
 	if (!rnd_attached)
 		return;
 
-	add_timer_randomness(&net_timer_state, ENT_NET + isr);
+	rndstats.rnd_net++;
+	enqueue_randomness(&net_timer_state, ENT_NET + isr);
 }
 
 void
@@ -572,6 +662,7 @@ add_disk_randomness(n)
 	if (!rnd_attached)
 		return;
 
+	rndstats.rnd_disk++;
 	c = n & 0xff;
 	n >>= 8;
 	c ^= n & 0xff;
@@ -579,7 +670,7 @@ add_disk_randomness(n)
 	c ^= n & 0xff;
 	n >>= 8;
 	c ^= n & 0xff;
-	add_timer_randomness(&disk_timer_state, ENT_DISK + c);
+	enqueue_randomness(&disk_timer_state, ENT_DISK + c);
 }
 
 void
@@ -590,7 +681,8 @@ add_tty_randomness(c)
 	if (!rnd_attached)
 		return;
 
-	add_timer_randomness(&tty_timer_state, ENT_TTY + c);
+	rndstats.rnd_tty++;
+	enqueue_randomness(&tty_timer_state, ENT_TTY + c);
 }
 
 #if POOLWORDS % 16
@@ -610,7 +702,7 @@ extract_entropy(buf, nbytes)
 	int	ret, i;
 	MD5_CTX tmp;
 	
-	add_timer_randomness(&extract_timer_state, nbytes);
+	enqueue_randomness(&extract_timer_state, nbytes);
 	
 	/* Redundant, but just in case... */
 	if (random_state.entropy_count > POOLBITS) 
@@ -656,7 +748,7 @@ extract_entropy(buf, nbytes)
 		bcopy((caddr_t)&tmp.buffer, buf, i);
 		nbytes -= i;
 		buf += i;
-		add_timer_randomness(&extract_timer_state, nbytes);
+		enqueue_randomness(&extract_timer_state, nbytes);
 	}
 
 	/* Wipe data from memory */
@@ -676,6 +768,7 @@ get_random_bytes(buf, nbytes)
 	size_t	nbytes;
 {
 	extract_entropy((char *) buf, nbytes);
+	rndstats.rnd_used += nbytes * 8;
 }
 
 int
@@ -711,6 +804,7 @@ randomread(dev, uio, ioflag)
 					    rnd_sleep);
 #endif
 				rnd_sleep++;
+				rndstats.rnd_waits++;
 				ret = tsleep(&rnd_sleep, PWAIT | PCATCH,
 				    "rndrd", 0);
 #ifdef	DEBUG
@@ -721,6 +815,7 @@ randomread(dev, uio, ioflag)
 					break;
 			}
 			n = min(n, random_state.entropy_count / 8);
+			rndstats.rnd_reads++;
 #ifdef	DEBUG
 			if (rnd_debug & RD_OUTPUT)
 				printf("rnd: %u possible output\n", n);

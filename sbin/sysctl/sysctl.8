@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.8 1997/06/13 13:50:59 mickey Exp $
+.\"	$OpenBSD: sysctl.8,v 1.9 1997/06/14 21:37:11 mickey Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -136,8 +136,9 @@ privilege can change the value.
 .It kern.somaxconn	integer	yes
 .It kern.sominconn	integer	yes
 .It kern.usermount	integer	yes
+.It kern.random	struct	no
 .It vm.loadavg	struct	no
-.It vm.psstrings	struct _ps_strings	no
+.It vm.psstrings	struct	no
 .It fs.posix.setuid	integer	yes
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.redirect	integer	yes
@@ -226,6 +227,10 @@ sysctl vm.loadavg
 .It Pa <sys/sysctl.h>
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
+.It Pa <dev/rndvar.h>
+definitions for
+.Xr random 4
+device's statistics structure
 .It Pa <sys/socket.h>
 definitions for second level network identifiers
 .It Pa <sys/gmon.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.15 1997/03/27 04:39:35 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.16 1997/06/14 21:37:10 mickey Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -60,6 +60,7 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <dev/rndvar.h>
 
 #ifdef DDB
 #include <ddb/db_var.h>
@@ -297,6 +298,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &sominconn));
 	case KERN_USERMOUNT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &usermount));
+	case KERN_RND:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &rndstats,
+		    sizeof(rndstats)));
 	default:
 		return (EOPNOTSUPP);
 	}
