@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.14 2002/10/15 17:10:57 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.15 2002/10/15 17:47:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -428,6 +428,8 @@ auth_setitem(auth_session_t *as, auth_item_t item, char *value)
 		return (0);
 
 	case AUTHV_CHALLENGE:
+		if (value != NULL && value == as->challenge)
+			return (0);
 		if (value != NULL && (value = strdup(value)) == NULL)
 			return (-1);
 		if (as->challenge)
@@ -436,45 +438,45 @@ auth_setitem(auth_session_t *as, auth_item_t item, char *value)
 		return (0);
 
 	case AUTHV_CLASS:
+		if (value != NULL && value == as->class)
+			return (0);
 		if (value != NULL && (value = strdup(value)) == NULL)
 			return (-1);
-
 		if (as->class)
 			free(as->class);
-
 		as->class = value;
 		return (0);
 
 	case AUTHV_NAME:
+		if (value != NULL && value == as->name)
+			return (0);
 		if (value != NULL && (value = strdup(value)) == NULL)
 			return (-1);
-
 		if (as->name)
 			free(as->name);
-
 		as->name = value;
 		return (0);
 
 	case AUTHV_SERVICE:
+		if (value != NULL && value == as->defservice)
+			return (0);
 		if (value == NULL || strcmp(value, defservice) == 0)
 			value = defservice;
 		else if ((value = strdup(value)) == NULL)
 			return (-1);
-
 		if (as->service && as->service != defservice)
 			free(as->service);
-
 		as->service = value;
 		return (0);
 
 	case AUTHV_STYLE:
+		if (value != NULL && value == as->style)
+			return (0);
 		if (value == NULL || strchr(value, '/') != NULL ||
 		    (value = strdup(value)) == NULL)
 			return (-1);
-
 		if (as->style)
 			free(as->style);
-
 		as->style = value;
 		return (0);
 
