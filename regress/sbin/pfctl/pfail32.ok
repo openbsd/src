@@ -4,7 +4,7 @@ pfctl: queue bandwidth must be larger than 123.77Kb
 cbq: queue eins is too slow!
 pfctl: queue bandwidth must be larger than 123.77Kb
 cbq: queue zwei is too slow!
-Queue zwei already exists on interface lo0
+queue zwei already exists on interface lo0
 pfctl: Syntax error in file: pf rules not loaded
 altq on lo0 cbq bandwidth 100Kb tbrsize 33224 queue { eins zwei }
 queue eins cbq( default ) { zwei }
