@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.164 2000/05/29 18:04:08 aaron Exp $
+#	$OpenBSD: files,v 1.165 2000/05/30 19:34:20 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -178,6 +178,10 @@ file	dev/ic/vga.c		vga & (vga_isa | vga_pci)
 device	vgafb: wsdisplaydev
 file	dev/ic/vgafb.c		vgafb & (vgafb_isa | vgafb_pci)
 file	dev/ic/font_8x16.c	vgafb & (vgafb_isa | vgafb_pci)
+
+# STI (hp graphics)
+device	sti: wsemuldisplaydev
+file	dev/ic/sti.c		sti & (sti_pci | sti_sgc)	needs-flag
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
