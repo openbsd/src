@@ -46,8 +46,10 @@ isabr*		at pci?	# ISA dev bridge.
 
 isa*		at isabr?
 
-#com0		at isa? port 0x2e8 irq 5
-#com1		at isa? port 0x3e8 irq 1
+com0		at isa? port 0x3f8 irq 4
+com1		at isa? port 0x2f8 irq 3
+com2		at isa? port 0x3e8 irq 1
+com3		at isa? port 0x2e8 irq 5
 
 
 #### PCI Bus devices.
@@ -70,7 +72,7 @@ ofbus*		at openfirm?
 #ofdisk*		at openfirm?
 #ofnet*		at openfirm?
 #ipkdbif0	at ofnet?
-ofcons*		at openfirm?
+#ofcons*		at openfirm?
 ofrtc*		at openfirm?
 
 #### PSEUDO Devices

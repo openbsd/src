@@ -66,8 +66,10 @@ isabr*		at pci?	# ISA dev bridge.
 pci*		at mpcpcibr?
 
 isa*		at isabr?
-#com0		at isa? port 0x2f8 irq 3
-#com1		at isa? port 0x3f8 irq 4
+com0		at isa? port 0x3f8 irq 4
+com1		at isa? port 0x2f8 irq 3
+com2		at isa? port 0x3e8 irq 1
+com3		at isa? port 0x2e8 irq 5
 
 ncr*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
@@ -85,7 +87,7 @@ ofdisk*		at openfirm?
 #ofnet*		at openfirm?
 #ipkdbif0	at ofnet?
 
-ofcons*		at openfirm?
+#ofcons*		at openfirm?
 
 ofrtc*		at openfirm?
 
