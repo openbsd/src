@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.4 1999/03/02 06:23:55 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.5 1999/03/11 21:08:08 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -40,7 +40,7 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.35 1999/03/02 01:23:01 tom Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.36 1999/03/06 23:37:55 tom Exp $")
 
 #define INDENT			8
 
@@ -466,7 +466,7 @@ int fmt_entry(TERMTYPE *tterm,
 			   int (*pred)(int type, int idx),
 			   bool suppress_untranslatable,
 			   bool infodump,
-			   bool numbers)
+			   int numbers)
 {
 int	i, j;
 char    buffer[MAX_TERMINFO_LENGTH];
@@ -730,7 +730,7 @@ bool	outcount = 0;
     return(infodump ? len : termcap_length(outbuf));
 }
 
-int dump_entry(TERMTYPE *tterm, bool limited, bool numbers, int (*pred)(int type, int idx))
+int dump_entry(TERMTYPE *tterm, bool limited, int numbers, int (*pred)(int type, int idx))
 /* dump a single entry */
 {
     int	len, critlen;

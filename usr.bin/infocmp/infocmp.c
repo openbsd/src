@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.2 1999/03/02 06:23:56 millert Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.3 1999/03/11 21:08:07 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -44,7 +44,7 @@
 #include <term_entry.h>
 #include <dump_entry.h>
 
-MODULE_ID("$From: infocmp.c,v 1.40 1999/03/01 00:40:17 tom Exp $")
+MODULE_ID("$From: infocmp.c,v 1.41 1999/03/07 00:52:02 tom Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -67,7 +67,7 @@ static TERMTYPE term[MAXTERMS];	/* terminfo entries */
 static int termcount;		/* count of terminal entries */
 
 static const char *tversion;	/* terminfo version selected */
-static bool numbers = TRUE;	/* format "%'char'" to "%{number}" */
+static int numbers = 0;		/* format "%'char'" to/from "%{number}" */
 static int outform;		/* output format */
 static int sortmode;		/* sort_mode */
 static int itrace;		/* trace flag for debugging */
@@ -804,6 +804,7 @@ static void usage(void)
 	    ,"  -d    list different capabilities"
 	    ,"  -e    format output as C initializer"
 	    ,"  -f    with -1, format complex strings"
+	    ,"  -G    format %{number} to %'char'"
 	    ,"  -g    format %'char' to %{number}"
 	    ,"  -i    analyze initialization/reset"
 	    ,"  -l    output terminfo names"
@@ -859,7 +860,7 @@ int main(int argc, char *argv[])
 	/* where is the terminfo database location going to default to? */
 	restdir = firstdir = 0;
 
-	while ((c = getopt(argc, argv, "decCfFgIinlLprR:s:uv:Vw:A:B:1T")) != EOF)
+	while ((c = getopt(argc, argv, "decCfFGgIinlLprR:s:uv:Vw:A:B:1T")) != EOF)
 		switch (c)
 		{
 		case 'd':
@@ -885,8 +886,12 @@ int main(int argc, char *argv[])
 			formatted = TRUE;
 			break;
 
+		case 'G':
+			numbers = 1;
+			break;
+
 		case 'g':
-			numbers = FALSE;
+			numbers = -1;
 			break;
 
 		case 'F':
