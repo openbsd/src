@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.6 1996/04/23 03:18:37 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.7 1996/05/09 06:55:51 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.20 1996/04/13 01:02:18 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -65,12 +65,16 @@
 # Terminal ports:
 #	tty00	standard serial port.
 #	ttyA*	mfc serial ports
+#	com*	ISA COM ports			(XXX)
+#	ttyB*	alias for ISA COM ports, this is what the system really wants
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Printers:
 #	par*	motherboard parallel port
+#	lpt*	ISA lp
+#	lpa*	interruptless ISA lp
 #
 # Special purpose devices:
 #	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
@@ -82,6 +86,8 @@
 #	lkm	loadable kernel modules interface.
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
+#	ipf	IP filter
+#	ss*	SCSI scanner
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -90,12 +96,14 @@ do
 case $i in
 all)
 	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 mouse0
-	sh MAKEDEV mouse1 tty00 ttyA0 ttyA1 grf0 grf1 grf2 grf3 grf4 grf5
+	sh MAKEDEV mouse1 tty00 ttyA0 ttyA1 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4
+	sh MAKEDEV ttyB5 ttyB6 ttyB7 ttyB8 ttyB9 grf0 grf1 grf2 grf3 grf4 grf5
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 ipl
+	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV lpa0 lpa1 lpt0 lpt1 lpt2 ipl
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 par0 lkm local
+	sh MAKEDEV tun0 tun1 par0 lkm ss0 local
 	;;
 
 floppy)
@@ -121,6 +129,7 @@ std)
 	mknod stdin		c 21 0	; chmod 666 stdin
 	mknod stdout		c 21 1	; chmod 666 stdout
 	mknod stderr		c 21 2	; chmod 666 stderr
+	mknod ipf		c 34 0	; chmod 444 ipf
 	;;
 
 fd)
@@ -419,8 +428,26 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
+com*|ttyB*)					# (XXX -- com should die)
+	unit=`expr $i : '...\(.*\)'`
+	rm -f com$unit tty$unit
+	mknod tty$unit c 32 $unit
+	chown uucp.wheel tty$unit
+	;;
+
+lpt*|lpa*)
+	unit=`expr $i : '...\(.*\)'`
+	case $i in
+	lpt*) name=lpt; flags=0;;
+	lpa*) name=lpa; flags=128;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit c 33 `expr $unit + $flags`
+	chown root.wheel $name$unit
+	;;
+
 ipl)
-	mknod ipl c 32 0
+	mknod ipl c 34 0
 	chown root.wheel ipl
 	;;
 
@@ -438,6 +465,14 @@ lkm)
         chown root:kmem lkm
         chmod 640 lkm
         ;;
+
+ss*)
+	unit=`expr $i : 'ss\(.*\)'`
+	rm -f ss$unit
+	mknod ss$unit c 35 $unit
+	chmod 600 ss$unit
+	chown root.wheel ss$unit
+	;;
 
 local)
 	umask 0
