@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.34 2003/10/10 18:12:41 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.35 2003/10/10 18:19:16 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -936,14 +936,14 @@ vr_list_rx_init(sc)
 			cd->vr_rx_chain[i].vr_nextdesc =
 			    &cd->vr_rx_chain[0];
 			ld->vr_rx_list[i].vr_next =
-			    sc->sc_listmap->dm_segs[0].ds_addr +
-			    offsetof(struct vr_list_data, vr_rx_list[0]);
+			    htole32(sc->sc_listmap->dm_segs[0].ds_addr +
+			    offsetof(struct vr_list_data, vr_rx_list[0]));
 		} else {
 			cd->vr_rx_chain[i].vr_nextdesc =
 			    &cd->vr_rx_chain[i + 1];
 			ld->vr_rx_list[i].vr_next =
-			    sc->sc_listmap->dm_segs[0].ds_addr +
-			    offsetof(struct vr_list_data, vr_rx_list[i + 1]);
+			    htole32(sc->sc_listmap->dm_segs[0].ds_addr +
+			    offsetof(struct vr_list_data, vr_rx_list[i + 1]));
 		}
 	}
 
