@@ -296,6 +296,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/opl3sa3reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/oplreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/oplvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/osiopreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/osiopvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/pcdisplay.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/pcdisplayvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/pckbcvar.ph

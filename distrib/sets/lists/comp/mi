@@ -246,6 +246,8 @@
 ./usr/include/dev/ic/opl3sa3reg.h
 ./usr/include/dev/ic/oplreg.h
 ./usr/include/dev/ic/oplvar.h
+./usr/include/dev/ic/osiopreg.h
+./usr/include/dev/ic/osiopvar.h
 ./usr/include/dev/ic/pcdisplay.h
 ./usr/include/dev/ic/pcdisplayvar.h
 ./usr/include/dev/ic/pckbcvar.h

@@ -725,6 +725,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/opl3sa3reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/oplreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/oplvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/osiopreg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/osiopvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/pcdisplay.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/pcdisplayvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/pckbcvar.ph
