@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.19 2002/12/05 22:16:13 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.20 2002/12/05 22:32:04 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -75,8 +75,8 @@
  * if any memory chunks of this type are used. It's ok to change the size
  * in runtime.
  */
-int debug_malloc_type = 0;
-int debug_malloc_size = 0;
+int debug_malloc_type = -1;
+int debug_malloc_size = -1;
 int debug_malloc_size_lo = -1;
 int debug_malloc_size_hi = -1;
 
