@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 1998/10/28 17:53:29 millert Exp $
+#	$OpenBSD: install.md,v 1.24 1998/11/03 04:10:16 aaron Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -198,7 +198,7 @@ md_prep_disklabel()
 	# display example
 	cat << \__md_prep_disklabel_1
 If you are unsure of how to use multiple partitions properly
-(ie. seperating /, /usr, /tmp, /var, /usr/local, and other things)
+(ie. separating /, /usr, /tmp, /var, /usr/local, and other things)
 just split the space into a root and swap partition for now.
 
 __md_prep_disklabel_1

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.41 1998/10/07 18:42:08 millert Exp $
+#	$OpenBSD: install.md,v 1.42 1998/11/03 04:10:15 aaron Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ should have a BIOS partition entry that spans the space they occupy completely.
 For safety, also make sure all OpenBSD file systems are within the offset and
 size specified in the 'A6' BIOS partition table.  (By default, the disklabel
 editor will try to enforce this).  If you are unsure of how to use multiple
-partitions properly (ie. seperating /,  /usr, /tmp, /var, /usr/local, and other
+partitions properly (ie. separating /,  /usr, /tmp, /var, /usr/local, and other
 things) just split the space into a root and swap partition for now.
 
 __md_prep_disklabel_1
