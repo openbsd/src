@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.43 2001/06/05 05:59:42 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.44 2001/06/05 10:04:46 angelos Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -897,21 +897,21 @@ rsa_sig_encode_hash (struct message *msg)
       handler = cert_get (idtype);
       if (!handler)
 	{
-	  log_error ("rsa_sig_encode_hash: cert_get (%d) failed", idtype);
+	  log_print ("rsa_sig_encode_hash: cert_get (%d) failed", idtype);
 	  return -1;
 	}
 
       exchange->sent_cert = handler->cert_from_printable (buf);
       if (exchange->sent_cert == NULL)
 	{
-	  log_error ("rsa_sig_encode_hash: failed to retrieve certificate");
+	  log_print ("rsa_sig_encode_hash: failed to retrieve certificate");
 	  return -1;
 	}
 
       handler->cert_serialize (exchange->sent_cert, &data, &datalen);
       if (data == NULL)
 	{
-	  log_error ("rsa_sig_encode_hash: cert serialization failed");
+	  log_print ("rsa_sig_encode_hash: cert serialization failed");
 	  return -1;
 	}
 
@@ -967,7 +967,8 @@ rsa_sig_encode_hash (struct message *msg)
   if (!exchange->sent_cert)
     {
       free (data);
-      log_error ("rsa_sig_encode_hash: failed to get certificate from wire encoding");
+      log_print ("rsa_sig_encode_hash: failed to get certificate from wire "
+		 "encoding");
       return -1;
     }
 
@@ -1032,7 +1033,7 @@ rsa_sig_encode_hash (struct message *msg)
 			  &datalen);
       if ((data == NULL) || (datalen == -1))
 	{
-	  log_error ("rsa_sig_encode_hash: badly formatted RSA private key");
+	  log_print ("rsa_sig_encode_hash: badly formatted RSA private key");
 	  return 0;
 	}
 
@@ -1042,7 +1043,7 @@ rsa_sig_encode_hash (struct message *msg)
 					    datalen);
       if (exchange->sent_key == NULL)
 	{
-	  log_error ("rsa_sig_encode_hash: bad RSA private key from dynamic "
+	  log_print ("rsa_sig_encode_hash: bad RSA private key from dynamic "
 		     "SA acquisition subsystem");
 	  return 0;
 	}
@@ -1092,7 +1093,7 @@ rsa_sig_encode_hash (struct message *msg)
 				      exchange->sent_key, RSA_PKCS1_PADDING));
   if (datalen == -1)
     {
-      log_error ("rsa_sig_encode_hash: RSA_private_encrypt () failed");
+      log_print ("rsa_sig_encode_hash: RSA_private_encrypt () failed");
       free (buf);
       return -1;
     }
