@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wavelan_ieee.h,v 1.1 1999/07/11 16:25:36 niklas Exp $	*/
+/*	$OpenBSD: if_wavelan_ieee.h,v 1.2 2000/02/03 00:56:45 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -195,6 +195,8 @@ struct wi_counters {
 #define WI_RID_WDS_ADDR5	0xFC15 /* port 1 MAC of WDS link node */
 #define WI_RID_WDS_ADDR6	0xFC16 /* port 1 MAC of WDS link node */
 #define WI_RID_MCAST_PM_BUF	0xFC17 /* PM buffering of mcast */
+#define WI_RID_ENCRYPTION	0xFC20 /* enable/disable WEP */
+#define WI_RID_AUTHTYPE		0xFC21 /* specify authentication type */
 
 /*
  * Network parameters, dynamic configuration entities
@@ -226,7 +228,20 @@ struct wi_counters {
 #define WI_RID_TX_RATE4		0xFCA2
 #define WI_RID_TX_RATE5		0xFCA3
 #define WI_RID_TX_RATE6		0xFCA4
+#define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
+#define WI_RID_TX_CRYPT_KEY	0xFCB1
 #define WI_RID_TICK_TIME	0xFCE0
+
+struct wi_key {
+	u_int16_t		wi_keylen;
+	u_int8_t		wi_keydat[14];
+};
+
+struct wi_ltv_keys {
+	u_int16_t		wi_len;
+	u_int16_t		wi_type;
+	struct wi_key		wi_keys[4];
+};
 
 /*
  * NIC information
