@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.40 2003/11/17 10:09:11 avsm Exp $
+.\"	$OpenBSD: config.8,v 1.41 2004/01/04 18:47:11 deraadt Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -39,8 +39,8 @@
 .Sh SYNOPSIS
 .Nm config
 .Op Fl b Ar builddir
-.Op Fl s Ar srcdir
 .Op Fl p
+.Op Fl s Ar srcdir
 .Op Ar config-file
 .Nm config
 .Fl e
@@ -86,7 +86,43 @@ Replace
 .Dq i386
 with the appropriate architecture name.
 .Pp
-The options are as follows:
+For kernel building, the options are as follows:
+.Bl -tag -width Ds
+.It Fl b Ar builddir
+Create the build directory in the path specified by
+.Ar builddir
+instead of the default
+.Pa ../compile/SYSTEMNAME .
+.It Fl p
+Configure for a system that includes profiling code; see
+.Xr kgmon 8
+and
+.Xr gprof 1 .
+When this option is specified,
+.Nm
+acts as if the lines
+.Dq makeoptions PROF="-pg"
+and
+.Dq options GPROF
+appeared in the specified kernel configuration file.
+In addition,
+.Dq .PROF
+is appended to the default compilation directory name.
+.Pp
+The
+.Fl p
+flag is expected to be used for
+.Dq one-shot
+profiles of existing systems; for regular profiling, it is probably wiser to
+make a separate configuration containing the makeoptions line.
+.It Fl s Ar srcdir
+Use
+.Ar srcdir
+as the top-level kernel source directory instead of the default (four
+directories above the build directory).
+.El
+.Pp
+For kernel modification, the options are as follows:
 .Bl -tag -width Ds
 .It Fl e
 Allows the modification of kernel device configuration (see
@@ -115,38 +151,6 @@ If so, compare the running kernel with the kernel to be edited
 .Pq Ar infile .
 If they seem to be the same, apply all configuration changes performed at
 boot.
-.It Fl b Ar builddir
-Create the build directory in the path specified by
-.Ar builddir
-instead of the default
-.Pa ../compile/SYSTEMNAME .
-.It Fl s Ar srcdir
-Use
-.Ar srcdir
-as the top-level kernel source directory instead of the default (four
-directories above the build directory).
-.It Fl p
-Configure for a system that includes profiling code; see
-.Xr kgmon 8
-and
-.Xr gprof 1 .
-When this option is specified,
-.Nm
-acts as if the lines
-.Dq makeoptions PROF="-pg"
-and
-.Dq options GPROF
-appeared in the specified kernel configuration file.
-In addition,
-.Dq .PROF
-is appended to the default compilation directory name.
-.Pp
-The
-.Fl p
-flag is expected to be used for
-.Dq one-shot
-profiles of existing systems; for regular profiling, it is probably wiser to
-make a separate configuration containing the makeoptions line.
 .El
 .Pp
 The old
