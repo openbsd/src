@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.11 2002/12/20 06:19:39 art Exp $
+.\"     $OpenBSD: vnode.9,v 1.12 2002/12/20 06:21:09 art Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -221,9 +221,7 @@ The exceptions are bgetvp and brelvp.
 The following fields of the vnode are manipulated at interrupt level:
 v_numoutput, v_holdcnt, v_dirtyblkhd, v_cleanblkhd, v_bioflag, v_freelist,
 and v_synclist.
-Any accesses to these fields should be protected by splbio,
-unless you are certain that there is no chance an interrupt handler
-will modify them.
+Any accesses to these fields should be protected by splbio.
 .Sh HISTORY
 This document first appeared in
 .Ox 2.9 .
