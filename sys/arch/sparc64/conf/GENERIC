@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2001/08/22 12:24:48 art Exp $
+#	$OpenBSD: GENERIC,v 1.11 2001/08/22 13:54:56 art Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -9,6 +9,7 @@ option		SUN4U
 option		_LP64
 
 option		DDB_SAFE_CONSOLE	# XXX - remove later
+option		PCIVERBOSE
 
 maxusers	64
 
@@ -29,6 +30,8 @@ ebus*	at pci?
 
 #### Standard system devices -- all required for a given architecture
 
+auxio*	at ebus?
+
 zs*	at sbus? slot ? offset ?
 zstty*	at zs? channel ?
 
@@ -37,6 +40,7 @@ pcons0	at mainbus0				# PROM console
 
 ## Mostek clock 
 clock*	at sbus? slot ? offset ?
+clock*	at ebus?
 
 ## Timer chip found on (some) sun4u systems.
 timer*	at mainbus0

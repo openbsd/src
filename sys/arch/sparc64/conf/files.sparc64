@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.9 2001/08/22 12:24:48 art Exp $
+#	$OpenBSD: files.sparc64,v 1.10 2001/08/22 13:54:56 art Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -41,18 +41,24 @@ file	arch/sparc64/dev/ebus.c			ebus
 
 device clock: mk48txx
 attach clock at mainbus, sbus with clock_sbus
+attach clock at ebus with clock_ebus
 
 device timer
 attach timer at mainbus, sbus
 
 device eeprom
-attach eeprom at sbus
+attach eeprom at sbus, ebus
 file	arch/sparc64/sparc64/clock.c
 file	dev/clock_subr.c
 
 device cpu
 attach cpu at mainbus
 file	arch/sparc64/sparc64/cpu.c
+
+device auxio
+attach auxio at ebus with auxio_ebus
+attach auxio at sbus with auxio_sbus
+file	arch/sparc64/dev/auxio.c		auxio
 
 #
 # Console related stuff
@@ -66,7 +72,7 @@ file	arch/sparc64/dev/z8530sc.c		zs
 define zstty {}
 device zstty: tty
 attach zstty at zs
-file arch/sparc64/dev/z8530tty.c			zstty needs-flag
+file arch/sparc64/dev/z8530tty.c		zstty needs-flag
 
 device kbd
 attach kbd at zs with kbd_zs
