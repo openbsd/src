@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 1996/08/25 09:56:57 downsj Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 1996/08/25 15:39:13 downsj Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1 f/g77.1
 MLINKS+=	gcc.1 cc.1
@@ -33,10 +33,10 @@ install:	maninstall
 		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
 		bindir=${DESTDIR}/usr/bin install
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
-	chown -R bin.bin ${DESTDIR}/usr/lib/gcc-lib
+	chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
 	chmod -R a+rX ${DESTDIR}/usr/lib/gcc-lib
 	if [ -e ${DESTDIR}/usr/lib/libf2c.a ]; then \
-		chown bin.bin ${DESTDIR}/usr/lib/libf2c.a; \
+		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/libf2c.a; \
 		chmod 444 ${DESTDIR}/usr/lib/libf2c.a; \
 	fi
 
