@@ -1701,3 +1701,4 @@
 ./usr/share/keymaps/amiga/us.map
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pciide_opti_reg.ph

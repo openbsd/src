@@ -319,6 +319,7 @@
 ./usr/include/dev/pci/pciide_apollo_reg.h
 ./usr/include/dev/pci/pciide_cmd_reg.h
 ./usr/include/dev/pci/pciide_cy693_reg.h
+./usr/include/dev/pci/pciide_opti_reg.h
 ./usr/include/dev/pci/pciide_pdc202xx_reg.h
 ./usr/include/dev/pci/pciide_piix_reg.h
 ./usr/include/dev/pci/pciide_sis_reg.h

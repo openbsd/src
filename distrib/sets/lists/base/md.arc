@@ -459,3 +459,4 @@
 ./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pciide_opti_reg.ph

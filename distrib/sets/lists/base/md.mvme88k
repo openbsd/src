@@ -413,3 +413,4 @@
 ./usr/mdec/stboot
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_opti_reg.ph
