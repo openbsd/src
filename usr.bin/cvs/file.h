@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.7 2004/08/06 14:12:56 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.8 2004/08/06 20:12:15 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -43,6 +43,7 @@ struct cvs_entries;
 #define CF_KNOWN    0x10  /* only recurse in directories known to CVS */
 #define CF_CREATE   0x20  /* create if file does not exist */
 #define CF_MKADMIN  0x40  /* create administrative files if they're missing */
+#define CF_NOSYMS   0x80  /* ignore symbolic links */
 
 
 /*
@@ -85,7 +86,13 @@ typedef struct cvs_file {
 } CVSFILE;
 
 
+
+#define CVS_DIRF_STATIC    0x01
+#define CVS_DIRF_STICKY    0x02
+
+
 struct cvs_dir {
+	u_int               cd_flags;
 	struct cvsroot     *cd_root;
 	char               *cd_repo;
 	struct cvs_entries *cd_ent;
