@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.27 2003/05/17 07:45:28 dhartmei Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.28 2003/05/19 20:22:53 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -257,18 +257,14 @@ print_state(struct pf_state *s, int opts)
 int
 unmask(struct pf_addr *m, sa_family_t af)
 {
-	int i = 31, j = 0, b = 0, msize;
+	int i = 31, j = 0, b = 0;
 	u_int32_t tmp;
 
-	if (af == AF_INET)
-		msize = 1;
-	else
-		msize = 4;
-	while (j < msize && m->addr32[j] == 0xffffffff) {
+	while (j < 4 && m->addr32[j] == 0xffffffff) {
 		b += 32;
 		j++;
 	}
-	if (j < msize) {
+	if (j < 4) {
 		tmp = ntohl(m->addr32[j]);
 		for (i = 31; tmp & (1 << i); --i)
 			b++;
