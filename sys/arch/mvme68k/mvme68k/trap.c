@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 1997/02/04 02:49:24 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.12 1997/02/04 12:29:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -237,7 +237,8 @@ again:
 		} else if (sig = writeback(fp, fromtrap)) {
 			beenhere = 1;
 			oticks = p->p_sticks;
-			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR, (caddr_t)faultaddr);
+			trapsignal(p, sig, VM_PROT_WRITE, SEGV_MAPERR,
+			    (caddr_t)faultaddr);
 			goto again;
 		}
 	}
@@ -639,7 +640,7 @@ copyfault:
 			goto dopanic;
 		}
 		frame.f_pad = code & 0xffff;
-		ucode = T_MMUFLT;
+		ucode = ftype;
 		typ = SEGV_MAPERR;
 		i = SIGSEGV;
 		break;
