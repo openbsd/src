@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.30 2001/06/27 03:14:28 smart Exp $ */
+/* $OpenBSD: netcat.c,v 1.31 2001/06/27 07:23:58 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -48,6 +48,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define PORT_MAX 65535
+
 /* Command Line Options */
 int	iflag;					/* Interval Flag */
 int	kflag;					/* More than one connect */
@@ -63,10 +65,9 @@ int	zflag;					/* Port Scan Flag */
 
 int timeout;
 int family = AF_UNSPEC;
-char *portlist[65535];
+char *portlist[PORT_MAX];
 
 ssize_t	atomicio __P((ssize_t (*)(), int, void *, size_t));
-
 void	atelnet __P((int, unsigned char *, unsigned int));
 void	build_ports __P((char *));
 void	help __P((void));
@@ -503,10 +504,10 @@ build_ports(p)
 
 		/* Make sure the ports are in order: lowest->highest */
 		hi = (int)strtoul(n, &endp, 10);
-		if (hi <= 0 || hi > 65535 || *endp != '\0')
+		if (hi <= 0 || hi > PORT_MAX || *endp != '\0')
 			errx(1, "port range not valid");
 		lo = (int)strtoul(p, &endp, 10);
-		if (lo <= 0 || lo > 65535 || *endp != '\0')
+		if (lo <= 0 || lo > PORT_MAX || *endp != '\0')
 			errx(1, "port range not valid");
 
 		if (lo > hi) {
@@ -517,7 +518,7 @@ build_ports(p)
 
 		/* Load ports sequentially */
 		for (cp = lo; cp <= hi; cp++) {
-			portlist[x] = malloc(sizeof(65535));
+			portlist[x] = malloc(sizeof(PORT_MAX));
 			sprintf(portlist[x], "%d", cp);
 			x++;
 		}
@@ -536,9 +537,9 @@ build_ports(p)
 		}
 	} else {
 		hi = (int)strtoul(p, &endp, 10);
-		if (hi <= 0 || hi > 65535 || *endp != '\0')
+		if (hi <= 0 || hi > PORT_MAX || *endp != '\0')
 			errx(1, "port range not valid");
-		portlist[0] = malloc(sizeof(65535));
+		portlist[0] = malloc(sizeof(PORT_MAX));
 		portlist[0] = p;
 	}
 }
