@@ -1,5 +1,5 @@
 #!/bin/sh -
-copyright='
+copyright="\
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +32,8 @@ copyright='
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-'
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.8 1995/03/10 04:13:52 chopps Exp $'
+"
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -46,12 +46,13 @@ if [ $# -ne 1 ] ; then
 	exit 1
 fi
 
-# Name of the source file.
+# Name and revision of the source file.
 src=$1
+SRC_ID=`head -1 $src | sed -e 's/.*\$\(.*\)\$.*/\1/'`
 
 # Names of the created files.
 out_c=vnode_if.c
-out_h=vnode_if.h
+out_h=../sys/vnode_if.h
 
 # Awk program (must support nawk extensions)
 # Use "awk" at Berkeley, "nawk" or "gawk" elsewhere.
@@ -123,15 +124,17 @@ awk_parser='
 '
 
 # This is put after the copyright on each generated file.
-warning="
+warning="\
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
- * Created by the script:
+ * Created from the file:
+ *	${SRC_ID}
+ * by the script:
  *	${SCRIPT_ID}
  */
-"
+" 
 
 # This is to satisfy McKusick (get rid of evil spaces 8^)
 anal_retentive='s:\([^/]\*\) :\1:g'
@@ -143,8 +146,9 @@ echo "$0: Creating $out_h" 1>&2
 exec > $out_h
 
 # Begin stuff
-echo "$copyright"
-echo "$warning"
+echo -n "$warning" | sed -e 's/\$//g'
+echo ""
+echo -n "$copyright"
 echo '
 extern struct vnodeop_desc vop_default_desc;
 '
@@ -224,8 +228,9 @@ echo "$0: Creating $out_c" 1>&2
 exec > $out_c
 
 # Begin stuff
-echo "$copyright"
-echo "$warning"
+echo -n "$warning" | sed -e 's/\$//g'
+echo ""
+echo -n "$copyright"
 echo '
 #include <sys/param.h>
 #include <sys/mount.h>

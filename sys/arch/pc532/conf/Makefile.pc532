@@ -62,7 +62,7 @@ NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o vnode_if.o ${LIBKERN} \
+SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o ${LIBKERN} \
 	${LIBCOMPAT}
 SYSTEM_DEP=Makefile ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
@@ -77,7 +77,7 @@ SYSTEM_LD_TAIL= size $@ ; nm -n $@ > SYMMS ; chmod 755 $@
 
 clean::
 	rm -f eddep *netbsd tags *.o locore.i [a-uw-z]*.s \
-		vnode_if.[ch] errs linterrs makelinks genassym
+		errs linterrs makelinks genassym
 
 #lint: /tmp param.c
 #	@lint -hbxn -I. -DGENERIC -Dvolatile= ${COPTS} ${PARAM} \
@@ -111,7 +111,7 @@ genassym: ${PC532}/pc532/genassym.c
 	${CC} -static ${INCLUDES} -D_KERNEL ${IDENT} ${PARAM} \
 		 ${PC532}/pc532/genassym.c -o genassym
 
-depend: assym.h param.c vnode_if.h
+depend: assym.h param.c
 	sh /usr/bin/mkdep ${COPTS} ${CFILES} ioconf.c
 	sh /usr/bin/mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${PC532}/pc532/genassym.c
 
@@ -149,11 +149,6 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 newvers:
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} -c vers.c
-
-# This allows you to specify which "awk" you will run, i.e.:
-#   make AWK=nawk ...
-vnode_if.c vnode_if.h : $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	AWK=${AWK} sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 %RULES
 

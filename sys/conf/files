@@ -144,6 +144,7 @@ file kern/vfs_lookup.c
 file kern/vfs_subr.c
 file kern/vfs_syscalls.c
 file kern/vfs_vnops.c
+file kern/vnode_if.c
 file miscfs/deadfs/dead_vnops.c
 file miscfs/fdesc/fdesc_vfsops.c	fdesc
 file miscfs/fdesc/fdesc_vnops.c		fdesc

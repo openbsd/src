@@ -84,7 +84,7 @@ LDX=-X
 LDX=-x
 .endif
 LDFLAGS= ${LDX} -G 4 -N -e __start -Ttext fffffc0000230000
-SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o ${LIBKERN} \
+SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o ${LIBKERN} \
 		${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
@@ -108,7 +108,7 @@ newvers:
 	${CC} ${CFLAGS} -c vers.c
 
 clean::
-	rm -f eddep *netbsd netbsd.gdb tags tags1 vnode_if.[ch] *.[io] \
+	rm -f eddep *netbsd netbsd.gdb tags tags1 *.[io] \
 		[a-z]*.s Errs errs linterrs makelinks genassym
 
 
@@ -129,7 +129,7 @@ genassym: genassym.o
 genassym.o: ${ALPHA}/alpha/genassym.c
 	${CC} -c ${CFLAGS} ${PARAM} $<
 
-SRCS= ${CFILES} ${ALPHA}/alpha/genassym.c ioconf.c param.c vnode_if.c
+SRCS= ${CFILES} ${ALPHA}/alpha/genassym.c ioconf.c param.c
 depend: .depend
 .depend: ${SRCS} assym.s
 	mkdep ${COPTS} ${SRCS}
@@ -157,8 +157,5 @@ param.c: $S/conf/param.c
 
 param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
-
-vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 %RULES
