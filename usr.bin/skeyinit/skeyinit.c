@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.46 2004/06/04 18:18:20 otto Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.47 2004/06/06 11:24:13 otto Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -290,7 +290,7 @@ main(int argc, char **argv)
 	    fchmod(fileno(skey.keyfile), S_IRUSR | S_IWUSR) != 0)
 		err(1, "can't set owner/mode for %s", pp->pw_name);
 	if (n == 0)
-		n = 99;
+		n = 100;
 
 	/* Set hash type if asked to */
 	if (ht && strcmp(ht, skey_get_algorithm()) != 0)
