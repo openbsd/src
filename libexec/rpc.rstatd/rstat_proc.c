@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.12 2001/01/17 19:23:26 deraadt Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.13 2001/01/24 11:42:37 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.12 2001/01/17 19:23:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.13 2001/01/24 11:42:37 deraadt Exp $";
 #endif
 
 /*
@@ -216,7 +216,8 @@ updatestat()
 	int i, save_errno = errno;
 #ifdef UVM
 	struct uvmexp uvmexp;
-	int mib[2], len;
+	int mib[2];
+	size_t len;
 #else
 	struct vmmeter cnt;
 #endif
