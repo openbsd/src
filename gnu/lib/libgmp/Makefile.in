@@ -59,12 +59,12 @@ FILES = gmp.h mp.h gmp-impl.h longlong.h urandom.h move-if-change \
 INCLUDES = -I. -Impn -I$(srcdir)
 FLAGS_TO_PASS = "CC=$(CC)" "CFLAGS=$(CFLAGS)" "XCFLAGS=$(XCFLAGS)"
 
-all: libgmp.a
+all: subdirs sublibs libgmp.a
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(XCFLAGS) $<
 
-libgmp.a: mpn/libmpn.a mpz/libmpz.a mpf/libmpf.a mpq/libmpq.a $(OBJS)
+libgmp.a: sublibs $(OBJS)
 	rm -rf tmpdir
 	mkdir tmpdir
 	for i in mpn mpz mpf mpq; \
@@ -78,7 +78,7 @@ libgmp.a: mpn/libmpn.a mpz/libmpz.a mpf/libmpf.a mpq/libmpq.a $(OBJS)
 	mv tmpdir/$@ .
 	rm -rf tmpdir
 
-libmp.a: mpn/libmpn.a mpbsd/libmpbsd.a $(OBJS)
+libmp.a: sublibs $(OBJS)
 	rm -rf tmpdir
 	mkdir tmpdir
 	for i in mpn mpbsd; \
@@ -92,15 +92,14 @@ libmp.a: mpn/libmpn.a mpbsd/libmpbsd.a $(OBJS)
 	mv tmpdir/$@ .
 	rm -rf tmpdir
 
-mpn/libmpn.a: force
+sublibs: mpn/libmpn.a mpz/libmpz.a mpf/libmpf.a mpq/libmpq.a mpbsd/libmpbsd.a
+	-touch sublibs
+
+subdirs:
 	cd mpn; $(MAKE) $(FLAGS_TO_PASS) libmpn.a
-mpz/libmpz.a: force
 	cd mpz; $(MAKE) $(FLAGS_TO_PASS) libmpz.a
-mpf/libmpf.a: force
 	cd mpf; $(MAKE) $(FLAGS_TO_PASS) libmpf.a
-mpq/libmpq.a: force
 	cd mpq; $(MAKE) $(FLAGS_TO_PASS) libmpq.a
-mpbsd/libmpbsd.a: force
 	cd mpbsd; $(MAKE) $(FLAGS_TO_PASS) libmpbsd.a
 
 check: libgmp.a

@@ -29,6 +29,8 @@ CC = gcc
 LOCAL_CC = $(CC)
 CFLAGS = -g -O
 AR = ar
+RANLIB = ranlib
+RANLIB_TEST = [ -f /usr/bin/ranlib -o -f /bin/ranlib ]
 SHELL = /bin/sh
 
 #### host and target specific makefile fragments come in here.
@@ -46,6 +48,7 @@ INCLUDES = -I. -I.. -I$(srcdir)/../mpz -I../mpn -I$(srcdir)/..
 libmpbsd.a: Makefile.in $(MPBSD_OBJS)
 	rm -f $@
 	$(AR) cr $@ $(MPBSD_OBJS)
+	if $(RANLIB_TEST) ; then $(RANLIB) $@; else true; fi
 
 .c.o:
 	$(CC) -c $(INCLUDES) -DBERKELEY_MP $(CFLAGS) $(XCFLAGS) $<

@@ -30,6 +30,8 @@ LOCAL_CC = $(CC)
 CFLAGS = -g -O
 AR = ar
 AR_FLAGS = rc
+RANLIB = ranlib
+RANLIB_TEST = [ -f /usr/bin/ranlib -o -f /bin/ranlib ]
 SHELL = /bin/sh
 
 #### host and target specific makefile fragments come in here.
@@ -71,6 +73,7 @@ INCLUDES = -I. -I.. -I../mpn -I$(srcdir)/..
 libmpz.a: Makefile $(MPZ_OBJS)
 	rm -f $@
 	$(AR) $(AR_FLAGS) $@ $(MPZ_OBJS)
+	if $(RANLIB_TEST) ; then $(RANLIB) $@; else true; fi
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(XCFLAGS) $<

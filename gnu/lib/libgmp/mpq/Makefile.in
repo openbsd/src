@@ -25,6 +25,8 @@ CC = gcc
 CFLAGS = -g -O
 AR = ar
 AR_FLAGS = rc
+RANLIB = ranlib
+RANLIB_TEST = [ -f /usr/bin/ranlib -o -f /bin/ranlib ]
 SHELL = /bin/sh
 
 #### host and target specific makefile fragments come in here.
@@ -42,6 +44,7 @@ INCLUDES = -I. -I.. -I../mpn -I$(srcdir)/..
 libmpq.a: Makefile $(MPQ_OBJS)
 	rm -f $@
 	$(AR) $(AR_FLAGS) $@ $(MPQ_OBJS)
+	if $(RANLIB_TEST) ; then $(RANLIB) $@; else true; fi
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(XCFLAGS) $<

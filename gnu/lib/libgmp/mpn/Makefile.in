@@ -28,6 +28,8 @@ CFLAGS = -g -O
 INCLUDES = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 AR = ar
 AR_FLAGS = rc
+RANLIB = ranlib
+RANLIB_TEST = [ -f /usr/bin/ranlib -o -f /bin/ranlib ]
 SFLAGS=
 
 #### host and target specific makefile fragments come in here.
@@ -36,6 +38,7 @@ SFLAGS=
 libmpn.a: Makefile mp_bases.o $(MPN_OBJECTS)
 	rm -f $@
 	$(AR) $(AR_FLAGS) $@ mp_bases.o $(MPN_OBJECTS)
+	if $(RANLIB_TEST) ; then $(RANLIB) $@; else true; fi
 
 .SUFFIXES: .c .s .S
 
