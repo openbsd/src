@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2000/06/30 16:00:12 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 2000/08/12 02:32:49 aaron Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/09/02 06:15:37 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 2000/06/30 16:00:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 2000/08/12 02:32:49 aaron Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -76,6 +76,8 @@ char	*suffixlist = ".*";	/* initially, can touch any file */
 
 int	errorsort();
 void	onintr();
+void	usage();
+
 /*
  *	error [-I ignorename] [-n] [-q] [-t suffixlist] [-s] [-v] [infile]
  *	
@@ -110,101 +112,118 @@ void	onintr();
  *		Take the following argument and use it as the name of
  *		the pascal source file, suffix .p
  *
- *	-E:	show the errors in sorted order; intended for
- *		debugging.
- *
  *	-S:	show the errors in unsorted order
  *		(as they come from the error file)
  *
  *	infile:	The error messages come from this file.
  *		Default: stdin
  */
+int
 main(argc, argv)
-	int	argc;
-	char	*argv[];
+	int argc;
+	char *argv[];
 {
-	char	*cp;
-	char	*ignorename = 0;
-	int	ed_argc;
-	char	**ed_argv;		/*return from touchfiles*/
+	char *ignorename = 0;
+	char **ed_argv;		/* return from touchfiles */
+	int ch, ed_argc;
 	boolean	show_errors = FALSE;
 	boolean	Show_Errors = FALSE;
 	boolean	pr_summary = FALSE;
 	boolean	edit_files = FALSE;
 
 	errorfile = stdin;
-	if (argc > 1) for(; (argc > 1) && (argv[1][0] == '-'); argc--, argv++){
-		for (cp = argv[1] + 1; *cp; cp++) switch(*cp){
-		default:
-			errx(1, "-%c: Unknown flag", *cp);
+	while ((ch = getopt(argc, argv, "STnqsvI:t:")) != -1)
+		switch (ch) {
+		case 'S':
+			Show_Errors = TRUE;
 			break;
-
-		case 'n':	notouch = TRUE;	break;
-		case 'q':	query = TRUE;	break;
-		case 'S':	Show_Errors = TRUE;	break;
-		case 's':	pr_summary = TRUE;	break;
-		case 'v':	edit_files = TRUE;	break;
-		case 'T':	terse = TRUE;	break;
+		case 'T':
+			terse = TRUE;
+			break;
+		case 'n':
+			notouch = TRUE;
+			break;
+		case 'q':
+			query = TRUE;
+			break;
+		case 's':
+			pr_summary = TRUE;
+			break;
+		case 'v':
+			edit_files = TRUE;
+			break;
+		case 'I':
+			ignorename = optarg;
+			break;
 		case 't':
-			*cp-- = 0; argv++; argc--;
-			if (argc > 1){
-				suffixlist = argv[1];
-			}
+			suffixlist = optarg;
 			break;
-		case 'I':	/*ignore file name*/
-			*cp-- = 0; argv++; argc--;
-			if (argc > 1)
-				ignorename = argv[1];
-			break;
+		default:
+			usage();
 		}
-	}	
+
+	argc -= optind;
+	argv += optind;
+
 	if (notouch)
-		suffixlist = 0;
-	if (argc > 1){
+		suffixlist = NULL;
+
+	if (argc > 1) {
 		if (argc > 3)
-			errx(3, "Only takes 0 or 1 arguments\n");
-		if ( (errorfile = fopen(argv[1], "r")) == NULL)
+			errx(3, "Only takes 0 or 1 arguments.\n");
+		if ((errorfile = fopen(argv[1], "r")) == NULL)
 			err(4, "%s", argv[1]);
 	}
-	if ( (queryfile = fopen(im_on, "r")) == NULL){
-		if (query){
+
+	if ((queryfile = fopen(im_on, "r")) == NULL) {
+		if (query) {
 			errx(9, "Can't open \"%s\" to query the user.", im_on);
 			exit(9);
 		}
 	}
+
 	if (signal(SIGINT, onintr) == SIG_IGN)
 		signal(SIGINT, SIG_IGN);
 	if (signal(SIGTERM, onintr) == SIG_IGN)
 		signal(SIGTERM, SIG_IGN);
+
 	getignored(ignorename);
 	eaterrors(&nerrors, &errors);
+
 	if (Show_Errors)
 		printerrors(TRUE, nerrors, errors);
+
 	qsort(errors, nerrors, sizeof(Eptr), errorsort);
+
 	if (show_errors)
 		printerrors(FALSE, nerrors, errors);
+
 	findfiles(nerrors, errors, &nfiles, &files);
+
 #define P(msg, arg) fprintf(stdout, msg, arg)
-	if (pr_summary){
-	    if (nunknown)
-	      P("%d Errors are unclassifiable.\n", nunknown);
-	    if (nignore)
-	      P("%d Errors are classifiable, but totally discarded.\n",nignore);
-	    if (nsyncerrors)
-	      P("%d Errors are synchronization errors.\n", nsyncerrors);
-	    if (nignore)
-	      P("%d Errors are discarded because they refer to sacrosinct files.\n", ndiscard);
-	    if (nnulled)
-	      P("%d Errors are nulled because they refer to specific functions.\n", nnulled);
-	    if (nnonspec)
-	      P("%d Errors are not specific to any file.\n", nnonspec);
-	    if (nthisfile)
-	      P("%d Errors are specific to a given file, but not to a line.\n", nthisfile);
-	    if (ntrue)
-	      P("%d Errors are true errors, and can be inserted into the files.\n", ntrue);
+
+	if (pr_summary) {
+		if (nunknown)
+			P("%d Errors are unclassifiable.\n", nunknown);
+		if (nignore)
+			P("%d Errors are classifiable, but totally discarded.\n",nignore);
+		if (nsyncerrors)
+			P("%d Errors are synchronization errors.\n", nsyncerrors);
+		if (nignore)
+			P("%d Errors are discarded because they refer to sacrosinct files.\n", ndiscard);
+		if (nnulled)
+			P("%d Errors are nulled because they refer to specific functions.\n", nnulled);
+		if (nnonspec)
+			P("%d Errors are not specific to any file.\n", nnonspec);
+		if (nthisfile)
+			P("%d Errors are specific to a given file, but not to a line.\n", nthisfile);
+		if (ntrue)
+			P("%d Errors are true errors, and can be inserted into the files.\n", ntrue);
 	}
+
 	filenames(nfiles, files);
 	fflush(stdout);
+
 	if (touchfiles(nfiles, files, &ed_argc, &ed_argv) && edit_files)
 		forkvi(ed_argc, ed_argv);
 }
@@ -213,10 +232,9 @@ forkvi(argc, argv)
 	int	argc;
 	char	**argv;
 {
-	if (query){
-		switch(inquire(terse
-		    ? "Edit? "
-		    : "Do you still want to edit the files you touched? ")){
+	if (query) {
+		switch (inquire(terse ? "Edit? " :
+		    "Do you still want to edit the files you touched? ")) {
 		case Q_NO:
 		case Q_no:
 			return;
@@ -224,6 +242,7 @@ forkvi(argc, argv)
 			break;
 		}
 	}
+
 	/*
 	 *	ed_agument's first argument is
 	 *	a vi/ex compatabile search argument
@@ -231,14 +250,14 @@ forkvi(argc, argv)
 	 */
 	try("vi", argc, argv);
 	try("ex", argc, argv);
-	try("ed", argc-1, argv+1);
+	try("ed", argc - 1, argv + 1);
 	fprintf(stdout, "Can't find any editors.\n");
 }
 
 try(name, argc, argv)
-	char	*name;
-	int	argc;
-	char	**argv;
+	char *name;
+	int argc;
+	char **argv;
 {
 	argv[0] = name;
 	wordvprint(stdout, argc, argv);
@@ -246,36 +265,54 @@ try(name, argc, argv)
 	fflush(stderr);
 	fflush(stdout);
 	sleep(2);
+
 	if (freopen(im_on, "r", stdin) == NULL)
 		return;
 	if (freopen(im_on, "w", stdout) == NULL)
 		return;
+
 	execvp(name, argv);
 }
 
 int errorsort(epp1, epp2)
-		Eptr	*epp1, *epp2;
+	Eptr *epp1, *epp2;
 {
-	reg	Eptr	ep1, ep2;
-		int	order;
+	reg Eptr ep1, ep2;
+	int order;
+
 	/*
 	 *	Sort by:
-	 *	1)	synchronization, non specific, discarded errors first;
-	 *	2)	nulled and true errors last
-	 *		a)	grouped by similar file names
-	 *			1)	grouped in ascending line number
+	 *	1) synchronization, non specific, discarded errors first;
+	 *	2) nulled and true errors last
+	 *	    a) grouped by similar file names
+	 *	    b) grouped in ascending line number
 	 */
 	ep1 = *epp1; ep2 = *epp2;
 	if (ep1 == 0 || ep2 == 0)
-		return(0);
-	if ( (NOTSORTABLE(ep1->error_e_class)) ^ (NOTSORTABLE(ep2->error_e_class))){
-		return(NOTSORTABLE(ep1->error_e_class) ? -1 : 1);
+		return (0);
+
+	if ((NOTSORTABLE(ep1->error_e_class)) ^
+	    (NOTSORTABLE(ep2->error_e_class))) {
+		return (NOTSORTABLE(ep1->error_e_class) ? -1 : 1);
 	}
+
 	if (NOTSORTABLE(ep1->error_e_class))	/* then both are */
-		return(ep1->error_no - ep2->error_no);
+		return (ep1->error_no - ep2->error_no);
+
 	order = strcmp(ep1->error_text[0], ep2->error_text[0]);
-	if (order == 0){
-		return(ep1->error_line - ep2->error_line);
-	}
-	return(order);
+	if (order == 0)
+		return (ep1->error_line - ep2->error_line);
+
+	return (order);
+}
+
+void
+usage()
+{
+	extern char *__progname;
+
+	(void)fprintf(stderr,
+	    "usage: %s [-STnsqv] [-I ignorefile] [-t suffixlist] [name]\n",
+	    __progname);
+	exit(1);
 }

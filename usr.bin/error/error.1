@@ -1,4 +1,4 @@
-.\"	$OpenBSD: error.1,v 1.11 2000/08/12 01:32:16 aaron Exp $
+.\"	$OpenBSD: error.1,v 1.12 2000/08/12 02:32:49 aaron Exp $
 .\"	$NetBSD: error.1,v 1.3 1995/09/02 06:15:20 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -42,12 +42,9 @@
 .Nd analyze and disperse compiler error messages
 .Sh SYNOPSIS
 .Nm error
-.Op Fl n
-.Op Fl s
-.Op Fl q
-.Op Fl v
-.Op Fl t Ar suffixlist
+.Op Fl STnqsv
 .Op Fl I Ar ignorefile
+.Op Fl t Ar suffixlist
 .Op Ar name
 .Sh DESCRIPTION
 The
@@ -62,6 +59,10 @@ without machinations of multiple windows in a screen editor.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl S
+Show the errors in unsorted order (as they come from the error file).
+.It Fl T
+Terse output.
 .It Fl n
 Do
 .Em not
@@ -79,6 +80,9 @@ Absence of the
 option implies that all referenced files
 (except those referring to discarded error messages)
 are to be touched.
+.It Fl s
+Print out statistics regarding the error categorization.
+Not too useful.
 .It Fl v
 After all files have been touched,
 overlay the visual editor
@@ -92,6 +96,8 @@ can't be found, try
 or
 .Xr \&ed 1
 from standard places.
+.It Fl I Ar ignorefile
+Specifies a file containing a list of functions to ignore.
 .It Fl t Ar suffixlist
 Take the following argument as a suffix list.
 Files whose suffixes do not appear in the suffix list are not touched.
@@ -110,11 +116,6 @@ to touch files ending with
 .Dq \&.foo\&* ,
 and
 .Dq \&.h .
-.It Fl s
-Print out statistics regarding the error categorization.
-Not too useful.
-.It Fl I Ar ignorefile
-Specifies a file containing a list of functions to ignore.
 .El
 .Pp
 .Nm
