@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.2 2000/08/03 14:06:39 aaron Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.3 2000/09/04 17:07:52 mickey Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -120,10 +120,11 @@ pcic_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t memt = pa->pa_memt;
 	bus_space_handle_t memh;
+	bus_size_t size;
 	int irq, i;
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->iot, &sc->ioh, NULL, NULL)) {
+	    &sc->iot, &sc->ioh, NULL, &size)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -139,11 +140,14 @@ pcic_pci_attach(parent, self, aux)
 	 */
 
 	/* Map mem space. */
-	if (bus_space_map(memt, 0xd0000, 0x4000, 0, &memh))
-		panic("pcic_pci_attach: can't map mem space");
+	if (bus_space_map(memt, 0xd0000, 0x10000, 0, &memh)) {
+		printf(": can't map mem space");
+		bus_space_unmap(sc->iot, sc->ioh, size);
+		return;
+	}
 
 	sc->membase = 0xd0000;
-	sc->subregionmask = (1 << (0x4000 / PCIC_MEM_PAGESIZE)) - 1;
+	sc->subregionmask = (1 << (0x10000 / PCIC_MEM_PAGESIZE)) - 1;
 
 	/* same deal for io allocation */
 
@@ -162,6 +166,7 @@ pcic_pci_attach(parent, self, aux)
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_MASTER_ENABLE);
 
+	printf("\n");
 	pcic_attach(sc);
 	pcic_attach_sockets(sc);
 
@@ -189,6 +194,8 @@ pcic_pci_attach(parent, self, aux)
 		sc->ih = pcic_pci_machdep_pcic_intr_establish(sc, pcic_intr);
 		if (sc->ih == NULL) {
 			printf("%s: couldnt map interrupt\n", sc->dev.dv_xname);
+			bus_space_unmap(memt, memh, 0x10000);
+			bus_space_unmap(sc->iot, sc->ioh, size);
 			return;
 		}
 	}
