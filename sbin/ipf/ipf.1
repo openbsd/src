@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.1,v 1.12 1998/01/26 04:13:32 dgregor Exp $
+.\"	$OpenBSD: ipf.1,v 1.13 1998/09/15 09:55:44 pattonme Exp $
 .TH IPF 1
 .SH NAME
 ipf \- alters packet filtering lists for IP packet input and output
@@ -67,7 +67,7 @@ lists.
 .B \-I
 Set the list to make changes to the inactive list.
 .TP
-.B \-l \0<param>
+.B \-l \0<pass|block|nomatch>
 Use of the \fB-l\fP flag toggles default logging of packets.  Valid
 arguments to this option are \fBpass\fP, \fBblock\fP and \fBnomatch\fP.
 When an option is set, any packet which exits filtering and matches the
@@ -109,12 +109,20 @@ affect fragment or state statistics).
 .DT
 .SH FILES
 \fI/usr/share/ipf\fP -- sample configuration files.
+.br
+/dev/ipauth
+.br
+/dev/ipl
+.br
+/dev/ipstate
 .SH SEE ALSO
-ipfstat(8), ipftest(1), ipf(5), mkfilters(1)
+ipftest(1), ipnat(1), ipf(4), ipl(4), ipnat(4), ipf(5), ipnat(5), ipfstat(8), ipmon(8)
+.br
+http://coombs.anu.edu.au/ipfilter/
 .SH DIAGNOSTICS
 .PP
 Needs to be run as root for the packet filtering lists to actually
 be affected inside the kernel.
 .SH BUGS
 .PP
-If you find any, please send email to me at darrenr@cyber.com.au
+If you find any, please send email to me at darrenr@pobox.com

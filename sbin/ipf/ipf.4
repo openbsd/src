@@ -1,9 +1,10 @@
-.\"	$OpenBSD: ipf.4,v 1.12 1998/09/01 16:38:17 deraadt Exp $
+.\"	$OpenBSD: ipf.4,v 1.13 1998/09/15 09:55:44 pattonme Exp $
 .TH IPF 4
 .SH NAME
 ipf \- packet filtering kernel interface
 .SH SYNOPSIS
 #include <netinet/ip_fil_compat.h>
+.br
 #include <netinet/ip_fil.h>
 .SH IOCTLS
 .PP
@@ -102,7 +103,7 @@ Flags which are recognised in fr_pass:
      FR_LOGFIRST     0x000040   /* log only the first packet to match */
      FR_RETRST       0x000080   /* return a TCP RST packet if blocked */
      FR__RETICMP     0x000100   /* return an ICMP packet if blocked */
-     FR_NOMATCH      0x000200   /* no match occurred */
+     FR_NOMATCH      0x000200   /* no match occured */
      FR_ACCOUNT      0x000400   /* count packet bytes */
      FR_KEEPFRAG     0x000800   /* keep fragment information */
      FR_KEEPSTATE    0x001000   /* keep `connection' state information */
@@ -140,7 +141,7 @@ from the list(s).  The values which it will take and recognise are FR_INQUE
 and FR_OUTQUE (see above).
 
 \fBGeneral Logging Flags\fP
-There are two flags which can be set to log packets independently of the
+There are two flags which can be set to log packets independantly of the
 rules used.  These allow for packets which are either passed or blocked
 to be logged.  To set (and clear)/get these flags, two ioctls are
 provided:
@@ -201,5 +202,14 @@ struct	filterstats {
 #endif
 };
 .fi
+.SH FILES
+/dev/ipauth
+.br
+/dev/ipl
+.br
+/dev/ipstate
 .SH SEE ALSO
-ipfstat(8), ipf(1), ipf(5)
+ipf(1), ipftest(1), ipnat(1), ipl(4), ipnat(4), ipf(5), ipnat(5), ipfstat(8), i
+pmon(8)
+.br
+http://coombs.anu.edu.au/ipfilter/

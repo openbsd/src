@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_nat.h,v 1.9 1998/02/17 01:39:05 dgregor Exp $       */
+/*       $OpenBSD: ip_nat.h,v 1.10 1998/09/15 09:51:18 pattonme Exp $       */
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.9 1998/02/17 01:39:05 dgregor Exp $
+ * $Id: ip_nat.h,v 1.10 1998/09/15 09:51:18 pattonme Exp $
  */
 
 #ifndef	__IP_NAT_H__
@@ -45,8 +45,8 @@
 typedef	struct	nat	{
 	u_long	nat_age;
 	int	nat_flags;
-	u_long	nat_sumd;
-	u_long	nat_ipsumd;
+	u_32_t	nat_sumd;
+	u_32_t	nat_ipsumd;
 	void	*nat_data;
 	struct	in_addr	nat_inip;
 	struct	in_addr	nat_outip;
@@ -176,6 +176,7 @@ extern	int	ip_natout __P((ip_t *, int, fr_info_t *));
 extern	int	ip_natin __P((ip_t *, int, fr_info_t *));
 extern	void	ip_natunload __P((void)), ip_natexpire __P((void));
 extern	void	nat_log __P((struct nat *, u_short));
-extern	void	fix_incksum __P((u_short *, u_long));
-extern	void	fix_outcksum __P((u_short *, u_long));
+extern	void	fix_incksum __P((u_short *, u_32_t));
+extern	void	fix_outcksum __P((u_short *, u_32_t));
+
 #endif /* __IP_NAT_H__ */

@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_fil_compat.h,v 1.8 1998/02/17 01:39:03 dgregor Exp $       */
+/*       $OpenBSD: ip_fil_compat.h,v 1.9 1998/09/15 09:51:18 pattonme Exp $ */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $Id: ip_fil_compat.h,v 1.8 1998/02/17 01:39:03 dgregor Exp $
+ * $Id: ip_fil_compat.h,v 1.9 1998/09/15 09:51:18 pattonme Exp $
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -124,7 +124,7 @@ typedef unsigned int    u_32_t;
 # else
 typedef unsigned long   u_32_t;
 # endif
-#endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ */
+#endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ || __sgi */
 
 #ifndef	MAX
 #define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
@@ -202,7 +202,15 @@ typedef unsigned long   u_32_t;
  */
 #ifdef KERNEL
 # if SOLARIS
-#  define	MUTEX_ENTER(x)	mutex_enter(x)
+#  define	ATOMIC_INC(x)		{ mutex_enter(&ipf_rw); (x)++; \
+					  mutex_exit(&ipf_rw); }
+#  define	ATOMIC_DEC(x)		{ mutex_enter(&ipf_rw); (x)--; \
+					  mutex_exit(&ipf_rw); }
+#  define	MUTEX_ENTER(x)		mutex_enter(x)
+#  define	READ_ENTER(x)		rw_enter(x, RW_READER)
+#  define	WRITE_ENTER(x)		rw_enter(x, RW_WRITER)
+#  define	MUTEX_DOWNGRADE(x)	rw_downgrade(x)
+#  define	RWLOCK_EXIT(x)	rw_exit(x)
 #  define	MUTEX_EXIT(x)	mutex_exit(x)
 #  define	MTOD(m,t)	(t)((m)->b_rptr)
 #  define	IRCOPY(a,b,c)	copyin((a), (b), (c))
@@ -254,10 +262,24 @@ typedef struct {
 	lock_t *l;
 	int pl;
 } kmutex_t;
-#   define	MUTEX_ENTER(x)	(x)->pl = LOCK((x)->l, IPF_LOCK_PL);
+#  define	ATOMIC_INC(x)		{ MUTEX_ENTER(&ipf_rw); \
+					  (x)++; MUTEX_EXIT(&ipf_rw); }
+#  define	ATOMIC_DEC(x)		{ MUTEX_ENTER(&ipf_rw); \
+					  (x)--; MUTEX_EXIT(&ipf_rw); }
+#   define	MUTEX_ENTER(x)		(x)->pl = LOCK((x)->l, IPF_LOCK_PL);
+#   define	READ_ENTER(x)		MUTEX_ENTER(x)
+#   define	WRITE_ENTER(x)		MUTEX_ENTER(x)
+#   define	MUTEX_DOWNGRADE(x)	;
+#   define	RWLOCK_EXIT(x)	MUTEX_EXIT(x)
 #   define	MUTEX_EXIT(x)	UNLOCK((x)->l, (x)->pl);
 #  else /* __sgi */
-#   define	MUTEX_ENTER(x)	;
+#   define	ATOMIC_INC(x)		(x)++
+#   define	ATOMIC_DEC(x)		(x)--
+#   define	MUTEX_ENTER(x)		;
+#   define	READ_ENTER(x)	;
+#   define	WRITE_ENTER(x)	;
+#   define	MUTEX_DOWNGRADE(x)	;
+#   define	RWLOCK_EXIT(x)	;
 #   define	MUTEX_EXIT(x)	;
 #  endif /* __sgi */
 #  ifndef linux
@@ -340,7 +362,13 @@ extern	vm_map_t	kmem_map;
 # define	SLEEP(x,y)	;
 # define	WAKEUP(x)	;
 # define	PANIC(x,y)	;
+# define	ATOMIC_INC(x)	(x)++
+# define	ATOMIC_DEC(x)	(x)--
 # define	MUTEX_ENTER(x)	;
+# define	READ_ENTER(x)	;
+# define	WRITE_ENTER(x)	;
+# define	MUTEX_DOWNGRADE(x)	;
+# define	RWLOCK_EXIT(x)	;
 # define	MUTEX_EXIT(x)	;
 # define	SPL_NET(x)	;
 # define	SPL_IMP(x)	;
@@ -370,6 +398,9 @@ typedef struct mbuf mb_t;
  * not be in other places or maybe one day linux will grow up and some
  * of these will turn up there too.
  */
+#ifndef	ICMP_MINLEN
+# define	ICMP_MINLEN	8
+#endif
 #ifndef	ICMP_UNREACH
 # define	ICMP_UNREACH	ICMP_DEST_UNREACH
 #endif
@@ -681,6 +712,12 @@ typedef	struct	uio	{
 #  undef UINT_MAX
 #  undef LONG_MAX
 #  undef ULONG_MAX
+#  define	s8 __s8
+#  define	u8 __u8
+#  define	s16 __s16
+#  define	u16 __u16
+#  define	s32 __s32
+#  define	u32 __u32
 #  include <linux/netdevice.h>
 #  undef	__KERNEL__
 # endif
@@ -715,4 +752,5 @@ struct	ether_addr	{
 #ifndef	ICMP_ROUTERSOLICIT
 # define	ICMP_ROUTERSOLICIT	10
 #endif
+
 #endif	/* __IP_COMPAT_H__ */

@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_fil.h,v 1.10 1998/02/17 01:39:02 dgregor Exp $       */
+/*       $OpenBSD: ip_fil.h,v 1.11 1998/09/15 09:51:18 pattonme Exp $       */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.10 1998/02/17 01:39:02 dgregor Exp $
+ * $Id: ip_fil.h,v 1.11 1998/09/15 09:51:18 pattonme Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -115,6 +115,9 @@ typedef	struct	fr_info	{
 	struct	frentry *fin_fr;
 	char	*fin_dp;		/* start of data past IP header */
 	void	*fin_mp;
+#if SOLARIS && defined(_KERNEL)
+	void	*fin_qfm;
+#endif
 } fr_info_t;
 
 /*
@@ -332,21 +335,19 @@ typedef	struct	ipflog	{
 	u_32_t	fl_flags;
 } ipflog_t;
 
-# ifdef __OpenBSD__
-# ifndef	ICMP_UNREACH_FILTER_PROHIB
-#  define	ICMP_UNREACH_FILTER_PROHIB	13
-# endif
-#else
+
+#if !defined(__OpenBSD__)
 # ifndef	ICMP_UNREACH_FILTER
 #  define	ICMP_UNREACH_FILTER	13
 # endif
 #endif
 
 #ifndef	IPF_LOGGING
-#define	IPF_LOGGING	0
+# define	IPF_LOGGING	0
 #endif
+
 #ifndef	IPF_DEFAULT_PASS
-#define	IPF_DEFAULT_PASS	FR_PASS
+# define	IPF_DEFAULT_PASS	FR_PASS
 #endif
 
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
@@ -392,19 +393,21 @@ extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
 # else
 extern	int	iplioctl __P((dev_t, int, caddr_t, int));
 # endif
-# ifdef __OpenBSD__
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
-# endif
-extern  int     ipl_enable __P((void));
-extern  int     ipl_disable __P((void));
 #else /* #ifndef _KERNEL */
 # if defined(__NetBSD__) && defined(PFIL_HOOKS)
 extern	int	ipfilterattach __P((int));
 # endif
-# ifndef __OpenBSD__
+
+#if !defined(__OpenBSD__)
+/*
+ * OpenBSD has this call in the kernel but doesn't export it to userland.
+ * See ip_fil.c for actual hook and more details.
+ */
 extern	int	iplattach __P((void));
-# endif
+#endif
+
 extern	int	ipl_enable __P((void));
 extern	int	ipl_disable __P((void));
 extern	void	ipflog_init __P((void));
@@ -460,37 +463,30 @@ extern	int	iplidentify __P((char *));
       (NetBSD >= 199511) || defined(__OpenBSD__)
 #    if defined(__NetBSD__) || (_BSDI_VERSION >= 199701) || defined(__OpenBSD__)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-#    else
+#    else /* FreeBSD v2.2+ or BSDI >= 199510 and < 199701 */
 extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
-#    endif
+#    endif /* NetBSD, modern BSDI and OpenBSD */
 extern	int	iplopen __P((dev_t, int, int, struct proc *));
 extern	int	iplclose __P((dev_t, int, int, struct proc *));
-#   else
-#    if defined(__OpenBSD__)
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
-#    else /* __OpenBSD__ */
-#     ifndef	linux
-extern	int	iplioctl __P((dev_t, int, caddr_t, int));
-#     else
-extern	int	iplioctl(struct inode *, struct file *, u_int, u_long);
-#     endif
-#    endif /* __OpenBSD__ */
-#    ifndef linux
-extern	int	iplopen __P((dev_t, int));
-extern	int	iplclose __P((dev_t, int));
-#    else
+#   else /* everybody else */
+#     ifdef	linux
+extern 	int	iplioctl(struct inode *, struct file *, u_int, u_long);
 extern	int	iplopen __P((struct inode *, struct file *));
 extern	void	iplclose __P((struct inode *, struct file *));
-#    endif /* !linux */
+      else
+extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+extern	int	iplopen __P((dev_t, int));
+extern	int	iplclose __P((dev_t, int));
+#     endif /* linux */
 #   endif /* (_BSDI_VERSION >= 199510) */
 #   if	BSD >= 199306
 extern	int	iplread __P((dev_t, struct uio *, int));
 #   else
-#    ifndef linux
-extern	int	iplread __P((dev_t, struct uio *));
-#    else
+#    ifdef linux
 extern	int	iplread(struct inode *, struct file *, char *, int);
-#    endif /* !linux */
+     else
+extern	int	iplread __P((dev_t, struct uio *));
+#    endif /* linux */
 #   endif /* BSD >= 199306 */
 #  endif /* __ sgi */
 # endif /* SOLARIS */
@@ -530,4 +526,5 @@ extern	int	iplused[IPL_LOGMAX + 1];
 extern	struct frentry *ipfilter[2][2], *ipacct[2][2];
 extern	struct frgroup *ipfgroups[3][2];
 extern	struct filterstats frstats[];
+
 #endif	/* __IP_FIL_H__ */

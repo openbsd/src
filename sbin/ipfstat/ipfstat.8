@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipfstat.8,v 1.9 1998/05/18 03:36:46 art Exp $
+.\"     $OpenBSD: ipfstat.8,v 1.10 1998/09/15 09:58:34 pattonme Exp $
 .TH ipfstat 8
 .SH NAME
 ipfstat \- reports on packet filter statistics and filter list
@@ -70,8 +70,14 @@ kernel.
 .SH FILES
 /dev/kmem
 .br
-/vmunix
+/dev/ipl
+.br
+/dev/ipstate
+.br
+/bsd
 .SH SEE ALSO
-ipf(1), ipfstat(1)
+ipf(1), ipftest(1), ipnat(1), ipf(4), ipl(4), ipnat(4), ipf(5), ipnat(5), ipmon(8)
+.br
+http://coombs.anu.edu.au/ipfilter/
 .SH BUGS
-none known.
+If you find any, please send email to me at darrenr@pobox.com.

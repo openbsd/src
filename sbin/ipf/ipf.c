@@ -1,4 +1,4 @@
-/*     $OpenBSD: ipf.c,v 1.11 1998/01/26 04:13:35 dgregor Exp $      */
+/*     $OpenBSD: ipf.c,v 1.12 1998/09/15 09:55:44 pattonme Exp $      */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -35,13 +35,17 @@
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
+#if defined(__OpenBSD__)
+# include <netinet/ip_fil_compat.h>
+#else
+# include <netinet/ip_compat.h>
+#endif
+#include <netinet/ip_fil.h>
 #include "ipf.h"
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.11 1998/01/26 04:13:35 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.12 1998/09/15 09:55:44 pattonme Exp $";
 #endif
 
 static	void	frsync __P((void));
@@ -205,12 +209,10 @@ char	*name, *file;
 		exit(1);
 	}
 
-	while (getline(line, sizeof(line)-1, fp)) {
+	while (getline(line, sizeof(line), fp)) {
 		/*
-		 * treat both CR and LF as EOL
+		 * treat CR as EOL.  LF is converted to NUL by getline().
 		 */
-		if ((s = index(line, '\n')))
-			*s = '\0';
 		if ((s = index(line, '\r')))
 			*s = '\0';
 		/*
@@ -223,7 +225,7 @@ char	*name, *file;
 			continue;
 
 		if (opts & OPT_VERBOSE)
-			(void)fprintf(stderr, "[%s]\n",line);
+			(void)fprintf(stderr, "[%s]\n", line);
 
 		fr = parse(line);
 		(void)fflush(stdout);
@@ -270,24 +272,34 @@ char	*name, *file;
 			}
 		}
 	}
+	if (ferror(fp) || !feof(fp)) {
+		fprintf(stderr, "%s: %s: file error or line too long\n",
+		    name, file);
+		exit(1);
+	}
 	(void)fclose(fp);
 }
 
 /*
- * Similar to fgets(3) but can handle '\\'
+ * Similar to fgets(3) but can handle '\\' and NL is converted to NUL.
+ * Returns NULL if error occured, EOF encounterd or input line is too long.
  */
 static char *getline(str, size, file)
 register char	*str;
 size_t	size;
 FILE	*file;
 {
-	register char *p;
-	register int len;
+	char *p;
+	int s, len;
 
 	do {
-		for (p = str; ; p += strlen(p) - 1) {
-			if (!fgets(p, size, file))
-				return(NULL);
+		for (p = str, s = size;; p += len, s -= len) {
+			/*
+			 * if an error occured, EOF was encounterd, or there
+			 * was no room to put NUL, return NULL.
+			 */
+			if (fgets(p, s, file) == NULL)
+				return (NULL);
 			len = strlen(p);
 			p[len - 1] = '\0';
 			if (p[len - 1] != '\\')
@@ -295,7 +307,7 @@ FILE	*file;
 			size -= len;
 		}
 	} while (*str == '\0' || *str == '\n');
-	return(str);
+	return (str);
 }
 
 
@@ -399,7 +411,9 @@ static void swapactive()
 
 static void frsync()
 {
-	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCFRSYN, 0) == -1)
+	int frsyn = 0;
+
+	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCFRSYN, &frsyn) == -1)
 		perror("SIOCFRSYN");
 	else
 		printf("filter sync'd\n");

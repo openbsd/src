@@ -1,4 +1,4 @@
-/*     $OpenBSD: parse.c,v 1.20 1998/07/09 06:12:23 deraadt Exp $      */
+/*     $OpenBSD: parse.c,v 1.21 1998/09/15 09:55:45 pattonme Exp $      */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -30,13 +30,17 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
+#if defined(__OpenBSD__)
+# include <netinet/ip_fil_compat.h>
+#else
+# include <netinet/ip_compat.h>
+#endif
+#include <netinet/ip_fil.h>
 #include "ipf.h"
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: parse.c,v 1.20 1998/07/09 06:12:23 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: parse.c,v 1.21 1998/09/15 09:55:45 pattonme Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -58,7 +62,7 @@ int	icmpcode __P((char *)), addkeep __P((char ***, struct frentry *));
 int	to_interface __P((frdest_t *, char *));
 void	print_toif __P((char *, frdest_t *));
 void	optprint __P((u_short, u_short, u_long, u_long));
-int	countbits __P((u_long));
+int	countbits __P((u_32_t));
 char	*portname __P((int, int));
 
 
@@ -476,11 +480,20 @@ char	*line;
 	/*
 	 * lazy users...
 	 */
-	if (!fil.fr_proto && !(fil.fr_ip.fi_fl & FI_TCPUDP) &&
-	    (fil.fr_dcmp || fil.fr_scmp || fil.fr_tcpf)) {
-		(void)fprintf(stderr,
-			"no protocol given for TCP/UDP comparisons\n");
+	if ((fil.fr_tcpf || fil.fr_tcpfm) && fil.fr_proto != IPPROTO_TCP) {
+		(void)fprintf(stderr, "TCP protocol not specified\n");
 		return NULL;
+	}
+	if (!(fil.fr_ip.fi_fl & FI_TCPUDP) && (fil.fr_proto != IPPROTO_TCP) &&
+	    (fil.fr_proto != IPPROTO_UDP) && (fil.fr_dcmp || fil.fr_scmp)) {
+		if (!fil.fr_proto) {
+			fil.fr_ip.fi_fl |= FI_TCPUDP;
+			fil.fr_mip.fi_fl |= FI_TCPUDP;
+		} else {
+			(void)fprintf(stderr,
+				     "port comparisons for non-TCP/UDP\n");
+			return NULL;
+		}
 	}
 /*
 	if ((fil.fr_flags & FR_KEEPFRAG) &&
@@ -981,7 +994,6 @@ struct	frentry	*fp;
 		fp->fr_proto = IPPROTO_ICMP;
 	if (isdigit(***cp)) {
 		i = atoi(**cp);
-		(*cp)++;
 	} else {
 		for (t = icmptypes, i = 0; ; t++, i++) {
 			if (!*t)
@@ -1083,9 +1095,9 @@ struct	frentry	*fp;
  * of bits.
  */
 int	countbits(ip)
-u_long	ip;
+u_32_t	ip;
 {
-	u_long	ipn;
+	u_32_t	ipn;
 	int	cnt = 0, i, j;
 
 	ip = ipn = ntohl(ip);

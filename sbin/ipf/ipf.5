@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.10 1998/01/26 04:13:34 dgregor Exp $
+.\"	$OpenBSD: ipf.5,v 1.11 1998/09/15 09:55:44 pattonme Exp $
 .TH IPF 5
 .SH NAME
 ipf \- IP packet filter rule syntax
@@ -483,5 +483,14 @@ qualifies all service/port names with the protocol specified.
 \fI/etc/hosts\fP -- host names
 .br
 \fI/usr/share/ipf\fP -- sample configuration files
+.br
+/dev/ipauth
+.br
+/dev/ipl
+.br
+/dev/ipstate
+.br
 .SH SEE ALSO
-ipf(1), ipftest(1), mkfilters(1), ipmon(8), ipf(4), hosts(5), services(5)
+ipf(1), ipftest(1), ipnat(1), ipf(4), ipl(4), ipnat(4), hosts(5), ipnat(5), services(5), ipfstat(8), ipmon(8)
+.br
+http://coombs.anu.edu.au/ipfilter/

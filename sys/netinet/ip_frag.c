@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_frag.c,v 1.9 1998/02/17 01:39:03 dgregor Exp $       */
+/*       $OpenBSD: ip_frag.c,v 1.10 1998/09/15 09:51:18 pattonme Exp $       */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_frag.c,v 1.9 1998/02/17 01:39:03 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ip_frag.c,v 1.10 1998/09/15 09:51:18 pattonme Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -59,14 +59,18 @@ static const char rcsid[] = "@(#)$Id: ip_frag.c,v 1.9 1998/02/17 01:39:03 dgrego
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include "ip_fil_compat.h"
+#if defined(__OpenBSD__)
+# include <netinet/ip_fil_compat.h>
+#else
+# include <netinet/ip_compat.h>
+#endif
 #include <netinet/tcpip.h>
-#include "ip_fil.h"
-#include "ip_proxy.h"
-#include "ip_nat.h"
-#include "ip_frag.h"
-#include "ip_state.h"
-#include "ip_auth.h"
+#include <netinet/ip_fil.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_state.h>
+#include <netinet/ip_auth.h>
 
 ipfr_t	*ipfr_heads[IPFT_SIZE];
 ipfr_t	*ipfr_nattab[IPFT_SIZE];
@@ -77,9 +81,8 @@ int	ipfr_inuse = 0,
 extern	int	ipfr_timer_id;
 #endif
 #if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
-extern	kmutex_t	ipf_frag;
-extern	kmutex_t	ipf_natfrag;
-extern	kmutex_t	ipf_nat;
+extern	krwlock_t	ipf_frag, ipf_natfrag, ipf_nat;
+extern	kmutex_t	ipf_rw;
 #endif
 
 
@@ -127,7 +130,7 @@ ipfr_t *table[];
 	for (fp = &table[idx]; (fr = *fp); fp = &fr->ipfr_next)
 		if (!bcmp((char *)&frag.ipfr_src, (char *)&fr->ipfr_src,
 			  IPFR_CMPSZ)) {
-			ipfr_stats.ifs_exists++;
+			ATOMIC_INC(ipfr_stats.ifs_exists);
 			return NULL;
 		}
 
@@ -137,7 +140,7 @@ ipfr_t *table[];
 	 */
 	KMALLOC(fr, ipfr_t *, sizeof(*fr));
 	if (fr == NULL) {
-		ipfr_stats.ifs_nomem++;
+		ATOMIC_INC(ipfr_stats.ifs_nomem);
 		return NULL;
 	}
 
@@ -158,8 +161,8 @@ ipfr_t *table[];
 	 * Compute the offset of the expected start of the next packet.
 	 */
 	fr->ipfr_off = (ip->ip_off & 0x1fff) + (fin->fin_dlen >> 3);
-	ipfr_stats.ifs_new++;
-	ipfr_inuse++;
+	ATOMIC_INC(ipfr_stats.ifs_new);
+	ATOMIC_INC(ipfr_inuse);
 	return fr;
 }
 
@@ -171,9 +174,9 @@ int pass;
 {
 	ipfr_t	*ipf;
 
-	MUTEX_ENTER(&ipf_frag);
+	WRITE_ENTER(&ipf_frag);
 	ipf = ipfr_new(ip, fin, pass, ipfr_heads);
-	MUTEX_EXIT(&ipf_frag);
+	RWLOCK_EXIT(&ipf_frag);
 	return ipf ? 0 : -1;
 }
 
@@ -186,12 +189,12 @@ nat_t *nat;
 {
 	ipfr_t	*ipf;
 
-	MUTEX_ENTER(&ipf_natfrag);
+	WRITE_ENTER(&ipf_natfrag);
 	if ((ipf = ipfr_new(ip, fin, pass, ipfr_nattab))) {
 		ipf->ipfr_data = nat;
 		nat->nat_data = ipf;
 	}
-	MUTEX_EXIT(&ipf_natfrag);
+	RWLOCK_EXIT(&ipf_natfrag);
 	return ipf ? 0 : -1;
 }
 
@@ -258,7 +261,7 @@ ipfr_t *table[];
 				else
 					f->ipfr_off = atoff;
 			}
-			ipfr_stats.ifs_hits++;
+			ATOMIC_INC(ipfr_stats.ifs_hits);
 			return f;
 		}
 	return NULL;
@@ -275,7 +278,7 @@ fr_info_t *fin;
 	nat_t	*nat;
 	ipfr_t	*ipf;
 
-	MUTEX_ENTER(&ipf_natfrag);
+	READ_ENTER(&ipf_natfrag);
 	ipf = ipfr_lookup(ip, fin, ipfr_nattab);
 	if (ipf) {
 		nat = ipf->ipfr_data;
@@ -288,7 +291,7 @@ fr_info_t *fin;
 		}
 	} else
 		nat = NULL;
-	MUTEX_EXIT(&ipf_natfrag);
+	RWLOCK_EXIT(&ipf_natfrag);
 	return nat;
 }
 
@@ -303,10 +306,10 @@ fr_info_t *fin;
 	int	ret;
 	ipfr_t	*ipf;
 
-	MUTEX_ENTER(&ipf_frag);
+	READ_ENTER(&ipf_frag);
 	ipf = ipfr_lookup(ip, fin, ipfr_heads);
 	ret = ipf ? ipf->ipfr_pass : 0;
-	MUTEX_EXIT(&ipf_frag);
+	RWLOCK_EXIT(&ipf_frag);
 	return ret;
 }
 
@@ -320,13 +323,13 @@ void *nat;
 	ipfr_t	*fr;
 	int	idx;
 
-	MUTEX_ENTER(&ipf_natfrag);
+	WRITE_ENTER(&ipf_natfrag);
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fr = ipfr_heads[idx]; fr; fr = fr->ipfr_next)
 			if (fr->ipfr_data == nat)
 				fr->ipfr_data = NULL;
 
-	MUTEX_EXIT(&ipf_natfrag);
+	RWLOCK_EXIT(&ipf_natfrag);
 }
 
 
@@ -339,16 +342,16 @@ void ipfr_unload()
 	nat_t	*nat;
 	int	idx;
 
-	MUTEX_ENTER(&ipf_frag);
+	WRITE_ENTER(&ipf_frag);
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fp = &ipfr_heads[idx]; (fr = *fp); ) {
 			*fp = fr->ipfr_next;
 			KFREE(fr);
 		}
-	MUTEX_EXIT(&ipf_frag);
+	RWLOCK_EXIT(&ipf_frag);
 
-	MUTEX_ENTER(&ipf_nat);
-	MUTEX_ENTER(&ipf_natfrag);
+	WRITE_ENTER(&ipf_nat);
+	WRITE_ENTER(&ipf_natfrag);
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fp = &ipfr_nattab[idx]; (fr = *fp); ) {
 			*fp = fr->ipfr_next;
@@ -358,8 +361,8 @@ void ipfr_unload()
 			}
 			KFREE(fr);
 		}
-	MUTEX_EXIT(&ipf_natfrag);
-	MUTEX_EXIT(&ipf_nat);
+	RWLOCK_EXIT(&ipf_natfrag);
+	RWLOCK_EXIT(&ipf_nat);
 }
 
 
@@ -383,7 +386,7 @@ int ipfr_slowtimer()
 #endif
 
 	SPL_NET(s);
-	MUTEX_ENTER(&ipf_frag);
+	WRITE_ENTER(&ipf_frag);
 
 	/*
 	 * Go through the entire table, looking for entries to expire,
@@ -401,13 +404,13 @@ int ipfr_slowtimer()
 					fr->ipfr_next->ipfr_prev =
 					     fr->ipfr_prev;
 				*fp = fr->ipfr_next;
-				ipfr_stats.ifs_expire++;
-				ipfr_inuse--;
+				ATOMIC_INC(ipfr_stats.ifs_expire);
+				ATOMIC_DEC(ipfr_inuse);
 				KFREE(fr);
 			} else
 				fp = &fr->ipfr_next;
 		}
-	MUTEX_EXIT(&ipf_frag);
+	RWLOCK_EXIT(&ipf_frag);
 
 	/*
 	 * Same again for the NAT table, except that if the structure also
@@ -416,8 +419,8 @@ int ipfr_slowtimer()
 	 * NOTE: We need to grab both mutex's early, and in this order so as
 	 * to prevent a deadlock if both try to expire at the same time.
 	 */
-	MUTEX_ENTER(&ipf_nat);
-	MUTEX_ENTER(&ipf_natfrag);
+	WRITE_ENTER(&ipf_nat);
+	WRITE_ENTER(&ipf_natfrag);
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fp = &ipfr_nattab[idx]; (fr = *fp); ) {
 			--fr->ipfr_ttl;
@@ -429,8 +432,8 @@ int ipfr_slowtimer()
 					fr->ipfr_next->ipfr_prev =
 					     fr->ipfr_prev;
 				*fp = fr->ipfr_next;
-				ipfr_stats.ifs_expire++;
-				ipfr_inuse--;
+				ATOMIC_INC(ipfr_stats.ifs_expire);
+				ATOMIC_DEC(ipfr_inuse);
 				if ((nat = (nat_t *)fr->ipfr_data)) {
 					if (nat->nat_data == fr)
 						nat->nat_data = NULL;
@@ -439,8 +442,8 @@ int ipfr_slowtimer()
 			} else
 				fp = &fr->ipfr_next;
 		}
-	MUTEX_EXIT(&ipf_natfrag);
-	MUTEX_EXIT(&ipf_nat);
+	RWLOCK_EXIT(&ipf_natfrag);
+	RWLOCK_EXIT(&ipf_nat);
 	SPL_X(s);
 	fr_timeoutstate();
 	ip_natexpire();

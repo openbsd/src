@@ -1,4 +1,4 @@
-/*    $OpenBSD: fils.c,v 1.12 1998/01/26 04:13:41 dgregor Exp $    */
+/*    $OpenBSD: fils.c,v 1.13 1998/09/15 09:58:34 pattonme Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -32,27 +32,31 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <netinet/tcp.h>
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
+#if defined(__OpenBSD__)
+# include <netinet/ip_fil_compat.h>
+#else
+# include <netinet/ip_compat.h>
+#endif
+#include <netinet/ip_fil.h>
 #include "ipf.h"
-#include "ip_proxy.h"
-#include "ip_nat.h"
-#include "ip_frag.h"
-#include "ip_state.h"
-#include "ip_auth.h"
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_state.h>
+#include <netinet/ip_auth.h>
 #include "kmem.h"
 #if defined(__NetBSD__) || (__OpenBSD__)
-#include <paths.h>
+# include <paths.h>
 #endif
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fils.c,v 1.12 1998/01/26 04:13:41 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: fils.c,v 1.13 1998/09/15 09:58:34 pattonme Exp $";
 #endif
 #ifdef	_PATH_UNIX
-#define	VMUNIX	_PATH_UNIX
+# define	VMUNIX	_PATH_UNIX
 #else
-#define	VMUNIX	"/vmunix"
+# define	VMUNIX	"/vmunix"
 #endif
 
 extern	char	*optarg;
@@ -447,6 +451,13 @@ ips_stat_t *ipsp;
 			PRINTF("\n");
 			/* ... phil@ultimate.com */
 
+			PRINTF("\tpkt_flags & %x = %x,\t", ips.is_flags & 0xf,
+				ips.is_flags >> 4);
+			PRINTF("\tpkt_options & %x = %x\n", ips.is_optmsk,
+				ips.is_opt);
+			PRINTF("\tpkt_security & %x = %x, pkt_auth & %x = %x\n",
+				ips.is_secmsk, ips.is_sec, ips.is_authmsk,
+				ips.is_auth);
 			istab[i] = ips.is_next;
 		}
 }

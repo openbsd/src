@@ -1,4 +1,4 @@
-/*    $OpenBSD: ip_fil.c,v 1.18 1998/05/18 21:10:46 provos Exp $    */
+/*    $OpenBSD: ip_fil.c,v 1.19 1998/09/15 09:51:17 pattonme Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.18 1998/05/18 21:10:46 provos Exp $";
+static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.19 1998/09/15 09:51:17 pattonme Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -87,13 +87,17 @@ static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.18 1998/05/18 21:10:46 provos
 #ifndef	_KERNEL
 # include <syslog.h>
 #endif
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
-#include "ip_proxy.h"
-#include "ip_nat.h"
-#include "ip_frag.h"
-#include "ip_state.h"
-#include "ip_auth.h"
+#if defined(__OpenBSD__)
+#include <netinet/ip_fil_compat.h>
+#else
+#include <netinet/ip_compat.h>
+#endif
+#include <netinet/ip_fil.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_state.h>
+#include <netinet/ip_auth.h>
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
@@ -120,7 +124,7 @@ extern	int	tcp_ttl;
 #endif
 
 int	ipl_inited = 0;
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__)
 int	ipl_unreach = ICMP_UNREACH_FILTER_PROHIB;
 #else
 int	ipl_unreach = ICMP_UNREACH_FILTER;
@@ -169,12 +173,7 @@ struct devsw iplsw = {
 };
 #endif /* _BSDI_VERSION >= 199510  && _KERNEL */
 
-#ifdef __OpenBSD__
-/* called by main() at boot time */
-void  iplattach __P((int));
-#endif
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)  || (_BSDI_VERSION >= 199701)
 # include <sys/conf.h>
 # if defined(NETBSD_PF)
 #  include <net/pfil.h>
@@ -209,19 +208,20 @@ int count;
 }
 # endif
 
-
+#if defined( __OpenBSD__)
 /*
- * None of the machinery should be initialized until the caller explicitly
- * enables the filter with ipf -E.
+ * Since iplattach() is called by main() at boot time, we put in a 
+ * fake stub so that none of the machinery is initialized till explicitly
+ * enabled via ipf -E. Therefore we rename the real iplattach() to 
+ * ipl_enable(). See also skeleton iplinit() later in this file. 
  */
-void
-iplattach(dummy)
-int dummy;
-{
-}
+void iplattach __P((int));
+void iplattach(int dummy) {};
 
-int
-ipl_enable()
+int ipl_enable()
+# else
+int iplattach()
+# endif /* OpenBSD */
 {
 	char *defpass;
 	int s;
@@ -267,7 +267,6 @@ ipl_enable()
 	else
 		defpass = "no-match -> block";
 
-#ifndef __OpenBSD__	/* don't print this message */ 
 	printf("IP Filter: initialized.  Default = %s all, Logging = %s\n",
 		defpass,
 # ifdef	IPFILTER_LOG
@@ -275,7 +274,6 @@ ipl_enable()
 # else
 		"disabled");
 # endif
-#endif /* __OpenBSD__ */
 	return 0;
 }
 
@@ -284,7 +282,11 @@ ipl_enable()
  * Disable the filter by removing the hooks from the IP input/output
  * stream.
  */
+# if defined(__OpenBSD__)
 int ipl_disable()
+# else
+int ipldetach()
+# endif
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
@@ -380,15 +382,13 @@ int mode;
 	unit = GET_MINOR(dev);
 	if ((IPL_LOGMAX < unit) || (unit < 0))
 		return ENXIO;
-#endif
 
-#if defined(__OpenBSD__) && defined(_KERNEL)
-
+# if defined(__OpenBSD__)
 	if (securelevel > 1) {
 		switch (cmd) {
-# ifndef	IPFILTER_LKM
+#  ifndef IPFILTER_LKM
 		case SIOCFRENB:
-# endif
+#  endif
 		case SIOCSETFF:
 		case SIOCADAFR:
 		case SIOCADIFR:
@@ -400,17 +400,18 @@ int mode;
 		case SIOCSWAPA:
 		case SIOCFRZST:
 		case SIOCIPFFL:
-# ifdef	IPFILTER_LOG
+#  ifdef IPFILTER_LOG
 		case SIOCIPFFB:
-# endif
+#  endif
 		case SIOCADNAT:
 		case SIOCRMNAT:
 		case SIOCFLNAT:
 		case SIOCCNATL:
-		     return EPERM;
+			return EPERM;
 		}
 	}
-#endif
+# endif /* OpenBSD */
+#endif /* _KERNEL */
 
 	SPL_NET(s);
 
@@ -424,6 +425,7 @@ int mode;
 		SPL_X(s);
 		return error;
 	}
+
 	switch (cmd) {
 	case FIONREAD :
 #ifdef IPFILTER_LOG
@@ -441,9 +443,15 @@ int mode;
 		else {
 			IRCOPY(data, (caddr_t)&enable, sizeof(enable));
 			if (enable)
+# if defined(__OpenBSD__)
 				error = ipl_enable();
 			else
 				error = ipl_disable();
+# else
+				error = iplattach();
+			else
+				error = ipldetach();
+# endif /* OpenBSD */
 		}
 		break;
 	}
@@ -900,7 +908,8 @@ struct tcpiphdr *ti;
 	/*
 	 * extra 0 in case of multicast
 	 */
-	err = ip_output(m, (struct mbuf *)0, 0, 0, 0, NULL);
+/* XXX if openbsd, add ", NULL" to end of ip_output?? */
+	err = ip_output(m, (struct mbuf *)0, 0, 0, 0);
 # endif
 	return err;
 }
@@ -918,10 +927,15 @@ void
 #  endif
 iplinit()
 {
-/*	(void) ipl_enable();  must explicitly enable with ipf -E */
+#  if defined(__OpenBSD__)
+	/* must explicitly enable with 'ipf -E'
+	 * which invokes ipl_enable(); */
+#  else
+	(void) iplattach();
+#  endif
 	ip_init();
 }
-# endif /* ! __NetBSD__ */
+# endif /* !LKM, !sgi, FreeBSD < 3 */
 
 
 size_t mbufchainlen(m0)
@@ -986,7 +1000,8 @@ frdest_t *fdp;
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = (struct sockaddr_in *)&ro->ro_rt->rt_gateway;
 	}
-	ro->ro_rt->rt_use++;
+	if (ro->ro_rt)
+		ro->ro_rt->rt_use++;
 
 	/*
 	 * For input packets which are being "fastrouted", they won't

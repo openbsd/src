@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 1996/06/23 14:30:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/09/15 09:58:33 pattonme Exp $
 
 PROG=	ipfstat
 MAN=	ipfstat.8
 SRCS=	fils.c parse.c opt.c kmem.c 
 .PATH:  ${.CURDIR}/../../sbin/ipf
-CFLAGS+=-DIPL_NAME=\"/dev/ipl\" -I${.CURDIR}/../../sbin/ipf -I${.CURDIR}/../../sys/netinet
+CFLAGS+=-I${.CURDIR}/../../sbin/ipf
 
 
 

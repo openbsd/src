@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.22 1998/03/21 22:42:13 millert Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.23 1998/09/15 09:57:29 pattonme Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
@@ -47,15 +48,26 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
-#include "ip_proxy.h"
-#include "ip_nat.h"
+#if defined(__OpenBSD__)
+# include <netinet/ip_fil_compat.h>
+#else
+# include <netinet/ip_compat.h>
+#endif
+#include <netinet/ip_fil.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
 #include "kmem.h"
+
+#if	defined(sun) && !SOLARIS2
+# define	STRERROR(x)	sys_errlist[x]
+extern	char	*sys_errlist[];
+#else
+# define	STRERROR(x)	strerror(x)
+#endif
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.22 1998/03/21 22:42:13 millert Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.23 1998/09/15 09:57:29 pattonme Exp $";
 #endif
 
 
@@ -66,14 +78,14 @@ static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.22 1998/03/21 22:42:13 millert
 extern	char	*optarg;
 
 ipnat_t	*parse __P((char *));
-u_int	hostnum __P((char *, int *));
-u_int	hostmask __P((char *));
+u_32_t	hostnum __P((char *, int *));
+u_32_t	hostmask __P((char *));
 u_short	portnum __P((char *, char *));
 void	dostats __P((int, int)), flushtable __P((int, int));
 void	printnat __P((ipnat_t *, int, void *));
 void	parsefile __P((int, char *, int));
 void	usage __P((char *));
-int	countbits __P((u_int));
+int	countbits __P((u_32_t));
 char	*getnattype __P((ipnat_t *));
 int	main __P((int, char*[]));
 
@@ -134,7 +146,8 @@ char *argv[];
 
 	if (!(opts & OPT_NODO) && ((fd = open(IPL_NAT, O_RDWR)) == -1) &&
 	    ((fd = open(IPL_NAT, O_RDONLY)) == -1)) {
-		perror("open "IPL_NAT);
+		(void) fprintf(stderr, "%s: open: %s\n", IPL_NAT,
+			STRERROR(errno));
 		exit(-1);
 	}
 
@@ -154,9 +167,9 @@ char *argv[];
  * of bits.
  */
 int	countbits(ip)
-u_int	ip;
+u_32_t	ip;
 {
-	u_int	ipn;
+	u_32_t	ipn;
 	int	cnt = 0, i, j;
 
 	ip = ipn = ntohl(ip);
@@ -361,7 +374,7 @@ int fd, opts;
 					ntohs(nat.nat_outport));
 				printf(" [%s %hu]", inet_ntoa(nat.nat_oip),
 					ntohs(nat.nat_oport));
-				printf(" %ld %hu %lx", nat.nat_age,
+				printf(" %ld %hu %x", nat.nat_age,
 					nat.nat_use, nat.nat_sumd);
 #if SOLARIS
 				printf(" %lx", nat.nat_ipsumd);
@@ -409,18 +422,18 @@ char	*name, *proto;
 }
 
 
-u_int	hostmask(msk)
+u_32_t	hostmask(msk)
 char	*msk;
 {
 	int	bits = -1;
-	u_int	mask;
+	u_32_t	mask;
 
 	if (!isdigit(*msk))
-		return (u_int)-1;
+		return (u_32_t)-1;
 	if (strchr(msk, '.'))
 		return inet_addr(msk);
 	if (strchr(msk, 'x'))
-		return (u_int)strtol(msk, NULL, 0);
+		return (u_32_t)strtol(msk, NULL, 0);
 	/*
 	 * set x most significant bits
 	 */
@@ -432,12 +445,19 @@ char	*msk;
 	return mask;
 }
 
-/* 
- * get_if_addr(): given a string containing an interface name (e.g. "ppp0")
- *		  return the IP address it represents as an unsigned int
+
+#if defined(__OpenBSD__)
+/*
+ * get_if_addr():
+ *	given a string containing an interface name (e.g. "ppp0")
+ *	return the IP address it represents as an unsigned int
+ *
+ * The OpenBSD community considers this feature to be quite useful and
+ * suggests inclusion into other platforms. The closest alternative is
+ * to define /etc/networks with suitable values.
  */
-u_int	if_addr(name)
-char	*name;
+u_32_t  if_addr(name)
+char   *name;
 {
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
@@ -448,7 +468,7 @@ char	*name;
 		warn("socket");
 		return INADDR_NONE;
 	}
-	
+
 	while (1) {
 		ifc.ifc_len = len;
 		ifc.ifc_buf = inbuf = realloc(inbuf, len);
@@ -471,7 +491,7 @@ char	*name;
 				? ifr->ifr_addr.sa_len
 				: sizeof(struct sockaddr));
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
-			     sizeof(ifr->ifr_name)))
+				sizeof(ifr->ifr_name)))
 			continue;
 		ifreq = *ifr;
 		if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0) {
@@ -488,22 +508,28 @@ char	*name;
 			return (sin->sin_addr.s_addr);
 		}
 	}
+
 if_addr_lose:
 	close(s);
 	free(inbuf);
 	return INADDR_NONE;
 }
+#endif
+
 
 /*
- * returns an ip address as an int var as a result of either a DNS lookup or
+ * returns an ip address as a long var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-u_int	hostnum(host, resolved)
+u_32_t	hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {
 	struct	hostent	*hp;
 	struct	netent	*np;
+#if defined(__OpenBSD__)
+	u_32_t		addr;
+#endif
 
 	*resolved = 0;
 	if (!strcasecmp("any", host))
@@ -513,9 +539,11 @@ int	*resolved;
 
 	if (!(hp = gethostbyname(host))) {
 		if (!(np = getnetbyname(host))) {
-			u_int addr;
+#if defined(__OpenBSD__)
+			/* attempt a map from interface name to address */
 			if ((addr = if_addr(host)) != INADDR_NONE)
 				return addr;
+#endif
 			*resolved = -1;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
@@ -756,6 +784,9 @@ char *line;
 					"missing parameter for \"proxy\"\n");
 				return NULL;
 			}
+		} else {
+			fprintf(stderr, "missing keyword \"port\"\n");
+			return NULL;
 		}
 		if ((proto = index(s, '/'))) {
 			*proto++ = '\0';
@@ -825,7 +856,8 @@ int opts;
 
 	if (strcmp(file, "-")) {
 		if (!(fp = fopen(file, "r"))) {
-			perror(file);
+			(void) fprintf(stderr, "%s: open: %s\n", file,
+				STRERROR(errno));
 			exit(1);
 		}
 	} else

@@ -1,4 +1,4 @@
-.\"      $OpenBSD: ipnat.5,v 1.5 1998/01/26 04:13:48 dgregor Exp $
+.\"      $OpenBSD: ipnat.5,v 1.6 1998/09/15 09:57:29 pattonme Exp $
 .TH IPNAT 5
 .SH NAME
 ipnat \- IP NAT file format
@@ -37,11 +37,11 @@ port number.  Either TCP or UDP or both can be selected by each rule, with a
 range of port numbers to remap into given as \fBport-number:port-number\fP.
 .SH Examples
 .PP
-To change IP#'s used internally from network 10 into an ISP provided 8 bit
-subnet at 209.1.2.0, the following would be used:
+To change IP numbers used internally from network 10 into an ISP provided 8 bit
+subnet at 209.1.2.0 through the ppp0 interface, the following would be used:
 .LP
 .nf
-map 10.0.0.0/8 -> 209.1.2.0/24
+map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 .fi
 .PP
 The obvious problem here is we're trying to squeeze over 16,000,000 IP
@@ -49,7 +49,7 @@ addresses into a 254 address space.  To increase the scope, remapping for TCP
 and/or UDP, port remapping can be used;
 .LP
 .nf
-map 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
+map ppp0 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
 .fi
 .PP
 which falls only 527,566 `addresses' short of the space available in network
@@ -57,8 +57,8 @@ which falls only 527,566 `addresses' short of the space available in network
 follows:
 .LP
 .nf
-map 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
-map 10.0.0.0/8 -> 209.1.2.0/24
+map ppp0 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
+map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 .fi
 .PP
 so that all TCP/UDP packets were port mapped and only other protocols, such as
@@ -67,5 +67,9 @@ ICMP, only have their IP# changed.
 /etc/services
 .br
 /etc/hosts
+.br
+/dev/ipnat
 .SH SEE ALSO
-ipnat(1), ipf(5), ipnat(4), ipnat(5)
+ipf(1), ipftest(1), ipnat(1), ipf(4), ipl(4), ipnat(4), ipf(5), ipfstat(8), ipmon(8)
+.br
+http://coombs.anu.edu.au/ipfilter/

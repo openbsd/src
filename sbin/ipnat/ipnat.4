@@ -1,13 +1,13 @@
-.\"      $OpenBSD: ipnat.4,v 1.7 1998/01/26 04:13:47 dgregor Exp $
+.\"      $OpenBSD: ipnat.4,v 1.8 1998/09/15 09:57:29 pattonme Exp $
 .TH IPNAT 4
 .SH NAME
 ipnat \- Network Address Translation kernel interface
 .SH SYNOPSIS
 .nf
-#include <sys/ip_fil_compat.h>
-#include <sys/ip_fil.h>
-#include <sys/ip_proxy.h>
-#include <sys/ip_nat.h>
+#include <netinet/ip_fil_compat.h>
+#include <netinet/ip_fil.h>
+#include <netinets/ip_proxy.h>
+#include <netinet/ip_nat.h>
 .fi
 .SH IOCTLS
 .PP
@@ -87,8 +87,14 @@ typedef struct  natstat {
         ipnat_t *ns_list;
 } natstat_t;
 .fi
+.SH FILES
+\fI/usr/share/ipf\fP -- sample configuration files.
+.br
+/dev/ipnat
+.SH SEE ALSO
+ipf(1), ipftest(1), ipnat(1), ipf(4), ipl(4), ipf(5), ipnat(5), ipfstat(8), ipmon(8)
+.br
+http://coombs.anu.edu.au/ipfilter/
 .SH BUGS
 It would be nice if there were more flexibility when adding and deleting
 filter rules.
-.SH SEE ALSO
-ipfstat(1), ipf(1), ipnat(1), ipf(4), ipnat(5)

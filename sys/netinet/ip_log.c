@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_log.c,v 1.2 1998/02/17 01:39:04 dgregor Exp $       */
+/*       $OpenBSD: ip_log.c,v 1.3 1998/09/15 09:51:18 pattonme Exp $       */
 /*
  * Copyright (C) 1997 by Darren Reed.
  *
@@ -6,7 +6,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $Id: ip_log.c,v 1.2 1998/02/17 01:39:04 dgregor Exp $
+ * $Id: ip_log.c,v 1.3 1998/09/15 09:51:18 pattonme Exp $
  */
 #ifdef	IPFILTER_LOG
 # ifndef SOLARIS
@@ -98,14 +98,18 @@
 # ifndef _KERNEL
 #  include <syslog.h>
 # endif
-# include "netinet/ip_fil_compat.h"
+# if defined(__OpenBSD__)
+#  include <netinet/ip_fil_compat.h>
+# else
+#  include <netinet/ip_compat.h>
+# endif
 # include <netinet/tcpip.h>
-# include "netinet/ip_fil.h"
-# include "netinet/ip_proxy.h"
-# include "netinet/ip_nat.h"
-# include "netinet/ip_frag.h"
-# include "netinet/ip_state.h"
-# include "netinet/ip_auth.h"
+# include <netinet/ip_fil.h>
+# include <netinet/ip_proxy.h>
+# include <netinet/ip_nat.h>
+# include <netinet/ip_frag.h>
+# include <netinet/ip_state.h>
+# include <netinet/ip_auth.h>
 # ifndef MIN
 #  define	MIN(a,b)	(((a)<(b))?(a):(b))
 # endif
@@ -122,9 +126,9 @@ iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];
 int	iplused[IPL_LOGMAX+1];
 u_long	iplcrc[IPL_LOGMAX+1];
 u_long	iplcrcinit;
-#ifdef	linux
+# ifdef	linux
 static struct wait_queue *iplwait[IPL_LOGMAX+1];
-#endif
+# endif
 
 
 /*
@@ -461,6 +465,7 @@ int unit;
 	iplog_t *ipl;
 	int used;
 
+	MUTEX_ENTER(&ipl_mutex);
 	while ((ipl = iplt[unit])) {
 		iplt[unit] = ipl->ipl_next;
 		KFREES((caddr_t)ipl, ipl->ipl_dsize);
@@ -469,6 +474,7 @@ int unit;
 	used = iplused[unit];
 	iplused[unit] = 0;
 	iplcrc[unit] = 0;
+	MUTEX_EXIT(&ipl_mutex);
 	return used;
 }
 #endif /* IPFILTER_LOG */
