@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.12 2002/01/31 21:34:56 jason Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.13 2002/01/31 22:37:07 jason Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.46 2002/01/31 21:35:16 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.47 2002/01/31 22:37:31 jason Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -93,6 +93,7 @@
 #	spif*	spif card (makes 8 tty and 1 bpp)
 #	bpp[jkl]	spif parallel port device
 #	crypto	hardware crypto access driver
+#	pci	PCI bus device
 #	uperf	performance counters
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -232,6 +233,10 @@ mouse*)name=${i##mouse-}
 
 uperf)
 	M uperf c 25 0 664
+	;;
+
+pci)
+	M pci c 52 0 664
 	;;
 
 crypto)
@@ -534,7 +539,7 @@ local)
 	;;
 
 all)
-	R wscons usbs audio0 xfs0 ss0 ss1 uk0 ses0 rndrandom lkm
+	R wscons pci usbs audio0 xfs0 ss0 ss1 uk0 ses0 rndrandom lkm
 	R tty00 tty01 tty02 tty03 cuaa cuab cuac cuad ttya ttyb ttyc
 	R ttyd ttyh0 ttyh1 crypto pf altq tun0 tun1 tun2 tun3 bpf0
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 fd1 fd1B fd1C
