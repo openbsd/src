@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.10 2000/01/06 07:09:36 d Exp $
+#	$OpenBSD: Makefile,v 1.11 2001/02/21 00:03:46 brad Exp $
 
-# After OpenBSD 2.7, libc_r will be depreceated and replaced by libpthread.
+# libc_r will be depreceated and replaced by libpthread
+# when all supported architectures support weak symbols.
 # See also comments in ../libc/Makefile.
 
 .include <bsd.own.mk>
