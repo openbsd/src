@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.3 1997/04/28 20:23:19 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.4 1997/11/14 03:59:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.3 1997/04/28 20:23:19 millert Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.4 1997/11/14 03:59:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -618,7 +618,7 @@ compile_tr(p, transtab)
 static char *
 compile_text()
 {
-	int asize, size;
+	int asize, esc_nl, size;
 	char *text, *p, *op, *s;
 	char lbuf[_POSIX2_LINE_MAX + 1];
 
@@ -629,13 +629,13 @@ compile_text()
 		op = s = text + size;
 		p = lbuf;
 		EATSPACE();
-		for (; *p; p++) {
-			if (*p == '\\')
-				p++;
+		for (esc_nl = 0; *p != '\0'; p++) {
+			if (*p == '\\' && p[1] != '\0' && *++p == '\n')
+				esc_nl = 1;
 			*s++ = *p;
 		}
 		size += s - op;
-		if (p[-2] != '\\') {
+		if (!esc_nl) {
 			*s = '\0';
 			break;
 		}
