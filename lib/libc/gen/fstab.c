@@ -32,11 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fstab.c,v 1.6 1997/07/09 00:28:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: fstab.c,v 1.7 1999/08/03 09:18:30 downsj Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fstab.h>
 #include <stdio.h>
@@ -174,12 +175,24 @@ getfsfile(name)
 int
 setfsent()
 {
+	struct stat sbuf;
+
 	if (_fs_fp) {
 		rewind(_fs_fp);
 		return(1);
 	}
+
+	if (stat(_PATH_FSTAB, &sbuf) != 0)
+		goto fail;
+	if ((sbuf.st_size == 0) || ((sbuf.st_mode & S_IFMT) != S_IFREG)) {
+		errno = EFTYPE;
+		goto fail;
+	}
+
 	if ((_fs_fp = fopen(_PATH_FSTAB, "r")))
 		return(1);
+
+fail:
 	error(errno);
 	return(0);
 }
