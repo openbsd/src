@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.59 2001/06/26 19:51:04 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.60 2001/06/26 20:06:36 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -2071,6 +2071,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf *m)
 {
 	u_short action, reason = 0, log = 0;
 	struct ip *h;
+	struct pf_rule *r = NULL;
 	struct pf_state *s;
 	int off;
 
@@ -2111,6 +2112,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf *m)
 		}
 		if ((s = pf_test_state_tcp(dir, ifp, m, 0, off, h, &th))) {
 			action = PF_PASS;
+			r = s->rule;
 			log = s->log;
 		} else
 			action = pf_test_tcp(dir, ifp, m, 0, off, h, &th);
@@ -2127,6 +2129,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf *m)
 		}
 		if ((s = pf_test_state_udp(dir, ifp, m, 0, off, h, &uh))) {
 			action = PF_PASS;
+			r = s->rule;
 			log = s->log;
 		} else
 			action = pf_test_udp(dir, ifp, m, 0, off, h, &uh);
@@ -2143,6 +2146,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf *m)
 		}
 		if ((s = pf_test_state_icmp(dir, ifp, m, 0, off, h, &ih))) {
 			action = PF_PASS;
+			r = s->rule;
 			log = s->log;
 		} else
 			action = pf_test_icmp(dir, ifp, m, 0, off, h, &ih);
@@ -2160,11 +2164,14 @@ done:
 		pf_status.packets[dir][action]++;
 	}
 	if (log) {
-		struct pf_rule r;
+		struct pf_rule r0;
 
-		r.ifp = ifp;
-		r.action = action;
-		PFLOG_PACKET(h, m, AF_INET, dir, reason, -1, &r);
+		if (r == NULL) {
+			r0.ifp = ifp;
+			r0.action = action;
+			r = &r0;
+		}
+		PFLOG_PACKET(h, m, AF_INET, dir, reason, -1, r);
 	}
 	return (action);
 }
