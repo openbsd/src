@@ -84,8 +84,12 @@ will sleep, if necessary, until required process resources are available.
 .Fn Fork
 can be implemented as a call to
 .Xr rfork 2
-"RFFDG|RFPROC"
+using "RFFDG|RFPROC"
 but isn't for backwards compatibility.
+If a process has file descriptor table sharing active, setuid or setgid
+programs will not
+.Xr execve 2
+with extra priviledges.
 .Sh ERRORS
 .Fn Rfork
 will fail and no child process will be created if:
