@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.231 2002/12/02 22:34:33 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.232 2002/12/02 22:45:37 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -866,7 +866,6 @@ filter_opt	: USER uids {
 			if (filter_opts.uid)
 				$2->tail->next = filter_opts.uid;
 			filter_opts.uid = $2;
-			
 		}
 		| GROUP gids {
 			if (filter_opts.gid)
@@ -877,7 +876,7 @@ filter_opt	: USER uids {
 			if (filter_opts.flags.b1 || filter_opts.flags.b2) {
 				yyerror("redefining flags");
 				YYERROR;
-			} 
+			}
 			filter_opts.flags.b1 |= $1.b1;
 			filter_opts.flags.b2 |= $1.b2;
 			filter_opts.flags.w |= $1.w;
@@ -887,14 +886,14 @@ filter_opt	: USER uids {
 			if (filter_opts.icmpspec) {
 				yyerror("redefining icmpspec");
 				YYERROR;
-			} 
+			}
 			filter_opts.icmpspec = $1;
 		}
 		| tos {
 			if (filter_opts.tos) {
 				yyerror("redefining tos");
 				YYERROR;
-			} 
+			}
 			filter_opts.tos = $1;
 		}
 		| keep {
