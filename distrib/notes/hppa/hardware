@@ -1,11 +1,7 @@
-dnl	$OpenBSD: hardware,v 1.1 2002/12/19 01:00:13 miod Exp $
+dnl	$OpenBSD: hardware,v 1.2 2003/01/14 21:54:34 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
-dnl	705
-dnl	710
-dnl	720
-dnl	730
-dnl	750
+dnl	705, 710, 720, 730, 750
 - PA7100-based
 	715/33, 715/50, 715/75
 	725/50, 725/75
@@ -23,8 +19,10 @@ dnl	750
 	C100, C110
 
 Supported devices {:-include-:}:
-dnl - SCSI controllers
-dnl 	built-in 53C710 or 53C720 SCSI
+- Ethernet Controller
+	built-in Intel 82596
+- SCSI controllers
+	built-in 53C710 SCSI
 - SGC/GSC graphics:
 	Artist (as found on 712)
 	CRX-8, CRX-24, HCRX-8, HCRX-24
