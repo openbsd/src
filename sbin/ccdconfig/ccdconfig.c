@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.6 1996/12/22 03:00:47 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.7 1997/01/13 21:23:35 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -319,11 +319,16 @@ do_all(action)
 	char line[_POSIX2_LINE_MAX];
 	char *cp, **argv;
 	int argc, rval;
+	gid_t egid;
 
+	egid = getegid();
+	setegid(getgid());
 	if ((f = fopen(ccdconf, "r")) == NULL) {
+		setegid(egid);
 		warn("fopen: %s", ccdconf);
 		return (1);
 	}
+	setegid(egid);
 
 	while (fgets(line, sizeof(line), f) != NULL) {
 		argc = 0;
