@@ -3595,11 +3595,15 @@ init_decl_processing ()
 	 from certain code which isn't valid in ANSI but which exists.  */
       temp = builtin_function ("abort", void_ftype_any, NOT_BUILT_IN,
 			       NULL_PTR);
-      TREE_THIS_VOLATILE (temp) = 1;
-      TREE_SIDE_EFFECTS (temp) = 1;
+      if (temp) {
+	TREE_THIS_VOLATILE (temp) = 1;
+	TREE_SIDE_EFFECTS (temp) = 1;
+      }
       temp = builtin_function ("exit", void_ftype_any, NOT_BUILT_IN, NULL_PTR);
-      TREE_THIS_VOLATILE (temp) = 1;
-      TREE_SIDE_EFFECTS (temp) = 1;
+      if (temp) {
+	TREE_THIS_VOLATILE (temp) = 1;
+	TREE_SIDE_EFFECTS (temp) = 1;
+      }
     }
 
 #if 0
