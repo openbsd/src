@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.17 2001/02/27 08:46:10 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.18 2001/03/16 15:51:58 art Exp $  */
 
 /*
  *  Portions of this code are:
@@ -74,8 +74,6 @@ static int syncer_delayno = 0;
 static long syncer_mask;
 LIST_HEAD(synclist, vnode);
 static struct synclist *syncer_workitem_pending;
-
-extern struct simplelock mountlist_slock;
 
 struct proc *syncerproc;
 
