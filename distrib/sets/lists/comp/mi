@@ -2022,6 +2022,10 @@
 ./usr/share/man/cat3/EVP_ripemd160.0
 ./usr/share/man/cat3/EVP_sha.0
 ./usr/share/man/cat3/EVP_sha1.0
+./usr/share/man/cat3/FD_CLR.0
+./usr/share/man/cat3/FD_ISSET.0
+./usr/share/man/cat3/FD_SET.0
+./usr/share/man/cat3/FD_ZERO.0
 ./usr/share/man/cat3/HMAC.0
 ./usr/share/man/cat3/HMAC_Final.0
 ./usr/share/man/cat3/HMAC_Init.0
@@ -2840,6 +2844,8 @@
 ./usr/share/man/cat3/has_il.0
 ./usr/share/man/cat3/has_key.0
 ./usr/share/man/cat3/hash.0
+./usr/share/man/cat3/hcreate.0
+./usr/share/man/cat3/hdestroy.0
 ./usr/share/man/cat3/heapsort.0
 ./usr/share/man/cat3/herror.0
 ./usr/share/man/cat3/hide_panel.0
@@ -2849,6 +2855,7 @@
 ./usr/share/man/cat3/hline.0
 ./usr/share/man/cat3/hosts_access.0
 ./usr/share/man/cat3/hosts_ctl.0
+./usr/share/man/cat3/hsearch.0
 ./usr/share/man/cat3/hstrerror.0
 ./usr/share/man/cat3/htobe16.0
 ./usr/share/man/cat3/htobe32.0
@@ -2910,6 +2917,7 @@
 ./usr/share/man/cat3/inet_ntoa.0
 ./usr/share/man/cat3/inet_ntop.0
 ./usr/share/man/cat3/inet_pton.0
+./usr/share/man/cat3/infnan.0
 ./usr/share/man/cat3/init_color.0
 ./usr/share/man/cat3/init_pair.0
 ./usr/share/man/cat3/initgroups.0
@@ -3483,6 +3491,7 @@
 ./usr/share/man/cat3/rewind.0
 ./usr/share/man/cat3/rewinddir.0
 ./usr/share/man/cat3/rexec.0
+./usr/share/man/cat3/rfc1413.0
 ./usr/share/man/cat3/rindex.0
 ./usr/share/man/cat3/rint.0
 ./usr/share/man/cat3/rintf.0
@@ -3724,6 +3733,7 @@
 ./usr/share/man/cat3/svc_getcaller.0
 ./usr/share/man/cat3/svc_getreq.0
 ./usr/share/man/cat3/svc_getreqset.0
+./usr/share/man/cat3/svc_getreqset2.0
 ./usr/share/man/cat3/svc_register.0
 ./usr/share/man/cat3/svc_run.0
 ./usr/share/man/cat3/svc_sendreply.0
@@ -3789,6 +3799,11 @@
 ./usr/share/man/cat3/timegm.0
 ./usr/share/man/cat3/timelocal.0
 ./usr/share/man/cat3/timeout.0
+./usr/share/man/cat3/timeradd.0
+./usr/share/man/cat3/timerclear.0
+./usr/share/man/cat3/timercmp.0
+./usr/share/man/cat3/timerisset.0
+./usr/share/man/cat3/timersub.0
 ./usr/share/man/cat3/times.0
 ./usr/share/man/cat3/timezone.0
 ./usr/share/man/cat3/tmpfile.0
@@ -3857,6 +3872,7 @@
 ./usr/share/man/cat3/vsyslog.0
 ./usr/share/man/cat3/vtimes.0
 ./usr/share/man/cat3/vw_printw.0
+./usr/share/man/cat3/vw_scanw.0
 ./usr/share/man/cat3/vwarn.0
 ./usr/share/man/cat3/vwarnx.0
 ./usr/share/man/cat3/vwprintw.0
@@ -3992,6 +4008,7 @@
 ./usr/share/man/cat9/boot.0
 ./usr/share/man/cat9/boottime.0
 ./usr/share/man/cat9/bounds_check_with_label.0
+./usr/share/man/cat9/bus_dma.0
 ./usr/share/man/cat9/bus_dmamap_create.0
 ./usr/share/man/cat9/bus_dmamap_destroy.0
 ./usr/share/man/cat9/bus_dmamap_load.0
@@ -4005,6 +4022,7 @@
 ./usr/share/man/cat9/bus_dmamem_map.0
 ./usr/share/man/cat9/bus_dmamem_mmap.0
 ./usr/share/man/cat9/bus_dmamem_unmap.0
+./usr/share/man/cat9/bus_space.0
 ./usr/share/man/cat9/bus_space_alloc.0
 ./usr/share/man/cat9/bus_space_barrier.0
 ./usr/share/man/cat9/bus_space_copy_1.0
@@ -4173,6 +4191,7 @@
 ./usr/share/man/cat9/timeout_initialized.0
 ./usr/share/man/cat9/timeout_pending.0
 ./usr/share/man/cat9/timeout_set.0
+./usr/share/man/cat9/timeout_triggered.0
 ./usr/share/man/cat9/tsleep.0
 ./usr/share/man/cat9/ttyprintf.0
 ./usr/share/man/cat9/untimeout.0
@@ -4189,6 +4208,7 @@
 ./usr/share/man/cat9/vn_lock.0
 ./usr/share/man/cat9/vnode.0
 ./usr/share/man/cat9/vprintf.0
+./usr/share/man/cat9/vwaitforio.0
 ./usr/share/man/cat9/wakeup.0
 ./usr/share/man/cat9/writedisklabel.0
 ./usr/share/misc/getopt
