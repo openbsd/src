@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.476 2005/01/28 17:29:31 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.477 2005/02/07 18:18:14 david Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -134,7 +134,6 @@ struct node_state_opt {
 		struct {
 			u_int32_t	limit;
 			u_int32_t	seconds;
-	
 		}		 max_src_conn_rate;
 		struct {
 			u_int8_t	flush;
@@ -1738,7 +1737,7 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				if (r.timeout[PFTM_SRC_NODE] <
 				    r.max_src_conn_rate.seconds)
-					r.timeout[PFTM_SRC_NODE] = 
+					r.timeout[PFTM_SRC_NODE] =
 					    r.max_src_conn_rate.seconds;
 				r.rule_flag |= PFRULE_SRCTRACK;
 				if (srctrack == PF_SRCTRACK_RULE)

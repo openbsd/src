@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.79 2005/01/05 18:23:10 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.80 2005/02/07 18:18:14 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -94,7 +94,6 @@ struct pfctl {
 	u_int8_t	 debug_set;
 	u_int8_t	 hostid_set;
 	u_int8_t	 ifname_set;
-	
 };
 
 struct node_if {
