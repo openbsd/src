@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2001/08/21 14:36:36 jason Exp $
+#	$OpenBSD: GENERIC,v 1.8 2001/08/21 16:21:47 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -42,6 +42,8 @@ le*		at ledma?
 qec*		at sbus? slot ? offset ?
 qe*		at qec?
 be*		at qec?
+
+hme*		at sbus? slot ? offset ?
 
 #
 # Note the flags on the esp entries below, that work around
