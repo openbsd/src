@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.4 2001/08/23 04:07:33 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.5 2001/08/24 19:46:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -141,22 +141,60 @@ sig_alrm(int signal)
 }
 
 int
+init_pcap(void)
+{
+	struct bpf_program bprog;
+	pcap_t *oldhpcap = hpcap;
+
+	hpcap = pcap_open_live(interface, snaplen, 1, PCAP_TO_MS, errbuf);
+	if (hpcap == NULL) {
+		logmsg(LOG_ERR, "Failed to initialize: %s\n",errbuf);
+		hpcap = oldhpcap;
+		return (-1);
+	}
+
+	if (filter) {
+		if (pcap_compile(hpcap, &bprog, filter, PCAP_OPT_FIL, 0) < 0)
+			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
+		else if (pcap_setfilter(hpcap, &bprog) < 0)
+			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
+	}
+
+	if (pcap_datalink(hpcap) != DLT_PFLOG) {
+		logmsg(LOG_ERR, "Invalid datalink type\n");
+		pcap_close(hpcap);
+		hpcap = oldhpcap;
+		return (-1);
+	}
+
+	if (oldhpcap)
+		pcap_close(oldhpcap);
+
+	snaplen = pcap_snapshot(hpcap);
+	logmsg(LOG_NOTICE, "Listening on %s, logging to %s, snaplen %d\n",
+		interface, filename, snaplen);
+	return (0);
+}
+
+int
 reset_dump(void)
 {
-        struct pcap_file_header hdr;
+	struct pcap_file_header hdr;
 	struct stat st;
 	FILE *fp;
 
 	if (hpcap == NULL)
 		return 1;
-	if (dpcap)
+	if (dpcap) {
 		pcap_dump_close(dpcap);
+		dpcap = 0;
+	}
 
 	/*
 	 * Basically reimpliment pcap_dump_open() because it truncates
 	 * files and duplicates headers and such.
 	 */
-	fp = fopen(filename, "a");
+	fp = fopen(filename, "a+");
 	if (fp == NULL) {
 		snprintf(hpcap->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
 		    filename, pcap_strerror(errno));
@@ -171,12 +209,27 @@ reset_dump(void)
 	}
 
 	dpcap = (pcap_dumper_t *)fp;
-	if (st.st_size != 0)
-		return (0);
 
 #define TCPDUMP_MAGIC 0xa1b2c3d4
 
-	/* 
+	if (st.st_size == 0) {
+		hdr.magic = TCPDUMP_MAGIC;
+		hdr.version_major = PCAP_VERSION_MAJOR;
+		hdr.version_minor = PCAP_VERSION_MINOR;
+		hdr.thiszone = hpcap->tzoff;
+		hdr.snaplen = hpcap->snapshot;
+		hdr.sigfigs = 0;
+		hdr.linktype = hpcap->linktype;
+
+		if (fwrite((char *)&hdr, sizeof(hdr), 1, fp) != 1) {
+			dpcap = NULL;
+			fclose(fp);
+			return (-1);
+		}
+		return (0);
+	}
+
+	/*
 	 * XXX Must read the file, compare the header against our new
 	 * options (in particular, snaplen) and adjust our options so
 	 * that we generate a correct file.
@@ -191,31 +244,24 @@ reset_dump(void)
 			    "Existing file specifies a snaplen of %d, using it",
 			    hdr.snaplen);
 			snaplen = hdr.snaplen;
+			if (init_pcap()) {
+				logmsg(LOG_ERR, "Failed to re-initialize\n");
+				if (hpcap == 0)
+					return (-1);
+				logmsg(LOG_NOTICE,
+					"Using old settings, offset: %d\n",
+					st.st_size);
+			}
 		}
 	}
+
 	(void) fseek(fp, 0L, SEEK_END);
-
-	hdr.magic = TCPDUMP_MAGIC;
-	hdr.version_major = PCAP_VERSION_MAJOR;
-	hdr.version_minor = PCAP_VERSION_MINOR;
-
-	hdr.thiszone = hpcap->tzoff;
-	hdr.snaplen = hpcap->snapshot;
-	hdr.sigfigs = 0;
-	hdr.linktype = hpcap->linktype;
-
-	if (fwrite((char *)&hdr, sizeof(hdr), 1, fp) != 1) {
-		dpcap = NULL;
-		fclose(fp);
-		return (-1);
-	}
 	return (0);
 }
 
 int
 main(int argc, char **argv)
 {
-	struct bpf_program bprog;
 	struct pcap_stat pstat;
 	int ch, np;
 	FILE *fp;
@@ -277,22 +323,8 @@ main(int argc, char **argv)
 			logmsg(LOG_NOTICE, "Failed to form filter expression");
 	}
 
-	hpcap = pcap_open_live(interface, snaplen, 1, PCAP_TO_MS, errbuf);
-	if (hpcap == NULL) {
-		logmsg(LOG_ERR, "Failed to initialize: %s\n",errbuf);
-		exit(1);
-	}
-
-	if (filter) {
-		if (pcap_compile(hpcap, &bprog, filter, PCAP_OPT_FIL, 0) < 0)
-			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
-		else if (pcap_setfilter(hpcap, &bprog) < 0)
-			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
-	}
-
-	if (pcap_datalink(hpcap) != DLT_PFLOG) {
-		logmsg(LOG_ERR, "Invalid datalink type\n");
-		pcap_close(hpcap);
+	if (init_pcap()) {
+		logmsg(LOG_ERR, "Exiting, init failure\n");
 		exit(1);
 	}
 
@@ -301,9 +333,6 @@ main(int argc, char **argv)
 		pcap_close(hpcap);
 		exit(1);
 	}
-
-	logmsg(LOG_NOTICE, "Listening on %s, logging to %s, snaplen %d\n",
-	    interface, filename, snaplen);
 
 	while (1) {
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS, pcap_dump, (u_char *)dpcap);
