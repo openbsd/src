@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.1 2004/11/16 09:52:33 markus Exp $ */
+/*	$OpenBSD: if.c,v 1.2 2004/11/25 23:08:13 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -75,7 +75,7 @@ initifstat(void)
 }
 
 #define UPDATE(x, y) do { \
-		ifs->ifs_now.x = ifm->y; \
+		ifs->ifs_now.x = ifm.y; \
 		ifs->ifs_cur.x = ifs->ifs_now.x - ifs->ifs_old.x; \
 		sum.x += ifs->ifs_cur.x; \
 		if (state == TIME) \
@@ -102,7 +102,7 @@ void
 fetchifstat(void)
 {
 	struct ifstat *newstats, *ifs;
-	struct if_msghdr *ifm;
+	struct if_msghdr ifm;
 	struct sockaddr *info[RTAX_MAX];
 	struct sockaddr_dl *sdl;
 	char *buf, *next, *lim;
@@ -128,24 +128,25 @@ fetchifstat(void)
 	bzero(&sum, sizeof(sum));
 
 	lim = buf + need;
-	for (next = buf; next < lim; next += ifm->ifm_msglen) {
-		ifm = (struct if_msghdr *)next;
-		if (ifm->ifm_type != RTM_IFINFO ||
-		   !(ifm->ifm_addrs & RTA_IFP))
+	for (next = buf; next < lim; next += ifm.ifm_msglen) {
+		bcopy(next, &ifm, sizeof ifm);
+		if (ifm.ifm_type != RTM_IFINFO ||
+		   !(ifm.ifm_addrs & RTA_IFP))
 			continue;
-		if (ifm->ifm_index >= nifs) {
-			if ((newstats = realloc(ifstats, (ifm->ifm_index + 4) *
+		if (ifm.ifm_index >= nifs) {
+			if ((newstats = realloc(ifstats, (ifm.ifm_index + 4) *
 			    sizeof(struct ifstat))) == NULL)
 				continue;
 			ifstats = newstats;
-			for (; nifs < ifm->ifm_index + 4; nifs++)
+			for (; nifs < ifm.ifm_index + 4; nifs++)
 				ifstats[nifs].ifs_name[0] = '\0';
 		}
-		ifs = &ifstats[ifm->ifm_index];
+		ifs = &ifstats[ifm.ifm_index];
 		if (ifs->ifs_name[0] == '\0') {
 			bzero(&info, sizeof(info));
-			rt_getaddrinfo((struct sockaddr *)(ifm + 1),
-			    ifm->ifm_addrs, info);
+			rt_getaddrinfo(
+			    (struct sockaddr *)((struct if_msghdr *)next + 1),
+			    ifm.ifm_addrs, info);
 			if ((sdl = (struct sockaddr_dl *)info[RTAX_IFP])) {
 				if (sdl->sdl_family == AF_LINK &&
 				    sdl->sdl_nlen > 0)
