@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.80 1998/09/11 22:45:52 millert Exp $
+#	$OpenBSD: install.sub,v 1.81 1998/09/12 08:33:57 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -534,11 +534,12 @@ configure_ifs() {
 	set -- `ifconfig $_interface_name | sed -n '
 		1s/.*<UP,.*$/UP/p
 		1s/.*<.*>*$/DOWN/p
-		2s/inet//
-		2s/--> [0-9.][0-9.]*//
-		2s/netmask//
-		2s/broadcast//
-		2p'`
+		/media:/s/^.*$//
+		/status:/s/^.*$//
+		/inet/s/--> [0-9.][0-9.]*//
+		/inet/s/netmask//
+		/inet/s/broadcast//
+		/inet/s/inet// p'`
 
 	_up=$1
 	_interface_ip=$2
@@ -572,17 +573,25 @@ configure_ifs() {
 		_interface_mask=$resp
 	done
 
-	echo "Your network interface might require additional link-layer"
-	echo "directives (like \`link0'). If this is the case you can enter"
-	echo "these at the next prompt.  Values used by some drivers are:"
-	echo "    -link0            BNC"
-	echo "    link0 -link1      AUI"
-	echo "    link0 link1       UTP"
-	echo "(But please keep in mind not all drivers use flags like this)."
-	echo -n "Additional link-layer arguments? [$_interface_extra] "
-	getresp "$_interface_extra"
-	if [ "X${resp}" != X"" ]; then
-		_interface_extra=$resp
+	if [ -n "`ifconfig -m ${_interface_name} | sed -n '/media/p'`" ]; then
+		echo "Your use of the network interface may require non-default"
+		echo "media directives.  The default media is:"
+		ifconfig -m ${_interface_name} | sed -n '
+			/supported/D
+			/media:/p'
+		echo "This is a list of supported media:"
+		ifconfig -m ${_interface_name} | sed -n '
+			/media:/D
+			/media/p'
+		echo "If the default is not satisfactory, and you wish to use"
+		echo "another media, enter it now, like:"
+		echo "        media 100baseTX mediaopt full-duplex"
+		echo ""
+		echo -n "Additional link-layer arguments? [$_interface_extra] "
+		getresp "$_interface_extra"
+		if [ "X${resp}" != X"" ]; then
+			_interface_extra=$resp
+		fi
 	fi
 
 	# Configure the interface.  If it
@@ -677,7 +686,7 @@ enable_network() {
 
 	# Display results...
 	echo	"Network interface configuration:"
-	ifconfig -a
+	ifconfig -am
 
 	echo	""
 
