@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.3 2001/06/04 20:05:06 maja Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.4 2001/07/07 18:26:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -29,6 +29,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsksymdef.h>
+
 #include <err.h>
 #include <errno.h>
 #include <kvm.h>
@@ -36,10 +41,7 @@
 #include <limits.h>
 #include <nlist.h>
 #include <stdio.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsksymdef.h>
+#include <unistd.h>
 
 #define	NUM_KBD	10
 
@@ -92,7 +94,7 @@ kbd_show_enc(kd, idx)
 	unsigned long p;
 	struct nameint *n;
 	int found;
-	long variant;
+	u_int32_t variant;
 
 	printf("tables available for %s keyboard:\nencoding\n\n",
 	       kbtype_tab[idx]);

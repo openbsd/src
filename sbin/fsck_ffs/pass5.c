@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.11 2001/03/09 07:26:09 mickey Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.12 2001/07/07 18:26:12 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -38,14 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.11 2001/03/09 07:26:09 mickey Exp $";
+static char rcsid[] = "$OpenBSD: pass5.c,v 1.12 2001/07/07 18:26:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/lock.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ufs/quota.h>
+#include <ufs/ufs/inode.h>
+#include <ufs/ffs/ffs_extern.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -343,7 +347,7 @@ pass5()
 						continue;
 					if (cg_inosused(cg)[i] & (1 << k))
 						continue;
-					pwarn("ALLOCATED INODE %d MARKED FREE\n",
+					pwarn("ALLOCATED INODE %ld MARKED FREE\n",
 					      c * fs->fs_ipg + i * 8 + k);
 				}
 			}
@@ -356,7 +360,7 @@ pass5()
 						continue;
 					if (cg_inosused(cg)[i] & (1 << k))
 						continue;
-					pwarn("ALLOCATED FRAG %d MARKED FREE\n",
+					pwarn("ALLOCATED FRAG %ld MARKED FREE\n",
 					      c * fs->fs_fpg + i * 8 + k);
 				}
 			}

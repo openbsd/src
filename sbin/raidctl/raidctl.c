@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.6 2001/06/04 14:59:49 mickey Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.7 2001/07/07 18:26:19 deraadt Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.11 2000/01/09 03:06:35 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ main(argc,argv)
 	int is_clean;
 	int raidID;
 	int rawpart;
-	int serial_number;
+	int serial_number = 0;
  	struct stat st;
  	int fd;
 	int force;
@@ -744,7 +744,7 @@ do_meter( fd, option )
 	double elapsed;
 	int elapsed_sec;
 	int elapsed_usec;
-	int simple_eta,last_eta;
+	int simple_eta;
 	double rate;
 	int amount;
 	int tbit_value;
@@ -800,11 +800,6 @@ do_meter( fd, option )
 			simple_eta = (int) ((100.0 - (double) last_percent ) / rate);
 		} else {
 			simple_eta = -1;
-		}
-		if (simple_eta <=0) { 
-			simple_eta = last_eta;
-		} else {
-			last_eta = simple_eta;
 		}
 
 		get_time_string(eta_buffer, simple_eta);

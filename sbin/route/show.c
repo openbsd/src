@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.19 2000/11/15 01:45:48 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.20 2001/07/07 18:26:20 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.19 2000/11/15 01:45:48 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.20 2001/07/07 18:26:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,9 @@ static void p_flags __P((int, char *));
 static void pr_rthdr __P((void));
 static void pr_family __P((int));
 
+int	keyword(char *);
+void	usage(char *);
+
 /*
  * Print routing tables.
  */
@@ -117,7 +120,7 @@ show(argc, argv)
 	char **argv;
 {
 	struct rt_msghdr *rtm;
-	char *buf = NULL, *next, *lim;
+	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
 	int mib[6], af = 0;
         struct sockaddr *sa;

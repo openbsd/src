@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.13 2001/06/04 14:59:48 mickey Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.14 2001/07/07 18:26:17 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -139,26 +139,29 @@ main(argc, argv, envp)
 	int argc;
 	char *argv[], *envp[];
 {
-	struct group *grp;
 	struct nfsd_args nfsdargs;
-	struct passwd *pwd;
-	struct ucred *cr;
 	struct sockaddr_in inetaddr, inetpeer;
 #ifdef ISO
 	struct sockaddr_iso isoaddr, isopeer;
 #endif
-	struct timeval ktv;
 	fd_set ready, sockbits;
-	int ch, cltpflag, connect_type_cnt, i, len, maxsock, msgsock;
+	int ch, cltpflag, connect_type_cnt, i, len, maxsock = 0, msgsock;
 	int nfsdcnt, nfssvc_flag, on, reregister, sock, tcpflag, tcpsock;
-	int tp4cnt, tp4flag, tp4sock, tpipcnt, tpipflag, tpipsock, udpflag;
+	int tp4cnt, tpipcnt, udpflag;
+#ifdef NFSKERB
+	struct ucred *cr;
 	char *cp, **cpp;
+	int tpipflag = 0, tp4flag = 0, tpipsock = 0, tp4sock;
+	struct timeval ktv;
+	struct passwd *pwd;
+	struct group *grp;
+#endif
 
 #define	MAXNFSDCNT	20
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
-	cltpflag = reregister = tcpflag = tp4cnt = tp4flag = tpipcnt = 0;
-	tpipflag = udpflag = 0;
+	cltpflag = reregister = tcpflag = tp4cnt = tpipcnt = 0;
+	tcpsock = udpflag = 0;
 #ifdef ISO
 #define	GETOPT	"cn:rtu"
 #define	USAGE	"[-crtu] [-n num_servers]"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.5 1997/07/30 23:28:45 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.6 2001/07/07 18:26:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -1674,7 +1674,7 @@ rtswitch(struct rt_entry *rt,
 		return;
 
 	swap = rt->rt_spares[0];
-	(void)sprintf(label, "Use #%d", rts - rt->rt_spares);
+	(void)sprintf(label, "Use #%d", (int)(rts - rt->rt_spares));
 	rtchange(rt, rt->rt_state & ~(RS_NET_SYN | RS_RDISC),
 		 rts->rts_gate, rts->rts_router, rts->rts_metric,
 		 rts->rts_tag, rts->rts_ifp, rts->rts_time, label);

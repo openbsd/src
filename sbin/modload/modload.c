@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.24 2001/03/22 23:17:50 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.25 2001/07/07 18:26:15 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ main(argc, argv)
 			p = modobj;
 		snprintf(modout, sizeof modout, "%s%s.XXXXXXXX.o",
 		    _PATH_TMP, p);
-		if (modfd = mkstemps(modout, strlen(".o")) == -1)
+		if ((modfd = mkstemps(modout, strlen(".o"))) == -1)
 			err(1, "creating %s", modout);
 		close(modfd);
 		out = modout;

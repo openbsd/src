@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.21 2001/07/07 00:19:52 millert Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.22 2001/07/07 18:26:15 deraadt Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -210,7 +210,6 @@ main(argc, argv)
 	struct nfsd_cargs ncd;
 	int mntflags, altflags, i, nfssvc_flag, num;
 	char *name, *p, *spec;
-	int error = 0;
 #ifdef NFSKERB
 	uid_t last_ruid;
 #endif
@@ -429,7 +428,7 @@ main(argc, argv)
 	}
 	if (nfsargsp->flags & NFSMNT_KERB) {
 		if ((opflags & ISBGRND) == 0) {
-			if (i = fork()) {
+			if ((i = fork())) {
 				if (i == -1)
 					err(1, "Couldn't launch NFS kerberos service process");
 				exit(0);
@@ -693,7 +692,7 @@ tryagain:
 		if (--retrycnt > 0) {
 			if (opflags & BGRND) {
 				opflags &= ~BGRND;
-				if (i = fork()) {
+				if ((i = fork())) {
 					if (i == -1)
 						err(1, "nqnfs 2");
 					exit(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.8 2001/03/02 08:33:55 art Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.9 2001/07/07 18:26:12 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass1.c,v 1.8 2001/03/02 08:33:55 art Exp $";
+static char rcsid[] = "$OpenBSD: pass1.c,v 1.9 2001/07/07 18:26:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ checkinode(inumber, idesc)
 	if (/* dp->di_size < 0 || */
 	    dp->di_size + sblock.fs_bsize - 1 < dp->di_size) {
 		if (debug)
-			printf("bad size %qu:", dp->di_size);
+			printf("bad size %llu:", (unsigned long long)dp->di_size);
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
@@ -160,8 +160,8 @@ checkinode(inumber, idesc)
 	ndb = howmany(dp->di_size, sblock.fs_bsize);
 	if (ndb < 0) {
 		if (debug)
-			printf("bad size %qu ndb %d:",
-				dp->di_size, ndb);
+			printf("bad size %llu ndb %d:",
+			    (unsigned long long)dp->di_size, ndb);
 		goto unknown;
 	}
 	if (mode == IFBLK || mode == IFCHR)
@@ -184,8 +184,9 @@ checkinode(inumber, idesc)
 				errexit("cannot read symlink");
 			if (debug) {
 				symbuf[dp->di_size] = 0;
-				printf("convert symlink %d(%s) of size %qd\n",
-					inumber, symbuf, dp->di_size);
+				printf("convert symlink %d(%s) of size %llu\n",
+					inumber, symbuf,
+					(unsigned long long)dp->di_size);
 			}
 			dp = ginode(inumber);
 			memcpy(dp->di_shortlink, symbuf, (long)dp->di_size);

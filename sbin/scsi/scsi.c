@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.7 2001/03/08 21:41:50 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.8 2001/07/07 18:26:21 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 				exit(errno);
 			}
 			else if (amount == 0)
-				fprintf(stderr, "Warning: wrote only %d bytes out of %d.\n",
+				fprintf(stderr, "Warning: wrote only %u bytes out of %u.\n",
 					scsireq->datalen - count,
 					scsireq->datalen);
 			
@@ -711,7 +711,6 @@ edit_report(void *hook, int letter, void *arg, int count, char *name)
 static int
 edit_get(void *hook, char *name)
 {
-	struct get_hook *h = (struct get_hook *)hook;
 	int arg = editinfo[editind].default_value;
 
 	if (editinfo[editind].can_edit) {
@@ -975,7 +974,6 @@ main(int argc, char **argv)
 			exit(1);
 		}
 	} else if (commandflag) {
-		int i;
 		char *fmt;
 
 		if (argc < 1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2001/06/13 20:13:29 markus Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2001/07/07 18:26:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 2001/06/13 20:13:29 markus Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 2001/07/07 18:26:20 deraadt Exp $";
 #endif
 
 #include "defs.h"
@@ -47,9 +47,10 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.11 2001/06/13 20:13:29 markus Exp $"
 #ifdef sgi
 #include "math.h"
 #endif
-#include <signal.h>
-#include <fcntl.h>
 #include <sys/file.h>
+#include <fcntl.h>
+#include <err.h>
+#include <signal.h>
 
 pid_t	mypid;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.c,v 1.23 2001/06/27 03:31:46 angelos Exp $	*/
+/*	$OpenBSD: kernel.c,v 1.24 2001/07/07 18:26:18 deraadt Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: kernel.c,v 1.23 2001/06/27 03:31:46 angelos Exp $";
+static char rcsid[] = "$OpenBSD: kernel.c,v 1.24 2001/07/07 18:26:18 deraadt Exp $";
 #endif
 
 #include <time.h>
@@ -1409,7 +1409,7 @@ kernel_request_sa(struct sadb_msg *sadb)
 	struct stateob *st;
 	time_t tm;
 	struct sadb_address *dst, *src;
-	struct sockaddr *dstaddr, *srcaddr;
+	struct sockaddr *dstaddr;
 	struct sadb_ext *ext = (struct sadb_ext *)(sadb + 1);
 	char srcbuf[NI_MAXHOST], dstbuf[NI_MAXHOST];
 	void *end;

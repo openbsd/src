@@ -737,11 +737,12 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 #ifdef __FreeBSD__
     struct diskslices ds;
     int slice = -1;
+    char *s;
+    int fd1, e;
 #endif
     struct disklabel dl, *lp;
     const char *s1, *s2;
-    char *s;
-    int part, fd1, i, e;
+    int part, i;
 
     part = -1;
     s1 = fname;
@@ -929,7 +930,7 @@ argtou(const char *arg, u_int lo, u_int hi, const char *msg)
 static int
 oklabel(const char *src)
 {
-    int c, i;
+    int c = 0, i;
 
     for (i = 0; i <= 11; i++) {
 	c = (u_char)*src++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.7 1999/03/25 01:45:01 aaron Exp $	*/
+/*	$OpenBSD: check.c,v 1.8 2001/07/07 18:26:12 deraadt Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: check.c,v 1.7 1999/03/25 01:45:01 aaron Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.8 2001/07/07 18:26:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -82,11 +82,12 @@ checkfilesys(fname)
 		return (8);
 	}
 
-	if (!preen)
+	if (!preen) {
 		if (boot.ValidFat < 0)
 			printf("** Phase 1 - Read and Compare FATs\n");
 		else
 			printf("** Phase 1 - Read FAT\n");
+	}
 
 	mod |= readfat(dosfs, &boot, boot.ValidFat >= 0 ? boot.ValidFat : 0, &fat);
 	if (mod & FSFATAL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modulus.c,v 1.5 2001/01/28 22:45:12 niklas Exp $	*/
+/*	$OpenBSD: modulus.c,v 1.6 2001/07/07 18:26:18 deraadt Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -81,7 +81,7 @@ mod_unlink(struct moduli_cache *ob)
 void
 mod_check_prime(int iter, int tm)
 {
-	struct moduli_cache *p, *tmp, *next;
+	struct moduli_cache *p, *tmp = NULL, *next;
 	time_t now;
 	int flag;
 	BN_CTX *ctx;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.4 2000/04/26 23:26:05 jasoni Exp $	*/
+/*	$OpenBSD: dir.c,v 1.5 2001/07/07 18:26:11 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.1 1997/06/11 11:21:46 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #if 0
 static char rcsid[] = "$NetBSD: dir.c,v 1.1 1997/06/11 11:21:46 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.4 2000/04/26 23:26:05 jasoni Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.5 2001/07/07 18:26:11 deraadt Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -551,7 +551,7 @@ expanddir(dp, name)
 {
 	daddr_t lastbn, newblk;
 	register struct bufarea *bp;
-	char *cp, *firstblk;
+	char *firstblk;
 
 	if ((firstblk = malloc(sblock.e2fs_bsize)) == NULL) {
 		fprintf(stderr, "out of memory");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.9 2001/05/28 21:22:47 gluk Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.10 2001/07/07 18:26:12 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: pass2.c,v 1.9 2001/05/28 21:22:47 gluk Exp $";
+static char rcsid[] = "$OpenBSD: pass2.c,v 1.10 2001/07/07 18:26:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,12 +178,12 @@ pass2()
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
 			if (usedsoftdep)
-			        pfatal("%s %s: LENGTH %d NOT MULTIPLE of %d",
-				       "DIRECTORY", pathbuf, inp->i_isize,
+			        pfatal("%s %s: LENGTH %ld NOT MULTIPLE of %d",
+				       "DIRECTORY", pathbuf, (long)inp->i_isize,
 				       DIRBLKSIZ);
 			else
-				pwarn("%s %s: LENGTH %d NOT MULTIPLE OF %d",
-				      "DIRECTORY", pathbuf, inp->i_isize,
+				pwarn("%s %s: LENGTH %ld NOT MULTIPLE OF %d",
+				      "DIRECTORY", pathbuf, (long)inp->i_isize,
 				      DIRBLKSIZ);
 			if (preen)
 				printf(" (ADJUSTED)\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: photurisd.c,v 1.11 2001/03/08 21:41:47 deraadt Exp $	*/
+/*	$OpenBSD: photurisd.c,v 1.12 2001/07/07 18:26:18 deraadt Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$OpenBSD: photurisd.c,v 1.11 2001/03/08 21:41:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: photurisd.c,v 1.12 2001/07/07 18:26:18 deraadt Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -117,8 +117,10 @@ main(int argc, char **argv)
 {
      int ch;
      int primes = 0, ignore = 0;
-     int cls, level;
      char *dir = PHOTURIS_DIR;
+#ifdef USE_DEBUG
+     int cls, level = 0;
+#endif
 
      daemon_mode = 0;
      global_port = 0;

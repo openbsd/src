@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.17 2001/01/09 03:26:06 angelos Exp $	*/
+/*	$OpenBSD: tape.c,v 1.18 2001/07/07 18:26:20 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ void
 newtapebuf(size)
 	long size;
 {
-	static tapebufsize = -1;
+	static long tapebufsize = -1;
 
 	ntrec = size;
 	if (size <= tapebufsize)
@@ -272,7 +272,7 @@ void
 getvol(nextvol)
 	long nextvol;
 {
-	long newvol, savecnt, wantnext, i;
+	long newvol = 0, savecnt, wantnext, i;
 	union u_spcl tmpspcl;
 #	define tmpbuf tmpspcl.s_spcl
 	char buf[TP_BSIZE];
@@ -651,7 +651,7 @@ getfile(fill, skip)
 	static char clearedbuf[MAXBSIZE];
 	char buf[MAXBSIZE / TP_BSIZE][TP_BSIZE];
 	char junk[TP_BSIZE];
-	int noskip = (spcl.c_type == TS_BITS || spcl.c_type == TS_CLRI);
+	volatile int noskip = (spcl.c_type == TS_BITS || spcl.c_type == TS_CLRI);
 
 	if (spcl.c_type == TS_END)
 		panic("ran off end of tape\n");

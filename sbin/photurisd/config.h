@@ -1,4 +1,4 @@
-/* $OpenBSD: config.h,v 1.4 2001/01/28 22:45:07 niklas Exp $ */
+/* $OpenBSD: config.h,v 1.5 2001/07/07 18:26:17 deraadt Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -73,10 +73,6 @@
 #ifdef _CONFIG_C_
 #define EXTERN
 
-#ifndef DEBUG
-void reconfig(int sig);
-#endif
-
 #else
 #define EXTERN extern
 #endif
@@ -118,6 +114,8 @@ EXTERN int init_signals(void);
 EXTERN int pick_scheme(u_int8_t **, u_int16_t *, u_int8_t *, u_int16_t);
 EXTERN int pick_attrib(struct stateob *, u_int8_t **, u_int16_t *);
 EXTERN int select_attrib(struct stateob *, u_int8_t **, u_int16_t *);
+
+EXTERN void reconfig(int sig);
 
 #endif /* _CONFIG_H_ */
 

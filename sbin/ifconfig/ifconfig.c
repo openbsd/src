@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.48 2001/05/07 13:53:26 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.49 2001/07/07 18:26:13 deraadt Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.48 2001/05/07 13:53:26 markus Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.49 2001/07/07 18:26:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -195,6 +195,7 @@ void	unsetvlandev __P((char *, int));
 void	vlan_status ();
 void	fixnsel __P((struct sockaddr_iso *));
 int	main __P((int, char *[]));
+int	prefix __P((void *val, int));
 
 /*
  * Media stuff.  Whenever a media command is first performed, the
@@ -371,7 +372,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register const struct afswtch *rafp;
+	register const struct afswtch *rafp = NULL;
 	int aflag = 0;
 	int ifaliases = 0;
 	int i;

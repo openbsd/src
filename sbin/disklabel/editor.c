@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.76 2001/05/19 05:10:46 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.77 2001/07/07 18:26:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.76 2001/05/19 05:10:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.77 2001/07/07 18:26:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -148,7 +148,7 @@ editor(lp, f, dev, fstabfile)
 	u_int32_t freesectors;
 	FILE *fp;
 	char buf[BUFSIZ], *cmd, *arg;
-	char **mountpoints = NULL, **omountpoints, **tmpmountpoints;
+	char **mountpoints = NULL, **omountpoints = NULL, **tmpmountpoints = NULL;
 
 	/* Alloc and init mount point info */
 	if (fstabfile) {
@@ -1692,8 +1692,9 @@ find_bounds(lp, bios_lp)
 	struct disklabel *lp;
 	struct disklabel *bios_lp;
 {
+#ifdef DOSLABEL
 	struct partition *pp = &lp->d_partitions[RAW_PART];
-
+#endif
 	/* Defaults */
 	/* XXX - reserve a cylinder for hp300? */
 	starting_sector = 0;
@@ -2364,8 +2365,9 @@ get_geometry(f, dgpp, bgpp)
 #endif
 	struct stat st;
 	struct disklabel *disk_geop;
+#ifdef CPU_BIOS
 	struct disklabel *bios_geop;
-
+#endif
 	if (fstat(f, &st) == -1)
 		err(4, "Can't stat device");
 

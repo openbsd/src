@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.27 2001/04/19 16:22:18 gluk Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.28 2001/07/07 18:26:16 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.27 2001/04/19 16:22:18 gluk Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.28 2001/07/07 18:26:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.27 2001/04/19 16:22:18 gluk Exp $";
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#include <err.h>
 
 #ifdef __STDC__
 #include <stdarg.h>
@@ -88,11 +89,11 @@ struct mntopt mopts[] = {
 	{ NULL },
 };
 
-#ifdef __STDC__
-void	fatal(const char *fmt, ...);
-#else
-void	fatal();
-#endif
+void	fatal __P((const char *fmt, ...));
+void	usage __P((void));
+void	mkfs __P((struct partition *, char *, int, int));
+void	rewritelabel __P((char *, int, struct disklabel *));
+u_short	dkcksum __P((struct disklabel *));
 
 #define	COMPAT			/* allow non-labeled disks */
 
@@ -205,7 +206,7 @@ main(argc, argv)
 	struct partition oldpartition;
 	struct stat st;
 	struct statfs *mp;
-	int fsi, fso, len, n, maxpartitions;
+	int fsi = -1, fso, len, n, maxpartitions;
 	char *cp, *s1, *s2, *special, *opstring, buf[BUFSIZ];
 	char *fstype = NULL;
 	char **saveargv = argv;
@@ -400,7 +401,7 @@ main(argc, argv)
 		goto havelabel;
 	}
 	cp = strrchr(special, '/');
-	if (cp == 0) {
+	if (cp == NULL) {
 		/*
 		 * No path prefix; try /dev/r%s then /dev/%s.
 		 */
@@ -458,8 +459,8 @@ main(argc, argv)
 			printf("%s: %s: not a character-special device\n",
 			    __progname, special);
 		cp = strchr(argv[0], '\0') - 1;
-		if (cp == 0 || (*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-		    && !isdigit(*cp))
+		if (cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+		    && !isdigit(*cp)))
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
 		lp = getdisklabel(special, fsi);
@@ -549,8 +550,9 @@ havelabel:
 	secpercyl = nsectors * ntracks - cylspares;
 	if (secpercyl != lp->d_secpercyl)
 		fprintf(stderr, "%s (%d) %s (%lu)\n",
-			"Warning: calculated sectors per cylinder", secpercyl,
-			"disagrees with disk label", lp->d_secpercyl);
+		    "Warning: calculated sectors per cylinder", secpercyl,
+		    "disagrees with disk label",
+		    (unsigned long)lp->d_secpercyl);
 	if (maxbpg == 0)
 		maxbpg = MAXBLKPG(bsize);
 #ifdef notdef /* label may be 0 if faked up by kernel */
@@ -639,6 +641,7 @@ getdisklabel(s, fd)
 	return (&lab);
 }
 
+void
 rewritelabel(s, fd, lp)
 	char *s;
 	int fd;
@@ -756,6 +759,7 @@ struct fsoptions {
 	{ NULL, NULL }
 };
 
+void
 usage()
 {
 	struct fsoptions *fsopt;

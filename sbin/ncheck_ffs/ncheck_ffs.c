@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.5 1997/01/15 23:41:30 millert Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.6 2001/07/07 18:26:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.5 1997/01/15 23:41:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.6 2001/07/07 18:26:16 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -258,12 +258,12 @@ loop:
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
-			warnx("read error from %s: %s: [sector %d]: count=%d\n",
-				disk, strerror(errno), blkno, dev_bsize);
+			warnx("read error from %s: %s: [sector %d]: count=%ld\n",
+			    disk, strerror(errno), blkno, dev_bsize);
 			continue;
 		}
-		warnx("short read error from %s: [sector %d]: count=%d, got=%d\n",
-			disk, blkno, dev_bsize, cnt);
+		warnx("short read error from %s: [sector %d]: count=%ld, got=%d\n",
+		    disk, blkno, dev_bsize, cnt);
 	}
 }
 
@@ -370,7 +370,7 @@ searchdir(ino, blkno, size, filesize, path)
 	for (loc = 0; loc < size;) {
 		dp = (struct direct *)(dblk + loc);
 		if (dp->d_reclen == 0) {
-			warnx("corrupted directory, inode %lu", ino);
+			warnx("corrupted directory, inode %lu", (long)ino);
 			break;
 		}
 		loc += dp->d_reclen;
@@ -385,8 +385,11 @@ searchdir(ino, blkno, size, filesize, path)
 		mode = di->di_mode & IFMT;
 		if (bsearch(&dp->d_ino, ilist, ninodes, sizeof(*ilist), matchino)) {
 			if (mflag)
-				printf("mode %-6o uid %-5lu gid %-5lu ino ", di->di_mode, di->di_uid, di->di_gid);
-			printf("%-7lu %s/%s%s\n", dp->d_ino, path, dp->d_name, mode == IFDIR ? "/." : "");
+				printf("mode %-6o uid %-5lu gid %-5lu ino ",
+				    di->di_mode, (unsigned long)di->di_uid,
+				    (unsigned long)di->di_gid);
+			printf("%-7lu %s/%s%s\n", (unsigned long)dp->d_ino,
+			    path, dp->d_name, mode == IFDIR ? "/." : "");
 		}
 		if (mode == IFDIR) {
 			if (dp->d_name[0] == '.') {
@@ -486,7 +489,7 @@ main(argc, argv)
 	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
 	dev_bshift = ffs(dev_bsize) - 1;
 	if (dev_bsize != (1 << dev_bshift))
-		errx(2, "blocksize (%d) not a power of 2", dev_bsize);
+		errx(2, "blocksize (%ld) not a power of 2", dev_bsize);
 	findinodes(sblock->fs_ipg * sblock->fs_ncg);
 	printf("%s:\n", disk);
 	scanonedir(ROOTINO, "");

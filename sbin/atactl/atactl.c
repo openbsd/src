@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.7 2001/06/04 14:59:47 mickey Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.8 2001/07/07 18:26:09 deraadt Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -540,7 +540,7 @@ device_smart(argc, argv)
 			fprintf(stderr,"SMART threshold exceeded!\n");
 			exit(2);
 		} else {
-			fprintf(stderr, "Unknown response %0.2x!\n",
+			fprintf(stderr, "Unknown response %02x!\n",
 			    req.cylinder);
 			exit(1);
 		}

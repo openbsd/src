@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.15 2001/06/04 14:59:47 mickey Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.16 2001/07/07 18:26:10 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -227,7 +227,7 @@ do_single(argc, argv, action)
 	}
 
 	/* Make sure there are enough arguments. */
-	if (argc < 4)
+	if (argc < 4) {
 		if (argc == 3) {
 			/* Assume that no flags are specified. */
 			noflags = 1;
@@ -238,6 +238,7 @@ do_single(argc, argv, action)
 			} else
 				usage();
 		}
+	}
 
 	/* First argument is the ccd to configure. */
 	cp = *argv++; --argc;

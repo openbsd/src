@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.69 2000/06/30 16:00:08 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.70 2001/07/07 18:26:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.69 2000/06/30 16:00:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.70 2001/07/07 18:26:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -332,6 +332,8 @@ main(argc, argv)
 		break;
 	}
 #endif
+	default:
+		break;
 	}
 	exit(error);
 }
@@ -482,9 +484,9 @@ writelabel(f, boot, lp)
 			}
 		}
 		if (verbose)
-			printf("writing label to block %qd (0x%qx)\n",
-			    sectoffset/DEV_BSIZE,
-			    sectoffset/DEV_BSIZE);
+			printf("writing label to block %lld (0x%qx)\n",
+			    (long long)sectoffset/DEV_BSIZE,
+			    (long long)sectoffset/DEV_BSIZE);
 		if (!donothing) {
 			if (lseek(f, sectoffset, SEEK_SET) < 0) {
 				perror("lseek");
@@ -694,8 +696,8 @@ readlabel(f)
 			    DEV_BSIZE;
 #endif
 		if (verbose)
-			printf("reading label from block %qd, offset %qd\n",
-			    sectoffset/DEV_BSIZE,
+			printf("reading label from block %lld, offset %lld\n",
+			    (long long)sectoffset/DEV_BSIZE,
 			    sectoffset/DEV_BSIZE +
 			    (LABELSECTOR * DEV_BSIZE) + LABELOFFSET);
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
@@ -725,8 +727,8 @@ readlabel(f)
 			    lp->d_magic2 == DISKMAGIC) {
 				if (lp->d_npartitions <= MAXPARTITIONS &&
 				    dkcksum(lp) == 0) {
-					warnx("found at 0x%x", (char *)lp
-					    - bootarea);
+					warnx("found at 0x%lx",
+					    (long)((char *)lp - bootarea));
 					return (lp);
 				}
 				msg = "disk label corrupted";
@@ -762,9 +764,9 @@ makebootarea(boot, dp, f)
 {
 	struct disklabel *lp;
 	char *p;
-	int b;
 #if NUMBOOT > 0
 	char *dkbasename;
+	int b;
 #if NUMBOOT == 1
 	struct stat sb;
 #endif
@@ -896,10 +898,10 @@ makedisktab(f, lp)
 	struct partition *pp;
 
 	if (lp->d_packname[0])
-		(void)fprintf(f, "%.*s|", sizeof(lp->d_packname),
+		(void)fprintf(f, "%.*s|", (int)sizeof(lp->d_packname),
 		    lp->d_packname);
 	if (lp->d_typename[0])
-		(void)fprintf(f, "%.*s|", sizeof(lp->d_typename),
+		(void)fprintf(f, "%.*s|", (int)sizeof(lp->d_typename),
 		    lp->d_typename);
 	(void)fputs("Automatically generated label:\\\n\t:dt=", f);
 	if ((unsigned) lp->d_type < DKMAXTYPES)
@@ -939,7 +941,7 @@ makedisktab(f, lp)
 	}
 	for (i = 0; i < NDDATA; i++)
 		if (lp->d_drivedata[i])
-			(void)fprintf(f, "d%d#%d", lp->d_drivedata[i]);
+			(void)fprintf(f, "d%d#%d", i, lp->d_drivedata[i]);
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
 		if (pp->p_size) {
@@ -1034,6 +1036,7 @@ display_partition(f, lp, mp, i, unit, width)
 
 	default:
 		p_size = -1;			/* no conversion */
+		p_offset = 0;
 		break;
 	}
 
@@ -1763,7 +1766,7 @@ usage()
 	    blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r|-cd] [-f temp] -E disk%.*s  (simple editor)\n",
-	    strlen(blank) - 5, blank);
+	    (int)strlen(blank) - 5, blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r]%s -R disk proto     (restore)\n",
 	    boot);

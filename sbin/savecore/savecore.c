@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.25 2001/06/20 23:12:48 niklas Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.26 2001/07/07 18:26:21 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.25 2001/06/20 23:12:48 niklas Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.26 2001/07/07 18:26:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,17 +250,17 @@ kmem_setup()
 			exit(1);
 		}
 
-	KREAD(kd_kern, current_nl[X_DUMPDEV].n_value, &dumpdev);
+	(void)KREAD(kd_kern, current_nl[X_DUMPDEV].n_value, &dumpdev);
 	if (dumpdev == NODEV) {
 		syslog(LOG_WARNING, "no core dump (no dumpdev)");
 		exit(1);
 	}
-	KREAD(kd_kern, current_nl[X_DUMPLO].n_value, &dumplo);
+	(void)KREAD(kd_kern, current_nl[X_DUMPLO].n_value, &dumplo);
 	dumplo *= DEV_BSIZE;
 	if (verbose)
-		(void)printf("dumplo = %d (%d * %d)\n",
+		(void)printf("dumplo = %ld (%ld * %d)\n",
 		    dumplo, dumplo / DEV_BSIZE, DEV_BSIZE);
-	KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag);
+	(void) KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag);
 
 	if (kernel == NULL) {
 		if (kvm_read(kd_kern, current_nl[X_VERSION].n_value,
@@ -332,7 +332,7 @@ check_kmem()
 		    _PATH_UNIX, vers, core_vers);
 	}
 
-	KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr);
+	(void)KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr);
 	if (panicstr) {
 		char	c, visout[5];
 		size_t	vislen;
@@ -359,10 +359,10 @@ dump_exists()
 {
 	int newdumpmag;
 
-	KREAD(kd_dump, dump_nl[X_DUMPMAG].n_value, &newdumpmag);
+	(void)KREAD(kd_dump, dump_nl[X_DUMPMAG].n_value, &newdumpmag);
 
 	/* Read the dump size. */
-	KREAD(kd_dump, dump_nl[X_DUMPSIZE].n_value, &dumpsize);
+	(void)KREAD(kd_dump, dump_nl[X_DUMPSIZE].n_value, &dumpsize);
 	dumpsize *= getpagesize();
 
 	/*
@@ -395,7 +395,7 @@ void
 save_core()
 {
 	register FILE *fp;
-	register int bounds, ifd, nr, nw, ofd;
+	register int bounds, ifd, nr, nw, ofd = -1;
 	char *rawp, path[MAXPATHLEN];
 	mode_t um;
 
@@ -572,7 +572,7 @@ rawname(s)
 		    "can't make raw dump device name from %s", s);
 		return (s);
 	}
-	(void)snprintf(name, sizeof(name), "%.*s/r%s", sl - s, s, sl + 1);
+	(void)snprintf(name, sizeof(name), "%.*s/r%s", (int)(sl - s), s, sl + 1);
 	if ((sl = strdup(name)) == NULL) {
 		syslog(LOG_ERR, "%s", strerror(errno));
 		exit(1);
@@ -585,7 +585,7 @@ get_crashtime()
 {
 	time_t dumptime;			/* Time the dump was taken. */
 
-	KREAD(kd_dump, dump_nl[X_TIME].n_value, &dumptime);
+	(void)KREAD(kd_dump, dump_nl[X_TIME].n_value, &dumptime);
 	if (dumptime == 0) {
 		if (verbose)
 			syslog(LOG_ERR, "dump time is zero");

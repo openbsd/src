@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.8 2000/02/28 17:03:26 millert Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.9 2001/07/07 18:26:14 deraadt Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknod.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: mknod.c,v 1.8 2000/02/28 17:03:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: mknod.c,v 1.9 2001/07/07 18:26:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ main(argc, argv)
 {
 	int ch, ismkfifo = 0;
 	void *set = NULL;
-	mode_t mode;
+	mode_t mode = 0;
 
 	setlocale (LC_ALL, "");
 
@@ -93,7 +93,7 @@ main(argc, argv)
 			 * interpreted relative to an assumed initial mode of
 			 * a=rw.
 			 */
-			mode = getmode (set, DEFFILEMODE);
+			mode = getmode(set, DEFFILEMODE);
 			free(set);
 			break;
 		case '?':

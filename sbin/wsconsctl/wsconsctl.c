@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.5 2001/06/30 02:12:57 mickey Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.6 2001/07/07 18:26:22 deraadt Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -94,7 +94,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int i, ch, fd, error;
+	int i, ch, fd = -1, error;
 	int aflag, wflag;
 	char *sep, *p;
 	const struct vartypesw *sw;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.11 2001/01/19 17:57:41 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.12 2001/07/07 18:26:19 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.11 2001/01/19 17:57:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.12 2001/07/07 18:26:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -517,7 +517,7 @@ printlist(name, basename)
 	char *name;
 	char *basename;
 {
-	register struct afile *fp, *list, *listp;
+	register struct afile *fp, *list, *listp = NULL;
 	register struct direct *dp;
 	struct afile single;
 	RST_DIR *dirp;
@@ -666,7 +666,7 @@ formatf(list, nentry)
 {
 	register struct afile *fp, *endlist;
 	int width, bigino, haveprefix, havepostfix;
-	int i, j, w, precision, columns, lines;
+	int i, j, w, precision = 0, columns, lines;
 
 	width = 0;
 	haveprefix = 0;

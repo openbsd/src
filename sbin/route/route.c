@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.42 2001/05/11 17:51:56 mickey Exp $	*/
+/*	$OpenBSD: route.c,v 1.43 2001/07/07 18:26:20 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.42 2001/05/11 17:51:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.43 2001/07/07 18:26:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,7 @@ flushroutes(argc, argv)
 {
 	size_t needed;
 	int mib[6], rlen, seqno;
-	char *buf = NULL, *next, *lim;
+	char *buf = NULL, *next, *lim = NULL;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 
@@ -933,7 +933,7 @@ getaddr(which, s, hpp)
 	char *s;
 	struct hostent **hpp;
 {
-	sup su;
+	sup su = NULL;
 	struct ns_addr ns_addr();
 	struct ipx_addr ipx_addr();
 	struct iso_addr *iso_addr();

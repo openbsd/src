@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.12 2001/05/15 09:01:02 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.13 2001/07/07 18:26:12 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.12 2001/05/15 09:01:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.13 2001/07/07 18:26:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,8 +233,8 @@ setup(dev)
 	}
 	if (sblock.fs_inodefmt >= FS_44INODEFMT) {
 		if (sblock.fs_maxfilesize != maxfilesize) {
-			pwarn("INCORRECT MAXFILESIZE=%qd IN SUPERBLOCK",
-				sblock.fs_maxfilesize);
+			pwarn("INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK",
+				(unsigned long long)sblock.fs_maxfilesize);
 			sblock.fs_maxfilesize = maxfilesize;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -255,8 +255,8 @@ setup(dev)
 			}
 		}
 		if (sblock.fs_qbmask != ~sblock.fs_bmask) {
-			pwarn("INCORRECT QBMASK=%qx IN SUPERBLOCK",
-				sblock.fs_qbmask);
+			pwarn("INCORRECT QBMASK=%lx IN SUPERBLOCK",
+				(unsigned long)sblock.fs_qbmask);
 			sblock.fs_qbmask = ~sblock.fs_bmask;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -266,8 +266,8 @@ setup(dev)
 			}
 		}
 		if (sblock.fs_qfmask != ~sblock.fs_fmask) {
-			pwarn("INCORRECT QFMASK=%qx IN SUPERBLOCK",
-				sblock.fs_qfmask);
+			pwarn("INCORRECT QFMASK=%lx IN SUPERBLOCK",
+				(unsigned long)sblock.fs_qfmask);
 			sblock.fs_qfmask = ~sblock.fs_fmask;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -372,8 +372,8 @@ setup(dev)
 	}
 	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
-		printf("cannot alloc %u bytes for lncntp\n", 
-		    (unsigned)(maxino + 1) * sizeof(int16_t));
+		printf("cannot alloc %lu bytes for lncntp\n", 
+		    (unsigned long)(maxino + 1) * sizeof(int16_t));
 		goto badsblabel;
 	}
 	numdirs = sblock.fs_cstotal.cs_ndir;
@@ -384,8 +384,8 @@ setup(dev)
 	inphead = (struct inoinfo **)calloc((unsigned)numdirs,
 	    sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
-		printf("cannot alloc %u bytes for inphead\n", 
-		    (unsigned)numdirs * sizeof(struct inoinfo *));
+		printf("cannot alloc %lu bytes for inphead\n", 
+		    (unsigned long)numdirs * sizeof(struct inoinfo *));
 		goto badsblabel;
 	}
 	bufinit();
@@ -497,7 +497,7 @@ readsb(listerr)
 				if (*olp == *nlp)
 					continue;
 				printf("offset %d, original %ld, alternate %ld\n",
-				    olp - (long *)&sblock, *olp, *nlp);
+				    (int)(olp - (long *)&sblock), *olp, *nlp);
 			}
 		}
 		badsb(listerr,
