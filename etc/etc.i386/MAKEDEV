@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.35 1996/12/14 18:23:57 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.36 1997/02/06 10:02:13 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -159,10 +159,12 @@ wt*)
 
 rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
-	mknod rd${unit} b 17 $unit
-#	mknod rrd${unit} c 9 $unit
-	chown root.operator rd${unit} rrd${unit}
-	chmod 640 rd${unit} rrd${unit}
+	mknod rd${unit}a b 17 `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b 17 `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c 47 `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c 47 `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
 	umask 77
 	;;
 
