@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.6 2001/06/26 23:21:18 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.7 2001/06/26 23:34:18 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -73,6 +73,11 @@ struct cfdriver lofn_cd = {
 };
 
 int lofn_intr	__P((void *));
+
+void lofn_putnum __P((struct lofn_softc *, u_int32_t, u_int32_t,
+    u_int32_t *, u_int32_t));
+int lofn_getnum __P((struct lofn_softc *, u_int32_t, u_int32_t,
+    u_int32_t *num, u_int32_t *numlen));
 
 int
 lofn_probe(parent, match, aux)
@@ -178,4 +183,34 @@ lofn_intr(vsc)
 	}
 
 	return (r);
+}
+
+void
+lofn_putnum(sc, win, reg, num, numlen)
+	struct lofn_softc *sc;
+	u_int32_t reg, win, *num, numlen;
+{
+	u_int32_t i, len;
+
+	len = ((numlen >> 5) + 3) >> 2;
+	for (i = 0; i < len; i++)
+		WRITE_REG(sc, LOFN_REGADDR(win, reg, i), num[i]);
+	WRITE_REG(sc, LOFN_LENADDR(win, reg), numlen);
+}
+
+int
+lofn_getnum(sc, win, reg, num, numlen)
+	struct lofn_softc *sc;
+	u_int32_t win, reg, *num, *numlen;
+{
+	u_int32_t len, i;
+
+	len = READ_REG(sc, LOFN_LENADDR(win, reg)) & LOFN_LENMASK;
+	if (len > (*numlen))
+		return (-1);
+	(*numlen) = len;
+	len = ((len >> 5) + 3) >> 2;
+	for (i = 0; i < len; i++)
+		num[i] = READ_REG(sc, LOFN_REGADDR(win, reg, i));
+	return (0);
 }
