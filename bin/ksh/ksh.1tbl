@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1tbl,v 1.36 2000/10/19 18:29:27 aaron Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.37 2001/01/16 14:18:39 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -4404,7 +4404,7 @@ reasonable substitutes and override the default bindings.
 .It Ic abort ^G
 Useful as a response to a request for a
 .Ic search-history
-pattern in order to about the search.
+pattern in order to abort the search.
 .It Ic auto-insert Ar n
 Simply causes the character to appear as literal input.
 Most ordinary characters are bound to this.
