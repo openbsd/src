@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.13 2002/03/31 17:30:31 deraadt Exp $
+#       $OpenBSD: install.md,v 1.14 2002/04/17 01:59:57 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -42,24 +42,6 @@
 MDSETS=kernel
 ARCH=ARCH
 
-md_copy_kernel() {
-	if [ ! -s /mnt/bsd ]; then
-		echo	""
-		echo	"Warning, no kernel installed!"
-		echo	"You did not unpack a file set containing a kernel."
-		echo	"This is needed to boot.  Please note that the install"
-		echo	"install kernel is not suitable for general use."
-		echo -n	"Escape to shell add /mnt/bsd by hand? [y] "
-		getresp "y"
-		case "$resp" in
-		y*|Y*)
-			echo "Type 'exit' to return to install."
-			sh
-			;;
-		esac
-	fi
-}
-
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
@@ -72,22 +54,17 @@ md_set_term() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | egrep -a "^[sw]d[0-9]|ofdisk[0-9] " | sed -e "s/[ :(].*//" | sort -u
+	bsort `dmesg | egrep -a "^[sw]d[0-9]+ " | cutword 1`
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	dmesg | egrep -a "^cd[0-9] " | sed -e "s/[ :(].*//" | sort -u
-}
-
-md_get_ifdevs() {
-        # return available network devices
-	dmesg | egrep "(^ie[0-9] )|(^le[0-9] )" | cut -d" " -f1 | sort -u
+	bsort `dmesg | egrep -a "^cd[0-9]+ " | cutword 1`
 }
 
 md_get_partition_range() {
 	# return range of valid partition letters
-	echo "[a-p]"
+	echo [a-p]
 }
 
 md_questions() {
@@ -95,30 +72,16 @@ md_questions() {
 }
 
 md_installboot() {
-	local _rawdev
-
-	echo ""
-	echo "Installing boot blocks."
-
-	if [ "X${1}" = X"" ]; then
-		echo "No disk device specified, you must run installboot manually."
-		return
-	fi
-	_rawdev=/dev/r${1}a
-
-	# use extracted mdec if it exists (may be newer)
-	if [ -f /mnt/usr/mdec/installboot ]; then
-		cp /mnt/usr/mdec/bootsd /mnt/bootsd
-		/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx ${_rawdev}
-	elif [ -f /usr/mdec/installboot ]; then
-		cp /usr/mdec/bootsd /mnt/bootsd
-		/usr/mdec/installboot -v /mnt/bootsd /usr/mdec/bootxx ${_rawdev}
-	else
-		echo "No boot block prototypes found, you must run installboot manually."
-	fi
+	echo Installing boot block...
+	cp /mnt/usr/mdec/bootsd /mnt/bootsd
+	/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx /dev/r${1}a
 }
 
-md_labeldisk() {
+md_native_fstype() {
+	:
+}
+
+md_native_fsopts() {
 	:
 }
 
@@ -194,32 +157,26 @@ __md_prep_disklabel_1
 md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
-		echo ""
-		echo "Welcome to the OpenBSD/mvme68k ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
-		cat << \__welcome_banner_1
+		cat << __EOT
+Welcome to the OpenBSD/mvme68k ${VERSION_MAJOR}.${VERSION_MINOR} installation program.
 
-This program is designed to help you put OpenBSD on your disk,
-in a simple and rational way.  You'll be asked several questions,
-and it would probably be useful to have your disk's hardware
-manual, the installation notes, and a calculator handy.
-__welcome_banner_1
+This program is designed to help you put OpenBSD on your disk, in a simple and
+rational way.
+__EOT
 
 	else
-		echo ""
-		echo "Welcome to the OpenBSD/mvme68k ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
-		cat << \__welcome_banner_2
+		cat << __EOT
+Welcome to the OpenBSD/mvme68k ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
 
-This program is designed to help you upgrade your OpenBSD system in a
-simple and rational way.
-
-As a reminder, installing the `etc' binary set is NOT recommended.
-Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
+This program is designed to help you upgrade your OpenBSD system in a simple
+and rational way.  As a reminder, installing the 'etc' binary set is NOT
+recommended.  Once the rest of your system has been upgraded, you should
+manually merge any changes to files in the 'etc' set into those files which
 already exist on your system.
-__welcome_banner_2
+__EOT
 	fi
 
-cat << \__welcome_banner_3
+cat << __EOT
 
 As with anything which modifies your disk's contents, this
 program can cause SIGNIFICANT data loss, and you are advised
@@ -231,17 +188,17 @@ You can hit Control-C at any time to quit, but if you do so at a
 prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
-__welcome_banner_3
+__EOT
 } | more
 }
 
 md_not_going_to_install() {
-	cat << \__not_going_to_install_1
+	cat << __EOT
 
 OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
-__not_going_to_install_1
+__EOT
 }
 
 md_congrats() {
@@ -251,14 +208,11 @@ md_congrats() {
 	else
 		what="upgraded";
 	fi
-	cat << __congratulations_1
+	cat << __EOT
 
-CONGRATULATIONS!  You have successfully $what OpenBSD!
-To boot the installed system, enter halt at the command prompt. Once the
-system has halted, reset the machine and boot from the disk.
+CONGRATULATIONS!  You have successfully $what OpenBSD!  To boot the
+installed system, enter halt at the command prompt. Once the system has
+halted, reset the machine and boot from the disk.
 
-__congratulations_1
-}
-
-md_native_fstype() {
+__EOT
 }

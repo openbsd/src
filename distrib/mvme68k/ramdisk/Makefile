@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2001/05/11 15:23:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2002/04/17 01:59:57 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -34,11 +34,11 @@ ${IMAGE}: rd_setup do_files rd_teardown
 
 bsd:
 .ifndef(NOBUILD)
-	cd ${.CURDIR}/../../../sys/arch/mvme68k/conf && config MINIROOT
-	cd ${.CURDIR}/../../../sys/arch/mvme68k/compile/MINIROOT && \
+	cd ${.CURDIR}/../../../sys/arch/mvme68k/conf && config RAMDISK
+	cd ${.CURDIR}/../../../sys/arch/mvme68k/compile/RAMDISK && \
 	    make clean && make
 .endif
-	cp ${.CURDIR}/../../../sys/arch/mvme68k/compile/MINIROOT/bsd bsd
+	cp ${.CURDIR}/../../../sys/arch/mvme68k/compile/RAMDISK/bsd bsd
 
 rd_test: rd_setup rd_teardown
 
