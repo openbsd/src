@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.12 1997/07/15 00:38:15 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.13 1997/07/22 14:43:19 kstailey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.12 1997/07/15 00:38:15 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.13 1997/07/22 14:43:19 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -642,24 +642,24 @@ struct ctlname tcpname[] = TCPCTL_NAMES;
 struct ctlname udpname[] = UDPCTL_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
-        { ipname, IPCTL_MAXID },        /* ip */
-        { icmpname, ICMPCTL_MAXID },    /* icmp */
-        { 0, 0 },                       /* igmp */
-        { 0, 0 },                       /* ggmp */
-        { 0, 0 },
-        { 0, 0 },
-        { tcpname, TCPCTL_MAXID },      /* tcp */
-        { 0, 0 },
-        { 0, 0 },                       /* egp */
-        { 0, 0 },
-        { 0, 0 },
-        { 0, 0 },
-        { 0, 0 },                       /* pup */
-        { 0, 0 },
-        { 0, 0 },
-        { 0, 0 },
-        { 0, 0 },
-        { udpname, UDPCTL_MAXID },      /* udp */
+	{ ipname, IPCTL_MAXID },	/* ip */
+	{ icmpname, ICMPCTL_MAXID },	/* icmp */
+	{ 0, 0 },			/* igmp */
+	{ 0, 0 },			/* ggmp */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ tcpname, TCPCTL_MAXID },	/* tcp */
+	{ 0, 0 },
+	{ 0, 0 },			/* egp */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },			/* pup */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ udpname, UDPCTL_MAXID },	/* udp */
 };
 
 /*
