@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.4 1997/09/19 18:00:58 deraadt Exp $	*/
+/*	$OpenBSD: chat.c,v 1.5 1997/11/16 21:16:49 millert Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -75,7 +75,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.15 1997/07/14 03:50:22 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.4 1997/09/19 18:00:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.5 1997/11/16 21:16:49 millert Exp $";
 #endif
 #endif
 
@@ -122,20 +122,6 @@ static char rcsid[] = "$OpenBSD: chat.c,v 1.4 1997/09/19 18:00:58 deraadt Exp $"
 #define O_NONBLOCK	O_NDELAY
 #endif
 
-/*************** Micro getopt() *********************************************/
-#define	OPTION(c,v)	(_O&2&&**v?*(*v)++:!c||_O&4?0:(!(_O&1)&& \
-				(--c,++v),_O=4,c&&**v=='-'&&v[0][1]?*++*v=='-'\
-				&&!v[0][1]?(--c,++v,0):(_O=2,*(*v)++):0))
-#define	OPTARG(c,v)	(_O&2?**v||(++v,--c)?(_O=1,--c,*v++): \
-				(_O=4,(char*)0):(char*)0)
-#define	OPTONLYARG(c,v)	(_O&2&&**v?(_O=1,--c,*v++):(char*)0)
-#define	ARG(c,v)	(c?(--c,*v++):(char*)0)
-
-static int _O = 0;		/* Internal state */
-/*************** Micro getopt() *********************************************/
-
-char *program_name;
-
 #define	MAX_ABORTS		50
 #define	MAX_REPORTS		50
 #define	DEFAULT_CHAT_TIMEOUT	45
@@ -152,6 +138,8 @@ char *chat_file   = (char *) 0;
 int timeout       = DEFAULT_CHAT_TIMEOUT;
 
 int have_tty_parameters = 0;
+
+extern char *__progname;
 
 #ifdef TERMIO
 #define term_parms struct termio
@@ -245,12 +233,10 @@ int argc;
 char **argv;
     {
     int option;
-    char *arg;
 
-    program_name = *argv;
     tzset();
 
-    while ((option = OPTION(argc, argv)) != 0)
+    while ((option = getopt(argc, argv, "evVt:r:f:")) != -1)
         {
 	switch (option)
 	    {
@@ -267,54 +253,42 @@ char **argv;
 		break;
 
 	    case 'f':
-		if ((arg = OPTARG(argc, argv)) != NULL)
-		    {
-		    chat_file = copy_of(arg);
-		    }
-		else
-		    {
-		    usage();
-		    }
+		chat_file = copy_of(optarg);
 		break;
 
 	    case 't':
-		if ((arg = OPTARG(argc, argv)) != NULL)
-		    {
-		    timeout = atoi(arg);
-		    }
-		else
-		    {
-		    usage();
-		    }
+		timeout = atoi(optarg);
 		break;
 
 	    case 'r':
-		arg = OPTARG (argc, argv);
-		if (arg)
+		if (report_fp != NULL)
 		    {
-		    if (report_fp != NULL)
-		        {
-			fclose (report_fp);
-		        }
-		    report_file = copy_of (arg);
-		    report_fp   = fopen (report_file, "a");
-		    if (report_fp != NULL)
-		        {
-			if (verbose)
-			    {
-			    fprintf (report_fp, "Opening \"%s\"...\n",
-				     report_file);
-			    }
-			report = 1;
-		        }
+		    fclose (report_fp);
+		    }
+		report_file = copy_of (optarg);
+		report_fp   = fopen (report_file, "a");
+		if (report_fp != NULL)
+		    {
+		    if (verbose)
+			{
+			fprintf (report_fp, "Opening \"%s\"...\n",
+				 report_file);
+			}
+		    report = 1;
 		    }
 		break;
+
+	    case ':':
+		fprintf(stderr, "Option -%c requires an argument\n",
+		    optopt);
 
 	    default:
 		usage();
 		break;
 	    }
       }
+      argc -= optind;
+      argv += optind;
 /*
  * Default the report file to the stderr location
  */
@@ -342,8 +316,7 @@ char **argv;
     
     if (chat_file != NULL)
 	{
-	arg = ARG(argc, argv);
-	if (arg != NULL)
+	if (argc > 0)
 	    {
 	    usage();
 	    }
@@ -354,15 +327,16 @@ char **argv;
 	}
     else
 	{
-	while ((arg = ARG(argc, argv)) != NULL)
+	while (*argv != NULL)
 	    {
-	    chat_expect(arg);
+	    chat_expect(*argv);
 
-	    if ((arg = ARG(argc, argv)) != NULL)
+	    if (*(++argv) != NULL)
 	        {
-		chat_send(arg);
+		chat_send(*argv);
 	        }
 	    }
+	    argv++;
 	}
 
     terminate(0);
@@ -376,7 +350,7 @@ char **argv;
 void do_file (chat_file)
 char *chat_file;
     {
-    int linect, len, sendflg;
+    int linect, sendflg;
     char *sp, *arg, quote;
     char buf [STR_LEN];
     FILE *cfp;
@@ -469,9 +443,8 @@ char *chat_file;
  */
 void usage()
     {
-    fprintf(stderr, "\
-Usage: %s [-e] [-v] [-t timeout] [-r report-file] {-f chat-file | chat-script}\n",
-	    program_name);
+    fprintf(stderr, "Usage: %s [-e] [-v] [-V] [-t timeout] [-r report-file]"
+	"{-f chat-file | chat-script}\n", __progname);
     exit(1);
     }
 
