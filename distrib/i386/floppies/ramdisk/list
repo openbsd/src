@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 1997/05/08 05:56:23 tholo Exp $
+#	$OpenBSD: list,v 1.6 1997/05/08 15:52:29 tholo Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -43,20 +43,20 @@ LINK	instbin			sbin/route
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/scsi
 LINK	instbin			sbin/umount
-SYMLINK	/bin/cat		usr/bin/cut
-SYMLINK	/bin/cat		usr/bin/egrep usr/bin/fgrep usr/bin/grep
-SYMLINK	/bin/cat		usr/bin/ftp
-SYMLINK	/bin/cat		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
-SYMLINK	/bin/cat		usr/bin/less usr/bin/more
-SYMLINK	/bin/cat		usr/bin/rsh
-SYMLINK	/bin/cat		usr/bin/sed
-SYMLINK	/bin/cat		usr/bin/sort
-SYMLINK	/bin/cat		usr/bin/tip
-SYMLINK /bin/cat		usr/bin/vi
-SYMLINK	/bin/cat		usr/sbin/bad144
-SYMLINK	/bin/cat		usr/sbin/chat
-SYMLINK	/bin/cat		usr/sbin/chown usr/sbin/chgrp
-SYMLINK	/bin/cat		usr/sbin/pppd
+LINK	instbin			usr/bin/cut
+LINK	instbin			usr/bin/egrep usr/bin/fgrep usr/bin/grep
+LINK	instbin			usr/bin/ftp
+LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+LINK	instbin			usr/bin/less usr/bin/more
+LINK	instbin			usr/bin/rsh
+LINK	instbin			usr/bin/sed
+LINK	instbin			usr/bin/sort
+LINK	instbin			usr/bin/tip
+LINK	instbin			usr/bin/vi
+LINK	instbin			usr/sbin/bad144
+LINK	instbin			usr/sbin/chat
+LINK	instbin			usr/sbin/chown usr/sbin/chgrp
+LINK	instbin			usr/sbin/pppd
 SPECIAL	/bin/rm instbin
 
 # `internal' crunchgen links
