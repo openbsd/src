@@ -43,16 +43,35 @@ Boston, MA 02111-1307, USA.  */
   "%{!mgnu-ld:+Accept TypeMismatch} -E %{mlinker-opt:-O} %{!shared:-u main} %{static:-a archive} %{shared:%{mgnu-ld:-shared}%{!mgnu-ld:-b}}"
 #endif
 
-/* Like the default, except no -lg.  */
+/* Profiling support is only provided in libc.a.  However, libprof and
+   libgprof are only available in shared form on HP-UX 11.00.  We use
+   the shared form if we are using the GNU linker or an archive form
+   isn't available.  We also usually need to link with libdld and it's
+   only available in shared form.  */
 #undef LIB_SPEC
+#if ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & MASK_GNU_LD)
 #define LIB_SPEC \
   "%{!shared:\
      %{!p:%{!pg: -lc %{static:%{!nolibdld:-a shared -ldld -a archive -lc}}}}\
-     %{pg: -L/usr/lib/pa20_64/libp/ -lgprof -lc\
-       %{static:%{!nolibdld:-a shared -ldld -a archive -lc}}}\
-     %{p: -L/usr/lib/pa20_64/libp/ -lprof -lc\
+     %{p:%{!pg:%{static:%{!mhp-ld:-a shared}%{mhp-ld:-a archive_shared}}\
+	   -lprof %{static:-a archive} -lc\
+	   %{static:%{!nolibdld:-a shared -ldld -a archive -lc}}}}\
+     %{pg:%{static:%{!mhp-ld:-a shared}%{mhp-ld:-a archive_shared}}\
+       -lgprof %{static:-a archive} -lc\
        %{static:%{!nolibdld:-a shared -ldld -a archive -lc}}}}\
    /usr/lib/pa20_64/milli.a"
+#else
+#define LIB_SPEC \
+  "%{!shared:\
+     %{!p:%{!pg: -lc %{static:%{!nolibdld:-a shared -ldld -a archive -lc}}}}\
+     %{p:%{!pg:%{static:%{mgnu-ld:-a shared}%{!mgnu-ld:-a archive_shared}}\
+	   -lprof %{static:-a archive} -lc\
+	   %{static:%{!nolibdld:-a shared -ldld -a archive -lc}}}}\
+     %{pg:%{static:%{mgnu-ld:-a shared}%{!mgnu-ld:-a archive_shared}}\
+       -lgprof %{static:-a archive} -lc\
+       %{static:%{!nolibdld:-a shared -ldld -a archive -lc}}}}\
+   /usr/lib/pa20_64/milli.a"
+#endif
 
 /* Under hpux11, the normal location of the `ld' and `as' programs is the
    /usr/ccs/bin directory.  */

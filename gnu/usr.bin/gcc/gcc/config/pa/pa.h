@@ -991,7 +991,7 @@ extern int may_call_alloca;
 
 #define TRAMPOLINE_TEMPLATE(FILE) 					\
   {									\
-    if (! TARGET_64BIT)							\
+    if (!TARGET_64BIT)							\
       {									\
 	fputs ("\tldw	36(%r22),%r21\n", FILE);			\
 	fputs ("\tbb,>=,n	%r21,30,.+16\n", FILE);			\
@@ -1001,10 +1001,20 @@ extern int may_call_alloca;
 	  fputs ("\tdepwi	0,31,2,%r21\n", FILE);			\
 	fputs ("\tldw	4(%r21),%r19\n", FILE);				\
 	fputs ("\tldw	0(%r21),%r21\n", FILE);				\
-	fputs ("\tldsid	(%r21),%r1\n", FILE);				\
-	fputs ("\tmtsp	%r1,%sr0\n", FILE);				\
-	fputs ("\tbe	0(%sr0,%r21)\n", FILE);				\
-	fputs ("\tldw	40(%r22),%r29\n", FILE);			\
+	if (TARGET_PA_20)						\
+	  {								\
+	    fputs ("\tbve	(%r21)\n", FILE);			\
+	    fputs ("\tldw	40(%r22),%r29\n", FILE);		\
+	    fputs ("\t.word	0\n", FILE);				\
+	    fputs ("\t.word	0\n", FILE);				\
+	  }								\
+	else								\
+	  {								\
+	    fputs ("\tldsid	(%r21),%r1\n", FILE);			\
+	    fputs ("\tmtsp	%r1,%sr0\n", FILE);			\
+	    fputs ("\tbe	0(%sr0,%r21)\n", FILE);			\
+	    fputs ("\tldw	40(%r22),%r29\n", FILE);		\
+	  }								\
 	fputs ("\t.word	0\n", FILE);					\
 	fputs ("\t.word	0\n", FILE);					\
 	fputs ("\t.word	0\n", FILE);					\
@@ -1027,16 +1037,21 @@ extern int may_call_alloca;
       }									\
   }
 
-/* Length in units of the trampoline for entering a nested function.
-
-   Flush the cache entries corresponding to the first and last addresses
-   of the trampoline.  This is necessary as the trampoline may cross two
-   cache lines.
-
-   If the code part of the trampoline ever grows to > 32 bytes, then it
-   will become necessary to hack on the cacheflush pattern in pa.md.  */
+/* Length in units of the trampoline for entering a nested function.  */
 
 #define TRAMPOLINE_SIZE (TARGET_64BIT ? 72 : 52)
+
+/* Length in units of the trampoline instruction code.  */
+
+#define TRAMPOLINE_CODE_SIZE (TARGET_64BIT ? 24 : (TARGET_PA_20 ? 32 : 40))
+
+/* Minimum length of a cache line.  A length of 16 will work on all
+   PA-RISC processors.  All PA 1.1 processors have a cache line of
+   32 bytes.  Most but not all PA 2.0 processors have a cache line
+   of 64 bytes.  As cache flushes are expensive and we don't support
+   PA 1.0, we use a minimum length of 32.  */
+
+#define MIN_CACHELINE_SIZE 32
 
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.
@@ -1046,55 +1061,85 @@ extern int may_call_alloca;
    Move the static chain value to trampoline template at offset 40.
    Move the trampoline address to trampoline template at offset 44.
    Move r19 to trampoline template at offset 48.  The latter two
-   words create a plabel for the indirect call to the trampoline.  */
+   words create a plabel for the indirect call to the trampoline.
+
+   A similar sequence is used for the 64-bit port but the plabel is
+   at the beginning of the trampoline.
+
+   Finally, the cache entries for the trampoline code are flushed.
+   This is necessary to ensure that the trampoline instruction sequence
+   is written to memory prior to any attempts at prefetching the code
+   sequence.  */
 
 #define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT) 			\
 {									\
-  if (! TARGET_64BIT)							\
-    {									\
-      rtx start_addr, end_addr;						\
+  rtx start_addr = gen_reg_rtx (Pmode);					\
+  rtx end_addr = gen_reg_rtx (Pmode);					\
+  rtx line_length = gen_reg_rtx (Pmode);				\
+  rtx tmp;								\
 									\
-      start_addr = memory_address (Pmode, plus_constant ((TRAMP), 36));	\
-      emit_move_insn (gen_rtx_MEM (Pmode, start_addr), (FNADDR));	\
-      start_addr = memory_address (Pmode, plus_constant ((TRAMP), 40));	\
-      emit_move_insn (gen_rtx_MEM (Pmode, start_addr), (CXT));		\
-      start_addr = memory_address (Pmode, plus_constant ((TRAMP), 44));	\
-      emit_move_insn (gen_rtx_MEM (Pmode, start_addr), (TRAMP));	\
-      start_addr = memory_address (Pmode, plus_constant ((TRAMP), 48));	\
-      emit_move_insn (gen_rtx_MEM (Pmode, start_addr),			\
+  if (!TARGET_64BIT)							\
+    {									\
+      tmp = memory_address (Pmode, plus_constant ((TRAMP), 36));	\
+      emit_move_insn (gen_rtx_MEM (Pmode, tmp), (FNADDR));		\
+      tmp = memory_address (Pmode, plus_constant ((TRAMP), 40));	\
+      emit_move_insn (gen_rtx_MEM (Pmode, tmp), (CXT));			\
+									\
+      /* Create a fat pointer for the trampoline.  */			\
+      tmp = memory_address (Pmode, plus_constant ((TRAMP), 44));	\
+      emit_move_insn (gen_rtx_MEM (Pmode, tmp), (TRAMP));		\
+      tmp = memory_address (Pmode, plus_constant ((TRAMP), 48));	\
+      emit_move_insn (gen_rtx_MEM (Pmode, tmp),				\
 		      gen_rtx_REG (Pmode, 19));				\
+									\
       /* fdc and fic only use registers for the address to flush,	\
-	 they do not accept integer displacements.  */ 			\
-      start_addr = force_reg (Pmode, (TRAMP));				\
-      end_addr = force_reg (Pmode, plus_constant ((TRAMP), 32));	\
-      emit_insn (gen_dcacheflush (start_addr, end_addr));		\
-      end_addr = force_reg (Pmode, plus_constant (start_addr, 32));	\
-      emit_insn (gen_icacheflush (start_addr, end_addr, start_addr,	\
-				  gen_reg_rtx (Pmode), gen_reg_rtx (Pmode)));\
+	 they do not accept integer displacements.  We align the	\
+	 start and end addresses to the beginning of their respective	\
+	 cache lines to minimize the number of lines flushed.  */	\
+      tmp = force_reg (Pmode, (TRAMP));					\
+      emit_insn (gen_andsi3 (start_addr, tmp,				\
+			     GEN_INT (-MIN_CACHELINE_SIZE)));		\
+      tmp = force_reg (Pmode,						\
+		       plus_constant (tmp, TRAMPOLINE_CODE_SIZE - 1));	\
+      emit_insn (gen_andsi3 (end_addr, tmp,				\
+			     GEN_INT (-MIN_CACHELINE_SIZE)));		\
+      emit_move_insn (line_length, GEN_INT (MIN_CACHELINE_SIZE));	\
+      emit_insn (gen_dcacheflush (start_addr, end_addr, line_length));	\
+      emit_insn (gen_icacheflush (start_addr, end_addr, line_length,	\
+				  gen_reg_rtx (Pmode),			\
+				  gen_reg_rtx (Pmode)));		\
     }									\
   else									\
     {									\
-      rtx start_addr, end_addr;						\
+      tmp = memory_address (Pmode, plus_constant ((TRAMP), 56));	\
+      emit_move_insn (gen_rtx_MEM (Pmode, tmp), (FNADDR));		\
+      tmp = memory_address (Pmode, plus_constant ((TRAMP), 64));	\
+      emit_move_insn (gen_rtx_MEM (Pmode, tmp), (CXT));			\
 									\
-      start_addr = memory_address (Pmode, plus_constant ((TRAMP), 56));	\
-      emit_move_insn (gen_rtx_MEM (Pmode, start_addr), (FNADDR));	\
-      start_addr = memory_address (Pmode, plus_constant ((TRAMP), 64));	\
-      emit_move_insn (gen_rtx_MEM (Pmode, start_addr), (CXT));		\
       /* Create a fat pointer for the trampoline.  */			\
-      end_addr = force_reg (Pmode, plus_constant ((TRAMP), 32));	\
-      start_addr = memory_address (Pmode, plus_constant ((TRAMP), 16));	\
-      emit_move_insn (gen_rtx_MEM (Pmode, start_addr), end_addr);	\
-      end_addr = gen_rtx_REG (Pmode, 27);				\
-      start_addr = memory_address (Pmode, plus_constant ((TRAMP), 24));	\
-      emit_move_insn (gen_rtx_MEM (Pmode, start_addr), end_addr);	\
+      tmp = memory_address (Pmode, plus_constant ((TRAMP), 16));	\
+      emit_move_insn (gen_rtx_MEM (Pmode, tmp),				\
+		      force_reg (Pmode, plus_constant ((TRAMP), 32)));	\
+      tmp = memory_address (Pmode, plus_constant ((TRAMP), 24));	\
+      emit_move_insn (gen_rtx_MEM (Pmode, tmp),				\
+		      gen_rtx_REG (Pmode, 27));				\
+									\
       /* fdc and fic only use registers for the address to flush,	\
-	 they do not accept integer displacements.  */ 			\
-      start_addr = force_reg (Pmode, (TRAMP));				\
-      end_addr = force_reg (Pmode, plus_constant ((TRAMP), 32));	\
-      emit_insn (gen_dcacheflush (start_addr, end_addr));		\
-      end_addr = force_reg (Pmode, plus_constant (start_addr, 32));	\
-      emit_insn (gen_icacheflush (start_addr, end_addr, start_addr,	\
-				  gen_reg_rtx (Pmode), gen_reg_rtx (Pmode)));\
+	 they do not accept integer displacements.  We align the	\
+	 start and end addresses to the beginning of their respective	\
+	 cache lines to minimize the number of lines flushed.  */	\
+      tmp = force_reg (Pmode, plus_constant ((TRAMP), 32));		\
+      emit_insn (gen_anddi3 (start_addr, tmp,				\
+			     GEN_INT (-MIN_CACHELINE_SIZE)));		\
+      tmp = force_reg (Pmode,						\
+		       plus_constant (tmp, TRAMPOLINE_CODE_SIZE - 1));	\
+      emit_insn (gen_anddi3 (end_addr, tmp,				\
+			     GEN_INT (-MIN_CACHELINE_SIZE)));		\
+      emit_move_insn (line_length, GEN_INT (MIN_CACHELINE_SIZE));	\
+      emit_insn (gen_dcacheflush (start_addr, end_addr, line_length));	\
+      emit_insn (gen_icacheflush (start_addr, end_addr, line_length,	\
+				  gen_reg_rtx (Pmode),			\
+				  gen_reg_rtx (Pmode)));		\
     }									\
 }
 
@@ -1219,7 +1264,7 @@ extern int may_call_alloca;
 
    `S' is the constant 31.
 
-   `T' is for fp loads and stores.  */
+   `T' is for floating-point loads and stores.  */
 #define EXTRA_CONSTRAINT(OP, C)				\
   ((C) == 'Q' ?						\
    (IS_RELOADING_PSEUDO_P (OP)				\
@@ -1238,22 +1283,24 @@ extern int may_call_alloca;
       && (move_operand (OP, GET_MODE (OP))		\
 	  || memory_address_p (GET_MODE (OP), XEXP (OP, 0))\
 	  || reload_in_progress))			\
-   : ((C) == 'T' ? 					\
-      (GET_CODE (OP) == MEM				\
-       /* Using DFmode forces only short displacements	\
-	  to be recognized as valid in reg+d addresses. \
-	  However, this is not necessary for PA2.0 since\
-	  it has long FP loads/stores.			\
-							\
-	  FIXME: the ELF32 linker clobbers the LSB of	\
-	  the FP register number in {fldw,fstw} insns.	\
-	  Thus, we only allow long FP loads/stores on	\
-	  TARGET_64BIT.  */				\
-       && memory_address_p ((TARGET_PA_20		\
-			     && !TARGET_ELF32		\
-			     ? GET_MODE (OP)		\
-			     : DFmode),			\
-			    XEXP (OP, 0))		\
+   : ((C) == 'T' ?							\
+      (GET_CODE (OP) == MEM						\
+       /* Floating-point loads and stores are used to load		\
+	  integer values as well as floating-point values.		\
+	  They don't have the same set of REG+D address modes		\
+	  as integer loads and stores.  PA 1.x supports only		\
+	  short displacements.  PA 2.0 supports long displacements	\
+	  but the base register needs to be aligned.			\
+									\
+	  The checks in GO_IF_LEGITIMATE_ADDRESS for SFmode and		\
+	  DFmode test the validity of an address for use in a           \
+	  floating point load or store.  So, we use SFmode/DFmode       \
+	  to see if the address is valid for a floating-point           \
+	  load/store operation.  */                                     \
+       && memory_address_p ((GET_MODE_SIZE (GET_MODE (OP)) == 4		\
+			     ? SFmode					\
+			     : DFmode),					\
+			    XEXP (OP, 0))				\
        && !(GET_CODE (XEXP (OP, 0)) == LO_SUM		\
 	    && GET_CODE (XEXP (XEXP (OP, 0), 0)) == REG \
 	    && REG_OK_FOR_BASE_P (XEXP (XEXP (OP, 0), 0))\
@@ -1353,17 +1400,36 @@ extern int may_call_alloca;
 	       && REG_OK_FOR_BASE_P (XEXP (X, 1)))	\
 	base = XEXP (X, 1), index = XEXP (X, 0);	\
       if (base != 0)					\
-	if (GET_CODE (index) == CONST_INT		\
-	    && ((INT_14_BITS (index)			\
-		 && (TARGET_SOFT_FLOAT			\
-		     || (TARGET_PA_20			\
-			 && ((MODE == SFmode		\
-			      && (INTVAL (index) % 4) == 0)\
-			     || (MODE == DFmode		\
-				 && (INTVAL (index) % 8) == 0)))\
-		     || ((MODE) != SFmode && (MODE) != DFmode))) \
-		|| INT_5_BITS (index)))			\
-	  goto ADDR;					\
+	if (GET_CODE (index) == CONST_INT				\
+	    && ((INT_14_BITS (index)					\
+		 && (((MODE) != DImode					\
+		      && (MODE) != SFmode				\
+		      && (MODE) != DFmode)				\
+		     /* The base register for DImode loads and stores	\
+			with long displacements must be aligned because	\
+			the lower three bits in the displacement are	\
+			assumed to be zero.  */				\
+		     || ((MODE) == DImode				\
+			 && (!TARGET_64BIT				\
+			     || (INTVAL (index) % 8) == 0))		\
+		     /* Similarly, the base register for SFmode/DFmode	\
+			loads and stores with long displacements must	\
+			be aligned.					\
+									\
+			FIXME: the ELF32 linker clobbers the LSB of	\
+			the FP register number in PA 2.0 floating-point	\
+			insns with long displacements.  This is because	\
+			R_PARISC_DPREL14WR and other relocations like	\
+			it are not supported.  For now, we reject long	\
+			displacements on this target.  */		\
+		     || (((MODE) == SFmode || (MODE) == DFmode)		\
+			 && (TARGET_SOFT_FLOAT				\
+			     || (TARGET_PA_20				\
+				 && !TARGET_ELF32			\
+				 && (INTVAL (index)			\
+				     % GET_MODE_SIZE (MODE)) == 0)))))	\
+		|| INT_5_BITS (index)))					\
+	  goto ADDR;							\
       if (! TARGET_SOFT_FLOAT				\
 	  && ! TARGET_DISABLE_INDEXING			\
 	  && base					\
@@ -1465,6 +1531,11 @@ do { 									\
 	newoffset = (offset & ~mask) + mask + 1;			\
       else								\
 	newoffset = offset & ~mask;					\
+									\
+      /* Ensure that long displacements are aligned.  */		\
+      if (!VAL_5_BITS_P (newoffset)					\
+	  && GET_MODE_CLASS (MODE) == MODE_FLOAT)			\
+	newoffset &= ~(GET_MODE_SIZE (MODE) -1);			\
 									\
       if (newoffset != 0						\
 	  && VAL_14_BITS_P (newoffset))					\

@@ -421,6 +421,7 @@ dump_type (t, flags)
     case BOUND_TEMPLATE_TEMPLATE_PARM:
       {
 	tree args = TYPE_TI_ARGS (t);
+	dump_qualifiers (t, after);
 	print_tree_identifier (scratch_buffer, TYPE_IDENTIFIER (t));
 	print_template_argument_list_start (scratch_buffer);
         dump_template_argument_list (args, flags);
@@ -1162,7 +1163,7 @@ dump_function_decl (t, flags)
 
   dump_function_name (t, flags);
 
-  if (1)
+  if (!(flags & TFF_NO_FUNCTION_ARGUMENTS))
     {
       dump_parameters (parmtypes, flags);
 
@@ -1458,7 +1459,7 @@ dump_expr (t, flags)
     case TEMPLATE_DECL:
     case NAMESPACE_DECL:
     case OVERLOAD:
-      dump_decl (t, flags & ~TFF_DECL_SPECIFIERS);
+      dump_decl (t, (flags & ~TFF_DECL_SPECIFIERS) | TFF_NO_FUNCTION_ARGUMENTS);
       break;
 
     case INTEGER_CST:

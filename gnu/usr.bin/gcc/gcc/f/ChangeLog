@@ -1,3 +1,68 @@
+2004-09-30  Release Manager
+
+	* GCC 3.3.5 Released.
+
+2004-05-31  Release Manager
+
+	* GCC 3.3.4 Released.
+
+Sat May  8 17:50:43 2004  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	Backport:
+	
+	2004-02-24  Michael Matz  <matz@suse.de>
+	
+	* sta.c (ffesta_save_): Don't break aliasing rules.
+
+2004-04-18  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* g77.texi (Floating-point Errors): Avoid referencing 
+	http://www.linuxsupportline.com/~billm/ which as has been hijacked.
+
+2004-03-21  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* g77.texi (Aligned Data): Remove obsolete paragraph including a
+	broken link.
+	(Floating-point Errors): Remove links to http://www.validgh.com/
+	which was "hijacked".
+	(Language): Fix link to Fortran books.
+	(Projects): Remove obsolete paragraph including a broken link to
+	ftp://alpha.gnu.org/gnu/g77/projects/.
+	(Trouble): Remove obsolete paragraph including a broken link to
+	ftp://alpha.gnu.org/g77.plan.
+	
+	* invoke.texi (Overall Options): Remove broken reference to
+	rat7.uue (which was of dubious copyright status anyways).
+
+	* root.texi (www-burley): Fix URL.
+	
+2004-02-14  Release Manager
+
+	* GCC 3.3.3 Released.
+
+2004-01-14  Ian Lance Taylor  <ian@wasabisystems.com>
+
+	* README: Remove.
+
+2003-12-31  Roger Sayle  <roger@eyesopen.com>
+
+	PR fortran/12632
+	* com.c (ffecom_subscript_check_): Take as an extra argument the
+	(possibly NULL) decl of the array.  Don't create unnecessary tree
+	nodes if the array index is known to be safe at compile-time.
+	If the array index is unsafe, force the array decl into memory to
+	avoid RTL expansion problems.
+	(ffecom_array_ref_): Update calls to ffecom_subscript_check_.
+	(ffecom_char_args_x_): Likewise.
+
+2003-12-05  Toon Moene  <toon@moene.indiv.nluug.nl>
+
+	PR fortran/12633
+	Revert 2002-05-09  Hassan Aurag  <aurag@cae.com>
+
+		* expr.c (ffeexpr_reduced_ugly2log_): Allow logicals-as-integers
+		under -fugly-logint as arguments of .and., .or., .xor.
+
 2003-10-16  Release Manager
 
 	* GCC 3.3.2 Released.

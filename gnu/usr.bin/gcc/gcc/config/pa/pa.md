@@ -2264,9 +2264,9 @@
 
 (define_insn ""
   [(set (match_operand:SI 0 "reg_or_nonsymb_mem_operand"
-				"=r,r,r,r,r,r,Q,!*q,!f,f,*TR")
+				"=r,r,r,r,r,r,Q,!*q,!r,!f,f,*TR")
 	(match_operand:SI 1 "move_operand"
-				"A,r,J,N,K,RQ,rM,!rM,!fM,*RT,f"))]
+				"A,r,J,N,K,RQ,rM,!rM,!*q,!fM,*RT,f"))]
   "(register_operand (operands[0], SImode)
     || reg_or_0_operand (operands[1], SImode))
    && ! TARGET_SOFT_FLOAT"
@@ -2279,18 +2279,19 @@
    ldw%M1 %1,%0
    stw%M0 %r1,%0
    mtsar %r1
+   {mfctl|mfctl,w} %%sar,%0
    fcpy,sgl %f1,%0
    fldw%F1 %1,%0
    fstw%F0 %1,%0"
-  [(set_attr "type" "load,move,move,move,shift,load,store,move,fpalu,fpload,fpstore")
+  [(set_attr "type" "load,move,move,move,shift,load,store,move,move,fpalu,fpload,fpstore")
    (set_attr "pa_combine_type" "addmove")
-   (set_attr "length" "4,4,4,4,4,4,4,4,4,4,4")])
+   (set_attr "length" "4,4,4,4,4,4,4,4,4,4,4,4")])
 
 (define_insn ""
   [(set (match_operand:SI 0 "reg_or_nonsymb_mem_operand"
-				"=r,r,r,r,r,r,Q,!*q")
+				"=r,r,r,r,r,r,Q,!*q,!r")
 	(match_operand:SI 1 "move_operand"
-				"A,r,J,N,K,RQ,rM,!rM"))]
+				"A,r,J,N,K,RQ,rM,!rM,!*q"))]
   "(register_operand (operands[0], SImode)
     || reg_or_0_operand (operands[1], SImode))
    && TARGET_SOFT_FLOAT"
@@ -2302,10 +2303,11 @@
    {zdepi|depwi,z} %Z1,%0
    ldw%M1 %1,%0
    stw%M0 %r1,%0
-   mtsar %r1"
-  [(set_attr "type" "load,move,move,move,move,load,store,move")
+   mtsar %r1
+   {mfctl|mfctl,w} %%sar,%0"
+  [(set_attr "type" "load,move,move,move,move,load,store,move,move")
    (set_attr "pa_combine_type" "addmove")
-   (set_attr "length" "4,4,4,4,4,4,4,4")])
+   (set_attr "length" "4,4,4,4,4,4,4,4,4")])
 
 (define_insn ""
   [(set (match_operand:SI 0 "register_operand" "=r")
@@ -2699,8 +2701,10 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "reg_or_nonsymb_mem_operand" "=r,r,r,r,r,Q,!*q,!*f")
-	(match_operand:HI 1 "move_operand" "r,J,N,K,RQ,rM,!rM,!*fM"))]
+  [(set (match_operand:HI 0 "reg_or_nonsymb_mem_operand"
+				"=r,r,r,r,r,Q,!*q,!r,!*f")
+	(match_operand:HI 1 "move_operand"
+				"r,J,N,K,RQ,rM,!rM,!*q,!*fM"))]
   "register_operand (operands[0], HImode)
    || reg_or_0_operand (operands[1], HImode)"
   "@
@@ -2711,10 +2715,11 @@
    ldh%M1 %1,%0
    sth%M0 %r1,%0
    mtsar %r1
+   {mfctl|mfctl,w} %sar,%0
    fcpy,sgl %f1,%0"
-  [(set_attr "type" "move,move,move,shift,load,store,move,fpalu")
+  [(set_attr "type" "move,move,move,shift,load,store,move,move,fpalu")
    (set_attr "pa_combine_type" "addmove")
-   (set_attr "length" "4,4,4,4,4,4,4,4")])
+   (set_attr "length" "4,4,4,4,4,4,4,4,4")])
 
 (define_insn ""
   [(set (match_operand:HI 0 "register_operand" "=r")
@@ -2814,8 +2819,10 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "reg_or_nonsymb_mem_operand" "=r,r,r,r,r,Q,!*q,!*f")
-	(match_operand:QI 1 "move_operand" "r,J,N,K,RQ,rM,!rM,!*fM"))]
+  [(set (match_operand:QI 0 "reg_or_nonsymb_mem_operand"
+				"=r,r,r,r,r,Q,!*q,!r,!*f")
+	(match_operand:QI 1 "move_operand"
+				"r,J,N,K,RQ,rM,!rM,!*q,!*fM"))]
   "register_operand (operands[0], QImode)
    || reg_or_0_operand (operands[1], QImode)"
   "@
@@ -2826,10 +2833,11 @@
    ldb%M1 %1,%0
    stb%M0 %r1,%0
    mtsar %r1
+   {mfctl|mfctl,w} %%sar,%0
    fcpy,sgl %f1,%0"
-  [(set_attr "type" "move,move,move,shift,load,store,move,fpalu")
+  [(set_attr "type" "move,move,move,shift,load,store,move,move,fpalu")
    (set_attr "pa_combine_type" "addmove")
-   (set_attr "length" "4,4,4,4,4,4,4,4")])
+   (set_attr "length" "4,4,4,4,4,4,4,4,4")])
 
 (define_insn ""
   [(set (match_operand:QI 0 "register_operand" "=r")
@@ -3137,9 +3145,9 @@
 
 (define_insn ""
   [(set (match_operand:DF 0 "reg_or_nonsymb_mem_operand"
-				"=r,r,r,r,r,Q,!*q,!f,f,*TR")
+				"=r,r,r,r,r,Q,!f,f,*TR")
 	(match_operand:DF 1 "move_operand"
-				"r,J,N,K,RQ,rM,!rM,!fM,*RT,f"))]
+				"r,J,N,K,RQ,rM,!fM,*RT,f"))]
   "(register_operand (operands[0], DFmode)
     || reg_or_0_operand (operands[1], DFmode))
    && ! TARGET_SOFT_FLOAT && TARGET_64BIT"
@@ -3150,13 +3158,12 @@
    depdi,z %z1,%0
    ldd%M1 %1,%0
    std%M0 %r1,%0
-   mtsar %r1
    fcpy,dbl %f1,%0
    fldd%F1 %1,%0
    fstd%F0 %1,%0"
-  [(set_attr "type" "move,move,move,shift,load,store,move,fpalu,fpload,fpstore")
+  [(set_attr "type" "move,move,move,shift,load,store,fpalu,fpload,fpstore")
    (set_attr "pa_combine_type" "addmove")
-   (set_attr "length" "4,4,4,4,4,4,4,4,4,4")])
+   (set_attr "length" "4,4,4,4,4,4,4,4,4")])
 
 (define_insn ""
   [(set (match_operand:DF 0 "register_operand" "=fx")
@@ -3296,9 +3303,9 @@
 
 (define_insn ""
   [(set (match_operand:DI 0 "reg_or_nonsymb_mem_operand"
-				"=r,r,r,r,r,r,Q,!*q,!f,f,*TR")
+				"=r,r,r,r,r,r,Q,!*q,!r,!f,f,*TR")
 	(match_operand:DI 1 "move_operand"
-				"A,r,J,N,K,RQ,rM,!rM,!fM,*RT,f"))]
+				"A,r,J,N,K,RQ,rM,!rM,!*q,!fM,*RT,f"))]
   "(register_operand (operands[0], DImode)
     || reg_or_0_operand (operands[1], DImode))
    && ! TARGET_SOFT_FLOAT && TARGET_64BIT"
@@ -3311,12 +3318,13 @@
    ldd%M1 %1,%0
    std%M0 %r1,%0
    mtsar %r1
+   {mfctl|mfctl,w} %%sar,%0
    fcpy,dbl %f1,%0
    fldd%F1 %1,%0
    fstd%F0 %1,%0"
-  [(set_attr "type" "load,move,move,move,shift,load,store,move,fpalu,fpload,fpstore")
+  [(set_attr "type" "load,move,move,move,shift,load,store,move,move,fpalu,fpload,fpstore")
    (set_attr "pa_combine_type" "addmove")
-   (set_attr "length" "4,4,4,4,4,4,4,4,4,4,4")])
+   (set_attr "length" "4,4,4,4,4,4,4,4,4,4,4,4")])
 
 (define_insn ""
   [(set (match_operand:DI 0 "reg_or_nonsymb_mem_operand"
@@ -4390,10 +4398,20 @@
   ""
   "
 {
-  if (! register_operand (operands[1], DImode)
-      || ! register_operand (operands[2], DImode))
-    /* Let GCC break this into word-at-a-time operations.  */
-    FAIL;
+  if (TARGET_64BIT)
+    {
+      /* One operand must be a register operand.  */
+      if (!register_operand (operands[1], DImode)
+	  && !register_operand (operands[2], DImode))
+	FAIL;
+    }
+  else
+    {
+      /* Both operands must be register operands.  */
+      if (!register_operand (operands[1], DImode)
+	  || !register_operand (operands[2], DImode))
+	FAIL;
+    }
 }")
 
 (define_insn ""
@@ -7769,29 +7787,58 @@
   return \"\";
 }")
 
-;; Flush the I and D cache line found at the address in operand 0.
+;; Flush the I and D cache lines from the start address (operand0)
+;; to the end address (operand1).  No lines are flushed if the end
+;; address is less than the start address (unsigned).
+;;
+;; Because the range of memory flushed is variable and the size of
+;; a MEM can only be a CONST_INT, the patterns specify that they
+;; perform an unspecified volatile operation on all memory.
+;;
+;; The address range for an icache flush must lie within a single
+;; space on targets with non-equivalent space registers.
+;;
 ;; This is used by the trampoline code for nested functions.
-;; So long as the trampoline itself is less than 32 bytes this
-;; is sufficient.
-
+;;
+;; Operand 0 contains the start address.
+;; Operand 1 contains the end address.
+;; Operand 2 contains the line length to use.
+;; Operands 3 and 4 (icacheflush) are clobbered scratch registers.
 (define_insn "dcacheflush"
-  [(unspec_volatile [(const_int 1)] 0)
-   (use (mem:SI (match_operand 0 "pmode_register_operand" "r")))
-   (use (mem:SI (match_operand 1 "pmode_register_operand" "r")))]
+  [(const_int 1)
+   (unspec_volatile [(mem:BLK (scratch))] 0)
+   (use (match_operand 0 "pmode_register_operand" "r"))
+   (use (match_operand 1 "pmode_register_operand" "r"))
+   (use (match_operand 2 "pmode_register_operand" "r"))
+   (clobber (match_scratch 3 "=&0"))]
   ""
-  "fdc 0(%0)\;fdc 0(%1)\;sync"
+  "*
+{
+  if (TARGET_64BIT)
+    return \"cmpb,*<<=,n %3,%1,.\;fdc,m %2(%3)\;sync\";
+  else
+    return \"cmpb,<<=,n %3,%1,.\;fdc,m %2(%3)\;sync\";
+}"
   [(set_attr "type" "multi")
    (set_attr "length" "12")])
 
 (define_insn "icacheflush"
-  [(unspec_volatile [(const_int 2)] 0)
-   (use (mem:SI (match_operand 0 "pmode_register_operand" "r")))
-   (use (mem:SI (match_operand 1 "pmode_register_operand" "r")))
+  [(const_int 2)
+   (unspec_volatile [(mem:BLK (scratch))] 0)
+   (use (match_operand 0 "pmode_register_operand" "r"))
+   (use (match_operand 1 "pmode_register_operand" "r"))
    (use (match_operand 2 "pmode_register_operand" "r"))
    (clobber (match_operand 3 "pmode_register_operand" "=&r"))
-   (clobber (match_operand 4 "pmode_register_operand" "=&r"))]
+   (clobber (match_operand 4 "pmode_register_operand" "=&r"))
+   (clobber (match_scratch 5 "=&0"))]
   ""
-  "mfsp %%sr0,%4\;ldsid (%2),%3\;mtsp %3,%%sr0\;fic 0(%%sr0,%0)\;fic 0(%%sr0,%1)\;sync\;mtsp %4,%%sr0\;nop\;nop\;nop\;nop\;nop\;nop"
+  "*
+{
+  if (TARGET_64BIT)
+    return \"mfsp %%sr0,%4\;ldsid (%5),%3\;mtsp %3,%%sr0\;cmpb,*<<=,n %5,%1,.\;fic,m %2(%%sr0,%5)\;sync\;mtsp %4,%%sr0\;nop\;nop\;nop\;nop\;nop\;nop\";
+  else
+    return \"mfsp %%sr0,%4\;ldsid (%5),%3\;mtsp %3,%%sr0\;cmpb,<<=,n %5,%1,.\;fic,m %2(%%sr0,%5)\;sync\;mtsp %4,%%sr0\;nop\;nop\;nop\;nop\;nop\;nop\";
+}"
   [(set_attr "type" "multi")
    (set_attr "length" "52")])
 

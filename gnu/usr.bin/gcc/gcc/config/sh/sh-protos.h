@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler for Hitachi / SuperH SH.
-   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2004
    Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com).
    Improved by Jim Wilson (wilson@cygnus.com).
@@ -118,7 +118,7 @@ extern struct rtx_def *get_fpscr_rtx PARAMS ((void));
 extern void output_file_start PARAMS ((FILE *));
 extern int sh_media_register_for_return PARAMS ((void));
 extern void sh_expand_prologue PARAMS ((void));
-extern void sh_expand_epilogue PARAMS ((void));
+extern void sh_expand_epilogue PARAMS ((bool));
 extern int sh_need_epilogue PARAMS ((void));
 extern int initial_elimination_offset PARAMS ((int, int));
 extern int fldi_ok PARAMS ((void));
@@ -131,6 +131,7 @@ extern bool sh_cannot_change_mode_class
 extern void sh_mark_label PARAMS ((rtx, int));
 extern int sh_register_move_cost
   PARAMS ((enum machine_mode mode, enum reg_class, enum reg_class));
+extern int check_use_sfunc_addr (rtx, rtx);
 
 #ifdef HARD_CONST
 extern void fpscr_set_from_mem PARAMS ((int, HARD_REG_SET));

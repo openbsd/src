@@ -301,6 +301,14 @@ fix = {
  */
 fix = {
     hackname = AAB_svr4_replace_byteorder;
+    mach     = "*-*-sysv4*";
+    mach     = "i[34567]86-*-sysv5*";
+    mach     = "i[34567]86-*-sco3.2v5*";
+    mach     = "i[34567]86-*-udk*";
+    mach     = "i[34567]86-*-solaris2.[0-4]";
+    mach     = "powerpcle-*-solaris2.[0-4]";
+    mach     = "sparc-*-solaris2.[0-4]";
+    mach     = "i[34567]86-sequent-ptx*";
     files    = sys/byteorder.h;
     replace  = '#ifndef _SYS_BYTEORDER_H
 \#define _SYS_BYTEORDER_H
@@ -1340,6 +1348,25 @@ fix = {
 
 
 /*
+ *  Fix hpux 11.00 broken snprintf declaration
+ *  (third argument is char *, needs to be const char * to prevent
+ *  spurious warnings with -Wwrite-strings or in C++).
+ */
+fix = {
+    hackname = hpux11_snprintf;
+    files    = stdio.h;
+    select   = '(extern int snprintf *\(char *\*, *(|__|_hpux_)size_t,)'
+                                    ' *(char *\*, *\.\.\.\);)';
+    c_fix     = format;
+    c_fix_arg = '%1 const %3';
+
+    test_text = "extern int snprintf(char *, size_t, char *, ...);\n"
+                "extern int snprintf(char *, __size_t, char *, ...);\n"
+                "extern int snprintf(char *, _hpux_size_t, char *, ...);";
+};
+
+
+/*
  *  get rid of bogus inline definitions in HP-UX 8.0
  */
 fix = {
@@ -1521,6 +1548,52 @@ fix = {
 
     test_text = "#ifdef __c99\n#  define __restrict restrict";
 };
+
+/*
+ * IRIX 6.5.22 <internal/math_core.h> uses the SGI c99 __generic() intrinsic
+ * to define the fpclasify, isfinite, isinf, isnan, isnormal and signbit 
+ * functions.
+ *
+ * This was probably introduced around IRIX 6.5.18
+ */
+fix = {
+    hackname  = irix___generic1;
+    files     = internal/math_core.h;
+    mach      = "mips-sgi-irix6.5";
+    select    = "#define ([a-z]+)\\(x\\) *__generic.*";
+
+    c_fix     = format;
+    c_fix_arg = "extern int %1(double);\n"
+		"extern int %1f(float);\n"
+		"extern int %1l(long double);\n"
+		"#define %1(x) (sizeof(x) == sizeof(double) ? _%1(x) \\\n"
+		"               : sizeof(x) == sizeof(float) ? _%1f(x) \\\n"
+		"               : _%1l(x))\n";
+
+    test_text = 
+      "#define isnan(x) __generic(x,,, _isnan, _isnanf, _isnanl,,,)(x)\n";
+};
+
+
+/* Likewise <internal/math_core.h> on IRIX 6.5.19 and later uses the SGI
+   compiler's __generic intrinsic to define isgreater, isgreaterequal,
+   isless, islessequal, islessgreater and isunordered functions.  */
+fix = {
+    hackname  = irix___generic2;
+    files     = internal/math_core.h;
+    mach      = "mips-sgi-irix6.5";
+    select    = "#define ([a-z]+)\\(x,y\\) *__generic.*";
+
+    c_fix     = format;
+    c_fix_arg = "#define %1(x,y) \\\n"
+		"  ((sizeof(x)<=4 && sizeof(y)<=4) ? _%1f(x,y) \\\n"
+		"   : (sizeof(x)<=8 && sizeof(y)<=8) ? _%1(x,y) \\\n"
+		"   : _%1l(x,y))\n";
+
+    test_text = 
+      "#define isless(x,y)         __generic(x,y,, _isless, _islessf, _islessl,,,)(x,y)";
+};
+
 
 /*
  *  IRIX 5.2's <sys/asm.h> contains an asm comment with a contraction
@@ -2105,6 +2178,31 @@ fix = {
 
 
 /*
+ *  obstack.h used casts as lvalues.
+ *
+ *  We need to change postincrements of casted pointers (which are
+ *  then dereferenced and assigned into) of the form
+ *
+ *    *((TYPE*)PTRVAR)++ = (VALUE)
+ *
+ *  into expressions like
+ *
+ *    ((*((TYPE*)PTRVAR) = (VALUE)), (PTRVAR += sizeof (TYPE)))
+ *
+ *  which is correct for the cases used in obstack.h since PTRVAR is
+ *  of type char * and the value of the expression is not used.
+ */
+fix = {
+    hackname  = obstack_lvalue_cast;
+    files     = obstack.h;
+    select    = '\*\(\(([^()]*)\*\)(.*)\)\+\+ = \(([^()]*)\)';
+    c_fix     = format;
+    c_fix_arg = "((*((%1*)%2) = (%3)), (%2 += sizeof (%1)))";
+    test_text = "*((void **) (h)->next_free)++ = (aptr)";
+};
+
+
+/*
  *  sys/lc_core.h on some versions of OSF1/4.x pollutes the namespace by
  *  defining regex.h related types.  This causes libg++ build and usage
  *  failures.  Fixing this correctly requires checking and modifying 3 files.
@@ -2529,8 +2627,8 @@ fix = {
      * instead of va_list.
      * Don't claim to have defined va_list.
      */
-    sed = "s@ va_list @ __gnuc_va_list @\n"
-          "s@ va_list)@ __gnuc_va_list)@\n"
+    sed = "s@[ \t]va_list @ __gnuc_va_list @\n"
+          "s@[ \t]va_list)@ __gnuc_va_list)@\n"
 	  "s@(va_list)&@(__gnuc_va_list)\\&@\n"
           "s@ _VA_LIST_));@ __gnuc_va_list));@\n"
           "s@ __VA_LIST__));@ __gnuc_va_list));@\n"

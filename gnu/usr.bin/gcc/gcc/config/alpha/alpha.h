@@ -67,6 +67,8 @@ Boston, MA 02111-1307, USA.  */
 	  builtin_define ("_IEEE_FP");			\
 	if (TARGET_IEEE_WITH_INEXACT)			\
 	  builtin_define ("_IEEE_FP_INEXACT");		\
+	if (TARGET_LONG_DOUBLE_128)			\
+	  builtin_define ("__LONG_DOUBLE_128__");	\
 							\
 	/* Macros dependent on the C dialect.  */	\
 	SUBTARGET_LANGUAGE_CPP_BUILTINS();		\
@@ -222,6 +224,11 @@ extern int alpha_tls_size;
 #define MASK_TLS_KERNEL	(1 << 14)
 #define TARGET_TLS_KERNEL (target_flags & MASK_TLS_KERNEL)
 
+/* This means use IEEE quad-format for long double.  Assumes the 
+   presence of the GEM support library routines.  */
+#define MASK_LONG_DOUBLE_128 (1 << 16)
+#define TARGET_LONG_DOUBLE_128 (target_flags & MASK_LONG_DOUBLE_128)
+
 /* This means that the processor is an EV5, EV56, or PCA56.
    Unlike alpha_cpu this is not affected by -mtune= setting.  */
 #define MASK_CPU_EV5	(1 << 28)
@@ -254,7 +261,7 @@ extern int alpha_tls_size;
 #define TARGET_CAN_FAULT_IN_PROLOGUE 0
 #endif
 #ifndef TARGET_HAS_XFLOATING_LIBS
-#define TARGET_HAS_XFLOATING_LIBS 0
+#define TARGET_HAS_XFLOATING_LIBS TARGET_LONG_DOUBLE_128
 #endif
 #ifndef TARGET_PROFILING_NEEDS_GP
 #define TARGET_PROFILING_NEEDS_GP 0
@@ -312,6 +319,10 @@ extern int alpha_tls_size;
      N_("Emit 32-bit relocations to the small data areas")},		\
     {"tls-kernel", MASK_TLS_KERNEL,					\
      N_("Emit rdval instead of rduniq for thread pointer")},		\
+    {"long-double-128", MASK_LONG_DOUBLE_128,				\
+     N_("Use 128-bit long double")},					\
+    {"long-double-64", -MASK_LONG_DOUBLE_128,				\
+     N_("Use 64-bit long double")},					\
     {"", TARGET_DEFAULT | TARGET_CPU_DEFAULT				\
 	 | TARGET_DEFAULT_EXPLICIT_RELOCS, ""} }
 
@@ -421,7 +432,18 @@ extern const char *alpha_tls_size_string; /* For -mtls-size= */
 
 #define FLOAT_TYPE_SIZE 32
 #define DOUBLE_TYPE_SIZE 64
-#define LONG_DOUBLE_TYPE_SIZE 64
+#define LONG_DOUBLE_TYPE_SIZE (TARGET_LONG_DOUBLE_128 ? 128 : 64)
+
+/* Define this to set long double type size to use in libgcc2.c, which can
+   not depend on target_flags.  */
+#ifdef __LONG_DOUBLE_128__
+#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 128
+#else
+#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
+#endif
+
+/* Work around target_flags dependency in ada/targtyps.c.  */
+#define WIDEST_HARDWARE_FP_SIZE 64
 
 #define	WCHAR_TYPE "unsigned int"
 #define	WCHAR_TYPE_SIZE 32
@@ -482,7 +504,7 @@ extern const char *alpha_tls_size_string; /* For -mtls-size= */
 #define PARM_BOUNDARY 64
 
 /* Boundary (in *bits*) on which stack pointer should be aligned.  */
-#define STACK_BOUNDARY 64
+#define STACK_BOUNDARY 128
 
 /* Allocation boundary (in *bits*) for the code of a function.  */
 #define FUNCTION_BOUNDARY 32
@@ -620,12 +642,12 @@ extern const char *alpha_tls_size_string; /* For -mtls-size= */
 
 /* Value is 1 if hard register REGNO can hold a value of machine-mode MODE.
    On Alpha, the integer registers can hold any mode.  The floating-point
-   registers can hold 32-bit and 64-bit integers as well, but not 16-bit
-   or 8-bit values.  */
+   registers can hold 64-bit integers as well, but not smaller values.  */
 
 #define HARD_REGNO_MODE_OK(REGNO, MODE) 				\
   ((REGNO) >= 32 && (REGNO) <= 62 					\
-   ? GET_MODE_UNIT_SIZE (MODE) == 8 || GET_MODE_UNIT_SIZE (MODE) == 4	\
+   ? (MODE) == SFmode || (MODE) == DFmode || (MODE) == DImode		\
+     || (MODE) == SCmode || (MODE) == DCmode				\
    : 1)
 
 /* Value is 1 if MODE is a supported vector mode.  */

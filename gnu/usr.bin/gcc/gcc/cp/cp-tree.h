@@ -2546,9 +2546,12 @@ struct lang_decl GTY(())
 
    An aggregate is an array or a class with no user-declared
    constructors, no private or protected non-static data members, no
-   base classes, and no virtual functions.  */
+   base classes, and no virtual functions.
+
+   As an extension, we also treat vectors as aggregates.  */
 #define CP_AGGREGATE_TYPE_P(TYPE)		\
   (TREE_CODE (TYPE) == ARRAY_TYPE		\
+   || TREE_CODE (TYPE) == VECTOR_TYPE		\
    || (CLASS_TYPE_P (TYPE)			\
        && !CLASSTYPE_NON_AGGREGATE (TYPE)))
 
@@ -3548,7 +3551,8 @@ enum overload_flags { NO_SPECIAL = 0, DTOR_FLAG, OP_FLAG, TYPENAME_FLAG };
    TFF_TEMPLATE_HEADER: show the template<...> header in a
        template-declaration.
    TFF_TEMPLATE_NAME: show only template-name.
-   TFF_EXPR_IN_PARENS: Parenthesize expressions.  */
+   TFF_EXPR_IN_PARENS: parenthesize expressions.
+   TFF_NO_FUNCTION_ARGUMENTS: don't show function arguments.  */
 
 #define TFF_PLAIN_IDENTIFIER               (0)
 #define TFF_SCOPE                	   (1)
@@ -3561,6 +3565,7 @@ enum overload_flags { NO_SPECIAL = 0, DTOR_FLAG, OP_FLAG, TYPENAME_FLAG };
 #define TFF_TEMPLATE_HEADER                (1 << 7)
 #define TFF_TEMPLATE_NAME                  (1 << 8)
 #define TFF_EXPR_IN_PARENS                 (1 << 9)
+#define TFF_NO_FUNCTION_ARGUMENTS          (1 << 10)
 
 /* Returns the TEMPLATE_DECL associated to a TEMPLATE_TEMPLATE_PARM
    node.  */
@@ -4377,8 +4382,6 @@ extern int cp_is_overload_p PARAMS ((tree));
 extern int cp_auto_var_in_fn_p PARAMS ((tree,tree));
 extern tree cp_copy_res_decl_for_inlining PARAMS ((tree, tree, tree, void*,
 						   int*, void*));
-extern int cp_start_inlining			PARAMS ((tree));
-extern void cp_end_inlining			PARAMS ((tree));
 
 /* in typeck.c */
 extern int string_conv_p			PARAMS ((tree, tree, int));

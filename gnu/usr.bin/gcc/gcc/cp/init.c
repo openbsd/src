@@ -32,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "output.h"
 #include "except.h"
 #include "toplev.h"
+#include "diagnostic.h"
 #include "ggc.h"
 
 static void construct_virtual_base (tree, tree);
@@ -245,15 +246,18 @@ build_zero_init (tree type, tree nelts, bool static_storage_p)
       max_index = nelts ? nelts : array_type_nelts (type);
       my_friendly_assert (TREE_CODE (max_index) == INTEGER_CST, 20030618);
 
-      for (index = size_zero_node;
-	   !tree_int_cst_lt (max_index, index);
-	   index = size_binop (PLUS_EXPR, index, size_one_node))
-	inits = tree_cons (index,
-			   build_zero_init (TREE_TYPE (type),
-					    /*nelts=*/NULL_TREE,
-					    static_storage_p),
-			   inits);
-      CONSTRUCTOR_ELTS (init) = nreverse (inits);
+      /* A zero-sized array, which is accepted as an extension, will
+         have an upper bound of -1.  */
+      if (!tree_int_cst_equal (max_index, integer_minus_one_node))
+        for (index = size_zero_node;
+             !tree_int_cst_lt (max_index, index);
+             index = size_binop (PLUS_EXPR, index, size_one_node))
+          inits = tree_cons (index,
+                             build_zero_init (TREE_TYPE (type),
+                                              /*nelts=*/NULL_TREE,
+                                              static_storage_p),
+                             inits);
+         CONSTRUCTOR_ELTS (init) = nreverse (inits);
     }
   else if (TREE_CODE (type) == REFERENCE_TYPE)
     ;
@@ -387,6 +391,9 @@ perform_member_init (tree member, tree init)
 	  /* member traversal: note it leaves init NULL */
 	  else if (TREE_CODE (type) == REFERENCE_TYPE)
 	    pedwarn ("uninitialized reference member `%D'", member);
+          else if (CP_TYPE_CONST_P (type))
+            pedwarn ("uninitialized member '%D' with 'const' type '%T'",
+                     member, type);
 	}
       else if (TREE_CODE (init) == TREE_LIST)
 	{
@@ -544,6 +551,7 @@ sort_mem_initializers (tree t, tree mem_inits)
 	    cp_warning_at ("  `%#D'", subobject);
 	  else
 	    warning ("  base `%T'", subobject);
+	  warning ("  when initialized here");
 	}
 
       /* Look again, from the beginning of the list.  */
@@ -1282,8 +1290,9 @@ expand_aggr_init_1 (binfo, true_exp, exp, init, flags)
       /* If store_init_value returns NULL_TREE, the INIT has been
 	 record in the DECL_INITIAL for EXP.  That means there's
 	 nothing more we have to do.  */
-      if (store_init_value (exp, init))
-	finish_expr_stmt (build (INIT_EXPR, type, exp, init));
+      init = store_init_value (exp, init);
+      if (init)
+	finish_expr_stmt (init);
       return;
     }
 
@@ -2832,11 +2841,13 @@ build_vec_init (base, maxindex, init, from_array)
 
 	  num_initialized_elts++;
 
+	  current_stmt_tree ()->stmts_are_full_exprs_p = 1;
 	  if (IS_AGGR_TYPE (type) || TREE_CODE (type) == ARRAY_TYPE)
 	    finish_expr_stmt (build_aggr_init (baseref, elt, 0));
 	  else
 	    finish_expr_stmt (build_modify_expr (baseref, NOP_EXPR,
 						 elt));
+	  current_stmt_tree ()->stmts_are_full_exprs_p = 0;
 
 	  finish_expr_stmt (build_unary_op (PREINCREMENT_EXPR, base, 0));
 	  finish_expr_stmt (build_unary_op (PREDECREMENT_EXPR, iterator, 0));
@@ -3092,23 +3103,35 @@ build_delete (type, addr, auto_delete, flags, use_global_delete)
 
   if (TREE_CODE (type) == POINTER_TYPE)
     {
+      bool complete_p = true;
+
       type = TYPE_MAIN_VARIANT (TREE_TYPE (type));
       if (TREE_CODE (type) == ARRAY_TYPE)
 	goto handle_array;
 
-      if (VOID_TYPE_P (type)
-	  /* We don't want to warn about delete of void*, only other
-	     incomplete types.  Deleting other incomplete types
-	     invokes undefined behavior, but it is not ill-formed, so
-	     compile to something that would even do The Right Thing
-	     (TM) should the type have a trivial dtor and no delete
-	     operator.  */
-	  || !complete_type_or_diagnostic (type, addr, 1)
-	  || !IS_AGGR_TYPE (type))
+      /* We don't want to warn about delete of void*, only other
+	  incomplete types.  Deleting other incomplete types
+	  invokes undefined behavior, but it is not ill-formed, so
+	  compile to something that would even do The Right Thing
+	  (TM) should the type have a trivial dtor and no delete
+	  operator.  */
+      if (!VOID_TYPE_P (type))
 	{
-	  /* Call the builtin operator delete.  */
-	  return build_builtin_delete_call (addr);
+	  complete_type (type);
+	  if (!COMPLETE_TYPE_P (type))
+	    {
+	      warning ("possible problem detected in invocation of "
+		       "delete operator:");
+	      cxx_incomplete_type_diagnostic (addr, type, 1);
+	      inform ("neither the destructor nor the class-specific "
+		      "operator delete will be called, even if they are "
+		      "declared when the class is defined.");
+	      complete_p = false;
+	    }
 	}
+      if (VOID_TYPE_P (type) || !complete_p || !IS_AGGR_TYPE (type))
+	/* Call the builtin operator delete.  */
+	return build_builtin_delete_call (addr);
       if (TREE_SIDE_EFFECTS (addr))
 	addr = save_expr (addr);
 

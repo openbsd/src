@@ -18,6 +18,7 @@
 #undef ASM_CPU32_DEFAULT_SPEC
 #define ASM_CPU32_DEFAULT_SPEC "-xarch=v8plus"
 #endif
+
 #if TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc
 #undef CPP_CPU64_DEFAULT_SPEC
 #define CPP_CPU64_DEFAULT_SPEC ""
@@ -25,6 +26,15 @@
 #define ASM_CPU32_DEFAULT_SPEC "-xarch=v8plusa"
 #undef ASM_CPU64_DEFAULT_SPEC
 #define ASM_CPU64_DEFAULT_SPEC AS_SPARC64_FLAG "a"
+#endif
+
+#if TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc3
+#undef CPP_CPU64_DEFAULT_SPEC
+#define CPP_CPU64_DEFAULT_SPEC ""
+#undef ASM_CPU32_DEFAULT_SPEC
+#define ASM_CPU32_DEFAULT_SPEC "-xarch=v8plusb"
+#undef ASM_CPU64_DEFAULT_SPEC
+#define ASM_CPU64_DEFAULT_SPEC AS_SPARC64_FLAG "b"
 #endif
 
 #if DEFAULT_ARCH32_P
@@ -45,15 +55,16 @@
 %{mcpu=sparclite|mcpu-f930|mcpu=f934:-D__sparclite__} \
 %{mcpu=v8:" DEF_ARCH32_SPEC("-D__sparcv8") "} \
 %{mcpu=supersparc:-D__supersparc__ " DEF_ARCH32_SPEC("-D__sparcv8") "} \
-%{mcpu=v9|mcpu=ultrasparc:" DEF_ARCH32_SPEC("-D__sparcv8") "} \
+%{mcpu=v9|mcpu=ultrasparc|mcpu=ultrasparc3:" DEF_ARCH32_SPEC("-D__sparcv8") "} \
 %{!mcpu*:%{!mcypress:%{!msparclite:%{!mf930:%{!mf934:%{!mv8:%{!msupersparc:%(cpp_cpu_default)}}}}}}} \
 "
 
 #undef ASM_CPU_SPEC
 #define ASM_CPU_SPEC "\
-%{mcpu=ultrasparc:" DEF_ARCH32_SPEC("-xarch=v8plusa") DEF_ARCH64_SPEC(AS_SPARC64_FLAG "a") "} \
 %{mcpu=v9:" DEF_ARCH32_SPEC("-xarch=v8plus") DEF_ARCH64_SPEC(AS_SPARC64_FLAG) "} \
-%{!mcpu=ultrasparc:%{!mcpu=v9:%{mcpu*:" DEF_ARCH32_SPEC("-xarch=v8") DEF_ARCH64_SPEC(AS_SPARC64_FLAG) "}}} \
+%{mcpu=ultrasparc:" DEF_ARCH32_SPEC("-xarch=v8plusa") DEF_ARCH64_SPEC(AS_SPARC64_FLAG "a") "} \
+%{mcpu=ultrasparc3:" DEF_ARCH32_SPEC("-xarch=v8plusb") DEF_ARCH64_SPEC(AS_SPARC64_FLAG "b") "} \
+%{!mcpu=ultrasparc3:%{!mcpu=ultrasparc:%{!mcpu=v9:%{mcpu*:" DEF_ARCH32_SPEC("-xarch=v8") DEF_ARCH64_SPEC(AS_SPARC64_FLAG) "}}}} \
 %{!mcpu*:%(asm_cpu_default)} \
 "
 
@@ -135,7 +146,7 @@
  * This should be the same as in sol2.h, except with "/sparcv9"
  * appended to the paths and /usr/ccs/lib is no longer necessary
  */
-#define LINK_ARCH64_SPEC \
+#define LINK_ARCH64_SPEC_BASE \
   "%{mcmodel=medlow:-M /usr/lib/ld/sparcv9/map.below4G} \
    %{G:-G} \
    %{YP,*} \
@@ -143,10 +154,12 @@
    %{compat-bsd: \
      %{!YP,*:%{p|pg:-Y P,/usr/ucblib/sparcv9:/usr/lib/libp/sparcv9:/usr/lib/sparcv9} \
        %{!p:%{!pg:-Y P,/usr/ucblib/sparcv9:/usr/lib/sparcv9}}} \
-     -R /usr/ucblib} \
+     -R /usr/ucblib/sparcv9} \
    %{!compat-bsd: \
      %{!YP,*:%{p|pg:-Y P,/usr/lib/libp/sparcv9:/usr/lib/sparcv9} \
        %{!p:%{!pg:-Y P,/usr/lib/sparcv9}}}}"
+
+#define LINK_ARCH64_SPEC LINK_ARCH64_SPEC_BASE
 
 #undef LINK_ARCH_SPEC
 #define LINK_ARCH_SPEC "\

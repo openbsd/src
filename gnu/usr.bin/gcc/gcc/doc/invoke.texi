@@ -1,5 +1,5 @@
 @c Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-@c 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+@c 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -347,7 +347,8 @@ in the following sections.
 -mno-faster-structs  -mno-flat  -mno-fpu @gol
 -mno-impure-text  -mno-stack-bias  -mno-unaligned-doubles @gol
 -msoft-float  -msoft-quad-float  -msparclite  -mstack-bias @gol
--msupersparc  -munaligned-doubles  -mv8}
+-msupersparc  -munaligned-doubles  -mv8
+-threads -pthreads}
 
 @emph{ARM Options}
 @gccoptlist{-mapcs-frame  -mno-apcs-frame @gol
@@ -473,7 +474,7 @@ in the following sections.
 -mno-fp-ret-in-387  -msoft-float  -msvr3-shlib @gol
 -mno-wide-multiply  -mrtd  -malign-double @gol
 -mpreferred-stack-boundary=@var{num} @gol
--mmmx  -msse  -msse2  -m3dnow @gol
+-mmmx  -msse  -msse2 -msse3 -m3dnow @gol
 -mthreads  -mno-align-stringops  -minline-all-stringops @gol
 -mpush-args  -maccumulate-outgoing-args  -m128bit-long-double @gol
 -m96bit-long-double  -mregparm=@var{num}  -momit-leaf-frame-pointer @gol
@@ -603,7 +604,8 @@ in the following sections.
 -metrax4  -metrax100  -mpdebug  -mcc-init  -mno-side-effects @gol
 -mstack-align  -mdata-align  -mconst-align @gol
 -m32-bit  -m16-bit  -m8-bit  -mno-prologue-epilogue  -mno-gotplt @gol
--melf  -maout  -melinux  -mlinux  -sim  -sim2}
+-melf  -maout  -melinux  -mlinux  -sim  -sim2 @gol
+-mmul-bug-workaround  -mno-mul-bug-workaround}
 
 @emph{PDP-11 Options}
 @gccoptlist{-mfpu  -msoft-float  -mac0  -mno-ac0  -m40  -m45  -m10 @gol
@@ -1020,7 +1022,7 @@ names @samp{c9x} and @samp{iso9899:199x} are deprecated.
 Default, ISO C90 plus GNU extensions (including some C99 features).
 
 @item gnu99
-@item gnu9x
+@itemx gnu9x
 ISO C99 plus GNU extensions.  When ISO C99 is fully implemented in GCC,
 this will become the default.  The name @samp{gnu9x} is deprecated.
 
@@ -2040,7 +2042,7 @@ Enable @option{-Wformat} plus format checks not included in
 
 @item -Wnonnull
 @opindex Wnonnull
-Enable warning about passing a null pointer for arguments marked as
+Warn about passing a null pointer for arguments marked as
 requiring a non-null value by the @code{nonnull} function attribute.
 
 @option{-Wnonnull} is included in @option{-Wall} and @option{-Wformat}.  It
@@ -3899,7 +3901,6 @@ other, a few use both.
 @option{-fpeephole} is enabled by default.
 @option{-fpeephole2} enabled at levels @option{-O2}, @option{-O3}, @option{-Os}.
 
-@item -fbranch-probabilities
 @item -fno-guess-branch-probability
 @opindex fno-guess-branch-probability
 Do not guess branch probabilities using a randomized model.
@@ -4214,8 +4215,8 @@ exactly determine which path is taken more often.
 @item -fnew-ra
 @opindex fnew-ra
 Use a graph coloring register allocator.  Currently this option is meant
-for testing, so we are interested to hear about miscompilations with
-@option{-fnew-ra}.
+only for testing.  Users should not specify this option, since it is not
+yet ready for production use.
 
 @item -ftracer
 @opindex ftracer
@@ -4291,6 +4292,10 @@ optimization that is done.  For example, GCC will not inline functions
 that contain more that a certain number of instructions.  You can
 control some of these constants on the command-line using the
 @option{--param} option.
+
+The names of specific parameters, and the meaning of the values, are
+tied to the internals of the compiler, and are subject to change
+without notice in future releases.
 
 In each case, the @var{value} is an integer.  The allowable choices for
 @var{name} are given in the following table:
@@ -5061,7 +5066,10 @@ predefined macro, except for macros that start with @samp{__} or with
 C@.
 
 @item %I
-Substitute a @option{-iprefix} option made from @env{GCC_EXEC_PREFIX}.
+Substitute any of @option{-iprefix} (made from @env{GCC_EXEC_PREFIX}),
+@option{-isysroot} (made from @env{TARGET_SYSTEM_ROOT}), and
+@option{-isystem} (made from @env{COMPILER_PATH} and @option{-B} options)
+as necessary.
 
 @item %s
 Current argument is the name of a library or startup file of some sort.
@@ -5951,6 +5959,24 @@ With @option{-mstack-bias}, GCC assumes that the stack pointer, and
 frame pointer if present, are offset by @minus{}2047 which must be added back
 when making stack frame references.
 Otherwise, assume no such offset is present.
+@end table
+
+These switches are supported in addition to the above on Solaris:
+
+@table @gcctabopt
+@item -threads
+@opindex threads
+Add support for multithreading using the Solaris threads library.  This
+option sets flags for both the preprocessor and linker.  This option does
+not affect the thread safety of object code produced by the compiler or
+that of libraries supplied with it.
+
+@item -pthreads
+@opindex pthreads
+Add support for multithreading using the POSIX threads library.  This
+option sets flags for both the preprocessor and linker.  This option does
+not affect the thread safety of object code produced  by the compiler or
+that of libraries supplied with it.
 @end table
 
 @node ARM Options
@@ -7267,61 +7293,61 @@ This specifies the @var{executable} that will be loading the build
 output file being linked. See man ld(1) for more information.
 
 @item -allowable_client  @var{client_name}
-@item -arch_only
+@itemx -arch_only
 
-@item -client_name       
-@item -compatibility_version
-@item -current_version    
-@item -dependency-file
-@item -dylib_file    
-@item -dylinker_install_name
-@item -dynamic
-@item -dynamiclib   
-@item -exported_symbols_list  
-@item -filelist
-@item -flat_namespace   
-@item -force_cpusubtype_ALL
-@item -force_flat_namespace   
-@item -headerpad_max_install_names
-@item -image_base  
-@item -init
-@item -install_name
-@item -keep_private_externs
-@item -multi_module
-@item -multiply_defined      
-@item -multiply_defined_unused      
-@item -noall_load  
-@item -nomultidefs
-@item -noprebind     
-@item -noseglinkedit
-@item -pagezero_size    
-@item -prebind
-@item -prebind_all_twolevel_modules
-@item -private_bundle
-@item -read_only_relocs
-@item -sectalign  
-@item -sectobjectsymbols    
-@item -whyload
-@item -seg1addr 
-@item -sectcreate
-@item -sectobjectsymbols
-@item -sectorder
-@item -seg_addr_table
-@item -seg_addr_table_filename
-@item -seglinkedit
-@item -segprot   
-@item -segs_read_only_addr
-@item -segs_read_write_addr
-@item -single_module   
-@item -static
-@item -sub_library
-@item -sub_umbrella 
-@item -twolevel_namespace
-@item -umbrella
-@item -undefined
-@item -unexported_symbols_list
-@item -weak_reference_mismatches
-@item -whatsloaded  
+@itemx -client_name       
+@itemx -compatibility_version
+@itemx -current_version    
+@itemx -dependency-file
+@itemx -dylib_file    
+@itemx -dylinker_install_name
+@itemx -dynamic
+@itemx -dynamiclib   
+@itemx -exported_symbols_list  
+@itemx -filelist
+@itemx -flat_namespace   
+@itemx -force_cpusubtype_ALL
+@itemx -force_flat_namespace   
+@itemx -headerpad_max_install_names
+@itemx -image_base  
+@itemx -init
+@itemx -install_name
+@itemx -keep_private_externs
+@itemx -multi_module
+@itemx -multiply_defined      
+@itemx -multiply_defined_unused      
+@itemx -noall_load  
+@itemx -nomultidefs
+@itemx -noprebind     
+@itemx -noseglinkedit
+@itemx -pagezero_size    
+@itemx -prebind
+@itemx -prebind_all_twolevel_modules
+@itemx -private_bundle
+@itemx -read_only_relocs
+@itemx -sectalign  
+@itemx -sectobjectsymbols    
+@itemx -whyload
+@itemx -seg1addr 
+@itemx -sectcreate
+@itemx -sectobjectsymbols
+@itemx -sectorder
+@itemx -seg_addr_table
+@itemx -seg_addr_table_filename
+@itemx -seglinkedit
+@itemx -segprot   
+@itemx -segs_read_only_addr
+@itemx -segs_read_write_addr
+@itemx -single_module   
+@itemx -static
+@itemx -sub_library
+@itemx -sub_umbrella 
+@itemx -twolevel_namespace
+@itemx -umbrella
+@itemx -undefined
+@itemx -unexported_symbols_list
+@itemx -weak_reference_mismatches
+@itemx -whatsloaded  
 
 @opindex allowable_client
 @opindex arch_only    
@@ -7841,7 +7867,8 @@ Tune to @var{cpu-type} everything applicable about the generated code, except
 for the ABI and the set of available instructions.  The choices for
 @var{cpu-type} are @samp{i386}, @samp{i486}, @samp{i586}, @samp{i686},
 @samp{pentium}, @samp{pentium-mmx}, @samp{pentiumpro}, @samp{pentium2},
-@samp{pentium3}, @samp{pentium4}, @samp{k6}, @samp{k6-2}, @samp{k6-3},
+@samp{pentium3}, @samp{pentium4}, @samp{prescott}, @samp{nocona},
+@samp{k6}, @samp{k6-2}, @samp{k6-3},
 @samp{athlon}, @samp{athlon-tbird}, @samp{athlon-4}, @samp{athlon-xp},
 @samp{athlon-mp}, @samp{winchip-c6}, @samp{winchip2} and @samp{c3}.
 
@@ -7872,7 +7899,7 @@ These synonyms are deprecated.
 
 @item -mfpmath=@var{unit}
 @opindex march
-generate floating point arithmetics for selected unit @var{unit}.  the choices
+Generate floating point arithmetics for selected unit @var{unit}.  The choices
 for @var{unit} are:
 
 @table @samp
@@ -7898,18 +7925,18 @@ For i387 you need to use @option{-march=@var{cpu-type}}, @option{-msse} or
 @option{-msse2} switches to enable SSE extensions and make this option
 effective.  For x86-64 compiler, these extensions are enabled by default.
 
-The resulting code should be considerably faster in majority of cases and avoid
+The resulting code should be considerably faster in the majority of cases and avoid
 the numerical instability problems of 387 code, but may break some existing
 code that expects temporaries to be 80bit.
 
-This is the default choice for x86-64 compiler.
+This is the default choice for the x86-64 compiler.
 
 @item sse,387
 Attempt to utilize both instruction sets at once.  This effectively double the
 amount of available registers and on chips with separate execution units for
 387 and SSE the execution resources too.  Use this option with care, as it is
-still experimental, because gcc register allocator does not model separate
-functional units well resulting in instable performance.
+still experimental, because the gcc register allocator does not model separate
+functional units well.
 @end table
 
 @item -masm=@var{dialect}
@@ -7978,7 +8005,7 @@ and will not be binary compatible with structures in code compiled
 without that switch.
 
 @item -m96bit-long-double
-@item -m128bit-long-double
+@itemx -m128bit-long-double
 @opindex m96bit-long-double
 @opindex m128bit-long-double
 These switches control the size of @code{long double} type. The i386 
@@ -7999,7 +8026,7 @@ Notice that neither of these options enable any extra precision over the x87
 standard of 80 bits for a @code{long double}. 
 
 @strong{Warning:} if you override the default value for your target ABI, the
-structures and arrays containing @code{long double} will change their size as
+structures and arrays containing @code{long double} variables will change their size as
 well as function calling convention for function taking @code{long double}
 will be modified.  Hence they will not be binary compatible with arrays or
 structures in code compiled without that switch.
@@ -8085,6 +8112,8 @@ preferred alignment to @option{-mpreferred-stack-boundary=2}.
 @itemx -mno-sse
 @item -msse2
 @itemx -mno-sse2
+@item -msse3
+@itemx -mno-sse3
 @item -m3dnow
 @itemx -mno-3dnow
 @opindex mmmx
@@ -8094,7 +8123,8 @@ preferred alignment to @option{-mpreferred-stack-boundary=2}.
 @opindex m3dnow
 @opindex mno-3dnow
 These switches enable or disable the use of built-in functions that allow
-direct access to the MMX, SSE and 3Dnow extensions of the instruction set.
+direct access to the MMX, SSE, SSE2, SSE3 and 3Dnow extensions of the
+instruction set.
 
 @xref{X86 Built-in Functions}, for details of the functions enabled
 and disabled by these switches.
@@ -8751,7 +8781,7 @@ Supported values for @var{cpu_type} are
 
 @table @samp
 @item ev4
-@item ev45
+@itemx ev45
 @itemx 21064
 Schedules as an EV4 and has no instruction set extensions.
 
@@ -8773,7 +8803,7 @@ Schedules as an EV5 and supports the BWX and MAX extensions.
 Schedules as an EV6 and supports the BWX, FIX, and MAX extensions.
 
 @item ev67
-@item 21264a
+@itemx 21264a
 Schedules as an EV6 and supports the BWX, CIX, FIX, and MAX extensions.
 @end table
 
@@ -8829,7 +8859,7 @@ These @samp{-m} options are defined for the H8/300 implementations:
 @opindex mrelax
 Shorten some address references at link time, when possible; uses the
 linker option @option{-relax}.  @xref{H8/300,, @code{ld} and the H8/300,
-ld.info, Using ld}, for a fuller description.
+ld, Using ld}, for a fuller description.
 
 @item -mh
 @opindex mh
@@ -9020,7 +9050,7 @@ parameters for machine type @var{cpu_type}.  Supported values for
 TMS320C40.
 
 @item -mbig-memory
-@item -mbig
+@itemx -mbig
 @itemx -msmall-memory
 @itemx -msmall
 @opindex mbig-memory
@@ -9816,6 +9846,13 @@ program should be set to @var{n} bytes.
 The options @option{-metrax4} and @option{-metrax100} are synonyms for
 @option{-march=v3} and @option{-march=v8} respectively.
 
+@item -mmul-bug-workaround
+@itemx -mno-mul-bug-workaround
+@opindex mmul-bug-workaround
+@opindex mno-mul-bug-workaround
+Work around a bug in the @code{muls} and @code{mulu} instructions for CPU
+models where it applies.  This option is active by default.
+
 @item -mpdebug
 @opindex mpdebug
 Enable CRIS-specific verbose debug-related information in the assembly
@@ -10062,7 +10099,7 @@ Use 32-bit @code{int}.
 Use 64-bit @code{float}.  This is the default.
 
 @item -mfloat32
-@item -mno-float64
+@itemx -mno-float64
 @opindex mfloat32
 @opindex mno-float64
 Use 32-bit @code{float}.

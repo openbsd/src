@@ -175,8 +175,9 @@ static rtx ia64_expand_fetch_and_op PARAMS ((optab, enum machine_mode,
 					     tree, rtx));
 static rtx ia64_expand_op_and_fetch PARAMS ((optab, enum machine_mode,
 					     tree, rtx));
-static rtx ia64_expand_compare_and_swap PARAMS ((enum machine_mode, int,
-						 tree, rtx));
+static rtx ia64_expand_compare_and_swap PARAMS ((enum machine_mode,
+						 enum machine_mode,
+						 int, tree, rtx));
 static rtx ia64_expand_lock_test_and_set PARAMS ((enum machine_mode,
 						  tree, rtx));
 static rtx ia64_expand_lock_release PARAMS ((enum machine_mode, tree, rtx));
@@ -278,11 +279,6 @@ static const struct attribute_spec ia64_attribute_table[] =
 #define TARGET_SCHED_REORDER ia64_sched_reorder
 #undef TARGET_SCHED_REORDER2
 #define TARGET_SCHED_REORDER2 ia64_sched_reorder2
-
-#ifdef HAVE_AS_TLS
-#undef TARGET_HAVE_TLS
-#define TARGET_HAVE_TLS true
-#endif
 
 #undef TARGET_ASM_OUTPUT_MI_THUNK
 #define TARGET_ASM_OUTPUT_MI_THUNK ia64_output_mi_thunk
@@ -1090,8 +1086,7 @@ ia64_expand_load_address (dest, src, scratch)
       if (! scratch)
 	scratch = no_new_pseudos ? subtarget : gen_reg_rtx (DImode);
 
-      emit_insn (gen_load_symptr (subtarget, plus_constant (sym, hi),
-				  scratch));
+      ia64_expand_load_address (subtarget, plus_constant (sym, hi), scratch);
       emit_insn (gen_adddi3 (temp, subtarget, GEN_INT (lo)));
     }
   else
@@ -1435,6 +1430,7 @@ ia64_expand_call (retval, addr, nextarg, sibcall_p)
   rtx insn, b0;
 
   addr = XEXP (addr, 0);
+  addr = convert_memory_address (DImode, addr);
   b0 = gen_rtx_REG (DImode, R_BR (0));
 
   /* ??? Should do this for functions known to bind local too.  */
@@ -3433,9 +3429,10 @@ ia64_function_arg (cum, mode, type, named, incoming)
 		      ? 1 : GET_MODE_SIZE (gr_mode) / UNITS_PER_WORD;
 	}
 
-      /* If we ended up using just one location, just return that one loc.  */
+      /* If we ended up using just one location, just return that one loc, but
+	 change the mode back to the argument mode.  */
       if (i == 1)
-	return XEXP (loc[0], 0);
+	return gen_rtx_REG (mode, REGNO (XEXP (loc[0], 0)));
       else
 	return gen_rtx_PARALLEL (mode, gen_rtvec_v (i, loc));
     }
@@ -3650,8 +3647,12 @@ ia64_va_arg (valist, type)
   /* Variable sized types are passed by reference.  */
   if (TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST)
     {
-      rtx addr = std_expand_builtin_va_arg (valist, build_pointer_type (type));
-      return gen_rtx_MEM (ptr_mode, force_reg (Pmode, addr));
+      rtx addr = force_reg (ptr_mode,
+	    std_expand_builtin_va_arg (valist, build_pointer_type (type)));
+#ifdef POINTERS_EXTEND_UNSIGNED
+      addr = convert_memory_address (Pmode, addr);
+#endif
+      return gen_rtx_MEM (ptr_mode, addr);
     }
 
   /* Arguments with alignment larger than 8 bytes start at the next even
@@ -7173,11 +7174,12 @@ ia64_reorg (insns)
       insn = get_last_insn ();
       if (! INSN_P (insn))
         insn = prev_active_insn (insn);
-      if (GET_CODE (insn) == INSN
-	  && GET_CODE (PATTERN (insn)) == UNSPEC_VOLATILE
-	  && XINT (PATTERN (insn), 1) == UNSPECV_INSN_GROUP_BARRIER)
-	{
-	  saw_stop = 1;
+      /* Skip over insns that expand to nothing.  */
+      while (GET_CODE (insn) == INSN && get_attr_empty (insn) == EMPTY_YES)
+        {
+	  if (GET_CODE (PATTERN (insn)) == UNSPEC_VOLATILE
+	      && XINT (PATTERN (insn), 1) == UNSPECV_INSN_GROUP_BARRIER)
+	    saw_stop = 1;
 	  insn = prev_active_insn (insn);
 	}
       if (GET_CODE (insn) == CALL_INSN)
@@ -7286,6 +7288,10 @@ ia64_in_small_data_p (exp)
   if (TARGET_NO_SDATA)
     return false;
 
+  /* Functions are never small data.  */
+  if (TREE_CODE (exp) == FUNCTION_DECL)
+    return false;
+
   if (TREE_CODE (exp) == VAR_DECL && DECL_SECTION_NAME (exp))
     {
       const char *section = TREE_STRING_POINTER (DECL_SECTION_NAME (exp));
@@ -7388,6 +7394,12 @@ bool
 ia64_function_ok_for_sibcall (decl)
      tree decl;
 {
+  /* We can't perform a sibcall if the current function has the syscall_linkage
+     attribute.  */
+  if (lookup_attribute ("syscall_linkage",
+			TYPE_ATTRIBUTES (TREE_TYPE (current_function_decl))))
+    return false;
+
   /* We must always return with our current GP.  This means we can
      only sibcall to functions defined in the current module.  */
   return decl && (*targetm.binds_local_p) (decl);
@@ -7710,9 +7722,14 @@ ia64_init_builtins ()
 				psi_type_node, integer_type_node,
 				integer_type_node, NULL_TREE);
 
-  /* __sync_val_compare_and_swap_di, __sync_bool_compare_and_swap_di */
+  /* __sync_val_compare_and_swap_di */
   tree di_ftype_pdi_di_di
     = build_function_type_list (long_integer_type_node,
+				pdi_type_node, long_integer_type_node,
+				long_integer_type_node, NULL_TREE);
+  /* __sync_bool_compare_and_swap_di */
+  tree si_ftype_pdi_di_di
+    = build_function_type_list (integer_type_node,
 				pdi_type_node, long_integer_type_node,
 				long_integer_type_node, NULL_TREE);
   /* __sync_synchronize */
@@ -7747,7 +7764,7 @@ ia64_init_builtins ()
 	       IA64_BUILTIN_VAL_COMPARE_AND_SWAP_DI);
   def_builtin ("__sync_bool_compare_and_swap_si", si_ftype_psi_si_si,
 	       IA64_BUILTIN_BOOL_COMPARE_AND_SWAP_SI);
-  def_builtin ("__sync_bool_compare_and_swap_di", di_ftype_pdi_di_di,
+  def_builtin ("__sync_bool_compare_and_swap_di", si_ftype_pdi_di_di,
 	       IA64_BUILTIN_BOOL_COMPARE_AND_SWAP_DI);
 
   def_builtin ("__sync_synchronize", void_ftype_void,
@@ -7878,13 +7895,14 @@ ia64_expand_fetch_and_op (binoptab, mode, arglist, target)
     }
 
   tmp = gen_reg_rtx (mode);
-  ccv = gen_rtx_REG (mode, AR_CCV_REGNUM);
+  /* ar.ccv must always be loaded with a zero-extended DImode value.  */
+  ccv = gen_rtx_REG (DImode, AR_CCV_REGNUM);
   emit_move_insn (tmp, mem);
 
   label = gen_label_rtx ();
   emit_label (label);
   emit_move_insn (ret, tmp);
-  emit_move_insn (ccv, tmp);
+  convert_move (ccv, tmp, /*unsignedp=*/1);
 
   /* Perform the specific operation.  Special case NAND by noticing
      one_cmpl_optab instead.  */
@@ -7947,14 +7965,15 @@ ia64_expand_op_and_fetch (binoptab, mode, arglist, target)
   emit_insn (gen_mf ());
   tmp = gen_reg_rtx (mode);
   old = gen_reg_rtx (mode);
-  ccv = gen_rtx_REG (mode, AR_CCV_REGNUM);
+  /* ar.ccv must always be loaded with a zero-extended DImode value.  */        
+  ccv = gen_rtx_REG (DImode, AR_CCV_REGNUM);
 
   emit_move_insn (tmp, mem);
 
   label = gen_label_rtx ();
   emit_label (label);
   emit_move_insn (old, tmp);
-  emit_move_insn (ccv, tmp);
+  convert_move (ccv, tmp, /*unsignedp=*/1);
 
   /* Perform the specific operation.  Special case NAND by noticing
      one_cmpl_optab instead.  */
@@ -7987,7 +8006,8 @@ ia64_expand_op_and_fetch (binoptab, mode, arglist, target)
 */
 
 static rtx
-ia64_expand_compare_and_swap (mode, boolp, arglist, target)
+ia64_expand_compare_and_swap (rmode, mode, boolp, arglist, target)
+     enum machine_mode rmode;
      enum machine_mode mode;
      int boolp;
      tree arglist;
@@ -8006,6 +8026,11 @@ ia64_expand_compare_and_swap (mode, boolp, arglist, target)
   mem = gen_rtx_MEM (mode, force_reg (ptr_mode, mem));
   MEM_VOLATILE_P (mem) = 1;
 
+  if (GET_MODE (old) != mode)
+    old = convert_to_mode (mode, old, /*unsignedp=*/1);
+  if (GET_MODE (new) != mode)
+    new = convert_to_mode (mode, new, /*unsignedp=*/1);
+
   if (! register_operand (old, mode))
     old = copy_to_mode_reg (mode, old);
   if (! register_operand (new, mode))
@@ -8017,14 +8042,7 @@ ia64_expand_compare_and_swap (mode, boolp, arglist, target)
     tmp = gen_reg_rtx (mode);
 
   ccv = gen_rtx_REG (DImode, AR_CCV_REGNUM);
-  if (mode == DImode)
-    emit_move_insn (ccv, old);
-  else
-    {
-      rtx ccvtmp = gen_reg_rtx (DImode);
-      emit_insn (gen_zero_extendsidi2 (ccvtmp, old));
-      emit_move_insn (ccv, ccvtmp);
-    }
+  convert_move (ccv, old, /*unsignedp=*/1);
   emit_insn (gen_mf ());
   if (mode == SImode)
     insn = gen_cmpxchg_acq_si (tmp, mem, new, ccv);
@@ -8035,7 +8053,7 @@ ia64_expand_compare_and_swap (mode, boolp, arglist, target)
   if (boolp)
     {
       if (! target)
-	target = gen_reg_rtx (mode);
+	target = gen_reg_rtx (rmode);
       return emit_store_flag_force (target, EQ, tmp, old, mode, 1, 1);
     }
   else
@@ -8110,11 +8128,16 @@ ia64_expand_builtin (exp, target, subtarget, mode, ignore)
   tree fndecl = TREE_OPERAND (TREE_OPERAND (exp, 0), 0);
   unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
   tree arglist = TREE_OPERAND (exp, 1);
+  enum machine_mode rmode = VOIDmode;
 
   switch (fcode)
     {
     case IA64_BUILTIN_BOOL_COMPARE_AND_SWAP_SI:
     case IA64_BUILTIN_VAL_COMPARE_AND_SWAP_SI:
+      mode = SImode;
+      rmode = SImode;
+      break;
+
     case IA64_BUILTIN_LOCK_TEST_AND_SET_SI:
     case IA64_BUILTIN_LOCK_RELEASE_SI:
     case IA64_BUILTIN_FETCH_AND_ADD_SI:
@@ -8133,7 +8156,15 @@ ia64_expand_builtin (exp, target, subtarget, mode, ignore)
       break;
 
     case IA64_BUILTIN_BOOL_COMPARE_AND_SWAP_DI:
+      mode = DImode;
+      rmode = SImode;
+      break;
+
     case IA64_BUILTIN_VAL_COMPARE_AND_SWAP_DI:
+      mode = DImode;
+      rmode = DImode;
+      break;
+
     case IA64_BUILTIN_LOCK_TEST_AND_SET_DI:
     case IA64_BUILTIN_LOCK_RELEASE_DI:
     case IA64_BUILTIN_FETCH_AND_ADD_DI:
@@ -8159,11 +8190,13 @@ ia64_expand_builtin (exp, target, subtarget, mode, ignore)
     {
     case IA64_BUILTIN_BOOL_COMPARE_AND_SWAP_SI:
     case IA64_BUILTIN_BOOL_COMPARE_AND_SWAP_DI:
-      return ia64_expand_compare_and_swap (mode, 1, arglist, target);
+      return ia64_expand_compare_and_swap (rmode, mode, 1, arglist,
+					   target);
 
     case IA64_BUILTIN_VAL_COMPARE_AND_SWAP_SI:
     case IA64_BUILTIN_VAL_COMPARE_AND_SWAP_DI:
-      return ia64_expand_compare_and_swap (mode, 0, arglist, target);
+      return ia64_expand_compare_and_swap (rmode, mode, 0, arglist,
+					   target);
 
     case IA64_BUILTIN_SYNCHRONIZE:
       emit_insn (gen_mf ());

@@ -974,7 +974,15 @@ insns_match_p (mode, i1, i2)
 #endif
 
   if (reload_completed
-      ? ! rtx_renumbered_equal_p (p1, p2) : ! rtx_equal_p (p1, p2))
+      ? rtx_renumbered_equal_p (p1, p2) : rtx_equal_p (p1, p2))
+    return true;
+
+  /* Do not do EQUIV substitution after reload.  First, we're undoing the
+     work of reload_cse.  Second, we may be undoing the work of the post-
+     reload splitting pass.  */
+  /* ??? Possibly add a new phase switch variable that can be used by
+     targets to disallow the troublesome insns after splitting.  */
+  if (!reload_completed)
     {
       /* The following code helps take care of G++ cleanups.  */
       rtx equiv1 = find_reg_equal_equiv_note (i1);
@@ -1001,11 +1009,9 @@ insns_match_p (mode, i1, i2)
 		return true;
 	    }
 	}
-
-      return false;
     }
 
-  return true;
+  return false;
 }
 
 /* Look through the insns at the end of BB1 and BB2 and find the longest
@@ -1698,7 +1704,7 @@ try_optimize_cfg (mode)
 		     /* If the jump insn has side effects,
 			we can't kill the edge.  */
 		     && (GET_CODE (b->end) != JUMP_INSN
-		         || (flow2_completed
+		         || (reload_completed
 			     ? simplejump_p (b->end)
 			     : onlyjump_p (b->end)))
 		     && merge_blocks (s, b, c, mode))

@@ -5,7 +5,7 @@
  * files which are fixed to work correctly with ANSI C and placed in a
  * directory that GNU C will search.
  *
- * This file contains 162 fixup descriptions.
+ * This file contains 166 fixup descriptions.
  *
  * See README for more information.
  *
@@ -342,7 +342,16 @@ tSCC zAab_Svr4_Replace_ByteorderList[] =
 /*
  *  Machine/OS name selection pattern
  */
-#define apzAab_Svr4_Replace_ByteorderMachs (const char**)NULL
+tSCC* apzAab_Svr4_Replace_ByteorderMachs[] = {
+        "*-*-sysv4*",
+        "i[34567]86-*-sysv5*",
+        "i[34567]86-*-sco3.2v5*",
+        "i[34567]86-*-udk*",
+        "i[34567]86-*-solaris2.[0-4]",
+        "powerpcle-*-solaris2.[0-4]",
+        "sparc-*-solaris2.[0-4]",
+        "i[34567]86-sequent-ptx*",
+        (const char*)NULL };
 #define AAB_SVR4_REPLACE_BYTEORDER_TEST_CT  0
 #define aAab_Svr4_Replace_ByteorderTests   (tTestDesc*)NULL
 
@@ -2252,6 +2261,41 @@ static const char* apzHpux11_VsnprintfPatch[] = {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
  *
+ *  Description of Hpux11_Snprintf fix
+ */
+tSCC zHpux11_SnprintfName[] =
+     "hpux11_snprintf";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zHpux11_SnprintfList[] =
+  "|stdio.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+#define apzHpux11_SnprintfMachs (const char**)NULL
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zHpux11_SnprintfSelect0[] =
+       "(extern int snprintf *\\(char *\\*, *(|__|_hpux_)size_t,) *(char *\\*, *\\.\\.\\.\\);)";
+
+#define    HPUX11_SNPRINTF_TEST_CT  1
+static tTestDesc aHpux11_SnprintfTests[] = {
+  { TT_EGREP,    zHpux11_SnprintfSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Hpux11_Snprintf
+ */
+static const char* apzHpux11_SnprintfPatch[] = {
+    "format",
+    "%1 const %3",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
  *  Description of Hpux8_Bogus_Inlines fix
  */
 tSCC zHpux8_Bogus_InlinesName[] =
@@ -2626,6 +2670,88 @@ static const char* apzIrix___RestrictPatch[] = {
     "%1#  ifndef __cplusplus\n\
 %2\n\
 #  endif",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Irix___Generic1 fix
+ */
+tSCC zIrix___Generic1Name[] =
+     "irix___generic1";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zIrix___Generic1List[] =
+  "|internal/math_core.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzIrix___Generic1Machs[] = {
+        "mips-sgi-irix6.5",
+        (const char*)NULL };
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zIrix___Generic1Select0[] =
+       "#define ([a-z]+)\\(x\\) *__generic.*";
+
+#define    IRIX___GENERIC1_TEST_CT  1
+static tTestDesc aIrix___Generic1Tests[] = {
+  { TT_EGREP,    zIrix___Generic1Select0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Irix___Generic1
+ */
+static const char* apzIrix___Generic1Patch[] = {
+    "format",
+    "extern int %1(double);\n\
+extern int %1f(float);\n\
+extern int %1l(long double);\n\
+#define %1(x) (sizeof(x) == sizeof(double) ? _%1(x) \\\n\
+               : sizeof(x) == sizeof(float) ? _%1f(x) \\\n\
+               : _%1l(x))\n",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Irix___Generic2 fix
+ */
+tSCC zIrix___Generic2Name[] =
+     "irix___generic2";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zIrix___Generic2List[] =
+  "|internal/math_core.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzIrix___Generic2Machs[] = {
+        "mips-sgi-irix6.5",
+        (const char*)NULL };
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zIrix___Generic2Select0[] =
+       "#define ([a-z]+)\\(x,y\\) *__generic.*";
+
+#define    IRIX___GENERIC2_TEST_CT  1
+static tTestDesc aIrix___Generic2Tests[] = {
+  { TT_EGREP,    zIrix___Generic2Select0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Irix___Generic2
+ */
+static const char* apzIrix___Generic2Patch[] = {
+    "format",
+    "#define %1(x,y) \\\n\
+  ((sizeof(x)<=4 && sizeof(y)<=4) ? _%1f(x,y) \\\n\
+   : (sizeof(x)<=8 && sizeof(y)<=8) ? _%1(x,y) \\\n\
+   : _%1l(x,y))\n",
     (char*)NULL };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -3764,6 +3890,41 @@ static const char* apzNodeent_SyntaxPatch[] = {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
  *
+ *  Description of Obstack_Lvalue_Cast fix
+ */
+tSCC zObstack_Lvalue_CastName[] =
+     "obstack_lvalue_cast";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zObstack_Lvalue_CastList[] =
+  "|obstack.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+#define apzObstack_Lvalue_CastMachs (const char**)NULL
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zObstack_Lvalue_CastSelect0[] =
+       "\\*\\(\\(([^()]*)\\*\\)(.*)\\)\\+\\+ = \\(([^()]*)\\)";
+
+#define    OBSTACK_LVALUE_CAST_TEST_CT  1
+static tTestDesc aObstack_Lvalue_CastTests[] = {
+  { TT_EGREP,    zObstack_Lvalue_CastSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Obstack_Lvalue_Cast
+ */
+static const char* apzObstack_Lvalue_CastPatch[] = {
+    "format",
+    "((*((%1*)%2) = (%3)), (%2 += sizeof (%1)))",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
  *  Description of Osf_Namespace_A fix
  */
 tSCC zOsf_Namespace_AName[] =
@@ -4501,8 +4662,8 @@ static tTestDesc aStdio_Va_ListTests[] = {
  *  Fix Command Arguments for Stdio_Va_List
  */
 static const char* apzStdio_Va_ListPatch[] = { "sed",
-    "-e", "s@ va_list @ __gnuc_va_list @\n\
-s@ va_list)@ __gnuc_va_list)@\n\
+    "-e", "s@[ \t]va_list @ __gnuc_va_list @\n\
+s@[ \t]va_list)@ __gnuc_va_list)@\n\
 s@(va_list)&@(__gnuc_va_list)\\&@\n\
 s@ _VA_LIST_));@ __gnuc_va_list));@\n\
 s@ __VA_LIST__));@ __gnuc_va_list));@\n\
@@ -6374,9 +6535,9 @@ static const char* apzX11_SprintfPatch[] = {
  *
  *  List of all fixes
  */
-#define REGEX_COUNT          176
-#define MACH_LIST_SIZE_LIMIT 261
-#define FIX_COUNT            162
+#define REGEX_COUNT          180
+#define MACH_LIST_SIZE_LIMIT 334
+#define FIX_COUNT            166
 
 /*
  *  Enumerate the fixes
@@ -6436,6 +6597,7 @@ typedef enum {
     HPUX11_SIZE_T_FIXIDX,
     HPUX11_UINT32_C_FIXIDX,
     HPUX11_VSNPRINTF_FIXIDX,
+    HPUX11_SNPRINTF_FIXIDX,
     HPUX8_BOGUS_INLINES_FIXIDX,
     HPUX_CTYPE_MACROS_FIXIDX,
     HPUX_LONG_DOUBLE_FIXIDX,
@@ -6446,6 +6608,8 @@ typedef enum {
     IO_QUOTES_USE_FIXIDX,
     IP_MISSING_SEMI_FIXIDX,
     IRIX___RESTRICT_FIXIDX,
+    IRIX___GENERIC1_FIXIDX,
+    IRIX___GENERIC2_FIXIDX,
     IRIX_ASM_APOSTROPHE_FIXIDX,
     IRIX_LIMITS_CONST_FIXIDX,
     IRIX_SOCKLEN_T_FIXIDX,
@@ -6476,6 +6640,7 @@ typedef enum {
     NEXT_VOLITILE_FIXIDX,
     NEXT_WAIT_UNION_FIXIDX,
     NODEENT_SYNTAX_FIXIDX,
+    OBSTACK_LVALUE_CAST_FIXIDX,
     OSF_NAMESPACE_A_FIXIDX,
     OSF_NAMESPACE_C_FIXIDX,
     PTHREAD_PAGE_SIZE_FIXIDX,
@@ -6817,6 +6982,11 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      HPUX11_VSNPRINTF_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aHpux11_VsnprintfTests,   apzHpux11_VsnprintfPatch, 0 },
 
+  {  zHpux11_SnprintfName,    zHpux11_SnprintfList,
+     apzHpux11_SnprintfMachs,
+     HPUX11_SNPRINTF_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aHpux11_SnprintfTests,   apzHpux11_SnprintfPatch, 0 },
+
   {  zHpux8_Bogus_InlinesName,    zHpux8_Bogus_InlinesList,
      apzHpux8_Bogus_InlinesMachs,
      HPUX8_BOGUS_INLINES_TEST_CT, FD_MACH_ONLY,
@@ -6866,6 +7036,16 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      apzIrix___RestrictMachs,
      IRIX___RESTRICT_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aIrix___RestrictTests,   apzIrix___RestrictPatch, 0 },
+
+  {  zIrix___Generic1Name,    zIrix___Generic1List,
+     apzIrix___Generic1Machs,
+     IRIX___GENERIC1_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aIrix___Generic1Tests,   apzIrix___Generic1Patch, 0 },
+
+  {  zIrix___Generic2Name,    zIrix___Generic2List,
+     apzIrix___Generic2Machs,
+     IRIX___GENERIC2_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aIrix___Generic2Tests,   apzIrix___Generic2Patch, 0 },
 
   {  zIrix_Asm_ApostropheName,    zIrix_Asm_ApostropheList,
      apzIrix_Asm_ApostropheMachs,
@@ -7016,6 +7196,11 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      apzNodeent_SyntaxMachs,
      NODEENT_SYNTAX_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aNodeent_SyntaxTests,   apzNodeent_SyntaxPatch, 0 },
+
+  {  zObstack_Lvalue_CastName,    zObstack_Lvalue_CastList,
+     apzObstack_Lvalue_CastMachs,
+     OBSTACK_LVALUE_CAST_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aObstack_Lvalue_CastTests,   apzObstack_Lvalue_CastPatch, 0 },
 
   {  zOsf_Namespace_AName,    zOsf_Namespace_AList,
      apzOsf_Namespace_AMachs,

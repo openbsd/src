@@ -1,8 +1,8 @@
 /* Subroutines for insn-output.c for Sun SPARC.
    Copyright (C) 1987, 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
-   64 bit SPARC V9 support by Michael Tiemann, Jim Wilson, and Doug Evans,
+   64-bit SPARC-V9 support by Michael Tiemann, Jim Wilson, and Doug Evans,
    at Cygnus Support.
 
 This file is part of GNU CC.
@@ -1355,6 +1355,34 @@ input_operand (op, mode)
     }
 
   return 0;
+}
+
+/* Return 1 if OP is valid for the lhs of a compare insn.  */
+
+int
+compare_operand (op, mode)
+     rtx op;
+     enum machine_mode mode;
+{
+  if (GET_CODE (op) == ZERO_EXTRACT)
+    return (register_operand (XEXP (op, 0), mode)
+	    && small_int_or_double (XEXP (op, 1), mode)
+	    && small_int_or_double (XEXP (op, 2), mode)
+	    /* This matches cmp_zero_extract.  */
+	    && ((mode == SImode
+		 && ((GET_CODE (XEXP (op, 2)) == CONST_INT
+		      && INTVAL (XEXP (op, 2)) > 19)
+		     || (GET_CODE (XEXP (op, 2)) == CONST_DOUBLE
+			 && CONST_DOUBLE_LOW (XEXP (op, 2)) > 19)))
+		/* This matches cmp_zero_extract_sp64.  */
+		|| (mode == DImode
+		    && TARGET_ARCH64
+		    && ((GET_CODE (XEXP (op, 2)) == CONST_INT
+			 && INTVAL (XEXP (op, 2)) > 51)
+			|| (GET_CODE (XEXP (op, 2)) == CONST_DOUBLE
+			    && CONST_DOUBLE_LOW (XEXP (op, 2)) > 51)))));
+  else
+    return register_operand (op, mode);
 }
 
 
@@ -5414,18 +5442,80 @@ sparc_va_arg (valist, type)
   return addr_rtx;
 }
 
+/* Return the string to output an unconditional branch to LABEL, which is
+   the operand number of the label.
+
+   DEST is the destination insn (i.e. the label), INSN is the source.  */
+
+const char *
+output_ubranch (dest, label, insn)
+     rtx dest;
+     int label;
+     rtx insn;
+{
+  static char string[64];
+  bool noop = false;
+  char *p;
+
+  /* TurboSPARC is reported to have problems with
+     with
+	foo: b,a foo
+     i.e. an empty loop with the annul bit set.  The workaround is to use 
+        foo: b foo; nop
+     instead.  */
+
+  if (! TARGET_V9 && flag_delayed_branch
+      && (INSN_ADDRESSES (INSN_UID (dest))
+	  == INSN_ADDRESSES (INSN_UID (insn))))
+    {
+      strcpy (string, "b\t");
+      noop = true;
+    }
+  else
+    {
+      bool v9_form = false;
+
+      if (TARGET_V9 && INSN_ADDRESSES_SET_P ())
+	{
+	  int delta = (INSN_ADDRESSES (INSN_UID (dest))
+		       - INSN_ADDRESSES (INSN_UID (insn)));
+	  /* Leave some instructions for "slop".  */
+	  if (delta >= -260000 && delta < 260000)
+	    v9_form = true;
+	}
+
+      if (v9_form)
+	strcpy (string, "ba%*,pt\t%%xcc, ");
+      else
+	strcpy (string, "b%*\t");
+    }
+
+  p = strchr (string, '\0');
+  *p++ = '%';
+  *p++ = 'l';
+  *p++ = '0' + label;
+  *p++ = '%';
+  if (noop)
+    *p++ = '#';
+  else
+    *p++ = '(';
+  *p = '\0';
+
+  return string;
+}
+
 /* Return the string to output a conditional branch to LABEL, which is
    the operand number of the label.  OP is the conditional expression.
    XEXP (OP, 0) is assumed to be a condition code register (integer or
    floating point) and its mode specifies what kind of comparison we made.
 
+   DEST is the destination insn (i.e. the label), INSN is the source.
+
    REVERSED is nonzero if we should reverse the sense of the comparison.
 
    ANNUL is nonzero if we should generate an annulling branch.
 
-   NOOP is nonzero if we have to follow this branch by a noop.
-
-   INSN, if set, is the insn.  */
+   NOOP is nonzero if we have to follow this branch by a noop.  */
 
 char *
 output_cbranch (op, dest, label, reversed, annul, noop, insn)
@@ -5463,7 +5553,7 @@ output_cbranch (op, dest, label, reversed, annul, noop, insn)
      nop
      ba .LC29  */
 
-  far = get_attr_length (insn) >= 3;
+  far = TARGET_V9 && (get_attr_length (insn) >= 3);
   if (reversed ^ far)
     {
       /* Reversal of FP compares takes care -- an ordered compare
@@ -5593,9 +5683,7 @@ output_cbranch (op, dest, label, reversed, annul, noop, insn)
       spaces -= 2;
     }
 
-  if (! TARGET_V9)
-    labelno = "";
-  else
+  if (TARGET_V9)
     {
       rtx note;
       int v8 = 0;
@@ -5645,6 +5733,9 @@ output_cbranch (op, dest, label, reversed, annul, noop, insn)
 	  spaces -= 3;
 	}
     }
+  else
+    labelno = "";
+
   if (spaces > 0)
     *p++ = '\t';
   else
@@ -5851,6 +5942,8 @@ sparc_emit_floatunsdi (operands)
    register REG.  LABEL is the operand number of the label; REG is the
    operand number of the reg.  OP is the conditional expression.  The mode
    of REG says what kind of comparison we made.
+
+   DEST is the destination insn (i.e. the label), INSN is the source.
 
    REVERSED is nonzero if we should reverse the sense of the comparison.
 
@@ -6767,7 +6860,7 @@ void
 sparc_initialize_trampoline (tramp, fnaddr, cxt)
      rtx tramp, fnaddr, cxt;
 {
-  /* SPARC 32 bit trampoline:
+  /* SPARC 32-bit trampoline:
 
  	sethi	%hi(fn), %g1
  	sethi	%hi(static), %g2
@@ -6777,10 +6870,6 @@ sparc_initialize_trampoline (tramp, fnaddr, cxt)
     SETHI i,r  = 00rr rrr1 00ii iiii iiii iiii iiii iiii
     JMPL r+i,d = 10dd ddd1 1100 0rrr rr1i iiii iiii iiii
    */
-#ifdef TRANSFER_FROM_TRAMPOLINE
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
-                     LCT_NORMAL, VOIDmode, 1, tramp, Pmode);
-#endif
 
   emit_move_insn
     (gen_rtx_MEM (SImode, plus_constant (tramp, 0)),
@@ -6819,9 +6908,17 @@ sparc_initialize_trampoline (tramp, fnaddr, cxt)
       && sparc_cpu != PROCESSOR_ULTRASPARC3)
     emit_insn (gen_flush (validize_mem (gen_rtx_MEM (SImode,
 						     plus_constant (tramp, 8)))));
+
+  /* Call __enable_execute_stack after writing onto the stack to make sure
+     the stack address is accessible.  */
+#ifdef TRANSFER_FROM_TRAMPOLINE
+  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
+                     LCT_NORMAL, VOIDmode, 1, tramp, Pmode);
+#endif
+
 }
 
-/* The 64 bit version is simpler because it makes more sense to load the
+/* The 64-bit version is simpler because it makes more sense to load the
    values as "immediate" data out of the trampoline.  It's also easier since
    we can read the PC without clobbering a register.  */
 
@@ -6829,12 +6926,8 @@ void
 sparc64_initialize_trampoline (tramp, fnaddr, cxt)
      rtx tramp, fnaddr, cxt;
 {
-#ifdef TRANSFER_FROM_TRAMPOLINE
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
-                     LCT_NORMAL, VOIDmode, 1, tramp, Pmode);
-#endif
+  /* SPARC 64-bit trampoline:
 
-  /*
 	rd	%pc, %g1
 	ldx	[%g1+24], %g5
 	jmp	%g5
@@ -6857,6 +6950,13 @@ sparc64_initialize_trampoline (tramp, fnaddr, cxt)
   if (sparc_cpu != PROCESSOR_ULTRASPARC
       && sparc_cpu != PROCESSOR_ULTRASPARC3)
     emit_insn (gen_flushdi (validize_mem (gen_rtx_MEM (DImode, plus_constant (tramp, 8)))));
+
+  /* Call __enable_execute_stack after writing onto the stack to make sure
+     the stack address is accessible.  */
+#ifdef TRANSFER_FROM_TRAMPOLINE
+  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
+                     LCT_NORMAL, VOIDmode, 1, tramp, Pmode);
+#endif
 }
 
 /* Subroutines to support a flat (single) register window calling
@@ -8554,10 +8654,17 @@ sparc_output_mi_thunk (file, thunk_fndecl, delta, vcall_offset, function)
   if (!SPARC_SIMM13_P (delta))
     {
       rtx scratch = gen_rtx_REG (Pmode, 1);
-      if (TARGET_ARCH64)
-	sparc_emit_set_const64 (scratch, delta_rtx);
+
+      if (input_operand (delta_rtx, GET_MODE (scratch)))
+	emit_insn (gen_rtx_SET (VOIDmode, scratch, delta_rtx));
       else
-	sparc_emit_set_const32 (scratch, delta_rtx);
+	{
+	  if (TARGET_ARCH64)
+	    sparc_emit_set_const64 (scratch, delta_rtx);
+	  else
+	    sparc_emit_set_const32 (scratch, delta_rtx);
+	}
+
       delta_rtx = scratch;
     }
 

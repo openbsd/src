@@ -133,6 +133,15 @@ extern int target_flags;
 
 #define TARGET_DWARF2_ASM	(target_flags & MASK_DWARF2_ASM)
 
+/* If the assembler supports thread-local storage, assume that the
+   system does as well.  If a particular target system has an
+   assembler that supports TLS -- but the rest of the system does not
+   support TLS -- that system should explicit define TARGET_HAVE_TLS
+   to false in its own configuration file.  */
+#if !defined(TARGET_HAVE_TLS) && defined(HAVE_AS_TLS)
+#define TARGET_HAVE_TLS true
+#endif
+
 extern int ia64_tls_size;
 #define TARGET_TLS14		(ia64_tls_size == 14)
 #define TARGET_TLS22		(ia64_tls_size == 22)
@@ -1280,6 +1289,13 @@ enum reg_class
 #define FUNCTION_ARG_PASS_BY_REFERENCE(CUM, MODE, TYPE, NAMED) \
   ia64_function_arg_pass_by_reference (&CUM, MODE, TYPE, NAMED)
 
+/* Nonzero if we do not know how to pass TYPE solely in registers.  */
+
+#define MUST_PASS_IN_STACK(MODE, TYPE) \
+  ((TYPE) != 0							\
+   && (TREE_CODE (TYPE_SIZE (TYPE)) != INTEGER_CST		\
+       || TREE_ADDRESSABLE (TYPE)))
+
 /* A C type for declaring a variable that is used as the first argument of
    `FUNCTION_ARG' and other related values.  For some target machines, the type
    `int' suffices and can hold the number of bytes of argument so far.  */
@@ -1344,7 +1360,7 @@ do {									\
    On many machines, no registers can be used for this purpose since all
    function arguments are pushed on the stack.  */
 #define FUNCTION_ARG_REGNO_P(REGNO) \
-(((REGNO) >= GR_ARG_FIRST && (REGNO) < (GR_ARG_FIRST + MAX_ARGUMENT_SLOTS)) \
+(((REGNO) >= AR_ARG_FIRST && (REGNO) < (AR_ARG_FIRST + MAX_ARGUMENT_SLOTS)) \
  || ((REGNO) >= FR_ARG_FIRST && (REGNO) < (FR_ARG_FIRST + MAX_ARGUMENT_SLOTS)))
 
 /* Implement `va_arg'.  */

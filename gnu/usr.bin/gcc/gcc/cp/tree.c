@@ -358,10 +358,12 @@ build_target_expr_with_type (init, type)
   if (TREE_CODE (init) == TARGET_EXPR)
     return init;
   else if (CLASS_TYPE_P (type) && !TYPE_HAS_TRIVIAL_INIT_REF (type)
-	   && TREE_CODE (init) != COND_EXPR)
+	   && TREE_CODE (init) != COND_EXPR
+	   && TREE_CODE (init) != CONSTRUCTOR)
     /* We need to build up a copy constructor call.  COND_EXPR is a special
        case because we already have copies on the arms and we don't want
-       another one here.  */
+       another one here.  A CONSTRUCTOR is aggregate initialization, which
+       is handled separately.  */
     return force_rvalue (init);
 
   slot = build (VAR_DECL, type);
@@ -2298,30 +2300,6 @@ cp_copy_res_decl_for_inlining (result, fn, caller, decl_map_,
     }
 
   return var;
-}
-
-/* Record that we're about to start inlining FN, and return nonzero if
-   that's OK.  Used for lang_hooks.tree_inlining.start_inlining.  */
-
-int
-cp_start_inlining (fn)
-     tree fn;
-{
-  if (DECL_TEMPLATE_INSTANTIATION (fn))
-    return push_tinst_level (fn);
-  else
-    return 1;
-}
-
-/* Record that we're done inlining FN.  Used for
-   lang_hooks.tree_inlining.end_inlining.  */
-
-void
-cp_end_inlining (fn)
-     tree fn ATTRIBUTE_UNUSED;
-{
-  if (DECL_TEMPLATE_INSTANTIATION (fn))
-    pop_tinst_level ();
 }
 
 /* Initialize tree.c.  */

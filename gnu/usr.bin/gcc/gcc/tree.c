@@ -1,6 +1,6 @@
 /* Language-independent node constructors for parse phase of GNU compiler.
    Copyright (C) 1987, 1988, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -721,6 +721,24 @@ integer_pow2p (expr)
 
   return ((high == 0 && (low & (low - 1)) == 0)
 	  || (low == 0 && (high & (high - 1)) == 0));
+}
+
+/* Return 1 if EXPR is an integer constant other than zero or a
+   complex constant other than zero.  */
+
+int
+integer_nonzerop (expr)
+     tree expr;
+{
+  STRIP_NOPS (expr);
+
+  return ((TREE_CODE (expr) == INTEGER_CST
+	   && ! TREE_CONSTANT_OVERFLOW (expr)
+	   && (TREE_INT_CST_LOW (expr) != 0
+	       || TREE_INT_CST_HIGH (expr) != 0))
+	  || (TREE_CODE (expr) == COMPLEX_CST
+	      && (integer_nonzerop (TREE_REALPART (expr))
+		  || integer_nonzerop (TREE_IMAGPART (expr)))));
 }
 
 /* Return the power of two represented by a tree node known to be a
@@ -1667,6 +1685,13 @@ unsafe_for_reeval (expr)
     case TARGET_EXPR:
       unsafeness = 1;
       break;
+
+    case EXIT_BLOCK_EXPR:
+      /* EXIT_BLOCK_LABELED_BLOCK, a.k.a. TREE_OPERAND (expr, 0), holds
+	 a reference to an ancestor LABELED_BLOCK, so we need to avoid
+	 unbounded recursion in the 'e' traversal code below.  */
+      exp = EXIT_BLOCK_RETURN (expr);
+      return exp ? unsafe_for_reeval (exp) : 0;
 
     default:
       tmp = (*lang_hooks.unsafe_for_reeval) (expr);

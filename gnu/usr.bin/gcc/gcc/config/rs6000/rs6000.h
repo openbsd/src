@@ -1993,9 +1993,11 @@ typedef struct rs6000_args
    acceptable.  */
 
 #define LEGITIMATE_CONSTANT_P(X)				\
-  (GET_CODE (X) != CONST_DOUBLE || GET_MODE (X) == VOIDmode	\
-   || (TARGET_POWERPC64 && GET_MODE (X) == DImode)		\
-   || easy_fp_constant (X, GET_MODE (X)))
+  ((GET_CODE (X) != CONST_VECTOR				\
+    || zero_constant (X, GET_MODE (X)))				\
+   && (GET_CODE (X) != CONST_DOUBLE || GET_MODE (X) == VOIDmode	\
+       || (TARGET_POWERPC64 && GET_MODE (X) == DImode)		\
+       || easy_fp_constant (X, GET_MODE (X))))
 
 /* The macros REG_OK_FOR..._P assume that the arg is a REG rtx
    and check its validity for a certain class.
@@ -2108,8 +2110,8 @@ typedef struct rs6000_args
   (GET_CODE (X) == REG && INT_REG_OK_FOR_BASE_P (X, (STRICT)))
 
 #define LEGITIMATE_LO_SUM_ADDRESS_P(MODE, X, STRICT)	\
-  (TARGET_ELF						\
-   && ! flag_pic && ! TARGET_TOC			\
+  (((TARGET_ELF && ! flag_pic) || TARGET_MACHO)		\
+   && ! TARGET_TOC					\
    && GET_MODE_NUNITS (MODE) == 1			\
    && (GET_MODE_BITSIZE (MODE) <= 32 			\
        || (TARGET_HARD_FLOAT && TARGET_FPRS && (MODE) == DFmode))	\

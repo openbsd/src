@@ -1,6 +1,6 @@
 /* CPP Library.
    Copyright (C) 1986, 1987, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -530,6 +530,7 @@ cpp_create_reader (lang)
   CPP_OPTION (pfile, operator_names) = 1;
   CPP_OPTION (pfile, warn_endif_labels) = 1;
   CPP_OPTION (pfile, warn_long_long) = !CPP_OPTION (pfile, c99);
+  CPP_OPTION (pfile, sysroot) = cpp_SYSROOT;
 
   CPP_OPTION (pfile, pending) =
     (struct cpp_pending *) xcalloc (1, sizeof (struct cpp_pending));
@@ -758,6 +759,8 @@ init_standard_includes (pfile)
   char *path;
   const struct default_include *p;
   const char *specd_prefix = CPP_OPTION (pfile, include_prefix);
+  int default_len, specd_len;
+  char *default_prefix;
 
   /* Several environment variables may add to the include search path.
      CPATH specifies an additional list of directories to be searched
@@ -789,13 +792,16 @@ init_standard_includes (pfile)
 
   /* Search "translated" versions of GNU directories.
      These have /usr/local/lib/gcc... replaced by specd_prefix.  */
+  default_len = 0;
+  specd_len = 0;
+  default_prefix = NULL;
   if (specd_prefix != 0 && cpp_GCC_INCLUDE_DIR_len)
     {
       /* Remove the `include' from /usr/local/lib/gcc.../include.
 	 GCC_INCLUDE_DIR will always end in /include.  */
-      int default_len = cpp_GCC_INCLUDE_DIR_len;
-      char *default_prefix = (char *) alloca (default_len + 1);
-      int specd_len = strlen (specd_prefix);
+      default_len = cpp_GCC_INCLUDE_DIR_len;
+      default_prefix = (char *) alloca (default_len + 1);
+      specd_len = strlen (specd_prefix);
 
       memcpy (default_prefix, cpp_GCC_INCLUDE_DIR, default_len);
       default_prefix[default_len] = '\0';
@@ -807,13 +813,23 @@ init_standard_includes (pfile)
 	      || (CPP_OPTION (pfile, cplusplus)
 		  && !CPP_OPTION (pfile, no_standard_cplusplus_includes)))
 	    {
+	      char *str;
+
+	      /* Should we be translating sysrooted dirs too?  Assume
+		 that iprefix and sysroot are mutually exclusive, for
+		 now.  */
+	      if (p->add_sysroot && CPP_OPTION (pfile, sysroot)
+		  && *(CPP_OPTION (pfile, sysroot)))
+		continue;
+
 	      /* Does this dir start with the prefix?  */
 	      if (!strncmp (p->fname, default_prefix, default_len))
 		{
 		  /* Yes; change prefix and add to search list.  */
 		  int flen = strlen (p->fname);
 		  int this_len = specd_len + flen - default_len;
-		  char *str = (char *) xmalloc (this_len + 1);
+
+		  str = (char *) xmalloc (this_len + 1);
 		  memcpy (str, specd_prefix, specd_len);
 		  memcpy (str + specd_len,
 			  p->fname + default_len,
@@ -825,7 +841,6 @@ init_standard_includes (pfile)
 	}
     }
 
-  /* Search ordinary names for GNU include directories.  */
   for (p = cpp_include_defaults; p->fname; p++)
     {
       /* Some standard dirs are only for C++.  */
@@ -833,7 +848,16 @@ init_standard_includes (pfile)
 	  || (CPP_OPTION (pfile, cplusplus)
 	      && !CPP_OPTION (pfile, no_standard_cplusplus_includes)))
 	{
-	  char *str = update_path (p->fname, p->component);
+	  char *str;
+
+	  /* Should this dir start with the sysroot?  */
+	  if (p->add_sysroot && CPP_OPTION (pfile, sysroot)
+	      && *(CPP_OPTION (pfile, sysroot)))
+	    str = concat (CPP_OPTION (pfile, sysroot), p->fname, NULL);
+
+	  else
+	    str = update_path (p->fname, p->component);
+
 	  append_include_chain (pfile, str, SYSTEM, p->cxx_aware);
 	}
     }
@@ -1178,6 +1202,7 @@ new_pending_directive (pend, text, handler)
   DEF_OPT("imacros",                  no_fil, OPT_imacros)                    \
   DEF_OPT("include",                  no_fil, OPT_include)                    \
   DEF_OPT("iprefix",                  no_pth, OPT_iprefix)                    \
+  DEF_OPT("isysroot",                 no_dir, OPT_isysroot)                   \
   DEF_OPT("isystem",                  no_dir, OPT_isystem)                    \
   DEF_OPT("iwithprefix",              no_dir, OPT_iwithprefix)                \
   DEF_OPT("iwithprefixbefore",        no_dir, OPT_iwithprefixbefore)
@@ -1320,6 +1345,10 @@ cpp_handle_option (pfile, argc, argv)
 	case OPT_iprefix:
 	  CPP_OPTION (pfile, include_prefix) = arg;
 	  CPP_OPTION (pfile, include_prefix_len) = strlen (arg);
+	  break;
+
+	case OPT_isysroot:
+	  CPP_OPTION (pfile, sysroot) = arg;
 	  break;
 
 	case OPT_A:

@@ -60,6 +60,7 @@ m68k port (?)		Jeff Law		law@redhat.com
 m68k-motorola-sysv port	Philippe De Muyter	phdm@macqel.be
 mcore port		Nick Clifton		nickc@redhat.com
 mips port               Eric Christopher        echristo@redhat.com
+mips port		Richard Sandiford	rsandifo@redhat.com
 mmix port		Hans-Peter Nilsson	hp@bitrange.com
 mn10200 port		Jeff Law		law@redhat.com
 mn10300 port		Jeff Law		law@redhat.com
@@ -74,9 +75,11 @@ sh port			Alexandre Oliva		aoliva@redhat.com
 sparc port		Richard Henderson	rth@redhat.com
 sparc port		David S. Miller		davem@redhat.com
 sparc port		Jakub Jelinek		jakub@redhat.com
+sparc port		Eric Botcazou		ebotcazou@libertysurf.fr
 v850 port		Nick Clifton		nickc@redhat.com
 v850 port		Michael Meissner	meissner@redhat.com
 vax port		Dave Anglin		dave.anglin@nrc.ca
+vax port		Matt Thomas		matt@3am-software.com
 x86-64 port		Jan Hubicka		jh@suse.cz
 xstormy16 port		Geoffrey Keating	geoffk@geoffk.org
 xtensa port		Bob Wilson		bob.wilson@acm.org
@@ -170,7 +173,6 @@ Eric Blake					ericb@gcc.gnu.org
 Jim Blandy					jimb@redhat.com
 Phil Blundell					pb@futuretv.com
 Hans Boehm					hboehm@gcc.gnu.org
-Eric Botcazou					ebotcazou@libertysurf.fr
 Andrew Cagney					cagney@redhat.com
 Chandra Chavva					cchavva@redhat.com
 William Cohen					wcohen@redhat.com
@@ -236,7 +238,6 @@ Gavin Romig-Koch				gavin@redhat.com
 Ira Ruben					ira@apple.com
 Douglas Rupp					rupp@gnat.com
 Alex Samuel					samuel@codesourcery.com
-Richard Sandiford				rsandifo@redhat.com
 Roger Sayle					roger@eyesopen.com
 Andreas Schwab					schwab@suse.de
 Svein Seldal                                    svein.seldal@solidas.com
@@ -264,7 +265,3 @@ GNATS only accounts
 Wolfgang Bangerth	bangerth		bangerth@ticam.utexas.edu
 James Dennett		jdennett		jdennett@acm.org
 Christian Ehrhardt	cae			ehrhardt@mathematik.uni-ulm.de
-
-Peter Bienstman(?)
-Benjamin Chelf(?)
-Mark Galassi(?)

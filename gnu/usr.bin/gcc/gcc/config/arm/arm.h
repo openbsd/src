@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler, for ARM.
    Copyright (C) 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002 Free Software Foundation, Inc.
+   2001, 2002, 2004 Free Software Foundation, Inc.
    Contributed by Pieter `Tiggr' Schoenmakers (rcpieter@win.tue.nl)
    and Martin Simmons (@harleqn.co.uk).
    More major hacks by Richard Earnshaw (rearnsha@arm.com)
@@ -571,7 +571,10 @@ extern int thumb_code;
 extern int arm_is_strong;
 
 /* Nonzero if this chip is an XScale.  */
-extern int arm_is_xscale;
+extern int arm_arch_xscale;
+
+/* Nonzero if tuning for XScale  */
+extern int arm_tune_xscale;
 
 /* Nonzero if this chip is an ARM6 or an ARM7.  */
 extern int arm_is_6_or_7;
@@ -703,7 +706,7 @@ extern int arm_is_6_or_7;
 #define BIGGEST_ALIGNMENT  32
 
 /* Make strings word-aligned so strcpy from constants will be faster.  */
-#define CONSTANT_ALIGNMENT_FACTOR (TARGET_THUMB || ! arm_is_xscale ? 1 : 2)
+#define CONSTANT_ALIGNMENT_FACTOR (TARGET_THUMB || ! arm_arch_xscale ? 1 : 2)
     
 #define CONSTANT_ALIGNMENT(EXP, ALIGN)				\
   ((TREE_CODE (EXP) == STRING_CST				\
@@ -1770,13 +1773,19 @@ typedef struct
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.
    CXT is an RTX for the static chain value for the function.  */
-#define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)  					\
-{											\
-  emit_move_insn									\
-    (gen_rtx_MEM (SImode, plus_constant (TRAMP, TARGET_ARM ? 8 : 16)), CXT);		\
-  emit_move_insn									\
-    (gen_rtx_MEM (SImode, plus_constant (TRAMP, TARGET_ARM ? 12 : 20)),	FNADDR);	\
+#ifndef INITIALIZE_TRAMPOLINE
+#define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
+{									\
+  emit_move_insn (gen_rtx_MEM (SImode,					\
+			       plus_constant (TRAMP,			\
+					      TARGET_ARM ? 8 : 16)),	\
+		  CXT);							\
+  emit_move_insn (gen_rtx_MEM (SImode,					\
+			       plus_constant (TRAMP,			\
+					      TARGET_ARM ? 12 : 20)),	\
+		  FNADDR);						\
 }
+#endif
 
 
 /* Addressing modes, and classification of registers for them.  */
@@ -2003,10 +2012,17 @@ typedef struct
 		  && INTVAL (op) <= 31)					\
 		goto LABEL;						\
 	    }								\
-	  /* NASTY: Since this limits the addressing of unsigned	\
-	     byte loads.  */						\
-	  range = ((MODE) == HImode || (MODE) == QImode)		\
-	    ? (arm_arch4 ? 256 : 4095) : 4096;				\
+  	  /* XXX For ARM v4 we may be doing a sign-extend operation	\
+	     during the load, but that has a restricted addressing	\
+	     range and we are unable to tell here whether that is the	\
+	     case.  To be safe we restrict all loads to that		\
+	     range.  */							\
+          if (arm_arch4)						\
+	    range = (mode == HImode || mode == QImode) ? 256 : 4096;	\
+	  else if (mode == HImode)					\
+	    range = 4095;						\
+	  else								\
+	    range = 4096;						\
 	  if (code == CONST_INT && INTVAL (INDEX) < range		\
 	      && INTVAL (INDEX) > -range)				\
 	    goto LABEL;							\
@@ -2029,7 +2045,7 @@ typedef struct
 	   && GET_CODE (XEXP (X, 0)) == REG				\
 	   && ARM_REG_OK_FOR_BASE_P (XEXP (X, 0)))			\
     goto LABEL;								\
-  else if (GET_MODE_SIZE (MODE) >= 4 && reload_completed		\
+  else if (reload_completed						\
 	   && (GET_CODE (X) == LABEL_REF				\
 	       || (GET_CODE (X) == CONST				\
 		   && GET_CODE (XEXP ((X), 0)) == PLUS			\
@@ -2180,6 +2196,7 @@ typedef struct
 	goto WIN;							\
     }									\
   else if (GET_MODE_CLASS (MODE) != MODE_FLOAT				\
+	   && GET_MODE_SIZE (mode) == 4					\
 	   && GET_CODE (X) == SYMBOL_REF				\
 	   && CONSTANT_POOL_ADDRESS_P (X)				\
 	   && ! (flag_pic						\
@@ -2322,7 +2339,7 @@ typedef struct
 #define MOVE_MAX 4
 
 #undef  MOVE_RATIO
-#define MOVE_RATIO (arm_is_xscale ? 4 : 2)
+#define MOVE_RATIO (arm_arch_xscale ? 4 : 2)
 
 /* Define if operations between registers always perform the operation
    on the full register even if a narrower mode is specified.  */

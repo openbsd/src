@@ -1,6 +1,6 @@
 /* Output routines for GCC for Hitachi / SuperH SH.
-   Copyright (C) 1993, 1994, 1995, 1997, 1997, 1998, 1999, 2000, 2001, 2002
-   Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1997, 1997, 1998, 1999, 2000, 2001, 2002,
+   2004 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com).
    Improved by Jim Wilson (wilson@cygnus.com). 
 
@@ -3065,6 +3065,14 @@ gen_block_redirect (jump, addr, need_block)
       else if (recog_memoized (prev) == CODE_FOR_block_branch_redirect)
 	need_block = 0;
     }
+  if (GET_CODE (PATTERN (jump)) == RETURN)
+    {
+      if (! need_block)
+	return prev;
+      /* Reorg even does nasty things with return insns that cause branches
+	 to go out of range - see find_end_label and callers.  */
+      return emit_insn_before (gen_block_branch_redirect (GEN_INT (0)) , jump);
+    }
   /* We can't use JUMP_LABEL here because it might be undefined
      when not optimizing.  */
   dest = XEXP (SET_SRC (PATTERN (jump)), 0);
@@ -3233,11 +3241,16 @@ gen_far_branch (bp)
   JUMP_LABEL (jump) = bp->far_label;
   if (! invert_jump (insn, label, 1))
     abort ();
-  (emit_insn_after
-   (gen_stuff_delay_slot
-    (GEN_INT (INSN_UID (XEXP (SET_SRC (PATTERN (jump)), 0))),
-     GEN_INT (recog_memoized (insn) == CODE_FOR_branch_false)),
-    insn));
+  /* If we are branching around a jump (rather than a return), prevent
+     reorg from using an insn from the jump target as the delay slot insn -
+     when reorg did this, it pessimized code (we rather hide the delay slot)
+     and it could cause branches to go out of range.  */
+  if (bp->far_label)
+    (emit_insn_after
+     (gen_stuff_delay_slot
+      (GEN_INT (INSN_UID (XEXP (SET_SRC (PATTERN (jump)), 0))),
+       GEN_INT (recog_memoized (insn) == CODE_FOR_branch_false)),
+      insn));
   /* Prevent reorg from undoing our splits.  */
   gen_block_redirect (jump, bp->address += 2, 2);
 }
@@ -4264,7 +4277,55 @@ output_stack_adjust (size, reg, temp, emit_fn)
 	     register to MACL.  However, there is currently no need
 	     to handle this case, so just abort when we see it.  */
 	  if (temp < 0)
-	    abort ();
+	    {
+	      /* If we reached here, the most likely case is the (sibcall)
+		 epilogue for non SHmedia.  Put a special push/pop sequence
+		 for such case as the last resort.  This looks lengthy but
+		 would not be problem because it seems to be very rare.  */
+	      if (! TARGET_SHMEDIA && (emit_fn != frame_insn))
+		{
+		  rtx adj_reg, tmp_reg, mem;
+
+		  /* ??? There is still the slight possibility that r4 or r5
+		     have been reserved as fixed registers or assigned as
+		     global registers, and they change during an interrupt.
+		     There are possible ways to handle this:
+		     - If we are adjusting the frame pointer (r14), we can do
+		       with a single temp register and an ordinary push / pop
+		       on the stack.
+		     - Grab any call-used or call-saved registers (i.e. not
+		       fixed or globals) for the temps we need.  We might
+		       also grab r14 if we are adjusting the stack pointer.
+		       If we can't find enough available registers, issue
+		       a diagnostic and abort - the user must have reserved
+		       way too many registers.
+		     But since all this is rather unlikely to happen and
+		     would require extra testing, we just abort if r4 / r5
+		     are not available.  */
+		  if (fixed_regs[4] || fixed_regs[5]
+		      || global_regs[4] || global_regs[5])
+		    abort ();
+
+		  adj_reg = gen_rtx_REG (GET_MODE (reg), 4);
+		  tmp_reg = gen_rtx_REG (GET_MODE (reg), 5);
+		  emit_move_insn (gen_rtx_MEM (Pmode, reg), adj_reg);
+		  emit_insn (GEN_MOV (adj_reg, GEN_INT (size)));
+		  emit_insn (GEN_ADD3 (adj_reg, adj_reg, reg));
+		  mem = gen_rtx_MEM (Pmode, gen_rtx_PRE_DEC (Pmode, adj_reg));
+		  emit_move_insn (mem, tmp_reg);
+		  emit_move_insn (tmp_reg, gen_rtx_MEM (Pmode, reg));
+		  mem = gen_rtx_MEM (Pmode, gen_rtx_PRE_DEC (Pmode, adj_reg));
+		  emit_move_insn (mem, tmp_reg);
+		  emit_move_insn (reg, adj_reg);
+		  mem = gen_rtx_MEM (Pmode, gen_rtx_POST_INC (Pmode, reg));
+		  emit_move_insn (adj_reg, mem);
+		  mem = gen_rtx_MEM (Pmode, gen_rtx_POST_INC (Pmode, reg));
+		  emit_move_insn (tmp_reg, mem);
+		  return;
+		}
+	      else
+		abort ();
+	    }
 	  const_reg = gen_rtx_REG (GET_MODE (reg), temp);
 
 	  /* If SIZE is negative, subtract the positive value.
@@ -4830,7 +4891,7 @@ sh_expand_prologue ()
 }
 
 void
-sh_expand_epilogue ()
+sh_expand_epilogue (bool sibcall_p)
 {
   HOST_WIDE_INT live_regs_mask[(FIRST_PSEUDO_REGISTER + 31) / 32];
   int d, i;
@@ -4838,8 +4899,21 @@ sh_expand_epilogue ()
 
   int save_flags = target_flags;
   int frame_size;
+  int temp;
 
   calc_live_regs (&d, live_regs_mask);
+
+  if (! sibcall_p)
+    temp = 7;
+  else if (TARGET_SHMEDIA)
+    temp = 1;
+  else
+    {
+      for (i = FIRST_GENERAL_REG; i <= LAST_GENERAL_REG; i++)
+	if (TEST_HARD_REG_BIT (live_regs_mask, i))
+	  break;
+      temp = (i <= LAST_GENERAL_REG) ? i : -1;
+    }
 
   if (TARGET_SH5 && d % (STACK_BOUNDARY / BITS_PER_UNIT))
     d_rounding = ((STACK_BOUNDARY / BITS_PER_UNIT)
@@ -4849,7 +4923,7 @@ sh_expand_epilogue ()
 
   if (frame_pointer_needed)
     {
-      output_stack_adjust (frame_size, frame_pointer_rtx, 7, emit_insn);
+      output_stack_adjust (frame_size, frame_pointer_rtx, temp, emit_insn);
 
       /* We must avoid moving the stack pointer adjustment past code
 	 which reads from the local frame, else an interrupt could
@@ -4865,7 +4939,7 @@ sh_expand_epilogue ()
 	 occur after the SP adjustment and clobber data in the local
 	 frame.  */
       emit_insn (gen_blockage ());
-      output_stack_adjust (frame_size, stack_pointer_rtx, 7, emit_insn);
+      output_stack_adjust (frame_size, stack_pointer_rtx, temp, emit_insn);
     }
 
   if (SHMEDIA_REGS_STACK_ADJUST ())
@@ -5041,7 +5115,7 @@ sh_expand_epilogue ()
   output_stack_adjust (extra_push + current_function_pretend_args_size
 		       + d + d_rounding
 		       + current_function_args_info.stack_regs * 8,
-		       stack_pointer_rtx, 7, emit_insn);
+		       stack_pointer_rtx, (sibcall_p ? -1 : temp), emit_insn);
 
   /* Switch back to the normal stack if necessary.  */
   if (sp_switch)
@@ -5065,7 +5139,7 @@ sh_need_epilogue ()
       rtx epilogue;
 
       start_sequence ();
-      sh_expand_epilogue ();
+      sh_expand_epilogue (0);
       epilogue = get_insns ();
       end_sequence ();
       sh_need_epilogue_known = (epilogue == NULL ? -1 : 1);
@@ -5238,7 +5312,7 @@ sh_build_va_list ()
   if (TARGET_SH5 || (! TARGET_SH3E && ! TARGET_SH4) || TARGET_HITACHI)
     return ptr_type_node;
 
-  record = make_node (RECORD_TYPE);
+  record = (*lang_hooks.types.make_type) (RECORD_TYPE);
 
   f_next_o = build_decl (FIELD_DECL, get_identifier ("__va_next_o"),
 			 ptr_type_node);
@@ -7855,6 +7929,53 @@ sh_register_operand (op, mode)
   if (op == CONST0_RTX (mode) && TARGET_SHMEDIA)
     return 1;
   return register_operand (op, mode);
+}
+
+/* INSN is an sfunc; return the rtx that describes the address used.  */
+static rtx
+extract_sfunc_addr (rtx insn)
+{
+  rtx pattern, part = NULL_RTX;
+  int len, i;
+
+  pattern = PATTERN (insn);
+  len = XVECLEN (pattern, 0);
+  for (i = 0; i < len; i++)
+    {
+      part = XVECEXP (pattern, 0, i);
+      if (GET_CODE (part) == USE && GET_MODE (XEXP (part, 0)) == Pmode
+	  && GENERAL_REGISTER_P (true_regnum (XEXP (part, 0))))
+	return XEXP (part, 0);
+    }
+  if (GET_CODE (XVECEXP (pattern, 0, 0)) == UNSPEC_VOLATILE)
+    return XVECEXP (XVECEXP (pattern, 0, 0), 0, 1);
+  abort ();
+}
+
+/* Verify that the register in use_sfunc_addr still agrees with the address
+   used in the sfunc.  This prevents fill_slots_from_thread from changing
+   use_sfunc_addr.
+   INSN is the use_sfunc_addr instruction, and REG is the register it
+   guards.  */
+int
+check_use_sfunc_addr (rtx insn, rtx reg)
+{
+  /* Search for the sfunc.  It should really come right after INSN.  */
+  while ((insn = NEXT_INSN (insn)))
+    {
+      if (GET_CODE (insn) == CODE_LABEL || GET_CODE (insn) == JUMP_INSN)
+	break;
+      if (! INSN_P (insn))
+	continue;
+	
+      if (GET_CODE (PATTERN (insn)) == SEQUENCE)
+	insn = XVECEXP (PATTERN (insn), 0, 0);
+      if (GET_CODE (PATTERN (insn)) != PARALLEL
+	  || get_attr_type (insn) != TYPE_SFUNC)
+	continue;
+      return rtx_equal_p (extract_sfunc_addr (insn), reg);
+    }
+  abort ();
 }
 
 #include "gt-sh.h"

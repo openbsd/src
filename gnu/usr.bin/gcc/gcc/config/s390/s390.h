@@ -639,8 +639,11 @@ CUMULATIVE_ARGS;
    a scalar value cannot be returned in registers.  */
 #define RETURN_IN_MEMORY(type)       				\
   (TYPE_MODE (type) == BLKmode || 				\
+   GET_MODE_SIZE (TYPE_MODE (type)) > 8	||			\
    GET_MODE_CLASS (TYPE_MODE (type)) == MODE_COMPLEX_INT  ||	\
-   GET_MODE_CLASS (TYPE_MODE (type)) == MODE_COMPLEX_FLOAT)
+   GET_MODE_CLASS (TYPE_MODE (type)) == MODE_COMPLEX_FLOAT ||	\
+   GET_MODE_CLASS (TYPE_MODE (type)) == MODE_VECTOR_INT ||	\
+   GET_MODE_CLASS (TYPE_MODE (type)) == MODE_VECTOR_FLOAT)
 
 /* Structure value address is passed as invisible first argument (gpr 2).  */
 #define STRUCT_VALUE 0
@@ -979,6 +982,12 @@ extern int flag_pic;
   "%f8",  "%f10", "%f12", "%f14", "%f9", "%f11", "%f13", "%f15",	\
   "%ap",  "%cc",  "%fp"							\
 }
+
+/* Emit a dtp-relative reference to a TLS variable.  */
+#ifdef HAVE_AS_TLS
+#define ASM_OUTPUT_DWARF_DTPREL(FILE, SIZE, X) \
+  s390_output_dwarf_dtprel (FILE, SIZE, X)
+#endif
 
 /* Print operand X (an rtx) in assembler syntax to file FILE.  */
 #define PRINT_OPERAND(FILE, X, CODE) print_operand (FILE, X, CODE)

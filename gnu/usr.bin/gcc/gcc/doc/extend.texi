@@ -1037,9 +1037,7 @@ Compound expressions, conditional expressions and casts are allowed as
 lvalues provided their operands are lvalues.  This means that you can take
 their addresses or store values into them.
 
-Standard C++ allows compound expressions and conditional expressions as
-lvalues, and permits casts to reference type, so use of this extension
-is deprecated for C++ code.
+All these extensions are deprecated.
 
 For example, a compound expression can be assigned, provided the last
 expression in the sequence is an lvalue.  These two expressions are
@@ -2554,7 +2552,7 @@ Currently, the attribute is ignored for inlined functions. If the
 attribute is applied to a symbol @emph{definition}, an error is reported.
 If a symbol previously declared @code{dllimport} is later defined, the
 attribute is ignored in subsequent references, and a warning is emitted.
-The attribute is also overriden by a subsequent declaration as
+The attribute is also overridden by a subsequent declaration as
 @code{dllexport}. 
 
 When applied to C++ classes, the attribute marks non-inlined
@@ -3666,7 +3664,7 @@ the single copy in the library.
 
 Since GCC eventually will implement ISO C99 semantics for
 inline functions, it is best to use @code{static inline} only
-to guarentee compatibility.  (The
+to guarantee compatibility.  (The
 existing semantics will remain available when @option{-std=gnu89} is
 specified, but eventually the default will be @option{-std=gnu99} and
 that will implement the C99 semantics, though it does not do so yet.)
@@ -3844,13 +3842,35 @@ represents the condition codes as a specific hardware register;
 condition code is handled differently, and specifying @samp{cc} has no
 effect.  But it is valid no matter what the machine.
 
-If your assembler instruction modifies memory in an unpredictable
+If your assembler instructions access memory in an unpredictable
 fashion, add @samp{memory} to the list of clobbered registers.  This
-will cause GCC to not keep memory values cached in registers across
-the assembler instruction.  You will also want to add the
-@code{volatile} keyword if the memory affected is not listed in the
-inputs or outputs of the @code{asm}, as the @samp{memory} clobber does
-not count as a side-effect of the @code{asm}.
+will cause GCC to not keep memory values cached in registers across the
+assembler instruction and not optimize stores or loads to that memory.
+You will also want to add the @code{volatile} keyword if the memory
+affected is not listed in the inputs or outputs of the @code{asm}, as
+the @samp{memory} clobber does not count as a side-effect of the
+@code{asm}.  If you know how large the accessed memory is, you can add
+it as input or output but if this is not known, you should add
+@samp{memory}.  As an example, if you access ten bytes of a string, you
+can use a memory input like:
+
+@example
+@{"m"( (@{ struct @{ char x[10]; @} *p = (void *)ptr ; *p; @}) )@}.
+@end example
+
+Note that in the following example the memory input is necessary,
+otherwise GCC might optimize the store to @code{x} away:
+@example
+int foo ()
+@{
+  int x = 42;
+  int *y = &x;
+  int result;
+  asm ("magic stuff accessing an 'int' pointed to by '%1'"
+        "=&d" (r) : "a" (y), "m" (*y));
+  return result;     
+@}
+@end example
 
 You can put multiple assembler instructions together in a single
 @code{asm} template, separated by the characters normally used in assembly
@@ -5313,6 +5333,31 @@ Generates the @code{movlps} machine instruction as a load from memory
 Generates the @code{movhps} machine instruction as a store to memory.
 @item void __builtin_ia32_storelps (v4sf, v2si *)
 Generates the @code{movlps} machine instruction as a store to memory.
+@end table
+
+The following built-in functions are available when @option{-msse3} is used.
+All of them generate the machine instruction that is part of the name.
+
+@example
+v2df __builtin_ia32_addsubpd (v2df, v2df)
+v2df __builtin_ia32_addsubps (v2df, v2df)
+v2df __builtin_ia32_haddpd (v2df, v2df)
+v2df __builtin_ia32_haddps (v2df, v2df)
+v2df __builtin_ia32_hsubpd (v2df, v2df)
+v2df __builtin_ia32_hsubps (v2df, v2df)
+v16qi __builtin_ia32_lddqu (char const *)
+void __builtin_ia32_monitor (void *, unsigned int, unsigned int)
+v2df __builtin_ia32_movddup (v2df)
+v4sf __builtin_ia32_movshdup (v4sf)
+v4sf __builtin_ia32_movsldup (v4sf)
+void __builtin_ia32_mwait (unsigned int, unsigned int)
+@end example
+
+The following built-in functions are available when @option{-msse3} is used.
+
+@table @code
+@item v2df __builtin_ia32_loadddup (double const *)
+Generates the @code{movddup} machine instruction as a load from memory.
 @end table
 
 The following built-in functions are available when @option{-m3dnow} is used.

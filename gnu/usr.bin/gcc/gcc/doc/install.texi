@@ -40,7 +40,7 @@
 @end ifset
 
 @c Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-@c 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+@c 1999, 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
 @c *** Converted to texinfo by Dean Wakerley, dean@wakerley.com
 
 @c Include everything if we're not making html
@@ -842,7 +842,7 @@ not specified is @samp{misc,tree,gc,rtlflag}; the checks @samp{rtl},
 @samp{gcac} and @samp{valgrind} are very expensive.
 
 @item --enable-coverage
-@item --enable-coverage=@var{level}
+@itemx --enable-coverage=@var{level}
 With this option, the compiler is built to collect self coverage
 information, every time it is run. This is for internal development
 purposes, and only works when the compiler is being built with gcc. The
@@ -891,8 +891,22 @@ forward to maintain the port.
 
 Some options which only apply to building cross compilers:
 @table @code
+@item --with-sysroot
+@itemx --with-sysroot=@var{dir}
+Tells GCC to consider @var{dir} as the root of a tree that contains a
+(subset of) the root filesystem of the target operating system.
+Target system headers, libraries and run-time object files will be
+searched in there.  The specified directory is not copied into the
+install tree, unlike the options @option{--with-headers} and
+@option{--with-libs} that this option obsoletes.  The default value,
+in case @option{--with-sysroot} is not given an argument, is
+@option{$@{gcc_tooldir@}/sys-root}.  If the specified directory is a
+subdirectory of @option{$@{exec_prefix@}}, then it will be found relative to
+the GCC binaries if the installation tree is moved.
+
 @item --with-headers
 @itemx --with-headers=@var{dir}
+Deprecated in favor of @option{--with-sysroot}.
 Specifies that target headers are available when building a cross compiler.
 The @var{dir} argument specifies a directory which has the target include
 files.  These include files will be copied into the @file{gcc} install
@@ -903,6 +917,7 @@ pre-exist, the @var{dir} argument may be omitted.  @command{fixincludes}
 will be run on these files to make them compatible with GCC.
 @item --with-libs
 @itemx --with-libs=``@var{dir1} @var{dir2} @dots{} @var{dirN}''
+Deprecated in favor of @option{--with-sysroot}.
 Specifies a list of directories which contain the target runtime
 libraries.  These libraries will be copied into the @file{gcc} install
 directory.  If the directory list is omitted, this option has no
@@ -1731,6 +1746,8 @@ GNU Compiler Collection on your machine.
 @uref{#*-*-sysv*,,*-*-sysv*}
 @item
 @uref{#vax-dec-ultrix,,vax-dec-ultrix}
+@item
+@uref{#x86_64-*-*,,x86_64-*-*, amd64-*-*}
 @item
 @uref{#xtensa-*-elf,,xtensa-*-elf}
 @item
@@ -3133,6 +3150,13 @@ that supports only 32-bit binaries, one must configure with
 @option{--disable-multilib}, since we will not be able to build the
 64-bit target libraries.
 
+GCC 3.3 triggers code generation bugs in earlier versions of the GNU
+compiler (especially GCC 3.0.x versions), which lead to the miscompilation
+of the stage1 compiler and the subsequent failure of the bootstrap process.
+A workaround is to use GCC 3.2.3 as an intermediary stage, i.e. to bootstrap
+that compiler with the base compiler and then use it to bootstrap the final
+compiler.
+
 @html
 <hr />
 @end html
@@ -3288,6 +3312,16 @@ On a System V release 4 system, make sure @file{/usr/bin} precedes
 @heading @anchor{vax-dec-ultrix}vax-dec-ultrix
 Don't try compiling with VAX C (@command{vcc}).  It produces incorrect code
 in some cases (for example, when @code{alloca} is used).
+
+@html
+<hr />
+@end html
+@heading @anchor{x86_64-*-*}x86_64-*-*, amd64-*-*
+
+GCC supports the x86-64 architecture implemented by the AMD64 processor
+(amd64-*-* is an alias for x86_64-*-*) on GNU/Linux, FreeBSD and NetBSD.
+On GNU/Linux the default is a bi-arch compiler which is able to generate
+both 64-bit x86-64 and 32-bit x86 code (via the @option{-m32} switch).
 
 @html
 <hr />
