@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.17 1996/06/20 10:51:08 deraadt Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.18 1996/06/24 20:00:51 pefo Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -232,7 +232,7 @@ vm_fork(p1, p2)
 	/*
 	 * Allocate a wired-down (for now) pcb and kernel stack for the process
 	 */
-#ifdef pica
+#if defined(arc) || defined(pica)
 	addr = kmem_alloc_upage(kernel_map, USPACE);
 #else
 	addr = kmem_alloc_pageable(kernel_map, USPACE);
@@ -415,7 +415,7 @@ loop:
 			       p->p_pid, p->p_comm, p->p_addr,
 			       ppri, cnt.v_free_count);
 #endif
-#ifdef pica
+#if defined(arc) || defined(pica)
 			vm_map_pageable(kernel_map, (vm_offset_t)p->p_addr,
 			    (vm_offset_t)p->p_addr + atop(USPACE), FALSE);
 #endif
