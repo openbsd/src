@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.348 2000/11/20 21:40:29 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.349 2000/11/21 03:03:51 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -713,6 +713,7 @@ product ALLIANCE AT24		0x6424	AT24
 
 /* Alteon products */
 product ALTEON ACENIC		0x0001	Acenic
+product ALTEON ACENICT		0x0002	Acenic Copper
 
 /* AMD products */
 product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
@@ -1309,6 +1310,7 @@ product NEOMAGIC NM256ZX	0x8006	MagicMedia 256ZX
 
 /* Netgear products */
 product NETGEAR GA620		0x620a	GA620
+product NETGEAR GA620T		0x630a	GA620T
 
 /* Network Security Technologies, Inc. */
 product NETSEC 7751		0x7751	7751
