@@ -1,0 +1,22 @@
+
+KAUTHD(8)                UNIX System Manager's Manual                KAUTHD(8)
+
+NNAAMMEE
+     kkaauutthhdd - remote Kerberos login daemon
+
+SSYYNNOOPPSSIISS
+     kkaauutthhdd
+
+DDEESSCCRRIIPPTTIIOONN
+     Daemon for the kauth(1) command.
+
+     Options supported by kkaauutthhdd:
+
+     --ii      Interactive.  Do not expect to be started by iinneettdd,, but allocate
+             and listen to the socket yourself.  Handy for testing and debug-
+             ging.
+
+SSEEEE AALLSSOO
+     kauth(1)
+
+ KTH-KRB                      September 27, 1996                             1

@@ -1,0 +1,66 @@
+
+
+
+ KKPPAASSSSWWDD((11))                   MMIITT PPrroojjeecctt AAtthheennaa                  KKPPAASSSSWWDD((11))
+                             KKeerrbbeerrooss VVeerrssiioonn 44..00
+
+
+
+ NNAAMMEE
+      kpasswd - change a user's Kerberos password
+
+ SSYYNNOOPPSSIISS
+      kkppaasssswwdd [ --hh ] [ --nn _n_a_m_e ] [ --ii _i_n_s_t_a_n_c_e ] [ --rr _r_e_a_l_m ] [ -u
+      _u_s_e_r_n_a_m_e_[_._i_n_s_t_a_n_c_e_]_[_@_r_e_a_l_m_]]
+
+ DDEESSCCRRIIPPTTIIOONN
+      The _k_p_a_s_s_w_d command is used to change a Kerberos principal's password.
+
+      If the _-_h option is specified, a brief summary of the options is
+      printed, and _k_p_a_s_s_w_d then exits.
+
+      If the _-_n option is specified, _n_a_m_e is used as the principal name
+      rather than the username of the user running _k_p_a_s_s_w_d.  (This is
+      determined from the ticket file if it exists; otherwise, it is
+      determined from the unix user id.)
+
+      If the _-_i option is specified, _i_n_s_t_a_n_c_e is used as the instance rather
+      than a null instance.
+
+      If the _-_r option is specified, _r_e_a_l_m is used as the realm rather than
+      the local realm.
+
+      If the _-_u option is specified, a fully qualified kerberos principal
+      can be given.
+
+      The utility prompts for the current Kerberos password (printing the
+      name of the principal for which it intends to change the password),
+      which is verified by the Kerberos server.  If the old password is
+      correct, the user is prompted twice for the new password.  A message
+      is printed indicating the success or failure of the password changing
+      operation.
+
+
+ BBUUGGSS
+      _k_p_a_s_s_w_d does not handle names, instances, or realms with special
+      characters in them when the -n, -i, or -r options are used.  Any valid
+      fullname is accepted, however, if the -u option is used.
+
+      If the principal whose password you are trying to change does not
+      exist, you will not be told until after you have entered the old
+      password.
+
+
+ SSEEEE AALLSSOO
+      kerberos(1), kinit(1), passwd(1), kadmin(8)
+
+
+
+
+
+
+
+                                    - 1 -      Formatted:  December 16, 1999
+
+
+

@@ -1,0 +1,198 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Swedish resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_SVE)
+#ifdef _WIN32
+LANGUAGE LANG_SWEDISH, SUBLANG_DEFAULT
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOG DISCARDABLE  0, 0, 210, 127
+STYLE DS_ABSALIGN | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Connect to"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_EDIT1,80,15,121,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,80,34,121,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,80,70,121,13,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "Connect",IDOK,44,106,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,117,106,50,14
+    LTEXT           "Hostname:",IDC_STATIC,7,18,40,8
+    LTEXT           "Port:",IDC_STATIC,7,37,16,8
+    LTEXT           "Login as user:",IDC_STATIC,7,72,47,8
+    COMBOBOX        IDC_COMBO2,80,53,121,56,CBS_DROPDOWN | CBS_SORT | 
+                    WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Term type:",IDC_STATIC,7,55,34,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 203
+        BOTTOMMARGIN, 120
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU_TELNET MENU DISCARDABLE 
+BEGIN
+    POPUP "Connection"
+    BEGIN
+        MENUITEM "Close",                       ID_CONNECTION_CLOSE
+    END
+    POPUP "Telnet"
+    BEGIN
+        MENUITEM "Encryption",                  ID_ENCRYPT_OPTION
+        MENUITEM SEPARATOR
+        MENUITEM "Send ""Are You There""",      ID_TELNET_SEND_AYT
+        MENUITEM "Send ""Break""",              ID_TELNET_SEND_BRK
+        MENUITEM "Send ""Interupt Process""",   ID_TELNET_SEND_IP
+        MENUITEM "Send ""Abort Output""",       ID_TELNET_SEND_AO
+        MENUITEM "Send ""Erase Character""",    ID_TELNET_SEND_EC
+        MENUITEM "Send ""Erase Line""",         ID_TELNET_SEND_EL
+    END
+    POPUP "Help"
+    BEGIN
+        MENUITEM "About",                       ID_SHOWVERSION
+    END
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Royal Institute of Technology (KTH)\0"
+            VALUE "FileDescription", "voodoo\0"
+            VALUE "FileVersion", "4, 0, 9, 9\0"
+            VALUE "InternalName", "voodoo\0"
+            VALUE "LegalCopyright", "Copyright © 1996 - 1998  Royal Institute of Technology (KTH)\0"
+            VALUE "OriginalFilename", "voodoo.exe\0"
+            VALUE "ProductName", "KTH Kerberos\0"
+            VALUE "ProductVersion", "4,0,9,9\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_DIALOG1 DLGINIT
+BEGIN
+    IDC_COMBO2, 0x403, 6, 0
+0x7478, 0x7265, 0x006d, 
+    IDC_COMBO2, 0x403, 6, 0
+0x7458, 0x7265, 0x006d, 
+    IDC_COMBO2, 0x403, 6, 0
+0x5458, 0x5245, 0x004d, 
+    IDC_COMBO2, 0x403, 6, 0
+0x5458, 0x7265, 0x006d, 
+    IDC_COMBO2, 0x403, 6, 0
+0x5478, 0x7265, 0x006d, 
+    0
+END
+
+#endif    // Swedish resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -1,0 +1,70 @@
+
+
+KSRVUTIL(8)              UNIX System Manager's Manual              KSRVUTIL(8)
+
+NNAAMMEE
+     kkssrrvvuuttiill host kerberos keyfile (srvtab) manipulation utility
+
+SSYYNNOOPPSSIISS
+     kkssrrvvuuttiill [--ff _k_e_y_f_i_l_e] [--ii] [--kk] [--pp _p_r_i_n_c_i_p_a_l] [--rr _r_e_a_l_m] _o_p_e_r_a_t_i_o_n
+
+
+DDEESSCCRRIIPPTTIIOONN
+     kkssrrvvuuttiill allows a system manager to list or change keys currently in his
+     keyfile or to add new keys to the keyfile.
+
+     Operation must be one of the following:
+
+     list    lists the keys in a keyfile showing version number and principal
+             name.  If the --kk option is given, keys will also be shown.
+
+     change  changes all the keys in the keyfile by using the regular admin
+             protocol.  If the --ii flag is given, kkssrrvvuuttiill will prompt for yes
+             or no before changing each key.  If the --kk option is used, the
+             old and new keys will be displayed.
+
+     add     allows the user to add a key.  add prompts for name, instance,
+             realm, and key version number, asks for confirmation, and then
+             asks for a password.  kkssrrvvuuttiill then converts the password to a
+             key and appends the keyfile with the new information.  If the --kk
+             option is used, the key is displayed.
+
+     get     gets a service from the Kerberos server, possibly creating the
+             principal. Names, instances and realms for the service keys to
+             get are prompted for. The default principal used in the kadmin
+             transcation is your root instance. This can be changed with the
+             --pp option.
+
+     In all cases, the default file used is KEY_FILE as defined in krb.h un-
+     less this is overridden by the --ff option.
+
+     A good use for kkssrrvvuuttiill would be for adding keys to a keyfile.  A system
+     manager could ask a kerberos administrator to create a new service key
+     with kadmin(8) and could supply an initial password.  Then, he could use
+     kkssrrvvuuttiill to add the key to the keyfile and then to change the key so that
+     it will be random and unknown to either the system manager or the ker-
+     beros administrator.
+
+     kkssrrvvuuttiill always makes a backup copy of the keyfile before making any
+     changes.
+
+
+DDIIAAGGNNOOSSTTIICCSS
+     If kkssrrvvuuttiill should exit on an error condition at any time during a change
+     or add, a copy of the original keyfile can be found in _f_i_l_e_n_a_m_e.old where
+     _f_i_l_e_n_a_m_e is the name of the keyfile, and a copy of the file with all new
+     keys changed or added so far can be found in _f_i_l_e_n_a_m_e.work. The original
+     keyfile is left unmodified until the program exits at which point it is
+     removed and replaced it with the workfile.  Appending the workfile to the
+     backup copy and replacing the keyfile with the result should always give
+     a usable keyfile, although the resulting keyfile will have some out of
+     date keys in it.
+
+
+SSEEEE AALLSSOO
+     kadmin(8),  ksrvtgt(1)
+
+AAUUTTHHOORR
+     Emanuel Jay Berkenbilt, MIT Project Athena
+
+ KTH-KRB                          May 4, 1996                                2

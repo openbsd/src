@@ -1,0 +1,66 @@
+
+
+
+ KKDDBB__DDEESSTTRROOYY((88))               MMIITT PPrroojjeecctt AAtthheennaa              KKDDBB__DDEESSTTRROOYY((88))
+                             KKeerrbbeerrooss VVeerrssiioonn 44..00
+
+
+
+ NNAAMMEE
+      kdb_destroy - destroy Kerberos key distribution center database
+
+ SSYYNNOOPPSSIISS
+      kdb_destroy
+
+ DDEESSCCRRIIPPTTIIOONN
+      _k_d_b___d_e_s_t_r_o_y deletes a Kerberos key distribution center database.
+
+      The user is prompted to verify that the database should be destroyed.
+      A response beginning with `y' or `Y' confirms deletion.  Any other
+      response aborts deletion.
+
+ DDIIAAGGNNOOSSTTIICCSS
+      "Database cannot be deleted at /var/kerberos/principal"
+                          The attempt to delete the database failed
+                          (probably due to a system or access permission
+                          error).
+
+      "Database not deleted."
+                          The user aborted the deletion.
+
+ FFIILLEESS
+      /var/kerberos/principal.pag, /var/kerberos/principal.dir
+                          DBM files containing database
+
+ SSEEEE AALLSSOO
+      kdb_init(8)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                    - 1 -      Formatted:  December 16, 1999
+
+
+

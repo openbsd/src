@@ -1,0 +1,47 @@
+
+KAUTH(1)                     UNIX Reference Manual                    KAUTH(1)
+
+NNAAMMEE
+     kkaauutthh - overworked Kerberos login program
+
+SSYYNNOOPPSSIISS
+     kkaauutthh [--nn _n_a_m_e] [--rr _r_e_m_o_t_e _u_s_e_r] [--tt _r_e_m_o_t_e _t_i_c_k_e_t _f_i_l_e] [--hh _h_o_s_t_s_._._.]
+     [--ll _l_i_f_e_t_i_m_e] [--ff _s_r_v_t_a_b] [--cc _c_e_l_l] [_c_o_m_m_a_n_d _._._.]
+
+DDEESSCCRRIIPPTTIIOONN
+     The kkaauutthh command obtains ticket granting tickets as well as AFS ticket
+     and tokens. It also does a whole lot of other stuff.
+
+     The following flags are supported:
+
+     --nn    Principal to get tickets for. If no other arguments are present
+           this can be given without the --nn flag.
+
+     --hh    Remote hosts to obtain tickets for. This works similar to the MIT
+           Athena Kerberos 4 patchlevel 10 command rkinit(1),  however not in
+           a compatible way. It requires that the remote host runs the
+           kauthd(8),  server. The --rr and --tt flags are useful only with this
+           option.
+
+     --rr    User on the remote host that should own the ticket file.
+
+     --tt    Ticket file on remote host.
+
+     --ll    Lifetime of tickets in minutes. A value of -1 is used for maximum
+           ticket lifetime.
+
+     --ff    Srvtab to get service keys from. Default is _/_e_t_c_/_s_r_v_t_a_b. This is
+           mainly used with batch services that need to run authenticated. If
+           any command is given, it will be executed in an authenticated fash-
+           ion and when the program exits the tickets are destroyed. For long
+           running jobs the tickets will be renewed.
+
+     --cc    AFS cell to get tokens for, default is your local cell.
+
+SSEEEE AALLSSOO
+     kinit(1),  kauthd(8),  kafs(3)
+
+BBUUGGSS
+     There is no help-switch.
+
+ KTH-KRB                          May 4, 1996                                1

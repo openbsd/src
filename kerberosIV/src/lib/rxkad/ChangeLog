@@ -1,0 +1,34 @@
+Sun Nov 22 10:46:02 1998  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.in (WFLAGS): set
+
+Sat Feb 21 15:23:01 1998  Assar Westerlund  <assar@sics.se>
+
+	* rxk_crpt.c: rename ntohl -> rxk_ntohl not to conflict
+
+Thu Feb 12 05:39:56 1998  Assar Westerlund  <assar@sics.se>
+
+	* rxk_info.c: expiration should be u_int32
+
+Tue Dec 30 11:55:52 1997  Bjoern Groenvall  <bg@sics.se>
+
+	* compat.c (tkt_MakeTicket): Add functions for binary
+ 	compatibility with the Transarc librxkad.
+
+Thu Nov 27 12:04:51 1997  Bjoern Groenvall  <bg@knoll.sics.se>
+
+	* rxk_locl.c (rxkad_prepare_packet): Level rxkad_auth did not
+	treat short packets properly.
+	
+	(rxkad_check_packet): Stricter test of packet length.
+
+Sun Nov  9 02:56:37 1997  Assar Westerlund  <assar@sics.se>
+
+	* rxk_clnt.c: fix to make AIX's xlc happier.
+	undef memcpy.
+	don't use //
+
+	* rxk_serv.c: fix to make AIX's xlc happier
+
+	* rxkad_locl.h: fix to make AIX's xlc happier
+

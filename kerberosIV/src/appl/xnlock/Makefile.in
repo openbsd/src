@@ -1,0 +1,99 @@
+# $KTH: Makefile.in,v 1.41 1999/03/11 12:12:13 joda Exp $
+
+SHELL = /bin/sh
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+top_builddir = ../..
+
+XINCS = @X_CFLAGS@
+XLIBS = @X_LIBS@ -lXt @X_PRE_LIBS@ -lX11 @X_EXTRA_LIBS@
+
+CC = @CC@
+LINK = @LINK@
+RANLIB = @RANLIB@
+DEFS = @DEFS@ -DBINDIR='"$(bindir)"'
+CFLAGS = $(XINCS) @CFLAGS@ $(WFLAGS)
+WFLAGS = @WFLAGS@ @WFLAGS_NOIMPLICITINT@
+LD_FLAGS = @LD_FLAGS@
+LIBS = $(XLIBS) @LIBS@
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+MKINSTALLDIRS = @top_srcdir@/mkinstalldirs
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+bindir = @bindir@
+mandir = @mandir@
+transform=@program_transform_name@
+EXECSUFFIX=@EXECSUFFIX@
+
+X_PROGS_BIN = xnlock$(EXECSUFFIX)
+
+PROG_BIN	= @MAKE_X_PROGS_BIN@
+PROG_LIBEXEC	= 
+PROGS = $(PROG_BIN) $(PROG_LIBEXEC)
+
+MAN1 = xnlock.man
+
+SOURCES = xnlock.c
+
+OBJECTS = xnlock.o
+
+all: $(PROGS)
+
+Wall:
+	make CFLAGS="$(XINCS) -g -Wall -Wno-comment -Wmissing-prototypes -Wmissing-declarations -D__USE_FIXED_PROTOTYPES__"
+
+.c.o:
+	$(CC) -c $(DEFS) -I../../include -I$(srcdir) $(CFLAGS) $(CPPFLAGS) $<
+
+install: all
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	PROG_BIN='$(PROG_BIN)'; for x in $$PROG_BIN; do \
+	  $(INSTALL_PROGRAM) $$x $(DESTDIR)$(bindir)/`echo $$x | sed '$(transform)'`; \
+	done
+	$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man1
+	(cd $(srcdir); \
+	for x in $(MAN1); do \
+	  b=`echo $$x | sed -e 's/\.man//' -e '$(transform)'`.1; \
+	  $(INSTALL_DATA) $$x $(DESTDIR)$(mandir)/man1/$$b; \
+	done)
+
+uninstall:
+	PROG_BIN='$(PROG_BIN)'; for x in $$PROG_BIN; do \
+	  rm -f $(DESTDIR)$(bindir)/`echo $$x | sed '$(transform)'`; \
+	done
+	for x in $(MAN1); do \
+	  b=`echo $$x | sed -e 's/\.man//' -e '$(transform)'`.1; \
+	  rm -f $(DESTDIR)$(mandir)/man1/$$b; \
+	done
+
+TAGS: $(SOURCES)
+	etags $(SOURCES)
+
+check:
+
+clean:
+	rm -f *.a *.o $(PROGS)
+
+mostlyclean: clean
+
+distclean: clean
+	rm -f Makefile *.tab.c *~
+
+realclean: distclean
+	rm -f TAGS
+
+KLIB=-L../../lib/krb -lkrb -L../../lib/des -ldes
+LIBROKEN=-L../../lib/roken -lroken
+
+xnlock$(EXECSUFFIX): xnlock.o
+	$(LINK) $(LD_FLAGS) $(LDFLAGS) -o $@ xnlock.o @KRB_KAFS_LIB@ $(KLIB) $(LIBROKEN) $(LIBS) $(LIBROKEN)
+
+$(OBJECTS): ../../include/config.h
+
+.PHONY: all Wall install uninstall check clean mostlyclean distclean realclean

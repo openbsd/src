@@ -1,0 +1,39 @@
+
+AFSLOG(1)                    UNIX Reference Manual                   AFSLOG(1)
+
+NNAAMMEE
+     aaffsslloogg - obtains AFS tokens for specified cells
+
+SSYYNNOOPPSSIISS
+     aaffsslloogg [--dd] [--cc _c_e_l_l] [--kk _r_e_a_l_m] [--pp _p_a_t_h] [--uunnlloogg] [--ccrreeaatteeuusseerr] [_a_r_g_s]
+
+DDEESSCCRRIIPPTTIIOONN
+     The aaffsslloogg command obtains AFS tokens, _a_r_g_s are either a name of a cell
+     or a pathnames of a file in the cell to get tokens for. If an argument is
+     . or .. or contains a slash it is assumed to be a pathname. Otherwise it
+     is assumed to be a name of a cell or a prefix thereof.
+
+     The --cc and --pp flags can be used to resolve ambiguities.
+
+     aaffsslloogg might fail to guess the Kerberos realm to get tickets for (for in-
+     stance if the volume location servers of the cell does not reside in the
+     kerberos realm that holds the AFS service key, and the correct realm
+     isn't the same as the cell name or the local realm (I didn't say this was
+     a common problem)). Anyway, the --kk can be used to give a hint. It should
+     not be used unless there is a problem, since all tickets will be taken
+     from the specified realm and this is not (usually) what you want.
+
+     --ccrreeaatteeuusseerr means that aaffsslloogg should try to run ppttss to create a remote
+     user principal in another cell.  --dd can be used for debugging.
+
+     If the --uunnlloogg flag is given any tokens are removed and all other argu-
+     ments are ignored.
+
+SSEEEE AALLSSOO
+     kauth(1),  kafs(3)
+
+BBUUGGSS
+     It should be able to handle the MIT Athena aakklloogg flags --hhoossttss, --zzssuubbss,
+     and --nnoopprrddbb, but does not.
+
+ KTH-KRB                        April 27, 1996                               1

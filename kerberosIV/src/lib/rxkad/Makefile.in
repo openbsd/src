@@ -1,0 +1,93 @@
+#
+# $KTH: Makefile.in,v 1.14 1999/03/10 19:01:16 joda Exp $
+#
+
+# This should really be set from configure
+AFSWS = @AFSWS@
+KRB5 = /usr/heimdal
+
+SHELL = /bin/sh
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+CC = @CC@
+LINK = @LINK@
+AR = ar
+RANLIB = @RANLIB@
+DEFS = @DEFS@
+CFLAGS = @CFLAGS@ $(WFLAGS)
+WFLAGS = @WFLAGS@
+
+INSTALL = @INSTALL@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS = @top_srcdir@/mkinstalldirs
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+includedir = @includedir@
+libdir = @libdir@
+
+PICFLAGS = # @PICFLAGS@
+
+LIBNAME = $(LIBPREFIX)rxkad
+#LIBEXT = @LIBEXT@ Always build archive library!
+LIBEXT = a
+LIBPREFIX = @LIBPREFIX@
+SHLIBEXT = @SHLIBEXT@
+LDSHARED = @LDSHARED@
+LIB = $(LIBNAME).$(LIBEXT)
+
+SOURCES = rxk_locl.c rxk_clnt.c rxk_serv.c rxk_crpt.c rxk_info.c osi_alloc.c compat.c
+
+OBJECTS = rxk_locl.o rxk_clnt.o rxk_serv.o rxk_crpt.o rxk_info.o osi_alloc.o compat.o
+
+all: $(LIB)
+
+Wall:
+	make CFLAGS="-g -Wall -Wno-comment -Wmissing-prototypes -Wmissing-declarations -D__USE_FIXED_PROTOTYPES__"
+
+.c.o:
+	$(CC) -c $(DEFS) -I../../include -I$(srcdir) $(CFLAGS) $(CPPFLAGS) $(PICFLAGS) -I$(AFSWS)/include -I$(KRB5)/include $<
+
+fc_test: rxk_crpt.c
+	$(LINK) -DTEST -o $@ $(CPPFLAGS) $(DEFS) -I../../include -I$(srcdir) $(CFLAGS) $(PICFLAGS) -I$(AFSWS)/include -I$(KRB5)/include $(VPATH)/rxk_crpt.c
+
+install: all
+	$(MKINSTALLDIRS) $(DESTDIR)$(includedir)/rx
+	$(INSTALL_DATA) $(srcdir)/rxkad.h $(DESTDIR)$(includedir)/rx/rxkad.h
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) -m 0555 $(LIB) $(DESTDIR)$(libdir)/$(LIB)
+
+uninstall:
+	rm -f $(DESTDIR)$(includedir)/rx/rxkad.h
+	rm -f $(DESTDIR)$(libdir)/$(LIB)
+
+TAGS: $(SOURCES)
+	etags $(SOURCES)
+
+check:
+
+clean:
+	rm -f $(LIB) *.o *.a fc_test
+
+mostlyclean: clean
+
+distclean: clean
+	rm -f Makefile *.tab.c *~
+
+realclean: distclean
+	rm -f TAGS
+
+$(LIBNAME).a: $(OBJECTS)
+	rm -f $@
+	$(AR) cr $@ $(OBJECTS)
+	-$(RANLIB) $@
+
+$(LIBNAME).$(SHLIBEXT): $(OBJECTS)
+	rm -f $@
+	$(LDSHARED) -o $@ $(OBJECTS)
+
+$(OBJECTS): ../../include/config.h
+
+.PHONY: all Wall install uninstall check clean mostlyclean distclean realclean

@@ -1,0 +1,35 @@
+.\" $KTH: movemail.1,v 1.1 1996/11/14 21:42:41 assar Exp $
+.\"
+.Dd November 14, 1996
+.Dt MOVEMAIL 1
+.Os KTH-KRB
+.Sh NAME
+.Nm movemail
+.Nd
+Fetch mail from a spool file or using the
+KPOP
+protocol
+.Sh SYNPOSYS
+.Nm
+.Ar inbox
+.Ar destfile
+.Sh DESCRIPTION
+The
+.Nm
+program fetches mail from
+.Ar inbox ,
+which can be a file name or
+po:username
+meaning fetch the mails with
+KPOP from the host
+.Ev MAILHOST .
+.Pp
+This program is intended to be called from mail user agents that are
+themselves not able to fetch the mail.  The primary example of this is
+Emacs.
+.Sh ENVIRONMENT
+.Ev MAILHOST	The host from which to fetch the mail.
+.Sh SEE ALSO
+.Xr popper 8
+.Sh HISTORY
+movemail comes from Emacs 19.30

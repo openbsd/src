@@ -1,0 +1,44 @@
+
+SKEY.ACCESS(5)             UNIX Programmer's Manual             SKEY.ACCESS(5)
+
+NNAAMMEE
+     llooggiinn..aacccceessss - Login access control table
+
+DDEESSCCRRIIPPTTIIOONN
+     The llooggiinn..aacccceessss file specifies (user, host) combinations and/or (user,
+     tty) combinations for which a login will be either accepted or refused.
+
+     When someone logs in, the llooggiinn..aacccceessss is scanned for the first entry
+     that matches the (user, host) combination, or, in case of non-networked
+     logins, the first entry that matches the (user, tty) combination.  The
+     permissions field of that table entry determines whether the login will
+     be accepted or refused.
+
+     Each line of the login access control table has three fields separated by
+     a ":" character:   permission : users : origins
+
+     The first field should be a "+" (access granted) or "-" (access denied)
+     character. The second field should be a list of one or more login names,
+     group names, or ALL (always matches).  The third field should be a list
+     of one or more tty names (for non-networked logins), host names, domain
+     names (begin with "."), host addresses, internet network numbers (end
+     with "."), ALL (always matches) or LOCAL (matches any string that does
+     not contain a "." character). If you run NIS you can use @netgroupname in
+     host or user patterns.
+
+     The EXCEPT operator makes it possible to write very compact rules.
+
+     The group file is searched only when a name does not match that of the
+     logged-in user. Only groups are matched in which users are explicitly
+     listed: the program does not look at a user's primary group id value.
+
+FFIILLEESS
+     /etc/login.access  The llooggiinn..aacccceessss file resides in _/_e_t_c.
+
+SSEEEE AALLSSOO
+     login(1)
+
+AAUUTTHHOORR
+     Guido van Rooij
+
+ FreeBSD                        April 30, 1994                               1

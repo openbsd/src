@@ -1,0 +1,110 @@
+
+
+KADMIN(8)                UNIX System Manager's Manual                KADMIN(8)
+
+NNAAMMEE
+     kkaaddmmiinn - network utility for Kerberos database administration
+
+SSYYNNOOPPSSIISS
+     kkaaddmmiinn [--pp _p_r_i_n_c_i_p_a_l] [--uu _u_s_e_r_n_a_m_e] [--rr _r_e_a_l_m] [--mm] [--TT _t_i_m_e_o_u_t] [--tt]
+     [----vveerrssiioonn] [--hh] [----hheellpp] _[_c_o_m_m_a_n_d_]
+
+DDEESSCCRRIIPPTTIIOONN
+     This utility provides a unified administration interface to the Kerberos
+     master database.  Kerberos administrators use kkaaddmmiinn to register new
+     users and services to the master database, and to change information
+     about existing database entries, such as changing a user's Kerberos pass-
+     word. A Kerberos administrator is a user with an ``admin'' instance whose
+     name appears on one of the Kerberos administration access control lists.
+
+     Supported options:
+
+     --pp _p_r_i_n_c_i_p_a_l
+             This is the adminstrator principal to use when talking to the
+             Kadmin server. The default is taken from the users environment.
+
+     --rr _r_e_a_l_m
+             This is the default realm to use for transactions. Default is the
+             local realm.
+
+     --uu _u_s_e_r_n_a_m_e
+             This is similar to --pp, but specifies a name, that gets appended
+             with a ``admin'' instance.
+
+     --TT _t_i_m_e_o_u_t
+             To prevent someone from walking up to an unguarded terminal and
+             doing malicious things, administrator tickets are destroyed after
+             a period of inactivity. This flag changes the timeout from the
+             default of one minute. A timeout of zero seconds disables this
+             functionality.
+
+     --mm      Historically kkaaddmmiinn destroyed tickets after every command; this
+             flag used to stop this behaviour (only destroying tickets upon
+             exit). Now it's just a synonym for --TT _0.
+
+     --tt      Use existing tickets (if any are available), this also disbles
+             timeout, and doesn't destroy any tickets upon exit.
+
+             These tickets have to be for the changepw.kerberos service.  Use
+             kkiinniitt --pp to acquire them.
+
+     The kkaaddmmiinn program communicates over the network with the kkaaddmmiinndd pro-
+     gram, which runs on the machine housing the Kerberos master database, and
+     does the actual modifications to the database.
+
+     When you enter the kkaaddmmiinn command, the program displays a message that
+     welcomes you and explains how to ask for help.  Then kkaaddmmiinn waits for you
+     to enter commands (which are described below).  It then asks you for your
+     administrator's password before accessing the database.
+
+     All commands can be abbreviated as long as they are unique.  Some short
+     versions of the commands are also recognized for backwards compatibility.
+
+     Recognised commands:
+
+     add_new_key _p_r_i_n_c_i_p_a_l
+             Creates a new principal in the Kerberos database. You give the
+             name of the new principal as an argument. You will then be asked
+             for a maximum ticket lifetime, attributes, the expiration date of
+             the principal, and finally the password of the principal.
+
+     change_password _p_r_i_n_c_i_p_a_l
+             Changes a principal's password. You will be prompted for the new
+             password.
+
+     change_key _p_r_i_n_c_i_p_a_l
+             This is the same as change_password, but the password is given as
+             a raw DES key (for the few occations when you need this).
+
+     change_admin_password
+             Changes your own admin password. It will prompt you for you old
+             and new passwords.
+
+     del_entry _p_r_i_n_c_i_p_a_l
+             Removes principal from the database.
+
+     get_entry _p_r_i_n_c_i_p_a_l
+             Show various information for the given principal. Note that the
+             key is shown as zeros.
+
+     mod_entry _p_r_i_n_c_i_p_a_l
+             Modifies a particular entry, for instance to change the expira-
+             tion date.
+
+     destroy_tickets
+             Destroys your admin tickets explicitly.
+
+     quit    Obvious.
+
+SSEEEE AALLSSOO
+     kerberos(1),  kadmind(8),  kpasswd(1),  kinit(1),  ksrvutil(8)
+
+AAUUTTHHOORRSS
+     Jeffrey I. Schiller, MIT Project Athena
+
+     Emanuel Jay Berkenbilt, MIT Project Athena
+
+BBUUGGSS
+     The user interface is primitive, and the command names could be better.
+
+ KTH-KRB                       February 3, 1998                              2
