@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.57 2004/06/21 23:50:37 tholo Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.58 2004/06/23 04:34:17 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1564,7 +1564,7 @@ int
 pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
     int *nchange, int flags)
 {
-	struct pfr_ktable	*p;
+	struct pfr_ktable	*p, *q;
 	struct pfr_ktableworkq	 workq;
 	struct pf_ruleset	*rs;
 	int			 s, xadd = 0, xchange = 0;
@@ -1590,8 +1590,10 @@ pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
-		SLIST_FOREACH(p, &workq, pfrkt_workq)
+		for (p = SLIST_FIRST(&workq); p != NULL; p = q) {
+			q = SLIST_NEXT(p, pfrkt_workq);
 			pfr_commit_ktable(p, tzero);
+		}
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 		rs->topen = 0;
