@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.67 1995/08/17 17:40:50 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.68 1995/12/09 05:53:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -246,7 +246,7 @@ iskmemdev(dev)
 	dev_t dev;
 {
 
-	return (major(dev) == mem_no && minor(dev) < 2);
+	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
 }
 
 /*
