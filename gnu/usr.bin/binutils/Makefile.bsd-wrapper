@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.4 1996/09/06 19:20:17 pefo Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.5 1996/10/02 20:56:43 deraadt Exp $
 
 MAN=	binutils/ar.1 binutils/nlmconv.1 binutils/nm.1 binutils/objcopy.1 \
 	binutils/objdump.1 binutils/ranlib.1 binutils/size.1 \
@@ -31,7 +31,7 @@ install: maninstall
 .endif
 
 clean cleandir:
-	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 
 depend:
 	# Nothing here so far...
