@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipcp.c,v 1.37 2002/06/15 08:02:00 brian Exp $
+ * $OpenBSD: ipcp.c,v 1.38 2003/04/28 17:36:56 beck Exp $
  */
 
 #include <sys/param.h>
@@ -251,7 +251,8 @@ ipcp_LoadDNS(struct ipcp *ipcp)
           else
             cp++;
         }
-        strcpy(cp_nons, cp);	/* Copy the end - including the NUL */
+        strlcpy(cp_nons, cp, st.st_size + 1 - (cp_nons - 
+	    ipcp->ns.resolv_nons)); /* Copy the end - including the NUL */
         cp_nons += strlen(cp_nons) - 1;
         while (cp_nons >= ipcp->ns.resolv_nons && *cp_nons == '\n')
           *cp_nons-- = '\0';
