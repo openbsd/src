@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.261 2002/12/18 00:15:21 henning Exp $
+#	$OpenBSD: files,v 1.262 2002/12/29 20:07:34 cedric Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -354,6 +354,7 @@ pseudo-device pf: ifnet
 file	net/pf.c		pf	needs-flag
 file	net/pf_norm.c		pf
 file	net/pf_ioctl.c		pf
+file	net/pf_table.c		pf
 pseudo-device pflog: ifnet
 file	net/if_pflog.c		pflog	needs-flag
 pseudo-device pfsync: ifnet

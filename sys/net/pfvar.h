@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.118 2002/12/23 13:15:18 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.119 2002/12/29 20:07:34 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,6 +36,9 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+
+#include <net/radix.h>
+#include <netinet/ip_ipsp.h>
 
 enum	{ PF_IN=1, PF_OUT=2 };
 enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2, PF_NAT=3, PF_NONAT=4,
@@ -436,6 +439,91 @@ struct pf_anchor {
 
 TAILQ_HEAD(pf_anchorqueue, pf_anchor);
 
+#define	PF_TABLE_MASK		0xCAFEBABE
+#define	PF_TABLE_NAME_SIZE	128
+
+struct pfr_table {
+	char			 pfrt_name[PF_TABLE_NAME_SIZE];
+};
+
+enum { PFR_FB_NONE, PFR_FB_MATCH, PFR_FB_ADDED, PFR_FB_DELETED,
+	PFR_FB_CHANGED, PFR_FB_CLEARED, PFR_FB_MAX };
+
+struct pfr_addr {
+	union {
+		struct in_addr	 _pfra_ip4addr;
+		struct in6_addr	 _pfra_ip6addr;
+	}		 pfra_u;
+	u_int8_t	 pfra_af;
+	u_int8_t	 pfra_net;
+	u_int8_t	 pfra_not;
+	u_int8_t	 pfra_fback;
+};
+#define	pfra_ip4addr	pfra_u._pfra_ip4addr
+#define	pfra_ip6addr	pfra_u._pfra_ip6addr
+
+enum { PFR_DIR_IN, PFR_DIR_OUT, PFR_DIR_MAX };
+enum { PFR_OP_BLOCK, PFR_OP_PASS, PFR_OP_ADDR_MAX, PFR_OP_TABLE_MAX };
+#define PFR_OP_XPASS	PFR_OP_ADDR_MAX
+
+struct pfr_astats {
+	struct pfr_addr	 pfras_a;
+	u_int64_t	 pfras_packets[PFR_DIR_MAX][PFR_OP_ADDR_MAX];
+	u_int64_t	 pfras_bytes[PFR_DIR_MAX][PFR_OP_ADDR_MAX];
+	long		 pfras_tzero;
+};
+
+struct pfr_tstats {
+	struct pfr_table pfrts_t;
+	u_int64_t	 pfrts_packets[PFR_DIR_MAX][PFR_OP_TABLE_MAX];
+	u_int64_t	 pfrts_bytes[PFR_DIR_MAX][PFR_OP_TABLE_MAX];
+	u_int64_t	 pfrts_match;
+	u_int64_t	 pfrts_nomatch;
+	long		 pfrts_tzero;
+	int		 pfrts_cnt;
+};
+#define	pfrts_name	pfrts_t.pfrt_name
+
+union pfr_hash {
+	char		 pfrh_sha1[20];
+	u_int32_t	 pfrh_int32[5];
+};
+
+SLIST_HEAD(pfr_kentryworkq, pfr_kentry);
+struct pfr_kentry {
+	struct radix_node	 pfrke_node[2];
+	union sockaddr_union	 pfrke_sa;
+	u_int64_t		 pfrke_packets[PFR_DIR_MAX][PFR_OP_ADDR_MAX];
+	u_int64_t		 pfrke_bytes[PFR_DIR_MAX][PFR_OP_ADDR_MAX];
+	SLIST_ENTRY(pfr_kentry)	 pfrke_workq;
+	long			 pfrke_tzero;
+	u_int8_t		 pfrke_af;
+	u_int8_t		 pfrke_net;
+	u_int8_t		 pfrke_not;
+	u_int8_t		 pfrke_mark;
+};
+
+SLIST_HEAD(pfr_ktablehashq, pfr_ktable);
+SLIST_HEAD(pfr_ktableworkq, pfr_ktable);
+RB_HEAD(pfr_ktablehead, pfr_ktable);
+struct pfr_ktable {
+	struct pfr_tstats	 pfrkt_ts;
+	union pfr_hash		 pfrkt_hash;
+	RB_ENTRY(pfr_ktable)	 pfrkt_tree;
+	SLIST_ENTRY(pfr_ktable)	 pfrkt_hashq;
+	SLIST_ENTRY(pfr_ktable)	 pfrkt_workq;
+	struct radix_node_head	*pfrkt_ip4;
+	struct radix_node_head	*pfrkt_ip6;
+};
+#define pfrkt_t		pfrkt_ts.pfrts_t
+#define pfrkt_name	pfrkt_t.pfrt_name
+#define pfrkt_cnt	pfrkt_ts.pfrts_cnt
+#define pfrkt_packets	pfrkt_ts.pfrts_packets
+#define pfrkt_bytes	pfrkt_ts.pfrts_bytes
+#define pfrkt_match	pfrkt_ts.pfrts_match
+#define pfrkt_nomatch	pfrkt_ts.pfrts_nomatch
+#define pfrkt_tzero	pfrkt_ts.pfrts_tzero
+
 struct pf_pdesc {
 	u_int64_t	 tot_len;	/* Make Mickey money */
 	union {
@@ -710,6 +798,27 @@ struct pfioc_ruleset {
 	char		 name[PF_RULESET_NAME_SIZE];
 };
 
+#define PFR_FLAG_ATOMIC		0x00000001
+#define PFR_FLAG_DUMMY		0x00000002
+#define PFR_FLAG_FEEDBACK	0x00000004
+#define PFR_FLAG_CLSTATS	0x00000008
+#define PFR_FLAG_RECURSE	0x00000010
+#define PFR_FLAG_ALLMASK	0x0000001F
+
+struct pfioc_table {
+	struct pfr_table	 pfrio_table;
+	void			*pfrio_buffer;
+	int			 pfrio_size;
+	int			 pfrio_size2;
+	int			 pfrio_nadd;
+	int			 pfrio_ndel;
+	int			 pfrio_nchange;
+	int			 pfrio_flags;
+};
+#define	pfrio_exists	pfrio_nadd
+#define	pfrio_nzero	pfrio_nadd
+#define	pfrio_name	pfrio_table.pfrt_name
+
 
 /*
  * ioctl operations
@@ -758,6 +867,22 @@ struct pfioc_ruleset {
 #define	DIOCGETANCHOR	_IOWR('D', 57, struct pfioc_anchor)
 #define	DIOCGETRULESETS	_IOWR('D', 58, struct pfioc_ruleset)
 #define	DIOCGETRULESET	_IOWR('D', 59, struct pfioc_ruleset)
+#define	DIOCRCLRTABLES	_IOWR('D', 60, struct pfioc_table)
+#define	DIOCRADDTABLES	_IOWR('D', 61, struct pfioc_table)
+#define	DIOCRDELTABLES	_IOWR('D', 62, struct pfioc_table)
+#define	DIOCRGETTABLES	_IOWR('D', 63, struct pfioc_table)
+#define	DIOCRGETTSTATS	_IOWR('D', 64, struct pfioc_table)
+#define DIOCRCLRTSTATS  _IOWR('D', 65, struct pfioc_table)
+#define	DIOCRCLRADDRS	_IOWR('D', 66, struct pfioc_table)
+#define	DIOCRADDADDRS	_IOWR('D', 67, struct pfioc_table)
+#define	DIOCRDELADDRS	_IOWR('D', 68, struct pfioc_table)
+#define	DIOCRSETADDRS	_IOWR('D', 69, struct pfioc_table)
+#define	DIOCRGETADDRS	_IOWR('D', 70, struct pfioc_table)
+#define	DIOCRGETASTATS	_IOWR('D', 71, struct pfioc_table)
+#define DIOCRCLRASTATS  _IOWR('D', 72, struct pfioc_table)
+#define	DIOCRTSTADDRS	_IOWR('D', 73, struct pfioc_table)
+#define	DIOCRWRAPTABLE	_IOWR('D', 74, struct pfioc_table)
+#define	DIOCRUNWRTABLE	_IOWR('D', 75, struct pfioc_table)
 
 
 #ifdef _KERNEL
@@ -789,6 +914,7 @@ extern void			 pf_update_anchor_rules(void);
 extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
 extern struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
+extern struct pool		 pfr_ktable_pl, pfr_kentry_pl;
 extern void			 pf_purge_timeout(void *);
 extern int			 pftm_interval;
 extern void			 pf_purge_expired_states(void);
@@ -822,6 +948,31 @@ void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
+int	pfr_match_addr(struct pf_addr *, struct pf_addr *,
+	    struct pf_addr *, sa_family_t);
+void	pfr_update_stats(struct pf_addr *, struct pf_addr *,
+	    struct pf_addr *, sa_family_t, u_int64_t, int, int, int);
+int	pfr_clr_tables(int *, int);
+int	pfr_add_tables(struct pfr_table *, int, int *, int);
+int	pfr_del_tables(struct pfr_table *, int, int *, int);
+int	pfr_get_tables(struct pfr_table *, int *, int);
+int	pfr_get_tstats(struct pfr_tstats *, int *, int);
+int	pfr_clr_tstats(struct pfr_table *, int, int *, int);
+int	pfr_clr_addrs(struct pfr_table *, int *, int);
+int	pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
+	    int);
+int	pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
+	    int);
+int	pfr_set_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
+	    int *, int *, int *, int);
+int	pfr_get_addrs(struct pfr_table *, struct pfr_addr *, int *, int);
+int	pfr_get_astats(struct pfr_table *, struct pfr_astats *, int *, int);
+int	pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *,
+	    int);
+int	pfr_tst_addrs(struct pfr_table *, struct pfr_addr *, int, int);
+int	pfr_wrap_table(struct pfr_table *, struct pf_addr_wrap *, int *,
+	    int);
+int	pfr_unwrap_table(struct pfr_table *, struct pf_addr_wrap *, int);
 
 extern struct pf_status	pf_status;
 extern struct pool	pf_frent_pl, pf_frag_pl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.33 2002/12/27 21:45:14 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.34 2002/12/29 20:07:34 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,6 +104,10 @@ pfattach(int num)
 	    NULL);
 	pool_init(&pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
 	    "pfpooladdrpl", NULL);
+	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
+	    "pfr_ktable", NULL);
+	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
+	    "pfr_kentry", NULL);
 
 	TAILQ_INIT(&pf_anchors);
 	pf_init_ruleset(&pf_main_ruleset);
@@ -430,6 +434,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETANCHOR:
 		case DIOCGETRULESETS:
 		case DIOCGETRULESET:
+		case DIOCRGETTABLES:
+		case DIOCRGETTSTATS:
+		case DIOCRCLRTSTATS:
+		case DIOCRCLRADDRS:
+		case DIOCRADDADDRS:
+		case DIOCRDELADDRS:
+		case DIOCRSETADDRS:
+		case DIOCRGETADDRS:
+		case DIOCRGETASTATS:
+		case DIOCRCLRASTATS:
+		case DIOCRTSTADDRS:
+		case DIOCRWRAPTABLE:
+		case DIOCRUNWRTABLE:
 			break;
 		default:
 			return (EPERM);
@@ -453,6 +470,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETANCHOR:
 		case DIOCGETRULESETS:
 		case DIOCGETRULESET:
+		case DIOCRGETTABLES:
+		case DIOCRGETTSTATS:
+		case DIOCRGETADDRS:
+		case DIOCRGETASTATS:
+		case DIOCRTSTADDRS:
+		case DIOCRWRAPTABLE:
+		case DIOCRUNWRTABLE:
 			break;
 		default:
 			return (EACCES);
@@ -1669,6 +1693,135 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 		else
 			bcopy(ruleset->name, pr->name, sizeof(pr->name));
+		break;
+	}
+
+	case DIOCRCLRTABLES: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_clr_tables(&io->pfrio_ndel, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRADDTABLES: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_add_tables(io->pfrio_buffer, io->pfrio_size,
+		    &io->pfrio_nadd, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRDELTABLES: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_del_tables(io->pfrio_buffer, io->pfrio_size,
+		    &io->pfrio_ndel, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRGETTABLES: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_get_tables(io->pfrio_buffer, &io->pfrio_size,
+		    io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRGETTSTATS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_get_tstats(io->pfrio_buffer, &io->pfrio_size,
+		    io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRCLRTSTATS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_clr_tstats(io->pfrio_buffer, io->pfrio_size,
+		    &io->pfrio_nzero, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRCLRADDRS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_clr_addrs(&io->pfrio_table, &io->pfrio_ndel,
+		    io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRADDADDRS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_add_addrs(&io->pfrio_table, io->pfrio_buffer,
+		    io->pfrio_size, &io->pfrio_nadd, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRDELADDRS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_del_addrs(&io->pfrio_table, io->pfrio_buffer,
+		    io->pfrio_size, &io->pfrio_ndel, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRSETADDRS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_set_addrs(&io->pfrio_table, io->pfrio_buffer,
+		    io->pfrio_size, &io->pfrio_size2, &io->pfrio_nadd,
+		    &io->pfrio_ndel, &io->pfrio_nchange, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRGETADDRS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_get_addrs(&io->pfrio_table, io->pfrio_buffer,
+		    &io->pfrio_size, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRGETASTATS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_get_astats(&io->pfrio_table, io->pfrio_buffer,
+		    &io->pfrio_size, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRCLRASTATS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_clr_astats(&io->pfrio_table, io->pfrio_buffer,
+		    io->pfrio_size, &io->pfrio_nzero, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRTSTADDRS: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_tst_addrs(&io->pfrio_table, io->pfrio_buffer,
+		    io->pfrio_size, io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRWRAPTABLE: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_wrap_table(&io->pfrio_table, io->pfrio_buffer,
+		    io->pfrio_exists ? &io->pfrio_exists : NULL,
+		    io->pfrio_flags);
+		break;
+	}
+
+	case DIOCRUNWRTABLE: {
+		struct pfioc_table *io = (struct pfioc_table *)addr;
+
+		error = pfr_unwrap_table(&io->pfrio_table, io->pfrio_buffer,
+		    io->pfrio_flags);
 		break;
 	}
 

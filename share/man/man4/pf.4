@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.24 2002/12/22 20:02:54 mcbride Exp $
+.\"	$OpenBSD: pf.4,v 1.25 2002/12/29 20:07:34 cedric Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -361,6 +361,111 @@ struct pfioc_limit {
 };
 .Ed
 .It Dv DIOCGETLIMIT   Fa "struct pfioc_limit"
+.It Dv DIOCRCLRTABLES Fa "struct pfioc_table"
+Clear all tables. All the IOCTLs that manipulate radix tables
+use the same structure described below. 
+For
+.Dv DIOCRCLRTABLES, pfrio_ndel contains on exit the number
+of tables deleted.
+.Bd -literal
+struct pfioc_table {
+        struct pfr_table         pfrio_table;
+        void                    *pfrio_buffer;
+        int                      pfrio_size;
+        int                      pfrio_size2;
+        int                      pfrio_nadd;
+        int                      pfrio_ndel;
+        int                      pfrio_nchange;
+        int                      pfrio_flags;
+};
+#define pfrio_exists    pfrio_nadd
+#define pfrio_nzero     pfrio_nadd
+.Ed
+.It Dv DIOCRADDTABLES Fa "struct pfioc_table"
+Creates one or more tables.
+On entry, pfrio_buffer[pfrio_size] contains a table of pfr_table structures.
+On exit, pfrio_nadd contains the number of tables effectively created.
+.It Dv DIOCRDELTABLES Fa "struct pfioc_table"
+Deletes one or more tables. 
+On entry, pfrio_buffer[pfrio_size] contains a table of pfr_table structures.
+On exit, pfrio_nadd contains the number of tables effectively deleted.
+.It Dv DIOCRGETTABLES Fa "struct pfioc_table"
+Get the list of all tables.
+On entry, pfrio_buffer[pfrio_size] contains a valid writeable buffer for
+pfr_table structures.
+On exit, pfrio_size contains the number of tables written into the buffer.
+If the buffer is too small, the kernel does not store anything but just
+return the required buffer size, without error.
+.It Dv DIOCRGETTSTATS Fa "struct pfioc_table"
+Like 
+.Dv DIOCRGETTABLES, but returns an array of pfr_tstats structures.
+.It Dv DIOCRCLRTSTATS Fa "struct pfioc_table"
+Clears the statistics of one or more tables. 
+On entry, pfrio_buffer[pfrio_size] contains a table of pfr_table structures.
+On exit, pfrio_nzero contains the number of tables effectively cleared.
+.It Dv DIOCRCLRADDRS Fa "struct pfioc_table"
+Clear all addresses in a table.
+On entry, pfrio_table contains the table to clear.
+On exit, pfrio_ndel contains the number of addresses removed.
+.It Dv DIOCRADDADDRS Fa "struct pfioc_table"
+Add one or more addresses to a table.
+On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+contains the list of pfr_addr structures to add.
+On exit, pfrio_nadd contains the number of addresses effectively added.
+.It Dv DIOCRDELTABLES Fa "struct pfioc_table"
+Delete one or more addresses from a table.
+On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+contains the list of pfr_addr structures to delete.
+On exit, pfrio_ndel contains the number of addresses effectively deleted.
+.It Dv DIOCRSETTABLES Fa "struct pfioc_table"
+Replace the content of a table by a new address list.
+This is the most complicated command, which uses all the structure members.
+On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+contains the new list of pfr_addr structures.
+In addition to that, if size2 is nonzero, pfrio_buffer[pfrio_size..pfrio_size2]
+must be a writeable buffer, into which the kernel can copy the addresses that
+have been deleted during the replace operation.
+On exit, pfrio_ndel, pfrio_nadd and pfrio_nchange contains the number of
+addresses deleted, added and changed by the kernel. if pfrio_size2 was set on
+entry, pfrio_size2 will point to the size of the buffer used, exactly like
+.Dv DIOCRGETADDRS.
+.It Dv DIOCRGETADDRS Fa "struct pfioc_table"
+Get all the addresses of a table.
+On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+contains a valid writeable buffer for pfr_addr structures.
+On exit, pfrio_size contains the number of addresses written into the buffer.
+If the buffer was too small, the kernel does not store anything but just
+return the required buffer size, without returning an error.
+.It Dv DIOCRGETASTATS Fa "struct pfioc_table"
+Like 
+.Dv DIOCRGETADDRS, but returns an array of pfr_astats structures.
+.It Dv DIOCRCLRASTATS Fa "struct pfioc_table"
+Clears the statistics of one or more addresses. 
+On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+contains a table of pfr_addr structures to clear.
+On exit, pfrio_nzero contains the number of addresses effectively cleared.
+.It Dv DIOCRTSTADDRS Fa "struct pfioc_table"
+Test if the given addresses match a table.
+On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
+contains a table of pfr_addr structures to test.
+On exit, the kernel update the pfr_addr table by setting the pfra_fback
+member appropriately.
+.It Dv DIOCRWRAPTABLE Fa "struct pfioc_table"
+Compute the SHA1 hash of a table and pack it into a pf_addr_wrap structure,
+along with a magic mask in the first word of the mask.
+On entry, pfrio_table contain the table id, and pfrio_buffer[pfrio_size]
+should contain a buffer large enough to contain one pf_addr_wrap structure.
+If the kernel should check if the table exists, then pfrio_exists must be
+set to a nonzero value.
+On exit, the kernel fill the pf_addr_wrap structure and set pfrio_exists
+if that flag was requested.
+.It Dv DIOCRUNWRTABLE Fa "struct pfioc_table"
+Do the opposite of
+.Dv DIOCRWRAPTABLE, and lookup a table from its hash value.
+On entry, pfrio_buffer[pfrio_size] should point to a pf_addr_wrap structure
+(a one-entry table).
+On exit, the kernel fills pfrio_table or returns ENOENT if it cannot find
+the matching table.
 .El
 .Sh EXAMPLES
 The following example demonstrates how to use the DIOCNATLOOK command

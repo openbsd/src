@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.287 2002/12/27 21:43:58 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.288 2002/12/29 20:07:34 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -141,6 +141,7 @@ int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
 
 struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
+struct pool		 pfr_ktable_pl, pfr_kentry_pl;
 
 void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 			    sa_family_t);
@@ -738,10 +739,8 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 		if (cur->src.addr.addr_dyn != NULL ||
 		    prev->src.addr.addr_dyn != NULL ||
 		    cur->src.not !=  prev->src.not ||
-		    !PF_AEQ(&cur->src.addr.addr, &prev->src.addr.addr,
-		    cur->af) ||
-		    !PF_AEQ(&cur->src.addr.mask, &prev->src.addr.mask,
-		    cur->af))
+		    !PF_AEQ(&cur->src.addr.addr, &prev->src.addr.addr, 0) ||
+		    !PF_AEQ(&cur->src.addr.mask, &prev->src.addr.mask, 0))
 			PF_SET_SKIP_STEPS(PF_SKIP_SRC_ADDR);
 		if (cur->src.port[0] != prev->src.port[0] ||
 		    cur->src.port[1] != prev->src.port[1] ||
@@ -750,10 +749,8 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 		if (cur->dst.addr.addr_dyn != NULL ||
 		    prev->dst.addr.addr_dyn != NULL ||
 		    cur->dst.not !=  prev->dst.not ||
-		    !PF_AEQ(&cur->dst.addr.addr, &prev->dst.addr.addr,
-		    cur->af) ||
-		    !PF_AEQ(&cur->dst.addr.mask, &prev->dst.addr.mask,
-		    cur->af))
+		    !PF_AEQ(&cur->dst.addr.addr, &prev->dst.addr.addr, 0) ||
+		    !PF_AEQ(&cur->dst.addr.mask, &prev->dst.addr.mask, 0))
 			PF_SET_SKIP_STEPS(PF_SKIP_DST_ADDR);
 		if (cur->dst.port[0] != prev->dst.port[0] ||
 		    cur->dst.port[1] != prev->dst.port[1] ||
@@ -1155,6 +1152,9 @@ pf_match_addr(u_int8_t n, struct pf_addr *a, struct pf_addr *m,
     struct pf_addr *b, sa_family_t af)
 {
 	int	match = 0;
+
+	if (m->addr32[0] == PF_TABLE_MASK)
+		return (pfr_match_addr(a, m, b, af) != n);
 
 	switch (af) {
 #ifdef INET
@@ -4191,6 +4191,17 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 done:
+	if (r != NULL &&  r->src.addr.mask.addr32[0] == PF_TABLE_MASK)
+		pfr_update_stats(&r->src.addr.addr, &r->src.addr.mask,
+		    (r->direction == dir) ? pd.src : pd.dst,
+		    pd.af, pd.tot_len, dir == PF_OUT,
+		    r->action == PF_PASS, r->src.not);
+	if (r != NULL && r->dst.addr.mask.addr32[0] == PF_TABLE_MASK)
+		pfr_update_stats(&r->dst.addr.addr, &r->dst.addr.mask,
+		    (r->direction == dir) ? pd.dst : pd.src,
+		    pd.af, pd.tot_len, dir == PF_OUT,
+		    r->action == PF_PASS, r->dst.not);
+
 	if (action != PF_DROP && h->ip_hl > 5 &&
 	    !((s && s->allow_opts) || (r && r->allow_opts))) {
 		action = PF_DROP;
