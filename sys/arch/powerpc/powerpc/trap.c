@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 1996/12/28 06:22:27 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 1997/02/05 01:33:55 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 				break;
 		}
 printf("dsi on addr %x iar %x\n", frame->dar, frame->srr0);
-		trapsignal(p, SIGSEGV, EXC_DSI);
+		trapsignal(p, SIGSEGV, EXC_DSI, SEGV_MAPERR, frame->dar);
 		break;
 	case EXC_ISI|EXC_USER:
 		{
@@ -137,7 +137,7 @@ printf("dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 				break;
 		}
 printf("isi iar %x\n", frame->srr0);
-		trapsignal(p, SIGSEGV, EXC_ISI);
+		trapsignal(p, SIGSEGV, EXC_ISI, SEGV_MAPERR, frame->srr0);
 		break;
 	case EXC_SC|EXC_USER:
 		{
@@ -261,7 +261,7 @@ brain_damage:
 
 	case EXC_PGM|EXC_USER:
 printf("pgm iar %x\n", frame->srr0);
-		trapsignal(p, SIGILL,EXC_PGM);
+		trapsignal(p, SIGILL, EXC_PGM, ILL_ILLOPC, frame->srr0);
 		break;
 	case EXC_AST|EXC_USER:
 		/* This is just here that we trap */

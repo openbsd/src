@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.2 1996/12/28 06:25:09 rahnds Exp $	*/
+/*	$OpenBSD: frame.h,v 1.3 1997/02/05 01:33:51 rahnds Exp $	*/
 /*	$NetBSD: frame.h,v 1.1 1996/09/30 16:34:25 ws Exp $	*/
 
 /*
@@ -37,28 +37,6 @@
 #include <machine/types.h>
 
 /*
- * We have to save all registers on every trap, because
- *	1. user could attach this process every time
- *	2. we must be able to restore all user registers in case of fork
- * Actually, we do not save the fp registers on trap, since
- * these are not used by the kernel. They are saved only when switching
- * between processes using the FPU.
- *
- * Change ordering to cluster together these register_t's.		XXX
- */
-struct trapframe {
-	register_t fixreg[32];
-	register_t lr;
-	int cr;
-	int xer;
-	register_t ctr;
-	register_t srr0;
-	register_t srr1;
-	register_t dar;			/* dar & dsisr are only filled on a DSI trap */
-	int dsisr;
-	int exc;
-};
-/*
  * This is to ensure alignment of the stackpointer
  */
 #define	FRAMELEN	roundup(sizeof(struct trapframe) + 8, 16)
@@ -90,4 +68,10 @@ struct callframe {
 	register_t r31;
 };
 
+struct sigframe {
+	int sf_signum;
+	siginfo_t *sf_sip;
+	struct sigcontext sf_sc;
+	siginfo_t sf_si;
+};
 #endif	/* _MACHINE_FRAME_H_ */

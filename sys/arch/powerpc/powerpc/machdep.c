@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 1997/01/20 20:43:48 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 1997/02/05 01:33:54 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -536,10 +536,12 @@ setregs(p, pack, stack, retval)
  * Send a signal to process.
  */
 void
-sendsig(catcher, sig, mask, code)
+sendsig(catcher, sig, mask, code, type, val)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	int type;
+	union sigval val;
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
@@ -565,21 +567,25 @@ sendsig(catcher, sig, mask, code)
 		fp = (struct sigframe *)tf->fixreg[1];
 	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
 	
-	frame.sf_code = code;
-	
 	/*
 	 * Generate signal context for SYS_sigreturn.
 	 */
 	frame.sf_sc.sc_onstack = oldonstack;
 	frame.sf_sc.sc_mask = mask;
+	frame.sf_sip = NULL;
 	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
+	if (psp->ps_siginfo & sigmask(sig)) {
+		frame.sf_sip = &fp->sf_si;
+		initsiginfo(&frame.sf_si, sig, code, type, val);
+	}
 	if (copyout(&frame, fp, sizeof frame) != 0)
 		sigexit(p, SIGILL);
 	
+
 	tf->fixreg[1] = (int)fp;
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)sig;
-	tf->fixreg[4] = (int)code;
+	tf->fixreg[4] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : NULL;
 	tf->fixreg[5] = (int)&frame.sf_sc;
 	tf->srr0 = (int)(((char *)PS_STRINGS)
 			 - (p->p_emul->e_esigcode - p->p_emul->e_sigcode));
