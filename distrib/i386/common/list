@@ -1,7 +1,7 @@
-#	$OpenBSD: list,v 1.11 2004/10/02 14:47:12 krw Exp $
+#	$OpenBSD: list,v 1.12 2004/12/29 00:45:32 deraadt Exp $
 
 SRCDIRS distrib/special
-SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
+SRCDIRS bin sbin usr.bin usr.sbin
 SRCDIRS sys/arch/i386/stand
 
 # copy the crunched binary, link to it, and kill it
