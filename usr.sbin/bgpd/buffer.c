@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.13 2004/01/10 21:02:54 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.14 2004/01/10 23:25:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/uio.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,15 +141,42 @@ msgbuf_write(struct msgbuf *msgbuf)
 	 * we MUST return and NOT try to write out stuff from later buffers -
 	 * the socket might have become writeable again
 	 */
-	struct buf	*buf;
-	int		 n;
+	struct iovec	 iov[IOV_MAX];
+	struct buf	*buf, *next;
+	int		 i = 0;
+	ssize_t		 n;
 
-	buf = TAILQ_FIRST(&msgbuf->bufs);
-	if ((n = buf_write(msgbuf->sock, buf)) < 0)
-		return (n);
+	TAILQ_FOREACH(buf, &msgbuf->bufs, entries) {
+		if (i >= IOV_MAX)
+			break;
+		iov[i].iov_base = buf->buf + buf->rpos;
+		iov[i].iov_len = buf->size - buf->rpos;
+		i++;
+	}
 
-	if (n == 1)	/* everything written out */
-		buf_dequeue(msgbuf, buf);
+	if ((n = writev(msgbuf->sock, iov, i)) == -1) {
+		if (errno == EAGAIN)	/* cannot write immediately */
+			return (0);
+		else
+			return (-1);
+	}
+
+	if (n == 0) {			/* connection closed */
+		errno = 0;
+		return (-2);
+	}
+
+	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
+	    buf = next) {
+		next = TAILQ_NEXT(buf, entries);
+		if (n >= buf->size - buf->rpos) {
+			n -= buf->size - buf->rpos;
+			buf_dequeue(msgbuf, buf);
+		} else {
+			buf->rpos += n;
+			n = 0;
+		}
+	}
 
 	return (0);
 }
