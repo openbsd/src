@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.23 1999/07/30 13:43:37 d Exp $
+#	$OpenBSD: files.pcmcia,v 1.24 1999/08/13 20:34:17 fgsch Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -61,9 +61,9 @@ file dev/pcmcia/if_rln_pcmcia.c			rln_pcmcia
 #file	dev/pcmcia/pcmcom.c			pcmcom | com_pcmcom needs-flag
 
 # Xircom Netwave
-#device	cnw: ether, ifnet
-#attach	cnw at pcmcia
-#file	dev/pcmcia/if_cnw.c			cnw
+device	cnw: ether, ifnet
+attach	cnw at pcmcia
+file	dev/pcmcia/if_cnw.c			cnw
 
 # Lucent WaveLAN
 device wi: ether, ifnet
