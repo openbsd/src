@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.1 1995/10/07 18:04:27 chopps Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.1.2.1 1995/11/10 16:39:12 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -35,7 +35,8 @@
  * me with the necessary 'inside' information to write the driver.
  *
  * This is partly based on other code:
- * - if_ed.c: basic function structure for Ethernet driver
+ * - if_ed.c: basic function structure for Ethernet driver and now also
+ *	qn_put() is done similarly, i.e. no extra packet buffers.
  *
  *	Device driver for National Semiconductor DS8390/WD83C690 based ethernet
  *	adapters.
@@ -54,22 +55,27 @@
  *	Copyright (c) 1995 Michael L. Hitch
  *	All rights reserved.
  *
+ * - if_fe.c: some ideas for error handling for qn_rint() which might
+ *	have fixed those random lock ups, too.
+ *
+ *	All Rights Reserved, Copyright (C) Fujitsu Limited 1995
+ *
  *
  * TODO:
  * - add multicast support
- * - try to find out what is the reason for random lock-ups happening
- *   when (or after) getting data
  */
 
 #include "qn.h"
 #if NQN > 0
 
 #define QN_DEBUG
+#define QN_DEBUG1_no /* hides some old tests */
 
 #include "bpfilter.h"
 
 /*
- * Fujitsu MB86950 Ethernet Controller (as used in QuickNet QN2000 Ethernet card)
+ * Fujitsu MB86950 Ethernet Controller (as used in the QuickNet QN2000
+ * Ethernet card)
  */
 
 #include <sys/param.h>
@@ -108,10 +114,12 @@
 #include <amiga/dev/if_qnreg.h>
 
 
-#define ETHER_MIN_LEN 64
-#define ETHER_MAX_LEN 1518
-#define ETHER_ADDR_LEN 6
-
+#define ETHER_MIN_LEN	60
+#define ETHER_MAX_LEN	1514
+#define ETHER_HDR_SIZE	14
+#define	NIC_R_MASK	(R_INT_PKT_RDY | R_INT_ALG_ERR |\
+			 R_INT_CRC_ERR | R_INT_OVR_FLO)
+#define	MAX_PACKETS	30 /* max number of packets read per interrupt */
 
 /*
  * Ethernet software status per interface
@@ -157,11 +165,16 @@ void	qnreset __P((struct qn_softc *));
 void	qninit __P((struct qn_softc *));
 void	qnstop __P((struct qn_softc *));
 static	u_short qn_put __P((u_short volatile *, struct mbuf *));
+static	void qn_rint __P((struct qn_softc *, u_short));
 static	void qn_flush __P((struct qn_softc *));
+#ifdef QN_DEBUG1
+static	void qn_dump __P((struct qn_softc *));
+#endif
 
 struct cfdriver qncd = {
 	NULL, "qn", qnmatch, qnattach, DV_IFNET, sizeof(struct qn_softc)
 };
+
 
 int
 qnmatch(parent, match, aux)
@@ -261,20 +274,10 @@ qninit(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_short i;
-	int s;
+	static retry = 0;
 
-	s = splimp();
-
-	/* Initialize NIC */
-	*sc->nic_reset      = DISABLE_DLC;
-	*sc->nic_t_status   = CLEAR_T_ERR;
-	*sc->nic_t_mask     = CLEAR_T_MASK;
-	*sc->nic_r_status   = CLEAR_R_ERR;
-	*sc->nic_r_mask     = R_INT_PKT_RDY;
-	*sc->nic_t_mode     = NO_LOOPBACK;
-
-	/* Turn DMA off */
-	*((u_short volatile *)(sc->sc_nic_base + NIC_BMPR4)) = (u_short)0x0000;
+	*sc->nic_r_mask   = NIC_R_MASK;
+	*sc->nic_t_mode   = NO_LOOPBACK;
 
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) {
 		*sc->nic_r_mode = PROMISCUOUS_MODE;
@@ -284,26 +287,29 @@ qninit(sc)
 
 	/* Set physical ethernet address. */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		*((u_short volatile *)(sc->sc_nic_base+QNET_HARDWARE_ADDRESS+2*i)) =
+		*((u_short volatile *)(sc->sc_nic_base+
+				       QNET_HARDWARE_ADDRESS+2*i)) =
 		    ((((u_short)sc->sc_arpcom.ac_enaddr[i]) << 8) |
 		    sc->sc_arpcom.ac_enaddr[i]);
 
-	sc->transmit_pending = 0;
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->transmit_pending = 0;
 
 	qn_flush(sc);
 
+	/* QuickNet magic. Done ONLY once, otherwise a lockup occurs. */
+	if (retry == 0) {
+		*((u_short volatile *)(sc->sc_nic_base + QNET_MAGIC)) = 0;
+		retry = 1;
+	}
+
 	/* Enable data link controller. */
-	*((u_short volatile *)(sc->sc_nic_base + QNET_MAGIC)) = (u_short)0x0000;
 	*sc->nic_reset = ENABLE_DLC;
 
 	/* Attempt to start output, if any. */
 	qnstart(ifp);
-
-	splx(s);
 }
-
 
 /*
  * Device timeout/watchdog routine.  Entered if the device neglects to
@@ -315,41 +321,35 @@ qnwatchdog(unit)
 {
 	struct qn_softc *sc = qncd.cd_devs[unit];
 
-	log(LOG_ERR, "%s: device timeout (watchdog)\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "qn: device timeout (watchdog)\n");
 	++sc->sc_arpcom.ac_if.if_oerrors;
 
 	qnreset(sc);
 }
 
-
 /*
- * Flush card's buffer RAM
+ * Flush card's buffer RAM.
  */
 static void
 qn_flush(sc)
 	struct qn_softc *sc;
 {
-#ifdef QN_DEBUG1
-	int cnt = 0;
-#endif
+#if 1
 	/* Read data until bus read error (i.e. buffer empty). */
-	while (!(*sc->nic_r_status & R_BUS_RD_ERR)) {
+	while (!(*sc->nic_r_status & R_BUS_RD_ERR))
 		(void)(*sc->nic_fifo);
-#ifdef QN_DEBUG1
-		cnt++;
-#endif
-	}
-#ifdef QN_DEBUG1
-	log(LOG_INFO, "Flushed %d words\n", cnt);
+#else
+	/* Read data twice to clear some internal pipelines. */
+	(void)(*sc->nic_fifo);
+	(void)(*sc->nic_fifo);
 #endif
 
 	/* Clear bus read error. */
 	*sc->nic_r_status = R_BUS_RD_ERR;
 }
 
-
 /*
- * Reset the interface...
+ * Reset the interface.
  *
  */
 void
@@ -364,9 +364,8 @@ qnreset(sc)
 	splx(s);
 }
 
-
 /*
- * Take interface offline
+ * Take interface offline.
  */
 void
 qnstop(sc)
@@ -374,14 +373,22 @@ qnstop(sc)
 {
 
 	/* Stop the interface. */
-	*sc->nic_reset  = DISABLE_DLC;
+	*sc->nic_reset    = DISABLE_DLC;
+	delay(200);
+	*sc->nic_t_status = CLEAR_T_ERR;
+	*sc->nic_t_mask   = CLEAR_T_MASK;
+	*sc->nic_r_status = CLEAR_R_ERR;
+	*sc->nic_r_mask   = CLEAR_R_MASK;
 
-	*sc->nic_t_mask = CLEAR_T_MASK;
-	*sc->nic_r_mask = CLEAR_R_MASK;
+	/* Turn DMA off */
+	*((u_short volatile *)(sc->sc_nic_base + NIC_BMPR4)) = 0;
+
+	/* Accept no packets. */
+	*sc->nic_r_mode = 0;
+	*sc->nic_t_mode = 0;
 
 	qn_flush(sc);
 }
-
 
 /*
  * Start output on interface. Get another datagram to send
@@ -398,10 +405,10 @@ qnstart(ifp)
 	struct qn_softc *sc = qncd.cd_devs[ifp->if_unit];
 	struct mbuf *m;
 	u_short len;
-	int timout = 50000;
+	int timout = 60000;
 
-	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
-	    IFF_RUNNING)
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
@@ -422,22 +429,26 @@ qnstart(ifp)
 		bpf_mtap(sc->sc_bpf, m);
 #endif
 	len = qn_put(sc->nic_fifo, m);
+	m_freem(m);
 
 	/*
-	 * Really transmit the packet
+	 * Really transmit the packet.
 	 */
 
-	/* set packet length (byte-swapped) */
+	/* Set packet length (byte-swapped). */
 	len = ((len >> 8) & 0x0007) | TRANSMIT_START | ((len & 0x00ff) << 8);
 	*sc->nic_len = len;
 
-	/* Wait for the packet to really leave */
-	while (!(*sc->nic_t_status & T_TMT_OK) && --timout)
-		;
+	/* Wait for the packet to really leave. */
+	while (!(*sc->nic_t_status & T_TMT_OK) && --timout) {
+		if ((timout % 10000) == 0)
+			log(LOG_INFO, "qn: timout...\n");
+	}
+
 	if (timout == 0)
 		/* Maybe we should try to recover from this one? */
-		/* But for now on, let's just fall thru and hope the best... */
-		log(LOG_INFO, "qn:timout\n");
+		/* But now, let's just fall thru and hope the best... */
+		log(LOG_INFO, "qn: transmit timout (fatal?)\n");
 
 	sc->transmit_pending = 1;
 	*sc->nic_t_mask = INT_TMT_OK | INT_SIXTEEN_COL;
@@ -445,7 +456,6 @@ qnstart(ifp)
 	sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
 	ifp->if_timer = 2;
 }
-
 
 /*
  * Memory copy, copies word at a time
@@ -472,7 +482,6 @@ word_copy_to_card(a, card, len)
 		*card = *a++;
 }
 
-
 /*
  * Copy packet from mbuf to the board memory
  *
@@ -485,53 +494,59 @@ qn_put(addr, m)
 	u_short volatile *addr;
 	struct mbuf *m;
 {
-	struct mbuf *mp;
-	register u_short len, tlen;
-	static u_short packet_buf[1536/2];
-	register u_char *p;
+	u_char *data, savebyte[2];
+	int len, wantbyte;
+	u_short totlen;
 
-	/*
-	 * If buffer is bzeroed, we might copy max(60, tlen) bytes and get
-	 * rid of extra zero fill-ins.
-	 */
-	bzero(packet_buf, 1536);
+	totlen = wantbyte = 0;
 
-	/*
-	 * The whole packet in one mbuf?
-	 */
-	if (m->m_next == NULL) {
-		tlen = m->m_len;
-		bcopy(mtod(m, u_char *), (u_char *)packet_buf, tlen);
-		/*word_copy_to_card(mtod(m, u_short *), addr, tlen + 1);*/
-		word_copy_to_card(packet_buf,
-		    addr,
-		    max(tlen + 1, ETHER_MIN_LEN-4));
-	} else {
-		/* No it wasn't, let's start copying */
-		for (p = (u_char *)packet_buf, tlen = 0, mp = m;
-		     mp;
-		     mp = mp->m_next) {
-			if ((len = mp->m_len) == 0)
-				continue;
-			tlen += len;
-			bcopy(mtod(mp, u_char *), p, len);
-			p += len;
+	for (; m != NULL; m = m->m_next) {
+		data = mtod(m, u_char *);
+		len = m->m_len;
+		totlen += len;
+		if (len > 0) {
+			/* Finish the last word. */
+			if (wantbyte) {
+				savebyte[1] = *data;
+				*addr = *((u_short *)savebyte);
+				data++;
+				len--;
+				wantbyte = 0;
+			}
+			/* Output contiguous words. */
+			if (len > 1) {
+				word_copy_to_card(data, addr, len);
+				data += len & ~1;
+				len &= 1;
+			}
+			/* Save last byte, if necessary. */
+			if (len == 1) {
+				savebyte[0] = *data;
+				wantbyte = 1;
+			}
 		}
-		/* word_copy_to_card(packet_buf, addr, tlen + 1); */
-		word_copy_to_card(packet_buf,
-		    addr,
-		    max(tlen + 1, ETHER_MIN_LEN-4));
 	}
-	m_freem(m);
 
-	if (tlen < ETHER_MIN_LEN - 4)
-		/* We have copied ETHER_MIN_LEN-4 bytes. */
-		tlen = ETHER_MIN_LEN - 4;
-	return (tlen);
+	if (wantbyte) {
+		savebyte[1] = 0;
+		*addr = *((u_short *)savebyte);
+	}
+
+	if(totlen < ETHER_MIN_LEN) {
+		/*
+		 * Fill the rest of the packet with zeros.
+		 * N.B.: This is required! Otherwise MB86950 fails.
+		 */
+		for(len = totlen + 1; len < ETHER_MIN_LEN; len += 2)
+	  		*addr = (u_short)0x0000;
+		totlen = ETHER_MIN_LEN;
+	}
+
+	return (totlen);
 }
 
 /*
- * Copy packet from board RAM
+ * Copy packet from board RAM.
  *
  * Trailers not supported.
  *
@@ -543,14 +558,20 @@ qn_get_packet(sc, len)
 {
 	register u_short volatile *nic_fifo_ptr = sc->nic_fifo;
 	struct ether_header *eh;
-	struct mbuf *m, *dst, *head = 0;
+	struct mbuf *m, *dst, *head = NULL;
 	register u_short len1;
 	u_short amount;
 
 	/* Allocate header mbuf. */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == NULL)
 		goto bad;
+
+	/*
+	 * Round len to even value.
+	 */
+	if (len & 1)
+		len++;
 
 	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_pkthdr.len = len;
@@ -571,10 +592,10 @@ qn_get_packet(sc, len)
 
 		amount = M_TRAILINGSPACE(m);
 		if (amount == 0) {
-			/* allocate another mbuf */
+			/* Allocate another mbuf. */
 			dst = m;
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0)
+			if (m == NULL)
 				goto bad;
 
 			if (len1 >= MINCLSIZE)
@@ -586,14 +607,12 @@ qn_get_packet(sc, len)
 			amount = M_TRAILINGSPACE(m);
 		}
 
-		if (amount < len1) {
-			if (amount & 1)
-				log(LOG_INFO, "Room for odd-length packet\n");
+		if (amount < len1)
 			len1 = amount;
-		}
+
 		word_copy_from_card(nic_fifo_ptr,
 		    (u_short *)(mtod(m, caddr_t) + m->m_len),
-		    len1 + 1);
+		    len1);
 		m->m_len += len1;
 		len -= len1;
 	}
@@ -624,93 +643,121 @@ qn_get_packet(sc, len)
 	return;
 
 bad:
-	if (head)
+	if (head) {
 		m_freem(head);
+		log(LOG_INFO, "qn_get_packet: mbuf alloc failed\n");
+	}
 }
-
 
 /*
  * Ethernet interface receiver interrupt.
  */
 static void
-qn_rint(sc)
+qn_rint(sc, rstat)
 	struct qn_softc *sc;
+	u_short rstat;
 {
 	int i;
 	u_short len, status;
 
+	/* Clear the status register. */
+	*sc->nic_r_status = CLEAR_R_ERR;
+
 	/*
-	 * Read at most 25 packets per interrupt
+	 * Was there some error?
+	 * Some of them are senseless because they are masked off.
+	 * XXX
 	 */
-	for (i = 0; i < 25; i++) {
-		if (*sc->nic_r_mode & RM_BUF_EMP) {
-			/*
-			 * Buffer empty
-			 */
-			if ((status = *sc->nic_r_status)) {
-				/* It was some error: let's first clear
-				 * the register.
-				 */
-				*sc->nic_r_status = CLEAR_R_ERR;
-				if (status & 0x0101) {
+	if (rstat & 0x0101) {
 #ifdef QN_DEBUG
-					log(LOG_INFO, "Overflow\n");
+		log(LOG_INFO, "Overflow\n");
 #endif
-					++sc->sc_arpcom.ac_if.if_ierrors;
-				} else if (status & 0x0202) {
+		++sc->sc_arpcom.ac_if.if_ierrors;
+	}
+	if (rstat & 0x0202) {
 #ifdef QN_DEBUG
-					log(LOG_INFO, "CRC Error\n");
+		log(LOG_INFO, "CRC Error\n");
 #endif
-					++sc->sc_arpcom.ac_if.if_ierrors;
-				} else if (status & 0x0404) {
+		++sc->sc_arpcom.ac_if.if_ierrors;
+	}
+	if (rstat & 0x0404) {
 #ifdef QN_DEBUG
-					log(LOG_INFO, "Alignment error\n");
+		log(LOG_INFO, "Alignment error\n");
 #endif
-					++sc->sc_arpcom.ac_if.if_ierrors;
-				} else if (status & 0x0808) {
-					/* Short packet (these may occur and are
-					 * no reason to worry about - or maybe
-					 * they are?).
-					 */
+		++sc->sc_arpcom.ac_if.if_ierrors;
+	}
+	if (rstat & 0x0808) {
+		/* Short packet (these may occur and are
+		 * no reason to worry about - or maybe
+		 * they are?).
+		 */
 #ifdef QN_DEBUG
-					log(LOG_INFO, "Short packet\n");
+		log(LOG_INFO, "Short packet\n");
 #endif
-					++sc->sc_arpcom.ac_if.if_ierrors;
-					/* qnreset(sc); */
-				} else if (status & 0x4040) {
+		++sc->sc_arpcom.ac_if.if_ierrors;
+	}
+	if (rstat & 0x4040) {
 #ifdef QN_DEBUG
-					log(LOG_INFO, "Bus read error\n");
+		log(LOG_INFO, "Bus read error\n");
 #endif
-					++sc->sc_arpcom.ac_if.if_ierrors;
-				} else {
-					/* There are some registers which are
-					 * not meaningful when read, so don't
-					 * care...
-					 */
-				}
-			}
-			return;
-		} else {
-			/* At least one valid packet. Clear the whole register. */
-			*sc->nic_r_status = CLEAR_R_ERR;
-
-			/* Read one word of garbage. */
-			(void)(*sc->nic_fifo);
-
-			/* Read packet length. */
-			len = *sc->nic_fifo;
-			len = ((len << 8) & 0xff00) | ((len >> 8) & 0x00ff);
-
-			/* Read the packet. */
-			qn_get_packet(sc, len);
-			++sc->sc_arpcom.ac_if.if_ipackets;
-		}
+		++sc->sc_arpcom.ac_if.if_ierrors;
+		qnreset(sc);
 	}
 
-	if (i == 25)
-		log(LOG_INFO, "used all the 25 loops\n");
-}
+	/*
+	 * Read at most MAX_PACKETS packets per interrupt
+	 */
+	for (i = 0; i < MAX_PACKETS; i++) {
+		if (*sc->nic_r_mode & RM_BUF_EMP)
+			/* Buffer empty. */
+			break;
 
+		/*
+		 * Read the first word: upper byte contains useful
+		 * information.
+		 */
+		status = *sc->nic_fifo;
+		if ((status & 0x7000) != 0x2000) {
+			log(LOG_INFO, "qn: ERROR: status=%04x\n", status);
+			continue;
+		}
+
+		/*
+		 * Read packet length (byte-swapped).
+		 * CRC is stripped off by the NIC.
+		 */
+		len = *sc->nic_fifo;
+		len = ((len << 8) & 0xff00) | ((len >> 8) & 0x00ff);
+
+#ifdef QN_DEBUG
+		if (len > ETHER_MAX_LEN || len < ETHER_HDR_SIZE) {
+			log(LOG_WARNING,
+			    "%s: received a %s packet? (%u bytes)\n",
+			    sc->sc_dev.dv_xname,
+			    len < ETHER_HDR_SIZE ? "partial" : "big", len);
+			++sc->sc_arpcom.ac_if.if_ierrors;
+			continue;
+		}
+#endif
+#ifdef QN_DEBUG
+		if (len < ETHER_MIN_LEN)
+			log(LOG_WARNING,
+			    "%s: received a short packet? (%u bytes)\n",
+			    sc->sc_dev.dv_xname, len);
+#endif 
+
+		/* Read the packet. */
+		qn_get_packet(sc, len);
+
+		++sc->sc_arpcom.ac_if.if_ipackets;
+	}
+
+#ifdef QN_DEBUG
+	/* This print just to see whether MAX_PACKETS is large enough. */
+	if (i == MAX_PACKETS)
+		log(LOG_INFO, "used all the %d loops\n", MAX_PACKETS);
+#endif
+}
 
 /*
  * Our interrupt routine
@@ -719,34 +766,36 @@ int
 qnintr(sc)
 	struct qn_softc *sc;
 {
-	u_short tint, rint, tintmask, rintmask;
+	u_short tint, rint, tintmask;
+	char return_tintmask = 0;
 
 	/*
 	 * If the driver has not been initialized, just return immediately.
 	 * This also happens if there is no QuickNet board present.
 	 */
-
 	if (sc->sc_base == NULL)
 		return (0);
 
 	/* Get interrupt statuses and masks. */
-	rint = *sc->nic_r_status;
-	tint = *sc->nic_t_status;
-	rintmask = *sc->nic_r_mask /* 0x8f8f */;
+	rint = (*sc->nic_r_status) & NIC_R_MASK;
 	tintmask = *sc->nic_t_mask;
-	if (!(tint&tintmask) && !(rint&rintmask))
+	tint = (*sc->nic_t_status) & tintmask;
+	if (tint == 0 && rint == 0)
 		return (0);
 
-	/* Disable receive interrupts so that we won't miss anything. */
+	/* Disable interrupts so that we won't miss anything. */
 	*sc->nic_r_mask = CLEAR_R_MASK;
+	*sc->nic_t_mask = CLEAR_T_MASK;
 
 	/*
 	 * Handle transmitter interrupts. Some of them are not asked for
 	 * but do happen, anyway.
 	 */
-	if (tint) {
-		*sc->nic_t_mask   = CLEAR_T_MASK;
+
+	if (tint != 0) {
+		/* Clear transmit interrupt status. */
 		*sc->nic_t_status = CLEAR_T_ERR;
+
 		if (sc->transmit_pending && (tint & T_TMT_OK)) {
 			sc->transmit_pending = 0;
 			/*
@@ -761,55 +810,41 @@ qnintr(sc)
 			 * 16 collision (i.e., packet lost).
 			 */
 			log(LOG_INFO, "qn: 16 collision - packet lost\n");
+#ifdef QN_DEBUG1
+			qn_dump(sc);
+#endif
 			sc->sc_arpcom.ac_if.if_oerrors++;
 			sc->sc_arpcom.ac_if.if_collisions += 16;
 			sc->transmit_pending = 0;
 		}
 
-		if (tint & T_COL && !(tint & T_TMT_OK)) {
-			/*
-			 * Normal collision
-			 */
-			log(LOG_INFO, "qn:collision (shouldn't hurt)\n");
-			sc->transmit_pending = 1;
-			sc->sc_arpcom.ac_if.if_oerrors++;
-			sc->sc_arpcom.ac_if.if_collisions++;
-		}
-
-		if (tint & BUS_WRITE_ERROR) {
-			/* One bus write error occurs at start up, at least on my
-			 * card. So I don't care about this one.
-			 */
-			sc->transmit_pending = 0;
-		}
-
-		if (tint & T_UNDERFLOW) {
-			log(LOG_INFO, "qn:underflow\n");
-		}
-
 		if (sc->transmit_pending) {
 			log(LOG_INFO, "qn:still pending...\n");
-			/* Return transmission interrupt mask. */
-			*sc->nic_t_mask = tintmask;
+
+			/* Must return transmission interrupt mask. */
+			return_tintmask = 1;
 		} else {
 			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 
 			/* Clear watchdog timer. */
 			sc->sc_arpcom.ac_if.if_timer = 0;
 		}
-	}
+	} else
+		return_tintmask = 1;
 
 	/*
 	 * Handle receiver interrupts.
 	 */
-	if (rint & rintmask)
-		qn_rint(sc);
-
-	/* Set receive interrupt mask back. */
-	*sc->nic_r_mask = rintmask;
+	if (rint != 0)
+		qn_rint(sc, rint);
 
 	if ((sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) == 0)
 		qnstart(&sc->sc_arpcom.ac_if);
+	else if (return_tintmask == 1)
+		*sc->nic_t_mask = tintmask;
+
+	/* Set receive interrupt mask back. */
+	*sc->nic_r_mask = NIC_R_MASK;
 
 	return (1);
 }
@@ -841,6 +876,7 @@ qnioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
+			qnstop(sc);
 			qninit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
@@ -857,41 +893,46 @@ qnioctl(ifp, command, data)
 				bcopy(ina->x_host.c_host,
 				    sc->sc_arpcom.ac_enaddr,
 				    sizeof(sc->sc_arpcom.ac_enaddr));
+			qnstop(sc);
 			qninit(sc);
 			break;
 		    }
 #endif
 		default:
 			log(LOG_INFO, "qn:sa_family:default (not tested)\n");
+			qnstop(sc);
 			qninit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		/*
-		 * If interface is marked down and it is running, then stop it.
-		 */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
+#ifdef QN_DEBUG1
+			qn_dump(sc);
+#endif
 			qnstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0)
+			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			qninit(sc);
-		else {
+		} else {
 			/*
 			 * Something else... we won't do anything so we won't
 			 * break anything (hope so).
 			 */
+#ifdef QN_DEBUG1
+			log(LOG_INFO, "Else branch...\n");
+#endif
 		}
 		break;
 
@@ -921,8 +962,28 @@ qnioctl(ifp, command, data)
 		error = EINVAL;
 	}
 
-	(void)splx(s);
+	splx(s);
 	return (error);
 }
+
+/*
+ * Dump some register information.
+ */
+#ifdef QN_DEBUG1
+static void
+qn_dump(sc)
+	struct qn_softc *sc;
+{
+
+	log(LOG_INFO, "t_status  : %04x\n", *sc->nic_t_status);
+	log(LOG_INFO, "t_mask    : %04x\n", *sc->nic_t_mask);
+	log(LOG_INFO, "t_mode    : %04x\n", *sc->nic_t_mode);
+	log(LOG_INFO, "r_status  : %04x\n", *sc->nic_r_status);
+	log(LOG_INFO, "r_mask    : %04x\n", *sc->nic_r_mask);
+	log(LOG_INFO, "r_mode    : %04x\n", *sc->nic_r_mode);
+	log(LOG_INFO, "pending   : %02x\n", sc->transmit_pending);
+	log(LOG_INFO, "if_flags  : %04x\n", sc->sc_arpcom.ac_if.if_flags);
+}
+#endif
 
 #endif /* NQN > 0 */

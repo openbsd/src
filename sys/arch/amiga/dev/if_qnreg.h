@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qnreg.h,v 1.1 1995/10/07 18:04:31 chopps Exp $	*/
+/*	$NetBSD: if_qnreg.h,v 1.1.2.1 1995/11/10 16:39:14 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -94,6 +94,10 @@
 #define CLEAR_R_ERR		0xcfcf /* Clear receive errors  */
 
 /* DLCR3 - Receive Interrupt Masks */
+#define R_INT_OVR_FLO		0x0101 /* Receive buf overflow  */
+#define R_INT_CRC_ERR		0x0202 /* CRC error             */
+#define R_INT_ALG_ERR		0x0404 /* Alignment error       */
+#define R_INT_SRT_PKT		0x0808 /* Short packet          */
 #define R_INT_PKT_RDY		0x8080 /* Packet ready          */
 #define CLEAR_R_MASK		0x0000 /* Clear receive intr masks */
 
@@ -101,7 +105,7 @@
 #define NO_LOOPBACK		0x0202 /* Loopback control      */
 
 /* DLCR5 - Receive Mode */
-/* Accept physical address, multicast group addresses
+/* Normal mode: accept physical address, multicast group addresses
  * which match the 1st three bytes and broadcast address.
  */
 #define NORMAL_MODE		0x0101

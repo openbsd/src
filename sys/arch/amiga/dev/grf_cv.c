@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.3.2.2 1995/10/21 15:15:41 chopps Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.3.2.3 1995/11/10 16:27:10 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -74,24 +74,26 @@
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int cv_mondefok __P((struct grfvideo_mode *));
-void cv_boardinit();
-static unsigned short compute_clock __P((unsigned long));
-int cv_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-int cv_setvmode __P((struct grf_softc *, unsigned int));
-int cv_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
-int cv_toggle __P((struct grf_softc *,unsigned short));
-int cv_getcmap __P((struct grf_softc *, struct grf_colormap *));
-int cv_putcmap __P((struct grf_softc *, struct grf_colormap *));
-void cv_off __P((struct grf_softc *));
-int cv_blank __P((struct grf_softc *, int *));
-void cv_inittextmode __P((struct grf_softc *));
+int	grfcvmatch  __P((struct device *, struct cfdata *, void *));
+void	grfcvattach __P((struct device *, struct device *, void *));
+int	grfcvprint  __P((void *, char *));
 
-int cv_ioctl __P((register struct grf_softc *gp, int cmd, void *data));
-void grfcvattach __P((struct device *, struct device *, void *));
-int  grfcvprint  __P((void *, char *));
-int  grfcvmatch  __P((struct device *, struct cfdata *, void *));
-void cv_memset __P((unsigned char *, unsigned char, int));
+static int cv_has_4mb __P((volatile char *));
+static unsigned short compute_clock __P((unsigned long));
+void	cv_boardinit __P((struct grf_softc *));
+int	cv_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
+int	cv_setvmode __P((struct grf_softc *, unsigned int));
+int	cv_blank __P((struct grf_softc *, int *));
+int	cv_mode __P((register struct grf_softc *, int, void *, int, int));
+int	cv_ioctl __P((register struct grf_softc *gp, int cmd, void *data));
+int	cv_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
+int	cv_getcmap __P((struct grf_softc *, struct grf_colormap *));
+int	cv_putcmap __P((struct grf_softc *, struct grf_colormap *));
+int	cv_toggle __P((struct grf_softc *));
+int	cv_mondefok __P((struct grfvideo_mode *));
+int	cv_load_mon __P((struct grf_softc *, struct grfcvtext_mode *));
+void	cv_inittextmode __P((struct grf_softc *));
+void	cv_memset __P((unsigned char *, unsigned char, int));
 
 #ifdef CV64CONSOLE
 extern void grfcv_iteinit __P((struct grf_softc *));
@@ -126,18 +128,15 @@ struct grfcvtext_mode cvconsole_mode = {
 	S3FONTX, S3FONTY, 80, 506/S3FONTY, S3FONT, 32, 255
 };
 
-
 /* Console colors */
 unsigned char cvconscolors[3][3] = {	/* background, foreground, hilite */
 	{0,0x40,0x50}, {152,152,152}, {255,255,255}
 };
 
-unsigned char pass_toggle;	/* passthru status tracker */
-
 
 /* Board Address of CV64 */
 
-static void *cv_boardaddr;
+static volatile caddr_t cv_boardaddr;
 static int cv_fbsize;
 
 int
@@ -227,59 +226,36 @@ grfcvattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	static struct grf_softc congrf;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
-	static char attachflag = 0;
 
 	zap = auxp;
 
 	printf("\n");
 
-	/* make sure id's have matched */
-	if (!cv_boardaddr)
-		return;
+	gp = (struct grf_softc *)dp;
 
-	/* do all that messy console/grf stuff */
-	if (dp == NULL)
-		gp = &congrf;
-	else
-		gp = (struct grf_softc *)dp;
+	gp->g_regkva = (volatile caddr_t)cv_boardaddr + READ_OFFSET;
+	gp->g_fbkva = (volatile caddr_t)cv_boardaddr + 0x01400000;
 
-	if (dp != NULL && congrf.g_regkva != 0) {
-		/*
-		 * inited earlier, just copy (not device struct)
-		 */
-		bcopy(&congrf.g_display, &gp->g_display,
-		    (char *)&gp[1] - (char *)&gp->g_display);
-	} else {
-		gp->g_regkva = (volatile caddr_t)cv_boardaddr + READ_OFFSET;
-		gp->g_fbkva = (volatile caddr_t)cv_boardaddr + 0x01400000;
+	gp->g_unit = GRF_CV64_UNIT;
+	gp->g_mode = cv_mode;
+	gp->g_conpri = grfcv_cnprobe();
+	gp->g_flags = GF_ALIVE;
 
-		gp->g_unit = GRF_CV64_UNIT;
-		gp->g_mode = cv_mode;
-		gp->g_conpri = grfcv_cnprobe();
-		gp->g_flags = GF_ALIVE;
-
-		/* wakeup the board */
-		cv_boardinit(gp);
+	/* wakeup the board */
+	cv_boardinit(gp);
 
 #ifdef CV64CONSOLE
-		grfcv_iteinit(gp);
-		(void)cv_load_mon(gp, &cvconsole_mode);
+	grfcv_iteinit(gp);
+	(void)cv_load_mon(gp, &cvconsole_mode);
 #endif
-	}
 
 	/*
-	 * attach grf (once)
+	 * attach grf
 	 */
-	if (amiga_config_found(cfdata, &gp->g_device, gp, grfcvprint)) {
-		attachflag = 1;
+	if (amiga_config_found(cfdata, &gp->g_device, gp, grfcvprint))
 		printf("grfcv: CyberVision64 with %dMB being used\n", cv_fbsize/0x100000);
-	} else {
-		if (!attachflag)
-			printf("grfcv unattached!!\n");
-	}
 }
 
 int
@@ -353,7 +329,7 @@ void
 cv_boardinit(gp)
 	struct grf_softc *gp;
 {
-	unsigned char *ba = gp->g_regkva;
+	volatile caddr_t ba = gp->g_regkva;
 	unsigned char test;
 	unsigned int clockpar;
 	int i;
@@ -606,7 +582,7 @@ cv_setvmode(gp, mode)
 	unsigned mode;
 {
 	if (!mode || (mode > monitor_def_max) ||
-	    monitor_def[mode-1].mode_num == 0)
+	    monitor_def[mode - 1].mode_num == 0)
 		return (EINVAL);
 
 	monitor_current = monitor_def + (mode - 1);
@@ -614,25 +590,13 @@ cv_setvmode(gp, mode)
 	return (0);
 }
 
-void
-cv_off(gp)
-	struct grf_softc *gp;
-{
-	char *ba = gp->g_regkva - READ_OFFSET;
-
-	/* we'll put the pass-through on for cc ite and set Full Bandwidth
-	 * bit on just in case it didn't work...but then it doesn't matter
-	 * does it? =)
-	 */
-	cvscreen(1, ba);
-}
 
 int
 cv_blank(gp, on)
 	struct grf_softc *gp;
 	int *on;
 {
-	char *ba = gp->g_regkva;
+	volatile caddr_t ba = gp->g_regkva;
 
 	gfx_on_off(*on ? 1 : 0, ba);
 	return (0);
@@ -660,7 +624,7 @@ cv_mode(gp, cmd, arg, a2, a3)
 
 	case GM_GRFOFF:
 #ifndef CV64CONSOLE
-		cv_off(gp);
+		(void)cv_toggle(gp);
 #else
 		cv_load_mon(gp, &cvconsole_mode);
 #endif
@@ -717,7 +681,7 @@ cv_ioctl (gp, cmd, data)
 		break;
 
 	case GRFTOGGLE:
-		return (cv_toggle (gp, 0));
+		return (cv_toggle (gp));
 
 	case GRFIOCSETMON:
 		return (cv_setmonitor (gp, (struct grfvideo_mode *)data));
@@ -775,7 +739,7 @@ cv_getcmap(gfp, cmap)
 	struct grf_softc *gfp;
 	struct grf_colormap *cmap;
 {
-	volatile unsigned char *ba;
+	volatile caddr_t ba;
 	u_char red[256], green[256], blue[256], *rp, *gp, *bp;
 	short x;
 	int error;
@@ -814,7 +778,7 @@ cv_putcmap(gfp, cmap)
 	struct grf_softc *gfp;
 	struct grf_colormap *cmap;
 {
-	volatile unsigned char *ba;
+	volatile caddr_t ba;
 	u_char red[256], green[256], blue[256], *rp, *gp, *bp;
 	short x;
 	int error;
@@ -849,19 +813,14 @@ cv_putcmap(gfp, cmap)
 
 
 int
-cv_toggle(gp,wopp)
+cv_toggle(gp)
 	struct grf_softc *gp;
-	unsigned short wopp; /* don't need that one yet, ill */
 {
-	volatile unsigned char *ba;
+	volatile caddr_t ba;
 
-	ba = gp->g_regkva - READ_OFFSET;
+	ba = gp->g_regkva;
+	cvscreen(1, ba - READ_OFFSET);
 
-	if (pass_toggle) {
-		cvscreen(0, ba);
-	} else {
-		cvscreen(1, ba);
-	}
 	return (0);
 }
 
@@ -908,8 +867,7 @@ cv_load_mon(gp, md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
-	volatile unsigned char *ba;
-	volatile unsigned char *fb;
+	volatile caddr_t ba, fb;
 	unsigned short mnr;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 		VSE, VT;
@@ -957,12 +915,12 @@ cv_load_mon(gp, md)
 	HBE = gv->hblank_stop;
 	HSS = gv->hsync_start;
 	HSE = gv->hsync_stop;
-	HT  = gv->htotal;
-	VBS = gv->vblank_start;
+	HT  = gv->htotal - 5;
+	VBS = gv->vblank_start - 1;
 	VSS = gv->vsync_start;
 	VSE = gv->vsync_stop;
 	VBE = gv->vblank_stop;
-	VT  = gv->vtotal;
+	VT  = gv->vtotal - 2;
 
 	if (TEXT)
 		HDE = ((gv->disp_width + md->fx - 1) / md->fx) - 1;
@@ -1198,8 +1156,8 @@ cv_inittextmode(gp)
 	struct grf_softc *gp;
 {
 	struct grfcvtext_mode *tm = (struct grfcvtext_mode *)gp->g_data;
-	volatile unsigned char *ba = gp->g_regkva;
-	unsigned char *fb = gp->g_fbkva;
+	volatile caddr_t ba = gp->g_regkva;
+	volatile caddr_t fb = gp->g_fbkva;
 	unsigned char *c, *f, y;
 	unsigned short z;
 

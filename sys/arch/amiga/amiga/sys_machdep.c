@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.12 1995/10/09 04:34:05 chopps Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.12.2.1 1995/11/10 16:13:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -60,7 +60,7 @@ sys_vtrace(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct vtrace_args /* {
+	register struct sys_vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
@@ -276,7 +276,7 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sysarch_args /* {
+	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
 	} */ *uap = v;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.28 1995/10/09 15:23:25 chopps Exp $
+#	$NetBSD: Makefile.amiga,v 1.28.2.1 1995/11/10 19:29:46 chopps Exp $
 
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
 #
@@ -75,6 +75,12 @@ PROFILE_C=	${CC} -S -c ${COPTS} $<; \
 NORMAL_S=	${CPP} ${COPTS} $< | ${AS} -o $@
 NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 
+.SUFFIXES: .o .g
+
+.g.o: ; echo This is a dummy rule and should not be executed.
+
+NORMAL_G=	gspa < $< | gspahextoc > $*.c; ${CC} -c ${CFLAGS} ${PROF} $*.c
+
 %OBJS
 
 %CFILES
@@ -142,7 +148,7 @@ genassym:
 	${CC} -static ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Damiga \
 	    -o genassym ${AMIGA}/amiga/genassym.c
 
-depend: assym.s param.c vnode_if.h grf_ultmscode.h
+depend: assym.s param.c vnode_if.h
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${AMIGA}/amiga/genassym.c
 
@@ -168,10 +174,5 @@ param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
 vnode_if.c vnode_if.h:	$S/kern/vnode_if.sh $S/kern/vnode_if.src
 	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
-
-grf_ultmscode.h: ${AMIGA}/dev/grf_ul.gsp
-	gspa < ${AMIGA}/dev/grf_ul.gsp | gspahextoc > grf_ultmscode.h
-
-grf_ul.o:	grf_ultmscode.h
 
 %RULES

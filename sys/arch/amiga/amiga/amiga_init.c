@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.33 1995/10/05 12:40:48 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.33.2.1 1995/11/10 16:09:54 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -63,6 +63,9 @@ extern u_int	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
 extern u_int	Sysseg_pa;
 extern u_int	virtual_avail;
+#ifdef M68040
+extern int	protostfree;
+#endif
 
 extern char *esym;
 
@@ -346,7 +349,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		 * Initialize level 2 descriptors (which immediately
 		 * follow the level 1 table).  We need:
 		 *	NPTEPG / SG4_LEV3SIZE
-		 * level 2 descriptors to map eachof the nptpages + 1
+		 * level 2 descriptors to map each of the nptpages + 1
 		 * pages of PTEs.  Note that we set the "used" bit
 		 * now to save the HW the expense of doing it.
 		 */
@@ -363,8 +366,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		 *	roundup(num, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
 		 * level 1 descriptors to map the 'num' level 2's.
 		 */
+		i = roundup(i, SG4_LEV2SIZE) / SG4_LEV2SIZE;
+		protostfree = (-1 << (i + 1)) /* & ~(-1 << MAXKL2SIZE) */;
 		sg = (u_int *) Sysseg_pa;
-		esg = &sg[roundup(i, SG4_LEV2SIZE) / SG4_LEV2SIZE];
+		esg = &sg[i];
 		sg_proto = (u_int)&sg[SG4_LEV1SIZE] | SG_U | SG_RW |SG_V;
 		while (sg < esg) {
 			*sg++ = sg_proto;

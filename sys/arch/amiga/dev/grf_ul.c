@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.7 1995/10/09 02:14:46 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.7.2.1 1995/11/10 19:29:54 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -53,7 +53,7 @@
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_ulreg.h>
 
-#include <grf_ultmscode.h>
+extern u_int16_t tmscode[];
 
 int ul_ioctl __P((struct grf_softc *, u_long, void *, dev_t));
 int ul_getcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
@@ -81,12 +81,11 @@ struct grfvideo_mode ul_monitor_defs[] = {
  	/*
 	 * Horizontal values are given in TMS units, that is, for the 
 	 * A2410 board, units of 16 pixels. The ioctl multiplies (when 
-	 * exporting) or divides (when importing) them by 2 to conform to
-	 * the other grfs.
+	 * exporting) or divides (when importing) them by 16 to conform to.
 	 *
-	 * XXX This should have been in units of pixels, IMHO. If you change 
-	 * this, you must also change amiga/stand/grfconfig/grfconfig.c, 
-	 * grf_{rt,rh,cl}.c and egsgrfconfig (the latter to generate the 
+	 * XXX This used to be in units of 8 pixel times. We 
+	 * must also change amiga/stand/grfconfig/grfconfig.c, 
+	 * grf_{rt,rh,cl,cv}.c and egsgrfconfig (the latter to generate the 
 	 * horizontal timings in units of pixels instead of 8 pixels.
 	 * You will also have to write warnings in BIG BOLD RED BLINKING 
 	 * LETTERS all over the docs, and still people will fry their monitors.
@@ -556,19 +555,11 @@ ul_getvmode (gp, vm)
 	vm->disp_height  = md->disp_height;
 	vm->depth        = md->depth;
 
-	/* XXX should use 16 instead of 2, but others use 1 instead of 8 */
-
-	/*
-	 * XXX another idea: maybe we should transform the timings to
-	 * have blank stop as point of reference (like other grfs) instead
-	 * of sync start?
-	 */
-
-	vm->hblank_start = (md->hblank_start - md->hblank_stop) * 2;
-	vm->hblank_stop  = (md->htotal - 1) * 2;
-	vm->hsync_start  = (md->hsync_start  - md->hblank_stop) * 2;
-	vm->hsync_stop   = (md->hsync_stop + md->htotal - md->hblank_stop) * 2;
-	vm->htotal       = md->htotal * 2;
+	vm->hblank_start = (md->hblank_start - md->hblank_stop) * 16;
+	vm->hblank_stop  = (md->htotal - 1) * 16;
+	vm->hsync_start  = (md->hsync_start  - md->hblank_stop) * 16;
+	vm->hsync_stop   = (md->hsync_stop + md->htotal - md->hblank_stop) * 16;
+	vm->htotal       = md->htotal * 16;
 
 	vm->vblank_start = md->vblank_start - md->vblank_stop;
 	vm->vblank_stop  = md->vtotal - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1995/10/09 04:34:02 chopps Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27.2.1 1995/11/10 16:10:00 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -237,6 +237,7 @@ boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
 #ifdef M68040
 static int	pmap_ishift;	/* segment table index shift */
+int		protostfree;	/* prototype (default) free ST map */
 #endif
 
 #ifdef MACHINE_NONCONTIG
@@ -363,7 +364,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 #ifdef M68040
 	if (mmutype == MMU_68040) {
 		pmap_ishift = SG4_SHIFT1;
-		pmap_kernel()->pm_stfree = 0xfffffff8;	/* XXXX */
+		pmap_kernel()->pm_stfree = protostfree;
 	} else
 		pmap_ishift = SG_ISHIFT;
 #endif
@@ -574,6 +575,12 @@ pmap_init(phys_start, phys_end)
 		printf("pmap_init: pt_map [%x - %x)\n", addr, addr2);
 #endif
 
+#ifdef M68040
+	if (mmutype == MMU_68040) {
+		protostfree = ~1 & ~(-1 << MAXUL2SIZE);
+	}
+#endif
+
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
@@ -734,7 +741,7 @@ pmap_pinit(pmap)
 	pmap->pm_stpa = Segtabzeropa;
 #ifdef M68040
 	if (mmutype == MMU_68040)
-		pmap->pm_stfree = 0x0000fffe;	/* XXXX */
+		pmap->pm_stfree = protostfree;
 #endif
 	pmap->pm_stchanged = TRUE;
 	pmap->pm_count = 1;
@@ -1011,7 +1018,7 @@ printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
 					ptpmap->pm_stpa = Segtabzeropa;
 #ifdef M68040
 					if (mmutype == MMU_68040)
-						ptpmap->pm_stfree = 0x0000fffe; /* XXXX */
+						ptpmap->pm_stfree = protostfree;
 #endif
 					ptpmap->pm_stchanged = TRUE;
 					/*
@@ -2046,7 +2053,7 @@ pmap_enter_ptpage(pmap, va)
 		    pmap_kernel(), (vm_offset_t)pmap->pm_stab);
 #ifdef M68040
 		if (mmutype == MMU_68040) {
-			pmap->pm_stfree = 0x0000fffe;	/* XXXX */
+			pmap->pm_stfree = protostfree;
 		}
 #endif
 		pmap->pm_stchanged = TRUE;

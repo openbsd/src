@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.1.2.1 1995/10/21 15:15:44 chopps Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.1.2.2 1995/11/10 16:27:13 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -57,11 +57,11 @@ struct grfcvtext_mode {
 
 
 /* read VGA register */
-#define vgar(ba, reg) (*(((volatile unsigned char *)ba)+reg))
+#define vgar(ba, reg) (*(((volatile caddr_t)ba)+reg))
 
 /* write VGA register */
 #define vgaw(ba, reg, val) \
-	*(((volatile unsigned char *)ba)+reg) = ((val) & 0xff)
+	*(((volatile caddr_t)ba)+reg) = ((val) & 0xff)
 
 /*
  * defines for the used register addresses (mw)
@@ -339,7 +339,7 @@ struct grfcvtext_mode {
 
 static inline unsigned char
 RAttr(ba, idx)
-	volatile void *ba;
+	volatile caddr_t ba;
 	short idx;
 {
 
@@ -350,7 +350,7 @@ RAttr(ba, idx)
 
 static inline unsigned char
 RSeq(ba, idx)
-	volatile void *ba;
+	volatile caddr_t ba;
 	short idx;
 {
 	vgaw(ba, SEQ_ADDRESS, idx);
@@ -359,7 +359,7 @@ RSeq(ba, idx)
 
 static inline unsigned char
 RCrt(ba, idx)
-	volatile void *ba;
+	volatile caddr_t ba;
 	short idx;
 {
 	vgaw(ba, CRT_ADDRESS, idx);
@@ -368,7 +368,7 @@ RCrt(ba, idx)
 
 static inline unsigned char
 RGfx(ba, idx)
-	volatile void *ba; 
+	volatile caddr_t ba; 
 	short idx;
 {
 	vgaw(ba, GCT_ADDRESS, idx);
@@ -379,10 +379,10 @@ RGfx(ba, idx)
 static inline void
 cv_write_port(bits, BoardAddr)
 	unsigned short bits;
-	volatile unsigned char *BoardAddr;
+	volatile caddr_t BoardAddr;
 {
 	volatile char *addr;
-	static unsigned char CVPortBits=0;	/* mirror port bits here */
+	static unsigned char CVPortBits = 0;	/* mirror port bits here */
 
 	addr = BoardAddr + 0x40001;
 	if (bits & 0x8000)
@@ -409,8 +409,8 @@ cv_write_port(bits, BoardAddr)
 
 static inline void
 cvscreen(toggle, ba)
-	char toggle;
-	volatile unsigned char *ba;
+	char *toggle;
+	volatile caddr_t ba;
 {
 
 	if (toggle)
@@ -423,23 +423,22 @@ cvscreen(toggle, ba)
 /* ba= registerbase */
 static inline void
 gfx_on_off(toggle, ba)
-	char toggle;
-	volatile unsigned char *ba;
+	int toggle;
+	volatile caddr_t ba;
 {
-	unsigned char r;
+	int r;
 
 	toggle &= 0x1;
 	toggle = toggle << 5;
 
-	r = RSeq(ba, 0x1);
-	r &= 0xDF; /* Bit 5 auf 0!!! */
-	WSeq(ba, 1, r | toggle);
+	r = RSeq(ba, SEQ_ID_CLOCKING_MODE);
+	r &= 0xdf;	/* set Bit 5 to 0 */
+
+	WSeq(ba, SEQ_ID_CLOCKING_MODE, r | toggle);
 }
 
-int cv_mode __P((register struct grf_softc *gp, int cmd, void *arg, int a2, int a3));
-int cv_load_mon __P((struct grf_softc *gp, struct grfcvtext_mode *gv));
-int grfcv_cnprobe __P((void));
 #if 0
+int grfcv_cnprobe __P((void));
 void grfcv_iteinit __P((struct grf_softc *gp));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1995/10/09 04:34:08 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.42.2.1 1995/11/10 19:32:59 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -280,8 +280,10 @@ trapmmufault(type, code, v, fp, p, sticks)
 	/*
 	 * Print out some data about the fault
 	 */
+#ifdef DEBUG_PAGE0
 	if (v < NBPG)					/* XXX PAGE0 */
 		mmudebug |= 0x100;			/* XXX PAGE0 */
+#endif
 	if (mmudebug && mmutype == MMU_68040) {
 		printf ("68040 access error: pc %x, code %x,"
 		    " ea %x, fa %x\n", fp->f_pc, code, fp->f_fmt7.f_ea, v);
@@ -294,7 +296,9 @@ trapmmufault(type, code, v, fp, p, sticks)
 			Debugger();			/* XXX PAGE0 */
 #endif							/* XXX PAGE0 */
 	}
+#ifdef DEBUG_PAGE0
 	mmudebug &= ~0x100;				/* XXX PAGE0 */
+#endif
 #endif
 
 	if (p)
