@@ -35,7 +35,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.29 2003/09/26 07:15:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.30 2004/09/16 08:55:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ volatile sig_atomic_t gothup;
 
 #define	WHDRSIZE	(sizeof(mywd) - sizeof(mywd.wd_we))
 
-int	 configure(int);
+int	 configure(void);
 void	 getboottime(void);
 void	 hup(int);
 void	 timer(void);
@@ -110,6 +110,7 @@ int	 Sendto(int, const void *, size_t, int, const struct sockaddr *,
 	    socklen_t);
 char	*interval(int, char *);
 
+/* ARGSUSED */
 void
 hup(int signo)
 {
@@ -188,7 +189,7 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "bind: %m");
 		exit(1);
 	}
-	if (!configure(s))
+	if (!configure())
 		exit(1);
 	timer();
 
@@ -293,7 +294,7 @@ handleread(int s)
 	(void) time((time_t *)&wd.wd_recvtime);
 	(void) write(whod, (char *)&wd, cc);
 	if (fstat(whod, &st) < 0 || st.st_size > cc)
-		ftruncate(whod, cc);
+		ftruncate(whod, (off_t)cc);
 	(void) close(whod);
 }
 
@@ -352,6 +353,11 @@ timer(void)
 		getboottime();
 	alarmcount++;
 	(void) fstat(utmpf, &stb);
+
+	/* implicitly safe truncation */
+	if (stb.st_size > 1024*1024 * sizeof(struct utmp))
+		stb.st_size = 1024*1024 * sizeof(struct utmp);
+
 	if ((stb.st_mtime != utmptime) || (stb.st_size > utmpsize)) {
 		utmptime = stb.st_mtime;
 		if (stb.st_size > utmpsize) {
@@ -367,7 +373,7 @@ timer(void)
 			utmpsize = nutmpsize;
 		}
 		(void) lseek(utmpf, (off_t)0, SEEK_SET);
-		cc = read(utmpf, (char *)utmp, stb.st_size);
+		cc = read(utmpf, (char *)utmp, (size_t)stb.st_size);
 		if (cc < 0) {
 			warnx("%s", _PATH_UTMP);
 			return;
@@ -466,7 +472,7 @@ rt_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
  * networks which deserve status information.
  */
 int
-configure(int s)
+configure(void)
 {
 	struct neighbor *np;
 	struct if_msghdr *ifm;
@@ -507,7 +513,7 @@ configure(int s)
 		ifam = (struct ifa_msghdr *)ifm;
 		info.rti_addrs = ifam->ifam_addrs;
 		rt_xaddrs((char *)(ifam + 1), ifam->ifam_msglen + (char *)ifam,
-			&info);
+		    &info);
 		/* gag, wish we could get rid of Internet dependencies */
 #define dstaddr	info.rti_info[RTAX_BRD]
 #define IPADDR_SA(x) ((struct sockaddr_in *)(x))->sin_addr.s_addr
