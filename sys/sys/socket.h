@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.12 1997/02/28 02:14:58 angelos Exp $	*/
+/*	$OpenBSD: socket.h,v 1.13 1997/02/28 02:18:56 angelos Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -100,6 +100,10 @@
 #define IPSEC_LEVEL_REQUIRE	0x03	/* Require secure inbound, also use */
 #define IPSEC_LEVEL_UNIQUE	0x04	/* Use outbound SA that is unique */
 #define IPSEC_LEVEL_DEFAULT	IPSEC_LEVEL_NONE
+
+#define IPSEC_AUTH_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
+#define IPSEC_ESP_TRANS_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
+#define IPSEC_ESP_NETWORK_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 
 /*
  * Structure used for manipulating linger option.
