@@ -7,14 +7,14 @@
 
 #if defined(APIWARN)
 #APP
-	.stabs "warning: strcpy() is almost always misused, consider using strlcpy()",30,0,0,0
-	.stabs "_strcpy",1,0,0,0
+	.section .gnu.warning.strcpy
+	.ascii "warning: strcpy() is almost always misused, consider using strlcpy()"
 #NO_APP
 #endif
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strcpy.S,v 1.5 2003/07/24 01:15:42 deraadt Exp $"
+	.asciz "$OpenBSD: strcpy.S,v 1.6 2005/03/25 21:43:37 kettenis Exp $"
 #endif
 
 /*
