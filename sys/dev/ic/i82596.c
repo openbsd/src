@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.15 2002/10/30 20:21:41 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.16 2002/11/01 19:56:13 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1411,7 +1411,7 @@ ie_run_tdr(sc, cmd)
 	struct ie_softc *sc;
 	int cmd;
 {
-	int result;
+	int result, clocks;
 
 	i82596_simple_command(sc, IE_CMD_TDR, cmd);
 	(sc->ie_bus_write16)(sc, IE_CMD_TDR_TIME(cmd), 0);
@@ -1428,21 +1428,21 @@ ie_run_tdr(sc, cmd)
 	if (result & IE_TDR_SUCCESS)
 		return;
 
+	clocks = result & IE_TDR_TIME;
 	if (result & 0x10000)
 		printf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
 	else if (result & IE_TDR_XCVR)
 		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
 	else if (result & IE_TDR_OPEN)
-		printf("%s: TDR detected an open %d clocks away\n",
-			sc->sc_dev.dv_xname, result & IE_TDR_TIME);
+		printf("%s: TDR detected an open %d clock%s away\n",
+		    sc->sc_dev.dv_xname, clocks, clocks == 1? "":"s");
 	else if (result & IE_TDR_SHORT)
-		printf("%s: TDR detected a short %d clocks away\n",
-			sc->sc_dev.dv_xname, result & IE_TDR_TIME);
+		printf("%s: TDR detected a short %d clock%s away\n",
+		    sc->sc_dev.dv_xname, clocks, clocks == 1? "":"s");
 	else
 		printf("%s: TDR returned unknown status 0x%x\n",
-			sc->sc_dev.dv_xname, result);
+		    sc->sc_dev.dv_xname, result);
 }
-
 
 /*
  * i82596_setup_bufs: set up the buffers
