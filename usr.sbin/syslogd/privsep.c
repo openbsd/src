@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.3 2003/07/31 21:28:28 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.4 2003/08/01 14:04:35 avsm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -188,7 +188,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			check_tty_name(path, sizeof path);
 			fd = open(path, O_WRONLY|O_NONBLOCK, 0);
 			if (fd < 0)
-				warnx("%s: priv_open_tty failed", __func__);
+				warnx("priv_open_tty failed");
 			send_fd(socks[0], fd);
 			close(fd);
 			break;
@@ -199,7 +199,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			check_log_name(path, sizeof path);
 			fd = open(path, O_WRONLY|O_APPEND|O_NONBLOCK, 0);
 			if (fd < 0)
-				warnx("%s: priv_open_log failed", __func__);
+				warnx("priv_open_log failed");
 			send_fd(socks[0], fd);
 			close(fd);
 			break;
@@ -208,7 +208,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			dprintf("[priv]: msg PRIV_OPEN_UTMP received\n");
 			fd = open(_PATH_UTMP, O_RDONLY|O_NONBLOCK, 0);
 			if (fd < 0)
-				warnx("%s: priv_open_utmp failed", __func__);
+				warnx("priv_open_utmp failed");
 			send_fd(socks[0], fd);
 			close(fd);
 			break;
@@ -218,7 +218,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			stat(config_file, &cf_info);
 			fd = open(config_file, O_RDONLY|O_NONBLOCK, 0);
 			if (fd < 0)
-				warnx("%s: priv_open_config failed", __func__);
+				warnx("priv_open_config failed");
 			send_fd(socks[0], fd);
 			close(fd);
 			break;
@@ -261,8 +261,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		case PRIV_GETHOSTBYADDR:
 			dprintf("[priv]: msg PRIV_GETHOSTBYADDR received\n");
 			if (!allow_gethostbyaddr)
-				errx(1, "%s: rejected attempt to gethostbyaddr",
-				    __func__);
+				errx(1, "rejected attempt to gethostbyaddr");
 			/* Expecting: length, address, address family */
 			must_read(socks[0], &addr_len, sizeof(int));
 			if (addr_len > sizeof(hostname))
@@ -280,12 +279,11 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			}
 			break;
 		default:
-			errx(1, "%s: unknown command %d", __func__, cmd);
+			errx(1, "unknown command %d", cmd);
 			break;
 		}
 	}
 
-	dprintf("%s: shutting down priv parent\n", __func__);
 	/* Unlink any domain sockets that have been opened */
 	for (i = 0; i < nfunix; i++)
 		if (funixn[i] && funix[i] != -1)
@@ -384,7 +382,6 @@ priv_open_tty(const char *tty)
 	char path[MAXPATHLEN];
 	int cmd, fd;
 
-	dprintf("[unpriv] priv_open_tty\n");
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
@@ -404,7 +401,6 @@ priv_open_log(const char *log)
 	char path[MAXPATHLEN];
 	int cmd, fd;
 
-	dprintf("[unpriv] priv_open_log %s\n", log);
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged child\n", __func__);
 
@@ -424,7 +420,6 @@ priv_open_utmp(void)
 	int cmd, fd;
 	FILE *fp;
 
-	dprintf("[unpriv] priv_open_utmp\n");
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
@@ -451,7 +446,6 @@ priv_open_config(void)
 	int cmd, fd;
 	FILE *fp;
 
-	dprintf("[unpriv] priv_open_config\n");
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
@@ -477,9 +471,9 @@ priv_config_modified()
 {
 	int cmd, res;
 
-	dprintf("[unpriv] priv_config_modified called\n");
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
+
 	cmd = PRIV_CONFIG_MODIFIED;
 	must_write(priv_fd, &cmd, sizeof(int));
 
@@ -509,8 +503,6 @@ priv_gethostbyname(char *host, char *addr, size_t addr_len)
 {
 	char hostcpy[MAXHOSTNAMELEN];
 	int cmd, ret_len;
-
-	dprintf("[unpriv] %s called\n", __func__);
 
 	if (strlcpy(hostcpy, host, sizeof hostcpy) >= sizeof(hostcpy))
 		errx(1, "%s: overflow attempt in hostname", __func__);
@@ -545,8 +537,6 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 {
 	int cmd, ret_len;
 
-	dprintf("[unpriv] %s called\n", __func__);
-
 	if (priv_fd < 0)
 		errx(1, "%s called from privileged portion", __func__);
 
@@ -560,7 +550,7 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 	must_read(priv_fd, &ret_len, sizeof(int));
 
 	/* Check there was no error (indicated by a return of 0) */
-	if (!res_len)
+	if (!ret_len)
 		return 0;
 
 	/* Check we don't overflow the passed in buffer */
