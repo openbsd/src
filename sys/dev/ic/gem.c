@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.35 2003/12/29 23:06:55 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.36 2004/02/01 07:00:25 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -114,12 +114,9 @@ int		gem_mediachange(struct ifnet *);
 void		gem_mediastatus(struct ifnet *, struct ifmediareq *);
 
 struct mbuf	*gem_get(struct gem_softc *, int, int);
-int		gem_put(struct gem_softc *, int, struct mbuf *);
-void		gem_read(struct gem_softc *, int, int);
 int		gem_eint(struct gem_softc *, u_int);
 int		gem_rint(struct gem_softc *);
 int		gem_tint(struct gem_softc *, u_int32_t);
-void		gem_power(int, void *);
 
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_arpcom.ac_if.if_flags & IFF_DEBUG) \
