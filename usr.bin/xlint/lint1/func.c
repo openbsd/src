@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.4 2001/11/18 20:55:42 deraadt Exp $	*/
+/*	$OpenBSD: func.c,v 1.5 2004/05/10 15:26:22 deraadt Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.4 2001/11/18 20:55:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.5 2004/05/10 15:26:22 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -133,7 +133,7 @@ int	nowarn;
  * Nonzero if complaints about use of "long long" are suppressed in
  * the next statement or declaration.
  */
-int	quadflg;
+int	quadflg = 1;
 
 /*
  * Puts a new element at the top of the stack used for control statements.
