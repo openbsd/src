@@ -1,5 +1,5 @@
-/*	$OpenBSD: klist.c,v 1.5 1998/02/25 15:51:02 art Exp $	*/
-/* $KTH: klist.c,v 1.28 1997/05/26 17:33:50 bg Exp $ */
+/*	$OpenBSD: klist.c,v 1.6 1998/05/18 01:24:55 art Exp $	*/
+/*	$KTH: klist.c,v 1.35 1998/05/01 05:16:33 joda Exp $	*/
 
 /*
  * This source code is no longer held under any constraint of USA
@@ -58,6 +58,20 @@ short_date(time_t dp)
     cp = ctime(&t) + 4;
     cp[15] = '\0';
     return (cp);
+}
+
+/* prints the approximate kdc time differential as something human
+   readable */
+static void
+print_time_diff(void)
+{
+    int d = abs(krb_get_kdc_time_diff());
+    char buf[80];
+  
+    if ((option_verbose && d > 0) || d > 60) {
+	unparse_time_approx (d, buf, sizeof(buf));
+	printf ("Time diff:\t%s\n", buf);
+    }
 }
 
 static void
@@ -129,7 +143,9 @@ display_tktfile(char *file, int tgt_test, int long_form)
      */
        
     if (!tgt_test && long_form)
-	printf("Principal:\t%s\n\n", krb_unparse_name(&pr));
+	printf("Principal:\t%s\n", krb_unparse_name(&pr));
+    print_time_diff();
+    printf("\n");
     while ((k_errno = tf_get_cred(&c)) == KSUCCESS) {
 	if (!tgt_test && long_form && header) {
 	    printf("%-15s  %-15s  %s%s\n",
@@ -149,9 +165,12 @@ display_tktfile(char *file, int tgt_test, int long_form)
 	    continue;			/* not a tgt */
 	}
 	if (long_form) {
+	    struct timeval tv;
+
 	    strcpy(buf1, short_date(c.issue_date));
 	    c.issue_date = krb_life_to_time(c.issue_date, c.lifetime);
-	    if (time(0) < (unsigned long) c.issue_date)
+	    krb_kdctimeofday(&tv);
+	    if (option_verbose || tv.tv_sec < (unsigned long) c.issue_date)
 	        strcpy(buf2, short_date(c.issue_date));
 	    else
 	        strcpy(buf2, ">>> Expired <<<");
