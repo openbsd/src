@@ -1,5 +1,5 @@
-.\" $OpenBSD: ppp.8,v 1.108 2001/03/09 00:15:15 brian Exp $
-.Dd 20 September 1995
+.\" $OpenBSD: ppp.8,v 1.109 2001/03/24 01:06:04 brian Exp $
+.Dd September 20, 1995
 .Dt PPP 8
 .Os
 .Sh NAME
@@ -11,8 +11,7 @@
 .Op Fl nat
 .Op Fl quiet
 .Op Fl unit Ns Ar N
-.Op Ar system Ns
-.No ...
+.Op Ar system ...
 .Sh DESCRIPTION
 This is a user process
 .Em PPP
@@ -242,7 +241,7 @@ In direct mode,
 acts as server which accepts incoming
 .Em PPP
 connections on stdin/stdout.
-.It Supports PAP and CHAP (rfc 1994, 2433 and 2759) authentication.
+.It "Supports PAP and CHAP (rfc 1994, 2433 and 2759) authentication.
 With PAP or CHAP, it is possible to skip the Unix style
 .Xr login 1
 procedure, and use the
@@ -974,7 +973,7 @@ command:
 .No set redial Ar secs Ns Xo
 .Oo + Ns Ar inc Ns
 .Op - Ns Ar max Ns
-.Oc Op . Ns Ar next
+.Oc Ns Op . Ns Ar next
 .Op Ar attempts
 .Xc
 .Pp
@@ -1615,19 +1614,18 @@ set filter
 .Ar name
 .Ar rule-no
 .Ar action
-.Op \&!
+.Op !\&
 .Oo
 .Op host
 .Ar src_addr Ns Op / Ns Ar width
 .Op Ar dst_addr Ns Op / Ns Ar width
 .Oc
-.Oo Ar proto Op src Ar cmp port
+.Ar [ proto Op src Ar cmp port
 .Op dst Ar cmp port
 .Op estab
 .Op syn
 .Op finrst
-.Op timeout Ar secs
-.Oc
+.Op timeout Ar secs ]
 .Bl -enum
 .It
 .Ar Name
@@ -1669,7 +1667,7 @@ the new rule number (rather than the next rule number).
 The
 .Ar action
 may optionally be followed with an exclamation mark
-.Pq Dq ! ,
+.Pq Dq !\& ,
 telling
 .Nm
 to reverse the sense of the following match.
@@ -1855,7 +1853,7 @@ is established.
 To control this IPCP behaviour, this implementation has the
 .Dq set ifaddr
 command for defining the local and remote IP address:
-.Bd -literal -offset indent
+.Bd -ragged -offset indent
 .No set ifaddr Oo Ar src_addr Ns
 .Op / Ns Ar \&nn
 .Oo Ar dst_addr Ns Op / Ns Ar \&nn
@@ -1963,7 +1961,7 @@ dialing and redialing separated by either a pipe
 .Pq Dq \&|
 or a colon
 .Pq Dq \&: :
-.Bd -literal -offset indent
+.Bd -ragged -offset indent
 .No set phone Ar telno Ns Xo
 .Oo \&| Ns Ar backupnumber
 .Oc Ns ... Ns Oo : Ns Ar nextnumber
@@ -2090,7 +2088,7 @@ When
 or
 .Ar chat
 logging is enabled, the actual password is not logged;
-.Sq ******** Ns
+.Sq ********
 is logged instead.
 .Pp
 Login scripts vary greatly between ISPs.
@@ -2648,7 +2646,7 @@ Type
 is actually specified as
 .Dq PPP Magna-link Variable Resource Compression
 in
-.Pa rfc1975 Ns No !
+.Pa rfc1975 Ns !
 .Nm
 is capable of negotiating with
 .Nm pppd ,
@@ -2765,7 +2763,7 @@ except that it issues challenges of a fixed 16 bytes in length and uses a
 combination of MD4, SHA-1 and DES to encrypt the challenge rather than using the
 standard MD5 mechanism.
 .It MSChap|chap80nt
-Default: Disabled and Accepted
+Default: Disabled and Accepted.
 The use of this authentication protocol
 is discouraged as it partially violates the authentication protocol by
 implementing two different mechanisms (LANMan & NT) under the guise of
@@ -3083,7 +3081,7 @@ will also disable
 .El
 .Pp
 .It add Ns Xo
-.Op \&!
+.Op !\&
 .Ar dest Ns Op / Ns Ar nn
 .Op Ar mask
 .Op Ar gateway
@@ -3124,9 +3122,9 @@ is replaced with the interface address and
 is replaced with the interface destination (peer) address.
 .Pp
 If the
-.Ar add!
+.Ar add!\&
 command is used
-.Pq note the trailing Dq \&! ,
+.Pq note the trailing Dq !\& ,
 then if the route already exists, it will be updated as with the
 .Sq route change
 command (see
@@ -3368,7 +3366,7 @@ These commands are also discussed in the file
 .Pa README.alias
 which comes with the source distribution.
 .Pp
-.It Op \&! Ns Xo
+.It Op !\& Ns Xo
 .No bg Ar command
 .Xc
 The given
@@ -3386,7 +3384,7 @@ command below.
 This is replaced with the date on which
 .Nm
 was compiled.
-.It Li DNS0 No " & " Li DNS1
+.It Li DNS0 & DNS1
 These are replaced with the primary and secondary nameserver IP numbers.
 If nameservers are negotiated by IPCP, the values of these macros will change.
 .It Li ENDDISC
@@ -3463,7 +3461,7 @@ command below.
 .Pp
 The default link name is
 .Dq deflink .
-.It close Op lcp|ccp Ns Op \&!
+.It close Op lcp|ccp Ns Op !\&
 If no arguments are given, the relevant protocol layers will be brought
 down and the link will be closed.
 If
@@ -3481,7 +3479,7 @@ If
 .Dq ccp
 is specified, only the relevant compression layer is closed.
 If the
-.Dq \&!
+.Dq !\&
 is used, the compression layer will remain in the closed state, otherwise
 it will re-enter the STOPPED state, waiting for the peer to initiate
 further CCP negotiation.
@@ -3493,7 +3491,7 @@ See the
 .Dq quit
 command below.
 .It delete Ns Xo
-.Op \&!
+.Op !\&
 .Ar dest
 .Xc
 This command deletes the route with the given
@@ -3514,9 +3512,9 @@ is specified as
 the default route is deleted.
 .Pp
 If the
-.Ar delete!
+.Ar delete!\&
 command is used
-.Pq note the trailing Dq \&! ,
+.Pq note the trailing Dq !\& ,
 .Nm
 will not complain if the route does not already exist.
 .It dial|call Op Ar label Ns Xo
@@ -3570,12 +3568,12 @@ This command is used to control the interface used by
 may be one of the following:
 .Bl -tag -width 2n
 .It iface add Ns Xo
-.Op \&!
+.Op !\&
 .Ar addr Ns Op / Ns Ar bits
 .Op Ar peer
 .Xc
 .It iface add Ns Xo
-.Op \&!
+.Op !\&
 .Ar addr
 .Ar mask
 .Ar peer
@@ -3589,7 +3587,7 @@ Instead of specifying
 can be used
 .Pq with no space between \&it and Ar addr .
 If the given address already exists, the command fails unless the
-.Dq \&!
+.Dq !\&
 is used - in which case the previous interface address entry is overwritten
 with the new one, allowing a change of netmask or peer address.
 .Pp
@@ -3620,15 +3618,15 @@ is not in the OPENED state and is not in
 mode, all interface addresses are deleted.
 .Pp
 .It iface delete Ns Xo
-.Op \&! Ns
-.No |rm Ns Op \&!
+.Op !\& Ns
+.No |rm Ns Op !\&
 .Ar addr
 .Xc
 This command deletes the given
 .Ar addr
 from the interface.
 If the
-.Dq \&!
+.Dq !\&
 is used, no error is given if the address isn't currently assigned to
 the interface (and no deletion takes place).
 .It iface show
@@ -3876,7 +3874,7 @@ Received identification packets are logged to the LCP log (see
 .Ic set log
 for details) and are never responded to.
 .It set Ns Xo
-.No Op up
+.Op up
 .Ar var value
 .Xc
 This option allows the setting of any of the following variables:
@@ -3897,7 +3895,7 @@ This sets the authentication key (or password) used in client mode
 PAP or CHAP negotiation to the given value.
 It also specifies the
 password to be used in the dial or login scripts in place of the
-.Sq \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\P
+.Sq \eP
 sequence, preventing the actual password from being logged.
 If
 .Ar command
@@ -3912,7 +3910,7 @@ for security reasons.
 If the first character of
 .Ar value
 is an exclamation mark
-.Pq Dq \&! ,
+.Pq Dq !\& ,
 .Nm
 treats the remainder of the string as a program that must be executed
 to determine the
@@ -3922,13 +3920,13 @@ and
 values.
 .Pp
 If the
-.Dq \&!
+.Dq !\&
 is doubled up
-.Pq to Dq \&!! ,
+.Pq to Dq !! ,
 it is treated as a single literal
-.Dq \&! ,
+.Dq !\& ,
 otherwise, ignoring the
-.Dq \&! ,
+.Dq !\& ,
 .Ar value
 is parsed as a program to execute in the same was as the
 .Dq !bg
@@ -4039,7 +4037,7 @@ until no options remain at which point
 will terminate negotiations (unless
 .Dq none
 is one of the specified
-.Ar option Ns No ).
+.Ar option ) .
 In server mode,
 .Nm
 will accept any of the given protocols - but the client
@@ -4108,15 +4106,11 @@ This is required (in addition to one or more other callback
 options) if you wish callback to be optional.
 .El
 .Pp
-.It set cbcp Oo Xo
-.No *| Ns Ar number Ns No
-.Oo
-.No , Ns Ar number Ns
-.Oc
-.No ...
+.It set cbcp Oo
+.No *| Ns Ar number Ns Oo
+.No , Ns Ar number Ns ...\& Oc
 .Op Ar delay Op Ar retry
 .Oc
-.Xc
 If no arguments are given, CBCP (Microsoft's CallBack Control Protocol)
 is disabled - ie, configuring CBCP in the
 .Dq set callback
@@ -4144,7 +4138,7 @@ is specified,
 .Nm
 will expect the peer to specify the number.
 .It set cd Oo
-.No off| Ns Ar seconds Ns Op \&!
+.No off| Ns Ar seconds Ns Op !\&
 .Oc
 Normally,
 .Nm
@@ -4217,7 +4211,7 @@ values.
 If
 .Ar seconds
 is followed immediately by an exclamation mark
-.Pq Dq \&! ,
+.Pq Dq !\& ,
 .Nm
 will
 .Em require
@@ -4307,7 +4301,7 @@ If
 does not begin with
 .Pa /dev/ ,
 it must either begin with an exclamation mark
-.Pq Dq \&! ,
+.Pq Dq !\& ,
 be of the format
 .No PPPoE: Ns Ar iface Ns Xo
 .Op \&: Ns Ar provider Ns
@@ -4315,9 +4309,9 @@ be of the format
 (on
 .Xr netgraph 4
 enabled systems), or be of the format
-.Ar host Ns No : Ns Ar port Ns Oo
-.No /tcp|udp
-.Oc .
+.Sm off
+.Ar host : port Op /tcp|udp .
+.Sm on
 .Pp
 If it begins with an exclamation mark, the rest of the device name is
 treated as a program name, and that program is executed when the device
@@ -4397,41 +4391,41 @@ format.
 It is possible to specify some special
 .Sq values
 in your chat script as follows:
-.Bd -unfilled -offset indent
-.It Li \\\\\\\\\\\\\\\\c
+.Bl -tag -width 2n
+.It Li \ec
 When used as the last character in a
 .Sq send
 string, this indicates that a newline should not be appended.
-.It Li \\\\\\\\\\\\\\\\d
+.It Li \ed
 When the chat script encounters this sequence, it delays two seconds.
-.It Li \\\\\\\\\\\\\\\\p
+.It Li \ep
 When the chat script encounters this sequence, it delays for one quarter of
 a second.
-.It Li \\\\\\\\\\\\\\\\n
+.It Li \en
 This is replaced with a newline character.
-.It Li \\\\\\\\\\\\\\\\r
+.It Li \er
 This is replaced with a carriage return character.
-.It Li \\\\\\\\\\\\\\\\s
+.It Li \es
 This is replaced with a space character.
-.It Li \\\\\\\\\\\\\\\\t
+.It Li \et
 This is replaced with a tab character.
-.It Li \\\\\\\\\\\\\\\\T
+.It Li \eT
 This is replaced by the current phone number (see
 .Dq set phone
 below).
-.It Li \\\\\\\\\\\\\\\\P
+.It Li \eP
 This is replaced by the current
 .Ar authkey
 value (see
 .Dq set authkey
 above).
-.It Li \\\\\\\\\\\\\\\\U
+.It Li \eU
 This is replaced by the current
 .Ar authname
 value (see
 .Dq set authname
 above).
-.Ed
+.El
 .Pp
 Note that two parsers will examine these escape sequences, so in order to
 have the
@@ -4446,11 +4440,11 @@ set dial "... ATDT\\\\T CONNECT"
 It is also possible to execute external commands from the chat script.
 To do this, the first character of the expect or send string is an
 exclamation mark
-.Pq Dq \&! .
+.Pq Dq !\& .
 If a literal exclamation mark is required, double it up to
-.Dq \&!!
+.Dq !!\&
 and it will be treated as a single literal
-.Dq \&! .
+.Dq !\& .
 When the command is executed, standard input and standard output are
 directed to the open device (see the
 .Dq set device
@@ -4504,7 +4498,7 @@ important that the
 signs are escaped, otherwise this parser will see them as constituting
 an expect-send-expect sequence.
 When the
-.Dq \&!
+.Dq !\&
 character is seen, the execution parser reads the first command as three
 arguments, and then
 .Xr sh 1
@@ -4536,7 +4530,7 @@ command has been used,
 will send the information to the peer using the LCP endpoint discriminator
 option.
 The following discriminators may be set:
-.Bd -unfilled -offset indent
+.Bl -tag -width indent
 .It Li label
 The current label is used.
 .It Li IP
@@ -4577,7 +4571,7 @@ is used.
 .Ar Value
 should be set to an absolute public switched network number with the
 country code first.
-.Ed
+.El
 .Pp
 If no arguments are given, the endpoint discriminator is reset.
 .It set escape Ar value...
@@ -4589,17 +4583,16 @@ It allows the user to specify a set of characters that will be
 as they travel across the link.
 .It set filter dial|alive|in|out Ar rule-no Xo
 .No permit|deny|clear| Ns Ar rule-no
-.Op \&!
+.Op !\&
 .Oo Op host
 .Ar src_addr Ns Op / Ns Ar width
 .Op Ar dst_addr Ns Op / Ns Ar width
-.Oc Oo tcp|udp|ospf|igmp|icmp Op src lt|eq|gt Ar port
+.Oc [ tcp|udp|ospf|igmp|icmp Op src lt|eq|gt Ar port
 .Op dst lt|eq|gt Ar port
 .Op estab
 .Op syn
 .Op finrst
-.Op timeout Ar secs
-.Oc
+.Op timeout Ar secs ]
 .Xc
 .Nm
 supports four filter sets.
@@ -4689,11 +4682,11 @@ unless the IP address is 0.0.0.0 in which case it defaults to
 If you wish to assign a dynamic IP number to the peer,
 .Ar hisaddr
 may also be specified as a range of IP numbers in the format
-.Bd -literal -offset indent
+.Bd -ragged -offset indent
 .Ar \&IP Ns Oo \&- Ns Ar \&IP Ns Xo
-.Oc Oo , Ns Ar \&IP Ns
+.Oc Ns Oo , Ns Ar \&IP Ns
 .Op \&- Ns Ar \&IP Ns
-.Oc No ...
+.Oc Ns ...
 .Xc
 .Ed
 .Pp
@@ -5099,7 +5092,7 @@ is unspecified or zero, the default kernel controlled value is used.
 .It set redial Ar secs Ns Xo
 .Oo + Ns Ar inc Ns
 .Op - Ns Ar max Ns
-.Oc Op . Ns Ar next
+.Oc Ns Op . Ns Ar next
 .Op Ar attempts
 .Xc
 .Nm
@@ -5143,7 +5136,7 @@ delay will be effective, even after
 has been exceeded, so an immediate manual dial may appear to have
 done nothing.
 If an immediate dial is required, a
-.Dq \&!
+.Dq !\&
 should immediately follow the
 .Dq open
 keyword.
@@ -5444,11 +5437,11 @@ They are a good source of information.
 .It
 Use
 .Dq help ,
-.Dq nat ? ,
-.Dq enable ? ,
-.Dq set ?
+.Dq nat \&? ,
+.Dq enable \&? ,
+.Dq set ?\&
 and
-.Dq show ?
+.Dq show ?\&
 to get online information about what's available.
 .It
 The following URLs contain useful information:

@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: defs.h,v 1.19 2000/11/02 00:54:33 brian Exp $
+ * $OpenBSD: defs.h,v 1.20 2001/03/24 01:05:59 brian Exp $
  *
  *	TODO:
  */
@@ -32,7 +32,9 @@
 #endif
 #define NMODEMS		2
 
-#define _PATH_PPP	"/etc/ppp"
+#ifndef PPP_CONFDIR
+#define PPP_CONFDIR	"/etc/ppp"
+#endif
 
 #define TUN_NAME	"tun"
 #define TUN_PREFIX	(_PATH_DEV TUN_NAME)	/* /dev/tun */
@@ -54,9 +56,9 @@
 #define NCP_IDLE_TIMEOUT 180	/* Drop all links */
 #define CHOKED_TIMEOUT 120	/* Delete queued packets w/ blocked tun */
 
-#define MIN_LQRPERIOD 2		/* Minimum LQR frequency */
+#define MIN_LQRPERIOD 1		/* Minimum LQR frequency */
 #define DEF_LQRPERIOD 30	/* Default LQR frequency */
-#define MIN_FSMRETRY 3		/* Minimum FSM retry frequency */
+#define MIN_FSMRETRY 1		/* Minimum FSM retry frequency */
 #define DEF_FSMRETRY 3		/* FSM retry frequency */
 #define DEF_FSMTRIES 5		/* Default max retries */
 #define DEF_FSMAUTHTRIES 3	/* Default max auth retries */

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.53 2001/02/04 01:19:53 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.54 2001/03/24 01:05:58 brian Exp $
  */
 
 #include <sys/param.h>
@@ -645,7 +645,7 @@ void
 bundle_LockTun(struct bundle *bundle)
 {
   FILE *lockfile;
-  char pidfile[MAXPATHLEN];
+  char pidfile[PATH_MAX];
 
   snprintf(pidfile, sizeof pidfile, "%stun%d.pid", _PATH_VARRUN, bundle->unit);
   lockfile = ID0fopen(pidfile, "w");
@@ -663,7 +663,7 @@ bundle_LockTun(struct bundle *bundle)
 static void
 bundle_UnlockTun(struct bundle *bundle)
 {
-  char pidfile[MAXPATHLEN];
+  char pidfile[PATH_MAX];
 
   snprintf(pidfile, sizeof pidfile, "%stun%d.pid", _PATH_VARRUN, bundle->unit);
   ID0unlink(pidfile);
@@ -705,7 +705,7 @@ bundle_Create(const char *prefix, int type, int unit)
     bundle.dev.fd = ID0open(bundle.dev.Name, O_RDWR);
     if (bundle.dev.fd >= 0)
       break;
-    else if (errno == ENXIO) {
+    else if (errno == ENXIO || errno == ENOENT) {
 #if defined(__FreeBSD__) && !defined(NOKLDLOAD)
       if (bundle.unit == minunit && !kldtried++) {
         /*
@@ -721,11 +721,10 @@ bundle_Create(const char *prefix, int type, int unit)
         }
       }
 #endif
-      err = errno;
-      break;
-    } else if (errno == ENOENT) {
-      if (++enoentcount > 2)
+      if (errno != ENOENT || ++enoentcount > 2) {
+        err = errno;
 	break;
+      }
     } else
       err = errno;
   }

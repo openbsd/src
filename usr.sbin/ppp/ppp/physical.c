@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.28 2000/11/28 22:59:53 brian Exp $
+ *  $OpenBSD: physical.c,v 1.29 2001/03/24 01:06:03 brian Exp $
  *
  */
 
@@ -119,15 +119,22 @@ struct {
   int (*DeviceSize)(void);
 } devices[] = {
 #ifndef NOI4B
+  /*
+   * This must come before ``tty'' so that the probe routine is
+   * able to identify it as a more specific type of terminal device.
+   */
   { i4b_Create, i4b_iov2device, i4b_DeviceSize },
 #endif
   { tty_Create, tty_iov2device, tty_DeviceSize },
 #ifndef NONETGRAPH
-  /* This must come before ``udp'' & ``tcp'' */
+  /*
+   * This must come before ``udp'' so that the probe routine is
+   * able to identify it as a more specific type of SOCK_DGRAM.
+   */
   { ether_Create, ether_iov2device, ether_DeviceSize },
 #endif
 #ifndef NOATM
-  /* and so must this */
+  /* Ditto for ATM devices */
   { atm_Create, atm_iov2device, atm_DeviceSize },
 #endif
   { tcp_Create, tcp_iov2device, tcp_DeviceSize },
@@ -314,17 +321,17 @@ physical_Lock(struct physical *p)
 static void
 physical_Unlock(struct physical *p)
 {
-  char fn[MAXPATHLEN];
   if (*p->name.full == '/' && p->type != PHYS_DIRECT &&
       ID0uu_unlock(p->name.base) == -1)
-    log_Printf(LogALERT, "%s: Can't uu_unlock %s\n", p->link.name, fn);
+    log_Printf(LogALERT, "%s: Can't uu_unlock %s\n", p->link.name,
+               p->name.base);
 }
 
 void
 physical_Close(struct physical *p)
 {
   int newsid;
-  char fn[MAXPATHLEN];
+  char fn[PATH_MAX];
 
   if (p->fd < 0)
     return;
@@ -950,7 +957,7 @@ static void
 physical_Found(struct physical *p)
 {
   FILE *lockfile;
-  char fn[MAXPATHLEN];
+  char fn[PATH_MAX];
 
   if (*p->name.full == '/') {
     snprintf(fn, sizeof fn, "%s%s.if", _PATH_VARRUN, p->name.base);

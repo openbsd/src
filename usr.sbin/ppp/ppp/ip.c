@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ip.c,v 1.28 2001/01/29 08:47:43 brian Exp $
+ * $OpenBSD: ip.c,v 1.29 2001/03/24 01:06:00 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -465,19 +465,19 @@ ip_LogDNS(const struct udphdr *uh, const char *direction)
 
   if (header.opcode == OPCODE_QUERY && header.qr == 0) {
     /* rfc1035 */
-    char name[MAXHOSTNAMELEN + 1], *n;
+    char namewithdot[MAXHOSTNAMELEN + 1], *n;
     const char *qtype, *qclass;
     const u_char *end;
 
-    n = name;
+    n = namewithdot;
     end = ptr + len - 4;
-    if (end - ptr > MAXHOSTNAMELEN)
-      end = ptr + MAXHOSTNAMELEN;
+    if (end - ptr >= sizeof namewithdot)
+      end = ptr + sizeof namewithdot - 1;
     while (ptr < end) {
       len = *ptr++;
       if (len > end - ptr)
         len = end - ptr;
-      if (n != name)
+      if (n != namewithdot)
         *n++ = '.';
       memcpy(n, ptr, len);
       ptr += len;
@@ -488,7 +488,7 @@ ip_LogDNS(const struct udphdr *uh, const char *direction)
     qclass = dns_Qclass2Txt(ntohs(*(const u_short *)(end + 2)));
 
     log_Printf(LogDNS, "%sbound query %s %s %s\n",
-               direction, qclass, qtype, name);
+               direction, qclass, qtype, namewithdot);
   }
 }
 

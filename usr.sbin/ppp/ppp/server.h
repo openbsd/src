@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: server.h,v 1.5 2001/01/26 01:41:04 brian Exp $
+ *	$OpenBSD: server.h,v 1.6 2001/03/24 01:06:06 brian Exp $
  */
 
 struct bundle;
@@ -35,7 +35,7 @@ struct server {
   struct {
     char passwd[50];
 
-    char sockname[MAXPATHLEN];		/* Points to local socket path */
+    char sockname[PATH_MAX];		/* Points to local socket path */
     mode_t mask;
 
     u_short port;			/* tcp socket */
