@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2004/01/28 21:46:38 tom Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2004/05/05 23:40:13 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -121,8 +121,8 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs rdsetroot \
-	    ${CRUNCHCONF}
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
+	    rdsetroot boot ${CRUNCHCONF} ${FS}
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
