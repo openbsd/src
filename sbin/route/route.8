@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.34 2004/06/19 19:55:53 cedric Exp $
+.\"	$OpenBSD: route.8,v 1.35 2004/06/25 01:26:01 henning Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -123,8 +123,6 @@ will
 .Dq flush
 the routing tables of all gateway entries.
 When the address family is specified by any of the
-.Fl osi ,
-.Fl xns ,
 .Fl ipx ,
 .Fl link ,
 .Fl x25 ,
@@ -210,27 +208,15 @@ modifier should be specified;
 the gateway given is the address of this host on the common network,
 indicating the interface to be used for transmission.
 .Pp
-The optional modifiers
-.Fl xns ,
-.Fl osi ,
-and
+The optional modifier
 .Fl link
-specify that all subsequent addresses are in the
-.Tn XNS
-.Tn OSI
-address families,
-or are specified as link-level addresses,
+specify that all subsequent addresses are specified as link-level addresses,
 and the names must be numeric specifications rather than
 symbolic names.
 .Pp
 The optional
 .Fl netmask
-qualifier is intended
-to achieve the effect of an
-.Tn OSI
-.Tn ESIS
-redirect with the netmask option,
-or to manually add subnet routes with
+qualifier is intended to manually add subnet routes with
 netmasks different from that of the implied network interface
 (as would otherwise be communicated using the OSPF or ISIS routing protocols).
 One specifies an additional ensuing address parameter
@@ -323,10 +309,7 @@ In a
 or
 .Cm add
 command where the destination and gateway are not sufficient to specify
-the route (as in the
-.Tn ISO
-case where several interfaces may have the
-same address), the
+the route, the
 .Fl ifp
 or
 .Fl ifa
