@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_readv.c,v 1.3 1999/11/25 07:01:42 d Exp $	*/
+/*	$OpenBSD: uthread_readv.c,v 1.4 2001/08/17 06:52:23 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -45,7 +45,7 @@
 ssize_t
 readv(int fd, const struct iovec * iov, int iovcnt)
 {
-	int	ret;
+	ssize_t	ret;
 	int	type;
 
 	/* Lock the file descriptor for read: */
