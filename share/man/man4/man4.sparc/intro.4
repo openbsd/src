@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.4 1998/07/15 04:42:30 jason Exp $
+.\"     $OpenBSD: intro.4,v 1.5 1998/09/08 01:30:38 jason Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -105,7 +105,7 @@ Sun 4/200 series (16.67 MHz)
 .br
 Sun 4/300 series (25 MHz)
 .It sun4c
-desktop SPARC systems with Sbus:
+desktop SPARC systems with SBus:
 .br
 SPARCstation 1 (20 MHz)
 .br
@@ -121,7 +121,7 @@ SPARCstation IPC (25 MHz)
 .br
 SPARCstation IPX (40 MHz).
 .It sun4m
-desktop SPARC systems with Mbus for CPUs, and Sbus:
+desktop SPARC systems with Mbus for CPUs, and SBus:
 .br
 SPARC Classic (50 Mhz microSPARC I)
 .br
@@ -178,6 +178,8 @@ Not all supported devices are listed.
 .Bl -tag -width le/lebuffer
 .It audioamd
 AMD 79C30 obio (sun4c) audio controller
+.It be
+10BaseT/100BaseTX SBus Ethernet controller
 .It bwtwo
 black and white obio frame buffer
 .It cgeight
@@ -185,11 +187,11 @@ black and white obio frame buffer
 .It cgfour
 8 bit obio (sun4 P4 bus) color graphics frame buffer
 .It cgfourteen
-24 bit Sbus color frame buffer
+24 bit SBus color frame buffer
 .It cgsix
-8 bit obio (sun4c & sun4m), Sbus color graphics frame buffer
+8 bit obio (sun4c & sun4m), SBus color graphics frame buffer
 .It cgthree
-8 bit VMEbus, Sbus, and obio (sun4m) color graphics frame buffer
+8 bit VMEbus, SBus, and obio (sun4m) color graphics frame buffer
 .It cgtwo
 8 bit VMEbus color frame buffer
 .It eeprom
@@ -201,32 +203,36 @@ ESP100A (sun4c),
 .br
 ESP200 (sun4m) SCSI controller,
 .br
-FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet Sbus controller
+FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet SBus controller
 .It fd
 Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
 floppy disk drive controller
 .It hme
-Sbus HME Ethernet controllers (SunSwift and Sun QuadFastEthernet)
+SBus HME Ethernet controllers (SunSwift and Sun QuadFastEthernet)
 .It ie
 Intel 82586 Ethernet controller (Sun 4/100)
 .It isp
-Qlogic ISP Sbus SCSI controller
+Qlogic ISP SBus SCSI controller
 .It kbd
 Sun type 2, type 3, type 4, and type 5 keyboards (on zs)
 .It le/lebuffer
-AMD 7990 LANCE ethernet controller (Sun 4/200, 4/300, sun4c, sun4m, Sbus)
+AMD 7990 LANCE ethernet controller (Sun 4/200, 4/300, sun4c, sun4m, SBus)
 .It magma
 Magma serial/parallel communication boards
 .It ms
 Sun mouse (on zs)
 .It openprom
 Sun Open boot PROM (what became IEEE 1275) configuration driver
+.It qec
+Supported as a carrier for the
+.Nm be
+controller.
 .It si
 NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller
 .It sw
 NCR5380 obio (Sun 4/100) "SCSI Wierd" SCSI controller
 .It tcx
-8 or 24 bit Sbus color graphics frame buffer
+8 or 24 bit SBus color graphics frame buffer
 .It xd
 Xylogics 753/7053 VMEbus SMD disk controller
 .It xy
