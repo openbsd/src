@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2001/12/22 18:52:01 smurph Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2001/12/22 18:53:45 smurph Exp $
 
 machine		mvme88k 
 
@@ -10,6 +10,9 @@ option		MVME197		# support for 197
 
 option		"NCPUS=1"	# number of CPUs supported (max 4)
 option		BUGMAP		# use the Bug ROM VME mappings
+
+# Define this if your processor has the xxx.usr bug (mask C82N)
+option		ERRATA__XXX_USR	
 
 maxusers	8
 
