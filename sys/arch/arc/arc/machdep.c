@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 1996/09/19 00:30:36 imp Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 1996/09/19 22:30:07 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.13 1996/09/19 00:30:36 imp Exp $
+ *      $Id: machdep.c,v 1.14 1996/09/19 22:30:07 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -143,9 +143,6 @@ int	(*Mach_splstatclock)() = splhigh;
 
 static void tlb_init_pica();
 static void tlb_init_tyne();
-
-void vid_print_string(const char *str);
-void vid_putchar(dev_t dev, char c);
 
 
 /*
@@ -523,7 +520,6 @@ consinit()
 		return;
 	initted = 1;
 	cninit();
-/* mdbpanic(); */
 }
 
 /*
@@ -919,14 +915,18 @@ boot(howto)
 		resettodr();
 	}
 	(void) splhigh();		/* extreme priority */
-	if (howto & RB_HALT)
+	if (howto & RB_HALT) {
 		printf("System halted.\n");
+		while(1); /* Forever */
+	}
 	else {
 		if (howto & RB_DUMP)
 			dumpsys();
 		printf("System restart.\n");
+		delay(2000000);
+		__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
+		while(1); /* Forever */
 	}
-	while(1); /* Forever */
 	/*NOTREACHED*/
 }
 
@@ -1110,78 +1110,4 @@ atoi(s)
 		val = -val;
 out:
 	return val;	
-}
-
-/*
- * This code is temporary for debugging at startup
- */
-
-static int vid_xpos=0, vid_ypos=0;
-
-static void 
-vid_wrchar(char c)
-{
-	volatile unsigned short *video;
-
-	video = (unsigned short *)(0xe08b8000) + vid_ypos * 80 + vid_xpos;
-	*video = (*video & 0xff00) | 0x0f00 | (unsigned short)c;
-}
-
-static void
-vid_scroll()
-{
-	volatile unsigned short *video;
-	int i;
-
-	video = (unsigned short *)(0xe08b8000);
-	for(i = 0; i < 80 * 24; i++) {
-		*video = *(video + 80);
-		video++;
-	}
-	for(i = 0; i < 80; i++) {
-		*video = *video & 0xff00 | ' ';
-		video++;
-	}
-}
-void
-vid_print_string(const char *str)
-{
-	unsigned char c;
-
-	while(c = *str++) {
-		vid_putchar((dev_t)0, c);
-	}
-}
-
-void
-vid_putchar(dev_t dev, char c)
-{
-	switch(c) {
-	case '\n':
-		vid_xpos = 0;
-		if(vid_ypos == 24)
-			vid_scroll();
-		else
-			vid_ypos++;
-		DELAY(500000);
-		break;
-
-	case '\r':
-		vid_xpos = 0;
-		break;
-
-	case '\t':
-		do {
-			vid_putchar(dev, ' ');
-		} while(vid_xpos & 7);
-		break;
-
-	default:
-		vid_wrchar(c);
-		vid_xpos++;
-		if(vid_xpos == 80) {
-			vid_xpos = 0;
-			vid_putchar(dev, '\n');
-		}
-	}
 }
