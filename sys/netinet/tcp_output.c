@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.63 2004/01/31 19:40:10 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.64 2004/02/10 10:30:24 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -616,14 +616,14 @@ send:
 				*(bp++) = 0;
 		}
 
-		optlen += TCPOLEN_SIGNATURE;
 
 		/* Pad options list to the next 32 bit boundary and
 		 * terminate it.
 		 */
 		*bp++ = TCPOPT_NOP;
 		*bp++ = TCPOPT_EOL;
-		optlen += 2;
+
+		optlen += TCPOLEN_SIGLEN;
 	}
 #endif /* TCP_SIGNATURE */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.14 2004/01/31 21:09:15 henning Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.15 2004/02/10 10:30:24 markus Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ struct tcphdr {
 #define	   TCPOLEN_TSTAMP_APPA		(TCPOLEN_TIMESTAMP+2) /* appendix A */
 #define	TCPOPT_SIGNATURE	19
 #define	   TCPOLEN_SIGNATURE		18
+#define	   TCPOLEN_SIGLEN		(TCPOLEN_SIGNATURE+2) /* padding */
 
 #define	MAX_TCPOPTLEN		40	/* Absolute maximum TCP options len */
 

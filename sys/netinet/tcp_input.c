@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.153 2004/02/05 04:23:13 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.154 2004/02/10 10:30:24 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3080,6 +3080,10 @@ tcp_mss(tp, offer)
 	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
 	    (tp->t_flags & TF_RCVD_TSTMP) == TF_RCVD_TSTMP)
 		mss -= TCPOLEN_TSTAMP_APPA;
+#ifdef TCP_SIGNATURE
+	if (tp->t_flags & TF_SIGNATURE)
+		mss -= TCPOLEN_SIGLEN;
+#endif
 
 	if (offer == -1) {
 		/* mss changed due to Path MTU discovery */
@@ -4139,7 +4143,7 @@ syn_cache_respond(sc, m)
 	    ((sc->sc_flags & SCF_SACK_PERMIT) ? 4 : 0) +
 #endif
 #ifdef TCP_SIGNATURE
-	    ((sc->sc_flags & SCF_SIGNATURE) ? TCPOLEN_SIGNATURE + 2 : 0) +
+	    ((sc->sc_flags & SCF_SIGNATURE) ? TCPOLEN_SIGLEN : 0) +
 #endif
 	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
 
