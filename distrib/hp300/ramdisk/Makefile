@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/09/05 21:16:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/09/26 02:09:54 millert Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -46,7 +46,7 @@ rd_setup: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV} ${DISKTYPE}
+	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 

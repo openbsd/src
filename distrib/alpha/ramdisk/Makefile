@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1997/09/05 21:16:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 1997/09/26 02:09:53 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -44,8 +44,7 @@ ${FLOPPY}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} ${FLOPPYTYPE}
-	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV} \
-	    ${FLOPPYTYPE}
+	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${MOUNT_POINT}
 	cp bsd.gz ${MOUNT_POINT}/bsd
@@ -91,7 +90,7 @@ do_prep:
 	disklabel -w -r ${VND} ${DISKTYPE}
 	
 do_mount:
-	newfs ${NEWFSARGS} ${NEWFSARGS_RD} -s ${NBLKS} ${VND_RDEV} ${DISKTYPE}
+	newfs ${NEWFSARGS} ${NEWFSARGS_RD} -s ${NBLKS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
  
 do_umount:

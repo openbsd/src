@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1997/05/14 18:39:04 niklas Exp $ 
+#	$OpenBSD: Makefile.inc,v 1.6 1997/09/26 02:10:00 millert Exp $ 
 #	$NetBSD: Makefile.inc,v 1.5.4.2 1996/08/07 07:29:42 phil Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -30,7 +30,8 @@ all: netbsd
 	-yes|bim -c init -c "add ${MDEC}/boot boot" -c "default 0" \
 	    -c "exit" ${.OBJDIR}/${IMAGE} 2>/dev/null >/dev/null
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 ${VND_RDEV} boot3
+	disklabel -w -r ${VND} boot3
+	newfs -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp netbsd ${MOUNT_POINT}/netbsd
 	@df -i ${MOUNT_POINT}
@@ -44,7 +45,8 @@ inject.fs: ${CBIN} ${LISTS} netbsd.gz
 .ifndef SD
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
 	vnconfig -v -c ${VND_DEV} ${.TARGET}
-	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} rd
+	disklabel -w -r ${VND} rd
+	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 .else
 	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 -s 4096 \

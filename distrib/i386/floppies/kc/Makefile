@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 1997/09/05 21:16:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 1997/09/26 02:09:55 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -33,12 +33,12 @@ all: bsd ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy5
-	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy5
+	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV}
 .else
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy3
-	newfs -O -m 0 -o space -i 6500 -c 80 ${VND_RDEV} floppy3
+	newfs -O -m 0 -o space -i 6500 -c 80 ${VND_RDEV}
 .endif
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u

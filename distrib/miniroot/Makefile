@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 1997/09/21 11:45:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 1997/09/26 02:09:59 millert Exp $
 
 # Revision is 2.1
 REV=		21
@@ -44,8 +44,7 @@ all: ${CBIN} bsd
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w ${RAWLABEL} ${VND} ${DISKTYPE}
-	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE} || \
-	    ${NEWFS_WILL_FAIL}
+	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} || ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \

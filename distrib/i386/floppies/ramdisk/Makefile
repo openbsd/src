@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 1997/09/05 21:16:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 1997/09/26 02:09:57 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,7 +30,7 @@ ${FS}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} floppy3
-	newfs -m 0 -o space -i 524288 -c 80 ${VND_RDEV} floppy3
+	newfs -m 0 -o space -i 524288 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
@@ -70,7 +70,7 @@ rd_setup: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV} ${DISKTYPE}
+	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 
