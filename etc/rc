@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.28 1996/12/22 20:14:09 deraadt Exp $
+#	$OpenBSD: rc,v 1.29 1997/02/03 12:04:44 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -75,6 +75,22 @@ echo 'starting network'
 
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
+
+# /etc/ifaliases, if it exists, contains the names of additional IP
+# addresses for each interface. It is formatted as a series of lines
+# that contain
+#	interface address netmask
+if [ -f /etc/ifaliases ]; then
+(
+	# delete comments and blank lines
+	set -- `sed -e 's/#.*$//' /etc/ifaliases | grep -v '^$'`
+	while [ $# -ge 3 ] ; do
+		ifconfig $1 inet alias $2 netmask $3
+		route add $2 localhost
+		shift 3
+	done
+)
+fi
 
 if [ X"${ipfilter}" = X"YES" -a X"${ipmon_flags}" != X"NO" ]; then
 	ipmon ${ipmon_flags} &
