@@ -1,4 +1,4 @@
-/*	$OpenBSD: magmareg.h,v 1.1 2002/01/12 20:19:40 jason Exp $	*/
+/*	$OpenBSD: magmareg.h,v 1.2 2002/01/12 21:30:56 jason Exp $	*/
 
 /* magmareg.h
  *
@@ -98,7 +98,8 @@ struct cd1400 {
  * cd1190 chip data
  */
 struct cd1190 {
-	__volatile u_char *cd_reg;	/* chip registers */
+	bus_space_handle_t cd_regh;	/* chip register handle */
+	bus_space_tag_t cd_regt;	/* chip register tag */
 	int cd_chiprev;			/* chip revision */
 };
 
@@ -106,16 +107,18 @@ struct cd1190 {
 struct magma_softc {
 	struct device ms_dev;		/* required. must be first in softc */
 
+	bus_space_tag_t sc_bustag;	/* our bus tag */
+	bus_space_handle_t sc_iohandle;	/* whole card registers */
+	void *sc_ih;			/* interrupt vector */
+	void *sc_sih;			/* softintr vector */
+
 	/* cd1400 chip info */
 	int ms_ncd1400;
 	struct cd1400 ms_cd1400[MAGMA_MAX_CD1400];
-	void *sc_ih;			/* interrupt vector */
-	void *sc_sih;			/* softintr vector */
-	bus_space_tag_t sc_bustag;
-	bus_space_handle_t sc_iohandle;	/* whole card registers */
 	bus_space_handle_t sc_svcackrh;	/* CD1400 service acknowledge receive */
 	bus_space_handle_t sc_svcackth;	/* CD1400 service acknowledge transmit */
 	bus_space_handle_t sc_svcackmh;	/* CD1400 service acknowledge modem */
+
 
 	/* cd1190 chip info */
 	int ms_ncd1190;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.1 2002/01/12 20:19:40 jason Exp $	*/
+/*	$OpenBSD: magma.c,v 1.2 2002/01/12 21:30:56 jason Exp $	*/
 /*
  * magma.c
  *
@@ -65,19 +65,6 @@
 #include <dev/ic/cd1190reg.h>
 
 #include <dev/sbus/magmareg.h>
-
-/*
- * Select tty soft interrupt bit based on TTY ipl. (stole from zs.c)
- */
-#if PIL_TTY == 1
-# define IE_MSOFT IE_L1
-#elif PIL_TTY == 4
-# define IE_MSOFT IE_L4
-#elif PIL_TTY == 6
-# define IE_MSOFT IE_L6
-#else
-# error "no suitable software interrupt bit"
-#endif
 
 /* supported cards
  *
@@ -330,7 +317,6 @@ magma_attach(parent, dev, aux)
 	struct magma_board_info *card = supported_cards;
 	char *magma_prom = getpropstring(sa->sa_node, "magma_prom");
 	int chip;
-	void *base;
 
 	/* find the card type */
 	while (card->mb_name && strcmp(magma_prom, card->mb_name))
@@ -449,9 +435,14 @@ magma_attach(parent, dev, aux)
 
 	/* init the cd1190 chips */
 	for (chip = 0 ; chip < card->mb_ncd1190 ; chip++) {
-	struct cd1190 *cd = &sc->ms_cd1190[chip];
+		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
-		cd->cd_reg = base + card->mb_cd1190[chip];
+		if (bus_space_subregion(sc->sc_bustag, sc->sc_iohandle,
+		    card->mb_cd1190[chip], CD1400_REGMAPSIZE, &cd->cd_regh)) {
+			printf(": failed to map cd1400 regs\n");
+			return;
+		}
+		cd->cd_regt = sc->sc_bustag;
 		dprintf(("%s attach CD1190 %d addr 0x%x (failed)\n", sc->ms_dev.dv_xname, chip, cd->cd_reg));
 		/* XXX don't know anything about these chips yet */
 	}
