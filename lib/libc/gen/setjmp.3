@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.12 2001/01/12 21:28:19 millert Exp $
+.\"	$OpenBSD: setjmp.3,v 1.13 2001/11/20 18:59:08 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -203,3 +203,25 @@ functions and do not restore the signal mask.
 Because of this discrepancy, the
 .Fn sigsetjmp Ns / Ns Fn siglongjmp
 interfaces should be used if portability is desired.
+.Pp
+Use of
+.Fn longjmp
+or
+.Fn siglongjmp
+from inside a signal handler is not as easy as it might seem.
+Generally speaking, all possible code paths between the
+.Fn setjmp
+and
+.Fn longjmp
+must be signal race safe, as discussed in
+.Xr signal 3 .
+Furthermore, the code paths must not do resource management
+(such as
+.Xr open 2
+or
+.Xr close 2 )
+without blocking the signal in question, or resources might
+be mismanaged.
+Obviously this makes
+.Fn longjmp
+much less useful than previously thought.
