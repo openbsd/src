@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2000/03/22 15:38:23 markus Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2000/06/11 09:03:32 fgsch Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.45 2000/03/22 15:38:23 markus Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.46 2000/06/11 09:03:32 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -422,10 +422,11 @@ cmdscanner(top)
 
 			if ((buf = el_gets(el, &num)) == NULL || num == 0)
 				quit(0, 0);
-			if (line[--num] == '\n') {
+			if (buf[--num] == '\n') {
 				if (num == 0)
 					break;
-			} else if (num >= sizeof(line)) {
+			}
+			if (num >= sizeof(line)) {
 				fputs("sorry, input line too long.\n", ttyout);
 				break;
 			}
