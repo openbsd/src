@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.4 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.5 2002/12/11 23:01:40 millert Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -54,56 +54,159 @@
 #define	_X	0x40
 #define	_B	0x80
 
+#define	EOF	(-1)
+
 extern const char	*_ctype_;
 extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
 
+#ifdef _ANSI_LIBRARY
 __BEGIN_DECLS
-extern int	isalnum(int);
-extern int	isalpha(int);
-extern int	iscntrl(int);
-extern int	isdigit(int);
-extern int	isgraph(int);
-extern int	islower(int);
-extern int	isprint(int);
-extern int	ispunct(int);
-extern int	isspace(int);
-extern int	isupper(int);
-extern int	isxdigit(int);
-extern int	tolower(int);
-extern int	toupper(int);
+int	isalnum(int);
+int	isalpha(int);
+int	iscntrl(int);
+int	isdigit(int);
+int	isgraph(int);
+int	islower(int);
+int	isprint(int);
+int	ispunct(int);
+int	isspace(int);
+int	isupper(int);
+int	isxdigit(int);
+int	tolower(int);
+int	toupper(int);
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-extern int	isblank(int);
-extern int	isascii(int);
-extern int	toascii(int);
-extern int	_tolower(int);
-extern int	_toupper(int);
+int	isblank(int);
+int	isascii(int);
+int	toascii(int);
+int	_tolower(int);
+int	_toupper(int);
 #endif
 __END_DECLS
 
-#define	isdigit(c)	((_ctype_ + 1)[(unsigned char)(c)] & _N)
-#define	islower(c)	((_ctype_ + 1)[(unsigned char)(c)] & _L)
-#define	isspace(c)	((_ctype_ + 1)[(unsigned char)(c)] & _S)
-#define	ispunct(c)	((_ctype_ + 1)[(unsigned char)(c)] & _P)
-#define	isupper(c)	((_ctype_ + 1)[(unsigned char)(c)] & _U)
-#define	isalpha(c)	((_ctype_ + 1)[(unsigned char)(c)] & (_U|_L))
-#define	isxdigit(c)	((_ctype_ + 1)[(unsigned char)(c)] & (_N|_X))
-#define	isalnum(c)	((_ctype_ + 1)[(unsigned char)(c)] & (_U|_L|_N))
-#define	isprint(c)	((_ctype_ + 1)[(unsigned char)(c)] & (_P|_U|_L|_N|_B))
-#define	isgraph(c)	((_ctype_ + 1)[(unsigned char)(c)] & (_P|_U|_L|_N))
-#define	iscntrl(c)	((_ctype_ + 1)[(unsigned char)(c)] & _C)
-#define tolower(c)	((_tolower_tab_ + 1)[(unsigned char)(c)])
-#define toupper(c)	((_toupper_tab_ + 1)[(unsigned char)(c)])
+#else /* !_ANSI_LIBRARY */
+
+static __inline int isalnum(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & (_U|_L|_N));
+}
+
+static __inline int isalpha(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & (_U|_L));
+}
+
+static __inline int iscntrl(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & _C);
+}
+
+static __inline int isdigit(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & _N);
+}
+
+static __inline int isgraph(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N));
+}
+
+static __inline int islower(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & _L);
+}
+
+static __inline int isprint(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N|_B));
+}
+
+static __inline int ispunct(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & _P);
+}
+
+static __inline int isspace(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & _S);
+}
+
+static __inline int isupper(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & _U);
+}
+
+static __inline int isxdigit(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((_ctype_ + 1)[(unsigned char)c] & (_N|_X));
+}
+
+static __inline int tolower(int c)
+{
+	if (c != (unsigned char) c)
+		return (c);
+	return ((_tolower_tab_ + 1)[c]);
+}
+
+static __inline int toupper(int c)
+{
+	if (c != (unsigned char) c)
+		return (c);
+	return ((_toupper_tab_ + 1)[c]);
+}
 
 #if !defined(_ANSI_SOURCE) && !defined (_POSIX_SOURCE)
-#if notyet
-#define isblank(c)	((_ctype_ + 1)[(unsigned char)(c)] & _B)
+static __inline int isblank(int c)
+{
+	return (c == ' ' || c == '\t');
+}
+
+static __inline int isascii(int c)
+{
+	if (c == EOF)
+		return (0);
+	return ((unsigned)(c) <= 0177);
+}
+
+static __inline int toascii(int c)
+{
+	return (c & 0177);
+}
+
+static __inline int _tolower(int c)
+{
+	return (c - 'A' + 'a');
+}
+
+static __inline int _toupper(int c)
+{
+	return (c - 'a' + 'A');
+}
 #endif
-#define	isascii(c)	((unsigned char)(c) <= 0177)
-#define	toascii(c)	((c) & 0177)
-#define _tolower(c)	((c) - 'A' + 'a')
-#define _toupper(c)	((c) - 'a' + 'A')
-#endif
+
+#endif /* !_ANSI_LIBRARY */
 
 #endif /* !_CTYPE_H_ */

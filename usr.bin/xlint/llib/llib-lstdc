@@ -1,4 +1,4 @@
-/*	$OpenBSD: llib-lstdc,v 1.3 1997/02/17 08:58:50 deraadt Exp $	*/
+/*	$OpenBSD: llib-lstdc,v 1.4 2002/12/11 23:01:40 millert Exp $	*/
 /*	$NetBSD: llib-lstdc,v 1.3 1995/07/03 21:39:28 cgd Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 /* LINTLIBRARY */
 
 #define _ANSI_SOURCE
+#define _ANSI_LIBRARY
 
 #include <assert.h>
 #include <ctype.h>
