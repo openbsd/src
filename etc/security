@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.8 1996/09/15 20:29:41 deraadt Exp $
+#	$OpenBSD: security,v 1.9 1996/09/16 19:40:27 deraadt Exp $
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
@@ -44,7 +44,7 @@ awk -F: '{
 		printf("Login %s has no password.\n", $1);
 	if (length($2) != 13 && ($10 ~ /.*sh$/ || $10 == ""))
 		printf("Login %s is off but still has a valid shell.\n", $1);
-	if ($3 == 0 && $1 != "root" && $1 != "toor")
+	if ($3 == 0 && $1 != "root")
 		printf("Login %s has a user id of 0.\n", $1);
 	if ($3 < 0)
 		printf("Login %s has a negative user id.\n", $1);
@@ -62,7 +62,7 @@ if [ -s $OUTPUT ] ; then
 	column $OUTPUT
 fi
 
-awk -F: '$1 != "toor" { print $1 " " $3 }' $MP | sort -n +1 | tee $TMP1 |
+awk -F: '{ print $1 " " $3 }' $MP | sort -n +1 | tee $TMP1 |
 uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 if [ -s $TMP2 ] ; then
 	printf "\n$MP has duplicate user id's.\n"
@@ -242,10 +242,10 @@ for f in $list ; do
 	fi
 done
 
-# Check for special users with .rhosts/.shosts files.  Only root and
-# toor should have .rhosts/.shosts files.  Also, .rhosts/.shosts files
+# Check for special users with .rhosts/.shosts files.  Only root should
+# have .rhosts/.shosts files.  Also, .rhosts/.shosts files
 # should not have plus signs.
-awk -F: '$1 != "root" && $1 != "toor" && $1 !~ /^[+-].*$/ && \
+awk -F: '$1 != "root" && $1 !~ /^[+-].*$/ && \
 	($3 < 100 || $1 == "ftp" || $1 == "uucp") \
 		{ print $1 " " $6 }' /etc/passwd |
 while read uid homedir; do
