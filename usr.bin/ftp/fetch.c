@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.51 2004/09/16 04:39:16 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.52 2005/04/05 22:37:00 henning Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.51 2004/09/16 04:39:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.52 2005/04/05 22:37:00 henning Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -606,7 +606,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 {
 	char *xargv[5];
 	char *cp, *line, *host, *dir, *file, *portnum;
-	char *user, *pass;
+	char *user, *pass, *pathstart;
 	char *ftpproxy, *httpproxy;
 	int rval, xargc;
 	volatile int argpos;
@@ -719,6 +719,12 @@ bad_ftp_url:
 			/* split off host[:port] if there is */
 			if (cp) {
 				portnum = strchr(cp, ':');
+				pathstart = strchr(cp, '/');
+				/* : in path is not a port # indicator */
+				if (portnum && pathstart &&
+				    pathstart < portnum)
+					portnum = NULL;
+
 				if (!portnum)
 					;
 				else {
