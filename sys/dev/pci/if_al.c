@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_al.c,v 1.2 1999/10/29 07:38:23 jason Exp $ */
+/*	$OpenBSD: if_al.c,v 1.3 1999/11/28 16:43:47 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -108,22 +108,6 @@
 
 #include <dev/pci/if_alreg.h>
 
-/*
- * Various supported PHY vendors/types and their names. Note that
- * this driver will work with pretty much any MII-compliant PHY,
- * so failure to positively identify the chip is not a fatal error.
- */
-
-struct al_type al_phys[] = {
-	{ TI_PHY_VENDORID, TI_PHY_10BT, "<TI ThunderLAN 10BT (internal)>" },
-	{ TI_PHY_VENDORID, TI_PHY_100VGPMI, "<TI TNETE211 100VG Any-LAN>" },
-	{ NS_PHY_VENDORID, NS_PHY_83840A, "<National Semiconductor DP83840A>"},
-	{ LEVEL1_PHY_VENDORID, LEVEL1_PHY_LXT970, "<Level 1 LXT970>" }, 
-	{ INTEL_PHY_VENDORID, INTEL_PHY_82555, "<Intel 82555>" },
-	{ SEEQ_PHY_VENDORID, SEEQ_PHY_80220, "<SEEQ 80220>" },
-	{ 0, 0, "<MII-compliant physical interface>" }
-};
-
 int al_probe		__P((struct device *, void *, void *));
 void al_attach		__P((struct device *, struct device *, void *));
 int al_intr		__P((void *));
@@ -155,14 +139,9 @@ void al_mii_send	__P((struct al_softc *, u_int32_t, int));
 int al_mii_readreg	__P((struct al_softc *, struct al_mii_frame *));
 int al_mii_writereg	__P((struct al_softc *, struct al_mii_frame *));
 
-u_int16_t al_phy_readreg	__P((struct al_softc *, int));
-void al_phy_writereg	__P((struct al_softc *, int, int));
-
-void al_autoneg_xmit	__P((struct al_softc *));
-void al_autoneg_mii	__P((struct al_softc *, int, int));
-void al_setmode_mii	__P((struct al_softc *, int));
-void al_getmode_mii	__P((struct al_softc *));
-
+int al_miibus_readreg	__P((struct device *, int, int));
+void al_miibus_writereg	__P((struct device *, int, int, int));
+void al_miibus_statchg	__P((struct device *));
 
 u_int32_t al_calchash	__P((caddr_t));
 void al_setmulti	__P((struct al_softc *));
@@ -522,99 +501,122 @@ int al_mii_writereg(sc, frame)
 	return(0);
 }
 
- u_int16_t al_phy_readreg(sc, reg)
-	struct al_softc		*sc;
-	int			reg;
+int al_miibus_readreg(self, phy, reg)
+	struct device		*self;
+	int			phy, reg;
 {
+	struct al_mii_frame	frame;
 	u_int16_t		rval = 0;
 	u_int16_t		phy_reg = 0;
-	struct al_mii_frame	frame;
+	struct al_softc		*sc = (struct al_softc *)self;
+
+	/*
+	 * Note: both the AL981 and AN985 have internal PHYs,
+	 * however the AL981 provides direct access to the PHY
+	 * registers while the AN985 uses a serial MII interface.
+	 * The AN985's MII interface is also buggy in that you
+	 * can read from any MII address (0 to 31), but only address 1
+	 * behaves normally. To deal with both cases, we pretend
+	 * that the PHY is at MII address 1.
+	 */
+	if (phy != 1)
+		return(0);
 
 	if (sc->al_did == PCI_PRODUCT_ADMTEK_AN985) {
-		if (sc->al_phy_addr != 1)
-			return(0);
-		frame.mii_phyaddr = sc->al_phy_addr;
+		bzero((char *)&frame, sizeof(frame));
+
+		frame.mii_phyaddr = phy;
 		frame.mii_regaddr = reg;
 		al_mii_readreg(sc, &frame);
+
 		return(frame.mii_data);
 	}
 
 	switch(reg) {
-	case PHY_BMCR:
+	case MII_BMCR:
 		phy_reg = AL_BMCR;
 		break;
-	case PHY_BMSR:
+	case MII_BMSR:
 		phy_reg = AL_BMSR;
 		break;
-	case PHY_VENID:
+	case MII_PHYIDR1:
 		phy_reg = AL_VENID;
 		break;
-	case PHY_DEVID:
+	case MII_PHYIDR2:
 		phy_reg = AL_DEVID;
 		break;
-	case PHY_ANAR:
+	case MII_ANAR:
 		phy_reg = AL_ANAR;
 		break;
-	case PHY_LPAR:
+	case MII_ANLPAR:
 		phy_reg = AL_LPAR;
 		break;
-	case PHY_ANEXP:
+	case MII_ANER:
 		phy_reg = AL_ANER;
 		break;
 	default:
 		printf("al%d: read: bad phy register %x\n",
 		    sc->al_unit, reg);
+		return(0);
 		break;
 	}
 
 	rval = CSR_READ_4(sc, phy_reg) & 0x0000FFFF;
 
+	if (rval == 0xFFFF)
+		return(0);
+
 	return(rval);
 }
 
-void al_phy_writereg(sc, reg, data)
-	struct al_softc		*sc;
-	int			reg;
-	int			data;
+void al_miibus_writereg(self, phy, reg, data)
+	struct device		*self;
+	int			phy, reg, data;
 {
-	u_int16_t		phy_reg = 0;
 	struct al_mii_frame	frame;
+	struct al_softc		*sc = (struct al_softc *)self;
+	u_int16_t		phy_reg = 0;
+
+	if (phy != 1)
+		return;
 
 	if (sc->al_did == PCI_PRODUCT_ADMTEK_AN985) {
-		if (sc->al_phy_addr != 1)
-			return;
-		frame.mii_phyaddr = sc->al_phy_addr;
+		bzero((char *)&frame, sizeof(frame));
+
+		frame.mii_phyaddr = phy;
 		frame.mii_regaddr = reg;
 		frame.mii_data = data;
+
 		al_mii_writereg(sc, &frame);
 		return;
 	}
 
 	switch(reg) {
-	case PHY_BMCR:
+	case MII_BMCR:
 		phy_reg = AL_BMCR;
 		break;
-	case PHY_BMSR:
+	case MII_BMSR:
 		phy_reg = AL_BMSR;
 		break;
-	case PHY_VENID:
+	case MII_PHYIDR1:
 		phy_reg = AL_VENID;
 		break;
-	case PHY_DEVID:
+	case MII_PHYIDR2:
 		phy_reg = AL_DEVID;
 		break;
-	case PHY_ANAR:
+	case MII_ANAR:
 		phy_reg = AL_ANAR;
 		break;
-	case PHY_LPAR:
+	case MII_ANLPAR:
 		phy_reg = AL_LPAR;
 		break;
-	case PHY_ANEXP:
+	case MII_ANER:
 		phy_reg = AL_ANER;
 		break;
 	default:
 		printf("al%d: phy_write: bad phy register %x\n",
 		    sc->al_unit, reg);
+		return;
 		break;
 	}
 
@@ -623,290 +625,11 @@ void al_phy_writereg(sc, reg, data)
 	return;
 }
 
-/*
- * Initiate an autonegotiation session.
- */
-void al_autoneg_xmit(sc)
-	struct al_softc		*sc;
+void al_miibus_statchg(self)
+	struct device		*self;
 {
-	u_int16_t		phy_sts;
-
-	al_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
-	DELAY(500);
-	while(al_phy_readreg(sc, PHY_BMCR)
-			& PHY_BMCR_RESET);
-
-	phy_sts = al_phy_readreg(sc, PHY_BMCR);
-	phy_sts |= PHY_BMCR_AUTONEGENBL|PHY_BMCR_AUTONEGRSTR;
-	al_phy_writereg(sc, PHY_BMCR, phy_sts);
-
 	return;
 }
-
-/*
- * Invoke autonegotiation on a PHY.
- */
-void al_autoneg_mii(sc, flag, verbose)
-	struct al_softc		*sc;
-	int			flag;
-	int			verbose;
-{
-	u_int16_t		phy_sts = 0, media, advert, ability;
-	struct ifnet		*ifp;
-	struct ifmedia		*ifm;
-
-	ifm = &sc->ifmedia;
-	ifp = &sc->arpcom.ac_if;
-
-	ifm->ifm_media = IFM_ETHER | IFM_AUTO;
-
-	/*
-	 * The 100baseT4 PHY on the 3c905-T4 has the 'autoneg supported'
-	 * bit cleared in the status register, but has the 'autoneg enabled'
-	 * bit set in the control register. This is a contradiction, and
-	 * I'm not sure how to handle it. If you want to force an attempt
-	 * to autoneg for 100baseT4 PHYs, #define FORCE_AUTONEG_TFOUR
-	 * and see what happens.
-	 */
-#ifndef FORCE_AUTONEG_TFOUR
-	/*
-	 * First, see if autoneg is supported. If not, there's
-	 * no point in continuing.
-	 */
-	phy_sts = al_phy_readreg(sc, PHY_BMSR);
-	if (!(phy_sts & PHY_BMSR_CANAUTONEG)) {
-		if (verbose)
-			printf("al%d: autonegotiation not supported\n",
-							sc->al_unit);
-		ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;	
-		return;
-	}
-#endif
-
-	switch (flag) {
-	case AL_FLAG_FORCEDELAY:
-		/*
-	 	 * XXX Never use this option anywhere but in the probe
-	 	 * routine: making the kernel stop dead in its tracks
- 		 * for three whole seconds after we've gone multi-user
-		 * is really bad manners.
-	 	 */
-		al_autoneg_xmit(sc);
-		DELAY(5000000);
-		break;
-	case AL_FLAG_SCHEDDELAY:
-		/*
-		 * Wait for the transmitter to go idle before starting
-		 * an autoneg session, otherwise al_start() may clobber
-	 	 * our timeout, and we don't want to allow transmission
-		 * during an autoneg session since that can screw it up.
-	 	 */
-		if (sc->al_cdata.al_tx_cons != 0) {
-			sc->al_want_auto = 1;
-			return;
-		}
-		al_autoneg_xmit(sc);
-		ifp->if_timer = 5;
-		sc->al_autoneg = 1;
-		sc->al_want_auto = 0;
-		return;
-		break;
-	case AL_FLAG_DELAYTIMEO:
-		ifp->if_timer = 0;
-		sc->al_autoneg = 0;
-		break;
-	default:
-		printf("al%d: invalid autoneg flag: %d\n", sc->al_unit, flag);
-		return;
-	}
-
-	if (al_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_AUTONEGCOMP) {
-		if (verbose)
-			printf("al%d: autoneg complete, ", sc->al_unit);
-		phy_sts = al_phy_readreg(sc, PHY_BMSR);
-	} else {
-		if (verbose)
-			printf("al%d: autoneg not complete, ", sc->al_unit);
-	}
-
-	media = al_phy_readreg(sc, PHY_BMCR);
-
-	/* Link is good. Report modes and set duplex mode. */
-	if (al_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT) {
-		if (verbose)
-			printf("link status good ");
-		advert = al_phy_readreg(sc, PHY_ANAR);
-		ability = al_phy_readreg(sc, PHY_LPAR);
-
-		if (advert & PHY_ANAR_100BT4 && ability & PHY_ANAR_100BT4) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_T4;
-			media |= PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(100baseT4)\n");
-		} else if (advert & PHY_ANAR_100BTXFULL &&
-			ability & PHY_ANAR_100BTXFULL) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-			media |= PHY_BMCR_SPEEDSEL;
-			media |= PHY_BMCR_DUPLEX;
-			printf("(full-duplex, 100Mbps)\n");
-		} else if (advert & PHY_ANAR_100BTXHALF &&
-			ability & PHY_ANAR_100BTXHALF) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
-			media |= PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(half-duplex, 100Mbps)\n");
-		} else if (advert & PHY_ANAR_10BTFULL &&
-			ability & PHY_ANAR_10BTFULL) {
-			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
-			media &= ~PHY_BMCR_SPEEDSEL;
-			media |= PHY_BMCR_DUPLEX;
-			printf("(full-duplex, 10Mbps)\n");
-		} else if (advert & PHY_ANAR_10BTHALF &&
-			ability & PHY_ANAR_10BTHALF) {
-			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-			media &= ~PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(half-duplex, 10Mbps)\n");
-		}
-
-		media &= ~PHY_BMCR_AUTONEGENBL;
-
-		/* Set ASIC's duplex mode to match the PHY. */
-		al_phy_writereg(sc, PHY_BMCR, media);
-	} else {
-		if (verbose)
-			printf("no carrier\n");
-	}
-
-	al_init(sc);
-
-	if (sc->al_tx_pend) {
-		sc->al_autoneg = 0;
-		sc->al_tx_pend = 0;
-		al_start(ifp);
-	}
-
-	return;
-}
-
-void al_getmode_mii(sc)
-	struct al_softc		*sc;
-{
-	u_int16_t		bmsr;
-	struct ifnet		*ifp;
-
-	ifp = &sc->arpcom.ac_if;
-
-	bmsr = al_phy_readreg(sc, PHY_BMSR);
-
-	/* fallback */
-	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-
-	if (bmsr & PHY_BMSR_10BTHALF) {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-	}
-
-	if (bmsr & PHY_BMSR_10BTFULL) {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
-	}
-
-	if (bmsr & PHY_BMSR_100BTXHALF) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
-	}
-
-	if (bmsr & PHY_BMSR_100BTXFULL) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	}
-
-	/* Some also support 100BaseT4. */
-	if (bmsr & PHY_BMSR_100BT4) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
-#ifdef FORCE_AUTONEG_TFOUR
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0 NULL):
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
-#endif
-	}
-
-	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
-	}
-
-	return;
-}
-
-/*
- * Set speed and duplex mode.
- */
-void al_setmode_mii(sc, media)
-	struct al_softc		*sc;
-	int			media;
-{
-	u_int16_t		bmcr;
-	struct ifnet		*ifp;
-
-	ifp = &sc->arpcom.ac_if;
-
-	/*
-	 * If an autoneg session is in progress, stop it.
-	 */
-	if (sc->al_autoneg) {
-		printf("al%d: canceling autoneg session\n", sc->al_unit);
-		ifp->if_timer = sc->al_autoneg = sc->al_want_auto = 0;
-		bmcr = al_phy_readreg(sc, PHY_BMCR);
-		bmcr &= ~PHY_BMCR_AUTONEGENBL;
-		al_phy_writereg(sc, PHY_BMCR, bmcr);
-	}
-
-	printf("al%d: selecting MII, ", sc->al_unit);
-
-	bmcr = al_phy_readreg(sc, PHY_BMCR);
-
-	bmcr &= ~(PHY_BMCR_AUTONEGENBL|PHY_BMCR_SPEEDSEL|
-			PHY_BMCR_DUPLEX|PHY_BMCR_LOOPBK);
-
-	if (IFM_SUBTYPE(media) == IFM_100_T4) {
-		printf("100Mbps/T4, half-duplex\n");
-		bmcr |= PHY_BMCR_SPEEDSEL;
-		bmcr &= ~PHY_BMCR_DUPLEX;
-	}
-
-	if (IFM_SUBTYPE(media) == IFM_100_TX) {
-		printf("100Mbps, ");
-		bmcr |= PHY_BMCR_SPEEDSEL;
-	}
-
-	if (IFM_SUBTYPE(media) == IFM_10_T) {
-		printf("10Mbps, ");
-		bmcr &= ~PHY_BMCR_SPEEDSEL;
-	}
-
-	if ((media & IFM_GMASK) == IFM_FDX) {
-		printf("full duplex\n");
-		bmcr |= PHY_BMCR_DUPLEX;
-	} else {
-		printf("half duplex\n");
-		bmcr &= ~PHY_BMCR_DUPLEX;
-	}
-
-	al_phy_writereg(sc, PHY_BMCR, bmcr);
-
-	return;
-}
-
 
 /*
  * Calculate CRC of a multicast group address, return the lower 6 bits.
@@ -1015,15 +738,15 @@ int al_probe(parent, match, aux)
 	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_ADMTEK)
-		return(0);
+		return (0);
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_ADMTEK_AL981:
 	case PCI_PRODUCT_ADMTEK_AN985:
-		return(1);
+		return (1);
 	}
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1046,13 +769,10 @@ al_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	struct ifnet		*ifp;
-	int			media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	bus_addr_t		iobase;
 	bus_size_t		iosize;
 	unsigned int		round;
 	caddr_t			roundptr;
-	struct al_type		*p;
-	u_int16_t		phy_vid, phy_did, phy_sts;
 
 	s = splimp();
 	sc->al_unit = sc->sc_dev.dv_unit;
@@ -1187,61 +907,20 @@ al_attach(parent, self, aux)
 	ifp->if_snd.ifq_maxlen = AL_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	for (i = AL_PHYADDR_MIN; i < AL_PHYADDR_MAL + 1; i++) {
-		sc->al_phy_addr = i;
-		al_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
-		DELAY(500);
-		while(al_phy_readreg(sc, PHY_BMCR)
-				& PHY_BMCR_RESET);
-		if ((phy_sts = al_phy_readreg(sc, PHY_BMSR)))
-			break;
-	}
-	if (phy_sts) {
-		phy_vid = al_phy_readreg(sc, PHY_VENID);
-		phy_did = al_phy_readreg(sc, PHY_DEVID);
-		p = al_phys;
-		while(p->al_vid) {
-			if (phy_vid == p->al_vid &&
-				(phy_did | 0x000F) == p->al_did) {
-				sc->al_pinfo = p;
-				break;
-			}
-			p++;
-		}
-		if (sc->al_pinfo == NULL)
-			sc->al_pinfo = &al_phys[PHY_UNKNOWN];
-	} else {
-#ifdef DIAGNOSTIC
-		printf("al%d: MII without any phy!\n", sc->al_unit);
-#endif
-	}
-
 	/*
-	 * Do ifmedia setup.
+	 * Initialize our media structures and probe the MII.
 	 */
-	ifmedia_init(&sc->ifmedia, 0, al_ifmedia_upd, al_ifmedia_sts);
-
-	if (sc->al_pinfo != NULL) {
-		al_getmode_mii(sc);
-		al_autoneg_mii(sc, AL_FLAG_FORCEDELAY, 1);
-	} else {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-	}
-
-	media = sc->ifmedia.ifm_media;
-	al_stop(sc);
-
-	ifmedia_set(&sc->ifmedia, media);
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = al_miibus_readreg;
+	sc->sc_mii.mii_writereg = al_miibus_writereg;
+	sc->sc_mii.mii_statchg = al_miibus_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, al_ifmedia_upd, al_ifmedia_sts);
+	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	/*
 	 * Call MI attach routines.
@@ -1431,10 +1110,8 @@ void al_rxeof(sc)
 
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
+
 #if NBPFILTER > 0
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
@@ -1521,7 +1198,7 @@ void al_tick(xsc)
 	void			*xsc;
 {
 	struct al_softc		*sc;
-	struct mii_data		*mii = NULL;
+	struct mii_data		*mii;
 	int			s;
 
 	s = splimp();
@@ -1551,7 +1228,7 @@ int al_intr(arg)
 	/* Supress unwanted interrupts */
 	if (!(ifp->if_flags & IFF_UP)) {
 		al_stop(sc);
-		return(claimed);
+		return (claimed);
 	}
 
 	/* Disable interrupts. */
@@ -1611,7 +1288,7 @@ int al_intr(arg)
 		al_start(ifp);
 	}
 
-	return(claimed);
+	return (claimed);
 }
 
 /*
@@ -1714,11 +1391,11 @@ void al_start(ifp)
 			break;
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
+#if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m_head);
 #endif
@@ -1741,7 +1418,7 @@ void al_init(xsc)
 {
 	struct al_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
-	struct mii_data		*mii = NULL;
+	struct mii_data		*mii;
 	int			s;
 
 	s = splimp();
@@ -1867,7 +1544,7 @@ void al_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq	*ifmr;
 {
 	struct al_softc		*sc;
-	struct mii_data		*mii = NULL;
+	struct mii_data		*mii;
 
 	sc = ifp->if_softc;
 
@@ -1887,6 +1564,7 @@ int al_ioctl(ifp, command, data)
 	struct al_softc		*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
+	struct mii_data		*mii;
 	int			s, error = 0;
 
 	s = splimp();
@@ -1903,15 +1581,11 @@ int al_ioctl(ifp, command, data)
 		case AF_INET:
 			al_init(sc);
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
+			break;	
 		default:
 			al_init(sc);
 			break;
 		}
-		break;
-	case SIOCGIFADDR:
-	case SIOCSIFMTU:
-		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -1929,7 +1603,8 @@ int al_ioctl(ifp, command, data)
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, command);
+		mii = &sc->sc_mii;
+		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 	default:
 		error = EINVAL;
@@ -1948,19 +1623,8 @@ void al_watchdog(ifp)
 
 	sc = ifp->if_softc;
 
-	if (sc->al_autoneg) {
-		al_autoneg_mii(sc, AL_FLAG_DELAYTIMEO, 1);
-		return;
-	}
-
 	ifp->if_oerrors++;
 	printf("al%d: watchdog timeout\n", sc->al_unit);
-
-	if (sc->al_pinfo != NULL) {
-		if (!(al_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT))
-			printf("al%d: no carrier - transceiver "
-				"cable problem?\n", sc->al_unit);
-	}
 
 	al_stop(sc);
 	al_reset(sc);
@@ -2040,4 +1704,3 @@ struct cfattach al_ca = {
 struct cfdriver al_cd = {
 	0, "al", DV_IFNET
 };
-

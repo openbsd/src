@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.54 1999/11/22 07:58:13 jason Exp $
+#	$OpenBSD: files.pci,v 1.55 1999/11/28 16:43:47 aaron Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -190,7 +190,7 @@ attach	ax at pci
 file	dev/pci/if_ax.c			ax
 
 # ADMtek AL981/AN985 ethernet
-device	al: ether, ifnet, ifmedia
+device	al: ether, ifnet, mii, ifmedia
 attach	al at pci
 file	dev/pci/if_al.c			al
 
@@ -198,6 +198,11 @@ file	dev/pci/if_al.c			al
 device	sf: ether, ifnet, mii, ifmedia
 attach	sf at pci
 file	dev/pci/if_sf.c			sf
+
+# SiS 900 ethernet
+device	sis: ether, ifnet, mii, ifmedia
+attach	sis at pci
+file	dev/pci/if_sis.c		sis
 
 # Industrial Computer Source WDT-50x
 device	wdt: pcibus
