@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.27 2002/09/10 03:18:59 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.28 2002/09/15 14:29:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -220,7 +220,7 @@ vgafbattach(parent, self, aux)
 	vgafb_stdscreen.ncols = sc->sc_rasops.ri_cols;
 	vgafb_stdscreen.textops = &sc->sc_rasops.ri_ops;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, &defattr);
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
 
 	printf("\n");
 
@@ -229,7 +229,7 @@ vgafbattach(parent, self, aux)
 
 		if (sc->sc_depth == 8) {
 			vgafb_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-			vgafb_setcolor(sc, 255, 255, 255, 255);
+			vgafb_setcolor(sc, 255, 0, 0, 0);
 			vgafb_setcolor(sc, WSCOL_RED, 255, 0, 0);
 			vgafb_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
 			vgafb_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
@@ -237,6 +237,12 @@ vgafbattach(parent, self, aux)
 			vgafb_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
 			vgafb_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
 			vgafb_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
+		} else {
+			/* fix color choice */
+			wscol_white = 0;
+			wscol_black = 255;
+			wskernel_bg = 0;
+			wskernel_fg = 255;
 		}
 
 		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
@@ -404,7 +410,7 @@ vgafb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*curyp = 0;
 	*curxp = 0;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, attrp);
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
