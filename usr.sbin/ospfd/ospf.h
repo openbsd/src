@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.4 2005/02/02 19:47:20 norby Exp $ */
+/*	$OpenBSD: ospf.h,v 1.5 2005/02/04 07:38:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -34,7 +34,7 @@
 
 #define DEFAULT_METRIC		1
 #define MIN_METRIC		1
-#define MAX_METRIC		65535
+#define MAX_METRIC		65535	/* sum & as-ext lsa use 24bit metrics */
 
 #define DEFAULT_PRIORITY	0 /* XXX force to 0 for now */
 #define MIN_PRIORITY		0
@@ -156,6 +156,9 @@ struct ls_upd_hdr {
 #define LINK_TYPE_VIRTUAL	4
 
 /* LSA headers */
+#define LSA_METRIC_MASK		0x00ffffff	/* only for sum & as-ext */
+#define LSA_ASEXT_E_FLAG	0x80000000
+
 struct lsa_rtr {
 	u_int8_t		flags;
 	u_int8_t		dummy;
@@ -180,6 +183,13 @@ struct lsa_sum {
 	u_int32_t		metric;		/* only lower 24 bit */
 };
 
+struct lsa_asext {
+	u_int32_t		mask;
+	u_int32_t		metric;		/* lower 24 bit plus E bit */
+	u_int32_t		fw_addr;
+	u_int32_t		ext_tag;
+};
+
 struct lsa_hdr {
 	u_int16_t		age;
 	u_int8_t		opts;
@@ -196,9 +206,10 @@ struct lsa_hdr {
 struct lsa {
 	struct lsa_hdr		hdr;
 	union {
-		struct lsa_rtr	rtr;
-		struct lsa_net  net;
-		struct lsa_sum	sum;
+		struct lsa_rtr		rtr;
+		struct lsa_net		net;
+		struct lsa_sum		sum;
+		struct lsa_asext	asext;
 	}			data;
 };
 

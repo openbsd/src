@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.3 2005/02/02 19:29:15 henning Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.4 2005/02/04 07:38:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,6 @@
 struct vertex	*vertex_get(struct lsa *, struct rde_nbr *);
 
 int		 lsa_router_check(struct lsa *, u_int16_t);
-int		 lsa_asext_check(struct area *, struct lsa *, u_int16_t);
 void		 lsa_age(struct vertex *);
 void		 lsa_timeout(int, short, void *);
 void		 lsa_refresh(struct vertex *);
@@ -146,31 +145,32 @@ int
 lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 {
 	struct area	*area = nbr->area;
+	u_int32_t	 metric;
 
 	if (len < sizeof(lsa->hdr)) {
-		log_warnx("lsa_check: invalid packet size");
+		log_warnx("lsa_check: bad packet size");
 		return (0);
 	}
 	if (ntohs(lsa->hdr.len) != len) {
-		log_warnx("lsa_check: invalid packet size");
+		log_warnx("lsa_check: bad packet size");
 		return (0);
 	}
 
 	if (iso_cksum(lsa, len, 0)) {
-		log_warnx("lsa_check: invalid packet checksum");
+		log_warnx("lsa_check: bad packet checksum");
 		return (0);
 	}
 
 	/* invalid ages */
 	if ((ntohs(lsa->hdr.age) < 1 && !nbr->self) ||
 	    ntohs(lsa->hdr.age) > MAX_AGE) {
-		log_debug("lsa_check: invalid age");
+		log_debug("lsa_check: bad age");
 		return (0);
 	}
 
 	/* invalid sequence number */
 	if (ntohl(lsa->hdr.seq_num) == 0x80000000) {
-		log_debug("ls_check: invalid seq num");
+		log_debug("ls_check: bad seq num");
 		return (0);
 	}
 
@@ -180,21 +180,38 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 			return (0);
 		break;
 	case LSA_TYPE_NETWORK:
-		if ((len & 0x03) ||
+		if ((len % sizeof(u_int32_t)) ||
 		    len < sizeof(lsa->hdr) + sizeof(u_int32_t)) {
-			log_warnx("lsa_check: invalid LSA network packet");
+			log_warnx("lsa_check: bad LSA network packet");
 			return (0);
 		}
 		break;
 	case LSA_TYPE_SUM_NETWORK:
 	case LSA_TYPE_SUM_ROUTER:
-		if (len != sizeof(struct lsa_hdr) + sizeof(struct lsa_sum)) {
-			log_warnx("lsa_check: invalid LSA summary packet");
+		if ((len % sizeof(u_int32_t)) ||
+		    len < sizeof(lsa->hdr) + sizeof(lsa->data.sum)) {
+			log_warnx("lsa_check: bad LSA summary packet");
+			return (0);
+		}
+		metric = ntohl(lsa->data.sum.metric);
+		if (metric & ~LSA_METRIC_MASK) {
+			log_warnx("lsa_check: bad LSA summary metric");
 			return (0);
 		}
 		break;
 	case LSA_TYPE_EXTERNAL:
-		if (!lsa_asext_check(area, lsa, len))
+		if ((len % (3 * sizeof(u_int32_t))) ||
+		    len < sizeof(lsa->hdr) + sizeof(lsa->data.asext)) {
+			log_warnx("lsa_check: bad LSA as-external packet");
+			return (0);
+		}
+		metric = ntohl(lsa->data.asext.metric);
+		if (metric & ~(LSA_METRIC_MASK | LSA_ASEXT_E_FLAG)) {
+			log_warnx("lsa_check: bad LSA as-external metric");
+			return (0);
+		}
+		/* AS-external-LSA are silently discarded in stub areas */
+		if (area->stub)
 			return (0);
 		break;
 	default:
@@ -250,17 +267,6 @@ lsa_router_check(struct lsa *lsa, u_int16_t len)
 		log_warnx("lsa_check: invalid LSA router packet");
 		return (0);
 	}
-	return (1);
-}
-
-int
-lsa_asext_check(struct area *area, struct lsa *lsa, u_int16_t len)
-{
-	if (area->stub)
-		/* AS-external-LSA are discarded in stub areas */
-		return (0);
-
-	/* XXX check size */
 	return (1);
 }
 
