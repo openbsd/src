@@ -339,70 +339,70 @@ svr4_getsiginfo(si, sig, code, addr)
 	u_long			 code;
 	caddr_t			 addr;
 {
-	si->si_signo = bsd_to_svr4_sig[sig];
-	si->si_errno = 0;
-	si->si_addr  = addr;
+	si->svr4_si_signo = bsd_to_svr4_sig[sig];
+	si->svr4_si_errno = 0;
+	si->svr4_si_addr  = addr;
 	/*
 	 * we can do this direct map as they are the same as all sparc
 	 * architectures.
 	 */
-	si->si_trap = code;
+	si->svr4_si_trap = code;
 
 	switch (code) {
 	case T_RESET:
-		si->si_code = 0;
+		si->svr4_si_code = 0;
 		break;
 
 	case T_TEXTFAULT:
-		si->si_code = SVR4_BUS_ADRALN;
+		si->svr4_si_code = SVR4_BUS_ADRALN;
 		break;
 
 	case T_ILLINST:
-		si->si_code = SVR4_ILL_ILLOPC;
+		si->svr4_si_code = SVR4_ILL_ILLOPC;
 		break;
 
 	case T_PRIVINST:
-		si->si_code = SVR4_ILL_PRVOPC;
+		si->svr4_si_code = SVR4_ILL_PRVOPC;
 		break;
 
 	case T_FPDISABLED:
-		si->si_code = SVR4_FPE_FLTINV;
+		si->svr4_si_code = SVR4_FPE_FLTINV;
 		break;
 
 	case T_ALIGN:
-		si->si_code = SVR4_BUS_ADRALN;
+		si->svr4_si_code = SVR4_BUS_ADRALN;
 		break;
 
 	case T_FPE:
-		si->si_code = SVR4_FPE_FLTINV;
+		si->svr4_si_code = SVR4_FPE_FLTINV;
 		break;
 
 	case T_DATAFAULT:
-		si->si_code = SVR4_BUS_ADRALN;
+		si->svr4_si_code = SVR4_BUS_ADRALN;
 		break;
 
 	case T_TAGOF:
-		si->si_code = SVR4_EMT_TAGOVF;
+		si->svr4_si_code = SVR4_EMT_TAGOVF;
 		break;
 
 	case T_CPDISABLED:
-		si->si_code = SVR4_FPE_FLTINV;
+		si->svr4_si_code = SVR4_FPE_FLTINV;
 		break;
 
 	case T_CPEXCEPTION:
-		si->si_code = SVR4_FPE_FLTINV;
+		si->svr4_si_code = SVR4_FPE_FLTINV;
 		break;
 
 	case T_DIV0:
-		si->si_code = SVR4_FPE_INTDIV;
+		si->svr4_si_code = SVR4_FPE_INTDIV;
 		break;
 
 	case T_INTOF:
-		si->si_code = SVR4_FPE_INTOVF;
+		si->svr4_si_code = SVR4_FPE_INTOVF;
 		break;
 
 	case T_BREAKPOINT:
-		si->si_code = SVR4_TRAP_BRKPT;
+		si->svr4_si_code = SVR4_TRAP_BRKPT;
 		break;
 
 	/*
@@ -425,7 +425,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	case T_L13INT:
 	case T_L14INT:
 	case T_L15INT:
-		si->si_code = 0;
+		si->svr4_si_code = 0;
 		break;
 
 	/*
@@ -439,11 +439,11 @@ svr4_getsiginfo(si, sig, code, addr)
 	case T_SVR4_SYSCALL:
 	case T_BSD_SYSCALL:
 	case T_KGDB_EXEC:
-		si->si_code = 0;
+		si->svr4_si_code = 0;
 		break;
 
 	default:
-		si->si_code = 0;
+		si->svr4_si_code = 0;
 #ifdef DIAGNOSTIC
 		printf("sig %d code %ld\n", sig, code);
 		panic("svr4_getsiginfo");
@@ -501,7 +501,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	 */
 	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_pc);
 	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
-	frame.sf_signum = frame.sf_si.si_signo;
+	frame.sf_signum = frame.sf_si.svr4_si_signo;
 	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
