@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 1997/11/17 01:16:34 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 1997/11/17 01:26:38 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -911,7 +911,7 @@ unaligned_fixup(va, opcode, reg, p)
 		type = tab[opcode - 0x20].type;
 		size = tab[opcode - 0x20].size;
 	} else {
-		type = NULL;
+		type = "0x%lx";
 		size = 0;
 	}
 
@@ -932,10 +932,8 @@ unaligned_fixup(va, opcode, reg, p)
 		uprintf("pid %d (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
 		    p->p_pid, p->p_comm, va, p->p_md.md_tf->tf_regs[FRAME_PC],
 		    p->p_md.md_tf->tf_regs[FRAME_PC]);
-		if (type)
-			uprintf("%s\n", type);
-		else
-			uprintf("%#lx\n", opcode);
+		uprintf(type, opcode);
+		uprintf("\n");
 	}
 
 	/*
