@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.42 2003/05/14 01:07:22 miod Exp $
+# 	$OpenBSD: RAMDISK,v 1.43 2003/05/14 01:13:48 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -251,7 +251,7 @@ cgeight0 at obio0 addr 0x0b300000 level 4	# sun4/100 P4
 wsdisplay* at cgeight?
 
 # Sun "tcx" accelerated color framebuffer.
-tcx*	at sbus? flags 0x0001
+tcx*	at sbus?
 wsdisplay* at tcx?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
@@ -260,7 +260,7 @@ cgfourteen1 at obio0 addr 0x90000000 flags 0x0001	# sun4m
 wsdisplay* at cgfourteen?
 
 # Sun "cgtwelve" (GS) accelerated 24-bit framebuffer.
-cgtwelve*	at sbus? flags 0x0001
+cgtwelve*	at sbus?
 wsdisplay* at cgtwelve?
 
 # Sun "leo" (ZX) accelerated 24-bit framebuffer.
