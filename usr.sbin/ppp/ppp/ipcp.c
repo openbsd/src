@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipcp.c,v 1.33 2001/08/19 23:22:17 brian Exp $
+ * $OpenBSD: ipcp.c,v 1.34 2002/01/16 14:13:06 brian Exp $
  */
 
 #include <sys/param.h>
@@ -616,7 +616,7 @@ ipcp_proxyarp(struct ipcp *ipcp,
     return 0;
   }
 
-  if ((s = ID0socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+  if ((s = ID0socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
     log_Printf(LogERROR, "ipcp_proxyarp: socket: %s\n",
                strerror(errno));
     return 0;

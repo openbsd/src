@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.26 2002/01/16 13:20:23 brian Exp $
+ *	$OpenBSD: mp.c,v 1.27 2002/01/16 14:13:06 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1000,7 +1000,7 @@ mp_SetEnddisc(struct cmdargs const *arg)
       else
         addr = arg->bundle->ncp.ipcp.my_ip;
 
-      s = ID0socket(AF_INET, SOCK_DGRAM, 0);
+      s = ID0socket(PF_INET, SOCK_DGRAM, 0);
       if (s < 0) {
         log_Printf(LogERROR, "set enddisc: socket(): %s\n", strerror(errno));
         return 2;
@@ -1137,7 +1137,7 @@ mpserver_Open(struct mpserver *s, struct peerid *peer)
 
   s->socket.sun_family = AF_LOCAL;
   s->socket.sun_len = sizeof s->socket;
-  s->fd = ID0socket(AF_LOCAL, SOCK_DGRAM, 0);
+  s->fd = ID0socket(PF_LOCAL, SOCK_DGRAM, 0);
   if (s->fd < 0) {
     log_Printf(LogERROR, "mpserver: socket(): %s\n", strerror(errno));
     return MPSERVER_FAILED;

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.21 2001/11/23 11:17:03 brian Exp $
+ *	$OpenBSD: iface.c,v 1.22 2002/01/16 14:13:06 brian Exp $
  */
 
 #include <sys/param.h>
@@ -523,7 +523,7 @@ iface_ChangeFlags(const char *ifname, int flags, int how)
   struct ifreq ifrq;
   int s;
 
-  s = ID0socket(AF_INET, SOCK_DGRAM, 0);
+  s = ID0socket(PF_INET, SOCK_DGRAM, 0);
   if (s < 0) {
     log_Printf(LogERROR, "iface_ChangeFlags: socket: %s\n", strerror(errno));
     return 0;

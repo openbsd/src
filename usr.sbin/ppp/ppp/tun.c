@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tun.c,v 1.13 2001/08/19 23:22:18 brian Exp $
+ *	$OpenBSD: tun.c,v 1.14 2002/01/16 14:13:06 brian Exp $
  */
 
 #include <sys/param.h>
@@ -88,7 +88,7 @@ tun_configure(struct bundle *bundle)
   struct ifreq ifr;
   int s;
   
-  s = socket(AF_INET, SOCK_DGRAM, 0);
+  s = socket(PF_INET, SOCK_DGRAM, 0);
   
   if (s < 0) {
     log_Printf(LogERROR, "tun_configure: socket(): %s\n", strerror(errno));
