@@ -1,4 +1,4 @@
-/* *	$OpenBSD: SYS.h,v 1.6 2003/01/02 20:25:29 miod Exp $*/
+/* *	$OpenBSD: SYS.h,v 1.7 2003/01/02 21:40:44 miod Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,43 +42,59 @@
 #include <machine/asm.h>
 
 #ifdef __STDC__
+#define	__ENTRY(p,x)	ENTRY(p##x)
+#define	__DO_SYSCALL(x)	or r13,r0,SYS_##x
+#define	__ALIAS(prefix,name)	WEAK_ALIAS(name,prefix##name)
+#else
+#define	__ENTRY(p,x)	ENTRY(p/**/x)
+#define	__DO_SYSCALL(x)	or r13,r0,SYS_/**/x
+#define	__ALIAS(prefix,name)	WEAK_ALIAS(name,prefix/**/name)
+#endif
 
-#define	_SYSCALL(x,y)	align 8; \
-			ENTRY(x); \
-			ld r10,r31,32; \
-			ld r11,r31,36; \
-			ld r12,r31,40; \
-			or r13,r0, SYS_ ## y; \
-			tb0 0, r0, 128; \
-			br __cerror
-#define	SYSCALL(x)	_SYSCALL(x,x)
-#define	RSYSCALL(x)	SYSCALL(x) ;\
-			jmp r1
-#define	PSEUDO(x,y)	_SYSCALL(x,y); \
-			jmp r1
-#define	PSEUDO_NOERROR(x,y)	ENTRY(x); ;\
-			or r13,r0, SYS_ ## y; \
-			tb0 0,r0,128; or r0,r0,r0;jmp r1
+#define	__SYSCALL(p,x,y)						\
+	align 8;							\
+	__ENTRY(p,x);							\
+	ld r10,r31,32;							\
+	ld r11,r31,36;							\
+	ld r12,r31,40;							\
+	__DO_SYSCALL(y);						\
+	tb0 0, r0, 128;							\
+	br __cerror
 
-#else /* !__STDC__ */
+#define	__PSEUDO(p,x,y)							\
+	__SYSCALL(p,x,y);						\
+	jmp r1
 
-#define	_SYSCALL(x,y)	align 8; \
-			ENTRY(x); \
-			ld r10,r31,32; \
-			ld r11,r31,36; \
-			ld r12,r31,40; \
-			or r13,r0, SYS_/**/y; \
-			tb0 0, r0, 128; \
-			br __cerror
-#define	SYSCALL(x)	_SYSCALL(x,x)
-#define	RSYSCALL(x)	SYSCALL(x); \
-			jmp r1
-#define	PSEUDO(x,y)	_SYSCALL(x,y); \
-			jmp r1
-#define	PSEUDO_NOERROR(x,y)	ENTRY(x); \
-			or r13,r0, SYS_/**/y; \
-			tb0 0,r0,128; or r0,r0,r0; jmp r1
-#endif /* !__STDC__ */
+#if 0
+#define	__PSEUDO_NOERROR(p,x,y)						\
+	__SYSCALL(p,x,y);						\
+	jmp r1
+#else
+/* XXX is this correct??? */
+#define	__PSEUDO_NOERROR(p,x,y)						\
+	align 8;							\
+	__ENTRY(p,x);							\
+	__DO_SYSCALL(y);						\
+	tb0 0, r0, 128;							\
+	or r0, r0, r0;							\
+	jmp r1
+#endif
+
+/*
+ * For the thread_safe versions, we prepend _thread_sys_ to the function
+ * name so that the 'C' wrapper can go around the real name.
+ */
+
+#define	SYSCALL(x)		__ALIAS(_thread_sys_,x);		\
+				__SYSCALL(_thread_sys_,x,x)
+#define	RSYSCALL(x)		__ALIAS(_thread_sys_,x);		\
+				__PSEUDO(_thread_sys_,x,x)
+#define	PSEUDO(x,y)		__ALIAS(_thread_sys_,x);		\
+				__PSEUDO(_thread_sys_,x,y)
+#define	PSEUDO_NOERROR(x,y)	__ALIAS(_thread_sys_,x);		\
+				__PSEUDO_NOERROR(_thread_sys_,x,y)
+#define	SYSENTRY(x)		__ALIAS(_thread_sys_,x);		\
+				__ENTRY(_thread_sys_,x)
 
 #define	ASMSTR		.asciz
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.20 2001/12/25 01:22:43 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.21 2003/01/02 21:40:46 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -61,6 +61,22 @@
 
 #define	ASBSS(name, size) \
 	.comm	_ASM_LABEL(name), size
+
+#ifdef	__ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
+#else
+#ifdef	__STDC__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak _##alias;							\
+	_##alias = _##sym
+#else
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak _/**/alias;						\
+	_/**/alias = _/**/sym
+#endif
+#endif
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.2 2000/03/01 17:31:21 todd Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.3 2003/01/02 21:40:46 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)fork.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: Ovfork.S,v 1.2 2000/03/01 17:31:21 todd Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.3 2003/01/02 21:40:46 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,7 +48,7 @@
 
 /* r2 = pid. r3 = 0 in parent, 1 in child */
 
-SYSCALL(vfork)
+SYSENTRY(vfork)
 	bcnd	eq0,r3,parent
 	or	r2,r0,0
 	or	r3,r0,0

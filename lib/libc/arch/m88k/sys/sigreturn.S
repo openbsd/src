@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigreturn.S,v 1.2 2000/03/01 17:31:22 todd Exp $	*/
+/*	$OpenBSD: sigreturn.S,v 1.3 2003/01/02 21:40:46 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: sigreturn.S,v 1.2 2000/03/01 17:31:22 todd Exp $"
+	.asciz "$OpenBSD: sigreturn.S,v 1.3 2003/01/02 21:40:46 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,4 +51,4 @@
  * Not sure what should be done XXX nivas
  */
 
-RSYSCALL(sigreturn)
+SYSENTRY(sigreturn)

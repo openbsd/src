@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.3 2003/01/02 20:25:31 miod Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.4 2003/01/02 21:40:46 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90"*/
-	.asciz "$OpenBSD: sigsuspend.S,v 1.3 2003/01/02 20:25:31 miod Exp $"
+	.asciz "$OpenBSD: sigsuspend.S,v 1.4 2003/01/02 21:40:46 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@
  * sigset_t != sizeof int.
  */
 
-ENTRY(sigsuspend)
+SYSENTRY(sigsuspend)
 	ld	r2,r2,0			/* dereference the pointer mask */
 	or	r13,r0,SYS_sigsuspend
 	tb0	0,r0,128

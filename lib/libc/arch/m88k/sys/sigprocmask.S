@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.3 2003/01/02 20:25:31 miod Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.4 2003/01/02 21:40:46 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,13 +40,13 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90"*/
-	.asciz "$OpenBSD: sigprocmask.S,v 1.3 2003/01/02 20:25:31 miod Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.4 2003/01/02 21:40:46 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-ENTRY(sigprocmask)
+SYSENTRY(sigprocmask)
 	bcnd	ne0,r3,L1		/* if new sigset pointer is null */
 	or	r2,r0,1			/* how = SIG_BLOCK and do it */
 	br	L2
