@@ -1,4 +1,4 @@
-/*	$NetBSD: $	*/
+/*	$OpenBSD: wdlink.h,v 1.2 1996/06/09 08:59:57 downsj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.

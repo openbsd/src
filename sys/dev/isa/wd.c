@@ -1,3 +1,4 @@
+/*	$OpenBSD: wd.c,v 1.16 1996/06/09 08:59:55 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*

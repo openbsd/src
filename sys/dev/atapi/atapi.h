@@ -1,4 +1,4 @@
-/*	$NetBSD: $	*/
+/*	$OpenBSD: atapi.h,v 1.2 1996/06/09 08:59:48 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.

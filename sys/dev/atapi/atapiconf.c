@@ -1,4 +1,4 @@
-/*	$NetBSD: $	*/
+/*	$OpenBSD: atapiconf.c,v 1.2 1996/06/09 08:59:49 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: $	*/
+/*	$OpenBSD: acd.c,v 1.2 1996/06/09 08:59:46 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -58,6 +58,12 @@
 #define ACD_DEBUG_PRINT(args)		printf args
 #else
 #define ACD_DEBUG_PRINT(args)
+#endif
+
+#ifdef ATAPI_DEBUG
+#define ATAPI_DEBUG_PRINT(args)		printf args
+#else
+#define ATAPI_DEBUG_PRINT(args)
 #endif
 
 struct acd_softc {
@@ -135,8 +141,6 @@ acdattach(parent, self, aux)
 	struct at_dev_link *sa = aux;
 	struct mode_sense cmd;
 	struct cappage cap;
-	int print_type = 0;
-	char *mtype;
 
 	printf("\n");
 
@@ -171,70 +175,6 @@ acdattach(parent, self, aux)
 		    self->dv_xname);
 		return;
 	}
-
-	/* Determine media type. */
-	switch (cap.medium_type) {
-	case MDT_UNKNOWN:
-		mtype = "medium type unknown";
-		break;
-
-	case MDT_DATA_120:
-		mtype = "120mm data disc";
-		break;
-
-	case MDT_AUDIO_120:
-		mtype = "120mm audio disc";
-		break;
-
-	case MDT_COMB_120:
-		mtype = "120mm data/audio disc";
-		break;
-
-	case MDT_PHOTO_120:
-		mtype = "120mm photo disc";
-		break;
-
-	case MDT_DATA_80:
-		mtype = "80mm data disc";
-		break;
-
-	case MDT_AUDIO_80:
-		mtype = "80mm audio disc";
-		break;
-
-	case MDT_COMB_80:
-		mtype = "80mm data/audio disc";
-		break;
-
-	case MDT_PHOTO_80:
-		mtype = "80mm photo disc";
-		break;
-
-	case MDT_NO_DISC:
-		mtype = "drive empty";
-		break;
-
-	case MDT_DOOR_OPEN:
-		mtype = "door open";
-		break;
-
-	case MDT_FMT_ERROR:
-		mtype = "medium format error";
-		break;
-
-	default:
-		mtype = "unknown type";
-		print_type = 1;
-		break;
-	}
-
-	/*
-	 * Display information about the drive.
-	 */
-	printf("%s: %s", self->dv_xname, mtype);
-	if (print_type)
-		printf(" (type 0x%x)", cap.medium_type);
-	printf("\n");
 }
 
 /*
@@ -544,9 +484,8 @@ acdstart(acd)
 		 * way and let it run (user level wait).
 		 */
 		if (ad_link->flags & ADEV_WAITING) {
-#ifdef ATAPI_DEBUG
-			printf("acdstart: waking up\n");
-#endif
+			ATAPI_DEBUG_PRINT(("acdstart: waking up\n"));
+
 			ad_link->flags &= ~ADEV_WAITING;
 			wakeup((caddr_t)ad_link);
 			return;
@@ -1034,9 +973,7 @@ acd_size(cd, flags)
 	 */
 	if (atapi_exec_cmd(cd->ad_link, &cmd , sizeof(cmd),
 	    &rdcap, sizeof(rdcap), B_READ, 0) != 0) {
-#ifdef ATAPI_DEBUG
-		printf("ATAPI_READ_CD_CAPACITY failed\n");
-#endif
+		ATAPI_DEBUG_PRINT(("ATAPI_READ_CD_CAPACITY failed\n"));
 		return 0;
 	}
 
@@ -1049,10 +986,8 @@ acd_size(cd, flags)
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
-#ifdef ATAPI_DEBUG
-	printf("acd_size: %ld %ld\n",blksize,size);
-#endif
 
+	ATAPI_DEBUG_PRINT(("acd_size: %ld %ld\n",blksize,size));
 	return size;
 }
 
