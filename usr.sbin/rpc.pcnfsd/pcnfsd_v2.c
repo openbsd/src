@@ -112,7 +112,7 @@ char            pw[64];
 int             c1, c2;
 struct passwd  *p;
 static u_int           extra_gids[EXTRAGIDLEN];
-static char     home[256];
+static char     home[MAXPATHLEN];
 #ifdef USE_YP
 char           *yphome;
 char           *cp;
@@ -144,7 +144,8 @@ char           *cp;
 #ifdef USE_YP
 		yphome = find_entry(uname, "auto.home");
 		if(yphome) {
-			strcpy(home, yphome);
+			strncpy(home, yphome, sizeof home-1);
+			home[sizeof home-1] = '\0';
 			free(yphome);
 			cp = strchr(home, ':');
 			cp++;
@@ -179,7 +180,8 @@ char           *cp;
 #ifdef USE_YP
 	yphome = find_entry(uname, "auto.home");
 	if(yphome) {
-		strcpy(home, yphome);
+		strncpy(home, yphome, sizeof home-1);
+		home[sizeof home-1] = '\0';
 		free(yphome);
 		cp = strchr(home, ':');
 		cp++;
@@ -356,7 +358,8 @@ static char *
 my_strdup(s)
 char *s;
 {
-char *r;
+	char *r;
+
 	r = (char *)grab(strlen(s)+1);
 	strcpy(r, s);
 	return(r);
