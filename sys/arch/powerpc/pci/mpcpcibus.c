@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.22 2000/10/19 04:53:06 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.23 2001/03/03 05:40:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -411,28 +411,18 @@ mpcpcibrattach(parent, self, aux)
 						prange[found].base;
 				}
 
-				found = 0;
-				/* find mem base, flag == 0x02000000 */
-				for (i = 0; i < rangelen ; i++)
-				{
-					if (prange[i].flags == 0x02000000) {
-						/* find last? */
-						found = i;
-					}
-				}
-				/* found the mem space ranges */
-				if (prange[found].flags == 0x02000000) {
-					sc->sc_membus_space.bus_base =
-						prange[found].base;
-
-				}
-				if ( (sc->sc_iobus_space.bus_base == 0) ||
-					(sc->sc_membus_space.bus_base == 0)) {
-					printf("io or memory base not found"
-						"mem %x io %x\n",
-						sc->sc_membus_space.bus_base,
-						sc->sc_iobus_space.bus_base);
-				}
+				/* the mem space ranges 
+				 * apple openfirmware always puts full
+				 * addresses in config information,
+				 * it is not necessary to have correct bus
+				 * base address, but since 0 is reserved
+				 * and all IO and device memory will be in
+				 * upper 2G of address space, set to
+				 * 0x80000000
+				 */
+                         
+				sc->sc_membus_space.bus_base = 0x80000000;
+				sc->sc_membus_space.bus_reverse = 1;
 
 			}
 
