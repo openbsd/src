@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 1997/11/30 07:48:01 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 1997/11/30 19:55:16 millert Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -21,7 +21,7 @@ POD=		pod/perl.pod pod/perlapio.pod pod/perlbook.pod pod/perlbot.pod \
 		pod/perlfunc.pod pod/perlguts.pod pod/perlipc.pod \
 		pod/perllocale.pod pod/perllol.pod pod/perlmod.pod \
 		pod/perlmodlib.pod pod/perlobj.pod pod/perlop.pod \
-		pod/perlovl.pod pod/perlpod.pod pod/perlre.pod \
+		pod/perlpod.pod pod/perlre.pod \
 		pod/perlref.pod pod/perlrun.pod pod/perlsec.pod \
 		pod/perlstyle.pod pod/perlsub.pod pod/perlsyn.pod \
 		pod/perltie.pod pod/perltoc.pod pod/perltoot.pod \
