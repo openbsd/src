@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.87 2005/01/31 15:06:31 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.88 2005/01/31 15:08:50 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -675,7 +675,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		err(1, "fork failed");
 	case 0:
 		execvp(PATH_PFCTL, pargv);
-		err(1, "exec of %s failed", PATH_PFCTL);
+		warn("exec of %s failed", PATH_PFCTL);
+		_exit(1);
 	}
 
 	/* parent */
