@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.24 2002/07/30 23:14:44 itojun Exp $
+.\"	$OpenBSD: systrace.1,v 1.25 2002/07/31 00:26:06 itojun Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -46,11 +46,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility enforces system call policies for applications by
-constraining the application's access to the system.
-The policy is generated interactively.
-Operations not covered by the policy raise an
-alarm and allow an user to refine the currently configured policy.
+utility monitors and controls an application's access to the system by
+enforcing access policies for system calls.  The
+.Nm
+utility might be used to trace an untrusted application's access to
+the system.  Alternatively, it might be used to protect the system
+from software bugs (such as buffer overflows) by constraining a
+daemon's access to the system.
+.Pp
+The access policy can be generated interactively or obtained from a
+policy file.  Operations not covered by the policy raise an alarm and
+allow an user to refine the currently configured policy.
 .Pp
 The options are as follows:
 .Bl -tag -width Dfxfile
@@ -73,7 +79,7 @@ and
 are translated to
 .Fn fsread .
 .It Fl i
-Inherits the policy of the first executed binary to all children.
+Inherits the policy - child processes inherit policy of the parent binary.
 .It Fl t
 Uses text mode to ask for interactive policy generation.
 .It Fl U
@@ -178,6 +184,15 @@ Predicates have the following format:
 .Pp
 A rule is added to the configured policy only if its predicate
 evaluates to true.
+.Sh FILES
+.Bl -tag -width xHOME/xsystrace -compact
+.It Pa /dev/systrace
+systrace device
+.It Pa /etc/systrace
+global systrace policies
+.It Pa $HOME/.systrace
+user specified policies
+.El
 .Sh EXAMPLES
 An excerpt from a sample
 .Xr ls 1
@@ -195,21 +210,12 @@ Policy: /bin/ls, Emulation: native
 [...]
 	native-open: filename eq "/etc" then deny[eperm], if group != wheel
 .Ed
-.Sh FILES
-.Bl -tag -width xHOME/xsystrace -compact
-.It Pa /dev/systrace
-systrace device
-.It Pa /etc/systrace
-global systrace policies
-.It Pa $HOME/.systrace
-user specified policies
-.El
 .Sh SEE ALSO
 .Xr systrace 4
 .Sh AUTHORS
 The
 .Nm
-utility has been developed by Niels Provos.
+utility was developed by Niels Provos.
 .Sh BUGS
 Applications that use clone()-like system calls to share the complete
 address space between processes may be able to replace system call
