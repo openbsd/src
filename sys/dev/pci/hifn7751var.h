@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.23 2001/06/23 00:25:38 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.24 2001/06/24 17:43:29 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -158,19 +158,6 @@ struct hifn_softc {
  *
  *	HIFN_CRYPT_NEW_KEY, HIFN_MAC_NEW_KEY
  *
- *  result_flags
- *  ------------
- *  result_flags is a bitwise "or" of result values.  The result_flags
- *  values should not be considered valid until:
- *
- *	callback routine NULL:  hifn_crypto() returns
- *	callback routine set:   callback routine called
- *
- *  Right now there is only one result flag:  HIFN_MAC_BAD
- *  It's bit is set on decode operations using authentication when a
- *  hash result does not match the input hash value.
- *  The HIFN_MAC_OK(r) macro can be used to help inspect this flag.
- *
  *  session_num
  *  -----------
  *  A number between 0 and 2048 (for DRAM models) or a number between 
@@ -203,60 +190,30 @@ struct hifn_softc {
  *  than the auth_header_skip (to skip over the ESP header).
  *  *** Value ignored if cryptography not used ***
  *
- *  source_length
- *  -------------
- *  Length of input data including all skipped headers.  On decode
- *  operations using authentication, the length must also include the
- *  the appended MAC hash (12, 16, or 20 bytes depending on algorithm
- *  and truncation settings).
- *
- *  If encryption is used, the encryption payload must be a non-zero
- *  multiple of 8.  On encode operations, the encryption payload size
- *  is (source_length - crypt_header_skip - (MAC hash size)).  On
- *  decode operations, the encryption payload is
- *  (source_length - crypt_header_skip).
- *
- *  dest_length
- *  -----------
- *  Length of the dest buffer.  It must be at least as large as the
- *  source buffer when authentication is not used.  When authentication
- *  is used on an encode operation, it must be at least as long as the
- *  source length plus an extra 12, 16, or 20 bytes to hold the MAC
- *  value (length of mac value varies with algorithm used).  When
- *  authentication is used on decode operations, it must be at least
- *  as long as the source buffer minus 12, 16, or 20 bytes for the MAC
- *  value which is not included in the dest data.  Unlike source_length,
- *  the dest_length does not have to be exact, values larger than required
- *  are fine.
- *
- *  private_data
- *  ------------
- *  An unsigned long quantity (i.e. large enough to hold a pointer), that
- *  can be used by the callback routine if desired.
  */
-typedef struct hifn_command {
-	volatile u_int result_flags;
-
-	u_short	session_num;
+struct hifn_command {
+	u_int16_t session_num;
 	u_int16_t base_masks, cry_masks, mac_masks;
+	u_int8_t iv[HIFN_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
 
-	u_char	iv[HIFN_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
-
-	struct mbuf *src_m;
-	struct uio *src_io;
+	union {
+		struct mbuf *src_m;
+		struct uio *src_io;
+	} srcu;
 	bus_dmamap_t src_map;
 
-	struct mbuf *dst_m;
-	struct uio *dst_io;
+	union {
+		struct mbuf *dst_m;
+		struct uio *dst_io;
+	} dstu;
 	bus_dmamap_t dst_map;
 
 	u_int16_t crypt_header_skip, mac_header_skip;
 	u_int32_t crypt_process_len, mac_process_len;
 
-	u_long private_data;
 	struct hifn_softc *softc;
 	struct cryptop *crp;
-} hifn_command_t;
+};
 
 /*
  *  Return values for hifn_crypto()
@@ -264,12 +221,6 @@ typedef struct hifn_command {
 #define HIFN_CRYPTO_SUCCESS	0
 #define HIFN_CRYPTO_BAD_INPUT	(-1)
 #define HIFN_CRYPTO_RINGS_FULL	(-2)
-
-/*
- *  Defines for the "result_flags" parameter of hifn_command_t.
- */
-#define HIFN_MAC_BAD		1
-#define HIFN_MAC_OK(r)		(!((r) & HIFN_MAC_BAD))
 
 #ifdef _KERNEL
 

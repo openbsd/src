@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.79 2001/06/24 16:30:59 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.80 2001/06/24 17:43:28 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -93,7 +93,7 @@ int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
 int	hifn_freesession __P((u_int64_t));
 int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
-int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *, struct cryptop *));
+int	hifn_crypto __P((struct hifn_softc *, struct hifn_command *, struct cryptop *));
 int	hifn_readramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
 int	hifn_writeramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
 int	hifn_dmamap_aligned __P((bus_dmamap_t));
@@ -1012,20 +1012,20 @@ hifn_crypto(sc, cmd, crp)
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->src_map,
-		    cmd->src_m, BUS_DMA_NOWAIT))
+		    cmd->srcu.src_m, BUS_DMA_NOWAIT))
 			goto err_srcmap1;
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
 		if (bus_dmamap_load_uio(sc->sc_dmat, cmd->src_map,
-		    cmd->src_io, BUS_DMA_NOWAIT))
+		    cmd->srcu.src_io, BUS_DMA_NOWAIT))
 			goto err_srcmap1;
 	} else
 		goto err_srcmap1;
 
 	if (hifn_dmamap_aligned(cmd->src_map)) {
 		if (crp->crp_flags & CRYPTO_F_IOV)
-			cmd->dst_io = cmd->src_io;
+			cmd->dstu.dst_io = cmd->srcu.src_io;
 		else if (crp->crp_flags & CRYPTO_F_IMBUF)
-			cmd->dst_m = cmd->src_m;
+			cmd->dstu.dst_m = cmd->srcu.src_m;
 		cmd->dst_map = cmd->src_map;
 	} else {
 		if (crp->crp_flags & CRYPTO_F_IOV)
@@ -1035,7 +1035,7 @@ hifn_crypto(sc, cmd, crp)
 			struct mbuf *m, *top, **mp;
 
 			totlen = cmd->src_map->dm_mapsize;
-			if (cmd->src_m->m_flags & M_PKTHDR) {
+			if (cmd->srcu.src_m->m_flags & M_PKTHDR) {
 				len = MHLEN;
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 			} else {
@@ -1045,7 +1045,7 @@ hifn_crypto(sc, cmd, crp)
 			if (m == NULL)
 				goto err_srcmap;
 			if (len == MHLEN)
-				M_DUP_PKTHDR(m, cmd->src_m);
+				M_DUP_PKTHDR(m, cmd->srcu.src_m);
 			if (totlen >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
 				if (m->m_flags & M_EXT)
@@ -1074,7 +1074,7 @@ hifn_crypto(sc, cmd, crp)
 				*mp = m;
 				mp = &m->m_next;
 			}
-			cmd->dst_m = top;
+			cmd->dstu.dst_m = top;
 		}
 	}
 
@@ -1085,11 +1085,11 @@ hifn_crypto(sc, cmd, crp)
 			goto err_srcmap;
 		if (crp->crp_flags & CRYPTO_F_IMBUF) {
 			if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->dst_map,
-			    cmd->dst_m, BUS_DMA_NOWAIT))
+			    cmd->dstu.dst_m, BUS_DMA_NOWAIT))
 				goto err_dstmap1;
 		} else if (crp->crp_flags & CRYPTO_F_IOV) {
 			if (bus_dmamap_load_uio(sc->sc_dmat, cmd->dst_map,
-			    cmd->dst_io, BUS_DMA_NOWAIT))
+			    cmd->dstu.dst_io, BUS_DMA_NOWAIT))
 				goto err_dstmap1;
 		}
 	}
@@ -1427,11 +1427,11 @@ hifn_process(crp)
 	bzero(cmd, sizeof(struct hifn_command));
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
-		cmd->src_m = (struct mbuf *)crp->crp_buf;
-		cmd->dst_m = (struct mbuf *)crp->crp_buf;
+		cmd->srcu.src_m = (struct mbuf *)crp->crp_buf;
+		cmd->dstu.dst_m = (struct mbuf *)crp->crp_buf;
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		cmd->src_io = (struct uio *)crp->crp_buf;
-		cmd->dst_io = (struct uio *)crp->crp_buf;
+		cmd->srcu.src_io = (struct uio *)crp->crp_buf;
+		cmd->dstu.dst_io = (struct uio *)crp->crp_buf;
 	} else {
 		err = EINVAL;
 		goto errout;	/* XXX we don't handle contiguous buffers! */
@@ -1497,11 +1497,11 @@ hifn_process(crp)
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
-					m_copyback(cmd->src_m,
+					m_copyback(cmd->srcu.src_m,
 					    enccrd->crd_inject,
 					    HIFN_IV_LENGTH, cmd->iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
-					cuio_copyback(cmd->src_io,
+					cuio_copyback(cmd->srcu.src_io,
 					    enccrd->crd_inject,
 					    HIFN_IV_LENGTH, cmd->iv);
 			}
@@ -1509,10 +1509,10 @@ hifn_process(crp)
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copydata(cmd->src_m, enccrd->crd_inject,
+				m_copydata(cmd->srcu.src_m, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
-				cuio_copydata(cmd->src_io, enccrd->crd_inject,
+				cuio_copydata(cmd->srcu.src_io, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
 		}
 
@@ -1554,7 +1554,7 @@ hifn_process(crp)
 	if (sc->sc_sessions[session].hs_flags == 1)
 		sc->sc_sessions[session].hs_flags = 2;
 
-	cmd->private_data = (u_long)crp;
+	cmd->crp = crp;
 	cmd->session_num = session;
 	cmd->softc = sc;
 
@@ -1582,7 +1582,7 @@ hifn_callback(sc, cmd, macbuf)
 	u_int8_t *macbuf;
 {
 	struct hifn_dma *dma = sc->sc_dma;
-	struct cryptop *crp = (struct cryptop *)cmd->private_data;
+	struct cryptop *crp = cmd->crp;
 	struct cryptodesc *crd;
 	struct mbuf *m;
 	int totlen;
@@ -1591,11 +1591,11 @@ hifn_callback(sc, cmd, macbuf)
 	bus_dmamap_sync(sc->sc_dmat, cmd->dst_map, BUS_DMASYNC_POSTWRITE);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
-		if (cmd->src_m != cmd->dst_m) {
-			m_freem(cmd->src_m);
-			crp->crp_buf = (caddr_t)cmd->dst_m;
+		if (cmd->srcu.src_m != cmd->dstu.dst_m) {
+			m_freem(cmd->srcu.src_m);
+			crp->crp_buf = (caddr_t)cmd->dstu.dst_m;
 		}
-		if ((m = cmd->dst_m) != NULL) {
+		if ((m = cmd->dstu.dst_m) != NULL) {
 			totlen = cmd->src_map->dm_mapsize;
 			hifnstats.hst_obytes += totlen;
 			while (m) {
