@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.89 2001/06/13 09:10:31 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.90 2001/06/19 12:34:09 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -93,6 +93,7 @@ int	session_setup_x11fwd(Session *s);
 void	session_close(Session *s);
 void	do_exec_pty(Session *s, const char *command);
 void	do_exec_no_pty(Session *s, const char *command);
+void	do_exec(Session *s, const char *command);
 void	do_login(Session *s, const char *command);
 void	do_child(Session *s, const char *command);
 void	do_motd(void);
@@ -270,17 +271,7 @@ do_authenticated1(Authctxt *authctxt)
 				command = NULL;
 				packet_integrity_check(plen, 0, type);
 			}
-			if (forced_command != NULL) {
-				original_command = command;
-				command = forced_command;
-				debug("Forced command '%.500s'", forced_command);
-			}
-			if (s->ttyfd != -1)
-				do_exec_pty(s, command);
-			else
-				do_exec_no_pty(s, command);
-			if (command != NULL)
-				xfree(command);
+			do_exec(s, command);
 			session_close(s);
 			return;
 
@@ -503,6 +494,35 @@ do_exec_pty(Session *s, const char *command)
 		/* server_loop _has_ closed ptyfd and fdout. */
 	}
 }
+
+/*
+ * This is called to fork and execute a command.  If another command is
+ * to be forced, execute that instead.
+ */
+void
+do_exec(Session *s, const char *command)
+{
+	if (forced_command) {
+		original_command = command;
+		command = forced_command;
+		forced_command = NULL;
+		debug("Forced command '%.900s'", command);
+	}
+
+	if (s->ttyfd != -1)
+		do_exec_pty(s, command);
+	else
+		do_exec_no_pty(s, command);
+
+	if (command != NULL)
+		xfree(command);
+
+	if (original_command != NULL) {
+		xfree(original_command);
+		original_command = NULL;
+	}
+}
+
 
 /* administrative, login(1)-like work */
 void
@@ -1288,13 +1308,8 @@ session_x11_req(Session *s)
 int
 session_shell_req(Session *s)
 {
-	/* if forced_command == NULL, the shell is execed */
-	char *shell = forced_command;
 	packet_done();
-	if (s->ttyfd == -1)
-		do_exec_no_pty(s, shell);
-	else
-		do_exec_pty(s, shell);
+	do_exec(s, NULL);
 	return 1;
 }
 
@@ -1304,17 +1319,7 @@ session_exec_req(Session *s)
 	u_int len;
 	char *command = packet_get_string(&len);
 	packet_done();
-	if (forced_command) {
-		original_command = command;
-		command = forced_command;
-		debug("Forced command '%.500s'", forced_command);
-	}
-	if (s->ttyfd == -1)
-		do_exec_no_pty(s, command);
-	else
-		do_exec_pty(s, command);
-	if (forced_command == NULL)
-		xfree(command);
+	do_exec(s, command);
 	return 1;
 }
 
