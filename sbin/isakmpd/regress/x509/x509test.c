@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.15 2001/01/27 12:03:39 niklas Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.16 2001/05/11 15:53:23 art Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ open_file (char *name)
     log_fatal ("open (\"%s\", O_RDONLY)", name);
   addr = mmap (0, file_sz, PROT_READ | PROT_WRITE, MAP_FILE | MAP_PRIVATE,
 	       fd, 0);
-  if (!addr)
+  if (addr == MAP_FAILED)
     log_fatal ("mmap (0, %d, PROT_READ | PROT_WRITE, MAP_FILE | MAP_PRIVATE,"
 	       "%d, 0)", file_sz, fd);
   close (fd);
