@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.40 2004/06/18 17:52:25 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.41 2004/07/09 19:13:46 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.40 2004/06/18 17:52:25 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.41 2004/07/09 19:13:46 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -929,6 +929,21 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 				return false;
 		} else if (strnNE(ilineptr, plineptr, plinelen))
 			return false;
+		if (iline == input_lines) {
+			/*
+			 * We are looking at the last line of the file.
+			 * If the file has no eol, the patch line should
+			 * not have one either and vice-versa. Note that
+			 * plinelen > 0.
+			 */
+			if (last_line_missing_eol) {
+				if (plineptr[plinelen - 1] == '\n')
+					return false;
+			} else {
+				if (plineptr[plinelen - 1] != '\n')
+					return false;
+			}
+		}
 	}
 	return true;
 }

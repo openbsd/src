@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.33 2004/01/28 08:31:07 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.34 2004/07/09 19:13:46 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.33 2004/01/28 08:31:07 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.34 2004/07/09 19:13:46 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -966,6 +966,12 @@ hunk_done:
 						free(p_line[filldst]);
 					p_end = fillsrc - 1;
 					return false;
+				}
+				if (fillsrc > p_ptrn_lines) {
+					if (remove_special_line()) {
+						p_len[fillsrc - 1] -= 1;
+						s[p_len[fillsrc - 1]] = 0;
+					}
 				}
 				/* FALL THROUGH */
 			case '+':
