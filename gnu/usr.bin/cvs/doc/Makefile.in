@@ -112,8 +112,8 @@ includeopt = @includeopt@
 install_sh = @install_sh@
 
 info_TEXINFOS = cvs.texinfo cvsclient.texi
-cvs_TEXINFOS = CVSvn.texi
-cvsclient_TEXINFOS = CVSvn.texi
+cvs_TEXINFOS = 
+cvsclient_TEXINFOS = 
 
 POSTSCRIPTS = \
 	cvs.ps \
