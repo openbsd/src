@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.12 1997/04/14 17:35:58 kstailey Exp $	*/
+/*	$OpenBSD: df.c,v 1.13 1997/04/14 17:38:22 kstailey Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.12 1997/04/14 17:35:58 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.13 1997/04/14 17:38:22 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -337,11 +337,11 @@ prthumanval(bytes)
 	unit = unit_adjust(&bytes);
 
 	if (bytes == 0)
-		(void)printf("     0   ");
+		(void)printf("     0B  ");
 	else if (bytes > 10)
-		(void)printf(" %5.0f%c  ", bytes, " KMGTPE"[unit]);
+		(void)printf(" %5.0f%c  ", bytes, "BKMGTPE"[unit]);
 	else
-		(void)printf(" %5.1f%c  ", bytes, " KMGTPE"[unit]);
+		(void)printf(" %5.1f%c  ", bytes, "BKMGTPE"[unit]);
 }
 
 void
