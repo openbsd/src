@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 1998/01/28 12:12:08 pefo Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 1998/08/31 17:42:34 millert Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,16 @@ mmopen(dev, flag, mode)
 	dev_t dev;
 	int flag, mode;
 {
-	return (0);
+
+	switch (minor(dev)) {
+		case 0:
+		case 1:
+		case 2:
+		case 12:
+			return (0);
+		default:
+			return (ENXIO);
+	}
 }
 
 /*ARGSUSED*/

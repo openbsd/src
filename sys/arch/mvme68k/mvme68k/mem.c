@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 1997/02/10 11:39:26 downsj Exp $ */
+/*	$OpenBSD: mem.c,v 1.6 1998/08/31 17:42:35 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -94,7 +94,15 @@ mmopen(dev, flag, mode)
 	int flag, mode;
 {
 
-	return (0);
+	switch (minor(dev)) {
+		case 0:
+		case 1:
+		case 2:
+		case 12:
+			return (0);
+		default:
+			return (ENXIO);
+	}
 }
 
 /*ARGSUSED*/

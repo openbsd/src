@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 1997/02/10 11:53:11 downsj Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 1998/08/31 17:42:42 millert Exp $	*/
 /*	$NetBSD: mem.c,v 1.19 1995/08/08 21:09:01 gwr Exp $	*/
 
 /*
@@ -78,7 +78,23 @@ mmopen(dev, flag, mode, p)
 	struct proc *p;
 {
 
-	return (0);
+	switch (minor(dev)) {
+		case 0:
+		case 1:
+		case 2:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+		case 11:
+		case 12:
+		case 13:
+			return (0);
+		default:
+			return (ENXIO);
+	}
 }
 
 /*ARGSUSED*/
