@@ -3,9 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.cats/MAKEDEV.md,v 1.5 2004/02/14 17:24:31 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.71 2004/02/14 17:24:30 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.10 2004/02/14 17:24:31 todd Exp 
+#	OpenBSD: etc.cats/MAKEDEV.md,v 1.6 2004/02/16 19:01:01 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -25,60 +26,59 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	std	standard devices
-#	fd	makes fd/* for the fdescfs
-#	local	configuration specific devices
-#	ramdisk	makes all devices for a ramdisk kernel
-# Tapes:
-#	st*	SCSI tapes
+#	ramdisk	Ramdisk kernel devices
+#	std	Standard devices
+#	local	Configuration specific devices
 # Disks:
-#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
-#	sd*	SCSI disks
+#	ccd*	Concatenated disk devices
 #	cd*	SCSI cdrom drives
-#	ch*	SCSI media changer
-#	rd*	"rd" pseudo-disks
-#	vnd*	"file" pseudo-disks
+#	ch*	SCSI media changers
 #	raid*	RAIDframe disk devices
-#	ccd*	concatenated disk devices
-# Console ports:
-#	ttyC0	wscons screen 0
-#	ttyC-F*	wscons virtual consoles
-#	wskbd*	wscons keyboards
-#	wsmouse*	wscons mice
-#	wsmux	wscons keyboard/mouse mux devices
+#	rd*	"rd" pseudo-disks
+#	sd*	SCSI disks
+#	vnd*	"file" pseudo-disk devices
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
+# Tapes:
+#	st*	SCSI tape drives
 # Terminal ports:
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 # Pseudo terminals:
-#	tty*	set of 16 slave pseudo terminals
-#	pty*	set of 16 master pseudo terminals
+#	ptm	pty master device
+#	pty*	Set of 16 master pseudo terminals
+#	tty*	Set of 16 slave pseudo terminals
+# Console ports:
+#	ttyC0	Minimal wscons devices
+#	ttyC-F*	wscons display devices
+#	wskbd*	wscons keyboards
+#	wsmouse*	wscons mice
+#	wsmux	wscons keyboard/mouse mux devices
 # USB devices:
-#	usb*	Bus control devices used by usbd for attach/detach
+#	usbs	All USB devices
+#	ttyU*	USB serial ports
+#	ugen*	Generic USB devices
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
 #	urio*	Diamond Multimedia Rio 500
-#	ttyU*	Serial ports
+#	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
-#	ugen*	Generic device
 # Special purpose devices:
-#	audio*	audio device
-#	apm		power management device
+#	audio*	Audio devices
+#	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
-#	tun*	network tunnel driver
-#	lkm	loadable kernel modules interface
-#	*random	inkernel random data source
-#	uk*	SCSI Unknown device
-#	ss*	SCSI scanners
-#	xfs*	XFS filesystem devices
-#	iop*	I2O controller device
-#	pf*	Packet Filter
-#	crypto	hardware crypto access driver
-#	usbs	make USB devices
+#	crypto	Hardware crypto access driver
+#	fd	fd/* nodes for fdescfs
+#	iop*	I2O controller devices
+#	lkm	Loadable kernel modules interface
 #	pci	PCI bus device
-#	systrace*	system call tracing device
-#	bktr*	video capturing
-#	tuner*	tuner device
-#	radio*	FM tuner device
-#	ptm	pty master device
+#	pf*	Packet Filter
+#	radio*	FM tuner devices
+#	*random	In-kernel random data source
+#	tun*	Network tunnel driver
+#	uk*	SCSI unknown devices
+#	ss*	SCSI scanners
+#	systrace*	System call tracing device
+#	tuner*	Tuner devices
+#	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -227,50 +227,16 @@ std)
 	M reload	c 2 20 640 kmem
 	;;
 
-ptm)
-	M ptm c 98 0 666
-	;;
-
-radio*)
-	M radio$U     c 97 $U
-	MKlist="$MKlist;[ -e radio ] || ln -s radio$U radio"
+xfs*)
+	M xfs$U c 51 $U 600
 	;;
 
 tuner*)
 	M tuner$U c 75 $(($(($U*2))+16)) 644
 	;;
 
-bktr*)
-	M bktr$U c 75 $U 644
-	;;
-
 systrace)
 	M systrace c 50 0 644
-	;;
-
-pci)
-	M pci c 71 0 600
-	;;
-
-usbs)
-	R ttyU0 ttyU1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
-	R uscanner0 urio0 usb0 usb1
-	;;
-
-crypto)
-	M crypto c 47 0
-	;;
-
-pf*)
-	M pf c 39 0 600
-	;;
-
-iop*)
-	M iop$U c 73 $U 660
-	;;
-
-xfs*)
-	M xfs$U c 51 $U 600
 	;;
 
 ss*)
@@ -285,6 +251,10 @@ uk*)
 	M uk$U c 28 $U 640 operator
 	;;
 
+tun*)
+	M tun$U c 33 $U 600
+	;;
+
 *random)
 	n=0
 	for pre in " " s u p a
@@ -294,21 +264,43 @@ uk*)
 	done
 	;;
 
+radio*)
+	M radio$U     c 97 $U
+	MKlist="$MKlist;[ -e radio ] || ln -s radio$U radio"
+	;;
+
+pf*)
+	M pf c 39 0 600
+	;;
+
+pci)
+	M pci c 71 0 600
+	;;
+
 lkm)
 	M lkm c 35 0 640 _lkm
 	;;
 
-tun*)
-	M tun$U c 33 $U 600
+iop*)
+	M iop$U c 73 $U 660
+	;;
+
+fd)
+	RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd"
+	;;
+
+crypto)
+	M crypto c 47 0
 	;;
 
 bpf*)
 	M bpf$U c 22 $U 600
 	;;
 
-apm*)
-	M apm	c 25 0 644
-	M apmctl	c 25 8 644
+bktr*)
+	M bktr$U c 75 $U 644
 	;;
 
 audio*)
@@ -322,22 +314,13 @@ audio*)
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
-ugen*)
-	n=$(($U*16))
-	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
-	do
-		M ugen$U.$j c 70 $(($n+$j)) 660
-	done
-	;;
-
 uscanner*)
 	M uscanner$U c 69 $U 660
 	;;
 
-ttyU[0-9a-zA-Z])
-	U=${i#ttyU*}
-	o=$(alph2d $U)
-	M ttyU$U c 68 $o 660 dialer uucp
+usb*)
+	[ "$i" = "usb" ] && u= || u=$U
+	M usb$u c 64 $U 660
 	;;
 
 urio*)
@@ -352,34 +335,23 @@ uhid*)
 	M uhid$U c 65 $U 660
 	;;
 
-usb*)
-	[ "$i" = "usb" ] && u= || u=$U
-	M usb$u c 64 $U 660
-	;;
-
-pty*)
-	if [ $U -gt 15 ]; then
-		echo bad unit for pty in: $i
-		continue
-	fi
-	set -A tbl p q r s t u v w x y z P Q R S T
-	name=${tbl[$U]}
-	n=0
-	while [ $n -lt 16 ]
+ugen*)
+	n=$(($U*16))
+	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
 	do
-		nam=$name$(hex $n)
-		off=$(($U*16))
-		M tty$nam c 4 $(($off+$n))
-		M pty$nam c 5 $(($off+$n))
-		n=$(($n+1))
+		M ugen$U.$j c 70 $(($n+$j)) 660
 	done
 	;;
 
-tty[0-7][0-9a-f])
-	U=${i#tty*}
-	o=$(h2d $U)
-	M tty$U c 54 $o 660 dialer uucp
-	M cua$U c 54 $(($o+128)) 660 dialer uucp
+ttyU[0-9a-zA-Z])
+	U=${i#ttyU*}
+	o=$(alph2d $U)
+	M ttyU$U c 68 $o 660 dialer uucp
+	;;
+
+usbs)
+	R ttyU0 ttyU1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
+	R uscanner0 urio0 usb0 usb1
 	;;
 
 wsmux|wsmouse|wskbd)
@@ -416,6 +388,45 @@ wscons)
 	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
+pty*)
+	if [ $U -gt 15 ]; then
+		echo bad unit for pty in: $i
+		continue
+	fi
+	set -A tbl p q r s t u v w x y z P Q R S T
+	name=${tbl[$U]}
+	n=0
+	while [ $n -lt 16 ]
+	do
+		nam=$name$(hex $n)
+		off=$(($U*16))
+		M tty$nam c 4 $(($off+$n))
+		M pty$nam c 5 $(($off+$n))
+		n=$(($n+1))
+	done
+	;;
+
+ptm)
+	M ptm c 98 0 666
+	;;
+
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(h2d $U)
+	M tty$U c 54 $o 660 dialer uucp
+	M cua$U c 54 $(($o+128)) 660 dialer uucp
+	;;
+
+st*)
+	n=$(($U*16))
+	for pre in " " n e en
+	do
+		M ${pre}st$U	b 25 $n 660 operator
+		M ${pre}rst$U	c 25 $n 660 operator
+		n=$(($n+1))
+	done
+	;;
+
 vnd*)
 	dodisk vnd $U 19 19 $U 0
 	dodisk svnd $U 19 19 $U 2048
@@ -433,14 +444,8 @@ cd*)
 	dodisk2 cd $U 26 26 $U 0
 	;;
 
-st*)
-	n=$(($U*16))
-	for pre in " " n e en
-	do
-		M ${pre}st$U	b 25 $n 660 operator
-		M ${pre}rst$U	c 25 $n 660 operator
-		n=$(($n+1))
-	done
+local)
+	test -s $T.local && sh $T.local
 	;;
 
 ramdisk)
@@ -448,23 +453,13 @@ ramdisk)
 	R sd3 sd4 bpf0 std
 	;;
 
-local)
-	test -s $T.local && sh $T.local
-	;;
-
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
-	;;
-
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
 	R local wscons pci iop0 iop1 usbs tuner0 radio0 audio0 uk0
-	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
-	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R random lkm tty00 tty01 tty02 tty03 crypto pf systrace wd0
+	R wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

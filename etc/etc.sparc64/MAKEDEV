@@ -3,9 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.30 2004/02/14 17:24:31 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.71 2004/02/14 17:24:30 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.10 2004/02/14 17:24:31 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.31 2004/02/16 19:01:02 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -25,72 +26,71 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	ramdisk	devices to be put on ramdisk-based media
-#	std	standard devices
-#	local	configuration specific devices
-# Tapes:
-#	st*	SCSI tapes
-#	ch*	SCSI media changer
+#	ramdisk	Ramdisk kernel devices
+#	std	Standard devices
+#	local	Configuration specific devices
 # Disks:
-#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
-#	fd*	Floppy disk drives (3 1/2", 5 1/4")
-#	sd*	SCSI disks
+#	ccd*	Concatenated disk devices
 #	cd*	SCSI cdrom drives
-#	vnd*	"file" pseudo-disks
-#	rd*	"rd" pseudo-disks
-#	ccd*	concatenated disk devices
+#	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	raid*	RAIDframe disk devices
-# Console ports:
-#	ttyC0	wscons screen 0
-#	ttyC-F*	wscons virtual consoles
-#	wskbd*	wscons keyboards
-#	wsmux	wscons keyboard/mouse mux devices
-#	console	PROM console
-# Pointing devices:
-#	mouse	mouse (provides events, for X11)
-#	wsmouse*	wscons mice
+#	rd*	"rd" pseudo-disks
+#	sd*	SCSI disks
+#	vnd*	"file" pseudo-disk devices
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
+# Tapes:
+#	ch*	SCSI media changers
+#	st*	SCSI tape drives
 # Terminal ports:
-#	tty[a-z]*	Zilog 8530 Serial Port
-#	cua[a-z]*	Zilog 8530 Serial Port
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
+#	cua[a-z]*	Zilog 8530 Serial Port
+#	tty[a-z]*	Zilog 8530 Serial Port
 #	ttyh*	Sab82532 serial devices
 # Pseudo terminals:
-#	tty*	set of 16 slave pseudo terminals
-#	pty*	set of 16 master pseudo terminals
 #	ptm	pty master device
+#	pty*	Set of 16 master pseudo terminals
+#	tty*	Set of 16 slave pseudo terminals
+# Console ports:
+#	console	PROM console
+#	ttyC0	Minimal wscons devices
+#	ttyC-F*	wscons display devices
+#	wskbd*	wscons keyboards
+#	wsmux	wscons keyboard/mouse mux devices
+# Pointing devices:
+#	wsmouse*	wscons mice
 # Printers:
+#	lpa*	Polled printer port
 #	lpt*	IEEE 1284 centronics printer
-#	lpa*	interruptless lp
 # USB devices:
-#	usb*	Bus control devices used by usbd for attach/detach
+#	usbs	All USB devices
+#	ttyU*	USB serial ports
+#	ugen*	Generic USB devices
 #	uhid*	Generic HID devices
-#	ugen*	Generic device
 #	ulpt*	Printer devices
 #	urio*	Diamond Multimedia Rio 500
-#	ttyU*	Serial ports
+#	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
 # Special purpose devices:
-#	usbs	make USB devices
-#	ses*	SES/SAF-TE SCSI devices
-#	fd	makes fd/* for the fdescfs
-#	xfs*	XFS filesystem devices
-#	ss*	SCSI scanners
-#	uk*	SCSI Unknown device
-#	audio*	audio device
-#	pf*	Packet Filter
+#	audio*	Audio devices
 #	bpf*	Berkeley Packet Filter
-#	tun*	network tunnel driver
-#	lkm	loadable kernel modules interface
-#	*random	inkernel random data source
-#	magma*	magma card (makes 16 tty and 2 bpp)
-#	bppmag[mno]	magma parallel port device
-#	bpp*	parallel port devices
-#	spif*	spif card (makes 8 tty and 1 bpp)
-#	bpp[jkl]	spif parallel port device
-#	crypto	hardware crypto access driver
+#	bpp*	Parallel port
+#	bppmag[mno]	Magma parallel port
+#	bpp[jkl]	"spif" parallel port
+#	crypto	Hardware crypto access driver
+#	fd	fd/* nodes for fdescfs
+#	lkm	Loadable kernel modules interface
+#	magma*	Magma multiport cards
 #	pci	PCI bus device
-#	uperf	performance counters
-#	systrace*	system call tracing device
+#	pf*	Packet Filter
+#	*random	In-kernel random data source
+#	ses*	SES/SAF-TE SCSI devices
+#	spif*	"spif" multiport cards
+#	ss*	SCSI scanners
+#	systrace*	System call tracing device
+#	tun*	Network tunnel driver
+#	uk*	SCSI unknown devices
+#	uperf	Performance counters
+#	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -240,34 +240,35 @@ std)
 	M ksyms		c 76 0 640 kmem
 	M drum		c 7 0 640 kmem
 	M klog		c 16 0 600
-	M mouse		c 13 0 666
-	M fb		c 22 0 666
 	M openprom	c 70 0 640 kmem
 	;;
 
-mouse*)
-	name=${i##mouse-}
-	if [ ! -c $name ]; then
-		$0 $name	# make the appropriate device
-	fi
-	RMlist="$RMlist mouse"
-	MKlist="$MKlist;ln -s $name mouse"
-	;;
-
-systrace)
-	M systrace c 50 0 644
+xfs*)
+	M xfs$U c 51 $U 600
 	;;
 
 uperf)
 	M uperf c 25 0 664
 	;;
 
-pci)
-	M pci c 52 0 600
+uk*)
+	M uk$U c 60 $U 640 operator
 	;;
 
-crypto)
-	M crypto c 75 0
+tun*)
+	M tun$U c 111 $U 600
+	;;
+
+systrace)
+	M systrace c 50 0 644
+	;;
+
+ss*)
+	M ss$U c 59 $(($U*16)) 640 operator
+	M nss$U c 59 $(($(($U*16))+1)) 640 operator
+	M enss$U c 59 $(($(($U*16))+3)) 640 operator
+	RMlist="$RMlist scan$U"
+	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
 	;;
 
 spif*)
@@ -288,8 +289,25 @@ spif*)
 	M bpp${nam}0 c 109 $(($offset+0)) 600
 	;;
 
-bpp*)
-	M bpp$U c 107 $U 600
+ses*)
+	M ses$U c 4 $U 640 operator
+	;;
+
+*random)
+	n=0
+	for pre in " " s u p a
+	do
+		M ${pre}random c 119 $n 644
+		n=$(($n+1))
+	done
+	;;
+
+pf*)
+	M pf c 73 0 600
+	;;
+
+pci)
+	M pci c 52 0 600
 	;;
 
 magma*)
@@ -311,29 +329,26 @@ magma*)
 	M bpp${nam}1 c 72 $(($offset+1)) 600
 	;;
 
-*random)
-	n=0
-	for pre in " " s u p a
-	do
-		M ${pre}random c 119 $n 644
-		n=$(($n+1))
-	done
-	;;
-
 lkm)
 	M lkm c 112 0 640 _lkm
 	;;
 
-tun*)
-	M tun$U c 111 $U 600
+fd)
+	RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd"
+	;;
+
+crypto)
+	M crypto c 75 0
+	;;
+
+bpp*)
+	M bpp$U c 107 $U 600
 	;;
 
 bpf*)
 	M bpf$U c 105 $U 600
-	;;
-
-pf*)
-	M pf c 73 0 600
 	;;
 
 audio*)
@@ -347,45 +362,13 @@ audio*)
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
-uk*)
-	M uk$U c 60 $U 640 operator
-	;;
-
-ss*)
-	M ss$U c 59 $(($U*16)) 640 operator
-	M nss$U c 59 $(($(($U*16))+1)) 640 operator
-	M enss$U c 59 $(($(($U*16))+3)) 640 operator
-	RMlist="$RMlist scan$U"
-	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
-	;;
-
-xfs*)
-	M xfs$U c 51 $U 600
-	;;
-
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
-	;;
-
-ses*)
-	M ses$U c 4 $U 640 operator
-	;;
-
-usbs)
-	R ttyU0 ttyU1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
-	R uscanner0 urio0 usb0 usb1
-	;;
-
 uscanner*)
 	M uscanner$U c 96 $U 660
 	;;
 
-ttyU[0-9a-zA-Z])
-	U=${i#ttyU*}
-	o=$(alph2d $U)
-	M ttyU$U c 95 $o 660 dialer uucp
+usb*)
+	[ "$i" = "usb" ] && u= || u=$U
+	M usb$u c 90 $U 660
 	;;
 
 urio*)
@@ -396,6 +379,10 @@ ulpt*)
 	M ulpt$U c 93 $U 660
 	;;
 
+uhid*)
+	M uhid$U c 91 $U 660
+	;;
+
 ugen*)
 	n=$(($U*16))
 	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
@@ -404,13 +391,15 @@ ugen*)
 	done
 	;;
 
-uhid*)
-	M uhid$U c 91 $U 660
+ttyU[0-9a-zA-Z])
+	U=${i#ttyU*}
+	o=$(alph2d $U)
+	M ttyU$U c 95 $o 660 dialer uucp
 	;;
 
-usb*)
-	[ "$i" = "usb" ] && u= || u=$U
-	M usb$u c 90 $U 660
+usbs)
+	R ttyU0 ttyU1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
+	R uscanner0 urio0 usb0 usb1
 	;;
 
 lpt*|lpa*)
@@ -419,63 +408,6 @@ lpt*|lpa*)
 	lpa*) n=lpa f=128;;
 	esac
 	M $n$U c 37 $(($U+$f)) 600
-	;;
-
-ptm)
-	M ptm c 123 0 666
-	;;
-
-pty*)
-	if [ $U -gt 15 ]; then
-		echo bad unit for pty in: $i
-		continue
-	fi
-	set -A tbl p q r s t u v w x y z P Q R S T
-	name=${tbl[$U]}
-	n=0
-	while [ $n -lt 16 ]
-	do
-		nam=$name$(hex $n)
-		off=$(($U*16))
-		M tty$nam c 20 $(($off+$n))
-		M pty$nam c 21 $(($off+$n))
-		n=$(($n+1))
-	done
-	;;
-
-ttyh*)
-	M ttyh$U c 77 $U 660 dialer uucp
-	;;
-
-tty[0-7][0-9a-f])
-	U=${i#tty*}
-	o=$(h2d $U)
-	M tty$U c 36 $o 660 dialer uucp
-	M cua$U c 36 $(($o+128)) 660 dialer uucp
-	;;
-
-cua[a-z])
-	u=${i#cua*}
-	case $u in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=2 ;;
-	d) n=3 ;;
-	*) echo unknown cua device $i ;;
-	esac
-	M cua$u c 12 $(($n+128)) 660 dialer uucp
-	;;
-
-tty[a-z])
-	u=${i#tty*}
-	case $u in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=2 ;;
-	d) n=3 ;;
-	*) echo unknown tty device $i ;;
-	esac
-	M tty$u c 12 $n 660 dialer uucp
 	;;
 
 wsmouse*)
@@ -516,8 +448,75 @@ wscons)
 	R ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
-rd*)
-	dodisk2 rd $U 5 61 $U 0
+pty*)
+	if [ $U -gt 15 ]; then
+		echo bad unit for pty in: $i
+		continue
+	fi
+	set -A tbl p q r s t u v w x y z P Q R S T
+	name=${tbl[$U]}
+	n=0
+	while [ $n -lt 16 ]
+	do
+		nam=$name$(hex $n)
+		off=$(($U*16))
+		M tty$nam c 20 $(($off+$n))
+		M pty$nam c 21 $(($off+$n))
+		n=$(($n+1))
+	done
+	;;
+
+ptm)
+	M ptm c 123 0 666
+	;;
+
+ttyh*)
+	M ttyh$U c 77 $U 660 dialer uucp
+	;;
+
+tty[a-z])
+	u=${i#tty*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	*) echo unknown tty device $i ;;
+	esac
+	M tty$u c 12 $n 660 dialer uucp
+	;;
+
+cua[a-z])
+	u=${i#cua*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	*) echo unknown cua device $i ;;
+	esac
+	M cua$u c 12 $(($n+128)) 660 dialer uucp
+	;;
+
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(h2d $U)
+	M tty$U c 36 $o 660 dialer uucp
+	M cua$U c 36 $(($o+128)) 660 dialer uucp
+	;;
+
+st*)
+	n=$(($U*16))
+	for pre in " " n e en
+	do
+		M ${pre}st$U	b 11 $n 660 operator
+		M ${pre}rst$U	c 18 $n 660 operator
+		n=$(($n+1))
+	done
+	;;
+
+ch*)
+	M ch$U c 19 $U 660 operator
 	;;
 
 vnd*)
@@ -525,8 +524,8 @@ vnd*)
 	dodisk svnd $U 8 110 $U 2048
 	;;
 
-cd*)
-	dodisk2 cd $U 18 58 $U 0
+rd*)
+	dodisk2 rd $U 5 61 $U 0
 	;;
 
 fd*)
@@ -557,18 +556,8 @@ fd*)
 	M r${nam}c	c $chr $(($n+2)) 640 operator
 	;;
 
-ch*)
-	M ch$U c 19 $U 660 operator
-	;;
-
-st*)
-	n=$(($U*16))
-	for pre in " " n e en
-	do
-		M ${pre}st$U	b 11 $n 660 operator
-		M ${pre}rst$U	c 18 $n 660 operator
-		n=$(($n+1))
-	done
+cd*)
+	dodisk2 cd $U 18 58 $U 0
 	;;
 
 local)
@@ -581,10 +570,10 @@ all)
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1
 	R pty2 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
 	R fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 ccd0 ccd1
-	R ccd2 ccd3 ptm wscons pci usbs audio0 uk0 random lpa0 lpa1
-	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1
-	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
-	R std st0 st1 fd
+	R ccd2 ccd3 ptm local wscons pci usbs audio0 uk0 random lpa0
+	R lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0
+	R ttyh1 crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2
+	R raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

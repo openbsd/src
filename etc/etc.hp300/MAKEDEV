@@ -3,9 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.16 2004/02/14 17:24:31 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.71 2004/02/14 17:24:30 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.10 2004/02/14 17:24:31 todd Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.17 2004/02/16 19:01:01 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -25,41 +26,42 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	std	standard devices
-#	local	configuration specific devices
-# Tapes:
-#	ct*	HP300 HP-IB cartridge tape
-#	mt*	(Magnetic) 9-track reel tape
-#	st*	Exabyte tape
+#	ramdisk	Ramdisk kernel devices
+#	std	Standard devices
+#	local	Configuration specific devices
 # Disks:
-#	ccd*	concatenated disk devices
+#	ccd*	Concatenated disk devices
 #	hd*	HP300 HP-IB disks
-#	sd*	SCSI disks
-#	vnd*	"file" pseudo-disks
 #	rd*	"rd" pseudo-disks
-# Terminal multiplexers:
+#	sd*	SCSI disks
+#	vnd*	"file" pseudo-disk devices
+# Tapes:
+#	ct*	HP300 HP-IB cartridge tape drives
+#	mt*	(Magnetic) 9-track reel tape drives
+#	st*	Exabyte tape
+# Terminal ports:
+#	apci*	HP400 4 port serial mux interface
 #	dca*	HP200/300 single port serial interface
 #	dcm*	HP200/300 4 port serial mux interface
-#	apci*	HP400 4 port serial mux interface
 # Pseudo terminals:
-#	tty*	set of 16 slave pseudo terminals
-#	pty*	set of 16 master pseudo terminals
 #	ptm	pty master device
+#	pty*	Set of 16 master pseudo terminals
+#	tty*	Set of 16 slave pseudo terminals
+# Console ports:
+#	grf*	Raw interface to HP300 graphics devices
+#	ite*	Terminal emulator interface to HP300 graphics devices
 # Printers:
 #	ppi*	HP-IB plotters
-# Call units:
 # Special purpose devices:
-#	fd	makes fd/* for the fdescfs
-#	grf*	raw interface to HP300 graphics devices
-#	ite*	terminal emulator interface to HP300 graphics devices
-#	hil	HP300 HIL input devices
 #	bpf*	Berkeley Packet Filter
-#	tun*	network tunnel driver
+#	fd	fd/* nodes for fdescfs
+#	hil	HP-HIL input devices
+#	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
-#	lkm	loadable kernel modules interface
-#	*random	inkernel random data source
-#	xfs*	XFS filesystem devices
-#	systrace*	system call tracing device
+#	*random	In-kernel random data source
+#	tun*	Network tunnel driver
+#	systrace*	System call tracing device
+#	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -305,12 +307,16 @@ hil)
 	RMlist="$RMlist keyboard locator"
 	;;
 
+xfs*)
+	M xfs$U c 51 $U 600
+	;;
+
 systrace)
 	M systrace c 50 0 644
 	;;
 
-xfs*)
-	M xfs$U c 51 $U 600
+tun*)
+	M tun$U c 23 $U 600
 	;;
 
 *random)
@@ -322,20 +328,12 @@ xfs*)
 	done
 	;;
 
-lkm)
-	M lkm c 24 0 640 _lkm
-	;;
-
 pf*)
 	M pf c 33 0 600
 	;;
 
-tun*)
-	M tun$U c 23 $U 600
-	;;
-
-bpf*)
-	M bpf$U c 22 $U 600
+lkm)
+	M lkm c 24 0 640 _lkm
 	;;
 
 fd)
@@ -344,8 +342,8 @@ fd)
 	MKlist="$MKlist;chmod 555 fd"
 	;;
 
-ptm)
-	M ptm c 52 0 666
+bpf*)
+	M bpf$U c 22 $U 600
 	;;
 
 pty*)
@@ -366,13 +364,8 @@ pty*)
 	done
 	;;
 
-rd*)
-	dodisk2 rd $U 8 34 $U 0
-	;;
-
-vnd*)
-	dodisk vnd $U 6 19 $U 0
-	dodisk svnd $U 6 19 $U 2048
+ptm)
+	M ptm c 52 0 666
 	;;
 
 ct*|mt*|st*)
@@ -397,6 +390,15 @@ ct*|mt*|st*)
 		echo bad unit for tape in: 
 		;;
 	esac
+	;;
+
+vnd*)
+	dodisk vnd $U 6 19 $U 0
+	dodisk svnd $U 6 19 $U 2048
+	;;
+
+rd*)
+	dodisk2 rd $U 8 34 $U 0
 	;;
 
 local)

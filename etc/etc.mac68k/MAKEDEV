@@ -3,9 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.14 2004/02/14 17:24:31 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.71 2004/02/14 17:24:30 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.10 2004/02/14 17:24:31 todd Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.15 2004/02/16 19:01:01 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -25,40 +26,40 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	std	standard devices
-#	fd	makes fd/* for the fdescfs
-#	local	configuration specific devices
-#	ramdisk	makes all devices for a ramdisk kernel
-#	st*	SCSI tapes
-#	sd*	SCSI disks
+#	ramdisk	Ramdisk kernel devices
+#	std	Standard devices
+#	local	Configuration specific devices
+# Disks:
+#	ccd*	Concatenated disk devices
 #	cd*	SCSI cdrom drives
 #	rd*	"rd" pseudo-disks
-#	ch*	SCSI media changer
-#	vnd*	"file" pseudo-disks
-#	ccd*	concatenated disk devices
+#	sd*	SCSI disks
+#	vnd*	"file" pseudo-disk devices
+# Tapes:
+#	ch*	SCSI media changers
+#	st*	SCSI tape drives
 # Terminal ports:
-#	ttye*	ite bitmapped consoles
-#	tty00	standard serial port
+#	tty00	Standard serial port
+#	ttye*	ITE bitmapped consoles
 # Pseudo terminals:
-#	tty*	set of 16 slave pseudo terminals
-#	pty*	set of 16 master pseudo terminals
 #	ptm	pty master device
-# Graphics devices:
-#	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
-#		Cirrus boards (grf3), A2410 (grf4) video or
-#		CyberVision 64 (grf5)
-# Special purpose devices:
-#	bpf*	Berkeley Packet Filter
-#	tun*	network tunnel driver
-#	pf*	Packet Filter
-#	lkm	loadable kernel modules interface
-#	*random	inkernel random data source
-#	uk*	SCSI Unknown device
-#	ss*	SCSI scanners
-#	xfs*	XFS filesystem devices
+#	pty*	Set of 16 master pseudo terminals
+#	tty*	Set of 16 slave pseudo terminals
+# Console ports:
 #	adb	Apple Desktop bus event interface
+#	grf*	Raw interface to the mac68k graphics devices
+# Special purpose devices:
 #	asc*	ASC Audio device
-#	systrace*	system call tracing device
+#	bpf*	Berkeley Packet Filter
+#	fd	fd/* nodes for fdescfs
+#	lkm	Loadable kernel modules interface
+#	pf*	Packet Filter
+#	*random	In-kernel random data source
+#	ss*	SCSI scanners
+#	systrace*	System call tracing device
+#	tun*	Network tunnel driver
+#	uk*	SCSI unknown devices
+#	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -246,20 +247,20 @@ asc*)
         M asc$U c 36 $U
         ;;
 
-systrace)
-	M systrace c 50 0 644
-	;;
-
-asc*)
-	M asc$U 36 0
-	;;
-
-adb)
-	M adb c 23 0
-	;;
-
 xfs*)
 	M xfs$U c 51 $U 600
+	;;
+
+uk*)
+	M uk$U c 34 $U 640 operator
+	;;
+
+tun*)
+	M tun$U c 24 $U 600
+	;;
+
+systrace)
+	M systrace c 50 0 644
 	;;
 
 ss*)
@@ -268,10 +269,6 @@ ss*)
 	M enss$U c 33 $(($(($U*16))+3)) 640 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
-	;;
-
-uk*)
-	M uk$U c 34 $U 640 operator
 	;;
 
 *random)
@@ -283,24 +280,30 @@ uk*)
 	done
 	;;
 
-lkm)
-	M lkm c 25 0 640 _lkm
-	;;
-
 pf*)
 	M pf c 35 0 600
 	;;
 
-tun*)
-	M tun$U c 24 $U 600
+lkm)
+	M lkm c 25 0 640 _lkm
+	;;
+
+fd)
+	RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd"
 	;;
 
 bpf*)
 	M bpf$U c 22 $U 600
 	;;
 
-ptm)
-	M ptm c 52 0 666
+asc*)
+	M asc$U 36 0
+	;;
+
+adb)
+	M adb c 23 0
 	;;
 
 pty*)
@@ -321,21 +324,8 @@ pty*)
 	done
 	;;
 
-vnd*)
-	dodisk vnd $U 8 19 $U 0
-	dodisk svnd $U 8 19 $U 2048
-	;;
-
-ch*)
-	M ch$U c 17 $U 660 operator
-	;;
-
-rd*)
-	dodisk2 rd $U 13 18 $U 0
-	;;
-
-cd*)
-	dodisk2 cd $U 6 15 $U 0
+ptm)
+	M ptm c 52 0 666
 	;;
 
 st*)
@@ -348,19 +338,30 @@ st*)
 	done
 	;;
 
-ramdisk)
-	R pty0 tty00 tty01 asc0 adb rd0 rd1 st0 st1 sd0 sd1 sd2 sd3
-	R bpf0 std
+ch*)
+	M ch$U c 17 $U 660 operator
+	;;
+
+vnd*)
+	dodisk vnd $U 8 19 $U 0
+	dodisk svnd $U 8 19 $U 2048
+	;;
+
+rd*)
+	dodisk2 rd $U 13 18 $U 0
+	;;
+
+cd*)
+	dodisk2 cd $U 6 15 $U 0
 	;;
 
 local)
 	test -s $T.local && sh $T.local
 	;;
 
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
+ramdisk)
+	R pty0 tty00 tty01 asc0 adb rd0 rd1 st0 st1 sd0 sd1 sd2 sd3
+	R bpf0 std
 	;;
 
 all)

@@ -3,9 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.15 2004/02/14 17:24:31 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.71 2004/02/14 17:24:30 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.10 2004/02/14 17:24:31 todd Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.16 2004/02/16 19:01:02 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -22,63 +23,60 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	std	standard devices
-#	local	configuration specific devices
-# Tapes:
-#	st*	SCSI tapes
-#	mt*	(Magnetic) 9-track reel tape
-#	ht*	massbus tm03 & tu??
-#	tm*	unibus tm11 & te10 emulations (e.g. Emulex tc-11)
-#	ts*	unibus ts11
-#	ut*	unibus tu45 emulations (e.g.si 9700)
+#	ramdisk	Ramdisk kernel devices
+#	std	Standard devices
+#	local	Configuration specific devices
 # Disks:
-#	hp*	massbuss rm??
-#	hk*	unibus rk06 and rk07
-#	up*	other unibus devices (e.g. on Emulex sc-21v controller)
-#	ra*	MSCP disks (ra??, hd??)
-#	rb*	730 idc w/ rb80 and/or rb02
-#	rx*	MSCP floppy disk (rx33/50/...)
-#	rl*	unibus r102
-#	hd*	HP300 HP-IB disks
-#	sd*	SCSI disks
+#	ccd*	Concatenated disk devices
 #	cd*	SCSI cdrom drives
-#	ch*	SCSI media changer
-#	ss*	SCSI scanners
-#	uk*	SCSI Unknown device
-#	rd*	"rd" pseudo-disks
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
-#	vnd*	"file" pseudo-disks
-#	ccd*	concatenated disk devices
-# Pseudo terminals:
-#	tty*	set of 16 slave pseudo terminals
-#	pty*	set of 16 master pseudo terminals
-#	ptm	pty master device
-# Printers:
+#	hk*	UNIBUS RK06 and RK07 disks
+#	hd*	HP300 HP-IB disks
+#	hp*	MASSBUSS disks
+#	ra*	MSCP disks
+#	rb*	730 IDC w/ RB80 and/or RB02
+#	rd*	"rd" pseudo-disks
+#	rl*	UNIBUS RL02
+#	rx*	RX02 floppy disks
+#	sd*	SCSI disks
+#	up*	Other UNIBUS devices
+#	vnd*	"file" pseudo-disk devices
+# Tapes:
+#	ch*	SCSI media changers
+#	ht*	MASSBUS TM03 and TU?? devices
+#	mt*	(Magnetic) 9-track reel tape drives
+#	st*	SCSI tape drives
+#	tm*	UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11)
+#	ts*	UNIBUS TS11
+#	ut*	UNIBUS TU45 emulations (e.g. 9700)
 # Terminal ports:
-#	dhu*	unibus dhu11
-#	dh*	unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)
-#	dmf*	unibus dmf32
-#	dmz*	unibus dmz32
+#	dh*	UNIBUS DH11 and emulations (e.g. Able dmax, Emulex CS-11)
+#	dhu*	UNIBUS DHU11
+#	dl*	UNIBUS DL11
+#	dmf*	UNIBUS DMF32
+#	dmz*	UNIBUS DMZ32
+#	dz*	UNIBUS DZ11 and DZ32
 #	vt*	console
-#	dz*	unibus dz11 and dz32
-#	dl*	unibus dl11
+# Pseudo terminals:
+#	ptm	pty master device
+#	pty*	Set of 16 master pseudo terminals
+#	tty*	Set of 16 slave pseudo terminals
 # Special purpose devices:
-#	openprom	
 #	bpf*	Berkeley Packet Filter
+#	fd	fd/* nodes for fdescfs
+#	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
-#	lkm	loadable kernel modules interface
-#	tun*	network tunnel driver
-#	*random	inkernel random data source
-#	magma*	magma card (makes 16 tty and 2 bpp)
-#	xfs*	XFS filesystem devices
 #	raid*	RAIDframe disk devices
-#	fd	makes fd/* for the fdescfs
+#	*random	In-kernel random data source
 #	ses*	SES/SAF-TE SCSI devices
-#	systrace*	system call tracing device
+#	ss*	SCSI scanners
+#	systrace*	System call tracing device
+#	tun*	Network tunnel driver
+#	uk*	SCSI unknown devices
+#	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -280,41 +278,32 @@ ht*|tm*|mt*|ts*|ut*)
 	umask 77
 	;;
 
-systrace)
-	M systrace c 49 0 644
-	;;
-
-ses*)
-	M ses$U c 124 $U 640 operator
-	;;
-
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 53 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
-	;;
-
 xfs*)
 	M xfs$U c 51 $U 600
 	;;
 
-magma*)
-	case $U in
-	0)	offset=0  nam=m;;
-	1)	offset=16 nam=n;;
-	2)	offset=32 nam=o;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=$(($U*64))
-	n=0
-	while [ $n -lt 16 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c major_mag_c $(($offset+$n)) 660 dialer uucp
-		n=$(($n+1))
-	done
-	M bpp${nam}0 c major_bppmag_c $(($offset+0)) 600
-	M bpp${nam}1 c major_bppmag_c $(($offset+1)) 600
+uk*)
+	M uk$U c 65 $U 640 operator
+	;;
+
+tun*)
+	M tun$U c 57 $U 600
+	;;
+
+systrace)
+	M systrace c 49 0 644
+	;;
+
+ss*)
+	M ss$U c 64 $(($U*16)) 640 operator
+	M nss$U c 64 $(($(($U*16))+1)) 640 operator
+	M enss$U c 64 $(($(($U*16))+3)) 640 operator
+	RMlist="$RMlist scan$U"
+	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
+	;;
+
+ses*)
+	M ses$U c 124 $U 640 operator
 	;;
 
 *random)
@@ -326,24 +315,44 @@ magma*)
 	done
 	;;
 
-tun*)
-	M tun$U c 57 $U 600
+pf*)
+	M pf c 42 0 600
 	;;
 
 lkm)
 	M lkm c 28 0 640 _lkm
 	;;
 
-pf*)
-	M pf c 42 0 600
+fd)
+	RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 53 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd"
 	;;
 
 bpf*)
 	M bpf$U c 56 $U 600
 	;;
 
-openprom)
-	M openprom c 70 0  
+pty*)
+	if [ $U -gt 15 ]; then
+		echo bad unit for pty in: $i
+		continue
+	fi
+	set -A tbl p q r s t u v w x y z P Q R S T
+	name=${tbl[$U]}
+	n=0
+	while [ $n -lt 16 ]
+	do
+		nam=$name$(hex $n)
+		off=$(($U*16))
+		M tty$nam c 20 $(($off+$n))
+		M pty$nam c 21 $(($off+$n))
+		n=$(($n+1))
+	done
+	;;
+
+ptm)
+	M ptm c 75 0 666
 	;;
 
 dz*)
@@ -419,31 +428,27 @@ dl*)
 	fi
 	;;
 
-ptm)
-	M ptm c 75 0 666
-	;;
-
-pty*)
-	if [ $U -gt 15 ]; then
-		echo bad unit for pty in: $i
-		continue
-	fi
-	set -A tbl p q r s t u v w x y z P Q R S T
-	name=${tbl[$U]}
-	n=0
-	while [ $n -lt 16 ]
+st*)
+	n=$(($U*16))
+	for pre in " " n e en
 	do
-		nam=$name$(hex $n)
-		off=$(($U*16))
-		M tty$nam c 20 $(($off+$n))
-		M pty$nam c 21 $(($off+$n))
+		M ${pre}st$U	b 21 $n 660 operator
+		M ${pre}rst$U	c 60 $n 660 operator
 		n=$(($n+1))
 	done
+	;;
+
+ch*)
+	M ch$U c 63 $U 660 operator
 	;;
 
 vnd*)
 	dodisk vnd $U 18 55 $U 0
 	dodisk svnd $U 18 55 $U 2048
+	;;
+
+rd*)
+	dodisk2 rd $U 23 62 $U 0
 	;;
 
 fd*)
@@ -474,38 +479,8 @@ fd*)
 	M r${nam}c	c $chr $(($n+2)) 640 operator
 	;;
 
-rd*)
-	dodisk2 rd $U 23 62 $U 0
-	;;
-
-uk*)
-	M uk$U c 65 $U 640 operator
-	;;
-
-ss*)
-	M ss$U c 64 $(($U*16)) 640 operator
-	M nss$U c 64 $(($(($U*16))+1)) 640 operator
-	M enss$U c 64 $(($(($U*16))+3)) 640 operator
-	RMlist="$RMlist scan$U"
-	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
-	;;
-
-ch*)
-	M ch$U c 63 $U 660 operator
-	;;
-
 cd*)
 	dodisk2 cd $U 22 61 $U 0
-	;;
-
-st*)
-	n=$(($U*16))
-	for pre in " " n e en
-	do
-		M ${pre}st$U	b 21 $n 660 operator
-		M ${pre}rst$U	c 60 $n 660 operator
-		n=$(($n+1))
-	done
 	;;
 
 local)
@@ -515,9 +490,9 @@ local)
 all)
 	R vt0 dl0 dz0 dhu0 ts0 ts1 mt0 mt1 hd0 hd1 hd2 ccd0 vnd0 sd0
 	R sd1 sd2 sd3 cd0 tun0 tun1 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
-	R bpf7 pty0 pty1 ss0 ptm uk0 random lkm pf systrace rx0 rx1
-	R ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 raid0 raid1 raid2 raid3 std
-	R st0 st1 fd
+	R bpf7 pty0 pty1 ss0 ptm local uk0 random lkm pf systrace rx0
+	R rx1 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 raid0 raid1 raid2 raid3
+	R std st0 st1 fd
 	;;
 
 up*|sd*|rx*|rl*|rb*|raid*|ra*|hp*|hk*|hd*|ccd*)

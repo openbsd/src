@@ -3,9 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.11 2004/02/14 17:24:31 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.71 2004/02/14 17:24:30 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.10 2004/02/14 17:24:31 todd Exp 
+#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.12 2004/02/16 19:01:02 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -25,45 +26,45 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	ramdisk	makes all devices for a ramdisk kernel
-#	std	standard devices
-#	local	configuration specific devices
-# Tapes:
-#	st*	SCSI tapes
+#	ramdisk	Ramdisk kernel devices
+#	std	Standard devices
+#	local	Configuration specific devices
 # Disks:
-#	sd*	SCSI disks
+#	ccd*	Concatenated disk devices
 #	cd*	SCSI cdrom drives
-#	ccd*	concatenated disk devices
-#	vnd*	"file" pseudo-disks
 #	rd*	"rd" pseudo-disks
+#	sd*	SCSI disks
+#	vnd*	"file" pseudo-disk devices
+# Tapes:
+#	ch*	SCSI media changers
+#	st*	SCSI tape drives
 # Terminal ports:
-#	ttya-d	standard serial ports
-#	cuaa-d	standard call-up devices
+#	cuaa-d	On-board call-up devices
+#	ttya-d	On-board serial ports
 #	tty0*	CL-CD2400 serial ports
 #	ttyw*	WG CL-CD2400 serial ports
 # Pseudo terminals:
-#	tty*	set of 16 slave pseudo terminals
-#	pty*	set of 16 master pseudo terminals
 #	ptm	pty master device
+#	pty*	Set of 16 master pseudo terminals
+#	tty*	Set of 16 slave pseudo terminals
 # Printers:
-#	par0	Printer port
+#	par0	On-board printer port
 # Special purpose devices:
-#	uk*	SCSI Unknown device
-#	ss*	SCSI scanners
-#	ch*	SCSI media changer
-#	fd	makes fd/* for the fdescfs
 #	bpf*	Berkeley Packet Filter
-#	tun*	network tunnel driver
+#	fd	fd/* nodes for fdescfs
+#	flash0	On-board flash memory
+#	lkm	Loadable kernel modules interface
+#	nvram0	On-board non-volatile memory
 #	pf*	Packet Filter
-#	lkm	loadable kernel modules interface
-#	*random	inkernel random data source
-#	xfs*	XFS filesystem devices
-#	sram0	static memory access
-#	nvram0	non-volatile memory access
-#	flash0	flash memory access
-#	vmes0	VMEbus access
-#	vmel0	VMEbus access
-#	systrace*	system call tracing device
+#	*random	In-kernel random data source
+#	sram0	On-board static memory
+#	ss*	SCSI scanners
+#	systrace*	System call tracing device
+#	tun*	Network tunnel driver
+#	uk*	SCSI unknown devices
+#	vmel0	VMEbus D32 space
+#	vmes0	VMEbus D16 space
+#	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -211,32 +212,40 @@ std)
 	;;
 
 
-systrace)
-	M systrace c 50 0 644
-	;;
-
-vmel0)
-	M vmel0 c 31 0 640 kmem
+xfs*)
+	M xfs$U c 51 $U 600
 	;;
 
 vmes0)
 	M vmes0 c 32 0 640 kmem
 	;;
 
-flash0)
-	M flash0 c 11 0 640 kmem
+vmel0)
+	M vmel0 c 31 0 640 kmem
 	;;
 
-nvram0)
-	M nvram0 c 10 0 640 kmem
+uk*)
+	M uk$U c 41 $U 640 operator
+	;;
+
+tun*)
+	M tun$U c 23 $U 600
+	;;
+
+systrace)
+	M systrace c 50 0 644
+	;;
+
+ss*)
+	M ss$U c 42 $(($U*16)) 640 operator
+	M nss$U c 42 $(($(($U*16))+1)) 640 operator
+	M enss$U c 42 $(($(($U*16))+3)) 640 operator
+	RMlist="$RMlist scan$U"
+	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
 	;;
 
 sram0)
 	M sram0 c 7 0 640 kmem
-	;;
-
-xfs*)
-	M xfs$U c 51 $U 600
 	;;
 
 *random)
@@ -248,20 +257,20 @@ xfs*)
 	done
 	;;
 
-lkm)
-	M lkm c 24 0 640 _lkm
-	;;
-
 pf*)
 	M pf c 39 0 600
 	;;
 
-tun*)
-	M tun$U c 23 $U 600
+nvram0)
+	M nvram0 c 10 0 640 kmem
 	;;
 
-bpf*)
-	M bpf$U c 22 $U 600
+lkm)
+	M lkm c 24 0 640 _lkm
+	;;
+
+flash0)
+	M flash0 c 11 0 640 kmem
 	;;
 
 fd)
@@ -270,20 +279,8 @@ fd)
 	MKlist="$MKlist;chmod 555 fd"
 	;;
 
-ch*)
-	M ch$U c 44 $U 660 operator
-	;;
-
-ss*)
-	M ss$U c 42 $(($U*16)) 640 operator
-	M nss$U c 42 $(($(($U*16))+1)) 640 operator
-	M enss$U c 42 $(($(($U*16))+3)) 640 operator
-	RMlist="$RMlist scan$U"
-	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
-	;;
-
-uk*)
-	M uk$U c 41 $U 640 operator
+bpf*)
+	M bpf$U c 22 $U 600
 	;;
 
 lp*)
@@ -292,10 +289,6 @@ lp*)
 	0) M par$u c 28 $u 600;;
 	*) echo unknown lp device $i ;;
 	esac
-	;;
-
-ptm)
-	M ptm c 52 0 666
 	;;
 
 pty*)
@@ -314,6 +307,10 @@ pty*)
 		M pty$nam c 5 $(($off+$n))
 		n=$(($n+1))
 	done
+	;;
+
+ptm)
+	M ptm c 52 0 666
 	;;
 
 ttyw*)
@@ -338,22 +335,6 @@ tty0*)
 	esac
 	;;
 
-cua[a-z])
-	u=${i#cua*}
-	case $u in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=2 ;;
-	d) n=3 ;;
-	*) echo unknown cua device $i ;;
-	esac
-	case $u in
-	a|b|c|d)
-		M cua$u c 12 $(($n+128)) 660 dialer uucp
-		;;
-	esac
-	;;
-
 tty[a-z])
 	u=${i#tty*}
 	case $u in
@@ -370,17 +351,20 @@ tty[a-z])
 	esac
 	;;
 
-rd*)
-	dodisk2 rd $U 9 18 $U 0
-	;;
-
-vnd*)
-	dodisk vnd $U 6 19 $U 0
-	dodisk svnd $U 6 19 $U 2048
-	;;
-
-cd*)
-	dodisk2 cd $U 8 9 $U 0
+cua[a-z])
+	u=${i#cua*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	*) echo unknown cua device $i ;;
+	esac
+	case $u in
+	a|b|c|d)
+		M cua$u c 12 $(($n+128)) 660 dialer uucp
+		;;
+	esac
 	;;
 
 st*)
@@ -391,6 +375,23 @@ st*)
 		M ${pre}rst$U	c 20 $n 660 operator
 		n=$(($n+1))
 	done
+	;;
+
+ch*)
+	M ch$U c 44 $U 660 operator
+	;;
+
+vnd*)
+	dodisk vnd $U 6 19 $U 0
+	dodisk svnd $U 6 19 $U 2048
+	;;
+
+rd*)
+	dodisk2 rd $U 9 18 $U 0
+	;;
+
+cd*)
+	dodisk2 cd $U 8 9 $U 0
 	;;
 
 local)
@@ -407,7 +408,7 @@ all)
 	R vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2
 	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
 	R pty1 pty2 xfs0 ss0 ss1 ch0 vmel0 vmes0 flash0 nvram0 sram0
-	R ptm uk0 random lkm pf systrace std st0 st1 fd
+	R ptm local uk0 random lkm pf systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

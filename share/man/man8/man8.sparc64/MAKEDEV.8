@@ -1,34 +1,29 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.8 2004/01/13 19:27:19 jmc Exp $
-.\" Copyright (c) 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" $OpenBSD: MAKEDEV.8,v 1.9 2004/02/16 19:05:06 miod Exp $
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
+.\" generated from:
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\"	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.31 2004/02/16 19:01:02 miod Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
+.\"	OpenBSD: MAKEDEV.man,v 1.1 2004/02/16 19:03:30 miod Exp 
+.\"	OpenBSD: MAKEDEV.mansub,v 1.1 2004/02/16 19:03:30 miod Exp 
 .\"
-.\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
+.\" Copyright (c) 2004, Miodrag Vallat
+.\" Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
 .\"
-.Dd October 5, 2001
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 16, 2004
 .Dt MAKEDEV 8 sparc64
 .Os
 .Sh NAME
@@ -40,117 +35,189 @@
 .Op Ar ...
 .Sh DESCRIPTION
 The shell script
-.Nm MAKEDEV ,
+.Nm ,
 found in the
 .Pa /dev
-directory, is used to create
-the common special
-files.
+directory, is used to create various special files.
 See
 .Xr intro 4
 for a more complete discussion of special files.
 .Pp
-.Nm MAKEDEV
+.Nm
 takes any number of device names as arguments, where the names are
-the common abbreviation for the device.
-There are four special device names,
-.Ar all ,
-.Ar std ,
-.Ar local
-and
-.Ar wscons .
-If
-given,
-.Ar all
-creates device files for all devices on the sparc64.
-If units are expected for a device,
-.Nm MAKEDEV
-will supply the standard numbers.
-The
-.Ar std
-argument creates only the standard devices for the sparc64.
-Finally
-.Ar local
-is for devices specific to the local site, and executes the shell file
-.Pa MAKEDEV.local .
+the common abbreviation for the device or group of devices.
 .Pp
-The sparc64 supports the following devices.
-Where a device name is followed by a hash sign ("#"), the hash sign
-must be replaced by a unit number.
+Where a device name is followed by a star
+.Sq * ,
+the star must be replaced by a unit number.
+If units are expected for a device but not provided,
+.Nm
+will supply the standard numbers in most cases.
 .Pp
-.Sy Pseudo-names
-.Bl -tag -width openprom -compact
+The sparc64 supports the following devices:
+.Pp
+.Pp
+.Sy Special device names
+.Bl -tag -width tenletters -compact
 .It Ar all
-All known devices for the sparc64.
+Creates special files for all devices on sparc64.
+.It Ar ramdisk
+Ramdisk kernel devices.
 .It Ar std
-The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
-stdin, stdout, tty, zero).
+Creates the
+.Sq standard
+devices (console, drum, klog, kmem, ksyms, mem, null,
+stderr, stdin, stdout, tty, zero)
+which are absolutely necessary for the system to function properly.
 .It Ar local
-Configuration specific devices.
-.It Ar wscons
-All wscons-related devices.
+Creates configuration-specific devices.
 .El
 .Pp
-.Sy Device-names
-.Bl -tag -width openprom -compact
-.It Ar audio
-Audio device.
-.It Ar bpf#
-Berkeley packet filters.
-.It Ar ccd#
-.Dq Concatenated
-disk drives.
-.It Ar cd#
-SCSI CD-ROM drives.
-.It Ar ch#
-SCSI media changer drives.
-.It Ar cua#
-Serial ports.
-.It Ar fd#
-.Dq Floppy
-disk drives.
-.It Ar lkm
-Loadable kernel modules.
-.It Ar openprom
-OPENPROM and EEPROM interface.
-.It Ar pty#
-Set of 16 master and slave pseudo terminals.
-.It Ar raid#
-RAIDframe disk drives.
-.It Ar random
-In-kernel random number generator.
-.It Ar rd#
-.Dq Ramdisk
+.Sy Disks
+.Bl -tag -width tenletters -compact
+.It Ar ccd*
+Concatenated disk devices.
+.It Ar cd*
+SCSI cdrom drives.
+.It Ar fd*
+Floppy disk drives (3 1/2", 5 1/4").
+.It Ar raid*
+RAIDframe disk devices.
+.It Ar rd*
+.Dq rd
 pseudo-disks.
-.It Ar sd#
-SCSI disk drives.
-.It Ar ses#
-SCSI SES/SAF-TE devices.
-.It Ar st#
-SCSI tape drives.
-.It Ar tty#
-Serial ports.
-.It Ar ttyC#
-Wscons console screens.
-.It Ar ttyU#
-USB serial ports.
-.It Ar tun#
-Network tunnel devices.
-.It Ar uk#
-.Dq Unknown SCSI
-devices.
-.It Ar vnd#
-.Dq File
-pseudo-disks.
-.It Ar wskbd
-Keyboard devices for wscons.
-.It Ar wsmouse
-Mouse devices for wscons.
-.It Ar wsmux
-Multiplexor devices for wscons.
-.It Ar xfs#
-XFS filesystem devices.
+.It Ar sd*
+SCSI disks.
+.It Ar vnd*
+.Dq file
+pseudo-disk devices.
+.It Ar wd*
+.Dq winchester
+disk drives (ST506, IDE, ESDI, RLL, ...).
 .El
+.Pp
+.Sy Tapes
+.Bl -tag -width tenletters -compact
+.It Ar ch*
+SCSI media changers.
+.It Ar st*
+SCSI tape drives.
+.El
+.Pp
+.Sy Terminal ports
+.Bl -tag -width tenletters -compact
+.It Ar tty[0-7][0-9a-f]
+NS16x50 serial ports.
+.It Ar cua[a-z]*
+Zilog 8530 Serial Port.
+.It Ar tty[a-z]*
+Zilog 8530 Serial Port.
+.It Ar ttyh*
+Sab82532 serial devices.
+.El
+.Pp
+.Sy Pseudo terminals
+.Bl -tag -width tenletters -compact
+.It Ar ptm
+pty master device.
+.It Ar pty*
+Set of 16 master pseudo terminals.
+.It Ar tty*
+Set of 16 slave pseudo terminals.
+.El
+.Pp
+.Sy Console ports
+.Bl -tag -width tenletters -compact
+.It Ar console
+PROM console.
+.It Ar ttyC0
+Minimal wscons devices.
+.It Ar ttyC-F*
+wscons display devices.
+.It Ar wskbd*
+wscons keyboards.
+.It Ar wsmux
+wscons keyboard/mouse mux devices.
+.El
+.Pp
+.Sy Pointing devices
+.Bl -tag -width tenletters -compact
+.It Ar wsmouse*
+wscons mice.
+.El
+.Pp
+.Sy Printers
+.Bl -tag -width tenletters -compact
+.It Ar lpa*
+Polled printer port.
+.It Ar lpt*
+IEEE 1284 centronics printer.
+.El
+.Pp
+.Sy USB devices
+.Bl -tag -width tenletters -compact
+.It Ar usbs
+All USB devices.
+.It Ar ttyU*
+USB serial ports.
+.It Ar ugen*
+Generic USB devices.
+.It Ar uhid*
+Generic HID devices.
+.It Ar ulpt*
+Printer devices.
+.It Ar urio*
+Diamond Multimedia Rio 500.
+.It Ar usb*
+Bus control devices used by usbd for attach/detach.
+.It Ar uscanner*
+Scanners.
+.El
+.Pp
+.Sy Special purpose devices
+.Bl -tag -width tenletters -compact
+.It Ar audio*
+Audio devices.
+.It Ar bpf*
+Berkeley Packet Filter.
+.It Ar bpp*
+Parallel port.
+.It Ar bppmag[mno]
+Magma parallel port.
+.It Ar bpp[jkl]
+.Dq spif
+parallel port.
+.It Ar crypto
+Hardware crypto access driver.
+.It Ar fd
+fd/* nodes for fdescfs.
+.It Ar lkm
+Loadable kernel modules interface.
+.It Ar magma*
+Magma multiport cards.
+.It Ar pci
+PCI bus device.
+.It Ar pf*
+Packet Filter.
+.It Ar *random
+In-kernel random data source.
+.It Ar ses*
+SES/SAF-TE SCSI devices.
+.It Ar spif*
+.Dq spif
+multiport cards.
+.It Ar ss*
+SCSI scanners.
+.It Ar systrace*
+System call tracing device.
+.It Ar tun*
+Network tunnel driver.
+.It Ar uk*
+SCSI unknown devices.
+.It Ar uperf
+Performance counters.
+.It Ar xfs*
+XFS filesystem node.
 .Sh FILES
 .Bl -tag -width /dev -compact
 .It Pa /dev

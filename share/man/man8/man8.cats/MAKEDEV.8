@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.7 2004/02/16 19:05:06 miod Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.1 2004/02/16 19:05:06 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.alpha/MAKEDEV.md,v 1.21 2004/02/16 19:00:57 miod Exp 
+.\"	OpenBSD: etc.cats/MAKEDEV.md,v 1.6 2004/02/16 19:01:01 miod Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.1 2004/02/16 19:03:30 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.1 2004/02/16 19:03:30 miod Exp 
@@ -24,7 +24,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd February 16, 2004
-.Dt MAKEDEV 8 alpha
+.Dt MAKEDEV 8 cats
 .Os
 .Sh NAME
 .Nm MAKEDEV
@@ -54,13 +54,13 @@ If units are expected for a device but not provided,
 .Nm
 will supply the standard numbers in most cases.
 .Pp
-The alpha supports the following devices:
+The cats supports the following devices:
 .Pp
 .Pp
 .Sy Special device names
 .Bl -tag -width tenletters -compact
 .It Ar all
-Creates special files for all devices on alpha.
+Creates special files for all devices on cats.
 .It Ar ramdisk
 Ramdisk kernel devices.
 .It Ar std
@@ -79,13 +79,13 @@ Creates configuration-specific devices.
 Concatenated disk devices.
 .It Ar cd*
 SCSI cdrom drives.
-.It Ar fd*
-Floppy disk drives (3 1/2", 5 1/4").
+.It Ar ch*
+SCSI media changers.
+.It Ar raid*
+RAIDframe disk devices.
 .It Ar rd*
 .Dq rd
 pseudo-disks.
-.It Ar raid*
-RAIDframe disk devices.
 .It Ar sd*
 SCSI disks.
 .It Ar vnd*
@@ -98,8 +98,6 @@ disk drives (ST506, IDE, ESDI, RLL, ...).
 .Pp
 .Sy Tapes
 .Bl -tag -width tenletters -compact
-.It Ar ch*
-SCSI media changers.
 .It Ar st*
 SCSI tape drives.
 .El
@@ -108,10 +106,6 @@ SCSI tape drives.
 .Bl -tag -width tenletters -compact
 .It Ar tty[0-7][0-9a-f]
 NS16x50 serial ports.
-.It Ar ttyB?
-DEC 3000 ZS8530 ("scc") serial ports.
-.It Ar ttyc*
-Cyclades serial ports.
 .El
 .Pp
 .Sy Pseudo terminals
@@ -132,22 +126,10 @@ Minimal wscons devices.
 wscons display devices.
 .It Ar wskbd*
 wscons keyboards.
-.It Ar wsmux
-wscons keyboard/mouse mux devices.
-.El
-.Pp
-.Sy Pointing devices
-.Bl -tag -width tenletters -compact
 .It Ar wsmouse*
 wscons mice.
-.El
-.Pp
-.Sy Printers
-.Bl -tag -width tenletters -compact
-.It Ar lpa*
-Polled printer port.
-.It Ar lpt*
-IEEE 1284 centronics printer.
+.It Ar wsmux
+wscons keyboard/mouse mux devices.
 .El
 .Pp
 .Sy USB devices
@@ -162,44 +144,48 @@ Generic USB devices.
 Generic HID devices.
 .It Ar ulpt*
 Printer devices.
+.It Ar urio*
+Diamond Multimedia Rio 500.
 .It Ar usb*
 Bus control devices used by usbd for attach/detach.
+.It Ar uscanner*
+Scanners.
 .El
 .Pp
 .Sy Special purpose devices
 .Bl -tag -width tenletters -compact
 .It Ar audio*
 Audio devices.
+.It Ar bktr*
+Video frame grabbers.
 .It Ar bpf*
 Berkeley Packet Filter.
+.It Ar crypto
+Hardware crypto access driver.
 .It Ar fd
 fd/* nodes for fdescfs.
 .It Ar iop*
 I2O controller devices.
 .It Ar lkm
 Loadable kernel modules interface.
-.It Ar mmclock
-Memory mapped clock.
-.It Ar music*
-MIDI devices.
 .It Ar pci
 PCI bus device.
 .It Ar pf*
 Packet Filter.
-.It Ar rmidi*
-Raw MIDI devices.
+.It Ar radio*
+FM tuner devices.
 .It Ar *random
 In-kernel random data source.
-.It Ar speaker
-PC speaker.
-.It Ar ss*
-SCSI scanners.
-.It Ar systrace*
-System call tracing device.
 .It Ar tun*
 Network tunnel driver.
 .It Ar uk*
 SCSI unknown devices.
+.It Ar ss*
+SCSI scanners.
+.It Ar systrace*
+System call tracing device.
+.It Ar tuner*
+Tuner devices.
 .It Ar xfs*
 XFS filesystem node.
 .Sh FILES
