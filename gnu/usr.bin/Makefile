@@ -1,12 +1,12 @@
 #	$NetBSD: Makefile,v 1.27 1995/12/07 07:26:32 phil Exp $
 
-SUBDIR+=	bc cpio cvs dc diff diff3 gawk grep groff
+SUBDIR+=	bc cpio cvs dc diff diff3 gawk gcc grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar texinfo
 
 # some ports don't use the tool chain in /usr/src
 .if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "mips") && \
 	(${MACHINE_ARCH} != "vax") && (${MACHINE_ARCH} != "ns32k")
-SUBDIR+=	gas gcc2 gdb ld
+SUBDIR+=	gas gdb ld
 .endif
 
 # ns32k and vax wants newer gcc
