@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.64 2004/01/11 19:42:27 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.65 2004/01/11 20:13:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -209,6 +209,12 @@ struct kroute_nexthop {
 	u_int8_t		connected;
 	struct bgpd_addr	gateway;
 	struct kroute		kr;
+};
+
+struct session_up {
+	u_int32_t		remote_bgpid;
+	struct bgpd_addr	local_addr;
+	struct bgpd_addr	remote_addr;
 };
 
 struct ctl_show_nexthop {

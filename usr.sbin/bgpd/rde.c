@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.53 2004/01/11 02:39:05 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.54 2004/01/11 20:13:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,7 +54,7 @@ void		 peer_init(struct peer *, u_long);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 void		 peer_remove(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
-void		 peer_up(u_int32_t, u_int32_t);
+void		 peer_up(u_int32_t, struct session_up *);
 void		 peer_down(u_int32_t);
 
 volatile sig_atomic_t	 rde_quit = 0;
@@ -179,7 +179,7 @@ void
 rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
-	u_int32_t		 rid;
+	struct session_up	 sup;
 	int			 n;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -198,10 +198,10 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			rde_update_dispatch(&imsg);
 			break;
 		case IMSG_SESSION_UP:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rid))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
 				fatalx("incorrect size of session request");
-			memcpy(&rid, imsg.data, sizeof(rid));
-			peer_up(imsg.hdr.peerid, rid);
+			memcpy(&sup, imsg.data, sizeof(sup));
+			peer_up(imsg.hdr.peerid, &sup);
 			break;
 		case IMSG_SESSION_DOWN:
 			peer_down(imsg.hdr.peerid);
@@ -777,7 +777,7 @@ peer_remove(struct rde_peer *peer)
 }
 
 void
-peer_up(u_int32_t id, u_int32_t rid)
+peer_up(u_int32_t id, struct session_up *sup)
 {
 	struct rde_peer	*peer;
 
@@ -786,7 +786,10 @@ peer_up(u_int32_t id, u_int32_t rid)
 		logit(LOG_CRIT, "peer_up: unknown peer id %d", id);
 		return;
 	}
-	peer->remote_bgpid = ntohl(rid);
+	peer->remote_bgpid = ntohl(sup->remote_bgpid);
+	memcpy(&peer->local_addr, &sup->local_addr, sizeof(peer->local_addr));
+	memcpy(&peer->remote_addr, &sup->remote_addr,
+	    sizeof(peer->remote_addr));
 	peer->state = PEER_UP;
 	up_init(peer);
 }

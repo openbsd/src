@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.13 2004/01/10 22:25:42 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.14 2004/01/11 20:13:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -59,9 +59,10 @@ struct rde_peer {
 	LIST_ENTRY(rde_peer)		 peer_l; /* list of all peers */
 	struct aspath_head		 path_h; /* list of all as paths */
 	struct peer_config		 conf;
-	u_int32_t			 remote_bgpid;
 	enum peer_state			 state;
-	struct in_addr			 if_ip; /* nexthop for announcements*/
+	u_int32_t			 remote_bgpid;
+	struct bgpd_addr		 remote_addr;
+	struct bgpd_addr		 local_addr;
 	u_int32_t			 up_pcnt;
 	u_int32_t			 up_acnt;
 	u_int32_t			 up_nlricnt;
