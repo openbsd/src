@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.12 1996/08/11 23:26:07 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.13 1996/12/11 19:08:20 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.66 1996/05/05 19:53:01 christos Exp $	*/
 
 /*
@@ -936,7 +936,7 @@ ststart(v)
 		*bp->b_actb = dp;
 
 		/*
-		 * if the device has been unmounted byt the user
+		 * if the device has been unmounted by the user
 		 * then throw away all requests until done
 		 */
 		if (!(st->flags & ST_MOUNTED) ||
@@ -944,6 +944,7 @@ ststart(v)
 			/* make sure that one implies the other.. */
 			sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
 			bp->b_error = EIO;
 			biodone(bp);
 			continue;
@@ -966,6 +967,7 @@ ststart(v)
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
 						bp->b_flags |= B_ERROR;
+						bp->b_resid = bp->b_bcount;
 						bp->b_error = EIO;
 						biodone(bp);
 						continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.17 1996/12/05 13:10:24 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.18 1996/12/11 19:08:14 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.92 1996/05/05 19:52:50 christos Exp $	*/
 
 /*
@@ -575,6 +575,7 @@ cdstart(v)
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			continue;
 		}

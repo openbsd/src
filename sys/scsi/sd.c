@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.20 1996/12/03 08:08:00 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.21 1996/12/11 19:08:18 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.100.4.1 1996/06/04 23:14:08 thorpej Exp $	*/
 
 /*
@@ -543,6 +543,7 @@ sdstart(v)
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			continue;
 		}
