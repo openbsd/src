@@ -7,15 +7,15 @@
  * 0.9.3-dev	  0x00903000
  * 0.9.3beta1	  0x00903001
  * 0.9.3beta2-dev 0x00903002
- * 0.9.3beta2     0x00903002
+ * 0.9.3beta2     0x00903002 (same as ...beta2-dev)
  * 0.9.3	  0x00903100
  * 0.9.3a	  0x00903101
  * 0.9.4 	  0x00904100
  * 1.2.3z	  0x1020311a
  * (Prior to 0.9.3-dev a different scheme was used: 0.9.2b is 0x0922.)
  */
-#define OPENSSL_VERSION_NUMBER	0x00904100L
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.4 09 Aug 1999"
+#define OPENSSL_VERSION_NUMBER	0x00905100L
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.5 28 Feb 2000"
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
 #endif /* HEADER_OPENSSLV_H */

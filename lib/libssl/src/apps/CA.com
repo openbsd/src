@@ -35,6 +35,7 @@ $ REQ    = openssl + " req " + SSLEAY_CONFIG
 $ CA     = openssl + " ca " + SSLEAY_CONFIG
 $ VERIFY = openssl + " verify"
 $ X509   = openssl + " x509"
+$ PKCS12 = openssl + " pkcs12"
 $ echo   = "write sys$Output"
 $!
 $ s = F$PARSE(F$ENVIRONMENT("DEFAULT"),"[]") - "].;"
@@ -96,10 +97,18 @@ $     CREATE /DIR /PROTECTION=OWNER:RWED 'CATOP'.certs]
 $     CREATE /DIR /PROTECTION=OWNER:RWED 'CATOP'.crl]
 $     CREATE /DIR /PROTECTION=OWNER:RWED 'CATOP'.newcerts]
 $     CREATE /DIR /PROTECTION=OWNER:RWED 'CATOP'.private]
+$
 $     OPEN   /WRITE ser_file 'CATOP']serial. 
 $     WRITE ser_file "01"
 $     CLOSE ser_file
 $     APPEND/NEW NL: 'CATOP']index.txt
+$
+$     ! The following is to make sure access() doesn't get confused.  It
+$     ! really needs one file in the directory to give correct answers...
+$     COPY NLA0: 'CATOP'.certs].;
+$     COPY NLA0: 'CATOP'.crl].;
+$     COPY NLA0: 'CATOP'.newcerts].;
+$     COPY NLA0: 'CATOP'.private].;
 $   ENDIF
 $!
 $   IF F$SEARCH(CATOP+".private"+CAKEY) .EQS. ""
@@ -119,6 +128,17 @@ $	RET=$STATUS
 $     ENDIF
 $   ENDIF
 $   GOTO opt_loop_continue
+$ ENDIF
+$!
+$ IF (prog_opt .EQS. "-pkcs12")
+$ THEN
+$   i = i + 1
+$   cname = P'i'
+$   IF cname .EQS. "" THEN cname = "My certificate"
+$   PKCS12 -in newcert.pem -inkey newreq.pem -certfile 'CATOP''CACERT -
+	   -out newcert.p12 -export -name "''cname'"
+$   RET=$STATUS
+$   exit RET
 $ ENDIF
 $!
 $ IF (prog_opt .EQS. "-xsign")

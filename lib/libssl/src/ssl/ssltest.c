@@ -56,11 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
+#include <assert.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <limits.h>
 
 #include "openssl/e_os.h"
 
@@ -69,12 +70,9 @@
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #ifdef WINDOWS
 #include "../crypto/bio/bss_file.c"
-#endif
-
-#if defined(NO_RSA) && !defined(NO_SSL2)
-#define NO_SSL2
 #endif
 
 #ifdef VMS
@@ -85,19 +83,23 @@
 #  define TEST_CLIENT_CERT "../apps/client.pem"
 #endif
 
-int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
+static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export,int keylength);
 #endif
 #ifndef NO_DH
 static DH *get_dh512(void);
 #endif
-BIO *bio_err=NULL;
-BIO *bio_stdout=NULL;
+#ifndef NO_DSA
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
+#endif
+
+static BIO *bio_err=NULL;
+static BIO *bio_stdout=NULL;
 
 static char *cipher=NULL;
-int verbose=0;
-int debug=0;
+static int verbose=0;
+static int debug=0;
 #if 0
 /* Not used yet. */
 #ifdef FIONBIO
@@ -105,6 +107,7 @@ static int s_nbio=0;
 #endif
 #endif
 
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
 int doit_biopair(SSL *s_ssl,SSL *c_ssl,long bytes);
 int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
@@ -121,6 +124,9 @@ static void sv_usage(void)
 	fprintf(stderr," -bytes <val>  - number of bytes to swap between client/server\n");
 #if !defined NO_DH && !defined NO_DSA
 	fprintf(stderr," -dhe1024      - generate 1024 bit key for DHE\n");
+#endif
+#if !defined NO_DH
+	fprintf(stderr," -no_dhe       - disable DHE\n");
 #endif
 #ifndef NO_SSL2
 	fprintf(stderr," -ssl2         - use SSLv2\n");
@@ -159,15 +165,20 @@ int main(int argc, char *argv[])
 	int number=1,reuse=0;
 	long bytes=1L;
 	SSL_CIPHER *ciph;
-	int dhe1024 = 0;
+	int dhe1024 = 0, no_dhe = 0;
 #ifndef NO_DH
 	DH *dh;
 #endif
+	verbose = 0;
+	debug = 0;
+	cipher = 0;
+	
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
+	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE);
-
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	argc--;
 	argv++;
@@ -186,6 +197,8 @@ int main(int argc, char *argv[])
 			reuse=1;
 		else if	(strcmp(*argv,"-dhe1024") == 0)
 			dhe1024=1;
+		else if	(strcmp(*argv,"-no_dhe") == 0)
+			no_dhe=1;
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			ssl2=1;
 		else if	(strcmp(*argv,"-tls1") == 0)
@@ -311,31 +324,36 @@ bad:
 		}
 
 #ifndef NO_DH
-# ifndef NO_DSA
-	if (dhe1024) 
+	if (!no_dhe)
 		{
-		DSA *dsa;
-
-		if (verbose)
+# ifndef NO_DSA
+		if (dhe1024) 
 			{
-			fprintf(stdout, "Creating 1024 bit DHE parameters ...");
-			fflush(stdout);
+			DSA *dsa;
+			unsigned char seed[20];
+			
+			if (verbose)
+				{
+				BIO_printf(bio_err, "Creating 1024 bit DHE parameters\n");
+				BIO_flush(bio_err);
+				}
+			
+			memcpy(seed, "Random String no. 12", 20);
+			dsa = DSA_generate_parameters(1024, seed, 20, NULL, NULL, dsa_cb, bio_err);
+			dh = DSA_dup_DH(dsa);	
+			DSA_free(dsa);
+			/* important: SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
+			SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
+			
+			if (verbose)
+				fprintf(stdout, " done\n");
 			}
-
-		dsa = DSA_generate_parameters(1024, NULL, 0, NULL, NULL, 0, NULL);
-		dh = DSA_dup_DH(dsa);	
-		DSA_free(dsa);
-		/* important: SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
-		SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
-
-		if (verbose)
-			fprintf(stdout, " done\n");
-		}
-	else
+		else
 # endif
-		dh=get_dh512();
-	SSL_CTX_set_tmp_dh(s_ctx,dh);
-	DH_free(dh);
+			dh=get_dh512();
+		SSL_CTX_set_tmp_dh(s_ctx,dh);
+		DH_free(dh);
+		}
 #endif
 
 #ifndef NO_RSA
@@ -373,17 +391,22 @@ bad:
 
 	if (client_auth)
 		{
-		fprintf(stderr,"client authentication\n");
+		BIO_printf(bio_err,"client authentication\n");
 		SSL_CTX_set_verify(s_ctx,
 			SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
 			verify_callback);
 		}
 	if (server_auth)
 		{
-		fprintf(stderr,"server authentication\n");
+		BIO_printf(bio_err,"server authentication\n");
 		SSL_CTX_set_verify(c_ctx,SSL_VERIFY_PEER,
 			verify_callback);
 		}
+	
+	{
+		int session_id_context = 0;
+		SSL_CTX_set_session_id_context(s_ctx, (void *)&session_id_context, sizeof session_id_context);
+	}
 
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);
@@ -400,13 +423,13 @@ bad:
 	if (!verbose)
 		{
 		ciph=SSL_get_current_cipher(c_ssl);
-		fprintf(stdout,"Protocol %s, cipher %s, %s\n",
+		BIO_printf(bio_stdout,"Protocol %s, cipher %s, %s\n",
 			SSL_get_version(c_ssl),
 			SSL_CIPHER_get_version(ciph),
 			SSL_CIPHER_get_name(ciph));
 		}
 	if ((number > 1) || (bytes > 1L))
-		printf("%d handshakes of %ld bytes done\n",number,bytes);
+		BIO_printf(bio_stdout, "%d handshakes of %ld bytes done\n",number,bytes);
 
 	SSL_free(s_ssl);
 	SSL_free(c_ssl);
@@ -421,6 +444,7 @@ end:
 	ERR_remove_state(0);
 	EVP_cleanup();
 	CRYPTO_mem_leaks(bio_err);
+	if (bio_err != NULL) BIO_free(bio_err);
 	EXIT(ret);
 	}
 
@@ -485,7 +509,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 		 * BIO_ctrl_pending(bio)              number of bytes we can read now
 		 * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfil
 		 *                                      other side's read attempt
-		 * BIO_ctrl_get_write_gurantee(bio)   number of bytes we can write now
+		 * BIO_ctrl_get_write_guarantee(bio)   number of bytes we can write now
 		 *
 		 * ..._read_request is never more than ..._write_guarantee;
 		 * it depends on the application which one you should use.
@@ -517,7 +541,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 				else
 					i = (int)cw_num;
 				r = BIO_write(c_ssl_bio, cbuf, i);
-				if (r == -1)
+				if (r < 0)
 					{
 					if (!BIO_should_retry(c_ssl_bio))
 						{
@@ -590,7 +614,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 				else
 					i = (int)sw_num;
 				r = BIO_write(s_ssl_bio, sbuf, i);
-				if (r == -1)
+				if (r < 0)
 					{
 					if (!BIO_should_retry(s_ssl_bio))
 						{
@@ -643,45 +667,40 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 			{
 			/* "I/O" BETWEEN CLIENT AND SERVER. */
 
-#define RELAYBUFSIZ 200
-			static char buf[RELAYBUFSIZ];
-
-			/* RELAYBUF is arbitrary.  When writing data over some real
-			 * network, use a buffer of the same size as in the BIO_pipe
-			 * and make that size large (for reading from the network
-			 * small buffers usually won't hurt).
-			 * Here sizes differ for testing. */
-
 			size_t r1, r2;
-			size_t num;
-			int r;
+			BIO *io1 = server_io, *io2 = client_io;
+			/* we use the non-copying interface for io1
+			 * and the standard BIO_write/BIO_read interface for io2
+			 */
+			
 			static int prev_progress = 1;
 			int progress = 0;
 			
-			/* client to server */
+			/* io1 to io2 */
 			do
 				{
-				r1 = BIO_ctrl_pending(client_io);
-				r2 = BIO_ctrl_get_write_guarantee(server_io);
+				size_t num;
+				int r;
+
+				r1 = BIO_ctrl_pending(io1);
+				r2 = BIO_ctrl_get_write_guarantee(io2);
 
 				num = r1;
 				if (r2 < num)
 					num = r2;
 				if (num)
 					{
-					if (sizeof buf < num)
-						num = sizeof buf;
+					char *dataptr;
+
 					if (INT_MAX < num) /* yeah, right */
 						num = INT_MAX;
 					
-					r = BIO_read(client_io, buf, (int)num);
-					if (r != (int)num) /* can't happen */
-						{
-						fprintf(stderr, "ERROR: BIO_read could not read "
-							"BIO_ctrl_pending() bytes");
-						goto err;
-						}
-					r = BIO_write(server_io, buf, (int)num);
+					r = BIO_nread(io1, &dataptr, (int)num);
+					assert(r > 0);
+					assert(r <= (int)num);
+					/* possibly r < num (non-contiguous data) */
+					num = r;
+					r = BIO_write(io2, dataptr, (int)num);
 					if (r != (int)num) /* can't happen */
 						{
 						fprintf(stderr, "ERROR: BIO_write could not write "
@@ -691,48 +710,58 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 					progress = 1;
 
 					if (debug)
-						printf("C->S relaying: %d bytes\n", (int)num);
+						printf((io1 == client_io) ?
+							"C->S relaying: %d bytes\n" :
+							"S->C relaying: %d bytes\n",
+							(int)num);
 					}
 				}
 			while (r1 && r2);
 
-			/* server to client */
-			do
-				{
-				r1 = BIO_ctrl_pending(server_io);
-				r2 = BIO_ctrl_get_write_guarantee(client_io);
+			/* io2 to io1 */
+			{
+				size_t num;
+				int r;
 
+				r1 = BIO_ctrl_pending(io2);
+				r2 = BIO_ctrl_get_read_request(io1);
+				/* here we could use ..._get_write_guarantee instead of
+				 * ..._get_read_request, but by using the latter
+				 * we test restartability of the SSL implementation
+				 * more thoroughly */
 				num = r1;
 				if (r2 < num)
 					num = r2;
 				if (num)
 					{
-					if (sizeof buf < num)
-						num = sizeof buf;
+					char *dataptr;
+					
 					if (INT_MAX < num)
 						num = INT_MAX;
+
+					if (num > 1)
+						--num; /* test restartability even more thoroughly */
 					
-					r = BIO_read(server_io, buf, (int)num);
+					r = BIO_nwrite(io1, &dataptr, (int)num);
+					assert(r > 0);
+					assert(r <= (int)num);
+					num = r;
+					r = BIO_read(io2, dataptr, (int)num);
 					if (r != (int)num) /* can't happen */
 						{
 						fprintf(stderr, "ERROR: BIO_read could not read "
 							"BIO_ctrl_pending() bytes");
 						goto err;
 						}
-					r = BIO_write(client_io, buf, (int)num);
-					if (r != (int)num) /* can't happen */
-						{
-						fprintf(stderr, "ERROR: BIO_write could not write "
-							"BIO_ctrl_get_write_guarantee() bytes");
-						goto err;
-						}
 					progress = 1;
-
+					
 					if (debug)
-						printf("S->C relaying: %d bytes\n", (int)num);
+						printf((io2 == client_io) ?
+							"C->S relaying: %d bytes\n" :
+							"S->C relaying: %d bytes\n",
+							(int)num);
 					}
-				}
-			while (r1 && r2);
+			} /* no loop, BIO_ctrl_get_read_request now returns 0 anyway */
 
 			if (!progress && !prev_progress)
 				if (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0)
@@ -1091,7 +1120,7 @@ err:
 	return(ret);
 	}
 
-int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
+static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char *s,buf[256];
 
@@ -1159,5 +1188,26 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 		(void)BIO_flush(bio_err);
 		}
 	return(rsa_tmp);
+	}
+#endif
+
+#ifndef NO_DSA
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
+	{
+	char c='*';
+	static int ok=0,num=0;
+
+	if (p == 0) { c='.'; num++; };
+	if (p == 1) c='+';
+	if (p == 2) { c='*'; ok++; }
+	if (p == 3) c='\n';
+	BIO_write(arg,&c,1);
+	(void)BIO_flush(arg);
+
+	if (!ok && (p == 0) && (num > 1))
+		{
+		BIO_printf((BIO *)arg,"error in dsatest\n");
+		exit(1);
+		}
 	}
 #endif

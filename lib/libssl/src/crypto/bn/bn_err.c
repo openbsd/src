@@ -71,6 +71,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_PACK(0,BN_F_BN_BLINDING_UPDATE,0),	"BN_BLINDING_update"},
 {ERR_PACK(0,BN_F_BN_BN2DEC,0),	"BN_bn2dec"},
 {ERR_PACK(0,BN_F_BN_BN2HEX,0),	"BN_bn2hex"},
+{ERR_PACK(0,BN_F_BN_CTX_GET,0),	"BN_CTX_get"},
 {ERR_PACK(0,BN_F_BN_CTX_NEW,0),	"BN_CTX_new"},
 {ERR_PACK(0,BN_F_BN_DIV,0),	"BN_div"},
 {ERR_PACK(0,BN_F_BN_EXPAND2,0),	"bn_expand2"},
@@ -95,6 +96,7 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {BN_R_INVALID_LENGTH                     ,"invalid length"},
 {BN_R_NOT_INITIALIZED                    ,"not initialized"},
 {BN_R_NO_INVERSE                         ,"no inverse"},
+{BN_R_TOO_MANY_TEMPORARY_VARIABLES       ,"too many temporary variables"},
 {0,NULL}
 	};
 

@@ -10,6 +10,9 @@ $	t := pkcs7-1.pem
 $	if p1 .nes. "" then t = p1
 $
 $	write sys$output "testing PKCS7 conversions (2)"
+$	if f$search("fff.*") .nes "" then delete fff.*;*
+$	if f$search("ff.*") .nes "" then delete ff.*;*
+$	if f$search("f.*") .nes "" then delete f.*;*
 $	copy 't' fff.p
 $
 $	write sys$output "p -> d"
@@ -34,9 +37,9 @@ $	write sys$output "p -> p"
 $	'cmd' -in f.p -inform p -outform p -out ff.p3
 $	if $severity .ne. 1 then exit 3
 $
-$	difference/output=nl: f.p ff.p1
+$	backup/compare f.p ff.p1
 $	if $severity .ne. 1 then exit 3
-$	difference/output=nl: f.p ff.p3
+$	backup/compare f.p ff.p3
 $	if $severity .ne. 1 then exit 3
 $
 $	delete f.*;*,ff.*;*,fff.*;*

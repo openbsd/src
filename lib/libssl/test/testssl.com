@@ -58,6 +58,10 @@ $	write sys$output "test sslv2 via BIO pair"
 $	mcr 'exe_dir'ssltest -bio_pair -ssl2 
 $	if $severity .ne. 1 then goto exit3
 $
+$	write sys$output "test sslv2/sslv3 with 1024 bit DHE via BIO pair"
+$	mcr 'exe_dir'ssltest -bio_pair -dhe1024 -v
+$	if $severity .ne. 1 then goto exit3
+$
 $	write sys$output "test sslv2 with server authentication via BIO pair"
 $	mcr 'exe_dir'ssltest -bio_pair -ssl2 -server_auth "-CAfile" certs.tmp 
 $	if $severity .ne. 1 then goto exit3
@@ -88,6 +92,10 @@ $	if $severity .ne. 1 then goto exit3
 $
 $	write sys$output "test sslv2/sslv3 via BIO pair"
 $	mcr 'exe_dir'ssltest 
+$	if $severity .ne. 1 then goto exit3
+$
+$	write sys$output "test sslv2/sslv3 w/o DHE via BIO pair"
+$	mcr 'exe_dir'ssltest -bio_pair -no_dhe
 $	if $severity .ne. 1 then goto exit3
 $
 $	write sys$output "test sslv2/sslv3 with server authentication"

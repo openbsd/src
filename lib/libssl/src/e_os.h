@@ -82,6 +82,20 @@ extern "C" {
 #define DEVRANDOM "/dev/arandom"
 #endif
 
+#if defined(__MWERKS__) && defined(macintosh)
+# if macintosh==1
+#  ifndef MAC_OS_GUSI_SOURCE
+#    define MAC_OS_pre_X
+#    define NO_SYS_TYPES_H
+#  endif
+#  define NO_SYS_PARAM_H
+#  define NO_CHMOD
+#  define NO_SYSLOG
+#  undef  DEVRANDOM
+#  define GETPID_IS_MEANINGLESS
+# endif
+#endif
+
 /********************************************************************
  The Microsoft section
  ********************************************************************/
@@ -93,6 +107,10 @@ extern "C" {
 #  define MS_STATIC
 #endif
 
+#if defined(_WIN32) && !defined(WIN32)
+#  define WIN32
+#endif
+
 #if defined(WIN32) || defined(WIN16)
 #  ifndef WINDOWS
 #    define WINDOWS
@@ -100,6 +118,10 @@ extern "C" {
 #  ifndef MSDOS
 #    define MSDOS
 #  endif
+#endif
+
+#if defined(MSDOS) && !defined(GETPID_IS_MEANINGLESS)
+#  define GETPID_IS_MEANINGLESS
 #endif
 
 #ifdef WIN32
@@ -119,6 +141,12 @@ extern "C" {
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
 #define writesocket(s,b,n)	send((s),(b),(n),0)
 #define EADDRINUSE		WSAEADDRINUSE
+#elif defined(MAC_OS_pre_X)
+#define get_last_socket_error()	errno
+#define clear_socket_error()	errno=0
+#define closesocket(s)		MacSocket_close(s)
+#define readsocket(s,b,n)	MacSocket_recv((s),(b),(n),true)
+#define writesocket(s,b,n)	MacSocket_send((s),(b),(n))
 #else
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
@@ -172,6 +200,7 @@ extern "C" {
 #define _O_TEXT O_TEXT
 #define _O_BINARY O_BINARY
 #define _int64 __int64
+#define _kbhit kbhit
 #endif
 
 #if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
@@ -227,9 +256,17 @@ extern "C" {
                                      __VMS_EXIT |= 0x10000000; \
 				     return(n); } while(0)
 #    endif
+#    define NO_SYS_PARAM_H
 #  else
      /* !defined VMS */
-#    include OPENSSL_UNISTD
+#    ifdef OPENSSL_UNISTD
+#      include OPENSSL_UNISTD
+#    else
+#      include <unistd.h>
+#    endif
+#    ifndef NO_SYS_TYPES_H
+#      include <sys/types.h>
+#    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
 #    define SSLEAY_CONF		OPENSSL_CONF
@@ -268,11 +305,17 @@ extern HINSTANCE _hInstance;
 #      define SHUTDOWN2(fd)		{ shutdown((fd),2); closesocket(fd); }
 #    endif
 
+#  elif defined(MAC_OS_pre_X)
+
+#    include "MacSocket.h"
+#    define SSLeay_Write(a,b,c)		MacSocket_send((a),(b),(c))
+#    define SSLeay_Read(a,b,c)		MacSocket_recv((a),(b),(c),true)
+#    define SHUTDOWN(fd)		MacSocket_close(fd)
+#    define SHUTDOWN2(fd)		MacSocket_close(fd)
 
 #  else
 
-#    include <sys/types.h>
-#    ifndef VMS
+#    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
 #    include <sys/time.h> /* Needed under linux for FD_XXX */
@@ -320,8 +363,8 @@ extern HINSTANCE _hInstance;
 
 #    define SSLeay_Read(a,b,c)     read((a),(b),(c))
 #    define SSLeay_Write(a,b,c)    write((a),(b),(c))
-#    define SHUTDOWN(fd)    { shutdown((fd),0); close((fd)); }
-#    define SHUTDOWN2(fd)   { shutdown((fd),2); close((fd)); }
+#    define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
+#    define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
 #    define INVALID_SOCKET	(-1)
 #  endif
 #endif

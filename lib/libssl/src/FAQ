@@ -1,0 +1,130 @@
+OpenSSL  -  Frequently Asked Questions
+--------------------------------------
+
+* Which is the current version of OpenSSL?
+* Where is the documentation?
+* How can I contact the OpenSSL developers?
+* Do I need patent licenses to use OpenSSL?
+* Is OpenSSL thread-safe?
+* Why do I get a "PRNG not seeded" error message?
+* Why does the linker complain about undefined symbols?
+* Where can I get a compiled version of OpenSSL?
+
+
+* Which is the current version of OpenSSL?
+
+The current version is available from <URL: http://www.openssl.org>.
+OpenSSL 0.9.5 was released on February 28th, 2000.
+
+In addition to the current stable release, you can also access daily
+snapshots of the OpenSSL development version at <URL:
+ftp://ftp.openssl.org/snapshot/>, or get it by anonymous CVS access.
+
+
+* Where is the documentation?
+
+OpenSSL is a library that provides cryptographic functionality to
+applications such as secure web servers.  Be sure to read the
+documentation of the application you want to use.  The INSTALL file
+explains how to install this library.
+
+OpenSSL includes a command line utility that can be used to perform a
+variety of cryptographic functions.  It is described in the openssl(1)
+manpage.  Documentation for developers is currently being written.  A
+few manual pages already are available; overviews over libcrypto and
+libssl are given in the crypto(3) and ssl(3) manpages.
+
+The OpenSSL manpages are installed in /usr/local/ssl/man/ (or a
+different directory if you specified one as described in INSTALL).
+In addition, you can read the most current versions at
+<URL: http://www.openssl.org/docs/>.
+
+For information on parts of libcrypto that are not yet documented, you
+might want to read Ariel Glenn's documentation on SSLeay 0.9, OpenSSL's
+predecessor, at <URL: http://www.columbia.edu/~ariel/ssleay/>.  Much
+of this still applies to OpenSSL.
+
+There is some documentation about certificate extensions and PKCS#12
+in doc/openssl.txt
+
+The original SSLeay documentation is included in OpenSSL as
+doc/ssleay.txt.  It may be useful when none of the other resources
+help, but please note that it reflects the obsolete version SSLeay
+0.6.6.
+
+
+* How can I contact the OpenSSL developers?
+
+The README file describes how to submit bug reports and patches to
+OpenSSL.  Information on the OpenSSL mailing lists is available from
+<URL: http://www.openssl.org>.
+
+
+* Do I need patent licenses to use OpenSSL?
+
+The patents section of the README file lists patents that may apply to
+you if you want to use OpenSSL.  For information on intellectual
+property rights, please consult a lawyer.  The OpenSSL team does not
+offer legal advice.
+
+You can configure OpenSSL so as not to use RC5 and IDEA by using
+ ./config no-rc5 no-idea
+
+Until the RSA patent expires, U.S. users may want to use
+ ./config no-rc5 no-idea no-rsa
+
+Please note that you will *not* be able to communicate with most of
+the popular web browsers without RSA support.
+
+
+* Is OpenSSL thread-safe?
+
+Yes.  On Windows and many Unix systems, OpenSSL automatically uses the
+multi-threaded versions of the standard libraries.  If your platform
+is not one of these, consult the INSTALL file.
+
+Multi-threaded applications must provide two callback functions to
+OpenSSL.  This is described in the threads(3) manpage.
+
+
+* Why do I get a "PRNG not seeded" error message?
+
+Cryptographic software needs a source of unpredictable data to work
+correctly.  Many open source operating systems provide a "randomness
+device" that serves this purpose.  On other systems, applications have
+to call the RAND_add() or RAND_seed() function with appropriate data
+before generating keys or performing public key encryption.
+
+Some broken applications do not do this.  As of version 0.9.5, the
+OpenSSL functions that need randomness report an error if the random
+number generator has not been seeded with at least 128 bits of
+randomness.  If this error occurs, please contact the author of the
+application you are using.  It is likely that it never worked
+correctly.  OpenSSL 0.9.5 makes the error visible by refusing to
+perform potentially insecure encryption.
+
+
+* Why does the linker complain about undefined symbols?
+
+Maybe the compilation was interrupted, and make doesn't notice that
+something is missing.  Run "make clean; make".
+
+If you used ./Configure instead of ./config, make sure that you
+selected the right target.  File formats may differ slightly between
+OS versions (for example sparcv8/sparcv9, or a.out/elf).
+
+If that doesn't help, you may want to try using the current snapshot.
+If the problem persists, please submit a bug report.
+
+
+* Where can I get a compiled version of OpenSSL?
+
+Some applications that use OpenSSL are distributed in binary form.
+When using such an application, you don't need to install OpenSSL
+yourself; the application will include the required parts (e.g. DLLs).
+
+If you want to install OpenSSL on a Windows system and you don't have
+a C compiler, read the "Mingw32" section of INSTALL.W32 for information
+on how to obtain and install the free GNU C compiler.
+
+A number of Linux and *BSD distributions include OpenSSL.

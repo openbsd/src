@@ -7,8 +7,8 @@ set OPENSSL_CONF=..\apps\openssl.cnf
 
 rem run this from inside the bin directory
 
-echo rsa_oaep_test
-rsa_oaep_test
+echo rsa_test
+rsa_test
 if errorlevel 1 goto done
 
 echo destest
@@ -133,6 +133,10 @@ if errorlevel 1 goto done
 
 echo test sslv2 via BIO pair
 ssltest -bio_pair -ssl2
+if errorlevel 1 goto done
+
+echo test sslv2/sslv3 with 1024 bit DHE via BIO pair
+ssltest -bio_pair -dhe1024 -v
 if errorlevel 1 goto done
 
 echo test sslv2 with server authentication via BIO pair

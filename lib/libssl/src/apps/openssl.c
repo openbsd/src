@@ -70,10 +70,10 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
-#define SSLEAY	/* turn off a few special case MONOLITH macros */
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
-#define SSLEAY_SRC
+#define OPENSSL_C /* tells apps.h to use complete apps_startup() */
 #include "apps.h"
+#include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>
 
@@ -120,9 +120,6 @@ int main(int Argc, char *Argv[])
 	arg.data=NULL;
 	arg.count=0;
 
-	/* SSLeay_add_ssl_algorithms(); is called in apps_startup() */
-	apps_startup();
-
 #if defined(DEBUG) && !defined(WINDOWS) && !defined(MSDOS)
 #ifdef SIGBUS
 	signal(SIGBUS,sig_stop);
@@ -132,11 +129,13 @@ int main(int Argc, char *Argv[])
 #endif
 #endif
 
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
+	apps_startup();
+
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	ERR_load_crypto_strings();
 
@@ -165,7 +164,7 @@ int main(int Argc, char *Argv[])
 	program_name(Argv[0],pname,PROG_NAME_SIZE);
 
 	f.name=pname;
-	fp=(FUNCTION *)lh_retrieve(prog,(char *)&f);
+	fp=(FUNCTION *)lh_retrieve(prog,&f);
 	if (fp != NULL)
 		{
 		Argv[0]=pname;
@@ -236,6 +235,12 @@ end:
 	EVP_cleanup();
 	ERR_free_strings();
 
+#ifdef LEVITTE_DEBUG
+	CRYPTO_push_info("Just to make sure I get a memory leak I can see :-)");
+	(void)Malloc(1024);
+	CRYPTO_pop_info();
+#endif
+
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL)
 		{
@@ -257,7 +262,7 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 	if ((argc <= 0) || (argv[0] == NULL))
 		{ ret=0; goto end; }
 	f.name=argv[0];
-	fp=(FUNCTION *)lh_retrieve(prog,(char *)&f);
+	fp=(FUNCTION *)lh_retrieve(prog,&f);
 	if (fp != NULL)
 		{
 		ret=fp->func(argc,argv);
@@ -356,7 +361,7 @@ static LHASH *prog_init(void)
 	if ((ret=lh_new(hash,cmp)) == NULL) return(NULL);
 
 	for (f=functions; f->name != NULL; f++)
-		lh_insert(ret,(char *)f);
+		lh_insert(ret,f);
 	return(ret);
 	}
 
@@ -369,5 +374,3 @@ static unsigned long MS_CALLBACK hash(FUNCTION *a)
 	{
 	return(lh_strhash(a->name));
 	}
-
-#undef SSLEAY

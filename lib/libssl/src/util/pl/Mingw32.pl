@@ -17,7 +17,7 @@ $mkdir='gmkdir';
 
 $cc='gcc';
 if ($debug)
-	{ $cflags="-g2 -ggdb"; }
+	{ $cflags="-DL_ENDIAN -g2 -ggdb"; }
 else
 	{ $cflags="-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall"; }
 

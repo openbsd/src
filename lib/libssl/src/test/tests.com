@@ -20,9 +20,9 @@ $	    tests = p1
 $	else
 $	    tests := -
 	test_des,test_idea,test_sha,test_md5,test_hmac,test_md2,test_mdc2,-
-	test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
+	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
 	test_rand,test_bn,test_enc,test_x509,test_rsa,test_crl,test_sid,-
-	test_reqgen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
+	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
 	test_ss,test_ssl,test_ca
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
@@ -48,7 +48,7 @@ $	DHTEST :=	dhtest
 $	DSATEST :=	dsatest
 $	METHTEST :=	methtest
 $	SSLTEST :=	ssltest
-$	RSATEST :=	rsa_oaep_test
+$	RSATEST :=	rsa_test
 $
 $	tests_i = 0
 $ loop_tests:
@@ -151,9 +151,7 @@ RECORD
 $	create/fdl=bntest-vms.fdl bntest-vms.sh
 $	open/append foo bntest-vms.sh
 $	type/output=foo: sys$input:
-<< __FOO__ bc | awk '{ \
-if ($$0 != "0") {print "error"; exit(1); } \
-if (((NR+1)%64) == 0) print NR+1," tests done"; }'
+<< __FOO__ bc | perl -e 'while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $1";} elsif (!/^0$/) {die "\nFailed! bc: $_";} print STDERR "."; $i++;} print STDERR "\n$i tests passed\n"'
 $	define/user sys$output bntest-vms.tmp
 $	mcr 'texe_dir''bntest'
 $	copy bntest-vms.tmp foo:
@@ -173,14 +171,14 @@ $	write sys$output "There are definitly a few expired certificates"
 $	@tverify.com
 $	goto loop_tests
 $ test_dh:
-$	write sys$output "Generate as set of DH parameters"
+$	write sys$output "Generate a set of DH parameters"
 $	mcr 'texe_dir''dhtest'
 $	goto loop_tests
 $ test_dsa:
-$	write sys$output "Generate as set of DSA parameters"
+$	write sys$output "Generate a set of DSA parameters"
 $	mcr 'texe_dir''dsatest'
 $	goto loop_tests
-$ test_reqgen:
+$ test_gen:
 $	write sys$output "Generate and verify a certificate request"
 $	@testgen.com
 $	goto loop_tests
