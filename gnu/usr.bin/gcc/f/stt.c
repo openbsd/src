@@ -1,5 +1,5 @@
 /* stt.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -189,7 +189,7 @@ ffestt_dimlist_append (ffesttDimList list, ffebld lower, ffebld upper,
   new->t = t;
 }
 
-/* Convert list of dims into ffebld format.
+/* ffestt_dimlist_as_expr -- Convert list of dims into ffebld format
 
    ffesttDimList list;
    ffeinfoRank rank;
@@ -199,15 +199,11 @@ ffestt_dimlist_append (ffesttDimList list, ffebld lower, ffebld upper,
 
    The dims in the list are converted to a list of ITEMs; the rank of the
    array, an expression representing the array size, a list of extent
-   expressions, and the list of ITEMs are returned.
-
-   If is_ugly_assumed, treat a final dimension with no lower bound
-   and an upper bound of 1 as a * bound.  */
+   expressions, and the list of ITEMs are returned.  */
 
 ffebld
 ffestt_dimlist_as_expr (ffesttDimList list, ffeinfoRank *rank,
-			ffebld *array_size, ffebld *extents,
-			bool is_ugly_assumed)
+			ffebld *array_size, ffebld *extents)
 {
   ffesttDimList next;
   ffebld expr;
@@ -243,10 +239,9 @@ ffestt_dimlist_as_expr (ffesttDimList list, ffeinfoRank *rank,
 	      > high)
 	    zero = TRUE;
 	  if ((next->next == list)
-	      && is_ugly_assumed
+	      && ffe_is_ugly_assumed ()
 	      && (next->lower == NULL)
-	      && (high == 1)
-	      && (ffebld_conter_orig (next->upper) == NULL))
+	      && (high == 1))
 	    {
 	      star = TRUE;
 	      ffebld_append_item (&bottom,
@@ -478,18 +473,16 @@ ffestt_dimlist_kill (ffesttDimList list)
     }
 }
 
-/* Determine type of list of dimensions.
+/* ffestt_dimlist_type -- Determine type of list of dims
 
-   Return KNOWN for all-constant bounds, ADJUSTABLE for constant
-   and variable but no * bounds, ASSUMED for constant and * but
-   not variable bounds, ADJUSTABLEASSUMED for constant and variable
-   and * bounds.
+   ffesttDimList list;
+   ffestpDimtype type;
+   type = ffestt_dimlist_type(list);
 
-   If is_ugly_assumed, treat a final dimension with no lower bound
-   and an upper bound of 1 as a * bound.  */
+   The dims in the list are dumped with commas separating them.	 */
 
 ffestpDimtype
-ffestt_dimlist_type (ffesttDimList list, bool is_ugly_assumed)
+ffestt_dimlist_type (ffesttDimList list)
 {
   ffesttDimList next;
   ffestpDimtype type;
@@ -500,38 +493,18 @@ ffestt_dimlist_type (ffesttDimList list, bool is_ugly_assumed)
   type = FFESTP_dimtypeKNOWN;
   for (next = list->next; next != list; next = next->next)
     {
-      bool ugly_assumed = FALSE;
-
-      if ((next->next == list)
-	  && is_ugly_assumed
-	  && (next->lower == NULL)
-	  && (next->upper != NULL)
-	  && (ffebld_op (next->upper) == FFEBLD_opCONTER)
-	  && (ffebld_constant_integerdefault (ffebld_conter (next->upper))
-	      == 1)
-	  && (ffebld_conter_orig (next->upper) == NULL))
-	ugly_assumed = TRUE;
-
       if (next->lower != NULL)
 	{
 	  if (ffebld_op (next->lower) != FFEBLD_opCONTER)
-	    {
-	      if (type == FFESTP_dimtypeASSUMED)
-		type = FFESTP_dimtypeADJUSTABLEASSUMED;
-	      else
-		type = FFESTP_dimtypeADJUSTABLE;
-	    }
+	    type = FFESTP_dimtypeADJUSTABLE;
 	}
       if (next->upper != NULL)
 	{
-	  if (ugly_assumed
-	      || (ffebld_op (next->upper) == FFEBLD_opSTAR))
-	    {
-	      if (type == FFESTP_dimtypeADJUSTABLE)
-		type = FFESTP_dimtypeADJUSTABLEASSUMED;
-	      else
-		type = FFESTP_dimtypeASSUMED;
-	    }
+	  if (ffebld_op (next->upper) == FFEBLD_opSTAR)
+	    if (type == FFESTP_dimtypeKNOWN)
+	      type = FFESTP_dimtypeASSUMED;
+	    else
+	      type = FFESTP_dimtypeADJUSTABLEASSUMED;
 	  else if (ffebld_op (next->upper) != FFEBLD_opCONTER)
 	    type = FFESTP_dimtypeADJUSTABLE;
 	}

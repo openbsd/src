@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-#   Copyright (C) 1995, 1997 Free Software Foundation, Inc.
+#   Copyright (C) 1995 Free Software Foundation, Inc.
 #   Contributed by Dave Love (d.love@dl.ac.uk).
 #
 #This file is part of GNU Fortran.
@@ -204,7 +204,7 @@ F2C_INTEGER=long int
 #elif FFECOM_f2cINTEGER == FFECOM_f2ccodeINT
 F2C_INTEGER=int
 #else
-#  error "Cannot find a suitable type for F2C_INTEGER"
+#  error Cannot find a suitable type for F2C_INTEGER
 #endif
 ],
  ac_cv_sys_f2cinteger="long int",)
@@ -218,7 +218,7 @@ F2C_INTEGER=long int
 #elif FFECOM_f2cINTEGER == FFECOM_f2ccodeINT
 F2C_INTEGER=int
 #else
-#  error "Cannot find a suitable type for F2C_INTEGER"
+#  error Cannot find a suitable type for F2C_INTEGER
 #endif
 ],
    ac_cv_sys_f2cinteger=int,)
@@ -230,50 +230,8 @@ fi
 )
 AC_MSG_RESULT($ac_cv_sys_f2cinteger)
 F2C_INTEGER=$ac_cv_sys_f2cinteger
-ac_cpp=$late_ac_cpp
+ac_cpp=late_ac_cpp
 AC_SUBST(F2C_INTEGER)
-
-AC_MSG_CHECKING(f2c long int type)
-late_ac_cpp=$ac_cpp
-ac_cpp="$late_ac_cpp -I$srcdir/.. -I../.. -I$srcdir/../.. -I$srcdir/../../config"
-AC_CACHE_VAL(ac_cv_sys_f2clongint,
-AC_EGREP_CPP(F2C_LONGINT=long int,
-[#include "proj.h"
-#define FFECOM_DETERMINE_TYPES 1
-#include "com.h"
-#if FFECOM_f2cLONGINT == FFECOM_f2ccodeLONG
-F2C_LONGINT=long int
-#elif FFECOM_f2cLONGINT == FFECOM_f2ccodeLONGLONG
-F2C_LONGINT=long long int
-#else
-#  error "Cannot find a suitable type for F2C_LONGINT"
-#endif
-],
- ac_cv_sys_f2clongint="long int",)
-if test "$ac_cv_sys_f2clongint" = ""; then
-  AC_EGREP_CPP(F2C_LONGINT=long long int,
-[#include "proj.h"
-#define FFECOM_DETERMINE_TYPES 1
-#include "com.h"
-#if FFECOM_f2cLONGINT == FFECOM_f2ccodeLONG
-F2C_LONGINT=long int
-#elif FFECOM_f2cLONGINT == FFECOM_f2ccodeLONGLONG
-F2C_LONGINT=long long int
-#else
-#  error "Cannot find a suitable type for F2C_LONGINT"
-#endif
-],
-   ac_cv_sys_f2clongint="long long int",)
-fi
-if test "$ac_cv_sys_f2clongint" = ""; then
-  AC_MSG_RESULT("")
-  AC_MSG_ERROR([Can't determine type for f2c long int; config.log may help.])
-fi
-)
-AC_MSG_RESULT($ac_cv_sys_f2clongint)
-F2C_LONGINT=$ac_cv_sys_f2clongint
-ac_cpp=$late_ac_cpp
-AC_SUBST(F2C_LONGINT)
 
 dnl maybe check for drem/remainder
 
@@ -306,7 +264,7 @@ dnl   on a case-by-case basis when it can be shown to not be necessary
 dnl   (e.g. no ERR= or IOSTAT=) or when it is given the appropriate
 dnl   compile-time option or, perhaps, source-code directive.
 
-dnl AC_DEFINE(ALWAYS_FLUSH)
+AC_DEFINE(ALWAYS_FLUSH)
 
 dnl   Most Fortran implementations do this, so to make it easier
 dnl   to compare the output of g77-compiled programs to those compiled
@@ -319,9 +277,8 @@ AC_DEFINE(WANT_LEAD_0)
 # got put here
 test -f libF77/makefile && mv libF77/makefile  libF77/makefile.ori
 test -f libI77/makefile && mv libI77/makefile  libI77/makefile.ori
-test -f libU77/makefile && mv libU77/makefile  libU77/makefile.ori
 
-AC_OUTPUT(Makefile ../../include/f2c.h:f2c.h.in libI77/Makefile libF77/Makefile libU77/Makefile)
+AC_OUTPUT(Makefile ../../include/f2c.h:f2c.h.in libI77/Makefile libF77/Makefile)
 
 dnl We might have configuration options to:
 dnl * allow non-standard string concatenation (use libF77 s_catow.o,

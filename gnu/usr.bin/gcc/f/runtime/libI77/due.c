@@ -16,11 +16,9 @@ c_due(cilist *a)
 	f__elist=a;
 	if(f__curunit->ufd==NULL && fk_open(DIR,UNF,a->ciunit) ) err(a->cierr,104,"due");
 	f__cf=f__curunit->ufd;
-	if(f__curunit->ufmt) err(a->cierr,102,"cdue");
-	if(!f__curunit->useek) err(a->cierr,104,"cdue");
-	if(f__curunit->ufd==NULL) err(a->cierr,114,"cdue");
-	if(a->cirec <= 0)
-		err(a->cierr,130,"due");
+	if(f__curunit->ufmt) err(a->cierr,102,"cdue")
+	if(!f__curunit->useek) err(a->cierr,104,"cdue")
+	if(f__curunit->ufd==NULL) err(a->cierr,114,"cdue")
 	(void) fseek(f__cf,(long)(a->cirec-1)*f__curunit->url,SEEK_SET);
 	f__curunit->uend = 0;
 	return(0);
@@ -32,8 +30,8 @@ integer s_rdue(cilist *a)
 #endif
 {
 	int n;
-	f__reading=1;
 	if(n=c_due(a)) return(n);
+	f__reading=1;
 	if(f__curunit->uwrt && f__nowreading(f__curunit))
 		err(a->cierr,errno,"read start");
 	return(0);
@@ -45,8 +43,8 @@ integer s_wdue(cilist *a)
 #endif
 {
 	int n;
-	f__reading=0;
 	if(n=c_due(a)) return(n);
+	f__reading=0;
 	if(f__curunit->uwrt != 1 && f__nowwriting(f__curunit))
 		err(a->cierr,errno,"write start");
 	return(0);

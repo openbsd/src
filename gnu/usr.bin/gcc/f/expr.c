@@ -1,5 +1,5 @@
 /* expr.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995-1997 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -37,7 +37,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "bld.h"
 #include "com.h"
 #include "implic.h"
-#include "intrin.h"
 #include "info.h"
 #include "lex.h"
 #include "malloc.h"
@@ -403,7 +402,6 @@ static ffelexHandler ffeexpr_token_substring_ (ffelexToken ft, ffebld expr,
 static ffelexHandler ffeexpr_token_substring_1_ (ffelexToken ft, ffebld expr,
 						 ffelexToken t);
 static ffelexHandler ffeexpr_token_substrp_ (ffelexToken t);
-static ffelexHandler ffeexpr_token_intrincheck_ (ffelexToken t);
 static ffelexHandler ffeexpr_token_funsubstr_ (ffelexToken ft, ffebld expr,
 					       ffelexToken t);
 static ffelexHandler ffeexpr_token_anything_ (ffelexToken ft, ffebld expr,
@@ -8097,7 +8095,7 @@ ffeexpr_cb_end_loc_ (ffelexToken ft UNUSED, ffebld expr, ffelexToken t)
   e->u.operand = ffebld_new_percent_loc (expr);
   ffebld_set_info (e->u.operand,
 		   ffeinfo_new (FFEINFO_basictypeINTEGER,
-				ffecom_pointer_kind (),
+				FFEINFO_kindtypeINTEGERDEFAULT,
 				0,
 				FFEINFO_kindENTITY,
 				FFEINFO_whereFLEETING,
@@ -11442,7 +11440,7 @@ ffeexpr_nil_rhs_ (ffelexToken t)
   switch (ffelex_token_type (t))
     {
     case FFELEX_typeQUOTE:
-      if (ffe_is_vxt ())
+      if (ffe_is_vxt_not_90 ())
 	return (ffelexHandler) ffeexpr_nil_quote_;
       ffelex_set_expecting_hollerith (-1, '\"',
 				      ffelex_token_where_line (t),
@@ -12274,12 +12272,12 @@ again:				/* :::::::::::::::::::: */
 	      : ffeinfo_basictype (info))
 	{
 	case FFEINFO_basictypeINTEGER:
-	  error = (ffeinfo_kindtype (info) != ffecom_label_kind ());
+	  error = (ffeinfo_kindtype (info) != FFEINFO_kindtypeINTEGERDEFAULT);
 	  break;
 
 	case FFEINFO_basictypeLOGICAL:
 	  error = !ffe_is_ugly_logint ()
-	    || (ffeinfo_kindtype (info) != ffecom_label_kind ());
+	    || (ffeinfo_kindtype (info) != FFEINFO_kindtypeLOGICALDEFAULT);
 	  break;
 
 	default:
@@ -13009,9 +13007,8 @@ again:				/* :::::::::::::::::::: */
 	{
 	case FFEINFO_basictypeINTEGER:
 	  error = (expr == NULL)
-	    || ((ffeinfo_rank (info) != 0) ?
-		ffe_is_pedantic ()	/* F77 C5. */
-		: (ffeinfo_kindtype (info) != ffecom_label_kind ()))
+	    || ((ffeinfo_rank (info) != 0)
+		&& ffe_is_pedantic ())	/* F77 C5. */
 	    || (ffebld_op (expr) != FFEBLD_opSYMTER);
 	  break;
 
@@ -13263,7 +13260,7 @@ ffeexpr_token_rhs_ (ffelexToken t)
   switch (ffelex_token_type (t))
     {
     case FFELEX_typeQUOTE:
-      if (ffe_is_vxt ())
+      if (ffe_is_vxt_not_90 ())
 	{
 	  ffeexpr_tokens_[0] = ffelex_token_use (t);
 	  return (ffelexHandler) ffeexpr_token_quote_;
@@ -15039,7 +15036,7 @@ just_name:			/* :::::::::::::::::::: */
 	  if (ffesymbol_generic (s) != FFEINTRIN_genNONE)
 	    ffeintrin_fulfill_generic (&expr, &info, e->token);
 	  else if (ffesymbol_specific (s) != FFEINTRIN_specNONE)
-	    ffeintrin_fulfill_specific (&expr, &info, NULL, e->token);
+	    ffeintrin_fulfill_specific (&expr, &info, e->token);
 	  ffebld_set_info (expr,
 			   ffeinfo_new (ffeinfo_basictype (info),
 					ffeinfo_kindtype (info),
@@ -15838,9 +15835,7 @@ ffeexpr_declare_unadorned_ (ffelexToken t, bool maybe_intrin)
       switch (ffeexpr_context_outer_ (ffeexpr_stack_))
 	{
 	case FFEEXPR_contextSUBROUTINEREF:
-	  bad = ((k != FFEINFO_kindSUBROUTINE)
-		 && ((ffesymbol_where (s) != FFEINFO_whereINTRINSIC)
-		     || (k != FFEINFO_kindNONE)));
+	  bad = (k != FFEINFO_kindSUBROUTINE);
 	  break;
 
 	case FFEEXPR_contextFILEEXTFUNC:
@@ -15866,11 +15861,6 @@ ffeexpr_declare_unadorned_ (ffelexToken t, bool maybe_intrin)
 	      break;
 
 	    case FFEINFO_kindNONE:
-	      if (ffesymbol_where (s) == FFEINFO_whereINTRINSIC)
-		{
-		  bad = !(ffeintrin_is_actualarg (ffesymbol_specific (s)));
-		  break;
-		}
 
 	      /* If state is UNDERSTOOD here, it's CHAR*(*) or attrsANY,
 		 and in the former case, attrsTYPE is set, so we
@@ -16442,7 +16432,7 @@ ffeexpr_sym_lhs_call_ (ffesymbol s, ffelexToken t)
       assert (ffesymbol_state (s) == FFESYMBOL_stateNONE);
 
       if (ffeintrin_is_intrinsic (ffesymbol_text (s), t, FALSE,
-				  &gen, &spec, &imp))
+				  &gen, &spec, &imp, &kind))
 	{
 	  ffesymbol_signal_change (s);	/* May need to back up to previous
 					   version. */
@@ -16453,7 +16443,7 @@ ffeexpr_sym_lhs_call_ (ffesymbol s, ffelexToken t)
 			      ffeinfo_new (FFEINFO_basictypeNONE,
 					   FFEINFO_kindtypeNONE,
 					   0,
-					   FFEINFO_kindNONE,
+					   kind,
 					   FFEINFO_whereINTRINSIC,
 					   FFETARGET_charactersizeNONE));
 	  ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
@@ -16490,8 +16480,6 @@ ffeexpr_sym_lhs_call_ (ffesymbol s, ffelexToken t)
       ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
       ffesymbol_resolve_intrin (s);
       s = ffecom_sym_learned (s);
-      if (where == FFEINFO_whereGLOBAL)
-	ffesymbol_globalize (s);
       ffesymbol_signal_unreported (s);	/* For debugging purposes. */
     }
 
@@ -16850,8 +16838,6 @@ ffeexpr_sym_lhs_extfunc_ (ffesymbol s, ffelexToken t)
       ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
       ffesymbol_resolve_intrin (s);
       s = ffecom_sym_learned (s);
-      if (where == FFEINFO_whereGLOBAL)
-	ffesymbol_globalize (s);
       ffesymbol_signal_unreported (s);	/* For debugging purposes. */
     }
 
@@ -17132,8 +17118,6 @@ ffeexpr_sym_rhs_actualarg_ (ffesymbol s, ffelexToken t)
       ffesymbol_set_attrs (s, na);
       ffesymbol_set_state (s, ns);
       s = ffecom_sym_learned (s);
-      if (where == FFEINFO_whereGLOBAL)
-	ffesymbol_globalize (s);
       ffesymbol_signal_unreported (s);	/* For debugging purposes. */
     }
 
@@ -17578,9 +17562,7 @@ ffeexpr_declare_parenthesized_ (ffelexToken t, bool maybe_intrin,
       switch (ffeexpr_context_outer_ (ffeexpr_stack_))
 	{
 	case FFEEXPR_contextSUBROUTINEREF:
-	  bad = ((k != FFEINFO_kindSUBROUTINE)
-		 && ((ffesymbol_where (s) != FFEINFO_whereINTRINSIC)
-		     || (k != FFEINFO_kindNONE)));
+	  bad = (k != FFEINFO_kindSUBROUTINE);
 	  break;
 
 	case FFEEXPR_contextDATA:
@@ -17672,15 +17654,6 @@ ffeexpr_declare_parenthesized_ (ffelexToken t, bool maybe_intrin,
       switch (bad ? FFEINFO_kindANY : k)
 	{
 	case FFEINFO_kindNONE:	/* Case "CHARACTER X,Y; Y=X(?". */
-	  if (ffesymbol_where (s) == FFEINFO_whereINTRINSIC)
-	    {
-	      if (ffeexpr_context_outer_ (ffeexpr_stack_)
-		  == FFEEXPR_contextSUBROUTINEREF)
-		*paren_type = FFEEXPR_parentypeSUBROUTINE_;
-	      else
-		*paren_type = FFEEXPR_parentypeFUNCTION_;
-	      break;
-	    }
 	  if (st == FFESYMBOL_stateUNDERSTOOD)
 	    {
 	      bad = TRUE;
@@ -17987,7 +17960,7 @@ ffeexpr_paren_rhs_let_ (ffesymbol s, ffelexToken t)
 		       | FFESYMBOL_attrsSFARG)));
 
       if (ffeintrin_is_intrinsic (ffesymbol_text (s), t, FALSE,
-				  &gen, &spec, &imp))
+				  &gen, &spec, &imp, &kind))
 	{
 	  if (!(sa & FFESYMBOL_attrsANYLEN)
 	      && (ffeimplic_peek_symbol_type (s, NULL)
@@ -18003,7 +17976,7 @@ ffeexpr_paren_rhs_let_ (ffesymbol s, ffelexToken t)
 			      ffeinfo_new (FFEINFO_basictypeNONE,
 					   FFEINFO_kindtypeNONE,
 					   0,
-					   FFEINFO_kindNONE,
+					   kind,
 					   FFEINFO_whereINTRINSIC,
 					   FFETARGET_charactersizeNONE));
 	  ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
@@ -18037,7 +18010,7 @@ ffeexpr_paren_rhs_let_ (ffesymbol s, ffelexToken t)
       assert (ffesymbol_state (s) == FFESYMBOL_stateNONE);
 
       if (ffeintrin_is_intrinsic (ffesymbol_text (s), t, FALSE,
-				  &gen, &spec, &imp))
+				  &gen, &spec, &imp, &kind))
 	{
 	  if (ffeimplic_peek_symbol_type (s, NULL)
 	      == FFEINFO_basictypeCHARACTER)
@@ -18052,7 +18025,7 @@ ffeexpr_paren_rhs_let_ (ffesymbol s, ffelexToken t)
 			      ffeinfo_new (FFEINFO_basictypeNONE,
 					   FFEINFO_kindtypeNONE,
 					   0,
-					   FFEINFO_kindNONE,
+					   kind,
 					   FFEINFO_whereINTRINSIC,
 					   FFETARGET_charactersizeNONE));
 	  ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
@@ -18100,8 +18073,6 @@ ffeexpr_paren_rhs_let_ (ffesymbol s, ffelexToken t)
       ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
       ffesymbol_resolve_intrin (s);
       s = ffecom_sym_learned (s);
-      if (where == FFEINFO_whereGLOBAL)
-	ffesymbol_globalize (s);
       ffesymbol_signal_unreported (s);	/* For debugging purposes. */
     }
 
@@ -18121,8 +18092,8 @@ ffeexpr_token_arguments_ (ffelexToken ft, ffebld expr, ffelexToken t)
   ffeexprExpr_ procedure;
   ffebld reduced;
   ffeinfo info;
+  bool is_function;
   ffeexprContext ctx;
-  bool check_intrin = FALSE;	/* Set TRUE if intrinsic is REAL(Z) or AIMAG(Z). */
 
   procedure = ffeexpr_stack_->exprstack;
   info = ffebld_info (procedure->u.operand);
@@ -18231,6 +18202,7 @@ ffeexpr_token_arguments_ (ffelexToken ft, ffebld expr, ffelexToken t)
       break;
     }
 
+  is_function = (ffeinfo_kind (info) != FFEINFO_kindSUBROUTINE);
   if ((ffeinfo_where (info) == FFEINFO_whereCONSTANT)
       && (ffeexpr_stack_->next_dummy != NULL))
     {				/* Too few arguments. */
@@ -18287,7 +18259,7 @@ ffeexpr_token_arguments_ (ffelexToken ft, ffebld expr, ffelexToken t)
     }
   else
     {
-      if (ffeexpr_stack_->context != FFEEXPR_contextSUBROUTINEREF)
+      if (is_function)
 	reduced = ffebld_new_funcref (procedure->u.operand,
 				      ffeexpr_stack_->expr);
       else
@@ -18297,7 +18269,7 @@ ffeexpr_token_arguments_ (ffelexToken ft, ffebld expr, ffelexToken t)
 	ffeintrin_fulfill_generic (&reduced, &info, ffeexpr_stack_->tokens[0]);
       else if (ffebld_symter_specific (procedure->u.operand)
 	       != FFEINTRIN_specNONE)
-	ffeintrin_fulfill_specific (&reduced, &info, &check_intrin,
+	ffeintrin_fulfill_specific (&reduced, &info,
 				    ffeexpr_stack_->tokens[0]);
       ffebld_set_info (reduced,
 		       ffeinfo_new (ffeinfo_basictype (info),
@@ -18319,37 +18291,6 @@ ffeexpr_token_arguments_ (ffelexToken ft, ffebld expr, ffelexToken t)
     {
       ffelex_token_kill (ffeexpr_stack_->tokens[0]);
       ffeexpr_is_substr_ok_ = FALSE;	/* Nobody likes "FUNC(3)(1:1)".... */
-
-      /* If the intrinsic needs checking (is REAL(Z) or AIMAG(Z), where
-	 Z is DOUBLE COMPLEX), and a command-line option doesn't already
-	 establish interpretation, probably complain.  */
-
-      if (check_intrin
-	  && !ffe_is_90 ()
-	  && !ffe_is_ugly_complex ())
-	{
-	  /* If the outer expression is REAL(me...), issue diagnostic
-	     only if next token isn't the close-paren for REAL(me).  */
-
-	  if ((ffeexpr_stack_->previous != NULL)
-	      && ((reduced = ffeexpr_stack_->previous->exprstack->u.operand) != NULL)
-	      && (ffebld_op (reduced) == FFEBLD_opSYMTER)
-	      && (ffebld_symter_implementation (reduced) == FFEINTRIN_impREAL))
-	    return (ffelexHandler) ffeexpr_token_intrincheck_;
-
-	  /* Diagnose the ambiguity now.  */
-
-	  if (ffebad_start (FFEBAD_INTRINSIC_CMPAMBIG))
-	    {
-	      ffebad_string (ffeintrin_name_implementation
-			     (ffebld_symter_implementation
-			      (ffebld_left
-			       (ffeexpr_stack_->exprstack->u.operand))));
-	      ffebad_here (0, ffelex_token_where_line (ffeexpr_stack_->exprstack->token),
-			   ffelex_token_where_column (ffeexpr_stack_->exprstack->token));
-	      ffebad_finish ();
-	    }
-	}
       return (ffelexHandler) ffeexpr_token_substrp_;
     }
 
@@ -19040,24 +18981,6 @@ ffeexpr_token_substrp_ (ffelexToken t)
 				      ffeexpr_token_substring_);
 }
 
-static ffelexHandler
-ffeexpr_token_intrincheck_ (ffelexToken t)
-{
-  if ((ffelex_token_type (t) != FFELEX_typeCLOSE_PAREN)
-      && ffebad_start (FFEBAD_INTRINSIC_CMPAMBIG))
-    {
-      ffebad_string (ffeintrin_name_implementation
-		     (ffebld_symter_implementation
-		      (ffebld_left
-		       (ffeexpr_stack_->exprstack->u.operand))));
-      ffebad_here (0, ffelex_token_where_line (ffeexpr_stack_->exprstack->token),
-		   ffelex_token_where_column (ffeexpr_stack_->exprstack->token));
-      ffebad_finish ();
-    }
-
-  return (ffelexHandler) ffeexpr_token_substrp_ (t);
-}
-
 /* ffeexpr_token_funsubstr_ -- NAME OPEN_PAREN expr
 
    Return a pointer to this function to the lexer (ffelex), which will
@@ -19070,6 +18993,7 @@ ffeexpr_token_intrincheck_ (ffelexToken t)
 static ffelexHandler
 ffeexpr_token_funsubstr_ (ffelexToken ft, ffebld expr, ffelexToken t)
 {
+  ffeinfoKind kind;
   ffeinfoWhere where;
   ffesymbol s;
   ffesymbolAttrs sa;
@@ -19132,7 +19056,7 @@ ffeexpr_token_funsubstr_ (ffelexToken ft, ffebld expr, ffelexToken t)
      reference is to a function.  */
 
   if (ffeintrin_is_intrinsic (ffesymbol_text (s), ffeexpr_stack_->tokens[0],
-			      FALSE, &gen, &spec, &imp))
+			      FALSE, &gen, &spec, &imp, &kind))
     {
       ffebld_symter_set_generic (symter, gen);
       ffebld_symter_set_specific (symter, spec);
@@ -19144,7 +19068,7 @@ ffeexpr_token_funsubstr_ (ffelexToken ft, ffebld expr, ffelexToken t)
 			  ffeinfo_new (FFEINFO_basictypeNONE,
 				       FFEINFO_kindtypeNONE,
 				       0,
-				       FFEINFO_kindNONE,
+				       kind,
 				       FFEINFO_whereINTRINSIC,
 				       FFETARGET_charactersizeNONE));
     }
@@ -19171,8 +19095,6 @@ ffeexpr_token_funsubstr_ (ffelexToken ft, ffebld expr, ffelexToken t)
   ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
   ffesymbol_resolve_intrin (s);
   s = ffecom_sym_learned (s);
-  if (ffesymbol_where (s) == FFEINFO_whereGLOBAL)
-    ffesymbol_globalize (s);
   ffesymbol_signal_unreported (s);	/* For debugging purposes. */
 
   ffebld_init_list (&ffeexpr_stack_->expr, &ffeexpr_stack_->bottom);

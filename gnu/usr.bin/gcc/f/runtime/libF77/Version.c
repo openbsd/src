@@ -3,7 +3,7 @@ static char junk[] = "\n@(#)LIBF77 VERSION 19960619\n";
 /*
 */
 
-char __G77_LIBF77_VERSION__[] = "0.5.20";
+char __G77_LIBF77_VERSION__[] = "0.5.19";
 
 /*
 2.00	11 June 1980.  File version.c added to library.
@@ -52,8 +52,7 @@ char __G77_LIBF77_VERSION__[] = "0.5.20";
 #include <stdio.h>
 
 void
-g77__fvers__ ()
+g77_libf77_version ()
 {
-  fprintf (stderr, "__G77_LIBF77_VERSION__: %s", __G77_LIBF77_VERSION__);
-  fputs (junk, stderr);
+  fprintf (stderr, "__G77_LIBF77_VERSION__: %s\n", __G77_LIBF77_VERSION__);
 }

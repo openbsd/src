@@ -5,8 +5,6 @@
 #ifndef Allow_TYQUAD
 #undef longint
 #define longint long
-#undef ulongint
-#define ulongint unsigned long
 #endif
 
 #ifdef KR_headers
@@ -15,17 +13,13 @@ char *f__icvt(value,ndigit,sign, base) longint value; int *ndigit,*sign;
 #else
 char *f__icvt(longint value, int *ndigit, int *sign, int base)
 #endif
-{
-	static char buf[MAXINTLENGTH+1];
+{	static char buf[MAXINTLENGTH+1];
 	register int i;
-	ulongint uvalue;
 
-	if(value > 0) {
-		uvalue = value;
+	if(value > 0)
 		*sign = 0;
-		}
 	else if (value < 0) {
-		uvalue = -value;
+		value = -value;
 		*sign = 1;
 		}
 	else {
@@ -36,10 +30,10 @@ char *f__icvt(longint value, int *ndigit, int *sign, int base)
 		}
 	i = MAXINTLENGTH;
 	do {
-		buf[--i] = (uvalue%base) + '0';
-		uvalue /= base;
+		buf[--i] = (value%base) + '0';
+		value /= base;
 		}
-		while(uvalue > 0);
+		while(value > 0);
 	*ndigit = MAXINTLENGTH - i;
 	return &buf[i];
 	}

@@ -93,7 +93,6 @@ void ffeglobal_new_progunit_ (ffesymbol s, ffelexToken t, ffeglobalType type);
 void ffeglobal_new_common (ffesymbol s, ffelexToken t, bool blank);
 void ffeglobal_pad_common (ffesymbol s, ffetargetAlign pad, ffewhereLine wl,
 			   ffewhereColumn wc);
-ffeglobal ffeglobal_promoted (ffesymbol s);
 void ffeglobal_save_common (ffesymbol s, bool save, ffewhereLine wl,
 			    ffewhereColumn wc);
 bool ffeglobal_size_common (ffesymbol s, long size);

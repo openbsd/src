@@ -1,5 +1,5 @@
 /* bld.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -1067,7 +1067,7 @@ ffebld_constant_is_zero (ffebldConstant c)
 #endif
 
 #if FFETARGET_okCHARACTER2 || FFETARGET_okCHARACTER3  /* ... */
-#error "no support for these!!"
+#error no support for these!!
 #endif
 
     case FFEBLD_constHOLLERITH:
@@ -2007,7 +2007,6 @@ ffebld_constantarray_dump (ffebldConstantArray array, ffeinfoBasictype bt,
 		      ffeinfoKindtype kt, ffetargetOffset size, ffebit bits)
 {
   ffetargetOffset i;
-  ffebitCount j;
 
   ffebld_dump_prefix (dmpout, bt, kt);
 
@@ -2039,12 +2038,12 @@ ffebld_constantarray_dump (ffebldConstantArray array, ffeinfoBasictype bt,
 	      else
 		fprintf (dmpout,
 		      "[%" ffetargetOffset_f "u..%" ffetargetOffset_f "d]:",
-			 offset, offset + (ffetargetOffset) length - 1);
-	      for (j = 0; j < length; ++j, ++offset)
+			 offset, offset + length - 1);
+	      for (i = 0; i < length; ++i, ++offset)
 		{
 		  ffebld_constantunion_dump (ffebld_constantarray_get (array, bt, kt,
 							   offset), bt, kt);
-		  if (j != length - 1)
+		  if (i != length - 1)
 		    fputc (',', dmpout);
 		}
 	      fprintf (dmpout, ";");

@@ -25,4 +25,5 @@ ftnint signal_(integer *sigp, sig_proc proc)
 	sig = (int)*sigp;
 
 	return (ftnint)signal(sig, (sig_type)proc);
+	return 0;
 	}

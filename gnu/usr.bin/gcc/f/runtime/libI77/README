@@ -32,9 +32,6 @@ number of characters transmitted -- then insert the line
 
 at the end of fmt.h .  This is necessary with
 at least some versions of Sun and DEC software.
-In particular, if you get a warning about an improper
-pointer/integer combination in compiling wref.c, then
-you need to compile with -DUSE_STRLEN .
 
 If your system's fopen does not like the ANSI binary
 reading and writing modes "rb" and "wb", then you should

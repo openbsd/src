@@ -15,17 +15,24 @@ separating them out.
    For information on bugs that might afflict people who configure,
 port, build, and install `g77', *Note Problems Installing::.
 
-   * Work is needed on the `SIGNAL()' intrinsic to ensure that pointers
-     and integers are properly handled on all targets, including 64-bit
-     machines.
+   * When using `-fugly', `g77' assumes an extra `%VAL(0)' argument is
+     to be passed to intrinsics taking no arguments, such as `IARGC()',
+     which in turn reject such a call.  Although this has been worked
+     around for 0.5.18 due to changes in the handling of intrinsics,
+     `g77' needs to do the ugly-argument-appending trick only for
+     external-function invocation, as this would probably be more
+     consistent with compilers that default to using that trick.
 
-   * When using `-fugly-comma', `g77' assumes an extra `%VAL(0)'
-     argument is to be passed to intrinsics taking no arguments, such
-     as `IARGC()', which in turn reject such a call.  Although this has
-     been worked around for 0.5.18 due to changes in the handling of
-     intrinsics, `g77' needs to do the ugly-argument-appending trick
-     only for external-function invocation, as this would probably be
-     more consistent with compilers that default to using that trick.
+   * Although `g77' generally supports `SELECT CASE', it doesn't do so
+     for `CHARACTER' types.  Worse, it just crashes with a barely
+     servicable diagnostic.  If the time can't be taken soon to finish
+     implementing this feature, at least a better way of diagnosing the
+     problem should be provided.
+
+   * To accept a lot of fine code, `g77' needs to accept `FORMAT' and
+     `ENTRY' before an `IMPLICIT NONE'.
+
+   * Some crashes occur when compiling under Solaris on x86 machines.
 
    * Something about `g77''s straightforward handling of label
      references and definitions sometimes prevents the GBE from
@@ -40,9 +47,12 @@ port, build, and install `g77', *Note Problems Installing::.
    * Some confusion in diagnostics concerning failing `INCLUDE'
      statements from within `INCLUDE''d or `#include''d files.
 
-   * `g77' assumes that `INTEGER(KIND=1)' constants range from `-2**31'
-     to `2**31-1' (the range for two's-complement 32-bit values),
-     instead of determining their range from the actual range of the
+   * Some problems on RS/6000 regarding statement functions and/or
+     `COMPLEX' arithmetic?
+
+   * `g77' assumes that `INTEGER' constants range from `-2**31' to
+     `2**31-1' (the range for two's-complement 32-bit values), instead
+     of determining their range from the actual range of the `INTEGER'
      type for the configuration (and, someday, for the constant).
 
      Further, it generally doesn't implement the handling of constants
@@ -103,24 +113,9 @@ port, build, and install `g77', *Note Problems Installing::.
      that's the state in which the debugger should start up, as is the
      case for languages like C.
 
-   * Debugging `g77'-compiled code using debuggers other than `gdb' is
-     likely not to work.
-
-     Getting `g77' and `gdb' to work together is a known
-     problem--getting `g77' to work properly with other debuggers, for
-     which source code often is unavailable to `g77' developers, seems
-     like a much larger, unknown problem, and is a lower priority than
-     making `g77' and `gdb' work together properly.
-
-     On the other hand, information about problems other debuggers have
-     with `g77' output might make it easier to properly fix `g77', and
-     perhaps even improve `gdb', so it is definitely welcome.  Such
-     information might even lead to all relevant products working
-     together properly sooner.
-
    * `g77' currently inserts needless padding for things like `COMMON
-     A,IPAD' where `A' is `CHARACTER*1' and `IPAD' is `INTEGER(KIND=1)'
-     on machines like x86, because the back end insists that `IPAD' be
+     A,IPAD' where `A' is `CHARACTER*1' and `IPAD' is `INTEGER*4' on
+     machines like x86, because the back end insists that `IPAD' be
      aligned to a 4-byte boundary, but the processor has no such
      requirement (though it's good for performance).
 
@@ -131,12 +126,6 @@ port, build, and install `g77', *Note Problems Installing::.
      potential, with the current setup, for interface differences in
      the way such areas are laid out between `g77' and other compilers.
 
-   * Some crashes occur when compiling under Solaris on x86 machines.
-
-     Nothing has been heard about any such problems for some time, so
-     this is considering a closed item as of 0.5.20.  Please submit any
-     bug reports pertinent to `g77''s support for Solaris/x86 systems.
-
    * RS/6000 support is not complete as of the gcc 2.6.3 back end.  The
      2.7.0 back end appears to fix this problem, or at least mitigate
      it significantly, but there is at least one known problem that is
@@ -144,34 +133,13 @@ port, build, and install `g77', *Note Problems Installing::.
      `g77-0.5.16'.  This problem shows up only when compiling the
      Fortran program with `-O'.
 
-     Nothing has been heard about any RS/6000 problems for some time,
-     so this is considering a closed item as of 0.5.20.  Please submit
-     any bug reports pertinent to `g77''s support for RS/6000 systems.
-
    * SGI support is known to be a bit buggy.  The known problem shows
      up only when compiling the Fortran program with `-O'.
 
-     It is possible these problems have all been fixed in 0.5.20 by
-     emulating complex arithmetic in the front end.  Please submit any
-     bug reports pertinent to `g77''s support for SGI systems.
-
-   * `g77' doesn't work perfectly on 64-bit configurations such as the
-     Alpha.  This problem is expected to be largely resolved as of
-     version 0.5.20, and version 0.6 should solve most or all related
-     problems (such as 64-bit machines other than DEC Alphas).
-
-     One known bug that causes a compile-time crash occurs when
-     compiling code such as the following with optimization:
-
-          SUBROUTINE CRASH (TEMP)
-          INTEGER*2 HALF(2)
-          REAL TEMP
-          HALF(1) = NINT (TEMP)
-          END
-
-     It is expected that a future version of `g77' will have a fix for
-     this problem, almost certainly by the time `g77' supports the
-     forthcoming version 2.8.0 of `gcc'.
+   * `g77' doesn't work on 64-bit configurations such as the Alpha.
+     This problem is expected to be largely resolved as of version
+     0.5.20, and version 0.6 should solve most or all related problems
+     (such as 64-bit machines other than DEC Alphas).
 
    * Maintainers of gcc report that the back end definitely has "broken"
      support for `COMPLEX' types.  Based on their input, it seems many
@@ -179,11 +147,9 @@ port, build, and install `g77', *Note Problems Installing::.
      `__complex__' type, such as `__complex__ int' (where the real and
      imaginary parts are integers) that GNU Fortran does not use.
 
-     Version 0.5.20 of `g77' works around this problem by not using the
-     back end's support for `COMPLEX'.  The new option
-     `-fno-emulate-complex' avoids the work-around, reverting to using
-     the same "broken" mechanism as that used by versions of `g77'
-     prior to 0.5.20.
+     Version 0.5.20 of `g77' is expected to work around this problem by
+     not using the back end's support for `COMPLEX'.  This work has
+     already been done, and is being tested by developers.
 
    * There seem to be some problems with passing constants, and perhaps
      general expressions (other than simple variables/arrays), to
@@ -193,4 +159,6 @@ port, build, and install `g77', *Note Problems Installing::.
      investigation is needed, but the problem is almost certainly in
      the gcc back end, and it apparently occurs only when compiling
      sufficiently complicated functions *without* the `-O' option.
+
+     This might be fixed in version 2.7.2 of `gcc'.
 

@@ -1,5 +1,5 @@
 /* stu.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -300,8 +300,6 @@ ffestu_sym_end_transition (ffesymbol s)
 	ffesymbol_resolve_intrin (s);
       s = ffecom_sym_learned (s);
       ffestorag_end_layout (s);
-      if (nwh == FFEINFO_whereGLOBAL)
-	ffesymbol_globalize (s);
       ffesymbol_signal_unreported (s);	/* For debugging purposes. */
     }
 
@@ -704,7 +702,7 @@ ffestu_sym_exec_transition (ffesymbol s)
 	  resolve_intrin = FALSE;
 	}
       else if (ffeintrin_is_intrinsic (ffesymbol_text (s), NULL, FALSE,
-				       &gen, &spec, &imp))
+				       &gen, &spec, &imp, &nkd))
 	{
 	  ffesymbol_signal_change (s);
 	  ffesymbol_set_state (s, FFESYMBOL_stateUNDERSTOOD);
@@ -715,7 +713,7 @@ ffestu_sym_exec_transition (ffesymbol s)
 			      ffeinfo_new (FFEINFO_basictypeNONE,
 					   FFEINFO_kindtypeNONE,
 					   0,
-					   FFEINFO_kindNONE,
+					   nkd,
 					   FFEINFO_whereINTRINSIC,
 					   FFETARGET_charactersizeNONE));
 	  ffesymbol_resolve_intrin (s);
@@ -822,8 +820,6 @@ ffestu_sym_exec_transition (ffesymbol s)
       else if (resolve_intrin)
 	ffesymbol_resolve_intrin (s);
       ffestorag_exec_layout (s);
-      if (nwh == FFEINFO_whereGLOBAL)
-	ffesymbol_globalize (s);
       ffesymbol_signal_unreported (s);	/* For debugging purposes. */
     }
 

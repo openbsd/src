@@ -44,7 +44,7 @@ integer do_ud(ftnint *number, char *ptr, ftnlen len)
 #endif
 		if (!(i = fread(ptr,(size_t)len,(size_t)(*number),f__cf))
 		 && !(f__recpos - *number*len))
-			err(f__elist->cierr,EOF,"do_ud");
+			err(f__elist->cierr,EOF,"do_ud")
 		if (i < *number)
 			memset(ptr + i*len, 0, (*number - i)*len);
 		return 0;

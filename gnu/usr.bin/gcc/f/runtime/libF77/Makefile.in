@@ -38,7 +38,7 @@ DEFS = @DEFS@
 CGFLAGS = -g0
 # f2c.h should already be installed in xgcc's include directory but add that
 # to -I anyhow in case not using xgcc.
-ALL_CFLAGS = -I. -I$(srcdir) -I../../../include $(CPPFLAGS) $(DEFS) $(CFLAGS)
+ALL_CFLAGS = -I$(srcdir) -I../../../include $(CPPFLAGS) $(DEFS) $(CFLAGS)
 AR = @AR@
 AR_FLAGS = rc
 RANLIB = @RANLIB@
@@ -50,12 +50,15 @@ CROSS = @CROSS@
 
 .c.o:
 	$(CC) -c -DSkip_f2c_Undefs $(ALL_CFLAGS) $(CGFLAGS) $<
+# Next two lines were removed because Solaris doesn't like `ld -x', and
+# it seems there's no real benefit to doing this anyway.
+#	ld -r -x -o $@x $@
+#	mv $@x $@
 
 MISC =	F77_aloc.o VersionF.o main.o s_rnge.o abort_.o getarg_.o iargc_.o\
 	getenv_.o signal_.o s_stop.o s_paus.o system_.o cabs.o\
 	derf_.o derfc_.o erf_.o erfc_.o sig_die.o exit.o
-POW =	pow_ci.o pow_dd.o pow_di.o pow_hh.o pow_ii.o  pow_ri.o pow_zi.o pow_zz.o \
-	pow_qq.o
+POW =	pow_ci.o pow_dd.o pow_di.o pow_hh.o pow_ii.o  pow_ri.o pow_zi.o pow_zz.o
 CX =	c_abs.o c_cos.o c_div.o c_exp.o c_log.o c_sin.o c_sqrt.o
 DCX =	z_abs.o z_cos.o z_div.o z_exp.o z_log.o z_sin.o z_sqrt.o
 REAL =	r_abs.o r_acos.o r_asin.o r_atan.o r_atn2.o r_cnjg.o r_cos.o\
@@ -72,24 +75,40 @@ HALF =	h_abs.o h_dim.o h_dnnt.o h_indx.o h_len.o h_mod.o  h_nint.o h_sign.o
 CMP =	l_ge.o l_gt.o l_le.o l_lt.o hl_ge.o hl_gt.o hl_le.o hl_lt.o
 EFL =	ef1asc_.o ef1cmc_.o
 CHAR =	s_cat.o s_cmp.o s_copy.o
-F90BIT = lbitbits.o lbitshft.o qbitbits.o qbitshft.o
+F90BIT = lbitbits.o lbitshft.o
 
-F2C_H = ../../../include/f2c.h
+lib = ../../../libf2c.a
 
-all: $(MISC) $(POW) $(CX) $(DCX) $(REAL) $(DBL) $(INT) \
-	 $(HALF) $(CMP) $(EFL) $(CHAR) $(F90BIT)
+F2C_H = ../../include/f2c.h
+
+all:	$(lib)
+
+$(lib): force $(MISC) $(POW) $(CX) $(DCX) $(REAL) $(DBL) $(INT) \
+	 $(HALF) $(CMP) $(EFL) $(CHAR)
+# Don't worry if ar fails, that can happen when a root-like user installs a
+# system built by a user to which the installer has insufficient access
+# to modify libf2c.a.  Probably a better solution to this should be
+# found, but this should do for now.  -- burley 951226
+	-$(AR) $(AR_FLAGS) $(lib) $(MISC) $(POW) $(CX) $(DCX) $(REAL) \
+	 $(DBL) $(INT) $(HALF) $(CMP) $(EFL) $(CHAR)
+	if $(RANLIB_TEST); then $(RANLIB) $(lib); \
+	  else true; fi
+
+uninstall:
+install:
 
 VersionF.o: Version.c
 	$(CC) -c $(CGFLAGS) -o $@ $(srcdir)/Version.c
+# Next two lines were removed because Solaris doesn't like `ld -x', and
+# it seems there's no real benefit to doing this anyway.
+#	ld -r -x -o $@x $@
+#	mv $@x $@
 
-mostlyclean clean:
-	-rm -f *.o
-
-distclean maintainer-clean: clean
-	-rm -f stage? include Makefile
+clean:
+	rm -f *.o
 
 # Not quite all these actually do depend on f2c.h...
 $(MISC) $(POW) $(CX) $(DCX) $(REAL) $(DBL) $(INT) \
-  $(HALF) $(CMP) $(EFL) $(CHAR) $(F90BIT): $(F2C_H)
+  $(HALF) $(CMP) $(EFL) $(CHAR): $(F2C_H) $(F90BIT)
 
-.PHONY: mostlyclean clean distclean maintainer-clean all
+force:

@@ -81,7 +81,6 @@ exec_prefix='$(prefix)'
 #
 # The default g++ include directory is $(libdir)/g++-include.
 gxx_include_dir='$(libdir)/g++-include'
-#gxx_include_dir='$(exec_prefix)/include/g++'
 
 # Default --program-transform-name to nothing.
 program_transform_name=
@@ -556,13 +555,6 @@ for machine in $canon_build $canon_host $canon_target; do
 		tmake_file=t-libc-ok
 		xmake_file=x-openbsd
 		;;
-	alpha-*-linux*)
-		tm_file=alpha/linux.h
-		tmake_file=alpha/t-linux
-		xmake_file=alpha/x-linux
-		fixincludes=Makefile.in
-		xm_file=alpha/xm-linux.h
-		;;
 	alpha-dec-osf[23456789]*)
 		tm_file=alpha/osf2.h
 		if [ x$stabs = xyes ]
@@ -1009,7 +1001,7 @@ for machine in $canon_build $canon_host $canon_target; do
 	i[345]86-*-linux*oldld*)	# Intel 80386's running Linux
 		cpu_type=i386		# with a.out format using pre BFD linkers
 		xm_file=i386/xm-linux.h
-		xmake_file=x-linux-aout
+		xmake_file=x-linux
 		tm_file=i386/linux-oldld.h
 		fixincludes=Makefile.in #On Linux, the headers are ok already.
 		broken_install=yes
@@ -1018,7 +1010,7 @@ for machine in $canon_build $canon_host $canon_target; do
 	i[345]86-*-linux*aout*)		# Intel 80386's running Linux
 		cpu_type=i386		# with a.out format
 		xm_file=i386/xm-linux.h
-		xmake_file=x-linux-aout
+		xmake_file=x-linux
 		tm_file=i386/linux-aout.h
 		fixincludes=Makefile.in #On Linux, the headers are ok already.
 		broken_install=yes
@@ -1027,7 +1019,7 @@ for machine in $canon_build $canon_host $canon_target; do
 	i[345]86-*-linux*)		# Intel 80386's running Linux
 		cpu_type=i386		# with ELF format
 		xm_file=i386/xm-linux.h
-		xmake_file=x-linux-aout
+		xmake_file=x-linux
 		tm_file=i386/linux.h
 		fixincludes=Makefile.in #On Linux, the headers are ok already.
 		broken_install=yes

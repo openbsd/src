@@ -1369,11 +1369,6 @@ output_prolog (file, size)
      We never need a GP for Windows/NT.  */
 
   alpha_function_needs_gp = 0;
-#ifdef __linux__
-  if(profile_flag) {
-      alpha_function_needs_gp = 1;
-  }
-#endif
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
     if ((GET_CODE (insn) == CALL_INSN)
 	|| (GET_RTX_CLASS (GET_CODE (insn)) == 'i'

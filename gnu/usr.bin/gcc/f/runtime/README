@@ -1,4 +1,4 @@
-970205
+950827
 
 This directory contains the f2c library packaged for use with g77 to configure
 and build automatically (in principle!) as part of the top-level configure and
@@ -25,6 +25,14 @@ Some key changes made by Burley:
 -  f2c.h configured to default to padding unformatted direct reads
    (#define Pad_UDread), because that's the behavior most users
    expect.
+
+-  f2c.h configured to default to always flushing after output so that
+   ERR= and IOSTAT= report disk-full errors (assuming the underlying
+   system library code does that correctly), again because that's the
+   behavior most users expect (#define ALWAYS_FLUSH).  But you should
+   write CALL FLUSH or CALL FLUSH(IUNIT) as appropriate in your source
+   code, because auto-flushing will not necessarily be enabled by
+   default in future versions of g77's run-time library.
 
 -  f2c.h configured to default to outputting leading zeros before
    decimal points in formatted and list-directed output, to be compatible

@@ -169,12 +169,11 @@ void ffestt_caselist_kill (ffesttCaseList list);
 void ffestt_dimlist_append (ffesttDimList list, ffebld lower, ffebld upper,
 			    ffelexToken t);
 ffebld ffestt_dimlist_as_expr (ffesttDimList list, ffeinfoRank *rank,
-			       ffebld *array_size, ffebld *extents,
-			       bool is_ugly_assumed);
+			       ffebld *array_size, ffebld *extents);
 ffesttDimList ffestt_dimlist_create (void);
 void ffestt_dimlist_dump (ffesttDimList list);
 void ffestt_dimlist_kill (ffesttDimList list);
-ffestpDimtype ffestt_dimlist_type (ffesttDimList dims, bool is_ugly_assumed);
+ffestpDimtype ffestt_dimlist_type (ffesttDimList dims);
 void ffestt_exprlist_append (ffesttExprList list, ffebld expr, ffelexToken t);
 ffesttExprList ffestt_exprlist_create (void);
 void ffestt_exprlist_drive (ffesttExprList list, void (*fn) ());

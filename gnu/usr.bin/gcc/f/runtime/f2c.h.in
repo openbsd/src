@@ -21,10 +21,14 @@ typedef @F2C_INTEGER@ /* long int */ logical;
 typedef short int shortlogical;
 typedef char logical1;
 typedef char integer1;
-typedef @F2C_LONGINT@ /* long long */ longint;		/* system-dependent */
-typedef unsigned @F2C_LONGINT@ /* long long */ ulongint;	/* system-dependent */
+/* integer*8 support from f2c not currently supported: */
+#if 0
+typedef @F2C_LONGINT@ /* long long */ longint; /* system-dependent */
+typedef unsigned @F2C_LONGINT@ ulongint;	/* system-dependent */
 #define qbit_clear(a,b)	((a) & ~((ulongint)1 << (b)))
 #define qbit_set(a,b)	((a) |  ((ulongint)1 << (b)))
+#endif
+typedef long long int longint;
 
 #define TRUE_ (1)
 #define FALSE_ (0)
@@ -37,15 +41,15 @@ typedef unsigned @F2C_LONGINT@ /* long long */ ulongint;	/* system-dependent */
 /* I/O stuff */
 
 #ifdef f2c_i2
-#error "f2c_i2 will not work with g77!!!!"
+  #error f2c_i2 will not work with g77!!!!
 /* for -i2 */
 typedef short flag;
 typedef short ftnlen;
 typedef short ftnint;
 #else
-typedef @F2C_INTEGER@ /* long int */ flag;
-typedef @F2C_INTEGER@ /* long int */ ftnlen;
-typedef @F2C_INTEGER@ /* long int */ ftnint;
+typedef @F2C_INTEGER@ /* int or long int */ flag;
+typedef @F2C_INTEGER@ /* int or long int */ ftnlen;
+typedef @F2C_INTEGER@ /* int or long int */ ftnint;
 #endif
 
 /*external read, write*/

@@ -1,5 +1,5 @@
 /* lang-options.h file for Fortran
-   Copyright (C) 1995-1997 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -52,20 +52,16 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
   "-fno-fixed-form",
   "-fpedantic",
   "-fno-pedantic",
-  "-fvxt",
-  "-fno-vxt",
+  "-fvxt-not-f90",
+  "-ff90-not-vxt",
   "-fugly",
   "-fno-ugly",
   "-fugly-args",
   "-fno-ugly-args",
-  "-fugly-assign",
-  "-fno-ugly-assign",
   "-fugly-assumed",
   "-fno-ugly-assumed",
   "-fugly-comma",
   "-fno-ugly-comma",
-  "-fugly-complex",
-  "-fno-ugly-complex",
   "-fugly-init",
   "-fno-ugly-init",
   "-fugly-logint",
@@ -76,8 +72,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
   "-fno-init-local-zero",
   "-fbackslash",
   "-fno-backslash",
-  "-femulate-complex",
-  "-fno-emulate-complex",
   "-funderscoring",
   "-fno-underscoring",
   "-fsecond-underscore",

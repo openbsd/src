@@ -1,5 +1,5 @@
 /* bad.def -- Public #include File (module.h template V1.0)
-   Copyright (C) 1995-1997 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -171,6 +171,9 @@ FFEBAD_MSGS1 (FFEBAD_SEMICOLON, FATAL,
 "Semicolon at %0 is an invalid token")
 FFEBAD_MSGS2 (FFEBAD_UNREC_STMT, FATAL,
 "Unrecognized statement name at %0 and invalid form for assignment or statement-function definition at %1",
+"Invalid statement at %0")
+FFEBAD_MSGS2 (FFEBAD_UNIMPL_STMT, FATAL,
+"Unimplemented or invalid form of statement at %0 (this is a catchall diagnostic that currently applies to a wide variety of errors, including things like invalid ordering of statements and invalid reference to intrinsic procedure)",
 "Invalid statement at %0")
 FFEBAD_MSGS2 (FFEBAD_INVALID_STMT_FORM, FATAL,
 "Invalid form for %A statement at %0",
@@ -485,34 +488,29 @@ FFEBAD_MSGS2 (FFEBAD_RELOP_ARG_KIND, FATAL,
 "Relational operator at %0 must operate on two scalar (not array) subexpressions, two function invocations returning integer, real, or character scalars, or a combination of both -- but the subexpression at %1 is %A",
 "Invalid operand (is %A) at %1 for relational operator at %0")
 FFEBAD_MSGS2 (FFEBAD_INTRINSIC_REF, FATAL,
-"Reference to intrinsic %A at %0 invalid -- one or more arguments have incorrect type",
-"Invalid reference to intrinsic %A at %0")
+"Reference to intrinsic function or subroutine `%A' at %0 invalid -- number or nature of arguments incorrect",
+"Invalid reference to intrinsic `%A' at %0")
 FFEBAD_MSGS2 (FFEBAD_INTRINSIC_TOOFEW, FATAL,
-"Too few arguments passed to intrinsic %A at %0",
-"Too few arguments for intrinsic %A at %0")
+"Too few arguments passed to intrinsic function or subroutine `%A' at %0",
+"Too few arguments for intrinsic `%A' at %0")
 FFEBAD_MSGS2 (FFEBAD_INTRINSIC_TOOMANY, FATAL,
-"Too many arguments passed to intrinsic %A at %0",
-"Too many arguments for intrinsic %A at %0")
+"Too many arguments passed to intrinsic function or subroutine `%A' at %0",
+"Too many arguments for intrinsic `%A' at %0")
 FFEBAD_MSGS2 (FFEBAD_INTRINSIC_DISABLED, FATAL,
-"Reference to disabled intrinsic %A at %0",
-"Disabled intrinsic %A at %0")
+"Reference to disabled intrinsic function or subroutine `%A' at %0",
+"Disabled intrinsic `%A' at %0")
 FFEBAD_MSGS2 (FFEBAD_INTRINSIC_IS_SUBR, FATAL,
-"Reference to intrinsic subroutine %A as if it were a function at %0",
-"Function reference to intrinsic subroutine %A at %0")
+"Reference to intrinsic subroutine `%A' as if it were a function at %0",
+"Function reference to intrinsic subroutine `%A' at %0")
 FFEBAD_MSGS2 (FFEBAD_INTRINSIC_IS_FUNC, FATAL,
-"Reference to intrinsic function %A as if it were a subroutine at %0",
-"Subroutine reference to intrinsic function %A at %0")
+"Reference to intrinsic function `%A' as if it were a subroutine at %0",
+"Subroutine reference to intrinsic function `%A' at %0")
 FFEBAD_MSGS2 (FFEBAD_INTRINSIC_UNIMPL, FATAL,
-"Reference to unimplemented intrinsic %A at %0 -- use EXTERNAL to reference user-written procedure with this name",
-"Unimplemented intrinsic %A at %0")
-FFEBAD_MSGS2 (FFEBAD_INTRINSIC_UNIMPLW, WARN,
-"Reference to unimplemented intrinsic %A at %0 (assumed EXTERNAL)",
-"Unimplemented intrinsic %A at %0 (assumed EXTERNAL)")
+"Reference to unimplemented intrinsic procedure `%A' at %0 -- use EXTERNAL to reference non-intrinsic procedure with this name",
+"Unimplemented intrinsic `%A' at %0")
 FFEBAD_MSGS2 (FFEBAD_INTRINSIC_AMBIG, FATAL,
-"Reference to generic intrinsic %A at %0 could be for specific intrinsic %B or %C",
-"Ambiguous reference to generic intrinsic %A (could be %B or %C) at %0")
-FFEBAD_MSGS1 (FFEBAD_INTRINSIC_CMPAMBIG, FATAL,
-"Ambiguous use of intrinsic %A at %0 [info -f g77 M CMPAMBIG]")
+"Reference to generic intrinsic procedure `%A' at %0 could be for specific intrinsic procedure `%B' or `%C'",
+"Ambiguous reference to generic intrinsic `%A' at %0")
 FFEBAD_MSGS1 (FFEBAD_OPEN_INCLUDE, FATAL,
 "Unable to open INCLUDE file `%A' at %0")
 FFEBAD_MSGS2 (FFEBAD_DOITER, FATAL,
@@ -620,7 +618,7 @@ FFEBAD_MSGS2 (FFEBAD_COMMON_ENLARGED, FATAL,
 FFEBAD_MSGS1 (FFEBAD_COMMON_BLANK_INIT, WARN,
 "Blank common initialized at %0")
 FFEBAD_MSGS1 (FFEBAD_NEED_INTRINSIC, WARN,
-"Intrinsic %A is passed as actual argument at %0 but not explicitly declared INTRINSIC")
+"Intrinsic procedure `%A' is passed as actual argument at %0 but not explicitly declared INTRINSIC")
 FFEBAD_MSGS1 (FFEBAD_NEED_EXTERNAL, WARN,
 "External procedure `%A' is passed as actual argument at %0 but not explicitly declared EXTERNAL")
 FFEBAD_MSGS1 (FFEBAD_SYMBOL_UPPER_CASE, WARN,
@@ -649,6 +647,8 @@ FFEBAD_MSGS2 (FFEBAD_TOO_BIG_INIT, WARN,
 "This could take a while (initializing `%A' at %0)...")
 FFEBAD_MSGS1 (FFEBAD_BLOCKDATA_STMT, WARN,
 "Statement at %0 invalid in BLOCK DATA program unit at %1")
+FFEBAD_MSGS1 (FFEBAD_TYPELESS_TOO_LARGE, WARN,
+"Typeless constant at %0 too large")
 FFEBAD_MSGS1 (FFEBAD_TRUNCATING_CHARACTER, WARN,
 "Truncating characters on right side of character constant at %0")
 FFEBAD_MSGS1 (FFEBAD_TRUNCATING_HOLLERITH, WARN,

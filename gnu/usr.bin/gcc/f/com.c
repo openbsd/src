@@ -1,5 +1,5 @@
 /* com.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995-1997 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -302,15 +302,11 @@ ffecomSymbol ffecom_symbol_null_
   NULL_TREE,
   NULL_TREE,
 };
-ffeinfoKindtype ffecom_pointer_kind_ = FFEINFO_basictypeNONE;
-ffeinfoKindtype ffecom_label_kind_ = FFEINFO_basictypeNONE;
 
 int ffecom_f2c_typecode_[FFEINFO_basictype][FFEINFO_kindtype];
 tree ffecom_f2c_integer_type_node;
-tree ffecom_f2c_ptr_to_integer_type_node;
 tree ffecom_f2c_address_type_node;
 tree ffecom_f2c_real_type_node;
-tree ffecom_f2c_ptr_to_real_type_node;
 tree ffecom_f2c_doublereal_type_node;
 tree ffecom_f2c_complex_type_node;
 tree ffecom_f2c_doublecomplex_type_node;
@@ -354,7 +350,6 @@ typedef enum
     FFECOM_rttypeDOUBLE_,	/* C's `double' type. */
     FFECOM_rttypeDOUBLEREAL_,
     FFECOM_rttypeDBLCMPLX_,
-    FFECOM_rttypeCHARACTER_,	/* f2c `char *'/`ftnlen' pair. */
     FFECOM_rttype_
   } ffecomRttype_;
 
@@ -753,210 +748,6 @@ static tree shadowed_labels;
 
 #endif /* FFECOM_targetCURRENT == FFECOM_targetGCC */
 
-
-/* This is like gcc's stabilize_reference -- in fact, most of the code
-   comes from that -- but it handles the situation where the reference
-   is going to have its subparts picked at, and it shouldn't change
-   (or trigger extra invocations of functions in the subtrees) due to
-   this.  save_expr is a bit overzealous, because we don't need the
-   entire thing calculated and saved like a temp.  So, for DECLs, no
-   change is needed, because these are stable aggregates, and ARRAY_REF
-   and such might well be stable too, but for things like calculations,
-   we do need to calculate a snapshot of a value before picking at it.  */
-
-#if FFECOM_targetCURRENT == FFECOM_targetGCC
-tree
-ffecom_stabilize_aggregate_ (tree ref)
-{
-  tree result;
-  enum tree_code code = TREE_CODE (ref);
-
-  switch (code)
-    {
-    case VAR_DECL:
-    case PARM_DECL:
-    case RESULT_DECL:
-      /* No action is needed in this case.  */
-      return ref;
-
-    case NOP_EXPR:
-    case CONVERT_EXPR:
-    case FLOAT_EXPR:
-    case FIX_TRUNC_EXPR:
-    case FIX_FLOOR_EXPR:
-    case FIX_ROUND_EXPR:
-    case FIX_CEIL_EXPR:
-      result = build_nt (code, stabilize_reference (TREE_OPERAND (ref, 0)));
-      break;
-
-    case INDIRECT_REF:
-      result = build_nt (INDIRECT_REF,
-			 stabilize_reference_1 (TREE_OPERAND (ref, 0)));
-      break;
-
-    case COMPONENT_REF:
-      result = build_nt (COMPONENT_REF,
-			 stabilize_reference (TREE_OPERAND (ref, 0)),
-			 TREE_OPERAND (ref, 1));
-      break;
-
-    case BIT_FIELD_REF:
-      result = build_nt (BIT_FIELD_REF,
-			 stabilize_reference (TREE_OPERAND (ref, 0)),
-			 stabilize_reference_1 (TREE_OPERAND (ref, 1)),
-			 stabilize_reference_1 (TREE_OPERAND (ref, 2)));
-      break;
-
-    case ARRAY_REF:
-      result = build_nt (ARRAY_REF,
-			 stabilize_reference (TREE_OPERAND (ref, 0)),
-			 stabilize_reference_1 (TREE_OPERAND (ref, 1)));
-      break;
-
-    case COMPOUND_EXPR:
-      result = build_nt (COMPOUND_EXPR,
-			 stabilize_reference_1 (TREE_OPERAND (ref, 0)),
-			 stabilize_reference (TREE_OPERAND (ref, 1)));
-      break;
-
-    case RTL_EXPR:
-      result = build1 (INDIRECT_REF, TREE_TYPE (ref),
-		       save_expr (build1 (ADDR_EXPR,
-					  build_pointer_type (TREE_TYPE (ref)),
-					  ref)));
-      break;
-
-
-    default:
-      return save_expr (ref);
-
-    case ERROR_MARK:
-      return error_mark_node;
-    }
-
-  TREE_TYPE (result) = TREE_TYPE (ref);
-  TREE_READONLY (result) = TREE_READONLY (ref);
-  TREE_SIDE_EFFECTS (result) = TREE_SIDE_EFFECTS (ref);
-  TREE_THIS_VOLATILE (result) = TREE_THIS_VOLATILE (ref);
-  TREE_RAISES (result) = TREE_RAISES (ref);
-
-  return result;
-}
-#endif
-
-/* A rip-off of gcc's convert.c convert_to_complex function,
-   reworked to handle complex implemented as C structures
-   (RECORD_TYPE with two fields, real and imaginary `r' and `i').  */
-
-#if FFECOM_targetCURRENT == FFECOM_targetGCC
-tree
-ffecom_convert_to_complex_ (tree type, tree expr)
-{
-  register enum tree_code form = TREE_CODE (TREE_TYPE (expr));
-  tree subtype;
-
-  assert (TREE_CODE (type) == RECORD_TYPE);
-
-  subtype = TREE_TYPE (TYPE_FIELDS (type));
-  
-  if (form == REAL_TYPE || form == INTEGER_TYPE || form == ENUMERAL_TYPE)
-    {
-      expr = convert (subtype, expr);
-      return ffecom_2 (COMPLEX_EXPR, type, expr,
-		       convert (subtype, integer_zero_node));
-    }
-
-  if (form == RECORD_TYPE)
-    {
-      tree elt_type = TREE_TYPE (TYPE_FIELDS (TREE_TYPE (expr)));
-      if (TYPE_MAIN_VARIANT (elt_type) == TYPE_MAIN_VARIANT (subtype))
-	return expr;
-      else
-	{
-	  expr = save_expr (expr);
-	  return ffecom_2 (COMPLEX_EXPR,
-			   type,
-			   convert (subtype,
-				    ffecom_1 (REALPART_EXPR,
-					      TREE_TYPE (TYPE_FIELDS (TREE_TYPE (expr))),
-					      expr)),
-			   convert (subtype,
-				    ffecom_1 (IMAGPART_EXPR,
-					      TREE_TYPE (TYPE_FIELDS (TREE_TYPE (expr))),
-					      expr)));
-	}
-    }
-
-  if (form == POINTER_TYPE || form == REFERENCE_TYPE)
-    error ("pointer value used where a complex was expected");
-  else
-    error ("aggregate value used where a complex was expected");
-  
-  return ffecom_2 (COMPLEX_EXPR, type,
-		   convert (subtype, integer_zero_node),
-		   convert (subtype, integer_zero_node));
-}
-#endif
-
-/* Handles making a COMPLEX type, either the standard
-   (but buggy?) gbe way, or the safer (but less elegant?)
-   f2c way.  */
-
-#if FFECOM_targetCURRENT == FFECOM_targetGCC
-static tree
-ffecom_make_complex_type_ (tree subtype)
-{
-  tree type;
-  tree realfield;
-  tree imagfield;
-
-  if (ffe_is_emulate_complex ())
-    {
-      type = make_node (RECORD_TYPE);
-      realfield = ffecom_decl_field (type, NULL_TREE, "r", subtype);
-      imagfield = ffecom_decl_field (type, realfield, "i", subtype);
-      TYPE_FIELDS (type) = realfield;
-      layout_type (type);
-    }
-  else
-    {
-      type = make_node (COMPLEX_TYPE);
-      TREE_TYPE (type) = subtype;
-      layout_type (type);
-    }
-
-  return type;
-}
-#endif
-
-/* Chooses either the gbe or the f2c way to build a
-   complex constant.  */
-
-#if FFECOM_targetCURRENT == FFECOM_targetGCC
-static tree
-ffecom_build_complex_constant_ (tree type, tree realpart, tree imagpart)
-{
-  tree bothparts;
-
-  if (ffe_is_emulate_complex ())
-    {
-      bothparts = build_tree_list (TYPE_FIELDS (type), realpart);
-      TREE_CHAIN (bothparts) = build_tree_list (TREE_CHAIN (TYPE_FIELDS (type)), imagpart);
-      bothparts = build (CONSTRUCTOR, type, NULL_TREE, bothparts);
-    }
-  else
-    {
-#if BUILT_FOR_280
-      bothparts = build_complex (NULL_TREE, realpart, imagpart);
-#else
-      bothparts = build_complex (realpart, imagpart);
-#endif
-      TREE_TYPE (bothparts) = type;
-    }
-
-  return bothparts;
-}
-#endif
 
 #if FFECOM_targetCURRENT == FFECOM_targetGCC
 static tree
@@ -1378,7 +1169,7 @@ ffecom_build_f2c_string_ (int i, char *s)
 #endif
 /* Returns CALL_EXPR or equivalent with given type (pass NULL_TREE for
    type to just get whatever the function returns), handling the
-   f2c value-returning convention, if required, by prepending
+   f2c complex-returning convention, if required, by prepending
    to the arglist a pointer to a temporary to receive the return value.	 */
 
 #if FFECOM_targetCURRENT == FFECOM_targetGCC
@@ -1700,55 +1491,45 @@ ffecom_char_args_ (tree *xitem, tree *length, ffebld expr)
       {
 	ffesymbol s = ffebld_symter (ffebld_left (expr));
 	tree tempvar;
+	tree dt;
 	tree args;
-	ffetargetCharacterSize size = ffeinfo_size (ffebld_info (expr));
 
-	if (size == FFETARGET_charactersizeNONE)
-	  size = 24;	/* ~~~~ Kludge alert!  This should someday be fixed. */
-
-	*length = build_int_2 (size, 0);
+	*length = build_int_2 (ffeinfo_size (ffebld_info (expr)), 0);
 	TREE_TYPE (*length) = ffecom_f2c_ftnlen_type_node;
 
 	if (ffeinfo_where (ffebld_info (ffebld_left (expr)))
 	    == FFEINFO_whereINTRINSIC)
-	  {
-	    ffecomGfrt ix;
-
-	    if (size == 1)
-	      {			/* Invocation of an intrinsic returning CHARACTER*1. */
-		item = ffecom_expr_intrinsic_ (expr, NULL_TREE,
-					       NULL, NULL);
-		break;
-	      }
-	    ix = ffeintrin_gfrt (ffebld_symter_implementation (ffebld_left (expr)));
-	    assert (ix != FFECOM_gfrt);
-	    item = ffecom_gfrt_tree_ (ix);
-	  }
-	else
-	  {
-	    item = ffesymbol_hook (s).decl_tree;
-	    if (item == NULL_TREE)
-	      {
-		s = ffecom_sym_transform_ (s);
-		item = ffesymbol_hook (s).decl_tree;
-	      }
-	    if (item == error_mark_node)
-	      {
-		item = *length = error_mark_node;
-		break;
-	      }
-
-	    if (!ffesymbol_hook (s).addr)
-	      item = ffecom_1_fn (item);
+	  {			/* Invocation of an intrinsic. */
+	    item = ffecom_expr_intrinsic_ (expr, NULL_TREE,
+					   NULL, NULL);
+	    break;
 	  }
 
 	assert (ffecom_pending_calls_ != 0);
-	tempvar = ffecom_push_tempvar (char_type_node, size, -1, TRUE);
+	tempvar = ffecom_push_tempvar (char_type_node,
+				       ffeinfo_size (ffebld_info (expr)),
+				       -1, TRUE);
 	tempvar = ffecom_1 (ADDR_EXPR,
 			    build_pointer_type (TREE_TYPE (tempvar)),
 			    tempvar);
 
 	ffecom_push_calltemps ();
+	dt = ffesymbol_hook (s).decl_tree;
+	if (dt == NULL_TREE)
+	  {
+	    s = ffecom_sym_transform_ (s);
+	    dt = ffesymbol_hook (s).decl_tree;
+	  }
+	if (dt == error_mark_node)
+	  {
+	    item = *length = error_mark_node;
+	    break;
+	  }
+
+	if (ffesymbol_hook (s).addr)
+	  item = dt;
+	else
+	  item = ffecom_1_fn (dt);
 
 	args = build_tree_list (NULL_TREE, tempvar);
 
@@ -2137,8 +1918,6 @@ ffecom_do_entry_ (ffesymbol fn, int entrynum)
   tree result;			/* Var holding result. */
   ffeinfoBasictype bt;
   ffeinfoKindtype kt;
-  ffeglobal g;
-  ffeglobalType gt;
   bool charfunc;		/* All entry points return same type
 				   CHARACTER. */
   bool cmplxfunc;		/* Use f2c way of returning COMPLEX. */
@@ -2164,7 +1943,6 @@ ffecom_do_entry_ (ffesymbol fn, int entrynum)
 
       /* Determine actual return type for function. */
 
-      gt = FFEGLOBAL_typeFUNC;
       bt = ffesymbol_basictype (fn);
       kt = ffesymbol_kindtype (fn);
       if (bt == FFEINFO_basictypeNONE)
@@ -2199,7 +1977,6 @@ ffecom_do_entry_ (ffesymbol fn, int entrynum)
       break;
 
     case FFEINFO_kindSUBROUTINE:
-      gt = FFEGLOBAL_typeSUBR;
       bt = FFEINFO_basictypeNONE;
       kt = FFEINFO_kindtypeNONE;
       if (ffecom_is_altreturning_)
@@ -2230,7 +2007,6 @@ ffecom_do_entry_ (ffesymbol fn, int entrynum)
       assert ("say what??" == NULL);
       /* Fall through. */
     case FFEINFO_kindANY:
-      gt = FFEGLOBAL_typeANY;
       bt = FFEINFO_basictypeNONE;
       kt = FFEINFO_kindtypeNONE;
       type = error_mark_node;
@@ -2249,12 +2025,6 @@ ffecom_do_entry_ (ffesymbol fn, int entrynum)
 		  type,
 		  0,		/* nested/inline */
 		  1);		/* TREE_PUBLIC */
-
-  if (((g = ffesymbol_global (fn)) != NULL)
-      && (ffeglobal_type (g) == gt))
-    {
-      ffeglobal_set_hook (g, current_function_decl);
-    }
 
   /* Reset args in master arg list so they get retransitioned. */
 
@@ -2531,7 +2301,7 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
     case FFEBLD_opACCTER:
       tree_type = ffecom_tree_type[bt][kt];
       {
-	ffebitCount i;
+	ffetargetOffset i;
 	ffebit bits = ffebld_accter_bits (expr);
 	ffetargetOffset source_offset = 0;
 	size_t size;
@@ -2640,54 +2410,9 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
 	  || (ffebld_symter_specific (expr) != FFEINTRIN_specNONE))
 	return ffecom_ptr_to_expr (expr);	/* Same as %REF(intrinsic). */
       s = ffebld_symter (expr);
-      t = ffesymbol_hook (s).decl_tree;
-
       if (assignp)
 	{			/* ASSIGN'ed-label expr. */
-	  if (ffe_is_ugly_assign ())
-	    {
-	      /* User explicitly wants ASSIGN'ed variables to be at the same
-		 memory address as the variables when used in non-ASSIGN
-		 contexts.  That can make old, arcane, non-standard code
-		 work, but don't try to do it when a pointer wouldn't fit
-		 in the normal variable (take other approach, and warn,
-		 instead).  */
-
-	      if (t == NULL_TREE)
-		{
-		  s = ffecom_sym_transform_ (s);
-		  t = ffesymbol_hook (s).decl_tree;
-		  assert (t != NULL_TREE);
-		}
-
-	      if (t == error_mark_node)
-		return t;
-
-	      if (GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (t)))
-		  >= GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (null_pointer_node))))
-		{
-		  if (ffesymbol_hook (s).addr)
-		    t = ffecom_1 (INDIRECT_REF,
-				  TYPE_MAIN_VARIANT (TREE_TYPE (TREE_TYPE (t))), t);
-		  return t;
-		}
-
-	      if (ffesymbol_hook (s).assign_tree == NULL_TREE)
-		{
-		  ffebad_start_msg ("ASSIGN'ed label cannot fit into `%A' at %0 -- using wider sibling",
-				    FFEBAD_severityWARNING);
-		  ffebad_string (ffesymbol_text (s));
-		  ffebad_here (0, ffesymbol_where_line (s),
-			       ffesymbol_where_column (s));
-		  ffebad_finish ();
-		}
-	    }
-
-	  /* Don't use the normal variable's tree for ASSIGN, though mark
-	     it as in the system header (housekeeping).  Use an explicit,
-	     specially created sibling that is known to be wide enough
-	     to hold pointers to labels.  */
-
+	  t = ffesymbol_hook (s).decl_tree;
 	  if (t != NULL_TREE)
 	    DECL_IN_SYSTEM_HEADER (t) = 1;	/* Don't let -Wunused complain. */
 
@@ -2701,6 +2426,7 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
 	}
       else
 	{
+	  t = ffesymbol_hook (s).decl_tree;
 	  if (t == NULL_TREE)
 	    {
 	      s = ffecom_sym_transform_ (s);
@@ -2855,7 +2581,10 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
 		    == FFEINFO_kindtypeREAL1)
 		  code = FFECOM_gfrtPOW_CI;	/* Overlapping result okay. */
 		else
-		  code = FFECOM_gfrtPOW_ZI;	/* Overlapping result okay. */
+		  {
+		    code = FFECOM_gfrtPOW_ZI;
+		    dest_used = NULL;	/* This one doesn't work with overlapping result. */
+		  }
 		break;
 
 	      default:
@@ -3112,8 +2841,7 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
 	      item = ffecom_expr (ffebld_left (expr));
 	      if (item == error_mark_node)
 		return error_mark_node;
-	      /* convert() takes care of converting to the subtype first,
-		 at least in gcc-2.7.2. */
+	      item = convert (TREE_TYPE (tree_type), item);
 	      item = convert (tree_type, item);
 	      return item;
 
@@ -3185,16 +2913,8 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
 	    arg1 = ffecom_save_tree (arg1);
 	    arg2 = ffecom_save_tree (arg2);
 
-	    if (TREE_CODE (TREE_TYPE (arg1)) == COMPLEX_TYPE)
-	      {
-		real_type = TREE_TYPE (TREE_TYPE (arg1));
-		assert (real_type == TREE_TYPE (TREE_TYPE (arg2)));
-	      }
-	    else
-	      {
-		real_type = TREE_TYPE (TYPE_FIELDS (TREE_TYPE (arg1)));
-		assert (real_type == TREE_TYPE (TYPE_FIELDS (TREE_TYPE (arg2))));
-	      }
+	    real_type = TREE_TYPE (TREE_TYPE (arg1));
+	    assert (real_type == TREE_TYPE (TREE_TYPE (arg2)));
 
 	    item
 	      = ffecom_2 (TRUTH_ANDIF_EXPR, integer_type_node,
@@ -3372,7 +3092,6 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
   ffebld arg2;
   ffebld arg3;
   ffecomGfrt ix;
-  ffeintrinImp codegen_imp;
 
   assert (ffebld_op (ffebld_left (expr)) == FFEBLD_opSYMTER);
 
@@ -3426,7 +3145,7 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 
      A standard call is made to the specific intrinsic just as if it had been
      passed in as a dummy procedure and called as any old procedure.  This
-     method can produce slower code but in some cases it's the easiest way for
+     method can produce slower code but in some cases its the easiest way for
      now.
 
      goto library;
@@ -3443,9 +3162,8 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
   /* For info on how the switch statement cases were written, see the files
      enclosed in comments below the switch statement. */
 
-  codegen_imp = ffeintrin_codegen_imp (ffebld_symter_implementation
-				       (ffebld_left (expr)));
-  switch (codegen_imp)
+  switch (ffeintrin_codegen_imp
+	  (ffebld_symter_implementation (ffebld_left (expr))))
     {
     case FFEINTRIN_impABS:	/* Plus impCABS, impCDABS, impDABS, impIABS. */
       if (ffeinfo_basictype (ffebld_info (arg1))
@@ -3478,14 +3196,9 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       goto library;		/* :::::::::::::::::::: */
 
     case FFEINTRIN_impAIMAG:	/* Plus impDIMAG. */
-      if (TREE_CODE (arg1_type) == COMPLEX_TYPE)
-	arg1_type = TREE_TYPE (arg1_type);
-      else
-	arg1_type = TREE_TYPE (TYPE_FIELDS (arg1_type));
-
       return
 	convert (tree_type,
-		 ffecom_1 (IMAGPART_EXPR, arg1_type,
+		 ffecom_1 (IMAGPART_EXPR, TREE_TYPE (arg1_type),
 			   ffecom_expr (arg1)));
 
     case FFEINTRIN_impAINT:	/* Plus impDINT. */
@@ -3629,48 +3342,43 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       return expr_tree;
 
     case FFEINTRIN_impCMPLX:
+      real_type = ffecom_tree_type[FFEINFO_basictypeREAL][kt];
       if (arg2 == NULL)
 	return
 	  convert (tree_type, ffecom_expr (arg1));
 
-      real_type = ffecom_tree_type[FFEINFO_basictypeREAL][kt];
       return
 	ffecom_2 (COMPLEX_EXPR, tree_type,
 		  convert (real_type, ffecom_expr (arg1)),
 		  convert (real_type,
 			   ffecom_expr (arg2)));
 
-    case FFEINTRIN_impCOMPLEX:
-      return
-	ffecom_2 (COMPLEX_EXPR, tree_type,
-		  ffecom_expr (arg1),
-		  ffecom_expr (arg2));
-
     case FFEINTRIN_impCONJG:	/* Plus impDCONJG. */
-      {
-	tree arg1_tree;
-
-	real_type = ffecom_tree_type[FFEINFO_basictypeREAL][kt];
-	arg1_tree = ffecom_save_tree (ffecom_expr (arg1));
-	return
-	  ffecom_2 (COMPLEX_EXPR, tree_type,
-		    ffecom_1 (REALPART_EXPR, real_type, arg1_tree),
-		    ffecom_1 (NEGATE_EXPR, real_type,
-			      ffecom_1 (IMAGPART_EXPR, real_type, arg1_tree)));
-      }
+      if (kt == FFEINFO_kindtypeREAL1)
+	ix = FFECOM_gfrtCONJG;
+      else if (kt == FFEINFO_kindtypeREAL2)
+	ix = FFECOM_gfrtDCONJG;
+      else
+	{
+	  assert ("bad CONJG kind type" == NULL);
+	  ix = FFECOM_gfrt;
+	}
+      dest_used = NULL;		/* These don't work with overlapping result. */
+      goto library;		/* :::::::::::::::::::: */
 
     case FFEINTRIN_impCOS:	/* Plus impCCOS, impCDCOS, impDCOS. */
       if (bt == FFEINFO_basictypeCOMPLEX)
 	{
 	  if (kt == FFEINFO_kindtypeREAL1)
-	    ix = FFECOM_gfrtCCOS;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCCOS;
 	  else if (kt == FFEINFO_kindtypeREAL2)
-	    ix = FFECOM_gfrtCDCOS;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCDCOS;
 	  else
 	    {
 	      assert ("bad COS COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -3699,10 +3407,6 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       goto library;		/* :::::::::::::::::::: */
 
     case FFEINTRIN_impDBLE:
-    case FFEINTRIN_impINT:
-    case FFEINTRIN_impREAL:
-    case FFEINTRIN_impLONG:
-    case FFEINTRIN_impSHORT:
       return convert (tree_type, ffecom_expr (arg1));
 
     case FFEINTRIN_impDIM:	/* Plus impDDIM, impIDIM. */
@@ -3731,14 +3435,15 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       if (bt == FFEINFO_basictypeCOMPLEX)
 	{
 	  if (kt == FFEINFO_kindtypeREAL1)
-	    ix = FFECOM_gfrtCEXP;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCEXP;
 	  else if (kt == FFEINFO_kindtypeREAL2)
-	    ix = FFECOM_gfrtCDEXP;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCDEXP;
 	  else
 	    {
 	      assert ("bad EXP COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -3780,6 +3485,9 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
     case FFEINTRIN_impINDEX:
       break;
 
+    case FFEINTRIN_impINT:
+      return convert (tree_type, ffecom_expr (arg1));
+
     case FFEINTRIN_impLEN:
 #if 0				/* The simple approach. */
       break;
@@ -3803,14 +3511,15 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       if (bt == FFEINFO_basictypeCOMPLEX)
 	{
 	  if (kt == FFEINFO_kindtypeREAL1)
-	    ix = FFECOM_gfrtCLOG;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCLOG;
 	  else if (kt == FFEINFO_kindtypeREAL2)
-	    ix = FFECOM_gfrtCDLOG;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCDLOG;
 	  else
 	    {
 	      assert ("bad LOG COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -3923,6 +3632,9 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 					      ffecom_float_half_))));
 #endif
 
+    case FFEINTRIN_impREAL:
+      return convert (tree_type, ffecom_expr (arg1));
+
     case FFEINTRIN_impSIGN:	/* Plus impDSIGN, impISIGN. */
       {
 	tree arg2_tree = ffecom_expr (arg2);
@@ -3953,14 +3665,15 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       if (bt == FFEINFO_basictypeCOMPLEX)
 	{
 	  if (kt == FFEINFO_kindtypeREAL1)
-	    ix = FFECOM_gfrtCSIN;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCSIN;
 	  else if (kt == FFEINFO_kindtypeREAL2)
-	    ix = FFECOM_gfrtCDSIN;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCDSIN;
 	  else
 	    {
 	      assert ("bad SIN COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -3992,14 +3705,15 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       if (bt == FFEINFO_basictypeCOMPLEX)
 	{
 	  if (kt == FFEINFO_kindtypeREAL1)
-	    ix = FFECOM_gfrtCSQRT;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCSQRT;
 	  else if (kt == FFEINFO_kindtypeREAL2)
-	    ix = FFECOM_gfrtCDSQRT;	/* Overlapping result okay. */
+	    ix = FFECOM_gfrtCDSQRT;
 	  else
 	    {
 	      assert ("bad SQRT COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -4038,17 +3752,6 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 	  ix = FFECOM_gfrt;
 	}
       goto library;		/* :::::::::::::::::::: */
-
-    case FFEINTRIN_impREALPART:
-      if (TREE_CODE (arg1_type) == COMPLEX_TYPE)
-	arg1_type = TREE_TYPE (arg1_type);
-      else
-	arg1_type = TREE_TYPE (TYPE_FIELDS (arg1_type));
-
-      return
-	convert (tree_type,
-		 ffecom_1 (REALPART_EXPR, arg1_type,
-			   ffecom_expr (arg1)));
 
     case FFEINTRIN_impIAND:
       return ffecom_2 (BIT_AND_EXPR, tree_type,
@@ -4351,33 +4054,25 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
     case FFEINTRIN_impMVBITS:
       {
 	tree arg1_tree;
-	tree arg2_tree;
-	tree arg3_tree;
+	tree arg2_tree = convert (integer_type_node,
+				  ffecom_expr (arg2));
+	tree arg3_tree = ffecom_save_tree (convert (integer_type_node,
+						    ffecom_expr (arg3)));
 	ffebld arg4 = ffebld_head (ffebld_trail (list));
 	tree arg4_tree;
 	tree arg4_type;
 	ffebld arg5 = ffebld_head (ffebld_trail (ffebld_trail (list)));
-	tree arg5_tree;
+	tree arg5_tree = ffecom_save_tree (convert (integer_type_node,
+						    ffecom_expr (arg5)));
 	tree prep_arg1;
 	tree prep_arg4;
 	tree arg5_plus_arg3;
 
-	ffecom_push_calltemps ();
-
-	arg2_tree = convert (integer_type_node,
-			     ffecom_expr (arg2));
-	arg3_tree = ffecom_save_tree (convert (integer_type_node,
-					       ffecom_expr (arg3)));
 	arg4_tree = ffecom_expr_rw (arg4);
 	arg4_type = TREE_TYPE (arg4_tree);
 
 	arg1_tree = ffecom_save_tree (convert (arg4_type,
 					       ffecom_expr (arg1)));
-
-	arg5_tree = ffecom_save_tree (convert (integer_type_node,
-					       ffecom_expr (arg5)));
-
-	ffecom_pop_calltemps ();
 
 	prep_arg1
 	  = ffecom_2 (LSHIFT_EXPR, arg4_type,
@@ -4557,15 +4252,10 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       return expr_tree;
 
     case FFEINTRIN_impSYSTEM:
-    case FFEINTRIN_impUNLINK:
-    case FFEINTRIN_impCHDIR:
-    case FFEINTRIN_impFPUT:
-    case FFEINTRIN_impFGET:
       {
 	tree arg1_len = integer_zero_node;
 	tree arg1_tree;
 	tree arg2_tree;
-	ffecomGfrt gfrt = ffeintrin_gfrt (codegen_imp);
 
 	ffecom_push_calltemps ();
 
@@ -4583,10 +4273,10 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 	TREE_CHAIN (arg1_tree) = arg1_len;
 
 	expr_tree
-	  = ffecom_call_ (ffecom_gfrt_tree_ (gfrt),
-			  ffecom_gfrt_kind_type_ (gfrt),
+	  = ffecom_call_ (ffecom_gfrt_tree_ (FFECOM_gfrtSYSTEM),
+			  ffecom_gfrt_kind_type_ (FFECOM_gfrtSYSTEM),
 			  FALSE,
-			  ffecom_f2c_integer_type_node,
+			  integer_type_node,
 			  arg1_tree,
 			  NULL_TREE, NULL, NULL, NULL_TREE, TRUE);
 
@@ -4602,11 +4292,17 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
       if (arg1 != NULL)
 	break;
 
+#ifdef VMS_TARGET
+      expr_tree = ffecom_integer_zero_node;	/* C lib translates this!! */
+#else
+      expr_tree = ffecom_integer_zero_node;
+#endif
+
       expr_tree = build_tree_list (NULL_TREE,
 				   ffecom_1 (ADDR_EXPR,
 					     build_pointer_type
 					     (ffecom_integer_type_node),
-					     integer_zero_node));
+					     expr_tree));
 
       return
 	ffecom_call_ (ffecom_gfrt_tree_ (FFECOM_gfrtEXIT),
@@ -4617,264 +4313,20 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 		      NULL_TREE, NULL, NULL, NULL_TREE, TRUE);
 
     case FFEINTRIN_impFLUSH:
-      if (arg1 == NULL)
-	ix = FFECOM_gfrtFLUSH;
-      else
-	ix = FFECOM_gfrtFLUSH1;
-      goto library;	/* :::::::::::::::::::: */
+      /* Ignore the arg, since the library has no use for it yet.  */
+      return
+	ffecom_call_ (ffecom_gfrt_tree_ (FFECOM_gfrtFLUSH),
+		      ffecom_gfrt_kind_type_ (FFECOM_gfrtFLUSH),
+		      FALSE,
+		      void_type_node,
+		      NULL_TREE,
+		      NULL_TREE, NULL, NULL, NULL_TREE, TRUE);
 
-    case FFEINTRIN_impCHMOD:
-    case FFEINTRIN_impLINK:
-    case FFEINTRIN_impRENAME:
-    case FFEINTRIN_impSYMLNK:
-      {
-	tree arg1_len = integer_zero_node;
-	tree arg1_tree;
-	tree arg2_len = integer_zero_node;
-	tree arg2_tree;
-	tree arg3_tree;
-	ffecomGfrt gfrt = ffeintrin_gfrt (codegen_imp);
-
-	ffecom_push_calltemps ();
-
-	arg1_tree = ffecom_arg_ptr_to_expr (arg1, &arg1_len);
-	arg2_tree = ffecom_arg_ptr_to_expr (arg2, &arg2_len);
-	if (arg3 != NULL)
-	  arg3_tree = ffecom_expr_rw (arg3);
-	else
-	  arg3_tree = NULL_TREE;
-
-	ffecom_pop_calltemps ();
-
-	arg1_tree = build_tree_list (NULL_TREE, arg1_tree);
-	arg1_len = build_tree_list (NULL_TREE, arg1_len);
-	arg2_tree = build_tree_list (NULL_TREE, arg2_tree);
-	arg2_len = build_tree_list (NULL_TREE, arg2_len);
-	TREE_CHAIN (arg1_tree) = arg2_tree;
-	TREE_CHAIN (arg2_tree) = arg1_len;
-	TREE_CHAIN (arg1_len) = arg2_len;
-	expr_tree = ffecom_call_ (ffecom_gfrt_tree_ (gfrt),
-				  ffecom_gfrt_kind_type_ (gfrt),
-				  FALSE,
-				  ffecom_f2c_integer_type_node,
-				  arg1_tree,
-				  NULL_TREE, NULL, NULL, NULL_TREE, TRUE);
-	if (arg3_tree != NULL_TREE)
-	  expr_tree = ffecom_modify (NULL_TREE, arg3_tree,
-				     convert (TREE_TYPE (arg3_tree),
-					      expr_tree));
-      }
-      return expr_tree;
-
-    case FFEINTRIN_impFGETC:
-    case FFEINTRIN_impFPUTC:
-      {
-	tree arg1_tree;
-	tree arg2_tree;
-	tree arg2_len = integer_zero_node;
-	tree arg3_tree;
-	ffecomGfrt gfrt = ffeintrin_gfrt (codegen_imp);
-
-	ffecom_push_calltemps ();
-
-	arg1_tree = convert (ffecom_f2c_ptr_to_integer_type_node,
-			     ffecom_ptr_to_expr (arg1));
-	arg2_tree = ffecom_arg_ptr_to_expr (arg2, &arg2_len);
-	arg3_tree = ffecom_expr_rw (arg3);
-
-	ffecom_pop_calltemps ();
-
-	arg1_tree = build_tree_list (NULL_TREE, arg1_tree);
-	arg2_tree = build_tree_list (NULL_TREE, arg2_tree);
-	arg2_len = build_tree_list (NULL_TREE, arg2_len);
-	TREE_CHAIN (arg1_tree) = arg2_tree;
-	TREE_CHAIN (arg2_tree) = arg2_len;
-
-	expr_tree = ffecom_call_ (ffecom_gfrt_tree_ (gfrt),
-				  ffecom_gfrt_kind_type_ (gfrt),
-				  FALSE,
-				  ffecom_f2c_integer_type_node,
-				  arg1_tree,
-				  NULL_TREE, NULL, NULL, NULL_TREE, TRUE);
-	expr_tree = ffecom_modify (NULL_TREE, arg3_tree,
-				   convert (TREE_TYPE (arg3_tree),
-					    expr_tree));
-      }
-      return expr_tree;
-
-    case FFEINTRIN_impKILL:
-      {
-	tree arg1_tree;
-	tree arg2_tree;
-	tree arg3_tree;
-	ffecomGfrt gfrt = ffeintrin_gfrt (codegen_imp);
-
-	ffecom_push_calltemps ();
-
-	arg1_tree = convert (ffecom_f2c_ptr_to_integer_type_node,
-			     ffecom_ptr_to_expr (arg1));
-	arg2_tree = convert (ffecom_f2c_ptr_to_integer_type_node,
-			     ffecom_ptr_to_expr (arg2));
-	if (arg3 == NULL)
-	  arg3_tree = NULL_TREE;
-	else
-	  arg3_tree = ffecom_expr_rw (arg3);
-
-	ffecom_pop_calltemps ();
-
-	arg1_tree = build_tree_list (NULL_TREE, arg1_tree);
-	arg2_tree = build_tree_list (NULL_TREE, arg2_tree);
-	TREE_CHAIN (arg1_tree) = arg2_tree;
-	expr_tree = ffecom_call_ (ffecom_gfrt_tree_ (gfrt),
-				  ffecom_gfrt_kind_type_ (gfrt),
-				  FALSE,
-				  ffecom_f2c_integer_type_node,
-				  arg1_tree,
-				  NULL_TREE, NULL, NULL, NULL_TREE, TRUE);
-	if (arg3_tree != NULL_TREE) {
-	  expr_tree = ffecom_modify (NULL_TREE, arg3_tree,
-				     convert (TREE_TYPE (arg3_tree),
-					      expr_tree));
-	}
-      }
-      return expr_tree;
-
-    case FFEINTRIN_impIRAND:
-    case FFEINTRIN_impRAND:
-      /* Arg defaults to 0 (normal random case) */
-      {
-	tree arg1_tree;
-	ffecomGfrt gfrt = ffeintrin_gfrt (codegen_imp);
-
-	if (arg1 == NULL)
-	  arg1_tree = ffecom_1 (ADDR_EXPR,
-				build_pointer_type
-				(ffecom_integer_type_node),
-				ffecom_integer_zero_node);
-	else
-	  arg1_tree = ffecom_ptr_to_expr (arg1);
-	arg1_tree = convert (ffecom_f2c_ptr_to_integer_type_node,
-			     arg1_tree);
-	arg1_tree = build_tree_list (NULL_TREE, arg1_tree);
-	return ffecom_call_ (ffecom_gfrt_tree_ (gfrt),
-			     ffecom_gfrt_kind_type_ (gfrt),
-			     FALSE,
-			     ((codegen_imp == FFEINTRIN_impIRAND) ?
-			      ffecom_f2c_integer_type_node :
-			      ffecom_f2c_doublereal_type_node),
-			     arg1_tree,
-			     dest_tree, dest, dest_used,
-			     NULL_TREE, TRUE);
-      }
-
-    case FFEINTRIN_impUMASK:
-      {
-	tree arg1_tree;
-	tree arg2_tree;
-	ffecomGfrt gfrt = ffeintrin_gfrt (codegen_imp);
-
-	ffecom_push_calltemps ();
-
-	arg1_tree = convert (ffecom_f2c_ptr_to_integer_type_node,
-			     ffecom_ptr_to_expr (arg1));
-	if (arg2 == NULL)
-	  arg2_tree = NULL_TREE;
-	else
-	  arg2_tree = ffecom_expr_rw (arg2);
-
-	ffecom_pop_calltemps ();
-
-	expr_tree = ffecom_call_ (ffecom_gfrt_tree_ (gfrt),
-				  ffecom_gfrt_kind_type_ (gfrt),
-				  FALSE,
-				  ffecom_f2c_integer_type_node,
-				  build_tree_list (NULL_TREE, arg1_tree),
-				  NULL_TREE, NULL, NULL, NULL_TREE,
-				  TRUE);
-	if (arg2_tree != NULL_TREE) {
-	  expr_tree = ffecom_modify (NULL_TREE, arg2_tree,
-				     convert (TREE_TYPE (arg2_tree),
-					      expr_tree));
-	}
-      }
-      return expr_tree;
-
-    case FFEINTRIN_impSECONDSUBR:
-      {
-	tree arg1_tree;
-	ffecomGfrt gfrt = ffeintrin_gfrt (codegen_imp);
-
-	ffecom_push_calltemps ();
-
-	arg1_tree = ffecom_expr_rw (arg1);
-
-	ffecom_pop_calltemps ();
-
-	expr_tree
-	  = ffecom_call_ (ffecom_gfrt_tree_ (gfrt),
-			  ffecom_gfrt_kind_type_ (gfrt),
-			  FALSE,
-			  NULL_TREE,
-			  NULL_TREE,
-			  NULL_TREE, NULL, NULL, NULL_TREE, TRUE);
-
-	expr_tree
-	  = ffecom_modify (NULL_TREE, arg1_tree,
-			   convert (TREE_TYPE (arg1_tree),
-				    expr_tree));
-      }
-      return expr_tree;
-
-    /* Straightforward calls of libf2c routines: */
     case FFEINTRIN_impABORT:
-    case FFEINTRIN_impACCESS:
-    case FFEINTRIN_impBESJ0:
-    case FFEINTRIN_impBESJ1:
-    case FFEINTRIN_impBESJN:
-    case FFEINTRIN_impBESY0:
-    case FFEINTRIN_impBESY1:
-    case FFEINTRIN_impBESYN:
-    case FFEINTRIN_impDATE:
-    case FFEINTRIN_impDBESJ0:
-    case FFEINTRIN_impDBESJ1:
-    case FFEINTRIN_impDBESJN:
-    case FFEINTRIN_impDBESY0:
-    case FFEINTRIN_impDBESY1:
-    case FFEINTRIN_impDBESYN:
-    case FFEINTRIN_impDTIME:
-    case FFEINTRIN_impETIME:
-    case FFEINTRIN_impFNUM:
-    case FFEINTRIN_impFSTAT:
+    case FFEINTRIN_impGETARG:
+    case FFEINTRIN_impGETENV:
     case FFEINTRIN_impFTELL:
     case FFEINTRIN_impFSEEK:
-    case FFEINTRIN_impGETARG:
-    case FFEINTRIN_impGERROR:
-    case FFEINTRIN_impGETCWD:
-    case FFEINTRIN_impGETENV:
-    case FFEINTRIN_impGETGID:
-    case FFEINTRIN_impGETLOG:
-    case FFEINTRIN_impGETPID:
-    case FFEINTRIN_impGETUID:
-    case FFEINTRIN_impGMTIME:
-    case FFEINTRIN_impHOSTNM:
-    case FFEINTRIN_impIDATE:
-    case FFEINTRIN_impIDATEVXT:
-    case FFEINTRIN_impIERRNO:
-    case FFEINTRIN_impISATTY:
-    case FFEINTRIN_impITIME:
-    case FFEINTRIN_impLNBLNK:
-    case FFEINTRIN_impLSTAT:
-    case FFEINTRIN_impLTIME:
-    case FFEINTRIN_impMCLOCK:
-    case FFEINTRIN_impPERROR:
-    case FFEINTRIN_impSECNDS:
-    case FFEINTRIN_impSECONDFUNC:
-    case FFEINTRIN_impSLEEP:
-    case FFEINTRIN_impSRAND:
-    case FFEINTRIN_impSTAT:
-    case FFEINTRIN_impSYSTEM_CLOCK:
-    case FFEINTRIN_impTIME:
-    case FFEINTRIN_impTIMEVXT:
       break;
 
     default:
@@ -6128,10 +5580,7 @@ tail_recurse:			/* :::::::::::::::::::: */
     case FFEBLD_opSYMTER:
       s = ffebld_symter (expr);
       t = ffesymbol_hook (s).decl_tree;
-      if ((t == NULL_TREE)
-	  && ((ffesymbol_kind (s) != FFEINFO_kindNONE)
-	      || ((ffesymbol_where (s) != FFEINFO_whereNONE)
-		  && (ffesymbol_where (s) != FFEINFO_whereINTRINSIC))))
+      if (t == NULL_TREE)
 	{
 	  s = ffecom_sym_transform_ (s);
 	  t = ffesymbol_hook (s).decl_tree;	/* Sfunc expr non-dummy,
@@ -6220,11 +5669,15 @@ ffecom_f2c_make_type_ (tree *type, int tcode, char *name)
       break;
 
     case FFECOM_f2ccodeTWOREALS:
-      *type = ffecom_make_complex_type_ (ffecom_f2c_real_type_node);
+      *type = make_node (COMPLEX_TYPE);
+      TREE_TYPE (*type) = ffecom_f2c_real_type_node;
+      layout_type (*type);
       break;
 
     case FFECOM_f2ccodeTWODOUBLEREALS:
-      *type = ffecom_make_complex_type_ (ffecom_f2c_doublereal_type_node);
+      *type = make_node (COMPLEX_TYPE);
+      TREE_TYPE (*type) = ffecom_f2c_doublereal_type_node;
+      layout_type (*type);
       break;
 
     default:
@@ -6253,7 +5706,7 @@ ffecom_f2c_set_lio_code_ (ffeinfoBasictype bt, int size,
 
   for (j = 0; ((size_t) j) < ARRAY_SIZE (ffecom_tree_type[0]); ++j)
     if (((t = ffecom_tree_type[bt][j]) != NULL_TREE)
-	&& (TREE_INT_CST_LOW (TYPE_SIZE (t)) == size))
+	&& (TYPE_PRECISION (t) == size))
       {
 	assert (code != -1);
 	ffecom_f2c_typecode_[bt][j] = code;
@@ -6330,8 +5783,7 @@ ffecom_finish_symbol_transform_ (ffesymbol s)
 
   if ((ffesymbol_hook (s).decl_tree == NULL_TREE)
       && ((ffesymbol_kind (s) != FFEINFO_kindNONE)
-	  || ((ffesymbol_where (s) != FFEINFO_whereNONE)
-	      && (ffesymbol_where (s) != FFEINFO_whereINTRINSIC))))
+	  || (ffesymbol_where (s) != FFEINFO_whereNONE)))
     /* Not transformed, and not CHARACTER*(*). */
     s = ffecom_sym_transform_ (s);
 
@@ -7208,11 +6660,6 @@ ffecom_make_gfrt_ (ffecomGfrt ix)
       kt = FFEINFO_kindtypeREAL2;
       break;
 
-    case FFECOM_rttypeCHARACTER_:
-      ttype = void_type_node;
-      kt = FFEINFO_kindtypeCHARACTER1;
-      break;
-
     default:
       ttype = NULL;
       kt = FFEINFO_kindtypeANY;
@@ -7402,8 +6849,6 @@ ffecom_start_progunit_ ()
   tree result;			/* Result of function. */
   ffeinfoBasictype bt;
   ffeinfoKindtype kt;
-  ffeglobal g;
-  ffeglobalType gt;
   bool charfunc;
   bool cmplxfunc;
   bool altentries = (ffecom_num_entrypoints_ != 0);
@@ -7436,16 +6881,8 @@ ffecom_start_progunit_ ()
     {
     case FFEINFO_kindPROGRAM:
       main_program = TRUE;
-      gt = FFEGLOBAL_typeMAIN;
-      bt = FFEINFO_basictypeNONE;
-      kt = FFEINFO_kindtypeNONE;
-      type = ffecom_tree_fun_type_void;
-      charfunc = FALSE;
-      cmplxfunc = FALSE;
-      break;
-
+      /* Fall through. */
     case FFEINFO_kindBLOCKDATA:
-      gt = FFEGLOBAL_typeBDATA;
       bt = FFEINFO_basictypeNONE;
       kt = FFEINFO_kindtypeNONE;
       type = ffecom_tree_fun_type_void;
@@ -7454,7 +6891,6 @@ ffecom_start_progunit_ ()
       break;
 
     case FFEINFO_kindFUNCTION:
-      gt = FFEGLOBAL_typeFUNC;
       bt = ffesymbol_basictype (fn);
       kt = ffesymbol_kindtype (fn);
       if (bt == FFEINFO_basictypeNONE)
@@ -7490,7 +6926,6 @@ ffecom_start_progunit_ ()
       break;
 
     case FFEINFO_kindSUBROUTINE:
-      gt = FFEGLOBAL_typeSUBR;
       bt = FFEINFO_basictypeNONE;
       kt = FFEINFO_kindtypeNONE;
       if (ffecom_is_altreturning_)
@@ -7505,7 +6940,6 @@ ffecom_start_progunit_ ()
       assert ("say what??" == NULL);
       /* Fall through. */
     case FFEINFO_kindANY:
-      gt = FFEGLOBAL_typeANY;
       bt = FFEINFO_basictypeNONE;
       kt = FFEINFO_kindtypeNONE;
       type = error_mark_node;
@@ -7529,13 +6963,6 @@ ffecom_start_progunit_ ()
 		  type,
 		  0,		/* nested/inline */
 		  !altentries);	/* TREE_PUBLIC */
-
-  if (!altentries
-      && ((g = ffesymbol_global (fn)) != NULL)
-      && (ffeglobal_type (g) == gt))
-    {
-      ffeglobal_set_hook (g, current_function_decl);
-    }
 
   yes = suspend_momentary ();
 
@@ -7639,7 +7066,6 @@ ffecom_sym_transform_ (ffesymbol s)
   bool addr;			/* Is t the address of the thingy? */
   ffeinfoBasictype bt;
   ffeinfoKindtype kt;
-  ffeglobal g;
   int yes;
   int old_lineno = lineno;
   char *old_input_filename = input_filename;
@@ -7690,15 +7116,6 @@ ffecom_sym_transform_ (ffesymbol s)
 	case FFEINFO_whereGLOBAL:	/* Subroutine or function. */
 	  assert (!ffecom_transform_only_dummies_);
 
-	  if (((g = ffesymbol_global (s)) != NULL)
-	      && ((ffeglobal_type (g) == FFEGLOBAL_typeSUBR)
-		  || (ffeglobal_type (g) == FFEGLOBAL_typeFUNC))
-	      && (ffeglobal_hook (g) != NULL_TREE))
-	    {
-	      t = ffeglobal_hook (g);
-	      break;
-	    }
-
 	  yes = suspend_momentary ();
 
 	  t = build_decl (FUNCTION_DECL,
@@ -7709,11 +7126,6 @@ ffecom_sym_transform_ (ffesymbol s)
 
 	  t = start_decl (t, FALSE);
 	  finish_decl (t, NULL_TREE, FALSE);
-
-	  if ((g != NULL)
-	      && ((ffeglobal_type (g) == FFEGLOBAL_typeSUBR)
-		  || (ffeglobal_type (g) == FFEGLOBAL_typeFUNC)))
-	    ffeglobal_set_hook (g, t);
 
 	  if (current_function_decl != NULL_TREE)
 	    resume_momentary (yes);
@@ -7847,7 +7259,7 @@ ffecom_sym_transform_ (ffesymbol s)
 
 		if (st != NULL)
 		  assert (ffestorag_size (st) * BITS_PER_UNIT
-			  == (ffetargetOffset)
+			  == (unsigned long int)
 			  TREE_INT_CST_LOW (DECL_SIZE (t)));
 
 		resume_momentary (yes);
@@ -8319,14 +7731,6 @@ ffecom_sym_transform_ (ffesymbol s)
 	case FFEINFO_whereGLOBAL:
 	  assert (!ffecom_transform_only_dummies_);
 
-	  if (((g = ffesymbol_global (s)) != NULL)
-	      && (ffeglobal_type (g) == FFEGLOBAL_typeFUNC)
-	      && (ffeglobal_hook (g) != NULL_TREE))
-	    {
-	      t = ffeglobal_hook (g);
-	      break;
-	    }
-
 	  yes = suspend_momentary ();
 
 	  if (ffesymbol_is_f2c (s)
@@ -8343,10 +7747,6 @@ ffecom_sym_transform_ (ffesymbol s)
 
 	  t = start_decl (t, FALSE);
 	  finish_decl (t, NULL_TREE, FALSE);
-
-	  if ((g != NULL)
-	      && (ffeglobal_type (g) == FFEGLOBAL_typeFUNC))
-	    ffeglobal_set_hook (g, t);
 
 	  if (current_function_decl != NULL_TREE)
 	    resume_momentary (yes);
@@ -8402,14 +7802,6 @@ ffecom_sym_transform_ (ffesymbol s)
 	case FFEINFO_whereGLOBAL:
 	  assert (!ffecom_transform_only_dummies_);
 
-	  if (((g = ffesymbol_global (s)) != NULL)
-	      && (ffeglobal_type (g) == FFEGLOBAL_typeSUBR)
-	      && (ffeglobal_hook (g) != NULL_TREE))
-	    {
-	      t = ffeglobal_hook (g);
-	      break;
-	    }
-
 	  yes = suspend_momentary ();
 
 	  t = build_decl (FUNCTION_DECL,
@@ -8420,10 +7812,6 @@ ffecom_sym_transform_ (ffesymbol s)
 
 	  t = start_decl (t, FALSE);
 	  finish_decl (t, NULL_TREE, FALSE);
-
-	  if ((g != NULL)
-	      && (ffeglobal_type (g) == FFEGLOBAL_typeSUBR))
-	    ffeglobal_set_hook (g, t);
 
 	  if (current_function_decl != NULL_TREE)
 	    resume_momentary (yes);
@@ -8781,7 +8169,7 @@ ffecom_transform_common_ (ffesymbol s)
 
   if ((cbt != NULL_TREE)
       && (!is_init
-	  || !DECL_EXTERNAL (cbt)))
+	  || !DECL_EXTERNAL (ffeglobal_hook (g))))
     return;
 
   /* Process inits.  */
@@ -8978,7 +8366,7 @@ ffecom_transform_equiv_ (ffestorag eqst)
     ffestorag_set_init (eqst, ffebld_new_any ());
 
   assert (ffestorag_size (eqst) * BITS_PER_UNIT
-	  == (ffetargetOffset) TREE_INT_CST_LOW (DECL_SIZE (eqt)));
+	  == (unsigned long int) TREE_INT_CST_LOW (DECL_SIZE (eqt)));
 
   ffestorag_set_hook (eqst, eqt);
 
@@ -9354,9 +8742,10 @@ ffecom_tree_divide_ (tree tree_type, tree left, tree right,
 
 	if (TREE_TYPE (tree_type)
 	    == ffecom_tree_type [FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL1])
-	  ix = FFECOM_gfrtDIV_CC;	/* Overlapping result okay. */
+	  ix = FFECOM_gfrtDIV_CC;
 	else
-	  ix = FFECOM_gfrtDIV_ZZ;	/* Overlapping result okay. */
+	  ix = FFECOM_gfrtDIV_ZZ;
+	dest_used = NULL;		/* These don't work with overlapping result. */
 
 	left = ffecom_1 (ADDR_EXPR,
 			 build_pointer_type (TREE_TYPE (left)),
@@ -9376,37 +8765,6 @@ ffecom_tree_divide_ (tree tree_type, tree left, tree right,
 			     dest_tree, dest, dest_used,
 			     NULL_TREE, TRUE);
       }
-      break;
-
-    case RECORD_TYPE:
-      {
-	ffecomGfrt ix;
-
-	if (TREE_TYPE (TYPE_FIELDS (tree_type))
-	    == ffecom_tree_type [FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL1])
-	  ix = FFECOM_gfrtDIV_CC;	/* Overlapping result okay. */
-	else
-	  ix = FFECOM_gfrtDIV_ZZ;	/* Overlapping result okay. */
-
-	left = ffecom_1 (ADDR_EXPR,
-			 build_pointer_type (TREE_TYPE (left)),
-			 left);
-	left = build_tree_list (NULL_TREE, left);
-	right = ffecom_1 (ADDR_EXPR,
-			  build_pointer_type (TREE_TYPE (right)),
-			  right);
-	right = build_tree_list (NULL_TREE, right);
-	TREE_CHAIN (left) = right;
-
-	return ffecom_call_ (ffecom_gfrt_tree_ (ix),
-			     ffecom_gfrt_kind_type_ (ix),
-			     ffe_is_f2c_library (),
-			     tree_type,
-			     left,
-			     dest_tree, dest, dest_used,
-			     NULL_TREE, TRUE);
-      }
-      break;
 
     default:
       return ffecom_2 (RDIV_EXPR, tree_type,
@@ -9878,43 +9236,7 @@ ffecom_1 (enum tree_code code, tree type, tree node)
       if (!mark_addressable (node))
 	assert ("can't mark_addressable this node!" == NULL);
     }
-
-  switch (ffe_is_emulate_complex () ? code : NOP_EXPR)
-    {
-      tree realtype;
-
-    case REALPART_EXPR:
-      item = build (COMPONENT_REF, type, node, TYPE_FIELDS (TREE_TYPE (node)));
-      break;
-
-    case IMAGPART_EXPR:
-      item = build (COMPONENT_REF, type, node, TREE_CHAIN (TYPE_FIELDS (TREE_TYPE (node))));
-      break;
-
-
-    case NEGATE_EXPR:
-      if (TREE_CODE (type) != RECORD_TYPE)
-	{
-	  item = build1 (code, type, node);
-	  break;
-	}
-      node = ffecom_stabilize_aggregate_ (node);
-      realtype = TREE_TYPE (TYPE_FIELDS (type));
-      item =
-	ffecom_2 (COMPLEX_EXPR, type,
-		  ffecom_1 (NEGATE_EXPR, realtype,
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node)),
-		  ffecom_1 (NEGATE_EXPR, realtype,
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node)));
-      break;
-
-    default:
-      item = build1 (code, type, node);
-      break;
-    }
-
+  item = build1 (code, type, node);
   if (TREE_SIDE_EFFECTS (node))
     TREE_SIDE_EFFECTS (item) = 1;
   if ((code == ADDR_EXPR) && staticp (node))
@@ -9967,158 +9289,7 @@ ffecom_2 (enum tree_code code, tree type, tree node1,
       || (type == error_mark_node))
     return error_mark_node;
 
-  switch (ffe_is_emulate_complex () ? code : NOP_EXPR)
-    {
-      tree a, b, c, d, realtype;
-
-    case CONJ_EXPR:
-      assert ("no CONJ_EXPR support yet" == NULL);
-      return error_mark_node;
-
-    case COMPLEX_EXPR:
-      item = build_tree_list (TYPE_FIELDS (type), node1);
-      TREE_CHAIN (item) = build_tree_list (TREE_CHAIN (TYPE_FIELDS (type)), node2);
-      item = build (CONSTRUCTOR, type, NULL_TREE, item);
-      break;
-
-    case PLUS_EXPR:
-      if (TREE_CODE (type) != RECORD_TYPE)
-	{
-	  item = build (code, type, node1, node2);
-	  break;
-	}
-      node1 = ffecom_stabilize_aggregate_ (node1);
-      node2 = ffecom_stabilize_aggregate_ (node2);
-      realtype = TREE_TYPE (TYPE_FIELDS (type));
-      item =
-	ffecom_2 (COMPLEX_EXPR, type,
-		  ffecom_2 (PLUS_EXPR, realtype,
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node1),
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node2)),
-		  ffecom_2 (PLUS_EXPR, realtype,
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node1),
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node2)));
-      break;
-
-    case MINUS_EXPR:
-      if (TREE_CODE (type) != RECORD_TYPE)
-	{
-	  item = build (code, type, node1, node2);
-	  break;
-	}
-      node1 = ffecom_stabilize_aggregate_ (node1);
-      node2 = ffecom_stabilize_aggregate_ (node2);
-      realtype = TREE_TYPE (TYPE_FIELDS (type));
-      item =
-	ffecom_2 (COMPLEX_EXPR, type,
-		  ffecom_2 (MINUS_EXPR, realtype,
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node1),
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node2)),
-		  ffecom_2 (MINUS_EXPR, realtype,
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node1),
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node2)));
-      break;
-
-    case MULT_EXPR:
-      if (TREE_CODE (type) != RECORD_TYPE)
-	{
-	  item = build (code, type, node1, node2);
-	  break;
-	}
-      node1 = ffecom_stabilize_aggregate_ (node1);
-      node2 = ffecom_stabilize_aggregate_ (node2);
-      realtype = TREE_TYPE (TYPE_FIELDS (type));
-      a = save_expr (ffecom_1 (REALPART_EXPR, realtype,
-			       node1));
-      b = save_expr (ffecom_1 (IMAGPART_EXPR, realtype,
-			       node1));
-      c = save_expr (ffecom_1 (REALPART_EXPR, realtype,
-			       node2));
-      d = save_expr (ffecom_1 (IMAGPART_EXPR, realtype,
-			       node2));
-      item =
-	ffecom_2 (COMPLEX_EXPR, type,
-		  ffecom_2 (MINUS_EXPR, realtype,
-			    ffecom_2 (MULT_EXPR, realtype,
-				      a,
-				      c),
-			    ffecom_2 (MULT_EXPR, realtype,
-				      b,
-				      d)),
-		  ffecom_2 (PLUS_EXPR, realtype,
-			    ffecom_2 (MULT_EXPR, realtype,
-				      a,
-				      d),
-			    ffecom_2 (MULT_EXPR, realtype,
-				      c,
-				      b)));
-      break;
-
-    case EQ_EXPR:
-      if ((TREE_CODE (node1) != RECORD_TYPE)
-	  && (TREE_CODE (node2) != RECORD_TYPE))
-	{
-	  item = build (code, type, node1, node2);
-	  break;
-	}
-      assert (TREE_CODE (node1) == RECORD_TYPE);
-      assert (TREE_CODE (node2) == RECORD_TYPE);
-      node1 = ffecom_stabilize_aggregate_ (node1);
-      node2 = ffecom_stabilize_aggregate_ (node2);
-      realtype = TREE_TYPE (TYPE_FIELDS (type));
-      item =
-	ffecom_2 (TRUTH_ANDIF_EXPR, type,
-		  ffecom_2 (code, type,
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node1),
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node2)),
-		  ffecom_2 (code, type,
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node1),
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node2)));
-      break;
-
-    case NE_EXPR:
-      if ((TREE_CODE (node1) != RECORD_TYPE)
-	  && (TREE_CODE (node2) != RECORD_TYPE))
-	{
-	  item = build (code, type, node1, node2);
-	  break;
-	}
-      assert (TREE_CODE (node1) == RECORD_TYPE);
-      assert (TREE_CODE (node2) == RECORD_TYPE);
-      node1 = ffecom_stabilize_aggregate_ (node1);
-      node2 = ffecom_stabilize_aggregate_ (node2);
-      realtype = TREE_TYPE (TYPE_FIELDS (type));
-      item =
-	ffecom_2 (TRUTH_ORIF_EXPR, type,
-		  ffecom_2 (code, type,
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node1),
-			    ffecom_1 (REALPART_EXPR, realtype,
-				      node2)),
-		  ffecom_2 (code, type,
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node1),
-			    ffecom_1 (IMAGPART_EXPR, realtype,
-				      node2)));
-      break;
-
-    default:
-      item = build (code, type, node1, node2);
-      break;
-    }
-
+  item = build (code, type, node1, node2);
   if (TREE_SIDE_EFFECTS (node1) || TREE_SIDE_EFFECTS (node2))
     TREE_SIDE_EFFECTS (item) = 1;
   return fold (item);
@@ -10835,9 +10006,9 @@ ffecom_constantunion (ffebldConstantUnion *cu, ffeinfoBasictype bt,
 	  case FFEINFO_kindtypeANY:
 	    return error_mark_node;
 	  }
-	item = ffecom_build_complex_constant_ (tree_type,
-					       build_real (el_type, real),
-					       build_real (el_type, imag));
+	item = build_complex (build_real (el_type, real),
+			      build_real (el_type, imag));
+	TREE_TYPE (item) = tree_type;
       }
       break;
 
@@ -11294,40 +10465,39 @@ ffecom_init_0 ()
      whether the compiler environment is buggy in known ways, some of which
      would, if not explicitly checked here, result in subtle bugs in g77.  */
 
-  if (ffe_is_do_internal_checks ())
-    {
-      static char names[][12]
-	=
-      {"bar", "bletch", "foo", "foobar"};
-      char *name;
-      unsigned long ul;
-      double fl;
+  {
+    static char names[][12]
+    =
+    {"bar", "bletch", "foo", "foobar"};
+    char *name;
+    unsigned long ul;
+    double fl;
 
-      name = bsearch ("foo", &names[0], ARRAY_SIZE (names), sizeof (names[0]),
-		      (int (*)()) strcmp);
-      if (name != (char *) &names[2])
-	{
-	  assert ("bsearch doesn't work, #define FFEPROJ_BSEARCH 0 in proj.h"
-		  == NULL);
-	  abort ();
-	}
+    name = bsearch ("foo", &names[0], ARRAY_SIZE (names), sizeof (names[0]),
+		    (int (*)()) strcmp);
+    if (name != (char *) &names[2])
+      {
+	assert ("bsearch doesn't work, #define FFEPROJ_BSEARCH 0 in proj.h"
+		== NULL);
+	abort ();
+      }
 
-      ul = strtoul ("123456789", NULL, 10);
-      if (ul != 123456789L)
-	{
-	  assert ("strtoul doesn't have enough range, #define FFEPROJ_STRTOUL 0\
+    ul = strtoul ("123456789", NULL, 10);
+    if (ul != 123456789L)
+      {
+	assert ("strtoul doesn't have enough range, #define FFEPROJ_STRTOUL 0\
  in proj.h" == NULL);
-	  abort ();
-	}
+	abort ();
+      }
 
-      fl = atof ("56.789");
-      if ((fl < 56.788) || (fl > 56.79))
-	{
-	  assert ("atof not type double, fix your #include <stdio.h>"
-		  == NULL);
-	  abort ();
-	}
-    }
+    fl = atof ("56.789");
+    if ((fl < 56.788) || (fl > 56.79))
+      {
+	assert ("atof not type double, fix your #include <stdio.h>"
+		== NULL);
+	abort ();
+      }
+  }
 
 #if FFECOM_GCC_INCLUDE
   ffecom_initialize_char_syntax_ ();
@@ -11405,37 +10575,45 @@ ffecom_init_0 ()
 
   float_type_node = make_node (REAL_TYPE);
   TYPE_PRECISION (float_type_node) = FLOAT_TYPE_SIZE;
-  layout_type (float_type_node);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("float"),
 			float_type_node));
+  layout_type (float_type_node);
 
   double_type_node = make_node (REAL_TYPE);
   TYPE_PRECISION (double_type_node) = DOUBLE_TYPE_SIZE;
-  layout_type (double_type_node);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("double"),
 			double_type_node));
+  layout_type (double_type_node);
 
   long_double_type_node = make_node (REAL_TYPE);
   TYPE_PRECISION (long_double_type_node) = LONG_DOUBLE_TYPE_SIZE;
-  layout_type (long_double_type_node);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("long double"),
 			long_double_type_node));
+  layout_type (long_double_type_node);
 
-  complex_integer_type_node = ffecom_make_complex_type_ (integer_type_node);
+  complex_integer_type_node = make_node (COMPLEX_TYPE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("complex int"),
 			complex_integer_type_node));
+  TREE_TYPE (complex_integer_type_node) = integer_type_node;
+  layout_type (complex_integer_type_node);
 
-  complex_float_type_node = ffecom_make_complex_type_ (float_type_node);
+  complex_float_type_node = make_node (COMPLEX_TYPE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("complex float"),
 			complex_float_type_node));
+  TREE_TYPE (complex_float_type_node) = float_type_node;
+  layout_type (complex_float_type_node);
 
-  complex_double_type_node = ffecom_make_complex_type_ (double_type_node);
+  complex_double_type_node = make_node (COMPLEX_TYPE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("complex double"),
 			complex_double_type_node));
+  TREE_TYPE (complex_double_type_node) = double_type_node;
+  layout_type (complex_double_type_node);
 
-  complex_long_double_type_node = ffecom_make_complex_type_ (long_double_type_node);
+  complex_long_double_type_node = make_node (COMPLEX_TYPE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("complex long double"),
 			complex_long_double_type_node));
+  TREE_TYPE (complex_long_double_type_node) = long_double_type_node;
+  layout_type (complex_long_double_type_node);
 
   integer_zero_node = build_int_2 (0, 0);
   TREE_TYPE (integer_zero_node) = integer_type_node;
@@ -11532,7 +10710,7 @@ ffecom_init_0 ()
   ffetype_set_star (base_type,
 		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
 		    type);
-  ffetype_set_kind (base_type, 3, type);
+  ffetype_set_kind (base_type, 2, type);
   assert (ffetype_size (type) == sizeof (ffetargetInteger2));
 
   ffecom_tree_type[FFEINFO_basictypeHOLLERITH][FFEINFO_kindtypeINTEGER2]
@@ -11541,7 +10719,7 @@ ffecom_init_0 ()
 			t));
 
   ffecom_tree_type[FFEINFO_basictypeINTEGER][FFEINFO_kindtypeINTEGER3]
-    = t = make_signed_type (CHAR_TYPE_SIZE * 2);
+    = t = make_signed_type (SHORT_TYPE_SIZE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("word"),
 			t));
   type = ffetype_new ();
@@ -11553,16 +10731,16 @@ ffecom_init_0 ()
   ffetype_set_star (base_type,
 		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
 		    type);
-  ffetype_set_kind (base_type, 6, type);
+  ffetype_set_kind (base_type, 3, type);
   assert (ffetype_size (type) == sizeof (ffetargetInteger3));
 
   ffecom_tree_type[FFEINFO_basictypeHOLLERITH][FFEINFO_kindtypeINTEGER3]
-    = t = make_unsigned_type (CHAR_TYPE_SIZE * 2);
+    = t = make_unsigned_type (SHORT_TYPE_SIZE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("unsigned word"),
 			t));
 
   ffecom_tree_type[FFEINFO_basictypeINTEGER][FFEINFO_kindtypeINTEGER4]
-    = t = make_signed_type (FLOAT_TYPE_SIZE * 2);
+    = t = make_signed_type (LONG_LONG_TYPE_SIZE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("integer4"),
 			t));
   type = ffetype_new ();
@@ -11574,17 +10752,15 @@ ffecom_init_0 ()
   ffetype_set_star (base_type,
 		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
 		    type);
-  ffetype_set_kind (base_type, 2, type);
+  ffetype_set_kind (base_type, 4, type);
   assert (ffetype_size (type) == sizeof (ffetargetInteger4));
 
   ffecom_tree_type[FFEINFO_basictypeHOLLERITH][FFEINFO_kindtypeINTEGER4]
-    = t = make_unsigned_type (FLOAT_TYPE_SIZE * 2);
+    = t = make_unsigned_type (LONG_LONG_TYPE_SIZE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("unsigned4"),
 			t));
 
-#if 0
-  if (ffe_is_do_internal_checks ()
-      && LONG_TYPE_SIZE != FLOAT_TYPE_SIZE
+  if (LONG_TYPE_SIZE != FLOAT_TYPE_SIZE
       && LONG_TYPE_SIZE != CHAR_TYPE_SIZE
       && LONG_TYPE_SIZE != SHORT_TYPE_SIZE
       && LONG_TYPE_SIZE != LONG_LONG_TYPE_SIZE)
@@ -11592,7 +10768,6 @@ ffecom_init_0 ()
       fprintf (stderr, "Sorry, no g77 support for LONG_TYPE_SIZE (%d bits) yet.\n",
 	       LONG_TYPE_SIZE);
     }
-#endif
 
   ffecom_tree_type[FFEINFO_basictypeLOGICAL][FFEINFO_kindtypeLOGICAL1]
     = t = make_signed_type (FLOAT_TYPE_SIZE);
@@ -11624,11 +10799,11 @@ ffecom_init_0 ()
   ffetype_set_star (base_type,
 		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
 		    type);
-  ffetype_set_kind (base_type, 3, type);
+  ffetype_set_kind (base_type, 2, type);
   assert (ffetype_size (type) == sizeof (ffetargetLogical2));
 
   ffecom_tree_type[FFEINFO_basictypeLOGICAL][FFEINFO_kindtypeLOGICAL3]
-    = t = make_signed_type (CHAR_TYPE_SIZE * 2);
+    = t = make_signed_type (SHORT_TYPE_SIZE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("logical3"),
 			t));
   type = ffetype_new ();
@@ -11640,11 +10815,11 @@ ffecom_init_0 ()
   ffetype_set_star (base_type,
 		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
 		    type);
-  ffetype_set_kind (base_type, 6, type);
+  ffetype_set_kind (base_type, 3, type);
   assert (ffetype_size (type) == sizeof (ffetargetLogical3));
 
   ffecom_tree_type[FFEINFO_basictypeLOGICAL][FFEINFO_kindtypeLOGICAL4]
-    = t = make_signed_type (FLOAT_TYPE_SIZE * 2);
+    = t = make_signed_type (LONG_LONG_TYPE_SIZE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("logical4"),
 			t));
   type = ffetype_new ();
@@ -11656,7 +10831,7 @@ ffecom_init_0 ()
   ffetype_set_star (base_type,
 		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
 		    type);
-  ffetype_set_kind (base_type, 2, type);
+  ffetype_set_kind (base_type, 4, type);
   assert (ffetype_size (type) == sizeof (ffetargetLogical4));
 
   ffecom_tree_type[FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL1]
@@ -11671,9 +10846,9 @@ ffecom_init_0 ()
 		    type);
   ffetype_set_ams (type,
 		   TYPE_ALIGN (t) / BITS_PER_UNIT, 0,
-		   TREE_INT_CST_LOW (TYPE_SIZE (t)) / BITS_PER_UNIT);
+		   TYPE_PRECISION (t) / BITS_PER_UNIT);
   ffetype_set_star (base_type,
-		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
+		    TYPE_PRECISION (t) / CHAR_TYPE_SIZE,
 		    type);
   ffetype_set_kind (base_type, 1, type);
   ffecom_f2c_typecode_[FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL1]
@@ -11691,9 +10866,9 @@ ffecom_init_0 ()
 		    type);
   ffetype_set_ams (type,
 		   TYPE_ALIGN (t) / BITS_PER_UNIT, 0,
-		   TREE_INT_CST_LOW (TYPE_SIZE (t)) / BITS_PER_UNIT);
+		   TYPE_PRECISION (t) / BITS_PER_UNIT);
   ffetype_set_star (base_type,
-		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
+		    TYPE_PRECISION (t) / CHAR_TYPE_SIZE,
 		    type);
   ffetype_set_kind (base_type, 2, type);
   ffecom_f2c_typecode_[FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL2]
@@ -11701,18 +10876,21 @@ ffecom_init_0 ()
   assert (ffetype_size (type) == sizeof (ffetargetReal2));
 
   ffecom_tree_type[FFEINFO_basictypeCOMPLEX][FFEINFO_kindtypeREAL1]
-    = t = ffecom_make_complex_type_ (ffecom_tree_type[FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL1]);
+    = t = make_node (COMPLEX_TYPE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("complex"),
 			t));
+  TREE_TYPE (t)
+    = ffecom_tree_type[FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL1];
+  layout_type (t);
   type = ffetype_new ();
   base_type = type;
   ffeinfo_set_type (FFEINFO_basictypeCOMPLEX, FFEINFO_kindtypeREAL1,
 		    type);
   ffetype_set_ams (type,
-		   TYPE_ALIGN (t) / BITS_PER_UNIT, 0,
-		   TREE_INT_CST_LOW (TYPE_SIZE (t)) / BITS_PER_UNIT);
+		   TYPE_ALIGN (TREE_TYPE (t)) / BITS_PER_UNIT, 0,
+		   TYPE_PRECISION (TREE_TYPE (t)) * 2 / BITS_PER_UNIT);
   ffetype_set_star (base_type,
-		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
+		    TYPE_PRECISION (TREE_TYPE (t)) * 2 / CHAR_TYPE_SIZE,
 		    type);
   ffetype_set_kind (base_type, 1, type);
   ffecom_f2c_typecode_[FFEINFO_basictypeCOMPLEX][FFEINFO_kindtypeREAL1]
@@ -11720,17 +10898,20 @@ ffecom_init_0 ()
   assert (ffetype_size (type) == sizeof (ffetargetComplex1));
 
   ffecom_tree_type[FFEINFO_basictypeCOMPLEX][FFEINFO_kindtypeREALDOUBLE]
-    = t = ffecom_make_complex_type_ (ffecom_tree_type[FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL2]);
+    = t = make_node (COMPLEX_TYPE);
   pushdecl (build_decl (TYPE_DECL, get_identifier ("double complex"),
 			t));
+  TREE_TYPE (t)
+    = ffecom_tree_type[FFEINFO_basictypeREAL][FFEINFO_kindtypeREAL2];
+  layout_type (t);
   type = ffetype_new ();
   ffeinfo_set_type (FFEINFO_basictypeCOMPLEX, FFEINFO_kindtypeREALDOUBLE,
 		    type);
   ffetype_set_ams (type,
-		   TYPE_ALIGN (t) / BITS_PER_UNIT, 0,
-		   TREE_INT_CST_LOW (TYPE_SIZE (t)) / BITS_PER_UNIT);
+		   TYPE_ALIGN (TREE_TYPE (t)) / BITS_PER_UNIT, 0,
+		   TYPE_PRECISION (TREE_TYPE (t)) * 2 / BITS_PER_UNIT);
   ffetype_set_star (base_type,
-		    TREE_INT_CST_LOW (TYPE_SIZE (t)) / CHAR_TYPE_SIZE,
+		    TYPE_PRECISION (TREE_TYPE (t)) * 2 / CHAR_TYPE_SIZE,
 		    type);
   ffetype_set_kind (base_type, 2,
 		    type);
@@ -11745,20 +10926,7 @@ ffecom_init_0 ()
       {
 	if ((t = ffecom_tree_type[i][j]) != NULL_TREE)
 	  {
-	    if (i == FFEINFO_basictypeINTEGER)
-	      {
-		/* Figure out the smallest INTEGER type that can hold
-		   a pointer on this machine. */
-		if (GET_MODE_SIZE (TYPE_MODE (t))
-		    >= GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (null_pointer_node))))
-		  {
-		    if ((ffecom_pointer_kind_ == FFEINFO_kindtypeNONE)
-			|| (GET_MODE_SIZE (TYPE_MODE (ffecom_tree_type[i][ffecom_pointer_kind_]))
-			    > GET_MODE_SIZE (TYPE_MODE (t))))
-		      ffecom_pointer_kind_ = j;
-		  }
-	      }
-	    else if (i == FFEINFO_basictypeCOMPLEX)
+	    if (i == FFEINFO_basictypeCOMPLEX)
 	      t = void_type_node;
 	    /* For f2c compatibility, REAL functions are really
 	       implemented as DOUBLE PRECISION.  */
@@ -11772,26 +10940,6 @@ ffecom_init_0 ()
 	    ffecom_tree_ptr_to_fun_type[i][j] = build_pointer_type (t);
 	  }
       }
-
-  /* Set up pointer types.  */
-
-  if (ffecom_pointer_kind_ == FFEINFO_basictypeNONE)
-    fatal ("no INTEGER type can hold a pointer on this configuration");
-  else if (0 && ffe_is_do_internal_checks ())
-    fprintf (stderr, "Pointer type kt=%d\n", ffecom_pointer_kind_);
-#if 0
-  type = ffetype_new ();
-  ffetype_set_kind (ffeinfo_type (FFEINFO_basictypeINTEGER,
-				  FFEINFO_kindtypeINTEGERDEFAULT),
-		    0, type);
-#endif
-
-  if (ffe_is_ugly_assign ())
-    ffecom_label_kind_ = ffecom_pointer_kind_;	/* Require ASSIGN etc to this. */
-  else
-    ffecom_label_kind_ = FFEINFO_kindtypeINTEGERDEFAULT;
-  if (0 && ffe_is_do_internal_checks ())
-    fprintf (stderr, "Label type kt=%d\n", ffecom_label_kind_);
 
   ffecom_integer_type_node
     = ffecom_tree_type[FFEINFO_basictypeINTEGER][FFEINFO_kindtypeINTEGER1];
@@ -11967,12 +11115,6 @@ ffecom_init_0 ()
   ffecom_f2c_ptr_to_ftnint_type_node
     = build_pointer_type (ffecom_f2c_ftnint_type_node);
 
-  ffecom_f2c_ptr_to_integer_type_node
-    = build_pointer_type (ffecom_f2c_integer_type_node);
-
-  ffecom_f2c_ptr_to_real_type_node
-    = build_pointer_type (ffecom_f2c_real_type_node);
-
   ffecom_float_zero_ = build_real (float_type_node, dconst0);
   ffecom_double_zero_ = build_real (double_type_node, dconst0);
   {
@@ -11998,7 +11140,6 @@ ffecom_init_0 ()
   ffecom_tree_xargc_ = start_decl (ffecom_tree_xargc_, FALSE);
   finish_decl (ffecom_tree_xargc_, NULL_TREE, FALSE);
 
-#if 0	/* This is being fixed, and seems to be working now. */
   if ((FLOAT_TYPE_SIZE != 32)
       || (TREE_INT_CST_LOW (TYPE_SIZE (TREE_TYPE (null_pointer_node))) != 32))
     {
@@ -12010,7 +11151,6 @@ ffecom_init_0 ()
       warning ("Please keep this in mind before you report bugs.  g77 should");
       warning ("support non-32-bit machines better as of version 0.6.");
     }
-#endif
 
 #if 0	/* Code in ste.c that would crash has been commented out. */
   if (TYPE_PRECISION (ffecom_f2c_ftnlen_type_node)
@@ -12651,9 +11791,7 @@ ffecom_ptr_to_expr (ffebld expr)
 	  || (TREE_CODE (item) == INDIRECT_REF)
 	  || (TREE_CODE (item) == ARRAY_REF)
 	  || (TREE_CODE (item) == COMPONENT_REF)
-#ifdef OFFSET_REF
 	  || (TREE_CODE (item) == OFFSET_REF)
-#endif
 	  || (TREE_CODE (item) == BUFFER_REF)
 	  || (TREE_CODE (item) == REALPART_EXPR)
 	  || (TREE_CODE (item) == IMAGPART_EXPR))
@@ -14162,25 +13300,21 @@ convert (type, expr)
   register tree e = expr;
   register enum tree_code code = TREE_CODE (type);
 
-  if (type == TREE_TYPE (e)
-      || TREE_CODE (e) == ERROR_MARK)
-    return e;
-  if (TYPE_MAIN_VARIANT (type) == TYPE_MAIN_VARIANT (TREE_TYPE (e)))
-    return fold (build1 (NOP_EXPR, type, e));
-  if (TREE_CODE (TREE_TYPE (e)) == ERROR_MARK
+  if (type == TREE_TYPE (expr)
+      || TREE_CODE (expr) == ERROR_MARK)
+    return expr;
+  if (TYPE_MAIN_VARIANT (type) == TYPE_MAIN_VARIANT (TREE_TYPE (expr)))
+    return fold (build1 (NOP_EXPR, type, expr));
+  if (TREE_CODE (TREE_TYPE (expr)) == ERROR_MARK
       || code == ERROR_MARK)
     return error_mark_node;
-  if (TREE_CODE (TREE_TYPE (e)) == VOID_TYPE)
+  if (TREE_CODE (TREE_TYPE (expr)) == VOID_TYPE)
     {
       assert ("void value not ignored as it ought to be" == NULL);
       return error_mark_node;
     }
   if (code == VOID_TYPE)
     return build1 (CONVERT_EXPR, type, e);
-  if ((code != RECORD_TYPE)
-      && (TREE_CODE (TREE_TYPE (e)) == RECORD_TYPE))
-    e = ffecom_1 (REALPART_EXPR, TREE_TYPE (TYPE_FIELDS (TREE_TYPE (e))),
-		  e);
   if (code == INTEGER_TYPE || code == ENUMERAL_TYPE)
     return fold (convert_to_integer (type, e));
   if (code == POINTER_TYPE)
@@ -14189,8 +13323,6 @@ convert (type, expr)
     return fold (convert_to_real (type, e));
   if (code == COMPLEX_TYPE)
     return fold (convert_to_complex (type, e));
-  if (code == RECORD_TYPE)
-    return fold (ffecom_convert_to_complex_ (type, e));
 
   assert ("conversion to non-scalar type requested" == NULL);
   return error_mark_node;

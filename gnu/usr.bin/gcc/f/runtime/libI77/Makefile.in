@@ -38,7 +38,7 @@ DEFS = @DEFS@
 CGFLAGS = -g0
 # f2c.h should already be installed in xgcc's include directory but add that
 # to -I anyhow in case not using xgcc.
-ALL_CFLAGS = -I. -I$(srcdir) -I../../../include $(CPPFLAGS) $(DEFS) $(CFLAGS)
+ALL_CFLAGS = -I$(srcdir) -I../../../include $(CPPFLAGS) $(DEFS) $(CFLAGS)
 AR = @AR@
 AR_FLAGS = rc
 RANLIB = @RANLIB@
@@ -50,6 +50,10 @@ CROSS = @CROSS@
 
 .c.o:
 	$(CC) -c -DSkip_f2c_Undefs -DAllow_TYQUAD $(ALL_CFLAGS) $(CGFLAGS) $<
+# Next two lines were removed because Solaris doesn't like `ld -x', and
+# it seems there's no real benefit to doing this anyway.
+#	ld -r -x -o $@x $@
+#	mv $@x $@
 
 OBJ =	VersionI.o backspace.o close.o dfe.o dolio.o due.o endfile.o err.o \
 	fmt.o fmtlib.o iio.o ilnw.o inquire.o lread.o lwrite.o open.o \
@@ -57,18 +61,33 @@ OBJ =	VersionI.o backspace.o close.o dfe.o dolio.o due.o endfile.o err.o \
 	util.o wref.o wrtfmt.o wsfe.o wsle.o wsne.o xwsne.o \
 	ftell_.o
 
-F2C_H = ../../../include/f2c.h
+lib = ../../../libf2c.a
 
-all: $(OBJ)
+F2C_H = ../../include/f2c.h
+
+all: $(F2C_H) $(lib)
+
+$(lib):	force $(OBJ)
+# Don't worry if ar fails, that can happen when a root-like user installs a
+# system built by a user to which the installer has insufficient access
+# to modify libf2c.a.  Probably a better solution to this should be
+# found, but this should do for now.  -- burley 951226
+	-$(AR) $(AR_FLAGS) $(lib) $(OBJ)
+	if $(RANLIB_TEST); then $(RANLIB) $(lib); \
+	  else true; fi
+
+uninstall:
+install:
 
 VersionI.o: Version.c
 	$(CC) -c $(CGFLAGS) -o $@ $(srcdir)/Version.c
+# Next two lines were removed because Solaris doesn't like `ld -x', and
+# it seems there's no real benefit to doing this anyway.
+#	ld -r -x -o $@x $@
+#	mv $@x $@
 
-mostlyclean clean:
-	-rm -f $(OBJ)
-
-distclean maintainer-clean: mostlyclean
-	-rm -f stage? include Makefile
+clean:
+	rm -f $(OBJ)
 
 backspace.o:	fio.h
 close.o:	fio.h
@@ -126,4 +145,4 @@ xwsne.o:	fmt.h
 # May be pessimistic:
 $(OBJ): $(F2C_H)
 
-.PHONY: mostlyclean clean distclean maintainer-clean all
+force:

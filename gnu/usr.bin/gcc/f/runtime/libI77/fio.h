@@ -80,8 +80,8 @@ extern int (*f__doend)(Void);
 extern FILE *f__cf;	/*current file*/
 extern unit *f__curunit;	/*current unit*/
 extern unit f__units[];
-#define err(f,m,s) do {if(f) errno= m; else f__fatal(m,s); return(m);} while(0)
-#define errfl(f,m,s) do {return err__fl((int)f,m,s);} while(0)
+#define err(f,m,s) {if(f) errno= m; else f__fatal(m,s); return(m);}
+#define errfl(f,m,s) return err__fl((int)f,m,s)
 
 /*Table sizes*/
 #define MXUNIT 100

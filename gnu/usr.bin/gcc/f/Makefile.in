@@ -1,5 +1,5 @@
 # Makefile for GNU F77 compiler.
-#   Copyright (C) 1995-1997 Free Software Foundation, Inc.
+#   Copyright (C) 1995 Free Software Foundation, Inc.
 
 #This file is part of GNU Fortran.
 
@@ -87,12 +87,17 @@ GCC_CFLAGS=$(INTERNAL_CFLAGS) $(X_CFLAGS) $(T_CFLAGS) $(CFLAGS)
 target= ... `configure' substitutes actual target name here.
 xmake_file= ... `configure' substitutes actual x- file name here.
 tmake_file= ... `configure' substitutes actual t- file name here.
+#version=`sed -e 's/.*\"\([^ \"]*\)[ \"].*/\1/' < $(srcdir)/version.c`
+#mainversion=`sed -e 's/.*\"\([0-9]*\.[0-9]*\).*/\1/' < $(srcdir)/version.c`
 
-# Directory where gcc sources are (gcc/), from where we are.
+# Directory where sources are, from where we are.
 # Note that this should be overridden when building f771, which happens
 # at the top level, not in f.  Likewise for VPATH (if added).
 srcdir = .
-VPATH = .
+# The following overriding of the VPATH inserted by configure (as well as
+# the change to the standard srcdir above) is due to not building in the f
+# directory as standard.
+#VPATH = $(srcdir)../
 
 # Additional system libraries to link with.
 CLIB=
@@ -137,7 +142,7 @@ ALL_CPPFLAGS = $(CPPFLAGS) $(X_CPPFLAGS) $(T_CPPFLAGS)
 # appropriate for the linker on AIX 4.1 and above.
 F771_LDFLAGS = `case "${target}" in\
  m68k-next-nextstep*) echo -segaddr __DATA 6000000;;\
- *-*-aix[4-9]*) \`$(CC) --print-prog-name=ld\` -v 2>&1 | grep BFD >/dev/null || echo -Wl,-bbigtoc;; esac`
+ *-*-aix[4-9]*) echo -Wl,-bbigtoc;; esac`
 
 # Even if ALLOCA is set, don't use it if compiling with GCC.
 
@@ -152,8 +157,11 @@ LIBS = $(SUBDIR_OBSTACK) $(SUBDIR_USE_ALLOCA) $(SUBDIR_MALLOC) $(CLIB)
 # Specify the directories to be searched for header files.
 # Both . and srcdir are used, in that order,
 # so that tm.h and config.h will be found in the compilation
-# directory rather than in the source directory.
-INCLUDES = -If -I$(srcdir)/f -I. -I$(srcdir) -I$(srcdir)/config
+# subdirectory rather than in the source directory.
+INCLUDES = -If -I. -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../config
+
+#(Old way of doing things, new way being better for -g:)
+#INCLUDES = -I. -I.. -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../config
 
 # Flags_to_pass to recursive makes.
 # Note that we don't need to distinguish the `_FOR_TARGET' cross tools
@@ -182,6 +190,7 @@ FLAGS_TO_PASS = \
 	"bindir=$(bindir)" \
 	"libsubdir=$(libsubdir)"
 
+# Always use -I$(srcdir)/config when compiling.
 .c.o:
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $< -o $@
 
@@ -236,7 +245,7 @@ OBJDEPS = stamp-objlist
 compiler: f771
 # This is now meant to be built in the top level directory, not `f':
 f771: $(P) f/Makefile $(F77_OBJS) $(OBJDEPS) $(LIBDEPS)
-	rm -f f771$(exeext)
+	rm -f ../f771$(exeext)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) $(F771_LDFLAGS) -o $@ \
 	      $(F77_OBJS) $(OBJS) $(LIBS)
 
@@ -246,7 +255,7 @@ f/Makefile:
 	then echo "Build f771 only at the top level." 2>&1; exit 1; \
 	else true; fi
 
-Makefile: $(srcdir)/f/Makefile.in $(srcdir)/configure
+Makefile: $(srcdir)/Makefile.in $(srcdir)/../configure
 
 native: f771
 
@@ -261,22 +270,22 @@ native: f771
 # the gcc-source files involved (each file itself, plus whatever
 # files on which it depends, but without including stuff resulting
 # from configuration, since we can't guess at that).  The files
-# that live in a distclean'd gcc source directory have "$(srcdir)/"
+# that live in a distclean'd gcc source directory have "$(srcdir)/../"
 # prefixes, while the others don't because they'll be created
 # only in the build directory.
-ASSERT_H = $(srcdir)/f/assert.j $(srcdir)/assert.h
-CONFIG_H = $(srcdir)/f/config.j config.h
-CONVERT_H = $(srcdir)/f/convert.j $(srcdir)/convert.h
-FLAGS_H = $(srcdir)/f/flags.j $(srcdir)/flags.h
-GLIMITS_H = $(srcdir)/f/glimits.j $(srcdir)/glimits.h
-HCONFIG_H = $(srcdir)/f/hconfig.j hconfig.h
-INPUT_H = $(srcdir)/f/input.j $(srcdir)/input.h
-RTL_H = $(srcdir)/f/rtl.j $(srcdir)/rtl.h $(srcdir)/rtl.def \
-	$(srcdir)/machmode.h $(srcdir)/machmode.def
-TCONFIG_H = $(srcdir)/f/tconfig.j tconfig.h
-TM_H = $(srcdir)/f/tm.j tm.h
-TREE_H = $(srcdir)/f/tree.j $(srcdir)/tree.h $(srcdir)/real.h \
-	$(srcdir)/tree.def $(srcdir)/machmode.h $(srcdir)/machmode.def
+ASSERT_H = $(srcdir)/assert.j $(srcdir)/../assert.h
+CONFIG_H = $(srcdir)/config.j config.h
+CONVERT_H = $(srcdir)/convert.j $(srcdir)/../convert.h
+FLAGS_H = $(srcdir)/flags.j $(srcdir)/../flags.h
+GLIMITS_H = $(srcdir)/glimits.j $(srcdir)/../glimits.h
+HCONFIG_H = $(srcdir)/hconfig.j hconfig.h
+INPUT_H = $(srcdir)/input.j $(srcdir)/../input.h
+RTL_H = $(srcdir)/rtl.j $(srcdir)/../rtl.h $(srcdir)/../rtl.def \
+	$(srcdir)/../machmode.h $(srcdir)/../machmode.def
+TCONFIG_H = $(srcdir)/tconfig.j tconfig.h
+TM_H = $(srcdir)/tm.j tm.h
+TREE_H = $(srcdir)/tree.j $(srcdir)/../tree.h $(srcdir)/../real.h \
+	$(srcdir)/../tree.def $(srcdir)/../machmode.h $(srcdir)/../machmode.def
 
 #Build the first part of this list with the command line:
 #    cd gcc/; make deps-kinda -f f/Makefile.in
@@ -462,36 +471,36 @@ f/stamp-str: f/str-1t.h f/str-1t.j f/str-2t.h f/str-2t.j \
 	touch f/stamp-str
 
 f/str-1t.h f/str-1t.j: f/fini f/str-1t.fin
-	./f/fini `echo $(srcdir)/f/str-1t.fin | sed 's,^\./,,'` f/str-1t.j f/str-1t.h
+	./f/fini `echo $(srcdir)/str-1t.fin | sed 's,^\./,,'` f/str-1t.j f/str-1t.h
 
 f/str-2t.h f/str-2t.j: f/fini f/str-2t.fin
-	./f/fini `echo $(srcdir)/f/str-2t.fin | sed 's,^\./,,'` f/str-2t.j f/str-2t.h
+	./f/fini `echo $(srcdir)/str-2t.fin | sed 's,^\./,,'` f/str-2t.j f/str-2t.h
 
 f/str-fo.h f/str-fo.j: f/fini f/str-fo.fin
-	./f/fini `echo $(srcdir)/f/str-fo.fin | sed 's,^\./,,'` f/str-fo.j f/str-fo.h
+	./f/fini `echo $(srcdir)/str-fo.fin | sed 's,^\./,,'` f/str-fo.j f/str-fo.h
 
 f/str-io.h f/str-io.j: f/fini f/str-io.fin
-	./f/fini `echo $(srcdir)/f/str-io.fin | sed 's,^\./,,'` f/str-io.j f/str-io.h
+	./f/fini `echo $(srcdir)/str-io.fin | sed 's,^\./,,'` f/str-io.j f/str-io.h
 
 f/str-nq.h f/str-nq.j: f/fini f/str-nq.fin
-	./f/fini `echo $(srcdir)/f/str-nq.fin | sed 's,^\./,,'` f/str-nq.j f/str-nq.h
+	./f/fini `echo $(srcdir)/str-nq.fin | sed 's,^\./,,'` f/str-nq.j f/str-nq.h
 
 f/str-op.h f/str-op.j: f/fini f/str-op.fin
-	./f/fini `echo $(srcdir)/f/str-op.fin | sed 's,^\./,,'` f/str-op.j f/str-op.h
+	./f/fini `echo $(srcdir)/str-op.fin | sed 's,^\./,,'` f/str-op.j f/str-op.h
 
 f/str-ot.h f/str-ot.j: f/fini f/str-ot.fin
-	./f/fini `echo $(srcdir)/f/str-ot.fin | sed 's,^\./,,'` f/str-ot.j f/str-ot.h
+	./f/fini `echo $(srcdir)/str-ot.fin | sed 's,^\./,,'` f/str-ot.j f/str-ot.h
 
 f/fini: f/fini.o f/proj-h.o
 	$(HOST_CC) $(HOST_CFLAGS) -W -Wall $(HOST_LDFLAGS) -o f/fini f/fini.o f/proj-h.o
 
 f/fini.o:
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) \
-	      `echo $(srcdir)/f/fini.c | sed 's,^\./,,'` -o $@
+	      `echo $(srcdir)/fini.c | sed 's,^\./,,'` -o $@
 
 f/proj-h.o: f/proj.o
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) \
-	      `echo $(srcdir)/f/proj.c | sed 's,^\./,,'` -o $@
+	      `echo $(srcdir)/proj.c | sed 's,^\./,,'` -o $@
 
 # Other than str-*.j, the *.j files are dummy #include files
 # that normally just #include the corresponding back-end *.h
@@ -533,7 +542,7 @@ deps-kinda:
 
 # Update the tags table.
 TAGS: force
-	cd $(srcdir)/f ;			\
+	cd $(srcdir) ;				\
 	etags *.c *.h ;				\
 	echo 'l' | tr 'l' '\f' >> TAGS ;	\
 	echo 'parse.y,0' >> TAGS ; 		\

@@ -1,8 +1,8 @@
-970205
+950212
 
 TODO list for the g77 library
 
-* `Makefile.in's should be brought up to standard; I'm not sure they
+* `Makefile.in's should be tarted up to standard; I'm not sure they
   have a complete set of targets at present.
 
 * Investigate building shared libraries on systems we know about.
@@ -10,6 +10,9 @@ TODO list for the g77 library
 * Test cases.
 
 * Allow the library to be stripped to save space.
+
+* libU77-type routines (and interface to much of libc).  Some work has
+  already been done on this: ask d.love@dl.ac.uk.
 
 * An interface to IEEE maths functions from libc where this makes
   sense.

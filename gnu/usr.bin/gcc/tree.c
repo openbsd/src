@@ -1964,6 +1964,30 @@ saveable_tree_cons (purpose, value, chain)
   return node;
 }
 
+/* Try to find out whether the type for which the size is to be determined
+   is an ARRAY(of ARRAY(of ARRAY ... of something with a constant size
+   which is an integral multiple of BITS_PER_UNIT)).
+   In that case, the size in bytes can be determined using an EXACT_DIV_EXPR.
+*/
+enum tree_code
+which_div_expr(type)
+     tree type;
+{
+  tree t;
+
+  if (TREE_CODE (type) != POINTER_TYPE && TREE_CODE (type) != ARRAY_TYPE)
+    return CEIL_DIV_EXPR;
+
+  for (t = TREE_TYPE (type); TREE_CODE (t) == ARRAY_TYPE; t = TREE_TYPE (t))
+    ;
+
+  if (TYPE_SIZE (t) != 0 && TREE_CODE (TYPE_SIZE (t)) == INTEGER_CST &&
+      TREE_INT_CST_LOW (TYPE_SIZE (t)) % BITS_PER_UNIT == 0)
+    return EXACT_DIV_EXPR;
+  else
+    return CEIL_DIV_EXPR;
+}
+
 /* Return the size nominally occupied by an object of type TYPE
    when it resides in memory.  The value is measured in units of bytes,
    and its data type is that normally used for type sizes
@@ -1984,7 +2008,7 @@ size_in_bytes (type)
       incomplete_type_error (NULL_TREE, type);
       return integer_zero_node;
     }
-  t = size_binop (CEIL_DIV_EXPR, TYPE_SIZE (type),
+  t = size_binop (which_div_expr (type), TYPE_SIZE (type),
 		  size_int (BITS_PER_UNIT));
   if (TREE_CODE (t) == INTEGER_CST)
     force_fit_type (t, 0);
@@ -2008,7 +2032,7 @@ int_size_in_bytes (type)
     return -1;
   if (TREE_INT_CST_HIGH (TYPE_SIZE (type)) != 0)
     {
-      tree t = size_binop (CEIL_DIV_EXPR, TYPE_SIZE (type),
+      tree t = size_binop (which_div_expr (type), TYPE_SIZE (type),
 			   size_int (BITS_PER_UNIT));
       return TREE_INT_CST_LOW (t);
     }

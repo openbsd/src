@@ -6,7 +6,7 @@
 #include "fio.h"
 #include "fmt.h"	/* for struct syl */
 #include "rawio.h"	/* for fcntl.h, fdopen */
-#if defined (NON_UNIX_STDIO) || defined (MISSING_FILE_ELEMS)
+#ifdef NON_UNIX_STDIO
 #ifdef KR_headers
 extern char *malloc();
 #else
@@ -75,8 +75,7 @@ char *F_err[] =
 	"can't read file",				/* 126 */
 	"can't write file",				/* 127 */
 	"'new' file exists",				/* 128 */
-	"can't append to file",				/* 129 */
-	"non-positive record number"			/* 130 */
+	"can't append to file"				/* 129 */
 };
 #define MAXERR (sizeof(F_err)/sizeof(char *)+100)
 

@@ -1,5 +1,5 @@
 /* top.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995-1997 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -65,7 +65,6 @@ bool ffe_is_do_internal_checks_ = TRUE;
 bool ffe_is_90_ = FFETARGET_defaultIS_90;
 bool ffe_is_automatic_ = FFETARGET_defaultIS_AUTOMATIC;
 bool ffe_is_backslash_ = FFETARGET_defaultIS_BACKSLASH;
-bool ffe_is_emulate_complex_ = TRUE;
 bool ffe_is_underscoring_ = FFETARGET_defaultEXTERNAL_UNDERSCORED
   || FFETARGET_defaultUNDERSCORED_EXTERNAL_UNDERSCORED;
 bool ffe_is_second_underscore_ = FFETARGET_defaultUNDERSCORED_EXTERNAL_UNDERSCORED;
@@ -81,18 +80,16 @@ bool ffe_is_mainprog_;		/* TRUE if current prog unit known to be
 				   main. */
 bool ffe_is_onetrip_ = FALSE;
 bool ffe_is_silent_ = TRUE;
-bool ffe_is_typeless_boz_ = FALSE;
+bool ffe_is_typeless_boz_ = TRUE;	/* Will become FALSE as of 0.5.20 or so. */
 bool ffe_is_pedantic_ = FFETARGET_defaultIS_PEDANTIC;
 bool ffe_is_saveall_;		/* TRUE if mainprog or SAVE (no args) seen. */
 bool ffe_is_ugly_args_ = TRUE;
-bool ffe_is_ugly_assign_ = FALSE;	/* Try and store pointer to ASSIGN labels in INTEGER vars. */
 bool ffe_is_ugly_assumed_ = FALSE;	/* DIMENSION X([...,]1) => DIMENSION X([...,]*) */
 bool ffe_is_ugly_comma_ = FALSE;
-bool ffe_is_ugly_complex_ = FALSE;
 bool ffe_is_ugly_init_ = TRUE;
 bool ffe_is_ugly_logint_ = FALSE;
 bool ffe_is_version_ = FALSE;
-bool ffe_is_vxt_ = FALSE;
+bool ffe_is_vxt_not_90_ = FFETARGET_defaultIS_VXT_NOT_90;
 bool ffe_is_warn_implicit_ = FALSE;
 bool ffe_is_warn_surprising_ = FALSE;
 bool ffe_is_zeros_ = FALSE;
@@ -100,12 +97,12 @@ ffeCase ffe_case_intrin_ = FFETARGET_defaultCASE_INTRIN;
 ffeCase ffe_case_match_ = FFETARGET_defaultCASE_MATCH;
 ffeCase ffe_case_source_ = FFETARGET_defaultCASE_SOURCE;
 ffeCase ffe_case_symbol_ = FFETARGET_defaultCASE_SYMBOL;
-ffeIntrinsicState ffe_intrinsic_state_gnu_ = FFE_intrinsicstateENABLED;
-ffeIntrinsicState ffe_intrinsic_state_f2c_ = FFE_intrinsicstateENABLED;
-ffeIntrinsicState ffe_intrinsic_state_f90_ = FFE_intrinsicstateENABLED;
-ffeIntrinsicState ffe_intrinsic_state_mil_ = FFE_intrinsicstateENABLED;
-ffeIntrinsicState ffe_intrinsic_state_unix_ = FFE_intrinsicstateENABLED;
-ffeIntrinsicState ffe_intrinsic_state_vxt_ = FFE_intrinsicstateENABLED;
+ffeIntrinsicState ffe_intrinsic_state_dcp_ = FFETARGET_defaultSTATE_DCP;
+ffeIntrinsicState ffe_intrinsic_state_f2c_ = FFETARGET_defaultSTATE_F2C;
+ffeIntrinsicState ffe_intrinsic_state_f90_ = FFETARGET_defaultSTATE_F90;
+ffeIntrinsicState ffe_intrinsic_state_mil_ = FFETARGET_defaultSTATE_MIL;
+ffeIntrinsicState ffe_intrinsic_state_unix_ = FFETARGET_defaultSTATE_UNIX;
+ffeIntrinsicState ffe_intrinsic_state_vxt_ = FFETARGET_defaultSTATE_VXT;
 int ffe_fixed_line_length_ = FFETARGET_defaultFIXED_LINE_LENGTH;
 mallocPool ffe_file_pool_ = NULL;
 mallocPool ffe_any_unit_pool_ = NULL;
@@ -175,7 +172,6 @@ ffe_decode_option (char *opt)
 	  flag_move_all_movables = 1;
 	  flag_reduce_all_givs = 1;
 	  flag_rerun_loop_opt = 1;
-	  flag_argument_noalias = 2;
 #endif
 	}
       else if (strcmp (&opt[2], "ident") == 0)
@@ -233,33 +229,23 @@ ffe_decode_option (char *opt)
 	ffe_set_is_pedantic (TRUE);
       else if (strcmp (&opt[2], "no-pedantic") == 0)
 	ffe_set_is_pedantic (FALSE);
-      else if (strcmp (&opt[2], "vxt") == 0)
-	ffe_set_is_vxt (TRUE);
-      else if (strcmp (&opt[2], "not-vxt") == 0)
-	ffe_set_is_vxt (FALSE);
       else if (strcmp (&opt[2], "vxt-not-f90") == 0)
-	warning ("%s no longer supported -- try -fvxt", opt);
+	ffe_set_is_vxt_not_90 (TRUE);
       else if (strcmp (&opt[2], "f90-not-vxt") == 0)
-	warning ("%s no longer supported -- try -fno-vxt -ff90", opt);
+	ffe_set_is_vxt_not_90 (FALSE);
       else if (strcmp (&opt[2], "ugly") == 0)
 	{
-	  warning ("%s is overloaded with meanings and likely to be removed;", opt);
-	  warning ("use only the specific -fugly-* options you need");
 	  ffe_set_is_ugly_args (TRUE);
-	  ffe_set_is_ugly_assign (TRUE);
 	  ffe_set_is_ugly_assumed (TRUE);
 	  ffe_set_is_ugly_comma (TRUE);
-	  ffe_set_is_ugly_complex (TRUE);
 	  ffe_set_is_ugly_init (TRUE);
 	  ffe_set_is_ugly_logint (TRUE);
 	}
       else if (strcmp (&opt[2], "no-ugly") == 0)
 	{
 	  ffe_set_is_ugly_args (FALSE);
-	  ffe_set_is_ugly_assign (FALSE);
 	  ffe_set_is_ugly_assumed (FALSE);
 	  ffe_set_is_ugly_comma (FALSE);
-	  ffe_set_is_ugly_complex (FALSE);
 	  ffe_set_is_ugly_init (FALSE);
 	  ffe_set_is_ugly_logint (FALSE);
 	}
@@ -267,10 +253,6 @@ ffe_decode_option (char *opt)
 	ffe_set_is_ugly_args (TRUE);
       else if (strcmp (&opt[2], "no-ugly-args") == 0)
 	ffe_set_is_ugly_args (FALSE);
-      else if (strcmp (&opt[2], "ugly-assign") == 0)
-	ffe_set_is_ugly_assign (TRUE);
-      else if (strcmp (&opt[2], "no-ugly-assign") == 0)
-	ffe_set_is_ugly_assign (FALSE);
       else if (strcmp (&opt[2], "ugly-assumed") == 0)
 	ffe_set_is_ugly_assumed (TRUE);
       else if (strcmp (&opt[2], "no-ugly-assumed") == 0)
@@ -279,10 +261,6 @@ ffe_decode_option (char *opt)
 	ffe_set_is_ugly_comma (TRUE);
       else if (strcmp (&opt[2], "no-ugly-comma") == 0)
 	ffe_set_is_ugly_comma (FALSE);
-      else if (strcmp (&opt[2], "ugly-complex") == 0)
-	ffe_set_is_ugly_complex (TRUE);
-      else if (strcmp (&opt[2], "no-ugly-complex") == 0)
-	ffe_set_is_ugly_complex (FALSE);
       else if (strcmp (&opt[2], "ugly-init") == 0)
 	ffe_set_is_ugly_init (TRUE);
       else if (strcmp (&opt[2], "no-ugly-init") == 0)
@@ -299,10 +277,6 @@ ffe_decode_option (char *opt)
 	ffe_set_is_init_local_zero (TRUE);
       else if (strcmp (&opt[2], "no-init-local-zero") == 0)
 	ffe_set_is_init_local_zero (FALSE);
-      else if (strcmp (&opt[2], "emulate-complex") == 0)
-	ffe_set_is_emulate_complex (TRUE);
-      else if (strcmp (&opt[2], "no-emulate-complex") == 0)
-	ffe_set_is_emulate_complex (FALSE);
       else if (strcmp (&opt[2], "backslash") == 0)
 	ffe_set_is_backslash (TRUE);
       else if (strcmp (&opt[2], "no-backslash") == 0)
@@ -407,14 +381,14 @@ ffe_decode_option (char *opt)
 	  ffe_set_case_source (FFE_caseNONE);
 	  ffe_set_case_symbol (FFE_caseNONE);
 	}
-      else if (strcmp (&opt[2], "gnu-intrinsics-delete") == 0)
-	ffe_set_intrinsic_state_gnu (FFE_intrinsicstateDELETED);
-      else if (strcmp (&opt[2], "gnu-intrinsics-hide") == 0)
-	ffe_set_intrinsic_state_gnu (FFE_intrinsicstateHIDDEN);
-      else if (strcmp (&opt[2], "gnu-intrinsics-disable") == 0)
-	ffe_set_intrinsic_state_gnu (FFE_intrinsicstateDISABLED);
-      else if (strcmp (&opt[2], "gnu-intrinsics-enable") == 0)
-	ffe_set_intrinsic_state_gnu (FFE_intrinsicstateENABLED);
+      else if (strcmp (&opt[2], "dcp-intrinsics-delete") == 0)
+	ffe_set_intrinsic_state_dcp (FFE_intrinsicstateDELETED);
+      else if (strcmp (&opt[2], "dcp-intrinsics-hide") == 0)
+	ffe_set_intrinsic_state_dcp (FFE_intrinsicstateHIDDEN);
+      else if (strcmp (&opt[2], "dcp-intrinsics-disable") == 0)
+	ffe_set_intrinsic_state_dcp (FFE_intrinsicstateDISABLED);
+      else if (strcmp (&opt[2], "dcp-intrinsics-enable") == 0)
+	ffe_set_intrinsic_state_dcp (FFE_intrinsicstateENABLED);
       else if (strcmp (&opt[2], "f2c-intrinsics-delete") == 0)
 	ffe_set_intrinsic_state_f2c (FFE_intrinsicstateDELETED);
       else if (strcmp (&opt[2], "f2c-intrinsics-hide") == 0)

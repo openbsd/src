@@ -1,11 +1,11 @@
-@c Copyright (C) 1995-1997 Free Software Foundation, Inc.
+@c Copyright (C) 1995, 1996 Free Software Foundation, Inc.
 @c This is part of the G77 manual.
 @c For copying conditions, see the file g77.texi.
 
 @c The text of this file appears in the file BUGS
 @c in the G77 distribution, as well as in the G77 manual.
 
-@c 1996-02-24
+@c 1996-11-27
 
 @ifclear BUGSONLY
 @node Actual Bugs
@@ -25,19 +25,12 @@ configure, port, build, and install @code{g77},
 @ref{Problems Installing}.
 
 @itemize @bullet
-@cindex SIGNAL() intrinsic
-@cindex intrinsics, SIGNAL()
+@cindex -fugly option
+@cindex options, -fugly
 @item
-Work is needed on the @code{SIGNAL()} intrinsic to ensure
-that pointers and integers are properly handled on all
-targets, including 64-bit machines.
-
-@cindex -fugly-comma option
-@cindex options, -fugly-comma
-@item
-When using @samp{-fugly-comma}, @code{g77} assumes an extra
+When using @samp{-fugly}, @code{g77} assumes an extra
 @samp{%VAL(0)} argument is to be passed to intrinsics
-taking no arguments, such as @code{IARGC()}, which in
+taking no arguments, such as @samp{IARGC()}, which in
 turn reject such a call.
 Although this has been worked around for 0.5.18 due
 to changes in the handling of intrinsics,
@@ -47,11 +40,29 @@ probably be more consistent with compilers that default
 to using that trick.
 
 @item
+Although @code{g77} generally supports @samp{SELECT CASE},
+it doesn't do so for @samp{CHARACTER} types.
+Worse, it just crashes with a barely servicable
+diagnostic.
+If the time can't be taken soon to finish implementing
+this feature, at least a better way of diagnosing
+the problem should be provided.
+
+@item
+To accept a lot of fine code, @code{g77} needs to
+accept @samp{FORMAT} and @samp{ENTRY} before an
+@samp{IMPLICIT NONE}.
+
+@item
+Some crashes occur when compiling under Solaris on x86
+machines.
+
+@item
 Something about @code{g77}'s straightforward handling of
 label references and definitions sometimes prevents the GBE
 from unrolling loops.
-Until this is solved, try inserting or removing @code{CONTINUE}
-statements as the terminal statement, using the @code{END DO}
+Until this is solved, try inserting or removing @samp{CONTINUE}
+statements as the terminal statement, using the @samp{END DO}
 form instead, and so on.
 
 @item
@@ -61,16 +72,20 @@ For example, @code{gcc} accepts abbreviated forms of long options,
 @code{g77} generally doesn't.
 
 @item
-Some confusion in diagnostics concerning failing @code{INCLUDE}
-statements from within @code{INCLUDE}'d or @code{#include}'d files.
+Some confusion in diagnostics concerning failing @samp{INCLUDE}
+statements from within @samp{INCLUDE}'d or @samp{#include}'d files.
+
+@item
+Some problems on RS/6000 regarding statement functions and/or
+@samp{COMPLEX} arithmetic?
 
 @cindex integer constants
 @cindex constants, integer
 @item
-@code{g77} assumes that @code{INTEGER(KIND=1)} constants range
+@code{g77} assumes that @samp{INTEGER} constants range
 from @samp{-2**31} to @samp{2**31-1} (the range for
 two's-complement 32-bit values),
-instead of determining their range from the actual range of the
+instead of determining their range from the actual range of the @samp{INTEGER}
 type for the configuration (and, someday, for the constant).
 
 Further, it generally doesn't implement the handling
@@ -152,33 +167,14 @@ main program unit is activated and about to execute its first
 executable statement, but that's the state in which the debugger should
 start up, as is the case for languages like C.
 
-@cindex debugger
-@item
-Debugging @code{g77}-compiled code using debuggers other than
-@code{gdb} is likely not to work.
-
-Getting @code{g77} and @code{gdb} to work together is a known
-problem---getting @code{g77} to work properly with other
-debuggers, for which source code often is unavailable to @code{g77}
-developers, seems like a much larger, unknown problem,
-and is a lower priority than making @code{g77} and @code{gdb}
-work together properly.
-
-On the other hand, information about problems other debuggers
-have with @code{g77} output might make it easier to properly
-fix @code{g77}, and perhaps even improve @code{gdb}, so it
-is definitely welcome.
-Such information might even lead to all relevant products
-working together properly sooner.
-
 @cindex padding
 @cindex structures
 @cindex common blocks
 @cindex equivalence areas
 @item
 @code{g77} currently inserts needless padding for things like
-@samp{COMMON A,IPAD} where @samp{A} is @code{CHARACTER*1} and @samp{IPAD}
-is @code{INTEGER(KIND=1)} on machines like x86, because
+@samp{COMMON A,IPAD} where @samp{A} is @samp{CHARACTER*1} and @samp{IPAD}
+is @samp{INTEGER*4} on machines like x86, because
 the back end insists that @samp{IPAD} be aligned to a 4-byte boundary, but
 the processor has no such requirement (though it's good for
 performance).
@@ -191,15 +187,6 @@ is the potential, with the current setup, for interface differences
 in the way such areas are laid out between @code{g77} and other
 compilers.
 
-@item
-Some crashes occur when compiling under Solaris on x86
-machines.
-
-Nothing has been heard about any such problems for some time,
-so this is considering a closed item as of 0.5.20.
-Please submit any bug reports pertinent to @code{g77}'s support
-for Solaris/x86 systems.
-
 @cindex RS/6000 support
 @cindex support, RS/6000
 @item
@@ -210,11 +197,6 @@ likely to be a code-generation bug in @file{gcc-2.7.0} plus
 @file{g77-0.5.16}.
 This problem shows up only when compiling the Fortran program with @samp{-O}.
 
-Nothing has been heard about any RS/6000 problems for some time,
-so this is considering a closed item as of 0.5.20.
-Please submit any bug reports pertinent to @code{g77}'s support
-for RS/6000 systems.
-
 @cindex SGI support
 @cindex support, SGI
 @item
@@ -222,50 +204,29 @@ SGI support is known to be a bit buggy.
 The known problem shows up only when compiling the Fortran program with
 @samp{-O}.
 
-It is possible these problems have all been fixed in 0.5.20 by
-emulating complex arithmetic in the front end.
-Please submit any bug reports pertinent to @code{g77}'s support
-for SGI systems.
-
-@cindex Alpha, support
+@cindex Alpha support
 @cindex support, Alpha
 @item
-@code{g77} doesn't work perfectly on 64-bit configurations such as the Alpha.
+@code{g77} doesn't work on 64-bit configurations such as the Alpha.
 This problem is expected to be largely resolved as of version 0.5.20,
 and version 0.6 should solve most or all related problems (such as
 64-bit machines other than DEC Alphas).
-
-One known bug that causes a compile-time crash occurs when compiling
-code such as the following with optimization:
-
-@example
-SUBROUTINE CRASH (TEMP)
-INTEGER*2 HALF(2)
-REAL TEMP
-HALF(1) = NINT (TEMP)
-END
-@end example
-
-It is expected that a future version of @code{g77} will have a fix for this
-problem, almost certainly by the time @code{g77} supports the forthcoming
-version 2.8.0 of @code{gcc}.
 
 @cindex COMPLEX support
 @cindex support, COMPLEX
 @item
 Maintainers of gcc report that the back end definitely has ``broken''
-support for @code{COMPLEX} types.
+support for @samp{COMPLEX} types.
 Based on their input, it seems many of
 the problems affect only the more-general facilities for gcc's
-@code{__complex__} type, such as @code{__complex__ int}
+@samp{__complex__} type, such as @samp{__complex__ int}
 (where the real and imaginary parts are integers) that GNU
 Fortran does not use.
 
-Version 0.5.20 of @code{g77} works around this
-problem by not using the back end's support for @code{COMPLEX}.
-The new option @samp{-fno-emulate-complex} avoids the work-around,
-reverting to using the same ``broken'' mechanism as that used
-by versions of @code{g77} prior to 0.5.20.
+Version 0.5.20 of @code{g77} is expected to work around this
+problem by not using the back end's support for @samp{COMPLEX}.
+This work has already been done, and is being tested by
+developers.
 
 @cindex ELF support
 @cindex support, ELF
@@ -281,5 +242,7 @@ More investigation is needed, but the problem is almost certainly
 in the gcc back end, and it apparently occurs only when
 compiling sufficiently complicated functions @emph{without} the
 @samp{-O} option.
+
+This might be fixed in version 2.7.2 of @code{gcc}.
 @end itemize
 

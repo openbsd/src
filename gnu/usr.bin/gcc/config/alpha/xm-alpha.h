@@ -45,9 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #if !defined(__GNUC__) && !defined(_WIN32)
 #include <alloca.h>
 #else
-#if !defined( __alpha__) || defined(__OpenBSD__)
 extern void *alloca ();
-#endif
 #endif
 
 /* The host compiler has problems with enum bitfields since it makes
@@ -69,9 +67,7 @@ extern void *malloc (), *realloc (), *calloc ();
 
 /* OSF/1 has vprintf.  */
 
-#ifndef linux  /* 1996/02/22 mauro@craftwork.com -- unreliable with Linux */
 #define HAVE_VPRINTF
-#endif
 
 /* OSF/1 has putenv.  */
 

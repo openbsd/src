@@ -23,8 +23,8 @@ c_sfe(cilist *a) /* check */
 	if(a->ciunit >= MXUNIT || a->ciunit<0)
 		err(a->cierr,101,"startio");
 	p = &f__units[a->ciunit];
-	if(p->ufd==NULL && fk_open(SEQ,FMT,a->ciunit)) err(a->cierr,114,"sfe");
-	if(!p->ufmt) err(a->cierr,102,"sfe");
+	if(p->ufd==NULL && fk_open(SEQ,FMT,a->ciunit)) err(a->cierr,114,"sfe")
+	if(!p->ufmt) err(a->cierr,102,"sfe")
 	return(0);
 }
 integer e_wsfe(Void)

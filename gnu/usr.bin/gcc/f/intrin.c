@@ -1,5 +1,5 @@
 /* intrin.c -- Recognize references to intrinsics
-   Copyright (C) 1995-1997 Free Software Foundation, Inc.
+   Copyright (C) 1995 Free Software Foundation, Inc.
    Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
 
 This file is part of GNU Fortran.
@@ -69,7 +69,6 @@ static ffebad ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 				ffebld args, ffeinfoBasictype *xbt,
 				ffeinfoKindtype *xkt,
 				ffetargetCharacterSize *xsz,
-				bool *check_intrin,
 				ffelexToken t,
 				bool commit);
 static bool ffeintrin_check_any_ (ffebld arglist);
@@ -158,7 +157,6 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		  ffebld args, ffeinfoBasictype *xbt,
 		  ffeinfoKindtype *xkt,
 		  ffetargetCharacterSize *xsz,
-		  bool *check_intrin,
 		  ffelexToken t,
 		  bool commit)
 {
@@ -173,8 +171,6 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
   bool need_col;
   ffeinfoBasictype col_bt = FFEINFO_basictypeNONE;
   ffeinfoKindtype col_kt = FFEINFO_kindtypeNONE;
-  int colon = (c[2] == ':') ? 2 : 3;
-  int argno;
 
   /* Check procedure type (function vs. subroutine) against
      invocation.  */
@@ -200,7 +196,7 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
   else
     firstarg_kt = FFEINFO_kindtype;
 
-  for (argc = &c[colon + 3],
+  for (argc = &c[5],
 	 arg = args;
        *argc != '\0';
        )
@@ -210,8 +206,6 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
       char extra = '\0';
       char basic;
       char kind;
-      int length;
-      int elements;
       bool lastarg_complex = FALSE;
 
       /* We don't do anything with keywords yet.  */
@@ -230,31 +224,9 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 	required = *(argc++);
       basic = *(argc++);
       kind = *(argc++);
-      if (*argc == '[')
-	{
-	  length = *++argc - '0';
-	  if (*++argc != ']')
-	    length = 10 * length + (*(argc++) - '0');
-	  ++argc;
-	}
-      else
-	length = -1;
-      if (*argc == '(')
-	{
-	  elements = *++argc - '0';
-	  if (*++argc != ')')
-	    elements = 10 * elements + (*(argc++) - '0');
-	  ++argc;
-	}
-      else if (*argc == '&')
-	{
-	  elements = -1;
-	  ++argc;
-	}
-      else
-	elements = 0;
       if ((*argc == '&')
-	  || (*argc == 'i')
+	  || (*argc == 'g')
+	  || (*argc == 's')
 	  || (*argc == 'w')
 	  || (*argc == 'x'))
 	extra = *(argc++);
@@ -295,9 +267,7 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 	  switch (basic)
 	    {
 	    case 'A':
-	      okay = (ffeinfo_basictype (i) == FFEINFO_basictypeCHARACTER)
-		&& ((length == -1)
-		    || (ffeinfo_size (i) == (ffetargetCharacterSize) length));
+	      okay = ffeinfo_basictype (i) == FFEINFO_basictypeCHARACTER;
 	      break;
 
 	    case 'C':
@@ -349,29 +319,6 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		|| (ffeinfo_basictype (i) == FFEINFO_basictypeREAL);
 	      break;
 
-	    case 'g':
-	      okay = ((ffebld_op (a) == FFEBLD_opLABTER)
-		      || (ffebld_op (a) == FFEBLD_opLABTOK));
-	      elements = -1;
-	      extra = '-';
-	      break;
-
-	    case 's':
-	      okay = (((((ffeinfo_basictype (i) == FFEINFO_basictypeNONE)
-			 && (ffeinfo_kindtype (i) == FFEINFO_kindtypeNONE)
-			 && (ffeinfo_kind (i) == FFEINFO_kindSUBROUTINE))
-			|| ((ffeinfo_basictype (i) == FFEINFO_basictypeINTEGER)
-			    && (ffeinfo_kindtype (i) == FFEINFO_kindtypeINTEGERDEFAULT)
-			    && (ffeinfo_kind (i) == FFEINFO_kindFUNCTION))
-			|| (ffeinfo_kind (i) == FFEINFO_kindNONE))
-		       && ((ffeinfo_where (i) == FFEINFO_whereDUMMY)
-			   || (ffeinfo_where (i) == FFEINFO_whereGLOBAL)))
-		      || ((ffeinfo_basictype (i) == FFEINFO_basictypeINTEGER)
-			  && (ffeinfo_kind (i) == FFEINFO_kindENTITY)));
-	      elements = -1;
-	      extra = '-';
-	      break;
-
 	    case '-':
 	    default:
 	      okay = TRUE;
@@ -380,35 +327,19 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 
 	  switch (kind)
 	    {
-	    case '1': case '2': case '3': case '4': case '5':
-	    case '6': case '7': case '8': case '9':
-	      akt = (kind - '0');
-	      if ((ffeinfo_basictype (i) == FFEINFO_basictypeINTEGER)
-		  || (ffeinfo_basictype (i) == FFEINFO_basictypeLOGICAL))
-		{
-		  switch (akt)
-		    {	/* Translate to internal kinds for now! */
-		    default:
-		      break;
+	    case '1':
+	      okay &= anynum || (ffeinfo_kindtype (i) == 1);
+	      akt = 1;
+	      break;
 
-		    case 2:
-		      akt = 4;
-		      break;
+	    case '2':
+	      okay &= anynum || (ffeinfo_kindtype (i) == 2);
+	      akt = 2;
+	      break;
 
-		    case 3:
-		      akt = 2;
-		      break;
-
-		    case 4:
-		      akt = 5;
-		      break;
-
-		    case 6:
-		      akt = 3;
-		      break;
-		    }
-		}
-	      okay &= anynum || (ffeinfo_kindtype (i) == akt);
+	    case '3':
+	      okay &= anynum || (ffeinfo_kindtype (i) == 3);
+	      akt = 3;
 	      break;
 
 	    case 'A':
@@ -417,32 +348,23 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		: firstarg_kt;
 	      break;
 
-	    case '*':
-	    default:
-	      break;
-	    }
-
-	  switch (elements)
-	    {
-	      ffebld b;
-
-	    case -1:
-	      break;
-
-	    case 0:
-	      if (ffeinfo_rank (i) != 0)
+	    case 's':
+	      if (((((ffeinfo_basictype (i) != FFEINFO_basictypeNONE)
+		     || (ffeinfo_kindtype (i) != FFEINFO_kindtypeNONE)
+		     || (ffeinfo_kind (i) != FFEINFO_kindSUBROUTINE))
+		    && ((ffeinfo_basictype (i) != FFEINFO_basictypeINTEGER)
+			|| (ffeinfo_kindtype (i) != FFEINFO_kindtypeINTEGERDEFAULT)
+			|| (ffeinfo_kind (i) != FFEINFO_kindFUNCTION))
+		    && (ffeinfo_kind (i) != FFEINFO_kindNONE))
+		   || ((ffeinfo_where (i) != FFEINFO_whereDUMMY)
+		       && (ffeinfo_where (i) != FFEINFO_whereGLOBAL)))
+		  && ((ffeinfo_basictype (i) != FFEINFO_basictypeINTEGER)
+		      || (ffeinfo_kind (i) != FFEINFO_kindENTITY)))
 		okay = FALSE;
 	      break;
 
+	    case '0':
 	    default:
-	      if ((ffeinfo_rank (i) != 1)
-		  || (ffebld_op (a) != FFEBLD_opSYMTER)
-		  || ((b = ffesymbol_arraysize (ffebld_symter (a))) == NULL)
-		  || (ffebld_op (b) != FFEBLD_opCONTER)
-		  || (ffeinfo_basictype (ffebld_info (b)) != FFEINFO_basictypeINTEGER)
-		  || (ffeinfo_kindtype (ffebld_info (b)) != FFEINFO_kindtypeINTEGERDEFAULT)
-		  || (ffebld_constant_integer1 (ffebld_conter (b)) != elements))
-		okay = FALSE;
 	      break;
 	    }
 
@@ -456,21 +378,28 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		okay = FALSE;
 	      break;
 
+	    case 'g':
+	      if ((ffebld_op (a) != FFEBLD_opLABTER)
+		  && (ffebld_op (a) != FFEBLD_opLABTOK))
+		okay = FALSE;
+	      break;
+
+	    case 's':
+	      break;
+
 	    case 'w':
 	    case 'x':
 	      if ((ffeinfo_kind (i) != FFEINFO_kindENTITY)
+		  || (ffeinfo_rank (i) != 0)
 		  || ((ffebld_op (a) != FFEBLD_opSYMTER)
 		      && (ffebld_op (a) != FFEBLD_opARRAYREF)
 		      && (ffebld_op (a) != FFEBLD_opSUBSTR)))
 		okay = FALSE;
 	      break;
 
-	    case '-':
-	    case 'i':
-	      break;
-
 	    default:
-	      if (ffeinfo_kind (i) != FFEINFO_kindENTITY)
+	      if ((ffeinfo_kind (i) != FFEINFO_kindENTITY)
+		  || (ffeinfo_rank (i) != 0))
 		okay = FALSE;
 	      break;
 	    }
@@ -542,7 +471,7 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
     {
     case 'A':
       bt = FFEINFO_basictypeCHARACTER;
-      sz = (c[2] == '*') ? FFETARGET_charactersizeNONE : 1;
+      sz = 1;
       break;
 
     case 'C':
@@ -575,34 +504,16 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 
   switch (c[1])
     {
-    case '1': case '2': case '3': case '4': case '5':
-    case '6': case '7': case '8': case '9':
-      kt = (c[1] - '0');
-      if ((bt == FFEINFO_basictypeINTEGER)
-	  || (bt == FFEINFO_basictypeLOGICAL))
-	{
-	  switch (kt)
-	    {	/* Translate to internal kinds for now! */
-	    default:
-	      break;
+    case '1':
+      kt = 1;
+      break;
 
-	    case 2:
-	      kt = 4;
-	      break;
+    case '2':
+      kt = 2;
+      break;
 
-	    case 3:
-	      kt = 2;
-	      break;
-
-	    case 4:
-	      kt = 5;
-	      break;
-
-	    case 6:
-	      kt = 3;
-	      break;
-	    }
-	}
+    case '3':
+      kt = 3;
       break;
 
     case 'C':
@@ -611,11 +522,7 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
       kt = 1;
       break;
 
-    case 'p':
-      kt = ffecom_pointer_kind ();
-      break;
-
-    case '=':
+    case '0':
       need_col = TRUE;
       /* Fall through.  */
     case '-':
@@ -626,14 +533,14 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 
   /* Determine collective type of COL, if there is one.  */
 
-  if (need_col || c[colon + 1] != '-')
+  if (need_col || c[3] != '-')
     {
       bool okay = TRUE;
       bool have_anynum = FALSE;
 
       for (arg = args;
 	   arg != NULL;
-	   arg = (c[colon + 1] == '*') ? ffebld_trail (arg) : NULL)
+	   arg = (c[3] == '*') ? ffebld_trail (arg) : NULL)
 	{
 	  ffebld a = ffebld_head (arg);
 	  ffeinfo i;
@@ -753,19 +660,14 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 
       switch (c[1])
 	{
-	case '=':
+	case '0':
 	  if (need_col)
 	    kt = col_kt;
 	  break;
 
 	case 'C':
-	  if (col_bt == FFEINFO_basictypeCOMPLEX)
-	    {
-	      if (col_kt != FFEINFO_kindtypeREALDEFAULT)
-		*check_intrin = TRUE;
-	      if (need_col)
-		kt = col_kt;
-	    }
+	  if (need_col && (col_bt == FFEINFO_basictypeCOMPLEX))
+	    kt = col_kt;
 	  break;
 	}
 
@@ -775,18 +677,16 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 
   /* Now, convert args in the arglist to the final type of the COL.  */
 
-  for (argno = 0, argc = &c[colon + 3],
+  for (argc = &c[5],
 	 arg = args;
        *argc != '\0';
-       ++argno)
+       )
     {
       char optional = '\0';
       char required = '\0';
       char extra = '\0';
       char basic;
       char kind;
-      int length;
-      int elements;
       bool lastarg_complex = FALSE;
 
       /* We don't do anything with keywords yet.  */
@@ -805,31 +705,9 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 	required = *(argc++);
       basic = *(argc++);
       kind = *(argc++);
-      if (*argc == '[')
-	{
-	  length = *++argc - '0';
-	  if (*++argc != ']')
-	    length = 10 * length + (*(argc++) - '0');
-	  ++argc;
-	}
-      else
-	length = -1;
-      if (*argc == '(')
-	{
-	  elements = *++argc - '0';
-	  if (*++argc != ')')
-	    elements = 10 * elements + (*(argc++) - '0');
-	  ++argc;
-	}
-      else if (*argc == '&')
-	{
-	  elements = -1;
-	  ++argc;
-	}
-      else
-	elements = 0;
       if ((*argc == '&')
-	  || (*argc == 'i')
+	  || (*argc == 'g')
+	  || (*argc == 's')
 	  || (*argc == 'w')
 	  || (*argc == 'x'))
 	extra = *(argc++);
@@ -845,8 +723,8 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 	  ffebld a;
 	  ffeinfo i;
 	  bool anynum;
-	  ffeinfoBasictype abt = FFEINFO_basictypeNONE;
-	  ffeinfoKindtype akt = FFEINFO_kindtypeNONE;
+	  ffeinfoBasictype abt;
+	  ffeinfoKindtype akt;
 
 	  if ((arg == NULL)
 	      || (ffebld_head (arg) == NULL))
@@ -863,15 +741,16 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 
 	  /* Determine what the default type for anynum would be.  */
 
+	  abt = FFEINFO_basictypeNONE;
+	  akt = FFEINFO_kindtypeNONE;
 	  if (anynum)
 	    {
-	      switch (c[colon + 1])
+	      switch (c[3])
 		{
 		case '-':
 		  break;
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-		  if (argno != (c[colon + 1] - '0'))
+		case '1':
+		  if (arg != args)
 		    break;
 		case '*':
 		  abt = col_bt;
@@ -888,9 +767,7 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 	  switch (basic)
 	    {
 	    case 'A':
-	      okay = (ffeinfo_basictype (i) == FFEINFO_basictypeCHARACTER)
-		&& ((length == -1)
-		    || (ffeinfo_size (i) == (ffetargetCharacterSize) length));
+	      okay = ffeinfo_basictype (i) == FFEINFO_basictypeCHARACTER;
 	      break;
 
 	    case 'C':
@@ -942,29 +819,6 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		|| (ffeinfo_basictype (i) == FFEINFO_basictypeREAL);
 	      break;
 
-	    case 'g':
-	      okay = ((ffebld_op (a) == FFEBLD_opLABTER)
-		      || (ffebld_op (a) == FFEBLD_opLABTOK));
-	      elements = -1;
-	      extra = '-';
-	      break;
-
-	    case 's':
-	      okay = (((((ffeinfo_basictype (i) == FFEINFO_basictypeNONE)
-			 && (ffeinfo_kindtype (i) == FFEINFO_kindtypeNONE)
-			 && (ffeinfo_kind (i) == FFEINFO_kindSUBROUTINE))
-			|| ((ffeinfo_basictype (i) == FFEINFO_basictypeINTEGER)
-			    && (ffeinfo_kindtype (i) == FFEINFO_kindtypeINTEGERDEFAULT)
-			    && (ffeinfo_kind (i) == FFEINFO_kindFUNCTION))
-			|| (ffeinfo_kind (i) == FFEINFO_kindNONE))
-		       && ((ffeinfo_where (i) == FFEINFO_whereDUMMY)
-			   || (ffeinfo_where (i) == FFEINFO_whereGLOBAL)))
-		      || ((ffeinfo_basictype (i) == FFEINFO_basictypeINTEGER)
-			  && (ffeinfo_kind (i) == FFEINFO_kindENTITY)));
-	      elements = -1;
-	      extra = '-';
-	      break;
-
 	    case '-':
 	    default:
 	      okay = TRUE;
@@ -973,35 +827,19 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 
 	  switch (kind)
 	    {
-	    case '1': case '2': case '3': case '4': case '5':
-	    case '6': case '7': case '8': case '9':
-	      akt = (kind - '0');
-	      if ((ffeinfo_basictype (i) == FFEINFO_basictypeINTEGER)
-		  || (ffeinfo_basictype (i) == FFEINFO_basictypeLOGICAL))
-		{
-		  switch (akt)
-		    {	/* Translate to internal kinds for now! */
-		    default:
-		      break;
+	    case '1':
+	      okay &= anynum || (ffeinfo_kindtype (i) == 1);
+	      akt = 1;
+	      break;
 
-		    case 2:
-		      akt = 4;
-		      break;
+	    case '2':
+	      okay &= anynum || (ffeinfo_kindtype (i) == 2);
+	      akt = 2;
+	      break;
 
-		    case 3:
-		      akt = 2;
-		      break;
-
-		    case 4:
-		      akt = 5;
-		      break;
-
-		    case 6:
-		      akt = 3;
-		      break;
-		    }
-		}
-	      okay &= anynum || (ffeinfo_kindtype (i) == akt);
+	    case '3':
+	      okay &= anynum || (ffeinfo_kindtype (i) == 3);
+	      akt = 3;
 	      break;
 
 	    case 'A':
@@ -1010,32 +848,23 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		: firstarg_kt;
 	      break;
 
-	    case '*':
-	    default:
-	      break;
-	    }
-
-	  switch (elements)
-	    {
-	      ffebld b;
-
-	    case -1:
-	      break;
-
-	    case 0:
-	      if (ffeinfo_rank (i) != 0)
+	    case 's':
+	      if (((((ffeinfo_basictype (i) != FFEINFO_basictypeNONE)
+		     || (ffeinfo_kindtype (i) != FFEINFO_kindtypeNONE)
+		     || (ffeinfo_kind (i) != FFEINFO_kindSUBROUTINE))
+		    && ((ffeinfo_basictype (i) != FFEINFO_basictypeINTEGER)
+			|| (ffeinfo_kindtype (i) != FFEINFO_kindtypeINTEGERDEFAULT)
+			|| (ffeinfo_kind (i) != FFEINFO_kindFUNCTION))
+		    && (ffeinfo_kind (i) != FFEINFO_kindNONE))
+		   || ((ffeinfo_where (i) != FFEINFO_whereDUMMY)
+		       && (ffeinfo_where (i) != FFEINFO_whereGLOBAL)))
+		  && ((ffeinfo_basictype (i) != FFEINFO_basictypeINTEGER)
+		      || (ffeinfo_kind (i) != FFEINFO_kindENTITY)))
 		okay = FALSE;
 	      break;
 
+	    case '0':
 	    default:
-	      if ((ffeinfo_rank (i) != 1)
-		  || (ffebld_op (a) != FFEBLD_opSYMTER)
-		  || ((b = ffesymbol_arraysize (ffebld_symter (a))) == NULL)
-		  || (ffebld_op (b) != FFEBLD_opCONTER)
-		  || (ffeinfo_basictype (ffebld_info (b)) != FFEINFO_basictypeINTEGER)
-		  || (ffeinfo_kindtype (ffebld_info (b)) != FFEINFO_kindtypeINTEGERDEFAULT)
-		  || (ffebld_constant_integer1 (ffebld_conter (b)) != elements))
-		okay = FALSE;
 	      break;
 	    }
 
@@ -1049,21 +878,28 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		okay = FALSE;
 	      break;
 
+	    case 'g':
+	      if ((ffebld_op (a) != FFEBLD_opLABTER)
+		  && (ffebld_op (a) != FFEBLD_opLABTOK))
+		okay = FALSE;
+	      break;
+
+	    case 's':
+	      break;
+
 	    case 'w':
 	    case 'x':
 	      if ((ffeinfo_kind (i) != FFEINFO_kindENTITY)
+		  || (ffeinfo_rank (i) != 0)
 		  || ((ffebld_op (a) != FFEBLD_opSYMTER)
 		      && (ffebld_op (a) != FFEBLD_opARRAYREF)
 		      && (ffebld_op (a) != FFEBLD_opSUBSTR)))
 		okay = FALSE;
 	      break;
 
-	    case '-':
-	    case 'i':
-	      break;
-
 	    default:
-	      if (ffeinfo_kind (i) != FFEINFO_kindENTITY)
+	      if ((ffeinfo_kind (i) != FFEINFO_kindENTITY)
+		  || (ffeinfo_rank (i) != 0))
 		okay = FALSE;
 	      break;
 	    }
@@ -1101,7 +937,7 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 				   FFEEXPR_contextLET);
 	      ffebld_set_head (arg, a);
 	    }
-	  else if ((c[colon + 1] == '*') && commit)
+	  else if ((c[3] == '*') && commit)
 	    {
 	      /* This is where we promote types to the consensus
 		 type for the COL.  Maybe this is where -fpedantic
@@ -1273,14 +1109,10 @@ ffeintrin_fulfill_generic (ffebld *expr, ffeinfo *info, ffelexToken t)
       if (state == FFE_intrinsicstateDELETED)
 	continue;
 
-      tname = ffeintrin_specs_[tspec].name;
-
-      if (timp != FFEINTRIN_impNONE)
-	{
-	  if (!(ffeintrin_imps_[timp].control[0] == '-')
-	      != !(ffebld_op (*expr) == FFEBLD_opSUBRREF))
-	    continue;		/* Form of reference must match form of specific. */
-	}
+      if (timp == FFEINTRIN_impNONE)
+	tname = ffeintrin_specs_[tspec].name;
+      else
+	tname = ffeintrin_imps_[timp].name;
 
       if (state == FFE_intrinsicstateDISABLED)
 	terror = FFEBAD_INTRINSIC_DISABLED;
@@ -1290,7 +1122,7 @@ ffeintrin_fulfill_generic (ffebld *expr, ffeinfo *info, ffelexToken t)
 	{
 	  terror = ffeintrin_check_ (timp, ffebld_op (*expr),
 				     ffebld_right (*expr),
-				     &tbt, &tkt, &tsz, NULL, t, FALSE);
+				     &tbt, &tkt, &tsz, t, FALSE);
 	  if (terror == FFEBAD)
 	    {
 	      if (imp != FFEINTRIN_impNONE)
@@ -1383,7 +1215,7 @@ ffeintrin_fulfill_generic (ffebld *expr, ffeinfo *info, ffelexToken t)
 	}
       error = ffeintrin_check_ (imp, ffebld_op (*expr),
 				ffebld_right (*expr),
-				&bt, &kt, &sz, NULL, t, TRUE);
+				&bt, &kt, &sz, t, TRUE);
       assert (error == FFEBAD);
       *info = ffeinfo_new (bt,
 			   kt,
@@ -1411,9 +1243,8 @@ ffeintrin_fulfill_generic (ffebld *expr, ffeinfo *info, ffelexToken t)
    ffebld expr;			// FUNCREF or SUBRREF with no info (caller
 				// gets it from the modified info structure).
    ffeinfo info;		// Already filled in, will be overwritten.
-   bool check_intrin;           // May be omitted, else set TRUE if intrinsic needs checking.
    ffelexToken token;		// Used for error message.
-   ffeintrin_fulfill_specific (&expr, &info, &check_intrin, token);
+   ffeintrin_fulfill_specific (&expr, &info, token);
 
    Based on the specific id, determine whether the arg list is valid
    (number, type, rank, and kind of args) and fill in the info structure
@@ -1423,8 +1254,7 @@ ffeintrin_fulfill_generic (ffebld *expr, ffeinfo *info, ffelexToken t)
    accordingly.	 */
 
 void
-ffeintrin_fulfill_specific (ffebld *expr, ffeinfo *info,
-			    bool *check_intrin, ffelexToken t)
+ffeintrin_fulfill_specific (ffebld *expr, ffeinfo *info, ffelexToken t)
 {
   ffebld symter;
   ffebldOp op;
@@ -1447,8 +1277,6 @@ ffeintrin_fulfill_specific (ffebld *expr, ffeinfo *info,
   state = ffeintrin_state_family (ffeintrin_specs_[spec].family);
 
   imp = ffeintrin_specs_[spec].implementation;
-  if (check_intrin != NULL)
-    *check_intrin = FALSE;
 
   any = ffeintrin_check_any_ (ffebld_right (*expr));
 
@@ -1460,10 +1288,8 @@ ffeintrin_fulfill_specific (ffebld *expr, ffeinfo *info,
     {
       error = ffeintrin_check_ (imp, ffebld_op (*expr),
 				ffebld_right (*expr),
-				&bt, &kt, &sz, check_intrin, t, TRUE);
+				&bt, &kt, &sz, t, TRUE);
     }
-  else
-    error = FFEBAD;	/* Not really needed, but quiet -Wuninitialized. */
 
   if (any || (error != FFEBAD))
     {
@@ -1474,7 +1300,7 @@ ffeintrin_fulfill_specific (ffebld *expr, ffeinfo *info,
 	  ffebad_start (error);
 	  ffebad_here (0, ffelex_token_where_line (t),
 		       ffelex_token_where_column (t));
-	  if (spec != FFEINTRIN_specNONE)
+	  if (imp == FFEINTRIN_impNONE)
 	    name = ffeintrin_specs_[spec].name;
 	  else
 	    name = ffeintrin_imps_[imp].name;
@@ -1524,9 +1350,8 @@ ffeintrin_init_0 ()
   char *p1;
   char *p2;
   char *p3;
-  int colon;
 
-  if (!ffe_is_do_internal_checks ())
+  if (!ffe_is_do_internal_checks())
     return;
 
   assert (FFEINTRIN_gen == ARRAY_SIZE (ffeintrin_gens_));
@@ -1543,9 +1368,6 @@ ffeintrin_init_0 ()
 
   for (i = 0; ((size_t) i) < ARRAY_SIZE (ffeintrin_names_); ++i)
     {
-      assert ((ffeintrin_names_[i].generic == FFEINTRIN_genNONE)
-	      || (ffeintrin_names_[i].specific == FFEINTRIN_specNONE));
-
       p1 = ffeintrin_names_[i].name_uc;
       p2 = ffeintrin_names_[i].name_lc;
       p3 = ffeintrin_names_[i].name_ic;
@@ -1585,44 +1407,31 @@ ffeintrin_init_0 ()
 	  continue;
 	}
       if ((c[1] != '-')
-	  && (c[1] != '=')
-      && ((c[1] < '1')
-	  || (c[1] > '9'))
-	  && (c[1] != 'C')
-	  && (c[1] != 'p'))
+	  && (c[1] != '0')
+      && (c[1] != '1')
+      && (c[1] != '2')
+      && (c[1] != '3')
+      && (c[1] != 'C'))
 	{
 	  fprintf (stderr, "%s: bad return-kind-type\n",
 		   ffeintrin_imps_[i].name);
 	  continue;
 	}
-      if (c[2] == ':')
-	colon = 2;
-      else
-	{
-	  if (c[2] != '*')
-	    {
-	      fprintf (stderr, "%s: bad return-modifier\n",
-		       ffeintrin_imps_[i].name);
-	      continue;
-	    }
-	  colon = 3;
-	}
-      if ((c[colon] != ':') || (c[colon + 2] != ':'))
+      if ((c[2] != ':') || (c[4] != ':'))
 	{
 	  fprintf (stderr, "%s: bad control\n",
 		   ffeintrin_imps_[i].name);
 	  continue;
 	}
-      if ((c[colon + 1] != '-')
-	  && (c[colon + 1] != '*')
-      && ((c[colon + 1] < '0')
-	  || (c[colon + 1] > '9')))
+      if ((c[3] != '-')
+	  && (c[3] != '*')
+      && (c[3] != '1'))
 	{
 	  fprintf (stderr, "%s: bad COL-spec\n",
 		   ffeintrin_imps_[i].name);
 	  continue;
 	}
-      c += (colon + 3);
+      c += 5;
       while (c[0] != '\0')
 	{
 	  while ((c[0] != '=')
@@ -1644,7 +1453,7 @@ ffeintrin_init_0 ()
 	  || (c[1] == 'p'))
 	    ++c;
 	  if (((c[1] != '-')
-	       && (c[1] != 'A')
+	      && (c[1] != 'A')
 	  && (c[1] != 'C')
 	  && (c[1] != 'I')
 	  && (c[1] != 'L')
@@ -1652,49 +1461,20 @@ ffeintrin_init_0 ()
 	  && (c[1] != 'B')
 	  && (c[1] != 'F')
 	  && (c[1] != 'N')
-	  && (c[1] != 'S')
-	  && (c[1] != 'g')
-	  && (c[1] != 's'))
-	      || ((c[2] != '*')
-		  && ((c[2] < '1')
-		      || (c[2] > '9'))
-	      && (c[2] != 'A')))
+	  && (c[1] != 'S'))
+	      || ((c[2] != '0')
+		  && (c[2] != '1')
+		  && (c[2] != '2')
+		  && (c[2] != '3')
+		  && (c[2] != 'A')
+		  && (c[2] != 's')))
 	    {
 	      fprintf (stderr, "%s: bad arg-type\n",
 		       ffeintrin_imps_[i].name);
 	      break;
 	    }
-	  if (c[3] == '[')
-	    {
-	      if (((c[4] < '0') || (c[4] > '9'))
-		  || ((c[5] != ']')
-		      && (++c, (c[4] < '0') || (c[4] > '9')
-			  || (c[5] != ']'))))
-		{
-		  fprintf (stderr, "%s: bad arg-len\n",
-			   ffeintrin_imps_[i].name);
-		  break;
-		}
-	      c += 3;
-	    }
-	  if (c[3] == '(')
-	    {
-	      if (((c[4] < '0') || (c[4] > '9'))
-		  || ((c[5] != ')')
-		      && (++c, (c[4] < '0') || (c[4] > '9')
-			  || (c[5] != ')'))))
-		{
-		  fprintf (stderr, "%s: bad arg-rank\n",
-			   ffeintrin_imps_[i].name);
-		  break;
-		}
-	      c += 3;
-	    }
-	  else if ((c[3] == '&')
-		   && (c[4] == '&'))
-	    ++c;
 	  if ((c[3] == '&')
-	      || (c[3] == 'i')
+	      || (c[3] == 's')
 	  || (c[3] == 'w')
 	  || (c[3] == 'x'))
 	    ++c;
@@ -1742,20 +1522,26 @@ ffeintrin_is_actualarg (ffeintrinSpec spec)
    ffeintrinGen gen;		// (TRUE only) Generic id of intrinsic.
    ffeintrinSpec spec;		// (TRUE only) Specific id of intrinsic.
    ffeintrinImp imp;		// (TRUE only) Implementation id of intrinsic.
-   if (ffeintrin_is_intrinsic (name, t, explicit,
-			       &gen, &spec, &imp))
+   ffeinfoKind kind;		// (TRUE:) kindFUNCTION, kindSUBROUTINE,
+				// or kindNONE; (FALSE:) kindANY, kindNONE.
+   if (ffeintrin_is_intrinsic (name, t, &gen, &spec, &imp, &kind))
 				// is an intrinsic, use gen, spec, imp, and
-				// kind accordingly.  */
+				// kind accordingly.
+
+   If FALSE is returned, kindANY says that the intrinsic exists but is
+   not valid for some reason (disabled or unimplemented), in which case a
+   diagnostic was generated (assuming t == NULL).  */
 
 bool
 ffeintrin_is_intrinsic (char *name, ffelexToken t, bool explicit,
 			ffeintrinGen *xgen, ffeintrinSpec *xspec,
-			ffeintrinImp *ximp)
+			ffeintrinImp *ximp, ffeinfoKind *xkind)
 {
   struct _ffeintrin_name_ *intrinsic;
   ffeintrinGen gen;
   ffeintrinSpec spec;
   ffeintrinImp imp;
+  ffeinfoKind kind;
   ffeIntrinsicState state;
   bool disabled = FALSE;
   bool unimpl = FALSE;
@@ -1779,8 +1565,6 @@ ffeintrin_is_intrinsic (char *name, ffelexToken t, bool explicit,
       int i;
       ffeintrinSpec tspec;
       bool ok = FALSE;
-
-      name = ffeintrin_gens_[gen].name;
 
       for (i = 0;
 	   (((size_t) i) < ARRAY_SIZE (ffeintrin_gens_[gen].specs))
@@ -1822,8 +1606,6 @@ ffeintrin_is_intrinsic (char *name, ffelexToken t, bool explicit,
 
   if (spec != FFEINTRIN_specNONE)
     {
-      name = ffeintrin_specs_[spec].name;
-
       if (((state = ffeintrin_state_family (ffeintrin_specs_[spec].family))
 	   == FFE_intrinsicstateDELETED)
 	  || (!explicit
@@ -1853,25 +1635,31 @@ ffeintrin_is_intrinsic (char *name, ffelexToken t, bool explicit,
 	{
 	  ffebad_start (disabled
 			? FFEBAD_INTRINSIC_DISABLED
-			: FFEBAD_INTRINSIC_UNIMPLW);
+			: FFEBAD_INTRINSIC_UNIMPL);
 	  ffebad_here (0, ffelex_token_where_line (t), ffelex_token_where_column (t));
 	  ffebad_string (name);
 	  ffebad_finish ();
 	}
 
+      if (disabled || unimpl)
+	*xkind = FFEINFO_kindANY;
+      else
+	*xkind = FFEINFO_kindNONE;
       return FALSE;
     }
 
   /* Determine whether intrinsic is function or subroutine.  If no specific
-     id, scan list of possible specifics for generic to get consensus.  If
-     not unanimous, or clear from the context, return NONE.  */
+     id, scan list of possible specifics for generic to get consensus.  Must
+     be unanimous, at least for now.  */
 
   if (spec == FFEINTRIN_specNONE)
     {
       int i;
       ffeintrinSpec tspec;
       ffeintrinImp timp;
-      bool at_least_one_ok = FALSE;
+      ffeinfoKind tkind;
+
+      kind = FFEINFO_kindNONE;
 
       for (i = 0;
 	   (((size_t) i) < ARRAY_SIZE (ffeintrin_gens_[gen].specs))
@@ -1879,31 +1667,31 @@ ffeintrin_is_intrinsic (char *name, ffelexToken t, bool explicit,
 		= ffeintrin_gens_[gen].specs[i]) != FFEINTRIN_specNONE);
 	   ++i)
 	{
-	  if (((state = ffeintrin_state_family (ffeintrin_specs_[tspec].family))
-	       == FFE_intrinsicstateDELETED)
-	      || (state == FFE_intrinsicstateDISABLED))
-	    continue;
-
 	  if ((timp = ffeintrin_specs_[tspec].implementation)
 	      == FFEINTRIN_impNONE)
 	    continue;
 
-	  at_least_one_ok = TRUE;
-	  break;
-	}
+	  if (ffeintrin_imps_[timp].control[0] == '-')
+	    tkind = FFEINFO_kindSUBROUTINE;
+	  else
+	    tkind = FFEINFO_kindFUNCTION;
 
-      if (!at_least_one_ok)
-	{
-	  *xgen = FFEINTRIN_genNONE;
-	  *xspec = FFEINTRIN_specNONE;
-	  *ximp = FFEINTRIN_impNONE;
-	  return FALSE;
+	  if ((kind == tkind) || (kind == FFEINFO_kindNONE))
+	    kind = tkind;
+	  else
+	    assert ("what kind of proc am i?" == NULL);
 	}
     }
+  else				/* Have specific, use that. */
+    kind
+      = (ffeintrin_imps_[imp].control[0] == '-')
+      ? FFEINFO_kindSUBROUTINE
+      : FFEINFO_kindFUNCTION;
 
   *xgen = gen;
   *xspec = spec;
   *ximp = imp;
+  *xkind = kind;
   return TRUE;
 }
 
@@ -1969,8 +1757,10 @@ ffeintrin_state_family (ffeintrinFamily family)
       state = ffe_state_max (state, ffe_intrinsic_state_mil ());
       return state;
 
-    case FFEINTRIN_familyGNU:
-      state = ffe_intrinsic_state_gnu ();
+    case FFEINTRIN_familyDCP:
+      state = ffe_intrinsic_state_vxt ();
+      state = ffe_state_max (state, ffe_intrinsic_state_f90 ());
+      state = ffe_state_max (state, ffe_intrinsic_state_dcp ());
       return state;
 
     case FFEINTRIN_familyF90:
@@ -1984,9 +1774,14 @@ ffeintrin_state_family (ffeintrinFamily family)
     case FFEINTRIN_familyFVZ:
       state = ffe_intrinsic_state_f2c ();
       state = ffe_state_max (state, ffe_intrinsic_state_vxt ());
+      state = ffe_state_max (state, ffe_intrinsic_state_dcp ());
       return state;
 
     case FFEINTRIN_familyF2C:
+      state = ffe_intrinsic_state_f2c ();
+      return state;
+
+    case FFEINTRIN_familyF2Z:
       state = ffe_intrinsic_state_f2c ();
       return state;
 

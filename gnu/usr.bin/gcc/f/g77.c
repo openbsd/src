@@ -1,5 +1,5 @@
 /* G77 preliminary semantic processing for the compiler driver.
-   Copyright (C) 1993-1997 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Contributed by Brendan Kehoe (brendan@cygnus.com), with significant
    modifications for GNU Fortran by James Craig Burley (burley@gnu.ai.mit.edu).
 
@@ -88,26 +88,10 @@ g77: `f77' language not included in list of languages\n\
 #endif
 #include <stdio.h>
 
-/* Include multi-lib information.  */
-#include "multilib.h"
-
 #ifndef R_OK
 #define R_OK 4
 #define W_OK 2
 #define X_OK 1
-#endif
-
-#ifndef WIFSIGNALED
-#define WIFSIGNALED(S) (((S) & 0xff) != 0 && ((S) & 0xff) != 0x7f)
-#endif
-#ifndef WTERMSIG
-#define WTERMSIG(S) ((S) & 0x7f)
-#endif
-#ifndef WIFEXITED
-#define WIFEXITED(S) (((S) & 0xff) == 0)
-#endif
-#ifndef WEXITSTATUS
-#define WEXITSTATUS(S) (((S) & 0xff00) >> 8)
 #endif
 
 /* Defined to the name of the compiler; if using a cross compiler, the
@@ -240,16 +224,12 @@ typedef enum
   OPTION_c,			/* Aka --compile. */
   OPTION_driver,		/* Wrapper-specific option. */
   OPTION_E,			/* Aka --preprocess. */
-  OPTION_for_linker,		/* Aka `-Xlinker' and `-Wl,'. */
   OPTION_help,			/* --help. */
   OPTION_i,			/* -imacros, -include, -include-*. */
-  OPTION_l,
-  OPTION_L,			/* Aka --library-directory. */
   OPTION_M,			/* Aka --dependencies. */
   OPTION_MM,			/* Aka --user-dependencies. */
   OPTION_nostdlib,		/* Aka --no-standard-libraries, or
 				   -nodefaultlibs. */
-  OPTION_o,			/* Aka --output. */
   OPTION_P,			/* Aka --print-*-name. */
   OPTION_S,			/* Aka --assemble. */
   OPTION_v,			/* Aka --verbose. */
@@ -298,19 +278,10 @@ typedef enum
    otherwise, in /usr/tmp or /tmp.  */
 
 static char *temp_filename;
-static char *temp_filename_f;	/* Same with ".f" appended. */
 
 /* Length of the prefix.  */
 
 static int temp_filename_length;
-
-/* The number of errors that have occurred; the link phase will not be
-   run if this is non-zero.  */
-static int error_count = 0;
-
-/* Number of commands that exited with a signal.  */
-
-static int signal_count = 0;
 
 /* END OF STUFF FROM gcc-2.7.0/gcc.c.  */
 
@@ -472,24 +443,10 @@ pfatal_with_name (name)
   char *s;
 
   if (errno < sys_nerr)
-    s = concat ("%s: ", my_strerror (errno));
+    s = concat3 ("%s: ", sys_errlist[errno], "");
   else
-    s = "cannot open `%s'";
+    s = "cannot open %s";
   fatal (s, name);
-}
-
-static void
-perror_exec (name)
-     char *name;
-{
-  char *s;
-
-  if (errno < sys_nerr)
-    s = concat ("installation problem, cannot exec `%s': ",
-		my_strerror (errno));
-  else
-    s = "installation problem, cannot exec `%s'";
-  error (s, name);
 }
 
 /* Compute a string to use as the base of all temporary file names.
@@ -548,13 +505,64 @@ choose_temp_base ()
   temp_filename_length = strlen (temp_filename);
   if (temp_filename_length == 0)
     abort ();
-
-  temp_filename_f = xmalloc (temp_filename_length + 2);
-  strcpy (temp_filename_f, temp_filename);
-  temp_filename_f[temp_filename_length] = '.';
-  temp_filename_f[temp_filename_length + 1] = 'f';
-  temp_filename_f[temp_filename_length + 2] = '\0';
 }
+
+#ifdef __MSDOS__
+static void
+perror_exec (name)
+     char *name;
+{
+  char *s;
+
+  if (errno < sys_nerr)
+    s = concat3 ("installation problem, cannot exec %s: ",
+		 my_strerror( errno ), "");
+  else
+    s = "installation problem, cannot exec %s";
+  error (s, name);
+}
+
+/* This is almost exactly what's in gcc.c:pexecute for MSDOS.  */
+void
+run_dos (program, argv)
+     char *program;
+     char *argv[];
+{
+  char *scmd, *rf;
+  FILE *argfile;
+  int i;
+
+  choose_temp_base (); /* not in gcc.c */
+
+  scmd = (char *) malloc (strlen (program) + strlen (temp_filename) + 10);
+  rf = scmd + strlen (program) + 6;
+  sprintf (scmd, "%s.exe @%s.gp", program, temp_filename);
+
+  argfile = fopen (rf, "w");
+  if (argfile == 0)
+    pfatal_with_name (rf);
+
+  for (i=1; argv[i]; i++)
+    {
+      char *cp;
+      for (cp = argv[i]; *cp; cp++)
+	{
+	  if (*cp == '"' || *cp == '\'' || *cp == '\\' || isspace (*cp))
+	    fputc ('\\', argfile);
+	  fputc (*cp, argfile);
+	}
+      fputc ('\n', argfile);
+    }
+  fclose (argfile);
+
+  i = system (scmd);
+
+  remove (rf);
+
+  if (i == -1)
+    perror_exec (program);
+}
+#endif /* __MSDOS__ */
 
 /* This structure describes one mapping.  */
 struct option_map
@@ -739,13 +747,12 @@ lookup_option (xopt, xskip, xarg, text)
      char *text;
 {
   Option opt = OPTION_;
-  int skip;
+  int skip = -1;
   char *arg = NULL;
 
   if ((skip = SWITCH_TAKES_ARG (text[1])) > (text[2] != '\0'))
     skip -= (text[2] != '\0');	/* Usually one of "DUoeTuImLA". */
-
-  if (text[1] == 'B')
+  else if (text[1] == 'B')
     opt = OPTION_B, skip = (text[2] == '\0'), arg = text + 2;
   else if (text[1] == 'b')
     opt = OPTION_b, skip = (text[2] == '\0'), arg = text + 2;
@@ -755,20 +762,12 @@ lookup_option (xopt, xskip, xarg, text)
     opt = OPTION_E, skip = 0;
   else if (text[1] == 'i')
     opt = OPTION_i, skip = 0;
-  else if (text[1] == 'l')
-    opt = OPTION_l;
-  else if (text[1] == 'L')
-    opt = OPTION_L, skip = (text[2] == '\0'), arg = text + 2;
-  else if (text[1] == 'o')
-    opt = OPTION_o;
   else if ((text[1] == 'S') && (text[2] == '\0'))
     opt = OPTION_S, skip = 0;
   else if (text[1] == 'V')
     opt = OPTION_V, skip = (text[2] == '\0');
   else if ((text[1] == 'v') && (text[2] == '\0'))
     opt = OPTION_v, skip = 0;
-  else if ((text[1] == 'W') && (text[2] == 'l') && (text[3] == ','))
-    opt = OPTION_for_linker, skip = 0;
   else if (text[1] == 'x')
     opt = OPTION_x, skip = (text[2] == '\0'), arg = text + 2;
   else
@@ -778,8 +777,7 @@ lookup_option (xopt, xskip, xarg, text)
 	   "imacros", "aux-info", "idirafter", "iprefix",
 	   "iwithprefix", "iwithprefixbefore", "isystem".  */
 	;
-
-      if (text[1] != '-')
+      else if (text[1] != '-')
 	skip = 0;
       else if (strcmp (text, "--assemble") == 0)
 	opt = OPTION_S;
@@ -799,16 +797,12 @@ lookup_option (xopt, xskip, xarg, text)
 	opt = OPTION_i;
       else if (opteq (&skip, &arg, text, "--language") == 0)
 	opt = OPTION_x;
-      else if (opteq (&skip, &arg, text, "--library-directory") == 0)
-	opt = OPTION_L;
       else if ((strcmp (text, "-M") == 0)
 	       || (strcmp (text, "--dependencies") == 0))
 	opt = OPTION_M;
       else if ((strcmp (text, "-MM") == 0)
 	       || (strcmp (text, "--user-dependencies") == 0))
 	opt = OPTION_MM;
-      else if (strcmp (text, "--output") == 0)
-	opt = OPTION_o;
       else if (opteq (&skip, &arg, text, "--prefix") == 0)
 	opt = OPTION_B;
       else if (strcmp (text, "--preprocess") == 0)
@@ -838,7 +832,9 @@ lookup_option (xopt, xskip, xarg, text)
 	       || (opteq (&skip, &arg, text, "--for-assembler") == 0)
 	       || (opteq (&skip, &arg, text, "--for-linker") == 0)
 	       || (opteq (&skip, &arg, text, "--force-link") == 0)
+	       || (opteq (&skip, &arg, text, "--library-directory") == 0)
 	       || (opteq (&skip, &arg, text, "--machine") == 0)
+	       || (opteq (&skip, &arg, text, "--output") == 0)
 	       || (opteq (&skip, &arg, text, "--target") == 0)
 	       || (opteq (&skip, &arg, text, "--undefine-macro") == 0))
 	;
@@ -851,13 +847,7 @@ lookup_option (xopt, xskip, xarg, text)
   if (xskip != NULL)
     *xskip = skip;
   if (xarg != NULL)
-    {
-      if ((arg != NULL)
-	  && (arg[0] == '\0'))
-	*xarg = NULL;
-      else
-	*xarg = arg;
-    }
+    *xarg = arg;
 }
 
 static void
@@ -894,245 +884,6 @@ append_arg (arg)
   newargv[newargc++] = arg;
 }
 
-extern int execv (), execvp ();
-
-/* If a stage of compilation returns an exit status >= 1,
-   compilation of that file ceases.  */
-
-#define MIN_FATAL_STATUS 1
-
-/* stdin file number.  */
-#define STDIN_FILE_NO 0
-
-/* stdout file number.  */
-#define STDOUT_FILE_NO 1
-
-/* value of `pipe': port index for reading.  */
-#define READ_PORT 0
-
-/* value of `pipe': port index for writing.  */
-#define WRITE_PORT 1
-
-/* Pipe waiting from last process, to be used as input for the next one.
-   Value is STDIN_FILE_NO if no pipe is waiting
-   (i.e. the next command is the first of a group).  */
-
-static int last_pipe_input;
-
-/* Fork one piped subcommand.  FUNC is the system call to use
-   (either execv or execvp).  ARGV is the arg vector to use.
-   NOT_LAST is nonzero if this is not the last subcommand
-   (i.e. its output should be piped to the next one.)  */
-
-#ifdef __MSDOS__
-
-#include <process.h>
-static int
-pexecute (search_flag, program, argv, not_last)
-     int search_flag;
-     char *program;
-     char *argv[];
-     int not_last;
-{
-#ifdef __GO32__
-  int i = (search_flag ? spawnv : spawnvp) (1, program, argv);
-#else
-  char *scmd, *rf;
-  FILE *argfile;
-  int i, el = search_flag ? 0 : 4;
-
-  scmd = (char *)malloc (strlen (program) + strlen (temp_filename) + 6 + el);
-  rf = scmd + strlen(program) + 2 + el;
-  sprintf (scmd, "%s%s @%s.gp", program,
-	   (search_flag ? "" : ".exe"), temp_filename);
-  argfile = fopen (rf, "w");
-  if (argfile == 0)
-    pfatal_with_name (rf);
-
-  for (i=1; argv[i]; i++)
-    {
-      char *cp;
-      for (cp = argv[i]; *cp; cp++)
-	{
-	  if (*cp == '"' || *cp == '\'' || *cp == '\\' || isspace (*cp))
-	    fputc ('\\', argfile);
-	  fputc (*cp, argfile);
-	}
-      fputc ('\n', argfile);
-    }
-  fclose (argfile);
-
-  i = system (scmd);
-
-  remove (rf);
-#endif
-  
-  if (i == -1)
-    {
-      perror_exec (program);
-      return MIN_FATAL_STATUS << 8;
-    }
-  return i << 8;
-}
-
-#endif
-
-#if !defined(__MSDOS__) && !defined(OS2) && !defined(_WIN32)
-
-static int
-pexecute (search_flag, program, argv, not_last)
-     int search_flag;
-     char *program;
-     char *argv[];
-     int not_last;
-{
-  int (*func)() = (search_flag ? execv : execvp);
-  int pid;
-  int pdes[2];
-  int input_desc = last_pipe_input;
-  int output_desc = STDOUT_FILE_NO;
-  int retries, sleep_interval;
-
-  /* If this isn't the last process, make a pipe for its output,
-     and record it as waiting to be the input to the next process.  */
-
-  if (not_last)
-    {
-      if (pipe (pdes) < 0)
-	pfatal_with_name ("pipe");
-      output_desc = pdes[WRITE_PORT];
-      last_pipe_input = pdes[READ_PORT];
-    }
-  else
-    last_pipe_input = STDIN_FILE_NO;
-
-  /* Fork a subprocess; wait and retry if it fails.  */
-  sleep_interval = 1;
-  for (retries = 0; retries < 4; retries++)
-    {
-      pid = vfork ();
-      if (pid >= 0)
-	break;
-      sleep (sleep_interval);
-      sleep_interval *= 2;
-    }
-
-  switch (pid)
-    {
-    case -1:
-#ifdef vfork
-      pfatal_with_name ("fork");
-#else
-      pfatal_with_name ("vfork");
-#endif
-      /* NOTREACHED */
-      return 0;
-
-    case 0: /* child */
-      /* Move the input and output pipes into place, if nec.  */
-      if (input_desc != STDIN_FILE_NO)
-	{
-	  close (STDIN_FILE_NO);
-	  dup (input_desc);
-	  close (input_desc);
-	}
-      if (output_desc != STDOUT_FILE_NO)
-	{
-	  close (STDOUT_FILE_NO);
-	  dup (output_desc);
-	  close (output_desc);
-	}
-
-      /* Close the parent's descs that aren't wanted here.  */
-      if (last_pipe_input != STDIN_FILE_NO)
-	close (last_pipe_input);
-
-      /* Exec the program.  */
-      (*func) (program, argv);
-      perror_exec (program);
-      exit (-1);
-      /* NOTREACHED */
-      return 0;
-
-    default:
-      /* In the parent, after forking.
-	 Close the descriptors that we made for this child.  */
-      if (input_desc != STDIN_FILE_NO)
-	close (input_desc);
-      if (output_desc != STDOUT_FILE_NO)
-	close (output_desc);
-
-      /* Return child's process number.  */
-      return pid;
-    }
-}
-
-#endif /* not __MSDOS__ and not OS2 and not _WIN32 */
-
-#if defined(OS2)
-
-static int
-pexecute (search_flag, program, argv, not_last)
-     int search_flag;
-     char *program;
-     char *argv[];
-     int not_last;
-{
-  return (search_flag ? spawnv : spawnvp) (1, program, argv);
-}
-#endif /* OS2 */
-
-#if defined(_WIN32)
-
-static int
-pexecute (search_flag, program, argv, not_last)
-     int search_flag;
-     char *program;
-     char *argv[];
-     int not_last;
-{
-  return (search_flag ? __spawnv : __spawnvp) (1, program, argv);
-}
-#endif /* _WIN32 */
-
-static int
-doit (char *program, char **argv)
-{
-  int pid;
-  int status;
-  int ret_code = 0;
-
-  pid = pexecute (0, program, argv, 0);
-
-#ifdef __MSDOS__
-  status = pid;
-#else
-#ifdef _WIN32
-  pid = cwait (&status, pid, WAIT_CHILD);
-#else
-  pid = wait (&status);
-#endif
-#endif
-  if (pid < 0)
-    abort ();
-
-  if (status != 0)
-    {
-      if (WIFSIGNALED (status))
-	{
-	  fatal ("Internal compiler error: program %s got fatal signal %d",
-		 program, WTERMSIG (status));
-	  signal_count++;
-	  ret_code = -1;
-	}
-      else if (WIFEXITED (status)
-	       && WEXITSTATUS (status) >= MIN_FATAL_STATUS)
-	ret_code = -1;
-    }
-
-  return ret_code;
-}
-
 int
 main (argc, argv)
      int argc;
@@ -1144,8 +895,6 @@ main (argc, argv)
   Option opt;
   int skip;
   char *arg;
-  int n_infiles = 0;
-  int n_outfiles = 0;
 
   /* This will be NULL if we encounter a situation where we should not
      link in libf2c.  */
@@ -1153,7 +902,7 @@ main (argc, argv)
 
   /* This will become 0 if anything other than -v and kin (like -V)
      is seen, meaning the user is trying to accomplish something.
-     If it remains nonzero, and the user wants version info, add stuff to
+     If it remains nonzero, the user wants version info, so add stuff to
      the command line to make gcc invoke all the appropriate phases
      to get all the version info.  */
   int add_version_magic = 1;
@@ -1219,14 +968,8 @@ main (argc, argv)
 
   for (i = 1; i < argc; ++i)
     {
-      if ((argv[i][0] == '+') && (argv[i][1] == 'e'))
+      if (argv[i][0] != '-')
 	{
-	  add_version_magic = 0;
-	  continue;
-	}
-      else if ((argv[i][0] != '-') || (argv[i][1] == 0))
-	{
-	  ++n_infiles;
 	  add_version_magic = 0;
 	  continue;
 	}
@@ -1247,26 +990,13 @@ main (argc, argv)
 	  add_version_magic = 0;
 	  break;
 
-	case OPTION_for_linker:
-	case OPTION_l:
-	  ++n_infiles;
-	  add_version_magic = 0;
-	  break;
-
-	case OPTION_o:
-	  ++n_outfiles;
-	  add_version_magic = 0;
-	  break;
-
 	case OPTION_v:
-	  if (!verbose)
-	    printf ("g77 version %s\n", ffezzz_version_string);
 	  verbose = 1;
+	  printf ("g77 version %s\n", ffezzz_version_string);
 	  break;
 
 	case OPTION_b:
 	case OPTION_B:
-	case OPTION_L:
 	case OPTION_driver:
 	case OPTION_i:
 	case OPTION_V:
@@ -1337,8 +1067,11 @@ Report bugs to fortran@gnu.ai.mit.edu.\n");
 	fatal ("argument to `%s' missing\n", argv[i]);
     }
 
-  if ((n_outfiles != 0) && (n_infiles == 0))
-    fatal ("No input files; unwilling to write output files");
+  /* If only -v and related options (like -V), don't link the standard
+     libraries.  */
+
+  if (add_version_magic)
+    library = NULL;
 
   /* Second pass through arglist, transforming arguments as appropriate.  */
 
@@ -1364,6 +1097,8 @@ Report bugs to fortran@gnu.ai.mit.edu.\n");
 	    {
 	      /* Track input language. */
 	      char *lang;
+
+	      append_arg (argv[i]);
 
 	      if (arg == NULL)
 		lang = argv[i+1];
@@ -1450,7 +1185,7 @@ Report bugs to fortran@gnu.ai.mit.edu.\n");
 
   /* Add -lf2c -lm as necessary.  */
 
-  if (!add_version_magic && library)
+  if (library)
     {				/* Doing a link and no -nostdlib. */
       if (saw_speclang)
 	append_arg ("-xnone");
@@ -1464,29 +1199,21 @@ Report bugs to fortran@gnu.ai.mit.edu.\n");
 	  break;
 	}
     }
-  else if (add_version_magic && verbose)
+  else if (verbose && add_version_magic)
     {
-      FILE *fsrc;
-
       choose_temp_base ();
 
       append_arg ("-fnull-version");
       append_arg ("-o");
       append_arg (temp_filename);
       append_arg ("-xf77-cpp-input");
-      append_arg (temp_filename_f);
+      append_arg ("/dev/null");
       append_arg ("-xnone");
       if (library)
 	{
 	  append_arg (library);
 	  append_arg ("-lm");
 	}
-
-      fsrc = fopen (temp_filename_f, "w");
-      if (fsrc == 0)
-	pfatal_with_name (fsrc);
-      fputs ("      call g77__fvers;call g77__ivers;call g77__uvers;end\n", fsrc);
-      fclose (fsrc);
     }
 
   append_arg (NULL);
@@ -1505,26 +1232,18 @@ Report bugs to fortran@gnu.ai.mit.edu.\n");
 	fprintf (stderr, " %s", newargv[i]);
       fprintf (stderr, "\n");
     }
+#if !defined(OS2) && !defined (_WIN32)
+#ifdef __MSDOS__
+  run_dos (gcc, newargv);
+#else /* !__MSDOS__ */
+  if (execvp (gcc, newargv) < 0)
+    pfatal_with_name (gcc);
+#endif /* __MSDOS__ */
+#else /* OS2 or _WIN32 */
+  if (spawnvp (1, gcc, newargv) < 0)
+    pfatal_with_name (gcc);
+#endif
 
-  if (doit (gcc, newargv) < 0)
-    ++error_count;
-  else if (add_version_magic && verbose)
-    {
-      char *outargv[2];
-
-      outargv[0] = temp_filename;
-      outargv[1] = 0;
-
-      if (doit (temp_filename, outargv) < 0)
-	++error_count;
-
-      remove (temp_filename);
-      remove (temp_filename_f);
-    }
-
-  exit (error_count > 0 ? (signal_count ? 2 : 1) : 0);
-  /* NOTREACHED */
   return 0;
 }
-
 #endif	/* LANGUAGE_F77 == 1 */
