@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.8 1997/02/05 15:50:55 deraadt Exp $ */
+/*	$OpenBSD: vme.c,v 1.9 1998/01/19 00:13:04 etheisen Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -138,17 +138,18 @@ vmepmap(sc, vmeaddr, len, bustype)
 	case BUS_PCC:
 		switch (bustype) {
 		case BUS_VMES:
-			printf("base %8x/%8x len %8x\n", vmeaddr, base, len);
+			printf("base 0x%8x/0x%8x len 0x%x\n",
+				vmeaddr, base, len);
 			if (base > VME1_A16BASE &&
 			    (base+len - VME1_A16BASE) < VME1_A16D16LEN) {
 				base = base - VME1_A16BASE + VME1_A16D16BASE;
-				printf("vmes1: base = %8x\n", base); /* 1:1 */
+				printf("vmes1: base = 0x%8x\n", base); /* 1:1 */
 			} else if (base > VME1_A32D16BASE &&
 			    base+len < VME1_A16BASE) {
 				/* 1:1 mapped */
-				printf("vmes2: base = %8x\n", base);
+				printf("vmes2: base = 0x%8x\n", base);
 			} else {
-				printf("%s: cannot map pa %x len %x\n",
+				printf("%s: cannot map pa 0x%x len 0x%x\n",
 				    sc->sc_dev.dv_xname, base, len);
 				return (NULL);
 			}
@@ -159,7 +160,7 @@ vmepmap(sc, vmeaddr, len, bustype)
 			else if (base+len < VME1_A32D16LEN)		/* HACK! */
 				base = base + VME1_A32D16BASE;
 			else {
-				printf("%s: cannot map pa %x len %x\n",
+				printf("%s: cannot map pa 0x%x len 0x%x\n",
 				    sc->sc_dev.dv_xname, base, len);
 				return (NULL);
 			}
@@ -282,7 +283,7 @@ vmeprint(args, bus)
 
 	printf(" addr 0x%x", ca->ca_offset);
 	if (ca->ca_vec > 0)
-		printf(" vec %d", ca->ca_vec);
+		printf(" vec 0x%x", ca->ca_vec);
 	if (ca->ca_ipl > 0)
 		printf(" ipl %d", ca->ca_ipl);
 	return (UNCONF);
