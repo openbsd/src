@@ -45,6 +45,7 @@ Supported devices {:-include-:}:
 			Future Domain TMC-950
 	RAID controllers:
 		3ware Escalade 3W-5x00, 3W-6x00
+		Compaq Smart ARRAY PCI/EISA adapters
 		DPT SmartCache III/IV PCI/EISA adapters 
 		ICP-Vortex GDT 6XXXRP series
 		Adaptec FSA-based
@@ -274,6 +275,12 @@ ICP-Vortex GDT 6XXXRP series
 
 3ware Escalade 3W-5x00, 3W-6x00
 		twe0	any	any	any
+
+Adaptec FSA-based
+		aac0	any	any	any
+
+Compaq Smart ARRAY PCI/EISA adapters
+		cac0	any	any	any
 
 SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
 		we0	0x280	9
