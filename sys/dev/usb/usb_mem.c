@@ -1,0 +1,277 @@
+/*	$OpenBSD: usb_mem.c,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.7 1999/08/02 19:49:50 augustss Exp $	*/
+
+/*
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@carlstedt.se) at
+ * Carlstedt Research & Technology.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * USB DMA memory allocation.
+ * We need to allocate a lot of small (many 8 byte, some larger)
+ * memory blocks that can be used for DMA.  Using the bus_dma
+ * routines directly would incur large overheads in space and time.
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
+
+#ifdef DIAGNOSTIC
+#include <sys/proc.h>
+#endif
+
+#include <machine/bus.h>
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usb_mem.h>
+
+#ifdef USB_DEBUG
+#define DPRINTF(x)	if (usbdebug) printf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
+extern int usbdebug;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
+#endif
+
+#define USB_MEM_SMALL 64
+#define USB_MEM_CHUNKS 64
+#define USB_MEM_BLOCK (USB_MEM_SMALL * USB_MEM_CHUNKS)
+
+/* This struct is overlayed on free fragments. */
+struct usb_frag_dma {
+	usb_dma_block_t *block;
+	u_int offs;
+	LIST_ENTRY(usb_frag_dma) next;
+};
+
+usbd_status	usb_block_allocmem 
+	__P((bus_dma_tag_t, size_t, size_t, usb_dma_block_t **));
+void		usb_block_real_freemem  __P((usb_dma_block_t *));
+void		usb_block_freemem  __P((usb_dma_block_t *));
+
+LIST_HEAD(, usb_block_dma) usb_blk_freelist = 
+	LIST_HEAD_INITIALIZER(usb_blk_freelist);
+/* XXX should have different free list for different tags */
+LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
+	LIST_HEAD_INITIALIZER(usb_frag_freelist);
+
+usbd_status
+usb_block_allocmem(tag, size, align, dmap)
+	bus_dma_tag_t tag;
+	size_t size;
+	size_t align;
+        usb_dma_block_t **dmap;
+{
+	int error;
+        usb_dma_block_t *p;
+	int s;
+
+	DPRINTFN(5, ("usb_block_allocmem: size=%d align=%d\n", size, align));
+
+#ifdef DIAGNOSTIC
+	if (!curproc) {
+		printf("usb_block_allocmem: in interrupt context\n");
+		return (USBD_NOMEM);
+	}
+#endif
+
+	s = splusb();
+	/* First check the free list. */
+	for (p = LIST_FIRST(&usb_blk_freelist); p; p = LIST_NEXT(p, next)) {
+		if (p->tag == tag && p->size >= size && p->align >= align) {
+			LIST_REMOVE(p, next);
+			splx(s);
+			*dmap = p;
+			DPRINTFN(6, ("usb_block_allocmem: free list size=%d\n",
+				     p->size));
+			return (USBD_NORMAL_COMPLETION);
+		}
+	}
+	splx(s);
+
+	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
+	p = malloc(sizeof *p, M_USB, M_NOWAIT);
+	if (p == 0)
+		return (USBD_NOMEM);
+	*dmap = p;
+
+	p->tag = tag;
+	p->size = size;
+	p->align = align;
+	error = bus_dmamem_alloc(tag, p->size, align, 0,
+				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+				 &p->nsegs, BUS_DMA_NOWAIT);
+	if (error)
+		return (USBD_NOMEM);
+
+	error = bus_dmamem_map(tag, p->segs, p->nsegs, p->size, 
+			       &p->kaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	if (error)
+		goto free;
+
+	error = bus_dmamap_create(tag, p->size, 1, p->size,
+				  0, BUS_DMA_NOWAIT, &p->map);
+	if (error)
+		goto unmap;
+
+	error = bus_dmamap_load(tag, p->map, p->kaddr, p->size, NULL, 
+				BUS_DMA_NOWAIT);
+	if (error)
+		goto destroy;
+	return 0;
+
+destroy:
+	bus_dmamap_destroy(tag, p->map);
+unmap:
+	bus_dmamem_unmap(tag, p->kaddr, p->size);
+free:
+	bus_dmamem_free(tag, p->segs, p->nsegs);
+	return (USBD_NOMEM);
+}
+
+void
+usb_block_real_freemem(p)
+        usb_dma_block_t *p;
+{
+#ifdef DIAGNOSTIC
+	if (!curproc) {
+		printf("usb_block_real_freemem: in interrupt context\n");
+		return;
+	}
+#endif
+	bus_dmamap_unload(p->tag, p->map);
+	bus_dmamap_destroy(p->tag, p->map);
+	bus_dmamem_unmap(p->tag, p->kaddr, p->size);
+	bus_dmamem_free(p->tag, p->segs, p->nsegs);
+	free(p, M_USB);
+}
+
+/*
+ * Do not free the memory unconditionally since we might be called
+ * from an interrupt context and that is BAD.
+ * XXX when should we really free?
+ */
+void
+usb_block_freemem(p)
+        usb_dma_block_t *p;
+{
+	int s;
+
+	DPRINTFN(6, ("usb_block_freemem: size=%d\n", p->size));
+	s = splusb();
+	LIST_INSERT_HEAD(&usb_blk_freelist, p, next);
+	splx(s);
+}
+
+usbd_status
+usb_allocmem(tag, size, align, p)
+	bus_dma_tag_t tag;
+	size_t size;
+	size_t align;
+        usb_dma_t *p;
+{
+	usbd_status r;
+	struct usb_frag_dma *f;
+	usb_dma_block_t *b;
+	int i;
+	int s;
+
+	/* If the request is large then just use a full block. */
+	if (size > USB_MEM_SMALL || align > USB_MEM_SMALL) {
+		DPRINTFN(1, ("usb_allocmem: large alloc %d\n", (int)size));
+		size = (size + USB_MEM_BLOCK - 1) & ~(USB_MEM_BLOCK - 1);
+		r = usb_block_allocmem(tag, size, align, &p->block);
+		if (r == USBD_NORMAL_COMPLETION) {
+			p->block->fullblock = 1;
+			p->offs = 0;
+		}
+		return (r);
+	}
+	
+	s = splusb();
+	/* Check for free fragments. */
+	for (f = LIST_FIRST(&usb_frag_freelist); f; f = LIST_NEXT(f, next))
+		if (f->block->tag == tag)
+			break;
+	if (!f) {
+		DPRINTFN(1, ("usb_allocmem: adding fragments\n"));
+		r = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL, &b);
+		if (r != USBD_NORMAL_COMPLETION) {
+			splx(s);
+			return (r);
+		}
+		b->fullblock = 0;
+		for (i = 0; i < USB_MEM_BLOCK; i += USB_MEM_SMALL) {
+			f = (struct usb_frag_dma *)(b->kaddr + i);
+			f->block = b;
+			f->offs = i;
+			LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
+		}
+		f = LIST_FIRST(&usb_frag_freelist);
+	}
+	p->block = f->block;
+	p->offs = f->offs;
+	LIST_REMOVE(f, next);
+	splx(s);
+	DPRINTFN(5, ("usb_allocmem: use frag=%p size=%d\n", f, (int)size));
+	return (USBD_NORMAL_COMPLETION);
+}
+
+void
+usb_freemem(tag, p)
+	bus_dma_tag_t tag;
+        usb_dma_t *p;
+{
+	struct usb_frag_dma *f;
+	int s;
+
+	if (p->block->fullblock) {
+		DPRINTFN(1, ("usb_freemem: large free\n"));
+		usb_block_freemem(p->block);
+		return;
+	}
+	f = KERNADDR(p);
+	f->block = p->block;
+	f->offs = p->offs;
+	s = splusb();
+	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
+	splx(s);
+	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
+}
