@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 1997/04/22 06:34:33 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 1997/04/22 07:05:12 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -74,7 +74,7 @@ this=$0
 umask 77
 
 case `uname -s` in
-SunOS) add ()
+SunOS|*) add ()
 	{
 		expr $1 + $2
 	}
@@ -301,7 +301,7 @@ fd*)
 ccd*|sd*|xd*|xy*|cd*|vnd*)
 	umask 2
 	unit=`unt $i`
-	if [ $unit -gt 15 ]
+	if [ 0$unit -gt 15 ]
 	then
 		echo bad disk unit: $i - $unit
 		exit 127
@@ -402,10 +402,10 @@ pty*)
 		n=0
 		while [ $n -lt 16 ]
                 do
-                        n=$name`hex $n`
+                        nam=$name`hex $n`
                         rm -rf {tty,pty}$n
-                        mknod tty$n c 5 `add $offset $n`
-                        mknod pty$n c 6 `add $offset $n`
+                        mknod tty$nam c 5 `add $offset $n`
+                        mknod pty$nam c 6 `add $offset $n`
                         n=`add $n 1`
                 done
 		umask 77
