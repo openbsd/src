@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.139 1999/05/07 21:42:54 jason Exp 
+ *	OpenBSD: pcidevs,v 1.140 1999/05/09 07:10:44 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1095,7 +1095,7 @@
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 */
 
-+/* RICOH products */
+/* RICOH products */
 #define	PCI_PRODUCT_RICOH_RF5C465	0x0465		/* 5C465 PCI-CardBus */
 #define	PCI_PRODUCT_RICOH_RF5C466	0x0466		/* 5C466 PCI-CardBus */
 #define	PCI_PRODUCT_RICOH_RF5C475	0x0475		/* 5C475 PCI-CardBus */
@@ -1208,7 +1208,7 @@
 /* Toshiba (2nd ID) products */
 #define	PCI_PRODUCT_TOSHIBA2_THB	0x0601		/* Host-PCI */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 CardBus-PCI */
-#define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x060a		/* ToPIC95B PCI-CardBus */
+#define	PCI_PRODUCT_TOSHIBA2_ToPIC95B	0x060a		/* ToPIC95B PCI-CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC97	0x060f		/* ToPIC97 PCI-CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_TFIRO	0x0701		/* PCI-FIRO */
 

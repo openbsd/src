@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.139 1999/05/07 21:42:54 jason Exp 
+ *	OpenBSD: pcidevs,v 1.140 1999/05/09 07:10:44 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2715,7 +2715,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ToPIC95 CardBus-PCI",
 	},
 	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B,
 	    0,
 	    "Toshiba (2nd ID)",
 	    "ToPIC95B PCI-CardBus",
