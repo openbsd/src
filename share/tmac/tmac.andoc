@@ -30,16 +30,20 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)tmac.andoc	5.6 (Berkeley) 8/5/91
-.\"	$Header: /home/cvs/src/share/tmac/tmac.andoc,v 1.1.1.1 1995/10/18 08:44:50 deraadt Exp $
+.\"	@(#)tmac.andoc	8.1 (Berkeley) 6/30/93
+.\"
+.\" If -mdoc macros, source tmac.mdoc
+.\" If -man macros, check to see if groff or troff/nroff is being used
 .\"
 .de Dd
-.rm Dd
-.so /usr/share/tmac/tmac.doc
-.Dd "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6" "\\$7" "\\$8"
+.rn Dd xX
+.so /usr/share/tmac/mdoc/doc
+.Dd \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8
+.rm xX
 ..
 .de TH
-.rm TH
+.rn TH xX
 .so /usr/share/tmac/tmac.an.old
 .TH "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6" "\\$7" "\\$8"
+.rm xX
 ..
