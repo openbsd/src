@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.7 1999/10/02 18:33:56 deraadt Exp $
+ *	$Id: scp.c,v 1.8 1999/10/02 19:18:22 deraadt Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.7 1999/10/02 18:33:56 deraadt Exp $");
+RCSID("$Id: scp.c,v 1.8 1999/10/02 19:18:22 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -61,6 +61,7 @@ static struct timeval start;
 unsigned long statbytes = 0;
 unsigned long totalbytes = 0;
 void progressmeter(int);
+int getttywidth(void);
 
 /* This is set to non-zero to enable verbose mode. */
 int verbose = 0;
@@ -960,7 +961,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.7 1999/10/02 18:33:56 deraadt Exp $
+ *	$Id: scp.c,v 1.8 1999/10/02 19:18:22 deraadt Exp $
  */
 
 char *
@@ -1051,7 +1052,8 @@ lostconn(signo)
 	exit(1);
 }
 
-void alarmtimer(int wait)
+void
+alarmtimer(int wait)
 {
    struct itimerval itv;
 
@@ -1061,12 +1063,14 @@ void alarmtimer(int wait)
    setitimer(ITIMER_REAL, &itv, NULL);
 }
 
-static void updateprogressmeter(void)
+void
+updateprogressmeter(void)
 {
 	progressmeter(0);
 }
 
-void progressmeter(int flag)
+void
+progressmeter(int flag)
 {
 	static const char prefixes[] = " KMGTP";
 	static struct timeval lastupdate;
@@ -1153,7 +1157,8 @@ void progressmeter(int flag)
 	fflush(stdout);
 }
 
-int getttywidth(void)
+int
+getttywidth(void)
 {
 	struct winsize winsize;
 

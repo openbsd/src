@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.8 1999/10/01 22:23:48 deraadt Exp $");
+RCSID("$Id: servconf.c,v 1.9 1999/10/02 19:18:22 deraadt Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -298,7 +298,6 @@ void read_server_config(ServerOptions *options, const char *filename)
 
 	case sHostKeyFile:
 	  charptr = &options->host_key_file;
-	parse_pathname:
 	  cp = strtok(NULL, WHITESPACE);
 	  if (!cp)
 	    {
