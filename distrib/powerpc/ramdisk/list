@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.18 2001/03/24 01:17:50 drahn Exp $
+#	$OpenBSD: list,v 1.19 2001/04/17 05:49:03 drahn Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -17,7 +17,7 @@ LINK	instbin			bin/hostname
 LINK	instbin			bin/ln
 LINK	instbin			bin/ls
 LINK	instbin			bin/mkdir
-LINK	instbin			bin/mt
+LINK	instbin			bin/mt bin/eject
 LINK	instbin			bin/mv
 LINK	instbin			bin/pax bin/tar bin/cpio
 LINK	instbin			bin/rm
