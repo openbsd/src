@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.1 1998/12/05 17:25:55 mickey Exp $	*/
+/*	$OpenBSD: profile.h,v 1.2 2003/01/30 05:38:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,13 +35,9 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#define	_MCOUNT_DECL static __inline void _mcount
+#define	_MCOUNT_DECL void _mcount
 
-#define	MCOUNT \
-void									\
-mcount()								\
-{									\
-}
+#define	MCOUNT
 
 #ifdef _KERNEL
 /*
