@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 1997/11/07 08:11:44 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 1998/03/04 10:58:11 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.96 1997/09/14 19:20:48 pk Exp $ */
 
 /*
@@ -757,7 +757,7 @@ sortm(mp, n)
 
 /*
  * For our convenience, vm_page.c implements:
- *       pmap_startup(), pmap_steal_memory()
+ *       vm_bootstrap_steal_memory()
  * using the functions:
  *       pmap_virtual_space(), pmap_free_pages(), pmap_next_page(),
  * which are much simpler to implement.

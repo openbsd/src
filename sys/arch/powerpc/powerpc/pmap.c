@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 1997/01/21 17:00:10 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 1998/03/04 10:58:16 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ avail_end = npgs * NBPG;
 	ptab_mask = ptab_cnt - 1;
 	
 	/*
-	 * We cannot do pmap_steal_memory here,
+	 * We cannot do vm_bootstrap_steal_memory here,
 	 * since we don't run with translation enabled yet.
 	 */
 	s = sizeof(struct pte_ovtab) * ptab_cnt;
