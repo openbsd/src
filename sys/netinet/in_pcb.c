@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.18 1997/08/09 23:36:26 millert Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.19 1997/11/30 06:10:43 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -410,8 +410,9 @@ in_pcbconnect(v, nam)
 	    inp->inp_lport) != 0)
 		return (EADDRINUSE);
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
-		if (inp->inp_lport == 0)
-			(void)in_pcbbind(inp, (struct mbuf *)0);
+		if (inp->inp_lport == 0 &&
+		    in_pcbbind(inp, (struct mbuf *)0) == EADDRNOTAVAIL)
+			return (EADDRNOTAVAIL);
 		inp->inp_laddr = ifaddr->sin_addr;
 	}
 	inp->inp_faddr = sin->sin_addr;
