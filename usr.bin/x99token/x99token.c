@@ -1,3 +1,5 @@
+/*	$OpenBSD: x99token.c,v 1.6 2003/06/13 17:27:41 millert Exp $	*/
+
 /*
  * X9.9 calculator
  * This software is provided AS IS with no express or implied warranty
