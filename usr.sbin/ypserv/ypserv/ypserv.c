@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.17 2001/12/01 23:27:24 miod Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.18 2001/12/05 10:02:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.17 2001/12/01 23:27:24 miod Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.18 2001/12/05 10:02:16 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -80,14 +80,13 @@ int	usedns = FALSE;
 char   *progname = "ypserv";
 char   *aclfile = NULL;
 
-void	sig_child();
-void	sig_hup();
+void	sig_child(int);
+void	sig_hup(int);
+volatile sig_atomic_t wantsighup;
 
 extern	int __svc_fdsetsize;
 extern	fd_set *__svc_fdset;
 extern	void svc_getreqset2 __P((fd_set *, int));
-
-volatile sig_atomic_t wantsighup;
 
 static
 void _msgout(char* msg)
@@ -103,7 +102,7 @@ void _msgout(char* msg)
 }
 
 static void
-closedown()
+closedown(void)
 {
 	if (_rpcsvcdirty == 0) {
 		extern fd_set *__svc_fdset;
@@ -122,7 +121,7 @@ closedown()
 }
 
 static void
-ypprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
+ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		domainname ypproc_domain_1_arg;
@@ -224,7 +223,7 @@ ypprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 }
 
 static void
-ypprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
+ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		domainname ypproc_domain_2_arg;
@@ -399,16 +398,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register SVCXPRT *transp;
-	int sock;
-	int proto;
+	int usage = 0, xflag = 0, allowv1 = 0, ch, sock, proto;
 	struct sockaddr_in saddr;
 	int asize = sizeof (saddr);
-	int	 usage = 0;
-	int	 xflag = 0;
-	int	 allowv1 = 0;
-	int	 ch;
-	extern	 char *optarg;
+	extern char *optarg;
+	SVCXPRT *transp;
 	
 	while ((ch = getopt(argc, argv, "1a:dx")) != -1)
 		switch (ch) {
@@ -439,14 +433,13 @@ main(argc, argv)
 		exit(1);
 	}
 
-	if (aclfile != NULL) {
+	if (aclfile != NULL)
 		(void)acl_init(aclfile);
-	} else {
+	else
 		(void)acl_securenet(YP_SECURENET_FILE);
-	}
-	if (xflag) {
+
+	if (xflag)
 		exit(1);
-	}
 
 	if (getsockname(0, (struct sockaddr *)&saddr, &asize) == 0) {
 		int ssize = sizeof (int);
@@ -499,7 +492,7 @@ main(argc, argv)
 	(void)signal(SIGHUP, sig_hup);
 	pidfile(NULL);
 
-	if ((_rpcfdtype == 0) || (_rpcfdtype == SOCK_DGRAM)) {
+	if (_rpcfdtype == 0 || _rpcfdtype == SOCK_DGRAM) {
 		transp = svcudp_create(sock);
 		if (transp == NULL) {
 			_msgout("cannot create udp service.");
@@ -523,7 +516,7 @@ main(argc, argv)
 		}
 	}
 
-	if ((_rpcfdtype == 0) || (_rpcfdtype == SOCK_STREAM)) {
+	if (_rpcfdtype == 0 || _rpcfdtype == SOCK_STREAM) {
 		if (_rpcpmstart)
 			transp = svcfd_create(sock, 0, 0);
 		else
@@ -565,7 +558,7 @@ main(argc, argv)
 }
 
 void
-sig_child()
+sig_child(int signo)
 {
 	int save_errno = errno;
 
@@ -580,7 +573,7 @@ sig_child()
  * It's a massive race.
  */
 void
-sig_hup()
+sig_hup(int signo)
 {
 	wantsighup = 1;
 }
