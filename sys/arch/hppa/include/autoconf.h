@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.4 1998/12/29 21:54:12 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.5 1999/01/11 18:15:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -39,6 +39,7 @@ struct confargs {
 	int		ca_mod;		/* module number on the bus */
 	struct iodc_data ca_type;	/* iodc-specific type descrition */
 	hppa_hpa_t	ca_hpa;		/* module HPA */
+	bus_dma_tag_t	ca_dmatag;	/* DMA tag */
 	struct pdc_iodc_read *ca_pdc_iodc_read;
 }; 
 
