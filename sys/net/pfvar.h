@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.181 2004/02/04 10:43:18 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.182 2004/02/10 18:49:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -780,8 +780,8 @@ RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state,
 
 struct pfi_if {
 	char				 pfif_name[IFNAMSIZ];
-        u_int64_t			 pfif_packets[2][2][2];
-        u_int64_t			 pfif_bytes[2][2][2];
+	u_int64_t			 pfif_packets[2][2][2];
+	u_int64_t			 pfif_bytes[2][2][2];
 	u_int64_t			 pfif_addcnt;
 	u_int64_t			 pfif_delcnt;
 	long				 pfif_tzero;
@@ -1181,12 +1181,12 @@ struct pfioc_table {
 #define PFI_FLAG_ALLMASK	0x0003
 
 struct pfioc_iface {
-	char			 pfiio_name[IFNAMSIZ];
-        void                    *pfiio_buffer;
-        int                      pfiio_esize;
-        int                      pfiio_size;
-	int			 pfiio_nzero;
-        int                      pfiio_flags;
+	char	 pfiio_name[IFNAMSIZ];
+	void	*pfiio_buffer;
+	int	 pfiio_esize;
+	int	 pfiio_size;
+	int	 pfiio_nzero;
+	int	 pfiio_flags;
 };
 
 

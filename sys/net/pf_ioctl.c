@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.102 2004/02/09 13:27:50 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.103 2004/02/10 18:49:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -365,7 +365,8 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 	struct pf_anchor	*anchor;
 	int			 i;
 
-	if (ruleset == NULL || ruleset->anchor == NULL || ruleset->tables > 0 ||	    ruleset->topen)
+	if (ruleset == NULL || ruleset->anchor == NULL || ruleset->tables > 0 ||
+	    ruleset->topen)
 		return;
 	for (i = 0; i < PF_RULESET_MAX; ++i)
 		if (!TAILQ_EMPTY(ruleset->rules[i].active.ptr) ||
@@ -2291,7 +2292,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
-			switch(ioe.rs_num) {
+			switch (ioe.rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
 				if (ioe.anchor[0] || ioe.ruleset[0]) {
@@ -2341,7 +2342,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
-			switch(ioe.rs_num) {
+			switch (ioe.rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
 				if (ioe.anchor[0] || ioe.ruleset[0]) {

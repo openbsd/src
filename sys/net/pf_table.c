@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.44 2003/12/31 22:14:42 deraadt Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.45 2004/02/10 18:49:10 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -81,8 +81,8 @@
 	} while (0)
 
 #define SUNION2PF(su, af) (((af)==AF_INET) ?	\
-        (struct pf_addr *)&(su)->sin.sin_addr :	\
-        (struct pf_addr *)&(su)->sin6.sin6_addr)
+    (struct pf_addr *)&(su)->sin.sin_addr :	\
+    (struct pf_addr *)&(su)->sin6.sin6_addr)
 
 #define	AF_BITS(af)		(((af)==AF_INET)?32:128)
 #define	ADDR_NETWORK(ad)	((ad)->pfra_net < AF_BITS((ad)->pfra_af))
@@ -833,10 +833,10 @@ void
 pfr_clean_node_mask(struct pfr_ktable *kt,
     struct pfr_kentryworkq *workq)
 {
-        struct pfr_kentry       *p;
+	struct pfr_kentry       *p;
 
-        SLIST_FOREACH(p, workq, pfrke_workq)
-                pfr_unroute_kentry(kt, p);
+	SLIST_FOREACH(p, workq, pfrke_workq)
+		pfr_unroute_kentry(kt, p);
 }
 
 void
@@ -2043,7 +2043,7 @@ _next_block:
 	}
 	for (;;) {
 		/* we don't want to use a nested block */
-                ke2 = (struct pfr_kentry *)(af == AF_INET ?
+		ke2 = (struct pfr_kentry *)(af == AF_INET ?
 		    rn_match(&pfr_sin, kt->pfrkt_ip4) :
 		    rn_match(&pfr_sin6, kt->pfrkt_ip6));
 		/* no need to check KENTRY_RNF_ROOT() here */
@@ -2073,11 +2073,11 @@ pfr_kentry_byidx(struct pfr_ktable *kt, int idx, int af)
 {
 	struct pfr_walktree	w;
 
-        bzero(&w, sizeof(w));
-        w.pfrw_op = PFRW_POOL_GET;
-        w.pfrw_cnt = idx;
+	bzero(&w, sizeof(w));
+	w.pfrw_op = PFRW_POOL_GET;
+	w.pfrw_cnt = idx;
 
-	switch(af) {
+	switch (af) {
 	case AF_INET:
 		rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
 		return w.pfrw_kentry;
@@ -2093,7 +2093,7 @@ void
 pfr_dynaddr_update(struct pfr_ktable *kt, struct pfi_dynaddr *dyn)
 {
 	struct pfr_walktree	w;
-	int 			s;
+	int			s;
 
 	bzero(&w, sizeof(w));
 	w.pfrw_op = PFRW_DYNADDR_UPDATE;

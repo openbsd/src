@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.421 2004/02/04 10:43:18 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.422 2004/02/10 18:49:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -524,7 +524,7 @@ pf_find_state_all(struct pf_state *key, u_int8_t tree, int *more)
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	switch(tree) {
+	switch (tree) {
 	case PF_LAN_EXT:
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
 			s = RB_FIND(pf_state_tree_lan_ext,
@@ -765,7 +765,8 @@ pf_src_tree_remove_state(struct pf_state *s)
 		if (--s->src_node->states <= 0) {
 			timeout = s->rule.ptr->timeout[PFTM_SRC_NODE];
 			if (!timeout)
-				timeout = pf_default_rule.timeout[PFTM_SRC_NODE];
+				timeout =
+				    pf_default_rule.timeout[PFTM_SRC_NODE];
 			s->src_node->expire = time.tv_sec + timeout;
 		}
 	}
@@ -773,7 +774,8 @@ pf_src_tree_remove_state(struct pf_state *s)
 		if (--s->nat_src_node->states <= 0) {
 			timeout = s->rule.ptr->timeout[PFTM_SRC_NODE];
 			if (!timeout)
-				timeout = pf_default_rule.timeout[PFTM_SRC_NODE];
+				timeout =
+				    pf_default_rule.timeout[PFTM_SRC_NODE];
 			s->nat_src_node->expire = time.tv_sec + timeout;
 		}
 	}
@@ -2251,7 +2253,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, struct pf_pdesc *pd)
 		saddr = pd->dst;
 		daddr = pd->src;
 	}
-	switch(pd->af) {
+	switch (pd->af) {
 	case AF_INET:
 		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
 		if (inp == NULL) {
@@ -2418,13 +2420,15 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 	switch (s->af) {
 #ifdef INET
 	case AF_INET:
-		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, &s->nat_src_node);
+		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL,
+		    &s->nat_src_node);
 		s->rt_kif = r->rpool.cur->kif;
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, &s->nat_src_node);
+		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL,
+		    &s->nat_src_node);
 		s->rt_kif = r->rpool.cur->kif;
 		break;
 #endif /* INET6 */
@@ -2773,8 +2777,8 @@ cleanup:
 			mss = pf_calc_mss(daddr, af, mss);
 			s->src.mss = mss;
 			pf_send_tcp(r, af, daddr, saddr, th->th_dport,
-			    th->th_sport, s->src.seqhi,
-			    ntohl(th->th_seq) + 1, TH_SYN|TH_ACK, 0, s->src.mss, 0);
+			    th->th_sport, s->src.seqhi, ntohl(th->th_seq) + 1,
+			    TH_SYN|TH_ACK, 0, s->src.mss, 0);
 			return (PF_SYNPROXY_DROP);
 		}
 	}
@@ -3731,7 +3735,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				(*state)->dst.seqhi = arc4random();
 			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
 			    &dst->addr, src->port, dst->port,
-			    (*state)->dst.seqhi, 0, TH_SYN, 0, (*state)->src.mss, 0);
+			    (*state)->dst.seqhi, 0, TH_SYN, 0,
+			    (*state)->src.mss, 0);
 			return (PF_SYNPROXY_DROP);
 		} else if (((th->th_flags & (TH_SYN|TH_ACK)) !=
 		    (TH_SYN|TH_ACK)) ||
@@ -4382,7 +4387,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				dst = &(*state)->dst;
 			}
 
-			if (src->wscale && dst->wscale && !(th.th_flags & TH_SYN))
+			if (src->wscale && dst->wscale &&
+			    !(th.th_flags & TH_SYN))
 				dws = dst->wscale & PF_WSCALE_MASK;
 			else
 				dws = 0;
@@ -4785,7 +4791,8 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 			}
 			return (NULL);
 		}
-		if (m->m_pkthdr.len < off + len || ntohs(h->ip_len) < off + len) {
+		if (m->m_pkthdr.len < off + len ||
+		    ntohs(h->ip_len) < off + len) {
 			ACTION_SET(actionp, PF_DROP);
 			REASON_SET(reasonp, PFRES_SHORT);
 			return (NULL);
@@ -5155,7 +5162,8 @@ bad:
  * returns 0 when the checksum is valid, otherwise returns 1.
  */
 int
-pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p, sa_family_t af)
+pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
+    sa_family_t af)
 {
 	u_int16_t flag_ok, flag_bad;
 	u_int16_t sum;

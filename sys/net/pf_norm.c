@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.78 2004/01/16 21:15:42 mcbride Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.79 2004/02/10 18:49:10 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -374,7 +374,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 
 	if (frep != NULL &&
 	    FR_IP_OFF(frep) + ntohs(frep->fr_ip->ip_len) - frep->fr_ip->ip_hl *
-	        4 > off)
+	    4 > off)
 	{
 		u_int16_t	precut;
 
@@ -638,8 +638,10 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 				h = mtod(m, struct ip *);
 
 
-				KASSERT((int)m->m_len == ntohs(h->ip_len) - precut);
-				h->ip_off = htons(ntohs(h->ip_off) + (precut >> 3));
+				KASSERT((int)m->m_len ==
+				    ntohs(h->ip_len) - precut);
+				h->ip_off = htons(ntohs(h->ip_off) +
+				    (precut >> 3));
 				h->ip_len = htons(ntohs(h->ip_len) - precut);
 			} else {
 				hosed++;
@@ -693,7 +695,8 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 					m->m_pkthdr.len = plen;
 				}
 				h = mtod(m, struct ip *);
-				KASSERT((int)m->m_len == ntohs(h->ip_len) - aftercut);
+				KASSERT((int)m->m_len ==
+				    ntohs(h->ip_len) - aftercut);
 				h->ip_len = htons(ntohs(h->ip_len) - aftercut);
 			} else {
 				hosed++;
