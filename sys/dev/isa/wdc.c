@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.28 1998/04/28 05:41:08 angelos Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.29 1998/07/05 07:20:02 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -68,6 +68,8 @@
 #include <dev/isa/wdreg.h>
 #include <dev/isa/wdlink.h>
 
+#include "wdc.h"
+
 #include "atapibus.h"
 #if NATAPIBUS > 0
 #include <dev/atapi/atapilink.h>
@@ -94,9 +96,17 @@ int	wdcprint	__P((void *, const char *));
 void	wdcattach	__P((struct device *, struct device *, void *));
 int	wdcintr		__P((void *));
 
-struct cfattach wdc_ca = {
+#if NWDC_ISA
+struct cfattach wdc_isa_ca = {
 	sizeof(struct wdc_softc), wdcprobe, wdcattach
 };
+#endif
+
+#if NWDC_ISAPNP
+struct cfattach wdc_isapnp_ca = {
+	sizeof(struct wdc_softc), wdcprobe, wdcattach
+};
+#endif
 
 struct cfdriver wdc_cd = {
 	NULL, "wdc", DV_DULL
@@ -137,6 +147,14 @@ static int wdc_nxfer;
 #define WDDEBUG_PRINT(args)
 #endif
 
+/* Macro for determining bus type. */
+#if NWDC_ISAPNP
+#define IS_ISAPNP(parent) \
+	!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isapnp")
+#else
+#define IS_ISAPNP(parent) 0
+#endif
+
 int
 wdcprobe(parent, match, aux)
 	struct device *parent;
@@ -146,6 +164,7 @@ wdcprobe(parent, match, aux)
 	bus_space_handle_t ioh;
 	struct wdc_softc *wdc = match;
 	struct isa_attach_args *ia = aux;
+	int err;
 
 #if NISADMA == 0
 	if (ia->ia_drq != DRQUNK) {
@@ -155,33 +174,31 @@ wdcprobe(parent, match, aux)
 #endif
 
 	wdc->sc_iot = iot = ia->ia_iot;
-	if (bus_space_map(iot, ia->ia_iobase, 8, 0, &ioh))
-		return 0;
+	if (IS_ISAPNP(parent)) {
+		ioh = ia->ia_ioh;
+	} else {
+		if (bus_space_map(iot, ia->ia_iobase, 8, 0, &ioh))
+			return 0;
+	}
 	wdc->sc_ioh = ioh;
 
 	/* Check if we have registers that work. */
-	/* Error register not writable, */
-	bus_space_write_1(iot, ioh, wd_error, 0x5a);
-	/* but all of cyl_lo are. */
 	bus_space_write_1(iot, ioh, wd_cyl_lo, 0xa5);
-	if (bus_space_read_1(iot, ioh, wd_error) == 0x5a ||
-	    bus_space_read_1(iot, ioh, wd_cyl_lo) != 0xa5) {
+	if (bus_space_read_1(iot, ioh, wd_cyl_lo) == 0xff) {
 		/*
 		 * Test for a controller with no IDE master, just one
 		 * ATAPI device. Select drive 1, and try again.
 		 */
 		bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | 0x10);
-		bus_space_write_1(iot, ioh, wd_error, 0x5a);
 		bus_space_write_1(iot, ioh, wd_cyl_lo, 0xa5);
-		if (bus_space_read_1(iot, ioh, wd_error) == 0x5a ||
-		    bus_space_read_1(iot, ioh, wd_cyl_lo) != 0xa5)
+		if (bus_space_read_1(iot, ioh, wd_cyl_lo) == 0xff)
 			goto nomatch;
 		wdc->sc_flags |= WDCF_ONESLAVE;
 	}
 
 	if (wdcreset(wdc, WDCRESET_SILENT) != 0) {
 		/*
-		 * if the reset failed,, there is no master. test for ATAPI
+		 * If the reset failed, there is no master. test for ATAPI
 		 * signature on the slave device. If no ATAPI slave, wait 5s
 		 * and retry a reset.
 		 */
@@ -211,6 +228,21 @@ wdcprobe(parent, match, aux)
 	/* Wait for command to complete. */
 	if (wait_for_unbusy(wdc) < 0)
 		goto nomatch;
+
+	/* See if the drive(s) are alive. */
+	err = bus_space_read_1(iot, ioh, wd_error);
+	if (err && (err != 0x01)) {
+		if (err & 0x80) {
+			/* Select drive 1. */
+			bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | 0x10);
+			(void) wait_for_unbusy(wdc);
+		
+			err = bus_space_read_1(iot, ioh, wd_error);
+			if ((err != 0x01) && (err != 0x81))
+				goto nomatch;
+		} else
+			goto nomatch;
+	}
 
 	ia->ia_iosize = 8;
 	ia->ia_msize = 0;
@@ -1191,7 +1223,7 @@ wdc_atapi_get_params(ab_link, drive, id)
 	wdcbit_bucket(wdc, excess);
 
  end:	/* Restart the queue. */
-	WDDEBUG_PRINT(("wdcstart from wdc_atapi_get_parms flags %d\n",
+	WDDEBUG_PRINT(("wdcstart from wdc_atapi_get_params flags %d\n",
 	    wdc->sc_flags));
 	wdc->sc_flags &= ~WDCF_ACTIVE;
 	wdcstart(wdc);
@@ -1650,7 +1682,6 @@ wdcwait(wdc, mask)
 		wdc->sc_status = status = bus_space_read_1(iot, ioh,
 		    wd_status);
 		/*
-		 * XXX
 		 * If a single slave ATAPI device is attached, it may
 		 * have released the bus. Select it and try again.
 		 */
