@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.37 1998/03/17 10:55:24 deraadt Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.38 1998/06/03 18:50:45 deraadt Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -382,31 +382,32 @@ struct cfattach ed_pci_ca = {
 	sizeof(struct ed_softc), ed_pci_match, ed_pci_attach
 };
 
+static struct ed_pci_devs {
+	pci_vendor_id_t vendor;
+	pci_product_id_t product;
+} ed_pci_devs[] = {
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029 },
+	{ PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F },
+	{ PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940 },
+	{ PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000 },
+	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_COMPEXE },
+	{ PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE },
+	{ PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926 },
+};
+
 int
 ed_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
 	struct pci_attach_args *pa = aux;
-
-	/* We don't check the vendor here since many make NE2000 clones */
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8029) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_WINBOND_W89C940F) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND2 &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_WINBOND2_W89C940) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETVIN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETVIN_NV5000) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPEX &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPEX_COMPEXE) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_KTI &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_KTI_KTIE) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SURECOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SURECOM_NE34) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT86C926))
-		return (1);
+	int i;
+	
+	for (i = 0; i < sizeof(ed_pci_devs)/sizeof(ed_pci_devs[0]); i++)
+		if (ed_pci_devs[i].vendor == PCI_VENDOR(pa->pa_id) &&
+		    ed_pci_devs[i].product == PCI_PRODUCT(pa->pa_id))
+			return (1);
 	return (0);
 }
 
@@ -443,8 +444,6 @@ ed_pci_attach(parent, self, aux)
 		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
-
-	printf(": NE2000 compatible PCI ethernet controller");
 
 	sc->asic_base = asicbase = ED_NOVELL_ASIC_OFFSET;
 	sc->nic_base = nicbase = ED_NOVELL_NIC_OFFSET;
