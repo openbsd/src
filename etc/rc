@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.32 1997/04/15 09:26:47 deraadt Exp $
+#	$OpenBSD: rc,v 1.33 1997/04/16 05:48:27 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -202,8 +202,9 @@ if [ -f /etc/ptmp ]; then
 	'password file may be incorrect -- /etc/ptmp exists'
 fi
 
-. /etc/rc.securelevel
+test -f /etc/rc.securelevel && . /etc/rc.securelevel
 if [ X${securelevel} != X"" ]; then
+	echo -n 'setting kernel security level: '
 	sysctl -w kern.securelevel=${securelevel}
 fi
 
