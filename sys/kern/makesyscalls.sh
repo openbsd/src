@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.9 2002/03/14 01:27:04 millert Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.10 2002/03/14 23:44:37 millert Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -350,10 +350,10 @@ function putent(nodefs, compatwrap) {
 	if (nodefs != "INDIR") {
 		prototype = "(struct proc *, void *, register_t *)"
 		if (compatwrap == "")
-			printf("int\t%s\t%s;\n", funcname,
+			printf("int\t%s%s;\n", funcname,
 			    prototype) > sysprotos
 		else
-			printf("int\t%s_%s\t%s;\n", compatwrap, funcname,
+			printf("int\t%s_%s%s;\n", compatwrap, funcname,
 			    prototype) > sysprotos
 	}
 
