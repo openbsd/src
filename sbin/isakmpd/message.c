@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.91 2004/12/10 09:00:48 markus Exp $	 */
+/* $OpenBSD: message.c,v 1.92 2004/12/14 19:03:16 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1456,8 +1456,9 @@ message_recv(struct message *msg)
 	}
 #if defined (USE_NAT_TRAVERSAL)
 	/*
-	 * Update the isakmp transport, but only in phase 1,
-	 * since phase 2 SAs might use this transport
+	 * NAT-T may have switched ports for us. We need to replace the
+	 * old ISAKMP SA transport here with one that contains the proper
+	 * (i.e translated) ports.
 	 */
 	if (msg->isakmp_sa && msg->exchange->phase == 1) {
 		t = msg->isakmp_sa->transport;
