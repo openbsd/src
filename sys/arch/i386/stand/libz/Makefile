@@ -1,15 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 1997/03/31 23:06:33 mickey Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/04/17 22:34:19 weingart Exp $
+#	$NetBSD: Makefile,v 1.2 1997/01/22 01:36:30 cgd Exp $
 
-CFLAGS	+=$(SACFLAGS)
-.include "../Makefile.inc"
-
-S	= ${.CURDIR}/../../../..
+S=${.CURDIR}/../../../..
 ZDST=${.OBJDIR}
-.include "${S}/lib/libz/Makefile.inc"
 
-all: ${ZLIB}
+.PATH: ${S}/lib/libz
 
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-.include <bsd.sys.mk>
-
+.include "${S}/lib/libz/Makefile"
