@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.2 2004/07/05 19:39:06 deraadt Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.3 2004/07/05 19:40:38 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -67,7 +67,6 @@ hotplug_device_attach(enum devclass class, char *name)
 	he.he_type = HOTPLUG_DEVAT;
 	he.he_devclass = class;
 	strlcpy(he.he_devname, name, sizeof(he.he_devname));
-
 	hotplug_put_event(&he);
 }
 
@@ -79,7 +78,6 @@ hotplug_device_detach(enum devclass class, char *name)
 	he.he_type = HOTPLUG_DEVDT;
 	he.he_devclass = class;
 	strlcpy(he.he_devname, name, sizeof(he.he_devname));
-
 	hotplug_put_event(&he);
 }
 
@@ -100,20 +98,22 @@ hotplug_put_event(struct hotplug_event *he)
 	wakeup(&evqueue);
 	selwakeup(&hotplug_sel);
 	KNOTE(&hotplug_sel.si_note, 0);
-
 	return (0);
 }
 
 int
 hotplug_get_event(struct hotplug_event *he)
 {
+	int s;
+
 	if (evqueue_count == 0)
 		return (1);
 
+	s = splbio();
 	*he = evqueue[evqueue_tail];
 	evqueue_tail = EVQUEUE_NEXT(evqueue_tail);
 	evqueue_count--;
-
+	splx(s);
 	return (0);
 }
 
@@ -127,7 +127,6 @@ hotplugopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (opened)
 		return (EBUSY);
 	opened = 1;
-
 	return (0);
 }
 
@@ -139,7 +138,6 @@ hotplugclose(dev_t dev, int flag, int mode, struct proc *p)
 	while (hotplug_get_event(&he) == 1)
 		;
 	opened = 0;
-
 	return (0);
 }
 
@@ -153,18 +151,14 @@ hotplugread(dev_t dev, struct uio *uio, int flags)
 		return (EINVAL);
 
 again:
-	if (hotplug_get_event(&he) == 0) {
+	if (hotplug_get_event(&he) == 0)
 		return (uiomove(&he, sizeof(he), uio));
-	}
-
-	if (flags & IO_NDELAY) {
+	if (flags & IO_NDELAY)
 		return (EAGAIN);
-	}
 
 	error = tsleep(evqueue, PRIBIO | PCATCH, "htplev", 0);
-	if (error) {
+	if (error)
 		return (error);
-	}
 	goto again;
 }
 
@@ -217,7 +211,6 @@ hotplugkqfilter(dev_t dev, struct knote *kn)
 	s = splbio();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
-
 	return (0);
 }
 
