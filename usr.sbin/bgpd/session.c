@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.21 2003/12/20 21:26:48 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.22 2003/12/20 21:31:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -64,7 +64,7 @@ int	session_connect(struct peer *);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
 void	session_update(struct peer *);
-void	session_notification(struct peer *, u_int8_t, u_int8_t, u_char *,
+void	session_notification(struct peer *, u_int8_t, u_int8_t, void *,
 	    ssize_t);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
@@ -826,7 +826,7 @@ session_update(struct peer *peer)
 
 void
 session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
-    u_char *data, ssize_t datalen)
+    void *data, ssize_t datalen)
 {
 	struct msg_header	 msg;
 	struct buf		*buf;
@@ -957,8 +957,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 					default:	/* cannot happen */
 						session_notification(peer,
 						    ERR_HEADER, ERR_HDR_TYPE,
-						    (u_char *)&peer->rbuf->type,
-						    1);
+						    &peer->rbuf->type, 1);
 						logit(LOG_CRIT,
 						    "received message with "
 						    "unknown type %u",
@@ -1013,7 +1012,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		log_errx(peer, "received message: illegal length: %u byte",
 		    *len);
 		session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
-		    (u_char *)&olen, sizeof(olen));
+		    &olen, sizeof(olen));
 		return (-1);
 	}
 
@@ -1023,7 +1022,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			log_errx(peer,
 			    "received OPEN: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
-			    (u_char *)&olen, sizeof(olen));
+			    &olen, sizeof(olen));
 			return (-1);
 		}
 		break;
@@ -1033,7 +1032,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			    "received NOTIFICATION: illegal len: %u byte",
 			    *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
-			    (u_char *)&olen, sizeof(olen));
+			    &olen, sizeof(olen));
 			return (-1);
 		}
 		break;
@@ -1042,7 +1041,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			log_errx(peer,
 			    "received UPDATE: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
-			    (u_char *)&olen, sizeof(olen));
+			    &olen, sizeof(olen));
 			return (-1);
 		}
 		break;
@@ -1051,14 +1050,14 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			log_errx(peer,
 			    "received KEEPALIVE: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
-			    (char *)&olen, sizeof(olen));
+			    &olen, sizeof(olen));
 			return (-1);
 		}
 		break;
 	default:
 		log_errx(peer, "received msg with unknown type %u", *type);
 		session_notification(peer, ERR_HEADER, ERR_HDR_TYPE,
-		    (u_char *)type, 1);
+		    type, 1);
 		return (-1);
 	}
 	return (0);
@@ -1085,8 +1084,7 @@ parse_open(struct peer *peer)
 			log_errx(peer, "peer wants unrecognized version %u",
 			    version);
 			session_notification(peer, ERR_OPEN,
-			    ERR_OPEN_VERSION, (u_char *)&version,
-			    sizeof(version));
+			    ERR_OPEN_VERSION, &version, sizeof(version));
 		return (-1);
 	}
 
