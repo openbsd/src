@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.86 1999/04/20 18:06:40 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.87 1999/04/20 18:09:37 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.86 1999/04/20 18:06:40 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.87 1999/04/20 18:09:37 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -772,6 +772,7 @@ READLINK?=	/usr/bin/readlink
 RM?=		/bin/rm
 RMDIR?=		/bin/rmdir
 SED?=		/usr/bin/sed
+FIND?=      /usr/bin/find
 
 # XXX ${SETENV} is needed in front of var=value lists whenever the next
 # command is expanded from a variable, as this could be a shell construct
@@ -1491,7 +1492,7 @@ package-links:
 
 .if !target(delete-package-links)
 delete-package-links:
-	@find ${PACKAGES} -type l -name ${PKGNAME}${PKG_SUFX}|xargs ${RM} -f
+	@${FIND} ${PACKAGES} -type l -name ${PKGNAME}${PKG_SUFX}|xargs ${RM} -f
 .endif
 
 .if !target(delete-package)
@@ -1935,7 +1936,7 @@ plist: install
 	@${MKDIR} ${PKGDIR}
 	@(dirs=""; \
 	  ld=""; \
-	  for f in `find ${PREFIX} -newer ${INSTALL_PRE_COOKIE} -print 2> /dev/null`; do \
+	  for f in `${FIND} ${PREFIX} -newer ${INSTALL_PRE_COOKIE} -print 2> /dev/null`; do \
 	   ff=`${ECHO} $$f | ${SED} -e 's|^${PREFIX}/||'`; \
 	   if [ -d $$f -a ! -h $$f ]; then dirs="$$ff $$dirs"; \
 	   else \
