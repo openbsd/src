@@ -1,4 +1,4 @@
-/*	$OpenBSD: m882xx.h,v 1.10 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.4 2001/12/22 07:35:43 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University

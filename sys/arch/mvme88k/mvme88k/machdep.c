@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.78 2001/12/20 06:43:23 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.79 2001/12/22 07:35:43 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -91,7 +91,7 @@
 #include <machine/kcore.h>
 #include <machine/locore.h>
 #include <machine/m88100.h>  		/* DMT_VALID        */
-#include <machine/m882xx.h>  		/* CMMU stuff       */
+#include <machine/m8820x.h>  		/* CMMU stuff       */
 #include <machine/prom.h>
 #include <machine/reg.h>
 #include <machine/trap.h>

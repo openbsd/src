@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.17 2001/12/19 07:04:41 smurph Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.18 2001/12/22 07:35:43 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -68,7 +68,7 @@
 #include <machine/cpus.h>
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
-#include <machine/m882xx.h>
+#include <machine/m8820x.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/

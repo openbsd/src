@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.21 2001/12/16 23:49:46 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.22 2001/12/22 07:35:43 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -37,7 +37,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/m882xx.h>		 /* CMMU defs		        */
+#include <machine/m8820x.h>		 /* CMMU defs		        */
 #include <machine/trap.h>		 /* current_thread()            */
 #include <machine/db_machdep.h>		 /* local ddb stuff             */
 #include <machine/bugio.h>		 /* bug routines 		*/

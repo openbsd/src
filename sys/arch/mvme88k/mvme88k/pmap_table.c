@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.12 2001/12/19 07:04:42 smurph Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.13 2001/12/22 07:35:43 smurph Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include <machine/board.h>
 #include <sys/param.h>
-#include <machine/m882xx.h>		/* CMMU stuff */
+#include <machine/m8820x.h>		/* CMMU stuff */
 #include <uvm/uvm_extern.h>
 #include <machine/pmap_table.h>		/* pmap_table.h*/
 

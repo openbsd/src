@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 2001/12/19 07:04:42 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.56 2001/12/22 07:35:43 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -63,7 +63,7 @@
 #include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu_number.h>
-#include <machine/m882xx.h>		/* CMMU stuff */
+#include <machine/m8820x.h>		/* CMMU stuff */
 #include <machine/pmap_table.h>
 #include <machine/pte.h>
 
