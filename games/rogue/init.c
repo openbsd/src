@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.8 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.9 2004/01/21 19:12:13 espie Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: init.c,v 1.8 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: init.c,v 1.9 2004/01/21 19:12:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,8 @@ boolean save_is_interactive = 1;
 boolean ask_quit = 1;
 boolean no_skull = 0;
 boolean passgo = 0;
-char *error_file = "rogue.esave";
-char *byebye_string = "Okay, bye bye!";
+const char *error_file = "rogue.esave";
+const char *byebye_string = "Okay, bye bye!";
 gid_t gid, egid;
 
 int
@@ -180,7 +180,7 @@ player_init()
 
 void
 clean_up(estr)
-	char *estr;
+	const char *estr;
 {
 	if (save_is_interactive) {
 		if (init_curses) {
@@ -341,7 +341,8 @@ env_get_value(s, e, add_blank)
 
 void
 init_str(str, dflt)
-	char **str, *dflt;
+	char **str;
+	const char *dflt;
 {
 	if (!(*str)) {
 		/* room.c:edit_opts() depends on length MAX_OPT_LEN + 2 */

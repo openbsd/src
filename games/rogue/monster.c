@@ -1,4 +1,4 @@
-/*	$OpenBSD: monster.c,v 1.6 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: monster.c,v 1.7 2004/01/21 19:12:13 espie Exp $	*/
 /*	$NetBSD: monster.c,v 1.3 1995/04/22 10:27:45 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: monster.c,v 1.6 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: monster.c,v 1.7 2004/01/21 19:12:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static const char rcsid[] = "$OpenBSD: monster.c,v 1.6 2003/06/03 03:01:41 mille
 object level_monsters;
 boolean mon_disappeared;
 
-char *m_names[] = {
+const char *m_names[] = {
 	"aquator",
 	"bat",
 	"centaur",
@@ -602,7 +602,7 @@ wake_room(rn, entering, row, col)
 	}
 }
 
-char *
+const char *
 mon_name(monster)
 	object *monster;
 {
@@ -830,7 +830,7 @@ char
 gr_obj_char()
 {
 	short r;
-	char *rs = "%!?]=/):*";
+	const char *rs = "%!?]=/):*";
 
 	r = get_rand(0, 8);
 

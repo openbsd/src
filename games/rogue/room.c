@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.7 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: room.c,v 1.8 2004/01/21 19:12:13 espie Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/04/22 10:28:17 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: room.c,v 1.7 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: room.c,v 1.8 2004/01/21 19:12:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -658,7 +658,7 @@ opt_go(i)
 void
 do_shell()
 {
-	char *sh;
+	const char *sh;
 
 	md_ignore_signals();
 	if (!(sh = md_getenv("SHELL"))) {

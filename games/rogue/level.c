@@ -1,4 +1,4 @@
-/*	$OpenBSD: level.c,v 1.6 2003/08/06 21:08:05 millert Exp $	*/
+/*	$OpenBSD: level.c,v 1.7 2004/01/21 19:12:13 espie Exp $	*/
 /*	$NetBSD: level.c,v 1.3 1995/04/22 10:27:37 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)level.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: level.c,v 1.6 2003/08/06 21:08:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: level.c,v 1.7 2004/01/21 19:12:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static const char rcsid[] = "$OpenBSD: level.c,v 1.6 2003/08/06 21:08:05 millert
 short cur_level = 0;
 short max_level = 1;
 short cur_room;
-char *new_level_message = 0;
+const char *new_level_message = 0;
 short party_room = NO_ROOM;
 short r_de;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: move.c,v 1.6 2004/01/21 19:12:13 espie Exp $	*/
 /*	$NetBSD: move.c,v 1.3 1995/04/22 10:27:47 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: move.c,v 1.5 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: move.c,v 1.6 2004/01/21 19:12:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ static const char rcsid[] = "$OpenBSD: move.c,v 1.5 2003/06/03 03:01:41 millert 
 
 short m_moves = 0;
 boolean jump = 0;
-char *you_can_move_again = "you can move again";
+const char *you_can_move_again = "you can move again";
 
 int
 one_move_rogue(dirch, pickup)

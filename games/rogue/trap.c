@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 2004/01/21 19:12:13 espie Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1995/04/22 10:28:35 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: trap.c,v 1.5 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: trap.c,v 1.6 2004/01/21 19:12:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ trap traps[MAX_TRAPS];
 boolean trap_door = 0;
 short bear_trap = 0;
 
-char *trap_strings[TRAPS * 2] = {
+const char *trap_strings[TRAPS * 2] = {
 	"trap door",
 			"you fell down a trap",
 	"bear trap",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.13 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.14 2004/01/21 19:12:13 espie Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -220,8 +220,8 @@ struct id {
 #define next_monster next_object
 
 struct obj {				/* comment is monster meaning */
-	unsigned long m_flags;	/* monster flags */
-	char *damage;			/* damage it does */
+	unsigned long m_flags;		/* monster flags */
+	const char *damage;		/* damage it does */
 	short quantity;			/* hit points to kill */
 	short ichar;			/* 'A' is for aquatar */
 	short kill_exp;			/* exp for killing it */
@@ -447,17 +447,17 @@ struct rogue_time {
 
 object	*alloc_object(void);
 object	*check_duplicate(object *, object *);
-char	*get_ench_color(void);
+const char	*get_ench_color(void);
 object	*get_letter_object(int);
 object	*get_thrown_at_monster(object *, short, short *, short *);
 object	*get_zapped_monster(short, short *, short *);
 object	*gr_monster(object *, int);
 object	*gr_object(void);
-char	*md_getenv(char *);
+char	*md_getenv(const char *);
 char	*md_gln(void);
 char	*md_malloc(int);
-char	*mon_name(object *);
-char	*name_of(const object *);
+const char	*mon_name(object *);
+const char	*name_of(const object *);
 object	*object_at(object *, short, short);
 object	*pick_up(short, short, short *);
 void	add_exp(int, boolean);
@@ -477,7 +477,7 @@ boolean	check_hunger(boolean);
 boolean	check_imitator(object *);
 void	check_message(void);
 int	check_up(void);
-void	clean_up(char *);
+void	clean_up(const char *);
 void	clear_level(void);
 void	cnfs(void);
 int	coin_toss(void);
@@ -515,7 +515,7 @@ void	free_stuff(object *);
 void	freeze(object *);
 int	get_armor_class(const object *);
 int	get_com_id(int *, short);
-int	get_damage(char *, boolean);
+int	get_damage(const char *, boolean);
 void	get_desc(const object *, char *, size_t);
 int	get_dir(short, short, short, short);
 void	get_dir_rc(short, short *, short *, short);
@@ -525,7 +525,7 @@ void	get_food(object *, boolean);
 int	get_hit_chance(object *);
 int	get_input_line(const char *, const char *, char *, size_t, const char *, boolean, boolean);
 char	get_mask_char(unsigned short);
-int	get_number(char *);
+int	get_number(const char *);
 boolean	get_oth_room(short, short *, short *);
 int	get_rand(int, int);
 short	get_room_number(short, short);
@@ -560,7 +560,7 @@ void	id_type(void);
 void	idntfy(void);
 boolean	imitating(short, short);
 int	init(int, char **);
-void	init_str(char **, char *);
+void	init_str(char **, const char *);
 void	inv_armor_weapon(boolean);
 void	inv_rings(void);
 void	inventory(object *, unsigned short);
@@ -582,10 +582,10 @@ void	make_room(short, short, short, short);
 void	make_scroll_titles(void);
 boolean	mask_pack(object *, unsigned short);
 boolean	mask_room(short, short *, short *, unsigned short);
-boolean	md_df(char *);
+boolean	md_df(const char *);
 void	md_exit(int);
 void	md_gct(struct rogue_time *);
-int	md_get_file_id(char *);
+int	md_get_file_id(const char *);
 void	md_gfmt(char *, struct rogue_time *);
 int	md_gseed(void);
 void	md_heed_signals(void);
@@ -623,7 +623,7 @@ void	opt_erase(int);
 void	opt_go(int);
 void	opt_show(int);
 short	pack_count(object *);
-short	pack_letter(char *, unsigned short);
+short	pack_letter(const char *, unsigned short);
 void	party_monsters(int, int);
 short	party_objects(int);
 void	place_at(object *, short, short);
@@ -646,7 +646,7 @@ void	put_scores(const object *, short);
 void	put_stairs(void);
 void	quaff(void);
 void	quit(boolean);
-int	r_index(char *, int, boolean);
+int	r_index(const char *, int, boolean);
 void	rand_around(short, short *, short *);
 int	rand_percent(int);
 void	rand_place(object *);
@@ -670,7 +670,7 @@ void	s_con_mon(object *);
 int	same_col(int, int);
 int	same_row(int, int);
 void	save_game(void);
-void	save_into_file(char *);
+void	save_into_file(const char *);
 void	save_screen(void);
 void	search(short, boolean);
 boolean	seek_gold(object *);
@@ -754,17 +754,17 @@ extern	char	hit_message[HIT_MESSAGE_LEN];
 extern	char	hunger_str[HUNGER_STR_LEN];
 #define LOGIN_NAME_LEN 40
 extern	char	login_name[LOGIN_NAME_LEN];
-extern	char   *byebye_string;
-extern	char   *curse_message;
-extern	char   *error_file;
+extern	const char   *byebye_string;
+extern	const char   *curse_message;
+extern	const char   *error_file;
 extern	char   *fruit;
-extern	char   *m_names[];
+extern	const char   *m_names[];
 extern	const char   *more;
-extern	char   *new_level_message;
+extern	const char   *new_level_message;
 extern	char   *nick_name;
-extern	char   *press_space;
+extern	const char   *press_space;
 extern	char   *save_file;
-extern	char   *you_can_move_again;
+extern	const char   *you_can_move_again;
 extern	long	level_points[];
 extern	short	add_strength;
 extern	short	auto_search;

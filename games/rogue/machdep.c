@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 2004/01/21 19:12:13 espie Exp $	*/
 /*	$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: machdep.c,v 1.9 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: machdep.c,v 1.10 2004/01/21 19:12:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ md_ignore_signals()
 
 int
 md_get_file_id(fname)
-	char *fname;
+	const char *fname;
 {
 	struct stat sbuf;
 
@@ -252,7 +252,7 @@ md_gfmt(fname, rt_buf)
 
 boolean
 md_df(fname)
-	char *fname;
+	const char *fname;
 {
 	if (unlink(fname)) {
 		return(0);
@@ -319,7 +319,7 @@ md_sleep(nsecs)
 
 char *
 md_getenv(name)
-	char *name;
+	const char *name;
 {
 	char *value;
 
