@@ -2,7 +2,7 @@
 .\"	$KTH: DynRootDB.5,v 1.1.2.2 2001/06/10 21:13:14 lha Exp $
 .Dd April 30, 2001
 .Dt DynRootDB 5
-.Os
+.Os Arla
 .Sh NAME
 .Nm DynRootDB
 .Nd AFS cells and database servers
@@ -12,11 +12,9 @@ The file
 lists AFS cells that should appear in the afs root
 .Pa ( /afs )
 when starting
-.Nm arlad
-or
-.Nm arla-cli.
+.Nm afsd .
 .Pp
-Each line in the file should contain one cell.
+Each line in the file should contain one cell, for example:
 .Bd -literal
 stacken.kth.se
 e.kth.se
@@ -26,16 +24,17 @@ it.kth.se
 .Pp
 .Nm
 is read when 
-.Nm arlad
+.Nm afsd
 is started, normally when the system boots.
 .Pp
-If there file
+If
 .Nm
-doesn't exist, then all cells in the CellServDB and dynamically
+doesn't exist, then all cells listed CellServDB and dynamically
 found nodes appear in the afs root.
 .Sh FILES
-.Pa /usr/arla/etc/DynRootDB
+.Pa /etc/afs/DynRootDB
+.Pa /etc/afs/CellServDB
 .Sh SEE ALSO
 .Xr CellServDB 5 ,
-.Xr arlad 8
+.Xr afsd 8
 
