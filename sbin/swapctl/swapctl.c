@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.4 2001/03/09 03:13:48 deraadt Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.5 2001/06/02 03:04:44 miod Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -326,7 +326,8 @@ add_swap(path)
 {
 
 	if (swapctl(SWAP_ON, path, pri) < 0)
-		err(1, "%s", path);
+		if (errno != EBUSY)
+			err(1, "%s", path);
 }
 
 /*
@@ -348,8 +349,20 @@ do_fstab()
 	char	*s;
 	long	priority;
 	struct	stat st;
-	int	isblk;
+	mode_t	rejecttype;
 	int	gotone = 0;
+
+	/*
+	 * Select which mount point types to reject, depending on the
+	 * value of the -t parameter.
+	 */
+	if (tflag != NULL) {
+		if (strcmp(tflag, "blk") == 0)
+			rejecttype = S_IFREG;
+		else if (strcmp(tflag, "noblk") == 0)
+			rejecttype = S_IFBLK;
+	} else
+		rejecttype = 0;
 
 #define PRIORITYEQ	"priority="
 #define NFSMNTPT	"nfsmntpt="
@@ -361,7 +374,6 @@ do_fstab()
 			continue;
 
 		spec = fp->fs_spec;
-		isblk = 0;
 
 		if ((s = strstr(fp->fs_mntops, PRIORITYEQ)) != NULL) {
 			s += sizeof(PRIORITYEQ) - 1;
@@ -376,8 +388,7 @@ do_fstab()
 			 * Skip this song and dance if we're only
 			 * doing block devices.
 			 */
-			if (tflag != NULL &&
-			    strcmp(tflag, "blk") == 0)
+			if (rejecttype == S_IFREG)
 				continue;
 
 			t = strpbrk(s, ",");
@@ -403,29 +414,32 @@ do_fstab()
 			}
 		} else {
 			/*
-			 * Determine blk-ness.
+			 * Determine blk-ness.  Don't even consider a
+			 * mountpoint outside /dev as a block device.
 			 */
+			if (rejecttype == S_IFREG) {
+				if (strncmp("/dev/", spec, 5) != 0)
+					continue;
+			}
 			if (stat(spec, &st) < 0) {
 				warn("%s", spec);
 				continue;
 			}
-			if (S_ISBLK(st.st_mode))
-				isblk = 1;
-		}
-
-		/*
-		 * Skip this type if we're told to.
-		 */
-		if (tflag != NULL) {
-			if (strcmp(tflag, "blk") == 0 && isblk == 0)
+			if ((st.st_mode & S_IFMT) == rejecttype)
 				continue;
-			if (strcmp(tflag, "noblk") == 0 && isblk == 1)
+
+			/*
+			 * Do not allow fancy objects to be swap areas.
+			 */
+			if (!S_ISREG(st.st_mode) &&
+			    !S_ISBLK(st.st_mode))
 				continue;
 		}
 
-		if (swapctl(SWAP_ON, spec, (int)priority) < 0)
-			warn("%s", spec);
-		else {
+		if (swapctl(SWAP_ON, spec, (int)priority) < 0) {
+			if (errno != EBUSY)
+				warn("%s", spec);
+		} else {
 			gotone = 1;
 			printf("%s: adding %s as swap device at priority %d\n",
 			    __progname, fp->fs_spec, (int)priority);
