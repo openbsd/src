@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.7 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.8 2001/10/24 17:33:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -62,8 +62,9 @@
  * This is a PCI shim for the Wavelan wireless network driver.
  * It works with PCI adaptors based on the PLX 9050 and PLX 9052
  * PCI to "dumb bus" bridge chip.  It has been tested with the
- * Global Sun Technology GL24110P02 (aka Linksys WDT11) and is
- * expected to work with the Global Sun GL24110P and Eumitcom WL11000P.
+ * Global Sun Technology GL24110P02 (aka Linksys WDT11), 3Com 3CRWE777A,
+ * and Netgear MA301.  It is also expected to work with the
+ * Global Sun GL24110P and Eumitcom WL11000P.
  *
  * All we do here is handle the PCI match and attach, set up an
  * interrupt handler entry point, and setup the PLX chip for level
@@ -129,6 +130,7 @@ static const struct wi_pci_product {
 	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02 },
 	{ PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A },
+	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301 },
 	{ 0, 0 }
 };
 
