@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.13 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.14 2002/05/10 06:52:03 hugh Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.13 2001/11/19 19:02:15 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.14 2002/05/10 06:52:03 hugh Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -71,6 +71,7 @@ extern int local_passwd(char *, int);
 extern int yp_passwd(char *);
 extern int krb_passwd(int, char **);
 extern int krb5_passwd(int, char **);
+extern int _yp_check(char **);
 void usage(int value);
 
 
@@ -82,7 +83,9 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 	char *username;
+#ifdef	YP
 	int status = 0;
+#endif
 #if defined(KERBEROS) || defined(KERBEROS5)
 	extern char realm[];
 

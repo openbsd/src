@@ -49,6 +49,7 @@
 #include <dlfcn.h>
 #include <util.h>
 #include <err.h>
+#include <des.h>
 #include <kerberosV/krb5.h>
 
 /* RCSID("$KTH: kpasswd.c,v 1.23 2000/12/31 07:48:34 assar Exp $"); */
