@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.30 1997/06/24 02:45:00 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.31 1997/06/28 07:05:22 deraadt Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -290,7 +290,7 @@ struct random_bucket {
 
 /* There is one of these per entropy source */
 struct timer_rand_state {
-	u_long	last_time;
+	u_int	last_time;
 	u_int	last_delta;
 	u_char	dont_count_entropy:1;
 };
@@ -306,7 +306,7 @@ struct rand_event {
 	struct rand_event *re_next;
 	struct timer_rand_state *re_state;
 	u_char re_nbits;
-	u_long re_time;
+	u_int re_time;
 	u_int re_val;
 };
 
@@ -542,7 +542,7 @@ enqueue_randomness(state, val)
 	struct timeval	tv;
 	register struct rand_event *rep;
 	int s;
-	u_long	time;
+	u_int	time;
 
 	rndstats.rnd_enqs++;
 
