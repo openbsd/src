@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.6 2001/11/28 19:47:54 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.7 2002/01/01 22:11:18 jason Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -757,7 +757,6 @@ qe_eint(sc, why)
 	}
 
 	if (why & QE_CR_STAT_CLOSS) {
-		printf("%s: no carrier, link down?\n", sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
 		r |= 1;
 	}
