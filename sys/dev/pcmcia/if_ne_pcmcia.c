@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.25 2000/02/02 18:47:02 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.26 2000/04/19 09:19:43 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -111,6 +111,10 @@ struct ne2000dev {
       0, -1, { 0x00, 0x80, 0xc8 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_RPTI_EP400,
+      0, -1, { 0x00, 0x40, 0x95 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_RPTI_EP401,
       0, -1, { 0x00, 0x40, 0x95 } },
 
@@ -126,6 +130,10 @@ struct ne2000dev {
       PCMCIA_CIS_SVEC_LANCARD,
       0, 0x7f0, { 0x00, 0xc0, 0x6c } },
 
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
+      PCMCIA_CIS_EPSON_EEN10B,
+      0, 0xff0, { 0x00, 0x00, 0x48 } },
+
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_EDIMAX_NE2000,
       0, -1, { 0x00, 0x00, 0xb4 } },
@@ -134,9 +142,13 @@ struct ne2000dev {
       PCMCIA_CIS_CNET_NE2000,
       0, -1, { 0x00, 0x80, 0xad } },
 
-    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
-      PCMCIA_CIS_EPSON_EEN10B,
-      0, 0xff0, { 0x00, 0x00, 0x48 } },
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_BILLIONTON_LNT10TN,
+      0, -1, { 0x00, 0x00, 0x00 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_NDC_ND5100_E,
+      0, -1, { 0x00, 0x80, 0xc6 } },
 
     /*
      * You have to add new entries which contains
@@ -164,6 +176,17 @@ struct ne2000dev {
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_SVEC_PN650TX,
       0, -1, { 0x00, 0xe0, 0x98 } },
+
+    /*
+     * This entry should be here so that above two cards doesn't
+     * match with this.  FNW-3700T won't match above entries due to
+     * MAC address check.
+     */
+#if 0
+    { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
+      PCMCIA_CIS_PLANEX_FNW3700T,
+      0, -1, { 0x00, 0x90, 0xcc } },
+#endif
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
@@ -251,25 +274,35 @@ struct ne2000dev {
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
       0, 0x01c0, { 0x00, 0xa0, 0x0c } },
 
-    { PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
-      PCMCIA_CIS_KINGSTON_KNE_PC2,
-      0, 0x0180, { 0x00, 0xc0, 0xf0 } },
-
     { PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
-
-    { PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
-      PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
-      0, 0x0ff0, { 0x00, 0x00, 0xf4 } },
 
     { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
       PCMCIA_CIS_SOCKET_LP_ETHER_CF,
       0, -1, { 0x00, 0xc0, 0x1b} },
 
+    { PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CFE_10,
+      PCMCIA_CIS_XIRCOM_CFE_10,
+      0, -1, { 0x00, 0x10, 0xa4 } },
+
+#if 0
+    { PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
+      PCMCIA_CIS_MELCO_LPC3_TX, 
+      0, -1, { 0x00, 0x40, 0x26 } },
+#endif
+
     { PCMCIA_VENDOR_DUAL, PCMCIA_PRODUCT_DUAL_NE2000,
       PCMCIA_CIS_DUAL_NE2000,
       0, 0x0ff0, { 0x00, 0xa0, 0x0c } },
+
+    { PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
+      PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
+      0, 0x0ff0, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
+      PCMCIA_CIS_KINGSTON_KNE_PC2,
+      0, 0x0180, { 0x00, 0xc0, 0xf0 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
