@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgsnd.2,v 1.10 2003/02/27 07:55:34 jmc Exp $
+.\"	$OpenBSD: msgsnd.2,v 1.11 2003/06/01 20:25:23 jmc Exp $
 .\"	$NetBSD: msgsnd.2,v 1.2 1997/03/27 08:20:36 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -156,11 +156,11 @@ The system call was interrupted by the delivery of a signal.
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
 .Xr msgrcv 2
+.Sh HISTORY
+Message queues appeared in the first release of AT&T Unix System V.
 .Sh BUGS
 .Ox
 does not define the
 .Er EIDRM
 error value, which should be used
 in the case of a removed message queue.
-.Sh HISTORY
-Message queues appeared in the first release of AT&T Unix System V.

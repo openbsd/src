@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.18 2002/04/08 23:13:10 espie Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.19 2003/06/01 20:25:23 jmc Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -142,7 +142,7 @@ and set with
 .It Dv SO_REUSEPORT Ta "enables duplicate address and port bindings"
 .It Dv SO_KEEPALIVE Ta "enables keep connections alive"
 .It Dv SO_DONTROUTE Ta "enables routing bypass for outgoing messages"
-.It Dv SO_LINGER  Ta "linger on close if data present"
+.It Dv SO_LINGER Ta "linger on close if data present"
 .It Dv SO_BROADCAST Ta "enables permission to transmit broadcast messages"
 .It Dv SO_OOBINLINE Ta "enables reception of out-of-band data in band"
 .It Dv SO_SNDBUF Ta "set buffer size for output"
@@ -330,11 +330,6 @@ this error may also be returned if
 .Fa optlen
 is not in a valid part of the process address space.
 .El
-.Sh COMPATIBILITY
-.Dv SO_PEERCRED
-is not supported, see
-.Xr getpeereid 2
-instead.
 .Sh SEE ALSO
 .Xr connect 2 ,
 .Xr ioctl 2 ,
@@ -343,10 +338,15 @@ instead.
 .Xr socket 2 ,
 .Xr getprotoent 3 ,
 .Xr protocols 5
-.Sh BUGS
-Several of the socket options should be handled at lower levels of the system.
+.Sh STANDARDS
+.Dv SO_PEERCRED
+is not supported, see
+.Xr getpeereid 2
+instead.
 .Sh HISTORY
 The
 .Fn getsockopt
 system call appeared in
 .Bx 4.2 .
+.Sh BUGS
+Several of the socket options should be handled at lower levels of the system.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.20 2003/05/20 04:15:47 pjanzen Exp $
+.\"	$OpenBSD: getsockname.2,v 1.21 2003/06/01 20:25:23 jmc Exp $
 .\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -153,12 +153,12 @@ process address space.
 .Xr getpeereid 2 ,
 .Xr getpeername 2 ,
 .Xr socket 2
-.Sh BUGS
-Names bound to sockets in the UNIX domain are inaccessible;
-.Nm getsockname
-returns a zero length name.
 .Sh HISTORY
 The
 .Fn getsockname
 function call appeared in
 .Bx 4.2 .
+.Sh BUGS
+Names bound to sockets in the UNIX domain are inaccessible;
+.Nm getsockname
+returns a zero length name.

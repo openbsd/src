@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.30 2003/05/16 09:17:48 jmc Exp $
+.\"	$OpenBSD: mmap.2,v 1.31 2003/06/01 20:25:23 jmc Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -218,6 +218,14 @@ parameter wasn't available.
 .Dv MAP_ANON
 was specified and insufficient memory was available.
 .El
+.Sh SEE ALSO
+.Xr madvise 2 ,
+.Xr mincore 2 ,
+.Xr mlock 2 ,
+.Xr mprotect 2 ,
+.Xr msync 2 ,
+.Xr munmap 2 ,
+.Xr getpagesize 3
 .Sh BUGS
 Due to a limitation of the current vm system (see
 .Xr uvm 9 ) ,
@@ -231,11 +239,3 @@ This means that such descriptors must be opened with
 .Dv O_RDWR ,
 which requires both read and write permissions on the underlying
 object.
-.Sh SEE ALSO
-.Xr madvise 2 ,
-.Xr mincore 2 ,
-.Xr mlock 2 ,
-.Xr mprotect 2 ,
-.Xr msync 2 ,
-.Xr munmap 2 ,
-.Xr getpagesize 3

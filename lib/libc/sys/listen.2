@@ -1,4 +1,4 @@
-.\"	$OpenBSD: listen.2,v 1.7 1999/06/29 14:10:05 aaron Exp $
+.\"	$OpenBSD: listen.2,v 1.8 2003/06/01 20:25:23 jmc Exp $
 .\"	$NetBSD: listen.2,v 1.7 1996/02/16 20:38:45 phil Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -94,12 +94,12 @@ The socket is not of a type that supports the operation
 .Xr accept 2 ,
 .Xr connect 2 ,
 .Xr socket 2
-.Sh BUGS
-The
-.Fa backlog
-is currently limited (silently) to 128.
 .Sh HISTORY
 The
 .Fn listen
 function call appeared in
 .Bx 4.2 .
+.Sh BUGS
+The
+.Fa backlog
+is currently limited (silently) to 128.
