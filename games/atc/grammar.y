@@ -1,4 +1,4 @@
-/*	$OpenBSD: grammar.y,v 1.2 1998/09/21 07:36:05 pjanzen Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.3 1999/07/31 20:08:29 pjanzen Exp $	*/
 /*	$NetBSD: grammar.y,v 1.3 1995/03/21 15:03:59 cgd Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: grammar.y,v 1.2 1998/09/21 07:36:05 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: grammar.y,v 1.3 1999/07/31 20:08:29 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ hdef:
 wdef:
 	WidthOp '=' ConstOp ';'
 		{
-		if (sp->height != 0)
+		if (sp->width != 0)
 			return (yyerror("Redefinition of 'width'."));
 		else if ($3 < 3)
 			return (yyerror("'width' is too small."));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphics.c,v 1.2 1998/09/21 07:36:05 pjanzen Exp $	*/
+/*	$OpenBSD: graphics.c,v 1.3 1999/07/31 20:08:30 pjanzen Exp $	*/
 /*	$NetBSD: graphics.c,v 1.3 1995/03/21 15:04:04 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: graphics.c,v 1.2 1998/09/21 07:36:05 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: graphics.c,v 1.3 1999/07/31 20:08:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -406,8 +406,11 @@ loser(p, s)
 
 	wmove(input, 0, 0);
 	wclrtobot(input);
-	wprintw(input, "Plane '%c' %s\n\nHit space for top players list...",
-		name(p), s);
+	if (p == NULL)
+		wprintw(input, "%s\n\nHit space for top players list...", s);
+	else
+		wprintw(input, "Plane '%c' %s\n\nHit space for top players list...",
+			name(p), s);
 	wrefresh(input);
 	fflush(stdout);
 	while ((c = getchar()) != EOF && c != ' ')

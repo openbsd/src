@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atc.6,v 1.4 1998/12/15 19:18:20 pjanzen Exp $
+.\"	$OpenBSD: atc.6,v 1.5 1999/07/31 20:08:29 pjanzen Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,8 @@
 .Sh SYNOPSIS
 .Nm atc
 .Op Fl u?lstpq
-.Op Fl gf Ar game_name
-.Op Fl r Ar random seed
+.Op Fl gf Ar "game name"
+.Op Fl r Ar "random seed"
 .Sh DESCRIPTION
 .Nm
 lets you try your hand at the nerve-wracking duties of an air traffic
@@ -59,7 +59,7 @@ and prop planes into and out of the flight arena and airports.
 The speed (update time) and frequency of the planes depend on the
 difficulty of the chosen arena.
 .Sh OPTIONS
-.Bl -tag -width "-g game"
+.Bl -tag -width "-g gamex"
 .It Fl u
 Print the usage line and exit.
 .It Fl ?
@@ -105,8 +105,9 @@ Several things will cause the end of the game.
 Each plane has a destination (see information area), and
 sending a plane to the wrong destination is an error.
 Planes can run out of fuel, or can collide.  Collision is defined as
-adjacency in any of the three dimensions.  A plane leaving the arena
-in any other way than through its destination exit is an error as well.
+adjacency, horizontal or vertical.  A plane leaving the arena
+in any other way than through its correct destination exit is an error
+as well.
 .Pp
 Scores are sorted in order of the number of planes safe.  The other
 statistics are provided merely for fun.  There is no penalty for
@@ -115,10 +116,10 @@ taking longer than another player (except in the case of ties).
 Suspending a game is not permitted.  If you get a talk message, tough.
 When was the last time an Air Traffic Controller got called away to
 the phone?
-.Sh THE DISPLAY
-Depending on the terminal you run
+.Sh "THE DISPLAY"
+Depending on the terminal used, the
 .Nm
-on, the screen will be divided into 4 areas.
+screen will be divided into 4 areas.
 It should be stressed that the terminal driver portion of the
 game was designed to be reconfigurable, so the display format can vary
 depending the version you are playing.  The descriptions here are based
@@ -128,44 +129,54 @@ Control-L redraws the screen, should it become muddled.
 .Ss RADAR
 The first screen area is the radar display, showing the relative locations
 of the planes, airports, standard entry/exit points, radar
-beacons, and "lines" which simply serve to aid you in guiding
+beacons, and
+.Dq lines
+which simply serve to aid you in guiding
 the planes.
 .Pp
 Planes are shown as a single letter with an altitude.  If
 the numerical altitude is a single digit, then it represents
 thousands of feet.
 Some distinction is made between the prop
-planes and the jets.  On ascii terminals, prop planes are
-represented by a upper case letter, jets by a lower case letter.
+planes and the jets.  On ASCII terminals, prop planes are
+represented by an upper case letter, jets by a lower case letter.
 .Pp
 Airports are shown as a number and some indication of the direction
 planes must be going to land at the airport.
-On ascii terminals, this is one of '^', '>', '<', and 'v', to indicate
+On ASCII terminals, this is one of
+.Sq ^ ,
+.Sq \&> ,
+.Sq \&< ,
+or
+.Sq v ,
+to indicate
 north (0 degrees), east (90), west (270) and south (180), respectively.
 The planes will also
 take off in this direction.
 .Pp
 Beacons are represented as circles or asterisks and a number.
 Their purpose is to offer a place of easy reference to the plane pilots.
-See 'the delay command' under the input section of this manual.
+See
+.Dq The Delay Command
+under the input section of this manual.
 .Pp
 Entry/exit points are displayed as numbers along the border of the
 radar screen.  Planes will enter the arena from these points without
 warning.  These points have a direction associated with them, and
 planes will always enter the arena from this direction.  On the
-ascii version of
+ASCII version of
 .Nm atc ,
 this direction is not displayed.  It will become apparent
 what this direction is as the game progresses.
 .Pp
 Incoming planes will always enter at the same altitude: 7000 feet.
-For a plane to successfully depart through an entry/exit point,
+For a plane to depart successfully through an entry/exit point,
 it must be flying at 9000 feet.
 It is not necessary for the planes to be flying in any particular
 direction when they leave the arena (yet).
-.Ss INFORMATION AREA
+.Ss "INFORMATION AREA"
 The second area of the display is the information area, which lists
-the time (number of updates since start), and the number of planes you
+the time (number of updates since start) and the number of planes you
 have directed safely out of the arena.
 Below this is a list of planes currently in the air, followed by a
 blank line, and then a list of planes on the ground (at airports).
@@ -179,28 +190,36 @@ some possible information lines:
 .Pp
 .Dl g7 E4: 225
 .Pp
-The first example shows a prop plane named 'B' that is flying at 4000
-feet.  It is low on fuel (note the '*').  Its destination is
+The first example shows a prop plane named
+.Sq B
+that is flying at 4000
+feet.  It is low on fuel (note the
+.Sq * ) .
+Its destination is
 Airport #0.
 The next command it expects
 to do is circle when it reaches Beacon #1.
-The second example shows a jet named 'g' at 7000 feet, destined for
-Exit #4.  It is just now executing a turn to 225 degrees (South-West).
-.Ss INPUT AREA
+The second example shows a jet named
+.Sq g
+at 7000 feet, destined for
+Exit #4.  It is just now executing a turn to 225 degrees (Southwest).
+.Ss "INPUT AREA"
 The third area of the display is the input area.  It is here that
 your input is reflected.  See the INPUT heading of this manual
 for more details.
-.Ss AUTHOR AREA
+.Ss "AUTHOR AREA"
 This area is used simply to give credit where credit is due. :-)
 .Sh INPUT
 A command completion interface is built into
-the game.  At any time, typing '?' will list possible input characters.
+the game.  At any time, typing
+.Sq ?
+will list possible input characters.
 Typing a backspace (your erase character) backs up, erasing the last part
 of the command.  When a command is complete, a return enters it, and
 any semantic checking is done at that time.  If no errors are detected,
 the command is sent to the appropriate plane.  If an error is discovered
 during the check, the offending statement will be underscored and a
-(hopefully) descriptive message will be printed under it.
+(somewhat) descriptive message will be printed under it.
 .Pp
 The command syntax is broken into two parts:
 .Em Immediate Only
@@ -220,90 +239,121 @@ In the following tables, the syntax
 .Em [0\-9]
 means any single digit, and
 .Em <dir>
-refers to the keys around the 's' key, namely
+refers to the keys around the
+.Sq s
+key, namely
 .Dq wedcxzaq .
 In absolute references,
-.Dq q
-refers to North-West or 315 degrees, and
-.Dq w
+.Sq q
+refers to Northwest or 315 degrees, and
+.Sq w
 refers to North, or 0 degrees.
 In relative references,
-.Dq q
-refers to -45 degrees or 45 degrees left, and
-.Dq w
+.Sq q
+refers to \-45 degrees or 45 degrees left, and
+.Sq w
 refers to 0 degrees, or no change in direction.
 .Pp
 All commands start with a plane letter.  This indicates the recipient
 of the command.  Case is ignored.
-.Ss IMMEDIATE ONLY COMMANDS
-.Bd -ragged -offset indent
-.Bl -tag -width indent -compact
-.It Sy a Altitude
-Affect a plane's altitude (and take off).
-.Bl -tag -width indent -compact
-.It Sy  [0\-9] Number
+.Ss "IMMEDIATE ONLY COMMANDS"
+.Bd -ragged
+.Bl -tag -width "aaaa"
+.It Sy "a [ cd+- ]" Em number
+Altitude:
+Affect a plane's altitude, possibly requesting takeoff.
+.Sq \&+
+and
+.Sq \&-
+are the same as
+.Sq c
+and
+.Sq d .
+.Bl -tag -width "aaaaaaaaaa" -compact
+.It Sy a [0\-9]
 Go to the given altitude (thousands of feet).
-.It Sy c/+ [0\-9] Climb (thousands of feet)
-Relative altitude change.
-.It Sy d/\- [0\-9] Descend (thousands of feet)
-Relative altitude change.
+.It Sy c [0\-9]
+Climb:
+Relative altitude change (thousands of feet).
+.It Sy d [0\-9]
+Descend
+Relative altitude change (thousands of feet).
 .El
-.It Sy m Mark
-Display in highlighted mode.  Command is displayed normally.
-.It Sy i Ignore
-Do not display highlighted.  Command is displayed as a
+.It Sy m
+Mark:
+Display in highlighted mode.  Plane and command information is
+displayed normally.
+.It Sy i
+Ignore:
+Do not display highlighted.  Command information is displayed as a
 line of dashes if there is no command.
-.It Sy u Unmark
+.It Sy u
+Unmark:
 Same as ignore, but if a delayed command is processed,
 the plane will become marked.  This is useful if you want
 to forget about a plane during part, but not all, of its
 journey.
 .El
 .Ed
-.Ss DELAYABLE COMMANDS
-.Bd -ragged -offset indent
-.Bl -tag -width indent -compact
-.It Sy c Circle
+.Ss "DELAYABLE COMMANDS"
+.Bd -ragged
+.Bl -tag -width "aaaa"
+.It Sy c
+Circle:
 Have the plane circle.
-.It Sy t Turn
+.It Sy "t [ l-r+LR ] [ dir ]" No or Sy "tt [ abe* ]" Em number
+Turn:
 Change direction.
-.Bl -tag -width indent -compact
-.It Sy l Left
-Turn counterclockwise (45 degrees by default).
-.Bl -tag -width indent -compact
-.It Sy <dir> Direction
-Turn ccw the given number of degrees.
-Zero degrees is no turn.  A ccw turn
-of -45 degrees is 45 cw.
-.El
-.It Sy r Right
-Turn clockwise (45 degrees by default).
-.Bl -tag -width indent -compact
-.It Sy <dir> Direction
-Same as turn left <dir>.
-.El
-.It Sy L Left 90
-Turn counterclockwise 90 degrees.
-.It Sy R Right 90
-Turn clockwise 90 degrees.
-.It Sy <dir> Direction
+.Bl -tag -width "aaaaaaaaaa" -compact
+.It Sy t<dir>
 Turn to the absolute compass heading given.
 The shortest turn will be taken.
-.It Sy t Towards
+.It Sy tl
+Left:
+Turn counterclockwise (45 degrees by default).
+.Bl -tag -width "tl <dir>" -compact
+.It Sy tl <dir>
+Turn ccw the given number of degrees.
+Zero degrees
+.Pq Sq w
+is no turn; 45 degrees ccw is
+.Sq e .
+The shortest turn will be taken; for instance, if you specify
+a ccw turn of 315 degrees
+.Pq Sq q ,
+which should take several turns,
+the plane will really turn 45 cw, which takes only one turn.
+.El
+.It Sy tr
+Right:
+Turn clockwise (45 degrees by default).
+.Bl -tag -width "tl <dir>" -compact
+.It Sy tr <dir>
+Analogous to turn left <dir>.
+.El
+.It Sy tL
+Turn counterclockwise 90 degrees.
+.It Sy tR
+Turn clockwise 90 degrees.
+.It Sy "tt [abe*]"
+Towards:
 Turn towards a beacon, airport or exit.  The turn is
 just an estimate.
-.Bl -tag -width indent -compact
-.It Sy b/* [0\-9] Beacon Number
-Turn towards the beacon.
-.It Sy e [0\-9] Exit Number
-Turn towards the exit.
-.It Sy a [0\-9] Airport Number
-Turn towards the airport.
+.Bl -tag -width "aaaaaaaaaa" -compact
+.It Sy ttb Em number
+Turn towards the specified beacon.
+.It Sy tt* Em number
+Equivalent to
+.Sy ttb .
+.It Sy tte Em number
+Turn towards the specified exit.
+.It Sy tta Em number
+Turn towards the specified airport.
 .El
 .El
 .El
 .Ed
-.Ss THE DELAY COMMAND
+.Ss "THE DELAY COMMAND"
 The
 .Em Delay
 (a/@)
@@ -315,20 +365,24 @@ versions).
 .Pp
 .Bd -ragged -offset indent
 .Bl -tag -width indent -compact
-.It Sy a/@ At
+.It Sy a/@
+At:
 Do the given delayable command when the plane reaches the given beacon.
-.Bl -tag -width indent -compact
-.It Sy ( b/* ) [0\-9] ( Beacon ) Number
+.Bl -tag -width "aaaaaaaaaa" -compact
+.It Sy ab Em number
 The letter is redundant to allow for expansion.
+.Sq \&@
+can be used instead of
+.Sq a .
 .El
 .El
 .Ed
-.Ss MARKING, UNMARKING AND IGNORING
+.Ss "MARKING, UNMARKING AND IGNORING"
 .Pp
 Planes are
 .Em marked
-when they enter the arena.  This means they are displayed in highlighted
-mode on the radar display.  A plane may also be either
+by default when they enter the arena.  This means they are displayed
+in highlighted mode on the radar display.  A plane may also be either
 .Em unmarked
 or
 .Em ignored.
@@ -356,50 +410,53 @@ not immediately switch to unhighlighted mode.
 .Bd -ragged -offset indent
 .Bl -tag -width "gtte4ab2"
 .It atlab1
-a: turn left at beacon #1
+Plane A: turn left at beacon #1
 .It cc
-C: circle
+Plane C: circle
 .It gtte4ab2
-g: turn towards exit #4 at beacon #2
+Plane G: turn towards exit #4 at beacon #2
 .It ma+2
-m: altitude: climb 2000 feet
+Plane M: altitude: climb 2000 feet
 .It stq
-S: turn to 315
+Plane S: turn to 315
 .It xi
-x: ignore
+Plane X: ignore
 .El
 .Ed
-.Sh OTHER INFORMATION
+.Sh "OTHER INFORMATION"
+.Bl -bullet
+.It
 Jets move every update; prop planes move every other update.
-.Pp
+.It
 All planes turn a most 90 degrees per movement.
-.Pp
+.It
 Planes enter at 7000 feet and leave at 9000 feet.
-.Pp
+.It
 Planes flying at an altitude of 0 crash if they are not over an airport.
-.Pp
+.It
 Planes waiting at airports can only be told to take off (climb in altitude).
+.El
 .Sh "NEW GAMES"
 The
-.Em Game_List
+.Pa Game_List
 file lists the currently available play fields.  New field description
-file names must be placed in this file to be 'playable'.  If a player
+file names must be placed in this file to be playable.  If a player
 specifies a game not in this file, his score will not be logged.
 .Pp
 The game field description files are broken into two parts.  The first
 part is the definition section.  Here, the four tunable game parameters
 must be set.  These variables are set with the syntax:
 .Pp
-.Dl variable = number;
+.Dl "variable = number;"
 .Pp
 Variable may be one of:
-.Em update,
+.Li update,
 indicating the number of seconds between forced updates;
-.Em newplane,
+.Li newplane,
 indicating (about) the number of updates between new plane entries;
-.Em width,
-indicating the width of the play field; and
-.Em height,
+.Li width,
+indicating the width of the play field; or
+.Li height,
 indicating the height of the play field.
 .Pp
 The second part of the field description files describes the locations
@@ -418,6 +475,7 @@ The syntax is as follows:
 [ (x1 y1) (x2 y2) ] ... ;
 .El
 .Ed
+.Pp
 For beacons, a simple x, y coordinate pair is used (enclosed in parenthesis).
 Airports and exits require a third value, a direction, which is one
 of
@@ -440,8 +498,9 @@ inclusive.  All of the exit coordinates must lie on the borders, and
 all of the beacons and airports must lie inside of the borders.
 Line endpoints may be anywhere within the field, so long as
 the lines are horizontal, vertical or
-.Dq exactly diagonal .
-.Ss FIELD FILE EXAMPLE
+.Em exactly
+diagonal.
+.Ss "FIELD FILE EXAMPLE"
 .Bd -literal -offset indent
 # This is the default game.
 
@@ -471,8 +530,8 @@ line:		[ (  1  1 ) (  6  6 ) ]
 Files are kept in a special directory. See the OPTIONS for a way to
 print this path out.
 .Pp
-.Bl -tag -width "/var/games/ATC_score" -compact
-.It Pa /var/games/ATC_score
+.Bl -tag -width "/usr/share/games/atc/Game_List" -compact
+.It Pa /var/games/atc_score
 Score file
 .It Pa /usr/share/games/atc/Game_List
 The list of playable games.
