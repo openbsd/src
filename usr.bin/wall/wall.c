@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.13 2000/09/07 17:23:26 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.14 2001/02/13 09:16:04 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.13 2000/09/07 17:23:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wall.c,v 1.14 2001/02/13 09:16:04 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -144,7 +144,7 @@ usage:
 			continue;
 		if (grouplist) {
 			int ingroup = 0, ngrps, i;
-			char username[16];
+			char username[MAXLOGNAME];
 			struct passwd *pw;
 			gid_t grps[NGROUPS_MAX];
 
