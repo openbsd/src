@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.84 1999/04/10 07:48:53 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.85 1999/04/20 18:04:27 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.84 1999/04/10 07:48:53 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.85 1999/04/20 18:04:27 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -119,11 +119,15 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # DISTNAME		- Name of port or distribution.
 # DISTFILES		- Name(s) of archive file(s) containing distribution
 #				  (default: ${DISTNAME}${EXTRACT_SUFX}).
+# SUPDISTFILES  - Names of supplementary archive files that don't get
+# 				  used all the time (default: empty).
 # PATCHFILES	- Name(s) of additional files that contain distribution
 #				  patches (default: none).  make will look for them at
 #				  PATCH_SITES (see above).  They will automatically be
 #				  uncompressed before patching if the names end with
 #				  ".gz" or ".Z".
+# SUPPATCHFILES  - Names of supplementary patch files that don't get
+# 				  used all the time (default: empty).
 # DIST_SUBDIR	- Suffix to ${DISTDIR}.  If set, all ${DISTFILES} 
 #				  and ${PATCHFILES} will be put in this subdirectory of
 #				  ${DISTDIR}.  Also they will be fetched in this subdirectory 
@@ -894,6 +898,14 @@ CDROM_OPT=		-f
 DISTFILES?=		${DISTNAME}${EXTRACT_SUFX}
 PKGNAME?=		${DISTNAME}
 
+.if make(makesum) || make(addsum) || defined(__FETCH_ALL)
+.if defined(SUPDISTFILES)
+ DISTFILES+=${SUPDISTFILES}
+.endif
+.if defined(SUPPATCHFILES)
+ PATCHFILES+=${SUPPATCHFILES}
+ .endif
+.endif
 ALLFILES?=	${DISTFILES} ${PATCHFILES}
 
 .if defined(IGNOREFILES)
@@ -1146,19 +1158,25 @@ DEPENDS_TARGET=	install
 
 # Disable checksum
 .if defined(NO_CHECKSUM) 
-.for _TARGET in checksum makesum addsum
+.for _TARGET in makesum addsum
 .if !target(${_TARGET})
-${_TARGET}: fetch
+${_TARGET}: fetch-all
 	@${DO_NADA}
 .endif
 .endfor
+.if !target(checksum)
+checksum: fetch
+	@${DO_NADA}
+.endif
 .endif
 
 # Disable extract
 .if defined(NO_EXTRACT) && !target(extract)
 extract: 
 	@${TOUCH} ${TOUCH_FLAGS} ${EXTRACT_COOKIE}
-checksum makesum addsum: fetch
+checksum: fetch 
+	@${DO_NADA}
+makesum addsum: fetch-all
 	@${DO_NADA}
 .endif
 
@@ -1275,7 +1293,7 @@ do-fetch:
 # re-distributed freely
 mirror-distfiles:
 .if (${MIRROR_DISTFILE} == "yes")
-	@make fetch __ARCH_OK=yes NO_IGNORE=yes NO_WARNINGS=yes
+	@make fetch-all __ARCH_OK=yes NO_IGNORE=yes NO_WARNINGS=yes
 .endif
 
 # list the distribution and patch files used by a port.  Typical
@@ -1604,6 +1622,11 @@ _PORT_USE: .USE
 fetch:
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-fetch
 .endif
+.if !target(fetch-all)
+fetch-all:
+	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} __FETCH_ALL=yes real-fetch
+.endif
+
 
 .if !target(extract)
 extract: ${EXTRACT_COOKIE}
@@ -1812,7 +1835,7 @@ fetch-list-one-pkg:
 # Checksumming utilities
 
 .if !target(makesum)
-makesum: fetch
+makesum: fetch-all
 	@${MKDIR} ${FILESDIR}
 	@if [ -f ${CHECKSUM_FILE} ]; then ${RM} -f ${CHECKSUM_FILE}; fi
 	@(cd ${DISTDIR}; \
@@ -1824,10 +1847,11 @@ makesum: fetch
 	@for file in ${_IGNOREFILES}; do \
 		${ECHO} "MD5 ($$file) = IGNORE" >> ${CHECKSUM_FILE}; \
 	done
+	@sort -u -o ${CHECKSUM_FILE} ${CHECKSUM_FILE} 
 .endif
 
 .if !target(addsum)
-addsum: fetch
+addsum: fetch-all
 	@${MKDIR} ${FILESDIR}
 	@touch ${CHECKSUM_FILE}
 	@(cd ${DISTDIR}; \
@@ -1839,8 +1863,7 @@ addsum: fetch
 	@for file in ${_IGNOREFILES}; do \
 		${ECHO} "MD5 ($$file) = IGNORE" >> ${CHECKSUM_FILE}; \
 	done
-	@sort -u ${CHECKSUM_FILE} >${CHECKSUM_FILE}.new
-	@${MV} -f ${CHECKSUM_FILE}.new ${CHECKSUM_FILE}
+	@sort -u -o ${CHECKSUM_FILE} ${CHECKSUM_FILE} 
 	@if [ `${SED} -e 's/\=.*$$//' ${CHECKSUM_FILE} | uniq -d | wc -l` -ne 0 ]; then \
 		${ECHO} "Inconsistent checksum in ${CHECKSUM_FILE}"; \
 		${FALSE}; \
@@ -2344,4 +2367,4 @@ tags:
    pre-extract pre-fetch pre-install pre-package pre-patch \
    pre-repackage print-depends-list print-package-depends readme \
    readmes real-extract real-fetch real-install reinstall \
-   repackage run-depends tags uninstall
+   repackage run-depends tags uninstall fetch-all
