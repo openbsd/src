@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.4 2004/08/02 13:54:02 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.5 2004/08/02 22:49:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -33,6 +33,7 @@
 
 struct cvs_file;
 struct cvs_dir;
+struct cvs_entries;
 
 
 #define CF_STAT     0x01  /* allocate space for file stats */
@@ -84,11 +85,11 @@ typedef struct cvs_file {
 
 
 struct cvs_dir {
-	struct cvsroot  *cd_root;
-	char            *cd_repo;
-	CVSENTRIES      *cd_ent;
-	struct cvs_flist cd_files;
-	u_int            cd_nfiles;
+	struct cvsroot     *cd_root;
+	char               *cd_repo;
+	struct cvs_entries *cd_ent;
+	struct cvs_flist    cd_files;
+	u_int               cd_nfiles;
 };
 
 

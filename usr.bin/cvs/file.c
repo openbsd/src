@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.16 2004/08/02 13:54:01 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.17 2004/08/02 22:49:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -293,11 +293,6 @@ cvs_file_getspec(char **fspec, int fsn, int flags)
 	int i, c;
 	char common[MAXPATHLEN], *cp;
 	CVSFILE *cfp;
-
-	/* first load the common subdirectory */
-	cfp = cvs_file_get(common, flags);
-	for (i = 0; i < fsn; i++) {
-	}
 
 	return (cfp);
 }
