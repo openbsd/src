@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2004/07/06 18:03:07 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.4 2004/07/07 03:15:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,9 +27,9 @@
 
 #include "ntpd.h"
 
-int	host_v4(const char *, struct sockaddr *, u_int8_t *);
-int	host_v6(const char *, struct sockaddr *);
-int	host_dns(const char *, struct sockaddr *, u_int8_t *);
+struct ntp_addr	*host_v4(const char *, u_int8_t *);
+struct ntp_addr	*host_v6(const char *);
+struct ntp_addr	*host_dns(const char *, u_int8_t *);
 
 int
 check_file_secrecy(int fd, const char *fname)
@@ -54,12 +54,12 @@ check_file_secrecy(int fd, const char *fname)
 	return (0);
 }
 
-int
-host(const char *s, struct sockaddr *sa, u_int8_t *len)
+struct ntp_addr	*
+host(const char *s, u_int8_t *len)
 {
-	int			 done = 0;
 	int			 mask;
 	char			*p, *q, *ps;
+	struct ntp_addr		*h = NULL;
 
 	if ((p = strrchr(s, '/')) != NULL) {
 		errno = 0;
@@ -78,29 +78,30 @@ host(const char *s, struct sockaddr *sa, u_int8_t *len)
 	}
 
 	/* IPv4 address? */
-	if (!done)
-		done = host_v4(s, sa, len);
+	if (h == NULL)
+		h = host_v4(s, len);
 
 	/* IPv6 address? */
-	if (!done) {
-		done = host_v6(ps, sa);
+	if (h == NULL) {
+		h = host_v6(ps);
 		*len = mask;
 	}
 
 	/* Hostname? */
-	if (!done)
-		done = host_dns(ps, sa, len);
+	if (h == NULL)
+		h = host_dns(ps, len);
 
 	free(ps);
 
-	return (done);
+	return (h);
 }
 
-int
-host_v4(const char *s, struct sockaddr *sa, u_int8_t *len)
+struct ntp_addr	*
+host_v4(const char *s, u_int8_t *len)
 {
 	struct in_addr		 ina;
 	struct sockaddr_in	*sa_in;
+	struct ntp_addr		*h;
 	int			 bits = 32;
 
 	bzero(&ina, sizeof(struct in_addr));
@@ -112,28 +113,33 @@ host_v4(const char *s, struct sockaddr *sa, u_int8_t *len)
 			return (0);
 	}
 
-	sa_in = (struct sockaddr_in *)sa;
+	if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
+		fatal(NULL);
+	sa_in = (struct sockaddr_in *)&h->ss;
 	sa_in->sin_len = sizeof(struct sockaddr_in);
 	sa_in->sin_family = AF_INET;
 	sa_in->sin_addr.s_addr = ina.s_addr;
 	*len = bits;
 
-	return (1);
+	return (h);
 }
 
-int
-host_v6(const char *s, struct sockaddr *sa)
+struct ntp_addr	*
+host_v6(const char *s)
 {
 	struct addrinfo		 hints, *res;
 	struct sockaddr_in6	*sa_in6;
+	struct ntp_addr		*h = NULL;
 
-	sa_in6 = (struct sockaddr_in6 *)sa;
-	sa_in6->sin6_len = sizeof(struct sockaddr_in6);
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(s, "0", &hints, &res) == 0) {
+		if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
+			fatal(NULL);
+		sa_in6 = (struct sockaddr_in6 *)&h->ss;
+		sa_in6->sin6_len = sizeof(struct sockaddr_in6);
 		sa_in6->sin6_family = AF_INET6;
 		memcpy(&sa_in6->sin6_addr,
 		    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
@@ -142,20 +148,19 @@ host_v6(const char *s, struct sockaddr *sa)
 		    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
 
 		freeaddrinfo(res);
-		return (1);
 	}
 
-	return (0);
+	return (h);
 }
 
-int
-host_dns(const char *s, struct sockaddr *sa, u_int8_t *len)
+struct ntp_addr	*
+host_dns(const char *s, u_int8_t *len)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error;
-	int			 got = 0;
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_in6	*sa_in6;
+	struct ntp_addr		*h, *hh = NULL;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
@@ -168,25 +173,27 @@ host_dns(const char *s, struct sockaddr *sa, u_int8_t *len)
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
 			continue;
-		sa->sa_family = res->ai_family;
+		if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
+			fatal(NULL);
+		h->ss.ss_family = res->ai_family;
 		if (res->ai_family == AF_INET) {
-			sa_in = (struct sockaddr_in *)sa;
+			sa_in = (struct sockaddr_in *)&h->ss;
 			sa_in->sin_len = sizeof(struct sockaddr_in);
 			sa_in->sin_addr.s_addr = ((struct sockaddr_in *)
 			    res->ai_addr)->sin_addr.s_addr;
 			*len = 32;
 		} else {
-			sa_in6 = (struct sockaddr_in6 *)sa;
+			sa_in6 = (struct sockaddr_in6 *)&h->ss;
 			sa_in6->sin6_len = sizeof(struct sockaddr_in6);
 			memcpy(&sa_in6->sin6_addr, &((struct sockaddr_in6 *)
 			    res->ai_addr)->sin6_addr, sizeof(struct in6_addr));
 			*len = 128;
 		}
 
-		got++;
-		break;	/* XXX should expand to all results... */
+		h->next = hh;
+		hh = h;
 	}
 	freeaddrinfo(res0);
 
-	return (got);
+	return (hh);
 }

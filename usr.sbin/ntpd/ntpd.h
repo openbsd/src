@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.14 2004/07/07 01:01:27 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.15 2004/07/07 03:15:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -59,6 +59,11 @@ struct listen_addr {
 	TAILQ_ENTRY(listen_addr)	 entry;
 	struct sockaddr_storage		 sa;
 	int				 fd;
+};
+
+struct ntp_addr {
+	struct ntp_addr		*next;
+	struct sockaddr_storage	 ss;
 };
 
 struct ntp_offset {
@@ -177,8 +182,8 @@ int	 parse_config(char *, struct ntpd_conf *);
 int	 cmdline_symset(char *);
 
 /* config.c */
-int	 check_file_secrecy(int, const char *);
-int	 host(const char *, struct sockaddr *, u_int8_t *);
+int		 check_file_secrecy(int, const char *);
+struct ntp_addr	*host(const char *, u_int8_t *);
 
 /* ntp_msg.c */
 void	get_ts(struct l_fixedpt *);

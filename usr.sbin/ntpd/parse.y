@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2004/07/06 23:08:26 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2004/07/07 03:15:37 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -69,7 +69,7 @@ typedef struct {
 	union {
 		u_int32_t		 number;
 		char			*string;
-		struct sockaddr_storage	 ss;
+		struct ntp_addr		*addr;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -82,7 +82,7 @@ typedef struct {
 %token	<v.string>		STRING
 %type	<v.number>		number
 %type	<v.string>		string
-%type	<v.ss>			address
+%type	<v.addr>		address
 %%
 
 grammar		: /* empty */
@@ -126,30 +126,43 @@ varset		: STRING '=' string		{
 
 conf_main	:  LISTEN ON address	{
 			struct listen_addr	*la;
+			struct ntp_addr		*h, *next;
 
-			if ((la = calloc(1, sizeof(struct listen_addr))) ==
-			    NULL)
-				fatal("parse conf_main listen on calloc");
-
-			la->fd = -1;
-			memcpy(&la->sa, &$3, sizeof(struct sockaddr_storage));
-			TAILQ_INSERT_TAIL(&conf->listen_addrs, la, entry);
+			for (h = $3; h != NULL; h = next) {
+				next = h->next;
+				la = calloc(1, sizeof(struct listen_addr));
+				if (la == NULL)
+					fatal("listen on calloc");
+				la->fd = -1;
+				memcpy(&la->sa, &h->ss,
+				    sizeof(struct sockaddr_storage));
+				TAILQ_INSERT_TAIL(&conf->listen_addrs, la,
+				    entry);
+				free(h);
+			}
 		}
 		| SERVER address	{
 			struct ntp_peer		*p;
+			struct ntp_addr		*h, *next;
 
-			if ((p = calloc(1, sizeof(struct ntp_peer))) == NULL)
-				fatal("parse conf_main server on calloc");
-			memcpy(&p->ss, &$2, sizeof(struct sockaddr_storage));
-			TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
+			for (h = $2; h != NULL; h = next) {			
+				next = h->next;
+				p = calloc(1, sizeof(struct ntp_peer));
+				if (p == NULL)
+					fatal("conf_main server calloc");
+				memcpy(&p->ss, &h->ss,
+				    sizeof(struct sockaddr_storage));
+				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
+				free(h);
+			}
 		}
 		;
 
 address		: STRING		{
-			u_int8_t	len;
+			u_int8_t	 len;
+			struct ntp_addr	*h;
 
-			bzero(&$$, sizeof($$));
-			if (!host($1, (struct sockaddr *)&$$, &len)) {
+			if (($$ = host($1, &len)) == NULL) {
 				yyerror("could not parse address spec \"%s\"",
 				    $1);
 				free($1);
@@ -157,13 +170,16 @@ address		: STRING		{
 			}
 			free($1);
 
-			if (($$.ss_family == AF_INET && len != 32) ||
-			    ($$.ss_family == AF_INET6 && len != 128)) {
-				/* unreachable */
-				yyerror("got prefixlen %u, expected %u",
-				    len, $$.ss_family == AF_INET ? 32 : 128);
-				YYERROR;
-			}
+			for (h = $$; h != NULL; h = h->next)
+				if ((h->ss.ss_family == AF_INET && len != 32) ||
+				    (h->ss.ss_family == AF_INET6 && len != 128))
+				    {
+					/* unreachable */
+					yyerror("got prefixlen %u, expected %u",
+					    len, h->ss.ss_family ==
+					    AF_INET ? 32 : 128);
+					YYERROR;
+				}
 		}
 		;
 
