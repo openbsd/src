@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.65 2004/09/14 22:00:32 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.66 2005/03/07 00:06:00 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -48,8 +48,6 @@ id=`basename ${d}`
 #	src/share/tmac/mdoc/doc-common
 #		change	.       ds oS OpenBSD X.X
 #		add	.	if "\\$2"X.X"  .as oS \0X.X
-#	src/share/tmac/mdoc/doc-syms
-#		ensure new release is listed
 #	src/share/mk/sys.mk
 #		OSMAJOR
 #		OSMINOR
@@ -66,12 +64,12 @@ id=`basename ${d}`
 #	A month or so before release, select STATUS "-beta"
 
 ost="OpenBSD"
-osr="3.6"
+osr="3.7"
 
 cat >vers.c <<eof
-#define STATUS "-current"
-#if 0
 #define STATUS "-beta"
+#if 0
+#define STATUS "-current"
 #define STATUS ""			/* release */
 #endif
 
