@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.4 1999/03/05 21:10:58 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.5 1999/03/12 02:40:42 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -142,10 +142,16 @@ needs to be in advance.
 The argument structure is defined as follows:
 .Bd -literal -offset indent
 struct ifbareq {
-	char ifba_name[IFNAMSIZ]; /* destination ifs */
-	u_int32_t ifba_age;         /* addr age */
-	struct ether_addr ifba_dst; /* dest addr */
+	char ifba_name[IFNAMSIZ];    /* bridge name */
+	char ifba_ifsname[IFNAMSIZ]; /* dest ifs */
+	u_int8_t ifba_age;           /* addr age */
+	u_int8_t ifba_flags;         /* addr age */
+	struct ether_addr ifba_dst;  /* dest addr */
 };
+
+#define IFBAF_TYPEMASK 0x03  /* address type mask */
+#define IFBAF_DYNAMIC  0x00  /* dynamically learned */
+#define IFBAF_STATIC   0x01  /* static address */
 
 struct ifbaconf {
 	char ifbac_name[IFNAMSIZ]; /* bridge name */
@@ -158,6 +164,21 @@ struct ifbaconf {
 #define	ifbac_req       ifbac_ifbacu.ifbacu_req
 };
 .Ed
+.It Dv SIOCBRDGSADDR
+.Pq Li "struct ifbareq"
+Add an entry, manually, to the address cache for the bridge named in
+.Ar ifba_name .
+The address and its associated interface and flags are set in the
+.Ar ifba_dst ,
+.Ar ifba_ifsname ,
+.Ar ifba_flags
+fields, respectively.
+.It Dv SIOCBRDGDADDR
+.Pq Li "struct ifbareq"
+Delete an entry from the address cache of the bridge named in
+.Ar ifba_name .
+Entries are deleted strictly based on the address field
+.Ar ifba_dst .
 .It Dv SIOCBRDGSCACHE
 .Pq Li "struct ifbcachereq"
 Set the maximum address cache size for the bridge named in
@@ -206,7 +227,8 @@ into the system.
 For delete operation, it means that the named interface is not a member
 of the bridge.
 .It Bq Eq ENOMEM
-Memory could not be allocated for an interface to be added to the bridge.
+Memory could not be allocated for an interface or cache entry
+to be added to the bridge.
 .It Bq Eq EEXIST
 The named interface is already a member of the bridge.
 .It Bq Eq EBUSY

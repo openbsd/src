@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.5 1999/03/08 13:06:36 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.6 1999/03/12 02:40:43 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -55,8 +55,12 @@ int bridge_setflag(int, char *, short);
 int bridge_clrflag(int, char *, short);
 int bridge_list(int, char *, char *);
 int bridge_addrs(int, char *, char *);
+int bridge_addaddr(int, char *, char *, char *);
+int bridge_deladdr(int, char *, char *);
 int bridge_maxaddr(int, char *, char *);
 int bridge_timeout(int, char *, char *);
+int bridge_flush(int, char *);
+int bridge_flushall(int, char *);
 int bridge_add(int, char *, char *);
 int bridge_delete(int, char *, char *);
 int bridge_status(int, char *);
@@ -69,7 +73,7 @@ void printb(char *, unsigned short, char *);
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
-#define	IFBABITS	"\020\1BLACKHOLE\2STATIC\3DYNAMIC"
+#define	IFBABITS	"\020\1STATIC"
 
 void
 usage() {
@@ -140,6 +144,37 @@ main(argc, argv)
 		}
 		else if (strcmp("down", argv[0]) == 0) {
 			error = bridge_clrflag(sock, brdg, IFF_UP);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("flush", argv[0]) == 0) {
+			error = bridge_flush(sock, brdg);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("flushall", argv[0]) == 0) {
+			error = bridge_flushall(sock, brdg);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("static", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc < 2) {
+				warnx("static requires 2 arguments");
+				return (EX_USAGE);
+			}
+			error = bridge_addaddr(sock, brdg, argv[0], argv[1]);
+			if (error)
+				return (error);
+			argc--; argv++;
+		}
+		else if (strcmp("deladdr", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("deladdr requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_deladdr(sock, brdg, argv[0]);
 			if (error)
 				return (error);
 		}
@@ -294,6 +329,58 @@ bridge_clrflag(s, brdg, f)
 }
 
 int
+bridge_flushall(s, brdg)
+	int s;
+	char *brdg;
+{
+	struct ifreq ifr;
+
+	strncpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
+		warn("ioctl(SIOCGIFFLAGS)");
+		return (EX_IOERR);
+	}
+
+	if ((ifr.ifr_flags & IFF_UP) == 0)
+		return (0);
+
+	strncpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+	ifr.ifr_flags &= ~IFF_UP;
+	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0) {
+		warn("ioctl(SIOCSIFFLAGS)");
+		return (EX_IOERR);
+	}
+
+	strncpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+	ifr.ifr_flags |= IFF_UP;
+	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0) {
+		warn("ioctl(SIOCSIFFLAGS)");
+		return (EX_IOERR);
+	}
+
+	return (0);
+}
+
+int
+bridge_flush(s, brdg)
+	int s;
+	char *brdg;
+{
+	struct ifbreq req;
+
+	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name) - 1);
+	req.ifbr_name[sizeof(req.ifbr_name) - 1] = '\0';
+	if (ioctl(s, SIOCBRDGFLUSH, &req) < 0) {
+		warn("ioctl(SIOCBRDGFLUSH)");
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
 bridge_list(s, brdg, delim)
 	int s;
 	char *brdg, *delim;
@@ -417,13 +504,67 @@ bridge_maxaddr(s, brdg, arg)
 }
 
 int
+bridge_deladdr(s, brdg, addr)
+	int s;
+	char *brdg, *addr;
+{
+	struct ifbareq ifba;
+	struct ether_addr *ea;
+
+	strncpy(ifba.ifba_name, brdg, sizeof(ifba.ifba_name) - 1);
+	ifba.ifba_name[sizeof(ifba.ifba_name) - 1] = '\0';
+	ea = ether_aton(addr);
+	if (ea == NULL) {
+		warnx("Invalid address: %s", addr);
+		return (EX_USAGE);
+	}
+	bcopy(ea, &ifba.ifba_dst, sizeof(struct ether_addr));
+
+	if (ioctl(s, SIOCBRDGDADDR, &ifba) < 0) {
+		warn("ioctl(SIOCBRDGDADDR)");
+		return (EX_IOERR);
+	}
+
+	return (0);
+}
+
+int
+bridge_addaddr(s, brdg, ifname, addr)
+	int s;
+	char *brdg, *ifname, *addr;
+{
+	struct ifbareq ifba;
+	struct ether_addr *ea;
+
+	strncpy(ifba.ifba_name, brdg, sizeof(ifba.ifba_name) - 1);
+	ifba.ifba_name[sizeof(ifba.ifba_name) - 1] = '\0';
+	strncpy(ifba.ifba_ifsname, ifname, sizeof(ifba.ifba_ifsname) - 1);
+	ifba.ifba_ifsname[sizeof(ifba.ifba_ifsname) - 1] = '\0';
+
+	ea = ether_aton(addr);
+	if (ea == NULL) {
+		warnx("Invalid address: %s", addr);
+		return (EX_USAGE);
+	}
+	bcopy(ea, &ifba.ifba_dst, sizeof(struct ether_addr));
+	ifba.ifba_flags = IFBAF_STATIC;
+
+	if (ioctl(s, SIOCBRDGSADDR, &ifba) < 0) {
+		warn("ioctl(SIOCBRDGSADDR)");
+		return (EX_IOERR);
+	}
+
+	return (0);
+}
+
+int
 bridge_addrs(s, brdg, delim)
 	int s;
 	char *brdg, *delim;
 {
 	struct ifbaconf ifbac;
 	struct ifbareq *ifba;
-	char *inbuf = NULL, buf[sizeof(ifba->ifba_name) + 1];
+	char *inbuf = NULL, buf[sizeof(ifba->ifba_ifsname) + 1];
 	int i, len = 8192;
 
 	while (1) {
@@ -446,12 +587,10 @@ bridge_addrs(s, brdg, delim)
 	for (i = 0; i < ifbac.ifbac_len / sizeof(*ifba); i++) {
 		ifba = ifbac.ifbac_req + i;
 		bzero(buf, sizeof(buf));
-		strncpy(buf, ifba->ifba_name, sizeof(ifba->ifba_name));
+		strncpy(buf, ifba->ifba_ifsname, sizeof(ifba->ifba_ifsname));
 		printf("%s%s %s %u ", delim, ether_ntoa(&ifba->ifba_dst),
 		    buf, ifba->ifba_age);
-#if 0
 		printb("flags", ifba->ifba_flags, IFBABITS);
-#endif
 		printf("\n");
 	}
 

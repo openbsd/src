@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.3 1999/03/05 21:10:52 jason Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.4 1999/03/12 02:40:43 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -58,10 +58,16 @@ struct ifbifconf {
  * Bridge address request
  */
 struct ifbareq {
-	char			ifba_name[IFNAMSIZ];	/* destination ifs */
-	u_int32_t		ifba_age;		/* route age */
+	char			ifba_name[IFNAMSIZ];	/* bridge name */
+	char			ifba_ifsname[IFNAMSIZ];	/* destination ifs */
+	u_int8_t		ifba_age;		/* address age */
+	u_int8_t		ifba_flags;		/* address flags */
 	struct ether_addr	ifba_dst;		/* destination addr */
 };
+
+#define	IFBAF_TYPEMASK		0x03		/* address type mask */
+#define	IFBAF_DYNAMIC		0x00		/* dynamically learned */
+#define	IFBAF_STATIC		0x01		/* static address */
 
 struct ifbaconf {
 	char			ifbac_name[IFNAMSIZ];	/* bridge ifs name */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.6 1999/03/05 22:09:19 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.7 1999/03/12 02:40:43 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -47,6 +47,10 @@
 .Op Ar delete interface-name
 .Op Ar maxaddr size
 .Op Ar timeout time
+.Op Ar static interface-name address
+.Op Ar deladdr address
+.Op Ar flush
+.Op Ar flushall
 .Op Ar link0
 .Op Ar link1
 .Op Ar -link0
@@ -78,11 +82,6 @@ Display the addresses that have been learned by the bridge.
 Add the interface named by
 .Ar interface-name
 as a member of the bridge.
-The interface must already be ready for packet
-reception, (ie. it must be in the
-.Cm up
-state, see
-.Xr ifconfig 8 )
 The interface is put into promiscuous mode so
 that it can receive every packet sent on the
 network.
@@ -105,6 +104,17 @@ The default is 240 seconds.
 If
 .Cm time
 is set to zero, then entries will not be expired.
+.It Ar static interface-name address
+Add a static entry into the address cache pointing to
+.Cm interface-name .
+Static entries are never aged out of the cache or replaced if the address
+is seen on a different interface.
+.It Ar deladdr address
+Delete an address from the cache.
+.It Ar flush
+Remove all dynamically learned addresses from the cache.
+.It Ar flushall
+Remove all addresses from the cache including static addresses.
 .It Ar link0
 Setting this flag stops all non-IP multicast packets from
 being forwarded by the bridge.
@@ -122,16 +132,16 @@ flag on the bridge interface.
 .El
 .Sh EXAMPLES
 .Bl -tag -width brconfig
-.It Cm brconfig bridge0 add pn0 add mx0 up
-Add the Ethernet interfaces pn0 and mx0 to the bridge bridge0, and
+.It Cm brconfig bridge0 add rl0 add xl0 up
+Add the Ethernet interfaces rl0 and xl0 to the bridge bridge0, and
 start the bridge forwarding packets.
 .It Cm brconfig bridge0
 Retrieve a list of interfaces that are members of bridge0, and the addresses
 learned by the bridge.
 .It Cm brconfig bridge0 down
 Stop bridge0 from forwarding packets.
-.It Cm brconfig bridge0 delete pn0
-Remove the interface pn0 from the bridge bridge0.
+.It Cm brconfig bridge0 delete xl0
+Remove the interface xl0 from the bridge bridge0.
 .El
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
