@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_locl.h,v 1.1 2000/02/28 23:13:04 deraadt Exp $	*/
+/*	$OpenBSD: des_locl.h,v 1.2 2002/10/27 13:24:26 miod Exp $	*/
 
 /* lib/des/des_locl.h */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -87,24 +87,24 @@
 #define MAXWRITE	(1024*16)
 #define BSIZE		(MAXWRITE+4)
 
-#define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
-			 l|=((unsigned long)(*((c)++)))<< 8L, \
-			 l|=((unsigned long)(*((c)++)))<<16L, \
-			 l|=((unsigned long)(*((c)++)))<<24L)
+#define c2l(c,l)	(l =((u_int32_t)(*((c)++)))    , \
+			 l|=((u_int32_t)(*((c)++)))<< 8L, \
+			 l|=((u_int32_t)(*((c)++)))<<16L, \
+			 l|=((u_int32_t)(*((c)++)))<<24L)
 
 /* NOTE - c is not incremented as per c2l */
 #define c2ln(c,l1,l2,n)	{ \
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((unsigned long)(*(--(c))))<<24L; \
-			case 7: l2|=((unsigned long)(*(--(c))))<<16L; \
-			case 6: l2|=((unsigned long)(*(--(c))))<< 8L; \
-			case 5: l2|=((unsigned long)(*(--(c))));     \
-			case 4: l1 =((unsigned long)(*(--(c))))<<24L; \
-			case 3: l1|=((unsigned long)(*(--(c))))<<16L; \
-			case 2: l1|=((unsigned long)(*(--(c))))<< 8L; \
-			case 1: l1|=((unsigned long)(*(--(c))));     \
+			case 8: l2 =((u_int32_t)(*(--(c))))<<24L; \
+			case 7: l2|=((u_int32_t)(*(--(c))))<<16L; \
+			case 6: l2|=((u_int32_t)(*(--(c))))<< 8L; \
+			case 5: l2|=((u_int32_t)(*(--(c))));     \
+			case 4: l1 =((u_int32_t)(*(--(c))))<<24L; \
+			case 3: l1|=((u_int32_t)(*(--(c))))<<16L; \
+			case 2: l1|=((u_int32_t)(*(--(c))))<< 8L; \
+			case 1: l1|=((u_int32_t)(*(--(c))));     \
 				} \
 			}
 
@@ -117,10 +117,10 @@
  * when faced with machines with 8 byte longs. */
 #define HDRSIZE 4
 
-#define n2l(c,l)	(l =((unsigned long)(*((c)++)))<<24L, \
-			 l|=((unsigned long)(*((c)++)))<<16L, \
-			 l|=((unsigned long)(*((c)++)))<< 8L, \
-			 l|=((unsigned long)(*((c)++))))
+#define n2l(c,l)	(l =((u_int32_t)(*((c)++)))<<24L, \
+			 l|=((u_int32_t)(*((c)++)))<<16L, \
+			 l|=((u_int32_t)(*((c)++)))<< 8L, \
+			 l|=((u_int32_t)(*((c)++))))
 
 #define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24L)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
@@ -152,14 +152,14 @@
 	t= R^s[S+1]; \
 	t=((t>>2)+(t<<30)); \
 	L^= \
-	*(unsigned long *)(des_SP+0x0100+((t    )&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0300+((t>> 8)&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0500+((t>>16)&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0700+((t>>24)&0xfc))+ \
-	*(unsigned long *)(des_SP+       ((u    )&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0200+((u>> 8)&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0400+((u>>16)&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0600+((u>>24)&0xfc)); }
+	*(u_int32_t *)(des_SP+0x0100+((t    )&0xfc))+ \
+	*(u_int32_t *)(des_SP+0x0300+((t>> 8)&0xfc))+ \
+	*(u_int32_t *)(des_SP+0x0500+((t>>16)&0xfc))+ \
+	*(u_int32_t *)(des_SP+0x0700+((t>>24)&0xfc))+ \
+	*(u_int32_t *)(des_SP+       ((u    )&0xfc))+ \
+	*(u_int32_t *)(des_SP+0x0200+((u>> 8)&0xfc))+ \
+	*(u_int32_t *)(des_SP+0x0400+((u>>16)&0xfc))+ \
+	*(u_int32_t *)(des_SP+0x0600+((u>>24)&0xfc)); }
 #else /* original version */
 #ifdef MSDOS
 #define D_ENCRYPT(L,R,S)	\
@@ -234,7 +234,7 @@
 
 #define IP(l,r) \
 	{ \
-	register unsigned long tt; \
+	register u_int32_t tt; \
 	PERM_OP(r,l,tt, 4,0x0f0f0f0fL); \
 	PERM_OP(l,r,tt,16,0x0000ffffL); \
 	PERM_OP(r,l,tt, 2,0x33333333L); \
@@ -244,7 +244,7 @@
 
 #define FP(l,r) \
 	{ \
-	register unsigned long tt; \
+	register u_int32_t tt; \
 	PERM_OP(l,r,tt, 1,0x55555555L); \
 	PERM_OP(r,l,tt, 8,0x00ff00ffL); \
 	PERM_OP(l,r,tt, 2,0x33333333L); \

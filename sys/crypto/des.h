@@ -1,4 +1,4 @@
-/*	$OpenBSD: des.h,v 1.1 2000/02/28 23:13:04 deraadt Exp $	*/
+/*	$OpenBSD: des.h,v 1.2 2002/10/27 13:24:26 miod Exp $	*/
 
 /* lib/des/des.h */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -50,6 +50,7 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
+#include <sys/types.h>
 #ifndef _KERNEL
 #include <stdio.h>
 #endif
@@ -61,7 +62,7 @@ typedef struct des_ks_struct
 		des_cblock _;
 		/* make sure things are correct size on machines with
 		 * 8 byte longs */
-		unsigned long pad[2];
+		int32_t pad[2];
 		} ks;
 #undef _
 #define _	ks._
@@ -124,7 +125,7 @@ extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
 void des_ecb3_encrypt(des_cblock *input,des_cblock *output,
 	des_key_schedule ks1,des_key_schedule ks2,
 	des_key_schedule ks3, int enc);
-unsigned long des_cbc_cksum(des_cblock *input,des_cblock *output,
+u_int32_t des_cbc_cksum(des_cblock *input,des_cblock *output,
 	long length,des_key_schedule schedule,des_cblock *ivec);
 void des_cbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule schedule,des_cblock *ivec,int enc);
@@ -137,8 +138,8 @@ void des_cfb_encrypt(unsigned char *in,unsigned char *out,int numbits,
 	long length,des_key_schedule schedule,des_cblock *ivec,int enc);
 void des_ecb_encrypt(des_cblock *input,des_cblock *output,
 	des_key_schedule ks,int enc);
-void des_encrypt(unsigned long *data,des_key_schedule ks, int enc);
-void des_encrypt2(unsigned long *data,des_key_schedule ks, int enc);
+void des_encrypt(u_int32_t *data,des_key_schedule ks, int enc);
+void des_encrypt2(u_int32_t *data,des_key_schedule ks, int enc);
 void des_ede3_cbc_encrypt(des_cblock *input, des_cblock *output, 
 	long length, des_key_schedule ks1, des_key_schedule ks2, 
 	des_key_schedule ks3, des_cblock *ivec, int enc);
@@ -168,7 +169,7 @@ void des_ofb_encrypt(unsigned char *in,unsigned char *out,
 	int numbits,long length,des_key_schedule schedule,des_cblock *ivec);
 void des_pcbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule schedule,des_cblock *ivec,int enc);
-unsigned long des_quad_cksum(des_cblock *input,des_cblock *output,
+u_int32_t des_quad_cksum(des_cblock *input,des_cblock *output,
 	long length,int out_count,des_cblock *seed);
 void des_random_seed(des_cblock key);
 void des_random_key(des_cblock ret);
@@ -202,7 +203,7 @@ void des_generate_random_block(des_cblock *block);
 #else
 
 void des_ecb3_encrypt();
-unsigned long des_cbc_cksum();
+u_int32_t des_cbc_cksum();
 void des_cbc_encrypt();
 void des_ncbc_encrypt();
 void des_3cbc_encrypt();
@@ -222,7 +223,7 @@ char *crypt();
 #endif
 void des_ofb_encrypt();
 void des_pcbc_encrypt();
-unsigned long des_quad_cksum();
+u_int32_t des_quad_cksum();
 void des_random_seed();
 void des_random_key();
 int des_read_password();
