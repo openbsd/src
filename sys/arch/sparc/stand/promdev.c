@@ -45,6 +45,8 @@
 
 #include "promdev.h"
 
+u_long	_randseed = 1;
+
 
 int	obp_close __P((struct open_file *));
 int	obp_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
@@ -412,6 +414,12 @@ getchar()
 	return (c);
 }
  
+int
+cngetc()
+{
+	return getchar();
+}
+
 int
 peekchar()
 {
