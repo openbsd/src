@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.27 1999/10/29 07:27:40 niklas Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.28 1999/11/22 08:39:33 mickey Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.27 1999/10/29 07:27:40 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.28 1999/11/22 08:39:33 mickey Exp $";
 #endif
 
 
@@ -621,10 +621,12 @@ rarp_process(ii, pkt)
 		err(FATAL, "cannot handle non IP addresses");
 		/* NOTREACHED */
 	}
-	for (target_ipaddr = 0, ia = ii->ii_addrs; target_ipaddr == 0 && ia;
-	     ia = ia->ia_next)
+	for (target_ipaddr = 0, ia = ii->ii_addrs; ia; ia = ia->ia_next) {
 		target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
 		    ia->ia_ipaddr & ia->ia_netmask, ia->ia_netmask);
+		if (target_ipaddr)
+			break;
+	}
 
 	if (target_ipaddr == 0) {
 		for (ia = ii->ii_addrs; ia; ia = ia->ia_next) {
