@@ -10,12 +10,14 @@
 
 LIBC_R?=	/usr/lib/libc_r.a
 
+PTHREAD=	-pthread
+
 CFLAGS +=	-Wall # -Werror
 DEBUG =		-ggdb
 CFLAGS +=	-DSRCDIR='"${.CURDIR}"'
-LDLIBS +=	-lpthread -lm  ${LDSTATIC}
+LDLIBS +=	${PTHREAD} -lm  ${LDSTATIC}
 DPADD +=	${LIBC_R}
-MKDEP =		-p -lpthread
+MKDEP =		-p ${PTHREAD}
 
 # This list used to include test_select, but that test doesn't terminate.
 TESTS = test_create test_pthread_join test_switch test_sleep test_readdir \
