@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.19 2004/11/15 11:23:10 espie Exp $
+# $OpenBSD: pkg_info,v 1.20 2004/11/15 12:22:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -100,47 +100,47 @@ sub print_info
 		print $pkg, " "x$l, get_line($dir.COMMENT), "\n";
 	} else {
 		if ($terse) {
-			print $opt_p, $pkg, "\n" unless $opt_q;
+			print $opt_l, $pkg, "\n" unless $opt_q;
 		} else {
-			print $opt_p, "Information for ", $pkg, "\n\n" unless $opt_q;
+			print $opt_l, "Information for ", $pkg, "\n\n" unless $opt_q;
 		}
 		if ($opt_c) {
-			print $opt_p, "Comment:\n" unless $opt_q;
+			print $opt_l, "Comment:\n" unless $opt_q;
 			printfile($dir.COMMENT);
 			print "\n";
 		}
 		if ($opt_R && -f $dir.REQUIRED_BY) {
-			print $opt_p, "Required by:\n" unless $opt_q;
+			print $opt_l, "Required by:\n" unless $opt_q;
 			printfile($dir.REQUIRED_BY);
 			print "\n";
 		}
 		if ($opt_d) {
-			print $opt_p, "Description:\n" unless $opt_q;
+			print $opt_l, "Description:\n" unless $opt_q;
 			printfile($dir.DESC);
 			print "\n";
 		}
 		if ($opt_M && -f $dir.DISPLAY) {
-			print $opt_p, "Install notice:\n" unless $opt_q;
+			print $opt_l, "Install notice:\n" unless $opt_q;
 			printfile($dir.DISPLAY);
 			print "\n";
 		}
 		if ($opt_U && -f $dir.UNDISPLAY) {
-			print $opt_p, "Deinstall notice:\n" unless $opt_q;
+			print $opt_l, "Deinstall notice:\n" unless $opt_q;
 			printfile($dir.UNDISPLAY);
 			print "\n";
 		}
 		if ($opt_i && -f $dir.INSTALL) {
-			print $opt_p, "Install script:\n" unless $opt_q;
+			print $opt_l, "Install script:\n" unless $opt_q;
 			printfile($dir.INSTALL);
 			print "\n";
 		}
 		if ($opt_k && -f $dir.DEINSTALL) {
-			print $opt_p, "De-Install script:\n" unless $opt_q;
+			print $opt_l, "De-Install script:\n" unless $opt_q;
 			printfile($dir.DEINSTALL, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_r && -f $dir.REQUIRE) {
-			print $opt_p, "Require script:\n" unless $opt_q;
+			print $opt_l, "Require script:\n" unless $opt_q;
 			printfile($dir.REQUIRE, \*STDOUT);
 			print "\n";
 		}
@@ -157,7 +157,7 @@ sub print_info
 			Fatal "Bad packing list" unless defined $plist;
 		}
 		if ($opt_L) {
-			print $opt_p, "Files:\n" unless $opt_q;
+			print $opt_l, "Files:\n" unless $opt_q;
 			for my $item (@{$plist->{items}}) {
 				next unless $item->IsFile();
 				if ($opt_K) {
@@ -181,11 +181,11 @@ sub print_info
 		}
 
 		if ($opt_f) {
-			print $opt_p, "Packing list:\n" unless $opt_q;
+			print $opt_l, "Packing list:\n" unless $opt_q;
 			$plist->write(\*STDOUT);
 			print "\n";
 		}
-		print $opt_p, "\n" unless $opt_q || $terse;
+		print $opt_l, "\n" unless $opt_q || $terse;
 	}
 }
 
@@ -225,8 +225,8 @@ if ($opt_v) {
 	    $opt_U = $opt_m = $opt_R = $opt_s = 1;
 }
 
-if (!defined $opt_p) {
-	$opt_p = "";
+if (!defined $opt_l) {
+	$opt_l = "";
 }
 
 if ($opt_K && !$opt_L) {
