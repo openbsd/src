@@ -386,6 +386,7 @@ scsi_probedev(scsi, target, lun)
 	sc_link->target = target;
 	sc_link->lun = lun;
 	sc_link->device = &probe_switch;
+	sc_link->inquiry_flags = 0;
 
 	/*
 	 * Ask the device what it is
@@ -429,6 +430,11 @@ scsi_probedev(scsi, target, lun)
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
 		scsi->moreluns |= (1 << target);
+
+	/*
+	 * Save INQUIRY "flags" (SID_Linked, etc.) for low-level drivers.
+	 */
+	sc_link->inquiry_flags = inqbuf.flags;
 
 	/*
 	 * note what BASIC type of device it is

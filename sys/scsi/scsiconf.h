@@ -141,6 +141,7 @@ struct scsi_link {
 #define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
 #define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
 #define	SDEV_FORCELUNS		0x08	/* prehistoric drive/ctlr groks LUNs */
+	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
