@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.23 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: hd.c,v 1.24 2004/02/15 02:56:13 tedu Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -877,7 +877,8 @@ hdinterrupt(arg)
 		return;
 	}
 #endif
-	disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 
 	if (rs->sc_flags & HDF_SEEK) {
 		rs->sc_flags &= ~HDF_SEEK;
