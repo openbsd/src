@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.2 1998/07/27 03:37:35 millert Exp $	*/
+/*	$OpenBSD: read_termcap.c,v 1.3 1998/08/14 21:11:41 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -398,16 +398,20 @@ _nc_getent(
 						if (rp >= r_end) {
 							unsigned int pos;
 							size_t newsize;
+							char *nrecord;
 
 							pos = rp - record;
 							newsize = r_end - record + BFRAG;
-							record = realloc(record, newsize);
-							if (record == 0) {
-								errno = ENOMEM;
+							nrecord = realloc(record, newsize);
+							if (nrecord == 0) {
+								if (record != 0)
+									free(nrecord);
 								if (myfd)
 									(void)close(fd);
+								errno = ENOMEM;
 								return (TC_SYS_ERR);
 							}
+							record = nrecord;
 							r_end = record + newsize;
 							rp = record + pos;
 						}
@@ -531,19 +535,23 @@ _nc_getent(
 			if (diff >= r_end - rp) {
 				unsigned int pos, tcpos, tcposend;
 				size_t newsize;
+				char *nrecord;
 
 				pos = rp - record;
 				newsize = r_end - record + diff + BFRAG;
 				tcpos = tcstart - record;
 				tcposend = tcend - record;
-				record = realloc(record, newsize);
+				nrecord = realloc(record, newsize);
 				if (record == 0) {
-					errno = ENOMEM;
+					if (record != 0)
+						free(record);
 					if (myfd)
 						(void)close(fd);
 					free(icap);
+					errno = ENOMEM;
 					return (TC_SYS_ERR);
 				}
+				record = nrecord;
 				r_end = record + newsize;
 				rp = record + pos;
 				tcstart = record + tcpos;
@@ -575,10 +583,14 @@ _nc_getent(
 		(void)close(fd);
 	*len = rp - record - 1; /* don't count NUL */
 	if (r_end > rp) {
-		if ((record = realloc(record, (size_t)(rp - record))) == 0) {
+		char *nrecord;
+		if ((nrecord = realloc(record, (size_t)(rp - record))) == 0) {
+			if (record != 0)
+				free(record);
 			errno = ENOMEM;
 			return (TC_SYS_ERR);
 		}
+		record = nrecord;
 	}
 
 	*cap = record;

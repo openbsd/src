@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace_buf.c,v 1.2 1998/07/23 21:20:06 millert Exp $	*/
+/*	$OpenBSD: trace_buf.c,v 1.3 1998/08/14 21:11:44 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@ char * _nc_trace_buf(int bufnum, size_t want)
 	static struct {
 		char *text;
 		size_t size;
-	} *list;
+	} *list, *nlist;
 	static size_t have;
 
 #if NO_LEAKS
@@ -62,10 +62,13 @@ char * _nc_trace_buf(int bufnum, size_t want)
 	if ((size_t)(bufnum+1) > have) {
 		size_t need = (bufnum + 1) * 2;
 		size_t used = sizeof(*list) * need;
-		list = (list == 0) ? malloc(used) : realloc(list, used);
-		if (list == 0) {
+		nlist = (list == 0) ? malloc(used) : realloc(list, used);
+		if (nlist == 0) {
+			if (list != 0)
+				free(list);
 			return(NULL);
 		}
+		list = nlist;
 		while (need > have)
 			list[have++].text = 0;
 	}
@@ -73,12 +76,19 @@ char * _nc_trace_buf(int bufnum, size_t want)
 	if (list[bufnum].text == 0)
 	{
 		list[bufnum].text = malloc(want);
-		list[bufnum].size = want;
 	}
-	else if (want > list[bufnum].size) {
-		list[bufnum].text = realloc(list[bufnum].text, want);
-		list[bufnum].size = want;
+	else if (want > list[bufnum].size)
+	{
+		char *p = realloc(list[bufnum].text, want);
+
+		if (p != 0) {
+			list[bufnum].text = p;
+		} else {
+			free(list[bufnum].text);
+			list[bufnum].text = 0;
+		}
 	}
+	list[bufnum].size = want;
 	if (list[bufnum].text != 0)
 		*(list[bufnum].text) = '\0';
 	return list[bufnum].text;

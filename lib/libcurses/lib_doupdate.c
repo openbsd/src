@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_doupdate.c,v 1.6 1998/07/23 21:18:42 millert Exp $	*/
+/*	$OpenBSD: lib_doupdate.c,v 1.7 1998/08/14 21:11:39 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -929,16 +929,18 @@ int	top    = total;
 int	last   = min(screen_columns, newscr->_maxx+1);
 size_t	length = sizeof(chtype) * last;
 chtype	blank  = newscr->_line[total-1].text[last-1]; /* lower right char */
+chtype	*ntstLine;
 
 	if(!clr_eos || !can_clear_with(blank))
 		return total;
 
 	if (tstLine == 0)
-		tstLine = (chtype *)malloc(length);
+		ntstLine = (chtype *)malloc(length);
 	else if (length > lenLine)
-		tstLine = (chtype *)realloc(tstLine, length);
+		ntstLine = (chtype *)realloc(tstLine, length);
 
-	if (tstLine != 0) {
+	if (ntstLine != 0) {
+		tstLine = ntstLine;
 		lenLine = length;
 		for (col = 0; col < last; col++)
 			tstLine[col] = blank;

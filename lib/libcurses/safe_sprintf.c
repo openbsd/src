@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe_sprintf.c,v 1.2 1998/07/23 21:20:01 millert Exp $	*/
+/*	$OpenBSD: safe_sprintf.c,v 1.3 1998/08/14 21:11:42 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -150,12 +150,17 @@ _nc_printf_length(const char *fmt, va_list ap)
 						if (prec < 0)
 							prec = strlen(pval);
 						if (prec > (int)length) {
+							char *nbuffer;
+
 							length = length + prec;
-							buffer = realloc(buffer, length);
-							if (buffer == 0) {
+							nbuffer = realloc(buffer, length);
+							if (nbuffer == 0) {
+								if (buffer != 0)
+									free(buffer);
 								free(format);
 								return -1;
 							}
+							buffer = nbuffer;
 						}
 						used = 'p';
 						break;
@@ -221,17 +226,22 @@ _nc_printf_string(const char *fmt, va_list ap)
 	static int rows, cols;
 	static char *buf;
 	static size_t len;
+	char *nbuf;
 
 	if (screen_lines > rows || screen_columns > cols) {
 		if (screen_lines   > rows) rows = screen_lines;
 		if (screen_columns > cols) cols = screen_columns;
 		len = (rows * (cols + 1)) + 1;
 		if (buf == 0)
-			buf = malloc(len);
+			nbuf = malloc(len);
 		else
-			buf = realloc(buf, len);
-		if (buf == NULL)
+			nbuf = realloc(buf, len);
+		if (nbuf == NULL) {
+			if (buf != NULL)
+				free(buf);
 			return(NULL);
+		}
+		buf = nbuf;
 	}
 
 	if (buf != 0) {

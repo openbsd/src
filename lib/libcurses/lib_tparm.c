@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tparm.c,v 1.1 1998/07/23 21:19:38 millert Exp $	*/
+/*	$OpenBSD: lib_tparm.c,v 1.2 1998/08/14 21:11:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -302,10 +302,17 @@ static	int static_vars[NUM_VARS];
 		}
 	}
 	if ((size_t)(cp - string) > len_fmt) {
+		char *nformat;
+
 		len_fmt = (cp - string) + len_fmt + 2;
-		format = format ? realloc(format, len_fmt) : malloc(len_fmt);
-		if (format == 0)
+		nformat = format ? realloc(format, len_fmt) : malloc(len_fmt);
+		if (nformat != 0) {
+			format = nformat;
+		} else {
+			if (format != 0)
+				free(format);
 			return 0;
+		}
 	}
 
 	if (number > 9) number = 9;

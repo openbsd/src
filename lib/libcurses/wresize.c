@@ -1,4 +1,4 @@
-/*	$OpenBSD: wresize.c,v 1.4 1998/07/23 21:20:11 millert Exp $	*/
+/*	$OpenBSD: wresize.c,v 1.5 1998/08/14 21:11:45 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -45,11 +45,15 @@ MODULE_ID("$From: wresize.c,v 1.9 1998/02/11 12:13:54 tom Exp $")
 
 static void *doalloc(void *p, size_t n)
 {
+	void *np;
+
 	if (p == 0)
-		p = malloc(n);
+		np = malloc(n);
 	else
-		p = realloc(p, n);
-	return p;
+		np = realloc(p, n);
+	if (np == 0 && p != 0)
+		free(p);
+	return np;
 }
 
 #define DOALLOC(p,t,n)  (t *)doalloc(p, sizeof(t)*(n))
