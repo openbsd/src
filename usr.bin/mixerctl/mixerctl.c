@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.13 2003/11/21 10:20:06 jmc Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.14 2004/01/22 08:06:18 tedu Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ int
 main(int argc, char **argv)
 {
 	int fd, i, j, ch, pos;
-	int aflag = 0, qflag = 0, wflag = 0, vflag = 0;
+	int aflag = 0, qflag = 0, vflag = 0;
 	char *file;
 	char *sep = "=";
 	mixer_devinfo_t dinfo;
@@ -254,7 +254,7 @@ main(int argc, char **argv)
 			aflag++;
 			break;
 		case 'w':
-			wflag++;
+			/* compat */
 			break;
 		case 'v':
 			vflag++;
@@ -276,13 +276,14 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((fd = open(file, wflag ? O_RDWR : O_RDONLY)) < 0)
-		err(1, "%s", file);
+	if ((fd = open(file, O_RDWR)) == -1)
+		if ((fd = open(file, O_RDONLY)) == -1)
+			err(1, "%s", file);
 
 	for(;;) {
-	       dinfo.index = ndev++;
-	       if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
-	 	       break;
+		dinfo.index = ndev++;
+		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
+			break;
 	}
 
 	if (!ndev)
@@ -340,49 +341,42 @@ main(int argc, char **argv)
 						fields[i].name);
 	}
 
-	if (!argc && aflag && !wflag) {
+	if (!argc && aflag) {
 		for(i = 0; fields[i].name; i++) {
 			prfield(&fields[i], sep, vflag);
 			fprintf(out, "\n");
 		}
 	} else if (argc > 0 && !aflag) {
 		struct field *p;
-		if (wflag) {
-			while(argc--) {
-				char *q;
 
-				if (q = strchr(*argv, '=')) {
-					*q++ = 0;
-					p = findfield(*argv);
-					if (p == 0)
-						warnx("field %s does not exist", *argv);
-					else {
-						val = *p->valp;
-						if (rdfield(p, q)) {
-							if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0)
-								warn("AUDIO_MIXER_WRITE");
-							else if (sep && !qflag) {
-								*p->valp = val;
-								prfield(p, ": ", 0);
-								ioctl(fd, AUDIO_MIXER_READ, p->valp);
-								printf(" -> ");
-								prfield(p, 0, 0);
-								printf("\n");
-							}
+		while(argc--) {
+			char *q;
+
+			if (q = strchr(*argv, '=')) {
+				*q++ = 0;
+				p = findfield(*argv);
+				if (p == NULL)
+					warnx("field %s does not exist", *argv);
+				else {
+					val = *p->valp;
+					if (rdfield(p, q)) {
+						if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0)
+							warn("AUDIO_MIXER_WRITE");
+						else if (sep && !qflag) {
+							*p->valp = val;
+							prfield(p, ": ", 0);
+							ioctl(fd, AUDIO_MIXER_READ, p->valp);
+							printf(" -> ");
+							prfield(p, 0, 0);
+							printf("\n");
 						}
 					}
-				} else
-					warnx("No `=' in %s", *argv);
-				argv++;
-			}
-		} else {
-			while(argc--) {
+				}
+			argv++;
+			} else {
 				p = findfield(*argv);
-				if (p == 0)
-					warnx("field %s does not exist", *argv);
-				else
-					prfield(p, sep, vflag), fprintf(out, "\n");
-				argv++;
+				prfield(p, sep, vflag);
+				fprintf(out, "\n");
 			}
 		}
 	} else
@@ -398,7 +392,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-nv] [-f file] -a\n"
 	    "       %s [-nv] [-f file] name [...]\n"
-	    "       %s [-q]  [-f file] -w name=value [...]\n",
+	    "       %s [-q]  [-f file] name=value [...]\n",
 	    __progname, __progname, __progname);
 
 	exit(1);

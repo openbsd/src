@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.19 2003/11/21 10:20:06 jmc Exp $
+.\" $OpenBSD: mixerctl.1,v 1.20 2004/01/22 08:06:18 tedu Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@
 .Nm mixerctl
 .Op Fl q
 .Pf \ \& Op Fl f Ar file
-.Fl w
 .Xo
 .Ar name Ns = Ns Ar value
 .Op Ar ...
@@ -86,7 +85,7 @@ Enumerated values are shown in
 .Dq []
 and set values are shown in
 .Dq {} .
-.It Fl w Ar name Ns = Ns Ar value
+.It Ar name Ns = Ns Ar value
 Attempt to set the specified variable
 .Ar name
 to
