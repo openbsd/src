@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.133 2004/08/13 14:03:20 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.134 2004/08/17 16:06:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,6 +92,7 @@ int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
 		    struct filter_match_l *, struct filter_set *);
 int		 str2key(char *, char *, size_t);
 int		 neighbor_consistent(struct peer *);
+int		 merge_filterset(struct filter_set *, struct filter_set *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -704,12 +705,12 @@ peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.capabilities = $3;
 		}
 		| SET filter_set_opt	{
-			memcpy(&curpeer->conf.attrset, &$2,
-			    sizeof(curpeer->conf.attrset));
+			if (merge_filterset(&curpeer->conf.attrset, &$2) == -1)
+				YYERROR;
 		}
 		| SET optnl "{" optnl filter_set_l optnl "}"	{
-			memcpy(&curpeer->conf.attrset, &$5,
-			    sizeof(curpeer->conf.attrset));
+			if (merge_filterset(&curpeer->conf.attrset, &$5) == -1)
+				YYERROR;
 		}
 		| mrtdump
 		| REFLECTOR		{
@@ -1058,27 +1059,8 @@ filter_set	: /* empty */					{
 
 filter_set_l	: filter_set_l comma filter_set_opt	{
 			$$ = $1;
-			if ($$.flags & $3.flags) {
-				yyerror("redefining set shitz is not fluffy");
+			if (merge_filterset(&$$, &$3) == 1)
 				YYERROR;
-			}
-			$$.flags |= $3.flags;
-			if ($3.flags & SET_LOCALPREF)
-				$$.localpref = $3.localpref;
-			if ($3.flags & SET_MED)
-				$$.med = $3.med;
-			if ($3.flags & SET_NEXTHOP)
-				memcpy(&$$.nexthop, &$3.nexthop,
-				    sizeof($$.nexthop));
-			if ($3.flags & SET_PREPEND)
-				$$.prepend = $3.prepend;
-			if ($3.flags & SET_PFTABLE)
-				strlcpy($$.pftable, $3.pftable,
-				    sizeof($$.pftable));
-			if ($3.flags & SET_COMMUNITY) {
-				$$.community.as = $3.community.as;
-				$$.community.type = $3.community.type;
-			}
 		}
 		| filter_set_opt
 		;
@@ -1953,5 +1935,32 @@ neighbor_consistent(struct peer *p)
 		return (-1);
 	}
 
+	return (0);
+}
+
+int
+merge_filterset(struct filter_set *a, struct filter_set *b)
+{
+	if (a->flags & b->flags) {
+		yyerror("redefining set parameters is not fluffy");
+		return (-1);
+	}
+	a->flags |= b->flags;
+	if (b->flags & SET_LOCALPREF)
+		a->localpref = b->localpref;
+	if (b->flags & SET_MED)
+		a->med = b->med;
+	if (b->flags & SET_NEXTHOP)
+		memcpy(&a->nexthop, &b->nexthop,
+		    sizeof(a->nexthop));
+	if (b->flags & SET_PREPEND)
+		a->prepend = b->prepend;
+	if (b->flags & SET_PFTABLE)
+		strlcpy(a->pftable, b->pftable,
+		    sizeof(a->pftable));
+	if (b->flags & SET_COMMUNITY) {
+		a->community.as = b->community.as;
+		a->community.type = b->community.type;
+	}
 	return (0);
 }
