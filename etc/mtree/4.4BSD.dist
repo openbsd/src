@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.154 2003/06/27 21:26:20 david Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.155 2003/08/19 09:34:16 markus Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -207,6 +207,11 @@ kadm5			gname=bin uname=root mode=0755
 # ./usr/include/kerberosV
 ..
 
+# ./usr/include/openssl
+openssl		gname=bin uname=root mode=0755
+# ./usr/include/openssl
+..
+
 # ./usr/include/protocols
 protocols		gname=bin uname=root mode=0755
 # ./usr/include/protocols
@@ -225,11 +230,6 @@ rpc		gname=bin uname=root mode=0755
 # ./usr/include/rpcsvc
 rpcsvc		gname=bin uname=root mode=0755
 # ./usr/include/rpcsvc
-..
-
-# ./usr/include/ssl
-ssl		gname=bin uname=root mode=0755
-# ./usr/include/ssl
 ..
 
 # ./usr/include
