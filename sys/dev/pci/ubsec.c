@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.125 2003/04/19 21:59:08 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.126 2003/04/19 22:08:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -391,15 +391,12 @@ ubsec_intr(arg)
 			 * at the top.
 			 */
 			for (i = 0; i < npkts; i++) {
-				if(q->q_stacked_mcr[i]) {
+				if(q->q_stacked_mcr[i])
 					ubsec_callback(sc, q->q_stacked_mcr[i]);
-					ubsecstats.hst_opackets++;
-				} else {
+				else
 					break;
-				}
 			}
 			ubsec_callback(sc, q);
-			ubsecstats.hst_opackets++;
 		}
 
 		/*
@@ -1255,6 +1252,9 @@ ubsec_callback(sc, q)
 	struct cryptodesc *crd;
 	struct ubsec_dma *dmap = q->q_dma;
 
+	ubsecstats.hst_opackets++;
+	ubsecstats.hst_obytes += dmap->d_alloc.dma_size;
+
 	bus_dmamap_sync(sc->sc_dmat, dmap->d_alloc.dma_map, 0,
 	    dmap->d_alloc.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1273,7 +1273,6 @@ ubsec_callback(sc, q)
 		m_freem(q->q_src_m);
 		crp->crp_buf = (caddr_t)q->q_dst_m;
 	}
-	ubsecstats.hst_obytes += ((struct mbuf *)crp->crp_buf)->m_len;
 
 	/* copy out IV for future use */
 	if (q->q_flags & UBSEC_QFLAGS_COPYOUTIV) {
