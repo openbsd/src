@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.14 1997/11/05 10:00:22 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.15 1998/03/01 10:05:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -160,7 +160,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	call_msg.rm_call.cb_vers = version;
 	xdrmem_create(&(cu->cu_outxdrs), cu->cu_outbuf,
 	    sendsz, XDR_ENCODE);
-	if (! xdr_callhdr(&(cu->cu_outxdrs), &call_msg)) {
+	if (!xdr_callhdr(&(cu->cu_outxdrs), &call_msg)) {
 		goto fooy;
 	}
 	cu->cu_xdrpos = XDR_GETPOS(&(cu->cu_outxdrs));
@@ -338,8 +338,9 @@ send_again:
 		if (inlen < sizeof(u_int32_t))
 			continue;	
 		/* see if reply transaction id matches sent id */
-		if (*((u_int32_t *)(cu->cu_inbuf)) != *((u_int32_t *)(cu->cu_outbuf)))
-			continue;	
+		if (((struct rpc_msg *)(cu->cu_inbuf))->rm_xid !=
+		    ((struct rpc_msg *)(cu->cu_outbuf))->rm_xid)
+			continue;
 		/* we now assume we have the proper reply */
 		break;
 	}
@@ -351,9 +352,21 @@ send_again:
 	ok = xdr_replymsg(&reply_xdrs, &reply_msg);
 	/* XDR_DESTROY(&reply_xdrs);  save a few cycles on noop destroy */
 	if (ok) {
+#if 0
+		/*
+		 * XXX Would like to check these, but call_msg is not
+		 * around.
+		 */
+		if (reply_msg.rm_call.cb_prog != call_msg.rm_call.cb_prog ||
+		    reply_msg.rm_call.cb_vers != call_msg.rm_call.cb_vers ||
+		    reply_msg.rm_call.cb_proc != call_msg.rm_call.cb_proc) {
+			goto call_again;	/* XXX spin? */
+		}
+#endif
+
 		_seterr_reply(&reply_msg, &(cu->cu_error));
 		if (cu->cu_error.re_status == RPC_SUCCESS) {
-			if (! AUTH_VALIDATE(cl->cl_auth,
+			if (!AUTH_VALIDATE(cl->cl_auth,
 			    &reply_msg.acpted_rply.ar_verf)) {
 				cu->cu_error.re_status = RPC_AUTHERROR;
 				cu->cu_error.re_why = AUTH_INVALIDRESP;
