@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.57 2000/02/21 21:42:13 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.58 2000/04/14 04:20:57 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2787,37 +2787,49 @@ tcp_mss(tp, offer)
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 	}
 	/*
-	 * if there's an mtu associated with the route, use it
+	 * if there's an mtu associated with the route and we support
+	 * path MTU discovery for the underlying protocol family, use it.
 	 */
-	if (rt->rt_rmx.rmx_mtu)
+	if (rt->rt_rmx.rmx_mtu) {
+		/*
+		 * One may wish to lower MSS to take into account options,
+		 * especially security-related options.
+		 */
+		mss = rt->rt_rmx.rmx_mtu - sizeof(struct tcphdr);
+		switch (tp->pf) {
 #ifdef INET6
-	{
-	  /*
-	   * One may wish to lower MSS to take into account options,
-	   * especially security-related options.
-	   */
-	  if (tp->pf == AF_INET6) 
-	    mss = rt->rt_rmx.rmx_mtu - sizeof(struct tcpipv6hdr);
-	  else
-#endif /* INET6 */
-		mss = rt->rt_rmx.rmx_mtu - sizeof(struct tcpiphdr);
-#ifdef INET6
-	}
-#endif /* INET6 */
-	else
+		case AF_INET6:
+			mss -= sizeof(struct ip6_hdr);
+			break;
+#endif
+#ifdef notdef	/* no IPv4 path MTU discovery yet */
+		case AF_INET:
+			mss -= sizeof(struct ip);
+			break;
+#endif
+		default:
+			/* the family does not support path MTU discovery */
+			mss = 0;
+			break;
+		}
+	} else
+		mss = 0;
+#else
+	mss = 0;
 #endif /* RTV_MTU */
-	{
-	  /*
-	   *  ifp may be null and rmx_mtu may be zero in certain
-	   *  v6 cases (e.g., if ND wasn't able to resolve the 
-	   *  destination host.
-	   */
+	if (mss == 0) {
+		/*
+		 * ifp may be null and rmx_mtu may be zero in certain
+		 * v6 cases (e.g., if ND wasn't able to resolve the 
+		 * destination host.
+		 */
 		mss = ifp ? ifp->if_mtu - sizeof(struct tcpiphdr) : 0;
-#ifdef INET6
-		if (tp->pf == AF_INET)
-#endif /* INET6 */
-		if (!in_localaddr(inp->inp_faddr))
-			mss = min(mss, tcp_mssdflt);
+		switch (tp->pf) {
+		case AF_INET:
+			if (!in_localaddr(inp->inp_faddr))
+				mss = min(mss, tcp_mssdflt);
+			break;
+		}
 	}
 	/*
 	 * The current mss, t_maxseg, is initialized to the default value.
