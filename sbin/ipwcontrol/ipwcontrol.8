@@ -1,4 +1,4 @@
-.\" $Id: ipwcontrol.8,v 1.3 2004/11/18 21:02:31 damien Exp $
+.\"	$OpenBSD: ipwcontrol.8,v 1.4 2004/11/21 23:52:56 jmc Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -33,13 +33,13 @@
 .Nd configure Intel PRO/Wireless 2100 network adapter
 .Sh SYNOPSIS
 .Nm
-.Op Fl i Ar interface
 .Op Fl r
+.Op Fl i Ar interface
 .Sh DESCRIPTION
 The
 .Nm
 utility controls the operation of Intel PRO/Wireless 2100 networking
-devices via
+devices via the
 .Xr ipw 4
 driver.
 .Pp
@@ -47,11 +47,11 @@ You should not use this program to configure IEEE 802.11 parameters.
 Use
 .Xr ifconfig 8
 instead.
-.Sh OPTIONS
+.Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width "-i interfaceXX"
 .It Fl i Ar interface
-Display adapter's internal statistics.
+Display the adapter's internal statistics.
 .It Fl r
 Display the radio switch state (on or off).
 .El
