@@ -38,16 +38,16 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigreturn.S,v 1.3 2000/01/06 08:49:46 d Exp $"
+	.asciz "$OpenBSD: sigreturn.S,v 1.4 2000/01/06 10:41:58 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
 #ifdef PROF
-#undef ENTRY
-#define	ENTRY(x) \
-	.globl _C_LABEL(x); .align 2; _C_LABEL(x):  pusha ; \
+#undef _PROF_PROLOGUE
+#define _PROF_PROLOGUE \
+	pusha; \
 	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
 #endif /* PROF */
 
