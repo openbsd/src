@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.396 2003/07/04 10:42:16 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.397 2003/07/04 11:05:44 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -861,7 +861,7 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 			    pf->anchor, pf->ruleset, pf->ab, pf->tticket)) {
 				yyerror("cannot define table %s: %s", $3,
 				    pfr_strerror(errno));
-				YYERROR;				
+				YYERROR;
 			}
 			pf->tdirty = 1;
 		}
@@ -894,11 +894,11 @@ table_opt	: STRING
 		}
 		| '{' tableaddrs '}'	{ table_opts.init_addr = 1; }
 		| FILENAME STRING	{
-			if(pfr_buf_load(pf->ab, $2, 0, append_addr)) {
+			if (pfr_buf_load(pf->ab, $2, 0, append_addr)) {
 				if (errno)
-                        		yyerror("cannot load %s: %s", $2,
-                        		    pfr_strerror(errno));
-                        	YYERROR;
+					yyerror("cannot load %s: %s", $2,
+					    pfr_strerror(errno));
+					YYERROR;
 			}
 			table_opts.init_addr = 1;
 		}
@@ -917,7 +917,7 @@ tableaddr	: not STRING {
 		}
 		| not STRING '/' number {
 			char *buf = NULL;
-                        
+
 			if (asprintf(&buf, "%s/%d", $2, $4) < 0) {
 				if (errno)
 					yyerror("cannot add %s/%d: %s", $2, $4,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.17 2003/07/03 09:13:06 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.18 2003/07/04 11:05:44 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -451,7 +451,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 /* buffer managment code */
 
-size_t buf_esize[PFRB_MAX] = { 0, 
+size_t buf_esize[PFRB_MAX] = { 0,
 	sizeof(struct pfr_table), sizeof(struct pfr_tstats),
 	sizeof(struct pfr_addr), sizeof(struct pfr_astats),
 };
@@ -495,7 +495,7 @@ pfr_buf_next(struct pfr_buffer *b, const void *prev)
 		return (b->pfrb_caddr);
 	bs = buf_esize[b->pfrb_type];
 	if ((((caddr_t)prev)-((caddr_t)b->pfrb_caddr)) / bs >= b->pfrb_size-1)
-		return (NULL); 
+		return (NULL);
 	return (((caddr_t)prev) + bs);
 }
 
@@ -548,7 +548,7 @@ pfr_buf_grow(struct pfr_buffer *b, int minsize)
  * reset buffer and free memory.
  */
 void
-pfr_buf_clear(struct pfr_buffer *b) 
+pfr_buf_clear(struct pfr_buffer *b)
 {
 	if (b == NULL)
 		return;

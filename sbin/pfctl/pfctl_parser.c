@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.166 2003/07/04 10:42:17 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.167 2003/07/04 11:05:44 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1180,7 +1180,7 @@ host_dns(const char *s, int v4mask, int v6mask)
  *	if set to 1, only simple addresses are accepted (no netblock, no "!").
  */
 int
-append_addr(struct pfr_buffer *b, char *s, int test) 
+append_addr(struct pfr_buffer *b, char *s, int test)
 {
 	return append_addr_not(b, s, test, 0);
 }
