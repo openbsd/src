@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.117 2004/10/26 00:25:51 jsg Exp $
+$OpenBSD: usbdevs,v 1.118 2004/10/30 14:36:28 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -290,6 +290,7 @@ vendor ACCTON		0x083a	Accton Technology
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
 vendor ACTIVEWIRE	0x0854	ActiveWire
+vendor BBELECTRONICS	0x0856	B&B Electronics
 vendor PORTGEAR		0x085a	PortGear
 vendor NETGEAR2		0x0864	Netgear
 vendor SYSTEMTALKS	0x086e	System Talks
@@ -562,6 +563,9 @@ product AVERATEC USBWLAN	0x4013	WLAN
 
 /* Avision products */
 product AVISION 1200U		0x0268	1200U
+
+/* B&B Electronics products */
+product BBELECTRONICS USOTL4	0xAC01	uLinks RS-422/485
 
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet */
