@@ -1,31 +1,21 @@
-# $OpenBSD: Makefile,v 1.8 1999/10/01 01:53:39 angelos Exp $
+#	$OpenBSD: Makefile,v 1.9 2001/07/20 20:05:58 mickey Exp $
 
 PROG=	keynote
-
-BINOWN= root
-BINGRP= bin
-BINMODE= 555
-BINDIR= /usr/bin
-LDADD=	-lkeynote -lm -lcrypto
-MAN=	keynote.1
-CLEANFILES+= lex.kv.c z.tab.c z.tab.h
-
-CFLAGS+= -Wall -DCRYPTO -DHAVE_CONFIG_H -I. -I${.CURDIR}
-LEXFLAGS2 = -Pkv -s -i
-YACCFLAGS2 = -d -p kv -b z
-
-KEYNOTEDIST= lib/libkeynote
-KEYNOTE_SRC= ${.CURDIR}/../../${KEYNOTEDIST}
-
 SRCS=	keynote-sign.c keynote-keygen.c keynote-sigver.c keynote-verify.c \
 	keynote-main.c z.tab.c lex.kv.c
+CFLAGS+= -Wall -DCRYPTO -DHAVE_CONFIG_H -I. -I${.CURDIR}
+LEXFLAGS2= -Pkv -s -i
+YACCFLAGS2= -d -p kv -b z
+LDADD=	-lkeynote -lm -lcrypto
+CLEANFILES+= lex.kv.c z.tab.c z.tab.h
+MAN=	keynote.1
 
-z.tab.c: keynote-ver.y keynote.h header.h
-	$(YACC.y) $(YACCFLAGS2) ${KEYNOTE_SRC}/keynote-ver.y
+.PATH:	${.CURDIR}/../../lib/libkeynote
 
-lex.kv.c: keynote-ver.l keynote.h header.h
-	$(LEX.l) $(LEXFLAGS2) ${KEYNOTE_SRC}/keynote-ver.l
+z.tab.c: keynote-ver.y
+	$(YACC.y) $(YACCFLAGS2) $>
 
-.PATH:	${KEYNOTE_SRC}
+lex.kv.c: keynote-ver.l
+	$(LEX.l) $(LEXFLAGS2) $>
 
 .include<bsd.prog.mk>
