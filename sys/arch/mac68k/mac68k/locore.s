@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.38 2004/11/27 14:26:32 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.39 2004/11/30 01:44:22 martin Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1503,6 +1503,51 @@ ENTRY(m68881_restore)
 	fmovem	a0@(FPF_REGS),fp0-fp7	| restore FP general registers
 Lm68881rdone:
 	frestore a0@			| restore state
+	rts
+
+/*
+ * delay() - delay for a specified number of microseconds
+ * _delay() - calibrator helper for delay()
+ *
+ * Notice that delay_factor is scaled up by a factor of 128 to avoid loss
+ * of precision for small delays.  As a result of this we need to avoid
+ * overflow.
+ *
+ * The branch target for the loops must be aligned on a half-line (8-byte)
+ * boundary to minimize cache effects.  This guarantees both that there
+ * will be no prefetch stalls due to cache line burst operations and that
+ * the loops will run from a single cache half-line.
+ */
+	.align	8			| align to half-line boundary
+
+ALTENTRY(_delay, _delay)
+ENTRY(delay)
+	movl	sp@(4),d0		| get microseconds to delay
+	cmpl	#0x40000,d0		| is it a "large" delay?
+	bls	Ldelayshort		| no, normal calculation
+	movql	#0x7f,d1		| adjust for scaled multipler (to
+	addl	d1,d0			|   avoid overflow)
+	lsrl	#7,d0
+	mulul	_C_LABEL(delay_factor),d0 | calculate number of loop iterations
+	bra	Ldelaysetup		| go do it!
+Ldelayshort:
+	mulul	_C_LABEL(delay_factor),d0 | calculate number of loop iterations
+	lsrl	#7,d0			| adjust for scaled multiplier
+Ldelaysetup:
+	jeq	Ldelayexit		| bail out if nothing to do
+	movql	#0,d1			| put bits 15-0 in d1 for the
+	movw	d0,d1			|   inner loop, and move bits
+	movw	#0,d0			|   31-16 to the low-order word
+	subql	#1,d1			|   of d0 for the outer loop
+	swap	d0
+Ldelay:
+	tstl	_C_LABEL(delay_flag)	| this never changes for delay()!
+	dbeq	d1,Ldelay		|   (used only for timing purposes)
+	dbeq	d0,Ldelay
+	addqw	#1,d1			| adjust end count and
+	swap	d0			|    return the longword result
+	orl	d1,d0
+Ldelayexit:
 	rts
 
 /*
