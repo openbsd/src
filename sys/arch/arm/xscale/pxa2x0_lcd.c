@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.3 2005/01/03 04:50:22 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.4 2005/01/04 03:53:46 drahn Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -158,18 +158,6 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		    sc->dev.dv_xname, 17);
 
 	/* Initialize LCD controller */
-	{
-		printf("\nbefore\n");
-		u_int32_t tmp;
-		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR0);
-		printf("LCCR0 %08x\n", tmp);
-		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR1);
-		printf("LCCR1 %08x\n", tmp);
-		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR2);
-		printf("LCCR2 %08x\n", tmp);
-		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR3);
-		printf("LCCR3 %08x\n", tmp);
-	}
 
 	/* Check if LCD is enabled before programming, it should not
 	 * be enabled while it is being reprogrammed, therefore disable
@@ -220,18 +208,6 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		pxa2x0_gpio_set_function(58 + nldd, GPIO_ALT_FN_2_OUT);
 
 	pxa2x0_lcd_geometry(sc, geom);
-	{
-		printf("\nafter\n");
-		u_int32_t tmp;
-		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR0);
-		printf("LCCR0 %08x\n", tmp);
-		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR1);
-		printf("LCCR1 %08x\n", tmp);
-		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR2);
-		printf("LCCR2 %08x\n", tmp);
-		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR3);
-		printf("LCCR3 %08x\n", tmp);
-	}
 }
 
 
