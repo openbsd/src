@@ -1,4 +1,4 @@
-/* $Id: cmdtab.c,v 1.4 2001/07/20 15:51:45 rees Exp $ */
+/* $Id: cmdtab.c,v 1.5 2001/07/30 20:05:39 rees Exp $ */
 
 /*
 copyright 1999
@@ -37,15 +37,15 @@ such damages.
 #ifdef __palmos__
 #include <Common.h>
 #include <System/SysAll.h>
-#include <System/Unix/unix_stdio.h>
-#include <System/Unix/unix_stdlib.h>
 #include <System/Unix/sys_types.h>
-#include <string.h>
-#undef sprintf
-#undef vsprintf
-#else
-#include <stdio.h>
+#include <System/Unix/unix_stdlib.h>
+#include <System/Unix/unix_string.h>
+#include <UI/UIAll.h>
+#include "field.h"
 #endif
+#include <stdio.h>
+
+#include "sectok.h"
 
 static struct cmd {
     int ins, inout;

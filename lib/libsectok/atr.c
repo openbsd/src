@@ -1,4 +1,4 @@
-/* $Id: atr.c,v 1.7 2001/07/20 15:51:45 rees Exp $ */
+/* $Id: atr.c,v 1.8 2001/07/30 20:05:39 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000, 2001
@@ -39,15 +39,14 @@ such damages.
 #ifdef __palmos__
 #include <Common.h>
 #include <System/SysAll.h>
-#include <System/MemoryMgr.h>
 #include <System/Unix/unix_stdlib.h>
+#include <System/Unix/unix_string.h>
 #include <UI/UIAll.h>
 #include "field.h"
 typedef long int32_t;
 #else
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 #endif
 
 #include "sectok.h"

@@ -1,4 +1,4 @@
-/* $Id: input.c,v 1.6 2001/07/26 22:15:04 rees Exp $ */
+/* $Id: input.c,v 1.7 2001/07/30 20:05:39 rees Exp $ */
 
 /*
 copyright 2001
@@ -36,6 +36,15 @@ such damages.
  * Jim Rees, University of Michigan, July 2000
  */
 
+#ifdef __palmos__
+#include <Common.h>
+#include <System/SysAll.h>
+#include <System/Unix/sys_types.h>
+#include <System/Unix/unix_stdlib.h>
+#include <System/Unix/unix_string.h>
+#include <UI/UIAll.h>
+#include "field.h"
+#endif
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>

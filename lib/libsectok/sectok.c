@@ -1,4 +1,4 @@
-/* $Id: sectok.c,v 1.8 2001/07/27 21:55:36 jakob Exp $ */
+/* $Id: sectok.c,v 1.9 2001/07/30 20:05:39 rees Exp $ */
 
 /*
 copyright 2000
@@ -37,6 +37,17 @@ such damages.
  * University of Michigan CITI, July 2001
  */
 
+#ifdef __palmos__
+#include <Common.h>
+#include <System/SysAll.h>
+#include <System/Unix/sys_types.h>
+#include <System/Unix/unix_stdlib.h>
+#include <System/Unix/unix_string.h>
+#include <UI/UIAll.h>
+#include "field.h"
+#include <stdio.h>
+#undef open
+#else
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -45,6 +56,7 @@ such damages.
 #include <string.h>
 #include <dlfcn.h>
 #include <errno.h>
+#endif
 
 #include "sectok.h"
 #include "ifdhandler.h"
@@ -63,6 +75,8 @@ int DBUpdateReaders(char *readerconf, int (callback) (int rn, unsigned long chan
 /* the callback for DBUpdateReaders */
 static int addReader(int rn, unsigned long channelID, char *driverFile);
 static void *lookupSym(void *handle, char *name);
+#else
+static int sillyports[] = {0x3f8, 0x2f8, 0x3e8, 0x2e8};
 #endif
 
 static int openReader(int readerNum, int flags);
@@ -153,6 +167,10 @@ sectok_xopen(int rn, int flags, char *config_path, char *driver_path, int *swp)
 
     r = openReader(rn, flags);
 
+#ifdef __palmos__
+    if (sectok_swOK(r) && !sectok_cardpresent(rn))
+	r = STENOCARD;
+#else
     if (sectok_swOK(r) && !(flags & STONOWAIT)) {
 	/* Wait for card present */
 	while (!sectok_cardpresent(rn)) {
@@ -164,6 +182,7 @@ sectok_xopen(int rn, int flags, char *config_path, char *driver_path, int *swp)
 	    }
 	}
     }
+#endif
 
  out:
 #ifdef SCPERF
@@ -196,7 +215,7 @@ openReader(int readerNum, int flags)
     readerInfo *reader;
 
 #ifdef DEBUG
-    fprintf(stderr, "openReader %d\n", readerNum);
+    printf("openReader %d\n", readerNum);
 #endif
 
     if (readerNum < 0 || readerNum >= MAX_READERS)
@@ -212,7 +231,7 @@ openReader(int readerNum, int flags)
 	libHandle = dlopen(reader->driverPath, RTLD_LAZY);
 	if (!libHandle) {
 #ifdef DEBUG
-	    fprintf(stderr, "%s: %s\n", reader->driverPath, dlerror());
+	    printf("%s: %s\n", reader->driverPath, dlerror());
 #endif
 	    return STEDRVR;
 	}
@@ -249,7 +268,7 @@ openReader(int readerNum, int flags)
 	reader->getcapa = IFD_Get_Capabilities;
 	reader->setcapa = IFD_Set_Capabilities;
 	reader->cardpresent = IFD_Is_ICC_Present;
-	reader->channelID = (0x10000 | readerNum);
+	reader->channelID = (0x10000 | (readerNum < 4 ? sillyports[readerNum] : readerNum));
 #endif /* DL_READERS */
 
 	reader->driverLoaded = 1;
@@ -327,7 +346,7 @@ sectok_reset(int fd, int flags, unsigned char *atr, int *swp)
 
     if (reader->power(IFD_RESET)) {
 #ifdef DEBUG
-	fprintf(stderr, "power failed!\n");
+	printf("power failed!\n");
 #endif
 	r = STESLAG;
 	goto out;
@@ -335,7 +354,7 @@ sectok_reset(int fd, int flags, unsigned char *atr, int *swp)
 
     if (atr && reader->getcapa(TAG_IFD_ATR, atr)) {
 #ifdef DEBUG
-	fprintf(stderr, "reset failed!\n");
+	printf("reset failed!\n");
 #endif
 	r = STESLAG;
 	goto out;

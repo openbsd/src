@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.8 2001/07/26 22:15:04 rees Exp $ */
+/* $Id: cyberflex.c,v 1.9 2001/07/30 20:05:39 rees Exp $ */
 
 /*
 copyright 2000
@@ -36,15 +36,19 @@ such damages.
  * University of Michigan CITI, July 2001
  */
 
+#ifdef __palmos__
+#include <Common.h>
+#include <System/SysAll.h>
+#include <System/Unix/unix_stdlib.h>
+#include <System/Unix/unix_string.h>
+#include <UI/UIAll.h>
+#include "field.h"
+#else
 #include <stdlib.h>
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <string.h>
-#ifdef __linux
-#include <openssl/des.h>
-#else /* __linux */
-#include <des.h>
-#endif
 
 #include "sectok.h"
 
@@ -70,7 +74,7 @@ cyberflex_create_file_acl(int fd, int cla, unsigned char *fid, int size, int fty
     data[4] = ftype;
     data[5] = 0x01;		/* status = 1 */
     data[6] = data[7] = 0x00;	/* record related */
-    memmove(&data[8], acl, 8);
+    memcpy(&data[8], acl, 8);
 
     sectok_apdu(fd, cla, 0xe0, 0, 0, 0x10, data, 0, NULL, swp);
     if (!sectok_swOK(*swp))
