@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.5 1996/08/31 14:20:36 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.6 1996/09/02 18:47:16 tholo Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.5 1996/08/31 14:20:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.6 1996/09/02 18:47:16 tholo Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -380,6 +380,7 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         char    zfile1[128], zfile2[128];
         int     fd;
         struct  stat st;
+	int	days = numdays;
 
 #ifdef _IBMR2
 /* AIX 3.1 has a broken fchown- if the owner_uid is -1, it will actually */
@@ -427,7 +428,7 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         if (!noaction && !(flags & CE_BINARY))
                 (void) log_trim(log);  /* Report the trimming to the old log */
 
-	if (numdays == -1) {
+	if (days == 0) {
 		if (noaction)
 			printf("rm %s\n",log);
 		else
