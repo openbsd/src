@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.23 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: select.2,v 1.24 2003/07/30 13:03:07 henning Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -39,6 +39,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/time.h>
+.Fd #include <string.h>
 .Fd #include <unistd.h>
 .Ft int
 .Fn select "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "struct timeval *timeout"
