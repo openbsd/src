@@ -1,4 +1,4 @@
-/*	$OpenBSD: midwayreg.h,v 1.3 1996/07/03 17:21:17 chuck Exp $	*/
+/*	$OpenBSD: midwayreg.h,v 1.4 1996/07/16 22:08:16 chuck Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -228,6 +228,8 @@ typedef caddr_t bus_mem_addr_t;
  */
 
 #define MIDDMA_JK	0x3	/* just kidding */
+#define MIDDMA_BYTE	0x1	/* byte */
+#define MIDDMA_2BYTE	0x2	/* 2 bytes */
 #define MIDDMA_WORD	0x0	/* word */
 #define MIDDMA_2WORD	0x7	/* 2 words */
 #define MIDDMA_4WORD	0x4	/* 4 words */

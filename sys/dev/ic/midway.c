@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.10 1996/07/11 22:47:04 chuck Exp $	*/
-/*	(sync'd to midway.c 1.59)	*/
+/*	$OpenBSD: midway.c,v 1.11 1996/07/16 22:08:17 chuck Exp $	*/
+/*	(sync'd to midway.c 1.60)	*/
 
 /*
  *
@@ -120,6 +120,11 @@
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <dev/ic/midwayreg.h>
 #include <dev/ic/midwayvar.h>
+#if defined(__alpha__)
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#undef vtophys
+#define	vtophys(va)	__alpha_bus_XXX_dmamap(sc->en_bc, (void *)(va))
+#endif
 #elif defined(__FreeBSD__)
 #include <machine/cpufunc.h>            /* for rdtsc proto for clock.h below */
 #include <machine/clock.h>              /* for DELAY */
@@ -280,47 +285,32 @@ u_int32_t r, v;
 #define EN_DQ_SLOT(X) ((X) >> 20)
 #define EN_DQ_LEN(X) ((X) & 0xfffff)
 
-/* add an item to the DTQ (more to come) */
-#define EN_DTQADD(SC,CNT,CHAN,BCODE,ADDR) \
-	EN_DTQADD_XXX(SC,CNT,CHAN,BCODE,ADDR,0)
-
-/* add a final item to the DTQ and kick it */
-#define EN_DTQADDEND(SC,CNT,CHAN,BCODE,ADDR,LEN) { \
-	(SC)->dtq[MID_DTQ_A2REG((SC)->dtq_us)] = EN_DQ_MK(CHAN,LEN); \
-	EN_DTQADD_XXX(SC,CNT,CHAN,BCODE,ADDR,MID_DMA_END); \
-	EN_WRITE((SC), MID_DMA_WRTX, MID_DTQ_A2REG((SC)->dtq_us)); \
-}
-
-/* DTQ add helper macro */
-#define EN_DTQADD_XXX(SC,CNT,CHAN,BCODE,ADDR,END) { \
+/* add an item to the DTQ */
+#define EN_DTQADD(SC,CNT,CHAN,BCODE,ADDR,LEN,END) { \
+	if (END) \
+	  (SC)->dtq[MID_DTQ_A2REG((SC)->dtq_us)] = EN_DQ_MK(CHAN,LEN); \
 	EN_WRITE((SC), (SC)->dtq_us, \
 		MID_MK_TXQ((CNT), (CHAN), (END), (BCODE))); \
 	(SC)->dtq_us += 4; \
 	EN_WRITE((SC), (SC)->dtq_us, (ADDR)); \
 	EN_WRAPADD(MID_DTQOFF, MID_DTQEND, (SC)->dtq_us, 4); \
 	(SC)->dtq_free--; \
+	if (END) \
+	  EN_WRITE((SC), MID_DMA_WRTX, MID_DTQ_A2REG((SC)->dtq_us)); \
 }
 
-
-/* add an item to the DRQ (more to come) */
-#define EN_DRQADD(SC,CNT,VCI,BCODE,ADDR) \
-	EN_DRQADD_XXX(SC,CNT,VCI,BCODE,ADDR,0)
-
-/* add a final item to the DRQ and kick it */
-#define EN_DRQADDEND(SC,CNT,VCI,BCODE,ADDR,LEN,SLOT) { \
-	(SC)->drq[MID_DRQ_A2REG((SC)->drq_us)] = EN_DQ_MK(SLOT,LEN); \
-	EN_DRQADD_XXX(SC,CNT,VCI,BCODE,ADDR,MID_DMA_END); \
-	EN_WRITE((SC), MID_DMA_WRRX, MID_DRQ_A2REG((SC)->drq_us)); \
-}
-
-/* DRQ add helper macro */
-#define EN_DRQADD_XXX(SC,CNT,VCI,BCODE,ADDR,END) { \
+/* DRQ add macro */
+#define EN_DRQADD(SC,CNT,VCI,BCODE,ADDR,LEN,SLOT,END) { \
+	if (END) \
+	  (SC)->drq[MID_DRQ_A2REG((SC)->drq_us)] = EN_DQ_MK(SLOT,LEN); \
 	EN_WRITE((SC), (SC)->drq_us, \
 		MID_MK_RXQ((CNT), (VCI), (END), (BCODE))); \
 	(SC)->drq_us += 4; \
 	EN_WRITE((SC), (SC)->drq_us, (ADDR)); \
 	EN_WRAPADD(MID_DRQOFF, MID_DRQEND, (SC)->drq_us, 4); \
 	(SC)->drq_free--; \
+	if (END) \
+	  EN_WRITE((SC), MID_DMA_WRRX, MID_DRQ_A2REG((SC)->drq_us)); \
 }
 
 /*
@@ -335,7 +325,7 @@ int	en_dumpmem __P((int,int,int));
 STATIC	void en_dmaprobe __P((struct en_softc *));
 STATIC	int en_dmaprobe_doit __P((struct en_softc *, u_int8_t *, 
 							u_int8_t *, int));
-STATIC	int en_dqneed __P((struct en_softc *, caddr_t, u_int));
+STATIC	int en_dqneed __P((struct en_softc *, caddr_t, u_int, u_int));
 STATIC	void en_init __P((struct en_softc *));
 STATIC	int en_ioctl __P((struct ifnet *, EN_IOCTL_CMDT, caddr_t));
 STATIC	int en_k2sz __P((int));
@@ -437,32 +427,51 @@ int sz;
  * en_dqneed: calculate number of DTQ/DRQ's needed for a buffer
  */
 
-STATIC INLINE int en_dqneed(sc, data, len)
+STATIC INLINE int en_dqneed(sc, data, len, tx)
 
 struct en_softc *sc;
 caddr_t data;
-u_int len;
+u_int len, tx;
 
 {
-  int result = 0, needalign;
+  int result = 0, needalign, sz;
     
     if (len < EN_MINDMA) {
-      return(1);		/* will copy/DMA_JK */
+      if (!tx)			/* XXX: conservative */
+        return(1);		/* will copy/DMA_JK */
     }
 
-    if (sc->alburst) {
-      needalign = (((u_int) data) & sc->bestburstmask);
+    if (tx) {			/* byte burst? */
+      needalign = (((unsigned long) data) % sizeof(u_int32_t));
       if (needalign) {
-	result++;		/* alburst */
-	len = len - (sc->bestburstlen - needalign);
+        result++;
+        sz = min(len, sizeof(u_int32_t) - needalign);
+        len -= sz;
+        data += sz;
       }
     }
 
-    if (len)
+    if (sc->alburst && len) {
+      needalign = (((unsigned long) data) & sc->bestburstmask);
+      if (needalign) {
+	result++;		/* alburst */
+        sz = min(len, sc->bestburstlen - needalign);
+        len -= sz;
+      }
+    }
+
+    if (len >= sc->bestburstlen) {
+      sz = len / sc->bestburstlen;
+      sz = sz * sc->bestburstlen;
+      len -= sz;
       result++;			/* best shot */
+    }
     
-    if (len > sc->bestburstlen && (len & sc->bestburstmask) != 0)
+    if (len) {
       result++;			/* clean up */
+      if (tx && (len % sizeof(u_int32_t)) != 0)
+        result++;		/* byte cleanup */
+    }
 
     return(result);
 }
@@ -513,7 +522,7 @@ u_int totlen, *drqneed;
     *mp = m;
     mp = &m->m_next;
 
-    *drqneed += en_dqneed(sc, m->m_data, m->m_len);
+    *drqneed += en_dqneed(sc, m->m_data, m->m_len, 0);
 
   }
   return(top);
@@ -664,6 +673,7 @@ done_probe:
   sc->txoutspace = sc->txdtqout = sc->launch = sc->lheader = sc->ltail = 0;
   sc->hwpull = sc->swadd = sc->rxqnotus = sc->rxqus = sc->rxoutboth = 0;
   sc->rxdrqout = sc->ttrash = sc->rxmbufout = sc->mfixfail = 0;
+  sc->headbyte = sc->tailbyte = sc->tailflush = 0;
 #endif
   sc->need_drqs = sc->need_dtqs = 0;
 
@@ -706,10 +716,10 @@ struct en_softc *sc;
   sc->alburst = 0;
 
   sp = (u_int8_t *) srcbuf;
-  while ((((u_int) sp) % MIDDMA_MAXBURST) != 0)
+  while ((((unsigned long) sp) % MIDDMA_MAXBURST) != 0)
     sp += 4;
   dp = (u_int8_t *) dstbuf;
-  while ((((u_int) dp) % MIDDMA_MAXBURST) != 0)
+  while ((((unsigned long) dp) % MIDDMA_MAXBURST) != 0)
     dp += 4;
 
   bestalgn = bestnotalgn = en_dmaprobe_doit(sc, sp, dp, 0);
@@ -1296,8 +1306,10 @@ struct ifnet *ifp;
     
       /*
        * calculate size of packet (in bytes)
-       * we also eliminate all stupid (non-word) alignments here using
-       * en_mfix().   a well behaved protocol will never need en_mfix()!
+       * also, if we are not doing transmit DMA we eliminate all stupid
+       * (non-word) alignments here using en_mfix().   calls to en_mfix()
+       * seem to be due to tcp retransmits for the most part.
+       *
        * after this loop mlen total length of mbuf chain (including atm_ph),
        * and lastm is a pointer to the last mbuf on the chain.
        */
@@ -1306,21 +1318,23 @@ struct ifnet *ifp;
       mlen = 0;
       prev = NULL;
       while (1) {
-	if ( (mtod(lastm, u_int) % sizeof(u_int32_t)) != 0 ||
-	  ((lastm->m_len % sizeof(u_int32_t)) != 0 && lastm->m_next)) {
-	  first = (lastm == m);
-	  if (en_mfix(sc, &lastm, prev) == 0) {	/* failed? */
-	    m_freem(m);
-	    m = NULL;
-            break;
+        if (EN_NOTXDMA || !en_dma) {		/* no DMA? */
+	  if ( (mtod(lastm, unsigned long) % sizeof(u_int32_t)) != 0 ||
+	    ((lastm->m_len % sizeof(u_int32_t)) != 0 && lastm->m_next)) {
+	    first = (lastm == m);
+	    if (en_mfix(sc, &lastm, prev) == 0) {	/* failed? */
+	      m_freem(m);
+	      m = NULL;
+              break;
+            }
+	    if (first)
+	      m = lastm;		/* update */
           }
-	  if (first)
-	    m = lastm;		/* update */
+          prev = lastm;
         }
 	mlen += lastm->m_len;
 	if (lastm->m_next == NULL)
 	  break;
-        prev = lastm;
 	lastm = lastm->m_next;
       }
 
@@ -1410,8 +1424,8 @@ struct ifnet *ifp;
 	}
 	atm_flags |= EN_OBTRL;
       }
-#endif	/* EN_MBUF_OPT */
       ATM_PH_FLAGS(ap) = atm_flags;	/* update EN_OBHDR/EN_OBTRL bits */
+#endif	/* EN_MBUF_OPT */
 
       /*
        * choose channel with smallest # of bytes waiting for DMA
@@ -1480,7 +1494,7 @@ struct mbuf **mm, *prev;
 #endif
 
   d = mtod(m, u_char *);
-  off = ((u_int) d) % sizeof(u_int32_t);
+  off = ((unsigned long) d) % sizeof(u_int32_t);
 
   if (off) {
     if ((m->m_flags & M_EXT) == 0) {
@@ -1555,8 +1569,15 @@ int chan;
   printf("%s: tx%d: starting...\n", sc->sc_dev.dv_xname, chan);
 #endif
 
+  /*
+   * note: now that txlaunch handles non-word aligned/sized requests
+   * the only time you can safely set launch.nodma is if you've en_mfix()'d
+   * the mbuf chain.    this happens only if EN_NOTXDMA || !en_dma.
+   */
+
+  launch.nodma = (EN_NOTXDMA || !en_dma);
+
 again:
-  launch.nodma = 0;
 
   /*
    * get an mbuf waiting for DMA
@@ -1612,8 +1633,11 @@ again:
     if (len == 0)
       continue;			/* atm_pseudohdr alone in first mbuf */
 
-    dtqneed += en_dqneed(sc, (caddr_t) cp, len);
+    dtqneed += en_dqneed(sc, (caddr_t) cp, len, 1);
   }
+
+  if ((launch.need % sizeof(u_int32_t)) != 0) 
+    dtqneed++;			/* need DTQ to FLUSH internal buffer */
 
   if ((launch.atm_flags & EN_OBTRL) == 0) {
     if (launch.aal == MID_TBD_AAL5) {
@@ -1649,21 +1673,11 @@ again:
   }
   
   /*
-   * ensure we have enough dtqs to go, if not, wait for more
-   * note that we only need 1 dtq if we are copying everything.
-   *
-   * XXX: we may want to modify the above to set launch.nodma if launch.mlen is
-   * less than a certain size (and avoid the DMA setup costs for small data)
+   * ensure we have enough dtqs to go, if not, wait for more.
    */
 
-#if 0
-  if (launch.mlen < SomeValueToBeDetermined)
-    launch.nodma = 1;
-#endif
-
-  if (EN_NOTXDMA || !en_dma || launch.nodma) {
+  if (launch.nodma) {
     dtqneed = 1;
-    launch.nodma = 1;
   }
   if (dtqneed > sc->dtq_free) {
     sc->need_dtqs = 1;
@@ -1731,8 +1745,7 @@ dequeue_drop:
 
 
 /*
- * en_txlaunch: launch an mbuf into the dma pool!   note that we have
- * en_mfix()ed any strange mbufs so we can count on u_int32_t alignment.
+ * en_txlaunch: launch an mbuf into the dma pool!
  */
 
 STATIC void en_txlaunch(sc, chan, l)
@@ -1747,7 +1760,7 @@ struct en_launch *l;
 	    start = sc->txslot[chan].start,
 	    stop = sc->txslot[chan].stop,
 	    dma, *data, *datastop, count, bcode;
-  int pad, addtail, need, last, len, needalign, cnt;
+  int pad, addtail, need, len, needalign, cnt, end, mx;
 
 
  /*
@@ -1760,14 +1773,16 @@ struct en_launch *l;
   *   cnt = # of bytes to transfer in this DTQ
   *   bcode/count = DMA burst code, and chip's version of cnt
   *
-  * note that for odd length mbufs we have already padded them out with 
-  * zeros, so "len" and "need" are rounded up to a word boundary.    an 
-  * odd length mbuf can only happen on the last mbuf of a chain [because we've 
-  * done en_mfix on the chain].    for aal5, the true length is already in
-  * l->pdu.
+  *   a single buffer can require up to 5 DTQs depending on its size
+  *   and alignment requirements.   the 5 possible requests are:
+  *   [1] 1, 2, or 3 byte DMA to align src data pointer to word boundary
+  *   [2] alburst DMA to align src data pointer to bestburstlen
+  *   [3] 1 or more bestburstlen DMAs
+  *   [4] clean up burst (to last word boundary)
+  *   [5] 1, 2, or 3 byte final clean up DMA
   */
 
- need = roundup(l->need, sizeof(u_int32_t));
+ need = l->need;
  dma = cur;
  addtail = (l->atm_flags & EN_OBTRL) == 0;	/* add a tail? */
 
@@ -1806,20 +1821,19 @@ struct en_launch *l;
    * now do the mbufs...
    */
 
-  last = 0;
   for (tmp = l->t ; tmp != NULL ; tmp = tmp->m_next) {
 
     /* get pointer to data and length */
     data = mtod(tmp, u_int32_t *);
-    len = roundup(tmp->m_len, sizeof(u_int32_t));
-    last = (tmp->m_next == NULL);
+    len = tmp->m_len;
     if (tmp == l->t) {
       data += sizeof(struct atm_pseudohdr)/sizeof(u_int32_t);
       len -= sizeof(struct atm_pseudohdr);
     }
 
     /* now, determine if we should copy it */
-    if (l->nodma || len < EN_MINDMA) {
+    if (l->nodma || (len < EN_MINDMA &&
+       (len % 4) == 0 && ((unsigned long) data % 4) == 0 && (cur % 4) == 0)) {
       datastop = data + (len / sizeof(u_int32_t));
       /* copy loop: preserve byte order!!!  use WRITEDAT */
       while (data != datastop) {
@@ -1837,20 +1851,54 @@ struct en_launch *l;
 
     /* going to do DMA, first make sure the dtq is in sync. */
     if (dma != cur) {
-      EN_DTQADD(sc, WORD_IDX(start,cur), chan, MIDDMA_JK, 0);
+      EN_DTQADD(sc, WORD_IDX(start,cur), chan, MIDDMA_JK, 0, 0, 0);
 #ifdef EN_DEBUG
       printf("%s: tx%d: dtq_sync: advance pointer to %d\n",
 		sc->sc_dev.dv_xname, chan, cur);
 #endif
     }
 
+    /* do we need to do a DMA op to align to word boundary? */
+    needalign = (unsigned long) data % sizeof(u_int32_t);
+    if (needalign) {
+      EN_COUNT(sc->headbyte);
+      cnt = min(len, sizeof(u_int32_t) - needalign);
+      if (cnt == 2) {
+        count = 1;
+        bcode = MIDDMA_2BYTE;
+      } else {
+        count = cnt;
+        bcode = MIDDMA_BYTE;
+      }
+      need -= cnt;
+      EN_WRAPADD(start, stop, cur, cnt);
+#ifdef EN_DEBUG
+      printf("%s: tx%d: small al_dma %d bytes (%d left, cur now 0x%x)\n",
+              sc->sc_dev.dv_xname, chan, cnt, need, cur);
+#endif
+      len -= cnt;
+      end = (need == 0) ? MID_DMA_END : 0;
+      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      if (end)
+        goto done;
+      data = (u_int32_t *) ((u_char *)data + cnt);
+    }
+
     /* do we need to do a DMA op to align? */
     if (sc->alburst && 
-	(needalign = (((u_int) data) & sc->bestburstmask)) != 0) {
+	(needalign = (((unsigned long) data) & sc->bestburstmask)) != 0
+	&& len >= sizeof(u_int32_t)) {
       cnt = sc->bestburstlen - needalign;
-      count = cnt / sizeof(u_int32_t);
-      bcode = en_dmaplan[count].bcode;
-      count = cnt >> en_dmaplan[count].divshift;
+      mx = len & ~(sizeof(u_int32_t)-1);	/* don't go past end */
+      if (cnt > mx) {
+        cnt = mx;
+        count = cnt / sizeof(u_int32_t);
+        bcode = MIDDMA_WORD;
+      } else {
+        count = cnt / sizeof(u_int32_t);
+        bcode = en_dmaplan[count].bcode;
+        count = cnt >> en_dmaplan[count].divshift;
+      }
       need -= cnt;
       EN_WRAPADD(start, stop, cur, cnt);
 #ifdef EN_DEBUG
@@ -1858,11 +1906,10 @@ struct en_launch *l;
 		sc->sc_dev.dv_xname, chan, cnt, need, cur);
 #endif
       len -= cnt;
-      if (len == 0 && last && addtail == 0) {
-	EN_DTQADDEND(sc, count, chan, bcode, vtophys(data), l->mlen);
-	goto done;		/* finished ! */
-      }
-      EN_DTQADD(sc, count, chan, bcode, vtophys(data));
+      end = (need == 0) ? MID_DMA_END : 0;
+      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      if (end)
+        goto done;
       data = (u_int32_t *) ((u_char *)data + cnt);
     }
 
@@ -1878,30 +1925,53 @@ struct en_launch *l;
 		sc->sc_dev.dv_xname, chan, cnt, need, cur);
 #endif
       len -= cnt;
-      if (len == 0 && last && addtail == 0) {
-	EN_DTQADDEND(sc, count, chan, bcode, vtophys(data), l->mlen);
-	goto done;		/* finished ! */
-      }
-      EN_DTQADD(sc, count, chan, bcode, vtophys(data));
+      end = (need == 0) ? MID_DMA_END : 0;
+      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      if (end)
+        goto done;
       data = (u_int32_t *) ((u_char *)data + cnt);
     }
 
     /* do we need to do a cleanup burst? */
-    if (len) {
-      count = len / sizeof(u_int32_t);
+    cnt = len & ~(sizeof(u_int32_t)-1);
+    if (cnt) {
+      count = cnt / sizeof(u_int32_t);
       bcode = en_dmaplan[count].bcode;
-      count = len >> en_dmaplan[count].divshift;
+      count = cnt >> en_dmaplan[count].divshift;
+      need -= cnt;
+      EN_WRAPADD(start, stop, cur, cnt);
+#ifdef EN_DEBUG
+      printf("%s: tx%d: cleanup_dma %d bytes (%d left, cur now 0x%x)\n", 
+		sc->sc_dev.dv_xname, chan, cnt, need, cur);
+#endif
+      len -= cnt;
+      end = (need == 0) ? MID_DMA_END : 0;
+      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      if (end)
+        goto done;
+      data = (u_int32_t *) ((u_char *)data + cnt);
+    }
+
+    /* any word fragments left? */
+    if (len) {
+      EN_COUNT(sc->tailbyte);
+      if (len == 2) {
+        count = 1;
+        bcode = MIDDMA_2BYTE;                 /* use 2byte mode */
+      } else {
+        count = len;
+        bcode = MIDDMA_BYTE;                  /* use 1 byte mode */
+      }
       need -= len;
       EN_WRAPADD(start, stop, cur, len);
 #ifdef EN_DEBUG
-      printf("%s: tx%d: cleanup_dma %d bytes (%d left, cur now 0x%x)\n", 
-		sc->sc_dev.dv_xname, chan, len, need, cur);
+      printf("%s: tx%d: byte cleanup_dma %d bytes (%d left, cur now 0x%x)\n",
+              sc->sc_dev.dv_xname, chan, len, need, cur);
 #endif
-      if (last && addtail == 0) {
-	EN_DTQADDEND(sc, count, chan, bcode, vtophys(data), l->mlen);
-	goto done;		/* finished ! */
-      }
-      EN_DTQADD(sc, count, chan, bcode, vtophys(data));
+      end = (need == 0) ? MID_DMA_END : 0;
+      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      if (end)
+        goto done;
     }
 
     dma = cur;		/* update dma pointer */
@@ -1910,11 +1980,31 @@ struct en_launch *l;
 
   /*
    * all mbuf data has been copied out to the obmem (or set up to be DMAd).
-   * if the trailer or padding needs to be put in, do it now.  note that
-   * we round down the padding size since we may have already padded some.
+   * if the trailer or padding needs to be put in, do it now.  
+   *
+   * NOTE: experimental results reveal the following fact:
+   *   if you DMA "X" bytes to the card, where X is not a multiple of 4,
+   *   then the card will internally buffer the last (X % 4) bytes (in
+   *   hopes of getting (4 - (X % 4)) more bytes to make a complete word).
+   *   it is imporant to make sure we don't leave any important data in
+   *   this internal buffer because it is discarded on the last (end) DTQ.
+   *   one way to do this is to DMA in (4 - (X % 4)) more bytes to flush
+   *   the darn thing out.
    */
 
   if (addtail) {
+
+    pad = need % sizeof(u_int32_t);
+    if (pad) {
+      /*
+       * FLUSH internal data buffer.  pad out with random data from the front
+       * of the mbuf chain...
+       */
+      EN_COUNT(sc->tailflush);
+      EN_WRAPADD(start, stop, cur, pad);
+      EN_DTQADD(sc, pad, chan, MIDDMA_BYTE, vtophys(l->t->m_data), 0, 0);
+      need -= pad;
+    }
 
     /* copy data */
     pad = need / sizeof(u_int32_t);	/* round *down* */
@@ -1936,7 +2026,8 @@ struct en_launch *l;
 
   if (addtail || dma != cur) {
    /* write final descritor  */
-    EN_DTQADDEND(sc, WORD_IDX(start,cur), chan, MIDDMA_JK, 0, l->mlen);
+    EN_DTQADD(sc, WORD_IDX(start,cur), chan, MIDDMA_JK, 0, 
+				l->mlen, MID_DMA_END);
     /* dma = cur; */ 	/* not necessary since we are done */
   }
 
@@ -2236,7 +2327,7 @@ struct en_softc *sc;
   struct mbuf *m, *tmp;
   u_int32_t cur, dstart, rbd, pdu, *sav, dma, bcode, count, *data, *datastop;
   u_int32_t start, stop, cnt, needalign;
-  int slot, raw, aal5, llc, vci, fill, mlen, tlen, drqneed, need, needfill;
+  int slot, raw, aal5, llc, vci, fill, mlen, tlen, drqneed, need, needfill, end;
 
 next_vci:
   if (sc->swsl_size == 0) {
@@ -2470,7 +2561,7 @@ defer:					/* defer processing */
 
     /* DMA data (check to see if we need to sync DRQ first) */
     if (dma != cur) {
-      EN_DRQADD(sc, WORD_IDX(start,cur), vci, MIDDMA_JK, 0);
+      EN_DRQADD(sc, WORD_IDX(start,cur), vci, MIDDMA_JK, 0, 0, 0, 0);
 #ifdef EN_DEBUG
       printf("%s: rx%d: vci%d: drq_sync: advance pointer to %d\n",
 		sc->sc_dev.dv_xname, slot, vci, cur);
@@ -2479,11 +2570,17 @@ defer:					/* defer processing */
 
     /* do we need to do a DMA op to align? */
     if (sc->alburst &&
-      (needalign = (((u_int) data) & sc->bestburstmask)) != 0) {
+      (needalign = (((unsigned long) data) & sc->bestburstmask)) != 0) {
       cnt = sc->bestburstlen - needalign;
-      count = cnt / sizeof(u_int32_t);
-      bcode = en_dmaplan[count].bcode;
-      count = cnt >> en_dmaplan[count].divshift;
+      if (cnt > tlen) {
+        cnt = tlen;
+        count = cnt / sizeof(u_int32_t);
+        bcode = MIDDMA_WORD;
+      } else {
+        count = cnt / sizeof(u_int32_t);
+        bcode = en_dmaplan[count].bcode;
+        count = cnt >> en_dmaplan[count].divshift;
+      }
       need -= cnt;
       EN_WRAPADD(start, stop, cur, cnt);
 #ifdef EN_DEBUG
@@ -2491,11 +2588,10 @@ defer:					/* defer processing */
 		sc->sc_dev.dv_xname, slot, vci, cnt, need);
 #endif
       tlen -= cnt;
-      if (need == 0 && !fill) {
-	EN_DRQADDEND(sc, count, vci, bcode, vtophys(data), mlen, slot);
-	goto done;		/* finished! */
-      }
-      EN_DRQADD(sc, count, vci, bcode, vtophys(data));
+      end = (need == 0 && !fill) ? MID_DMA_END : 0;
+      EN_DRQADD(sc, count, vci, bcode, vtophys(data), mlen, slot, end);
+      if (end)
+        goto done;
       data = (u_int32_t *)((u_char *) data + cnt);   
     }
 
@@ -2511,11 +2607,10 @@ defer:					/* defer processing */
 		sc->sc_dev.dv_xname, slot, vci, cnt, need);
 #endif
       tlen -= cnt;
-      if (need == 0 && !fill) {
-	EN_DRQADDEND(sc, count, vci, bcode, vtophys(data), mlen, slot);
-	goto done;		/* finished! */
-      }
-      EN_DRQADD(sc, count, vci, bcode, vtophys(data));
+      end = (need == 0 && !fill) ? MID_DMA_END : 0;
+      EN_DRQADD(sc, count, vci, bcode, vtophys(data), mlen, slot, end);
+      if (end)
+        goto done;
       data = (u_int32_t *)((u_char *) data + cnt);   
     }
 
@@ -2530,11 +2625,10 @@ defer:					/* defer processing */
       printf("%s: rx%d: vci%d: cleanup_dma %d bytes (%d left)\n",
 		sc->sc_dev.dv_xname, slot, vci, tlen, need);
 #endif
-      if (need == 0 && !fill) {
-	EN_DRQADDEND(sc, count, vci, bcode, vtophys(data), mlen, slot);
-	goto done;		/* finished! */
-      }
-      EN_DRQADD(sc, count, vci, bcode, vtophys(data));
+      end = (need == 0 && !fill) ? MID_DMA_END : 0;
+      EN_DRQADD(sc, count, vci, bcode, vtophys(data), mlen, slot, end);
+      if (end)
+        goto done;
     }
 
     dma = cur;		/* update dma pointer */
@@ -2552,7 +2646,8 @@ defer:					/* defer processing */
 		sc->sc_dev.dv_xname, slot, vci, dma, cur);
 #endif
     EN_WRAPADD(start, stop, cur, fill);
-    EN_DRQADDEND(sc, WORD_IDX(start,cur), vci, MIDDMA_JK, 0, mlen, slot);
+    EN_DRQADD(sc, WORD_IDX(start,cur), vci, MIDDMA_JK, 0, mlen,
+					slot, MID_DMA_END);
     /* dma = cur; */	/* not necessary since we are done */
   }
 
@@ -2629,8 +2724,8 @@ int unit, level;
 
     if (level & END_STATS) {
       printf("  en_stats:\n");
-      printf("    %d mbufs fixed by mfix (%d failures)\n", 
-						sc->mfix, sc->mfixfail);
+      printf("    %d mfix (%d failed); %d/%d head/tail byte DMAs, %d flushes\n",
+	   sc->mfix, sc->mfixfail, sc->headbyte, sc->tailbyte, sc->tailflush);
       printf("    %d rx dma overflow interrupts\n", sc->dmaovr);
       printf("    %d times we ran out of TX space and stalled\n", 
 							sc->txoutspace);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midwayvar.h,v 1.7 1996/07/11 22:47:07 chuck Exp $	*/
+/*	$OpenBSD: midwayvar.h,v 1.8 1996/07/16 22:08:16 chuck Exp $	*/
 
 /*
  *
@@ -164,6 +164,9 @@ struct en_softc {
   u_int32_t ttrash;		/* # of RBD's with T bit set */
   u_int32_t mfix;		/* # of times we had to call mfix */
   u_int32_t mfixfail;		/* # of times mfix failed */
+  u_int32_t headbyte;		/* # of times we used BYTE DMA at front */
+  u_int32_t tailbyte;		/* # of times we used BYTE DMA at end */
+  u_int32_t tailflush;		/* # of times we had to FLUSH out DMA bytes */
   u_int32_t txmbovr;		/* # of times we dropped due to mbsize */
   u_int32_t dmaovr;		/* tx dma overflow count */
   u_int32_t txoutspace;		/* out of space in xmit buffer */
