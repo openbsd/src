@@ -481,6 +481,8 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/ncrreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/neoreg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/noctreg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/noctvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/nofnreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/nofnvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/pccbbreg.ph

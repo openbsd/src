@@ -432,6 +432,8 @@
 ./usr/include/dev/pci/maestro_reg.h
 ./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/neoreg.h
+./usr/include/dev/pci/noctreg.h
+./usr/include/dev/pci/noctvar.h
 ./usr/include/dev/pci/nofnreg.h
 ./usr/include/dev/pci/nofnvar.h
 ./usr/include/dev/pci/pccbbreg.h
