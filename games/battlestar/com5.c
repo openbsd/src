@@ -1,4 +1,4 @@
-/*	$OpenBSD: com5.c,v 1.8 2000/09/24 21:55:23 pjanzen Exp $	*/
+/*	$OpenBSD: com5.c,v 1.9 2000/09/26 04:42:55 pjanzen Exp $	*/
 /*	$NetBSD: com5.c,v 1.3 1995/03/21 15:07:07 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com5.c,v 1.8 2000/09/24 21:55:23 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com5.c,v 1.9 2000/09/26 04:42:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,8 +47,8 @@ static char rcsid[] = "$OpenBSD: com5.c,v 1.8 2000/09/24 21:55:23 pjanzen Exp $"
 void
 kiss()
 {
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
-		;
+	if (inc_wordnumber(words[wordnumber], "whom"))
+		return;
 	/* The goddess must be "taken" first if bathing. */
 	if (wordtype[wordnumber] == NOUNS && wordvalue[wordnumber] == NORMGOD
 	    && TestBit(location[position].objects, BATHGOD)) {
@@ -93,6 +93,7 @@ kiss()
 		puts("I see nothing like that here.");
 	} else
 		puts("I'd prefer not to.");
+	wordnumber++;
 }
 
 void
@@ -100,12 +101,13 @@ love()
 {
 	int     n;
 
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
-		;
+	if (inc_wordnumber(words[wordnumber], "whom"))
+		return;
 	if (wordtype[wordnumber] == NOUNS) {
 	    if ((TestBit(location[position].objects, BATHGOD) ||
 	        TestBit(location[position].objects, NORMGOD)) &&
 		   wordvalue[wordnumber] == NORMGOD) {
+			wordnumber++;
 			if (loved) {
 				printf("Loved.\n");
 				return;
@@ -157,6 +159,7 @@ love()
 		puts("Where's your lover?");
 	} else
 		puts("It doesn't seem to work.");
+	wordnumber++;
 }
 
 int
@@ -275,7 +278,11 @@ give()
 
 	last1 = last2 = wordcount + 2;
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] != OBJECT && wordvalue[wordnumber] != AMULET && wordvalue[wordnumber] != MEDALION && wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount)
+	while (wordtype[++wordnumber] != OBJECT &&
+	    wordvalue[wordnumber] != AMULET &&
+	    wordvalue[wordnumber] != MEDALION &&
+	    wordvalue[wordnumber] != TALISMAN &&
+	    wordnumber <= wordcount)
 		;
 	if (wordnumber <= wordcount) {
 		obj = wordvalue[wordnumber];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.11 2000/09/24 21:55:22 pjanzen Exp $	*/
+/*	$OpenBSD: com2.c,v 1.12 2000/09/26 04:42:55 pjanzen Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com2.c,v 1.11 2000/09/24 21:55:22 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com2.c,v 1.12 2000/09/26 04:42:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,7 @@ wearit()
 
 		default:
 			printf("You can't wear %s%s!\n",
-			    (IsPluralObject(value) ? "" : AorAn(value)),
-			    objsht[value]);
+			    A_OR_AN_OR_BLANK(value), objsht[value]);
 			return (firstnumber);
 
 		case KNIFE:
@@ -94,8 +93,7 @@ wearit()
 				encumber -= objcumber[value];
 				ourtime++;
 				printf("You are now wearing %s%s.\n",
-				    (IsPluralObject(value) ? "the " : 
-				    (AorAn(value))), objsht[value]);
+				    A_OR_AN_OR_THE(value), objsht[value]);
 			} else
 				if (TestBit(wear, value))
 					printf("You are already wearing the %s.\n",
@@ -117,17 +115,20 @@ wearit()
 int
 put()
 {				/* synonyms = {buckle, strap, tie} */
-	if (wordvalue[wordnumber + 1] == ON) {
-		wordvalue[++wordnumber] = PUTON;
-		return (cypher());
+	if (inc_wordnumber(words[wordnumber], "what"))
+		return(-1);
+	if (wordvalue[wordnumber] == ON) {
+		wordvalue[wordnumber] = PUTON;
+		wordtype[wordnumber] = VERB;
+		return (cypher() - 1);
 	}
-	if (wordvalue[wordnumber + 1] == DOWN) {
-		wordvalue[++wordnumber] = DROP;
-		return (cypher());
+	if (wordvalue[wordnumber] == DOWN) {
+		wordvalue[wordnumber] = DROP;
+		wordtype[wordnumber] = VERB;
+		return (cypher() - 1);
 	}
 	puts("I don't understand what you want to put.");
 	return (-1);
-
 }
 
 int
@@ -139,7 +140,8 @@ draw()
 int
 use()
 {
-	wordnumber++;
+	if (inc_wordnumber(words[wordnumber], "what"))
+		return(-1);
 	if (wordvalue[wordnumber] == AMULET && TestBit(inven, AMULET) &&
 	    position != FINAL) {
 		puts("The amulet begins to glow.");
@@ -150,6 +152,7 @@ use()
 				whichway(location[position]);
 				puts("The waves subside and it is possible to descend to the sea cave now.");
 				ourtime++;
+				wordnumber++;
 				return (-1);
 			}
 		}
@@ -161,6 +164,7 @@ use()
 			position = 229;
 		ourtime++;
 		notes[CANTSEE] = 0;
+		wordnumber++;
 		return (0);
 	}
 	else if (position == FINAL)
@@ -173,6 +177,7 @@ use()
 		puts("You aren't holding the amulet.");
 	else
 		puts("There is no apparent use.");
+	wordnumber++;
 	return (-1);
 }
 
@@ -181,12 +186,13 @@ murder()
 {
 	int     n;
 
+	if (inc_wordnumber(words[wordnumber], "whom"))
+		return;
 	for (n = 0; !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE || n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL || n == HALBERD) && TestBit(inven, n)) && n < NUMOFOBJECTS; n++)
 		;
 	if (n == NUMOFOBJECTS) {
 		if (TestBit(inven, LASER)) {
 			printf("Your laser should do the trick.\n");
-			wordnumber++;
 			switch(wordvalue[wordnumber]) {
 			case NORMGOD:
 			case TIMER:
@@ -204,8 +210,7 @@ murder()
 					puts("You can't kill that!");
 				else
 					printf("You can't kill %s%s!\n",
-					    (IsPluralObject(wordvalue[wordnumber]) ? "" :
-					    AorAn(wordvalue[wordnumber])),
+					    A_OR_AN_OR_BLANK(wordvalue[wordnumber]),
 					    objsht[wordvalue[wordnumber]]);
 				break;
 			}
@@ -213,7 +218,6 @@ murder()
 			puts("You don't have suitable weapons to kill.");
 	} else {
 		printf("Your %s should do the trick.\n", objsht[n]);
-		wordnumber++;
 		switch (wordvalue[wordnumber]) {
 
 		case NORMGOD:
@@ -274,13 +278,14 @@ murder()
 				    objsht[wordvalue[wordnumber]]);
 		}
 	}
+	wordnumber++;
 }
 
 void
 ravage()
 {
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
-		;
+	if (inc_wordnumber(words[wordnumber], "whom"))
+		return;
 	if (wordtype[wordnumber] == NOUNS && (TestBit(location[position].objects, wordvalue[wordnumber])
 	    || (wordvalue[wordnumber] == NORMGOD && TestBit(location[position].objects, BATHGOD)))) {
 		ourtime++;
@@ -325,9 +330,12 @@ ravage()
 			break;
 		default:
 			puts("You are perverted.");
+			wordnumber++;
 		}
-	} else
-		puts("Who?");
+	} else {
+		printf("%s:  Who?\n", words[wordnumber]);
+		wordnumber++;
+	}
 }
 
 int
@@ -354,3 +362,18 @@ follow()
 			puts("There is no one to follow.");
 	return (-1);
 }
+
+void
+undress()
+{
+	if (inc_wordnumber(words[wordnumber], "whom"))
+		return;
+	if (wordvalue[wordnumber] == NORMGOD &&
+	    (TestBit(location[position].objects, NORMGOD)) && godready >= 2) {
+		wordnumber--;
+		love();
+	} else {
+		wordnumber--;
+		ravage();
+	}
+}	

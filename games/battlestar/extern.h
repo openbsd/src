@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 2000/09/24 21:55:24 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 2000/09/26 04:42:56 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -59,9 +59,15 @@
 #define TestBit(array, index)	(array[index/BITS] & (1 << (index % BITS)))
 #define SetBit(array, index)	(array[index/BITS] |= (1 << (index % BITS)))
 #define ClearBit(array, index)	(array[index/BITS] &= ~(1 << (index % BITS)))
- /* "a " vs "an " before an object */
-#define AorAn(value)	(objflags[(value)] & OBJ_AN ? "an " : "a ")
-#define IsPluralObject(value) (objflags[(value)] & OBJ_PLURAL)
+/*
+ * These macros yield words to use with objects (followed but not preceded
+ * by spaces, or with no spaces if the expansion is the empty string).
+ */
+#define A_OR_AN(n)		(objflags[(n)] & OBJ_AN ? "an " : "a ")
+#define IS_PLURAL(n)	(objflags[(n)] & OBJ_PLURAL)
+#define A_OR_AN_OR_THE(n)	(IS_PLURAL((n)) ? "the " : A_OR_AN((n)))
+#define A_OR_AN_OR_BLANK(n)	(IS_PLURAL((n)) ? "" : A_OR_AN((n)))
+#define IS_OR_ARE(n)		(IS_PLURAL((n)) ? "are " : "is ")
 
  /* well known rooms */
 #define FINAL	275
@@ -199,6 +205,7 @@
 #define OPEN	1053
 #define VERBOSE	1054
 #define BRIEF	1055
+#define AUXVERB 1056
 
  /* injuries */
 #define ARM	6		/* broken arm */
@@ -239,6 +246,8 @@
 /* Flags for objects */
 #define OBJ_PLURAL	1
 #define OBJ_AN		2
+#define OBJ_PERSON	4
+#define OBJ_NONOBJ	8	/* footsteps, asteroids, etc. */
 
 struct room {
 	const char   *name;
@@ -273,6 +282,7 @@ extern char    words[NWORD][WORDLEN];
 extern int     wordvalue[NWORD];
 extern int     wordtype[NWORD];
 extern int     wordcount, wordnumber;
+extern int     stop_cypher;	/* continue parsing the current line? */
 
  /* state of the game */
 extern time_t  ourtime;
@@ -340,6 +350,7 @@ int follow __P((void));
 char *getcom __P((char *, int, const char *, const char *));
 char *getword __P((char *, char *, int));
 int give __P((void));
+int inc_wordnumber __P((const char *, const char *));
 void initialize __P((const char *));
 int jump __P((void));
 void kiss __P((void));
@@ -350,6 +361,7 @@ void live __P((void));
 void love __P((void));
 int moveplayer __P((int, int));
 void murder __P((void));
+void newlocation __P((void));
 void news __P((void));
 void newway __P((int));
 void open_score_file __P((void));
@@ -370,6 +382,7 @@ int takeoff __P((void));
 int throw __P((const char *));
 const char *truedirec __P((int, char));
 int ucard __P((const unsigned int *));
+void undress __P((void));
 int use __P((void));
 int visual __P((void));
 int wearit __P((void));

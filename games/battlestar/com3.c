@@ -1,4 +1,4 @@
-/*	$OpenBSD: com3.c,v 1.9 2000/09/24 21:55:23 pjanzen Exp $	*/
+/*	$OpenBSD: com3.c,v 1.10 2000/09/26 04:42:55 pjanzen Exp $	*/
 /*	$NetBSD: com3.c,v 1.3 1995/03/21 15:07:00 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com3.c,v 1.9 2000/09/24 21:55:23 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com3.c,v 1.10 2000/09/26 04:42:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,7 @@ shoot()
 				ClearBit(location[position].objects, value);
 				ourtime++;
 				printf("The %s explode%s\n", objsht[value],
-				    (IsPluralObject(value) ? "." : "s."));
+				    (IS_PLURAL(value) ? "." : "s."));
 				if (value == BOMB)
 					die(0);
 			} else
@@ -251,6 +251,7 @@ shoot()
 				break;
 
 			case NORMGOD:
+			case BATHGOD:
 				if (TestBit(location[position].objects, BATHGOD)) {
 					puts("The goddess is hit in the chest and splashes back against the rocks.");
 					puts("Dark blood oozes from the charred blast hole.  Her naked body floats in the");

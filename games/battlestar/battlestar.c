@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.10 2000/09/23 02:51:58 pjanzen Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.11 2000/09/26 04:42:54 pjanzen Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: battlestar.c,v 1.10 2000/09/23 02:51:58 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: battlestar.c,v 1.11 2000/09/26 04:42:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,35 +80,16 @@ main(argc, argv)
 		initialize((argc > 2) ? argv[2] : DEFAULT_SAVE_FILE);
 	else
 		initialize(argv[1]);
-start:
-	news();
-	if (beenthere[position] <= ROOMDESC)
-	     beenthere[position]++;
-	if (notes[LAUNCHED])
-		crash();	/* decrements fuel & crash */
-	if (matchlight) {
-		puts("Your match splutters out.");
-		matchlight = 0;
-	}
-	if (!notes[CANTSEE] || TestBit(inven, LAMPON) ||
-	    TestBit(location[position].objects, LAMPON)) {
-		writedes();
-		printobjs();
-	} else
-		puts("It's too dark to see anything in here!");
-	whichway(location[position]);
-run:
-	next = getcom(mainbuf, sizeof mainbuf, ">-: ",
-	    "Please type in something.");
-	for (wordcount = 0; next && wordcount < NWORD - 1; wordcount++)
-		next = getword(next, words[wordcount], -1);
-	parse();
-	switch (cypher()) {
-	case -1:
-		goto run;
-	case 0:
-		goto start;
-	default:
-		errx(1, "bad return from cypher(): please submit a bug report");
+
+	newlocation();
+	for (;;) {
+		stop_cypher = 0;
+		next = getcom(mainbuf, sizeof mainbuf, ">-: ",
+		    "Please type in something.");
+		for (wordcount = 0; next && wordcount < NWORD - 1; wordcount++)
+			next = getword(next, words[wordcount], -1);
+		parse();
+		while (cypher())
+			;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.9 2000/09/24 21:55:25 pjanzen Exp $	*/
+/*	$OpenBSD: globals.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: globals.c,v 1.9 2000/09/24 21:55:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: globals.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -221,14 +221,22 @@ const int     objcumber[NUMOFOBJECTS] = {
 };
 
 const int objflags[NUMOFOBJECTS] = {
-	0,	0,	0,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,	0,  OBJ_PLURAL,	0,  OBJ_PLURAL,
-	0,    OBJ_AN,	0,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,  OBJ_PLURAL,	0,	0,	0,
-	0,	0,    OBJ_AN,	0,  OBJ_PLURAL,	0,	0,  OBJ_PLURAL,
-	0,	0,  OBJ_PLURAL,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,	0,	0,	0,	0
+	0,		0,	    OBJ_NONOBJ,	    OBJ_PERSON,
+	0,		0,		0,		0,
+	0,		0,		0,		0,
+	0,	    OBJ_PLURAL,	    OBJ_NONOBJ,	    OBJ_PLURAL,
+	0,	      OBJ_AN,		0,		0,
+	0,		0,		0,	    OBJ_PERSON,
+    OBJ_PERSON,		0,		0,		0,
+    OBJ_PLURAL,		0,		0,		0,
+	0,	OBJ_NONOBJ,	OBJ_AN | OBJ_PERSON, OBJ_NONOBJ,
+    OBJ_PLURAL,		0,	    OBJ_PERSON,	    OBJ_PLURAL,
+	0,		0,	    OBJ_PLURAL,		0,
+	0,		0,		0,	    OBJ_PERSON,
+    OBJ_PERSON,	    OBJ_PERSON,	    OBJ_PERSON,	    OBJ_NONOBJ,
+    OBJ_NONOBJ,	    OBJ_NONOBJ,		0,		0,
+      OBJ_AN,		0,	    OBJ_PERSON,		0,
+	0,		0,		0,		0
 };
 
 int     win = 1;
@@ -243,6 +251,7 @@ char    words[NWORD][WORDLEN];
 int     wordvalue[NWORD];
 int     wordtype[NWORD];
 int     wordcount, wordnumber;
+int     stop_cypher;	/* continue parsing the current line? */
 
  /* state of the game */
 int     ourtime;

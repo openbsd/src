@@ -1,4 +1,4 @@
-/*	$OpenBSD: com4.c,v 1.10 2000/09/23 03:02:36 pjanzen Exp $	*/
+/*	$OpenBSD: com4.c,v 1.11 2000/09/26 04:42:55 pjanzen Exp $	*/
 /*	$NetBSD: com4.c,v 1.3 1995/03/21 15:07:04 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com4.c,v 1.10 2000/09/23 03:02:36 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com4.c,v 1.11 2000/09/26 04:42:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,9 @@ take(from)
 	if (wordnumber < wordcount && wordvalue[wordnumber + 1] == OFF) {
 		wordnumber++;
 		wordvalue[wordnumber] = TAKEOFF;
-		return (cypher());
+		wordtype[wordnumber] = VERB;
+		cypher();
+		return (wordnumber);
 	} else {
 		wordnumber++;
 		while (wordnumber <= wordcount && wordtype[wordnumber] == OBJECT) {
@@ -76,16 +78,15 @@ take(from)
 					win--;
 			} else if (TestBit(inven, value))
 				printf("You're already holding %s%s.\n",
-				    (IsPluralObject(value) ? "" :
-				    (AorAn(value))), objsht[value]);
+				    A_OR_AN_OR_BLANK(value), objsht[value]);
 			else if (!TestBit(from, value))
 				printf("I don't see any %s around here.\n", objsht[value]);
 			else if (!heavy)
 				printf("The %s %s too heavy.\n", objsht[value],
-				    (IsPluralObject(value) ? "are" : "is"));
+				    IS_OR_ARE(value));
 			else
 				printf("The %s %s too cumbersome to hold.\n", objsht[value],
-				    (IsPluralObject(value) ? "are" : "is"));
+				    IS_OR_ARE(value));
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else
@@ -225,7 +226,7 @@ throw(name)
 			deposit = location[position].down;
 			break;
 		}
-		wordnumber++;
+		wordnumber = first + 1;
 		while (wordnumber <= wordcount) {
 			value = wordvalue[wordnumber];
 			if (deposit && TestBit(location[position].objects, value)) {
@@ -377,17 +378,18 @@ eat()
 
 		case -2:
 			puts("You can't eat that!");
+			wordnumber++;
 			return (firstnumber);
 
 		case -1:
 			puts("Eat what?");
+			wordnumber++;
 			return (firstnumber);
 
 		default:
 			printf("You can't eat %s%s!\n",
-			    wordtype[wordnumber] == OBJECT &&
-			    IsPluralObject(value) ? "" :
-			    (AorAn(value)), objsht[value]);
+			    A_OR_AN_OR_BLANK(value), objsht[value]);
+			wordnumber++;
 			return (firstnumber);
 
 		case PAPAYAS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.9 2000/09/24 21:55:25 pjanzen Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getcom.c,v 1.9 2000/09/24 21:55:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getcom.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,12 +89,13 @@ getword(buf1, buf2, flag)
 	cnt = 1;
 	while (isspace(*buf1))
 		buf1++;
-	if (*buf1 != ',') {
+	if (*buf1 != ',' && *buf1 != '.') {
 		if (!*buf1) {
-			*buf2 = 0;
+			*buf2 = '\0';
 			return (0);
 		}
-		while (cnt < WORDLEN && *buf1 && !isspace(*buf1) && *buf1 != ',')
+		while (cnt < WORDLEN && *buf1 && !isspace(*buf1) &&
+		    *buf1 != ',' && *buf1 != '.')
 			if (flag < 0) {
 				if (isupper(*buf1)) {
 					*buf2++ = tolower(*buf1++);

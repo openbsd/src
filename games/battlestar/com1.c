@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.10 2000/09/24 21:55:22 pjanzen Exp $	*/
+/*	$OpenBSD: com1.c,v 1.11 2000/09/26 04:42:55 pjanzen Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com1.c,v 1.10 2000/09/24 21:55:22 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com1.c,v 1.11 2000/09/26 04:42:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -268,4 +268,25 @@ crash()
 		printf("I'm afraid you have suffered %s and %s.\n",
 		    ouch[hurt1], ouch[hurt2]);
 	}
+}
+
+void
+newlocation()
+{
+	news();
+	if (beenthere[position] <= ROOMDESC)
+	     beenthere[position]++;
+	if (notes[LAUNCHED])
+		crash();	/* decrements fuel & crash */
+	if (matchlight) {
+		puts("Your match splutters out.");
+		matchlight = 0;
+	}
+	if (!notes[CANTSEE] || TestBit(inven, LAMPON) ||
+	    TestBit(location[position].objects, LAMPON)) {
+		writedes();
+		printobjs();
+	} else
+		puts("It's too dark to see anything in here!");
+	whichway(location[position]);
 }

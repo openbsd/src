@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.9 2000/09/24 21:55:26 pjanzen Exp $	*/
+/*	$OpenBSD: parse.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.9 2000/09/24 21:55:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.10 2000/09/26 04:42:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,12 +126,13 @@ parse()
 	for (n = 1; n < wordcount; n++)
 		if (wordtype[n] == ADJS) {
 			int i;
-			for (i = n + 1; i < wordcount; i++) {
+			for (i = n + 1; i <= wordcount; i++) {
 				wordtype[i - 1] = wordtype[i];
 				wordvalue[i - 1] = wordvalue[i];
 				strlcpy(words[i - 1], words[i], WORDLEN);
 			}
 			wordcount--;
+			n--;
 		}
 	/* Don't let a comma mean AND if followed by a verb. */
 	for (n = 0; n < wordcount; n++)
