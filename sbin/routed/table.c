@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.8 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.9 2003/03/13 06:10:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -602,7 +602,7 @@ rtm_type_name(u_char type)
 
 	if (type > sizeof(rtm_types)/sizeof(rtm_types[0])
 	    || type == 0) {
-		sprintf(name0, "RTM type %#x", type);
+		snprintf(name0, sizeof name0, "RTM type %#x", type);
 		return name0;
 	} else {
 		return rtm_types[type-1];
@@ -1674,7 +1674,7 @@ rtswitch(struct rt_entry *rt,
 		return;
 
 	swap = rt->rt_spares[0];
-	(void)sprintf(label, "Use #%d", (int)(rts - rt->rt_spares));
+	(void)snprintf(label, sizeof label, "Use #%d", (int)(rts - rt->rt_spares));
 	rtchange(rt, rt->rt_state & ~(RS_NET_SYN | RS_RDISC),
 		 rts->rts_gate, rts->rts_router, rts->rts_metric,
 		 rts->rts_tag, rts->rts_ifp, rts->rts_time, label);
