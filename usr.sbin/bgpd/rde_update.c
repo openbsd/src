@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.9 2004/02/27 20:53:56 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.10 2004/03/01 23:07:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -207,7 +207,7 @@ up_generate_updates(struct rde_peer *peer,
 	/*
 	 * Filtering should be hooked up here.
 	 * With filtering the decision if withdraw, update or nothing
-	 * needs to be done on a per peer basis -- acctually per filter
+	 * needs to be done on a per peer basis -- actually per filter
 	 * set.
 	 */
 

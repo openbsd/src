@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.4 2004/02/27 20:53:56 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.5 2004/03/01 23:07:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -67,7 +67,7 @@ rde_apply_set(struct attr_flags *attrs, struct filter_set *set)
 		attrs->nexthop = set->nexthop;
 	if (set->flags & SET_PREPEND) {
 		/*
-		 * The acctual prepending is done afterwards because 
+		 * The actual prepending is done afterwards because
 		 * This could overflow but somebody that uses that many
 		 * prepends is loony and needs professional help.
 		 */
