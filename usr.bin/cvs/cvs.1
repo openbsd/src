@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.25 2005/01/14 17:02:56 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.26 2005/01/16 11:10:36 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -138,11 +138,44 @@ Administration front-end for
 Aliases:
 .Ic adm ,
 .Ic rcs .
-.It Ic annotate
+.It Xo Ic annotate
+.Op Fl flR
+.Oo Fl D Ar date \*(Ba
+.Fl r Ar rev Oc
+.Op Ar file ...
+.Xc
+.Pp
 For each line of any files specified, show information about its
 last revision.
 The information given is the last revision when a modification occurred,
 the author's name, and the date of the revision.
+.Pp
+The
+.Fl f
+flag is used to force the use of the head revision if the specified
+tag or date is not found.
+This can be used in combination with
+.Fl D
+or
+.Fl r
+to ensure that there is some output from the
+.Ic annotate
+command, even if only to show Revision 1.1 of the file.
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory
+only and to disable recursive behaviour, which can be requested with the
+.Fl R
+flag.
+The
+.Fl D
+flag shows the annotations as of the latest revision no later than
+.Ar date .
+The
+.Fl r
+flag shows annotations as of revision
+.Ar rev
+(can be a revision number or a tag).
 .Pp
 Aliases:
 .Ic ann .
