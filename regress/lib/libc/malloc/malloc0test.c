@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <limits.h>
+#include <errno.h>
 
 volatile sig_atomic_t got;
 jmp_buf jmp;
@@ -59,10 +61,38 @@ main(int argc, char *argv[])
 	caddr_t zblob = malloc(0);
 	caddr_t *blobp, blob;
 	int size, rsize, tsize;
-	int count = 0, prot;
+	int prot;
 	int rval = 0, fuckup = 0;
+	long limit = 200000, count;
+	int ch, silent = 0;
+	char *ep;
+	extern char *__progname;
 
-	while (1) {
+	while ((ch = getopt(argc, argv, "sn:")) != -1) {
+		switch (ch) {
+		case 's':
+			silent = 1;
+			break;
+		case 'n':
+			errno = 0;
+			limit = strtol(optarg, &ep, 10);
+			if (optarg[0] == '\0' || *ep != '\0' ||
+			    (errno == ERANGE &&
+			     (limit == LONG_MAX || limit == LONG_MIN)))
+				goto usage;
+			break;
+		default:
+usage:
+			fprintf(stderr, "Usage: %s [-s][-n <count>]\n",
+			    __progname);
+			exit(1);
+		}
+	}
+
+	if (limit == 0)
+		limit = LONG_MAX;
+
+	for (count = 0; count < limit; count++) {
 		size = arc4random() % SIZE;
 		blob = malloc(size);
 		if (blob == NULL) {
@@ -94,8 +124,9 @@ main(int argc, char *argv[])
 		}
 		*blobp = blob;
 
-
-		if (++count % 100000 == 0)
+		if (!silent && count % 100000 == 0 && count != 0)
 			fprintf(stderr, "count = %d\n", count);
 	}
+
+	return rval;
 }
