@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICSBC,v 1.2 1997/03/12 13:24:15 briggs Exp $
+#	$OpenBSD: GENERICSBC,v 1.3 1997/03/12 15:59:01 briggs Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC
@@ -30,6 +30,8 @@ options		FDESC		# user file descriptor filesystem
 #options	LFS		# Log-based filesystem (still experimental)
 #options	PORTAL		# portal filesystem (still experimental)
 options		PROCFS		# Process filesystem
+
+options		LKM		# loadable kernel modules
 
 options		SCSI
 #options	SCSIDEBUG

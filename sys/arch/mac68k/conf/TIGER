@@ -1,4 +1,4 @@
-#	$OpenBSD: TIGER,v 1.3 1997/03/12 13:24:16 briggs Exp $
+#	$OpenBSD: TIGER,v 1.4 1997/03/12 15:59:02 briggs Exp $
 #	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
 #
 # Allen's Q700
@@ -26,6 +26,8 @@ options		CD9660		# ISO-9660 w/ RockRidge
 options		KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
 options		PROCFS		# Process filesystem
+
+options		LKM		# loadable kernel modules
 
 options		SCSI
 
