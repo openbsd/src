@@ -34,7 +34,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: syscall.S,v 1.6 2003/06/02 20:18:30 millert Exp $"
+	.asciz "$OpenBSD: syscall.S,v 1.7 2004/10/29 21:14:16 hshoexer Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSENTRY(syscall)
@@ -42,7 +42,7 @@ SYSENTRY(syscall)
 	pop	%eax	/* syscall number */
 	push	%ecx
 	int	$0x80
-	push	%ecx	/* Keep stack frame consistant */
+	push	%ecx	/* Keep stack frame consistent */
 	jc	err
 	ret
 err:
