@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: wsetup.c,v 1.3 2001/07/09 06:57:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wsetup.c,v 1.4 2002/04/29 06:36:12 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -75,8 +75,11 @@ __swsetup(fp)
 	/*
 	 * Make a buffer if necessary, then set _w.
 	 */
-	if (fp->_bf._base == NULL)
+	if (fp->_bf._base == NULL) {
+		if ((fp->_flags & (__SSTR | __SALC)) == __SSTR)
+			return (EOF);
 		__smakebuf(fp);
+	}
 	if (fp->_flags & __SLBF) {
 		/*
 		 * It is line buffered, so make _lbfsize be -_bufsize
