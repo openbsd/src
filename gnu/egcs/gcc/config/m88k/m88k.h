@@ -351,8 +351,10 @@ extern char * reg_names[];
 	if (flag_pic)							     \
 	  error ("-mshort-data-%s and PIC are incompatible", m88k_short_data); \
       }									     \
-    if (TARGET_OMIT_LEAF_FRAME_POINTER)       /* keep nonleaf frame pointers */    \
-      flag_omit_frame_pointer = 1;                                         \
+    if (TARGET_OMIT_LEAF_FRAME_POINTER)	/* keep nonleaf frame pointers */    \
+      flag_omit_frame_pointer = 1;					     \
+      									     \
+    flag_caller_saves = 0;			/* not safe on m88k yet */   \
   } while (0)
 
 /*** Storage Layout ***/
