@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.15 1997/09/03 17:23:20 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.16 1997/09/05 04:04:06 deraadt Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -57,15 +57,9 @@
 LIST_HEAD(xs_free_list, scsi_xfer) xs_free_list;
 
 static __inline struct scsi_xfer *scsi_make_xs __P((struct scsi_link *,
-						    struct scsi_generic *,
-						    int cmdlen,
-						    u_char *data_addr,
-						    int datalen,
-						    int retries,
-						    int timeout,
-						    struct buf *,
-						    int flags));
-
+    struct scsi_generic *, int cmdlen, u_char *data_addr,
+    int datalen, int retries, int timeout, struct buf *, int flags));
+static inline void asc2ascii __P((u_char asc, u_char ascq, char *result));
 int sc_err1 __P((struct scsi_xfer *, int));
 int scsi_interpret_sense __P((struct scsi_xfer *));
 #if	SCSIVERBOSE
@@ -817,8 +811,7 @@ static const char *sense_keys[16] = {
 	"Reserved"
 };
 static const struct {
-	unsigned char asc;
-	unsigned char ascq;
+	u_char asc, ascq;
 	char *description;
 } adesc[] = {
 	{ 0x00, 0x00, "No Additional Sense Information" },
@@ -1014,8 +1007,11 @@ static const struct {
 	{ 0x00, 0x00, NULL }
 };
 
+
 static inline void
-asc2ascii(unsigned char asc, unsigned char ascq, char *result)
+asc2ascii(asc, ascq, result)
+	u_char asc, ascq;
+	char *result;
 {
 	register int i = 0;
 
@@ -1049,20 +1045,20 @@ scsi_print_sense(xs, verbosity)
 
 	sc_print_addr(xs->sc_link);
 	s = (char *) &xs->sense;
-	printf(" Check Condition on opcode %x\n", xs->cmd->opcode);
+	printf("Check Condition on opcode %x\n", xs->cmd->opcode);
 
 	/*
 	 * Basics- print out SENSE KEY
 	 */
-	printf("    SENSE KEY:  %s", scsi_decode_sense(s, 0));
+	printf("    SENSE KEY: %s\n", scsi_decode_sense(s, 0));
 
 	/*
  	 * Print out, unqualified but aligned, FMK, EOM and ILI status.
 	 */
 	if (s[2] & 0xe0) {
-		char pad;
-		printf("\n              ");
-		pad = ' ';
+		char pad = ' ';
+
+		printf("             ");
 		if (s[2] & SSD_FILEMARK) {
 			printf("%c Filemark Detected", pad);
 			pad = ',';
@@ -1073,8 +1069,8 @@ scsi_print_sense(xs, verbosity)
 		}
 		if (s[2] & SSD_ILI)
 			printf("%c Incorrect Length Indicator Set", pad);
+		printf("\n");
 	}
-
 	/*
 	 * Now we should figure out, based upon device type, how
 	 * to format the information field. Unfortunately, that's
@@ -1083,7 +1079,7 @@ scsi_print_sense(xs, verbosity)
 	 */
 	info = _4btol(&s[3]);
 	if (info)
-		printf("\n   INFO FIELD:  %d", info);
+		printf("   INFO FIELD: %d\n", info);
 
 	/*
 	 * Now we check additional length to see whether there is
@@ -1091,13 +1087,11 @@ scsi_print_sense(xs, verbosity)
 	 */
 
 	/* enough for command specific information? */
-	if (s[7] < 4) {
-		printf("\n");
+	if (s[7] < 4)
 		return;
-	}
 	info = _4btol(&s[8]);
 	if (info)
-		printf("\n COMMAND INFO:  %d (0x%x)", info, info);
+		printf(" COMMAND INFO: %d (0x%x)\n", info, info);
 
 	/*
 	 * Decode ASC && ASCQ info, plus FRU, plus the rest...
@@ -1105,16 +1099,14 @@ scsi_print_sense(xs, verbosity)
 
 	sbs = scsi_decode_sense(s, 1);
 	if (sbs)
-		printf("\n     ASC/ASCQ:  %s", sbs);
+		printf("     ASC/ASCQ: %s\n", sbs);
 	if (s[14] != 0)
-		printf("\n     FRU CODE:  0x%x", s[14] & 0xff);
+		printf("     FRU CODE: 0x%x\n", s[14] & 0xff);
 	sbs = scsi_decode_sense(s, 3);
 	if (sbs)
-		printf("\n         SKSV:  %s", sbs);
-	if (verbosity == 0) {
-		printf("\n");
+		printf("         SKSV: %s\n", sbs);
+	if (verbosity == 0)
 		return;
-	}
 
 	/*
 	 * Now figure whether we should print any additional informtion.
@@ -1137,12 +1129,12 @@ scsi_print_sense(xs, verbosity)
 	if (j == sizeof (xs->sense))
 		return;
 
-	printf("\n Additional Sense Information (byte %d out...):\n", i);
+	printf(" Additional Sense Information (byte %d out...):\n", i);
 	if (i == 15) {
-		printf("\t%2d:", i);
+		printf("        %2d:", i);
 		k = 7;
 	} else {
-		printf("\t%2d:", i);
+		printf("        %2d:", i);
 		k = 2;
 		j -= 2;
 	}
@@ -1151,7 +1143,7 @@ scsi_print_sense(xs, verbosity)
 			break;
 		if (k == 8) {
 			k = 0;
-			printf("\n\t%2d:", i);
+			printf("\n        %2d:", i);
 		}
 		printf(" 0x%02x", s[i] & 0xff);
 		k++;
@@ -1162,15 +1154,16 @@ scsi_print_sense(xs, verbosity)
 }
 
 char *
-scsi_decode_sense(void *sinfo, int flag)
+scsi_decode_sense(sinfo, flag)
+	void *sinfo;
+	int flag;
 {
-	unsigned char *snsbuf;
-	unsigned char skey;
+	u_char *snsbuf, skey;
 	static char rqsbuf[132];
 
 	skey = 0;
 
-	snsbuf = (unsigned char *) sinfo;
+	snsbuf = (u_char *) sinfo;
 	if (flag == 0 || flag == 2 || flag == 3) {
 		skey = snsbuf[2] & 0xf;
 	}
