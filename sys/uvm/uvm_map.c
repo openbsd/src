@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.50 2002/08/20 23:21:17 mickey Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.51 2002/08/30 09:56:22 espie Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -974,7 +974,7 @@ uvm_map_lookup_entry(map, address, entry)
 		use_tree = 1;
 	}
 
-	uvm_tree_sanity(map, __FUNCTION__);
+	uvm_tree_sanity(map, __func__);
 
 	if (use_tree) {
 		vm_map_entry_t prev = &map->header;
