@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.18 1997/04/22 07:05:12 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.19 1997/04/22 07:43:50 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -73,8 +73,8 @@ PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 this=$0
 umask 77
 
-case `uname -s` in
-SunOS|*) add ()
+case "$os" in # set os in the environment if not OpenBSD
+SunOS) add ()
 	{
 		expr $1 + $2
 	}
@@ -409,9 +409,6 @@ pty*)
                         n=`add $n 1`
                 done
 		umask 77
-		if [ $unit = 1 ]; then
-			mv ttyqf ttyv0; mv ptyqf ptyv0
-		fi
 		;;
 	esac
 	;;
