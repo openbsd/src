@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.chars,v 1.4 2003/06/03 02:56:22 millert Exp $
+.\"	$OpenBSD: vi.chars,v 1.5 2004/01/24 12:29:13 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)vi.chars	8.3 (Berkeley) 6/27/96
 .\"
-.bd S 3
+.\" .bd S 3
 .pn 21
 .de iP
 .IP "\fB\\$1\fR" \\$2
@@ -57,7 +57,7 @@ is not available.
 A \fB^@\fR cannot be part of the file due to the editor implementation
 (7.5f).
 .iP "^A" 15
-Unused.
+Search forward for the current word.
 .iP "^B" 15
 Backward window.
 A count specifies repetition.
@@ -65,11 +65,11 @@ Two lines of continuity are kept if possible (2.1, 6.1, 7.2).
 .iP "^C" 15
 Unused.
 .iP "^D" 15
-As a command, scrolls down a half-window of text.  
+As a command, scrolls down a half-window of text.
 A count gives the number of (logical) lines to scroll, and is remembered
 for future \fB^D\fR and \fB^U\fR commands (2.1, 7.2).
-During an insert, backtabs over \fIautoindent\fR white space at the beginning
-of a line (6.6, 7.5); this white space cannot be backspaced over.
+During an insert, backtabs over \fIautoindent\fR whitespace at the beginning
+of a line (6.6, 7.5); this whitespace cannot be backspaced over.
 .iP "^E" 15
 Exposes one more line below the current screen in the file, leaving
 the cursor where it is if possible.
@@ -138,18 +138,19 @@ except that some teletype drivers will eat the
 so that the editor never sees it.
 .iP "^R" 15
 Redraws the current screen, eliminating logical lines not corresponding
-to physical lines (lines with only a single @ character on them).
-On hardcopy terminals in \fIopen\fR mode, retypes the current line
+to physical lines (lines with only a single @ character on them)
+.\" On hardcopy terminals in \fIopen\fR mode, retypes the current line
 (5.4, 7.2, 7.8).
 .iP "^S" 15
 Unused.  Some teletype drivers use
 .B ^S
 to suspend output until
-.B ^Q is pressed.
+.B ^Q
+is pressed.
 .iP "^T" 15
 Not a command character.
 During an insert, with \fIautoindent\fR set and at the beginning of the
-line, inserts \fIshiftwidth\fR white space.
+line, inserts \fIshiftwidth\fR whitespace.
 .iP "^U" 15
 Scrolls the screen up, inverting \fB^D\fR which scrolls down.  Counts work as
 they do for \fB^D\fR, and the previous scroll amount is common to both.
@@ -192,12 +193,12 @@ Unused.
 Searches for the word which is after the cursor as a tag.  Equivalent
 to typing \fB:ta\fR, this word, and then a \s-2CR\s0.
 Mnemonically, this command is ``go right to'' (7.3).
-.iP "^\(ua" 15
+.iP "^^" 15
 Equivalent to \fB:e #\fR\s-2CR\s0, returning to the previous position
 in the last edited file, or editing a file which you specified if you
 got a `No write since last change diagnostic' and do not want to have
 to type the file name again (7.3).
-(You have to do a \fB:w\fR before \fB^\(ua\fR
+(You have to do a \fB:w\fR before \fB^^\fR
 will work in this case.  If you do not wish to write the file you should
 do \fB:e!\ #\fR\s-2CR\s0 instead.)
 .iP "^_" 15
@@ -239,7 +240,7 @@ place text (4.3, 6.3)
 .iP "#" 15
 The macro character which, when followed by a number, will substitute
 for a function key on terminals without function keys (6.9).
-In input mode, 
+In input mode,
 if this is your erase character, it will delete the last character
 you typed in input mode, and must be preceded with a \fB\e\fR to insert
 it, since it normally backs over the last input character you gave.
@@ -269,9 +270,9 @@ over complete lines; if you use \fB\(ga\fR, the operation takes place
 from the exact marked place to the current cursor position within the
 line.
 .iP "(" 15
-Retreats to the beginning of a
-sentence, or to the beginning of a \s-2LISP\s0 s-expression
-if the \fIlisp\fR option is set.
+Retreats to the beginning of a sentence.
+.\" or to the beginning of a \s-2LISP\s0 s-expression
+.\" if the \fIlisp\fR option is set.
 A sentence ends at a \fB. !\fR or \fB?\fR which is followed by either
 the end of a line or by two spaces.  Any number of closing \fB) ] "\fR
 and \fB\(aa\fR characters may appear after the \fB. !\fR or \fB?\fR,
@@ -307,8 +308,8 @@ a \fB2dw\fR, \fB3.\fR deletes three words (3.3, 6.3, 7.2, 7.4).
 .iP "/" 15
 Reads a string from the last line on the screen, and scans forward for
 the next occurrence of this string.  The normal input editing sequences may
-be used during the input on the bottom line; an returns to command state
-without ever searching.
+be used during the input on the bottom line.
+.\" an returns to command state without ever searching.
 The search begins when you hit \s-2CR\s0 to terminate the pattern;
 the cursor moves to the beginning of the last line to indicate that the search
 is in progress; the search may then
@@ -326,7 +327,7 @@ a closing \fB/\fR and then an offset \fB+\fR\fIn\fR or \fB\-\fR\fIn\fR.
 .IP
 To include the character \fB/\fR in the search string, you must escape
 it with a preceding \fB\e\fR.
-A \fB\(ua\fR at the beginning of the pattern forces the match to occur
+A \fB^\fR at the beginning of the pattern forces the match to occur
 at the beginning of a line only; this speeds the search.  A \fB$\fR at
 the end of the pattern forces the match to occur at the end of a line
 only.
@@ -355,8 +356,11 @@ spaces.  Like all operators, affects lines when repeated, as in
 \fB<<\fR.  Counts are passed through to the basic object, thus \fB3<<\fR
 shifts three lines (6.6, 7.2).
 .iP "=" 15
-Reindents line for \s-2LISP\s0, as though they were typed in with \fIlisp\fR
-and \fIautoindent\fR set (6.8).
+.\" Reindents line for \s-2LISP\s0, as though they were typed in with \fIlisp\fR
+.\" and \fIautoindent\fR set (6.8).
+Display the line number.
+If a numerical prefix is specified, display its line number;
+otherwise display the line number of the last line in the file.
 .iP ">" 15
 An operator which shifts lines right one \fIshiftwidth\fR, normally 8
 spaces.  Affects lines when repeated as in \fB>>\fR.  Counts repeat the
@@ -396,9 +400,9 @@ In any case the cursor is moved to the first non-white character on the
 line.  If used as the target of an operator, full lines are affected
 (2.3, 3.2).
 .iP "I" 15
-Inserts at the beginning of a line; a synonym for \fB\(uai\fR.
+Inserts at the beginning of a line; a synonym for \fB^i\fR.
 .iP "J" 15
-Joins together lines, supplying appropriate white space: one space between
+Joins together lines, supplying appropriate whitespace: one space between
 words, two spaces after a \fB.\fR, and no spaces at all if the first
 character of the joined on line is \fB)\fR.  A count causes that many
 lines to be joined rather than the default two (6.5, 7.1f).
@@ -419,8 +423,8 @@ of \fBn\fR.
 .iP "O" 15
 Opens a new line above the current line and inputs text there up to an
 \s-2ESC\s0.  A count can be used on dumb terminals to specify a number
-of lines to be opened; this is generally obsolete, as the \fIslowopen\fR
-option works better (3.1).
+of lines to be opened.
+.\" this is generally obsolete, as the \fIslowopen\fR option works better (3.1).
 .iP "P" 15
 Puts the last deleted text back before/above the cursor.  The text goes
 back as whole lines above the cursor if it was deleted as whole lines.
@@ -459,7 +463,7 @@ Deletes the character before the cursor.  A count repeats the effect,
 but only characters on the current line are deleted.
 .iP "Y" 15
 Yanks a copy of the current line into the unnamed buffer, to be put back
-by a later \fBp\fR or \fBP\fR; a very useful synonym for \fByy\fR. 
+by a later \fBp\fR or \fBP\fR; a very useful synonym for \fByy\fR.
 A count yanks that many lines.  May be preceded by a buffer name to put
 lines in that buffer (7.4).
 .iP "ZZ" 15
@@ -473,20 +477,22 @@ macro in the \fIsections\fR option,
 normally a `.NH' or `.SH' and also at lines which which start
 with a formfeed \fB^L\fR.  Lines beginning with \fB{\fR also stop \fB[[\fR;
 this makes it useful for looking backwards, a function at a time, in C
-programs.  If the option \fIlisp\fR is set, stops at each \fB(\fR at the
-beginning of a line, and is thus useful for moving backwards at the top
-level \s-2LISP\s0 objects. (4.2, 6.1, 6.6, 7.2).
+programs
+.\" If the option \fIlisp\fR is set, stops at each \fB(\fR at the
+.\" beginning of a line, and is thus useful for moving backwards at the top
+.\" level \s-2LISP\s0 objects.
+(4.2, 6.1, 6.6, 7.2).
 .iP "\e" 15
 Unused.
 .iP "]]" 15
-Forward to a section boundary, see \fB[[\fR for a definition (4.2, 6.1,
+Forward to a section boundary; see \fB[[\fR for a definition (4.2, 6.1,
 6.6, 7.2).
-.iP "\(ua" 15
+.iP "^" 15
 Moves to the first non-white position on the current line (4.4).
 .iP "_" 15
 Unused.
 .iP "\(ga" 15
-When followed by a \fB\(ga\fR returns to the previous context.
+When followed by a \fB\(ga\fR, returns to the previous context.
 The previous context is set whenever the current
 line is moved in a non-relative way.
 When followed by a letter \fBa\fR\-\fBz\fR, returns to the position which
@@ -638,6 +644,4 @@ definition of paragraph (4.2, 6.8, 7.6).
 Unused.
 .iP "^?\ (\s-2\fRDEL\fP\s0)" 15
 Interrupts the editor, returning it to command accepting state (1.5,
-7.5)
-.bp
-\&.
+7.5).

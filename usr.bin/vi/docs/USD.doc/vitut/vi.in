@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.in,v 1.5 2003/06/03 02:56:22 millert Exp $
+.\"	$OpenBSD: vi.in,v 1.6 2004/01/24 12:29:13 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,15 @@
 .\"
 .\"	@(#)vi.in	8.5 (Berkeley) 8/18/96
 .\"
+.if n \{\
+.po 5n
+.ll 70n
+.\}
 .nr LL 6.5i
 .nr FL 6.5i
 .EH 'USD:11-%''An Introduction to Display Editing with Vi'
 .OH 'An Introduction to Display Editing with Vi''USD:11-%'
-.bd S 3
+.\" .bd S 3
 .if t .ds dg \(dg
 .if n .ds dg +
 .if t .ds dd \(dd
@@ -91,15 +95,15 @@ limited speed available.
 .PP
 It is also possible to use the command set of
 .I vi
-on hardcopy terminals, storage tubes and ``glass tty's'' using a one line
+on hardcopy terminals, storage tubes and ``glass tty's'' using a one-line
 editing window; thus
-.I vi's
+.I vi 's
 command set is available on all terminals.
 The full command set of the more traditional, line
 oriented editor
 .I ex
 is available within
-.I vi;
+.I vi ;
 it is quite simple to switch between the two modes of editing.
 .AE
 .NH 1
@@ -111,15 +115,15 @@ National Science Foundation under grants MCS74-07644-A03 and MCS78-07291
 is gratefully acknowledged.
 .FE
 This document provides a quick introduction to
-.I vi.
+.I vi .
 (Pronounced \fIvee-eye\fP.)
 You should be running
 .I vi
 on a file you are familiar with while you are reading this.
 The first part of this document (sections 1 through 5)
 describes the basics of using
-.I vi.
-Some topics of special interest are presented in section 6, and 
+.I vi .
+Some topics of special interest are presented in section 6, and
 some nitty-gritty details of how the editor functions are saved for section
 7 to avoid cluttering the presentation here.
 .PP
@@ -130,13 +134,13 @@ This card summarizes the commands of
 .I vi
 in a very compact format.  You should have the card handy while you are
 learning
-.I vi.
+.I vi .
 .NH 2
 Specifying terminal type
 .PP
-Before you can start
+Before you start
 .I vi
-you must tell the system what kind of terminal you are using.
+you can tell the system what kind of terminal you are using.
 Here is a (necessarily incomplete) list of terminal type codes.
 If your terminal does not appear here, you should consult with one of
 the staff members on your system to find out the code for your terminal.
@@ -172,37 +176,36 @@ Suppose for example that you have a Hewlett-Packard HP2621A
 terminal.  The code used by the system for this terminal is `2621'.
 In this case you can use one of the following commands to tell the system
 the type of your terminal:
-.DS
-% \fBsetenv TERM\fP 2621
+.DS I
+% setenv TERM 2621
 .DE
 This command works with the
 .I csh
 shell.
 If you are using the standard Bourne shell
 .I sh
-then you should give the commands
-.DS
-$ \fBTERM=\fP2621
-$ \fBexport TERM\fP
+then you should give the command:
+.DS I
+$ export TERM=2621
 .DE
 .PP
 If you want to arrange to have your terminal type set up automatically
 when you log in, you can use the
-.I tset
+.I tset (1)
 program.
 If you dial in on a
 .I mime ,
 but often use hardwired ports, a typical line for your
 .I .login
 file (if you use csh) would be
-.DS
-\fBsetenv TERM \(gatset\fP \- \-d mime\(ga
+.DS I
+% setenv TERM `tset - -d mime`
 .DE
 or for your
 .I .profile
 file (if you use sh)
-.DS
-\fBTERM=\(gatse\fPt \- \-d mime\(ga
+.DS I
+$ export TERM=`tset - -d mime`
 .DE
 .I Tset
 knows which terminals are hardwired to each port
@@ -218,8 +221,8 @@ After telling the system which kind of terminal you have, you should
 make a copy of a file you are familiar with, and run
 .I vi
 on this file, giving the command
-.DS
-% \fBvi\fR \fIname\fR
+.DS I
+% vi name
 .DE
 replacing \fIname\fR with the name of the copy file you just created.
 The screen should clear and the text of your file should appear on the
@@ -234,7 +237,7 @@ This should get you back to the command level interpreter.
 Figure out what you did wrong (ask someone else if necessary) and try again.
      Another thing which can go wrong is that you typed the wrong file name and
 the editor just printed an error diagnostic.  In this case you should
-follow the above procedure for getting out of the editor, and try again
+follow the above procedure for getting out of the editor and try again,
 this time spelling the file name correctly.
      If the editor doesn't seem to respond to the commands which you type
 here, try sending an interrupt to it by hitting the \s-2DEL\s0 or \s-2RUB\s0
@@ -245,9 +248,9 @@ by a carriage return.
 .NH 2
 The editor's copy: the buffer
 .PP
-The editor does not directly modify the file which you are editing. 
+The editor does not directly modify the file which you are editing.
 Rather, the editor makes a copy of this file, in a place called the
-.I buffer,
+.I buffer ,
 and remembers the file's
 name.  You do not affect the contents of the file unless and until you
 write the changes you make back into the original file.
@@ -267,7 +270,7 @@ will also work within the editor.
 If you don't have cursor positioning keys, or even if you do, you can use
 the \fBh j k\fR and \fBl\fR keys as cursor positioning
 keys (these are labelled with arrows on an
-.I adm3a).*
+.I adm3a). *
 .PP
 (Particular note for the HP2621: on this terminal the function keys
 must be \fIshifted\fR (ick) to send to the machine, otherwise they
@@ -275,14 +278,14 @@ only act locally.  Unshifted use will leave the cursor positioned
 incorrectly.)
 .FS
 * As we will see later,
-.I h
+.B h
 moves back to the left (like control-h which is a backspace),
-.I j
+.B j
 moves down (in the same column),
-.I k
+.B k
 moves up (in the same column),
 and
-.I l
+.B l
 moves to the right.
 .FE
 .NH 2
@@ -361,15 +364,9 @@ Scrolling and paging
 The editor has a number of commands for moving around in the file.
 The most useful of these is generated by hitting the control and D keys
 at the same time, a control-D or `^D'.  We will use this two character
-notation for referring to these control keys from now on.  You may have
-a key labelled `^' on your terminal.  This key will be represented as `\(ua'
-in this document; `^' is exclusively used as part of the `^x' notation
-for control characters.\*(dd
-.FS
-\*(dd If you don't have a `^' key on your terminal
-then there is probably a key labelled `\(ua'; in any case these characters
-are one and the same.
-.FE
+notation for referring to these control keys from now on.
+.\" You may have a key labelled `^' on your terminal;
+.\" `^' is exclusively used as part of the `^x' notation for control characters.
 .PP
 As you know now if you tried hitting \fB^D\fR, this command scrolls down in
 the file.  The \fBD\fR thus stands for down.  Many editor commands are mnemonic
@@ -414,14 +411,14 @@ or more briefly \fB:se nows\fR\s-2CR\s0.
 .FE
 .PP
 If the search string you give the editor is not present in the
-file the editor will print
+file, the editor will print
 a diagnostic on the last line of the screen, and the cursor will be returned
 to its initial position.
 .PP
 If you wish the search to match only at the beginning of a line, begin
-the search string with an \fB\(ua\fR.  To match only at the end of
+the search string with an \fB^\fR.  To match only at the end of
 a line, end the search string with a \fB$\fR.
-Thus \fB/\(uasearch\fR\s-2CR\s0 will search for the word `search' at
+Thus \fB/^search\fR\s-2CR\s0 will search for the word `search' at
 the beginning of a line, and \fB/last$\fR\s-2CR\s0 searches for the
 word `last' at the end of a line.*
 .FS
@@ -673,7 +670,7 @@ You can make small corrections in existing text quite easily.
 Find a single character which is wrong or just pick any character.
 Use the arrow keys to find the character, or
 get near the character with the word motion keys and then either
-backspace (hit the \s-2BS\s0 key or \fB^H\fR or even just \fBh\fR) or 
+backspace (hit the \s-2BS\s0 key or \fB^H\fR or even just \fBh\fR) or
 \s-2SPACE\s0 (using the space bar)
 until the cursor is on the character which is wrong.
 If the character is not needed then hit the \fBx\fP key; this deletes
@@ -696,7 +693,7 @@ the number of characters to be deleted.
 More corrections: operators
 .PP
 You already know almost enough to make changes at a higher level.
-All you need to know now is that the 
+All you need to know now is that the
 .B d
 key acts as a delete operator.  Try the command
 .B dw
@@ -708,13 +705,13 @@ made a change.  You can remember it by analogy with an ellipsis `\fB...\fR'.
 Now try
 \fBdb\fR.
 This deletes a word backwards, namely the preceding word.
-Try 
+Try
 \fBd\fR\s-2SPACE\s0.  This deletes a single character, and is equivalent
 to the \fBx\fR command.
 .PP
 Another very useful operator is
 .B c
-or change.  The command 
+or change.  The command
 .B cw
 thus changes the text of a single word.
 You follow it by the replacement text ending with an \s-2ESC\s0.
@@ -727,7 +724,7 @@ Notice that the end of the text to be changed was marked with the character
 Operating on lines
 .PP
 It is often the case that you want to operate on lines.
-Find a line which you want to delete, and type 
+Find a line which you want to delete, and type
 \fBdd\fR,
 the
 .B d
@@ -777,10 +774,10 @@ material back.  However, since it is often the case that we regret a
 change or make a change incorrectly, the editor provides a
 .B u
 (undo) command to reverse the last change which you made.
-Try this a few times, and give it twice in a row to notice that an
+Try this a few times, and give it twice in a row to notice that a
 .B u
 also undoes a
-.B u.
+.B u .
 .PP
 The undo command lets you reverse only a single change.  After you make
 a number of changes to a line, you may decide that you would rather have
@@ -788,6 +785,13 @@ the original state of the line back.  The
 .B U
 command restores the current line to the state before you started changing
 it.
+Additionally, an unlimited number of changes may be reversed by following a
+.B u
+with a
+.B . .
+Each subsequent
+.B .
+will undo one more change.
 .PP
 You can recover text which you delete, even if
 undo will not bring it back; see the section on recovering lost text
@@ -797,12 +801,12 @@ Summary
 .IP
 .TS
 lw(.50i)b a.
-\fR\s-2SPACE\s0\fP	advance the cursor one position
+\fB\s-2SPACE\s0\fP	advance the cursor one position
 ^H	backspace the cursor
-^W	erase a word during an insert
-\fRerase\fP	your erase (usually ^H or #), erases a character during an insert
-\fRkill\fP	your kill (usually @, ^X, or ^U), kills the insert on this line
-\&\fB.\fP	repeats the changing command
+\fBwerase\fP	(usually ^W), erase a word during an insert
+\fBerase\fP	(usually DEL or ^H), erases a character during an insert
+\fBkill\fP	(usually ^U), kills the insert on this line
+\fB.\fP	repeats the changing command
 O	opens and inputs new lines, above the current
 U	undoes the changes you made to the current line
 a	appends text after the cursor
@@ -819,25 +823,26 @@ Low level character motions
 .PP
 Now move the cursor to a line where there is a punctuation or a bracketing
 character such as a parenthesis or a comma or period.  Try the command
-\fBf\fR\fIx\fR where \fIx\fR is this character.  This command finds
+\fBf\fR\fIx\fR, where \fIx\fR is this character.  This command finds
 the next \fIx\fR character to the right of the cursor in the current
 line.  Try then hitting a \fB;\fR, which finds the next instance of the
 same character.  By using the \fBf\fR command and then a sequence of
 \fB;\fR's you can often
 get to a particular place in a line much faster than with a sequence
 of word motions or \s-2SPACE\s0s.
-There is also a \fBF\fR command, which is like \fBf\fR, but searches 
+There is also an \fBF\fR command, which is like \fBf\fR, but searches
 backward.  The \fB;\fR command repeats \fBF\fR also.
 .PP
 When you are operating on the text in a line it is often desirable to
 deal with the characters up to, but not including, the first instance of
 a character.  Try \fBdf\fR\fIx\fR for some \fIx\fR now and
-notice that the \fIx\fR character is deleted.  Undo this with \fBu\fR
-and then try \fBdt\fR\fIx\fR;  the \fBt\fR here stands for to, i.e.
+notice that the text up to (and including) the \fIx\fR character is deleted.
+Undo this with \fBu\fR and then try \fBdt\fR\fIx\fR;
+the \fBt\fR here stands for to, i.e.
 delete up to the next \fIx\fR, but not the \fIx\fR.  The command \fBT\fR
 is the reverse of \fBt\fR.
 .PP
-When working with the text of a single line, an \fB\(ua\fR moves the
+When working with the text of a single line, a \fB^\fR moves the
 cursor to the first non-white position on the line, and a
 \fB$\fR moves it to the end of the line.  Thus \fB$a\fR will append new
 text at the end of the current line.
@@ -847,14 +852,14 @@ characters are represented as a number of spaces expanding to a tab stop,
 where tab stops are every 8 positions.*
 .FS
 * This is settable by a command of the form \fB:se ts=\fR\fIx\fR\s-2CR\s0,
-where \fIx\fR is 4 to set tabstops every four columns.  This has
+where \fIx\fR is 4 to set tabstops every four columns.  This has an
 effect on the screen representation within the editor.
 .FE
 When the cursor is at a tab, it sits on the last of the several spaces
 which represent that tab.  Try moving the cursor back and forth over
 tabs so you understand how this works.
 .PP
-On rare occasions, your file may have nonprinting characters in it. 
+On rare occasions, your file may have nonprinting characters in it.
 These characters are displayed in the same way they are represented in
 this document, that is with a two character code, the first character
 of which is `^'.  On the screen non-printing characters resemble a `^'
@@ -928,7 +933,7 @@ The section commands interpret a preceding count as a different window size in
 which to redraw the screen at the new location, and this window size
 is the base size for newly drawn windows until another size is specified.
 This is very useful
-if you are on a slow terminal and are looking for a particular section. 
+if you are on a slow terminal and are looking for a particular section.
 You can give the first section command a small count to then see each successive
 section heading in a small window.
 .NH 2
@@ -947,7 +952,7 @@ If preceded by a buffer name, \fB"\fR\fIx\fR\|\fBy\fR, where
 buffer.  The text can then be put back in the file with the commands
 .B p
 and
-.B P;
+.B P ;
 \fBp\fR puts the text after or below the cursor, while \fBP\fR puts the text
 before or above the cursor.
 .PP
@@ -957,7 +962,7 @@ partially spans more than one line, then when you put the text back,
 it will be placed after the cursor (or before if you
 use \fBP\fR).  If the yanked text forms whole lines, they will be put
 back as whole lines, without changing the current line.  In this case,
-the put acts much like a \fBo\fR or \fBO\fR command.
+the put acts much like an \fBo\fR or \fBO\fR command.
 .PP
 Try the command \fBYP\fR.  This makes a copy of the current line and
 leaves you on this copy, which is placed before the current line.
@@ -970,7 +975,7 @@ To move text within the buffer, you need to delete it in one place, and
 put it back in another.  You can precede a delete operation by the
 name of a buffer in which the text is to be stored as in \fB"a5dd\fR
 deleting 5 lines into the named buffer \fIa\fR.  You can then move the
-cursor to the eventual resting place of the these lines and do a \fB"ap\fR
+cursor to the eventual resting place of these lines and do a \fB"ap\fR
 or \fB"aP\fR to put them back.
 In fact, you can switch and edit another file before you put the lines
 back, by giving a command of the form \fB:e \fR\fIname\fR\s-2CR\s0 where
@@ -981,13 +986,13 @@ to the other file.
 An ordinary delete command saves the text in the unnamed buffer,
 so that an ordinary put can move it elsewhere.
 However, the unnamed buffer is lost when you change files,
-so to move text from one file to another you should use an unnamed buffer.
+so to move text from one file to another you should use a named buffer.
 .NH 2
 Summary.
 .IP
 .TS
 lw(.50i)b a.
-\(ua	first non-white on line
+^	first non-white on line
 $	end of line
 )	forward sentence
 }	forward paragraph
@@ -1096,8 +1101,8 @@ On a dumb terminal, if there are @ lines in the middle of the screen
 as a result of line deletion, you may get rid of these lines by typing
 \fB^R\fR to cause the editor to retype the screen, closing up these holes.
 .PP
-Finally, if you wish to place a certain line on the screen at the top
-middle or bottom of the screen, you can position the cursor to that line,
+Finally, if you wish to place a certain line on the screen at the top,
+middle, or bottom of the screen, you can position the cursor to that line,
 and then give a \fBz\fR command.
 You should follow the \fBz\fR command with a \s-2RETURN\s0 if you want
 the line to appear at the top of the window, a \fB.\fR if you want it
@@ -1113,19 +1118,19 @@ long delays, waiting for the screen to be refreshed.  We have already
 pointed out how the editor optimizes the updating of the screen during
 insertions on dumb terminals to limit the delays, and how the editor erases
 lines to @ when they are deleted on dumb terminals.
-.PP
-The use of the slow terminal insertion mode is controlled by the
-.I slowopen
-option.  You can force the editor to use this mode even on faster terminals
-by giving the command \fB:se slow\fR\s-2CR\s0.  If your system is sluggish
-this helps lessen the amount of output coming to your terminal.
-You can disable this option by \fB:se noslow\fR\s-2CR\s0.
-.PP
-The editor can simulate an intelligent terminal on a dumb one.  Try
-giving the command \fB:se redraw\fR\s-2CR\s0.  This simulation generates
-a great deal of output and is generally tolerable only on lightly loaded
-systems and fast terminals.  You can disable this by giving the command
- \fB:se noredraw\fR\s-2CR\s0.
+.\" .PP
+.\" The use of the slow terminal insertion mode is controlled by the
+.\" .I slowopen
+.\" option.  You can force the editor to use this mode even on faster terminals
+.\" by giving the command \fB:se slow\fR\s-2CR\s0.  If your system is sluggish,
+.\" this helps lessen the amount of output coming to your terminal.
+.\" You can disable this option by \fB:se noslow\fR\s-2CR\s0.
+.\" .PP
+.\" The editor can simulate an intelligent terminal on a dumb one.  Try
+.\" giving the command \fB:se redraw\fR\s-2CR\s0.  This simulation generates
+.\" a great deal of output and is generally tolerable only on lightly loaded
+.\" systems and fast terminals.  You can disable this by giving the command
+.\"  \fB:se noredraw\fR\s-2CR\s0.
 .PP
 The editor also makes editing more pleasant at low speed by starting
 editing in a small window, and letting the window expand as you edit.
@@ -1141,7 +1146,7 @@ which cause large screen motions:
 .B ":  /  ?  [[  ]]  \(ga  \(aa"
 .DE
 Thus if you are searching for a particular instance of a common string
-in a file you can precede the first search command by a small number,
+in a file, you can precede the first search command by a small number,
 say 3, and the editor will draw three line windows around each instance
 of the string which it locates.
 .PP
@@ -1162,10 +1167,10 @@ what is displayed on the screen.  You can still edit the text on
 the screen if you wish; clear up the confusion
 by hitting a \fB^L\fR; or move or search again, ignoring the
 current state of the display.
-.PP
-See section 7.8 on \fIopen\fR mode for another way to use the
-.I vi
-command set on slow terminals.
+.\" .PP
+.\" See section 7.8 on \fIopen\fR mode for another way to use the
+.\" .I vi
+.\" command set on slow terminals.
 .NH 2
 Options, set, and editor startup files
 .PP
@@ -1190,18 +1195,18 @@ l l l a.
 Name	Default	Description
 _
 autoindent	noai	Supply indentation automatically
-autowrite	noaw	Automatic write before \fB:n\fR, \fB:ta\fR, \fB^\(ua\fR, \fB!\fR
+autowrite	noaw	Automatic write before \fB:n\fR, \fB:ta\fR, \fB^^\fR, \fB!\fR
 ignorecase	noic	Ignore case in searching
-lisp	nolisp	\fB( { ) }\fR commands deal with S-expressions
-list	nolist	Tabs print as ^I; end of lines marked with $
-magic	nomagic	The characters . [ and * are special in scans
-number	nonu	Lines are displayed prefixed with line numbers
+.\" lisp	nolisp	\fB( { ) }\fR commands deal with S-expressions
+list	nolist	Tabs print as ^I; end of lines marked $
+magic	nomagic	. [ and * are special in scans
+number	nonu	Lines prefixed with line numbers
 paragraphs	para=IPLPPPQPbpP LI	Macro names which start paragraphs
 redraw	nore	Simulate a smart terminal on a dumb one
 sections	sect=NHSHH HU	Macro names which start new sections
-shiftwidth	sw=8	Shift distance for <, > and input \fB^D\fP and \fB^T\fR
+shiftwidth	sw=8	Shift distance for <, > and \fB^D\fP and \fB^T\fR
 showmatch	nosm	Show matching \fB(\fP or \fB{\fP as \fB)\fP or \fB}\fR is typed
-slowopen	slow	Postpone display updates during inserts
+.\" slowopen	slow	Postpone display updates during inserts
 term	dumb	The kind of terminal you are using.
 .TE
 .KE
@@ -1239,31 +1244,31 @@ be separated with the | character, for example:
 .DS
 \fBset\fP ai aw terse|\fBmap\fP @ dd|\fBmap\fP # x
 .DE
-which sets the options \fIautoindent\fP, \fIautowrite\fP, \fIterse\fP,
+which sets the options \fIautoindent\fP, \fIautowrite\fP, \fIterse\fP
 (the
 .B set
 command),
-makes @ delete a line,
+makes @ delete a line
 (the first
 .B map ),
-and makes # delete a character,
+and makes # delete a character
 (the second
 .B map ).
-(See section 6.9 for a description of the \fBmap\fP command)
+(See section 6.9 for a description of the \fBmap\fP command.)
 This string should be placed in the variable EXINIT in your environment.
 If you use the shell \fIcsh\fP,
 put this line in the file
 .I .login
 in your home directory:
-.DS
-setenv EXINIT \(aa\fBset\fP ai aw terse|\fBmap\fP @ dd|\fBmap\fP # x\(aa
+.DS I
+setenv EXINIT 'set ai aw terse|map @ dd|map # x'
 .DE
 If you use the standard shell \fIsh\fP,
 put these lines in the file
 .I .profile
 in your home directory:
 .DS
-EXINIT=\(aa\fBset\fP ai aw terse|\fBmap\fP @ dd|\fBmap\fP # x\(aa
+EXINIT='set ai aw terse|map @ dd|map # x'
 export EXINIT
 .DE
 Of course, the particulars of the line would depend on which options
@@ -1314,11 +1319,11 @@ Recovering lost files
 .PP
 If the system crashes, you can recover the work you were doing
 to within a few changes.  You will normally receive mail when you next
-login giving you the name of the file which has been saved for you. 
+login giving you the name of the file which has been saved for you.
 You should then change to the directory where you were when the system
 crashed and give a command of the form:
 .DS
-% \fBvi \-r\fR \fIname\fR
+% vi -r name
 .DE
 replacing \fIname\fR with the name of the file which you were editing.
 This will recover your work to a point near where you left off.\*(dg
@@ -1333,8 +1338,8 @@ the few lost lines by hand.
 .PP
 You can get a listing of the files which are saved for you by giving
 the command:
-.DS
-% \fBvi \-r\fR
+.DS I
+% vi -r
 .DE
 If there is more than one instance of a particular file saved, the editor
 gives you the newest instance each time you recover it.  You can thus
@@ -1361,24 +1366,24 @@ from the right hand edge of the screen.
 If the editor breaks an input line and you wish to put it back together
 you can tell it to join the lines with \fBJ\fR.  You can give \fBJ\fR
 a count of the number of lines to be joined as in \fB3J\fR to join 3
-lines.  The editor supplies white space, if appropriate,
+lines.  The editor supplies whitespace, if appropriate,
 at the juncture of the joined
-lines, and leaves the cursor at this white space.
-You can kill the white space with \fBx\fR if you don't want it.
+lines, and leaves the cursor at this whitespace.
+You can kill the whitespace with \fBx\fR if you don't want it.
 .NH 2
 Features for editing programs
 .PP
 The editor has a number of commands for editing programs.
 The thing that most distinguishes editing of programs from editing of text
 is the desirability of maintaining an indented structure to the body of
-the program.  The editor has a
+the program.  The editor has an
 .I autoindent
 facility for helping you generate correctly indented programs.
 .PP
 To enable this facility you can give the command \fB:se ai\fR\s-2CR\s0.
 Now try opening a new line with \fBo\fR and type some characters on the
 line after a few tabs.  If you now start another line, notice that the
-editor supplies white space at the beginning of the line to line it up
+editor supplies whitespace at the beginning of the line to line it up
 with the previous line.  You cannot backspace over this indentation,
 but you can use \fB^D\fR key to backtab over the supplied indentation.
 .PP
@@ -1395,7 +1400,7 @@ For shifting lines in the program left and right, there are operators
 and
 .B >.
 These shift the lines you specify right or left by one
-.I shiftwidth.
+.I shiftwidth .
 Try
 .B <<
 and
@@ -1423,51 +1428,51 @@ You can run system commands over portions of the buffer using the operator
 \fB!\fR.
 You can use this to sort lines in the buffer, or to reformat portions
 of the buffer with a pretty-printer.
-Try typing in a list of random words, one per line and ending them
+Try typing in a list of random words, one per line, and ending them
 with a blank line.  Back up to the beginning of the list, and then give
 the command \fB!}sort\fR\s-2CR\s0.  This says to sort the next paragraph
 of material, and the blank line ends a paragraph.
-.NH 2
-Commands for editing \s-2LISP\s0
-.PP
-If you are editing a \s-2LISP\s0 program you should set the option
-.I lisp
-by doing
-\fB:se\ lisp\fR\s-2CR\s0.
-This changes the \fB(\fR and \fB)\fR commands to move backward and forward
-over s-expressions.
-The \fB{\fR and \fB}\fR commands are like \fB(\fR and \fB)\fR but don't
-stop at atoms.  These can be used to skip to the next list, or through
-a comment quickly.
-.PP
-The
-.I autoindent
-option works differently for \s-2LISP\s0, supplying indent to align at
-the first argument to the last open list.  If there is no such argument
-then the indent is two spaces more than the last level.
-.PP
-There is another option which is useful for typing in \s-2LISP\s0, the
-.I showmatch
-option.
-Try setting it with
-\fB:se sm\fR\s-2CR\s0
-and then try typing a `(' some words and then a `)'.  Notice that the
-cursor shows the position of the `(' which matches the `)' briefly. 
-This happens only if the matching `(' is on the screen, and the cursor
-stays there for at most one second.
-.PP
-The editor also has an operator to realign existing lines as though they
-had been typed in with
-.I lisp
-and
-.I autoindent
-set.  This is the \fB=\fR operator.
-Try the command \fB=%\fR at the beginning of a function.  This will realign
-all the lines of the function declaration.
-.PP
-When you are editing \s-2LISP\s0,, the \fB[[\fR and \fR]]\fR advance
-and retreat to lines beginning with a \fB(\fR, and are useful for dealing
-with entire function definitions.
+.\" .NH 2
+.\" Commands for editing \s-2LISP\s0
+.\" .PP
+.\" If you are editing a \s-2LISP\s0 program you should set the option
+.\" .I lisp
+.\" by doing
+.\" \fB:se\ lisp\fR\s-2CR\s0.
+.\" This changes the \fB(\fR and \fB)\fR commands to move backward and forward
+.\" over s-expressions.
+.\" The \fB{\fR and \fB}\fR commands are like \fB(\fR and \fB)\fR but don't
+.\" stop at atoms.  These can be used to skip to the next list, or through
+.\" a comment quickly.
+.\" .PP
+.\" The
+.\" .I autoindent
+.\" option works differently for \s-2LISP\s0, supplying indent to align at
+.\" the first argument to the last open list.  If there is no such argument
+.\" then the indent is two spaces more than the last level.
+.\" .PP
+.\" There is another option which is useful for typing in \s-2LISP\s0, the
+.\" .I showmatch
+.\" option.
+.\" Try setting it with
+.\" \fB:se sm\fR\s-2CR\s0
+.\" and then try typing a `(' some words and then a `)'.  Notice that the
+.\" cursor shows the position of the `(' which matches the `)' briefly.
+.\" This happens only if the matching `(' is on the screen, and the cursor
+.\" stays there for at most one second.
+.\" .PP
+.\" The editor also has an operator to realign existing lines as though they
+.\" had been typed in with
+.\" .I lisp
+.\" and
+.\" .I autoindent
+.\" set.  This is the \fB=\fR operator.
+.\" Try the command \fB=%\fR at the beginning of a function.  This will realign
+.\" all the lines of the function declaration.
+.\" .PP
+.\" When you are editing \s-2LISP\s0,, the \fB[[\fR and \fR]]\fR advance
+.\" and retreat to lines beginning with a \fB(\fR, and are useful for dealing
+.\" with entire function definitions.
 .NH 2
 Macros
 .PP
@@ -1519,16 +1524,16 @@ or
 you should escape them with a \fB^V\fR.
 (It may be necessary to double the \fB^V\fR if the map
 command is given inside
-.I vi,
+.I vi ,
 rather than in
-.I ex.)
+.I ex .)
 Spaces and tabs inside the
 .I rhs
 need not be escaped.
 .PP
 Thus to make the \fBq\fR key write and exit the editor, you can give
 the command
-.DS
+.DS I
 :map q :wq\fB^V^V\fP\s-2CR CR\s0
 .DE
 which means that whenever you type \fBq\fR, it will be as though you
@@ -1549,7 +1554,7 @@ The first \s-2CR\s0 is part of the
 the second terminates the : command.
 .PP
 Macros can be deleted with
-.DS
+.DS I
 unmap lhs
 .DE
 .PP
@@ -1560,7 +1565,7 @@ instead of the 2 character ``#'' sequence.  So that terminals without
 function keys can access such definitions, the form ``#x'' will mean function
 key
 .I x
-on all terminals (and need not be typed within one second.)
+on all terminals (and need not be typed within one second).
 The character ``#'' can be changed by using a macro in the usual way:
 .DS
 :map \fB^V^V^I\fP #
@@ -1569,9 +1574,11 @@ to use tab, for example.  (This won't affect the
 .I map
 command, which still uses
 .B #,
-but just the invocation from visual mode.
+but just the invocation from visual mode.)
 .PP
-The undo command reverses an entire macro call as a unit,
+The
+.I undo
+command reverses an entire macro call as a unit,
 if it made any changes.
 .PP
 Placing a `!' after the word
@@ -1587,7 +1594,7 @@ where
 .B \o'b/'
 is a blank.
 The \fB^V\fP is necessary to prevent the blanks from being taken as
-white space between the
+whitespace between the
 .I lhs
 and
 .I rhs .
@@ -1721,14 +1728,14 @@ More file manipulation commands
 .PP
 The following table lists the file manipulation commands which you can
 use when you are in
-.I vi.
+.I vi .
 .KF
 .DS
 .TS
 lb l.
 :w	write back changes
 :wq	write and quit
-:x	write (if necessary) and quit (same as ZZ).
+:x	write (if necessary) and quit (same as ZZ)
 :e \fIname\fP	edit file \fIname\fR
 :e!	reedit, discarding changes
 :e + \fIname\fP	edit, starting at end
@@ -1800,9 +1807,9 @@ command.
 If you are editing large programs, you will find the \fB:ta\fR command
 very useful.  It utilizes a data base of function names and their locations,
 which can be created by programs such as
-.I ctags,
+.I ctags ,
 to quickly find a function whose name you give.
-If the \fB:ta\fR command will require the editor to switch files, then
+If the \fB:ta\fR command requires the editor to switch files, then
 you must \fB:w\fR or abandon any changes before switching.  You can repeat
 the \fB:ta\fR command without any arguments to look for the same tag
 again.
@@ -1832,8 +1839,8 @@ If you do not want or need this facility, you should
 set nomagic
 .DE
 in your EXINIT.
-In this case, 
-only the characters \fB\(ua\fR and \fB$\fR are special in patterns.
+In this case,
+only the characters \fB^\fR and \fB$\fR are special in patterns.
 The character \fB\e\fR is also then special (as it is most everywhere in
 the system), and may be used to get at the
 an extended pattern matching facility.
@@ -1843,13 +1850,13 @@ The following table gives the extended forms when \fBmagic\fR is set.
 .DS
 .TS
 lb l.
-\(ua	at beginning of pattern, matches beginning of line
+^	at beginning of pattern, matches beginning of line
 $	at end of pattern, matches end of line
 \fB\&.\fR	matches any character
 \e<	matches the beginning of a word
 \e>	matches the end of a word
 [\fIstr\fP]	matches any single character in \fIstr\fP
-[\(ua\fIstr\fP]	matches any single character not in \fIstr\fP
+[^\fIstr\fP]	matches any single character not in \fIstr\fP
 [\fIx\fP\-\fIy\fP]	matches any character between \fIx\fP and \fIy\fP
 *	matches any number of the preceding pattern
 .TE
@@ -1876,7 +1883,7 @@ kill	your kill character, deletes the input on this line
 \s-2CR\s0	starts a new line
 ^D	backtabs over \fIautoindent\fP
 0^D	kills all the \fIautoindent\fP
-\(ua^D	same as \fB0^D\fP, but restores indent next line
+^^D	same as \fB0^D\fP, but restores indent next line
 ^V	quotes the next non-printing character into the file
 .TE
 .DE
@@ -1902,7 +1909,7 @@ If you wish to type in your erase or kill character (say # or @) then
 you must precede it with a \fB\e\fR, just as you would do at the normal
 system command level.  A more general way of typing non-printing characters
 into the file is to precede them with a \fB^V\fR.  The \fB^V\fR echoes
-as a \fB\(ua\fR character on which the cursor rests.  This indicates that
+as a \fB^\fR character on which the cursor rests.  This indicates that
 the editor expects you to type a control character.  In fact you may
 type any character and it will be inserted into the file at that point.*
 .FS
@@ -1911,7 +1918,7 @@ not allow the \s-2NULL\s0 (\fB^@\fR) character to appear in files.  Also
 the \s-2LF\s0 (linefeed or \fB^J\fR) character is used by the editor
 to separate lines in the file, so it cannot appear in the middle of a
 line.  You can insert any other character, however, if you wait for the
-editor to echo the \fB\(ua\fR before you type the character.  In fact,
+editor to echo the \fB^\fR before you type the character.  In fact,
 the editor will treat a following letter as a request for the corresponding
 control character.  This is the only way to type \fB^S\fR or \fB^Q\fP,
 since the system normally uses them to suspend and resume output
@@ -1924,7 +1931,7 @@ boundary.
 This only works immediately after the supplied \fIautoindent\fR.
 .PP
 When you are using \fIautoindent\fR you may wish to place a label at
-the left margin of a line.  The way to do this easily is to type \fB\(ua\fR
+the left margin of a line.  The way to do this easily is to type \fB^\fR
 and then \fB^D\fR.  The editor will move the cursor to the left margin
 for one line, and restore the previous indent on the next.  You can also
 type a \fB0\fR followed immediately by a \fB^D\fR if you wish to kill
@@ -1939,7 +1946,7 @@ system convention for typing on such a terminal.
 Characters which you normally type are converted to lower case, and you
 can type upper case letters by preceding them with a \e.
 The characters { ~ } | \(ga are not available on such terminals, but you
-can escape them as \e( \e\(ua \e) \e! \e\(aa.
+can escape them as \e( \e^ \e) \e! \e\(aa.
 These characters are represented on the display in the same way they
 are typed.\*(dd
 .FS
@@ -1951,7 +1958,7 @@ Vi and ex
 .PP
 .I Vi
 is actually one mode of editing within the editor
-.I ex.
+.I ex .
 When you are running
 .I vi
 you can escape to the line oriented editor of
@@ -1966,13 +1973,13 @@ Likewise, most
 .I ex
 commands can be invoked from
 .I vi
-using :.
+using \fB:\fR.
 Just give them without the \fB:\fR and follow them with a \s-2CR\s0.
 .PP
 In rare instances, an internal error may occur in
-.I vi.
+.I vi .
 In this case you will get a diagnostic and be left in the command mode of
-.I ex.
+.I ex .
 You can then save your work and quit if you wish by giving a command
 \fBx\fR after the \fB:\fR which \fIex\fR prompts you with, or you can
 reenter \fIvi\fR by giving
@@ -1995,72 +2002,72 @@ users often mix their use of
 command mode and
 .I vi
 command mode to speed the work they are doing.
-.NH 2
-Open mode: vi on hardcopy terminals and ``glass tty's''
-\(dd
-.PP
-If you are on a hardcopy terminal or a terminal which does not have a cursor
-which can move off the bottom line, you can still use the command set of
-.I vi,
-but in a different mode.
-When you give a
-.I vi
-command, the editor will tell you that it is using
-.I open
-mode.
-This name comes from the
-.I open
-command in
-.I ex,
-which is used to get into the same mode.
-.PP
-The only difference between
-.I visual
-mode
-and
-.I open
-mode is the way in which the text is displayed.
-.PP
-In
-.I open
-mode the editor uses a single line window into the file, and moving backward
-and forward in the file causes new lines to be displayed, always below the
-current line.
-Two commands of
-.I vi
-work differently in
-.I open:
-.B z
-and
-\fB^R\fR.
-The
-.B z
-command does not take parameters, but rather draws a window of context around
-the current line and then returns you to the current line.
-.PP
-If you are on a hardcopy terminal,
-the
-.B ^R
-command will retype the current line.
-On such terminals, the editor normally uses two lines to represent the
-current line.
-The first line is a copy of the line as you started to edit it, and you work
-on the line below this line.
-When you delete characters, the editor types a number of \e's to show
-you the characters which are deleted.  The editor also reprints the current
-line soon after such changes so that you can see what the line looks
-like again.
-.PP
-It is sometimes useful to use this mode on very slow terminals which
-can support
-.I vi
-in the full screen mode.
-You can do this by entering
-.I ex
-and using an
-.I open
-command.
-.LP
+.\" .NH 2
+.\" Open mode: vi on hardcopy terminals and ``glass tty's''
+.\" \(dd
+.\" .PP
+.\" If you are on a hardcopy terminal or a terminal which does not have a cursor
+.\" which can move off the bottom line, you can still use the command set of
+.\" .I vi,
+.\" but in a different mode.
+.\" When you give a
+.\" .I vi
+.\" command, the editor will tell you that it is using
+.\" .I open
+.\" mode.
+.\" This name comes from the
+.\" .I open
+.\" command in
+.\" .I ex,
+.\" which is used to get into the same mode.
+.\" .PP
+.\" The only difference between
+.\" .I visual
+.\" mode
+.\" and
+.\" .I open
+.\" mode is the way in which the text is displayed.
+.\" .PP
+.\" In
+.\" .I open
+.\" mode the editor uses a single line window into the file, and moving backward
+.\" and forward in the file causes new lines to be displayed, always below the
+.\" current line.
+.\" Two commands of
+.\" .I vi
+.\" work differently in
+.\" .I open:
+.\" .B z
+.\" and
+.\" \fB^R\fR.
+.\" The
+.\" .B z
+.\" command does not take parameters, but rather draws a window of context around
+.\" the current line and then returns you to the current line.
+.\" .PP
+.\" If you are on a hardcopy terminal,
+.\" the
+.\" .B ^R
+.\" command will retype the current line.
+.\" On such terminals, the editor normally uses two lines to represent the
+.\" current line.
+.\" The first line is a copy of the line as you started to edit it, and you work
+.\" on the line below this line.
+.\" When you delete characters, the editor types a number of \e's to show
+.\" you the characters which are deleted.  The editor also reprints the current
+.\" line soon after such changes so that you can see what the line looks
+.\" like again.
+.\" .PP
+.\" It is sometimes useful to use this mode on very slow terminals which
+.\" can support
+.\" .I vi
+.\" in the full screen mode.
+.\" You can do this by entering
+.\" .I ex
+.\" and using an
+.\" .I open
+.\" command.
+.\" .LP
 .SH
 Acknowledgements
 .PP

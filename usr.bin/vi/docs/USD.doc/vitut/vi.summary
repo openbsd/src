@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.summary,v 1.5 2003/06/03 02:56:22 millert Exp $
+.\"	$OpenBSD: vi.summary,v 1.6 2004/01/24 12:29:13 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,8 +135,8 @@ $	last	\fIx\fP-\fIn\fP	\fIn\fP before \fIx\fP
 .TS
 aw(1.7i)b aw(1.5i).
 % setenv TERM \fItype\fP	\fIcsh\fP and all version 6
-$ TERM=\fItype\fP; export TERM	\fIsh\fP in Version 7
-See also \fItset\fR(1)
+$ export TERM=\fItype\fP	\fIsh\fP in Version 7
+\fRSee also\fP \fItset\fR(1)
 .TE
 .h "Some terminal types"
 .TS
@@ -151,7 +151,7 @@ lw(.4i) lw(.4i) lw(.4i) lw(.4i) lw(.4i).
 .h "Initializing options"
 .TS
 lw(.9i)b aw(1.5i).
-EXINIT	place \fBset\fP's here in environment var.
+EXINIT	place \fBset\fP's here in environment var
 set \fIx\fP	enable option
 set no\fIx\fP	disable option
 set \fIx\fP=\fIval\fP	give value \fIval\fP
@@ -165,7 +165,7 @@ lw(.9i)b lw(.3i) lw(1.0i).
 autoindent	ai	supply indent
 autowrite	aw	write before changing files
 ignorecase	ic	in scanning
-lisp		\fB( ) { }\fP are s-exp's
+.\" lisp		\fB( ) { }\fP are s-exp's
 list		print ^I for tab, $ at end
 magic		\fB. [ *\fP special in patterns
 number	nu	number lines
@@ -175,7 +175,7 @@ scroll		command mode lines
 sections	sect	macro names ...
 shiftwidth	sw	for \fB< >\fP, and input \fB^D\fP
 showmatch	sm	to \fB)\fP and \fB}\fP as typed
-slowopen	slow	choke updates during insert
+.\" slowopen	slow	choke updates during insert
 window		visual mode lines
 wrapscan	ws	around end of buffer?
 wrapmargin	wm	automatic line splitting
@@ -184,13 +184,13 @@ wrapmargin	wm	automatic line splitting
 .h "Scanning pattern formation"
 .TS
 aw(.9i)b aw(1.0i).
-\(ua	beginning of line
+^	beginning of line
 $	end of line
 \fB.\fR	any character
 \e<	beginning of word
 \e>	end of word
 [\fIstr\fP]	any char in \fIstr\fP
-[\(ua\fIstr\fP]	... not in \fIstr\fP
+[^\fIstr\fP]	... not in \fIstr\fP
 [\fIx\-y\fP]	... between \fIx\fP and \fIy\fP
 *	any number of preceding
 .TE
@@ -253,7 +253,7 @@ T}
 .h "Counts before vi commands"
 .TS
 lw(1.5i) lw(1.7i)b.
-line/column number	z  G  |	
+line/column number	z  G  |
 scroll amount	^D  ^U
 replicate insert	a  i  A  I
 repeat effect	\fRmost rest\fP
@@ -290,7 +290,7 @@ aw(0.75i)b aw(1.6i).
 :e + \fIname\fP	edit, starting at end
 :e +\fIn\fR	edit starting at line \fIn\fR
 :e #	edit alternate file
-^\(ua	synonym for \fB:e #\fP
+^^	synonym for \fB:e #\fP
 :w \fIname\fP	write file \fIname\fP
 :w! \fIname\fP	overwrite file \fIname\fP
 :sh	run shell, then return
@@ -352,13 +352,13 @@ M	middle window line
 +	next line, at first non-white
 \-	previous line, at first non-white
 \fRCR\fP	return, same as +
-\(da \fRor\fP j	next line, same column
-\(ua \fRor\fP k	previous line, same column
+^J \fRor\fP j	next line, same column
+^ \fRor\fP k	previous line, same column
 .TE
 .h "Character positioning"
 .TS
 aw(0.5i)b aw(2.0i).
-\(ua	first non white
+^	first non white
 0	beginning of line
 $	end of line
 h \fRor\fP \(->	forward
@@ -408,7 +408,7 @@ aw(.5i)b aw(2.0i).
 \fRESC\fP	ends insertion, back to command
 ^?	interrupt, terminates insert
 ^D	backtab over \fIautoindent\fP
-\(ua^D	kill \fIautoindent\fP, save for next
+^^D	kill \fIautoindent\fP, save for next
 0^D	... but at margin next also
 ^V	quote non-printing character
 .TE
