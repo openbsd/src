@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.7 1995/11/28 08:47:38 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.8 1995/12/29 17:12:48 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -16,7 +16,7 @@ ident		GENERIC
 
 # Need to set locally
 timezone	8 dst
-maxusers	16
+maxusers	32
 
 # Standard system options
 options		SWAPPAGER		# swap pager (anonymous and swap space)
@@ -60,7 +60,7 @@ options		COMPAT_NOLABEL	# defaults for unlabeled disks
 # HP-UX binary compatibility.
 # NOTE: THIS IS STILL VERY EXPERIMENTAL.  YOUR MILEAGE MAY VARY.
 #
-#options	COMPAT_HPUX	# HP-UX binary compatibility
+options	COMPAT_HPUX		# HP-UX binary compatibility
 
 # Debugging options
 options		DDB		# Kernel Dynamic Debugger

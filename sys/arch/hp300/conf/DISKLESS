@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.4 1995/11/28 08:47:39 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.5 1995/12/29 17:12:50 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -55,7 +55,7 @@ options		USELEDS		# make the lights twinkle
 # HP-UX binary compatibility.
 # NOTE: THIS IS STILL VERY EXPERIMENTAL.  YOUR MILEAGE MAY VARY.
 #
-#options	COMPAT_HPUX	# HP-UX binary compatibility
+options	COMPAT_HPUX		# HP-UX binary compatibility
 
 # Debugging options
 options		DDB		# Kernel Dynamic Debugger
