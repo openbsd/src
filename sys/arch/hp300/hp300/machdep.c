@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2001/07/25 13:25:31 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2001/08/18 20:21:10 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufp,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufp + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
