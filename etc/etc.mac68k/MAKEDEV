@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.25 1998/09/25 12:28:04 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.26 1998/10/15 21:24:53 art Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -144,7 +144,7 @@ all)
 	sh $this lkm
 	sh $this random
 	sh $this uk0 uk1
-	sh $this ss0
+	sh $this ss0 xfs0
 	sh $this local
 	;;
 

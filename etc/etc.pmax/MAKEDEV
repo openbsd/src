@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.25 1998/09/25 11:28:22 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.26 1998/10/15 21:24:53 art Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -115,6 +115,7 @@ all)
 #	sh $this tun0 tun1 tun2 tun3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 #	sh $this lkm local
+	sh $this xfs0
 	sh $this fb0 fb1 fb2
        ;;
 

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.38 1998/09/25 11:11:58 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.39 1998/10/15 21:24:52 art Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -170,7 +170,7 @@ all)
 	sh $this view00 view01 view02 view03 view04 view05 pty0 pty1
 	sh $this lpa0 lpa1 lpt0 lpt1 lpt2 ipl
 	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 acd0 ch0 uk0 uk1
-	sh $this tun0 tun1 par0 lkm ss0 random audio0 local
+	sh $this tun0 tun1 par0 lkm ss0 random audio0 xfs0 local
 	;;
 
 floppy|ramdisk)

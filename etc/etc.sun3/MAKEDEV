@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.23 1998/09/27 21:59:51 kstailey Exp $
+#	$OpenBSD: MAKEDEV,v 1.24 1998/10/15 21:24:53 art Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -90,7 +90,7 @@ case $arg in
 all)
 	sh $this std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random ss0 uk0
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this ipl
+	sh $this ipl xfs0
 	;;
 
 std)
