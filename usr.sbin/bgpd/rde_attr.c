@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.24 2004/03/12 21:21:39 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.25 2004/03/12 21:53:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -303,7 +303,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 		}
 		TAILQ_FOREACH(a, &attr->others, attr_l)
 			if (type == a->type) {
-				*size = NULL;
+				*size = 0;
 				*suberr = ERR_UPD_ATTRLIST;
 				return (NULL);
 			}
