@@ -1,3 +1,4 @@
+.\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,7 +34,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.18 2000/01/19 05:36:38 pjanzen Exp $
+.\"	$OpenBSD: malloc.3,v 1.19 2000/04/20 02:14:26 aaron Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -72,7 +73,8 @@ space from the appropriate list.
 .Pp
 The allocated space is
 suitably aligned (after possible pointer
-coercion) for storage of any type of object. If the space is of
+coercion) for storage of any type of object.
+If the space is of
 .Em pagesize
 or larger, the memory returned will be page-aligned.
 .Pp
@@ -166,43 +168,54 @@ and finally for the global variable
 and scan them for flags in that order.
 Flags are single letters, uppercase means on, lowercase means off.
 .Bl -tag -width indent
-.It A
-``abort'' malloc will coredump the process, rather than tolerate failure.
+.It Cm A
+.Dq Abort .
+.Fn malloc
+will coredump the process, rather than tolerate failure.
 This is a very handy debugging aid, since the core file will represent the
-time of failure,
-rather than when the null pointer was accessed.
+time of failure, rather than when the null pointer was accessed.
 .Pp
-.It D
-``dump'' malloc will dump statistics in a file called ``malloc.out'' at exit.
+.It Cm D
+.Dq Dump .
+.Fn malloc
+will dump statistics in a file called
+.Pa malloc.out
+at exit.
 This option requires the library to have been compiled with -DMALLOC_STATS in
 order to have any effect.
 .Pp
-.It J
-``junk'' fill some junk into the area allocated.
-Currently junk is bytes of 0xd0, this is pronounced ``Duh'' :-)
+.It Cm J
+.Dq Junk .
+Fill some junk into the area allocated.
+Currently junk is bytes of 0xd0; this is pronounced
+.Dq Duh .
+\&:-)
 .Pp
-.It H
-``hint'' pass a hint to the kernel about pages we don't use.  If the
-machine is paging a lot this may help a bit.
+.It Cm H
+.Dq Hint .
+Pass a hint to the kernel about pages we don't use.
+If the machine is paging a lot this may help a bit.
 .Pp
-.It N
+.It Cm N
 Do not output warning messages when encountering possible corruption
 or bad pointers.
 .Pp
-.It R
-``realloc'' always reallocate when
+.It Cm R
+.Dq realloc .
+Always reallocate when
 .Fn realloc
 is called, even if the initial allocation was big enough.
 This can substantially aid in compacting memory.
 .Pp
-.It U
-``utrace'' generate entries for
+.It Cm U
+.Dq utrace .
+Generate entries for
 .Xr ktrace 1
 for all operations.
 Consult the source for this one.
 .Pp
-.It X
-``xmalloc''
+.It Cm X
+.Dq xmalloc .
 rather than return failure,
 .Xr abort 3
 the program with a diagnostic message on stderr.
@@ -213,23 +226,31 @@ extern char *malloc_options;
 malloc_options = "X";
 .Ed
 .Pp
-.It Z
-``zero'' fill some junk into the area allocated (see ``J''),
+.It Cm Z
+.Dq Zero .
+Fill some junk into the area allocated (see
+.Cm J ) ,
 except for the exact length the user asked for, which is zeroed.
 .Pp
-.It <
-``Half the cache size'' Reduce the size of the cache by a factor of two.
+.It Cm <
+.Dq Half the cache size .
+Reduce the size of the cache by a factor of two.
 .Pp
-.It >
-``Double the cache size'' Double the size of the cache by a factor of two.
+.It Cm >
+.Dq Double the cache size .
+Double the size of the cache by a factor of two.
 .El
 .Pp
 So to set a systemwide reduction of cache size and coredumps on problems
 one would:
 .Li ln -s 'A<' /etc/malloc.conf
 .Pp
-The ``J'' and ``Z'' is mostly for testing and debugging,
-if a program changes behavior if either of these options are used,
+The
+.Cm J
+and
+.Cm Z
+is mostly for testing and debugging.
+If a program changes behavior if either of these options are used,
 it is buggy.
 .Pp
 The default cache size is 16 pages.
@@ -240,8 +261,7 @@ The
 .Fn malloc
 and
 .Fn calloc
-functions return
-a pointer to the allocated space if successful; otherwise,
+functions return a pointer to the allocated space if successful; otherwise,
 a null pointer is returned and
 .Va errno
 is set to
@@ -260,11 +280,11 @@ if successful; otherwise, a null pointer is returned and
 .Va errno
 is set to
 .Er ENOMEM .
-.Sh MESSAGES
+.Sh DIAGNOSTICS
 If
 .Fn malloc ,
 .Fn calloc ,
-.Fn realloc
+.Fn realloc ,
 or
 .Fn free
 detect an error or warning condition,
@@ -272,77 +292,84 @@ a message will be printed to file descriptor
 2 (not using stdio).
 Errors will always result in the process being
 .Xr abort 3 'ed.
-If the ``A'' option has been specified, warnings will also
+If the
+.Cm A
+option has been specified, warnings will also
 .Xr abort 3
 the process.
 .Pp
 Here is a brief description of the error messages and what they mean:
-.Pp
-``(ES): mumble mumble mumble'':
-malloc have been compiled with -DEXTRA_SANITY and something looks
-fishy in there.  Consult sources and or wizards.
-.Pp
-``allocation failed''
-if the ``A'' option is specified it is an error for
+.Bl -tag -width Fl
+.It Dq (ES): mumble mumble mumble
+.Fn malloc
+has been compiled with
+.Dv \&-DEXTRA_SANITY
+and something looks fishy in there.
+Consult sources and/or wizards.
+.It Dq allocation failed
+If the
+.Cm A
+option is specified it is an error for
 .Fn malloc ,
-.Fn calloc
+.Fn calloc ,
 or
 .Fn realloc
 to return
 .Dv NULL .
-.Pp
-``mmap(2) failed, check limits.''
-This is a rather weird condition that is most likely to mean that
-the system is seriously overloaded or that your ulimits are sick.
-.Pp
-``freelist is destroyed.''
-mallocs internal freelist has been stomped on.
+.It Dq mmap(2) failed, check limits.
+This is a rather weird condition that is most likely to indicate a
+seriously overloaded system or a
+.Xr ulimit 1
+restriction.
+.It Dq freelist is destroyed.
+.Fn malloc Ns 's
+internal freelist has been stomped on.
+.El
 .Pp
 Here is a brief description of the warning messages and what they mean:
-.Pp
-``chunk/page is already free.''
+.Bl -tag -width Fl
+.It Dq chunk/page is already free.
 A pointer to a free chunk is attempted freed again.
-.Pp
-``junk pointer, too high to make sense.''
-The pointer doesn't make sense.  It's above the area of memory that
+.It Dq junk pointer, too high to make sense.
+The pointer doesn't make sense.
+It's above the area of memory that
 .Fn malloc
 knows something about.
 This could be a pointer from some
 .Xr mmap 2 'ed
 memory.
-.Pp
-``junk pointer, too low to make sense.''
-The pointer doesn't make sense.  It's below the area of memory that
+.It Dq junk pointer, too low to make sense.
+The pointer doesn't make sense.
+It's below the area of memory that
 .Fn malloc
 knows something about.
 This pointer probably came from your data or bss segments.
-.Pp
-``malloc() has never been called.''
+.It Dq malloc() has never been called.
 Nothing has ever been allocated, yet something is being freed or
 realloc'ed.
-.Pp
-``modified (chunk-/page-) pointer.''
+.It Dq modified (chunk-/page-) pointer.
 The pointer passed to free or realloc has been modified.
-.Pp
-``pointer to wrong page.''
+.It Dq pointer to wrong page.
 The pointer that
 .Fn malloc
 is trying to free is not pointing to
 a sensible page.
-.Pp
-``recursive call.''
-You have tried to call recursively into these functions.
-I can only imagine this as happening if you call one of these
-functions from a signal handler, which happens to be called
-while you're already in here.
-Well, sorry to say: that's not supported.
-If this is a problem for you I'd like to hear about it.  It
-would be possible to add a sigblock() around this package,
-but it would have a performance penalty that is not acceptable
-as the default.
-.Pp
-``unknown char in MALLOC_OPTIONS''
-we found something we didn't understand.
+.It Dq recursive call.
+An attempt was made to call recursively into these functions, i.e., from a
+signal handler.
+This behavior is not supported.
+In particular, signal handlers should
+.Em not
+use any of the
+.Fn malloc
+functions nor utilize any other functions which may call
+.Fn malloc
+(e.g.,
+.Xr stdio 3
+routines).
+.It Dq unknown char in MALLOC_OPTIONS
+We found something we didn't understand.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/malloc.conf"
 .It Pa /etc/malloc.conf
