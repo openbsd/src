@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.27 1998/11/09 05:39:59 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 1998/11/09 05:56:50 millert Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -123,6 +123,7 @@ raminst)
 	sh $this std
 	sh $this rz0 rz1 rz2 rz3 rz4 tz0 tz1 rd0 pty0
 	sh $this fb0 fb1 fb2
+	;;
 
 std)
 	mknod console		c 0 0
