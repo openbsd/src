@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.22 2000/03/19 19:25:35 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.23 2000/03/24 01:28:07 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -67,6 +67,7 @@ package,
 addressed page layout leaving the
 manipulation of fonts and other
 typesetting details to the individual author.
+.Pp
 In
 .Nm \-mdoc ,
 page layout macros
@@ -78,6 +79,7 @@ Essentially items which affect the physical position
 of text on a formatted page.
 In addition to the page structure domain, there are two more domains,
 the manual domain and the general text domain.
+.Pp
 The general text domain is defined as macros which
 perform tasks such as quoting or emphasizing pieces of text.
 The manual domain is defined as macros that are a subset of the
@@ -160,6 +162,8 @@ outlined as follows:
 .It "AT&T Macro" .
 .It "BSD Macro" .
 .It "OpenBSD Macro" .
+.It "FreeBSD Macro" .
+.It "NetBSD Macro" .
 .It "UNIX Macro" .
 .It "Emphasis Macro" .
 .It "Enclosure/Quoting Macros"
@@ -379,7 +383,7 @@ Title of article in a book or journal.
 .Pp
 One way of passing a string
 containing blank spaces is to use the hard or unpaddable space character
-.Ql \e\  ,
+.Ql \e\ ,
 that is, a blank space preceded by the escape character
 .Ql \e .
 This method may be used with any macro but has the side effect
@@ -436,7 +440,7 @@ are handled by replacing the
 .Ql \e
 with
 .Ql \ee
-(e.g.
+(e.g.,
 .Ql \een )
 to preserve
 the backslash.
@@ -535,10 +539,11 @@ A volume title may be arbitrary or one of the following:
 .\" PS1	UNIX Programmer's Supplementary Documents
 .Pp
 .Bl -column SMM -offset indent -compact
-.It Li AMD	UNIX Ancestral Manual Documents
-.It Li SMM	UNIX System Manager's Manual
-.It Li URM	UNIX Reference Manual
-.It Li PRM	UNIX Programmer's Manual
+.It Li AMD	OpenBSD Ancestral Manual Documents
+.It Li SMM	OpenBSD System Manager's Manual
+.It Li URM	OpenBSD Reference Manual
+.It Li PRM	OpenBSD Programmer's Manual
+.It Li KM	OpenBSD Kernel Manual
 .El
 .Pp
 The default volume labeling is
@@ -547,7 +552,9 @@ for sections 1, 6, and 7;
 .Li SMM
 for section 8;
 .Li PRM
-for sections 2, 3, 4, and 5.
+for sections 2, 3, 4, and 5;
+.Li KM
+for section 9.
 .\" .Cl
 .\" MMI	UNIX Manual Master Index
 .\" .Cl
@@ -556,17 +563,17 @@ for sections 2, 3, 4, and 5.
 .\" LOC	UNIX Local Manual
 .It Li \&.Os operating_system release#
 The name of the operating system
-should be the common acronym, e.g.
+should be the common acronym, e.g.,
 .Tn OpenBSD
 or
 .Tn ATT .
 The release should be the standard release
-nomenclature for the system specified, e.g. 4.3, 4.3+Tahoe, V.3,
+nomenclature for the system specified, e.g., 4.3, 4.3+Tahoe, V.3,
 V.4.
 Unrecognized arguments are displayed as given in the page footer.
 For instance, a typical footer might be:
 .Pp
-.Dl \&.Os OpenBSD 2.3
+.Dl \&.Os OpenBSD 2.7
 .Pp
 or for a locally produced set
 .Pp
@@ -575,7 +582,7 @@ or for a locally produced set
 The OpenBSD default,
 .Ql \&.Os
 without an argument, has been defined as
-.Tn OpenBSD
+.Ox 2.7
 in the site specific file
 .Pa /usr/share/tmac/mdoc/doc-common .
 It really should default to
@@ -609,7 +616,9 @@ that is, discussion of a command in the text of a man page.
 In the first case,
 .Xr troff 1
 macros are themselves a type of command;
-the general syntax for a troff command is:
+the general syntax for a
+.Xr troff
+command is:
 .Bd -filled -offset indent
 \&.Va argument1 argument2 ... argument9
 .Ed
@@ -760,7 +769,7 @@ The result is:
 .Pp
 The punctuation is not recognized and all is output in the
 literal font.
-If the punctuation is separated by a leading whitespace:
+If the punctuation is separated by a leading white space:
 .Pp
 .Dl \&.Li "sptr , ptr ) ,"
 .Pp
@@ -786,8 +795,8 @@ quotation set:
 The problem is that
 .Xr troff
 may assume it is supposed to actually perform the operation
-or evaluation suggested by the characters.  To prevent
-the accidental evaluation of these characters,
+or evaluation suggested by the characters.
+To prevent the accidental evaluation of these characters,
 escape them with
 .Ql \e& .
 Typical syntax is shown in the first content macro displayed
@@ -928,7 +937,7 @@ macro specifies an environment variable.
 .Dl Usage: .Ev argument ... \*(Pu
 .Bl -tag -width ".Ev PRINTER ) ) ," -compact -offset 14n
 .It Li \&.Ev DISPLAY
-.Ev  DISPLAY
+.Ev DISPLAY
 .It Li \&.Ev PATH\ .
 .Ev PATH .
 .It Li \&.Ev PRINTER\ )\ )\ ,
@@ -1123,8 +1132,9 @@ between the current function name and the one prior.
 At the moment,
 .Ql \&.Fn
 does not check its word boundaries
-against troff line lengths and may split across a newline
-ungracefully.
+against
+.Xr troff
+line lengths and may split across a newline ungracefully.
 This will be fixed in the near future.
 .Ss Function Type
 This macro is intended for the
@@ -1152,7 +1162,7 @@ The
 .Ql \&.Ic
 macro designates an interactive or internal command.
 .Pp
-.Dl Usage: .Ic argument ... \*(Pu
+.Dl Usage: .Ic command ... \*(Pu
 .Bl -tag -width ".Ic setenv , unsetenvxx" -compact -offset 14n
 .It Li \&.Ic :wq
 .Ic :wq
@@ -1176,7 +1186,7 @@ variable constants, anything which should be displayed as it
 would be typed.
 .Pp
 .Dl Usage: .Li argument ... \*(Pu
-.Bl -tag -width ".Li cntrl-D ) ,"  -compact -offset 14n
+.Bl -tag -width ".Li cntrl-D ) ," -compact -offset 14n
 .It Li \&.Li \een
 .Li \en
 .It Li \&.Li M1 M2 M3\ ;
@@ -1197,11 +1207,19 @@ macro is used for the document title or subject name.
 It has the peculiarity of remembering the first
 argument it was called with, which should
 always be the subject name of the page.
-When called without
-arguments,
+When called without arguments,
 .Ql \&.Nm
 regurgitates this initial name for the sole purpose
 of making less work for the author.
+There are two situations, however, where
+.Ql \&.Nm
+should
+.Em always
+be given an argument:
+(1) when used in the
+.Sx SYNOPSIS
+section and (2) when trailing punctuation is required.
+.Pp
 Note:
 a section two
 or three document function name is addressed with the
@@ -1228,15 +1246,17 @@ to
 it can not recall the first argument it was invoked with.
 .Pp
 .Dl Usage: .Nm argument ... \*(Pu
-.Bl -tag -width ".Nm mdoc.samples" -compact -offset 14n
+.Bl -tag -width ".Nm mdoc.samples ." -compact -offset 14n
 .It Li \&.Nm mdoc.samples
-.Nm  mdoc.samples
-.It Li \&.Nm \e-mdoc
-.Nm \-mdoc .
-.It Li \&.Nm foo\ )\ )\ ,
-.Nm foo ) ) ,
+.Nm mdoc.samples
 .It Li \&.Nm
 .Nm
+.It Li \&.Nm mdoc.samples \&.
+.Nm mdoc.samples .
+.It Li \&.Nm \e-mdoc
+.Nm \-mdoc
+.It Li \&.Nm foo\ )\ )\ ,
+.Nm foo ) ) ,
 .El
 .Pp
 The
@@ -1399,16 +1419,40 @@ The
 .Ql \&.Bx
 macro is parsed and is callable.
 .Ss OpenBSD Macro
-.Dl Usage: .Ox [Version] ... \*(Pu
-.Bl -tag -width ".Ox 2.3 ) ," -compact -offset 14n
+.Dl Usage: .Ox [Version/release] ... \*(Pu
+.Bl -tag -width ".Ox 2.7 ) ," -compact -offset 14n
 .It Li ".Ox"
 .Ox
-.It Li ".Ox 2.3 ."
-.Ox 2.3 .
+.It Li ".Ox 2.7 ."
+.Ox 2.7 .
 .El
 .Pp
 The
 .Ql \&.Ox
+macro is parsed and is callable.
+.Ss FreeBSD Macro
+.Dl Usage: .Fx [Version/release] ... \*(Pu
+.Bl -tag -width ".Fx 4.0 ) ," -compact -offset 14n
+.It Li ".Fx"
+.Fx
+.It Li ".Fx 4.0 ."
+.Fx 4.0 .
+.El
+.Pp
+The
+.Ql \&.Fx
+macro is parsed and is callable.
+.Ss NetBSD Macro
+.Dl Usage: .Nx [Version/release] ... \*(Pu
+.Bl -tag -width ".Nx 1.5 ) ," -compact -offset 14n
+.It Li ".Nx"
+.Nx
+.It Li ".Nx 1.5 ."
+.Nx 1.5 .
+.El
+.Pp
+The
+.Ql \&.Nx
 macro is parsed and is callable.
 .Ss UNIX Macro
 .Dl Usage: .Ux ... \*(Pu
@@ -1516,21 +1560,25 @@ than
 If formatted with
 .Xr nroff ,
 a quoted literal is always quoted.
-If formatted with troff, an item is only quoted if the width
+If formatted with
+.Xr troff ,
+an item is only quoted if the width
 of the item is less than three constant width characters.
 This is to make short strings more visible where the font change
 to literal (constant width) is less noticeable.
 .It Li \&.Pf
 The prefix macro is not callable, but it is parsed:
-.Bl -tag -width ".Pf ( Fa name2" -offset indent
+.Bl -tag -width "(namexx" -offset indent
 .It Li ".Pf ( Fa name2"
 becomes
 .Pf ( Fa name2 .
 .El
-.Pp
+.It Li \&.Ns
 The
 .Ql \&.Ns
-(no space) macro performs the analogous suffix function.
+(no space) macro, which
+.Em is
+callable, performs the analogous suffix function.
 .El
 .Pp
 .ne 4
@@ -1854,27 +1902,25 @@ The
 section describes the typical usage of the
 subject of a man page.
 The macros required are either
-.Ql ".Nm" ,
-.Ql ".Cd" ,
-.Ql ".Fn" ,
+.Ql \&.Nm ,
+.Ql \&.Cd ,
+.Ql \&.Fn ,
 (and possibly
-.Ql ".Fo" ,
-.Ql ".Fc" ,
-.Ql ".Fd" ,
-.Ql ".Ft"
+.Ql \&.Fo ,
+.Ql \&.Fc ,
+.Ql \&.Fd ,
+.Ql \&.Ft
 macros).
-The function name
-macro
-.Ql ".Fn"
-is required
-for manual page sections 2 and 3, the command and general
+The fuction name macro
+.Ql \&.Fn
+is required for manual page sections 2 and 3, the command and general
 name macro
 .Ql \&.Nm
 is required for sections 1, 5, 6, 7, 8.
 Section 4 manuals require a
-.Ql ".Nm" , ".Fd"
+.Ql \&.Nm , \&.Fd
 or a
-.Ql ".Cd"
+.Ql \&.Cd
 configuration device usage macro.
 Several other macros may be necessary to produce
 the synopsis line as shown below:
@@ -2022,8 +2068,9 @@ for example, this section was set with:
 .Ss Paragraphs and Line Spacing.
 .Bl -tag -width 6n
 .It \&.Pp
-The \&.Pp paragraph command may
-be used to specify a line space where necessary.
+The
+.Ql \&.Pp
+paragraph command may be used to specify a line space where necessary.
 The macro is not necessary before or after
 .Ql \&.Sh
 macros,
@@ -2035,7 +2082,9 @@ a
 macro.
 (The
 .Ql \&.Bl
-macro asserts a vertical distance unless the -compact flag is given).
+macro asserts a vertical distance unless the
+.Fl compact
+flag is given).
 .El
 .\" This worked with version one, need to redo for version three
 .\" .Pp
@@ -2164,7 +2213,7 @@ and
 .Ql \&.Ek
 (end-keep).
 The only option that
-.Ql \&.Bl
+.Ql \&.Bk
 accepts is
 .Fl words
 and is useful for preventing line breaks in the middle of options.
@@ -2172,9 +2221,7 @@ In the example for the make command line arguments (see
 .Sx What's in a name ) ,
 the keep prevented
 .Xr nroff
-from placing up the
-flag and the argument
-on separate lines.
+from placing the flag and the argument on separate lines.
 (Actually, the option macro used to prevent this from occurring,
 but was dropped when the decision (religious) was made to force
 right justified margins in
@@ -2185,12 +2232,12 @@ More work needs to be done with the keep macros, a
 .Fl line
 option needs to be added.)
 .Ss Examples and Displays
-There are five types of displays, a quickie one line indented display
-.Ql \&.D1 ,
-a quickie one line literal display
-.Ql \&.Dl ,
-and a block literal, block filled and block ragged which use
-the
+There are six types of displays: a quickie, one-line indented display
+.Ql \&.D1 ;
+a quickie one-line literal display
+.Ql \&.Dl ;
+and a block-ragged, block-unfilled, block-filled, and block-literal
+which use the
 .Ql \&.Bd
 begin-display
 and
@@ -2233,8 +2280,13 @@ The
 display must be ended with the
 .Ql \&.Ed
 macro.
-Displays may be nested within displays and
-lists.
+Displays may be nested within displays and lists, but may
+.Em not
+contain other displays; this also prohibits nesting of
+.Ql \&.D1
+and
+.Ql \&.Dl
+one-line displays.
 .Ql \&.Bd
 has the following syntax:
 .Pp
@@ -2242,15 +2294,16 @@ has the following syntax:
 .Pp
 The display-type must be one of the following four types and
 may have an offset specifier for indentation:
-.Ql \&.Bd .
 .Pp
 .Bl -tag -width "file file_name  " -compact
 .It Fl ragged
-Display a block of text as typed,
-right (and left) margin edges are left ragged.
+Fill, but do not adjust the right margin.
+.It Fl unfilled
+Do not fill. Display a block of text as typed. The right (and left) margin
+edges are left ragged.
 .It Fl filled
 Display a filled (formatted) block.
-The block of text is formatted (the edges are filled \-
+The block of text is formatted (the edges are filled,
 not left unjustified).
 .It Fl literal
 Display a literal block, useful for source code or
@@ -2307,18 +2360,19 @@ End-display.
 .El
 .Ss Tagged Lists and Columns
 There are several types of lists which may be initiated with the
-.Ql ".Bl"
+.Ql \&.Bl
 begin-list macro.
 Items within the list
 are specified with the
-.Ql ".It"
+.Ql \&.It
 item macro and
 each list must end with the
-.Ql ".El"
+.Ql \&.El
 macro.
-Lists may be nested within themselves and within displays.
-Columns may be used inside of lists, but lists are unproven
-inside of columns.
+Lists other than
+.Fl enum
+may be nested within themselves and within displays.
+The use of columns inside of lists or lists inside of columns is unproven.
 .Pp
 In addition, several list attributes may be specified such as
 the width of a tag, the list offset, and compactness
@@ -2333,18 +2387,18 @@ This type of list is quite popular with
 users, but might look a bit funny after having read many pages of
 tagged lists.
 The following list types are accepted by
-.Ql ".Bl" :
+.Ql \&.Bl :
 .Pp
 .Bl -ohang -compact
-.It Fl bullet
-.It Fl item
-.It Fl enum
-These three are the simplest types of lists.
+.It Xo Fl bullet , Fl dash ,
+.Fl enum , Fl hyphen , Fl item
+.Xc
+These five are the simplest types of lists.
 Once the
-.Ql ".Bl"
+.Ql \&.Bl
 macro has been given, items in the list are merely
 indicated by a line consisting solely of the
-.Ql ".It"
+.Ql \&.It
 macro.
 For example, the source text for a simple enumerated list
 would look like:
@@ -2388,12 +2442,10 @@ Bullet one goes here.
 Bullet two here.
 .El
 .Pp
-.It Fl tag
-.It Fl diag
-.It Fl hang
-.It Fl ohang
-.It Fl inset
-These list-types collect arguments specified with the
+.It Xo Fl tag , Fl diag ,
+.Fl hang , Fl ohang , Fl inset
+.Xc
+These list types collect arguments specified with the
 .Ql \&.It
 macro and create a label which may be
 .Em inset
@@ -2416,6 +2468,9 @@ Here is an example of inset labels:
 .It Em Tag
 The tagged list (also called a tagged paragraph) is the
 most common type of list used in the Berkeley manuals.
+Use a
+.Fl width
+attribute as described below.
 .It Em Diag
 Diag lists create section four diagnostic lists
 and are similar to inset lists except callable
@@ -2453,7 +2508,7 @@ Here is the source text which produced the above example:
 \&.El
 .Ed
 .Pp
-Here is a hanged list with just one item:
+Here is a hanged list with just two items:
 .Bl -hang -offset indent
 .It Em Hanged
 labels appear similar to tagged lists when the
@@ -2475,7 +2530,7 @@ And the unformatted text which created it:
 \&.El
 .Ed
 .Pp
-The tagged list which follows uses an optional width specifier to control
+The tagged list which follows uses a width specifier to control
 the width of the tag.
 .Pp
 .Bl -tag -width "PAGEIN" -compact -offset indent
@@ -2487,7 +2542,7 @@ number of disk
 resulting from references
 by the process to pages not loaded in core.
 .It UID
-numerical user-id of process owner
+numerical user ID of process owner
 .It PPID
 numerical ID of parent of process process priority
 (non-positive when in non-interruptible wait)
@@ -2504,7 +2559,7 @@ The raw text:
 \&resulting from references
 \&by the process to pages not loaded in core.
 \&.It UID
-\&numerical user-id of process owner
+\&numerical user ID of process owner
 \&.It PPID
 \&numerical ID of parent of process process priority
 \&(non-positive when in non-interruptible wait)
@@ -2531,7 +2586,7 @@ is absolutely necessary for the scaling to work correctly.
 .It Fl width Ar "ENAMETOOLONG"
 sets width to the constant width length of the
 string given.
-.It Fl width  Ar "\\*qint mkfifo\\*q"
+.It Fl width Ar "\\*qint mkfifo\\*q"
 again, the width is set to the constant width of the string
 given.
 .El
@@ -2542,15 +2597,50 @@ time
 is invoked, an attempt is made to determine an appropriate
 width.
 If the first argument to
-.Ql ".It"
+.Ql \&.It
 is a callable macro, the default width for that macro will be used
 as if the macro name had been supplied as the width.
 However,
 if another item in the list is given with a different callable
 macro name, a new and nested list is assumed.
+This effectively means that
+.Fl width
+is required for the tag list type.
+.Pp
+.It Fl column
+This list type generates multiple columns.
+The number of columns and the width of each column is determined by
+the arguments to the
+.Fl column
+list.
+Each
+.Ql \&.It
+argument is parsed to make a row and each column within the row
+is a separate argument separated by a tab or the
+.Ql \&.Ta
+macro.
+.El
+.Pp
+The table:
+.Bl -column "String" "Nroff" "Troff" -offset indent
+.It Sy "String" Ta Sy "Nroff" Ta Sy "Troff"
+.It Li "<=" Ta \&<\&= Ta \*(<=
+.It Li ">=" Ta \&>\&= Ta \*(>=
+.El
+.Pp
+was produced by:
+.Bd -literal -offset indent
+\&.Bl -column "String" "Nroff" "Troff" -offset indent
+\&.It Sy "String" Ta Sy "Nroff" Ta Sy "Troff"
+\&.It Li "<=" Ta \\&<\\&= Ta \\*(<=
+\&.It Li ">=" Ta \\&>\\&= Ta \\*(>=
+\&.El
+.Ed
 .Sh PREDEFINED STRINGS
 The following strings are predefined and may be used by
-preceding with the troff string interpreting sequence
+preceding with the
+.Xr troff
+string interpreting sequence
 .Ql \&\e*(xx
 where
 .Em xx
@@ -2782,6 +2872,8 @@ template for writing a man page
 .El
 .Sh SEE ALSO
 .Xr man 1 ,
+.Xr groff 1 ,
+.Xr nroff 1 ,
 .Xr troff 1 ,
 .Xr mdoc 7
 .Sh BUGS
@@ -2810,8 +2902,18 @@ looks ridiculous if a line is in fill mode.
 .Pp
 The method used to prevent header and footer page
 breaks (other than the initial header and footer) when using
-nroff occasionally places an unsightly partially filled line (blank)
+.Xr nroff
+occasionally places an unsightly partially filled line (blank)
 at the would be bottom of the page.
+.Pp
+If the outer-most list definition does not have a
+.Fl width
+argument, the
+.Ql \&.It
+elements of inner lists may not work (producing a list where
+each successive element
+.Dq walks
+to the right).
 .Pp
 The list and display macros do not do any keeps
 and certainly should be able to.
