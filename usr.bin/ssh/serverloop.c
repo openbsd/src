@@ -1,17 +1,10 @@
 /*
-
-serverloop.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Sun Sep 10 00:30:37 1995 ylo
-
-Server main loop for handling the interactive session.
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Sun Sep 10 00:30:37 1995 ylo
+ * Server main loop for handling the interactive session.
+ */
 
 #include "includes.h"
 #include "xmalloc.h"
@@ -66,8 +59,9 @@ sigchld_handler(int sig)
 	errno = save_errno;
 }
 
-/* Process any buffered packets that have been received from the client. */
-
+/*
+ * Process any buffered packets that have been received from the client.
+ */
 void 
 process_buffered_input_packets()
 {
@@ -159,9 +153,10 @@ process_buffered_input_packets()
 	}
 }
 
-/* Make packets from buffered stderr data, and buffer it for sending
-   to the client. */
-
+/*
+ * Make packets from buffered stderr data, and buffer it for sending
+ * to the client.
+ */
 void 
 make_packets_from_stderr_data()
 {
@@ -187,9 +182,10 @@ make_packets_from_stderr_data()
 	}
 }
 
-/* Make packets from buffered stdout data, and buffer it for sending to the
-   client. */
-
+/*
+ * Make packets from buffered stdout data, and buffer it for sending to the
+ * client.
+ */
 void 
 make_packets_from_stdout_data()
 {
@@ -215,11 +211,12 @@ make_packets_from_stdout_data()
 	}
 }
 
-/* Sleep in select() until we can do something.  This will initialize the
-   select masks.  Upon return, the masks will indicate which descriptors
-   have data or can accept data.  Optionally, a maximum time can be specified
-   for the duration of the wait (0 = infinite). */
-
+/*
+ * Sleep in select() until we can do something.  This will initialize the
+ * select masks.  Upon return, the masks will indicate which descriptors
+ * have data or can accept data.  Optionally, a maximum time can be specified
+ * for the duration of the wait (0 = infinite).
+ */
 void 
 wait_until_can_do_something(fd_set * readset, fd_set * writeset,
 			    unsigned int max_time_milliseconds)
@@ -291,9 +288,10 @@ retry_select:
 	}
 }
 
-/* Processes input from the client and the program.  Input data is stored
-   in buffers and processed later. */
-
+/*
+ * Processes input from the client and the program.  Input data is stored
+ * in buffers and processed later.
+ */
 void 
 process_input(fd_set * readset)
 {
@@ -340,8 +338,9 @@ process_input(fd_set * readset)
 	}
 }
 
-/* Sends data from internal buffers to client program stdin. */
-
+/*
+ * Sends data from internal buffers to client program stdin.
+ */
 void 
 process_output(fd_set * writeset)
 {
@@ -373,9 +372,10 @@ process_output(fd_set * writeset)
 		packet_write_poll();
 }
 
-/* Wait until all buffered output has been sent to the client.
-   This is used when the program terminates. */
-
+/*
+ * Wait until all buffered output has been sent to the client.
+ * This is used when the program terminates.
+ */
 void 
 drain_output()
 {
@@ -401,12 +401,13 @@ drain_output()
 	packet_write_wait();
 }
 
-/* Performs the interactive session.  This handles data transmission between
-   the client and the program.  Note that the notion of stdin, stdout, and
-   stderr in this function is sort of reversed: this function writes to
-   stdin (of the child program), and reads from stdout and stderr (of the
-   child program). */
-
+/*
+ * Performs the interactive session.  This handles data transmission between
+ * the client and the program.  Note that the notion of stdin, stdout, and
+ * stderr in this function is sort of reversed: this function writes to
+ * stdin (of the child program), and reads from stdout and stderr (of the
+ * child program).
+ */
 void 
 server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 {
@@ -575,9 +576,11 @@ quit:
 	/* Wait for the child to exit.  Get its exit status. */
 	wait_pid = wait(&wait_status);
 	if (wait_pid < 0) {
-		/* It is possible that the wait was handled by SIGCHLD
-		   handler.  This may result in either: this call
-		   returning with EINTR, or: this call returning ECHILD. */
+		/*
+		 * It is possible that the wait was handled by SIGCHLD
+		 * handler.  This may result in either: this call
+		 * returning with EINTR, or: this call returning ECHILD.
+		 */
 		if (child_terminated)
 			wait_status = child_wait_status;
 		else
@@ -585,7 +588,8 @@ quit:
 	} else {
 		/* Check if it matches the process we forked. */
 		if (wait_pid != pid)
-			error("Strange, wait returned pid %d, expected %d", wait_pid, pid);
+			error("Strange, wait returned pid %d, expected %d",
+			    wait_pid, pid);
 	}
 
 	/* We no longer want our SIGCHLD handler to be called. */

@@ -1,32 +1,25 @@
 /*
-
-uidswap.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Sat Sep  9 01:56:14 1995 ylo
-
-Code for uid-swapping.
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Sat Sep  9 01:56:14 1995 ylo
+ * Code for uid-swapping.
+ */
 
 #include "includes.h"
-RCSID("$Id: uidswap.c,v 1.3 1999/11/23 22:25:56 markus Exp $");
+RCSID("$Id: uidswap.c,v 1.4 1999/11/24 00:26:04 deraadt Exp $");
 
 #include "ssh.h"
 #include "uidswap.h"
 
-/* Note: all these functions must work in all of the following cases:
-
-   1. euid=0, ruid=0
-   2. euid=0, ruid!=0
-   3. euid!=0, ruid!=0
-
-   Additionally, they must work regardless of whether the system has
-   POSIX saved uids or not. */
+/*
+ * Note: all these functions must work in all of the following cases:
+ *    1. euid=0, ruid=0
+ *    2. euid=0, ruid!=0
+ *    3. euid!=0, ruid!=0
+ * Additionally, they must work regardless of whether the system has
+ * POSIX saved uids or not.
+ */
 
 #ifdef _POSIX_SAVED_IDS
 /* Lets assume that posix saved ids also work with seteuid, even though that
@@ -37,9 +30,10 @@ RCSID("$Id: uidswap.c,v 1.3 1999/11/23 22:25:56 markus Exp $");
 /* Saved effective uid. */
 static uid_t saved_euid = 0;
 
-/* Temporarily changes to the given uid.  If the effective user id is not
-   root, this does nothing.  This call cannot be nested. */
-
+/*
+ * Temporarily changes to the given uid.  If the effective user
+ * id is not root, this does nothing.  This call cannot be nested.
+ */
 void 
 temporarily_use_uid(uid_t uid)
 {
@@ -61,8 +55,9 @@ temporarily_use_uid(uid_t uid)
 #endif /* SAVED_IDS_WORK_WITH_SETEUID */
 }
 
-/* Restores to the original uid. */
-
+/*
+ * Restores to the original uid.
+ */
 void 
 restore_uid()
 {
@@ -79,9 +74,10 @@ restore_uid()
 #endif /* SAVED_IDS_WORK_WITH_SETEUID */
 }
 
-/* Permanently sets all uids to the given uid.  This cannot be called while
-   temporarily_use_uid is effective. */
-
+/*
+ * Permanently sets all uids to the given uid.  This cannot be
+ * called while temporarily_use_uid is effective.
+ */
 void 
 permanently_set_uid(uid_t uid)
 {

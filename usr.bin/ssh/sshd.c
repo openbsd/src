@@ -1,24 +1,17 @@
 /*
-
-sshd.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Fri Mar 17 17:09:28 1995 ylo
-
-This program is the ssh daemon.  It listens for connections from clients, and
-performs authentication, executes use commands or shell, and forwards
-information to/from the application to the user client over an encrypted
-connection.  This can also handle forwarding of X11, TCP/IP, and authentication
-agent connections.
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Fri Mar 17 17:09:28 1995 ylo
+ * This program is the ssh daemon.  It listens for connections from clients, and
+ * performs authentication, executes use commands or shell, and forwards
+ * information to/from the application to the user client over an encrypted
+ * connection.  This can also handle forwarding of X11, TCP/IP, and authentication
+ * agent connections.
+ */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.64 1999/11/23 22:25:55 markus Exp $");
+RCSID("$Id: sshd.c,v 1.65 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -52,10 +45,12 @@ ServerOptions options;
 /* Name of the server configuration file. */
 char *config_file_name = SERVER_CONFIG_FILE;
 
-/* Debug mode flag.  This can be set on the command line.  If debug
-   mode is enabled, extra debugging output will be sent to the system
-   log, the daemon will not go to background, and will exit after processing
-   the first connection. */
+/*
+ * Debug mode flag.  This can be set on the command line.  If debug
+ * mode is enabled, extra debugging output will be sent to the system
+ * log, the daemon will not go to background, and will exit after processing
+ * the first connection.
+ */
 int debug_flag = 0;
 
 /* Flag indicating that the daemon is being started from inetd. */
@@ -132,10 +127,11 @@ void do_child(const char *command, struct passwd * pw, const char *term,
 	      const char *display, const char *auth_proto,
 	      const char *auth_data, const char *ttyname);
 
-/* Signal handler for SIGHUP.  Sshd execs itself when it receives SIGHUP;
-   the effect is to reread the configuration file (and to regenerate
-   the server key). */
-
+/*
+ * Signal handler for SIGHUP.  Sshd execs itself when it receives SIGHUP;
+ * the effect is to reread the configuration file (and to regenerate
+ * the server key).
+ */
 void 
 sighup_handler(int sig)
 {
@@ -143,8 +139,10 @@ sighup_handler(int sig)
 	signal(SIGHUP, sighup_handler);
 }
 
-/* Called from the main program after receiving SIGHUP.  Restarts the server. */
-
+/*
+ * Called from the main program after receiving SIGHUP.
+ * Restarts the server.
+ */
 void 
 sighup_restart()
 {
@@ -155,10 +153,11 @@ sighup_restart()
 	exit(1);
 }
 
-/* Generic signal handler for terminating signals in the master daemon.
-   These close the listen socket; not closing it seems to cause "Address
-   already in use" problems on some machines, which is inconvenient. */
-
+/*
+ * Generic signal handler for terminating signals in the master daemon.
+ * These close the listen socket; not closing it seems to cause "Address
+ * already in use" problems on some machines, which is inconvenient.
+ */
 void 
 sigterm_handler(int sig)
 {
@@ -167,9 +166,10 @@ sigterm_handler(int sig)
 	exit(255);
 }
 
-/* SIGCHLD handler.  This is called whenever a child dies.  This will then
-   reap any zombies left by exited c. */
-
+/*
+ * SIGCHLD handler.  This is called whenever a child dies.  This will then
+ * reap any zombies left by exited c.
+ */
 void 
 main_sigchld_handler(int sig)
 {
@@ -183,8 +183,9 @@ main_sigchld_handler(int sig)
 	errno = save_errno;
 }
 
-/* Signal handler for the alarm after the login grace period has expired. */
-
+/*
+ * Signal handler for the alarm after the login grace period has expired.
+ */
 void 
 grace_alarm_handler(int sig)
 {
@@ -195,7 +196,9 @@ grace_alarm_handler(int sig)
 	fatal("Timeout before authentication for %s.", get_remote_ipaddr());
 }
 
-/* convert ssh auth msg type into description */
+/*
+ * convert ssh auth msg type into description
+ */
 char *
 get_authname(int type)
 {
@@ -221,11 +224,13 @@ get_authname(int type)
 	return NULL;
 }
 
-/* Signal handler for the key regeneration alarm.  Note that this
-   alarm only occurs in the daemon waiting for connections, and it does not
-   do anything with the private key or random state before forking.  Thus there
-   should be no concurrency control/asynchronous execution problems. */
-
+/*
+ * Signal handler for the key regeneration alarm.  Note that this
+ * alarm only occurs in the daemon waiting for connections, and it does not
+ * do anything with the private key or random state before forking.
+ * Thus there should be no concurrency control/asynchronous execution
+ * problems.
+ */
 void 
 key_regeneration_alarm(int sig)
 {
@@ -256,8 +261,9 @@ key_regeneration_alarm(int sig)
 	errno = save_errno;
 }
 
-/* Main program for the daemon. */
-
+/*
+ * Main program for the daemon.
+ */
 int
 main(int ac, char **av)
 {
@@ -742,10 +748,11 @@ main(int ac, char **av)
 	exit(0);
 }
 
-/* Process an incoming connection.  Protocol version identifiers have already
-   been exchanged.  This sends server key and performs the key exchange.
-   Server and host keys will no longer be needed after this functions. */
-
+/*
+ * Process an incoming connection.  Protocol version identifiers have already
+ * been exchanged.  This sends server key and performs the key exchange.
+ * Server and host keys will no longer be needed after this functions.
+ */
 void
 do_connection()
 {
@@ -941,13 +948,14 @@ do_connection()
 	do_authentication(user);
 }
 
-/* Check if the user is allowed to log in via ssh. If user is listed in
-   DenyUsers or user's primary group is listed in DenyGroups, false will
-   be returned. If AllowUsers isn't empty and user isn't listed there, or
-   if AllowGroups isn't empty and user isn't listed there, false will be
-   returned. Otherwise true is returned.
-   XXX This function should also check if user has a valid shell */
-
+/*
+ * Check if the user is allowed to log in via ssh. If user is listed in
+ * DenyUsers or user's primary group is listed in DenyGroups, false will
+ * be returned. If AllowUsers isn't empty and user isn't listed there, or
+ * if AllowGroups isn't empty and user isn't listed there, false will be
+ * returned. Otherwise true is returned.
+ * XXX This function should also check if user has a valid shell
+ */
 static int
 allowed_user(struct passwd * pw)
 {
@@ -1012,10 +1020,11 @@ allowed_user(struct passwd * pw)
 	return 1;
 }
 
-/* Performs authentication of an incoming connection.  Session key has already
-   been exchanged and encryption is enabled.  User is the user name to log
-   in as (received from the client). */
-
+/*
+ * Performs authentication of an incoming connection.  Session key has already
+ * been exchanged and encryption is enabled.  User is the user name to log
+ * in as (received from the client).
+ */
 void
 do_authentication(char *user)
 {
@@ -1088,8 +1097,10 @@ do_authentication(char *user)
 #define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)
 #define AUTH_FAIL_MSG "Too many authentication failures for %.100s"
 
-/* read packets and try to authenticate local user *pw.
-   return if authentication is successfull */
+/*
+ * read packets and try to authenticate local user *pw.
+ * return if authentication is successfull
+ */
 void
 do_authloop(struct passwd * pw)
 {
@@ -1330,8 +1341,10 @@ do_authloop(struct passwd * pw)
 	}
 }
 
-/* The user does not exist or access is denied,
-   but fake indication that authentication is needed. */
+/*
+ * The user does not exist or access is denied,
+ * but fake indication that authentication is needed.
+ */
 void
 do_fake_authloop(char *user)
 {
@@ -1382,7 +1395,9 @@ do_fake_authloop(char *user)
 }
 
 
-/* Remove local Xauthority file. */
+/*
+ * Remove local Xauthority file.
+ */
 static void
 xauthfile_cleanup_proc(void *ignore)
 {
@@ -1395,11 +1410,12 @@ xauthfile_cleanup_proc(void *ignore)
 	}
 }
 
-/* Prepares for an interactive session.  This is called after the user has
-   been successfully authenticated.  During this message exchange, pseudo
-   terminals are allocated, X11, TCP/IP, and authentication agent forwardings
-   are requested, etc. */
-
+/*
+ * Prepares for an interactive session.  This is called after the user has
+ * been successfully authenticated.  During this message exchange, pseudo
+ * terminals are allocated, X11, TCP/IP, and authentication agent forwardings
+ * are requested, etc.
+ */
 void 
 do_authenticated(struct passwd * pw)
 {
@@ -1648,10 +1664,11 @@ do_forced_command:
 	}
 }
 
-/* This is called to fork and execute a command when we have no tty.  This
-   will call do_child from the child, and server_loop from the parent after
-   setting up file descriptors and such. */
-
+/*
+ * This is called to fork and execute a command when we have no tty.  This
+ * will call do_child from the child, and server_loop from the parent after
+ * setting up file descriptors and such.
+ */
 void 
 do_exec_no_pty(const char *command, struct passwd * pw,
 	       const char *display, const char *auth_proto,
@@ -1751,9 +1768,10 @@ struct pty_cleanup_context {
 	int pid;
 };
 
-/* Function to perform cleanup if we get aborted abnormally (e.g., due to a
-   dropped connection). */
-
+/*
+ * Function to perform cleanup if we get aborted abnormally (e.g., due to a
+ * dropped connection).
+ */
 void 
 pty_cleanup_proc(void *context)
 {
@@ -1768,11 +1786,12 @@ pty_cleanup_proc(void *context)
 	pty_release(cu->ttyname);
 }
 
-/* This is called to fork and execute a command when we have a tty.  This
-   will call do_child from the child, and server_loop from the parent after
-   setting up file descriptors, controlling tty, updating wtmp, utmp,
-   lastlog, and other such operations. */
-
+/*
+ * This is called to fork and execute a command when we have a tty.  This
+ * will call do_child from the child, and server_loop from the parent after
+ * setting up file descriptors, controlling tty, updating wtmp, utmp,
+ * lastlog, and other such operations.
+ */
 void 
 do_exec_pty(const char *command, int ptyfd, int ttyfd,
 	    const char *ttyname, struct passwd * pw, const char *term,
@@ -1927,9 +1946,10 @@ do_exec_pty(const char *command, int ptyfd, int ttyfd,
 	close(fdout);
 }
 
-/* Sets the value of the given variable in the environment.  If the variable
-   already exists, its value is overriden. */
-
+/*
+ * Sets the value of the given variable in the environment.  If the variable
+ * already exists, its value is overriden.
+ */
 void 
 child_set_env(char ***envp, unsigned int *envsizep, const char *name,
 	      const char *value)
@@ -1963,11 +1983,12 @@ child_set_env(char ***envp, unsigned int *envsizep, const char *name,
 	snprintf(env[i], strlen(name) + 1 + strlen(value) + 1, "%s=%s", name, value);
 }
 
-/* Reads environment variables from the given file and adds/overrides them
-   into the environment.  If the file does not exist, this does nothing.
-   Otherwise, it must consist of empty lines, comments (line starts with '#')
-   and assignments of the form name=value.  No other forms are allowed. */
-
+/*
+ * Reads environment variables from the given file and adds/overrides them
+ * into the environment.  If the file does not exist, this does nothing.
+ * Otherwise, it must consist of empty lines, comments (line starts with '#')
+ * and assignments of the form name=value.  No other forms are allowed.
+ */
 void 
 read_environment_file(char ***env, unsigned int *envsize,
 		      const char *filename)
@@ -2013,10 +2034,11 @@ read_environment_file(char ***env, unsigned int *envsize,
 	fclose(f);
 }
 
-/* Performs common processing for the child, such as setting up the
-   environment, closing extra file descriptors, setting the user and group
-   ids, and executing the command or shell. */
-
+/*
+ * Performs common processing for the child, such as setting up the
+ * environment, closing extra file descriptors, setting the user and group
+ * ids, and executing the command or shell.
+ */
 void 
 do_child(const char *command, struct passwd * pw, const char *term,
 	 const char *display, const char *auth_proto,

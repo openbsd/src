@@ -1,22 +1,15 @@
-/*	$OpenBSD: ssh-agent.c,v 1.21 1999/11/23 22:25:55 markus Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.22 1999/11/24 00:26:03 deraadt Exp $	*/
 
 /*
-
-ssh-agent.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Wed Mar 29 03:46:59 1995 ylo
-
-The authentication agent program.
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Wed Mar 29 03:46:59 1995 ylo
+ * The authentication agent program.
+ */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.21 1999/11/23 22:25:55 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.22 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -213,8 +206,9 @@ process_remove_identity(SocketEntry *e)
 	buffer_put_char(&e->output, SSH_AGENT_FAILURE);
 }
 
-/* Removes all identities from the agent. */
-
+/*
+ * Removes all identities from the agent.
+ */
 void
 process_remove_all_identities(SocketEntry *e)
 {
@@ -235,8 +229,9 @@ process_remove_all_identities(SocketEntry *e)
 	return;
 }
 
-/* Adds an identity to the agent. */
-
+/*
+ * Adds an identity to the agent.
+ */
 void
 process_add_identity(SocketEntry *e)
 {

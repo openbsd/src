@@ -1,13 +1,7 @@
 /*
-
-   auth-kerberos.c
-
-   Dug Song <dugsong@UMICH.EDU>
-
-   Kerberos v4 authentication and ticket-passing routines.
-
-   $Id: auth-krb4.c,v 1.9 1999/11/23 22:25:52 markus Exp $
-*/
+ *    Dug Song <dugsong@UMICH.EDU>
+ *    Kerberos v4 authentication and ticket-passing routines.
+ */
 
 #include "includes.h"
 #include "packet.h"
@@ -107,7 +101,7 @@ auth_krb4(const char *server_user, KTEXT auth, char **client)
 
 	*client = xmalloc(MAX_K_NAME_SZ);
 	(void) snprintf(*client, MAX_K_NAME_SZ, "%s%s%s@%s", adat.pname,
-			*adat.pinst ? "." : "", adat.pinst, adat.prealm);
+	    *adat.pinst ? "." : "", adat.pinst, adat.prealm);
 
 	/* Check ~/.klogin authorization now. */
 	if (kuserok(&adat, (char *) server_user) != KSUCCESS) {
@@ -125,7 +119,7 @@ auth_krb4(const char *server_user, KTEXT auth, char **client)
 	/* If we can't successfully encrypt the checksum, we send back an
 	   empty message, admitting our failure. */
 	if ((r = krb_mk_priv((u_char *) & cksum, reply.dat, sizeof(cksum) + 1,
-		             schedule, &adat.session, &local, &foreign)) < 0) {
+	    schedule, &adat.session, &local, &foreign)) < 0) {
 		packet_send_debug("Kerberos V4 mk_priv: (%d) %s", r, krb_err_txt[r]);
 		reply.dat[0] = 0;
 		reply.length = 0;
@@ -159,10 +153,11 @@ auth_kerberos_tgt(struct passwd *pw, const char *string)
 
 	if (strcmp(creds.service, "krbtgt")) {
 		log("Kerberos V4 tgt (%s%s%s@%s) rejected for %s", creds.pname,
-		    creds.pinst[0] ? "." : "", creds.pinst, creds.realm, pw->pw_name);
+		    creds.pinst[0] ? "." : "", creds.pinst, creds.realm,
+		    pw->pw_name);
 		packet_send_debug("Kerberos V4 tgt (%s%s%s@%s) rejected for %s",
-		     creds.pname, creds.pinst[0] ? "." : "", creds.pinst,
-				  creds.realm, pw->pw_name);
+		    creds.pname, creds.pinst[0] ? "." : "", creds.pinst,
+		    creds.realm, pw->pw_name);
 		goto auth_kerberos_tgt_failure;
 	}
 	if (!krb4_init(pw->pw_uid))
@@ -172,8 +167,8 @@ auth_kerberos_tgt(struct passwd *pw, const char *string)
 		goto auth_kerberos_tgt_failure;
 
 	if (save_credentials(creds.service, creds.instance, creds.realm,
-			     creds.session, creds.lifetime, creds.kvno,
-		             &creds.ticket_st, creds.issue_date) != KSUCCESS) {
+	    creds.session, creds.lifetime, creds.kvno,
+	    &creds.ticket_st, creds.issue_date) != KSUCCESS) {
 		packet_send_debug("Kerberos V4 tgt refused: couldn't save credentials");
 		goto auth_kerberos_tgt_failure;
 	}
@@ -181,8 +176,8 @@ auth_kerberos_tgt(struct passwd *pw, const char *string)
 	chown(tkt_string(), pw->pw_uid, pw->pw_gid);
 
 	packet_send_debug("Kerberos V4 tgt accepted (%s.%s@%s, %s%s%s@%s)",
-			  creds.service, creds.instance, creds.realm, creds.pname,
-			  creds.pinst[0] ? "." : "", creds.pinst, creds.realm);
+	    creds.service, creds.instance, creds.realm, creds.pname,
+	    creds.pinst[0] ? "." : "", creds.pinst, creds.realm);
 	memset(&creds, 0, sizeof(creds));
 	packet_start(SSH_SMSG_SUCCESS);
 	packet_send();
@@ -222,7 +217,7 @@ auth_afs_token(struct passwd *pw, const char *token_string)
 		log("AFS token (%s@%s) rejected for %s", creds.pname, creds.realm,
 		    pw->pw_name);
 		packet_send_debug("AFS token (%s@%s) rejected for %s", creds.pname,
-				  creds.realm, pw->pw_name);
+		    creds.realm, pw->pw_name);
 		memset(&creds, 0, sizeof(creds));
 		packet_start(SSH_SMSG_FAILURE);
 		packet_send();
@@ -230,7 +225,7 @@ auth_afs_token(struct passwd *pw, const char *token_string)
 		return 0;
 	}
 	packet_send_debug("AFS token accepted (%s@%s, %s@%s)", creds.service,
-			  creds.realm, creds.pname, creds.realm);
+	    creds.realm, creds.pname, creds.realm);
 	memset(&creds, 0, sizeof(creds));
 	packet_start(SSH_SMSG_SUCCESS);
 	packet_send();

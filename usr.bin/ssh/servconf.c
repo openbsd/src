@@ -1,18 +1,18 @@
 /*
-
-servconf.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Mon Aug 21 15:48:58 1995 ylo
-
-*/
+ * 
+ * servconf.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Mon Aug 21 15:48:58 1995 ylo
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.25 1999/11/23 22:25:54 markus Exp $");
+RCSID("$Id: servconf.c,v 1.26 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "ssh.h"
 #include "servconf.h"

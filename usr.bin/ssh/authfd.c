@@ -1,20 +1,20 @@
 /*
-
-authfd.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Wed Mar 29 01:30:28 1995 ylo
-
-Functions for connecting the local authentication agent.
-
-*/
+ * 
+ * authfd.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Wed Mar 29 01:30:28 1995 ylo
+ * 
+ * Functions for connecting the local authentication agent.
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: authfd.c,v 1.12 1999/11/23 22:25:52 markus Exp $");
+RCSID("$Id: authfd.c,v 1.13 1999/11/24 00:26:00 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"

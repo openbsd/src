@@ -1,21 +1,14 @@
 /*
-
-sshconnect.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Sat Mar 18 22:15:47 1995 ylo
-
-Code to connect to a remote host, and to perform the client side of the
-login (authentication) dialog.
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Sat Mar 18 22:15:47 1995 ylo
+ * Code to connect to a remote host, and to perform the client side of the
+ * login (authentication) dialog.
+ */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.38 1999/11/23 22:25:55 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.39 1999/11/24 00:26:03 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -35,8 +28,9 @@ RCSID("$Id: sshconnect.c,v 1.38 1999/11/23 22:25:55 markus Exp $");
 /* Session id for the current session. */
 unsigned char session_id[16];
 
-/* Connect to the given ssh server using a proxy command. */
-
+/*
+ * Connect to the given ssh server using a proxy command.
+ */
 int
 ssh_proxy_connect(const char *host, int port, uid_t original_real_uid,
 		  const char *proxy_command)
@@ -134,8 +128,9 @@ ssh_proxy_connect(const char *host, int port, uid_t original_real_uid,
 	return 1;
 }
 
-/* Creates a (possibly privileged) socket for use as the ssh connection. */
-
+/*
+ * Creates a (possibly privileged) socket for use as the ssh connection.
+ */
 int
 ssh_create_socket(uid_t original_real_uid, int privileged)
 {
@@ -162,15 +157,16 @@ ssh_create_socket(uid_t original_real_uid, int privileged)
 	return sock;
 }
 
-/* Opens a TCP/IP connection to the remote server on the given host.  If
-   port is 0, the default port will be used.  If anonymous is zero,
-   a privileged port will be allocated to make the connection.
-   This requires super-user privileges if anonymous is false.
-   Connection_attempts specifies the maximum number of tries (one per
-   second).  If proxy_command is non-NULL, it specifies the command (with %h
-   and %p substituted for host and port, respectively) to use to contact
-   the daemon. */
-
+/*
+ * Opens a TCP/IP connection to the remote server on the given host.  If
+ * port is 0, the default port will be used.  If anonymous is zero,
+ * a privileged port will be allocated to make the connection.
+ * This requires super-user privileges if anonymous is false.
+ * Connection_attempts specifies the maximum number of tries (one per
+ * second).  If proxy_command is non-NULL, it specifies the command (with %h
+ * and %p substituted for host and port, respectively) to use to contact
+ * the daemon.
+ */
 int
 ssh_connect(const char *host, struct sockaddr_in * hostaddr,
 	    int port, int connection_attempts,
@@ -313,9 +309,10 @@ ssh_connect(const char *host, struct sockaddr_in * hostaddr,
 	return 1;
 }
 
-/* Checks if the user has an authentication agent, and if so, tries to
-   authenticate using the agent. */
-
+/*
+ * Checks if the user has an authentication agent, and if so, tries to
+ * authenticate using the agent.
+ */
 int
 try_agent_authentication()
 {
@@ -413,9 +410,10 @@ try_agent_authentication()
 	return 0;
 }
 
-/* Computes the proper response to a RSA challenge, and sends the response to
-   the server. */
-
+/*
+ * Computes the proper response to a RSA challenge, and sends the response to
+ * the server.
+ */
 void
 respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
 {
@@ -454,9 +452,10 @@ respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
 	memset(&md, 0, sizeof(md));
 }
 
-/* Checks if the user has authentication file, and if so, tries to authenticate
-   the user using it. */
-
+/*
+ * Checks if the user has authentication file, and if so, tries to authenticate
+ * the user using it.
+ */
 int
 try_rsa_authentication(struct passwd * pw, const char *authfile)
 {
@@ -569,9 +568,10 @@ try_rsa_authentication(struct passwd * pw, const char *authfile)
 	return 0;
 }
 
-/* Tries to authenticate the user using combined rhosts or /etc/hosts.equiv
-   authentication and RSA host authentication. */
-
+/*
+ * Tries to authenticate the user using combined rhosts or /etc/hosts.equiv
+ * authentication and RSA host authentication.
+ */
 int
 try_rhosts_rsa_authentication(const char *local_user, RSA * host_key)
 {
@@ -859,9 +859,10 @@ send_afs_tokens(void)
 
 #endif /* AFS */
 
-/* Waits for the server identification string, and sends our own
-   identification string. */
-
+/*
+ * Waits for the server identification string, and sends our own
+ * identification string.
+ */
 void
 ssh_exchange_identification()
 {
@@ -969,14 +970,15 @@ read_yes_or_no(const char *prompt, int defval)
 	}
 }
 
-/* Starts a dialog with the server, and authenticates the current user on the
-   server.  This does not need any extra privileges.  The basic connection
-   to the server must already have been established before this is called.
-   User is the remote user; if it is NULL, the current local user name will
-   be used.  Anonymous indicates that no rhosts authentication will be used.
-   If login fails, this function prints an error and never returns.
-   This function does not require super-user privileges. */
-
+/*
+ * Starts a dialog with the server, and authenticates the current user on the
+ * server.  This does not need any extra privileges.  The basic connection
+ * to the server must already have been established before this is called.
+ * User is the remote user; if it is NULL, the current local user name will
+ * be used.  Anonymous indicates that no rhosts authentication will be used.
+ * If login fails, this function prints an error and never returns.
+ * This function does not require super-user privileges.
+ */
 void
 ssh_login(int host_key_valid,
 	  RSA *own_host_key,

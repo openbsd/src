@@ -1,22 +1,22 @@
 /*
-
-auth-rhosts.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Fri Mar 17 05:12:18 1995 ylo
-
-Rhosts authentication.  This file contains code to check whether to admit
-the login based on rhosts authentication.  This file also processes
-/etc/hosts.equiv.
-
-*/
+ * 
+ * auth-rhosts.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Fri Mar 17 05:12:18 1995 ylo
+ * 
+ * Rhosts authentication.  This file contains code to check whether to admit
+ * the login based on rhosts authentication.  This file also processes
+ * /etc/hosts.equiv.
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: auth-rhosts.c,v 1.9 1999/11/23 22:25:52 markus Exp $");
+RCSID("$Id: auth-rhosts.c,v 1.10 1999/11/24 00:26:00 deraadt Exp $");
 
 #include "packet.h"
 #include "ssh.h"

@@ -1,13 +1,13 @@
 /*
-
-scp - secure remote copy.  This is basically patched BSD rcp which uses ssh
-to do the data transfer (instead of using rcmd).
-
-NOTE: This version should NOT be suid root.  (This uses ssh to do the transfer
-and ssh has the necessary privileges.)
-
-1995 Timo Rinne <tri@iki.fi>, Tatu Ylonen <ylo@cs.hut.fi>
-
+ * 
+ * scp - secure remote copy.  This is basically patched BSD rcp which uses ssh
+ * to do the data transfer (instead of using rcmd).
+ * 
+ * NOTE: This version should NOT be suid root.  (This uses ssh to do the transfer
+ * and ssh has the necessary privileges.)
+ * 
+ * 1995 Timo Rinne <tri@iki.fi>, Tatu Ylonen <ylo@cs.hut.fi>
+ * 
 */
 
 /*
@@ -45,7 +45,7 @@ and ssh has the necessary privileges.)
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.18 1999/11/23 22:25:54 markus Exp $");
+RCSID("$Id: scp.c,v 1.19 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -970,7 +970,7 @@ run_err(const char *fmt,...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.18 1999/11/23 22:25:54 markus Exp $
+ *	$Id: scp.c,v 1.19 1999/11/24 00:26:03 deraadt Exp $
  */
 
 char *

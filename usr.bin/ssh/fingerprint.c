@@ -1,5 +1,5 @@
 #include "includes.h"
-RCSID("$Id: fingerprint.c,v 1.2 1999/11/23 22:25:53 markus Exp $");
+RCSID("$Id: fingerprint.c,v 1.3 1999/11/24 00:26:01 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -7,9 +7,10 @@ RCSID("$Id: fingerprint.c,v 1.2 1999/11/23 22:25:53 markus Exp $");
 
 #define FPRINT "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x"
 
-/* Generate key fingerprint in ascii format.
-   Based on ideas and code from Bjoern Groenvall <bg@sics.se> */
-
+/*
+ * Generate key fingerprint in ascii format.
+ * Based on ideas and code from Bjoern Groenvall <bg@sics.se>
+ */
 char *
 fingerprint(BIGNUM *e, BIGNUM *n)
 {
@@ -31,8 +32,8 @@ fingerprint(BIGNUM *e, BIGNUM *n)
 	MD5_Update(&md, buf, nlen + elen);
 	MD5_Final(d, &md);
 	snprintf(retval, sizeof(retval), FPRINT,
-		 d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7],
-		 d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
+	    d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7],
+	    d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
 	memset(buf, 0, nlen + elen);
 	xfree(buf);
 	return retval;

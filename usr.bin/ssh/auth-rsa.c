@@ -1,22 +1,22 @@
 /*
-
-auth-rsa.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Mon Mar 27 01:46:52 1995 ylo
-
-RSA-based authentication.  This code determines whether to admit a login
-based on RSA authentication.  This file also contains functions to check
-validity of the host key.
-
-*/
+ * 
+ * auth-rsa.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Mon Mar 27 01:46:52 1995 ylo
+ * 
+ * RSA-based authentication.  This code determines whether to admit a login
+ * based on RSA authentication.  This file also contains functions to check
+ * validity of the host key.
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.12 1999/11/23 22:25:52 markus Exp $");
+RCSID("$Id: auth-rsa.c,v 1.13 1999/11/24 00:26:00 deraadt Exp $");
 
 #include "rsa.h"
 #include "packet.h"

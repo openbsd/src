@@ -1,24 +1,17 @@
 /*
-
-ssh.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Sat Mar 18 16:36:11 1995 ylo
-
-Ssh client program.  This program can be used to log into a remote machine.
-The software supports strong authentication, encryption, and forwarding
-of X11, TCP/IP, and authentication connections.
-
-Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Sat Mar 18 16:36:11 1995 ylo
+ * Ssh client program.  This program can be used to log into a remote machine.
+ * The software supports strong authentication, encryption, and forwarding
+ * of X11, TCP/IP, and authentication connections.
+ *
+ * Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
+ */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.31 1999/11/23 22:25:55 markus Exp $");
+RCSID("$Id: ssh.c,v 1.32 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -111,9 +104,10 @@ usage()
 	exit(1);
 }
 
-/* Connects to the given host using rsh (or prints an error message and exits
-   if rsh is not available).  This function never returns. */
-
+/*
+ * Connects to the given host using rsh (or prints an error message and exits
+ * if rsh is not available).  This function never returns.
+ */
 void
 rsh_connect(char *host, char *user, Buffer * command)
 {
@@ -148,8 +142,9 @@ rsh_connect(char *host, char *user, Buffer * command)
 	exit(1);
 }
 
-/* Main program for the ssh client. */
-
+/*
+ * Main program for the ssh client.
+ */
 int
 main(int ac, char **av)
 {

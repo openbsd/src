@@ -1,24 +1,24 @@
 /*
-
-login.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Fri Mar 24 14:51:08 1995 ylo
-
-This file performs some of the things login(1) normally does.  We cannot
-easily use something like login -p -h host -f user, because there are
-several different logins around, and it is hard to determined what kind of
-login the current system has.  Also, we want to be able to execute commands
-on a tty.
-
-*/
+ * 
+ * login.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Fri Mar 24 14:51:08 1995 ylo
+ * 
+ * This file performs some of the things login(1) normally does.  We cannot
+ * easily use something like login -p -h host -f user, because there are
+ * several different logins around, and it is hard to determined what kind of
+ * login the current system has.  Also, we want to be able to execute commands
+ * on a tty.
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: login.c,v 1.8 1999/11/23 22:25:54 markus Exp $");
+RCSID("$Id: login.c,v 1.9 1999/11/24 00:26:02 deraadt Exp $");
 
 #include <util.h>
 #include <utmp.h>

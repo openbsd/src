@@ -1,20 +1,20 @@
 /*
-
-compress.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Wed Oct 25 22:12:46 1995 ylo
-
-Interface to packet compression for ssh.
-
-*/
+ * 
+ * compress.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Wed Oct 25 22:12:46 1995 ylo
+ * 
+ * Interface to packet compression for ssh.
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: compress.c,v 1.2 1999/11/23 22:25:53 markus Exp $");
+RCSID("$Id: compress.c,v 1.3 1999/11/24 00:26:01 deraadt Exp $");
 
 #include "ssh.h"
 #include "buffer.h"

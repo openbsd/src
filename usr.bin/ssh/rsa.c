@@ -1,41 +1,41 @@
 /*
-
-rsa.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Fri Mar  3 22:07:06 1995 ylo
-
-Description of the RSA algorithm can be found e.g. from the following sources:
-
-  Bruce Schneier: Applied Cryptography.  John Wiley & Sons, 1994.
-
-  Jennifer Seberry and Josed Pieprzyk: Cryptography: An Introduction to
-    Computer Security.  Prentice-Hall, 1989.
-
-  Man Young Rhee: Cryptography and Secure Data Communications.  McGraw-Hill,
-    1994.
-
-  R. Rivest, A. Shamir, and L. M. Adleman: Cryptographic Communications
-    System and Method.  US Patent 4,405,829, 1983.
-
-  Hans Riesel: Prime Numbers and Computer Methods for Factorization.
-    Birkhauser, 1994.
-
-  The RSA Frequently Asked Questions document by RSA Data Security, Inc., 1995.
-
-  RSA in 3 lines of perl by Adam Back <aba@atlax.ex.ac.uk>, 1995, as included
-    below:
-
-    gone - had to be deleted - what a pity
-
+ * 
+ * rsa.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Fri Mar  3 22:07:06 1995 ylo
+ * 
+ * Description of the RSA algorithm can be found e.g. from the following sources:
+ * 
+ *   Bruce Schneier: Applied Cryptography.  John Wiley & Sons, 1994.
+ * 
+ *   Jennifer Seberry and Josed Pieprzyk: Cryptography: An Introduction to
+ *   Computer Security.  Prentice-Hall, 1989.
+ * 
+ *   Man Young Rhee: Cryptography and Secure Data Communications.  McGraw-Hill,
+ *   1994.
+ * 
+ *   R. Rivest, A. Shamir, and L. M. Adleman: Cryptographic Communications
+ *   System and Method.  US Patent 4,405,829, 1983.
+ * 
+ *   Hans Riesel: Prime Numbers and Computer Methods for Factorization.
+ *   Birkhauser, 1994.
+ * 
+ *   The RSA Frequently Asked Questions document by RSA Data Security, Inc., 1995.
+ * 
+ *   RSA in 3 lines of perl by Adam Back <aba@atlax.ex.ac.uk>, 1995, as included
+ *   below:
+ * 
+ *     [gone - had to be deleted - what a pity]
+ * 
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.9 1999/11/23 22:25:54 markus Exp $");
+RCSID("$Id: rsa.c,v 1.10 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "rsa.h"
 #include "ssh.h"

@@ -1,21 +1,21 @@
 /*
-
-packet.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Sat Mar 18 02:40:40 1995 ylo
-
-This file contains code implementing the packet protocol and communication
-with the other side.  This same code is used both on client and server side.
-
-*/
+ * 
+ * packet.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Sat Mar 18 02:40:40 1995 ylo
+ * 
+ * This file contains code implementing the packet protocol and communication
+ * with the other side.  This same code is used both on client and server side.
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: packet.c,v 1.14 1999/11/23 22:25:54 markus Exp $");
+RCSID("$Id: packet.c,v 1.15 1999/11/24 00:26:02 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"

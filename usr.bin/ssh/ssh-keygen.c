@@ -1,20 +1,13 @@
 /*
-
-ssh-keygen.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Mon Mar 27 02:26:40 1995 ylo
-
-Identity and host key generation and maintenance.
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Mon Mar 27 02:26:40 1995 ylo
+ * Identity and host key generation and maintenance.
+ */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.12 1999/11/23 22:25:55 markus Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.13 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -125,9 +118,10 @@ do_fingerprint(struct passwd *pw)
 	exit(0);
 }
 
-/* Perform changing a passphrase.  The argument is the passwd structure
-   for the current user. */
-
+/*
+ * Perform changing a passphrase.  The argument is the passwd structure
+ * for the current user.
+ */
 void
 do_change_passphrase(struct passwd *pw)
 {
@@ -217,8 +211,9 @@ do_change_passphrase(struct passwd *pw)
 	exit(0);
 }
 
-/* Change the comment of a private key file. */
-
+/*
+ * Change the comment of a private key file.
+ */
 void
 do_change_comment(struct passwd *pw)
 {
@@ -326,8 +321,9 @@ usage(void)
 	exit(1);
 }
 
-/* Main program for key management. */
-
+/*
+ * Main program for key management.
+ */
 int
 main(int ac, char **av)
 {

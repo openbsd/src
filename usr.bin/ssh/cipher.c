@@ -1,18 +1,18 @@
 /*
-
-cipher.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Wed Apr 19 17:41:39 1995 ylo
-
-*/
+ * 
+ * cipher.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Wed Apr 19 17:41:39 1995 ylo
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.16 1999/11/23 22:25:53 markus Exp $");
+RCSID("$Id: cipher.c,v 1.17 1999/11/24 00:26:01 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"

@@ -1,21 +1,14 @@
 /*
-
-xmalloc.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Mon Mar 20 21:23:10 1995 ylo
-
-Versions of malloc and friends that check their results, and never return
-failure (they call fatal if they encounter an error).
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Mon Mar 20 21:23:10 1995 ylo
+ * Versions of malloc and friends that check their results, and never return
+ * failure (they call fatal if they encounter an error).
+ */
 
 #include "includes.h"
-RCSID("$Id: xmalloc.c,v 1.4 1999/11/23 22:25:56 markus Exp $");
+RCSID("$Id: xmalloc.c,v 1.5 1999/11/24 00:26:04 deraadt Exp $");
 
 #include "ssh.h"
 

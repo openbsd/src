@@ -1,25 +1,20 @@
 /*
-
-tildexpand.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Wed Jul 12 01:07:36 1995 ylo
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Wed Jul 12 01:07:36 1995 ylo
+ */
 
 #include "includes.h"
-RCSID("$Id: tildexpand.c,v 1.3 1999/11/23 22:25:56 markus Exp $");
+RCSID("$Id: tildexpand.c,v 1.4 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
 
-/* Expands tildes in the file name.  Returns data allocated by xmalloc.
-   Warning: this calls getpw*. */
-
+/*
+ * Expands tildes in the file name.  Returns data allocated by xmalloc.
+ * Warning: this calls getpw*.
+ */
 char *
 tilde_expand_filename(const char *filename, uid_t my_uid)
 {
@@ -39,9 +34,9 @@ tilde_expand_filename(const char *filename, uid_t my_uid)
 	/* Find where the username ends. */
 	cp = strchr(filename, '/');
 	if (cp)
-		userlen = cp - filename;	/* Have something after username. */
+		userlen = cp - filename;	/* Something after username. */
 	else
-		userlen = strlen(filename);	/* Nothign after username. */
+		userlen = strlen(filename);	/* Nothing after username. */
 	if (userlen == 0)
 		pw = getpwuid(my_uid);	/* Own home directory. */
 	else {

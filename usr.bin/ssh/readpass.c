@@ -1,20 +1,20 @@
 /*
-
-readpass.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Mon Jul 10 22:08:59 1995 ylo
-
-Functions for reading passphrases and passwords.
-
-*/
+ * 
+ * readpass.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Mon Jul 10 22:08:59 1995 ylo
+ * 
+ * Functions for reading passphrases and passwords.
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: readpass.c,v 1.5 1999/11/23 22:25:54 markus Exp $");
+RCSID("$Id: readpass.c,v 1.6 1999/11/24 00:26:03 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"

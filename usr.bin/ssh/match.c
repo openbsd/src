@@ -1,20 +1,20 @@
 /*
-
-match.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Thu Jun 22 01:17:50 1995 ylo
-
-Simple pattern matching, with '*' and '?' as wildcards.
-
-*/
+ * 
+ * match.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Thu Jun 22 01:17:50 1995 ylo
+ * 
+ * Simple pattern matching, with '*' and '?' as wildcards.
+ * 
+ */
 
 #include "includes.h"
-RCSID("$Id: match.c,v 1.2 1999/11/23 22:25:54 markus Exp $");
+RCSID("$Id: match.c,v 1.3 1999/11/24 00:26:02 deraadt Exp $");
 
 #include "ssh.h"
 

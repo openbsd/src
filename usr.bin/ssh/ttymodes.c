@@ -1,23 +1,16 @@
 /*
-
-ttymodes.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Tue Mar 21 15:59:15 1995 ylo
-
-Encoding and decoding of terminal modes in a portable way.
-Much of the format is defined in ttymodes.h; it is included multiple times
-into this file with the appropriate macro definitions to generate the
-suitable code.
-
-*/
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Created: Tue Mar 21 15:59:15 1995 ylo
+ * Encoding and decoding of terminal modes in a portable way.
+ * Much of the format is defined in ttymodes.h; it is included multiple times
+ * into this file with the appropriate macro definitions to generate the
+ * suitable code.
+ */
 
 #include "includes.h"
-RCSID("$Id: ttymodes.c,v 1.3 1999/11/23 22:25:56 markus Exp $");
+RCSID("$Id: ttymodes.c,v 1.4 1999/11/24 00:26:04 deraadt Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -26,9 +19,10 @@ RCSID("$Id: ttymodes.c,v 1.3 1999/11/23 22:25:56 markus Exp $");
 #define TTY_OP_ISPEED	192	/* int follows */
 #define TTY_OP_OSPEED	193	/* int follows */
 
-/* Converts POSIX speed_t to a baud rate.  The values of the constants
-   for speed_t are not themselves portable. */
-
+/*
+ * Converts POSIX speed_t to a baud rate.  The values of the
+ * constants for speed_t are not themselves portable.
+ */
 static int 
 speed_to_baud(speed_t speed)
 {
@@ -115,8 +109,9 @@ speed_to_baud(speed_t speed)
 	}
 }
 
-/* Converts a numeric baud rate to a POSIX speed_t. */
-
+/*
+ * Converts a numeric baud rate to a POSIX speed_t.
+ */
 static speed_t 
 baud_to_speed(int baud)
 {
@@ -203,9 +198,11 @@ baud_to_speed(int baud)
 	}
 }
 
-/* Encodes terminal modes for the terminal referenced by fd in a portable
-   manner, and appends the modes to a packet being constructed. */
-
+/*
+ * Encodes terminal modes for the terminal referenced by fd
+ * in a portable manner, and appends the modes to a packet
+ * being constructed.
+ */
 void 
 tty_make_modes(int fd)
 {
@@ -247,9 +244,10 @@ tty_make_modes(int fd)
 	packet_put_char(TTY_OP_END);
 }
 
-/* Decodes terminal modes for the terminal referenced by fd in a portable
-   manner from a packet being read. */
-
+/*
+ * Decodes terminal modes for the terminal referenced by fd in a portable
+ * manner from a packet being read.
+ */
 void 
 tty_parse_modes(int fd, int *n_bytes_ptr)
 {
@@ -258,9 +256,11 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 	int n_bytes = 0;
 	int failure = 0;
 
-	/* Get old attributes for the terminal.  We will modify these
-	   flags. I am hoping that if there are any machine-specific
-	   modes, they will initially have reasonable values. */
+	/*
+	 * Get old attributes for the terminal.  We will modify these
+	 * flags. I am hoping that if there are any machine-specific
+	 * modes, they will initially have reasonable values.
+	 */
 	if (tcgetattr(fd, &tio) < 0)
 		failure = -1;
 
@@ -313,24 +313,32 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 		default:
 			debug("Ignoring unsupported tty mode opcode %d (0x%x)",
 			      opcode, opcode);
-			/* Opcodes 0 to 127 are defined to have a one-byte argument. */
+			/*
+			 * Opcodes 0 to 127 are defined to have
+			 * a one-byte argument.
+			 */
 			if (opcode >= 0 && opcode < 128) {
 				n_bytes += 1;
 				(void) packet_get_char();
 				break;
 			} else {
-				/* Opcodes 128 to 159 are defined to have an integer argument. */
+				/*
+				 * Opcodes 128 to 159 are defined to have
+				 * an integer argument.
+				 */
 				if (opcode >= 128 && opcode < 160) {
 					n_bytes += 4;
 					(void) packet_get_int();
 					break;
 				}
 			}
-			/* It is a truly undefined opcode (160 to 255).
-			   We have no idea about its arguments.  So we
-			   must stop parsing.  Note that some data may be
-			   left in the packet; hopefully there is nothing
-			   more coming after the mode data. */
+			/*
+			 * It is a truly undefined opcode (160 to 255).
+			 * We have no idea about its arguments.  So we
+			 * must stop parsing.  Note that some data may be
+			 * left in the packet; hopefully there is nothing
+			 * more coming after the mode data.
+			 */
 			log("parse_tty_modes: unknown opcode %d", opcode);
 			packet_integrity_check(0, 1, SSH_CMSG_REQUEST_PTY);
 			goto set;

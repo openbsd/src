@@ -1,12 +1,12 @@
 /*
-  radix.c
-
-  base-64 encoding pinched from lynx2-7-2, who pinched it from rpem.
-  Originally written by Mark Riordan 12 August 1990 and 17 Feb 1991
-  and placed in the public domain.
-
-  Dug Song <dugsong@UMICH.EDU>
-*/
+ *   radix.c
+ * 
+ *   base-64 encoding pinched from lynx2-7-2, who pinched it from rpem.
+ *   Originally written by Mark Riordan 12 August 1990 and 17 Feb 1991
+ *   and placed in the public domain.
+ * 
+ *   Dug Song <dugsong@UMICH.EDU>
+ */
 
 #include "includes.h"
 

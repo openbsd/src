@@ -1,21 +1,21 @@
 /*
-
-mpaux.c
-
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-
-Created: Sun Jul 16 04:29:30 1995 ylo
-
-This file contains various auxiliary functions related to multiple
-precision integers.
-
+ * 
+ * mpaux.c
+ * 
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * 
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * 
+ * Created: Sun Jul 16 04:29:30 1995 ylo
+ * 
+ * This file contains various auxiliary functions related to multiple
+ * precision integers.
+ * 
 */
 
 #include "includes.h"
-RCSID("$Id: mpaux.c,v 1.7 1999/11/23 22:25:54 markus Exp $");
+RCSID("$Id: mpaux.c,v 1.8 1999/11/24 00:26:02 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "getput.h"
