@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.45 2002/09/20 11:17:55 fgsch Exp $
+#	$OpenBSD: files.sparc,v 1.46 2003/01/14 19:56:32 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -78,6 +78,9 @@ device sbus { slot = -1, offset = -1 }
 attach sbus at mainbus, iommu, sbus, xbox
 file	arch/sparc/dev/sbus.c			sbus
 
+# Sun specific files
+include "../../../dev/sun/files.sun"
+
 #
 # Console (zs) related stuff
 #
@@ -86,9 +89,6 @@ device zstty: tty
 attach zstty at zs
 file	arch/sparc/dev/z8530tty.c		zstty needs-flag
 file	arch/sparc/dev/zs_kgdb.c		kgdb
-
-define sunkbd
-file	dev/sun/sunkbd.c			sunkbd
 
 device zskbd: tty, wskbddev, sunkbd
 attach zskbd at zs

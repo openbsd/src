@@ -1,6 +1,7 @@
-#	$OpenBSD: files.sun,v 1.1 1997/08/08 08:17:14 downsj Exp $
+#	$OpenBSD: files.sun,v 1.2 2003/01/14 19:56:32 jason Exp $
 # $NetBSD: files.sun,v 1.1 1996/05/29 21:54:34 pk Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
-file dev/sun/event.c
+define	sunkbd
+file	dev/sun/sunkbd.c			sunkbd

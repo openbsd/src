@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.41 2002/07/12 10:25:02 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.42 2003/01/14 19:56:32 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -40,6 +40,9 @@ include "dev/pcmcia/files.pcmcia"
 # COMPAT_NETBSD
 include "compat/netbsd/files.netbsd"
 file	arch/sparc64/sparc64/netbsd_machdep.c	compat_netbsd
+
+# Sun specific files
+include "../../../dev/sun/files.sun"
 
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
@@ -125,9 +128,6 @@ file	arch/sparc64/dev/ce4231.c		audioce
 
 attach com at ebus with com_ebus
 file	arch/sparc64/dev/com_ebus.c		com_ebus
-
-define sunkbd
-file	dev/sun/sunkbd.c			sunkbd
 
 attach pckbc at ebus with pckbc_ebus
 file	arch/sparc64/dev/pckbc_ebus.c		pckbc_ebus
