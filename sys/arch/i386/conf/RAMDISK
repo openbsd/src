@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.89 2000/08/02 13:55:51 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.90 2000/08/02 14:08:38 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -69,6 +69,9 @@ pci*	at pchb? bus ?
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
 pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 pcic2	at isa? port 0x3e4 iomem 0xd4000 iosiz 0x4000
+
+# PCI PCMCIA controllers
+pcic*	at pci? dev? function ?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
