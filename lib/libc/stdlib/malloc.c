@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.15 1996/09/26 04:49:56 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.16 1996/09/26 15:22:19 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -535,6 +535,8 @@ malloc_init ()
 	} else if (i == 2) {
 	    p = malloc_options;
 	}
+	else
+	    p = NULL;
 	for (; p && *p; p++) {
 	    switch (*p) {
 		case '>': malloc_cache   <<= 1; break;
