@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.10 1995/12/13 18:54:03 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.11 1996/01/28 12:30:13 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,25 +55,10 @@
 #define	T_PTELEN	8	/* Page table length exceeded */
 #define	T_TRANSFLT	9	/* translation fault */
 #define	T_TRCTRAP	10	/* trace trap */
-/* #define	T_COMPAT	11	/* compatibility mode fault on VAX */
+#define	T_COMPAT	11	/* compatibility mode fault on VAX */
 #define	T_ACCFLT	12	/* Access violation fault */
-/* #define	T_TABLEFLT	13	/* page table fault */
-/* #define	T_ALIGNFLT	14	/* alignment fault */
 #define	T_KSPNOTVAL	15	/* kernel stack pointer not valid */
-/* #define	T_BUSERR	16	/* bus error */
 #define	T_KDBTRAP	17	/* kernel debugger trap */
-
-/* #define	T_DIVIDE	18	/* integer divide fault */
-/* #define	T_NMI		19	/* non-maskable trap */
-/* #define	T_OFLOW		20	/* overflow trap */
-/* #define	T_BOUND		21	/* bound instruction fault */
-/* #define	T_DNA		22	/* device not available fault */
-/* #define	T_DOUBLEFLT	23	/* double fault */
-/* #define	T_FPOPFLT	24	/* fp coprocessor operand fetch fault */
-/* #define	T_TSSFLT	25	/* invalid tss fault */
-/* #define	T_SEGNPFLT	26	/* segment not present fault */
-/* #define	T_STKFLT	27	/* stack fault */
-/* #define	T_RESERVED	28	/* reserved fault base */
 
 /* These gets ORed with the word for page handling routines */
 #define	T_WRITE		0x80
@@ -83,33 +68,33 @@
 #define	T_USER	0x100
 
 #ifndef ASSEMBLER
-/* If we want to alter USP in some syscall, we do it with mtpr */
 struct	trapframe {
-	int	fp;	/* Stack frame pointer */
-        int     ap;     /* Argument pointer on user stack */
-        int     r0;     /* General registers saved upon trap/syscall */
-        int     r1;
-        int     r2;
-        int     r3;
-        int     r4;
-        int     r5;
-        int     r6;
-        int     r7;
-        int     r8;
-        int     r9;
-        int     r10;
-        int     r11;
-	int	trap;	/* Type of trap */
-        u_int	code;   /* Trap specific code */
-        u_int   pc;     /* User pc */
-        u_int   psl;    /* User psl */
+	unsigned	fp;	/* Stack frame pointer */
+	unsigned	ap;     /* Argument pointer on user stack */
+	unsigned	sp;	/* Stack pointer */
+	unsigned	r0;     /* General registers saved upon trap/syscall */
+	unsigned	r1;
+	unsigned	r2;
+	unsigned	r3;
+	unsigned	r4;
+	unsigned	r5;
+	unsigned	r6;
+	unsigned	r7;
+	unsigned	r8;
+	unsigned	r9;
+	unsigned	r10;
+	unsigned	r11;
+	unsigned	trap;	/* Type of trap */
+        unsigned	code;   /* Trap specific code */
+        unsigned	pc;     /* User pc */
+        unsigned	psl;    /* User psl */
 };
 
 /*
  * This struct is used when setting up interrupt vectors dynamically.
  * It pushes a longword between 0-63 on the stack; this number is
  * normally used as the ctlr number on devices. This use effectively
- * limits the number of interruptable ctlrs on the unibus to 64.
+ * limits the number of interruptable ctlrs on one unibus to 64.
  */
 struct ivec_dsp {
 	char	pushr; 		/* pushr */
