@@ -150,7 +150,7 @@ accept_igmp(int recvlen)
     }
 
     iphdrlen  = ip->ip_hl << 2;
-    ipdatalen = ntohs(ip->ip_len);
+    ipdatalen = ntohs(ip->ip_len) - iphdrlen;
     if (iphdrlen + ipdatalen != recvlen) {
 	logit(LOG_WARNING, 0,
 	    "received packet from %s shorter (%u bytes) than hdr+data length (%u+%u)",
