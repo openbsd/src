@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.9 2001/03/19 20:25:00 niklas Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.10 2001/04/04 20:13:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -60,14 +60,21 @@ struct wi_counters {
 
 /*
  * Encryption controls. We can enable or disable encryption as
- * well as specify up to 4 encryption keys. We can also specify  
+ * well as specify up to 4 encryption keys. We can also specify
  * which of the four keys will be used for transmit encryption.
  */
-#define WI_RID_ENCRYPTION       0xFC20
-#define WI_RID_AUTHTYPE         0xFC21
-#define WI_RID_DEFLT_CRYPT_KEYS 0xFCB0
-#define WI_RID_TX_CRYPT_KEY     0xFCB1
-#define WI_RID_WEP_AVAIL        0xFD4F
+#define WI_RID_ENCRYPTION	0xFC20
+#define WI_RID_AUTHTYPE		0xFC21
+#define WI_RID_P2_TX_CRYPT_KEY	0xFC23
+#define WI_RID_P2_CRYPT_KEY0	0xFC24
+#define WI_RID_P2_CRYPT_KEY1	0xFC25
+#define WI_RID_MICROWAVE_OVEN	0xFC25
+#define WI_RID_P2_CRYPT_KEY2	0xFC26
+#define WI_RID_P2_CRYPT_KEY3	0xFC27
+#define WI_RID_P2_ENCRYPTION	0xFC28
+#define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
+#define WI_RID_TX_CRYPT_KEY	0xFCB1
+#define WI_RID_WEP_AVAIL	0xFD4F
 struct wi_key {
 	u_int16_t		wi_keylen;
 	u_int8_t		wi_keydat[14];
@@ -115,6 +122,7 @@ struct wi_softc	{
 	int			sc_io_window;
 	struct pcmcia_function	*sc_pf;
 	struct timeout		sc_timo;
+	int			sc_prism2;
 };
 
 #define WI_TIMEOUT	50000	/* XXX just a guess at a good value.  */
@@ -138,7 +146,7 @@ struct wi_softc	{
 #define WI_DEFAULT_AP_DENSITY	1
 
 #define WI_DEFAULT_RTS_THRESH	2347
-	
+
 #define WI_DEFAULT_DATALEN	2304
 
 #define WI_DEFAULT_CREATE_IBSS	0
@@ -437,6 +445,8 @@ struct wi_ltv_commqual {
 	u_int16_t		wi_sig_lvl;
 	u_int16_t		wi_noise_lvl;
 };
+
+#define	WI_RID_CUR_TX_RATE	0xFD44	/* current TX rate */
 
 /*
  * Actual system scale thresholds (0xFD46).

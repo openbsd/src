@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.27 2001/03/19 20:24:59 niklas Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.28 2001/04/04 20:13:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.27 2001/03/19 20:24:59 niklas Exp $";
+	"$OpenBSD: if_wi.c,v 1.28 2001/04/04 20:13:11 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -181,6 +181,157 @@ struct cfattach wi_ca = {
 	wi_pcmcia_detach, wi_pcmcia_activate
 };
 
+static const struct wi_pcmcia_product {
+	u_int32_t	pp_vendor;
+	u_int32_t	pp_product;
+	const char	*pp_cisinfo[4];
+	const char	*pp_name;
+	int		pp_prism2;
+} wi_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
+	  "WaveLAN/IEEE",
+	  0 },
+
+	{ PCMCIA_VENDOR_3COM,
+	  PCMCIA_PRODUCT_3COM_3CRWE737A,
+	  PCMCIA_CIS_3COM_3CRWE737A,
+	  "3Com AirConnect Wireless LAN",
+	  1 },
+
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11,
+	  "Corega Wireless LAN PCC-11",
+	  1 },
+
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
+	  "Corega Wireless LAN PCCA-11",
+	  1 },
+
+	{ PCMCIA_VENDOR_INTERSIL,
+	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
+	  PCMCIA_CIS_INTERSIL_PRISM2,
+	  "Intersil Prism II",
+	  1 },
+
+	{ PCMCIA_VENDOR_SAMSUNG,
+	  PCMCIA_PRODUCT_SAMSUNG_SWL_2000N,
+	  PCMCIA_CIS_SAMSUNG_SWL_2000N,
+	  "Samsung MagicLAN SWL-2000N",
+	  1 },
+
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_SMC_2632W,
+	  "SMC 2632 EZ Connect Wireless PC Card",
+	  1 },
+
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_NANOSPEED_PRISM2,
+	  "NANOSPEED ROOT-RZ2000 WLAN Card",
+	  1 },
+
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
+	  PCMCIA_CIS_ELSA_XI300_IEEE,
+	  "XI300 Wireless LAN",
+	  1 },
+
+	{ PCMCIA_VENDOR_COMPAQ,
+	  PCMCIA_PRODUCT_COMPAQ_NC5004,
+	  PCMCIA_CIS_COMPAQ_NC5004,
+	  "Compaq Agency NC5004 Wireless Card",
+	  1 },
+
+	{ PCMCIA_VENDOR_CONTEC,
+	  PCMCIA_PRODUCT_CONTEC_FX_DS110_PCC,
+	  PCMCIA_CIS_CONTEC_FX_DS110_PCC,
+	  "Contec FLEXLAN/FX-DS110-PCC",
+	  1 },
+
+	{ PCMCIA_VENDOR_TDK,
+	  PCMCIA_PRODUCT_TDK_LAK_CD011WL,
+	  PCMCIA_CIS_TDK_LAK_CD011WL,
+	  "TDK LAK-CD011WL",
+	  1 },
+
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_NEC_CMZ_RT_WP,
+	  "NEC Wireless Card CMZ-RT-WP",
+	  1 },
+
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_NTT_ME_WLAN,
+	  "NTT-ME 11Mbps Wireless LAN PC Card",
+	  1 },
+
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_NTT_ME_WLAN,
+	  "Addtron AWP-100",
+	  0 },
+
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_CABLETRON_ROAMABOUT,
+	  "Cabletron RoamAbout",
+	  0 },
+
+	{ PCMCIA_VENDOR_IODATA2,
+	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
+	  PCMCIA_CIS_IODATA2_WNB11PCM,
+	  "I-O DATA WN-B11/PCM",
+	  1 },
+
+	{ 0,
+	  0,
+	  { NULL, NULL, NULL, NULL },
+	  NULL,
+	  0 }
+};
+
+static const struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
+
+const struct wi_pcmcia_product *
+wi_lookup(pa)
+	struct pcmcia_attach_args *pa;
+{
+	const struct wi_pcmcia_product *pp;
+
+	/*
+	 * match by CIS information first
+	 * XXX: Farallon SkyLINE 11mb uses PRISM II but vendor ID
+	 *	and product ID is the same as Lucent WaveLAN
+	 */
+	for (pp = wi_pcmcia_products; pp->pp_name != NULL; pp++) {
+		if (pa->card->cis1_info[0] != NULL &&
+		    pp->pp_cisinfo[0] != NULL &&
+		    strcmp(pa->card->cis1_info[0], pp->pp_cisinfo[0]) == 0 &&
+		    pa->card->cis1_info[1] != NULL &&
+		    pp->pp_cisinfo[1] != NULL &&
+		    strcmp(pa->card->cis1_info[1], pp->pp_cisinfo[1]) == 0)
+			return pp;
+	}
+
+	/* match by vendor/product id */
+	for (pp = wi_pcmcia_products; pp->pp_name != NULL; pp++) {
+		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
+		    pa->manufacturer == pp->pp_vendor &&
+		    pa->product != PCMCIA_PRODUCT_INVALID &&
+		    pa->product == pp->pp_product)
+			return pp;
+	}
+
+	return NULL;
+}
+
 int
 wi_pcmcia_match(parent, match, aux)
 	struct device *parent;
@@ -188,24 +339,9 @@ wi_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
-		return (0);
-
-	switch (pa->manufacturer) {
-	case PCMCIA_VENDOR_LUCENT:
-		/* XXX Per-productid checking here. */
-		return (1);
-
-	case PCMCIA_VENDOR_ELSA:
-		switch (pa->product) {
-		case PCMCIA_PRODUCT_ELSA_XI300_IEEE:
-			return (1);
-		}
-		return (0);
-
-	default:
-		return (0);
-	}
+	if (wi_lookup(pa) != NULL)
+		return 1;
+	return 0;
 }
 
 void
@@ -217,6 +353,7 @@ wi_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_function	*pf = pa->pf;
 	struct pcmcia_config_entry *cfe = pf->cfe_head.sqh_first;
+	const struct wi_pcmcia_product *pp;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
 	struct ifnet		*ifp;
@@ -248,6 +385,13 @@ wi_pcmcia_attach(parent, self, aux)
 	sc->wi_gone = 0;
 	sc->wi_btag = sc->sc_pcioh.iot;
 	sc->wi_bhandle = sc->sc_pcioh.ioh;
+
+	pp = wi_lookup(pa);
+	if (pp == NULL) {
+		/* should not happen */
+		sc->sc_prism2 = 0;
+	} else
+		sc->sc_prism2 = pp->pp_prism2;
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
@@ -724,6 +868,23 @@ wi_read_record(sc, ltv)
 {
 	u_int16_t		*ptr;
 	int			i, len, code;
+	struct wi_ltv_gen	*oltv, p2ltv;
+
+	if (sc->sc_prism2) {
+		oltv = ltv;
+		switch (ltv->wi_type) {
+		case WI_RID_ENCRYPTION:
+			p2ltv.wi_type = WI_RID_P2_ENCRYPTION;
+			p2ltv.wi_len = 2;
+			ltv = &p2ltv;
+			break;
+		case WI_RID_TX_CRYPT_KEY:
+			p2ltv.wi_type = WI_RID_P2_TX_CRYPT_KEY;
+			p2ltv.wi_len = 2;
+			ltv = &p2ltv;
+			break;
+		}
+	}
 
 	/* Tell the NIC to enter record read mode. */
 	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_READ, ltv->wi_type))
@@ -753,6 +914,35 @@ wi_read_record(sc, ltv)
 	for (i = 0; i < ltv->wi_len - 1; i++)
 		ptr[i] = CSR_READ_2(sc, WI_DATA1);
 
+	if (sc->sc_prism2) {
+		switch (oltv->wi_type) {
+		case WI_RID_TX_RATE:
+		case WI_RID_CUR_TX_RATE:
+			switch (ltv->wi_val) {
+			case 1: oltv->wi_val = 1; break;
+			case 2: oltv->wi_val = 2; break;
+			case 3:	oltv->wi_val = 6; break;
+			case 4: oltv->wi_val = 5; break;
+			case 7: oltv->wi_val = 7; break;
+			case 8: oltv->wi_val = 11; break;
+			case 15: oltv->wi_val = 3; break;
+			default: oltv->wi_val = 0x100 + ltv->wi_val; break;
+			}
+			break;
+		case WI_RID_ENCRYPTION:
+			oltv->wi_len = 2;
+			if (ltv->wi_val & 0x01)
+				oltv->wi_val = 1;
+			else
+				oltv->wi_val = 0;
+			break;
+		case WI_RID_TX_CRYPT_KEY:
+			oltv->wi_len = 2;
+			oltv->wi_val = ltv->wi_val;
+			break;
+		}
+	}
+
 	return(0);
 }
 
@@ -766,6 +956,36 @@ wi_write_record(sc, ltv)
 {
 	u_int16_t		*ptr;
 	int			i;
+	struct wi_ltv_gen	*oltv;
+
+	if (sc->sc_prism2) {
+		switch (oltv->wi_type) {
+		case WI_RID_TX_RATE:
+		case WI_RID_CUR_TX_RATE:
+			switch (ltv->wi_val) {
+			case 1: oltv->wi_val = 1; break;
+			case 2: oltv->wi_val = 2; break;
+			case 3:	oltv->wi_val = 6; break;
+			case 4: oltv->wi_val = 5; break;
+			case 7: oltv->wi_val = 7; break;
+			case 8: oltv->wi_val = 11; break;
+			case 15: oltv->wi_val = 3; break;
+			default: oltv->wi_val = 0x100 + ltv->wi_val; break;
+			}
+			break;
+		case WI_RID_ENCRYPTION:
+			oltv->wi_len = 2;
+			if (ltv->wi_val & 0x01)
+				oltv->wi_val = 1;
+			else
+				oltv->wi_val = 0;
+			break;
+		case WI_RID_TX_CRYPT_KEY:
+			oltv->wi_len = 2;
+			oltv->wi_val = ltv->wi_val;
+			break;
+		}
+	}
 
 	if (wi_seek(sc, ltv->wi_type, 0, WI_BAP1))
 		return(EIO);
