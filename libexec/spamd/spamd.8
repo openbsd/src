@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.39 2003/09/25 09:07:33 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.40 2003/10/22 21:31:38 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -81,6 +81,14 @@ This defaults to 450.
 Delay each character sent to the client by the specified
 amount of seconds.
 Defaults to 1.
+.It Fl v
+Enable verbose logging. By default
+.Nm
+logs connections, disconnections and blacklist matches to
+.Xr syslog 8
+at LOG_INFO level. With verbose logging enabled, message detail
+including subject and recipient information is logged at LOG_INFO, along
+with the message body and SMTP dialogue being logged at LOG_DEBUG level. 
 .It Fl w Ar window
 Set the socket receive buffer to this many bytes, adjusting the window size.
 .El

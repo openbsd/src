@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.49 2003/10/03 17:05:50 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.50 2003/10/22 21:31:38 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -116,6 +116,7 @@ time_t t;
 int maxcon = MAXCON;
 int clients;
 int debug;
+int verbose;
 int stutter = 1;
 int window;
 #define MAXTIME 400
@@ -673,11 +674,11 @@ nextstate(struct con *cp)
 		}
 		if (!cp->data_body && !*cp->ibuf)
 			cp->data_body = 1;
-		if (cp->data_body && *cp->ibuf)
-			syslog_r(LOG_INFO, &sdata, "%s: Body: %s", cp->addr,
+		if (verbose && cp->data_body && *cp->ibuf)
+			syslog_r(LOG_DEBUG, &sdata, "%s: Body: %s", cp->addr,
 			    cp->ibuf);
-		else if (match(cp->ibuf, "FROM:") || match(cp->ibuf, "TO:") ||
-		    match(cp->ibuf, "SUBJECT:"))
+		else if (verbose && (match(cp->ibuf, "FROM:") || 
+		     match(cp->ibuf, "TO:") || match(cp->ibuf, "SUBJECT:")))
 			syslog_r(LOG_INFO, &sdata, "%s: %s", cp->addr,
 			    cp->ibuf);
 		cp->ip = cp->ibuf;
@@ -734,8 +735,9 @@ handler(struct con *cp)
 			cp->ip--;
 		*cp->ip = '\0';
 		cp->r = 0;
-		syslog_r(LOG_DEBUG, &sdata, "%s: says '%s'", cp->addr,
-		    cp->ibuf);
+		if (verbose)
+			syslog_r(LOG_DEBUG, &sdata, "%s: says '%s'", cp->addr,
+			    cp->ibuf);
 		nextstate(cp);
 	}
 }
@@ -836,6 +838,9 @@ main(int argc, char *argv[])
 			stutter = i;
 		case 'n':
 			spamd = optarg;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case 'w':
 			window = atoi(optarg);
