@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.364 2003/06/14 07:23:15 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.365 2003/06/20 17:38:24 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3829,7 +3829,12 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			if (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws))) {
 				if (pf_status.debug >= PF_DEBUG_MISC) {
-					printf("pf: BAD ICMP state: ");
+					printf("pf: BAD ICMP %d:%d ",
+					    icmptype, pd->hdr.icmp->icmp_code);
+					pf_print_host(pd->src, 0, pd->af);
+					printf(" -> ");
+					pf_print_host(pd->dst, 0, pd->af);
+					printf(" state: ");
 					pf_print_state(*state);
 					printf(" seq=%u\n", seq);
 				}
