@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2000/09/11 17:15:18 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/11/22 21:04:40 espie Exp $
 
 #
 # This is hairy. libroken (originally libroken and libutil) has to be built
@@ -11,7 +11,7 @@
 # libs and without making a hairy Makefile.bsd-wrapper
 #
 # Anomalies:
-#  - Man pages are not built from the main source beacuse of differing
+#  - Man pages are not built from the main source because of differing
 #    path names.
 #  - config.h and arla-version.h have to be pre-built and put in src/include.
 #    config.h contains macros for endianness, but they are only used in one
@@ -31,8 +31,8 @@ SUBDIR		+= afsd fs vos pts
 ## libroken) and libroken used by gensysname in (libarla/Makefile.ko.inc)
 
 beforedepend:
-	(cd libroken && make depend && make)
-	(cd ydr && make depend && make)
+	cd libroken && make depend && exec make
+	cd ydr && make depend && exec make
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
