@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.5 2000/10/14 06:23:52 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.6 2000/10/18 20:35:21 chris Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -815,7 +815,9 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		union sockaddr_union *laddr, struct sockaddr_encap *ddst)
 {
     struct ipsec_acquire *ipa;
+#ifdef INET6
     int i;
+#endif
 
     /*
      * Check whether request has been made already.
