@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.62 2001/06/08 03:53:47 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.63 2001/06/19 00:48:23 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -73,6 +73,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>

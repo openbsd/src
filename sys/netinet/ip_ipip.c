@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.16 2001/06/08 03:53:46 angelos Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.17 2001/06/19 00:48:23 deraadt Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -39,8 +39,8 @@
  * IP-inside-IP processing
  */
 
-
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>

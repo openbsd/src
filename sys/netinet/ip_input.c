@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.75 2001/06/08 03:53:46 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.76 2001/06/19 00:48:23 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
