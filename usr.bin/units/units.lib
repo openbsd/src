@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.3 1996/06/26 05:42:16 deraadt Exp $
+/ $OpenBSD: units.lib,v 1.4 1999/06/13 16:31:18 pjanzen Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -54,6 +54,7 @@ d-			deci
 c-			centi
 m-			milli
 p-			pico
+n-			nano
 f-			femto
 a-			atto
 z-			zopto
@@ -63,15 +64,28 @@ y-			yocto
 
 fuzz			1
 pi			3.14159265358979323846
-c			2.99792458e+8 m/sec fuzz
+c			2.99792458e+8 m/sec
 g			9.80665 m/sec2
-au			1.49597871e+11 m fuzz
-mole			6.022169e+23 fuzz
-e			1.6021917e-19 coul fuzz
+AU			1.49597870e+11 m fuzz
+au			AU
+mole			6.0221367e+23 fuzz
+e			1.60217733e-19 coul fuzz
+/ Next two to be multiplied by mass
 energy			c2
 force			g
-mercury			1.33322e+5 kg/m2-sec2
+mercury			1.3332239e+5 kg/m2-sec2
 hg			mercury
+mmHg			0.001 m hg
+
+mu			4.e-7 pi-N/A2
+epsilon			1.0 /mu/c2
+alpha			0.5 mu-c-e2/planck
+planck			6.6260755e-34 joule-sec
+hbar			0.5 planck/pi
+electronmass		9.1093897e-31 kg
+protonmass		1.6726231e-27 kg
+neutronmass		1.6749286e-27 kg
+
 
 / dimensionless
 
@@ -79,7 +93,7 @@ radian			.5 / pi
 degree			1|180 pi-radian
 circle			2 pi-radian
 turn			2 pi-radian
-revolution			turn
+revolution		turn
 rev			turn
 grade			.9 degree
 arcdeg			1 degree
@@ -102,7 +116,7 @@ hr			hour
 day			24 hr
 da			day
 week			7 day
-year			365.24219879 day fuzz
+year			3.15569259747e7 sec fuzz
 yr			year
 month			1|12 year
 ms			millisec
@@ -141,12 +155,9 @@ troypound		appound
 / Length
 
 meter			m
-cm			centimeter
-mm			millimeter
-km			kilometer
-nm			nanometer
 micron			micrometer
 angstrom		decinanometer
+ao			0.25 alpha/pi/rydbergconst
 
 inch			2.54 cm
 in			inch
@@ -161,6 +172,7 @@ mile			5280 ft
 mi			mile
 
 british			1200|3937 m/ft
+/ Assume we do not want the prefix n- with mile
 nmile			1852 m
 
 acre			4840 yd2
@@ -206,6 +218,7 @@ newton			kg-m/sec2
 nt			newton
 N			newton
 joule			nt-m
+J			joule
 cal			4.1868 joule
 
 / Electrical
@@ -214,13 +227,18 @@ coulomb			coul
 C			coul
 ampere			coul/sec
 amp			ampere
+A			amp
 watt			joule/sec
+W			watt
 volt			watt/amp
 ohm			volt/amp
 mho			/ohm
 farad			coul/volt
+F			farad
 henry			sec2/farad
+H			henry
 weber			volt-sec
+Wb			weber
 
 / Light
 
@@ -228,64 +246,65 @@ cd			candela
 lumen			cd sr
 lux			cd sr/m2
 
-/ Wall Street Journal, July 2, 1993
+/ Wall Street Journal, June 10, 1999, with rounding
 
 $			dollar
 argentinapeso		$
 australiadollar		.66 $
-austriaschilling	.83 $
+austriaschilling	.076 $
 bahraindinar		2.6522 $
-belgiumfranc		.028 $
-brazilcruzeiro		.000019 $
-britainpound		1.49 $
-canadadollar		.77 $
-czechkoruna		.034 $
-chilepeso		.0025 $
-chinarenminbi		.174856 $
-colombiapeso		.001495 $
-denmarkkrone		.15 $
-ecuadorsucre		.000539 $
-finlandmarkka		.17 $
-francefranc		.17 $
-germanymark		.58 $
+belgiumfranc		.026 $
+brazilreal		.57 $
+britainpound		1.60 $
+canadadollar		.68 $
+chilepeso		.002 $
+chinarenminbi		.1208 $
+colombiapeso		.000596 $
+czechkoruna		.028 $
+denmarkkrone		.14 $
+ecuadorsucre		.000093 $
+finlandmarkka		.18 $
+francefranc		.16 $
+germanymark		.5358 $
 greatbritainpound	britainpound
-greecedrachma		.0043 $
+greecedrachma		.00323 $
 hongkongdollar		.13  $
-hungaryforint		.011 $
-indiarupee		.03211 $
-indonesiarupiah		.0004782 $
-irelandpunt		1.43 $
-israelshekel		.3642 $
-italylira		.00064 $
-japanyen		.0093 $
-jordandinar		1.4682 $
-kuwaitdinar		3.3173 $
-lebanonpound		.000578 $
-malaysiaringgit		.338 $
-maltalira		2.6042 $
-mexicopeso		.3205128 $
-netherlandguilder	.52 $
-newzealanddollar	.539 $
-norwaykrone		.139 $
-pakistanrupee		.037 $
-perunewsol		.5065 $
-philippinespeso		.03738 $
-polandzloty		.000059 $
-portugalescudo		.00617 $
-saudiarabiariyal	.26702 $
-singaporedollar		.6157 $
-slovakkoruna		.034 $
-southamericarand	.21 $
-southkoreawon		.001 $
-spainpeseta		.007 $
-swedenkrona		.13 $
+hungaryforint		.0042 $
+indiarupee		.02326 $
+indonesiarupiah		.000129 $
+irelandpunt		1.33 $
+israelshekel		.245 $
+italylira		.00054 $
+japanyen		.0084 $
+jordandinar		1.41 $
+kuwaitdinar		3.27 $
+lebanonpound		.000663 $
+malaysiaringgit		.263 $
+maltalira		2.48 $
+mexicopeso		.1044 $
+netherlandguilder	.48 $
+newzealanddollar	.538 $
+norwaykrone		.128 $
+pakistanrupee		.0193 $
+perunewsol		.298 $
+philippinespeso		.0264 $
+polandzloty		.254 $
+portugalescudo		.00523 $
+saudiarabiariyal	.2666 $
+singaporedollar		.583 $
+slovakkoruna		.0229 $
+southafricarand		.163 $
+southkoreawon		.00086 $
+spainpeseta		.0063 $
+swedenkrona		.118 $
 switzerlandfranc	.66 $
-taiwandollar		.038285 $
-thailandbaht		.03962 $
-turkeylira		.0000929 $
+taiwandollar		.0308 $
+thailandbaht		.02705 $
+turkeylira		.00000244 $
 unitedarabdirham	.2723 $
-uruguaynewpeso		.246852 $
-venezuelabolivar	.011 $
+uruguaynewpeso		.0889 $
+venezuelabolivar	.00166 $
+euro			1.05 $
 
 mark			germanymark
 bolivar			venezuelabolivar
@@ -304,7 +323,6 @@ franc			francefranc
 markka			finlandmarkka
 sucre			ecuadorsucre
 poundsterling		britainpound
-cruzeiro		brazilcruzeiro
 
 / computer
 
@@ -316,19 +334,20 @@ megabyte		1024 kbyte
 gigabyte		1024 megabyte
 meg			megabyte
 
-
 / Trivia
 
 %			1|100
+abampere		10 ampere
 admiraltyknot		6080 ft/hr
 apostilb		cd/pi-m2
+asb			apostilb
 are			1e+2 m2
 arpentcan		27.52 mi
 arpentlin		191.835 ft
-astronomicalunit	au
+astronomicalunit	AU
 atmosphere		1.01325e+5 nt/m2
 atm			atmosphere
-atomicmassunit		1.66044e-27 kg fuzz
+atomicmassunit		1.6605402e-27 kg fuzz
 amu			atomicmassunit
 bag			94 lb
 bakersdozen		13
@@ -336,8 +355,10 @@ bar			1e+5 nt/m2
 barie			1e-1 nt/m2
 barleycorn		1|3 in
 barn			1e-28 m2
+\ oil barrel, nothing else
 barrel			42 gal
 barye			1e-1 nt/m2
+baryl			microbar
 bev			1e+9 e-volt
 biot			10 amp
 blondel			cd/pi-m2
@@ -387,7 +408,7 @@ equivalentlux		lumen/pi-m2
 equivalentphot		cd/pi-cm2
 erg			cm2-gm/sec2
 ev			e-volt
-faraday			9.652e+4 coul
+faraday			9.6485309e+4 coul
 fathom			6 ft
 fermi			1e-15 m
 fifth			4|5 qt
@@ -403,13 +424,15 @@ furlong			220 yd
 galileo			1e-2 m/sec2
 gamma			1e-9 weber/m2
 gauss			1e-4 weber/m2
+G			gauss
 geodeticfoot		british-ft
 geographicalmile	1852 m
-gilbert			7.95775e-1 amp
+gilbert			2.5 amp/pi
 gill			1|4 pt
 gross			144
 gunterschain		22 yd
 hand			4 in
+hartree			2 rydberg
 hectare			1e+4 m2
 hefnercandle		.92 cd
 hertz			/sec
@@ -417,7 +440,8 @@ Hz			hertz
 hogshead		2 barrel
 hd			hogshead
 homestead		1|4 mi2
-horsepower		550 ft-lb-g/sec
+/ horsepower is not uniquely defined
+horsepower		735.50 watt
 hp			horsepower
 hyl			gm force sec2/m
 hz			/sec
@@ -426,29 +450,33 @@ jeroboam		4|5 gal
 karat			1|24
 kcal			kilocal
 kcalorie		kilocal
-kev			1e+3 e-volt
 key			kg
-khz			1e+3 /sec
 kilderkin		18 gal
 knot			nmile/hr
+kn			knot
 lambert			cd/pi-cm2
+Lb			lambert
 langley			cal/cm2
 last			80 bu
 league			3 mi
 lightyear		c-yr
+ly			lightyear
 line			1|12 in
 link			66|100 ft
 longhundredweight	112 lb
 longquarter		28 lb
 lusec			1e-6 mm-hg m3/s
+m_earth			5.98e24 kg
+m_moon			7.34e22 kg
+m_sun			1.989e30 kg
 mach			331.46 m/sec
 magnum			2 qt
 marineleague		3 nmile
 maxwell			1e-8 weber
+Mx			maxwell
 metriccarat		200 mg
 mgd			megagal/day
 mh			millihenry
-mhz			1e+6 /sec
 mil			1e-3 in
 millenium		1000 year
 minersinch		1.5 ft3/min
@@ -462,26 +490,28 @@ nit			cd/m2
 noggin			1|8 qt
 nox			1e-3 lux
 ns			nanosec
-oersted			2.5e+2 pi-amp/m
-oe			oersted
+oersted			2.5e+2 amp/m/pi
+Oe			oersted
 pace			36 in
 palm			3 in
 parasang		3.5 mi
-parsec			au-radian/arcsec
+parsec			AU-radian/arcsec
 pascal			nt/m2
+Pa			pascal
 pc			parsec
 pennyweight		1|20 oz
 pwt			pennyweight
 percent			%
 perch			rd
-pf			picofarad
 phot			lumen/cm2
 pica			1|6 in
 pieze			1e+3 nt/m2
 pipe			4 barrel
 point			1|72 in
 poise			gm/cm-sec
+P			poise
 pole			rd
+pond			9.80665e-3 nt
 poundal			ft-lb/sec2
 pdl			poundal
 proof			1|200
@@ -495,11 +525,15 @@ ream			500
 registerton		100 ft3
 rehoboam		156 floz
 rhe			10 m2/nt-sec
+rem			0.01 J/kg
 rontgen			2.58e-4 curie/kg
+roentgen		rontgen
+R			roentgen
 rood			1.21e+3 yd
 rope			20 ft
 rutherford		1e+6 /sec
-rydberg			1.36054e+1 ev
+rydbergconst		0.5 electronmass-c-alpha2/planck
+rydberg			rydbergconst-planck-c
 sabin			1 ft2
 sack			3 bu
 seam			8 bu
@@ -519,6 +553,7 @@ square			100 ft2
 stere			m3
 sthene			1e+3 nt
 stilb			cd/cm2
+sb			stilb
 stoke			1e-4 m2/sec
 stone			14 lb
 strike			2 bu
@@ -529,6 +564,7 @@ surveyorslink		66|100 ft
 tablespoon		4 fldr
 teaspoon		4|3 fldr
 tesla			weber/m2
+T			tesla
 therm			1e+5 btu
 thermie			1e+6 cal
 timberfoot		ft3
@@ -540,7 +576,7 @@ tun			8 barrel
 water			gram g / cc
 wey			40 bu
 weymass			252 lb
-Xunit			1.00202e-13 m
+Xunit			1.00206e-13 m
 k			1.38047e-16 erg/degC
 
 
@@ -559,11 +595,6 @@ tex			.001 gram / m
 englishell		45 inch
 scottishell		37.2 inch
 flemishell		27 inch
-planck			6.626e-34 joule-sec
-hbar			1.055e-34 joule-sec
-electronmass		9.1095e-31 kg
-protonmass		1.6726e-27 kg
-neutronmass		1.6606e-27 kg
 V			volt
 eV			e V
 bohrradius		hbar2-C2/8.988e9 N m2-e2-electronmass
@@ -574,7 +605,7 @@ statamp			1|2.99792458e9 amp
 statvolt		2.99792458e2 volt
 statcoulomb		statcoul
 statampere		statamp
-debye			3.336e-30 coul-m
+debye			3.33564e-30 coul-m
 pulsatance		2 pi/sec
 rpm			rev/minute
 rps			rev/sec
@@ -608,4 +639,3 @@ linenyarncount		900 ft/pound
 worstedyarncount	1680 ft/pound
 metricyarncount		meter/gram
 jewlerspoint		2 milligram
-
