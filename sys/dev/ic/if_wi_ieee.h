@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.16 2002/10/27 16:20:48 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.17 2003/08/24 12:23:57 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -83,6 +83,8 @@ struct wi_req {
 #define WI_RID_IFACE_STATS	0x0100
 #define WI_RID_MGMT_XMIT	0x0200
 #define	WI_RID_MONITOR_MODE	0x0500
+#define WI_RID_SCAN_APS		0x0600
+#define WI_RID_READ_APS		0x0700
 
 struct wi_80211_hdr {
 	u_int16_t		frame_ctl;
@@ -225,6 +227,7 @@ struct wi_counters {
 #define	WI_RID_CNFAUTHMODE	0xFC2A
 #define	WI_RID_SYMBOL_KEYLENGTH	0xFC2B
 #define	WI_RID_ROAMING_MODE	0xFC2D /* Roaming mode (1:firm,3:disable) */
+#define WI_RID_CUR_BEACON_INT	0xFC33 /* beacon xmit time for BSS creation */
 #define	WI_RID_CNF_DBM_ADJUST	0xFC46 /* Get DBM adjustment factor */
 #define	WI_RID_SYMBOL_PREAMBLE	0xFC8C /* Enable/disable short preamble */
 #define	WI_RID_P2_SHORT_PREAMBLE	0xFCB0 /* Short preamble support */
@@ -341,6 +344,20 @@ struct wi_ltv_keys {
 #define WI_RID_AUTH_STATION	0xFCE3 /* Authenticates Station (AP) */
 #define WI_RID_CHANNEL_REQ	0xFCE4 /* Channel Information Request (AP) */
 #define WI_RID_SCAN_RES		0xFD88 /* Scan Results Table */
+
+struct wi_apinfo {
+	int			scanreason;	/* ScanReason */
+	char			bssid[6];	/* BSSID (mac address) */
+	int			channel;	/* Channel */
+	int			signal;		/* Signal level */
+	int			noise;		/* Average Noise Level*/
+	int			quality;	/* Quality */
+	int			namelen;	/* Length of SSID string */
+	char			name[32];	/* SSID string */
+	int			capinfo;	/* Capability info. */ 
+	int			interval;	/* BSS Beacon Interval */
+	int			rate;		/* Data Rate */
+};
 
 /*
  * The following do not get passed down to the card, they are used
