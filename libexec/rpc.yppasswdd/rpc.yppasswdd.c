@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: rpc.yppasswdd.c,v 1.7 1997/08/04 19:25:11 deraadt Exp $";
+static char rcsid[] = "$Id: rpc.yppasswdd.c,v 1.8 1997/08/05 02:26:50 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -40,6 +40,7 @@ static char rcsid[] = "$Id: rpc.yppasswdd.c,v 1.7 1997/08/04 19:25:11 deraadt Ex
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <pwd.h>
 #include <util.h>
