@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.172 2003/01/30 15:05:37 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.173 2003/02/01 14:37:04 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -721,7 +721,8 @@ therefore rules for redirected packets should specify the address and port
 after translation.
 .Pp
 Translation rules apply only to packets that pass through
-the specified interface.
+the specified interface, and if no interface is specified,
+translation is applied to packets on all interfaces.
 For instance, redirecting port 80 on an external interface to an internal
 web server will only work for connections originating from the outside.
 Connections to the address of the external interface from local hosts will
@@ -1849,17 +1850,17 @@ filteropt      = [ user ] | [ group ] | [ flags ] |
                  [ max-mss number ] [ fragmentation ] [ allow-opts ] |
                  [ label string ] | [ queue string ]
 
-nat-rule       = [ no ] nat on ifspec  [ af ] [ protospec ]
+nat-rule       = [ no ] nat [ on ifspec ] [ af ] [ protospec ]
                  from ipspec to ipspec [ portspec ]
                  [ -> ( redirhost | { redirhost-list } )
                  [ portspec ] ] [ pooltype ] [ static-port ]
 
-binat-rule     = [ no ] binat on interface-name [ af ]
+binat-rule     = [ no ] binat [ on interface-name ] [ af ]
                  [ proto ( proto-name | proto-number ) ]
                  from address [ / mask-bits ] to ipspec
                  [ -> address [ / mask-bits ] ]
 
-rdr-rule       = [ no ] rdr on ifspec [ af ] [ protospec ]
+rdr-rule       = [ no ] rdr [ on ifspec ] [ af ] [ protospec ]
                  from ipspec to ipspec [ portspec ]
                  [ -> ( redirhost | { redirhost-list } )
                  [ portspec ] ] [ pooltype ]
