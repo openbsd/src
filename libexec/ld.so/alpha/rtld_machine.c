@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.15 2002/08/23 22:57:03 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.16 2002/09/01 23:55:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -197,6 +197,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	symn = object->dyn.strtab + sym->st_name;
 
 	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
+	this = NULL;
 	ooff = _dl_find_symbol(symn, _dl_objects, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size);
 	if (this == NULL) {

@@ -296,6 +296,7 @@ _dl_bind(elf_object_t *object, int index)
 	symn = object->dyn.strtab + sym->st_name;
 
 	addr = (Elf_Word *)(object->load_offs + rel->r_offset);
+	this = NULL;
 	ooff = _dl_find_symbol(symn, _dl_objects, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, 0);
 	if (this == NULL) {
