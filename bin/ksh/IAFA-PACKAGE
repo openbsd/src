@@ -1,7 +1,7 @@
-$OpenBSD: IAFA-PACKAGE,v 1.6 1998/06/25 19:01:34 millert Exp $
+$OpenBSD: IAFA-PACKAGE,v 1.7 1999/07/14 13:37:23 millert Exp $
 
 Title:		pdksh
-Version:	5.2.13
+Version:	5.2.14
 Description:	A public domain implementation of the Korn shell (ksh88),
 		a UNIX command line interpreter / scripting language; the few
 		missing ksh features are being added and the shell is being
@@ -12,6 +12,7 @@ Author:		(Eric Gisin), (Charles Forsyth), (John R MacMillan),
 Maintained-by:	michael@cs.mun.ca (Michael Rendell)
 Maintained-at:	ftp://ftp.cs.mun.ca:/pub/pdksh/
 Platforms:	Written in C, runs on most UNIX boxes (uses GNU autoconf;
-		works best in a POSIX or BSD environment).  Also runs on OS/2.
+		works best in a POSIX or BSD environment).  Also runs on OS/2
+		and (using cygwin32 package) on win95/NT
 Copying-Policy:	Freely Redistributable (mostly public domain, some copyrighted)
 Keywords:	pdksh, ksh, Korn, shell, command line interpreter

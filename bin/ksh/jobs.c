@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.13 1999/01/19 20:41:53 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.14 1999/07/14 13:37:23 millert Exp $	*/
 
 /*
  * Process and job control
@@ -1850,10 +1850,14 @@ fill_command(c, len, t)
 	char		**ap;
 
 	if (t->type == TEXEC || t->type == TCOM) {
+		/* Causes problems when set -u is in effect, can also
+		   cause problems when array indices evaluated (may have
+		   side effects, eg, assignment, incr, etc.)
 		if (t->type == TCOM)
 			ap = eval(t->args, DOBLANK|DONTRUNCOMMAND);
 		else
-			ap = t->args;
+		*/
+		ap = t->args;
 		--len; /* save room for the null */
 		while (len > 0 && *ap != (char *) 0) {
 			alen = strlen(*ap);

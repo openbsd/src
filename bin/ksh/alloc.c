@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.3 1998/06/29 20:06:19 deraadt Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.4 1999/07/14 13:37:23 millert Exp $	*/
 
 /*
  * area-based allocation built on malloc/free
@@ -171,7 +171,7 @@ alloc(size, ap)
 	ACHECK(ap);
 	if (size <= 0)
 		aerror(ap, "allocate bad size");
-	cells = (unsigned)(size - 1) / sizeof(Cell) + 1;
+	cells = (unsigned)(size + sizeof(Cell) - 1) / sizeof(Cell);
 
 	/* allocate at least this many cells */
 	acells = cells + NOBJECT_FIELDS;

@@ -1,4 +1,4 @@
-$OpenBSD: PROJECTS,v 1.4 1998/06/25 19:01:38 millert Exp $
+$OpenBSD: PROJECTS,v 1.5 1999/07/14 13:37:23 millert Exp $
 
 Things to be done in pdksh (see also the NOTES file):
 
@@ -9,18 +9,18 @@ Things to be done in pdksh (see also the NOTES file):
 
       The following builtins, which are defined by POSIX, haven't been
       examined:
-	eval time
+	eval
 
       The first pass has been done on the following commands:
 	. : alias bg break cd continue echo exec exit export false fc fg
-	getopts jobs kill pwd read readonly return set shift trap true umask
-	unalias unset wait
+	getopts jobs kill pwd read readonly return set shift time trap true
+	umask unalias unset wait
 
       The second pass (ie, believed to be completely POSIX) has been done on
       the following commands:
 	test
 
-      (ulimit also needs to be examined to check it fits the posix style)
+      (ulimit also needs to be examined to check that it fits the posix style)
 
     * test suite
       Ideally, as the builtin utilities are being POSIXized, short tests

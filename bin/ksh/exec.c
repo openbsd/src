@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.18 1999/06/23 10:30:51 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.19 1999/07/14 13:37:23 millert Exp $	*/
 
 /*
  * execute command tree
@@ -96,7 +96,7 @@ execute(t, flags)
 	}
 	 */
 	if ((flags&XFORK) && !(flags&XEXEC) && t->type != TPIPE)
-		return exchild(t, flags, -1); /* run in sub-process */
+		return exchild(t, flags & ~XTIME, -1); /* run in sub-process */
 
 	newenv(E_EXEC);
 	if (trap)
@@ -114,6 +114,9 @@ execute(t, flags)
 		 * and assignments last..
 		 */
 		ap = eval(t->args, t->u.evalflags | DOBLANK | DOGLOB | DOTILDE);
+		if (flags & XTIME)
+			/* Allow option parsing (bizarre, but POSIX) */
+			timex_hook(t, &ap);
 		if (Flag(FXTRACE) && ap[0]) {
 			shf_fprintf(shl_out, "%s",
 				PS4_SUBSTITUTE(str_val(global("PS4"))));
@@ -125,6 +128,7 @@ execute(t, flags)
 		if (ap[0])
 			tp = findcom(ap[0], FC_BI|FC_FUNC);
 	}
+	flags &= ~XTIME;
 
 	if (t->ioact != NULL || t->type == TPIPE || t->type == TCOPROC) {
 		e->savefd = (short *) alloc(sizeofN(short, NUFILE), ATEMP);

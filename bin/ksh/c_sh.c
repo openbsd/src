@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.12 1999/06/15 01:18:33 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.13 1999/07/14 13:37:23 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -430,15 +430,34 @@ c_eval(wp)
 		return 1;
 	s = pushs(SWORDS, ATEMP);
 	s->u.strv = wp + builtin_opt.optind;
-	/*
-	 * Handle case where command is empty due to failed
-	 * command substitution, eg, eval "$(false)".
-	 * In this case, shell() will not set/change exstat (cause
-	 * compiled tree is empty), so will use this value.  subst_exstat
-	 * is cleared in execute(), so should be 0 if there were no
-	 * substitutions.
-	 */
-	exstat = subst_exstat;
+	if (!Flag(FPOSIX)) {
+		/*
+		 * Handle case where the command is empty due to failed
+		 * command substitution, eg, eval "$(false)".
+		 * In this case, shell() will not set/change exstat (because
+		 * compiled tree is empty), so will use this value.
+		 * subst_exstat is cleared in execute(), so should be 0 if
+		 * there were no substitutions.
+		 *
+		 * A strict reading of POSIX says we don't do this (though
+		 * it is traditionally done). [from 1003.2-1992]
+		 *    3.9.1: Simple Commands
+		 *	... If there is a command name, execution shall
+		 *	continue as described in 3.9.1.1.  If there
+		 *	is no command name, but the command contained a command
+		 *	substitution, the command shall complete with the exit
+		 *	status of the last command substitution
+		 *    3.9.1.1: Command Search and Execution
+		 *	...(1)...(a) If the command name matches the name of
+		 *	a special built-in utility, that special built-in
+		 *	utility shall be invoked.
+		 * 3.14.5: Eval
+		 *	... If there are no arguments, or only null arguments,
+		 *	eval shall return an exit status of zero.
+		 */
+		exstat = subst_exstat;
+	}
+
 	return shell(s, FALSE);
 }
 
@@ -696,15 +715,15 @@ timex(t, f)
 	struct op *t;
 	int f;
 {
-#define TF_NONE		0
+#define TF_NOARGS	BIT(0)
 #define TF_NOREAL	BIT(1)		/* don't report real time */
 #define TF_POSIX	BIT(2)		/* report in posix format */
-	int rv;
+	int rv = 0;
 	struct tms t0, t1, tms;
-	clock_t t0t, t1t;
-	clock_t real;
-	int tf = TF_NONE;
+	clock_t t0t, t1t = 0;
+	int tf = 0;
 	extern clock_t j_usrtime, j_systime; /* computed by j_wait */
+	char opts[1];
 
 	t0t = ksh_times(&t0);
 	if (t->left) {
@@ -717,30 +736,70 @@ timex(t, f)
 		 * really work as it only counts the last job).
 		 */
 		j_usrtime = j_systime = 0;
-		rv = execute(t->left, f);
+		if (t->left->type == TCOM)
+			t->left->str = opts;
+		opts[0] = 0;
+		rv = execute(t->left, f | XTIME);
+		tf |= opts[0];
 		t1t = ksh_times(&t1);
-		real = t1t - t0t;
-		tms.tms_utime = t1.tms_utime - t0.tms_utime + j_usrtime;
-		tms.tms_stime = t1.tms_stime - t0.tms_stime + j_systime;
-	} else { /* ksh93 - report shell times (shell+kids) */
+	} else
+		tf = TF_NOARGS;
+
+	if (tf & TF_NOARGS) { /* ksh93 - report shell times (shell+kids) */
 		tf |= TF_NOREAL;
-		real = 0;
 		tms.tms_utime = t0.tms_utime + t0.tms_cutime;
 		tms.tms_stime = t0.tms_stime + t0.tms_cstime;
-		rv = 0;
+	} else {
+		tms.tms_utime = t1.tms_utime - t0.tms_utime + j_usrtime;
+		tms.tms_stime = t1.tms_stime - t0.tms_stime + j_systime;
 	}
 
 	if (!(tf & TF_NOREAL))
 		shf_fprintf(shl_out,
 			tf & TF_POSIX ? "real %8s\n" : "%8ss real ",
-			clocktos(real));
+			clocktos(t1t - t0t));
 	shf_fprintf(shl_out, tf & TF_POSIX ? "user %8s\n" : "%8ss user ",
 		clocktos(tms.tms_utime));
-	shf_fprintf(shl_out, tf & TF_POSIX ? "user %8s\n" : "%8ss system\n",
+	shf_fprintf(shl_out, tf & TF_POSIX ? "sys  %8s\n" : "%8ss system\n",
 		clocktos(tms.tms_stime));
 	shf_flush(shl_out);
 
 	return rv;
+}
+
+void
+timex_hook(t, app)
+	struct op *t;
+	char ** volatile *app;
+{
+	char **wp = *app;
+	int optc;
+	int i, j;
+	Getopt opt;
+
+	ksh_getopt_reset(&opt, 0);
+	opt.optind = 0;	/* start at the start */
+	while ((optc = ksh_getopt(wp, &opt, ":p")) != EOF)
+		switch (optc) {
+		  case 'p':
+			t->str[0] |= TF_POSIX;
+			break;
+		  case '?':
+			errorf("time: -%s unknown option", opt.optarg);
+		  case ':':
+			errorf("time: -%s requires an argument",
+				opt.optarg);
+		}
+	/* Copy command words down over options. */
+	if (opt.optind != 0) {
+		for (i = 0; i < opt.optind; i++)
+			afree(wp[i], ATEMP);
+		for (i = 0, j = opt.optind; (wp[i] = wp[j]); i++, j++)
+			;
+	}
+	if (!wp[0])
+		t->str[0] |= TF_NOARGS;
+	*app = wp;
 }
 
 static char *

@@ -1,3 +1,44 @@
+Tue Jul 13 14:32:57 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* made pdksh-5.2.14 distribution
+
+Wed Jun 30 17:42:54 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* c_test.c(test_eval): changed -nt/-ot tests so they succeed
+	  if file2 (file2) `does not exist' (ie, the stat fails).
+	  (based on fix from Dave Hillman).
+
+Tue May 25 17:23:39 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* jobs.c(fill_command): do not eval() TCOM arguments - can cause
+	  problems.
+
+Tue May 25 15:26:31 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* new-version.sh,ksh.Man: added version number to man page; update
+	  version as well as date when updating tests/version.t and ksh.Man.
+
+Mon May 24 20:57:21 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* c_sh.c(c_eval): only set exstat to substs_exstat if in non-posix mode.
+
+Mon May 24 15:44:10 NDT 1999 Michael Rendell (michael@lyman.cs.mun.ca)
+
+	* tree.h(FTIME): new define.
+	* c_sh.c(timex): stuff to get info to/from timex_hook.
+	* c_sh.c(timex_hook): new function (handles option processing).
+	* exec.c(execute): call timex_hook() after TCOM eval().
+
+Tue May 18 12:23:27 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* vi.c(vi_hook): case VREDO: removed != 0 from switch expression.
+
+Tue May 18 11:24:12 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
+
+	* emacs.c(CHARMASK,X_TABSZ): changed from 128 to 256.
+	* emacs.c(x_size,x_zotc,x_mapout): use iscntl() vs range test.
+	  (Based on changes from Martin Dalecki)
+
 Thu May 13 17:23:17 NDT 1999 Michael Rendell (michael@deimos.cs.mun.ca)
 
 	* emacs.c(x_bound,bind_if_not_bound): new variable/fucntion.
@@ -486,7 +527,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.11 1999/06/15 01:18:32 millert Exp $
+$OpenBSD: ChangeLog,v 1.12 1999/07/14 13:37:23 millert Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

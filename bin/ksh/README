@@ -1,11 +1,11 @@
-$OpenBSD: README,v 1.8 1999/06/15 01:18:33 millert Exp $
+$OpenBSD: README,v 1.9 1999/07/14 13:37:23 millert Exp $
 
-Last updated October '97 for pdksh-5.2.13.
+Last updated Jul '99 for pdksh-5.2.14.
 	(check ftp://ftp.cs.mun.ca:/pub/pdksh/ or
 	 http://www.cs.mun.ca/~michael/pdksh/ for new versions/patches)
 
 PD-ksh is a mostly complete AT&T ksh look-alike (see NOTES file for a list
-of things not supported).  Work is currently underway to make it fully
+of things not supported).  Work is mostly finished to make it fully
 compatible with both POSIX and AT&T ksh (when the two don't conflict).
 
 Since pdksh is free and compiles and runs on most common unix systems, it
@@ -142,7 +142,7 @@ The following is a list of machines that pdksh is reported to work on:
     -/PC Linux 1.x,2.x
     -/PC NetBSD 0.9a
     -/PC BSDI 1.1
-    -/PC FreeBSD 2.0, 2.1
+    -/PC FreeBSD 2.x, 3.x
     -/PC OpenBSD
     -/PC Interactive/Sunsoft 3.0.1 and 4.1 (note that problems have been
 	    reported with isc3.2 - see the BUG-REPORTS file)
@@ -190,7 +190,7 @@ as well as the following, if relevant (if you aren't sure, include them)
 	* the contents of config.log (this is created by the configure script)
 	* if you are using gcc (the GNU C compiler), which version it is.
 
-BTW, the most frequently reported bug is
+BTW, THE MOST FREQUENTLY REPORTED BUG IS
 	echo hi | read a; echo $a	# Does not print hi
 I'm aware of this and there is no need to report it.
 

@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.11 1999/06/15 01:18:32 millert Exp $
+$OpenBSD: BUG-REPORTS,v 1.12 1999/07/14 13:37:23 millert Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -93,6 +93,15 @@ problems believed to be fixed marked by x.
   Happens since code doesn't distinguish between globbing and ~ (needs
   special case to strip & replace a leading ~ during the completion
   process).
+
+* pdksh 5.2.13, (reported by Martin Dalecki): shell dumps core when set -x
+  is used on some scripts
+  [awaiting more info...]
+
+* pdksh 5.2.13, (reported by Arthor Pool): interactive shells can't be
+  interrupted when processing ${foo#bar} expressions.
+  [same goes for globbing - fixing this means checking for interrupts in
+  the `tight' loops - could slow things down quite a bit]
 
 --------------------- put fixed problems below this line ---------------------
 
@@ -1354,4 +1363,36 @@ x pdksh 5.2.13, (reported by David J. McMahon): here documents in subshells
 x pdksh 5.2.13, (reported by Seiichi Namba): emacs: keys bound in .profile/$ENV
   are overridden by stty settings (eg, binding ^U in .profile has no effect).
   [fixed in 5.2.14: emacs.c: added x_bound array to track what user has set.]
+
+x pdksh 5.2.13: vi: failed redo (.) commands caused line to be returned to the
+  shell (eg, "echo hi/there^[Bdf/.").
+  [fixed in 5.2.14: vi.c(vi_hook): removed !=0 from VREDO switch expression]
+
+x pdksh 5.2.13, (reported by Arthor Pool): man page: (a) the time reserved
+  word is not described; (b) description of command line wrapping is in vi
+  section only (not in emacs); (c) limit on array indicies not mentioned;
+  (d) ignoreeof ignored if eof read 13 times.
+  [fixed in 5.2.14: man page updated]
+
+x pdksh 5.2.13, (reported by Arthor Pool): set -u causes loss of stdout
+  when command substitution with undefined parameter reference is run
+  in an interactive shell.
+  [fixed in 5.2.14: jobs.c(fill_command): don't eval TCOM arguments]
+
+  XXX fd 1 lost (general fd pool handler?, error handler for comsub?)
+
+  AP messages:
+      time not descr
+      vi/emacs <+>
+      trap
+      typeset -f ... "$(jasdsjh)" ...
+      array
+      os2 interrupts + pattern 
+      ignoreeof
+      set -A --
+      set -u -> comsub errors & fill_command eval
+
+x pdksh 5.2.13, (reported by Dave Hillman): test -nt
+  and test -ot do not succeed if file2 (file2) does not exist.
+  [fixed in 5.2.14: c_test.c(test_eval): return true if appropriate stat fails]
 

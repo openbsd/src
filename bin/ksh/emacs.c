@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.9 1999/06/15 01:18:33 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.10 1999/07/14 13:37:23 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -41,7 +41,7 @@ typedef unsigned char Findex;
 
 struct x_defbindings {
 	Findex		xdb_func;	/* XFUNC_* */
-	char		xdb_tab;
+	unsigned char	xdb_tab;
 	unsigned char	xdb_char;
 };
 
@@ -58,14 +58,13 @@ struct x_defbindings {
    * changes increase memory usage from 9,216 bytes to 24,416 bytes...)
    */
 # define CHARMASK	0xFF		/* 8-bit ASCII character mask */
-# define X_TABSZ	256		/* size of keydef tables etc */
 # define X_NTABS	4		/* normal, meta1, meta2, meta3 */
 static int	x_prefix3 = 0xE0;
 #else /* OS2 */
-# define CHARMASK	0x7F		/* 7-bit ASCII character mask */
-# define X_TABSZ	128		/* size of keydef tables etc */
+# define CHARMASK	0xFF		/* 8-bit character mask */
 # define X_NTABS	3		/* normal, meta1, meta2 */
 #endif /* OS2 */
+#define X_TABSZ		(CHARMASK+1)	/* size of keydef tables etc */
 
 /* Arguments for do_complete()
  * 0 = enumerate  M-= complete as much as possible and then list
@@ -702,7 +701,7 @@ x_size(c)
 {
 	if (c=='\t')
 		return 4;	/* Kludge, tabs are always four spaces. */
-	if (c < ' ' || c == 0x7F) /* ASCII control char */
+	if (iscntrl(c))		/* control char */
 		return 2;
 	return 1;
 }
@@ -725,7 +724,7 @@ x_zotc(c)
 	if (c == '\t')  {
 		/*  Kludge, tabs are always four spaces.  */
 		x_e_puts("    ");
-	} else if (c < ' ' || c == 0x7F)  { /* ASCII */
+	} else if (iscntrl(c))  {
 		x_e_putc('^');
 		x_e_putc(UNCTRL(c));
 	} else
@@ -1343,14 +1342,15 @@ x_mapout(c)
 	static char buf[8];
 	register char *p = buf;
 
-	if (c < ' ' || c == 0x7F)  { /* ASCII */
-		*p++ = '^';
-		*p++ = (c == 0x7F) ? '?' : (c | 0x40);
 #ifdef OS2
-	} else if (c == 0xE0) {
+	if (c == 0xE0) {
 		*p++ = '^';
 		*p++ = '0';
+	} else
 #endif /* OS2 */
+	if (iscntrl(c))  {
+		*p++ = '^';
+		*p++ = UNCTRL(c);
 	} else
 		*p++ = c;
 	*p = 0;

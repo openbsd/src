@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.7 1999/06/15 01:18:35 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.8 1999/07/14 13:37:24 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -45,6 +45,7 @@ int 	c_unset		ARGS((char **wp));
 int 	c_ulimit	ARGS((char **wp));
 int 	c_times		ARGS((char **wp));
 int 	timex		ARGS((struct op *t, int f));
+void	timex_hook	ARGS((struct op *t, char ** volatile *app));
 int 	c_exec		ARGS((char **wp));
 int 	c_builtin	ARGS((char **wp));
 /* c_test.c */

@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.8 1999/06/15 01:18:32 millert Exp $
+$OpenBSD: CONTRIBUTORS,v 1.9 1999/07/14 13:37:23 millert Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -125,3 +125,5 @@ Other contributors:
     * Mark Funkenhauser <mark@interix.com>: added $LINENO support.
     * Corinna Vinschen <Corinna@Vinschen.de> and Steven Hein <ssh@sgi.com>:
       port to cyngin environment on win95/winnt.
+    * Martin Dalecki <dalecki@cs.net.pl>: changes for 8 bit emacs mode.
+    * Dave Hillman <daveh@gte.net>: patch for bug in test -nt.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.6 1999/01/08 20:25:03 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.7 1999/07/14 13:37:24 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -504,7 +504,7 @@ vi_hook(ch)
 		state = VNORMAL;
 		if (argc1 != 0)
 			lastac = argc1;
-		switch (vi_cmd(lastac, lastcmd) != 0) {
+		switch (vi_cmd(lastac, lastcmd)) {
 		case -1:
 			vi_error();
 			refresh(0);
@@ -526,8 +526,8 @@ vi_hook(ch)
 			refresh(0);
 			return 1;
 		case 2:
-			/* back from a 'v' command - don't redraw the screen */
-			return 1;
+			/* back from a 'v' command - can't happen */
+			break;
 		}
 		break;
 
