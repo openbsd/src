@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.5 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.6 1999/09/30 03:23:59 pjanzen Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.5 1999/09/25 15:52:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.6 1999/09/30 03:23:59 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -251,6 +251,8 @@ mustpick:
 		    && !isrepair(pp->battle))
 			return error("cannot play \"Go\" on a \"%s\"",
 			    C_name[pp->battle]);
+		if (pp->safety[S_RIGHT_WAY] == S_PLAYED)
+			return error("\"Go\" implied by \"Right of Way\"");
 		pp->battle = C_GO;
 		pp->can_go = TRUE;
 		break;
@@ -321,10 +323,12 @@ protected:
 				pp->speed = C_INIT;
 			if (pp->battle == C_STOP || pp->battle == C_INIT) {
 				pp->can_go = TRUE;
-				pp->battle = C_INIT;
+				pp->battle = C_GO;
 			}
-			if (!pp->can_go && isrepair(pp->battle))
+			if (!pp->can_go && isrepair(pp->battle)) {
 				pp->can_go = TRUE;
+				pp->battle = C_GO;
+			}
 		}
 		Next = -1;
 		break;
