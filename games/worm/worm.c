@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.10 2000/01/25 07:06:41 pjanzen Exp $	*/
+/*	$OpenBSD: worm.c,v 1.11 2001/02/18 18:22:26 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.10 2000/01/25 07:06:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.11 2001/02/18 18:22:26 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: worm.c,v 1.10 2000/01/25 07:06:41 pjanzen Exp $
 #include <err.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
