@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 2000/01/12 05:51:02 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 2000/01/17 00:30:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -66,13 +66,13 @@
 #define	FAULT_TYPE(op)	(VM_PROT_READ|(inst_store(op) ? VM_PROT_WRITE : 0))
 
 const char *trap_type[] = {
-	"invalid interrupt vector",
-	"high priority machine check",
+	"invalid",
+	"HPMC",
 	"power failure",
 	"recovery counter",
 	"external interrupt",
-	"low-priority machine check",
-	"instruction TLB miss fault",
+	"LPMC",
+	"ITLB miss fault",
 	"instruction protection",
 	"Illegal instruction",
 	"break instruction",
@@ -81,19 +81,19 @@ const char *trap_type[] = {
 	"overflow",
 	"conditional",
 	"assist exception",
-	"data TLB miss",
+	"DTLB miss",
 	"ITLB non-access miss",
 	"DTLB non-access miss",
 	"data protection/rights/alignment",
 	"data break",
-	"TLB dirty bit",
+	"TLB dirty",
 	"page reference",
 	"assist emulation",
-	"higher-privelege transfer",
-	"lower-privilege transfer",
+	"higher-priv transfer",
+	"lower-priv transfer",
 	"taken branch",
 	"data access rights",
-	"data protection ID",
+	"data protection",
 	"unaligned data ref",
 };
 int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
@@ -184,8 +184,7 @@ trap(type, frame)
 	else
 		tts = trap_type[type & ~T_USER];
 
-	if ((type & ~T_USER) != T_INTERRUPT &&
-	    (type & ~T_USER) != T_IBREAK)
+	if (type != T_INTERRUPT && (type & ~T_USER) != T_IBREAK)
 		db_printf("trap: %d, %s for %x:%x at %x:%x, fl=%x, fp=%p\n",
 		    type, tts, space, va, frame->tf_iisq_head,
 		    frame->tf_iioq_head, frame->tf_flags, frame);
@@ -193,6 +192,12 @@ trap(type, frame)
 		db_printf("trap: break instruction %x:%x at %x:%x, fp=%p\n",
 		    break5(opcode), break13(opcode),
 		    frame->tf_iisq_head, frame->tf_iioq_head, frame);
+
+	{
+		extern int etext;
+		if (frame < (struct trapframe *)&etext)
+			goto dead_end;
+	}
 #endif
 	switch (type) {
 	case T_NONEXIST:
@@ -303,7 +308,7 @@ trap(type, frame)
 			goto dead_end;
 
 		/*
-		 * if could be a kernel map for exec_map faults
+		 * it could be a kernel map for exec_map faults
 		 */
 		if (!(type & T_USER) && space == HPPA_SID_KERNEL)
 			map = kernel_map;
