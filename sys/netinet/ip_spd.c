@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.3 2000/09/27 07:28:24 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.4 2000/09/29 19:46:26 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -137,6 +137,13 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	    {
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
+		    /* Make sure there's enough data in the packet */
+		    if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t))
+		    {
+			*error = EINVAL;
+			return NULL;
+		    }
+
 		    /*
 		     * Luckily, the offset of the src/dst ports in both the UDP
 		     * and TCP headers is the same (first two 16-bit values
@@ -181,6 +188,13 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	    {
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
+		    /* Make sure there's enough data in the packet */
+		    if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t))
+		    {
+			*error = EINVAL;
+			return NULL;
+		    }
+
 		    /*
 		     * Luckily, the offset of the src/dst ports in both the UDP
 		     * and TCP headers is the same (first two 16-bit values
