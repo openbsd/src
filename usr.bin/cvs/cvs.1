@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.13 2004/12/08 00:08:18 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.14 2004/12/08 00:43:44 jfb Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -277,8 +277,12 @@ Aliases:
 Causes
 .Nm
 to print its version information.
-If this command is issued within a local copy of a repository located on
-another machine,
+If this command is issued within a local copy of a remote repository or
+if either the
+.Ev CVSROOT
+environment variable or the
+.Fl d
+flag specify a remote repository,
 .Nm
 will also connect to the server and ask it to print its version information.
 .Pp
