@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 1996/12/28 06:22:03 rahnds Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 1997/01/21 17:00:09 rahnds Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1003,7 +1003,7 @@ s_isitrap:
 	stw	30,32(1);		/* saved XER */			\
 	lmw	28,tempsave(0);		/* restore r28-r31 */		\
 	mfctr	6;							\
-	li	5,_C_LABEL(intr_depth)@ha;				\
+	lis	5,_C_LABEL(intr_depth)@ha;				\
 	lwz	5,_C_LABEL(intr_depth)@l(5);				\
 	mfsrr0	4;							\
 	mfsrr1	3;							\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 1997/01/09 21:19:02 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 1997/01/21 17:00:10 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ avail_end = npgs * NBPG;
 	for (i = 0; i < 16; i++) {
 		pmap_kernel()->pm_sr[i] = EMPTY_SEGMENT;
 		asm volatile ("mtsrin %0,%1"
-			      :: "r"(i << ADDR_SR_SHFT), "r"(EMPTY_SEGMENT));
+			      :: "r"(EMPTY_SEGMENT), "r"(i << ADDR_SR_SHFT) );
 	}
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
 	asm volatile ("mtsr %0,%1"
