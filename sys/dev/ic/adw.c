@@ -301,7 +301,7 @@ adw_create_carriers(sc)
 		}
 		carr->next_vpa = carr_next;
 		carr_next = carr->carr_pa;
-carr->id = i;
+		carr->id = i;
 	}
 	sc->carr_freelist = carr;
 	return (i);
@@ -1021,9 +1021,11 @@ adw_intr(arg)
 	         */
 	        if ((xs = sc->sc_queue.lh_first) != NULL)
 			(void) adw_scsi_cmd(xs);
+
+		return (1);
 	}
 
-	return (1);
+	return (0);
 }
 
 
@@ -1098,7 +1100,7 @@ adw_timeout(arg)
 
 
 /*
- * adw__isr_callback() - Second Level Interrupt Handler called by AdvISR()
+ * adw_isr_callback() - Second Level Interrupt Handler called by AdvISR()
  *
  * Interrupt callback function for the Wide SCSI Adv Library.
  */
