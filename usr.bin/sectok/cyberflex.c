@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.19 2001/08/15 21:11:29 rees Exp $ */
+/* $Id: cyberflex.c,v 1.20 2001/08/24 17:27:57 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -813,13 +813,7 @@ int jload(int ac, char *av[])
 int junload(int ac, char *av[])
 {
     char progname[5], contname[5];
-    int i, vflag = 0, sw;
-
-    /* Use old defaults */
-    if (progID[0] == 0)
-	memcpy(progID, "ww", 2);
-    if (contID[0] == 0)
-	memcpy(contID, "wx", 2);
+    int i, vflag = 0, gotprog = 0, gotcont = 0, sw;
 
     optind = optreset = 1;
 
@@ -827,9 +821,11 @@ int junload(int ac, char *av[])
 	switch (i) {
 	case 'p':
 	    sectok_parse_input(optarg, progID, 2);
+	    gotprog = 1;
 	    break;
 	case 'c':
 	    sectok_parse_input(optarg, contID, 2);
+	    gotcont = 1;
 	    break;
 	case 'v':
 	    vflag = 1;
@@ -839,6 +835,26 @@ int junload(int ac, char *av[])
 	    return -1;
 	}
     }
+
+    if (ac - optind >= 1) {
+	/* Derive progID and contID from filename */
+	if (!gotprog) {
+	    progID[0] = av[optind][0];
+	    progID[1] = 'p';
+	    gotprog = 1;
+	}
+	if (!gotcont) {
+	    contID[0] = av[optind][0];
+	    contID[1] = 'c';
+	    gotcont = 1;
+	}
+    }
+
+    /* Use old defaults */
+    if (!gotprog)
+	memcpy(progID, "ww", 2);
+    if (!gotcont)
+	memcpy(contID, "wx", 2);
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
