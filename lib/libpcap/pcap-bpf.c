@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.15 2004/01/27 06:58:03 tedu Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.16 2004/02/06 22:41:24 tedu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -197,6 +197,8 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		    "kernel bpf filter out of date");
 		goto bad;
 	}
+#if 0
+	/* Just use the kernel default */
 	v = 32768;	/* XXX this should be a user-accessible hook */
 	/* Ignore the return value - this is because the call fails on
 	 * BPF systems that don't have kernel malloc.  And if the call
@@ -204,6 +206,7 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	 * buffer size.
 	 */
 	(void) ioctl(fd, BIOCSBLEN, (caddr_t)&v);
+#endif
 
 	(void)strlcpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
