@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.49 2003/04/14 13:08:42 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.50 2003/05/14 18:08:27 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ rehash_timers (void)
 {
 #if 0
   /* XXX - not yet */
-  log_print ("SIGUSR2 received, rehasing soft expiration timers.");
+  log_print ("SIGUSR2 received, rehashing soft expiration timers.");
 
   timer_rehash_timers ();
 #endif
