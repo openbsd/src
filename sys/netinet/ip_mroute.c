@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip_mroute.c,v 1.3 1996/04/21 22:29:02 deraadt Exp $	*/
-/*	$NetBSD: ip_mroute.c,v 1.26 1996/03/16 23:54:00 christos Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.4 1996/05/10 12:31:19 deraadt Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -558,8 +558,7 @@ add_vif(m)
 		/* Create a fake encapsulation interface. */
 		ifp = (struct ifnet *)malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK);
 		bzero(ifp, sizeof(*ifp));
-		ifp->if_name = "mdecap";
-		ifp->if_unit = vifcp->vifc_vifi;
+		sprintf(ifp->if_xname, "mdecap%d", vifcp->vifc_vifi);
 
 		/* Prepare cached route entry. */
 		bzero(&vifp->v_route, sizeof(vifp->v_route));
@@ -975,10 +974,10 @@ ip_mforward(m, ifp)
 	    ip->ip_ttl++;	/* compensate for -1 in *_send routines */
 	if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
 	    vifp = viftable + vifi;
-	    printf("Sending IPPROTO_RSVP from %x to %x on vif %d (%s%s%d)\n",
+	    printf("Sending IPPROTO_RSVP from %x to %x on vif %d (%s%s)\n",
 		ntohl(ip->ip_src), ntohl(ip->ip_dst), vifi,
 		(vifp->v_flags & VIFF_TUNNEL) ? "tunnel on " : "",
-		vifp->v_ifp->if_name, vifp->v_ifp->if_unit);
+		vifp->v_ifp->if_xname);
 	}
 	return (ip_mdq(m, ifp, rt, vifi));
     }

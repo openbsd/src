@@ -1,5 +1,5 @@
-/*	$OpenBSD: ppp_tty.c,v 1.3 1996/04/21 22:28:42 deraadt Exp $	*/
-/*	$NetBSD: ppp_tty.c,v 1.5 1996/03/15 02:28:10 paulus Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.4 1996/05/10 12:31:13 deraadt Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.6 1996/05/07 02:40:51 thorpej Exp $	*/
 
 /*
  * ppp_tty.c - Point-to-Point Protocol (PPP) driver for asynchronous
@@ -784,7 +784,7 @@ pppinput(c, tp)
     if (c & TTY_FE) {
 	/* framing error or overrun on this char - abort packet */
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("ppp%d: bad char %x\n", sc->sc_if.if_unit, c);
+	    printf("%s: bad char %x\n", sc->sc_if.if_xname, c);
 	goto flush;
     }
 
@@ -837,7 +837,7 @@ pppinput(c, tp)
 	    sc->sc_flags |= SC_PKTLOST;	/* note the dropped packet */
 	    if ((sc->sc_flags & (SC_FLUSH | SC_ESCAPED)) == 0){
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("ppp%d: bad fcs %x\n", sc->sc_if.if_unit,
+		    printf("%s: bad fcs %x\n", sc->sc_if.if_xname,
 			   sc->sc_fcs);
 		sc->sc_if.if_ierrors++;
 		sc->sc_stats.ppp_ierrors++;
@@ -850,7 +850,7 @@ pppinput(c, tp)
 	if (ilen < PPP_HDRLEN + PPP_FCSLEN) {
 	    if (ilen) {
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("ppp%d: too short (%d)\n", sc->sc_if.if_unit, ilen);
+		    printf("%s: too short (%d)\n", sc->sc_if.if_xname, ilen);
 		sc->sc_if.if_ierrors++;
 		sc->sc_stats.ppp_ierrors++;
 		sc->sc_flags |= SC_PKTLOST;
@@ -919,7 +919,7 @@ pppinput(c, tp)
 	    pppgetm(sc);
 	    if (sc->sc_m == NULL) {
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("ppp%d: no input mbufs!\n", sc->sc_if.if_unit);
+		    printf("%s: no input mbufs!\n", sc->sc_if.if_xname);
 		goto flush;
 	    }
 	}
@@ -932,8 +932,8 @@ pppinput(c, tp)
 	if (c != PPP_ALLSTATIONS) {
 	    if (sc->sc_flags & SC_REJ_COMP_AC) {
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("ppp%d: garbage received: 0x%x (need 0xFF)\n",
-			   sc->sc_if.if_unit, c);
+		    printf("%s: garbage received: 0x%x (need 0xFF)\n",
+			   sc->sc_if.if_xname, c);
 		goto flush;
 	    }
 	    *sc->sc_mp++ = PPP_ALLSTATIONS;
@@ -944,8 +944,8 @@ pppinput(c, tp)
     }
     if (sc->sc_ilen == 1 && c != PPP_UI) {
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("ppp%d: missing UI (0x3), got 0x%x\n",
-		   sc->sc_if.if_unit, c);
+	    printf("%s: missing UI (0x3), got 0x%x\n",
+		   sc->sc_if.if_xname, c);
 	goto flush;
     }
     if (sc->sc_ilen == 2 && (c & 1) == 1) {
@@ -956,7 +956,7 @@ pppinput(c, tp)
     }
     if (sc->sc_ilen == 3 && (c & 1) == 0) {
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("ppp%d: bad protocol %x\n", sc->sc_if.if_unit,
+	    printf("%s: bad protocol %x\n", sc->sc_if.if_xname,
 		   (sc->sc_mp[-1] << 8) + c);
 	goto flush;
     }
@@ -964,7 +964,7 @@ pppinput(c, tp)
     /* packet beyond configured mru? */
     if (++sc->sc_ilen > sc->sc_mru + PPP_HDRLEN + PPP_FCSLEN) {
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("ppp%d: packet too big\n", sc->sc_if.if_unit);
+	    printf("%s: packet too big\n", sc->sc_if.if_xname);
 	goto flush;
     }
 
@@ -975,7 +975,7 @@ pppinput(c, tp)
 	    pppgetm(sc);
 	    if (m->m_next == NULL) {
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("ppp%d: too few input mbufs!\n", sc->sc_if.if_unit);
+		    printf("%s: too few input mbufs!\n", sc->sc_if.if_xname);
 		goto flush;
 	    }
 	}
@@ -1014,7 +1014,7 @@ ppplogchar(sc, c)
 	sc->sc_rawin[sc->sc_rawin_count++] = c;
     if (sc->sc_rawin_count >= sizeof(sc->sc_rawin)
 	|| (c < 0 && sc->sc_rawin_count > 0)) {
-	printf("ppp%d input: ", sc->sc_if.if_unit);
+	printf("%s input: ", sc->sc_if.if_xname);
 	pppdumpb(sc->sc_rawin, sc->sc_rawin_count);
 	sc->sc_rawin_count = 0;
     }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: bpf.c,v 1.3 1996/04/21 22:28:27 deraadt Exp $	*/
-/*	$NetBSD: bpf.c,v 1.25 1996/03/30 21:57:30 christos Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.4 1996/05/10 12:31:05 deraadt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.27 1996/05/07 05:26:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -899,34 +899,39 @@ bpf_setif(d, ifr)
 {
 	struct bpf_if *bp;
 	char *cp;
-	int unit, s, error;
+	int unit_seen, i, s, error;
 
 	/*
-	 * Separate string into name part and unit number.  Put a null
-	 * byte at the end of the name part, and compute the number.
-	 * If the a unit number is unspecified, the default is 0,
-	 * as initialized above.  XXX This should be common code.
+	 * Make sure the provided name has a unit number, and default
+	 * it to '0' if not specified.
+	 * XXX This is ugly ... do this differently?
 	 */
-	unit = 0;
+	unit_seen = 0;
 	cp = ifr->ifr_name;
-	cp[sizeof(ifr->ifr_name) - 1] = '\0';
-	while (*cp++) {
-		if (*cp >= '0' && *cp <= '9') {
-			unit = *cp - '0';
-			*cp++ = '\0';
-			while (*cp)
-				unit = 10 * unit + *cp++ - '0';
-			break;
+	cp[sizeof(ifr->ifr_name) - 1] = '\0';	/* sanity */
+	while (*cp++)
+		if (*cp >= '0' && *cp <= '9')
+			unit_seen = 1;
+	if (!unit_seen) {
+		/* Make sure to leave room for the '\0'. */
+		for (i = 0; i < (IFNAMSIZ - 1); ++i) {
+			if ((ifr->ifr_name[i] >= 'a' &&
+			     ifr->ifr_name[i] <= 'z') ||
+			    (ifr->ifr_name[i] >= 'A' &&
+			     ifr->ifr_name[i] <= 'Z'))
+				continue;
+			ifr->ifr_name[i] = '0';
 		}
 	}
+
 	/*
 	 * Look through attached interfaces for the named one.
 	 */
 	for (bp = bpf_iflist; bp != 0; bp = bp->bif_next) {
 		struct ifnet *ifp = bp->bif_ifp;
 
-		if (ifp == 0 || unit != ifp->if_unit
-		    || strcmp(ifp->if_name, ifr->ifr_name) != 0)
+		if (ifp == 0 ||
+		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
 		/*
 		 * We found the requested interface.
@@ -962,20 +967,15 @@ bpf_setif(d, ifr)
 }
 
 /*
- * Convert an interface name plus unit number of an ifp to a single
- * name which is returned in the ifr.
+ * Copy the interface name to the ifreq.
  */
 static void
 bpf_ifname(ifp, ifr)
 	struct ifnet *ifp;
 	struct ifreq *ifr;
 {
-	char *s = ifp->if_name;
-	char *d = ifr->ifr_name;
 
-	while ((*d++ = *s++) != '\0')
-		continue;
-	sprintf(d, "%d", ifp->if_unit);
+	bcopy(ifp->if_xname, ifr->ifr_name, IFNAMSIZ);
 }
 
 /*
@@ -1298,7 +1298,7 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 			D_MARKFREE(&bpf_dtab[i]);
 
 #if 0
-	printf("bpf: %s%d attached\n", ifp->if_name, ifp->if_unit);
+	printf("bpf: %s attached\n", ifp->if_xname);
 #endif
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: iso_snpac.c,v 1.3 1996/04/21 22:29:32 deraadt Exp $	*/
-/*	$NetBSD: iso_snpac.c,v 1.12 1996/04/13 01:35:00 cgd Exp $	*/
+/*	$OpenBSD: iso_snpac.c,v 1.4 1996/05/10 12:31:22 deraadt Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.13 1996/05/07 02:45:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -268,10 +268,10 @@ iso_setmcasts(ifp, req)
 	}
 	if (doreset) {
 		if (ifp->if_reset)
-			(*ifp->if_reset) (ifp->if_unit);
+			(*ifp->if_reset) (ifp);
 		else
-			printf("iso_setmcasts: %s%d needs reseting to receive iso mcasts\n",
-			       ifp->if_name, ifp->if_unit);
+			printf("iso_setmcasts: %s needs reseting to receive iso mcasts\n",
+			       ifp->if_xname);
 	}
 }
 

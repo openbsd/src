@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_eon.c,v 1.3 1996/04/21 22:29:23 deraadt Exp $	*/
-/*	$NetBSD: if_eon.c,v 1.13 1996/04/13 01:34:44 cgd Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.4 1996/05/10 12:31:22 deraadt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.14 1996/05/07 02:45:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -142,9 +142,9 @@ eonattach()
 		printf("eonattach()\n");
 	}
 #endif
-	ifp->if_unit = 0;
-	ifp->if_name = "eon";
+	sprintf(ifp->if_xname, "eon%d", 0);
 	ifp->if_mtu = ETHERMTU;
+	ifp->if_softc = NULL;
 	/* since everything will go out over ether or token ring */
 
 	ifp->if_ioctl = eonioctl;

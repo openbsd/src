@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ether.c,v 1.5 1996/04/21 22:28:58 deraadt Exp $	*/
-/*	$NetBSD: if_ether.c,v 1.29 1996/03/30 21:53:19 christos Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.6 1996/05/10 12:31:19 deraadt Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.30 1996/05/07 02:40:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -868,9 +868,7 @@ db_show_radix_node(rn, w)
 
 	db_printf(" ifp=%p ", rt->rt_ifp);
 	if (rt->rt_ifp)
-		db_printf("(%s%d)",
-				  rt->rt_ifp->if_name,
-				  rt->rt_ifp->if_unit);
+		db_printf("(%s)", rt->rt_ifp->if_xname);
 	else
 		db_printf("(NULL)");
 

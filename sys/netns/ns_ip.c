@@ -1,5 +1,5 @@
-/*	$OpenBSD: ns_ip.c,v 1.3 1996/04/24 08:46:19 mickey Exp $	*/
-/*	$NetBSD: ns_ip.c,v 1.14 1996/02/13 22:13:58 christos Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.4 1996/05/10 12:31:23 deraadt Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.15 1996/05/07 02:48:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -80,6 +80,7 @@ void	nsipstart();
 void	nsip_rtchange __P((register struct in_addr *dst));
 #define LOMTU	(1024+512);
 
+int	nsipif_unit;			/* XXX */
 struct ifnet nsipif;
 struct ifnet_en *nsip_list;		/* list of all hosts and gateways or
 					broadcast addrs */
@@ -92,7 +93,7 @@ nsipattach()
 
 	if (nsipif.if_mtu == 0) {
 		ifp = &nsipif;
-		ifp->if_name = "nsip";
+		sprintf(ifp->if_xname, "nsip%d", nsipif_unit);
 		ifp->if_mtu = LOMTU;
 		ifp->if_ioctl = nsipioctl;
 		ifp->if_output = nsipoutput;
@@ -106,14 +107,20 @@ nsipattach()
 	nsip_list = m;
 	ifp = &m->ifen_ifnet;
 
-	ifp->if_name = "nsip";
+	sprintf(ifp->if_xname, "nsip%d", nsipif_unit++);
 	ifp->if_mtu = LOMTU;
 	ifp->if_ioctl = nsipioctl;
 	ifp->if_output = nsipoutput;
 	ifp->if_start = nsipstart;
 	ifp->if_flags = IFF_POINTOPOINT;
-	ifp->if_unit = nsipif.if_unit++;
 	if_attach(ifp);
+
+	/*
+	 * XXX Emulate the side effect of incrementing nsipif.if_unit
+	 * XXX in the days before if_xname.
+	 */
+	bzero(nsipif.if_xname, sizeof(nsipif.if_xname))
+	sprintf(nsipif.if_xname, "nsip%d", nsipif_unit);
 
 	return (m);
 }
@@ -317,7 +324,7 @@ nsipstart(ifp)
 	panic("nsip_start called\n");
 }
 
-struct ifreq ifr = {"nsip0"};
+struct ifreq ifr = {"nsip0"};		/* XXX */
 
 nsip_route(m)
 	register struct mbuf *m;
@@ -385,7 +392,8 @@ nsip_route(m)
 	/*
 	 * now configure this as a point to point link
 	 */
-	ifr.ifr_name[4] = '0' + nsipif.if_unit - 1;
+	bzero(ifr.ifr_name, sizeof(ifr.ifr_name));
+	sprintf(ifr.ifr_name, "nsip%d", nsipif_unit - 1);
 	ifr.ifr_dstaddr = *snstosa(ns_dst);
 	(void)ns_control((struct socket *)0, SIOCSIFDSTADDR, (caddr_t)&ifr,
 			(struct ifnet *)ifn);

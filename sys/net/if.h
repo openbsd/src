@@ -1,5 +1,5 @@
-/*	$OpenBSD: if.h,v 1.4 1996/05/06 05:43:43 mickey Exp $	*/
-/*	$NetBSD: if.h,v 1.20 1996/02/13 22:00:12 christos Exp $	*/
+/*	$OpenBSD: if.h,v 1.5 1996/05/10 12:31:07 deraadt Exp $	*/
+/*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -106,14 +106,20 @@ struct	if_data {
  */
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 
+/*
+ * Length of interface external name, including terminating '\0'.
+ * Note: this is the same size as a generic device's external name.
+ */
+#define	IFNAMSIZ	16
+
 struct ifnet {				/* and the entries */
-	char	*if_name;		/* name, e.g. ``en'' or ``lo'' */
+	void	*if_softc;		/* lower-level data for this if */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
+	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
 	caddr_t	if_bpf;			/* packet filter structure */
 	u_short	if_index;		/* numeric abbreviation for this if */
-	short	if_unit;		/* sub-unit for lower level driver */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */
 	struct	if_data if_data;	/* statistics and other data about if */
@@ -126,9 +132,9 @@ struct ifnet {				/* and the entries */
 	int	(*if_ioctl)		/* ioctl routine */
 		__P((struct ifnet *, u_long, caddr_t));
 	int	(*if_reset)		/* XXX bus reset routine */
-		__P((int));
+		__P((struct ifnet *));
 	void	(*if_watchdog)		/* timer routine */
-		__P((int));
+		__P((struct ifnet *));
 	struct	ifqueue {
 		struct	mbuf *ifq_head;
 		struct	mbuf *ifq_tail;
@@ -271,7 +277,6 @@ struct ifa_msghdr {
  * remainder may be interface specific.
  */
 struct	ifreq {
-#define	IFNAMSIZ	16
 	char	ifr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	union {
 		struct	sockaddr ifru_addr;

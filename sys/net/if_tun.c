@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_tun.c,v 1.8 1996/04/24 06:43:51 mickey Exp $	*/
-/*	$NetBSD: if_tun.c,v 1.22 1996/02/13 22:00:26 christos Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.9 1996/05/10 12:31:13 deraadt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -99,7 +99,7 @@ int	tunwrite __P((dev_t, struct uio *, int));
 int	tunselect __P((dev_t, int, struct proc *));
 
 
-static int tuninit __P((int));
+static int tuninit __P((struct tun_softc *));
 
 void
 tunattach(unused)
@@ -112,8 +112,8 @@ tunattach(unused)
 		tunctl[i].tun_flags = TUN_INITED;
 
 		ifp = &tunctl[i].tun_if;
-		ifp->if_unit = i;
-		ifp->if_name = "tun";
+		sprintf(ifp->if_xname, "tun%d", i);
+		ifp->if_softc = &tunctl[i];
 		ifp->if_mtu = TUNMTU;
 		ifp->if_ioctl = tun_ioctl;
 		ifp->if_output = tun_output;
@@ -158,7 +158,7 @@ tunopen(dev, flag, mode, p)
 		return ENXIO;
 	ifp = &tp->tun_if;
 	tp->tun_flags |= TUN_OPEN;
-	TUNDEBUG(("%s%d: open\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s: open\n", ifp->if_xname));
 	return (0);
 }
 
@@ -210,19 +210,18 @@ tunclose(dev, flag, mode, p)
 	tp->tun_pgrp = 0;
 	selwakeup(&tp->tun_rsel);
 		
-	TUNDEBUG(("%s%d: closed\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s: closed\n", ifp->if_xname));
 	return (0);
 }
 
 static int
-tuninit(unit)
-	int	unit;
+tuninit(tp)
+	struct tun_softc *tp;
 {
-	struct tun_softc *tp = &tunctl[unit];
 	struct ifnet	*ifp = &tp->tun_if;
 	register struct ifaddr *ifa;
 
-	TUNDEBUG(("%s%d: tuninit\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s: tuninit\n", ifp->if_xname));
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
@@ -258,13 +257,12 @@ tun_ioctl(ifp, cmd, data)
 	s = splimp();
 	switch(cmd) {
 	case SIOCSIFADDR:
-		tuninit(ifp->if_unit);
-		TUNDEBUG(("%s%d: address set\n", ifp->if_name, ifp->if_unit));
+		tuninit((struct tun_softc *)(ifp->if_softc));
+		TUNDEBUG(("%s: address set\n", ifp->if_xname));
 		break;
 	case SIOCSIFDSTADDR:
-		tuninit(ifp->if_unit);
-		TUNDEBUG(("%s%d: destination address set\n",
-			 ifp->if_name, ifp->if_unit));
+		tuninit((struct tun_softc *)(ifp->if_softc));
+		TUNDEBUG(("%s: destination address set\n", ifp->if_name));
 		break;
 	default:
 		error = EINVAL;
@@ -283,15 +281,15 @@ tun_output(ifp, m0, dst, rt)
 	struct sockaddr *dst;
 	struct rtentry *rt;
 {
-	struct tun_softc *tp = &tunctl[ifp->if_unit];
+	struct tun_softc *tp = ifp->if_softc;
 	struct proc	*p;
 	int		s;
 
-	TUNDEBUG(("%s%d: tun_output\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s: tun_output\n", ifp->if_xname));
 
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
-		TUNDEBUG(("%s%d: not ready 0%o\n", ifp->if_name,
-			  ifp->if_unit, tp->tun_flags));
+		TUNDEBUG(("%s: not ready 0%o\n", ifp->if_xname,
+			  tp->tun_flags));
 		m_freem (m0);
 		return EHOSTDOWN;
 	}
@@ -420,10 +418,10 @@ tunread(dev, uio, ioflag)
 	struct mbuf	*m, *m0;
 	int		error=0, len, s;
 
-	TUNDEBUG(("%s%d: read\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s: read\n", ifp->if_xname));
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
-		TUNDEBUG(("%s%d: not ready 0%o\n", ifp->if_name,
-			  ifp->if_unit, tp->tun_flags));
+		TUNDEBUG(("%s: not ready 0%o\n", ifp->if_xname,
+			  tp->tun_flags));
 		return EHOSTDOWN;
 	}
 
@@ -479,11 +477,10 @@ tunwrite(dev, uio, ioflag)
 	int		isr;
 	int		error=0, s, tlen, mlen;
 
-	TUNDEBUG(("%s%d: tunwrite\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
 
 	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
-		TUNDEBUG(("%s%d: len=%d!\n", ifp->if_name, ifp->if_unit,
-		    uio->uio_resid));
+		TUNDEBUG(("%s: len=%d!\n", ifp->if_xname, uio->uio_resid));
 		return EIO;
 	}
 	tlen = uio->uio_resid;
@@ -596,14 +593,14 @@ tunselect(dev, rw, p)
 	struct ifnet	*ifp = &tp->tun_if;
 
 	s = splimp();
-	TUNDEBUG(("%s%d: tunselect\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s: tunselect\n", ifp->if_xname));
 
 	switch (rw) {
 	case FREAD:
 		if (ifp->if_snd.ifq_len > 0) {
 			splx(s);
-			TUNDEBUG(("%s%d: tunselect q=%d\n", ifp->if_name,
-			    ifp->if_unit, ifp->if_snd.ifq_len));
+			TUNDEBUG(("%s: tunselect q=%d\n", ifp->if_xname,
+			    ifp->if_snd.ifq_len));
 			return 1;
 		}
 		selrecord(curproc, &tp->tun_rsel);
@@ -613,7 +610,7 @@ tunselect(dev, rw, p)
 		return 1;
 	}
 	splx(s);
-	TUNDEBUG(("%s%d: tunselect waiting\n", ifp->if_name, ifp->if_unit));
+	TUNDEBUG(("%s: tunselect waiting\n", ifp->if_xname));
 	return 0;
 }
 

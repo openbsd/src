@@ -1,5 +1,5 @@
-/*	$OpenBSD: esis.c,v 1.3 1996/04/21 22:29:21 deraadt Exp $	*/
-/*	$NetBSD: esis.c,v 1.13 1996/04/13 01:34:39 cgd Exp $	*/
+/*	$OpenBSD: esis.c,v 1.4 1996/05/10 12:31:21 deraadt Exp $	*/
+/*	$NetBSD: esis.c,v 1.14 1996/05/07 02:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -346,8 +346,8 @@ esis_rdoutput(inbound_shp, inbound_m, inbound_oidx, rd_dstnsap, rt)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISOUTPUT]) {
 		printf(
-		"esis_rdoutput: ifp %p (%s%d), ht %d, m %p, oidx %p\n",
-		       ifp, ifp->if_name, ifp->if_unit, esis_holding_time,
+		"esis_rdoutput: ifp %p (%s), ht %d, m %p, oidx %p\n",
+		       ifp, ifp->if_xname, esis_holding_time,
 		       inbound_m, inbound_oidx);
 		printf("\tdestination: %s\n", clnp_iso_addrp(rd_dstnsap));
 		printf("\tredirected toward:%s\n", clnp_iso_addrp(rd_gwnsap));
@@ -871,8 +871,8 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISOUTPUT]) {
 		int             i;
-		printf("esis_shoutput: ifp %p (%s%d), %s, ht %d, to: [%d] ",
-		       ifp, ifp->if_name, ifp->if_unit,
+		printf("esis_shoutput: ifp %p (%s), %s, ht %d, to: [%d] ",
+		       ifp, ifp->if_xname,
 		       type == ESIS_ESH ? "esh" : "ish",
 		       ht, sn_len);
 		for (i = 0; i < sn_len; i++)
@@ -1022,8 +1022,8 @@ isis_input(m0, va_alist)
 	if (argo_debug[D_ISISINPUT]) {
 		int             i;
 
-		printf("isis_input: pkt on ifp %p (%s%d): from:",
-		       ifp, ifp->if_name, ifp->if_unit);
+		printf("isis_input: pkt on ifp %p (%s): from:",
+		       ifp, ifp->if_xname);
 		for (i = 0; i < 6; i++)
 			printf("%x%c", shp->snh_shost[i] & 0xff,
 			       (i < 5) ? ':' : ' ');
@@ -1103,8 +1103,8 @@ isis_output(m, va_alist)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISISOUTPUT]) {
 		u_char *cp = (u_char *) LLADDR(sdl), *cplim = cp + sn_len;
-		printf("isis_output: ifp %p (%s%d), to: ",
-		       ifp, ifp->if_name, ifp->if_unit);
+		printf("isis_output: ifp %p (%s), to: ",
+		       ifp, ifp->if_xname);
 		while (cp < cplim) {
 			printf("%x", *cp++);
 			printf("%c", (cp < cplim) ? ':' : ' ');

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_sl.c,v 1.3 1996/03/14 08:41:45 tholo Exp $	*/
-/*	$NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.4 1996/05/10 12:31:11 deraadt Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.39 1996/05/07 02:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -202,8 +202,9 @@ slattach()
 	register int i = 0;
 
 	for (sc = sl_softc; i < NSL; sc++) {
-		sc->sc_if.if_name = "sl";
-		sc->sc_if.if_unit = i++;
+		sprintf(sc->sc_if.if_xname, "sl%d", i++);
+		sc->sc_if.if_softc = sc;
+		sc->sc_unit = i;		/* XXX */
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags =
 		    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
@@ -353,7 +354,7 @@ sltioctl(tp, cmd, data, flag)
 
 	switch (cmd) {
 	case SLIOCGUNIT:
-		*(int *)data = sc->sc_if.if_unit;
+		*(int *)data = sc->sc_unit;	/* XXX */
 		break;
 
 	default:
@@ -375,7 +376,7 @@ sloutput(ifp, m, dst, rtp)
 	struct sockaddr *dst;
 	struct rtentry *rtp;
 {
-	register struct sl_softc *sc = &sl_softc[ifp->if_unit];
+	register struct sl_softc *sc = ifp->if_softc;
 	register struct ip *ip;
 	register struct ifqueue *ifq;
 	int s;
@@ -385,7 +386,7 @@ sloutput(ifp, m, dst, rtp)
 	 * the line protocol to support other address families.
 	 */
 	if (dst->sa_family != AF_INET) {
-		printf("sl%d: af%d not supported\n", sc->sc_if.if_unit,
+		printf("%s: af%d not supported\n", sc->sc_if.if_xname,
 			dst->sa_family);
 		m_freem(m);
 		sc->sc_if.if_noproto++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.3 1996/03/15 02:28:06 paulus Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.4 1996/05/07 02:40:39 thorpej Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
  *
@@ -53,6 +53,7 @@
  */
 struct ppp_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
+	int	sc_unit;		/* XXX unit number */
 	u_int	sc_flags;		/* control/status bits; see if_ppp.h */
 	void	*sc_devp;		/* pointer to device-dep structure */
 	void	(*sc_start) __P((struct ppp_softc *));	/* start output proc */

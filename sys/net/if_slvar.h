@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.15 1995/03/26 20:30:14 jtc Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.16 1996/05/07 02:40:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,6 +43,7 @@
  */
 struct sl_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
+	int	sc_unit;		/* XXX unit number */
 	struct	ifqueue sc_fastq;	/* interactive output queue */
 	struct	tty *sc_ttyp;		/* pointer to tty structure */
 	u_char	*sc_mp;			/* pointer to next available buf char */

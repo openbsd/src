@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.3 1995/12/24 03:32:03 mycroft Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.4 1996/05/07 02:40:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -234,6 +234,7 @@ fddi_output(ifp, m0, dst, rt0)
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
+#if defined(__FreeBSD__)
 		IFDEBUG(D_ETHER)
 			int i;
 			printf("unoutput: sending pkt to: ");
@@ -241,6 +242,7 @@ fddi_output(ifp, m0, dst, rt0)
 				printf("%x ", edst[i] & 0xff);
 			printf("\n");
 		ENDDEBUG
+#endif
 		} break;
 #endif /* ISO */
 #ifdef	LLC
@@ -331,7 +333,7 @@ fddi_output(ifp, m0, dst, rt0)
 	}
 #endif
 	default:
-		printf("%s%d: can't handle af%d\n", ifp->if_name, ifp->if_unit,
+		printf("%s: can't handle af%d\n", ifp->if_xname,
 			dst->sa_family);
 		senderr(EAFNOSUPPORT);
 	}
@@ -484,9 +486,11 @@ fddi_input(ifp, fh, m)
 				if (m == 0)
 					return;
 				*mtod(m, struct fddi_header *) = *fh;
+#if defined(__FreeBSD__)
 				IFDEBUG(D_ETHER)
 					printf("clnp packet");
 				ENDDEBUG
+#endif
 				schednetisr(NETISR_ISO);
 				inq = &clnlintrq;
 				break;

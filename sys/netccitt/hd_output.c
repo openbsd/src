@@ -1,5 +1,5 @@
-/*	$OpenBSD: hd_output.c,v 1.2 1996/03/04 07:36:24 niklas Exp $	*/
-/*	$NetBSD: hd_output.c,v 1.6 1996/02/13 22:04:29 christos Exp $	*/
+/*	$OpenBSD: hd_output.c,v 1.3 1996/05/10 12:31:15 deraadt Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.7 1996/05/07 02:36:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -237,8 +237,8 @@ hd_ifoutput(m, va_alist)
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
 		/*
-		 * printf("%s%d: HDLC says OK to send but queue full, may
-		 * hang\n", ifp->if_name, ifp->if_unit);
+		 * printf("%s: HDLC says OK to send but queue full, may
+		 * hang\n", ifp->if_xname);
 		 */
 		m_freem(m);
 	} else {

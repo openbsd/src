@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.7 1996/04/15 14:01:25 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -168,7 +168,7 @@ arc_output(ifp, m0, dst, rt0)
 		break;
 
 	default:
-		printf("%s%d: can't handle af%d\n", ifp->if_name, ifp->if_unit,
+		printf("%s: can't handle af%d\n", ifp->if_xname,
 			dst->sa_family);
 		senderr(EAFNOSUPPORT);
 	}
@@ -434,8 +434,8 @@ outofseq:
 	if (m) 
 		m_freem(m);
 
-	log(LOG_INFO,"%s%d: got out of seq. packet: %s\n",
-	    ifp->if_name, ifp->if_unit, s);
+	log(LOG_INFO,"%s: got out of seq. packet: %s\n",
+	    ifp->if_xname, s);
 
 	return NULL;
 }
@@ -552,16 +552,16 @@ arc_ifattach(ifp)
 	ifp->if_hdrlen = ARC_HDRLEN;
 	if (ifp->if_flags & IFF_LINK0 && arc_phdsmtu > 60480)
 		log(LOG_ERR,
-		    "%s%d: arc_phdsmtu is %d, but must not exceed 60480",
-		    ifp->if_name, ifp->if_unit, arc_phdsmtu);
+		    "%s: arc_phdsmtu is %d, but must not exceed 60480",
+		    ifp->if_xname, arc_phdsmtu);
 
 	ifp->if_mtu = (ifp->if_flags & IFF_LINK0 ? arc_phdsmtu : ARCMTU);
 	ac = (struct arccom *)ifp;
 	ac->ac_seqid = (time.tv_sec) & 0xFFFF; /* try to make seqid unique */
 	if (ac->ac_anaddr == 0) {
 		/* XXX this message isn't entirely clear, to me -- cgd */
-		log(LOG_ERR,"%s%d: link address 0 reserved for broadcasts.  Please change it and ifconfig %s%d down up\n",
-		   ifp->if_name,ifp->if_unit,ifp->if_name,ifp->if_unit); 
+		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",
+		   ifp->if_xname, ifp->if_xname); 
 	}
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	    ifa = ifa->ifa_list.tqe_next)
