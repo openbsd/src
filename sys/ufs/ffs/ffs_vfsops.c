@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.38 2001/04/13 02:39:05 gluk Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.39 2001/04/15 23:46:29 gluk Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -829,7 +829,7 @@ ffs_unmount(mp, mntflags, p)
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	if (fs->fs_flags & FS_DOSOFTDEP)
+	if (mp->mnt_flag & MNT_SOFTDEP)
 		error = softdep_flushfiles(mp, flags, p);
 	else
 		error = ffs_flushfiles(mp, flags, p);
