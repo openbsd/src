@@ -1,7 +1,7 @@
-/*	$OpenBSD: bios.c,v 1.39 2001/01/21 20:23:22 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.40 2001/02/28 16:45:25 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Michael Shalayeff
+ * Copyright (c) 1997-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/reboot.h>
+#include <sys/extent.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -105,8 +106,8 @@ biosprobe(parent, match, aux)
 
 #ifdef BIOS_DEBUG
 	printf("%s%d: boot API ver %x, %x; args %p[%d]\n",
-	       bia->bios_dev, bios_cd.cd_ndevs,
-	       bootapiver, BOOTARG_APIVER, bootargp, bootargc);
+	    bia->bios_dev, bios_cd.cd_ndevs,
+	    bootapiver, BOOTARG_APIVER, bootargp, bootargc);
 #endif
 	/* there could be only one */
 	if (bios_cd.cd_ndevs || strcmp(bia->bios_dev, bios_cd.cd_name))
@@ -127,7 +128,7 @@ biosattach(parent, self, aux)
 #if (NPCI > 0 && NPCIBIOS > 0) || NAPM > 0
 	struct bios_attach_args *bia = aux;
 #endif
-	u_int8_t *va;
+	volatile u_int8_t *va;
 	char *str;
 	int flags;
 
@@ -165,7 +166,7 @@ biosattach(parent, self, aux)
 				;
 			if (cksum != 0)
 				continue;
-		
+
 			if (h->entry <= BIOS32_START || h->entry >= BIOS32_END)
 				continue;
 
@@ -207,6 +208,53 @@ biosattach(parent, self, aux)
 		config_found(self, &ba, bios_print);
 	}
 #endif
+
+	/*
+	 * now, that we've gave 'em a chance to attach,
+	 * scan and map all the proms we can find
+	 */
+	if (!(flags & BIOSF_PROMSCAN)) {
+		volatile u_int8_t *eva;
+
+		for (str = NULL, va = ISA_HOLE_VADDR(0xc0000),
+		     eva = ISA_HOLE_VADDR(0xf0000);
+		     va < eva; va += 512) {
+			extern struct extent *iomem_ex;
+			bios_romheader_t romh = (bios_romheader_t)va;
+			u_int32_t off, len;
+			u_int8_t cksum;
+			int i;
+
+			if (romh->signature != 0xaa55)
+				continue;
+
+			if (!romh->len || romh->len == 0xff)
+				continue;
+
+			len = romh->len * 512;
+			off = 0xc0000 + (va - (u_int8_t *)
+			    ISA_HOLE_VADDR(0xc0000));
+
+			for (cksum = 0, i = len; i--; cksum += va[i])
+				;
+			if (cksum != 0)
+				printf("!");	/* stinking x20 again */
+
+			if (!str)
+				printf("%s: PROM list:",
+				    str = sc->sc_dev.dv_xname);
+			printf(" %05x[%04x]", off, len);
+
+			if ((i = extent_alloc_region(iomem_ex,
+			    (paddr_t)off, len, EX_NOWAIT)))
+				printf(":%d", i);
+
+			va += len - 512;
+		}
+	}
+
+	if (str)
+		printf("\n");
 }
 
 void

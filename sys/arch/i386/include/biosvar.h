@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.37 2000/08/17 22:08:11 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.38 2001/02/28 16:45:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -33,6 +33,7 @@
 
 #ifndef _I386_BIOSVAR_H_
 #define _I386_BIOSVAR_H_
+#pragma pack(1)
 
 	/* some boxes put apm data seg in the 2nd page */
 #define	BOOTARG_OFF	(NBPG*2)
@@ -40,8 +41,9 @@
 #define	BOOTBIOS_ADDR	(0x7c00)
 
 	/* BIOS configure flags */
-#define	BIOSF_BIOS32			0x0001
-#define	BIOSF_PCIBIOS			0x0002
+#define	BIOSF_BIOS32	0x0001
+#define	BIOSF_PCIBIOS	0x0002
+#define	BIOSF_PROMSCAN	0x0004
 
 /* BIOS media ID */
 #define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
@@ -63,6 +65,18 @@
 #define	BIOS_MAP_RES	0x02	/* Reserved memory */
 #define	BIOS_MAP_ACPI	0x03	/* ACPI Reclaim memory */
 #define	BIOS_MAP_NVS	0x04	/* ACPI NVS memory */
+
+/*
+ * Optional ROM header
+ */
+typedef
+struct bios_romheader {
+	u_int16_t	signature;	/* 0xaa55 */
+	u_int8_t	len;		/* length in pages (512 bytes) */
+	u_int32_t	entry;		/* initialization entry point */
+	u_int8_t	reserved[19];
+	u_int16_t	pnpheaader;	/* offset to PnP expansion header */
+} *bios_romheader_t;
 
 /*
  * BIOS32
@@ -88,7 +102,7 @@ typedef
 struct bios32_entry {
 	u_int32_t offset;
 	u_int16_t segment;
-} __attribute__((__packed__)) *bios32_entry_t;
+} *bios32_entry_t;
 
 #define	BIOS32_START	0xe0000
 #define	BIOS32_SIZE	0x20000
@@ -241,4 +255,5 @@ extern bios_memmap_t *bios_memmap;
 #endif /* _LOCORE */
 #endif /* _KERNEL || _STANDALONE */
 
+#pragma pack()
 #endif /* _I386_BIOSVAR_H_ */
