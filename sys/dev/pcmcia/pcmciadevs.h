@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.84 2002/01/04 17:42:10 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.85 2002/03/28 16:46:32 provos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.83 2002/01/04 17:41:44 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.84 2002/03/28 16:45:52 provos Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -284,6 +284,8 @@
 #define	PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD	0xc1ab
 #define	PCMCIA_CIS_LINKSYS2_IWN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS2_IWN	0x1612
+#define	PCMCIA_CIS_LINKSYS2_IWN2	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS2_IWN2	0x1613
 
 /* Lucent WaveLAN/IEEE */
 #define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }
