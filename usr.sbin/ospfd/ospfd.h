@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.5 2005/02/07 05:51:00 david Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.6 2005/02/09 14:39:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -367,6 +367,7 @@ struct buf	*buf_open(size_t);
 struct buf	*buf_dynamic(size_t, size_t);
 int		 buf_add(struct buf *, void *, size_t);
 void		*buf_reserve(struct buf *, size_t);
+void		*buf_seek(struct buf *, size_t, size_t);
 int		 buf_close(struct msgbuf *, struct buf *);
 int		 buf_write(int, struct buf *);
 void		 buf_free(struct buf *);
