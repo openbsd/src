@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.9 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.10 2002/06/09 05:16:20 angelos Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.9 2001/12/07 09:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.10 2002/06/09 05:16:20 angelos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mbuf.h>
+#include <sys/sysctl.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -148,14 +149,16 @@ initmbufs()
 {
 	int ret;
 
-	if (namelist[X_MBSTAT].n_type == 0) {
-		if ((ret = kvm_nlist(kd, namelist)) == -1)
-			errx(1, "%s", kvm_geterr(kd));
-		else if (ret)
-			nlisterr(namelist);
+	if (kd != NULL) {
 		if (namelist[X_MBSTAT].n_type == 0) {
-			error("namelist on %s failed", _PATH_UNIX);
-			return(0);
+			if ((ret = kvm_nlist(kd, namelist)) == -1)
+				errx(1, "%s", kvm_geterr(kd));
+			else if (ret)
+				nlisterr(namelist);
+			if (namelist[X_MBSTAT].n_type == 0) {
+				error("namelist on %s failed", _PATH_UNIX);
+				return(0);
+			}
 		}
 	}
 	if (mb == 0)
@@ -166,7 +169,17 @@ initmbufs()
 void
 fetchmbufs()
 {
-	if (namelist[X_MBSTAT].n_type == 0)
-		return;
-	NREAD(X_MBSTAT, mb, sizeof (*mb));
+	int mib[2];
+	size_t size = sizeof (*mb);
+
+	if (kd == NULL) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MBSTAT;
+		if (sysctl(mib, 2, mb, &size, NULL, 0) < 0)
+			err(1, "sysctl(KERN_MBSTAT) failed");
+	} else {
+		if (namelist[X_MBSTAT].n_type == 0)
+			return;
+		NREAD(X_MBSTAT, mb, size);
+	}
 }
