@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.13 2001/06/27 04:37:20 art Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.14 2001/07/09 03:54:40 mickey Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -33,8 +33,14 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
+
 #include <dev/cons.h>
+#include <dev/ofw/openfirm.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -105,14 +111,6 @@ struct wsdisplay_emulops vgafb_emulops = {
 	rcons_alloc_attr
 };
 
-int vgafb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t vgafb_mmap __P((void *, off_t, int));
-int vgafb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-void vgafb_free_screen __P((void *, void *));
-int vgafb_show_screen __P((void *, void *, int,
-				void (*) (void *, int, int), void *));
-
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
 	vgafb_mmap,
@@ -122,8 +120,9 @@ struct wsdisplay_accessops vgafb_accessops = {
 	0 /* load_font */
 };
 
-
 int	vgafb_print __P((void *, const char *));
+int	vgafb_getcmap __P((struct vgafb_config *vc, struct wsdisplay_cmap *cm));
+int	vgafb_putcmap __P((struct vgafb_config *vc, struct wsdisplay_cmap *cm));
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16

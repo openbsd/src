@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.2 2000/09/19 05:32:22 rahnds Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.3 2001/07/09 03:54:41 mickey Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -69,5 +69,17 @@ void	vgafb_common_setup __P((bus_space_tag_t, bus_space_tag_t,
 	    u_int32_t, size_t));
 void	vgafb_wscons_attach __P((struct device *, struct vgafb_config *, int));
 void	vgafb_wscons_console __P((struct vgafb_config *));
+void	vgafb_cnprobe __P((struct consdev *cp));
+void	vgafb_cnattach __P((bus_space_tag_t iot, bus_space_tag_t memt,
+	    void *pc, int bus, int device, int function));
+void	vgafb_wsdisplay_attach __P((struct device *parent,
+	    struct vgafb_config *vc, int console));
 int	vgafbioctl __P((void *, u_long, caddr_t, int, struct proc *));
 int	vgafbmmap __P((void *, off_t, int));
+int	vgafb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+paddr_t	vgafb_mmap __P((void *, off_t, int));
+int	vgafb_alloc_screen __P((void *v, const struct wsscreen_descr *type,
+	    void **cookiep, int *curxp, int *curyp, long *attrp));
+void	vgafb_free_screen __P((void *v, void *cookie));
+int	vgafb_show_screen __P((void *v, void *cookie, int waitok,
+	    void (*cb) __P((void *, int, int)), void *cbarg));

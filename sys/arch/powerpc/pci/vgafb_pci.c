@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.4 2001/06/25 23:30:01 drahn Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.5 2001/07/09 03:54:40 mickey Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -39,12 +39,14 @@
 #endif
 #include <machine/pte.h>
 
+#include <dev/cons.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 
 #include <arch/powerpc/pci/vgafbvar.h>
@@ -61,6 +63,9 @@ struct vgafb_pci_softc {
 	int nscreens;
 };
 
+int vgafb_pci_probe __P((struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
+    u_int32_t *iosize, u_int32_t *memaddr, u_int32_t *memsize,
+    u_int32_t *cacheable, u_int32_t *mmioaddr, u_int32_t *mmiosize));
 #ifdef __BROKEN_INDIRECT_CONFIG
 int	vgafb_pci_match __P((struct device *, void *, void *));
 #else
