@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.44 2005/04/01 11:21:28 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.45 2005/04/02 08:48:15 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2632,10 +2632,11 @@ ral_init(struct ifnet *ifp)
 	      RAL_TX_RING_COUNT   <<  8 |
 	      RAL_TX_DESC_SIZE;
 
+	/* rings _must_ be initialized in this _exact_ order! */
 	RAL_WRITE(sc, RAL_TXCSR2, tmp);
 	RAL_WRITE(sc, RAL_TXCSR3, sc->txq.physaddr);
-	RAL_WRITE(sc, RAL_TXCSR4, sc->atimq.physaddr);
 	RAL_WRITE(sc, RAL_TXCSR5, sc->prioq.physaddr);
+	RAL_WRITE(sc, RAL_TXCSR4, sc->atimq.physaddr);
 	RAL_WRITE(sc, RAL_TXCSR6, sc->bcnq.physaddr);
 
 	/* setup rx ring */
