@@ -198,8 +198,8 @@ about:
 	NCR 5380-based SCSI host adapters.
 	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
 		that connect to the floppy disk controller.)
-	Multiprocessor Pentium and Pentium Pro systems.  (Though they should
-		run fine using one processor only.)
+	Multiprocessor systems.  (Though they should run fine using
+		one processor only.)
 
 We are planning future support for many of these devices.
 
