@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.26 1999/07/30 19:05:50 deraadt Exp $
+#	$OpenBSD: files.alpha,v 1.27 1999/08/08 19:17:27 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -231,6 +231,8 @@ file	arch/alpha/pci/tga_bt485.c	tga
 
 include "../../../dev/isa/files.isapnp"
 file	arch/alpha/isa/isapnp_machdep.c	isapnp
+
+attach  com at isapnp with com_isapnp
 
 #
 # Devices that can live on multiple busses
