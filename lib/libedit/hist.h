@@ -1,5 +1,5 @@
-/*	$OpenBSD: hist.h,v 1.6 2003/06/02 20:18:40 millert Exp $	*/
-/*	$NetBSD: hist.h,v 1.3 1997/01/11 06:47:56 lukem Exp $	*/
+/*	$OpenBSD: hist.h,v 1.7 2003/10/31 08:42:24 otto Exp $	*/
+/*	$NetBSD: hist.h,v 1.10 2003/08/07 16:44:31 agc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,38 +39,39 @@
  * el.hist.c: History functions
  */
 #ifndef _h_el_hist
-#define _h_el_hist
+#define	_h_el_hist
 
 #include "histedit.h"
 
-typedef const HistEvent *	(*hist_fun_t)(ptr_t, int, ...);
+typedef int (*hist_fun_t)(ptr_t, HistEvent *, int, ...);
 
 typedef struct el_history_t {
-    char *buf;				/* The history buffer		*/
-    char *last;				/* The last character		*/
-    int eventno;			/* Event we are looking for	*/
-    ptr_t ref;				/* Argument for history fcns	*/
-    hist_fun_t fun;			/* Event access			*/
-    const HistEvent *ev;		/* Event cookie			*/
+	char		*buf;		/* The history buffer		*/
+	size_t		sz;		/* Size of history buffer	*/
+	char		*last;		/* The last character		*/
+	int		 eventno;	/* Event we are looking for	*/
+	ptr_t		 ref;		/* Argument for history fcns	*/
+	hist_fun_t	 fun;		/* Event access			*/
+	HistEvent	 ev;		/* Event cookie			*/
 } el_history_t;
 
-#define HIST_FUN(el, fn, arg)	\
-    ((((el)->el_history.ev = \
-       (*(el)->el_history.fun)((el)->el_history.ref, fn, arg)) == NULL) ? \
-     NULL : (el)->el_history.ev->str)
+#define	HIST_FUN(el, fn, arg)	\
+    ((((*(el)->el_history.fun) ((el)->el_history.ref, &(el)->el_history.ev, \
+	fn, arg)) == -1) ? NULL : (el)->el_history.ev.str)
 
 #define	HIST_NEXT(el)		HIST_FUN(el, H_NEXT, NULL)
 #define	HIST_FIRST(el)		HIST_FUN(el, H_FIRST, NULL)
 #define	HIST_LAST(el)		HIST_FUN(el, H_LAST, NULL)
 #define	HIST_PREV(el)		HIST_FUN(el, H_PREV, NULL)
-#define	HIST_EVENT(el, num)	HIST_FUN(el, H_EVENT, num)
+#define	HIST_SET(el, num)	HIST_FUN(el, H_SET, num)
 #define	HIST_LOAD(el, fname)	HIST_FUN(el, H_LOAD fname)
 #define	HIST_SAVE(el, fname)	HIST_FUN(el, H_SAVE fname)
 
-protected int 		hist_init(EditLine *);
-protected void 		hist_end(EditLine *);
+protected int		hist_init(EditLine *);
+protected void		hist_end(EditLine *);
 protected el_action_t	hist_get(EditLine *);
 protected int		hist_set(EditLine *, hist_fun_t, ptr_t);
-protected int		hist_list(EditLine *, int, char **);
+protected int		hist_command(EditLine *, int, const char **);
+protected int		hist_enlargebuf(EditLine *, size_t, size_t);
 
 #endif /* _h_el_hist */

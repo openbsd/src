@@ -1,5 +1,5 @@
-/*	$OpenBSD: search.h,v 1.5 2003/06/02 20:18:40 millert Exp $	*/
-/*	$NetBSD: search.h,v 1.2 1997/01/11 06:48:09 lukem Exp $	*/
+/*	$OpenBSD: search.h,v 1.6 2003/10/31 08:42:24 otto Exp $	*/
+/*	$NetBSD: search.h,v 1.7 2003/08/07 16:44:33 agc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,21 +38,22 @@
 /*
  * el.search.h: Line and history searching utilities
  */
-#ifndef _h_el_search 
-#define _h_el_search 
+#ifndef _h_el_search
+#define	_h_el_search
 
 #include "histedit.h"
 
 typedef struct el_search_t {
-    char *patbuf;		/* The pattern buffer		*/
-    int  patlen;		/* Length of the pattern buffer	*/
-    int  patdir;		/* Direction of the last search	*/
-    int  chadir;		/* Character search direction	*/
-    char chacha;		/* Character we are looking for	*/
+	char	*patbuf;		/* The pattern buffer		*/
+	size_t	 patlen;		/* Length of the pattern buffer	*/
+	int	 patdir;		/* Direction of the last search	*/
+	int	 chadir;		/* Character search direction	*/
+	char	 chacha;		/* Character we are looking for	*/
+	char	 chatflg;		/* 0 if f, 1 if t */
 } el_search_t;
 
 
-protected int 		el_match(const char *, const char *);
+protected int		el_match(const char *, const char *);
 protected int		search_init(EditLine *);
 protected void		search_end(EditLine *);
 protected int		c_hmatch(EditLine *, const char *);
@@ -61,7 +62,6 @@ protected el_action_t	ce_inc_search(EditLine *, int);
 protected el_action_t	cv_search(EditLine *, int);
 protected el_action_t	ce_search_line(EditLine *, char *, int);
 protected el_action_t	cv_repeat_srch(EditLine *, int);
-protected el_action_t	cv_csearch_back(EditLine *, int, int, int);
-protected el_action_t	cv_csearch_fwd(EditLine *, int, int, int);
+protected el_action_t	cv_csearch(EditLine *, int, int, int, int);
 
 #endif /* _h_el_search */

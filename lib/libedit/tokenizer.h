@@ -1,5 +1,5 @@
-/*	$OpenBSD: tokenizer.h,v 1.6 2003/06/02 20:18:40 millert Exp $	*/
-/*	$NetBSD: tokenizer.h,v 1.2 1997/01/11 06:48:16 lukem Exp $	*/
+/*	$OpenBSD: tokenizer.h,v 1.7 2003/10/31 08:42:24 otto Exp $	*/
+/*	$NetBSD: tokenizer.h,v 1.6 2003/08/07 16:44:34 agc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,13 +39,13 @@
  * tokenizer.h: Header file for tokenizer routines
  */
 #ifndef _h_tokenizer
-#define _h_tokenizer
+#define	_h_tokenizer
 
 typedef struct tokenizer Tokenizer;
 
-Tokenizer 	*tok_init(const char *);
+Tokenizer	*tok_init(const char *);
 void		 tok_reset(Tokenizer *);
 void		 tok_end(Tokenizer *);
-int		 tok_line(Tokenizer *, const char *, int *, char ***);
+int		 tok_line(Tokenizer *, const char *, int *, const char ***);
 
 #endif /* _h_tokenizer */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys.h,v 1.7 2003/06/02 20:18:40 millert Exp $	*/
-/*	$NetBSD: sys.h,v 1.3 1997/01/11 06:48:12 lukem Exp $	*/
+/*	$OpenBSD: sys.h,v 1.8 2003/10/31 08:42:24 otto Exp $	*/
+/*	$NetBSD: sys.h,v 1.8 2003/08/07 16:44:33 agc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,15 @@
  * sys.h: Put all the stupid compiler and system dependencies here...
  */
 #ifndef _h_sys
-#define _h_sys
+#define	_h_sys
+
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if !defined(__attribute__) && (defined(__cplusplus) || !defined(__GNUC__)  || __GNUC__ == 2 && __GNUC_MINOR__ < 8)
+# define __attribute__(A)
+#endif
 
 #ifndef public
 # define public		/* Externally visible functions/variables */
@@ -54,37 +62,54 @@
 			/* When we want to hide everything	*/
 #endif
 
-#include <sys/cdefs.h>
-
 #ifndef _PTR_T
 # define _PTR_T
-typedef void* ptr_t;
+typedef void	*ptr_t;
 #endif
 
 #ifndef _IOCTL_T
 # define _IOCTL_T
-typedef void* ioctl_t;
+typedef void	*ioctl_t;
 #endif
 
 #include <stdio.h>
 
+#ifndef HAVE_STRLCAT
+#define	strlcat libedit_strlcat
+size_t	strlcat(char *dst, const char *src, size_t size);
+#endif
+
+#ifndef HAVE_STRLCPY
+#define	strlcpy libedit_strlcpy
+size_t	strlcpy(char *dst, const char *src, size_t size);
+#endif
+
+#ifndef HAVE_FGETLN
+#define	fgetln libedit_fgetln
+char	*fgetln(FILE *fp, size_t *len);
+#endif
+
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
 
-#ifdef SUNOS
+#ifdef notdef
 # undef REGEX
 # undef REGEXP
 # include <malloc.h>
-typedef void (*sig_t)(int);
 # ifdef __GNUC__
 /*
  * Broken hdrs.
  */
+extern int	tgetent(const char *bp, char *name);
+extern int	tgetflag(const char *id);
+extern int	tgetnum(const char *id);
+extern char    *tgetstr(const char *id, char **area);
+extern char    *tgoto(const char *cap, int col, int row);
+extern int	tputs(const char *str, int affcnt, int (*putc)(int));
 extern char    *getenv(const char *);
 extern int	fprintf(FILE *, const char *, ...);
 extern int	sigsetmask(int);
 extern int	sigblock(int);
-extern int	ioctl(int, int, void *);
 extern int	fputc(int, FILE *);
 extern int	fgetc(FILE *);
 extern int	fflush(FILE *);
@@ -93,7 +118,6 @@ extern int	toupper(int);
 extern int	errno, sys_nerr;
 extern char	*sys_errlist[];
 extern void	perror(const char *);
-extern int	read(int, const char*, int);
 #  include <string.h>
 #  define strerror(e)	sys_errlist[e]
 # endif

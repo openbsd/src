@@ -1,5 +1,5 @@
-/*	$OpenBSD: key.h,v 1.6 2003/06/02 20:18:40 millert Exp $	*/
-/*	$NetBSD: key.h,v 1.2 1997/01/11 06:47:59 lukem Exp $	*/
+/*	$OpenBSD: key.h,v 1.7 2003/10/31 08:42:24 otto Exp $	*/
+/*	$NetBSD: key.h,v 1.8 2003/08/07 16:44:32 agc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,37 +39,42 @@
  * el.key.h: Key macro header
  */
 #ifndef _h_el_key
-#define _h_el_key
+#define	_h_el_key
 
 typedef union key_value_t {
-    el_action_t  cmd;	/* If it is a command the #	*/
-    char        *str;	/* If it is a string...		*/
+	el_action_t	 cmd;	/* If it is a command the #	*/
+	char		*str;	/* If it is a string...		*/
 } key_value_t;
 
 typedef struct key_node_t key_node_t;
 
 typedef struct el_key_t {
-    char        *buf;	/* Key print buffer		*/
-    key_node_t  *map;	/* Key map			*/
-    key_value_t  val;	/* Local conversion buffer	*/
+	char		*buf;	/* Key print buffer		*/
+	key_node_t	*map;	/* Key map			*/
+	key_value_t	 val;	/* Local conversion buffer	*/
 } el_key_t;
 
-#define XK_CMD	0
-#define XK_STR	1
-#define XK_NOD	2
-#define XK_EXE	3
+#define	XK_CMD	0
+#define	XK_STR	1
+#define	XK_NOD	2
+#define	XK_EXE	3
 
-protected int 		key_init(EditLine *);
-protected void 		key_end(EditLine *);
-protected key_value_t *	key_map_cmd(EditLine *, int);
-protected key_value_t *	key_map_str(EditLine *, char *);
-protected void		key_reset(EditLine *);
-protected int 		key_get(EditLine *, char *, key_value_t *);
-protected void		key_add(EditLine *, char *, key_value_t *, int);
-protected void		key_clear(EditLine *, el_action_t *, char *);
-protected int		key_delete(EditLine *, char *);
-protected void		key_print(EditLine *, char *);
-protected void	        key_kprint(EditLine *, char *, key_value_t *, int);
-protected char 	       *key__decode_str(char *, char *, char *);
+#undef key_end
+#undef key_clear
+#undef key_print
+
+protected int		 key_init(EditLine *);
+protected void		 key_end(EditLine *);
+protected key_value_t	*key_map_cmd(EditLine *, int);
+protected key_value_t	*key_map_str(EditLine *, char *);
+protected void		 key_reset(EditLine *);
+protected int		 key_get(EditLine *, char *, key_value_t *);
+protected void		 key_add(EditLine *, const char *, key_value_t *, int);
+protected void		 key_clear(EditLine *, el_action_t *, const char *);
+protected int		 key_delete(EditLine *, const char *);
+protected void		 key_print(EditLine *, const char *);
+protected void	         key_kprint(EditLine *, const char *, key_value_t *,
+    int);
+protected char		*key__decode_str(const char *, char *, const char *);
 
 #endif /* _h_el_key */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sig.h,v 1.5 2003/06/02 20:18:40 millert Exp $	*/
-/*	$NetBSD: sig.h,v 1.2 1997/01/11 06:48:11 lukem Exp $	*/
+/*	$OpenBSD: sig.h,v 1.6 2003/10/31 08:42:24 otto Exp $	*/
+/*	$NetBSD: sig.h,v 1.5 2003/08/07 16:44:33 agc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * el.sig.h: Signal handling functions
  */
 #ifndef _h_el_sig
-#define _h_el_sig
+#define	_h_el_sig
 
 #include <signal.h>
 
@@ -49,17 +49,18 @@
  * Define here all the signals we are going to handle
  * The _DO macro is used to iterate in the source code
  */
-#define ALLSIGS 	\
-    _DO(SIGINT)		\
-    _DO(SIGTSTP)	\
-    _DO(SIGSTOP)	\
-    _DO(SIGQUIT)	\
-    _DO(SIGHUP)		\
-    _DO(SIGTERM)	\
-    _DO(SIGCONT)	\
-    _DO(SIGWINCH)
+#define	ALLSIGS		\
+	_DO(SIGINT)	\
+	_DO(SIGTSTP)	\
+	_DO(SIGSTOP)	\
+	_DO(SIGQUIT)	\
+	_DO(SIGHUP)	\
+	_DO(SIGTERM)	\
+	_DO(SIGCONT)	\
+	_DO(SIGWINCH)
 
-typedef sig_t *el_signal_t;
+typedef void (*el_signalhandler_t)(int);
+typedef el_signalhandler_t *el_signal_t;
 
 protected void	sig_end(EditLine*);
 protected int	sig_init(EditLine*);
