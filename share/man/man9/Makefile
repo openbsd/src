@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.61 2003/01/10 03:23:01 kjc Exp $
+#	$OpenBSD: Makefile,v 1.62 2003/01/11 06:21:07 wcobb Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -18,9 +18,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 bus_dma.9 bus_space.9 copy.9 \
 	time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 vget.9 \
 	vgone.9 vhold.9 vinvalbuf.9 vput.9 vref.9 vrele.9 \
-	vm_allocate.9 vm_map_copy.9 vm_deallocate.9 \
-	vm_map_inherit.9 vm_map_protect.9 vnode.9 vn_lock.9 \
-	vwaitforio.9 vwaitforio.9
+	vnode.9 vn_lock.9 vwaitforio.9 vwaitforio.9
 
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
@@ -154,9 +152,6 @@ MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 	timeout.9 timeout_initialized.9 timeout.9 untimeout.9 \
 	timeout.9 timeout_triggered.9
 MLINKS+=uiomove.9 uio.9
-MLINKS+=vm_map_copy.9 vm_copy.9
-MLINKS+=vm_map_inherit.9 vm_inherit.9
-MLINKS+=vm_map_protect.9 vm_protect.9
 MLINKS+=malloc.9 MALLOC.9 malloc.9 free.9 malloc.9 FREE.9
 MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 max.9 kern.9 min.9 kern.9 ulmax.9 kern.9 ulmin.9 kern.9 abs.9 \
