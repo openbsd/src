@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.16 2000/09/27 21:41:34 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.17 2000/10/11 19:59:52 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -319,6 +319,8 @@ ssh2_auth_pubkey(struct passwd *pw, char *service)
 				authenticated = -1;
 			}
 		}
+		if (authenticated != 1)
+			auth_clear_options();
 		key_free(key);
 	}
 	xfree(pkalg);

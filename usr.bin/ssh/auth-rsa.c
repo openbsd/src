@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.30 2000/10/03 18:03:03 markus Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.31 2000/10/11 19:59:52 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -284,6 +284,8 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 
 	if (authenticated)
 		packet_send_debug("RSA authentication accepted.");
+	else
+		auth_clear_options();
 
 	/* Return authentication result. */
 	return authenticated;
