@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.59 1999/12/21 08:23:06 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.60 1999/12/25 04:48:16 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -140,8 +140,8 @@ ip_output(m0, va_alist)
 	struct route_enc re0, *re = &re0;
 	struct sockaddr_encap *ddst, *gw;
 	u_int8_t sa_require, sa_have = 0;
-	struct tdb *tdb, *t;
-	int s, ip6flag = 0;
+	int s, protoflag = AF_INET;
+	struct tdb *tdb;
 
 #ifdef INET6
 	struct ip6_hdr *ip6;
@@ -392,6 +392,7 @@ sendit:
 			goto no_encap;
 		}
 
+		/* Do an SPD lookup */
 		ddst = (struct sockaddr_encap *) &re->re_dst;
 		ddst->sen_family = PF_KEY;
 		ddst->sen_len = SENT_IP4_LEN;
@@ -516,8 +517,7 @@ sendit:
 			 */
 			splx(s);
 			goto no_encap;
-		    }
-		    else {
+		    } else {
 			if (tdb->tdb_authalgxform)
 			  sa_require = NOTIFY_SATYPE_AUTH;
 			if (tdb->tdb_encalgxform)
@@ -552,16 +552,19 @@ sendit:
 		 */
 		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
 
-		if (sa_require & ~sa_have)
+		if (sa_require & ~sa_have) {
+		        splx(s);
 			goto no_encap;
+		}
 
 		if (tdb == NULL) {
 			splx(s);
 			if (gw->sen_type == SENT_IPSP)
-			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
+			        DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
+
 #ifdef INET6
-			else
-			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet6_ntoa4(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi), gw->sen_ipsp6_sproto));
+			if (gw->sen_type == SENT_IPSP6)
+			        DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet6_ntoa4(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi), gw->sen_ipsp6_sproto));
 #endif /* INET6 */	  
 
 			if (re->re_rt)
@@ -571,137 +574,21 @@ sendit:
 			goto done;
 		}
 
-		for (t = tdb; t != NULL; t = t->tdb_onext)
-		    if ((t->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
-			(t->tdb_sproto == IPPROTO_AH && !ah_enable)) {
-		        DPRINTF(("ip_output(): IPSec outbound packet dropped due to policy\n"));
-
+		error = ipsp_process_packet(m, &mp, tdb, &protoflag, 0);
+		if ((mp == NULL) && (!error))
+		        error = ENOBUFS;
+		if (error) {
 			if (re->re_rt)
                         	RTFREE(re->re_rt);
-			error = EHOSTUNREACH;
-			m_freem(m);
+			if (mp)
+			        m_freem(mp);
 			goto done;
-		    }
-
-		while (tdb && tdb->tdb_xform) {
-			/* Check if the SPI is invalid */
-			if (tdb->tdb_flags & TDBF_INVALID) {
-				splx(s);
-			        DPRINTF(("ip_output(): attempt to use invalid SA %s/%08x/%u\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
-				m_freem(m);
-				if (re->re_rt)
-					RTFREE(re->re_rt);
-				return ENXIO;
-			}
-
-#ifndef INET6
-			/* Sanity check */
-			if (tdb->tdb_dst.sa.sa_family != AF_INET) {
-			    splx(s);
-			        DPRINTF(("ip_output(): attempt to use SA %s/%08x/%u for protocol family %d\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto, tdb->tdb_dst.sa.sa_family));
-				m_freem(m);
-				if (re->re_rt)
-					RTFREE(re->re_rt);
-				return ENXIO;
-			}
-#endif /* INET6 */
-
-			/* Register first use, setup expiration timer */
-			if (tdb->tdb_first_use == 0) {
-				tdb->tdb_first_use = time.tv_sec;
-				tdb_expiration(tdb, TDBEXP_TIMEOUT);
-			}
-
-			/* Check for tunneling */
-			if (((tdb->tdb_dst.sa.sa_family == AF_INET) &&
-			     (tdb->tdb_dst.sin.sin_addr.s_addr != 
-			      INADDR_ANY) &&
-			     (tdb->tdb_dst.sin.sin_addr.s_addr !=
-			      ip->ip_dst.s_addr)) ||
-			    (tdb->tdb_dst.sa.sa_family == AF_INET6) ||
-			    ((tdb->tdb_flags & TDBF_TUNNELING) &&
-			     (tdb->tdb_xform->xf_type != XF_IP4))) {
-			        /* Fix length and checksum */
-			        ip->ip_len = htons(m->m_pkthdr.len);
-			        ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-				error = ipe4_output(m, tdb, &mp,
-						    ip->ip_hl << 2,
-						    offsetof(struct ip, ip_p));
-				if (mp == NULL)
-					error = EFAULT;
-				if (error) {
-					splx(s);
-					if (re->re_rt)
-						RTFREE(re->re_rt);
-					return error;
-				}
-				if (tdb->tdb_dst.sa.sa_family == AF_INET)
-				        ip6flag = 0;
-#ifdef INET6
-				if (tdb->tdb_dst.sa.sa_family == AF_INET6)
-				        ip6flag = 1;
-#endif /* INET6 */
-				m = mp;
-				mp = NULL;
-			}
-
-			if ((tdb->tdb_xform->xf_type == XF_IP4) &&
-			    (tdb->tdb_dst.sa.sa_family == AF_INET)) {
-			        ip = mtod(m, struct ip *);
-				ip->ip_len = htons(m->m_pkthdr.len);
-				ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-			}
-
-#ifdef INET6
-			if ((tdb->tdb_xform->xf_type == XF_IP4) &&
-			    (tdb->tdb_dst.sa.sa_family == AF_INET6)) {
-			    ip6 = mtod(m, struct ip6_hdr *);
-			    ip6->ip6_plen = htons(m->m_pkthdr.len);
-			}
-#endif /* INET6 */
-
-#ifdef INET6
-			/*
-			 * This assumes that there is only just an IPv6
-			 * header prepended.
-			 */
-			if (ip6flag)
-			  error = (*(tdb->tdb_xform->xf_output))(m, tdb, &mp, sizeof(struct ip6_hdr), offsetof(struct ip6_hdr, ip6_nxt));
-#endif /* INET6 */
-
-			if (!ip6flag)
-			  error = (*(tdb->tdb_xform->xf_output))(m, tdb, &mp, ip->ip_hl << 2, offsetof(struct ip, ip_p));
-			if (!error && mp == NULL)
-				error = EFAULT;
-			if (error) {
-				splx(s);
-				if (mp != NULL)
-					m_freem(mp);
-				if (re->re_rt)
-					RTFREE(re->re_rt);
-				return error;
-			}
-
-			m = mp;
-			mp = NULL;
-
-			if (!ip6flag) {
-			    ip = mtod(m, struct ip *);
-			    ip->ip_len = htons(m->m_pkthdr.len);
-			}
-
-#ifdef INET6
-			if (ip6flag) {
-			    ip6 = mtod(m, struct ip6_hdr *);
-			    ip6->ip6_plen = htons(m->m_pkthdr.len);
-			}
-#endif /* INET6 */
-			tdb = tdb->tdb_onext;
 		}
-		splx(s);
 
-		if (!ip6flag)
-		  ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+		m = mp;
+		mp = NULL;
+
+		splx(s);
 
 		/*
 		 * At this point, m is pointing to an mbuf chain with the
@@ -711,7 +598,7 @@ sendit:
 		if (re->re_rt)
 			RTFREE(re->re_rt);
 
-		if (!ip6flag) {
+		if (protoflag == AF_INET) {
 		    ip = mtod(m, struct ip *);
 		    NTOHS(ip->ip_len);
 		    NTOHS(ip->ip_off);
@@ -722,7 +609,7 @@ sendit:
 		}
 
 #ifdef INET6
-		if (ip6flag) {
+		if (protoflag == AF_INET6) {
 		    ip6 = mtod(m, struct ip6_hdr *);
 		    NTOHS(ip6->ip6_plen);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.50 1999/12/08 12:10:25 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.51 1999/12/25 04:48:16 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -563,5 +563,9 @@ extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
                                u_int32_t *);
 
 extern unsigned char ipseczeroes[];
+
+/* Packet processing */
+int ipsp_process_packet(struct mbuf *, struct mbuf **, struct tdb *,
+			int *, int);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */

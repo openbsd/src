@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.59 1999/12/08 06:06:43 itojun Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.60 1999/12/25 04:48:16 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -45,27 +45,28 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
-#include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
 
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/in_var.h>
-#include <netinet/ip_var.h>
-#include <netinet/ip_icmp.h>
+#endif /* INET */
 
-#include <net/raw_cb.h>
+#ifdef INET6
+#include <netinet6/in6.h>
+#include <netinet6/ip6.h>
+#endif /* INET6 */
+
 #include <net/pfkeyv2.h>
 
 #include <netinet/ip_ipsp.h>
@@ -83,6 +84,10 @@ void tdb_hashstats(void);
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
+#endif
+
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 #ifdef __GNUC__
@@ -1494,4 +1499,232 @@ ipsp_address(union sockaddr_union sa)
 	default:
 	    return "(unknown address family)";
     }
+}
+
+/*
+ * Loop over a tdb chain, taking into consideration protocol tunneling. The
+ * fourth argument is set if the first encapsulation header is already in
+ * place.
+ */
+int
+ipsp_process_packet(struct mbuf *m, struct mbuf **mp, struct tdb *tdb, int *af,
+		    int tunalready)
+{
+    int i, error, off;
+    struct tdb *t;
+
+#ifdef INET
+    struct ip *ip;
+#endif /* INET */
+
+#ifdef INET6
+    struct ip6_hdr *ip6;
+#endif /* INET6 */
+
+    for (t = tdb; t != NULL; t = t->tdb_onext)
+      if ((t->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
+	  (t->tdb_sproto == IPPROTO_AH && !ah_enable))
+      {
+	  DPRINTF(("ipsp_process_packet(): IPSec outbound packet dropped due to policy\n"));
+	  m_freem(m);
+	  return EHOSTUNREACH;
+      }
+
+    while (tdb && tdb->tdb_xform)
+    {
+	/* Check if the SPI is invalid */
+	if (tdb->tdb_flags & TDBF_INVALID)
+	{
+	    DPRINTF(("ipsp_process_packet(): attempt to use invalid SA %s/%08x/%u\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
+	    m_freem(m);
+	    return ENXIO;
+	}
+
+#ifndef INET6
+	/* Sanity check */
+	if (tdb->tdb_dst.sa.sa_family != AF_INET)
+	{
+	    DPRINTF(("ipsp_process_packet(): attempt to use SA %s/%08x/%u for protocol family %d\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto, tdb->tdb_dst.sa.sa_family));
+	    m_freem(m);
+	    return ENXIO;
+	}
+#endif /* INET6 */
+
+#ifndef INET
+	/* Sanity check */
+	if (tdb->tdb_dst.sa.sa_family != AF_INET6)
+	{
+	    DPRINTF(("ipsp_process_packet(): attempt to use SA %s/%08x/%u for protocol family %d\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto, tdb->tdb_dst.sa.sa_family));
+	    m_freem(m);
+	    return ENXIO;
+	}
+#endif /* INET */
+
+	/* Register first use, setup expiration timer */
+	if (tdb->tdb_first_use == 0)
+	{
+	    tdb->tdb_first_use = time.tv_sec;
+	    tdb_expiration(tdb, TDBEXP_TIMEOUT);
+	}
+
+	/* Check for tunneling if we don't have the first header in place */
+	if (tunalready == 0)
+	{
+	    if ((*af) == tdb->tdb_dst.sa.sa_family)
+	    {
+#ifdef INET
+		if ((*af) == AF_INET)
+		  i = sizeof(struct ip);
+#endif /* INET */
+
+#ifdef INET6
+		if ((*af) == AF_INET6)
+		  i = sizeof(struct ip6_hdr);
+#endif /* INET6 */
+
+		if (m->m_len < i)
+		{
+		    if ((m = m_pullup(m, i)) == 0)
+		      return ENOBUFS;
+		}
+
+#ifdef INET
+		ip = mtod(m, struct ip *);
+#endif /* INET */
+
+#ifdef INET6
+		ip6 = mtod(m, struct ip6_hdr *);
+#endif /* INET6 */
+	    }
+
+	    if ((tdb->tdb_dst.sa.sa_family != (*af)) ||
+		((tdb->tdb_flags & TDBF_TUNNELING) &&
+		 (tdb->tdb_xform->xf_type != XF_IP4)) ||
+#ifdef INET
+		((tdb->tdb_dst.sa.sa_family == AF_INET) &&
+		 (tdb->tdb_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
+		 (tdb->tdb_dst.sin.sin_addr.s_addr != ip->ip_dst.s_addr)) ||
+#endif /* INET */
+#ifdef INET6
+		((tdb->tdb_dst.sa.sa_family == AF_INET6) &&
+		 (!IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_dst.sin6.sin6_addr)) &&
+		 (!IN6_ARE_ADDR_EQUAL(&tdb->tdb_dst.sin6.sin6_addr,
+				      &ip6->ip6_dst))) ||
+#endif /* INET6 */
+		0)
+	    {
+#ifdef INET
+		/* Fix IPv4 header checksum and length */
+		if ((*af) == AF_INET)
+		{
+		    ip->ip_len = htons(m->m_pkthdr.len);
+		    ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+		    i = ip->ip_hl << 2;
+		    off = offsetof(struct ip, ip_p);
+		}
+#endif /* INET */
+
+#ifdef INET6
+		/* Fix IPv6 header payload length */
+		if ((*af) == AF_INET6)
+		{
+		    ip6->ip6_plen = htons(m->m_pkthdr.len);
+		    i = sizeof(struct ip6_hdr);
+		    off = offsetof(struct ip6_hdr, ip6_nxt);
+		}
+#endif /* INET6 */
+
+		/* Encapsulate */
+		error = ipe4_output(m, tdb, mp, i, off);
+		if ((*mp) == NULL)
+		  error = EFAULT;
+		if (error)
+		{
+		    if (*mp)
+		      m_freem(*mp);
+		    return error;
+		}
+
+		*af = tdb->tdb_dst.sa.sa_family;
+		m = *mp;
+		*mp = NULL;
+	    }
+	}
+	else
+	{
+	    tunalready = 0;
+
+	    if (tdb->tdb_xform->xf_type == XF_IP4)
+	      continue;
+	}
+    
+#ifdef INET
+	if (tdb->tdb_dst.sa.sa_family == AF_INET)
+	{
+	    ip = mtod(m, struct ip *);
+	    i = ip->ip_hl << 2;
+	    off = offsetof(struct ip, ip_p);
+
+	    if (tdb->tdb_xform->xf_type == XF_IP4)
+	    {
+		ip->ip_len = htons(m->m_pkthdr.len);
+		ip->ip_sum = in_cksum(m, i);
+	    }
+	}
+#endif /* INET */
+
+#ifdef INET6
+	if (tdb->tdb_dst.sa.sa_family == AF_INET6)
+	{
+	    ip6 = mtod(m, struct ip6_hdr *);
+	    i = sizeof(struct ip6_hdr);
+	    off = offsetof(struct ip6_hdr, ip6_nxt);
+	    ip6->ip6_plen = htons(m->m_pkthdr.len);
+	}
+#endif /* INET6 */
+    
+	error = (*(tdb->tdb_xform->xf_output))(m, tdb, mp, i, off);
+	if ((*mp) == NULL)
+	  error = EFAULT;
+	if (error)
+	{
+	    if (*mp)
+	      m_freem(*mp);
+	    return error;
+	}
+
+	m = *mp;
+	*mp = NULL;
+	tdb = tdb->tdb_onext;
+
+#ifdef INET
+	/* Fix the header length, for AH processing */
+	if ((*af) == AF_INET)
+	{
+	    ip = mtod(m, struct ip *);
+	    ip->ip_len = htons(m->m_pkthdr.len);
+	}
+#endif /* INET */
+
+#ifdef INET6
+	/* Fix the header length, for AH processing */
+	if ((*af) == AF_INET6)
+	{
+	    ip6 = mtod(m, struct ip6_hdr *);
+	    ip6->ip6_plen = htons(m->m_pkthdr.len);
+	}
+#endif /* INET6 */
+    }
+
+#ifdef INET
+    /* Fix checksum */
+    if ((*af) == AF_INET)
+    {
+	ip = mtod(m, struct ip *);
+	ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+    }
+#endif /* INET */
+
+    *mp = m;
+    return 0;
 }
