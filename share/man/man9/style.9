@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.36 2004/02/10 20:33:32 jmc Exp $
+.\"	$OpenBSD: style.9,v 1.37 2004/02/24 19:55:51 jmc Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -243,7 +243,6 @@ typedef struct _bar {
 	int	level;
 } BAR;
 .Ed
-.Pp
 .Bd -literal -offset 0i
 /*
  * All major routines should have a comment briefly describing what
@@ -652,6 +651,11 @@ Whenever possible, code should be run through a code checker
 .Dq Li gcc -Wall -W -Wtraditional -Wpointer-arith -Wbad-function-cast ... ,
 .Xr lint 1
 or lclint from the ports tree) and produce minimal warnings.
+.Sh FILES
+.Bl -tag -width "/usr/share/misc/license.template " -compact
+.It Pa /usr/share/misc/license.template
+Example license for new code.
+.El
 .Sh SEE ALSO
 .Xr indent 1 ,
 .Xr err 3 ,
