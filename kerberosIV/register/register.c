@@ -1,4 +1,4 @@
-/*	$Id: register.c,v 1.1.1.1 1995/12/14 06:52:33 tholo Exp $	*/
+/*	$Id: register.c,v 1.2 1996/04/17 07:23:33 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -291,7 +291,7 @@ setup_key(local)
 		exit(1);
 	}
 	key_sched(&kdata.kf_key, schedule);
-	des_set_key(&kdata.kf_key, schedule);
+	desrw_set_key(&kdata.kf_key, schedule);
 	return;
 }
 

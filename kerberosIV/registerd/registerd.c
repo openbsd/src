@@ -1,4 +1,4 @@
-/*	$Id: registerd.c,v 1.2 1995/12/29 09:50:32 tholo Exp $	*/
+/*	$Id: registerd.c,v 1.3 1996/04/17 07:23:35 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -130,7 +130,7 @@ main(argc, argv)
 	send_packet(msgbuf, CLEAR);
 	kfile = (struct keyfile_data *) keybuf;
 	key_sched(&kfile->kf_key, schedule);
-	des_set_key(&kfile->kf_key, schedule);
+	desrw_set_key(&kfile->kf_key, schedule);
 
 	/* read the command code byte */
 
