@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.7 2002/05/09 14:12:17 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.8 2002/06/07 00:18:05 itojun Exp $	*/
 /*	$KAME: ftp.c,v 1.14 2002/04/24 08:17:23 itojun Exp $	*/
 
 /*
@@ -61,11 +61,7 @@ static struct sockaddr_storage data4;	/* server data address */
 static struct sockaddr_storage data6;	/* client data address */
 static int epsvall = 0;
 
-#ifdef FAITH4
-enum state { NONE, LPRT, EPRT, PORT, LPSV, EPSV, PASV };
-#else
 enum state { NONE, LPRT, EPRT, LPSV, EPSV };
-#endif
 
 static int ftp_activeconn(void);
 static int ftp_passiveconn(void);
@@ -440,22 +436,6 @@ ftp_copyresult(int src, int dst, enum state state)
 		}
 		write(dst, rbuf, n);
 		return n;
-#ifdef FAITH4
-	case PORT:
-		/* expecting "200 EPRT command successful." */
-		if (code == 200) {
-			p = strstr(rbuf, "EPRT");
-			if (p) {
-				p[0] = 'P';
-				p[1] = 'O';
-			}
-		} else {
-			close(wport4);
-			wport4 = -1;
-		}
-		write(dst, rbuf, n);
-		return n;
-#endif
 	case LPSV:
 	case EPSV:
 		/*
@@ -592,123 +572,6 @@ passivefail:
 			return n;
 		}
 	    }
-#ifdef FAITH4
-	case PASV:
-		/* expecting "229 Entering Extended Passive Mode (|||x|)" */
-		if (code != 229) {
-passivefail1:
-			close(wport6);
-			wport6 = -1;
-			write(dst, rbuf, n);
-			return n;
-		}
-
-	    {
-		u_short port;
-		struct sockaddr_in *sin;
-		struct sockaddr_in6 *sin6;
-
-		/*
-		 * EPSV result -> PORT result
-		 */
-		p = param;
-		while (*p && *p != '(')	/*)*/
-			p++;
-		if (!*p)
-			goto passivefail1;	/*XXX*/
-		p++;
-		n = sscanf(p, "|||%hu|", &port);
-		if (n != 1)
-			goto passivefail1;	/*XXX*/
-
-		/* keep EPRT parameter */
-		n = sizeof(data4);
-		error = getpeername(src, (struct sockaddr *)&data4, &n);
-		if (error == -1)
-			goto passivefail1;	/*XXX*/
-		sin6 = (struct sockaddr_in6 *)&data4;
-		sin6->sin6_port = htons(port);
-
-		/* get ready for passive data connection */
-		memset(&data6, 0, sizeof(data6));
-		sin = (struct sockaddr_in *)&data6;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_family = AF_INET;
-		wport6 = socket(sin->sin_family, SOCK_STREAM, 0);
-		if (wport6 == -1) {
-passivefail2:
-			n = snprintf(sbuf, sizeof(sbuf),
-				"500 could not translate from EPSV\r\n");
-			if (n < 0 || n >= sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
-		}
-#ifdef IP_FAITH
-	    {
-		int on = 1;
-		error = setsockopt(wport6, IPPROTO_IP, IP_FAITH,
-			&on, sizeof(on));
-		if (error == -1)
-			exit_error("setsockopt(IP_FAITH): %s", strerror(errno));
-	    }
-#endif
-		error = bind(wport6, (struct sockaddr *)sin, sin->sin_len);
-		if (error == -1) {
-			close(wport6);
-			wport6 = -1;
-			goto passivefail2;
-		}
-		error = listen(wport6, 1);
-		if (error == -1) {
-			close(wport6);
-			wport6 = -1;
-			goto passivefail2;
-		}
-
-		/* transmit PORT */
-		/*
-		 * addr from dst, port from wport6
-		 */
-		n = sizeof(data6);
-		error = getsockname(wport6, (struct sockaddr *)&data6, &n);
-		if (error == -1) {
-			close(wport6);
-			wport6 = -1;
-			goto passivefail2;
-		}
-		sin = (struct sockaddr_in *)&data6;
-		port = sin->sin_port;
-
-		n = sizeof(data6);
-		error = getsockname(dst, (struct sockaddr *)&data6, &n);
-		if (error == -1) {
-			close(wport6);
-			wport6 = -1;
-			goto passivefail2;
-		}
-		sin = (struct sockaddr_in *)&data6;
-		sin->sin_port = port;
-
-		{
-			char *a, *p;
-
-			a = (char *)&sin->sin_addr;
-			p = (char *)&sin->sin_port;
-			n = snprintf(sbuf, sizeof(sbuf),
-"227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n",
-				UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
-				UC(p[0]), UC(p[1]));
-			if (n < 0 || n >= sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(dst, sbuf, n);
-			passivemode = 1;
-			return n;
-		}
-	    }
-#endif /* FAITH4 */
 	}
 
  bad:
@@ -1045,124 +908,6 @@ eprtparamfail:
 		if (n)
 			write(src, sbuf, n);
 		return n;
-#ifdef FAITH4
-	} else if (strcmp(cmd, "PORT") == 0 && param) {
-		/*
-		 * PORT -> EPRT
-		 */
-		char host[NI_MAXHOST], serv[NI_MAXSERV];
-
-		nstate = PORT;
-
-		close(wport4);
-		close(wport6);
-		close(port4);
-		close(port6);
-		wport4 = wport6 = port4 = port6 = -1;
-
-		p = param;
-		n = sscanf(p, "%u,%u,%u,%u,%u,%u",
-			&ho[0], &ho[1], &ho[2], &ho[3], &po[0], &po[1]);
-		if (n != 6) {
-			n = snprintf(sbuf, sizeof(sbuf),
-				"501 illegal parameter to PORT\r\n");
-			if (n < 0 || n >= sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
-		}
-
-		memset(&data6, 0, sizeof(data6));
-		sin = (struct sockaddr_in *)&data6;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_family = AF_INET;
-		sin->sin_addr.s_addr = htonl(
-			((ho[0] & 0xff) << 24) | ((ho[1] & 0xff) << 16) |
-			((ho[2] & 0xff) << 8) | (ho[3] & 0xff));
-		sin->sin_port = htons(((po[0] & 0xff) << 8) | (po[1] & 0xff));
-
-		/* get ready for active data connection */
-		n = sizeof(data4);
-		error = getsockname(dst, (struct sockaddr *)&data4, &n);
-		if (error == -1) {
-portfail:
-			n = snprintf(sbuf, sizeof(sbuf),
-				"500 could not translate to EPRT\r\n");
-			if (n < 0 || n >= sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
-		}
-		if (((struct sockaddr *)&data4)->sa_family != AF_INET6)
-			goto portfail;
-
-		((struct sockaddr_in6 *)&data4)->sin6_port = 0;
-		sa = (struct sockaddr *)&data4;
-		wport4 = socket(sa->sa_family, SOCK_STREAM, 0);
-		if (wport4 == -1)
-			goto portfail;
-		error = bind(wport4, sa, sa->sa_len);
-		if (error == -1) {
-			close(wport4);
-			wport4 = -1;
-			goto portfail;
-		}
-		error = listen(wport4, 1);
-		if (error == -1) {
-			close(wport4);
-			wport4 = -1;
-			goto portfail;
-		}
-
-		/* transmit EPRT */
-		n = sizeof(data4);
-		error = getsockname(wport4, (struct sockaddr *)&data4, &n);
-		if (error == -1) {
-			close(wport4);
-			wport4 = -1;
-			goto portfail;
-		}
-		af = 2;
-		sa = (struct sockaddr *)&data4;
-		if (getnameinfo(sa, sa->sa_len, host, sizeof(host),
-			serv, sizeof(serv), NI_NUMERICHOST | NI_NUMERICSERV)) {
-			close(wport4);
-			wport4 = -1;
-			goto portfail;
-		}
-		n = snprintf(sbuf, sizeof(sbuf), "EPRT |%d|%s|%s|\r\n", af, host, serv);
-		if (n < 0 || n >= sizeof(sbuf))
-			n = 0;
-		if (n)
-			write(dst, sbuf, n);
-		*state = nstate;
-		passivemode = 0;
-		return n;
-	} else if (strcmp(cmd, "PASV") == 0 && !param) {
-		/*
-		 * PASV -> EPSV
-		 */
-
-		nstate = PASV;
-
-		close(wport4);
-		close(wport6);
-		close(port4);
-		close(port6);
-		wport4 = wport6 = port4 = port6 = -1;
-
-		/* transmit EPSV */
-		n = snprintf(sbuf, sizeof(sbuf), "EPSV\r\n");
-		if (n < 0 || n >= sizeof(sbuf))
-			n = 0;
-		if (n)
-			write(dst, sbuf, n);
-		*state = PASV;
-		passivemode = 0;	/* to be set to 1 later */
-		return n;
-#else /* FAITH4 */
 	} else if (strcmp(cmd, "PORT") == 0 || strcmp(cmd, "PASV") == 0) {
 		/*
 		 * reject PORT/PASV
@@ -1173,7 +918,6 @@ portfail:
 		if (n)
 			write(src, sbuf, n);
 		return n;
-#endif /* FAITH4 */
 	} else if (passivemode
 		&& (strcmp(cmd, "STOR") == 0
 		 || strcmp(cmd, "STOU") == 0

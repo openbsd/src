@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.20 2002/05/26 01:21:12 deraadt Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.21 2002/06/07 00:18:05 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.50 2002/05/09 14:06:52 itojun Exp $	*/
 
 /*
@@ -73,14 +73,6 @@
 #include <netdb.h>
 #include <ifaddrs.h>
 
-#ifdef FAITH4
-#include <resolv.h>
-#include <arpa/nameser.h>
-#ifndef FAITH_NS
-#define FAITH_NS "FAITH_NS"
-#endif
-#endif
-
 #include "faithd.h"
 #include "prefix.h"
 
@@ -112,9 +104,6 @@ static void play_service(int);
 static void play_child(int, struct sockaddr *);
 static int faith_prefix(struct sockaddr *);
 static int map6to4(struct sockaddr_in6 *, struct sockaddr_in *);
-#ifdef FAITH4
-static int map4to6(struct sockaddr_in *, struct sockaddr_in6 *);
-#endif
 static void sig_child(int);
 static void sig_terminate(int);
 static void start_daemon(void);
@@ -239,7 +228,7 @@ daemon_main(int argc, char **argv)
 	char *ns;
 #endif /* FAITH_NS */
 
-	while ((c = getopt(argc, argv, "df:p46")) != -1) {
+	while ((c = getopt(argc, argv, "df:p")) != -1) {
 		switch (c) {
 		case 'd':
 			dflag++;
@@ -250,14 +239,6 @@ daemon_main(int argc, char **argv)
 		case 'p':
 			pflag++;
 			break;
-#ifdef FAITH4
-		case '4':
-			family = AF_INET;
-			break;
-		case '6':
-			family = AF_INET6;
-			break;
-#endif
 		default:
 			usage();
 			/*NOTREACHED*/
@@ -346,16 +327,6 @@ daemon_main(int argc, char **argv)
 			    strerror(errno));
 	}
 #endif
-#ifdef FAITH4
-#ifdef IP_FAITH
-	if (res->ai_family == AF_INET) {
-		error = setsockopt(s_wld, IPPROTO_IP, IP_FAITH, &on, sizeof(on));
-		if (error == -1)
-			exit_failure("setsockopt(IP_FAITH): %s",
-			    strerror(errno));
-	}
-#endif
-#endif /* FAITH4 */
 
 	error = setsockopt(s_wld, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	if (error == -1)
@@ -533,17 +504,6 @@ play_child(int s_src, struct sockaddr *srcaddr)
 		}
 		syslog(LOG_INFO, "translating from v6 to v4");
 		break;
-#ifdef FAITH4
-	case AF_INET:
-		if (!map4to6((struct sockaddr_in *)&dstaddr6,
-		    (struct sockaddr_in6 *)&dstaddr4)) {
-			close(s_src);
-			exit_failure("map4to6 failed");
-			/*NOTREACHED*/
-		}
-		syslog(LOG_INFO, "translating from v4 to v6");
-		break;
-#endif
 	default:
 		close(s_src);
 		exit_failure("family not supported");
@@ -721,39 +681,6 @@ map6to4(struct sockaddr_in6 *dst6, struct sockaddr_in *dst4)
 	return 1;
 }
 
-#ifdef FAITH4
-/* 0: non faith, 1: faith */
-static int
-map4to6(struct sockaddr_in *dst4, struct sockaddr_in6 *dst6)
-{
-	char host[NI_MAXHOST];
-	char serv[NI_MAXSERV];
-	struct addrinfo hints, *res;
-	int ai_errno;
-
-	if (getnameinfo((struct sockaddr *)dst4, dst4->sin_len, host, sizeof(host),
-			serv, sizeof(serv), NI_NAMEREQD|NI_NUMERICSERV) != 0)
-		return 0;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_flags = 0;
-	hints.ai_family = AF_INET6;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = 0;
-
-	if ((ai_errno = getaddrinfo(host, serv, &hints, &res)) != 0) {
-		syslog(LOG_INFO, "%s %s: %s", host, serv,
-		    gai_strerror(ai_errno));
-		return 0;
-	}
-
-	memcpy(dst6, res->ai_addr, res->ai_addrlen);
-
-	freeaddrinfo(res);
-
-	return 1;
-}
-#endif /* FAITH4 */
 
 static void
 sig_child(int sig)
