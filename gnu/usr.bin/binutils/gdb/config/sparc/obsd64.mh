@@ -4,3 +4,6 @@ XM_FILE= xm-obsd.h
 NAT_FILE= nm-obsd.h
 NAT_CLIBS= -lkvm
 NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o kcore-nbsd.o sp64nbsd-nat.o solib.o
+
+MMALLOC =
+MMALLOC_CFLAGS = -DNO_MMALLOC
