@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcscp.4,v 1.1 2001/02/14 06:12:00 fgsch Exp $
+.\"	$OpenBSD: pcscp.4,v 1.2 2001/02/14 06:36:27 fgsch Exp $
 .\"	$NetBSD: pcscp.4,v 1.3 1999/09/12 18:47:12 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,9 +67,6 @@ host adapters, use the
 .\" or 
 .\" .Xr siop 4
 driver.
-.Sh BUGS
-The driver currently ignores EEPROM settings, which establish
-per-target parameters etc.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr scsi 4 ,
@@ -82,3 +79,6 @@ per-target parameters etc.
 .Xr uk 4
 .Pp
 .Pa http://www.amd.com/
+.Sh BUGS
+The driver currently ignores EEPROM settings, which establish
+per-target parameters etc.
