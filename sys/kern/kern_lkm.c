@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.13 1996/10/14 13:01:33 mickey Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.14 1997/02/06 13:09:13 deraadt Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -207,9 +207,10 @@ lkmlookup(i, name, error)
 		 * Copy name and lookup id from all loaded
 		 * modules.  May fail.
 		 */
-	 	*error = copyinstr(name, istr, MAXLKMNAME, NULL);
+	 	*error = copyinstr(name, istr, MAXLKMNAME-1, NULL);
 		if (*error)
 			return NULL;
+		istr[MAXLKMNAME-1] = '\0';
 
 		for (p = lkmods.tqh_first; p != NULL; p = p->list.tqe_next)
 			if (!strcmp(istr, p->private.lkm_any->lkm_name))
@@ -542,7 +543,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		statp->private	= (unsigned long)curp->private.lkm_any;
 		statp->ver	= curp->private.lkm_any->lkm_ver;
 		copyoutstr(curp->private.lkm_any->lkm_name, 
-			  statp->name, MAXLKMNAME - 2, NULL);
+			  statp->name, MAXLKMNAME, NULL);
 
 		break;
 
