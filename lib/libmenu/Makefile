@@ -37,7 +37,7 @@ MLINKS=	menu_attribs.3 set_menu_fore.3 menu_attribs.3 menu_fore.3 \
         mitem_opts.3 item_opts_on.3 mitem_opts.3 item_opts_off.3 \
         mitem_opts.3 item_opts.3 mitem_userptr.3 set_item_userptr.3 \
         mitem_userptr.3 item_userptr.3 mitem_value.3 set_item_value.3 \
-        mitem_value.3 item_value.3 mitem_visible.3 item_visible.3 \
+        mitem_value.3 item_value.3 mitem_visible.3 item_visible.3
 
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \
