@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.23 2004/03/17 20:55:09 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.24 2004/03/20 18:50:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -194,9 +194,15 @@ memattach(parent, self, aux)
 			int s, settimeout;
 
 			switch (cpu_hvers) {
-			/* probably all oosiop-equipped machines */
-			case HPPA_BOARD_HP715_50:
 			case HPPA_BOARD_HP715_33:
+			case HPPA_BOARD_HP715S_33:
+			case HPPA_BOARD_HP715T_33:
+			case HPPA_BOARD_HP715_50:
+			case HPPA_BOARD_HP715S_50:
+			case HPPA_BOARD_HP715T_50:
+			case HPPA_BOARD_HP715_75:
+			case HPPA_BOARD_HP725_50:
+			case HPPA_BOARD_HP725_75:
 				settimeout = 1;
 				break;
 			default:
@@ -222,6 +228,7 @@ memattach(parent, self, aux)
 				vic |= (850 << 19);	/* clks */
 
 			sc->sc_vp->vi_control = vic;
+
 			__asm __volatile("stwas %1, 0(%0)"
 			    :: "r" (&VI_CTRL), "r" (vic) : "memory");
 			splx(s);
