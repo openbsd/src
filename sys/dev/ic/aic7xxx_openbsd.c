@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.16 2003/12/28 21:29:27 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.17 2004/01/05 01:09:18 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -117,8 +117,10 @@ ahc_attach(struct ahc_softc *ahc)
 		ahc->sc_channel_b.adapter_target = ahc->our_id_b;
 	}
 
-	ahc_controller_info(ahc, ahc_info, sizeof ahc_info);
-	printf("%s: %s\n", ahc->sc_dev.dv_xname, ahc_info);
+	if (bootverbose) {
+		ahc_controller_info(ahc, ahc_info, sizeof ahc_info);
+		printf("%s: %s\n", ahc->sc_dev.dv_xname, ahc_info);
+	}
 
 	ahc_intr_enable(ahc, TRUE);
 

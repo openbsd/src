@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.42 2003/12/24 22:45:45 krw Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.43 2004/01/05 01:09:18 krw Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.42 2003/12/24 22:45:45 krw Exp $
+ * $Id: ahc_pci.c,v 1.43 2004/01/05 01:09:18 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -893,17 +893,14 @@ ahc_pci_attach(parent, self, aux)
 	ahc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	    ahc_platform_intr, ahc, ahc->sc_dev.dv_xname);
 	if (ahc->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		       ahc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		ahc_free(ahc);
 		return;
-	}
-	printf("\n");
-	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", ahc_name(ahc), intrstr);
+	} else
+		printf(": %s\n", intrstr ? intrstr : "?");
 
 	dscommand0 = ahc_inb(ahc, DSCOMMAND0);
 	dscommand0 |= MPARCKEN|CACHETHEN;
