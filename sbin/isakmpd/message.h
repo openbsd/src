@@ -1,4 +1,4 @@
-/* $OpenBSD: message.h,v 1.19 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: message.h,v 1.20 2004/06/10 12:54:53 hshoexer Exp $	 */
 /* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -152,16 +152,19 @@ struct message {
  * retransmitted other than if we see duplicates from our peer's last
  * message.
  */
-#define MSG_LAST	1
+#define MSG_LAST	0x01
 
 /* The message has already been encrypted.  */
-#define MSG_ENCRYPTED	2
+#define MSG_ENCRYPTED	0x02
 
 /* The message is on the send queue.  */
-#define MSG_IN_TRANSIT	4
+#define MSG_IN_TRANSIT	0x04
 
 /* This message should be kept on the prioritized sendq.  */
-#define MSG_PRIORITIZED	8
+#define MSG_PRIORITIZED	0x08
+
+/* This message has successfully been authenticated. */
+#define MSG_AUTHENTICATED	0x10
 
 TAILQ_HEAD(msg_head, message);
 

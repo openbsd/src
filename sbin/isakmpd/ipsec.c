@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.92 2004/06/09 14:02:44 ho Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.93 2004/06/10 12:54:53 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1040,7 +1040,15 @@ ipsec_responder(struct message *msg)
 			    "ipsec_responder: got NOTIFY of type %s",
 			    constant_name(isakmp_notify_cst, type)));
 
-			p->flags |= PL_MARK;
+			switch (type) {
+			case IPSEC_NOTIFY_INITIAL_CONTACT:
+				/* Handled by leftover logic. */
+				break;
+
+			default:
+				p->flags |= PL_MARK;
+				break;
+			}
 		}
 
 		/*
@@ -1601,6 +1609,12 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			    == 0) {
 				log_print("ipsec_handle_leftover_payload: got "
 				    "INITIAL-CONTACT without ISAKMP SA");
+				return -1;
+			}
+
+			if ((msg->flags & MSG_AUTHENTICATED) == 0) {
+				log_print("ipsec_handle_leftover_payload: "
+				    "got unauthenticated INITIAL-CONTACT");
 				return -1;
 			}
 			/*
