@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 2004/12/31 00:04:35 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2004/12/31 00:40:52 drahn Exp $
 # $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
 #
 # GENERIC machine description file
@@ -24,7 +24,6 @@ machine	zaurus	arm
 # include "../../../conf/GENERIC"
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
-option		COMPAT_43	# and 4.3BSD
 option		FFS		# UFS
 #option		NFSCLIENT	# Network File System client
 option		CD9660		# ISO 9660 + Rock Ridge file system
@@ -69,18 +68,10 @@ options 	XSCALE_CACHE_WRITE_THROUGH
 #options 	XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
-options SYSCALL_DEBUG
-
 # FPA options
 
 #options 	ARMFPE		# ARM Ltd FPE
 
-#option WSDISPLAY_COMPAT_USL		# VT handling
-#option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-#option WSDISPLAY_DEFAULTSCREENS=6	# can get raw scancodes
-#option WSDISPLAY_COMPAT_PCVT		# can get raw scancodes
-
-#config		bsd	swap generic
 config		bsd	root on rd0a swap on rd0b
 
 # The main bus device
@@ -135,7 +126,6 @@ pseudo-device	rd		1	# ram disk
 option		BOOT_CONFIG	# boot-time kernel config
 
 # RAMDISK stuff
-#option		MINIROOTSIZE=8192
 option		MINIROOTSIZE=5120
 option		RAMDISK_HOOKS
 

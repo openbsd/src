@@ -3,7 +3,7 @@
 # First try for arm-specific configuration info
 #
 
-maxpartitions	8
+maxpartitions	16
 maxusers	2 8 64
 
 include "../../../scsi/files.scsi"
