@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.13 2004/08/02 21:42:58 brad Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.14 2004/09/18 00:19:48 brad Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -512,6 +512,11 @@ cardbus_attach_card(sc)
     ca.ca_memt = sc->sc_memt;
     ca.ca_dmat = sc->sc_dmat;
 
+#if rbus
+    ca.ca_rbus_iot = sc->sc_rbus_iot;
+    ca.ca_rbus_memt = sc->sc_rbus_memt;
+#endif
+
     ca.ca_tag = tag;
     ca.ca_bus = sc->sc_bus;
     ca.ca_device = sc->sc_device;
@@ -521,13 +526,15 @@ cardbus_attach_card(sc)
 
     ca.ca_intrline = sc->sc_intrline;
 
-    if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
-      printf("cardbus_attach_card: failed to read CIS\n");
-    } else {
+    if (cis_ptr != 0) {
+	if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
+	   printf("cardbus_attach_card: failed to read CIS\n");
+	} else {
 #ifdef CARDBUS_DEBUG
-      decode_tuples(tuple, 2048, print_tuple, NULL);
+	   decode_tuples(tuple, 2048, print_tuple, NULL);
 #endif
-      decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+	   decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+	}
     }
 
     if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
