@@ -1,4 +1,4 @@
-OpenBSD/atari 2.3 runs on a TT030 and a Falcon. Currently an FPU is
+OpenBSD/MACHINE OSREV runs on a TT030 and a Falcon. Currently an FPU is
 required, although this might change in the (near) future. The
 minimum amount of RAM required is 4Mb.
 
@@ -15,7 +15,7 @@ as you will probably want to compile your own kernel. (GENERIC is
 large and bulky to accommodate all people, BOOT is small and might
 not have all the features you want).
 
-Supported devices include:
+Supported devices {:-include-:}:
 	- The built-in SCSI host adapter
 		- Should support most SCSI-drives. The drives that are
 		  currently tested are:

@@ -10,8 +10,8 @@ partition ID to 0xA6, you will be able to share the disk with 386BSD,
 FreeBSD or NetBSD. Note that the latter three can NOT easily share the disk
 with each other.
 
-To do the upgrade, you must have the floppy23.fs floppy image on a disk.
-You must also have at least the "base23" and "bsd" binary distribution set
+To do the upgrade, you must have the floppy{:--:}OSrev.fs floppy image on a disk.
+You must also have at least the "base{:--:}OSrev" and "bsd" binary distribution set
 available, so that you can upgrade with it, using one of the upgrade
 methods described above.  Finally, you must have sufficient disk space
 available to install the new binaries.  Since the old binaries are being
@@ -27,7 +27,7 @@ operating system's partition, before beginning the upgrade process.
 
   To upgrade your system, follow the following instructions:
 
-	Boot your machine using of the floppy23.fs floppy.  When presented
+	Boot your machine using of the floppy{:--:}OSrev.fs floppy.  When presented
 	with the boot prompt (the "boot>" prompt), hit return.
 
 	While booting, you will probably see several warnings.  You should
@@ -70,7 +70,7 @@ operating system's partition, before beginning the upgrade process.
 	answer affirmatively, the configuration stored on the root file
 	system will be used.  After this you will be given the opportunity
 	to escape to the command shell to do any additional network
-	configuration.  This may include adding or altering routes, if
+	configuration.  This may {:-include-:} adding or altering routes, if
 	needed.
 	
 	At the next point you can edit the fstab, which is used for the
@@ -82,7 +82,7 @@ operating system's partition, before beginning the upgrade process.
 
 	You will be asked if the upgrade sets are already on the mounted
 	file systems.  If you answer with yes, you can type in the path
-	where the sets are stored.  The upgrade then contiues with the
+	where the sets are stored.  The upgrade then continues with the
 	procedure described in the paragraph "Common file system
 	installations" in the install section of this document.
 
@@ -90,16 +90,16 @@ operating system's partition, before beginning the upgrade process.
 	disk, look at the installation section of this document for
 	information on how to go on.  Your options are to install via FTP,
 	via HTTP, via nfs, from tape, from CD-ROM or, again, from local
-	disk.  But remember to not install the "etc23" distribution file!
+	disk.  But remember to not install the "etc{:--:}OSrev" distribution file!
 
-  Your system has now been upgraded to OpenBSD 2.3.
+  Your system has now been upgraded to OpenBSD OSREV.
 
-	After rebooting your machine is a complete OpenBSD 2.3 system.
+	After rebooting your machine is a complete OpenBSD OSREV system.
 	However, that doesn't mean that you're finished with the upgrade
 	process.  There are several things that you should do, or might
 	have to do, to insure that the system works properly.
 
-	First, you will probably want to get the etc23 distribution,
+	First, you will probably want to get the etc{:--:}OSrev distribution,
 	extract it to a temporary location, and compare its contents with
 	those in your /etc/ directory.  You will probably want to replace
 	some of your system configuration files, or incorporate some of the

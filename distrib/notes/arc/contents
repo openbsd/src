@@ -1,90 +1,37 @@
-The ARC specific portion of the OpenBSD 2.3 release is found in the
-"arc" subdirectory of the distribution.  That subdirectory is laid
-out as follows:
+TopPart
 
-.../2.3/arc/
-		INSTALL.arc	Installation notes; this file.
+OpenBSDbsd
 
-		CKSUM		Output of the cksum(1) and md5(1) programs
-		MD5		usable for verification of the correctness
-				of downloaded files.
-
-		*.gz		ARC binary distribution sets;
-				see below.
-
-		bsd		ARC GENERIC kernel in ELF format.
-				This is the kernel installed by the
-				install script.
-
-		bsd.rd		ARC RAMDISK kernel. This is the
-				kernel that should be booted when
-				installing OpenBSD.
+OpenBSDrd
 
 		bsd.ecoff	ARC GENERIC kernel in ECOFF format.
 				This kernel may be used to boot a
 				system from a MSDOS disk.
 
+OpenBSDdistsets
+
 The ARC ramdisk image is a bootable kernel+rootimage. This kernel is used
 when a system is installed for the first time. The file is in ECOFF format.
 
-The OpenBSD/arc binary distribution sets contain the binaries which
-comprise the OpenBSD 2.3 release for ARC systems. There are seven binary
-distribution sets.  The binary distribution sets can be found in
-the "arc" subdirectory of the OpenBSD 2.3 distribution tree,
-and are as follows:
+DistributionDescription
 
-	base23	The OpenBSD/arc 2.3 base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base OpenBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.
-		[ 14.0M gzipped, 47.4M uncompressed ]
+OpenBSDbase(14.0M,47.4M)
 
-	comp23	The OpenBSD/arc Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!).
-		This set includes the system include files
-		(/usr/include), the linker, the compiler tool chain,
-		and the various system libraries (except the shared
-		libraries, which are included as part of the base
-		set).  This set also includes the manual pages for all
-		of the utilities it contains, as well as the system
-		call and library manual pages.
-		[ 13.1M gzipped, 51.9M uncompressed ]
+OpenBSDcomp(13.1M,51.9M)
 
-	etc23	This distribution set contains the system
-		configuration files that reside in /etc and in several
-		other places.  This set MUST be installed if you are
-		installing the system from scratch, but should NOT be
-		used if you are upgrading.  (If you are upgrading,
-		it's recommended that you get a copy of this set and
-		CAREFULLY upgrade your configuration files by hand.)
-		[ 92K gzipped, 490K uncompressed ]
+OpenBSDetc(92K,490K)
 
-	game23	This set includes the games and their manual pages.
-		[ 2.8M gzipped, 7.1M uncompressed ]
+OpenBSDgame(2.8M,7.1M)
 
-	man23	This set includes all of the manual pages for the
-		binaries and other software contained in the base set.
-		Note that it does not include any of the manual pages
-		that are included in the other sets.
-		[ 2.4M gzipped, 9.2M uncompressed ]
+OpenBSDman(2.4M,9.2M)
 
-	misc23	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
-		man pages for other architectures which happen to be
-		installed from the source tree by default.
-		[ 1.7M gzipped, 5.9M uncompressed ]
+OpenBSDmisc(1.7M,5.9M)
 
-	text23	This set includes OpenBSD's text processing tools,
-		including groff, all related programs, and their
-		manual pages.
-		[ 958K gzipped, 4.0M uncompressed ]
+OpenBSDtext(958K,4.0M)
 
-	xbase23 This set includes the base X distribution.  This includes
-		programs, headers, libraries, configuration files.
+OpenBSDxbase
 
-	xfont23 This set includes all of the X fonts.
+OpenBSDxfont
 
-	xserv23 This set includes all of the X servers.
+OpenBSDxserv
 

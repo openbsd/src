@@ -1,4 +1,4 @@
-OpenBSD/hp300 2.3 will run on most HP 9000/300- and 400-series machines.
+OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series machines.
 The lowest amount of RAM that has ever been tested is 7.5M, though it
 may run with less.  Certainly, if you wish to run X, more RAM is
 recommended.

@@ -1,5 +1,4 @@
-Installing OpenBSD is a relatively complex process, but if you have
-this document in hand it shouldn't be too much trouble.
+OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD ramdisk kernel that
@@ -22,7 +21,7 @@ following string at the "Run a program" prompt:
 to boot from an existing MSDOS FAT partition to which the ramdisk kernel
 have been copied. Or from the CD-ROM:
 
-	CD:\2.3\arc\bsd.rd
+	CD:\OSREV\arc\bsd.rd
 
 Exact input to describe the device path varies. Consult your ARC-Bios manual
 for more information about the particular system.
@@ -82,17 +81,20 @@ So to boot the system to multiuser mode set:
 
 	OSLOADOPTIONS=Na
 
+OpenBSDFTPInstall
 
-Congratulations, you have successfully installed OpenBSD 2.3.  When you
-reboot into OpenBSD, you should log in as "root" at the login prompt.
-There is no initial password, but if you're using the machine in a
-networked environment, you should create yourself an account and
-protect it and the "root" account with good passwords.
+OpenBSDHTTPInstall
 
-Some of the files in the OpenBSD 2.3 distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified.  If you are unfamiliar with UN*X-like
-system administration, it's recommended that you buy a book that
-discusses it.
+OpenBSDTAPEInstall
 
+OpenBSDCDROMInstall
+
+OpenBSDNFSInstall
+
+OpenBSDDISKInstall({:-"wdN" or -:},,{:- or MS-DOS-:})
+
+OpenBSDCommonFS
+
+OpenBSDCommonURL
+
+OpenBSDCongratulations

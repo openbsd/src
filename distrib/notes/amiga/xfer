@@ -24,7 +24,7 @@ partition, optionally you must also get the miniroot image there
 for later transfer to your swap partition as explained elsewhere.
 For ramdisk installs you need to get both the bsd and bsd.rd
 kernel images, and for miniroot installs you need bsd and the
-miniroot23.fs image.
+miniroot{:--:}OSrev.fs image.
 
 To prepare for installing via an AmigaDOS partition:
 
@@ -104,7 +104,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base23.tar.gz" set somewhere in your file system.  If you wish,
+	"base{:--:}OSrev.tar.gz" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.

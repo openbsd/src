@@ -2,7 +2,7 @@
 your system, see the next section.)
 
 To install OpenBSD/pc532, there are several things you need to know.
-First, OpenBSD "autoconfigs" the scsi devices. inst-20.fs has only
+First, OpenBSD "autoconfigs" the scsi devices. inst{:--:}OSrev.fs has only
 support for disks configured into the kernel. Starting the search at
 SCSI address 0, lun 0 and increasing, the first disk found will be sd0
 regardless of the address, the second will be sd1. KLONDIKE for example
@@ -15,7 +15,7 @@ has the following devices installed:
 	cd0 -> ID 3 LUN 0: Toshiba XM-4101TA CD-ROM drive
 	st0 -> ID 4 LUN 0: Tandberg TDC3600 QIC tape drive
 
-Only sd0-sd3 are supported by the inst-20.fs kernel.
+Only sd0-sd3 are supported by the inst{:--:}OSrev.fs kernel.
 
 Next you need to know what the install script wants to do.  This install
 is script on the ram disk root that can do most of the work of configuring
@@ -41,15 +41,15 @@ your disk.
 The Install Procedure:
 
   a) Adjust your console device settings.
-	The inst-20.fs kernel will come up with 9600 baud, 7 bits,
+	The inst{:--:}OSrev.fs kernel will come up with 9600 baud, 7 bits,
 	even parity and one stop bit. Adjust your terminal to match
 	these settings. The monitor's baud rate can be changed with
 	"baud d'9600".
 
-  b) Get inst-20.fs and boot the kernel.
+  b) Get inst{:--:}OSrev.fs and boot the kernel.
 
 	From Floppy: (and using the autoboot monitor)
-	If you have a 1.44 meg SCSI floppy drive, you can put inst-20.fs
+	If you have a 1.44 meg SCSI floppy drive, you can put inst{:--:}OSrev.fs
 	onto a 3.5" floppy disk. Insert the disk into your floppy
 	drive and use the monitor's boot command to boot the default
 	image from the floppy. The image booted will ask you for a
@@ -58,8 +58,8 @@ The Install Procedure:
 	Replace X with your drive number. For KLONDIKE X would be "2".
 
 	Tape:
-	You will need to load a copy of inst-20.fs into RAM.
-		- load the inst-20.fs at 0x288000
+	You will need to load a copy of inst{:--:}OSrev.fs into RAM.
+		- load the inst{:--:}OSrev.fs at 0x288000
 		- run at 0x3E8820
 	The boot program will ask you now for a kernel to load. Answer
 		rd0a:/bsd
@@ -71,7 +71,7 @@ The Install Procedure:
 	output to standard output a byte sequence used by the pc532
 	ROM monitor to download a binary file into RAM.  Using this
 	program on a computer connected to the pc532, one can
-	load a copy of inst-20.fs into RAM at 0x288000.  The boot
+	load a copy of inst{:--:}OSrev.fs into RAM at 0x288000.  The boot
 	sequence is now the same as with tape.
 
   c) Choose a disk geometry.  For me, the reported geometry left
@@ -81,7 +81,7 @@ The Install Procedure:
 	2053880 sectors.
 
 	To help in this process, there is a program "factor" that is
-	on the inst-20.fs.  The usage is "factor number" and it lists
+	on the inst{:--:}OSrev.fs.  The usage is "factor number" and it lists
 	the prime factors of number.
 	For example, with the 2053880 sector disk I got:
 
@@ -114,9 +114,9 @@ The Install Procedure:
 	the auto-boot monitor), your root partition, your swap partition,
 	and then any other partitions you may want.  For the "other"
 	partitions, it will ask for a mount point.  The mount point will
-	be "relative to /" and should not include the leading "/".  Also,
+	be "relative to /" and should not {:-include-:} the leading "/".  Also,
 	IF you do not want the partition to have newfs run on it (that is
-	it might be the last one and have a copy of inst-20.fs) enter "NO"
+	it might be the last one and have a copy of inst{:--:}.fs) enter "NO"
 	to the mount point and it will not run newfs on the partition.
 	It will enter the partition into the disklabel.
 

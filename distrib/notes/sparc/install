@@ -10,10 +10,10 @@ If your Sparc is hooked up in a network and you can find a server to
 arrange for a diskless setup, which is a convenient way to install on a
 machine whose disk does not currently hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
-use afterwards.  (see `Installing using a diskless setup' below).
+use afterwards.  (see ``Installing using a diskless setup'' below).
 
 It is also possible to install OpenBSD "manually" from a running SunOS
-system, using SunOS tools and gnu tar and gunzip (see `Installing from SunOS' 
+system, using SunOS tools and gnu tar and gunzip (see ``Installing from SunOS''
 below).
 
 
@@ -45,8 +45,8 @@ same thing, but the install/upgrade scripts and procedures are quite
 different between the old and new version.
 
 The other difference between the the two forms are in their bootblocks,
-and filesystems.  The "floppy23.fs" image is the compressed ramdisk form,
-the "kc23.fs" paired with either "inst23.fs" or "upgr23.fs" comprise a
+and filesystems.  The "floppy{:--:}OSrev.fs" image is the compressed ramdisk form,
+the "kc{:--:}OSrev.fs" paired with either "inst{:--:}OSrev.fs" or "upgr{:--:}OSrev.fs" comprise a
 bootable kernel floppy and associated install/upgrade filesystem floppy.
 
 The CD-ROM, miniroot and netboot install scripts are essentially the
@@ -110,8 +110,8 @@ the appropriate filesystem floppy, for the ramdisk installation,
 just hit return, the filesystem image is internal to the kernel.
 
 After the initial device probe messages you'll asked to start the
-install or upgrade procedure. Proceed to the section `Running the
-installation scripts' below.
+install or upgrade procedure. Proceed to the section ``Running the
+installation scripts'' below.
 
 
 Booting From CD-ROM installation media:
@@ -132,8 +132,8 @@ does not work, you'll have to create a boot floppy or bootable
 hard disk using the instructions under preparing boot media.
 
 After the initial device probe messages you'll asked to start the
-install or upgrade procedure. Proceed to the section `Running the
-installation scripts' below.
+install or upgrade procedure. Proceed to the section ``Running the
+installation scripts'' below.
 
 
 Booting from SCSI disk (miniroot or floppy image)
@@ -161,8 +161,8 @@ drive vs. scsi-id shuffling and partition a=0, b=1...
 
 This will cause the kernel contained in the miniroot to be booted.
 After the initial probe messages you'll asked to start the install
-or upgrade procedure. Proceed to the section `Running the installation
-scripts' below.
+or upgrade procedure. Proceed to the section ``Running the installation
+scripts'' below.
 
 
 Installing using a diskless setup.
@@ -185,8 +185,8 @@ this command takes one of the following forms:
 
 This will cause the kernel provided by the diskless setup to be booted.
 After the initial probe messages you'll asked to start the install
-or upgrade procedure. Proceed to the section `Running the installation
-scripts' below.
+or upgrade procedure. Proceed to the section ``Running the installation
+scripts'' below.
 
 
 Installing using the "new" Single Floppy, CD-ROM, miniroot or netboot
@@ -289,7 +289,7 @@ may be a better option.
 	If you select to configure the network, the install program will
 	ask you for a name of your system and the DNS domain name to use.
 	Note that the host name should be without the domain part, and that
-	the domain name should NOT include the host name part.
+	the domain name should NOT {:-include-:} the host name part.
 
 	Next the system will give you a list of network interfaces you can
 	configure.  For each network interface you select to configure, it
@@ -326,187 +326,21 @@ may be a better option.
 	images.  Note that installation sets on multiple floppies is not
 	currently supported.
 
-	To install via FTP:
-		To begin an FTP install you will need the following
-		pieces of information.  Don't be daunted by this list;
-		the defaults are sufficient for most people.
-		    1) Proxy server URL if you are using a URL-based
-		       ftp proxy (squid, CERN ftp, Apache 1.2 or higher).
-		       You need to define a proxy if you are behind a
-		       firewall that blocks outgoing ftp (assuming you
-		       have a proxy available to use).
-		    2) Do you need to use passive mode ftp?  Most modern
-		       ftp servers are capable of dealing with passive
-		       ftp connections.  You only need to enable this
-		       option if you are behind a firewall that allows
-		       outgoing ftp but blocks incoming tcp ports > 1023.
-		       If in doubt say yes to this option.
-		       Note that you will not be asked about passive
-		       ftp if you are using a proxy.
-		    3) The IP address (or hostname if you enabled
-		       DNS earlier in the install) of an ftp server
-		       carrying the OpenBSD 2.3 distribution.
-		       If you don't know, just hit return when
-		       asked if you want to see a list of such hosts.
-		    4) The ftp directory holding the distribution sets.
-		       The default value of pub/OpenBSD/2.3/sparc
-		       is almost always correct.
-		    5) The login and password for the ftp account.
-		       The default will be correct unless you are
-		       doing non-anonymous ftp.
+OpenBSDFTPInstall
 
-		For instructions on how to complete the installation via
-		ftp, see the section named "Common URL installations" below.
+OpenBSDHTTPInstall
 
-	To install via HTTP:
-		To begin an HTTP install you will need the following
-		pieces of information:
-		    1) Proxy server URL if you are using a URL-based
-		       http proxy (squid, CERN ftp, Apache 1.2 or higher).
-		       You need to define a proxy if you are behind a
-		       firewall that blocks outgoing http connections
-		       (assuming you have a proxy available to use).
-		    3) The IP address (or hostname if you enabled
-		       DNS earlier in the install) of an http server
-		       carrying the OpenBSD 2.3 distribution.
-		       If you don't know, just hit return when
-		       asked if you want to see a list of such hosts.
-		    4) The directory holding the distribution sets.
-		       There is no standard location for this;
-		       You should use the directory specified
-		       along with the server in the list of official
-		       http mirror sites that you received in step 3.
+OpenBSDTAPEInstall
 
-		For instructions on how to complete the installation via
-		http, see the section named "Common URL installations" below.
-
-	To install from tape:
-		In order to install from tape, the distribution sets to be
-		installed must have been written to tape previously, either
-		in tar format or gzip-compressed tar format.
-
-		You will also have to identify the tape device where the
-		distribution sets are to be extracted from.  This will
-		typically be "nrst0" (no-rewind, raw interface).
-
-		Next you will have to provide the file number of the set
-		that is to be extracted.  Note that the file number starts
-		at 1, which is the first file written to the tape.
-
-		The install program will not automatically detect whether
-		an image has been compressed, so it will ask for that
-		information before starting the extraction.
-
-
-	To install from CD-ROM:
-		When installing from a CD-ROM, you will be asked which
-		device holds the distribution sets.  This will typically
-		be "cd0".  Next you will be asked which partition 
-                on the CD-ROM the distribution is to be loaded from.  
-                This is normally partition "a".
-
-		Next you will have to identify the file system type that
-		has been used to create the distribution on the CD-ROM,
-		this can be either FFS or ISO CD9660.  The OpenBSD CD
-		distribution uses the CD9660 format.
-
-		You will also have to provide the relative path to the
-		directory on the CD which holds the distribution, for the
-		sparc this is "2.3/sparc".
-
-		For instructions on how to complete the installation from
-		the CD-ROM distribution, see the section named "Common
-		file system installations" below.
+OpenBSDCDROMInstall
 		
-	To install from a NFS mounted directory:
-		When installing from a NFS-mounted directory, you must
-		have completed network configuration above, and also
-		set up the exported file system on the NFS server in
-		advance.
+OpenBSDNFSInstall
 
-		First you must identify the IP address of the NFS server
-		to load the distribution from, and the file system the
-		server expects you to mount.
+OpenBSDDISKInstall({:-"wdN" or -:},{:-only -:})
 
-		The install program will also ask whether or not TCP
-		should be used for transport (the default is UDP).  Note
-		that TCP only works with newer NFS servers.
-
-		You will also have to provide the relative path to the
-		directory on the file system where the distribution sets
-		are located.  Note that this path should not be prefixed
-		with a '/'.
-
-		For instructions on how to complete the installation from
-		the CD-ROM distribution, see the section named "Common
-		file system installations" below.
-
-	To install from a local disk partition:
-		When installing from a local disk partition, you will
-		first have to identify which disk holds the distribution
-		sets.  This is normally "sdN" or "wdN" where N is a
-		number 0 through 9.  Next you will have to identify the
-		partition within that disk that holds the distribution,
-		this is a single letter between 'a' and 'p'.
-
-		You will also have to identify the type of file system
-		residing in the partition identified.  Currently, you can
-		only install from partitions that use the fast file system
-		(ffs).
-
-		You will also have to provide the relative path to the
-		directory on the file system where the distribution sets
-		are located.  Note that this path should not be prefixed
-		with a '/'.
-
-		For instructions on how to complete the installation from
-		the a local disk partition, see the next section.
+OpenBSDCommonFS
 		
-	Common file system installations:
-		The following instructions are common to installations
-		from local disk partitions, NFS mounted directories and
-		CD-ROMs.
-
-		A list of available distribution sets will be listed.  If
-		any sets has already been extracted, those will be marked
-		with an X.  Enter the name of one distribution set at a
-		time, until all desired distribution sets has been
-		installed on your system.
-
-	Common URL installations:
-		Once you have entered the required information, the
-		install program will fetch a file list and present
-		a list of all the distribution sets that were found
-		in the specified directory.  (If no valid sets were found,
-		you will be notified and given the option of unpacking
-		any gzipped tar files found or getting a file list if
-		none were found.)  If any sets have already been extracted,
-		those sets will be marked with an X.
-
-		At this point you may individually select distribution
-		sets to install or enter "all" to install all of
-		the sets (which is what most users will want to do).
-		You may also enter "list" to get a file list or
-		"done" when you are done selecting distribution sets.
-		(It is also possible to enter an arbitrary filename
-		and have it treated as a file set).
-
-		Once you have selected the file sets you want to install
-		and entered "done" you will be prompted to verify that
-		you really do want to download and install the files.
-		Assuming you acquiesce, the files will begin to download
-		and unpack.  If not, you will be given the option of
-		installing sets via one of the other install methods.
-
-
-	When all the selected distribution sets has been extracted, you
-	will be allowed to select which time zone your system will be
-	using, all the device nodes needed by the installed system will
-	be created for you and the file systems will be unmounted.  For
-	this to work properly, it is expected that you have installed
-	at least the "base23" and "etc23" distribution sets.
-
-
+OpenBSDCommonURL
 
 Installing using the old Multi-Floppy procedure.
 
@@ -564,21 +398,13 @@ On version 2 OpenBOOT ROMs:
 On sun4 systems, you may not need to specify the boot file, as 
 the OpenBSD boot blocks will look for "bsd" on the boot device by default.
 
-Congratulations, you have successfully installed OpenBSD 2.3.  When you
-reboot into OpenBSD, you should log in as "root" at the login prompt.
-There is no initial password, but if you're using the machine in a
-networked environment, you should create yourself an account and
-protect it and the "root" account with good passwords.
+OpenBSDCongratulations
 
-Some of the files in the OpenBSD 2.3 distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified.  If you will be running your OpenBSD 
-system from a serial console, you may need to edit /etc/ttys and
-change the terminal type, and getty method from "sun" and "suncons"
-to "vt100" and "std.9600" or something similar.  Also when running
-from a serial console, you may wish to adjust the eeprom settings
-for input-device, output-device, screen-#columns, and screen-#rows
+If you will be running your OpenBSD system from a serial console, you may
+need to edit /etc/ttys and change the terminal type, and getty method from
+"sun" and "suncons" to "vt100" and "std.9600" or something similar.  Also
+when running from a serial console, you may wish to adjust the eeprom
+settings for input-device, output-device, screen-#columns, and screen-#rows
 as appropriate.  
 
 If you plan on using the extra serial ports on 4/300 systems, 
@@ -606,7 +432,7 @@ Installing from SunOS.
 You need a SunOS machine to install OpenBSD.  You also need at
 least the following pieces:
 
-    the *.tar.gz files you want to install (as a minimum, base23.tar.gz)
+    the *.tar.gz files you want to install (as a minimum, base{:--:}OSrev.tar.gz)
     gunzip (GNU gzip) SunOS binary
     gtar (GNU tar) SunOS binary
     a "/boot" file from a SunOS machine that matches your machine type
@@ -663,11 +489,11 @@ The installboot man page says to do something like this:
 You can now extract the provided "*.tar.gz files onto your disk.
 
     sunos# ls -FC
-    base23.tar.gz      etc23.tar.gz       man23.tar.gz       secr23.tar.gz
-    comp23.tar.gz      games23.tar.gz     misc23.tar.gz      text23.tar.gz
-    xbase23.tar.gz     xfont23.tar.gz     xserv23.tar.gz     bsd
+    base{:--:}OSrev.tar.gz      etc{:--:}OSrev.tar.gz       man{:--:}OSrev.tar.gz       secr23.tar.gz
+    comp{:--:}OSrev.tar.gz      game{:--:}OSrev.tar.gz      misc{:--:}OSrev.tar.gz      text{:--:}OSrev.tar.gz
+    xbase{:--:}OSrev.tar.gz     xfont{:--:}OSrev.tar.gz     xserv{:--:}OSrev.tar.gz     bsd
     bsd.scsi3
-    sunos# gunzip < base23.tar.gz | (cd /mnt; gtar xvpf -)
+    sunos# gunzip < base{:--:}OSrev.tar.gz | (cd /mnt; gtar xvpf -)
     [...] for each set
 
 And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
@@ -746,17 +572,17 @@ handle corresponding to the root filesystem. If successful, the boot
 program starts reading from the remote root filesystem in search of the
 kernel which is then read into memory.
 
-You will want export the miniroot23.fs filesystem to the client.  You
+You will want export the miniroot{:--:}OSrev.fs filesystem to the client.  You
 can dd this filesystem image to some spare partition, mount and export
 that partition or use tar to copy the contents to a more convenient spot.
 
 Alternatively you can build a bootable partition from the distribution sets
 as follows:
 
-Unpack `base23.tar.gz' and `etc23.tar.gz' on the server in the root directory
+Unpack `base{:--:}OSrev.tar.gz' and `etc{:--:}OSrev.tar.gz' on the server in the root directory
 for your target machine. If you elect to use a separately NFS-mounted
 filesystem for `/usr' with your diskless setup, make sure the "./usr" base
-files in base23.tar.gz end up in the correct location. One way to do this is
+files in base{:--:}OSrev.tar.gz end up in the correct location. One way to do this is
 to temporarily use a loopback mount on the server, re-routing <root>/usr to
 your server's exported OpenBSD "/usr" directory. Also put the kernel and
 the install/upgrade scripts into the root directory.

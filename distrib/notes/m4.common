@@ -1,0 +1,479 @@
+dnl
+dnl	$OpenBSD: m4.common,v 1.1 1998/05/18 00:33:17 todd Exp $
+dnl
+dnl simulate an include path with a macro 'includeit'.
+define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
+dnl
+dnl
+dnl If both the 1st and the 2nd argument exist, show the sizes.
+dnl Otherwise, evaluate to NULL.
+dnl
+dnl XXX fix to allow - empty 1st arg, for files uncompressed
+dnl                  - empty 2nd arg, for files where only compressed size is
+dnl                    known (aka pc532)
+dnl
+define(`showsize',`ifelse(X$1,X,,X$2,X,,X,X,{:-
+		[ $1 gzipped, $2 uncompressed ]-:})')dnl
+dnl
+dnl
+dnl  Everybody looks the same on these (or should if they don't)
+dnl
+define(`TopPart',
+`The MACHINE-specific portion of the OpenBSD OSREV release is found in the
+"MACHINE" subdirectory of the distribution.  That subdirectory is laid
+out as follows:
+
+.../OSREV/MACHINE/
+		INSTALL.MACHINE	Installation notes; this file.
+
+		CKSUM		Output of the cksum(1) and md5(1) programs
+		MD5		usable for verification of the correctness
+				of downloaded files.')dnl
+dnl
+dnl 
+dnl XXX Fix this for i386 vs rest 'ten binary' is not right for i386
+define(`DistributionDescription',
+`The OpenBSD/MACHINE binary distribution sets contain the binaries which
+comprise the OpenBSD OSREV release for MACHINE systems.  There are ten binary
+distribution sets.  The binary distribution sets can be found in
+the "MACHINE" subdirectory of the OpenBSD OSREV distribution tree,
+and are as follows:')dnl
+dnl
+dnl
+dnl Change the quote.  There were too many `word' situations that would have
+dnl to have been changed to ``word''.  The quote gets changed to {:- and -:}.
+dnl It can really be anything, but it needs to be unique.
+dnl
+changequote(`{:-',`-:}')dnl
+dnl
+dnl
+dnl Conventions when editing:
+dnl o base`'OSrev is required because if it appears as baseOSrev the defined
+dnl   value OSrev does not get substituted.  Same goes for MACHINE and OSREV,
+dnl   assigned as cmd line parameters to m4 in the Makefile.
+dnl o `include' and `define' is required as include and define are both m4
+dnl   reserved words that evaluate to NULL if not quoted.
+dnl o showsize() must not be on a new line.  It creates it's own new line if
+dnl   there are sizes to display, otherwise, evaluates to NULL
+dnl
+dnl
+dnl OpenBSDbase( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDbase-:},
+{:-	base{:--:}OSrev	The OpenBSD/MACHINE OSREV base binary distribution.  You
+		MUST install this distribution set.  It contains the
+		base OpenBSD utilities that are necessary for the
+		system to run and be minimally functional.  It
+		includes shared library support, and excludes
+		everything described below.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDcomp( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDcomp-:},
+{:-	comp{:--:}OSrev	The OpenBSD/MACHINE Compiler tools.  All of the tools
+		relating to C, C++, and FORTRAN (yes, there are two!) are
+		supported.  This set includes the system {:-include-:} files
+		(/usr/{:-include-:}), the linker, the compiler tool chain,
+		and the various system libraries (except the shared
+		libraries, which are included as part of the base
+		set).  This set also includes the manual pages for all
+		of the utilities it contains, as well as the system
+		call and library manual pages.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDetc( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDetc-:},
+{:-	etc{:--:}OSrev	This distribution set contains the system configuration
+		files that reside in /etc and in several other places.
+		This set MUST be installed if you are installing the
+		system from scratch, but should NOT be used if you are
+		upgrading.  (If you are upgrading, it's recommended that
+		you get a copy of this set and CAREFULLY upgrade your
+		configuration files by hand.)showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDgame( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDgame-:},
+{:-	game{:--:}OSrev	This set includes the games and their manual pages.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDman( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDman-:},
+{:-	man{:--:}OSrev	This set includes all of the manual pages for the
+		binaries and other software contained in the base set.
+		Note that it does not {:-include-:} any of the manual pages
+		that are included in the other sets.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDmisc( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDmisc-:},
+{:-	misc{:--:}OSrev	This set includes the system dictionaries (which are
+		rather large), the typesettable document set, and
+		man pages for other architectures which happen to be
+		installed from the source tree by default.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDtext( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDtext-:},
+{:-	text{:--:}OSrev	This set includes OpenBSD's text processing tools,
+		including groff, all related programs, and their
+		manual pages.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDxbase( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDxbase-:},
+{:-	xbase{:--:}OSrev This set includes the base X distribution.  This includes
+		programs, headers, libraries, configuration files.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDxfont( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDxfont-:},
+{:-	xfont{:--:}OSrev This set includes all of the X fonts.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDxserv( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDxserv-:},
+{:-	xserv{:--:}OSrev This set includes all of the X servers.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDxlink( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDxlink-:},
+{:-	xlink{:--:}OSrev This set includes the X server link kit.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl floppy stuff
+dnl
+define({:-OpenBSDfloppy-:},
+{:-		floppy{:--:}OSrev.fs	The MACHINE boot and installation
+				floppy; see below.-:})dnl
+dnl
+define({:-OpenBSDfloppydesc-:},
+{:-In summary, there is one MACHINE floppy image called "floppy{:--:}OSrev.fs" (which
+you can copy to a floppy using rawrite.exe or `dd'; as described later
+in this document).  This is a bootable install floppy which can be 
+used both to install and to upgrade OpenBSD to the current version.   
+It is also useful for maintenance and disaster recovery.  $1
+
+Bootable installation/upgrade floppy:
+
+	This disk contains a file system, is bootable, and has   
+	enough utilities on board to prepare your hard disk drive
+	for OpenBSD and to install the OpenBSD distribution.
+
+	It also holds the utilities needed in order to upgrade a
+	system to the current version of OpenBSD.-:})dnl
+dnl
+dnl
+dnl misc
+dnl
+define({:-OpenBSDdistsets-:},
+{:-		*.tar.gz	MACHINE binary distribution sets;
+				see below.-:})dnl
+dnl
+define({:-OpenBSDbsd-:},
+{:-		bsd		A stock GENERIC MACHINE kernel which
+				will be installed on your system
+				during the install.-:})dnl
+dnl
+define({:-OpenBSDrd-:},
+{:-		bsd.rd		A compressed RAMDISK kernel; the embedded
+				filesystem contains the installation tools.
+				Used for simple installation from a pre-
+				existing system.-:})dnl
+dnl
+define({:-OpenBSDminiroot-:},
+{:-		miniroot{:--:}OSrev.fs	A miniroot filesystem image to be used
+				if you for some reason can't or don't
+				want to use the ramdisk installation
+				method.-:})dnl
+dnl
+dnl
+dnl  Various Install Instructions
+dnl
+define({:-OpenBSDInstallPrelude-:},
+{:-Installing OpenBSD is a relatively complex process, but if you have
+this document in hand and are careful to read and remember the
+information which is presented to you by the install program, it
+shouldn't be too much trouble.
+
+Before you begin, you should know the geometry of your hard disk, i.e.
+the sector size (note that sector sizes other than 512 bytes are not
+currently supported), the number of sectors per track, the number of
+tracks per cylinder (also known as the number of heads), and the
+number of cylinders on the disk.  The OpenBSD kernel will try to
+discover these parameters on its own, and if it can it will print them
+at boot time.  If possible, you should use the parameters it prints.
+(You might not be able to because you're sharing your disk with
+another operating system, or because your disk is old enough that the
+kernel can't figure out its geometry.)-:})dnl
+dnl
+define({:-OpenBSDInstallPart2-:},
+{:-You should now be ready to install OpenBSD.
+
+The following is a walk-through of the steps you will take while
+getting OpenBSD installed on your hard disk.  If any question has a
+default answer, it will be displayed in brackets ("[]") after the  
+question.  If you wish to stop the installation, you may hit Control-C
+at any time, but if you do, you'll have to begin the installation
+process again from scratch.-:})dnl
+dnl
+define({:-OpenBSDBootMsgs-:},
+{:-	Once the kernel has loaded, you will be presented with the
+	OpenBSD kernel boot messages.  You will want to read them
+	to determine your disk's name and geometry.  Its name will
+	be something like "sd0" or "wd0" and the geometry will be
+	printed on a line that begins with its name.  As mentioned
+	above, you will need your disk's geometry when creating
+	OpenBSD partitions.  You will also need to know the device
+	name to tell the install tools what disk to install on. If
+	you cannot read the messages as they scroll by, do not
+	worry -- you can get at this information later inside the
+	install program.-:})dnl
+dnl
+dnl
+define({:-OpenBSDFTPInstall-:},
+{:-	To install via FTP:
+		To begin an FTP install you will need the following
+		pieces of information.  Don't be daunted by this list;
+		the defaults are sufficient for most people.
+		    1) Proxy server URL if you are using a URL-based
+		       ftp proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       You need to {:-define-:} a proxy if you are behind a
+		       firewall that blocks outgoing ftp (assuming you
+		       have a proxy available to use).
+		    2) Do you need to use active mode ftp?  By default,
+		       ftp will attempt to use passive mode and fall
+		       back to an active connection if the server does
+		       not support passive mode.  You only need to enable
+		       this option if you are connecting to a buggy ftp
+		       daemon that implements passive ftp incorrectly.
+		       Note that you will not be asked about active
+		       ftp if you are using a proxy.
+		    3) The IP address (or hostname if you enabled
+		       DNS earlier in the install) of an ftp server
+		       carrying the OpenBSD OSREV distribution.
+		       If you don't know, just hit return when
+		       asked if you want to see a list of such hosts.
+		    4) The ftp directory holding the distribution sets.
+		       The default value of pub/OpenBSD/OSREV/MACHINE
+		       is almost always correct.
+		    5) The login and password for the ftp account.
+		       You will only be asked for a password for
+		       non-anonymous ftp.
+
+		For instructions on how to complete the installation via
+		ftp, see the section named "Common URL installations" below.-:})dnl
+dnl
+define({:-OpenBSDHTTPInstall-:},
+{:-	To install via HTTP:
+		To begin an HTTP install you will need the following
+		pieces of information:
+		    1) Proxy server URL if you are using a URL-based
+		       http proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       You need to {:-define-:} a proxy if you are behind a
+		       firewall that blocks outgoing http connections
+		       (assuming you have a proxy available to use).
+		    3) The IP address (or hostname if you enabled
+		       DNS earlier in the install) of an http server
+		       carrying the OpenBSD OSREV distribution.
+		       If you don't know, just hit return when
+		       asked if you want to see a list of such hosts.
+		    4) The directory holding the distribution sets.
+		       There is no standard location for this;
+		       You should use the directory specified
+		       along with the server in the list of official
+		       http mirror sites that you received in step 3.
+
+		For instructions on how to complete the installation via
+		http, see the section named "Common URL installations" below.-:})dnl
+dnl
+define({:-OpenBSDTAPEInstall-:},
+{:-	To install from tape:
+		In order to install from tape, the distribution sets to be
+		installed must have been written to tape previously, either
+		in tar format or gzip-compressed tar format.
+
+		You will also have to identify the tape device where the
+		distribution sets are to be extracted from.  This will
+		typically be "nrst0" (no-rewind, raw interface).
+
+		Next you will have to provide the file number of the set
+		that is to be extracted.  Note that the file number starts
+		at 1, which is the first file written to the tape.
+
+		The install program will not automatically detect whether
+		an image has been compressed, so it will ask for that
+		information before starting the extraction.-:})dnl
+dnl
+define({:-OpenBSDCDROMInstall-:},
+{:-	To install from CD-ROM:
+		When installing from a CD-ROM, you will be asked which
+		device holds the distribution sets.  This will typically
+		be either "cd0" or "acd0".  Next you will be asked which
+		partition on the CD-ROM the distribution is to be loaded
+		from.  This is normally partition "a".
+
+		Next you will have to identify the file system type that
+		has been used to create the distribution on the CD-ROM,
+		this can be either FFS or ISO CD9660.  The OpenBSD CD
+		distribution uses the CD9660 format.
+
+		You will also have to provide the relative path to the
+		directory on the CD which holds the distribution, for the
+		MACHINE this is "OSREV/MACHINE".
+
+		For instructions on how to complete the installation from
+		the CD-ROM distribution, see the section named "Common
+		file system installations" below.-:})dnl
+dnl
+define({:-OpenBSDNFSInstall-:},
+{:-	To install from a NFS mounted directory:
+		When installing from a NFS-mounted directory, you must
+		have completed network configuration above, and also
+		set up the exported file system on the NFS server in
+		advance.
+
+		First you must identify the IP address of the NFS server
+		to load the distribution from, and the file system the
+		server expects you to mount.
+
+		The install program will also ask whether or not TCP
+		should be used for transport (the default is UDP).  Note
+		that TCP only works with newer NFS servers.
+
+		You will also have to provide the relative path to the
+		directory on the file system where the distribution sets
+		are located.  Note that this path should not be prefixed
+		with a '/'.
+
+		For instructions on how to complete the installation from
+		the CD-ROM distribution, see the section named "Common
+		file system installations" below.-:})dnl
+dnl
+dnl OpenBSDDISKInstall({:-<additional disk> or-:},   <-- $1
+dnl		       {:-only -:},                  <-- $2
+dnl                    {:- or <other fs name>-:})dnl <-- $3
+dnl
+dnl Note the spacing used above.  It is crucial to keep words from running
+dnl together in the actual document.
+dnl
+dnl Arg 1 is optional.
+dnl Choices for args 2 & 3:
+dnl - OpenBSDDISKInstall(,{:-only -:})  
+dnl    (only have 1 fs possible, ffs)
+dnl - OpenBSDDISKInstall(,,{:-or <insert some other filesystem name>-:})
+dnl    (have another fs possible for reading during disk install)
+dnl
+dnl see $1, $2, and $3 below for further usage information.
+dnl
+define({:-OpenBSDDISKInstall-:},
+{:-	To install from a local disk partition:
+		When installing from a local disk partition, you will
+		first have to identify which disk holds the distribution
+		sets.  This is normally $1"sdN" where N is a number
+		0 through 9.  Next you will have to identify the partition
+		within that disk that holds the distribution, this is a
+		single letter between 'a' and 'p'.
+
+		You will also have to identify the type of file system
+		residing in the partition identified.  Currently, you can
+		$2{:--:}install from partitions that has been formatted as the
+		Berkeley fast file system (ffs)$3.
+
+		You will also have to provide the relative path to the
+		directory on the file system where the distribution sets
+		are located.  Note that this path should not be prefixed
+		with a '/'.
+
+		For instructions on how to complete the installation from
+		the a local disk partition, see the next section.-:})dnl
+dnl
+define({:-OpenBSDCommonFS-:},
+{:-	Common file system installations:
+		The following instructions are common to installations
+		from local disk partitions, NFS mounted directories and
+		CD-ROMs.
+
+		A list of available distribution sets will be listed.
+		You may individually select distribution sets to install
+		or enter `all' to install all of the sets (which is what
+		most users will want to do).  You may also enter `list'
+		to get a file list or `done' when you are done selecting
+		distribution sets.  You may also use wildcards in place of
+		a file name, eg `*.tar.gz' or even `base*|comp*'.  It is
+		also possible to enter an arbitrary filename and have it
+		treated as a file set.
+
+		Once you have selected the file sets you want to install
+		and entered `done' you will be prompted to verify that
+		you really do want to extract file sets.  Assuming you
+		acquiesce, the files will begin to extract.  If not, you
+		will be given the option of installing sets via one of
+		the other install methods.-:})dnl
+dnl
+define({:-OpenBSDCommonURL-:},
+{:-	Common URL installations:
+		Once you have entered the required information, the
+		install program will fetch a file list and present
+		a list of all the distribution sets that were found
+		in the specified directory.  (If no valid sets were found,
+		you will be notified and given the option of unpacking
+		any gzipped tar files found or getting a file list if
+		none were found.)
+
+		At this point you may individually select distribution
+		sets to install or enter `all' to install all of the
+		sets (which is what most users will want to do).  You
+		may also enter `list' to get a file list or `done' when
+		you are done selecting distribution sets.  You may also
+		use wildcards in place of a file name, eg `*.tar.gz' or
+		even `base*|comp*'.  It is also possible to enter an
+		arbitrary filename and have it treated as a file set.
+
+		Once you have selected the file sets you want to install
+		and entered `done' you will be prompted to verify that
+		you really do want to download and install the files.
+		Assuming you acquiesce, the files will begin to download
+		and unpack.  If not, you will be given the option of
+		installing sets via one of the other install methods.
+
+
+	When all the selected distribution sets has been extracted, you
+	will be allowed to select which time zone your system will be
+	using, all the device nodes needed by the installed system will
+	be created for you and the file systems will be unmounted.  For
+	this to work properly, it is expected that you have installed
+	at least the "base{:--:}OSrev", "etc{:--:}OSrev", and "bsd" distribution sets.-:})dnl
+dnl
+define({:-OpenBSDCongratulations-:},
+{:-Congratulations, you have successfully installed OpenBSD OSREV.  When you
+reboot into OpenBSD, you should log in as "root" at the login prompt.
+There is no initial password, but if you're using the machine in a
+networked environment, you should create yourself an account and
+protect it and the "root" account with good passwords.  You should have
+got a mail from the install program we recommend you to read.  This you
+can do by running
+
+	mail
+
+and then just enter "1" to get the first message.  You quit mail by
+entering "q".
+
+Some of the files in the OpenBSD OSREV distribution might need to be
+tailored for your site.  We recommend you run:
+
+	man afterboot
+
+which wilk tell you about a bunch of the files needing to be reviewed.
+If you are unfamiliar with UN*X-like system administration, it's
+recommended that you buy a book that discusses it.-:})dnl

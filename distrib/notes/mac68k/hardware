@@ -1,14 +1,14 @@
-OpenBSD/mac68k 2.3 runs on several of the older Macintosh computers.
+OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 6MB of RAM should be sufficient to boot and the system can probably
 be squeezed onto a 60MB hard disk by leaving off a package or two.
 To actually do much compiling or anything more interesting than
 booting, at least 8MB of RAM and more disk space is recommended.
-About 80MB will be necessary to install all of the OpenBSD 2.3 binary
+About 80MB will be necessary to install all of the OpenBSD OSREV binary
 distribution (note that this does not count swap space!).  Much more
 disk space is required to install the source and objects as well (about
 another 105MB).
 
-OpenBSD/mac68k 2.3 now runs on most 680x0 MacIntosh's.  Specifically, it
+OpenBSD/mac68k OSREV now runs on most 680x0 MacIntosh's.  Specifically, it
 should work on:
 	68020 with 68851 PMMU and 68881 FPU
 	68030 with 68882 FPU (most Macs have this)
@@ -28,7 +28,7 @@ machine.
 	PB165c
 
 
-Supported devices on all of the above systems include:
+Supported devices on all of the above systems {:-include-:}:
 	Internal SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
 	Internal sound--enough to beep on some machines, anyway
 	Most NuBus video cards (there have been some

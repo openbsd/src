@@ -49,7 +49,7 @@ Using the SRM console:
     Some variables you will want to set:
 	auto_action	Determines what happens when you turn power
 			on, halt, or crash your machine.  Valid
-			values include "halt", "boot", and "restart".
+			values {:-include-:} "halt", "boot", and "restart".
 			Most users will want to set this to "boot".
 	bootdef_dev	Default boot device (or list of devices).
 	boot_file	Name of the kernel to boot.  If you don't set

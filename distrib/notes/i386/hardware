@@ -1,4 +1,4 @@
-OpenBSD/i386 2.3 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
+OpenBSD/MACHINE OSREV runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
 does NOT support MCA systems, such as some IBM PS/2 systems.  The
 minimal configuration is said to require 4M of RAM and 50M of disk space,
@@ -9,7 +9,7 @@ actually allow you to run X and/or compile, but it won't be speedy.
 Note that until you have around 16M of RAM, getting more RAM is more
 important than getting a faster CPU.)
 
-Supported devices include:
+Supported devices {:-include-:}:
 	Floppy controllers.
 	MFM, ESDI, IDE, and RLL hard disk controllers.
 	SCSI host adapters:
@@ -105,7 +105,7 @@ Supported devices include:
 	Miscellaneous:
 		OPTi(82C929) chipset for multi-interface CD-ROM, and
 			sound ISA cards.
-		PCI-PCI bridges and cards which include them, such as
+		PCI-PCI bridges and cards which {:-include-:} them, such as
 			the AHA-394x SCSI host adapter and some
 			DC21x4x-based multi-Ethernet cards.
 		APM power management.
@@ -315,7 +315,7 @@ Right-click on the "My Computer" Icon, select Properties, select the
 Device Manager tab, and double click on PCMCIA Socket, then on the Bridge
 that is listed under this heading. Select Properties at the bottom of
 the window, and click on Resources. Finally you will see an address range,
-in Hex. On my Dell Lattitude LM, for example, the range was FCFC-FCFF.
+in Hex. On my Dell Latitude LM, for example, the range was FCFC-FCFF.
 
 If you don't have Windows '95 on a hard disk, there are several possibilities:
 1) But you do have Windows'95 setup floppies? Then look through them for
@@ -350,7 +350,7 @@ Follow the normal steps for building a new kernel documented elsewhere.
 For my system I changed the original pcicmaster0 line as follows:
 
 #pcicmaster0	at isa? port 0x3E0 size 2
-# hack for CL PCIC on Dell Lattitude LM; really on PCI, but...
+#hack for CL PCIC on Dell Lattitude LM; really on PCI, but...
 pcicmaster0	at isa? port 0xFCFC size 4
 
 IRQ's: You probably do NOT have to worry about the IRQ's appearing

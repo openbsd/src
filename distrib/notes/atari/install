@@ -1,10 +1,4 @@
-Installing OpenBSD is a relatively complex process, but, if you have
-this document in hand and are careful to read and remember the
-information which is presented to you by the install program, it
-shouldn't be too much trouble.
-
-Before you begin, you must have already prepared your hard disk as
-detailed in the section on preparing your system for install.
+OpenBSDInstallPrelude
 
 The following is a walk-through of the steps necessary to get OpenBSD
 installed on your hard disk.  If you wish to stop the installation,

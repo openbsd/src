@@ -76,7 +76,7 @@ Installing applications from the CD-ROM package collection:
 Installing applications from the ftp.openbsd.org package collection:
 
 	The above packages, and others, have been placed on
-	ftp.openbsd.org in the directory pub/OpenBSD/2.3/packages/<arch>/
+	ftp.openbsd.org in the directory pub/OpenBSD/OSREV/packages/<arch>/
 	where <arch> is the supported hardware architecture.  You may
 	want to peruse the directory for your architecture to see what
 	packages are available.  The packages are also on the OpenBSD FTP
@@ -92,7 +92,7 @@ Installing applications from the ftp.openbsd.org package collection:
 
     $ su
     Password: <enter your root password>
-    # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/i386/emacs-20.2.tgz
+    {:-#-:} pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE/emacs-20.2.tgz
 
 	Note: there are both USA and INTERNATIONAL versions of ssh and
 	pgp on the ftp server.  Be sure to grab the correct version.
@@ -100,7 +100,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	RSAREF, a legal requirement for use within the United States due
 	to patent issues.
 
-	Packages available include:
+	Packages available {:-include-:}:
 
 		bash-2.01.1.tgz               pine-3.96.tgz
 		emacs-20.2.tgz                screen-3.7.4.tgz    

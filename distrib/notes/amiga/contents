@@ -1,29 +1,12 @@
-The amiga-specific portion of the OpenBSD 2.3 release is found in the
-"amiga" subdirectory of the distribution.  That subdirectory is laid
-out as follows:
+TopPart
 
-.../2.3/amiga/
-		INSTALL.amiga	This file.
+OpenBSDbsd
 
-		CKSUM		Output of the cksum(1) and md5(1) programs
-		MD5		usable for verification of the correctness
-				of downloaded files.
+OpenBSDrd
 
-		bsd		A generic OpenBSD kernel used both for
-				miniroot installation and as the first
-				"real" kernel your OpenBSD installation
-				will use.
+OpenBSDminiroot
 
-		bsd.rd		A ramdisk OpenBSD kernel used for simple
-				installation.
-
-		miniroot23.fs	A miniroot filesystem image to be used
-				if you for some reason can't or don't
-				want to use the ramdisk installation
-				method.
-
-		*.tar.gz	amiga binary distribution sets;
-				see below.
+OpenBSDdistsets
 
 		utils/		Miscellaneous amiga installation
 				utilities; see installation section, below.
@@ -42,67 +25,28 @@ Installation/upgrade miniroot file system:
 	NFS file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing AmigaDOS partitions.
 
-	This file is named "miniroot23.fs".
+	This file is named "miniroot{:--:}OSrev.fs".
 
 
-The OpenBSD/amiga binary distribution sets contain the binaries which
-comprise the OpenBSD 2.3 release for the amiga.  There are seven binary
-distribution sets.  The binary distribution sets can be found in
-the "amiga" subdirectory of the OpenBSD 2.3 distribution tree,
-and are as follows:
+DistributionDescription
 
-	base23	The OpenBSD/amiga 2.3 base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base OpenBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.
-		[ 11.2M gzipped, 33.9M uncompressed ]
+OpenBSDbase(11.2M,33.9M)
 
-	comp23	The OpenBSD/amiga Compiler tools.  The C, C++, and
-		FORTRAN language environments are supported.  This set
-		includes the system include files (/usr/include), the
-		linker, the compiler tool chain, and the various system
-		libraries (except the shared libraries, which are
-		included as part of the base set).  This set also
-		includes the manual pages for all of the utilities it
-		contains, as well as the system call and library manual
-		pages.
-		[ 7.0M gzipped, 23.6M uncompressed ]
+OpenBSDcomp(7.0M,23.6M)
 
-	etc23	This distribution set contains the system configuration
-		files that reside in /etc and in several other places.
-		This set MUST be installed if you are installing the
-		system from scratch, but should NOT be used if you are
-		upgrading.  (If you are upgrading, it's recommended that
-		you get a copy of this set and CAREFULLY upgrade your
-		configuration files by hand.)
-		[ 92K gzipped, 490K uncompressed ]
+OpenBSDetc(92K,490K)
 
-	game23	This set includes the games and their manual pages.
-		[ 2.7M gzipped, 6.7M uncompressed ]
+OpenBSDgame(2.7M,6.7M)
 
-	man23	This set includes all of the manual pages for the
-		binaries and other software contained in the base set.
-		Note that it does not include any of the manual pages
-		that are included in the other sets.
-		[ 2.4M gzipped, 9.2M uncompressed ]
+OpenBSDman(2.4M,9.2M)
 
-	misc23	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
-		man pages for other architectures which happen to be
-		installed from the source tree by default.
-		[ 1.7M gzipped, 5.8M uncompressed ]
+OpenBSDmisc(1.7M,5.8M)
 
-	text23	This set includes OpenBSD's text processing tools,
-		including groff, all related programs, and their
-		manual pages.
-		[ 945K gzipped, 3.5M uncompressed ]
+OpenBSDtext(945K,3.5M)
 
-	xbase23 This set includes the base X distribution.  This includes
-		programs, headers, libraries, configuration files.
+OpenBSDxbase
 
-	xfont23 This set includes all of the X fonts.
+OpenBSDxfont
 
-	xserv23 This set includes all of the X servers.
+OpenBSDxserv
 

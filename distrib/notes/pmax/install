@@ -28,7 +28,7 @@ onto the pmax which allows you to write to the raw disk - i.e. on all
 UN*X like operating systems it should work using "dd". On OpenBSD
 as well as SunOS you use a command like:
 
-	# dd if=simpleroot23.fs of=/dev/rsd0c bs=20b
+	# dd if=simpleroot{:--:}OSrev.fs of=/dev/rsd0c bs=20b
 
 Especially on OpenBSD/pmax you'll have to use /dev/rrz0c or something
 like that instead of /dev/rsd0c.
@@ -89,7 +89,7 @@ documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
 One part of the distribution of OpenBSD/pmax is a file called
-simpleroot23.tar.gz which is a good start for the root filesystem area on
+simpleroot{:--:}OSrev.tar.gz which is a good start for the root filesystem area on
 the NFS server then you want to install via network.
 
 A few configuration files need to be edited:
@@ -108,7 +108,7 @@ A few configuration files need to be edited:
 
 Now you must populate the the `/dev' directory for your client. If you
 have an intelligent tar command on the NFS server the /dev directory
-inside the simpleroot23.tar.gz should be usable (i.e. containing
+inside the simpleroot{:--:}OSrev.tar.gz should be usable (i.e. containing
 special devices and not only files) - else you'll have to remake the
 devices on the server using
 
@@ -178,7 +178,7 @@ Ok - now let's see what to do to set up the server:
     
     mkdir /export/root
     cd /export/root
-    tar xvpzf /some_path/simpleroot23.tar.gz
+    tar xvpzf /some_path/simpleroot{:--:}OSrev.tar.gz
     vi /etc/exports (to add the above line)
     kill -HUP `cat /var/run/mountd.pid` (so that mountd rereads exports)
 
@@ -310,7 +310,7 @@ character is treated as a comment and need not be filled in when
 altering partitions.
 
 Special note: the line containing `8 partitions:' is best left alone,
-even if you define less then eight partitions. If this line displays
+even if you {:-define-:} less then eight partitions. If this line displays
 a different number and the program complains about it (after you leave
 the editor), then try setting it to `8 partitions:'.
 
@@ -420,19 +420,5 @@ incarnation to make the root filesystem writable is
 
 assuming your rootdisk is rz0.
 
-Congratulations, you have successfully installed OpenBSD 2.3.  When you
-reboot into OpenBSD, you should log in as "root" at the login prompt.
-There is no initial password, but if you're using the machine in a
-networked environment, you should create yourself an account and
-protect it and the "root" account with good passwords.
+OpenBSDCongratulations
 
-Some of the files in the OpenBSD 2.3 distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified.  If you are unfamiliar with UN*X-like
-system administration, it's recommended that you buy a book that
-discusses it.
-
-I am very interested in reports of how the installation worked - so if
-you got OpenBSD/pmax installed (or if you have problems doing this)
-please send a mail to me: graichen@OpenBSD.org - thanks.

@@ -1,9 +1,4 @@
-The sun3-specific portion of the OpenBSD 2.3 release is found in the
-"sun3" subdirectory of the distribution.  That subdirectory is laid
-out as follows:
-
-.../2.3/sun3/
-		INSTALL.sun3	Installation notes; this file.
+TopPart
 
 		install/	Boot programs, a GENERIC kernel,
 				a stand-alone RAMDISK kernel,
@@ -39,63 +34,25 @@ OpenBSD/sun3.  These files can also be used to configure an NFS server
 to support installation "over the network".  See the section "Getting
 the OpenBSD System onto Useful Media" for instructions on either method.
 
-The OpenBSD/sun3 binary distribution sets contain the binaries which
-comprise the OpenBSD 2.3 release for the sun3.  There are seven binary
-distribution sets.  The binary distribution sets can be found in
-the "sun3" subdirectory of the OpenBSD 2.3 distribution tree,
-and are as follows:
+DistributionDescription
 
-	base23	The OpenBSD/sun3 2.3 base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base OpenBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.
-		[ 7.2M gzipped, 19M uncompressed ]
+OpenBSDbase(7.2M,19M)
 
-	comp23	The OpenBSD/sun3 Compiler tools.  All of the tools
-		relating to C and C++.  This set includes the system
-		include files (/usr/include), the linker, the compiler
-		tool chain, and the various system libraries (except
-		the shared libraries, which are included as part of the
-		base set).  This set also includes the manual pages for
-		all of the utilities it contains, as well as the system
-		call and library manual pages.
-		[ 4.6M gzipped, 14.7M uncompressed ]
+OpenBSDcomp(4.6M,14.7M)
 
-	etc23	This distribution set contains the system configuration
-		files that reside in /etc and in several other places.
-		This set MUST be installed if you are installing the
-		system from scratch, but should NOT be used if you are
-		upgrading.  (If you are upgrading, it's recommended that
-		you get a copy of this set and CAREFULLY upgrade your
-		configuration files by hand.)
-		[ 64K gzipped, 348K uncompressed ]
+OpenBSDetc(64K,348K)
 
-	games23	This set includes the games and their manual pages.
-		[ 2.8M gzipped, 6.8M uncompressed ]
+OpenBSDgame(2.8M,6.8M)
 
-	man23	This set includes all of the manual pages for the
-		binaries and other software contained in the base set.
-		Note that it does not include any of the manual pages
-		that are included in the other sets.
-		[ 850K gzipped, 3.3M uncompressed ]
+OpenBSDman(850K,3.3M)
 
-	misc23	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
-		man pages for other architectures which happen to be
-		installed from the source tree by default.
-		[ 1.8M gzipped, 6.5M uncompressed ]
+OpenBSDmisc(1.8M,6.5M)
 
-	text23	This set includes OpenBSD's text processing tools,
-		including groff, all related programs, and their
-		manual pages.
-		[ 770K gzipped, 2.8M uncompressed ]
+OpenBSDtext(770K,2.8M)
 
-	xbase23 This set includes the base X distribution.  This includes
-		programs, headers, libraries, configuration files.
+OpenBSDxbase
 
-	xfont23 This set includes all of the X fonts.
-
-	xserv23 This set includes all of the X servers.
+OpenBSDxfont
+	
+OpenBSDxserv
 

@@ -1,4 +1,4 @@
-OpenBSD 2.3 is the first public release of OpenBSD for the DECstation
+OpenBSD OSREV is the first public release of OpenBSD for the DECstation
 and DECsystem family of computers.  This release includes kernel
 support for ELF shared libraries and uses them throughout the
 userland.

@@ -1,11 +1,11 @@
-OpenBSD/pmax 2.3 runs on the following classes of machines:
+OpenBSD/MACHINE OSrev runs on the following classes of machines:
 	- Decstation 2100 and 3100, also known as "pmin" and  "pmax" 
 	- Personal Decstations (5000/20, and /25)  also known as "MAXINE"
 	- Decstation 5000/120, /125, and /133, also known as "3MIN"
 	- Decstation 5000/200, also known as "3MAX"
 	- Decstation 5000/240, also known as "3MAXPLUS"
 
-OpenBSD/pmax 2.3 does *not* (yet) run on these machines:
+OpenBSD/MACHINE OSrev does *not* (yet) run on these machines:
 	- Decstation 5100 (an r2000-based cousin of the Decstation 3100)
 	- Decsystem 5400 and 5500 (Qbus-based systems, similar to a
 	  Vax 'Mayfair' and 'Mayfair II', but with an r2000a or r3000
@@ -20,7 +20,7 @@ RAM feels like Ultrix with 8M of RAM.) Note that until you have
 around 16M of RAM, getting more RAM is more important than getting a
 faster CPU.
 
-Supported devices include:
+Supported devices {:-include-:}:
 	Decstation 2100 and 3100 baseboard video: 
 		pm one-bit mono or 8-bit pseudocolor frame buffers.
 

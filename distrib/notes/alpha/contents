@@ -1,99 +1,34 @@
-The alpha-specific portion of the OpenBSD 2.3 release is found in the
-"alpha" subdirectory of the distribution.  That subdirectory is laid
-out as follows:
+TopPart
 
-.../2.3/alpha/
-		INSTALL.alpha	Installation notes; this file.
+OpenBSDfloppy
 
-		CKSUM		Output of the cksum(1) and md5(1) programs
-		MD5		usable for verification of the correctness
-				of downloaded files.
+OpenBSDdistsets
 
-		floppy23.fs	The alpha boot and installation
-				floppy; see below.
+OpenBSDbsd
 
-		*.tar.gz	alpha binary distribution sets;
-				see below.
+OpenBSDrd
 
-		bsd		A stock GENERIC alpha kernel which
-				will be installed on your system
-				during the install.
+OpenBSDfloppydesc
 
-		bsd.rd		A ramdisk OpenBSD kernel used for simple
-				installation.
+DistributionDescription
 
-In summary, there is one alpha floppy image called "floppy.fs".  This
-is a bootable install floppy which can be used both to install and to
-upgrade OpenBSD to the current version.  It is also useful for maintenance
-and disaster recovery.
+OpenBSDbase(38.3M,106.5M)
 
-Bootable installation/upgrade floppy:
+OpenBSDcomp(13.3M,48.6M)
 
-	This disk contains a file system, is bootable, and has
-	enough utilities on board to prepare your hard disk drive
-	for OpenBSD and to install the OpenBSD distribution.
+OpenBSDetc(92.0K, 490K)
 
-	It also holds the utilities needed in order to upgrade a
-	system to the current version of OpenBSD.
+OpenBSDgame(5.9M, 15.5M)
 
-The OpenBSD/alpha binary distribution sets contain the binaries which
-comprise the OpenBSD 2.3 release for the alpha.  There are seven binary
-distribution sets.  The binary distribution sets can be found in
-the "alpha" subdirectory of the OpenBSD 2.3 distribution tree,
-and are as follows:
+OpenBSDman(2.4M, 9.2M)
 
-	base23	The OpenBSD/alpha 2.3 base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base OpenBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.
-		[ 38.3M gzipped, 106.5M uncompressed ]
+OpenBSDmisc(1.7M,5.9M)
 
-	comp23	The OpenBSD/alpha Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!).
-		This set includes the system include files
-		(/usr/include), the linker, the compiler tool chain,
-		and the various system libraries (except the shared
-		libraries, which are included as part of the base
-		set).  This set also includes the manual pages for all
-		of the utilities it contains, as well as the system
-		call and library manual pages.
-		[ 13.3M gzipped, 48.6M uncompressed ]
+OpenBSDtext(1.7M,5.6M)
 
-	etc23	This distribution set contains the system
-		configuration files that reside in /etc and in several
-		other places.  This set MUST be installed if you are
-		installing the system from scratch, but should NOT be
-		used if you are upgrading.  (If you are upgrading,
-		it's recommended that you get a copy of this set and
-		CAREFULLY upgrade your configuration files by hand.)
-		[ 92.0K gzipped, 490K uncompressed ]
+OpenBSDxbase
 
-	game23	This set includes the games and their manual pages.
-		[ 5.9M gzipped, 15.5M uncompressed ]
+OpenBSDxfont
 
-	man23	This set includes all of the manual pages for the
-		binaries and other software contained in the base set.
-		Note that it does not include any of the manual pages
-		that are included in the other sets.
-		[ 2.4M gzipped, 9.2M uncompressed ]
-
-	misc23	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
-		man pages for other architectures which happen to be
-		installed from the source tree by default.
-		[ 1.7M gzipped, 5.9M uncompressed ]
-
-	text23	This set includes OpenBSD's text processing tools,
-		including groff, all related programs, and their
-		manual pages.
-		[ 1.7M gzipped, 5.6M uncompressed ]
-
-	xbase23 This set includes the base X distribution.  This includes
-		programs, headers, libraries, configuration files.
-
-	xfont23 This set includes all of the X fonts.
-
-	xserv23 This set includes all of the X servers.
+OpenBSDxserv
 

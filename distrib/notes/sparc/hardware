@@ -24,7 +24,7 @@ RAM feels like Solaris with 4M of RAM.) Note that until you have
 around 16M of RAM, getting more RAM is more important than getting a
 faster CPU.)  Installation from "ramdisk" kernels requires 8M of RAM.
 
-Supported devices include:
+Supported devices {:-include-:}:
 	sun4c and sun4m SBus video: 
 		cgsix, cgthree, and bwtwo frame buffers
 

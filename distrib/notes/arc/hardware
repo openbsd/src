@@ -1,9 +1,9 @@
-OpenBSD/arc 2.3 runs on the following classes of machines:
+OpenBSD/arc OSREV runs on the following classes of machines:
 	- Acer PICA61 (RISC-PC) Systems.
 	- Deskstation rPC44.
 	- Deskstation Tyne.
 
-OpenBSD/pmax 2.3 does *not* (yet) run on these machines:
+OpenBSD/pmax OSREV does *not* (yet) run on these machines:
 	- Mips Magnum
 	- Olivetti systems.
 	- SNI RMxxx machines.
@@ -13,7 +13,7 @@ The minimal configuration requires 8M of RAM and ~60M of disk space.
 To install the entire system requires ~150M of disk space, and to run
 X or compile the system, 32Mb of RAM and ~1G of disk is recommended.
 
-Supported devices include:
+Supported devices {:-include-:}:
 	graphics:
 		built-in S3 VGA graphics adapter on PICA.
 		Standard VGA graphics adapter on rPC44 and Tyne.

@@ -10,7 +10,7 @@ sends data to the ROM monitor over the serial line.
 You may need to find and read the documentation about the ROM monitor
 download command and other low level commands.
 
-Other methods of getting OpenBSD/pc532 on your pc532 may include 
+Other methods of getting OpenBSD/pc532 on your pc532 may {:-include-:}
 SCSI tape or SCSI floppy disk or cloning a disk on a system
 already running OpenBSD/pc532.
 

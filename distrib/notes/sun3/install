@@ -13,7 +13,7 @@ initialize the disk on that machine and then move the disk.
 
 * Installing from tape:
 
-Create the OpenBSD/sun3 2.0 boot tape as described in the section
+Create the OpenBSD/sun3 OSREV boot tape as described in the section
 entitled "Preparing a boot tape" and boot the tape.  At the PROM
 monitor prompt, use one of the commands:
 	>b st()
@@ -172,3 +172,5 @@ The miniroot's install program will:
 
 First-time installation on a system through a method other than the
 installation program is possible, but strongly discouraged.
+
+OpenBSDCongratulations

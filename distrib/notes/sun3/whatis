@@ -1,10 +1,10 @@
 
-OpenBSD 2.0 is the first "full" release of OpenBSD for the sun3,
+OpenBSD OSREV is the first "full" release of OpenBSD for the sun3,
 including a full set of binaries.  This binary distribution is
 referred to elsewhere in this document by the name OpenBSD/sun3.
 This release offers improved stability and many new features.
 
-New features added since the 1.0 release include:
+New features added since the 1.0 release {:-include-:}:
 * Native boot programs for disk, network, and tape
 * Automated installation tools (using a "miniroot")
 * New SCSI driver supporting DMA, interrupts, and

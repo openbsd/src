@@ -76,7 +76,7 @@ If you are installing onto a single root partition, proceed to the
 Installation of base files:
 
 	Select the "Install" menu item from the "File" menu and install
-	base23.tar.gz, bsd-generic.tar.gz, comp23.tar.gz, and any other 
+	base{:--:}OSrev.tar.gz, bsd-generic.tar.gz, comp{:--:}OSrev.tar.gz, and any other 
 	packages you wish to install at this time (see the contents section 
 	for information about what's in each package).  The installer will
 	print out the filename of each file as it is installed and will
@@ -103,19 +103,5 @@ option in the "File" menu, then quit the application and restart.  Due
 to a long-standing bug, the preferences will not be saved unless you
 quit.
 
-If the system comes up, congratulations, you have successfully
-installed OpenBSD 2.3.  When you reboot into OpenBSD, you should log
-in as "root" at the login prompt.  There is no initial password, but
-if you're using the machine in a networked environment, you should
-create yourself an account and protect it and the "root" account with
-good passwords.
-
-Some of the files in the OpenBSD 2.3 distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified, as well.  If you are unfamiliar with
-UN*X-like system administration, it's recommended that you buy a book
-that discusses it.  Also, a useful resource in getting to know your new
-system is the *BSD FAQ which is available from numerous sights on the
-Internet.
+OpenBSDCongratulations
 

@@ -1,7 +1,7 @@
 Installation is really only supported from the local Macintosh
 hard drive or from an AppleShare volume.  This means that you'll
 need at least enough room for the largest file that you will have
-to install.  This is the 6.2M base23 file.  There has been talk
+to install.  This is the 6.2M base{:--:}OSrev file.  There has been talk
 of allowing an install from split files.  If you have the time,
 desire, and knowledge, please feel free to add that functionality.
 

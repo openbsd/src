@@ -27,7 +27,7 @@ NOTE:  BOOTING SYS_UBOOT VIA THE NETWORK IS ONLY POSSIBLE IF YOUR BOOTROM
 IS `REV. C' OR LATER.
 
 In order to complete this process, you will need the following from the
-`2.3/hp300' directory of the distribution:
+`OSREV/hp300' directory of the distribution:
 
 	SYS_UBOOT	The unified boot block file.
 

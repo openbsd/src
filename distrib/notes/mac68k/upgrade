@@ -1,11 +1,11 @@
-To upgrade to OpenBSD 2.3 from a previous version, you should follow the
+To upgrade to OpenBSD OSREV from a previous version, you should follow the
 instructions on installing the system beginning with using the MacBSD
 Install Utility.  All you need do is copy each of the distribution sets in
 over your current system from the MacOS.
 
-However, you should not copy the etc23.tar.gz file into the system.
+However, you should not copy the etc{:--:}OSrev.tar.gz file into the system.
 Instead, download it while running OpenBSD and put it in /tmp or some other
-harmless place and unpack it with a command like 'tar zxvf etc23.tar.gz'.
+harmless place and unpack it with a command like 'tar zxvf etc{:--:}OSrev.tar.gz'.
 You will then have an etc directory with current system configuration files
 in it.  Use this to carefully upgrade your files in the running /etc and
 reboot the system.  Also, it is highly recommended that when upgrading your

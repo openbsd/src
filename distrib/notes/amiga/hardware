@@ -1,4 +1,4 @@
-OpenBSD/amiga 2.3 runs on any amiga that has a 68020, 68030, 68040 or
+OpenBSD/MACHINE OSREV runs on any amiga that has a 68020, 68030, 68040 or
 68060 CPU with some form of FPU and MMU.  It should also run on
 MacroSystem's DraCo computer.  The minimal configuration requires 4M of
 RAM and about 55M of disk space.  To install the entire system requires
@@ -22,7 +22,7 @@ large and bulky to accommodate all people).
 If you only have 4M of fast memory, you should make your swap partition
 larger, as your system will be doing much more swapping.
 
-Supported devices include:
+Supported devices {:-include-:}:
 	A4000/A1200 IDE controller.
 	ISA IDE & ATAPI with a supported ISA bridge.
 		[Note: With single ATAPI device IDE busses, the

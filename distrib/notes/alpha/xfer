@@ -20,18 +20,18 @@ To boot from CD-ROM:
 	ignore them (unless it is DKA0).  For example, if your
 	cdrom is listed as DKA600, you want to use dka6 (device
 	ID's are case insensitive).  Insert the OpenBSD/alpha CD
-	and enter "boot -fi 2.3/alpha/bsd.rd DEVICE" where DEVICE is
+	and enter "boot -fi OSREV/alpha/bsd.rd DEVICE" where DEVICE is
 	the dka device.  Note that the argument order is important
 	here.  If this does not work, you'll have to create a boot
 	floppy or bootable hard disk; follow the directions below.
 	(A boot floppy image is included on the CD-ROM as
-	2.3/alpha/floppy.fs.)
+	OSREV/{:--:}MACHINE/floppy{:--:}OSrev.fs.)
 
 If you have a floppy drive on your alpha:
 
 	If you are using a UN*X-like system to write the floppy
 	image to disk, you should use the "dd" command to copy the
-	file system image (floppy.fs) directly to the raw floppy
+	file system image (floppy{:--:}OSrev.fs) directly to the raw floppy
 	disk.  It is suggested that you read the dd(1) manual page
 	or ask your system administrator to determine the correct
 	set of arguments to use; it will be slightly different from
@@ -41,7 +41,7 @@ If you have a floppy drive on your alpha:
 	If you are using a DOS PC to write the floppy image to
 	disk, you should use the "rawrite" utility, provided in
 	the "i386/inst" directory of the OpenBSD distribution.  It
-	will write the file system image (floppy.fs) to a disk.
+	will write the file system image (floppy{:--:}OSrev.fs) to a disk.
 	You can boot it using "boot dva0".
 
 	Note that, when installing, the floppy can be write-protected (i.e.
@@ -56,7 +56,7 @@ If you don't have a floppy drive on your alpha:
 	You must use a UN*X-like system to write the floppy image
 	to the hard disk you will be using for OpenBSD/alpha.  You
 	should use the "dd" command to copy the file system image
-	(floppy.fs) directly to the raw 'c' device (whole disk) of
+	(floppy{:--:}OSrev.fs) directly to the raw 'c' device (whole disk) of
 	the target hard disk.  It is suggested that you read the
 	dd(1) manual page or ask your system administrator to
 	determine the correct set of arguments to use; it will be
@@ -94,13 +94,13 @@ following:
 	administrator.) In the above example, "<dist_directories>"
 	are the distribution sets' directories, for the distribution
 	sets you wish to place on the tape.  For instance, to put
-	the "base23" and "etc23" distributions on tape (in order
+	the "base{:--:}OSrev" and "etc{:--:}OSrev" distributions on tape (in order
 	to do the absolute minimum installation to a new disk),
 	you would do the following:
 
-		cd .../2.3		# the top of the tree
-		cd alpha/
-		tar cf <tape_device> base23 etc23
+		cd .../OSREV		# the top of the tree
+		cd MACHINE/
+		tar cf <tape_device> base{:--:}OSrev etc{:--:}OSrev
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -153,7 +153,7 @@ must do the following:
 	Place the distribution sets you wish to upgrade somewhere
 	in your current file system tree.  At a bare minimum, you
 	must upgrade the "base" binary distribution, and so must
-	put the "base23" set somewhere in your file system.  If
+	put the "base{:--:}OSrev" set somewhere in your file system.  If
 	you wish, you can do the other sets, as well, but you should
 	NOT upgrade the "etc" distribution; the "etc" distribution
 	contains system configuration files that you should review

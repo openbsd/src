@@ -180,7 +180,7 @@ The `(Cyl. x - y)' info that appears after the hash (`#') character is
 treated as a comment and need not be filled in when altering partitions.
 
 Special note: the line containing `8 partitions:' is best left alone,
-even if you define less then eight partitions. If this line displays
+even if you {:-define-:} less then eight partitions. If this line displays
 a different number and the program complains about it (after you leave
 the editor), then try setting it to `8 partitions:'.
 

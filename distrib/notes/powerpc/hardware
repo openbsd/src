@@ -1,4 +1,4 @@
-OpenBSD/powerpc 2.3 runs on ISA (AT-Bus), and PCI buses
+OpenBSD/MACHINE OSREV runs on ISA (AT-Bus), and PCI buses
 with 603, 603e, 604, 604e processors.
 Only systems with openfirmware are supported.
 Has been tested on various Motorola (MCG) boards:
@@ -11,7 +11,7 @@ disk space, though we do not know of anyone running with a system
 quite this minimal today.  To install the entire system requires much
 more disk space,
 
-Supported devices include:
+Supported devices {:-include-:}:
 	ONLY DEVICES SUPPORTED BY OPENFIRMWARE ON THE MACHINE.
 
 	Floppy controllers.

@@ -13,7 +13,7 @@ a floppy disk (1.44Mb required).
 
 If you are using a UN*X-like system to write the floppy image to
 disk, you should use the "dd" command to copy the file system image
-(floppy23.fs) directly to the raw floppy disks.  It is suggested that
+(floppy{:--:}OSrev.fs) directly to the raw floppy disks.  It is suggested that
 you read the dd(1) manual page or ask your system administrator to
 determine the correct set of arguments to use; it will be slightly
 different from system to system, and a comprehensive list of the
@@ -22,7 +22,7 @@ possibilities is beyond the scope of this document.
 If you are using DOS to write the floppy image to disk, you should
 use the "rawrite" utility, provided in the "i386/inst" directory of
 the OpenBSD distribution.  It will write the file system image
-(floppy23.fs) to a disk.
+(floppy{:--:}OSrev.fs) to a disk.
 
 Note that when installing, the floppy can be write-protected (i.e.
 read-only).
@@ -47,14 +47,14 @@ following:
 	(If you can't figure it out, ask your system administrator.)
 	In the above example, "<dist_directories>" are the
 	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base23",
-	"etc23", and "bsd" distributions on tape (in order to do the
+	wish to place on the tape.  For instance, to put the "base{:--:}OSrev",
+	"etc{:--:}OSrev", and "bsd" distributions on tape (in order to do the
 	absolute minimum installation to a new disk), you would do the
 	following:
 
-		cd .../2.3		# the top of the tree
-		cd i386/
-		tar cf <tape_device> base23 etc23 bsd
+		cd .../OSREV		# the top of the tree
+		cd MACHINE/
+		tar cf <tape_device> base{:--:}OSrev etc{:--:}OSrev bsd
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -104,7 +104,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base23" set somewhere in your file system.  If you wish,
+	"base{:--:}OSrev" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.
