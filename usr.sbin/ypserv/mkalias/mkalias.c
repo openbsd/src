@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.11 2002/07/19 20:59:40 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.12 2002/09/06 21:37:38 maja Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.11 2002/07/19 20:59:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.12 2002/09/06 21:37:38 maja Exp $";
 #endif
 
 #include <ctype.h>
@@ -87,7 +87,7 @@ split_address(char *address, int len, char *user, char *host)
 int
 check_host(char *address, char *host, int dflag, int uflag, int Eflag)
 {
-	char answer[PACKETSZ];
+	u_char answer[PACKETSZ];
 	int  status;
 
 	if ((dflag && strchr(address, '@')) ||
