@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.2 2004/08/07 10:24:41 pefo Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.3 2004/08/09 21:13:29 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -34,12 +34,10 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <dev/ic/mc146818reg.h>
-#include <machine/m48t37.h>
-
 #include <mips64/archtype.h>
-
 #include <mips64/dev/clockvar.h>
+
+#include <sgi/localbus/macebus.h>
 
 extern void clock_int5_init(struct clock_softc *);
 extern int clock_started;
@@ -49,11 +47,8 @@ extern int clock_started;
 
 void	md_clk_attach(struct device *parent, struct device *self, void *aux);
 
-void	m48clock_get(struct clock_softc *, time_t, struct tod_time *);
-void	m48clock_set(struct clock_softc *, struct tod_time *);
-
-void	dsclock_get(struct clock_softc *, time_t, struct tod_time *);
-void	dsclock_set(struct clock_softc *, struct tod_time *);
+void	ds1687_get(struct clock_softc *, time_t, struct tod_time *);
+void	ds1687_set(struct clock_softc *, struct tod_time *);
 
 void
 md_clk_attach(parent, self, aux)
@@ -68,18 +63,17 @@ md_clk_attach(parent, self, aux)
 
         switch (sys_config.system_type) {
 	case SGI_O2:
-		sc->sc_clock.clk_get = m48clock_get;
-		sc->sc_clock.clk_set = m48clock_set;
+		sc->sc_clock.clk_get = ds1687_get;
+		sc->sc_clock.clk_set = ds1687_set;
 		sc->sc_clock.clk_init = clock_int5_init;
 		sc->sc_clock.clk_hz = 100;
 		sc->sc_clock.clk_profhz = 100;
-		sc->sc_clock.clk_stathz = 100;
-#if 0
-		if (bus_space_map(sc->sc_clk_t, 0xfc807ff0, 16, 0,
+		sc->sc_clock.clk_stathz = 0;	/* XXX no stat clock yet */
+		sc->sc_clk_t = ca->ca_iot;
+		if (bus_space_map(sc->sc_clk_t, MACE_ISA_RTC_OFFS, 128*256, 0,
 		    &sc->sc_clk_h))
 			printf("UH!? Can't map clock device!\n");
-		printf(" M48x compatible using counter as ticker");
-#endif
+		printf(" TOD with DS1687,");
 		break;
 
 	default:
@@ -87,122 +81,70 @@ md_clk_attach(parent, self, aux)
 	}
 }
 
-/*
- *  M48TXX clock driver.
- */
-void
-m48clock_get(sc, base, ct)
-	struct clock_softc *sc;
-	time_t base;
-	struct tod_time *ct;
-{
-	bus_space_tag_t clk_t = sc->sc_clk_t;
-	bus_space_handle_t clk_h = sc->sc_clk_h;
-        int century, tmp;
-
-return;
-	tmp = bus_space_read_1(clk_t, clk_h, TOD_CTRL) | TOD_CTRL_R;
-	bus_space_write_1(clk_t, clk_h, TOD_CTRL, tmp);
-
-	ct->sec = FROMBCD(bus_space_read_1(clk_t, clk_h, TOD_SECOND));
-	ct->min = FROMBCD(bus_space_read_1(clk_t, clk_h, TOD_MINUTE));
-	ct->hour = FROMBCD(bus_space_read_1(clk_t, clk_h, TOD_HOUR));
-	ct->dow = FROMBCD(bus_space_read_1(clk_t, clk_h, TOD_DAY));
-	ct->day = FROMBCD(bus_space_read_1(clk_t, clk_h, TOD_DATE));
-	ct->mon = FROMBCD(bus_space_read_1(clk_t, clk_h, TOD_MONTH)) - 1;
-	ct->year = FROMBCD(bus_space_read_1(clk_t, clk_h, TOD_YEAR));
-	century = FROMBCD(bus_space_read_1(clk_t, clk_h, TOD_CENTURY));
-	tmp = bus_space_read_1(clk_t, clk_h, TOD_CTRL) & ~TOD_CTRL_R;
-	bus_space_write_1(clk_t, clk_h, TOD_CTRL, tmp);
-
-        /* Since tm_year is defined to be years since 1900 we compute */
-        /* the correct value here                                     */
-        ct->year = century*100 + ct->year - 1900;
-}
-
-void
-m48clock_set(sc, ct)
-	struct clock_softc *sc;
-	struct tod_time *ct;
-{
-	bus_space_tag_t clk_t = sc->sc_clk_t;
-	bus_space_handle_t clk_h = sc->sc_clk_h;
-        int tmp;
-	int year, century;
-
-return;
-	century = (ct->year + 1900) / 100;
-	year = ct->year % 100;
-
-	tmp = bus_space_read_1(clk_t, clk_h, TOD_CTRL) | TOD_CTRL_W;
-	bus_space_write_1(clk_t, clk_h, TOD_CTRL, tmp);
-
-	bus_space_write_1(clk_t, clk_h, TOD_SECOND, TOBCD(ct->sec));
-	bus_space_write_1(clk_t, clk_h, TOD_MINUTE, TOBCD(ct->min));
-	bus_space_write_1(clk_t, clk_h, TOD_HOUR, TOBCD(ct->hour));
-	bus_space_write_1(clk_t, clk_h, TOD_DAY, TOBCD(ct->dow));
-	bus_space_write_1(clk_t, clk_h, TOD_DATE, TOBCD(ct->day));
-	bus_space_write_1(clk_t, clk_h, TOD_MONTH, TOBCD(ct->mon + 1));
-	bus_space_write_1(clk_t, clk_h, TOD_YEAR, TOBCD(year));
-	bus_space_write_1(clk_t, clk_h, TOD_CENTURY, TOBCD(century));
-
-	tmp = bus_space_read_1(clk_t, clk_h, TOD_CTRL) & ~TOD_CTRL_W;
-	bus_space_write_1(clk_t, clk_h, TOD_CTRL, tmp);
-}
-
 
 /*
  *  Dallas clock driver.
  */
 void
-dsclock_get(sc, base, ct)
+ds1687_get(sc, base, ct)
 	struct clock_softc *sc;
 	time_t base;
 	struct tod_time *ct;
 {
 	bus_space_tag_t clk_t = sc->sc_clk_t;
 	bus_space_handle_t clk_h = sc->sc_clk_h;
-        int century, tmp;
+	int tmp12, century;
 
-	tmp = bus_space_read_1(clk_t, clk_h, 15);
-	bus_space_write_1(clk_t, clk_h, 15, tmp | 0x80);
+	/* Select bank 1 */
+	tmp12 = bus_space_read_1(clk_t, clk_h, 12);
+	bus_space_write_1(clk_t, clk_h, 12, tmp12 | 0x10);
+
+	/* Wait for no update in progress */
+	while (bus_space_read_1(clk_t, clk_h, 12) & 0x80)
+		/* Do nothing */;
 
 	ct->sec = FROMBCD(bus_space_read_1(clk_t, clk_h, 0));
-	ct->min = FROMBCD(bus_space_read_1(clk_t, clk_h, 1));
-	ct->hour = FROMBCD(bus_space_read_1(clk_t, clk_h, 2));
-	ct->day = FROMBCD(bus_space_read_1(clk_t, clk_h, 4));
-	ct->mon = FROMBCD(bus_space_read_1(clk_t, clk_h, 5)) - 1;
-	ct->year = FROMBCD(bus_space_read_1(clk_t, clk_h, 6));
-	bus_space_write_1(clk_t, clk_h, 15, tmp);
+	ct->min = FROMBCD(bus_space_read_1(clk_t, clk_h, 2));
+	ct->hour = FROMBCD(bus_space_read_1(clk_t, clk_h, 4));
+	ct->day = FROMBCD(bus_space_read_1(clk_t, clk_h, 7));
+	ct->mon = FROMBCD(bus_space_read_1(clk_t, clk_h, 8)) - 1;
+	ct->year = FROMBCD(bus_space_read_1(clk_t, clk_h, 9));
+	century = FROMBCD(bus_space_read_1(clk_t, clk_h, 72));
 
-        /* Since tm_year is defined to be years since 1900 we compute */
-        /* the correct value here                                     */
-        ct->year = century*100 + ct->year - 1900;
+	bus_space_write_1(clk_t, clk_h, 12, tmp12 | 0x10);
+
+	ct->year += 100 * (century - 19);
 }
 
 void
-dsclock_set(sc, ct)
+ds1687_set(sc, ct)
 	struct clock_softc *sc;
 	struct tod_time *ct;
 {
 	bus_space_tag_t clk_t = sc->sc_clk_t;
 	bus_space_handle_t clk_h = sc->sc_clk_h;
-        int tmp;
-	int year, century;
+	int year, century, tmp12, tmp13;
 
-	century = (ct->year + 1900) / 100;
+	century = ct->year / 100 + 19;
 	year = ct->year % 100;
 
-	tmp = bus_space_read_1(clk_t, clk_h, 15);
-	bus_space_write_1(clk_t, clk_h, 15, tmp | 0x80);
+	/* Select bank 1 */
+	tmp12 = bus_space_read_1(clk_t, clk_h, 12);
+	bus_space_write_1(clk_t, clk_h, 12, tmp12 | 0x10);
+
+	/* Stop update */
+	tmp13 = bus_space_read_1(clk_t, clk_h, 13);
+	bus_space_write_1(clk_t, clk_h, 13, tmp13 | 0x80);
 
 	bus_space_write_1(clk_t, clk_h, 0, TOBCD(ct->sec));
-	bus_space_write_1(clk_t, clk_h, 1, TOBCD(ct->min));
-	bus_space_write_1(clk_t, clk_h, 2, TOBCD(ct->hour));
-	bus_space_write_1(clk_t, clk_h, 3, TOBCD(ct->dow));
-	bus_space_write_1(clk_t, clk_h, 4, TOBCD(ct->day));
-	bus_space_write_1(clk_t, clk_h, 5, TOBCD(ct->mon + 1));
-	bus_space_write_1(clk_t, clk_h, 6, TOBCD(year));
+	bus_space_write_1(clk_t, clk_h, 2, TOBCD(ct->min));
+	bus_space_write_1(clk_t, clk_h, 4, TOBCD(ct->hour));
+	bus_space_write_1(clk_t, clk_h, 6, TOBCD(ct->dow));
+	bus_space_write_1(clk_t, clk_h, 7, TOBCD(ct->day));
+	bus_space_write_1(clk_t, clk_h, 8, TOBCD(ct->mon + 1));
+	bus_space_write_1(clk_t, clk_h, 9, TOBCD(year));
+	bus_space_write_1(clk_t, clk_h, 72, TOBCD(century));
 
-	bus_space_write_1(clk_t, clk_h, 15, tmp);
+	bus_space_write_1(clk_t, clk_h, 12, tmp12);
+	bus_space_write_1(clk_t, clk_h, 13, tmp13);
 }
