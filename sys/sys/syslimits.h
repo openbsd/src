@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslimits.h,v 1.4 1998/07/15 23:12:56 deraadt Exp $	*/
+/*	$OpenBSD: syslimits.h,v 1.5 1998/08/05 16:33:26 millert Exp $	*/
 /*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #endif
 
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#define	IOV_MAX			 1024	/* max # of iov's (readv,sendmsg,etc) */
 #define	NZERO			   20	/* default "nice" */
 #endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
 
