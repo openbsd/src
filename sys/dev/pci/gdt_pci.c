@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.16 2002/06/11 03:05:53 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.17 2002/06/11 14:41:35 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -481,7 +481,9 @@ gdt_pci_attach(parent, self, aux)
 		while (bus_space_read_1(dpmemt, dpmemh,
 		    GDT_MPR_IC + GDT_S_STATUS) != 0xff) {
 			if (--retries == 0) {
-				printf("DEINIT failed\n");
+				printf("DEINIT failed (status 0x%x)\n",
+				    bus_space_read_1(dpmemt, dpmemh,
+				    GDT_MPR_IC + GDT_S_STATUS));
 				goto bail_out;
 			}
 			DELAY(1);
