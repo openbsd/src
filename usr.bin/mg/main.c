@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2002/07/25 16:37:54 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2003/01/06 17:04:09 deraadt Exp $	*/
 
 /*
  *	Mainline.
@@ -15,6 +15,7 @@
 int		 thisflag;			/* flags, this command	*/
 int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
+int		 startrow;			/* row to start         */
 BUFFER		*curbp;				/* current buffer	*/
 BUFFER		*bheadp;			/* BUFFER listhead	*/
 MGWIN		*curwp;				/* current window	*/
@@ -62,7 +63,26 @@ main(int argc, char **argv)
 		(void)load(cp);
 #endif	/* !NO_STARTUP */
 	while (--argc > 0) {
-		cp = adjustname(*++argv);
+		argv++;
+
+		if (argv[0][0] == '+' && strlen(argv[0]) >= 2) {
+			long lval;
+			char *ep;
+
+			errno = 0;
+			lval = strtoul(&argv[0][1], &ep, 10);
+			if (argv[0][1] == '\0' || *ep != '\0')
+				goto notnum;
+			if ((errno == ERANGE &&
+			    (lval == LONG_MAX || lval == LONG_MIN)) ||
+			    (lval > INT_MAX || lval < INT_MIN))
+				goto notnum;
+			startrow = (int)lval;
+			continue;
+		}
+notnum:
+
+		cp = adjustname(*argv);
 		if (cp != NULL) {
 			curbp = findbuffer(cp);
 			(void)showbuffer(curbp, curwp, 0);
