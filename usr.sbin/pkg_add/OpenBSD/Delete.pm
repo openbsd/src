@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.4 2004/11/06 12:22:33 espie Exp $
+# $OpenBSD: Delete.pm,v 1.5 2004/11/09 10:49:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,16 +21,6 @@ package OpenBSD::Delete;
 use OpenBSD::Error;
 use OpenBSD::Vstat;
 use OpenBSD::PackageInfo;
-
-sub ensure_ldconfig
-{
-	my $state = shift;
-	return if $state->{not};
-	return unless defined $OpenBSD::PackingElement::Lib::todo;
-	VSystem($state->{very_verbose}, 
-	    @OpenBSD::PackingElement::Lib::ldconfig, "-R");
-	undef $OpenBSD::PackingElement::Lib::todo;
-}
 
 sub manpages_unindex
 {
