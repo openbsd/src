@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.32 1999/07/15 14:11:05 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.33 1999/08/09 12:19:07 millert Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -439,6 +439,7 @@ sys_execve(p, v, retval)
 	    ((char *)PS_STRINGS) - szsigcode, szsigcode))
 		goto exec_abort;
 
+	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 
