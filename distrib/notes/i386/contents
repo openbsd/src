@@ -8,7 +8,7 @@ out as follows:
 		floppy.fs	The i386 boot and installation
 				floppy; see below.
 
-		*.gz/		i386 binary distribution sets;
+		*.gz		i386 binary distribution sets;
 				see below.
 
 		bsd		A stock GENERIC i386 kernel which
