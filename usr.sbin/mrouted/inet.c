@@ -16,10 +16,11 @@
 /*
  * Exported variables.
  */
-char s1[19];		/* buffers to hold the string representations  */
-char s2[19];		/* of IP addresses, to be passed to inet_fmt() */
-char s3[19];		/* or inet_fmts().                             */
-char s4[19];
+#define SNAMLEN		19
+char s1[SNAMLEN];	/* buffers to hold the string representations  */
+char s2[SNAMLEN];	/* of IP addresses, to be passed to inet_fmt() */
+char s3[SNAMLEN];	/* or inet_fmts().                             */
+char s4[SNAMLEN];
 
 
 /*
@@ -108,7 +109,7 @@ inet_fmt(u_int32_t addr, char *s)
     register u_char *a;
 
     a = (u_char *)&addr;
-    sprintf(s, "%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
+    snprintf(s, SNAMLEN, "%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
     return (s);
 }
 
@@ -124,18 +125,21 @@ inet_fmts(u_int32_t addr, u_int32_t mask, char *s)
     int bits;
 
     if ((addr == 0) && (mask == 0)) {
-	sprintf(s, "default");
+	snprintf(s, SNAMLEN, "default");
 	return (s);
     }
     a = (u_char *)&addr;
     m = (u_char *)&mask;
     bits = 33 - ffs(ntohl(mask));
 
-    if      (m[3] != 0) sprintf(s, "%u.%u.%u.%u/%d", a[0], a[1], a[2], a[3],
-						bits);
-    else if (m[2] != 0) sprintf(s, "%u.%u.%u/%d",    a[0], a[1], a[2], bits);
-    else if (m[1] != 0) sprintf(s, "%u.%u/%d",       a[0], a[1], bits);
-    else                sprintf(s, "%u/%d",          a[0], bits);
+    if      (m[3] != 0)
+	snprintf(s, SNAMLEN, "%u.%u.%u.%u/%d", a[0], a[1], a[2], a[3], bits);
+    else if (m[2] != 0)
+	snprintf(s, SNAMLEN, "%u.%u.%u/%d",    a[0], a[1], a[2], bits);
+    else if (m[1] != 0)
+	snprintf(s, SNAMLEN, "%u.%u/%d",       a[0], a[1], bits);
+    else
+	snprintf(s, SNAMLEN, "%u/%d",          a[0], bits);
 
     return (s);
 }

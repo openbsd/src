@@ -1859,7 +1859,7 @@ scaletime(u_long t)
     if (t > 999)
 	return "*** ";
 
-    sprintf(p,"%3d%c", (int)t, s);
+    snprintf(p, 5, "%3d%c", (int)t, s);
 
     return p;
 }

@@ -205,8 +205,7 @@ stmt	: error
 					fatal("Too many named boundaries (max %d)", MAXBOUNDS);
 				      }
 
-				      boundlist[numbounds].name = malloc(strlen($2) + 1);
-				      strcpy(boundlist[numbounds].name, $2);
+				      boundlist[numbounds].name = strdup($2);
 				      boundlist[numbounds++].bound = $3;
 				    }
 	| SYSNAM STRING    {
