@@ -1,4 +1,4 @@
-.\"	$OpenBSD: an.4,v 1.19 2003/04/02 20:56:19 jmc Exp $
+.\"	$OpenBSD: an.4,v 1.20 2003/05/20 04:25:59 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -41,6 +41,7 @@
 .Sh SYNOPSIS
 .Cd "an* at pcmcia? function ?"
 .Cd "an* at pci? dev ? function ?"
+.Cd "an* at isapnp?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -111,6 +112,7 @@ command.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr intro 4 ,
+.Xr isapnp 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
