@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.31 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.32 2004/04/24 20:34:53 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -402,7 +402,7 @@ vs_scsicmd(xs)
 	/*
 	 * Wait until we can use the command queue entry.
 	 * Should only have to wait if the master command
-	      * queue entry is busy and we are polling.
+	 * queue entry is busy and we are polling.
 	 */
 	while (cqep->cqe_QECR & M_QECR_GO);
 
@@ -439,8 +439,7 @@ vs_scsicmd(xs)
 
 	if (flags & SCSI_POLL) {
 		/* poll for the command to complete */
-		vs_poll(sc, xs);
-		return (COMPLETE);
+		return vs_poll(sc, xs);
 	}
 	return (SUCCESSFULLY_QUEUED);
 }
