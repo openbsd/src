@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.47 2004/10/09 19:55:29 brad Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.48 2005/03/25 03:23:51 brad Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -227,7 +227,7 @@ vlan_start(struct ifnet *ifp)
 			m0 = m_prepend(m, sizeof(struct ether_vlan_header),
 			    M_DONTWAIT);
 			if (m0 == NULL) {
-				ifp->if_ierrors++;
+				ifp->if_oerrors++;
 				continue;
 			}
 
