@@ -1,5 +1,5 @@
-/*	$OpenBSD: if.c,v 1.11 2002/05/31 09:53:26 deraadt Exp $	*/
-/*	$KAME: if.c,v 1.15 2001/05/22 06:04:17 jinmei Exp $	*/
+/*	$OpenBSD: if.c,v 1.12 2002/05/31 21:24:28 itojun Exp $	*/
+/*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,23 +37,12 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#ifdef __FreeBSD__
-# include <net/ethernet.h>
-#endif
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
-#if defined(__bsdi__) || defined(__OpenBSD__)
-# include <netinet/in.h>
-# include <netinet/if_ether.h>
-#endif
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsold.h,v 1.9 2002/05/31 10:11:14 itojun Exp $	*/
-/*	$KAME: rtsold.h,v 1.11 2000/10/10 06:18:04 itojun Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.10 2002/05/31 21:24:28 itojun Exp $	*/
+/*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,6 +35,7 @@ struct ifinfo {
 
 	struct sockaddr_dl *sdl; /* link-layer address */
 	char ifname[IF_NAMESIZE]; /* interface name */
+	u_int32_t linkid;	/* link ID of this interface */
 	int active;		/* interface status */
 	int probeinterval;	/* interval of probe timer(if necessary) */
 	int probetimer;		/* rest of probe timer */
@@ -66,6 +67,7 @@ struct ifinfo *find_ifinfo(int ifindex);
 void rtsol_timer_update(struct ifinfo *);
 extern void warnmsg(int, const char *, const char *, ...)
      __attribute__((__format__(__printf__, 3, 4)));
+extern char **autoifprobe(void);
 
 /* if.c */
 extern int ifinit(void);
@@ -83,7 +85,7 @@ extern void rtsol_input(int);
 
 /* probe.c */
 extern int probe_init(void);
-extern void defrouter_probe(int);
+extern void defrouter_probe(struct ifinfo *);
 
 /* dump.c */
 extern void rtsold_dump_file(char *);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: probe.c,v 1.6 2002/05/31 09:53:26 deraadt Exp $	*/
-/*	$KAME: probe.c,v 1.10 2000/08/13 06:14:59 itojun Exp $	*/
+/*	$OpenBSD: probe.c,v 1.7 2002/05/31 21:24:28 itojun Exp $	*/
+/*	$KAME: probe.c,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -38,9 +38,7 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
+#include <net/if_dl.h>
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
@@ -60,7 +58,7 @@
 static struct msghdr sndmhdr;
 static struct iovec sndiov[2];
 static int probesock;
-static void sendprobe(struct in6_addr *addr, int ifindex);
+static void sendprobe(struct in6_addr *, struct ifinfo *);
 
 int
 probe_init()
@@ -99,18 +97,19 @@ probe_init()
  * Probe if each router in the default router list is still alive.
  */
 void
-defrouter_probe(int ifindex)
+defrouter_probe(struct ifinfo *ifinfo)
 {
 	u_char ntopbuf[INET6_ADDRSTRLEN];
 	struct in6_drlist dr;
 	int s, i;
+	int ifindex = ifinfo->sdl->sdl_index;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "socket: %s", strerror(errno));
 		return;
 	}
-	bzero(&dr, sizeof(dr));
-	strlcpy(dr.ifname, "lo0", sizeof dr.ifname); /* dummy interface */
+	memset(&dr, 0, sizeof(dr));
+	strcpy(dr.ifname, "lo0"); /* dummy interface */
 	if (ioctl(s, SIOCGDRLST_IN6, (caddr_t)&dr) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "ioctl(SIOCGDRLST_IN6): %s",
 		    strerror(errno));
@@ -123,14 +122,13 @@ defrouter_probe(int ifindex)
 			if (!IN6_IS_ADDR_LINKLOCAL(&dr.defrouter[i].rtaddr)) {
 				warnmsg(LOG_ERR, __FUNCTION__,
 				    "default router list contains a "
-				    "non-linklocal address(%s)",
+				    "non-link-local address(%s)",
 				    inet_ntop(AF_INET6,
 				    &dr.defrouter[i].rtaddr,
 				    ntopbuf, INET6_ADDRSTRLEN));
 				continue; /* ignore the address */
 			}
-			sendprobe(&dr.defrouter[i].rtaddr,
-			    dr.defrouter[i].if_index);
+			sendprobe(&dr.defrouter[i].rtaddr, ifinfo);
 		}
 	}
 
@@ -139,18 +137,20 @@ closeandend:
 }
 
 static void
-sendprobe(struct in6_addr *addr, int ifindex)
+sendprobe(struct in6_addr *addr, struct ifinfo *ifinfo)
 {
 	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 	struct sockaddr_in6 sa6_probe;
 	struct in6_pktinfo *pi;
 	struct cmsghdr *cm;
+	u_int32_t ifindex = ifinfo->sdl->sdl_index;
 	int hoplimit = 1;
 
-	bzero(&sa6_probe, sizeof(sa6_probe));
+	memset(&sa6_probe, 0, sizeof(sa6_probe));
 	sa6_probe.sin6_family = AF_INET6;
 	sa6_probe.sin6_len = sizeof(sa6_probe);
 	sa6_probe.sin6_addr = *addr;
+	sa6_probe.sin6_scope_id = ifinfo->linkid;
 
 	sndmhdr.msg_name = (caddr_t)&sa6_probe;
 	sndmhdr.msg_iov[0].iov_base = NULL;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsold.c,v 1.20 2002/05/31 10:11:14 itojun Exp $	*/
-/*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.21 2002/05/31 21:24:28 itojun Exp $	*/
+/*	$KAME: rtsold.c,v 1.49 2002/05/31 10:19:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/param.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -88,7 +89,6 @@ static int mobile_node = 0;
 volatile sig_atomic_t do_dump;
 static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
 
-static int ifconfig(char *);
 #if 0
 static int ifreconfig(char *);
 #endif
@@ -99,14 +99,13 @@ static void TIMEVAL_SUB(struct timeval *, struct timeval *, struct timeval *);
 
 static void rtsold_set_dump_file(void);
 static void usage(char *);
-static char **autoifprobe(void);
 
 int
 main(argc, argv)
 	int argc;
-	char *argv[];
+	char **argv;
 {
-	int s, maxfd, ch, once = 0, i;
+	int s, maxfd, ch, once = 0;
 	struct timeval *timeout;
 	char *argv0, *opts;
 	fd_set fdset;
@@ -155,23 +154,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (aflag) {
-		if (argc != 0) {
-			usage(argv0);
-			/*NOTREACHED*/
-		}
-
-		argv = autoifprobe();
-		if (!argv) {
-			errx(1, "could not autoprobe interface");
-			/*NOTREACHED*/
-		}
-
-		for (i = 0; argv[i]; i++)
-			;
-		argc = i;
-	}
-	if (argc == 0) {
+	if ((!aflag && argc == 0) || (aflag && argc != 0)) {
 		usage(argv0);
 		/*NOTREACHED*/
 	}
@@ -241,7 +224,9 @@ main(argc, argv)
 		exit(1);
 		/*NOTREACHED*/
 	}
-	while (argc--) {
+	if (aflag)
+		argv = autoifprobe();
+	while (argv && *argv) {
 		if (ifconfig(*argv)) {
 			warnmsg(LOG_ERR, __FUNCTION__,
 			    "failed to initialize %s", *argv);
@@ -321,7 +306,7 @@ main(argc, argv)
 	return 0;
 }
 
-static int
+int
 ifconfig(char *ifname)
 {
 	struct ifinfo *ifinfo;
@@ -353,6 +338,15 @@ ifconfig(char *ifname)
 	/* construct a router solicitation message */
 	if (make_packet(ifinfo))
 		goto bad;
+
+	/* set link ID of this interface. */
+#ifdef HAVE_SCOPELIB
+	if (inet_zoneid(AF_INET6, 2, ifname, &ifinfo->linkid))
+		goto bad;
+#else
+	/* XXX: assume interface IDs as link IDs */
+	ifinfo->linkid = ifinfo->sdl->sdl_index;
+#endif
 
 	/*
 	 * check if the interface is available.
@@ -390,6 +384,22 @@ bad:
 	free(ifinfo->sdl);
 	free(ifinfo);
 	return(-1);
+}
+
+void
+iflist_init()
+{
+	struct ifinfo *ifi, *next;
+
+	for (ifi = iflist; ifi; ifi = next) {
+		next = ifi->next;
+		if (ifi->sdl)
+			free(ifi->sdl);
+		if (ifi->rs_data)
+			free(ifi->rs_data);
+		free(ifi);
+		iflist = NULL;
+	}
 }
 
 #if 0
@@ -525,7 +535,7 @@ rtsol_check_timer()
 				}
 
 				if (probe && mobile_node)
-					defrouter_probe(ifinfo->sdl->sdl_index);
+					defrouter_probe(ifinfo);
 				break;
 			}
 			case IFS_DELAY:
@@ -717,15 +727,29 @@ warnmsg(int priority, const char *func, const char *msg, ...)
 	va_end(ap);
 }
 
-static char **
+/*
+ * return a list of interfaces which is suitable to sending an RS.
+ */
+char **
 autoifprobe()
 {
 #ifndef HAVE_GETIFADDRS
 	errx(1, "-a is not available with the configuration");
 #else
-	static char ifname[IFNAMSIZ + 1];
-	static char *argv[2];
+	static char **argv = NULL;
+	static int n = 0;
+	char **a;
+	int i, found;
 	struct ifaddrs *ifap, *ifa, *target;
+
+	/* initialize */
+	while (n--)
+		free(argv[n]);
+	if (argv) {
+		free(argv);
+		argv = NULL;
+	}
+	n = 0;
 
 	if (getifaddrs(&ifap) != 0)
 		return NULL;
@@ -745,33 +769,44 @@ autoifprobe()
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 
-		if (target && strcmp(target->ifa_name, ifa->ifa_name) == 0)
+		found = 0;
+		for (i = 0; i < n; i++) {
+			if (strcmp(argv[i], ifa->ifa_name) == 0) {
+				found++;
+				break;
+			}
+		}
+		if (found)
 			continue;
 
-		if (!target)
-			target = ifa;
-		else {
-			/* if we find multiple candidates, failure. */
-			if (dflag > 1)
-				warnx("multiple interfaces found");
-			target = NULL;
-			break;
+		/* if we find multiple candidates, just warn. */
+		if (n != 0 && dflag > 1)
+			warnx("multiple interfaces found");
+
+		a = (char **)realloc(argv, (n + 1) * sizeof(char **));
+		if (a == NULL)
+			err(1, "realloc");
+		argv = a;
+		argv[n] = (char *)malloc(1 + strlen(ifa->ifa_name));
+		if (!argv[n])
+			err(1, "malloc");
+		strcpy(argv[n], ifa->ifa_name);
+		n++;
+	}
+
+	if (n) {
+		a = (char **)realloc(argv, (n + 1) * sizeof(char **));
+		if (a == NULL)
+			err(1, "realloc");
+		argv = a;
+		argv[n] = NULL;
+
+		if (dflag > 0) {
+			for (i = 0; i < n; i++)
+				warnx("probing %s", argv[i]);
 		}
 	}
-
-	if (target) {
-		strncpy(ifname, target->ifa_name, sizeof(ifname) - 1);
-		ifname[sizeof(ifname) - 1] = '\0';
-		argv[0] = ifname;
-		argv[1] = NULL;
-
-		if (dflag > 0)
-			warnx("probing %s", argv[0]);
-	}
 	freeifaddrs(ifap);
-	if (target)
-		return argv;
-	else
-		return (char **)NULL;
+	return argv;
 #endif
 }

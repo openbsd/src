@@ -1,5 +1,5 @@
-/*	$OpenBSD: dump.c,v 1.8 2002/05/31 09:53:26 deraadt Exp $	*/
-/*	$KAME: dump.c,v 1.9 2001/08/20 06:55:54 itojun Exp $	*/
+/*	$OpenBSD: dump.c,v 1.9 2002/05/31 21:24:27 itojun Exp $	*/
+/*	$KAME: dump.c,v 1.10 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.

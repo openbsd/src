@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsol.c,v 1.7 2002/05/31 09:53:26 deraadt Exp $	*/
-/*	$KAME: rtsol.c,v 1.14 2001/11/13 10:31:23 jinmei Exp $	*/
+/*	$OpenBSD: rtsol.c,v 1.8 2002/05/31 21:24:28 itojun Exp $	*/
+/*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -177,8 +177,12 @@ sendpacket(struct ifinfo *ifinfo)
 	struct cmsghdr *cm;
 	int hoplimit = 255;
 	int i;
+	struct sockaddr_in6 dst;
 
-	sndmhdr.msg_name = (caddr_t)&sin6_allrouters;
+	dst = sin6_allrouters;
+	dst.sin6_scope_id = ifinfo->linkid;
+
+	sndmhdr.msg_name = (caddr_t)&dst;
 	sndmhdr.msg_iov[0].iov_base = (caddr_t)ifinfo->rs_data;
 	sndmhdr.msg_iov[0].iov_len = ifinfo->rs_datalen;
 
