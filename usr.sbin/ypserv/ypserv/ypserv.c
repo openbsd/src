@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypserv.c,v 1.1 1995/11/01 16:56:36 deraadt Exp $";
+static char rcsid[] = "$Id: ypserv.c,v 1.2 1996/01/20 00:43:43 chuck Exp $";
 #endif
 
 #include "yp.h"
@@ -71,7 +71,6 @@ static int _rpcfdtype;		/* Whether Stream or Datagram ? */
 static int _rpcsvcdirty;	/* Still serving ? */
 
 int	usedns = FALSE;
-int	acl_access_ok;
 char   *progname = "ypserv";
 
 void sig_child();
@@ -118,7 +117,7 @@ ypprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 		domainname ypproc_domain_2_arg;
 		domainname ypproc_domain_nonack_2_arg;
 		ypreq_key ypproc_match_2_arg;
-		ypreq_key ypproc_first_2_arg;
+		ypreq_nokey ypproc_first_2_arg;
 		ypreq_key ypproc_next_2_arg;
 		ypreq_xfr ypproc_xfr_2_arg;
 		ypreq_nokey ypproc_all_2_arg;
@@ -128,131 +127,80 @@ ypprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 	} argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
-	char *(*local)(char *, struct svc_req *, SVCXPRT *);
-	struct sockaddr_in *caller;
+	char *(*local)(char *, struct svc_req *);
 
 	_rpcsvcdirty = 1;
-	
-	caller = svc_getcaller(transp);
-	acl_access_ok = acl_check_host(&caller->sin_addr);
-	
-	if (!acl_access_ok) {
-		yplog_date("ypserv: access denied");
-		yplog_call(transp);
-		switch (rqstp->rq_proc) {
-		case YPPROC_NULL:
-			yplog_line("request: NULL");
-			break;
-		case YPPROC_DOMAIN:
-			yplog_line("request: DOMAIN");
-			break;
-		case YPPROC_DOMAIN_NONACK:
-			yplog_line("request: DOMAIN_NONACK");
-			break;
-		case YPPROC_MATCH:
-			yplog_line("request: MATCH");
-			break;
-		case YPPROC_FIRST:
-			yplog_line("request: FIRST");
-			break;
-		case YPPROC_NEXT:
-			yplog_line("request: NEXT");
-			break;
-		case YPPROC_XFR:
-			yplog_line("request: XFR");
-			break;
-		case YPPROC_CLEAR:
-			yplog_line("request: CLEAR");
-			break;
-		case YPPROC_ALL:
-			yplog_line("request: ALL");
-			break;
-		case YPPROC_MASTER:
-			yplog_line("request: MASTER");
-			break;
-		case YPPROC_ORDER:
-			yplog_line("request: ORDER");
-			break;
-		case YPPROC_MAPLIST:
-			yplog_line("request: MAPLIST");
-			break;
-		default:
-			yplog_line("request: unknown");
-			break;
-		}
-	}
-	
 	switch (rqstp->rq_proc) {
 	case YPPROC_NULL:
 		xdr_argument = (xdrproc_t) xdr_void;
 		xdr_result = (xdrproc_t) xdr_void;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_null_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_null_2_svc;
 		break;
 
 	case YPPROC_DOMAIN:
 		xdr_argument = (xdrproc_t) xdr_domainname;
 		xdr_result = (xdrproc_t) xdr_bool;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_domain_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_domain_2_svc;
 		break;
 
 	case YPPROC_DOMAIN_NONACK:
 		xdr_argument = (xdrproc_t) xdr_domainname;
 		xdr_result = (xdrproc_t) xdr_bool;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_domain_nonack_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_domain_nonack_2_svc;
 		break;
 
 	case YPPROC_MATCH:
 		xdr_argument = (xdrproc_t) xdr_ypreq_key;
 		xdr_result = (xdrproc_t) xdr_ypresp_val;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_match_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_match_2_svc;
 		break;
 
 	case YPPROC_FIRST:
-		xdr_argument = (xdrproc_t) xdr_ypreq_key;
+		xdr_argument = (xdrproc_t) xdr_ypreq_nokey;
 		xdr_result = (xdrproc_t) xdr_ypresp_key_val;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_first_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_first_2_svc;
 		break;
 
 	case YPPROC_NEXT:
 		xdr_argument = (xdrproc_t) xdr_ypreq_key;
 		xdr_result = (xdrproc_t) xdr_ypresp_key_val;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_next_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_next_2_svc;
 		break;
 
 	case YPPROC_XFR:
 		xdr_argument = (xdrproc_t) xdr_ypreq_xfr;
 		xdr_result = (xdrproc_t) xdr_ypresp_xfr;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_xfr_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_xfr_2_svc;
 		break;
 
 	case YPPROC_CLEAR:
 		xdr_argument = (xdrproc_t) xdr_void;
 		xdr_result = (xdrproc_t) xdr_void;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_clear_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_clear_2_svc;
 		break;
 
 	case YPPROC_ALL:
 		xdr_argument = (xdrproc_t) xdr_ypreq_nokey;
 		xdr_result = (xdrproc_t) xdr_ypresp_all;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_all_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_all_2_svc;
 		break;
 
 	case YPPROC_MASTER:
 		xdr_argument = (xdrproc_t) xdr_ypreq_nokey;
 		xdr_result = (xdrproc_t) xdr_ypresp_master;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_master_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_master_2_svc;
 		break;
 
 	case YPPROC_ORDER:
 		xdr_argument = (xdrproc_t) xdr_ypreq_nokey;
 		xdr_result = (xdrproc_t) xdr_ypresp_order;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_order_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_order_2_svc;
 		break;
 
 	case YPPROC_MAPLIST:
 		xdr_argument = (xdrproc_t) xdr_domainname;
 		xdr_result = (xdrproc_t) xdr_ypresp_maplist;
-		local = (char *(*)(char *, struct svc_req *, SVCXPRT *)) ypproc_maplist_2_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_maplist_2_svc;
 		break;
 
 	default:
@@ -266,8 +214,7 @@ ypprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 		_rpcsvcdirty = 0;
 		return;
 	}
-	result = (*local)((char *)&argument, rqstp, transp);
-/*
+	result = (*local)((char *)&argument, rqstp);
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
@@ -275,7 +222,6 @@ ypprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 		_msgout("unable to free arguments");
 		exit(1);
 	}
-*/
 	_rpcsvcdirty = 0;
 	return;
 }
@@ -372,7 +318,8 @@ char *argv[];
 		(void) pmap_unset(YPPROG, YPVERS);
 	}
 
-	yplog_init(progname);
+	ypopenlog();	/* open log file */
+	ypdb_init();	/* init db stuff */
 
 	chdir("/");
 	
