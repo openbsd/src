@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_xform.c,v 1.1 1999/06/18 07:24:08 deraadt Exp $	*/
+/*	$OpenBSD: ip_xform.c,v 1.2 1999/06/30 17:23:59 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -320,4 +320,22 @@ struct auth_hash auth_hash_hmac_ripemd_160_96 = {
     (void (*)(void *)) RMD160Init,
     (void (*)(void *, u_int8_t *, u_int16_t)) RMD160Update,
     (void (*)(u_int8_t *, void *)) RMD160Final
+};
+
+struct auth_hash auth_hash_key_md5 = {
+    SADB_AALG_X_MD5, "Keyed MD5", 
+    0, AH_MD5_ALEN,
+    sizeof(MD5_CTX),
+    (void (*)(void *))MD5Init, 
+    (void (*)(void *, u_int8_t *, u_int16_t))MD5Update, 
+    (void (*)(u_int8_t *, void *))MD5Final 
+};
+
+struct auth_hash auth_hash_key_sha1 = {
+    SADB_AALG_X_SHA1, "Keyed SHA1",
+    0, AH_SHA1_ALEN,
+    sizeof(SHA1_CTX),
+    (void (*)(void *))SHA1Init, 
+    (void (*)(void *, u_int8_t *, u_int16_t))SHA1Update, 
+    (void (*)(u_int8_t *, void *))SHA1Final 
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.26 1999/05/16 21:48:31 niklas Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.27 1999/06/30 17:23:59 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -77,28 +77,14 @@
 #define DPRINTF(x)
 #endif
 
-struct auth_hash ah_new_hash[] = {
-     { SADB_AALG_MD5HMAC96, "HMAC-MD5-96", 
-       MD5HMAC96_KEYSIZE, AH_MD5_ALEN,
-       sizeof(MD5_CTX),
-       (void (*)(void *)) MD5Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t)) MD5Update, 
-       (void (*)(u_int8_t *, void *)) MD5Final 
-     },
-     { SADB_AALG_SHA1HMAC96, "HMAC-SHA1-96",
-       SHA1HMAC96_KEYSIZE, AH_SHA1_ALEN,
-       sizeof(SHA1_CTX),
-       (void (*)(void *)) SHA1Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t)) SHA1Update, 
-       (void (*)(u_int8_t *, void *)) SHA1Final 
-     },
-     { SADB_AALG_X_RIPEMD160HMAC96, "HMAC-RIPEMD-160-96",
-       RIPEMD160HMAC96_KEYSIZE, AH_RMD160_ALEN,
-       sizeof(RMD160_CTX),
-       (void (*)(void *)) RMD160Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t)) RMD160Update, 
-       (void (*)(u_int8_t *, void *)) RMD160Final 
-     }
+extern struct auth_hash auth_hash_hmac_md5_96;
+extern struct auth_hash auth_hash_hmac_sha1_96;
+extern struct auth_hash auth_hash_hmac_ripemd_160_96;
+
+struct auth_hash *ah_new_hash[] = {
+    &auth_hash_hmac_md5_96,
+    &auth_hash_hmac_sha1_96,
+    &auth_hash_hmac_ripemd_160_96
 };
 
 /*
@@ -122,9 +108,8 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     struct auth_hash *thash = NULL;
     int i;
 
-    for (i = sizeof(ah_new_hash) / sizeof(struct auth_hash) - 1;
-	 i >= 0; i--) 
-      if (ii->ii_authalg == ah_new_hash[i].type)
+    for (i = sizeof(ah_new_hash) / sizeof(ah_new_hash[0]) - 1; i >= 0; i--)
+      if (ii->ii_authalg == ah_new_hash[i]->type)
 	break;
 
     if (i < 0) 
@@ -133,7 +118,7 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	return EINVAL;
     }
 
-    thash = &ah_new_hash[i];
+    thash = ah_new_hash[i];
 
     if (ii->ii_authkeylen != thash->keysize)
     {
@@ -214,11 +199,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     int ohlen, len, count, off, errc;
     u_int32_t btsx;
     struct mbuf *m0;
-    union {
-	 MD5_CTX md5ctx; 
-	 SHA1_CTX sha1ctx;
-	 RMD160_CTX rmd160ctx;
-    } ctx;
+    union authctx ctx;
     u_int8_t optval;
     u_char buffer[40];
 
@@ -458,11 +439,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     struct ip *ip, ipo;
     struct ah_new aho, *ah;
     register int len, off, count, ilen;
-    union {
-	 MD5_CTX md5ctx;
-	 SHA1_CTX sha1ctx;
-	 RMD160_CTX rmd160ctx;
-    } ctx;
+    union authctx ctx;
     u_int8_t optval;
     u_char opts[40];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.44 1999/06/18 07:24:03 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.45 1999/06/30 17:23:59 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -259,11 +259,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     struct esp_new *esp;
     struct ip *ip, ipo;
     u_int32_t btsx;
-    union {
-	 MD5_CTX md5ctx;
-	 SHA1_CTX sha1ctx;
-	 RMD160_CTX rmd160ctx;
-    } ctx;
+    union authctx ctx;
     u_char buf[AH_ALEN_MAX], buf2[AH_ALEN_MAX];
 
     blks = espx->blocksize;
@@ -597,11 +593,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     struct mbuf *mi, *mo = (struct mbuf *) NULL;
     u_char *pad, *idat, *odat, *ivp;
     u_char iv[ESP_MAX_IVS], blk[ESP_MAX_BLKS], auth[AH_ALEN_MAX], opts[40];
-    union {
-	 MD5_CTX md5ctx;
-	 SHA1_CTX sha1ctx;
-	 RMD160_CTX rmd160ctx;
-    } ctx;
+    union authctx ctx;
     int iphlen, blks, alen;
     
     blks = espx->blocksize;

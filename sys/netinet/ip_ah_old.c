@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.23 1999/05/16 21:48:32 niklas Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.24 1999/06/30 17:23:59 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -77,21 +77,12 @@
 #define DPRINTF(x)
 #endif
 
-struct auth_hash ah_old_hash[] = {
-     { SADB_AALG_X_MD5, "Keyed MD5", 
-       0, AH_MD5_ALEN,
-       sizeof(MD5_CTX),
-       (void (*)(void *))MD5Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t))MD5Update, 
-       (void (*)(u_int8_t *, void *))MD5Final 
-     },
-     { SADB_AALG_X_SHA1, "Keyed SHA1",
-       0, AH_SHA1_ALEN,
-       sizeof(SHA1_CTX),
-       (void (*)(void *))SHA1Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t))SHA1Update, 
-       (void (*)(u_int8_t *, void *))SHA1Final 
-     }
+extern struct auth_hash auth_hash_key_md5;
+extern struct auth_hash auth_hash_key_sha1;
+
+struct auth_hash *ah_old_hash[] = {
+    &auth_hash_key_md5,
+    &auth_hash_key_sha1,
 };
 
 /*
@@ -115,8 +106,8 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     int i;
 
     /* Check whether the hash algorithm is supported */
-    for (i = sizeof(ah_old_hash) / sizeof(struct auth_hash) - 1; i >= 0; i--) 
-      if (ii->ii_authalg == ah_old_hash[i].type)
+    for (i = sizeof(ah_old_hash) / sizeof(ah_old_hash[0]) - 1; i >= 0; i--)
+      if (ii->ii_authalg == ah_old_hash[i]->type)
 	      break;
 
     if (i < 0) 
@@ -125,7 +116,7 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	return EINVAL;
     }
 
-    thash = &ah_old_hash[i];
+    thash = ah_old_hash[i];
 
     DPRINTF(("ah_old_init(): initalized TDB with hash algorithm %s\n",
 	     thash->name));
@@ -189,10 +180,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     struct ah_old *ah, *aho;
     int ohlen, len, count, off, alen;
     struct mbuf *m0;
-    union {
-	 MD5_CTX md5ctx; 
-	 SHA1_CTX sha1ctx;
-    } ctx;
+    union authctx_old ctx;
     u_int8_t optval;
     u_char buffer[40];
 
@@ -395,10 +383,7 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     struct ah_old *ah, aho;
     register int len, off, count;
     register struct mbuf *m0;
-    union {
-	 MD5_CTX md5ctx;
-	 SHA1_CTX sha1ctx;
-    } ctx;
+    union authctx_old ctx;
     int ilen, ohlen, alen;
     u_int8_t optval;
     u_char opts[40];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.36 1999/06/18 07:24:07 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.37 1999/06/30 17:23:59 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -285,6 +285,17 @@ struct tdb				/* tunnel descriptor block */
     TAILQ_HEAD(tdb_bind_head, tdb) tdb_bind_in;
     TAILQ_ENTRY(tdb)  tdb_bind_in_next;	/* Refering Incoming SAs */
     TAILQ_HEAD(tdb_inp_head, inpcb) tdb_inp;
+};
+
+union authctx_old {
+    MD5_CTX md5ctx;
+    SHA1_CTX sha1ctx;
+};
+
+union authctx {
+    MD5_CTX md5ctx;
+    SHA1_CTX sha1ctx;
+    RMD160_CTX rmd160ctx;
 };
 
 struct tdb_ident {
