@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.35 2000/02/21 17:46:16 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.36 2000/04/17 18:14:22 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -663,6 +663,12 @@ apm_set_ver(self)
 			/* stay w/ flags then */
 			apm_majver = APM_MAJOR(apm_flags);
 			apm_minver = APM_MINOR(apm_flags);
+
+			/* fix version for some endianess-challenged compaqs */
+			if (!apm_majver) {
+				apm_majver = 1;
+				apm_majver = 0;
+			}
 		}
 	}
 	printf(": Power Management spec V%d.%d", apm_majver, apm_minver);
