@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.32 1999/12/08 06:50:17 itojun Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.33 2000/01/11 19:27:52 fgsch Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -315,8 +315,6 @@ ether_output(ifp, m0, dst, rt0)
 		etype = htons(ETHERTYPE_IPX);
  		bcopy((caddr_t)&satosipx(dst)->sipx_addr.ipx_host,
 		    (caddr_t)edst, sizeof (edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
