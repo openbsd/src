@@ -184,6 +184,9 @@ int	i386_set_ldt __P((struct proc *, char *, register_t *));
 void	isa_defaultirq __P((void));
 int	isa_nmi __P((void));
 
+/* vm_machdep.c */
+int	kvtop __P((caddr_t));
+
 #ifdef VM86
 /* vm86.c */
 void	vm86_gpfault __P((struct proc *, int));
