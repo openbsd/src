@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.4 1996/06/10 08:38:55 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.5 1996/08/05 12:02:54 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.5 1996/08/05 12:02:54 deraadt Exp $";
 #endif
 
 #define INET
