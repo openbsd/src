@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.29 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wskbd.c,v 1.30 2002/03/30 23:00:01 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1376,17 +1376,21 @@ internal_command(sc, type, ksym, ksym2)
 	switch (ksym) {
 	case KS_Cmd_ScrollBack:
 		if (MOD_ONESET(sc->id, MOD_ANYSHIFT)) {
-			wsscrollback(sc->sc_displaydv,
-			    WSDISPLAY_SCROLL_BACKWARD);
+			if (sc->sc_displaydv != NULL)
+				wsscrollback(sc->sc_displaydv,
+				    WSDISPLAY_SCROLL_BACKWARD);
 			return (1);
 		}
+		break;
 
 	case KS_Cmd_ScrollFwd:
 		if (MOD_ONESET(sc->id, MOD_ANYSHIFT)) {
-			wsscrollback(sc->sc_displaydv,
-			    WSDISPLAY_SCROLL_FORWARD);
+			if (sc->sc_displaydv != NULL)
+				wsscrollback(sc->sc_displaydv,
+				    WSDISPLAY_SCROLL_FORWARD);
 			return (1);
 		}
+		break;
 	}
 #endif
 
