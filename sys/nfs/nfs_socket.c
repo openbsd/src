@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.37 2004/06/24 19:35:26 tholo Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.38 2004/07/10 20:39:15 marius Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -242,7 +242,12 @@ nfs_connect(nmp, rep)
 		so->so_rcv.sb_timeo = (5 * hz);
 		so->so_snd.sb_timeo = (5 * hz);
 	} else {
-		so->so_rcv.sb_timeo = 0;
+		/*
+		 * enable receive timeout to detect server crash and
+		 * reconnect.  otherwise, we can be stuck in soreceive
+		 * forever.
+		 */
+		so->so_rcv.sb_timeo = (5 * hz);
 		so->so_snd.sb_timeo = 0;
 	}
 	if (nmp->nm_sotype == SOCK_DGRAM) {
@@ -322,10 +327,11 @@ nfs_reconnect(rep)
 	 * Loop through outstanding request list and fix up all requests
 	 * on old socket.
 	 */
-	for (rp = TAILQ_FIRST(&nfs_reqq); rp != NULL;
-	    rp = TAILQ_NEXT(rp, r_chain)) {
+	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
 		if (rp->r_nmp == nmp)
 			rp->r_flags |= R_MUSTRESEND;
+
+		rp->r_rexmit = 0;
 	}
 	return (0);
 }
@@ -490,6 +496,8 @@ tryagain:
 		while (rep->r_flags & R_MUSTRESEND) {
 			m = m_copym(rep->r_mreq, 0, M_COPYALL, M_WAIT);
 			nfsstats.rpcretries++;
+			rep->r_rtt = 0;
+			rep->r_flags &= ~R_TIMING;
 			error = nfs_send(so, rep->r_nmp->nm_nam, m, rep);
 			if (error) {
 				if (error == EINTR || error == ERESTART ||
@@ -518,6 +526,16 @@ tryagain:
 			   if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
+				/*
+				 * looks like the server died after it
+				 * received the request, make sure
+				 * that we will retransmit and we
+				 * don't get stuck here forever.
+				 */
+				if (rep->r_rexmit >= rep->r_nmp->nm_retry) {
+					nfsstats.rpctimeouts++;
+					error = EPIPE;
+				}
 			   }
 			} while (error == EWOULDBLOCK);
 			if (!error && auio.uio_resid > 0) {
