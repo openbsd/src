@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.12 2003/04/10 23:21:57 millert Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.13 2003/04/14 03:14:06 millert Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 
 /* 
@@ -134,15 +134,19 @@ main(int argc, char *argv[])
 int
 equivalent(char *lname, char *rname)
 {
-	char *s;
+	char *s, *ns;
 
 	if (strcmp(lname, rname) == 0)
 		return(1);
 	for (s = lname; *s && (s = strchr(s, '/')); s++) {
-		while (s[1] == '/')
-			strcpy(s+1, s+2);
+		if (s[1] == '/') {
+			/* collapse multiple slashes in lname */
+			for (ns = s + 1; *ns == '/'; ns++)
+				;
+			memmove(s + 1, ns, strlen(ns) + 1);
+		}
 	}
-	return(!strcmp(lname, rname));
+	return(strcmp(lname, rname) == 0);
 }
 
 void
@@ -189,10 +193,10 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 	}
 
 	if (rel)
-		strlcpy(buf, "../", sizeof buf);
+		strlcpy(buf, "../", sizeof(buf));
 	else
 		buf[0] = '\0';
-	strlcat(buf, fn, sizeof buf);
+	strlcat(buf, fn, sizeof(buf));
     
 	if (!(df = opendir(buf))) {
 		warn("%s: Cannot opendir", buf);
@@ -210,7 +214,7 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 			if (!strcmp (dp->d_name, cur->name))
 				goto next;	/* can't continue */
 		}
-		strcpy(p, dp->d_name);
+		strlcpy(p, dp->d_name, buf + sizeof(buf) - p);
 
 		if (n_dirs > 0) {
 			if (stat(buf, &sb) < 0) {
