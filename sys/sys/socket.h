@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.44 2002/09/10 20:51:37 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.45 2002/11/24 15:25:45 espie Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -163,9 +163,9 @@ struct sockaddr {
 struct sockaddr_storage {
 	u_int8_t	ss_len;		/* total length */
 	sa_family_t	ss_family;	/* address family */
-	u_char		__ss_pad1[6];	/* align to quad */
+	unsigned char	__ss_pad1[6];	/* align to quad */
 	u_int64_t	__ss_pad2;	/* force alignment for stupid compilers */
-	u_char		__ss_pad3[240];	/* pad to a total of 256 bytes */
+	unsigned char	__ss_pad3[240];	/* pad to a total of 256 bytes */
 };
 
 /*
@@ -173,8 +173,8 @@ struct sockaddr_storage {
  * information in raw sockets.
  */
 struct sockproto {
-	u_short	sp_family;		/* address family */
-	u_short	sp_protocol;		/* protocol */
+	unsigned short	sp_family;	/* address family */
+	unsigned short	sp_protocol;	/* protocol */
 };
 
 /*
@@ -317,7 +317,7 @@ struct msghdr {
 	void		*msg_name;	/* optional address */
 	socklen_t	msg_namelen;	/* size of address */
 	struct		iovec *msg_iov;	/* scatter/gather array */
-	u_int		msg_iovlen;	/* # elements in msg_iov */
+	unsigned int	msg_iovlen;	/* # elements in msg_iov */
 	void		*msg_control;	/* ancillary data, see below */
 	socklen_t	msg_controllen;	/* ancillary data buffer len */
 	int		msg_flags;	/* flags on received message */
@@ -388,8 +388,8 @@ struct cmsghdr {
  * 4.3 compat sockaddr, move to compat file later
  */
 struct osockaddr {
-	u_short	sa_family;		/* address family */
-	char	sa_data[14];		/* up to 14 bytes of direct address */
+	unsigned short	sa_family;	/* address family */
+	char		sa_data[14];	/* up to 14 bytes of direct address */
 };
 
 /*

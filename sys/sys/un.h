@@ -1,4 +1,4 @@
-/*	$OpenBSD: un.h,v 1.6 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: un.h,v 1.7 2002/11/24 15:25:45 espie Exp $	*/
 /*	$NetBSD: un.h,v 1.11 1996/02/04 02:12:47 christos Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
  * Definitions for UNIX IPC domain.
  */
 struct	sockaddr_un {
-	u_char	sun_len;		/* sockaddr len including null */
-	u_char	sun_family;		/* AF_UNIX */
+	unsigned char	sun_len;	/* sockaddr len including null */
+	unsigned char	sun_family;	/* AF_UNIX */
 	char	sun_path[104];		/* path name (gag) */
 };
 
