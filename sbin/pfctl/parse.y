@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.245 2002/12/08 00:19:47 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.246 2002/12/08 17:00:19 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1290,7 +1290,7 @@ address		: '(' STRING ')'		{
 			$$->af = 0;
 			set_ipmask($$, 128);
 			$$->addr.addr_dyn = (struct pf_addr_dyn *)1;
-			strncpy($$->addr.addr.pfa.ifname, $2,
+			strlcpy($$->addr.addr.pfa.ifname, $2,
 			    sizeof($$->addr.addr.pfa.ifname));
 			$$->next = NULL;
 			$$->tail = $$;
@@ -2540,7 +2540,7 @@ expand_label_if(const char *name, char *label, const char *ifname)
 		else
 			strlcat(tmp, ifname, PF_RULE_LABEL_SIZE);
 		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
 	}
 }
 
@@ -2582,7 +2582,7 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
 		}
 		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
 	}
 }
 
@@ -2620,7 +2620,7 @@ expand_label_port(const char *name, char *label, struct node_port *port)
 			snprintf(op, sizeof(op), ">=%s", a1);
 		strlcat(tmp, op, PF_RULE_LABEL_SIZE);
 		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
 	}
 }
 
@@ -2641,7 +2641,7 @@ expand_label_proto(const char *name, char *label, u_int8_t proto)
 		    snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
 			"%u", proto);
 		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
 	}
 }
 
@@ -2657,7 +2657,7 @@ expand_label_nr(const char *name, char *label)
 		snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
 		    "%u", pf->rule_nr);
 		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
 	}
 }
 
@@ -2919,7 +2919,7 @@ expand_rule(struct pf_rule *r,
 			}
 			pa->addr = h->addr;
 			if (h->ifname != NULL)
-				strncpy(pa->ifname, h->ifname, IFNAMSIZ);
+				strlcpy(pa->ifname, h->ifname, IFNAMSIZ);
 			else
 				pa->ifname[0] = 0;
 			TAILQ_INSERT_TAIL(&r->rt_pool.list, pa, entries);
