@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1995/12/14 06:52:47 tholo Exp $
+#	$Id: Makefile,v 1.2 1995/12/17 18:20:20 tholo Exp $
 
 LIB=	ss
 SRCS=	ss_err.c data.c error.c execute_cmd.c help.c invocation.c list_rqs.c \
@@ -29,6 +29,6 @@ beforeinstall:
 	    fi
 
 beforedepend:
-	ln -s . ss
+	test -h ss || ln -s . ss
 
 .include <bsd.lib.mk>
