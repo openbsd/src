@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.294 2003/01/19 10:19:15 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.295 2003/01/20 18:37:52 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2122,7 +2122,8 @@ hashkey		: /* empty */
 				if ($$ == NULL)
 					err(1, "hashkey: calloc");
 				MD5Init(&context);
-				MD5Update(&context, $1, strlen($1));
+				MD5Update(&context, (unsigned char *)$1,
+				    strlen($1));
 				MD5Final((unsigned char *)$$, &context);
 				HTONL($$->key32[0]);
 				HTONL($$->key32[1]);

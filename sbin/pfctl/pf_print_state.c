@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.19 2003/01/20 17:16:56 cedric Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.20 2003/01/20 18:37:52 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,7 +55,7 @@
 #include "pfctl_parser.h"
 #include "pfctl.h"
 
-void	print_name(struct pf_addr *, struct pf_addr *, sa_family_t);
+void	print_name(struct pf_addr *, sa_family_t);
 
 void
 print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
@@ -88,7 +88,7 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 }
 
 void
-print_name(struct pf_addr *addr, struct pf_addr *mask, sa_family_t af)
+print_name(struct pf_addr *addr, sa_family_t af)
 {
 	char host[NI_MAXHOST];
 
@@ -126,7 +126,7 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 	u_int16_t p = ntohs(h->port);
 
 	if (opts & PF_OPT_USEDNS)
-		print_name(&h->addr, NULL, af);
+		print_name(&h->addr, af);
 	else {
 		struct pf_addr_wrap aw;
 

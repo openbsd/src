@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.137 2003/01/19 15:28:12 camield Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.138 2003/01/20 18:37:52 camield Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1177,8 +1177,8 @@ pfctl_test_altqsupport(int dev, int opts)
 			return (0);
 		} else
 			err(1, "DIOCGETALTQS");
-	} else
-		return (1);
+	}
+	return (1);
 }
 
 int
