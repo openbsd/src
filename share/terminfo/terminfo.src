@@ -12811,6 +12811,14 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 	kf8=\E[OR, kf9=\E[OS, khome=\E[H, ri=\EM, rmam=\E[?7l, 
 	rmir=\E[4l, rmkx=\E>, rmso=\E[m, rmul=\E[m, sgr0=\E[m, 
 	smam=\E[?7h, smir=\E[4h, smkx=\E=, smso=\E[7m, smul=\E[4m, 
+# From: iang@cs.berkeley.edu 
+pilot|tgtelnet, 
+	am, xenl, 
+	cols#39, lines#16, 
+	bel=^G, clear=\Ec, cr=^M, cub1=^H, cud1=^J, 
+	cup=\Em%p1%{32}%+%c%p2%{32}%+%c, home=\Em  , ht=^I, 
+	ind=^J, kbs=^H, kcub1=^H, kcud1=^J, knp=^L, kpp=^K, 
+	nel=\Em~ , rmso=\EB, smso=\Eb, 
 ######## ICH/ICH1 VERSUS RMIR/SMIR
 #
 # Some non-curses applications get confused if both ich/ich1 and rmir/smir

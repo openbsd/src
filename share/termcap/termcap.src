@@ -11571,6 +11571,9 @@ v3220|LANPAR Vision II model 3220/3221/3222:\
 	:k8=\E[OR:k9=\E[OS:kd=\E[B:ke=\E>:kh=\E[H:kl=\E[D:kr=\E[C:\
 	:ks=\E=:ku=\E[A:le=^H:me=\E[m:nd=\E[C:se=\E[m:so=\E[7m:\
 	:sr=\EM:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:
+# From: iang@cs.berkeley.edu 
+pi|pilot|tgtelnet:am:xn:bs:co#39:li#16:cl=\Ec:cm=\Em%+ %+ :ho=\Em  :nw=\Em~ :\
+	:so=\Eb:se=\EB:bl=^g:cr=^m:do=^j:le=^h:kP=^k:kN=^l:
 ######## ICH/ICH1 VERSUS RMIR/SMIR
 #
 # Some non-curses applications get confused if both ich/ich1 and rmir/smir
