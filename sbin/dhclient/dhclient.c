@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.61 2004/11/25 11:05:10 claudio Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.62 2004/12/05 18:35:51 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -220,7 +220,7 @@ routehandler(struct protocol *p)
 			break;
 		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
 			break;
-		if (scripttime == 0 || t < scripttime + 3)
+		if (scripttime == 0 || t < scripttime + 10)
 			break;
 		goto die;
 	case RTM_IFINFO:
