@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.1 1997/04/13 21:30:47 provos Exp $ */
+/* $OpenBSD: res_random.c,v 1.2 1997/04/19 09:53:25 provos Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -43,7 +43,9 @@
  *
  * X[0] = random seed.
  * X[n] = a*X[n-1]+b mod m is a Linear Congruential Generator
- * with a = 625, b = 6571, m = 31104 and a maximal period of m-1.
+ * with a = 7^(even random) mod m, 
+ *      b = random with gcd(b,m) == 1
+ *      m = 31104 and a maximal period of m-1.
  *
  * The transaction id is determined by:
  * id[n] = seed xor (g^X[n] mod n)
@@ -51,6 +53,10 @@
  * Effectivly the id is restricted to the lower 15 bits, thus
  * yielding two different cycles by toggling the msb on and off.
  * This avoids reuse issues caused by reseeding.
+ *
+ * The 16 bit space is very small and brute force attempts are
+ * entirly feasible, we skip a random number of transaction ids
+ * so that an attacker will not get sequential ids.
  */
 
 #include <sys/types.h>
@@ -61,13 +67,14 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-#define RU_MAX	20000		/* Uniq cycle, avoid blackjack prediction */
+#define RU_OUT  180             /* Time after wich will be reseeded */
+#define RU_MAX	30000		/* Uniq cycle, avoid blackjack prediction */
 #define RU_GEN	2		/* Starting generator */
 #define RU_N	32749		/* RU_N-1 = 2*2*3*2729 */
-#define RU_A	625
-#define RU_B	6571
-#define RU_M	31104
+#define RU_AGEN	7               /* determine ru_a as RU_AGEN^(2*rand) */
+#define RU_M	31104           /* RU_M = 2^7*3^5 - don't change */
 
 #define PFAC_N 3
 const static u_int16_t pfacts[PFAC_N] = {
@@ -78,9 +85,12 @@ const static u_int16_t pfacts[PFAC_N] = {
 
 static u_int16_t ru_x;
 static u_int16_t ru_seed;
+static u_int16_t ru_a, ru_b;
 static u_int16_t ru_g;
 static u_int16_t ru_counter = 0;
 static u_int16_t ru_msb = 0;
+static time_t ru_reseed;
+static u_int32_t tmp;                /* Storage for unused random */
 
 static u_int32_t pmod __P((u_int32_t, u_int32_t, u_int32_t));
 static void res_initid __P((void));
@@ -110,7 +120,7 @@ pmod(gen, exp, mod)
 }
 
 /* 
- * Initalizes the seed and choosed a suitable generator. Also toggles 
+ * Initalizes the seed and chooses a suitable generator. Also toggles 
  * the msb flag. The msb flag is used to generate two distinct
  * cycles of random numbers and thus avoiding reuse of ids.
  *
@@ -121,7 +131,6 @@ static void
 res_initid()
 {
 	u_int16_t j, i;
-	u_int32_t tmp;
 	int noprime = 1;
 
 	tmp = arc4random();
@@ -130,7 +139,17 @@ res_initid()
 	/* 15 bits of random seed */
 	ru_seed = (tmp >> 16) & 0x7FFF;
 
-	j = arc4random() % RU_N;
+	tmp = arc4random();
+
+	/* Determine the LCG we use */
+	ru_b = (tmp & 0xfffe) | 1;
+	ru_a = pmod(RU_AGEN, (tmp >> 16) & 0xfffe, RU_M);
+	while (ru_b % 3 == 0)
+	  ru_b += 2;
+	
+	tmp = arc4random();
+	j = tmp % RU_N;
+	tmp = tmp >> 16;
 
 	/* 
 	 * Do a fast gcd(j,RU_N-1), so we can find a j with
@@ -152,19 +171,31 @@ res_initid()
 	ru_g = pmod(RU_GEN,j,RU_N);
 	ru_counter = 0;
 
+	ru_reseed = time(NULL) + RU_OUT;
 	ru_msb = ru_msb == 0x8000 ? 0 : 0x8000; 
 }
 
 u_int
 res_randomid()
 {
-	if (ru_counter % RU_MAX == 0)
+        int i, n;
+
+	if (ru_counter >= RU_MAX || time(NULL) > ru_reseed)
 		res_initid();
 
-	ru_counter++;
+	if (!tmp)
+	        tmp = arc4random();
 
-	/* Linear Congruential Generator */
-	ru_x = (RU_A*ru_x + RU_B) % RU_M;
+	/* Skip a random number of ids */
+	n = tmp & 0x2f; tmp = tmp >> 6;
+	if (ru_counter + n >= RU_MAX)
+                res_initid();
+
+	for (i=0; i<=n; i++)
+	        /* Linear Congruential Generator */
+	        ru_x = (ru_a*ru_x + ru_b) % RU_M;
+
+	ru_counter += i;
 
 	return (ru_seed ^ pmod(ru_g,ru_x,RU_N)) | ru_msb;
 }
@@ -181,6 +212,8 @@ main(int argc, char **argv)
 	printf("Generator: %d\n", ru_g);
 	printf("Seed: %d\n", ru_seed);
 	printf("Ru_X: %d\n", ru_x);
+	printf("Ru_A: %d\n", ru_a);
+	printf("Ru_B: %d\n", ru_b);
 
 	n = atoi(argv[1]);
 	for (i=0;i<n;i++) {
