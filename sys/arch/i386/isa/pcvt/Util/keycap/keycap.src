@@ -1,4 +1,4 @@
-#	$OpenBSD: keycap.src,v 1.8 2000/05/27 03:37:27 hugh Exp $
+#	$OpenBSD: keycap.src,v 1.9 2000/12/10 02:52:58 deraadt Exp $
 
 # Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis, Joerg Wunsch and
 #                                Holger Veit.
@@ -450,6 +450,7 @@ no|norway|Norwegian mapping:\
 	:K41=\346:S41=\306:\
 	:K40=\370:S40=\330:\
 	:A45=:\
+	:K29=':S29=*:\
 	:tc=denmark:
 
 # from codrv, untested
