@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.21 2004/01/21 06:15:18 mcbride Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.22 2004/01/21 12:49:18 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.21 2004/01/21 06:15:18 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.22 2004/01/21 12:49:18 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -178,7 +178,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 		break;
 	case PFSYNC_ACT_UPD_C:
 		for (i = 1, u = (void *)((char *)hdr + PFSYNC_HDRLEN);
-		    i <= hdr->count && i * sizeof(*u) <= len; i++, d++) {
+		    i <= hdr->count && i * sizeof(*u) <= len; i++, u++) {
 			printf("\tid: %016llx creatorid: %08x\n",
 			    betoh64(u->id), ntohl(u->creatorid));
 		}
@@ -192,7 +192,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 		break;
 	case PFSYNC_ACT_UREQ:
 		for (i = 1, r = (void *)((char *)hdr + PFSYNC_HDRLEN);
-		    i <= hdr->count && i * sizeof(*r) <= len; i++, d++) {
+		    i <= hdr->count && i * sizeof(*r) <= len; i++, r++) {
 			printf("\tid: %016llx creatorid: %08x\n",
 			    betoh64(r->id), ntohl(r->creatorid));
 		}
