@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.14 2003/01/12 20:48:15 henning Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.15 2003/01/13 00:37:12 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -167,6 +167,9 @@ xl_pci_attach(parent, self, aux)
 		sc->xl_flags |= XL_FLAG_FUNCREG | XL_FLAG_PHYOK |
 		    XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_WEIRDRESET;
 		sc->xl_flags |= XL_FLAG_INVERT_LED_PWR|XL_FLAG_INVERT_MII_PWR;
+		break;
+	case  PCI_PRODUCT_3COM_3C9201:
+		sc->xl_flags |= XL_FLAG_PHYOK;
 		break;
 	default:
 		break;
