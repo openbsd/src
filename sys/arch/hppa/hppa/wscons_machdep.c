@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.6 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.7 2004/10/05 19:27:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -30,13 +30,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/extent.h>
-
-#include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/pdc.h>
-#include <machine/iomod.h>
 
 #include <dev/cons.h>
 
