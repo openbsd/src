@@ -897,7 +897,7 @@ or alternatively install them via FTP this way:
 
 You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh!  ssh is
 included in all OpenBSD systems.  The implementation is OpenSSH, which we are
-the developers of.  Version 3.2 is included, and has support for both SSH1
+the developers of.  Version 3.5 is included, and has support for both SSH1
 and SSH2 protocols.  For more information, see
 	http://www.OpenSSH.com
 
