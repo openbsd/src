@@ -1,5 +1,5 @@
-$OpenBSD: BUGS,v 1.4 1998/12/21 01:02:21 niklas Exp $
-$EOM: BUGS,v 1.22 1998/12/17 07:50:50 niklas Exp $
+$OpenBSD: BUGS,v 1.5 1999/02/26 03:29:20 niklas Exp $
+$EOM: BUGS,v 1.23 1999/02/24 15:48:05 niklas Exp $
 
 Until we have a bug-tracking system setup, we might just add bugs to this
 file:
@@ -50,4 +50,19 @@ file:
 
 * Renegotiation after a failed phase 1 fails.
 
-* Phase 1 rekey event removal seems to be done twice.
+* Phase 1 rekey event removal seems to be done twice. [fixed]
+
+* PF_ENCAP expirations does not find the proper phase 2 SA to remove.
+
+* ISAKMP SA expirations should have a soft/hard timeout just like IPsec ones.
+  The soft one should put a watchdog on the SA, and start a renegotiation as
+  soon as something used the SA.  Hard ones should just clean it up, no
+  renegotiation at all.
+
+* ISAKMP SAs does not get removed after rekeying.
+
+* On-demand PF_ENCAP SAs does not get reestablished.
+
+* Rekeying is now done automatically on expirations, it should not.  The
+  SAs should be brought up on-demand just like the first time.
+
