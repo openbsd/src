@@ -1,7 +1,7 @@
-/*	$OpenBSD: process_machdep.c,v 1.7 2002/11/08 22:30:48 mickey Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.8 2003/01/15 22:07:06 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999-2002 Michael Shalayeff
+ * Copyright (c) 1999-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ process_read_regs(p, regs)
 	regs->r_pc	 = p->p_md.md_regs->tf_iioq_head;
 	regs->r_npc	 = p->p_md.md_regs->tf_iioq_tail;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -93,7 +93,7 @@ process_read_fpregs(p, fpregs)
 		fpu_save((vaddr_t)p->p_addr->u_pcb.pcb_fpregs);
 	bcopy(p->p_addr->u_pcb.pcb_fpregs, fpregs, 32*8);
 
-	return 0;
+	return (0);
 }
 
 #ifdef PTRACE
@@ -135,10 +135,10 @@ process_write_regs(p, regs)
 	p->p_md.md_regs->tf_ret1 = regs->r_regs[29];
 	p->p_md.md_regs->tf_sp   = regs->r_regs[30];
 	p->p_md.md_regs->tf_r31  = regs->r_regs[31];
-	p->p_md.md_regs->tf_iioq_head = regs->r_pc;
-	p->p_md.md_regs->tf_iioq_tail = regs->r_npc;
+	p->p_md.md_regs->tf_iioq_head = regs->r_pc | 3;
+	p->p_md.md_regs->tf_iioq_tail = regs->r_npc | 3;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -155,7 +155,7 @@ process_write_fpregs(p, fpregs)
 		fpu_curpcb = 0;
 	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -163,8 +163,10 @@ process_sstep(p, sstep)
 	struct proc *p;
 	int sstep;
 {
-	/* TODO */
-	return EINVAL;
+	if (sstep)
+		return (EINVAL);
+
+	return (0);
 }
 
 int
@@ -172,10 +174,10 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	if (!USERMODE(addr))	/* XXX */
-		return EINVAL;
-	p->p_md.md_regs->tf_iioq_head = (register_t)addr;
-	return 0;
+	p->p_md.md_regs->tf_iioq_tail = 4 +
+	    (p->p_md.md_regs->tf_iioq_head = (register_t)addr | 3);
+
+	return (0);
 }
 
 #endif	/* PTRACE */
