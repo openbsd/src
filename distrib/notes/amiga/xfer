@@ -22,7 +22,7 @@ The various methods are explained below.  However, for all methods
 you need to transfer a OpenBSD kernel binary to your AmigaDOS
 partition, optionally you must also get the miniroot image there
 for later transfer to your swap partition as explained elsewhere.
-For ramdisk installs you nedd to get both the bsd and bsd.rd
+For ramdisk installs you need to get both the bsd and bsd.rd
 kernel images, and for miniroot installs you need bsd and the
 miniroot21.fs image.
 
@@ -35,7 +35,12 @@ To prepare for installing via an AmigaDOS partition:
 	instead of separate ones for each distribution set.  This
 	will also simplify the installation work later on.
 
-	Note where you place the files you will need this later.
+	Note where you place the files, you will need this later.
+	Also, it might be a good idea to type down the AmigaDOS
+	partition structure of the disk you put these files on.  In
+	the context of the install program you will only be able to
+	identify the partition by starting sector (block) number
+	and/or size.  The partition names are *not* available.
 
 	Once you have done this, you can proceed to the next
 	step in the installation process, preparing your hard disk.

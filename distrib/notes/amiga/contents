@@ -5,28 +5,30 @@ out as follows:
 .../2.1/amiga/
 		INSTALL.amiga	This file.
 
-		kernels/	A generic OpenBSD kernel, bsd, is found here
-				as well as a ramdisk OpenBSD kernel, called:
-				bsd.rd.
+		CKSUM		Output of the cksum(1) and md5(1) programs
+		MD5		usable for verification of the correctness
+				of downloaded files.
 
-		miniroots/	An amiga installation and upgrade
-				file system image; see below.
+		X11/		The X window system for OpenBSD/amiga 2.1
 
-		tars/		amiga binary distribution sets;
+		bsd		A generic OpenBSD kernel used both for
+				miniroot installation and as the first
+				"real" kernel your OpenBSD installation
+				will use.
+
+		bsd.rd		A ramdisk OpenBSD kernel used for simple
+				installation.
+
+		miniroot21.fs	A miniroot filesystem image to be used
+				if you for some reason can't or don't
+				want to use the ramdisk installation
+				method.
+
+		*.tar.gz	amiga binary distribution sets;
 				see below.
 
-		tars.split/	amiga binary distribution sets
-				splitted in 80k parts.
-
-		utils/	Miscellaneous amiga installation
+		utils/		Miscellaneous amiga installation
 				utilities; see installation section, below.
-
-There is one amiga file system image to be found in the "amiga/miniroots"
-subdirectory of the OpenBSD 2.1 distribution.  It's a combined upgrade
-and installation image and should only be used if you cannot use the
-ramdisk installation method.  It's described in more detail below.
-There is a gzipped version available, for easier downloading.  (The
-gzipped version has the ".gz" extension added to its name.)
 
 Installation/upgrade miniroot file system:
 
@@ -48,7 +50,7 @@ Installation/upgrade miniroot file system:
 The OpenBSD/amiga binary distribution sets contain the binaries which
 comprise the OpenBSD 2.1 release for the amiga.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "amiga/tars" subdirectory of the OpenBSD 2.1
+subdirectories of the "amiga/" subdirectory of the OpenBSD 2.1
 distribution tree, and are as follows (all have ".tar.gz" appended to
 the name given in the table below):
 
@@ -58,7 +60,7 @@ the name given in the table below):
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
-		[ 11M gzipped, 35M uncompressed ]
+		[ 12M gzipped, 36M uncompressed ]
 
 	comp21	The OpenBSD/amiga Compiler tools.  The C, C++, and
 		FORTRAN language environments are supported.  This set
@@ -69,7 +71,7 @@ the name given in the table below):
 		includes the manual pages for all of the utilities it
 		contains, as well as the system call and library manual
 		pages.
-		[ 7M gzipped, 23M uncompressed ]
+		[ 7M gzipped, 24M uncompressed ]
 
 	etc21	This distribution set contains the system configuration
 		files that reside in /etc and in several other places.
@@ -78,7 +80,7 @@ the name given in the table below):
 		upgrading.  (If you are upgrading, it's recommended that
 		you get a copy of this set and CAREFULLY upgrade your
 		configuration files by hand.)
-		[ 70K gzipped, 380K uncompressed ]
+		[ 90K gzipped, 450K uncompressed ]
 
 	game21	This set includes the games and their manual pages.
 		[ 3M gzipped, 7M uncompressed ]
@@ -87,7 +89,7 @@ the name given in the table below):
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
-		[ 2M gzipped, 8M uncompressed ]
+		[ 2M gzipped, 9M uncompressed ]
 
 	misc21	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
@@ -99,15 +101,3 @@ the name given in the table below):
 		including groff, all related programs, and their
 		manual pages.
 		[ 1M gzipped, 4M uncompressed ]
-
-The amiga binary distribution sets are distributed in the same form as
-the source distribution sets; catted together, the members of a set
-form a gzipped tar file.  Each amiga binary distribution set also has
-its own "CKSUMS" & "MD5" file, just as the source distribution sets do.
-
-The instructions given for extracting the source sets work equally
-well for the binary sets, but it is worth noting that if you use that
-method, the files are extracted "below" the current directory.  That
-is, if you want to extract the binaries "into" your system, i.e.
-replace the system binaries with them, you have to run the "tar xvfp"
-from /.

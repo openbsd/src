@@ -1,10 +1,10 @@
 OpenBSD/amiga 2.1 runs on any amiga that has a 68020, 68030, 68040 or
-68060 CPU with some form of FPU and MMU.  The minimal configuration
-requires 4M of RAM and about 75M of disk space.  To install the entire
-system requires much more disk space, and to run X or compile the system,
-more RAM is recommended.  (4M of RAM will actually allow you to
-compile, however it won't be speedy.  X really isn't usable on a
-4M system.)
+68060 CPU with some form of FPU and MMU.  It should also run on
+MacroSystem's DraCo computer.  The minimal configuration requires 4M of
+RAM and about 55M of disk space.  To install the entire system requires
+much more disk space, and to run X or compile the system, more RAM is
+recommended.  (4M of RAM will actually allow you to compile, however it
+won't be speedy.  X really isn't usable on a 4M system.)
 
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
@@ -16,8 +16,8 @@ Here is a table of recommended HD partition sizes for a full install:
 
 As you may note the recommended size of /usr is 20M greater than
 needed. This is to leave room for a kernel source and compile tree
-as you will probably want to compile your own kernel. (GENERIC and
-INSTALL are large and bulky to accommodate all people).
+as you will probably want to compile your own kernel. (GENERIC is
+large and bulky to accommodate all people).
 
 If you only have 4M of fast memory, you should make your swap partition
 larger, as your system will be doing much more swapping.
@@ -27,45 +27,50 @@ Supported devices include:
 	ISA IDE & ATAPI with a supported ISA bridge.
 	SCSI host adapters:
 		33c93 based boards: A2091, A3000 and GVP series II.
-		53c80 based boards: 12 Gauge, IVS and Wordsync/Bytesync.
-		53c710 based boards: A4091, Magnum, Warp Engine and Zeus.
+		53c80 based boards: 12 Gauge, IVS, Emplant and
+				    Wordsync/Bytesync.
+		53c710 based boards: A4091, Magnum, Warp Engine, Zeus
+				     and DraCo.
 		FAS216 based boards: FastLane Z3, Blizzard.
 	Video controllers:
-		ECS, AGA and A2024 built in on various amigas.
+		ECS, AGA and A2024 built in on various amigas
 		Retina Z2 and Retina Z3.
 		Picasso II.
 		GVP Spectrum.
-              Piccolo.
+		Piccolo.
 		A2410.
 		Cybervision 64.
+		oMnibus.
+		Domino.
+		Merlin.
 	Ethernet controllers:
-		A2065 Ethernet
-		Hydra Ethernet
-		ASDG Ethernet
-		A4066 Ethernet
-		Ariadne Ethernet
-		Quicknet Ethernet
+		A2065.
+		Hydra.
+		ASDG.
+		A4066.
+		Ariadne.
+		Quicknet.
 		Via a supported ISA bridge:
-			NE[12]000, SMC/WD 8003/8013/8216, 3COM 3c503 Ethernet
+			NE[12]000, SMC/WD 8003/8013/8216 and 3COM 3c503.
 		
 	Arcnet controllers:
-		A2060 Arcnet
+		A2060.
 	Tape drives:
-		Most SCSI tape drives, including
-			Archive Viper, Cipher SCSI-2 ST150.
+		Most SCSI tape drives.
 	CD-ROM drives:
-		Most SCSI CD-ROM drives
+		Most SCSI CD-ROM drives.
 	Serial ports:
 		Amiga serial port.
-		MultiFaceCard II and III
-		A2232
-		PC COM ports attached to a supported ISA bridge
+		DraCo serial port.
+		MultiFaceCard II and III.
+		A2232.
+		PC COM ports attached to a supported ISA bridge.
 	Parallel ports:
 		Amiga parallel port.
-		PC LPT ports attached to a supported ISA bridge
+		PC LPT ports attached to a supported ISA bridge.
 	ISA bridges:
-		The GoldenGate Bus+ (aka GG2)
-		The CrossLink
+		The GoldenGate Bus+ (aka GG2).
+		The CrossLink.
 	Amiga floppy drives.
 	Amiga mouse.
 
