@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.16 2004/03/17 09:25:10 jmc Exp $
+dnl	$OpenBSD: prep,v 1.17 2005/03/18 19:37:07 mickey Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -58,6 +58,17 @@ disk:f.  Make sure you reset the boot device to its default value:
 will work for most systems. This can be adapted if you've multiple
 systems installed and know what you're doing.
 
+To disable automatic boot use the following command:
+
+    ok setenv auto-boot? false
+
+and then to enable it later use:
+
+    ok setenv auto-boot? true
+
+or on an installed system use the eeprom(8) commmand:
+
+    # eeprom 'auto-boot?=true'
 
 Updating your firmware:
 -----------------------

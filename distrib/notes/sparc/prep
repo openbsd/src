@@ -66,6 +66,17 @@ Make sure that the ROM security modes are disabled:
 
     ok setenv security-mode none
 
+To disable automatic boot use the following command:
+
+    ok setenv auto-boot? false
+
+and then to enable it later use:
+
+    ok setenv auto-boot? true
+
+or on an installed system use the eeprom(8) commmand:
+
+    # eeprom 'auto-boot?=true'
 
 Please note that while OpenBSD and SunOS have a reasonable degree of
 compatibility between disk labels and filesystems, there are some problems
