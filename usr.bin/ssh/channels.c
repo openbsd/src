@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.173 2002/04/22 21:04:52 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.174 2002/06/09 13:32:01 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -707,8 +707,8 @@ channel_pre_open(Channel *c, fd_set * readset, fd_set * writeset)
 			FD_SET(c->wfd, writeset);
 		} else if (c->ostate == CHAN_OUTPUT_WAIT_DRAIN) {
 			if (CHANNEL_EFD_OUTPUT_ACTIVE(c))
-                               debug2("channel %d: obuf_empty delayed efd %d/(%d)",
-                                   c->self, c->efd, buffer_len(&c->extended));
+			       debug2("channel %d: obuf_empty delayed efd %d/(%d)",
+				   c->self, c->efd, buffer_len(&c->extended));
 			else
 				chan_obuf_empty(c);
 		}
@@ -1641,8 +1641,8 @@ channel_output_poll(void)
 			 * hack for extended data: delay EOF if EFD still in use.
 			 */
 			if (CHANNEL_EFD_INPUT_ACTIVE(c))
-                               debug2("channel %d: ibuf_empty delayed efd %d/(%d)",
-                                   c->self, c->efd, buffer_len(&c->extended));
+			       debug2("channel %d: ibuf_empty delayed efd %d/(%d)",
+				   c->self, c->efd, buffer_len(&c->extended));
 			else
 				chan_ibuf_empty(c);
 		}

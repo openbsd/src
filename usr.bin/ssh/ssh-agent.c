@@ -35,7 +35,7 @@
 
 #include "includes.h"
 #include <sys/queue.h>
-RCSID("$OpenBSD: ssh-agent.c,v 1.89 2002/06/05 21:55:44 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.90 2002/06/09 13:32:01 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -613,7 +613,7 @@ process_remove_smartcard_key(SocketEntry *e)
 		version = k->type == KEY_RSA1 ? 1 : 2;
 		if ((id = lookup_identity(k, version)) != NULL) {
 			tab = idtab_lookup(version);
-                        TAILQ_REMOVE(&tab->idlist, id, next);
+			TAILQ_REMOVE(&tab->idlist, id, next);
 			tab->nentries--;
 			free_identity(id);
 			success = 1;

@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: nchan.c,v 1.45 2002/03/25 21:13:51 markus Exp $");
+RCSID("$OpenBSD: nchan.c,v 1.46 2002/06/09 13:32:01 markus Exp $");
 
 #include "ssh1.h"
 #include "ssh2.h"
@@ -411,8 +411,8 @@ chan_is_dead(Channel *c, int send)
 	    c->extended_usage == CHAN_EXTENDED_WRITE &&
 	    c->efd != -1 &&
 	    buffer_len(&c->extended) > 0) {
-                debug2("channel %d: active efd: %d len %d",
-                    c->self, c->efd, buffer_len(&c->extended));
+		debug2("channel %d: active efd: %d len %d",
+		    c->self, c->efd, buffer_len(&c->extended));
 		return 0;
 	}
 	if (!(c->flags & CHAN_CLOSE_SENT)) {
