@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 2002/02/19 19:51:54 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2002/02/19 20:20:39 miod Exp $
 
 .if ${MACHINE}=="hp300"
 PROG=	hilinfo
 CFLAGS+= -I${.CURDIR}/../../sys/arch/hp300
+DPADD=	${LIBUTIL}
+LDADD=	-lutil
 .else
 NOPROG=yes
 .endif

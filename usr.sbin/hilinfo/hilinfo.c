@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilinfo.c,v 1.3 2002/02/19 19:51:54 miod Exp $	*/
+/*	$OpenBSD: hilinfo.c,v 1.4 2002/02/19 20:20:39 miod Exp $	*/
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
  * the Center for Software Science at the University of Utah (CSS).
@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <util.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <dev/hilioctl.h>
@@ -100,7 +101,7 @@ getinfo(dname)
 {
 	int f;
 
-	f = open(dname, 0);
+	f = opendev(dname, 0, OPENDEV_BLCK, NULL);
 	if (f < 0) {
 		warn("open(%s)", dname);
 		return 0;
