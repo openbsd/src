@@ -294,6 +294,7 @@
 ./usr/include/dev/mii/iophyreg.h
 ./usr/include/dev/mii/lxtphyreg.h
 ./usr/include/dev/mii/mii.h
+./usr/include/dev/mii/mii_bitbang.h
 ./usr/include/dev/mii/miidevs.h
 ./usr/include/dev/mii/miivar.h
 ./usr/include/dev/mii/mtdphyreg.h
