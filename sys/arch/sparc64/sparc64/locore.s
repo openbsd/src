@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.13 2002/04/03 17:22:41 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.14 2002/05/23 23:11:15 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6008,7 +6008,7 @@ _C_LABEL(tlb_flush_ctx):
 /*
  * blast_vcache()
  *
- * Clear out all of both I$ and D$ regardless of contents
+ * Clear out all of D$ regardless of contents
  * Does not modify %o0
  *
  */
@@ -6025,7 +6025,6 @@ _C_LABEL(blast_vcache):
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
-	stxa	%g0, [%o1] ASI_ICACHE_TAG
 	stxa	%g0, [%o1] ASI_DCACHE_TAG
 	brnz,pt	%o1, 1b
 	 dec	8, %o1
@@ -6034,41 +6033,10 @@ _C_LABEL(blast_vcache):
 	retl
 	 wrpr	%o3, %pstate
 
-
-/*
- * blast_icache()
- *
- * Clear out all of I$ regardless of contents
- * Does not modify %o0
- *
- */
-	.align 8
-	.globl	_C_LABEL(blast_icache)
-	.proc 1
-	FTYPE(blast_icache)
-_C_LABEL(blast_icache):
-/*
- * We turn off interrupts for the duration to prevent RED exceptions.
- */
-	rdpr	%pstate, %o3
-	set	(2*NBPG)-8, %o1
-	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
-	wrpr	%o4, 0, %pstate
-1:
-	stxa	%g0, [%o1] ASI_ICACHE_TAG
-	brnz,pt	%o1, 1b
-	 dec	8, %o1
-	sethi	%hi(KERNBASE), %o2
-	flush	%o2
-	retl
-	 wrpr	%o3, %pstate
-
-
-
 /*
  * dcache_flush_page(vaddr_t pa)
  *
- * Clear one page from D$ and I$.
+ * Clear one page from D$.
  *
  */
 	.align 8
@@ -6091,33 +6059,12 @@ _C_LABEL(dcache_flush_page):
 
 1:
 	ldxa	[%o4] ASI_DCACHE_TAG, %o3
-	dec	16, %o5
 	xor	%o3, %o2, %o3
 	andcc	%o3, %o1, %g0
 	bne,pt	%xcc, 2f
-	 membar	#LoadStore
+	 dec	16, %o5
+	membar	#LoadStore
 	stxa	%g0, [%o4] ASI_DCACHE_TAG
-	membar	#StoreLoad
-2:
-	brnz,pt	%o5, 1b
-	 inc	16, %o4
-
-	!! Now do the I$
-	srlx	%o0, 13-8, %o2
-	mov	-1, %o1		! Generate mask for tag: bits [35..8]
-	srl	%o1, 32-35+7, %o1
-	clr	%o4
-	sll	%o1, 7, %o1	! Mask
-	set	(2*NBPG), %o5
-	
-1:
-	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
-	dec	16, %o5
-	xor	%g1, %o2, %g1
-	andcc	%g1, %o1, %g0
-	bne,pt	%xcc, 2f
-	 membar	#LoadStore
-	stxa	%g0, [%o4] ASI_ICACHE_TAG
 	membar	#StoreLoad
 2:
 	brnz,pt	%o5, 1b
@@ -6132,7 +6079,7 @@ _C_LABEL(dcache_flush_page):
 /*
  * cache_flush_virt(va, len)
  *
- * Clear everything in that va range from D$ and I$.
+ * Clear everything in that va range from D$.
  *
  */
 	.align 8
@@ -6147,7 +6094,6 @@ _C_LABEL(cache_flush_virt):
 	and	%o0, %o3, %o0
 	and	%o2, %o3, %o2
 	sub	%o2, %o1, %o4	! End < start? need to split flushes.
-	sethi	%hi((1<<13)), %o5
 	brlz,pn	%o4, 1f
 	 movrz	%o4, %o3, %o4	! If start == end we need to wrap
 
@@ -6155,9 +6101,6 @@ _C_LABEL(cache_flush_virt):
 1:
 	stxa	%g0, [%o0] ASI_DCACHE_TAG
 	dec	16, %o4
-	xor	%o5, %o0, %o3	! Second way
-	stxa	%g0, [%o0] ASI_ICACHE_TAG
-	stxa	%g0, [%o3] ASI_ICACHE_TAG
 	brgz,pt	%o4, 1b
 	 inc	16, %o0
 2:
@@ -6172,9 +6115,6 @@ _C_LABEL(cache_flush_virt):
 3:
 	stxa	%g0, [%o4] ASI_DCACHE_TAG
 	dec	16, %o1
-	xor	%o5, %o4, %g1	! Second way
-	stxa	%g0, [%o4] ASI_ICACHE_TAG
-	stxa	%g0, [%g1] ASI_ICACHE_TAG
 	brgz,pt	%o1, 3b
 	 inc	16, %o4
 
@@ -6186,7 +6126,7 @@ _C_LABEL(cache_flush_virt):
 /*
  *	cache_flush_phys(paddr_t, psize_t, int);
  *
- *	Clear a set of paddrs from the D$, I$ and if param3 is
+ *	Clear a set of paddrs from the D$ and if param3 is
  *	non-zero, E$.  (E$ is not supported yet).
  */
 
@@ -6207,9 +6147,8 @@ _C_LABEL(cache_flush_phys):
 	add	%o0, %o1, %o1	! End PA
 
 	!!
-	!! Both D$ and I$ tags match pa bits 40-13, but
-	!! they are shifted different amounts.  So we'll
-	!! generate a mask for bits 40-13.
+	!! D$ tags match pa bits 40-13.
+	!! Generate a mask for them.
 	!!
 
 	mov	-1, %o2		! Generate mask for tag: bits [40..13]
@@ -6223,12 +6162,10 @@ _C_LABEL(cache_flush_phys):
 	clr	%o4
 1:
 	ldxa	[%o4] ASI_DCACHE_TAG, %o3
-	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
 	sllx	%o3, 40-29, %o3	! Shift D$ tag into place
 	and	%o3, %o2, %o3	! Mask out trash
 	cmp	%o0, %o3
 	blt,pt	%xcc, 2f	! Too low
-	 sllx	%g1, 40-35, %g1	! Shift I$ tag into place
 	cmp	%o1, %o3
 	bgt,pt	%xcc, 2f	! Too high
 	 nop
@@ -6236,13 +6173,6 @@ _C_LABEL(cache_flush_phys):
 	membar	#LoadStore
 	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
 2:
-	cmp	%o0, %g1
-	blt,pt	%xcc, 3f
-	 cmp	%o1, %g1
-	bgt,pt	%icc, 3f
-	 nop
-	stxa	%g0, [%o4] ASI_ICACHE_TAG
-3:
 	membar	#StoreLoad
 	dec	16, %o5
 	brgz,pt	%o5, 1b
