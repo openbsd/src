@@ -30,7 +30,7 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')dnl
-VERSIONID(`$OpenBSD: gandalf.mc,v 1.4 1998/08/15 18:17:14 millert Exp $')dnl
+VERSIONID(`$OpenBSD: gandalf.mc,v 1.5 1998/10/17 06:00:05 tholo Exp $')dnl
 OSTYPE(openbsd)dnl
 DOMAIN(sigmasoft)dnl
 MASQUERADE_AS(SigmaSoft.COM)dnl
@@ -43,3 +43,39 @@ MAILER(procmail)dnl
 MAILER(smtp)dnl
 
 Cw SigmaSoft.COM
+
+LOCAL_CONFIG
+#
+#  Regular expression to reject:
+#    * numeric-only localparts from aol.com and msn.com
+#    * localparts starting with a digit from juno.com
+#    * localparts longer than 10 characters from aol.com
+#
+Kcheckaddress regex -a@MATCH
+   ^([0-9]+<@(aol|msn)\.com|[0-9][^<]*<@juno\.com|.{10}[^<]+<@aol\.com)\.?>
+
+#
+#  Names that won't be allowed in a To: line (local-part and domains)
+#
+C{RejectToLocalparts}	friend you
+C{RejectToDomains}	public.com
+
+LOCAL_RULESETS
+HTo: $>CheckTo
+
+SCheckTo
+R$={RejectToLocalparts}@$*	$#error $: "553 Header error"
+R$*@$={RejectToDomains}		$#error $: "553 Header error"
+
+HMessage-Id: $>CheckMessageId
+
+SCheckMessageId
+R< $+ @ $+ >			$@ OK
+R$*				$#error $: "553 Header error"
+
+LOCAL_RULESETS
+SLocal_check_mail
+# check address against various regex checks
+R$*				$: $>Parse0 $>3 $1
+R$+				$: $(checkaddress $1 $)
+R@MATCH				$#error $: "553 Header error"
