@@ -837,6 +837,12 @@ parse_args(argc, argv)
 	NewArgv++;
     }
 
+    if (user_runas != NULL && !ISSET(rval, (MODE_EDIT|MODE_RUN))) {
+	if (excl != '\0')
+	    warnx("the `-u' and '-%c' options may not be used together", excl);
+	usage(1);
+    }
+
     if ((NewArgc == 0 && (rval & MODE_EDIT)) ||
 	(NewArgc > 0 && !(rval & (MODE_RUN | MODE_EDIT))))
 	usage(1);
