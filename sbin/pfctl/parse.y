@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.267 2002/12/20 19:57:37 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.268 2002/12/21 18:47:33 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -279,12 +279,12 @@ int			 atoul(char *, u_long *);
 int			 getservice(char *);
 
 struct sym {
-	struct sym *next;
-	int used;
-	char *nam;
-	char *val;
+	struct sym	*next;
+	int		 used;
+	char		*nam;
+	char		*val;
 };
-struct sym *symhead = NULL;
+struct sym	*symhead = NULL;
 
 int			 symset(const char *, const char *);
 char			*symget(const char *);
@@ -534,7 +534,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			    0, 0, 0);
 		}
 		| NATANCHOR string interface af proto fromto {
-			struct pf_rule r;
+			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
@@ -550,7 +550,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			    $6.dst.host, $6.dst.port, NULL);
 		}
 		| RDRANCHOR string interface af proto fromto {
-			struct pf_rule r;
+			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
@@ -585,7 +585,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			expand_rdr(&r, $3, $5, $6.src.host, $6.dst.host, NULL);
 		}
 		| BINATANCHOR string interface af proto fromto {
-			struct pf_rule r;
+			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
@@ -930,7 +930,7 @@ bandwidth	: BANDWIDTH STRING {
 			bps = strtod($2, &cp);
 			if (cp != NULL) {
 				if (!strcmp(cp, "b"))
-					;
+					; /* nothing */
 				else if (!strcmp(cp, "Kb"))
 					bps *= 1000;
 				else if (!strcmp(cp, "Mb"))
@@ -1068,7 +1068,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.keep_state = $9.keep.action;
 			o = $9.keep.options;
 			while (o) {
-				struct node_state_opt *p = o;
+				struct node_state_opt	*p = o;
 
 				switch (o->type) {
 				case PF_STATE_OPT_MAX:
@@ -1105,8 +1105,8 @@ pfrule		: action dir logquick interface route af proto fromto
 				r.rt = $5.rt;
 				r.rpool.opts = $5.pool_opts;
 			}
-			if (r.rt && r.rt != PF_FASTROUTE) {
 
+			if (r.rt && r.rt != PF_FASTROUTE) {
 				decide_address_family($5.host, &r.af);
 				remove_invalid_hosts(&$5.host, &r.af);
 				if ($5.host == NULL) {
@@ -1369,8 +1369,8 @@ proto_list	: proto_item			{ $$ = $1; }
 		;
 
 proto_item	: STRING			{
-			u_int8_t pr;
-			u_long ulval;
+			u_int8_t	pr;
+			u_long		ulval;
 
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
@@ -1379,7 +1379,7 @@ proto_item	: STRING			{
 				}
 				pr = (u_int8_t)ulval;
 			} else {
-				struct protoent *p;
+				struct protoent	*p;
 
 				p = getprotobyname($1);
 				if (p == NULL) {
@@ -1585,7 +1585,8 @@ uid_item	: uid				{
 		}
 		| PORTUNARY uid			{
 			if ($2 == UID_MAX && $1 != PF_OP_EQ && $1 != PF_OP_NE) {
-				yyerror("user unknown requires operator = or !=");
+				yyerror("user unknown requires operator = or "
+				    "!=");
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_uid));
@@ -1599,7 +1600,8 @@ uid_item	: uid				{
 		}
 		| uid PORTBINARY uid		{
 			if ($1 == UID_MAX || $3 == UID_MAX) {
-				yyerror("user unknown requires operator = or !=");
+				yyerror("user unknown requires operator = or "
+				    "!=");
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_uid));
@@ -1620,7 +1622,7 @@ uid		: STRING			{
 				if (!strcmp($1, "unknown"))
 					$$ = UID_MAX;
 				else {
-					struct passwd *pw;
+					struct passwd	*pw;
 
 					if ((pw = getpwnam($1)) == NULL) {
 						yyerror("unknown user %s", $1);
@@ -1662,7 +1664,8 @@ gid_item	: gid				{
 		}
 		| PORTUNARY gid			{
 			if ($2 == GID_MAX && $1 != PF_OP_EQ && $1 != PF_OP_NE) {
-				yyerror("group unknown requires operator = or !=");
+				yyerror("group unknown requires operator = or "
+				    "!=");
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_gid));
@@ -1676,7 +1679,8 @@ gid_item	: gid				{
 		}
 		| gid PORTBINARY gid		{
 			if ($1 == GID_MAX || $3 == GID_MAX) {
-				yyerror("group unknown requires operator = or !=");
+				yyerror("group unknown requires operator = or "
+				    "!=");
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_gid));
@@ -1697,7 +1701,7 @@ gid		: STRING			{
 				if (!strcmp($1, "unknown"))
 					$$ = GID_MAX;
 				else {
-					struct group *grp;
+					struct group	*grp;
 
 					if ((grp = getgrnam($1)) == NULL) {
 						yyerror("unknown group %s", $1);
@@ -2056,7 +2060,7 @@ hashkey		: /* empty */
 					YYERROR;
 				}
 			} else {
-				MD5_CTX context;
+				MD5_CTX	context;
 
 				$$ = calloc(1, sizeof(struct pf_poolhashkey));
 				if ($$ == NULL)
@@ -2182,7 +2186,8 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 							nat.rpool.opts =
 							    PF_POOL_ROUNDROBIN;
 						else
-							nat.rpool.opts = $8.type;
+							nat.rpool.opts =
+							    $8.type;
 					}
 				}
 			}
@@ -2295,8 +2300,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				if ($10->host == NULL)
 					YYERROR;
 				if ($10->host->next != NULL) {
-					yyerror("binat rule must redirect to a single "
-					    "address");
+					yyerror("binat rule must redirect to "
+					    "a single address");
 					YYERROR;
 				}
 
@@ -2326,7 +2331,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 		}
 		;
 
-rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool pooltype
+rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
+		  redirpool pooltype
 		{
 			struct pf_rule	rdr;
 
@@ -2620,7 +2626,8 @@ rule_consistent(struct pf_rule *r)
 	}
 	if (!r->af && (r->src.addr.addr_dyn != NULL ||
 	    r->dst.addr.addr_dyn != NULL)) {
-		yyerror("dynamic addresses require address family (inet/inet6)");
+		yyerror("dynamic addresses require address family "
+		    "(inet/inet6)");
 		problems++;
 	}
 	if (r->rule_flag & PFRULE_FRAGMENT && (r->src.port_op ||
@@ -2765,8 +2772,8 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 		    PF_AZERO(&h->addr.mask, af)))
 			strlcat(tmp, "any", PF_RULE_LABEL_SIZE);
 		else {
-			char a[48];
-			int bits;
+			char	a[48];
+			int	bits;
 
 			if (inet_ntop(af, &h->addr.addr, a,
 			    sizeof(a)) == NULL)
@@ -3577,12 +3584,12 @@ yylex(void)
 top:
 	p = buf;
 	while ((c = lgetc(fin)) == ' ')
-		;
+		; /* nothing */
 
 	yylval.lineno = lineno;
 	if (c == '#')
 		while ((c = lgetc(fin)) != '\n' && c != EOF)
-			;
+			; /* nothing */
 	if (c == '$' && parsebuf == NULL) {
 		while (1) {
 			if ((c = lgetc(fin)) == EOF)
@@ -3727,8 +3734,8 @@ parse_rules(FILE *input, struct pfctl *xpf, int opts)
 	if (opts & PF_OPT_VERBOSE2) {
 		for (sym = symhead; sym; sym = sym->next)
 			if (!sym->used)
-				fprintf(stderr, "warning: macro '%s' not used\n",
-				    sym->nam);
+				fprintf(stderr, "warning: macro '%s' not "
+				    "used\n", sym->nam);
 	}
 	return (errors ? -1 : 0);
 }
@@ -3803,7 +3810,7 @@ symget(const char *nam)
 
 /* interface lookup routines */
 
-struct node_host *iftab;
+struct node_host	*iftab;
 
 void
 ifa_load(void)
@@ -3827,9 +3834,11 @@ ifa_load(void)
 		n->ifa_flags = ifa->ifa_flags;
 #ifdef __KAME__
 		if (n->af == AF_INET6 &&
-		    IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr) &&
-		    ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id == 0) {
-			struct sockaddr_in6 *sin6;
+		    IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)
+		    ifa->ifa_addr)->sin6_addr) &&
+		    ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id == 0)
+		    {
+			struct sockaddr_in6	*sin6;
 
 			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 			sin6->sin6_scope_id = sin6->sin6_addr.s6_addr[2] << 8 |
