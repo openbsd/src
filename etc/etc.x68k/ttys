@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.1.1.1 1996/05/19 12:35:21 oki Exp $
+#	$NetBSD: ttys,v 1.1.1.1.4.1 1996/06/17 06:15:19 oki Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -7,7 +7,7 @@
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty Pc"		x68k	on secure 
+console	"/usr/libexec/getty Pc"		vt220	on secure 
 tty00	"/usr/libexec/getty std.9600"	unknown off secure	# int. serial.
 #tty00	none			unknown	off secure rtcsts softcar # for dialup ppp.
 tty02	"/usr/libexec/getty std.9600"	unknown off secure	# ext. serial.
