@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.14 1997/09/17 06:47:05 downsj Exp $
+#	$OpenBSD: files.sparc,v 1.15 1998/03/25 07:54:53 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -48,6 +48,10 @@ file	arch/sparc/sparc/clock.c
 device power
 attach power at obio
 file	arch/sparc/dev/power.c			power needs-count
+
+device led
+attach led at mainbus
+file	arch/sparc/dev/led.c			led needs-count
 
 device cpu
 attach cpu at mainbus

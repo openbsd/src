@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 1998/03/01 09:24:28 johns Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 1998/03/25 07:54:59 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -97,6 +97,11 @@
 #endif
 
 #include "auxreg.h"
+
+#ifdef SUN4
+#include <sparc/dev/led.h>
+#include "led.h"
+#endif
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
@@ -463,7 +468,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-#if NAUXREG > 0
+#if (NAUXREG > 0) || (NLED > 0)
 	int ret, oldval;
 #endif
 
@@ -473,7 +478,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_LED_BLINK:
-#if NAUXREG > 0
+#if (NLED > 0) || (NAUXREG > 0)
 		oldval = sparc_led_blink;
 		ret = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &sparc_led_blink);
@@ -482,8 +487,14 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		 * If we were false and are now true, call led_blink().
 		 * led_blink() itself will catch the other case.
 		 */
-		if (!oldval && sparc_led_blink > oldval)
+		if (!oldval && sparc_led_blink > oldval) {
+#if NAUXREG > 0
 			led_blink((caddr_t *)0);
+#endif
+#if NLED > 0
+			led_sun4_cycle((caddr_t *)0);
+#endif
+		}
 
 		return (ret);
 #else
