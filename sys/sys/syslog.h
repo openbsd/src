@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.8 2002/10/06 14:50:26 espie Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.9 2003/02/26 19:20:33 espie Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ struct syslog_data {
 	int 	log_mask;
 };
 
-#define SYSLOG_DATA_INIT {-1, 0, 0, 0, NULL, LOG_USER, 0xff}
+#define SYSLOG_DATA_INIT {-1, 0, 0, 0, (const char *)0, LOG_USER, 0xff}
 
 #ifdef _KERNEL
 #define	LOG_PRINTF	-1	/* pseudo-priority to indicate use of printf */
