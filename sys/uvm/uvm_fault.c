@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.c,v 1.11 2001/05/07 16:08:40 art Exp $	*/
-/*	$NetBSD: uvm_fault.c,v 1.37 1999/06/16 23:02:40 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.12 2001/05/09 15:31:23 art Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.39 1999/06/17 19:23:21 thorpej Exp $	*/
 
 /*
  *
@@ -1725,17 +1725,8 @@ uvm_fault_wire(map, start, end, access_type)
 
 	pmap = vm_map_pmap(map);
 
-#ifndef PMAP_NEW
 	/*
-	 * call pmap pageable: this tells the pmap layer to lock down these
-	 * page tables.
-	 */
-
-	pmap_pageable(pmap, start, end, FALSE);
-#endif
-
-	/*
-	 * now fault it in page at a time.   if the fault fails then we have
+	 * fault it in page at a time.   if the fault fails then we have
 	 * to undo what we have done.
 	 */
 
@@ -1838,7 +1829,7 @@ uvm_fault_unwire_locked(map, start, end)
 		 * if the entry is no longer wired, tell the pmap.
 		 */
 		if (VM_MAPENT_ISWIRED(entry) == 0)
-			pmap_change_wiring(pmap, va, FALSE);
+			pmap_unwire(pmap, va);
 
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg)
@@ -1846,13 +1837,4 @@ uvm_fault_unwire_locked(map, start, end)
 	}
 
 	uvm_unlock_pageq();
-
-#ifndef PMAP_NEW
-	/*
-	 * now we call pmap_pageable to let the pmap know that the page tables
-	 * in this space no longer need to be wired.
-	 */
-
-	pmap_pageable(pmap, start, end, TRUE);
-#endif
 }

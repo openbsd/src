@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2001/05/05 21:26:34 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 2001/05/09 15:31:24 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -1492,29 +1492,22 @@ validate:
 }
 
 /*
- *	Routine:	pmap_change_wiring
+ *	Routine:	pmap_unwire
  *	Function:	Change the wiring attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	pmap_t	pmap;
 	vaddr_t	va;
-	boolean_t	wired;
 {
 	u_int *pte;
 
-	/*
-	 * Never called this way.
-	 */
-	if (wired)
-		panic("pmap_change_wiring: wired");
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired);
+		printf("pmap_unwire(%p, %lx)\n", pmap, va);
 #endif
 	if (pmap == NULL)
 		return;
@@ -1528,7 +1521,7 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_ste_v(pmap, va)) {
 		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid STE for %lx\n",
+			printf("pmap_unwire: invalid STE for %lx\n",
 			    va);
 		return;
 	}
@@ -1538,21 +1531,18 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_pte_v(pte)) {
 		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid PTE for %lx\n",
+			printf("pmap_unwire: invalid PTE for %lx\n",
 			    va);
 	}
 #endif
-	if ((wired && !pmap_pte_w(pte)) || (!wired && pmap_pte_w(pte))) {
-		if (wired)
-			pmap->pm_stats.wired_count++;
-		else
+	if (pmap_pte_w(pte)) {
 			pmap->pm_stats.wired_count--;
 	}
 	/*
 	 * Wiring is not a hardware characteristic so there is no need
 	 * to invalidate TLB.
 	 */
-	pmap_pte_set_w(pte, wired);
+	pmap_pte_set_w(pte, 0);
 }
 
 /*
@@ -1838,30 +1828,6 @@ pmap_copy_page(src, dst)
 	src >>= PG_SHIFT;
 	dst >>= PG_SHIFT;
 	physcopyseg(src, dst);
-}
-
-
-/*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
- *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
- *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vaddr_t		sva, eva;
-	boolean_t	pageable;
-{
-	/* nothing */
 }
 
 /*

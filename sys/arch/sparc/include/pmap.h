@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.16 2000/06/05 11:02:52 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.17 2001/05/09 15:31:27 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -283,7 +283,7 @@ int		pmap_count_ptes __P((struct pmap *));
 void		pmap_prefer __P((vaddr_t, vaddr_t *));
 int		pmap_pa_exists __P((paddr_t));
 void		*pmap_bootstrap_alloc __P((int));
-void		pmap_change_wiring __P((pmap_t, vaddr_t, boolean_t));
+void		pmap_unwire __P((pmap_t, vaddr_t));
 void		pmap_collect __P((pmap_t));
 void		pmap_copy __P((pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t));
 #ifdef PMAP_NEW
@@ -294,7 +294,6 @@ pmap_t		pmap_create __P((vsize_t));
 void		pmap_destroy __P((pmap_t));
 void		pmap_init __P((void));
 vaddr_t		pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
-void		pmap_pageable __P((pmap_t, paddr_t, paddr_t, boolean_t));
 vaddr_t		pmap_phys_address __P((int));
 void		pmap_pinit __P((pmap_t));
 void		pmap_reference __P((pmap_t));

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.12 2001/04/10 06:59:13 niklas Exp $ */
+/* $OpenBSD: pmap.c,v 1.13 2001/05/09 15:31:23 art Exp $ */
 /* $NetBSD: pmap.c,v 1.148 2000/09/22 05:23:37 thorpej Exp $ */
 
 /*-
@@ -2139,12 +2139,9 @@ pmap_kremove(vaddr_t va, vsize_t size)
  *	The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap_t pmap, vaddr_t va, int wired)
+pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	pt_entry_t *pte;
-
-	if (wired)
-		panic("pmap_change_wiring");
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2449,15 +2446,6 @@ pmap_copy_page(paddr_t src, paddr_t dst)
         s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
         d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
 	memcpy(d, s, PAGE_SIZE);
-}
-
-void
-pmap_pageable(pmap, start, end, pageable)
-	pmap_t		pmap;
-	vaddr_t		start;
-	vaddr_t		end;
-	boolean_t	pageable;
-{
 }
 
 /*

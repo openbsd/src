@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2001/03/22 01:15:35 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2001/05/09 15:31:25 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -3057,7 +3057,7 @@ Retry:
 } /* pmap_enter */
 
 /*
- *	Routine:	pmap_change_wiring
+ *	Routine:	pmap_unwire
  *
  *	Author:		Fuzzy
  *
@@ -3066,7 +3066,6 @@ Retry:
  *	Prameterts:
  *		pmap		pointer to pmap structure
  *		v		virtual address of page to be wired/unwired
- *		wired		flag indicating new wired state
  *
  *	Extern/Global:
  *		pte_per_vm_page
@@ -3080,7 +3079,7 @@ Retry:
  *		The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap_t map, vm_offset_t v, boolean_t wired)
+pmap_unwire(pmap_t map, vm_offset_t v)
 {
 	pt_entry_t  *pte;
 	int      i;
@@ -3089,22 +3088,18 @@ pmap_change_wiring(pmap_t map, vm_offset_t v, boolean_t wired)
 	PMAP_LOCK(map, spl);
 
 	if ((pte = pmap_pte(map, v)) == PT_ENTRY_NULL)
-		panic ("pmap_change_wiring: pte missing");
+		panic ("pmap_unwire: pte missing");
 
-	if (wired && !pte->wired)
-		/* wiring mapping */
-		map->stats.wired_count++;
-
-	else if (!wired && pte->wired)
+	if (pte->wired)
 		/* unwired mapping */
 		map->stats.wired_count--;
 
 	for (i = ptes_per_vm_page; i>0; i--)
-		(pte++)->wired = wired;
+		(pte++)->wired = 0;
 
 	PMAP_UNLOCK(map, spl);
 
-} /* pmap_change_wiring() */
+} /* pmap_unwire() */
 
 /*
  * Routine:	PMAP_EXTRACT
@@ -3761,38 +3756,6 @@ copy_from_phys(vm_offset_t srcpa, vm_offset_t dstva, int bytecount)
 		}
 	}
 }
-
-/*
- * Routine:	PMAP_PAGEABLE
- *
- * History:
- *	'90.7.16	Fuzzy
- *
- * Function:
- *	Make the specified pages (by pmap, offset) pageable (or not) as
- *	requested. A page which is not pageable may not take a fault;
- *	therefore, its page table entry must remain valid for the duration.
- *	this routine is merely advisory; pmap_enter will specify that
- *	these pages are to be wired down (or not) as appropriate.
- *
- * Parameters:
- *	pmap		pointer to pmap structure
- *	start		virtual address of start of range
- *	end		virtual address of end of range
- *	pageable	flag indicating whether range is to be pageable.
- *
- *	This routine currently does nothing in the 88100 implemetation.
- */
-void
-pmap_pageable(pmap_t pmap, vm_offset_t start, vm_offset_t end,
-	      boolean_t pageable)
-{
-#ifdef lint
-	pmap++; start++; end++; pageable++;
-#endif
-} /* pmap_pagealbe() */
-
-
 
 /*
  * Routine:	PMAP_REDZONE

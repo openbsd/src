@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.80 2000/11/22 11:57:04 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.81 2001/05/09 15:31:27 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5783,7 +5783,7 @@ pmap_kremove4m(va, len)
  */
 /* ARGSUSED */
 void
-pmap_change_wiring(pm, va, wired)
+pmap_unwire(pm, va, wired)
 	struct pmap *pm;
 	vaddr_t va;
 	int wired;
@@ -6272,25 +6272,6 @@ pmap_is_referenced4m(pa)
 	return (0);
 }
 #endif /* 4m */
-
-/*
- * Make the specified pages (by pmap, offset) pageable (or not) as requested.
- *
- * A page which is not pageable may not take a fault; therefore, its page
- * table entry must remain valid for the duration (or at least, the trap
- * handler must not call vm_fault).
- *
- * This routine is merely advisory; pmap_enter will specify that these pages
- * are to be wired down (or not) as appropriate.
- */
-/* ARGSUSED */
-void
-pmap_pageable(pm, start, end, pageable)
-	struct pmap *pm;
-	vaddr_t start, end;
-	int pageable;
-{
-}
 
 /*
  * Fill the given MI physical page with zero bytes.

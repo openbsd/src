@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2001/05/05 21:26:36 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2001/05/09 15:31:24 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -1261,7 +1261,7 @@ pmap_protect(pmap, sva, eva, prot)
 }
 
 /*
- *	Routine:	pmap_change_wiring
+ *	Routine:	pmap_unwire
  *	Function:	Change the wiring attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
@@ -1271,19 +1271,16 @@ pmap_protect(pmap, sva, eva, prot)
  * only used to unwire pages and hence the mapping entry will exist.
  */
 void
-pmap_change_wiring(pmap, va, wired)
-	register pmap_t	pmap;
+pmap_unwire(pmap, va)
+	pmap_t	pmap;
 	vaddr_t	va;
-	boolean_t	wired;
 {
-	register struct pv_entry *pv;
-	boolean_t waswired;
+	struct pv_entry *pv;
 
 	va = hppa_trunc_page(va);
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_change_wiring(%p, %x, %swire)\n",
-		    pmap, va, wired? "": "un");
+		printf("pmap_unwire(%p, %x)\n", pmap, va);
 #endif
 
 	if (!pmap)
@@ -1292,13 +1289,9 @@ pmap_change_wiring(pmap, va, wired)
 	simple_lock(&pmap->pmap_lock);
 
 	if ((pv = pmap_find_va(pmap_sid(pmap, va), va)) == NULL)
-		panic("pmap_change_wiring: can't find mapping entry");
+		panic("pmap_unwire: can't find mapping entry");
 
-	waswired = pv->pv_tlbprot & TLB_WIRED;
-	if (wired && !waswired) {
-		pv->pv_tlbprot |= TLB_WIRED;
-		pmap->pmap_stats.wired_count++;
-	} else if (!wired && waswired) {
+	if (pv->pv_tlbprot & TLB_WIRED) {
 		pv->pv_tlbprot &= ~TLB_WIRED;
 		pmap->pmap_stats.wired_count--;
 	}

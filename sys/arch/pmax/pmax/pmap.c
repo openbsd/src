@@ -1050,30 +1050,26 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 }
 
 /*
- *	Routine:	pmap_change_wiring
+ *	Routine:	pmap_unwire
  *	Function:	Change the wiring attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
-	register pmap_t	pmap;
+pmap_unwire(pmap, va)
+	pmap_t	pmap;
 	vm_offset_t va;
-	boolean_t wired;
 {
-	register pt_entry_t *pte;
-	u_int p;
-	register int i;
+	pt_entry_t *pte;
+	int i;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_WIRING))
-		printf("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired);
+		printf("pmap_unwire(%p, %lx)\n", pmap, va);
 #endif
 	if (pmap == NULL)
 		return;
-
-	p = wired ? PG_WIRED : 0;
 
 	/*
 	 * Don't need to flush the TLB since PG_WIRED is only in software.
@@ -1082,7 +1078,7 @@ pmap_change_wiring(pmap, va, wired)
 		/* change entries in kernel pmap */
 #ifdef DIAGNOSTIC
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
-			panic("pmap_change_wiring");
+			panic("pmap_unwire");
 #endif
 		pte = kvtopte(va);
 	} else {
@@ -1092,13 +1088,11 @@ pmap_change_wiring(pmap, va, wired)
 	}
 
 	i = mipspagesperpage;
-	if (!(pte->pt_entry & PG_WIRED) && p)
-		pmap->pm_stats.wired_count += i;
-	else if ((pte->pt_entry & PG_WIRED) && !p)
+	if ((pte->pt_entry & PG_WIRED))
 		pmap->pm_stats.wired_count -= i;
 	do {
 		if (pte->pt_entry & PG_V)
-			pte->pt_entry = (pte->pt_entry & ~PG_WIRED) | p;
+			pte->pt_entry ~= PG_WIRED;
 		pte++;
 	} while (--i != 0);
 }
@@ -1266,34 +1260,6 @@ pmap_copy_page(src, dst)
 		s += 4;
 		d += 4;
 	} while (s != end);
-}
-
-/*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
- *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
- *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vm_offset_t	sva, eva;
-	boolean_t	pageable;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_pageable(%p, %lx, %lx, %x)\n",
-		       pmap, sva, eva, pageable);
-#endif
 }
 
 /*

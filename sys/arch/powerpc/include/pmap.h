@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.4 2001/02/22 03:26:23 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.5 2001/05/09 15:31:26 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ extern struct pmap kernel_pmap_;
 #define	pmap_clear_reference(pa)	(ptemodify((pa), PTE_REF, 0))
 #define	pmap_is_modified(pa)		(ptebits((pa), PTE_CHG))
 #define	pmap_is_referenced(pa)		(ptebits((pa), PTE_REF))
-#define	pmap_change_wiring(pm, va, wired)
+#define	pmap_unwire(pm, va)
 
 #define	pmap_phys_address(x)		(x)
 

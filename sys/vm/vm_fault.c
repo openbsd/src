@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_fault.c,v 1.17 1999/09/03 18:02:27 art Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.18 2001/05/09 15:31:23 art Exp $	*/
 /*	$NetBSD: vm_fault.c,v 1.21 1998/01/31 04:02:39 ross Exp $	*/
 
 /* 
@@ -861,14 +861,6 @@ vm_fault_wire(map, start, end)
 	pmap = vm_map_pmap(map);
 
 	/*
-	 * Inform the physical mapping system that the
-	 * range of addresses may not fault, so that
-	 * page tables and such can be locked down as well.
-	 */
-
-	pmap_pageable(pmap, start, end, FALSE);
-
-	/*
 	 * We simulate a fault to get the page and enter it
 	 * in the physical map.
 	 */
@@ -912,19 +904,10 @@ vm_fault_unwire(map, start, end)
 		if (pa == (vm_offset_t)0) {
 			panic("unwire: page not in pmap");
 		}
-		pmap_change_wiring(pmap, va, FALSE);
+		pmap_unwire(pmap, va);
 		vm_page_unwire(PHYS_TO_VM_PAGE(pa));
 	}
 	vm_page_unlock_queues();
-
-	/*
-	 * Inform the physical mapping system that the range
-	 * of addresses may fault, so that page tables and
-	 * such may be unwired themselves.
-	 */
-
-	pmap_pageable(pmap, start, end, TRUE);
-
 }
 
 /*

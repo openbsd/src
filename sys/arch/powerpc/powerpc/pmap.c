@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2001/05/05 21:26:40 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 2001/05/09 15:31:26 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -984,19 +984,6 @@ pmap_update()
 void
 pmap_collect(pm)
 	struct pmap *pm;
-{
-}
-
-/*
- * Make the specified pages pageable or not as requested.
- *
- * This routine is merely advisory.
- */
-void
-pmap_pageable(pm, start, end, pageable)
-	struct pmap *pm;
-	vm_offset_t start, end;
-	int pageable;
 {
 }
 

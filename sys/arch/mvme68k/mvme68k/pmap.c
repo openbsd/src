@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2001/05/05 21:26:38 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.19 2001/05/09 15:31:25 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -1413,23 +1413,22 @@ validate:
 }
 
 /*
- *	Routine:	pmap_change_wiring
+ *	Routine:	pmap_unwire
  *	Function:	Change the wiring attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
-	register pmap_t	pmap;
+pmap_unwire(pmap, va)
+	pmap_t	pmap;
 	vm_offset_t	va;
-	boolean_t	wired;
 {
-	register pt_entry_t *pte;
+	pt_entry_t *pte;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_change_wiring(%x, %x, %x)\n", pmap, va, wired);
+		printf("pmap_unwire(%x, %x)\n", pmap, va);
 #endif
 	if (pmap == NULL)
 		return;
@@ -1443,7 +1442,7 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_ste_v(pmap, va)) {
 		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid STE for %x\n", va);
+			printf("pmap_unwire: invalid STE for %x\n", va);
 		return;
 	}
 	/*
@@ -1452,7 +1451,7 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_pte_v(pte)) {
 		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid PTE for %x\n", va);
+			printf("pmap_unwire: invalid PTE for %x\n", va);
 	}
 #endif
 	/*
@@ -1460,12 +1459,9 @@ pmap_change_wiring(pmap, va, wired)
 	 * update the wire count.  Note that wiring is not a hardware
 	 * characteristic so there is no need to invalidate the TLB.
 	 */
-	if (pmap_pte_w_chg(pte, wired ? PG_W : 0)) {
-		pmap_pte_set_w(pte, wired);
-		if (wired)
-			pmap->pm_stats.wired_count++;
-		else
-			pmap->pm_stats.wired_count--;
+	if (pmap_pte_w_chg(pte, 0)) {
+		pmap_pte_set_w(pte, 0);
+		pmap->pm_stats.wired_count--;
 	}
 }
 
@@ -1759,82 +1755,6 @@ pmap_copy_page(src, dst)
 	copypage((caddr_t)skva, (caddr_t)dkva);
 	/* CADDR1 and CADDR2 are virtually contiguous */
 	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
-}
-
-/*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
- *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
- *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vm_offset_t	sva, eva;
-	boolean_t	pageable;
-{
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_pageable(%x, %x, %x, %x)\n",
-		       pmap, sva, eva, pageable);
-#endif
-	/*
-	 * If we are making a PT page pageable then all valid
-	 * mappings must be gone from that page.  Hence it should
-	 * be all zeros and there is no need to clean it.
-	 * Assumptions:
-	 *	- we are called with only one page at a time
-	 *	- PT pages have only one pv_table entry
-	 */
-	if (pmap == pmap_kernel() && pageable && sva + NBPG == eva) {
-		register struct pv_entry *pv;
-		register vm_offset_t pa;
-
-#ifdef DEBUG
-		if ((pmapdebug & (PDB_FOLLOW|PDB_PTPAGE)) == PDB_PTPAGE)
-			printf("pmap_pageable(%x, %x, %x, %x)\n",
-			       pmap, sva, eva, pageable);
-#endif
-		if (!pmap_ste_v(pmap, sva))
-			return;
-		pa = pmap_pte_pa(pmap_pte(pmap, sva));
-		if (PAGE_IS_MANAGED(pa) == 0)
-			return;
-		pv = pa_to_pvh(pa);
-		if (pv->pv_ptste == NULL)
-			return;
-#ifdef DEBUG
-		if (pv->pv_va != sva || pv->pv_next) {
-			printf("pmap_pageable: bad PT page va %x next %x\n",
-			       pv->pv_va, pv->pv_next);
-			return;
-		}
-#endif
-		/*
-		 * Mark it unmodified to avoid pageout
-		 */
-		pmap_changebit(pa, PG_M, FALSE);
-#ifdef DEBUG
-		if ((PHYS_TO_VM_PAGE(pa)->flags & PG_CLEAN) == 0) {
-			printf("pa %x: flags=%x: not clean\n",
-			       pa, PHYS_TO_VM_PAGE(pa)->flags);
-			PHYS_TO_VM_PAGE(pa)->flags |= PG_CLEAN;
-		}
-		if (pmapdebug & PDB_PTPAGE)
-			printf("pmap_pageable: PT page %x(%x) unmodified\n",
-			       sva, *pmap_pte(pmap, sva));
-		if (pmapdebug & PDB_WIRING)
-			pmap_check_wiring("pageable", sva);
-#endif
-	}
 }
 
 /*

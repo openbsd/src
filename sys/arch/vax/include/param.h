@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.14 2001/05/05 20:56:56 art Exp $ */
+/*	$OpenBSD: param.h,v 1.15 2001/05/09 15:31:27 art Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -161,7 +161,6 @@
 #define       ovbcopy(x,y,z)  bcopy(x, y, z)
 
 #ifdef _KERNEL
-#define        pmap_pageable(a,b,c,d)          /* Dont do anything */
 #ifndef lint
 #define splx(reg)						\
 ({								\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.13 2001/01/12 23:37:01 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -182,7 +182,6 @@ do { if (pmap) { \
 } } while (0)
 #define pmap_collect(pmap)
 #define pmap_release(pmap)
-#define pmap_pageable(pmap, start, end, pageable)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 #define	pmap_update()
 #define	pmap_activate(p)

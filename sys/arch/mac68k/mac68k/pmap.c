@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2001/05/08 17:30:41 aaron Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2001/05/09 15:31:25 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 1999/04/22 04:24:53 chs Exp $	*/
 
 /*
@@ -1389,22 +1389,20 @@ validate:
 }
 
 /*
- * pmap_change_wiring:		[ INTERFACE ]
+ * pmap_unwire:		[ INTERFACE ]
  *
  *	Change the wiring attribute for a map/virtual-address pair.
  *
  *	The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	pmap_t		pmap;
 	vaddr_t		va;
-	boolean_t	wired;
 {
 	pt_entry_t *pte;
 
-	PMAP_DPRINTF(PDB_FOLLOW,
-	    ("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired));
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_unwire(%p, %lx)\n", pmap, va));
 
 	if (pmap == NULL)
 		return;
@@ -1418,7 +1416,7 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_ste_v(pmap, va)) {
 		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid STE for %lx\n", va);
+			printf("pmap_unwire: invalid STE for %lx\n", va);
 		return;
 	}
 	/*
@@ -1427,7 +1425,7 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_pte_v(pte)) {
 		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid PTE for %lx\n", va);
+			printf("pmap_unwire: invalid PTE for %lx\n", va);
 	}
 #endif
 	/*
@@ -1435,12 +1433,9 @@ pmap_change_wiring(pmap, va, wired)
 	 * update the wire count.  Note that wiring is not a hardware
 	 * characteristic so there is no need to invalidate the TLB.
 	 */
-	if (pmap_pte_w_chg(pte, wired ? PG_W : 0)) {
-		pmap_pte_set_w(pte, wired);
-		if (wired)
-			pmap->pm_stats.wired_count++;
-		else
-			pmap->pm_stats.wired_count--;
+	if (pmap_pte_w_chg(pte, 0)) {
+		pmap_pte_set_w(pte, 0);
+		pmap->pm_stats.wired_count--;
 	}
 }
 
@@ -1764,79 +1759,6 @@ pmap_copy_page(src, dst)
 #endif
 
 	splx(s);
-}
-
-/*
- * pmap_pageable:		[ INTERFACE ]
- *
- *	Make the specified pages (by pmap, offset) pageable (or not) as
- *	requested.
- *
- *	A page which is not pageable may not take a fault; therefore,
- *	its page table entry must remain valid for the duration.
- *
- *	This routine is merely advisory; pmap_enter() will specify that
- *	these pages are to be wired down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vaddr_t		sva, eva;
-	boolean_t	pageable;
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW,
-	    ("pmap_pageable(%p, %lx, %lx, %x)\n",
-	    pmap, sva, eva, pageable));
-
-	/*
-	 * If we are making a PT page pageable then all valid
-	 * mappings must be gone from that page.  Hence it should
-	 * be all zeros and there is no need to clean it.
-	 * Assumptions:
-	 *	- we are called with only one page at a time
-	 *	- PT pages have only one pv_table entry
-	 */
-	if (pmap == pmap_kernel() && pageable && sva + NBPG == eva) {
-		struct pv_entry *pv;
-		paddr_t pa;
-
-#ifdef DEBUG
-		if ((pmapdebug & (PDB_FOLLOW|PDB_PTPAGE)) == PDB_PTPAGE)
-			printf("pmap_pageable(%p, %lx, %lx, %x)\n",
-			       pmap, sva, eva, pageable);
-#endif
-		if (!pmap_ste_v(pmap, sva))
-			return;
-		pa = pmap_pte_pa(pmap_pte(pmap, sva));
-		if (PAGE_IS_MANAGED(pa) == 0)
-			return;
-		pv = pa_to_pvh(pa);
-		if (pv->pv_ptste == NULL)
-			return;
-#ifdef DEBUG
-		if (pv->pv_va != sva || pv->pv_next) {
-			printf("pmap_pageable: bad PT page va %lx next %p\n",
-			       pv->pv_va, pv->pv_next);
-			return;
-		}
-#endif
-		/*
-		 * page is unused, free it now!
-		 */
-		pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
-				    NULL, PRM_TFLUSH|PRM_CFLUSH);
-#if defined(UVM)
-		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
-#else
-		vm_page_free(PHYS_TO_VM_PAGE(pa));
-#endif
-#ifdef DEBUG
-		if (pmapdebug & PDB_PTPAGE)
-			printf("pmap_pageable: PT page %lx(%x) freed\n",
-			       sva, *pmap_pte(pmap, sva));
-#endif
-	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2001/05/05 21:26:41 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.15 2001/05/09 15:31:28 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -461,10 +461,9 @@ if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
 }
 
 void
-pmap_change_wiring(pmap, va, wired) 
-	register pmap_t pmap;
+pmap_unwire(pmap, va)
+	pmap_t pmap;
 	vaddr_t va;
-	boolean_t wired;
 {
 	int *p, *pte, i;
 
@@ -482,10 +481,7 @@ pmap_change_wiring(pmap, va, wired)
 	}
 	pte = &p[i];
 
-	if(wired) 
-		*pte |= PG_W;
-	else
-		*pte &= ~PG_W;
+	*pte &= ~PG_W;
 }
 
 /*
