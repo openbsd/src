@@ -1,3 +1,4 @@
+dnl	$OpenBSD: hardware,v 1.18 2005/01/26 18:57:18 miod Exp $
 OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series
 machines.
 6MB of RAM should be sufficient to boot and a minimal system can probably
@@ -46,6 +47,8 @@ The following HP hardware is supported:
 		98720 and 98721 Renaissance.
 		98730 and 98731 DaVinci.
 		A1096A monochrome Hyperion.
+		SGC-based frame buffers, including the 425e on-board EVRX
+		  (but not as console)
 
 	Input devices:
 		General interface supporting all HIL devices: keyboard,
@@ -63,11 +66,13 @@ The following HP hardware is supported:
 (*) 400-series machines configured for Domain/OS are not fully supported,
     notably, the keyboard doesn't work and the ROMs must be in `HP-UX mode'.
 
-    The 425e is only supported with a serial console on the first serial
-    port.
+    Machines with SGC frame buffers, such as the 425e, are only supported
+    with a serial console on the first serial port; however, once the
+    system is running multiuser, it is possible to spawn a terminal on
+    the display.
 
 (**) SCSI-II drives are known to work, though this may require changing a
-     jumper on some drives.  See your disk's documentation for details.
+     jumper on some drives.  See your hardware documentation for details.
 
 (***) Serial mice connected to a `HIL to quad' converter are also known
       to work.
