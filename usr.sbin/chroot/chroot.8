@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.8,v 1.7 2002/10/25 19:23:48 millert Exp $
+.\"	$OpenBSD: chroot.8,v 1.8 2002/10/29 23:12:06 millert Exp $
 .\"	$NetBSD: chroot.8,v 1.9 2000/08/17 12:36:32 mrg Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -43,6 +43,7 @@
 .Sh SYNOPSIS
 .Nm chroot
 .Op Fl u Ar user
+.Op Fl U Ar user
 .Op Fl g Ar group
 .Op Fl G Ar group,group,...
 .Ar newroot
@@ -66,6 +67,14 @@ The options are as follows:
 Set user ID to
 .Ar user
 (a user name or user ID).
+.It Fl U Ar user
+Set user, group and supplemental group IDs based on the
+.Xr passwd 5
+database entry for
+.Ar user .
+The
+.Fl U
+option may not be specified in conjunction with any other options.
 .It Fl g Ar group
 Set group ID to
 .Ar group
@@ -78,13 +87,12 @@ will be the used as the first entry in the group vector.
 .It Fl G Ar group,group,...
 Set the supplemental group IDs to a comma-separated list of
 group names or group IDs.
+If neither the
+.Fl G
+nor the
+.Fl U
+option is specified, the supplemental group list remains unchanged.
 .El
-.Pp
-Note, the
-.Ar command
-or shell are run with the real user ID of the invoking user unless the
-.Fl u
-flag is specified.
 .Sh ENVIRONMENT
 .Bl -tag -width SHELL
 .It Ev SHELL

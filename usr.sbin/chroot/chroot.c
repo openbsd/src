@@ -1,4 +1,4 @@
-/*	$OpenBSD: chroot.c,v 1.6 2002/10/25 19:23:48 millert Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.7 2002/10/29 23:12:06 millert Exp $	*/
 /*	$NetBSD: chroot.c,v 1.11 2001/04/06 02:34:04 lukem Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-static const char rcsid[] = "$OpenBSD: chroot.c,v 1.6 2002/10/25 19:23:48 millert Exp $";
+static const char rcsid[] = "$OpenBSD: chroot.c,v 1.7 2002/10/29 23:12:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,16 +70,23 @@ main(int argc, char **argv)
 	struct group	*gp;
 	struct passwd	*pw;
 	const char	*shell;
-	char		*user, *group, *grouplist, *endp, *p;
+	char		*fulluser, *user, *group, *grouplist, *endp, *p;
 	gid_t		gid, gidlist[NGROUPS_MAX];
 	uid_t		uid;
 	int		ch, gids;
 	unsigned long	ul;
 
+	gid = 0;
+	uid = 0;
 	gids = 0;
-	user = group = grouplist = NULL;
-	while ((ch = getopt(argc, argv, "G:g:u:")) != -1) {
+	user = fulluser = group = grouplist = NULL;
+	while ((ch = getopt(argc, argv, "G:g:U:u:")) != -1) {
 		switch(ch) {
+		case 'U':
+			fulluser = optarg;
+			if (*fulluser == '\0')
+				usage();
+			break;
 		case 'u':
 			user = optarg;
 			if (*user == '\0')
@@ -105,6 +112,9 @@ main(int argc, char **argv)
 
 	if (argc < 1)
 		usage();
+	if (fulluser && (user || group || grouplist))
+		errx(1,
+		    "the -U option may not be specified with any other option");
 
 	if (group != NULL) {
 		if ((gp = getgrnam(group)) != NULL)
@@ -120,6 +130,8 @@ main(int argc, char **argv)
 			errx(1, "no such group `%s'", group);
 		if (grouplist != NULL)
 			gidlist[gids++] = gid;
+		if (setgid(gid) != 0)
+			err(1, "setgid");
 	}
 
 	while ((p = strsep(&grouplist, ",")) != NULL && gids < NGROUPS_MAX) {
@@ -137,10 +149,16 @@ main(int argc, char **argv)
 			gidlist[gids] = (gid_t)ul;
 		} else
 			errx(1, "no such group `%s'", p);
-		gids++;
+		/*
+		 * Ignore primary group if specified; we already added it above.
+		 */
+		if (group == NULL || gidlist[gids] != gid)
+			gids++;
 	}
 	if (p != NULL && gids == NGROUPS_MAX)
 		errx(1, "too many supplementary groups provided");
+	if (gids && setgroups(gids, gidlist) != 0)
+		err(1, "setgroups");
 
 	if (user != NULL) {
 		if ((pw = getpwnam(user)) != NULL)
@@ -156,14 +174,21 @@ main(int argc, char **argv)
 			errx(1, "no such user `%s'", user);
 	}
 
+	if (fulluser != NULL) {
+		if ((pw = getpwnam(fulluser)) == NULL)
+			errx(1, "no such user `%s'", fulluser);
+		uid = pw->pw_uid;
+		gid = pw->pw_gid;
+		if (setgid(gid) != 0)
+			err(1, "setgid");
+		if (initgroups(fulluser, gid) == -1)
+			err(1, "initgroups");
+	}
+
 	if (chroot(argv[0]) != 0 || chdir("/") != 0)
 		err(1, "%s", argv[0]);
 
-	if (gids && setgroups(gids, gidlist) != 0)
-		err(1, "setgroups");
-	if (group && setgid(gid) != 0)
-		err(1, "setgid");
-	if (user && setuid(uid) != 0)
+	if ((user || fulluser) && setuid(uid) != 0)
 		err(1, "setuid");
 
 	if (argv[1]) {
@@ -184,6 +209,6 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr, "usage: %s [-g group] [-G group,group,...] "
-	    "[-u user] newroot [command]\n", __progname);
+	    "[-u user] [-U user] newroot [command]\n", __progname);
 	exit(1);
 }
