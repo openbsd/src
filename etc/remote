@@ -1,32 +1,75 @@
-#	$OpenBSD: remote,v 1.4 1997/09/03 21:26:19 deraadt Exp $
-#	@(#)remote	5.2 (Berkeley) 6/30/90
+#	from: @(#)remote	8.1 (Berkeley) 6/10/93
 #
-# remote -- remote host description file
-# see tip(1), remote(5)
+# remote -- remote host description database
+# see tip(1), cgetcap(3), phones(5), remote(5)
 #
-# dv	device to use for the tty
-# el	EOL marks (default is NULL)
-# du	make a call flag (dial up)
-# pn	phone numbers (@ =>'s search phones file; possibly taken from
-#	PHONES environment variable)
-# at	ACU type
-# ie	input EOF marks (default is NULL)
-# oe	output EOF string (default is NULL)
-# cu	call unit (default is dv)
-# br	baud rate (defaults to 300)
-# fs	frame size (default is BUFSIZ) -- used in buffering writes on
-#	receive operations
-# tc	to continue a capability
+# Capabilities used in examples:
+#
+#   at	ACU type
+#   br	baud rate (defaults to 300)
+#   dc	direct connect
+#   du	make a call flag (dial up)
+#   dv	device to use for the tty
+#   el	EOL marks (default is NULL)
+#   ie	input EOF marks (default is NULL)
+#   oe	output EOF string (default is NULL)
+#   pa	parity
+#   pn	phone #, '\@' means use the phones(5) file
+#   tc	include the named system description
+#
+# Most OpenBSD architectures use /dev/tty00, /dev/cua00, etc.
+# for the 'standard' serial ports. Some architectures use
+# /dev/ttya, /dev/cuaa, etc. The samples provide descriptions
+# for the first serial port in each style.
+#
+# A few architectures such as the Alpha, HPPA, or mvme88k either
+# don't provide a serial port by default or have more complex
+# naming conventions.
+#
+# In all cases make sure you are using the appropriate device
+# name for the port you wish to access.
+#
+# System names can be anything, the samples use the device name
+# for simplicity.
+#
+# NOTE:
+#       a) Multiple :tc=XXX: capabilities are allowed, so that
+#          various general pieces can be assembled into one
+#          system description.
+#       b) Only the first capability with the same name is 
+#          used. So capabilitites included a with :tc=XXX: can
+#          be overridden by assigning them a value before 
+#          including them. e.g. ":oe=^Z:" in doshost below.
+#
+# See cgetcap(3) for details on capability databases.
+# --------------------------------------------------------------
 
-# UNIX system definitions
-unix19200|19200 Baud dial-out to another UNIX system:\
-	:el=^U^C^R^O^D^S^Q:ie=%$:oe=^D:tc=dial1200:
-unix1200|1200 Baud dial-out to another UNIX system:\
-	:el=^U^C^R^O^D^S^Q:ie=%$:oe=^D:tc=dial1200:
-unix300|300 Baud dial-out to another UNIX system:\
-	:el=^U^C^R^O^D^S^Q:ie=%$:oe=^D:tc=dial300:
-
-# General dialer definitions used below
+# General definitions used in :tc=XXX: capabilities below
 #
-dialout:\
-        :dv=/dev/tty00:br#19200:cu=/dev/cua00:at=hayes:du:
+direct:\
+	:dc:
+
+dialup:\
+        :du:at=hayes:pn=\@:
+
+doshost:\
+	:oe=^Z:tc=unixhost:
+
+unixhost:\
+	:pa=none:br#9600:el=^U^C^R^O^D^S^Q:ie=%$:oe=^D:
+
+# Sample directly connected lines. Directly connected lines are
+# most commonly used for serial consoles.
+#
+tty00|For Amiga,i386,mac68k,mvmeppc,powerpc,vax,hp300:\
+	:dv=/dev/tty00:tc=direct:tc=unixhost:
+
+ttya|For sun3,sparc,mvme68k:\
+	:dv=/dev/ttya:tc=direct:tc=unixhost:
+
+# Sample dial out lines.
+#
+cua00|For Amiga,i386,mac68k,mvmeppc,powerpc,vax,hp300:\
+	:dv=/dev/cua00:tc=dialup:tc=unixhost:
+cuaa|For sun3,sparc,mvme68k:\
+	:dv=/dev/cuaa:tc=dialup:tc=unixhost:

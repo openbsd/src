@@ -1,4 +1,4 @@
-.\"	$OpenBSD: phones.5,v 1.6 2000/10/26 00:37:05 aaron Exp $
+.\"	$OpenBSD: phones.5,v 1.7 2001/08/11 00:05:53 krw Exp $
 .\"	$NetBSD: phones.5,v 1.3 1994/11/30 19:31:25 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -39,47 +39,77 @@
 .Os
 .Sh NAME
 .Nm phones
-.Nd remote host phone number database
+.Nd remote host phone number file
 .Sh DESCRIPTION
-The
-.Pa /etc/phones
-file contains the system-wide private phone numbers for the
+.Nm
+files are used by
 .Xr tip 1
-program.
-This file is normally unreadable, and so may contain privileged information.
+to find phone numbers not included in the
+.Xr remote 5
+database(s) being used.
+.Pp
+The default file is
+.Pa /etc/phones ,
+which is used unless the
+.Ev PHONES
+environment variable has been set.
+.Pa /etc/phones
+is world readable by default, and should
+.Em not
+contain privileged information.
+.Pp
 The format of the file is a series of lines of the form:
 .Pp
-.D1 Li <system-name>[\ \et]*<phone-number>
+.D1 Li <system name>[\ \et]*<phone number>
 .Pp
-The system name is one of those defined in the
-.Xr remote 5
-file and the phone number is constructed from any sequence of
-characters terminated only by
+The system name must start at the first character on the line.
+The phone number is any sequence of characters terminated by a
 .Ql \&,
 or the end of the line.
-The
-.Ql =
-and
-.Ql *
-characters are indicators to the auto call units to pause and wait for
-a second dial tone (when going through an exchange).
-The
-.Ql =
-is required by the
-.Tn DF02-AC
-and the
-.Ql *
-is required by the
-.Tn BIZCOMP
-1030.
+Thus the phone number field can contain arbitrary dialing strings, not
+just phone numbers.
+.Pp
+Certain auto-call units or modems can use
+.Ql \&,
+in their dialing strings.
+For these units (currently Hayes, Courier and Telebit)
+.Xr tip 1
+will translate a
+.Ql \&=
+in the phone number to a
+.Ql \&,
+when actually dialing the number.
+.Pp
+If the auto-call unit is a Racal-Vadic 831,
+.Xr tip 1
+will translate a
+.Ql \&_
+in the phone number to a
+.Ql \&= .
+.Pp
+.Xr tip 1
+ignores all lines with a system name other than the one being
+looked up.
+Comments can be inserted into the file by making the first character
+on a line something not used to start any system name in the
+.Xr remote 5
+database(s) being used, such as 
+.Ql # .
 .Pp
 Only one phone number per line is permitted.
-However, if more than one line in the file contains the same system name,
-.Xr tip 1
-will attempt to dial each one in turn, until it establishes a connection.
+To associate more than one phone number with a system name you must
+create multiple lines that have the same system name.
+.Xr tip 1 
+will try each number in sequence until it makes a connection or
+reaches the end of the file.
+.Pp
 .Sh FILES
 .Bl -tag -width /etc/phones -compact
 .It Pa /etc/phones
+The default
+.Nm
+file for
+.Xr tip 1 .
 .El
 .Sh SEE ALSO
 .Xr tip 1 ,

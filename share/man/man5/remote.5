@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.10 2001/08/02 20:37:35 hugh Exp $
+.\"	$OpenBSD: remote.5,v 1.11 2001/08/11 00:05:53 krw Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -48,8 +48,7 @@ and their attributes are stored in an
 file which is structured somewhat like the
 .Xr termcap 5
 file.
-Each line in the file provides a description for a single
-.Xr system .
+Each line in the file provides a description for a single remote host.
 Fields are separated by a colon
 .Pq Sq \&: .
 Lines ending with a
@@ -70,25 +69,29 @@ indicates a following numeric value.
 .Pp
 Entries named
 .Dq tip\&*
-and
-.Dq cu\&*
+.\"and
+.\".Dq cu\&*
 are used as default entries by
-.Xr tip ,
-and the
-.Xr cu
-interface to
-.Xr tip ,
+.Xr tip 1
+.\"and the
+.\".Xr cu 1
+.\"interface to
+.\".Xr tip 1 ,
 as follows.
 When
-.Xr tip
-is invoked with only a phone number, it looks for an entry of the form
-.Dq tip300 ,
-where 300 is the baud rate with which the connection is to be made.
-When the
-.Xr cu
-interface is used, entries of the form
-.Dq cu300
-are used.
+.Xr tip 1
+is invoked with only a baud rate, it looks for an entry of the form
+.Dq tip<baud rate> .
+E.g.
+.Ic tip -300
+will cause
+.Xr tip 1
+to look for the system tip300.
+.\"When the
+.\".Xr cu 1
+.\"interface is used, entries of the form
+.\".Dq cu300
+.\"are used.
 .Sh CAPABILITIES
 Capabilities are either strings (str), numbers (num), or boolean flags (bool).
 A string capability is specified by
@@ -107,7 +110,7 @@ Auto call unit type.
 .It Sy \&be
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq beautify
 to
@@ -133,7 +136,7 @@ field.
 .It Sy \&dc
 (bool)
 This host is directly connected, and
-.Xr tip
+.Xr tip 1
 should not expect carrier detect to be high, nor should it exit if
 carrier detect drops.
 .It Sy \&di
@@ -153,13 +156,13 @@ one user at a time has access to the port.
 .It Sy \&ec
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq echocheck
 to
 .Sy on ,
 so that
-.Xr tip
+.Xr tip 1
 will synchronize with the remote host during file
 transfer by waiting for the last character transmitted to echo.
 .It Sy \&el
@@ -169,14 +172,14 @@ The default is
 .Dv NULL .
 .Dq ~
 escapes are only recognized by
-.Xr tip
+.Xr tip 1
 after one of the characters in
 .Sy el ,
 or after a carriage-return.
 .It Sy \&es
 (str)
 The escape character for
-.Xr tip .
+.Xr tip 1 .
 The default is
 .Dq ~ .
 .It Sy \&et
@@ -213,7 +216,7 @@ The default is
 .It Sy \&nb
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq beautify
 to
@@ -222,7 +225,7 @@ so that non-printable characters will not be discarded when scripting.
 .It Sy \&nt
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq tandem
 to
@@ -232,7 +235,7 @@ from the remote host.
 .It Sy \&nv
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq verbose
 to
@@ -244,7 +247,7 @@ Output end-of-file string.
 The default is
 .Dv NULL .
 When
-.Xr tip
+.Xr tip 1
 is transferring a file, this string is sent at end-of-file.
 .It Sy \&pa
 (str)
@@ -262,14 +265,35 @@ The default is no parity.
 .It Sy \&pn
 (str)
 Telephone number(s) for this host.
-If the telephone number field contains a
-.Ql @
-(at sign),
-.Xr tip
-searches the file
-.Pa /etc/phones
-file for a list of telephone numbers (see
-.Xr phones 5 ) .
+Either a list of arbitrary dialing strings separated by
+commas, or a
+.Ql @ .
+An at sign,
+.Ql @ ,
+tells
+.Xr tip 1
+to search the
+.Xr phones 5
+database for the list of telephone numbers.
+.Pp
+For modems or auto-call units that use a
+.Ql \&,
+in their dialing strings (hayes, courier, t3000)
+.Xr tip 1
+will convert any
+.Ql \&=
+in the string to a 
+.Ql \&,
+when dialing.
+For modems or auto-call units that use a
+.Ql \&=
+in their dial strings, (v831),
+.Xr tip 1
+will convert any
+.Ql \&_
+to a
+.Ql \&=
+when dialing.
 .It Sy \&pr
 (str)
 Character that indicates end-of-line on the remote host.
@@ -278,7 +302,7 @@ The default value is
 .It Sy \&ra
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq raise
 to
@@ -299,7 +323,7 @@ The default value is
 .It Sy \&rw
 (str)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq rawftp
 to
@@ -308,7 +332,7 @@ so that all characters will be sent as is during file transfers.
 .It Sy \&sc
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq script
 to
@@ -317,7 +341,7 @@ so that everything transmitted by the remote host will be recorded.
 .It Sy \&ta
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq tandem
 to
@@ -327,7 +351,7 @@ from the remote host.
 .It Sy \&tb
 (bool)
 Initialize the 
-.Xr tip 
+.Xr tip 1 
 variable 
 .Dq tabexpand
 to
@@ -340,7 +364,7 @@ This is used primarily to share common capability information.
 .It Sy \&vb
 (bool)
 Initialize the
-.Xr tip
+.Xr tip 1
 variable
 .Dq verbose
 to
@@ -359,6 +383,7 @@ arpavax|ax:\e
 .Sh FILES
 .Bl -tag -width /etc/remote -compact
 .It Pa /etc/remote
+Global database.
 .El
 .Sh SEE ALSO
 .Xr tip 1 ,
