@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile,v 1.11 2001/11/20 01:13:44 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.12 2002/02/21 23:17:53 drahn Exp $
 
 SUBDIR=ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
 
 NOMAN=
 SRCS=	ldasm.S loader.c library.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
-SRCS+=  sod.c strcmp.c strncmp.c strsep.c strtol.c strdup.c strcpy.c
+SRCS+=	util.c
+SRCS+=  sod.c strcmp.c strncmp.c strsep.c strtol.c
 OBJS+=  strchr.o
 PROG=	ld.so
 MAN=	ld.so.8
@@ -17,7 +18,7 @@ AFLAGS += -fpic
 CFLAGS += -fpic -msoft-float
 .endif
 .if (${MACHINE_ARCH} == "alpha")
-CFLAGS += -Werror
+CFLAGS += -Werror -Wall -Wno-uninitialized
 CFLAGS += -fpic -mno-fp-regs
 LIBCSRCDIR=${.CURDIR}/../../lib/libc
 .include "${LIBCSRCDIR}/arch/alpha/Makefile.inc"

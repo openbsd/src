@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.11 2001/11/06 15:32:11 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.12 2002/02/21 23:17:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -278,7 +278,7 @@ _dl_show_objects()
 
 	object = _dl_objects;
 
-	_dl_printf("\tStart    End      Type Ref Name\n");
+	_dl_printf("\tStart    Size     Type Ref Name\n");
 
 	while (object) {
 		switch (object->obj_type) {

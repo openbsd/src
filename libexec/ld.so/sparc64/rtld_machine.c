@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2002/02/20 05:04:34 jason Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.10 2002/02/21 23:17:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -289,6 +289,7 @@ resolve_failed:
 					fails++;
 					continue;
 				}
+				value += (Elf_Addr)(ooff + this->st_value);
 #ifdef notyet
 /*
  * XXX Hmm, we should change the API of _dl_find_symbol and do this in there,
@@ -304,7 +305,6 @@ resolve_failed:
 				}
 #endif
 			}
-			value += (Elf_Addr)(ooff + this->st_value);
 		}
 
 		if (type == R_TYPE(JMP_SLOT)) {
@@ -316,7 +316,6 @@ resolve_failed:
 			void *dstaddr = where;
 			const void *srcaddr;
 			const Elf_Sym *dstsym = sym, *srcsym = NULL;
-			const char *name = symn;
 			size_t size = dstsym->st_size;
 			Elf_Addr soff;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.1.1.1 2000/06/13 03:34:17 rahnds Exp $ */
+/*	$OpenBSD: syscall.h,v 1.2 2002/02/21 23:17:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  *
  */
+#ifndef __DL_SYSCALL_H__
+#define __DL_SYSCALL_H__
 
 #ifdef USE_CACHE
 #include <sys/stat.h>
@@ -243,3 +245,4 @@ _dl_suid_ok (void)
 
   	return (uid == euid && gid == egid);
 }
+#endif /*__DL_SYSCALL_H__*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1.1.1 2000/06/13 03:34:13 rahnds Exp $ */
+/*	$OpenBSD: archdep.h,v 1.2 2002/02/21 23:17:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,98 +35,14 @@
 #ifndef _MIPS_ARCHDEP_H_
 #define _MIPS_ARCHDEP_H_
 
+#include "syscall.h"
+#include "util.h"
+
 #define	DL_MALLOC_ALIGN	4	/* Arch constraint or otherwise */
 
 #define	MACHID	EM_MIPS		/* ELF e_machine ID value checked */
 
 #define	RELTYPE	Elf32_Rel
 #define	RELSIZE	sizeof(Elf32_Rel)
-
-/*
- *	Simple reloc of REL32's. Used by bootstrapping.
- */
-#define	SIMPLE_RELOC(r, s, p, v)					\
-	if(ELF32_R_TYPE((r)->r_info) == R_MIPS_REL32) {			\
-		if(ELF32_ST_BIND((s)->st_info) == STB_LOCAL &&		\
-		   (ELF32_ST_TYPE((s)->st_info) == STT_SECTION ||	\
-		    ELF32_ST_TYPE((s)->st_info) == STT_NOTYPE) ) {	\
-			*(p) += (v);					\
-		}							\
-		else {							\
-			*(p) = (v) + (s)->st_value;			\
-		}							\
-	}
-
-/*
- *	The following functions are declared inline so they can
- *	be used before bootstrap linking has been finished.
- */
-extern inline void
-_dl_wrstderr(const char *s)
-{
-	while(*s) {
-		_dl_write(2, s, 1);
-		s++;
-	}
-}
-
-extern inline void *
-_dl_memset(void *p, const char v, size_t c)
-{
-	char *ip = p;
-
-	while(c--)
-		*ip++ = v;
-	return(p);
-}
-
-extern inline int
-_dl_strlen(const char *p)
-{
-	const char *s = p;
-
-	while(*s != '\0')
-		s++;
-	return(s - p);
-}
-
-extern inline char *
-_dl_strcpy(char *d, const char *s)
-{
-	char *rd = d;
-
-	while((*d++ = *s++) != '\0');
-
-	return(rd);
-}
-
-extern inline int
-_dl_strncmp(const char *d, const char *s, int c)
-{
-	while(c-- && *d && *d++ == *s++) {};
-	if(c < 0) {
-		return(0);
-	}
-	return(d[-1] - s[-1]);
-}
- 
-extern inline int
-_dl_strcmp(const char *d, const char *s)
-{
-	while(*d && *d++ == *s++) {};
-	return(d[-1] - s[-1]);
-}
- 
-extern inline const char *
-_dl_strchr(const char *p, const int c)
-{
-	while(*p) {
-		if(*p == c) {
-			return(p);
-		}
-		p++;
-	}
-	return(0);
-}
 
 #endif /* _MIPS_ARCHDEP_H_ */

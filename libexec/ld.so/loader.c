@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.23 2001/09/26 22:58:23 jason Exp $ */
+/*	$OpenBSD: loader.c,v 1.24 2002/02/21 23:17:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -48,13 +48,6 @@
  *  Local decls.
  */
 static char *_dl_getenv(const char *var, const char **env);
-
-/*
- * Static vars usable after bootsrapping.
- */
-static void *_dl_malloc_base;
-static void *_dl_malloc_pool = 0;
-static long *_dl_malloc_free = 0;
 
 const char *_dl_progname;
 int  _dl_pagesz;
@@ -111,7 +104,6 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	Elf_Dyn *dynp, long *dl_data)
 {
 	int		n;
-	int		brk_addr;
 	Elf_Phdr	*phdp;
 	char		*us = "";
 	elf_object_t	*dynobj;
@@ -157,17 +149,13 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 */
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
 	for (n = 0; n < dl_data[AUX_phnum]; n++) {
-		if (phdp->p_type == PT_LOAD) {				/*XXX*/
-			if (phdp->p_vaddr + phdp->p_memsz > brk_addr)	/*XXX*/
-				brk_addr = phdp->p_vaddr + phdp->p_memsz;
-		}							/*XXX*/
 		if (phdp->p_type == PT_DYNAMIC) {
-			exe_obj = _dl_add_object("", (Elf_Dyn *)phdp->p_vaddr,
-						   dl_data, OBJTYPE_EXE, 0, 0);
+			exe_obj = _dl_add_object(argv[0],
+			    (Elf_Dyn *)phdp->p_vaddr, dl_data, OBJTYPE_EXE,
+			    0, 0);
 		}
 		if (phdp->p_type == PT_INTERP) {
-			us = (char *)_dl_malloc(_dl_strlen((char *)phdp->p_vaddr) + 1);
-			_dl_strcpy(us, (char *)phdp->p_vaddr);
+			us = _dl_strdup((char *)phdp->p_vaddr);
 		}
 		phdp++;
 	}
@@ -509,7 +497,6 @@ _dl_call_init(elf_object_t *object)
 {
 	Elf_Addr ooff;
 	const Elf_Sym  *sym;
-	static void (*_dl_atexit)(Elf_Addr) = NULL;
 
 	if (object->next) {
 		_dl_call_init(object->next);
@@ -582,61 +569,4 @@ _dl_getenv(const char *var, const char **env)
 	}
 
 	return(0);
-}
-
-
-/*
- *  The following malloc/free code is a very simplified implementation
- *  of a malloc function. However, we do not need to be very complex here
- *  because we only free memory when 'dlclose()' is called and we can
- *  reuse at least the memory allocated for the object descriptor. We have
- *  one dynamic string allocated, the library name and it is likely that
- *  we can reuse that one to without a lot of complex colapsing code.
- */
-
-void *
-_dl_malloc(int size)
-{
-	long *p;
-	long *t, *n;
-
-	size = (size + 8 + DL_MALLOC_ALIGN - 1) & ~(DL_MALLOC_ALIGN - 1);
-
-	if ((t = _dl_malloc_free) != 0) {	/* Try free list first */
-		n = (long *)&_dl_malloc_free;
-		while (t && t[-1] < size) {
-			n = t;
-			t = (long *)*t;
-		}
-		if (t) {
-			*n = *t;
-			_dl_memset(t, 0, t[-1] - 4);
-			return((void *)t);
-		}
-	}
-	if ((_dl_malloc_pool == 0) ||
-	    (_dl_malloc_pool + size > _dl_malloc_base + 4096)) {
-		_dl_malloc_pool = (void *)_dl_mmap((void *)0, 4096,
-						PROT_READ|PROT_WRITE,
-						MAP_ANON|MAP_PRIVATE, -1, 0);
-		if (_dl_malloc_pool == 0 || _dl_malloc_pool == MAP_FAILED ) {
-			_dl_printf("Dynamic loader failure: malloc.\n");
-			_dl_exit(7);
-		}
-		_dl_malloc_base = _dl_malloc_pool;
-	}
-	p = _dl_malloc_pool;
-	_dl_malloc_pool += size;
-	_dl_memset(p, 0, size);
-	*p = size;
-	return((void *)(p + 1));
-}
-
-void
-_dl_free(void *p)
-{
-	long *t = (long *)p;
-
-	*t = (long)_dl_malloc_free;
-	_dl_malloc_free = p;
 }

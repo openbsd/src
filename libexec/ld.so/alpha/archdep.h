@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2002/02/16 21:27:30 millert Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2002/02/21 23:17:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -44,86 +44,8 @@
 
 #include <elf_abi.h>
 #include <machine/reloc.h>
-
-int	_dl_write(int, const char *, int);
-
-/*
- *	The following functions are declared inline so they can
- *	be used before bootstrap linking has been finished.
- */
-static inline void
-_dl_wrstderr(const char *s)
-{
-	while(*s) {
-		_dl_write(2, s, 1);
-		s++;
-	}
-}
-
-static inline void *
-_dl_memset(void *p, const char v, size_t c)
-{
-	char *ip = p;
-
-	while(c--)
-		*ip++ = v;
-	return(p);
-}
-
-static inline int
-_dl_strlen(const char *p)
-{
-	const char *s = p;
-
-	while(*s != '\0')
-		s++;
-	return(s - p);
-}
-
-static inline char *
-_dl_strcpy(char *d, const char *s)
-{
-	char *rd = d;
-
-	while((*d++ = *s++) != '\0');
-
-	return(rd);
-}
-
-static inline int
-_dl_strncmp(const char *d, const char *s, int c)
-{
-	while(c-- && *d && *d == *s) {
-		d++;
-		s++;
-	};
-	if(c < 0) {
-		return(0);
-	}
-	return(*d - *s);
-}
- 
-static inline int
-_dl_strcmp(const char *d, const char *s)
-{
-	while(*d && *d == *s) {
-		d++;
-		s++;
-	}
-	return(*d - *s);
-}
- 
-static inline const char *
-_dl_strchr(const char *p, const int c)
-{
-	while(*p) {
-		if(*p == c) {
-			return(p);
-		}
-		p++;
-	}
-	return(0);
-}
+#include "syscall.h"
+#include "util.h"
 
 static inline void
 RELOC_RELA(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.3 2002/02/16 21:27:30 millert Exp $ */
+/*	$OpenBSD: syscall.h,v 1.4 2002/02/21 23:17:53 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -32,6 +32,9 @@
  *
  */
 
+#ifndef __DL_SYSCALL_H__
+#define __DL_SYSCALL_H__
+
 #ifdef USE_CACHE
 #include <sys/stat.h>
 #endif
@@ -52,7 +55,6 @@ long	_dl___syscall(quad_t, ...);
 int	_dl_mprotect(const void *, int, int);
 int	_dl_munmap(const void*, unsigned int);
 int	_dl_open(const char*, unsigned int);
-void	_dl_printf(const char *, ...);
 int	_dl_read(int, const char*, int);
 #ifdef USE_CACHE
 int	_dl_stat(const char *, struct stat *);
@@ -77,3 +79,4 @@ _dl_suid_ok (void)
 }
 
 #include <elf_abi.h>
+#endif /*__DL_SYSCALL_H__*/

@@ -1,4 +1,4 @@
-/*      $OpenBSD: sod.c,v 1.7 2001/09/22 04:58:18 drahn Exp $       */
+/*      $OpenBSD: sod.c,v 1.8 2002/02/21 23:17:53 drahn Exp $       */
 /*  
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -44,10 +44,9 @@
 #include <syscall.h>
 
 #include "archdep.h"
+#include "util.h"
 
 #define PAGSIZ	__LDPGSZ
-char * _dl_strdup(const char *);
-void _dl_free(void *);
 int _dl_hinthash(char *cp, int vmajor, int vminor);
 
 /*
@@ -68,7 +67,7 @@ _dl_build_sod(name, sodp)
 	sodp->sod_major = sodp->sod_minor = 0;
 
 	/* does it look like /^lib/ ? */
-	if (strncmp((char *)sodp->sod_name, "lib", 3) != 0)
+	if (_dl_strncmp((char *)sodp->sod_name, "lib", 3) != 0)
 		return;
 
 	/* is this a filename? */

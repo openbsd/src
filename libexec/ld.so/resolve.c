@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.5 2001/09/25 14:06:48 art Exp $ */
+/*	$OpenBSD: resolve.c,v 1.6 2002/02/21 23:17:53 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -44,8 +44,6 @@
 
 elf_object_t *_dl_objects;
 elf_object_t *_dl_last_object;
-
-void * _dl_malloc(int);
 
 /*
  *	Initialize and add a new dynamic object to the object list.
@@ -133,8 +131,7 @@ d_un.d_val;
 	object->obj_type = objtype;
 	object->load_addr = laddr;
 	object->load_offs = loff;
-	object->load_name = (char *)_dl_malloc(_dl_strlen(objname) + 1);
-	_dl_strcpy(object->load_name, objname);
+	object->load_name = _dl_strdup(objname);
 	object->refcount = 1;
 
 	return(object);
