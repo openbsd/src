@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.34 1999/02/01 07:58:30 d Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.35 1999/02/03 03:58:05 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -107,7 +107,7 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.34 1999/02/01 07:58:30 d Exp $";
     * we use the unwrapped syscall _thread_sys_write()
     */
 #  define write _thread_sys_write
-   int write __P((int, const void *, size_t));
+   ssize_t write __P((int, const void *, size_t));
 #   undef malloc
 #   undef realloc
 #   undef free
