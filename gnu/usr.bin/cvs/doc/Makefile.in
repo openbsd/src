@@ -112,8 +112,8 @@ includeopt = @includeopt@
 install_sh = @install_sh@
 
 info_TEXINFOS = cvs.texinfo cvsclient.texi
-cvs_TEXINFOS = 
-cvsclient_TEXINFOS = 
+cvs_TEXINFOS = CVSvn.texi
+cvsclient_TEXINFOS = CVSvn.texi
 
 POSTSCRIPTS = \
 	cvs.ps \
@@ -469,12 +469,12 @@ cvs-paper.ps: cvs-paper.ms
 #   don't look through VPATH for targets, but only for sources.
 # - They should be disabled on systems without the bug and in environments
 #   where $(srcdir) = $(builddir)
-@MAKE_TARGETS_IN_VPATH_FALSE@CVSvn.texi: $(srcdir)/CVSvn.texi
+@MAKE_TARGETS_IN_VPATH_FALSE@#CVSvn.texi: $(srcdir)/CVSvn.texi
 @MAKE_TARGETS_IN_VPATH_FALSE@	# use cat so the time stamp gets set properly
 @MAKE_TARGETS_IN_VPATH_FALSE@	cat $(srcdir)/CVSvn.texi >$@
-@MAKE_TARGETS_IN_VPATH_FALSE@$(srcdir)/CVSvn.texi: $(srcdir)/CVSvn.texi.in $(top_srcdir)/configure.in
-@MAKE_TARGETS_IN_VPATH_FALSE@	sed 's,@VERSION\@,$(VERSION),g' $(srcdir)/CVSvn.texi.in >$(srcdir)/CVSvn.ttexi
-@MAKE_TARGETS_IN_VPATH_FALSE@	mv $(srcdir)/CVSvn.ttexi $(srcdir)/CVSvn.texi
+@MAKE_TARGETS_IN_VPATH_FALSE@CVSvn.texi: $(srcdir)/CVSvn.texi.in $(top_srcdir)/configure.in
+@MAKE_TARGETS_IN_VPATH_FALSE@	sed 's,@VERSION\@,$(VERSION),g' $(srcdir)/CVSvn.texi.in >CVSvn.ttexi
+@MAKE_TARGETS_IN_VPATH_FALSE@	mv CVSvn.ttexi CVSvn.texi
 
 # for backwards compatibility with the old makefiles
 realclean: maintainer-clean

@@ -294,7 +294,7 @@ Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	  CONFIG_HEADERS= CONFIG_LINKS= \
 	  CONFIG_FILES=$(subdir)/$@ $(SHELL) ./config.status
 
-options.h: stamp-h2
+options.h: #stamp-h2
 	@if test ! -f $@; then \
 		rm -f stamp-h2; \
 		$(MAKE) stamp-h2; \
@@ -594,11 +594,11 @@ remotecheck: all
 #   is changed, acversion.m4 is built only after the new version number is
 #   propagated to the Makefile.  (Libtool uses the same guarantee.)
 # - need the explicit version.o dependency or else make won't match
-#   $(srcdir)/version.c when looking for a dependency for version.c
-version.o: $(srcdir)/version.c
-$(srcdir)/version.c: $(srcdir)/version.c.in $(top_srcdir)/configure.in
-	sed 's,@VERSION\@,$(VERSION),g' $(srcdir)/version.c.in >$(srcdir)/version.tc
-	mv $(srcdir)/version.tc $(srcdir)/version.c
+#   $(top_srcdir)/version.c when looking for a dependency for version.c
+version.o: version.c
+version.c: $(srcdir)/version.c.in $(top_srcdir)/configure.in
+	sed 's,@VERSION\@,$(VERSION),g' $(srcdir)/version.c.in > version.tc
+	mv version.tc version.c
 
 # for backwards compatibility with the old makefiles
 .PHONY: realclean
