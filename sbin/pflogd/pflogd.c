@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.31 2004/09/17 07:11:55 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.32 2005/01/08 18:51:18 canacar Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -606,7 +606,7 @@ main(int argc, char **argv)
 
 	while (1) {
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS,
-		    dump_packet, (u_char *)dpcap);
+		    phandler, (u_char *)dpcap);
 		if (np < 0)
 			logmsg(LOG_NOTICE, "%s", pcap_geterr(hpcap));
 
