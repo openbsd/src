@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.32 2000/06/16 21:43:04 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.33 2000/06/20 05:50:16 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -799,8 +799,7 @@ bridge_output(ifp, m, sa, rt)
 			if (LIST_NEXT(p, next) == NULL) {
 				used = 1;
 				mc = m;
-			}
-			else {
+			} else {
 				mc = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 				if (mc == NULL) {
 					sc->sc_if.if_oerrors++;
@@ -1171,8 +1170,7 @@ bridge_broadcast(sc, ifp, eh, m)
 		if (LIST_NEXT(p, next) == NULL) {
 			mc = m;
 			used = 1;
-		}
-		else {
+		} else {
 			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
@@ -1224,8 +1222,7 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 
 			for (h = 0; h < BRIDGE_RTABLE_SIZE; h++)
 				LIST_INIT(&sc->sc_rts[h]);
-		}
-		else
+		} else
 			goto done;
 	}
 
@@ -1472,12 +1469,10 @@ bridge_rtage(vsc)
 				if (n->brt_age)
 					n->brt_age = 0;
 				n = LIST_NEXT(n, brt_next);
-			}
-			else if (n->brt_age) {
+			} else if (n->brt_age) {
 				n->brt_age = 0;
 				n = LIST_NEXT(n, brt_next);
-			}
-			else {
+			} else {
 				p = LIST_NEXT(n, brt_next);
 				LIST_REMOVE(n, brt_next);
 				sc->sc_brtcnt--;
@@ -1755,8 +1750,7 @@ bridge_addrule(bif, req, out)
 		n->brl_flags &= ~BRL_FLAG_IN;
 		n->brl_flags |= BRL_FLAG_OUT;
 		SIMPLEQ_INSERT_TAIL(&bif->bif_brlout, n, brl_next);
-	}
-	else {
+	} else {
 		n->brl_flags &= ~BRL_FLAG_OUT;
 		n->brl_flags |= BRL_FLAG_IN;
 		SIMPLEQ_INSERT_TAIL(&bif->bif_brlin, n, brl_next);
