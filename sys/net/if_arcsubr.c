@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.16 2003/08/18 11:01:41 dhartmei Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.17 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ u_int8_t  arcbroadcastaddr = 0;
  */
 int
 arc_output(ifp, m0, dst, rt0)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 	struct rtentry *rt0;
@@ -96,7 +96,7 @@ arc_output(ifp, m0, dst, rt0)
 	struct mbuf		*m, *m1, *mcopy;
 	struct rtentry		*rt;
 	struct arccom		*ac;
-	register struct arc_header *ah;
+	struct arc_header *ah;
 	int			s, error, newencoding, len;
 	u_int8_t		atype, adst;
 	int			tfrags, sflag, fsflag, rsflag;
@@ -464,8 +464,8 @@ arc_input(ifp, m)
 	struct ifnet *ifp;
 	struct mbuf *m;
 {
-	register struct arc_header *ah;
-	register struct ifqueue *inq;
+	struct arc_header *ah;
+	struct ifqueue *inq;
 	u_int8_t atype;
 	int s;
 
@@ -523,10 +523,10 @@ arc_input(ifp, m)
 static char digits[] = "0123456789abcdef";
 char *
 arc_sprintf(ap)
-	register u_int8_t *ap;
+	u_int8_t *ap;
 {
 	static char arcbuf[3];
-	register char *cp = arcbuf;
+	char *cp = arcbuf;
 
 	*cp++ = digits[*ap >> 4];
 	*cp++ = digits[*ap++ & 0xf];
@@ -539,9 +539,9 @@ arc_sprintf(ap)
  */
 void
 arc_ifattach(ifp)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct arccom *ac;
+	struct arccom *ac;
 
 	ifp->if_type = IFT_ARCNET;
 	ifp->if_addrlen = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_usrreq.c,v 1.6 2003/06/02 23:28:18 millert Exp $	*/
+/*	$OpenBSD: tp_usrreq.c,v 1.7 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tp_usrreq.c,v 1.9 1996/03/16 23:14:06 christos Exp $	*/
 
 /*-
@@ -121,8 +121,8 @@ dump_mbuf(n, str)
 			       n, n->m_len, n->m_data, n->m_act, n->m_next, n->m_type);
 #ifdef notdef
 			{
-				register char  *p = mtod(n, char *);
-				register int    i;
+				char  *p = mtod(n, char *);
+				int    i;
 
 				printf("data: ");
 				for (i = 0; i < n->m_len; i++) {
@@ -164,16 +164,16 @@ dump_mbuf(n, str)
 int
 tp_rcvoob(tpcb, so, m, outflags, inflags)
 	struct tp_pcb  *tpcb;
-	register struct socket *so;
-	register struct mbuf *m;
+	struct socket *so;
+	struct mbuf *m;
 	int            *outflags;
 	int             inflags;
 {
-	register struct mbuf *n;
-	register struct sockbuf *sb = &so->so_rcv;
+	struct mbuf *n;
+	struct sockbuf *sb = &so->so_rcv;
 	struct tp_event E;
 	int             error = 0;
-	register struct mbuf **nn;
+	struct mbuf **nn;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_XPD]) {
@@ -278,8 +278,8 @@ restart:
 int
 tp_sendoob(tpcb, so, xdata, outflags)
 	struct tp_pcb  *tpcb;
-	register struct socket *so;
-	register struct mbuf *xdata;
+	struct socket *so;
+	struct mbuf *xdata;
 	int            *outflags;	/* not used */
 {
 	/*
@@ -291,9 +291,9 @@ tp_sendoob(tpcb, so, xdata, outflags)
 	 * when it reaches the zero-length mbuf if this XPD TPDU hasn't
 	 * yet been acknowledged.
 	 */
-	register struct sockbuf *sb = &(tpcb->tp_Xsnd);
-	register struct mbuf *xmark;
-	register int    len = 0;
+	struct sockbuf *sb = &(tpcb->tp_Xsnd);
+	struct mbuf *xmark;
+	int    len = 0;
 	struct tp_event E;
 
 #ifdef ARGO_DEBUG
@@ -388,7 +388,7 @@ tp_usrreq(so, req, m, nam, controlp)
 	int             req;
 	struct mbuf    *m, *nam, *controlp;
 {
-	register struct tp_pcb *tpcb = sototpcb(so);
+	struct tp_pcb *tpcb = sototpcb(so);
 	int             s = splsoftnet();
 	int             error = 0;
 	int             flags, *outflags = &flags;
@@ -474,7 +474,7 @@ tp_usrreq(so, req, m, nam, controlp)
 		    tpcb->tp_next == 0)
 			error = EINVAL;
 		else {
-			register struct tp_pcb **tt;
+			struct tp_pcb **tt;
 			remque(tpcb);
 			tpcb->tp_next = tpcb->tp_prev = tpcb;
 			for (tt = &tp_listeners; *tt; tt = &((*tt)->tp_nextlisten))
@@ -761,7 +761,7 @@ tp_ltrace(so, uio)
 {
 #ifdef TPPT
 	if (tp_traceflags[D_DATA]) {
-		register struct tp_pcb *tpcb = sototpcb(so);
+		struct tp_pcb *tpcb = sototpcb(so);
 		if (tpcb) {
 			tptraceTPCB(TPPTmisc, "sosend so resid iovcnt", so,
 				    uio->uio_resid, uio->uio_iovcnt, 0);
@@ -772,7 +772,7 @@ tp_ltrace(so, uio)
 
 int
 tp_confirm(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
 	struct tp_event E;
 	if (tpcb->tp_state == TP_CONFIRMING)
@@ -789,9 +789,9 @@ int
 tp_snd_control(m, so, data)
 	struct mbuf    *m;
 	struct socket  *so;
-	register struct mbuf **data;
+	struct mbuf **data;
 {
-	register struct cmsghdr *ch;
+	struct cmsghdr *ch;
 	int             error = 0;
 
 	if (m && m->m_len) {

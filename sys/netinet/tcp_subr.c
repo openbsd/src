@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.70 2003/11/04 21:43:16 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.71 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -204,9 +204,9 @@ struct mbuf *
 tcp_template(tp)
 	struct tcpcb *tp;
 {
-	register struct inpcb *inp = tp->t_inpcb;
-	register struct mbuf *m;
-	register struct tcphdr *th;
+	struct inpcb *inp = tp->t_inpcb;
+	struct mbuf *m;
+	struct tcphdr *th;
 
 	if ((m = tp->t_template) == 0) {
 		m = m_get(M_DONTWAIT, MT_HEADER);
@@ -320,15 +320,15 @@ void
 tcp_respond(tp, template, m, ack, seq, flags)
 	struct tcpcb *tp;
 	caddr_t template;
-	register struct mbuf *m;
+	struct mbuf *m;
 	tcp_seq ack, seq;
 	int flags;
 {
-	register int tlen;
+	int tlen;
 	int win = 0;
 	struct route *ro = 0;
-	register struct tcphdr *th;
-	register struct tcpiphdr *ti = (struct tcpiphdr *)template;
+	struct tcphdr *th;
+	struct tcpiphdr *ti = (struct tcpiphdr *)template;
 	int af;		/* af on wire */
 
 	if (tp) {
@@ -526,7 +526,7 @@ tcp_newtcpcb(struct inpcb *inp)
  */
 struct tcpcb *
 tcp_drop(tp, errno)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 	int errno;
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
@@ -558,9 +558,9 @@ tcp_close(struct tcpcb *tp)
 	struct sackhole *p, *q;
 #endif
 #ifdef RTV_RTT
-	register struct rtentry *rt;
+	struct rtentry *rt;
 #ifdef INET6
-	register int bound_to_specific = 0;  /* I.e. non-default */
+	int bound_to_specific = 0;  /* I.e. non-default */
 
 	/*
 	 * This code checks the nature of the route for this connection.
@@ -607,7 +607,7 @@ tcp_close(struct tcpcb *tp)
 	    (rt = inp->inp_route.ro_rt) &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != INADDR_ANY) {
 #endif /* INET6 */
-		register u_long i = 0;
+		u_long i = 0;
 
 		if ((rt->rt_rmx.rmx_locks & RTV_RTT) == 0) {
 			i = tp->t_srtt *
@@ -737,8 +737,8 @@ tcp_notify(inp, error)
 	struct inpcb *inp;
 	int error;
 {
-	register struct tcpcb *tp = (struct tcpcb *)inp->inp_ppcb;
-	register struct socket *so = inp->inp_socket;
+	struct tcpcb *tp = (struct tcpcb *)inp->inp_ppcb;
+	struct socket *so = inp->inp_socket;
 
 	/*
 	 * Ignore some errors if we are hooked up.
@@ -865,10 +865,10 @@ void *
 tcp_ctlinput(cmd, sa, v)
 	int cmd;
 	struct sockaddr *sa;
-	register void *v;
+	void *v;
 {
-	register struct ip *ip = v;
-	register struct tcphdr *th;
+	struct ip *ip = v;
+	struct tcphdr *th;
 	extern int inetctlerrmap[];
 	void (*notify)(struct inpcb *, int) = tcp_notify;
 	int errno;

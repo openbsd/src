@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_x25subr.c,v 1.14 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: if_x25subr.c,v 1.15 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if_x25subr.c,v 1.13 1996/05/09 22:29:25 scottr Exp $	*/
 
 /*
@@ -111,11 +111,11 @@ static struct llinfo_x25 *x25_lxalloc(struct rtentry *);
  */
 static struct llinfo_x25 *
 x25_lxalloc(rt)
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
-	register struct llinfo_x25 *lx;
-	register struct sockaddr *dst = rt_key(rt);
-	register struct ifaddr *ifa;
+	struct llinfo_x25 *lx;
+	struct sockaddr *dst = rt_key(rt);
+	struct ifaddr *ifa;
 
 	MALLOC(lx, struct llinfo_x25 *, sizeof(*lx), M_PCB, M_NOWAIT);
 	if (lx == 0)
@@ -141,10 +141,10 @@ x25_lxalloc(rt)
 
 void
 x25_lxfree(lx)
-	register struct llinfo_x25 *lx;
+	struct llinfo_x25 *lx;
 {
-	register struct rtentry *rt = lx->lx_rt;
-	register struct pklcd *lcp = lx->lx_lcd;
+	struct rtentry *rt = lx->lx_rt;
+	struct pklcd *lcp = lx->lx_lcd;
 
 	if (lcp) {
 		lcp->lcd_upper = 0;
@@ -163,12 +163,12 @@ x25_lxfree(lx)
  */
 int
 x25_ifinput(m, v)
-	register struct mbuf *m;
+	struct mbuf *m;
 	void *v;
 {
 	struct pklcd   *lcp = v;
 	struct llinfo_x25 *lx = (struct llinfo_x25 *) lcp->lcd_upnext;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct ifqueue *inq;
 	extern struct timeval time;
 	int             s, isr;
@@ -228,11 +228,11 @@ x25_ifinput(m, v)
 
 int
 x25_connect_callback(m, v)
-	register struct mbuf *m;
+	struct mbuf *m;
 	void *v;
 {
-	register struct pklcd *lcp = v;
-	register struct llinfo_x25 *lx = (struct llinfo_x25 *) lcp->lcd_upnext;
+	struct pklcd *lcp = v;
+	struct llinfo_x25 *lx = (struct llinfo_x25 *) lcp->lcd_upnext;
 	int             do_clear = 1;
 	if (m == 0)
 		goto refused;
@@ -266,9 +266,9 @@ x25_dgram_incoming(m0, v)
 	struct mbuf    *m0;
 	void *v;
 {
-	register struct pklcd *lcp = v;
-	register struct rtentry *rt, *nrt;
-	register struct mbuf *m = m0->m_next;	/* m0 has calling
+	struct pklcd *lcp = v;
+	struct rtentry *rt, *nrt;
+	struct mbuf *m = m0->m_next;	/* m0 has calling
 						 * sockaddr_x25 */
 	rt = rtalloc1(SA(&lcp->lcd_faddr), 0);
 	if (rt == 0) {
@@ -302,10 +302,10 @@ x25_ifoutput(ifp, m0, dst, rt)
 	struct ifnet   *ifp;
 	struct mbuf    *m0;
 	struct sockaddr *dst;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
-	register struct mbuf *m = m0;
-	register struct llinfo_x25 *lx;
+	struct mbuf *m = m0;
+	struct llinfo_x25 *lx;
 	struct pklcd   *lcp;
 	int             error = 0;
 
@@ -417,8 +417,8 @@ void
 x25_iftimeout(ifp)
 	struct ifnet   *ifp;
 {
-	register struct pkcb *pkcb = 0;
-	register struct pklcd **lcpp, *lcp;
+	struct pkcb *pkcb = 0;
+	struct pklcd **lcpp, *lcp;
 	int             s = splimp();
 
 	FOR_ALL_PKCBS(pkcb)
@@ -440,11 +440,11 @@ x25_iftimeout(ifp)
 void
 x25_rtrequest(cmd, rt, info)
 	int cmd;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	struct rt_addrinfo *info;
 {
-	register struct llinfo_x25 *lx = (struct llinfo_x25 *) rt->rt_llinfo;
-	register struct pklcd *lcp;
+	struct llinfo_x25 *lx = (struct llinfo_x25 *) rt->rt_llinfo;
+	struct pklcd *lcp;
 
 	/*
 	 * would put this pk_init, except routing table doesn't exist yet.
@@ -493,8 +493,8 @@ int x25_dont_rtinvert = 0;
 void
 x25_rtinvert(cmd, sa, rt)
 	int cmd;
-	register struct sockaddr *sa;
-	register struct rtentry *rt;
+	struct sockaddr *sa;
+	struct rtentry *rt;
 {
 	struct rtentry *rt2 = 0;
 	/*
@@ -548,9 +548,9 @@ union imp_addr {
 void
 x25_ddnip_to_ccitt(src, rt)
 	struct sockaddr *src;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
-	register struct sockaddr_x25 *dst = (struct sockaddr_x25 *) rt->rt_gateway;
+	struct sockaddr_x25 *dst = (struct sockaddr_x25 *) rt->rt_gateway;
 	union imp_addr  imp_addr;
 	int             imp_no, imp_port, temp;
 	char           *x25addr = dst->x25_addr;
@@ -601,7 +601,7 @@ x25_ddnip_to_ccitt(src, rt)
 void
 x25_dg_rtinit(dst, ia, af)
 	struct sockaddr_x25 *dst;
-	register struct x25_ifaddr *ia;
+	struct x25_ifaddr *ia;
 	int af;
 {
 	struct sockaddr *sa = 0;
@@ -619,7 +619,7 @@ x25_dg_rtinit(dst, ia, af)
 			/*
 			 * First determine our IP addr for network
 			 */
-			register struct in_ifaddr *ina;
+			struct in_ifaddr *ina;
 
 			for (ina = in_ifaddr.tqh_first; ina != 0;
 			     ina = ina->ia_list.tqe_next)
@@ -630,7 +630,7 @@ x25_dg_rtinit(dst, ia, af)
 		}
 		{
 
-			register char  *x25addr = dst->x25_addr;
+			char  *x25addr = dst->x25_addr;
 
 			switch (x25addr[5] & 0x0f) {
 			case 0:/* Physical:  0000 0 IIIHH00 [SS]	 */
@@ -724,11 +724,11 @@ struct x25_dgproto {
 
 int
 pk_user_protolisten(info)
-	register u_char *info;
+	u_char *info;
 {
-	register struct x25_dgproto *dp = x25_dgprototab
+	struct x25_dgproto *dp = x25_dgprototab
 	+ ((sizeof x25_dgprototab) / (sizeof *dp));
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 
 	while (dp > x25_dgprototab)
 		if ((--dp)->spi == info[0])
@@ -754,14 +754,14 @@ gotspi:if (info[1])
  */
 int
 pk_rtattach(so, m0)
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf    *m0;
 {
-	register struct pklcd *lcp = (struct pklcd *) so->so_pcb;
-	register struct mbuf *m = m0;
+	struct pklcd *lcp = (struct pklcd *) so->so_pcb;
+	struct mbuf *m = m0;
 	struct sockaddr *dst = mtod(m, struct sockaddr *);
-	register struct rtentry *rt = rtalloc1(dst, 0);
-	register struct llinfo_x25 *lx;
+	struct rtentry *rt = rtalloc1(dst, 0);
+	struct llinfo_x25 *lx;
 	caddr_t         cp;
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -824,12 +824,12 @@ pk_rtattach(so, m0)
 
 int
 x25_rtattach(lcp0, rt)
-	register struct pklcd *lcp0;
+	struct pklcd *lcp0;
 	struct rtentry *rt;
 {
-	register struct llinfo_x25 *lx = (struct llinfo_x25 *) rt->rt_llinfo;
-	register struct pklcd *lcp;
-	register struct mbuf *m;
+	struct llinfo_x25 *lx = (struct llinfo_x25 *) rt->rt_llinfo;
+	struct pklcd *lcp;
+	struct mbuf *m;
 	if ((lcp = lx->lx_lcd) != NULL) {	/* adding an additional VC */
 		if (lcp->lcd_state == READY) {
 			transfer_sockbuf(&lcp->lcd_sb, pk_output(lcp0), lcp0);

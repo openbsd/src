@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_param.h,v 1.3 2003/06/02 23:28:18 millert Exp $	*/
+/*	$OpenBSD: tp_param.h,v 1.4 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tp_param.h,v 1.9 1996/02/13 22:11:32 christos Exp $	*/
 
 /*-
@@ -303,13 +303,14 @@ struct tp_vbp {
 bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type))
 
 #define ADDOPTION(type, DU, len, src)\
-{	register caddr_t P;\
+do { \
+	caddr_t P;\
 	P = (caddr_t)(DU) + (int)((DU)->tpdu_li);\
 	vbptr(P)->tpv_code = type;\
 	vbptr(P)->tpv_len = len;\
 	bcopy((caddr_t)&src, (caddr_t)&(vbptr(P)->tpv_val), (unsigned)len);\
 	DU->tpdu_li += len+2;/* 1 for code, 1 for length */\
-}
+} while (0)
 /******************************************************
  * Macro for the local credit:
  * uses max transmission unit for the ll
@@ -319,9 +320,9 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
 #if defined(ARGO_DEBUG)&&!defined(LOCAL_CREDIT_EXPAND)
 #define LOCAL_CREDIT(tpcb) tp_local_credit(tpcb)
 #else
-#define LOCAL_CREDIT(tpcb) { if (tpcb->tp_rsycnt == 0) {\
-    register struct sockbuf *xxsb = &((tpcb)->tp_sock->so_rcv);\
-    register int xxi = sbspace(xxsb);\
+#define LOCAL_CREDIT(tpcb) do { if (tpcb->tp_rsycnt == 0) {\
+    struct sockbuf *xxsb = &((tpcb)->tp_sock->so_rcv);\
+    int xxi = sbspace(xxsb);\
     xxi = (xxi<0) ? 0 : ((xxi) / (tpcb)->tp_l_tpdusize);\
     xxi = min(xxi, (tpcb)->tp_maxlcredit); \
     if (!(tpcb->tp_cebit_off)) { \
@@ -331,7 +332,7 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
         } \
     } else \
         (tpcb)->tp_lcredit = xxi; \
-} }
+} } while (0)
 #endif				/* ARGO_DEBUG */
 
 #ifdef _KERNEL

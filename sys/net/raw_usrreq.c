@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.8 2003/09/28 23:17:45 cloder Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.9 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -69,12 +69,12 @@ raw_init()
 void
 raw_input(struct mbuf *m0, ...)
 {
-	register struct rawcb *rp;
-	register struct mbuf *m = m0;
-	register int sockets = 0;
+	struct rawcb *rp;
+	struct mbuf *m = m0;
+	int sockets = 0;
 	struct socket *last;
 	va_list ap;
-	register struct sockproto *proto;
+	struct sockproto *proto;
 	struct sockaddr *src, *dst;
 	
 	va_start(ap, m0);
@@ -152,8 +152,8 @@ raw_usrreq(so, req, m, nam, control)
 	int req;
 	struct mbuf *m, *nam, *control;
 {
-	register struct rawcb *rp = sotorawcb(so);
-	register int error = 0;
+	struct rawcb *rp = sotorawcb(so);
+	int error = 0;
 	int len;
 
 	if (req == PRU_CONTROL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.58 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.59 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -213,13 +213,13 @@ tcp_sack_adjust(struct tcpcb *tp)
  */
 int
 tcp_output(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
-	register struct socket *so = tp->t_inpcb->inp_socket;
-	register long len, win, txmaxseg;
+	struct socket *so = tp->t_inpcb->inp_socket;
+	long len, win, txmaxseg;
 	int off, flags, error;
-	register struct mbuf *m;
-	register struct tcphdr *th;
+	struct mbuf *m;
+	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned int optlen, hdrlen;
 	int idle, sendalot = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_pcb.c,v 1.5 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: ns_pcb.c,v 1.6 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: ns_pcb.c,v 1.10 1996/03/27 14:44:14 christos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ ns_pcballoc(so, head)
 	struct socket *so;
 	struct nspcb *head;
 {
-	register struct nspcb *nsp;
+	struct nspcb *nsp;
 
 	nsp = malloc(sizeof(*nsp), M_PCB, M_NOWAIT);
 	if (nsp == 0)
@@ -69,10 +69,10 @@ ns_pcballoc(so, head)
 	
 int
 ns_pcbbind(nsp, nam)
-	register struct nspcb *nsp;
+	struct nspcb *nsp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_ns *sns;
+	struct sockaddr_ns *sns;
 	u_short lport = 0;
 
 	if (nsp->nsp_lport || !ns_nullhost(nsp->nsp_laddr))
@@ -124,9 +124,9 @@ ns_pcbconnect(nsp, nam)
 	struct mbuf *nam;
 {
 	struct ns_ifaddr *ia;
-	register struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
-	register struct ns_addr *dst;
-	register struct route *ro;
+	struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
+	struct ns_addr *dst;
+	struct route *ro;
 	struct ifnet *ifp;
 
 	if (nam->m_len != sizeof (*sns))
@@ -245,10 +245,10 @@ ns_pcbdetach(nsp)
 
 void
 ns_setsockaddr(nsp, nam)
-	register struct nspcb *nsp;
+	struct nspcb *nsp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
+	struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
 	
 	nam->m_len = sizeof (*sns);
 	sns = mtod(nam, struct sockaddr_ns *);
@@ -260,10 +260,10 @@ ns_setsockaddr(nsp, nam)
 
 void
 ns_setpeeraddr(nsp, nam)
-	register struct nspcb *nsp;
+	struct nspcb *nsp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
+	struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
 	
 	nam->m_len = sizeof (*sns);
 	sns = mtod(nam, struct sockaddr_ns *);
@@ -282,12 +282,12 @@ ns_setpeeraddr(nsp, nam)
  */
 void
 ns_pcbnotify(dst, errno, notify, param)
-	register struct ns_addr *dst;
+	struct ns_addr *dst;
 	long param;
 	int errno;
 	void (*notify)(struct nspcb *);
 {
-	register struct nspcb *nsp, *oinp;
+	struct nspcb *nsp, *oinp;
 	int s = splimp();
 
 	for (nsp = (&nspcb)->nsp_next; nsp != (&nspcb);) {
@@ -333,7 +333,7 @@ ns_pcblookup(faddr, lport, wildp)
 	u_short lport;
 	int wildp;
 {
-	register struct nspcb *nsp, *match = 0;
+	struct nspcb *nsp, *match = 0;
 	int matchwild = 3, wildcard;
 	u_short fport;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.94 2003/12/08 07:07:36 mcbride Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.95 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -156,9 +156,9 @@ udp6_input(mp, offp, proto)
 void
 udp_input(struct mbuf *m, ...)
 {
-	register struct ip *ip;
-	register struct udphdr *uh;
-	register struct inpcb *inp;
+	struct ip *ip;
+	struct udphdr *uh;
+	struct inpcb *inp;
 	struct mbuf *opts = 0;
 	struct ip save_ip;
 	int iphlen, len;
@@ -660,10 +660,10 @@ bad:
 struct mbuf *
 udp_saveopt(p, size, type)
 	caddr_t p;
-	register int size;
+	int size;
 	int type;
 {
-	register struct cmsghdr *cp;
+	struct cmsghdr *cp;
 	struct mbuf *m;
 
 	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
@@ -684,7 +684,7 @@ udp_saveopt(p, size, type)
  */
 static void
 udp_notify(inp, errno)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	int errno;
 {
 	inp->inp_socket->so_error = errno;
@@ -701,7 +701,7 @@ udp6_ctlinput(cmd, sa, d)
 {
 	struct udphdr uh;
 	struct sockaddr_in6 sa6;
-	register struct ip6_hdr *ip6;
+	struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
 	void *cmdarg;
@@ -860,8 +860,8 @@ udp_ctlinput(cmd, sa, v)
 	struct sockaddr *sa;
 	void *v;
 {
-	register struct ip *ip = v;
-	register struct udphdr *uhp;
+	struct ip *ip = v;
+	struct udphdr *uhp;
 	extern int inetctlerrmap[];
 	void (*notify)(struct inpcb *, int) = udp_notify;
 	int errno;
@@ -893,10 +893,10 @@ udp_ctlinput(cmd, sa, v)
 int
 udp_output(struct mbuf *m, ...)
 {
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	struct mbuf *addr, *control;
-	register struct udpiphdr *ui;
-	register int len = m->m_pkthdr.len;
+	struct udpiphdr *ui;
+	int len = m->m_pkthdr.len;
 	struct in_addr laddr;
 	int s = 0, error = 0;
 	va_list ap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.72 2003/10/25 19:31:05 mcbride Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.73 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ u_char etherbroadcastaddr[ETHER_ADDR_LEN] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 
 int
 ether_ioctl(ifp, arp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct arpcom *arp;
 	u_long cmd;
 	caddr_t data;
@@ -241,7 +241,7 @@ ether_ioctl(ifp, arp, cmd, data)
  */
 int
 ether_output(ifp, m0, dst, rt0)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 	struct rtentry *rt0;
@@ -249,10 +249,10 @@ ether_output(ifp, m0, dst, rt0)
 	u_int16_t etype;
 	int s, len, error = 0, hdrcmplt = 0;
  	u_char edst[ETHER_ADDR_LEN], esrc[ETHER_ADDR_LEN];
-	register struct mbuf *m = m0;
-	register struct rtentry *rt;
+	struct mbuf *m = m0;
+	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
-	register struct ether_header *eh;
+	struct ether_header *eh;
 	struct arpcom *ac = (struct arpcom *)ifp;
 	short mflags;
 
@@ -399,7 +399,7 @@ ether_output(ifp, m0, dst, rt0)
 	case AF_ISO: {
 		int	snpalen;
 		struct	llc *l;
-		register struct sockaddr_dl *sdl;
+		struct sockaddr_dl *sdl;
 
 		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
@@ -443,7 +443,7 @@ ether_output(ifp, m0, dst, rt0)
 #endif /* ISO */
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		register struct sockaddr_dl *sdl =
+		struct sockaddr_dl *sdl =
 			(struct sockaddr_dl *) rt -> rt_gateway;
 
 		if (sdl && sdl->sdl_family == AF_LINK
@@ -465,7 +465,7 @@ ether_output(ifp, m0, dst, rt0)
 #ifdef LLC_DEBUG
 		{
 			int i;
-			register struct llc *l = mtod(m, struct llc *);
+			struct llc *l = mtod(m, struct llc *);
 
 			printf("ether_output: sending LLC2 pkt to: ");
 			for (i=0; i < ETHER_ADDR_LEN; i++)
@@ -620,13 +620,13 @@ ether_input_mbuf(ifp, m)
 void
 ether_input(ifp, eh, m)
 	struct ifnet *ifp;
-	register struct ether_header *eh;
+	struct ether_header *eh;
 	struct mbuf *m;
 {
-	register struct ifqueue *inq;
+	struct ifqueue *inq;
 	u_int16_t etype;
 	int s, llcfound = 0;
-	register struct llc *l;
+	struct llc *l;
 	struct arpcom *ac;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -863,7 +863,7 @@ decapsulate:
 			case LLC_TEST_P:
 			{
 				struct sockaddr sa;
-				register struct ether_header *eh2;
+				struct ether_header *eh2;
 				int i;
 				u_char c = l->llc_dsap;
 
@@ -928,11 +928,11 @@ decapsulate:
 static char digits[] = "0123456789abcdef";
 char *
 ether_sprintf(ap)
-	register u_char *ap;
+	u_char *ap;
 {
-	register int i;
+	int i;
 	static char etherbuf[18];
-	register char *cp = etherbuf;
+	char *cp = etherbuf;
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		*cp++ = digits[*ap >> 4];
@@ -948,7 +948,7 @@ ether_sprintf(ap)
  */
 void
 ether_ifattach(ifp)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
 
 	/*
@@ -1167,9 +1167,9 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
 int
 ether_addmulti(ifr, ac)
 	struct ifreq *ifr;
-	register struct arpcom *ac;
+	struct arpcom *ac;
 {
-	register struct ether_multi *enm;
+	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
 	int s = splimp(), error;
@@ -1228,9 +1228,9 @@ ether_addmulti(ifr, ac)
 int
 ether_delmulti(ifr, ac)
 	struct ifreq *ifr;
-	register struct arpcom *ac;
+	struct arpcom *ac;
 {
-	register struct ether_multi *enm;
+	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
 	int s = splimp(), error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_cons.c,v 1.9 2003/06/02 23:28:18 millert Exp $	*/
+/*	$OpenBSD: tp_cons.c,v 1.10 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tp_cons.c,v 1.8 1996/02/14 21:32:37 christos Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@ SOFTWARE.
 int
 tpcons_pcbconnect(v, nam)
 	void *v;
-	register struct mbuf *nam;
+	struct mbuf *nam;
 {
 	struct isopcb  *isop = v;
 	int             error;
@@ -157,7 +157,7 @@ tpcons_ctlinput(cmd, siso, v)
 	void *v;
 {
 	struct isopcb  *isop = v;
-	register struct tp_pcb *tpcb = 0;
+	struct tp_pcb *tpcb = 0;
 
 	if (isop->isop_socket)
 		tpcb = (struct tp_pcb *) isop->isop_socket->so_pcb;
@@ -174,7 +174,7 @@ tpcons_ctlinput(cmd, siso, v)
 				 * still in class negotiation
 				 */
 				/* fake an ack */
-				register SeqNum seq = SEQ_ADD(tpcb, tpcb->tp_snduna, 1);
+				SeqNum seq = SEQ_ADD(tpcb, tpcb->tp_snduna, 1);
 
 #ifdef TPPT
 				if(tp_traceflags[D_DATA])
@@ -261,7 +261,7 @@ tpcons_output(struct mbuf *m0, ...)
 	struct isopcb  *isop;
 	int             datalen;
 	int             nochksum;
-	register struct mbuf *m = m0;
+	struct mbuf *m = m0;
 	int             error;
 	va_list		ap;
 

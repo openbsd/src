@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.11 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.12 2003/12/10 07:22:43 itojun Exp $	*/
 
 /*-
  *
@@ -59,11 +59,11 @@ ipx_control(so, cmd, data, ifp)
 	struct socket *so;
 	u_long	cmd;
 	caddr_t	data;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct ifreq *ifr = (struct ifreq *)data;
-	register struct ipx_aliasreq *ifra = (struct ipx_aliasreq *)data;
-	register struct ipx_ifaddr *ia;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ipx_aliasreq *ifra = (struct ipx_aliasreq *)data;
+	struct ipx_ifaddr *ia;
 	int dstIsNew, hostIsNew;
 	int error = 0;
 
@@ -211,8 +211,8 @@ ipx_control(so, cmd, data, ifp)
  */
 void
 ipx_ifscrub(ifp, ia)
-	register struct ifnet *ifp;
-	register struct ipx_ifaddr *ia; 
+	struct ifnet *ifp;
+	struct ipx_ifaddr *ia; 
 {
 	if (ia->ia_flags & IFA_ROUTE) {
 		if (ifp->if_flags & IFF_POINTOPOINT) {
@@ -229,9 +229,9 @@ ipx_ifscrub(ifp, ia)
  */
 int
 ipx_ifinit(ifp, ia, sipx, scrub)
-	register struct ifnet *ifp;
-	register struct ipx_ifaddr *ia;
-	register struct sockaddr_ipx *sipx;
+	struct ifnet *ifp;
+	struct ipx_ifaddr *ia;
+	struct sockaddr_ipx *sipx;
 	int scrub;
 {
 	struct sockaddr_ipx oldaddr;
@@ -286,11 +286,11 @@ ipx_ifinit(ifp, ia, sipx, scrub)
  */
 struct ipx_ifaddr *
 ipx_iaonnetof(dst)
-	register struct ipx_addr *dst;
+	struct ipx_addr *dst;
 {
-	register struct ipx_ifaddr *ia;
-	register struct ipx_addr *compare;
-	register struct ifnet *ifp;
+	struct ipx_ifaddr *ia;
+	struct ipx_addr *compare;
+	struct ifnet *ifp;
 	struct ipx_ifaddr *ia_maybe = NULL;
 	union ipx_net net = dst->ipx_net;
 
@@ -319,8 +319,9 @@ register struct ipx_addr *addr;
 {
 	u_short port;
 	struct ipx_addr work = *addr;
-	register char *p; register u_char *q;
-	register char *net = "", *host = "";
+	char *p;
+	u_char *q;
+	char *net = "", *host = "";
 	char cport[10], chost[15], cnet[15];
 
 	port = ntohs(work.ipx_port);

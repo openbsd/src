@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_frag.c,v 1.5 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: clnp_frag.c,v 1.6 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: clnp_frag.c,v 1.8 1996/04/13 01:34:23 cgd Exp $	*/
 
 /*-
@@ -343,7 +343,7 @@ clnp_reass(m, src, dst, seg)
 	struct iso_addr *dst;	/* dst of new fragment */
 	struct clnp_segment *seg;	/* segment part of fragment header */
 {
-	register struct clnp_fragl *cfh;
+	struct clnp_fragl *cfh;
 
 	/* look for other fragments of this datagram */
 	for (cfh = clnp_frags; cfh != NULL; cfh = cfh->cfl_next) {
@@ -409,8 +409,8 @@ clnp_newpkt(m, src, dst, seg)
 	struct iso_addr *dst;	/* dst of new fragment */
 	struct clnp_segment *seg;	/* segment part of fragment header */
 {
-	register struct clnp_fragl *cfh;
-	register struct clnp_fixed *clnp;
+	struct clnp_fragl *cfh;
+	struct clnp_fixed *clnp;
 	struct mbuf    *m0;
 
 	clnp = mtod(m, struct clnp_fixed *);
@@ -473,11 +473,11 @@ clnp_insert_frag(cfh, m, seg)
 	struct mbuf    *m;	/* new fragment */
 	struct clnp_segment *seg;	/* segment part of fragment header */
 {
-	register struct clnp_fixed *clnp;	/* clnp hdr of fragment */
-	register struct clnp_frag *cf;	/* generic fragment ptr */
-	register struct clnp_frag *cf_sub = NULL;	/* frag subseq to new
+	struct clnp_fixed *clnp;	/* clnp hdr of fragment */
+	struct clnp_frag *cf;	/* generic fragment ptr */
+	struct clnp_frag *cf_sub = NULL;	/* frag subseq to new
 							 * one */
-	register struct clnp_frag *cf_prev = NULL;	/* frag prev to new one */
+	struct clnp_frag *cf_prev = NULL;	/* frag prev to new one */
 	u_short         first;	/* offset of first byte of initial pdu */
 	u_short         last;	/* offset of last byte of initial pdu */
 	u_short         fraglen;/* length of fragment */
@@ -701,10 +701,10 @@ struct mbuf    *
 clnp_comp_pdu(cfh)
 	struct clnp_fragl *cfh;	/* fragment header */
 {
-	register struct clnp_frag *cf = cfh->cfl_frags;
+	struct clnp_frag *cf = cfh->cfl_frags;
 
 	while (cf->cfr_next != NULL) {
-		register struct clnp_frag *cf_next = cf->cfr_next;
+		struct clnp_frag *cf_next = cf->cfr_next;
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REASS]) {

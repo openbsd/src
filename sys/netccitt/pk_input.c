@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_input.c,v 1.6 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: pk_input.c,v 1.7 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: pk_input.c,v 1.7 1996/02/13 22:05:21 christos Exp $	*/
 
 /*
@@ -101,9 +101,9 @@ pk_newlink(ia, llnext)
 	struct x25_ifaddr *ia;
 	caddr_t         llnext;
 {
-	register struct x25config *xcp = &ia->ia_xc;
-	register struct pkcb *pkp;
-	register struct protosw *pp;
+	struct x25config *xcp = &ia->ia_xc;
+	struct pkcb *pkp;
+	struct protosw *pp;
 	unsigned        size;
 
 	pp = pffindproto(AF_CCITT, (int) xcp->xc_lproto, 0);
@@ -144,10 +144,10 @@ pk_newlink(ia, llnext)
 
 int
 pk_dellink(pkp)
-	register struct pkcb *pkp;
+	struct pkcb *pkp;
 {
-	register int    i;
-	register struct protosw *pp;
+	int    i;
+	struct protosw *pp;
 
 	/*
 	 * Essentially we have the choice to
@@ -205,7 +205,7 @@ pk_dellink(pkp)
 
 int
 pk_resize(pkp)
-	register struct pkcb *pkp;
+	struct pkcb *pkp;
 {
 	struct pklcd   *dev_lcp = 0;
 	struct x25config *xcp = pkp->pk_xcp;
@@ -246,7 +246,7 @@ pk_ctlinput(code, src, addr)
 	struct sockaddr *src;
 	void            *addr;
 {
-	register struct pkcb *pkp = (struct pkcb *) addr;
+	struct pkcb *pkp = (struct pkcb *) addr;
 	struct rtentry *llrt;
 
 	switch (code) {
@@ -295,8 +295,8 @@ struct ifqueue  pkintrq;
 void
 pkintr()
 {
-	register struct mbuf *m;
-	register int    s;
+	struct mbuf *m;
+	int    s;
 
 	for (;;) {
 		s = splimp();
@@ -338,10 +338,10 @@ struct mbuf_cache pk_input_cache = {0};
 void
 pk_input(struct mbuf *m, ...)
 {
-	register struct x25_packet *xp;
-	register struct pklcd *lcp;
-	register struct socket *so = 0;
-	register struct pkcb *pkp;
+	struct x25_packet *xp;
+	struct pklcd *lcp;
+	struct socket *so = 0;
+	struct pkcb *pkp;
 	int             ptype, lcn, lcdstate = LISTEN;
 
 	if (pk_input_cache.mbc_size || pk_input_cache.mbc_oldsize)
@@ -515,7 +515,7 @@ pk_input(struct mbuf *m, ...)
 
 		lcp->lcd_rxcnt++;
 		if (lcp->lcd_flags & X25_MBS_HOLD) {
-			register struct mbuf *n = lcp->lcd_cps;
+			struct mbuf *n = lcp->lcd_cps;
 			int             mbit = MBIT(xp);
 			octet           q_and_d_bits;
 
@@ -799,9 +799,9 @@ pk_input(struct mbuf *m, ...)
 static void
 prune_dnic(from, to, dnicname, xcp)
 	char           *from, *to, *dnicname;
-	register struct x25config *xcp;
+	struct x25config *xcp;
 {
-	register char  *cp1 = from, *cp2 = from;
+	char  *cp1 = from, *cp2 = from;
 	if (xcp->xc_prepnd0 && *cp1 == '0') {
 		from = ++cp1;
 		goto copyrest;
@@ -818,10 +818,10 @@ copyrest:
 
 void
 pk_simple_bsd(from, to, lower, len)
-	register octet *from, *to;
-	register int    len, lower;
+	octet *from, *to;
+	int    len, lower;
 {
-	register int    c;
+	int    c;
 	while (--len >= 0) {
 		c = *from;
 		if (lower & 0x01)
@@ -838,10 +838,10 @@ pk_simple_bsd(from, to, lower, len)
 
 void
 pk_from_bcd(a, iscalling, sa, xcp)
-	register struct x25_calladdr *a;
+	struct x25_calladdr *a;
 	int             iscalling;
-	register struct sockaddr_x25 *sa;
-	register struct x25config *xcp;
+	struct sockaddr_x25 *sa;
+	struct x25config *xcp;
 {
 	octet           buf[MAXADDRLN + 1];
 	octet          *cp;
@@ -873,7 +873,7 @@ save_extra(m0, fp, so)
 	octet          *fp;
 	struct socket  *so;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct cmsghdr  cmsghdr;
 	/* XXX: christos:
 	 * used to be m_copy(m, 0, ...)
@@ -906,10 +906,10 @@ pk_incoming_call(pkp, m0)
 	struct pkcb    *pkp;
 	struct mbuf    *m0;
 {
-	register struct pklcd *lcp = 0, *l;
-	register struct sockaddr_x25 *sa;
-	register struct x25_calladdr *a;
-	register struct socket *so = 0;
+	struct pklcd *lcp = 0, *l;
+	struct sockaddr_x25 *sa;
+	struct x25_calladdr *a;
+	struct socket *so = 0;
 	struct x25_packet *xp = mtod(m0, struct x25_packet *);
 	struct mbuf    *m;
 	struct x25config *xcp = pkp->pk_xcp;
@@ -1053,8 +1053,8 @@ pk_call_accepted(lcp, m)
 	struct pklcd   *lcp;
 	struct mbuf    *m;
 {
-	register struct x25_calladdr *ap;
-	register octet *fcp;
+	struct x25_calladdr *ap;
+	octet *fcp;
 	struct x25_packet *xp = mtod(m, struct x25_packet *);
 	int             len = m->m_len;
 
@@ -1077,10 +1077,10 @@ pk_call_accepted(lcp, m)
 
 void
 pk_parse_facilities(fcp, sa)
-	register octet *fcp;
-	register struct sockaddr_x25 *sa;
+	octet *fcp;
+	struct sockaddr_x25 *sa;
 {
-	register octet *maxfcp;
+	octet *maxfcp;
 
 	maxfcp = fcp + *fcp;
 	fcp++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.29 2003/12/03 14:51:05 markus Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.30 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ in_gif_output(ifp, family, m, rt)
 	struct mbuf	*m;
 	struct rtentry *rt;
 {
-	register struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
 	struct tdb tdb;

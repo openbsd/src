@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_input.c,v 1.6 2003/09/26 21:43:32 miod Exp $	*/
+/*	$OpenBSD: clnp_input.c,v 1.7 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: clnp_input.c,v 1.12 1996/04/13 01:34:26 cgd Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ void            x25esis_input();
 void
 clnp_init()
 {
-	register struct protosw *pr;
+	struct protosw *pr;
 
 	/*
 	 * CLNP protox initialization
@@ -153,8 +153,8 @@ clnp_init()
 void
 clnlintr()
 {
-	register struct mbuf *m;/* ptr to first mbuf of pkt */
-	register struct clnl_fixed *clnl;	/* ptr to fixed part of clnl
+	struct mbuf *m;/* ptr to first mbuf of pkt */
+	struct clnl_fixed *clnl;	/* ptr to fixed part of clnl
 						 * hdr */
 	int             s;	/* save and restore priority */
 	struct clnl_protosw *clnlsw;	/* ptr to protocol switch */
@@ -176,7 +176,7 @@ next:
 		m_freem(m);
 		goto next;
 	} else {
-		register struct ifaddr *ifa;
+		struct ifaddr *ifa;
 		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first; ifa != 0;
 		     ifa = ifa->ifa_list.tqe_next)
 			if (ifa->ifa_addr->sa_family == AF_ISO)
@@ -286,7 +286,7 @@ void
 clnp_input(struct mbuf *m, ...)
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
-	register struct clnp_fixed *clnp;	/* ptr to fixed part of
+	struct clnp_fixed *clnp;	/* ptr to fixed part of
 						 * header */
 	struct sockaddr_iso source;	/* source address of pkt */
 	struct sockaddr_iso target;	/* destination address of pkt */

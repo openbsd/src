@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_pcb.c,v 1.4 2003/06/02 23:28:18 millert Exp $	*/
+/*	$OpenBSD: tp_pcb.c,v 1.5 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tp_pcb.c,v 1.13 1996/03/16 23:13:58 christos Exp $	*/
 
 /*-
@@ -358,13 +358,13 @@ tp_init()
  */
 void
 tp_soisdisconnecting(so)
-	register struct socket *so;
+	struct socket *so;
 {
 	soisdisconnecting(so);
 	so->so_state &= ~SS_CANTSENDMORE;
 #ifdef TP_PERF_MEAS
 	if (DOPERF(sototpcb(so))) {
-		register struct tp_pcb *tpcb = sototpcb(so);
+		struct tp_pcb *tpcb = sototpcb(so);
 		u_int           fsufx, lsufx;
 
 		bcopy((caddr_t) tpcb->tp_fsuffix, (caddr_t) &fsufx,
@@ -405,15 +405,15 @@ tp_soisdisconnecting(so)
  */
 void
 tp_soisdisconnected(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register struct socket *so = tpcb->tp_sock;
+	struct socket *so = tpcb->tp_sock;
 
 	soisdisconnecting(so);
 	so->so_state &= ~SS_CANTSENDMORE;
 #ifdef TP_PERF_MEAS
 	if (DOPERF(tpcb)) {
-		register struct tp_pcb *ttpcb = sototpcb(so);
+		struct tp_pcb *ttpcb = sototpcb(so);
 		u_int           fsufx, lsufx;
 
 		/* CHOKE */
@@ -455,8 +455,8 @@ void
 tp_freeref(n)
 	RefNum          n;
 {
-	register struct tp_ref *r = tp_ref + n;
-	register struct tp_pcb *tpcb;
+	struct tp_ref *r = tp_ref + n;
+	struct tp_pcb *tpcb;
 
 	tpcb = r->tpr_pcb;
 #ifdef ARGO_DEBUG
@@ -514,10 +514,10 @@ tp_freeref(n)
  */
 u_long
 tp_getref(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register struct tp_ref *r, *rlim;
-	register int    i;
+	struct tp_ref *r, *rlim;
+	int    i;
 	caddr_t         obase;
 	unsigned        size;
 
@@ -561,9 +561,9 @@ got_one:
  */
 int
 tp_set_npcb(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register struct socket *so = tpcb->tp_sock;
+	struct socket *so = tpcb->tp_sock;
 	int             error;
 
 	if (tpcb->tp_nlproto && tpcb->tp_npcb) {
@@ -610,7 +610,7 @@ tp_attach(so, protocol)
 	struct socket  *so;
 	long            protocol;
 {
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	int             error = 0;
 	int             dom = so->so_proto->pr_domain->dom_family;
 	u_long          lref;
@@ -754,9 +754,9 @@ bad2:
  */
 void
 tp_detach(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register struct socket *so = tpcb->tp_sock;
+	struct socket *so = tpcb->tp_sock;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
@@ -822,7 +822,7 @@ tp_detach(tpcb)
 #endif
 
 	if (tpcb->tp_state == TP_LISTENING) {
-		register struct tp_pcb **tt;
+		struct tp_pcb **tt;
 		for (tt = &tp_listeners; *tt; tt = &((*tt)->tp_nextlisten))
 			if (*tt == tpcb)
 				break;
@@ -854,7 +854,7 @@ tp_detach(tpcb)
 	 * IFPERFs)
 	 */
 	if (tpcb->tp_p_meas) {
-		register struct mbuf *m = tpcb->tp_p_mbuf;
+		struct mbuf *m = tpcb->tp_p_mbuf;
 		struct mbuf    *n;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_PERF_MEAS]) {
@@ -888,11 +888,11 @@ int
 tp_tselinuse(tlen, tsel, siso, reuseaddr)
 	int tlen;
 	caddr_t         tsel;
-	register struct sockaddr_iso *siso;
+	struct sockaddr_iso *siso;
 	int reuseaddr;
 {
 	struct tp_pcb  *b = tp_bound_pcbs.next, *l = tp_listeners;
-	register struct tp_pcb *t;
+	struct tp_pcb *t;
 
 	for (;;) {
 		if (b != (struct tp_pcb *) & tp_bound_pcbs) {
@@ -923,11 +923,11 @@ tp_tselinuse(tlen, tsel, siso, reuseaddr)
 
 int
 tp_pcbbind(v, nam)
-	register void *v;
-	register struct mbuf *nam;
+	void *v;
+	struct mbuf *nam;
 {
-	register struct tp_pcb *tpcb = v;
-	register struct sockaddr_iso *siso = 0;
+	struct tp_pcb *tpcb = v;
+	struct sockaddr_iso *siso = 0;
 	int             tlen = 0, wrapped = 0;
 	caddr_t         tsel = NULL;
 	u_short         tutil;

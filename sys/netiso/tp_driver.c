@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_driver.c,v 1.6 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: tp_driver.c,v 1.7 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tp_driver.c,v 1.8 1996/03/16 23:13:45 christos Exp $	*/
 
 #include "tp_states.h"
@@ -980,10 +980,10 @@ static int      inx[26][9] =
 };
 int
 tp_driver(p, e)
-	register struct tp_pcb *p;
-	register struct tp_event *e;
+	struct tp_pcb *p;
+	struct tp_event *e;
 {
-	register int    index, error = 0;
+	int    index, error = 0;
 	struct act_ent *a;
 	static struct act_ent erroraction = {0, -1};
 

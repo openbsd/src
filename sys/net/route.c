@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.38 2003/08/27 00:01:38 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.39 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ route_init()
 
 void
 rtalloc_noclone(ro, howstrict)
-	register struct route *ro;
+	struct route *ro;
 	int howstrict;
 {
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
@@ -195,12 +195,12 @@ okaytoclone(flags, howstrict)
 
 struct rtentry *
 rtalloc2(dst, report,howstrict)
-	register struct sockaddr *dst;
+	struct sockaddr *dst;
 	int report,howstrict;
 {
-	register struct radix_node_head *rnh = rt_tables[dst->sa_family];
-	register struct rtentry *rt;
-	register struct radix_node *rn;
+	struct radix_node_head *rnh = rt_tables[dst->sa_family];
+	struct rtentry *rt;
+	struct radix_node *rn;
 	struct rtentry *newrt = 0;
 	struct rt_addrinfo info;
 	int  s = splnet(), err = 0, msgtype = RTM_MISS;
@@ -240,7 +240,7 @@ miss:		if (report) {
  */
 void
 rtalloc(ro)
-	register struct route *ro;
+	struct route *ro;
 {
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
 		return;				 /* XXX */
@@ -249,12 +249,12 @@ rtalloc(ro)
 
 struct rtentry *
 rtalloc1(dst, report)
-	register struct sockaddr *dst;
+	struct sockaddr *dst;
 	int report;
 {
-	register struct radix_node_head *rnh = rt_tables[dst->sa_family];
-	register struct rtentry *rt;
-	register struct radix_node *rn;
+	struct radix_node_head *rnh = rt_tables[dst->sa_family];
+	struct rtentry *rt;
+	struct radix_node *rn;
 	struct rtentry *newrt = 0;
 	struct rt_addrinfo info;
 	int  s = splsoftnet(), err = 0, msgtype = RTM_MISS;
@@ -307,9 +307,9 @@ rtalloc1(dst, report)
 
 void
 rtfree(rt)
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	if (rt == NULL)
 		panic("rtfree");
@@ -333,7 +333,7 @@ rtfree(rt)
 
 void
 ifafree(ifa)
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 {
 	if (ifa == NULL)
 		panic("ifafree");
@@ -529,7 +529,7 @@ ifa_ifwithroute(flags, dst, gateway)
 	int flags;
 	struct sockaddr	*dst, *gateway;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 #ifdef IPSEC
 	/*
@@ -659,9 +659,9 @@ rtrequest1(req, info, ret_nrt)
 	struct rtentry **ret_nrt;
 {
 	int s = splsoftnet(); int error = 0;
-	register struct rtentry *rt, *crt;
-	register struct radix_node *rn;
-	register struct radix_node_head *rnh;
+	struct rtentry *rt, *crt;
+	struct radix_node *rn;
+	struct radix_node_head *rnh;
 	struct ifaddr *ifa;
 	struct sockaddr *ndst;
 #define senderr(x) { error = x ; goto bad; }
@@ -799,7 +799,7 @@ rt_setgate(rt0, dst, gate)
 {
 	caddr_t new, old;
 	int dlen = ROUNDUP(dst->sa_len), glen = ROUNDUP(gate->sa_len);
-	register struct rtentry *rt = rt0;
+	struct rtentry *rt = rt0;
 
 	if (rt->rt_gateway == NULL || glen > ROUNDUP(rt->rt_gateway->sa_len)) {
 		old = (caddr_t)rt_key(rt);
@@ -844,9 +844,9 @@ void
 rt_maskedcopy(src, dst, netmask)
 	struct sockaddr *src, *dst, *netmask;
 {
-	register u_char *cp1 = (u_char *)src;
-	register u_char *cp2 = (u_char *)dst;
-	register u_char *cp3 = (u_char *)netmask;
+	u_char *cp1 = (u_char *)src;
+	u_char *cp2 = (u_char *)dst;
+	u_char *cp3 = (u_char *)netmask;
 	u_char *cplim = cp2 + *cp3;
 	u_char *cplim2 = cp2 + *cp1;
 
@@ -866,12 +866,12 @@ rt_maskedcopy(src, dst, netmask)
  */
 int
 rtinit(ifa, cmd, flags)
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 	int cmd, flags;
 {
-	register struct rtentry *rt;
-	register struct sockaddr *dst;
-	register struct sockaddr *deldst;
+	struct rtentry *rt;
+	struct sockaddr *dst;
+	struct sockaddr *deldst;
 	struct mbuf *m = NULL;
 	struct rtentry *nrt = NULL;
 	int error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.70 2003/12/08 07:07:36 mcbride Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.71 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ in_pcballoc(so, v)
 	void *v;
 {
 	struct inpcbtable *table = v;
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	int s;
 
 	MALLOC(inp, struct inpcb *, sizeof(*inp), M_PCB, M_NOWAIT);
@@ -205,14 +205,14 @@ in_pcballoc(so, v)
 
 int
 in_pcbbind(v, nam)
-	register void *v;
+	void *v;
 	struct mbuf *nam;
 {
-	register struct inpcb *inp = v;
-	register struct socket *so = inp->inp_socket;
-	register struct inpcbtable *table = inp->inp_table;
+	struct inpcb *inp = v;
+	struct socket *so = inp->inp_socket;
+	struct inpcbtable *table = inp->inp_table;
 	u_int16_t *lastport = &inp->inp_table->inpt_lastport;
-	register struct sockaddr_in *sin;
+	struct sockaddr_in *sin;
 	struct proc *p = curproc;		/* XXX */
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
@@ -375,12 +375,12 @@ portloop:
  */
 int
 in_pcbconnect(v, nam)
-	register void *v;
+	void *v;
 	struct mbuf *nam;
 {
-	register struct inpcb *inp = v;
+	struct inpcb *inp = v;
 	struct sockaddr_in *ifaddr = NULL;
-	register struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
+	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
 
 #ifdef INET6
 	if (sotopf(inp->inp_socket) == PF_INET6)
@@ -514,10 +514,10 @@ in_pcbdetach(v)
 
 void
 in_setsockaddr(inp, nam)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_in *sin;
+	struct sockaddr_in *sin;
 
 	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
@@ -533,7 +533,7 @@ in_setpeeraddr(inp, nam)
 	struct inpcb *inp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_in *sin;
+	struct sockaddr_in *sin;
 
 #ifdef INET6
 	if (sotopf(inp->inp_socket) == PF_INET6) {
@@ -621,7 +621,7 @@ in_pcbnotifyall(table, dst, errno, notify)
 	int errno;
 	void (*notify)(struct inpcb *, int);
 {
-	register struct inpcb *inp, *oinp;
+	struct inpcb *inp, *oinp;
 	struct in_addr faddr;
 
 #ifdef INET6
@@ -668,7 +668,7 @@ void
 in_losing(inp)
 	struct inpcb *inp;
 {
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	struct rt_addrinfo info;
 
 	if ((rt = inp->inp_route.ro_rt)) {
@@ -697,7 +697,7 @@ in_losing(inp)
  */
 void
 in_rtchange(inp, errno)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	int errno;
 {
 	if (inp->inp_route.ro_rt) {
@@ -717,7 +717,7 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 	u_int fport_arg, lport_arg;
 	int flags;
 {
-	register struct inpcb *inp, *match = 0;
+	struct inpcb *inp, *match = 0;
 	int matchwild = 3, wildcard;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 	struct in_addr faddr = *(struct in_addr *)faddrp;
@@ -971,7 +971,7 @@ in_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 	u_int fport_arg, lport_arg;
 {
 	struct inpcbhead *head;
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
 	head = INPCBHASH(table, &faddr, fport, &laddr, lport);
@@ -1014,7 +1014,7 @@ in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 	u_int fport_arg, lport_arg;
 {
 	struct inpcbhead *head;
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
 	head = IN6PCBHASH(table, faddr, fport, laddr, lport);
@@ -1063,7 +1063,7 @@ in_pcblookup_listen(table, laddr, lport_arg, reverse)
 {
 	struct inpcbhead *head;
 	struct in_addr *key1, *key2;
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
 	if (reverse) {
@@ -1126,7 +1126,7 @@ in6_pcblookup_listen(table, laddr, lport_arg, reverse)
 {
 	struct inpcbhead *head;
 	struct in6_addr *key1, *key2;
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
 	if (reverse) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd_timer.c,v 1.3 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: hd_timer.c,v 1.4 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: hd_timer.c,v 1.6 1996/02/13 22:04:33 christos Exp $	*/
 
 /*
@@ -73,8 +73,8 @@ int             hd_n2 = N2;
 void
 hd_timer()
 {
-	register struct hdcb *hdp;
-	register int    s = splimp();
+	struct hdcb *hdp;
+	int    s = splimp();
 
 	for (hdp = hdcbhead; hdp; hdp = hdp->hd_next) {
 		if (hdp->hd_rrtimer && (--hdp->hd_rrtimer == 0)) {

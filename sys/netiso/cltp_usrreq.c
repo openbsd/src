@@ -1,4 +1,4 @@
-/*	$OpenBSD: cltp_usrreq.c,v 1.5 2003/09/28 23:17:45 cloder Exp $	*/
+/*	$OpenBSD: cltp_usrreq.c,v 1.6 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: cltp_usrreq.c,v 1.9 1996/02/13 22:08:59 christos Exp $	*/
 
 /*
@@ -79,10 +79,10 @@ cltp_input(struct mbuf *m0, ...)
 {
 	struct sockaddr *srcsa, *dstsa;
 	u_int           cons_channel;
-	register struct isopcb *isop;
-	register struct mbuf *m = m0;
-	register u_char *up = mtod(m, u_char *);
-	register struct sockaddr_iso *src;
+	struct isopcb *isop;
+	struct mbuf *m = m0;
+	u_char *up = mtod(m, u_char *);
+	struct sockaddr_iso *src;
 	int             len, hdrlen = *up + 1, dlen = 0;
 	u_char         *uplim = up + hdrlen;
 	caddr_t         dtsap = NULL;
@@ -169,7 +169,7 @@ bad:
  */
 void
 cltp_notify(isop)
-	register struct isopcb *isop;
+	struct isopcb *isop;
 {
 
 	sorwakeup(isop->isop_socket);
@@ -214,11 +214,11 @@ cltp_ctlinput(cmd, sa, dummy)
 int
 cltp_output(struct mbuf *m, ...)
 {
-	register struct isopcb *isop;
-	register int    len;
-	register struct sockaddr_iso *siso;
+	struct isopcb *isop;
+	int    len;
+	struct sockaddr_iso *siso;
 	int             hdrlen, error = 0, docsum;
-	register u_char *up;
+	u_char *up;
 	va_list ap;
 
 	va_start(ap, m);
@@ -282,7 +282,7 @@ cltp_usrreq(so, req, m, nam, control)
 	int             req;
 	struct mbuf    *m, *nam, *control;
 {
-	register struct isopcb *isop = sotoisopcb(so);
+	struct isopcb *isop = sotoisopcb(so);
 	int             s = 0, error = 0;
 
 	if (req == PRU_CONTROL)

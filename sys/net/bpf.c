@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.41 2003/10/24 04:26:16 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.42 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -97,10 +97,10 @@ int	filt_bpfread(struct knote *, long);
 
 int
 bpf_movein(uio, linktype, mp, sockp, filter)
-	register struct uio *uio;
+	struct uio *uio;
 	int linktype;
-	register struct mbuf **mp;
-	register struct sockaddr *sockp;
+	struct mbuf **mp;
+	struct sockaddr *sockp;
 	struct bpf_insn *filter;
 {
 	struct mbuf *m;
@@ -325,7 +325,7 @@ bpfopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	register struct bpf_d *d;
+	struct bpf_d *d;
 
 	if (minor(dev) >= nbpfilter)
 		return (ENXIO);
@@ -357,8 +357,8 @@ bpfclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	register struct bpf_d *d = &bpf_dtab[minor(dev)];
-	register int s;
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	int s;
 
 	s = splimp();
 	if (d->bd_bif)
@@ -386,10 +386,10 @@ bpfclose(dev, flag, mode, p)
 int
 bpfread(dev, uio, ioflag)
 	dev_t dev;
-	register struct uio *uio;
+	struct uio *uio;
 	int ioflag;
 {
-	register struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int error;
 	int s;
 
@@ -492,7 +492,7 @@ bpfread(dev, uio, ioflag)
  */
 static __inline void
 bpf_wakeup(d)
-	register struct bpf_d *d;
+	struct bpf_d *d;
 {
 	wakeup((caddr_t)d);
 	if (d->bd_async && d->bd_sig)
@@ -511,7 +511,7 @@ bpfwrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	register struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
@@ -593,7 +593,7 @@ bpfioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
 
 	if (d->bd_locked && suser(p, 0) != 0) {
@@ -656,7 +656,7 @@ bpfioctl(dev, cmd, addr, flag, p)
 		if (d->bd_bif != 0)
 			error = EINVAL;
 		else {
-			register u_int size = *(u_int *)addr;
+			u_int size = *(u_int *)addr;
 
 			if (size > BPF_MAXBUFSIZE)
 				*(u_int *)addr = size = BPF_MAXBUFSIZE;
@@ -998,12 +998,12 @@ bpf_ifname(ifp, ifr)
  */
 int
 bpfpoll(dev, events, p)
-	register dev_t dev;
+	dev_t dev;
 	int events;
 	struct proc *p;
 {
-	register struct bpf_d *d;
-	register int s, revents;
+	struct bpf_d *d;
+	int s, revents;
 
 	revents = events & (POLLIN | POLLRDNORM);
 	if (revents == 0)
@@ -1091,12 +1091,12 @@ filt_bpfread(struct knote *kn, long hint)
 void
 bpf_tap(arg, pkt, pktlen)
 	caddr_t arg;
-	register u_char *pkt;
-	register u_int pktlen;
+	u_char *pkt;
+	u_int pktlen;
 {
 	struct bpf_if *bp;
-	register struct bpf_d *d;
-	register size_t slen;
+	struct bpf_d *d;
+	size_t slen;
 	/*
 	 * Note that the ipl does not have to be raised at this point.
 	 * The only problem that could arise here is that if two different
@@ -1119,10 +1119,10 @@ void
 bpf_mcopy(src_arg, dst_arg, len)
 	const void *src_arg;
 	void *dst_arg;
-	register size_t len;
+	size_t len;
 {
-	register const struct mbuf *m;
-	register u_int count;
+	const struct mbuf *m;
+	u_int count;
 	u_char *dst;
 
 	m = src_arg;
@@ -1176,14 +1176,14 @@ bpf_mtap(arg, m)
  */
 void
 bpf_catchpacket(d, pkt, pktlen, snaplen, cpfn)
-	register struct bpf_d *d;
-	register u_char *pkt;
-	register size_t pktlen, snaplen;
-	register void (*cpfn)(const void *, void *, size_t);
+	struct bpf_d *d;
+	u_char *pkt;
+	size_t pktlen, snaplen;
+	void (*cpfn)(const void *, void *, size_t);
 {
-	register struct bpf_hdr *hp;
-	register int totlen, curlen;
-	register int hdrlen = d->bd_bif->bif_hdrlen;
+	struct bpf_hdr *hp;
+	int totlen, curlen;
+	int hdrlen = d->bd_bif->bif_hdrlen;
 	struct timeval tv;
 
 	/*
@@ -1262,7 +1262,7 @@ bpf_catchpacket(d, pkt, pktlen, snaplen, cpfn)
  */
 int
 bpf_allocbufs(d)
-	register struct bpf_d *d;
+	struct bpf_d *d;
 {
 	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
 	if (d->bd_fbuf == NULL)
@@ -1283,7 +1283,7 @@ bpf_allocbufs(d)
  */
 void
 bpf_freed(d)
-	register struct bpf_d *d;
+	struct bpf_d *d;
 {
 	/*
 	 * We don't need to lock out interrupts since this descriptor has

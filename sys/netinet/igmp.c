@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.18 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.19 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ static int
 rti_fill(inm)
 	struct in_multi *inm;
 {
-	register struct router_info *rti;
+	struct router_info *rti;
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_ifp == inm->inm_ifp) {
@@ -84,7 +84,7 @@ static struct router_info *
 rti_find(ifp)
 	struct ifnet *ifp;
 {
-	register struct router_info *rti;
+	struct router_info *rti;
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_ifp == ifp)
@@ -121,16 +121,16 @@ rti_delete(ifp)
 void
 igmp_input(struct mbuf *m, ...)
 {
-	register int iphlen;
-	register struct ifnet *ifp = m->m_pkthdr.rcvif;
-	register struct ip *ip = mtod(m, struct ip *);
-	register struct igmp *igmp;
-	register int igmplen;
-	register int minlen;
+	int iphlen;
+	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ip *ip = mtod(m, struct ip *);
+	struct igmp *igmp;
+	int igmplen;
+	int minlen;
 	struct in_multi *inm;
 	struct in_multistep step;
 	struct router_info *rti;
-	register struct in_ifaddr *ia;
+	struct in_ifaddr *ia;
 	int timer;
 	va_list ap;
 
@@ -438,7 +438,7 @@ igmp_leavegroup(inm)
 void
 igmp_fasttimo()
 {
-	register struct in_multi *inm;
+	struct in_multi *inm;
 	struct in_multistep step;
 	int s;
 
@@ -476,7 +476,7 @@ igmp_fasttimo()
 void
 igmp_slowtimo()
 {
-	register struct router_info *rti;
+	struct router_info *rti;
 	int s;
 
 	s = splsoftnet();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.124 2003/12/02 23:16:29 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.125 2003/12/10 07:22:43 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -418,7 +418,7 @@ struct ipsecinit {
 static __inline u_int64_t
 htonq(u_int64_t q)
 {
-	register u_int32_t u, l;
+	u_int32_t u, l;
 	u = q >> 32;
 	l = (u_int32_t) q;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.22 2003/12/07 15:41:27 markus Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.23 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ sl_clone_create(ifc, unit)
 
 static int
 slinit(sc)
-	register struct sl_softc *sc;
+	struct sl_softc *sc;
 {
 	if (sc->sc_ep == (u_char *) 0) {
 		MGETHDR(sc->sc_mbuf, M_WAIT, MT_DATA);
@@ -270,10 +270,10 @@ slinit(sc)
 int
 slopen(dev, tp)
 	dev_t dev;
-	register struct tty *tp;
+	struct tty *tp;
 {
 	struct proc *p = curproc;		/* XXX */
-	register struct sl_softc *sc;
+	struct sl_softc *sc;
 	int error, s;
 
 	if ((error = suser(p, 0)) != 0)
@@ -330,7 +330,7 @@ void
 slclose(tp)
 	struct tty *tp;
 {
-	register struct sl_softc *sc;
+	struct sl_softc *sc;
 	int s;
 
 	ttywflush(tp);
@@ -392,12 +392,12 @@ sltioctl(tp, cmd, data, flag)
 int
 sloutput(ifp, m, dst, rtp)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
 	struct rtentry *rtp;
 {
-	register struct sl_softc *sc = ifp->if_softc;
-	register struct ip *ip;
+	struct sl_softc *sc = ifp->if_softc;
+	struct ip *ip;
 	int s, error;
 
 	/*
@@ -458,17 +458,17 @@ sloutput(ifp, m, dst, rtp)
  */
 void
 slstart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
-	register struct mbuf *m;
-	register u_char *cp;
-	register struct ip *ip;
+	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
+	struct mbuf *m;
+	u_char *cp;
+	struct ip *ip;
 	int s;
 	struct mbuf *m2;
 #if NBPFILTER > 0
 	u_char bpfbuf[SLMTU + SLIP_HDRLEN];
-	register int len = 0;
+	int len = 0;
 #endif
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))	/* XXX - cgd */
 	extern int cfreecount;
@@ -531,12 +531,12 @@ slstart(tp)
 			 * and/or the copy should be negligible cost compared
 			 * to the packet transmission time).
 			 */
-			register struct mbuf *m1 = m;
-			register u_char *cp = bpfbuf + SLIP_HDRLEN;
+			struct mbuf *m1 = m;
+			u_char *cp = bpfbuf + SLIP_HDRLEN;
 
 			len = 0;
 			do {
-				register int mlen = m1->m_len;
+				int mlen = m1->m_len;
 
 				bcopy(mtod(m1, caddr_t), cp, mlen);
 				cp += mlen;
@@ -586,7 +586,7 @@ slstart(tp)
 		}
 
 		while (m) {
-			register u_char *ep;
+			u_char *ep;
 
 			cp = mtod(m, u_char *); ep = cp + m->m_len;
 			while (cp < ep) {
@@ -594,7 +594,7 @@ slstart(tp)
 				 * Find out how many bytes in the string we can
 				 * handle without doing something special.
 				 */
-				register u_char *bp = cp;
+				u_char *bp = cp;
 
 				while (cp < ep) {
 					switch (*cp++) {
@@ -663,8 +663,8 @@ slstart(tp)
  */
 static struct mbuf *
 sl_btom(sc, len)
-	register struct sl_softc *sc;
-	register int len;
+	struct sl_softc *sc;
+	int len;
 {
 	struct mbuf *m;
 
@@ -703,12 +703,12 @@ sl_btom(sc, len)
  */
 void
 slinput(c, tp)
-	register int c;
-	register struct tty *tp;
+	int c;
+	struct tty *tp;
 {
-	register struct sl_softc *sc;
-	register struct mbuf *m;
-	register int len;
+	struct sl_softc *sc;
+	struct mbuf *m;
+	int len;
 	int s;
 #if NBPFILTER > 0
 	u_char chdr[CHDR_LEN];
@@ -888,14 +888,14 @@ newpack:
  */
 int
 slioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct sl_softc *sc = ifp->if_softc;
-	register struct ifaddr *ifa = (struct ifaddr *)data;
-	register struct ifreq *ifr;
-	register int s = splimp(), error = 0;
+	struct sl_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr;
+	int s = splimp(), error = 0;
 	struct sl_stats *slsp;
 
 	switch (cmd) {

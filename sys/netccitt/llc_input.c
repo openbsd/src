@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc_input.c,v 1.4 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: llc_input.c,v 1.5 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: llc_input.c,v 1.3 1996/02/13 22:04:44 christos Exp $	*/
 
 /* 
@@ -70,10 +70,10 @@
 void
 llcintr()
 {
-	register struct mbuf *m;
-	register int i;
-	register int frame_kind;
-	register u_char cmdrsp;
+	struct mbuf *m;
+	int i;
+	int frame_kind;
+	u_char cmdrsp;
 	struct llc_linkcb *linkp;
 	struct npaidbentry *sapinfo = NULL;
 	struct sdl_hdr *sdlhdr;
@@ -371,7 +371,7 @@ llc_ctlinput(prc, addr, info)
 	struct rtentry *nlrt;
 	struct rtentry *llrt = NULL;
 	struct llc_linkcb *linkp = NULL;
-	register int i;
+	int i;
 
 	/* info must point to something valid at all times */
 	if (info == 0)
@@ -408,9 +408,9 @@ llc_ctlinput(prc, addr, info)
 		return 0;
 
 	case PRC_IFDOWN: {
-		register struct llc_linkcb *linkp;
-		register struct llc_linkcb *nlinkp;
-		register int i;
+		struct llc_linkcb *linkp;
+		struct llc_linkcb *nlinkp;
+		int i;
 
 		/*
 		 * All links are accessible over the doubly linked list llccb_q

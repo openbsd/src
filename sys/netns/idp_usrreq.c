@@ -1,4 +1,4 @@
-/*	$OpenBSD: idp_usrreq.c,v 1.6 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: idp_usrreq.c,v 1.7 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: idp_usrreq.c,v 1.9 1996/02/13 22:13:43 christos Exp $	*/
 
 /*
@@ -65,8 +65,8 @@
 void
 idp_input(struct mbuf *m, ...)
 {
-	register struct nspcb *nsp;
-	register struct idp *idp = mtod(m, struct idp *);
+	struct nspcb *nsp;
+	struct idp *idp = mtod(m, struct idp *);
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct	sockaddr_ns idp_ns;
 	va_list ap;
@@ -86,7 +86,7 @@ idp_input(struct mbuf *m, ...)
 	idp_ns.sns_family = AF_NS;
 	idp_ns.sns_addr = idp->idp_sna;
 	if (ns_neteqnn(idp->idp_sna.x_net, ns_zeronet) && ifp) {
-		register struct ifaddr *ifa;
+		struct ifaddr *ifa;
 
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 		    ifa = ifa->ifa_list.tqe_next) {
@@ -127,7 +127,7 @@ idp_abort(nsp)
  */
 void
 idp_drop(nsp, errno)
-	register struct nspcb *nsp;
+	struct nspcb *nsp;
 	int errno;
 {
 	struct socket *so = nsp->nsp_socket;
@@ -154,11 +154,11 @@ int
 idp_output(struct mbuf *m0, ...)
 {
 	struct nspcb *nsp;
-	register struct mbuf *m;
-	register struct idp *idp;
-	register struct socket *so;
-	register int len = 0;
-	register struct route *ro;
+	struct mbuf *m;
+	struct idp *idp;
+	struct socket *so;
+	int len = 0;
+	struct route *ro;
 	struct mbuf *mprev = NULL;
 	extern int idpcksum;
 	va_list ap;
@@ -258,7 +258,7 @@ idp_output(struct mbuf *m0, ...)
 
 			}
 			if ((ro->ro_rt->rt_flags & RTF_GATEWAY) == 0) {
-				register struct ns_addr *dst =
+				struct ns_addr *dst =
 						&satons_addr(ro->ro_dst);
 				dst->x_host = idp->idp_dna.x_host;
 			}
@@ -285,7 +285,7 @@ idp_ctloutput(req, so, level, name, value)
 	int name;
 	struct mbuf **value;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct nspcb *nsp = sotonspcb(so);
 	int mask, error = 0;
 	extern long ns_pexseq;
@@ -321,7 +321,7 @@ idp_ctloutput(req, so, level, name, value)
 		case SO_DEFAULT_HEADERS:
 			m->m_len = sizeof(struct idp);
 			{
-				register struct idp *idp = mtod(m, struct idp *);
+				struct idp *idp = mtod(m, struct idp *);
 				idp->idp_len = 0;
 				idp->idp_sum = 0;
 				idp->idp_tc = 0;
@@ -368,7 +368,7 @@ idp_ctloutput(req, so, level, name, value)
 
 		case SO_DEFAULT_HEADERS:
 			{
-				register struct idp *idp
+				struct idp *idp
 				    = mtod(*value, struct idp *);
 				nsp->nsp_dpt = idp->idp_pt;
 			}

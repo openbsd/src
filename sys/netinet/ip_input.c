@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.114 2003/07/29 03:21:57 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.115 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -220,8 +220,8 @@ static int ip_weadvertise(u_int32_t);
 void
 ip_init()
 {
-	register struct protosw *pr;
-	register int i;
+	struct protosw *pr;
+	int i;
 	const u_int16_t defbaddynamicports_tcp[] = DEFBADDYNAMICPORTS_TCP;
 	const u_int16_t defbaddynamicports_udp[] = DEFBADDYNAMICPORTS_UDP;
 
@@ -292,8 +292,8 @@ void
 ipv4_input(m)
 	struct mbuf *m;
 {
-	register struct ip *ip;
-	register struct ipq *fp;
+	struct ip *ip;
+	struct ipq *fp;
 	struct in_ifaddr *ia;
 	struct ipqent *ipqe;
 	int hlen, mff, len;
@@ -689,9 +689,9 @@ bad:
 struct in_ifaddr *
 in_iawithaddr(ina, m)
 	struct in_addr ina;
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register struct in_ifaddr *ia;
+	struct in_ifaddr *ia;
 
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 		if ((ina.s_addr == ia->ia_addr.sin_addr.s_addr) ||
@@ -917,7 +917,7 @@ void
 ip_freef(fp)
 	struct ipq *fp;
 {
-	register struct ipqent *q, *p;
+	struct ipqent *q, *p;
 
 	for (q = fp->ipq_fragq.lh_first; q != NULL; q = p) {
 		p = q->ipqe_q.le_next;
@@ -938,7 +938,7 @@ ip_freef(fp)
 void
 ip_slowtimo()
 {
-	register struct ipq *fp, *nfp;
+	struct ipq *fp, *nfp;
 	int s = splsoftnet();
 
 	ipq_lock();
@@ -995,10 +995,10 @@ int
 ip_dooptions(m)
 	struct mbuf *m;
 {
-	register struct ip *ip = mtod(m, struct ip *);
-	register u_char *cp;
+	struct ip *ip = mtod(m, struct ip *);
+	u_char *cp;
 	struct ip_timestamp ipt;
-	register struct in_ifaddr *ia;
+	struct in_ifaddr *ia;
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr sin, dst;
 	n_time ntime;
@@ -1212,7 +1212,7 @@ struct in_ifaddr *
 ip_rtaddr(dst)
 	 struct in_addr dst;
 {
-	register struct sockaddr_in *sin;
+	struct sockaddr_in *sin;
 
 	sin = satosin(&ipforward_rt.ro_dst);
 
@@ -1263,9 +1263,9 @@ static int
 ip_weadvertise(addr)
 	u_int32_t addr;
 {
-	register struct rtentry *rt;
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct rtentry *rt;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 	struct sockaddr_inarp sin;
 
 	sin.sin_len = sizeof(sin);
@@ -1308,8 +1308,8 @@ ip_weadvertise(addr)
 struct mbuf *
 ip_srcroute()
 {
-	register struct in_addr *p, *q;
-	register struct mbuf *m;
+	struct in_addr *p, *q;
+	struct mbuf *m;
 
 	if (ip_nhops == 0)
 		return ((struct mbuf *)0);
@@ -1378,12 +1378,12 @@ ip_srcroute()
  */
 void
 ip_stripoptions(m, mopt)
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf *mopt;
 {
-	register int i;
+	int i;
 	struct ip *ip = mtod(m, struct ip *);
-	register caddr_t opts;
+	caddr_t opts;
 	int olen;
 
 	olen = (ip->ip_hl<<2) - sizeof (struct ip);
@@ -1424,9 +1424,9 @@ ip_forward(m, srcrt)
 	struct mbuf *m;
 	int srcrt;
 {
-	register struct ip *ip = mtod(m, struct ip *);
-	register struct sockaddr_in *sin;
-	register struct rtentry *rt;
+	struct ip *ip = mtod(m, struct ip *);
+	struct sockaddr_in *sin;
+	struct rtentry *rt;
 	int error, type = 0, code = 0;
 	struct mbuf *mcopy;
 	n_long dest;

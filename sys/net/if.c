@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.77 2003/12/10 03:30:21 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.78 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -746,10 +746,10 @@ if_clone_list(ifcr)
 /*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithaddr(addr)
-	register struct sockaddr *addr;
+	struct sockaddr *addr;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 
 #define	equal(a1, a2) \
   (bcmp((caddr_t)(a1), (caddr_t)(a2), ((struct sockaddr *)(a1))->sa_len) == 0)
@@ -774,10 +774,10 @@ ifa_ifwithaddr(addr)
 /*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithdstaddr(addr)
-	register struct sockaddr *addr;
+	struct sockaddr *addr;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 	    if (ifp->if_flags & IFF_POINTOPOINT)
@@ -800,21 +800,21 @@ struct ifaddr *
 ifa_ifwithnet(addr)
 	struct sockaddr *addr;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 	char *addr_data = addr->sa_data, *cplim;
 
 	if (af == AF_LINK) {
-		register struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
+		struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
 		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
 		    ifindex2ifnet[sdl->sdl_index])
 			return (ifnet_addrs[sdl->sdl_index]);
 	}
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			register char *cp, *cp2, *cp3;
+			char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
 			    ifa->ifa_netmask == 0)
@@ -842,10 +842,10 @@ ifa_ifwithnet(addr)
  */
 struct ifaddr *
 ifa_ifwithaf(af)
-	register int af;
+	int af;
 {
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
@@ -863,11 +863,11 @@ ifa_ifwithaf(af)
 struct ifaddr *
 ifaof_ifpforaddr(addr, ifp)
 	struct sockaddr *addr;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
-	register char *cp, *cp2, *cp3;
-	register char *cplim;
+	struct ifaddr *ifa;
+	char *cp, *cp2, *cp3;
+	char *cplim;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 
@@ -904,10 +904,10 @@ ifaof_ifpforaddr(addr, ifp)
 void
 link_rtrequest(cmd, rt, info)
 	int cmd;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	struct rt_addrinfo *info;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 	struct sockaddr *dst;
 	struct ifnet *ifp;
 
@@ -977,9 +977,9 @@ if_up(struct ifnet *ifp)
  */
 void
 if_qflush(ifq)
-	register struct ifqueue *ifq;
+	struct ifqueue *ifq;
 {
-	register struct mbuf *m, *n;
+	struct mbuf *m, *n;
 
 	n = ifq->ifq_head;
 	while ((m = n) != NULL) {
@@ -1022,7 +1022,7 @@ struct ifnet *
 ifunit(name)
 	const char *name;
 {
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (strcmp(ifp->if_xname, name) == 0)
@@ -1041,8 +1041,8 @@ ifioctl(so, cmd, data, p)
 	caddr_t data;
 	struct proc *p;
 {
-	register struct ifnet *ifp;
-	register struct ifreq *ifr;
+	struct ifnet *ifp;
+	struct ifreq *ifr;
 	int error = 0;
 	short oif_flags;
 
@@ -1242,16 +1242,16 @@ ifconf(cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	register struct ifconf *ifc = (struct ifconf *)data;
-	register struct ifnet *ifp;
-	register struct ifaddr *ifa;
+	struct ifconf *ifc = (struct ifconf *)data;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
 	int space = ifc->ifc_len, error = 0;
 
 	/* If ifc->ifc_len is 0, fill it in with the needed size and return. */
 	if (space == 0) {
 		TAILQ_FOREACH(ifp, &ifnet, if_list) {
-			register struct sockaddr *sa;
+			struct sockaddr *sa;
 
 			if (TAILQ_EMPTY(&ifp->if_addrlist))
 				space += sizeof (ifr);
@@ -1287,7 +1287,7 @@ ifconf(cmd, data)
 			    space >= sizeof (ifr) &&
 			    ifa != TAILQ_END(&ifp->if_addrlist);
 			    ifa = TAILQ_NEXT(ifa, ifa_list)) {
-				register struct sockaddr *sa = ifa->ifa_addr;
+				struct sockaddr *sa = ifa->ifa_addr;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 				if (cmd == OSIOCGIFCONF) {
 					struct osockaddr *osa =

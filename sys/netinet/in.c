@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.32 2003/06/23 08:09:21 itojun Exp $	*/
+/*	$OpenBSD: in.c,v 1.33 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ int
 in_localaddr(in)
 	struct in_addr in;
 {
-	register struct in_ifaddr *ia;
+	struct in_ifaddr *ia;
 
 	if (subnetsarelocal) {
 		for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
@@ -134,7 +134,7 @@ int
 in_canforward(in)
 	struct in_addr in;
 {
-	register u_int32_t net;
+	u_int32_t net;
 
 	if (IN_EXPERIMENTAL(in.s_addr) || IN_MULTICAST(in.s_addr))
 		return (0);
@@ -153,8 +153,8 @@ void
 in_socktrim(ap)
 	struct sockaddr_in *ap;
 {
-	register char *cplim = (char *) &ap->sin_addr;
-	register char *cp = (char *) (&ap->sin_addr + 1);
+	char *cplim = (char *) &ap->sin_addr;
+	char *cp = (char *) (&ap->sin_addr + 1);
 
 	ap->sin_len = 0;
 	while (--cp >= cplim)
@@ -214,10 +214,10 @@ in_control(so, cmd, data, ifp)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct ifreq *ifr = (struct ifreq *)data;
-	register struct in_ifaddr *ia = 0;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct in_ifaddr *ia = 0;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
@@ -636,8 +636,8 @@ in_lifaddr_ioctl(so, cmd, data, ifp)
  */
 void
 in_ifscrub(ifp, ia)
-	register struct ifnet *ifp;
-	register struct in_ifaddr *ia;
+	struct ifnet *ifp;
+	struct in_ifaddr *ia;
 {
 
 	in_scrubprefix(ia);
@@ -649,12 +649,12 @@ in_ifscrub(ifp, ia)
  */
 int
 in_ifinit(ifp, ia, sin, scrub)
-	register struct ifnet *ifp;
-	register struct in_ifaddr *ia;
+	struct ifnet *ifp;
+	struct in_ifaddr *ia;
 	struct sockaddr_in *sin;
 	int scrub;
 {
-	register u_int32_t i = sin->sin_addr.s_addr;
+	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
 	int s = splimp(), flags = RTF_UP, error;
 
@@ -859,7 +859,7 @@ in_broadcast(in, ifp)
 	struct ifnet *ifp;
 {
 	struct ifnet *ifn, *if_first, *if_target;
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	if (in.s_addr == INADDR_BROADCAST ||
 	    in.s_addr == INADDR_ANY)
@@ -905,10 +905,10 @@ in_broadcast(in, ifp)
  */
 struct in_multi *
 in_addmulti(ap, ifp)
-	register struct in_addr *ap;
-	register struct ifnet *ifp;
+	struct in_addr *ap;
+	struct ifnet *ifp;
 {
-	register struct in_multi *inm;
+	struct in_multi *inm;
 	struct ifreq ifr;
 	struct in_ifaddr *ia;
 	int s = splsoftnet();
@@ -972,7 +972,7 @@ in_addmulti(ap, ifp)
  */
 void
 in_delmulti(inm)
-	register struct in_multi *inm;
+	struct in_multi *inm;
 {
 	struct ifreq ifr;
 	int s = splsoftnet();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_output.c,v 1.6 2003/06/12 01:07:27 deraadt Exp $	*/
+/*	$OpenBSD: pk_output.c,v 1.7 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: pk_output.c,v 1.7 1996/02/13 22:05:30 christos Exp $	*/
 
 /*
@@ -59,11 +59,11 @@ struct mbuf_cache pk_output_cache = {0}, pk_input_cache;
 
 void
 pk_output(lcp)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 {
-	register struct x25_packet *xp;
-	register struct mbuf *m;
-	register struct pkcb *pkp = lcp->lcd_pkp;
+	struct x25_packet *xp;
+	struct mbuf *m;
+	struct pkcb *pkp = lcp->lcd_pkp;
 
 	if (lcp == 0 || pkp == 0) {
 		printf("pk_output: zero arg\n");
@@ -192,9 +192,9 @@ struct mbuf *
 nextpk(lcp)
 	struct pklcd   *lcp;
 {
-	register struct mbuf *m, *n;
+	struct mbuf *m, *n;
 	struct socket  *so = lcp->lcd_so;
-	register struct sockbuf *sb = (so ? &so->so_snd : &lcp->lcd_sb);
+	struct sockbuf *sb = (so ? &so->so_snd : &lcp->lcd_sb);
 
 	if (lcp->lcd_template) {
 		m = lcp->lcd_template;

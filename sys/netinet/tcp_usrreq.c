@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.73 2003/12/08 07:07:36 mcbride Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.74 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -137,8 +137,8 @@ tcp_usrreq(so, req, m, nam, control)
 	struct mbuf *m, *nam, *control;
 {
 	struct sockaddr_in *sin;
-	register struct inpcb *inp;
-	register struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
 	int ostate;
@@ -498,9 +498,9 @@ tcp_ctloutput(op, so, level, optname, mp)
 {
 	int error = 0, s;
 	struct inpcb *inp;
-	register struct tcpcb *tp;
-	register struct mbuf *m;
-	register int i;
+	struct tcpcb *tp;
+	struct mbuf *m;
+	int i;
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
@@ -658,7 +658,7 @@ int
 tcp_attach(so)
 	struct socket *so;
 {
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 	struct inpcb *inp;
 	int error;
 
@@ -703,7 +703,7 @@ tcp_attach(so)
  */
 struct tcpcb *
 tcp_disconnect(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
 
@@ -733,7 +733,7 @@ tcp_disconnect(tp)
  */
 struct tcpcb *
 tcp_usrclosed(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
 
 	switch (tp->t_state) {

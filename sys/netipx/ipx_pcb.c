@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.9 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.10 2003/12/10 07:22:43 itojun Exp $	*/
 
 /*-
  *
@@ -71,7 +71,7 @@ ipx_pcballoc(so, head)
 	struct socket *so;
 	struct ipxpcbtable *head;
 {
-	register struct ipxpcb *ipxp;
+	struct ipxpcb *ipxp;
 	int s;
 
 	ipxp = malloc(sizeof(*ipxp), M_PCB, M_DONTWAIT);
@@ -91,10 +91,10 @@ ipx_pcballoc(so, head)
 	
 int
 ipx_pcbbind(ipxp, nam)
-	register struct ipxpcb *ipxp;
+	struct ipxpcb *ipxp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_ipx *sipx;
+	struct sockaddr_ipx *sipx;
 	u_short lport = 0;
 
 	if (ipxp->ipxp_lport || !ipx_nullhost(ipxp->ipxp_laddr))
@@ -147,9 +147,9 @@ ipx_pcbconnect(ipxp, nam)
 	struct mbuf *nam;
 {
 	struct ipx_ifaddr *ia;
-	register struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
-	register struct ipx_addr *dst;
-	register struct route *ro;
+	struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
+	struct ipx_addr *dst;
+	struct route *ro;
 	struct ifnet *ifp;
 
 	if (nam->m_len != sizeof(*sipx))
@@ -274,10 +274,10 @@ ipx_pcbdetach(ipxp)
 
 void
 ipx_setsockaddr(ipxp, nam)
-	register struct ipxpcb *ipxp;
+	struct ipxpcb *ipxp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
+	struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
 	
 	nam->m_len = sizeof(*sipx);
 	sipx = mtod(nam, struct sockaddr_ipx *);
@@ -289,10 +289,10 @@ ipx_setsockaddr(ipxp, nam)
 
 void
 ipx_setpeeraddr(ipxp, nam)
-	register struct ipxpcb *ipxp;
+	struct ipxpcb *ipxp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
+	struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
 	
 	nam->m_len = sizeof(*sipx);
 	sipx = mtod(nam, struct sockaddr_ipx *);
@@ -311,12 +311,12 @@ ipx_setpeeraddr(ipxp, nam)
  */
 void
 ipx_pcbnotify(dst, errno, notify, param)
-	register struct ipx_addr *dst;
+	struct ipx_addr *dst;
 	int errno;
 	void (*notify)(struct ipxpcb *);
 	long param;
 {
-	register struct ipxpcb *ipxp, *oinp;
+	struct ipxpcb *ipxp, *oinp;
 	int s = splimp();
 
 	for (ipxp = ipxcbtable.ipxpt_queue.cqh_first;
@@ -364,7 +364,7 @@ ipx_pcblookup(faddr, lport, wildp)
 	u_short lport;
 	int wildp;
 {
-	register struct ipxpcb *ipxp, *match = 0;
+	struct ipxpcb *ipxp, *match = 0;
 	int matchwild = 3, wildcard;
 	u_short fport;
 

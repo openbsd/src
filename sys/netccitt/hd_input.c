@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd_input.c,v 1.6 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: hd_input.c,v 1.7 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: hd_input.c,v 1.9 1996/04/13 01:34:16 cgd Exp $	*/
 
 /*
@@ -68,10 +68,10 @@ static void free_iframes(struct hdcb *, int *, int);
 void
 hdintr()
 {
-	register struct mbuf *m;
-	register struct hdcb *hdp;
-	register struct ifnet *ifp;
-	register int    s;
+	struct mbuf *m;
+	struct hdcb *hdp;
+	struct ifnet *ifp;
+	int    s;
 	static struct ifnet *lastifp;
 	static struct hdcb *lasthdp;
 
@@ -121,11 +121,11 @@ hdintr()
 
 int
 process_rxframe(hdp, fbuf)
-	register struct hdcb *hdp;
-	register struct mbuf *fbuf;
+	struct hdcb *hdp;
+	struct mbuf *fbuf;
 {
-	register int    queued = FALSE, frametype, pf;
-	register struct Hdlc_frame *frame;
+	int    queued = FALSE, frametype, pf;
+	struct Hdlc_frame *frame;
 	struct sockaddr *sa = (struct sockaddr *) hdp->hd_pkp;
 
 	frame = mtod(fbuf, struct Hdlc_frame *);
@@ -323,12 +323,12 @@ process_rxframe(hdp, fbuf)
 
 int
 process_iframe(hdp, fbuf, frame)
-	register struct hdcb *hdp;
+	struct hdcb *hdp;
 	struct mbuf    *fbuf;
-	register struct Hdlc_iframe *frame;
+	struct Hdlc_iframe *frame;
 {
-	register int    nr = frame->nr, ns = frame->ns, pf = frame->pf;
-	register int    queued = FALSE;
+	int    nr = frame->nr, ns = frame->ns, pf = frame->pf;
+	int    queued = FALSE;
 
 	/*
 	 * Validate the iframe's N(R) value. It's N(R) value must be in sync
@@ -394,7 +394,7 @@ process_iframe(hdp, fbuf, frame)
 		fbuf->m_act = 0;/* probably not necessary */
 #else
 		{
-			register struct mbuf *m;
+			struct mbuf *m;
 
 			for (m = fbuf; m->m_next; m = m->m_next)
 				m->m_act = (struct mbuf *) 0;
@@ -428,7 +428,7 @@ bool
 range_check(rear, value, front)
 	int             rear, value, front;
 {
-	register bool   result = FALSE;
+	bool   result = FALSE;
 
 	if (front > rear)
 		result = (rear <= value) && (value <= front);
@@ -450,7 +450,7 @@ frame_reject(hdp, rejectcode, frame)
 	int rejectcode;
 	struct Hdlc_iframe *frame;
 {
-	register struct Frmr_frame *frmr = &hd_frmr;
+	struct Frmr_frame *frmr = &hd_frmr;
 
 	frmr->frmr_control = ((struct Hdlc_frame *) frame)->control;
 
@@ -493,11 +493,11 @@ frame_reject(hdp, rejectcode, frame)
 
 void
 process_sframe(hdp, frame, frametype)
-	register struct hdcb *hdp;
-	register struct Hdlc_sframe *frame;
+	struct hdcb *hdp;
+	struct Hdlc_sframe *frame;
 	int             frametype;
 {
-	register int    nr = frame->nr, pf = frame->pf, pollbit = 0;
+	int    nr = frame->nr, pf = frame->pf, pollbit = 0;
 
 	if (valid_nr(hdp, nr, pf) == TRUE) {
 		switch (frametype) {
@@ -555,9 +555,9 @@ process_sframe(hdp, frame, frametype)
 
 bool
 valid_nr(hdp, nr, finalbit)
-	register struct hdcb *hdp;
+	struct hdcb *hdp;
 	int nr;
-	register int    finalbit;
+	int    finalbit;
 {
 	/* Make sure it really does acknowledge something. */
 	if (hdp->hd_lastrxnr == nr)
@@ -603,10 +603,10 @@ valid_nr(hdp, nr, finalbit)
 
 static void
 rej_routine(hdp, rejnr)
-	register struct hdcb *hdp;
-	register int    rejnr;
+	struct hdcb *hdp;
+	int    rejnr;
 {
-	register int    anchor;
+	int    anchor;
 
 	/*
 	 * Flush the output queue.  Any iframes queued for
@@ -648,12 +648,12 @@ rej_routine(hdp, rejnr)
 
 static void
 free_iframes(hdp, nr, finalbit)
-	register struct hdcb *hdp;
+	struct hdcb *hdp;
 	int            *nr;
-	register int    finalbit;
+	int    finalbit;
 
 {
-	register int    i, k;
+	int    i, k;
 
 	/*
 	 * We  need to do the  following  because  of a  funny quirk  in  the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.87 2003/08/14 19:00:12 jason Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.88 2003/12/10 07:22:43 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1118,8 +1118,8 @@ checkreplaywindow32(u_int32_t seq, u_int32_t initial, u_int32_t *lastseq,
 caddr_t
 m_pad(struct mbuf *m, int n)
 {
-	register struct mbuf *m0, *m1;
-	register int len, pad;
+	struct mbuf *m0, *m1;
+	int len, pad;
 	caddr_t retval;
 
 	if (n <= 0) {  /* No stupid arguments. */

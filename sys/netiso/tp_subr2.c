@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_subr2.c,v 1.8 2003/06/02 23:28:18 millert Exp $	*/
+/*	$OpenBSD: tp_subr2.c,v 1.9 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tp_subr2.c,v 1.11 1996/03/26 22:27:01 christos Exp $	*/
 
 /*-
@@ -231,9 +231,9 @@ void
 tp_indicate(ind, tpcb, error)
 	int             ind;
 	u_short         error;
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register struct socket *so = tpcb->tp_sock;
+	struct socket *so = tpcb->tp_sock;
 #ifdef TPPT
 	if (tp_traceflags[D_INDICATION]) {
 		tptraceTPCB(TPPTindicate, ind, *(u_short *) (tpcb->tp_lsuffix),
@@ -257,7 +257,7 @@ tp_indicate(ind, tpcb, error)
 #endif
 
 	if (ind == ER_TPDU) {
-		register struct mbuf *m;
+		struct mbuf *m;
 		struct tp_disc_reason x;
 
 		if ((so->so_state & SS_CANTRCVMORE) == 0 &&
@@ -468,7 +468,7 @@ int
 tp_mask_to_num(x)
 	u_char          x;
 {
-	register int    j;
+	int    j;
 
 	for (j = 4; j >= 0; j--) {
 		if (x & (1 << j))
@@ -518,12 +518,12 @@ copyQOSparms(src, dst)
  */
 void
 tp_mss(tpcb, nhdr_size)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	int             nhdr_size;
 {
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	struct ifnet   *ifp;
-	register int    rtt, mss;
+	int    rtt, mss;
 	u_long          bufsize;
 	int             i, ssthresh = 0, rt_mss;
 	struct socket  *so;
@@ -646,13 +646,13 @@ punt_route:
 int
 tp_route_to(m, tpcb, channel)
 	struct mbuf    *m;
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	caddr_t         channel;
 {
-	register struct sockaddr_iso *siso;	/* NOTE: this may be a
+	struct sockaddr_iso *siso;	/* NOTE: this may be a
 						 * sockaddr_in */
 	int             error = 0, save_netservice = tpcb->tp_netservice;
-	register struct rtentry *rt = 0;
+	struct rtentry *rt = 0;
 	int             nhdr_size;
 
 	siso = mtod(m, struct sockaddr_iso *);
@@ -768,13 +768,13 @@ pk_flowcontrol(lcp, foo, bar)
 /* class zero version */
 void
 tp0_stash(tpcb, e)
-	register struct tp_pcb *tpcb;
-	register struct tp_event *e;
+	struct tp_pcb *tpcb;
+	struct tp_event *e;
 {
 #define E e->TPDU_ATTR(DT)
 
-	register struct sockbuf *sb = &tpcb->tp_sock->so_rcv;
-	register struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
+	struct sockbuf *sb = &tpcb->tp_sock->so_rcv;
+	struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 
 #ifdef TP_PERF_MEAS
 	if (DOPERF(tpcb)) {
@@ -799,7 +799,7 @@ tp0_stash(tpcb, e)
 #endif
 
 	if (E.e_eot) {
-		register struct mbuf *n = E.e_data;
+		struct mbuf *n = E.e_data;
 		n->m_flags |= M_EOR;
 		n->m_act = NULL;	/* set on tp_input */
 	}
@@ -812,20 +812,20 @@ tp0_stash(tpcb, e)
 	if (tpcb->tp_netservice != ISO_CONS)
 		printf("tp0_stash: tp running over something weird\n");
 	else {
-		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
+		struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		pk_flowcontrol(lcp, sbspace(sb) <= 0, 1);
 	}
 }
 
 void
 tp0_openflow(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
+	struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 	if (tpcb->tp_netservice != ISO_CONS)
 		printf("tp0_openflow: tp running over something weird\n");
 	else {
-		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
+		struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		if (lcp->lcd_rxrnr_condition)
 			pk_flowcontrol(lcp, 0, 0);
 	}
@@ -846,7 +846,7 @@ tp0_openflow(tpcb)
 
 int
 tp_setup_perf(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
 	if (tpcb->tp_p_meas == 0) {
 		tpcb->tp_p_meas = malloc(sizeof(struct tp_pmeas), M_PCB, M_WAITOK);
@@ -868,7 +868,7 @@ tp_setup_perf(tpcb)
 #ifdef ARGO_DEBUG
 void
 dump_addr(addr)
-	register struct sockaddr *addr;
+	struct sockaddr *addr;
 {
 	switch (addr->sa_family) {
 	case AF_INET:

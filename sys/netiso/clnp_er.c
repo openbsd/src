@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_er.c,v 1.4 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: clnp_er.c,v 1.5 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: clnp_er.c,v 1.8 1996/04/13 01:34:20 cgd Exp $	*/
 
 /*-
@@ -205,7 +205,7 @@ clnp_discard(m, reason)
 
 	if (m != NULL) {
 		if (m->m_len >= sizeof(struct clnp_fixed)) {
-			register struct clnp_fixed *clnp =
+			struct clnp_fixed *clnp =
 				mtod(m, struct clnp_fixed *);
 
 			if (((clnp->cnf_type & CNF_TYPE) != CLNP_ER) &&
@@ -240,8 +240,8 @@ clnp_emit_er(m, reason)
 	struct mbuf    *m;	/* header of packet to discard */
 	u_int           reason;	/* reason for discard */
 {
-	register struct clnp_fixed *clnp = mtod(m, struct clnp_fixed *);
-	register struct clnp_fixed *er;
+	struct clnp_fixed *clnp = mtod(m, struct clnp_fixed *);
+	struct clnp_fixed *er;
 	struct route_iso route;
 	struct ifnet   *ifp;
 	struct sockaddr *first_hop;
@@ -378,7 +378,7 @@ int
 clnp_er_index(p)
 	u_int p;
 {
-	register u_char *cp = clnp_er_codes + CLNP_ERRORS;
+	u_char *cp = clnp_er_codes + CLNP_ERRORS;
 	while (cp > clnp_er_codes) {
 		cp--;
 		if (*cp == p)

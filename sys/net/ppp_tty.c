@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.19 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.20 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -181,10 +181,10 @@ void	ppplogchar(struct ppp_softc *, int);
 int
 pppopen(dev, tp)
     dev_t dev;
-    register struct tty *tp;
+    struct tty *tp;
 {
     struct proc *p = curproc;		/* XXX */
-    register struct ppp_softc *sc;
+    struct ppp_softc *sc;
     int error, s;
 
     if ((error = suser(p, 0)) != 0)
@@ -242,7 +242,7 @@ pppclose(tp, flag)
     struct tty *tp;
     int flag;
 {
-    register struct ppp_softc *sc;
+    struct ppp_softc *sc;
     int s;
 
     s = spltty();
@@ -290,13 +290,13 @@ pppasyncrelinq(sc)
  */
 int
 pppread(tp, uio, flag)
-    register struct tty *tp;
+    struct tty *tp;
     struct uio *uio;
     int flag;
 {
-    register struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
+    struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
     struct mbuf *m, *m0;
-    register int s;
+    int s;
     int error = 0;
 
     if (sc == NULL)
@@ -348,11 +348,11 @@ pppread(tp, uio, flag)
  */
 int
 pppwrite(tp, uio, flag)
-    register struct tty *tp;
+    struct tty *tp;
     struct uio *uio;
     int flag;
 {
-    register struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
+    struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
     struct mbuf *m, *m0, **mp;
     struct sockaddr dst;
     int len, error;
@@ -502,9 +502,9 @@ static u_int16_t fcstab[256] = {
  */
 u_int16_t
 pppfcs(fcs, cp, len)
-    register u_int16_t fcs;
-    register u_char *cp;
-    register int len;
+    u_int16_t fcs;
+    u_char *cp;
+    int len;
 {
     while (len--)
 	fcs = PPP_FCS(fcs, *cp++);
@@ -517,12 +517,12 @@ pppfcs(fcs, cp, len)
  */
 void
 pppasyncstart(sc)
-    register struct ppp_softc *sc;
+    struct ppp_softc *sc;
 {
-    register struct tty *tp = (struct tty *) sc->sc_devp;
-    register struct mbuf *m;
-    register int len;
-    register u_char *start, *stop, *cp;
+    struct tty *tp = (struct tty *) sc->sc_devp;
+    struct mbuf *m;
+    int len;
+    u_char *start, *stop, *cp;
     int n, ndone, done, idle;
     struct mbuf *m2;
     int s;
@@ -721,10 +721,10 @@ pppasyncctlp(sc)
  */
 int
 pppstart(tp, force)
-    register struct tty *tp;
+    struct tty *tp;
     int force;
 {
-    register struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
+    struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
 
     /*
      * If there is stuff in the output queue, send it now.
@@ -778,7 +778,7 @@ ppp_timeout(x)
  */
 void
 pppgetm(sc)
-    register struct ppp_softc *sc;
+    struct ppp_softc *sc;
 {
     struct mbuf *m, **mp;
     int len;
@@ -811,9 +811,9 @@ static unsigned int paritytab[8] = {
 int
 pppinput(c, tp)
     int c;
-    register struct tty *tp;
+    struct tty *tp;
 {
-    register struct ppp_softc *sc;
+    struct ppp_softc *sc;
     struct mbuf *m;
     int ilen, s;
 

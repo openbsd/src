@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc_var.h,v 1.4 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: llc_var.h,v 1.5 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: llc_var.h,v 1.5 1996/02/13 22:05:01 christos Exp $	*/
 
 /* 
@@ -489,7 +489,7 @@ struct sdl_hdr {
 #define LLC_UPDATE_NR_RECEIVED(l,nr) { \
 	while ((l)->llcl_nr_received != (nr)) { \
 		struct mbuf *_m; \
-		register short seq; \
+		short seq; \
 		seq = llc_seq2slot((l),(l)->llcl_nr_received); \
 		if ((_m = (l)->llcl_output_buffers[seq]) != NULL) \
 			m_freem(_m); \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.31 2003/12/06 14:40:33 grange Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.32 2003/12/10 07:22:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1444,7 +1444,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	struct ifaliasreq *ifra;
-	register int error = 0;
+	int error = 0;
 
 	ifa = (struct ifaddr *)addr;
 	ifra = (struct ifaliasreq *)addr;
@@ -1647,7 +1647,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	switch (ifp->if_type) {
 #if NETHER > 0
 	case IFT_ETHER: {
-			register struct ether_header *eh;
+			struct ether_header *eh;
 
 			eh = mtod(m, struct ether_header *);
 			eh->ether_shost[0] = 0;
@@ -1661,7 +1661,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 #endif
 #if NFDDI > 0
 	case IFT_FDDI: {
-			register struct fddi_header *fh;
+			struct fddi_header *fh;
 
 			fh = mtod(m, struct fddi_header *);
 			fh->fddi_shost[0] = 0;
@@ -1675,7 +1675,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 #endif
 #if NTOKEN > 0
 	case IFT_ISO88025: {
-			register struct token_header *th;
+			struct token_header *th;
 
 			th = mtod(m, struct token_header *);
 			th->token_shost[0] = 3;

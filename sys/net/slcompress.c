@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.c,v 1.7 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: slcompress.c,v 1.8 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: slcompress.c,v 1.17 1997/05/17 21:12:10 christos Exp $	*/
 
 /*
@@ -68,8 +68,8 @@ void
 sl_compress_init(comp)
 	struct slcompress *comp;
 {
-	register u_int i;
-	register struct cstate *tstate = comp->tstate;
+	u_int i;
+	struct cstate *tstate = comp->tstate;
 
 	bzero((char *)comp, sizeof(*comp));
 	for (i = MAX_STATES - 1; i > 0; --i) {
@@ -94,8 +94,8 @@ sl_compress_setup(comp, max_state)
  	struct slcompress *comp;
  	int max_state;
 {
-	register u_int i;
-	register struct cstate *tstate = comp->tstate;
+	u_int i;
+	struct cstate *tstate = comp->tstate;
 
 	if (max_state == -1) {
 		max_state = MAX_STATES - 1;
@@ -173,18 +173,18 @@ sl_compress_setup(comp, max_state)
 u_int
 sl_compress_tcp(m, ip, comp, compress_cid)
 	struct mbuf *m;
-	register struct ip *ip;
+	struct ip *ip;
 	struct slcompress *comp;
 	int compress_cid;
 {
-	register struct cstate *cs = comp->last_cs->cs_next;
-	register u_int hlen = ip->ip_hl;
-	register struct tcphdr *oth;
-	register struct tcphdr *th;
-	register u_int deltaS, deltaA;
-	register u_int changes = 0;
+	struct cstate *cs = comp->last_cs->cs_next;
+	u_int hlen = ip->ip_hl;
+	struct tcphdr *oth;
+	struct tcphdr *th;
+	u_int deltaS, deltaA;
+	u_int changes = 0;
 	u_char new_seq[16];
-	register u_char *cp = new_seq;
+	u_char *cp = new_seq;
 
 	/*
 	 * Bail if this is an IP fragment or if the TCP packet isn't
@@ -221,8 +221,8 @@ sl_compress_tcp(m, ip, comp, compress_cid)
 		 * states via linear search.  If we don't find a state
 		 * for the datagram, the oldest state is (re-)used.
 		 */
-		register struct cstate *lcs;
-		register struct cstate *lastcs = comp->last_cs;
+		struct cstate *lcs;
+		struct cstate *lastcs = comp->last_cs;
 
 		do {
 			lcs = cs; cs = cs->cs_next;
@@ -483,13 +483,13 @@ sl_uncompress_tcp_core(buf, buflen, total_len, type, comp, hdrp, hlenp)
 	u_char **hdrp;
 	u_int *hlenp;
 {
-	register u_char *cp;
-	register u_int hlen, changes;
-	register struct tcphdr *th;
-	register struct cstate *cs;
-	register struct ip *ip;
-	register u_int16_t *bp;
-	register u_int vjlen;
+	u_char *cp;
+	u_int hlen, changes;
+	struct tcphdr *th;
+	struct cstate *cs;
+	struct ip *ip;
+	u_int16_t *bp;
+	u_int vjlen;
 
 	switch (type) {
 
@@ -557,7 +557,7 @@ sl_uncompress_tcp_core(buf, buflen, total_len, type, comp, hdrp, hlenp)
 	switch (changes & SPECIALS_MASK) {
 	case SPECIAL_I:
 		{
-		register u_int i = ntohs(cs->cs_ip.ip_len) - cs->cs_hlen;
+		u_int i = ntohs(cs->cs_ip.ip_len) - cs->cs_hlen;
 		th->th_ack = htonl(ntohl(th->th_ack) + i);
 		th->th_seq = htonl(ntohl(th->th_seq) + i);
 		}

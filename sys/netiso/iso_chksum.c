@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_chksum.c,v 1.6 2003/06/02 23:28:17 millert Exp $	*/
+/*	$OpenBSD: iso_chksum.c,v 1.7 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: iso_chksum.c,v 1.8 1996/04/22 01:43:45 christos Exp $	*/
 
 /*-
@@ -108,9 +108,9 @@ iso_check_csum(m, len)
 	struct mbuf    *m;
 	int             len;
 {
-	register u_char *p = mtod(m, u_char *);
-	register u_long c0 = 0, c1 = 0;
-	register int    i = 0;
+	u_char *p = mtod(m, u_char *);
+	u_long c0 = 0, c1 = 0;
+	int    i = 0;
 	int             cum = 0;/* cumulative length */
 	int             l;
 
@@ -185,9 +185,9 @@ iso_gen_csum(m, n, l)
 	int             n;	/* offset of 2 checksum bytes */
 	int             l;
 {
-	register u_char *p = mtod(m, u_char *);
-	register int    c0 = 0, c1 = 0;
-	register int    i = 0;
+	u_char *p = mtod(m, u_char *);
+	int    c0 = 0, c1 = 0;
+	int    i = 0;
 	int             loc = n++, len = 0;	/* n is position, loc is
 						 * offset */
 	u_char         *xloc = NULL;
@@ -289,9 +289,9 @@ iso_gen_csum(m, n, l)
 
 int
 m_datalen(m)
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register int    datalen;
+	int    datalen;
 
 	for (datalen = 0; m; m = m->m_next)
 		datalen += m->m_len;
@@ -300,9 +300,9 @@ m_datalen(m)
 
 int
 m_compress(in, out)
-	register struct mbuf *in, **out;
+	struct mbuf *in, **out;
 {
-	register int    datalen = 0;
+	int    datalen = 0;
 	int             s = splimp();
 
 	if (in->m_next == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_output.c,v 1.4 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: ns_output.c,v 1.5 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: ns_output.c,v 1.8 1996/02/13 22:14:01 christos Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ ns_output(struct mbuf *m0, ...)
 {
 	struct route *ro;
 	int flags;
-	register struct idp *idp = mtod(m0, struct idp *);
-	register struct ifnet *ifp = 0;
+	struct idp *idp = mtod(m0, struct idp *);
+	struct ifnet *ifp = 0;
 	int error = 0;
 	struct route idproute;
 	struct sockaddr_ns *dst;

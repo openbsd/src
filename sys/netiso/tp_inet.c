@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_inet.c,v 1.12 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: tp_inet.c,v 1.13 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
 
 /*-
@@ -215,11 +215,11 @@ in_recycle_tsuffix(v)
  */
 void
 in_putnetaddr(v, nm, which)
-	register void *v;
+	void *v;
 	struct sockaddr *nm;
 	int             which;
 {
-	register struct inpcb *inp = v;
+	struct inpcb *inp = v;
 	struct sockaddr_in *name = (struct sockaddr_in *) nm;
 	switch (which) {
 	case TP_LOCAL:
@@ -256,11 +256,11 @@ in_putnetaddr(v, nm, which)
  */
 int
 in_cmpnetaddr(v, nm, which)
-	register void *v;
-	register struct sockaddr *nm;
+	void *v;
+	struct sockaddr *nm;
 	int             which;
 {
-	register struct inpcb *inp = v;
+	struct inpcb *inp = v;
 	struct sockaddr_in *name = (struct sockaddr_in *) nm;
 	if (which == TP_LOCAL) {
 		if (name->sin_port && name->sin_port != inp->inp_lport)
@@ -292,11 +292,11 @@ in_cmpnetaddr(v, nm, which)
 void
 in_getnetaddr(v, name, which)
 	void *v;
-	register struct mbuf *name;
+	struct mbuf *name;
 	int             which;
 {
 	struct inpcb   *inp = v;
-	register struct sockaddr_in *sin = mtod(name, struct sockaddr_in *);
+	struct sockaddr_in *sin = mtod(name, struct sockaddr_in *);
 	bzero((caddr_t) sin, sizeof(*sin));
 	switch (which) {
 	case TP_LOCAL:
@@ -336,7 +336,7 @@ int
 tpip_mtu(v)
 	void *v;
 {
-	register struct tp_pcb *tpcb = v;
+	struct tp_pcb *tpcb = v;
 	struct inpcb   *inp = (struct inpcb *) tpcb->tp_npcb;
 
 #ifdef ARGO_DEBUG
@@ -413,8 +413,8 @@ tpip_output_dg(struct mbuf *m0, ...)
 	struct in_addr *laddr, *faddr;
 	struct route   *ro;
 	int             nochksum;
-	register struct mbuf *m;
-	register struct ip *ip;
+	struct mbuf *m;
+	struct ip *ip;
 	int             error;
 	va_list ap;
 
@@ -501,7 +501,7 @@ tpip_input(struct mbuf *m, ...)
 {
 	int             iplen;
 	struct sockaddr_in src, dst;
-	register struct ip *ip;
+	struct ip *ip;
 	int             s = splsoftnet(), hdrlen;
 	va_list ap;
 
@@ -724,7 +724,7 @@ tpin_abort(inp, n)
 #ifdef ARGO_DEBUG
 void
 dump_inaddr(addr)
-	register struct sockaddr_in *addr;
+	struct sockaddr_in *addr;
 {
 	printf("INET: port 0x%x; addr 0x%x\n", addr->sin_port, addr->sin_addr.s_addr);
 }

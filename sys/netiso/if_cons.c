@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cons.c,v 1.6 2003/08/06 21:08:07 millert Exp $	*/
+/*	$OpenBSD: if_cons.c,v 1.7 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: if_cons.c,v 1.7 1996/02/13 22:09:44 christos Exp $	*/
 
 /*-
@@ -185,15 +185,15 @@ extern struct isopcb tp_isopcb;	/* chain of all TP pcbs */
  */
 void
 nibble_copy(src_octet, src_nibble, dst_octet, dst_nibble, len)
-	register char  *src_octet;
-	register char  *dst_octet;
-	register unsigned src_nibble;
-	register unsigned dst_nibble;
+	char  *src_octet;
+	char  *dst_octet;
+	unsigned src_nibble;
+	unsigned dst_nibble;
 	int             len;
 {
 
-	register        i;
-	register unsigned dshift, sshift;
+	       i;
+	unsigned dshift, sshift;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
@@ -235,15 +235,15 @@ nibble_copy(src_octet, src_nibble, dst_octet, dst_nibble, len)
  */
 int
 nibble_match(src_octet, src_nibble, dst_octet, dst_nibble, len)
-	register char  *src_octet;
-	register char  *dst_octet;
-	register unsigned src_nibble;
-	register unsigned dst_nibble;
+	char  *src_octet;
+	char  *dst_octet;
+	unsigned src_nibble;
+	unsigned dst_nibble;
 	int             len;
 {
 
-	register        i;
-	register unsigned dshift, sshift;
+	       i;
+	unsigned dshift, sshift;
 	u_char          nibble_a, nibble_b;
 
 #ifdef ARGO_DEBUG
@@ -310,11 +310,11 @@ cons_init()
 
 int
 tp_incoming(m, v)
-	register struct mbuf *m;
+	struct mbuf *m;
 	void *v;
 {
 	struct pklcd   *lcp = v;
-	register struct isopcb *isop;
+	struct isopcb *isop;
 
 	if (iso_pcballoc(NULL, &tp_isopcb)) {
 		pk_close(lcp);
@@ -340,7 +340,7 @@ cons_tpinput(m0, v)
 	void *v;
 {
 	struct pklcd   *lcp = v;
-	register struct isopcb *isop = (struct isopcb *) lcp->lcd_upnext;
+	struct isopcb *isop = (struct isopcb *) lcp->lcd_upnext;
 	int             cmd, ptype = PK_CLEAR;
 
 	if (isop == 0)
@@ -397,9 +397,9 @@ cons_tpinput(m0, v)
  */
 int
 cons_connect(isop)
-	register struct isopcb *isop;
+	struct isopcb *isop;
 {
-	register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
+	struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 	int             error;
 
 #ifdef ARGO_DEBUG
@@ -453,7 +453,7 @@ cons_ctlinput(cmd, sa, v)
 
 int
 find_error_reason(xp)
-	register struct x25_packet *xp;
+	struct x25_packet *xp;
 {
 	int             error, cause = 0;
 
@@ -563,8 +563,8 @@ make_partial_x25_packet(isop, lcp)
 	u_int           proto = 0;
 	int             flag = 0;
 	caddr_t         buf;
-	register caddr_t ptr;
-	register int    len = 0;
+	caddr_t ptr;
+	int    len = 0;
 	int             buflen = 0;
 	caddr_t         facil_len;
 	struct mbuf    *m = NULL;
@@ -652,7 +652,7 @@ make_partial_x25_packet(isop, lcp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CDUMP_REQ]) {
-		register int    i;
+		int    i;
 
 		printf("ECN_CONNECT DATA buf 0x%x len %d (0x%x)\n",
 		       buf, buflen, buflen);
@@ -707,8 +707,8 @@ make_partial_x25_packet(isop, lcp)
 
 Static int
 NSAPtoDTE(siso, sx25)
-	register struct sockaddr_iso *siso;
-	register struct sockaddr_x25 *sx25;
+	struct sockaddr_iso *siso;
+	struct sockaddr_x25 *sx25;
 {
 	int             dtelen = -1;
 
@@ -720,9 +720,9 @@ NSAPtoDTE(siso, sx25)
 #endif
 
 	if (siso->siso_data[0] == AFI_37) {
-		register char  *out = sx25->x25_addr;
-		register char  *in = siso->siso_data + 1;
-		register int    nibble;
+		char  *out = sx25->x25_addr;
+		char  *in = siso->siso_data + 1;
+		int    nibble;
 		char           *lim = siso->siso_data + siso->siso_nlen;
 		char           *olim = out + 15;
 		int             lowNibble = 0;
@@ -740,7 +740,7 @@ NSAPtoDTE(siso, sx25)
 		 * error = iso_8208snparesolve(addr, x121string,
 		 * &x121strlen);
 		 */
-		register struct rtentry *rt;
+		struct rtentry *rt;
 		extern struct sockaddr_iso blank_siso;
 		struct sockaddr_iso nsiso;
 
@@ -748,9 +748,9 @@ NSAPtoDTE(siso, sx25)
 		bcopy(nsiso.siso_data, siso->siso_data,
 		      nsiso.siso_nlen = siso->siso_nlen);
 		if ((rt = rtalloc1((struct sockaddr *) &nsiso, 1)) != NULL) {
-			register struct sockaddr_x25 *sxx =
+			struct sockaddr_x25 *sxx =
 			(struct sockaddr_x25 *) rt->rt_gateway;
-			register char  *in = sxx->x25_addr;
+			char  *in = sxx->x25_addr;
 
 			rt->rt_use--;
 			if (sxx && sxx->x25_family == AF_CCITT) {
@@ -777,8 +777,8 @@ NSAPtoDTE(siso, sx25)
 
 Static int
 FACILtoNSAP(addr, buf)
-	register u_char *buf;
-	register struct sockaddr_iso *addr;
+	u_char *buf;
+	struct sockaddr_iso *addr;
 {
 	int             len_in_nibbles = *++buf & 0x3f;
 	u_char          buf_len = (len_in_nibbles + 1) >> 1;	/* in bytes */
@@ -820,7 +820,7 @@ FACILtoNSAP(addr, buf)
 
 Static void
 init_siso(siso)
-	register struct sockaddr_iso *siso;
+	struct sockaddr_iso *siso;
 {
 	siso->siso_len = sizeof(*siso);
 	siso->siso_family = AF_ISO;
@@ -845,8 +845,8 @@ DTEtoNSAP(addr, sx)
 	struct sockaddr_iso *addr;
 	struct sockaddr_x25 *sx;
 {
-	register char  *in, *out;
-	register int    first;
+	char  *in, *out;
+	int    first;
 	int             pad_tail = 0;
 	int             src_len;
 
@@ -889,8 +889,8 @@ parse_facil(lcp, isop, buf, buf_len)
 	struct isopcb  *isop;
 	struct pklcd   *lcp;
 {
-	register int    i;
-	register u_char *ptr = (u_char *) buf;
+	int    i;
+	u_char *ptr = (u_char *) buf;
 	u_char         *facil_lim;
 	int             facil_param_len = 0, facil_len;
 

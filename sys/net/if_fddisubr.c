@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.35 2003/10/25 19:31:05 mcbride Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.36 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ extern struct ifqueue pkintrq;
  */
 int
 fddi_output(ifp, m0, dst, rt0)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 	struct rtentry *rt0;
@@ -168,10 +168,10 @@ fddi_output(ifp, m0, dst, rt0)
 	u_int16_t type;
 	int s, len, error = 0, hdrcmplt = 0;
  	u_char edst[6], esrc[6];
-	register struct mbuf *m = m0;
-	register struct rtentry *rt;
+	struct mbuf *m = m0;
+	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
-	register struct fddi_header *fh;
+	struct fddi_header *fh;
 	struct arpcom *ac = (struct arpcom *)ifp;
 	short mflags;
 
@@ -270,7 +270,7 @@ fddi_output(ifp, m0, dst, rt0)
 	case AF_ISO: {
 		int	snpalen;
 		struct	llc *l;
-		register struct sockaddr_dl *sdl;
+		struct sockaddr_dl *sdl;
 
 		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
@@ -305,7 +305,7 @@ fddi_output(ifp, m0, dst, rt0)
 #ifdef	CCITT
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		register struct sockaddr_dl *sdl = 
+		struct sockaddr_dl *sdl = 
 			(struct sockaddr_dl *) rt->rt_gateway;
 
 		if (sdl && sdl->sdl_family == AF_LINK
@@ -329,7 +329,7 @@ fddi_output(ifp, m0, dst, rt0)
 #ifdef LLC_DEBUG
 		{
 			int i;
-			register struct llc *l = mtod(m, struct llc *);
+			struct llc *l = mtod(m, struct llc *);
 
 			printf("fddi_output: sending LLC2 pkt to: ");
 			for (i=0; i<6; i++)
@@ -407,7 +407,7 @@ fddi_output(ifp, m0, dst, rt0)
 		(void) looutput(ifp, mcopy, dst, rt);
 
 	if (type != 0) {
-		register struct llc *l;
+		struct llc *l;
 		M_PREPEND(m, sizeof (struct llc), M_DONTWAIT);
 		if (m == 0)
 			senderr(ENOBUFS);
@@ -481,11 +481,11 @@ bad:
 void
 fddi_input(ifp, fh, m)
 	struct ifnet *ifp;
-	register struct fddi_header *fh;
+	struct fddi_header *fh;
 	struct mbuf *m;
 {
-	register struct ifqueue *inq;
-	register struct llc *l;
+	struct ifqueue *inq;
+	struct llc *l;
 #ifdef	ISO
 	struct arpcom *ac = (struct arpcom *)ifp;
 #endif
@@ -596,7 +596,7 @@ fddi_input(ifp, fh, m)
 		case LLC_TEST_P:
 		{
 			struct sockaddr sa;
-			register struct ether_header *eh;
+			struct ether_header *eh;
 			int i;
 			u_char c = l->llc_dsap;
 
@@ -665,7 +665,7 @@ fddi_input(ifp, fh, m)
  */
 void
 fddi_ifattach(ifp)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
 
 	ifp->if_type = IFT_FDDI;

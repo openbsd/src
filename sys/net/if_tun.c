@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.53 2003/12/06 09:16:38 markus Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.54 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ tunclose(dev, flag, mode, p)
 		if_down(ifp);
 		if (ifp->if_flags & IFF_RUNNING) {
 			/* find internet addresses and delete routes */
-			register struct ifaddr *ifa;
+			struct ifaddr *ifa;
 			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 #ifdef INET
 				if (ifa->ifa_addr->sa_family == AF_INET) {
@@ -339,7 +339,7 @@ tuninit(tp)
 	struct tun_softc *tp;
 {
 	struct ifnet	*ifp = &tp->tun_if;
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	TUNDEBUG(("%s: tuninit\n", ifp->if_xname));
 

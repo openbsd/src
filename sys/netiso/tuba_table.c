@@ -1,4 +1,4 @@
-/*	$OpenBSD: tuba_table.c,v 1.5 2003/06/02 23:28:18 millert Exp $	*/
+/*	$OpenBSD: tuba_table.c,v 1.6 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tuba_table.c,v 1.6 1996/02/13 22:12:34 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ tuba_timer(v)
 {
 	int             s = splsoftnet();
 	int             i;
-	register struct tuba_cache *tc;
+	struct tuba_cache *tc;
 	long            timelimit = time.tv_sec - arpt_keep;
 
 	timeout_add(&tuba_timeout, arpt_prune * hz);
@@ -86,11 +86,11 @@ tuba_table_init()
 
 int
 tuba_lookup(siso, wait)
-	register struct sockaddr_iso *siso;
+	struct sockaddr_iso *siso;
 	int wait;
 {
 	struct radix_node *rn;
-	register struct tuba_cache *tc;
+	struct tuba_cache *tc;
 	struct tuba_cache **new;
 	int             dupentry = 0, sum_a = 0, sum_b = 0, old_size, i;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_output.c,v 1.5 2003/06/02 23:28:18 millert Exp $	*/
+/*	$OpenBSD: tp_output.c,v 1.6 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: tp_output.c,v 1.12 1996/03/16 23:13:56 christos Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ tp_consistency(tpcb, cmd, param)
 	struct tp_conn_param *param;
 	struct tp_pcb  *tpcb;
 {
-	register int    error = EOK;
+	int    error = EOK;
 	int             class_to_use = tp_mask_to_num(param->p_class);
 
 #ifdef TPPT
@@ -411,7 +411,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 		goto done;
 	}
 	if (*mp == MNULL) {
-		register struct mbuf *m;
+		struct mbuf *m;
 
 		MGET(m, M_DONTWAIT, TPMT_SONAME);	/* does off, type, next */
 		if (m == NULL) {
@@ -505,7 +505,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			   tpcb->tp_next == 0)
 			error = EINVAL;
 		else {
-			register struct tp_pcb *t;
+			struct tp_pcb *t;
 			error = EADDRINUSE;
 			for (t = tp_listeners; t; t = t->tp_nextlisten)
 				if ((t->tp_flags & TPF_GENERAL_ADDR) == 0 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.37 2003/12/07 15:41:27 markus Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.38 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ ppp_clone_create(ifc, unit)
     int unit;
 {
     extern int ifqmaxlen;
-    register struct ppp_softc *sc;
+    struct ppp_softc *sc;
     int s;
 
     sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
@@ -593,13 +593,13 @@ pppioctl(sc, cmd, data, flag, p)
  */
 static int
 pppsioctl(ifp, cmd, data)
-    register struct ifnet *ifp;
+    struct ifnet *ifp;
     u_long cmd;
     caddr_t data;
 {
-    register struct ppp_softc *sc = ifp->if_softc;
-    register struct ifaddr *ifa = (struct ifaddr *)data;
-    register struct ifreq *ifr = (struct ifreq *)data;
+    struct ppp_softc *sc = ifp->if_softc;
+    struct ifaddr *ifa = (struct ifaddr *)data;
+    struct ifreq *ifr = (struct ifreq *)data;
     struct ppp_stats *psp;
 #ifdef	PPP_COMPRESS
     struct ppp_comp_stats *pcp;
@@ -690,7 +690,7 @@ pppoutput(ifp, m0, dst, rtp)
     struct sockaddr *dst;
     struct rtentry *rtp;
 {
-    register struct ppp_softc *sc = ifp->if_softc;
+    struct ppp_softc *sc = ifp->if_softc;
     int protocol, address, control;
     u_char *cp;
     int s, error;

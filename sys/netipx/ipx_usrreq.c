@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.12 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.13 2003/12/10 07:22:43 itojun Exp $	*/
 
 /*-
  *
@@ -79,8 +79,8 @@ int ipx_recvspace = IPXRCVQ;
 void
 ipx_input(struct mbuf *m, ...)
 {
-	register struct ipxpcb *ipxp;
-	register struct ipx *ipx = mtod(m, struct ipx *);
+	struct ipxpcb *ipxp;
+	struct ipx *ipx = mtod(m, struct ipx *);
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct sockaddr_ipx ipx_ipx;
 	va_list	ap;
@@ -100,7 +100,7 @@ ipx_input(struct mbuf *m, ...)
 	ipx_ipx.sipx_family = AF_IPX;
 	ipx_ipx.sipx_addr = ipx->ipx_sna;
 	if (ipx_neteqnn(ipx->ipx_sna.ipx_net, ipx_zeronet) && ifp) {
-		register struct ifaddr *ifa;
+		struct ifaddr *ifa;
 
 		for (ifa = ifp->if_addrlist.tqh_first;
 		     ifa; ifa = ifa->ifa_list.tqe_next) {
@@ -142,7 +142,7 @@ ipx_abort(ipxp)
 /* struct ipxpcb * DELETE THIS */
 void
 ipx_drop(ipxp, errno)
-	register struct ipxpcb *ipxp;
+	struct ipxpcb *ipxp;
 	int errno;
 {
 	struct socket *so = ipxp->ipxp_socket;
@@ -164,12 +164,12 @@ ipx_drop(ipxp, errno)
 int
 ipx_output(struct mbuf *m0, ...)
 {
-	register struct mbuf *m;
-	register struct ipx *ipx;
+	struct mbuf *m;
+	struct ipx *ipx;
 	struct ipxpcb *ipxp;
-	register struct socket *so;
-	register int len = 0;
-	register struct route *ro;
+	struct socket *so;
+	int len = 0;
+	struct route *ro;
 	struct mbuf *mprev = NULL;
 	va_list	ap;
 
@@ -266,7 +266,7 @@ ipx_ctloutput(req, so, level, name, value)
 	int name;
 	struct mbuf **value;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct ipxpcb *ipxp = sotoipxpcb(so);
 	int mask, error = 0;
 	/*extern long ipx_pexseq;*/ /*XXX*//*JRE*/
@@ -302,7 +302,7 @@ ipx_ctloutput(req, so, level, name, value)
 		case SO_DEFAULT_HEADERS:
 			m->m_len = sizeof(struct ipx);
 			{
-				register struct ipx *ipx = mtod(m, struct ipx *);
+				struct ipx *ipx = mtod(m, struct ipx *);
 				ipx->ipx_len = 0;
 				ipx->ipx_sum = 0;
 				ipx->ipx_tc = 0;
@@ -349,7 +349,7 @@ ipx_ctloutput(req, so, level, name, value)
 
 		case SO_DEFAULT_HEADERS:
 			{
-				register struct ipx *ipx
+				struct ipx *ipx
 				    = mtod(*value, struct ipx *);
 				ipxp->ipxp_dpt = ipx->ipx_pt;
 			}

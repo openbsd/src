@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_subr.c,v 1.5 2003/06/02 23:28:17 millert Exp $	*/
+/*	$OpenBSD: clnp_subr.c,v 1.6 2003/12/10 07:22:43 itojun Exp $	*/
 /*	$NetBSD: clnp_subr.c,v 1.8 1996/04/13 01:34:35 cgd Exp $	*/
 
 /*-
@@ -101,11 +101,11 @@ SOFTWARE.
  */
 struct mbuf    *
 clnp_data_ck(m, length)
-	register struct mbuf *m;/* ptr to mbuf chain containing hdr & data */
+	struct mbuf *m;/* ptr to mbuf chain containing hdr & data */
 	int             length;	/* length (in bytes) of packet */
 {
-	register int    len;	/* length of data */
-	register struct mbuf *mhead;	/* ptr to head of chain */
+	int    len;	/* length of data */
+	struct mbuf *mhead;	/* ptr to head of chain */
 
 	len = -length;
 	mhead = m;
@@ -149,8 +149,8 @@ caddr_t
 clnp_extract_addr(bufp, buflen, srcp, destp)
 	caddr_t         bufp;	/* ptr to buffer containing addresses */
 	int             buflen;	/* length of buffer */
-	register struct iso_addr *srcp;	/* ptr to source address buffer */
-	register struct iso_addr *destp;	/* ptr to destination address
+	struct iso_addr *srcp;	/* ptr to source address buffer */
+	struct iso_addr *destp;	/* ptr to destination address
 						 * buffer */
 {
 	int             len;	/* argument to bcopy */
@@ -201,9 +201,9 @@ clnp_extract_addr(bufp, buflen, srcp, destp)
  */
 int
 clnp_ours(dst)
-	register struct iso_addr *dst;	/* ptr to destination address */
+	struct iso_addr *dst;	/* ptr to destination address */
 {
-	register struct iso_ifaddr *ia;	/* scan through interface addresses */
+	struct iso_ifaddr *ia;	/* scan through interface addresses */
 
 	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 #ifdef ARGO_DEBUG
@@ -418,8 +418,8 @@ done:
 caddr_t
 clnp_insert_addr(bufp, srcp, dstp)
 	caddr_t         bufp;	/* address of where addr part goes */
-	register struct iso_addr *srcp;	/* ptr to src addr */
-	register struct iso_addr *dstp;	/* ptr to dst addr */
+	struct iso_addr *srcp;	/* ptr to src addr */
+	struct iso_addr *dstp;	/* ptr to dst addr */
 {
 	*bufp++ = dstp->isoa_len;
 	(void) bcopy((caddr_t) dstp, bufp, dstp->isoa_len);
@@ -456,7 +456,7 @@ clnp_insert_addr(bufp, srcp, dstp)
 int
 clnp_route(dst, ro, flags, first_hop, ifa)
 	struct iso_addr *dst;	/* ptr to datagram destination */
-	register struct route_iso *ro;	/* existing route structure */
+	struct route_iso *ro;	/* existing route structure */
 	int             flags;	/* flags for routing */
 	struct sockaddr **first_hop;	/* result: fill in with ptr to
 					 * firsthop */

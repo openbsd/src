@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.16 2003/09/28 23:17:45 cloder Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.17 2003/12/10 07:22:43 itojun Exp $	*/
 
 /*-
  *
@@ -118,9 +118,9 @@ ipx_init()
 void
 ipxintr()
 {
-	register struct ipx *ipx;
-	register struct mbuf *m;
-	register struct ipxpcb *ipxp;
+	struct ipx *ipx;
+	struct mbuf *m;
+	struct ipxpcb *ipxp;
 	struct ipx_ifaddr *ia;
 	int len, s;
 
@@ -313,8 +313,8 @@ void
 ipx_forward(m)
 struct mbuf *m;
 {
-	register struct ipx *ipx = mtod(m, struct ipx *);
-	register int error;
+	struct ipx *ipx = mtod(m, struct ipx *);
+	int error;
 	int agedelta = 1;
 	int flags = IPX_FORWARDING;
 	int ok_there = 0;
@@ -454,9 +454,9 @@ ipx_watch_output(m, ifp)
 struct mbuf *m;
 struct ifnet *ifp;
 {
-	register struct ipxpcb *ipxp;
-	register struct ifaddr *ifa;
-	register struct ipx_ifaddr *ia;
+	struct ipxpcb *ipxp;
+	struct ifaddr *ifa;
+	struct ipx_ifaddr *ia;
 	/*
 	 * Give any raw listeners a crack at the packet
 	 */
@@ -465,7 +465,7 @@ struct ifnet *ifp;
 	    ipxp = ipxp->ipxp_queue.cqe_next) {
 		struct mbuf *m0 = m_copy(m, 0, (int)M_COPYALL);
 		if (m0) {
-			register struct ipx *ipx;
+			struct ipx *ipx;
 
 			M_PREPEND(m0, sizeof(*ipx), M_DONTWAIT);
 			if (m0 == NULL)

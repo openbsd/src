@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.30 2003/12/03 14:53:04 markus Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.31 2003/12/10 07:22:42 itojun Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -243,12 +243,12 @@ loop_clone_destroy(ifp)
 int
 looutput(ifp, m, dst, rt)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
@@ -469,13 +469,13 @@ lortrequest(cmd, rt, info)
 /* ARGSUSED */
 int
 loioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa;
-	register struct ifreq *ifr;
-	register int error = 0;
+	struct ifaddr *ifa;
+	struct ifreq *ifr;
+	int error = 0;
 
 	switch (cmd) {
 

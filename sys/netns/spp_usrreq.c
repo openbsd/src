@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.16 2003/09/22 21:39:40 miod Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.17 2003/12/10 07:22:44 itojun Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -79,10 +79,10 @@ u_short spp_newchecks[50];
 void
 spp_input(struct mbuf *m, ...)
 {
-	register struct nspcb *nsp;
-	register struct sppcb *cb;
-	register struct spidp *si = mtod(m, struct spidp *);
-	register struct socket *so;
+	struct nspcb *nsp;
+	struct sppcb *cb;
+	struct spidp *si = mtod(m, struct spidp *);
+	struct socket *so;
 	short ostate = 0;
 	int dropsocket = 0;
 	va_list ap;
@@ -156,7 +156,7 @@ spp_input(struct mbuf *m, ...)
 
 	case TCPS_LISTEN:{
 		struct mbuf *am;
-		register struct sockaddr_ns *sns;
+		struct sockaddr_ns *sns;
 		struct ns_addr laddr;
 
 		/*
@@ -299,9 +299,9 @@ spp_reass(cb, si)
 register struct sppcb *cb;
 register struct spidp *si;
 {
-	register struct spidp_q *q;
-	register struct mbuf *m;
-	register struct socket *so = cb->s_nspcb->nsp_socket;
+	struct spidp_q *q;
+	struct mbuf *m;
+	struct socket *so = cb->s_nspcb->nsp_socket;
 	char packetp = cb->s_flags & SF_HI;
 	int incr;
 	char wakeup = 0;
@@ -366,7 +366,7 @@ register struct spidp *si;
 	if (cb->s_rtt && SSEQ_GT(si->si_ack, cb->s_rtseq)) {
 		sppstat.spps_rttupdated++;
 		if (cb->s_srtt != 0) {
-			register short delta;
+			short delta;
 			delta = cb->s_rtt - (cb->s_srtt >> 3);
 			if ((cb->s_srtt += delta) <= 0)
 				cb->s_srtt = 1;
@@ -684,9 +684,9 @@ int
 spp_fixmtu(nsp)
 register struct nspcb *nsp;
 {
-	register struct sppcb *cb = (struct sppcb *)(nsp->nsp_pcb);
-	register struct mbuf *m;
-	register struct spidp *si;
+	struct sppcb *cb = (struct sppcb *)(nsp->nsp_pcb);
+	struct mbuf *m;
+	struct spidp *si;
 	struct ns_errp *ep;
 	struct sockbuf *sb;
 	int badseq, len;
@@ -731,11 +731,11 @@ register struct nspcb *nsp;
 int
 spp_output(struct mbuf *m0, ...)
 {
-	register struct sppcb *cb = NULL;
+	struct sppcb *cb = NULL;
 	struct socket *so;
-	register struct mbuf *m;
-	register struct spidp *si = (struct spidp *) 0;
-	register struct sockbuf *sb;
+	struct mbuf *m;
+	struct spidp *si = (struct spidp *) 0;
+	struct sockbuf *sb;
 	int len = 0, win, rcv_win;
 	short span, off, recordp = 0;
 	u_short alo;
@@ -840,7 +840,7 @@ spp_output(struct mbuf *m0, ...)
 		si->si_i = *cb->s_idp;
 		si->si_s = cb->s_shdr;
 		if ((cb->s_flags & SF_PI) && (cb->s_flags & SF_HO)) {
-			register struct sphdr *sh;
+			struct sphdr *sh;
 			if (m0->m_len < sizeof (*sh)) {
 				if((m0 = m_pullup(m0, sizeof(*sh))) == NULL) {
 					(void) m_free(m);
@@ -1153,9 +1153,9 @@ int spp_do_persist_panics = 0;
 
 void
 spp_setpersist(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
-	register int t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
+	int t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
 	extern int spp_backoff[];
 
 	if (cb->s_timer[SPPT_REXMT] && spp_do_persist_panics)
@@ -1178,9 +1178,9 @@ spp_ctloutput(req, so, level, name, value)
 	int name, level;
 	struct mbuf **value;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct nspcb *nsp = sotonspcb(so);
-	register struct sppcb *cb;
+	struct sppcb *cb;
 	int mask, error = 0;
 
 	if (level != NSPROTO_SPP) {
@@ -1279,7 +1279,7 @@ spp_ctloutput(req, so, level, name, value)
 
 		case SO_DEFAULT_HEADERS:
 			{
-				register struct sphdr *sp
+				struct sphdr *sp
 						= mtod(*value, struct sphdr *);
 				cb->s_dt = sp->sp_dt;
 				cb->s_cc = sp->sp_cc & SP_EM;
@@ -1304,10 +1304,10 @@ spp_usrreq(so, req, m, nam, controlp)
 	struct mbuf *m, *nam, *controlp;
 {
 	struct nspcb *nsp = sotonspcb(so);
-	register struct sppcb *cb = NULL;
+	struct sppcb *cb = NULL;
 	int s = splsoftnet();
 	int error = 0, ostate;
-	register struct sockbuf *sb;
+	struct sockbuf *sb;
 
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (long)m, (caddr_t)nam,
@@ -1574,11 +1574,11 @@ spp_usrreq_sp(so, req, m, nam, controlp)
  */
 void
 spp_template(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
-	register struct nspcb *nsp = cb->s_nspcb;
-	register struct idp *idp = cb->s_idp;
-	register struct sockbuf *sb = &(nsp->nsp_socket->so_snd);
+	struct nspcb *nsp = cb->s_nspcb;
+	struct idp *idp = cb->s_idp;
+	struct sockbuf *sb = &(nsp->nsp_socket->so_snd);
 
 	idp->idp_pt = NSPROTO_SPP;
 	idp->idp_sna = nsp->nsp_laddr;
@@ -1602,12 +1602,12 @@ spp_template(cb)
  */
 struct sppcb *
 spp_close(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
-	register struct spidp_q *s;
+	struct spidp_q *s;
 	struct nspcb *nsp = cb->s_nspcb;
 	struct socket *so = nsp->nsp_socket;
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	s = cb->s_q.si_next;
 	while (s != &(cb->s_q)) {
@@ -1631,13 +1631,13 @@ spp_close(cb)
  */
 struct sppcb *
 spp_usrclosed(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
 	return (spp_close(cb));
 }
 struct sppcb *
 spp_disconnect(cb)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 {
 	return (spp_close(cb));
 }
@@ -1647,7 +1647,7 @@ spp_disconnect(cb)
  */
 struct sppcb *
 spp_drop(cb, errno)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 	int errno;
 {
 	struct socket *so = cb->s_nspcb->nsp_socket;
@@ -1683,8 +1683,8 @@ int	spp_backoff[SPP_MAXRXTSHIFT+1] =
 void
 spp_fasttimo()
 {
-	register struct nspcb *nsp;
-	register struct sppcb *cb;
+	struct nspcb *nsp;
+	struct sppcb *cb;
 	int s = splsoftnet();
 
 	nsp = nspcb.nsp_next;
@@ -1708,10 +1708,10 @@ spp_fasttimo()
 void
 spp_slowtimo()
 {
-	register struct nspcb *ip, *ipnxt;
-	register struct sppcb *cb;
+	struct nspcb *ip, *ipnxt;
+	struct sppcb *cb;
 	int s = splsoftnet();
-	register long i;
+	long i;
 
 	/*
 	 * Search through tcb's and update active timers.
@@ -1749,7 +1749,7 @@ tpgone:
  */
 struct sppcb *
 spp_timers(cb, timer)
-	register struct sppcb *cb;
+	struct sppcb *cb;
 	long timer;
 {
 	long rexmt;
