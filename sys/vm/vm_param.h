@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.7 1996/10/23 15:38:38 deraadt Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.8 1997/04/10 13:48:50 deraadt Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -118,6 +118,8 @@ extern int		page_shift;
 struct _ps_strings {
 	void	*val;
 };
+
+#define SWAPSKIPBYTES	8192	/* never use at the start of a swap space */
 
 /* 
  *	Return values from the VM routines.

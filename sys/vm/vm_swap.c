@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.3 1997/02/17 07:38:20 mickey Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.4 1997/04/10 13:48:51 deraadt Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.32 1996/02/05 01:54:09 christos Exp $	*/
 
 /*
@@ -439,15 +439,15 @@ swfree(p, index)
 			 * Don't use the first cluster of the device
 			 * in case it starts with a label or boot block.
 			 */
-			rminit(swapmap, blk - ctod(CLSIZE),
-			    vsbase + ctod(CLSIZE), "swap", nswapmap);
+			rminit(swapmap, blk - ctod(btoc(SWAPSKIPBYTES)),
+			    vsbase + ctod(btoc(SWAPSKIPBYTES)), "swap", nswapmap);
 		} else if (dvbase == 0) {
 			/*
 			 * Don't use the first cluster of the device
 			 * in case it starts with a label or boot block.
 			 */
-			rmfree(swapmap, blk - ctod(CLSIZE),
-			    vsbase + ctod(CLSIZE));
+			rmfree(swapmap, blk - ctod(btoc(SWAPSKIPBYTES)),
+			    vsbase + ctod(btoc(SWAPSKIPBYTES)));
 		} else
 			rmfree(swapmap, blk, vsbase);
 	}
