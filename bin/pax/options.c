@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.15 1997/02/27 23:32:58 michaels Exp $	*/
+/*	$OpenBSD: options.c,v 1.16 1997/03/02 09:46:47 tholo Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.15 1997/02/27 23:32:58 michaels Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.16 1997/03/02 09:46:47 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -849,6 +849,39 @@ tar_options(argc, argv)
 	}
 }
 
+int
+mkpath(path)
+	char *path;
+{
+	struct stat sb;
+	register char *slash;
+	int done = 0;
+
+	slash = path;
+
+	while (!done) {
+		slash += strspn(slash, "/");
+		slash += strcspn(slash, "/");
+
+		done = (*slash == '\0');
+		*slash = '\0';
+
+		if (stat(path, &sb)) {
+			if (errno != ENOENT || mkdir(path, 0777)) {
+				paxwarn(1, "%s", path);
+				return (-1);
+			}
+		} else if (!S_ISDIR(sb.st_mode)) {
+		        syswarn(1, ENOTDIR, "%s", path);
+			return (-1);
+		}
+
+		if (!done)
+			*slash = '/';
+	}
+
+	return (0);
+}
 /*
  * cpio_options()
  *	look at the user specified flags. set globals as required and check if
@@ -874,9 +907,11 @@ cpio_options(argc, argv)
 	kflag = 1;
 	pids = 1;
 	pmode = 1;
+	pmtime = 0;
 	arcname = NULL;
 	dflag = 1;
 	act = -1;
+	nodirs = 1;
 	while ((c=getopt(argc,argv,"abcdfiklmoprstuvzABC:E:F:H:I:LO:SZ6")) != EOF)
 		switch (c) {
 			case 'a':
@@ -900,6 +935,7 @@ cpio_options(argc, argv)
 				/*
 				 * create directories as needed
 				 */
+				nodirs = 0;
 				break;
 			case 'f':
 				/*
@@ -1081,12 +1117,15 @@ cpio_options(argc, argv)
 					cpio_usage();
 			break;
 		case COPY:
-			if (optind >= argc) {
+			if (*argv == (char *)NULL) {
 				paxwarn(0, "Destination directory was not supplied");
 				cpio_usage();
 			}
+			dirptr = *argv;
+			if (mkpath(dirptr) < 0)
+				cpio_usage();
 			--argc;
-			dirptr = argv[argc];
+			++argv;
 			/* FALL THROUGH */
 		case ARCHIVE:
 		case APPND:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.4 1997/01/26 10:33:22 downsj Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.5 1997/03/02 09:46:45 tholo Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.4 1997/01/26 10:33:22 downsj Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.5 1997/03/02 09:46:45 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ file_creat(arcn)
 		    file_mode)) >= 0)
 			break;
 		oerrno = errno;
-		if (chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
 			syswarn(1, oerrno, "Unable to create %s", arcn->name);
 			return(-1);
 		}
@@ -360,7 +360,7 @@ mk_link(to, to_sb, from, ign)
 		if (link(to, from) == 0)
 			break;
 		oerrno = errno;
-		if (chk_path(from, to_sb->st_uid, to_sb->st_gid) == 0)
+		if (!nodirs && chk_path(from, to_sb->st_uid, to_sb->st_gid) == 0)
 			continue;
 		if (!ign) {
 			syswarn(1, oerrno, "Could not link to %s from %s", to,
@@ -468,7 +468,7 @@ node_creat(arcn)
 		if (++pass <= 1)
 			continue;
 
-		if (chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
 			syswarn(1, oerrno, "Could not create: %s", arcn->name);
 			return(-1);
 		}
