@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.41 2004/10/14 09:35:48 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.42 2004/10/15 01:58:04 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,8 +133,8 @@ client_query(struct ntp_peer *p)
 			} else
 				fatal("client_query connect");
 		}
-		if (setsockopt(p->query->fd, IPPROTO_IP, IP_TOS, &tos,
-		    sizeof(tos)) == -1)
+		if (p->addr->ss.ss_family == AF_INET && setsockopt(p->query->fd,
+		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1)
 			log_warn("setsockopt IPTOS_LOWDELAY");
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.16 2004/10/14 09:35:48 dtucker Exp $ */
+/*	$OpenBSD: server.c,v 1.17 2004/10/15 01:58:04 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -83,8 +83,8 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 		if ((la->fd = socket(la->sa.ss_family, SOCK_DGRAM, 0)) == -1)
 			fatal("socket");
 
-		if (setsockopt(la->fd, IPPROTO_IP, IP_TOS, &tos, sizeof(tos))
-		    == -1)
+		if (la->sa.ss_family == AF_INET && setsockopt(la->fd,
+		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1)
 			log_warn("setsockopt IPTOS_LOWDELAY");
 
 		if (bind(la->fd, (struct sockaddr *)&la->sa,
