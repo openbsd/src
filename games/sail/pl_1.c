@@ -43,6 +43,7 @@ static char rcsid[] = "$NetBSD: pl_1.c,v 1.3 1995/04/22 10:37:07 cgd Exp $";
 
 #include "player.h"
 #include <sys/types.h>
+#include <errno.h>
 #include <sys/wait.h>
 
 /*
