@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.24 2000/07/18 22:02:52 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.25 2000/10/15 19:30:31 marc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -45,6 +45,13 @@ FTP site or on the official
 CD.
 These packages are provided as a convenience for quickly installing software
 that would otherwise need to be built manually.
+.Bd -filled -offset indent
+.Em Note :
+System distribution files, e.g. base28.tgz, comp28.tgz, etc., are
+.Em not
+packages and may not be installed using
+.Nm pkg_add .
+.Ed
 .Pp
 Package names may be specified as filenames (which normally consist of the
 package name itself plus the
