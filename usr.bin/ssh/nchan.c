@@ -1,5 +1,5 @@
 #include "includes.h"
-RCSID("$Id: nchan.c,v 1.3 1999/10/17 16:56:09 markus Exp $");
+RCSID("$Id: nchan.c,v 1.4 1999/10/25 21:03:17 markus Exp $");
 
 #include "ssh.h"
 
@@ -15,7 +15,7 @@ static void chan_shutdown_read(Channel *c);
 static void chan_delele_if_full_closed(Channel *c);
 
 /*
- * EVENTS: update channel input/ouput states
+ * EVENTS: update channel input/output states
  *	   execute ACTIONS
  */
 /* events concerning the INPUT from socket for channel (istate) */
@@ -23,7 +23,7 @@ void
 chan_rcvd_oclose(Channel *c){
 	switch(c->istate){
 	case CHAN_INPUT_WAIT_OCLOSE:
-		debug("channel %d: INPUT_WAIT_CLOSE -> INPUT_CLOSED [rcvd OCLOSE]", c->self);
+		debug("channel %d: INPUT_WAIT_OCLOSE -> INPUT_CLOSED [rcvd OCLOSE]", c->self);
 		c->istate=CHAN_INPUT_CLOSED;
 		chan_delele_if_full_closed(c);
 		break;
@@ -61,7 +61,7 @@ chan_ibuf_empty(Channel *c){
 	}
 	switch(c->istate){
 	case CHAN_INPUT_WAIT_DRAIN:
-		debug("channel %d: INPUT_WAIT_DRAIN -> INPUT_WAIT_OCLOSE [inbuf empty, send OCLOSE]", c->self);
+		debug("channel %d: INPUT_WAIT_DRAIN -> INPUT_WAIT_OCLOSE [inbuf empty, send IEOF]", c->self);
 		chan_send_ieof(c);
 		c->istate=CHAN_INPUT_WAIT_OCLOSE;
 		break;
@@ -167,7 +167,7 @@ chan_send_oclose(Channel *c){
 		packet_send();
 		break;
 	default:
-		debug("internal error: channel %d: cannot send IEOF for istate %d",c->self,c->istate);
+		debug("internal error: channel %d: cannot send OCLOSE for ostate %d",c->self,c->istate);
 		break;
 	}
 }
@@ -176,14 +176,14 @@ static void
 chan_shutdown_write(Channel *c){
 	debug("channel %d: shutdown_write", c->self);
 	if(shutdown(c->sock, SHUT_WR)<0)
-		error("chan_shutdown_write failed for %d/%d %.100s",
+		error("chan_shutdown_write failed for #%d/fd%d: %.100s",
 			c->self, c->sock, strerror(errno));
 }
 static void
 chan_shutdown_read(Channel *c){
 	debug("channel %d: shutdown_read", c->self);
 	if(shutdown(c->sock, SHUT_RD)<0)
-		error("chan_shutdown_read failed for %d/%d %.100s",
+		error("chan_shutdown_read failed for #%d/fd%d: %.100s",
 			c->self, c->sock, strerror(errno));
 }
 static void
