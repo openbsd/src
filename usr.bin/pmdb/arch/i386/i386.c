@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386.c,v 1.5 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: i386.c,v 1.6 2004/02/17 00:52:22 jfb Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -35,8 +35,8 @@
  * No frame for x86?
  */
 struct frame {
-	int fp; 
-	int pc;
+	u_int32_t fp; 
+	u_int32_t pc;
 };
 
 static const char *md_reg_names[] = {
@@ -65,15 +65,15 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	fr.fp = r.r_ebp;
 	fr.pc = r.r_eip;
 	for (count = 0; count < frame; count++) {
-		if (process_read(ps, fr.fp, &fr, sizeof(fr)) < 0)
+		if (process_read(ps, (off_t)fr.fp, &fr, sizeof(fr)) < 0)
 			return (-1);
 
 		if (fr.pc < 0x1000)
 			return (-1);
 	}
 
-	fram->pc = fr.pc;
-	fram->fp = fr.fp;
+	fram->pc = (reg)fr.pc;
+	fram->fp = (reg)fr.fp;
 
 	return (0);
 }
