@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.11 2003/12/30 10:45:45 miod Exp $
+dnl	$OpenBSD: install,v 1.12 2004/01/03 22:40:19 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -56,7 +56,7 @@ The encoding for the drive ID is as follows:
 - MVME187 built-in controller and MVME327 SCSI controller:
     'yy' is ten times the device ID.
 - MVME328 SCSI controller:
-    'yy' is eight times the devic ID, written in hexadecimal
+    'yy' is eight times the device ID, written in hexadecimal
 - MVME350 tape controller:
     'yy' is always zero, as this controller only supports one tape drive.
 
