@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptotest.c,v 1.8 2003/06/03 14:39:50 ho Exp $	*/
+/*	$OpenBSD: cryptotest.c,v 1.9 2003/08/28 14:43:35 markus Exp $	*/
 /*	$EOM: cryptotest.c,v 1.5 1998/10/07 16:40:49 niklas Exp $	*/
 
 /*
@@ -124,6 +124,8 @@ main (void)
   test_crypto (BLOWFISH_CBC);
 
   test_crypto (CAST_CBC);
+
+  test_crypto (AES_CBC);
 
   special_test_blf ();
 

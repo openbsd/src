@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.57 2003/07/25 08:31:16 markus Exp $	*/
+/*	$OpenBSD: conf.c,v 1.58 2003/08/28 14:43:35 markus Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -390,7 +390,7 @@ conf_load_defaults (int tr)
   char *mm_auth[]   = { "PRE_SHARED", "DSS", "RSA_SIG", 0 };
   char *mm_hash[]   = { "MD5", "SHA", 0 };
   char *mm_enc[]    = { "DES_CBC", "BLOWFISH_CBC", "3DES_CBC",
-			"CAST_CBC", 0 };
+			"CAST_CBC", "AES_CBC", 0 };
   char *dh_group[]  = { "MODP_768", "MODP_1024", "MODP_1536", 0 };
   char *qm_enc[]    = { "DES", "3DES", "CAST", "BLOWFISH", "AES", 0 };
   char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
@@ -399,7 +399,7 @@ conf_load_defaults (int tr)
 
   /* Abbreviations to make section names a bit shorter.  */
   char *mm_auth_p[] = { "", "-DSS", "-RSA_SIG", 0 };
-  char *mm_enc_p[]  = { "DES", "BLF", "3DES", "CAST", 0 };
+  char *mm_enc_p[]  = { "DES", "BLF", "3DES", "CAST", "AES", 0 };
   char *dh_group_p[]= { "-GRP1", "-GRP2", "-GRP5", "", 0 };
   char *qm_enc_p[]  = { "-DES", "-3DES", "-CAST", "-BLF", "-AES", 0 };
   char *qm_hash_p[] = { "-MD5", "-SHA", "-RIPEMD",
