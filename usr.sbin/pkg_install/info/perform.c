@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.7 1999/02/27 13:40:24 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.8 2000/04/10 18:44:31 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.7 1999/02/27 13:40:24 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.8 2000/04/10 18:44:31 espie Exp $";
 #endif
 
 /* This is OpenBSD pkg_install, based on:
@@ -152,18 +152,6 @@ pkg_do(char *pkg)
 		installed = TRUE;
 	}
 
-	/* Suck in the contents list */
-	plist.head = plist.tail = NULL;
-	fp = fopen(CONTENTS_FNAME, "r");
-	if (!fp) {
-		warnx("unable to open %s file", CONTENTS_FNAME);
-		code = 1;
-		goto bail;
-	}
-	/* If we have a prefix, add it now */
-	read_plist(&plist, fp);
-	fclose(fp);
-
 	/*
          * Index is special info type that has to override all others to make
          * any sense.
@@ -171,6 +159,18 @@ pkg_do(char *pkg)
 	if (Flags & SHOW_INDEX) {
 		show_index(pkg, COMMENT_FNAME);
 	} else {
+		/* Suck in the contents list */
+		plist.head = plist.tail = NULL;
+		fp = fopen(CONTENTS_FNAME, "r");
+		if (!fp) {
+			warnx("unable to open %s file", CONTENTS_FNAME);
+			code = 1;
+			goto bail;
+		}
+		/* If we have a prefix, add it now */
+		read_plist(&plist, fp);
+		fclose(fp);
+
 		/* Start showing the package contents */
 		if (!Quiet)
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
@@ -196,8 +196,8 @@ pkg_do(char *pkg)
 			show_files("Files:\n", &plist);
 		if (!Quiet)
 			puts(InfoPrefix);
+		free_plist(&plist);
 	}
-	free_plist(&plist);
 bail:
 	free(pkg2);
 	leave_playpen(Home);
