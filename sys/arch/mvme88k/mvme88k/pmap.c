@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.41 2001/09/19 20:50:57 mickey Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -57,7 +57,6 @@
 #include <sys/user.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>			/* vm/vm_kern.h */
 #include <uvm/uvm.h>
 
 #include <machine/asm_macro.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.23 2001/08/25 12:13:27 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.24 2001/09/19 20:50:59 mickey Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.37 2000/06/09 04:43:19 soda Exp $	*/
 
 /* 
@@ -78,7 +78,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #define UVM_PAGE                /* pull in uvm_page.h functions */
 #include <uvm/uvm.h>

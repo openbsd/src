@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.4 2001/07/25 13:25:32 art Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.5 2001/09/19 20:50:57 mickey Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -52,7 +52,6 @@
 #include <sys/mount.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_mem.c,v 1.2 2000/10/18 21:37:35 bjc Exp $	*/
+/*	$OpenBSD: bus_mem.c,v 1.3 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: bus_mem.c,v 1.8 2000/06/29 07:14:23 mrg Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
@@ -40,7 +40,7 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/pmap.h>

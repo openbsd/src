@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.23 2001/08/12 22:41:15 mickey Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.24 2001/09/19 20:50:59 mickey Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /*
@@ -196,6 +196,7 @@ struct uio;
 struct uvm_object;
 struct vm_anon;
 struct vm_aref;
+struct vm_map;
 struct vmspace;
 struct pmap;
 struct vnode;
@@ -301,6 +302,15 @@ struct uvmexp {
 };
 
 #ifdef _KERNEL
+
+/*
+ * the various kernel maps, owned by MD code
+ */
+extern struct vm_map *exec_map;
+extern struct vm_map *kernel_map;
+extern struct vm_map *kmem_map;
+extern struct vm_map *mb_map;
+extern struct vm_map *phys_map;
 
 extern struct uvmexp uvmexp;
 

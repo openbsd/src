@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdqvar.h,v 1.12 2001/06/27 04:45:58 art Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.13 2001/09/19 20:50:58 mickey Exp $	*/
 /*	$NetBSD: pdqvar.h,v 1.11 1996/10/25 21:33:37 cgd Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ enum _pdq_type_t {
 #endif /* M_CAST */
 #include <sys/malloc.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #define	PDQ_USE_MBUFS
 #if defined(__NetBSD__) || defined(__OpenBSD__)

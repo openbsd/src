@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.39 2001/09/12 00:23:34 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.40 2001/09/19 20:50:57 mickey Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -72,7 +72,7 @@
 #include <dev/cons.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef SYSVMSG
 #include <sys/msg.h>

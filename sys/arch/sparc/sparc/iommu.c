@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.9 2001/07/25 13:25:33 art Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.10 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -40,8 +40,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 
 #include <machine/pmap.h>

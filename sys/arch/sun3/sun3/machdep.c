@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2001/09/14 09:07:50 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -80,7 +80,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

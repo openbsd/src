@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.5 2001/03/20 08:32:20 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.6 2001/09/19 20:50:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -43,7 +43,6 @@
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 
 #include <machine/bus.h>

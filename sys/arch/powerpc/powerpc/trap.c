@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2001/09/18 01:51:54 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <machine/db_machdep.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

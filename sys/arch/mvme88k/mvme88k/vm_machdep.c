@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.32 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.33 2001/09/19 20:50:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -57,7 +57,6 @@
 #include <sys/extent.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

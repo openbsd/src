@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.2 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.106 2001/08/09 01:01:31 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -40,7 +40,6 @@
 #include <sys/kcore.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 
 #include <machine/pcb.h>

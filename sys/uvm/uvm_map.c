@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.23 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.24 2001/09/19 20:50:59 mickey Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.77 2000/06/13 04:10:47 chs Exp $	*/
 
 /* 
@@ -84,7 +84,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #define UVM_MAP
 #include <uvm/uvm.h>

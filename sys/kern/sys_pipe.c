@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.37 2001/07/05 07:15:07 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.38 2001/09/19 20:50:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -48,8 +48,6 @@
 #include <sys/lock.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <sys/pipe.h>

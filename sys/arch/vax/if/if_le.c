@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.6 2001/08/25 13:33:36 hugh Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.7 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@
 #include <sys/reboot.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

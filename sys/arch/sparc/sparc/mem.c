@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.16 2001/07/25 13:25:33 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.17 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
 
 /*
@@ -58,7 +58,7 @@
 #include <machine/conf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 extern vaddr_t prom_vstart;
 extern vaddr_t prom_vend;

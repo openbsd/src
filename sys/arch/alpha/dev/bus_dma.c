@@ -1,4 +1,4 @@
-/* $OpenBSD: bus_dma.c,v 1.3 2001/07/25 13:25:31 art Exp $ */
+/* $OpenBSD: bus_dma.c,v 1.4 2001/09/19 20:50:56 mickey Exp $ */
 /* $NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $ */
 
 /*-
@@ -48,7 +48,6 @@
 #include <sys/mbuf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.42 2001/06/27 07:14:22 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.43 2001/09/19 20:50:58 mickey Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -62,8 +62,6 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
 

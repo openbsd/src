@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2001/09/12 00:23:33 art Exp $ */
+/*	$OpenBSD: machdep.c,v 1.53 2001/09/19 20:50:56 mickey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -118,7 +118,6 @@
 #include <net/netisr.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

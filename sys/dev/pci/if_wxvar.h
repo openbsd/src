@@ -279,9 +279,11 @@ struct wxmdvar {
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 #include <machine/intr.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

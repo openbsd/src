@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.18 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.19 2001/09/19 20:50:59 mickey Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.48 2000/04/10 01:17:41 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

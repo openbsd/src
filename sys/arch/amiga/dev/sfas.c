@@ -1,4 +1,4 @@
-/*    $OpenBSD: sfas.c,v 1.11 2001/06/27 05:44:44 nate Exp $  */
+/*    $OpenBSD: sfas.c,v 1.12 2001/09/19 20:50:56 mickey Exp $  */
 /*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 #include <vm/vm_page.h>
 #include <machine/pmap.h>
 #include <machine/cpu.h>

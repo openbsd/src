@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.2 2001/09/15 01:40:36 mickey Exp $	*/
+/*	$OpenBSD: dma.c,v 1.3 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@
 #include <sys/mount.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 

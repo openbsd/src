@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.10 2001/07/25 13:25:32 art Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.11 2001/09/19 20:50:56 mickey Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -50,8 +50,6 @@
 #include <machine/bus.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.7 2001/09/17 14:26:36 art Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.8 2001/09/19 20:50:59 mickey Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@
 #include <sys/malloc.h>
 #include <sys/gmon.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.45 2001/07/25 13:25:32 art Exp $	*/
+/*	$OpenBSD: bios.c,v 1.46 2001/09/19 20:50:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -44,7 +44,7 @@
 #include <sys/extent.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <dev/cons.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2001/09/18 13:59:23 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/pool.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

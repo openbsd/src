@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.12 2001/08/11 23:21:14 art Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.13 2001/09/19 20:50:57 mickey Exp $	*/
 /*	$NetBSD: dvma.c,v 1.5 1996/11/20 18:57:29 gwr Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@
 #include <sys/exec.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

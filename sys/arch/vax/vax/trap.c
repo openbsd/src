@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2001/09/14 14:57:43 art Exp $     */
+/*	$OpenBSD: trap.c,v 1.16 2001/09/19 20:50:57 mickey Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,8 +41,9 @@
 #include <sys/exec.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/mtpr.h>
 #include <machine/pte.h>
