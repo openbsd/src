@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.11 1999/09/23 04:12:10 alex Exp $
+.\"	$Id: inetd.8,v 1.12 1999/12/08 13:21:17 itojun Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -185,6 +185,16 @@ RPC based services are specified with the
 or
 .Dq rpc/udp
 service type.
+.Dq tcp
+and
+.Dq udp
+will be recognized as
+.Dq TCP or UDP over default IP version .
+It is currently IPv4, but in the future it will be IPv6.
+If you need to specify IPv4 or IPv6 explicitly, use something like
+.Dq tcp4
+or
+.Dq udp6 .
 .Pp
 The
 .Em wait/nowait
@@ -307,6 +317,107 @@ is reread.
 creates a file
 .Em /var/run/inetd.pid
 that contains its process identifier.
+.Ss IPv6 TCP/UDP behavior
+If you run servers for IPv4 and IPv6 traffic, you'll need to specify
+.Dq tcp4
+and
+.Dq tcp6
+properly on the
+.Pa inetd.conf
+lines.
+For safety reasons the author recommends you to run
+two separate process for the same server program,
+specified as two separate lines on 
+.Pa inetd.conf ,
+for
+.Dq tcp6
+and
+.Dq tcp4 .
+For detailed description please read on.
+.Pp
+The behavior of 
+.Dv AF_INET6
+socket is documented in RFC2553.
+Basically, it says as follows:
+.Bl -bullet -compact
+.It
+Specific bind on
+.Dv AF_INET6
+socket
+.Po
+.Xr bind 2
+with address specified
+.Pc
+should accept IPv6 traffic to that address only.
+.It
+If you perform wildcard bind
+on
+.Dv AF_INET6
+socket
+.Po
+.Xr bind 2
+to IPv6 address
+.Li ::
+.Pc ,
+and there is no wildcard bind
+.Dv AF_INET
+socket on that TCP/UDP port, IPv6 traffic as well as IPv4 traffic
+should be routed to that
+.Dv AF_INET6
+socket.
+IPv4 traffic should be seen as if it came from IPv6 address like
+.Li ::ffff:10.1.1.1 .
+This is called IPv4 mapped address.
+.It
+If there are both wildcard bind
+.Dv AF_INET
+socket and wildcard bind
+.Dv AF_INET6
+socket on one TCP/UDP port, they should behave separately.
+IPv4 traffic should be routed to
+.Dv AF_INET
+socket and IPv6 should be routed to
+.Dv AF_INET6
+socket.
+.El
+.Pp
+Because of this,
+.Nm
+will behave as follows.
+.Bl -bullet -compact
+.It
+If you have only one server on
+.Dq tcp4 ,
+IPv4 traffic will be routed to the server.
+IPv6 traffic will not be accepted.
+.It
+If you have two servers on
+.Dq tcp4
+and
+.Dq tcp6 ,
+IPv4 traffic will be routed to the server on
+.Dq tcp4,
+and IPv6 traffic will go to server on
+.Dq tcp6 .
+.It
+If you have only one server on
+.Dq tcp6 ,
+Both IPv4 and IPv6 traffic will be routed to the server.
+.El
+.Pp
+The author do not recommend the third option on the above bullets.
+RFC2553 does not define the constraint between the order of
+.Xr bind 2 ,
+nor how IPv4 TCP/UDP port number and IPv6 TCP/UDP port number
+relate each other
+.Po
+should they be integrated or separated
+.Pc .
+Implemented behavior is very different across kernel to kernel.
+Many of the servers do not properly handle IPv4 mapped address.
+Therefore, it is unwise to rely too much upon the behavior of
+.Dv AF_INET6
+wildcard bind socket.
 .Sh BUGS
 Host address specifiers, while they make conceptual sense for RPC
 services, do not work entirely correctly.  This is largely because the
@@ -315,6 +426,12 @@ for the same service on different local addresses.  Provided you never
 have more than one entry for a given RPC service, everything should
 work correctly.  (Note that default host address specifiers do apply to
 RPC lines with no explicit specifier.)
+.Pp
+.Dq rpc
+or
+.Dq tcpmux
+on IPv6 is not tested enough.
+Kerberos support on IPv6 is not tested.
 .Sh SEE ALSO
 .Xr comsat 8 ,
 .Xr fingerd 8 ,
@@ -332,3 +449,4 @@ command appeared in
 Support for Sun-RPC
 based services is modeled after that
 provided by SunOS 4.1.
+IPv6 support and IPsec hack was made by KAME project, in 1999.

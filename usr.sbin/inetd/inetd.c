@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.56 1999/02/24 12:31:30 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.57 1999/12/08 13:21:17 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.56 1999/02/24 12:31:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.57 1999/12/08 13:21:17 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -224,10 +224,12 @@ struct	servtab {
 	union {
 		struct	sockaddr se_un_ctrladdr;
 		struct	sockaddr_in se_un_ctrladdr_in;
+		struct	sockaddr_in6 se_un_ctrladdr_in6;
 		struct	sockaddr_un se_un_ctrladdr_un;
 	} se_un;			/* bound address */
 #define se_ctrladdr	se_un.se_un_ctrladdr
 #define se_ctrladdr_in	se_un.se_un_ctrladdr_in
+#define se_ctrladdr_in6	se_un.se_un_ctrladdr_in6
 #define se_ctrladdr_un	se_un.se_un_ctrladdr_un
 	int	se_ctrladdr_size;
 	int	se_max;			/* max # of instances of this service */
@@ -671,6 +673,7 @@ config(sig)
 	register struct servtab *sep, *cp, **sepp;
 	int omask;
 	int n;
+	char protoname[10];
 
 	if (!setconfig()) {
 		syslog(LOG_ERR, "%s: %m", CONFIG);
@@ -763,8 +766,13 @@ config(sig)
 				u_short port = htons(atoi(sep->se_service));
 
 				if (!port) {
+					/*XXX*/
+					strncpy(protoname, sep->se_proto,
+						sizeof(protoname));
+					if (isdigit(protoname[strlen(protoname) - 1]))
+						protoname[strlen(protoname) - 1] = '\0';
 					sp = getservbyname(sep->se_service,
-					    sep->se_proto);
+					    protoname);
 					if (sp == 0) {
 						syslog(LOG_ERR,
 						    "%s/%s: unknown service",
@@ -785,6 +793,62 @@ config(sig)
 				if (sep->se_fd == -1)
 					setup(sep);
 			}
+			break;
+		case AF_INET6:
+			sep->se_ctrladdr_in6.sin6_family = AF_INET6;
+			/* se_ctrladdr_in was set in getconfigent */
+			sep->se_ctrladdr_size = sizeof sep->se_ctrladdr_in6;
+
+			if (isrpcservice(sep)) {
+				struct rpcent *rp;
+
+				sep->se_rpcprog = atoi(sep->se_service);
+				if (sep->se_rpcprog == 0) {
+					rp = getrpcbyname(sep->se_service);
+					if (rp == 0) {
+						syslog(LOG_ERR,
+						    "%s: unknown rpc service",
+						    sep->se_service);
+						goto serv_unknown;
+					}
+					sep->se_rpcprog = rp->r_number;
+				}
+				if (sep->se_fd == -1)
+					setup(sep);
+				if (sep->se_fd != -1)
+					register_rpc(sep);
+			} else {
+				u_short port = htons(atoi(sep->se_service));
+
+				if (!port) {
+					/*XXX*/
+					strncpy(protoname, sep->se_proto,
+						sizeof(protoname));
+					if (isdigit(protoname[strlen(protoname) - 1]))
+						protoname[strlen(protoname) - 1] = '\0';
+					sp = getservbyname(sep->se_service,
+					    protoname);
+					if (sp == 0) {
+						syslog(LOG_ERR,
+						    "%s/%s: unknown service",
+						    sep->se_service, sep->se_proto);
+						goto serv_unknown;
+					}
+					port = sp->s_port;
+				}
+				if (port != sep->se_ctrladdr_in6.sin6_port) {
+					sep->se_ctrladdr_in6.sin6_port = port;
+					if (sep->se_fd != -1) {
+						FD_CLR(sep->se_fd, &allsock);
+						nsock--;
+						(void) close(sep->se_fd);
+					}
+					sep->se_fd = -1;
+				}
+				if (sep->se_fd == -1)
+					setup(sep);
+			}
+			break;
 		}
 	serv_unknown:
 		if (cp->se_next != NULL) {
@@ -838,6 +902,7 @@ retry(sig)
 			switch (sep->se_family) {
 			case AF_UNIX:
 			case AF_INET:
+			case AF_INET6:
 				setup(sep);
 				if (sep->se_fd != -1 && isrpcservice(sep))
 					register_rpc(sep);
@@ -862,6 +927,7 @@ goaway(sig)
 			(void)unlink(sep->se_service);
 			break;
 		case AF_INET:
+		case AF_INET6:
 			if (sep->se_wait == 1 && isrpcservice(sep))
 				unregister_rpc(sep);
 			break;
@@ -888,7 +954,7 @@ setup(sep)
 	}
 #define	turnon(fd, opt) \
 setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
-	if (strcmp(sep->se_proto, "tcp") == 0 && (options & SO_DEBUG) &&
+	if (strncmp(sep->se_proto, "tcp", 3) == 0 && (options & SO_DEBUG) &&
 	    turnon(sep->se_fd, SO_DEBUG) < 0)
 		syslog(LOG_ERR, "setsockopt (SO_DEBUG): %m");
 	if (turnon(sep->se_fd, SO_REUSEADDR) < 0)
@@ -1049,6 +1115,14 @@ matchconf (old, new)
 			return (0);
 	}
 
+	if ((old->se_family == AF_INET6) &&
+		(new->se_family == AF_INET6) &&
+		(bcmp(&old->se_ctrladdr_in6.sin6_addr,
+		    &new->se_ctrladdr_in6.sin6_addr,
+		    sizeof(new->se_ctrladdr_in6.sin6_addr)) != 0)) {
+			return (0);
+	}
+
 	return (1);
 }
 
@@ -1186,6 +1260,8 @@ more:
 		sep->se_family = AF_UNIX;
 	} else {
 		sep->se_family = AF_INET;
+		if (sep->se_proto[strlen(sep->se_proto) - 1] == '6')
+			sep->se_family = AF_INET6;
 		if (strncmp(sep->se_proto, "rpc/", 4) == 0) {
 			char *cp, *ccp;
 			long l;
