@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.86 2002/09/10 22:43:49 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.87 2002/09/12 05:31:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -572,8 +572,16 @@ $syscall
 	ldo	TRAPFRAME_SIZEOF(t3), t3
 	stw	t4, TF_R19 -TRAPFRAME_SIZEOF(sr1, t3)	/* t4 for vfork() */
 	stw	t1, TF_R22 -TRAPFRAME_SIZEOF(sr1, t3)	/* syscall # */
+	/* gotta save the args, in case we gonna restart */
+	stw	arg3, TF_R23-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg2, TF_R24-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_R25-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg0, TF_R26-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r27, TF_R27-TRAPFRAME_SIZEOF(sr1, t3)	/* dp */
 	stw	sp, TF_R30 -TRAPFRAME_SIZEOF(sr1, t3)	/* user stack */
-	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(t3), sp
+	copy	t3, sp
+	stw,ma	r0, HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(sr1, sp)
+	stw	r0, HPPA_FRAME_CRP(sr1, sp)
 	ldil	L%kpsw, t1
 	ldw	R%kpsw(sr1, t1), t1
 	stw	r1, TF_CR15-TRAPFRAME_SIZEOF(sr1, t3)	/* eiem ,bc */
@@ -592,6 +600,7 @@ $syscall
 	 */
 	stw	r2 , TF_R2 -TRAPFRAME_SIZEOF(sr1, t3)
 	stw	r3 , TF_R3 -TRAPFRAME_SIZEOF(sr1, t3)
+	copy	t3, r3
 #ifdef DDB
 	/* save callee-save registers */
 	stw	r4 , TF_R4 -TRAPFRAME_SIZEOF(sr1, t3)
@@ -610,17 +619,6 @@ $syscall
 	stw	r17, TF_R17-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	r18, TF_R18-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
-	/* gotta save the args, in case we gonna restart */
-	stw	arg3, TF_R23-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	arg2, TF_R24-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	arg1, TF_R25-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	arg0, TF_R26-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	r27, TF_R27-TRAPFRAME_SIZEOF(sr1, t3)	/* dp */
-	stw	r0, 0(sr1, t3)	/* terminate frame */
-	copy	r0 , r3
-	stw	r0, HPPA_FRAME_PSP(sr1, sp)
-	stw	r0, HPPA_FRAME_CRP(sr1, sp)
-
 	/*
 	 * Save the rest of the CPU context
 	 */
@@ -635,15 +633,14 @@ $syscall
 	stw	arg0, TF_CR20-TRAPFRAME_SIZEOF(sr1, t3)	/* use ,bc */
 	stw	r31, TF_CR21-TRAPFRAME_SIZEOF(sr1, t3)
 
-	ldil	TFF_LAST|TFF_SYS, arg1
+	ldil	L%TFF_LAST|TFF_SYS, arg1
 	stw	r0, TF_CR19-TRAPFRAME_SIZEOF(sr1, t3)	/* iir */
 	stw	arg1, TF_FLAGS-TRAPFRAME_SIZEOF(sr1, t3)
 
-	copy	arg0, arg1
 	mfsp	sr2, arg2
 	mfsp	sr4, arg3
 	stw	arg0, TF_SR0-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	arg1, TF_SR1-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg0, TF_SR1-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	arg2, TF_SR2-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	arg3, TF_SR4-TRAPFRAME_SIZEOF(sr1, t3)
 
@@ -2469,6 +2466,9 @@ Lcspstr
 	.align	8
 link_ok
 #endif
+	ldil	L%want_resched, t4
+	stw	r0, R%want_resched(t4)
+
 	ldw	P_FORW(arg1), arg0
 	stw	arg0, P_FORW(t2)
 	stw	t2, P_BACK(arg0)
@@ -2479,9 +2479,6 @@ link_ok
 	stw	t3, R%whichqs(t1)
 
 	/* don't need &whichqs (t1) starting here */
-	ldil	L%want_resched, t3
-	stw	r0, R%want_resched(t3)
-
 #ifdef DIAGNOSTIC
 	ldw	P_WCHAN(arg1), t1
 	comb,<>,n r0, t1, switch_error
@@ -2507,9 +2504,6 @@ link_ok
 	copy    arg1, t2
 kstack_ok
 #endif
-	ldil	L%curproc, t1
-	stw	arg1, R%curproc(t1)
-
 	/* Skip context switch if same process. */
 	comb,=,n arg1, arg2, switch_return
 
@@ -2586,9 +2580,10 @@ switch_exited
 	copy	t2, sp
 
 switch_return
-	bv	0(rp)
 	mtctl	arg3, eiem
-
+	ldil	L%curproc, t1
+	bv	0(rp)
+	stw	arg1, R%curproc(t1)
 EXIT(cpu_switch)
 
 ENTRY(switch_trampoline,0)
