@@ -1564,6 +1564,7 @@
 ./usr/libexec/smrsh
 ./usr/libexec/spamd
 ./usr/libexec/spamd-setup
+./usr/libexec/spamlogd
 ./usr/libexec/spellprog
 ./usr/libexec/ssh-keysign
 ./usr/libexec/tcpd
@@ -1736,6 +1737,7 @@
 ./usr/sbin/slstats
 ./usr/sbin/snkadm
 ./usr/sbin/snkinit
+./usr/sbin/spamdb
 ./usr/sbin/spppcontrol
 ./usr/sbin/spray
 ./usr/sbin/sshd

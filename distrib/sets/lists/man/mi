@@ -2147,6 +2147,8 @@
 ./usr/share/man/cat8/snkinit.0
 ./usr/share/man/cat8/spamd-setup.0
 ./usr/share/man/cat8/spamd.0
+./usr/share/man/cat8/spamdb.0
+./usr/share/man/cat8/spamlogd.0
 ./usr/share/man/cat8/sparc
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/boot_sparc.0
