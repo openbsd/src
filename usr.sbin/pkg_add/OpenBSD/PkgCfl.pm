@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.4 2004/09/18 08:14:40 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.5 2004/09/24 08:46:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,7 @@ sub make_conflict_list($)
 
 	unless (defined $plist->{'no-default-conflict'}) {
 		my $stem = (OpenBSD::PackageName::splitname $plist->pkgname())[0];
-		push(@$l, sub { grep { m/^\Q$stem\E-\d.*$/ } @_; });
+		push(@$l, sub { OpenBSD::PackageName::pkgspec_match($stem."-*", @_); });
 	}
 	if (defined $plist->{pkgcfl}) {
 		for my $cfl (@{$plist->{pkgcfl}}) {
