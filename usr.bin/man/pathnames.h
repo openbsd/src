@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1996/09/16 02:26:11 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1997/06/06 10:05:09 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/09/28 06:05:40 tls Exp $	*/
 
 /*
@@ -38,5 +38,5 @@
 
 #define	_PATH_MANCONF	"/etc/man.conf"
 #define	_PATH_PAGER	"/usr/bin/more -s"
-#define	_PATH_TMPFILE	"/tmp/man.XXXXXX"
+#define	_PATH_TMPFILE	"/tmp/man.XXXXXXXXXX"
 #define	_PATH_WHATIS	"whatis.db"
