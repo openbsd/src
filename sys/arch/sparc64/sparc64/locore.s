@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.19 2002/07/20 20:19:10 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.20 2002/07/20 22:30:35 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3202,7 +3202,7 @@ instr_miss:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, textfault
 	 or	%g4, TTE_ACCESS, %g7			! Update accessed bit
-	btst	TTE_ACCESS, %g4				! Need to update access git?
+	btst	TTE_ACCESS, %g4				! Need to update access bit?
 	bne,pt	%xcc, 1f
 	 nop
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and store it
