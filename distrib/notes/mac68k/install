@@ -91,6 +91,14 @@ Installation of base files:
 	device nodes for you in /dev and your initial /etc/fstab.  The
 	installer program also has an option to give you a mini-shell.
 
+	You may have noticed in other versions of OpenBSD that adding the
+	ssl{:--:}OSrev.tar.gz is supported from the installer. This is
+	unfortunately *not* the case for the macintosh installer, as the
+	ssl package will not extract in the correct directory when extracted
+	with the macintosh installation tool. Instead, should install this
+	package *after* you install your system using pkg_add(8). please
+	see afterboot(8) for details on how to do this.
+
 **** Booting the system
 
 Double-click on the BSD/Mac68k Booter icon to start the application.  Check
