@@ -10,7 +10,7 @@
  *
  * Main client header
  *
- * $OpenBSD: skey.h,v 1.18 2002/05/16 03:50:42 millert Exp $
+ * $OpenBSD: skey.h,v 1.19 2004/08/05 13:31:36 millert Exp $
  */
 
 #ifndef _SKEY_H_
@@ -71,6 +71,7 @@ char *put8(char *, char *);
 int etob(char *, char *);
 void rip(char *);
 int skeychallenge(struct skey *, char *, char *);
+int skeychallenge2(int, struct skey *, char *, char *);
 int skeylookup(struct skey *, char *);
 int skeyverify(struct skey *, char *);
 int skeyzero(struct skey *);

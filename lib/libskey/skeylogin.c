@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.51 2003/09/21 23:35:24 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.52 2004/08/05 13:31:36 millert Exp $
  */
 
 #include <sys/param.h>
@@ -38,22 +38,23 @@
 
 static void skey_fakeprompt(char *, char *);
 static char *tgetline(int, char *, size_t, int);
-static int skeygetent(struct skey *, const char *);
+static int skeygetent(int, struct skey *, const char *);
 
 /*
  * Return an skey challenge string for user 'name'. If successful,
  * fill in the caller's skey structure and return (0). If unsuccessful
  * (e.g., if name is unknown) return (-1).
  *
- * The file read/write pointer is left at the start of the
- * record.
+ * The file read/write pointer is left at the start of the record.
  */
 int
-skeychallenge(struct skey *mp, char *name, char *ss)
+skeychallenge2(int fd, struct skey *mp, char *name, char *ss)
 {
 	int rval;
 
-	rval = skeylookup(mp, name);
+	memset(mp, 0, sizeof(*mp));
+	rval = skeygetent(fd, mp, name);
+
 	switch (rval) {
 	case 0:		/* Lookup succeeded, return challenge */
 		(void)snprintf(ss, SKEY_MAX_CHALLENGE,
@@ -75,6 +76,12 @@ skeychallenge(struct skey *mp, char *name, char *ss)
 	}
 }
 
+int
+skeychallenge(struct skey *mp, char *name, char *ss)
+{
+	return (skeychallenge2(-1, mp, name, ss));
+}
+
 /*
  * Get an entry in the One-time Password database and lock it.
  *
@@ -84,13 +91,12 @@ skeychallenge(struct skey *mp, char *name, char *ss)
  *  1: entry not found
  */
 static int
-skeygetent(struct skey *mp, const char *name)
+skeygetent(int fd, struct skey *mp, const char *name)
 {
 	struct stat statbuf;
 	size_t nread;
 	char *cp, filename[PATH_MAX], *last;
 	FILE *keyfile;
-	int fd;
 
 	/* Check to see that /etc/skey has not been disabled. */
 	if (stat(_PATH_SKEYDIR, &statbuf) != 0)
@@ -100,18 +106,19 @@ skeygetent(struct skey *mp, const char *name)
 		return (-1);
 	}
 
-	/* Open the user's databse entry, creating it as needed. */
-	/* XXX - really want "/etc/skey/L/USER" where L is 1st char of USER */
-	if (snprintf(filename, sizeof(filename), "%s/%s", _PATH_SKEYDIR,
-	    name) >= sizeof(filename)) {
-		errno = ENAMETOOLONG;
-		return (-1);
-	}
-	if ((fd = open(filename, O_RDWR | O_NOFOLLOW | O_NONBLOCK,
-	    S_IRUSR | S_IWUSR)) == -1) {
-		if (errno == ENOENT)
-			goto not_found;
-		return (-1);
+	if (fd == -1) {
+		/* Open the user's databse entry, creating it as needed. */
+		if (snprintf(filename, sizeof(filename), "%s/%s", _PATH_SKEYDIR,
+		    name) >= sizeof(filename)) {
+			errno = ENAMETOOLONG;
+			return (-1);
+		}
+		if ((fd = open(filename, O_RDWR | O_NOFOLLOW | O_NONBLOCK,
+		    S_IRUSR | S_IWUSR)) == -1) {
+			if (errno == ENOENT)
+				goto not_found;
+			return (-1);
+		}
 	}
 
 	/* Lock and stat the user's skey file. */
@@ -183,7 +190,7 @@ int
 skeylookup(struct skey *mp, char *name)
 {
 	memset(mp, 0, sizeof(*mp));
-	return (skeygetent(mp, name));
+	return (skeygetent(-1, mp, name));
 }
 
 /*
@@ -213,7 +220,7 @@ skeygetnext(struct skey *mp)
 	while ((readdir_r(mp->keydir, &entry, &dp)) == 0 && dp == &entry) {
 		/* Skip dot files and zero-length files. */
 		if (entry.d_name[0] != '.' &&
-		    (rval = skeygetent(mp, entry.d_name)) != 1)
+		    (rval = skeygetent(-1, mp, entry.d_name)) != 1)
 			break;
 	}
 

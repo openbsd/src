@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.3,v 1.10 2003/06/17 21:56:24 millert Exp $
+.\" $OpenBSD: skey.3,v 1.11 2004/08/05 13:31:36 millert Exp $
 .\"
 .\" Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -39,6 +39,7 @@
 .Nm skey_set_algorithm ,
 .Nm skey_unlock ,
 .Nm skeychallenge ,
+.Nm skeychallenge2 ,
 .Nm skeygetnext ,
 .Nm skeylookup ,
 .Nm skeyverify ,
@@ -89,6 +90,8 @@
 .Ft int
 .Fn skeychallenge "struct skey *rec" "char *user" "char *buf"
 .Ft int
+.Fn skeychallenge2 "int fd" "struct skey *rec" "char *user" "char *buf"
+.Ft int
 .Fn skeygetnext "struct skey *rec"
 .Ft int
 .Fn skeylookup "struct skey *rec" "char *user"
@@ -108,7 +111,7 @@ to an 8-byte binary array stored in
 .Fa out .
 The
 .Fn atob8
-function returns 0 on success and -1 if an invalid hex character is encountered.
+function returns 0 on success and \-1 if an invalid hex character is encountered.
 .Pp
 The
 .Fn backspace
@@ -127,7 +130,7 @@ to a 16-byte string of hex digits stored in
 the caller must supply enough space (17 bytes including the final NUL).
 The
 .Fn btoa8
-function returns 0 on success and -1 if an error occurred.
+function returns 0 on success and \-1 if an error occurred.
 .Pp
 The
 .Fn btoe
@@ -150,8 +153,8 @@ into an 8-byte binary representation.
 The
 .Fn etob
 function returns 1 if the words are all in the database and parity is correct,
-0 if a word is not in the database, -1 if the number of words is incorrect,
-or -2 if there is a parity error.
+0 if a word is not in the database, \-1 if the number of words is incorrect,
+or \-2 if there is a parity error.
 .Pp
 The
 .Fn f
@@ -166,7 +169,7 @@ function converts a single hex digit
 to an integer.
 The
 .Fn htoi
-function returns the converted integer on success or -1 if
+function returns the converted integer on success or \-1 if
 .Fa h
 not a valid hex digit.
 .Pp
@@ -181,7 +184,7 @@ runs them through a hash function and collapses the
 to 64 bits.
 The
 .Fn keycrunch
-function returns 0 on success or -1 if there is a memory allocation failure.
+function returns 0 on success or \-1 if there is a memory allocation failure.
 .Pp
 The
 .Fn put8
@@ -239,7 +242,7 @@ function presents the
 with an S/Key challenge and authenticates the response.
 The
 .Fn skey_authenticate
-function returns 0 if authentication is successful or -1 if not.
+function returns 0 if authentication is successful or \-1 if not.
 .Pp
 The
 .Fn skey_get_algorithm
@@ -252,7 +255,7 @@ The
 .Fn skey_haskey
 function returns 0 if the
 .Fa user
-exists in the S/Key database, 1 if the user does not exist, or -1
+exists in the S/Key database, 1 if the user does not exist, or \-1
 if there was an error reading the database.
 .Pp
 The
@@ -270,7 +273,7 @@ function checks a
 and
 .Fa passwd
 pair against the S/Key database.
-It returns 0 on successful authentication or -1 on failure.
+It returns 0 on successful authentication or \-1 on failure.
 .Pp
 The
 .Fn skey_set_algorithm
@@ -287,7 +290,7 @@ function unlocks the record in the S/Key database specified by
 .Fa rec .
 The
 .Fn skey_unlock
-function returns 0 on success or -1 on failure.
+function returns 0 on success or \-1 on failure.
 Either way, the S/Key database is not closed nor is the database
 file pointer affected.
 .Pp
@@ -303,9 +306,22 @@ It also fills in the skey struct
 and locks the user's record in the S/Key database.
 The
 .Fn skeychallenge
-function returns 0 on success or -1 on failure.
+function returns 0 on success or \-1 on failure.
 On success the S/Key database remains open and the read/write file
 pointer is set to the beginning of the record.
+.Pp
+The
+.Fn skeychallenge2
+function is identical to
+.Fn skeychallenge
+except that instead of opening the user's entry in the S/Key database,
+the open file referenced by
+.Ar fd
+is used instead.
+When
+.Ar fd
+is \-1, the behavior is equivalent to
+.Fn skeychallenge .
 .Pp
 The
 .Fn skeygetnext
@@ -315,7 +331,7 @@ and locks that record in the S/Key database.
 The
 .Fn skeygetnext
 function returns 0 on success, 1 if there are no more entries,
-or -1 if there was an error accessing the S/Key database.
+or \-1 if there was an error accessing the S/Key database.
 The S/Key database remains open after a call to
 .Fn skeygetnext .
 If no error was encountered accessing the S/Key database, the read/write
@@ -336,7 +352,7 @@ The
 .Fn skeylookup
 function returns 0 on success, 1 if
 .Fa user
-was not found, or -1 if there was an error accessing the S/Key database.
+was not found, or \-1 if there was an error accessing the S/Key database.
 If no error was encountered accessing the S/Key database, the read/write
 file pointer is set to the beginning of the record.
 .Pp
@@ -347,7 +363,7 @@ function verifies the user's
 based on the S/Key record
 .Fa rec .
 It returns 0 on success (updating the database), 1 on failure, or
--1 if there was an error accessing the database.
+\-1 if there was an error accessing the database.
 The database is always closed by a call to
 .Fn skeyverify .
 .Sh SEE ALSO
