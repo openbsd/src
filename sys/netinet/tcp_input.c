@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.16 1997/11/12 20:57:43 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.17 1997/11/12 20:59:44 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1059,9 +1059,9 @@ trimthenstep6:
 	 */
 	if (tiflags & TH_RST) {
 
-		if ((ti->ti_seq != tp->rcv_nxt) ||
-		    (ti->ti_ack && ((SEQ_LEQ(ti->ti_ack, tp->iss) ||
-		    SEQ_GT(ti->ti_ack, tp->snd_max)))))
+		if ((ti->ti_seq != tp->rcv_nxt) &&
+		    (ti->ti_ack && ((SEQ_GT(ti->ti_ack, tp->snd_nxt) ||
+		      SEQ_LT(ti->ti_ack, (tp->snd_nxt - tp->snd_wnd))))))
 			goto drop;
 
 		switch (tp->t_state) {
