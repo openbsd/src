@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.13 2001/04/12 15:01:19 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.14 2001/04/12 20:36:06 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -118,7 +118,6 @@ void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *));
 void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
 void txp_show_descriptor __P((void *));
-int txp_encap __P((struct txp_softc *, struct txp_tx_ring *, struct mbuf *, u_int32_t *, u_int32_t *, u_int32_t *));
 void txp_tx_reclaim __P((struct txp_softc *, struct txp_tx_ring *, u_int32_t));
 
 struct cfattach txp_ca = {
@@ -555,30 +554,33 @@ txp_tx_reclaim(sc, r, off)
 	struct txp_tx_ring *r;
 	u_int32_t off;
 {
-	u_int32_t i = r->r_cons, idx = TXP_OFFSET2IDX(off), cnt = r->r_cnt;
-	struct txp_tx_desc *txd = &r->r_desc[i];
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	u_int32_t idx = TXP_OFFSET2IDX(off);
+	struct txp_tx_desc *txd;
 	struct mbuf *m;
 
-	while (i != idx) {
-		if (cnt == 0)
+	while (r->r_cons != idx) {
+		if (r->r_cnt == 0)
 			break;
+
+		txd = &r->r_desc[r->r_cons];
+		r->r_cons = (r->r_cons + 1) % TX_ENTRIES;
+		r->r_cnt--;
+
 		if ((txd->tx_flags & TX_FLAGS_TYPE_M) ==
 		    TX_FLAGS_TYPE_DATA) {
-			bcopy(&txd->tx_addrlo, &m, sizeof(struct mbuf *));
-			if (m != NULL)
+			m = (struct mbuf *)txd->tx_addrlo;
+			if (m != NULL) {
 				m_freem(m);
-			bzero(txd, sizeof(*txd));
+				txd->tx_addrlo = 0;
+				ifp->if_opackets++;
+			}
 		}
-		cnt--;
-
-		if (++i == TX_ENTRIES) {
-			i = 0;
-			txd = r->r_desc;
-		} else
-			txd++;
+		ifp->if_flags &= ~IFF_OACTIVE;
 	}
-	r->r_cons = i;
-	r->r_cnt = cnt;
+
+	if (r->r_cnt == 0)
+		ifp->if_timer = 0;
 }
 
 void
@@ -928,6 +930,7 @@ txp_init(sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_timer = 0;
 
 	splx(s);
 }
@@ -938,125 +941,75 @@ txp_start(ifp)
 	struct ifnet *ifp;
 {
 	struct txp_softc *sc = ifp->if_softc;
-	struct txp_tx_ring *r;
+	struct txp_tx_ring *r = &sc->sc_txhir;
 	struct txp_tx_desc *txd;
+	struct txp_frag_desc *fxd;
 	struct mbuf *m;
-	u_int32_t bix, totlen, cnt;
+	u_int32_t firstprod, firstcnt;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	r = &sc->sc_txhir;
-	bix = r->r_prod;
-
-	while ((TX_ENTRIES - r->r_cnt) > 4) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+	while (1) {
+		IF_DEQUEUE(&ifp->if_snd, m);	/* no mbufs */
 		if (m == NULL)
 			break;
 
-#if NBPFILTER > 0
-		/*
-		 * If BPF is listening on this interface, let it see the
-		 * packet before we commit it to the wire.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
-
-		txd = &r->r_desc[bix];
-		if (++bix == TX_ENTRIES)
-			bix = 0;
-
-		r->r_cnt++;
-
-		if (txp_encap(sc, &sc->sc_txhir, m, &bix, &totlen, &cnt)) {
-			if (bix == 0)
-				bix = TX_ENTRIES;
-			bix--;
-			r->r_cnt--;
-			IF_PREPEND(&ifp->if_snd, m);
+		if ((TX_ENTRIES - r->r_cnt) < 4) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		bzero(txd, sizeof(*txd));
+		firstprod = r->r_prod;
+		firstcnt = r->r_cnt;
+
+		txd = &r->r_desc[r->r_prod];
+		r->r_prod = (r->r_prod + 1) % TX_ENTRIES;
+		r->r_cnt++;
+		if (r->r_cnt == (TX_ENTRIES - 4)) {
+			goto oactive;
+		}
+
 		txd->tx_flags = TX_FLAGS_TYPE_DATA;
-		txd->tx_totlen = totlen;
-		txd->tx_numdesc = cnt;
-		/* stash mbuf * in the descriptor */
-		bcopy(&m, &txd->tx_addrlo, sizeof(struct mbuf *));
+		txd->tx_numdesc = 0;
+		txd->tx_addrlo = (u_int32_t)m;
+		txd->tx_addrhi = 0;
+		txd->tx_totlen = 0;
+		txd->tx_pflags = 0;
 
-		/* Kick the txp */
-		WRITE_REG(sc, r->r_reg, TXP_IDX2OFFSET(bix));
+		while (m != NULL) {
+			if (m->m_len == 0) {
+				m = m->m_next;
+				continue;
+			}
 
-		if (++bix == TX_ENTRIES)
-			bix = 0;
-	}
+			txd->tx_numdesc++;
 
-	r->r_prod = bix;
-}
+			fxd = (struct txp_frag_desc *)&r->r_desc[r->r_prod];
+			r->r_prod = (r->r_prod + 1) % TX_ENTRIES;
+			r->r_cnt++;
+			if (r->r_cnt == (TX_ENTRIES - 4))
+				goto oactive;
 
-int
-txp_encap(sc, r, mhead, bixp, totlenp, cntp)
-	struct txp_softc *sc;
-	struct txp_tx_ring *r;
-	struct mbuf *mhead;
-	u_int32_t *bixp, *totlenp, *cntp;
-{
-	struct mbuf *m;
-	struct txp_frag_desc *fd;
-	u_int32_t cnt = 0, cur, frag, totlen = 0;
-	u_int64_t addr;
-
-	cur = frag = *bixp;
-	fd = (struct txp_frag_desc *)&r->r_desc[frag];
-	m = mhead;
-
-	while (m != NULL) {
-		if (m->m_len == 0) {
+			fxd->frag_flags = FRAG_FLAGS_TYPE_FRAG;
+			fxd->frag_rsvd1 = 0;
+			fxd->frag_len = m->m_len;
+			fxd->frag_addrlo = vtophys(m->m_data);
+			fxd->frag_addrhi = 0;
+			fxd->frag_rsvd2 = 0;
 			m = m->m_next;
-			continue;
 		}
 
-		totlen += m->m_len;
-
-		if ((TX_ENTRIES - (r->r_cnt + cnt)) < 4)
-			goto err;
-
-		bzero(fd, sizeof(*fd));
-		fd->frag_flags = FRAG_FLAGS_TYPE_FRAG;
-		addr = vtophys(m->m_data);
-		fd->frag_addrlo = addr & 0xffffffff;
-		fd->frag_addrhi = addr >> 32;
-		fd->frag_len = m->m_len;
-
-		cur = frag;
-		cnt++;
-		frag++;
-		if (frag == TX_ENTRIES) {
-			frag = 0;
-			fd = (struct txp_frag_desc *)r->r_desc;
-		} else {
-			fd++;
-		}
-
-		m = m->m_next;
-	}
-	*bixp = frag;
-	*totlenp = totlen;
-	*cntp = cnt;
-	r->r_cnt += cnt;
-
-	return (0);
-
-err:
-	for (; cnt > 0; cnt--) {
-		if (frag == 0)
-			frag = TX_ENTRIES;
-		frag--;
+		ifp->if_timer = 5;
+		WRITE_REG(sc, r->r_reg, TXP_IDX2OFFSET(r->r_prod));
 	}
 
-	return (ENOBUFS);
+	return;
+
+oactive:
+	ifp->if_flags |= IFF_OACTIVE;
+	r->r_prod = firstprod;
+	r->r_cnt = firstcnt;
 }
 
 /*
