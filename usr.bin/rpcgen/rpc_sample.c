@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_sample.c,v 1.2 1996/06/26 05:38:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_sample.c,v 1.3 1997/11/15 22:10:53 deraadt Exp $	*/
 /*	$NetBSD: rpc_sample.c,v 1.2 1995/06/11 21:50:01 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -179,10 +179,7 @@ write_sample_server(def)
 */
 			return_type(proc);
 			f_print(fout, "* \n");
-			if( Cflag )
-			  pvname_svc(proc->proc_name, vp->vers_num);
-			else
-			  pvname(proc->proc_name, vp->vers_num);
+			pvname_svc(proc->proc_name, vp->vers_num);
 			printarglist( proc, RQSTP, "struct svc_req *" );
 
 			f_print(fout, "{\n");
