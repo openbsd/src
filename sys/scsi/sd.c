@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.52 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.53 2002/06/09 00:05:57 art Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -596,8 +596,9 @@ done:
 	 * Correctly set the buf to indicate a completed xfer
 	 */
 	bp->b_resid = bp->b_bcount;
+	s = splbio();
 	biodone(bp);
-
+	splx(s);
 	if (sd != NULL)
 		device_unref(&sd->sc_dev);
 }
@@ -633,6 +634,9 @@ sdstart(v)
 	struct partition *p;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart "));
+
+	splassert(IPL_BIO);
+
 	/*
 	 * Check if the device has room for another command
 	 */

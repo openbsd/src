@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.45 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: ss.c,v 1.46 2002/06/09 00:05:57 art Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -605,7 +605,9 @@ done:
 	 * Correctly set the buf to indicate a completed xfer
 	 */
 	bp->b_resid = bp->b_bcount;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 /*
