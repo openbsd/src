@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.3 2005/04/03 12:03:43 ho Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.4 2005/04/03 12:24:59 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -43,7 +43,7 @@
 
 #include "sasyncd.h"
 
-static int
+static void
 privdrop(void)
 {
 	struct passwd	*pw = getpwnam(SASYNCD_USER);
@@ -64,8 +64,6 @@ privdrop(void)
 		log_err("%s: failed to drop privileges", __progname);
 		exit(1);
 	}
-
-	return 0;
 }
 
 volatile int daemon_shutdown = 0;
@@ -165,6 +163,12 @@ main(int argc, char **argv)
 	}
 	if (r)
 		return 1;
+
+	if (geteuid() != 0) {
+		/* No point in continuing. */
+		fprintf(stderr, "This daemon needs to be run as root.\n");
+		return 1;
+	}
 
 	if (carp_init())
 		return 1;
