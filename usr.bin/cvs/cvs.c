@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.12 2004/08/12 17:51:05 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.13 2004/11/09 21:01:36 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -64,6 +64,8 @@ char *cvs_rootstr;
 char *cvs_rsh = CVS_RSH_DEFAULT;
 char *cvs_editor = CVS_EDITOR_DEFAULT;
 
+char *cvs_msg = NULL;
+
 
 /* hierarchy of all the files affected by the command */
 CVSFILE *cvs_files;
@@ -89,65 +91,79 @@ static struct cvs_cmd {
 	char    cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
 	int   (*cmd_hdlr)(int, char **);
 	char   *cmd_synopsis;
+	char   *cmd_opts;
 	char    cmd_descr[CVS_CMD_MAXDESCRLEN];
 } cvs_cdt[] = {
 	{
 		CVS_OP_ADD, "add",      { "ad",  "new" }, cvs_add,
 		"[-m msg] file ...",
+		"",
 		"Add a new file/directory to the repository",
 	},
 	{
 		-1, "admin",    { "adm", "rcs" }, NULL,
+		"",
 		"",
 		"Administration front end for rcs",
 	},
 	{
 		CVS_OP_ANNOTATE, "annotate", { "ann"        }, NULL,
 		"",
+		"",
 		"Show last revision where each line was modified",
 	},
 	{
 		CVS_OP_CHECKOUT, "checkout", { "co",  "get" }, cvs_checkout,
+		"",
 		"",
 		"Checkout sources for editing",
 	},
 	{
 		CVS_OP_COMMIT, "commit",   { "ci",  "com" }, cvs_commit,
 		"[-flR] [-F logfile | -m msg] [-r rev] ...",
+		"F:flm:Rr:",
 		"Check files into the repository",
 	},
 	{
 		CVS_OP_DIFF, "diff",     { "di",  "dif" }, cvs_diff,
 		"[-cilu] [-D date] [-r rev] ...",
+		"cD:ilur:",
 		"Show differences between revisions",
 	},
 	{
 		-1, "edit",     {              }, NULL,
+		"",
 		"",
 		"Get ready to edit a watched file",
 	},
 	{
 		-1, "editors",  {              }, NULL,
 		"",
+		"",
 		"See who is editing a watched file",
 	},
 	{
 		-1, "export",   { "ex",  "exp" }, NULL,
+		"",
 		"",
 		"Export sources from CVS, similar to checkout",
 	},
 	{
 		CVS_OP_HISTORY, "history",  { "hi",  "his" }, cvs_history,
 		"",
+		"",
 		"Show repository access history",
 	},
 	{
-		CVS_OP_IMPORT, "import",   { "im",  "imp" }, NULL,
-		"",
+		CVS_OP_IMPORT, "import",   { "im",  "imp" }, cvs_import,
+		"[-d] [-b branch] [-I ign] [-k subst] [-m msg] "
+		"repository vendor-tag release-tags ...",
+		"b:dI:k:m:",
 		"Import sources into CVS, using vendor branches",
 	},
 	{
 		CVS_OP_INIT, "init",     {              }, cvs_init,
+		"",
 		"",
 		"Create a CVS repository if it doesn't exist",
 	},
@@ -155,86 +171,102 @@ static struct cvs_cmd {
 	{
 		"kserver",  {}, NULL
 		"",
+		"",
 		"Start a Kerberos authentication CVS server",
 	},
 #endif
 	{
 		CVS_OP_LOG, "log",      { "lo"         }, cvs_getlog,
 		"",
+		"",
 		"Print out history information for files",
 	},
 	{
 		-1, "login",    {}, NULL,
+		"",
 		"",
 		"Prompt for password for authenticating server",
 	},
 	{
 		-1, "logout",   {}, NULL,
 		"",
+		"",
 		"Removes entry in .cvspass for remote repository",
 	},
 	{
 		-1, "rdiff",    {}, NULL,
+		"",
 		"",
 		"Create 'patch' format diffs between releases",
 	},
 	{
 		-1, "release",  {}, NULL,
 		"",
+		"",
 		"Indicate that a Module is no longer in use",
 	},
 	{
 		CVS_OP_REMOVE, "remove",   {}, NULL,
+		"",
 		"",
 		"Remove an entry from the repository",
 	},
 	{
 		-1, "rlog",     {}, NULL,
 		"",
+		"",
 		"Print out history information for a module",
 	},
 	{
 		-1, "rtag",     {}, NULL,
+		"",
 		"",
 		"Add a symbolic tag to a module",
 	},
 	{
 		CVS_OP_SERVER, "server",   {}, cvs_server,
 		"",
+		"",
 		"Server mode",
 	},
 	{
 		CVS_OP_STATUS, "status",   {}, cvs_status,
+		"",
 		"",
 		"Display status information on checked out files",
 	},
 	{
 		CVS_OP_TAG, "tag",      { "ta", }, NULL,
 		"",
+		"",
 		"Add a symbolic tag to checked out version of files",
 	},
 	{
 		-1, "unedit",   {}, NULL,
+		"",
 		"",
 		"Undo an edit command",
 	},
 	{
 		CVS_OP_UPDATE, "update",   {}, cvs_update,
 		"",
+		"",
 		"Bring work tree in sync with repository",
 	},
 	{
 		CVS_OP_VERSION, "version",  {}, cvs_version,
-		"",
+		"", "",
 		"Show current CVS version(s)",
 	},
 	{
 		-1, "watch",    {}, NULL,
 		"",
+		"",
 		"Set watches",
 	},
 	{
 		-1, "watchers", {}, NULL,
+		"",
 		"",
 		"See who is watching a file",
 	},
@@ -248,25 +280,6 @@ void             usage        (void);
 void             sigchld_hdlr (int);
 void             cvs_readrc   (void);
 struct cvs_cmd*  cvs_findcmd  (const char *); 
-
-
-
-/*
- * sigchld_hdlr()
- *
- * Handler for the SIGCHLD signal, which can be received in case we are
- * running a remote server and it dies.
- */
-
-void
-sigchld_hdlr(int signo)
-{
-	int status;
-	pid_t pid;
-
-	if ((pid = wait(&status)) == -1) {
-	}
-}
 
 
 /*
@@ -389,7 +402,7 @@ main(int argc, char **argv)
 	}
 
 	/* setup signal handlers */
-	signal(SIGCHLD, sigchld_hdlr);
+	signal(SIGPIPE, SIG_IGN);
 
 	cvs_file_init();
 
