@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.28 2002/07/08 14:48:57 itojun Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.29 2003/01/15 06:31:24 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1479,7 +1479,7 @@ int tl_encap(sc, c, m_head)
 				break;
 			total_len+= m->m_len;
 			c->tl_ptr->tl_frag[frag].tlist_dadr =
-				vtophys(mtod(m, vm_offset_t));
+				vtophys(mtod(m, vaddr_t));
 			c->tl_ptr->tl_frag[frag].tlist_dcnt = m->m_len;
 			frag++;
 		}

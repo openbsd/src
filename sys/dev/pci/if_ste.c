@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.17 2002/11/19 18:40:17 jason Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.18 2003/01/15 06:31:24 art Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1389,7 +1389,7 @@ int ste_encap(sc, c, m_head)
 				break;
 			total_len += m->m_len;
 			f = &c->ste_ptr->ste_frags[frag];
-			f->ste_addr = vtophys(mtod(m, vm_offset_t));
+			f->ste_addr = vtophys(mtod(m, vaddr_t));
 			f->ste_len = m->m_len;
 			frag++;
 		}

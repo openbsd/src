@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.24 2002/11/26 06:01:28 nate Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.25 2003/01/15 06:31:24 art Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1682,7 +1682,7 @@ nge_encap(sc, m_head, txidx)
 				return(ENOBUFS);
 			f = &sc->nge_ldata->nge_tx_list[frag];
 			f->nge_ctl = NGE_CMDSTS_MORE | m->m_len;
-			f->nge_ptr = vtophys(mtod(m, vm_offset_t));
+			f->nge_ptr = vtophys(mtod(m, vaddr_t));
 			DPRINTFN(7,("%s: f->nge_ptr=%#x\n",
 				    sc->sc_dv.dv_xname, f->nge_ptr));
 			if (cnt != 0)

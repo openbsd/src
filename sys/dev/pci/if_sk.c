@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.26 2002/11/26 06:01:28 nate Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.27 2003/01/15 06:31:24 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1224,7 +1224,7 @@ int sk_encap(sc_if, m_head, txidx)
 			    (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2)
 				return(ENOBUFS);
 			f = &sc_if->sk_rdata->sk_tx_ring[frag];
-			f->sk_data_lo = vtophys(mtod(m, vm_offset_t));
+			f->sk_data_lo = vtophys(mtod(m, vaddr_t));
 			f->sk_ctl = m->m_len | SK_OPCODE_DEFAULT;
 			if (cnt == 0)
 				f->sk_ctl |= SK_TXCTL_FIRSTFRAG;

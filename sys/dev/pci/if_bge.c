@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.17 2002/11/26 06:01:28 nate Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.18 2003/01/15 06:31:24 art Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -639,8 +639,8 @@ bge_jfree(buf, size, arg)
 
 	/* calculate the slot this buffer belongs to */
 
-	i = ((vm_offset_t)buf
-	     - (vm_offset_t)sc->bge_cdata.bge_jumbo_buf) / BGE_JLEN;
+	i = ((vaddr_t)buf
+	     - (vaddr_t)sc->bge_cdata.bge_jumbo_buf) / BGE_JLEN;
 
 	if ((i < 0) || (i >= BGE_JSLOTS))
 		panic("bge_jfree: asked to free buffer that we don't manage!");
@@ -1047,7 +1047,7 @@ bge_blockinit(sc)
 {
 	struct bge_rcb		*rcb;
 	struct bge_rcb_opaque	*rcbo;
-	vm_offset_t		rcb_addr;
+	vaddr_t			rcb_addr;
 	int			i;
 
 	/*

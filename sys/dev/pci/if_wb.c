@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.19 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.20 2003/01/15 06:31:24 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1353,7 +1353,7 @@ int wb_encap(sc, c, m_head)
 			} else
 				f->wb_status = WB_TXSTAT_OWN;
 			f->wb_next = vtophys(&c->wb_ptr->wb_frag[frag + 1]);
-			f->wb_data = vtophys(mtod(m, vm_offset_t));
+			f->wb_data = vtophys(mtod(m, vaddr_t));
 			frag++;
 		}
 	}

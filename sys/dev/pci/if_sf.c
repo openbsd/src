@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.18 2002/11/19 18:40:17 jason Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.19 2003/01/15 06:31:24 art Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1162,7 +1162,7 @@ int sf_encap(sc, c, m_head)
 			if (frag == 0)
 				f->sf_pktlen = m_head->m_pkthdr.len;
 			f->sf_fraglen = m->m_len;
-			f->sf_addr = vtophys(mtod(m, vm_offset_t));
+			f->sf_addr = vtophys(mtod(m, vaddr_t));
 			frag++;
 		}
 	}
