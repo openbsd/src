@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.35 2002/09/11 23:16:44 mickey Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.36 2002/11/19 18:34:41 jason Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1993,7 +1993,7 @@ uvm_vnp_sync(mp)
 	 * (so we can now safely lock uvn's again).
 	 */
 
-	for (uvn = uvn_sync_q.sqh_first ; uvn ; uvn = uvn->u_syncq.sqe_next) {
+	SIMPLEQ_FOREACH(uvn, &uvn_sync_q, u_syncq) {
 		simple_lock(&uvn->u_obj.vmobjlock);
 #ifdef DEBUG
 		if (uvn->u_flags & UVM_VNODE_DYING) {

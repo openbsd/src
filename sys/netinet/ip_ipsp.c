@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.149 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.150 2002/11/19 18:34:41 jason Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1322,7 +1322,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 					    M_NOWAIT);
 
 					if (mtag == NULL)
-						return tags.slh_first;
+						return SLIST_FIRST(&tags);
 
 					tdbi = (struct tdb_ident *) (mtag + 1);
 					bzero(tdbi, sizeof(struct tdb_ident));
@@ -1381,7 +1381,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			tdb = gettdb(spi, &su, IPPROTO_ESP);
 			if (tdb == NULL) {
 				splx(s);
-				return tags.slh_first;
+				return SLIST_FIRST(&tags);
 			}
 
 			/* How large is the ESP header ? We use this later. */
@@ -1399,7 +1399,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			 */
 			if (tdb->tdb_flags & TDBF_RANDOMPADDING) {
 				splx(s);
-				return tags.slh_first;
+				return SLIST_FIRST(&tags);
 			}
 
 			/* Update the length of trailing ESP authenticators. */
@@ -1415,13 +1415,13 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			/* Verify the self-describing padding values. */
 			if (lasteight[6] != 0) {
 				if (lasteight[6] != lasteight[5])
-					return tags.slh_first;
+					return SLIST_FIRST(&tags);
 
 				for (i = 4; lasteight[i + 1] != 1 && i >= 0;
 				    i--)
 					if (lasteight[i + 1] !=
 					    lasteight[i] + 1)
-						return tags.slh_first;
+						return SLIST_FIRST(&tags);
 			}
 		}
 		/* Fall through. */
@@ -1429,7 +1429,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			mtag = m_tag_get(PACKET_TAG_IPSEC_IN_CRYPTO_DONE,
 			    sizeof(struct tdb_ident), M_NOWAIT);
 			if (mtag == NULL)
-				return tags.slh_first;
+				return SLIST_FIRST(&tags);
 
 			tdbi = (struct tdb_ident *) (mtag + 1);
 			bzero(tdbi, sizeof(struct tdb_ident));
@@ -1481,7 +1481,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			break;
 
 		default:
-			return tags.slh_first; /* We're done. */
+			return SLIST_FIRST(&tags); /* We're done. */
 		}
 	}
 }
