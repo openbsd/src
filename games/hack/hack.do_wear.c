@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do_wear.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.do_wear.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,21 +62,29 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.do_wear.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.do_wear.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
-#include "hack.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "hack.h"
 extern char *nomovemsg;
 extern char quitchars[];
-extern char *Doname();
 
-off_msg(otmp) register struct obj *otmp; {
+static void off_msg(struct obj *);
+static int  dorr(struct obj *);
+static int  cursed(struct obj *);
+
+static void
+off_msg(struct obj *otmp)
+{
 	pline("You were wearing %s.", doname(otmp));
 }
 
-doremarm() {
-	register struct obj *otmp;
+int
+doremarm()
+{
+	struct obj *otmp;
 	if(!uarm && !uarmh && !uarms && !uarmg) {
 		pline("Not wearing any armor.");
 		return(0);
@@ -99,7 +107,9 @@ doremarm() {
 	return(1);
 }
 
-doremring() {
+int
+doremring()
+{
 	if(!uleft && !uright){
 		pline("Not wearing any ring.");
 		return(0);
@@ -127,19 +137,21 @@ doremring() {
 		}
 	}
 	/* NOTREACHED */
-#ifdef lint
 	return(0);
-#endif /* lint */
 }
 
-dorr(otmp) register struct obj *otmp; {
+static int
+dorr(struct obj *otmp)
+{
 	if(cursed(otmp)) return(0);
 	ringoff(otmp);
 	off_msg(otmp);
 	return(1);
 }
 
-cursed(otmp) register struct obj *otmp; {
+static int
+cursed(struct obj *otmp)
+{
 	if(otmp->cursed){
 		pline("You can't. It appears to be cursed.");
 		return(1);
@@ -147,8 +159,11 @@ cursed(otmp) register struct obj *otmp; {
 	return(0);
 }
 
-armoroff(otmp) register struct obj *otmp; {
-register int delay = -objects[otmp->otyp].oc_delay;
+int
+armoroff(struct obj *otmp)
+{
+	int delay = -objects[otmp->otyp].oc_delay;
+
 	if(cursed(otmp)) return(0);
 	setworn((struct obj *) 0, otmp->owornmask & W_ARMOR);
 	if(delay) {
@@ -169,10 +184,12 @@ register int delay = -objects[otmp->otyp].oc_delay;
 	return(1);
 }
 
-doweararm() {
-	register struct obj *otmp;
-	register int delay;
-	register int err = 0;
+int
+doweararm()
+{
+	struct obj *otmp;
+	int delay;
+	int err = 0;
 	long mask = 0;
 
 	otmp = getobj("[", "wear");
@@ -228,8 +245,10 @@ doweararm() {
 	return(1);
 }
 
-dowearring() {
-	register struct obj *otmp;
+int
+dowearring()
+{
+	struct obj *otmp;
 	long mask = 0;
 	long oldprop;
 
@@ -297,10 +316,11 @@ dowearring() {
 	return(1);
 }
 
-ringoff(obj)
-register struct obj *obj;
+void
+ringoff(struct obj *obj)
 {
-register long mask;
+	long mask;
+
 	mask = obj->owornmask & W_RING;
 	setworn((struct obj *) 0, obj->owornmask);
 	if(!(u.uprops[PROP(obj->otyp)].p_flgs & mask))
@@ -333,8 +353,11 @@ register long mask;
 	}
 }
 
-find_ac(){
-register int uac = 10;
+void
+find_ac()
+{
+	int uac = 10;
+
 	if(uarm) uac -= ARM_BONUS(uarm);
 	if(uarm2) uac -= ARM_BONUS(uarm2);
 	if(uarmh) uac -= ARM_BONUS(uarmh);
@@ -348,9 +371,12 @@ register int uac = 10;
 	}
 }
 
-glibr(){
-register struct obj *otmp;
-int xfl = 0;
+void
+glibr()
+{
+	struct obj *otmp;
+	int xfl = 0;
+
 	if(!uarmg) if(uleft || uright) {
 		/* Note: at present also cursed rings fall off */
 		pline("Your %s off your fingers.",
@@ -375,16 +401,21 @@ int xfl = 0;
 }
 
 struct obj *
-some_armor(){
-register struct obj *otmph = uarm;
+some_armor()
+{
+	struct obj *otmph = uarm;
+
 	if(uarmh && (!otmph || !rn2(4))) otmph = uarmh;
 	if(uarmg && (!otmph || !rn2(4))) otmph = uarmg;
 	if(uarms && (!otmph || !rn2(4))) otmph = uarms;
 	return(otmph);
 }
 
-corrode_armor(){
-register struct obj *otmph = some_armor();
+void
+corrode_armor()
+{
+	struct obj *otmph = some_armor();
+
 	if(otmph){
 		if(otmph->rustfree ||
 		   otmph->otyp == ELVEN_CLOAK ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.3 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,33 +62,35 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rnd.c,v 1.3 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: rnd.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #define RND(x)	((random()>>3) % x)
 
-rn1(x,y)
-register x,y;
+#include <stdlib.h>
+
+int
+rn1(int x, int y)
 {
 	return(RND(x)+y);
 }
 
-rn2(x)
-register x;
+int
+rn2(int x)
 {
 	return(RND(x));
 }
 
-rnd(x)
-register x;
+int
+rnd(int x)
 {
 	return(RND(x)+1);
 }
 
-d(n,x)
-register n,x;
+int
+d(int n, int x)
 {
-	register tmp = n;
+	int tmp = n;
 
 	while(n--) tmp += RND(x);
 	return(tmp);

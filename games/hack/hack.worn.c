@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.worn.c,v 1.3 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.worn.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.worn.c,v 1.3 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.worn.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -84,12 +84,11 @@ struct worn {
 	{ 0, 0 }
 };
 
-setworn(obj, mask)
-register struct obj *obj;
-long mask;
+void
+setworn(struct obj *obj, long mask)
 {
-	register struct worn *wp;
-	register struct obj *oobj;
+	struct worn *wp;
+	struct obj *oobj;
 
 	for(wp = worn; wp->w_mask; wp++) if(wp->w_mask & mask) {
 		oobj = *(wp->w_obj);
@@ -113,8 +112,10 @@ long mask;
 }
 
 /* called e.g. when obj is destroyed */
-setnotworn(obj) register struct obj *obj; {
-	register struct worn *wp;
+void
+setnotworn(struct obj *obj)
+{
+	struct worn *wp;
 
 	for(wp = worn; wp->w_mask; wp++)
 		if(obj == *(wp->w_obj)) {

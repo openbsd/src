@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.rip.c,v 1.5 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.rip.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.rip.c,v 1.5 2003/04/06 18:50:37 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: hack.rip.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -84,7 +84,11 @@ static char *ripbot = "\
                  *|     *  *  *      | *\n\
         _________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______";
 
-outrip(){
+static void center(int, char *);
+
+void
+outrip()
+{
 	char buf[BUFSZ];
 
 	cls();
@@ -102,9 +106,9 @@ outrip(){
 	center(8, buf);
 	(void) strlcpy(buf, killer, sizeof buf);
  	{
-		register int i1;
+		int i1;
 		if((i1 = strlen(buf)) > 16) {
-			register int i,i0;
+			int i,i0;
 			i0 = i1 = 0;
 			for(i = 0; i <= 16; i++)
 				if(buf[i] == ' ') i0 = i, i1 = i+1;
@@ -121,8 +125,9 @@ outrip(){
 	getret();
 }
 
-center(line, text) int line; char *text; {
-	register int n = strlen(text)/2;
+static void
+center(int line, char *text)
+{
+	int n = strlen(text)/2;
 	printf(ripmid, 8+n, text, 8-n, "");
 }
-

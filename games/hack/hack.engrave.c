@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.engrave.c,v 1.4 2003/05/07 09:48:57 tdeval Exp $	*/
+/*	$OpenBSD: hack.engrave.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,9 +62,10 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.engrave.c,v 1.4 2003/05/07 09:48:57 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.engrave.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include	<stdlib.h>
 #include	"hack.h"
 
 extern char *nomovemsg;
@@ -82,9 +83,13 @@ struct engr {
 #define	BURN	3
 } *head_engr;
 
+static void del_engr(struct engr *);
+
 struct engr *
-engr_at(x,y) register xchar x,y; {
-register struct engr *ep = head_engr;
+engr_at(xchar x, xchar y)
+{
+	struct engr *ep = head_engr;
+
 	while(ep) {
 		if(x == ep->engr_x && y == ep->engr_y)
 			return(ep);
@@ -93,10 +98,13 @@ register struct engr *ep = head_engr;
 	return((struct engr *) 0);
 }
 
-sengr_at(s,x,y) register char *s; register xchar x,y; {
-register struct engr *ep = engr_at(x,y);
-register char *t;
-register int n;
+int
+sengr_at(char *s, xchar x, xchar y)
+{
+	struct engr *ep = engr_at(x,y);
+	char *t;
+	int n;
+
 	if(ep && ep->engr_time <= moves) {
 		t = ep->engr_txt;
 /*
@@ -111,17 +119,20 @@ register int n;
 	return(0);
 }
 
-u_wipe_engr(cnt)
-register int cnt;
+void
+u_wipe_engr(int cnt)
 {
 	if(!u.uswallow && !Levitation)
 		wipe_engr_at(u.ux, u.uy, cnt);
 }
 
-wipe_engr_at(x,y,cnt) register xchar x,y,cnt; {
-register struct engr *ep = engr_at(x,y);
-register int lth,pos;
-char ch;
+void
+wipe_engr_at(xchar x, xchar y, xchar cnt)
+{
+	struct engr *ep = engr_at(x,y);
+	int lth,pos;
+	char ch;
+
 	if(ep){
 		if((ep->engr_type != DUST) || Levitation) {
 			cnt = rn2(1 + 50/(cnt+1)) ? 0 : 1;
@@ -143,8 +154,11 @@ char ch;
 	}
 }
 
-read_engr_at(x,y) register int x,y; {
-register struct engr *ep = engr_at(x,y);
+void
+read_engr_at(int x, int y)
+{
+	struct engr *ep = engr_at(x,y);
+
 	if(ep && ep->engr_txt[0]) {
 	    switch(ep->engr_type) {
 	    case DUST:
@@ -163,14 +177,13 @@ register struct engr *ep = engr_at(x,y);
 	}
 }
 
-make_engr_at(x,y,s)
-register int x,y;
-register char *s;
+void
+make_engr_at(int x, int y, char *s)
 {
-	register struct engr *ep;
-	register size_t len = strlen(s) + 1;
+	struct engr *ep;
+	size_t len = strlen(s) + 1;
 
-	if(ep = engr_at(x,y))
+	if ((ep = engr_at(x,y)))
 	    del_engr(ep);
 	ep = (struct engr *)
 	    alloc((unsigned)(sizeof(struct engr) + len));
@@ -185,14 +198,17 @@ register char *s;
 	ep->engr_lth = len;
 }
 
-doengrave(){
-register int len;
-register char *sp;
-register struct engr *ep, *oep = engr_at(u.ux,u.uy);
-char buf[BUFSZ];
-xchar type;
-int spct;		/* number of leading spaces */
-register struct obj *otmp;
+int
+doengrave()
+{
+	int len;
+	char *sp;
+	struct engr *ep, *oep = engr_at(u.ux,u.uy);
+	char buf[BUFSZ];
+	xchar type;
+	int spct;		/* number of leading spaces */
+	struct obj *otmp;
+
 	multi = 0;
 
 	if(u.uswallow) {
@@ -322,8 +338,11 @@ register struct obj *otmp;
 	return(1);
 }
 
-save_engravings(fd) int fd; {
-register struct engr *ep = head_engr;
+void
+save_engravings(int fd)
+{
+	struct engr *ep = head_engr;
+
 	while(ep) {
 		if(!ep->engr_lth || !ep->engr_txt[0]){
 			ep = ep->nxt_engr;
@@ -337,9 +356,12 @@ register struct engr *ep = head_engr;
 	head_engr = 0;
 }
 
-rest_engravings(fd) int fd; {
-register struct engr *ep;
-unsigned lth;
+void
+rest_engravings(int fd)
+{
+	struct engr *ep;
+	unsigned lth;
+
 	head_engr = 0;
 	while(1) {
 		mread(fd, (char *) &lth, sizeof(unsigned));
@@ -352,8 +374,11 @@ unsigned lth;
 	}
 }
 
-del_engr(ep) register struct engr *ep; {
-register struct engr *ept;
+static void
+del_engr(struct engr *ep)
+{
+	struct engr *ept;
+
 	if(ep == head_engr)
 		head_engr = ep->nxt_engr;
 	else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.func_tab.h,v 1.3 2003/03/16 21:22:35 camield Exp $*/
+/*	$OpenBSD: def.func_tab.h,v 1.4 2003/05/19 06:30:56 pjanzen Exp $*/
 /*	$NetBSD: def.func_tab.h,v 1.3 1995/03/23 08:29:23 cgd Exp $*/
 
 /*
@@ -64,14 +64,14 @@
 
 struct func_tab {
 	char f_char;
-	int (*f_funct)();
+	int (*f_funct)(void);
 };
 
 extern struct func_tab cmdlist[];
 
 struct ext_func_tab {
 	char *ef_txt;
-	int (*ef_funct)();
+	int (*ef_funct)(void);
 };
 
 extern struct ext_func_tab extcmdlist[];

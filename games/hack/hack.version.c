@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.version.c,v 1.4 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.version.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,12 +62,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.version.c,v 1.4 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.version.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"date.h"
+#include	"hack.h"
 
-doversion(){
+int
+doversion()
+{
 	pline("%s 1.0.3 - last edit %s.", (
 #ifdef QUEST
 		"Quest"

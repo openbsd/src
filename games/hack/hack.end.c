@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.end.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $	*/
+/*	$OpenBSD: hack.end.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,19 +62,48 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.end.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.end.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
-#include "hack.h"
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
+#include "hack.h"
+
+#define newttentry() (struct toptenentry *) alloc(sizeof(struct toptenentry))
+#define	NAMSZ	8
+#define	DTHSZ	40
+#define	PERSMAX	1
+#define	POINTSMIN	1	/* must be > 0 */
+#define	ENTRYMAX	100	/* must be >= 10 */
+#define	PERS_IS_UID		/* delete for PERSMAX per name; now per uid */
+
 extern char plname[], pl_character[];
-extern char *itoa(), *ordin(), *eos();
 
 xchar maxdlevel = 1;
 
+struct toptenentry {
+	struct toptenentry *tt_next;
+	long int points;
+	int level,maxlvl,hp,maxhp;
+	int uid;
+	char plchar;
+	char sex;
+	char name[NAMSZ+1];
+	char death[DTHSZ+1];
+	char date[7];		/* yymmdd */
+} *tt_head;
+
+static void topten(void);
+static void outheader(void);
+static int  outentry(int, struct toptenentry *, int);
+static char *itoa(int);
+static char *ordin(int);
+
 void
-done1()
+done1(int notused)
 {
 	(void) signal(SIGINT,SIG_IGN);
 	pline("Really quit?");
@@ -89,25 +118,37 @@ done1()
 	/* NOTREACHED */
 }
 
+int
+done2()
+{
+	done1(0);
+	return(0);
+}
+
 int done_stopprint;
 int done_hup;
 
 void
-done_intr(){
+done_intr(int notused)
+{
 	done_stopprint++;
 	(void) signal(SIGINT, SIG_IGN);
 	(void) signal(SIGQUIT, SIG_IGN);
 }
 
 void
-done_hangup(){
+done_hangup(int notused)
+{
 	done_hup++;
 	(void) signal(SIGHUP, SIG_IGN);
-	done_intr();
+	done_intr(notused);
 }
 
-done_in_by(mtmp) register struct monst *mtmp; {
-static char buf[BUFSZ];
+void
+done_in_by(struct monst *mtmp)
+{
+	static char buf[BUFSZ];
+
 	pline("You die ...");
 	if(mtmp->data->mlet == ' '){
 		snprintf(buf, sizeof buf, "the ghost of %s", (char *) mtmp->mextra);
@@ -126,8 +167,8 @@ static char buf[BUFSZ];
 /* called with arg "died", "drowned", "escaped", "quit", "choked", "panicked",
    "burned", "starved" or "tricked" */
 /* Be careful not to call panic from here! */
-done(st1)
-register char *st1;
+void
+done(char *st1)
 {
 
 #ifdef WIZARD
@@ -166,7 +207,7 @@ register char *st1;
 			outrip();
 	}
 	if(*st1 == 'c') killer = st1;		/* after outrip() */
-	settty((char *) 0);	/* does a clear_screen() */
+	settty((char *) 0);	/* does a clr_screen() */
 	if(!done_stopprint)
 		printf("Goodbye %s %s...\n\n", pl_character, plname);
 	{ long int tmp;
@@ -182,10 +223,10 @@ register char *st1;
 	}
 	if(*st1 == 'e') {
 		extern struct monst *mydogs;
-		register struct monst *mtmp;
-		register struct obj *otmp;
-		register int i;
-		register unsigned worthlessct = 0;
+		struct monst *mtmp;
+		struct obj *otmp;
+		int i;
+		unsigned worthlessct = 0;
 		boolean has_amulet = FALSE;
 
 		killer = st1;
@@ -258,36 +299,18 @@ register char *st1;
 	exit(0);
 }
 
-#define newttentry() (struct toptenentry *) alloc(sizeof(struct toptenentry))
-#define	NAMSZ	8
-#define	DTHSZ	40
-#define	PERSMAX	1
-#define	POINTSMIN	1	/* must be > 0 */
-#define	ENTRYMAX	100	/* must be >= 10 */
-#define	PERS_IS_UID		/* delete for PERSMAX per name; now per uid */
-struct toptenentry {
-	struct toptenentry *tt_next;
-	long int points;
-	int level,maxlvl,hp,maxhp;
-	int uid;
-	char plchar;
-	char sex;
-	char name[NAMSZ+1];
-	char death[DTHSZ+1];
-	char date[7];		/* yymmdd */
-} *tt_head;
-
-topten(){
+static void
+topten()
+{
 	int uid = getuid();
 	int rank, rank0 = -1, rank1 = 0;
 	int occ_cnt = PERSMAX;
-	register struct toptenentry *t0, *t1, *tprev;
+	struct toptenentry *t0, *t1, *tprev;
 	char *recfile = RECORD;
 	char *reclock = "record_lock";
 	int sleepct = 300;
 	FILE *rfile;
-	register flg = 0;
-	extern char *getdate();
+	int flg = 0;
 #define	HUP	if(!done_hup)
 	while(link(recfile, reclock) == -1) {
 		HUP perror(reclock);
@@ -434,9 +457,12 @@ unlock:
 	(void) unlink(reclock);
 }
 
-outheader() {
-char linebuf[BUFSZ];
-register char *bp;
+static void
+outheader()
+{
+	char linebuf[BUFSZ];
+	char *bp;
+
 	(void) strlcpy(linebuf, "Number Points  Name", sizeof linebuf);
 	bp = eos(linebuf);
 	while(bp < linebuf + COLNO - 9) *bp++ = ' ';
@@ -445,11 +471,13 @@ register char *bp;
 }
 
 /* so>0: standout line; so=0: ordinary line; so<0: no output, return lth */
-int
-outentry(rank,t1,so) register struct toptenentry *t1; {
-boolean quit = FALSE, killed = FALSE, starv = FALSE;
-char linebuf[BUFSZ];
-char *bp;
+static int
+outentry(int rank, struct toptenentry *t1, int so)
+{
+	boolean quit = FALSE, killed = FALSE, starv = FALSE;
+	char linebuf[BUFSZ];
+	char *bp;
+
 	linebuf[0] = 0;
 	if(rank)
 		snprintf(linebuf, sizeof linebuf, "%3d", rank);
@@ -537,22 +565,29 @@ char *bp;
 	return(strlen(linebuf));
 }
 
-char *
-itoa(a) int a; {
-static char buf[12];
-	snprintf(buf,sizeof buf,"%d",a);
+static char *
+itoa(int a)
+{
+	static char buf[12];
+
+	snprintf(buf, sizeof buf, "%d", a);
 	return(buf);
 }
 
-char *
-ordin(n) int n; {
-register int d = n%10;
+static char *
+ordin(int n)
+{
+	int d = n%10;
+
 	return((d==0 || d>3 || n/10==1) ? "th" : (d==1) ? "st" :
 		(d==2) ? "nd" : "rd");
 }
 
-clearlocks(){
-register x;
+void
+clearlocks()
+{
+	int x;
+
 	(void) signal(SIGHUP,SIG_IGN);
 	for(x = maxdlevel; x >= 0; x--) {
 		glo(x);
@@ -560,25 +595,17 @@ register x;
 	}
 }
 
-#ifdef NOSAVEONHANGUP
-hangup()
-{
-	(void) signal(SIGINT, SIG_IGN);
-	clearlocks();
-	exit(1);
-}
-#endif /* NOSAVEONHANGUP */
-
 char *
-eos(s)
-register char *s;
+eos(char *s)
 {
 	while(*s) s++;
 	return(s);
 }
 
 /* it is the callers responsibility to check that there is room for c */
-charcat(s,c) register char *s, c; {
+void
+charcat(char *s, char c)
+{
 	while(*s) s++;
 	*s++ = c;
 	*s = 0;
@@ -589,16 +616,18 @@ charcat(s,c) register char *s, c; {
  * requested. Otherwise, find scores for the current player (and list them
  * if argc == -1).
  */
-prscore(argc,argv) int argc; char **argv; {
+void
+prscore(int argc, char **argv)
+{
 	extern char *hname;
 	char **players;
 	int playerct;
 	int rank;
-	register struct toptenentry *t1, *t2;
+	struct toptenentry *t1, *t2;
 	char *recfile = RECORD;
 	FILE *rfile;
-	register flg = 0;
-	register int i;
+	int flg = 0;
+	int i;
 #ifdef nonsense
 	long total_score = 0L;
 	char totchars[10];
@@ -662,7 +691,7 @@ prscore(argc,argv) int argc; char **argv; {
 		  (players[i][0] == '-' &&
 		   players[i][1] == t1->plchar &&
 		   players[i][2] == 0) ||
-		  (digit(players[i][0]) && rank <= atoi(players[i])))
+		  (isdigit(players[i][0]) && rank <= atoi(players[i])))
 			flg++;
 	  }
 	  t1 = t1->tt_next = newttentry();
@@ -697,7 +726,7 @@ prscore(argc,argv) int argc; char **argv; {
 			  (players[i][0] == '-' &&
 			   players[i][1] == t1->plchar &&
 			   players[i][2] == 0) ||
-			  (digit(players[i][0]) && rank <= atoi(players[i]))){
+			  (isdigit(players[i][0]) && rank <= atoi(players[i]))){
 			outwithit:
 				if(outflg)
 				    (void) outentry(rank, t1, 0);

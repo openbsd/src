@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.dog.c,v 1.6 2003/05/07 09:48:57 tdeval Exp $	*/
+/*	$OpenBSD: hack.dog.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,14 +62,16 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.dog.c,v 1.6 2003/05/07 09:48:57 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.dog.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
 #include	"hack.mfndpos.h"
 extern struct monst *makemon();
 #include "def.edog.h"
-#include "def.mkroom.h"
+
+static void initedog(struct monst *);
+static int  dogfood(struct obj *);
 
 struct permonst li_dog =
 	{ "little dog", 'd',2,18,6,1,6,sizeof(struct edog) };
@@ -79,13 +81,18 @@ struct permonst la_dog =
 	{ "large dog", 'd',6,15,4,2,4,sizeof(struct edog) };
 
 
-makedog(){
-register struct monst *mtmp = makemon(&li_dog,u.ux,u.uy);
+void
+makedog()
+{
+	struct monst *mtmp = makemon(&li_dog,u.ux,u.uy);
+
 	if(!mtmp) return; /* dogs were genocided */
 	initedog(mtmp);
 }
 
-initedog(mtmp) register struct monst *mtmp; {
+void
+initedog(struct monst *mtmp)
+{
 	mtmp->mtame = mtmp->mpeaceful = 1;
 	EDOG(mtmp)->hungrytime = 1000 + moves;
 	EDOG(mtmp)->eattime = 0;
@@ -100,15 +107,18 @@ struct monst *mydogs = 0;
 struct monst *fallen_down = 0;	/* monsters that fell through a trapdoor */
 	/* they will appear on the next level @ goes to, even if he goes up! */
 
-losedogs(){
-register struct monst *mtmp;
-	while(mtmp = mydogs){
+void
+losedogs()
+{
+	struct monst *mtmp;
+
+	while ((mtmp = mydogs)) {
 		mydogs = mtmp->nmon;
 		mtmp->nmon = fmon;
 		fmon = mtmp;
 		mnexto(mtmp);
 	}
-	while(mtmp = fallen_down){
+	while ((mtmp = fallen_down) ){
 		fallen_down = mtmp->nmon;
 		mtmp->nmon = fmon;
 		fmon = mtmp;
@@ -116,8 +126,11 @@ register struct monst *mtmp;
 	}
 }
 
-keepdogs(){
-register struct monst *mtmp;
+void
+keepdogs()
+{
+	struct monst *mtmp;
+
 	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 	    if(dist(mtmp->mx,mtmp->my) < 3 && follower(mtmp)
 		&& !mtmp->msleep && !mtmp->mfroz) {
@@ -130,7 +143,9 @@ register struct monst *mtmp;
 	}
 }
 
-fall_down(mtmp) register struct monst *mtmp; {
+void
+fall_down(struct monst *mtmp)
+{
 	relmon(mtmp);
 	mtmp->nmon = fallen_down;
 	fallen_down = mtmp;
@@ -146,7 +161,9 @@ fall_down(mtmp) register struct monst *mtmp; {
 #define	APPORT	4
 #define	POISON	5
 #define	UNDEF	6
-dogfood(obj) register struct obj *obj; {
+static int
+dogfood(struct obj *obj)
+{
 	switch(obj->olet) {
 	case FOOD_SYM:
 	    return(
@@ -168,19 +185,21 @@ dogfood(obj) register struct obj *obj; {
 }
 
 /* return 0 (no move), 1 (move) or 2 (dead) */
-dog_move(mtmp, after) register struct monst *mtmp; {
-register int nx,ny,omx,omy,appr,nearer,j;
-int udist,chi,i,whappr;
-register struct monst *mtmp2;
-register struct permonst *mdat = mtmp->data;
-register struct edog *edog = EDOG(mtmp);
-struct obj *obj;
-struct trap *trap;
-xchar cnt,chcnt,nix,niy;
-schar dogroom,uroom;
-xchar gx,gy,gtyp,otyp;	/* current goal */
-coord poss[9];
-int info[9];
+int
+dog_move(struct monst *mtmp, int after)
+{
+	int nx, ny, omx, omy, appr, nearer, j;
+	int udist, chi, i, whappr;
+	struct monst *mtmp2;
+	struct permonst *mdat = mtmp->data;
+	struct edog *edog = EDOG(mtmp);
+	struct obj *obj;
+	struct trap *trap;
+	xchar cnt, chcnt, nix, niy;
+	schar dogroom, uroom;
+	xchar gx, gy, gtyp, otyp;	/* current goal */
+	coord poss[9];
+	int info[9];
 #define GDIST(x,y) ((x-gx)*(x-gx) + (y-gy)*(y-gy))
 #define DDIST(x,y) ((x-omx)*(x-omx) + (y-omy)*(y-omy))
 
@@ -223,29 +242,28 @@ int info[9];
 			edog->droptime = moves;
 		}
 	} else {
-		if(obj = o_at(omx,omy)) if(!strchr("0_", obj->olet)){
-		    if((otyp = dogfood(obj)) <= CADAVER){
-			nix = omx;
-			niy = omy;
-			goto eatobj;
-		    }
-		    if(obj->owt < 10*mtmp->data->mlevel)
-		    if(rn2(20) < edog->apport+3)
-		    if(rn2(udist) || !rn2((int) edog->apport)){
-			freeobj(obj);
-			unpobj(obj);
-			/* if(levl[omx][omy].scrsym == obj->olet)
-				newsym(omx,omy); */
-			mpickobj(mtmp,obj);
-		    }
-		}
+		if ((obj = o_at(omx,omy)))
+			if(!strchr("0_", obj->olet)){
+				if((otyp = dogfood(obj)) <= CADAVER){
+					nix = omx;
+					niy = omy;
+					goto eatobj;
+				}
+				if (obj->owt < 10*mtmp->data->mlevel)
+					if (rn2(20) < edog->apport+3)
+						if (rn2(udist) || !rn2((int) edog->apport)){
+							freeobj(obj);
+							unpobj(obj);
+							/* if(levl[omx][omy].scrsym == obj->olet)
+								newsym(omx,omy); */
+							mpickobj(mtmp,obj);
+						}
+			}
 	}
 
 	/* first we look for food */
 	gtyp = UNDEF;	/* no goal as yet */
-#ifdef LINT
-	gx = gy = 0;	/* suppress 'used before set' message */
-#endif /* LINT */
+	gx = gy = 0;
 	for(obj = fobj; obj; obj = obj->nobj) {
 		otyp = dogfood(obj);
 		if(otyp > gtyp || otyp == UNDEF) continue;
@@ -274,8 +292,8 @@ int info[9];
 			gy = u.uy;
 #ifndef QUEST
 		} else {
-			int tmp = rooms[dogroom].fdoor;
-			    cnt = rooms[dogroom].doorct;
+			int tmp = rooms[(int)dogroom].fdoor;
+			    cnt = rooms[(int)dogroom].doorct;
 
 			gx = gy = FAR;	/* random, far away */
 			while(cnt--){
@@ -297,13 +315,13 @@ int info[9];
 		if(after && udist <= 4 && gx == u.ux && gy == u.uy)
 			return(0);
 		if(udist > 1){
-			if(!IS_ROOM(levl[u.ux][u.uy].typ) || !rn2(4) ||
+			if (!IS_ROOM(levl[(int)u.ux][(int)u.uy].typ) || !rn2(4) ||
 			   whappr ||
 			   (mtmp->minvent && rn2((int) edog->apport)))
 				appr = 1;
 		}
 		/* if you have dog food he'll follow you more closely */
-		if(appr == 0){
+		if (appr == 0) {
 			obj = invent;
 			while(obj){
 				if(obj->otyp == TRIPE_RATION){
@@ -317,8 +335,7 @@ int info[9];
 	if(mtmp->mconf) appr = 0;
 
 	if(gx == u.ux && gy == u.uy && (dogroom != uroom || dogroom < 0)){
-	extern coord *gettrack();
-	register coord *cp;
+	coord *cp;
 		cp = gettrack(omx,omy);
 		if(cp){
 			gx = cp->x;
@@ -428,9 +445,11 @@ newdogpos:
 }
 
 /* return roomnumber or -1 */
-inroom(x,y) xchar x,y; {
+int
+inroom(xchar x, xchar y)
+{
 #ifndef QUEST
-	register struct mkroom *croom = &rooms[0];
+	struct mkroom *croom = &rooms[0];
 	while(croom->hx >= 0){
 		if(croom->hx >= x-1 && croom->lx <= x+1 &&
 		   croom->hy >= y-1 && croom->ly <= y+1)
@@ -441,11 +460,10 @@ inroom(x,y) xchar x,y; {
 	return(-1);	/* not in room or on door */
 }
 
-tamedog(mtmp, obj)
-register struct monst *mtmp;
-register struct obj *obj;
+int
+tamedog(struct monst *mtmp, struct obj *obj)
 {
-	register struct monst *mtmp2;
+	struct monst *mtmp2;
 
 	if(flags.moonphase == FULL_MOON && night() && rn2(6))
 		return(0);

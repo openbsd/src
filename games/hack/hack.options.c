@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.options.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.options.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,17 +62,21 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.options.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: hack.options.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "config.h"
 #include "hack.h"
-extern char *eos();
 
+static void parseoptions(char *, boolean);
+
+void
 initoptions()
 {
-	register char *opts;
-	extern char *getenv();
+	char *opts;
 
 	flags.time = flags.nonews = flags.notombstone = flags.end_own =
 	flags.standout = flags.nonull = FALSE;
@@ -82,28 +86,28 @@ initoptions()
 	flags.end_around = 4;
 	flags.female = FALSE;			/* players are usually male */
 
-	if(opts = getenv("HACKOPTIONS"))
+	if ((opts = getenv("HACKOPTIONS")))
 		parseoptions(opts,TRUE);
 }
 
-parseoptions(opts, from_env)
-register char *opts;
-boolean from_env;
+static void
+parseoptions(char *opts, boolean from_env)
 {
-	register char *op,*op2;
+	char *op,*op2;
 	unsigned num;
 	boolean negated;
 
-	if(op = strchr(opts, ',')) {
+	if ((op = strchr(opts, ','))) {
 		*op++ = 0;
 		parseoptions(op, from_env);
 	}
-	if(op = strchr(opts, ' ')) {
+	if ((op = strchr(opts, ' '))) {
 		op2 = op;
 		while(*op++)
 			if(*op != ' ') *op2++ = *op;
 	}
-	if(!*opts) return;
+	if (!*opts)
+		return;
 	negated = FALSE;
 	while((*opts == '!') || !strncmp(opts, "no", 2)) {
 		if(*opts == '!') opts++; else opts += 2;
@@ -179,9 +183,9 @@ boolean from_env;
 		op++;
 		while(*op) {
 			num = 1;
-			if(digit(*op)) {
+			if(isdigit(*op)) {
 				num = atoi(op);
-				while(digit(*op)) op++;
+				while(isdigit(*op)) op++;
 			} else
 			if(*op == '!') {
 				negated = !negated;
@@ -210,7 +214,7 @@ bad:
 		if(!strncmp(opts, "help", 4)) {
 			pline("%s%s%s",
 "To set options use `HACKOPTIONS=\"<options>\"' in your environment, or ",
-"give the command 'o' followed by the line `<options>' while playing. ",
+"give the command 'O' followed by the line `<options>' while playing. ",
 "Here <options> is a list of <option>s separated by commas." );
 			pline("%s%s%s",
 "Simple (boolean) options are rest_on_space, news, time, ",
@@ -225,7 +229,7 @@ bad:
 			return;
 		}
 		pline("Bad option: %s.", opts);
-		pline("Type `o help<cr>' for help.");
+		pline("Type `O help<cr>' for help.");
 		return;
 	}
 	puts("Bad syntax in HACKOPTIONS.");
@@ -236,6 +240,7 @@ bad:
 	getret();
 }
 
+int
 doset()
 {
 	char buf[BUFSZ];
@@ -258,7 +263,7 @@ doset()
 			flags.end_top, flags.end_around);
 		if(flags.end_own) (void) strlcat(buf, "/own scores", sizeof buf);
 	    } else {
-		register char *eop = eos(buf);
+		char *eop = eos(buf);
 		if(*--eop == ',') *eop = 0;
 	    }
 	    pline(buf);

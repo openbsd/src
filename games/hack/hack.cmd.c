@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.cmd.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.cmd.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,103 +62,93 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.cmd.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.cmd.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
 #include	"def.func_tab.h"
-
-int doredraw(),doredotopl(),dodrop(),dodrink(),doread(),dosearch(),dopickup(),
-doversion(),doweararm(),dowearring(),doremarm(),doremring(),dopay(),doapply(),
-dosave(),dowield(),ddoinv(),dozap(),ddocall(),dowhatis(),doengrave(),dotele(),
-dohelp(),doeat(),doddrop(),do_mname(),doidtrap(),doprwep(),doprarm(),
-doprring(),doprgold(),dodiscovered(),dotypeinv(),dolook(),doset(),
-doup(), dodown(), done1(), donull(), dothrow(), doextcmd(), dodip(), dopray();
-#ifdef SHELL
-int dosh();
-#endif /* SHELL */
-#ifdef SUSPEND
-int dosuspend();
-#endif /* SUSPEND */
+#include	<ctype.h>
 
 struct func_tab cmdlist[]={
-	'\020', doredotopl,
-	'\022', doredraw,
-	'\024', dotele,
+	{ '\020', doredotopl },
+	{ '\022', doredraw },
+	{ '\024', dotele },
 #ifdef SUSPEND
-	'\032', dosuspend,
+	{ '\032', dosuspend },
 #endif /* SUSPEND */
-	'a', doapply,
+	{ 'a', doapply },
 /*	'A' : UNUSED */
 /*	'b', 'B' : go sw */
-	'c', ddocall,
-	'C', do_mname,
-	'd', dodrop,
-	'D', doddrop,
-	'e', doeat,
-	'E', doengrave,
+	{ 'c', ddocall },
+	{ 'C', do_mname },
+	{ 'd', dodrop },
+	{ 'D', doddrop },
+	{ 'e', doeat },
+	{ 'E', doengrave },
 /*	'f', 'F' : multiple go (might become 'fight') */
 /*	'g', 'G' : UNUSED */
 /*	'h', 'H' : go west */
-	'I', dotypeinv,		/* Robert Viduya */
-	'i', ddoinv,
+	{ 'I', dotypeinv },		/* Robert Viduya */
+	{ 'i', ddoinv },
 /*	'j', 'J', 'k', 'K', 'l', 'L', 'm', 'M', 'n', 'N' : move commands */
 /*	'o', doopen,	*/
-	'O', doset,
-	'p', dopay,
-	'P', dowearring,
-	'q', dodrink,
-	'Q', done1,
-	'r', doread,
-	'R', doremring,
-	's', dosearch,
-	'S', dosave,
-	't', dothrow,
-	'T', doremarm,
+	{ 'O', doset },
+	{ 'p', dopay },
+	{ 'P', dowearring },
+	{ 'q', dodrink },
+	{ 'Q', done2 },
+	{ 'r', doread },
+	{ 'R', doremring },
+	{ 's', dosearch },
+	{ 'S', dosave },
+	{ 't', dothrow },
+	{ 'T', doremarm },
 /*	'u', 'U' : go ne */
-	'v', doversion,
+	{ 'v', doversion },
 /*	'V' : UNUSED */
-	'w', dowield,
-	'W', doweararm,
+	{ 'w', dowield },
+	{ 'W', doweararm },
 /*	'x', 'X' : UNUSED */
 /*	'y', 'Y' : go nw */
-	'z', dozap,
+	{ 'z', dozap },
 /*	'Z' : UNUSED */
-	'<', doup,
-	'>', dodown,
-	'/', dowhatis,
-	'?', dohelp,
+	{ '<', doup },
+	{ '>', dodown },
+	{ '/', dowhatis },
+	{ '?', dohelp },
 #ifdef SHELL
-	'!', dosh,
+	{ '!', dosh },
 #endif /* SHELL */
-	'.', donull,
-	' ', donull,
-	',', dopickup,
-	':', dolook,
-	'^', doidtrap,
-	'\\', dodiscovered,		/* Robert Viduya */
-	 WEAPON_SYM,  doprwep,
-	 ARMOR_SYM,  doprarm,
-	 RING_SYM,  doprring,
-	'$', doprgold,
-	'#', doextcmd,
-	0,0,0
+	{ '.', donull },
+	{ ' ', donull },
+	{ ',', dopickup },
+	{ ':', dolook },
+	{ '^', doidtrap },
+	{ '\\', dodiscovered },		/* Robert Viduya */
+	{ WEAPON_SYM,  doprwep },
+	{ ARMOR_SYM,  doprarm },
+	{ RING_SYM,  doprring },
+	{ '$', doprgold },
+	{ '#', doextcmd },
+	{ '\0', NULL }
 };
 
 struct ext_func_tab extcmdlist[] = {
-	"dip", dodip,
-	"pray", dopray,
-	(char *) 0, donull
+	{ "dip", dodip },
+	{ "pray", dopray },
+	{ NULL, donull}
 };
 
-extern char *parse(), lowc(), unctrl(), quitchars[];
+extern char quitchars[];
 
-rhack(cmd)
-register char *cmd;
+static char unctrl(char);
+
+void
+rhack(char *cmd)
 {
-	register struct func_tab *tlist = cmdlist;
+	struct func_tab *tlist = cmdlist;
 	boolean firsttime = FALSE;
-	register res;
+	int res;
 
 	if(!cmd) {
 		firsttime = TRUE;
@@ -167,7 +157,7 @@ register char *cmd;
 	}
 	if(!*cmd || (*cmd & 0377) == 0377 ||
 	   (flags.no_rest_on_space && *cmd == ' ')){
-		bell();
+		hackbell();
 		flags.move = 0;
 		return;		/* probably we just had an interrupt */
 	}
@@ -177,7 +167,7 @@ register char *cmd;
 		domove();
 		return;
 	}
-	if(movecmd(lowc(*cmd))) {
+	if(movecmd(tolower(*cmd))) {
 		flags.run = 1;
 	rush:
 		if(firsttime){
@@ -199,7 +189,7 @@ register char *cmd;
 		flags.run = 2;
 		goto rush;
 	}
-	if(*cmd == 'F' && movecmd(lowc(cmd[1]))) {
+	if(*cmd == 'F' && movecmd(tolower(cmd[1]))) {
 		flags.run = 3;
 		goto rush;
 	}
@@ -208,7 +198,7 @@ register char *cmd;
 		flags.nopick = 1;
 		goto walk;
 	}
-	if(*cmd == 'M' && movecmd(lowc(cmd[1]))) {
+	if(*cmd == 'M' && movecmd(tolower(cmd[1]))) {
 		flags.run = 1;
 		flags.nopick = 1;
 		goto rush;
@@ -233,7 +223,7 @@ register char *cmd;
 		tlist++;
 	}
 	{ char expcmd[10];
-	  register char *cp = expcmd;
+	  char *cp = expcmd;
 	  while(*cmd && cp-expcmd < sizeof(expcmd)-2) {
 		if(*cmd >= 040 && *cmd < 0177)
 			*cp++ = *cmd++;
@@ -248,10 +238,11 @@ register char *cmd;
 	multi = flags.move = 0;
 }
 
+int
 doextcmd()	/* here after # - now read a full-word command */
 {
 	char buf[BUFSZ];
-	register struct ext_func_tab *efp = extcmdlist;
+	struct ext_func_tab *efp = extcmdlist;
 
 	pline("# ");
 	getlin(buf);
@@ -267,16 +258,8 @@ doextcmd()	/* here after # - now read a full-word command */
 	return(0);
 }
 
-char
-lowc(sym)
-char sym;
-{
-    return( (sym >= 'A' && sym <= 'Z') ? sym+'a'-'A' : sym );
-}
-
-char
-unctrl(sym)
-char sym;
+static char
+unctrl(char sym)
 {
     return( (sym >= ('A' & 037) && sym <= ('Z' & 037)) ? sym + 0140 : sym );
 }
@@ -287,10 +270,10 @@ schar xdir[10] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0 };
 schar ydir[10] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0 };
 schar zdir[10] = {  0, 0, 0, 0, 0, 0, 0, 0, 1,-1 };
 
-movecmd(sym)	/* also sets u.dz, but returns false for <> */
-char sym;
+int
+movecmd(char sym)	/* also sets u.dz, but returns false for <> */
 {
-	register char *dp;
+	char *dp;
 
 	u.dz = 0;
 	if(!(dp = strchr(sdir, sym))) return(0);
@@ -300,8 +283,8 @@ char sym;
 	return(!u.dz);
 }
 
-getdir(s)
-boolean s;
+int
+getdir(boolean s)
 {
 	char dirsym;
 
@@ -317,23 +300,27 @@ boolean s;
 	return(1);
 }
 
+void
 confdir()
 {
-	register x = rn2(8);
+	int x = rn2(8);
 	u.dx = xdir[x];
 	u.dy = ydir[x];
 }
 
 #ifdef QUEST
-finddir(){
-register int i, ui = u.di;
+void
+finddir()
+{
+	int i, ui = u.di;
+
 	for(i = 0; i <= 8; i++){
 		if(flags.run & 1) ui++; else ui += 7;
 		ui %= 8;
 		if(i == 8){
 			pline("Not near a wall.");
 			flags.move = multi = 0;
-			return(0);
+			return;
 		}
 		if(!isroom(u.ux+xdir[ui], u.uy+ydir[ui]))
 			break;
@@ -344,7 +331,7 @@ register int i, ui = u.di;
 		if(i == 8){
 			pline("Not near a room.");
 			flags.move = multi = 0;
-			return(0);
+			return;
 		}
 		if(isroom(u.ux+xdir[ui], u.uy+ydir[ui]))
 			break;
@@ -354,13 +341,17 @@ register int i, ui = u.di;
 	u.dy = ydir[ui];
 }
 
-isroom(x,y)  register x,y; {		/* what about POOL? */
+int
+isroom(int x, int y)
+{		/* what about POOL? */
 	return(isok(x,y) && (levl[x][y].typ == ROOM ||
 				(levl[x][y].typ >= LDOOR && flags.run >= 6)));
 }
 #endif /* QUEST */
 
-isok(x,y) register x,y; {
+int
+isok(int x, int y)
+{
 	/* x corresponds to curx, so x==1 is the first column. Ach. %% */
 	return(x >= 1 && x <= COLNO-1 && y >= 0 && y <= ROWNO-1);
 }

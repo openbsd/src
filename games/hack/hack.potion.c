@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.potion.c,v 1.3 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.potion.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,19 +62,22 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.potion.c,v 1.3 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.potion.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
-extern int float_down();
 extern char *nomovemsg;
 extern struct monst youmonst;
 extern struct monst *makemon();
 
-dodrink() {
-	register struct obj *otmp,*objs;
-	register struct monst *mtmp;
-	register int unkn = 0, nothing = 0;
+static void ghost_from_bottle(void);
+
+int
+dodrink()
+{
+	struct obj *otmp,*objs;
+	struct monst *mtmp;
+	int unkn = 0, nothing = 0;
 
 	otmp = getobj("!", "drink");
 	if(!otmp) return(0);
@@ -252,26 +255,24 @@ use_it:
 	return(1);
 }
 
+void
 pluslvl()
 {
-	register num;
+	int num;
 
 	pline("You feel more experienced.");
 	num = rnd(10);
 	u.uhpmax += num;
 	u.uhp += num;
 	if(u.ulevel < 14) {
-		extern long newuexp();
-
 		u.uexp = newuexp()+1;
 		pline("Welcome to experience level %u.", ++u.ulevel);
 	}
 	flags.botl = 1;
 }
 
-strange_feeling(obj,txt)
-register struct obj *obj;
-register char *txt;
+void
+strange_feeling(struct obj *obj, char *txt)
 {
 	if(flags.beginner)
 	    pline("You have a strange feeling for a moment, then it passes.");
@@ -286,12 +287,10 @@ char *bottlenames[] = {
 	"bottle", "phial", "flagon", "carafe", "flask", "jar", "vial"
 };
 
-potionhit(mon, obj)
-register struct monst *mon;
-register struct obj *obj;
+void
+potionhit(struct monst *mon, struct obj *obj)
 {
-	extern char *xname();
-	register char *botlnam = bottlenames[rn2(SIZE(bottlenames))];
+	char *botlnam = bottlenames[rn2(SIZE(bottlenames))];
 	boolean uclose, isyou = (mon == &youmonst);
 
 	if(isyou) {
@@ -358,8 +357,8 @@ register struct obj *obj;
 	obfree(obj, Null(obj));
 }
 
-potionbreathe(obj)
-register struct obj *obj;
+void
+potionbreathe(struct obj *obj)
 {
 	switch(obj->otyp) {
 	case POT_RESTORE_STRENGTH:
@@ -417,8 +416,10 @@ register struct obj *obj;
  * -- If the flask is small, can one dip a large object? Does it magically
  * --   become a jug? Etc.
  */
-dodip(){
-	register struct obj *potion, *obj;
+int
+dodip()
+{
+	struct obj *potion, *obj;
 
 	if(!(obj = getobj("#", "dip")))
 		return(0);
@@ -435,9 +436,11 @@ dodip(){
 	return(1);
 }
 
-ghost_from_bottle(){
+static void
+ghost_from_bottle()
+{
 	extern struct permonst pm_ghost;
-	register struct monst *mtmp;
+	struct monst *mtmp;
 
 	if(!(mtmp = makemon(PM_GHOST,u.ux,u.uy))){
 		pline("This bottle turns out to be empty.");

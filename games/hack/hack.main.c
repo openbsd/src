@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.11 2003/05/07 09:48:57 tdeval Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.12 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,11 +62,16 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.main.c,v 1.11 2003/05/07 09:48:57 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.main.c,v 1.12 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <signal.h>
+#include <unistd.h>
 #include "hack.h"
 
 #ifdef QUEST
@@ -75,17 +80,13 @@ static char rcsid[] = "$OpenBSD: hack.main.c,v 1.11 2003/05/07 09:48:57 tdeval E
 #define	gamename	"hack"
 #endif
 
-extern char *getlogin(), *getenv();
 extern char plname[PL_NSIZ], pl_character[PL_CSIZ];
 extern struct permonst mons[CMNUM+2];
 extern char genocided[60], fut_geno[60];
 
-int (*afternmv)();
-int (*occupation)();
+void (*afternmv)(void);
+int (*occupation)(void);
 char *occtxt;			/* defined when occupation != NULL */
-
-void done1();
-void hangup();
 
 int hackpid;				/* current pid */
 int locknum;				/* max num of players */
@@ -100,16 +101,15 @@ extern char *nomovemsg;
 extern long wailmsg;
 
 #ifdef CHDIR
-static void chdirx();
+static void chdirx(char *, boolean);
 #endif
 
-main(argc,argv)
-int argc;
-char *argv[];
+int
+main(int argc, char **argv)
 {
-	register int fd;
+	int fd;
 #ifdef CHDIR
-	register char *dir;
+	char *dir;
 #endif
 
 	hname = argv[0];
@@ -151,7 +151,7 @@ char *argv[];
 	 * Note that we trust him here; it is possible to play under
 	 * somebody else's name.
 	 */
-	{ register char *s;
+	{ char *s;
 
 	  initoptions();
 	  if(!*plname && (s = getenv("LOGNAME")))
@@ -183,12 +183,12 @@ char *argv[];
 	gettty();
 	setbuf(stdout,obuf);
 	umask(007);
-	setrandom();
+	srandomdev();
 	startup();
 	cls();
 	u.uhp = 1;	/* prevent RIP on early quits */
 	u.ux = FAR;	/* prevent nscr() */
-	(void) signal(SIGHUP, hangup);
+	(void) signal(SIGHUP, hackhangup);
 
 	/*
 	 * Find the creation date of this game,
@@ -281,19 +281,19 @@ char *argv[];
 		getlock();	/* sets lock if locknum != 0 */
 #ifdef WIZARD
 	} else {
-		register char *sfoo;
+		char *sfoo;
 		(void) strlcpy(lock,plname,sizeof lock);
-		if(sfoo = getenv("MAGIC"))
+		if ((sfoo = getenv("MAGIC")))
 			while(*sfoo) {
 				switch(*sfoo++) {
 				case 'n': (void) srandom(*sfoo++);
 					break;
 				}
 			}
-		if(sfoo = getenv("GENOCIDED")){
+		if ((sfoo = getenv("GENOCIDED"))) {
 			if(*sfoo == '!'){
-				register struct permonst *pm = mons;
-				register char *gp = genocided;
+				struct permonst *pm = mons;
+				char *gp = genocided;
 
 				while(pm < mons+CMNUM+2){
 					if(!strchr(sfoo, pm->mlet))
@@ -337,8 +337,9 @@ not_recovered:
 		setsee();
 		flags.botlx = 1;
 		makedog();
-		{ register struct monst *mtmp;
-		  if(mtmp = m_at(u.ux, u.uy)) mnexto(mtmp);	/* riv05!a3 */
+		{ struct monst *mtmp;
+		  if ((mtmp = m_at(u.ux, u.uy)))
+			  mnexto(mtmp);	/* riv05!a3 */
 		}
 		seemons();
 #ifdef NEWS
@@ -378,7 +379,7 @@ not_recovered:
 				    (void) makemon((struct permonst *)0, 0, 0);
 			}
 			if(Glib) glibr();
-			timeout();
+			hacktimeout();
 			++moves;
 			if(flags.time) flags.botl = 1;
 			if(u.uhp < 1) {
@@ -471,11 +472,11 @@ not_recovered:
 	}
 }
 
-glo(foo)
-register foo;
+void
+glo(int foo)
 {
 	/* construct the string  xlock.n  */
-	register char *tf;
+	char *tf;
 
 	tf = lock;
 	while(*tf && *tf != '.') tf++;
@@ -487,8 +488,11 @@ register foo;
  * explicitly (-w implies wizard) or by askname.
  * It may still contain a suffix denoting pl_character.
  */
-askname(){
-register int c,ct;
+void
+askname()
+{
+	int c,ct;
+
 	printf("\nWho are you? ");
 	(void) fflush(stdout);
 	ct = 0;
@@ -507,19 +511,20 @@ register int c,ct;
 	if(ct == 0) askname();
 }
 
-/*VARARGS1*/
-impossible(s,x1,x2)
-register char *s;
+void
+impossible(char *s, ...)
 {
-	pline(s,x1,x2);
+	va_list ap;
+
+	va_start(ap, s);
+	pline(s, ap);
+	va_end(ap);
 	pline("Program in disorder - perhaps you'd better Quit.");
 }
 
 #ifdef CHDIR
 static void
-chdirx(dir, wr)
-char *dir;
-boolean wr;
+chdirx(char *dir, boolean wr)
 {
 
 #ifdef SECURE
@@ -548,7 +553,7 @@ boolean wr;
 	/* perhaps we should also test whether . is writable */
 	/* unfortunately the access systemcall is worthless */
 	if(wr) {
-	    register fd;
+	    int fd;
 
 	    if(dir == NULL)
 		dir = ".";
@@ -561,6 +566,7 @@ boolean wr;
 }
 #endif
 
+void
 stop_occupation()
 {
 	if(occupation) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.save.c,v 1.5 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.save.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,40 +62,43 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.save.c,v 1.5 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.save.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
-#include "hack.h"
-extern char genocided[60];	/* defined in Decl.c */
-extern char fut_geno[60];	/* idem */
+#include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
+#include "hack.h"
 
+extern char genocided[60];	/* defined in Decl.c */
+extern char fut_geno[60];	/* idem */
 extern char SAVEF[], nul[];
 extern char pl_character[PL_CSIZ];
-extern struct obj *restobjchn();
-extern struct monst *restmonchn();
 
-dosave(){
+static int dosave0(int);
+
+int
+dosave()
+{
 	if(dosave0(0)) {
 		settty("Be seeing you ...\n");
 		exit(0);
 	}
-#ifdef lint
 	return(0);
-#endif /* lint */
 }
 
-#ifndef NOSAVEONHANGUP
-hangup(){
+void
+hackhangup(int notused)
+{
 	(void) dosave0(1);
 	exit(1);
 }
-#endif /* NOSAVEONHANGUP */
 
 /* returns 1 if save successful */
-dosave0(hu) int hu; {
-	register fd, ofd;
+static int
+dosave0(int hu)
+{
+	int fd, ofd;
 	int tmp;		/* not register ! */
 
 	(void) signal(SIGHUP, SIG_IGN);
@@ -151,10 +154,10 @@ dosave0(hu) int hu; {
 	return(1);
 }
 
-dorecover(fd)
-register fd;
+int
+dorecover(int fd)
 {
-	register nfd;
+	int nfd;
 	int tmp;		/* not a register ! */
 	unsigned mid;		/* idem */
 	struct obj *otmp;
@@ -217,7 +220,7 @@ register fd;
 		}
 	}
 	if(u.ustuck) {
-		register struct monst *mtmp;
+		struct monst *mtmp;
 
 		for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 			if(mtmp->m_id == mid) goto monfnd;
@@ -234,11 +237,10 @@ register fd;
 }
 
 struct obj *
-restobjchn(fd)
-register fd;
+restobjchn(int fd)
 {
-	register struct obj *otmp, *otmp2;
-	register struct obj *first = 0;
+	struct obj *otmp, *otmp2;
+	struct obj *first = 0;
 	int xl;
 #ifdef lint
 	/* suppress "used before set" warning from lint */
@@ -262,11 +264,10 @@ register fd;
 }
 
 struct monst *
-restmonchn(fd)
-register fd;
+restmonchn(int fd)
 {
-	register struct monst *mtmp, *mtmp2;
-	register struct monst *first = 0;
+	struct monst *mtmp, *mtmp2;
+	struct monst *first = 0;
 	int xl;
 
 	struct permonst *monbegin;

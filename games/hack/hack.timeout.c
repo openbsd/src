@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.timeout.c,v 1.3 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.timeout.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,13 +62,18 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.timeout.c,v 1.3 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.timeout.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
 
-timeout(){
-register struct prop *upp;
+static void stoned_dialogue(void);
+
+void
+hacktimeout()
+{
+	struct prop *upp;
+
 	if(Stoned) stoned_dialogue();
 	for(upp = u.uprops; upp < u.uprops+SIZE(u.uprops); upp++)
 	    if((upp->p_flgs & TIMEOUT) && !--upp->p_flgs) {
@@ -113,9 +118,10 @@ char *stoned_texts[] = {
 	"You are a statue."			/* 1 */
 };
 
+static void
 stoned_dialogue()
 {
-	register long i = (Stoned & TIMEOUT);
+	long i = (Stoned & TIMEOUT);
 
 	if(i > 0 && i <= SIZE(stoned_texts))
 		pline(stoned_texts[SIZE(stoned_texts) - i]);

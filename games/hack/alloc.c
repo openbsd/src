@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.4 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: alloc.c,v 1.4 2003/03/16 21:22:35 camield Exp $";
+static const char rcsid[] = "$OpenBSD: alloc.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #ifdef LINT
@@ -76,38 +76,27 @@ static char rcsid[] = "$OpenBSD: alloc.c,v 1.4 2003/03/16 21:22:35 camield Exp $
 */
 #include <stdio.h>
 long *
-alloc(n) unsigned n; {
-long dummy = ftell(stderr);
+alloc(unsigned int n)
+{
+	long dummy = ftell(stderr);
+
 	if(n) dummy = 0;	/* make sure arg is used */
 	return(&dummy);
 }
 
 #else
 
-extern char *malloc();
-extern char *realloc();
+#include <stdlib.h>
+#include "hack.h"
 
 long *
-alloc(lth)
-register unsigned lth;
+alloc(unsigned int lth)
 {
-	register char *ptr;
+	char *ptr;
 
 	if(!(ptr = malloc(lth)))
 		panic("Cannot get %d bytes", lth);
 	return((long *) ptr);
-}
-
-long *
-enlarge(ptr,lth)
-register char *ptr;
-register unsigned lth;
-{
-	register char *nptr;
-
-	if(!(nptr = realloc(ptr,lth)))
-		panic("Cannot reallocate %d bytes", lth);
-	return((long *) nptr);
 }
 
 #endif /* LINT */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.wield.c,v 1.4 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.wield.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,20 +62,23 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.wield.c,v 1.4 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.wield.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
 extern struct obj zeroobj;
 
-setuwep(obj) register struct obj *obj; {
+void
+setuwep(struct obj *obj)
+{
 	setworn(obj, W_WEP);
 }
 
+int
 dowield()
 {
-	register struct obj *wep;
-	register int res = 0;
+	struct obj *wep;
+	int res = 0;
 
 	multi = 0;
 	if(!(wep = getobj("#-)", "wield"))) /* nothing */;
@@ -108,7 +111,9 @@ dowield()
 	return(res);
 }
 
-corrode_weapon(){
+void
+corrode_weapon()
+{
 	if(!uwep || uwep->olet != WEAPON_SYM) return;	/* %% */
 	if(uwep->rustfree)
 		pline("Your %s not affected.", aobjnam(uwep, "are"));
@@ -118,12 +123,12 @@ corrode_weapon(){
 	}
 }
 
-chwepon(otmp,amount)
-register struct obj *otmp;
-register amount;
+int
+chwepon(struct obj *otmp, int amount)
 {
-register char *color = (amount < 0) ? "black" : "green";
-register char *time;
+	char *color = (amount < 0) ? "black" : "green";
+	char *time;
+
 	if(!uwep || uwep->olet != WEAPON_SYM) {
 		strange_feeling(otmp,
 			(amount > 0) ? "Your hands twitch."

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.tty.c,v 1.6 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.tty.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: hack.tty.c,v 1.6 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.tty.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ static char rcsid[] = "$OpenBSD: hack.tty.c,v 1.6 2003/03/16 21:22:36 camield Ex
 
 #include	"hack.h"
 #include	<stdio.h>
+#include	<stdarg.h>
 #include	<termios.h>
 
 /*
@@ -118,21 +119,23 @@ static char rcsid[] = "$OpenBSD: hack.tty.c,v 1.6 2003/03/16 21:22:36 camield Ex
 #define	NR_OF_EOFS	20
 #endif /* BSD */
 
-extern speed_t ospeed;
 static char erase_char, kill_char;
 static boolean settty_needed = FALSE;
 struct termios inittyb, curttyb;
 
+static void setctty();
+
 /*
- * Get initial state of terminal, set ospeed (for termcap routines)
+ * Get initial state of terminal,
  * and switch off tab expansion if necessary.
  * Called by startup() in termcap.c and after returning from ! or ^Z
  */
-gettty(){
+void
+gettty()
+{
 	if(tcgetattr(0, &inittyb) < 0)
 		perror("Hack (gettty)");
 	curttyb = inittyb;
-	ospeed = cfgetospeed(&inittyb);
 	erase_char = inittyb.c_cc[VERASE];
 	kill_char = inittyb.c_cc[VKILL];
 	getioctls();
@@ -146,8 +149,10 @@ gettty(){
 }
 
 /* reset terminal to original state */
-settty(s) char *s; {
-	clear_screen();
+void
+settty(char *s)
+{
+	clr_screen();
 	end_screen();
 	if(s) printf("%s", s);
 	(void) fflush(stdout);
@@ -158,14 +163,17 @@ settty(s) char *s; {
 	setioctls();
 }
 
-setctty(){
+static void
+setctty()
+{
 	if(tcsetattr(0, TCSADRAIN, &curttyb) < 0)
 		perror("Hack (setctty)");
 }
 
-
-setftty(){
-register int change = 0;
+void
+setftty()
+{
+	int change = 0;
 	flags.cbreak = ON;
 	flags.echo = OFF;
 	/* Should use (ECHO|CRMOD) here instead of ECHO */
@@ -188,11 +196,16 @@ register int change = 0;
 
 
 /* fatal error */
-/*VARARGS1*/
-error(s,x,y) char *s; {
+void
+error(char *s, ...)
+{
+	va_list ap;
+
 	if(settty_needed)
 		settty((char *) 0);
-	printf(s,x,y);
+	va_start(ap, s);
+	printf(s, ap);
+	va_end(ap);
 	putchar('\n');
 	exit(1);
 }
@@ -203,11 +216,11 @@ error(s,x,y) char *s; {
  * Reading can be interrupted by an escape ('\033') - now the
  * resulting string is "\033".
  */
-getlin(bufp)
-register char *bufp;
+void
+getlin(char *bufp)
 {
-	register char *obufp = bufp;
-	register int c;
+	char *obufp = bufp;
+	int c;
 
 	flags.toplin = 2;		/* nonempty, no --More-- required */
 	for(;;) {
@@ -225,7 +238,7 @@ register char *bufp;
 			if(bufp != obufp) {
 				bufp--;
 				putstr("\b \b"); /* putsym converts \b */
-			} else	bell();
+			} else	hackbell();
 		} else if(c == '\n') {
 			*bufp = 0;
 			return;
@@ -244,16 +257,18 @@ register char *bufp;
 				putstr("\b \b");
 			}
 		} else
-			bell();
+			hackbell();
 	}
 }
 
-getret() {
+void
+getret()
+{
 	cgetret("");
 }
 
-cgetret(s)
-register char *s;
+void
+cgetret(char *s)
 {
 	putsym('\n');
 	if(flags.standout)
@@ -268,10 +283,11 @@ register char *s;
 
 char morc;	/* tell the outside world what char he used */
 
-xwaitforspace(s)
-register char *s;	/* chars allowed besides space or return */
+/* s: chars allowed besides space or return */
+void
+xwaitforspace(char *s)
 {
-register int c;
+	int c;
 
 	morc = 0;
 
@@ -282,7 +298,7 @@ register int c;
 			morc = c;
 			break;
 		}
-		bell();
+		hackbell();
 	    }
 	}
 }
@@ -291,7 +307,7 @@ char *
 parse()
 {
 	static char inputline[COLNO];
-	register foo;
+	int foo;
 
 	flags.move = 1;
 	if(!Invisible) curs_on_u(); else home();
@@ -319,8 +335,9 @@ parse()
 }
 
 char
-readchar() {
-	register int sym;
+readchar()
+{
+	int sym;
 
 	(void) fflush(stdout);
 	if((sym = getchar()) == EOF)
@@ -330,7 +347,7 @@ readchar() {
 	   * (?like when one hits break or for interrupted systemcalls?),
 	   * and we must see several before we quit.
 	   */
-		register int cnt = NR_OF_EOFS;
+		int cnt = NR_OF_EOFS;
 		while (cnt--) {
 		    clearerr(stdin);	/* omit if clearerr is undefined */
 		    if((sym = getchar()) != EOF) goto noteof;
@@ -346,6 +363,7 @@ readchar() {
 	return((char) sym);
 }
 
+void
 end_of_input()
 {
 	settty("End of input?\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.fight.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $	*/
+/*	$OpenBSD: hack.fight.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,23 +62,27 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.fight.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.fight.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include	<stdio.h>
 #include	"hack.h"
 extern struct permonst li_dog, dog, la_dog;
-extern char *exclam(), *xname();
-extern struct obj *mkobj_at();
 
 static boolean far_noise;
 static long noisetime;
 
+static void monstone(struct monst *);
+
 /* hitmm returns 0 (miss), 1 (hit), or 2 (kill) */
-hitmm(magr,mdef) register struct monst *magr,*mdef; {
-register struct permonst *pa = magr->data, *pd = mdef->data;
-int hit;
-schar tmp;
-boolean vis;
+int
+hitmm(struct monst * magr, struct monst * mdef)
+{
+	struct permonst *pa = magr->data, *pd = mdef->data;
+	int hit;
+	schar tmp;
+	boolean vis;
+
 	if(strchr("Eauy", pa->mlet)) return(0);
 	if(magr->mfroz) return(0);		/* riv05!a3 */
 	tmp = pd->ac + pa->mlevel;
@@ -131,21 +135,26 @@ boolean vis;
 }
 
 /* drop (perhaps) a cadaver and remove monster */
-mondied(mdef) register struct monst *mdef; {
-register struct permonst *pd = mdef->data;
-		if(letter(pd->mlet) && rn2(3)){
-			(void) mkobj_at(pd->mlet,mdef->mx,mdef->my);
-			if(cansee(mdef->mx,mdef->my)){
-				unpmon(mdef);
-				atl(mdef->mx,mdef->my,fobj->olet);
-			}
-			stackobj(fobj);
+void
+mondied(struct monst *mdef)
+{
+	struct permonst *pd = mdef->data;
+
+	if(letter(pd->mlet) && rn2(3)){
+		(void) mkobj_at(pd->mlet,mdef->mx,mdef->my);
+		if(cansee(mdef->mx,mdef->my)){
+			unpmon(mdef);
+			atl(mdef->mx,mdef->my,fobj->olet);
 		}
-		mondead(mdef);
+		stackobj(fobj);
+	}
+	mondead(mdef);
 }
 
 /* drop a rock and remove monster */
-monstone(mdef) register struct monst *mdef; {
+static void
+monstone(struct monst *mdef)
+{
 	extern char mlarge[];
 	if(strchr(mlarge, mdef->data->mlet))
 		mksobj_at(ENORMOUS_ROCK, mdef->mx, mdef->my);
@@ -157,10 +166,12 @@ monstone(mdef) register struct monst *mdef; {
 	}
 	mondead(mdef);
 }
-		
 
-fightm(mtmp) register struct monst *mtmp; {
-register struct monst *mon;
+int
+fightm(struct monst *mtmp)
+{
+	struct monst *mon;
+
 	for(mon = fmon; mon; mon = mon->nmon) if(mon != mtmp) {
 		if(DIST(mon->mx,mon->my,mtmp->mx,mtmp->my) < 3)
 		    if(rn2(4))
@@ -170,11 +181,11 @@ register struct monst *mon;
 }
 
 /* u is hit by sth, but not a monster */
-thitu(tlev,dam,name)
-register tlev,dam;
-register char *name;
+int
+thitu(int tlev, int dam, char *name)
 {
-char buf[BUFSZ];
+	char buf[BUFSZ];
+
 	setan(name,buf,sizeof buf);
 	if(u.uac + tlev <= rnd(20)) {
 		if(Blind) pline("It misses.");
@@ -190,13 +201,11 @@ char buf[BUFSZ];
 
 char mlarge[] = "bCDdegIlmnoPSsTUwY',&";
 
+/* return TRUE if mon still alive */
 boolean
-hmon(mon,obj,thrown)	/* return TRUE if mon still alive */
-register struct monst *mon;
-register struct obj *obj;
-register thrown;
+hmon(struct monst *mon, struct obj *obj, int thrown)
 {
-	register tmp;
+	int tmp;
 	boolean hittxt = FALSE;
 
 	if(!obj){
@@ -311,12 +320,12 @@ register thrown;
 
 /* try to attack; return FALSE if monster evaded */
 /* u.dx and u.dy must be set */
-attack(mtmp)
-register struct monst *mtmp;
+boolean
+attack(struct monst *mtmp)
 {
 	schar tmp;
 	boolean malive = TRUE;
-	register struct permonst *mdat;
+	struct permonst *mdat;
 	mdat = mtmp->data;
 
 	u_wipe_engr(3);   /* andrew@orca: prevent unlimited pick-axe attacks */
@@ -346,7 +355,7 @@ register struct monst *mtmp;
 	wakeup(mtmp);
 
 	if(mtmp->mhide && mtmp->mundetected){
-		register struct obj *obj;
+		struct obj *obj;
 
 		mtmp->mundetected = 0;
 		if((obj = o_at(mtmp->mx,mtmp->my)) && !Blind)

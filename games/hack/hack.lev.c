@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.lev.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.lev.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,41 +62,39 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.lev.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.lev.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
-#include "hack.h"
-#include "def.mkroom.h"
 #include <stdio.h>
-extern struct monst *restmonchn();
-extern struct obj *restobjchn();
+#include <stdlib.h>
+#include <unistd.h>
+#include "hack.h"
+
 extern struct obj *billobjs;
-extern char *itoa();
 extern char SAVEF[];
 extern int hackpid;
 extern xchar dlevel;
 extern char nul[];
 
 #ifndef NOWORM
-#include	"def.wseg.h"
 extern struct wseg *wsegs[32], *wheads[32];
 extern long wgrowtime[32];
 #endif /* NOWORM */
 
 boolean level_exists[MAXLEVEL+1];
 
-savelev(fd,lev)
-int fd;
-xchar lev;
+void
+savelev(int fd, xchar lev)
 {
 #ifndef NOWORM
-	register struct wseg *wtmp, *wtmp2;
-	register tmp;
+	struct wseg *wtmp, *wtmp2;
+	int tmp;
 #endif /* NOWORM */
 
-	if(fd < 0) panic("Save on bad file!");	/* impossible */
-	if(lev >= 0 && lev <= MAXLEVEL)
-		level_exists[lev] = TRUE;
+	if (fd < 0)
+		panic("Save on bad file!");	/* impossible */
+	if (lev >= 0 && lev <= MAXLEVEL)
+		level_exists[(int)lev] = TRUE;
 
 	bwrite(fd,(char *) &hackpid,sizeof(hackpid));
 	bwrite(fd,(char *) &lev,sizeof(lev));
@@ -134,21 +132,18 @@ xchar lev;
 #endif /* NOWORM */
 }
 
-bwrite(fd,loc,num)
-register fd;
-register char *loc;
-register unsigned num;
+void
+bwrite(int fd, char *loc, unsigned int num)
 {
 /* lint wants the 3rd arg of write to be an int; lint -p an unsigned */
 	if(write(fd, loc, (int) num) != num)
 		panic("cannot write %u bytes to file #%d", num, fd);
 }
 
-saveobjchn(fd,otmp)
-register fd;
-register struct obj *otmp;
+void
+saveobjchn(int fd, struct obj *otmp)
 {
-	register struct obj *otmp2;
+	struct obj *otmp2;
 	unsigned xl;
 	int minusone = -1;
 
@@ -163,11 +158,10 @@ register struct obj *otmp;
 	bwrite(fd, (char *) &minusone, sizeof(int));
 }
 
-savemonchn(fd,mtmp)
-register fd;
-register struct monst *mtmp;
+void
+savemonchn(int fd, struct monst *mtmp)
 {
-	register struct monst *mtmp2;
+	struct monst *mtmp2;
 	unsigned xl;
 	int minusone = -1;
 	struct permonst *monbegin = &mons[0];
@@ -186,11 +180,10 @@ register struct monst *mtmp;
 	bwrite(fd, (char *) &minusone, sizeof(int));
 }
 
-savegoldchn(fd,gold)
-register fd;
-register struct gold *gold;
+void
+savegoldchn(int fd, struct gold *gold)
 {
-	register struct gold *gold2;
+	struct gold *gold2;
 	while(gold) {
 		gold2 = gold->ngold;
 		bwrite(fd, (char *) gold, sizeof(struct gold));
@@ -200,11 +193,10 @@ register struct gold *gold;
 	bwrite(fd, nul, sizeof(struct gold));
 }
 
-savetrapchn(fd,trap)
-register fd;
-register struct trap *trap;
+void
+savetrapchn(int fd, struct trap *trap)
 {
-	register struct trap *trap2;
+	struct trap *trap2;
 	while(trap) {
 		trap2 = trap->ntrap;
 		bwrite(fd, (char *) trap, sizeof(struct trap));
@@ -214,16 +206,15 @@ register struct trap *trap;
 	bwrite(fd, nul, sizeof(struct trap));
 }
 
-getlev(fd,pid,lev)
-int fd,pid;
-xchar lev;
+void
+getlev(int fd, int pid, xchar lev)
 {
-	register struct gold *gold;
-	register struct trap *trap;
+	struct gold *gold;
+	struct trap *trap;
 #ifndef NOWORM
-	register struct wseg *wtmp;
+	struct wseg *wtmp;
 #endif /* NOWORM */
-	register tmp;
+	int tmp;
 	long omoves;
 	int hpid;
 	xchar dlvl;
@@ -251,7 +242,7 @@ xchar lev;
 
 	/* regenerate animals while on another level */
 	{ long tmoves = (moves > omoves) ? moves-omoves : 0;
-	  register struct monst *mtmp, *mtmp2;
+	  struct monst *mtmp, *mtmp2;
 	  extern char genocided[];
 
 	  for(mtmp = fmon; mtmp; mtmp = mtmp2) {
@@ -318,12 +309,10 @@ xchar lev;
 #endif /* NOWORM */
 }
 
-mread(fd, buf, len)
-register fd;
-register char *buf;
-register unsigned len;
+void
+mread(int fd, char *buf, unsigned len)
 {
-	register int rlen;
+	int rlen;
 	extern boolean restoring;
 
 	rlen = read(fd, buf, (int) len);
@@ -337,6 +326,7 @@ register unsigned len;
 	}
 }
 
+void
 mklev()
 {
 	extern boolean in_mklev;

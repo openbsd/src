@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.track.c,v 1.3 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.track.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.track.c,v 1.3 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.track.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -73,12 +73,16 @@ coord utrack[UTSZ];
 int utcnt = 0;
 int utpnt = 0;
 
-initrack(){
+void
+initrack()
+{
 	utcnt = utpnt = 0;
 }
 
 /* add to track */
-settrack(){
+void
+settrack()
+{
 	if(utcnt < UTSZ) utcnt++;
 	if(utpnt == UTSZ) utpnt = 0;
 	utrack[utpnt].x = u.ux;
@@ -87,9 +91,11 @@ settrack(){
 }
 
 coord *
-gettrack(x,y) register x,y; {
-register int i,cnt,dist;
-coord tc;
+gettrack(int x, int y)
+{
+	int i,cnt,dist;
+	coord tc;
+
 	cnt = utcnt;
 	for(i = utpnt-1; cnt--; i--){
 		if(i == -1) i = UTSZ-1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.eat.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.eat.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,16 +62,16 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.eat.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: hack.eat.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include	<stdio.h>
 #include	"hack.h"
 char POISONOUS[] = "ADKSVabhks";
 extern char *nomovemsg;
-extern int (*afternmv)();
-extern int (*occupation)();
+extern void (*afternmv)(void);
+extern int (*occupation)(void);
 extern char *occtxt;
-extern struct obj *splitobj(), *addinv();
 
 /* hunger texts used on bottom line (each 8 chars long) */
 #define	SATIATED	0
@@ -92,19 +92,17 @@ char *hu_stat[] = {
 	"Starved "
 };
 
-init_uhunger(){
-	u.uhunger = 900;
-	u.uhs = NOT_HUNGRY;
-}
-
 #define	TTSZ	SIZE(tintxts)
-struct { char *txt; int nut; } tintxts[] = {
-	"It contains first quality peaches - what a surprise!",	40,
-	"It contains salmon - not bad!",	60,
-	"It contains apple juice - perhaps not what you hoped for.", 20,
-	"It contains some nondescript substance, tasting awfully.", 500,
-	"It contains rotten meat. You vomit.", -50,
-	"It turns out to be empty.",	0
+struct {
+	char *txt;
+	int nut;
+} tintxts[] = {
+	{ "It contains first quality peaches - what a surprise!",	40 },
+	{ "It contains salmon - not bad!",	60 },
+	{ "It contains apple juice - perhaps not what you hoped for.", 20 },
+	{ "It contains some nondescript substance, tasting awfully.", 500 },
+	{ "It contains rotten meat. You vomit.", -50 },
+	{ "It turns out to be empty.",	0 }
 };
 
 static struct {
@@ -112,8 +110,20 @@ static struct {
 	int usedtime, reqtime;
 } tin;
 
-opentin(){
-	register int r;
+static void newuhs(boolean);
+static int  eatcorpse(struct obj *);
+
+void
+init_uhunger()
+{
+	u.uhunger = 900;
+	u.uhs = NOT_HUNGRY;
+}
+
+int
+opentin()
+{
+	int r;
 
 	if(!carried(tin.tin))		/* perhaps it was stolen? */
 		return(0);		/* %% probably we should use tinoid */
@@ -145,15 +155,19 @@ opentin(){
 	return(0);
 }
 
-Meatdone(){
+void
+Meatdone()
+{
 	u.usym = '@';
 	prme();
 }
 
-doeat(){
-	register struct obj *otmp;
-	register struct objclass *ftmp;
-	register tmp;
+int
+doeat()
+{
+	struct obj *otmp;
+	struct objclass *ftmp;
+	int tmp;
 
 	/* Is there some food (probably a heavy corpse) here on the ground? */
 	if(!Levitation)
@@ -202,8 +216,7 @@ gotit:
 			if(Glib) {
 				pline("The tin slips out of your hands.");
 				if(otmp->quan > 1) {
-					register struct obj *obj;
-					extern struct obj *splitobj();
+					struct obj *obj;
 
 					obj = splitobj(otmp, 1);
 					if(otmp == uwep) setuwep(obj);
@@ -323,8 +336,9 @@ eatx:
 	return(1);
 }
 
-/* called in hack.main.c */
-gethungry(){
+void
+gethungry()
+{
 	--u.uhunger;
 	if(moves % 2) {
 		if(Regeneration) u.uhunger--;
@@ -341,24 +355,32 @@ gethungry(){
 }
 
 /* called after vomiting and after performing feats of magic */
-morehungry(num) register num; {
+void
+morehungry(int num)
+{
 	u.uhunger -= num;
 	newuhs(TRUE);
 }
 
 /* called after eating something (and after drinking fruit juice) */
-lesshungry(num) register num; {
+void
+lesshungry(int num)
+{
 	u.uhunger += num;
 	newuhs(FALSE);
 }
 
-unfaint(){
+void
+unfaint()
+{
 	u.uhs = FAINTING;
 	flags.botl = 1;
 }
 
-newuhs(incr) boolean incr; {
-	register int newhs, h = u.uhunger;
+static void
+newuhs(boolean incr)
+{
+	int newhs, h = u.uhunger;
 
 	newhs = (h > 1000) ? SATIATED :
 		(h > 150) ? NOT_HUNGRY :
@@ -417,16 +439,19 @@ newuhs(incr) boolean incr; {
 #define	CORPSE_I_TO_C(otyp)	(char) ((otyp >= DEAD_ACID_BLOB)\
 		     ?  'a' + (otyp - DEAD_ACID_BLOB)\
 		     :	'@' + (otyp - DEAD_HUMAN))
-poisonous(otmp)
-register struct obj *otmp;
+int
+poisonous(struct obj *otmp)
 {
 	return(strchr(POISONOUS, CORPSE_I_TO_C(otmp->otyp)) != 0);
 }
 
 /* returns 1 if some text was printed */
-eatcorpse(otmp) register struct obj *otmp; {
-register char let = CORPSE_I_TO_C(otmp->otyp);
-register tp = 0;
+static int
+eatcorpse(struct obj *otmp)
+{
+	char let = CORPSE_I_TO_C(otmp->otyp);
+	int tp = 0;
+
 	if(let != 'a' && moves > otmp->age + 50 + rn2(100)) {
 		tp++;
 		pline("Ulch -- that meat was tainted!");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.rumors.c,v 1.4 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.rumors.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,19 +62,26 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.rumors.c,v 1.4 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.rumors.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include	<stdio.h>
 #include	"hack.h"		/* for RUMORFILE and BSD (index) */
 #define	CHARSZ	8			/* number of bits in a char */
-extern long *alloc();
 int n_rumors = 0;
 int n_used_rumors = -1;
 char *usedbits;
 
-init_rumors(rumf) register FILE *rumf; {
-register int i;
+static void init_rumors(FILE *);
+static int  skipline(FILE *);
+static void outline(FILE *);
+static int  used(int);
+
+static void
+init_rumors(FILE *rumf)
+{
+	int i;
+
 	n_used_rumors = 0;
 	while(skipline(rumf)) n_rumors++;
 	rewind(rumf);
@@ -83,26 +90,35 @@ register int i;
 	for( ; i>=0; i--) usedbits[i] = 0;
 }
 
-skipline(rumf) register FILE *rumf; {
-char line[COLNO];
+static int
+skipline(FILE *rumf)
+{
+	char line[COLNO];
+
 	while(1) {
 		if(!fgets(line, sizeof(line), rumf)) return(0);
 		if(strchr(line, '\n')) return(1);
 	}
 }
 
-outline(rumf) register FILE *rumf; {
-char line[COLNO];
-register char *ep;
+static void
+outline(FILE *rumf)
+{
+	char line[COLNO];
+	char *ep;
+
 	if(!fgets(line, sizeof(line), rumf)) return;
 	if((ep = strchr(line, '\n')) != 0) *ep = 0;
 	pline("This cookie has a scrap of paper inside! It reads: ");
 	pline(line);
 }
 
-outrumor(){
-register int rn,i;
-register FILE *rumf;
+void
+outrumor()
+{
+	int rn,i;
+	FILE *rumf;
+
 	if(n_rumors <= n_used_rumors ||
 	  (rumf = fopen(RUMORFILE, "r")) == (FILE *) 0) return;
 	if(n_used_rumors < 0) init_rumors(rumf);
@@ -121,6 +137,8 @@ none:
 	(void) fclose(rumf);
 }
 
-used(i) register int i; {
+static int
+used(int i)
+{
 	return(usedbits[i/CHARSZ] & (1 << (i % CHARSZ)));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mkmaze.c,v 1.3 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.mkmaze.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,22 +62,24 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.mkmaze.c,v 1.3 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.mkmaze.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
-#include "def.mkroom.h"		/* not really used */
-extern struct monst *makemon();
 extern struct permonst pm_wizard;
-extern struct obj *mkobj_at();
-extern coord mazexy();
 struct permonst hell_hound =
 	{ "hell hound", 'd', 12, 14, 2, 3, 6, 0 };
 
+static void walkfrom(int, int);
+static void move(int *, int *, int);
+static int  okay(int, int, int);
+
+
+void
 makemaz()
 {
 	int x,y;
-	register zx,zy;
+	int zx,zy;
 	coord mm;
 	boolean al = (dlevel >= 30 && !flags.made_amulet);
 
@@ -85,7 +87,7 @@ makemaz()
 		for(y = 2; y < ROWNO-1; y++)
 			levl[x][y].typ = (x%2 && y%2) ? 0 : HWALL;
 	if(al) {
-	    register struct monst *mtmp;
+	    struct monst *mtmp;
 
 	    zx = 2*(COLNO/4) - 1;
 	    zy = 2*(ROWNO/4) - 1;
@@ -98,9 +100,9 @@ makemaz()
 	    (void) mkobj_at(AMULET_SYM, zx, zy);
 	    flags.made_amulet = 1;
 	    walkfrom(zx+4, zy);
-	    if(mtmp = makemon(&hell_hound, zx, zy))
+	    if ((mtmp = makemon(&hell_hound, zx, zy)))
 		mtmp->msleep = 1;
-	    if(mtmp = makemon(PM_WIZARD, zx+1, zy)) {
+	    if ((mtmp = makemon(PM_WIZARD, zx+1, zy))) {
 		mtmp->msleep = 1;
 		flags.no_of_wizards = 1;
 	    }
@@ -145,14 +147,17 @@ makemaz()
 	for(x = rn1(6,7); x; x--)
 		mktrap(0,1,(struct mkroom *) 0);
 	mm = mazexy();
-	levl[(xupstair = mm.x)][(yupstair = mm.y)].scrsym = '<';
-	levl[xupstair][yupstair].typ = STAIRS;
+	levl[(int)(xupstair = mm.x)][(int)(yupstair = mm.y)].scrsym = '<';
+	levl[(int)xupstair][(int)yupstair].typ = STAIRS;
 	xdnstair = ydnstair = 0;
 }
 
-walkfrom(x,y) int x,y; {
-register int q,a,dir;
-int dirs[4];
+static void
+walkfrom(int x, int y)
+{
+	int q,a,dir;
+	int dirs[4];
+
 	levl[x][y].typ = ROOM;
 	while(1) {
 		q = 0;
@@ -167,9 +172,8 @@ int dirs[4];
 	}
 }
 
-move(x,y,dir)
-register int *x, *y;
-register int dir;
+static void
+move(int *x, int *y, int dir)
 {
 	switch(dir){
 		case 0: --(*y); break;
@@ -179,9 +183,8 @@ register int dir;
 	}
 }
 
-okay(x,y,dir)
-int x,y;
-register int dir;
+static int
+okay(int x, int y, int dir)
 {
 	move(&x,&y,dir);
 	move(&x,&y,dir);
@@ -192,8 +195,10 @@ register int dir;
 }
 
 coord
-mazexy(){
+mazexy()
+{
 	coord mm;
+
 	mm.x = 3 + 2*rn2(COLNO/2 - 2);
 	mm.y = 3 + 2*rn2(ROWNO/2 - 2);
 	return mm;

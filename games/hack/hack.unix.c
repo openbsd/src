@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.12 2003/05/07 09:48:57 tdeval Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.13 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.12 2003/05/07 09:48:57 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.unix.c,v 1.13 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -76,27 +76,28 @@ static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.12 2003/05/07 09:48:57 tdeval E
  *	- determination of what files are "very old"
  */
 
-#include <stdio.h>
-#include <errno.h>
-#include "hack.h"
-
 #include	<sys/types.h>		/* for time_t and stat */
 #include	<sys/stat.h>
-#ifdef BSD
+#include	<sys/param.h>
 #include	<sys/time.h>
-#else
-#include	<time.h>
-#endif /* BSD */
 
-extern char *getenv();
-extern time_t time();
+#include	<err.h>
+#include	<errno.h>
+#include	<signal.h>
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<unistd.h>
+#include	"hack.h"
 
-setrandom()
-{
- 	(void) srandomdev();
-}
 
-struct tm *
+static struct tm *getlt(void);
+static int veryold(int);
+#ifdef MAIL
+static void newmail(void);
+static void mdrush(struct monst *, boolean);
+#endif
+
+static struct tm *
 getlt()
 {
 	time_t date;
@@ -106,6 +107,7 @@ getlt()
 	return(localtime(&date));
 }
 
+int
 getyear()
 {
 	return(1900 + getlt()->tm_year);
@@ -115,18 +117,19 @@ char *
 getdate()
 {
 	static char datestr[7];
-	register struct tm *lt = getlt();
+	struct tm *lt = getlt();
 
 	(void) snprintf(datestr, sizeof(datestr), "%02d%02d%02d",
 		lt->tm_year % 100, lt->tm_mon + 1, lt->tm_mday);
 	return(datestr);
 }
 
+int
 phase_of_the_moon()			/* 0-7, with 0: new, 4: full */
 {					/* moon period: 29.5306 days */
 					/* year: 365.2422 days */
-	register struct tm *lt = getlt();
-	register int epact, diy, golden;
+	struct tm *lt = getlt();
+	int epact, diy, golden;
 
 	diy = lt->tm_yday;
 	golden = (lt->tm_year % 19) + 1;
@@ -137,13 +140,15 @@ phase_of_the_moon()			/* 0-7, with 0: new, 4: full */
 	return( (((((diy + epact) * 6) + 11) % 177) / 22) & 7 );
 }
 
+int
 night()
 {
-	register int hour = getlt()->tm_hour;
+	int hour = getlt()->tm_hour;
 
 	return(hour < 6 || hour > 21);
 }
 
+int
 midnight()
 {
 	return(getlt()->tm_hour == 0);
@@ -151,27 +156,12 @@ midnight()
 
 struct stat buf, hbuf;
 
-gethdate(name) char *name; {
-/* old version - for people short of space */
-/*
-    register char *np;
-  	if(stat(name, &hbuf))
-  		error("Cannot get status of %s.",
-  			(np = strrchr(name, '/')) ? np+1 : name);
-  
-   version using PATH from: seismo!gregc@ucsf-cgl.ARPA (Greg Couch) */
+void
+gethdate(char *name)
+{
+	char *p, *np, *path;
+	char filename[MAXPATHLEN+1];
 
-
-/*
- * The problem with   #include	<sys/param.h>   is that this include file
- * does not exist on all systems, and moreover, that it sometimes includes
- * <sys/types.h> again, so that the compiler sees these typedefs twice.
- */
-#define		MAXPATHLEN	1024
-
-
-char *p, *np, *path;
-char filename[MAXPATHLEN+1];
 	if (strchr(name, '/') != NULL || (p = getenv("PATH")) == NULL)
 		p = "";
 	np = path = strdup(p);	/* Make a copy for strsep. */
@@ -197,7 +187,9 @@ char filename[MAXPATHLEN+1];
 	free(path);
 }
 
-uptodate(fd) {
+int
+uptodate(int fd)
+{
 	if(fstat(fd, &buf)) {
 		pline("Cannot get status of saved level? ");
 		return(0);
@@ -210,8 +202,10 @@ uptodate(fd) {
 }
 
 /* see whether we should throw away this xlock file */
-veryold(fd) {
-	register int i;
+static int
+veryold(int fd)
+{
+	int i;
 	time_t date;
 
 	if(fstat(fd, &buf)) return(0);			/* cannot get status */
@@ -241,16 +235,17 @@ veryold(fd) {
 	return(1);					/* success! */
 }
 
+void
 getlock()
 {
-      extern int hackpid, locknum;
-	register int i = 0, fd;
+	extern int hackpid, locknum;
+	int i = 0, fd;
 
 	(void) fflush(stdout);
 
 	/* we ignore QUIT and INT at this point */
 	if (link(HLOCK, LLOCK) == -1) {
-		register int errnosv = errno;
+		int errnosv = errno;
 
 		perror(HLOCK);
 		printf("Cannot link %s to %s\n", LLOCK, HLOCK);
@@ -309,7 +304,7 @@ gotlock:
 			error("cannot close lock");
 		}
 	}
-}	
+}
 
 #ifdef MAIL
 
@@ -343,12 +338,13 @@ gotlock:
  *	- Make him lose his mail when a Nymph steals the letter.
  *	- Do something to the text when the scroll is enchanted or cancelled.
  */
-#include	"def.mkroom.h"
 static struct stat omstat,nmstat;
 static char *mailbox;
 static long laststattime;
 
-getmailstatus() {
+void
+getmailstatus()
+{
 	if(!(mailbox = getenv("MAIL")))
 		return;
 	if(stat(mailbox, &omstat)){
@@ -361,7 +357,9 @@ getmailstatus() {
 	}
 }
 
-ckmailstatus() {
+void
+ckmailstatus()
+{
 	if(!mailbox
 #ifdef MAILCKFREQ
 		    || moves < laststattime + MAILCKFREQ
@@ -383,12 +381,14 @@ ckmailstatus() {
 	}
 }
 
-newmail() {
+static void
+newmail()
+{
 	/* produce a scroll of mail */
-	register struct obj *obj;
-	register struct monst *md;
+	struct obj *obj;
+	struct monst *md;
 	extern char plname[];
-	extern struct obj *mksobj(), *addinv();
+	extern struct obj *mksobj();
 	extern struct monst *makemon();
 	extern struct permonst pm_mail_daemon;
 
@@ -412,15 +412,14 @@ newmail() {
 }
 
 /* make md run through the cave */
-mdrush(md,away)
-register struct monst *md;
-boolean away;
+static void
+mdrush(struct monst *md, boolean away)
 {
-	register int uroom = inroom(u.ux, u.uy);
+	int uroom = inroom(u.ux, u.uy);
 	if(uroom >= 0) {
-		register int tmp = rooms[uroom].fdoor;
-		register int cnt = rooms[uroom].doorct;
-		register int fx = u.ux, fy = u.uy;
+		int tmp = rooms[uroom].fdoor;
+		int cnt = rooms[uroom].doorct;
+		int fx = u.ux, fy = u.uy;
 		while(cnt--) {
 			if(dist(fx,fy) < dist(doors[tmp].x, doors[tmp].y)){
 				fx = doors[tmp].x;
@@ -435,7 +434,7 @@ boolean away;
 			tmp = fy; fy = md->my; md->my = tmp;
 		}
 		while(fx != md->mx || fy != md->my) {
-			register int dx,dy,nfx = fx,nfy = fy,d1,d2;
+			int dx,dy,nfx = fx,nfy = fy,d1,d2;
 
 			tmp_at(fx,fy);
 			d1 = DIST(fx,fy,md->mx,md->my);
@@ -465,9 +464,11 @@ boolean away;
 		pmon(md);
 }
 
-readmail() {
+void
+readmail()
+{
 #ifdef DEF_MAILREADER			/* This implies that UNIX is defined */
-	register char *mr = 0;
+	char *mr = 0;
 	more();
 	if(!(mr = getenv("MAILREADER")))
 		mr = DEF_MAILREADER;
@@ -484,10 +485,11 @@ readmail() {
 }
 #endif /* MAIL */
 
-regularize(s)	/* normalize file name - we don't like ..'s or /'s */
-register char *s;
+/* normalize file name - we don't like ..'s or /'s */
+void
+regularize(char *s)
 {
-	register char *lp;
+	char *lp;
 
 	while((lp = strchr(s, '.')) || (lp = strchr(s, '/')))
 		*lp = '_';

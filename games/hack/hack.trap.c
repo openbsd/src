@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.trap.c,v 1.5 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.trap.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,12 +62,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.trap.c,v 1.5 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.trap.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include	<ctype.h>
+#include	<stdlib.h>
 #include	"hack.h"
-
-extern struct monst *makemon();
 
 char vowels[] = "aeiou";
 
@@ -83,11 +83,14 @@ char *traps[] = {
 	" mimic"
 };
 
+static void vtele(void);
+static void teleds(int, int);
+static int  teleok(int, int);
+
 struct trap *
-maketrap(x,y,typ)
-register x,y,typ;
+maketrap(int x, int y, int typ)
 {
-	register struct trap *ttmp;
+	struct trap *ttmp;
 
 	ttmp = newtrap();
 	ttmp->ttyp = typ;
@@ -100,8 +103,10 @@ register x,y,typ;
 	return(ttmp);
 }
 
-dotrap(trap) register struct trap *trap; {
-	register int ttype = trap->ttyp;
+void
+dotrap(struct trap *trap)
+{
+	int ttype = trap->ttyp;
 
 	nomul(0);
 	if(trap->tseen && !rn2(5) && ttype != PIT)
@@ -149,7 +154,7 @@ if(uarmh) pline("Fortunately, you are wearing a helmet!");
 			    stackobj(fobj);
 			    if(Invisible) newsym(u.ux, u.uy);
 			} else {
-			    register int newlevel = dlevel + 1;
+			    int newlevel = dlevel + 1;
 				while(!rn2(4) && newlevel < 29)
 					newlevel++;
 				pline("A trap door opens up under you!");
@@ -199,16 +204,18 @@ if(uarmh) pline("Fortunately, you are wearing a helmet!");
 	}
 }
 
-mintrap(mtmp) register struct monst *mtmp; {
-	register struct trap *trap = t_at(mtmp->mx, mtmp->my);
-	register int wasintrap = mtmp->mtrapped;
+int
+mintrap(struct monst *mtmp)
+{
+	struct trap *trap = t_at(mtmp->mx, mtmp->my);
+	int wasintrap = mtmp->mtrapped;
 
 	if(!trap) {
 		mtmp->mtrapped = 0;	/* perhaps teleported? */
 	} else if(wasintrap) {
 		if(!rn2(40)) mtmp->mtrapped = 0;
 	} else {
-	    register int tt = trap->ttyp;
+	    int tt = trap->ttyp;
 	    int in_sight = cansee(mtmp->mx,mtmp->my);
 	    extern char mlarge[];
 
@@ -289,7 +296,9 @@ pline("A trap door in the ceiling opens and a rock hits %s!", monnam(mtmp));
 	return(mtmp->mtrapped);
 }
 
-selftouch(arg) char *arg; {
+void
+selftouch(char *arg)
+{
 	if(uwep && uwep->otyp == DEAD_COCKATRICE){
 		pline("%s touch the dead cockatrice.", arg);
 		pline("You turn to stone.");
@@ -298,7 +307,9 @@ selftouch(arg) char *arg; {
 	}
 }
 
-float_up(){
+void
+float_up()
+{
 	if(u.utrap) {
 		if(u.utraptype == TT_PIT) {
 			u.utrap = 0;
@@ -310,10 +321,13 @@ float_up(){
 		pline("You start to float in the air!");
 }
 
-float_down(){
-	register struct trap *trap;
+int
+float_down()
+{
+	struct trap *trap;
+
 	pline("You float gently to the ground.");
-	if(trap = t_at(u.ux,u.uy))
+	if ((trap = t_at(u.ux,u.uy)))
 		switch(trap->ttyp) {
 		case PIERC:
 			break;
@@ -324,14 +338,17 @@ float_down(){
 			dotrap(trap);
 	}
 	pickup(1);
+	return(0);	/* XXX value needed in hack.potion.c */
 }
 
-vtele() {
-#include "def.mkroom.h"
-	register struct mkroom *croom;
+static void
+vtele()
+{
+	struct mkroom *croom;
+
 	for(croom = &rooms[0]; croom->hx >= 0; croom++)
 	    if(croom->rtype == VAULT) {
-		register x,y;
+		int x,y;
 
 		x = rn2(2) ? croom->lx : croom->hx;
 		y = rn2(2) ? croom->ly : croom->hy;
@@ -343,10 +360,11 @@ vtele() {
 	tele();
 }
 
-tele() {
-	extern coord getpos();
+void
+tele()
+{
 	coord cc;
-	register int nux,nuy;
+	int nux,nuy;
 
 	if(Teleport_control) {
 		pline("To what position do you want to be teleported?");
@@ -366,8 +384,8 @@ tele() {
 	teleds(nux, nuy);
 }
 
-teleds(nux, nuy)
-register int nux,nuy;
+static void
+teleds(int nux, int nuy)
 {
 	if(Punished) unplacebc();
 	unsee();
@@ -389,14 +407,18 @@ register int nux,nuy;
 	if(!Blind) read_engr_at(u.ux,u.uy);
 }
 
-teleok(x,y) register int x,y; {	/* might throw him into a POOL */
+static int
+teleok(int x, int y)
+{	/* might throw him into a POOL */
 	return( isok(x,y) && !IS_ROCK(levl[x][y].typ) && !m_at(x,y) &&
 		!sobj_at(ENORMOUS_ROCK,x,y) && !t_at(x,y)
 	);
 	/* Note: gold is permitted (because of vaults) */
 }
 
-dotele() {
+int
+dotele()
+{
 	extern char pl_character[];
 
 	if(
@@ -417,7 +439,9 @@ dotele() {
 	return(1);
 }
 
-placebc(attach) int attach; {
+void
+placebc(int attach)
+{
 	if(!uchain || !uball){
 		impossible("Where are your chain and ball??");
 		return;
@@ -434,7 +458,9 @@ placebc(attach) int attach; {
 	}
 }
 
-unplacebc(){
+void
+unplacebc()
+{
 	if(!carried(uball)){
 		freeobj(uball);
 		unpobj(uball);
@@ -443,20 +469,27 @@ unplacebc(){
 	unpobj(uchain);
 }
 
-level_tele() {
-register int newlevel;
+void
+level_tele()
+{
+	int newlevel;
+
 	if(Teleport_control) {
 	    char buf[BUFSZ];
 
 	    do {
 	      pline("To what level do you want to teleport? [type a number] ");
 	      getlin(buf);
-	    } while(!digit(buf[0]) && (buf[0] != '-' || !digit(buf[1])));
+	    } while(!isdigit(buf[0]) && (buf[0] != '-' || !isdigit(buf[1])));
 	    newlevel = atoi(buf);
 	} else {
 	    newlevel  = 5 + rn2(20);	/* 5 - 24 */
-	    if(dlevel == newlevel)
-		if(!xdnstair) newlevel--; else newlevel++;
+	    if(dlevel == newlevel) {
+		if(!xdnstair)
+			newlevel--;
+		else
+			newlevel++;
+	    }
 	}
 	if(newlevel >= 30) {
 	    if(newlevel > MAXLEVEL) newlevel = MAXLEVEL;
@@ -488,13 +521,14 @@ register int newlevel;
 	goto_level(newlevel, FALSE); /* calls done("escaped") if newlevel==0 */
 }
 
+void
 drown()
 {
 	pline("You fall into a pool!");
 	pline("You can't swim!");
 	if(rn2(3) < u.uluck+2) {
 		/* most scrolls become unreadable */
-		register struct obj *obj;
+		struct obj *obj;
 
 		for(obj = invent; obj; obj = obj->nobj)
 			if(obj->olet == SCROLL_SYM && rn2(12) > u.uluck)
@@ -503,7 +537,8 @@ drown()
 
 		pline("You attempt a teleport spell.");	/* utcsri!carroll */
 		(void) dotele();
-		if(levl[u.ux][u.uy].typ != POOL) return;
+		if(levl[(int)u.ux][(int)u.uy].typ != POOL)
+			return;
 	}
 	pline("You drown ...");
 	killer = "pool of water";

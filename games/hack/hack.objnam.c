@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.objnam.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $	*/
+/*	$OpenBSD: hack.objnam.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,19 +62,25 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.objnam.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.objnam.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include	<ctype.h>
+#include	<stdio.h>
+#include	<stdlib.h>
 #include	"hack.h"
 #define	PREFIX	15
-extern char *eos();
 extern int bases[];
 
 static char bufr[BUFSZ];
 
+static char *sitoa(int);
+
 char *
-strprepend(s,pref) register char *s, *pref; {
-register int i = strlen(pref);
+strprepend(char *s, char *pref)
+{
+	int i = strlen(pref);
+
 	if(i > PREFIX) {
 		pline("WARNING: prefix too short.");
 		return(s);
@@ -84,24 +90,26 @@ register int i = strlen(pref);
 	return(s);
 }
 
-char *
-sitoa(a) int a; {
-static char buf[13];
+static char *
+sitoa(int a)
+{
+	static char buf[13];
+
 	snprintf(buf, sizeof buf, (a < 0) ? "%d" : "+%d", a);
 	return(buf);
 }
 
 char *
-typename(otyp)
-register int otyp;
+typename(int otyp)
 {
-static char buf[BUFSZ];
-register struct objclass *ocl = &objects[otyp];
-register char *an = ocl->oc_name;
-register char *dn = ocl->oc_descr;
-register char *un = ocl->oc_uname;
-register char *bp;
-register int nn = ocl->oc_name_known;
+	static char buf[BUFSZ];
+	struct objclass *ocl = &objects[otyp];
+	char *an = ocl->oc_name;
+	char *dn = ocl->oc_descr;
+	char *un = ocl->oc_uname;
+	char *bp;
+	int nn = ocl->oc_name_known;
+
 	switch(ocl->oc_olet) {
 	case POTION_SYM:
 		strlcpy(buf, "potion", sizeof buf);
@@ -159,16 +167,16 @@ register int nn = ocl->oc_name_known;
 }
 
 char *
-xname(obj)
-register struct obj *obj;
+xname(struct obj *obj)
 {
-register char *buf = &(bufr[PREFIX]);	/* leave room for "17 -3 " */
-register int nn = objects[obj->otyp].oc_name_known;
-register char *an = objects[obj->otyp].oc_name;
-register char *dn = objects[obj->otyp].oc_descr;
-register char *un = objects[obj->otyp].oc_uname;
-register int pl = (obj->quan != 1);
-size_t len = bufr + sizeof bufr - buf;
+	char *buf = &(bufr[PREFIX]);	/* leave room for "17 -3 " */
+	int nn = objects[obj->otyp].oc_name_known;
+	char *an = objects[obj->otyp].oc_name;
+	char *dn = objects[obj->otyp].oc_descr;
+	char *un = objects[obj->otyp].oc_uname;
+	int pl = (obj->quan != 1);
+	size_t len = bufr + sizeof bufr - buf;
+
 	if(!obj->dknown && !Blind) obj->dknown = 1; /* %% doesn't belong here */
 	switch(obj->olet) {
 	case AMULET_SYM:
@@ -288,12 +296,12 @@ size_t len = bufr + sizeof bufr - buf;
 			obj->olet,obj->olet,obj->otyp,obj->spe);
 	}
 	if(pl) {
-		register char *p;
+		char *p;
 
 		for(p = buf; *p; p++) {
 			if(!strncmp(" of ", p, 4)) {
 				/* pieces of, cloves of, lumps of */
-				register int c1, c2 = 's';
+				int c1, c2 = 's';
 
 				do {
 					c1 = c2; c2 = *p; *p++ = c1;
@@ -320,12 +328,12 @@ nopl:
 }
 
 char *
-doname(obj)
-register struct obj *obj;
+doname(struct obj *obj)
 {
-char prefix[PREFIX];
-register char *bp = xname(obj);
-register char *p;
+	char prefix[PREFIX];
+	char *bp = xname(obj);
+	char *p;
+
 	if(obj->quan != 1)
 		snprintf(prefix, sizeof prefix, "%u ", obj->quan);
 	else
@@ -373,9 +381,8 @@ register char *p;
 }
 
 /* used only in hack.fight.c (thitu) */
-setan(str,buf,len)
-register char *str,*buf;
-register size_t len;
+void
+setan(char *str, char *buf, size_t len)
 {
 	if(strchr(vowels,*str))
 		snprintf(buf, len, "an %s", str);
@@ -384,9 +391,11 @@ register size_t len;
 }
 
 char *
-aobjnam(otmp,verb) register struct obj *otmp; register char *verb; {
-register char *bp = xname(otmp);
-char prefix[PREFIX];
+aobjnam(struct obj *otmp, char *verb)
+{
+	char *bp = xname(otmp);
+	char prefix[PREFIX];
+
 	if(otmp->quan != 1) {
 		snprintf(prefix, sizeof prefix, "%u ", otmp->quan);
 		bp = strprepend(bp, prefix);
@@ -408,10 +417,9 @@ char prefix[PREFIX];
 }
 
 char *
-Doname(obj)
-register struct obj *obj;
+Doname(struct obj *obj)
 {
-	register char *s = doname(obj);
+	char *s = doname(obj);
 
 	if('a' <= *s && *s <= 'z') *s -= ('a' - 'A');
 	return(s);
@@ -421,15 +429,14 @@ char *wrp[] = { "wand", "ring", "potion", "scroll", "gem" };
 char wrpsym[] = { WAND_SYM, RING_SYM, POTION_SYM, SCROLL_SYM, GEM_SYM };
 
 struct obj *
-readobjnam(bp, len)
-register char *bp;
-register size_t len;
+readobjnam(char *bp, size_t len)
 {
-register char *p, *cp = bp;
-register int i;
-int cnt, spe, spesgn, typ, heavy;
-char let;
-char *un, *dn, *an;
+	char *p, *cp = bp;
+	int i;
+	int cnt, spe, spesgn, typ, heavy;
+	char let;
+	char *un, *dn, *an;
+
 /* int the = 0; char *oname = 0; */
 	cnt = spe = spesgn = typ = heavy = 0;
 	let = 0;
@@ -446,9 +453,9 @@ char *un, *dn, *an;
 		cnt = 1;
 		cp += 2;
 	}
-	if(!cnt && digit(*cp)){
+	if(!cnt && isdigit(*cp)){
 		cnt = atoi(cp);
-		while(digit(*cp)) cp++;
+		while(isdigit(*cp)) cp++;
 		while(*cp == ' ') cp++;
 	}
 	if(!cnt) cnt = 1;		/* %% what with "gems" etc. ? */
@@ -456,7 +463,7 @@ char *un, *dn, *an;
 	if(*cp == '+' || *cp == '-'){
 		spesgn = (*cp++ == '+') ? 1 : -1;
 		spe = atoi(cp);
-		while(digit(*cp)) cp++;
+		while(isdigit(*cp)) cp++;
 		while(*cp == ' ') cp++;
 	} else {
 		p = strrchr(cp, '(');
@@ -465,7 +472,7 @@ char *un, *dn, *an;
 			else *p = 0;
 			p++;
 			spe = atoi(p);
-			while(digit(*p)) p++;
+			while(isdigit(*p)) p++;
 			if(strcmp(p, ")")) spe = 0;
 			else spesgn = 1;
 		}
@@ -497,7 +504,8 @@ char *un, *dn, *an;
 	if(cnt != 1) {
 		/* find "cloves of garlic", "worthless pieces of blue glass" */
 		for(p = cp; *p; p++) if(!strncmp(p, "s of ", 5)){
-			while(*p = p[1]) p++;
+			while ((*p = p[1]))
+				p++;
 			goto sing;
 		}
 		/* remove -s or -es (boxes) or -ies (rubies, zruties) */
@@ -549,7 +557,7 @@ sing:
 		goto srch;
 	}
 	for(i = 0; i < sizeof(wrpsym); i++) {
-		register int j = strlen(wrp[i]);
+		int j = strlen(wrp[i]);
 		if(!strncmp(cp, wrp[i], j)){
 			let = wrpsym[i];
 			cp += j;
@@ -584,7 +592,7 @@ srch:
 	i = 1;
 	if(let) i = bases[letindex(let)];
 	while(i <= NROFOBJECTS && (!let || objects[i].oc_olet == let)){
-		register char *zn = objects[i].oc_name;
+		char *zn = objects[i].oc_name;
 
 		if(!zn) goto nxti;
 		if(an && strcmp(an, zn))
@@ -602,7 +610,7 @@ any:
 	if(!let) let = wrpsym[rn2(sizeof(wrpsym))];
 	typ = probtype(let);
 typfnd:
-	{ register struct obj *otmp;
+	{ struct obj *otmp;
 	  extern struct obj *mksobj();
 	let = objects[typ].oc_olet;
 	otmp = mksobj(typ);

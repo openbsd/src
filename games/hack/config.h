@@ -1,4 +1,4 @@
-/* *	$OpenBSD: config.h,v 1.7 2003/03/16 21:22:35 camield Exp $*/
+/* *	$OpenBSD: config.h,v 1.8 2003/05/19 06:30:56 pjanzen Exp $*/
 /* *	$NetBSD: config.h,v 1.3 1995/03/23 08:29:15 cgd Exp $*/
 
 /*
@@ -70,22 +70,9 @@
 #define	UNIX		/* delete if no fork(), exec() available */
 #define	CHDIR		/* delete if no chdir() available */
 
-/*
- * Some include files are in a different place under SYSV
- * 	BSD		   SYSV
- * <sys/wait.h>		<wait.h>
- * <sys/time.h>		<time.h>
- * <sgtty.h>		<termio.h>
- * Some routines are called differently
- * Also, the code for suspend and various ioctls is only given for BSD4.2
- * (I do not have access to a SYSV system.)
- */
-#define BSD		/* delete this line on System V */
-
 /* #define STUPID */	/* avoid some complicated expressions if
 			   your C compiler chokes on them */
 /* #define PYRAMID_BUG */	/* avoid a bug on the Pyramid */
-/* #define NOWAITINCLUDE */	/* neither <wait.h> nor <sys/wait.h> exists */
 
 #define WIZARD  "bruno"	/* the person allowed to use the -D option */
 #define RECORD	"record"/* the file containing the list of topscorers */

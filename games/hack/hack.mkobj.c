@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mkobj.c,v 1.5 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.mkobj.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,19 +62,17 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.mkobj.c,v 1.5 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.mkobj.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
 
 char mkobjstr[] = "))[[!!!!????%%%%/=**))[[!!!!????%%%%/=**(%";
-struct obj *mkobj(), *mksobj();
 
 struct obj *
-mkobj_at(let,x,y)
-register let,x,y;
+mkobj_at(int let, int x, int y)
 {
-	register struct obj *otmp = mkobj(let);
+	struct obj *otmp = mkobj(let);
 	otmp->ox = x;
 	otmp->oy = y;
 	otmp->nobj = fobj;
@@ -82,10 +80,10 @@ register let,x,y;
 	return(otmp);
 }
 
-mksobj_at(otyp,x,y)
-register otyp,x,y;
+void
+mksobj_at(int otyp, int x, int y)
 {
-	register struct obj *otmp = mksobj(otyp);
+	struct obj *otmp = mksobj(otyp);
 	otmp->ox = x;
 	otmp->oy = y;
 	otmp->nobj = fobj;
@@ -93,7 +91,8 @@ register otyp,x,y;
 }
 
 struct obj *
-mkobj(let) {
+mkobj(int let)
+{
 	if(!let)
 		let = mkobjstr[rn2(sizeof(mkobjstr) - 1)];
 	return(
@@ -109,10 +108,9 @@ mkobj(let) {
 struct obj zeroobj;
 
 struct obj *
-mksobj(otyp)
-register otyp;
+mksobj(int otyp)
 {
-	register struct obj *otmp;
+	struct obj *otmp;
 	char let = objects[otyp].oc_olet;
 
 	otmp = newobj(0);
@@ -181,24 +179,27 @@ register otyp;
 	return(otmp);
 }
 
-letter(c) {
+int
+letter(int c)
+{
 	return(('@' <= c && c <= 'Z') || ('a' <= c && c <= 'z'));
 }
 
-weight(obj)
-register struct obj *obj;
+int
+weight(struct obj *obj)
 {
-register int wt = objects[obj->otyp].oc_weight;
+	int wt = objects[obj->otyp].oc_weight;
+
 	return(wt ? wt*obj->quan : (obj->quan + 1)/2);
 }
 
-mkgold(num,x,y)
-register long num;
+void
+mkgold(long num, int x, int y)
 {
-	register struct gold *gold;
-	register long amount = (num ? num : 1 + (rnd(dlevel+2) * rnd(30)));
+	struct gold *gold;
+	long amount = (num ? num : 1 + (rnd(dlevel+2) * rnd(30)));
 
-	if(gold = g_at(x,y))
+	if ((gold = g_at(x,y)))
 		gold->amount += amount;
 	else {
 		gold = newgold();

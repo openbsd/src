@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.Decl.c,v 1.4 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.Decl.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.Decl.c,v 1.4 2003/03/16 21:22:35 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.Decl.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -74,7 +74,6 @@ boolean in_mklev, restoring;
 
 struct rm levl[COLNO][ROWNO];	/* level map */
 #ifndef QUEST
-#include "def.mkroom.h"
 struct mkroom rooms[MAXNROFROOMS+1];
 coord doors[DOORMAX];
 #endif /* QUEST */

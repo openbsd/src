@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do_name.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $	*/
+/*	$OpenBSD: hack.do_name.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,20 +62,25 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.do_name.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.do_name.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
 #include <stdio.h>
+#include <stdlib.h>
 extern char plname[];
+static void do_oname(struct obj *);
+static char *lmonnam(struct monst *);
+static char *visctrl(char);
 
 coord
-getpos(force,goal) int force; char *goal; {
-register cx,cy,i,c;
-extern char sdir[];		/* defined in hack.c */
-extern schar xdir[], ydir[];	/* idem */
-extern char *visctrl();		/* see below */
-coord cc;
+getpos(int force, char *goal)
+{
+	int cx,cy,i,c;
+	extern char sdir[];		/* defined in hack.c */
+	extern schar xdir[], ydir[];	/* idem */
+	coord cc;
+
 	pline("(For instructions type a ?)");
 	cx = u.ux;
 	cy = u.uy;
@@ -108,12 +113,15 @@ coord cc;
 	return(cc);
 }
 
-do_mname(){
-char buf[BUFSZ];
-coord cc;
-register int cx,cy,lth,i;
-register struct monst *mtmp, *mtmp2;
-extern char *lmonnam();
+int
+do_mname()
+{
+	char buf[BUFSZ];
+	coord cc;
+	int cx,cy,lth,i;
+	struct monst *mtmp, *mtmp2;
+	extern char *lmonnam();
+
 	cc = getpos(0, "the monster you want to name");
 	cx = cc.x;
 	cy = cc.y;
@@ -160,10 +168,13 @@ extern char *lmonnam();
  * when there might be pointers around in unknown places. For now: only
  * when  obj  is in the inventory.
  */
-do_oname(obj) register struct obj *obj; {
-register struct obj *otmp, *otmp2;
-register lth;
-char buf[BUFSZ];
+static void
+do_oname(struct obj *obj)
+{
+	struct obj *otmp, *otmp2;
+	int lth;
+	char buf[BUFSZ];
+
 	pline("What do you want to name %s? ", doname(obj));
 	getlin(buf);
 	clrlin();
@@ -197,9 +208,10 @@ char buf[BUFSZ];
 	free((char *) obj);	/* let us hope nobody else saved a pointer */
 }
 
+int
 ddocall()
 {
-	register struct obj *obj;
+	struct obj *obj;
 
 	pline("Do you want to name an individual object? [ny] ");
 	switch(readchar()) {
@@ -216,14 +228,13 @@ ddocall()
 	return(0);
 }
 
-docall(obj)
-register struct obj *obj;
+void
+docall(struct obj *obj)
 {
 	char buf[BUFSZ];
 	struct obj otemp;
-	register char **str1;
-	extern char *xname();
-	register char *str;
+	char **str1;
+	char *str;
 	size_t len;
 
 	otemp = *obj;
@@ -251,16 +262,17 @@ char *ghostnames[] = {		/* these names should have length < PL_NSIZ */
 };
 
 char *
-xmonnam(mtmp, vb) register struct monst *mtmp; int vb; {
-static char buf[BUFSZ];		/* %% */
-extern char *shkname();
+xmonnam(struct monst *mtmp, int vb)
+{
+	static char buf[BUFSZ];		/* %% */
+
 	if(mtmp->mnamelth && !vb) {
 		(void) strlcpy(buf, NAME(mtmp), sizeof buf);
 		return(buf);
 	}
 	switch(mtmp->data->mlet) {
 	case ' ':
-		{ register char *gn = (char *) mtmp->mextra;
+		{ char *gn = (char *) mtmp->mextra;
 		  if(!*gn) {		/* might also look in scorefile */
 		    gn = ghostnames[rn2(SIZE(ghostnames))];
 		    if(!rn2(2)) (void)
@@ -288,29 +300,31 @@ extern char *shkname();
 	return(buf);
 }
 
-char *
-lmonnam(mtmp) register struct monst *mtmp; {
+static char *
+lmonnam(struct monst *mtmp)
+{
 	return(xmonnam(mtmp, 1));
 }
 
 char *
-monnam(mtmp) register struct monst *mtmp; {
+monnam(struct monst *mtmp)
+{
 	return(xmonnam(mtmp, 0));
 }
 
 char *
-Monnam(mtmp) register struct monst *mtmp; {
-register char *bp = monnam(mtmp);
+Monnam(struct monst *mtmp)
+{
+	char *bp = monnam(mtmp);
+
 	if('a' <= *bp && *bp <= 'z') *bp += ('A' - 'a');
 	return(bp);
 }
 
 char *
-amonnam(mtmp,adj)
-register struct monst *mtmp;
-register char *adj;
+amonnam(struct monst *mtmp, char *adj)
 {
-	register char *bp = monnam(mtmp);
+	char *bp = monnam(mtmp);
 	static char buf[BUFSZ];		/* %% */
 
 	if(!strncmp(bp, "the ", 4)) bp += 4;
@@ -319,19 +333,19 @@ register char *adj;
 }
 
 char *
-Amonnam(mtmp, adj)
-register struct monst *mtmp;
-register char *adj;
+Amonnam(struct monst *mtmp, char *adj)
 {
-	register char *bp = amonnam(mtmp,adj);
+	char *bp = amonnam(mtmp,adj);
 
 	*bp = 'T';
 	return(bp);
 }
 
 char *
-Xmonnam(mtmp) register struct monst *mtmp; {
-register char *bp = Monnam(mtmp);
+Xmonnam(struct monst *mtmp)
+{
+	char *bp = Monnam(mtmp);
+
 	if(!strncmp(bp, "The ", 4)) {
 		bp += 2;
 		*bp = 'A';
@@ -339,9 +353,8 @@ register char *bp = Monnam(mtmp);
 	return(bp);
 }
 
-char *
-visctrl(c)
-char c;
+static char *
+visctrl(char c)
 {
 static char ccc[3];
 	if(c < 040) {

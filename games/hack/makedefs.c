@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedefs.c,v 1.4 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: makedefs.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,12 +62,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: makedefs.c,v 1.4 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: makedefs.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 /* construct definitions of object constants */
 #define	LINSZ	1000
@@ -76,14 +78,19 @@ static char rcsid[] = "$OpenBSD: makedefs.c,v 1.4 2003/03/16 21:22:36 camield Ex
 int fd;
 char string[STRSZ];
 
+void capitalize(char *sp);
+int  getentry(void);
+int  skipuntil(char *s);
+char nextchar(void);
+void readline(void);
+
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-register int index = 0;
-register int propct = 0;
-register char *sp;
+	int index = 0;
+	int propct = 0;
+	char *sp;
+
 	if (argc != 2) {
 		(void)fprintf(stderr, "usage: makedefs file\n");
 		exit(1);
@@ -124,8 +131,11 @@ register char *sp;
 char line[LINSZ], *lp = line, *lp0 = line, *lpe = line;
 int eof;
 
-readline(){
-register int n = read(fd, lp0, (line+LINSZ)-lp0);
+void
+readline()
+{
+	int n = read(fd, lp0, (line+LINSZ)-lp0);
+
 	if(n < 0){
 		printf("Input error.\n");
 		exit(1);
@@ -135,7 +145,8 @@ register int n = read(fd, lp0, (line+LINSZ)-lp0);
 }
 
 char
-nextchar(){
+nextchar()
+{
 	if(lp == lpe){
 		readline();
 		lp = lp0;
@@ -143,8 +154,11 @@ nextchar(){
 	return((lp == lpe) ? 0 : *lp++);
 }
 
-skipuntil(s) char *s; {
-register char *sp0, *sp1;
+int
+skipuntil(char *s)
+{
+	char *sp0, *sp1;
+
 loop:
 	while(*s != nextchar())
 		if(eof) {
@@ -152,7 +166,7 @@ loop:
 			exit(1);
 		}
 	if(strlen(s) > lpe-lp+1){
-		register char *lp1, *lp2;
+		char *lp1, *lp2;
 		lp2 = lp;
 		lp1 = lp = lp0;
 		while(lp2 != lpe) *lp1++ = *lp2++;
@@ -175,12 +189,15 @@ loop:
 	goto loop;
 }
 
-getentry(){
-int inbraces = 0, inparens = 0, stringseen = 0, commaseen = 0;
-int prefix = 0;
-char ch;
+int
+getentry()
+{
+	int inbraces = 0, inparens = 0, stringseen = 0, commaseen = 0;
+	int prefix = 0;
+	char ch;
 #define	NSZ	10
-char identif[NSZ], *ip;
+	char identif[NSZ], *ip;
+
 	string[0] = string[4] = 0;
 	/* read until {...} or XXX(...) followed by ,
 	   skip comment and #define lines
@@ -189,12 +206,12 @@ char identif[NSZ], *ip;
 	while(1) {
 		ch = nextchar();
 	swi:
-		if(letter(ch)){
+		if(isalpha(ch)){
 			ip = identif;
 			do {
 				if(ip < identif+NSZ-1) *ip++ = ch;
 				ch = nextchar();
-			} while(letter(ch) || digit(ch));
+			} while(isalpha(ch) || isdigit(ch));
 			*ip = 0;
 			while(ch == ' ' || ch == '\t') ch = nextchar();
 			if(ch == '(' && !inparens && !stringseen)
@@ -232,7 +249,7 @@ char identif[NSZ], *ip;
 		case '\n':
 			/* watch for #define at begin of line */
 			if((ch = nextchar()) == '#'){
-				register char pch;
+				char pch;
 				/* skip until '\n' not preceded by '\\' */
 				do {
 					pch = ch;
@@ -260,9 +277,9 @@ char identif[NSZ], *ip;
 			continue;
 		case '"':
 			{
-				register char *sp = string + prefix;
-				register char pch;
-				register int store = (inbraces || inparens)
+				char *sp = string + prefix;
+				char pch;
+				int store = (inbraces || inparens)
 					&& !stringseen++ && !commaseen;
 				do {
 					pch = ch;
@@ -277,15 +294,8 @@ char identif[NSZ], *ip;
 	}
 }
 
-capitalize(sp) register char *sp; {
-	if('a' <= *sp && *sp <= 'z') *sp += 'A'-'a';
-}
-
-letter(ch) register char ch; {
-	return( ('a' <= ch && ch <= 'z') ||
-		('A' <= ch && ch <= 'Z') );
-}
-
-digit(ch) register char ch; {
-	return( '0' <= ch && ch <= '9' );
+void
+capitalize(char *sp)
+{
+	*sp = (char)toupper(*sp);
 }

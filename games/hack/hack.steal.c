@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.steal.c,v 1.3 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.steal.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,20 +62,28 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.steal.c,v 1.3 2003/03/16 21:22:36 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.steal.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "hack.h"
 
-long		/* actually returns something that fits in an int */
-somegold(){
+extern void (*afternmv)(void);
+
+/* actually returns something that fits in an int */
+long
+somegold()
+{
 	return( (u.ugold < 100) ? u.ugold :
 		(u.ugold > 10000) ? rnd(10000) : rnd((int) u.ugold) );
 }
 
-stealgold(mtmp)  register struct monst *mtmp; {
-register struct gold *gold = g_at(u.ux, u.uy);
-register long tmp;
+void
+stealgold(struct monst *mtmp)
+{
+	struct gold *gold = g_at(u.ux, u.uy);
+	long tmp;
+
 	if(gold && ( !u.ugold || gold->amount > u.ugold || !rn2(5))) {
 		mtmp->mgold += gold->amount;
 		freegold(gold);
@@ -97,11 +105,14 @@ register long tmp;
 }
 
 /* steal armor after he finishes taking it off */
-unsigned stealoid;		/* object to be stolen */
-unsigned stealmid;		/* monster doing the stealing */
-stealarm(){
-	register struct monst *mtmp;
-	register struct obj *otmp;
+static unsigned stealoid;		/* object to be stolen */
+static unsigned stealmid;		/* monster doing the stealing */
+
+void
+stealarm()
+{
+	struct monst *mtmp;
+	struct obj *otmp;
 
 	for(otmp = invent; otmp; otmp = otmp->nobj)
 	  if(otmp->o_id == stealoid) {
@@ -124,12 +135,12 @@ stealarm(){
 /* returns 1 when something was stolen */
 /* (or at least, when N should flee now) */
 /* avoid stealing the object stealoid */
-steal(mtmp)
-struct monst *mtmp;
+int
+steal(struct monst *mtmp)
 {
-	register struct obj *otmp;
-	register tmp;
-	register named = 0;
+	struct obj *otmp;
+	int tmp;
+	int named = 0;
 
 	if(!invent){
 	    if(Blind)
@@ -175,13 +186,6 @@ struct monst *mtmp;
 			(void) armoroff(otmp);
 			otmp->cursed = curssv;
 			if(multi < 0){
-				extern char *nomovemsg;
-				extern int (*afternmv)();
-				/*
-				multi = 0;
-				nomovemsg = 0;
-				afternmv = 0;
-				*/
 				stealoid = otmp->o_id;
 				stealmid = mtmp->m_id;
 				afternmv = stealarm;
@@ -212,18 +216,17 @@ struct monst *mtmp;
 	return((multi < 0) ? 0 : 1);
 }
 
-mpickobj(mtmp,otmp)
-register struct monst *mtmp;
-register struct obj *otmp;
+void
+mpickobj(struct monst *mtmp, struct obj *otmp)
 {
 	otmp->nobj = mtmp->minvent;
 	mtmp->minvent = otmp;
 }
 
-stealamulet(mtmp)
-register struct monst *mtmp;
+int
+stealamulet(struct monst *mtmp)
 {
-	register struct obj *otmp;
+	struct obj *otmp;
 
 	for(otmp = invent; otmp; otmp = otmp->nobj) {
 	    if(otmp->olet == AMULET_SYM) {
@@ -239,11 +242,10 @@ register struct monst *mtmp;
 }
 
 /* release the objects the killed animal has stolen */
-relobj(mtmp,show)
-register struct monst *mtmp;
-register show;
+void
+relobj(struct monst *mtmp, int show)
 {
-	register struct obj *otmp, *otmp2;
+	struct obj *otmp, *otmp2;
 
 	for(otmp = mtmp->minvent; otmp; otmp = otmp2){
 		otmp->ox = mtmp->mx;
@@ -257,7 +259,7 @@ register show;
 	}
 	mtmp->minvent = (struct obj *) 0;
 	if(mtmp->mgold || mtmp->data->mlet == 'L') {
-		register long tmp;
+		long tmp;
 
 		tmp = (mtmp->mgold > 10000) ? 10000 : mtmp->mgold;
 		mkgold((long)(tmp + d(dlevel,30)), mtmp->mx, mtmp->my);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.makemon.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.makemon.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.makemon.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static const char rcsid[] = "$OpenBSD: hack.makemon.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -79,11 +79,10 @@ struct monst zeromonst;
  *	note that in this case we return only one of them (the one at [x,y]).
  */
 struct monst *
-makemon(ptr,x,y)
-register struct permonst *ptr;
+makemon(struct permonst *ptr, int x, int y)
 {
-	register struct monst *mtmp;
-	register tmp, ct;
+	struct monst *mtmp;
+	int tmp, ct;
 	boolean anything = (!ptr);
 	extern boolean in_mklev;
 
@@ -154,9 +153,8 @@ gotmon:
 #endif /* NOWORM */
 
 	if(anything) if(ptr->mlet == 'O' || ptr->mlet == 'k') {
-		coord enexto();
 		coord mm;
-		register int cnt = rnd(10);
+		int cnt = rnd(10);
 		mm.x = x;
 		mm.y = y;
 		while(cnt--) {
@@ -169,10 +167,9 @@ gotmon:
 }
 
 coord
-enexto(xx,yy)
-register xchar xx,yy;
+enexto(xchar xx, xchar yy)
 {
-	register xchar x,y;
+	xchar x,y;
 	coord foo[15], *tfoo;
 	int range;
 
@@ -209,7 +206,9 @@ foofull:
 	return( foo[rn2(tfoo-foo)] );
 }
 
-goodpos(x,y)	/* used only in mnexto and rloc */
+/* used only in mnexto and rloc */
+int
+goodpos(int x, int y)
 {
 	return(
 	! (x < 1 || x > COLNO-2 || y < 1 || y > ROWNO-2 ||
@@ -219,11 +218,11 @@ goodpos(x,y)	/* used only in mnexto and rloc */
 	));
 }
 
-rloc(mtmp)
-struct monst *mtmp;
+void
+rloc(struct monst *mtmp)
 {
-	register tx,ty;
-	register char ch = mtmp->data->mlet;
+	int tx,ty;
+	char ch = mtmp->data->mlet;
 
 #ifndef NOWORM
 	if(ch == 'w' && mtmp->mx) return;	/* do not relocate worms */
@@ -245,17 +244,15 @@ struct monst *mtmp;
 }
 
 struct monst *
-mkmon_at(let,x,y)
-char let;
-register int x,y;
+mkmon_at(char let, int x, int y)
 {
-	register int ct;
-	register struct permonst *ptr;
+	int ct;
+	struct permonst *ptr;
 
 	for(ct = 0; ct < CMNUM; ct++) {
 		ptr = &mons[ct];
 		if(ptr->mlet == let)
 			return(makemon(ptr,x,y));
 	}
-	return(0);
+	return(NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.bones.c,v 1.6 2003/05/07 09:48:56 tdeval Exp $	*/
+/*	$OpenBSD: hack.bones.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,23 +62,25 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.bones.c,v 1.6 2003/05/07 09:48:56 tdeval Exp $";
+static const char rcsid[] = "$OpenBSD: hack.bones.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $";
 #endif /* not lint */
 
+#include <unistd.h>
 #include "hack.h"
 extern char plname[PL_NSIZ];
-extern long somegold();
-extern struct monst *makemon();
 extern struct permonst pm_ghost;
 
 char bones[] = "bones_xx";
 
 /* save bones and possessions of a deceased adventurer */
-savebones(){
-register fd;
-register struct obj *otmp;
-register struct trap *ttmp;
-register struct monst *mtmp;
+void
+savebones()
+{
+	int fd;
+	struct obj *otmp;
+	struct trap *ttmp;
+	struct monst *mtmp;
+
 	if(dlevel <= 0 || dlevel > MAXLEVEL) return;
 	if(!rn2(1 + dlevel/2)) return;	/* not so many ghosts on low levels */
 	bones[6] = '0' + (dlevel/10);
@@ -136,8 +138,11 @@ register struct monst *mtmp;
 	(void) close(fd);
 }
 
-getbones(){
-register fd,x,y,ok;
+int
+getbones()
+{
+	int fd,x,y,ok;
+
 	if(rn2(3)) return(0);	/* only once in three times do we find bones */
 	bones[6] = '0' + dlevel/10;
 	bones[7] = '0' + dlevel%10;
