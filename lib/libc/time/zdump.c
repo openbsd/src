@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)zdump.c	7.27";
-static char rcsid[] = "$OpenBSD: zdump.c,v 1.6 1998/01/18 23:25:02 millert Exp $";
+static char elsieid[] = "@(#)zdump.c	7.28";
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.7 1999/01/29 07:04:05 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -128,7 +128,7 @@ extern char *	tzname[2];
 
 static char *	abbr P((struct tm * tmp));
 static long	delta P((struct tm * newp, struct tm * oldp));
-static time_t	hunt P((char * name, time_t lot, time_t hit));
+static time_t	hunt P((char * name, time_t lot, time_t	hit));
 static size_t	longest;
 static char *	progname;
 static void	show P((char * zone, time_t t, int v));
@@ -167,7 +167,7 @@ char *	argv[];
 		if (c == 'v')
 			vflag = 1;
 		else	cutoff = optarg;
-	if (c != -1 ||
+	if ((c != EOF && c != -1) ||
 		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
 			(void) fprintf(stderr,
 _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
@@ -262,7 +262,7 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 		show(argv[i], t, TRUE);
 	}
 	if (fflush(stdout) || ferror(stdout)) {
-		(void) fprintf(stderr, _("%s: Error writing standard output "),
+		(void) fprintf(stderr, _("%s: Error writing "),
 			argv[0]);
 		(void) perror(_("standard output"));
 		(void) exit(EXIT_FAILURE);

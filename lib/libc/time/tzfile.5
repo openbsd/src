@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tzfile.5,v 1.5 1998/01/18 23:24:59 millert Exp $
+.\"	$OpenBSD: tzfile.5,v 1.6 1999/01/29 07:04:05 d Exp $
 .TH TZFILE 5
 .SH NAME
 tzfile \- time zone information
@@ -10,7 +10,7 @@ The time zone information files used by
 .IR tzset (3)
 begin with the magic characters "TZif" to identify then as
 time zone information files,
-followed by bytes reserved for future use,
+followed by sixteen bytes reserved for future use,
 followed by six four-byte values of type
 .BR long ,
 written in a ``standard'' byte order
@@ -134,6 +134,6 @@ is zero or the time argument is less than the first transition time recorded
 in the file.
 .SH SEE ALSO
 ctime(3)
-.\" @(#)tzfile.5	7.10
+.\" @(#)tzfile.5	7.11
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).

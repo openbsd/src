@@ -1,5 +1,4 @@
-/*	$OpenBSD: private.h,v 1.10 1998/01/23 19:33:51 millert Exp $	*/
-
+/*	$OpenBSD: private.h,v 1.11 1999/01/29 07:04:05 d Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -34,7 +33,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.46";
+static char	privatehid[] = "@(#)private.h	7.48";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -59,6 +58,10 @@ static char	privatehid[] = "@(#)private.h	7.46";
 #ifndef HAVE_STRERROR
 #define HAVE_STRERROR		0
 #endif /* !defined HAVE_STRERROR */
+
+#ifndef HAVE_SYMLINK
+#define HAVE_SYMLINK		1
+#endif /* !defined HAVE_SYMLINK */
 
 #ifndef HAVE_UNISTD_H
 #define HAVE_UNISTD_H		1
@@ -231,7 +234,7 @@ char *	scheck P((const char *string, const char *format));
 ** add one more for a minus sign if the type is signed.
 */
 #define INT_STRLEN_MAXIMUM(type) \
-    ((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 100 + 1 + TYPE_SIGNED(type))
+    ((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + 1 + TYPE_SIGNED(type))
 #endif /* !defined INT_STRLEN_MAXIMUM */
 
 /*

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.5 1998/01/18 23:25:03 millert Exp $
+.\"	$OpenBSD: zic.8,v 1.6 1999/01/29 07:04:05 d Exp $
 .TH ZIC 8
 .SH NAME
 zic \- time zone compiler
@@ -206,6 +206,8 @@ Recognized forms include:
 .fi
 .in -.5i
 .sp
+where hour 0 is midnight at the start of the day,
+and hour 24 is midnight at the end of the day.
 Any of these forms may be followed by the letter
 .B w
 if the given time is local
@@ -409,4 +411,4 @@ the earliest transition time recorded in the compiled file is correct.
 /usr/share/zoneinfo	standard directory used for created files
 .SH "SEE ALSO"
 ctime(3), tzfile(5), zdump(8)
-.\" @(#)zic.8	7.17
+.\" @(#)zic.8	7.18
