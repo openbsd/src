@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 1999/04/22 20:36:22 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 1999/04/23 17:38:48 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -72,6 +72,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
@@ -207,7 +211,7 @@ struct pvlist {
 
 struct pvlist *pv_table;	/* array of entries, one per physical page */
 
-#define pvhead(pa)	(&pv_table[atop((pa) - vm_first_phys)])
+#define pvhead(pa)	(&pv_table[((pa) - vm_first_phys) >> PGSHIFT])
 
 /*
  * Each virtual segment within each pmap is either valid or invalid.
@@ -2053,19 +2057,25 @@ pv_changepte4_4c(pv0, bis, bic)
 			pte += VA_VPG(va);
 			*pte = (*pte | bis) & ~bic;
 		} else {
-			register int tpte;
+			int tpte;
 
 			/* in hardware: fix hardware copy */
 			if (CTX_USABLE(pm,rp)) {
-				extern vm_offset_t pager_sva, pager_eva;
-
 				/*
 				 * Bizarreness:  we never clear PG_W on
 				 * pager pages, nor PG_NC on DVMA pages.
 				 */
+#if defined(UVM)
+				if (bic == PG_W &&
+				    va >= uvm.pager_sva && va < uvm.pager_eva)
+					continue;
+#else
+				extern vm_offset_t pager_sva, pager_eva;
+
 				if (bic == PG_W &&
 				    va >= pager_sva && va < pager_eva)
 					continue;
+#endif
 				if (bic == PG_NC &&
 				    va >= DVMA_BASE && va < DVMA_END)
 					continue;
@@ -2371,15 +2381,21 @@ pv_changepte4m(pv0, bis, bic)
 		sp = &rp->rg_segmap[VA_VSEG(va)];
 
 		if (pm->pm_ctx) {
-			extern vm_offset_t pager_sva, pager_eva;
-
 			/*
 			 * Bizarreness:  we never clear PG_W on
 			 * pager pages, nor set PG_C on DVMA pages.
 			 */
+#if defined(UVM)
+			if ((bic & PPROT_WRITE) &&
+			    va >= uvm.pager_sva && va < uvm.pager_eva)
+				continue;
+#else
+			extern vm_offset_t pager_sva, pager_eva;
+
 			if ((bic & PPROT_WRITE) &&
 			    va >= pager_sva && va < pager_eva)
 				continue;
+#endif
 			if ((bis & SRMMU_PG_C) &&
 			    va >= DVMA_BASE && va < DVMA_END)
 				continue;
@@ -2684,8 +2700,13 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
 
+#if defined(UVM)
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+#else
 	cnt.v_page_size = NBPG;
 	vm_set_page_size();
+#endif
 
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
 	/* In this case NPTESG is not a #define */
@@ -2744,8 +2765,13 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		}
 	}
 
+#if defined(UVM)
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+#else
 	cnt.v_page_size = NBPG;
 	vm_set_page_size();
+#endif
 
 #if defined(SUN4)
 	/*
@@ -3554,7 +3580,15 @@ pass2:
 	}
 
 	if (pass1) {
+#if defined(UVM)
+		vm_offset_t va = uvm_km_alloc(kernel_map, s);
+
+		if (!va)
+			panic("pmap_init: Out of mem in kernel_map");
+		pa = pmap_extract(pmap_kernel(), va);
+#else
 		pa = pmap_extract(pmap_kernel(), kmem_alloc(kernel_map, s));
+#endif
 		pass1 = 0;
 		goto pass2;
 	}
