@@ -1,3 +1,4 @@
+/*	$OpenBSD: grammar.y,v 1.2 1998/09/21 07:36:05 pjanzen Exp $	*/
 /*	$NetBSD: grammar.y,v 1.3 1995/03/21 15:03:59 cgd Exp $	*/
 
 /*-
@@ -67,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: grammar.y,v 1.3 1995/03/21 15:03:59 cgd Exp $";
+static char rcsid[] = "$OpenBSD: grammar.y,v 1.2 1998/09/21 07:36:05 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,14 +289,18 @@ Lline:
 	;
 %%
 
+void
 check_edge(x, y)
+	int x, y;
 {
 	if (!(x == 0) && !(x == sp->width - 1) && 
 	    !(y == 0) && !(y == sp->height - 1))
 		yyerror("edge value not on edge.");
 }
 
+void
 check_point(x, y)
+	int x, y;
 {
 	if (x < 1 || x >= sp->width - 1)
 		yyerror("X value out of range.");
@@ -303,7 +308,9 @@ check_point(x, y)
 		yyerror("Y value out of range.");
 }
 
+void
 check_linepoint(x, y)
+	int x, y;
 {
 	if (x < 0 || x >= sp->width)
 		yyerror("X value out of range.");
@@ -311,7 +318,9 @@ check_linepoint(x, y)
 		yyerror("Y value out of range.");
 }
 
+void
 check_line(x1, y1, x2, y2)
+	int x1, y1, x2, y2;
 {
 	int	d1, d2;
 
@@ -325,7 +334,9 @@ check_line(x1, y1, x2, y2)
 		yyerror("Bad line endpoints.");
 }
 
+int
 yyerror(s)
+	const char *s;
 {
 	fprintf(stderr, "\"%s\": line %d: %s\n", file, line, s);
 	errors++;
@@ -333,7 +344,9 @@ yyerror(s)
 	return (errors);
 }
 
+void
 check_edir(x, y, dir)
+	int x, y, dir;
 {
 	int	bad = 0;
 
@@ -364,10 +377,13 @@ check_edir(x, y, dir)
 		yyerror("Bad direction for entrance at exit.");
 }
 
+void
 check_adir(x, y, dir)
+	int x, y, dir;
 {
 }
 
+int
 checkdefs()
 {
 	int	err = 0;

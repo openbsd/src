@@ -1,3 +1,4 @@
+/*	$OpenBSD: extern.c,v 1.2 1998/09/21 07:36:05 pjanzen Exp $	*/
 /*	$NetBSD: extern.c,v 1.4 1995/04/27 21:22:19 mycroft Exp $	*/
 
 /*-
@@ -49,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: extern.c,v 1.4 1995/04/27 21:22:19 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: extern.c,v 1.2 1998/09/21 07:36:05 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,9 +58,9 @@ static char rcsid[] = "$NetBSD: extern.c,v 1.4 1995/04/27 21:22:19 mycroft Exp $
 
 char		GAMES[] =	"Game_List";
 
-int		clck, safe_planes, start_time, test_mode;
+int		clck, safe_planes, start_time, test_mode, makenoise;
 
-char		*file;
+const char	*file;
 
 FILE		*filein, *fileout;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.4 1995/04/27 21:22:26 mycroft Exp $	*/
+/*	$OpenBSD: update.c,v 1.3 1998/09/21 07:36:07 pjanzen Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,16 +49,18 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: update.c,v 1.4 1995/04/27 21:22:26 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.3 1998/09/21 07:36:07 pjanzen Exp $";
 #endif
 #endif not lint
 
 #include "include.h"
 
-update()
+void
+update(dummy)
+	int dummy;
 {
-	int	i, dir_diff, mask, unclean;
-	PLANE	*pp, *p1, *p2, *p;
+	int	i, dir_diff, unclean;
+	PLANE	*pp, *p1, *p2;
 
 #ifdef SYSV
 	alarm(0);
@@ -211,7 +213,7 @@ update()
 	 * Otherwise, prop jobs show up *on* entrance.  Remember that
 	 * we don't update props on odd updates.
 	 */
-	if ((rand() % sp->newplane_time) == 0)
+	if ((random() % sp->newplane_time) == 0)
 		addplane();
 
 #ifdef SYSV
@@ -219,7 +221,7 @@ update()
 #endif
 }
 
-char *
+const char *
 command(pp)
 	PLANE	*pp;
 {
@@ -250,9 +252,9 @@ command(pp)
 	return (buf);
 }
 
-/* char */
+char
 name(p)
-	PLANE	*p;
+	const PLANE	*p;
 {
 	if (p->plane_type == 0)
 		return ('A' + p->plane_no);
@@ -260,7 +262,9 @@ name(p)
 		return ('a' + p->plane_no);
 }
 
+int
 number(l)
+	char l;
 {
 	if (l < 'a' && l > 'z' && l < 'A' && l > 'Z')
 		return (-1);
@@ -270,6 +274,7 @@ number(l)
 		return (l - 'A');
 }
 
+int
 next_plane()
 {
 	static int	last_plane = -1;
@@ -298,12 +303,13 @@ next_plane()
 	return (last_plane);
 }
 
+int
 addplane()
 {
 	PLANE	p, *pp, *p1;
 	int	i, num_starts, close, rnd, rnd2, pnum;
 
-	bzero(&p, sizeof (p));
+	memset(&p, 0, sizeof (p));
 
 	p.status = S_MARKED;
 	p.plane_type = random() % 2;
@@ -358,7 +364,7 @@ addplane()
 	p.plane_no = pnum;
 
 	pp = newplane();
-	bcopy(&p, pp, sizeof (p));
+	memcpy(pp, &p, sizeof (p));
 
 	if (pp->orig_type == T_AIRPORT)
 		append(&ground, pp);
@@ -370,6 +376,7 @@ addplane()
 
 PLANE	*
 findplane(n)
+	int n;
 {
 	PLANE	*pp;
 
@@ -382,8 +389,10 @@ findplane(n)
 	return (NULL);
 }
 
+int
 too_close(p1, p2, dist)
-	PLANE	*p1, *p2;
+	const PLANE	*p1, *p2;
+	int	dist;
 {
 	if (ABS(p1->altitude - p2->altitude) <= dist &&
 	    ABS(p1->xpos - p2->xpos) <= dist && ABS(p1->ypos - p2->ypos) <= dist)
@@ -392,7 +401,9 @@ too_close(p1, p2, dist)
 		return (0);
 }
 
+int
 dir_deg(d)
+	int d;
 {
 	switch (d) {
 	case 0: return (0);

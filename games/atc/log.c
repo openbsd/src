@@ -1,3 +1,4 @@
+/*	$OpenBSD: log.c,v 1.5 1998/09/21 07:36:06 pjanzen Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -49,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $";
+static char rcsid[] = "$OpenBSD: log.c,v 1.5 1998/09/21 07:36:06 pjanzen Exp $";
 #endif
 #endif not lint
 
@@ -58,9 +59,14 @@ static char rcsid[] = "$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $";
 
 static FILE *score_fp;
 
-compar(a, b)
-	SCORE	*a, *b;
+int
+compar(va, vb)
+	const void *va, *vb;
 {
+	const SCORE *a, *b;
+
+	a = (SCORE *)va;
+	b = (SCORE *)vb;
 	if (b->planes == a->planes)
 		return (b->time - a->time);
 	else
@@ -77,8 +83,9 @@ compar(a, b)
 #define MIN(t)		(((t) % SECAHOUR) / SECAMIN)
 #define SEC(t)		((t) % SECAMIN)
 
-char	*
+const char	*
 timestr(t)
+	int t;
 {
 	static char	s[80];
 
@@ -96,6 +103,7 @@ timestr(t)
 	return (s);
 }
 
+int
 open_score_file()
 {
 	mode_t old_mode;
@@ -117,8 +125,10 @@ open_score_file()
 		return (-1);
 	}
 	umask(old_mode);
+	return (0);
 }
 
+int
 log_score(list_em)
 {
 	int		i, num_scores = 0, good, changed = 0, found = 0;
@@ -127,6 +137,8 @@ log_score(list_em)
 	SCORE		score[100], thisscore;
 	struct utsname	name;
 
+	if (score_fp == NULL)
+		return (-1);
 #ifdef BSD
 	if (flock(fileno(score_fp), LOCK_EX) < 0)
 #endif
@@ -191,10 +203,10 @@ log_score(list_em)
 				if (thisscore.time > score[i].time) {
 					if (num_scores < NUM_SCORES)
 						num_scores++;
-					bcopy(&score[i],
-						&score[num_scores - 1], 
+					memcpy(&score[num_scores - 1],
+						&score[i],
 						sizeof (score[i]));
-					bcopy(&thisscore, &score[i],
+					memcpy(&score[i], &thisscore,
 						sizeof (score[i]));
 					changed++;
 					break;
@@ -202,7 +214,7 @@ log_score(list_em)
 			}
 		}
 		if (!found && !changed && num_scores < NUM_SCORES) {
-			bcopy(&thisscore, &score[num_scores], 
+			memcpy(&score[num_scores], &thisscore,
 				sizeof (score[num_scores]));
 			num_scores++;
 			changed++;
@@ -255,4 +267,12 @@ log_score(list_em)
 	}
 	putchar('\n');
 	return (0);
+}
+
+void
+log_score_quit(dummy)
+	int dummy;
+{
+	(void)log_score(0);
+	exit(0);
 }
