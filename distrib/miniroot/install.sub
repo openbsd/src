@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.5 1997/04/30 18:52:45 niklas Exp $
+#	$OpenBSD: install.sub,v 1.6 1997/04/30 20:25:36 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -583,7 +583,7 @@ __install_ftp_2
 		fi
 
 		_ftp_file=`echo ${resp} | cutword 1'`
-		echo "get ${_ftp_file} |\"tar --unlink -zxvpf -\"" >> \
+		echo "get ${_ftp_file} |\"tar -zxvpf -\"" >> \
 		    /tmp/ftp-script.sh
 	done
 
@@ -655,7 +655,7 @@ install_from_mounted_fs() {
 		fi
 
 		# Extract file
-		cat $_filename | (cd /mnt; tar --unlink -zxvpf -)
+		cat $_filename | (cd /mnt; tar -zxvpf -)
 		echo "Extraction complete."
 		_setsdone="$_f $_setsdone"
 
@@ -1011,11 +1011,11 @@ __install_tape_2
 		getresp "1"
 		case "$resp" in
 		1)
-			_xcmd="tar --unlink -zxvpf -"
+			_xcmd="tar -zxvpf -"
 			;;
 
 		2)
-			_xcmd="tar --unlink -xvpf -"
+			_xcmd="tar -xvpf -"
 			;;
 
 		*)
