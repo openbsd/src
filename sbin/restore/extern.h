@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2004/04/13 21:51:18 henning Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2004/12/30 01:51:32 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
 
 /*-
@@ -94,7 +94,6 @@ void		 setup(void);
 void	 	 skipdirs(void);
 void		 skipfile(void);
 void		 skipmaps(void);
-void		 swabst(u_char *, u_char *);
 void	 	 treescan(char *, ino_t, long (*)(char *, ino_t, int));
 ino_t		 upperbnd(ino_t);
 long		 verifyfile(char *, ino_t, int);

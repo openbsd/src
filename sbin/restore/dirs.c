@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.28 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.29 2004/12/30 01:51:32 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: dirs.c,v 1.28 2004/07/17 02:14:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: dirs.c,v 1.29 2004/12/30 01:51:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -350,8 +350,10 @@ putdir(char *buf, size_t size)
 	} else {
 		for (loc = 0; loc < size; ) {
 			dp = (struct direct *)(buf + loc);
-			if (Bcvt)
-				swabst((u_char *)"ls", (u_char *) dp);
+			if (Bcvt) {
+				dp->d_ino = swap32(dp->d_ino);
+				dp->d_reclen = swap16(dp->d_reclen);
+			}
 			if (oldinofmt && dp->d_ino != 0) {
 #				if BYTE_ORDER == BIG_ENDIAN
 					if (Bcvt)
@@ -434,7 +436,10 @@ dcvt(struct odirect *odp, struct direct *ndp)
 {
 
 	memset(ndp, 0, (size_t)(sizeof *ndp));
-	ndp->d_ino =  odp->d_ino;
+	if (Bcvt)
+	    ndp->d_ino = swap16(odp->d_ino);
+	else
+	    ndp->d_ino = odp->d_ino;
 	ndp->d_type = DT_UNKNOWN;
 	(void)strncpy(ndp->d_name, odp->d_name, ODIRSIZ);
 	ndp->d_namlen = strlen(ndp->d_name);

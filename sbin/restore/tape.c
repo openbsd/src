@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.29 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.30 2004/12/30 01:51:32 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.29 2004/07/17 02:14:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.30 2004/12/30 01:51:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ static const char rcsid[] = "$OpenBSD: tape.c,v 1.29 2004/07/17 02:14:33 deraadt
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/stat.h>
+#include <sys/endian.h>
 
 #include <ufs/ufs/dinode.h>
 #include <protocols/dumprestore.h>
@@ -96,9 +97,7 @@ static void	 findtapeblksize(void);
 static int	 gethead(struct s_spcl *);
 static void	 readtape(char *);
 static void	 setdumpnum(void);
-static u_long	 swabl(u_long);
-static u_char	*swablong(u_char *, int);
-static u_char	*swabshort(u_char *, int);
+static void	 swap_header(struct s_spcl *);
 static void	 terminateinput(void);
 static void	 xtrfile(char *, size_t);
 static void	 xtrlnkfile(char *, size_t);
@@ -982,7 +981,7 @@ gethead(struct s_spcl *buf)
 	if (!cvtflag) {
 		readtape((char *)buf);
 		if (buf->c_magic != NFS_MAGIC) {
-			if (swabl(buf->c_magic) != NFS_MAGIC)
+			if (swap32(buf->c_magic) != NFS_MAGIC)
 				return (FAIL);
 			if (!Bcvt) {
 				Vprintf(stdout, "Note: Doing Byte swapping\n");
@@ -992,7 +991,7 @@ gethead(struct s_spcl *buf)
 		if (checksum((int *)buf) == FAIL)
 			return (FAIL);
 		if (Bcvt)
-			swabst((u_char *)"8l4s31l528b1l192b2l", (u_char *)buf);
+			swap_header(buf);
 		goto good;
 	}
 	readtape((char *)(&u_ospcl.s_ospcl));
@@ -1220,7 +1219,7 @@ checksum(int *buf)
 
 	j = sizeof(union u_spcl) / sizeof(int);
 	i = 0;
-	if(!Bcvt) {
+	if (!Bcvt) {
 		do
 			i += *buf++;
 		while (--j);
@@ -1228,7 +1227,7 @@ checksum(int *buf)
 		/* What happens if we want to read restore tapes
 			for a 16bit int machine??? */
 		do
-			i += swabl(*buf++);
+			i += swap32(*buf++);
 		while (--j);
 	}
 
@@ -1254,69 +1253,40 @@ msg(const char *fmt, ...)
 }
 #endif /* RRESTORE */
 
-static u_char *
-swabshort(u_char *sp, int n)
+static void
+swap_header(struct s_spcl *s)
 {
-	char c;
+	s->c_type = swap32(s->c_type);
+	s->c_date = swap32(s->c_date);
+	s->c_ddate = swap32(s->c_ddate);
+	s->c_volume = swap32(s->c_volume);
+	s->c_tapea = swap32(s->c_tapea);
+	s->c_inumber = swap32(s->c_inumber);
+	s->c_magic = swap32(s->c_magic);
+	s->c_checksum = swap32(s->c_checksum);
 
-	while (--n >= 0) {
-		c = sp[0]; sp[0] = sp[1]; sp[1] = c;
-		sp += 2;
-	}
-	return (sp);
-}
+	s->c_dinode.di_mode = swap16(s->c_dinode.di_mode);
+	s->c_dinode.di_nlink = swap16(s->c_dinode.di_nlink);
+	s->c_dinode.di_ouid = swap16(s->c_dinode.di_ouid);
+	s->c_dinode.di_ogid = swap16(s->c_dinode.di_ogid);
 
-static u_char *
-swablong(u_char *sp, int n)
-{
-	char c;
+	s->c_dinode.di_size = swap64(s->c_dinode.di_size);
 
-	while (--n >= 0) {
-		c = sp[0]; sp[0] = sp[3]; sp[3] = c;
-		c = sp[2]; sp[2] = sp[1]; sp[1] = c;
-		sp += 4;
-	}
-	return (sp);
-}
+	s->c_dinode.di_atime = swap32(s->c_dinode.di_atime);
+	s->c_dinode.di_atimensec = swap32(s->c_dinode.di_atimensec);
+	s->c_dinode.di_mtime = swap32(s->c_dinode.di_mtime);
+	s->c_dinode.di_mtimensec = swap32(s->c_dinode.di_mtimensec);
+	s->c_dinode.di_ctime = swap32(s->c_dinode.di_ctime);
+	s->c_dinode.di_ctimensec = swap32(s->c_dinode.di_ctimensec);
 
-void
-swabst(u_char *cp, u_char *sp)
-{
-	int n = 0;
+	s->c_dinode.di_flags = swap32(s->c_dinode.di_flags);
+	s->c_dinode.di_blocks = swap32(s->c_dinode.di_blocks);
+	s->c_dinode.di_gen = swap32(s->c_dinode.di_gen);
+	s->c_dinode.di_uid = swap32(s->c_dinode.di_uid);
+	s->c_dinode.di_gid = swap32(s->c_dinode.di_gid);
 
-	while (*cp) {
-		switch (*cp) {
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			n = (n * 10) + (*cp++ - '0');
-			continue;
-
-		case 's': case 'w': case 'h':
-			if (n == 0)
-				n = 1;
-			sp = swabshort(sp, n);
-			break;
-
-		case 'l':
-			if (n == 0)
-				n = 1;
-			sp = swablong(sp, n);
-			break;
-
-		default: /* Any other character, like 'b' counts as byte. */
-			if (n == 0)
-				n = 1;
-			sp += n;
-			break;
-		}
-		cp++;
-		n = 0;
-	}
-}
-
-static u_long
-swabl(u_long x)
-{
-	swabst((u_char *)"l", (u_char *)&x);
-	return (x);
+	s->c_count = swap32(s->c_count);
+	s->c_level = swap32(s->c_level);
+	s->c_flags = swap32(s->c_flags);
+	s->c_firstrec = swap32(s->c_firstrec);
 }
