@@ -1,5 +1,8 @@
-#	$OpenBSD: LUCIFIER,v 1.15 1998/09/11 11:26:23 fgsch Exp $
+#	$OpenBSD: LUCIFIER,v 1.16 1998/09/27 17:29:10 mickey Exp $
 #
+
+source	/sys
+build	/usr/obj/sys/arch/i386/compile/LUCIFIER
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -12,6 +15,7 @@ option		I686_CPU
 option		VM86		# Virtual 8086 emulation
 option		USER_LDT	# user-settable LDT; used by WINE
 option		XSERVER		# diddle with console driver
+option		APERTURE	# enable aperture
 
 #option		DUMMY_NOPS	# speed hack; recommended
 
@@ -25,6 +29,7 @@ option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 
 option		TIMEZONE=300	# time zone to adjust RTC time by
 option		DST=1		# daylight savings time used by RTC
+option		NTP
 
 option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
@@ -34,6 +39,7 @@ option		DDB		# in-kernel debugger
 option		DEBUG		# more dubugging code
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
+option		PTRACE		# process tracing
 
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
@@ -55,8 +61,8 @@ option		QUOTA		# UFS quotas
 option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
 
-#option		NFSCLIENT	# Network File System client
-#option		NFSSERVER	# Network File System server
+option		NFSCLIENT	# Network File System client
+option		NFSSERVER	# Network File System server
 
 option		CD9660		# ISO 9660 + Rock Ridge file system
 option		MSDOSFS		# MS-DOS file system
@@ -85,6 +91,8 @@ option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
 
 option		BOOT_CONFIG	# add support for boot -c
+option		BUFCACHEPERCENT=25
+option		NBUF=4096
 
 maxusers	32		# estimated number of users
 
@@ -178,7 +186,7 @@ scsibus* at ahc?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# unknown SCSI
@@ -201,12 +209,16 @@ acd*	at atapibus? drive?
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 ed0	at isa? port 0x280 iomem 0xd0000 irq 3	# WD/SMC, 3C503, and NE[12]000
+xl0	at pci? dev ? function ?
+#ep0	at pci? dev ? function ?
 
 sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record drq)
 spkr0	at pckbd? port 0x61
+
+audio*	at sb?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 joy0	at isa? port 0x201
@@ -224,5 +236,6 @@ pseudo-device	pty	64	# pseudo-terminals
 pseudo-device	tb	1	# tablet line discipline
 pseudo-device	vnd	4	# paging to files
 pseudo-device	ccd	4	# concatenated disk devices
+pseudo-device	ksyms		# kernel symbol table
 
-pseudo-device	pctr	1
+pseudo-device	pctr
