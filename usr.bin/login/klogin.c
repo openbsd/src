@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.6 1995/03/08 19:41:36 brezak Exp $	*/
+/*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: klogin.c,v 1.6 1995/03/08 19:41:36 brezak Exp $";
+static char rcsid[] = "$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -205,7 +205,7 @@ klogin(pw, instance, localhost, password)
 	}
 
 	/* undecipherable: probably didn't have a srvtab on the local host */
-	if (kerror = RD_AP_UNDEC) {
+	if (kerror == RD_AP_UNDEC) {
 		syslog(LOG_NOTICE, "krb_rd_req: (%s)\n", krb_err_txt[kerror]);
 		dest_tkt();
 		return (1);
