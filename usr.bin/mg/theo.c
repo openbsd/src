@@ -67,7 +67,7 @@ static const char *talk[] = {
 	"35 commits an hour? That's pathetic!",
 	"Fine software takes time to prepare.  Give a little slack.",
 	"I need a vax!",
-	"Now you don't love me anymore",
+	"Just a minute ago we were hugging and now you, guys, do not love me anymore",
 	"I'll let you know when I need to floss my teeth",
 	"If you can't figure out yourself, you're lacking some mental faculties",
 	"I am just stating a fact",
