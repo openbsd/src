@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.22 2003/08/08 09:51:53 jmc Exp $
+.\"	$OpenBSD: ip.4,v 1.23 2004/12/18 20:33:11 jaredy Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -84,7 +84,7 @@ The first-hop gateway address will be extracted from the option list
 and the size adjusted accordingly before use.
 To disable previously specified options,
 use a zero-length buffer:
-.Bd -literal
+.Bd -literal -offset indent
 setsockopt(s, IPPROTO_IP, IP_OPTIONS, NULL, 0);
 .Ed
 .Pp
@@ -100,7 +100,7 @@ and
 .Dv SOCK_DGRAM
 sockets.
 For example,
-.Bd -literal
+.Bd -literal -offset indent
 int tos = IPTOS_LOWDELAY;       /* see <netinet/ip.h> */
 setsockopt(s, IPPROTO_IP, IP_TOS, &tos, sizeof(tos));
 
@@ -120,27 +120,36 @@ call will return the destination
 address for a
 .Tn UDP
 datagram.
-The msg_control field in the msghdr structure points to a buffer
-that contains a cmsghdr structure followed by the
+The
+.Va msg_control
+field in the
+.Vt msghdr
+structure points to a buffer that contains a
+.Vt cmsghdr
+structure followed by the
 .Tn IP
 address.
-The cmsghdr fields have the following values:
-.Bd -literal
+The
+.Vt cmsghdr
+fields have the following values:
+.Bd -literal -offset indent
 cmsg_len = CMSG_LEN(sizeof(struct in_addr))
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVDSTADDR
 .Ed
 .Pp
-The IP_PORTRANGE
+The
+.Dv IP_PORTRANGE
 option causes the default allocation policy for when the kernel is asked
 to choose a free port number.
 Three choices are available:
-.Bl -tag -width IP_PORTRANGE_DEFAULT
-.It IP_PORTRANGE_DEFAULT
+.Pp
+.Bl -tag -width IP_PORTRANGE_DEFAULT -compact -offset indent
+.It Dv IP_PORTRANGE_DEFAULT
 The regular range of non-reserved ports.
-.It IP_PORTRANGE_HIGH
+.It Dv IP_PORTRANGE_HIGH
 A high range, for fun.
-.It IP_PORTRANGE_LOW
+.It Dv IP_PORTRANGE_LOW
 Reserved ports; between 600 and 1023.
 .El
 .Ss "Multicast Options"
@@ -159,11 +168,11 @@ The
 option changes the time-to-live (TTL)
 for outgoing multicast datagrams
 in order to control the scope of the multicasts:
-.Bd -literal
+.Bd -literal -offset indent
 u_char ttl;	/* range: 0 to 255, default = 1 */
 setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl));
 .Ed
-.sp
+.Pp
 Datagrams with a TTL of 1 are not forwarded beyond the local network.
 Multicast datagrams with a TTL of 0 will not be transmitted on any network,
 but may be delivered locally if the sending host belongs to the destination
@@ -178,12 +187,14 @@ The
 .Dv IP_MULTICAST_IF
 option overrides the default for
 subsequent transmissions from a given socket:
-.Bd -literal
+.Bd -literal -offset indent
 struct in_addr addr;
 setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &addr, sizeof(addr));
 .Ed
-.sp
-where "addr" is the local
+.Pp
+where
+.Va addr
+is the local
 .Tn IP
 address of the desired interface or
 .Dv INADDR_ANY
@@ -193,7 +204,7 @@ be obtained via the
 .Dv SIOCGIFCONF
 and
 .Dv SIOCGIFFLAGS
-ioctls.
+.Xr ioctl 2 Ns 's .
 Normal applications should not need to use this option.
 .Pp
 If a multicast datagram is sent to a group to which the sending host itself
@@ -203,11 +214,11 @@ The
 .Dv IP_MULTICAST_LOOP
 option gives the sender explicit control
 over whether or not subsequent datagrams are looped back:
-.Bd -literal
+.Bd -literal -offset indent
 u_char loop;	/* 0 = disable, 1 = enable (default) */
 setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop));
 .Ed
-.sp
+.Pp
 This option
 improves performance for applications that may have no more than one
 instance on a single host (such as a router daemon), by eliminating
@@ -227,22 +238,22 @@ datagrams sent to the group.
 To join a multicast group, use the
 .Dv IP_ADD_MEMBERSHIP
 option:
-.Bd -literal
+.Bd -literal -offset indent
 struct ip_mreq mreq;
 setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
 .Ed
-.sp
+.Pp
 where
 .Fa mreq
 is the following structure:
-.Bd -literal
+.Bd -literal -offset indent
 struct ip_mreq {
     struct in_addr imr_multiaddr; /* multicast group to join */
     struct in_addr imr_interface; /* interface to join on */
 }
 .Ed
-.sp
-.Dv imr_interface
+.Pp
+.Va imr_interface
 should
 be
 .Dv INADDR_ANY
@@ -260,11 +271,11 @@ Up to
 single socket.
 .Pp
 To drop a membership, use:
-.Bd -literal
+.Bd -literal -offset indent
 struct ip_mreq mreq;
 setsockopt(s, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
 .Ed
-.sp
+.Pp
 where
 .Fa mreq
 contains the same values as used to add the membership.
@@ -320,29 +331,32 @@ indicates the complete IP header is included with the data
 and may be used only with the
 .Dv SOCK_RAW
 type.
-.Bd -literal
+.Bd -literal -offset indent
 #include <netinet/ip.h>
 
 int hincl = 1;                  /* 1 = on, 0 = off */
 setsockopt(s, IPPROTO_IP, IP_HDRINCL, &hincl, sizeof(hincl));
 .Ed
-.sp
+.Pp
 Unlike previous
-.Tn BSD
+.Bx
 releases, the program must set all
 the fields of the IP header, including the following:
-.Bd -literal
+.Bd -literal -offset indent
 ip->ip_v = IPVERSION;
 ip->ip_hl = hlen >> 2;
 ip->ip_id = 0;  /* 0 means kernel set appropriate value */
 ip->ip_off = htons(offset);
 ip->ip_len = htons(len);
 .Ed
-.sp .5
 .Pp
 Additionally note that starting with
 .Ox 2.1 ,
-the ip_off and ip_len fields are in network byte order.
+the
+.Va ip_off
+and
+.Va ip_len
+fields are in network byte order.
 If the header source address is set to
 .Dv INADDR_ANY ,
 the kernel will choose an appropriate address.
@@ -384,6 +398,7 @@ or longer than the option buffer provided.
 .El
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
+.Xr ioctl 2 ,
 .Xr recv 2 ,
 .Xr send 2 ,
 .Xr icmp 4 ,
