@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.47 2000/05/23 12:38:28 itojun Exp $
+.\"	$OpenBSD: sysctl.8,v 1.48 2000/05/23 13:07:34 mickey Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -266,6 +266,7 @@ privilege can change the value.
 .It ddb.tab_stop_width	integer	yes
 .It ddb.panic	integer	yes
 .It ddb.console	integer	yes
+.It vfs.nfs.iothreads	integer	yes
 .El
 .Pp
 The
@@ -282,7 +283,7 @@ can extract information about the filesystems that have been compiled
 into the running system.
 This information can be obtained by using the command:
 .Bd -literal -offset indent
-sysctl vfs
+sysctl vfs.mounts
 .Ed
 By default, only filesystems that are actively being used are listed.
 Use of the
@@ -333,8 +334,23 @@ It is also possible to add or remove ports from the current list.
 sysctl -w net.inet.tcp.baddynamic=+748
 sysctl -w net.inet.tcp.baddynamic=-871
 .Ed
+.Pp
+To adjust the number of kernel
+.Nm nfsio
+threads used to service asynchronous
+I/O requests on an NFS client machine use
+.Bd -literal -offset indent -compact
+sysctl -w vfs.nfs.iothreads=4
+.Ed
+.Pp
+The number of 4 is the default, where the 20 is the maximum.
+See
+.Xr nfssvc 2
+and
+.Xr nfsd 8
+for futher discussion.
 .Sh FILES
-.Bl -tag -width <netinet/icmpXvar.h> -compact
+.Bl -tag -width <ufs/ffs/ffs_extern.h> -compact
 .It Pa <sys/sysctl.h>
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
@@ -364,9 +380,16 @@ definitions for third level IPX identifiers and
 fourth level IPX identifiers
 .It Pa <ddb/db_var.h>
 definitions for second level ddb identifiers
+.It Pa <sys/mount.h>
+definitions for second level vfs identifiers
+.It Pa <nfs/nfs.h>
+definitions for third level NFS identifiers
+.It Pa <ufs/ffs/ffs_extern.h>
+definitions for third level FFS identifiers
 .El
 .Sh SEE ALSO
-.Xr sysctl 3
+.Xr sysctl 3 ,
+.Xr sysctl.conf 5
 .Sh HISTORY
 .Nm sysctl
 first appeared in
