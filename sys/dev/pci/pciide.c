@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.115 2003/02/24 01:34:41 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.116 2003/02/24 20:54:15 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1391,7 +1391,7 @@ pciide_map_compat_intr(pa, cp, compatchan, interface)
 }
 
 /*
- * generic code to map the compat intr if hw_ok=1 and it is a compat channel.
+ * generic code to unmap the compat intr if hw_ok=1 and it is a compat channel.
  * Set hw_ok=0 on failure
  */
 void
@@ -2825,7 +2825,7 @@ cmd0643_9_setup_channel(chp)
 #ifdef __sparc64__
 	/*
 	 * The Ultra 5 has a tendency to hang during reboot.  This is due
-	 * to the PCI0646U asserting a PCI interrtupt line when the chip
+	 * to the PCI0646U asserting a PCI interrupt line when the chip
 	 * registers claim that it is not.  Performing a reset at this
 	 * point appears to eliminate the symptoms.  It is likely the
 	 * real cause is still lurking somewhere in the code.
