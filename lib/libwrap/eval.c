@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.1 1997/02/26 03:06:50 downsj Exp $	*/
+/*	$OpenBSD: eval.c,v 1.2 2001/11/07 18:49:21 deraadt Exp $	*/
 
  /*
   * Routines for controlled evaluation of host names, user names, and so on.
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) eval.c 1.3 95/01/30 19:51:45";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.1 1997/02/26 03:06:50 downsj Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.2 2001/11/07 18:49:21 deraadt Exp $";
 #endif
 #endif
 
@@ -52,7 +52,7 @@ char   *eval_user(request)
 struct request_info *request;
 {
     if (request->user[0] == 0) {
-	strcpy(request->user, unknown);
+	strlcpy(request->user, unknown, sizeof(request->user));
 	if (request->sink == 0 && request->client->sin && request->server->sin)
 	    rfc931(request->client->sin, request->server->sin, request->user);
     }
@@ -65,7 +65,7 @@ char   *eval_hostaddr(host)
 struct host_info *host;
 {
     if (host->addr[0] == 0) {
-	strcpy(host->addr, unknown);
+	strlcpy(host->addr, unknown, sizeof(host->addr));
 	if (host->request->hostaddr != 0)
 	    host->request->hostaddr(host);
     }
@@ -78,7 +78,7 @@ char   *eval_hostname(host)
 struct host_info *host;
 {
     if (host->name[0] == 0) {
-	strcpy(host->name, unknown);
+	strlcpy(host->name, unknown, sizeof(host->name));
 	if (host->request->hostname != 0)
 	    host->request->hostname(host);
     }

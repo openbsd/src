@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.3 2000/10/14 00:56:15 itojun Exp $	*/
+/*	$OpenBSD: socket.c,v 1.4 2001/11/07 18:49:21 deraadt Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-static char rcsid[] = "$OpenBSD: socket.c,v 1.3 2000/10/14 00:56:15 itojun Exp $";
+static char rcsid[] = "$OpenBSD: socket.c,v 1.4 2001/11/07 18:49:21 deraadt Exp $";
 #endif
 #endif
 
@@ -66,7 +66,7 @@ char   *name;
     if (strchr(name, '.') == 0 || strlen(name) >= MAXHOSTNAMELEN - 1) {
 	return (gethostbyname(name));
     } else {
-	sprintf(dot_name, "%s.", name);
+	snprintf(dot_name, sizeof(dot_name), "%s.", name);
 	return (gethostbyname(dot_name));
     }
 }
@@ -201,7 +201,7 @@ struct host_info *host;
     }
     if ((hp = gethostbyaddr(ap, alen, af)) != 0) {
 
-	STRN_CPY(host->name, hp->h_name, sizeof(host->name));
+	strlcpy(host->name, hp->h_name, sizeof(host->name));
 
 	/*
 	 * Verify that the address is a member of the address list returned
@@ -262,7 +262,9 @@ struct host_info *host;
 		      inet_ntop(af, ap, hbuf, sizeof(hbuf)),
 		      STRING_LENGTH, hp->h_name);
 	}
-	strcpy(host->name, paranoid);		/* name is bad, clobber it */
+
+	/* name is bad, clobber it */
+	strlcpy(host->name, paranoid, sizeof(host->name));
     }
 }
 
