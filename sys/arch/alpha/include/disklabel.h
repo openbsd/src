@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.4 1997/04/07 06:21:37 millert Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.5 1997/06/30 11:50:58 niklas Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -34,15 +34,66 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define	LABELSECTOR	0			/* sector containing label */
-#define	LABELOFFSET	64			/* offset of label in sector */
-#define	MAXPARTITIONS	16			/* number of partitions */
-#define	RAW_PART	2			/* raw partition: xx?c */
+enum disklabel_tag { DLT_ALPHA, DLT_I386 };
 
-/* Just a dummy */
-struct cpu_disklabel {
-	int	cd_dummy;			/* must have one element. */
+/*
+ * What disklabels are we probing for, and in which order?
+ */
+#ifndef LABELPROBES
+#define LABELPROBES		DLT_ALPHA, DLT_I386
+#endif
+
+#define	ALPHA_LABELSECTOR	0		/* sector containing label */
+#define	ALPHA_LABELOFFSET	64		/* offset of label in sector */
+#define	I386_LABELSECTOR	1		/* sector containing label */
+#define	I386_LABELOFFSET	0		/* offset of label in sector */
+
+#define LABELSECTOR		ALPHA_LABELSECTOR
+#define LABELOFFSET		ALPHA_LABELOFFSET
+
+#define	MAXPARTITIONS		16		/* number of partitions */
+#define	RAW_PART		2		/* raw partition: xx?c */
+
+/* DOS partition table -- located in boot block */
+#define	DOSBBSECTOR	0		/* DOS boot block relative sector # */
+#define	DOSPARTOFF	446
+#define	NDOSPART	4
+
+struct dos_partition {
+	u_int8_t	dp_flag;	/* bootstrap flags */
+	u_int8_t	dp_shd;		/* starting head */
+	u_int8_t	dp_ssect;	/* starting sector */
+	u_int8_t	dp_scyl;	/* starting cylinder */
+	u_int8_t	dp_typ;		/* partition type (see below) */
+	u_int8_t	dp_ehd;		/* end head */
+	u_int8_t	dp_esect;	/* end sector */
+	u_int8_t	dp_ecyl;	/* end cylinder */
+	u_int32_t	dp_start;	/* absolute starting sector number */
+	u_int32_t	dp_size;	/* partition size in sectors */
 };
+
+/* Known DOS partition types. */
+#define	DOSPTYP_UNUSED	0x00		/* Unused partition */
+#define DOSPTYP_FAT12	0x01		/* 12-bit FAT */
+#define DOSPTYP_FAT16S	0x04		/* 16-bit FAT, less than 32M */
+#define DOSPTYP_EXTEND	0x05		/* Extended; contains sub-partitions */
+#define DOSPTYP_FAT16B	0x06		/* 16-bit FAT, more than 32M */
+#define DOSPTYP_FAT16C	0x0e		/* 16-bit FAT, CHS-mapped */
+#define DOSPTYP_ONTRACK	0x54
+#define	DOSPTYP_LINUX	0x83		/* That other thing */
+#define DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
+#define DOSPTYP_NETBSD	DOSPTYP_386BSD	/* NetBSD partition type (XXX) */
+#define DOSPTYP_OPENBSD	0xa6		/* OpenBSD partition type */
+
+#include <sys/dkbad.h>
+struct cpu_disklabel {
+	struct dos_partition dosparts[NDOSPART];
+	struct dkbad bad;
+};
+
+/* Isolate the relevant bits to get sector and cylinder. */
+#define	DPSECT(s)	((s) & 0x3f)
+#define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
 #ifdef _KERNEL
 struct disklabel;
