@@ -1,7 +1,12 @@
-#	$OpenBSD: Makefile,v 1.8 1998/12/05 00:06:26 espie Exp $
+#	$OpenBSD: Makefile,v 1.9 1999/09/28 02:22:53 smurph Exp $
 
 PROG=	make
 CFLAGS+= -I${.CURDIR} -Wall -Wno-char-subscripts -Wno-unused #-Wmissing-prototypes -Wstrict-prototypes
+
+.if (${MACHINE_ARCH} == "m88k")
+CFLAGS+=-O0
+.endif
+
 SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c \
 	make.c parse.c str.c suff.c targ.c var.c util.c
 SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
