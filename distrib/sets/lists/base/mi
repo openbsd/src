@@ -1757,7 +1757,6 @@
 ./usr/share/games/boggle
 ./usr/share/games/ching
 ./usr/share/games/fortune
-./usr/share/games/larn
 ./usr/share/games/quiz.db
 ./usr/share/groff_font
 ./usr/share/groff_font/devX100
@@ -4044,7 +4043,6 @@
 ./var/games
 ./var/games/hackdir
 ./var/games/hackdir/save
-./var/games/larn
 ./var/games/phantasia
 ./var/games/save
 ./var/log

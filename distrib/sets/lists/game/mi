@@ -20,7 +20,6 @@
 ./usr/games/hangman
 ./usr/games/hunt
 ./usr/games/huntd
-./usr/games/larn
 ./usr/games/mille
 ./usr/games/monop
 ./usr/games/morse
@@ -82,9 +81,6 @@
 ./usr/share/games/fortune/startrek.dat
 ./usr/share/games/fortune/zippy
 ./usr/share/games/fortune/zippy.dat
-./usr/share/games/larn/larn.help
-./usr/share/games/larn/larnmaze
-./usr/share/games/larn/larnopts
 ./usr/share/games/quiz.db/africa
 ./usr/share/games/quiz.db/america
 ./usr/share/games/quiz.db/areas
@@ -137,7 +133,6 @@
 ./usr/share/man/cat6/gomoku.0
 ./usr/share/man/cat6/hack.0
 ./usr/share/man/cat6/hangman.0
-./usr/share/man/cat6/larn.0
 ./usr/share/man/cat6/mille.0
 ./usr/share/man/cat6/monop.0
 ./usr/share/man/cat6/morse.0
@@ -168,8 +163,6 @@
 ./var/games/hackdir/hh
 ./var/games/hackdir/perm
 ./var/games/hackdir/record
-./var/games/larn/llog12.0
-./var/games/larn/lscore12.0
 ./var/games/phantasia/characs
 ./var/games/phantasia/gold
 ./var/games/phantasia/lastdead
