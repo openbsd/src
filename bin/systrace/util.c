@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2002/06/04 19:20:54 provos Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2002/06/04 22:45:25 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -32,6 +32,8 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <pwd.h>
 
 char *
 strrpl(char *str, size_t size, char *match, char *value)
@@ -66,6 +68,21 @@ strrpl(char *str, size_t size, char *match, char *value)
 
 	return (p);
 }
+
+char *
+uid_to_name(uid_t uid)
+{
+	static char buf[128];
+	struct passwd *pw;
+       
+	if ((pw = getpwuid(uid)) == NULL)
+		snprintf(buf, sizeof(buf), "uid %d", uid);
+	else
+		snprintf(buf, sizeof(buf), "%s", pw->pw_name);
+
+	return (buf);
+}
+
 
 /* simplify_path is from pdksh and apparently in the public domain */
 

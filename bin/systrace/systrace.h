@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.3 2002/06/04 19:43:35 provos Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.4 2002/06/04 22:45:25 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -121,6 +121,8 @@ int filter_prepolicy(int, struct policy *);
 char *filter_expand(char *data);
 
 int parse_filter(char *, struct filter **);
+
+char *uid_to_name(uid_t);
 
 char *strrpl(char *, size_t, char *, char *);
 

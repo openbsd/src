@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.8 2002/06/04 20:13:19 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.9 2002/06/04 22:45:25 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <syslog.h>
 #include <err.h>
 #include <errno.h>
 
@@ -50,6 +51,7 @@ int connected = 0;		/* Connected to GUI */
 int inherit = 0;		/* Inherit policy to childs */
 int automatic = 0;		/* Do not run interactively */
 int userpolicy = 1;		/* Permit user defined policies */
+char *username = NULL;		/* Username in automatic mode */
 
 short
 trans_cb(int fd, pid_t pid, int policynr,
@@ -101,6 +103,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 		goto out;
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
+		syslog(LOG_WARNING, "user: %s, prog: %s", username, output);
 		goto out;
 	}
 
@@ -137,17 +140,18 @@ gen_cb(int fd, pid_t pid, int policynr, char *name, int code,
 		errx(1, "%s:%d: find %d\n", __func__, __LINE__,
 		    policynr);
 
-	if (policy->flags & POLICY_UNSUPERVISED) {
-		action = ICPOLICY_NEVER;
-		goto out;
-	}
-
 	ipid = intercept_getpid(pid);
 	ipid->uflags = 0;
 	snprintf(output, sizeof(output),
 	    "%s, pid: %d(%d), policy: %s, filters: %d, syscall: %s-%s(%d), args: %d",
 	    ipid->name != NULL ? ipid->name : policy->name, pid, policynr,
 	    policy->name, policy->nfilters, emulation, name, code, argsize);
+
+	if (policy->flags & POLICY_UNSUPERVISED) {
+		action = ICPOLICY_NEVER;
+		syslog(LOG_WARNING, "user: %s, prog: %s", username, output);
+		goto out;
+	}
 
 	action = filter_ask(NULL, NULL, policynr, emulation, name,
 	    output, &future, &ipid->uflags);
@@ -391,6 +395,7 @@ main(int argc, char **argv)
 		switch (c) {
 		case 'a':
 			automatic = 1;
+			username = uid_to_name(getuid());
 			break;
 		case 'i':
 			inherit = 1;
