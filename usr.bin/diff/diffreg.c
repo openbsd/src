@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.36 2003/07/21 15:56:48 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.37 2003/07/21 21:57:22 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.36 2003/07/21 15:56:48 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.37 2003/07/21 21:57:22 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -291,7 +291,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 	context_vec_ptr = context_vec_start - 1;
 	chrtran = (iflag ? cup2low : clow2low);
 	if (S_ISDIR(stb1.st_mode) != S_ISDIR(stb2.st_mode))
-		return (D_MISMATCH);
+		return (S_ISDIR(stb1.st_mode) ? D_MISMATCH1 : D_MISMATCH2);
 	if (strcmp(file1, "-") == 0 && strcmp(file2, "-") == 0)
 		goto notsame;
 

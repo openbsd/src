@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.28 2003/07/09 00:39:25 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.29 2003/07/21 21:57:22 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.28 2003/07/09 00:39:25 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.29 2003/07/21 21:57:22 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -334,8 +334,12 @@ print_status(int val, char *path1, char *path2, char *entry)
 			    path1, entry ? entry : "",
 			    path2, entry ? entry : "");
 		break;
-	case D_MISMATCH:
-		printf("File %s/%s is a directory but file %s/%s is not\n",
+	case D_MISMATCH1:
+		printf("File %s/%s is a directory while file %s/%s is a file\n",
+		    path1, entry ? entry : "", path2, entry ? entry : "");
+		break;
+	case D_MISMATCH2:
+		printf("File %s/%s is a file while file %s/%s is a directory\n",
 		    path1, entry ? entry : "", path2, entry ? entry : "");
 		break;
 	}
