@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.15 2004/01/05 22:57:58 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.16 2004/01/06 10:42:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -510,10 +510,29 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 				t = m->ReopenTimer - now;
 				if (*timeout > t)
 					*timeout = t;
+				continue;
 			}
+			if (m->ReopenTimerInterval != 0)
+				m->ReopenTimer = now + m->ReopenTimerInterval;
 			m->state = MRT_STATE_RUNNING;
 			imsg_compose(m->ibuf, IMSG_MRT_REQ, 0,
 					&m->conf, sizeof(m->conf));
+		}
+		if (m->state == MRT_STATE_REOPEN) {
+			if (mrt_close(m) == 0) {
+				m->state = MRT_STATE_REOPEN;
+				continue;
+			}
+			if (mrt_open(m) == 0) {
+				mrt_abort(m);
+				t = m->ReopenTimer - now;
+				if (*timeout > t)
+					*timeout = t;
+				continue;
+			}
+			if (m->ReopenTimerInterval != 0)
+				m->ReopenTimer = now + m->ReopenTimerInterval;
+			m->state = MRT_STATE_RUNNING;
 		}
 		if (m->ReopenTimer != 0) {
 			t = m->ReopenTimer - now;
@@ -531,7 +550,15 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 					t = m->ReopenTimer - now;
 					if (*timeout > t)
 						*timeout = t;
+					continue;
 				}
+				if (m->conf.type == MRT_TABLE_DUMP &&
+				    m->state == MRT_STATE_STOPPED) {
+					imsg_compose(mrt_imsgbuf[0],
+					    IMSG_MRT_REQ, 0,
+					    &m->conf, sizeof(m->conf));
+				}
+
 				m->state = MRT_STATE_RUNNING;
 				if (m->ReopenTimerInterval != 0) {
 					m->ReopenTimer = now +
@@ -566,6 +593,8 @@ mrt_handler(struct mrt_head *mrt)
 
 	now = time(NULL);
 	LIST_FOREACH(m, mrt, list) {
+		if (m->state == MRT_STATE_RUNNING)
+			m->state = MRT_STATE_REOPEN;
 		if (m->conf.type == MRT_TABLE_DUMP) {
 			if (m->state == MRT_STATE_STOPPED) {
 				if (mrt_open(m) == 0) {
@@ -573,12 +602,10 @@ mrt_handler(struct mrt_head *mrt)
 					break;
 				}
 				imsg_compose(mrt_imsgbuf[0], IMSG_MRT_REQ, 0,
-						&m->conf, sizeof(m->conf));
+				    &m->conf, sizeof(m->conf));
 				m->state = MRT_STATE_RUNNING;
 			}
 		}
-		if (m->state == MRT_STATE_RUNNING)
-			m->state = MRT_STATE_REOPEN;
 		if (m->ReopenTimerInterval != 0)
 			m->ReopenTimer = now + m->ReopenTimerInterval;
 	}
