@@ -7,6 +7,7 @@
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
+./usr/include/powerpc/adbsys.h
 ./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/asm.h
 ./usr/include/powerpc/autoconf.h
@@ -30,6 +31,7 @@
 ./usr/include/powerpc/kbio.h
 ./usr/include/powerpc/kcore.h
 ./usr/include/powerpc/limits.h
+./usr/include/powerpc/link.h
 ./usr/include/powerpc/param.h
 ./usr/include/powerpc/pcb.h
 ./usr/include/powerpc/pio.h
@@ -125,7 +127,6 @@
 ./usr/lib/libkadm_pic.a
 ./usr/lib/libkafs_pic.a
 ./usr/lib/libkdb_pic.a
-./usr/lib/libkeycap_pic.a
 ./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
