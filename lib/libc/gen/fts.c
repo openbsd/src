@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.8 1997/07/23 21:09:05 kstailey Exp $	*/
+/*	$OpenBSD: fts.c,v 1.9 1997/08/02 00:13:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.8 1997/07/23 21:09:05 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.9 1997/08/02 00:13:49 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ FTS *
 fts_open(argv, options, compar)
 	char * const *argv;
 	register int options;
-	int (*compar)();
+	int (*compar) __P((const FTSENT **, const FTSENT **));
 {
 	register FTS *sp;
 	register FTSENT *p, *root;
@@ -257,12 +257,12 @@ fts_close(sp)
 }
 
 /*
- * Special case a root of "/" so that slashes aren't appended which would
- * cause paths to be written as "//foo".
+ * Special case of "/" at the end of the path so that slashes aren't
+ * appended which would cause paths to be written as "....//foo".
  */
 #define	NAPPEND(p)							\
-	(p->fts_level == FTS_ROOTLEVEL && p->fts_pathlen == 1 &&	\
-	    p->fts_path[0] == '/' ? 0 : p->fts_pathlen)
+	(p->fts_path[p->fts_pathlen-1] == '/'				\
+	    ? p->fts_pathlen-1 : p->fts_pathlen)
 
 FTSENT *
 fts_read(sp)
