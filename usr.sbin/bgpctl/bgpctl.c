@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.24 2004/01/10 21:04:37 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.25 2004/01/11 01:05:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -340,6 +340,7 @@ int
 show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 {
 	struct peer		*p;
+	struct sockaddr_in	*sa_in;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
@@ -368,6 +369,19 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		case NV_TIMERS:
 			print_neighbor_timers(p);
 			break;
+		}
+		printf("\n");
+		if (p->sa_local.ss_family == AF_INET) {
+			sa_in = (struct sockaddr_in *)&p->sa_local;
+			printf("  Local host:   %20s, Local port:   %5u\n",
+			    log_ntoa(sa_in->sin_addr.s_addr),
+			    ntohs(sa_in->sin_port));
+		}
+		if (p->sa_remote.ss_family == AF_INET) {
+			sa_in = (struct sockaddr_in *)&p->sa_remote;
+			printf("  Foreign host: %20s, Foreign port: %5u\n",
+			    log_ntoa(sa_in->sin_addr.s_addr),
+			    ntohs(sa_in->sin_port));
 		}
 		printf("\n");
 		break;
