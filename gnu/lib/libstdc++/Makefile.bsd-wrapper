@@ -1,4 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2004/03/19 16:16:55 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2004/10/16 22:21:33 brad Exp $
+
+.include "${.CURDIR}/shlib_version"
+SHLIB_MAJOR=${major}
+SHLIB_MINOR=${minor}
 
 LIBIBERTY_INCLUDES=${.CURDIR}/../libiberty/include
 LIBIBERTY_SRCDIR=${.CURDIR}/../libiberty/src
@@ -9,7 +13,8 @@ GXX_INCDIR=	/usr/include/g++
 MAKE_FLAGS= 	GCC_SRCDIR="${GCC_SRCDIR}" \
 		LIBIBERTY_INCLUDES="${LIBIBERTY_INCLUDES}" \
 		LIBIBERTY_SRCDIR="${LIBIBERTY_SRCDIR}" \
-		mkinstalldirs='mkdir -p'
+		mkinstalldirs='mkdir -p' \
+		libtool_VERSION=${SHLIB_MAJOR}:${SHLIB_MINOR}:0
 
 .MAIN: all
 
@@ -42,7 +47,8 @@ CF_SHARED= --enable-shared
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	CFLAGS="${CFLAGS} ${COPTS}" CXXFLAGS="${CXXFLAGS} ${COPTS}" \
+	CC="${CC}" CXX="${CXX}" CFLAGS="${CFLAGS} ${COPTS}" \
+	CXXFLAGS="${CXXFLAGS} ${COPTS}" \
 	/bin/sh ${.CURDIR}/libstdc++/configure \
 		--prefix=/usr \
 		--disable-nls \

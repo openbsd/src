@@ -160,7 +160,7 @@ libstdc___la_LIBADD = \
 libstdc___la_DEPENDENCIES = ${version_dep} $(libstdc___la_LIBADD)
 
 libstdc___la_LDFLAGS = \
-	-version-info @libtool_VERSION@ ${version_arg} \
+	-version-info ${libtool_VERSION} ${version_arg} \
 	-lm @LIBUNWIND_FLAG@ 
 
 
