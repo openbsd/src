@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.11 1996/06/10 00:43:59 downsj Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.12 1996/07/24 23:16:11 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-4170S        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "MAXTOR  ", "XT-8760S        ", ""},     SDEV_NOLUNS},
+	 "MAXTOR  ", "XT-8760S",	 ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "LXT-213S        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
