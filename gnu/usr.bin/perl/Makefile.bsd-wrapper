@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.35 2000/04/07 14:07:30 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.36 2000/04/09 06:00:49 millert Exp $
 #
 # Build wrapper for Perl 5.6.0
 #
@@ -133,7 +133,8 @@ INST_PROG='/usr/bin/install -c'
 
 MLINKS=		c2ph.1 pstruct.1
 
-GENERATED=	cflags config.h config.sh makeaperl makedepend makedir \
+# NOTE: config.sh *must* be first
+GENERATED=	config.sh config.h cflags makeaperl makedepend makedir \
 		myconfig writemain Makefile Policy.sh x2p/Makefile x2p/cflags
 
 CLEANFILES=	config.sh Policy.sh ${MANALL}
@@ -150,7 +151,7 @@ beforedepend:	config.sh config.h
 perl.build:	perl.lib
 	(cd ${.OBJDIR}; ${MAKE})
 
-config.sh:
+config.sh:	config.over
 	(cd ${.OBJDIR}; /usr/bin/env PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	 /bin/sh Configure -Dopenbsd_distribution=defined ${THREADED} -dsE)
 
