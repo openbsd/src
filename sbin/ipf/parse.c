@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.9 1997/02/26 04:35:40 kstailey Exp $	*/
+/*	$OpenBSD: parse.c,v 1.10 1997/02/26 15:05:36 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -872,6 +872,9 @@ u_long optmsk, optbits;
 					    (!secmsk && !secbits)) {
 						printf("%s%s", s, io->on_name);
 						s = ",";
+						if (io->on_value ==
+						    IPOPT_SECURITY)
+							io++;
 					} else
 						io++;
 				}
