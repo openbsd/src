@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.2 2003/08/12 20:40:19 jason Exp $	*/
+/*	$OpenBSD: safe.c,v 1.3 2003/08/12 23:08:46 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -107,19 +107,17 @@ void safe_totalreset(struct safe_softc *);
 __inline u_int32_t safe_rng_read(struct safe_softc *);
 
 int safe_free_entry(struct safe_softc *, struct safe_ringentry *);
-void safe_op_cb(void *, bus_dma_segment_t *, int, bus_size_t, int);
 
 #ifdef SAFE_DEBUG
-void safe_dump_dmastatus(struct safe_softc *, const char *);
-void safe_dump_ringstate(struct safe_softc *, const char *);
-void safe_dump_intrstate(struct safe_softc *, const char *);
-void safe_dump_request(struct safe_softc *, const char *,
-		struct safe_ringentry *);
-
-int safe_debug = 0;
-SYSCTL_INT(_hw_safe, OID_AUTO, debug, CTLFLAG_RW, &safe_debug,
-	    0, "control debugging msgs");
+int safe_debug;
 #define	DPRINTF(_x)	if (safe_debug) printf _x
+
+void safe_dump_dmastatus(struct safe_softc *, const char *);
+void safe_dump_intrstate(struct safe_softc *, const char *);
+void safe_dump_ringstate(struct safe_softc *, const char *);
+void safe_dump_request(struct safe_softc *, const char *,
+    struct safe_ringentry *);
+void safe_dump_ring(struct safe_softc *sc, const char *tag);
 #else
 #define	DPRINTF(_x)
 #endif
@@ -663,14 +661,12 @@ safe_process(struct cryptop *crp)
 			goto errout;
 		}
 	}
-	safe_op_cb(&re->re_src, re->re_src_map->dm_segs,
-	    re->re_src_map->dm_nsegs, re->re_src_map->dm_mapsize, 0);
 	nicealign = safe_dmamap_aligned(&re->re_src);
 	uniform = safe_dmamap_uniform(&re->re_src);
 
 	DPRINTF(("src nicealign %u uniform %u nsegs %u\n",
-		nicealign, uniform, re->re_src.nsegs));
-	if (re->re_src.nsegs > 1) {
+		nicealign, uniform, re->re_src_nsegs));
+	if (re->re_src_nsegs > 1) {
 		re->re_desc.d_src = sc->sc_spalloc.dma_paddr +
 			((caddr_t) sc->sc_spfree - (caddr_t) sc->sc_spring);
 		for (i = 0; i < re->re_src_nsegs; i++) {
@@ -751,7 +747,8 @@ safe_process(struct cryptop *crp)
 					err = EINVAL;
 					goto errout;
 				}
-			}
+			} else
+				re->re_dst = re->re_src;
 		} else if (crp->crp_flags & CRYPTO_F_IMBUF) {
 			if (nicealign && uniform == 1) {
 				/*
@@ -906,9 +903,7 @@ safe_process(struct cryptop *crp)
 			goto errout;
 		}
 
-		safe_op_cb(&re->re_dst, re->re_dst_map->dm_segs,
-		    re->re_dst_map->dm_nsegs, re->re_dst_map->dm_mapsize, 0);
-		if (re->re_dst.nsegs > 1) {
+		if (re->re_dst_nsegs > 1) {
 			re->re_desc.d_dst = sc->sc_dpalloc.dma_paddr +
 			    ((caddr_t) sc->sc_dpfree - (caddr_t) sc->sc_dpring);
 			for (i = 0; i < re->re_dst_nsegs; i++) {
@@ -995,17 +990,18 @@ void
 safe_reset_board(struct safe_softc *sc)
 {
 	u_int32_t v;
+
 	/*
 	 * Reset the device.  The manual says no delay
 	 * is needed between marking and clearing reset.
 	 */
-	v = READ_REG(sc, SAFE_PE_DMACFG) &~
-		(SAFE_PE_DMACFG_PERESET | SAFE_PE_DMACFG_PDRRESET |
-		 SAFE_PE_DMACFG_SGRESET);
+	v = READ_REG(sc, SAFE_PE_DMACFG) &
+	    ~(SAFE_PE_DMACFG_PERESET | SAFE_PE_DMACFG_PDRRESET |
+	    SAFE_PE_DMACFG_SGRESET);
 	WRITE_REG(sc, SAFE_PE_DMACFG, v
-				    | SAFE_PE_DMACFG_PERESET
-				    | SAFE_PE_DMACFG_PDRRESET
-				    | SAFE_PE_DMACFG_SGRESET);
+	    | SAFE_PE_DMACFG_PERESET
+	    | SAFE_PE_DMACFG_PDRRESET
+	    | SAFE_PE_DMACFG_SGRESET);
 	WRITE_REG(sc, SAFE_PE_DMACFG, v);
 }
 
@@ -1475,10 +1471,11 @@ safe_dmamap_aligned(const struct safe_operand *op)
 {
 	int i;
 
-	for (i = 0; i < op->nsegs; i++) {
-		if (op->segs[i].ds_addr & 3)
+	for (i = 0; i < op->map->dm_nsegs; i++) {
+		if (op->map->dm_segs[i].ds_addr & 3)
 			return (0);
-		if (i != (op->nsegs - 1) && (op->segs[i].ds_len & 3))
+		if (i != (op->map->dm_nsegs - 1) &&
+		    (op->map->dm_segs[i].ds_len & 3))
 			return (0);
 	}
 	return (1);
@@ -1574,13 +1571,13 @@ safe_dmamap_uniform(const struct safe_operand *op)
 {
 	int result = 1;
 
-	if (op->nsegs > 0) {
+	if (op->map->dm_nsegs > 0) {
 		int i;
 
-		for (i = 0; i < op->nsegs-1; i++) {
-			if (op->segs[i].ds_len % SAFE_MAX_DSIZE)
+		for (i = 0; i < op->map->dm_nsegs-1; i++) {
+			if (op->map->dm_segs[i].ds_len % SAFE_MAX_DSIZE)
 				return (0);
-			if (op->segs[i].ds_len != SAFE_MAX_DSIZE)
+			if (op->map->dm_segs[i].ds_len != SAFE_MAX_DSIZE)
 				result = 2;
 		}
 	}
@@ -1795,17 +1792,111 @@ safe_intr(void *arg)
 	return (1);
 }
 
-void
-safe_op_cb(void *arg, bus_dma_segment_t *seg, int nsegs,
-    bus_size_t mapsize, int error)
-{
-	struct safe_operand *op = arg;
+#ifdef SAFE_DEBUG
 
-	DPRINTF(("%s: mapsize %u nsegs %d error %d\n", __func__,
-	    (u_int) mapsize, nsegs, error));
-	if (error != 0)
-		return;
-	op->nsegs = nsegs;
-	bcopy(seg, op->segs, nsegs * sizeof (seg[0]));
+void
+safe_dump_dmastatus(struct safe_softc *sc, const char *tag)
+{
+	printf("%s: ENDIAN 0x%x SRC 0x%x DST 0x%x STAT 0x%x\n", tag,
+	    READ_REG(sc, SAFE_DMA_ENDIAN), READ_REG(sc, SAFE_DMA_SRCADDR),
+	    READ_REG(sc, SAFE_DMA_DSTADDR), READ_REG(sc, SAFE_DMA_STAT));
 }
 
+void
+safe_dump_intrstate(struct safe_softc *sc, const char *tag)
+{
+	printf("%s: HI_CFG 0x%x HI_MASK 0x%x HI_DESC_CNT 0x%x HU_STAT 0x%x HM_STAT 0x%x\n",
+	    tag, READ_REG(sc, SAFE_HI_CFG), READ_REG(sc, SAFE_HI_MASK),
+	    READ_REG(sc, SAFE_HI_DESC_CNT), READ_REG(sc, SAFE_HU_STAT),
+	    READ_REG(sc, SAFE_HM_STAT));
+}
+
+void
+safe_dump_ringstate(struct safe_softc *sc, const char *tag)
+{
+	u_int32_t estat = READ_REG(sc, SAFE_PE_ERNGSTAT);
+
+	/* NB: assume caller has lock on ring */
+	printf("%s: ERNGSTAT %x (next %u) back %u front %u\n",
+	    tag, estat, (estat >> SAFE_PE_ERNGSTAT_NEXT_S),
+	    sc->sc_back - sc->sc_ring, sc->sc_front - sc->sc_ring);
+}
+
+void
+safe_dump_request(struct safe_softc *sc, const char* tag, struct safe_ringentry *re)
+{
+	int ix, nsegs;
+
+	ix = re - sc->sc_ring;
+	printf("%s: %p (%u): csr %x src %x dst %x sa %x len %x\n", tag,
+	    re, ix, re->re_desc.d_csr, re->re_desc.d_src, re->re_desc.d_dst,
+	    re->re_desc.d_sa, re->re_desc.d_len);
+	if (re->re_src_nsegs > 1) {
+		ix = (re->re_desc.d_src - sc->sc_spalloc.dma_paddr) /
+		    sizeof(struct safe_pdesc);
+		for (nsegs = re->re_src_nsegs; nsegs; nsegs--) {
+			printf(" spd[%u] %p: %p size %u flags %x", ix,
+			    &sc->sc_spring[ix],
+			    (caddr_t)sc->sc_spring[ix].pd_addr,
+			    sc->sc_spring[ix].pd_size,
+			    sc->sc_spring[ix].pd_flags);
+			if (sc->sc_spring[ix].pd_size == 0)
+				printf(" (zero!)");
+			printf("\n");
+			if (++ix == SAFE_TOTAL_SPART)
+				ix = 0;
+		}
+	}
+	if (re->re_dst_nsegs > 1) {
+		ix = (re->re_desc.d_dst - sc->sc_dpalloc.dma_paddr) /
+		    sizeof(struct safe_pdesc);
+		for (nsegs = re->re_dst_nsegs; nsegs; nsegs--) {
+			printf(" dpd[%u] %p: %p flags %x\n", ix,
+			    &sc->sc_dpring[ix],
+			    (caddr_t) sc->sc_dpring[ix].pd_addr,
+			    sc->sc_dpring[ix].pd_flags);
+			if (++ix == SAFE_TOTAL_DPART)
+				ix = 0;
+		}
+	}
+	printf("sa: cmd0 %08x cmd1 %08x staterec %x\n",
+	    re->re_sa.sa_cmd0, re->re_sa.sa_cmd1, re->re_sa.sa_staterec);
+	printf("sa: key %x %x %x %x %x %x %x %x\n", re->re_sa.sa_key[0],
+	    re->re_sa.sa_key[1], re->re_sa.sa_key[2], re->re_sa.sa_key[3],
+	    re->re_sa.sa_key[4], re->re_sa.sa_key[5], re->re_sa.sa_key[6],
+	    re->re_sa.sa_key[7]);
+	printf("sa: indigest %x %x %x %x %x\n", re->re_sa.sa_indigest[0],
+	    re->re_sa.sa_indigest[1], re->re_sa.sa_indigest[2],
+	    re->re_sa.sa_indigest[3], re->re_sa.sa_indigest[4]);
+	printf("sa: outdigest %x %x %x %x %x\n", re->re_sa.sa_outdigest[0],
+	    re->re_sa.sa_outdigest[1], re->re_sa.sa_outdigest[2],
+	    re->re_sa.sa_outdigest[3], re->re_sa.sa_outdigest[4]);
+	printf("sr: iv %x %x %x %x\n",
+	    re->re_sastate.sa_saved_iv[0], re->re_sastate.sa_saved_iv[1],
+	    re->re_sastate.sa_saved_iv[2], re->re_sastate.sa_saved_iv[3]);
+	printf("sr: hashbc %u indigest %x %x %x %x %x\n",
+	    re->re_sastate.sa_saved_hashbc,
+	    re->re_sastate.sa_saved_indigest[0],
+	    re->re_sastate.sa_saved_indigest[1],
+	    re->re_sastate.sa_saved_indigest[2],
+	    re->re_sastate.sa_saved_indigest[3],
+	    re->re_sastate.sa_saved_indigest[4]);
+}
+
+void
+safe_dump_ring(struct safe_softc *sc, const char *tag)
+{
+	printf("\nSafeNet Ring State:\n");
+	safe_dump_intrstate(sc, tag);
+	safe_dump_dmastatus(sc, tag);
+	safe_dump_ringstate(sc, tag);
+	if (sc->sc_nqchip) {
+		struct safe_ringentry *re = sc->sc_back;
+		do {
+			safe_dump_request(sc, tag, re);
+			if (++re == sc->sc_ringtop)
+				re = sc->sc_ring;
+		} while (re != sc->sc_front);
+	}
+}
+#endif /* SAFE_DEBUG */

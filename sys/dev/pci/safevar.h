@@ -1,4 +1,4 @@
-/*	$OpenBSD: safevar.h,v 1.2 2003/08/12 20:40:19 jason Exp $	*/
+/*	$OpenBSD: safevar.h,v 1.3 2003/08/12 23:08:46 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -83,8 +83,6 @@ struct safe_operand {
 		struct uio *io;
 	} u;
 	bus_dmamap_t		map;
-	int			nsegs;
-	bus_dma_segment_t	segs[SAFE_MAX_PART];
 };
 
 /*
@@ -121,15 +119,15 @@ struct safe_ringentry {
 #define	re_src_m	re_src.u.m
 #define	re_src_io	re_src.u.io
 #define	re_src_map	re_src.map
-#define	re_src_nsegs	re_src.nsegs
-#define	re_src_segs	re_src.segs
+#define	re_src_nsegs	re_src.map->dm_nsegs
+#define	re_src_segs	re_src.map->dm_segs
 #define	re_src_mapsize	re_src.map->dm_mapsize
 
 #define	re_dst_m	re_dst.u.m
 #define	re_dst_io	re_dst.u.io
 #define	re_dst_map	re_dst.map
-#define	re_dst_nsegs	re_dst.nsegs
-#define	re_dst_segs	re_dst.segs
+#define	re_dst_nsegs	re_dst.map->dm_nsegs
+#define	re_dst_segs	re_dst.map->dm_segs
 #define	re_dst_mapsize	re_dst.map->dm_mapsize
 
 struct rndstate_test;
