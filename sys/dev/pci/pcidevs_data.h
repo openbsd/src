@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.67 1998/07/15 22:08:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.68 1998/07/19 05:53:25 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -169,6 +169,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M5237 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
+	    0,
+	    "Acer Labs",
+	    "M5243 AGP/PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,

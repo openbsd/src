@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.67 1998/07/15 22:08:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.68 1998/07/19 05:53:25 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -565,6 +565,7 @@
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
 #define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB Host Controller */
+#define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 AGP/PCI-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Management Controller */
 
 /* Adaptec products */
