@@ -2040,3 +2040,5 @@
 ./usr/share/man/cat4/uftdi.0
 ./usr/share/man/cat4/pms.0
 ./usr/share/man/cat4/pmsi.0
+./usr/share/man/cat9/bus_dma.0
+./usr/share/man/cat9/bus_space.0
