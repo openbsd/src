@@ -1,5 +1,5 @@
-#	$OpenBSD: DISKLESS,v 1.6 1996/05/14 18:38:11 mickey Exp $
-#	$NetBSD: DISKLESS,v 1.25 1996/04/25 20:14:28 scottr Exp $
+#	$OpenBSD: DISKLESS,v 1.7 1996/05/27 08:05:07 deraadt Exp $
+#	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
