@@ -64,10 +64,11 @@ Supported devices {:-include-:}:
 	Parallel ports.
 	Ethernet adapters:
 		Alteon Tigon I/II PCI Gigabit Ethernet boards [*] [+]:
-			3Com 3c985
-			Alteon ACEnic
-			Netgear GA620
+			3Com 3c985 and 3c905B
+			Alteon ACEnic V (fiber and copper)
+			Netgear GA620 and GA620T
 			SGI Tigon
+			Farallon PN9000
 		AMD LANCE and PCnet-based ISA Ethernet adapters [*], including:
 			Novell NE1500T
 			Novell NE2100
