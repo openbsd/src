@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.6 1999/02/24 23:47:18 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.7 1999/02/25 00:02:27 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -141,14 +141,10 @@ isvalid(char *option, int type, int mode)
     int i;
 
     for (i = sizeof(xf) / sizeof(transform) - 1; i >= 0; i--)
-      if (!strcmp(option, xf[i].name))
-      {
-	  if ((xf[i].flags & CMD_MASK) == type && 
-	      (xf[i].flags & mode))
-	    return xf[i].id;
-	  else
-	    return 0;
-      }
+      if (!strcmp(option, xf[i].name) &&
+	  (xf[i].flags & CMD_MASK) == type && 
+	  (xf[i].flags & mode))
+        return xf[i].id;
 
     return 0;
 }
