@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2000/07/23 21:49:03 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/07/23 21:53:45 pjanzen Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	canfield
@@ -12,6 +12,8 @@ beforeinstall:
 	@if [ ! -f ${DESTDIR}/var/games/cfscores ]; then \
 	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 664 \
 		/dev/null ${DESTDIR}/var/games/cfscores ; \
+	else \
+	    true ; \
 	fi
 
 .include "../../Makefile.inc"
