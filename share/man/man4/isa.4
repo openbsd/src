@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.12 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: isa.4,v 1.13 2001/12/05 11:27:44 mickey Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -209,6 +209,13 @@ Soundblaster, Soundblaster 16, and Soundblaster Pro sound cards.
 .It Xr wss 4
 Windows Sound System-compatible sound cards based on the AD1848 and
 compatible chips.
+.El
+.Ss Radio receiver devices
+.Bl -tag -width sf24xx -offset ind
+.It az 4
+Aztech/PackardBell radio card devices.
+.It sf2r 4
+SoundForte RadioLink SF16-FMR2 FM radio devices.
 .El
 .Pp
 Note that some

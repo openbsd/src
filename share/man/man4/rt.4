@@ -1,3 +1,4 @@
+.\"	$OpenBSD: rt.4,v 1.2 2001/12/05 11:27:44 mickey Exp $
 .\"	$RuOBSD: rt.4,v 1.3 2001/10/26 05:38:43 form Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -24,17 +25,17 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd October 8, 2001
-.Dt rt 4
+.Dt RT 4
 .Os
 .Sh NAME
 .Nm rt
 .Nd AIMS Lab Radiotrack FM radio device driver
 .Sh SYNOPSIS
-.Cd "rt0   at isa? port 0x20c"
-.Cd "rt0   at isa? port 0x30c"
-.Cd "rt0   at isa? port 0x284"
-.Cd "rt0   at isa? port 0x384"
-.Cd "radio* at rt0"
+.Cd "rt*   at isa? port 0x20c"
+.Cd "rt*   at isa? port 0x30c"
+.Cd "rt*   at isa? port 0x284"
+.Cd "rt*   at isa? port 0x384"
+.Cd "radio* at rt?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,15 +46,15 @@ The Radiotrack is a stereo FM tuner that allows to tune in the range
 87.5 - 108.0 MHz, report signal status on the current frequency, and
 force audio output to mono.
 .Pp
-The Radiotrack cards take only one I/O port. The I/O port is set by
-the driver to the value specified in the configuration file and must be
-either 0x20c or 0x30c.
+The Radiotrack cards take only one I/O port.
+The I/O port is set by the driver to the value specified in
+the configuration file and must be either 0x20c or 0x30c.
 .Sh BUGS
 Support for the SF16-FMI cards is rather ugly, volume control is not working
 and the driver can not correctly determine signal state.
 .Sh SEE ALSO
-.Xr radio 4 ,
-.Xr isa 4 .
+.Xr isa 4 ,
+.Xr radio 4 .
 .Sh AUTHORS
 The
 .Nm
