@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.10 2000/01/22 13:39:29 aaron Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.11 2000/02/13 01:04:54 aaron Exp $
 .\
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -43,7 +43,7 @@
 .Os
 .Sh NAME
 .Nm vnconfig
-.Nd configure vnode disks
+.Nd "configure vnode disks for file swapping or pseudo file systems"
 .Sh SYNOPSIS
 .Nm vnconfig Fl c
 .Op Fl v
@@ -54,7 +54,7 @@
 .Ar rawdev
 .Sh DESCRIPTION
 The
-.Nm vnconfig
+.Nm
 command configures vnode pseudo disk devices.
 It will associate the special file
 .Ar rawdev
@@ -64,13 +64,13 @@ allowing the latter to be accessed as though it were a disk.
 Hence a regular file within the filesystem can be used for swapping
 or can contain a filesystem that is mounted in the name space.  Both
 traditional devices,
-.Nm vnd  ,
+.Pa vnd ,
 and the cache-coherent devices,
-.Nm svnd  ,
+.Pa svnd ,
 are configured through
-.Nm
+.Nm vnconfig .
 .Pp
-Options indicate an action to be performed:
+The options are as follows:
 .Bl -tag -width indent
 .It Fl c
 Configures the device.
@@ -92,15 +92,15 @@ is assumed.
 .It Pa /dev/{,r}{,s}vnd*
 .El
 .Sh EXAMPLES
+Configure the vnode disk
+.Pa svnd0
+(all of its partitions become usable):
+.Pp
 .Dl vnconfig svnd0 /tmp/diskimage
 .Pp
-Configures the vnode disk
-.Pa svnd0
-(i.e., all of its partitions become usable).
+Unconfigure the same device:
 .Pp
 .Dl vnconfig -u svnd0
-.Pp
-Unconfigures the same device.
 .Sh BUGS
 This command should really be named
 .Nm vndconfig .
