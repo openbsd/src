@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.13 2002/04/26 12:55:01 espie Exp $	*/
+/*	$OpenBSD: expr.c,v 1.14 2002/04/26 16:15:16 espie Exp $	*/
 /*	$NetBSD: expr.c,v 1.7 1995/09/28 05:37:31 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: expr.c,v 1.13 2002/04/26 12:55:01 espie Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.14 2002/04/26 16:15:16 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,8 +142,7 @@ static jmp_buf expjump;
 #define getch()         *nxtch++
 
 int
-expr(expbuf)
-	const char *expbuf;
+expr(const char *expbuf)
 {
 	int rval;
 
@@ -615,8 +614,7 @@ skipws()
  * and forces eval to return FALSE.
  */
 static void
-experr(msg)
-	const char *msg;
+experr(const char *msg)
 {
 	printf("m4: %s in expr %s.\n", msg, where);
 	longjmp(expjump, -1);
