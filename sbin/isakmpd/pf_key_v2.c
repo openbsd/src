@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.62 2001/06/05 10:51:27 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.63 2001/06/05 21:43:46 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1116,7 +1116,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
       if (!pp)
 	goto nosid;
 
-      sid = calloc (PF_KEY_V2_ROUND (len) + sizeof *sid, sizeof (u_int8_t));
+      sid = calloc (PF_KEY_V2_ROUND (len + 1) + sizeof *sid, sizeof (u_int8_t));
       if (!sid)
 	{
 	  free (pp);
@@ -1125,7 +1125,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 
       sid->sadb_ident_type = idtype;
       sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
-			    + PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+			    + PF_KEY_V2_ROUND (len + 1) / PF_KEY_V2_CHUNK;
       if ((isakmp_sa->initiator && !incoming)
 	  || (!isakmp_sa->initiator && incoming))
 	sid->sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
@@ -1153,7 +1153,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
       if (!pp)
 	goto nodid;
 
-      sid = calloc (PF_KEY_V2_ROUND (len) + sizeof *sid, sizeof (u_int8_t));
+      sid = calloc (PF_KEY_V2_ROUND (len + 1) + sizeof *sid, sizeof (u_int8_t));
       if (!sid)
 	{
 	  free (pp);
@@ -1162,7 +1162,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 
       sid->sadb_ident_type = idtype;
       sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
-			    + PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+			    + PF_KEY_V2_ROUND (len + 1) / PF_KEY_V2_CHUNK;
       if ((isakmp_sa->initiator && !incoming)
 	  || (!isakmp_sa->initiator && incoming))
 	sid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
@@ -1445,7 +1445,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 	    goto cleanup;
 
 	  sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
-	    + PF_KEY_V2_ROUND (srcid_len) / PF_KEY_V2_CHUNK;
+	    + PF_KEY_V2_ROUND (srcid_len + 1) / PF_KEY_V2_CHUNK;
 	  sid->sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
 	  sid->sadb_ident_type = srcid_type;
 
@@ -1467,7 +1467,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 	    goto cleanup;
 
 	  sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
-	    + PF_KEY_V2_ROUND (dstid_len) / PF_KEY_V2_CHUNK;
+	    + PF_KEY_V2_ROUND (dstid_len + 1) / PF_KEY_V2_CHUNK;
 	  sid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
 	  sid->sadb_ident_type = dstid_type;
 
