@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 3.t,v 1.2 1996/06/23 14:30:38 deraadt Exp $
+.\"	$OpenBSD: 3.t,v 1.3 1996/10/12 03:06:55 tholo Exp $
 .\"	$NetBSD: 3.t,v 1.2 1995/03/18 14:56:10 cgd Exp $
 .\"
 .\" Copyright (c) 1982, 1993
@@ -346,6 +346,19 @@ then
 will remove that directory entry.
 Again,
 this condition can only arise when there has been a hardware failure.
+.PP
+.I Fsck
+also checks for directories with unallocated blocks (holes).
+Such directories should never be created.
+When found,
+.I fsck
+will prompt the user to adjust the length of the offending directory
+which is done by shortening the size of the directory to the end of the
+last allocated block preceeding the hole.
+Unfortunately, this means that another Phase 1 run has to be done. 
+.I Fsck
+will remind the user to rerun fsck after repairing a
+directory containing an unallocated block.
 .PP
 If a directory entry inode number references
 outside the inode list, then

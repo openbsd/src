@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.2 1996/06/23 14:30:28 deraadt Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.3 1996/10/12 03:06:53 tholo Exp $	*/
 /*	$NetBSD: fsck.h,v 1.10 1995/04/12 21:24:09 mycroft Exp $	*/
 
 /*
@@ -182,6 +182,7 @@ char	skipclean;		/* skip clean file systems if preening */
 int	fsmodified;		/* 1 => write done to file system */
 int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */
+int	rerun;			/* rerun fsck. Only used in non-preen mode */
 
 daddr_t	maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */

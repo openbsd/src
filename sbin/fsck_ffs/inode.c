@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.6 1996/06/23 14:30:29 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.7 1996/10/12 03:06:54 tholo Exp $	*/
 /*	$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.6 1996/06/23 14:30:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.7 1996/10/12 03:06:54 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ ckinode(dp, idesc)
 	struct dinode dino;
 	quad_t remsize, sizepb;
 	mode_t mode;
+	char pathbuf[MAXPATHLEN + 1];
 
 	if (idesc->id_fix != IGNORE)
 		idesc->id_fix = DONTKNOW;
@@ -89,8 +90,26 @@ ckinode(dp, idesc)
 				numfrags(&sblock, fragroundup(&sblock, offset));
 		else
 			idesc->id_numfrags = sblock.fs_frag;
-		if (*ap == 0)
+		if (*ap == 0) {
+			if (idesc->id_type == DATA && ndb >= 0) {
+				/* An empty block in a directory XXX */
+				getpathname(pathbuf, idesc->id_number,
+						idesc->id_number);
+                        	pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
+					pathbuf);
+                        	if (reply("ADJUST LENGTH") == 1) {
+					dp = ginode(idesc->id_number);
+                                	dp->di_size = (ap - &dino.di_db[0]) *
+					    sblock.fs_bsize;
+					printf(
+					    "YOU MUST RERUN FSCK AFTERWARDS\n");
+					rerun = 1;
+                                	inodirty();
+					
+                        	}
+			}
 			continue;
+		}
 		idesc->id_blkno = *ap;
 		if (idesc->id_type == ADDR)
 			ret = (*idesc->id_func)(idesc);
@@ -108,6 +127,24 @@ ckinode(dp, idesc)
 			ret = iblock(idesc, n, remsize);
 			if (ret & STOP)
 				return (ret);
+		} else {
+			if (idesc->id_type == DATA && remsize > 0) {
+				/* An empty block in a directory XXX */
+				getpathname(pathbuf, idesc->id_number,
+						idesc->id_number);
+                        	pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
+					pathbuf);
+                        	if (reply("ADJUST LENGTH") == 1) {
+					dp = ginode(idesc->id_number);
+                                	dp->di_size -= remsize;
+					remsize = 0;
+					printf(
+					    "YOU MUST RERUN FSCK AFTERWARDS\n");
+					rerun = 1;
+                                	inodirty();
+					break;
+                        	}
+			}
 		}
 		sizepb *= NINDIR(&sblock);
 		remsize -= sizepb;
@@ -126,7 +163,9 @@ iblock(idesc, ilevel, isize)
 	register struct bufarea *bp;
 	int i, n, (*func)(), nif;
 	quad_t sizepb;
+	char pathbuf[MAXPATHLEN + 1];
 	char buf[BUFSIZ];
+	struct dinode *dp;
 	extern int pass1check();
 
 	if (idesc->id_type == ADDR) {
@@ -170,6 +209,25 @@ iblock(idesc, ilevel, isize)
 			if (n & STOP) {
 				bp->b_flags &= ~B_INUSE;
 				return (n);
+			}
+		} else {
+			if (idesc->id_type == DATA && isize > 0) {
+				/* An empty block in a directory XXX */
+				getpathname(pathbuf, idesc->id_number,
+						idesc->id_number);
+                        	pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
+					pathbuf);
+                        	if (reply("ADJUST LENGTH") == 1) {
+					dp = ginode(idesc->id_number);
+                                	dp->di_size -= isize;
+					isize = 0;
+					printf(
+					    "YOU MUST RERUN FSCK AFTERWARDS\n");
+					rerun = 1;
+                                	inodirty();
+					bp->b_flags &= ~B_INUSE;
+					return(STOP);
+                        	}
 			}
 		}
 		isize -= sizepb;
