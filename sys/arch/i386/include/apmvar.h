@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.5 1998/07/18 02:40:35 marc Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.6 1998/07/27 23:16:36 marc Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -131,9 +131,14 @@
 #define		BATT_FLAGS(regp) (((regp)->cx & 0xff00) >> 8)
 #define		AC_STATE(regp) (((regp)->bx & 0xff00) >> 8)
 #define		BATT_LIFE(regp) ((regp)->cx & 0xff) /* in % */
+/* Return time in minutes. According to the APM 1.2 spec:
+	DX = Remaining battery life -- time units
+		Bit 15 = 0	Time units are seconds
+		       = 1 	Time units are minutes
+		Bits 14-0 =	Number of seconds or minutes */
 #define		BATT_REMAINING(regp) (((regp)->dx & 0x8000) ? \
-				      ((regp)->dx & 0x7fff)*60 : \
-				      ((regp)->dx & 0x7fff))
+				      ((regp)->dx & 0x7fff) : \   
+				      ((regp)->dx & 0x7fff)/60)  
 #define		BATT_REM_VALID(regp) (((regp)->dx & 0xffff) != 0xffff)
 
 #define	APM_GET_PM_EVENT	0x530b
