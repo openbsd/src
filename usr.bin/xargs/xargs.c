@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.4 1997/01/15 23:43:40 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.5 1997/09/12 01:47:25 deraadt Exp $	*/
 /*	$NetBSD: xargs.c,v 1.7 1994/11/14 06:51:41 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: xargs.c,v 1.4 1997/01/15 23:43:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: xargs.c,v 1.5 1997/09/12 01:47:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -293,7 +293,7 @@ run(argv)
 	case 0:
 		execvp(argv[0], argv);
 		noinvoke = (errno == ENOENT) ? 127 : 126;
-		warn("%s", argv[0]);;
+		warn("%s", argv[0]);
 		_exit(1);
 	}
 	pid = waitpid(pid, &status, 0);
