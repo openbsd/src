@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.170 2002/08/31 07:28:32 miod Exp $
+#	$OpenBSD: Makefile,v 1.171 2002/09/06 21:30:22 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -130,15 +130,6 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/mtree; \
 		${INSTALL} -c -o root -g wheel -m 444 BSD.x11.dist \
 		    ${DESTDIR}/etc/mtree
-	cd photuris; \
-		${INSTALL} -c -o root -g wheel -m 600 secrets.conf \
-		    ${DESTDIR}/etc/photuris; \
-		${INSTALL} -c -o root -g wheel -m 600 attributes.conf \
-		    ${DESTDIR}/etc/photuris; \
-		${INSTALL} -c -o root -g wheel -m 600 photuris.conf \
-		    ${DESTDIR}/etc/photuris; \
-		${INSTALL} -c -o root -g wheel -m 600 photuris.startup \
-		    ${DESTDIR}/etc/photuris
 	cd ppp; \
 		${INSTALL} -c -o root -g wheel -m 600 chap-secrets \
 		    ${DESTDIR}/etc/ppp; \

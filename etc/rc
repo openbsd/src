@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.203 2002/08/20 08:42:59 hugh Exp $
+#	$OpenBSD: rc,v 1.204 2002/09/06 21:30:22 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -213,13 +213,6 @@ if [ "X${named_flags}" != X"NO" ]; then
 		named_flags="-t ${named_chroot} ${named_flags}"
 	fi
 	echo 'starting named';		named $named_flags
-fi
-
-# $photurisd_flags is imported from /etc/rc.conf;
-# If $photurisd_flags == NO or /etc/photuris/photuris.conf doesn't exist, then
-# photurisd isn't run.
-if [ "X${photurisd_flags}" != X"NO" -a -e /etc/photuris/photuris.conf ]; then
-	echo 'starting photurisd';	photurisd ${photurisd_flags}
 fi
 
 # $isakmpd_flags is imported from /etc/rc.conf;

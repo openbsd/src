@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.134 2002/07/18 21:32:28 provos Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.135 2002/09/06 21:30:22 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -87,11 +87,6 @@ mail
 # ./etc/mtree
 mtree
 # ./etc/mtree
-..
-
-# ./etc/photuris
-photuris
-# ./etc/photuris
 ..
 
 # ./etc/ppp

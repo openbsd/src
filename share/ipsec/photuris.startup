@@ -1,8 +1,0 @@
-#	$OpenBSD: photuris.startup,v 1.2 2001/02/03 08:20:36 niklas Exp $
-
-# Initial exchanges which might be needed by NIS or NFS servers
-dst=134.100.106.2 port=468 options=enc,auth user=provos
-tsrc=134.100.106.0/255.255.255.255
-tdst=134.100.0.0/255.255.0.0
-
-dst=134.100.104.6 port=7468
