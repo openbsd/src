@@ -1,7 +1,7 @@
-/*	$OpenBSD: noexec.c,v 1.3 2003/01/05 22:41:36 deraadt Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.4 2003/04/23 21:46:04 mickey Exp $	*/
 
 /*
- * Copyright (c) 2002 Michael Shalayeff
+ * Copyright (c) 2002,2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,10 +48,7 @@ char label[64] = "non-exec ";
 u_int64_t data[PAD+TEST] = { 0 };
 u_int64_t bss[PAD+TEST];
 
-void
-testfly()
-{
-}
+void testfly();
 
 void
 sigsegv(int sig, siginfo_t *sip, void *scp)
@@ -62,7 +59,6 @@ sigsegv(int sig, siginfo_t *sip, void *scp)
 int
 noexec(void *p, size_t size)
 {
-
 	fail = 0;
 	printf("%s: execute\n", label);
 	((void (*)(void))p)();
@@ -76,13 +72,15 @@ noexec_mprotect(void *p, size_t size)
 
 	/* here we must fail on segv since we said it gets executable */
 	fail = 1;
-	mprotect(p, size, PROT_READ|PROT_WRITE|PROT_EXEC);
+	if (mprotect(p, size, PROT_READ|PROT_WRITE|PROT_EXEC) < 0)
+		err(1, "mprotect 1");
 	printf("%s: execute\n", label);
 	((void (*)(void))p)();
 
 	/* here we are successful on segv and fail if it still executes */
 	fail = 0;
-	mprotect(p, size, PROT_READ|PROT_WRITE);
+	if (mprotect(p, size, PROT_READ|PROT_WRITE) < 0)
+		err(1, "mprotect 2");
 	printf("%s: catch a signal\n", label);
 	((void (*)(void))p)();
 
@@ -105,17 +103,32 @@ getaddr(void *a)
 int
 noexec_mmap(void *p, size_t size)
 {
-	void *addr;
+	memcpy(p + page_size * 1, p, page_size);
+	memcpy(p + page_size * 2, p, page_size);
+	/* XXX must flush cache */
 
 	/* here we must fail on segv since we said it gets executable */
 	fail = 1;
-	if ((addr = mmap(p, size, PROT_READ|PROT_WRITE|PROT_EXEC,
-	    MAP_ANON|MAP_FIXED, -1, 0)) == MAP_FAILED)
-		err(1, "mmap");
-	printf("%s: execute\n", label);
-	((void (*)(void))addr)();
 
-	exit(0);
+	printf("%s: execute #1\n", label);
+	((void (*)(void))p)();
+
+	/* unmap the first page to see that the higher page is still exec */
+	if (munmap(p, page_size) < 0)
+		err(1, "munmap");
+
+	p += page_size;
+	printf("%s: execute #2\n", label);
+	((void (*)(void))p)();
+
+	/* unmap the last page to see that the lower page is still exec */
+	if (munmap(p + page_size, page_size) < 0)
+		err(1, "munmap");
+
+	printf("%s: execute #3\n", label);
+	((void (*)(void))p)();
+
+	return (0);
 }
 
 void
@@ -179,7 +192,11 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			func = &noexec_mmap;
-			strcat(label, "-mmap");
+			strcat(label, "mmap");
+			if ((p = mmap(NULL, 3 * page_size,
+			    PROT_READ|PROT_WRITE|PROT_EXEC,
+			    MAP_ANON, -1, 0)) == MAP_FAILED)
+				err(1, "mmap");
 			break;
 		case 'p':
 			func = &noexec_mprotect;
@@ -202,7 +219,17 @@ main(int argc, char *argv[])
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGSEGV, &sa, NULL);
 
-	memcpy(p, &testfly, TEST);
+	if (p != &testfly)
+		memcpy(p, &testfly, TEST);
 
 	exit((*func)(p, size));
 }
+
+__asm (".space 8192");
+
+void
+testfly()
+{
+}
+
+__asm (".space 8192");

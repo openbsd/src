@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2002/09/03 15:28:49 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 2003/04/23 21:46:04 mickey Exp $
 
 .if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc" || \
     ${MACHINE} == "alpha" || ${MACHINE} == "macppc" || \
@@ -12,11 +12,12 @@ REGRESS_TARGETS=	nxtext-mprotect \
 		nxdata	nxdata-mprotect \
 		nxbss	nxbss-mprotect \
 		nxheap	nxheap-mprotect \
+		nxmmap	nxmmap-mprotect \
 		nxstack	nxstack-mprotect
 .PHONY: ${REGRESS_TARGETS}
 
 nxtext-mprotect: ${PROG}
-#	@./${PROG} -T -p
+	@./${PROG} -T -p
 
 nxdata: ${PROG}
 	@./${PROG} -D
@@ -41,6 +42,12 @@ nxstack: ${PROG}
 
 nxstack-mprotect: ${PROG}
 	@./${PROG} -S -p
+
+nxmmap: ${PROG}
+	@./${PROG} -m
+
+nxmmap-mprotect: ${PROG}
+	@./${PROG} -m -p
 
 .else
 REGRESS_TARGETS=		# this architecture has no test for this
