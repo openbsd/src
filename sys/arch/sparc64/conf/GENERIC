@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2001/08/23 14:25:40 art Exp $
+#	$OpenBSD: GENERIC,v 1.15 2001/09/22 03:51:18 art Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -29,6 +29,7 @@ ppb*	at pci? dev ? function ?
 ebus*	at pci?
 
 hme*	at pci? dev ? function ?
+gem*	at pci? dev ? function ?
 
 #### Standard system devices -- all required for a given architecture
 
