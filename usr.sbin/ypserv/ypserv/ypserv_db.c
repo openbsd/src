@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.5 1996/06/26 21:26:39 maja Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.6 1996/06/27 20:25:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.5 1996/06/26 21:26:39 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.6 1996/06/27 20:25:54 deraadt Exp $";
 #endif
 
 /*
@@ -381,6 +381,7 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 	struct	in_addr addr_addr;
 	static  char val[BUFSIZ+1]; /* match libc */
 	static	hostname[MAXHOSTNAMELEN];
+	char	tmpbuf[MAXHOSTNAMELEN + 20];
 	char *v;
 	int l;
 	char	*ptr;
@@ -396,19 +397,15 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 		if (host == NULL || host->h_addrtype != AF_INET) 
 			return(YP_NOKEY);
 		addr_name = (struct in_addr *) *host->h_addr_list;
-		snprintf(val,sizeof(val), "%s %s",
-			inet_ntoa(*addr_name), keystr);
-		l = strlen(val);
-		v = val + l;
-		while ((ptr = *(host->h_aliases)) != NULL) {
-			l = strlen(ptr);
-			if ((v - val) + l + 1 > BUFSIZ)
+		v = val;
+		for (; host->h_addr_list[0] != NULL; host->h_addr_list++) {
+			addr_name = (struct in_addr *)host->h_addr_list[0];
+			snprintf(tmpbuf,sizeof(tmpbuf), "%s %s\n",
+				inet_ntoa(*addr_name), host->h_name);
+			if (v - val + strlen(tmpbuf) + 1 > sizeof(val))
 				break;
-			strcpy(v, " ");
-			v += 1;
-			strcpy(v, ptr);
-			v += l;
-			host->h_aliases++;
+			strcpy(v, tmpbuf);
+			v = v + strlen(tmpbuf);
 		}
 		result->val.valdat_val = val;
 		result->val.valdat_len = v - val;
