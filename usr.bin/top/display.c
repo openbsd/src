@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.2 1997/08/22 07:16:27 downsj Exp $	*/
+/*	$OpenBSD: display.c,v 1.3 1999/03/06 20:19:21 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -57,7 +57,7 @@ static int display_width = MAX_COLS;
 
 static char *cpustates_tag __P((void));
 static int string_count __P((char **));
-static void summary_format __P((char *, int *, char **));
+static void summary_format __P((char *, size_t, int *, char **));
 static void line_update __P((char *, char *, int, int));
 
 #define lineindex(l) ((l)*display_width)
@@ -305,7 +305,8 @@ int *brkdn;
     }
 
     /* format and print the process state summary */
-    summary_format(procstates_buffer, brkdn, procstate_names);
+    summary_format(procstates_buffer, sizeof(procstates_buffer), brkdn,
+	procstate_names);
     fputs(procstates_buffer, stdout);
 
     /* save the numbers for next time */
@@ -354,7 +355,7 @@ int *brkdn;
     if (memcmp(lprocstates, brkdn, num_procstates * sizeof(int)) != 0)
     {
 	/* format and update the line */
-	summary_format(new, brkdn, procstate_names);
+	summary_format(new, sizeof(new), brkdn, procstate_names);
 	line_update(procstates_buffer, new, x_brkdn, y_brkdn);
 	memcpy(lprocstates, brkdn, num_procstates * sizeof(int));
     }
@@ -522,7 +523,7 @@ int *stats;
     lastline++;
 
     /* format and print the memory summary */
-    summary_format(memory_buffer, stats, memory_names);
+    summary_format(memory_buffer, sizeof(memory_buffer), stats, memory_names);
     fputs(memory_buffer, stdout);
 }
 
@@ -534,7 +535,7 @@ int *stats;
     static char new[MAX_COLS];
 
     /* format the new line */
-    summary_format(new, stats, memory_names);
+    summary_format(new, sizeof(new), stats, memory_names);
     line_update(memory_buffer, new, x_mem, y_mem);
 }
 
@@ -935,19 +936,22 @@ register char **pp;
     return(cnt);
 }
 
-static void summary_format(str, numbers, names)
+static void summary_format(str, siz, numbers, names)
 
 char *str;
+size_t siz;
 int *numbers;
 register char **names;
 
 {
-    register char *p;
     register int num;
     register char *thisname;
 
+    if (siz == 0)
+	return;
+
     /* format each number followed by its string */
-    p = str;
+    *str = '\0';
     while ((thisname = *names++) != NULL)
     {
 	/* get the number to format */
@@ -960,30 +964,30 @@ register char **names;
 	    if (thisname[0] == 'K')
 	    {
 		/* yes: format it as a memory value */
-		p = strecpy(p, format_k(num));
+		strlcat(str, format_k(num), siz);
 
 		/* skip over the K, since it was included by format_k */
-		p = strecpy(p, thisname+1);
+		strlcat(str, thisname+1, siz);
 	    }
 	    else
 	    {
-		p = strecpy(p, itoa(num));
-		p = strecpy(p, thisname);
+		strlcat(str, itoa(num), siz);
+		strlcat(str, thisname, siz);
 	    }
 	}
 
 	/* ignore negative numbers, but display corresponding string */
 	else if (num < 0)
 	{
-	    p = strecpy(p, thisname);
+	    strlcat(str, thisname, siz);
 	}
     }
 
     /* if the last two characters in the string are ", ", delete them */
-    p -= 2;
-    if (p >= str && p[0] == ',' && p[1] == ' ')
+    thisname = str + strlen(str) - 2;
+    if (thisname >= str && thisname[0] == ',' && thisname[1] == ' ')
     {
-	*p = '\0';
+	*thisname = '\0';
     }
 }
 

@@ -1,4 +1,4 @@
-/* * $OpenBSD: skey.c,v 1.10 1997/07/17 05:48:40 millert Exp $*/
+/* * $OpenBSD: skey.c,v 1.11 1999/03/06 20:19:20 millert Exp $*/
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -37,7 +37,7 @@ main(argc, argv)
 {
 	int     n, i, cnt = 1, pass = 0, hexmode = 0;
 	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
-	char	buf[33], *seed, *slash;
+	char	bufs[33], bufh[33], *seed, *slash;
 
 	/* If we were called as otp-METHOD, set algorithm based on that */
 	if ((slash = strrchr(argv[0], '/')))
@@ -129,16 +129,16 @@ main(argc, argv)
 	if (cnt == 1) {
 		while (n-- != 0)
 			f(key);
-		(void)puts(hexmode ? put8(buf, key) : btoe(buf, key));
+		(void)puts(hexmode ? put8(bufh, key) : btoe(bufs, key));
 	} else {
 		for (i = 0; i <= n - cnt; i++)
 			f(key);
 		for (; i <= n; i++) {
 			if (hexmode)
 				(void)printf("%d: %-29s  %s\n", i,
-				    btoe(buf, key), put8(buf, key));
+				    btoe(bufs, key), put8(bufh, key));
 			else
-				(void)printf("%d: %-29s\n", i, btoe(buf, key));
+				(void)printf("%d: %-29s\n", i, btoe(bufs, key));
 			f(key);
 		}
 	}

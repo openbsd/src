@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.5 1997/06/24 02:40:15 dgregor Exp $	*/
+/*	$OpenBSD: tput.c,v 1.6 1999/03/06 20:19:22 millert Exp $	*/
 /*	$NetBSD: tput.c,v 1.8 1995/08/31 22:11:37 jtc Exp $	*/
 
 /*-
@@ -44,13 +44,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: tput.c,v 1.5 1997/06/24 02:40:15 dgregor Exp $";
+static char rcsid[] = "$OpenBSD: tput.c,v 1.6 1999/03/06 20:19:22 millert Exp $";
 #endif /* not lint */
 
 #include <termios.h>
 
 #include <err.h>
 #include <curses.h>
+#include <term.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -58,75 +59,101 @@ static char rcsid[] = "$OpenBSD: tput.c,v 1.5 1997/06/24 02:40:15 dgregor Exp $"
 
 static void   prlongname __P((char *));
 static void   setospeed __P((void));
-static void   outc __P((int));
 static void   usage __P((void));
 static char **process __P((char *, char *, char **));
+
+extern char  *__progname;
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
-	int ch, exitval, n;
-	char *argv0, *cptr, *p, *term, buf[1024], tbuf[1024];
+	int ch, exitval, n, Sflag = 0;
+	size_t len;
+	char *p, *term, *str;
 
 	term = NULL;
-	while ((ch = getopt(argc, argv, "T:")) != -1)
+	while ((ch = getopt(argc, argv, "ST:")) != -1)
 		switch(ch) {
 		case 'T':
 			term = optarg;
+			break;
+		case 'S':
+			Sflag = 1;
 			break;
 		case '?':
 		default:
 			usage();
 		}
-	if ((argv0 = (char *)strrchr(argv[0], '/')) != NULL)
-		argv0++;
-	else
-		argv0 = argv[0];
 	argc -= optind;
 	argv += optind;
 
+	if (Sflag && argc > 0)
+		usage();
 
 	if (!term && !(term = getenv("TERM")))
 errx(2, "no terminal type specified and no TERM environmental variable.");
-	if (tgetent(tbuf, term) != 1)
-		err(2, "tgetent failure");
+	if (setupterm(term, STDOUT_FILENO, NULL) == ERR)
+		err(2, "setupterm failure");
 	setospeed();
-	if (strcmp(argv0, "clear") == 0) {
+	if (strcmp(__progname, "clear") == 0) {
+		if (Sflag)
+			usage();
 		*argv = "clear";
 		*(argv+1) = NULL;
 	}
+	if (Sflag) {
+		char **av;
+
+		/* Build new argv based on stdin */
+		argc = n = 0;
+		av = NULL;
+		while ((str = fgetln(stdin, &len)) != NULL) {
+			if (str[len-1] != '\n')
+				errx(1, "premature EOF");
+			str[len-1] = '\0';
+			/* grow av as needed */
+			if (argc + 1 >= n) {
+				n += 64;
+				av = (char **)realloc(av, sizeof(char *) * n);
+				if (av == NULL)
+					errx(1, "out of memory");
+				av = &av[argc];
+			}
+			while ((p = strsep(&str, " \t")) != NULL)
+				if ((av[argc++] = strdup(p)) == NULL)
+					errx(1, "out of memory");
+		}
+		if (argc > 0) {
+			av[argc] = NULL;
+			argv = av;
+		}
+	}
 	for (exitval = 0; (p = *argv) != NULL; ++argv) {
 		switch (*p) {
-		case 'c':
-			if (!strcmp(p, "clear"))
-				p = "cl";
-			break;
 		case 'i':
 			if (!strcmp(p, "init"))
-				p = "is";
+				p = "is2";	/* XXX - is1 as well? */
 			break;
 		case 'l':
 			if (!strcmp(p, "longname")) {
-				prlongname(tbuf);
+				prlongname(CUR term_names);
 				continue;
 			}
 			break;
 		case 'r':
 			if (!strcmp(p, "reset"))
-				p = "rs";
+				p = "rs2";	/* XXX - rs1 as well? */
 			break;
 		}
-		cptr = buf;
-		if (tgetstr(p, &cptr))
-			argv = process(p, buf, argv);
-		else if ((n = tgetnum(p)) != -1)
+		/* XXX - check termcap names too */
+		if ((str = tigetstr(p)) != NULL && str != (char *)-1)
+			argv = process(p, str, argv);
+		else if ((n = tigetnum(p)) != -1 && n != -2)
 			(void)printf("%d\n", n);
 		else
-			exitval = !tgetflag(p);
+			exitval = (tigetflag(p) == -1);
 
 		if (argv == NULL)
 			break;
@@ -184,7 +211,7 @@ process(cap, str, argv)
 				    break;
 			    default:
 				/*
-				 * hpux has lot's of them, but we complain
+				 * HP-UX has lots of them, but we complain
 				 */
 				 errx(2, erresc, *cp, cap);
 			    }
@@ -192,7 +219,7 @@ process(cap, str, argv)
 	/* And print them. */
 	switch (arg_need) {
 	case 0:
-		(void)tputs(str, 1, outc);
+		(void)putp(str);
 		break;
 	case 1:
 		arg_cols = 0;
@@ -201,7 +228,7 @@ process(cap, str, argv)
 			errx(2, errfew, 1, cap);
 		arg_rows = atoi(*argv);
 
-		(void)tputs(tgoto(str, arg_cols, arg_rows), 1, outc);
+		(void)putp(tparm(str, arg_cols, arg_rows));
 		break;
 	case 2:
 		if (*++argv == NULL || *argv[0] == '\0')
@@ -212,7 +239,7 @@ process(cap, str, argv)
 			errx(2, errfew, 2, cap);
 		arg_cols = atoi(*argv);
 
-		(void) tputs(tgoto(str, arg_cols, arg_rows), arg_rows, outc);
+		(void) tputs(tparm(str, arg_cols, arg_rows), arg_rows, putchar);
 		break;
 
 	default:
@@ -235,15 +262,10 @@ setospeed()
 }
 
 static void
-outc(c)
-	int c;
-{
-	(void)putchar(c);
-}
-
-static void
 usage()
 {
-	(void)fprintf(stderr, "usage: tput [-T term] attribute ...\n");
+	(void)fprintf(stderr,
+	    "usage: %s [-T term] attribute [attribute-args] ...\n"
+	    "       %s [-T term] -S\n", __progname, __progname);
 	exit(1);
 }

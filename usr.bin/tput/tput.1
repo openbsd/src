@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.3 1998/10/30 00:24:40 aaron Exp $
+.\"	$OpenBSD: tput.1,v 1.4 1999/03/06 20:19:21 millert Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)tput.1	8.2 (Berkeley) 3/19/94
 .\"
-.Dd March 19, 1994
+.Dd July 25, 1998
 .Dt TPUT 1
 .Os BSD 4.4
 .Sh NAME
@@ -46,6 +46,9 @@
 .Ar attribute
 .Op Ar attribute-args
 .Ar ...
+.Nm tput
+.Op Fl T Ar term
+.Fl S
 .Sh DESCRIPTION
 .Nm tput
 makes terminal-dependent information available to users or shell
@@ -54,13 +57,17 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl T
 The terminal name as specified in the
-.Xr termcap
+.Xr terminfo
 database, for example, ``vt100'' or ``xterm''.
 If not specified,
 .Nm tput
 retrieves the
 .Dq Ev TERM
 variable from the environment.
+.It Fl S
+The
+.Ar attributes
+are read from stdin instead of from the command line.
 .El
 .Pp
 .Nm tput
@@ -75,8 +82,8 @@ without further action.
 If the
 .Ar attribute
 is of type string, and takes arguments (e.g. cursor movement,
-the termcap
-.Dq cm
+the terminfo
+.Dq cup
 sequence) the arguments are taken from the command line immediately
 following the attribute.
 .Pp
@@ -84,18 +91,18 @@ The following special attributes are available:
 .Bl -tag -width Ar
 .It clear
 Clear the screen (the
-.Xr termcap
-``cl'' sequence).
+.Xr terminfo
+``clear'' sequence).
 .It init
 Initialize the terminal (the
-.Xr termcap
-``is'' sequence).
+.Xr terminfo
+``is2'' sequence).
 .It longname
 Print the descriptive name of the user's terminal type.
 .It reset
 Reset the terminal (the
-.Xr termcap
-``rs'' sequence).
+.Xr termifo
+``rs2'' sequence).
 .Sh DIAGNOSTICS
 The exit value of
 .Nm tput
@@ -110,15 +117,15 @@ exits 0 if the terminal has this attribute, and 1 if it does not.
 .Nm tput
 exits 2 if any error occurred.
 .Sh EXAMPLES
-.Bl -tag -width "tput cm 6 11 DC 6" -compact
-.It Li "tput cl cm 5 10"
+.Bl -tag -width "tput cup 6 11 dch 6" -compact
+.It Li "tput clear cup 5 10"
 clear the screen and goto line 5 column 10
 .Pp
-.It Li "tput cm 6 11 DC 6"
+.It Li "tput cup 6 11 dch 6"
 goto line 6 column 11 and delete 6 characters
 .Sh SEE ALSO
-.Xr termcap 3 ,
-.Xr termcap 5
+.Xr terminfo 3 ,
+.Xr terminfo 5
 .Sh BUGS
 .Nm tput
 can't really distinguish between different types of attributes.
