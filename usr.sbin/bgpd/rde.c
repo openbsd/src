@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.43 2004/01/03 20:37:34 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.44 2004/01/04 17:19:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -707,7 +707,7 @@ peer_up(u_int32_t id, u_int32_t rid)
 		logit(LOG_CRIT, "peer_up: unknown peer id %d", id);
 		return;
 	}
-	peer->remote_bgpid = rid;
+	peer->remote_bgpid = ntohl(rid);
 	peer->state = PEER_UP;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.58 2004/01/03 22:44:28 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.59 2004/01/04 17:19:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1199,7 +1199,7 @@ parse_open(struct peer *peer)
 		    NULL, 0);
 		return (-1);
 	} */
-	peer->remote_bgpid = ntohl(bgpid);
+	peer->remote_bgpid = bgpid;
 
 	memcpy(&optparamlen, p, sizeof(optparamlen));
 	p += sizeof(optparamlen);
