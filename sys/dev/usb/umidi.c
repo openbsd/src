@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.10 2004/06/27 19:44:48 deraadt Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.11 2004/11/20 01:29:37 jsg Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1279,6 +1279,8 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 			break;
 		case EV_SYSEX_STOP:
 			if (packet->status != EV_SYSEX) break;
+			if (packet->index == 0)
+				packet->index = 1; 
 			packet->status = data;
 			packet->buffer[packet->index++] = data;
 			packet->buffer[0] = (0x4 - 1 + packet->index) | cable_number << 4;
