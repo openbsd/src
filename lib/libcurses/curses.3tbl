@@ -28,7 +28,7 @@
 .\"
 '\" t
 .\" $From: ncurses.3x,v 1.24 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: curses.3tbl,v 1.6 1998/07/23 21:18:09 millert Exp $
+.\" $OpenBSD: curses.3tbl,v 1.7 1998/07/25 22:04:02 millert Exp $
 .TH curses 3 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -389,11 +389,11 @@ subwin/\fBcurs_window\fR(3)
 syncok/\fBcurs_window\fR(3)
 termattrs/\fBcurs_termattrs\fR(3)
 termname/\fBcurs_termattrs\fR(3)
-tgetent/\fBcurs_termcap\fR(3)
-tgetflag/\fBcurs_termcap\fR(3)
-tgetnum/\fBcurs_termcap\fR(3)
-tgetstr/\fBcurs_termcap\fR(3)
-tgoto/\fBcurs_termcap\fR(3)
+tgetent/\fBtermcap\fR(3)
+tgetflag/\fBtermcap\fR(3)
+tgetnum/\fBtermcap\fR(3)
+tgetstr/\fBtermcap\fR(3)
+tgoto/\fBtermcap\fR(3)
 tigetflag/\fBterminfo\fR(3)
 tigetnum/\fBterminfo\fR(3)
 tigetstr/\fBterminfo\fR(3)
@@ -401,7 +401,7 @@ timeout/\fBcurs_inopts\fR(3)
 touchline/\fBcurs_touch\fR(3)
 touchwin/\fBcurs_touch\fR(3)
 tparm/\fBterminfo\fR(3)
-tputs/\fBcurs_termcap\fR(3)
+tputs/\fBtermcap\fR(3)
 tputs/\fBterminfo\fR(3)
 typeahead/\fBcurs_inopts\fR(3)
 unctrl/\fBcurs_util\fR(3)
