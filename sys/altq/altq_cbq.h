@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.h,v 1.6 2002/12/16 17:27:19 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.h,v 1.7 2003/04/02 14:51:45 henning Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -49,7 +49,6 @@ extern "C" {
 #define	NULL_CLASS_HANDLE	0xffffffff
 #define	ROOT_CLASS_HANDLE	0xfffffffe
 #define	DEFAULT_CLASS_HANDLE	0xfffffffd
-#define	CTL_CLASS_HANDLE	0xfffffffc
 
 /* class flags shoud be same as class flags in rm_class.h */
 #define	CBQCLF_RED		0x0001	/* use RED */
@@ -66,7 +65,6 @@ extern "C" {
 /* class flags for special classes */
 #define	CBQCLF_ROOTCLASS	0x1000	/* root class */
 #define	CBQCLF_DEFCLASS		0x2000	/* default class */
-#define	CBQCLF_CTLCLASS		0x4000	/* control class */
 #define	CBQCLF_CLASSMASK	0xf000	/* class mask */
 
 #define	CBQ_MAXQSIZE		200

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.15 2003/03/31 12:35:45 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.16 2003/04/02 14:51:45 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -86,9 +86,6 @@ cbq_class_destroy(cbq_state_t *cbqp, struct rm_class *cl)
 	case DEFAULT_CLASS_HANDLE:
 		cbqp->ifnp.default_ = NULL;
 		break;
-	case CTL_CLASS_HANDLE:
-		cbqp->ifnp.ctl_ = NULL;
-		break;
 	case NULL_CLASS_HANDLE:
 		break;
 	default:
@@ -111,8 +108,6 @@ clh_to_clp(cbq_state_t *cbqp, u_int32_t chandle)
 		return (cbqp->ifnp.root_);
 	case DEFAULT_CLASS_HANDLE:
 		return (cbqp->ifnp.default_);
-	case CTL_CLASS_HANDLE:
-		return (cbqp->ifnp.ctl_);
 	}
 
 	if (chandle >= CBQ_MAX_CLASSES)
@@ -139,11 +134,6 @@ cbq_clear_interface(cbq_state_t *cbqp)
 					cbqp->cbq_class_tbl[i] = NULL;
 				}
 			}
-		}
-		if (cbqp->ifnp.ctl_ != NULL &&
-		    !is_a_parent_class(cbqp->ifnp.ctl_)) {
-			cbq_class_destroy(cbqp, cbqp->ifnp.ctl_);
-			cbqp->ifnp.ctl_ = NULL;
 		}
 		if (cbqp->ifnp.default_ != NULL &&
 		    !is_a_parent_class(cbqp->ifnp.default_)) {
@@ -258,8 +248,6 @@ cbq_remove_altq(struct pf_altq *a)
 
 	cbq_clear_interface(cbqp);
 
-	if (cbqp->ifnp.ctl_)
-		cbq_class_destroy(cbqp, cbqp->ifnp.ctl_);
 	if (cbqp->ifnp.default_)
 		cbq_class_destroy(cbqp, cbqp->ifnp.default_);
 	if (cbqp->ifnp.root_)
@@ -328,8 +316,7 @@ cbq_add_queue(struct pf_altq *a)
 		if (a->qid == 0)
 			return (EINVAL);
 		if (a->qid >= CBQ_MAX_CLASSES &&
-		    a->qid != DEFAULT_CLASS_HANDLE &&
-		    a->qid != CTL_CLASS_HANDLE)
+		    a->qid != DEFAULT_CLASS_HANDLE)
 			return (EINVAL);
 		if (cbqp->cbq_class_tbl[a->qid] != NULL)
 			return (EBUSY);
@@ -406,9 +393,6 @@ cbq_remove_queue(struct pf_altq *a)
 		break;
 	case DEFAULT_CLASS_HANDLE:
 		cbqp->ifnp.default_ = NULL;
-		break;
-	case CTL_CLASS_HANDLE:
-		cbqp->ifnp.ctl_ = NULL;
 		break;
 	case NULL_CLASS_HANDLE:
 		break;
