@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinfo.c,v 1.2 1997/07/23 04:14:46 millert Exp $	*/
+/*	$OpenBSD: skeyinfo.c,v 1.3 1997/07/23 06:31:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -104,6 +104,7 @@ main(argc, argv)
 		case 1:		/* Unknown user */
 			warnx("%s is not listed in /etc/skeykeys", name);
 	}
+	(void)fclose(mp->keyfile);
 
 	exit(errs);
 }
