@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.17 2005/02/02 07:53:01 otto Exp $	*/
+/*	$OpenBSD: expr.c,v 1.18 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -19,7 +19,7 @@ enum token {
 	O_EQ, O_NE,
 	/* assignments are assumed to be in range O_ASN .. O_BORASN */
 	O_ASN, O_TIMESASN, O_DIVASN, O_MODASN, O_PLUSASN, O_MINUSASN,
-	       O_LSHIFTASN, O_RSHIFTASN, O_BANDASN, O_BXORASN, O_BORASN,
+	O_LSHIFTASN, O_RSHIFTASN, O_BANDASN, O_BXORASN, O_BORASN,
 	O_LSHIFT, O_RSHIFT,
 	O_LE, O_GE, O_LT, O_GT,
 	O_LAND,
@@ -38,7 +38,7 @@ enum token {
 	OPEN_PAREN, CLOSE_PAREN, CTERN,
 	/* things that don't appear in the opinfo[] table */
 	VAR, LIT, END, BAD
-    };
+};
 #define IS_BINOP(op) (((int)op) >= (int)O_EQ && ((int)op) <= (int)O_COMMA)
 #define IS_ASSIGNOP(op)	((int)(op) >= (int)O_ASN && (int)(op) <= (int)O_BORASN)
 
@@ -57,7 +57,7 @@ enum prec {
 	P_TERN,			/* ?: */
 	P_ASSIGN,		/* = *= /= %= += -= <<= >>= &= ^= |= */
 	P_COMMA			/* , */
-    };
+};
 #define MAX_PREC	P_COMMA
 
 struct opinfo {
@@ -71,46 +71,46 @@ struct opinfo {
  * of enum token too.
  */
 static const struct opinfo opinfo[] = {
-		{ "++",	 2, P_PRIMARY },	/* before + */
-		{ "--",	 2, P_PRIMARY },	/* before - */
-		{ "==",	 2, P_EQUALITY },	/* before = */
-		{ "!=",	 2, P_EQUALITY },	/* before ! */
-		{ "=",	 1, P_ASSIGN },		/* keep assigns in a block */
-		{ "*=",	 2, P_ASSIGN },
-		{ "/=",	 2, P_ASSIGN },
-		{ "%=",	 2, P_ASSIGN },
-		{ "+=",	 2, P_ASSIGN },
-		{ "-=",	 2, P_ASSIGN },
-		{ "<<=", 3, P_ASSIGN },
-		{ ">>=", 3, P_ASSIGN },
-		{ "&=",	 2, P_ASSIGN },
-		{ "^=",	 2, P_ASSIGN },
-		{ "|=",	 2, P_ASSIGN },
-		{ "<<",	 2, P_SHIFT },
-		{ ">>",	 2, P_SHIFT },
-		{ "<=",	 2, P_RELATION },
-		{ ">=",	 2, P_RELATION },
-		{ "<",	 1, P_RELATION },
-		{ ">",	 1, P_RELATION },
-		{ "&&",	 2, P_LAND },
-		{ "||",	 2, P_LOR },
-		{ "*",	 1, P_MULT },
-		{ "/",	 1, P_MULT },
-		{ "%",	 1, P_MULT },
-		{ "+",	 1, P_ADD },
-		{ "-",	 1, P_ADD },
-		{ "&",	 1, P_BAND },
-		{ "^",	 1, P_BXOR },
-		{ "|",	 1, P_BOR },
-		{ "?",	 1, P_TERN },
-		{ ",",	 1, P_COMMA },
-		{ "~",	 1, P_PRIMARY },
-		{ "!",	 1, P_PRIMARY },
-		{ "(",	 1, P_PRIMARY },
-		{ ")",	 1, P_PRIMARY },
-		{ ":",	 1, P_PRIMARY },
-		{ "",	 0, P_PRIMARY } /* end of table */
-	    };
+	{ "++",	 2, P_PRIMARY },	/* before + */
+	{ "--",	 2, P_PRIMARY },	/* before - */
+	{ "==",	 2, P_EQUALITY },	/* before = */
+	{ "!=",	 2, P_EQUALITY },	/* before ! */
+	{ "=",	 1, P_ASSIGN },		/* keep assigns in a block */
+	{ "*=",	 2, P_ASSIGN },
+	{ "/=",	 2, P_ASSIGN },
+	{ "%=",	 2, P_ASSIGN },
+	{ "+=",	 2, P_ASSIGN },
+	{ "-=",	 2, P_ASSIGN },
+	{ "<<=", 3, P_ASSIGN },
+	{ ">>=", 3, P_ASSIGN },
+	{ "&=",	 2, P_ASSIGN },
+	{ "^=",	 2, P_ASSIGN },
+	{ "|=",	 2, P_ASSIGN },
+	{ "<<",	 2, P_SHIFT },
+	{ ">>",	 2, P_SHIFT },
+	{ "<=",	 2, P_RELATION },
+	{ ">=",	 2, P_RELATION },
+	{ "<",	 1, P_RELATION },
+	{ ">",	 1, P_RELATION },
+	{ "&&",	 2, P_LAND },
+	{ "||",	 2, P_LOR },
+	{ "*",	 1, P_MULT },
+	{ "/",	 1, P_MULT },
+	{ "%",	 1, P_MULT },
+	{ "+",	 1, P_ADD },
+	{ "-",	 1, P_ADD },
+	{ "&",	 1, P_BAND },
+	{ "^",	 1, P_BXOR },
+	{ "|",	 1, P_BOR },
+	{ "?",	 1, P_TERN },
+	{ ",",	 1, P_COMMA },
+	{ "~",	 1, P_PRIMARY },
+	{ "!",	 1, P_PRIMARY },
+	{ "(",	 1, P_PRIMARY },
+	{ ")",	 1, P_PRIMARY },
+	{ ":",	 1, P_PRIMARY },
+	{ "",	 0, P_PRIMARY } /* end of table */
+};
 
 
 typedef struct expr_state Expr_state;
@@ -128,13 +128,15 @@ struct expr_state {
 					 */
 };
 
-enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
-		  ET_LVALUE, ET_RDONLY, ET_STR };
+enum error_type {
+	ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
+	ET_LVALUE, ET_RDONLY, ET_STR
+};
 
-static void        evalerr(Expr_state *, enum error_type, const char *)
-		       __attribute__((__noreturn__));
+static void	   evalerr(Expr_state *, enum error_type, const char *)
+		    __attribute__((__noreturn__));
 static struct tbl *evalexpr(Expr_state *, enum prec);
-static void        token(Expr_state *);
+static void	   token(Expr_state *);
 static struct tbl *do_ppmm(Expr_state *, enum token, struct tbl *, bool);
 static void	   assign_check(Expr_state *, enum token, struct tbl *);
 static struct tbl *tempvar(void);
@@ -249,17 +251,17 @@ evalerr(Expr_state *es, enum error_type type, const char *str)
 
 	case ET_RECURSIVE:
 		warningf(true, "%s: expression recurses on parameter `%s'",
-			es->expression, str);
+		    es->expression, str);
 		break;
 
 	case ET_LVALUE:
 		warningf(true, "%s: %s requires lvalue",
-			es->expression, str);
+		    es->expression, str);
 		break;
 
 	case ET_RDONLY:
 		warningf(true, "%s: %s applied to read only variable",
-			es->expression, str);
+		    es->expression, str);
 		break;
 
 	default: /* keep gcc happy */
@@ -279,9 +281,8 @@ evalexpr(Expr_state *es, enum prec prec)
 
 	if (prec == P_PRIMARY) {
 		op = es->tok;
-		if (op == O_BNOT || op == O_LNOT || op == O_MINUS
-		    || op == O_PLUS)
-		{
+		if (op == O_BNOT || op == O_LNOT || op == O_MINUS ||
+		    op == O_PLUS) {
 			token(es);
 			vl = intvar(es, evalexpr(es, P_PRIMARY));
 			if (op == O_BNOT)
@@ -316,8 +317,7 @@ evalexpr(Expr_state *es, enum prec prec)
 	}
 	vl = evalexpr(es, ((int) prec) - 1);
 	for (op = es->tok; IS_BINOP(op) && opinfo[(int) op].prec == prec;
-		op = es->tok)
-	{
+	    op = es->tok) {
 		token(es);
 		vasn = vl;
 		if (op != O_ASN) /* vl may not have a value yet */
@@ -327,9 +327,8 @@ evalexpr(Expr_state *es, enum prec prec)
 			vr = intvar(es, evalexpr(es, P_ASSIGN));
 		} else if (op != O_TERN && op != O_LAND && op != O_LOR)
 			vr = intvar(es, evalexpr(es, ((int) prec) - 1));
-		if ((op == O_DIV || op == O_MOD || op == O_DIVASN
-		     || op == O_MODASN) && vr->val.i == 0)
-		{
+		if ((op == O_DIV || op == O_MOD || op == O_DIVASN ||
+		    op == O_MODASN) && vr->val.i == 0) {
 			if (es->noassign)
 				vr->val.i = 1;
 			else
@@ -413,6 +412,7 @@ evalexpr(Expr_state *es, enum prec prec)
 		case O_TERN:
 			{
 				int e = vl->val.i != 0;
+
 				if (!e)
 					es->noassign++;
 				vl = evalexpr(es, MAX_PREC);
@@ -474,11 +474,11 @@ token(Expr_state *es)
 				evalerr(es, ET_STR, "missing ]");
 			cp += len;
 		} else if (c == '(' /*)*/ ) {
-		    /* todo: add math functions (all take single argument):
-		     * abs acos asin atan cos cosh exp int log sin sinh sqrt
-		     * tan tanh
-		     */
-		    ;
+			/* todo: add math functions (all take single argument):
+			 * abs acos asin atan cos cosh exp int log sin sinh sqrt
+			 * tan tanh
+			 */
+			;
 		}
 		if (es->noassign) {
 			es->val = tempvar();
@@ -505,9 +505,8 @@ token(Expr_state *es)
 		int i, n0;
 
 		for (i = 0; (n0 = opinfo[i].name[0]); i++)
-			if (c == n0
-			    && strncmp(cp, opinfo[i].name, opinfo[i].len) == 0)
-			{
+			if (c == n0 &&
+			    strncmp(cp, opinfo[i].name, opinfo[i].len) == 0) {
 				es->tok = (enum token) i;
 				cp += opinfo[i].len;
 				break;
@@ -569,8 +568,8 @@ intvar(Expr_state *es, struct tbl *vp)
 	struct tbl *vq;
 
 	/* try to avoid replacing a temp var with another temp var */
-	if (vp->name[0] == '\0'
-	    && (vp->flag & (ISSET|INTEGER|EXPRLVALUE)) == (ISSET|INTEGER))
+	if (vp->name[0] == '\0' &&
+	    (vp->flag & (ISSET|INTEGER|EXPRLVALUE)) == (ISSET|INTEGER))
 		return vp;
 
 	vq = tempvar();

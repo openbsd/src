@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.16 2005/03/28 21:33:04 deraadt Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.17 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -66,7 +66,7 @@ static const struct t_op u_ops [] = {
 	{"-x",	TO_FILEX },
 	{"-z",	TO_STZER },
 	{"",	TO_NONOP }
-    };
+};
 static const struct t_op b_ops [] = {
 	{"=",	TO_STEQL },
 	{"==",	TO_STEQL },
@@ -83,7 +83,7 @@ static const struct t_op b_ops [] = {
 	{"-nt",	TO_FILNT },
 	{"-ot",	TO_FILOT },
 	{"",	TO_NONOP }
-    };
+};
 
 static int	test_stat(const char *, struct stat *);
 static int	test_eaccess(const char *, int);
@@ -141,8 +141,8 @@ c_test(char **wp)
 				opnd1 = (*te.getopnd)(&te, TO_NONOP, 1);
 				if ((op = (Test_op) (*te.isa)(&te, TM_BINOP))) {
 					opnd2 = (*te.getopnd)(&te, op, 1);
-					res = (*te.eval)(&te, op, opnd1, opnd2,
-							1);
+					res = (*te.eval)(&te, op, opnd1,
+					    opnd2, 1);
 					if (te.flags & TEF_ERROR)
 						return T_ERR_EXIT;
 					if (invert & 1)
@@ -161,7 +161,7 @@ c_test(char **wp)
 				if (!Flag(FPOSIX) && strcmp(opnd1, "-t") == 0)
 				    break;
 				res = (*te.eval)(&te, TO_STNZE, opnd1,
-						(char *) 0, 1);
+				    (char *) 0, 1);
 				if (invert & 1)
 					res = !res;
 				return !res;
@@ -191,11 +191,10 @@ test_isop(Test_env *te, Test_meta meta, const char *s)
 	if (*s) {
 		sc1 = s[1];
 		for (; otab->op_text[0]; otab++)
-			if (sc1 == otab->op_text[1]
-			    && strcmp(s, otab->op_text) == 0
-			    && ((te->flags & TEF_DBRACKET)
-				|| (otab->op_num != TO_STLT
-				    && otab->op_num != TO_STGT)))
+			if (sc1 == otab->op_text[1] &&
+			    strcmp(s, otab->op_text) == 0 &&
+			    ((te->flags & TEF_DBRACKET) ||
+			    (otab->op_num != TO_STLT && otab->op_num != TO_STGT)))
 				return otab->op_num;
 	}
 	return TO_NONOP;
@@ -216,11 +215,11 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 	/*
 	 * Unary Operators
 	 */
-	  case TO_STNZE: /* -n */
+	case TO_STNZE: /* -n */
 		return *opnd1 != '\0';
-	  case TO_STZER: /* -z */
+	case TO_STZER: /* -z */
 		return *opnd1 == '\0';
-	  case TO_OPTION: /* -o */
+	case TO_OPTION: /* -o */
 		if ((not = *opnd1 == '!'))
 			opnd1++;
 		if ((res = option(opnd1)) < 0)
@@ -231,47 +230,47 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 				res = !res;
 		}
 		return res;
-	  case TO_FILRD: /* -r */
+	case TO_FILRD: /* -r */
 		return test_eaccess(opnd1, R_OK) == 0;
-	  case TO_FILWR: /* -w */
+	case TO_FILWR: /* -w */
 		return test_eaccess(opnd1, W_OK) == 0;
-	  case TO_FILEX: /* -x */
+	case TO_FILEX: /* -x */
 		return test_eaccess(opnd1, X_OK) == 0;
-	  case TO_FILAXST: /* -a */
+	case TO_FILAXST: /* -a */
 		return test_stat(opnd1, &b1) == 0;
-	  case TO_FILEXST: /* -e */
+	case TO_FILEXST: /* -e */
 		/* at&t ksh does not appear to do the /dev/fd/ thing for
 		 * this (unless the os itself handles it)
 		 */
 		return stat(opnd1, &b1) == 0;
-	  case TO_FILREG: /* -r */
+	case TO_FILREG: /* -r */
 		return test_stat(opnd1, &b1) == 0 && S_ISREG(b1.st_mode);
-	  case TO_FILID: /* -d */
+	case TO_FILID: /* -d */
 		return test_stat(opnd1, &b1) == 0 && S_ISDIR(b1.st_mode);
-	  case TO_FILCDEV: /* -c */
+	case TO_FILCDEV: /* -c */
 		return test_stat(opnd1, &b1) == 0 && S_ISCHR(b1.st_mode);
-	  case TO_FILBDEV: /* -b */
+	case TO_FILBDEV: /* -b */
 		return test_stat(opnd1, &b1) == 0 && S_ISBLK(b1.st_mode);
-	  case TO_FILFIFO: /* -p */
+	case TO_FILFIFO: /* -p */
 		return test_stat(opnd1, &b1) == 0 && S_ISFIFO(b1.st_mode);
-	  case TO_FILSYM: /* -h -L */
+	case TO_FILSYM: /* -h -L */
 		return lstat(opnd1, &b1) == 0 && S_ISLNK(b1.st_mode);
-	  case TO_FILSOCK: /* -S */
+	case TO_FILSOCK: /* -S */
 		return test_stat(opnd1, &b1) == 0 && S_ISSOCK(b1.st_mode);
-	  case TO_FILCDF:/* -H HP context dependent files (directories) */
+	case TO_FILCDF:/* -H HP context dependent files (directories) */
 		return 0;
-	  case TO_FILSETU: /* -u */
-		return test_stat(opnd1, &b1) == 0
-			&& (b1.st_mode & S_ISUID) == S_ISUID;
-	  case TO_FILSETG: /* -g */
-		return test_stat(opnd1, &b1) == 0
-			&& (b1.st_mode & S_ISGID) == S_ISGID;
-	  case TO_FILSTCK: /* -k */
-		return test_stat(opnd1, &b1) == 0
-			&& (b1.st_mode & S_ISVTX) == S_ISVTX;
-	  case TO_FILGZ: /* -s */
+	case TO_FILSETU: /* -u */
+		return test_stat(opnd1, &b1) == 0 &&
+		    (b1.st_mode & S_ISUID) == S_ISUID;
+	case TO_FILSETG: /* -g */
+		return test_stat(opnd1, &b1) == 0 &&
+		    (b1.st_mode & S_ISGID) == S_ISGID;
+	case TO_FILSTCK: /* -k */
+		return test_stat(opnd1, &b1) == 0 &&
+		    (b1.st_mode & S_ISVTX) == S_ISVTX;
+	case TO_FILGZ: /* -s */
 		return test_stat(opnd1, &b1) == 0 && b1.st_size > 0L;
-	  case TO_FILTT: /* -t */
+	case TO_FILTT: /* -t */
 		if (opnd1 && !bi_getn(opnd1, &res)) {
 			te->flags |= TEF_ERROR;
 			res = 0;
@@ -280,80 +279,78 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 			res = isatty(opnd1 ? res : 0);
 		}
 		return res;
-	  case TO_FILUID: /* -O */
+	case TO_FILUID: /* -O */
 		return test_stat(opnd1, &b1) == 0 && b1.st_uid == ksheuid;
-	  case TO_FILGID: /* -G */
+	case TO_FILGID: /* -G */
 		return test_stat(opnd1, &b1) == 0 && b1.st_gid == getegid();
 	/*
 	 * Binary Operators
 	 */
-	  case TO_STEQL: /* = */
+	case TO_STEQL: /* = */
 		if (te->flags & TEF_DBRACKET)
 			return gmatch(opnd1, opnd2, false);
 		return strcmp(opnd1, opnd2) == 0;
-	  case TO_STNEQ: /* != */
+	case TO_STNEQ: /* != */
 		if (te->flags & TEF_DBRACKET)
 			return !gmatch(opnd1, opnd2, false);
 		return strcmp(opnd1, opnd2) != 0;
-	  case TO_STLT: /* < */
+	case TO_STLT: /* < */
 		return strcmp(opnd1, opnd2) < 0;
-	  case TO_STGT: /* > */
+	case TO_STGT: /* > */
 		return strcmp(opnd1, opnd2) > 0;
-	  case TO_INTEQ: /* -eq */
-	  case TO_INTNE: /* -ne */
-	  case TO_INTGE: /* -ge */
-	  case TO_INTGT: /* -gt */
-	  case TO_INTLE: /* -le */
-	  case TO_INTLT: /* -lt */
+	case TO_INTEQ: /* -eq */
+	case TO_INTNE: /* -ne */
+	case TO_INTGE: /* -ge */
+	case TO_INTGT: /* -gt */
+	case TO_INTLE: /* -le */
+	case TO_INTLT: /* -lt */
 		{
 			long v1, v2;
 
-			if (!evaluate(opnd1, &v1, KSH_RETURN_ERROR, false)
-			    || !evaluate(opnd2, &v2, KSH_RETURN_ERROR, false))
-			{
+			if (!evaluate(opnd1, &v1, KSH_RETURN_ERROR, false) ||
+			    !evaluate(opnd2, &v2, KSH_RETURN_ERROR, false)) {
 				/* error already printed.. */
 				te->flags |= TEF_ERROR;
 				return 1;
 			}
 			switch ((int) op) {
-			  case TO_INTEQ:
+			case TO_INTEQ:
 				return v1 == v2;
-			  case TO_INTNE:
+			case TO_INTNE:
 				return v1 != v2;
-			  case TO_INTGE:
+			case TO_INTGE:
 				return v1 >= v2;
-			  case TO_INTGT:
+			case TO_INTGT:
 				return v1 > v2;
-			  case TO_INTLE:
+			case TO_INTLE:
 				return v1 <= v2;
-			  case TO_INTLT:
+			case TO_INTLT:
 				return v1 < v2;
 			}
 		}
-	  case TO_FILNT: /* -nt */
+	case TO_FILNT: /* -nt */
 		{
 			int s2;
 			/* ksh88/ksh93 succeed if file2 can't be stated
 			 * (subtly different from `does not exist').
 			 */
-			return stat(opnd1, &b1) == 0
-				&& (((s2 = stat(opnd2, &b2)) == 0
-				      && b1.st_mtime > b2.st_mtime) || s2 < 0);
+			return stat(opnd1, &b1) == 0 &&
+			    (((s2 = stat(opnd2, &b2)) == 0 &&
+			    b1.st_mtime > b2.st_mtime) || s2 < 0);
 		}
-	  case TO_FILOT: /* -ot */
+	case TO_FILOT: /* -ot */
 		{
 			int s1;
 			/* ksh88/ksh93 succeed if file1 can't be stated
 			 * (subtly different from `does not exist').
 			 */
-			return stat(opnd2, &b2) == 0
-				&& (((s1 = stat(opnd1, &b1)) == 0
-				      && b1.st_mtime < b2.st_mtime) || s1 < 0);
+			return stat(opnd2, &b2) == 0 &&
+			    (((s1 = stat(opnd1, &b1)) == 0 &&
+			    b1.st_mtime < b2.st_mtime) || s1 < 0);
 		}
-	  case TO_FILEQ: /* -ef */
-		return stat (opnd1, &b1) == 0 && stat (opnd2, &b2) == 0
-		       && b1.st_dev == b2.st_dev
-		       && b1.st_ino == b2.st_ino;
+	case TO_FILEQ: /* -ef */
+		return stat (opnd1, &b1) == 0 && stat (opnd2, &b2) == 0 &&
+		    b1.st_dev == b2.st_dev && b1.st_ino == b2.st_ino;
 	}
 	(*te->error)(te, 0, "internal error: unknown op");
 	return 1;
@@ -387,8 +384,8 @@ test_eaccess(const char *path, int mode)
 		else if (S_ISDIR(statb.st_mode))
 			res = 0;
 		else
-			res = (statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))
-				? 0 : -1;
+			res = (statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) ?
+			    0 : -1;
 	}
 
 	return res;
@@ -545,7 +542,7 @@ static void
 ptest_error(Test_env *te, int offset, const char *msg)
 {
 	const char *op = te->pos.wp + offset >= te->wp_end ?
-				(const char *) 0 : te->pos.wp[offset];
+	    (const char *) 0 : te->pos.wp[offset];
 
 	te->flags |= TEF_ERROR;
 	if (op)

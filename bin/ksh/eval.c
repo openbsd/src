@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.26 2005/02/25 11:21:16 deraadt Exp $	*/
+/*	$OpenBSD: eval.c,v 1.27 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -191,28 +191,28 @@ expand(char *cp,	/* input word */
 		Xcheck(ds, dp);
 
 		switch (type) {
-		  case XBASE:	/* original prefixed string */
+		case XBASE:	/* original prefixed string */
 			c = *sp++;
 			switch (c) {
-			  case EOS:
+			case EOS:
 				c = 0;
 				break;
-			  case CHAR:
+			case CHAR:
 				c = *sp++;
 				break;
-			  case QCHAR:
+			case QCHAR:
 				quote |= 2; /* temporary quote */
 				c = *sp++;
 				break;
-			  case OQUOTE:
+			case OQUOTE:
 				word = IFS_WORD;
 				tilde_ok = 0;
 				quote = 1;
 				continue;
-			  case CQUOTE:
+			case CQUOTE:
 				quote = 0;
 				continue;
-			  case COMSUB:
+			case COMSUB:
 				tilde_ok = 0;
 				if (f & DONTRUNCOMMAND) {
 					word = IFS_WORD;
@@ -230,7 +230,7 @@ expand(char *cp,	/* input word */
 					newlines = 0;
 				}
 				continue;
-			  case EXPRSUB:
+			case EXPRSUB:
 				word = IFS_WORD;
 				tilde_ok = 0;
 				if (f & DONTRUNCOMMAND) {
@@ -248,7 +248,7 @@ expand(char *cp,	/* input word */
 					v.type = 10; /* not default */
 					v.name[0] = '\0';
 					v_evaluate(&v, substitute(sp, 0),
-						KSH_UNWIND_ERROR, true);
+					    KSH_UNWIND_ERROR, true);
 					sp = strchr(sp, 0) + 1;
 					for (p = str_val(&v); *p; ) {
 						Xcheck(ds, dp);
@@ -256,13 +256,13 @@ expand(char *cp,	/* input word */
 					}
 				}
 				continue;
-			  case OSUBST: /* ${{#}var{:}[=+-?#%]word} */
+			case OSUBST: /* ${{#}var{:}[=+-?#%]word} */
 			  /* format is:
 			   *   OSUBST [{x] plain-variable-part \0
 			   *     compiled-word-part CSUBST [}x]
 			   * This is where all syntax checking gets done...
 			   */
-			  {
+			    {
 				char *varname = ++sp; /* skip the { or x (}) */
 				int stype;
 				int slen;
@@ -290,7 +290,7 @@ expand(char *cp,	/* input word */
 						SubType *newst;
 
 						newst = (SubType *) alloc(
-							sizeof(SubType), ATEMP);
+						    sizeof(SubType), ATEMP);
 						newst->next = (SubType *) 0;
 						newst->prev = st;
 						st->next = newst;
@@ -305,11 +305,11 @@ expand(char *cp,	/* input word */
 					if (stype)
 						sp += slen;
 					switch (stype & 0x7f) {
-					  case '#':
-					  case '%':
+					case '#':
+					case '%':
 						/* ! DOBLANK,DOBRACE_,DOTILDE */
-						f = DOPAT | (f&DONTRUNCOMMAND)
-						    | DOTEMP_;
+						f = DOPAT | (f&DONTRUNCOMMAND) |
+						    DOTEMP_;
 						quote = 0;
 						/* Prepend open pattern (so |
 						 * in a trim will work as
@@ -318,7 +318,7 @@ expand(char *cp,	/* input word */
 						*dp++ = MAGIC;
 						*dp++ = '@' + 0x80;
 						break;
-					  case '=':
+					case '=':
 						/* Enabling tilde expansion
 						 * after :'s here is
 						 * non-standard ksh, but is
@@ -341,11 +341,11 @@ expand(char *cp,	/* input word */
 						f &= ~(DOBLANK|DOGLOB|DOBRACE_);
 						tilde_ok = 1;
 						break;
-					  case '?':
+					case '?':
 						f &= ~DOBLANK;
 						f |= DOTEMP_;
 						/* fall through */
-					  default:
+					default:
 						/* Enable tilde expansion */
 						tilde_ok = 1;
 						f |= DOTILDE;
@@ -354,8 +354,8 @@ expand(char *cp,	/* input word */
 					/* skip word */
 					sp = (char *) wdscan(sp, CSUBST);
 				continue;
-			  }
-			  case CSUBST: /* only get here if expanding word */
+			    }
+			case CSUBST: /* only get here if expanding word */
 				sp++; /* ({) skip the } or x */
 				tilde_ok = 0;	/* in case of ${unset:-} */
 				*dp = '\0';
@@ -364,8 +364,8 @@ expand(char *cp,	/* input word */
 				if (f&DOBLANK)
 					doblank--;
 				switch (st->stype&0x7f) {
-				  case '#':
-				  case '%':
+				case '#':
+				case '%':
 					/* Append end-pattern */
 					*dp++ = MAGIC; *dp++ = ')'; *dp = '\0';
 					dp = Xrestpos(ds, dp, st->base);
@@ -380,7 +380,7 @@ expand(char *cp,	/* input word */
 						doblank++;
 					st = st->prev;
 					continue;
-				  case '=':
+				case '=':
 					/* Restore our position and substitute
 					 * the value of st->var (may not be
 					 * the assigned value in the presence
@@ -401,47 +401,46 @@ expand(char *cp,	/* input word */
 					len = strlen(dp) + 1;
 					setstr(st->var,
 					    debunk((char *) alloc(len, ATEMP),
-						dp, len),
-					    KSH_UNWIND_ERROR);
+					    dp, len), KSH_UNWIND_ERROR);
 					x.str = str_val(st->var);
 					type = XSUB;
 					if (f&DOBLANK)
 						doblank++;
 					st = st->prev;
 					continue;
-				  case '?':
+				case '?':
 				    {
 					char *s = Xrestpos(ds, dp, st->base);
 
 					errorf("%s: %s", st->var->name,
 					    dp == s ?
-					      "parameter null or not set"
-					    : (debunk(s, s, strlen(s) + 1), s));
+					    "parameter null or not set" :
+					    (debunk(s, s, strlen(s) + 1), s));
 				    }
 				}
 				st = st->prev;
 				type = XBASE;
 				continue;
 
-			  case OPAT: /* open pattern: *(foo|bar) */
+			case OPAT: /* open pattern: *(foo|bar) */
 				/* Next char is the type of pattern */
 				make_magic = 1;
 				c = *sp++ + 0x80;
 				break;
 
-			  case SPAT: /* pattern separator (|) */
+			case SPAT: /* pattern separator (|) */
 				make_magic = 1;
 				c = '|';
 				break;
 
-			  case CPAT: /* close pattern */
+			case CPAT: /* close pattern */
 				make_magic = 1;
 				c = /*(*/ ')';
 				break;
 			}
 			break;
 
-		  case XNULLSUB:
+		case XNULLSUB:
 			/* Special case for "$@" (and "${foo[@]}") - no
 			 * word is generated if $# is 0 (unless there is
 			 * other stuff inside the quotes).
@@ -458,8 +457,8 @@ expand(char *cp,	/* input word */
 			}
 			continue;
 
-		  case XSUB:
-		  case XSUBMID:
+		case XSUB:
+		case XSUBMID:
 			if ((c = *x.str++) == 0) {
 				type = XBASE;
 				if (f&DOBLANK)
@@ -468,10 +467,10 @@ expand(char *cp,	/* input word */
 			}
 			break;
 
-		  case XARGSEP:
+		case XARGSEP:
 			type = XARG;
 			quote = 1;
-		  case XARG:
+		case XARG:
 			if ((c = *x.str++) == '\0') {
 				/* force null words to be created so
 				 * set -- '' 2 ''; foo "$@" will do
@@ -499,7 +498,7 @@ expand(char *cp,	/* input word */
 			}
 			break;
 
-		  case XCOM:
+		case XCOM:
 			if (newlines) {		/* Spit out saved nl's */
 				c = '\n';
 				--newlines;
@@ -527,9 +526,8 @@ expand(char *cp,	/* input word */
 		}
 
 		/* check for end of word or IFS separation */
-		if (c == 0 || (!quote && (f & DOBLANK) && doblank && !make_magic
-			       && ctype(c, C_IFS)))
-		{
+		if (c == 0 || (!quote && (f & DOBLANK) && doblank &&
+		    !make_magic && ctype(c, C_IFS))) {
 			/* How words are broken up:
 			 *		   |       value of c
 			 *	  word	   |	ws	nws	0
@@ -541,9 +539,8 @@ expand(char *cp,	/* input word */
 			 * Note that IFS_NWS/0 generates a word (at&t ksh
 			 * doesn't do this, but POSIX does).
 			 */
-			if (word == IFS_WORD
-			    || (!ctype(c, C_IFSWS) && c && word == IFS_NWS))
-			{
+			if (word == IFS_WORD ||
+			    (!ctype(c, C_IFSWS) && c && word == IFS_NWS)) {
 				char *p;
 
 				*dp++ = '\0';
@@ -552,8 +549,8 @@ expand(char *cp,	/* input word */
 				if (fdo & DOBRACE_)
 					/* also does globbing */
 					alt_expand(wp, p, p,
-						   p + Xlength(ds, (dp - 1)),
-						   fdo | (f & DOMARKDIRS));
+					    p + Xlength(ds, (dp - 1)),
+					    fdo | (f & DOMARKDIRS));
 				else
 #endif /* BRACE_EXPAND */
 				if (fdo & DOGLOB)
@@ -591,10 +588,10 @@ expand(char *cp,	/* input word */
 			/* mark any special second pass chars */
 			if (!quote)
 				switch (c) {
-				  case '[':
-				  case NOT:
-				  case '-':
-				  case ']':
+				case '[':
+				case NOT:
+				case '-':
+				case ']':
 					/* For character classes - doesn't hurt
 					 * to have magic !,-,]'s outside of
 					 * [...] expressions.
@@ -606,53 +603,51 @@ expand(char *cp,	/* input word */
 						*dp++ = MAGIC;
 					}
 					break;
-				  case '*':
-				  case '?':
+				case '*':
+				case '?':
 					if (f & (DOPAT | DOGLOB)) {
 						fdo |= DOMAGIC_ | (f & DOGLOB);
 						*dp++ = MAGIC;
 					}
 					break;
 #ifdef BRACE_EXPAND
-				  case OBRACE:
-				  case ',':
-				  case CBRACE:
-					if ((f & DOBRACE_) && (c == OBRACE
-						|| (fdo & DOBRACE_)))
-					{
+				case OBRACE:
+				case ',':
+				case CBRACE:
+					if ((f & DOBRACE_) && (c == OBRACE ||
+					    (fdo & DOBRACE_))) {
 						fdo |= DOBRACE_|DOMAGIC_;
 						*dp++ = MAGIC;
 					}
 					break;
 #endif /* BRACE_EXPAND */
-				  case '=':
+				case '=':
 					/* Note first unquoted = for ~ */
 					if (!(f & DOTEMP_) && !saw_eq) {
 						saw_eq = 1;
 						tilde_ok = 1;
 					}
 					break;
-				  case ':': /* : */
+				case ':': /* : */
 					/* Note unquoted : for ~ */
 					if (!(f & DOTEMP_) && (f & DOASNTILDE))
 						tilde_ok = 1;
 					break;
-				  case '~':
+				case '~':
 					/* tilde_ok is reset whenever
 					 * any of ' " $( $(( ${ } are seen.
 					 * Note that tilde_ok must be preserved
 					 * through the sequence ${A=a=}~
 					 */
-					if (type == XBASE
-					    && (f & (DOTILDE|DOASNTILDE))
-					    && (tilde_ok & 2))
-					{
+					if (type == XBASE &&
+					    (f & (DOTILDE|DOASNTILDE)) &&
+					    (tilde_ok & 2)) {
 						char *p, *dp_x;
 
 						dp_x = dp;
 						p = maybe_expand_tilde(sp,
-							&ds, &dp_x,
-							f & DOASNTILDE);
+						    &ds, &dp_x,
+						    f & DOASNTILDE);
 						if (p) {
 							if (dp != dp_x)
 								word = IFS_WORD;
@@ -764,9 +759,9 @@ varsub(Expand *xp, char *sp, char *word,
 	c = sp[0];
 	if (c == '*' || c == '@') {
 		switch (stype & 0x7f) {
-		  case '=':	/* can't assign to a vector */
-		  case '%':	/* can't trim a vector (yet) */
-		  case '#':
+		case '=':	/* can't assign to a vector */
+		case '%':	/* can't trim a vector (yet) */
+		case '#':
 			return -1;
 		}
 		if (e->loc->argc == 0) {
@@ -784,10 +779,10 @@ varsub(Expand *xp, char *sp, char *word,
 			XPtrV wv;
 
 			switch (stype & 0x7f) {
-			  case '=':	/* can't assign to a vector */
-			  case '%':	/* can't trim a vector (yet) */
-			  case '#':
-			  case '?':
+			case '=':	/* can't assign to a vector */
+			case '%':	/* can't trim a vector (yet) */
+			case '#':
+			case '?':
 				return -1;
 			}
 			XPinit(wv, 32);
@@ -810,8 +805,8 @@ varsub(Expand *xp, char *sp, char *word,
 			}
 		} else {
 			/* Can't assign things like $! or $1 */
-			if ((stype & 0x7f) == '='
-			    && (ctype(*sp, C_VAR1) || digit(*sp)))
+			if ((stype & 0x7f) == '=' &&
+			    (ctype(*sp, C_VAR1) || digit(*sp)))
 				return -1;
 			xp->var = global(sp);
 			xp->str = str_val(xp->var);
@@ -823,10 +818,10 @@ varsub(Expand *xp, char *sp, char *word,
 	/* test the compiler's code generator */
 	if (ctype(c, C_SUBOP2) ||
 	    (((stype&0x80) ? *xp->str=='\0' : xp->str==null) ? /* undef? */
-	     c == '=' || c == '-' || c == '?' : c == '+'))
+	    c == '=' || c == '-' || c == '?' : c == '+'))
 		state = XBASE;	/* expand word instead of variable value */
-	if (Flag(FNOUNSET) && xp->str == null
-	    && (ctype(c, C_SUBOP2) || (state != XBASE && c != '+')))
+	if (Flag(FNOUNSET) && xp->str == null &&
+	    (ctype(c, C_SUBOP2) || (state != XBASE && c != '+')))
 		errorf("%s: parameter not set", sp);
 	return state;
 }
@@ -857,7 +852,7 @@ comsub(Expand *xp, char *cp)
 
 		if ((io->flag&IOTYPE) != IOREAD)
 			errorf("funny $() command: %s",
-				snptreef((char *) 0, 32, "%R", io));
+			    snptreef((char *) 0, 32, "%R", io));
 		shf = shf_open(name = evalstr(io->name, DOTILDE), O_RDONLY, 0,
 			SHF_MAPHI|SHF_CLEXEC);
 		if (shf == NULL)
@@ -893,7 +888,7 @@ trimsub(char *str, char *pat, int how)
 	char *p, c;
 
 	switch (how&0xff) {	/* UCHAR_MAX maybe? */
-	  case '#':		/* shortest at beginning */
+	case '#':		/* shortest at beginning */
 		for (p = str; p <= end; p++) {
 			c = *p; *p = '\0';
 			if (gmatch(str, pat, false)) {
@@ -903,7 +898,7 @@ trimsub(char *str, char *pat, int how)
 			*p = c;
 		}
 		break;
-	  case '#'|0x80:	/* longest match at beginning */
+	case '#'|0x80:	/* longest match at beginning */
 		for (p = end; p >= str; p--) {
 			c = *p; *p = '\0';
 			if (gmatch(str, pat, false)) {
@@ -913,13 +908,13 @@ trimsub(char *str, char *pat, int how)
 			*p = c;
 		}
 		break;
-	  case '%':		/* shortest match at end */
+	case '%':		/* shortest match at end */
 		for (p = end; p >= str; p--) {
 			if (gmatch(p, pat, false))
 				return str_nsave(str, p - str, ATEMP);
 		}
 		break;
-	  case '%'|0x80:	/* longest match at end */
+	case '%'|0x80:	/* longest match at end */
 		for (p = str; p <= end; p++) {
 			if (gmatch(p, pat, false))
 				return str_nsave(str, p - str, ATEMP);
@@ -992,9 +987,8 @@ globit(XString *xs,	/* dest string */
 		 * any patterns were expanded and the markdirs option is set.
 		 * Symlinks make things a bit tricky...
 		 */
-		if ((check & GF_EXCHECK)
-		    || ((check & GF_MARKDIR) && (check & GF_GLOBBED)))
-		{
+		if ((check & GF_EXCHECK) ||
+		    ((check & GF_MARKDIR) && (check & GF_GLOBBED))) {
 #define stat_check()	(stat_done ? stat_done : \
 			    (stat_done = stat(Xstring(*xs, xp), &statb) < 0 \
 				? -1 : 1))
@@ -1007,25 +1001,20 @@ globit(XString *xs,	/* dest string */
 			 * slashes from regular files (eg, /etc/passwd/).
 			 * SunOS 4.1.3 does this...
 			 */
-			if ((check & GF_EXCHECK) && xp > Xstring(*xs, xp)
-			    && xp[-1] == '/' && !S_ISDIR(lstatb.st_mode)
-			    && (!S_ISLNK(lstatb.st_mode)
-				|| stat_check() < 0
-				|| !S_ISDIR(statb.st_mode))
-				)
+			if ((check & GF_EXCHECK) && xp > Xstring(*xs, xp) &&
+			    xp[-1] == '/' && !S_ISDIR(lstatb.st_mode) &&
+			    (!S_ISLNK(lstatb.st_mode) ||
+			    stat_check() < 0 || !S_ISDIR(statb.st_mode)))
 				return;
 			/* Possibly tack on a trailing / if there isn't already
 			 * one and if the file is a directory or a symlink to a
 			 * directory
 			 */
-			if (((check & GF_MARKDIR) && (check & GF_GLOBBED))
-			    && xp > Xstring(*xs, xp) && xp[-1] != '/'
-			    && (S_ISDIR(lstatb.st_mode)
-				|| (S_ISLNK(lstatb.st_mode)
-				    && stat_check() > 0
-				    && S_ISDIR(statb.st_mode))
-				    ))
-			{
+			if (((check & GF_MARKDIR) && (check & GF_GLOBBED)) &&
+			    xp > Xstring(*xs, xp) && xp[-1] != '/' &&
+			    (S_ISDIR(lstatb.st_mode) ||
+			    (S_ISLNK(lstatb.st_mode) && stat_check() > 0 &&
+			    S_ISDIR(statb.st_mode)))) {
 				*xp++ = '/';
 				*xp = '\0';
 			}
@@ -1081,8 +1070,8 @@ globit(XString *xs,	/* dest string */
 			if (name[0] == '.' &&
 			    (name[1] == 0 || (name[1] == '.' && name[2] == 0)))
 				continue; /* always ignore . and .. */
-			if ((*name == '.' && *sp != '.')
-			    || !gmatch(name, sp, true))
+			if ((*name == '.' && *sp != '.') ||
+			    !gmatch(name, sp, true))
 				continue;
 
 			len = strlen(d->d_name) + 1;
@@ -1154,8 +1143,8 @@ debunk(char *dp, const char *sp, size_t dlen)
 			return dp;
 		memcpy(dp, sp, s - sp);
 		for (d = dp + (s - sp); *s && (d - dp < dlen); s++)
-			if (!ISMAGIC(*s) || !(*++s & 0x80)
-			    || !strchr("*+?@! ", *s & 0x7f))
+			if (!ISMAGIC(*s) || !(*++s & 0x80) ||
+			    !strchr("*+?@! ", *s & 0x7f))
 				*d++ = *s;
 			else {
 				/* extended pattern operators: *+?@! */
@@ -1190,7 +1179,8 @@ maybe_expand_tilde(char *p, XString *dsp, char **dpp, int isassign)
 		p += 2;
 	}
 	*tp = '\0';
-	r = (p[0] == EOS || p[0] == CHAR || p[0] == CSUBST) ? tilde(Xstring(ts, tp)) : (char *) 0;
+	r = (p[0] == EOS || p[0] == CHAR || p[0] == CSUBST) ?
+	    tilde(Xstring(ts, tp)) : (char *) 0;
 	Xfree(ts, tp);
 	if (r) {
 		while (*r) {
@@ -1309,9 +1299,8 @@ alt_expand(XPtrV *wp, char *start, char *exp_start, char *end, int fdo)
 		if (ISMAGIC(*p)) {
 			if (*++p == OBRACE)
 				count++;
-			else if ((*p == CBRACE && --count == 0)
-				 || (*p == ',' && count == 1))
-			{
+			else if ((*p == CBRACE && --count == 0) ||
+			    (*p == ',' && count == 1)) {
 				char *new;
 				int l1, l2, l3;
 
@@ -1324,7 +1313,7 @@ alt_expand(XPtrV *wp, char *start, char *exp_start, char *end, int fdo)
 				memcpy(new + l1 + l2, brace_end, l3);
 				new[l1 + l2 + l3] = '\0';
 				alt_expand(wp, new, new + l1,
-					   new + l1 + l2 + l3, fdo);
+				    new + l1 + l2 + l3, fdo);
 				field_start = p + 1;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.7 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.8 2005/03/30 17:16:37 deraadt Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
@@ -22,12 +22,11 @@ tty_init(int init_ttystate)
 	tty_devtty = 1;
 
 	if ((tfd = open("/dev/tty", O_RDWR, 0)) < 0) {
-
 		if (tfd < 0) {
 			tty_devtty = 0;
 			warningf(false,
-				"No controlling tty (open /dev/tty: %s)",
-				strerror(errno));
+			    "No controlling tty (open /dev/tty: %s)",
+			    strerror(errno));
 		}
 	}
 
@@ -44,10 +43,10 @@ tty_init(int init_ttystate)
 	}
 	if ((tty_fd = fcntl(tfd, F_DUPFD, FDBASE)) < 0) {
 		warningf(false, "j_ttyinit: dup of tty fd failed: %s",
-			strerror(errno));
+		    strerror(errno));
 	} else if (fcntl(tty_fd, F_SETFD, FD_CLOEXEC) < 0) {
 		warningf(false, "j_ttyinit: can't set close-on-exec flag: %s",
-			strerror(errno));
+		    strerror(errno));
 		close(tty_fd);
 		tty_fd = -1;
 	} else if (init_ttystate)

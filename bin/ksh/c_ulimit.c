@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.13 2005/02/02 07:53:01 otto Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.14 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -41,15 +41,17 @@ c_ulimit(char **wp)
 		{ "coredump(blocks)", RLIMIT, RLIMIT_CORE, RLIMIT_CORE, 512, 'c' },
 		{ "data(kbytes)", RLIMIT, RLIMIT_DATA, RLIMIT_DATA, 1024, 'd' },
 		{ "stack(kbytes)", RLIMIT, RLIMIT_STACK, RLIMIT_STACK, 1024, 's' },
-		{ "lockedmem(kbytes)", RLIMIT, RLIMIT_MEMLOCK, RLIMIT_MEMLOCK, 1024, 'l' },
+		{ "lockedmem(kbytes)", RLIMIT, RLIMIT_MEMLOCK, RLIMIT_MEMLOCK,
+		    1024, 'l' },
 		{ "memory(kbytes)", RLIMIT, RLIMIT_RSS, RLIMIT_RSS, 1024, 'm' },
-		{ "nofiles(descriptors)", RLIMIT, RLIMIT_NOFILE, RLIMIT_NOFILE, 1, 'n' },
+		{ "nofiles(descriptors)", RLIMIT, RLIMIT_NOFILE, RLIMIT_NOFILE,
+		    1, 'n' },
 		{ "processes", RLIMIT, RLIMIT_NPROC, RLIMIT_NPROC, 1, 'p' },
-#ifdef RLIMIT_VMEM
+	#ifdef RLIMIT_VMEM
 		{ "vmemory(kbytes)", RLIMIT, RLIMIT_VMEM, RLIMIT_VMEM, 1024, 'v' },
-#endif /* RLIMIT_VMEM */
+	#endif /* RLIMIT_VMEM */
 		{ (char *) 0 }
-	    };
+	};
 	static char	options[3 + NELEM(limits)];
 	rlim_t		val = 0;
 	int		how = SOFT | HARD;
@@ -57,7 +59,6 @@ c_ulimit(char **wp)
 	int		set, all = 0;
 	int		optc, what;
 	struct rlimit	limit;
-
 	if (!options[0]) {
 		/* build options string on first call - yuck */
 		char *p = options;
@@ -70,18 +71,18 @@ c_ulimit(char **wp)
 	what = 'f';
 	while ((optc = ksh_getopt(wp, &builtin_opt, options)) != EOF)
 		switch (optc) {
-		  case 'H':
+		case 'H':
 			how = HARD;
 			break;
-		  case 'S':
+		case 'S':
 			how = SOFT;
 			break;
-		  case 'a':
+		case 'a':
 			all = 1;
 			break;
-		  case '?':
+		case '?':
 			return 1;
-		  default:
+		default:
 			what = optc;
 		}
 
@@ -114,8 +115,8 @@ c_ulimit(char **wp)
 			 * if unset params are 0 or an error.
 			 */
 			if (!rval && !digit(wp[0][0])) {
-			    bi_errorf("invalid limit: %s", wp[0]);
-			    return 1;
+				bi_errorf("invalid limit: %s", wp[0]);
+				return 1;
 			}
 			val = rval * l->factor;
 		}
@@ -132,8 +133,7 @@ c_ulimit(char **wp)
 			shprintf("%-20s ", l->name);
 			if (val == RLIM_INFINITY)
 				shprintf("unlimited\n");
-			else
-			{
+			else {
 				val /= l->factor;
 				shprintf("%ld\n", (long) val);
 			}
@@ -152,7 +152,7 @@ c_ulimit(char **wp)
 					bi_errorf("exceeds allowable limit");
 				else
 					bi_errorf("bad limit: %s",
-						strerror(errno));
+					    strerror(errno));
 				return 1;
 			}
 		} else {
@@ -165,8 +165,7 @@ c_ulimit(char **wp)
 	if (!set) {
 		if (val == RLIM_INFINITY)
 			shprintf("unlimited\n");
-		else
-		{
+		else {
 			val /= l->factor;
 			shprintf("%ld\n", (long) val);
 		}

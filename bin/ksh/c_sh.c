@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.28 2005/02/02 07:53:01 otto Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.29 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -60,10 +60,10 @@ c_umask(char **wp)
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "S")) != EOF)
 		switch (optc) {
-		  case 'S':
+		case 'S':
 			symbolic = 1;
 			break;
-		  case '?':
+		case '?':
 			return 1;
 		}
 	cp = wp[builtin_opt.optind];
@@ -111,10 +111,18 @@ c_umask(char **wp)
 			while (*cp) {
 				while (*cp && strchr("augo", *cp))
 					switch (*cp++) {
-					case 'a': positions |= 0111; break;
-					case 'u': positions |= 0100; break;
-					case 'g': positions |= 0010; break;
-					case 'o': positions |= 0001; break;
+					case 'a':
+						positions |= 0111;
+						break;
+					case 'u':
+						positions |= 0100;
+						break;
+					case 'g':
+						positions |= 0010;
+						break;
+					case 'o':
+						positions |= 0001;
+						break;
 					}
 				if (!positions)
 					positions = 0111; /* default is a */
@@ -145,8 +153,8 @@ c_umask(char **wp)
 					new_umask &= ~new_val;
 					break;
 				case '=':
-					new_umask = new_val
-					    | (new_umask & ~(positions * 07));
+					new_umask = new_val |
+					    (new_umask & ~(positions * 07));
 					break;
 				case '+':
 					new_umask |= new_val;
@@ -246,19 +254,19 @@ c_read(char **wp)
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "prsu,")) != EOF)
 		switch (optc) {
-		  case 'p':
+		case 'p':
 			if ((fd = coproc_getfd(R_OK, &emsg)) < 0) {
 				bi_errorf("-p: %s", emsg);
 				return 1;
 			}
 			break;
-		  case 'r':
+		case 'r':
 			expand = 0;
 			break;
-		  case 's':
+		case 's':
 			history = 1;
 			break;
-		  case 'u':
+		case 'u':
 			if (!*(cp = builtin_opt.optarg))
 				fd = 0;
 			else if ((fd = check_fd(cp, R_OK, &emsg)) < 0) {
@@ -266,7 +274,7 @@ c_read(char **wp)
 				return 1;
 			}
 			break;
-		  case '?':
+		case '?':
 			return 1;
 		}
 	wp += builtin_opt.optind;
@@ -314,9 +322,8 @@ c_read(char **wp)
 				c = shf_getc(shf);
 				if (c == '\0')
 					continue;
-				if (c == EOF && shf_error(shf)
-				    && shf_errno(shf) == EINTR)
-				{
+				if (c == EOF && shf_error(shf) &&
+				    shf_errno(shf) == EINTR) {
 					/* Was the offending signal one that
 					 * would normally kill a process?
 					 * If so, pretend the read was killed.
@@ -367,8 +374,8 @@ c_read(char **wp)
 		}
 		/* strip trailing IFS white space from last variable */
 		if (!wp[1])
-			while (Xlength(cs, cp) && ctype(cp[-1], C_IFS)
-			       && ctype(cp[-1], C_IFSWS))
+			while (Xlength(cs, cp) && ctype(cp[-1], C_IFS) &&
+			    ctype(cp[-1], C_IFSWS))
 				cp--;
 		Xput(cs, cp, '\0');
 		vp = global(*wp);
@@ -514,11 +521,11 @@ c_exitreturn(char **wp)
 	arg = wp[builtin_opt.optind];
 
 	if (arg) {
-	    if (!getn(arg, &n)) {
-		    exstat = 1;
-		    warningf(true, "%s: bad number", arg);
-	    } else
-		    exstat = n;
+		if (!getn(arg, &n)) {
+			exstat = 1;
+			warningf(true, "%s: bad number", arg);
+		} else
+			exstat = n;
 	}
 	if (wp[0][0] == 'r') { /* return */
 		struct env *ep;
@@ -590,7 +597,7 @@ c_brkcont(char **wp)
 		 */
 		last_ep->flags &= ~EF_BRKCONT_PASS;
 		warningf(true, "%s: can only %s %d level(s)",
-			wp[0], wp[0], n - quit);
+		    wp[0], wp[0], n - quit);
 	}
 
 	unwind(*wp[0] == 'b' ? LBREAK : LCONTIN);
@@ -641,13 +648,13 @@ c_unset(char **wp)
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "fv")) != EOF)
 		switch (optc) {
-		  case 'f':
+		case 'f':
 			unset_var = 0;
 			break;
-		  case 'v':
+		case 'v':
 			unset_var = 1;
 			break;
-		  case '?':
+		case '?':
 			return 1;
 		}
 	wp += builtin_opt.optind;
@@ -782,14 +789,14 @@ timex_hook(struct op *t, char **volatile *app)
 	opt.optind = 0;	/* start at the start */
 	while ((optc = ksh_getopt(wp, &opt, ":p")) != EOF)
 		switch (optc) {
-		  case 'p':
+		case 'p':
 			t->str[0] |= TF_POSIX;
 			break;
-		  case '?':
+		case '?':
 			errorf("time: -%s unknown option", opt.optarg);
-		  case ':':
+		case ':':
 			errorf("time: -%s requires an argument",
-				opt.optarg);
+			    opt.optarg);
 		}
 	/* Copy command words down over options. */
 	if (opt.optind != 0) {

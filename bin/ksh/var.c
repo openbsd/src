@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.25 2005/03/28 21:33:04 deraadt Exp $	*/
+/*	$OpenBSD: var.c,v 1.26 2005/03/30 17:16:37 deraadt Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -189,25 +189,25 @@ global(const char *n)
 			return vp;
 		vp->flag |= ISSET|INTEGER;
 		switch (c) {
-		  case '$':
+		case '$':
 			vp->val.i = kshpid;
 			break;
-		  case '!':
+		case '!':
 			/* If no job, expand to nothing */
 			if ((vp->val.i = j_async()) == 0)
 				vp->flag &= ~(ISSET|INTEGER);
 			break;
-		  case '?':
+		case '?':
 			vp->val.i = exstat;
 			break;
-		  case '#':
+		case '#':
 			vp->val.i = l->argc;
 			break;
-		  case '-':
+		case '-':
 			vp->flag &= ~INTEGER;
 			vp->val.s = getoptions();
 			break;
-		  default:
+		default:
 			vp->flag &= ~(ISSET|INTEGER);
 		}
 		return vp;
@@ -262,9 +262,9 @@ local(const char *n, bool copy)
 		while ((ll = ll->next) && !(vq = tsearch(&ll->vars, n, h)))
 			;
 		if (vq) {
-			vp->flag |= vq->flag & (EXPORT|INTEGER|RDONLY
-						|LJUST|RJUST|ZEROFIL
-						|LCASEV|UCASEV_AL|INT_U|INT_L);
+			vp->flag |= vq->flag &
+			    (EXPORT | INTEGER | RDONLY | LJUST | RJUST |
+			    ZEROFIL | LCASEV | UCASEV_AL | INT_U | INT_L);
 			if (vq->flag & INTEGER)
 				vp->type = vq->type;
 			vp->u2.field = vq->u2.field;
@@ -292,11 +292,11 @@ str_val(struct tbl *vp)
 		s = vp->val.s + vp->type;
 	else {				/* integer source */
 		/* worst case number length is when base=2, so use BITS(long) */
-			     /* minus base #     number    null */
+		/* minus base #     number    null */
 		static char strbuf[1 + 2 + 1 + BITS(long) + 1];
 		const char *digits = (vp->flag & UCASEV_AL) ?
-				  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-				: "0123456789abcdefghijklmnopqrstuvwxyz";
+		    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" :
+		    "0123456789abcdefghijklmnopqrstuvwxyz";
 		unsigned long n;
 		int base;
 
@@ -355,8 +355,8 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 	if (!(vq->flag&INTEGER)) { /* string dest */
 		if ((vq->flag&ALLOC)) {
 			/* debugging */
-			if (s >= vq->val.s
-			    && s <= vq->val.s + strlen(vq->val.s))
+			if (s >= vq->val.s &&
+			    s <= vq->val.s + strlen(vq->val.s))
 				internal_errorf(true,
 				    "setstr: %s=%s: assigning to self",
 				    vq->name, s);
@@ -617,13 +617,12 @@ typeset(const char *var, Tflag set, Tflag clr, int field, int base)
 	}
 
 	/* Prevent typeset from creating a local PATH/ENV/SHELL */
-	if (Flag(FRESTRICTED) && (strcmp(tvar, "PATH") == 0
-				  || strcmp(tvar, "ENV") == 0
-				  || strcmp(tvar, "SHELL") == 0))
+	if (Flag(FRESTRICTED) && (strcmp(tvar, "PATH") == 0 ||
+	    strcmp(tvar, "ENV") == 0 || strcmp(tvar, "SHELL") == 0))
 		errorf("%s: restricted", tvar);
 
-	vp = (set&LOCAL) ? local(tvar, (set & LOCAL_COPY) ? true : false)
-		: global(tvar);
+	vp = (set&LOCAL) ? local(tvar, (set & LOCAL_COPY) ? true : false) :
+	    global(tvar);
 	set &= ~(LOCAL|LOCAL_COPY);
 
 	vpbase = (vp->flag & ARRAY) ? global(arrayname(var)) : vp;
@@ -632,8 +631,8 @@ typeset(const char *var, Tflag set, Tflag clr, int field, int base)
 	 * be changed, which means it can be truncated or modified
 	 * (-L/-R/-Z/-i).
 	 */
-	if ((vpbase->flag&RDONLY)
-	    && (val || clr || (set & ~EXPORT)))
+	if ((vpbase->flag&RDONLY) &&
+	    (val || clr || (set & ~EXPORT)))
 		/* XXX check calls - is error here ok by POSIX? */
 		errorf("%s: is read only", tvar);
 	if (val)
@@ -650,18 +649,18 @@ typeset(const char *var, Tflag set, Tflag clr, int field, int base)
 			char *s = NULL;
 			char *free_me = NULL;
 
-			fake_assign = (t->flag & ISSET) && (!val || t != vp)
-				      && ((set & (UCASEV_AL|LCASEV|LJUST|RJUST|ZEROFIL))
-					  || ((t->flag & INTEGER) && (clr & INTEGER))
-					  || (!(t->flag & INTEGER) && (set & INTEGER)));
+			fake_assign = (t->flag & ISSET) && (!val || t != vp) &&
+			    ((set & (UCASEV_AL|LCASEV|LJUST|RJUST|ZEROFIL)) ||
+			    ((t->flag & INTEGER) && (clr & INTEGER)) ||
+			    (!(t->flag & INTEGER) && (set & INTEGER)));
 			if (fake_assign) {
 				if (t->flag & INTEGER) {
 					s = str_val(t);
 					free_me = (char *) 0;
 				} else {
 					s = t->val.s + t->type;
-					free_me = (t->flag & ALLOC) ? t->val.s
-								  : (char *) 0;
+					free_me = (t->flag & ALLOC) ? t->val.s :
+					    (char *) 0;
 				}
 				t->flag &= ~ALLOC;
 			}
@@ -689,7 +688,7 @@ typeset(const char *var, Tflag set, Tflag clr, int field, int base)
 					else {
 						if (t->flag & ALLOC)
 							afree((void*) t->val.s,
-							      t->areap);
+							    t->areap);
 						t->flag &= ~(ISSET|ALLOC);
 						t->type = 0;
 					}
@@ -715,8 +714,8 @@ typeset(const char *var, Tflag set, Tflag clr, int field, int base)
 	}
 
 	/* only x[0] is ever exported, so use vpbase */
-	if ((vpbase->flag&EXPORT) && !(vpbase->flag&INTEGER)
-	    && vpbase->type == 0)
+	if ((vpbase->flag&EXPORT) && !(vpbase->flag&INTEGER) &&
+	    vpbase->type == 0)
 		export(vpbase, (vpbase->flag&ISSET) ? vpbase->val.s : null);
 
 	return vp;
@@ -773,9 +772,9 @@ skip_wdvarname(const char *s,
     int aok)				/* skip array de-reference? */
 {
 	if (s[0] == CHAR && letter(s[1])) {
-		do
+		do {
 			s += 2;
-		while (s[0] == CHAR && letnum(s[1]));
+		} while (s[0] == CHAR && letnum(s[1]));
 		if (aok && s[0] == CHAR && s[1] == '[') {
 			/* skip possible array de-reference */
 			const char *p = s;
@@ -831,8 +830,8 @@ makenv(void)
 	XPinit(env, 64);
 	for (l = e->loc; l != NULL; l = l->next)
 		for (vpp = l->vars.tbls, i = l->vars.size; --i >= 0; )
-			if ((vp = *vpp++) != NULL
-			    && (vp->flag&(ISSET|EXPORT)) == (ISSET|EXPORT)) {
+			if ((vp = *vpp++) != NULL &&
+			    (vp->flag&(ISSET|EXPORT)) == (ISSET|EXPORT)) {
 				struct block *l2;
 				struct tbl *vp2;
 				unsigned h = hash(vp->name);
@@ -907,7 +906,7 @@ static void
 getspec(struct tbl *vp)
 {
 	switch (special(vp->name)) {
-	  case V_SECONDS:
+	case V_SECONDS:
 		vp->flag &= ~SPECIAL;
 		/* On start up the value of SECONDS is used before seconds
 		 * has been set - don't do anything in this case
@@ -917,7 +916,7 @@ getspec(struct tbl *vp)
 			setint(vp, (long) (time((time_t *)0) - seconds));
 		vp->flag |= SPECIAL;
 		break;
-	  case V_RANDOM:
+	case V_RANDOM:
 		vp->flag &= ~SPECIAL;
 		if (use_rand)
 			setint(vp, (long) (rand() & 0x7fff));
@@ -926,18 +925,18 @@ getspec(struct tbl *vp)
 		vp->flag |= SPECIAL;
 		break;
 #ifdef HISTORY
-	  case V_HISTSIZE:
+	case V_HISTSIZE:
 		vp->flag &= ~SPECIAL;
 		setint(vp, (long) histsize);
 		vp->flag |= SPECIAL;
 		break;
 #endif /* HISTORY */
-	  case V_OPTIND:
+	case V_OPTIND:
 		vp->flag &= ~SPECIAL;
 		setint(vp, (long) user_opt.uoptind);
 		vp->flag |= SPECIAL;
 		break;
-	  case V_LINENO:
+	case V_LINENO:
 		vp->flag &= ~SPECIAL;
 		setint(vp, (long) current_lineno + user_lineno);
 		vp->flag |= SPECIAL;
@@ -951,25 +950,25 @@ setspec(struct tbl *vp)
 	char *s;
 
 	switch (special(vp->name)) {
-	  case V_PATH:
+	case V_PATH:
 		if (path)
 			afree(path, APERM);
 		path = str_save(str_val(vp), APERM);
 		flushcom(1);	/* clear tracked aliases */
 		break;
-	  case V_IFS:
+	case V_IFS:
 		setctypes(s = str_val(vp), C_IFS);
 		ifs0 = *s;
 		break;
-	  case V_OPTIND:
+	case V_OPTIND:
 		vp->flag &= ~SPECIAL;
 		getopts_reset((int) intval(vp));
 		vp->flag |= SPECIAL;
 		break;
-	  case V_POSIXLY_CORRECT:
+	case V_POSIXLY_CORRECT:
 		change_flag(FPOSIX, OF_SPECIAL, 1);
 		break;
-	  case V_TMPDIR:
+	case V_TMPDIR:
 		if (tmpdir) {
 			afree(tmpdir, APERM);
 			tmpdir = (char *) 0;
@@ -979,63 +978,64 @@ setspec(struct tbl *vp)
 		 */
 		{
 			struct stat statb;
+
 			s = str_val(vp);
-			if (s[0] == '/' && access(s, W_OK|X_OK) == 0
-			    && stat(s, &statb) == 0 && S_ISDIR(statb.st_mode))
+			if (s[0] == '/' && access(s, W_OK|X_OK) == 0 &&
+			    stat(s, &statb) == 0 && S_ISDIR(statb.st_mode))
 				tmpdir = str_save(s, APERM);
 		}
 		break;
 #ifdef HISTORY
-	  case V_HISTSIZE:
+	case V_HISTSIZE:
 		vp->flag &= ~SPECIAL;
 		sethistsize((int) intval(vp));
 		vp->flag |= SPECIAL;
 		break;
-	  case V_HISTFILE:
+	case V_HISTFILE:
 		sethistfile(str_val(vp));
 		break;
 #endif /* HISTORY */
 #ifdef EDIT
-	  case V_VISUAL:
+	case V_VISUAL:
 		set_editmode(str_val(vp));
 		break;
-	  case V_EDITOR:
+	case V_EDITOR:
 		if (!(global("VISUAL")->flag & ISSET))
 			set_editmode(str_val(vp));
 		break;
-	  case V_COLUMNS:
+	case V_COLUMNS:
 		if ((x_cols = intval(vp)) <= MIN_COLS)
 			x_cols = MIN_COLS;
 		break;
 #endif /* EDIT */
-	  case V_MAIL:
+	case V_MAIL:
 		mbset(str_val(vp));
 		break;
-	  case V_MAILPATH:
+	case V_MAILPATH:
 		mpset(str_val(vp));
 		break;
-	  case V_MAILCHECK:
+	case V_MAILCHECK:
 		vp->flag &= ~SPECIAL;
 		mcset(intval(vp));
 		vp->flag |= SPECIAL;
 		break;
-	  case V_RANDOM:
+	case V_RANDOM:
 		vp->flag &= ~SPECIAL;
 		srand((unsigned int)intval(vp));
 		use_rand = 1;
 		vp->flag |= SPECIAL;
 		break;
-	  case V_SECONDS:
+	case V_SECONDS:
 		vp->flag &= ~SPECIAL;
 		seconds = time((time_t*) 0) - intval(vp);
 		vp->flag |= SPECIAL;
 		break;
-	  case V_TMOUT:
+	case V_TMOUT:
 		/* at&t ksh seems to do this (only listen if integer) */
 		if (vp->flag & INTEGER)
 			ksh_tmout = vp->val.i >= 0 ? vp->val.i : 0;
 		break;
-	  case V_LINENO:
+	case V_LINENO:
 		vp->flag &= ~SPECIAL;
 		/* The -1 is because line numbering starts at 1. */
 		user_lineno = (unsigned int) intval(vp) - current_lineno - 1;
@@ -1048,34 +1048,34 @@ static void
 unsetspec(struct tbl *vp)
 {
 	switch (special(vp->name)) {
-	  case V_PATH:
+	case V_PATH:
 		if (path)
 			afree(path, APERM);
 		path = str_save(def_path, APERM);
 		flushcom(1);	/* clear tracked aliases */
 		break;
-	  case V_IFS:
+	case V_IFS:
 		setctypes(" \t\n", C_IFS);
 		ifs0 = ' ';
 		break;
-	  case V_TMPDIR:
+	case V_TMPDIR:
 		/* should not become unspecial */
 		if (tmpdir) {
 			afree(tmpdir, APERM);
 			tmpdir = (char *) 0;
 		}
 		break;
-	  case V_MAIL:
+	case V_MAIL:
 		mbset((char *) 0);
 		break;
-	  case V_MAILPATH:
+	case V_MAILPATH:
 		mpset((char *) 0);
 		break;
-	  case V_LINENO:
-	  case V_MAILCHECK:	/* at&t ksh leaves previous value in place */
-	  case V_RANDOM:
-	  case V_SECONDS:
-	  case V_TMOUT:		/* at&t ksh leaves previous value in place */
+	case V_LINENO:
+	case V_MAILCHECK:	/* at&t ksh leaves previous value in place */
+	case V_RANDOM:
+	case V_SECONDS:
+	case V_TMOUT:		/* at&t ksh leaves previous value in place */
 		unspecial(vp->name);
 		break;
 

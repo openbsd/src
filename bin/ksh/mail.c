@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.14 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: mail.c,v 1.15 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -57,12 +57,11 @@ mcheck(void)
 			mbp = NULL;
 
 		while (mbp) {
-			if (mbp->mb_path && stat(mbp->mb_path, &stbuf) == 0
-			    && S_ISREG(stbuf.st_mode))
-			{
-				if (stbuf.st_size
-				    && mbp->mb_mtime != stbuf.st_mtime
-				    && stbuf.st_atime <= stbuf.st_mtime)
+			if (mbp->mb_path && stat(mbp->mb_path, &stbuf) == 0 &&
+			    S_ISREG(stbuf.st_mode)) {
+				if (stbuf.st_size &&
+				    mbp->mb_mtime != stbuf.st_mtime &&
+				    stbuf.st_atime <= stbuf.st_mtime)
 					mprintit(mbp);
 				mbp->mb_mtime = stbuf.st_mtime;
 			} else {
@@ -116,7 +115,8 @@ mpset(char *mptoparse)
 	while (mval) {
 		mpath = mval;
 		if ((mval = strchr(mval, ':')) != NULL) {
-			*mval = '\0', mval++;
+			*mval = '\0';
+			mval++;
 		}
 		/* POSIX/bourne-shell say file%message */
 		for (p = mpath; (mmsg = strchr(p, '%')); ) {

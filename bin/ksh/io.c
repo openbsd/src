@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.20 2004/12/30 21:34:24 otto Exp $	*/
+/*	$OpenBSD: io.c,v 1.21 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -73,9 +73,8 @@ bi_errorf(const char *fmt, ...)
 	 * non-interactive shells to exit.
 	 * XXX odd use of KEEPASN; also may not want LERROR here
 	 */
-	if ((builtin_flag & SPEC_BI)
-	    || (Flag(FPOSIX) && (builtin_flag & KEEPASN)))
-	{
+	if ((builtin_flag & SPEC_BI) ||
+	    (Flag(FPOSIX) && (builtin_flag & KEEPASN))) {
 		builtin_argv0 = (char *) 0;
 		unwind(LERROR);
 	}
@@ -103,12 +102,12 @@ void
 error_prefix(int fileline)
 {
 	/* Avoid foo: foo[2]: ... */
-	if (!fileline || !source || !source->file
-	    || strcmp(source->file, kshname) != 0)
+	if (!fileline || !source || !source->file ||
+	    strcmp(source->file, kshname) != 0)
 		shf_fprintf(shl_out, "%s: ", kshname + (*kshname == '-'));
 	if (fileline && source && source->file != NULL) {
 		shf_fprintf(shl_out, "%s[%d]: ", source->file,
-			source->errline > 0 ? source->errline : source->line);
+		    source->errline > 0 ? source->errline : source->line);
 		source->errline = 0;
 	}
 }
@@ -149,8 +148,7 @@ kshdebug_init_(void)
 	if (kshdebug_shf)
 		shf_close(kshdebug_shf);
 	kshdebug_shf = shf_open("/tmp/ksh-debug.log",
-				O_WRONLY|O_APPEND|O_CREAT, 0600,
-				SHF_WR|SHF_MAPHI);
+	    O_WRONLY|O_APPEND|O_CREAT, 0600, SHF_WR|SHF_MAPHI);
 	if (kshdebug_shf) {
 		shf_fprintf(kshdebug_shf, "\nNew shell[pid %d]\n", getpid());
 		shf_flush(kshdebug_shf);
@@ -183,9 +181,10 @@ kshdebug_dump_(const char *str, const void *mem, int nbytes)
 	shf_fprintf(kshdebug_shf, "[%d] %s:\n", getpid(), str);
 	for (i = 0; i < nbytes; i += nprow) {
 		char c = '\t';
+
 		for (j = 0; j < nprow && i + j < nbytes; j++) {
-			shf_fprintf(kshdebug_shf, "%c%02x",
-				c, ((const unsigned char *) mem)[i + j]);
+			shf_fprintf(kshdebug_shf, "%c%02x", c,
+			    ((const unsigned char *) mem)[i + j]);
 			c = ' ';
 		}
 		shf_fprintf(kshdebug_shf, "\n");
@@ -201,7 +200,7 @@ can_seek(int fd)
 	struct stat statb;
 
 	return fstat(fd, &statb) == 0 && !S_ISREG(statb.st_mode) ?
-		SHF_UNBUF : 0;
+	    SHF_UNBUF : 0;
 }
 
 struct shf	shf_iob[3];
@@ -302,14 +301,13 @@ check_fd(char *name, int mode, const char **emsgp)
 		 * historical shells never did this check (XXX don't know what
 		 * posix has to say).
 		 */
-		if (!(mode & X_OK) && fl != O_RDWR
-		    && (((mode & R_OK) && fl != O_RDONLY)
-			|| ((mode & W_OK) && fl != O_WRONLY)))
-		{
+		if (!(mode & X_OK) && fl != O_RDWR &&
+		    (((mode & R_OK) && fl != O_RDONLY) ||
+		    ((mode & W_OK) && fl != O_WRONLY))) {
 			if (emsgp)
 				*emsgp = (fl == O_WRONLY) ?
-						"fd not open for reading"
-					      : "fd not open for writing";
+				    "fd not open for reading" :
+				    "fd not open for writing";
 			return -1;
 		}
 		return fd;
@@ -431,6 +429,5 @@ maketemp(Area *ap, Temp_type type, struct temp **tlist)
 
 	tp->next = *tlist;
 	*tlist = tp;
-
 	return tp;
 }

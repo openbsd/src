@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2005/03/28 21:33:01 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -175,8 +175,8 @@ main(int argc, char *argv[])
 #endif /* POSIXLY_CORRECT */
 
 	/* Check to see if we're /bin/sh. */
-	if (!strcmp(&kshname[strlen(kshname) - 3], "/sh")
-	    || !strcmp(kshname, "sh") || !strcmp(kshname, "-sh")) {
+	if (!strcmp(&kshname[strlen(kshname) - 3], "/sh") ||
+	    !strcmp(kshname, "sh") || !strcmp(kshname, "-sh")) {
 		Flag(FSH) = 1;
 		version_param = "SH_VERSION";
 	}
@@ -210,10 +210,10 @@ main(int argc, char *argv[])
 		char *pwdx = pwd;
 
 		/* Try to use existing $PWD if it is valid */
-		if (pwd[0] != '/'
-		    || stat(pwd, &s_pwd) < 0 || stat(".", &s_dot) < 0
-		    || s_pwd.st_dev != s_dot.st_dev
-		    || s_pwd.st_ino != s_dot.st_ino)
+		if (pwd[0] != '/' ||
+		    stat(pwd, &s_pwd) < 0 || stat(".", &s_dot) < 0 ||
+		    s_pwd.st_dev != s_dot.st_dev ||
+		    s_pwd.st_ino != s_dot.st_ino)
 			pwdx = (char *) 0;
 		set_current_wd(pwdx);
 		if (current_wd[0])
@@ -247,8 +247,8 @@ main(int argc, char *argv[])
 		/* Set PS1 if it isn't set, or we are root and prompt doesn't
 		 * contain a #.
 		 */
-		if (!(vp->flag & ISSET)
-		    || (!ksheuid && !strchr(str_val(vp), '#')))
+		if (!(vp->flag & ISSET) ||
+		    (!ksheuid && !strchr(str_val(vp), '#')))
 			/* setstr can't fail here */
 			setstr(vp, safe_prompt, KSH_RETURN_ERROR);
 	}
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 		s = pushs(SSTDIN, ATEMP);
 		s->file = "<stdin>";
 		s->u.shf = shf_fdopen(0, SHF_RD | can_seek(0),
-				      (struct shf *) 0);
+		    (struct shf *) 0);
 		if (isatty(0) && isatty(2)) {
 			Flag(FTALKING) = Flag(FTALKING_I) = 1;
 			/* The following only if isatty(0) */
@@ -333,7 +333,7 @@ main(int argc, char *argv[])
 		include(KSH_SYSTEM_PROFILE, 0, (char **) 0, 1);
 		if (!Flag(FPRIVILEGED))
 			include(substitute("$HOME/.profile", 0), 0,
-				(char **) 0, 1);
+			    (char **) 0, 1);
 	}
 
 	if (Flag(FPRIVILEGED))
@@ -341,8 +341,8 @@ main(int argc, char *argv[])
 	else {
 		char *env_file;
 
-			/* include $ENV */
-			env_file = str_val(global("ENV"));
+		/* include $ENV */
+		env_file = str_val(global("ENV"));
 
 #ifdef DEFAULT_ENV
 		/* If env isn't set, include default environment */
@@ -358,10 +358,10 @@ main(int argc, char *argv[])
 		restricted = 1;
 	if (restricted) {
 		static const char *const restr_com[] = {
-						"typeset", "-r", "PATH",
-						    "ENV", "SHELL",
-						(char *) 0
-					    };
+			"typeset", "-r", "PATH",
+			"ENV", "SHELL",
+			(char *) 0
+		};
 		shcomexec((char **) restr_com);
 		/* After typeset command... */
 		Flag(FRESTRICTED) = 1;
@@ -422,22 +422,22 @@ include(const char *name, int argc, char **argv, int intr_ok)
 			e->loc->argc = old_argc;
 		}
 		switch (i) {
-		  case LRETURN:
-		  case LERROR:
+		case LRETURN:
+		case LERROR:
 			return exstat & 0xff; /* see below */
-		  case LINTR:
+		case LINTR:
 			/* intr_ok is set if we are including .profile or $ENV.
 			 * If user ^C's out, we don't want to kill the shell...
 			 */
 			if (intr_ok && (exstat - 128) != SIGTERM)
 				return 1;
 			/* fall through... */
-		  case LEXIT:
-		  case LLEAVE:
-		  case LSHELL:
+		case LEXIT:
+		case LLEAVE:
+		case LSHELL:
 			unwind(i);
 			/*NOREACHED*/
-		  default:
+		default:
 			internal_errorf(1, "include: %d", i);
 			/*NOREACHED*/
 		}
@@ -487,17 +487,17 @@ shell(Source *volatile s, volatile int toplevel)
 	i = sigsetjmp(e->jbuf, 0);
 	if (i) {
 		switch (i) {
-		  case LINTR: /* we get here if SIGINT not caught or ignored */
-		  case LERROR:
-		  case LSHELL:
+		case LINTR: /* we get here if SIGINT not caught or ignored */
+		case LERROR:
+		case LSHELL:
 			if (interactive) {
 				if (i == LINTR)
 					shellf(newline);
 				/* Reset any eof that was read as part of a
 				 * multiline command.
 				 */
-				if (Flag(FIGNOREEOF) && s->type == SEOF
-				    && wastty)
+				if (Flag(FIGNOREEOF) && s->type == SEOF &&
+				    wastty)
 					s->type = SSTDIN;
 				/* Used by exit command to get back to
 				 * top level shell.  Kind of strange since
@@ -510,14 +510,14 @@ shell(Source *volatile s, volatile int toplevel)
 				break;
 			}
 			/* fall through... */
-		  case LEXIT:
-		  case LLEAVE:
-		  case LRETURN:
+		case LEXIT:
+		case LLEAVE:
+		case LRETURN:
 			source = old_source;
 			quitenv(NULL);
 			unwind(i);	/* keep on going */
 			/*NOREACHED*/
-		  default:
+		default:
 			source = old_source;
 			quitenv(NULL);
 			internal_errorf(1, "shell: %d", i);
@@ -547,9 +547,8 @@ shell(Source *volatile s, volatile int toplevel)
 			if (wastty && Flag(FIGNOREEOF) && --attempts > 0) {
 				shellf("Use `exit' to leave ksh\n");
 				s->type = SSTDIN;
-			} else if (wastty && !really_exit
-				   && j_stopped_running())
-			{
+			} else if (wastty && !really_exit &&
+			    j_stopped_running()) {
 				really_exit = 1;
 				s->type = SSTDIN;
 			} else {
@@ -582,9 +581,8 @@ void
 unwind(int i)
 {
 	/* ordering for EXIT vs ERR is a bit odd (this is what at&t ksh does) */
-	if (i == LEXIT || (Flag(FERREXIT) && (i == LERROR || i == LINTR)
-			   && sigtraps[SIGEXIT_].trap))
-	{
+	if (i == LEXIT || (Flag(FERREXIT) && (i == LERROR || i == LINTR) &&
+	    sigtraps[SIGEXIT_].trap)) {
 		runtrap(&sigtraps[SIGEXIT_]);
 		i = LLEAVE;
 	} else if (Flag(FERREXIT) && (i == LERROR || i == LINTR)) {
@@ -593,20 +591,20 @@ unwind(int i)
 	}
 	while (1) {
 		switch (e->type) {
-		  case E_PARSE:
-		  case E_FUNC:
-		  case E_INCL:
-		  case E_LOOP:
-		  case E_ERRH:
+		case E_PARSE:
+		case E_FUNC:
+		case E_INCL:
+		case E_LOOP:
+		case E_ERRH:
 			siglongjmp(e->jbuf, i);
 			/*NOTREACHED*/
 
-		  case E_NONE:
+		case E_NONE:
 			if (i == LINTR)
 				e->flags |= EF_FAKE_SIGDIE;
 			/* Fall through... */
 
-		  default:
+		default:
 			quitenv(NULL);
 		}
 	}
@@ -664,7 +662,7 @@ quitenv(struct shf *shf)
 				if ((sig == SIGINT || sig == SIGTERM) &&
 				    getpgrp() == kshpid) {
 					setsig(&sigtraps[sig], SIG_DFL,
-						SS_RESTORE_CURR|SS_FORCE);
+					    SS_RESTORE_CURR|SS_FORCE);
 					kill(0, sig);
 				}
 			}

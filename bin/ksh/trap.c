@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2005/02/25 11:21:16 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * signal handling
@@ -165,9 +165,8 @@ trap_pending(void)
 	Trap *p;
 
 	for (p = sigtraps, i = NSIG+1; --i >= 0; p++)
-		if (p->set && ((p->trap && p->trap[0])
-			       || ((p->flags & (TF_DFL_INTR|TF_FATAL))
-				   && !p->trap)))
+		if (p->set && ((p->trap && p->trap[0]) ||
+		    ((p->flags & (TF_DFL_INTR|TF_FATAL)) && !p->trap)))
 			return p->signal;
 	return 0;
 }
@@ -198,8 +197,8 @@ runtraps(int flag)
 	if (flag & TF_FATAL)
 		fatal_trap = 0;
 	for (p = sigtraps, i = NSIG+1; --i >= 0; p++)
-		if (p->set && (!flag
-			       || ((p->flags & flag) && p->trap == (char *) 0)))
+		if (p->set && (!flag ||
+		    ((p->flags & flag) && p->trap == (char *) 0)))
 			runtrap(p);
 }
 
@@ -275,7 +274,7 @@ restoresigs(void)
 	for (i = NSIG+1, p = sigtraps; --i >= 0; p++)
 		if (p->flags & (TF_EXEC_IGN|TF_EXEC_DFL))
 			setsig(p, (p->flags & TF_EXEC_IGN) ? SIG_IGN : SIG_DFL,
-				SS_RESTORE_CURR|SS_FORCE);
+			    SS_RESTORE_CURR|SS_FORCE);
 }
 
 void
@@ -301,6 +300,7 @@ settrap(Trap *p, char *s)
 			else
 				p->flags |= TF_EXEC_DFL;
 		}
+
 		/* assumes handler already set to what shell wants it
 		 * (normally trapsig, but could be j_sigchld() or SIG_IGN)
 		 */
@@ -357,7 +357,7 @@ setsig(Trap *p, sig_t f, int flags)
 	if (!(p->flags & (TF_ORIG_IGN|TF_ORIG_DFL))) {
 		sigaction(p->signal, &Sigact_ign, &sigact);
 		p->flags |= sigact.sa_handler == SIG_IGN ?
-					TF_ORIG_IGN : TF_ORIG_DFL;
+		    TF_ORIG_IGN : TF_ORIG_DFL;
 		p->cursig = SIG_IGN;
 	}
 
@@ -365,8 +365,8 @@ setsig(Trap *p, sig_t f, int flags)
 	 *	- the user of an interactive shell wants to change it
 	 *	- the shell wants for force a change
 	 */
-	if ((p->flags & TF_ORIG_IGN) && !(flags & SS_FORCE)
-	    && (!(flags & SS_USER) || !Flag(FTALKING)))
+	if ((p->flags & TF_ORIG_IGN) && !(flags & SS_FORCE) &&
+	    (!(flags & SS_USER) || !Flag(FTALKING)))
 		return 0;
 
 	setexecsig(p, flags & SS_RESTORE_MASK);
@@ -400,20 +400,20 @@ setexecsig(Trap *p, int restore)
 	/* XXX debugging */
 	if (!(p->flags & (TF_ORIG_IGN|TF_ORIG_DFL)))
 		internal_errorf(1, "setexecsig: unset signal %d(%s)",
-			p->signal, p->name);
+		    p->signal, p->name);
 
 	/* restore original value for exec'd kids */
 	p->flags &= ~(TF_EXEC_IGN|TF_EXEC_DFL);
 	switch (restore & SS_RESTORE_MASK) {
-	  case SS_RESTORE_CURR: /* leave things as they currently are */
+	case SS_RESTORE_CURR: /* leave things as they currently are */
 		break;
-	  case SS_RESTORE_ORIG:
+	case SS_RESTORE_ORIG:
 		p->flags |= p->flags & TF_ORIG_IGN ? TF_EXEC_IGN : TF_EXEC_DFL;
 		break;
-	  case SS_RESTORE_DFL:
+	case SS_RESTORE_DFL:
 		p->flags |= TF_EXEC_DFL;
 		break;
-	  case SS_RESTORE_IGN:
+	case SS_RESTORE_IGN:
 		p->flags |= TF_EXEC_IGN;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.29 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.30 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * command history
@@ -65,9 +65,10 @@ c_fc(char **wp)
 		return 1;
 	}
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, "e:glnrs0,1,2,3,4,5,6,7,8,9,")) != EOF)
+	while ((optc = ksh_getopt(wp, &builtin_opt,
+	    "e:glnrs0,1,2,3,4,5,6,7,8,9,")) != EOF)
 		switch (optc) {
-		  case 'e':
+		case 'e':
 			p = builtin_opt.optarg;
 			if (strcmp(p, "-") == 0)
 				sflag++;
@@ -77,24 +78,24 @@ c_fc(char **wp)
 				strlcat(editor, " $_", len);
 			}
 			break;
-		  case 'g': /* non-at&t ksh */
+		case 'g': /* non-at&t ksh */
 			gflag++;
 			break;
-		  case 'l':
+		case 'l':
 			lflag++;
 			break;
-		  case 'n':
+		case 'n':
 			nflag++;
 			break;
-		  case 'r':
+		case 'r':
 			rflag++;
 			break;
-		  case 's':	/* posix version of -e - */
+		case 's':	/* posix version of -e - */
 			sflag++;
 			break;
 		  /* kludge city - accept -num as -- -num (kind of) */
-		  case '0': case '1': case '2': case '3': case '4':
-		  case '5': case '6': case '7': case '8': case '9':
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
 			p = shf_smprintf("-%c%s",
 					optc, builtin_opt.optarg);
 			if (!first)
@@ -106,7 +107,7 @@ c_fc(char **wp)
 				return 1;
 			}
 			break;
-		  case '?':
+		case '?':
 			return 1;
 		}
 	wp += builtin_opt.optind;
@@ -136,8 +137,8 @@ c_fc(char **wp)
 			return 1;
 		}
 
-		hp = first ? hist_get(first, false, false)
-			   : hist_get_newest(false);
+		hp = first ? hist_get(first, false, false) :
+		    hist_get_newest(false);
 		if (!hp)
 			return 1;
 		return hist_replace(hp, pat, rep, gflag);
@@ -157,8 +158,8 @@ c_fc(char **wp)
 		return 1;
 	}
 	if (!first) {
-		hfirst = lflag ? hist_get("-16", true, true)
-			       : hist_get_newest(false);
+		hfirst = lflag ? hist_get("-16", true, true) :
+		    hist_get_newest(false);
 		if (!hfirst)
 			return 1;
 		/* can't fail if hfirst didn't fail */
@@ -169,11 +170,11 @@ c_fc(char **wp)
 		 * bounds for -l as well.
 		 */
 		hfirst = hist_get(first, (lflag || last) ? true : false,
-				lflag ? true : false);
+		    lflag ? true : false);
 		if (!hfirst)
 			return 1;
-		hlast = last ? hist_get(last, true, lflag ? true : false)
-			    : (lflag ? hist_get_newest(false) : hfirst);
+		hlast = last ? hist_get(last, true, lflag ? true : false) :
+		    (lflag ? hist_get_newest(false) : hfirst);
 		if (!hlast)
 			return 1;
 	}
@@ -190,10 +191,9 @@ c_fc(char **wp)
 		const char *nfmt = nflag ? "\t" : "%d\t";
 
 		for (hp = rflag ? hlast : hfirst;
-		     hp >= hfirst && hp <= hlast; hp += rflag ? -1 : 1)
-		{
+		    hp >= hfirst && hp <= hlast; hp += rflag ? -1 : 1) {
 			shf_fprintf(shl_stdout, nfmt,
-				hist_source->line - (int) (histptr - hp));
+			    hist_source->line - (int) (histptr - hp));
 			/* print multi-line commands correctly */
 			for (s = *hp; (t = strchr(s, '\n')); s = t)
 				shf_fprintf(shl_stdout, "%.*s\t", ++t - s, s);
@@ -208,11 +208,11 @@ c_fc(char **wp)
 	tf = maketemp(ATEMP, TT_HIST_EDIT, &e->temps);
 	if (!(shf = tf->shf)) {
 		bi_errorf("cannot create temp file %s - %s",
-			tf->name, strerror(errno));
+		    tf->name, strerror(errno));
 		return 1;
 	}
 	for (hp = rflag ? hlast : hfirst;
-	     hp >= hfirst && hp <= hlast; hp += rflag ? -1 : 1)
+	    hp >= hfirst && hp <= hlast; hp += rflag ? -1 : 1)
 		shf_fprintf(shf, "%s\n", *hp);
 	if (shf_close(shf) == EOF) {
 		bi_errorf("error writing temporary file - %s", strerror(errno));
@@ -244,8 +244,8 @@ c_fc(char **wp)
 			return 1;
 		}
 
-		n = fstat(shf_fileno(shf), &statb) < 0 ? 128
-			: statb.st_size + 1;
+		n = fstat(shf_fileno(shf), &statb) < 0 ? 128 :
+		    statb.st_size + 1;
 		Xinit(xs, xp, n, hist_source->areap);
 		while ((n = shf_read(xp, Xnleft(xs, xp), shf)) > 0) {
 			xp += n;
@@ -254,7 +254,7 @@ c_fc(char **wp)
 		}
 		if (n < 0) {
 			bi_errorf("error reading temp file %s - %s",
-				tf->name, strerror(shf_errno(shf)));
+			    tf->name, strerror(shf_errno(shf)));
 			shf_close(shf);
 			return 1;
 		}
@@ -318,9 +318,8 @@ hist_replace(char **hp, const char *pat, const char *rep, int global)
 		int any_subst = 0;
 
 		Xinit(xs, xp, 128, ATEMP);
-		for (s = *hp; (s1 = strstr(s, pat))
-			      && (!any_subst || global) ; s = s1 + pat_len)
-		{
+		for (s = *hp; (s1 = strstr(s, pat)) && (!any_subst || global);
+		    s = s1 + pat_len) {
 			any_subst = 1;
 			len = s1 - s;
 			XcheckN(xs, xp, len + rep_len);
@@ -475,8 +474,8 @@ findhist(int start, int fwd, const char *str, int anchored)
 
 	hp = &history[start];
 	for (; hp >= history && hp <= histptr; hp += incr)
-		if ((anchored && strncmp(*hp, str, len) == 0)
-		    || (!anchored && strstr(*hp, str)))
+		if ((anchored && strncmp(*hp, str, len) == 0) ||
+		    (!anchored && strstr(*hp, str)))
 			return hp - history;
 
 	return -1;
@@ -673,7 +672,8 @@ hist_init(Source *s)
 		/*
 		 * we have some data
 		 */
-		base = (unsigned char *)mmap(0, hsize, PROT_READ, MAP_FILE|MAP_PRIVATE, histfd, 0);
+		base = (unsigned char *)mmap(0, hsize, PROT_READ,
+		    MAP_FILE|MAP_PRIVATE, histfd, 0);
 		/*
 		 * check on its validity
 		 */
@@ -716,8 +716,7 @@ hist_count_lines(unsigned char *base, int bytes)
 	int lines = 0;
 
 	while (bytes--) {
-		switch (state)
-		{
+		switch (state) {
 		case shdr:
 			if (*base == COMMAND)
 				state = sn1;
@@ -908,7 +907,8 @@ writehistfile(int lno, char *cmd)
 		if (sizenow > hsize) {
 			/* someone has added some lines */
 			bytes = sizenow - hsize;
-			base = (unsigned char *)mmap(0, sizenow, PROT_READ, MAP_FILE|MAP_PRIVATE, histfd, 0);
+			base = (unsigned char *)mmap(0, sizenow,
+			    PROT_READ, MAP_FILE|MAP_PRIVATE, histfd, 0);
 			if (base == MAP_FAILED)
 				goto bad;
 			new = base + hsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.11 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: path.c,v 1.12 2005/03/30 17:16:37 deraadt Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
@@ -70,9 +70,8 @@ make_path(const char *cwd, const char *file,
 			*cdpathp = *pend ? ++pend : (char *) 0;
 		}
 
-		if ((use_cdpath == 0 || !plen || plist[0] != '/')
-		    && (cwd && *cwd))
-		{
+		if ((use_cdpath == 0 || !plen || plist[0] != '/') &&
+		    (cwd && *cwd)) {
 			len = strlen(cwd);
 			XcheckN(*xsp, xp, len);
 			memcpy(xp, cwd, len);
@@ -253,8 +252,8 @@ do_phys_path(XString *xsp, char *xp, const char *path)
 		lbuf[llen] = '\0';
 
 		/* If absolute path, start from scratch.. */
-		xp = lbuf[0] == '/' ? Xstring(*xsp, xp)
-				    : Xrestpos(*xsp, xp, savepos);
+		xp = lbuf[0] == '/' ? Xstring(*xsp, xp) :
+		    Xrestpos(*xsp, xp, savepos);
 		if (!(xp = do_phys_path(xsp, xp, lbuf)))
 			return (char *) 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.21 2005/03/28 21:33:04 deraadt Exp $	*/
+/*	$OpenBSD: syn.c,v 1.22 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * shell parser (C version)
@@ -198,52 +198,52 @@ get_command(int cf)
 	struct nesting_state old_nesting;
 
 	iops = (struct ioword **) alloc(sizeofN(struct ioword *, NUFILE+1),
-					ATEMP);
+	    ATEMP);
 	XPinit(args, 16);
 	XPinit(vars, 16);
 
 	syniocf = KEYWORD|ALIAS;
 	switch (c = token(cf|KEYWORD|ALIAS|VARASN)) {
-	  default:
+	default:
 		REJECT;
 		afree((void*) iops, ATEMP);
 		XPfree(args);
 		XPfree(vars);
 		return NULL; /* empty line */
 
-	  case LWORD:
-	  case REDIR:
+	case LWORD:
+	case REDIR:
 		REJECT;
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = newtp(TCOM);
 		t->lineno = source->line;
 		while (1) {
-			cf = (t->u.evalflags ? ARRAYVAR : 0)
-			     | (XPsize(args) == 0 ? ALIAS|VARASN : CMDWORD);
+			cf = (t->u.evalflags ? ARRAYVAR : 0) |
+			    (XPsize(args) == 0 ? ALIAS|VARASN : CMDWORD);
 			switch (tpeek(cf)) {
-			  case REDIR:
+			case REDIR:
 				if (iopn >= NUFILE)
 					yyerror("too many redirections\n");
 				iops[iopn++] = synio(cf);
 				break;
 
-			  case LWORD:
+			case LWORD:
 				ACCEPT;
 				/* the iopn == 0 and XPsize(vars) == 0 are
 				 * dubious but at&t ksh acts this way
 				 */
-				if (iopn == 0 && XPsize(vars) == 0
-				    && XPsize(args) == 0
-				    && assign_command(ident))
+				if (iopn == 0 && XPsize(vars) == 0 &&
+				    XPsize(args) == 0 &&
+				    assign_command(ident))
 					t->u.evalflags = DOVACHECK;
-				if ((XPsize(args) == 0 || Flag(FKEYWORD))
-				    && is_wdvarassign(yylval.cp))
+				if ((XPsize(args) == 0 || Flag(FKEYWORD)) &&
+				    is_wdvarassign(yylval.cp))
 					XPput(vars, yylval.cp);
 				else
 					XPput(args, yylval.cp);
 				break;
 
-			  case '(':
+			case '(':
 				/* Check for "> foo (echo hi)", which at&t ksh
 				 * allows (not POSIX, but not disallowed)
 				 */
@@ -253,8 +253,8 @@ get_command(int cf)
 					goto Subshell;
 				}
 				/* Must be a function */
-				if (iopn != 0 || XPsize(args) != 1
-				    || XPsize(vars) != 0)
+				if (iopn != 0 || XPsize(args) != 1 ||
+				    XPsize(vars) != 0)
 					syntaxerr((char *) 0);
 				ACCEPT;
 				/*(*/
@@ -262,7 +262,7 @@ get_command(int cf)
 				t = function_body(XPptrv(args)[0], false);
 				goto Leave;
 
-			  default:
+			default:
 				goto Leave;
 			}
 		}
@@ -270,18 +270,20 @@ get_command(int cf)
 		break;
 
 	  Subshell:
-	  case '(':
+	case '(':
 		t = nested(TPAREN, '(', ')');
 		break;
 
-	  case '{': /*}*/
+	case '{': /*}*/
 		t = nested(TBRACE, '{', '}');
 		break;
 
-	  case MDPAREN:
+	case MDPAREN:
 	  {
-		static const char let_cmd[] = { CHAR, 'l', CHAR, 'e',
-						CHAR, 't', EOS };
+		static const char let_cmd[] = {
+			CHAR, 'l', CHAR, 'e',
+			CHAR, 't', EOS
+		};
 		/* Leave KEYWORD in syniocf (allow if (( 1 )) then ...) */
 		t = newtp(TCOM);
 		t->lineno = source->line;
@@ -292,7 +294,7 @@ get_command(int cf)
 		break;
 	  }
 
-	  case DBRACKET: /* [[ .. ]] */
+	case DBRACKET: /* [[ .. ]] */
 		/* Leave KEYWORD in syniocf (allow if [[ -n 1 ]] then ...) */
 		t = newtp(TDBRACKET);
 		ACCEPT;
@@ -310,13 +312,13 @@ get_command(int cf)
 		}
 		break;
 
-	  case FOR:
-	  case SELECT:
+	case FOR:
+	case SELECT:
 		t = newtp((c == FOR) ? TFOR : TSELECT);
 		musthave(LWORD, ARRAYVAR);
 		if (!is_wdvarname(yylval.cp, true))
 			yyerror("%s: bad identifier\n",
-				c == FOR ? "for" : "select");
+			    c == FOR ? "for" : "select");
 		t->str = str_save(ident, ATEMP);
 		nesting_push(&old_nesting, c);
 		t->vars = wordlist();
@@ -324,8 +326,8 @@ get_command(int cf)
 		nesting_pop(&old_nesting);
 		break;
 
-	  case WHILE:
-	  case UNTIL:
+	case WHILE:
+	case UNTIL:
 		nesting_push(&old_nesting, c);
 		t = newtp((c == WHILE) ? TWHILE : TUNTIL);
 		t->left = c_list(true);
@@ -333,7 +335,7 @@ get_command(int cf)
 		nesting_pop(&old_nesting);
 		break;
 
-	  case CASE:
+	case CASE:
 		t = newtp(TCASE);
 		musthave(LWORD, 0);
 		t->str = yylval.cp;
@@ -342,7 +344,7 @@ get_command(int cf)
 		nesting_pop(&old_nesting);
 		break;
 
-	  case IF:
+	case IF:
 		nesting_push(&old_nesting, c);
 		t = newtp(TIF);
 		t->left = c_list(true);
@@ -351,7 +353,7 @@ get_command(int cf)
 		nesting_pop(&old_nesting);
 		break;
 
-	  case BANG:
+	case BANG:
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = pipeline(0);
 		if (t == (struct op *) 0)
@@ -359,13 +361,13 @@ get_command(int cf)
 		t = block(TBANG, NOBLOCK, t, NOWORDS);
 		break;
 
-	  case TIME:
+	case TIME:
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = pipeline(0);
 		t = block(TTIME, t, NOBLOCK, NOWORDS);
 		break;
 
-	  case FUNCTION:
+	case FUNCTION:
 		musthave(LWORD, 0);
 		t = function_body(yylval.cp, true);
 		break;
@@ -383,7 +385,7 @@ get_command(int cf)
 	} else {
 		iops[iopn++] = NULL;
 		iops = (struct ioword **) aresize((void*) iops,
-					sizeofN(struct ioword *, iopn), ATEMP);
+		    sizeofN(struct ioword *, iopn), ATEMP);
 		t->ioact = iops;
 	}
 
@@ -443,18 +445,18 @@ elsepart(void)
 	struct op *t;
 
 	switch (token(KEYWORD|ALIAS|VARASN)) {
-	  case ELSE:
+	case ELSE:
 		if ((t = c_list(true)) == NULL)
 			syntaxerr((char *) 0);
 		return (t);
 
-	  case ELIF:
+	case ELIF:
 		t = newtp(TELIF);
 		t->left = c_list(true);
 		t->right = thenpart();
 		return (t);
 
-	  default:
+	default:
 		REJECT;
 	}
 	return NULL;
@@ -779,10 +781,10 @@ assign_command(char *s)
 
 	if (Flag(FPOSIX) || !*s)
 		return 0;
-	return     (c == 'a' && strcmp(s, "alias") == 0)
-		|| (c == 'e' && strcmp(s, "export") == 0)
-		|| (c == 'r' && strcmp(s, "readonly") == 0)
-		|| (c == 't' && strcmp(s, "typeset") == 0);
+	return (c == 'a' && strcmp(s, "alias") == 0) ||
+	    (c == 'e' && strcmp(s, "export") == 0) ||
+	    (c == 'r' && strcmp(s, "readonly") == 0) ||
+	    (c == 't' && strcmp(s, "typeset") == 0);
 }
 
 /* Check if we are in the middle of reading an alias */
@@ -840,13 +842,11 @@ dbtestp_isa(Test_env *te, Test_meta meta)
 	else if (meta == TM_CPAREN)
 		ret = c == /*(*/ ')';
 	else if (meta == TM_UNOP || meta == TM_BINOP) {
-		if (meta == TM_BINOP && c == REDIR
-		    && (yylval.iop->flag == IOREAD
-			|| yylval.iop->flag == IOWRITE))
-		{
+		if (meta == TM_BINOP && c == REDIR &&
+		    (yylval.iop->flag == IOREAD || yylval.iop->flag == IOWRITE)) {
 			ret = 1;
 			save = wdcopy(yylval.iop->flag == IOREAD ?
-				db_lthan : db_gthan, ATEMP);
+			    db_lthan : db_gthan, ATEMP);
 		} else if (uqword && (ret = (int) test_isop(te, meta, ident)))
 			save = yylval.cp;
 	} else /* meta == TM_END */
@@ -892,8 +892,8 @@ dbtestp_error(Test_env *te, int offset, const char *msg)
 		REJECT;
 		/* Kludgy to say the least... */
 		symbol = LWORD;
-		yylval.cp = *(XPptrv(*te->pos.av) + XPsize(*te->pos.av)
-				+ offset);
+		yylval.cp = *(XPptrv(*te->pos.av) + XPsize(*te->pos.av) +
+		    offset);
 	}
 	syntaxerr(msg);
 }

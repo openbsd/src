@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.12 2005/03/28 21:28:22 deraadt Exp $	*/
+/*	$OpenBSD: shf.c,v 1.13 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -58,9 +58,8 @@ shf_open(const char *name, int oflags, int mode, int sflags)
 		fd = nfd;
 	}
 	sflags &= ~SHF_ACCMODE;
-	sflags |= (oflags & O_ACCMODE) == O_RDONLY ? SHF_RD
-		  : ((oflags & O_ACCMODE) == O_WRONLY ? SHF_WR
-		     : SHF_RDWR);
+	sflags |= (oflags & O_ACCMODE) == O_RDONLY ? SHF_RD :
+	    ((oflags & O_ACCMODE) == O_WRONLY ? SHF_WR : SHF_RDWR);
 
 	return shf_reopen(fd, sflags, shf);
 }
@@ -78,12 +77,19 @@ shf_fdopen(int fd, int sflags, struct shf *shf)
 		if (flags < 0)
 			/* will get an error on first read/write */
 			sflags |= SHF_RDWR;
-		else
+		else {
 			switch (flags & O_ACCMODE) {
-			case O_RDONLY: sflags |= SHF_RD; break;
-			case O_WRONLY: sflags |= SHF_WR; break;
-			case O_RDWR: sflags |= SHF_RDWR; break;
+			case O_RDONLY:
+				sflags |= SHF_RD;
+				break;
+			case O_WRONLY:
+				sflags |= SHF_WR;
+				break;
+			case O_RDWR:
+				sflags |= SHF_RDWR;
+				break;
 			}
+		}
 	}
 
 	if (!(sflags & (SHF_RD | SHF_WR)))
@@ -128,12 +134,19 @@ shf_reopen(int fd, int sflags, struct shf *shf)
 		if (flags < 0)
 			/* will get an error on first read/write */
 			sflags |= SHF_RDWR;
-		else
+		else {
 			switch (flags & O_ACCMODE) {
-			case O_RDONLY: sflags |= SHF_RD; break;
-			case O_WRONLY: sflags |= SHF_WR; break;
-			case O_RDWR: sflags |= SHF_RDWR; break;
+			case O_RDONLY:
+				sflags |= SHF_RD;
+				break;
+			case O_WRONLY:
+				sflags |= SHF_WR;
+				break;
+			case O_RDWR:
+				sflags |= SHF_RDWR;
+				break;
 			}
+		}
 	}
 
 	if (!(sflags & (SHF_RD | SHF_WR)))
@@ -167,8 +180,8 @@ struct shf *
 shf_sopen(char *buf, int bsize, int sflags, struct shf *shf)
 {
 	/* can't have a read+write string */
-	if (!(sflags & (SHF_RD | SHF_WR))
-	    || (sflags & (SHF_RD | SHF_WR)) == (SHF_RD | SHF_WR))
+	if (!(sflags & (SHF_RD | SHF_WR)) ||
+	    (sflags & (SHF_RD | SHF_WR)) == (SHF_RD | SHF_WR))
 		internal_errorf(1, "shf_sopen: flags 0x%x", sflags);
 
 	if (!shf) {
@@ -327,12 +340,12 @@ shf_emptybuf(struct shf *shf, int flags)
 		/* Note that we assume SHF_ALLOCS is not set if SHF_ALLOCB
 		 * is set... (changing the shf pointer could cause problems)
 		 */
-		if (!(flags & EB_GROW) || !(shf->flags & SHF_DYNAMIC)
-		    || !(shf->flags & SHF_ALLOCB))
+		if (!(flags & EB_GROW) || !(shf->flags & SHF_DYNAMIC) ||
+		    !(shf->flags & SHF_ALLOCB))
 			return EOF;
 		/* allocate more space for buffer */
 		nbuf = (unsigned char *) aresize(shf->buf, shf->wbsize * 2,
-						shf->areap);
+		    shf->areap);
 		shf->rp = nbuf + (shf->rp - shf->buf);
 		shf->wp = nbuf + (shf->wp - shf->buf);
 		shf->rbsize += shf->wbsize;
@@ -348,8 +361,8 @@ shf_emptybuf(struct shf *shf, int flags)
 			while (ntowrite > 0) {
 				n = write(shf->fd, buf, ntowrite);
 				if (n < 0) {
-					if (errno == EINTR
-					    && !(shf->flags & SHF_INTERRUPT))
+					if (errno == EINTR &&
+					    !(shf->flags & SHF_INTERRUPT))
 						continue;
 					shf->flags |= SHF_ERROR;
 					shf->errno_ = errno;
@@ -358,7 +371,7 @@ shf_emptybuf(struct shf *shf, int flags)
 						/* allow a second flush
 						 * to work */
 						memmove(shf->buf, buf,
-							ntowrite);
+						    ntowrite);
 						shf->wp = shf->buf + ntowrite;
 					}
 					return EOF;
@@ -405,9 +418,9 @@ shf_fillbuf(struct shf *shf)
 	shf->rp = shf->buf;
 	while (1) {
 		shf->rnleft = blocking_read(shf->fd, (char *) shf->buf,
-					    shf->rbsize);
-		if (shf->rnleft < 0 && errno == EINTR
-		    && !(shf->flags & SHF_INTERRUPT))
+		    shf->rbsize);
+		if (shf->rnleft < 0 && errno == EINTR &&
+		    !(shf->flags & SHF_INTERRUPT))
 			continue;
 		break;
 	}
@@ -446,9 +459,8 @@ shf_seek(struct shf *shf, off_t where, int from)
 
 	if (shf->flags & SHF_READING) {
 		if (from == SEEK_CUR &&
-				(where < 0 ?
-					-where >= shf->rbsize - shf->rnleft :
-					where < shf->rnleft)) {
+		    (where < 0 ? -where >= shf->rbsize - shf->rnleft :
+		    where < shf->rnleft)) {
 			shf->rnleft -= where;
 			shf->rp += where;
 			return 0;
@@ -486,8 +498,8 @@ shf_read(char *buf, int bsize, struct shf *shf)
 		internal_errorf(1, "shf_read: bsize %d", bsize);
 
 	while (bsize > 0) {
-		if (shf->rnleft == 0
-		    && (shf_fillbuf(shf) == EOF || shf->rnleft == 0))
+		if (shf->rnleft == 0 &&
+		    (shf_fillbuf(shf) == EOF || shf->rnleft == 0))
 			break;
 		ncopy = shf->rnleft;
 		if (ncopy > bsize)
@@ -499,8 +511,8 @@ shf_read(char *buf, int bsize, struct shf *shf)
 		shf->rnleft -= ncopy;
 	}
 	/* Note: fread(3S) returns 0 for errors - this doesn't */
-	return orig_bsize == bsize ? (shf_error(shf) ? EOF : 0)
-				   : orig_bsize - bsize;
+	return orig_bsize == bsize ? (shf_error(shf) ? EOF : 0) :
+	    orig_bsize - bsize;
 }
 
 /* Read up to a newline or EOF.  The newline is put in buf; buf is always
@@ -531,7 +543,7 @@ shf_getse(char *buf, int bsize, struct shf *shf)
 			}
 		}
 		end = (unsigned char *) memchr((char *) shf->rp, '\n',
-					     shf->rnleft);
+		    shf->rnleft);
 		ncopy = end ? end - shf->rp + 1 : shf->rnleft;
 		if (ncopy > bsize)
 			ncopy = bsize;
@@ -567,8 +579,8 @@ shf_ungetc(int c, struct shf *shf)
 	if (!(shf->flags & SHF_RD))
 		internal_errorf(1, "shf_ungetc: flags %x", shf->flags);
 
-	if ((shf->flags & SHF_ERROR) || c == EOF
-	    || (shf->rp == shf->buf && shf->rnleft))
+	if ((shf->flags & SHF_ERROR) || c == EOF ||
+	    (shf->rp == shf->buf && shf->rnleft))
 		return EOF;
 
 	if ((shf->flags & SHF_WRITING) && shf_emptybuf(shf, EB_READSW) == EOF)
@@ -617,8 +629,8 @@ shf_putchar(int c, struct shf *shf)
 		}
 		while ((n = write(shf->fd, &cc, 1)) != 1)
 			if (n < 0) {
-				if (errno == EINTR
-				    && !(shf->flags & SHF_INTERRUPT))
+				if (errno == EINTR &&
+				    !(shf->flags & SHF_INTERRUPT))
 					continue;
 				shf->flags |= SHF_ERROR;
 				shf->errno_ = errno;
@@ -662,9 +674,8 @@ shf_write(const char *buf, int nbytes, struct shf *shf)
 		internal_errorf(1, "shf_write: nbytes %d", nbytes);
 
 	/* Don't buffer if buffer is empty and we're writting a large amount. */
-	if ((ncopy = shf->wnleft)
-	    && (shf->wp != shf->buf || nbytes < shf->wnleft))
-	{
+	if ((ncopy = shf->wnleft) &&
+	    (shf->wp != shf->buf || nbytes < shf->wnleft)) {
 		if (ncopy > nbytes)
 			ncopy = nbytes;
 		memcpy(shf->wp, buf, ncopy);
@@ -685,8 +696,8 @@ shf_write(const char *buf, int nbytes, struct shf *shf)
 			while (ncopy > 0) {
 				n = write(shf->fd, buf, ncopy);
 				if (n < 0) {
-					if (errno == EINTR
-					    && !(shf->flags & SHF_INTERRUPT))
+					if (errno == EINTR &&
+					    !(shf->flags & SHF_INTERRUPT))
 						continue;
 					shf->flags |= SHF_ERROR;
 					shf->errno_ = errno;
@@ -772,16 +783,11 @@ shf_smprintf(const char *fmt, ...)
  *  machines it don't matter.  Assumes C compiler has converted shorts to
  *  ints before pushing them.
  */
-#define POP_INT(f, s, a) (((f) & FL_LONG) ?				\
-				va_arg((a), unsigned long)		\
-			    :						\
-				(sizeof(int) < sizeof(long) ?		\
-					((s) ?				\
-						(long) va_arg((a), int)	\
-					    :				\
-						va_arg((a), unsigned))	\
-				    :					\
-					va_arg((a), unsigned)))
+#define POP_INT(f, s, a) \
+	(((f) & FL_LONG) ? va_arg((a), unsigned long) :			\
+	    (sizeof(int) < sizeof(long) ? ((s) ?			\
+	    (long) va_arg((a), int) : va_arg((a), unsigned)) :		\
+	    va_arg((a), unsigned)))
 
 #define ABIGNUM		32000	/* big numer that will fit in a short */
 #define LOG2_10		3.321928094887362347870319429	/* log base 2 of 10 */
@@ -978,8 +984,8 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 			case 'x':
 			    {
 				const char *digits = (flags & FL_UPPER) ?
-						  "0123456789ABCDEF"
-						: "0123456789abcdef";
+				    "0123456789ABCDEF" :
+				    "0123456789abcdef";
 				do {
 					*--s = digits[lnum & 0xf];
 					lnum >>= 4;
@@ -1061,12 +1067,8 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 					/* Overflow check - should
 					 * never have this problem.
 					 */
-					if (decpt >
-						&fpbuf[sizeof(fpbuf)]
-							- s - 8)
-						decpt =
-						 &fpbuf[sizeof(fpbuf)]
-							- s - 8;
+					if (decpt > &fpbuf[sizeof(fpbuf)] - s - 8)
+						decpt = &fpbuf[sizeof(fpbuf)] - s - 8;
 					(void) memcpy(s, p, decpt);
 					s += decpt;
 					p += decpt;
@@ -1080,11 +1082,8 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 				/* Overflow check - should
 				 * never have this problem.
 				 */
-				if (precision > &fpbuf[sizeof(fpbuf)]
-							- s - 7)
-					precision =
-						&fpbuf[sizeof(fpbuf)]
-						- s - 7;
+				if (precision > &fpbuf[sizeof(fpbuf)] - s - 7)
+					precision = &fpbuf[sizeof(fpbuf)] - s - 7;
 				for (tmp = decpt;  tmp++ < 0 &&
 					    precision > 0 ; precision--)
 					*s++ = '0';
@@ -1094,11 +1093,8 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 				/* Overflow check - should
 				 * never have this problem.
 				 */
-				if (precision > &fpbuf[sizeof(fpbuf)]
-							- s - 7)
-					precision =
-						&fpbuf[sizeof(fpbuf)]
-						- s - 7;
+				if (precision > &fpbuf[sizeof(fpbuf)] - s - 7)
+					precision = &fpbuf[sizeof(fpbuf)] - s - 7;
 				(void) memcpy(s, p, precision);
 				s += precision;
 				/*
@@ -1173,8 +1169,7 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 				field = -field;
 				/* skip past sign or 0x when padding with 0 */
 				if ((flags & FL_ZERO) && (flags & FL_NUMBER)) {
-					if (*s == '+' || *s == '-' || *s ==' ')
-					{
+					if (*s == '+' || *s == '-' || *s ==' ') {
 						shf_putc(*s, shf);
 						s++;
 						precision--;
@@ -1184,8 +1179,7 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 						s++;
 						nwritten++;
 						if (--precision > 0 &&
-							(*s | 0x20) == 'x')
-						{
+						    (*s | 0x20) == 'x') {
 							shf_putc(*s, shf);
 							s++;
 							precision--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.27 2005/02/25 11:21:16 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.28 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * Command line editing - common code
@@ -33,8 +33,8 @@ void
 x_init(void)
 {
 	/* set to -2 to force initial binding */
-	edchars.erase = edchars.kill = edchars.intr = edchars.quit
-		= edchars.eof = -2;
+	edchars.erase = edchars.kill = edchars.intr = edchars.quit =
+	    edchars.eof = -2;
 	/* default value for deficient systems */
 	edchars.werase = 027;	/* ^W */
 
@@ -72,14 +72,13 @@ check_sigwinch(void)
 			 * see the change cause the environ doesn't change.
 			 */
 			if (ws.ws_col) {
-				x_cols = ws.ws_col < MIN_COLS ? MIN_COLS
-						: ws.ws_col;
+				x_cols = ws.ws_col < MIN_COLS ? MIN_COLS :
+				    ws.ws_col;
 
 				if ((vp = typeset("COLUMNS", 0, 0, 0, 0)))
 					setint(vp, (long) ws.ws_col);
 			}
-			if (ws.ws_row
-			    && (vp = typeset("LINES", 0, 0, 0, 0)))
+			if (ws.ws_row && (vp = typeset("LINES", 0, 0, 0, 0)))
 				setint(vp, (long) ws.ws_row);
 		}
 	}
@@ -215,12 +214,12 @@ set_editmode(const char *ed)
 {
 	static const enum sh_flag edit_flags[] = {
 #ifdef EMACS
-			FEMACS, FGMACS,
+		FEMACS, FGMACS,
 #endif
 #ifdef VI
-			FVI,
+		FVI,
 #endif
-		    };
+	};
 	char *rcp;
 	int i;
 
@@ -296,7 +295,7 @@ static void	glob_path(int flags, const char *pat, XPtrV *wp,
 
 #if 0 /* not used... */
 int	x_complete_word(const char *str, int slen, int is_command,
-			      int *multiple, char **ret);
+	    int *multiple, char **ret);
 int
 x_complete_word(const char *str, int slen, int is_command, int *multiple,
     char **ret)
@@ -306,7 +305,7 @@ x_complete_word(const char *str, int slen, int is_command, int *multiple,
 	char **words;
 
 	nwords = (is_command ? x_command_glob : x_file_glob)(XCF_FULLPATH,
-				str, slen, &words);
+	    str, slen, &words);
 	*nwordsp = nwords;
 	if (nwords == 0) {
 		*ret = (char *) 0;
@@ -330,9 +329,8 @@ x_print_expansions(int nwords, char *const *words, int is_command)
 	/* Check if all matches are in the same directory (in this
 	 * case, we want to omit the directory name)
 	 */
-	if (!is_command
-	    && (prefix_len = x_longest_prefix(nwords, words)) > 0)
-	{
+	if (!is_command &&
+	    (prefix_len = x_longest_prefix(nwords, words)) > 0) {
 		int i;
 
 		/* Special case for 1 match (prefix is whole word) */
@@ -340,13 +338,12 @@ x_print_expansions(int nwords, char *const *words, int is_command)
 			prefix_len = x_basename(words[0], (char *) 0);
 		/* Any (non-trailing) slashes in non-common word suffixes? */
 		for (i = 0; i < nwords; i++)
-			if (x_basename(words[i] + prefix_len, (char *) 0)
-							> prefix_len)
+			if (x_basename(words[i] + prefix_len, (char *) 0) >
+			    prefix_len)
 				break;
 		/* All in same directory? */
 		if (i == nwords) {
-			while (prefix_len > 0
-			       && words[0][prefix_len - 1] != '/')
+			while (prefix_len > 0 && words[0][prefix_len - 1] != '/')
 				prefix_len--;
 			use_copy = 1;
 			XPinit(l, nwords + 1);
@@ -390,7 +387,7 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 
 	/* remove all escaping backward slashes */
 	escaping = 0;
-	for(i = 0, idx = 0; toglob[i]; i++) {
+	for (i = 0, idx = 0; toglob[i]; i++) {
 		if (toglob[i] == '\\' && !escaping) {
 			escaping = 1;
 			continue;
@@ -432,10 +429,9 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 		 * to glob something which evaluated to an empty
 		 * string (e.g., "$FOO" when there is no FOO, etc).
 		 */
-		if ((strcmp(words[0], toglob) == 0
-		     && stat(words[0], &statb) < 0)
-		    || words[0][0] == '\0')
-		{
+		if ((strcmp(words[0], toglob) == 0 &&
+		    stat(words[0], &statb) < 0) ||
+		    words[0][0] == '\0') {
 			x_free_words(nwords, words);
 			nwords = 0;
 		}
@@ -521,10 +517,8 @@ x_command_glob(int flags, const char *str, int slen, char ***wordsp)
 		for (i = 0; i < nwords; i++) {
 			info[i].word = words[i];
 			info[i].base = x_basename(words[i], (char *) 0);
-			if (!last_info || info[i].base != last_info->base
-			    || strncmp(words[i],
-					last_info->word, info[i].base) != 0)
-			{
+			if (!last_info || info[i].base != last_info->base ||
+			    strncmp(words[i], last_info->word, info[i].base) != 0) {
 				last_info = &info[i];
 				path_order++;
 			}
@@ -559,8 +553,8 @@ x_command_glob(int flags, const char *str, int slen, char ***wordsp)
 	return nwords;
 }
 
-#define IS_WORDC(c)	!( ctype(c, C_LEX1) || (c) == '\'' || (c) == '"'  \
-			    || (c) == '`' || (c) == '=' || (c) == ':' )
+#define IS_WORDC(c)	!( ctype(c, C_LEX1) || (c) == '\'' || (c) == '"' || \
+			    (c) == '`' || (c) == '=' || (c) == ':' )
 
 static int
 x_locate_word(const char *buf, int buflen, int pos, int *startp,
@@ -581,8 +575,8 @@ x_locate_word(const char *buf, int buflen, int pos, int *startp,
 	/* Keep going backwards to start of word (has effect of allowing
 	 * one blank after the end of a word)
 	 */
-	for (; (start > 0 && IS_WORDC(buf[start - 1]))
-		|| (start > 1 && buf[start-2] == '\\'); start--)
+	for (; (start > 0 && IS_WORDC(buf[start - 1])) ||
+	    (start > 1 && buf[start-2] == '\\'); start--)
 		;
 	/* Go forwards to end of word */
 	for (end = start; end < buflen && IS_WORDC(buf[end]); end++) {
@@ -635,7 +629,7 @@ x_cf_glob(int flags, const char *buf, int buflen, int pos, int *startp,
 		return 0;
 
 	nwords = (is_command ? x_command_glob : x_file_glob)(flags,
-				    buf + *startp, len, &words);
+	    buf + *startp, len, &words);
 	if (nwords == 0) {
 		*wordsp = (char **) 0;
 		return 0;
@@ -818,12 +812,12 @@ glob_path(int flags, const char *pat, XPtrV *wp, const char *path)
 		words = (char **) XPptrv(*wp);
 		for (i = j = oldsize; i < newsize; i++) {
 			staterr = 0;
-			if ((search_access(words[i], X_OK, &staterr) >= 0)
-			    || (staterr == EISDIR)) {
+			if ((search_access(words[i], X_OK, &staterr) >= 0) ||
+			    (staterr == EISDIR)) {
 				words[j] = words[i];
 				if (!(flags & XCF_FULLPATH))
 					memmove(words[j], words[j] + pathlen,
-						strlen(words[j] + pathlen) + 1);
+					    strlen(words[j] + pathlen) + 1);
 				j++;
 			} else
 				afree(words[i], ATEMP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.27 2005/03/28 21:28:22 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.28 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -203,8 +203,8 @@ options_fmt_entry(void *arg, int i, char *buf, int buflen)
 	struct options_info *oi = (struct options_info *) arg;
 
 	shf_snprintf(buf, buflen, "%-*s %s",
-		oi->opt_width, oi->opts[i].name,
-		Flag(oi->opts[i].flag) ? "on" : "off");
+	    oi->opt_width, oi->opts[i].name,
+	    Flag(oi->opts[i].flag) ? "on" : "off");
 	return buf;
 }
 
@@ -229,7 +229,7 @@ printoptions(int verbose)
 					oi.opt_width = len;
 			}
 		print_columns(shl_stdout, n, options_fmt_entry, &oi,
-			      oi.opt_width + 5, 1);
+		    oi.opt_width + 5, 1);
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
@@ -352,9 +352,8 @@ parse_args(char **argv,
 		/* Set FLOGIN before parsing options so user can clear
 		 * flag using +l.
 		 */
-		Flag(FLOGIN) = (argv[0][0] == '-'
-				|| ((p = strrchr(argv[0], '/'))
-				     && *++p == '-'));
+		Flag(FLOGIN) = (argv[0][0] == '-' ||
+		    ((p = strrchr(argv[0], '/')) && *++p == '-'));
 		opts = cmd_opts;
 	} else
 		opts = set_opts;
@@ -362,12 +361,12 @@ parse_args(char **argv,
 	while ((optc = ksh_getopt(argv, &go, opts)) != EOF) {
 		set = (go.info & GI_PLUS) ? 0 : 1;
 		switch (optc) {
-		  case 'A':
+		case 'A':
 			arrayset = set ? 1 : -1;
 			array = go.optarg;
 			break;
 
-		  case 'o':
+		case 'o':
 			if (go.optarg == (char *) 0) {
 				/* lone -o: print options
 				 *
@@ -394,21 +393,20 @@ parse_args(char **argv,
 			}
 			break;
 
-		  case '?':
+		case '?':
 			return -1;
 
-		  default:
+		default:
 			/* -s: sort positional params (at&t ksh stupidity) */
 			if (what == OF_SET && optc == 's') {
 				sortargs = 1;
 				break;
 			}
 			for (i = 0; i < NELEM(options); i++)
-				if (optc == options[i].c
-				    && (what & options[i].flags))
-				{
+				if (optc == options[i].c &&
+				    (what & options[i].flags)) {
 					change_flag((enum sh_flag) i, what,
-						    set);
+					    set);
 					break;
 				}
 			if (i == NELEM(options)) {
@@ -417,10 +415,9 @@ parse_args(char **argv,
 			}
 		}
 	}
-	if (!(go.info & GI_MINUSMINUS) && argv[go.optind]
-	    && (argv[go.optind][0] == '-' || argv[go.optind][0] == '+')
-	    && argv[go.optind][1] == '\0')
-	{
+	if (!(go.info & GI_MINUSMINUS) && argv[go.optind] &&
+	    (argv[go.optind][0] == '-' || argv[go.optind][0] == '+') &&
+	    argv[go.optind][1] == '\0') {
 		/* lone - clears -v and -x flags */
 		if (argv[go.optind][0] == '-' && !Flag(FPOSIX))
 			Flag(FVERBOSE) = Flag(FXTRACE) = 0;
@@ -429,8 +426,8 @@ parse_args(char **argv,
 	}
 	if (setargsp)
 		/* -- means set $#/$* even if there are no arguments */
-		*setargsp = !arrayset && ((go.info & GI_MINUSMINUS)
-					  || argv[go.optind]);
+		*setargsp = !arrayset && ((go.info & GI_MINUSMINUS) ||
+		    argv[go.optind]);
 
 	if (arrayset && (!*array || *skip_varname(array, false))) {
 		bi_errorf("%s: is not an identifier", array);
@@ -440,7 +437,7 @@ parse_args(char **argv,
 		for (i = go.optind; argv[i]; i++)
 			;
 		qsortp((void **) &argv[go.optind], (size_t) (i - go.optind),
-			xstrcmp);
+		    xstrcmp);
 	}
 	if (arrayset) {
 		set_array(array, arrayset, argv + go.optind);
@@ -503,13 +500,13 @@ gmatch(const char *s, const char *p, int isfile)
 	if (!isfile && !has_globbing(p, pe)) {
 		int len = pe - p + 1;
 		char tbuf[64];
-		char *t = len <= sizeof(tbuf) ? tbuf
-				: (char *) alloc(len, ATEMP);
+		char *t = len <= sizeof(tbuf) ? tbuf :
+		    (char *) alloc(len, ATEMP);
 		debunk(t, p, len);
 		return !strcmp(t, s);
 	}
 	return do_gmatch((const unsigned char *) s, (const unsigned char *) se,
-			 (const unsigned char *) p, (const unsigned char *) pe);
+	    (const unsigned char *) p, (const unsigned char *) pe);
 }
 
 /* Returns if p is a syntacticly correct globbing pattern, false
@@ -602,17 +599,17 @@ do_gmatch(const unsigned char *s, const unsigned char *se,
 			continue;
 		}
 		switch (*p++) {
-		  case '[':
+		case '[':
 			if (sc == 0 || (p = cclass(p, sc)) == NULL)
 				return 0;
 			break;
 
-		  case '?':
+		case '?':
 			if (sc == 0)
 				return 0;
 			break;
 
-		  case '*':
+		case '*':
 			if (p == pe)
 				return 1;
 			s--;
@@ -627,25 +624,22 @@ do_gmatch(const unsigned char *s, const unsigned char *se,
 		   *
 		   * Not ifdef'd KSH as this is needed for ${..%..}, etc.
 		   */
-		  case 0x80|'+': /* matches one or more times */
-		  case 0x80|'*': /* matches zero or more times */
+		case 0x80|'+': /* matches one or more times */
+		case 0x80|'*': /* matches zero or more times */
 			if (!(prest = pat_scan(p, pe, 0)))
 				return 0;
 			s--;
 			/* take care of zero matches */
-			if (p[-1] == (0x80 | '*')
-			    && do_gmatch(s, se, prest, pe))
+			if (p[-1] == (0x80 | '*') &&
+			    do_gmatch(s, se, prest, pe))
 				return 1;
 			for (psub = p; ; psub = pnext) {
 				pnext = pat_scan(psub, pe, 1);
 				for (srest = s; srest <= se; srest++) {
-					if (do_gmatch(s, srest,
-						psub, pnext - 2)
-					    && (do_gmatch(srest, se,
-							  prest, pe)
-						|| (s != srest
-						    && do_gmatch(srest, se,
-							p - 2, pe))))
+					if (do_gmatch(s, srest, psub, pnext - 2) &&
+					    (do_gmatch(srest, se, prest, pe) ||
+					    (s != srest && do_gmatch(srest,
+					    se, p - 2, pe))))
 						return 1;
 				}
 				if (pnext == prest)
@@ -653,24 +647,22 @@ do_gmatch(const unsigned char *s, const unsigned char *se,
 			}
 			return 0;
 
-		  case 0x80|'?': /* matches zero or once */
-		  case 0x80|'@': /* matches one of the patterns */
-		  case 0x80|' ': /* simile for @ */
+		case 0x80|'?': /* matches zero or once */
+		case 0x80|'@': /* matches one of the patterns */
+		case 0x80|' ': /* simile for @ */
 			if (!(prest = pat_scan(p, pe, 0)))
 				return 0;
 			s--;
 			/* Take care of zero matches */
-			if (p[-1] == (0x80 | '?')
-			    && do_gmatch(s, se, prest, pe))
+			if (p[-1] == (0x80 | '?') &&
+			    do_gmatch(s, se, prest, pe))
 				return 1;
 			for (psub = p; ; psub = pnext) {
 				pnext = pat_scan(psub, pe, 1);
 				srest = prest == pe ? se : s;
 				for (; srest <= se; srest++) {
-					if (do_gmatch(s, srest,
-						      psub, pnext - 2)
-					    && do_gmatch(srest, se,
-							 prest, pe))
+					if (do_gmatch(s, srest, psub, pnext - 2) &&
+					    do_gmatch(srest, se, prest, pe))
 						return 1;
 				}
 				if (pnext == prest)
@@ -678,7 +670,7 @@ do_gmatch(const unsigned char *s, const unsigned char *se,
 			}
 			return 0;
 
-		  case 0x80|'!': /* matches none of the patterns */
+		case 0x80|'!': /* matches none of the patterns */
 			if (!(prest = pat_scan(p, pe, 0)))
 				return 0;
 			s--;
@@ -687,22 +679,21 @@ do_gmatch(const unsigned char *s, const unsigned char *se,
 
 				for (psub = p; ; psub = pnext) {
 					pnext = pat_scan(psub, pe, 1);
-					if (do_gmatch(s, srest,
-						      psub, pnext - 2))
-					{
+					if (do_gmatch(s, srest, psub,
+					    pnext - 2)) {
 						matched = 1;
 						break;
 					}
 					if (pnext == prest)
 						break;
 				}
-				if (!matched && do_gmatch(srest, se,
-							  prest, pe))
+				if (!matched &&
+				    do_gmatch(srest, se, prest, pe))
 					return 1;
 			}
 			return 0;
 
-		  default:
+		default:
 			if (sc != p[-1])
 				return 0;
 			break;
@@ -733,9 +724,8 @@ cclass(const unsigned char *p, int sub)
 		if (c == '\0')
 			/* No closing ] - act as if the opening [ was quoted */
 			return sub == '[' ? orig_p : NULL;
-		if (ISMAGIC(p[0]) && p[1] == '-'
-		    && (!ISMAGIC(p[2]) || p[3] != ']'))
-		{
+		if (ISMAGIC(p[0]) && p[1] == '-' &&
+		    (!ISMAGIC(p[2]) || p[3] != ']')) {
 			p += 2; /* MAGIC- */
 			d = *p++;
 			if (ISMAGIC(d)) {
@@ -764,8 +754,8 @@ pat_scan(const unsigned char *p, const unsigned char *pe, int match_sep)
 	for (; p < pe; p++) {
 		if (!ISMAGIC(*p))
 			continue;
-		if ((*++p == /*(*/ ')' && nest-- == 0)
-		    || (*p == '|' && match_sep && nest == 0))
+		if ((*++p == /*(*/ ')' && nest-- == 0) ||
+		    (*p == '|' && match_sep && nest == 0))
 			return ++p;
 		if ((*p & 0x80) && strchr("*+?@! ", *p & 0x7f))
 			nest++;
@@ -924,11 +914,10 @@ ksh_getopt(char **argv, Getopt *go, const char *options)
 			go->info |= GI_MINUSMINUS;
 			return EOF;
 		}
-		if (arg == (char *) 0
-		    || ((flag != '-' ) /* neither a - nor a + (if + allowed) */
-			&& (!(go->flags & GF_PLUSOPT) || flag != '+'))
-		    || (c = arg[1]) == '\0')
-		{
+		if (arg == (char *) 0 ||
+		    ((flag != '-' ) && /* neither a - nor a + (if + allowed) */
+		    (!(go->flags & GF_PLUSOPT) || flag != '+')) ||
+		    (c = arg[1]) == '\0') {
 			go->p = 0;
 			return EOF;
 		}
@@ -937,16 +926,15 @@ ksh_getopt(char **argv, Getopt *go, const char *options)
 		go->info |= flag == '-' ? GI_MINUS : GI_PLUS;
 	}
 	go->p++;
-	if (c == '?' || c == ':' || c == ';' || c == ',' || c == '#'
-	    || !(o = strchr(options, c)))
-	{
+	if (c == '?' || c == ':' || c == ';' || c == ',' || c == '#' ||
+	    !(o = strchr(options, c))) {
 		if (options[0] == ':') {
 			go->buf[0] = c;
 			go->optarg = go->buf;
 		} else {
 			warningf(true, "%s%s-%c: unknown option",
-				(go->flags & GF_NONAME) ? "" : argv[0],
-				(go->flags & GF_NONAME) ? "" : ": ", c);
+			    (go->flags & GF_NONAME) ? "" : argv[0],
+			    (go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
 				bi_errorf(null);
 		}
@@ -971,8 +959,8 @@ ksh_getopt(char **argv, Getopt *go, const char *options)
 				return ':';
 			}
 			warningf(true, "%s%s-`%c' requires argument",
-				(go->flags & GF_NONAME) ? "" : argv[0],
-				(go->flags & GF_NONAME) ? "" : ": ", c);
+			    (go->flags & GF_NONAME) ? "" : argv[0],
+			    (go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
 				bi_errorf(null);
 			return '?';
@@ -1076,8 +1064,8 @@ print_columns(struct shf *shf, int n, char *(*func) (void *, int, char *, int),
 			i = c * rows + r;
 			if (i < n) {
 				shf_fprintf(shf, "%-*s",
-					max_width,
-					(*func)(arg, i, str, max_width + 1));
+				    max_width,
+				    (*func)(arg, i, str, max_width + 1));
 				if (c + 1 < cols)
 					shf_fprintf(shf, "%*s", nspace, null);
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.10 2005/03/28 21:28:22 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.11 2005/03/30 17:16:37 deraadt Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -8,8 +8,8 @@
 
 #define	INIT_TBLS	8	/* initial table size (power of 2) */
 
-static void     texpand(struct table *, int);
-static int      tnamecmp(void *, void *);
+static void	texpand(struct table *, int);
+static int	tnamecmp(void *, void *);
 
 
 unsigned int
@@ -51,9 +51,8 @@ texpand(struct table *tp, int nsize)
 	for (i = 0; i < osize; i++)
 		if ((tblp = otblp[i]) != NULL) {
 			if ((tblp->flag&DEFINED)) {
-				for (p = &ntblp[hash(tblp->name)
-					  & (tp->size-1)];
-				     *p != NULL; p--)
+				for (p = &ntblp[hash(tblp->name) &
+				    (tp->size-1)]; *p != NULL; p--)
 					if (p == ntblp) /* wrap */
 						p += tp->size;
 				*p = tblp;
@@ -78,8 +77,8 @@ tsearch(struct table *tp, const char *n, unsigned int h)
 
 	/* search for name in hashed table */
 	for (pp = &tp->tbls[h & (tp->size-1)]; (p = *pp) != NULL; pp--) {
-		if (*p->name == *n && strcmp(p->name, n) == 0
-		    && (p->flag&DEFINED))
+		if (*p->name == *n && strcmp(p->name, n) == 0 &&
+		    (p->flag&DEFINED))
 			return p;
 		if (pp == tp->tbls) /* wrap */
 			pp += tp->size;
@@ -171,7 +170,7 @@ tsort(struct table *tp)
 	dp = p;			/* dest */
 	for (i = 0; i < tp->size; i++)
 		if ((*dp = *sp++) != NULL && (((*dp)->flag&DEFINED) ||
-					      ((*dp)->flag&ARRAY)))
+		    ((*dp)->flag&ARRAY)))
 			dp++;
 	i = dp - p;
 	qsortp((void**)p, (size_t)i, tnamecmp);
@@ -206,8 +205,8 @@ tprintinfo(struct table *tp)
 		/* taken from tsearch() and added counter */
 		for (pp = &tp->tbls[h & (tp->size-1)]; (p = *pp); pp--) {
 			ncmp++;
-			if (*p->name == *n && strcmp(p->name, n) == 0
-			    && (p->flag&DEFINED))
+			if (*p->name == *n && strcmp(p->name, n) == 0 &&
+			    (p->flag&DEFINED))
 				break; /* return p; */
 			if (pp == tp->tbls) /* wrap */
 				pp += tp->size;
@@ -220,8 +219,8 @@ tprintinfo(struct table *tp)
 	}
 	if (nentries)
 		shellf("  %d entries, worst ncmp %d, avg ncmp %d.%02d\n",
-			nentries, maxncmp,
-			totncmp / nentries,
-			(totncmp % nentries) * 100 / nentries);
+		    nentries, maxncmp,
+		    totncmp / nentries,
+		    (totncmp % nentries) * 100 / nentries);
 }
 #endif /* PERF_DEBUG */
