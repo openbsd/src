@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.24 2003/07/31 09:46:08 kjc Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.25 2004/01/29 01:25:13 mcbride Exp $ */
 
 /*
  * Copyright (c) Henning Brauer <henning@openbsd.org>
@@ -84,9 +84,13 @@ int
 pfctl_show_altq(int dev, int opts, int verbose2)
 {
 	struct pf_altq_node	*root = NULL, *node;
+	int nodes; 
 
-	if (pfctl_update_qstats(dev, &root))
+
+	if ((nodes = pfctl_update_qstats(dev, &root)) < 0)
 		return (-1);
+	if (opts & PF_OPT_SHOWALL && nodes > 0)
+		pfctl_print_title("ALTQ:");
 
 	for (node = root; node != NULL; node = node->next)
 		pfctl_print_altq_node(dev, node, 0, opts);
@@ -155,7 +159,7 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 			}
 		}
 	}
-	return (0);
+	return (mnr);
 }
 
 void

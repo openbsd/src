@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.72 2003/12/31 11:18:24 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.73 2004/01/29 01:25:13 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -45,6 +45,7 @@
 #define PF_OPT_VERBOSE2		0x0080
 #define PF_OPT_DUMMYACTION	0x0100
 #define PF_OPT_DEBUG		0x0200
+#define PF_OPT_SHOWALL		0x0400
 
 #define PF_TH_ALL		0xFF
 
