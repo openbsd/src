@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.44 2000/06/06 04:49:29 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.45 2000/06/14 04:42:10 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -420,7 +420,10 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	m_copydata(m, m->m_pkthdr.len - alen, alen, tc->tc_ptr);
     }
     else
-      crde = crp->crp_desc;
+    {
+        crde = crp->crp_desc;
+        tc->tc_ptr = 0;
+    }
 
     /* Crypto operation descriptor */
     crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
@@ -943,6 +946,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
     tc->tc_spi = tdb->tdb_spi;
     tc->tc_proto = tdb->tdb_sproto;
+    tc->tc_ptr = 0;
     bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
     /* Crypto operation descriptor */
