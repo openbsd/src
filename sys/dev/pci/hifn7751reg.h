@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.39 2002/07/25 15:27:20 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.40 2003/02/15 23:39:13 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -71,10 +71,10 @@
  *
  * Holds an individual descriptor for any of the rings.
  */
-typedef struct hifn_desc {
+struct hifn_desc {
 	volatile u_int32_t l;		/* length and status bits */
 	volatile u_int32_t p;
-} hifn_desc_t;
+};
 
 /*
  * Masks for the "length" field of struct hifn_desc.
@@ -365,12 +365,12 @@ typedef struct hifn_desc {
 /*
  * Structure to help build up the command data structure.
  */
-typedef struct hifn_base_command {
+struct hifn_base_command {
 	volatile u_int16_t masks;
 	volatile u_int16_t session_num;
 	volatile u_int16_t total_source_count;
 	volatile u_int16_t total_dest_count;
-} hifn_base_command_t;
+};
 
 #define	HIFN_BASE_CMD_MAC		0x0400
 #define	HIFN_BASE_CMD_CRYPT		0x0800
@@ -385,12 +385,12 @@ typedef struct hifn_base_command {
 /*
  * Structure to help build up the command data structure.
  */
-typedef struct hifn_crypt_command {
+struct hifn_crypt_command {
 	volatile u_int16_t masks;
 	volatile u_int16_t header_skip;
 	volatile u_int16_t source_count;
 	volatile u_int16_t reserved;
-} hifn_crypt_command_t;
+};
 
 #define	HIFN_CRYPT_CMD_ALG_MASK		0x0003		/* algorithm: */
 #define	HIFN_CRYPT_CMD_ALG_DES		0x0000		/*   DES */
@@ -411,12 +411,12 @@ typedef struct hifn_crypt_command {
 /*
  * Structure to help build up the command data structure.
  */
-typedef struct hifn_mac_command {
+struct hifn_mac_command {
 	volatile u_int16_t masks;
 	volatile u_int16_t header_skip;
 	volatile u_int16_t source_count;
 	volatile u_int16_t reserved;
-} hifn_mac_command_t;
+};
 
 #define	HIFN_MAC_CMD_ALG_MASK		0x0001
 #define	HIFN_MAC_CMD_ALG_SHA1		0x0000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.135 2002/11/26 00:42:53 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.136 2003/02/15 23:39:12 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -940,7 +940,7 @@ hifn_writeramaddr(sc, addr, data)
 	u_int8_t *data;
 {
 	struct hifn_dma *dma = sc->sc_dma;
-	hifn_base_command_t wc;
+	struct hifn_base_command wc;
 	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
 	int r, cmdi, resi, srci, dsti;
 
@@ -957,7 +957,7 @@ hifn_writeramaddr(sc, addr, data)
 
 	/* build write command */
 	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
-	*(hifn_base_command_t *)dma->command_bufs[cmdi] = wc;
+	*(struct hifn_base_command *)dma->command_bufs[cmdi] = wc;
 	bcopy(data, &dma->test_src, sizeof(dma->test_src));
 
 	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr
@@ -1008,7 +1008,7 @@ hifn_readramaddr(sc, addr, data)
 	u_int8_t *data;
 {
 	struct hifn_dma *dma = sc->sc_dma;
-	hifn_base_command_t rc;
+	struct hifn_base_command rc;
 	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
 	int r, cmdi, srci, dsti, resi;
 
@@ -1024,7 +1024,7 @@ hifn_readramaddr(sc, addr, data)
 	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
 	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
-	*(hifn_base_command_t *)dma->command_bufs[cmdi] = rc;
+	*(struct hifn_base_command *)dma->command_bufs[cmdi] = rc;
 
 	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
 	    offsetof(struct hifn_dma, test_src));
@@ -1117,9 +1117,9 @@ hifn_write_command(cmd, buf)
 	u_int8_t *buf;
 {
 	u_int8_t *buf_pos;
-	hifn_base_command_t *base_cmd;
-	hifn_mac_command_t *mac_cmd;
-	hifn_crypt_command_t *cry_cmd;
+	struct hifn_base_command *base_cmd;
+	struct hifn_mac_command *mac_cmd;
+	struct hifn_crypt_command *cry_cmd;
 	int using_mac, using_crypt, len;
 	u_int32_t dlen, slen;
 
@@ -1127,7 +1127,7 @@ hifn_write_command(cmd, buf)
 	using_mac = cmd->base_masks & HIFN_BASE_CMD_MAC;
 	using_crypt = cmd->base_masks & HIFN_BASE_CMD_CRYPT;
 
-	base_cmd = (hifn_base_command_t *)buf_pos;
+	base_cmd = (struct hifn_base_command *)buf_pos;
 	base_cmd->masks = htole16(cmd->base_masks);
 	slen = cmd->src_map->dm_mapsize;
 	if (cmd->sloplen)
@@ -1142,10 +1142,10 @@ hifn_write_command(cmd, buf)
 	base_cmd->session_num = htole16(cmd->session_num |
 	    ((slen << HIFN_BASE_CMD_SRCLEN_S) & HIFN_BASE_CMD_SRCLEN_M) |
 	    ((dlen << HIFN_BASE_CMD_DSTLEN_S) & HIFN_BASE_CMD_DSTLEN_M));
-	buf_pos += sizeof(hifn_base_command_t);
+	buf_pos += sizeof(struct hifn_base_command);
 
 	if (using_mac) {
-		mac_cmd = (hifn_mac_command_t *)buf_pos;
+		mac_cmd = (struct hifn_mac_command *)buf_pos;
 		dlen = cmd->maccrd->crd_len;
 		mac_cmd->source_count = htole16(dlen & 0xffff);
 		dlen >>= 16;
@@ -1153,11 +1153,11 @@ hifn_write_command(cmd, buf)
 		    ((dlen << HIFN_MAC_CMD_SRCLEN_S) & HIFN_MAC_CMD_SRCLEN_M));
 		mac_cmd->header_skip = htole16(cmd->maccrd->crd_skip);
 		mac_cmd->reserved = 0;
-		buf_pos += sizeof(hifn_mac_command_t);
+		buf_pos += sizeof(struct hifn_mac_command);
 	}
 
 	if (using_crypt) {
-		cry_cmd = (hifn_crypt_command_t *)buf_pos;
+		cry_cmd = (struct hifn_crypt_command *)buf_pos;
 		dlen = cmd->enccrd->crd_len;
 		cry_cmd->source_count = htole16(dlen & 0xffff);
 		dlen >>= 16;
@@ -1165,7 +1165,7 @@ hifn_write_command(cmd, buf)
 		    ((dlen << HIFN_CRYPT_CMD_SRCLEN_S) & HIFN_CRYPT_CMD_SRCLEN_M));
 		cry_cmd->header_skip = htole16(cmd->enccrd->crd_skip);
 		cry_cmd->reserved = 0;
-		buf_pos += sizeof(hifn_crypt_command_t);
+		buf_pos += sizeof(struct hifn_crypt_command);
 	}
 
 	if (using_mac && cmd->mac_masks & HIFN_MAC_CMD_NEW_KEY) {
