@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.69 2003/07/24 09:59:02 itojun Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.70 2003/09/23 18:09:20 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -324,7 +324,7 @@ main(int argc, char *argv[])
 	int auth = 0, enc = 0, klen = 0, alen = 0, mode = ESP_NEW, i = 0;
 	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH, sproto2 = SADB_SATYPE_AH;
 	int dport = -1, sport = -1, tproto = -1;
-	int srcset = 0, dstset = 0, dst2set = 0;
+	int srcset = 0, dstset = 0, dst2set = 0, proxyset = 0;
 	int cnt = 0, bypass = 0, deny = 0, ipsec = 0, comp = 0;
 	u_int32_t spi = SPI_LOCAL_USE, spi2 = SPI_LOCAL_USE;
 	u_int32_t cpi = SPI_LOCAL_USE;
@@ -347,6 +347,7 @@ main(int argc, char *argv[])
 	struct sadb_protocol sprotocol, sprotocol2;
 	u_char realkey[8192], realakey[8192];
 	struct iovec iov[30];
+	struct addrinfo hints, *res;
 
 	if (argc < 2) {
 		usage();
@@ -733,23 +734,47 @@ main(int argc, char *argv[])
 		if (!strcmp(argv[i] + 1, "dst2") &&
 		    iscmd(mode, GRP_SPI) && (i + 1 < argc)) {
 			sad8.sadb_address_exttype = SADB_X_EXT_DST2;
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 #ifdef INET6
-			if (strchr(argv[i + 1], ':')) {
-				sad8.sadb_address_len = (sizeof(sad8) +
-				    ROUNDUP(sizeof(struct sockaddr_in6))) / 8;
-				dst2->sin6.sin6_family = AF_INET6;
-				dst2->sin6.sin6_len = sizeof(struct sockaddr_in6);
-				dst2set = inet_pton(AF_INET6, argv[i + 1],
-				    &dst2->sin6.sin6_addr) != -1 ? 1 : 0;
+			if (hints.ai_family = AF_INET6,
+			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
+				if (res->ai_next) {
+					fprintf(stderr,
+					    "%s: destination address2 %s resolves to multiple addresses\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				if (res->ai_addrlen != sizeof(dst2->sin6)) {
+					fprintf(stderr,
+					    "%s: destination address2 %s resolves to unexpected address\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				memcpy(&dst2->sin6, res->ai_addr,
+				    sizeof(dst2->sin6));
+				dst2set = 1;
+				freeaddrinfo(res);
 			} else
-#endif				/* INET6 */
-			{
-				sad8.sadb_address_len = (sizeof(sad8) +
-				    sizeof(struct sockaddr_in)) / 8;
-				dst2->sin.sin_family = AF_INET;
-				dst2->sin.sin_len = sizeof(struct sockaddr_in);
-				dst2set = inet_pton(AF_INET, argv[i + 1],
-				    &dst2->sin.sin_addr) != -1 ? 1 : 0;
+#endif
+			if (hints.ai_family = AF_INET,
+			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
+				if (res->ai_next) {
+					fprintf(stderr,
+					    "%s: destination address2 %s resolves to multiple addresses\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				if (res->ai_addrlen != sizeof(dst2->sin)) {
+					fprintf(stderr,
+					    "%s: destination address2 %s resolves to unexpected address\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				memcpy(&dst2->sin, res->ai_addr,
+				    sizeof(dst2->sin));
+				dst2set = 1;
+				freeaddrinfo(res);
 			}
 
 			if (dst2set == 0) {
@@ -763,22 +788,51 @@ main(int argc, char *argv[])
 		}
 		if (!strcmp(argv[i] + 1, "src") && (i + 1 < argc)) {
 			sad1.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 #ifdef INET6
-			if (strchr(argv[i + 1], ':')) {
-				src->sin6.sin6_family = AF_INET6;
-				src->sin6.sin6_len = sizeof(struct sockaddr_in6);
-				srcset = inet_pton(AF_INET6, argv[i + 1],
-				    &src->sin6.sin6_addr) != -1 ? 1 : 0;
-				sad1.sadb_address_len = 1 +
-				    ROUNDUP(sizeof(struct sockaddr_in6)) / 8;
+			if (hints.ai_family = AF_INET6,
+			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
+				if (res->ai_next) {
+					fprintf(stderr,
+					    "%s: source address %s resolves to multiple addresses\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				if (res->ai_addrlen != sizeof(src->sin6)) {
+					fprintf(stderr,
+					    "%s: source address %s resolves to unexpected address\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				memcpy(&src->sin6, res->ai_addr,
+				    sizeof(src->sin6));
+				srcset = 1;
+				freeaddrinfo(res);
+				sad1.sadb_address_len = (sizeof(sad1) +
+				    ROUNDUP(sizeof(struct sockaddr_in6))) / 8;
 			} else
-#endif				/* INET6 */
-			{
-				src->sin.sin_family = AF_INET;
-				src->sin.sin_len = sizeof(struct sockaddr_in);
-				srcset = inet_pton(AF_INET, argv[i + 1],
-				    &src->sin.sin_addr) != -1 ? 1 : 0;
-				sad1.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+#endif
+			if (hints.ai_family = AF_INET,
+			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
+				if (res->ai_next) {
+					fprintf(stderr,
+					    "%s: source address %s resolves to multiple addresses\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				if (res->ai_addrlen != sizeof(src->sin)) {
+					fprintf(stderr,
+					    "%s: source address %s resolves to unexpected address\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				memcpy(&src->sin, res->ai_addr,
+				    sizeof(src->sin));
+				srcset = 1;
+				freeaddrinfo(res);
+				sad1.sadb_address_len = (sizeof(sad1) +
+				    ROUNDUP(sizeof(struct sockaddr_in))) / 8;
 			}
 
 			if (srcset == 0) {
@@ -793,34 +847,59 @@ main(int argc, char *argv[])
 		if (!strcmp(argv[i] + 1, "proxy") && (i + 1 < argc) && !deny &&
 		    !bypass && !ipsec) {
 			sad3.sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 #ifdef INET6
-			if (strchr(argv[i + 1], ':')) {
-				proxy->sin6.sin6_family = AF_INET6;
-				proxy->sin6.sin6_len = sizeof(struct sockaddr_in6);
-				if (!inet_pton(AF_INET6, argv[i + 1],
-				    &proxy->sin6.sin6_addr)) {
+			if (hints.ai_family = AF_INET6,
+			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
+				if (res->ai_next) {
 					fprintf(stderr,
-					    "%s: Warning: proxy address %s is not valid\n",
+					    "%s: source address %s resolves to multiple addresses\n",
 					    argv[0], argv[i + 1]);
 					exit(1);
 				}
-				sad3.sadb_address_len = 1 +
-				    ROUNDUP(sizeof(struct sockaddr_in6)) / 8;
+				if (res->ai_addrlen != sizeof(proxy->sin6)) {
+					fprintf(stderr,
+					    "%s: source address %s resolves to unexpected address\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				memcpy(&proxy->sin6, res->ai_addr,
+				    sizeof(proxy->sin6));
+				proxyset = 1;
+				freeaddrinfo(res);
+				sad3.sadb_address_len = (sizeof(sad3) +
+				    ROUNDUP(sizeof(struct sockaddr_in6))) / 8;
 			} else
-#endif				/* INET6 */
-			{
-				proxy->sin.sin_family = AF_INET;
-				proxy->sin.sin_len = sizeof(struct sockaddr_in);
-				if (!inet_pton(AF_INET, argv[i + 1],
-				    &proxy->sin.sin_addr)) {
+#endif
+			if (hints.ai_family = AF_INET,
+			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
+				if (res->ai_next) {
 					fprintf(stderr,
-					    "%s: Warning: proxy address %s is not valid\n",
+					    "%s: source address %s resolves to multiple addresses\n",
 					    argv[0], argv[i + 1]);
 					exit(1);
 				}
-				sad3.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+				if (res->ai_addrlen != sizeof(proxy->sin)) {
+					fprintf(stderr,
+					    "%s: source address %s resolves to unexpected address\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				memcpy(&proxy->sin, res->ai_addr,
+				    sizeof(proxy->sin));
+				proxyset = 1;
+				freeaddrinfo(res);
+				sad3.sadb_address_len = (sizeof(sad3) +
+				    ROUNDUP(sizeof(struct sockaddr_in))) / 8;
 			}
 
+			if (proxyset == 0) {
+				fprintf(stderr,
+				    "%s: Warning: proxy address %s is not valid\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
 			i++;
 			continue;
 		}
@@ -1110,23 +1189,51 @@ main(int argc, char *argv[])
 		}
 		if (!strcmp(argv[i] + 1, "dst") && (i + 1 < argc) && !bypass && !deny) {
 			sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 #ifdef INET6
-			if (strchr(argv[i + 1], ':')) {
+			if (hints.ai_family = AF_INET6,
+			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
+				if (res->ai_next) {
+					fprintf(stderr,
+					    "%s: destination address %s resolves to multiple addresses\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				if (res->ai_addrlen != sizeof(dst->sin6)) {
+					fprintf(stderr,
+					    "%s: destination address %s resolves to unexpected address\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				memcpy(&dst->sin6, res->ai_addr,
+				    sizeof(dst->sin6));
+				dstset = 1;
+				freeaddrinfo(res);
 				sad2.sadb_address_len = (sizeof(sad2) +
 				    ROUNDUP(sizeof(struct sockaddr_in6))) / 8;
-				dst->sin6.sin6_family = AF_INET6;
-				dst->sin6.sin6_len = sizeof(struct sockaddr_in6);
-				dstset = inet_pton(AF_INET6, argv[i + 1],
-					&dst->sin6.sin6_addr) != -1 ? 1 : 0;
 			} else
-#endif				/* INET6 */
-			{
+#endif
+			if (hints.ai_family = AF_INET,
+			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
+				if (res->ai_next) {
+					fprintf(stderr,
+					    "%s: destination address %s resolves to multiple addresses\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				if (res->ai_addrlen != sizeof(dst->sin)) {
+					fprintf(stderr,
+					    "%s: destination address %s resolves to unexpected address\n",
+					    argv[0], argv[i + 1]);
+					exit(1);
+				}
+				memcpy(&dst->sin, res->ai_addr,
+				    sizeof(dst->sin));
+				dstset = 1;
+				freeaddrinfo(res);
 				sad2.sadb_address_len = (sizeof(sad2) +
-				    sizeof(struct sockaddr_in)) / 8;
-				dst->sin.sin_family = AF_INET;
-				dst->sin.sin_len = sizeof(struct sockaddr_in);
-				dstset = inet_pton(AF_INET, argv[i + 1],
-				    &dst->sin.sin_addr) != -1 ? 1 : 0;
+				    ROUNDUP(sizeof(struct sockaddr_in))) / 8;
 			}
 
 			if (dstset == 0) {
