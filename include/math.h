@@ -1,6 +1,3 @@
-/*	$OpenBSD: math.h,v 1.2 1997/09/21 10:45:42 niklas Exp $	*/
-/*	$NetBSD: math.h,v 1.10 1994/10/26 00:56:05 cgd Exp $	*/
-
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -13,7 +10,8 @@
  */
 
 /*
- * @(#)fdlibm.h 5.1 93/09/24
+ * from: @(#)fdlibm.h 5.1 93/09/24
+ * $Id: math.h,v 1.3 1998/03/02 23:58:02 millert Exp $
  */
 
 #ifndef _MATH_H_
@@ -66,6 +64,7 @@ extern  _LIB_VERSION_TYPE  _LIB_VERSION;
 #define _XOPEN_ fdlibm_xopen
 #define _POSIX_ fdlibm_posix
 
+#ifdef __LIBM_PRIVATE
 struct exception {
 	int type;
 	char *name;
@@ -73,6 +72,7 @@ struct exception {
 	double arg2;
 	double retval;
 };
+#endif
 
 #define	HUGE		MAXFLOAT
 
@@ -152,7 +152,9 @@ extern double nextafter __P((double, double));
 extern double remainder __P((double, double));
 extern double scalb __P((double, double));
 
+#ifdef __LIBM_PRIVATE
 extern int matherr __P((struct exception *));
+#endif
 
 /*
  * IEEE Test Vector
@@ -217,6 +219,7 @@ extern float erff __P((float));
 extern float erfcf __P((float));
 extern float gammaf __P((float));
 extern float hypotf __P((float, float));
+extern int isinff __P((float));
 extern int isnanf __P((float));
 extern int finitef __P((float));
 extern float j0f __P((float));
