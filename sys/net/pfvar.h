@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.43 2001/08/19 19:03:58 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.44 2001/08/19 20:25:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -41,9 +41,9 @@ enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2 };
 enum	{ PF_OP_IRG=1, PF_OP_EQ=2, PF_OP_NE=3, PF_OP_LT=4,
 	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7, PF_OP_XRG=8 };
 enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
-enum	{ PF_CHANGERULE_ADD_HEAD=1, PF_CHANGERULE_ADD_TAIL=2,
-	  PF_CHANGERULE_ADD_BEFORE=3, PF_CHANGERULE_ADD_AFTER=4,
-	  PF_CHANGERULE_REMOVE=5 };
+enum	{ PF_CHANGE_ADD_HEAD=1, PF_CHANGE_ADD_TAIL=2,
+	  PF_CHANGE_ADD_BEFORE=3, PF_CHANGE_ADD_AFTER=4,
+	  PF_CHANGE_REMOVE=5 };
 
 struct pf_rule_addr {
 	u_int32_t	addr;
@@ -255,7 +255,6 @@ struct pfioc_rule {
 };
 
 struct pfioc_changerule {
-	u_int32_t	 ticket;
 	u_int32_t	 action;
 	struct pf_rule	 oldrule;
 	struct pf_rule	 newrule;
@@ -267,10 +266,22 @@ struct pfioc_nat {
 	struct pf_nat	 nat;
 };
 
+struct pfioc_changenat {
+	u_int32_t	 action;
+	struct pf_nat	 oldnat;
+	struct pf_nat	 newnat;
+};
+
 struct pfioc_rdr {
 	u_int32_t	 ticket;
 	u_int32_t	 nr;
 	struct pf_rdr	 rdr;
+};
+
+struct pfioc_changerdr {
+	u_int32_t	 action;
+	struct pf_rdr	 oldrdr;
+	struct pf_rdr	 newrdr;
 };
 
 struct pfioc_state {
@@ -322,6 +333,8 @@ struct pfioc_if {
 #define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
 #define DIOCGETSTATES	_IOWR('D', 25, struct pfioc_states)
 #define DIOCCHANGERULE	_IOWR('D', 26, struct pfioc_changerule)
+#define DIOCCHANGENAT	_IOWR('D', 27, struct pfioc_changenat)
+#define DIOCCHANGERDR	_IOWR('D', 28, struct pfioc_changerdr)
 
 #ifdef _KERNEL
 

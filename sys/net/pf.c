@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.132 2001/08/19 20:00:39 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.133 2001/08/19 20:25:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -120,6 +120,8 @@ int			 pf_tree_key_compare(struct pf_tree_key *,
 			    struct pf_tree_key *);
 int			 pf_compare_rules(struct pf_rule *,
 			    struct pf_rule *);
+int			 pf_compare_nats(struct pf_nat *, struct pf_nat *);
+int			 pf_compare_rdrs(struct pf_rdr *, struct pf_rdr *);
 void			 pf_tree_rotate_left(struct pf_tree_node **);
 void			 pf_tree_rotate_right(struct pf_tree_node **);
 struct pf_tree_node	*pf_tree_first(struct pf_tree_node *);
@@ -240,6 +242,46 @@ pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
 	if (memcmp(&a->src, &b->src, sizeof(struct pf_rule_addr)))
 		return (1);
 	if (memcmp(&a->dst, &b->dst, sizeof(struct pf_rule_addr)))
+		return (1);
+	if (strcmp(a->ifname, b->ifname))
+		return (1);
+	return (0);
+}
+
+int
+pf_compare_nats(struct pf_nat *a, struct pf_nat *b)
+{
+	if (a->saddr != b->saddr ||
+	    a->smask != b->smask ||
+	    a->daddr != b->daddr ||
+	    a->dmask != b->dmask ||
+	    a->raddr != b->raddr ||
+	    a->proto != b->proto ||
+	    a->snot != b->snot ||
+	    a->dnot != b->dnot ||
+	    a->ifnot != b->ifnot)
+		return (1);
+	if (strcmp(a->ifname, b->ifname))
+		return (1);
+	return (0);
+}
+
+int
+pf_compare_rdrs(struct pf_rdr *a, struct pf_rdr *b)
+{
+	if (a->saddr != b->saddr ||
+	    a->smask != b->smask ||
+	    a->daddr != b->daddr ||
+	    a->dmask != b->dmask ||
+	    a->raddr != b->raddr ||
+	    a->dport != b->dport ||
+	    a->dport2 != b->dport2 ||
+	    a->rport != b->rport ||
+	    a->proto != b->proto ||
+	    a->snot != b->snot ||
+	    a->dnot != b->dnot ||
+	    a->ifnot != b->ifnot ||
+	    a->opts != b->opts)
 		return (1);
 	if (strcmp(a->ifname, b->ifname))
 		return (1);
@@ -897,13 +939,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule *oldrule = NULL, *newrule = NULL;
 		u_int32_t nr = 0;
 
-		if (pcr->action < PF_CHANGERULE_ADD_HEAD ||
-		    pcr->action > PF_CHANGERULE_REMOVE) {
+		if (pcr->action < PF_CHANGE_ADD_HEAD ||
+		    pcr->action > PF_CHANGE_REMOVE) {
 			error = EINVAL;
 			break;
 		}
 
-		if (pcr->action != PF_CHANGERULE_REMOVE) {
+		if (pcr->action != PF_CHANGE_REMOVE) {
 			newrule = pool_get(&pf_rule_pl, PR_NOWAIT);
 			if (newrule == NULL) {
 				error = ENOMEM;
@@ -925,9 +967,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		s = splsoftnet();
 
-		if (pcr->action == PF_CHANGERULE_ADD_HEAD)
+		if (pcr->action == PF_CHANGE_ADD_HEAD)
 			oldrule = TAILQ_FIRST(pf_rules_active);
-		else if (pcr->action == PF_CHANGERULE_ADD_TAIL)
+		else if (pcr->action == PF_CHANGE_ADD_TAIL)
 			oldrule = TAILQ_LAST(pf_rules_active, pf_rulequeue);
 		else {
 			oldrule = TAILQ_FIRST(pf_rules_active);
@@ -941,7 +983,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		}
 
-		if (pcr->action == PF_CHANGERULE_REMOVE) {
+		if (pcr->action == PF_CHANGE_REMOVE) {
 			struct pf_tree_node *n;
 
 			for (n = pf_tree_first(tree_ext_gwy); n != NULL;
@@ -954,8 +996,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (oldrule == NULL)
 				TAILQ_INSERT_TAIL(pf_rules_active, newrule,
 				    entries);
-			else if (pcr->action == PF_CHANGERULE_ADD_HEAD ||
-			    pcr->action == PF_CHANGERULE_ADD_BEFORE)
+			else if (pcr->action == PF_CHANGE_ADD_HEAD ||
+			    pcr->action == PF_CHANGE_ADD_BEFORE)
 				TAILQ_INSERT_BEFORE(oldrule, newrule, entries);
 			else
 				TAILQ_INSERT_AFTER(pf_rules_active, oldrule,
@@ -1076,6 +1118,72 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
+	case DIOCCHANGENAT: {
+		struct pfioc_changenat *pcn = (struct pfioc_changenat *)addr;
+		struct pf_nat *oldnat = NULL, *newnat = NULL;
+
+		if (pcn->action < PF_CHANGE_ADD_HEAD ||
+		    pcn->action > PF_CHANGE_REMOVE) {
+			error = EINVAL;
+			break;
+		}
+
+		if (pcn->action != PF_CHANGE_REMOVE) {
+			newnat = pool_get(&pf_nat_pl, PR_NOWAIT);
+			if (newnat == NULL) {
+				error = ENOMEM;
+				break;
+			}
+			bcopy(&pcn->newnat, newnat, sizeof(struct pf_nat));
+			newnat->ifp = NULL;
+			if (newnat->ifname[0]) {
+				newnat->ifp = ifunit(newnat->ifname);
+				if (newnat->ifp == NULL) {
+					pool_put(&pf_nat_pl, newnat);
+					error = EINVAL;
+					break;
+				}
+			}
+		}
+
+		s = splsoftnet();
+
+		if (pcn->action == PF_CHANGE_ADD_HEAD)
+			oldnat = TAILQ_FIRST(pf_nats_active);
+		else if (pcn->action == PF_CHANGE_ADD_TAIL)
+			oldnat = TAILQ_LAST(pf_nats_active, pf_natqueue);
+		else {
+			oldnat = TAILQ_FIRST(pf_nats_active);
+			while ((oldnat != NULL) && pf_compare_nats(oldnat,
+			    &pcn->oldnat))
+				oldnat = TAILQ_NEXT(oldnat, entries);
+			if (oldnat == NULL) {
+				error = EINVAL;
+				splx(s);
+				break;
+			}
+		}
+
+		if (pcn->action == PF_CHANGE_REMOVE) {
+			TAILQ_REMOVE(pf_nats_active, oldnat, entries);
+			pool_put(&pf_nat_pl, oldnat);
+		} else {
+			if (oldnat == NULL)
+				TAILQ_INSERT_TAIL(pf_nats_active, newnat,
+				    entries);
+			else if (pcn->action == PF_CHANGE_ADD_HEAD ||
+			    pcn->action == PF_CHANGE_ADD_BEFORE)
+				TAILQ_INSERT_BEFORE(oldnat, newnat, entries);
+			else
+				TAILQ_INSERT_AFTER(pf_nats_active, oldnat,
+				     newnat, entries);
+		}
+
+		ticket_nats_active++;
+		splx(s);
+		break;
+	}
+
 	case DIOCBEGINRDRS: {
 		u_int32_t *ticket = (u_int32_t *)addr;
 		struct pf_rdr *rdr;
@@ -1176,6 +1284,72 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(rdr, &pr->rdr, sizeof(struct pf_rdr));
+		splx(s);
+		break;
+	}
+
+	case DIOCCHANGERDR: {
+		struct pfioc_changerdr *pcn = (struct pfioc_changerdr *)addr;
+		struct pf_rdr *oldrdr = NULL, *newrdr = NULL;
+
+		if (pcn->action < PF_CHANGE_ADD_HEAD ||
+		    pcn->action > PF_CHANGE_REMOVE) {
+			error = EINVAL;
+			break;
+		}
+
+		if (pcn->action != PF_CHANGE_REMOVE) {
+			newrdr = pool_get(&pf_rdr_pl, PR_NOWAIT);
+			if (newrdr == NULL) {
+				error = ENOMEM;
+				break;
+			}
+			bcopy(&pcn->newrdr, newrdr, sizeof(struct pf_rdr));
+			newrdr->ifp = NULL;
+			if (newrdr->ifname[0]) {
+				newrdr->ifp = ifunit(newrdr->ifname);
+				if (newrdr->ifp == NULL) {
+					pool_put(&pf_rdr_pl, newrdr);
+					error = EINVAL;
+					break;
+				}
+			}
+		}
+
+		s = splsoftnet();
+
+		if (pcn->action == PF_CHANGE_ADD_HEAD)
+			oldrdr = TAILQ_FIRST(pf_rdrs_active);
+		else if (pcn->action == PF_CHANGE_ADD_TAIL)
+			oldrdr = TAILQ_LAST(pf_rdrs_active, pf_rdrqueue);
+		else {
+			oldrdr = TAILQ_FIRST(pf_rdrs_active);
+			while ((oldrdr != NULL) && pf_compare_rdrs(oldrdr,
+			    &pcn->oldrdr))
+				oldrdr = TAILQ_NEXT(oldrdr, entries);
+			if (oldrdr == NULL) {
+				error = EINVAL;
+				splx(s);
+				break;
+			}
+		}
+
+		if (pcn->action == PF_CHANGE_REMOVE) {
+			TAILQ_REMOVE(pf_rdrs_active, oldrdr, entries);
+			pool_put(&pf_rdr_pl, oldrdr);
+		} else {
+			if (oldrdr == NULL)
+				TAILQ_INSERT_TAIL(pf_rdrs_active, newrdr,
+				    entries);
+			else if (pcn->action == PF_CHANGE_ADD_HEAD ||
+			    pcn->action == PF_CHANGE_ADD_BEFORE)
+				TAILQ_INSERT_BEFORE(oldrdr, newrdr, entries);
+			else
+				TAILQ_INSERT_AFTER(pf_rdrs_active, oldrdr,
+				     newrdr, entries);
+		}
+
+		ticket_rdrs_active++;
 		splx(s);
 		break;
 	}
