@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.24 2002/11/07 21:02:43 millert Exp $
+.\"	$OpenBSD: queue.3,v 1.25 2002/12/07 07:18:17 marc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -199,7 +199,7 @@
 .Ft "bool"
 .Fn TAILQ_EMPTY "TAILQ_HEAD *head"
 .Fn TAILQ_FOREACH "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME"
-.Fn TAILQ_FOREACH_REVERSE "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME"
+.Fn TAILQ_FOREACH_REVERSE "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME" "HEADNAME"
 .Ft void
 .Fn TAILQ_INIT "TAILQ_HEAD *head"
 .Ft void
