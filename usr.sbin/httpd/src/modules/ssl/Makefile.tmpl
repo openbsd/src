@@ -166,7 +166,6 @@ ssl_expr_scan.c: ssl_expr_scan.l ssl_expr_parse.h
 ssl_expr_parse.c ssl_expr_parse.h: ssl_expr_parse.y
 	yacc -d ssl_expr_parse.y
 	sed -e 's;yy;ssl_expr_yy;g' \
-	    -e '/#ifndef lint/,/#endif/d' \
 	    -e '/#if defined(c_plusplus) || defined(__cplusplus)/,/#endif/d' \
 	    <y.tab.c >ssl_expr_parse.c && rm -f y.tab.c
 	sed -e 's;yy;ssl_expr_yy;g' \
