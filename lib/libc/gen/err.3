@@ -1,4 +1,4 @@
-.\"	$OpenBSD: err.3,v 1.11 2000/08/31 13:35:33 aaron Exp $
+.\"	$OpenBSD: err.3,v 1.12 2001/02/17 17:01:03 pjanzen Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,8 +77,14 @@ The text that follows depends on the function being called.
 The
 .Fa fmt
 specification (and associated arguments) may be any format allowed by
-.Xr printf 3
-or a simple string.
+.Xr printf 3 ,
+a simple string, or
+.Dv NULL .
+If the  
+.Fa fmt
+argument is not
+.Dv NULL ,
+the formatted error message is output.
 .Pp
 In the case of the
 .Fn err ,
@@ -90,11 +96,26 @@ functions only, the error message string affiliated with the current value of
 the global variable
 .Va errno
 is output (see
-.Xr strerror 3 ) ;
-that is, the output is as follows:
+.Xr strerror 3 ) ,
+preceded by a colon character and a space if
+.Fa fmt
+is not
+.Dv NULL .
+That is, the output is as follows:
 .Bd -literal -offset indent
 progname: fmt: error message string
 .Ed
+.Pp
+if
+.Fa fmt
+is not
+.Dv NULL ,
+or:
+.Bd -literal -offset indent
+progname: error message string
+.Ed
+.Pp
+if it is.
 .Pp
 The counterpart functions,
 .Fn errx ,
@@ -155,7 +176,7 @@ and
 functions first appeared in
 .Bx 4.4 .
 .Sh CAVEATS
-It is important to never pass a string with user-supplied data as a
+It is important never to pass a string with user-supplied data as a
 format without using
 .Ql %s .
 An attacker can put format specifiers in the string to mangle your stack,
@@ -171,7 +192,7 @@ and
 .Fn warn
 functions.
 .Pp
-Be sure to always use the proper secure idiom:
+Always be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 err(1, "%s", string);
 .Ed
