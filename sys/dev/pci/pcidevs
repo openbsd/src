@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.101 1998/11/19 06:45:23 jason Exp $
+$OpenBSD: pcidevs,v 1.102 1998/11/26 17:12:12 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -67,15 +67,15 @@ vendor LSIL		0x1015	LSI Canada
 vendor ICLPERSONAL	0x1016	ICL Personal Systems
 vendor SPEA		0x1017	SPEA Software
 vendor UNISYS		0x1018	Unisys Systems
-vendor ELITEGROUP	0x1019	Elitegroup Computer Systems
+vendor ELITEGROUP	0x1019	Elitegroup
 vendor NCR		0x101a	AT&T GIS
 vendor VITESSE		0x101b	Vitesse Semiconductor
 vendor WD		0x101c	Western Digital
-vendor AMI		0x101e	American Megatrends
+vendor AMI		0x101e	AMI
 vendor PICTURETEL	0x101f	PictureTel
 vendor HITACHICOMP	0x1020	Hitachi Computer Products
 vendor OKI		0x1021	OKI Electric Industry
-vendor AMD		0x1022	Advanced Micro Devices
+vendor AMD		0x1022	AMD
 vendor TRIDENT		0x1023	Trident Microsystems
 vendor ZENITH		0x1024	Zenith Data Systems
 vendor ACER		0x1025	Acer
@@ -86,7 +86,7 @@ vendor MATROX		0x102b	Matrox
 vendor CHIPS		0x102c	Chips and Technologies
 vendor WYSE		0x102d	WYSE Technology
 vendor OLIVETTI		0x102e	Olivetti
-vendor TOSHIBA		0x102f	Toshiba America
+vendor TOSHIBA		0x102f	Toshiba
 vendor TMCRESEARCH	0x1030	TMC Research
 vendor MIRO		0x1031	Miro Computer Products
 vendor COMPAQ2		0x1032	Compaq (2nd ID)
@@ -106,13 +106,13 @@ vendor KPC		0x1040	Kubota Pacific
 vendor COMPUTREND	0x1041	Computrend
 vendor PCTECH		0x1042	PC Technology
 vendor ASUSTEK		0x1043	Asustek Computer
-vendor DPT		0x1044	Distributed Processing Technology
+vendor DPT		0x1044	DPT
 vendor OPTI		0x1045	Opti
 vendor IPCCORP		0x1046	IPC Corporation
 vendor GENOA		0x1047	Genoa Systems
 vendor ELSA		0x1048	Elsa
 vendor FOUNTAINTECH	0x1049	Fountain Technology
-vendor SGSTHOMSON	0x104a	SGS Thomson Microelectric
+vendor SGSTHOMSON	0x104a	SGS Thomson
 vendor BUSLOGIC		0x104b	BusLogic
 vendor TI		0x104c	Texas Instruments
 vendor SONY		0x104d	Sony
@@ -232,7 +232,7 @@ vendor BOCA		0x10c0	Boca Research
 vendor ICM		0x10c1	ICM
 vendor AUSPEX		0x10c2	Auspex Systems
 vendor SAMSUNGSEMI	0x10c3	Samsung Semiconductors
-vendor AWARD		0x10c4	Award Software Int'l
+vendor AWARD		0x10c4	Award
 vendor XEROX		0x10c5	Xerox
 vendor RAMBUS		0x10c6	Rambus
 vendor MEDIAVIS		0x10c7	Media Vision
@@ -319,7 +319,7 @@ vendor DATACUBE		0x1117	Datacube
 vendor BERG		0x1118	Berg Electronics
 vendor VORTEX		0x1119	Vortex Computer Systems
 vendor EFFICIENTNETS	0x111a	Efficent Networks
-vendor TELEDYNE		0x111b	Teledyne Electronic Systems
+vendor TELEDYNE		0x111b	Teledyne
 vendor TRICORD		0x111c	Tricord Systems
 vendor IDT		0x111d	IDT
 vendor ELDEC		0x111e	Eldec
@@ -405,7 +405,7 @@ vendor MIRTRON		0x1175	Mitron Computer
 vendor SBE		0x1176	SBE
 vendor SILICONENG	0x1177	Silicon Engineering
 vendor ALFA		0x1178	Alfa
-vendor TOSHIBA2		0x1179	Toshiba Info Systems (2nd ID)
+vendor TOSHIBA2		0x1179	Toshiba (2nd ID)
 vendor ATREND		0x117a	A-Trend Technology
 vendor ATTO		0x117c	Atto Technology
 vendor TR		0x117e	T/R Systems
@@ -1041,6 +1041,7 @@ product S3 968_2		0x88f2	86C968-2 (Vision968)
 product S3 968_3		0x88f3	86C968-3 (Vision968)
 product S3 TRIO64V2_DX		0x8901	Trio64V2/DX
 product S3 PLATO		0x8902	Plato
+product S3 TRIO3D_AGP		0x8904	Trio3D AGP
 product S3 VIRGE_DX_GX		0x8a01	ViRGE DX/GX
 product S3 VIRGE_GX2		0x8a10	ViRGE GX2
 product S3 VIRGE_MX		0x8c01	ViRGE MX
