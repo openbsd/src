@@ -1,3 +1,4 @@
+/*	$OpenBSD: ftpcmd.y,v 1.15 1998/02/03 22:21:21 downsj Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -46,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.15 1998/02/03 22:21:21 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -725,13 +726,24 @@ pathname
 			 * processing, but only gives a 550 error reply.
 			 * This is a valid reply in some cases but not in others.
 			 */
-			if (logged_in && $1 && *$1 == '~') {
+			if (logged_in && $1 && strchr($1, '~') != NULL) {
 				glob_t gl;
 				int flags =
 				 GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+				char *pptr = $1;
+
+				/*
+				 * glob() will only find a leading ~, but
+				 * Netscape kindly puts a slash in front of
+				 * it for publish URLs.  There needs to be
+				 * a flag for glob() that expands tildes
+				 * anywhere in the string.
+				 */
+				if ((pptr[0] == '/') && (pptr[1] == '~'))
+					pptr++;
 
 				memset(&gl, 0, sizeof(gl));
-				if (glob($1, flags, NULL, &gl) ||
+				if (glob(pptr, flags, NULL, &gl) ||
 				    gl.gl_pathc == 0) {
 					reply(550, "not found");
 					$$ = NULL;
