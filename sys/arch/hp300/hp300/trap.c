@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2001/09/14 06:04:58 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2001/11/04 02:58:54 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -71,8 +71,6 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/4/94
  */
-
-#include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>

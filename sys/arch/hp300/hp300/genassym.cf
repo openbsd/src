@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.12 2001/09/16 14:28:04 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.13 2001/11/04 02:58:54 miod Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -63,29 +63,10 @@ export	MMU_68030
 export	MMU_HP
 export	MMU_68851
 
-# MMU configuration options
-ifdef M68K_MMU_HP
-define	M68K_MMU_HP		1
-endif
-ifdef M68K_MMU_MOTOROLA
-define	M68K_MMU_MOTOROLA	1
-endif
-
 # values for cputype
 export	CPU_68020
 export	CPU_68030
 export	CPU_68040
-
-# CPU configuration options
-ifdef M68020
-define	M68020			1
-endif
-ifdef M68030
-define	M68030			1
-endif
-ifdef M68040
-define	M68040			1
-endif
 
 # values for fputype
 export	FPU_68881
@@ -124,14 +105,6 @@ export	MMUID_MASK
 export	EC_PHYS
 export	EC_NONE
 export	EC_VIRT
-
-# Cache type configuration options
-ifdef CACHE_HAVE_VAC
-define	CACHE_HAVE_VAC		1
-endif
-ifdef CACHE_HAVE_PAC
-define	CACHE_HAVE_PAC		1
-endif
 
 # general constants
 export	UPAGES
@@ -206,7 +179,7 @@ struct	pcb
 member	pcb_ps
 member	pcb_usp
 member	pcb_regs
-member	PCB_FPCTX	pcb_fpregs
+member	PCB_FPCTX		pcb_fpregs
 define	SIZEOF_PCB		sizeof(struct pcb)
 
 # exception frame size
