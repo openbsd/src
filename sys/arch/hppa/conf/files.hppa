@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.1 1998/07/02 20:48:44 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.2 1998/07/07 20:52:28 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -100,15 +100,17 @@ include "arch/hppa/spmath/files.spmath"
 file	arch/hppa/hppa/autoconf.c
 file	arch/hppa/hppa/conf.c
 file	arch/hppa/hppa/db_memrw.c		ddb
+file	arch/hppa/hppa/disksubr.c
 file	arch/hppa/hppa/machdep.c
 file	arch/hppa/hppa/mem.c
 file	arch/hppa/hppa/movc.S
 file	arch/hppa/hppa/cswtch.S
+file	arch/hppa/hppa/syscall.S
 file	arch/hppa/hppa/pmap.c
+file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sys_machdep.c
 file	arch/hppa/hppa/trap.c
 file	arch/hppa/hppa/vm_machdep.c
-file	arch/hppa/hppa/disksubr.c
 file	arch/hppa/dev/dma.c
 file	arch/hppa/dev/clock.c
 file	netinet/in_cksum.c			inet
