@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2002/03/20 01:02:18 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.68 2002/03/27 21:39:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -42,18 +42,11 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/malloc.h>
+#include <sys/extent.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/cpu.h>
-#include <machine/pmap.h>
-#include <machine/pte.h>
 #include <machine/cpufunc.h>
-#include <machine/pdc.h>
-#include <machine/iomod.h>
 
 #ifdef PMAPDEBUG
 #define	DPRINTF(l,s)	do {		\
@@ -206,7 +199,7 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 
 	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pde_alloc: pde %x\n", pa));
 
-	pg->flags &= ~PG_BUSY;	/* never busy */
+	pg->flags &= ~PG_BUSY;		/* never busy */
 	pg->wire_count = 1;		/* no mappings yet */
 	pmap_pde_set(pm, va, pa);
 	pm->pm_stats.resident_count++;	/* count PTP as resident */
@@ -288,7 +281,7 @@ pmap_vp_find(struct pmap *pm, vaddr_t va)
 }
 
 void
-pmap_dump_table(pa_space_t space)
+pmap_dump_table(pa_space_t space, vaddr_t sva)
 {
 	pa_space_t sp;
 
@@ -301,7 +294,7 @@ pmap_dump_table(pa_space_t space)
 		    !(pa = pmap_sdir_get(sp)))
 			continue;
 
-		for (va = virtual_avail; va < VM_MAX_KERNEL_ADDRESS;
+		for (va = sva? sva : virtual_avail; va < VM_MAX_KERNEL_ADDRESS;
 		    va += PAGE_SIZE) {
 			if (pdemask != (va & PDE_MASK)) {
 				pdemask = va & PDE_MASK;
@@ -492,6 +485,8 @@ pmap_bootstrap(vstart)
 	if (&etext < &etext1) {
 		physical_steal = (vaddr_t)&etext;
 		physical_end = (vaddr_t)&etext1;
+		DPRINTF(PDB_INIT, ("physpool: 0x%x @ 0x%x\n",
+		    physical_end - physical_steal, physical_steal));
 	}
 
 	/*
@@ -512,6 +507,9 @@ pmap_bootstrap(vstart)
 		atop(virtual_avail), totalphysmem + i, VM_FREELIST_DEFAULT);
 	/* we have only one initial phys memory segment */
 	vm_physmem[0].pmseg.pvhead = (struct pv_head *)addr;
+
+	DPRINTF(PDB_INIT, ("stealspool: 0x%x @ 0x%x\n",
+	    virtual_avail - virtual_steal, virtual_steal));
 }
 
 /*
@@ -873,7 +871,8 @@ pmap_write_protect(pmap, sva, eva, prot)
 		if ((pte = pmap_pte_get(pde, sva))) {
 
 			DPRINTF(PDB_PMAP,
-			    ("pmap_write_protect: pte=0x%x\n", pte));
+			    ("pmap_write_protect: va=0x%x pte=0x%x\n",
+			    sva,  pte));
 			/*
 			 * Determine if mapping is changing.
 			 * If not, nothing to do.
@@ -1091,15 +1090,17 @@ pmap_zero_page(pa)
 
 	while (pa < pe) {
 		__asm volatile(			/* can use ,bc */
-		    "stwas,ma %%r0,4(%0)\n\t"
-		    "stwas,ma %%r0,4(%0)\n\t"
-		    "stwas,ma %%r0,4(%0)\n\t"
-		    "stwas,ma %%r0,4(%0)"
+		    "stwas,ma	%%r0,4(%0)\n\t"
+		    "stwas,ma	%%r0,4(%0)\n\t"
+		    "stwas,ma	%%r0,4(%0)\n\t"
+		    "stwas,ma	%%r0,4(%0)"
 		    : "+r" (pa) :: "memory");
 
 		if (!(pa & dcache_line_mask))
 			__asm volatile("rsm	%1, %%r0\n\t"
+				       "nop ! nop ! nop\n\t"
 				       "fdc	%2(%0)\n\t"
+				       "nop ! nop ! nop\n\t"
 				       "ssm	%1, %%r0"
 			    :: "r" (pa), "i" (PSW_D), "r" (-4) : "memory");
 	}
@@ -1120,25 +1121,27 @@ pmap_copy_page(spa, dpa)
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_copy_page(%x, %x)\n", spa, dpa));
 
 	s = splhigh();
-	/* XXX flush cache for the spa ??? */
+	/* XXX flush cache for the sva (from spa) ??? */
 
 	while (spa < spe) {
 		__asm volatile(			/* can use ,bc */
-		    "ldwas,ma 4(%0),%%r22\n\t"
-		    "ldwas,ma 4(%0),%%r21\n\t"
-		    "stwas,ma %%r22,4(%1)\n\t"
-		    "stwas,ma %%r21,4(%1)\n\t"
-		    "ldwas,ma 4(%0),%%r22\n\t"
-		    "ldwas,ma 4(%0),%%r21\n\t"
-		    "stwas,ma %%r22,4(%1)\n\t"
-		    "stwas,ma %%r21,4(%1)\n\t"
+		    "ldwas,ma	4(%0),%%r22\n\t"
+		    "ldwas,ma	4(%0),%%r21\n\t"
+		    "stwas,ma	%%r22,4(%1)\n\t"
+		    "stwas,ma	%%r21,4(%1)\n\t"
+		    "ldwas,ma	4(%0),%%r22\n\t"
+		    "ldwas,ma	4(%0),%%r21\n\t"
+		    "stwas,ma	%%r22,4(%1)\n\t"
+		    "stwas,ma	%%r21,4(%1)\n\t"
 		    : "+r" (spa), "+r" (dpa) :: "r22", "r21", "memory");
 
 		if (!(spa & dcache_line_mask))
 			__asm volatile(
 			    "rsm	%2, %%r0\n\t"
+			    "nop ! nop ! nop\n\t"
 			    "pdc	%3(%0)\n\t"
 			    "fdc	%3(%1)\n\t"
+			    "nop ! nop\n\t"
 			    "ssm	%2, %%r0"
 			    :: "r" (spa), "r" (dpa), "i" (PSW_D), "r" (-4)
 			    : "memory");
@@ -1230,9 +1233,6 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 	DPRINTF(PDB_FOLLOW|PDB_POOL,
 	    ("pmap_pv_page_alloc(%p, %x)\n", pp, flags));
 
-	if ((va = pmap_steal_memory(PAGE_SIZE, NULL, NULL)))
-		return (void *)va;
-
 	/*
 		TODO
 	if (list not empty) {
@@ -1240,6 +1240,9 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 		return (va);
 	}
 	*/
+
+	if ((va = pmap_steal_memory(PAGE_SIZE, NULL, NULL)))
+		return (void *)va;
 
 	DPRINTF(PDB_FOLLOW|PDB_POOL,
 	    ("pmap_pv_page_alloc: uvm_km_alloc_poolpage1\n"));
