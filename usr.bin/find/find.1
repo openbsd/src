@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.40 2003/09/02 18:50:06 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.41 2004/01/23 19:38:13 millert Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -118,12 +118,13 @@ quotes, backslash
 space, tab, and newline
 .Pq Sq \en
 characters.
-As an alternative, the
+Alternatively, the
 .Fl print0
-function may be used safely in conjunction with the
+primary may be used in conjunction with the
 .Fl 0
-argument to
-.Xr xargs 1 .
+option to
+.Xr xargs 1 ,
+allowing all file names to be processed safely.
 .It Fl x
 Prevents
 .Nm
@@ -523,6 +524,7 @@ Print out a list of all core files on local file systems.
 .Xr locate 1 ,
 .Xr whereis 1 ,
 .Xr which 1 ,
+.Xr xargs 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr getgrent 3 ,
