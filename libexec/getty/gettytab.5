@@ -30,14 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
-.\"	$Id: gettytab.5,v 1.10 2000/03/14 21:31:39 aaron Exp $
+.\"	$Id: gettytab.5,v 1.11 2000/09/08 02:19:17 pjanzen Exp $
 .\"
 .Dd April 19, 1994
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
 .Nm gettytab
-.Nd terminal configuration data base
+.Nd terminal configuration database
 .Sh SYNOPSIS
 .Nm gettytab
 .Sh DESCRIPTION
@@ -46,7 +46,7 @@ The
 file
 is a simplified version of the
 .Xr termcap 5
-data base
+database
 used to describe terminal lines.
 The initial terminal login process
 .Xr getty 8
@@ -54,7 +54,7 @@ accesses the
 .Nm gettytab
 file each time it starts, allowing simpler
 reconfiguration of terminal characteristics.
-Each entry in the data base
+Each entry in the database
 is used to describe one class of terminals.
 .Pp
 There is a default terminal class,
@@ -192,11 +192,13 @@ The following capabilities are no longer supported by
 .El
 .Pp
 If no line speed is specified, speed will not be altered
-from that which prevails when getty is entered.
+from that which prevails when
+.Xr getty 8
+is entered.
 Specifying an input or output speed will override
 line speed for stated direction only.
 .Pp
-Terminal modes to be used for the output of the message,
+Terminal modes to be used for the output of the message and
 for input of the login name,
 and to leave the terminal set as upon completion,
 are derived from the boolean flags specified.
@@ -246,8 +248,8 @@ it will restart using the table indicated by the
 .Em nx
 entry. If there is none, it will re-use its original table.
 .Pp
-Delays are specified in milliseconds, the nearest possible
-delay available in the tty driver will be used.
+Delays are specified in milliseconds;
+the nearest possible delay available in the tty driver will be used.
 Should greater certainty be desired, delays
 with values 0, 1, 2, and 3 are interpreted as
 choosing that particular delay algorithm from the driver.
@@ -255,18 +257,19 @@ choosing that particular delay algorithm from the driver.
 The
 .Em \&cl
 screen clear string may be preceded by a (decimal) number
-of milliseconds of delay required (a la termcap).
+of milliseconds of delay required (a la
+.Xr termcap 5 ) .
 This delay is simulated by repeated use of the pad character
 .Em \&pc .
 .Pp
-The initial message, and login message,
+The initial message and login message,
 .Em \&im
 and
-.Em \&lm
+.Em \&lm ,
 may include any of the following character sequences, which expand to
 information about the environment in which
 .Xr getty 8
-is running.
+is running:
 .Pp
 .Bl -tag -width \&%xxx -compact
 .It \&%d
@@ -317,20 +320,19 @@ by the
 string (if it exists).
 The
 .Em \&ev
-string, can be used to enter additional data into
-the environment.
-It is a list of comma separated strings, each of which
+string can be used to enter additional data into the environment.
+It is a list of comma-separated strings, each of which
 will presumably be of the form
 .Em name=value .
 .Pp
-If a non-zero timeout is specified, with
+If a non-zero timeout is specified with
 .Em \&to ,
-then getty will exit within the indicated
-number of seconds, either having
-received a login name and passed control
-to
+then
+.Xr getty 8
+will exit within the indicated number of seconds, either having
+received a login name and passed control to
 .Xr login 1 ,
-or having received an alarm signal, and exited.
+or having received an alarm signal and exited.
 This may be useful to hangup dial in lines.
 .Pp
 Output from
@@ -346,19 +348,22 @@ string
 may be specified with
 .Em \&ap
 to allow any parity on input, but generate odd parity output.
-Note: this only applies while getty is being run,
-terminal driver limitations prevent a more complete
+Note: this only applies while
+.Xr getty 8
+is being run; terminal driver limitations prevent a more complete
 implementation.
-.Xr Getty 8
+.Xr getty 8
 does not check parity of input characters in
 .Dv RAW
 mode.
 .Pp
-If
+If a
 .Em \&pp
-string is specified and a PPP link bring up sequence is recognized,
-getty will invoke the program referenced by the pp option.  This
-can be used to handle incoming PPP calls.
+string is specified and a PPP link bring-up sequence is recognized,
+getty will invoke the program referenced by the
+.Em \&pp
+option.
+This can be used to handle incoming PPP calls.
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr gethostname 3 ,
@@ -375,7 +380,7 @@ cases, '#' or '^H' typed in a login name will be treated as
 an erase character, and '@' will be treated as a kill character.
 .Pp
 The delay stuff is a real crock.
-Apart form its general lack of flexibility, some
+Apart from its general lack of flexibility, some
 of the delay algorithms are not implemented.
 The terminal driver should support sane delay settings.
 .Pp
@@ -385,8 +390,7 @@ capability is stupid.
 .Pp
 The
 .Xr termcap 5
-format is horrid, something more rational should
-have been chosen.
+format is horrid; something more rational should have been chosen.
 .Sh HISTORY
 The
 .Nm gettytab
