@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.12 2003/12/12 10:25:00 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.13 2003/12/27 05:01:52 mcbride Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -445,6 +445,9 @@ must be smaller or equal than MCLBYTES.
 The pointer returned points to an mbuf in the chain and the new offset
 for data in this mbuf is
 .Fa *offp .
+If this function fails,
+.Fa m
+is freed.
 .It Fn m_pullup "struct mbuf *n" "int len"
 Ensure that the data in the mbuf chain starting at the beginning of
 the chain and ending at
