@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.1 2003/01/08 02:11:38 krw Exp $	*/
+/*	$OpenBSD: osiop_gsc.c,v 1.2 2003/01/08 05:20:35 mickey Exp $	*/
 /*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*
@@ -27,9 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*	$OpenBSD: osiop_gsc.c,v 1.1 2003/01/08 02:11:38 krw Exp $	*/
-
 /*
  * Copyright (c) 1998 Michael Shalayeff
  * All rights reserved.
@@ -89,10 +86,8 @@ int osiop_gsc_match(struct device *, void *, void *);
 void osiop_gsc_attach(struct device *, struct device *, void *);
 int osiop_gsc_intr(void *);
 
-struct cfattach osiop_ca = {
-	sizeof(struct osiop_softc),
-    	osiop_gsc_match,
-	osiop_gsc_attach
+struct cfattach osiop_gsc_ca = {
+	sizeof(struct osiop_softc), osiop_gsc_match, osiop_gsc_attach
 };
 
 int
@@ -101,21 +96,13 @@ osiop_gsc_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct gsc_attach_args *ga = aux;
-	bus_space_handle_t ioh;
-	int rv = 1;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GSCSI &&
 	     ga->ga_type.iodc_sv_model != HPPA_FIO_SCSI))
 		return 0;
 
-	if (bus_space_map(ga->ga_iot, ga->ga_hpa, 
-			  OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
-		return 0;
-
-
-	bus_space_unmap(ga->ga_iot, ioh, OSIOP_GSC_OFFSET + OSIOP_NREGS);
-	return rv;
+	return 1;
 }
 
 void

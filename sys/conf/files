@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.265 2003/01/08 02:11:38 krw Exp $
+#	$OpenBSD: files,v 1.266 2003/01/08 05:20:35 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -172,7 +172,7 @@ file	dev/ic/siop.c			siop
 
 # Symbios/NCR 53c720/53c8xx SCSI controllers
 device	osiop: scsi
-file	dev/ic/osiop.c			osiop
+file	dev/ic/osiop.c			osiop & osiop_gsc
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet, ifmedia, mii

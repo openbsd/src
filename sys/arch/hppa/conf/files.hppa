@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.37 2003/01/08 02:11:38 krw Exp $
+#	$OpenBSD: files.hppa,v 1.38 2003/01/08 05:20:35 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -146,11 +146,8 @@ file	arch/hppa/gsc/lpt_gsc.c		lpt_gsc
 attach	ie at gsc with ie_gsc
 file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
 
-attach	siop at gsc
-file	arch/hppa/gsc/siop_gsc.c	siop
-
-attach	osiop at gsc
-file	arch/hppa/gsc/osiop_gsc.c	osiop
+attach	osiop at gsc with osiop_gsc
+file	arch/hppa/gsc/osiop_gsc.c	osiop_gsc
 
 device	hil: tty
 attach	hil at gsc
