@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_test.c,v 1.5 2003/02/15 12:15:04 deraadt Exp $	*/
+/*	$OpenBSD: pcnfsd_test.c,v 1.6 2003/04/05 10:43:39 avsm Exp $	*/
 /*	$NetBSD: pcnfsd_test.c,v 1.2 1995/07/25 22:21:01 gwr Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ v2_pr_init_results *rp;
 	}
 	printf("results: stat = %d, dir = '%s', cm = '%s'\n",
 		rp->stat, rp->dir, rp->cm);
-	strcpy(spooldirbuff, rp->dir);
+	strlcpy(spooldirbuff, rp->dir, sizeof(spooldirbuf));
 /* free up allocated strings */
 	if(rp->cm)
 		free(rp->cm);
@@ -303,7 +303,7 @@ FILE *fp;
 	printf("results: stat = %d, jobid = '%s', cm = '%s'\n",
 		rp->stat, rp->id, rp->cm);
 	if(rp->stat == PS_RES_OK)
-		strcpy(last_id, rp->id);
+		strlcpy(last_id, rp->id, sizeof(last_id));
 /* free up allocated strings */
 	if(rp->cm)
 		free(rp->cm);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_print.c,v 1.16 2003/04/04 22:37:47 avsm Exp $	*/
+/*	$OpenBSD: pcnfsd_print.c,v 1.17 2003/04/05 10:43:39 avsm Exp $	*/
 /*	$NetBSD: pcnfsd_print.c,v 1.3 1995/08/14 19:45:18 gwr Exp $	*/
 
 /*
@@ -807,9 +807,10 @@ char *command;
 		if (strstr(command, "$FILE"))
 			alias[num_aliases].a_command = strdup(command);
 		else {
-			alias[num_aliases].a_command = (char *)grab(strlen(command) + 8);
-			strcpy(alias[num_aliases].a_command, command);
-			strcat(alias[num_aliases].a_command, " $FILE");
+			int len = strlen(command) + 8;
+			alias[num_aliases].a_command = (char *)grab(len);
+			strlcpy(alias[num_aliases].a_command, command, len);
+			strlcat(alias[num_aliases].a_command, " $FILE", len);
 		}
 		num_aliases++;
 	}
@@ -862,18 +863,19 @@ map_printer_name(printer)
 }
 
 static void
-substitute(string, token, data)
+substitute(string, token, data, slength)
 	char *string, *token, *data;
+	size_t slength;
 {
 	char temp[512], *c;
 
 	while (c = strstr(string, token)) {
 		*c = '\0';
-		strcpy(temp, string);
-		strcat(temp, data);
+		strlcpy(temp, string, sizeof(temp));
+		strlcat(temp, data, sizeof(temp));
 		c += strlen(token);
-		strcat(temp, c);
-		strcpy(string, temp);
+		strlcat(temp, c, sizeof(temp));
+		strlcpy(string, temp, slength);
 	}
 }
 
@@ -889,9 +891,9 @@ int i;
 	for (i = 0; i < num_aliases; i++){
 		if (!strcmp(printer, alias[i].a_printer)) {
 			strlcpy(expansion, alias[i].a_command, sizeof(expansion));
-			substitute(expansion, "$FILE", file);
-			substitute(expansion, "$USER", user);
-			substitute(expansion, "$HOST", host);
+			substitute(expansion, "$FILE", file, sizeof(expansion));
+			substitute(expansion, "$USER", user, sizeof(expansion));
+			substitute(expansion, "$HOST", host, sizeof(expansion));
 			return (expansion);
 		}
 	}
