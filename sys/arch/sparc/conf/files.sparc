@@ -16,7 +16,7 @@ device vmes at mainbus { [addr = -1], [level = -1], [vect = -1] }
 file	arch/sparc/dev/obio.c		obio vmel vmes
 
 device pfour at obio {}
-file  arch/sparc/dev/pfour.c		pfour
+file  arch/sparc/dev/pfour.c		pfour needs-count
 
 device audio at mainbus
 file	arch/sparc/dev/amd7930.c	audio needs-flag
