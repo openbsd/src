@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 1999/08/14 03:17:32 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 1999/11/16 17:00:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -320,6 +320,7 @@ pdc_scanbus(self, ca, bus, maxmod)
 	register int i;
 
 	for (i = maxmod; i--; ) {
+		struct confargs nca;
 		struct pdc_iodc_read pdc_iodc_read;
 
 		dp.dp_bc[0] = dp.dp_bc[1] = dp.dp_bc[2] = dp.dp_bc[3] = -1;
@@ -331,21 +332,20 @@ pdc_scanbus(self, ca, bus, maxmod)
 			     PDC_MEMMAP_HPA, &pdc_memmap, &dp) < 0)
 			continue;
 
+		nca = *ca;
 		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
 			     &pdc_iodc_read, pdc_memmap.hpa, IODC_DATA,
-			     &ca->ca_type, sizeof(ca->ca_type)) < 0)
+			     &nca.ca_type, sizeof(nca.ca_type)) < 0)
 			continue;
 
-		ca->ca_mod = i;
-		ca->ca_hpa = pdc_memmap.hpa;
-		ca->ca_iot = 0;
-		ca->ca_pdc_iodc_read = &pdc_iodc_read;
-		ca->ca_name = hppa_mod_info(ca->ca_type.iodc_type,
-					    ca->ca_type.iodc_sv_model);
+		nca.ca_mod = i;
+		nca.ca_hpa = pdc_memmap.hpa;
+		nca.ca_pdc_iodc_read = &pdc_iodc_read;
+		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
+					    nca.ca_type.iodc_sv_model);
 
-		config_found_sm(self, ca, mbprint, mbsubmatch);
+		config_found_sm(self, &nca, mbprint, mbsubmatch);
 	}
-
 }
 
 const char *
