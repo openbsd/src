@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.35 2004/06/24 23:15:58 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.36 2004/07/05 02:13:44 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -593,10 +593,10 @@ attr_mp_nexthop_check(u_char *data, u_int16_t len, u_int16_t afi)
 
 	nh_len = *data++;
 	len--;
-	
+
 	if (nh_len > len)
 		return (-1);
-	
+
 	switch (afi) {
 	case AFI_IPv6:
 		if (nh_len != 16 && nh_len != 32) {

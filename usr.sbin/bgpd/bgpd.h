@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.133 2004/07/03 17:19:59 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.134 2004/07/05 02:13:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -248,7 +248,7 @@ struct imsg_fd {
 struct imsgbuf {
 	int				fd;
 	pid_t				pid;
-	TAILQ_HEAD(fds, imsg_fd)	fds;	
+	TAILQ_HEAD(fds, imsg_fd)	fds;
 	struct buf_read			r;
 	struct msgbuf			w;
 };

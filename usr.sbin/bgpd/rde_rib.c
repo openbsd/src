@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.49 2004/06/22 23:17:01 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.50 2004/07/05 02:13:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -774,7 +774,7 @@ nexthop_update(struct kroute_nexthop *msg)
 	/* should I trust in the parent ??? */
 	if (nh->exit_nexthop.af != msg->nexthop.af ||
 	    (nh->exit_nexthop.af == AF_INET &&
-	    nh->exit_nexthop.v4.s_addr != msg->nexthop.v4.s_addr)) { 
+	    nh->exit_nexthop.v4.s_addr != msg->nexthop.v4.s_addr)) {
 		log_warnx("nexthop_update: bad nexthop returned");
 		return;
 	}

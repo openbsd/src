@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.21 2004/06/22 23:17:01 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.22 2004/07/05 02:13:44 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -111,7 +111,7 @@ up_prefix_cmp(struct update_prefix *a, struct update_prefix *b)
 		return (-1);
 	if (a->prefix.af > b->prefix.af)
 		return (1);
-	
+
 	switch (a->prefix.af) {
 	case AF_INET:
 		if (ntohl(a->prefix.v4.s_addr) < ntohl(b->prefix.v4.s_addr))

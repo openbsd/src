@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.27 2004/06/20 18:07:06 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.28 2004/07/05 02:13:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -266,5 +266,5 @@ imsg_get_fd(struct imsgbuf *ibuf)
 	TAILQ_REMOVE(&ibuf->fds, ifd, entry);
 	free(ifd);
 
-	return(fd);
+	return (fd);
 }

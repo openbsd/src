@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.101 2004/06/29 20:13:07 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.102 2004/07/05 02:13:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -863,7 +863,7 @@ mask2prefixlen6(struct in6_addr *in6a)
 			l += 9 - ffs(in6a->s6_addr[i]);
 
 	return (l);
-} 
+}
 
 in_addr_t
 prefixlen2mask(u_int8_t prefixlen)
@@ -894,7 +894,7 @@ prefix_equal(const struct bgpd_addr *a, const struct bgpd_addr *b,
 	in_addr_t	mask;
 	int		i;
 	u_int8_t	m;
-	
+
 	if (a->af != b->af)
 		return 0;
 	switch (a->af) {
@@ -913,7 +913,7 @@ prefix_equal(const struct bgpd_addr *a, const struct bgpd_addr *b,
 		i = prefixlen % 8;
 		if (i) {
 			m = 0xff00 >> i;
-			if ((a->v6.s6_addr[prefixlen / 8] & m) != 
+			if ((a->v6.s6_addr[prefixlen / 8] & m) !=
 			    (b->v6.s6_addr[prefixlen / 8] & m))
 				return (0);
 		}

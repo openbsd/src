@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.124 2004/07/04 03:51:31 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.125 2004/07/05 02:13:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -196,7 +196,7 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 			pfd[PFD_MRT_FILE].events = POLLOUT;
 			i++;
 		}
-				
+
 		if ((nfds = poll(pfd, i, INFTIM)) == -1)
 			if (errno != EINTR)
 				fatal("poll error");

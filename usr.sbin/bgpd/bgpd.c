@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.100 2004/07/04 03:51:31 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.101 2004/07/05 02:13:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 		timeout = mrt_timeout(&mrt_l);
 		if (timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
-		
+
 		if ((nfds = poll(pfd, POLL_MAX, timeout * 1000)) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
