@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.111 2002/06/09 18:40:35 itojun Exp $
+#	$OpenBSD: Makefile,v 1.112 2002/06/16 14:42:22 naddy Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -39,7 +39,8 @@ RDIRS=	../lib/libc_r ../lib/libcom_err ../lib/libcompat ../lib/libcurses \
 	../lib/libocurses ../lib/libossaudio ../lib/libpanel ../lib/librpcsvc \
 	../lib/libskey ../lib/libsectok ../lib/libedit ../lib/libpcap \
 	../lib/libutil ../lib/libusbhid ../lib/libwrap ../lib/libz \
-	../lib/libkeynote ../usr.bin/lex ../gnu/lib/libreadline \
+	../lib/libkeynote ../lib/libevent \
+	../usr.bin/lex ../gnu/lib/libreadline \
 	../sys/arch/${MACHINE}
 
 # Places using Makefile that needs a prerequisite target met before includes
