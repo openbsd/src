@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.82 2002/10/11 13:31:49 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.83 2002/10/11 15:04:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.82 2002/10/11 13:31:49 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.83 2002/10/11 15:04:44 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2238,23 +2238,25 @@ wi_get_id(sc)
 	struct wi_ltv_ver		ver;
 	const struct wi_card_ident	*id;
 	u_int16_t			pri_fw_ver[3];
-	const char			*chip_id;
+	const char			*card_name;
+	u_int16_t			card_id;
 
 	/* get chip identity */
 	bzero(&ver, sizeof(ver));
 	ver.wi_type = WI_RID_CARD_ID;
 	ver.wi_len = 5;
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+	card_id = letoh16(ver.wi_ver[0]);
 	for (id = wi_card_ident; id->firm_type != WI_NOTYPE; id++) {
-		if (letoh16(ver.wi_ver[0]) == id->card_id)
+		if (card_id == id->card_id)
 			break;
 	}
 	if (id->firm_type != WI_NOTYPE) {
 		sc->sc_firmware_type = id->firm_type;
-		chip_id = id->card_name;
+		card_name = id->card_name;
 	} else if (ver.wi_ver[0] & htole16(0x8000)) {
 		sc->sc_firmware_type = WI_INTERSIL;
-		chip_id = "Unknown PRISM2 chip";
+		card_name = "Unknown PRISM2 chip";
 	} else {
 		sc->sc_firmware_type = WI_LUCENT;
 	}
@@ -2307,7 +2309,7 @@ wi_get_id(sc)
 		printf("\n%s: %s%s, Firmware %d.%d.%d (primary), %d.%d.%d (station), ",
 		    WI_PRT_ARG(sc),
 		    sc->sc_firmware_type == WI_SYMBOL ? "Symbol " : "",
-		    chip_id, pri_fw_ver[0], pri_fw_ver[1], pri_fw_ver[2],
+		    card_name, pri_fw_ver[0], pri_fw_ver[1], pri_fw_ver[2],
 		    sc->sc_sta_firmware_ver / 10000,
 		    (sc->sc_sta_firmware_ver % 10000) / 100,
 		    sc->sc_sta_firmware_ver % 100);
