@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.19 1999/05/17 02:32:31 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.20 1999/08/16 07:57:02 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.19 1999/05/17 02:32:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.20 1999/08/16 07:57:02 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -776,7 +776,7 @@ mem1:				saved_errno = errno;
 	 * state.
 	 */
 	if (ISSET(FTS_NOCHDIR)) {
-		if (len == sp->fts_pathlen)
+		if (len == sp->fts_pathlen || nitems == 0)
 			--cp;
 		*cp = '\0';
 	}
