@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.11 2004/07/05 22:12:53 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.12 2004/07/06 23:26:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,6 +39,7 @@ void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
 int	ntp_dispatch(int fd);
 void	ntp_adjtime(struct ntpd_conf *);
+int	get_peer_update(struct ntp_peer *, double *);
 
 void
 ntp_sighdlr(int sig)
@@ -283,16 +284,15 @@ void
 ntp_adjtime(struct ntpd_conf *conf)
 {
 	struct ntp_peer	*p;
-	double		 offset_median = 0;
+	double		 offset, offset_median = 0;
 	int		 offset_cnt = 0;
-	u_int8_t	 idx;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (!p->valid)
 			continue;
 
-		for (idx = 0; idx < OFFSET_ARRAY_SIZE; idx++) {
-			offset_median += p->offset[idx];
+		if (get_peer_update(p, &offset) == 0) {
+			offset_median += offset;
 			offset_cnt++;
 		}
 	}
@@ -302,4 +302,42 @@ ntp_adjtime(struct ntpd_conf *conf)
 	if (offset_median >= 0.001 || offset_median <= 0.001)
 		imsg_compose(&ibuf_main, IMSG_ADJTIME, 0,
 			    &offset_median, sizeof(offset_median));
+}
+
+int
+get_peer_update(struct ntp_peer *p, double *offset)
+{
+	int	i, best = 0, good = 0;
+
+	/*
+	 * clock filter
+	 * find the offset which arrived with the lowest delay
+	 * use that as the peer update
+	 * invalidate it and all older ones
+	 */
+
+	for (i = 0; good == 0 && i < OFFSET_ARRAY_SIZE; i++)
+		if (p->reply[i].good) {
+			good++;
+			best = i;
+		}
+
+	for (; i < OFFSET_ARRAY_SIZE; i++)
+		if (p->reply[i].good) {
+			good++;
+			if (p->reply[i].delay < p->reply[best].delay)
+				best = i;
+		}
+
+	/* XXX lower trust in the peer when too few good replies received */
+
+	if (good == 0)
+		return (-1);
+
+	for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
+		if (p->reply[i].rcvd <= p->reply[best].rcvd)
+			p->reply[i].good = 0;
+
+	*offset = p->reply[best].offset;
+	return (0);
 }

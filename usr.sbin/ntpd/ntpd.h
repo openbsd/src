@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.12 2004/07/05 22:12:53 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.13 2004/07/06 23:26:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,7 @@
 #define	NTPD_OPT_VERBOSE	0x0001
 #define	NTPD_OPT_VERBOSE2	0x0002
 
-#define	INTERVAL_ADJTIME	120	/* call adjtime every n seconds */
+#define	INTERVAL_ADJTIME	240	/* call adjtime every n seconds */
 #define	INTERVAL_QUERY		30	/* sync with peers every n seconds */
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
 #define	OFFSET_ARRAY_SIZE	8
@@ -53,6 +53,14 @@ struct listen_addr {
 	int				 fd;
 };
 
+struct ntp_offset {
+	u_int8_t	good;
+	double		offset;
+	double		delay;
+	double		error;
+	time_t		rcvd;
+};
+
 struct ntp_peer {
 	TAILQ_ENTRY(ntp_peer)		 entry;
 	struct sockaddr_storage		 ss;
@@ -60,8 +68,7 @@ struct ntp_peer {
 	enum client_state		 state;
 	time_t				 next;
 	time_t				 deadline;
-	double				 offset[OFFSET_ARRAY_SIZE];
-	double				 delay[OFFSET_ARRAY_SIZE];
+	struct ntp_offset		 reply[OFFSET_ARRAY_SIZE];
 	u_int8_t			 shift;
 	u_int8_t			 valid;
 };
