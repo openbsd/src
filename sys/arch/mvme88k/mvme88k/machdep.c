@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.143 2004/06/23 00:30:36 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.144 2004/06/23 03:58:30 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -827,9 +827,6 @@ setregs(p, pack, stack, retval)
 	 */
 	if (cputyp == CPU_88110) {
 		tf->tf_exip = pack->ep_entry & ~3;
-#ifdef DEBUG
-		printf("exec @ 0x%x\n", tf->tf_exip);
-#endif
 	} else {
 		tf->tf_snip = pack->ep_entry & ~3;
 		tf->tf_sfip = (pack->ep_entry & ~3) | FIP_V;
