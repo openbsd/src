@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.89 2002/09/15 09:39:36 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.90 2002/10/07 14:38:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -955,7 +955,7 @@ hpmc_v
 	ATRAP(privr,T_PRIV_REG)		/* 11. privileged register trap */
 	ATRAP(ovrfl,T_OVERFLOW)		/* 12. overflow trap */
 	ATRAP(cond,T_CONDITION)		/* 13. conditional trap */
-	ATRAP(excpt,T_EXCEPTION)	/* 14. assist exception trap */
+	CTRAP(excpt,T_EXCEPTION,)	/* 14. assist exception trap */
 	STRAP(dtlb,T_DTLBMISS,DTLBPRE)	/* 15. data TLB miss fault */
 	STRAP(itlbna,T_ITLBMISSNA,DTLBPRE)/* 16. ITLB non-access miss fault */
 	STRAP(dtlbna,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
@@ -1008,8 +1008,48 @@ hpmc_v
 	ATRAP(unk63,63)
 					/* 64 */
 
+	.export TLABEL(excpt), entry
+ENTRY(TLABEL(excpt),0)
+	/* assume we never get this one w/o fpu [enabled] */
+	copy	rp, r1
+	mtctl	arg0, tr5
+	.import	fpu_save, code
+	.call
+	bl	fpu_save, rp
+	mfctl	cr30, arg0
+	copy	r1, rp
+	mtctl	r0, ccr		/* cause a reload after exception */
+	ldil	L%fpu_curpcb, r1
+	mfctl	cr30, arg0
+	stw	r0, R%fpu_curpcb(r1)
+
+	/* now, check for trap */
+	ldw	0(arg0), r1
+	bb,>=,n	r1, HPPA_FPU_T_POS, excpt_notrap
+	ldw	8(arg0), r1
+	extru	r1, 5, 6, r1
+	comib,<>,n HPPA_FPU_UNMPL, r1, excpt_notrap
+
+	ldw	0(arg0), r1
+	depi	0, HPPA_FPU_T_POS, 1, r1
+	stw	r1, 0(arg0)
+	ldw	8(arg0), r1
+	stw	r0, 8(arg0)
+	fdc	r0(arg0)
+	.import	$fpu_emulate, code
+	b	$fpu_emulate
+	mfctl	tr5, arg0
+
+excpt_notrap
+	fdc	r0(arg0)
+	mfctl	tr5, arg0
+	sync
+	b	TLABEL(all)
+	ldi	T_EXCEPTION, r1
+EXIT(TLABEL(excpt))
+
 	.export TLABEL(emu), entry
-LEAF_ENTRY(TLABEL(emu))
+ENTRY(TLABEL(emu),0)
 
 	/*
 	 * Switch FPU/SFU context
@@ -1023,21 +1063,53 @@ LEAF_ENTRY(TLABEL(emu))
 	 *
 	 */
 
+	mfctl	iir, r1
+	extru	r1, 5, 6, r1	/* no sfu implementation right now */
+	comib,=	4, r1, TLABEL(all)
+	ldi	T_ILLEGAL, r1
+
+	mfctl	iir, r1
+	extru	r1, 25, 3, r1	/* only fpu coprocessor emulation now */
+	comib,<< 4, r1, TLABEL(all)
+	ldi	T_ILLEGAL, r1
+
+	/* if we are already enabled and hit again, emulate */
 	mfctl	ccr, r1
+	extru,<> r1, 25, 2, r0
+	b,n	$fpusw_set
+	nop
+
+#if 0
+	/* here we emulate the fld/fst */
+	mfctl	iir, r1
+	extru	r1, 5, 6, r1
+	comib,=	0xb, r9, TLABEL(all)
+	ldi	T_ILLEGAL, r1
+
+	mfctl	iir, r1
+	extru	r1, 5, 6, r1
+	comib,=	0x9, r9, TLABEL(all)
+	ldi	T_ILLEGAL, r1
+#endif
+	.import	$fpu_emulate, code
+	b	$fpu_emulate
+	nop
+
+$fpusw_set
 	/* enable coprocessor */
 	depi	3, 25, 2, r1
 	mtctl	r1, ccr
 
-	mtctl	arg0, tr5
+	copy	arg0, arg1
 	ldil	L%fpu_curpcb, arg0
-	mfctl	cr30, r1
+	mfctl	cr30, r9
 	ldw	R%fpu_curpcb(arg0), arg0
 
-	comb,=,n arg0, r1, $fpusw_done
-	comb,=,n r0, arg0, $fpusw_nosave
+	comb,=,n arg0, r9, $fpusw_done
+	comb,=,n arg0, r0, $fpusw_nosave
 
 	copy	rp, r1
-	.import	fpu_save, entry
+	.import	fpu_save, code
 	.call
 	bl	fpu_save, rp
 	ldo	PCB_FPREGS+U_PCB(arg0), arg0
@@ -1051,8 +1123,7 @@ $fpusw_nosave
 	ldo	1(arg0), arg0
 	stw	arg0, R%fpu_csw(r1)
 
-	mfctl	cr30, r1
-	ldo	31*8+PCB_FPREGS+U_PCB(r1), arg0
+	ldo	31*8+PCB_FPREGS+U_PCB(r9), arg0
 
 	fldds,ma -8(arg0), fr31
 	fldds,ma -8(arg0), fr30
@@ -1091,9 +1162,8 @@ $fpusw_nosave
 	stw	arg0, R%fpu_curpcb(r1)
 
 $fpusw_done
-	mfctl	tr7, r1
-	mfctl	tr5, arg0
-	rfi
+	copy	arg1, arg0
+	rfir
 	nop
 EXIT(TLABEL(emu))
 
@@ -1521,8 +1591,9 @@ $trapnowvirt
 	 */
 
 	mfctl	rctr, t1
+	mfctl	ccr, t2
 	stw	t1, TF_CR0(t3)
-	/* XXX save ccr here w/ rctr */
+	stw	t2, TF_CR10(t3)
 
 #ifdef DDB
 	/*
@@ -1915,20 +1986,36 @@ EXIT(fpu_save)
 
 #ifdef FPEMUL
 	/*
-	 * Emulate FPU/SFU if none/disabled
+	 * Emulate FPU
 	 *
 	 * iisq:iioq - exception triggered instruction
 	 */
-ENTRY($fpu_emulate,0)
+ENTRY($fpu_emulate,320)
 	mtctl	sp, tr3
 	mtctl	r31, tr2
 
 	ldil	L%fpemu_stack, r31
 	ldw	R%fpemu_stack(r31), r31
-	ldo	R%TRAPFRAME_SIZEOF+HPPA_FRAME_SIZE(r31), sp
 
 	stw	r2 , TF_R2 (r31)
-	stw	r3 , TF_R2 (r31)
+	stw	r3 , TF_R3 (r31)
+#ifdef DDB
+	stw	r4 , TF_R4 (r31)
+	stw	r5 , TF_R5 (r31)
+	stw	r6 , TF_R6 (r31)
+	stw	r7 , TF_R7 (r31)
+	stw	r8 , TF_R8 (r31)
+	stw	r9 , TF_R9 (r31)
+	stw	r10, TF_R10(r31)
+	stw	r11, TF_R11(r31)
+	stw	r12, TF_R12(r31)
+	stw	r13, TF_R13(r31)
+	stw	r14, TF_R14(r31)
+	stw	r15, TF_R15(r31)
+	stw	r16, TF_R16(r31)
+	stw	r17, TF_R17(r31)
+	stw	r18, TF_R18(r31)
+#endif
 	stw	r19, TF_R19(r31)
 	stw	r20, TF_R20(r31)
 	stw	r21, TF_R21(r31)
@@ -1940,62 +2027,93 @@ ENTRY($fpu_emulate,0)
 	stw	r27, TF_R27(r31)
 	stw	r28, TF_R28(r31)
 	stw	r29, TF_R29(r31)
+	mfctl	tr2, t2
+	mfctl	tr3, t1
+	stw	t1, TF_R30(r31)
+	stw	t2, TF_R31(r31)
+	copy	r1, arg0
 	mfctl	sar, r1
-	mfctl	iir, arg0
 	stw	r1, TF_CR11(r31)
 	stw	arg0, TF_CR19(r31)
 
-	extru,<> arg0, 10, 1, r0
-	extru,= arg0, 11, 1, r0
-	or,tr	r0, r0, r0
-	.call
-	bl,n	$sfu_emu, rp
+	ldo	TRAPFRAME_SIZEOF(r31), r3
+	ldo	TRAPFRAME_SIZEOF+HPPA_FRAME_SIZE(r31), sp
+
+	ldil	L%$global$, dp
+	ldo	R%$global$(dp), dp
 
 	.import	fpu_emulate, code
 	ldil	L%fpu_emulate,t1
 	ldo	R%fpu_emulate(t1),t1
-	mfctl	iir, arg0
-	/* arg3 -- regs */
+	mfctl	cr30, arg2
 	.call
 	blr	r0,rp
 	bv,n	0(t1)
 	nop
+
+	mfctl	cr30, arg0
+	fdc	r0(arg0)
+	ldo	32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	32(arg0), arg0
+	fdc	r0(arg0)
 
 	ldil	L%fpemu_stack, r31
 	ldw	R%fpemu_stack(r31), r31
 
 	ldw	TF_CR11(r31), r1
 	mtsar	r1
-	ldw	TF_R29(r31), r29
-	ldw	TF_R28(r31), r27
-	mtctl	r27, tr5
-	ldw	TF_R27(r31), r27
-	ldw	TF_R26(r31), r26
-	ldw	TF_R25(r31), r25
-	ldw	TF_R24(r31), r24
-	ldw	TF_R23(r31), r23
-	ldw	TF_R22(r31), r22
-	ldw	TF_R21(r31), r21
-	ldw	TF_R20(r31), r20
-	ldw	TF_R19(r31), r19
-	ldw	TF_R3 (r31), r3
 	ldw	TF_R2 (r31), r2
-	mfctl	tr3, sp
-	mfctl	tr2, r31
+	ldw	TF_R3 (r31), r3
+	copy	ret0, r1
+#ifdef DDB
+	ldw	TF_R4 (r31), r4
+	ldw	TF_R5 (r31), r5
+	ldw	TF_R6 (r31), r6
+	ldw	TF_R7 (r31), r7
+	ldw	TF_R8 (r31), r8
+	ldw	TF_R9 (r31), r9
+	ldw	TF_R10(r31), r10
+	ldw	TF_R11(r31), r11
+	ldw	TF_R12(r31), r12
+	ldw	TF_R13(r31), r13
+	ldw	TF_R14(r31), r14
+	ldw	TF_R15(r31), r15
+	ldw	TF_R16(r31), r16
+	ldw	TF_R17(r31), r17
+	ldw	TF_R18(r31), r18
+#endif
+	ldw	TF_R19(r31), r19
+	ldw	TF_R20(r31), r20
+	ldw	TF_R21(r31), r21
+	ldw	TF_R22(r31), r22
+	ldw	TF_R23(r31), r23
+	ldw	TF_R24(r31), r24
+	ldw	TF_R25(r31), r25
+	ldw	TF_R26(r31), r26
+	ldw	TF_R27(r31), r27
+	ldw	TF_R28(r31), r28
+	ldw	TF_R29(r31), r29
+	ldw	TF_R30(r31), r30
+	ldw	TF_R31(r31), r31
 
-	comb,<>	r0, ret0, TLABEL(all)
-	mfctl	tr5, ret0
+	comb,<>	r0, r1, TLABEL(all)
+	ldi	T_EXCEPTION, r1
 
 	mfctl	tr7, r1
-	rfi
+	rfir
 	nop
 EXIT($fpu_emulate)
-
-	.export	$sfu_emu, entry
-ENTRY($sfu_emu,0)
-	bv	r0(rp)
-	ldo	1(r0), ret0	/* none supported by now */
-EXIT($sfu_emu)
 
 #endif /* FPEMUL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2002/09/23 06:11:46 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2002/10/07 14:38:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -144,7 +144,8 @@ trap(type, frame)
 
 	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (trapnum == T_ITLBMISS) {
+	if (trapnum == T_ITLBMISS ||
+	    trapnum == T_EXCEPTION || trapnum == T_EMULATION) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_EXECUTE;
@@ -210,7 +211,6 @@ trap(type, frame)
 	case T_PRIV_REG:
 		/* these just can't make it to the trap() ever */
 	case T_HPMC:      case T_HPMC | T_USER:
-	case T_EMULATION:
 #endif
 	case T_IBREAK:
 	case T_DATALIGN:
@@ -239,49 +239,47 @@ trap(type, frame)
 		break;
 
 	case T_EXCEPTION | T_USER: {
-		extern u_int32_t fpu_enable;	/* from machdep */
-		extern paddr_t fpu_curpcb;
-		u_int32_t stat, *pex;
+		u_int64_t *fpp = (u_int64_t *)frame->tf_cr30;
+		u_int32_t *pex;
 		int i, flt;
 
-#ifdef DIAGNOSTIC
-		if (fpu_curpcb != frame->tf_cr30)
-			panic("trap: FPU is not owned");
-#endif
-		mfctl(CR_CCR, stat);
-		if (stat & fpu_enable)	/* net quite there yet */
-			fpu_save((vaddr_t)p->p_addr->u_pcb.pcb_fpregs);
-		/* nobody owns it anymore */
-		fpu_curpcb = 0;
-		mtctl(stat & ~fpu_enable, CR_CCR);
-
-		/* get the exceptions and mask by the enabled mask */
-		pex = (u_int32_t *)&p->p_addr->u_pcb.pcb_fpregs[0];
+		pex = (u_int32_t *)&fpp[0];
 		for (i = 0, pex++; i < 7 && !*pex; i++, pex++);
-		stat = HPPA_FPU_OP(*pex);
-		if (stat & HPPA_FPU_V)
-			flt = FPE_FLTINV;
-		else if (stat & HPPA_FPU_Z)
-			flt = FPE_FLTDIV;
-		else if (stat & HPPA_FPU_O)
-			flt = FPE_FLTOVF;
-		else if (stat & HPPA_FPU_U)
-			flt = FPE_FLTUND;
-		else if (stat & HPPA_FPU_I)
-			flt = FPE_FLTRES;
-		else
-			flt = 0;
-		/* still left: under/over-flow and inexact */
-		*pex = 0;
+		flt = 0;
+		if (i < 7) {
+			u_int32_t stat = HPPA_FPU_OP(*pex);
+			if (stat == HPPA_FPU_UNMPL)
+				flt = FPE_FLTINV;
+			else if (stat & HPPA_FPU_V)
+				flt = FPE_FLTINV;
+			else if (stat & HPPA_FPU_Z)
+				flt = FPE_FLTDIV;
+			else if (stat & HPPA_FPU_I)
+				flt = FPE_FLTRES;
+			else if (stat & HPPA_FPU_O)
+				flt = FPE_FLTOVF;
+			else if (stat & HPPA_FPU_U)
+				flt = FPE_FLTUND;
+			/* still left: under/over-flow w/ inexact */
+			*pex = 0;
+		}
+		/* reset the trap flag, as if there was none */
+		fpp[0] &= ~(((u_int64_t)HPPA_FPU_T) << 32);
+		/* flush out, since load is done from phys, only 4 regs */
+		fdcache(HPPA_SID_KERNEL, (vaddr_t)fpp, 8 * 4);
 
 		sv.sival_int = va;
 		trapsignal(p, SIGFPE, type &~ T_USER, flt, sv);
 		}
 		break;
 
-	case T_EMULATION | T_USER:	/* co-proc assist trap */
+	case T_EMULATION:
+		panic("trap: emulation trap in the kernel");
+		break;
+
+	case T_EMULATION | T_USER:
 		sv.sival_int = va;
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTINV, sv);
+		trapsignal(p, SIGILL, type &~ T_USER, ILL_ILLOPC, sv);
 		break;
 
 	case T_OVERFLOW | T_USER:
@@ -458,10 +456,6 @@ return;
 		break;
 
 	case T_CONDITION:
-#if 0
-if (kdb_trap (type, va, frame))
-	return;
-#endif
 		panic("trap: divide by zero in the kernel");
 		break;
 

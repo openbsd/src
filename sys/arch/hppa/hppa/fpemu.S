@@ -1,7 +1,7 @@
-/*	$OpenBSD: fpemu.S,v 1.6 2002/09/15 09:34:09 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.7 2002/10/07 14:38:34 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2000,2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,12 +35,12 @@
 
 #define	FPEMU_VERSION	(1 << 11)
 
-#define	FP_TABLE2(name, ep0, ep1, ep2, ep3) \
+#define	FP_TABLE2(name,ep0,ep1,ep2,ep3) \
 	ldil	L%$fpemu_tbl$name, t1			! \
 	ldo	R%$fpemu_tbl$name(t1), t1		! \
 	ldwx,s	r1(t1), t2				! \
 	bv	r0(t2)					! \
-	nop						! \
+	copy	r0, ret0				! \
 	.label $fpemu_tbl$name				! \
 	.import	__CONCAT(__CONCAT(ep0,_),name), code	! \
 	.import	__CONCAT(__CONCAT(ep1,_),name), code	! \
@@ -75,49 +75,52 @@
 
 	.text
 /*
- * fpu_emulate(iir)
+ * fpu_emulate(iir,0,fpregs)
  */
 LEAF_ENTRY(fpu_emulate)
 
-	extru	arg0, 22, 2, arg3
+	copy	arg0, t4
 	extru	arg0, 18, 3, r31
-	comib,=	1, arg3, $fpu_cln1
-	nop
+	extru	arg0, 20, 2, r1
+	extru	arg0, 22, 2, t3
+	subi,<>	1, t3, r0
 	extru	arg0, 16, 2, r31
 
-$fpu_cln1
 	/*
 	 * theoreticaly we would need to determine the fpu instruction
 	 * exception type (there could be 4 of those, but stick w/
 	 * non-timex fpus for now.
 	 */
-	ldi	1, ret0
-	extru,<> arg0, 10, 5, r1
-	ldi	32, r1	/* fpemu zero reg */
-	extru,<> arg0, 31, 5, t1
+	extru,<> arg0, 10, 5, t1
+	ldi	32, t1	/* fpemu zero reg */
+	extru,<> arg0, 31, 5, t2
 	b,n	$fpemu_nzt
-	comib,=,n 2, arg3, $fpemu_exit
+	nop
+	comib,=,n 2, t3, $fpemu_exit
+	nop
 $fpemu_nzt
-	copy	arg0, t4
-	sh3add	r1, arg2, arg0
-	extru	arg1, 20, 2, r1
-	sh3add	t1, arg2, arg1
-
 	/*
 	 * arg0 -- source register (address)
 	 * arg1 -- target register (address)
 	 * arg2 -- fpregs context
-	 * arg3 -- class
+	 * t3 -- class
 	 * r31 -- subop
 	 * r1 -- format specifier
-	 * (t4 -- copy or arg0, ie iir)
+	 * (t4 -- copy of arg0, ie iir)
 	 */
-	comib,=,n 0, arg3, $fpemu0c_0
-	comib,=,n 1, arg3, $fpemu0c_1
-	comib,=,n 2, arg3, $fpemu0c_2
-	comib,=,n 3, arg3, $fpemu0c_3
+	sh3add	t1, arg2, arg0
+	sh3add	t2, arg2, arg1
+	stw	r0, 32*8+0(arg2)	/* make sure zero reg is zero */
+	stw	r0, 32*8+4(arg2)
+
+	comib,=,n 0, t3, $fpemu0c_0
+	comib,=,n 1, t3, $fpemu0c_1
+	comib,=,n 2, t3, $fpemu0c_2
+	comib,=,n 3, t3, $fpemu0c_3
 
 $fpemu0c_0
+	comib,=,n 2, r1, $fpemu_exit
+
 	comib,=,n 0, r31, $fpemu0c_0_0
 	comib,=,n 1, r31, $fpemu_exit
 	comib,=,n 2, r31, $fpemu0c_0_2
@@ -134,40 +137,36 @@ $fpemu0c_0_0
 	copy	r0, ret0
 
 $fpemu0c_0_2	/* fcpy */
-	comib,=,n 2, r1, $fpemu_exit
 	subi	3, r1, r1
 	ldw	0*4(arg0), t1
 	ldw	1*4(arg0), t2
 	ldw	2*4(arg0), t3
-	ldw	3*4(arg0), t4
 	blr,n	r1, r0
-	nop
+	ldw	3*4(arg0), t4
 	stw	t3, 2*4(arg1)
 	stw	t4, 3*4(arg1)
+	nop
+	nop
+	nop
 	stw	t2, 1*4(arg1)
-	nop
-	nop
-	nop
 	stw	t1, 0*4(arg1)
 	bv	0(rp)
 	copy	r0, ret0
 
 $fpemu0c_0_3	/* fabs */
-	comib,=,n 2, r1, $fpemu_exit
 	subi	3, r1, r1
 	ldw	0*4(arg0), t1
 	ldw	1*4(arg0), t2
 	ldw	2*4(arg0), t3
 	ldw	3*4(arg0), t4
-	depi	0, 0, 1, t1
 	blr,n	r1, r0
-	nop
+	depi	0, 0, 1, t1
 	stw	t3, 2*4(arg1)
 	stw	t4, 3*4(arg1)
+	nop
+	nop
+	nop
 	stw	t2, 1*4(arg1)
-	nop
-	nop
-	nop
 	stw	t1, 0*4(arg1)
 	bv	0(rp)
 	copy	r0, ret0
@@ -181,8 +180,7 @@ $fpemu0c_0_5	/* frnd */
 	FP_TABLE2(frnd,sgl,dbl,invalid,quad)
 
 $fpemu0c_1
-	extru	t4, 18, 2, t2
-	sh2add	r1, t2, r1
+	extru	t4, 16, 4, r1
 	comib,=,n 0, r31, $fpemu0c_1_0
 	comib,=,n 1, r31, $fpemu0c_1_1
 	comib,=,n 2, r31, $fpemu0c_1_2
@@ -193,7 +191,7 @@ $fpemu0c_1_0	/* fcnvff */
 #define	dbl_to_quad_fcnvff	invalid_fcnvff
 #define	quad_to_sgl_fcnvff	invalid_fcnvff
 #define	quad_to_dbl_fcnvff	invalid_fcnvff
-	FP_TABLE3(fcnvff, invalid, sgl_to_dbl, invalid, sgl_to_quad, dbl_to_sgl, invalid, invalid, dbl_to_quad, invalid, invalid, invalid, invalid, quad_to_sgl, quad_to_dbl, invalid, invalid)
+	FP_TABLE3(fcnvff, invalid, dbl_to_sgl, invalid, quad_to_sgl, sgl_to_dbl, invalid, invalid, quad_to_dbl, invalid, invalid, invalid, invalid, sgl_to_quad, dbl_to_quad, invalid, invalid)
 
 $fpemu0c_1_1	/* fcnvxf */
 #define	sgl_to_quad_fcnvxf	invalid_fcnvxf
@@ -201,7 +199,7 @@ $fpemu0c_1_1	/* fcnvxf */
 #define	quad_to_sgl_fcnvxf	invalid_fcnvxf
 #define	quad_to_dbl_fcnvxf	invalid_fcnvxf
 #define	quad_to_quad_fcnvxf	invalid_fcnvxf
-	FP_TABLE3(fcnvxf, sgl_to_sgl, sgl_to_dbl, invalid, sgl_to_quad, dbl_to_sgl, dbl_to_dbl, invalid, dbl_to_quad, invalid, invalid, invalid, invalid, quad_to_sgl, quad_to_dbl, invalid, quad_to_quad)
+	FP_TABLE3(fcnvxf, sgl_to_sgl, dbl_to_sgl, invalid, quad_to_sgl, sgl_to_dbl, dbl_to_dbl, invalid, quad_to_dbl, invalid, invalid, invalid, invalid, sgl_to_quad, dbl_to_quad, invalid, quad_to_quad)
 
 $fpemu0c_1_2	/* fcnvfx */
 #define	sgl_to_quad_fcnvfx	invalid_fcnvfx
@@ -209,7 +207,7 @@ $fpemu0c_1_2	/* fcnvfx */
 #define	quad_to_sgl_fcnvfx	invalid_fcnvfx
 #define	quad_to_dbl_fcnvfx	invalid_fcnvfx
 #define	quad_to_quad_fcnvfx	invalid_fcnvfx
-	FP_TABLE3(fcnvfx, sgl_to_sgl, sgl_to_dbl, invalid, sgl_to_quad, dbl_to_sgl, dbl_to_dbl, invalid, dbl_to_quad, invalid, invalid, invalid, invalid, quad_to_sgl, quad_to_dbl, invalid, quad_to_quad)
+	FP_TABLE3(fcnvfx, sgl_to_sgl, dbl_to_sgl, invalid, quad_to_sgl, sgl_to_dbl, dbl_to_dbl, invalid, quad_to_dbl, invalid, invalid, invalid, invalid, sgl_to_quad, dbl_to_quad, invalid, quad_to_quad)
 
 $fpemu0c_1_3	/* fcnvfxt */
 #define	sgl_to_quad_fcnvfxt	invalid_fcnvfxt
@@ -217,31 +215,22 @@ $fpemu0c_1_3	/* fcnvfxt */
 #define	quad_to_sgl_fcnvfxt	invalid_fcnvfxt
 #define	quad_to_dbl_fcnvfxt	invalid_fcnvfxt
 #define	quad_to_quad_fcnvfxt	invalid_fcnvfxt
-	FP_TABLE3(fcnvfxt, sgl_to_sgl, sgl_to_dbl, invalid, sgl_to_quad, dbl_to_sgl, dbl_to_dbl, invalid, dbl_to_quad, invalid, invalid, invalid, invalid, quad_to_sgl, quad_to_dbl, invalid, quad_to_quad)
-
+	FP_TABLE3(fcnvfxt, sgl_to_sgl, dbl_to_sgl, invalid, quad_to_sgl, sgl_to_dbl, dbl_to_dbl, invalid, quad_to_dbl, invalid, invalid, invalid, invalid, sgl_to_quad, dbl_to_quad, invalid, quad_to_quad)
 
 $fpemu0c_2
-	comib,=,n 0, r31, $fpemu0c_2_0
 	comib,=,n 1, r31, $fpemu0c_2_1
-	comib,=,n 2, r31, $fpemu_exit
-	comib,=,n 3, r31, $fpemu_exit
-	comib,=,n 4, r31, $fpemu_exit
-	comib,=,n 5, r31, $fpemu_exit
-	comib,=,n 6, r31, $fpemu_exit
-	comib,=,n 7, r31, $fpemu_exit
+	comib,<>,n 0, r31, $fpemu_exit
 
 $fpemu0c_2_0
 	copy	arg2, arg3
 	extru,<> t4, 15, 5, t1
 	ldi	32, t1
-	sh3add	t1, arg3, arg1
-	extru	t4, 31, 5, arg2
+	sh3add	t1, arg3, arg2
 	FP_TABLE2(fcmp,sgl,dbl,invalid,invalid)
 
 $fpemu0c_2_1
 	comib,<>,n 0, r1, $fpemu_exit
 
-	/* extru	t4, 31, 5, arg1 */
 	/* XXX timex is much more compilicated */
 	ldw	0(arg2), t1
 	ldi	0, ret0
@@ -261,19 +250,27 @@ $fpemu0c_2_1
 	mtctl	t2, pcoq
 
 $fpemu0c_3
-	copy	arg2, arg3
-	extru,<> t4, 31, 5, t1
+	extru,<> t4, 15, 5, t1
 	ldi	32, t1
-	sh3add	t1, arg3, arg2
+	blr	r31, r0
+	copy	arg2, arg3
 
-	comib,=,n 0, r31, $fpemu0c_3_0
-	comib,=,n 1, r31, $fpemu0c_3_1
-	comib,=,n 2, r31, $fpemu0c_3_2
-	comib,=,n 3, r31, $fpemu0c_3_3
-	comib,=,n 4, r31, $fpemu0c_3_4
-	comib,=,n 5, r31, $fpemu_exit
-	comib,=,n 6, r31, $fpemu_exit
-	comib,=,n 7, r31, $fpemu_exit
+	b	$fpemu0c_3_0
+	sh3add	t1, arg3, arg2
+	b	$fpemu0c_3_1
+	sh3add	t1, arg3, arg2
+	b	$fpemu0c_3_2
+	sh3add	t1, arg3, arg2
+	b	$fpemu0c_3_3
+	sh3add	t1, arg3, arg2
+	b	$fpemu0c_3_4
+	sh3add	t1, arg3, arg2
+	b	$fpemu_exit
+	sh3add	t1, arg3, arg2
+	b	$fpemu_exit
+	sh3add	t1, arg3, arg2
+	b	$fpemu_exit
+	sh3add	t1, arg3, arg2
 
 $fpemu0c_3_0	/* fadd */
 	FP_TABLE2(fadd,sgl,dbl,invalid,invalid)
@@ -306,7 +303,8 @@ invalid_fsub
 invalid_fmpy
 invalid_fdiv
 invalid_frem
-	bv,n	0(rp)
+	bv	0(rp)
+	ldi	1, ret0
 EXIT(fpu_emulate)
 
 	.end

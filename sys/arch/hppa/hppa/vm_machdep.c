@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.42 2002/09/11 15:55:58 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.43 2002/10/07 14:38:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -136,7 +136,7 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
-	extern vaddr_t fpu_curpcb;
+	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct trapframe *tf = p->p_md.md_regs;
 
 	if (tf->tf_cr30 == fpu_curpcb) {
@@ -153,6 +153,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void (*func)(void *);
 	void *arg;
 {
+	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct pcb *pcbp;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -161,12 +162,20 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (round_page(sizeof(struct user)) > NBPG)
 		panic("USPACE too small for user");
 #endif
+	if (p1->p_md.md_regs->tf_cr30 == fpu_curpcb)
+		fpu_save(fpu_curpcb);
 
 	pcbp = &p2->p_addr->u_pcb;
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pm_space;
 	pcbp->pcb_uva = (vaddr_t)p2->p_addr;
+	/* reset any of the pending FPU exceptions from parent */
+	pcbp->pcb_fpregs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
+	pcbp->pcb_fpregs[1] = 0;
+	pcbp->pcb_fpregs[2] = 0;
+	pcbp->pcb_fpregs[3] = 0;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)&pcbp->pcb_fpregs[0], 8 * 4);
 
 	sp = (register_t)p2->p_addr + NBPG;
 	p2->p_md.md_regs = tf = (struct trapframe *)sp;
@@ -192,7 +201,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	tf->tf_eiem = ~0;
 	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */;
-	pcbp->pcb_fpregs[32] = 0;
 
 	/*
 	 * Set up return value registers as libc:fork() expects

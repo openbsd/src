@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 2002/09/23 17:43:20 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.82 2002/10/07 14:38:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1158,6 +1158,7 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
+	extern paddr_t fpu_curpcb;	/* from locore.S */
 	register struct trapframe *tf = p->p_md.md_regs;
 	register struct pcb *pcb = &p->p_addr->u_pcb;
 #ifdef DEBUG
@@ -1176,10 +1177,16 @@ setregs(p, pack, stack, retval)
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	/* reset any of the pending FPU exceptions */
-	pcb->pcb_fpregs[0] = HPPA_FPU_INIT;
+	pcb->pcb_fpregs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpregs[1] = 0;
 	pcb->pcb_fpregs[2] = 0;
 	pcb->pcb_fpregs[3] = 0;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
+	if (tf->tf_cr30 == fpu_curpcb) {
+		fpu_curpcb = 0;
+		/* force an fpu ctxsw, we'll not be hugged by the cpu_switch */
+		mtctl(0, CR_CCR);
+	}
 
 	/* setup terminal stack frame */
 	stack = hppa_round_page(stack);
