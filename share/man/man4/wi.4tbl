@@ -1,0 +1,232 @@
+.\"	$OpenBSD: wi.4tbl,v 1.1 2002/03/30 00:12:38 millert Exp $
+.\"
+.\" Copyright (c) 1997, 1998, 1999
+.\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Bill Paul.
+.\" 4. Neither the name of the author nor the names of any co-contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY Bill Paul AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL Bill Paul OR THE VOICES IN HIS HEAD
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+.\" THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$FreeBSD: wi.4,v 1.3 1999/05/22 16:12:43 wpaul Exp $
+.\"
+.Dd June 24, 2001
+.Dt WI 4
+.Os
+.Sh NAME
+.Nm wi
+.Nd WaveLAN/IEEE and PRISM-II 802.11DS wireless network driver
+.Sh SYNOPSIS
+.Cd "wi* at pci? dev ? function ?"
+.Cd "wi* at pcmcia? function ?"
+.Cd "wi* at macobio?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for wireless network adapters based on the
+Lucent Technologies WaveLAN/IEEE (aka WaveLAN II) and Intersil
+PRISM-II and PRISM-2.5 chipsets.
+.Pp
+The core of the WaveLAN/IEEE is the Lucent Hermes controller.
+All host/device interaction is via programmed I/O with the Hermes.
+The Hermes supports 802.11 and 802.3 frames, power management, BSS,
+WDS and ad-hoc operation modes.
+.Pp
+The
+.Nm
+driver encapsulates all IP and ARP traffic as 802.11 frames, however
+it can receive either 802.11 or 802.3 frames.
+Transmit speed is selectable between 1Mbps fixed, 2Mbps fixed, 2Mbps
+with auto fallback, 6Mbps, 8Mbps, or 11Mbps depending on your hardware
+(see above).
+The Lucent WaveLAN/IEEE Silver and Gold cards as well as the Intersil
+cards have support for WEP encryption.
+The WaveLAN Gold and newer Intersil cards support 104bit keys, the others
+only accept 40bit keys.
+The Lucent Bronze cards do not support WEP.
+To enable encryption, use the
+.Xr wicontrol 8
+utility to set your keys.
+.Pp
+By default, the
+.Nm
+driver configures the card for BSS operation (aka infrastructure
+mode).
+This mode requires the use of an access point (base station).
+.Pp
+The
+.Nm
+driver also supports an ad-hoc (point-to-point) mode where
+the nwid is ignored and stations can communicate amongst
+themselves without the aid of an access point.
+Note that there are two possible ad-hoc modes.
+One mode, referred to as
+.Dq ad-hoc demo mode ,
+predates the IEEE 802.11 specification and so may not interoperate
+with cards from other vendors.
+The standardized ad-hoc mode, also know as IBSS mode, is not
+supported by cards with very old firmware revisions.
+.Pp
+Additionally, cards based on the Intersil PRISM-II and PRISM-2.5 chips 
+have a host-based access point mode which allows the card to
+act as a normal access point (with some assistance from the
+.Nm
+driver).
+This mode is not available on cards that uses the Hermes controller,
+such as those from Lucent.
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+.Pp
+Cards supported by the
+.Nm
+driver come in a variety of packages, though the most common
+are of the PCMCIA type.
+In many cases, the PCI version of a wireless card is simply
+a PCMCIA card bundled with a PCI adapter.
+The PCI adapters come in two flavors: true PCMCIA bridges and
+dumb PCMCIA bridges.
+A true PCMCIA bridge (such as those sold by Lucent) will attach
+as a real PCMCIA controller.
+The wireless card will then attach to the PCMCIA bus.
+Wireless cards in PCMCIA slots may be inserted and ejected on the fly.
+.br
+A dumb bridge, on the other hand, does not show up as a true PCMCIA bus.
+The wireless card will simply appear to the host as a normal PCI
+device and will not require any PCMCIA support.
+Cards in this type of adapter should only be removed when the
+machine is powered down.
+.Pp
+The following cards are among those supported to by
+.Nm
+driver:
+.Pp
+.in +\n(dIu
+.TS
+tab (:) ;
+l l l
+_ _ _
+l l l .
+Card:Chip:Bus
+3Com AirConnect 3CRWE737A:Prism-II:PCMCIA
+Addtron AWP-100:Prism-II:PCMCIA
+Agere Orinoco:Hermes:PCMCIA
+BUFFALO AirStation:Prism-II:PCMCIA
+BUFFALO AirStation:Prism-II:CF
+Cabletron RoamAbout:Hermes:PCMCIA
+Compaq Agency NC5004:Prism-II:PCMCIA
+Contec FLEXLAN/FX-DS110-PCC:Prism-II:PCMCIA
+Corega PCC-11:Prism-II:PCMCIA
+Corega PCCA-11:Prism-II:PCMCIA
+Corega PCCB-11:Prism-II:PCMCIA
+Corega CGWLPCIA11:Prism-II:PCI
+ELSA XI300:Prism-II:PCMCIA
+ELSA XI800:Prism-II:CF
+EMTAC A2424i:Prism-II:PCMCIA
+Ericsson Wireless LAN CARD C11:Prism-II:PCMCIA
+Gemtek WL-311:Prism-2.5:PCMCIA
+I-O DATA WN-B11/PCM:Prism-II:PCMCIA
+Intel PRO/Wireless 2011:Prism-II:PCMCIA
+Intersil Prism II:Prism-II:PCMCIA
+Intersil Mini-PCI:Prism-2.5:PCI
+Linksys Instant Wireless WPC11:Prism-II:PCMCIA
+Linksys Instant Wireless WPC11 2.5:Prism-2.5:PCMCIA
+Lucent WaveLAN:Hermes:PCMCIA
+NANOSPEED ROOT-RZ2000:Prism-II:PCMCIA
+NDC/Sohoware NCP130:Prism-II:PCI
+NEC CMZ-RT-WP:Prism-II:PCMCIA
+NTT-ME 11Mbps Wireless LAN:Prism-II:PCMCIA
+Proxim RangeLAN-DS:Prism-II:PCMCIA
+Samsung MagicLAN SWL-2000N:Prism-II:PCMCIA
+Symbol Spectrum24:Prism-II:PCMCIA
+SMC 2632 EZ Connect:Prism-II:PCMCIA
+TDK LAK-CD011WL:Prism-II:PCMCIA
+.TE
+.in -\n(dIu
+.Pp
+Note that some of the PRISM-II adapters only work at 3.3V, hence
+.Xr cardbus 4
+support is required for those cards to set VCC correctly, even
+though they are really 16bit cards.
+.Pp
+Several vendors sell PCI adapters built around the PLX Technology 9050
+or 9052 chip.
+The following such adapters are supported or expected to work:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It 3Com AirConnect 3CRWE777A
+.It Belkin F5D6000 (a rebadged WL11000P)
+.It Eumitcom WL11000P
+.It Global Sun Technology GL24110P (untested)
+.It Global Sun Technology GL24110P02
+.It LinkSys WDT11 (a rebadged GL24110P02)
+.It Netgear MA301
+.It US Robotics 2415 (rebadged WL11000P)
+.El
+.Pp
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "wi%d: init failed"
+The WaveLAN card failed to come ready after an initialization command
+was issued.
+.It "wi%d: failed to allocate %d bytes on NIC"
+The driver was unable to allocate memory for transmit frames in the
+NIC's on-board RAM.
+.It "wi%d: device timeout"
+The WaveLAN failed to generate an interrupt to acknowledge a transmit
+command.
+.El
+.Sh SEE ALSO
+.Xr an 4 ,
+.Xr arp 4 ,
+.Xr netintro 4 ,
+.Xr ifconfig 8 ,
+.Xr wicontrol 8
+.Rs
+.%T HCF Light programming specification
+.%O http://www.wavelan.com
+.Re
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Fx 3.0 .
+.Ox
+support was added in
+.Ox 2.6 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Bill Paul <wpaul@ctr.columbia.edu> and ported to
+.Ox
+by Niklas Hallqvist <niklas@appli.se>.
+.Sh CAVEATS
+The original Lucent WaveLAN cards usually default to channel 3;
+newer cards use channel 10 by default.
+Non-Lucent cards vary, for instance the Addtron cards use channel
+11 by default.
+See
+.Xr wicontrol 8
+for information on how to change the channel.
