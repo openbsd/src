@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/04/21 23:41:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/05/29 19:14:37 deraadt Exp $
 #	$NetBSD: Makefile,v 1.12 1996/03/19 03:03:04 jtc Exp $
 
 PROG=	pppd
@@ -17,5 +17,7 @@ LDADD=	-lutil
 DPADD=	${LIBUTIL}
 CFLAGS+= -I. -I${.CURDIR} -DHAVE_PATHS_H
 CLEANFILES=y.tab.h grammar.c scanner.c
+
+MLINKS=	pppd.8 ppp.8
 
 .include <bsd.prog.mk>
