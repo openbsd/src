@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.5 2004/01/05 09:49:42 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.6 2004/01/05 16:29:20 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -50,6 +50,14 @@ Show the BGP timers.
 .Pp
 .It Li reload
 Reload the configuration file.
+.Pp
+.It Li fib couple
+Insert the learned routes into the Forward Information Base aka the kernel
+routing table.
+.Pp
+.It Li fib decouple
+Remove the learned routes into the Forward Information Base aka the kernel
+routing table.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact

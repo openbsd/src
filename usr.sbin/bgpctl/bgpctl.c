@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.16 2004/01/04 23:44:17 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.17 2004/01/05 16:29:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,10 @@ enum actions {
 	SHOW_SUMMARY,
 	SHOW_NEIGHBOR,
 	SHOW_NEIGHBOR_TIMERS,
-	RELOAD
+	RELOAD,
+	FIB,
+	FIB_COUPLE,
+	FIB_DECOUPLE
 };
 
 enum neighbor_views {
@@ -48,7 +51,8 @@ struct keywords {
 
 static const struct keywords keywords_main[] = {
 	{ "reload",	RELOAD},
-	{ "show",	SHOW}
+	{ "show",	SHOW},
+	{ "fib",	FIB}
 };
 
 static const struct keywords keywords_show[] = {
@@ -59,6 +63,11 @@ static const struct keywords keywords_show[] = {
 static const struct keywords keywords_neighbor[] = {
 	{ "timers",	SHOW_NEIGHBOR_TIMERS},
 	{ "messages",	SHOW_NEIGHBOR}
+};
+
+static const struct keywords keywords_fib[] = {
+	{ "couple",	FIB_COUPLE},
+	{ "decouple",	FIB_DECOUPLE}
 };
 
 int		 main(int, char *[]);
@@ -141,6 +150,29 @@ again:
 		imsg_compose(&ibuf, IMSG_CTL_RELOAD, 0, NULL, 0);
 		printf("reload request sent.\n");
 		done = 1;
+		break;
+	case FIB:
+		if (argc >= 3) {
+			action = match_keyword(argv[2], keywords_fib,
+			    sizeof(keywords_fib)/sizeof(keywords_fib[0]));
+			goto again;
+		} else
+			errx(1, "fib [couple|decouple]");
+		break;
+	case FIB_COUPLE:
+		if (argc >= 4)
+			errx(1, "\"fib couple\" takes no options");
+		imsg_compose(&ibuf, IMSG_CTL_FIB_COUPLE, 0, NULL, 0);
+		printf("couple request sent.\n");
+		done = 1;
+		break;
+	case FIB_DECOUPLE:
+		if (argc >= 4)
+			errx(1, "\"fib decouple\" takes no options");
+		imsg_compose(&ibuf, IMSG_CTL_FIB_DECOUPLE, 0, NULL, 0);
+		printf("decouple request sent.\n");
+		done = 1;
+		break;
 	}
 
 	while (!done) {
@@ -166,6 +198,9 @@ again:
 				done = show_neighbor_msg(&imsg, NV_TIMERS);
 				break;
 			case RELOAD:
+			case FIB:
+			case FIB_COUPLE:
+			case FIB_DECOUPLE:
 				break;
 			}
 			imsg_free(&imsg);
