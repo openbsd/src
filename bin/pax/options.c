@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.21 1997/04/05 22:51:53 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.22 1997/04/06 06:26:23 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.21 1997/04/05 22:51:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.22 1997/04/06 06:26:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -609,7 +609,7 @@ tar_options(argc, argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hmopruts:vwxzBC:HLPSXZ014578")) 
+	    "b:cef:hmopruts:vwxzBC:HLPXZ014578")) 
 	    != EOF)  {
 		switch(c) {
 		case 'b':
@@ -743,12 +743,6 @@ tar_options(argc, argv)
 			Lflag = 1;
 			break;
 		case 'P':
-			/*
-			 * do not follow symlinks
-			 */
-			Lflag = 0;
-			break;
-		case 'S':
 			/*
 			 * do not remove leading '/' from pathnames
 			 */
