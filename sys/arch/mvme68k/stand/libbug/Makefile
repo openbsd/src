@@ -1,23 +1,18 @@
-#	$OpenBSD: Makefile,v 1.4 1996/05/10 20:03:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/05/16 02:25:39 chuck Exp $
 
 LIB=bug
 
 NOPIC=
 NOPROFILE=
 
-CLEANFILES+=machine
+S=${.CURDIR}/../../../..
+DIR_SA=$S/lib/libsa
 
-CFLAGS+=-I${.OBJDIR}
+CFLAGS+=-I${.CURDIR}/../../include -I${DIR_SA}
 
-SRCS=	delay.c diskrd.c diskwr.c getbrdid.c instat.c outln.c outstr.c \
-	return.c rtc_rd.c
-.PATH:    ${.CURDIR}/../../../../lib/libc_sa
-
-all:	machine libbug.a
+SRCS=	delay.c diskrd.c diskwr.c getbrdid.c inchr.c instat.c outln.c \
+	outstr.c putchar.c return.c rtc_rd.c
 
 install:
-
-machine:
-	rm -f machine; ln -s ${.CURDIR}/../../include machine
 
 .include <bsd.lib.mk>

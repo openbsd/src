@@ -1,4 +1,4 @@
-/*	$OpenBSD: instat.c,v 1.2 1996/05/16 02:25:42 chuck Exp $ */
+/*	$OpenBSD: inchr.c,v 1.1 1996/05/16 02:25:38 chuck Exp $ */
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -7,15 +7,16 @@
 #include <sys/types.h>
 #include <machine/prom.h>
 
+#include "stand.h"
 #include "libbug.h"
 
 /* returns 0 if no characters ready to read */
 int
-peekchar()
+getchar()
 {
 	int ret;
 
 	MVMEPROM_NOARG();
-	MVMEPROM_CALL(MVMEPROM_INSTAT);
-	MVMEPROM_STATRET(ret);
+	MVMEPROM_CALL(MVMEPROM_INCHR);
+	MVMEPROM_RETURN_BYTE(ret);
 }
