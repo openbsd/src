@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.3 1997/03/31 23:06:29 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.4 1997/04/06 19:52:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -36,6 +36,7 @@
 
 void gateA20 __P((int));
 void memprobe __P((void));
+void devboot __P((dev_t, char *));
 
 extern u_long	codeseg;
 extern int	boothowto;
