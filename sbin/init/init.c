@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.15 1998/06/03 16:20:24 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.16 1999/07/06 07:54:44 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,13 +47,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.15 1998/06/03 16:20:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.16 1999/07/06 07:54:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <sys/reboot.h>
 
 #include <db.h>
 #include <errno.h>
@@ -113,6 +114,7 @@ state_func_t multi_user __P((void));
 state_func_t clean_ttys __P((void));
 state_func_t catatonia __P((void));
 state_func_t death __P((void));
+state_func_t nice_death __P((void));
 
 enum { AUTOBOOT, FASTBOOT } runcom_mode = AUTOBOOT;
 
@@ -231,11 +233,11 @@ main(argc, argv)
 	handle(badsys, SIGSYS, 0);
 	handle(disaster, SIGABRT, SIGFPE, SIGILL, SIGSEGV,
 	       SIGBUS, SIGXCPU, SIGXFSZ, 0);
-	handle(transition_handler, SIGHUP, SIGTERM, SIGTSTP, 0);
+	handle(transition_handler, SIGHUP, SIGTERM, SIGTSTP, SIGUSR1, 0);
 	handle(alrm_handler, SIGALRM, 0);
 	sigfillset(&mask);
 	delset(&mask, SIGABRT, SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGSYS,
-		SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGTSTP, SIGALRM, 0);
+		SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGUSR1, SIGTSTP, SIGALRM, 0);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 	memset(&sa, 0, sizeof sa);
 	sigemptyset(&sa.sa_mask);
@@ -1209,6 +1211,9 @@ transition_handler(sig)
 	case SIGTERM:
 		requested_transition = death;
 		break;
+	case SIGUSR1:
+		requested_transition = nice_death;
+		break;
 	case SIGTSTP:
 		requested_transition = catatonia;
 		break;
@@ -1340,6 +1345,85 @@ alrm_handler(sig)
 	int sig;
 {
 	clang = 1;
+}
+
+#define _PATH_RCSHUTDOWN        "/etc/rc.shutdown"
+
+/*
+ * Bring the system down to single user nicely, after run the shutdown script.
+ */
+state_func_t
+nice_death()
+{
+	register session_t *sp;
+	register int i;
+	pid_t pid;
+	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
+	int howto = RB_HALT;
+	int status;
+
+	for (sp = sessions; sp; sp = sp->se_next) {
+		sp->se_flags &= ~SE_PRESENT;
+		sp->se_flags |= SE_SHUTDOWN;
+		kill(sp->se_process, SIGHUP);
+	}
+
+	/* NB: should send a message to the session logger to avoid blocking. */
+	logwtmp("~", "shutdown", "");
+
+	if (access(_PATH_RCSHUTDOWN, R_OK) != -1) {
+		pid_t pid;
+		struct sigaction sa;
+
+		switch ((pid = fork())) {
+		case -1:
+			break;
+		case 0:
+
+			memset(&sa, 0, sizeof sa);
+			sigemptyset(&sa.sa_mask);
+			sa.sa_flags = 0;
+			sa.sa_handler = SIG_IGN;
+			(void) sigaction(SIGTSTP, &sa, NULL);
+			(void) sigaction(SIGHUP, &sa, NULL);
+
+			setctty(_PATH_CONSOLE);
+
+			sigprocmask(SIG_SETMASK, &sa.sa_mask, NULL);
+
+			execl(_PATH_BSHELL, "sh", _PATH_RCSHUTDOWN, NULL);
+			stall("can't exec %s for %s: %m", _PATH_BSHELL,
+			    _PATH_RCSHUTDOWN);
+			_exit(1);
+		default:
+			waitpid(pid, &status, 0);
+			if (WIFEXITED(status) && WEXITSTATUS(status) == 2)
+				howto |= RB_POWERDOWN;
+		}
+	}
+
+	for (i = 0; i < 3; ++i) {
+		if (kill(-1, death_sigs[i]) == -1 && errno == ESRCH)
+			goto die;
+
+		clang = 0;
+		alarm(DEATH_WATCH);
+		do
+			if ((pid = waitpid(-1, NULL, 0)) != -1)
+				collect_child(pid);
+		while (clang == 0 && errno != ECHILD);
+
+		if (errno == ECHILD)
+			goto die;
+	}
+
+	warning("some processes would not die; ps axl advised");
+
+die:
+	reboot(howto);
+
+	/* ... and if that fails.. oh well */
+	return (state_func_t) single_user;
 }
 
 /*
