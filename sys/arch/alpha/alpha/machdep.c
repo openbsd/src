@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 1997/07/08 10:55:54 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 1997/07/23 06:23:58 denny Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -1486,6 +1486,9 @@ netintr()
 #ifdef INET
 	DONETISR(NETISR_ARP, arpintr());
 	DONETISR(NETISR_IP, ipintr());
+#endif
+#ifdef NETATALK
+	DONETISR(NETISR_ATALK, atintr());
 #endif
 #ifdef NS
 	DONETISR(NETISR_NS, nsintr());
