@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 1999/12/17 06:24:38 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 1999/12/31 09:07:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -967,8 +967,6 @@ setregs(p, pack, stack, retval)
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	tf->tf_pidr1 = p->p_vmspace->vm_map.pmap->pmap_pid;
 	tf->tf_pidr2 = p->p_vmspace->vm_map.pmap->pmap_pid;
-	tf->tf_pidr3 = p->p_vmspace->vm_map.pmap->pmap_pid;
-	tf->tf_pidr4 = p->p_vmspace->vm_map.pmap->pmap_pid;
 
 	/* setup terminal stack frame */
 	stack += HPPA_FRAME_SIZE;

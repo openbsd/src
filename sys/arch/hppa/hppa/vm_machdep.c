@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 1999/11/25 18:37:43 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 1999/12/31 09:07:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -185,8 +185,7 @@ cpu_fork(p1, p2, stack, stacksize)
 		     tf->tf_sr5 = tf->tf_sr6 =
 		p2->p_vmspace->vm_map.pmap->pmap_space;
 	tf->tf_sr7 = HPPA_SID_KERNEL;
-	tf->tf_pidr1 = tf->tf_pidr2 = tf->tf_pidr3 = tf->tf_pidr4 =
-		p2->p_vmspace->vm_map.pmap->pmap_pid;
+	tf->tf_pidr1 = tf->tf_pidr2 = p2->p_vmspace->vm_map.pmap->pmap_pid;
 
 	/*
 	 * If specified, give the child a different stack.

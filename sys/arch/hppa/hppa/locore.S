@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.22 1999/12/12 03:31:23 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.23 1999/12/31 09:07:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -248,8 +248,10 @@ $qisnowon
 	ldi	HPPA_PID_KERNEL, r1
 	mtctl	r1, pidr1
 	mtctl	r1, pidr2
-	mtctl	r1, pidr3
-	mtctl	r1, pidr4
+#if pbably_not_worth_it
+	mtctl	r0, pidr3
+	mtctl	r0, pidr4
+#endif
 	mtsp	r0, sr0
 	mtsp	r0, sr1
 	mtsp	r0, sr2
@@ -656,13 +658,6 @@ $syscall
 	mtsp	r0, sr6
 	mtsp	r0, sr7
 
-#ifdef notdef
-	/* leave pidr2 in user space so copy* work */
-	ldi	HPPA_PID_KERNEL, t4
-	mtctl	t4, pidr3
-	mtctl	t4, pidr4
-#endif
-
 	/* setup frame */
 	stw	r0, HPPA_FRAME_PSP(sp)
 	stw	r0, HPPA_FRAME_CRP(sp)
@@ -767,11 +762,12 @@ $syscall_return_copy_loop
 	mtsp	t1, sr7
 	mtctl	t2, pidr2
 
+#if pbably_not_worth_it
 	ldw	TF_CR12(sr3, t3), t1
 	ldw	TF_CR13(sr3, t3), t2
 	mtctl	t1, pidr3
 	mtctl	t2, pidr4
-
+#endif
 	ldw	TF_CR30(sr3, t3), t1
 	mtctl	t1, cr30
 
@@ -1498,10 +1494,12 @@ $trapnowvirt
 	mtsp	r0, sr6
 	mtsp	r0, sr7
 
+#if pbably_not_worth_it
 	mfctl	pidr3, t1
 	mfctl	pidr4, t2
 	stw	t1, TF_CR12(t3)
 	stw	t2, TF_CR13(t3)
+#endif
 
 	/*
 	 * Save all general registers that we haven't saved already
@@ -2137,8 +2135,6 @@ ENTRY(switch_exit)
 	/* leave pidr2 in user space so copy* work */
 	ldi	HPPA_PID_KERNEL, t4
 	mtctl	t4, pidr1
-	mtctl	t4, pidr3
-	mtctl	t4, pidr4
 
 	b	switch_search
 	nop
