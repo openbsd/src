@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.23 2003/03/20 07:26:33 jmc Exp $
+.\" $OpenBSD: keynote.4,v 1.24 2003/06/02 09:47:15 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -749,6 +749,11 @@ trusted assertions to
 .Sq bootstrap
 a policy whose details are specified in signed credentials issued
 by others and submitted over the untrusted interface.
+.Sh FILES
+.Bl -tag -width libkeynote.a -compact
+.It Pa keynote.h
+.It Pa libkeynote.a
+.El
 .Sh EXAMPLES
 A policy that delegates authority for the
 .Qq SPEND
@@ -866,11 +871,6 @@ However, the following return "Reject" (_MIN_TRUST):
         app_domain = "SPEND"
         dollars = "5500"
 .Ed
-.Sh FILES
-.Bl -tag -width libkeynote.a -compact
-.It Pa keynote.h
-.It Pa libkeynote.a
-.El
 .Sh SEE ALSO
 .Xr keynote 1 ,
 .Xr keynote 3 ,
