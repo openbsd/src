@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.40 1998/03/24 19:32:48 marc Exp $
+#	$OpenBSD: MAKEDEV,v 1.41 1998/04/30 06:12:51 jason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -246,8 +246,21 @@ tcx*)
 	mknod tcx$unit		c 109 $unit; chmod 666 tcx$unit
 	;;
 
-audio)
-	mknod audio		c 69 0; chmod 666 audio
+audio*)
+	unit=${i#audio}
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	major=69
+	audioctl=audioctl$unit
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chown root.wheel $audio $sound $mixer $audioctl
+	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
 openprom)

@@ -1,4 +1,4 @@
-# 	$OpenBSD: FLOPPY,v 1.18 1998/02/26 10:50:10 johns Exp $
+# 	$OpenBSD: FLOPPY,v 1.19 1998/04/30 06:12:53 jason Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -110,6 +110,7 @@ sbus0	at iommu0				# sun4m
 
 #audioamd0 at mainbus0				# sun4c
 #audioamd0 at obio0				# sun4m
+#audio*	at audioamd?
 
 auxreg0	at mainbus0				# sun4c
 auxreg0	at obio0				# sun4m

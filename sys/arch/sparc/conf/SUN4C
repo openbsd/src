@@ -63,6 +63,8 @@ sbus0	at mainbus0
 #vmel0	at mainbus0
 
 audioamd0 at mainbus0
+audio*	at audioamd?
+
 auxreg0	at mainbus0
 
 clock0	at mainbus0

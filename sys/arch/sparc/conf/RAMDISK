@@ -65,6 +65,7 @@ sbus0	at iommu0				# sun4m
 
 audioamd0 at mainbus0				# sun4c
 audioamd0 at obio0				# sun4m
+audio*	at audioamd?
 
 auxreg0	at mainbus0				# sun4c
 auxreg0	at obio0				# sun4m
