@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.35 2000/04/19 02:17:49 niklas Exp $	*/
+/*	$OpenBSD: aha.c,v 1.36 2000/11/13 13:43:01 niklas Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1083,7 +1083,7 @@ aha_init(sc)
 	wmbx = (struct aha_mbx *)uvm_pagealloc_contig(sizeof(struct aha_mbx),
 	    0, 0xffffff, PAGE_SIZE);
 #else
-	wmbx = (struct aha_mbx *)vm_pagealloc_contig(sizeof(struct aha_mbx),
+	wmbx = (struct aha_mbx *)vm_page_alloc_contig(sizeof(struct aha_mbx),
 	    0, 0xffffff, PAGE_SIZE);
 #endif
 	if (wmbx == NULL)
