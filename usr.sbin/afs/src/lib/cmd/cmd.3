@@ -1,4 +1,4 @@
-.\" $Id: cmd.3,v 1.1 2000/09/11 14:40:55 art Exp $
+.\" $Id: cmd.3,v 1.2 2001/06/27 07:43:38 deraadt Exp $
 .\" Things to fix:
 .\"   * use better macros for arguments (like .Pa for files)
 .\"
@@ -158,7 +158,7 @@ will take the current syntax and try to parse the arguments
 .Fa argc, argv.
 .Pp
 When a
-.Xr mdoc(7)
+.Xr mdoc 7
 file is generated. The .ctx file for the command is read to add extra
 content to the manual-page. The file is split up in sections separated by
 .Pp
@@ -253,8 +253,8 @@ A file named the same way as the command binary (really argv[0]) with
 the extention .ctx will be used to add extra help-text in the mdoc
 manpage when its generated.
 .Sh SEE ALSO
-.Xr getarg(3),
-.Xr mdoc(7)
+.Xr getarg 3 ,
+.Xr mdoc 7
 .Sh HISTORY
 First written on CMU. Taken up by Transarc/IBM in their AFS
 product. Reimplmented for Arla since a lot of people missed it. When
