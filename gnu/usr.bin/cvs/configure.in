@@ -76,12 +76,12 @@ fi
 AC_MSG_RESULT($ccvs_cv_sys_working_fnmatch)
 
 dnl
-dnl set $(KRB4) from --with-krb4=value -- WITH_KRB4
+dnl set $KRB4 from --with-krb4=value -- WITH_KRB4
 dnl
 KRB4=/usr/kerberos
 define(WITH_KRB4,[
 AC_ARG_WITH([krb4],
-  [  --with-krb4=value       set default $(KRB4) from value],
+  [  --with-krb4=value       set default \$KRB4 from value],
   [KRB4=$withval],
 )dnl
 echo "default place for krb4 is $KRB4"

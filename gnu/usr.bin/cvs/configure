@@ -12,7 +12,7 @@ ac_help=
 ac_default_prefix=/usr/local
 # Any additions from configure.in:
 ac_help="$ac_help
-  --with-krb4=value       set default $(KRB4) from value"
+  --with-krb4=value       set default \$KRB4 from value"
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
