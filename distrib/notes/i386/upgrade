@@ -1,12 +1,27 @@
-dnl	$OpenBSD: upgrade,v 1.18 2003/09/07 00:21:47 miod Exp $
+dnl	$OpenBSD: upgrade,v 1.19 2003/09/07 12:01:56 krw Exp $
 dnl OpenBSDUpgrade({:-the CD-ROM or an installation floppy as you would do for
 dnl a new installation-:})
-Due to the change in binary format from a.out to ELF in OpenBSD OSREV,
-upgrades, albeit possible, are very tricky.  The best solution, whenever
+Due to the change from a.out to ELF binary format in OpenBSD OSREV,
+upgrades can be a complex, delicate process.  The best solution, whenever
 possible, is to backup your data and reinstall from scratch.
 
-The two main hurdles in the upgrade from an a.out system to an ELF OpenBSD
-OSREV system are:
+The second best solution is to remove all ports, third party programs and
+libraries installed on your system; upgrade; and then add ELF versions of
+the removed files.
+
+In all cases, once you start the upgrade you MUST complete it. If the
+upgrade process fails or is abandoned before it completes you will almost
+certainly be left with a non-functional system.
+
+Finally, you cannot use the bsd.rd kernel to upgrade the system. The
+existing bootblocks on your system cannot boot the OSREV bsd.rd.
+
+If you must do an upgrade while preserving the functionality of any
+existing a.out binary files, then the rest of this section will guide you
+through that process.
+
+The two main hurdles in upgrading from an a.out system to an ELF OpenBSD
+OSREV system while preserving the functioning of a.out binaryies are:
 - the a.out binary emulation, required for compatibility with a.out
   binaries using shared libraries, is not enabled by default, and requires
   an explicit configuration change.
