@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.47 1997/08/04 23:58:15 dgregor Exp $
+#	$OpenBSD: MAKEDEV,v 1.48 1997/08/06 07:06:46 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@ case $i in
 all)
 	sh MAKEDEV std fd wt0 wd0 wd1 wd2 wd3 sd0 sd1 sd2
 	sh MAKEDEV tty00 tty01 tty02 tty03 pty0 pty1 st0 st1 ch0 cd0 cd1
-	sh MAKEDEV cyclades
+	sh MAKEDEV ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 	sh MAKEDEV mcd0 acd0 vnd0 vnd1 lpa0 lpa1 ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyC0 ttyC1 ttyC2 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ipl tun0 tun1 tun2
@@ -154,11 +154,11 @@ ttyC*)
 	;;
 
 ttyc*)
-        unit=`expr $i : 'ttyc(.*\)'`
-        rm -f ttyc$unit cuac$unit
-        mknod ttyc$unit c $major $minor
-        mknod cuac$unit c $major `expr $minor + 128`
-        chown uucp.wheel ttyc$unit cuac$unit
+	unit=`expr $i : 'ttyc\(.*\)'`
+	rm -f ttyc$unit cuac$unit
+	mknod ttyc$unit c 38 $unit
+	mknod cuac$unit c 38 `expr $unit + 128`
+	chown uucp.wheel ttyc$unit cuac$unit
         ;;
 
 fd)
@@ -598,9 +598,6 @@ ss*)
 	rm -f scan$unit
 	ln -s ss$unit scan$unit
 	;;
-
-cyclades)
-	sh MAKEDEV ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 
 pctr)
 	rm -f pctr;
