@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.26 2003/09/29 09:08:19 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.27 2004/01/12 11:35:08 jmc Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -2364,13 +2364,13 @@ xdc_e2str(no)
 	case XD_ERR_RVFY:
 		return ("Read verify");
 	case XD_ERR_VFER:
-		return ("Fatail VMEDMA error");
+		return ("Fatal VMEDMA error");
 	case XD_ERR_VBUS:
 		return ("VMEbus error");
 	case XD_ERR_DFLT:
 		return ("Drive faulted");
 	case XD_ERR_HECY:
-		return ("Header error/cyliner");
+		return ("Header error/cylinder");
 	case XD_ERR_HEHD:
 		return ("Header error/head");
 	case XD_ERR_NOCY:
