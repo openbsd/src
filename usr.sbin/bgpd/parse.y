@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.140 2004/09/28 12:09:31 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.141 2004/10/19 12:02:50 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -139,7 +139,7 @@ typedef struct {
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
-%token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR
+%token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND
 %token	DUMP IN OUT
 %token	LOG ROUTECOLL
 %token	TCP MD5SIG PASSWORD KEY
@@ -740,6 +740,18 @@ peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.reflector_client = 1;
 			conf->clusterid = $2.v4.s_addr;
 		}
+		| DEPEND ON STRING	{
+			if (strlcpy(curpeer->conf.if_depend, $3,
+			    sizeof(curpeer->conf.if_depend)) >=
+			    sizeof(curpeer->conf.if_depend)) {
+				yyerror("interface name \"%s\" too long: "
+				    "max %u", $3,
+				    sizeof(curpeer->conf.if_depend) - 1);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		}
 		;
 
 espah		: ESP		{ $$ = 1; }
@@ -1213,6 +1225,7 @@ lookup(char *s)
 		{ "capabilities",	CAPABILITIES},
 		{ "community",		COMMUNITY},
 		{ "deny",		DENY},
+		{ "depend",		DEPEND},
 		{ "descr",		DESCR},
 		{ "dump",		DUMP},
 		{ "enforce",		ENFORCE},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.63 2004/09/22 08:46:28 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.64 2004/10/19 12:02:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -180,6 +180,7 @@ struct peer {
 	struct msgbuf		 wbuf;
 	struct buf_read		*rbuf;
 	u_int8_t		 auth_established;
+	u_int8_t		 depend_ok;
 	struct peer		*next;
 };
 

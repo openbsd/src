@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.109 2004/09/23 01:55:05 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.110 2004/10/19 12:02:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -544,6 +544,14 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				log_warnx("kroute request not from SE");
 			else
 				kr_show_route(&imsg);
+			break;
+		case IMSG_IFINFO:
+			if (idx != PFD_PIPE_SESSION)
+				log_warnx("IFINFO request not from SE");
+			else if (imsg.hdr.len != IMSG_HEADER_SIZE + IFNAMSIZ)
+				log_warnx("IFINFO request with wrong len");
+			else
+				kr_ifinfo(imsg.data);
 			break;
 		default:
 			break;

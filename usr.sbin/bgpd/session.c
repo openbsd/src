@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.195 2004/10/07 13:39:14 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.196 2004/10/19 12:02:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -533,6 +533,12 @@ init_peer(struct peer *p)
 	p->capa.announce = p->conf.capabilities;
 	p->capa.ann_mp = 1;
 	p->capa.ann_refresh = 1;
+	if (p->conf.if_depend[0])
+		imsg_compose(ibuf_main, IMSG_IFINFO, 0, 0, -1,
+		    p->conf.if_depend, sizeof(p->conf.if_depend));
+	else
+		p->depend_ok = 1;
+
 	peer_cnt++;
 
 	change_state(p, STATE_IDLE, EVNT_NONE);
@@ -570,7 +576,9 @@ bgp_fsm(struct peer *peer, enum session_events event)
 				return;
 			}
 
-			if (peer->conf.passive || peer->conf.template) {
+			if (!peer->depend_ok)
+				peer->ConnectRetryTimer = 0;
+			else if (peer->conf.passive || peer->conf.template) {
 				change_state(peer, STATE_ACTIVE, event);
 				peer->ConnectRetryTimer = 0;
 			} else {
@@ -2019,9 +2027,10 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
 	struct listen_addr	*la, *nla;
+	struct kif		*kif;
 	u_char			*data;
 	enum reconf_action	 reconf;
-	int			 n;
+	int			 n, depend_ok;
 	u_int8_t		 errcode, subcode;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -2160,6 +2169,29 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			nconf = NULL;
 			pending_reconf = 0;
 			log_info("SE reconfigured");
+			break;
+		case IMSG_IFINFO:
+			if (idx != PFD_PIPE_MAIN)
+				fatalx("IFINFO message not from parent");
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct kif))
+				fatalx("IFINFO imsg with wrong len");
+			kif = imsg.data;
+			depend_ok = (kif->flags & IFF_UP) &&
+			    (kif->link_state == LINK_STATE_UP ||
+			    (kif->link_state == LINK_STATE_UNKNOWN &&
+			    strncmp(kif->ifname, "carp", 4)));
+
+			for (p = peers; p != NULL; p = p->next)
+				if (!strcmp(p->conf.if_depend, kif->ifname)) {
+					if (depend_ok && !p->depend_ok) {
+						p->depend_ok = depend_ok;
+						bgp_fsm(p, EVNT_START);
+					} else if (!depend_ok && p->depend_ok) {
+						p->depend_ok = depend_ok;
+						bgp_fsm(p, EVNT_STOP);
+					}
+				}
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:

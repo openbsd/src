@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.30 2004/09/28 12:09:31 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.31 2004/10/19 12:02:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -193,6 +193,8 @@ print_peer(struct peer_config *p, struct bgpd_config *conf)
 			    inet_ntoa(ina));
 		}
 	}
+	if (p->if_depend[0])
+		printf("%s\tdepend on \"%s\"\n", c, p->if_depend);
 
 	if (p->auth.method == AUTH_MD5SIG)
 		printf("%s\ttcp md5sig\n", c);

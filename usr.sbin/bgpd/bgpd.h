@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.144 2004/09/28 12:09:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.145 2004/10/19 12:02:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -222,6 +222,7 @@ struct peer_config {
 	struct peer_auth	 auth;
 	u_int8_t		 capabilities;
 	u_int8_t		 reflector_client;
+	char			 if_depend[IFNAMSIZ];
 	enum reconf_action	 reconf_action;
 };
 
@@ -297,7 +298,8 @@ enum imsg_type {
 	IMSG_CTL_SHOW_RIB_AS,
 	IMSG_CTL_SHOW_RIB_PREFIX,
 	IMSG_CTL_SHOW_NETWORK,
-	IMSG_REFRESH
+	IMSG_REFRESH,
+	IMSG_IFINFO
 };
 
 struct imsg_hdr {
@@ -618,11 +620,11 @@ int		 kr_dispatch_msg(void);
 int		 kr_nexthop_add(struct bgpd_addr *);
 void		 kr_nexthop_delete(struct bgpd_addr *);
 void		 kr_show_route(struct imsg *);
+void		 kr_ifinfo(char *);
 in_addr_t	 prefixlen2mask(u_int8_t);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);
-
 
 /* control.c */
 int	control_init(void);
