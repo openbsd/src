@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.4 2004/12/02 02:20:41 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.5 2005/01/04 02:32:18 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -509,8 +509,19 @@ bce_ioctl(ifp, cmd, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (ifp->if_flags & IFF_RUNNING)
-			bce_set_filter(ifp);
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->bce_ac) :
+		    ether_delmulti(ifr, &sc->bce_ac);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
+			if (ifp->if_flags & IFF_RUNNING)
+				bce_set_filter(ifp);
+			error = 0;
+		}
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
