@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.4 1998/07/13 03:52:12 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.5 1998/09/29 07:22:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -38,18 +38,23 @@
 
 #define	DEFAULT_KERNEL_ADDRESS	0x12000
 
-void pdc_init __P((void));
-void getbinfo __P((void));
+extern dev_t bootdev;
 
-int ctstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+void pdc_init __P((void));
+struct pz_device;
+struct pz_device *pdc_findev __P((int, int));
+
+int iodcstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+
 int ctopen __P((struct open_file *, ...));
 int ctclose __P((struct open_file *));
-int ctioctl __P((struct open_file *, u_long, void *));
 
-int dkstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int dkopen __P((struct open_file *, ...));
 int dkclose __P((struct open_file *));
-int dkioctl __P((struct open_file *, u_long, void *));
+
+int lfopen __P((struct open_file *, ...));
+int lfstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int lfclose __P((struct open_file *));
 
 void ite_probe __P((struct consdev *));
 void ite_init __P((struct consdev *));
@@ -60,6 +65,5 @@ void ite_pollc __P((dev_t, int));
 void machdep __P((void));
 void devboot __P((dev_t, char *));
 void fcacheall __P((void));
-void sync_caches __P((void));
 
 extern int debug;
