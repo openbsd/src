@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.9 1998/12/22 02:09:46 niklas Exp $
-#	$EOM: Makefile,v 1.37 1998/12/22 02:09:14 niklas Exp $
+#	$OpenBSD: Makefile,v 1.10 1999/02/26 03:30:00 niklas Exp $
+#	$EOM: Makefile,v 1.41 1999/02/25 15:53:37 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -34,6 +34,17 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
+#
+# This makefile is a "pmake" one, i.e. the make variant commonly found in
+# BSD derived systems, where it is indeed named "make".  Other systems
+# may provide this make variant as "pmake" or maybe "bsdmake".
+#
+
+OS=		openbsd
+#OS=		linux
+
+.PATH:		${.CURDIR}/sysdep/${OS}
+
 PROG=		isakmpd
 BINDIR?=	/sbin
 SRCS=		app.c asn.c asn_useful.c attribute.c cert.c constants.c \
@@ -41,18 +52,26 @@ SRCS=		app.c asn.c asn_useful.c attribute.c cert.c constants.c \
 		field.c gmp_util.c hash.c if.c ike_auth.c ike_main_mode.c \
 		ike_quick_mode.c init.c ipsec.c ipsec_fld.c ipsec_num.c \
 		isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c log.c \
-		message.c math_2n.c math_ec2n.c math_group.c pf_encap.c \
+		message.c math_2n.c math_ec2n.c math_group.c \
 		pkcs.c prf.c sa.c sysdep.c timer.c transport.c udp.c ui.c \
 		util.c x509.c
+
+# Chose one of the IPSec SADB interfacing choices
+SRCS+=		pf_encap.c
+#SRCS+=		pf_key_v2.c
+#SRCS+=		klips.c
+
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 		isakmp_num.h
 CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_num.c isakmp_num.h ipsec_fld.c ipsec_fld.h \
 		isakmp_fld.c isakmp_fld.h
 MAN=		isakmpd.8 isakmpd.conf.5
-LDADD=		-lgmp -ldes
-DPADD=		${LIBGMP} ${LIBDES}
-CFLAGS+=	-Wall -I. -I${.CURDIR} -DNEED_SYSDEP_APP
+CFLAGS+=	-Wall -DNEED_SYSDEP_APP \
+		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I. \
+
+#If you use PF_KEYv2 do this:
+#CFLAGS+=	-DUSE_PF_KEY_V2
 
 # Different debugging & profiling suggestions
 #
@@ -65,6 +84,8 @@ DEBUG=		-g
 # If you have ElectricFence available, you can spot abuses of the heap.
 #LDADD+=		-L/usr/local/lib -lefence
 #
+
+.include "sysdep/${OS}/Makefile.inc"
 
 .if !make(install)
 SUBDIR=		regress
