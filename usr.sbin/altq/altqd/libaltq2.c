@@ -63,12 +63,8 @@ log_write(int severity, int syserr, const char *format, ...)
 	if (severity <= l_debug) {
 		if (!daemonize) {
 			vfprintf(stderr, format, ap);
-			if (syserr != 0) {
-				if (syserr < sys_nerr)
-					fprintf(stderr, ": %s", sys_errlist[syserr]);
-				else
-					fprintf(stderr, ": errno %d", syserr);
-			}
+			if (syserr != 0)
+				fprintf(stderr, ": %s", strerror(syserr));
 			fprintf(stderr, "\n");
 		} else {
 			if (syserr == 0)
