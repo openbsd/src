@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.39 2000/07/09 01:27:33 ho Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.40 2000/07/10 16:27:05 ho Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -259,7 +259,7 @@ process_config_line(Options *options, const char *host,
 		intptr = &options->forward_agent;
 parse_flag:
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing yes/no argument.", filename, linenum);
 		value = 0;	/* To avoid compiler warning... */
 		if (strcmp(arg, "yes") == 0 || strcmp(arg, "true") == 0)
@@ -345,7 +345,7 @@ parse_flag:
 	case oStrictHostKeyChecking:
 		intptr = &options->strict_host_key_checking;
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing yes/no argument.",
 			      filename, linenum);
 		value = 0;	/* To avoid compiler warning... */
@@ -380,7 +380,7 @@ parse_flag:
 	case oIdentityFile:
 	case oIdentityFile2:
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (*activep) {
 			intptr = (opcode == oIdentityFile) ?
@@ -405,7 +405,7 @@ parse_flag:
 		charptr = &options->user;
 parse_string:
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (*activep && *charptr == NULL)
 			*charptr = xstrdup(arg);
@@ -434,7 +434,7 @@ parse_string:
 	case oProxyCommand:
 		charptr = &options->proxy_command;
 		string = xstrdup("");
-		while ((arg = strsep(&s, WHITESPACE)) != NULL) {
+		while ((arg = strsep(&s, WHITESPACE)) != NULL && *arg != '\0') {
 			string = xrealloc(string, strlen(string) + strlen(arg) + 2);
 			strcat(string, " ");
 			strcat(string, arg);
@@ -449,7 +449,7 @@ parse_string:
 		intptr = &options->port;
 parse_int:
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (arg[0] < '0' || arg[0] > '9')
 			fatal("%.200s line %d: Bad number.", filename, linenum);
@@ -469,7 +469,7 @@ parse_int:
 	case oCipher:
 		intptr = &options->cipher;
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		value = cipher_number(arg);
 		if (value == -1)
@@ -481,7 +481,7 @@ parse_int:
 
 	case oCiphers:
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (!ciphers_valid(arg))
 			fatal("%.200s line %d: Bad SSH2 cipher spec '%s'.",
@@ -493,7 +493,7 @@ parse_int:
 	case oProtocol:
 		intptr = &options->protocol;
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		value = proto_spec(arg);
 		if (value == SSH_PROTO_UNKNOWN)
@@ -516,14 +516,14 @@ parse_int:
 
 	case oRemoteForward:
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (arg[0] < '0' || arg[0] > '9')
 			fatal("%.200s line %d: Badly formatted port number.",
 			      filename, linenum);
 		fwd_port = atoi(arg);
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing second argument.",
 			      filename, linenum);
 		if (sscanf(arg, "%255[^:]:%hu", buf, &fwd_host_port) != 2)
@@ -535,14 +535,14 @@ parse_int:
 
 	case oLocalForward:
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (arg[0] < '0' || arg[0] > '9')
 			fatal("%.200s line %d: Badly formatted port number.",
 			      filename, linenum);
 		fwd_port = atoi(arg);
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing second argument.",
 			      filename, linenum);
 		if (sscanf(arg, "%255[^:]:%hu", buf, &fwd_host_port) != 2)
@@ -554,19 +554,19 @@ parse_int:
 
 	case oHost:
 		*activep = 0;
-		while ((arg = strsep(&s, WHITESPACE)) != NULL)
+		while ((arg = strsep(&s, WHITESPACE)) != NULL && *arg != '\0')
 			if (match_pattern(host, arg)) {
 				debug("Applying options for %.100s", arg);
 				*activep = 1;
 				break;
 			}
-		/* Avoid garbage check below, as strsep already returned NULL. */
+		/* Avoid garbage check below, as strsep is done. */
 		return 0;
 
 	case oEscapeChar:
 		intptr = &options->escape_char;
 		arg = strsep(&s, WHITESPACE);
-		if (!arg)
+		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (arg[0] == '^' && arg[2] == 0 &&
 		    (unsigned char) arg[1] >= 64 && (unsigned char) arg[1] < 128)
