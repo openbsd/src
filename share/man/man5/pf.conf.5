@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.14 2001/09/15 03:54:40 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.15 2001/09/15 14:04:20 jakob Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -138,10 +138,17 @@ Not only the packet that creates state is logged, but all packets of
 the connection.
 .El
 .Pp
-The log messages can be viewed with tcpdump:
+The logged packets are sent to the
+.Em pflog0
+interface. This interfece is monitored by
+.Xr pflogd 8
+logging daemon which dumps the logged packets to the file
+.Em /var/log/pflog
+in
+.Xr tcpdump 8
+binary format. The log files can be read using tcpdump:
 .Bd -literal
-.Cm # ifconfig pflog0 up
-.Cm # tcpdump -n -i pflog0
+.Cm # tcpdump -n -e -ttt -r /var/log/pflog
 .Ed
 .Sh QUICK
 If a packet matches a rule which has the 
@@ -440,7 +447,8 @@ pass in on kue0 proto tcp from any to any port { ssh, smtp, domain, auth } keep 
 .Xr pf 4 ,
 .Xr nat.conf 5 ,
 .Xr services 5 ,
-.Xr pfctl 8
+.Xr pfctl 8 ,
+.Xr pflogd 8
 .Pp
 .Pa http://www.obfuscation.org/ipf/
 has an extensive filter rule tutorial which for the most part applies to
