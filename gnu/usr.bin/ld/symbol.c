@@ -1,5 +1,5 @@
+/* * $OpenBSD: symbol.c,v 1.2 1998/03/26 19:46:26 niklas Exp $	- symbol table routines*/
 /*
- * $Id: symbol.c,v 1.1.1.1 1995/10/18 08:40:55 deraadt Exp $	- symbol table routines
  */
 
 /* Create the symbol table entries for `etext', `edata' and `end'.  */

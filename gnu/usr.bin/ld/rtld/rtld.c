@@ -1,3 +1,4 @@
+/*	$OpenBSD: rtld.c,v 1.9 1998/03/26 19:47:29 niklas Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg

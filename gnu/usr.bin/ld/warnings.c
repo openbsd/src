@@ -1,5 +1,5 @@
+/* * $OpenBSD: warnings.c,v 1.3 1998/03/26 19:46:29 niklas Exp $*/
 /*
- * $Id: warnings.c,v 1.2 1997/07/08 09:34:58 deraadt Exp $
  */
 
 #include <sys/param.h>

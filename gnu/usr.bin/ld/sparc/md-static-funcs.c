@@ -1,6 +1,6 @@
+/* *	$OpenBSD: md-static-funcs.c,v 1.2 1998/03/26 19:47:32 niklas Exp $*/
 
 /*
- *	$Id: md-static-funcs.c,v 1.1.1.1 1995/10/18 08:40:58 deraadt Exp $
  *
  * Simple SPARC relocations for the benefit of self-relocation of ld.so
  * avoiding the use of global variables (ie. reloc_bitshift[] et. al.).

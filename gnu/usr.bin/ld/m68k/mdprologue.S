@@ -1,3 +1,4 @@
+/* *	$OpenBSD: mdprologue.S,v 1.2 1998/03/26 19:47:03 niklas Exp $*/
 /*
  * Copyright (c) 1993 Paul Mackerras
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.1.1.1 1995/10/18 08:40:57 deraadt Exp $
  */
 
 /*
