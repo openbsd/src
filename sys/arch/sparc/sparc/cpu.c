@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.26 2000/02/21 14:56:04 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.27 2000/02/21 14:57:04 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -937,7 +937,6 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
-	printf("warning: hypersparc support still under construction\n");
 
 	replacemul();
 }
