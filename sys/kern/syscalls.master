@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.31 1998/09/17 20:54:04 art Exp $
+;	$OpenBSD: syscalls.master,v 1.32 1998/11/18 01:14:25 art Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -421,7 +421,7 @@
 218	UNIMPL
 219	UNIMPL
 #endif	/* !LKM */
-; System calls 220-240 are reserved for use by NetBSD
+; System calls 220-240 are reserved for use by OpenBSD
 #ifdef SYSVSEM
 220	STD		{ int sys___osemctl(int semid, int semnum, int cmd, \
 			    union semun *arg); }
@@ -496,12 +496,18 @@
 #ifdef SYSVSEM
 257	STD		{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union semun *arg); }
+#else
+257	UNIMPL
 #endif
 #ifdef SYSVSHM
 258	STD		{ int sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds *buf); }
+#else
+258	UNIMPL
 #endif
 #ifdef SYSVMSG
 259	STD		{ int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
+#else
+259	UNIMPL
 #endif
