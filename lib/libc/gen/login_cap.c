@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.15 2002/12/15 13:27:06 henning Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.16 2003/03/31 15:47:03 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -685,57 +685,82 @@ setusercontext(lc, pwd, uid, flags)
 	return (0);
 }
 
+/*
+ * Look up "path" for this user in login.conf and replace whitespace
+ * with ':' and "~/" with "$HOME/" at the beginning of entries.  Sets
+ * the PATH environment variable to the result or _PATH_DEFPATH on error.
+ */
 static int
 setuserpath(lc, home)
 	login_cap_t *lc;
 	char *home;
 {
-	int hlen, plen, error;
-	int cnt = 0;
-	char *path;
-	char *p, *savep;
-	char *q, *saveq = NULL;
+	size_t psize, n;
+	char *p, *path, *opath, *dst, *dend, *tmp, last;
+	int cnt, error;
 
-	hlen = strlen(home);
+	dst = path = NULL;
+	if ((opath = login_getcapstr(lc, "path", NULL, NULL)) == NULL)
+		goto done;
 
-	if ((savep = p = path = login_getcapstr(lc, "path", NULL, NULL))) {
-		while (*p)
-			if (*p++ == '~')
-				++cnt;
-		plen = (p - path) + cnt * (hlen + 1) + 1;
-		p = path;
-		if ((saveq = q = path = malloc(plen))) {
-			while (*p) {
-				p += strspn(p, " \t");
-				if (*p == '\0')
-					break;
-				plen = strcspn(p, " \t");
-				if (hlen == 0 && *p == '~') {
-					p += plen;
-					continue;
-				}
-				if (q != path)
-					*q++ = ':';
-				if (*p == '~') {
-					strcpy(q, home);
-					q += hlen;
-					++p;
-					--plen;
-				}
-				memcpy(q, p, plen);
-				p += plen;
-				q += plen;
+	/* Count the number of entries that begin with "~/" or consist of "~" */
+	for (p = opath, cnt = 0, last = ' '; *p != '\0'; last = *p++) {
+		if (p[0] == '~' && (last == ' ' || last == '\t')) {
+			switch (p[1]) {
+			case '/':
+				p++;
+				/* FALLTHROUGH */
+			case ' ':
+			case '\t':
+			case '\0':
+				cnt++;
+				break;
 			}
-			*q = '\0';
 		}
 	}
-	error = setenv("PATH", path ? path : _PATH_DEFPATH, 1);
-	
-	if (savep)
-		free(savep);
-	if (saveq)
-		free(saveq);
 
+	/* The '~' in opath counts against strlen(home), hence the decrement. */
+	psize = (p - opath) + (cnt * (strlen(home) - 1)) + 1;
+	if ((dst = path = malloc(psize)) == NULL)
+		goto done;
+
+	/* Copy path elements from opath into path, expanding ~ as we go. */
+	dend = dst + psize;
+	for (tmp = opath; (p = strsep(&tmp, " \t")) != NULL; ) {
+		if (*p == '\0')
+			continue;
+		if (p[0] == '~' && (p[1] == '/' || p[1] == '\0')) {
+			n = strlcpy(dst, home, dend - dst);
+			if (n >= dend - dst) {
+				dst = path;
+				goto done;
+			}
+			dst += n;
+			p++;
+		}
+		if ((n = strlcpy(dst, p, dend - dst)) >= dend - dst) {
+			dst = path;
+			goto done;
+		}
+		dst += n;
+		*dst++ = ':';
+	}
+	if (dst != path)
+		*--dst = '\0';		/* replace trailing ':' w/ a NUL */
+
+	/*
+	 * Possible exit states:
+	 *	error: path == NULL, opath == NULL, dst == NULL
+	 *	error: path == NULL, opath != NULL, dst == NULL
+	 *	error: path != NULL, opath != NULL, dst == path
+	 *	good:  path != NULL, opath != NULL, dst != path
+	 */
+done:
+	error = setenv("PATH", (path != dst) ? path : _PATH_DEFPATH, 1);
+	if (opath != NULL)
+		free(opath);
+	if (path != opath)
+		free(path);
 	return (error);
 }
 
