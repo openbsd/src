@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.1 1999/11/20 11:22:54 matthieu Exp $ */
+/* $OpenBSD: memconfig.c,v 1.2 1999/12/05 06:32:56 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -224,7 +224,8 @@ setfunc(memfd, argc, argv)
 				help("set");
 			break;
 		case 'o':
-			if ((*optarg == 0) || (strlen(optarg) > 7))
+			if (*optarg == 0 ||
+			    strlen(optarg) > sizeof(mrd.mr_owner)-1)
 				help("set");
 			strcpy(mrd.mr_owner, optarg);
 			break;
