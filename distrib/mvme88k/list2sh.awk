@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.1 1998/12/17 02:16:30 smurph Exp $
+#	$OpenBSD: list2sh.awk,v 1.2 2001/08/29 15:01:17 krw Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -20,10 +20,8 @@ $1 == "LINK" {
 }
 $1 == "SPECIAL" {
 	printf("echo '%s'\n", $0);
-	printf("(cd ${TARGDIR};");
-	for (i = 2; i <= NF; i++)
-		printf(" %s", $i);
-	printf(")\n");
+	sub(/^[ \t]*SPECIAL[ \t]*/, "");
+	printf("(cd ${TARGDIR}; %s)\n", $0);
 	next;
 }
 {

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.23 2001/06/26 23:50:38 drahn Exp $
+#	$OpenBSD: list,v 1.24 2001/08/29 15:01:17 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -97,7 +97,7 @@ COPY    ${TOPDIR}/common/termcap.vt        usr/share/misc/termcap
 
 # and the installation tools
 COPY	dot.profile			.profile
-SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/install.md > install.md
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/install.md > install.md
 COPY	${CURDIR}/../../miniroot/install.sh		install
 COPY	${CURDIR}/../../miniroot/upgrade.sh		upgrade
 #SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/install.sub > install.sub

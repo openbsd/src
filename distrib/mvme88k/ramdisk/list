@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2001/06/23 19:44:50 deraadt Exp $
+#	$OpenBSD: list,v 1.6 2001/08/29 15:01:17 krw Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -86,7 +86,7 @@ LINK    sbin/init                 	usr/bin/vi
 COPY	dot.profile			.profile
 COPY	dot.instutils			.instutils
 COPY	install.sh			install
-SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/install.md > install.md
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/install.md > install.md
 COPY	install.sub			install.sub
 COPY	disktab.shadow			etc/disktab.shadow
 COPY    ${DESTDIR}/usr/mdec/installboot usr/mdec

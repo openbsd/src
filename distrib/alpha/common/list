@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.2 2001/06/23 19:44:34 deraadt Exp $
+#	$OpenBSD: list,v 1.3 2001/08/29 15:01:17 krw Exp $
 
 # we strip comments from files since we need the space...
 
@@ -6,10 +6,10 @@
 #SPECIAL sed -e '/^#[ 	].*$/d' < ${CURDIR}/../common/disktab.preinstall > etc/disktab.preinstall
 
 # and the installation tools
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../common/dot.profile > .profile
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../common/disktab.shadow > etc/disktab.shadow
-SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sub > install.sub
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
-SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/../common/install.md > install.md
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../common/dot.profile > .profile
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../common/disktab.shadow > etc/disktab.shadow
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../miniroot/install.sh > install
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/../common/install.md > install.md
 SPECIAL	chmod 755 install
 #SPECIAL chmod 755 upgrade
