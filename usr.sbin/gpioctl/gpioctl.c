@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.1 2004/06/03 19:13:24 grange Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.2 2004/08/08 00:05:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -142,7 +142,7 @@ pinread(int pin)
 	op.gp_pin = pin;
 	if (ioctl(devfd, GPIOPINREAD, &op) == -1)
 		err(1, "GPIOPINREAD");
-	
+
 	if (quiet)
 		return;
 
@@ -222,9 +222,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage:\t%s [-hq] [-d device] [pin] [0 | 1 | 2]\n",
+	fprintf(stderr, "usage: %s [-hq] [-d device] [pin] [0 | 1 | 2]\n",
 	    __progname);
-	fprintf(stderr, "\t%s [-hq] [-d device] -c pin [flags]\n",
+	fprintf(stderr, "       %s [-hq] [-d device] -c pin [flags]\n",
 	    __progname);
 
 	exit(1);

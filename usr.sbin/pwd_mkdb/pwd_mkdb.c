@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.37 2003/06/28 20:37:29 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.38 2004/08/08 00:05:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static const char rcsid[] = "$OpenBSD: pwd_mkdb.c,v 1.37 2003/06/28 20:37:29 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pwd_mkdb.c,v 1.38 2004/08/08 00:05:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	if (argc != 1 || (makeold && secureonly) ||
 	    (username && (*username == '+' || *username == '-')))
 		usage();
-	
+
 	if ((grp = getgrnam(SHADOW_GROUP)) == NULL)
 		errx(1, "cannot find `%s' in the group database, aborting",
 		    SHADOW_GROUP);
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	if (st.st_size / 128 > openinfo.nelem)
 		openinfo.nelem = st.st_size / 128;
 
-        /* If only updating a single record, stash the old uid */
+	/* If only updating a single record, stash the old uid */
 	if (username) {
 		dp = dbopen(_PATH_MP_DB, O_RDONLY, 0, DB_HASH, NULL);
 		if (dp == NULL)
@@ -381,11 +381,9 @@ fmt:		errno = EFTYPE;	/* XXX */
 	return (1);
 }
 
-void                    
-cp(from, to, mode)              
-	char *from, *to;
-	mode_t mode;    
-{               
+void
+cp(char *from, char *to, mode_t mode)
+{
 	static char buf[MAXBSIZE];
 	int from_fd, rcount, to_fd, wcount;
 
@@ -413,8 +411,7 @@ cp(from, to, mode)
 }
 
 void
-mv(from, to)
-	char *from, *to;
+mv(char *from, char *to)
 {
 	char buf[MAXPATHLEN * 2];
 
@@ -428,8 +425,7 @@ mv(from, to)
 }
 
 void
-error(name)
-	char *name;
+error(char *name)
 {
 
 	warn("%s", name);
@@ -438,8 +434,7 @@ error(name)
 }
 
 void
-errorx(name)
-	char *name;
+errorx(char *name)
 {
 
 	warnx("%s", name);
@@ -496,13 +491,12 @@ void
 db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 	 int keytype, char *username, uid_t olduid)
 {
-	int flags = 0;
-	int dbmode, found = 0;
-	u_int cnt;
 	char *p, *t, buf[LINE_MAX * 2], tbuf[1024];
+	int flags = 0, dbmode, found = 0;
+	static int firsttime = 1;
 	DBT data, key;
 	size_t len;
-	static int firsttime = 1;
+	u_int cnt;
 
 	/* If given a username just add that record to the existing db. */
 	dbmode = username ? 0 : R_NOOVERWRITE;
