@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 1997/05/29 18:27:53 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.23 1997/06/06 03:44:47 kstailey Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -94,8 +94,8 @@ install:
 	cp ${FS} ${DESTDIR}/snapshot/${FS}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib -c ${CBIN} \
-	${CRUNCHCONF}
+	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
+	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
@@ -105,15 +105,9 @@ do_files:
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 
-.if (${KERBEROS} == "yes")
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs rdsetroot
-.else
-clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}-nokrb.mk ${CBIN}-nokrb.cache \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs rdsetroot
-.endif
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
