@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipsend.1,v 1.5 2000/08/23 03:17:32 ericj Exp $
+.\"     $OpenBSD: ipsend.1,v 1.6 2000/08/23 03:19:39 ericj Exp $
 .Dd August 22, 2000
 .Dt IPSEND 1
 \!\" Originally by Darren Reed <darrenr@cyber.com.au>
@@ -8,16 +8,16 @@
 .Nd sends IP packets
 .Sh SYNOPSIS
 .Nm ipsend
-.Op Ar dITUv
-.Op Ar i interface
-.Op Ar f offset
-.Op Ar g gateway
-.Op Ar m MTU
-.Op Ar o option
-.Op Ar P protocol
-.Op Ar s source
-.Op Ar t dest port
-.Op Ar w window
+.Op Ar -dITUv
+.Op Ar -i interface
+.Op Ar -f offset
+.Op Ar -g gateway
+.Op Ar -m MTU
+.Op Ar -o option
+.Op Ar -P protocol
+.Op Ar -s source
+.Op Ar -t dest port
+.Op Ar -w window
 .Op destination
 .Op TCP-flags
 .Sh DESCRIPTION
