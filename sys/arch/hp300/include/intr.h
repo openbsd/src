@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2001/11/23 00:47:39 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 2001/12/17 01:13:07 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -151,7 +151,7 @@ extern	unsigned short hp300_impipl;
 #define	splimp()		_splraise(hp300_impipl)
 #define	splclock()		spl6()
 #define	splstatclock()		spl6()
-#define	splvm()			spl6()
+#define	splvm()			splimp()
 #define	splhigh()		spl7()
 
 /* watch out for side effects */
