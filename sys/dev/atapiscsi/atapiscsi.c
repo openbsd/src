@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.44 2001/06/25 22:29:20 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.45 2001/06/25 22:31:29 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -584,18 +584,6 @@ wdc_atapi_the_poll_machine(chp, xfer)
 		if (retargs.timeout != -1) {
 			current_timeout = retargs.timeout;
 			idx = 0;
-		}
-
-		if (cold && retargs.expect_irq == 1) {
-			xfer->endticks = 0;
-			chp->ch_flags |= WDCF_IRQ_WAIT;
-			while (xfer->endticks == 0 && 
-			    (current_timeout * 1000) <= idx) {
-				delay(1000);
-				idx += 1000;
-			}
-			chp->ch_flags &= ~WDCF_IRQ_WAIT;
-			continue;
 		}
 
 		if (retargs.delay != 0) {
