@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whatis.1,v 1.11 2003/06/10 09:12:12 jmc Exp $
+.\"	$OpenBSD: whatis.1,v 1.12 2003/07/07 09:11:41 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
 .Nd describe what a command is
 .Sh SYNOPSIS
 .Nm whatis
+.Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
 .Ar command Op Ar ...
@@ -95,16 +96,21 @@ may be overridden by specifying a path in the
 environment variable.
 .El
 .Sh FILES
-.Bl -tag -width whatis.db
+.Bl -tag -width "/etc/man.conf" -compact
 .It Pa whatis.db
 name of the whatis database
+.It Pa /etc/man.conf
+default
+.Xr man 1
+configuration file
 .El
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr man 1 ,
 .Xr whereis 1 ,
 .Xr which 1 ,
-.Xr man.conf 5
+.Xr man.conf 5 ,
+.Xr makewhatis 8
 .Sh HISTORY
 The
 .Nm
