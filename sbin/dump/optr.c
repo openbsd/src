@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.4 1996/06/23 14:30:11 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.5 1996/08/05 11:51:16 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.4 1996/06/23 14:30:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.5 1996/08/05 11:51:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -269,13 +269,13 @@ static void
 sendmes(tty, message)
 	char *tty, *message;
 {
-	char t[50], buf[BUFSIZ];
+	char t[MAXPATHLEN], buf[BUFSIZ];
 	register char *cp;
 	int lmsg = 1;
 	FILE *f_tty;
 
 	(void) strcpy(t, _PATH_DEV);
-	(void) strcat(t, tty);
+	(void) strncat(t, sizeof t, tty);
 
 	if ((f_tty = fopen(t, "w")) != NULL) {
 		setbuf(f_tty, buf);
