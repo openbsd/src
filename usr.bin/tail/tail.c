@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.4 1997/01/15 23:43:18 millert Exp $	*/
+/*	$OpenBSD: tail.c,v 1.5 1999/02/03 02:09:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tail.c,v 1.4 1997/01/15 23:43:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: tail.c,v 1.5 1999/02/03 02:09:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -158,7 +158,7 @@ main(argc, argv)
 	 * If style not specified, the default is the whole file for -r, and
 	 * the last 10 lines if not -r.
 	 */
-	if (style == NOTSET)
+	if (style == NOTSET) {
 		if (rflag) {
 			off = 0;
 			style = REVERSE;
@@ -166,6 +166,7 @@ main(argc, argv)
 			off = 10;
 			style = RLINES;
 		}
+	}
 
 	if (*argv)
 		for (first = 1; (fname = *argv++);) {

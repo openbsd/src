@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.3 1997/01/12 23:43:06 millert Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.4 1999/02/03 02:09:30 millert Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.3 1997/01/12 23:43:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.4 1999/02/03 02:09:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ static char rcsid[] = "$OpenBSD: reverse.c,v 1.3 1997/01/12 23:43:06 millert Exp
 #include "extern.h"
 
 static void r_buf __P((FILE *));
-static void r_reg __P((FILE *, enum STYLE, long, struct stat *));
+static int r_reg __P((FILE *, enum STYLE, long, struct stat *));
 
 /*
  * reverse -- display input in reverse order by line.
@@ -89,9 +89,7 @@ reverse(fp, style, off, sbp)
 	if (style != REVERSE && off == 0)
 		return;
 
-	if (S_ISREG(sbp->st_mode))
-		r_reg(fp, style, off, sbp);
-	else
+	if (!S_ISREG(sbp->st_mode) || r_reg(fp, style, off, sbp) != 0)
 		switch(style) {
 		case FBYTES:
 		case RBYTES:
@@ -110,7 +108,7 @@ reverse(fp, style, off, sbp)
 /*
  * r_reg -- display a regular file in reverse order by line.
  */
-static void
+static int
 r_reg(fp, style, off, sbp)
 	FILE *fp;
 	register enum STYLE style;
@@ -123,18 +121,14 @@ r_reg(fp, style, off, sbp)
 	char *start;
 
 	if (!(size = sbp->st_size))
-		return;
+		return (0);
 
-	if (size > SIZE_T_MAX) {
-		errx(0, "%s: %s", fname, strerror(EFBIG));
-		return;
-	}
+	if (size > SIZE_T_MAX)
+		return (1);
 
-	if ((start = mmap(NULL, (size_t)size,
-	    PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1) {
-		errx(0, "%s: %s", fname, strerror(EFBIG));
-		return;
-	}
+	if ((start = mmap(NULL, (size_t)size, PROT_READ, 0, fileno(fp),
+	    (off_t)0)) == (caddr_t)-1)
+		return (1);
 	p = start + size - 1;
 
 	if (style == RBYTES && off < size)
@@ -153,7 +147,9 @@ r_reg(fp, style, off, sbp)
 	if (llen)
 		WR(p, llen);
 	if (munmap(start, (size_t)sbp->st_size))
-		err(0, fname);
+		ierr();
+
+	return (0);
 }
 
 typedef struct bf {

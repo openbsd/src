@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:51:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1999/02/03 02:09:30 millert Exp $
 
 PROG=	tail
-SRCS=	forward.c read.c reverse.c tail.c
+SRCS=	forward.c misc.c read.c reverse.c tail.c
 
 .include <bsd.prog.mk>

@@ -1,9 +1,11 @@
-/*	$OpenBSD: extern.h,v 1.4 1999/02/03 02:09:30 millert Exp $	*/
-/*	$NetBSD: extern.h,v 1.3 1994/11/23 07:42:00 jtc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1999/02/03 02:09:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Edward Sze-Tyan Wang.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,24 +34,37 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-#define	WR(p, size) \
-	if (write(STDOUT_FILENO, p, size) != size) \
-		oerr();
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1999/02/03 02:09:30 millert Exp $";
+#endif
+#endif /* not lint */
 
-enum STYLE { NOTSET = 0, FBYTES, FLINES, RBYTES, RLINES, REVERSE };
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <err.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "extern.h"
 
-void forward __P((FILE *, enum STYLE, long, struct stat *));
-void reverse __P((FILE *, enum STYLE, long, struct stat *));
+void
+ierr()
+{
 
-void bytes __P((FILE *, off_t));
-void lines __P((FILE *, off_t));
+	warn("%s", fname);
+	rval = 1;
+}
 
-void ierr __P((void));
-void oerr __P((void));
+void
+oerr()
+{
 
-extern int fflag, rflag, rval;
-extern char *fname;
+	err(1, "stdout");
+}

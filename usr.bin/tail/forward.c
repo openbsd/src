@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.6 1997/05/30 19:33:44 millert Exp $	*/
+/*	$OpenBSD: forward.c,v 1.7 1999/02/03 02:09:30 millert Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.6 1997/05/30 19:33:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.7 1999/02/03 02:09:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ static char rcsid[] = "$OpenBSD: forward.c,v 1.6 1997/05/30 19:33:44 millert Exp
 
 #include "extern.h"
 
-static void rlines __P((FILE *, long, struct stat *));
+static int rlines __P((FILE *, long, struct stat *));
 
 /*
  * forward -- display the file, from an offset, forward.
@@ -136,7 +136,8 @@ forward(fp, style, off, sbp)
 				return;
 			}
 		} else if (off == 0) {
-			while (getc(fp) != EOF);
+			while (getc(fp) != EOF)
+				;
 			if (ferror(fp)) {
 				ierr();
 				return;
@@ -145,16 +146,17 @@ forward(fp, style, off, sbp)
 			bytes(fp, off);
 		break;
 	case RLINES:
-		if (S_ISREG(sbp->st_mode))
+		if (S_ISREG(sbp->st_mode)) {
 			if (!off) {
 				if (fseek(fp, 0L, SEEK_END) == -1) {
 					ierr();
 					return;
 				}
-			} else
-				rlines(fp, off, sbp);
-		else if (off == 0) {
-			while (getc(fp) != EOF);
+			} else if (rlines(fp, off, sbp) != 0)
+				lines(fp, off);
+		} else if (off == 0) {
+			while (getc(fp) != EOF)
+				;
 			if (ferror(fp)) {
 				ierr();
 				return;
@@ -199,7 +201,7 @@ forward(fp, style, off, sbp)
 /*
  * rlines -- display the last offset lines of the file.
  */
-static void
+static int
 rlines(fp, off, sbp)
 	FILE *fp;
 	long off;
@@ -210,18 +212,14 @@ rlines(fp, off, sbp)
 	char *start;
 
 	if (!(size = sbp->st_size))
-		return;
+		return (0);
 
-	if (size > SIZE_T_MAX) {
-		errx(0, "%s: %s", fname, strerror(EFBIG));
-		return;
-	}
+	if (size > SIZE_T_MAX)
+		return (1);
 
-	if ((start = mmap(NULL, (size_t)size,
-	    PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1) {
-		errx(0, "%s: %s", fname, strerror(EFBIG));
-		return;
-	}
+	if ((start = mmap(NULL, (size_t)size, PROT_READ, 0, fileno(fp),
+	    (off_t)0)) == (caddr_t)-1)
+		return (1);
 
 	/* Last char is special, ignore whether newline or not. */
 	for (p = start + size - 1; --size;)
@@ -235,10 +233,12 @@ rlines(fp, off, sbp)
 	WR(p, size);
 	if (fseek(fp, (long)sbp->st_size, SEEK_SET) == -1) {
 		ierr();
-		return;
+		return (1);
 	}
 	if (munmap(start, (size_t)sbp->st_size)) {
-		err(0, fname);
-		return;
+		ierr();
+		return (1);
 	}
+
+	return (0);
 }
