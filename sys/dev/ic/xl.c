@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.26 2001/07/02 01:28:21 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.27 2001/08/03 23:31:52 chris Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2499,6 +2499,16 @@ xl_attach(sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, XL_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+#if NVLAN > 0
+	if (sc->xl_type == XL_TYPE_905B)
+		ifp->if_capabilities = IFCAP_VLAN_MTU;
+	/*
+	 * XXX
+	 * Do other cards filter large packets or simply pass them through?
+	 * Apparently only the 905B has the capability to set a larger size.
+ 	 */
+#endif
 
 	XL_SEL_WIN(3);
 	sc->xl_media = CSR_READ_2(sc, XL_W3_MEDIA_OPT);
