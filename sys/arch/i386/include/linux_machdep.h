@@ -86,7 +86,7 @@ dev_t linux_fakedev __P((dev_t));
  * ugly patch to fake device numbers.
  */
 #define LINUX_CONS_MAJOR   4
-#define NETBSD_CONS_MAJOR 12
+#define NATIVE_CONS_MAJOR 12
 
 /*
  * Linux ioctl calls for the keyboard.

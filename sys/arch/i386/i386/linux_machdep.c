@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.10 1997/02/01 21:53:20 deraadt Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.11 1998/02/08 08:32:34 deraadt Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -416,7 +416,7 @@ linux_fakedev(dev)
 	dev_t dev;
 {
 
-	if (major(dev) == NETBSD_CONS_MAJOR)
+	if (major(dev) == NATIVE_CONS_MAJOR)
 		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 	return dev;
 }
