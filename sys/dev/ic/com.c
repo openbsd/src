@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.53 1999/11/28 12:26:05 downsj Exp $	*/
+/*	$OpenBSD: com.c,v 1.54 2000/01/11 04:08:45 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -406,7 +406,7 @@ comattach(parent, self, aux)
 			/* No console support! */
 			ioh = ia->ia_ioh;
 		} else {
-	       		if (iobase != comconsaddr) {
+			if (iobase != comconsaddr) {
 				if (bus_space_map(iot, iobase, COM_NPORTS, 0,
 				    &ioh))
 					panic("comattach: io mapping failed");
@@ -786,14 +786,14 @@ comopen(dev, flag, mode, p)
 			bus_space_handle_t hayespioh = sc->sc_hayespioh;
 
 			bus_space_write_1(iot, ioh, com_fifo,
-			     FIFO_DMA_MODE|FIFO_ENABLE|
-			     FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_8);
+			    FIFO_DMA_MODE|FIFO_ENABLE|
+			    FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_8);
 
 			/* Set 16550 compatibility mode */
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETMODE);
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, 
-			     HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
-			     HAYESP_MODE_SCALE);
+			    HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
+			    HAYESP_MODE_SCALE);
 
 			/* Set RTS/CTS flow control */
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETFLOWTYPE);
@@ -803,13 +803,13 @@ comopen(dev, flag, mode, p)
 			/* Set flow control levels */
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETRXFLOW);
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, 
-			     HAYESP_HIBYTE(HAYESP_RXHIWMARK));
+			    HAYESP_HIBYTE(HAYESP_RXHIWMARK));
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_LOBYTE(HAYESP_RXHIWMARK));
+			    HAYESP_LOBYTE(HAYESP_RXHIWMARK));
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_HIBYTE(HAYESP_RXLOWMARK));
+			    HAYESP_HIBYTE(HAYESP_RXLOWMARK));
 			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_LOBYTE(HAYESP_RXLOWMARK));
+			    HAYESP_LOBYTE(HAYESP_RXLOWMARK));
 		} else
 #endif
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
@@ -892,7 +892,7 @@ comopen(dev, flag, mode, p)
 			}
 		} else {
 			while (sc->sc_cua ||
-			       (!ISSET(tp->t_cflag, CLOCAL) &&
+			    (!ISSET(tp->t_cflag, CLOCAL) &&
 				!ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
 				error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
@@ -1669,7 +1669,7 @@ ohfudge:
  */
 #include <dev/cons.h>
 
-#ifdef arc
+#if defined(arc) || defined(hppa)
 #undef CONADDR
 	extern int CONADDR;
 #endif
@@ -1679,14 +1679,14 @@ comcnprobe(cp)
 	struct consdev *cp;
 {
 	/* XXX NEEDS TO BE FIXED XXX */
-#ifdef arc
+#if defined(arc)
 	bus_space_tag_t iot = &arc_bus_io;
-#else
-#ifdef powerpc
+#elif defined(powerpc)
 	bus_space_tag_t iot = &ppc_isa_io;
+#elif defined(hppa)
+	bus_space_tag_t iot = &hppa_bustag;
 #else
-        bus_space_tag_t iot = 0;
-#endif   
+	bus_space_tag_t iot = 0;
 #endif
 	bus_space_handle_t ioh;
 	int found;
