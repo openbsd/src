@@ -31,10 +31,9 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/6/93
- *	$Id: pathnames.h,v 1.1.1.1 1995/10/18 08:47:33 deraadt Exp $
+ *	$Id: pathnames.h,v 1.2 1996/09/16 02:19:38 millert Exp $
  */
 
 #include <paths.h>
 
-#undef _PATH_TMP
-#define	_PATH_TMP	"/tmp/EdP.aXXXXX"
+#define	_PATH_TMPFILE	"/tmp/EdP.aXXXXX"
