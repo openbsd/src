@@ -1,0 +1,61 @@
+.\" $OpenBSD: ntpd.8,v 1.1 2004/05/31 13:59:55 henning Exp $
+.\"
+.\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER IN
+.\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 31, 2004
+.Dt NTPD 8
+.Os
+.Sh NAME
+.Nm ntpd
+.Nd "Network Time Protocol daemon"
+.Sh SYNOPSIS
+.Nm ntpd
+.Bk -words
+.Op Fl d
+.Op Fl f Ar file
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+daemon implements the Simple Network Time Protocol version 4 as described
+in RFC 2030.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Do not daemonize and log to
+.Em stderr .
+.It Fl f Ar file
+Specify an alternate location,
+.Ar file ,
+for the configuration file.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/ntpd.conf" -compact
+.It Pa /etc/ntpd.conf
+.Nm
+configuration file.
+.El
+.Sh SEE ALSO
+.Xr ntpd.conf 5
+.Rs
+.%R RFC 2030
+.%T "Simple Network Time Protocol (SNTP) Version 4"
+.%D October 1996
+.Re
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 3.6 .

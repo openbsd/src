@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/05/31 13:46:16 henning Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/05/31 13:59:55 henning Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -10,6 +10,6 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 YFLAGS=
-NOMAN=
+MAN=	ntpd.8
 
 .include <bsd.prog.mk>
