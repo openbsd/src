@@ -4024,12 +4024,12 @@
 ./usr/src
 ./var
 ./var/account
-./var/cron/atjobs
 ./var/audit
 ./var/authpf
 ./var/backups
 ./var/crash
 ./var/cron
+./var/cron/atjobs
 ./var/cron/tabs
 ./var/db
 ./var/db/ns

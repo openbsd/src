@@ -1,14 +1,6 @@
 ./usr/share/doc/html
 ./usr/share/doc/html/bind
 ./usr/share/doc/html/curses
-./usr/share/doc/smm/11.timedop/Makefile
-./usr/share/doc/smm/11.timedop/timed.ms
-./usr/share/doc/smm/12.timed/Makefile
-./usr/share/doc/smm/12.timed/date
-./usr/share/doc/smm/12.timed/loop
-./usr/share/doc/smm/12.timed/time
-./usr/share/doc/smm/12.timed/timed.ms
-./usr/share/doc/smm/12.timed/unused
 ./usr/share/info/amdref.info
 ./usr/share/info/amdref.info-1
 ./usr/share/info/amdref.info-2

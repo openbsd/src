@@ -201,7 +201,15 @@
 ./usr/share/doc/smm/09.sendmail/Makefile
 ./usr/share/doc/smm/09.sendmail/intro.me
 ./usr/share/doc/smm/11.timedop
+./usr/share/doc/smm/11.timedop/Makefile
+./usr/share/doc/smm/11.timedop/timed.ms
 ./usr/share/doc/smm/12.timed
+./usr/share/doc/smm/12.timed/Makefile
+./usr/share/doc/smm/12.timed/date
+./usr/share/doc/smm/12.timed/loop
+./usr/share/doc/smm/12.timed/time
+./usr/share/doc/smm/12.timed/timed.ms
+./usr/share/doc/smm/12.timed/unused
 ./usr/share/doc/smm/13.amd
 ./usr/share/doc/smm/14.uucpimpl
 ./usr/share/doc/smm/15.uucpnet
