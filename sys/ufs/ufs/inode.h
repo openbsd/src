@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.15 2001/06/23 02:07:56 csapuntz Exp $	*/
+/*	$OpenBSD: inode.h,v 1.16 2001/07/04 06:10:50 angelos Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -55,20 +55,6 @@ struct ext2fs_inode_ext {
        ufs_daddr_t ext2fs_last_lblk; /* last logical block allocated */
        ufs_daddr_t ext2fs_last_blk; /* last block allocated on disk */
 };
-
-struct inode_vtbl {
-	int (* iv_truncate)(struct inode *, off_t, int, 
-	    struct ucred *);
-	int (* iv_update)(struct inode *, struct timespec *, struct timespec *,
-	    int waitfor);
-	int (* iv_inode_alloc)(struct inode *, int mode, 
-	    struct ucred *, struct vnode **);
-	int (* iv_inode_free)(struct inode *, ino_t ino, int mode);
-	int (* iv_buf_alloc)(struct inode *, off_t, int, struct ucred *,
-	    int, struct buf **);
-	int (* iv_bufatoff)(struct inode *, off_t offset, char **res,
-	    struct buf **bpp);
-} *vtbl;
 
 /*
  * The inode is used to describe each active (or recently active) file in the
@@ -131,6 +117,20 @@ struct inode {
 	} i_din;
 
 	struct inode_vtbl *i_vtbl;
+};
+
+struct inode_vtbl {
+	int (* iv_truncate)(struct inode *, off_t, int, 
+	    struct ucred *);
+	int (* iv_update)(struct inode *, struct timespec *, struct timespec *,
+	    int waitfor);
+	int (* iv_inode_alloc)(struct inode *, int mode, 
+	    struct ucred *, struct vnode **);
+	int (* iv_inode_free)(struct inode *, ino_t ino, int mode);
+	int (* iv_buf_alloc)(struct inode *, off_t, int, struct ucred *,
+	    int, struct buf **);
+	int (* iv_bufatoff)(struct inode *, off_t offset, char **res,
+	    struct buf **bpp);
 };
 
 #define UFS_TRUNCATE(ip, off, flags, cred) \
