@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2001/03/09 03:24:09 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2001/05/15 19:56:06 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.30 2001/03/09 03:24:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.31 2001/05/15 19:56:06 deraadt Exp $";
 #endif
 #endif
 
@@ -85,6 +85,7 @@ static char default_devnam[MAXPATHLEN];	/* name of default device */
 static pid_t pid;		/* Our pid */
 static uid_t uid;		/* Our real user-id */
 static int conn_running;	/* we have a [dis]connector running */
+static int crashed = 0;
 
 int ttyfd = -1;			/* Serial port file descriptor */
 mode_t tty_mode = -1;		/* Original access permissions to tty */
@@ -960,11 +961,16 @@ static void
 hup(sig)
     int sig;
 {
-    syslog(LOG_INFO, "Hangup (SIGHUP)");
+    int save_errno = errno;
+
+    if (crashed)
+	_exit(127);
+    syslog(LOG_INFO, "Hangup (SIGHUP)");		/* XXX unsafe */
     kill_link = 1;
     if (conn_running)
 	/* Send the signal to the [dis]connector process(es) also */
 	kill_my_pg(sig);
+    errno = save_errno;
 }
 
 
@@ -978,12 +984,17 @@ static void
 term(sig)
     int sig;
 {
-    syslog(LOG_INFO, "Terminating on signal %d.", sig);
+    int save_errno = errno;
+
+    if (crashed)
+	_exit(127);
+    syslog(LOG_INFO, "Terminating on signal %d.", sig);	/* XXX unsafe */
     persist = 0;		/* don't try to restart */
     kill_link = 1;
     if (conn_running)
 	/* Send the signal to the [dis]connector process(es) also */
 	kill_my_pg(sig);
+    errno = save_errno;
 }
 
 
@@ -997,7 +1008,7 @@ chld(sig)
 {
     int save_errno = errno;
 
-    reap_kids();
+    reap_kids();		/* XXX somewhat unsafe */
     errno = save_errno;
 }
 
@@ -1014,9 +1025,9 @@ toggle_debug(sig)
 {
     debug = !debug;
     if (debug) {
-	setlogmask(LOG_UPTO(LOG_DEBUG));
+	setlogmask(LOG_UPTO(LOG_DEBUG));	/* XXX safe, but wrong */
     } else {
-	setlogmask(LOG_UPTO(LOG_WARNING));
+	setlogmask(LOG_UPTO(LOG_WARNING));	/* XXX safe, but wrong */
     }
 }
 
@@ -1042,15 +1053,13 @@ static void
 bad_signal(sig)
     int sig;
 {
-    static int crashed = 0;
-
     if (crashed)
 	_exit(127);
     crashed = 1;
-    syslog(LOG_ERR, "Fatal signal %d", sig);
+    syslog(LOG_ERR, "Fatal signal %d", sig);	/* XXX unsafe */
     if (conn_running)
 	kill_my_pg(SIGTERM);
-    die(1);
+    die(1);					/* XXX unsafe! */
 }
 
 
