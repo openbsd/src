@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.4 1997/07/05 05:22:06 millert Exp $
+.\"	$OpenBSD: scsi.8,v 1.5 1998/09/17 04:15:02 aaron Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -45,60 +45,88 @@
 .Os
 .Sh NAME
 .Nm scsi
-.Nd program to assist with scsi devices.
+.Nd program to assist with SCSI devices
 .Sh SYNOPSIS
-.Bd -literal -offset
-Usage:
-scsi -f device -d debug_level                    # To set debug level
-scsi -f device [-v] -z seconds                   # To freeze bus
-scsi -f device -m page [-P pc] [-e]              # To read mode pages
-scsi -f device -p [-b bus] [-l lun]              # To probe all devices
-scsi -f device -r [-b bus] [-t targ] [-l lun]    # To reprobe a device
-scsi -f device [-v] [-s seconds] -c cmd_fmt [arg0 ... argn] # A command...
-               -o count out_fmt [arg0 ... argn]  #   EITHER (for data out)
-               -i count in_fmt                   #   OR     (for data in)
+.Nm scsi
+.Fl f Ar device
+.Fl d Ar debug_level
+.Nm scsi
+.Fl f Ar device
+.Op Fl v
+.Fl z Ar seconds
+.Nm scsi
+.Fl f Ar device
+.Fl m Ar page
+.Op Fl P Ar pc
+.Op Fl e
+.Nm scsi
+.Fl f Ar device
+.Fl p
+.Op Fl b Ar bus
+.Op Fl l Ar lun
+.Nm scsi
+.Fl f Ar device
+.Fl r
+.Op Fl b Ar bus
+.Op Fl t Ar targ
+.Op Fl l Ar lun
+.Nm scsi
+.Fl f Ar device
+.Op Fl v
+.Op Fl s Ar seconds
+.Fl c Ar cmd_fmt
+.Op Ar arg ...
+.Fl o Ar count out_fmt
+.Op Ar arg ...
+.Fl i Ar count in_fmt
 .Pp
-"out_fmt" can be "-" to read output data from stdin;
-"in_fmt" can be "-" to write input data to stdout;
+.in -\\n(iSu
+.Ar out_fmt
+can be
+.Sq -
+to read output data from stdin;
+.Ar in_fmt
+can be
+.Sq -
+to write input data to stdout.
 .Pp
-If debugging is not compiled in the kernel, "-d" will have no effect
-.Ed
+If debugging is not compiled in the kernel,
+.Fl d
+will have no effect.
 .Sh DESCRIPTION
 The
 .Nm scsi
-program is used to send commands to a scsi device. It is also
-a sample usage of the user level SCSI commands.
+program is used to send commands to a SCSI device. It is also
+a sample usage of the user-level SCSI commands.
 .Pp
-The
-.Fr -d
-option sets the SCSI kernel debug level.  The kernel must have been compiled
-with the
-.Em SCSIDEBUG
+The following options are available:
+.Bl -tag -width Ds
+.It Fl d Ar debug_level
+Sets the SCSI kernel debug level.  The kernel must have been compiled
+with the SCSIDEBUG
 option.  See
-.Fr /sys/scsi/scsi_debug.h
+.Pa /sys/scsi/scsi_debug.h
 to figure out what to set the kernel debug level to.
 .Pp
-The
-.Fr -z
-option freezes all activity on all SCSI busses for a given number of
+.It Fl z Ar seconds
+Freezes all activity on all SCSI busses for a given number of
 seconds.  If
-.Fr -v
-is also specified then a BEL character is sent to the standard
+.Fl v
+is also specified, a BEL character is sent to the standard
 output at the start and finish of the bus freeze.
 This requires that the kernel be built with the SCSI_FREEZE kernel option.
 This kernel code is not committed yet.
 .Pp
-The
-.Fr -m
-option is used to read a device mode page.  The file
-.Fr /usr/share/misc/scsi_modes
-is read to look at for how to interpret the mode data.  The environment
-variable SCSI_MODES can specify a different file to use.
+.It Fl m Ar page
+Read a device mode page.  The file
+.Pa /usr/share/misc/scsi_modes
+is read to discover how to interpret the mode data.  The environment
+variable
+.Ev SCSI_MODES
+can specify a different file to use.
 .Pp
-.in +.25i
-The
-.Fr -P
-option can be used to specify a page control field.  The page control
+.It Fl P Ar pc
+Specify a page control field.  The page control
 fields are
 .Bd -literal -offset
 0 Current Values
@@ -107,40 +135,44 @@ fields are
 3 Saved Values
 .Ed
 .Pp
-The
-.Fr -e
-option permits you to edit the fields.  It will use the editor specified
-by your EDITOR environment variable.  To store changes permanently, 
+.It Fl e
+Permits you to edit the fields.  It will use the editor specified
+by your
+.Ev EDITOR
+environment variable.  To store changes permanently, 
 edit page control 3 using the
-.Fr -P
+.Fl P
 flag.
-.in -.25i
 .Pp
+.It Fl p
+Can be used against the "super scsi" device
+.Pa /dev/scsi/super
+to probe all devices with a given SCSI
+.Ar lun
+on a given SCSI bus.
 The
-.Fr -p
-option can be used against the "super scsi" device
-.Fr /dev/scsi/super
-to probe all devices with a given SCSI lun on a given SCSI bus.
-The bus can be selected with the -b option and the default is 0.
-The lun can be selected with the -l option and the default is 0.
+.Ar bus
+can be selected with the -b option and the default is 0.
+The
+.Ar lun
+can be selected with the -l option and the default is 0.
 See
 .Xr scsi 4
 for a description of the "super scsi" device.
 .Pp
-The
-.Fr -r
-option can be used in FreeBSD 1.1 to reprobe a specific SCSI device at a given
+.It Fl r
+Can be used in FreeBSD 1.1 to reprobe a specific SCSI device at a given
 Bus, Target and Lun.
 This is not needed in FreeBSD 2.1, since opening a fixed SCSI device
 has the side effect of reprobing it, and probing with the bus with the
--p option should bring on line any newly found devices.
+.Fl p
+option should bring on line any newly found devices.
 See
 .Xr scsi 4
-for a description of fixed scsi devices.
+for a description of fixed SCSI devices.
 .Pp
-The
-.Fr -c
-option permits you to send user level SCSI commands specified on
+.It Fl c
+Permits you to send user-level SCSI commands specified on
 the command line to a
 device.  The command is sent using the SCIOCCOMMAND ioctl, so the
 device you are accessing must permit this ioctl. See
@@ -149,46 +181,50 @@ for full details of which minor devices permit the ioctl, and
 .Xr scsi 3
 for the full details on how to build up the commands and data phases
 using the format arguments.
-.in +.25i
 .Pp
-.Fr -v
-turns on more verbose information.
+.It Fl v
+Turns on more verbose information.
 .Pp
-.Fr -s
-sets the command timeout in seconds.  The default is two seconds.
+.It Fl s Ar seconds
+Sets the command timeout to
+.Ar seconds .
+The default is two seconds.
 .Pp
-.Fr "-c cmd_fmt"
-specifies the command as described in
+.It Fl c Ar cmd_fmt
+Specifies the command as described in
 .Xr scsi 3 "."
 The additional arguments provide values for any variables
 specified in the command format.
 .Pp
-.Fr "-o count out_fmt arg0 ... argn"
-indicates that this is a data out command (i.e., data will be sent from
+.It Fl o Ar count out_fmt arg ...
+Indicates that this is a data out command (i.e., data will be sent from
 the system to the device) with
-.Fr count
+.Ar count
 bytes of data. The data out is built up using the facilities described in
 .Xr scsi 3
 using the provided arguments to fill in any integer variables.
-.Fr out_fmt
-can be specified as a hyphen ("-") to indicate that the
-.Fr count
+.Ar out_fmt
+can be specified as a hyphen
+.Pq Sq -
+to indicate that the
+.Ar count
 bytes of data should be read from the standard input.
 .Pp
-.Fr "-i count in_fmt"
-indicates that this is a data in command (i.e., data will be read from
+.It Fl i Ar count in_fmt arg ...
+Indicates that this is a data in command (i.e., data will be read from
 the device into the system) with
-.Fr count
+.Ar count
 bytes of data read in.  The information is extracted according to
-.Fr in_fmt
+.Ar in_fmt
 using the facilities described in
 .Xr scsi 3
 and displayed on the standard output.
-.Fr in_fmt
-can be specified as a hyphen ("-") to indicate that the
-.Fr count
+.Ar in_fmt
+can be specified as a hyphen
+.Pq Sq -
+to indicate that the
+.Ar count
 bytes of data input should be written to the standard output.
-.in -.25i
 .Sh EXAMPLES
 To verify that the device type for the disk /dev/rsd0c is 0
 (direct access device):
@@ -202,34 +238,42 @@ To do an inquiry to /dev/rsd2c:
 root# scsi -f /dev/rsd2c -c "12 0 0 0 64 0" -i 64 "s8 z8 z16 z4"
 FUJITSU M2654S-512 010P
 .Pp
-To edit mode page 1 on /dev/rsd2c, and store it permanently on the
+To edit mode page 1 on /dev/rsd2c and store it permanently on the
 drive (set AWRE and ARRE to 1 to enable bad block remapping):
 .Bd -literal -offset
 root# scsi -f /dev/rsd2c -m 1 -e -P 3
 .Ed
 .Pp
 .Sh ENVIRONMENT
-The SU_DEBUG_OUTPUT variable can be set to a file to send debugging
+The
+.Ev SU_DEBUG_OUTPUT
+variable can be set to a file to send debugging
 output to that file.
 .Pp
-The SU_DEBUG_LEVEL variable can be set to a non-zero integer to increase
+The
+.Ev SU_DEBUG_LEVEL
+variable can be set to a non-zero integer to increase
 the level of debugging.  Currently this is a on or off thing; it should
 perhaps use the ioctl to set the debug level in the kernel and then set
 it back to zero at program exit.
 .Pp
-The SU_DEBUG_TRUNCATE variable can be set to an integer to limit the
+The
+.Ev SU_DEBUG_TRUNCATE
+variable can be set to an integer to limit the
 amount of data phase output sent to the debugging file.
 .Pp
-The EDITOR variable determines the editor to use for the mode editor.
+The
+.Ev EDITOR
+variable determines the editor to use for the mode editor.
 .Sh SEE ALSO
 .Xr scsi 4 ,
 .Xr scsi 3
 .Sh BUGS
-.Pp
 Some devices respond to an inquiry for all LUNS.  This will cause them
 to come on line to 8 times during reprobe to different logical units.
 "scsi -f /dev/rsd0c -c "4 0 0 0 0 0" permits anyone who can write to
-/dev/rsd0c to format the disk drive.
+.Pa /dev/rsd0c
+to format the disk drive.
 .Sh HISTORY
 The
 .Nm scsi

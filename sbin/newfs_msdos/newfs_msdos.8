@@ -1,4 +1,4 @@
-.\" $OpenBSD: newfs_msdos.8,v 1.4 1997/01/10 19:04:09 kstailey Exp $
+.\" $OpenBSD: newfs_msdos.8,v 1.5 1998/09/17 04:14:57 aaron Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Joerg Wunsch
 .\"
@@ -43,11 +43,11 @@
 establishes a file system structure on
 .Ar device
 that is understood by
-.Xr mount_msdos
-and some ancient program loader.
-.Ar Device
+.Xr mount_msdos 8
+and some ancient program loaders.
+.Ar device
 will typically be the character device node for a floppy disk drive,
-.Pq e.\ g. Pa /dev/rfd0 ,
+.Pq e.g. Pa /dev/rfd0 ,
 although any existing writable file or device is acceptable.  In case
 of a regular file it is treated as a dumped image of an MS-DOS file
 system; only the file system structure will be written to it, and it
@@ -97,7 +97,7 @@ as well as keeping pointer chains for the chunks constituting
 one file.  There are usually two identical copies of the FAT.
 .It Em The root directory
 The final structure is the root directory for this medium.  It is
-merely a space reservation, padded with 0's, and unfortunately fixed
+merely a space reservation, padded with 0s, and unfortunately fixed
 in its size.
 .Nm newfs_msdos
 initializes it to empty, and enters a volume label record into the
@@ -110,7 +110,7 @@ appropriate information written to diagnostic output).
 .Sh SEE ALSO
 .Xr fdformat 1 ,
 .Xr mount_msdos 8 ,
-.Xr newfs 8 .
+.Xr newfs 8
 .Sh BUGS
 There is currently no way to specify obscure file system parameters.
 Thus, only media with one of the supported capacity values can be

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newlfs.8,v 1.2 1996/06/23 14:31:54 deraadt Exp $
+.\"	$OpenBSD: newlfs.8,v 1.3 1998/09/17 04:14:59 aaron Exp $
 .\"	$NetBSD: newlfs.8,v 1.2 1995/03/18 14:58:54 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -43,27 +43,31 @@
 .Sh SYNOPSIS
 .Nm newlfs
 .Fl L
-.Op Ar newlfs-options
+.Op Fl B Ar segsize
+.Op Fl b Ar blocksize
+.Op Fl m Ar freespace\&%
+.Op Fl s Ar size
 .Ar special
 .Sh DESCRIPTION
-.Nm Newlfs
-builds a log-structured file system on the specified special
-device basing its defaults on the information in the disk label.
+.Nm newlfs
+builds a log-structured file system on the specified
+.Ar special
+device, basing its defaults on the information in the disk label.
 (Before running 
 .Nm newlfs
 the disk must be labeled using 
 .Xr disklabel 8 .)
 .Pp
-The following options define the general layout policies.
+The following options define the general layout policies:
 .Bl -tag -width Fl
-.It Fl B
+.It Fl B Ar segsize
 The logical segment size of the file system in bytes.
-.It Fl b Ar block-size
+.It Fl b Ar blocksize
 The block size of the file system in bytes.
 .It Fl L
 Create a log-structured file system (LFS).
 This flag is currently required.
-.It Fl m Ar free space \&%
+.It Fl m Ar freespace\&%
 The percentage of space reserved from normal users; the minimum
 free space threshold.  The default value used is 10%.
 See

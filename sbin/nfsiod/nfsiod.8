@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsiod.8,v 1.4 1998/06/15 17:55:56 mickey Exp $
+.\"	$OpenBSD: nfsiod.8,v 1.5 1998/09/17 04:14:59 aaron Exp $
 .\"	$NetBSD: nfsiod.8,v 1.6 1995/03/18 14:59:04 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -46,7 +46,7 @@ asynchronous I/O server
 .Nm nfsiod
 .Op Fl n Ar num_servers
 .Sh DESCRIPTION
-.Nm Nfsiod
+.Nm nfsiod
 runs on an
 .Tn NFS
 client machine to service asynchronous I/O requests to its server.
@@ -65,7 +65,7 @@ level of concurrency, typically four to six.  The system maximum is twenty.
 .Pp
 The
 .Nm nfsiod
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
 .Xr nfssvc 2 ,

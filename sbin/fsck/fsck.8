@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.7 1998/08/30 05:41:24 deraadt Exp $
+.\"	$OpenBSD: fsck.8,v 1.8 1998/09/17 04:14:52 aaron Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -59,33 +59,39 @@ is compiled to support it.
 Force checking of filesystems, even when they are marked clean (for filesystems
 that support this).
 .It Fl l Ar maxparallel
-Limit the number of parallel checks to the number specified in
-the following argument. By default, the limit is the number of
-disks, running one process per disk. If a smaller limit is giv-
-en, the disks are checked round-robin, one filesystem at a time.
+Limit the number of parallel checks to
+.Ar maxparallel .
+By default, the limit is the number of
+disks, running one process per disk. If a smaller limit is given,
+the disks are checked round-robin, one filesystem at a time.
 .It Fl n
-Causes
+Cause
 .Nm
-to assume no as the answer to all operator questions, except "CONTINUE?".
+to assume
+.Dq no
+as the answer to all operator questions, except "CONTINUE?".
 .It Fl p
 Enter preen mode.
 .It Fl t Ar fstype
 Invoke fsck only in the comma separated list of filesystem types. If the
 list starts with 
-.Dq no 
-then invoke fsck only in the filesystem types that are not specified in
+.Dq no ,
+invoke fsck only in the filesystem types that are
+.Em not
+specified in
 the list.
 .It Fl v
 Print the commands before executing them.
 .It Fl y
-Causes
+Cause
 .Nm
-to assume yes
+to assume
+.Dq yes
 as the answer to all operator questions.
 .It Fl T Ar fstype:fsoptions
 List of comma separated filesystem specific options for the specified
 filesystem type, in the same format as
-.Xr mount 8
+.Xr mount 8 .
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
 .It Pa /etc/fstab

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccdconfig.8,v 1.8 1997/11/27 01:20:36 deraadt Exp $
+.\"	$OpenBSD: ccdconfig.8,v 1.9 1998/09/17 04:14:51 aaron Exp $
 .\"	$NetBSD: ccdconfig.8,v 1.4 1996/02/28 01:01:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 .Oc
 .Oc
 .Sh DESCRIPTION
-.Nm Ccdconfig
+.Nm ccdconfig
 is used to dynamically configure and unconfigure concatenated disk
 devices, or ccds.  For more information about the ccd, see
 .Xr ccd 4 .
@@ -94,12 +94,12 @@ ccd configuration file.  If no arguments are specified, every configured
 ccd is dumped.  Otherwise, the configuration of each listed ccd is dumped.
 .It Fl M Ar core
 Extract values associated with the name list from
-.Pa core
+.Ar core
 instead of the default
 .Pa /dev/mem .
 .It Fl N Ar system
 Extract the name list from
-.Pa system
+.Ar system
 instead of the default
 .Pa /bsd .
 .It Fl u
@@ -120,16 +120,16 @@ of strings, or the word
 .Dq none .
 The flags are as follows:
 .Bd -unfilled -offset indent
-CCDF_SWAP		0x01		Interleave should be dmmax
-CCDF_UNIFORM	0x02		Use uniform interleave
-CCDF_MIRROR	0x04		Enable data mirroring
-CCDF_OLD		0x08		Use old unoptimized I/O protocol
+CCDF_SWAP		0x01		Interleave should be dmmax.
+CCDF_UNIFORM	0x02		Use uniform interleave.
+CCDF_MIRROR	0x04		Enable data mirroring.
+CCDF_OLD		0x08		Use old unoptimized I/O protocol.
 .Ed
 .Pp
 The format in the
 configuration file appears exactly as if it were entered on the command line.
 Note that on the command line and in the configuration file, the
-.Pa flags
+.Ar flags
 argument is optional.
 .Bd -unfilled -offset indent
 #
@@ -150,10 +150,13 @@ interleave factor of 32 blocks.
 .Ed
 .Pp
 .Sh FILES
-/etc/ccd.conf - default ccd configuration file.
+.Bl -tag -width /etc/ccd.conf -compact
+.It Pa /etc/ccd.conf
+default ccd configuration file
+.El
 .Sh SEE ALSO
 .Xr ccd 4 ,
-.Xr rc 8 .
+.Xr rc 8
 .Sh HISTORY
 The
 .Nm ccdconfig

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.8 1998/09/06 22:23:18 aaron Exp $
+.\"	$OpenBSD: ping.8,v 1.9 1998/09/17 04:15:00 aaron Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -56,7 +56,7 @@ packets to network hosts
 .Op Fl w Ar maxwait
 .Ar host
 .Sh DESCRIPTION
-.Nm Ping
+.Nm ping
 uses the
 .Tn ICMP
 protocol's mandatory
@@ -101,7 +101,6 @@ Only the super-user may use this option.
 .Bf -emphasis
 This can be very hard on a network and should be used with caution.
 .Ef
-Only root can do a flood ping.
 .It Fl I Ar ifaddr
 Specify the interface to transmit from on machines with multiple
 interfaces. For unicast and multicast pings.
@@ -109,7 +108,7 @@ interfaces. For unicast and multicast pings.
 Wait
 .Ar wait
 seconds
-.Em between sending each packet .
+between sending each packet .
 The default is to wait for one second between each packet.
 This option is incompatible with the
 .Fl f
@@ -145,7 +144,9 @@ packet and displays
 the route buffer on returned packets.
 Note that the IP header is only large enough for nine such routes.
 If more routes come back than should, such as due to an illegal spoofed
-packet, ping will print the route list and then truncate it at the correct
+packet,
+.Nm ping
+will print the route list and then truncate it at the correct
 spot.  Many hosts ignore or discard this option.
 .It Fl r
 Bypass the normal routing tables and send directly to a host on an attached
@@ -194,14 +195,14 @@ requests.
 .Pp
 When using
 .Nm ping
-for fault isolation, it should first be run on the local host, to verify
+for fault isolation, it should first be run on the local host to verify
 that the local network interface is up and running.
 Then, hosts and gateways further and further away should be ``pinged''.
-Round-trip times and packet loss statistics are computed.
+Round trip times and packet loss statistics are computed.
 If duplicate packets are received, they are not included in the packet
 loss calculation, although the round trip time of these packets is used
-in calculating the minimum/average/maximum round-trip time numbers.
-When the specified number of packets have been sent (and received) or
+in calculating the minimum/average/maximum round trip time numbers.
+When the specified number of packets have been sent (and received), or
 if the program is terminated with a
 .Dv SIGINT ,
 a brief summary is displayed.
@@ -222,7 +223,7 @@ of
 header followed by an arbitrary amount of data.
 When a
 .Ar packetsize
-is given, this indicated the size of this extra piece of data (the
+is given, this indicates the size of this extra piece of data (the
 default is 56).
 Thus the amount of data received inside of an IP packet of type
 .Tn ICMP
@@ -239,7 +240,7 @@ it uses in the computation of round trip times.
 If less than eight bytes of pad are specified, no round trip times are
 given.
 .Sh DUPLICATE AND DAMAGED PACKETS
-.Nm Ping
+.Nm ping
 will report duplicate and damaged packets.
 Duplicate packets should never occur, and seem to be caused by
 inappropriate link-level retransmissions.
@@ -308,7 +309,9 @@ with
 or
 .Xr ftp 1 .
 .Pp
-In normal operation ping prints the ttl value from the packet it receives.
+In normal operation,
+.Nm ping
+prints the TTL value from the packet it receives.
 When a remote system receives a ping packet, it can do one of three things
 with the
 .Tn TTL
@@ -321,7 +324,7 @@ release.
 In this case the
 .Tn TTL
 value in the received packet will be 255 minus the
-number of routers in the round-trip path.
+number of routers in the round trip path.
 .It
 Set it to 255; this is what current Berkeley Unix systems do.
 In this case the
@@ -329,11 +332,7 @@ In this case the
 value in the received packet will be 255 minus the
 number of routers in the path
 .Xr from
-the remote system
-.Em to
-the
-.Nm ping Ns Em ing
-host.
+the remote system to the pinging host.
 .It
 Set it to some other value.
 Some machines use the same value for
@@ -344,7 +343,7 @@ packets, for example either 30 or 60.
 Others may use completely wild values.
 .El
 .Sh BUGS
-Many Hosts and Gateways ignore the
+Many hosts and gateways ignore the
 .Tn RECORD_ROUTE
 option.
 .Pp
@@ -365,4 +364,5 @@ broadcast address should only be done under very controlled conditions.
 The
 .Nm
 command appeared in
+A
 .Bx 4.3 .

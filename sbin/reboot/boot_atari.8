@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_atari.8,v 1.3 1998/09/01 16:38:19 deraadt Exp $
+.\"	$OpenBSD: boot_atari.8,v 1.4 1998/09/17 04:15:00 aaron Exp $
 .\"	$NetBSD: boot_atari.8,v 1.1 1996/06/27 11:07:56 leo Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -40,14 +40,14 @@
 .\"	@(#)boot_hp300.8	8.2 (Berkeley) 4/19/94
 .\"
 .Dd June 21, 1996
-.Dt boot_atari 8
+.Dt BOOT_ATARI 8
 .Os
 .Sh NAME
 .Nm boot
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery
+.Ss Power fail and crash recovery
 .Pp
 When the
 .Tn OpenBSD
@@ -60,39 +60,38 @@ to shut the system down is with the
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
-.Xr ddb 8
-,if it is configured in the kernel.  If the debugger is not present,
-or the debugger is exited, the system will attempt a dump to the
+.Xr ddb 8 ,
+if it is configured in the kernel.  If the debugger is not present
+or has exited, the system will attempt a dump to the
 configured dump device (which will be automatically recovered with
 .Xr savecore 8
-during the next boot cycle).  After the dump is complete (successful
+during the next boot cycle).  After the dump completes (successful
 or not), the system will attempt a reboot.
 .Pp
-.Sy Booting OpenBSD using the bootloader
+.Ss Booting OpenBSD using the bootloader
 .Pp
 When a bootable
 .Tn OpenBSD
 partition is created by means of
-.Xr installboot 8
-, the Atari BIOS will automatically start the OpenBSD bootloader. By default
+.Xr installboot 8 ,
+the Atari BIOS will automatically start the OpenBSD bootloader. By default,
 it will load the kernel image
 .Pa /bsd
-and attempts to boot it into multi-user mode. This behaviour can be changed by
+and attempt to boot it into multi-user mode. This behaviour can be changed by
 either keeping the
-.Pa Alternate
-or the
-.Pa Right-Shift
-key pressed during the boot. When
+.Sq Alternate
+or
+.Sq Right-Shift
+key pressed during the boot process. When
 the
-.Pa Alternate
+.Sq Alternate
 key is pressed, the bootstrap is aborted, causing the BIOS
 to continue scanning the disks for a bootable partition (this is compatible
 with AHDI 3.0). Pressing the
-.Pa Right-Shift
-key during the boot, causes the boot loader to enter the interactive mode.
+.Sq Right-Shift
+key during the boot causes the bootloader to enter interactive mode.
 In interactive mode, the command line looks like:
 .Bd -ragged -offset indent
-.Pp
 .Op Ar OS-type
 .Op Ar boot-path
 .Op Ar boot-options
@@ -112,28 +111,29 @@ indicated will be used.
 If something other than
 .Pa .OpenBSD
 is specified, control is returned to the BIOS with the boot preference set to
-the selected type. Due to limitations of the BIOS however, the search for
+the selected type. Due to limitations of the BIOS, however, the search for
 bootblocks is continued rather than restarted.
-.It boot-path
+.It Em boot-path
 This gives you the opportunity to boot another kernel, say:
-.Pa /bsd.old.
+.Pa /bsd.old .
 The default is
-.Pa /bsd
-.It boot-options
+.Pa /bsd .
+.It Em boot-options
 These options are a subset of the
 .Xr loadbsd
 options.
+.Pp
 .Bl -tag -width flag -compact
 .It Fl a
-Boot into multi-user mode (the default)
+Boot into multi-user mode (the default).
 .It Fl b
-Ask for a root device
+Ask for a root device.
 .It Fl d
-Enter the kernel debugger
+Enter the kernel debugger.
 .El
 .El
 .Pp
-.Sy Booting using the loadbsd program
+.Ss Booting using the loadbsd program
 .Pp
 When you want (or have to) start OpenBSD from GEM, you have to use the
 .Xr loadbsd
@@ -160,7 +160,7 @@ Print a help screen that tries to explain the same options as mentioned
 here.
 .It Fl o Ar outputfile
 Write all output to the file
-.Ar outputfile.
+.Ar outputfile .
 .It Fl s
 Tell OpenBSD only to use ST compatible RAM. 
 .It Fl t
@@ -186,7 +186,7 @@ This is a GEMDOS path specification of the kernel to boot.
 .Pp
 Note: Because the loadbsd program can only read kernels from a GEMDOS
 filesystem, the file
-.Ar /bsd
+.Pa /bsd
 is usually not the same as the actual kernel booted. This can cause some
 programs to fail.
 .Sh FILES

@@ -1,4 +1,4 @@
-.\"   $OpenBSD: nfsd.8,v 1.4 1998/06/15 17:55:55 mickey Exp $
+.\"   $OpenBSD: nfsd.8,v 1.5 1998/09/17 04:14:59 aaron Exp $
 .\"   $NetBSD: nfsd.8,v 1.7 1996/02/18 11:58:24 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -47,7 +47,7 @@ server
 .Op Fl rut
 .Op Fl n Ar num_servers
 .Sh DESCRIPTION
-.Nm Nfsd
+.Nm nfsd
 runs on a server machine to service
 .Tn NFS
 requests from client machines.
@@ -96,7 +96,7 @@ A server should run enough daemons to handle
 the maximum level of concurrency from its clients,
 typically four to six.
 .Pp
-.Nm Nfsd
+.Nm nfsd
 listens for service requests at the port indicated in the
 .Tn NFS
 server specification; see
@@ -106,7 +106,7 @@ RFC1094 and
 .Pp
 The
 .Nm nfsd
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
 .Xr nfssvc 2 ,

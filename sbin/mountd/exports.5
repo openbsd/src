@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exports.5,v 1.4 1998/07/20 17:04:52 deraadt Exp $
+.\"	$OpenBSD: exports.5,v 1.5 1998/09/17 04:14:56 aaron Exp $
 .\"	$NetBSD: exports.5,v 1.9 1996/02/18 11:57:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -86,7 +86,7 @@ different sets of hosts and export options.
 The second component of a line specifies how the filesystem is to be
 exported to the host set.
 The option flags specify whether the filesystem
-is exported read-only or read-write and how the client uid is mapped to
+is exported read-only or read-write and how the client UID is mapped to
 user credentials on the server.
 .Pp
 Export options are specified as follows:
@@ -116,7 +116,7 @@ or
 .Sm off
 .Fl mapall No = Sy user:group1:group2:...
 .Sm on
-specifies a mapping for all client uids (including root)
+Specifies a mapping for all client UIDs (including root)
 using the same semantics as
 .Fl maproot .
 .Pp
@@ -209,9 +209,11 @@ local filesystem mount points, the above example specifies the following:
 .Sy /usr
 is exported to hosts
 .Em friends
-where friends is specified in the netgroup file
+where
+.Em friends
+is specified in the netgroup file
 with users mapped to their remote credentials and
-root mapped to uid 0 and group 10.
+root mapped to UID 0 and GID 10.
 It is exported read-write and the hosts in ``friends'' can mount either /usr
 or /usr/local.
 It is exported to
@@ -226,13 +228,13 @@ all users mapped to the user and groups associated with ``nobody''.
 .Sy /u
 is exported to all hosts on the subnetwork
 .Em 131.104.48
-with root mapped to the uid for ``bin'' and with no group access.
+with root mapped to the UID for ``bin'' and with no group access.
 .Pp
 .Sy /u2
-is exported to the hosts in ``friends'' with root mapped to uid and groups
+is exported to the hosts in ``friends'' with root mapped to UID and groups
 associated with ``root'';
 it is exported to all hosts on network ``cis-net'' allowing mounts at any
-directory within /u2 and mapping all uids to credentials for the principal
+directory within /u2 and mapping all UIDs to credentials for the principal
 that is authenticated by a Kerberos ticket.
 .Sh FILES
 .Bl -tag -width /etc/exports -compact

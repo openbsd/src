@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_umap.8,v 1.5 1998/06/15 17:55:50 mickey Exp $
+.\"	$OpenBSD: mount_umap.8,v 1.6 1998/09/17 04:14:56 aaron Exp $
 .\"	$NetBSD: mount_umap.8,v 1.4 1996/03/05 02:36:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -52,12 +52,12 @@
 -g
 .Ar gid-mapfile
 .Ar target
-.Ar mount-point
+.Ar mount_point
 .Sh DESCRIPTION
 The
 .Nm mount_umap
-command is used to mount a sub-tree of an existing file system
-that uses a different set of uids and gids than the local system.
+command is used to mount a subtree of an existing file system
+that uses a different set of UIDs and GIDs than the local system.
 Such a file system could be mounted from a remote site via NFS or
 it could be a file system on removable media brought from some
 foreign location that uses a different password file.
@@ -76,19 +76,19 @@ man page for possible options and their meanings.
 The
 .Nm mount_umap
 command uses a set of files provided by the user to make correspondences
-between uids and gids in the sub-tree's original environment and
-some other set of ids in the local environment.  For instance, user
-smith might have uid 1000 in the original environment, while having
-uid 2000 in the local environment.  The
+between UIDs and GIDs in the subtree's original environment and
+some other set of IDs in the local environment.  For instance, user
+smith might have UID 1000 in the original environment, while having
+UID 2000 in the local environment.  The
 .Nm mount_umap
 command allows the subtree from smith's original environment to be
-mapped in such a way that all files with owning uid 1000 look like
-they are actually owned by uid 2000.  
+mapped in such a way that all files with owner UID 1000 look like
+they are actually owned by UID 2000.  
 .Pp
 .Em target 
-should be the current location of the sub-tree in the
+should be the current location of the subtree in the
 local system's name space.  
-.Em mount-point 
+.Ar mount_point 
 should be a directory
 where the mapped subtree is to be placed.  
 .Em uid-mapfile 
@@ -97,27 +97,27 @@ and
 describe the mappings to be made between identifiers.
 Briefly, the format of these files is a count of the number of
 mappings on the first line, with each subsequent line containing
-a single mapping.  Each of these mappings consists of an id from
-the original environment and the corresponding id in the local environment,
+a single mapping.  Each of these mappings consists of an ID from
+the original environment and the corresponding ID in the local environment,
 separated by white space.  
 .Em uid-mapfile 
-should contain all uid
+should contain all UID
 mappings, and 
 .Em gid-mapfile 
-should contain all gid mappings.
-Any uids not mapped in 
+should contain all GID mappings.
+Any UIDs not mapped in 
 .Em uid-mapfile 
 will be treated as user NOBODY,
-and any gids not mapped in 
+and any GIDs not mapped in 
 .Em gid-mapfile 
 will be treated as group
-NULLGROUP.  At most 64 uids can be mapped for a given subtree, and
+NULLGROUP.  At most 64 UIDs can be mapped for a given subtree, and
 at most 16 groups can be mapped by a given subtree.
 .Pp
 The mapfiles can be located anywhere in the file hierarchy, but they
 must be owned by root, and they must be writable only by root.  
 .Nm mount_umap
-will refuse to map the sub-tree if the ownership or permissions on
+will refuse to map the subtree if the ownership or permissions on
 these files are improper.  It will also balk if the count of mappings
 in the first line of the map files is not correct.
 .Pp

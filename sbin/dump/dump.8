@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.12 1998/05/06 14:35:09 deraadt Exp $
+.\"	$OpenBSD: dump.8,v 1.13 1998/09/17 04:14:52 aaron Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -58,7 +58,7 @@
 .in -\\n(iSu
 (The
 .Bx 4.3
-option syntax is implemented for backward compatibility, but
+option syntax is implemented for backward compatibility but
 is not documented here.)
 .Sh DESCRIPTION
 .Nm
@@ -79,18 +79,18 @@ by using the
 option.
 .Pp
 On media that cannot reliably return an end-of-media indication
-(such as some cartridge tape drives)
+(such as some cartridge tape drives),
 each volume is of a fixed size;
-the actual size is determined by the tape size and density and/or
+the actual size is determined by the tape size, density and/or
 block count options below.
 By default, the same output file name is used for each volume
 after prompting the operator to change media.
 .Pp
 .Ar files-to-dump
-is either a mountpoint of a filesystem,
+is either a mountpoint of a filesystem
 or a list of files and directories on a single filesystem to be backed
 up as a subset of the filesystem.
-In the former case, either the path to a mounted filesystem,
+In the former case, either the path to a mounted filesystem
 or the device of an unmounted filesystem can be used.
 In the latter case, certain restrictions are placed on the backup:
 .Fl u
@@ -110,7 +110,9 @@ guarantees the entire file system is copied
 option below).
 A level number above 0,
 incremental backup,
-tells dump to
+tells
+.Nm dump
+to
 copy all files new or modified since the
 last dump of a lower level.
 The default level is 0.
@@ -163,7 +165,7 @@ if the dump requires more volumes than the number of names given,
 the last file name will used for all remaining volumes after prompting
 for media changes.
 If the name of the file is of the form
-.Dq host:file ,
+.Dq host:file
 or
 .Dq user@host:file ,
 .Nm
@@ -199,7 +201,9 @@ The default tape length is 2300 feet.
 Use the specified date as the starting time for the dump
 instead of the time determined from looking in
 .Pa /etc/dumpdates .
-The format of date is the same as that of
+The format of
+.Ar date
+is the same as that of
 .Xr ctime 3 .
 This option is useful for automated dump scripts that wish to
 dump over a specific period of time.
@@ -242,7 +246,7 @@ The
 flag causes
 .Nm
 to print out, for each file system in
-.Pa /etc/dumpdates
+.Pa /etc/dumpdates ,
 the most recent dump date and level,
 and highlights those file systems that should be dumped.
 If the
@@ -251,7 +255,9 @@ flag is set, all other options are ignored, and
 .Nm
 exits immediately.
 .It Fl w
-Is like W, but prints only those filesystems which need to be dumped.
+Same as
+.Fl W ,
+but prints only those filesystems which need to be dumped.
 .El
 .Pp
 .Nm
@@ -260,7 +266,7 @@ end of tape,
 end of dump,
 tape write error,
 tape open error or
-disk read error (if there are more than a threshold of 32).
+disk read error (if there is more than a threshold of 32).
 In addition to alerting all operators implied by the
 .Fl n
 flag,
@@ -355,7 +361,7 @@ to the standard error output.
 .It Pa /dev/rst0
 default tape unit to dump to
 .It Pa /dev/rst*
-Raw SCSI tape interface
+raw SCSI tape interface
 .It Pa /etc/dumpdates
 dump date records
 .It Pa /etc/fstab
@@ -390,7 +396,7 @@ with the
 .Fl W
 or
 .Fl w
-flags does not report filesystems that have never been recorded
+flag does not report filesystems that have never been recorded
 in
 .Pa /etc/dumpdates ,
 even if listed in

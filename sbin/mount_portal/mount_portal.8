@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_portal.8,v 1.4 1998/07/16 16:52:11 mickey Exp $
+.\"	$OpenBSD: mount_portal.8,v 1.5 1998/09/17 04:14:56 aaron Exp $
 .\"	$NetBSD: mount_portal.8,v 1.6 1995/08/18 15:01:19 pk Exp $
 .\"
 .\" Copyright (c) 1993, 1994
@@ -84,7 +84,9 @@ The portal daemon works by being passed the full pathname
 of the object being opened.
 The daemon creates an appropriate descriptor according
 to the rules in the configuration file, and then passes the descriptor back
-to the calling process as the result of the open system call.
+to the calling process as the result of the
+.Fn open
+system call.
 .Sh NAMESPACE
 By convention, the portal daemon divides the namespace into sub-namespaces,
 each of which handles objects of a particular type.

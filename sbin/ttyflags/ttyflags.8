@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ttyflags.8,v 1.4 1996/10/08 01:20:28 michaels Exp $
+.\"	$OpenBSD: ttyflags.8,v 1.5 1998/09/17 04:15:03 aaron Exp $
 .\"	$NetBSD: ttyflags.8,v 1.2 1995/03/18 15:01:22 cgd Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
 .Op Fl p
 .Op Fl a | Ar tty ...
 .Sh DESCRIPTION
-.Nm Ttyflags
+.Nm ttyflags
 sets the device-specific flags for terminals, based on the flags
 found on the terminal's line in
 .Pa /etc/ttys .
@@ -81,6 +81,6 @@ utility appeared in
 .Nx 0.9a .
 .Sh BUGS
 The conditions on which to report an error are ill-defined.
-.Nm Ttyflags
+.Nm ttyflags
 tries to report all significant errors, perhaps going over-board
 at times.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.6 1998/07/20 22:47:11 deraadt Exp $
+.\"	$OpenBSD: tunefs.8,v 1.7 1998/09/17 04:15:03 aaron Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -53,7 +53,7 @@
 .Op Fl s Ar enable | disable
 .Op Ar special | Ar filesys
 .Sh DESCRIPTION
-.Nm Tunefs
+.Nm tunefs
 is designed to change the dynamic parameters of a file system
 which affect the layout policies.
 The parameters which are to be changed are indicated by the flags
@@ -107,10 +107,14 @@ been deleted to get under the higher threshold.
 The file system can either try to minimize the time spent
 allocating blocks, or it can attempt to minimize the space
 fragmentation on the disk.
-If the value of minfree (see above) is less than 5%,
+If the value of
+.Ar minfree
+(see above) is less than 5%,
 then the file system should optimize for space to avoid
 running out of full sized blocks.
-For values of minfree greater than or equal to 5%,
+For values of
+.Ar minfree
+greater than or equal to 5%,
 fragmentation is unlikely to be problematical, and
 the file system can be optimized for time.
 .It Fl p

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.7 1997/10/02 14:37:34 downsj Exp $
+.\"	$OpenBSD: shutdown.8,v 1.8 1998/09/17 04:15:02 aaron Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -47,7 +47,7 @@
 .Ar time
 .Op Ar warning-message ...
 .Sh DESCRIPTION
-.Nm Shutdown
+.Nm shutdown
 provides an automated shutdown procedure for super-users
 to nicely notify users when the system is shutting down,
 saving them from system administrators, hackers, and gurus, who
@@ -58,11 +58,12 @@ Available friendlinesses:
 .It Fl d
 The system will perform a crash dump.
 .It Fl f
-.Nm Shutdown
+.Nm shutdown
 arranges, in the manner of
 .Xr fastboot 8 ,
 for the file systems
-.Em not to be
+.Em not
+to be
 checked on reboot.
 .It Fl h
 The system is halted at the specified
@@ -72,7 +73,7 @@ when
 execs
 .Xr halt 8 .
 .It Fl k
-Kick every body off.
+Kick everybody off.
 The
 .Fl k
 option
@@ -83,7 +84,7 @@ Prevent the normal
 .Xr sync 2
 before stopping.
 .It Fl r 
-.Nm Shutdown
+.Nm shutdown
 execs
 .Xr reboot 8
 at the specified
@@ -96,7 +97,7 @@ flag is passed on to
 causing machines which support automatic power down to do so after halting.
 (Currently supported on some i386 and sparc platforms.)
 .It Ar time
-.Ar Time
+.Ar time
 is the time at which
 .Nm shutdown
 will bring the system down and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapon.8,v 1.3 1997/08/25 20:45:10 millert Exp $
+.\"	$OpenBSD: swapon.8,v 1.4 1998/09/17 04:15:03 aaron Exp $
 .\"	$NetBSD: swapon.8,v 1.8 1995/08/18 14:51:35 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -46,7 +46,7 @@
 .Nm swapon
 .Ar special_file ...
 .Sh DESCRIPTION
-.Nm Swapon
+.Nm swapon
 is used to specify additional devices on which paging and swapping
 are to take place.
 The system begins by swapping and paging on only a single device
@@ -70,19 +70,19 @@ are made available.
 The second form gives individual block devices as given
 in the system swap configuration table.  The call makes only this space
 available to the system for swap allocation.
+.Sh FILES
+.Bl -tag -width /dev/[ru][pk]?b -compact
+.It Pa /dev/[ru][pk]?b
+standard paging devices
+.It Pa /etc/fstab
+ASCII filesystem description table
+.El
 .Sh SEE ALSO
 .Xr swapon 2 ,
 .Xr fstab 5 ,
 .Xr init 8 ,
 .Xr rc 8 ,
 .Xr vnconfig 8
-.Sh FILES
-.Bl -tag -width /dev/[ru][pk]?b -compact
-.It Pa /dev/[ru][pk]?b
-standard paging devices
-.It Pa /etc/fstab
-ascii filesystem description table
-.El
 .Sh BUGS
 There is no way to stop paging and swapping on a device.
 It is therefore not possible to make use of devices which may be

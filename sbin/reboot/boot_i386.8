@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_i386.8,v 1.5 1998/07/11 22:46:09 angelos Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.6 1998/09/17 04:15:00 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -32,19 +32,21 @@
 .\" 
 
 .Dd September 4, 1997
-.Dt BOOT_i386 8 i386
+.Dt BOOT_I386 8 i386
 .Os
 .Sh NAME
 .Nm boot
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery.
+.Ss Power fail and crash recovery
+.Pp
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
-.Sy Cold starts.
+.Ss Cold starts
+.Pp
 The
 .Tn "PC AT"
 clones will perform a POST (Power On Self Test) upon being booted cold.
@@ -60,31 +62,31 @@ if it is an older BIOS, it will start with checking for a disk in floppy
 drive A (otherwise known as drive 0) first, and failing that, attempt to
 boot the hard disk C (otherwise known as hard disk controller 1, drive 0).
 .Pp
-.Sy Warm starts.
+.Ss Warm starts
+.Pp
 The BIOS loads the first block (at physical location: track 0, head 0,
 sector 1) off the boot device into memory, and if the last two bytes in the
 block match the signature 0x55AA, the BIOS considers the block a valid
 bootable drive.  The BIOS then proceeds to call the machine code program
 in this block.  If the BIOS is current, it will also pass the boot drive
-to the boot block in register
-.Sy %dl.
+to the boot block in register %dl.
 .Pp
 There are two different types of boot blocks on devices.  There is the
-MBR (master boot record), and the PBR (partition boot record).  A digression
+MBR (master boot record) and the PBR (partition boot record).  A digression
 into a little piece of history will quickly give light as to why this is so.
 In the beginning, the PC ``architecture'' came with a single or dual floppy
 drives, and no hard drives.  The only type of bootable sectors on any device
 were the PBRs.  They were responsible for loading the rest of the operating
-system from the right device.  When hard disks came out, it was felt that
+system from the correct device.  When hard disks came out, it was felt that
 such a huge space should be able to be partitioned into separate drives,
-and this is where the MBR was invented.
+and this is when the MBR was invented.
 .Pp
 The MBR relocates itself upon being loaded and invoked by the BIOS.
-Embeded within the MBR is a partition table, with four partitions table
+Embeded within the MBR is a partition table, with four partition table
 entries.  The MBR code traverses this table (which was loaded with the
 MBR by the BIOS), looking for an active entry, and then loads the MBR or
 PBR from the disk location specified by the partition table entry.  So
-in all reality, the MBR is nothing more than a fancy chaining PBR.
+in reality, the MBR is nothing more than a fancy chaining PBR.
 .Pp
 Note: The MBR could load another MBR, which is the case when you are booting
 off an extended partition.  In other words, the first block of an extended
@@ -110,7 +112,7 @@ cylinder/head/sector of the real drive geometry into something that would
 allow the applications using the BIOS to access a larger portion of the
 drive, still using the restricted BIOS API.
 .Pp
-The reason this has become a problem, is that any modern OS will use its own
+The reason this has become a problem is that any modern OS will use its own
 drivers to access the disk drive, bypassing the BIOS completely.  However,
 the MBR, PBR, and partition tables are all still written using the original
 BIOS access methods.  This is for backwards compatibility to the original
@@ -141,7 +143,7 @@ system second stage bootstrap
 .Xr boot 8
 .Sh BUGS
 The ``PC BIOS Architecture'' makes this process very prone to weird and
-wonderfull interactions between differing operating systems.  There is
+wonderful interactions between differing operating systems.  There is
 no published standard to the MBR and PBR, which makes coding these a
 nightmare.  Somebody *please* write me a decent BIOS, and make them (the
 masses) use it!

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.18 1998/08/06 18:08:09 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.19 1998/09/17 04:14:51 aaron Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -105,7 +105,7 @@
 .Ar disk Ar protofile
 .Oo Ar disktype Oc
 .Sh DESCRIPTION
-.Nm Disklabel
+.Nm disklabel
 can be used to install, examine or modify the label on a disk drive or pack.
 When writing the label, it can be used
 to change the drive identification,
@@ -170,7 +170,7 @@ partitions, it will be necessary to have separate disktab entries
 describing each, or to edit the label after installation as described below.
 The optional argument is a pack identification string,
 up to 16 characters long.
-The pack id must be quoted if it contains blanks.
+The pack ID must be quoted if it contains blanks.
 If the
 .Fl r
 flag is given, the disk sectors containing the label and bootstrap
@@ -211,7 +211,7 @@ With the
 flag,
 .Nm disklabel
 is capable of restoring a disk label that was formatted
-in a prior operation and saved in an ascii file.
+in a prior operation and saved in an ASCII file.
 The prototype file used to create the label should be in the same format
 as that produced when reading or editing a label.
 Comments are delimited by
@@ -300,16 +300,16 @@ size, block fragment size, block size, and cylinders per group for
 the specified partition (not all parameters are configurable for
 non-BSD partitions).
 .It s Op path
-Save the label to a file in ascii format (suitable for loading via
+Save the label to a file in ASCII format (suitable for loading via
 the
-.Op -R
+.Fl R
 option).  If no path is specified, the user will be prompted for
 one.
 .It w
 Write the label to disk.  This option will commit any changes to
 the on-disk label.
 .It q
-Quit the editor.  If any changes have been made the user will be
+Quit the editor.  If any changes have been made, the user will be
 asked whether or not to save the changes to the on-disk label.
 .It x
 Exit the editor without saving any changes to the label.
@@ -384,12 +384,16 @@ Create a label for sd0 based on information for ``sd2212'' found
 in
 .Pa /etc/disktab .
 Any existing bootstrap code will be clobbered.  (Normally you do
-not want to use the -r flag though.)
+not want to use the
+.Fl r
+flag though.)
 .Pp
 .Dl disklabel -e -r sd0
 .Pp
 Read the on-disk label for sd0, edit it and reinstall in-core as
-well as on-disk.  (Normally you do not want to use the -r flag
+well as on-disk.  (Normally you do not want to use the
+.Fl r
+flag
 though.)  Existing bootstrap code is unaffected.
 .Pp
 .Dl disklabel -R sd0 mylabel
@@ -458,7 +462,7 @@ mode,
 .Nm disklabel
 is far too quick to shuffle partitions around; it should keep a
 free block list and only move partitions around with the user's
-permission.  Also in
+permission.  Also, in
 .Fl E
 mode, partitions outside the OpenBSD portion of the disk should
-be changeable..
+be changeable.

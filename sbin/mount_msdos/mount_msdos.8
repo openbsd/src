@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_msdos.8,v 1.5 1996/10/08 01:20:27 michaels Exp $
+.\"	$OpenBSD: mount_msdos.8,v 1.6 1998/09/17 04:14:55 aaron Exp $
 .\"	$NetBSD: mount_msdos.8,v 1.10 1996/01/19 21:14:43 leo Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -45,17 +45,17 @@
 .Op Fl l
 .Op Fl 9
 .Op Fl G
-.Pa special
-.Pa node
+.Ar special
+.Ar node
 .Sh DESCRIPTION
 The
 .Nm mount_msdos
 command attaches the MS-DOS filesystem residing on
 the device
-.Pa special
+.Ar special
 to the global filesystem namespace at the location
 indicated by
-.Pa node .
+.Ar node .
 This command is normally executed by
 .Xr mount 8
 at boot time, but can be used by any user to mount an
@@ -98,10 +98,10 @@ The default mask is taken from the
 directory on which the file system is being mounted.
 .It Fl s
 Force behaviour to
-ignore and not generate Win'95 long filenames.
+ignore and not generate Windows 95/98 long filenames.
 .It Fl l
 Force listing and generation of
-Win'95 long filenames
+Windows 95/98 long filenames
 and separate creation/modification/access dates.
 .Pp
 If neither
@@ -111,14 +111,14 @@ nor
 are given,
 .Nm mount_msdos
 searches the root directory of the filesystem to
-be mounted for any existing Win'95 long filenames.
+be mounted for any existing Windows 95/98 long filenames.
 If no such entries are found,
 .Fl s
 is the default. Otherwise
 .Fl l
 is assumed.
 .It Fl 9
-Ignore the special Win'95 directory entries even
+Ignore the special Windows 95/98 directory entries even
 if deleting or renaming a file. This forces
 .Fl s .
 .It Fl G
@@ -137,7 +137,7 @@ The use of the
 .Fl 9
 flag could result in damaged filesystems,
 albeit the damage is in part taken care of by
-procedures similar to the ones used in Win'95.
+procedures similar to the ones used in Windows 95/98.
 .Pp
 The default handling for
 .Fl s
@@ -148,14 +148,19 @@ with short filenames only. To generate long filenames
 on empty DOS filesystems use
 .Fl l .
 .Pp
-Note that Win'95 handles only access dates,
+Note that Windows 95/98 handles only access dates,
 but not access times.
+.Pp
+Also note that 
+.Nm mount_msdos
+will only handle FAT16 filesystems. FAT32 filesystems, as
+provided by Windows 95 (OSR2) and Windows 98, are not supported.
 .Sh HISTORY
 The
 .Nm mount_msdos
 utility first appeared in NetBSD 0.9.
 Its predecessor, the
 .Nm mount_pcfs
-utility appeared in NetBSD 0.8, and was abandoned in favor
+utility, appeared in NetBSD 0.8, and was abandoned in favor
 of the more aptly-named
 .Nm mount_msdos .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_x68k.8,v 1.4 1996/07/10 03:52:56 ccappuc Exp $
+.\"	$OpenBSD: boot_x68k.8,v 1.5 1998/09/17 04:15:01 aaron Exp $
 .\"	$NetBSD: boot_x68k.8,v 1.1 1996/06/15 18:54:22 oki Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)boot_x68k.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd Jun 16, 1996
+.Dd June 16, 1996
 .Dt BOOT_X68K 8 x68k
 .Os
 .Sh NAME
@@ -42,40 +42,44 @@
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery.
+.Ss Power fail and crash recovery
+.Pp
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
-.Sy Cold starts.
+.Ss Cold starts
+.Pp
 The X68000/X68030 system boots from the device
 which is determined by the configuration of
 battery-backuped SRAM.
-By default, the boot rom attempt to boot from
+By default, the boot ROM attempts to boot from a
 floppy disk drive (from 0 to 3) first,
-and then attempt to boot from hard disk (SASI or SCSI).
-On the OpenBSD/X68k, booting from partition A of SCSI disks (sd?a) 
+and then from a hard disk (SASI or SCSI).
+On the OpenBSD/X68k, booting from partition ``a'' of SCSI disks (sd?a) 
 and 2HD floppy disks (fd?a, fd?c) is currently supported.
 .Pp
 First, the initial program loader of IOCS ROM or SCSI disk
-(or equivalent) reads
-.Pa boot
+(or equivalent) reads the
+.Nm boot
 program at the top of the disk,
-and then the boot program loads the OpenBSD kernel
+and then the
+.Nm boot
+program loads the OpenBSD kernel
 .Pa /bsd
 which is in the same partition of the disk.
-If you press
-.Pa [SHIFT]
-key when booting, the boot program enables you to change
+If you press the
+.Sq SHIFT
+key when booting, the boot program enables you to change the
 boot flag
 .Dv RB_SINGLE
 with the
-.Pa [SHIFT]
+.Sq SHIFT
 key, and to choose which kernel
 to be used with arrow keys.
-If the LED of
-.Pa [HIRAGANA]
-key is turned on, the boot program adds
+If the LED of the
+.Sq HIRAGANA
+key is turned on, the boot program adds the
 .Dv RB_KDB
 flag and tries to boot the system in debug mode; see
 .Xr ddb 8
@@ -87,9 +91,9 @@ other operating systems such as Human68k and OS-9.
 .Pp
 Note for X68030/040turbo(68040 accelerator by BEEPs) systems:
 OpenBSD can boot under 040 mode.
-It can also boot under 030 mode if you have MC68030 on the board.
+It can also boot under 030 mode if you have an MC68030 on the board.
 .Pp
-Note for X68000/Xellent30(68030 accelerator by TSR)+MC68030 systems:
+Note for X68000/Xellent30(68030 accelerator by TSR) + MC68030 systems:
 In order to boot OpenBSD, you must choose 030 mode by using
 .Pa CH30.SYS ,
 which must reside in the battery-backuped SRAM.

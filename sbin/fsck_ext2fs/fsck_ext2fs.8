@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ext2fs.8,v 1.3 1997/06/14 04:16:52 downsj Exp $
+.\"	$OpenBSD: fsck_ext2fs.8,v 1.4 1998/09/17 04:14:52 aaron Exp $
 .\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
@@ -54,7 +54,7 @@
 .Ar filesystem
 .Ar ...
 .Sh DESCRIPTION
-.Nm Fsck_ext2fs
+.Nm fsck_ext2fs
 performs interactive filesystem consistency checks and repair for each of
 the filesystems specified on the command line. It is normally invoked from
 .Xr fsck 8 .
@@ -111,17 +111,17 @@ The amount and severity of data lost may be determined from the diagnostic
 output.
 The default action for each consistency correction
 is to wait for the operator to respond
-.Li yes
+.Dq yes
 or
-.Li no .
-If the operator does not have write permission on the filesystem
+.Dq no .
+If the operator does not have write permission on the filesystem,
 .Nm fsck_ext2fs
 will default to a 
 .Fl n
 action.
 .Pp
 The following flags are interpreted by
-.Nm fsck_ext2fs .
+.Nm fsck_ext2fs :
 .Bl -tag -width indent
 .It Fl b
 Use the block specified immediately after the flag as
@@ -133,7 +133,7 @@ Print debugging output.
 Force checking of file systems.  Normally, if a file system is cleanly
 unmounted, the kernel will set a
 .Dq clean flag
-in the file system superblock, and
+in the file system superblock and
 .Nm
 will not check the file system.  This option forces
 .Nm
@@ -147,7 +147,9 @@ In particular, systems that do not wish to have lost files accessible
 by all users on the system should use a more restrictive
 set of permissions such as 700.
 .It Fl n
-Assume a no response to all questions asked by 
+Assume a
+.Dq no
+response to all questions asked by 
 .Nm fsck_ext2fs
 except for
 .Ql CONTINUE? ,
@@ -156,7 +158,9 @@ do not open the filesystem for writing.
 .It Fl p
 Specify ``preen'' mode, described above.
 .It Fl y
-Assume a yes response to all questions asked by 
+Assume a
+.Dq yes
+response to all questions asked by 
 .Nm fsck_ext2fs ;
 this should be used with great caution as this is a free license
 to continue after essentially unlimited trouble has been encountered.
@@ -164,6 +168,7 @@ to continue after essentially unlimited trouble has been encountered.
 .Pp
 .Bl -enum -indent indent -compact
 Inconsistencies checked are as follows:
+.Pp
 .It
 Blocks claimed by more than one inode or the free map.
 .It

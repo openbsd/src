@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_null.8,v 1.4 1998/06/15 17:55:47 mickey Exp $
+.\"	$OpenBSD: mount_null.8,v 1.5 1998/09/17 04:14:55 aaron Exp $
 .\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -47,13 +47,13 @@
 .Nm mount_null
 .Op Fl o Ar options
 .Ar target
-.Ar mount-point
+.Ar mount_point
 .Sh DESCRIPTION
 The
 .Nm mount_null
 command creates a
 null layer, duplicating a sub-tree of the file system
-name space under another part of the global file system namespace.
+namespace under another part of the global file system namespace.
 It is implemented using a stackable layers technique, and its
 .Do
 null-nodes
@@ -86,9 +86,9 @@ for constructing new layers.
 .\"
 .Sh INSTANTIATING NEW NULL LAYERS
 New null layers are created with 
-.Xr mount_null 8 .
-.Xr Mount_null 8
-takes two arguments, the pathname
+.Nm mount_null .
+.Nm mount_null
+takes two arguments: the pathname
 of the lower vfs (target-pn) and the pathname where the null
 layer will appear in the namespace (mount-point-pn).  After
 the null layer is put into place, the contents
@@ -99,11 +99,11 @@ of target-pn subtree will be aliased under mount-point-pn.
 The null layer is the minimum file system layer,
 simply bypassing all possible operations to the lower layer
 for processing there.  The majority of its activity centers
-on the bypass routine, though which nearly all vnode operations
+on the bypass routine, through which nearly all vnode operations
 pass.
 .Pp
 The bypass routine accepts arbitrary vnode operations for
-handling by the lower layer.  It begins by examing vnode
+handling by the lower layer.  It begins by examining vnode
 operation arguments and replacing any null-nodes by their
 lower-layer equivalents.  It then invokes the operation
 on the lower layer.  Finally, it replaces the null-nodes
@@ -117,12 +117,14 @@ Although bypass handles most operations,
 and
 .Em vop_print
 are not bypassed.
-.Em Vop_getattr
+.Em vop_getattr
 must change the fsid being returned.
-.Em Vop_inactive
-and vop_reclaim are not bypassed so that
+.Em vop_inactive
+and
+.Em vop_reclaim
+are not bypassed so that
 they can handle freeing null-layer specific data.
-.Em Vop_print
+.Em vop_print
 is not bypassed to avoid excessive debugging
 information.
 .\"
@@ -146,13 +148,16 @@ For example, imagine mounting a null layer with
 .Bd -literal -offset indent
 mount_null /usr/include /dev/layer/null
 .Ed
+.Pp
 Changing directory to 
 .Pa /dev/layer/null
 will assign
 the root null-node (which was created when the null layer was mounted).
 Now consider opening 
 .Pa sys .
-A vop_lookup would be
+A
+.Em vop_lookup
+would be
 done on the root null-node.  This operation would bypass through
 to the lower layer which would return a vnode representing 
 the UFS 
@@ -170,7 +175,9 @@ process when constructing other vnode stacks.
 .Sh CREATING OTHER FILE SYSTEM LAYERS
 One of the easiest ways to construct new file system layers is to make
 a copy of the null layer, rename all files and variables, and
-then begin modifyng the copy.  Sed can be used to easily rename
+then begin modifyng the copy.
+.Xr sed 1 
+can be used to easily rename
 all variables.
 .Pp
 The umap layer is an example of a layer descended from the 

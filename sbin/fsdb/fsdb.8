@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsdb.8,v 1.6 1997/01/16 04:57:04 millert Exp $
+.\"	$OpenBSD: fsdb.8,v 1.7 1998/09/17 04:14:53 aaron Exp $
 .\"	$NetBSD: fsdb.8,v 1.5 1997/01/11 05:51:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -213,13 +213,13 @@ Exit the program.
 .Xr editline 3 ,
 .Xr fs 5 ,
 .Xr fsck 8 ,
-.Xr clri 8 .
+.Xr clri 8
 .Sh BUGS
 Manipulation of ``short'' symlinks doesn't work (in particular, don't
 try changing a symlink's type).
-.br
+.Pp
 You must specify modes as numbers rather than symbolic names.
-.br
+.Pp
 There are a bunch of other things that you might want to do which
 .Nm
 doesn't implement.

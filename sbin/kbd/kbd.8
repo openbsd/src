@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kbd.8,v 1.4 1998/06/20 06:49:46 marc Exp $
+.\"	$OpenBSD: kbd.8,v 1.5 1998/09/17 04:14:54 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Juergen Hannken-Illjes
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Op Fl q
 .Ar name
 .Sh DESCRIPTION
-.Nm Kbd
+.Nm kbd
 is used to change the keyboard encoding.
 The execution of
 .Nm kbd
@@ -53,18 +53,18 @@ to set a national keyboard layout.
 .Pp
 If called as
 .Nm kbd
-.Fl l
+.Fl l ,
 all available keyboard encodings are listed.
 .Pp
 If called as
 .Nm kbd
-.Ar name
+.Ar name ,
 the keyboard encoding will be set to
 .Ar name
 and a short message will be printed to stdout.
 If the
 .Fl q
-flag is present
+flag is present,
 .Nm kbd
 will be quiet unless an error occurs.
 .Sh SEE ALSO

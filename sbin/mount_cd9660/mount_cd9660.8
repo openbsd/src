@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_cd9660.8,v 1.4 1998/06/15 17:55:40 mickey Exp $
+.\"	$OpenBSD: mount_cd9660.8,v 1.5 1998/09/17 04:14:55 aaron Exp $
 .\"	$NetBSD: mount_cd9660.8,v 1.3 1995/04/23 10:33:13 cgd Exp $
 .\"
 .\" Copyright (c) 1993, 1994
@@ -47,14 +47,14 @@
 .Nm mount_cd9660
 .Op Fl egR
 .Op Fl o Ar options
-.Ar special | node
+.Ar special node
 .Sh DESCRIPTION
 The
 .Nm mount_cd9660
 command attaches the ISO-9660 filesystem residing on the device
-.Pa special
+.Ar special
 to the global filesystem namespace at the location indicated by
-.Pa node .
+.Ar node .
 This command is normally executed by
 .Xr mount 8
 at boot time.

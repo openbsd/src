@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.7 1998/01/15 17:22:32 niklas Exp $
+.\"	$OpenBSD: route.8,v 1.8 1998/09/17 04:15:01 aaron Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -39,7 +39,7 @@
 .Os BSD 4.4
 .Sh NAME
 .Nm route
-.Nd manually manipulate the routing tables.
+.Nd manually manipulate the routing tables
 .Sh SYNOPSIS
 .Nm route
 .Op Fl dnqv
@@ -49,7 +49,7 @@
 .Ar args
 .Oc
 .Sh DESCRIPTION
-.Nm Route
+.Nm route
 is a utility used to manually manipulate the network
 routing tables.  It normally is not needed, as a
 system routing table management daemon such as
@@ -57,9 +57,9 @@ system routing table management daemon such as
 should tend to this task.
 .Pp
 The
-.Nm route :
+.Nm route
 utility supports a limited number of general options,
-but a rich command language, enabling the user to specify
+but a rich command language enables the user to specify
 any arbitrary request that could be delivered via the
 programmatic interface discussed in 
 .Xr route 4 .
@@ -72,7 +72,7 @@ Bypasses attempts to print host and network names symbolically
 when reporting actions.  (The process of translating between symbolic
 names and numerical equivalents can be quite time consuming, and
 may require correct operation of the network; thus it may be expedient
-to forgo this, especially when attempting to repair networking operations).
+to forgo this, especially when attempting to repair networking operations.)
 .It Fl v
 (verbose) Print additional details.
 .It Fl q
@@ -80,7 +80,7 @@ Suppress all output.
 .El
 .Pp
 The
-.Nm route :
+.Nm route
 utility provides several commands:
 .Pp
 .Bl -tag -width Fl -compact
@@ -142,12 +142,13 @@ The other commands have the following syntax:
 .Pp
 where
 .Ar destination
-is the destination host or network,
+is the destination host or network and
 .Ar gateway
 is the next-hop intermediary via which packets should be routed.
 Routes to a particular host may be distinguished from those to
 a network by interpreting the Internet address specified as the
-.Ar destination argument.
+.Ar destination
+argument.
 The optional modifiers
 .Fl net
 and
@@ -156,7 +157,7 @@ force the destination to be interpreted as a network or a host, respectively.
 Otherwise, if the 
 .Ar destination
 has a ``local address part'' of
-INADDR_ANY ,
+INADDR_ANY,
 or if the
 .Ar destination
 is the symbolic name of a network, then the route is
@@ -280,7 +281,7 @@ If this lookup fails,
 .Xr getnetbyname 3
 is then used to interpret the name as that of a network.
 .Pp
-.Nm Route
+.Nm route
 uses a routing socket and the new message types
 RTM_ADD,
 RTM_DELETE,
@@ -313,10 +314,14 @@ An attempt to add a route failed because the gateway listed was not
 on a directly-connected network.
 The next-hop gateway must be given.
 .It Sy "not in table"
-A delete operation was attempted for an entry which
+A
+.Cm delete
+operation was attempted for an entry which
 wasn't present in the tables.
 .It Sy "routing table overflow"
-An add operation was attempted, but the system was
+An
+.Cm add
+operation was attempted, but the system was
 low on resources and was unable to allocate memory
 to create the new entry.
 .El
@@ -325,7 +330,7 @@ to create the new entry.
 .Xr route 4 ,
 .Xr esis 4 ,
 .Xr routed 8 ,
-.Xr XNSrouted 8
+.Xr XNSrouted 8 ,
 .Xr IPXrouted 8
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.8 1998/08/30 22:45:14 deraadt Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.9 1998/09/17 04:14:55 aaron Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -78,7 +78,7 @@ Use the NFS Version 2 protocol.
 .It Fl 3
 Use the NFS Version 3 protocol. The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
-.It Fl D
+.It Fl D Ar deadthresh
 Used with NQNFS to set the
 .Dq "dead server threshold"
 to the specified number of round trip timeout intervals.
@@ -91,7 +91,7 @@ Values may be set in the range of 1 - 9, with 9 referring to an
 (i.e. never assume cached data still valid).
 This option is not generally recommended and is really an experimental
 feature.
-.It Fl I
+.It Fl I Ar readdirsize
 Set the readdir read size to the specified value. The value should normally
 be a multiple of DIRBLKSIZ that is <= the read size for the mount.
 .It Fl K
@@ -101,7 +101,7 @@ This requires that the kernel be built with the NFSKERB option.
 (Refer to the INTERNET-DRAFT titled
 .%T "Authentication Mechanisms for ONC RPC" ,
 for more information.)
-.It Fl L
+.It Fl L Ar leaseterm
 Used with NQNFS to set the lease term to the specified number of seconds.
 Only use this argument for mounts with a large round trip delay.
 Values are normally in the 10-30 second range.
@@ -109,7 +109,7 @@ Values are normally in the 10-30 second range.
 The kernel always uses a reserved port number to communicate with
 clients. This option is ignored, and exists solely for compatibility
 with older systems.
-.It Fl R
+.It Fl R Ar retrycnt
 Set the retry count for doing the mount to the specified value.
 .It Fl T
 Use TCP transport instead of UDP.
@@ -119,7 +119,7 @@ the client.
 .It Fl U
 Force the mount protocol to use UDP transport, even for TCP NFS mounts.
 (Necessary for some old BSD servers.)
-.It Fl a
+.It Fl a Ar maxreadahead
 Set the read-ahead count to the specified value.
 This may be in the range of 0 - 4, and determines how many blocks
 will be read ahead when a large file is being read sequentially.
@@ -143,7 +143,7 @@ Turn off the dynamic retransmit timeout estimator.
 This may be useful for UDP mounts that exhibit high retry rates,
 since it is possible that the dynamically estimated timeout interval is too
 short.
-.It Fl g
+.It Fl g Ar maxgroups
 Set the maximum size of the group list for the credentials to the
 specified value.
 This should be used for mounts on old servers that cannot handle a
@@ -163,12 +163,12 @@ but tends to flood the attribute and name caches with prefetched entries.
 Try this option and see whether performance improves or degrades. Probably
 most useful for client to server network interconnects with a large bandwidth
 times delay product.
-.It Fl m
+.It Fl m Ar realm
 Set the Kerberos realm to the string argument.
 Used with the
 .Fl K
 option for mounts to other realms.
-.It Fl o
+.It Fl o Ar options
 Options are specified with a
 .Fl o
 flag followed by a comma separated string of options.
@@ -191,7 +191,7 @@ that was part of the first release of 4.4BSD-Lite.
 To interoperate with a first release 4.4BSD-Lite NFS system you will have to
 avoid this option until you have had an oppurtunity to upgrade the NFS code
 to release 2 of 4.4BSD-Lite on all your systems.
-.It Fl r
+.It Fl r Ar readsize
 Set the read data size to the specified value.
 It should normally be a power of 2 greater than or equal to 1024.
 This should be used for UDP mounts when the
@@ -210,7 +210,7 @@ option as well.
 .It Fl s
 A soft mount, which implies that file system calls will fail
 after \fBRetry\fR round trip timeout intervals.
-.It Fl t
+.It Fl t Ar timeout
 Set the initial retransmit timeout to the specified value.
 May be useful for fine tuning UDP mounts over internetworks
 with high packet loss rates or an overloaded server.
@@ -218,10 +218,12 @@ Try increasing the interval if
 .Xr nfsstat 1
 shows high retransmit rates while the file system is active or reducing the
 value if there is a low retransmit rate but long response delay observed.
-(Normally, the -d option should be specified when using this option to manually
+(Normally, the
+.Fl d
+option should be specified when using this option to manually
 tune the timeout
 interval.)
-.It Fl w
+.It Fl w Ar writesize
 Set the write data size to the specified value.
 Ditto the comments w.r.t. the
 .Fl r
@@ -234,7 +236,7 @@ and
 .Fl w
 options should only be used as a last ditch effort at improving performance
 when mounting servers that do not support TCP mounts.
-.It Fl x
+.It Fl x Ar retrans
 Set the retransmit timeout count for soft mounts to the specified value.
 .El
 .Sh SEE ALSO

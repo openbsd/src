@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotacheck.8,v 1.3 1997/01/03 16:22:10 mickey Exp $
+.\"	$OpenBSD: quotacheck.8,v 1.4 1998/09/17 04:15:00 aaron Exp $
 .\"	$NetBSD: quotacheck.8,v 1.4 1995/03/18 14:59:20 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -58,7 +58,7 @@
 .Op Fl v
 .Fl a
 .Sh DESCRIPTION
-.Nm Quotacheck
+.Nm quotacheck
 examines each filesystem,
 builds a table of current disk usage,
 and compares this table against that recorded
@@ -67,7 +67,7 @@ If any inconsistencies are detected, both the
 quota file and the current system copy of the
 incorrect quotas are updated (the latter only
 occurs if an active filesystem is checked).
-By default both user and group quotas are checked.
+By default, both user and group quotas are checked.
 .Pp
 Available options:
 .Bl -tag -width Ds
@@ -79,11 +79,11 @@ flag is supplied in place of any filesystem names,
 will check all the filesystems indicated in
 .Pa /etc/fstab
 to be read-write with disk quotas.
-By default only the types of quotas listed in
+By default, only the types of quotas listed in
 .Pa /etc/fstab
 are checked.
 .It Fl d
-Enable debugging mode, no actual data will be written on disk(s).
+Enable debugging mode. No actual data will be written on disk(s).
 .It Fl g
 Only group quotas listed in
 .Pa /etc/fstab
@@ -118,28 +118,28 @@ Normally
 .Nm quotacheck
 operates silently.
 .Pp
-.Nm Quotacheck
-expects each filesystem to be checked to have a
+.Nm quotacheck
+expects each filesystem to be checked to have
 quota files named
 .Pa quota.user
 and
 .Pa quota.group
-which are located at the root of the associated file system.
+located at the root of the associated file system.
 These defaults may be overridden in
 .Pa /etc/fstab .
 If a file is not present, 
 .Nm quotacheck
 will create it.
 .Pp
-.Nm Quotacheck
+.Nm quotacheck
 is normally run at boot time from the
 .Pa /etc/rc.local
-file, see
-.Xr rc 8 ,
+file
+.Pq see Xr rc 8
 before enabling disk quotas with
 .Xr quotaon 8 .
 .Pp
-.Nm Quotacheck
+.Nm quotacheck
 accesses the raw device in calculating the actual
 disk usage for each user.
 Thus, the filesystems

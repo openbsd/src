@@ -1,4 +1,4 @@
-.\"	$OpenBSD: clri.8,v 1.4 1996/06/25 04:46:23 deraadt Exp $
+.\"	$OpenBSD: clri.8,v 1.5 1998/09/17 04:14:51 aaron Exp $
 .\"	$NetBSD: clri.8,v 1.2 1995/03/18 14:54:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -39,18 +39,18 @@
 .Os BSD 4
 .Sh NAME
 .Nm clri
-.Nd clear an inode
+.Nd clear inode(s)
 .Sh SYNOPSIS
 .Nm clri
-.Ar special_device inode_number ...
+.Ar special_device inode_number Op Ar ...
 .Sh DESCRIPTION
 .Bf -symbolic
-.Nm Clri
+.Nm clri
 is obsoleted for normal file system repair work by
 .Xr fsck 8 .
 .Ef
 .Pp
-.Nm Clri
+.Nm clri
 zeros out the inodes with the specified inode number(s)
 on the filesystem residing on the given
 .Ar special_device .

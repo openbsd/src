@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_ados.8,v 1.3 1996/10/08 01:20:26 michaels Exp $
+.\"	$OpenBSD: mount_ados.8,v 1.4 1998/09/17 04:14:54 aaron Exp $
 .\"	$NetBSD: mount_ados.8,v 1.3 1995/03/18 14:57:09 cgd Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -41,17 +41,17 @@
 .Op Fl u Ar uid
 .Op Fl g Ar gid
 .Op Fl m Ar mask
-.Pa special
-.Pa node
+.Ar special
+.Ar node
 .Sh DESCRIPTION
 The
 .Nm mount_ados
 command attaches the AmigaDOS filesystem residing on
 the device
-.Pa special
+.Ar special
 to the global filesystem namespace at the location
 indicated by
-.Pa node .
+.Ar node .
 This command is normally executed by
 .Xr mount 8
 at boot time, but can be used by any user to mount an

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dmesg.8,v 1.3 1996/07/08 22:09:31 ccappuc Exp $
+.\"	$OpenBSD: dmesg.8,v 1.4 1998/09/17 04:14:51 aaron Exp $
 .\"	$NetBSD: dmesg.8,v 1.9 1995/03/18 14:54:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -45,17 +45,21 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Sh DESCRIPTION
-.Nm Dmesg
+.Nm dmesg
 displays the contents of the system message buffer.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl M
-Extract values associated with the name list from the specified core
-instead of the default ``/dev/kmem''.
-.It Fl N
-Extract the name list from the specified system instead of the default
-``/bsd''.
+.It Fl M Ar core
+Extract values associated with the name list from the specified
+.Ar core
+instead of the default
+.Pa /dev/kmem .
+.It Fl N Ar system
+Extract the name list from the specified
+.Ar system
+instead of the default
+.Pa /bsd .
 .El
 .Sh SEE ALSO
 .Xr syslogd 8

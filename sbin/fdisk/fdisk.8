@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.15 1998/09/01 16:38:16 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.16 1998/09/17 04:14:52 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -45,12 +45,12 @@
 .Sh DESCRIPTION
 In order for the BIOS to boot the kernel, certain conventions must be
 adhered to.  Sector 0 of a bootable hard disk must contain boot code,
-a MBR partition table, and a magic number.  These MBR partitions (also
+an MBR partition table, and a magic number.  These MBR partitions (also
 known as BIOS partitions) can be used to break the disk up into several
 pieces.  The BIOS loads sector 0 of the boot disk into memory, verifies
 the magic number, and begins executing the code at the first byte.
 The normal DOS MBR boot code searches the MBR partition table for an
-`active' partition (indicated by a `*' in the fist column), and if one
+`active' partition (indicated by a `*' in the first column), and if one
 is found, the boot block from that partition is loaded and executed in
 place of the original (MBR) boot block.
 .Pp
@@ -63,7 +63,7 @@ Edit existing MBR sectors.
 .It Fl f Ar mbrname
 Specifies an alternate MBR template file.
 .It Fl c,h,s
-Specify an alternate BIOS geometry for
+Specifies an alternate BIOS geometry for
 .Nm
 to use.
 .El
@@ -100,7 +100,7 @@ options.
 .Pp
 This disk is divided into two partitions that happen to fill the disk.
 The first partition overlaps the third partition.  (Used for debugging
-purposes)
+purposes.)
 .Bl -tag -width "start/size"
 .It Em "#"
 Number of partition table entry.  A '*' denotes the bootable partition.
@@ -150,13 +150,13 @@ but is safe as long as you do not execute the
 .Em write
 command, or answer in the negative (the default) when
 .Nm
-askes you about writing out changes.
+asks you about writing out changes.
 .Sh COMMAND MODE
 When you first enter this mode, you are presented with a prompt, that looks
 like so:
 .Em "fdisk: 0>" .
 This prompt has two important pieces of information for you.  It will tell
-you if the in memory copy of the boot block has been modified or not.  If it
+you if the in-memory copy of the boot block has been modified or not.  If it
 has been modified, the prompt will change to look like:
 .Em "fdisk:*0>" .
 The second piece of information pertains to the number given in the prompt.
@@ -166,43 +166,49 @@ you are editing extended partitions.  The list of commands and their
 explanations are given below.
 .Bl -tag -width "update"
 .It Em help
-This command gives you a list of commands that
+Display a list of commands that
 .Nm
 understands in the interactive edit mode.
 .It Em reinit
-This command initializes the currently selected, in memory copy, of the
+Initialize the currently selected, in-memory copy of the
 boot block.
 .It Em disk
-This command will display the current drive geometry that fdisk has
-probed.  You are given a chance to edit them if you wish.
+Display the current drive geometry that
+.Nm fdisk
+has
+probed.  You are given a chance to edit it if you wish.
 .It Em edit
-This command is used to edit a given table entry in the memory copy of
+Edit a given table entry in the memory copy of
 the current boot block.  You may edit either in BIOS geometry mode,
 or in sector offsets and sizes.
 .It Em flag
-This command makes the given partition table entry bootable.  Only one
+Make the given partition table entry bootable.  Only one
 entry can be marked bootable. If you wish to boot from an extended
 partition, you will need to mark the partition table entry for the
 extended partition as bootable.
 .It Em update
-This command will update the machine code in the memory copy of the
+Update the machine code in the memory copy of the
 currently selected boot block.
 .It Em select
-This command will select and load into memory the boot block pointed
+Select and load into memory the boot block pointed
 to by the extended partition table entry in the current boot block.
 .It Em print
-This command will print the currently selected in memory copy of the boot
+Print the currently selected in-memory copy of the boot
 block and its MBR table to the terminal.
 .It Em write
-This will write the in memory copy of the boot block to disk.  You will
+Write the in-memory copy of the boot block to disk.  You will
 be asked to confirm this operation.
 .It Em exit
-This will exit the current level of fdisk, either returning to the
-previously selected in memory copy of a boot block, or exit the
+Exit the current level of
+.Nm fdisk ,
+either returning to the
+previously selected in-memory copy of a boot block, or exiting the
 program if there is none.
 .It Em quit
-This will exit the current level of fdisk, either returning to the
-previously selected in memory copy of a boot block, or exit the
+Exit the current level of
+.Nm fdisk ,
+either returning to the
+previously selected in-memory copy of a boot block, or exiting the
 program if there is none.  Unlike
 .Em exit
 it does write the modified block out.
@@ -214,7 +220,7 @@ Quit program without saving current changes.
 The automatic calculation of starting cylinder etc. uses
 a set of figures that represent what the BIOS thinks is the
 geometry of the drive.
-These figures are by default taken from the incore disklabel, or
+These figures are by default taken from the in-core disklabel, or
 values that
 .Em /boot
 has passed to the kernel, but
@@ -233,15 +239,19 @@ Editing an existing partition is risky, and may cause you to
 lose all the data in that partition.
 .Pp
 You should run this program interactively once or twice to see how it works.
-This is completely safe as long as you answer the write questions in the
+This is completely safe as long as you answer the
+.Dq write
+questions in the
 negative.
 .Sh FILES
-.Pa /usr/mdec/mbr
-- the default MBR template
+.Bl -tag -width /usr/mdec/mbr -compact
+.It Pa /usr/mdec/mbr
+default MBR template
+.El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr boot_i386 8
 .Sh BUGS
 There are subtleties that the program detects that are not explained in
-this manual page.  Also, chances are that some of the subleties it should
+this manual page.  Also, chances are that some of the subtleties it should
 detect are being steamrolled.  Caveat Emperor.

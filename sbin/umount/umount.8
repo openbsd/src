@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umount.8,v 1.3 1997/08/20 04:57:27 millert Exp $
+.\"	$OpenBSD: umount.8,v 1.4 1998/09/17 04:15:03 aaron Exp $
 .\"	$NetBSD: umount.8,v 1.2 1995/03/18 15:01:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -56,14 +56,15 @@ command
 calls the
 .Xr unmount 2
 system call to remove a
-.Ar "special device"
+.Ar special
+device
 or the remote node (rhost:path) from the file system tree at the point
 .Ar node .
-If either
+If neither
 .Ar special
-or
+nor
 .Ar node
-are not provided, the appropriate information is taken from the
+are provided, the appropriate information is taken from the
 .Xr fstab 5
 file.
 .Pp

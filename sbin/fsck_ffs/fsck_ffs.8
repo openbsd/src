@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ffs.8,v 1.2 1997/03/27 16:28:52 kstailey Exp $
+.\"	$OpenBSD: fsck_ffs.8,v 1.3 1998/09/17 04:14:52 aaron Exp $
 .\"	$NetBSD: fsck_ffs.8,v 1.12 1996/09/23 16:18:34 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -66,8 +66,8 @@ Here
 reads the table
 .Pa /etc/fstab
 to determine which filesystems to check.
-Only partitions in fstab that are mounted ``rw,'' ``rq'' or ``ro''
-and that have non-zero pass number are checked.
+Only partitions in fstab that are mounted ``rw'', ``rq'' or ``ro''
+and have non-zero pass numbers are checked.
 Filesystems with pass number 1 (normally just the root filesystem)
 are checked one at a time.
 When pass 1 completes, all remaining filesystems are checked,
@@ -79,6 +79,7 @@ to be the partition designator.
 The kernel takes care that only a restricted class of innocuous filesystem
 inconsistencies can happen unless hardware or software failures intervene.
 These are limited to the following:
+.Pp
 .Bl -item -compact
 .It
 Unreferenced inodes
@@ -131,16 +132,16 @@ The amount and severity of data lost may be determined from the diagnostic
 output.
 The default action for each consistency correction
 is to wait for the operator to respond
-.Li yes
+.Dq yes
 or
-.Li no .
-If the operator does not have write permission on the filesystem
+.Dq no .
+If the operator does not have write permission on the filesystem,
 .Nm fsck_ffs
 will default to a 
 .Fl n
 action.
 .Pp
-.Nm Fsck
+.Nm fsck
 has more consistency checks than
 its predecessors
 .Em check , dcheck , fcheck ,
@@ -155,10 +156,10 @@ The following flags are interpreted by
 Force checking of file systems.  Normally, if a file system is cleanly
 unmounted, the kernel will set a
 .Dq clean flag
-in the file system superblock, and
-.Nm
+in the file system superblock and
+.Nm fsck_ffs
 will not check the file system.  This option forces
-.Nm
+.Nm fsck_ffs
 to check the file system, regardless of the state of the clean flag.
 .It Fl b
 Use the block specified immediately after the flag as
@@ -173,12 +174,16 @@ In particular, systems that wish to have lost files accessible
 by all users on the system should use a less restrictive
 set of permissions such as 755.
 .It Fl y
-Assume a yes response to all questions asked by 
+Assume a
+.Dq yes
+response to all questions asked by 
 .Nm fsck_ffs ;
 this should be used with great caution as this is a free license
 to continue after essentially unlimited trouble has been encountered.
 .It Fl n
-Assume a no response to all questions asked by 
+Assume a
+.Dq no
+response to all questions asked by 
 .Nm fsck_ffs
 except for
 .Ql CONTINUE? ,
@@ -194,13 +199,17 @@ The filesystem is in the old (static table) format.
 .It 1
 The filesystem is in the new (dynamic table) format.
 .It 2
-The filesystem supports 32-bit uid's and gid's,
+The filesystem supports 32-bit UIDs and GIDs,
 short symbolic links are stored in the inode, 
 and directories have an added field showing the file type.
 .It 3
-If maxcontig is greater than one,
+If
+.Va maxcontig
+is greater than one,
 build the free segment maps to aid in finding contiguous sets of blocks.
-If maxcontig is equal to one, delete any existing segment maps.
+If
+.Va maxcontig
+is equal to one, delete any existing segment maps.
 .El
 .Pp
 In interactive mode,
@@ -227,6 +236,7 @@ the file
 .Pp
 .Bl -enum -indent indent -compact
 Inconsistencies checked are as follows:
+.Pp
 .It
 Blocks claimed by more than one inode or the free map.
 .It
@@ -284,7 +294,7 @@ the raw device should always be used.
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
 .It Pa /etc/fstab
-contains default list of filesystems to check.
+contains default list of filesystems to check
 .El
 .Sh DIAGNOSTICS
 The diagnostics produced by 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: savecore.8,v 1.4 1998/03/26 00:06:31 deraadt Exp $
+.\"	$OpenBSD: savecore.8,v 1.5 1998/09/17 04:15:02 aaron Exp $
 .\"	$NetBSD: savecore.8,v 1.11 1995/06/27 22:40:46 briggs Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -48,7 +48,7 @@
 .Op Fl N Ar system
 .Ar directory
 .Sh DESCRIPTION
-.Nm Savecore
+.Nm savecore
 copies the currently running kernel and its associated core dump into
 .Fa directory ,
 and enters a reboot message and information about the core dump into
@@ -74,7 +74,7 @@ Compresses the core dump and kernel (see
 .Xr compress 1 ).
 .El
 .Pp
-.Nm Savecore
+.Nm savecore
 checks the core dump in various ways to make sure that it is current and
 that it corresponds to the currently running system.
 If it passes these checks, it saves the core image in
@@ -94,7 +94,7 @@ and it is incremented and stored back into the file each time
 .Nm savecore
 successfully runs.
 .Pp
-.Nm Savecore
+.Nm savecore
 also checks the available disk space before attempting to make the copies.
 If there is insufficient disk space in the filesystem containing
 .Ar directory ,
@@ -111,7 +111,7 @@ so that future invocations of
 .Nm savecore
 will ignore it.
 .Pp
-.Nm Savecore
+.Nm savecore
 is meant to be called near the end of the initialization file
 .Pa /etc/rc
 (see

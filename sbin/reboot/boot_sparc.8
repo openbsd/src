@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.5 1998/07/11 22:46:12 angelos Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.6 1998/09/17 04:15:00 aaron Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
 .Dd April 19, 1994
-.Dt boot_sparc 8 sparc
+.Dt BOOT_SPARC 8 sparc
 .Os
 .Sh NAME
 .Nm reboot
@@ -47,57 +47,57 @@ bootstrapping procedures
 .Op Fl n
 .Op Fl q
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery.
+.Ss Power fail and crash recovery
+.Pp
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed
-as described in
-.Xr fsck 8 .
+(as described in
+.Xr fsck 8 ),
 and unless this fails, the system will resume multi-user operations.
 .Pp
-.Sy Cold starts
+.Ss Cold starts
+.Pp
 The SPARC system currently uses the SunOS bootstrap loaders.
 This will be changed in a future version of the system.
 The SunOS boot will attempt to load
 .Pa bsd
-from partition A of the boot device,
+from partition ``a'' of the boot device,
 which must currently be an ``sd'' disk.
 .Pp
 The
-.Op Fl s
-flag to the SunOS boot loader will being the system up in single-user mode.
+.Fl s
+flag to the SunOS bootloader will bring the system up in single-user mode.
 The
-.Op Fl a
+.Fl a
 flag instructs the system to prompt for the location of the root filesystem
 and the primary swap partition.
 .\"The
 .\".Op Fl d
-.\"flag to the SunOS boot loader will bring the system up in debug mode.
+.\"flag to the SunOS bootloader will bring the system up in debug mode.
 .\"Here it waits for a kernel debugger connect; see
 .\".Xr kgdb 8 .
 Other flags are currently ignored.
 .Pp
-The Sparc boot rom comes in two flavours: an ``old-style'' rom is used in
-sun4 machines, while A ``new-style'' rom can be found on sun4c and sun4m models.
-The ``new-style'' Sparc boot rom is a full-featured Forth system with emacs
+The SPARC boot ROM comes in two flavours: an ``old-style'' ROM is used in
+sun4 machines, while a ``new-style'' ROM can be found on sun4c and sun4m models.
+The ``new-style'' SPARC boot ROM is a full-featured Forth system with emacs
 key bindings. It can be put in ``old-style'' user-interface compatibility
 mode (in which case it shows a simple `>' prompt), but this is essentially
-useless. However, by default the rom runs in old-mode; to enter new-mode type `n'.
-The rom then shows a Forth-style `ok' prompt. It is recommended to have
-the rom always start in its native ``new-style'' mode. Utter the following
-incantation in new-mode to force the rom to always start in new-mode.
+useless. However, by default the ROM runs in old-mode; to enter new-mode type `n'.
+The ROM then shows a Forth-style `ok' prompt. It is recommended to have
+the ROM always start in its native ``new-style'' mode. Utter the following
+incantation in new-mode to force the ROM to always start in new-mode:
 .Pp
-.Pa \	ok
+.Em \	ok
 setenv sunmon-compat? false
 .Pp
-The rom will normally load the kernel from "sd(0,0,0)bsd". To change the
-default so that
-.Pa OpenBSD
-will be loaded type the following
+The ROM will normally load the kernel from "sd(0,0,0)bsd". To change the
+default so that OpenBSD will be loaded, type the following:
 .Pp
-.Pa \	ok
+.Em \	ok
 setenv boot-from sd(0,0,0)bsd
 .Pp
-At any time you can break back to the rom by pressing the `L1' and `a'
+At any time you can break back to the ROM by pressing the `L1' and `a'
 keys at the same time (if the console is a serial port the same is
 achieved by sending a `break').
 If you do this accidentally you can continue whatever was in progress

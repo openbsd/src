@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_msdos.8,v 1.5 1998/01/11 20:40:34 provos Exp $
+.\"	$OpenBSD: fsck_msdos.8,v 1.6 1998/09/17 04:14:53 aaron Exp $
 .\"	$NetBSD: fsck_msdos.8,v 1.4 1996/10/17 20:41:24 cgd Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
@@ -49,7 +49,6 @@
 .Ar filesystem
 .Ar ...
 .Sh DESCRIPTION
-.Pp
 The
 .Nm
 utility verifies and repairs
@@ -91,7 +90,9 @@ check other file system types for consistency, such as
 .It Fl n
 Causes
 .Nm
-to assume no as the answer to all operator
+to assume
+.Dq no
+as the answer to all operator
 questions, except
 .Dq CONTINUE? .
 .It Fl p
@@ -99,12 +100,14 @@ Preen the specified filesystems.
 .It Fl y
 Causes
 .Nm
-to assume yes as the answer to all operator questions.
+to assume
+.Dq yes
+as the answer to all operator questions.
 .El
 .Sh SEE ALSO
 .Xr fsck 8 ,
 .Xr fsck_ffs 8 ,
 .Xr mount_msdos 8
 .Sh BUGS
-.Nm Fsck_msdos
+.Nm fsck_msdos
 is still under construction.

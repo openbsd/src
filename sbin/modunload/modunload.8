@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modunload.8,v 1.4 1996/10/08 01:20:25 michaels Exp $
+.\"	$OpenBSD: modunload.8,v 1.5 1998/09/17 04:14:54 aaron Exp $
 .\"	$NetBSD: modunload.8,v 1.3 1995/03/18 14:56:49 cgd Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -59,8 +59,7 @@ Unload the module with the name
 .Sh DIAGNOSTICS
 The
 .Nm
-utility exits with a status of 0 on success
-and with a nonzero status if an error occurs.
+utility exits 0 on success or with a non-zero status if an error occurred.
 .Sh SEE ALSO
 .Xr lkm 4 ,
 .Xr modload 8 ,

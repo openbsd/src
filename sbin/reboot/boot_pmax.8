@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_pmax.8,v 1.6 1998/07/24 20:49:08 deraadt Exp $
+.\"	$OpenBSD: boot_pmax.8,v 1.7 1998/09/17 04:15:00 aaron Exp $
 .\"	$NetBSD: boot_pmax.8,v 1.1 1995/04/25 23:55:11 mellon Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -52,31 +52,33 @@ Since the system is not reenterable,
 it is necessary to read it in from disk or tape
 each time it is to be bootstrapped.
 .Pp
-.Sy Power fail and crash recovery.
+.Ss Power fail and crash recovery
+.Pp
 Normally, the system will boot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
-.Sy Cold starts.
+.Ss Cold starts
+.Pp
 At power up, all DECstation ROMs consult the
 .Nm haltaction
 environment
-variable in EEPROM to determine whether or not to attempt to boot
-automatically.   If this
-variable is set to \fBh\fR, the ROM prints a prompt on the console and
-waits for user commands.   If set to \fBb\fR, the ROM attempts to autoboot.
+variable in EEPROM to determine whether or not to attempt an automatic
+boot.  If this
+variable is set to ``h'', the ROM prints a prompt on the console and
+waits for user commands.  If set to ``b'', the ROM attempts to autoboot.
 .Pp
 On the DECstation 2100 and 3100, the path used for automatic booting is
 stored in the
 .Nm bootpath
-environment variable.   The path is made up of a 
-device type specifier (e.g., rz, tz, mop or tftp) followed by
+environment variable.  The path is made up of a 
+device type specifier (e.g., rz, tz, mop or tftp), followed by
 a triplet in the form (x,y,z), followed by a filename to load.
 .Pp
-Within the triplet, x is the controller (always 0), y is the SCSI id of
+Within the triplet, ``x'' is the controller (always 0), ``y'' is the SCSI ID of
 the drive to
-boot from or 0 for net boots, and z is the partition to boot from
-(usually 0 for SCSI devices, always zero for network booting.
+boot from or 0 for net boots, and ``z'' is the partition to boot from
+(usually 0 for SCSI devices, always zero for network booting).
 For network boots, () may be specified instead of (0,0,0).
 .Pp
 The filename is optional for bootp/tftp and mop booting, since in
@@ -84,9 +86,11 @@ these cases the network protocol can be used to determine which
 file to boot.  When booting off the tape, no filename should be
 specified, and when booting off of disk, the filename of a kernel
 must be specified.  Generally, the kernel is named
-.Nm bsd.
+.Pa bsd .
 .Pp
-An example bootpath setting would be:
+An example
+.Nm bootpath
+setting would be:
 .nf
 .sp 1
 .ce 1
@@ -95,17 +99,17 @@ setenv bootpath rz(0,1,0)bsd
 .Pp
 For automatic boots, the ROM automatically passes a
 .Fl a
-argument to the boot
-loader, requesting that
+argument to the bootloader,
+requesting that
 .Tn OpenBSD
-attempt to come up to multi-user mode.   At the boot ROM prompt,
+attempt to come up to multi-user mode.  At the boot ROM prompt,
 the user may boot
 .Tn OpenBSD
 with either the
 .Nm auto
 or the
 .Nm boot
-command.   If the
+command.  If the
 .Nm auto
 command is used, the
 .Fl a
@@ -120,8 +124,9 @@ When either the
 .Nm boot
 or the
 .Nm auto
-command is issued with no arguments, the kernel specified in the bootpath
-environment variable is booted.   An alternate kernel may be specified
+command is issued with no arguments, the kernel specified in the
+.Nm bootpath
+environment variable is booted.  An alternate kernel may be specified
 with the
 .Fl f
 flag, followed by the path of the kernel to boot, as described above.
@@ -130,14 +135,16 @@ For example:
 .ce 1
 boot -f rz(0,4,0)bsd.new
 .Pp
-On TurboChannel machines (all DECstation 5000 models), the boot path
-is specified in the boot environment variable, along with any arguments
-to be passed to the kernel.   Note that to specify boot arguments (e.g.,
-.Fl a)
+On TurboChannel machines (all DECstation 5000 models), the bootpath
+is specified in the
+.Nm boot
+environment variable, along with any arguments
+to be passed to the kernel.  Note that to specify boot arguments (e.g.,
+.Fl a )
 when setting the
 .Nm boot
 environment variable, the filename and arguments
-must be enclosed in quotes.   For example:
+must be enclosed in quotes.  For example:
 .nf
 .sp 1
 .ce 1
@@ -146,19 +153,19 @@ setenv boot "3/rz4/bsd -a"
 .Pp
 The device from which to boot is specified as the TurboChannel slot
 number, a TurboChannel-option-specific device name, and a path to the
-file to load, all separated by slashes.   You can get a list of the
+file to load, all separated by slashes.  You can get a list of the
 devices installed in your TurboChannel slots (as well as any built-in
 devices which appear as TurboChannel slots) by typing the
 .Nm cnfg
 command
-at the boot prompt.   You can get more detailed information about a specific
+at the boot prompt.  You can get more detailed information about a specific
 TurboChannel option by typing
 .Nm cnfg
 followed by the slot number of that
 option.
 .Pp
-For SCSI devices, the option-specific device identifier is either rz# for
-disks or tz# for tapes, where # is the SCSI id of the device.   For network
+For SCSI devices, the option-specific device identifier is either ``rz#'' for
+disks or ``tz#'' for tapes, where # is the SCSI ID of the device.  For network
 devices, the option-specific protocol identifier is either mop or tftp.
 Filename requirements are as for the DECstation 2100 and 3100.
 .Pp
@@ -166,18 +173,20 @@ To start
 .Tn OpenBSD
 from the boot prompt, the
 .Nm boot
-command must be used.   With no arguments, this simply boots the default
+command must be used.  With no arguments, this simply boots the default
 kernel with the default arguments as set with
 .Nm setenv
-.Nm boot.
-If no boot environment variable is set or if an alternate kernel is to be
+.Nm boot .
+If no
+.Nm boot
+environment variable is set, or if an alternate kernel is to be
 booted, the path of that kernel may be specified after the boot command as
-described above, and any arguments may be passed similarly.   For example:
+described above, and any arguments may be passed similarly.  For example:
 .sp 1
 .ce 1
 boot 3/rz4/bsd.new -a
 .Sh SEE ALSO
-.Xr crash 8m ,
+.Xr crash 8 ,
 .Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
