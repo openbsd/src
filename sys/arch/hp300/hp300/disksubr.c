@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 1997/10/02 00:58:08 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 1998/05/02 05:09:59 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -75,8 +75,15 @@ readdisklabel(dev, strat, lp, osdep)
 	struct disklabel *dlp;
 	char *msg = NULL;
 
+	/* minimal requirements for archetypal disk label */
+	if (lp->d_secsize == 0)
+		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
+	if (lp->d_secpercyl == 0) {
+		lp->d_secpercyl = 1;
+	}
+
 	lp->d_npartitions = 1;
 	if (lp->d_partitions[0].p_size == 0)
 		lp->d_partitions[0].p_size = 0x1fffffff;
