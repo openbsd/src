@@ -60,7 +60,8 @@ enum attrs {A_PACKED, A_NOCOMMON, A_COMMON, A_NORETURN, A_CONST, A_T_UNION,
 	    A_SENTINEL, A_BOUNDED};
 
 enum format_type { printf_format_type, scanf_format_type,
-		   strftime_format_type, syslog_format_type };
+		   strftime_format_type, syslog_format_type,
+		   kprintf_format_type };
 
 enum bounded_type { buffer_bound_type, string_bound_type, 
 		    minbytes_bound_type, size_bound_type };
@@ -776,6 +777,8 @@ decl_attributes (node, attributes, prefix_attributes)
 		  format_type = printf_format_type;
 		else if (!strcmp (p, "syslog") || !strcmp (p, "__syslog__"))
 		  format_type = syslog_format_type;
+		else if (!strcmp (p, "kprintf") || !strcmp (p, "__kprintf__"))
+		  format_type = kprintf_format_type;
 		else if (!strcmp (p, "scanf") || !strcmp (p, "__scanf__"))
 		  format_type = scanf_format_type;
 		else if (!strcmp (p, "strftime")
@@ -1452,6 +1455,22 @@ static format_char_info scan_char_table[] = {
   { "p",	2,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*"	},
   { "n",	1,	T_I,	T_C,	T_S,	T_L,	T_LL,	NULL,	NULL,	""	},
   { NULL,	0,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL	}
+};
+
+static format_char_info kprintf_char_table[] = {
+  { "di",	0,	T_I,	T_I,	T_I,	T_L,	T_LL,	T_LL,	T_ST,	"-wp0 +"	},
+  { "oxX",	0,	T_UI,	T_UI,	T_UI,	T_UL,	T_ULL,  T_ULL,  T_ST,	"-wp0#"		},
+  { "u",	0,	T_UI,	T_UI,	T_UI,	T_UL,	T_ULL,  T_ULL,  T_ST,	"-wp0"		},
+  { "c",	0,	T_I,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	"-w"		},
+  { "s",	1,	T_C,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	"-wp"		},
+  { "p",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-w"		},
+/* Kernel bitmap formatting */
+  { "b",	1,	T_C,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"" 		},
+/* Kernel recursive format */
+  { ":",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"" 		},
+/* Kernel debugger auto-radix printing */
+  { "nrz",	0,	T_I,	T_I,	T_I,	T_L,	T_LL,	T_LL,	NULL,	"-wp0# +" 	},
+  { NULL }
 };
 
 /* Handle format characters recognized by glibc's strftime.c.
@@ -2257,7 +2276,8 @@ check_format_info (info, params)
 	    }
 	}
       else if ((info->format_type == printf_format_type) || 
-      	(info->format_type == syslog_format_type))
+      	(info->format_type == syslog_format_type) ||
+	(info->format_type == kprintf_format_type))
 	{
 	  /* See if we have a number followed by a dollar sign.  If we do,
 	     it is an operand number, so set PARAMS to that operand.  */
@@ -2335,6 +2355,72 @@ check_format_info (info, params)
 		       != unsigned_type_node))
 		    warning ("field width is not type int (arg %d)", arg_num);
 		}
+	    }
+	  else if (info->format_type == kprintf_format_type)
+	    {
+	      switch (*format_chars)
+		{
+		case 'b':
+		  if (params == 0)
+		    {
+		      tfaff ();
+		      return;
+		    }
+		  if (info->first_arg_num != 0)
+		    {
+		      cur_param = TREE_VALUE (params);
+		      cur_type = TREE_TYPE (cur_param);
+		      params = TREE_CHAIN (params);
+		      ++arg_num;
+		      /*
+		       * `%b' takes two arguments:
+		       * an integer type (the bits), type-checked here
+		       * a string (the bit names), checked for in mainstream
+		       * code below (see `%b' entry in print_char_table[])
+		       */
+	  
+	       	      if (TREE_CODE (TYPE_MAIN_VARIANT (cur_type)) != INTEGER_TYPE)
+			warning ("bitfield is not an integer type (arg %d)", arg_num);
+		    }
+		  break;
+
+		case ':':
+		  if (params == 0)
+		    {
+		      tfaff();
+		      return;
+		    }
+		  if (info->first_arg_num != 0)
+		    {
+		      cur_param = TREE_VALUE (params);
+		      cur_type = TREE_TYPE (cur_param);
+		      params = TREE_CHAIN (params);
+		      ++arg_num;
+		      /*
+		       * `%:' takes two arguments:
+		       * a string (the recursive format), type-checked here
+		       * a pointer (va_list of format arguments), checked for
+		       * in mainstream code below (see `%:' entry in
+		       * print_char_table[])
+		       */
+		      if (TREE_CODE (cur_type) == POINTER_TYPE)
+			{
+			  cur_type = TREE_TYPE (cur_type);
+			  if (TYPE_MAIN_VARIANT (cur_type) == char_type_node)
+			    break;
+			}
+		      warning ("format argument is not a string (arg %d)", arg_num);
+		    }
+		break;
+
+	      default:
+		while (ISDIGIT (*format_chars))
+		  {
+		    wide = TRUE;
+		    ++format_chars;
+		  }
+		break;
+	      }
 	    }
 	  else
 	    {
@@ -2456,6 +2542,9 @@ check_format_info (info, params)
 	  break;
 	case strftime_format_type:
 	  fci = time_char_table;
+	  break;
+	case kprintf_format_type:
+	  fci = kprintf_char_table;
 	  break;
 	default:
 	  abort ();

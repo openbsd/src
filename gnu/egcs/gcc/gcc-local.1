@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.12 2003/06/26 18:32:12 avsm Exp $
+.\" $OpenBSD: gcc-local.1,v 1.13 2003/07/25 02:48:11 avsm Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -152,6 +152,18 @@ An extra attribute,
 .Dv __bounded__ ,
 has been added to mark functions that can be
 checked this way.
+.It
+.Nm gcc
+recognizes a new format attribute, kprintf, to deal with the extra format
+arguments
+.Ql %b ,
+.Ql %: ,
+.Ql %r ,
+and
+.Ql %z
+used in the
+.Ox
+kernel.
 .El
 .Sh ATTRIBUTES
 The
