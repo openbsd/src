@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.255 2002/06/30 21:59:45 deraadt Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.256 2002/07/19 15:43:33 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -289,9 +289,6 @@ static void
 grace_alarm_handler(int sig)
 {
 	/* XXX no idea how fix this signal handler */
-
-	/* Close the connection. */
-	packet_close();
 
 	/* Log error and exit. */
 	fatal("Timeout before authentication for %s.", get_remote_ipaddr());
@@ -576,6 +573,8 @@ privsep_preauth(void)
 	if (pid == -1) {
 		fatal("fork of unprivileged child failed");
 	} else if (pid != 0) {
+		fatal_remove_cleanup((void (*) (void *)) packet_close, NULL);
+
 		debug2("Network child is on pid %ld", (long)pid);
 
 		close(pmonitor->m_recvfd);
@@ -589,6 +588,10 @@ privsep_preauth(void)
 		while (waitpid(pid, &status, 0) < 0)
 			if (errno != EINTR)
 				break;
+
+		/* Reinstall, since the child has finished */
+		fatal_add_cleanup((void (*) (void *)) packet_close, NULL);
+
 		return (authctxt);
 	} else {
 		/* child */
@@ -632,6 +635,8 @@ privsep_postauth(Authctxt *authctxt)
 	if (pmonitor->m_pid == -1)
 		fatal("fork of unprivileged child failed");
 	else if (pmonitor->m_pid != 0) {
+		fatal_remove_cleanup((void (*) (void *)) packet_close, NULL);
+
 		debug2("User child is on pid %ld", (long)pmonitor->m_pid);
 		close(pmonitor->m_recvfd);
 		monitor_child_postauth(pmonitor);
