@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.16 2001/07/09 07:05:00 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.17 2001/08/17 22:35:01 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -29,6 +29,14 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/wait.h>
+#include <sys/event.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <syslog.h>
 #include <fcntl.h>
@@ -36,12 +44,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/wait.h>
 #include <errno.h>
 #include <err.h>
 #include <machine/apmvar.h>
@@ -287,23 +289,23 @@ stand_by(int ctl_fd)
 	ioctl(ctl_fd, APM_IOC_STANDBY, 0);
 }
 
-#define TIMO (10*60)			/* 10 minutes */
+#define TIMO (1*60)			/* 10 minutes */
 
 int
 main(int argc, char *argv[])
 {
 	const char *fname = apmdev;
-	int ctl_fd, sock_fd, ch, ready, fdsn, suspends, standbys, resumes;
+	int ctl_fd, sock_fd, ch, suspends, standbys, resumes;
 	int statonly = 0;
 	int enableonly = 0;
 	int pctonly = 0;
 	int powerstatus = 0, powerbak = 0, powerchange = 0;
 	int messages = 0;
 	int noacsleep = 0;
-	fd_set *devfdsp, *selfdsp;
-	struct apm_event_info apmevent;
-	struct timeval tv = {TIMO, 0}, stv;
+	struct timespec ts = {TIMO, 0}, sts = {0, 0};
 	const char *sockname = sockfile;
+	int kq;
+	struct kevent ev[2];
 
 	while ((ch = getopt(argc, argv, "qadsepmf:t:S:")) != -1)
 		switch(ch) {
@@ -323,8 +325,8 @@ main(int argc, char *argv[])
 			sockname = optarg;
 			break;
 		case 't':
-			tv.tv_sec = strtoul(optarg, NULL, 0);
-			if (tv.tv_sec == 0)
+			ts.tv_sec = strtoul(optarg, NULL, 0);
+			if (ts.tv_sec == 0)
 				usage();
 			break;
 		case 's':	/* status only */
@@ -381,81 +383,80 @@ main(int argc, char *argv[])
 	(void) signal(SIGINT, sigexit);
 
 	sock_fd = bind_socket(sockname);
-	fdsn = howmany(MAX(ctl_fd, sock_fd)+1, NFDBITS) * sizeof(fd_mask);
-	if ((devfdsp = (fd_set *)malloc(fdsn)) == NULL)
-		err(1, "malloc");
+	kq = kqueue();
+	if (kq <= 0)
+		err(1, "kqueue");
 
-	if ((selfdsp = (fd_set *)malloc(fdsn)) == NULL)
-		err(1, "malloc");
-
-	memset(devfdsp, 0, fdsn);
-	FD_SET(ctl_fd, devfdsp);
-	FD_SET(sock_fd, devfdsp);
+	EV_SET(&ev[0], ctl_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
+	    0, 0, NULL);
+	EV_SET(&ev[1], sock_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
+	    0, 0, NULL);
+	if (kevent(kq, ev, 2, NULL, 0, &sts) < 0)
+		err(1, "kevent");
 
 	for (;;) {
-		stv = tv;
-		memmove(selfdsp, devfdsp, fdsn);
+		int rv;
 
-		ready = select(MAX(ctl_fd,sock_fd)+1, selfdsp, 0, 0, &stv);
-		if (ready == -1 && errno != EINTR)
-			continue;
+		sts = ts;
 
-		if (ready == 0) {
-			/* wakeup for timeout: take status */
-			powerbak = power_status(ctl_fd, 0, 0);
-			if (powerstatus != powerbak) {
-				powerstatus = powerbak;
-				powerchange = 1;
-			}
+		if ((rv = kevent(kq, NULL, 0, ev, 1, &sts)) < 0)
+			break;
+
+		/* wakeup for timeout: take status */
+		powerbak = power_status(ctl_fd, 0, 0);
+		if (powerstatus != powerbak) {
+			powerstatus = powerbak;
+			powerchange = 1;
 		}
 
-		if (FD_ISSET(ctl_fd, selfdsp)) {
+		if (!rv)
+			continue;
+
+		if (ev->ident == ctl_fd) {
 			suspends = standbys = resumes = 0;
-			while (!ioctl(ctl_fd, APM_IOC_NEXTEVENT, &apmevent)) {
+			syslog(LOG_DEBUG, "apmevent %04x index %d",
+			    APM_EVENT_TYPE(ev->data),
+			    APM_EVENT_INDEX(ev->data));
 
-				syslog(LOG_DEBUG, "apmevent %04x index %d",
-				    apmevent.type, apmevent.index);
-
-				switch (apmevent.type) {
-				case APM_SUSPEND_REQ:
-				case APM_USER_SUSPEND_REQ:
-				case APM_CRIT_SUSPEND_REQ:
-				case APM_BATTERY_LOW:
-					suspends++;
-					break;
-				case APM_USER_STANDBY_REQ:
-				case APM_STANDBY_REQ:
-					standbys++;
-					break;
+			switch (APM_EVENT_TYPE(ev->data)) {
+			case APM_SUSPEND_REQ:
+			case APM_USER_SUSPEND_REQ:
+			case APM_CRIT_SUSPEND_REQ:
+			case APM_BATTERY_LOW:
+				suspends++;
+				break;
+			case APM_USER_STANDBY_REQ:
+			case APM_STANDBY_REQ:
+				standbys++;
+				break;
 #if 0
-				case APM_CANCEL:
-					suspends = standbys = 0;
-					break;
+			case APM_CANCEL:
+				suspends = standbys = 0;
+				break;
 #endif
-				case APM_NORMAL_RESUME:
-				case APM_CRIT_RESUME:
-				case APM_SYS_STANDBY_RESUME:
-					powerbak = power_status(ctl_fd, 0, 0);
-					if (powerstatus != powerbak) {
-						powerstatus = powerbak;
-						powerchange = 1;
-					}
-					resumes++;
-					break;
-				case APM_POWER_CHANGE:
-					powerbak = power_status(ctl_fd, 0, 0);
-					if (powerstatus != powerbak) {
-						powerstatus = powerbak;
-						powerchange = 1;
-					}
-					break;
-				default:
+			case APM_NORMAL_RESUME:
+			case APM_CRIT_RESUME:
+			case APM_SYS_STANDBY_RESUME:
+				powerbak = power_status(ctl_fd, 0, 0);
+				if (powerstatus != powerbak) {
+					powerstatus = powerbak;
+					powerchange = 1;
 				}
+				resumes++;
+				break;
+			case APM_POWER_CHANGE:
+				powerbak = power_status(ctl_fd, 0, 0);
+				if (powerstatus != powerbak) {
+					powerstatus = powerbak;
+					powerchange = 1;
+				}
+				break;
+			default:
 			}
 
 			if ((standbys || suspends) && noacsleep &&
 			    power_status(ctl_fd, 0, 0))
-				syslog(LOG_DEBUG, "no sleep till brooklyn");
+				syslog(LOG_DEBUG, "no! sleep! till brooklyn!");
 			else if (suspends)
 				suspend(ctl_fd);
 			else if (standbys)
@@ -473,13 +474,8 @@ main(int argc, char *argv[])
 					do_etc_file(_PATH_APM_ETC_POWERDOWN);
 				powerchange = 0;
 			}
-			ready--;
-		}
 
-		if (ready == 0)
-			continue;
-
-		if (FD_ISSET(sock_fd, selfdsp))
+		} else if (ev->ident == sock_fd)
 			switch (handle_client(sock_fd, ctl_fd)) {
 			case NORMAL:
 				break;
@@ -491,7 +487,7 @@ main(int argc, char *argv[])
 				break;
 			}
 	}
-	syslog(LOG_ERR, "select failed: %m");
+	syslog(LOG_ERR, "kevent failed: %m");
 
 	return 1;
 }
