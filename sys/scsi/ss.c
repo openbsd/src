@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.26 1997/03/11 03:40:49 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.27 1997/03/11 04:00:15 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -331,7 +331,8 @@ ss_identify_scanner(ss, inqbuf)
 		}
 		printf("%s\n", ss->quirkdata->name);
 	} else {
-		printf(" generic scanner\n"); /* good luck 8c{)] */
+		printf("\n%s: generic scanner\n", ss->sc_dev.dv_xname);
+		ss->sio.scan_scanner_type = GENERIC_SCSI2;
 	}
 }
 
