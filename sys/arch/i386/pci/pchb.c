@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.13 2000/05/04 05:35:45 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.14 2000/05/05 00:26:28 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -154,6 +154,7 @@ pchbattach(parent, self, aux)
 	struct pcibus_attach_args pba;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
+	pcitag_t tag;
 	int neednl = 1;
 	int i;
 
@@ -226,6 +227,40 @@ pchbattach(parent, self, aux)
 				pba.pba_pc = pa->pa_pc;
 				config_found(self, &pba, pchb_print);
 				break;
+			}
+			break;
+		case PCI_PRODUCT_INTEL_82454NX:
+			pbnum = 0;
+			switch (pa->pa_device) {
+			case 18: /* PXB 0 bus A - primary bus */
+				break;
+			case 19: /* PXB 0 bus B */
+				/* read SUBA0 from MIOC */
+				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
+				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd0);
+				pbnum = ((bcreg & 0x0000ff00) >> 8) + 1;
+				break;
+			case 20: /* PXB 1 bus A */
+				/* read BUSNO1 from MIOC */
+				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
+				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd0);
+				pbnum = (bcreg & 0xff000000) >> 24;
+				break;
+			case 21: /* PXB 1 bus B */
+				/* read SUBA1 from MIOC */
+				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
+				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd4);
+				pbnum = (bcreg & 0x000000ff) + 1;
+				break;
+			}
+			if (pbnum != 0) {
+				pba.pba_busname = "pci";
+				pba.pba_iot = pa->pa_iot;
+				pba.pba_memt = pa->pa_memt;
+				pba.pba_dmat = pa->pa_dmat;
+				pba.pba_bus = pbnum;
+				pba.pba_pc = pa->pa_pc;
+				config_found(self, &pba, pchb_print);
 			}
 			break;
 		case PCI_PRODUCT_INTEL_CDC:
