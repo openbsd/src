@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.221 2002/11/27 16:06:20 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.222 2002/11/27 16:23:01 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -670,7 +670,7 @@ priority	: /* empty */		{ $$ = DEFAULT_PRIORITY; }
 		}
 		;
 
-qlimit		: /* empty */		{ $$ = 0; }
+qlimit		: /* empty */		{ $$ = DEFAULT_QLIMIT; }
 		| QLIMIT number		{
 			if ($2 > 65535) {
 				yyerror("qlimit out of range: max 65535");

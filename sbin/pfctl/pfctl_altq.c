@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.11 2002/11/27 16:06:20 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.12 2002/11/27 16:23:01 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -167,6 +167,8 @@ print_queue(const struct pf_altq *a, unsigned level)
 	printf("bandwidth %s ", rate2str((double)a->bandwidth));
 	if (a->priority != DEFAULT_PRIORITY)
 		printf("priority %u ", a->priority);
+	if (a->qlimit != DEFAULT_QLIMIT)
+		printf("qlimit %u ", a->qlimit);
 	switch (a->scheduler) {
 	case ALTQT_CBQ:
 		print_cbq_opts(a);
@@ -240,7 +242,7 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 		pa->parent_qid = parent->qid;
 	}
 	if (pa->qlimit == 0)
-		pa->qlimit = 50;
+		pa->qlimit = DEFAULT_QLIMIT;
 
 	if (bw_absolute > 0)
 		pa->bandwidth = bw_absolute;
