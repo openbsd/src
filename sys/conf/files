@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.106 1999/02/17 20:39:16 deraadt Exp $
+#	$OpenBSD: files,v 1.107 1999/02/24 22:36:42 angelos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -398,7 +398,6 @@ file net/route.c
 file net/rtsock.c
 file net/slcompress.c			sl | ppp | strip
 file net/if_enc.c			inet & ipsec
-file net/encap.c			inet & ipsec
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc
@@ -458,6 +457,7 @@ file netinet/ip_sha1.c			inet & ipsec
 file netinet/ip_skipjack.c		inet & ipsec
 file netinet/ip_blf.c			inet & ipsec
 file netinet/ip_cast.c			inet & ipsec
+file netinet/ip_skipjack.c		inet & ipsec
 file netinet/libdeslite/ecb_enc.c	inet & ipsec
 file netinet/libdeslite/set_key.c	inet & ipsec
 file netinet/libdeslite/ecb3_enc.c	inet & ipsec
@@ -609,7 +609,6 @@ file netinet6/in6_proto.c		inet6
 file netinet6/ipv6_trans.c   		inet6
 
 # ... PF_KEY
-file netsec/sadb.c			key
 file netsec/pfkey.c			key
 file netsec/pfkeyv2.c			key
 file netsec/pfkeyv2_parsemessage.c	key
