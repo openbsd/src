@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.3 2004/11/10 10:14:47 grange Exp $ */
+/* $OpenBSD: if_bce.c,v 1.4 2004/12/02 02:20:41 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -135,6 +135,7 @@ struct bce_softc {
 	struct bce_dma_slot	*bce_tx_ring;	/* transmit ring */
 	struct bce_chain_data	bce_cdata;	/* mbufs */
 	bus_dmamap_t		bce_ring_map;
+	u_int32_t		bce_intmask;	/* current intr mask */
 	u_int32_t		bce_rxin;	/* last rx descriptor seen */
 	u_int32_t		bce_txin;	/* last tx descriptor seen */
 	int			bce_txsfree;	/* no. tx slots available */
@@ -449,7 +450,7 @@ bce_attach(parent, self, aux)
 	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
 	    bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);	 /* MAGIC */
 	/* enable traffic meter led mode */
-	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
+	bce_mii_write((struct device *) sc, 1, 27,	 /* MAGIC */
 	    bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));	 /* MAGIC */
 
 
@@ -684,7 +685,6 @@ bce_intr(xsc)
 	struct bce_softc *sc;
 	struct ifnet   *ifp;
 	u_int32_t intstatus;
-	u_int32_t intmask;
 	int             wantinit;
 	int             handled = 0;
 
@@ -695,11 +695,9 @@ bce_intr(xsc)
 	for (wantinit = 0; wantinit == 0;) {
 		intstatus = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
 		    BCE_INT_STS);
-		intmask = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
-		    BCE_INT_MASK);
 
 		/* ignore if not ours, or unsolicited interrupts */
-		intstatus &= intmask;
+		intstatus &= sc->bce_intmask;
 		if (intstatus == 0)
 			break;
 
@@ -1005,8 +1003,10 @@ bce_init(ifp)
 	}
 
 	/* Enable interrupts */
+	sc->bce_intmask =
+	    I_XI | I_RI | I_XU | I_RO | I_RU | I_DE | I_PD | I_PC | I_TO;
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_INT_MASK,
-	    I_XI | I_RI | I_XU | I_RO | I_RU | I_DE | I_PD | I_PC | I_TO);
+	    sc->bce_intmask);
 
 	/* start the receive dma */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXDPTR,
@@ -1134,7 +1134,8 @@ bce_stop(ifp, disable)
 
 	/* Disable interrupts. */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_INT_MASK, 0);
-	bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_INT_MASK);
+	sc->bce_intmask = 0;
+	delay(10);
 
 	/* Disable emac */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL, EC_ED);
