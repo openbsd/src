@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.5 1996/06/10 07:28:52 deraadt Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.6 1996/12/17 03:46:37 dm Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -127,11 +127,13 @@
 /*
  * Set the attribute timeout based on how recently the file has been modified.
  */
+#if 0 /* replaced by nfs_attrtimeo() in nfs_subs.c */
 #define	NFS_ATTRTIMEO(np) \
 	((((np)->n_flag & NMODIFIED) || \
 	 (time.tv_sec - (np)->n_mtime) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
 	 ((time.tv_sec - (np)->n_mtime) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
 	  (time.tv_sec - (np)->n_mtime) / 10))
+#endif
 
 /*
  * Expected allocation sizes for major data structures. If the actual size

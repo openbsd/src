@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.10 1996/07/05 09:09:06 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.11 1996/12/17 03:46:36 dm Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -306,8 +306,33 @@ struct iso_args {
 /*
  * Arguments to mount NFS
  */
-#define NFS_ARGSVERSION	3		/* change when nfs_args changes */
+#define NFS_ARGSVERSION	4		/* change when nfs_args changes */
 struct nfs_args {
+	int		version;	/* args structure version number */
+	struct sockaddr	*addr;		/* file server address */
+	int		addrlen;	/* length of address */
+	int		sotype;		/* Socket type */
+	int		proto;		/* and Protocol */
+	u_char		*fh;		/* File handle to be mounted */
+	int		fhsize;		/* Size, in bytes, of fh */
+	int		flags;		/* flags */
+	int		wsize;		/* write size in bytes */
+	int		rsize;		/* read size in bytes */
+	int		readdirsize;	/* readdir size in bytes */
+	int		timeo;		/* initial timeout in .1 secs */
+	int		retrans;	/* times to retry send */
+	int		maxgrouplist;	/* Max. size of group list */
+	int		readahead;	/* # of blocks to readahead */
+	int		leaseterm;	/* Term (sec) of lease */
+	int		deadthresh;	/* Retrans threshold */
+	char		*hostname;	/* server's name */
+	int		acregmin;	/* Attr cache file recently modified */
+	int		acregmax;	/* ac file not recently modified */
+	int		acdirmin;	/* ac for dir recently modified */
+	int		acdirmax;	/* ac for dir not recently modified */
+};
+/* NFS args version 3 (for backwards compatibility) */
+struct nfs_args3 {
 	int		version;	/* args structure version number */
 	struct sockaddr	*addr;		/* file server address */
 	int		addrlen;	/* length of address */
@@ -349,6 +374,11 @@ struct nfs_args {
 #define	NFSMNT_RESVPORT		0x00008000  /* Allocate a reserved port */
 #define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
 #define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
+
+/* Flags valid only in mount syscall arguments */
+#define NFSMNT_ACTIMES		0x00040000  /* Args contain attr cache times*/
+
+/* Flags valid only in kernel */
 #define	NFSMNT_INTERNAL		0xfffc0000  /* Bits set internally */
 #define NFSMNT_HASWRITEVERF	0x00040000  /* Has write verifier for V3 */
 #define NFSMNT_GOTPATHCONF	0x00080000  /* Got the V3 pathconf info */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.3 1996/03/31 13:16:12 mickey Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.4 1996/12/17 03:46:39 dm Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -85,6 +85,10 @@ struct	nfsmount {
 	int	nm_numuids;		/* Number of nfsuid mappings */
 	TAILQ_HEAD(, nfsuid) nm_uidlruhead; /* Lists of nfsuid mappings */
 	LIST_HEAD(, nfsuid) nm_uidhashtbl[NFS_MUIDHASHSIZ];
+	u_short	nm_acregmin;		/* Attr cache file recently modified */
+	u_short	nm_acregmax;		/* ac file not recently modified */
+	u_short	nm_acdirmin;		/* ac for dir recently modified */
+	u_short	nm_acdirmax;		/* ac for dir not recently modified */
 };
 
 #ifdef _KERNEL

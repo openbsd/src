@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.13 1996/10/15 11:34:15 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.14 1996/12/17 03:46:38 dm Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1321,6 +1321,31 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	return (0);
 }
 
+inline int
+nfs_attrtimeo (struct nfsnode *np)
+{
+	struct vnode *vp = np->n_vnode;
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	int tenthage = (time.tv_sec - np->n_mtime) / 10;
+	int minto, maxto;
+
+	if (vp->v_type == VDIR) {
+		maxto = nmp->nm_acdirmax;
+		minto = nmp->nm_acdirmin;
+	}
+	else {
+		maxto = nmp->nm_acregmax;
+		minto = nmp->nm_acregmin;
+	}
+
+	if (np->n_flag & NMODIFIED || tenthage < minto)
+		return minto;
+	else if (tenthage < maxto)
+		return tenthage;
+	else
+		return maxto;
+}
+
 /*
  * Check the time stamp
  * If the cache is valid, copy contents to *vap and return 0
@@ -1334,7 +1359,7 @@ nfs_getattrcache(vp, vaper)
 	register struct nfsnode *np = VTONFS(vp);
 	register struct vattr *vap;
 
-	if ((time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
+	if ((time.tv_sec - np->n_attrstamp) >= nfs_attrtimeo(np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}

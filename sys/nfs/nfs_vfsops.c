@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.13 1996/09/21 11:06:22 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.14 1996/12/17 03:46:39 dm Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -543,6 +543,29 @@ nfs_decode_args(nmp, argp)
 		argp->deadthresh <= NQ_NEVERDEAD)
 		nmp->nm_deadthresh = argp->deadthresh;
 
+	if (argp->flags & NFSMNT_ACTIMES) {
+		if (argp->acregmax > 0xffff)
+			nmp->nm_acregmax = 0xffff;
+		else if (argp->acregmax >= 0)
+			nmp->nm_acregmax = argp->acregmax;
+		if (argp->acregmin >= 0) {
+			if (argp->acregmin > nmp->nm_acregmax)
+				nmp->nm_acregmin = nmp->nm_acregmax;
+			else
+				nmp->nm_acregmin = argp->acregmin;
+		}
+		if (argp->acdirmax > 0xffff)
+			nmp->nm_acdirmax = 0xffff;
+		else if (argp->acdirmax >= 0)
+			nmp->nm_acdirmax = argp->acdirmax;
+		if (argp->acdirmin >= 0) {
+			if (argp->acdirmin > nmp->nm_acdirmax)
+				nmp->nm_acdirmin = nmp->nm_acdirmax;
+			else
+				nmp->nm_acdirmin = argp->acdirmin;
+		}
+	}
+
 	if (nmp->nm_so && adjsock) {
 		nfs_disconnect(nmp);
 		if (nmp->nm_sotype == SOCK_DGRAM)
@@ -580,11 +603,20 @@ nfs_mount(mp, path, data, ndp, p)
 	size_t len;
 	u_char nfh[NFSX_V3FHMAX];
 
-	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
+	error = copyin (data, (caddr_t)&args, sizeof (args.version));
 	if (error)
 		return (error);
-	if (args.version != NFS_ARGSVERSION)
+	if (args.version == 3) {
+		error = copyin (data, (caddr_t)&args,
+				sizeof (struct nfs_args3));
+		args.flags &= ~NFSMNT_INTERNAL;
+	}
+	else if (args.version == NFS_ARGSVERSION)
+		error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
+	else
 		return (EPROGMISMATCH);
+	if (error)
+		return (error);
 	args.flags |= NFSMNT_RESVPORT;		/* ALWAYS allocate one */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		register struct nfsmount *nmp = VFSTONFS(mp);
@@ -674,6 +706,10 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	CIRCLEQ_INIT(&nmp->nm_timerhead);
 	nmp->nm_inprog = NULLVP;
 	nmp->nm_fhsize = argp->fhsize;
+	nmp->nm_acregmin = NFS_MINATTRTIMO;
+	nmp->nm_acregmax = NFS_MAXATTRTIMO;
+	nmp->nm_acdirmin = NFS_MINATTRTIMO;
+	nmp->nm_acdirmax = NFS_MAXATTRTIMO;
 	bcopy((caddr_t)argp->fh, (caddr_t)nmp->nm_fh, argp->fhsize);
 #ifdef COMPAT_09
 	mp->mnt_stat.f_type = 2;
