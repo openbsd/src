@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.102 2002/08/07 18:44:39 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.103 2002/10/10 17:27:40 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2470,7 +2470,7 @@ bridge_fragment(sc, ifp, eh, m)
 	struct mbuf *m;
 {
 	struct llc llc;
-	struct mbuf *m0 = m;
+	struct mbuf *m0;
 	int s, len, error = 0;
 	int hassnap = 0;
 #ifdef INET
@@ -2507,6 +2507,9 @@ bridge_fragment(sc, ifp, eh, m)
 	if (hassnap)
 		m_adj(m, LLC_SNAPFRAMELEN);
 
+	if (m->m_len < sizeof(struct ip) &&
+	    (m = m_pullup(m, sizeof(struct ip))) == NULL)
+		goto dropit;
 	ip = mtod(m, struct ip *);
 	NTOHS(ip->ip_len);
 	NTOHS(ip->ip_off);
@@ -2522,7 +2525,7 @@ bridge_fragment(sc, ifp, eh, m)
 	if (error == EMSGSIZE)
 		goto dropit;
 
-	for (m = m0; m; m = m0) {
+	for (; m; m = m0) {
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.149 2002/06/24 23:57:28 itojun Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.150 2002/10/10 17:27:40 dhartmei Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -734,7 +734,7 @@ sendit:
 	if (error == EMSGSIZE)
 		goto bad;
 
-	for (m = m0; m; m = m0) {
+	for (; m; m = m0) {
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0)
