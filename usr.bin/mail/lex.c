@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.8 1997/07/14 00:24:27 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.9 1997/07/22 06:46:20 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.8 1997/07/14 00:24:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.9 1997/07/22 06:46:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,6 @@ setfile(name)
 	char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
 	extern char *tempMesg;
-	extern int errno;
 
 	if ((name = expand(name)) == NULL)
 		return(-1);
@@ -180,12 +179,11 @@ incfile()
 		return(-1);
 	holdsigs();
 	newsize = fsize(ibuf);
-	if (newsize == 0)
-		return(-1);		/* mail box is now empty??? */
-	if (newsize < mailsize)
-		return(-1);		/* mail box has shrunk??? */
-	if (newsize == mailsize)
-		return(0);		/* no new mail */
+	/* make sure mail box has grown and is non-empty */
+	if (newsize == 0 || newsize <= mailsize) {
+		relsesigs();
+		return(newsize == mailsize ? 0 : -1);
+	}
 	setptr(ibuf, mailsize);
 	setmsize(msgCount);
 	mailsize = ftell(ibuf);
