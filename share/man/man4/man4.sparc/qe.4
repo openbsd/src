@@ -1,4 +1,4 @@
-.\"     $OpenBSD: qec.4,v 1.4 1998/10/19 05:45:11 jason Exp $
+.\"     $OpenBSD: qe.4,v 1.1 1998/10/19 05:45:10 jason Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -29,28 +29,46 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 1998
-.Dt QEC 4 sparc
+.Dd October 15, 1998
+.Dt QE 4 sparc
 .Os
 .Sh NAME
-.Nm qec
-.Nd SPARC Quad Ethernet Controller
+.Nm qe
+.Nd SPARC Fast Ethernet interface
 .Sh SYNOPSIS
 .Cd "qec* at sbus? slot ? offset ?                 " Pq "sun4c/sun4m"
+.Cd "qe* at qec?                                   " Pq "sun4c/sun4m"
 .Sh DESCRIPTION
 The 
 .Nm
-driver is an sbus controller that can contain either one
-.Xr be 4
-Ethernet controller (Sun part number SUNW,270-2450)
-or four
-.Xr me 4
-ethernet controllers (Sun part number SUNW,595-3198).
-This driver, like other buses, is not directly available to users.
+interface provides access to 10Mb/s Ethernet networks via the
+.Tn AMD
+Am79C940 (MACE) Ethernet controller.
+The 
+.Nm 
+is found on the Sun QuadEthernet boards
+(Sun part number SUNW,595-3198).
+.Pp
+Each of the host's network addresses
+is specified at boot time with an
+.Dv SIOCSIFADDR
+.Xr ioctl 2 .
+The
+.Nm
+interface employs the address resolution protocol described in
+.Xr arp 4
+to dynamically map between Internet and Ethernet addresses on the local
+network.
 .Sh SEE ALSO
+.Xr ifconfig 8 ,
+.Xr ifmedia 4 ,
+.Xr qec 4 ,
 .Xr be 4 ,
-.Xr qe 4 ,
-.Xr intro 4
+.Xr ie 4 ,
+.Xr le 4 ,
+.Xr intro 4 ,
+.Xr inet 4 ,
+.Xr arp 4
 .Sh HISTORY
 .Ox
 support for the
