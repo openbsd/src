@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.148 2002/02/14 13:24:45 todd Exp $
+#	$OpenBSD: Makefile,v 1.149 2002/02/14 19:40:54 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -216,8 +216,10 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g utmp -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
 .if ${MACHINE} == "vax"
-	(cd etc.vax; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
-	    ${DESTDIR}/)
+	uudecode -p etc.vax/${PCS}.uu > ${DESTDIR}/${PCS} && \
+	    chown ${BINOWN} ${DESTDIR}/${PCS} && \
+	    chgrp ${BINGRP} ${DESTDIR}/${PCS} && \
+	    chmod 644 ${DESTDIR}/${PCS}
 .endif
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 	(cd ../usr.sbin/ypserv/ypinit; ${MAKE} distribution)
