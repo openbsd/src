@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.94 2002/10/13 15:51:55 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.95 2002/10/14 09:21:34 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -812,7 +812,7 @@ One should pass these explicitely.
 There's hardly a point in filtering on loopback interfaces such as lo0.
 Every packet seen there is sent from and to the local host.
 One may want to include these rules at the very beginning
-of your ruleset to pass all traffic on lo0:
+of one's ruleset to pass all traffic on lo0:
 .Bd -literal
 pass in quick on lo0 all
 pass out quick on lo0 all
