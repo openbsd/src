@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1998/04/07 20:01:10 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1998/05/15 03:16:38 art Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ usage()
  * main.  Parse arguments, invoke the protocol or command parser.
  */
 
-
+	int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -363,4 +363,5 @@ main(argc, argv)
 #endif
 			command(1, 0, 0);
 	}
+	return 0;
 }

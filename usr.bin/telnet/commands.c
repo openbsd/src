@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.14 1998/05/15 01:26:09 art Exp $	*/
+/*	$OpenBSD: commands.c,v 1.15 1998/05/15 03:16:35 art Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
  */
 
 #include "telnet_locl.h"
+#include <err.h>
 
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 int tos = -1;
@@ -70,7 +71,7 @@ skey_calc(argc, argv)
 
 	if(argc != 3) {
 		printf("%s sequence challenge\n", argv[0]);
-		return;
+		return 0;
 	}
 
 	switch(fork()) {
@@ -78,7 +79,7 @@ skey_calc(argc, argv)
 		execv(PATH_SKEY, argv);
 		exit (1);
 	case -1:
-		perror("fork");
+		err(1, "fork");
 		break;
 	default:
 		(void) wait(&status);
@@ -148,7 +149,7 @@ makeargv()
  * Todo:  1.  Could take random integers (12, 0x12, 012, 0b1).
  */
 
-	static
+	static char
 special(s)
 	register char *s;
 {
@@ -1403,7 +1404,7 @@ extern int shell();
 #endif	/* !defined(TN3270) */
 
     /*VARARGS*/
-    static
+    static int
 bye(argc, argv)
     int  argc;		/* Number of arguments */
     char *argv[];	/* arguments */
@@ -1499,7 +1500,7 @@ getslc(name)
 		genget(name, (char **) SlcList, sizeof(struct slclist));
 }
 
-    static
+    static int
 slccmd(argc, argv)
     int  argc;
     char *argv[];
@@ -1584,6 +1585,7 @@ getenvcmd(name)
 		genget(name, (char **) EnvList, sizeof(struct envlist));
 }
 
+    int
 env_cmd(argc, argv)
     int  argc;
     char *argv[];
@@ -1763,7 +1765,7 @@ env_unexport(var)
 {
 	register struct env_lst *ep;
 
-	if (ep = env_find(var))
+	if ((ep = env_find(var)) != NULL)
 		ep->export = 0;
 }
 
@@ -1916,6 +1918,7 @@ auth_help()
     return 0;
 }
 
+    int
 auth_cmd(argc, argv)
     int  argc;
     char *argv[];
@@ -2097,7 +2100,7 @@ filestuff(fd)
  * Print status about the connection.
  */
     /*ARGSUSED*/
-    static
+    static int
 status(argc, argv)
     int	 argc;
     char *argv[];
@@ -2604,8 +2607,8 @@ tn(argc, argv)
 
 	user = getenv("USER");
 	if (user == NULL ||
-	    (pw = getpwnam(user)) && pw->pw_uid != getuid()) {
-		if (pw = getpwuid(getuid()))
+	    ((pw = getpwnam(user)) && pw->pw_uid != getuid())) {
+		if ((pw = getpwuid(getuid())) != NULL)
 			user = pw->pw_name;
 		else
 			user = NULL;
@@ -2817,7 +2820,7 @@ command(top, tbuf, cnt)
 /*
  * Help command.
  */
-	static
+	static int
 help(argc, argv)
 	int argc;
 	char *argv[];
@@ -2846,9 +2849,6 @@ help(argc, argv)
 	}
 	return 0;
 }
-
-static char *rcname = 0;
-static char rcbuf[128];
 
 #if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.h,v 1.3 1998/03/12 04:57:39 art Exp $	*/
+/*	$OpenBSD: ring.h,v 1.4 1998/05/15 03:16:42 art Exp $	*/
 /*	$NetBSD: ring.h,v 1.5 1996/02/28 21:04:09 thorpej Exp $	*/
 
 /*
@@ -100,3 +100,7 @@ extern void
 extern void
     ring_clear_mark P((Ring *)),
     ring_mark P((Ring *));
+
+
+extern int
+    ring_at_mark P((Ring *));
