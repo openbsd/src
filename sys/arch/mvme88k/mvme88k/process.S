@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.11 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.12 2001/11/18 01:43:33 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -37,14 +37,11 @@
 
 	data
 	align 4
-Lsw0:
-	string	"cpu_switch\n"
-	align 4
 swchanpanic:
-	string  "switch wchan %x\n"
+	string  "switch wchan %x"
 	align 4
 swsrunpanic:
-	string	"switch SRUN %x\n"
+	string	"switch SRUN %x"
 
 	text
 	align 8
@@ -143,9 +140,6 @@ ENTRY(cpu_switch)
 
 	or.u	r11, r0, hi16(_curproc)
 	st	r0, r11, lo16(_curproc)	/* curproc = NULL */
-
-	or.u	r11, r0, hi16(_curpcb)
-	st	r0, r11, lo16(_curpcb)	/* curpcb = NULL */
 
 Lidleloop:
 

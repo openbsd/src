@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.11 2001/08/24 22:53:15 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.12 2001/11/18 01:43:33 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -2261,7 +2261,7 @@ _Xfp_imprecise: global _Xfp_imprecise
 		/* should never get here!!!! */
 	data
 	align 8
-	1: string "error in inprecise fp exception handler, r4 is 0x%08x\n\0"
+	1: string "error in inprecise fp exception handler, r4 is 0x%08x"
 	align 8
 	text
 		or.u r2, r0, hi16(1b)

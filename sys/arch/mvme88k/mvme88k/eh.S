@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.16 2001/09/20 17:02:31 mpech Exp $   */
+/*   $OpenBSD: eh.S,v 1.17 2001/11/18 01:43:33 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -240,7 +240,7 @@
 	data
 	align 4
 sbadcpupanic:
-	string  "eh.S: bad cpu number in FLAGS\n"
+	string  "eh.S: bad cpu number in FLAGS"
 	
 	text
 	align 8
@@ -1019,7 +1019,7 @@ badaddr__maybe_byte:
 badaddr__unknown_size:
 #ifndef NDEBUG
 	data
-1: 	string "bad length (%d) to badaddr() from 0x%x\n\000"
+1: 	string "bad length (%d) to badaddr() from 0x%x"
 	text
 	or.u   r2, r0, hi16(1b)
 	or     r2, r2, lo16(1b)
