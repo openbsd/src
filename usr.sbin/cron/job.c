@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.4 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.5 2002/07/11 20:15:40 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: job.c,v 1.4 2002/07/08 18:11:02 millert Exp $";
+static char const rcsid[] = "$OpenBSD: job.c,v 1.5 2002/07/11 20:15:40 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -44,9 +44,9 @@ job_add(entry *e, user *u) {
 			return;
 
 	/* build a job queue element */
-	if ((j = (job*)malloc(sizeof(job))) == NULL)
+	if ((j = (job *)malloc(sizeof(job))) == NULL)
 		return;
-	j->next = (job*) NULL;
+	j->next = NULL;
 	j->e = e;
 	j->u = u;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.11 2002/07/11 19:29:36 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.12 2002/07/11 20:15:40 millert Exp $	*/
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.11 2002/07/11 19:29:36 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.12 2002/07/11 20:15:40 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -359,7 +359,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	/* got the command in the 'cmd' string; save it in *e.
 	 */
 	if ((e->cmd = strdup(cmd)) == NULL) {
-		ecode = e_none;
+		ecode = e_memory;
 		goto eof;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.12 2002/07/09 18:59:12 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.13 2002/07/11 20:15:40 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: env.c,v 1.12 2002/07/09 18:59:12 millert Exp $";
+static char const rcsid[] = "$OpenBSD: env.c,v 1.13 2002/07/11 20:15:40 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -39,7 +39,7 @@ void
 env_free(char **envp) {
 	char **p;
 
-	for (p = envp; *p != NULL;  p++)
+	for (p = envp; *p != NULL; p++)
 		free(*p);
 	free(envp);
 }
@@ -49,11 +49,11 @@ env_copy(char **envp) {
 	int count, i, save_errno;
 	char **p;
 
-	for (count = 0;  envp[count] != NULL;  count++)
+	for (count = 0; envp[count] != NULL; count++)
 		continue;
 	p = (char **) malloc((count+1) * sizeof(char *));  /* 1 for the NULL */
 	if (p != NULL) {
-		for (i = 0;  i < count;  i++)
+		for (i = 0; i < count; i++)
 			if ((p[i] = strdup(envp[i])) == NULL) {
 				save_errno = errno;
 				while (--i >= 0)
@@ -70,14 +70,14 @@ env_copy(char **envp) {
 char **
 env_set(char **envp, char *envstr) {
 	int count, found;
-	char **p, *cp;
+	char **p, *envtmp;
 
 	/*
 	 * count the number of elements, including the null pointer;
 	 * also set 'found' to -1 or index of entry if already in here.
 	 */
 	found = -1;
-	for (count = 0;  envp[count] != NULL;  count++) {
+	for (count = 0; envp[count] != NULL; count++) {
 		if (!strcmp_until(envp[count], envstr, '='))
 			found = count;
 	}
@@ -88,11 +88,10 @@ env_set(char **envp, char *envstr) {
 		 * it exists already, so just free the existing setting,
 		 * save our new one there, and return the existing array.
 		 */
-		free(envp[found]);
-		if ((envp[found] = strdup(envstr)) == NULL) {
-			envp[found] = "";
+		if ((envtmp = strdup(envstr)) == NULL)
 			return (NULL);
-		}
+		free(envp[found]);
+		envp[found] = envtmp;
 		return (envp);
 	}
 
@@ -101,15 +100,16 @@ env_set(char **envp, char *envstr) {
 	 * one, save our string over the old null pointer, and return resized
 	 * array.
 	 */
+	if ((envtmp = strdup(envstr)) == NULL)
+		return (NULL);
 	p = (char **) realloc((void *) envp,
 			      (size_t) ((count+1) * sizeof(char **)));
-	if (p == NULL)
+	if (p == NULL) {
+		free(envtmp);
 		return (NULL);
-	cp = strdup(envstr);
-	if (cp == NULL)
-		return(NULL);
+	}
 	p[count] = p[count-1];
-	p[count-1] = cp;
+	p[count-1] = envtmp;
 	return (p);
 }
 
