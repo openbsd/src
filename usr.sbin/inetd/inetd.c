@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.54 1998/12/04 07:52:02 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.55 1999/01/04 12:03:08 niklas Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.54 1998/12/04 07:52:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.55 1999/01/04 12:03:08 niklas Exp $";
 #endif /* not lint */
 
 /*
@@ -212,7 +212,7 @@ struct	servtab {
 	int	se_rpcversl;		/* rpc program lowest version */
 	int	se_rpcversh;		/* rpc program highest version */
 #define isrpcservice(sep)	((sep)->se_rpcversl != 0)
-	short	se_wait;		/* single threaded server */
+	pid_t	se_wait;		/* single threaded server */
 	short	se_checked;		/* looked at during merge */
 	char	*se_user;		/* user name to run as */
 	char	*se_group;		/* group name to run as */
