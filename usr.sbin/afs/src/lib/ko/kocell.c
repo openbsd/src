@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,20 +37,11 @@
 
 #include "ko_locl.h"
 
-#ifdef HAVE_ARPA_NAMESER_H
-#include <arpa/nameser.h>
-#endif
-#ifdef HAVE_RESOLV_H
-#include <resolv.h>
-#endif
-
-#ifdef KERBEROS
+#ifdef HAVE_KRB4
 #include <krb.h>
 #endif
 
-#include "resolve.h"
-
-RCSID("$KTH: kocell.c,v 1.47.2.3 2001/07/09 03:27:48 lha Exp $");
+RCSID("$arla: kocell.c,v 1.75 2003/06/10 16:52:06 lha Exp $");
 
 #define TRANSARCSYSCONFDIR "/usr/vice/etc"
 #define CELLFILENAME "CellServDB"
@@ -58,6 +49,7 @@ RCSID("$KTH: kocell.c,v 1.47.2.3 2001/07/09 03:27:48 lha Exp $");
 #define SUIDCELLSFILENAME "SuidCells"
 #define THESECELLFILENAME "TheseCells"
 #define DYNROOTDBFILENAME "DynRootDB"
+#define ALIASDBFILENAME "AliasDB"
 #define DEFCELLCACHESIZE 499
 
 /*
@@ -74,8 +66,6 @@ static char *thiscell = NULL;
 static char **thesecells = NULL;
 static int numthesecells = 1;
 static int dynrootdb_in_use;
-
-enum { CELL_INVALID_HOST = 1 };
 
 /*
  * Logging
@@ -108,6 +98,19 @@ static Log_unit *cell_log = NULL;
 static unsigned long celldb_version = 0;
 
 static int add_special_dynroot_cell (void);
+
+/*
+ * Cell alias
+ */
+
+struct cellalias {
+    char *name;
+    char *alias;
+    int type;
+    Listitem *li;
+};
+
+static List *cellaliaslist;
 
 /*
  * Functions for handling cell entries.
@@ -175,36 +178,27 @@ newcell (char *line)
 }
 
 /*
- *
+ * Verify that that host is valid (dns wise)
  */
 
 static void
 fetch_host (cell_entry *c, cell_db_entry *host)
 {
-    struct dns_reply *r;
-    struct resource_record *rr;
     struct timeval tv;
+    int ret;
 
     gettimeofday (&tv, NULL);
     
-    r = dns_lookup(host->name, "A");
-    if (r == NULL) {
+    ret = _ko_resolve_host(host->name, host);
+    if (ret) {
 	log_log (cell_log, CDEBDNS, 
 		 "fetch_host: failed to resolve host %s in cell %s",
 		 host->name, c->name);
 	host->timeout = CELL_INVALID_HOST;
 	return;
     }
-    for(rr = r->head; rr;rr=rr->next){
-	if (rr->type == T_A) {
-	    if (strcmp(host->name,rr->domain) == 0) {
-		host->addr = *(rr->u.a);
-		host->timeout = tv.tv_sec + rr->ttl;
-		break;
-	    }
-	}
-    }
-    dns_free_data(r);
+
+    host->timeout += tv.tv_sec;
 }
 
 
@@ -244,12 +238,17 @@ updatehosts (cell_entry *c, int dbnum, cell_db_entry *dbservers)
 	}
     }
 
-    c->ndbservers = dbnum;
-    c->dbservers  = malloc (dbnum * sizeof(cell_db_entry));
-    if (c->dbservers == NULL && dbnum != 0)
-	err (1, "malloc %lu", (unsigned long)dbnum * sizeof(cell_db_entry));
-    memcpy (c->dbservers, dbservers, dbnum * sizeof (cell_db_entry));
-    free (old_servers);
+    if (c->dbservers != dbservers) {
+	c->ndbservers = dbnum;
+	c->dbservers  = malloc (dbnum * sizeof(cell_db_entry));
+	if (c->dbservers == NULL && dbnum != 0)
+	    err (1, "malloc %lu", 
+		 (unsigned long)dbnum * sizeof(cell_db_entry));
+	memcpy (c->dbservers, dbservers, dbnum * sizeof (cell_db_entry));
+	free (old_servers);
+    } else {
+	assert(c->ndbservers == dbnum);
+    }
 
     if (c->ndbservers)
 	qsort (c->dbservers, c->ndbservers, sizeof(c->dbservers[0]),
@@ -270,63 +269,34 @@ updatehosts (cell_entry *c, int dbnum, cell_db_entry *dbservers)
 static int
 dns_lookup_cell (const char *cell, cell_entry *c)
 {
-    struct dns_reply *r;
-    struct resource_record *rr;
-    int dbnum = 0;
+    int i, ret, dbnum = 0;
     cell_db_entry dbservers[256];
     int lowest_ttl = INT_MAX;
-    int i;
     struct timeval tv;
 
     memset (dbservers, 0, sizeof(dbservers));
     gettimeofday(&tv, NULL);
 
-    r = dns_lookup(cell, "AFSDB");
-    if (r == NULL) {
+    ret = _ko_resolve_cell(cell, dbservers, 
+			   sizeof(dbservers)/sizeof(dbservers[0]),
+			   &dbnum, &lowest_ttl);
+    if (ret) {
 	log_log (cell_log, CDEBDNS, 
 		 "dns_lookup_cell: failed to resolve cell %s", cell);
-	return 1;
+	return ret;
     }
-    if (c == NULL)
-	c = cell_new_dynamic (cell);
 
-    for(rr = r->head; rr;rr=rr->next){
-	if(rr->type == T_AFSDB) {
-	    struct mx_record *mx = (struct mx_record*)rr->u.data;
-
-	    if (mx->preference != 1) {
-		break;
-	    }
-	    if (dbnum >= sizeof (dbservers) / sizeof(*dbservers)) {
-	        break;
-	    }
-	    if (lowest_ttl > rr->ttl)
-		lowest_ttl = rr->ttl;
-	    dbservers[dbnum].name = strdup (mx->domain);
-	    if (dbservers[dbnum].name == NULL)
-		err (1, "strdup");
-	    dbservers[dbnum].timeout = CELL_INVALID_HOST;
-	    dbnum++;
-	}
-    }
-    for(rr = r->head; rr;rr=rr->next){
-	if (rr->type == T_A) {
-	    for (i = 0; i < dbnum; i++) {
-		if (strcmp(dbservers[i].name,rr->domain) == 0) {
-		    dbservers[i].addr = *(rr->u.a);
-		    dbservers[i].timeout = tv.tv_sec + rr->ttl;
-		    break;
-		}
-	    }
-	}
-    }
-    dns_free_data(r);
+    for (i = 0; i < dbnum; i++)
+	if (dbservers[i].timeout != CELL_INVALID_HOST)
+	    dbservers[i].timeout += tv.tv_sec;
 
     if (lowest_ttl == INT_MAX)
-	lowest_ttl = 0;
-    
-    /* catch the hosts that didn't fit in additional rr */
+	lowest_ttl = 5 * 60;
+
+    if (c == NULL)
+	c = cell_new_dynamic (cell);
     c->timeout = lowest_ttl + tv.tv_sec;
+    /* catch the hosts that didn't fit in additional rr */
     updatehosts (c, dbnum, dbservers);
     return 0;
 }
@@ -342,6 +312,9 @@ update_cell (cell_entry *c)
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
+
+    if (c->id == DYNROOT_CELLID)
+	return;
 
     if ((c->timeout && c->timeout < tv.tv_sec)
 	|| c->ndbservers == 0) {
@@ -410,8 +383,8 @@ cell_new (const char *name)
 	free (c);
 	return NULL;
     }
-    assert (cellno != 0);
     c->id           = cellno++;
+    assert(c->id != DYNROOT_CELLID);
     c->expl         = NULL;
     c->ndbservers   = 0;
     c->active_hosts = 0;
@@ -420,6 +393,7 @@ cell_new (const char *name)
     hashtabadd (cellnamehtab, c);
     hashtabadd (cellnumhtab, c);
     c->timeout      = 0;
+    c->poller_timeout = 0;
     celldb_version++;
     return c;
 }
@@ -432,21 +406,11 @@ cell_entry *
 cell_new_dynamic (const char *name)
 {
     cell_entry *c;
-    FILE *f;
 
     c = cell_new (name);
     if (c == NULL)
 	return NULL;
     c->expl = "dynamically added cell";
-    f = fopen (SYSCONFDIR "/" CELLFILENAME, "a");
-    if (f == NULL)
-	f = fopen (TRANSARCSYSCONFDIR "/" CELLFILENAME, "a");
-    if (f == NULL) {
-	log_log (cell_log, CDEBWARN,"Cannot open CellServDB for writing");
-	return c;
-    }
-    fprintf (f, ">%s	#dynamically added cell\n", name);
-    fclose (f);
     return c;
 }
 
@@ -522,7 +486,7 @@ readcellservdb (const char *filename)
      while (fgets (line, sizeof (line), f)) {
 	  ++lineno;
 	  i = 0;
-	  line[strlen(line) - 1] = '\0';
+	  line[strcspn(line, "\n")] = '\0';
 	  while (line[0] && isspace((unsigned char)line[i]))
 		 i++;
 	  if (line[i] == '#' || line[i] == '\0')
@@ -552,7 +516,7 @@ readcellservdb (const char *filename)
  */
 
 static int
-parse_simple_file (const char *filename, void (*func)(const char *))
+parse_simple_file (const char *filename, void (*func)(char *))
 {
     FILE *f;
     char line[256];
@@ -562,7 +526,7 @@ parse_simple_file (const char *filename, void (*func)(const char *))
 	return 1;
     
     while ((fgets (line, sizeof(line), f) != NULL)) {
-	line[strlen(line) - 1] = '\0';
+	line[strcspn(line, "\n")] = '\0';
 	(*func) (line);
     }
     fclose (f);
@@ -574,16 +538,25 @@ parse_simple_file (const char *filename, void (*func)(const char *))
  */
 
 static void
-addthesecell (const char *cellname)
+addthesecell (char *cellname)
 {
+    const char *cell;
+    char **ntc;
     int i;
-    cellname = cell_expand_cell (cellname);
+
+    cell = cell_expand_cell (cellname);
     for (i = 0; thesecells && thesecells[i]; i++)
-	if (strcasecmp (thesecells[i], cellname) == 0)
+	if (strcasecmp (thesecells[i], cell) == 0)
 	    return;
-    thesecells = erealloc (thesecells, 
-			   (numthesecells + 1) * sizeof (char *));
-    thesecells[numthesecells - 1] = estrdup (cellname);
+
+    ntc = realloc (thesecells, (numthesecells + 1) * sizeof (char *));
+    if (ntc == NULL)
+	errx(1, "realloc");
+    thesecells = ntc;
+
+    thesecells[numthesecells - 1] = strdup (cell);
+    if (thesecells[numthesecells - 1] == NULL)
+	errx(1, "strdup");
     thesecells[numthesecells] = NULL;
     ++numthesecells;
 }
@@ -616,12 +589,11 @@ readthiscell (const char *filename)
 	 return 1;
 
      if (fgets (cell, sizeof cell, f) == NULL) {
-	 log_log (cell_log, CDEBERR, "Cannot read cellname from %s\n",
+	 log_log (cell_log, CDEBERR, "Cannot read cellname from %s",
 		  filename);
 	 return 1;
      }
-     if (cell[strlen(cell) - 1] == '\n')
-	 cell[strlen(cell) - 1] = '\0';
+     cell[strcspn(cell, "\n")] = '\0';
      thiscell = strdup (cell);
      if (thiscell == NULL)
 	 err (1, "strdup");
@@ -634,14 +606,14 @@ readthiscell (const char *filename)
  */
 
 static void
-addsuidcell (const char *cellname)
+addsuidcell (char *cellname)
 {
     cell_entry *e;
 
     e = cell_get_by_name (cellname);
     if (e == NULL) {
 	log_log (cell_log, CDEBWARN,
-		 "suidcell: cell %s doesn't exist in the db\n", cellname);
+		 "suidcell: cell %s doesn't exist in the db", cellname);
     } else {
 	e->flags |= SUID_CELL;
     }
@@ -658,14 +630,14 @@ readsuidcell (const char *filename)
  */
 
 static void
-add_dynroot(const char *cellname)
+add_dynroot(char *cellname)
 {
     cell_entry *e; 
 
     e = cell_get_by_name (cellname);
     if (e == NULL) {
 	log_log (cell_log, CDEBWARN,
-		 "dynroot: cell %s doesn't exist in the db\n", cellname);
+		 "dynroot: cell %s doesn't exist in the db", cellname);
     } else {
 	e->flags |= DYNROOT_CELL;
 	dynrootdb_in_use = 1;
@@ -678,6 +650,58 @@ readdynrootdb (const char *filename)
     return parse_simple_file (filename, add_dynroot);
 }
 
+static void
+add_alias(char *alias_line)
+{
+    const char *delim = " \t";
+    char *cellname, *aliasname, *type, *al;
+    size_t sz;
+
+    al = alias_line;
+
+#define ENDSTR(str)	((str) == NULL || *(str) == '\0' || *(str) == '#')
+
+    sz = strspn(alias_line, delim);
+    al = al + sz;
+    if (ENDSTR(al))
+	return;
+    cellname = strsep(&al, delim);
+    if (ENDSTR(cellname) || al == NULL)
+	goto out;
+    sz = strspn(al, delim);
+    al = al + sz;
+    if (ENDSTR(al))
+	goto out;
+    aliasname = strsep(&al, delim);
+    if (ENDSTR(aliasname))
+	goto out;
+
+    type = "readonly";
+    if (al != NULL) {
+	sz = strspn(al, delim);
+	al = al + sz;
+	if (!ENDSTR(al)) {
+	    al = strsep(&al, delim);
+	    if (!ENDSTR(al))
+		type = al;
+	}
+    }
+
+#undef ENDSTR
+    cell_addalias(cellname, aliasname, type);
+    return;
+
+ out:
+    log_log (cell_log, CDEBWARN,
+	     "alias: failed to parse line `%s'", alias_line);
+}
+
+static int
+readaliasdb (const char *filename)
+{
+    return parse_simple_file (filename, add_alias);
+}
+
 /*
  * Initialize the cache of cell information.
  */
@@ -685,12 +709,13 @@ readdynrootdb (const char *filename)
 static int cell_inited = 0;
 
 void
-cell_init (int cellcachesize, Log_method *log)
+cell_init (int cellcachesize, Log_method *logm)
 {
-    char *env;
+    char *env = NULL;
+    uid_t uid,euid;
     int ret;
 
-    assert (log);
+    assert (logm);
 
     if (cell_inited) {
 	log_log (cell_log, CDEBWARN, "cell_init: Already initlized");
@@ -698,11 +723,9 @@ cell_init (int cellcachesize, Log_method *log)
     }
     cell_inited = 1;
 
-#ifdef HAVE_RES_INIT
-    res_init();
-#endif
+    _ko_resolve_init();
 
-    cell_log = log_unit_init (log, "cell", celldebug_units, CDEBDEFAULT);
+    cell_log = log_unit_init (logm, "cell", celldebug_units, CDEBDEFAULT);
     if (cell_log == NULL)
 	errx (1, "cell_init: log_unit_init failed");
 
@@ -716,9 +739,16 @@ cell_init (int cellcachesize, Log_method *log)
     if (cellnumhtab == NULL)
 	errx (1, "cell_init: hashtabnew failed");
 
-    env = getenv ("AFSCELL");
+    uid = getuid();
+    euid = geteuid();
+
+    if(uid == euid)
+	env = getenv ("AFSCELL");
+
     if (env != NULL) {
-	thiscell = estrdup (env);
+	thiscell = strdup (env);
+	if (thiscell == NULL)
+	    errx(1, "strdup");
     } else if (readthiscell (SYSCONFDIR "/" THISCELLFILENAME)) {
 	if (readthiscell(TRANSARCSYSCONFDIR "/" THISCELLFILENAME))
 	    errx (1, "could not open "
@@ -727,7 +757,18 @@ cell_init (int cellcachesize, Log_method *log)
 		  TRANSARCSYSCONFDIR "/" THISCELLFILENAME);
     }
 
-    if (readcellservdb (SYSCONFDIR "/" CELLFILENAME)) {
+    env = NULL;
+
+    if(uid == euid) 
+	env = getenv("CELLSERVDBFILE");
+
+    if(env != NULL) {
+	if(readcellservdb (env)) {
+	    log_log (cell_log, CDEBWARN,
+		     "Can't read the CellServDB file, "
+		     "will use DNS AFSDB entries");
+	}
+    } else if (readcellservdb (SYSCONFDIR "/" CELLFILENAME)) {
 	if (readcellservdb(TRANSARCSYSCONFDIR "/" CELLFILENAME)) {
 	    log_log (cell_log, CDEBWARN,
 		     "Can't read the CellServDB file, "
@@ -753,6 +794,9 @@ cell_init (int cellcachesize, Log_method *log)
     if (readdynrootdb (SYSCONFDIR "/" DYNROOTDBFILENAME))
 	readdynrootdb (TRANSARCSYSCONFDIR "/" DYNROOTDBFILENAME);
 
+    cellaliaslist = listnew();
+    if (readaliasdb (SYSCONFDIR "/" ALIASDBFILENAME))
+	readaliasdb (TRANSARCSYSCONFDIR "/" ALIASDBFILENAME);
 }
 
 /*
@@ -817,7 +861,7 @@ cell_getcellbyhost(const char *host)
     const char *ptr = NULL;
     assert(host);
     
-#ifdef KERBEROS
+#ifdef HAVE_KRB4
     ptr = krb_realmofhost(host);
 #endif
     if (ptr)
@@ -867,8 +911,8 @@ cell_num2name (int32_t cell)
 const char *
 cell_getthiscell (void)
 {
-    assert (thiscell != NULL);
-
+    if (thiscell == NULL)
+	return "unknown-cell-missing-configuration";
     return thiscell;
 }
 
@@ -962,10 +1006,10 @@ cell_setsuid_by_num (int32_t cell)
  */
 
 void
-cell_print_cell (cell_entry *c, FILE *out)
+cell_print_cell (const cell_entry *c, FILE *out)
 {
     int i;
-    char timestr[30];
+    char timestr[128];
     struct tm tm;
     time_t t;
 
@@ -974,9 +1018,9 @@ cell_print_cell (cell_entry *c, FILE *out)
     fprintf (out, "comment: %s\n", c->expl);
     if (c->timeout) {
 	t = c->timeout;
-	strftime(timestr, sizeof(timestr),
-		 "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm));
-	fprintf (out, "timeout: %s\n", timestr);
+	if (strftime(timestr, sizeof(timestr),
+		     "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm)) > 0)
+	    fprintf (out, "timeout: %s\n", timestr);
     }
     fprintf (out, "num hosts: %d active hosts: %d\n",
 	     c->ndbservers, c->active_hosts);
@@ -988,14 +1032,35 @@ cell_print_cell (cell_entry *c, FILE *out)
 	    buf = "no timeout";
 	else {
 	    t = c->timeout;
-	    strftime(timestr, sizeof(timestr),
-		     "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm));
-	    buf = timestr;
+	    if (strftime(timestr, sizeof(timestr),
+			 "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm)) > 0)
+		buf = timestr;
+	    else
+		buf = "time-error";
 	}
 	fprintf (out, " host: %s %s - %s\n", c->dbservers[i].name,
 		 inet_ntoa (c->dbservers[i].addr), buf);
     }
 }
+
+static int
+cell_info_print (const cell_entry *e, void *ptr)
+{
+    FILE *f = (FILE *)ptr;
+    cell_print_cell(e, f);
+    return 0;
+}
+
+/*
+ * Print all cell info on `f'
+ */
+
+void
+cell_status (FILE *f)
+{
+    cell_foreach(cell_info_print, f);
+}
+
 
 /*
  * Iterate over all entries in the cell-db with `func'
@@ -1014,6 +1079,9 @@ cell_iterate_func (void *ptr, void *arg)
     struct cell_iterate_arg *cia = (struct cell_iterate_arg *) arg;
     cell_entry *cell = (cell_entry *) ptr;
     int ret;
+
+    if (cell->id == DYNROOT_CELLID)
+	return 0;
 
     ret = (cia->func) (cell, cia->arg);
     if (ret)
@@ -1105,7 +1173,7 @@ add_special_dynroot_cell (void)
 	free (c);
 	return errno;
     }
-    c->id         = 0; /* XXX */
+    c->id         = DYNROOT_CELLID;
     c->expl       = "The special dynroot cell";
     c->ndbservers = 0;
     c->dbservers  = NULL;
@@ -1124,3 +1192,121 @@ cell_is_sanep (int cell)
 {
     return cell < cellno;
 } 
+
+/*
+ * Get the poller delta time for `cell'. Default is zero, that means
+ * that the caller should use the default poller timeout.
+ */
+
+time_t
+cell_get_poller_time(const cell_entry *cell)
+{
+    return cell->poller_timeout;
+}
+
+/*
+ * Set the poller delta `time' for `cell'.
+ */
+
+void
+cell_set_poller_time(cell_entry *cell, time_t time)
+{
+    cell->poller_timeout = time;
+}
+
+/*
+ *
+ */
+
+static int
+find_alias (const char *cellname, const char *alias, int type, void *arg)
+{
+    const char *newcell = arg;
+    if (strcmp(alias, newcell) == 0)
+	return EEXIST;
+    return 0;
+}
+
+int
+cell_addalias(const char *cellname, const char *alias, const char *stype)
+{
+    struct cellalias *ca;
+    int type;
+    int ret;
+
+    if (strcasecmp("readonly", stype) == 0 ||
+        strcasecmp("ro", stype) == 0)
+	type = DYNROOT_ALIAS_READONLY;
+    else if (strcasecmp("readwrite", stype) == 0 ||
+	     strcasecmp("rw", stype) == 0)
+	type = DYNROOT_ALIAS_READWRITE;
+    else
+	return EINVAL;
+
+    ret = cell_alias_foreach(find_alias, (void *)alias);
+    if (ret)
+	return ret;
+
+    ca = malloc(sizeof(*ca));
+    if (ca == NULL)
+	return ENOMEM;
+    memset(ca, 0, sizeof(*ca));
+    
+    ca->type = type;
+    ca->name = strdup(cellname);
+    if (ca->name == NULL)
+	goto out;
+    ca->alias = strdup(alias);
+    if (ca->alias == NULL)
+	goto out;
+    ca->li = listaddtail(cellaliaslist, ca);
+    if (ca->li == NULL)
+	goto out;
+
+    celldb_version++;
+
+    return 0;
+ out:
+    if (ca->name)
+	free(ca->name);
+    if (ca->alias)
+	free(ca->alias);
+    free(ca);
+    return ENOMEM;
+}
+
+
+/*
+ *
+ */
+
+struct listalias_ctx {
+    cell_alias_fn func;
+    void *ptr;
+    int error;
+};
+
+static Bool
+listalias_f(List *list, Listitem *li, void *arg)
+{
+    struct cellalias *ca = listdata(li);
+    struct listalias_ctx *ctx = arg;
+    
+    ctx->error = (*ctx->func)(ca->name, ca->alias, ca->type, ctx->ptr);
+    if (ctx->error)
+	return TRUE;
+    return FALSE;
+}
+
+int
+cell_alias_foreach (cell_alias_fn func, void *ptr)
+{
+    struct listalias_ctx c;
+    c.func = func;
+    c.ptr = ptr;
+    c.error = 0;
+
+    listiter(cellaliaslist, listalias_f, &c);
+
+    return c.error;
+}

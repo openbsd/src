@@ -35,12 +35,16 @@
  * Interface to directory handling routines
  */
 
-/* $KTH: fdir.h,v 1.5 2000/10/02 22:59:49 lha Exp $ */
+/* $arla: fdir.h,v 1.7 2002/03/06 21:41:43 tol Exp $ */
 
 #ifndef _FDIR_H_
 #define _FDIR_H_
 
-#include <fs.h>
+#ifndef _KERNEL
+#include <roken.h>
+#endif
+
+#include <fids.h>
 #include <fbuf.h>
 
 int
@@ -58,13 +62,14 @@ fdir_changefid (fbuf *the_fbuf,
 int
 fdir_emptyp (fbuf *dir);
 
-typedef void (*fdir_readdir_func)(VenusFid *, const char *, void *);
+typedef int (*fdir_readdir_func)(VenusFid *, const char *, void *);
 
 int
 fdir_readdir (fbuf *the_fbuf,
 	      fdir_readdir_func func,
 	      void *arg,
-	      const VenusFid *dir);
+	      VenusFid dir,
+	      uint32_t *offset);
 
 int
 fdir_creat (fbuf *dir,

@@ -1,7 +1,6 @@
-2001-10-23  Magnus Ahltorp  <ahltorp@nada.kth.se>
+2001-05-26  Mattias Amnefelt  <mattiasa@e.kth.se>
 
-	* editline.c: 1.2->1.3: from heimdal/kth-krb: rename STATUS ->
-	el_STATUS to avoid conflict with STATUS in arpa/nameser.h
+	* Makefile.in: use correct makefile syntax
 
 2000-03-01  Assar Westerlund  <assar@sics.se>
 

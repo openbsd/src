@@ -1,4 +1,4 @@
-/*  $KTH: 1.2 $
+/*  $arla: 1.2 $
 **
 **  Editline system header file for Unix.
 */

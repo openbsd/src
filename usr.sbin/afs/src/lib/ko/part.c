@@ -35,7 +35,7 @@
 
 #include "part.h"
 
-RCSID("$KTH: part.c,v 1.3 2000/10/02 22:43:24 lha Exp $");
+RCSID("$arla: part.c,v 1.3 2000/10/02 22:43:24 lha Exp $");
 
 /*
  * partition_num2name

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: auth.h,v 1.3 2000/10/02 22:42:41 lha Exp $ */
+/* $arla: auth.h,v 1.4 2003/06/10 14:46:27 lha Exp $ */
 
 #ifndef __AUTH_H
 #define __AUTH_H 1
@@ -42,7 +42,9 @@
 #include <netinet/in.h>
 #include <atypes.h>
 #include <rx/rx.h>
+#ifdef HAVE_KRB4
 #include <krb.h>
+#endif
 #include <kafs.h>
 #include <rxkad.h>
 

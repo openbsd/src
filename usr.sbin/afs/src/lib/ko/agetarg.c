@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: agetarg.c,v 1.8.2.3 2001/05/17 07:38:30 lha Exp $");
+RCSID("$arla: agetarg.c,v 1.13 2002/09/17 18:30:53 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -101,8 +101,8 @@ mandoc_template(struct agetargs *args,
     t = time(NULL);
     strftime(timestr, sizeof(timestr), "%b %d, %Y", localtime(&t));
     printf(".Dd %s\n", timestr);
-    p = strrchr(__progname, '/');
-    if(p) p++; else p = __progname;
+    p = strrchr(getprogname(), '/');
+    if(p) p++; else p = getprogname();
     strncpy(cmd, p, sizeof(cmd));
     cmd[sizeof(cmd)-1] = '\0';
     strupr(cmd);
@@ -176,7 +176,7 @@ aarg_printusage (struct agetargs *args,
     size_t max_len = 0;
 
     if (progname == NULL)
-	progname = __progname;
+	progname = getprogname();
 
     if(getenv("GETARGMANDOC")){
 	mandoc_template(args, extra_string, style);
@@ -428,6 +428,8 @@ arg_match_long(struct agetargs *args, int argc,
 	    current = partial;
 	else
 	    return AARG_ERR_NO_MATCH;
+
+	numarg = current - args;
     }
 
     if(*optarg == '\0' && !ISFLAG(current))
@@ -480,9 +482,8 @@ agetarg(struct agetargs *args,
 	    usedargs[swcount] = 1;
 	    i += j;
 	    swcount++;
-	} else if(argv[i][0] == '-' &&
-		  (argv[i][1] == '-' || 
-		   ((style & AARG_TRANSLONG) && argv[i][1] != 0))) {
+	} else if(argv[i][1] == '-' || 
+		  ((style & AARG_TRANSLONG) && argv[i][1] != 0)) {
 	    int k;
 
 	    if(argv[i][2] == 0 && !(style & AARG_TRANSLONG)){
@@ -560,8 +561,7 @@ agetarg(struct agetargs *args,
 		}
 	    }
 	out:;
-	} else
-	    break;
+	}
     }
     *optind = i;
 

@@ -31,12 +31,14 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: fbuf.h,v 1.6 2000/10/02 22:59:38 lha Exp $ */
+/* $arla: fbuf.h,v 1.8 2002/09/07 10:44:06 lha Exp $ */
 
 #ifndef _FBUF_H_
 #define _FBUF_H_
 
+#ifndef _KERNEL
 #include <rx/rx.h>
+#endif
 
 typedef enum {
     FBUF_READ    = 0x01,
@@ -54,13 +56,19 @@ struct fbuf {
 
 typedef struct fbuf fbuf;
 
+#ifdef _KERNEL
+int fbuf_create (fbuf *fbuf, NNPFS_FBUF_HANDLE fd, size_t len, fbuf_flags flags);
+#else
 int fbuf_create (fbuf *fbuf, int fd, size_t len, fbuf_flags flags);
+#endif
+
 int fbuf_truncate (fbuf *fbuf, size_t new_len);
 int fbuf_end (fbuf *fbuf);
 size_t fbuf_len (fbuf *f);
 void *fbuf_buf (fbuf *f);
 
+#ifndef _KERNEL
 int copyrx2fd (struct rx_call *call, int fd, off_t off, size_t len);
 int copyfd2rx (int fd, struct rx_call *call, off_t off, size_t len);
-
+#endif
 #endif /* _FBUF_H_ */

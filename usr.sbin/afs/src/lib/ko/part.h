@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: part.h,v 1.2 2000/10/02 22:43:29 lha Exp $ */
+/* $arla: part.h,v 1.2 2000/10/02 22:43:29 lha Exp $ */
 
 int partition_num2name(int id, char *str, size_t sz);
 int partition_name2num(const char *name);

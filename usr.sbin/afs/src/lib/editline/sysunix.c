@@ -29,7 +29,7 @@
 #include <sgtty.h>
 #endif
 
-RCSID("$KTH: sysunix.c,v 1.2 2000/03/01 21:40:41 assar Exp $");
+RCSID("$arla: sysunix.c,v 1.2 2000/03/01 21:40:41 assar Exp $");
 
 #ifdef HAVE_TERMIOS_H
 

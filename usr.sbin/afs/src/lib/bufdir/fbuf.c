@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include <config.h>
 
-RCSID("$KTH: fbuf.c,v 1.13.2.3 2001/10/24 01:35:22 ahltorp Exp $") ;
+RCSID("$arla: fbuf.c,v 1.22 2003/01/23 10:34:55 tol Exp $") ;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +53,12 @@ RCSID("$KTH: fbuf.c,v 1.13.2.3 2001/10/24 01:35:22 ahltorp Exp $") ;
 #include <fbuf.h>
 
 #ifdef HAVE_MMAP
+
+/*
+ * mmap version of the fbuf interface, the mmap_copy{rx2fd,fd2rx} are
+ * little complicated to support reading/writing on non page
+ * bonderies.
+ */
 
 #if !defined(MAP_FAILED)
 #define MAP_FAILED ((void *)(-1))
@@ -160,6 +166,12 @@ mmap_end (fbuf *f)
 }
 
 /*
+ *
+ */
+
+static size_t mmap_max_size = 10 * 1024 * 1024;
+
+/*
  * Copy `len' bytes from the rx call `call' to the file `fd'.
  * Returns 0 or error
  */
@@ -170,21 +182,41 @@ mmap_copyrx2fd (struct rx_call *call, int fd, off_t off, size_t len)
     void *buf;
     int r_len;
     int ret = 0;
-	     
+    off_t adjust_off, adjust_len;
+    size_t size;
+
     if (len == 0)
 	return 0;
 
-    buf = mmap (0, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off);
-    if (buf == (void *) MAP_FAILED)
-	return errno;
-    r_len = rx_Read (call, buf, len);
-    if (r_len != len)
-	ret = conv_to_arla_errno(rx_Error(call));
+    /* padding */
+    adjust_off = off % getpagesize();
 
-    if (msync (buf, len, MS_ASYNC))
-	ret = errno;
-    if (munmap (buf, len))
-	ret = errno;
+    while (len > 0) {
+
+	size = min(len + adjust_off, mmap_max_size);
+	adjust_len = getpagesize() - (size % getpagesize());
+
+	buf = mmap (0, size + adjust_len, 
+		    PROT_READ | PROT_WRITE, MAP_SHARED, 
+		    fd, off - adjust_off);
+	if (buf == (void *) MAP_FAILED)
+	    return errno;
+	r_len = rx_Read (call, ((char *) buf) + adjust_off, size - adjust_off);
+	if (r_len != size - adjust_off)
+	    ret = conv_to_arla_errno(rx_GetCallError(call));
+
+	len -= r_len;
+	off += r_len;
+	adjust_off = 0;
+
+	if (msync (buf, size + adjust_len, MS_ASYNC))
+	    ret = errno;
+	if (munmap (buf, size + adjust_len))
+	    ret = errno;
+
+	if (ret)
+	    break;
+    }
 
     return ret;
 }
@@ -198,21 +230,38 @@ static int
 mmap_copyfd2rx (int fd, struct rx_call *call, off_t off, size_t len)
 {
     void *buf;
-    int r_write;
+    int w_len;
     int ret = 0;
+    off_t adjust_off, adjust_len;
+    size_t size;
 
     if (len == 0)
 	return 0;
 
-    buf = mmap (0, len, PROT_READ, MAP_PRIVATE, fd, off);
-    if (buf == (void *) MAP_FAILED)
-	return errno;
-    r_write = rx_Write (call, buf, len);
-    if (r_write != len)
-	ret = conv_to_arla_errno(rx_Error(call));
+    adjust_off = off % getpagesize();
 
-    if (munmap (buf, len))
-	ret = errno;
+    while (len > 0) {
+
+	size = min(len + adjust_off, mmap_max_size);
+	adjust_len = size % getpagesize();
+
+	buf = mmap (0, size + adjust_len, 
+		    PROT_READ, MAP_PRIVATE, fd, off - adjust_off);
+	if (buf == (void *) MAP_FAILED)
+	    return errno;
+	w_len = rx_Write (call, (char *)buf + adjust_off, size - adjust_off);
+	if (w_len != size - adjust_off)
+	    ret = conv_to_arla_errno(rx_GetCallError(call));
+
+	len -= w_len;
+	off += w_len;
+	adjust_off = 0;
+
+	if (munmap (buf, size + adjust_len))
+	    ret = errno;
+	if (ret)
+	    break;
+    }
 
     return ret;
 }

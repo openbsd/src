@@ -32,9 +32,12 @@
  */
 
 /*
- *  Include file for whole arlad
- *  $KTH: ko_locl.h,v 1.12 2000/10/02 22:43:03 lha Exp $
+ *  Private Include file for libko
+ *  $arla: ko_locl.h,v 1.14 2002/07/24 07:03:42 lha Exp $
  */
+
+#ifndef _LIBKO_H
+#define _LIBKO_H 1
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -68,6 +71,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <err.h>
+#include <limits.h>
 #include <strings.h>
 #include <roken.h>
 #include <parse_units.h>
@@ -75,8 +79,16 @@
 
 #include <hash.h>
 #include <bool.h>
+#include <list.h>
 #include <log.h>
 
 #include "ko.h"
 
+/* resolver independant api for libko */
+enum { CELL_INVALID_HOST = 1 };
 
+void	 _ko_resolve_init(void);
+int	 _ko_resolve_cell(const char *, cell_db_entry *, int, int *, int *);
+int	 _ko_resolve_host(const char *, cell_db_entry *);
+
+#endif /* _LIBKO_H */

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: acl.h,v 1.5 2000/10/03 00:28:33 lha Exp $ */
+/* $arla: acl.h,v 1.5 2000/10/03 00:28:33 lha Exp $ */
 
 #ifndef __ACL_H
 #define __ACL_H

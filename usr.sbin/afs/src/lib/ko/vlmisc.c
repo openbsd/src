@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,8 +32,9 @@
  */
 
 #include "ko_locl.h"
+#include <volumeserver.h>
 
-RCSID("$KTH: vlmisc.c,v 1.3.2.1 2001/03/04 04:07:15 lha Exp $");
+RCSID("$arla: vlmisc.c,v 1.6 2002/05/25 19:12:31 lha Exp $");
 
 /*
  * Convert old style vldbentry `old` to newer vldbNentry style `new'
@@ -138,4 +139,82 @@ volname_suffix (int type)
     assert (type >= 0 && type < MAXTYPES);
 
     return volsuffixes[type];
+}
+
+
+char *
+vol_getopname(int32_t op, char *str, size_t sz)
+{
+    op &= VLOP_ALLOPERS;
+
+    switch(op) {
+    case VLOP_MOVE:
+	strlcpy(str, "move", sz);
+	break;
+    case VLOP_RELEASE:
+	strlcpy(str, "release", sz);
+	break;
+    case VLOP_BACKUP:
+	strlcpy(str, "backup", sz);
+	break;
+    case VLOP_DELETE:
+	strlcpy(str, "delete", sz);
+	break;
+    case VLOP_DUMP:
+	strlcpy(str, "dump", sz);
+	break;
+    default:
+	snprintf(str, sz, "unknown flag %x\n", op);
+	break;
+    }
+    return str;
+}
+
+/*
+ * Print the first of RW, RO, or BACKUP that there's a clone of
+ * according to serverFlag.
+ */
+
+const char *
+volumetype_from_serverflag(int32_t flag)
+{
+    const char *str;
+
+    if (flag & VLSF_RWVOL)
+	str = "RW";
+    else if (flag & VLSF_ROVOL)
+	str = "RO";
+    else if (flag & VLSF_ROVOL)
+	str = "RO";
+    else if (flag & VLSF_BACKVOL)
+	str = "BACKUP";
+    else
+	str = "<unknown>";
+
+    return str;
+}
+
+/*
+ * Convert a volume `type' to a string.
+ */
+
+const char *
+volumetype_from_volsertype(int32_t type)
+{
+    const char *str;
+
+    switch (type) {
+    case RWVOL:
+	str = "RW";
+	break;
+    case ROVOL:
+	str = "RO";
+	break;
+    case BACKVOL:
+	str = "BK";
+	break;
+    default:
+	str = "<unknown>";
+    }
+    return str;
 }

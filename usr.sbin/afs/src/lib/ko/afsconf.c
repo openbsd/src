@@ -36,7 +36,7 @@
 #include "ports.h"
 #include <log.h>
 
-RCSID("$KTH: afsconf.c,v 1.5 2000/10/03 00:28:53 lha Exp $");
+RCSID("$arla: afsconf.c,v 1.5 2000/10/03 00:28:53 lha Exp $");
 
 /*
  * Currently only handles dir_path == NULL

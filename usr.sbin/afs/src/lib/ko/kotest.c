@@ -47,7 +47,7 @@
 #include <roken.h>
 #include <ko.h>
 
-RCSID("$KTH: kotest.c,v 1.5 2000/10/02 22:43:19 lha Exp $");
+RCSID("$arla: kotest.c,v 1.8 2002/10/08 23:00:10 lha Exp $");
 
 int
 main (int argc, char **argv)
@@ -56,9 +56,9 @@ main (int argc, char **argv)
     int ret = 0;
     Log_method *method;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
 
-    method = log_open(get_progname(), "/dev/stderr");
+    method = log_open(getprogname(), "/dev/stderr");
     if (method == NULL)
 	errx (1, "log_open failed");
     cell_init(0, method);

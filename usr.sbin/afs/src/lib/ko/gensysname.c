@@ -33,8 +33,9 @@
 
 #include "ko_locl.h"
 #include <fnmatch.h>
+#include <getarg.h>
 
-RCSID("$KTH: gensysname.c,v 1.35.2.1 2001/09/15 13:33:04 mattiasa Exp $");
+RCSID("$arla: gensysname.c,v 1.39 2003/04/09 02:39:31 lha Exp $");
 
 typedef int (*test_sysname)(void);
 typedef void (*gen_sysname)(char*, size_t, const char*, 
@@ -75,7 +76,6 @@ osf_gen_sysname(char *buf,
 		const char *vendor, 
 		const char *os)
 {
-
     int minor, major, nargs;
     char patch;
     nargs = sscanf(os, "osf%d.%d%c", &major, &minor, &patch);
@@ -86,7 +86,6 @@ osf_gen_sysname(char *buf,
     } else {
 	snprintf(buf, len, "alpha_osf");
     }
-
 }
 
 
@@ -154,6 +153,7 @@ struct sysname sysnames[] = {
     { "sun4x_55",     "sparc*", "*", "solaris2.5*", NULL },
     { "sun4x_56",     "sparc*", "*", "solaris2.6*", NULL },
     { "sun4x_57",     "sparc*", "*", "solaris2.7*", NULL },
+    { "sun4x_58",     "sparc*", "*", "solaris2.8*", NULL }, 
     { "sunx86_54",    "i386", "*", "solaris2.4*", NULL },
     { "sunx86_551",   "i386", "*", "solaris2.5.1*", NULL },
     { "sunx86_55",    "i386", "*", "solaris2.5*", NULL },
@@ -180,7 +180,7 @@ printsysname(const char *sysname)
 	printf("%s\n", sysname);
 	break;
     case OUTPUT_C:
-	printf("/* Generated from $KTH: gensysname.c,v 1.35.2.1 2001/09/15 13:33:04 mattiasa Exp $ */\n\n");
+	printf("/* Generated from $arla: gensysname.c,v 1.39 2003/04/09 02:39:31 lha Exp $ */\n\n");
 	printf("#ifdef HAVE_CONFIG_H\n#include <config.h>\n#endif\n");
 	printf("#include <ko.h>\n\n");
 	printf("const char *arla_getsysname(void) { return \"%s\" ; }\n", 
@@ -200,21 +200,20 @@ static int allflag = 0;
 static int sysnameflag = 0;
 static int versionflag = 0;
 
-struct agetargs args[] = {
-    {"machine", 'm', aarg_flag,    &machineflag, "machine output", NULL},
-    {"human",   'h', aarg_flag,    &humanflag,   "human", NULL},
-    {"ccode",   'c', aarg_flag,    &ccodeflag, "", NULL},
-    {"sysname",	's', aarg_flag,    &sysnameflag, NULL, NULL},
-    {"version", 'v', aarg_flag,    &versionflag, NULL, NULL},
-    {"all",     'a', aarg_flag,    &allflag, NULL, NULL},
-    {"help",	0,   aarg_flag,    &helpflag, NULL, NULL},
-    {NULL,      0, aarg_end, NULL}
+struct getargs args[] = {
+    {"machine", 'm', arg_flag,    &machineflag, "machine output", NULL},
+    {"human",   'h', arg_flag,    &humanflag,   "human", NULL},
+    {"ccode",   'c', arg_flag,    &ccodeflag, "", NULL},
+    {"sysname",	's', arg_flag,    &sysnameflag, NULL, NULL},
+    {"version", 'v', arg_flag,    &versionflag, NULL, NULL},
+    {"all",     'a', arg_flag,    &allflag, NULL, NULL},
+    {"help",	0,   arg_flag,    &helpflag, NULL, NULL},
 };
 
 static void
 usage(void)
 {
-    aarg_printusage(args, NULL, "[sysname]", 0);
+    arg_printusage(args, NULL, "[sysname]", 0);
     exit(1);
     
 }
@@ -249,7 +248,7 @@ main(int argc, char **argv)
     int found = 0;
     int optind = 0;
 
-    if (agetarg (args, argc, argv, &optind, AARG_GNUSTYLE)) 
+    if (getarg (args, sizeof(args)/sizeof(args[0]), argc, argv, &optind)) 
 	usage();
 
     argc -= optind;
@@ -259,7 +258,7 @@ main(int argc, char **argv)
 	usage();
 
     if (versionflag)
-	errx(0, "Version: $KTH: gensysname.c,v 1.35.2.1 2001/09/15 13:33:04 mattiasa Exp $");
+	errx(0, "Version: $arla: gensysname.c,v 1.39 2003/04/09 02:39:31 lha Exp $");
 
     if (ccodeflag)
 	output = OUTPUT_C;

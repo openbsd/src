@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: ko.h,v 1.27.2.2 2001/05/06 22:40:49 ahltorp Exp $ */
+/* $arla: ko.h,v 1.36 2002/12/06 05:00:04 lha Exp $ */
 
 #ifndef __KO_H
 #define __KO_H 1
@@ -71,6 +71,12 @@ enum { SUID_CELL 	= 0x1,	/* if this is a suid cell */
        DYNROOT_CELL	= 0x2	/* cell should show up in dynroot */
 };
 
+enum { DYNROOT_CELLID = 0 };
+
+enum { 
+    DYNROOT_ALIAS_READONLY = 0,
+    DYNROOT_ALIAS_READWRITE = 1
+};
 
 typedef struct {
     int32_t id;			/* Cell-ID */
@@ -81,9 +87,10 @@ typedef struct {
     cell_db_entry *dbservers;	/* Database servers */
     unsigned flags;		/* Various flags, like SUID_CELL */
     time_t timeout;		/* when this entry expire */
+    time_t poller_timeout;	/* delta time between poller calls */
 } cell_entry;
 
-void	      cell_init (int cellcachesize, Log_method *log);
+void	      cell_init (int cellcachesize, Log_method *logm);
 
 const cell_db_entry *cell_dbservers_by_id (int32_t cell, int *);
 
@@ -104,11 +111,17 @@ Bool	       cell_setsuid_by_num (int32_t cell);
 int            cell_setthiscell (const char *cell);
 int	       cell_foreach (int (*func) (const cell_entry *, void *), 
 			     void *arg);
+typedef	int    (*cell_alias_fn)(const char *, const char *, int, void *);
+int	       cell_alias_foreach (cell_alias_fn, void *);
+int	       cell_addalias(const char *, const char *, const char *);
 const char    *cell_expand_cell (const char *cell);
 unsigned long  cell_get_version(void);
 Bool 	       cell_is_sanep (int cell);
 const char **  cell_thesecells (void);
-void 	       cell_print_cell (cell_entry *c, FILE *out);
+void 	       cell_print_cell (const cell_entry *c, FILE *out);
+void	       cell_status (FILE *f);
+time_t	       cell_get_poller_time(const cell_entry *c);
+void	       cell_set_poller_time(cell_entry *c, time_t time);
 
 
 /*
@@ -125,5 +138,16 @@ int volname_canonicalize (char *volname);
 size_t volname_specific (const char *volname, int type,
 			 char *buf, size_t buf_sz);
 const char *volname_suffix (int type);
+
+char *vol_getopname(int32_t op, char *str, size_t sz);
+const char *volumetype_from_serverflag(int32_t flag);
+const char *volumetype_from_volsertype(int32_t type);
+
+/*
+ * misc
+ */
+
+int
+VenusFid_cmp (const VenusFid *fid1, const VenusFid *fid2);
 
 #endif /* __KO_H */

@@ -49,7 +49,7 @@
 
 #include "ports.h"
 
-RCSID("$KTH: ports.c,v 1.10.2.1 2001/04/22 01:21:37 lha Exp $") ;
+RCSID("$arla: ports.c,v 1.12 2001/04/22 01:23:12 lha Exp $") ;
 
 typedef struct {
      const char *name;		/* Name of the service */

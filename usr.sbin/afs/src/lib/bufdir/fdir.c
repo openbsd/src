@@ -35,9 +35,10 @@
  * Routines for reading an AFS directory
  */
 
+#ifndef _KERNEL
 #include <config.h>
 
-RCSID("$KTH: fdir.c,v 1.9 2000/10/02 22:59:43 lha Exp $") ;
+RCSID("$arla: fdir.c,v 1.14 2003/02/04 17:09:04 lha Exp $") ;
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -45,6 +46,10 @@ RCSID("$KTH: fdir.c,v 1.9 2000/10/02 22:59:43 lha Exp $") ;
 #include <unistd.h>
 #include <assert.h>
 #include <rx/rx.h>
+#else
+#include <nnpfs_locl.h>
+#endif
+
 #include <afs_dir.h>
 #include <fdir.h>
 
@@ -116,12 +121,12 @@ static DirEntry *
 find_entry(DirPage0 *page0, const char *name)
 {
     DirEntry *entry;
-    unsigned i;
+    unsigned short i;
 
     for (i = ntohs(page0->dheader.hash[hashentry (name)]);
 	 i != 0;
 	 i = ntohs(entry->next)) {
-	entry = getentry (page0, i - 1);
+	entry = getentry (page0, (unsigned short)(i - 1));
 
 	if (strcmp (entry->name, name) == 0)
 	    return entry;
@@ -153,25 +158,6 @@ find_by_name (DirPage0 *page0,
 }
 
 /*
- * Change the fid for `name' to `fid'.  Return 0 or -1.
- */
-
-static int
-update_fid_by_name (DirPage0 *page0,
-		    const char *name,
-		    const VenusFid *fid)
-{
-    DirEntry *entry = find_entry (page0, name);
-
-    if (entry == NULL)
-	return -1;
-
-    entry->fid.Vnode = htonl (fid->fid.Vnode);
-    entry->fid.Unique = htonl (fid->fid.Unique);
-    return 0;
-}
-
-/*
  * Return true if slot `off' on `page' is being used.
  */
 
@@ -182,23 +168,18 @@ used_slot (DirPage1 *page, int off)
 }
 
 /*
- * Mark slot `off' on `page' as being used.
+ * Return true if slot w/ index `off' on `page' is a valid entry.
  */
 
-static void
-set_used (DirPage1 *page, int off)
+static int
+first_slotp (DirPage1 *page, int off)
 {
-    page->header.pg_bitmap[off / 8] |= 1 << (off % 8);
-}
+    DirEntry *entry = &page->entry[off];
+    if (used_slot(page, off + 1) 
+	&& entry->flag == AFSDIR_FIRST)
+	return TRUE;
 
-/*
- * Mark slot `off' on `page' as not being used.
- */
-
-static void
-set_unused (DirPage1 *page, int off)
-{
-    page->header.pg_bitmap[off / 8] &= ~(1 << (off % 8));
+    return FALSE;
 }
 
 /*
@@ -220,6 +201,46 @@ is_page_empty (DirPage0 *page0, unsigned pageno)
 	if (page->header.pg_bitmap[i] != 0)
 	    return 0;
     return 1;
+}
+
+#ifndef _KERNEL
+/*
+ * Change the fid for `name' to `fid'.  Return 0 or -1.
+ */
+
+static int
+update_fid_by_name (DirPage0 *page0,
+		    const char *name,
+		    const VenusFid *fid)
+{
+    DirEntry *entry = find_entry (page0, name);
+
+    if (entry == NULL)
+	return -1;
+
+    entry->fid.Vnode = htonl (fid->fid.Vnode);
+    entry->fid.Unique = htonl (fid->fid.Unique);
+    return 0;
+}
+
+/*
+ * Mark slot `off' on `page' as being used.
+ */
+
+static void
+set_used (DirPage1 *page, int off)
+{
+    page->header.pg_bitmap[off / 8] |= 1 << (off % 8);
+}
+
+/*
+ * Mark slot `off' on `page' as not being used.
+ */
+
+static void
+set_unused (DirPage1 *page, int off)
+{
+    page->header.pg_bitmap[off / 8] &= ~(1 << (off % 8));
 }
 
 /*
@@ -282,7 +303,7 @@ add_to_page (DirPage0 *page0,
 	    for (k = i + 1; k < i + j + 1; ++k)
 		page->header.pg_bitmap[k / 8] |= (1 << (k % 8));
 
-	    page->entry[i].flag = 1;
+	    page->entry[i].flag = AFSDIR_FIRST;
 	    page->entry[i].length = 0;
 	    page->entry[i].next = next;
 	    page->entry[i].fid.Vnode  = htonl(fid.Vnode);
@@ -326,28 +347,6 @@ remove_from_page (DirPage0 *page0,
     return 0;
 }
 
-/* 
- * Lookup `name' in the AFS directory identified by `dir' and return
- * the Fid in `file'. Return value is 0 or error code.
- */
-
-int
-fdir_lookup (fbuf *the_fbuf, const VenusFid *dir,
-	     const char *name, VenusFid *file)
-{
-     DirPage0 *page0;
-     unsigned ind;
-
-     page0 = (DirPage0 *)fbuf_buf(the_fbuf);
-     assert (page0);
-     ind = find_by_name (page0, name, file, dir);
-
-     if (ind == 0)
-	 return 0;
-     else
-	 return ENOENT;
-}
-
 /*
  * Lookup `name' in the AFS directory identified by `dir' and change the
  * fid to `fid'.
@@ -369,6 +368,29 @@ fdir_changefid (fbuf *the_fbuf,
 	return 0;
     else
 	return ENOENT;
+}
+#endif
+
+/* 
+ * Lookup `name' in the AFS directory identified by `dir' and return
+ * the Fid in `file'. Return value is 0 or error code.
+ */
+
+int
+fdir_lookup (fbuf *the_fbuf, const VenusFid *dir,
+	     const char *name, VenusFid *file)
+{
+     DirPage0 *page0;
+     unsigned ind;
+
+     page0 = (DirPage0 *)fbuf_buf(the_fbuf);
+     assert (page0);
+     ind = find_by_name (page0, name, file, dir);
+
+     if (ind == 0)
+	 return 0;
+     else
+	 return ENOENT;
 }
 
 /*
@@ -398,13 +420,16 @@ int
 fdir_readdir (fbuf *the_fbuf,
 	      fdir_readdir_func func,
 	      void *arg,
-	      const VenusFid *dir)
+	      VenusFid dir, 
+	      uint32_t *offset)
 {
      DirPage0 *page0;
      unsigned i, j;
      VenusFid fid;
      unsigned len = fbuf_len(the_fbuf);
      unsigned npages;
+     unsigned first_slot;
+     int ret;
 
      page0 = (DirPage0 *)fbuf_buf(the_fbuf);
 
@@ -415,36 +440,52 @@ fdir_readdir (fbuf *the_fbuf,
      if (npages < len / AFSDIR_PAGESIZE)
 	 npages = len / AFSDIR_PAGESIZE;
 
-     for (i = 0; i < npages; ++i) {
-	 DirPage1 *page = getpage (page0, i);
-	 unsigned first_slot;
+     if (offset && *offset) {
+	 i = *offset / ENTRIESPERPAGE;
+	 first_slot = *offset % ENTRIESPERPAGE;
 
-	 if (i == 0)
-	     first_slot = 12;
-	 else
-	     first_slot = 0;
+	 assert(i > 0 || first_slot >= 12);
+     } else {
+	 i = 0;
+	 first_slot = 12;
+     }
+
+     for (; i < npages; ++i) {
+	 DirPage1 *page = getpage (page0, i);
 
 	 for (j = first_slot; j < ENTRIESPERPAGE - 1; ++j) {
-	     if (used_slot (page, j + 1)) {
+	     if (first_slotp (page, j)) {
 		 DirEntry *entry = &page->entry[j];
 
-		 assert (entry->flag);
+		 if (entry->flag != AFSDIR_FIRST)
+		     continue;
 
-		 fid.Cell       = dir->Cell;
-		 fid.fid.Volume = dir->fid.Volume;
+		 fid.Cell       = dir.Cell;
+		 fid.fid.Volume = dir.fid.Volume;
 		 fid.fid.Vnode  = ntohl (entry->fid.Vnode);
 		 fid.fid.Unique = ntohl (entry->fid.Unique);
 
-		 (*func)(&fid, entry->name, arg);
-
+		 ret = (*func)(&fid, entry->name, arg);
+		 if (ret) {
+		     if (ret > 0)
+			 j++; /* look at next entry next time */
+		     
+		     goto done;
+		 }
 		 j += additional_entries (entry->name);
 	     }
 	 }
+	 first_slot = 0;
      }
+
+ done:
+     if (offset)
+	 *offset = i * ENTRIESPERPAGE + j;
 
      return 0;
 }
 
+#ifndef _KERNEL
 /*
  * Create a new directory with only . and ..
  */
@@ -518,7 +559,8 @@ fdir_creat (fbuf *dir,
     assert (page0);
     npages = ntohs(page0->header.pg_pgcount);
 
-    assert (npages == dir->len / AFSDIR_PAGESIZE);
+    if (npages < fbuf_len(dir) / AFSDIR_PAGESIZE)
+	npages = fbuf_len(dir) / AFSDIR_PAGESIZE;
 
     if (find_entry (page0, name))
 	return EEXIST;
@@ -573,6 +615,9 @@ fdir_remove (fbuf *dir,
 
     page0 = (DirPage0 *)fbuf_buf(dir);
     npages = ntohs(page0->header.pg_pgcount);
+    if (npages < len / AFSDIR_PAGESIZE)
+	npages = len / AFSDIR_PAGESIZE;
+
     hash_value = hashentry (name);
     i = ntohs(page0->dheader.hash[hash_value]);
     found = i == 0;
@@ -618,3 +663,4 @@ fdir_remove (fbuf *dir,
 	return 0;
     }
 }
+#endif

@@ -1,3 +1,11 @@
+2003-02-01  Love  <lha@stacken.kth.se>
+
+	* sl.c: use getprogname() not __progname
+	
+2002-12-07  Love  <lha@stacken.kth.se>
+
+	* Makefile.am: INCLUDES += COMERR_CPPFLAGS
+	
 2000-12-21  Love  <lha@stacken.kth.se>
 
 	* Makefile.in: added @LIBS@ to program built localy

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: ports.h,v 1.3 2000/10/02 22:43:39 lha Exp $ */
+/* $arla: ports.h,v 1.3 2000/10/02 22:43:39 lha Exp $ */
 
 /*
  * Port numbers.

@@ -34,7 +34,7 @@
 #include "make_cmds.h"
 #include <getarg.h>
 
-RCSID("$KTH: make_cmds.c,v 1.3 2000/09/01 21:29:38 lha Exp $");
+RCSID("$arla: make_cmds.c,v 1.4 2002/04/26 16:11:41 lha Exp $");
 
 #include <roken.h>
 #include <err.h>
@@ -213,13 +213,13 @@ main(int argc, char **argv)
 {
     int optind = 0;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
     if(getarg(args, sizeof(args)/sizeof(*args), argc, argv, &optind))
 	usage(1);
     if(help_flag)
 	usage(0);
     if(version_flag) {
-	printf ("$KTH: make_cmds.c,v 1.3 2000/09/01 21:29:38 lha Exp $\n");
+	printf ("$arla: make_cmds.c,v 1.4 2002/04/26 16:11:41 lha Exp $\n");
 	exit(0);
     }
     

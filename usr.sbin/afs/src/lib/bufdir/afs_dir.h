@@ -35,7 +35,7 @@
  * The directory structure used by AFS.
  */
 
-/* $KTH: afs_dir.h,v 1.6 2000/10/02 22:59:28 lha Exp $ */
+/* $arla: afs_dir.h,v 1.8 2002/03/19 12:21:25 tol Exp $ */
 
 #ifndef _AFS_DIR_
 #define _AFS_DIR_
@@ -43,6 +43,8 @@
 #define AFSDIR_PAGESIZE 2048
 #define ADIRHASHSIZE 128
 #define ENTRIESPERPAGE 64
+
+#define AFSDIR_FIRST 1
 
 /* number of pages in map */
 
@@ -54,19 +56,19 @@
  */
 
 typedef struct {
-     u_int32_t Vnode;
-     u_int32_t Unique;
+     uint32_t Vnode;
+     uint32_t Unique;
 } DirFid;
 
 typedef struct {
      union {
 	  struct {
-	      u_int16_t pgcount;
-	      u_int16_t tag;	/* Should be 1234 in net-order */
-	      u_int8_t freecount;
-	      u_int8_t bitmap[ENTRIESPERPAGE / 8];
+	      uint16_t pgcount;
+	      uint16_t tag;	/* Should be 1234 in net-order */
+	      uint8_t freecount;
+	      uint8_t bitmap[ENTRIESPERPAGE / 8];
 	  } s;
-	  u_int8_t pad[32];
+	  uint8_t pad[32];
      } u;
 } PageHeader;
 
@@ -78,14 +80,14 @@ typedef struct {
 #define pg_bitmap	u.s.bitmap
 
 typedef struct {
-     u_int8_t map[MAXPAGES];
-     u_int16_t hash[ADIRHASHSIZE];
+     uint8_t map[MAXPAGES];
+     uint16_t hash[ADIRHASHSIZE];
 } DirHeader;
 
 typedef struct {
-     u_int8_t flag;
-     u_int8_t length;
-     u_int16_t next;
+     uint8_t flag;
+     uint8_t length;
+     uint16_t next;
      DirFid fid;
      char name[16];		/* If name overflows into fill, then we */
      char fill[4];		/* should use next entry too.  */

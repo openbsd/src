@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: cellconfig.h,v 1.2 2000/10/02 22:42:46 lha Exp $ */
+/* $arla: cellconfig.h,v 1.2 2000/10/02 22:42:46 lha Exp $ */
 
 #ifndef __CELLCONFIG_H
 #define __CELLCONFIG_H 1

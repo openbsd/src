@@ -34,7 +34,7 @@
 #include "ko_locl.h"
 #include "auth.h"
 
-RCSID("$KTH: auth.c,v 1.5 2000/10/02 22:42:36 lha Exp $");
+RCSID("$arla: auth.c,v 1.7 2003/06/10 16:41:02 lha Exp $");
 
 #ifdef KERBEROS
 
@@ -52,7 +52,7 @@ ktc_GetToken(const struct ktc_principal *server,
 	     int token_len,
 	     struct ktc_principal *client)
 {
-    u_int32_t i;
+    uint32_t i;
     unsigned char t[128];
     struct ViceIoctl parms;
 
@@ -109,6 +109,7 @@ ktc_SetToken(const struct ktc_principal *server,
 	     const struct ktc_principal *client,
 	     int unknown)	/* XXX */
 {
+#ifdef HAVE_KRB4
     const char *cell;
     CREDENTIALS cred;
     int ret;
@@ -139,6 +140,20 @@ ktc_SetToken(const struct ktc_principal *server,
     ret = kafs_settoken (cell, uid, &cred);
     memset (&cred, 0, sizeof(cred));
     return ret;
+#elif defined(HAVE_KAFS_SETTOKEN_RXKAD)
+    struct ClearToken ct;
+    int ret;
+
+    ct.AuthHandle = token.kvno;
+    memcpy(&ct.HandShakeKey, &token.sessionKey, sizeof(ct.HandShakeKey));
+    ct.BeginTimestamp = token.startTime;
+    ct.EndTimestamp = token.endTime;
+    
+    ret = kafs_settoken_rxkad (server->cell, &ct,
+			       token.ticket, token.ticketLen);
+    memset(&ct, 0, sizeof(ct));
+    return ret;
+#endif
 }
 
 #endif /* KERBEROS */
