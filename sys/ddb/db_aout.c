@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.14 1997/02/07 08:04:10 deraadt Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.15 1997/02/07 08:32:15 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -357,16 +357,12 @@ X_db_stub_xh(sym, xh)
 	db_symtab_t sym;
 	struct exec *xh;
 {
-#if 0
 	extern char kernel_text[];
-#endif
 
 	bzero(xh, sizeof(*xh));
 	xh->a_midmag = htonl((((0 << 10) | MID_ZERO) << 16) | ZMAGIC);
 	xh->a_syms   = *sym->private;
-#if 0
 	xh->a_entry  = (u_long)kernel_text;
-#endif
 }
 
 /*
