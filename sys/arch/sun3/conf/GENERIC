@@ -40,6 +40,7 @@ options 	MFS		# memory-based filesystem
 
 # Networking options
 options 	INET		# IP prototol stack support
+options		IPFILTER	# IP packet filter for security
 #options	GATEWAY		# IP packet forwarding
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
