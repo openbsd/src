@@ -70,10 +70,10 @@ Boston, MA 02111-1307, USA.  */
 #undef OBSD_LINK_SPEC
 #ifdef OBSD_NO_DYNAMIC_LIBRARIES
 #define OBSD_LINK_SPEC \
-  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{assert*}"
+  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!nostdlib:%{!r*:%{!e*:-e %(openbsd_entry_point)}}} -dc -dp %{assert*}"
 #else
 #define OBSD_LINK_SPEC \
-  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e %(openbsd_entry_point)}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 #endif
 
 #undef SUBTARGET_EXTRA_SPECS
@@ -196,3 +196,35 @@ do									\
     (void) sysarch (0, &s);						\
   }									\
 while (0)
+
+/* Provide a STARTFILE_SPEC appropriate for OpenBSD ELF.  Here we
+   provide support for the special GCC option -static.  On ELF
+   targets, we also add the crtbegin.o file, which provides part
+   of the support for getting C++ file-scope static objects
+   constructed before entering "main".  */
+
+#define OPENBSD_STARTFILE_SPEC	\
+  "%{!shared:			\
+     %{pg:gcrt0%O%s}		\
+     %{!pg:			\
+       %{p:gcrt0%O%s}		\
+       %{!p:crt0%O%s}}}		\
+   %:if-exists(crti%O%s)	\
+   %{static:%:if-exists-else(crtbeginT%O%s crtbegin%O%s)} \
+   %{!static: \
+     %{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}}"
+
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC OPENBSD_STARTFILE_SPEC
+
+/* Provide an ENDFILE_SPEC appropriate for OpenBSD ELF.  Here we
+add crtend.o, which provides part of the support for getting
+C++ file-scope static objects deconstructed after exiting "main".  */
+
+#define OPENBSD_ENDFILE_SPEC     \
+  "%{!shared:crtend%O%s} %{shared:crtendS%O%s} \
+   %:if-exists(crtn%O%s)"
+
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC OPENBSD_ENDFILE_SPEC
+
