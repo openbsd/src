@@ -1,5 +1,5 @@
 #	$NetBSD: genassym.cf,v 1.3 1997/07/16 00:01:49 is Exp $
-#	$OpenBSD: genassym.cf,v 1.3 1997/09/18 13:39:34 niklas Exp $
+#	$OpenBSD: genassym.cf,v 1.4 2000/05/27 19:46:49 art Exp $
 #
 # Copyright (c) 1982, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,10 @@ include <sys/syscall.h>
 include <sys/user.h>
 
 include <vm/vm.h>
+
+ifdef UVM
+include <uvm/uvm_extern.h>
+endif
 
 include <machine/cpu.h>
 include <machine/trap.h>
@@ -111,7 +115,11 @@ define	PM_STCHG	offsetof(struct pmap, pm_stchanged)
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 
 # interrupt/fault metering
+ifdef UVM
+define	UVMEXP_INTRS	offsetof(struct uvmexp, intrs)
+else
 define	V_INTR		offsetof(struct vmmeter, v_intr)
+endif
 
 # general constants
 define	UPAGES		UPAGES
