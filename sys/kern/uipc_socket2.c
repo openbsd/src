@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.22 2001/11/27 22:53:19 provos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.23 2001/11/28 02:28:55 provos Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -54,9 +54,10 @@
  */
 
 /* strings for sleep message: */
-char	netio[] = "netio";
 char	netcon[] = "netcon";
 char	netcls[] = "netcls";
+char	netio[] = "netio";
+char	netlck[] = "netlck";
 
 u_long	sb_max = SB_MAX;		/* patchable */
 
@@ -290,7 +291,7 @@ sb_lock(sb)
 		sb->sb_flags |= SB_WANT;
 		error = tsleep((caddr_t)&sb->sb_flags,
 		    (sb->sb_flags & SB_NOINTR) ?
-		    PSOCK : PSOCK|PCATCH, netio, 0);
+		    PSOCK : PSOCK|PCATCH, netlck, 0);
 		if (error)
 			return (error);
 	}
