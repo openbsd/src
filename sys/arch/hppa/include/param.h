@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.6 1999/09/18 19:01:56 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.7 1999/10/26 16:20:43 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -86,18 +86,14 @@
 #define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
-#ifdef GATEWAY
-#define	NMBCLUSTERS	(1024)		/* cl map size: 1MB */
-#else
-#define	NMBCLUSTERS	(512)		/* cl map size: 0.5MB */
-#endif
+#define	NMBCLUSTERS	(2048)		/* cl map size: 1MB */
 #endif
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(8192*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(16 * 1024 * 1024 / CLBYTES)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
