@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.134 2004/12/06 21:55:01 espie Exp $
+# $OpenBSD: pkg_add,v 1.135 2004/12/07 12:19:34 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -70,7 +70,8 @@ sub find_conflicts($$)
 
 sub can_install($$)
 {
-	my ($pkgname, $state) = @_;
+	my ($plist, $state) = @_;
+	my $pkgname = $plist->pkgname();
 
 	my @l = find_conflicts($pkgname, $state);
 
@@ -83,10 +84,16 @@ sub can_install($$)
 
 	require OpenBSD::Update;
 
-	my $plist = OpenBSD::Update::can_do($l[0], $pkgname, $state);
-	if ($plist) {
-		$plist->{dir} = installed_info($l[0]);
-		return $plist;
+	my $rplist = OpenBSD::Update::can_do($l[0], $pkgname, $state);
+	if ($rplist) {
+		if (!OpenBSD::Update::is_safe($plist, $state)) {
+			print "Can't safely update $l[0] to $pkgname\n";
+			$errors++;
+			return undef;
+		}
+		$rplist->{dir} = installed_info($l[0]);
+		$plist->{replacing} = $rplist;
+		return 1;
 	} else {
 		print "Can't update $l[0] into $pkgname\n";
 		$errors++;
@@ -99,21 +106,7 @@ sub can_install($$)
 sub pre_add($$)
 {
 	my ($pkg, $state) = @_;
-	my $pkgname1;
-	my $toreplace;
 	
-	if ($pkg ne '-') {
-		if ($state->{verbose}) {
-			if (defined $state->{deptree}->{$pkg}) {
-			    print $state->{deptree}->{$pkg},":";
-			}
-			print "parsing $pkg\n";
-		}
-		$pkgname1 = OpenBSD::PackageName::url2pkgname($pkg);
-		$toreplace = can_install($pkgname1, $state);
-		return undef unless $toreplace;
-	}
-
 	my $handle = OpenBSD::PackageLocator->find($pkg);
 	if (!$handle) {
 		print "Can't find $pkg\n";
@@ -134,33 +127,23 @@ sub pre_add($$)
 		return undef;
 	}
 	my $pkgname = $plist->pkgname();
-	if (defined $pkgname1) {
-		if ($pkgname ne $pkgname1) {
+	if ($pkg ne '-') {
+		if (OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
 			print "Package name is not consistent ???\n";
 			$errors++;
 			return undef;
 		}
-	} else {
-		if ($state->{verbose}) {
-			if (defined $state->{deptree}->{$pkg}) {
-			    print $state->{deptree}->{$pkg},":";
-			}
-			print "parsing $pkgname\n";
-		}
-		$toreplace = can_install($pkgname, $state);
-		return undef unless $toreplace;
 	}
-	my $avoid = '';
-	if ($toreplace ne '1') {
-		$plist->{replacing} = $toreplace;
-		$avoid = $toreplace->pkgname();
-
-		require OpenBSD::Update;
-
-		if (!OpenBSD::Update::is_safe($plist, $state)) {
-			print "Can't safely update $avoid to $pkgname\n";
-			$errors++;
+	if ($state->{verbose}) {
+		if (defined $state->{deptree}->{$pkg}) {
+		    print $state->{deptree}->{$pkg},":";
 		}
+		print "parsing $pkgname\n";
+	}
+	return undef unless can_install($plist, $state);
+	my $avoid = '';
+	if (defined $plist->{replacing}) {
+		$avoid = $plist->{replacing}->pkgname();
 	}
 	# second handling of conflicts
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
