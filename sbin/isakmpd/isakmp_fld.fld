@@ -1,5 +1,5 @@
-#	$OpenBSD: isakmp_fld.fld,v 1.4 1998/11/20 07:41:43 niklas Exp $
-#	$EOM: isakmp_fld.fld,v 1.4 1998/11/20 07:21:07 niklas Exp $
+#	$OpenBSD: isakmp_fld.fld,v 1.5 1999/04/27 21:14:30 niklas Exp $
+#	$EOM: isakmp_fld.fld,v 1.5 1999/04/25 13:38:22 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -130,7 +130,7 @@ ISAKMP_NOTIFY : ISAKMP_GEN
   DOI			cst 4		isakmp_doi_cst,ipsec_doi_cst
   PROTO			cst 1		isakmp_proto_cst
   SPI_SZ		num 1
-  MSG_TYPE		cst 2		isakmp_notify_cst
+  MSG_TYPE		cst 2		isakmp_notify_cst,ipsec_notify_cst
   SPI			raw
 .
 
