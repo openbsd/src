@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.1 1997/02/16 18:20:03 downsj Exp $
+#	$OpenBSD: dot.profile,v 1.2 1997/02/16 19:32:32 downsj Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -33,10 +33,11 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=vt200
+TERM=hp300h
 export TERM
 
 # set up some sane defaults
+echo "TERM is $TERM"
 echo 'erase ^?, werase ^H, kill ^U, intr ^C'
 stty newcrt werase ^H intr ^C kill ^U erase ^? 9600
 echo ''
