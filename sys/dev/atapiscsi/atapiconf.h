@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiconf.h,v 1.1 1999/07/18 21:25:18 csapuntz Exp $     */
+/*      $OpenBSD: atapiconf.h,v 1.2 1999/07/22 03:10:47 csapuntz Exp $     */
 /*	$NetBSD: atapiconf.h,v 1.7 1998/10/12 16:09:24 bouyer Exp $	*/
 
 /*
@@ -33,11 +33,13 @@
 #include <scsi/scsiconf.h>
 
 /* drive states stored in ata_drive_datas */
-#define PIOMODE		0
-#define PIOMODE_WAIT	1
-#define DMAMODE		2
-#define DMAMODE_WAIT	3
-#define READY		4
+#define IDENTIFY        0
+#define IDENTIFY_WAIT   1
+#define PIOMODE		2
+#define PIOMODE_WAIT	3
+#define DMAMODE		4
+#define DMAMODE_WAIT	5
+#define READY		6
 
 struct atapi_mode_header;
 struct ataparams;

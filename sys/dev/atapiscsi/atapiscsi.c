@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.3 1999/07/20 06:21:58 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.4 1999/07/22 03:10:47 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -119,11 +119,9 @@ struct atapiscsi_softc {
 	struct device  sc_dev;
 	struct  scsi_link  sc_adapterlink;
 	struct  wdc_softc  *sc_wdc;
-
-	u_int8_t sc_channel;  /* Channel we represent */
-	struct   scsi_link  sc_link[2];
+	u_int8_t sc_channel;  
 	int  valid[2];
-	struct ata_drive_datas *sc_drvs;	/* array supplied by adapter */
+	struct ata_drive_datas *sc_drvs;
 };
 
 static struct scsi_adapter atapiscsi_switch = 
@@ -198,6 +196,7 @@ atapiscsi_attach(parent, self, aux)
 	as->sc_adapterlink.device = &atapiscsi_dev;
 	as->sc_adapterlink.openings = 1;
 	as->sc_adapterlink.flags = SDEV_ATAPI;
+	as->sc_adapterlink.quirks = SDEV_NOLUNS;
 	as->sc_wdc->channels[as->sc_channel]->ch_as = as;
 
 	for (drive = 0; drive < 2 ; drive++ ) {
@@ -211,13 +210,15 @@ atapiscsi_attach(parent, self, aux)
 			   will be called atapibus by the IDE side of the
 			   driver. */
 			drvp->drv_softc = (struct device *)as;
-			wdc_probe_caps(drvp);		
+			wdc_probe_caps(drvp);
+
+			if ((id->atap_config & ATAPI_CFG_CMD_MASK) 
+			    == ATAPI_CFG_CMD_16)
+				drvp->atapi_cap |= ACAP_LEN;
+
+			drvp->atapi_cap |= (id->atap_config & ATAPI_CFG_DRQ_MASK);
 		}
 	}
-
-#if 0
-	config_found(self, &as->sc_adapterlink, scsiprint);
-#endif
 }
 
 
@@ -387,7 +388,7 @@ wdc_atapi_start(chp, xfer)
 		xfer->c_flags &= ~C_DMA;
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
-		if (drvp->state != PIOMODE) {
+		if (drvp->state != IDENTIFY) {
 			printf("%s:%d:%d: bad state %d in wdc_atapi_start\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
 			    xfer->drive, drvp->state);
@@ -396,9 +397,8 @@ wdc_atapi_start(chp, xfer)
 		wdc_atapi_ctrl(chp, xfer, 0);
 		return;
 	}
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | (xfer->drive << 4));
-	if (wait_for_unbusy(chp, ATAPI_DELAY) < 0) {
+	
+	if (wdc_select_drive(chp, xfer->drive, ATAPI_DELAY) < 0) {
 		printf("wdc_atapi_start: not ready, st = %02x\n",
 		    chp->ch_status);
 		sc_xfer->error = XS_TIMEOUT;
@@ -419,20 +419,14 @@ wdc_atapi_start(chp, xfer)
 	    sc_xfer->datalen <= 0xffff ? sc_xfer->datalen : 0xffff,
 	    0, 0, 0, 
 	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
-	
+
 	/*
 	 * If there is no interrupt for CMD input, busy-wait for it (done in 
 	 * the interrupt routine. If it is a polled command, call the interrupt
 	 * routine until command is done.
 	 */
-	if (
-#ifndef __OpenBSD__
-	    (sc_xfer->sc_link->scsi_atapi.cap  & ATAPI_CFG_DRQ_MASK) !=
-	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->flags & SCSI_POLL)
-#else
-	    1
-#endif
-	) {
+	if (((drvp->atapi_cap & ATAPI_CFG_DRQ_MASK) != ATAPI_CFG_IRQ_DRQ)
+	    || (sc_xfer->flags & SCSI_POLL)) {
 		/* Wait for at last 400ns for status bit to be valid */
 		DELAY(1);
 		wdc_atapi_intr(chp, xfer, 0);
@@ -465,7 +459,7 @@ wdc_atapi_intr(chp, xfer, irq)
 	struct scsi_sense *cmd_reqsense =
 	    (struct scsi_sense *)&_cmd_reqsense;
 	u_int32_t cmd[4];
-	int  cmdlen =12;  /* XXX - Not true for all ATAPI devices */
+	int  cmdlen = (drvp->atapi_cap & ACAP_LEN) ? 16 : 12;
 
 	memset (cmd, 0, sizeof(cmd));
 
@@ -479,9 +473,13 @@ wdc_atapi_intr(chp, xfer, irq)
 		    drvp->state);
 		panic("wdc_atapi_intr: bad state\n");
 	}
-	/* Ack interrupt done in wait_for_unbusy */
+
+	/* We should really wait_for_unbusy here too before 
+	   switching drives. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
+
+	/* Ack interrupt done in wait_for_unbusy */
 	if (wait_for_unbusy(chp,
 	    (irq == 0) ? sc_xfer->timeout : 0) != 0) {
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
@@ -547,6 +545,7 @@ again:
 				break;
 			}
 		}
+
 		/* send packet command */
 		/* Commands are 12 or 16 bytes long. It's 32-bit aligned */
 		if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
@@ -658,6 +657,7 @@ again:
 			    xfer->c_bcount -= len;
 			}
 		}
+
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
 			timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
@@ -735,6 +735,7 @@ again:
 			    xfer->c_bcount -=len;
 			}
 		}
+
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
 			timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
@@ -857,9 +858,52 @@ again:
 	WDCDEBUG_PRINT(("wdc_atapi_ctrl %s:%d:%d state %d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive, drvp->state),
 	    DEBUG_INTR | DEBUG_FUNCS);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | (xfer->drive << 4));
+
+	/* We shouldn't have to select the drive in these states.
+	   If we do, there are other, more serious problems */
+	if (drvp->state != IDENTIFY_WAIT &&
+	    drvp->state != PIOMODE_WAIT &&
+	    drvp->state != DMAMODE_WAIT)
+		wdc_select_drive(chp, xfer->drive, delay);
+
 	switch (drvp->state) {
+		/* You need to send an ATAPI drive an ATAPI-specific
+		   command to revive it after a hard reset. Identify
+		   is about the most innocuous thing you can do
+		   that's guaranteed to be there */
+	case IDENTIFY:
+		wdccommandshort(chp, drvp->drive, ATAPI_IDENTIFY_DEVICE);
+		drvp->state = IDENTIFY_WAIT;
+		break;
+	
+	case IDENTIFY_WAIT:
+		errstring = "IDENTIFY";
+		
+		if (wdcwait(chp, 0, 0, delay)) 
+			goto timeout;
+
+		if (chp->ch_status & WDCS_ERR) {
+			chp->ch_error = bus_space_read_1(chp->cmd_iot,
+							 chp->cmd_ioh, 
+							 wd_error);
+			goto error;
+		}
+
+		if (wdcwait(chp, WDCS_DRQ, WDCS_DRQ, 1000)) 
+			goto timeout;
+
+		if (chp->ch_status & WDCS_ERR) {
+			chp->ch_error = bus_space_read_1(chp->cmd_iot,
+							 chp->cmd_ioh, 
+							 wd_error);
+			goto error;
+		}
+
+		wdcbit_bucket(chp, 512);
+
+		drvp->state = PIOMODE;
+		break;
+
 	case PIOMODE:
 piomode:
 		/* Don't try to set mode if controller can't be adjusted */
@@ -981,7 +1025,22 @@ wdc_atapi_reset(chp, xfer)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 
+	chp->ch_status = bus_space_read_1(chp->cmd_iot,
+					 chp->cmd_ioh, 
+					 wd_status);
+
+	if (chp->ch_status & WDCS_DRQ) {
+		printf ("wdc_atapi_reset: DRQ is asserted. We've really messed up\n");
+		wdc_reset_channel(drvp);
+	}
+
 	wdccommandshort(chp, xfer->drive, ATAPI_SOFT_RESET);
+
+	/* Some ATAPI devices need extra time to find their
+	   brains after a reset
+	 */
+	delay(5000);
+
 	drvp->state = 0;
 	if (wait_for_unbusy(chp, WDC_RESET_WAIT) != 0) {
 		printf("%s:%d:%d: reset failed\n",
@@ -989,6 +1048,7 @@ wdc_atapi_reset(chp, xfer)
 		    xfer->drive);
 		sc_xfer->error = XS_SELTIMEOUT;
 	}
+
 	wdc_atapi_done(chp, xfer);
 	return;
 }
