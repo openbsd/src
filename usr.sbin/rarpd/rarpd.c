@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.4 1996/06/25 15:13:50 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.5 1996/08/12 23:42:12 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.4 1996/06/25 15:13:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.5 1996/08/12 23:42:12 deraadt Exp $";
 #endif
 
 
@@ -114,7 +114,7 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind, opterr;
 
-	if (name = strrchr(argv[0], '/'))
+	if ((name = strrchr(argv[0], '/')))
 		++name;
 	else
 		name = argv[0];
@@ -185,7 +185,9 @@ main(argc, argv)
 		}
 	}
 	rarp_loop();
+	exit(0);
 }
+
 /*
  * Add 'ifname' to the interface list.  Lookup its IP address and network
  * mask and Ethernet address, and open a BPF file for it.
@@ -537,7 +539,7 @@ rarp_process(ii, pkt)
 
 	ep = (struct ether_header *) pkt;
 
-	if (ether_ntohost(ename, &ep->ether_shost) != 0 ||
+	if (ether_ntohost(ename, (struct ether_addr *)&ep->ether_shost) != 0 ||
 	    (hp = gethostbyname(ename)) == 0)
 		return;
 
@@ -648,6 +650,9 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 
 	(void) close(fd);
 }
+
+int arptab_set __P((u_char *eaddr, u_long host));
+
 /*
  * Poke the kernel arp tables with the ethernet/ip address combinataion
  * given.  When processing a reply, we must do this so that the booting
@@ -663,6 +668,9 @@ update_arptab(ep, ipaddr)
 	int     s;
 	struct arpreq request;
 	struct sockaddr_in *sin;
+
+	u_char *eaddr;
+	u_long host;
 
 	request.arp_flags = 0;
 	sin = (struct sockaddr_in *) & request.arp_pa;
