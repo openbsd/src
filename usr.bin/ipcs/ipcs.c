@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.4 1996/06/26 05:34:37 deraadt Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.5 1996/08/11 00:24:32 deraadt Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ main(argc, argv)
 				    symbols[X_SHMSEGS].n_name, kvm_geterr(kd));
 
 			xshmids = malloc(sizeof(struct shmid_ds) *
-			    msginfo.msgmni);
+			    shminfo.shmmni);
 
 			if (kvm_read(kd, (u_long)shmsegs, xshmids,
 			    sizeof(struct shmid_ds) * shminfo.shmmni) !=
