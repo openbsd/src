@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.19 2001/06/24 16:15:56 matthieu Exp $	*/
+/*	$OpenBSD: pci.c,v 1.20 2001/06/26 22:22:41 jason Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	/* The i386 pci_make_tag function can panic if called with wrong 
 	   args, try to avoid that */
 	if (io->pi_sel.pc_bus >= 256 || 
-	    io->pi_sel.pc_dev >= (pci_mode == 2 ? 32 : 16) ||
+	    io->pi_sel.pc_dev >= pci_bus_maxdevs(pc, io->pi_sel.pc_bus) ||
 	    io->pi_sel.pc_func >= 8) {
 		error = EINVAL;
 		goto done;
