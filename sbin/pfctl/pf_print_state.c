@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.12 2002/11/29 18:24:29 mickey Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.13 2002/11/30 10:07:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -223,4 +223,26 @@ print_state(struct pf_state *s, int opts)
 			printf(", rule %u", s->rule.nr);
 		printf("\n");
 	}
+}
+
+int
+unmask(struct pf_addr *m, sa_family_t af)
+{
+	int i = 31, j = 0, b = 0, msize;
+	u_int32_t tmp;
+
+	if (af == AF_INET)
+		msize = 1;
+	else
+		msize = 4;
+	while (j < msize && m->addr32[j] == 0xffffffff) {
+		b += 32;
+		j++;
+	}
+	if (j < msize) {
+		tmp = ntohl(m->addr32[j]);
+		for (i = 31; tmp & (1 << i); --i)
+			b++;
+	}
+	return (b);
 }

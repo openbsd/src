@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.114 2002/11/28 13:18:09 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.115 2002/11/30 10:07:51 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -887,26 +887,4 @@ parse_flags(char *s)
 			f |= 1 << (q - tcpflags);
 	}
 	return (f ? f : PF_TH_ALL);
-}
-
-int
-unmask(struct pf_addr *m, sa_family_t af)
-{
-	int i = 31, j = 0, b = 0, msize;
-	u_int32_t tmp;
-
-	if (af == AF_INET)
-		msize = 1;
-	else
-		msize = 4;
-	while (j < msize && m->addr32[j] == 0xffffffff) {
-		b += 32;
-		j++;
-	}
-	if (j < msize) {
-		tmp = ntohl(m->addr32[j]);
-		for (i = 31; tmp & (1 << i); --i)
-			b++;
-	}
-	return (b);
 }
