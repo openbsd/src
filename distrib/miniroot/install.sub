@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.119 1999/04/02 17:50:01 millert Exp $
+#	$OpenBSD: install.sub,v 1.120 1999/04/05 00:26:49 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -837,12 +837,9 @@ if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
 fi
 
 # Provide a list of possible servers
-case "${_ftp_getlist}" in
-	n*|N*)	resp=n ;;
-	*)	resp=y ;;
-esac
-echo -n "Do you want a list of potential ${_url_type} servers? [${resp}] "
-getresp "y"
+test -z "$_ftp_getlist" && _ftp_getlist=y
+echo -n "Do you want a list of potential ${_url_type} servers? [${_ftp_getlist}] "
+getresp $_ftp_getlist
 case "$resp" in
 n*|N*)	_ftp_getlist=n
 	;;
@@ -869,7 +866,7 @@ while [ "X${resp}" = X"" ]; do
 	if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
 		cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
 		resp=""
-	elif [ -n "$resp" -a `isnumeric $resp` -eq 1 -a $resp -ge 1 \
+	elif [ -n "$resp" -a `isnumeric $resp` -eq 1 -a ${resp:-0} -ge 1 \
 	    -a -f /tmp/ftplist ]; then
 		maxlines=`grep "^${_url_type}:" /tmp/ftplist | cat -n |
 		    sed -n -e '$p' | cutword 1`
@@ -1730,7 +1727,10 @@ done
 }
 
 install_sets() {
-local _yup="FALSE"
+local _yup="FALSE" _have_nfs
+
+# Can we do an NFS install?
+test -f /sbin/mount_nfs && _have_nfs=true
 
 # Ask the user which media to load the distribution from.
 cat << __EOT
@@ -1756,8 +1756,9 @@ while [ X"${resp}" = X ]; do
 	# If _yup is not FALSE, it means that we extracted sets above.
 	# If that's the case, bypass the menu the first time.
 	if [ X"$_yup" = X"FALSE" ]; then
-		echo -n	"Install from (f)tp, (h)ttp, (t)ape, (C)D-ROM,"
-		echo -n " (N)FS or local (d)isk? "
+		echo -n	"Install from (f)tp, (h)ttp, (t)ape, (C)D-ROM"
+		test -n "$_have_nfs" && echo -n ", (N)FS"
+		echo -n " or local (d)isk? "
 		getresp ""
 		case "$resp" in
 		d*|D*)
@@ -1781,8 +1782,13 @@ while [ X"${resp}" = X ]; do
 			resp=c
 			;;
 		n*|N*)
-			install_nfs
-			resp=n
+			if [ -n "$_have_nfs" ]; then
+				install_nfs
+				resp=n
+			else
+				echo "Invalid response: $resp"
+				resp=""
+			fi
 			;;
 		*)
 			echo "Invalid response: $resp"
