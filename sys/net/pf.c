@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.226 2002/06/09 10:52:38 pb Exp $ */
+/*	$OpenBSD: pf.c,v 1.227 2002/06/09 10:55:59 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3804,10 +3804,13 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir)
 	if (m0->m_pkthdr.len <= ifp->if_mtu) {
 		error = (*ifp->if_output)(ifp, m0, (struct sockaddr *)dst,
 		    NULL);
-	} else if (r->rt != PF_DUPTO)
-		icmp6_error(m0, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
-	else
-		goto bad;
+	} else {
+		in6_ifstat_inc(ifp, ifs6_in_toobig);
+		if (r->rt != PF_DUPTO)
+			icmp6_error(m0, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
+		else
+			goto bad;
+	}
 
 done:
 	if (r->rt != PF_DUPTO)
