@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.32 2004/12/08 05:36:14 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.33 2004/12/08 16:07:43 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -194,6 +194,12 @@ cvs_connect(struct cvsroot *root)
 	int argc, infd[2], outfd[2], errfd[2];
 	char *argv[16], *cvs_server_cmd, *vresp;
 
+
+	if (root->cr_flags & CVS_ROOT_CONNECTED) {
+		cvs_log(LP_NOTICE, "already connected to CVSROOT");
+		return (0);
+	}
+
 	if (pipe(infd) == -1) {
 		cvs_log(LP_ERRNO,
 		    "failed to create input pipe for client connection");
@@ -338,6 +344,8 @@ cvs_connect(struct cvsroot *root)
 
 	cvs_log(LP_DEBUG, "connected to %s", root->cr_host);
 
+	root->cr_flags |= CVS_ROOT_CONNECTED;
+
 	return (0);
 }
 
@@ -350,6 +358,9 @@ cvs_connect(struct cvsroot *root)
 void
 cvs_disconnect(struct cvsroot *root)
 {
+	if (!(root->cr_flags & CVS_ROOT_CONNECTED))
+		return;
+
 	cvs_log(LP_DEBUG, "closing connection to %s", root->cr_host);
 	if (root->cr_srvin != NULL) {
 		(void)fclose(root->cr_srvin);
@@ -359,6 +370,8 @@ cvs_disconnect(struct cvsroot *root)
 		(void)fclose(root->cr_srvout);
 		root->cr_srvout = NULL;
 	}
+
+	root->cr_flags &= ~CVS_ROOT_CONNECTED;
 }
 
 
