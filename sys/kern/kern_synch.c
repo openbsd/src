@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.45 2002/07/24 17:58:49 mickey Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.46 2002/10/15 20:17:22 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -657,8 +657,8 @@ yield()
 	struct proc *p = curproc;
 	int s;
 
-	p->p_priority = p->p_usrpri;
 	s = splstatclock();
+	p->p_priority = p->p_usrpri;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nvcsw++;
 	mi_switch();
@@ -684,8 +684,8 @@ preempt(newp)
 	if (newp != NULL)
 		panic("preempt: cpu_preempt not yet implemented");
 
-	p->p_priority = p->p_usrpri;
 	s = splstatclock();
+	p->p_priority = p->p_usrpri;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nivcsw++;
 	mi_switch();
