@@ -1,4 +1,4 @@
-.\" $OpenBSD: extattr_get_file.2,v 1.4 2002/04/30 16:31:42 mpech Exp $
+.\" $OpenBSD: extattr_get_file.2,v 1.5 2002/05/01 13:36:18 drahn Exp $
 .\"
 .\" Copyright (c) 2001 Dima Dorfman <dima@unixfreak.org>
 .\" All rights reserved.
@@ -201,6 +201,8 @@ or an entire path name exceeded 1023 characters.
 A component of the path name that must exist does not exist.
 .It Bq Er EACCES
 Search permission is denied for a component of the path prefix.
+.It Bq Er ENOATTR
+An attribute does not exist for the specified existing path.
 .\" XXX are any missing?
 .El
 .Sh SEE ALSO

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: errlist.c,v 1.4 2002/04/30 16:32:58 drahn Exp $";
+static char *rcsid = "$OpenBSD: errlist.c,v 1.5 2002/05/01 13:36:18 drahn Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef lint
@@ -142,5 +142,6 @@ const char *const
 	"Authentication error",			/* 80 - EAUTH */
 	"Need authenticator",			/* 81 - ENEEDAUTH */
 	"IPsec processing failure",		/* 82 - EIPSEC */
+	"Attribute not found",			/* 83 - ENOATTR */
 };
 int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };
