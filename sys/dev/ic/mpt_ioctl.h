@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_ioctl.h,v 1.2 2004/10/22 05:01:05 marco Exp $	*/
+/*	$OpenBSD: mpt_ioctl.h,v 1.3 2004/10/22 05:03:40 marco Exp $	*/
 /*
  * Copyright (c) 2004 Marco Peereboom
  * All rights reserved.
@@ -50,4 +50,4 @@ struct mpt_mfg0 {
 #define MPT_IOCTL_MFG3 _IOWR('B', 36, struct _CONFIG_PAGE_MANUFACTURING_3)
 #define MPT_IOCTL_MFG4 _IOWR('B', 37, struct _CONFIG_PAGE_MANUFACTURING_4)
 
-#endif _DEV_IC_MPT_IOCTL_H_
+#endif /* _DEV_IC_MPT_IOCTL_H_ */
