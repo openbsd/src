@@ -55,7 +55,7 @@ init_igmp()
     ip->ip_hl  = sizeof(struct ip) >> 2;
     ip->ip_v   = IPVERSION;
     ip->ip_tos = 0;
-    ip->ip_off = 0;
+    ip->ip_off = htons(0);
     ip->ip_p   = IPPROTO_IGMP;
     ip->ip_ttl = MAXTTL;	/* applies to unicasts only */
 
@@ -314,7 +314,7 @@ send_igmp(src, dst, type, code, group, datalen)
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
     ip->ip_dst.s_addr       = dst;
-    ip->ip_len              = MIN_IP_HEADER_LEN + IGMP_MINLEN + datalen;
+    ip->ip_len              = htons(MIN_IP_HEADER_LEN + IGMP_MINLEN + datalen);
 
     igmp                    = (struct igmp *)(send_buf + MIN_IP_HEADER_LEN);
     igmp->igmp_type         = type;
@@ -338,7 +338,7 @@ send_igmp(src, dst, type, code, group, datalen)
     sdst.sin_len = sizeof(sdst);
 #endif
     sdst.sin_addr.s_addr = dst;
-    if (sendto(igmp_socket, send_buf, ip->ip_len, 0,
+    if (sendto(igmp_socket, send_buf, ntohs(ip->ip_len), 0,
 			(struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
 	if (errno == ENETDOWN)
 	    check_vif_state();

@@ -432,7 +432,7 @@ main(argc, argv)
 		ip->ip_dst = gateway[0];
 	} else
 		ip->ip_dst = to.sin_addr;
-	ip->ip_off = 0;
+	ip->ip_off = htons(0);
 	ip->ip_hl = (sizeof(struct ip) + lsrrlen) >> 2;
 	ip->ip_p = IPPROTO_UDP;
 	ip->ip_v = IPVERSION;
@@ -618,7 +618,7 @@ send_probe(seq, ttl, to)
 	struct packetdata *op = (struct packetdata *)(up + 1);
 	int i;
 
-	ip->ip_len = datalen;
+	ip->ip_len = htons(datalen);
 	ip->ip_ttl = ttl;
 	ip->ip_id = htons(ident+seq);
 
