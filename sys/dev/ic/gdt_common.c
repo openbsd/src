@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.9 2000/11/10 09:42:14 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.10 2000/12/13 15:32:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1056,7 +1056,7 @@ gdt_intr(arg)
 	ccb = &gdt->sc_ccbs[ctx.istatus - 2];
 	xs = ccb->gc_xs;
 	if (!gdt_polling)
-		untimeout(gdt_timeout, ccb);
+		timeout_del(&xs->stimeout);
 	ctx.service = ccb->gc_service;
 	prev_cmd = ccb->gc_flags & GDT_GCF_CMD_MASK;
 	if (xs && xs->cmd->opcode != PREVENT_ALLOW &&
@@ -1285,6 +1285,7 @@ gdt_enqueue_ccb(gdt, ccb)
 {
 	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_enqueue_ccb(%p, %p) ", gdt, ccb));
 
+	timeout_set(&ccb->gc_xs->stimeout, gdt_timeout, ccb);
 	TAILQ_INSERT_TAIL(&gdt->sc_ccbq, ccb, gc_chain);
 	gdt_start_ccbs(gdt);
 }
@@ -1294,23 +1295,26 @@ gdt_start_ccbs(gdt)
 	struct gdt_softc *gdt;
 {
 	struct gdt_ccb *ccb;
+	struct scsi_xfer *xs;
 
 	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_start_ccbs(%p) ", gdt));
 
 	while ((ccb = TAILQ_FIRST(&gdt->sc_ccbq)) != NULL) {
+
+		xs = ccb->gc_xs;
 		if (ccb->gc_flags & GDT_GCF_WATCHDOG)
-			untimeout(gdt_watchdog, ccb);
+			timeout_del(&xs->stimeout);
 
 		if (gdt_exec_ccb(ccb) == 0) {
 			ccb->gc_flags |= GDT_GCF_WATCHDOG;
-			timeout(gdt_watchdog, ccb,
+			timeout_add(&xs->stimeout,
 			    (GDT_WATCH_TIMEOUT * hz) / 1000);
 			break;
 		}
 		TAILQ_REMOVE(&gdt->sc_ccbq, ccb, gc_chain);
 
-		if ((ccb->gc_xs->flags & SCSI_POLL) == 0)
-			timeout(gdt_timeout, ccb,
+		if ((xs->flags & SCSI_POLL) == 0)
+			timeout_add(&xs->stimeout,
 			    (ccb->gc_timeout * hz) / 1000);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.1 2000/11/10 09:39:35 niklas Exp $	*/
+/*	$OpenBSD: aac.c,v 1.2 2000/12/13 15:32:39 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1026,7 +1026,7 @@ aac_host_response(struct aac_softc *sc)
 		if (ccb == NULL) {
 			AAC_PRINT_FIB(sc, fib);
 		} else {
-			untimeout(aac_timeout, ccb);
+			timeout_del(&ccb->ac_xs->stimeout);
 			aac_unmap_command(ccb);		/* XXX defer? */
 			aac_enqueue_completed(ccb);
 		}
@@ -1460,6 +1460,7 @@ aac_enqueue_ccb(sc, ccb)
 {
 	AAC_DPRINTF(AAC_D_QUEUE, ("aac_enqueue_ccb(%p, %p) ", sc, ccb));
 
+	timeout_set(&ccb->ac_xs->stimeout, aac_timeout, ccb);
 	TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ac_chain);
 	aac_start_ccbs(sc);
 }
@@ -1469,23 +1470,26 @@ aac_start_ccbs(sc)
 	struct aac_softc *sc;
 {
 	struct aac_ccb *ccb;
+	struct scsi_xfer *xs;
 
 	AAC_DPRINTF(AAC_D_QUEUE, ("aac_start_ccbs(%p) ", sc));
 
 	while ((ccb = TAILQ_FIRST(&sc->sc_ccbq)) != NULL) {
+
+		xs = ccb->ac_xs;
 		if (ccb->ac_flags & AAC_ACF_WATCHDOG)
-			untimeout(aac_watchdog, ccb);
+			timeout_del(&xs->stimeout);
 
 		if (aac_exec_ccb(ccb) == 0) {
 			ccb->ac_flags |= AAC_ACF_WATCHDOG;
-			timeout(aac_watchdog, ccb,
+			timeout_add(&xs->stimeout,
 			    (AAC_WATCH_TIMEOUT * hz) / 1000);
 			break;
 		}
 		TAILQ_REMOVE(&sc->sc_ccbq, ccb, ac_chain);
 
-		if ((ccb->ac_xs->flags & SCSI_POLL) == 0)
-			timeout(aac_timeout, ccb,
+		if ((xs->flags & SCSI_POLL) == 0)
+			timeout_add(&xs->stimeout,
 			    (ccb->ac_timeout * hz) / 1000);
 	}
 }
