@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.24 2003/02/02 18:38:22 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.25 2003/02/07 23:28:18 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.24 2003/02/02 18:38:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.25 2003/02/07 23:28:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ verify(tempname, pw)
 		pw_error(tempname, 1, 1);
 	if (fstat(fd, &sb))
 		pw_error(tempname, 1, 1);
-	if (sb.st_size == 0 || sb.st_nlink != 1) {
+	if (sb.st_size == 0 || sb.st_nlink != 1 || sb.st_uid != uid) {
 		warnx("corrupted temporary file");
 		goto bad;
 	}
