@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.6 1999/02/17 18:03:47 art Exp $	*/
+/*	$OpenBSD: umount.c,v 1.7 1999/02/27 07:59:30 deraadt Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.6 1999/02/17 18:03:47 art Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.7 1999/02/27 07:59:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -276,30 +276,19 @@ getmntname(name, what, type)
 {
 	struct statfs *mntbuf;
 	int i, mntsize;
-	char realonname[MAXPATHLEN], realfromname[MAXPATHLEN];
 
 	if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0) {
 		warn("getmntinfo");
 		return (NULL);
 	}
 	for (i = 0; i < mntsize; i++) {
-		/*
-		 * Translate the name in case the mount call wasn't done
-		 * with a translated name.
-		 * (but return the name as it is in the struct)
-		 */
-		if (realpath(mntbuf[i].f_mntfromname, realfromname) == NULL)
-			continue;
-		if (realpath(mntbuf[i].f_mntonname, realonname) == NULL)
-			continue;
-
-		if ((what == MNTON) && !strcmp(realfromname, name)) {
+		if ((what == MNTON) && !strcmp(mntbuf[i].f_mntfromname, name)) {
 			if (type)
 				memcpy(type, mntbuf[i].f_fstypename,
 				    sizeof(mntbuf[i].f_fstypename));
 			return (mntbuf[i].f_mntonname);
 		}
-		if ((what == MNTFROM) && !strcmp(realonname, name)) {
+		if ((what == MNTFROM) && !strcmp(mntbuf[i].f_mntonname, name)) {
 			if (type)
 				memcpy(type, mntbuf[i].f_fstypename,
 				    sizeof(mntbuf[i].f_fstypename));
