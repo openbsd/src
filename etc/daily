@@ -1,10 +1,12 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.46 2003/07/28 20:58:48 jmc Exp $
+#	$OpenBSD: daily,v 1.47 2004/11/15 18:10:48 nick Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
 bak=/var/backups
+
+sysctl -n kern.version
 
 if [ -f /etc/daily.local ]; then
 	echo ""
