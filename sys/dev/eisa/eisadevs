@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.8 1998/05/16 04:03:16 imp Exp $
+$OpenBSD: eisadevs,v 1.9 1998/07/04 09:03:48 deraadt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -41,8 +41,11 @@ vendor BUS		BusLogic
 vendor DEC		Digital Equipment
 vendor DTI		DeskStation Technology, Inc.
 vendor FSI		FORE Systems
+vendor HWP		Hewlett-Packard
+vendor INP		Interphase
 vendor INT		Intel
 vendor ETI		Microdyne
+vendor MLX		Mylex
 vendor SMC		Standard Microsystems Corp.
 vendor TCM		3Com
 vendor USC		UltraStor
@@ -82,6 +85,9 @@ product DTI 0000	Evolution RISC PC
 product FSI 2001	ESA-200 ATM
 product FSI 2002	ESA-200A ATM
 product FSI 2003	ESA-200E ATM
+
+/* Interphase products */
+product INP 25D0	Seahawk 4811 FDDI Controller
 
 /* Intel products */
 product INT 1010	EtherExpress 32 Flash Ethernet
