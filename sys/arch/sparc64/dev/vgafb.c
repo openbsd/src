@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.30 2002/12/10 02:12:33 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.31 2002/12/25 01:23:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -113,6 +113,7 @@ int vgafb_getcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
 int vgafb_putcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
 void vgafb_setcolor(struct vgafb_softc *, unsigned int,
     u_int8_t, u_int8_t, u_int8_t);
+void vgafb_restore_default_colors(struct vgafb_softc *);
 void vgafb_updatecursor(struct rasops_info *ri);
 static int a2int(char *, int);
 
@@ -228,15 +229,7 @@ vgafbattach(parent, self, aux)
 		sc->sc_ofhandle = OF_stdout();
 
 		if (sc->sc_depth == 8) {
-			vgafb_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-			vgafb_setcolor(sc, 255, 0, 0, 0);
-			vgafb_setcolor(sc, WSCOL_RED, 255, 0, 0);
-			vgafb_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
-			vgafb_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
-			vgafb_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
-			vgafb_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
-			vgafb_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
-			vgafb_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
+			vgafb_restore_default_colors(sc);
 		} else {
 			/* fix color choice */
 			wscol_white = 0;
@@ -284,6 +277,10 @@ vgafb_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL &&
+		    sc->sc_depth == 8) {
+			vgafb_restore_default_colors(sc);
+		}
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -393,6 +390,23 @@ vgafb_setcolor(sc, index, r, g, b)
 	sc->sc_cmap_green[index] = g;
 	sc->sc_cmap_blue[index] = b;
 	OF_call_method("color!", sc->sc_ofhandle, 4, 0, r, g, b, index);
+}
+
+void
+vgafb_restore_default_colors(struct vgafb_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < 256; i++) {
+		const u_char *color;
+
+		color = &rasops_cmap[i * 3];
+		vgafb_setcolor(sc, i, color[0], color[1], color[2]);
+	}
+	/* compensate for BoW palette */
+	vgafb_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
+	vgafb_setcolor(sc, 255, 0, 0, 0);	/* cursor */
+	vgafb_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 }
 
 int
