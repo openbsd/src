@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.86 2002/01/04 16:17:09 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.87 2002/01/23 04:48:02 ericj Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -97,12 +97,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 /* open, close, write, ioctl */
 #define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
-/* open, close, write, ioctl */
-#define	cdev_spkr_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
