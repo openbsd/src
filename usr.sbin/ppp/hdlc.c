@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: hdlc.c,v 1.4 1997/12/24 09:30:32 brian Exp $
+ * $Id: hdlc.c,v 1.5 1998/01/06 01:03:01 brian Exp $
  *
  *	TODO:
  */
@@ -453,7 +453,7 @@ ReportProtStatus(struct cmdargs const *arg)
   } while (statp->number);
   if (cnt)
     fprintf(VarTerm, "\n");
-  return (1);
+  return (0);
 }
 
 int
