@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2004/05/07 19:06:59 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.27 2004/08/11 13:18:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -123,7 +123,7 @@ procfile(char *fn)
 
 	if (Bflag > 0)
 		initqueue();
-	for (c = 0; !(lflag && c);) {
+	for (c = 0;  c == 0 || !(lflag || qflag); ) {
 		ln.off += ln.len + 1;
 		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL)
 			break;
