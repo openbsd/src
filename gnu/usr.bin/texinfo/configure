@@ -682,7 +682,7 @@ if (aclocal --version) < /dev/null > /dev/null 2>&1; then
    ACLOCAL=aclocal
    echo "$ac_t""found" 1>&6
 else
-   ACLOCAL="sh -x $missing_dir/missing aclocal"
+   ACLOCAL="sh $missing_dir/missing aclocal"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -695,7 +695,7 @@ if (autoconf --version) < /dev/null > /dev/null 2>&1; then
    AUTOCONF=autoconf
    echo "$ac_t""found" 1>&6
 else
-   AUTOCONF="sh -x $missing_dir/missing autoconf"
+   AUTOCONF="sh $missing_dir/missing autoconf"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -708,7 +708,7 @@ if (automake --version) < /dev/null > /dev/null 2>&1; then
    AUTOMAKE=automake
    echo "$ac_t""found" 1>&6
 else
-   AUTOMAKE="sh -x $missing_dir/missing automake"
+   AUTOMAKE="sh $missing_dir/missing automake"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -721,7 +721,7 @@ if (autoheader --version) < /dev/null > /dev/null 2>&1; then
    AUTOHEADER=autoheader
    echo "$ac_t""found" 1>&6
 else
-   AUTOHEADER="sh -x $missing_dir/missing autoheader"
+   AUTOHEADER="sh $missing_dir/missing autoheader"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -734,7 +734,7 @@ if (makeinfo --version) < /dev/null > /dev/null 2>&1; then
    MAKEINFO=makeinfo
    echo "$ac_t""found" 1>&6
 else
-   MAKEINFO="sh -x $missing_dir/missing makeinfo"
+   MAKEINFO="sh $missing_dir/missing makeinfo"
    echo "$ac_t""missing" 1>&6
 fi
 
@@ -3577,10 +3577,10 @@ fi
 
             MKINSTALLDIRS=
    if test $ac_aux_dir; then
-     MKINSTALLDIRS="sh -x $ac_aux_dir/mkinstalldirs"
+     MKINSTALLDIRS="sh $ac_aux_dir/mkinstalldirs"
    fi
    if test -z "$MKINSTALLDIRS"; then
-     MKINSTALLDIRS="sh -x \$(top_srcdir)/mkinstalldirs"
+     MKINSTALLDIRS="sh \$(top_srcdir)/mkinstalldirs"
    fi
    
 
