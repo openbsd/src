@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.14 1997/01/05 11:08:58 niklas Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.15 1997/01/15 02:03:53 kstailey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -820,9 +820,9 @@ randomioctl(dev, cmd, data, flag, p)
 	int	flag;
 	struct proc *p;
 {
-	int	ret;
+	int	ret = 0;
 	u_int	cnt;
-	
+
 	switch (cmd) {
 	case RNDGETENTCNT:
 		ret = copyout(&random_state.entropy_count, data,
