@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.14 2002/11/18 05:15:39 itojun Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.15 2002/12/09 09:53:34 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -133,7 +133,6 @@ static int aflag, follow, sflag, tflag;
 
 extern	char *__progname;
 
-int	main(int, char *[]);
 void	dotrace(caddr_t);
 void	tcp_trace(short, short, struct tcpcb *, struct tcpcb *,
 	    struct tcpiphdr *, int);
@@ -143,17 +142,12 @@ void	usage(void);
 kvm_t	*kd;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	int ch, i, jflag, npcbs;
-	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
+	char *system = NULL, *core = NULL, *cp, errbuf[_POSIX2_LINE_MAX];
+	int ch, i, jflag = 0, npcbs = 0;
 	unsigned long l;
 
-	system = core = NULL;
-
-	jflag = npcbs = 0;
 	while ((ch = getopt(argc, argv, "afjM:N:p:st")) != -1) {
 		switch (ch) {
 		case 'a':
@@ -269,8 +263,7 @@ main(argc, argv)
 }
 
 void
-dotrace(tcpcb)
-	caddr_t tcpcb;
+dotrace(caddr_t tcpcb)
 {
 	struct tcp_debug *td;
 	int prev_debx = tcp_debx;
@@ -325,11 +318,8 @@ dotrace(tcpcb)
  */
 /*ARGSUSED*/
 void
-tcp_trace(act, ostate, atp, tp, ti, req)
-	short act, ostate;
-	struct tcpcb *atp, *tp;
-	struct tcpiphdr *ti;
-	int req;
+tcp_trace(short act, short ostate, struct tcpcb *atp,
+    struct tcpcb *tp, struct tcpiphdr *ti, int req)
 {
 	tcp_seq seq, ack;
 	int flags, len, win, timer;
@@ -421,8 +411,7 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 }
 
 int
-numeric(v1, v2)
-	const void *v1, *v2;
+numeric(const void *v1, const void *v2)
 {
 	const caddr_t *c1 = v1;
 	const caddr_t *c2 = v2;
@@ -439,7 +428,7 @@ numeric(v1, v2)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void) fprintf(stderr, "usage: %s [-afjst] [-p hex-address]"
