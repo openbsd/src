@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.23 1999/10/25 20:34:30 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.24 1999/10/27 16:37:46 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -28,7 +28,7 @@ RCSID("$Id: sshconnect.c,v 1.23 1999/10/25 20:34:30 markus Exp $");
 #include "uidswap.h"
 #include "compat.h"
 
-#include <md5.h>
+#include <ssl/md5.h>
 
 /* Session id for the current session. */
 unsigned char session_id[16];
@@ -452,10 +452,10 @@ respond_to_rsa_challenge(BIGNUM *challenge, RSA *prv)
   assert(len <= sizeof(buf) && len);
   memset(buf, 0, sizeof(buf));
   BN_bn2bin(challenge, buf + sizeof(buf) - len);
-  MD5Init(&md);
-  MD5Update(&md, buf, 32);
-  MD5Update(&md, session_id, 16);
-  MD5Final(response, &md);
+  MD5_Init(&md);
+  MD5_Update(&md, buf, 32);
+  MD5_Update(&md, session_id, 16);
+  MD5_Final(response, &md);
   
   debug("Sending response to host key RSA challenge.");
 
