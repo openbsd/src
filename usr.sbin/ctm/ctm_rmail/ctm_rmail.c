@@ -292,6 +292,7 @@ read_piece(char *input_file)
 	if (!decoding)
 	    {
 	    char *s;
+	    int fd = -1;
 
 	    if (sscanf(line, "CTM_MAIL BEGIN %s %d %d %c",
 		    delta, &pce, &npieces, junk) != 3)
@@ -302,16 +303,16 @@ read_piece(char *input_file)
 
 	    got_one++;
 	    strcpy(tname, piece_dir);
-	    strcat(tname, "/p.XXXXXX");
-	    if (mktemp(tname) == NULL)
+	    strcat(tname, "/p.XXXXXXXXXX");
+	    if ((fd = mkstemp(tname)) == -1 ||
+		(ofp = fdopen(fd, "w")) == NULL)
 		{
-		err("*mktemp: '%s'", tname);
-		status++;
-		continue;
-		}
-	    if ((ofp = fopen(tname, "w")) == NULL)
-		{
-		err("cannot open '%s' for writing", tname);
+		if (fd != -1) {
+		    err("cannot open '%s' for writing", tname);
+		    close(fd);
+		    }
+		else
+		    err("*mkstemp: '%s'", tname);
 		status++;
 		continue;
 		}
@@ -494,17 +495,19 @@ combine(char *delta, int npieces, char *dname, char *pname, char *tname)
     FILE *dfp, *pfp;
     int i, n, e;
     char buf[BUFSIZ];
+    int fd = -1;
 
     strcpy(tname, delta_dir);
-    strcat(tname, "/d.XXXXXX");
-    if (mktemp(tname) == NULL)
+    strcat(tname, "/d.XXXXXXXXXX");
+    if ((fd = mkstemp(tname)) == -1 ||
+	(dfp = fdopen(fd, "w")) == NULL)
 	{
-	err("*mktemp: '%s'", tname);
-	return 0;
-	}
-    if ((dfp = fopen(tname, "w")) == NULL)
-	{
-	err("cannot open '%s' for writing", tname);
+	if (fd != -1) {
+	    close(fd);
+	    err("cannot open '%s' for writing", tname);
+	    }
+	else
+	    err("*mktemp: '%s'", tname);
 	return 0;
 	}
 
