@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.13 2003/12/19 06:57:17 brad Exp $	*/
+/*	$OpenBSD: radix.c,v 1.14 2004/04/25 00:30:02 itojun Exp $	*/
 /*	$NetBSD: radix.c,v 1.11 1996/03/16 23:55:36 christos Exp $	*/
 
 /*
@@ -48,6 +48,10 @@
 #endif
 #include <sys/syslog.h>
 #include <net/radix.h>
+
+#ifdef RADIX_MPATH
+#include <net/radix_mpath.h>
+#endif
 
 int	max_keylen;
 struct radix_mask *rn_mkfreelist;
@@ -295,7 +299,7 @@ on1:
 					while (x && x->rn_mask != m->rm_mask)
 						x = x->rn_dupedkey;
 					if (x && rn_satisfies_leaf(v, x, off))
-						    return x;
+						return x;
 				}
 			} while ((m = m->rm_mklist) != NULL);
 		}
@@ -551,6 +555,21 @@ rn_addroute(v_arg, n_arg, head, treenodes)
 	saved_tt = tt = rn_insert(v, head, &keyduplicated, treenodes);
 	if (keyduplicated) {
 		for (t = tt; tt; t = tt, tt = tt->rn_dupedkey) {
+#ifdef RADIX_MPATH
+			/* permit multipath, if enabled for the family */
+			if (rn_mpath_capable(head) && netmask == tt->rn_mask) {
+				/*
+				 * go down to the end of multipaths, so that
+				 * new entry goes into the end of rn_dupedkey
+				 * chain.
+				 */
+				do {
+					t = tt;
+					tt = tt->rn_dupedkey;
+				} while (tt && t->rn_mask == tt->rn_mask);
+				break;
+			}
+#endif
 			if (tt->rn_mask == netmask)
 				return (0);
 			if (netmask == 0 ||
@@ -674,20 +693,39 @@ on2:
 }
 
 struct radix_node *
-rn_delete(v_arg, netmask_arg, head)
+rn_delete(v_arg, netmask_arg, head, rn)
 	void *v_arg, *netmask_arg;
 	struct radix_node_head *head;
+	struct radix_node *rn;
 {
 	struct radix_node *t, *p, *x, *tt;
 	struct radix_mask *m, *saved_m, **mp;
 	struct radix_node *dupedkey, *saved_tt, *top;
 	caddr_t v, netmask;
 	int b, head_off, vlen;
+#ifdef RADIX_MPATH
+	int mpath_enable = 0;
+#endif
 
 	v = v_arg;
 	netmask = netmask_arg;
 	x = head->rnh_treetop;
+#ifdef RADIX_MPATH
+	if (rn && (rn->rn_mask != rn_zeros)) {
+		tt = rn;
+		/* 
+		 * Is this route(rn) a rn->dupedkey chain? 
+		 * Only default route is an exception. (rn_mask)
+		 */
+		if (rn_mpath_next(tt->rn_p))
+			mpath_enable = 1;
+		else
+			tt = rn_search(v, x);
+	} else
+		tt = rn_search(v, x);
+#else
 	tt = rn_search(v, x);
+#endif
 	head_off = x->rn_off;
 	vlen =  *(u_char *)v;
 	saved_tt = tt;
@@ -789,6 +827,16 @@ on1:
 		}
 		goto out;
 	}
+#ifdef RADIX_MPATH
+	if (mpath_enable) {
+		/*
+		 * my parent dupedkey is NULL
+		 * end of mpath route.
+		 */
+		t->rn_dupedkey = NULL;
+		goto out;
+	}
+#endif
 	if (t->rn_l == tt)
 		x = t->rn_r;
 	else
@@ -895,14 +943,24 @@ rn_inithead(head, off)
 	int off;
 {
 	struct radix_node_head *rnh;
-	struct radix_node *t, *tt, *ttt;
+
 	if (*head)
 		return (1);
 	R_Malloc(rnh, struct radix_node_head *, sizeof (*rnh));
 	if (rnh == 0)
 		return (0);
-	Bzero(rnh, sizeof (*rnh));
 	*head = rnh;
+	return rn_inithead0(rnh, off);
+}
+
+int
+rn_inithead0(rnh, off)
+	struct radix_node_head *rnh;
+	int off;
+{
+	register struct radix_node *t, *tt, *ttt;
+
+	Bzero(rnh, sizeof (*rnh));
 	t = rn_newpair(rn_zeros, off, rnh->rnh_nodes);
 	ttt = rnh->rnh_nodes + 2;
 	t->rn_r = ttt;
