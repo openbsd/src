@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.38 2001/12/11 20:58:53 deraadt Exp $
+#	$OpenBSD: services,v 1.39 2001/12/24 09:21:37 nordin Exp $
 #
 # Network services, Internet style
 #
@@ -7,6 +7,7 @@
 # even if the protocol doesn't support UDP operations.
 # Updated from RFC 1340, ``Assigned Numbers'' (July 1992).  Not all ports
 # are included, only the more common ones.
+# See also http://www.iana.org/assignments/port-numbers
 #
 #	from: @(#)services	5.8 (Berkeley) 5/9/91
 #
@@ -200,10 +201,8 @@ rfe		5002/udp		# Actually uses UDP only
 sip		5060/tcp		# SIP
 sip		5060/udp		# SIP
 #
-#
 # Kerberos (Project Athena/MIT) services
-# Note that these are for Kerberos v4, and are unofficial.  Sites running
-# v5 should comment these out and uncomment the v5 entries above.
+# Note that these are for Kerberos v4, and are unofficial.
 #
 kerberos-sec	88/udp				# Kerberos secondary port UDP
 kerberos-sec	88/tcp				# Kerberos secondary port TCP
