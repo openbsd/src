@@ -17,6 +17,6 @@ SRCS=   photuris_cookie_request.c photuris_cookie_response.c \
 	photurisd.c packet.c api.c kernel.c
 
 CFLAGS+= -I. -DIPSEC
-MAN= photurisd.1
+MAN= photurisd.8
 
 .include <bsd.prog.mk>
