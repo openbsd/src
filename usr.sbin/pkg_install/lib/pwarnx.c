@@ -1,4 +1,4 @@
-/* $OpenBSD: pwarnx.c,v 1.1 2001/04/08 16:45:48 espie Exp $ */
+/* $OpenBSD: pwarnx.c,v 1.2 2001/06/06 20:56:35 espie Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -42,12 +42,18 @@ static char pkgname[60];
 
 void
 set_pkg(name)
-    const char *name;
+    char *name;
 {
 
     char *name2;
 
     if (name != NULL) {
+    	size_t len;
+	
+	len = strlen(name);
+	while (len != 0 && name[len-1] == '/')
+		name[--len] = '\0';
+
     	name2 = strrchr(name, '/');
 	if (name2 != NULL) 
 		name = name2+1;

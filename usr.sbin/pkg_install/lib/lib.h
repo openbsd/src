@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.8 2001/04/08 16:45:47 espie Exp $ */
+/* $OpenBSD: lib.h,v 1.9 2001/06/06 20:56:35 espie Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -206,7 +206,7 @@ int		delete_package(Boolean, Boolean, package_t *);
 int		pkg_perform(char **);
 
 
-void		set_pkg(const char *);
+void		set_pkg(char *);
 void 		pwarnx(const char *, ...);
 
 /* Externs */
