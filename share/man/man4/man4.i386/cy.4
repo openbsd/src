@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: cy.4,v 1.1.1.1 1995/10/18 08:44:29 deraadt Exp $
+.\"	$Id: cy.4,v 1.2 1998/03/09 02:57:40 millert Exp $
 .\"
 .Dd 5 October, 1993
 .Dt CY 4 i386
@@ -34,6 +34,7 @@
 Cyclades Cyclom-{4, 8, 16}Y asynchronous comms board device driver
 .Sh SYNOPSIS
 .Cd "cy0 at isa? tty irq 10 iomem 0xdc000 iosiz 8192 vector cyintr"
+.Cd "cy1 at pci?"
 .Sh DESCRIPTION
 This driver provides an interface to Cyclades Cyclom-4Y, Cyclom-8Y and
 Cyclom-16Y asynchronous multiport serial boards.  These boards are based
