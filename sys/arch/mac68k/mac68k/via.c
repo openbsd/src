@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.14 1997/03/27 14:58:53 briggs Exp $	*/
+/*	$OpenBSD: via.c,v 1.15 1998/05/03 07:16:53 gene Exp $	*/
 /*	$NetBSD: via.c,v 1.58 1997/03/04 04:11:52 scottr Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
-#include <machine/macinfo.h>
 #include <machine/frame.h>
 #include <machine/viareg.h>
 
