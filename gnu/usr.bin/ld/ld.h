@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.4 1999/05/10 16:18:33 espie Exp $	*/
+/*	$OpenBSD: ld.h,v 1.5 2000/04/24 03:33:27 form Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -640,6 +640,7 @@ void	prline_file_name __P((struct file_entry *, FILE *));
 int	do_warnings __P((FILE *));
 
 /* In etc.c: */
+char	*xstrdup __P((char *));
 void	*xmalloc __P((size_t));
 void	*xrealloc __P((void *, size_t));
 char	*concat __P((const char *, const char *, const char *));

@@ -1,10 +1,25 @@
-/* * $OpenBSD: etc.c,v 1.2 1998/03/26 19:46:18 niklas Exp $*/
+/* * $OpenBSD: etc.c,v 1.3 2000/04/24 03:33:27 form Exp $*/
 /*
  */
 
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+
+/*
+ * Like strdup but get fatal error if memory is exhausted.
+ */
+char *
+xstrdup(s)
+	char *s;
+{
+	char *result = strdup(s);
+
+	if (!result)
+		errx(1, "virtual memory exhausted");
+
+	return result;
+}
 
 /*
  * Like malloc but get fatal error if memory is exhausted.
