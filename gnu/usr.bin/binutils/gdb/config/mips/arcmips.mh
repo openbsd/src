@@ -6,4 +6,4 @@ NATDEPFILES= infptrace.o inftarg.o corelow.o mips-obsd.o fork-child.o obsdsolib.
 
 # Use native malloc with real mmap().
 MMALLOC = 
-MMALLOC_DISABLE = -DNO_MMALLOC
+MMALLOC_CFLAGS = -DNO_MMALLOC
