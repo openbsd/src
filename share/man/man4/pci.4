@@ -1,0 +1,246 @@
+.\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
+.\"
+.\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
+.\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
+.\" Copyright (c) 1997 Jonathan Stone
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgements:
+.\"      This product includes software developed by Jonathan Stone
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 3, 2000
+.Dt PCI 4
+.Os
+.Sh NAME
+.Nm pci
+.Nd PCI bus support and drivers
+.Sh SYNOPSIS
+.Pp
+.Cd "pci* at mainbus? bus ?"
+.Cd "pci* at pchb? bus ?"
+.Cd "pci* at ppb? bus ?"
+.Pp
+Other
+.Nm
+attachments are machine-dependent and depend on the bus topology and
+.Tn PCI
+bus interface of your system.
+See
+.Xr intro 4
+for your system for details.
+.Sh INTRODUCTION
+The system includes a machine-independent
+.Tn PCI
+bus subsystem and
+several machine-independent
+.Tn PCI
+device drivers.
+.Pp
+Your system may support additional
+.Tn PCI
+devices.
+Drivers for
+.Tn PCI
+devices not listed here are machine-dependent.
+Consult your system's
+.Xr intro 4
+for additional information.
+.Pp
+Note that interrupt mappings on the i386 may require that you configure
+your BIOS to reserve sufficient interrupts as "PCI/ISAPnP" so that there
+are sufficient interrupts remaining to configure the discovered PCI
+devices.
+.Sh SUPPORTED DEVICES
+The system includes machine-independent
+.Tn PCI
+drivers, sorted by device type and driver name:
+.Pp
+.Ss SCSI interfaces
+.Bl -tag -width speaker -offset ind
+.It Xr ahc 4
+Adaptec 29xx, 39xx, and other AIC-7xxx-based
+.Tn SCSI
+interfaces.
+.It Xr bt 4
+Buslogic BT-9xx
+.Tn SCSI
+interfaces.
+.It Xr dpt 4
+DPT SmartCache/SmartRAID III and IV SCSI interfaces.
+.It Xr isp 4
+QLogic ISP-1020, ISP-1040, and ISP-2100
+.Tn SCSI
+and
+.Tn FibreChannel
+interfaces.
+.It Xr ncr 4
+Symbios Logic/NCR 53c8xx-family
+.Tn SCSI
+interfaces.
+.It Xr adw 4
+AdvanSys PCI
+.Tn SCSI
+interfaces.
+.El
+.Pp
+.Ss Network interfaces
+.Bl -tag -width speaker -offset ind
+.It Xr de 4
+.Tn DEC
+DC21x4x (Tulip) based
+.Tn Ethernet
+interfaces, including the DE435,
+DE450, and DE500, and Znyx, SMC, Cogent/Adaptec, and Asante single- and
+multi-port
+.Tn Ethernet
+interfaces.  Multi-port interfaces are typically
+configured as a
+.Tn PCI Ns \- Ns Tn PCI
+bridge with multiple
+.Em de
+instances on the
+.Tn PCI
+bus on the other side of the bridge.
+.It Xr en 4
+Midway-based Efficent Networks Inc. and Adaptec ATM interfaces.
+.It Xr ep 4
+3Com 3c590, 3c595
+.Tn Ethernet
+interfaces.
+.It Xr xl 4
+3Com 3c900, 3c905, 3c980, and 3cSOHO
+.Tn Ethernet
+interfaces.
+.It Xr fpa 4
+.Tn DEC
+DEFPA
+.Tn FDDI
+interfaces.
+.It Xr fxp 4
+Intel EtherExpress PRO 10+/100B
+.Tn Ethernet
+interfaces.
+.It Xr le 4
+PCNet-PCI
+.Tn Ethernet
+interfaces.
+.It Xr ne 4
+NE2000-compatible
+.Tn Ethernet
+interfaces.
+.It Xr tl 4
+Texas Instruments ThunderLAN-based
+.Tn Ethernet
+interfaces.
+.El
+.Pp
+.Ss Serial interfaces
+.Bl -tag -width speaker -offset ind
+.It Xr cy 4
+Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications
+device interface.
+.El
+.Pp
+.Ss Audio devices
+.Bl -tag -width speaker -offset ind
+.It Xr auvia 4
+VIA VT82C686A integrated AC'97 sound device.
+.It Xr clcs 4
+Cirrus Logic CS4280 sound device.
+.It Xr eap 4
+Ensoniq AudioPCI sound device.
+.It Xr eso 4
+ESS Solo-1 PCI AudioDrive sound device.
+.It Xr fms 4
+Forte Media FM801 sound device.
+.It Xr sv 4
+S3 SonicVibes sound device.
+.El
+.Pp
+.Ss Miscellaneous devices
+.Bl -tag -width speaker -offset ind
+.It Xr cbb 4
+.Tn PCI
+Yenta compatible
+.Tn CardBus
+bridges.
+.It Xr ohci 4
+USB OHCI host controller
+.It Xr pcic 4
+.Tn PCI
+.Tn PCMCIA
+controllers, including the Cirrus Logic GD6729.
+.It Xr ppb 4
+Generic
+.Tn PCI Ns \- Ns Tn PCI
+bridges, including
+.Tn PCI
+expansion backplanes.
+.It Xr puc 4
+PCI
+.Dq universal
+communications cards, containing
+.Xr com 4
+and
+.Xr lpt 4
+communications ports.
+.It Xr uhci 4
+USB UHCI host controller
+.El
+.Pp
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr ahc 4 ,
+.Xr auvia 4 ,
+.Xr bha 4 ,
+.Xr cac 4 ,
+.Xr clcs 4 ,
+.Xr cy 4 ,
+.Xr de 4 ,
+.Xr dpt 4 ,
+.Xr eap 4 ,
+.Xr eso 4 ,
+.Xr en 4 ,
+.Xr ep 4 ,
+.Xr eso 4 ,
+.Xr ex 4 ,
+.Xr fms 4 ,
+.Xr fpa 4 ,
+.Xr fxp 4 ,
+.Xr isp 4 ,
+.Xr le 4 ,
+.Xr ncr 4 ,
+.Xr ne 4 ,
+.Xr pcic 4 ,
+.Xr ppb 4 ,
+.Xr puc 4 ,
+.Xr sv 4 ,
+.Xr tl 4 ,
+.Xr usb 4
+.Sh HISTORY
+The machine-independent
+.Tn PCI
+subsystem appeared in
+.Ox 2.0 .

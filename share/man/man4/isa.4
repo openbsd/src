@@ -1,0 +1,252 @@
+.\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
+.\"
+.\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
+.\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
+.\" Copyright (c) 1997 Jonathan Stone
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgements:
+.\"      This product includes software developed by Jonathan Stone
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 4, 2000
+.Dt ISA 4
+.Os
+.Sh NAME
+.Nm isa
+.Nd ISA bus support and drivers
+.Sh SYNOPSIS
+.Pp
+.Cd "isa0 at mainbus0"
+.Cd "isa0 at pcib?"
+.Pp
+Attachments are machine-dependent and depend on the bus topology and
+.Tn ISA
+bus interface of your system, but the above is typical.
+See
+.Xr intro 4
+for your system for details.
+.Sh INTRODUCTION
+The system includes a machine-independent
+.Tn ISA
+bus subsystem and several machine-independent
+.Tn ISA
+device drivers.
+.Pp
+Your system may support additional
+.Tn ISA
+devices.
+Drivers for
+.Tn ISA
+device not listed here are machine-dependent.
+Consult your system's
+.Xr intro 4
+for additional information.
+.Pp
+Note that interrupt mappings on the i386 may require that you configure
+your BIOS to reserve the interrupts for these devices as "Legacy ISA".
+If such configuration is not done, the system may use those interrupts
+for
+.Xr pci 4
+or
+.Xr isapnp 4
+devices instead.
+.Pp
+.Sh SUPPORTED DEVICES
+At least the following devices are supporter:
+.Pp
+.Ss SCSI controllers
+.Bl -tag -width speaker -offset ind
+.It Xr aha 4
+Adaptec AHA-154x family (154xA, 154xB, 154xC, and 154xCF) and the
+BusLogic BT54x
+.Tn SCSI
+interfaces.
+.It Xr aic 4
+Adaptec AIC-6260 and Adaptec AIC-6360 based
+.Tn SCSI
+interfaces, including
+the Adaptec 152x, SoundBlaster
+.Tn SCSI
+interfaces, and a variety of compatibles.
+.It Xr bt 4
+BusLogic BT-445
+.Tn SCSI
+interfaces.
+.It Xr dpt 4
+DPT SmartCache/SmartRAID III and IV SCSI interfaces.
+.It Xr sea 4
+Seagate/Future Domain
+.Tn SCSI
+cards.
+ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
+.It Xr uha 4
+Ultrastor 14f
+.Tn SCSI
+interfaces.
+.It Xr wds 4
+WD-7000 family of bus-mastering
+.Tn SCSI
+interfaces.
+.El
+.Ss Disk and tape controllers
+.Bl -tag -width speaker -offset ind
+.It Xr mcd 4
+Mitsumi CD-ROM drives.
+.It Xr wdc 4
+Standard Western Digital type hard drive controllers: MFM, RLL, ESDI,
+and IDE/ATAPI.  See also the
+.Xr pciide 4
+device driver which is used instead on machines with PCI IDE controllers.
+.It Xr wt 4
+Wangtek and compatible QIC-02 and QIC-36 tape drives.
+.El
+.Pp
+.Ss Serial and parallel interfaces
+.Bl -tag -width speaker -offset ind
+.It Xr com 4 , and Xr pccom 4
+NS8250, NS16450, NS16550, ST16550, and TI16750 serial driver.
+The
+.Xr pccom 4
+driver is used on the i386; all the rest use
+.Xr com 4 .
+.It Xr ast 4
+Multi-port serial communications card first made by AST.
+.It Xr boca 4
+Boca BB100[48] and BB2016 multiplexing serial communications cards.
+.It Xr cy 4
+Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications cards.
+.It Xr lpt 4
+Standard
+.Tn ISA
+parallel port interface.
+.It Xr rtfps 4
+IBM RT four-port serial cards.
+.El
+.Pp
+.Ss Network interfaces
+.Bl -tag -width speaker -offset ind
+.It Xr ec 4
+3Com Etherlink II (3c503)
+.Tn Ethernet
+interfaces.
+.It Xr eg 4
+3Com Etherlink Plus (3c505)
+.Tn Ethernet
+interfaces.
+.It Xr el 4
+3Com Etherlink (3c501)
+.Tn Ethernet
+interfaces.
+.It Xr ep 4
+3Com Etherlink III (3c509)
+.Tn Ethernet
+interfaces.
+.It Xr ie 4
+Ethernet interfaces based on Intel 82586
+.Tn Ethernet
+chip,
+including AT&T Starlan-10, AT&T EN100, AT&T Starlan Fibre, and 3Com 3c507.
+.It Xr le 4
+Ethernet interfaces based on the AMD LANCE chip,
+including BICC Isolan, Novell NE2100, Digital DEPCA, and PCnet-ISA.
+.It Xr ne 4
+Novel NE2000 and compatible
+.Tn Ethernet
+interfaces.
+.It Xr sm 4
+SMC91C9x-based
+.Tn Ethernet
+interfaces.
+.It Xr we 4
+Western Digital/SMC 80x3, SMC Elite Ultra, and SMC EtherEZ
+.Tn Ethernet
+interfaces.
+.El
+.Ss Sound cards
+.Bl -tag -width speaker -offset ind
+.It Xr aria 4
+Sierra's Aria based sound cards.
+.It Xr ess 4
+ESS Technology AudioDrive 1788-, 1888-, 1887-, and 888-based sound cards.
+.It Xr gus 4
+Gravis Ultrasound sound cards.
+.It Xr pas 4
+ProAudio Spectrum sound cards.
+.It Xr pss 4
+Personal Sound System-compatible sound cards, including
+Cardinal Digital SoundPro 16 and Orchid Soundwave 32.
+.It Xr sb 4
+Soundblaster, Soundblaster 16, and Soundblaster Pro sound cards.
+.It Xr wss 4
+Windows Sound System-compatible sound cards based on the AD1848 and
+compatible chips.
+.El
+.Pp
+Note that some
+.Tn ISA
+devices also have newer
+.Tn ISA
+Plug-and-Play variants.
+These are listed in
+.Xr isapnp 4 .
+.Sh SEE ALSO
+.Xr aha 4 ,
+.Xr aic 4 ,
+.Xr aria 4 ,
+.Xr ast 4 ,
+.Xr bha 4 ,
+.Xr cy 4 ,
+.Xr gus 4 ,
+.Xr ec 4 ,
+.Xr el 4 ,
+.Xr ep 4 ,
+.Xr ess 4 ,
+.Xr ie 4 ,
+.Xr isapnp 4 ,
+.Xr iy 4 ,
+.Xr lc 4 ,
+.Xr le 4 ,
+.Xr lpt 4 ,
+.Xr mcd 4 ,
+.Xr nca 4 ,
+.Xr ne 4 ,
+.Xr pas 4 ,
+.Xr pss 4 ,
+.Xr rtfps 4 ,
+.Xr sb 4 ,
+.Xr sea 4 ,
+.Xr sm 4 ,
+.Xr uha 4 ,
+.Xr wd 4 ,
+.Xr wds 4 ,
+.Xr we 4 ,
+.Xr wss 4 ,
+.Xr wt 4
+.Sh HISTORY
+The machine-independent
+.Tn ISA
+subsystem appeared in
+.Ox 2.0 .
+
