@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.97 2002/11/27 21:47:14 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.98 2002/12/09 18:36:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -34,19 +34,6 @@
  * the copyrights and acknowledgements below.
  */
 /*
- * Copyright (c) 1990,1991,1992,1994 The University of Utah and
- * the Computer Systems Laboratory (CSL).  All rights reserved.
- *
- * THE UNIVERSITY OF UTAH AND CSL PROVIDE THIS SOFTWARE IN ITS "AS IS"
- * CONDITION, AND DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES
- * WHATSOEVER RESULTING FROM ITS USE.
- *
- * CSL requests users of this software to return to csl-dist@cs.utah.edu any
- * improvements that they make and grant CSL redistribution rights.
- *
- *	Utah $Hdr: locore.s 1.62 94/12/15$
- */
-/*
  *  (c) Copyright 1988 HEWLETT-PACKARD COMPANY
  *
  *  To anyone who acknowledges that this file is provided "AS IS"
@@ -59,6 +46,27 @@
  *  of the software without specific, written prior permission.
  *  Hewlett-Packard Company makes no representations about the
  *  suitability of this software for any purpose.
+ */
+/*
+ * Copyright (c) 1990,1991,1992,1994 The University of Utah and
+ * the Computer Systems Laboratory (CSL).  All rights reserved.
+ *
+ * Permission to use, copy, modify and distribute this software is hereby
+ * granted provided that (1) source code retains these copyright, permission,
+ * and disclaimer notices, and (2) redistributions including binaries
+ * reproduce the notices in supporting documentation, and (3) all advertising
+ * materials mentioning features or use of this software display the following
+ * acknowledgement: ``This product includes software developed by the
+ * Computer Systems Laboratory at the University of Utah.''
+ *
+ * THE UNIVERSITY OF UTAH AND CSL ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS
+ * IS" CONDITION.  THE UNIVERSITY OF UTAH AND CSL DISCLAIM ANY LIABILITY OF
+ * ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * CSL requests users of this software to return to csl-dist@cs.utah.edu any
+ * improvements that they make and grant CSL redistribution rights.
+ *
+ * 	Utah $Hdr: locore.s 1.63 95/01/20$
  */
 
 #include <sys/errno.h>
