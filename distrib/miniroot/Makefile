@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/05/01 08:43:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/05/01 08:46:03 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -73,6 +73,9 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	${CBIN}.conf *.o *.lo *.c
+
+beforeinstall:
+	cp ${IMAGE} ${DESTDIR}/snapshot
 
 .endif	# DESTDIR check
 .include <bsd.obj.mk>
