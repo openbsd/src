@@ -1,34 +1,36 @@
-#	$OpenBSD: bsd.obj.mk,v 1.11 1997/08/22 14:52:11 flipk Exp $
+#	$OpenBSD: bsd.obj.mk,v 1.12 2003/10/28 17:09:33 espie Exp $
 #	$NetBSD: bsd.obj.mk,v 1.9 1996/04/10 21:08:05 thorpej Exp $
 
 .if !target(obj)
-.if defined(NOOBJ)
+.  if defined(NOOBJ)
 obj:
-.else
+.  else
 
-.if defined(MAKEOBJDIR)
+.  if defined(MAKEOBJDIR)
 __baseobjdir=	${MAKEOBJDIR}
-.else
+.  else
 __baseobjdir=	obj
-.endif
+.  endif
 
-.if defined(OBJMACHINE)
+.  if defined(OBJMACHINE)
 __objdir=	${__baseobjdir}.${MACHINE}
-.else
+.  else
 __objdir=	${__baseobjdir}
-.endif
+.  endif
 
-.if defined(USR_OBJMACHINE)
+.  if defined(USR_OBJMACHINE)
 __usrobjdir=	${BSDOBJDIR}.${MACHINE}
 __usrobjdirpf=	
-.else
+.  else
 __usrobjdir=	${BSDOBJDIR}
-.if defined(OBJMACHINE)
+.    if defined(OBJMACHINE)
 __usrobjdirpf=	.${MACHINE}
-.else
+.    else
 __usrobjdirpf=
-.endif
-.endif
+.    endif
+.  endif
+
+_SUBDIRUSE:
 
 obj! _SUBDIRUSE
 	@cd ${.CURDIR}; \
@@ -56,5 +58,5 @@ obj! _SUBDIRUSE
 			mkdir $$dest; \
 		fi ; \
 	fi;
-.endif
+.  endif
 .endif
