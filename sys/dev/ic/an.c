@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.6 2000/06/19 00:12:41 aaron Exp $	*/
+/*	$OpenBSD: an.c,v 1.7 2000/06/20 03:24:21 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -346,16 +346,11 @@ an_rxeof(sc)
 
 	ifp->if_ipackets++;
 
+#if NBPFILTER > 0
 	/* Handle BPF listeners. */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		BPF_MTAP(ifp, m);
-		if (ifp->if_flags & IFF_PROMISC &&
-		    (bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-		    ETHER_ADDR_LEN) && (eh->ether_dhost[0] & 1) == 0)) {
-			m_freem(m);
-			return;
-		}
-	}
+#endif
 
 	/* Receive packet. */
 	m_adj(m, sizeof(struct ether_header));
@@ -1167,8 +1162,10 @@ void an_start(ifp)
 		 * If there's a BPF listner, bounce a copy of
 		 * this frame to him.
 		 */
+#if NBPFILTER > 0
 		if (ifp->if_bpf)
 			BPF_MTAP(ifp, m0);
+#endif
 
 		m_freem(m0);
 		m0 = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.11 2000/02/15 02:28:15 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.12 2000/06/20 03:24:21 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1554,13 +1554,6 @@ int tl_intvec_rxeof(xsc, type)
 		if (ifp->if_bpf) {
 			m->m_pkthdr.len = m->m_len = total_len;
 			bpf_mtap(ifp->if_bpf, m);
-			if (ifp->if_flags & IFF_PROMISC &&
-				(bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-		 				ETHER_ADDR_LEN) &&
-					(eh->ether_dhost[0] & 1) == 0)) {
-				m_freem(m);
-				continue;
-			}
 		}
 #endif
 		/* Remove header from mbuf and pass it on. */
