@@ -651,7 +651,7 @@ Convert(Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
 	Year = -Year;
     if (Year < 69)
 	Year += 2000;
-    else if (Year < 100)
+    else if (Year < 100) {
 	Year += 1900;
 	if (Year < EPOCH)
 		Year += 100;
