@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.17 2000/07/31 17:27:11 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.18 2000/07/31 17:28:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.17 2000/07/31 17:27:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.18 2000/07/31 17:28:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -331,11 +331,22 @@ reg_service(rqstp, xprt)
 			goto done;
 		}
 
-		/* check if secure */
-		if (fnd && (fnd->pml_map.pm_port < IPPORT_RESERVED ||
-		    fnd->pml_map.pm_port == NFS_PORT) &&
+		if (debugging)
+			printf("set: prog %u vers %u port %u\n",
+			    reg.pm_prog, reg.pm_vers, reg.pm_port);
+
+		if (reg.pm_port & ~0xffff)
+			goto done;
+
+		/*
+		 * only permit localhost root to create
+		 * mappings pointing at sensitive ports
+		 */
+		if ((reg.pm_port < IPPORT_RESERVED ||
+		    reg.pm_port == NFS_PORT) &&
 		    htons(fromsin->sin_port) >= IPPORT_RESERVED) {
-			syslog(LOG_WARNING, "resvport set attempt by non-root");
+			syslog(LOG_WARNING,
+			    "resvport set attempt by non-root");
 			goto done;
 		}
 
