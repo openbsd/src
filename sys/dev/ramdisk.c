@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.24 2004/04/01 20:57:09 miod Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.25 2004/04/03 15:43:53 krw Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -489,23 +489,23 @@ rdgetdisklabel(struct rd_softc *sc)
 		/* as long as it's not 0 - readdisklabel divides by it (?) */
 	}
 
-	strncpy(lp.d_typename, "RAM disk", sizeof(lp.d_typename));
-	lp.d_type = DTYPE_SCSI;
-	strncpy(lp.d_packname, "fictitious", sizeof(lp.d_packname));
-	lp.d_secperunit = lp.d_nsectors;
-	lp.d_rpm = 3600;
-	lp.d_interleave = 1;
-	lp.d_flags = D_RAMDISK;
+	strncpy(lp->d_typename, "RAM disk", sizeof(lp->d_typename));
+	lp->d_type = DTYPE_SCSI;
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+	lp->d_secperunit = lp->d_nsectors;
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = D_RAMDISK;
 
-	lp.d_partitions[RAW_PART].p_offset = 0;
-	lp.d_partitions[RAW_PART].p_size =
-	    lp.d_secperunit * (lp.d_secsize / DEV_BSIZE);
-	lp.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	lp.d_npartitions = RAW_PART + 1;
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
 
-	lp.d_magic = DISKMAGIC;
-	lp.d_magic2 = DISKMAGIC;
-	lp.d_checksum = dkcksum(&lp);
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
 
 	/*
 	 * Call the generic disklabel extraction routine
