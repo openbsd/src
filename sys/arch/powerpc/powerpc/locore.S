@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2000/06/15 03:16:39 rahnds Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 2000/06/30 02:37:21 rahnds Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -203,6 +203,10 @@ _ENTRY(_C_LABEL(switchexit))
 	 * already in r3).
 	 */
 	bl      _C_LABEL(exit2)
+
+	/* Fall through to cpu_switch to actually select another proc */
+	li      3,0                     /* indicate exited process */
+
 	
 /* Fall through to cpu_switch to actually select another proc */
 
