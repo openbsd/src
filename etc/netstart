@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.65 2000/03/12 04:18:47 itojun Exp $
+#	$OpenBSD: netstart,v 1.66 2000/03/17 17:40:31 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -47,17 +47,44 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# IPv6 configurations.
 	ip6kernel=YES
 
-	# disallow scoped unicast dest without outgoing scope identifiers.
+	# disallow link-local unicast dest without outgoing scope identifiers.
 	route add -inet6 fe80:: -prefixlen 10 ::1 -reject
-	route add -inet6 fc80:: -prefixlen 10 ::1 -reject
+
+	# disallow site-local unicast dest without outgoing scope identifiers..
+	# If you configure site-locals without scope id (it is permissible
+	# config for routers that are not on scope boundary), you may want
+	# to comment the line out.
+	route add -inet6 fec0:: -prefixlen 10 ::1 -reject
+
 	# disallow "internal" addresses to appear on the wire.
 	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
-	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
-	# disallow packets to malicious 6to4 prefix
+
+	# disallow packets to malicious IPv4 compatible prefix.
+	route add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject
+	route add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject
+	route add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject
+	route add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject
+
+	# disallow packets to malicious 6to4 prefix.
 	route add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
 	route add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
-	route add -inet6 2002:0000:0000:: -prefixlen 48 ::1 -reject
-	route add -inet6 2002:ffff:ffff:: -prefixlen 48 ::1 -reject
+	route add -inet6 2002:0000:: -prefixlen 24 ::1 -reject
+	route add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject
+
+	# Completely disallow packets to IPv4 compatible prefix.
+	# This may conflict with RFC1933 under following circumstances:
+	# (1) An IPv6-only KAME node tries to originate packets to IPv4
+	#     comatible destination.  The KAME node has no IPv4 compatible
+	#     support.  Under RFC1933, it should transmit native IPv6
+	#     packets toward IPv4 compatible destination, hoping it would
+	#     reach a router that forwards the packet toward auto-tunnel
+	#     interface.
+	# (2) An IPv6-only node originates a packet to IPv4 compatible
+	#     destination.  A KAME node is acting as an IPv6 router, and
+	#     asked to forward it.
+	# Due to rare use of IPv4 compatible address, and security issues
+	# with it, we disable it by default.
+	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
 
 	rtsolif=""
 else
