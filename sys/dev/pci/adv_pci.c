@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv_pci.c,v 1.3 1998/11/17 06:09:01 downsj Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.4 1998/11/17 07:55:46 downsj Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
  *      ABP940U - Bus-Master PCI Ultra (240 CDB)
  *      ABP970 - Bus-Master PCI MAC/PC (240 CDB)
  *      ABP970U - Bus-Master PCI MAC/PC Ultra (240 CDB)
- *      ABP940UW - Bus-Master PCI Ultra-Wide (240 CDB)
  *
  *   Multi Channel Products:
  *      ABP950 - Dual Channel Bus-Master PCI (240 CDB Per Channel)
