@@ -122,7 +122,7 @@ int main (argc, argv, envp)
 				usage (s);
 			}
 			memset (tmp, 0, sizeof *tmp);
-			strcpy (tmp -> name, argv [i]);
+			strlcpy (tmp -> name, argv [i], sizeof (tmp->name));
 			tmp -> next = interfaces;
 			tmp -> flags = INTERFACE_REQUESTED;
 			interfaces = tmp;

@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: main.c,v 1.2 2002/06/10 00:39:46 itojun Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: main.c,v 1.3 2002/06/21 03:30:21 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -90,7 +90,7 @@ int main (argc, argv, envp)
 	/* XXX for now... */
 	memset(&name, 0, sizeof(name));
 	name.sun_family = PF_UNIX;
-	strcpy (name.sun_path, "/var/run/sysconf");
+	strlcpy (name.sun_path, "/var/run/sysconf", sizeof (name.sun_path));
 	name.sun_len = ((sizeof name) - (sizeof name.sun_path) +
 			strlen (name.sun_path));
 
