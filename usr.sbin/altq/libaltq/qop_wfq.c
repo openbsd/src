@@ -1,4 +1,4 @@
-/*	$OpenBSD: qop_wfq.c,v 1.3 2001/12/03 08:38:48 kjc Exp $	*/
+/*	$OpenBSD: qop_wfq.c,v 1.4 2002/03/01 11:01:42 kjc Exp $	*/
 /*	$KAME: qop_wfq.c,v 1.5 2001/08/16 10:39:15 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -120,8 +120,7 @@ wfq_interface_parser(const char *ifname, int argc, char **argv)
 					hash_policy = WFQ_HASH_SRCPORT;
 				else {
 					LOG(LOG_ERR, 0,
-					    "Unknown hash policy '%s'",
-					    argv);
+					    "Unknown hash policy '%s'", *argv);
 					return (0);
 				}
 			}
