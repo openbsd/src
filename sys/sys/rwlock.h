@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.1 2003/11/18 06:11:10 tedu Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.2 2003/12/28 17:14:33 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -65,6 +65,9 @@
  * (XXX - the rest of the API for this is not invented yet).
  */
 
+#ifndef SYS_RWLOCK_H
+#define SYS_RWLOCK_H
+
 struct rwlock {
 	__volatile unsigned long rwl_owner;
 };
@@ -96,3 +99,4 @@ void rw_exit_write(struct rwlock *);
 void rw_enter_wait(struct rwlock *, struct proc *, int);
 void rw_exit_waiters(struct rwlock *, unsigned long);
 
+#endif
