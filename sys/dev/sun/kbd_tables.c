@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_tables.c,v 1.2 1996/04/18 23:48:16 niklas Exp $	*/
+/*	$OpenBSD: kbd_tables.c,v 1.3 1997/01/15 07:00:19 kstailey Exp $	*/
 /*	$NetBSD: kbd_tables.c,v 1.2 1996/02/29 19:32:18 gwr Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 /*
  * Key release codes are decoded in this map.
  */
-struct keymap keymap_release = {
+struct keymap keymap_release = {{
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_NOP,
     /*   2:             */	KEYSYM_HOLE,
@@ -183,14 +183,14 @@ struct keymap keymap_release = {
     /* 125: KP_Add      */	KEYSYM_NOP,
     /* 126:             */	KEYSYM_LAYOUT,	/* layout next */
     /* 127:             */	KEYSYM_RESET,	/* kbd ID next */
-};
+}};
 
 
 /*
  * This map is used when a control key is down.
  */
 #define	CTL(c)	((c)&0x1F)
-struct keymap keymap_control = {
+struct keymap keymap_control = {{
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_NOP,
     /*   2:             */	KEYSYM_HOLE,
@@ -319,7 +319,7 @@ struct keymap keymap_control = {
     /* 125: KP_Add      */	KEYSYM_NOP,
     /* 126:             */	KEYSYM_HW_ERR,
     /* 127:             */	KEYSYM_ALL_UP,
-};
+}};
 #undef	CTL
 
 
@@ -328,7 +328,7 @@ struct keymap keymap_control = {
  * (lower-case, upper-case)
  */
 
-struct keymap keymap_s3_lc = {
+struct keymap keymap_s3_lc = {{
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_FUNC_L(1),
     /*   2:             */	KEYSYM_HOLE,
@@ -457,10 +457,10 @@ struct keymap keymap_s3_lc = {
     /* 125: KP_Add      */	KEYSYM_HOLE,
     /* 126:             */	KEYSYM_HW_ERR,
     /* 127:             */	KEYSYM_ALL_UP,
-};
+}};
 
 
-struct keymap keymap_s3_uc = {
+struct keymap keymap_s3_uc = {{
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_FUNC_L(1),
     /*   2:             */	KEYSYM_HOLE,
@@ -589,7 +589,7 @@ struct keymap keymap_s3_uc = {
     /* 125: KP_Add      */	KEYSYM_HOLE,
     /* 126:             */	KEYSYM_HW_ERR,
     /* 127:             */	KEYSYM_ALL_UP,
-};
+}};
 
 
 /*
@@ -597,7 +597,7 @@ struct keymap keymap_s3_uc = {
  * (lower-case, upper-case)
  */
 
-struct keymap keymap_s4_lc = {
+struct keymap keymap_s4_lc = {{
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_FUNC_L(1),
     /*   2:             */	KEYSYM_HOLE,
@@ -726,10 +726,10 @@ struct keymap keymap_s4_lc = {
     /* 125: KP_Add      */	KEYSYM_FUNC_N(14),
     /* 126:             */	KEYSYM_HW_ERR,
     /* 127:             */	KEYSYM_ALL_UP,
-};
+}};
 
 
-struct keymap keymap_s4_uc = {
+struct keymap keymap_s4_uc = {{
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_FUNC_L(1),
     /*   2:             */	KEYSYM_HOLE,
@@ -858,7 +858,7 @@ struct keymap keymap_s4_uc = {
     /* 125: KP_Add      */	KEYSYM_FUNC_N(14),
     /* 126:             */	KEYSYM_HW_ERR,
     /* 127:             */	KEYSYM_ALL_UP,
-};
+}};
 
 
 
