@@ -1,0 +1,89 @@
+.\" $OpenBSD: mutex.9,v 1.1 2005/02/18 16:15:32 pedro Exp $
+.\"
+.\" Copyright (c) 2005 Pedro Martelletto <pedro@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 9, 2005
+.Dt MUTEX 9
+.Os
+.Sh NAME
+.Nm mutex ,
+.Nm mtx_init ,
+.Nm mtx_enter ,
+.Nm mtx_leave
+.Nd interface to CPU mutexes
+.Sh SYNOPSIS
+.Fd #include <sys/mutex.h>
+.Ft void
+.Fn mtx_init "struct mutex *mtxp" "int wantipl"
+.Ft void
+.Fn mtx_enter "struct mutex *mtxp"
+.Ft void
+.Fn mtx_leave "struct mutex *mtxp"
+.Sh DESCRIPTION
+The
+.Nm
+set of functions provides a non-recursive, interrupt-aware spinning mechanism
+to ensure mutual exclusion between different CPUs.
+.Pp
+The
+.Fn mtx_init
+function is used to initiate the mutex pointed to by
+.Fa mtxp .
+When acquired, the mutex will cause the processor interrupt level to be changed
+to
+.Fa wantipl .
+.Pp
+The
+.Fn mtx_enter
+function acquires a mutex, spinning if necessary.
+.Pp
+The
+.Fn mtx_leave
+function releases a mutex.
+In case the acquisition of the mutex caused the interrupt level to be changed,
+it is then restored.
+.Sh SEE ALSO
+.Xr lockmgr 9 ,
+.Xr spl 9
+.Sh HISTORY
+The
+.Nm
+functions first appeared in
+.Ox 3.6 .
+.Sh AUTHORS
+The
+.Nm
+functions were written by
+.An Artur Grabowski
+.Aq art@openbsd.org .
+.Sh CAVEATS
+Multiple mutexes may be nested, but not interleaved.
+This is okay:
+.Bd -literal -offset indent
+mtx_enter(foo);
+mtx_enter(bar);
+mtx_leave(bar);
+mtx_leave(foo);
+.Ed
+.Pp
+While this is
+.Fa not :
+.Bd -literal -offset indent
+mtx_enter(foo);
+mtx_enter(bar);
+mtx_leave(foo);
+mtx_leave(bar);
+.Ed

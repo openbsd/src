@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2004/12/18 14:26:03 grange Exp $
+#	$OpenBSD: Makefile,v 1.89 2005/02/18 16:15:32 pedro Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -12,7 +12,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 iic.9 intro.9 inittodr.9 \
 	kern.9 knote.9 kthread.9 ktrace.9 loadfirmware.9 lock.9 log.9 \
 	malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
-	mountroothook_establish.9 namei.9 \
+	mountroothook_establish.9 mutex.9 namei.9 \
 	panic.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 \
@@ -147,6 +147,7 @@ MLINKS+=microtime.9 getmicrotime.9 microtime.9 microuptime.9 \
 	microtime.9 getnanouptime.9 microtime.9 bintime.9 \
 	microtime.9 getbintime.9 microtime.9 binuptime.9 \
 	microtime.9 getbinuptime.9
+MLINKS+=mutex.9 mtx_init.9 mutex.9 mtx_enter.9 mutex.9 mtx_leave.9
 MLINKS+=namei.9 lookup.9 namei.9 relookup.9 namei.9 NDINIT.9
 MLINKS+=random.9 add_true_randomness.9 \
 	random.9 add_timer_randomness.9 \
