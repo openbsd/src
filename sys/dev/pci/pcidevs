@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.93 1998/10/10 03:55:05 jason Exp $
+$OpenBSD: pcidevs,v 1.94 1998/10/10 06:59:32 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -632,6 +632,7 @@ product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI MACH64_ET		0x4554	Mach64 ET
 product ATI MACH64_VT		0x4654	Mach64 VT
+product ATI RAGEPRO		0x4742	Rage Pro
 product ATI MACH64_GT		0x4754	Mach64 GT
 product ATI MACH64_GX		0x4758	Mach64 GX
 
@@ -780,6 +781,7 @@ product DOLPHIN PCISCI		0x0658	PCI-SCI Bridge
 product EMULEX LPPFC		0x10df	Light Pulse FibreChannel adapter
 
 /* Ensoniq products */
+product	ENSONIQ	SB64PCI		0x1371	SoundBlaster 64PCI
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 
 /* ESS Technology Inc products */
