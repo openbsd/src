@@ -1,5 +1,5 @@
 .\"	$NetBSD: huntd.6,v 1.3 1998/01/09 08:03:42 perry Exp $
-.\"	$OpenBSD: huntd.6,v 1.3 1999/01/29 07:30:36 d Exp $
+.\"	$OpenBSD: huntd.6,v 1.4 1999/02/01 06:53:56 d Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -131,13 +131,15 @@ enable scanning (default 1)
 .It cloak
 enable cloaking (default 1)
 .It logerr
-errors to stderr as well as syslog(8) (default 1)
+errors to stderr (default 1)
+.It syslog
+errors to syslog(8) (default 0)
 .It scoredecay
 nr deaths before nr kills begins to decay (default 15)
 .It maxremove
 Maximum number of holes in the maze wall (default 40)
 .It linger
-Seconds to keep game open with no players (default 90)
+Seconds to keep game open with no players. \&-1 means forever. (default 90)
 .It flytime
 max time flying (default 20)
 .It flystep
@@ -194,6 +196,9 @@ duration of a cloak (default 20)
 duration of a scan (default 20)
 .It mindshot
 minimum shot class needed to make a drone (default 2)
+.It simstep
+minimum simulation step in microseconds. Zero means traditional blocking 
+behaviour. Try 55000 for something reasonable (default 0)
 .El
 .Sh "SEE ALSO"
 .Xr hunt 6 ,

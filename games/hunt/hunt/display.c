@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.1 1999/01/29 07:30:33 d Exp $	*/
+/*	$OpenBSD: display.c,v 1.2 1999/02/01 06:53:55 d Exp $	*/
 
 /*
  * Display abstraction.
@@ -336,7 +336,13 @@ char
 display_atyx(y, x)
 	int y, x;
 {
-	return mvinch(y, x) & 0x7f;
+	int oy, ox;
+	char c;
+
+	display_getyx(&oy, &ox);
+	c = mvwinch(stdscr, y, x) & 0x7f;
+	display_move(oy, ox);
+	return (c);
 }
 
 void

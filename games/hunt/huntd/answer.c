@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.3 1999/01/29 07:30:34 d Exp $	*/
+/*	$OpenBSD: answer.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  *  Hunt
@@ -17,6 +17,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "hunt.h"
 #include "server.h"
@@ -26,60 +27,58 @@
 int allow_severity	= LOG_INFO;
 int deny_severity	= LOG_WARNING;
 
+
+/* List of spawning connections: */
+struct spawn		*Spawn = NULL;
+
 static void	stplayer __P((PLAYER *, int));
 static void	stmonitor __P((PLAYER *));
-static IDENT *	get_ident __P((u_long, u_long, char *, char, 
-			struct request_info *));
+static IDENT *	get_ident __P((struct sockaddr *, int, u_long, char *, char));
 
-int
-answer()
+void
+answer_first()
 {
-	PLAYER			*pp;
+	struct sockaddr		sockstruct;
 	int			newsock;
-	u_int32_t		mode;
-	char			name[NAMELEN];
-	u_int8_t		team;
-	u_int32_t		enter_status;
 	int			socklen;
-	u_long			machine;
-	u_int32_t		uid;
-	struct sockaddr_in	sockstruct;
-	char			*cp1, *cp2;
 	int			flags;
-	u_int32_t		version;
 	struct request_info	ri;
-	char			Ttyname[NAMELEN];	/* never used */
+	struct spawn *sp;
 
+	/* Answer the call to hunt: */
 	socklen = sizeof sockstruct;
-	errno = 0;
 	newsock = accept(Socket, (struct sockaddr *) &sockstruct, &socklen);
-	if (newsock < 0)
-	{
-		if (errno == EINTR)
-			return FALSE;
-		syslog(LOG_ERR, "accept: %m");
-		cleanup(1);
+	if (newsock < 0) {
+		log(LOG_ERR, "accept");
+		return;
 	}
 
 	/* Check for access permissions: */
 	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, newsock, 0);
 	if (hosts_access(&ri) == 0) {
 		close(newsock);
-		return (FALSE);
+		logx(LOG_INFO, "rejected connection");
+		return;
 	}
 
-	machine = ntohl((u_int32_t)((struct sockaddr_in *) &sockstruct)->sin_addr.s_addr);
-	version = htonl((u_int32_t) HUNT_VERSION);
-	(void) write(newsock, &version, sizeof version);
-	(void) read(newsock, &uid, sizeof uid);
-	uid = ntohl((unsigned long) uid);
-	(void) read(newsock, name, sizeof name);
-	(void) read(newsock, &team, sizeof team);
-	(void) read(newsock, &enter_status, sizeof enter_status);
-	enter_status = ntohl((unsigned long) enter_status);
-	(void) read(newsock, Ttyname, sizeof Ttyname);
-	(void) read(newsock, &mode, sizeof mode);
-	mode = ntohl(mode);
+	/* Remember this spawning connection: */
+	sp = (struct spawn *)malloc(sizeof *sp);
+	if (sp == NULL) {
+		log(LOG_ERR, "malloc");
+		close(newsock);
+		return;
+	}
+	memset(sp, '\0', sizeof *sp);
+
+	/* Keep the calling machine's source addr for ident purposes: */
+	memcpy(&sp->source, &sockstruct, sizeof sp->source);
+	sp->sourcelen = socklen;
+
+	/* Warn if we lose connection info: */
+	if (socklen > sizeof Spawn->source) 
+		logx(LOG_WARNING, 
+		    "struct sockaddr is not big enough! (%d > %d)",
+		    socklen, sizeof Spawn->source);
 
 	/*
 	 * Turn off blocking I/O, so a slow or dead terminal won't stop
@@ -89,69 +88,132 @@ answer()
 	flags |= O_NDELAY;
 	(void) fcntl(newsock, F_SETFL, flags);
 
+	/* Start listening to the spawning connection */
+	sp->fd = newsock;
+	FD_SET(sp->fd, &Fds_mask);
+	if (sp->fd >= Num_fds)
+		Num_fds = sp->fd + 1;
+
+	/* Initialise the spawn state */
+	sp->state = 0;
+
+	/* Add to the spawning list */
+	if ((sp->next = Spawn) != NULL)
+		Spawn->prevnext = &sp->next;
+	sp->prevnext = &Spawn;
+	Spawn = sp;
+}
+
+int
+answer_next(sp)
+	struct spawn *sp;
+{
+	PLAYER			*pp;
+	char			*cp1, *cp2;
+	u_int32_t		version;
+	FILE			*conn;
+	int			len;
+
+	switch (sp->state) {
+	case 0: 
+		len = read(sp->fd, &sp->uid, sizeof sp->uid);
+		break;
+	case 1:
+		len = read(sp->fd, sp->name, NAMELEN);
+		sp->name[NAMELEN] = '\0';
+		break;
+	case 2:
+		len = read(sp->fd, &sp->team, sizeof sp->team);
+		break;
+	case 3:
+		len = read(sp->fd, &sp->enter_status, sizeof sp->enter_status);
+		break;
+	case 4:	
+		len = read(sp->fd, sp->ttyname, NAMELEN);
+		break;
+	case 5:
+		len = read(sp->fd, &sp->mode, sizeof sp->mode);
+		break;
+ 	case 7:
+		len = sp->msglen = read(sp->fd, &sp->msg, sizeof sp->msg - 1);
+		break;
+	default:
+		log(LOG_ERR, "impossible state %d", sp->state);
+		goto close_it;
+	}
+
+	if (len < 0) {
+		log(LOG_WARNING, "read");
+		goto close_it;
+	}
+	if (len == 0) {
+		logx(LOG_WARNING, "lost connection to new client");
+		goto close_it;
+	}
+
+	if (sp->state == 7) {
+		/* Received message: */
+		char teamstr[] = "[?]";
+
+		teamstr[1] = sp->team;
+		outyx(ALL_PLAYERS, HEIGHT, 0, "%s%s: %.*s",
+			sp->name,
+			sp->team == ' ' ? "": teamstr,
+			sp->msglen,
+			sp->msg);
+		ce(ALL_PLAYERS);
+		sendcom(ALL_PLAYERS, REFRESH);
+		sendcom(ALL_PLAYERS, READY, 0);
+		flush(ALL_PLAYERS);
+		goto close_it;
+	}
+
+	sp->state++;
+	if (sp->state != 6) {
+		/* More to come: */
+		return FALSE;
+	}
+
+	/* Convert data from network byte order: */
+	sp->uid = ntohl(sp->uid);
+	sp->enter_status = ntohl(sp->enter_status);
+	sp->mode = ntohl(sp->mode);
+
 	/*
 	 * Make sure the name contains only printable characters
 	 * since we use control characters for cursor control
 	 * between driver and player processes
 	 */
-	for (cp1 = cp2 = name; *cp1 != '\0'; cp1++)
+	for (cp1 = cp2 = sp->name; *cp1 != '\0'; cp1++)
 		if (isprint(*cp1) || *cp1 == ' ')
 			*cp2++ = *cp1;
 	*cp2 = '\0';
 
-	/* The connection is solely for a message: */
-	if (mode == C_MESSAGE) {
-		fd_set r;
-		struct timeval tmo = { 0, 1000000 / 2 };
-		char	buf[BUFSIZ + 1];
-		int	buflen;
-		int	n;
+	/* Tell the other end this server's hunt driver version: */
+	version = htonl((u_int32_t) HUNT_VERSION);
+	(void) write(sp->fd, &version, sizeof version);
 
-		/* wait for 0.5 second for the message packet */
-		FD_ZERO(&r);
-		FD_SET(newsock, &r);
-		n = select(newsock+1, &r, 0, 0, &tmo);
-		if (n < 0)
-			syslog(LOG_ERR, "select: %m");
-		else if (n > 0)  {
-			buflen = 0;
-			while (buflen < (BUFSIZ - 1) && (n = read(newsock, 
-			    buf + buflen, (BUFSIZ - 1) - buflen)) > 0) 
-				buflen += n;
-			buf[buflen] = '\0';
-
-			if (team == ' ')
-				outyx(ALL_PLAYERS, HEIGHT, 0, "%s: %s", 
-					name, buf);
-			else
-				outyx(ALL_PLAYERS, HEIGHT, 0, "%s[%c]: %s", 
-					name, team, buf);
-			ce(ALL_PLAYERS);
-			sendcom(ALL_PLAYERS, REFRESH);
-			sendcom(ALL_PLAYERS, READY, 0);
-			flush(ALL_PLAYERS);
-		}
-
-		(void) close(newsock);
+	if (sp->mode == C_MESSAGE) {
+		/* The connection is solely for a message: */
+		sp->state = 7;
 		return FALSE;
 	}
 
+	/* Use a stdio file descriptor from now on: */
+	conn = fdopen(sp->fd, "w");
+
 	/* The player is a monitor: */
-	else if (mode == C_MONITOR) {
+	if (sp->mode == C_MONITOR) {
 		if (conf_monitor && End_monitor < &Monitor[MAXMON]) {
 			pp = End_monitor++;
-			if (team == ' ')
-				team = '*';
+			if (sp->team == ' ')
+				sp->team = '*';
 		} else {
-			u_int32_t response;
-
 			/* Too many monitors */
-			response = htonl(0);
-			(void) write(newsock, (char *) &response,
-				sizeof response);
-			(void) close(newsock);
-			syslog(LOG_NOTICE, "too many monitors");
-			return FALSE;
+			fprintf(conn, "Too many monitors\n");
+			fflush(conn);
+			logx(LOG_NOTICE, "too many monitors");
+			goto close_it;
 		}
 
 	/* The player is a normal hunter: */
@@ -159,34 +221,46 @@ answer()
 		if (End_player < &Player[MAXPL])
 			pp = End_player++;
 		else {
-			u_int32_t response;
-
+			fprintf(conn, "Too many players\n");
+			fflush(conn);
 			/* Too many players */
-			response = htonl(0);
-			(void) write(newsock, (char *) &response,
-				sizeof response);
-			(void) close(newsock);
-			syslog(LOG_NOTICE, "too many players");
-			return FALSE;
+			logx(LOG_NOTICE, "too many players");
+			goto close_it;
 		}
 	}
 
-	pp->p_ident = get_ident(machine, uid, name, team, &ri);
-	pp->p_output = fdopen(newsock, "w");
+	/* Find the player's running scorecard */
+	pp->p_ident = get_ident(&sp->source, sp->sourcelen, sp->uid, 
+	    sp->name, sp->team);
+	pp->p_output = conn;
 	pp->p_death[0] = '\0';
-	pp->p_fd = newsock;
-	FD_SET(pp->p_fd, &Fds_mask);
-	if (pp->p_fd >= Num_fds)
-		Num_fds = pp->p_fd + 1;
+	pp->p_fd = sp->fd;
 
+	/* Remove from the spawn list. (fd remains in read set) */
+	*sp->prevnext = sp->next;
+	if (sp->next) sp->next->prevnext = sp->prevnext;
+
+	/* No idea where the player starts: */
 	pp->p_y = 0;
 	pp->p_x = 0;
 
-	if (mode == C_MONITOR)
+	/* Mode-specific initialisation: */
+	if (sp->mode == C_MONITOR)
 		stmonitor(pp);
 	else
-		stplayer(pp, enter_status);
+		stplayer(pp, sp->enter_status);
+
+	/* And, they're off! */
 	return TRUE;
+
+close_it:
+	/* Destroy the spawn */
+	*sp->prevnext = sp->next;
+	if (sp->next) sp->next->prevnext = sp->prevnext;
+	FD_CLR(sp->fd, &Fds_mask);
+	close(sp->fd);
+	free(sp);
+	return FALSE;
 }
 
 /* Start a monitor: */
@@ -360,15 +434,21 @@ rand_dir()
  *	Get the score structure of a player
  */
 static IDENT *
-get_ident(machine, uid, name, team, ri)
-	u_long	machine;
+get_ident(sa, salen, uid, name, team)
+	struct sockaddr *sa;
+	int	salen;
 	u_long	uid;
 	char	*name;
 	char	team;
-	struct request_info *ri;
 {
 	IDENT		*ip;
 	static IDENT	punt;
+	u_int32_t	machine;
+
+	if (sa->sa_family == AF_INET)
+		machine = ntohl((u_long)((struct sockaddr_in *)sa)->sin_addr.s_addr);
+	else
+		machine = 0;
 
 	for (ip = Scores; ip != NULL; ip = ip->i_next)
 		if (ip->i_machine == machine
@@ -379,7 +459,7 @@ get_ident(machine, uid, name, team, ri)
 
 	if (ip != NULL) {
 		if (ip->i_team != team) {
-			syslog(LOG_INFO, "player %s %s team %c",
+			logx(LOG_INFO, "player %s %s team %c",
 				name,
 				team == ' ' ? "left" : ip->i_team == ' ' ? 
 					"joined" : "changed to",
@@ -397,7 +477,7 @@ get_ident(machine, uid, name, team, ri)
 		/* Alloc new entry -- it is released in clear_scores() */
 		ip = (IDENT *) malloc(sizeof (IDENT));
 		if (ip == NULL) {
-			syslog(LOG_ERR, "malloc: %m");
+			log(LOG_ERR, "malloc");
 			/* Fourth down, time to punt */
 			ip = &punt;
 		}
@@ -420,7 +500,7 @@ get_ident(machine, uid, name, team, ri)
 		ip->i_next = Scores;
 		Scores = ip;
 
-		syslog(LOG_INFO, "new player: %s%s%c%s",
+		logx(LOG_INFO, "new player: %s%s%c%s",
 			name, 
 			team == ' ' ? "" : " (team ",
 			team,
@@ -428,4 +508,28 @@ get_ident(machine, uid, name, team, ri)
 	}
 
 	return ip;
+}
+
+void
+answer_info(fp)
+	FILE *fp;
+{
+	struct spawn *sp;
+	char buf[128];
+	const char *bf;
+	struct sockaddr_in *sa;
+
+	if (Spawn == NULL)
+		return;
+	fprintf(fp, "\nSpawning connections:\n");
+	for (sp = Spawn; sp; sp = sp->next) {
+		sa = (struct sockaddr_in *)&sp->source;
+		bf = inet_ntop(AF_INET, &sa->sin_addr, buf, sizeof buf);
+		if (!bf)  {
+			log(LOG_WARNING, "inet_ntop");
+			bf = "?";
+		}
+		fprintf(fp, "fd %d: state %d, from %s:%d\n",
+			sp->fd, sp->state, bf, sa->sin_port);
+	}
 }

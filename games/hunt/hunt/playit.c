@@ -1,4 +1,4 @@
-/*	$OpenBSD: playit.c,v 1.3 1999/01/29 07:30:34 d Exp $	*/
+/*	$OpenBSD: playit.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
 /*	$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $	*/
 /*
  *  Hunt
@@ -20,9 +20,9 @@
 
 static int	nchar_send;
 static FLAG	Last_player;
+static int	Otto_expect;
 
 # define	MAX_SEND	5
-# define	STDIN		0
 
 /*
  * ibuf is the input buffer used for the stream from the driver.
@@ -49,7 +49,8 @@ playit()
 	int		y, x;
 	u_int32_t	version;
 	int		otto_y, otto_x;
-	char		otto_face;
+	char		otto_face = ' ';
+	int		chars_processed;
 
 	if (read(Socket, &version, sizeof version) != sizeof version) {
 		bad_con();
@@ -60,8 +61,8 @@ playit()
 		/* NOTREACHED */
 	}
 	errno = 0;
-	Otto_count = 0;
 	nchar_send = MAX_SEND;
+	Otto_expect = 0;
 	while ((ch = GETCHR()) != EOF) {
 		switch (ch & 0377) {
 		  case MOVE:
@@ -69,22 +70,7 @@ playit()
 			x = GETCHR();
 			display_move(y, x);
 			break;
-		  case ADDCH:
-			ch = GETCHR();
-			if (Otto_mode)
-				switch (ch) {
 
-				case '<':
-				case '>':
-				case '^':
-				case 'v':
-					otto_face = ch;
-					display_getyx(&otto_y, &otto_x);
-					break;
-				}
-
-			display_put_ch(ch);
-			break;
 		  case CLRTOEOL:
 			display_clear_eol();
 			break;
@@ -108,29 +94,51 @@ playit()
 			display_beep();
 			break;
 		  case READY:
+			chars_processed = GETCHR();
 			display_refresh();
 			if (nchar_send < 0)
-				tcflush(STDIN, TCIFLUSH);
+				tcflush(STDIN_FILENO, TCIFLUSH);
 			nchar_send = MAX_SEND;
-			Otto_count -= (GETCHR() & 0xff);
-			if (!Am_monitor) {
-				if (Otto_count == 0 && Otto_mode)
-					otto(otto_y, otto_x, otto_face);
+			if (Otto_mode) {
+				/*
+				 * The driver returns the number of keypresses
+				 * that it has processed. Use this to figure
+				 * out if otto's commands have completed.
+				 */
+				Otto_expect -= chars_processed;
+				if (Otto_expect == 0) {
+					/* not very fair! */
+					static char buf[MAX_SEND * 2];
+					int len;
+
+					/* Ask otto what it wants to do: */
+					len = otto(otto_y, otto_x, otto_face,
+						buf, sizeof buf);
+					if (len) {
+						/* Pass it on to the driver: */
+						write(Socket, buf, len);
+						/* Update expectations: */
+						Otto_expect += len;
+					}
+				}
 			}
 			break;
+		  case ADDCH:
+			ch = GETCHR();
+			/* FALLTHROUGH */
 		  default:
+			display_put_ch(ch);
 			if (Otto_mode)
 				switch (ch) {
-
 				case '<':
 				case '>':
 				case '^':
 				case 'v':
 					otto_face = ch;
 					display_getyx(&otto_y, &otto_x);
+					otto_x--;
 					break;
 				}
-			display_put_ch(ch);
 			break;
 		}
 	}
@@ -153,8 +161,8 @@ getchr()
 
 	FD_ZERO(&s_readfds);
 	FD_SET(Socket, &s_readfds);
-	FD_SET(STDIN, &s_readfds);
-	s_nfds = (Socket > STDIN) ? Socket : STDIN;
+	FD_SET(STDIN_FILENO, &s_readfds);
+	s_nfds = (Socket > STDIN_FILENO) ? Socket : STDIN_FILENO;
 	s_nfds++;
 
 one_more_time:
@@ -165,17 +173,15 @@ one_more_time:
 		nfds = select(nfds, &readfds, NULL, NULL, NULL);
 	} while (nfds <= 0 && errno == EINTR);
 
-	if (FD_ISSET(STDIN, &readfds))
+	if (FD_ISSET(STDIN_FILENO, &readfds))
 		send_stuff();
 	if (! FD_ISSET(Socket, &readfds))
 		goto one_more_time;
 	icnt = read(Socket, ibuf, sizeof ibuf);
-	if (icnt < 0) {
+	if (icnt <= 0) {
 		bad_con();
 		/* NOTREACHED */
 	}
-	if (icnt == 0)
-		goto one_more_time;
 	iptr = ibuf;
 	icnt--;
 	return *iptr++;
@@ -194,7 +200,7 @@ send_stuff()
 	static char	Buf[BUFSIZ];
 
 	/* Drain the user's keystrokes: */
-	count = read(STDIN, Buf, sizeof Buf);
+	count = read(STDIN_FILENO, Buf, sizeof Buf);
 	if (count <= 0)
 		return;
 
@@ -216,12 +222,18 @@ send_stuff()
 	}
 	count = nsp - inp;
 	if (count) {
-		if (Otto_mode)
-			Otto_count += count;
 		nchar_send -= count;
 		if (nchar_send < 0)
 			count += nchar_send;
 		(void) write(Socket, inp, count);
+		if (Otto_mode) {
+			/*
+			 * The user can insert commands over otto.
+			 * So, otto shouldn't be alarmed when the 
+			 * server processes more than otto asks for.
+			 */
+			Otto_expect += count;
+		}
 	}
 }
 
@@ -238,7 +250,7 @@ quit(old_status)
 	if (Last_player)
 		return Q_QUIT;
 	if (Otto_mode)
-		return Q_CLOAK;
+		return otto_quit(old_status);
 	display_move(HEIGHT, 0);
 	display_put_str("Re-enter game [ynwo]? ");
 	display_clear_eol();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expl.c,v 1.3 1999/01/29 07:30:35 d Exp $	*/
+/*	$OpenBSD: expl.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
 /*	$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $	*/
 /*
  *  Hunt
@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <syslog.h>
+#include <string.h>
 #include "hunt.h"
 #include "server.h"
 #include "conf.h"
@@ -101,9 +102,21 @@ rollexpl()
 			check(pp, y, x);
 		free((char *) ep);
 	}
-	for (x = EXPLEN - 1; x > 0; x--)
-		Expl[x] = Expl[x - 1];
+	memmove(&Expl[1], &Expl[0], (EXPLEN - 1) * sizeof Expl[0]);
+	/* for (x = EXPLEN - 1; x > 0; x--)
+		Expl[x] = Expl[x - 1]; */
 	Last_expl = Expl[0] = NULL;
+}
+
+int
+can_rollexpl()
+{
+	int i;
+
+	for (i = EXPLEN - 1; i >= 0; i--)
+		if (Expl[i] != NULL)
+			return 1;
+	return 0;
 }
 
 static	REGEN	*removed = NULL;
@@ -114,7 +127,7 @@ init_removed()
 {
 	rem_index = removed = malloc(conf_maxremove * sizeof(REGEN));
 	if (rem_index == NULL) {
-		syslog(LOG_ERR, "malloc: %m");
+		log(LOG_ERR, "malloc");
 		cleanup(1);
 	}
 }
@@ -133,7 +146,7 @@ remove_wall(y, x)
 	char	save_char = 0;
 
 	if (removed == NULL)
-		init_removed();
+		clearwalls();
 
 	r = rem_index;
 	while (r->r_y != 0) {

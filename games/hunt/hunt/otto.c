@@ -1,4 +1,4 @@
-/*	$OpenBSD: otto.c,v 1.3 1999/01/29 07:30:33 d Exp $	*/
+/*	$OpenBSD: otto.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 /*
  *	otto	- a hunt otto-matic player
@@ -20,8 +20,12 @@
 #include "client.h"
 #include "display.h"
 
+#include <stdio.h>
+#define panic(m)	_panic(__FILE__,__LINE__,m)
+
+useconds_t	Otto_pause 	= 55000;
+
 int	Otto_mode;
-int	Otto_count;
 
 # undef		WALL
 # undef		NORTH
@@ -89,7 +93,6 @@ static	int		facing;
 static	int		row, col;
 static	int		num_turns;		/* for wandering */
 static	char		been_there[HEIGHT][WIDTH2];
-static	struct itimerval	pause_time	= { { 0, 0 }, { 0, 55000 }};
 
 static	void		attack __P((int, struct item *));
 static	void		duck __P((int));
@@ -97,29 +100,21 @@ static	void		face_and_move_direction __P((int, int));
 static	int		go_for_ammo __P((char));
 static	void		ottolook __P((int, struct item *));
 static	void		look_around __P((void));
-static	void		nothing __P((int));
 static	int		stop_look __P((struct item *, char, int, int));
 static	void		wander __P((void));
+static	void		_panic __P((const char *, int, const char *));
 
-static void
-nothing(dummy)
-	int dummy;
-{
-}
-
-void
-otto(y, x, face)
+int
+otto(y, x, face, buf, buflen)
 	int	y, x;
 	char	face;
+	char	*buf;
+	size_t	buflen;
 {
 	int		i;
-	int		old_mask;
 
-	(void) signal(SIGALRM, nothing);
-	old_mask = sigblock(sigmask(SIGALRM));
-	setitimer(ITIMER_REAL, &pause_time, NULL);
-	sigpause(old_mask);
-	sigsetmask(old_mask);
+	if (usleep(Otto_pause) < 0)
+		panic("usleep");
 
 	/* save away parameters so other functions may use/update info */
 	switch (face) {
@@ -127,7 +122,7 @@ otto(y, x, face)
 	case '<':	facing = WEST; break;
 	case 'v':	facing = SOUTH; break;
 	case '>':	facing = EAST; break;
-	default:	abort();
+	default:	panic("unknwown face");
 	}
 	row = y; col = x;
 	been_there[row][col] |= 1 << facing;
@@ -160,8 +155,12 @@ otto(y, x, face)
 		wander();
 
 done:
-	(void) write(Socket, command, comlen);
-	Otto_count += comlen;
+	if (comlen) {
+		if (comlen > buflen)
+			panic("not enough buffer space");
+		memcpy(buf, command, comlen);
+	}
+	return comlen;
 }
 
 static int
@@ -331,7 +330,7 @@ ottolook(rel_dir, itemp)
 		break;
 
 	default:
-		abort();
+		panic("unknown look");
 	}
 }
 
@@ -543,3 +542,20 @@ wander()
 	face_and_move_direction(rel_dir, 1);
 }
 
+/* Otto always re-enters the game, cloaked. */
+int
+otto_quit(old_status)
+{
+	return Q_CLOAK;
+}
+
+static void
+_panic(file, line, msg)
+	const char *file;
+	int line;
+	const char *msg;
+{
+
+	fprintf(stderr, "%s:%d: panic! %s\n", file, line, msg);
+	abort();
+}

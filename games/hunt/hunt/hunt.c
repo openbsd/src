@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.3 1999/01/29 07:30:33 d Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  *  Hunt
@@ -164,9 +164,12 @@ main(ac, av)
 		}
 		exit(0);
 	}
-	if (Otto_mode)
+	if (Otto_mode) {
+		if (Am_monitor)
+			errx(1, "otto mode incompatible with monitor mode");
 		(void) strlcpy(name, "otto", sizeof name);
-	else
+		team = ' ';
+	} else
 		fill_in_blanks();
 
 	(void) fflush(stdout);
@@ -179,7 +182,7 @@ main(ac, av)
 	display_clear_the_screen();
 	(void) signal(SIGINT, intr);
 	(void) signal(SIGTERM, sigterm);
-	(void) signal(SIGPIPE, SIG_IGN);
+	/* (void) signal(SIGPIPE, SIG_IGN); */
 
 	for (;;) {
 		find_driver(TRUE);

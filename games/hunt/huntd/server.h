@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.h,v 1.1 1999/01/29 07:30:36 d Exp $	*/
+/*	$OpenBSD: server.h,v 1.2 1999/02/01 06:53:56 d Exp $	*/
 /*	$NetBSD: hunt.h,v 1.5 1998/09/13 15:27:28 hubertf Exp $	*/
 
 /*
@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <sys/socket.h>
 
 /*
  * Choose MAXPL and MAXMON carefully.  The screen is assumed to be
@@ -158,11 +159,32 @@ struct regen_def {
 	REGEN	*r_next;
 };
 
+struct spawn {
+	int		fd;
+	int		state;
+	struct sockaddr source;
+	int 		sourcelen;
+	u_int32_t	uid;
+	char		name[NAMELEN+1];
+	u_int8_t	team;
+	u_int32_t	enter_status;
+	char		ttyname[NAMELEN];
+	u_int32_t	mode;
+	char		msg[BUFSIZ];
+	int		msglen;
+	struct spawn *	next;
+	struct spawn **	prevnext;
+};
+
+extern struct spawn *	Spawn;
+
 extern int	Socket;
 
 /* answer.c */
-int	answer __P((void));
+void	answer_first __P((void));
+int	answer_next __P((struct spawn *));
 int	rand_dir __P((void));
+void	answer_info __P((FILE *));
 
 /* draw.c */
 void	drawmaze __P((PLAYER *));
@@ -190,11 +212,13 @@ void	showexpl __P((int, int, char));
 void	rollexpl __P((void));
 void	makemaze __P((void));
 void	clearwalls __P((void));
+int	can_rollexpl __P((void));
 
 /* makemaze.c */
 void	makemaze __P((void));
 
 /* shots.c */
+int	can_moveshots __P((void));
 void	moveshots __P((void));
 PLAYER *play_at __P((int, int));
 int	opposite __P((int, char));
@@ -211,6 +235,10 @@ void	clrscr __P((PLAYER *));
 void	ce __P((PLAYER *));
 void	sendcom __P((PLAYER *, int, ...));
 void	flush __P((PLAYER *));
+void	log __P((int, const char *, ...))
+			__attribute__((format (printf, 2, 3)));
+void	logx __P((int, const char *, ...))
+			__attribute__((format (printf, 2, 3)));
 
 /* extern.c */
 extern FLAG	Am_monitor;

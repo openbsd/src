@@ -1,4 +1,4 @@
-/*	$OpenBSD: shots.c,v 1.3 1999/01/29 07:30:36 d Exp $	*/
+/*	$OpenBSD: shots.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
 /*	$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $	*/
 /*
  *  Hunt
@@ -30,6 +30,32 @@ static	int	move_normal_shot __P((BULLET *));
 static	void	move_slime __P((BULLET *, int, BULLET *));
 static	void	save_bullet __P((BULLET *));
 static	void	zapshot __P((BULLET *, BULLET *));
+
+/* Return true if there is pending activity */
+int
+can_moveshots()
+{
+	PLAYER *pp;
+
+	/* Bullets are moving? */
+	if (Bullets)
+		return 1;
+
+	/* Explosions are happening? */
+	if (can_rollexpl())
+		return 1;
+
+	/* Things are flying? */
+	for (pp = Boot; pp < &Boot[NBOOTS]; pp++)
+		if (pp->p_flying >= 0)
+			return 1;
+	for (pp = Player; pp < End_player; pp++)
+		if (pp->p_flying >= 0)
+			return 1;
+
+	/* Everything is quiet: */
+	return 0;
+}
 
 /*
  * moveshots:
@@ -826,7 +852,7 @@ chkslime(bp, next)
 	/* Duplicate the unit of slime: */
 	nbp = (BULLET *) malloc(sizeof (BULLET));
 	if (nbp == NULL) {
-		syslog(LOG_ERR, "malloc: %m");
+		log(LOG_ERR, "malloc");
 		return;
 	}
 	*nbp = *bp;
@@ -1078,7 +1104,7 @@ play_at(y, x)
 			return pp;
 
 	/* Internal fault: */
-	syslog(LOG_ERR, "play_at: not a player");
+	logx(LOG_ERR, "play_at: not a player");
 	abort();
 }
 

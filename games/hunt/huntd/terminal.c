@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.3 1999/01/29 07:30:37 d Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
 /*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
 /*
  *  Hunt
@@ -7,8 +7,13 @@
  */
 
 #include <stdarg.h>
+#include <syslog.h>
+#include <err.h>
+#include <string.h>
+
 #include "hunt.h"
 #include "server.h"
+#include "conf.h"
 
 #define	TERM_WIDTH	80	/* Assume terminals are 80-char wide */
 
@@ -201,3 +206,37 @@ flush(pp)
 		fflush(pp->p_output);
 }
 
+void
+logx(prio, fmt)
+	int prio;
+	const char *fmt;
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (conf_syslog)
+		vsyslog(prio, fmt, ap);
+	else if (conf_logerr)
+	/* if (prio < LOG_NOTICE) */
+		vwarnx(fmt, ap);
+	va_end(fmt);
+}
+
+void
+log(prio, fmt)
+	int prio;
+	const char *fmt;
+{
+	va_list ap;
+	char fmtm[1024];
+
+	va_start(ap, fmt);
+	if (conf_syslog) {
+		strlcpy(fmtm, fmt, sizeof fmtm);
+		strlcat(fmtm, ": %m", sizeof fmtm);
+		vsyslog(prio, fmtm, ap);
+	} else if (conf_logerr)
+	/* if (prio < LOG_NOTICE) */
+		vwarn(fmt, ap);
+	va_end(fmt);
+}

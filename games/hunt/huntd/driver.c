@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.3 1999/01/29 07:30:35 d Exp $	*/
+/*	$OpenBSD: driver.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
@@ -20,6 +20,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <paths.h>
+#include <fcntl.h>
 #include "hunt.h"
 #include "conf.h"
 #include "server.h"
@@ -44,6 +46,9 @@ static	void	makeboots __P((void));
 static	void	send_stats __P((void));
 static	void	zap __P((PLAYER *, FLAG));
 static  void	announce_game __P((void));
+static	void	siginfo __P((int));
+static	void	print_stats __P((FILE *));
+static	void	handle_wkport __P((int));
 
 /*
  * main:
@@ -56,15 +61,17 @@ main(ac, av, ep)
 {
 	PLAYER	*pp;
 	int	had_char;
-	short	port_num, reply;
 	static fd_set	read_fds;
 	static FLAG	first = TRUE;
 	static FLAG	server = FALSE;
 	extern int	optind;
 	extern char	*optarg;
 	int		c;
-	FILE *		cffile;
 	static struct timeval	linger = { 0, 0 };
+	static struct timeval	timeout = { 0, 0 }, *to;
+	struct spawn	*sp;
+	int		ret;
+	int		nready;
 
 	First_arg = av[0];
 	if (ep == NULL || *ep == NULL)
@@ -108,81 +115,72 @@ erred:
 
 again:
 	do {
-		/* Wait for something to happen: */
-		read_fds = Fds_mask;
-		errno = 0;
-		while (select(Num_fds, &read_fds, NULL, NULL, NULL) < 0)
-		{
-			if (errno != EINTR) {
-				syslog(LOG_ERR, "select: %m");
+		/* First, poll to see if we can get input */
+		timerclear(&timeout);
+		do {
+			read_fds = Fds_mask;
+			errno = 0;
+			nready = select(Num_fds, &read_fds, NULL, NULL, 
+			    &timeout);
+			if (nready < 0 && errno != EINTR) {
+				log(LOG_ERR, "select");
 				cleanup(1);
 			}
-			errno = 0;
+		} while (nready < 0);
+
+		if (nready == 0) {
+			/*
+			 * Nothing was ready. We do some work now
+			 * to see if the simulation has any pending work
+			 * to do, and decide if we need to to block 
+			 * indefinitely or just timeout.
+			 */
+			if (conf_simstep && can_moveshots()) {
+				/*
+				 * block for a short time before continuing
+				 * with explosions, bullets and whatnot
+				 */
+				to = &timeout;
+				to->tv_sec =  conf_simstep / 1000000;
+				to->tv_usec = conf_simstep % 1000000;
+			} else
+				/*
+				 * since there's nothing going on,
+				 * just block waiting for external activity
+				 */
+				to = NULL;
+			
+			do {
+				read_fds = Fds_mask;
+				errno = 0;
+				nready = select(Num_fds, &read_fds, NULL, NULL, 
+				    to);
+				if (nready < 0 && errno != EINTR) {
+					log(LOG_ERR, "select");
+					cleanup(1);
+				}
+			} while (nready < 0);
 		}
 
 		/* Remember which descriptors are active: */
 		Have_inp = read_fds;
 
-		/* Handle a datagram sent to the server socket: */
-		if (FD_ISSET(Server_socket, &read_fds)) {
-			struct sockaddr_in	test;
-			int 			namelen;
-			u_int16_t		msg;
+		/* Answer new player connections: */
+		if (FD_ISSET(Socket, &read_fds))
+			answer_first();
 
-			namelen = sizeof test;
-			(void) recvfrom(Server_socket, 
-				&msg, sizeof msg,
-				0,
-				(struct sockaddr *) &test, &namelen);
-
-			port_num = htons(sock_port);
-			switch (ntohs(msg)) {
-			  case C_MESSAGE:
-				if (Nplayer <= 0)
-					break;
-				reply = htons((u_short) Nplayer);
-				(void) sendto(Server_socket, 
-					&reply, sizeof reply, 
-					0,
-					(struct sockaddr *) &test, sizeof test);
-				break;
-			  case C_SCORES:
-				reply = htons(stat_port);
-				(void) sendto(Server_socket, 
-					&reply, sizeof reply, 
-					0,
-					(struct sockaddr *) &test, sizeof test);
-				break;
-			  case C_PLAYER:
-			  case C_MONITOR:
-				if (msg == C_MONITOR && Nplayer <= 0)
-					break;
-				reply = htons(sock_port);
-				(void) sendto(Server_socket, 
-					&reply, sizeof reply, 
-					0,
-					(struct sockaddr *) &test, sizeof test);
-				break;
+		/* Continue answering new player connections: */
+		for (sp = Spawn; sp; sp = sp->next)
+			if (FD_ISSET(sp->fd, &read_fds) && answer_next(sp)) {
+				if (first && should_announce)
+					announce_game();
+				first = FALSE;
 			}
-		}
 
 		/* Process input and move bullets until we've exhausted input */
-		for (;;) {
-			had_char = FALSE;
-			for (pp = Player; pp < End_player; pp++)
-				if (havechar(pp)) {
-					execute(pp);
-					pp->p_nexec++;
-					had_char++;
-				}
-			for (pp = Monitor; pp < End_monitor; pp++)
-				if (havechar(pp)) {
-					mon_execute(pp);
-					pp->p_nexec++;
-					had_char++;
-				}
-			if (!had_char)
-				break;
+		had_char = TRUE;
+		while (had_char) {
+
 			moveshots();
 			for (pp = Player; pp < End_player; )
 				if (pp->p_death[0] != '\0')
@@ -194,15 +192,25 @@ again:
 					zap(pp, FALSE);
 				else
 					pp++;
+
+			had_char = FALSE;
+			for (pp = Player; pp < End_player; pp++)
+				if (havechar(pp)) {
+					execute(pp);
+					pp->p_nexec++;
+					had_char = TRUE;
+				}
+			for (pp = Monitor; pp < End_monitor; pp++)
+				if (havechar(pp)) {
+					mon_execute(pp);
+					pp->p_nexec++;
+					had_char = TRUE;
+				}
 		}
 
-		/* Answer new player connections: */
-		if (FD_ISSET(Socket, &read_fds))
-			if (answer()) {
-				if (first && should_announce)
-					announce_game();
-				first = FALSE;
-			}
+		/* Handle a datagram sent to the server socket: */
+		if (FD_ISSET(Server_socket, &read_fds))
+			handle_wkport(Server_socket);
 
 		/* Answer statistics connections: */
 		if (FD_ISSET(Status, &read_fds))
@@ -223,15 +231,27 @@ again:
 		}
 	} while (Nplayer > 0);
 
-	/* No more players. Wait for a short while for one to come back: */
+	/* No more players! */
+
+	/* Continuous game? */
+	if (conf_linger < 0)
+		goto again;
+
+	/* Wait a short while for one to come back: */
 	read_fds = Fds_mask;
 	linger.tv_sec = conf_linger;
-	if (select(Num_fds, &read_fds, NULL, NULL, &linger) > 0) {
+	while ((ret = select(Num_fds, &read_fds, NULL, NULL, &linger)) < 0) {
+		if (errno != EINTR) {
+			log(LOG_WARNING, "select");
+			break;
+		}
+	}
+	if (ret > 0)
 		/* Someone returned! Resume the game: */
 		goto again;
-	}
+	/* else, it timed out, and the game is really over. */
 
-	/* If we are an inetd server, we should restart: */
+	/* If we are an inetd server, we should re-init the map and restart: */
 	if (server) {
 		clear_scores();
 		makemaze();
@@ -241,11 +261,11 @@ again:
 		goto again;
 	}
 
-	/* Destroy all the monitors: */
+	/* Get rid of any attached monitors: */
 	for (pp = Monitor; pp < End_monitor; )
 		zap(pp, FALSE);
 
-	/* The end: */
+	/* Fin: */
 	cleanup(0);
 	exit(0);
 }
@@ -262,20 +282,39 @@ init()
 	int	msg;
 	int	len;
 	struct sockaddr_in	addr;
+	struct sigaction	sact;
 
-	/* XXX should we call deamon() instead ??? */
 	(void) setsid();
-	(void) setpgid(getpid(), getpid());
+	if (setpgid(getpid(), getpid()) == -1)
+		err(1, "setpgid");
 
-	/* Handle some signals: */
-	(void) signal(SIGHUP, SIG_IGN);
-	(void) signal(SIGINT, cleanup);
-	(void) signal(SIGQUIT, SIG_IGN);
-	(void) signal(SIGTERM, cleanup);
-	(void) signal(SIGPIPE, SIG_IGN);
+	sact.sa_flags = SA_RESTART;
+	sigemptyset(&sact.sa_mask);
 
-	(void) chdir("/");		/* just in case it core dumps */
-	(void) umask(0777);		/* No privacy at all! */
+	/* Ignore HUP, QUIT and PIPE: */
+	sact.sa_handler = SIG_IGN;
+	if (sigaction(SIGHUP, &sact, NULL) == -1)
+		err(1, "sigaction SIGHUP");
+	if (sigaction(SIGQUIT, &sact, NULL) == -1)
+		err(1, "sigaction SIGQUIT");
+	if (sigaction(SIGPIPE, &sact, NULL) == -1)
+		err(1, "sigaction SIGPIPE");
+
+	/* Clean up gracefully on INT and TERM: */
+	sact.sa_handler = cleanup;
+	if (sigaction(SIGINT, &sact, NULL) == -1)
+		err(1, "sigaction SIGINT");
+	if (sigaction(SIGTERM, &sact, NULL) == -1)
+		err(1, "sigaction SIGTERM");
+
+	/* Handle INFO: */
+	sact.sa_handler = siginfo;
+	if (sigaction(SIGINFO, &sact, NULL) == -1)
+		err(1, "sigaction SIGINFO");
+
+	if (chdir("/") == -1)
+		warn("chdir");
+	(void) umask(0777);
 
 	/* Initialize statistics socket: */
 	addr.sin_family = AF_INET;
@@ -284,14 +323,17 @@ init()
 
 	Status = socket(AF_INET, SOCK_STREAM, 0);
 	if (bind(Status, (struct sockaddr *) &addr, sizeof addr) < 0) {
-		syslog(LOG_ERR, "bind: %m");
+		log(LOG_ERR, "bind");
 		cleanup(1);
 	}
-	(void) listen(Status, 5);
+	if (listen(Status, 5) == -1) {
+		log(LOG_ERR, "listen");
+		cleanup(1);
+	}
 
 	len = sizeof (struct sockaddr_in);
 	if (getsockname(Status, (struct sockaddr *) &addr, &len) < 0)  {
-		syslog(LOG_ERR, "getsockname: %m");
+		log(LOG_ERR, "getsockname");
 		cleanup(1);
 	}
 	stat_port = ntohs(addr.sin_port);
@@ -304,16 +346,19 @@ init()
 	Socket = socket(AF_INET, SOCK_STREAM, 0);
 	msg = 1;
 	if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK, &msg, sizeof msg)<0)
-		syslog(LOG_ERR, "setsockopt loopback %m");
+		log(LOG_ERR, "setsockopt loopback");
 	if (bind(Socket, (struct sockaddr *) &addr, sizeof addr) < 0) {
-		syslog(LOG_ERR, "bind: %m");
+		log(LOG_ERR, "bind");
 		cleanup(1);
 	}
-	(void) listen(Socket, 5);
+	if (listen(Socket, 5) == -1) {
+		log(LOG_ERR, "listen");
+		cleanup(1);
+	}
 
 	len = sizeof (struct sockaddr_in);
 	if (getsockname(Socket, (struct sockaddr *) &addr, &len) < 0)  {
-		syslog(LOG_ERR, "getsockname: %m");
+		log(LOG_ERR, "getsockname");
 		cleanup(1);
 	}
 	sock_port = ntohs(addr.sin_port);
@@ -343,10 +388,11 @@ init()
 		Server_socket = socket(AF_INET, SOCK_DGRAM, 0);
 		if (bind(Server_socket, (struct sockaddr *) &test_port,
 		    sizeof test_port) < 0) {
-			syslog(LOG_ERR, "bind port %d: %m", Server_port);
+			log(LOG_ERR, "bind port %d", Server_port);
 			cleanup(1);
 		}
-		(void) listen(Server_socket, 5);
+
+		/* Datagram sockets do not need a listen() call. */
 	}
 
 	/* We'll handle the broadcast listener in the main loop: */
@@ -373,7 +419,7 @@ init()
 	See_over[WALL4] = FALSE;
 	See_over[WALL5] = FALSE;
 
-	syslog(LOG_INFO, "game started");
+	logx(LOG_INFO, "game started");
 }
 
 /*
@@ -821,19 +867,29 @@ havechar(pp)
 	PLAYER	*pp;
 {
 
+	/* Do we already have characters? */
 	if (pp->p_ncount < pp->p_nchar)
 		return TRUE;
+	/* Is the player being quiet? */
 	if (!FD_ISSET(pp->p_fd, &Have_inp))
 		return FALSE;
+	/* Remove the player from the read set until we have drained them: */
 	FD_CLR(pp->p_fd, &Have_inp);
+
+	/* Suck their keypresses into a buffer: */
 check_again:
-	errno = 0;
 	if ((pp->p_nchar = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf)) <= 0)
 	{
 		if (errno == EINTR)
 			goto check_again;
-		pp->p_cbuf[0] = 'q';
+		if (errno != EAGAIN) {
+			log(LOG_INFO, "read");
+			/* Assume their connection was lost/closed: */
+			pp->p_cbuf[0] = 'q';
+			pp->p_nchar = 1;
+		}
 	}
+	/* Reset pointer into read buffer */
 	pp->p_ncount = 0;
 	return TRUE;
 }
@@ -864,7 +920,7 @@ cleanup(eval)
 	(void) close(Socket);
 
 	/* The end: */
-	syslog(LOG_INFO, "game over");
+	logx(LOG_INFO, "game over");
 	exit(eval);
 }
 
@@ -876,7 +932,6 @@ cleanup(eval)
 static void
 send_stats()
 {
-	IDENT	*ip;
 	FILE	*fp;
 	int	s;
 	struct sockaddr_in	sockstruct;
@@ -889,7 +944,7 @@ send_stats()
 	if (s < 0) {
 		if (errno == EINTR)
 			return;
-		syslog(LOG_ERR, "accept: %m");
+		logx(LOG_ERR, "accept");
 		return;
 	}
 
@@ -902,10 +957,26 @@ send_stats()
 
 	fp = fdopen(s, "w");
 	if (fp == NULL) {
-		syslog(LOG_ERR, "fdopen: %m");
+		log(LOG_ERR, "fdopen");
 		(void) close(s);
 		return;
 	}
+
+	print_stats(fp);
+
+	(void) fclose(fp);
+}
+
+/*
+ * print_stats:
+ * 	emit the game statistics
+ */
+void
+print_stats(fp)
+	FILE *fp;
+{
+	IDENT	*ip;
+	PLAYER  *pp;
 
 	/* Send the statistics as raw text down the socket: */
 	fputs("Name\t\tScore\tDucked\tAbsorb\tFaced\tShot\tRobbed\tMissed\tSlimeK\n", fp);
@@ -922,7 +993,7 @@ send_stats()
 			ip->i_faced, ip->i_shot, ip->i_robbed,
 			ip->i_missed, ip->i_slime);
 	}
-	fputs("\n\nName\t\tEnemy\tFriend\tDeaths\tStill\tSaved\n", fp);
+	fputs("\n\nName\t\tEnemy\tFriend\tDeaths\tStill\tSaved\tConnect\n", fp);
 	for (ip = Scores; ip != NULL; ip = ip->i_next) {
 		fprintf(fp, "%s%c%c%c\t", ip->i_name,
 			ip->i_team == ' ' ? ' ' : '[',
@@ -931,12 +1002,36 @@ send_stats()
 		);
 		if (strlen(ip->i_name) + 3 < 8)
 			putc('\t', fp);
-		fprintf(fp, "%d\t%d\t%d\t%d\t%d\n",
+		fprintf(fp, "%d\t%d\t%d\t%d\t%d\t",
 			ip->i_gkills, ip->i_bkills, ip->i_deaths,
 			ip->i_stillb, ip->i_saved);
+		for (pp = Player; pp < End_player; pp++)
+			if (pp->p_ident == ip)
+				putc('p', fp);
+		for (pp = Monitor; pp < End_monitor; pp++)
+			if (pp->p_ident == ip)
+				putc('m', fp);
+		putc('\n', fp);
 	}
+}
 
-	(void) fclose(fp);
+
+/*
+ * Send the game statistics to the controlling tty
+ */
+static void
+siginfo(sig)
+	int sig;
+{
+	int tty;
+	FILE *fp;
+
+	if ((tty = open(_PATH_TTY, O_WRONLY)) >= 0) {
+		fp = fdopen(tty, "w");
+		print_stats(fp);
+		answer_info(fp);
+		fclose(fp);
+	}
 }
 
 /*
@@ -951,7 +1046,7 @@ clear_scores()
 	/* Release the list of scores: */
 	for (ip = Scores; ip != NULL; ip = nextip) {
 		nextip = ip->i_next;
-		(void) free((char *) ip);
+		free((char *) ip);
 	}
 	Scores = NULL;
 }
@@ -965,4 +1060,56 @@ announce_game()
 {
 
 	/* Stub */
+}
+
+/*
+ * Handle a UDP packet sent to the well known port.
+ */
+static void
+handle_wkport(fd)
+	int fd;
+{
+	struct sockaddr		fromaddr;
+	int 			fromlen;
+	u_int16_t		query;
+	u_int16_t		response;
+
+	fromlen = sizeof fromaddr;
+	if (recvfrom(fd, &query, sizeof query, 0, &fromaddr, &fromlen) == -1)
+	{
+		log(LOG_WARNING, "recvfrom");
+		return;
+	}
+	query = ntohs(query);
+
+	switch (query) {
+	  case C_MESSAGE:
+		if (Nplayer <= 0)
+			/* Don't bother replying if nobody to talk to: */
+			return;
+		/* Return the number of people playing: */
+		response = Nplayer;
+		break;
+	  case C_SCORES:
+		/* Someone wants the statistics port: */
+		response = stat_port;
+		break;
+	  case C_PLAYER:
+	  case C_MONITOR:
+		/* Someone wants to play or watch: */
+		if (query == C_MONITOR && Nplayer <= 0)
+			/* Don't bother replying if there's nothing to watch: */
+			return;
+		/* Otherwise, tell them how to get to the game: */
+		response = sock_port;
+		break;
+	  default:
+		log(LOG_INFO, "unknown udp query %d", query);
+		return;
+	}
+
+	response = ntohs(response);
+	if (sendto(fd, &response, sizeof response, 0,
+	    &fromaddr, sizeof fromaddr) == -1)
+		log(LOG_WARNING, "sendto");
 }
