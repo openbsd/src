@@ -38,6 +38,7 @@ Boston, MA 02111-1307, USA.  */
       OPENBSD_OS_CPP_BUILTINS_LP64();			\
       builtin_define ("__sparc64__");			\
       builtin_define ("__sparc_v9__");			\
+      builtin_define ("__sparcv9__");			\
       builtin_define ("__arch64__");			\
       builtin_define ("__sparc__");			\
     }							\
