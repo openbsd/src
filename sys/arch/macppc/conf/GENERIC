@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.16 2002/03/25 15:08:58 lebel Exp $
+#	$OpenBSD: GENERIC,v 1.17 2002/03/28 14:39:45 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -18,6 +18,9 @@ option		USBVERBOSE
 #option		MACOBIOVERBOSE
 option		ALTIVEC
 option		APERTURE	# in-kernel aperture driver for XFree86
+#option		WSDISPLAY_COMPAT_RAWKBD
+
+
 
 option		USER_PCICONF	# user-space PCI configuration
 
@@ -98,12 +101,15 @@ gpio*		at gpio?			# GPIO, PMU interrupt router.
 aed*		at adb?				# ADB Event Device
 akbd*		at adb?				# ADB keyboard
 
-wskbd*		at akbd? console ?
+wskbd*		at akbd? console ? mux 1
 ams*		at adb?				# ADB mouse
 wsmouse*	at ams?	mux 0
 #abtn*		at adb?				# ADB button?
 zsc*		at macobio?
 zstty*		at zsc? channel ?
+
+#i2c*		at macobio?
+#tas*		at i2c?
 
 awacs*		at macobio?			# Apple audio device
 audio*		at awacs?
@@ -154,7 +160,7 @@ uplcom* 	at uhub? port ?            # I/O DATA USB-RSAQ2 serial adapter
 ucom*   	at uplcom? portno ?
 
 wsdisplay*	at vgafb?
-wskbd*		at ukbd? console ?
+wskbd*		at ukbd? console ? mux 1
 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
