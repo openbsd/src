@@ -30,7 +30,7 @@
 .Sh DESCRIPTION
 Configures
 .Ar count
-.Nm strip
+.Nm
 interfaces,   named
 .Sy st Ns Ar 0 ,
 .Sy st Ns Ar 1 ,
@@ -38,7 +38,7 @@ etc, into a kernel built from a config file containing the
 given entry.
 .Pp
 Each
-.Nm strip
+.Nm
 interface is a pseudo-device driver for the Metricom Ricochet radio,
 operating in peer-to-peer packet mode.
 .Pp
@@ -50,7 +50,7 @@ radio.   Packets arriving from the radio
 via the serial link are decapsulated and then passed up to the local
 host's networking stack.
 .Pp
-.Nm STRIP
+.Nm
 is an acronym for
 .Sy St Ns armode
 .Sy  R  Ns adio
@@ -58,11 +58,11 @@ is an acronym for
 .Pp
 In many ways,
 the
-.Nm strip
+.Nm
 driver is very much like the
 .Nm sl
 SLIP pseudo-device driver.  A
-.Nm strip
+.Nm
 device is attached to a tty line with
 .Xr slattach 8 .
 Once attached, the interface is configured via
@@ -70,19 +70,19 @@ Once attached, the interface is configured via
 The major difference between the
 .Xr sl 4
 SLIP pseudo-device driver and the
-.Nm strip
+.Nm
 driver is that SLIP works only between two hosts over
 a dedicated point-to-point connection. In contrast,
-.Nm strip
+.Nm
 sends
 packets to a frequency-hopping radio, which  can address packets to
 any peer Metricom radio. rather than just to a single host at the
 other end of a point-to-point line.  Thus,  one
-.Nm strip
+.Nm
 pseudo-device is usually sufficient for any kernel.
 .Pp
 In other respects, a
-.Nm strip
+.Nm
 interface is rather like an Ethernet interface.
 Packets are  individually  addressed, and subsequent packets can
 be sent independently to different MAC addresses.  However,
@@ -94,16 +94,16 @@ The interface flags
 and
 .Dv IFF_BROADCAST
 are not supported on
-.Nm strip
+.Nm
 interface.
 .Pp
 In other words,
-.Nm strip
+.Nm
 implements a multiple-access, non-broadcast device, accessed via
 an RS-232 serial line, using a proprietary packet framing scheme. 
 .Pp
 This version
-.Nm strip
+.Nm
 driver maps IP addresses to Metricom radio addresses using
 statically configured entries in the normal routing table. These entries
 map IP addresses of peer radios to the MAC-level addresses.
@@ -113,8 +113,7 @@ type code for use with STRIP. A future version of this driver will
 support 
 .Xr arp 4
 to obtain the IP address of reachable peer radios dynamically.
-.Pp
-.Sh Address configuration.
+.Sh ADDRESS CONFIGURATION
 This version of the STRIP driver requires static pre-configuration of
 the mapping from IP addresses to radio MAC addresses.
 The 
@@ -134,8 +133,7 @@ route add -host 10.11.12.13 -link 1:2:3:4:5:6:7:8
 .Pp
 Generalising from this example to other IP addresses and to other 8-digit MAC addresses
 should be clear.
-.Pp
-.Sh Radio configuration.
+.Sh RADIO CONFIGURATION
 The Metricom radios can auto-baud at speeds up to 38.4k baud.
 At higher speeds -- 57600 or 115200 -- the radio cannot autobaud.
 When running at  high speeds, the radio's serial port should be
@@ -148,7 +146,7 @@ will then save the current radio  state in non-volatile memory.
 .Pp
 Metricom radios can operate in either "modem-emulation" mode
 or in packet mode (Starmode). The
-.Nm strip
+.Nm
 driver automatically detects if the radio has fallen out of starmode,
 and resets it back into starmode, if the baud rate was set correctly
 by
@@ -166,7 +164,7 @@ by
 Currently is IP-only.  Encapsulations for AppleTalk and ARP have been defined,
 but are not yet implemented in this driver.
 .Pp
-.Nm Strip
+.Nm
 has not been widely tested on a variety of lower-level tty drivers.
 .P
 The detection and resetting of radios that crash out of Starmode does
@@ -174,16 +172,16 @@ not always work in this version of the driver.  One workaround
 is to kill the 
 .Xr slattach
 process, ifconfig the
-.Nm strip
+.Nm
 interface down, and then start a new slattach and rerun ifconfig.
 .Sh HISTORY
-.Nm Strip
+.Nm
 was originally developed  for the Linux kernel by Stuart
 Cheshire of  Stanford's Operating Systems and Networking group,
 as part of Mary Baker's  MosquitoNet 
 .Sy http://mosquitonet.stanford.edu/mosquitonet.html
 project.
 This
-.Nm strip
+.Nm
 driver was ported to BSD by Jonathan Stone at Stanford's Distributed
 Systems Group and first distributed with NetBSD 1.2.

@@ -1,5 +1,5 @@
 .\"
-.\"	$OpenBSD: bktr.4,v 1.1 1998/10/10 06:48:22 downsj Exp $
+.\"	$OpenBSD: bktr.4,v 1.2 1999/07/03 02:11:13 aaron Exp $
 .\"	$FreeBSD: bktr.4,v 1.1 1998/03/09 10:56:22 jkh Exp $
 .\"
 .Dd January 28, 1998
@@ -8,13 +8,13 @@
 .Dt BKTR 4 i386
 .Os
 .Sh NAME
-.Nm brooktree
-.Nd video capture driver
+.Nm bktr
+.Nd brooktree video capture driver
 .Sh SYNOPSIS
 .Nm device bktr0
 .Sh DESCRIPTION
 The
-.Nm bktr
+.Nm
 driver provides support for PCI
 .Em video
 capture on low cost, high performance boards.  The driver is heavily based on
@@ -54,7 +54,6 @@ The following kernel parameters may be used to further configure the driver:
 specifies the number of contiguous pages to allocate when successfully
 probed.  The default number of pages allocated by the kernel is 216.
 This means that there are (216*4096) bytes available for use.
-.Pp
 .Sh AUTHOR
 This driver is based on the work of
 .An Jim Lowe Aq james@miller.cs.uwm.edu ,

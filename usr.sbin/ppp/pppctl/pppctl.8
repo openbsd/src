@@ -1,4 +1,4 @@
-.\" $Id: pppctl.8,v 1.4 1999/05/23 14:11:35 aaron Exp $
+.\" $Id: pppctl.8,v 1.5 1999/07/03 02:11:10 aaron Exp $
 .Dd 26 June 1997
 .Os
 .Dt PPPCTL 8
@@ -96,7 +96,6 @@ daemon.  If this switch is not used,
 will prompt for a password once it has successfully connected to
 .Nm ppp .
 .El
-.Pp
 .Sh EXAMPLES
 If you run
 .Nm ppp
@@ -160,7 +159,6 @@ You can even make a generic script:
 #! /bin/sh
 exec pppctl /var/run/internet "$@"
 .Ed
-.Pp
 .Sh ENVIRONMENT
 The following environment variables are understood by
 .Nm
@@ -181,7 +179,6 @@ and
 commands in
 .Pa ~/.editrc .
 .El
-.Pp
 .Sh SEE ALSO
 .Xr ps 1 ,
 .Xr editline 3 ,

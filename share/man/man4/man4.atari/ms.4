@@ -41,7 +41,6 @@ mouse interface
 .Sh SYNOPSIS
 .Cd "pseudo-device mouse 1"
 .Sh DESCRIPTION
-
 The Atari mouse driver supports both the original Atari mouse and the third
 party 3-button mouse that has its middle button connected to the up-switch
 of the second joystick port. To accomodate X11 users with a standard mouse,
@@ -65,7 +64,6 @@ This ioctl allows you to get the actual status of the emulation mode.
 .It Sy Interface description
 The Atari mouse interface works on a minimal emulation of Sun's Firm_event
 structures. The primary reason for this is easy interfacing with X11.
-
 .Pp
 The movement and button events are read as structures of the form:
 .Bd -literal
@@ -75,7 +73,6 @@ typedef struct Firm_event {
 	int_16_t        value;    /* VKEY_{UP,DOWN} or locator delta */
 	struct timeval  time;     /* time stamp of the event         */
 }
-
 .Pp
 The values of 'id' concerning the mouse:
 .Bd -literal
@@ -85,21 +82,18 @@ The values of 'id' concerning the mouse:
 #define LOC_X_DELTA     0x7f80    /* mouse delta-X       */
 #define LOC_Y_DELTA     0x7f81    /* mouse delta-Y       */
 .Ed
-
 .Pp
 The values of 'value' concerning a button event:
 .Bd -literal
 #define VKEY_UP         0         /* a button went up   */
 #define VKEY_DOWN       1         /* a button went down */
 .Ed
-
-.Pp
 .Sh FILES
 .Bl -tag -width /dev/mouse0 -compact
 .It Pa /dev/mouse0
-The real mouse device
+real mouse device
 .It Pa /dev/mouse
-The currently active mouse device
+currently active mouse device
 .El
 .El
 .Sh BUGS

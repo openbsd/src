@@ -67,7 +67,6 @@ interface employs the address resolution protocol described in
 .Xr arp 4
 to dynamically map between Internet and Ethernet addresses on the local
 network.
-.Pp
 .Sh HARDWARE
 The
 .Nm
@@ -76,12 +75,10 @@ interface supports the following Zorro II expansion cards:
 .It Em QuickNet
 Resource Management Force's ethernet card, manufacturer\ 2011, product\ 2
 .El
-.Pp
 .Sh NOTES
 Multicasting not done yet. If the driver happens to lock up, you may use
 .Xr ifconfig
 to force the driver down and up again. This usually helps.
-.Pp
 .Sh HISTORY
 The
 .Nm

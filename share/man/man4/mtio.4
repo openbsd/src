@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtio.4,v 1.3 1999/05/16 19:56:31 alex Exp $
+.\"	$OpenBSD: mtio.4,v 1.4 1999/07/03 02:11:12 aaron Exp $
 .\"	$NetBSD: mtio.4,v 1.4 1996/03/03 17:13:54 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
@@ -39,9 +39,7 @@
 .Os
 .Sh NAME
 .Nm mtio
-.Nd
-.Tn OpenBSD
-magtape interface
+.Nd magtape interface
 .Sh DESCRIPTION
 This interface concerns devices which are typical tape block devices,
 see
@@ -179,7 +177,6 @@ struct	mtget	{
 #define	T_BADBPI	030		/* undefined selection */
 #endif
 .Ed
-.Pp
 .Sh FILES
 .Bl -tag -width /dev/rmt? -compact
 .It Pa /dev/mt?
@@ -196,7 +193,7 @@ struct	mtget	{
 .Xr ut 4
 .Sh HISTORY
 The
-.Nm mtio
+.Nm
 manual appeared in
 .Bx 4.2 .
 .Sh BUGS

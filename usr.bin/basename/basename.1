@@ -1,4 +1,4 @@
-.\"	$OpenBSD: basename.1,v 1.6 1999/06/05 01:21:19 aaron Exp $
+.\"	$OpenBSD: basename.1,v 1.7 1999/07/03 02:11:08 aaron Exp $
 .\"	$NetBSD: basename.1,v 1.9 1995/03/25 18:17:45 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -48,7 +48,7 @@
 .Ar string
 .Op Ar suffix
 .Sh DESCRIPTION
-.Nm basename
+.Nm
 deletes any prefix ending with the last slash
 .Pq Sq \&/
 character present in
@@ -58,7 +58,6 @@ and a
 if given.
 The resulting filename is written to the standard output.
 A non-existent suffix is ignored.
-.Pp
 .Sh EXAMPLES
 The following line sets the shell variable
 .Ev FOO
@@ -66,10 +65,9 @@ to
 .Pa ls .
 .Pp
 .Dl FOO=`basename /usr/bin/trail`
-.Pp
 .Sh DIAGNOSTICS
 The
-.Nm basename
+.Nm
 utility
 exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
@@ -78,6 +76,6 @@ exits 0 on success or >0 if an error occurred.
 .Xr sh 1
 .Sh STANDARDS
 The
-.Nm basename
-utility conform to
+.Nm
+utility conforms to
 .St -p1003.2-92 .

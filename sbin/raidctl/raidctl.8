@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.4 1999/06/04 02:45:25 aaron Exp $
+.\"	$OpenBSD: raidctl.8,v 1.5 1999/07/03 02:11:08 aaron Exp $
 .\"
 .\"     $NetBSD: raidctl.8,v 1.3 1999/02/04 14:50:31 oster Exp $
 .\"
@@ -529,14 +529,12 @@ correct will be catastrophic should a component ever fail -- it is
 better to use RAID 0 and get the additional space and speed, than it
 is to use parity, but not keep the parity correct.  At least with RAID
 0 there is no perception of increased data security.
-.Pp
 .Sh FILES
 .Bl -tag -width /dev/XXrXraidX -compact
 .It Pa /dev/{,r}raid*
 .Nm
 device special files
 .El
-.Pp
 .Sh SEE ALSO
 .Xr ccd 4 ,
 .Xr raid 4 ,

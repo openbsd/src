@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ispcvt.8,v 1.3 1999/01/13 07:26:04 niklas Exp $
+.\"	$OpenBSD: ispcvt.8,v 1.4 1999/07/03 02:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1995 Hellmuth Michaelis
 .\"
@@ -44,12 +44,12 @@
 .Op Fl v
 .Sh DESCRIPTION
 The
-.Nm ispcvt
+.Nm
 utility allows the user to check whether the current video driver compiled
 into the kernel is a pcvt driver. The major and minor release numbers of
 the driver are also checked.
 Furthermore
-.Nm ispcvt
+.Nm
 is also able to print out the values of all the
 .Dq Ar PCVT_XXXXXX
 compile time options, the driver in the current running kernel was
@@ -87,7 +87,6 @@ name & major number matched, release minor number mismatch
 .It Sy 5
 usage error
 .El
-.Pp
 .Sh BUGS
 No known bugs
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cap_mkdb.1,v 1.9 1999/07/02 20:11:44 aaron Exp $
+.\"	$OpenBSD: cap_mkdb.1,v 1.10 1999/07/03 02:11:08 aaron Exp $
 .\"	$NetBSD: cap_mkdb.1,v 1.4 1995/03/26 03:59:36 glass Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -40,7 +40,6 @@
 .Sh NAME
 .Nm cap_mkdb
 .Nd create capability database
-.Pp
 .Sh SYNOPSIS
 .Nm cap_mkdb
 .Op Fl i
@@ -48,7 +47,6 @@
 .Op Fl f Ar outfile
 .Ar file1
 .Op Ar file2 ...
-.Pp
 .Sh DESCRIPTION
 .Nm
 builds a hashed database out of the
@@ -82,13 +80,12 @@ format.
 .It Fl v
 Print out the number of capability records in the database.
 .El
-.Pp
 .Sh FORMAT
 Each record is stored in the database using two different types of keys.
 .Pp
 The first type is a key which consists of the first capability of
 the record (not including the trailing colon
-.Pq Sq \&: )
+.Pq Ql \&: )
 with a data
 field consisting of a special byte followed by the rest of the record.
 The special byte is either a 0 or 1, where a 0 means that the record

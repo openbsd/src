@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yacc.1,v 1.4 1998/10/30 00:24:45 aaron Exp $
+.\"	$OpenBSD: yacc.1,v 1.5 1999/07/03 02:11:09 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -47,6 +47,7 @@ parser generator
 .Nm yacc
 .Op Fl dlrtv
 .Op Fl b Ar prefix
+.Op Fl o Ar output_file
 .Op Fl p Ar symbol_prefix
 .Ar filename
 .Sh DESCRIPTION
@@ -94,6 +95,10 @@ option is specified,
 .Nm yacc
 will not insert the #line directives.
 #line directives specified by the user will be retained.
+.It Fl o Ar output_file
+The
+.Fl o
+option specifies an explicit 
 .It Fl p Ar symbol_prefix
 The
 .Fl p
@@ -124,7 +129,6 @@ The
 option causes a human-readable description of the generated parser to
 be written to the file
 .Pa y.output .
-.Pp
 .Sh ENVIRONMENT
 The following environment variable is referenced by
 .Nm yacc :

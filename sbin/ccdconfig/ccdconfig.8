@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccdconfig.8,v 1.11 1998/12/15 01:20:28 aaron Exp $
+.\"	$OpenBSD: ccdconfig.8,v 1.12 1999/07/03 02:11:06 aaron Exp $
 .\"	$NetBSD: ccdconfig.8,v 1.4 1996/02/28 01:01:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -140,15 +140,13 @@ argument is optional.
 # ccd           ileave  flags   component devices
 ccd0            16      none    /dev/sd2e /dev/sd3e
 .Ed
-.Pp
-.Sh EXAMPLE
+.Sh EXAMPLES
 The following command, executed from the command line, would configure ccd0
 with 4 components (/dev/sd2e, /dev/sd3e, /dev/sd4e, /dev/sd5e), and an
 interleave factor of 32 blocks.
 .Bd -unfilled -offset indent
 # ccdconfig ccd0 32 0 /dev/sd2e /dev/sd3e /dev/sd4e /dev/sd5e
 .Ed
-.Pp
 .Sh FILES
 .Bl -tag -width /etc/ccd.conf -compact
 .It Pa /etc/ccd.conf

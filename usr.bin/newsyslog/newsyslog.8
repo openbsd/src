@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.14 1999/06/05 04:16:05 aaron Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.15 1999/07/03 02:11:09 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -161,7 +161,6 @@ Specify a file containing the PID of a process to send a
 signal to instead of
 .Pa /var/run/syslog.pid .
 .El
-.Pp
 .Sh OPTIONS
 The following options can be used with
 .Nm newsyslog :
@@ -201,7 +200,6 @@ in flags are processed,
 and notifications sent if any have changed.  Without this option, monitored
 entries are not processed.
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width /etc/newsyslog.conf
 .It Pa /etc/newsyslog.conf

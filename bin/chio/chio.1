@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.11 1999/05/30 17:44:54 aaron Exp $
+.\"	$OpenBSD: chio.1,v 1.12 1999/07/03 02:11:06 aaron Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -84,7 +84,6 @@ the first robotic arm in the changer, the ET would be
 .Dq picker
 and the EU would be
 .Dq 0 .
-.Pp
 .Sh SUPPORTED COMMANDS
 .Cm chio move
 .Aq Ar from ET
@@ -192,7 +191,6 @@ Element supports passing media (exporting) to an outside human operator.
 .It Dv INENAB
 Element supports receiving media (importing) from an outside human operator.
 .El
-.Pp
 .Sh EXAMPLES
 .Cm chio move slot 3 drive 0
 .Pp
@@ -201,7 +199,6 @@ Moves the media in slot 3 (fourth slot) to drive 0 (first drive).
 .Cm chio setpicker 2
 .Pp
 Configures the changer to use picker 2 (third picker) for operations.
-.Pp
 .Sh FILES
 .Bl -tag -width /dev/ch0 -compact
 .It Pa /dev/ch0
