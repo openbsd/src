@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.6 2003/06/02 04:00:17 deraadt Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.7 2003/07/10 08:00:28 deraadt Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: yppoll.c,v 1.6 2003/06/02 04:00:17 deraadt Exp $";
+static char rcsid[] = "$Id: yppoll.c,v 1.7 2003/07/10 08:00:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,14 +55,14 @@ static char rcsid[] = "$Id: yppoll.c,v 1.6 2003/06/02 04:00:17 deraadt Exp $";
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "Usage: yppoll [-h host] [-d domainname] mapname\n");
 	exit(1);
 }
 
-int
+static int
 get_remote_info(char *indomain, char *inmap, char *server, int *outorder,
     char **outname)
 {

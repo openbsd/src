@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.10 2003/06/25 21:44:56 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.11 2003/07/10 08:00:28 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.10 2003/06/25 21:44:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.11 2003/07/10 08:00:28 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -45,14 +45,14 @@ static char rcsid[] = "$OpenBSD: ypset.c,v 1.10 2003/06/25 21:44:56 deraadt Exp 
 #include <rpcsvc/ypclnt.h>
 #include <arpa/inet.h>
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: ypset [-h host ] [-d domain] server\n");
 	exit(1);
 }
 
-int
+static int
 bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 {
 	struct ypbind_setdom ypsd;
