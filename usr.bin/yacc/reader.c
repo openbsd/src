@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.15 2003/06/19 16:34:53 pvalchev Exp $	*/
+/*	$OpenBSD: reader.c,v 1.16 2004/01/06 05:35:26 deraadt Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -531,7 +531,11 @@ copy_union(void)
     if (!lflag)
 	fprintf(text_file, line_format, lineno, input_file_name);
 
+    fprintf(text_file, "#ifndef YYSTYPE_DEFINED\n");
+    fprintf(text_file, "#define YYSTYPE_DEFINED\n");
     fprintf(text_file, "typedef union");
+    if (dflag) fprintf(union_file, "#ifndef YYSTYPE_DEFINED\n");
+    if (dflag) fprintf(union_file, "#define YYSTYPE_DEFINED\n");
     if (dflag) fprintf(union_file, "typedef union");
 
     depth = 0;
@@ -555,6 +559,7 @@ loop:
 	if (--depth == 0)
 	{
 	    fprintf(text_file, " YYSTYPE;\n");
+	    fprintf(text_file, "#endif /* YYSTYPE_DEFINED */\n");
 	    FREE(u_line);
 	    return;
 	}

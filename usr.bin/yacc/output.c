@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.11 2003/06/19 16:34:53 pvalchev Exp $	*/
+/*	$OpenBSD: output.c,v 1.12 2004/01/06 05:35:26 deraadt Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.11 2003/06/19 16:34:53 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.12 2004/01/06 05:35:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -948,7 +948,9 @@ output_defines(void)
 	if (union_file == NULL) open_error(union_file_name);
 	while ((c = getc(union_file)) != EOF)
 	    putc(c, defines_file);
-	fprintf(defines_file, " YYSTYPE;\nextern YYSTYPE %slval;\n",
+	fprintf(defines_file, " YYSTYPE;\n");
+	fprintf(defines_file, "#endif /* YYSTYPE_DEFINED */\n");
+	fprintf(defines_file, "extern YYSTYPE %slval;\n",
 		symbol_prefix);
     }
 }
