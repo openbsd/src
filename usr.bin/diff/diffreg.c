@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.22 2003/06/26 22:04:45 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.23 2003/06/27 20:28:13 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -991,6 +991,9 @@ asciifile(FILE *f)
 {
 	char buf[BUFSIZ], *cp;
 	int cnt;
+
+	if (aflag)
+		return (1);
 
 	fseek(f, 0L, SEEK_SET);
 	cnt = fread(buf, 1, BUFSIZ, f);
