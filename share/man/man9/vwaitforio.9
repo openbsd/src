@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vwaitforio.9,v 1.5 2002/08/26 20:18:07 art Exp $
+.\"     $OpenBSD: vwaitforio.9,v 1.6 2002/12/20 06:16:34 art Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -56,7 +56,7 @@ flags indicate flags to be passed to
 This function must be called at splbio().
 .Pp
 It may be important to ensure that no other process submits asynchronous
-writes while you are waiting for I/O on this vnode.
+writes while a process is waiting for I/O on this vnode.
 Otherwise, vwaitforio may never return.
 .Pp
 (Vnode interlock??)
