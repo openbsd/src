@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.3 2002/03/15 18:04:41 art Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.4 2002/03/15 18:21:20 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -184,7 +184,7 @@ read_from_pid(pid_t pid, off_t from, void *to, size_t size)
 	piod.piod_addr = to;
 	piod.piod_len = size;
 
-	return (ptrace(PT_IO, pid, (caddr_t)&piod, 0) != size);
+	return (ptrace(PT_IO, pid, (caddr_t)&piod, 0));
 }
 
 
@@ -198,7 +198,7 @@ write_to_pid(pid_t pid, off_t to, void *from, size_t size)
 	piod.piod_addr = from;
 	piod.piod_len = size;
 
-	return (ptrace(PT_IO, pid, (caddr_t)&piod, 0) != size);
+	return (ptrace(PT_IO, pid, (caddr_t)&piod, 0));
 }
 
 static int
