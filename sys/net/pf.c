@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.47 2001/06/26 05:03:36 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.48 2001/06/26 06:58:28 markus Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1718,7 +1718,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 			}
 
 		} else {
-			// XXX Remove these printfs before release
+			/* XXX Remove these printfs before release */
 			printf("pf: BAD state: ");
 			print_state(direction, s);
 			print_flags(th->th_flags);
