@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.9 2005/03/07 02:08:45 uwe Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.10 2005/03/29 20:00:16 uwe Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -125,6 +125,11 @@ int allowaperture = 1;
 #else
 int allowaperture = 0;
 #endif
+#endif
+
+#if defined(__zaurus__)
+/* Permit console keyboard to do a nice halt. */
+int kbd_reset;
 #endif
 
 /* Prototypes */
@@ -450,6 +455,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_APMWARN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
 #endif
+#if defined(__zaurus__)
+	case CPU_KBDRESET:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
+			    kbd_reset));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    &kbd_reset));
+#endif
 
 	default:
 		return (EOPNOTSUPP);
@@ -541,7 +555,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 #endif
 
-#if 1
+#if 0
 void
 parse_mi_bootargs(args)
 	char *args;

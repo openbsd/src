@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 2005/03/03 22:55:00 uwe Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 2005/03/29 20:00:16 uwe Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -61,7 +61,8 @@
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
 #define	CPU_ALLOWAPERTURE	6	/* int: allow mmap of /dev/xf86 */
 #define CPU_APMWARN		7	/* APM battery warning percentage */
-#define	CPU_MAXID		8	/* number of valid machdep ids */
+#define CPU_KBDRESET		8	/* int: console keyboard reset */
+#define	CPU_MAXID		9	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -72,6 +73,7 @@
 	{ "powersave", CTLTYPE_INT }, \
 	{ "allowaperture", CTLTYPE_INT }, \
 	{ "apmwarn", CTLTYPE_INT }, \
+	{ "kbdreset", CTLTYPE_INT }, \
 }    
 
 #ifdef _KERNEL
