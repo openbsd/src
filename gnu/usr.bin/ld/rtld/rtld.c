@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.28 2002/07/27 22:06:06 deraadt Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.29 2002/09/07 01:25:34 marc Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1096,7 +1096,7 @@ binder(jmpslot_t *jsp)
 	}
 
 	if (smp == NULL)
-		errx(1, "Call to binder from unknown location: %#x", jsp);
+		errx(1, "Call to binder from unknown location: %p", jsp);
 
 	index = jsp->reloc_index & JMPSLOT_RELOC_MASK;
 
@@ -1106,7 +1106,7 @@ binder(jmpslot_t *jsp)
 
 	np = lookup(sym, &src_map, 1);
 	if (np == NULL)
-		errx(1, "Undefined symbol \"%s\" called from %s:%s at %#x",
+		errx(1, "Undefined symbol \"%s\" called from %s:%s at %p",
 				sym, main_progname, smp->som_path, jsp);
 
 	/* Fixup jmpslot so future calls transfer directly to target */
@@ -1196,7 +1196,7 @@ unmaphints(void)
 	}
 }
 
-int
+static int
 hinthash(char *cp, int vmajor, int vminor)
 {
 	int	k = 0;
@@ -1354,31 +1354,12 @@ preload(char *paths)
 	return;
 }
 
-static struct somap_private dlmap_private = {
-		0,
-		(struct so_map *)0,
-		0,
-#ifdef SUN_COMPAT
-		0,
-#endif
-};
-
-static struct so_map dlmap = {
-	(caddr_t)0,
-	"internal",
-	(struct so_map *)0,
-	(struct sod *)0,
-	(caddr_t)0,
-	(u_int)0,
-	(struct _dynamic *)0,
-	(caddr_t)&dlmap_private
-};
 static int dlerrno;
 
 /*
  * Populate sod struct for dlopen's call to map_object
  */
-void
+static void
 build_sod(const char *name, struct sod *sodp)
 {
 	unsigned int	tuplet;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.13 2002/07/19 19:28:12 marc Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.14 2002/09/07 01:25:34 marc Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -137,18 +137,18 @@ add_search_path(char *path)
 void
 remove_search_path(char *path)
 {
-	char	*cp, *dup;
-
-	if (path == NULL)
+	char    *cp, *dup;
+  
+	if (path == NULL)  
 		return;
-
+        
 	/* Remove search directories from `path' */
 	path = dup = strdup(path);
 	while ((cp = strsep(&path, ":")) != NULL)
 		remove_search_dir(cp);
 	free(dup);
 }
-
+                
 void
 std_search_path(void)
 {

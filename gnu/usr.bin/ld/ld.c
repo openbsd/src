@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.27 2002/07/19 19:28:11 marc Exp $	*/
+/*	$OpenBSD: ld.c,v 1.28 2002/09/07 01:25:34 marc Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -257,24 +257,24 @@ static void	enter_global_ref(struct localsymbol *,
 				 char *, struct file_entry *);
 static void	digest_symbols(void);
 static void	digest_pass1(void), digest_pass2(void);
-static void	consider_file_section_lengths(struct file_entry *);
-static void	relocate_file_addresses(struct file_entry *);
-static void	consider_relocation(struct file_entry *, int);
-static void	consider_local_symbols(struct file_entry *);
+static void	consider_file_section_lengths(struct file_entry *, void *);
+static void	relocate_file_addresses(struct file_entry *, void *);
+static void	consider_relocation(struct file_entry *, void *);
+static void	consider_local_symbols(struct file_entry *, void *);
 static void	perform_relocation(char *, int,
 				   struct relocation_info *, int,
 				   struct file_entry *, int);
-static void	copy_text(struct file_entry *);
-static void	copy_data(struct file_entry *);
-static void	coptxtrel(struct file_entry *);
-static void	copdatrel(struct file_entry *);
+static void	copy_text(struct file_entry *, void *);
+static void	copy_data(struct file_entry *, void *);
+static void	coptxtrel(struct file_entry *, void *);
+static void	copdatrel(struct file_entry *, void *);
 static void	write_output(void);
 static void	write_header(void);
 static void	write_text(void);
 static void	write_data(void);
 static void	write_rel(void);
 static void	write_syms(void);
-static void	assign_symbolnums(struct file_entry *, int *);
+static void	assign_symbolnums(struct file_entry *, void *);
 static void	cleanup(void);
 static int	parse(char *, char *, char *);
 
@@ -596,7 +596,7 @@ decode_command(int argc, char **argv)
 		std_search_path();
 }
 
-void
+static void
 add_cmdline_ref(symbol *sp)
 {
 	symbol **ptr;
@@ -869,7 +869,7 @@ do_rpath:
  */
 
 void
-each_file(void (*function)(), void *arg)
+each_file(void (*function)(struct file_entry *, void *), void *arg)
 {
 	int	i;
 
@@ -910,43 +910,10 @@ each_file(void (*function)(), void *arg)
 	}
 }
 
-/*
- * Call FUNCTION on each input file entry until it returns a non-zero value.
- * Return this value. Do not call for entries for libraries; instead, call
- * once for each library member that is being loaded.
- * 
- * FUNCTION receives two arguments: the entry, and ARG.  It must be a function
- * returning unsigned long (though this can probably be fudged).
- */
-
-unsigned long
-check_each_file(unsigned long (*function)(), void *arg)
-{
-	int    i;
-	unsigned long return_val;
-
-	for (i = 0; i < number_of_files; i++) {
-		struct file_entry *entry = &file_table[i];
-		if (entry->flags & E_SCRAPPED)
-			continue;
-		if (entry->flags & E_IS_LIBRARY) {
-			struct file_entry *subentry = entry->subfiles;
-			for (; subentry; subentry = subentry->chain) {
-				if (subentry->flags & E_SCRAPPED)
-					continue;
-				if (return_val = (*function)(subentry, arg))
-					return return_val;
-			}
-		} else if (return_val = (*function)(entry, arg))
-			return return_val;
-	}
-	return 0;
-}
-
 /* Like `each_file' but ignore files that were just for symbol definitions.  */
 
 void
-each_full_file(void (*function)(), void	*arg)
+each_full_file(void (*function)(struct file_entry *, void *), void *arg)
 {
 	int    i;
 
@@ -992,7 +959,7 @@ each_full_file(void (*function)(), void	*arg)
 
 /* Close the input file that is now open.  */
 
-void
+static void
 file_close(void)
 {
 	close(input_desc);
@@ -1662,22 +1629,6 @@ enter_global_ref(struct localsymbol *lsp, char *name, struct file_entry *entry)
 }
 
 /*
- * This returns 0 if the given file entry's symbol table does *not* contain
- * the nlist point entry, and it returns the files entry pointer (cast to
- * unsigned long) if it does.
- */
-
-unsigned long
-contains_symbol(struct file_entry *entry, struct nlist *np)
-{
-	if (np >= &entry->symbols->nzlist.nlist &&
-		np < &(entry->symbols + entry->nsymbols)->nzlist.nlist)
-		return (unsigned long) entry;
-	return 0;
-}
-
-
-/*
  * Having entered all the global symbols and found the sizes of sections of
  * all files to be linked, make all appropriate deductions from this data.
  * 
@@ -1745,7 +1696,7 @@ digest_symbols(void)
 	 * and TEXT_SIZE.
 	 */
 	consider_rrs_section_lengths();
-	each_full_file(consider_file_section_lengths, 0);
+	each_full_file(consider_file_section_lengths, (void *)0);
 	rrs_text_start = text_start + text_size;
 	text_size += rrs_text_size;
 	data_size += rrs_data_size;
@@ -1790,7 +1741,7 @@ printf("set_sect_start = %#x, set_sect_size = %#x\n",
 
 	/* Compute start addresses of each file's sections and symbols.  */
 
-	each_full_file(relocate_file_addresses, 0);
+	each_full_file(relocate_file_addresses, (void*) 0);
 	relocate_rrs_addresses();
 
 	/* Pass 2: assign values to symbols */
@@ -2088,7 +2039,7 @@ printf("pass1: SO definition for %s, type %x in %s at %#x\n",
  * of the output file.
  */
 static void
-consider_relocation( struct file_entry *entry, int dataseg)
+consider_relocation( struct file_entry *entry, void *dataseg)
 {
 	struct relocation_info	*reloc, *end;
 	struct localsymbol	*lsp;
@@ -2274,7 +2225,7 @@ consider_relocation( struct file_entry *entry, int dataseg)
  * Determine the disposition of each local symbol.
  */
 static void
-consider_local_symbols(struct file_entry *entry)
+consider_local_symbols(struct file_entry *entry, void *dummy)
 {
 	struct localsymbol	*lsp, *lspend;
 
@@ -2344,7 +2295,7 @@ consider_local_symbols(struct file_entry *entry)
  * the output file.
  */
 static void
-consider_file_section_lengths(struct file_entry *entry)
+consider_file_section_lengths(struct file_entry *entry, void *dummy)
 {
 
 	entry->text_start_address = text_size;
@@ -2365,7 +2316,7 @@ consider_file_section_lengths(struct file_entry *entry)
  * Also relocate the addresses of the file's local and debugger symbols.
  */
 static void
-relocate_file_addresses(struct file_entry *entry)
+relocate_file_addresses(struct file_entry *entry, void *dummy)
 {
 	struct localsymbol	*lsp, *lspend;
 
@@ -2525,7 +2476,7 @@ digest_pass2(void)
 				/* Flag second-hand definitions */
 				undefined_global_sym_count++;
 			if (sp->flags & GS_TRACE)
-				printf("symbol %s assigned to location %#x\n",
+				printf("symbol %s assigned to location %#lx\n",
 					sp->name, sp->value);
 		}
 
@@ -2590,7 +2541,7 @@ digest_pass2(void)
 		}
 		bss_size += size;
 		if (write_map)
-			printf("Allocating %s %s: %x at %x\n",
+			printf("Allocating %s %s: %x at %lx\n",
 				sp->defined==(N_BSS|N_EXT)?"common":"data",
 				sp->name, size, sp->value);
 
@@ -2734,7 +2685,7 @@ write_text(void)
 	if (trace_files)
 		fprintf(stderr, "Copying and relocating text:\n\n");
 
-	each_full_file(copy_text, 0);
+	each_full_file(copy_text, (void *)0);
 	file_close();
 
 	if (trace_files)
@@ -2749,7 +2700,7 @@ write_text(void)
  * reuse.
  */
 void
-copy_text(struct file_entry *entry)
+copy_text(struct file_entry *entry, void *dummy)
 {
 	char	*bytes;
 	int	fd;
@@ -2797,7 +2748,7 @@ write_data(void)
 	if (fseek(outstream, pos, SEEK_SET) != 0)
 		errx(1, "write_data: fseek");
 
-	each_full_file(copy_data, 0);
+	each_full_file(copy_data, (void *)0);
 	file_close();
 
 	/*
@@ -2823,7 +2774,7 @@ write_data(void)
  * reuse. See comments in `copy_text'.
  */
 void
-copy_data(struct file_entry *entry)
+copy_data(struct file_entry *entry, void *dummy)
 {
 	char	*bytes;
 	int	fd;
@@ -3145,15 +3096,15 @@ write_rel(void)
 	if (count != global_sym_count)
 		errx(1, "internal error: write_rel: count = %d", count);
 
-	each_full_file(assign_symbolnums, &count);
+	each_full_file(assign_symbolnums, (void *)&count);
 
 	/* Write out the relocations of all files, remembered from copy_text. */
-	each_full_file(coptxtrel, 0);
+	each_full_file(coptxtrel, (void *)0);
 
 	if (trace_files)
 		fprintf(stderr, "\nWriting data relocation:\n\n");
 
-	each_full_file(copdatrel, 0);
+	each_full_file(copdatrel, (void *)0);
 
 	if (trace_files)
 		fprintf(stderr, "\n");
@@ -3164,9 +3115,10 @@ write_rel(void)
  * Assign symbol ordinal numbers to local symbols in each entry.
  */
 static void
-assign_symbolnums(struct file_entry *entry, int *countp)
+assign_symbolnums(struct file_entry *entry, void *arg)
 {
 	struct localsymbol	*lsp, *lspend;
+	int			*countp = arg;
 	int			n = *countp;
 
 	lspend = entry->symbols + entry->nsymbols;
@@ -3183,7 +3135,7 @@ assign_symbolnums(struct file_entry *entry, int *countp)
 }
 
 static void
-coptxtrel(struct file_entry *entry)
+coptxtrel(struct file_entry *entry, void *dummy)
 {
 	struct relocation_info *r, *end;
 	int reloc = entry->text_start_address;
@@ -3247,7 +3199,7 @@ coptxtrel(struct file_entry *entry)
 }
 
 static void
-copdatrel(struct file_entry *entry)
+copdatrel(struct file_entry *entry, void *dummy)
 {
 	struct relocation_info *r, *end;
 	/*
@@ -3310,7 +3262,7 @@ copdatrel(struct file_entry *entry)
 		sizeof(struct relocation_info), outstream);
 }
 
-void write_file_syms(struct file_entry *, int *);
+void write_file_syms(struct file_entry *, void *);
 void write_string_table(void);
 
 /* Offsets and current lengths of symbol and string tables in output file. */
@@ -3529,7 +3481,7 @@ write_syms(void)
 					nl.n_type = sp->defined;
 				if (nl.n_type == (N_INDR|N_EXT) &&
 							sp->value != 0)
-					errx(1, "%s: N_INDR has value %#x",
+					errx(1, "%s: N_INDR has value %#lx",
 							sp->name, sp->value);
 				nl.n_value = sp->value;
 				if (sp->def_lsp)
@@ -3650,8 +3602,9 @@ printf("writesym(#%d): %s, type %x\n", syms_written, sp->name, sp->defined);
  * would be confused if we did that.
  */
 void
-write_file_syms(struct file_entry *entry, int *syms_written_addr)
+write_file_syms(struct file_entry *entry, void *arg)
 {
+	int			*syms_written_addr = arg;
 	struct localsymbol	*lsp, *lspend;
 
 	/* Upper bound on number of syms to be written here.  */

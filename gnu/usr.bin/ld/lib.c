@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.9 2002/07/19 19:28:11 marc Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.10 2002/09/07 01:25:34 marc Exp $	- library routines*/
 /*
  */
 
@@ -93,7 +93,7 @@ decode_library_subfile(int fd, struct file_entry *library_entry,
 	if (sscanf(hdr1.ar_size, "%d", &member_length) != 1)
 		errx(1, "%s: malformatted header of archive member: %.*s",
 			get_file_name(library_entry),
-			sizeof(hdr1.ar_name), hdr1.ar_name);
+			(int) sizeof(hdr1.ar_name), hdr1.ar_name);
 
 	subentry = (struct file_entry *) xmalloc(sizeof(struct file_entry));
 	bzero(subentry, sizeof(struct file_entry));
@@ -120,7 +120,7 @@ decode_library_subfile(int fd, struct file_entry *library_entry,
 		if (read(fd, name, namelen) != namelen)
 			errx(1, "%s: malformatted archive member: %.*s",
 				get_file_name(library_entry),
-				sizeof(hdr1.ar_name), hdr1.ar_name);
+				(int) sizeof(hdr1.ar_name), hdr1.ar_name);
 		name[namelen] = 0;
 		content_length -= namelen;
 		starting_offset += namelen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.11 2002/07/17 20:33:29 marc Exp $	*/
+/*	$OpenBSD: ld.h,v 1.12 2002/09/07 01:25:34 marc Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -616,9 +616,8 @@ void	read_file_symbols(struct file_entry *);
 int	set_element_prefixed_p(char *);
 int	text_offset(struct file_entry *);
 int	file_open(struct file_entry *);
-void	each_file(void (*)(), void *);
-void	each_full_file(void (*)(), void *);
-unsigned long	check_each_file(unsigned long (*)(), void *);
+void	each_file(void (*)(struct file_entry *, void *), void *);
+void	each_full_file(void (*)(struct file_entry *, void *), void *);
 void	mywrite(void *, int, int, FILE *);
 void	padfile(int, FILE *);
 extern int	will_see_later(const char *);
@@ -650,10 +649,12 @@ int	findlib(struct file_entry *);
 /* In shlib.c: */
 char	*findshlib(char *, int *, int *, int);
 void	add_search_dir(char *);
+void	remove_search_path(char *path);
 void	add_search_path(char *);
 void	std_search_path(void);
 int	getdewey(int[], char *);
 int	cmpndewey(int[], int, int[], int);
+void	remove_search_dir(char *);
 
 /* In rrs.c: */
 void	init_rrs(void);
@@ -684,8 +685,9 @@ void	md_fix_jmpslot(jmpslot_t *, long, u_long);
 int	md_make_reloc(struct relocation_info *, struct relocation_info *, int);
 void	md_make_jmpreloc(struct relocation_info *, struct relocation_info *, int);
 void	md_make_gotreloc(struct relocation_info *, struct relocation_info *, int);
-void	md_make_copyreloc(struct relocation_info *, struct relocation_info *);
+void	md_make_cpyreloc(struct relocation_info *, struct relocation_info *);
 void	md_set_breakpoint(long, long *);
+int	md_midcompat(struct exec *);
 
 #ifdef NEED_SWAP
 void	md_swapin_exec_hdr(struct exec *);
@@ -693,6 +695,7 @@ void	md_swapout_exec_hdr(struct exec *);
 void	md_swapin_reloc(struct relocation_info *, int);
 void	md_swapout_reloc(struct relocation_info *, int);
 void	md_swapout_jmpslot(jmpslot_t *, int);
+#endif
 
 /* In xbits.c: */
 void	swap_longs(long *, int);
@@ -706,4 +709,3 @@ void	swap_so_debug(struct so_debug *);
 void	swapin_sod(struct sod *, int);
 void	swapout_sod(struct sod *, int);
 void	swap_rrs_hash(struct rrs_hash *, int);
-#endif

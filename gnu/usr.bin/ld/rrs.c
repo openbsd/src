@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrs.c,v 1.9 2002/07/19 19:28:11 marc Exp $*/
+/*	$OpenBSD: rrs.c,v 1.10 2002/09/07 01:25:34 marc Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -78,7 +78,6 @@ static int	current_got_offset;
 static int	max_got_offset;
 static int	min_got_offset;
 static int	got_origin;
-static int	current_reloc_offset;
 static int	current_hash_index;
 int		number_of_shobjs;
 
@@ -547,7 +546,7 @@ claim_rrs_internal_gotslot(struct file_entry *entry, struct relocation_info *rp,
 	if (lsp->gotslot_offset != -1) {
 		/* Already claimed */
 		if (*GOTP(lsp->gotslot_offset) != addend)
-			errx(1, "%s: gotslot at %#x is multiple valued",
+			errx(1, "%s: gotslot at %#lx is multiple valued",
 				get_file_name(entry), lsp->gotslot_offset);
 		return lsp->gotslot_offset;
 	}
@@ -633,7 +632,7 @@ printf("claim_rrs_segment_reloc: %s at %#x\n",
  * Fill the RRS hash table for the given symbol name.
  * NOTE: the hash value computation must match the one in rtld.
  */
-void
+static void
 rrs_insert_hash(char *cp, int index)
 {
 	int		hashval = 0;
@@ -676,9 +675,11 @@ void
 consider_rrs_section_lengths(void)
 {
 	int		n;
-	struct shobj	*shp, **shpp;
+	struct shobj	*shp;
 
 #ifdef notyet
+	struct shobj	**shpp;
+
 /* We run into trouble with this as long as shared object symbols
    are not checked for definitions */
 	/*
@@ -947,7 +948,7 @@ relocate_rrs_addresses(void)
 
 }
 
-void
+static void
 write_rrs_data(void)
 {
 	long	pos;
@@ -989,7 +990,7 @@ write_rrs_data(void)
 	mywrite(rrs_plt, number_of_jmpslots, sizeof(jmpslot_t), outstream);
 }
 
-void
+static void
 write_rrs_text(void)
 {
 	long			pos;

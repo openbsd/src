@@ -1,12 +1,16 @@
-/* $OpenBSD: etc.c,v 1.4 2002/05/24 06:08:52 ericj Exp $ */
+/* $OpenBSD: etc.c,v 1.5 2002/09/07 01:25:34 marc Exp $ */
 
 /* Public Domain */
 
 #include <sys/types.h>
 
+#include <a.out.h>
 #include <err.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+
+#include "ld.h"
 
 #define	OOM_MSG	"Out of memory"
 

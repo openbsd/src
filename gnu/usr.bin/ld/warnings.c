@@ -1,4 +1,4 @@
-/* * $OpenBSD: warnings.c,v 1.8 2002/07/19 19:28:12 marc Exp $*/
+/* * $OpenBSD: warnings.c,v 1.9 2002/09/07 01:25:34 marc Exp $*/
 /*
  */
 
@@ -86,8 +86,8 @@ get_file_name(struct file_entry *entry)
 
 /* Print a complete or partial map of the output file. */
 
-static void	describe_file_sections(struct file_entry *, FILE *);
-static void	list_file_locals(struct file_entry *, FILE *);
+static void	describe_file_sections(struct file_entry *, void *);
+static void	list_file_locals(struct file_entry *, void *);
 
 void
 print_symbols(FILE *outfile)
@@ -107,7 +107,7 @@ print_symbols(FILE *outfile)
 		else if (sp->defined == (N_UNDF|N_EXT))
 			fprintf(outfile, "common: size %#x", sp->common_size);
 		else
-			fprintf(outfile, "type %d, value %#x, size %#x",
+			fprintf(outfile, "type %d, value %#lx, size %#x",
 				sp->defined, sp->value, sp->size);
 		if (sp->alias)
 			fprintf(outfile, ", aliased to %s", sp->alias->name);
@@ -118,8 +118,10 @@ print_symbols(FILE *outfile)
 }
 
 static void
-describe_file_sections(struct file_entry *entry, FILE *outfile)
+describe_file_sections(struct file_entry *entry, void *arg)
 {
+	FILE *outfile = arg;
+
 	fprintf(outfile, "  ");
 	print_file_name(entry, outfile);
 	if (entry->flags & (E_JUST_SYMS | E_DYNAMIC))
@@ -132,8 +134,9 @@ describe_file_sections(struct file_entry *entry, FILE *outfile)
 }
 
 static void
-list_file_locals(struct file_entry *entry, FILE *outfile)
+list_file_locals(struct file_entry *entry, void *arg)
 {
+	FILE			*outfile = arg;
 	struct localsymbol	*lsp, *lspend;
 
 	entry->strings = (char *)alloca(entry->string_size);
@@ -151,7 +154,7 @@ list_file_locals(struct file_entry *entry, FILE *outfile)
 		 * update it if necessary by this file's start address.
 		 */
 		if (!(p->n_type & (N_STAB | N_EXT)))
-			fprintf(outfile, "  %s: 0x%x\n",
+			fprintf(outfile, "  %s: 0x%lx\n",
 				entry->strings + p->n_un.n_strx, p->n_value);
 	}
 
@@ -188,8 +191,10 @@ struct line_debug_entry
  */
 
 static int
-reloc_cmp(struct relocation_info *rel1, struct relocation_info *rel2)
+reloc_cmp(const void *arg1, const void *arg2)
 {
+	const struct relocation_info *rel1 = arg1;
+	const struct relocation_info *rel2 = arg2;
 	return RELOC_ADDRESS(rel1) - RELOC_ADDRESS(rel2);
 }
 
@@ -512,8 +517,8 @@ do_relocation_warnings(struct file_entry *entry, int data_segment,
  * possible, just the .o file if not.
  */
 
-void
-do_file_warnings(struct file_entry *entry, FILE *outfile)
+static void
+do_file_warnings(struct file_entry *entry, void *arg)
 {
 	int	nsym;
 	int	i;
@@ -522,6 +527,7 @@ do_file_warnings(struct file_entry *entry, FILE *outfile)
 	int	dont_allow_symbol_name;
 	u_char	*nlist_bitvector;
 	struct line_debug_entry	*text_scan, *data_scan;
+	FILE	*outfile = arg;
 
 	nsym = entry->nsymbols;
 	nlist_bitvector = (u_char *)alloca((nsym >> 3) + 1);

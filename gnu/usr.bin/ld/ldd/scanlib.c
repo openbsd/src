@@ -1,4 +1,4 @@
-/* $OpenBSD: scanlib.c,v 1.4 2002/07/19 19:28:12 marc Exp $ */
+/* $OpenBSD: scanlib.c,v 1.5 2002/09/07 01:25:34 marc Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -30,10 +30,16 @@
  */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <fcntl.h>
-#include <unistd.h>
+
 #include <a.out.h>
+#include <err.h>
+#include <fcntl.h>
 #include <link.h>
+#include <stdio.h>
+#include <unistd.h>
+
+extern void scan_library(int, struct exec *, const char *, const char *,
+			 const char *); 
 
 void
 scan_library(int fd, struct exec *hdr, const char *name, const char *fmt1,

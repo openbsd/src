@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.11 2002/07/19 19:28:12 marc Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.12 2002/09/07 01:25:34 marc Exp $	*/
 /*	$NetBSD: ldd.c,v 1.12 1995/10/09 00:14:41 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -45,9 +45,10 @@
 #include <string.h>
 #include <unistd.h>
 
-extern void scan_library(int, struct exec *, const char *, const char *, const char *);
+extern void scan_library(int, struct exec *, const char *, const char *,
+			 const char *); 
 
-void
+static void
 usage(void)
 {
 	extern char *__progname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.13 2002/07/19 19:28:12 marc Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.14 2002/09/07 01:25:34 marc Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -275,7 +275,7 @@ enter(char *dir, char *file, char *name, int dewey[], int ndewey)
 #define _PATH_LD_HINTS		"./ld.so.hints"
 #endif
 
-int
+static int
 hinthash(char *cp, int vmajor, int vminor)
 {
 	int	k = 0;

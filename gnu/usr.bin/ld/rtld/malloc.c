@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.5 2002/07/19 19:28:12 marc Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.6 2002/09/07 01:25:34 marc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$OpenBSD: malloc.c,v 1.5 2002/07/19 19:28:12 marc Exp $";
+static char *rcsid = "$OpenBSD: malloc.c,v 1.6 2002/09/07 01:25:34 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,6 +56,7 @@ static char *rcsid = "$OpenBSD: malloc.c,v 1.5 2002/07/19 19:28:12 marc Exp $";
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/mman.h>
+
 #ifndef BSD
 #define MAP_COPY	MAP_PRIVATE
 #define MAP_FILE	0
@@ -73,7 +74,8 @@ static char *rcsid = "$OpenBSD: malloc.c,v 1.5 2002/07/19 19:28:12 marc Exp $";
  */
 #define	NPOOLPAGES	(32*1024/pagesz)
 static caddr_t		pagepool_start, pagepool_end;
-static int		morepages();
+static int		morepages(int);
+extern void		xprintf(char *, ...);
 
 /*
  * The overhead on a block is at least 4 bytes.  When free, this space
@@ -120,7 +122,6 @@ static int findbucket(union overhead *freep, int srchlen);
  */
 #define	NBUCKETS 30
 static	union overhead *nextf[NBUCKETS];
-extern	char *sbrk();
 
 static	int pagesz;			/* page size */
 static	int pagebucket;			/* page size bucket */
@@ -387,7 +388,7 @@ realloc(void *cp, size_t nbytes)
  * header starts at ``freep''.  If srchlen is -1 search the whole list.
  * Return bucket number, or -1 if not found.
  */
-static
+static int
 findbucket(union overhead *freep, int srchlen)
 {
 	union overhead *p;
