@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.8 1996/09/15 10:09:12 tholo Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.9 1996/09/26 09:13:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -101,14 +101,39 @@ typedef union {
 } querybuf;
 
 typedef union {
-    int32_t al;
-    char ac;
+	int32_t al;
+	char ac;
 } align;
 
 static int qcomp __P((struct in_addr **, struct in_addr **));
 static struct hostent *getanswer __P((querybuf *, int, int));
+static int hbadchar __P((char *));
 
 extern int h_errno;
+
+static int
+hbadchar(p)
+	char *p;
+{
+	char c;
+
+	/*
+	 * Many people do not obey RFC 822 and 1035.  The valid
+	 * characters are a-z, A-Z, 0-9, '-' and . But the others
+	 * tested for below can happen, and we must be more permissive
+	 * until those idiots clean up their act.
+	 */
+	while ((c = *p++)) {
+		if (('a' >= c && c <= 'z') ||
+		    ('A' >= c && c <= 'Z') ||
+		    ('0' >= c && c <= '9'))
+			continue;
+		if (strchr("-_/.[]\\", c) ||
+		    (c == '.' && p[1] == '.'))
+			return 1;
+	}
+	return 0;
+}
 
 static struct hostent *
 getanswer(answer, anslen, iquery)
@@ -124,6 +149,7 @@ getanswer(answer, anslen, iquery)
 	int type, class, buflen, ancount, qdcount;
 	int haveanswer, getclass = C_ANY;
 	char **hap;
+	int good = 1;
 
 	eom = answer->buf + anslen;
 	/*
@@ -200,7 +226,7 @@ getanswer(answer, anslen, iquery)
 			n = strlen(host.h_name);
 			if (n >= MAXHOSTNAMELEN)
 				host.h_name[MAXHOSTNAMELEN-1] = '\0';
-			return(&host);
+			goto gotent;
 		}
 		if (iquery || type != T_A)  {
 #ifdef DEBUG
@@ -224,6 +250,8 @@ getanswer(answer, anslen, iquery)
 			host.h_length = n;
 			getclass = class;
 			host.h_addrtype = (class == C_IN) ? AF_INET : AF_UNSPEC;
+			if (host.h_addrtype == AF_INET)
+				host.h_length = sizeof(struct in_addr);
 			if (!iquery) {
 				host.h_name = bp;
 				if (strlen(bp) >= MAXHOSTNAMELEN)
@@ -248,19 +276,27 @@ getanswer(answer, anslen, iquery)
 		cp += n;
 		haveanswer++;
 	}
-	if (haveanswer) {
-		*ap = NULL;
-		*hap = NULL;
-		if (_res.nsort) {
-			qsort(host.h_addr_list, haveanswer,
-			    sizeof(struct in_addr),
-			    (int (*)__P((const void *, const void *)))qcomp);
-		}
-		return (&host);
-	} else {
+	if (!haveanswer) {
 		h_errno = TRY_AGAIN;
 		return ((struct hostent *) NULL);
 	}
+	*ap = NULL;
+	*hap = NULL;
+	if (_res.nsort) {
+		qsort(host.h_addr_list, haveanswer,
+		    sizeof(struct in_addr),
+		    (int (*)__P((const void *, const void *)))qcomp);
+	}
+gotent:
+	if (hbadchar(host.h_name))
+		good = 0;
+	for (ap = host_aliases; good && *ap; ap++)
+		if (hbadchar(*ap))
+			good = 0;
+	if (good)
+		return (&host);
+	h_errno = NO_RECOVERY;
+	return ((struct hostent *) NULL);
 }
 
 struct hostent *
