@@ -61,7 +61,6 @@
 ./etc/networks
 ./etc/newsyslog.conf
 ./etc/passwd
-./etc/passwd.conf
 ./etc/phones
 ./etc/photuris/attributes.conf
 ./etc/photuris/photuris.conf
