@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootst.c,v 1.4 1996/04/28 10:48:24 deraadt Exp $ */
+/*	$OpenBSD: bootst.c,v 1.5 1996/05/16 02:49:07 chuck Exp $ */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -6,9 +6,9 @@
 #include <sys/exec.h>
 #include <machine/prom.h>
 
-#define RB_NOSYM 0x400
+#include "stand.h"
+#include "libsa.h"
 
-void parse_args __P((struct mvmeprom_args *pbugargs));
 int load_kern();
 int read_tape_block __P((short ctrl, short dev, short *status,
     void *addr, int *cnt, int blk_num, u_char *flags, int verbose));
@@ -27,7 +27,6 @@ struct kernel {
 
 typedef(*kernel_entry) __P((struct mvmeprom_args *, struct kernel *));
 
-extern struct mvmeprom_args bugargs;
 int
 main()
 {
@@ -41,7 +40,7 @@ main()
 	print_brdid();
 	print_memory();
 	*/
-	parse_args(pbugargs);
+	parse_args(&kernel.kname, &kernel.bflags);
 	if (load_kern(pbugargs) == 1) {
 		printf("unsuccessful in loading kernel\n");
 	} else {
@@ -70,7 +69,7 @@ main()
 		printf("kernel.end_loaded %x\n", kernel.end_loaded);
 #endif
 		if (kernel.bflags & RB_HALT)
-			mvmeprom_return();
+			_rtt();
 		if (((u_long)addr &0xf) == 0x2) {
 			(addr)(pbugargs, &kernel);
 		} else {
@@ -313,47 +312,4 @@ loadmini(addr, pbugargs)
 	kernel.emini = (void *) ((u_int) addr + cnt);
 	kernel.end_loaded = (u_int) kernel.emini;
 	return (0);
-}
-
-void
-parse_args(pargs)
-	struct mvmeprom_args *pargs;
-{
-	char *ptr = pargs->arg_start;
-	char c, *name = NULL;
-	int howto = 0;
-
-	if (pargs->arg_start != pargs->arg_end) {
-		while (c = *ptr) {
-			while (c == ' ')
-				c = *++ptr;
-			if (!c)
-				return;
-			if (c != '-') {
-				name = ptr;
-				while ((c = *++ptr) && c != ' ');
-				if (c)
-					*ptr++ = 0;
-				continue;
-			}
-			while ((c = *++ptr) && c != ' ') {
-				if (c == 'a')
-					howto |= RB_ASKNAME;
-				else if (c == 'b')
-					howto |= RB_HALT;
-				else if (c == 'y')
-					howto |= RB_NOSYM;
-				else if (c == 'd')
-					howto |= RB_KDB;
-				else if (c == 'm')
-					howto |= RB_MINIROOT;
-				else if (c == 'r')
-					howto |= RB_DFLTROOT;
-				else if (c == 's')
-					howto |= RB_SINGLE;
-			}
-		}
-	}
-	kernel.bflags = howto;
-	kernel.kname = name;
 }
