@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.9 2000/08/12 04:29:24 jasoni Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.10 2000/08/15 02:44:12 ericj Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -116,6 +116,10 @@ int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *pfsp, str
 int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 struct vnode *procfs_findtextvp __P((struct proc *));
 int procfs_freevp __P((struct vnode *));
+
+#if !defined(UVM)
+int procfs_rwmem __P((struct proc *, struct uio *));
+#endif
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile __P((struct proc *));
