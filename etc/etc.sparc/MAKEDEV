@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.9 2002/02/17 05:14:30 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.37 2002/02/21 13:03:00 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.38 2002/02/21 13:41:55 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.88 2002/02/21 13:19:06 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.89 2002/02/21 13:44:12 todd Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -471,8 +471,8 @@ all)
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1
 	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
 	R fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 tcx0 cgfourteen0
-	R cgeight0 cgsix0 cgfour0 cgthree0 cgtwo0 bwtwo0 audio0 uk0
-	R rndrandom lkm cuaa cuab cuac cuad ttya ttyb ttyc ttyd pf
+	R cgeight0 cgsix0 cgfour0 cgthree0 cgtwo0 bwtwo0 audio0 uk1
+	R uk0 random lkm cuaa cuab cuac cuad ttya ttyb ttyc ttyd pf
 	R altq xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 

@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.hp300/MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.37 2002/02/21 13:03:00 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.38 2002/02/21 13:41:55 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.46 2002/02/21 13:19:06 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.47 2002/02/21 13:44:12 todd Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -425,7 +425,7 @@ all)
 	R st1 hil grf0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
 	R sd2 sd3 sd4 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 local ppi0
-	R apci0 rndrandom lkm pf altq std fd
+	R apci0 random lkm pf altq std fd
 	;;
 
 sd*|hd*|ccd*)

@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.vax/MAKEDEV.md,v 1.8 2002/02/21 13:17:30 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.37 2002/02/21 13:03:00 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.38 2002/02/21 13:41:55 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.42 2002/02/21 13:19:07 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.43 2002/02/21 13:44:13 todd Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -507,7 +507,7 @@ local)
 all)
 	R vt0 dl0 dz0 dhu0 ts0 ts1 mt0 mt1 hd0 hd1 hd2 ccd0 vnd0 sd0
 	R sd1 sd2 sd3 cd0 tun0 tun1 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
-	R bpf7 pty0 pty1 ss0 uk0 rndrandom lkm pf altq rx0 rx1 ra0 ra1
+	R bpf7 pty0 pty1 ss0 uk0 random lkm pf altq rx0 rx1 ra0 ra1
 	R ra2 ra3 hp0 hp1 hp2 hp3 raid0 raid1 raid2 raid3 std st0 st1
 	R fd
 	;;
