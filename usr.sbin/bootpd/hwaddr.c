@@ -134,8 +134,8 @@ setarp(s, ia, ha, len)
 	extern char *inet_ntoa();
 
 	a = inet_ntoa(*ia);
-	snprintf(buf, sizeof(buf), "arp -d %s; arp -s %s %s temp",
-		a, a, haddrtoa(ha, len));
+	snprintf(buf, sizeof(buf), "(arp -d %s; arp -s %s %s temp) "
+	    "</dev/null >/dev/null 2>&1", a, a, haddrtoa(ha, len));
 	if (debug > 2)
 		report(LOG_INFO, "%s", buf);
 	status = system(buf);
