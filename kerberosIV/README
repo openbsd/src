@@ -1,14 +1,18 @@
-$OpenBSD: README,v 1.1 2000/02/25 16:35:23 hin Exp $
+$OpenBSD: README,v 1.2 2000/08/31 19:54:45 hin Exp $
 
-This version is based on krb4-1.0, which is available from
-ftp://ftp.pdc.kth.se/pub/krb4/src/
+This version is based on version 1.0.2 of the Kerberos IV distribution
+from KTH, which is available from ftp://ftp.pdc.kth.se/pub/krb4/src/.
 
 A webpage is available at http://www.pdc.kth.se/kth-krb/.
 
-To upgrade to a newer version:
+UPGRADING
+---------
 
-1. unpack the distribution and rename it to src
-2. mkdir /tmp/krb ; cd /tmp/krb ; /usr/src/kerberosIV/src/configure
+1. Import the distribution into src/kerberosIV/src. Dont forget to change
+   all '$Id: README,v 1.2 2000/08/31 19:54:45 hin Exp $' tags etc. to '$KTH: ... $'.
+2. mkdir /tmp/krb 
+   cd /tmp/krb 
+   /usr/src/kerberosIV/src/configure --disable-otp
 3. cd include ; make
 4. cp config.h protos.h roken-common.h ktypes.h version.h \
 	/usr/src/kerberosIV/src/include
@@ -29,3 +33,10 @@ To upgrade to a newer version:
 8. Update the kafs.h include file with a newer from Arla, this is
    needed for the afs client. *yuk*
 9. Update any other utilities that may need to be changed.
+
+OTP
+---
+
+OTP is not currently supported, even though code is available in KTH Kerberos.
+The reason for this is simply that nobody cares enough to make it work. If you
+need OTP, fixing it should be quite simple.
