@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.4 2002/05/22 09:09:32 deraadt Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.5 2002/07/19 02:38:40 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.4 2002/05/22 09:09:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.5 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 /*
@@ -99,8 +99,7 @@ extern struct group_entry *gtable[];
  * most of the work.
  */
 void
-__setnetgrent(group)
-	char *group;
+__setnetgrent(char *group)
 {
 	/* Sanity check */
 
@@ -126,8 +125,7 @@ __setnetgrent(group)
  * Get the next netgroup off the list.
  */
 int
-__getnetgrent(hostp, userp, domp)
-	char **hostp, **userp, **domp;
+__getnetgrent(char **hostp, char **userp, char **domp)
 {
 	if (nextgrp) {
 		*hostp = nextgrp->ng_str[NG_HOST];
@@ -143,7 +141,7 @@ __getnetgrent(hostp, userp, domp)
  * __endnetgrent() - cleanup
  */
 void
-__endnetgrent()
+__endnetgrent(void)
 {
 	struct linelist *lp, *olp;
 	struct netgrp *gp, *ogp;
@@ -180,8 +178,7 @@ __endnetgrent()
  * Parse the netgroup file setting up the linked lists.
  */
 static int
-parse_netgrp(group)
-	char *group;
+parse_netgrp(char *group)
 {
 	char *spos, *epos;
 	int len, strpos;
@@ -291,8 +288,7 @@ parse_netgrp(group)
  * is found. Return 1 if eof is encountered.
  */
 static struct linelist *
-read_for_group(group)
-	char *group;
+read_for_group(char *group)
 {
 	char *pos, *spos, *linep = NULL, *olinep = NULL;
 	int len, olen;

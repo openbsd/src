@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.10 2001/11/19 09:03:03 deraadt Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.11 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$OpenBSD: yplib_host.c,v 1.10 2001/11/19 09:03:03 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yplib_host.c,v 1.11 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -66,17 +66,14 @@ extern void *ypresp_data;
 int _yplib_host_timeout = 10;
 
 CLIENT *
-yp_bind_host(server, program, version, port, usetcp)
-	char *server;
-	u_long	program, version;
-	u_short port;
-	int usetcp;
+yp_bind_host(char *server, u_long program, u_long version, u_short port,
+    int usetcp)
 {
 	struct sockaddr_in rsrv_sin;
-	int rsrv_sock;
+	static CLIENT *client;
 	struct hostent *h;
 	struct timeval tv;
-	static CLIENT *client;
+	int rsrv_sock;
 
 	memset(&rsrv_sin, 0, sizeof rsrv_sin);
 	rsrv_sin.sin_len = sizeof rsrv_sin;
@@ -116,19 +113,16 @@ yp_bind_host(server, program, version, port, usetcp)
 		    server);
 		exit(1);
 	}
-
 	return(client);
-	
 }
 
 CLIENT *
-yp_bind_local(program, version)
-	u_long	program, version;
+yp_bind_local(u_long program, u_long version)
 {
 	struct sockaddr_in rsrv_sin;
-	int rsrv_sock;
-	struct timeval tv;
 	static CLIENT *client;
+	struct timeval tv;
+	int rsrv_sock;
 
 	memset(&rsrv_sin, 0, sizeof rsrv_sin);
 	rsrv_sin.sin_len = sizeof rsrv_sin;
@@ -148,18 +142,12 @@ yp_bind_local(program, version)
 }
 
 int
-yp_match_host(client, indomain, inmap, inkey, inkeylen, outval, outvallen)
-	CLIENT *client;
-	char *indomain;
-	char *inmap;
-	const char *inkey;
-	int inkeylen;
-	char **outval;
-	int *outvallen;
+yp_match_host(CLIENT *client, char *indomain, char *inmap, const char *inkey,
+    int inkeylen, char **outval, int *outvallen)
 {
 	struct ypresp_val yprv;
-	struct timeval tv;
 	struct ypreq_key yprk;
+	struct timeval tv;
 	int r;
 
 	*outval = NULL;
@@ -190,14 +178,8 @@ yp_match_host(client, indomain, inmap, inkey, inkeylen, outval, outvallen)
 }
 
 int
-yp_first_host(client, indomain, inmap, outkey, outkeylen, outval, outvallen)
-	CLIENT *client;
-	char *indomain;
-	char *inmap;
-	char **outkey;
-	int *outkeylen;
-	char **outval;
-	int *outvallen;
+yp_first_host(CLIENT *client, char *indomain, char *inmap, char **outkey,
+    int *outkeylen, char **outval, int *outvallen)
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_nokey yprnk;
@@ -233,17 +215,8 @@ yp_first_host(client, indomain, inmap, outkey, outkeylen, outval, outvallen)
 }
 
 int
-yp_next_host(client, indomain, inmap, inkey, inkeylen, outkey,
-    outkeylen, outval, outvallen)
-	CLIENT *client;
-	char *indomain;
-	char *inmap;
-	char *inkey;
-	int inkeylen;
-	char **outkey;
-	int *outkeylen;
-	char **outval;
-	int *outvallen;
+yp_next_host(CLIENT *client, char *indomain, char *inmap, char *inkey,
+    int inkeylen, char **outkey, int *outkeylen, char **outval, int *outvallen)
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_key yprk;
@@ -281,11 +254,8 @@ yp_next_host(client, indomain, inmap, inkey, inkeylen, outkey,
 }
 
 int
-yp_all_host(client, indomain, inmap, incallback)
-	CLIENT *client;
-	char *indomain;
-	char *inmap;
-	struct ypall_callback *incallback;
+yp_all_host(CLIENT *client, char *indomain, char *inmap,
+    struct ypall_callback *incallback)
 {
 	struct ypreq_nokey yprnk;
 	struct timeval tv;
@@ -307,11 +277,7 @@ yp_all_host(client, indomain, inmap, incallback)
 }
 
 int
-yp_order_host(client, indomain, inmap, outorder)
-	CLIENT *client;
-	char *indomain;
-	char *inmap;
-	u_int32_t *outorder;
+yp_order_host(CLIENT *client, char *indomain, char *inmap, u_int32_t *outorder)
 {
 	struct ypresp_order ypro;
 	struct ypreq_nokey yprnk;
@@ -336,11 +302,7 @@ yp_order_host(client, indomain, inmap, outorder)
 }
 
 int
-yp_master_host(client, indomain, inmap, outname)
-	CLIENT *client;
-	char *indomain;
-	char *inmap;
-	char **outname;
+yp_master_host(CLIENT *client, char *indomain, char *inmap, char **outname)
 {
 	struct ypresp_master yprm;
 	struct ypreq_nokey yprnk;
@@ -358,17 +320,14 @@ yp_master_host(client, indomain, inmap, outname)
 	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
 	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_master: clnt_call");
-	if (!(r=ypprot_err(yprm.stat)) )
-	    *outname = (char *)strdup(yprm.peer);
+	if (!(r = ypprot_err(yprm.stat)))
+		*outname = (char *)strdup(yprm.peer);
 	xdr_free(xdr_ypresp_master, (char *)&yprm);
 	return r;
 }
 
 int
-yp_maplist_host(client, indomain, outmaplist)
-	CLIENT *client;
-	char *indomain;
-	struct ypmaplist **outmaplist;
+yp_maplist_host(CLIENT *client, char *indomain, struct ypmaplist **outmaplist)
 {
 	struct ypresp_maplist ypml;
 	struct timeval tv;
@@ -387,4 +346,3 @@ yp_maplist_host(client, indomain, outmaplist)
 	/* NO: xdr_free(xdr_ypresp_maplist, &ypml);*/
 	return ypprot_err(ypml.stat);
 }
-

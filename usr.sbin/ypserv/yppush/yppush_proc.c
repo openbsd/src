@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_proc.c,v 1.4 2000/10/12 09:47:28 deraadt Exp $ */
+/*	$OpenBSD: yppush_proc.c,v 1.5 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush_proc.c,v 1.4 2000/10/12 09:47:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush_proc.c,v 1.5 2002/07/19 02:38:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -40,27 +40,21 @@ static char rcsid[] = "$OpenBSD: yppush_proc.c,v 1.4 2000/10/12 09:47:28 deraadt
 
 extern int Verbose;
 
-void * 
-yppushproc_null_1_svc(argp, rqstp)
-	void *argp;
-	struct svc_req *rqstp;
+void *
+yppushproc_null_1_svc(void *argp, struct svc_req *rqstp)
 {
-
-	static char* result;
+	static char *result;
 
 	/*
 	 * insert server code here
 	 */
-	return((void*) &result);
+	return((void *) &result);
 }
 
-void * 
-yppushproc_xfrresp_1_svc(argp, rqstp)
-	yppushresp_xfr *argp;
-	struct svc_req *rqstp;
+void *
+yppushproc_xfrresp_1_svc(yppushresp_xfr *argp, struct svc_req *rqstp)
 {
-
-	static char* result;
+	static char *result;
 
 	/*
 	 * insert server code here
@@ -68,6 +62,5 @@ yppushproc_xfrresp_1_svc(argp, rqstp)
 	if ((argp->status < YPPUSH_SUCC) || Verbose)
 		fprintf(stderr, "yppush: %s\n",
 		    yppush_err_string(argp->status));
-
-	return((void*) &result);
+	return((void *) &result);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.16 2001/11/19 09:01:43 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.17 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.16 2001/11/19 09:01:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.17 2002/07/19 02:38:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ static char rcsid[] = "$OpenBSD: yppush.c,v 1.16 2001/11/19 09:01:43 deraadt Exp
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <ctype.h>
 
 #include <rpc/rpc.h>
@@ -68,15 +69,14 @@ extern void yppush_xfrrespprog_1(struct svc_req *request, SVCXPRT *xprt);
 extern bool_t xdr_ypreq_xfr(XDR *, struct ypreq_xfr *);
 
 void
-usage()
+usage(void)
 {
-	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "\typpush [-d domainname] [-h host] [-v] mapname\n");
+	fprintf(stderr, "usage: yppush [-d domainname] [-h host] [-v] mapname\n");
 	exit(1);
 }
 
 void
-_svc_run()
+_svc_run(void)
 {
 	fd_set *readfdsp = NULL;
 	extern fd_set *__svc_fdset;
@@ -116,12 +116,7 @@ _svc_run()
 }
 
 void
-req_xfr(pid, prog, transp, host, client)
-pid_t pid;
-u_int prog;
-SVCXPRT *transp;
-char *host;
-CLIENT *client;
+req_xfr(pid_t pid, u_int prog, SVCXPRT *transp, char *host, CLIENT *client)
 {
 	struct ypreq_xfr request;
 	struct timeval tv;
@@ -155,9 +150,7 @@ CLIENT *client;
 }
 
 void
-push(inlen, indata)
-int inlen;
-char *indata;
+push(int inlen, char *indata)
 {
 	char host[MAXHOSTNAMELEN];
 	CLIENT *client;
@@ -201,7 +194,7 @@ char *indata;
 		return;
 	}
 
-	switch(pid=fork()) {
+	switch (pid=fork()) {
 	case -1:
 		fprintf(stderr, "yppush: Cannot fork.\n");
 		exit(1);
@@ -222,13 +215,8 @@ char *indata;
 }
 
 int
-pushit(instatus, inkey, inkeylen, inval, invallen, indata)
-int instatus;
-char *inkey;
-int inkeylen;
-char *inval;
-int invallen;
-char *indata;
+pushit(u_long instatus, char *inkey, int inkeylen, char *inval, int invallen,
+    void *indata)
 {
 	if (instatus != YP_TRUE)
 		return instatus;
@@ -237,9 +225,7 @@ char *indata;
 }
 
 int
-main(argc, argv)
-int  argc;
-char **argv;
+main(int argc, char *argv[])
 {
 	struct ypall_callback ypcb;
 	extern char *optarg;
@@ -257,7 +243,7 @@ char **argv;
 	yp_get_default_domain(&domain);
 	hostname = NULL;
 	while ((c=getopt(argc, argv, "d:h:v")) != -1)
-		switch(c) {
+		switch (c) {
 		case 'd':
 			domain = optarg;
 			break;
@@ -291,12 +277,11 @@ char **argv;
 	/* Check domain */
 	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
 	if (!((stat(map_path, &finfo) == 0) &&
-	      ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
-	  	fprintf(stderr, "yppush: Map does not exist.\n");
+	    ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
+		fprintf(stderr, "yppush: Map does not exist.\n");
 		exit(1);
 	}
-		
-	
+
 	/* Check map */
 	snprintf(map_path, sizeof map_path, "%s/%s/%s%s",
 	    YP_DB_PATH, domain, Map, YPDB_SUFFIX);
@@ -304,7 +289,7 @@ char **argv;
 		fprintf(stderr, "yppush: Map does not exist.\n");
 		exit(1);
 	}
-		
+
 	snprintf(map_path, sizeof map_path, "%s/%s/%s",
 	    YP_DB_PATH, domain, Map);
 	yp_databas = ypdb_open(map_path, 0, O_RDONLY);
@@ -335,7 +320,6 @@ char **argv;
 			}
 		}
 	}
-	
 
 	yp_bind(Domain);
 
@@ -362,4 +346,3 @@ char **argv;
 
 	exit(0);
 }
-

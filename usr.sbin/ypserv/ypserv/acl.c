@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.7 2001/11/19 09:03:06 deraadt Exp $ */
+/*	$OpenBSD: acl.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: acl.c,v 1.7 2001/11/19 09:03:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: acl.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -52,10 +52,7 @@ static char rcsid[] = "$OpenBSD: acl.c,v 1.7 2001/11/19 09:03:06 deraadt Exp $";
 static	struct aclent *acl_root = NULL;
 
 static int
-acl_read_line(fp, buf, size)
-	FILE *fp;
-	char *buf;
-	int size;
+acl_read_line(FILE *fp, char *buf, int size)
 {
 	int	 len = 0;
 	char *c, *p, l;
@@ -65,7 +62,7 @@ acl_read_line(fp, buf, size)
 	do {
 		while (fgets(buf, size, fp)) {
 			c = buf;
-			while(*c != '\0') {
+			while (*c != '\0') {
 				if (*c == '#' || *c == '\n') {
 					*c = '\0';
 				} else {
@@ -74,7 +71,7 @@ acl_read_line(fp, buf, size)
 			}
 
 			c = p = buf; l = ' ';
-			while(*c != '\0') {
+			while (*c != '\0') {
 				if (isspace(l) && isspace(*c)) {
 					c++;
 				} else {
@@ -82,7 +79,7 @@ acl_read_line(fp, buf, size)
 				}
 			}
 			*p = '\0';
-			
+
 			if (p != buf) {
 				--p;
 				if (isspace(*p) != 0) {
@@ -98,11 +95,10 @@ acl_read_line(fp, buf, size)
 }
 
 int
-acl_check_host(addr)
-struct in_addr *addr;
+acl_check_host(struct in_addr *addr)
 {
 	struct aclent *p;
-	
+
 	p = acl_root;
 	while (p != NULL) {
 		if ((addr->s_addr & p->s_mask) == p->s_addr)
@@ -113,18 +109,16 @@ struct in_addr *addr;
 }
 
 void
-acl_add_net(allow, addr,mask)
-	int	allow;
-	struct in_addr *addr, *mask;
+acl_add_net(int	allow, struct in_addr *addr, struct in_addr *mask)
 {
 	struct aclent *acl, *p;
-	
+
 	acl = (struct aclent *) malloc(sizeof(struct aclent));
 	acl->next	 = NULL;
 	acl->allow	= allow;
 	acl->s_addr = addr->s_addr;
 	acl->s_mask = mask->s_addr;
-	
+
 	if (acl_root == NULL) {
 		acl_root = acl;
 	} else {
@@ -133,12 +127,10 @@ acl_add_net(allow, addr,mask)
 			p = p->next;
 		p->next = acl;
 	}
-} 
+}
 
 void
-acl_add_host(allow, addr)
-	int	allow;
-	struct in_addr *addr;
+acl_add_host(int allow, struct in_addr *addr)
 {
 	struct in_addr mask;
 
@@ -147,27 +139,22 @@ acl_add_host(allow, addr)
 }
 
 int
-acl_init(file)
-	char *file;
+acl_init(char *file)
 {
-	char	 data_line[1024];
-	int	 line_no = 0;
-	int	 len, i;
-	int	 allow = TRUE;
-	int	 error_cnt = 0;
-	char	*p, *k;
-	int	 state;
+	char data_line[1024], *p, *k;
+	int line_no = 0, len, i, state;
+	int allow = TRUE, error_cnt = 0;
 	struct in_addr addr, mask, *host_addr;
 	struct hostent *host;
-	struct netent	*net;
-	FILE	*data_file = NULL;
-	
+	struct netent *net;
+	FILE *data_file = NULL;
+
 	if (file != NULL)
 		data_file = fopen(file, "r");
 
 	while (data_file != NULL &&
 	    acl_read_line(data_file, data_line, sizeof(data_line))) {
-		
+
 		line_no++;
 		len = strlen(data_line);
 		if (len == 0)
@@ -213,7 +200,7 @@ acl_init(file)
 				p++;
 				i++;
 			}
-			
+
 			if (*p != '\0')
 				*p++ = '\0';
 
@@ -240,7 +227,7 @@ acl_init(file)
 			acl_add_net(allow, &addr, &mask);
 			state = ACLE_OK;
 		}
-			
+
 		/* State 6 & 7: host line */
 		/* State 8 & 9: net line */
 
@@ -253,10 +240,10 @@ acl_init(file)
 				p++;
 				i++;
 			}
-			
+
 			if (*p != '\0')
 				*p++ = '\0';
-			
+
 			if (state == ACLS_ALLOW_HOST || state == ACLS_DENY_HOST) {
 				if (*k >= '0' && *k <= '9') {
 					(void)inet_aton(k, &addr);
@@ -301,7 +288,7 @@ acl_init(file)
 		if (*p == '\0' &&
 		    (state == ACLS_ALLOW_HOST_DONE || state == ACLS_DENY_HOST_DONE))
 			state = ACLE_OK;
-			
+
 		/* State 12 & 13: allow/deny net line */
 		if (*p == '\0' &&
 		    (state == ACLS_ALLOW_NET_DONE || state == ACLS_DENY_NET_DONE)) {
@@ -316,14 +303,14 @@ acl_init(file)
 
 		if (*p != '\0' &&
 		    (state == ACLS_ALLOW_NET_DONE || state == ACLS_DENY_NET_DONE)) {
-			
+
 			k = p;			/* save start of verb */
 			i = 0;
 			while (*p != '\0' && !isspace(*p = tolower(*p))) {
 				p++;
 				i++;
 			}
-			
+
 			if (*p != '\0')
 				*p++ = '\0';
 
@@ -345,7 +332,7 @@ acl_init(file)
 				p++;
 				i++;
 			}
-			
+
 			if (*p != '\0')
 				*p++ = '\0';
 
@@ -376,7 +363,7 @@ acl_init(file)
 			acl_add_net(allow, &addr, &mask);
 			state = ACLE_OK;
 		}
-			
+
 		switch (state) {
 		case ACLE_NONETMASK:
 			fprintf(stderr,
@@ -433,20 +420,15 @@ acl_init(file)
 }
 
 int
-acl_securenet(file)
-char *file;
+acl_securenet(char *file)
 {
-	char	 data_line[1024];
-	int	 line_no = 0;
-	int	 len, i;
-	int	 allow = TRUE;
-	int	 error_cnt = 0;
-	char	*p, *k;
-	int	 state;
+	char data_line[1024], *p, *k;
+	int line_no = 0, len, i, allow = TRUE, state;
+	int error_cnt = 0;
 	struct in_addr addr, mask;
-	struct netent	*net;
-	FILE	*data_file = NULL;
-	
+	struct netent *net;
+	FILE *data_file = NULL;
+
 	if (file != NULL)
 		data_file = fopen(file, "r");
 
@@ -474,12 +456,12 @@ char *file;
 			p++;
 			i++;
 		}
-		
+
 		if (*p != '\0') {
 			*p++ = '\0';
 			state = ACLS_ALLOW_NET_MASK;
 		}
-		
+
 		if (state == ACLS_INIT)
 			state = ACLE_UEOL;
 
@@ -496,18 +478,18 @@ char *file;
 					state = ACLS_ALLOW_NET;
 				}
 			}
-			
+
 			k = p;				/* save start of verb */
 			i = 0;
 			while (*p != '\0' && !isspace(*p = tolower(*p))) {
 				p++;
 				i++;
 			}
-			
+
 			if (*p != '\0')
 				*p++ = '\0';
 		}
-		
+
 		if (state == ACLS_ALLOW_NET_MASK)
 			state = ACLE_UEOL;
 
@@ -525,7 +507,7 @@ char *file;
 				}
 			}
 		}
-			
+
 		if (state == ACLS_ALLOW_NET)
 			state = ACLE_UEOL;
 
@@ -533,7 +515,7 @@ char *file;
 			acl_add_net(allow, &addr, &mask);
 			state = ACLE_OK;
 		}
-			
+
 		switch (state) {
 		case ACLE_NONET:
 			error_cnt++;
@@ -559,7 +541,7 @@ char *file;
 	if (data_file != NULL) {
 		(void)fflush(stderr);
 		(void)fclose(data_file);
-		
+
 		/* Always add a last deny all if file exists */
 		addr.s_addr = mask.s_addr = 0;
 		allow = FALSE;
@@ -567,7 +549,7 @@ char *file;
 	}
 
 	/* Always add a last allow all if file don't exists */
-	
+
 	addr.s_addr = mask.s_addr = 0;
 	allow = TRUE;
 	acl_add_net(allow, &addr, &mask);
@@ -575,7 +557,7 @@ char *file;
 }
 
 void
-acl_reset()
+acl_reset(void)
 {
 	struct aclent *p;
 

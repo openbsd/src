@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_svc.c,v 1.7 2002/03/14 16:44:25 mpech Exp $ */
+/*	$OpenBSD: yppush_svc.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush_svc.c,v 1.7 2002/03/14 16:44:25 mpech Exp $";
+static char rcsid[] = "$OpenBSD: yppush_svc.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $";
 #endif /* not lint */
 
 #include "yppush.h"
@@ -57,8 +57,7 @@ int _rpcfdtype;			/* Whether Stream or Datagram ? */
 int _rpcsvcdirty;		/* Still serving ? */
 
 static
-void _msgout(msg)
-	char *msg;
+void _msgout(char *msg)
 {
 #ifdef RPC_SVC_FG
 	if (_rpcpmstart)
@@ -71,9 +70,7 @@ void _msgout(msg)
 }
 
 void
-yppush_xfrrespprog_1(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+yppush_xfrrespprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		int fill;
@@ -120,5 +117,4 @@ yppush_xfrrespprog_1(rqstp, transp)
 	_rpcsvcdirty = 0;
 	if (rqstp->rq_proc!=YPPUSHPROC_NULL)
 		exit(0);
-	return;
 }

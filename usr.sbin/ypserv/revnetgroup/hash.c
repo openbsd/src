@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.2 2002/03/14 16:44:25 mpech Exp $ */
+/* $OpenBSD: hash.c,v 1.3 2002/07/19 02:38:40 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -40,7 +40,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.2 2002/03/14 16:44:25 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: hash.c,v 1.3 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 /*
@@ -53,9 +53,7 @@ static const char rcsid[] = "$OpenBSD: hash.c,v 1.2 2002/03/14 16:44:25 mpech Ex
  * OZ's original sdbm hash
  */
 u_int32_t
-hash(keyarg, len)
-	const void *keyarg;
-	size_t len;
+hash(const void *keyarg, size_t len)
 {
 	const u_char *key;
 	size_t loop;
@@ -104,8 +102,8 @@ hash(keyarg, len)
  * We mask off all but the lower 8 bits since our table array
  * can only hold 256 elements.
  */
-u_int32_t hashkey(key)
-	char *key;
+u_int32_t
+hashkey(char *key)
 {
 
 	if (key == NULL)
@@ -114,9 +112,8 @@ u_int32_t hashkey(key)
 }
 
 /* Find an entry in the hash table (may be hanging off a linked list). */
-char *lookup(table, key)
-	struct group_entry *table[];
-	char *key;
+char *
+lookup(struct group_entry *table[], char *key)
 {
 	struct group_entry *cur;
 
@@ -148,9 +145,8 @@ char *lookup(table, key)
  *
  * That's a lot of comment for such a small piece of code, isn't it.
  */
-void store (table, key, data)
-	struct group_entry *table[];
-	char *key, *data;
+void
+store(struct group_entry *table[], char *key, char *data)
 {
 	struct group_entry *new;
 	u_int32_t i;
@@ -162,8 +158,6 @@ void store (table, key, data)
 	new->data = strdup(data);
 	new->next = table[i];
 	table[i] = new;
-
-	return;
 }
 
 /*
@@ -178,9 +172,8 @@ void store (table, key, data)
  * an entry in the table, then we just have to do one thing, which is
  * to update its grouplist.
  */
-void mstore (table, key, data, domain)
-	struct member_entry *table[];
-	char *key, *data, *domain;
+void
+mstore(struct member_entry *table[], char *key, char *data, char *domain)
 {
 	struct member_entry *cur, *new;
 	struct grouplist *tmp,*p;
@@ -196,8 +189,8 @@ void mstore (table, key, data, domain)
 	/* Check if all we have to do is insert a new groupname. */
 	while (cur) {
 		if (!strcmp(cur->key, key) && !strcmp(cur->domain,domain)) {
-		  	p = cur->groups;
-			while(p) {
+			p = cur->groups;
+			while (p) {
 				if (!strcmp(p->groupname,data))
 					return;
 				p = p->next;
@@ -216,6 +209,4 @@ void mstore (table, key, data, domain)
 	new->groups = tmp;
 	new->next = table[i];
 	table[i] = new;
-
-	return;
 }

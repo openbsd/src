@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.7 2002/03/28 22:05:58 fgsch Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.7 2002/03/28 22:05:58 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -42,11 +42,9 @@ static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.7 2002/03/28 22:05:58 fgsch Exp 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <err.h>
 
-static int read_line(fp, buf, size)
-FILE *fp;
-char *buf;
-int size;
+static int read_line(FILE *fp, char *buf, int size)
 {
 	int done = 0;
 
@@ -76,9 +74,7 @@ int size;
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE	*data_file;
 	char	 data_line[1024];
@@ -97,7 +93,7 @@ main(argc, argv)
 			err(1, "");
 	} else
 		data_file = stdin;
-  
+
 	while (read_line(data_file, data_line, sizeof(data_line))) {
 		line_no++;
 		len = strlen(data_line);
@@ -108,8 +104,7 @@ main(argc, argv)
 
 		/*
 		 * Check if we have the whole line
-		 */ 
-
+		 */
 		if (data_line[len-1] != '\n') {
 			if (argc == 2)
 				fprintf(stderr,
@@ -127,9 +122,9 @@ main(argc, argv)
 			p++;
 		while (isspace(*p))	/* replace space with <NUL> */
 			*p = '\0'; p++;
-		
+
 		v = p;			/* save start of value */
-		while(*p != '\0')	/* find end of string */
+		while (*p != '\0')	/* find end of string */
 			p++;
 
 		(void)inet_aton(k, &host_addr);

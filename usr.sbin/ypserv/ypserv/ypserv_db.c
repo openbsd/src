@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.16 2001/11/19 09:03:06 deraadt Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.17 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,11 +34,11 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.16 2001/11/19 09:03:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.17 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 /*
- * major revision/cleanup of Mats' version 
+ * major revision/cleanup of Mats' version
  * done by Chuck Cranor <chuck@ccrc.wustl.edu>
  * Jan 1996.
  */
@@ -95,7 +95,7 @@ extern int usedns;
  * ypdb_init: init the queues and lists
  */
 void
-ypdb_init()
+ypdb_init(void)
 
 {
 	LIST_INIT(&doms);
@@ -108,13 +108,9 @@ ypdb_init()
  * ypprivate is FALSE.
  */
 int
-yp_private(key, ypprivate)
-	datum	key;
-	int	ypprivate;
+yp_private(datum key, int ypprivate)
 {
-	int	result;
-
-  	if (ypprivate)
+	if (ypprivate)
 		return (FALSE);
 
 	if (key.dsize == 0 || key.dptr == NULL)
@@ -141,7 +137,6 @@ yp_private(key, ypprivate)
 	if (key.dsize == YP_SECURE_LEN &&
 	    strncmp(key.dptr, YP_SECURE_KEY, YP_SECURE_LEN) == 0)
 		return(TRUE);
-	
 	return(FALSE);
 }
 
@@ -150,11 +145,11 @@ yp_private(key, ypprivate)
  * no more file descripotors free, or we want to close all maps.
  */
 void
-ypdb_close_last()
+ypdb_close_last(void)
 {
 	struct opt_map *last = maps.cqh_last;
 
-	if (last == (void*)&maps) {
+	if (last == (void *)&maps) {
 		yplog("  ypdb_close_last: LRU list is empty!");
 		return;
 	}
@@ -176,9 +171,9 @@ ypdb_close_last()
  * Close all open maps.
  */
 void
-ypdb_close_all()
+ypdb_close_all(void)
 {
-	
+
 #ifdef DEBUG
 	yplog("  ypdb_close_all(): start");
 #endif
@@ -193,8 +188,7 @@ ypdb_close_all()
  * Close Database if Open/Close Optimization isn't turned on.
  */
 void
-ypdb_close_db(db)
-	DBM	*db;
+ypdb_close_db(DBM *db)
 {
 #ifdef DEBUG
 	yplog("  ypdb_close_db(0x%x)", db);
@@ -208,18 +202,13 @@ ypdb_close_db(db)
  * ypdb_open_db
  */
 DBM *
-ypdb_open_db(domain, map, status, map_info)
-	domainname	domain;
-	mapname		map;
-	ypstat		*status;
-	struct opt_map	**map_info;
+ypdb_open_db(domainname domain, mapname map, ypstat *status,
+    struct opt_map **map_info)
 {
 	char map_path[MAXPATHLEN];
 	static char   *domain_key = YP_INTERDOMAIN_KEY;
 	static char   *secure_key = YP_SECURE_KEY;
-	struct	stat finfo;
 	DBM	*db;
-	int	fd;
 	struct opt_domain *d = NULL;
 	struct opt_map	*m = NULL;
 	datum	k, v;
@@ -275,7 +264,7 @@ ypdb_open_db(domain, map, status, map_info)
 	i = 0;
 	while (i == 0) {
 #endif
-		snprintf(map_path, sizeof(map_path), "%s/%s/%s", YP_DB_PATH, 
+		snprintf(map_path, sizeof(map_path), "%s/%s/%s", YP_DB_PATH,
 		    domain, map);
 		db = ypdb_open(map_path, O_RDONLY, 0444);
 #ifdef OPTDB
@@ -304,12 +293,12 @@ ypdb_open_db(domain, map, status, map_info)
 			return(NULL);
 		}
 #ifdef DEBUG
-		yplog("  ypdb_open_db: ypdb_open FAILED: map %s (domain=%s)", 
+		yplog("  ypdb_open_db: ypdb_open FAILED: map %s (domain=%s)",
 		    map, domain);
 #endif
 		return(NULL);
 	}
-	
+
 	/*
 	 * note: status now YP_NOMAP
 	 */
@@ -371,7 +360,7 @@ ypdb_open_db(domain, map, status, map_info)
 	if (map_info)
 		*map_info = m;
 #ifdef DEBUG
-	yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=0x%x", 
+	yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=0x%x",
 	    domain, map, m->host_lookup, m->secure, m->db);
 #endif
 	return(m->db);
@@ -381,23 +370,17 @@ ypdb_open_db(domain, map, status, map_info)
  * lookup host
  */
 ypstat
-lookup_host(nametable, host_lookup, db, keystr, result)
-	int	nametable;
-	int	host_lookup;
-	DBM	*db;
-	char	*keystr;
-	ypresp_val *result;
+lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
+    ypresp_val *result)
 {
-	struct	hostent	*host;
-	struct  in_addr *addr_name;
-	struct	in_addr addr_addr;
-	static  char val[BUFSIZ+1]; /* match libc */
-	static	hostname[MAXHOSTNAMELEN];
-	char	tmpbuf[MAXHOSTNAMELEN + 20];
-	char *v;
+	struct hostent *host;
+	struct in_addr *addr_name;
+	struct in_addr addr_addr;
+	static char val[BUFSIZ+1]; /* match libc */
+	static char hostname[MAXHOSTNAMELEN];
+	char tmpbuf[MAXHOSTNAMELEN + 20], *v, *ptr;
 	int l;
-	char	*ptr;
-	
+
 	if (!host_lookup)
 		return(YP_NOKEY);
 
@@ -407,7 +390,7 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 
 	if (nametable) {
 		host = gethostbyname(keystr);
-		if (host == NULL || host->h_addrtype != AF_INET) 
+		if (host == NULL || host->h_addrtype != AF_INET)
 			return(YP_NOKEY);
 		addr_name = (struct in_addr *) *host->h_addr_list;
 		v = val;
@@ -436,7 +419,7 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 		return(YP_NOKEY);
 
 	l = 0;
-	for(; host->h_addr_list[0] != NULL; host->h_addr_list++)
+	for (; host->h_addr_list[0] != NULL; host->h_addr_list++)
 		if (!bcmp(host->h_addr_list[0], &addr_addr, sizeof(addr_addr)))
 			l++;
 	if (l == 0) {
@@ -468,30 +451,26 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 }
 
 ypresp_val
-ypdb_get_record(domain, map, key, ypprivate)
-	domainname	domain;
-	mapname		map;
-	keydat		key;
-	int		ypprivate;
+ypdb_get_record(domainname domain, mapname map, keydat key, int ypprivate)
 {
 	static	ypresp_val res;
 	static	char keystr[YPMAXRECORD+1];
 	DBM	*db;
 	datum	k, v;
-	int	host_lookup, hn;
+	int	host_lookup = 0, hn;
 	struct opt_map *map_info = NULL;
 
 	bzero((char *)&res, sizeof(res));
-	
+
 	db = ypdb_open_db(domain, map, &res.stat, &map_info);
-	if (!db || res.stat < 0) 
+	if (!db || res.stat < 0)
 		return(res);
 	if (map_info)
 		host_lookup = map_info->host_lookup;
 
 	k.dptr = key.keydat_val;
 	k.dsize = key.keydat_len;
-	
+
 	if (yp_private(k, ypprivate)) {
 		res.stat = YP_NOKEY;
 		goto done;
@@ -502,7 +481,7 @@ ypdb_get_record(domain, map, key, ypprivate)
 	if (v.dptr == NULL) {
 		res.stat = YP_NOKEY;
 		if ((hn = strcmp(map, YP_HOSTNAME)) != 0 &&
-		    strcmp(map, YP_HOSTADDR) != 0) 
+		    strcmp(map, YP_HOSTADDR) != 0)
 			goto done;
 		/* note: lookup_host needs null terminated string */
 		strncpy(keystr, key.keydat_val, key.keydat_len);
@@ -517,29 +496,25 @@ ypdb_get_record(domain, map, key, ypprivate)
 done:
 	ypdb_close_db(db);
 	return(res);
-	
 }
 
 ypresp_key_val
-ypdb_get_first(domain, map, ypprivate)
-	domainname domain;
-	mapname map;
-	int ypprivate;
+ypdb_get_first(domainname domain, mapname map, int ypprivate)
 {
 	static ypresp_key_val res;
 	DBM	*db;
 	datum	k, v;
 
 	bzero((char *)&res, sizeof(res));
-	
+
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 
 	if (res.stat >= 0) {
 		k = ypdb_firstkey(db);
-	  
+
 		while (yp_private(k, ypprivate))
 			k = ypdb_nextkey(db);
-	  
+
 		if (k.dptr == NULL) {
 			res.stat = YP_NOKEY;
 		} else {
@@ -559,11 +534,7 @@ ypdb_get_first(domain, map, ypprivate)
 }
 
 ypresp_key_val
-ypdb_get_next(domain, map, key, ypprivate)
-	domainname domain;
-	mapname map;
-	keydat key;
-	int ypprivate;
+ypdb_get_next(domainname domain, mapname map, keydat key, int ypprivate)
 {
 	static ypresp_key_val res;
 	DBM	*db;
@@ -571,7 +542,7 @@ ypdb_get_next(domain, map, key, ypprivate)
 
 	bzero((char *)&res, sizeof(res));
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
-	
+
 	if (res.stat >= 0) {
 		n.dptr = key.keydat_val;
 		n.dsize = key.keydat_len;
@@ -611,9 +582,7 @@ ypdb_get_next(domain, map, key, ypprivate)
 }
 
 ypresp_order
-ypdb_get_order(domain, map)
-	domainname domain;
-	mapname map;
+ypdb_get_order(domainname domain, mapname map)
 {
 	static ypresp_order res;
 	static char   *order_key = YP_LAST_KEY;
@@ -623,7 +592,7 @@ ypdb_get_order(domain, map)
 
 	bzero((char *)&res, sizeof(res));
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
-	
+
 	if (res.stat >= 0) {
 		k.dptr = order_key;
 		k.dsize = YP_LAST_LEN;
@@ -642,9 +611,7 @@ ypdb_get_order(domain, map)
 }
 
 ypresp_master
-ypdb_get_master(domain, map)
-	domainname domain;
-	mapname map;
+ypdb_get_master(domainname domain, mapname map)
 {
 	static ypresp_master res;
 	static char   *master_key = YP_MASTER_KEY;
@@ -654,7 +621,7 @@ ypdb_get_master(domain, map)
 
 	bzero((char *)&res, sizeof(res));
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
-	
+
 	if (res.stat >= 0) {
 		k.dptr = master_key;
 		k.dsize = YP_MASTER_LEN;
@@ -673,33 +640,31 @@ ypdb_get_master(domain, map)
 }
 
 bool_t
-ypdb_xdr_get_all(xdrs, req)
-	XDR *xdrs;
-	ypreq_nokey *req;
+ypdb_xdr_get_all(XDR *xdrs, ypreq_nokey *req)
 {
 	static ypresp_all resp;
 	DBM	*db;
 	datum	k, v;
 
 	bzero((char *)&resp, sizeof(resp));
-	
+
 	/*
 	 * open db, and advance past any private keys we may see
 	 */
-	db = ypdb_open_db(req->domain, req->map, 
+	db = ypdb_open_db(req->domain, req->map,
 	    &resp.ypresp_all_u.val.stat, NULL);
-	if (!db || resp.ypresp_all_u.val.stat < 0) 
+	if (!db || resp.ypresp_all_u.val.stat < 0)
 		return(FALSE);
 	k = ypdb_firstkey(db);
 	while (yp_private(k, FALSE))
 		k = ypdb_nextkey(db);
-	
-	while(1) {
-		if (k.dptr == NULL) 
+
+	while (1) {
+		if (k.dptr == NULL)
 			break;
 
 		v = ypdb_fetch(db, k);
-		if (v.dptr == NULL) 
+		if (v.dptr == NULL)
 			break;
 
 		resp.more = TRUE;
@@ -708,24 +673,24 @@ ypdb_xdr_get_all(xdrs, req)
 		resp.ypresp_all_u.val.key.keydat_len = k.dsize;
 		resp.ypresp_all_u.val.val.valdat_val = v.dptr;
 		resp.ypresp_all_u.val.val.valdat_len = v.dsize;
-			
+
 		if (!xdr_ypresp_all(xdrs, &resp)) {
 #ifdef DEBUG
 			yplog("  ypdb_xdr_get_all: xdr_ypresp_all failed");
-#endif					
+#endif
 			return(FALSE);
 		}
-			
+
 		/* advance past private keys */
 		k = ypdb_nextkey(db);
 		while (yp_private(k, FALSE))
 			k = ypdb_nextkey(db);
 	}
-		
+
 	bzero((char *)&resp, sizeof(resp));
 	resp.ypresp_all_u.val.stat = YP_NOKEY;
 	resp.more = FALSE;
-	
+
 	if (!xdr_ypresp_all(xdrs, &resp)) {
 #ifdef DEBUG
 		yplog("  ypdb_xdr_get_all: final xdr_ypresp_all failed");
@@ -737,9 +702,7 @@ ypdb_xdr_get_all(xdrs, req)
 }
 
 int
-ypdb_secure(domain, map)
-	domainname	domain;
-	mapname		map;
+ypdb_secure(domainname domain, mapname map)
 {
 	static	ypresp_val res;
 	DBM	*db;
@@ -750,7 +713,7 @@ ypdb_secure(domain, map)
 	secure = FALSE;
 
 	db = ypdb_open_db(domain, map, &res.stat, &map_info);
-	if (!db || res.stat < 0) 
+	if (!db || res.stat < 0)
 		return(secure);			/* ? */
 	if (map_info)
 		secure = map_info->secure;
@@ -758,4 +721,3 @@ ypdb_secure(domain, map)
 	ypdb_close_db(db);
 	return(secure);
 }
-

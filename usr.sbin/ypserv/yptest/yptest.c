@@ -1,4 +1,4 @@
-/*	$OpenBSD: yptest.c,v 1.10 2002/02/13 23:10:46 deraadt Exp $ */
+/*	$OpenBSD: yptest.c,v 1.11 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yptest.c,v 1.10 2002/02/13 23:10:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yptest.c,v 1.11 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -44,12 +44,12 @@ static char rcsid[] = "$OpenBSD: yptest.c,v 1.10 2002/02/13 23:10:46 deraadt Exp
 #include <rpcsvc/ypclnt.h>
 
 static int
-yptest_foreach(status, key, keylen, val, vallen, data)
-int status, keylen, vallen;
-char *key, *val, *data;
+yptest_foreach(u_long status, char *key, int keylen, char *val, int vallen,
+    void *data)
 {
 	if (status == 2)
 		return(0);
+
 	/* key avslutas med NUL */
 	/* val avslutas med NUL */
 	key[keylen] = '\0';
@@ -59,29 +59,21 @@ char *key, *val, *data;
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	char *Domain;
-	char *Map = "passwd.byname";
-	char *Key = "root";
-	int	 KeyLen;
-	char *Value;
-	char *Key2;
-	int	 ValLen;
-	int	 Status;
-	int	 Order;
+	char *Domain, *Value, *Key2;
+	char *Map = "passwd.byname", *Key = "root";
+	int ValLen, Status, Order, KeyLen;
 	struct ypall_callback Callback;
 	struct ypmaplist *ypml, *y;
 
 	Status = yp_get_default_domain(&Domain);
-printf("Status %d\n", Status);
-printf("dom %s\n", Domain);
-printf("dom %d\n", Domain[0]);
+	printf("Status %d\n", Status);
+	printf("dom %s\n", Domain);
+	printf("dom %d\n", Domain[0]);
 	if (Status)
 		printf("yp error: %s\n", yperr_string(Status));
-	
+
 	printf("Test 1: yp_match\n");
 	KeyLen = strlen(Key);
 	Status = yp_match(Domain, Map, Key, KeyLen, &Value, &ValLen);
@@ -89,7 +81,7 @@ printf("dom %d\n", Domain[0]);
 		printf("yp error: %s\n", yperr_string(Status));
 	else
 		printf("%*.*s\n", ValLen, ValLen, Value);
-	
+
 	printf("\nTest 2: yp_first\n");
 	Status = yp_first(Domain, Map, &Key2, &KeyLen, &Value, &ValLen);
 	if (Status)
@@ -124,9 +116,9 @@ printf("dom %d\n", Domain[0]);
 
 	printf("\nTest 6: yp_maplist\n");
 	ypml = NULL;
-	switch(yp_maplist(Domain, &ypml)) {
+	switch (yp_maplist(Domain, &ypml)) {
 	case 0:
-		for(y = ypml; y; ) {
+		for (y = ypml; y; ) {
 			ypml = y;
 			printf("%s\n", ypml->map);
 			y = ypml->next;

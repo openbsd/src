@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.h,v 1.2 2002/02/16 21:28:11 millert Exp $ */
+/*	$OpenBSD: db.h,v 1.3 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -39,5 +39,3 @@ int		db_hash_list_database(char *);
 __END_DECLS
 
 #endif /* !_MAKEDBM_DB_H_ */
-
-

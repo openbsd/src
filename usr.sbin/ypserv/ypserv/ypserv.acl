@@ -35,10 +35,9 @@ allow net mojathome netmask 255.255.255.0
 #############################################################################
 # At last we have a command that will match any caller:
 #
-#	allow all 
+#	allow all
 #	deny all
 #
 
 # reject all connections
 deny all
-

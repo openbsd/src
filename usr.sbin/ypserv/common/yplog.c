@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplog.c,v 1.7 2002/03/14 16:44:25 mpech Exp $ */
+/*	$OpenBSD: yplog.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor
@@ -31,7 +31,7 @@
  */
 
 /*
- * yplog.c: replacement yplog routines for 
+ * yplog.c: replacement yplog routines for
  * Mats O Jansson's ypserv program, as added by
  * Chuck Cranor.
  */
@@ -49,7 +49,6 @@ static FILE	*logfp = NULL;		/* the log file */
  * yplog(): like a printf, but to the log file.   does the flush
  * and data for you.
  */
-
 void
 yplog(const char *fmt, ...)
 {
@@ -63,13 +62,10 @@ yplog(const char *fmt, ...)
 /*
  * vyplog() support routine for yplog()
  */
-
 void
-vyplog(fmt, ap)
-	const char *fmt;
-	va_list ap;
+vyplog(const char *fmt, va_list ap)
 {
-        time_t t;
+	time_t t;
 
 	if (logfp == NULL)
 		return;
@@ -83,9 +79,8 @@ vyplog(fmt, ap)
 /*
  * open log
  */
-
 void
-ypopenlog()
+ypopenlog(void)
 {
 	static char logfn[] = "/var/yp/ypserv.log";
 
@@ -100,9 +95,8 @@ ypopenlog()
 /*
  * close log
  */
-
 void
-ypcloselog()
+ypcloselog(void)
 {
 	if (logfp) {
 		yplog("yplog closed");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.27 2002/03/26 09:35:22 fgsch Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.28 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.27 2002/03/26 09:35:22 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.28 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -68,11 +68,10 @@ extern int (*ypresp_allfn)();
 extern void *ypresp_data;
 
 static int
-ypxfr_foreach(status, keystr, keylen, valstr, vallen, data)
-int status, keylen, vallen;
-char *keystr, *valstr, *data;
+ypxfr_foreach(u_long status, char *keystr, int keylen, char *valstr, int vallen,
+    void *data)
 {
-	datum	key, val;
+	datum key, val;
 
 	if (status == YP_NOMORE)
 		return(0);
@@ -87,23 +86,18 @@ char *keystr, *valstr, *data;
 	val.dsize = strlen(valstr);
 
 	ypdb_store(db, key, val, YPDB_INSERT);
-
 	return 0;
 }
 
 int
-get_local_ordernum(domain, map, lordernum)
-char *domain;
-char *map;
-u_int32_t *lordernum;
+get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 {
-	char map_path[MAXPATHLEN];
+	char map_path[MAXPATHLEN], order[MAX_LAST_LEN+1];
 	char order_key[] = YP_LAST_KEY;
-	char order[MAX_LAST_LEN+1];
 	struct stat finfo;
-	DBM *db;
 	datum k, v;
 	int status;
+	DBM *db;
 
 	/* This routine returns YPPUSH_SUCC or YPPUSH_NODOM */
 
@@ -115,53 +109,49 @@ u_int32_t *lordernum;
 		fprintf(stderr, "%s: domain %s not found locally\n",
 		    __progname, domain);
 		status = YPPUSH_NODOM;
+		goto bail;
 	}
 
-	if (status > 0) {
-		snprintf(map_path, sizeof map_path, "%s/%s/%s%s",
-		    YP_DB_PATH, domain, map, YPDB_SUFFIX);
-		if (!(stat(map_path, &finfo) == 0))
-			status = YPPUSH_NOMAP;
+	snprintf(map_path, sizeof map_path, "%s/%s/%s%s",
+	    YP_DB_PATH, domain, map, YPDB_SUFFIX);
+	if (!(stat(map_path, &finfo) == 0)) {
+		status = YPPUSH_NOMAP;
+		goto bail;
 	}
 
-	if (status > 0) {
-		snprintf(map_path, sizeof map_path, "%s/%s/%s",
-		    YP_DB_PATH, domain, map);
-		db = ypdb_open(map_path, O_RDONLY, 0444);
-		if (db == NULL)
-			status = YPPUSH_DBM;
+	snprintf(map_path, sizeof map_path, "%s/%s/%s",
+	    YP_DB_PATH, domain, map);
+	db = ypdb_open(map_path, O_RDONLY, 0444);
+	if (db == NULL) {
+		status = YPPUSH_DBM;
+		goto bail;
 	}
 
-	if (status > 0) {
-		k.dptr = (char *)&order_key;
-		k.dsize = YP_LAST_LEN;
+	k.dptr = (char *)&order_key;
+	k.dsize = YP_LAST_LEN;
 
-		v = ypdb_fetch(db,k);
-		ypdb_close(db);
+	v = ypdb_fetch(db,k);
+	ypdb_close(db);
 
-		if (v.dptr == NULL) {
-			*lordernum = 0;
-		} else {
-	        	strlcpy(order, v.dptr, sizeof order);
-			*lordernum = (u_int32_t)atol(order);
-		}
+	if (v.dptr == NULL) {
+		*lordernum = 0;
+	} else {
+		strlcpy(order, v.dptr, sizeof order);
+		*lordernum = (u_int32_t)atol(order);
 	}
 
+bail:
 	if (status == YPPUSH_NOMAP || status == YPPUSH_DBM) {
 		*lordernum = 0;
 		status = YPPUSH_SUCC;
 	}
-	return(status);
+	return (status);
 
 }
 
 int
-get_remote_ordernum(client, domain, map, lordernum, rordernum)
-CLIENT *client;
-char *domain;
-char *map;
-u_int32_t lordernum;
-u_int32_t *rordernum;
+get_remote_ordernum(CLIENT *client, char *domain, char *map,
+    u_int32_t lordernum, u_int32_t *rordernum)
 {
 	int status;
 
@@ -177,11 +167,8 @@ u_int32_t *rordernum;
 }
 
 int
-get_map(client,domain,map,incallback)
-CLIENT *client;
-char *domain;
-char *map;
-struct ypall_callback *incallback;
+get_map(CLIENT *client, char *domain, char *map,
+    struct ypall_callback *incallback)
 {
 	int	status;
 
@@ -191,38 +178,28 @@ struct ypall_callback *incallback;
 	} else {
 		status = YPPUSH_YPERR;
 	}
-
-	return(status);
+	return (status);
 }
 
 DBM *
-create_db(domain,map,temp_map)
-char *domain;
-char *map;
-char *temp_map;
+create_db(char *domain, char *map, char *temp_map)
 {
 	return ypdb_open_suf(temp_map, O_RDWR, 0444);
 }
 
 int
-install_db(domain,map,temp_map)
-char *domain;
-char *map;
-char *temp_map;
+install_db(char *domain, char *map, char *temp_map)
 {
 	char	db_name[MAXPATHLEN];
 
 	snprintf(db_name, sizeof db_name, "%s/%s/%s%s",
 	    YP_DB_PATH, domain, map, YPDB_SUFFIX);
 	rename(temp_map, db_name);
-
 	return YPPUSH_SUCC;
 }
 
 int
-add_order(db, ordernum)
-DBM *db;
-u_int32_t ordernum;
+add_order(DBM *db, u_int32_t ordernum)
 {
 	char	datestr[11];
 	datum	key, val;
@@ -238,20 +215,15 @@ u_int32_t ordernum;
 	val.dsize = strlen(datestr);
 
 	status = ypdb_store(db, key, val, YPDB_INSERT);
-	if (status >= 0) {
+	if (status >= 0)
 		status = YPPUSH_SUCC;
-	} else {
+	else
 		status = YPPUSH_DBM;
-	}
-	return(status);
+	return (status);
 }
 
 int
-add_master(client, domain, map, db)
-CLIENT *client;
-char *domain;
-char *map;
-DBM *db;
+add_master(CLIENT *client, char *domain, char *map, DBM *db)
 {
 	char	keystr[] = YP_MASTER_KEY;
 	char	*master;
@@ -272,21 +244,16 @@ DBM *db;
 		val.dsize = strlen(master);
 
 		status = ypdb_store(db, key, val, YPDB_INSERT);
-		if (status >= 0) {
+		if (status >= 0)
 			status = YPPUSH_SUCC;
-		} else {
+		else
 			status = YPPUSH_DBM;
-		}
 	}
-	return status;
+	return (status);
 }
 
 int
-add_interdomain(client, domain, map, db)
-CLIENT *client;
-char *domain;
-char *map;
-DBM *db;
+add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
 {
 	char	keystr[] = YP_INTERDOMAIN_KEY;
 	char	*value;
@@ -307,11 +274,10 @@ DBM *db;
 
 		if (v.dptr != NULL) {
 			status = ypdb_store(db, k, v, YPDB_INSERT);
-			if (status >= 0) {
+			if (status >= 0)
 				status = YPPUSH_SUCC;
-			} else {
+			else
 				status = YPPUSH_DBM;
-			}
 		}
 	}
 
@@ -319,16 +285,10 @@ DBM *db;
 }
 
 int
-add_secure(client, domain, map, db)
-CLIENT *client;
-char *domain;
-char *map;
-DBM *db;
+add_secure(CLIENT *client, char *domain, char *map, DBM *db)
 {
-	char	keystr[] = YP_SECURE_KEY;
-	char	*value;
-	int	vallen;
-	int	status;
+	char	keystr[] = YP_SECURE_KEY, *value;
+	int	vallen, status;
 	datum	k, v;
 
 	/* Get SECURE */
@@ -357,12 +317,10 @@ DBM *db;
 }
 
 int
-send_clear(client)
-CLIENT *client;
+send_clear(CLIENT *client)
 {
 	struct	timeval tv;
-	int	r;
-	int	status;
+	int	status, r;
 
 	status = YPPUSH_SUCC;
 
@@ -378,10 +336,7 @@ CLIENT *client;
 }
 
 int
-send_reply(client,status,tid)
-CLIENT *client;
-u_long	status;
-u_long  tid;
+send_reply(CLIENT *client, u_long status, u_long tid)
 {
 	struct	timeval tv;
 	struct	ypresp_xfr resp;
@@ -402,29 +357,17 @@ u_long  tid;
 }
 
 int
-main (argc,argv)
-int argc;
-char *argv[];
+main(int argc, char *argv[])
 {
-	int	 usage = 0;
-	int	 cflag = 0;
-	int	 fflag = 0;
-	int	 Cflag = 0;
-	int	 ch;
-	extern	 char *optarg;
-	char	 *domain;
-	char	 *host = NULL;
-	char	 *srcdomain = NULL;
-	char	 *tid = NULL;
-	char	 *prog = NULL;
-	char	 *ipadd = NULL;
-	char	 *port = NULL;
-	char	 *map = NULL;
+	int	 usage = 0, cflag = 0, fflag = 0, Cflag = 0;
+	char	 *domain, *host = NULL, *srcdomain = NULL;
+	char	 *tid = NULL, *prog = NULL, *ipadd = NULL;
+	char	 *port = NULL, *map = NULL;
+	int	 status, xfr_status, ch, srvport;
 	u_int32_t ordernum, new_ordernum;
 	struct	 ypall_callback callback;
 	CLIENT   *client;
-	int	 status, xfr_status;
-	int	 srvport;
+	extern	 char *optarg;
 
 	status = YPPUSH_SUCC;
 	client = NULL;
@@ -507,12 +450,12 @@ char *argv[];
 	}
 
 	if (status > 0) {
-	        yplog("Get Master");
+		yplog("Get Master");
 
 		if (host == NULL) {
 			if (srcdomain == NULL) {
 				status = yp_master(domain, map, &host);
-		        } else {
+			} else {
 				status = yp_master(srcdomain, map, &host);
 			}
 			if (status == 0) {
@@ -525,7 +468,7 @@ char *argv[];
 
 	/* XXX this is raceable if portmap has holes! */
 	if (status > 0) {
-	        yplog("Check for reserved port on host: %s", host);
+		yplog("Check for reserved port on host: %s", host);
 
 		srvport = getrpcport(host, YPPROG, YPVERS, IPPROTO_TCP);
 		if (srvport >= IPPORT_RESERVED)
@@ -533,7 +476,7 @@ char *argv[];
 	}
 
 	if (status > 0) {
-	        yplog("Connect host: %s", host);
+		yplog("Connect host: %s", host);
 
 		client = yp_bind_host(host, YPPROG, YPVERS, 0, 1);
 
@@ -560,7 +503,7 @@ char *argv[];
 				status = YPPUSH_DBM;
 		}
 
-	  	/* Add ORDER */
+		/* Add ORDER */
 		if (status > 0)
 			status = add_order(db, new_ordernum);
 
@@ -568,11 +511,11 @@ char *argv[];
 		if (status > 0)
 			status = add_master(client, domain, map, db);
 
-	        /* Add INTERDOMAIN */
+		/* Add INTERDOMAIN */
 		if (status > 0)
 			status = add_interdomain(client, domain, map, db);
 
-	        /* Add SECURE */
+		/* Add SECURE */
 		if (status > 0)
 			status = add_secure(client, domain, map, db);
 
@@ -614,7 +557,6 @@ char *argv[];
 		clnt_destroy(client);
 	}
 
-	return(0);
+	return (0);
 
 }
-

@@ -1,4 +1,4 @@
-/* $OpenBSD: revnetgroup.c,v 1.2 2000/06/30 16:00:27 millert Exp $ */
+/* $OpenBSD: revnetgroup.c,v 1.3 2002/07/19 02:38:40 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.2 2000/06/30 16:00:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.3 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 /* Default location of netgroup file. */
@@ -62,25 +62,22 @@ struct group_entry *gtable[TABLESIZE];
  */
 struct member_entry *mtable[TABLESIZE];
 
-void usage(prog)
-char *prog;
+void
+usage(char *prog)
 {
 	fprintf (stderr,"usage: %s -u|-h [-f netgroup file]\n",prog);
 	exit(1);
 }
 
-extern char *optarg;
-
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE *fp;
 	char readbuf[LINSIZ];
 	struct group_entry *gcur;
 	struct member_entry *mcur;
 	char *host, *user, *domain;
+	extern char *optarg;
 	int ch;
 	char *key = NULL, *data = NULL;
 	int hosts = -1, i;
@@ -89,7 +86,7 @@ main(argc, argv)
 		usage(argv[0]);
 
 	while ((ch = getopt(argc, argv, "uhf:")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'u':
 			if (hosts != -1) {
 				warnx("please use only one of -u or -h");
@@ -129,9 +126,9 @@ main(argc, argv)
 		if (readbuf[0] == '#')
 			continue;
 		/* handle backslash line continuations */
-		while(readbuf[strlen(readbuf) - 2] == '\\') {
+		while (readbuf[strlen(readbuf) - 2] == '\\') {
 			fgets((char *)&readbuf[strlen(readbuf) - 2],
-					sizeof(readbuf) - strlen(readbuf), fp);
+			    sizeof(readbuf) - strlen(readbuf), fp);
 		}
 		data = NULL;
 		if ((data = (char *)(strpbrk(readbuf, " \t") + 1)) < (char *)2)
@@ -149,22 +146,22 @@ main(argc, argv)
 	 */
 	for (i = 0; i < TABLESIZE; i++) {
 		gcur = gtable[i];
-		while(gcur) {
+		while (gcur) {
 			__setnetgrent(gcur->key);
-			while(__getnetgrent(&host, &user, &domain) != NULL) {
+			while (__getnetgrent(&host, &user, &domain) != NULL) {
 				if (hosts) {
 					if (!(host && !strcmp(host,"-"))) {
 						mstore(mtable,
-						       host ? host : "*",
-						       gcur->key,
-						       domain ? domain : "*");
+						    host ? host : "*",
+						    gcur->key,
+						    domain ? domain : "*");
 					}
 				} else {
 					if (!(user && !strcmp(user,"-"))) {
 						mstore(mtable,
-						       user ? user : "*",
-						       gcur->key,
-						       domain ? domain : "*");
+						    user ? user : "*",
+						    gcur->key,
+						    domain ? domain : "*");
 					}
 				}
 			}
@@ -178,11 +175,11 @@ main(argc, argv)
 	/* Spew out the results. */
 	for (i = 0; i < TABLESIZE; i++) {
 		mcur = mtable[i];
-		while(mcur) {
+		while (mcur) {
 			struct grouplist *tmp;
 			printf ("%s.%s\t", mcur->key, mcur->domain);
 			tmp = mcur->groups;
-			while(tmp) {
+			while (tmp) {
 				printf ("%s", tmp->groupname);
 				tmp = tmp->next;
 				if (tmp)

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: ypinit.sh,v 1.9 2002/03/23 13:58:59 deraadt Exp $
+#	$Id: ypinit.sh,v 1.10 2002/07/19 02:38:40 deraadt Exp $
 #
 # ypinit.sh - setup an master or slave server.
 #
@@ -163,7 +163,7 @@ __notice1
 	esac
 
 	if [ -d "${YP_DIR}/${DOMAIN}" ]; then
-		echo ""	
+		echo ""
 		echo -n "Can we destroy the existing ${YP_DIR}/${DOMAIN} and its contents? [y/n: n]  "
 		read KILL
 
@@ -186,7 +186,6 @@ __notice1
 			echo "OK, please clean it up by hand and start again.  Bye"
 			exit 0
 		fi
-	
 	fi
 
 	if ! mkdir "${YP_DIR}/${DOMAIN}"; then
@@ -209,7 +208,7 @@ then
 	fi
 
 	SUBDIR=`grep "^SUBDIR=" ${YP_DIR}/Makefile`
-	
+
 	if [ -z "${SUBDIR}" ]
 	then
 		echo "Can't find line starting with 'SUBDIR=' in ${YP_DIR}/Makefile. " 1>&2
@@ -224,7 +223,7 @@ then
 	done
 	NEWSUBDIR="${NEWSUBDIR} ${DOMAIN}"
 
-	if [ -f ${YP_DIR}/Makefile.tmp ]; then 
+	if [ -f ${YP_DIR}/Makefile.tmp ]; then
 		rm ${YP_DIR}/Makefile.tmp
 	fi
 
@@ -276,7 +275,6 @@ LIST_OK="NO"
 
 while [ "${LIST_OK}" = "NO" ];
 do
-	
 	if [ "${SERVERTYPE}" = "MASTER" ];
 	then
 		HOST_LIST="${HOST}"
@@ -315,8 +313,8 @@ do
 		echo "Update the list of hosts running YP servers in domain ${DOMAIN}."
 		echo "Master for this domain is ${MASTER_NAME}."
 		echo ""
-		echo "First verify old servers, type \\\\ to remove a server." 
-		echo "Then add new servers, one per line. When done type a <control D>." 
+		echo "First verify old servers, type \\\\ to remove a server."
+		echo "Then add new servers, one per line. When done type a <control D>."
 		echo ""
 		echo "	master server   :  ${HOST}"
 		if [ "${NEW_LIST}" != "" ]; then
@@ -369,13 +367,12 @@ if [ $? -ne 0 ]; then
 	echo "" 1>&2
 	echo "Couldn't build yp data base ${YP_DIR}/${DOMAIN}/ypservers." 1>&2
 	ERROR_EXISTS="YES"
-	if [ "${ERROR_EXIT}" = "YES" ]; then 
+	if [ "${ERROR_EXIT}" = "YES" ]; then
 		exit 1
 	fi
 fi
 
 if [ "${SERVERTYPE}" = "MASTER" ]; then
-	
 	CUR_PWD=`pwd`
 	cd ${YP_DIR}/${DOMAIN}
 	echo "Running ${YP_DIR}/${DOMAIN}/Makefile..."
@@ -383,7 +380,7 @@ if [ "${SERVERTYPE}" = "MASTER" ]; then
 		echo "" 1>&2
 		echo "Error running Makefile." 1>&2
 		ERROR_EXISTS="YES"
-		if [ "${ERROR_EXIT}" = "YES" ]; then 
+		if [ "${ERROR_EXIT}" = "YES" ]; then
 			exit 1
 		fi
 	fi

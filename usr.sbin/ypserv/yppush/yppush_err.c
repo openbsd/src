@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_err.c,v 1.3 2000/10/12 09:47:27 deraadt Exp $ */
+/*	$OpenBSD: yppush_err.c,v 1.4 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,17 +32,16 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush_err.c,v 1.3 2000/10/12 09:47:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush_err.c,v 1.4 2002/07/19 02:38:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <rpcsvc/yp.h>
 
 char *
-yppush_err_string(y)
-	enum yppush_status y;
+yppush_err_string(enum yppush_status y)
 {
 
-	switch(y) {
+	switch (y) {
 	case YPPUSH_SUCC:
 		return ("Success");
 	case YPPUSH_AGE:
@@ -75,6 +74,6 @@ yppush_err_string(y)
 		return ("ypxfr error");
 	case YPPUSH_REFUSED:
 		return ("Transfer request refused by ypserv");
-        }
+	}
 	return ("unknown error");
 }

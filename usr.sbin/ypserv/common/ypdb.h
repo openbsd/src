@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypdb.h,v 1.6 2002/02/16 21:28:11 millert Exp $ */
+/*	$OpenBSD: ypdb.h,v 1.7 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -50,8 +50,8 @@
 #define YPDB_SUFFIX	".db"
 
 /* Flags to ypdb_store(). */
-#define YPDB_INSERT      0
-#define YPDB_REPLACE     1
+#define YPDB_INSERT	0
+#define YPDB_REPLACE	1
 
 #ifndef DATUM
 typedef struct {
@@ -69,9 +69,9 @@ datum	 ypdb_fetch(DBM *, datum);
 datum	 ypdb_firstkey(DBM *);
 datum	 ypdb_nextkey(DBM *);
 datum	 ypdb_setkey(DBM *, datum);
-DBM     *ypdb_open(const char *, int, int);
-DBM     *ypdb_open_suf(const char *, int, int);
-int	 ypdb_store(DBM *, datum, datum, int);
+DBM	*ypdb_open(const char *, int, int);
+DBM	*ypdb_open_suf(const char *, int, int);
+int	ypdb_store(DBM *, datum, datum, int);
 __END_DECLS
 
 #endif /* !_YPDB_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.17 2002/03/20 14:19:30 maja Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.18 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.17 2002/03/20 14:19:30 maja Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.18 2002/07/19 02:38:40 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -53,10 +53,8 @@ extern char *__progname;		/* from crt0.o */
  * Read one line
  */
 
-static int read_line(fp, buf, size)
-	FILE	*fp;
-	char	*buf;
-	int	size;
+static int
+read_line(FILE *fp, char *buf, int size)
 {
 	int	done;
 
@@ -72,7 +70,7 @@ static int read_line(fp, buf, size)
 				buf += len - 2;
 				size -= len - 2;
 				*buf = '\n'; buf[1] = '\0';
-				
+
 				/* Skip leading white space on next line */
 				while ((ch = getc(fp)) != EOF &&
 				    isascii(ch) && isspace(ch))
@@ -87,30 +85,26 @@ static int read_line(fp, buf, size)
 	return done;
 }
 
-void 
-add_record(db, str1, str2, check)
-	DBM	*db;
-	char	*str1, *str2;
-	int	check;
+void
+add_record(DBM *db, char *str1, char *str2, int check)
 {
 	datum   key, val;
 	int	status;
 
 	key.dptr = str1;
 	key.dsize = strlen(str1);
-	
+
 	if (check) {
 		val = ypdb_fetch(db,key);
 
 		if (val.dptr != NULL)
 			return;		/* already there */
-		
 	}
 
 	val.dptr  = str2;
 	val.dsize = strlen(str2);
 	status = ypdb_store(db, key, val, YPDB_INSERT);
-	
+
 	if (status != 0) {
 		printf("%s: problem storing %s %s\n",__progname,str1,str2);
 		exit(1);
@@ -118,13 +112,12 @@ add_record(db, str1, str2, check)
 }
 
 static char *
-file_date(filename)
-	char	*filename;
+file_date(char *filename)
 {
 	struct	stat finfo;
 	static	char datestr[11];
 	int	status;
-	
+
 	if (strcmp(filename,"-") == 0) {
 		snprintf(datestr, sizeof datestr, "%010u", time(0));
 	} else {
@@ -132,33 +125,32 @@ file_date(filename)
 		if (status < 0) {
 			fprintf(stderr, "%s: can't stat %s\n", __progname, filename);
 			exit(1);
-		}	
+		}
 		snprintf(datestr, sizeof datestr, "%010u", finfo.st_mtime);
 	}
 	return datestr;
 }
 
 void
-list_database(database,Uflag)
-	char	*database;
-	int	Uflag;
+list_database(char *database, int Uflag)
 {
 	DBM	*db;
 	datum	key, val;
-  	
+
 	db = ypdb_open(database, O_RDONLY, 0444);
-	
+
 	if (db == NULL) {
 		if (Uflag != 0)
-			if (db_hash_list_database(database)) return;
+			if (db_hash_list_database(database))
+				return;
 
 		fprintf(stderr, "%s: can't open database %s: %s\n", __progname,
 		    database, strerror(errno));
 		exit(1);
 	}
-	
+
 	key = ypdb_firstkey(db);
-	
+
 	while (key.dptr != NULL) {
 		val = ypdb_fetch(db,key);
 		printf("%*.*s %*.*s\n",
@@ -166,18 +158,13 @@ list_database(database,Uflag)
 		    val.dsize, val.dsize, val.dptr);
 		key = ypdb_nextkey(db);
 	}
-  
 	ypdb_close(db);
 }
 
 void
-
-create_database(infile, database, yp_input_file, yp_output_file,
-    yp_master_name, yp_domain_name, bflag, lflag, sflag)
-	char	*infile, *database;
-	char	*yp_input_file, *yp_output_file;
-	char	*yp_master_name, *yp_domain_name;
-	int	bflag, lflag, sflag;
+create_database(char *infile, char *database, char *yp_input_file,
+    char *yp_output_file, char *yp_master_name, char *yp_domain_name,
+    int bflag, int lflag, int sflag)
 {
 	FILE	*data_file;
 	char	data_line[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
@@ -191,7 +178,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN],
 		db_tempname[MAXPATHLEN];
 	char	empty_str[] = "";
-	
+
 	if (strcmp(infile,"-") == 0) {
 		data_file = stdin;
 	} else {
@@ -202,7 +189,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 			exit(1);
 		}
 	}
-	
+
 	if (strlen(database) + strlen(YPDB_SUFFIX) > MAXPATHLEN) {
 		fprintf(stderr,"%s: %s: file name too long\n",
 		    __progname, database);
@@ -211,8 +198,8 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	snprintf(db_outfile, sizeof(db_outfile), "%s%s", database, YPDB_SUFFIX);
 
 	slash = strrchr(database, '/');
-	if (slash != NULL) 
-		slash[1] = 0; 			/* truncate to dir */
+	if (slash != NULL)
+		slash[1] = 0;			/* truncate to dir */
 	else
 		*database = 0;			/* elminate */
 
@@ -237,23 +224,22 @@ create_database(infile, database, yp_input_file, yp_output_file,
 		    __progname, db_outfile);
 		exit(1);
 	}
-	
+
 	while (read_line(data_file,data_line,sizeof(data_line))) {
-		
 		line_no++;
 		len =  strlen(data_line);
-		
-		/* Check if we have the whole line */ 
-		
+
+		/* Check if we have the whole line */
+
 		if (data_line[len-1] != '\n') {
 			fprintf(stderr, "line %d in \"%s\" is too long",
 			    line_no, infile);
 		} else {
 			data_line[len-1] = '\0';
 		}
-		
+
 		p = (char *) &data_line;
-		
+
 		k  = p;				    /* save start of key */
 		while (!isspace(*p)) {		    /* find first "space" */
 			if (lflag && isupper(*p))   /* if force lower case */
@@ -264,33 +250,33 @@ create_database(infile, database, yp_input_file, yp_output_file,
 			*p = '\0';
 			p++;
 		}
-		
+
 		v = p;				/* save start of value */
 		while (*p != '\0')		/* find end of string */
-			p++;	
-		
+			p++;
+
 		add_record(new_db, k, v, TRUE);	/* save record */
-		
+
 	}
-	
+
 	if (strcmp(infile,"-") != 0)
 		(void) fclose(data_file);
-	
+
 	add_record(new_db, YP_LAST_KEY, file_date(infile), FALSE);
 
 	if (yp_input_file)
 		add_record(new_db, YP_INPUT_KEY, yp_input_file, FALSE);
-	
+
 	if (yp_output_file)
 		add_record(new_db, YP_OUTPUT_KEY, yp_output_file, FALSE);
-	
+
 	if (yp_master_name)
 		add_record(new_db, YP_MASTER_KEY, yp_master_name, FALSE);
 	else {
 		gethostname(myname, sizeof(myname));
 		add_record(new_db, YP_MASTER_KEY, myname, FALSE);
 	}
-	
+
 	if (yp_domain_name)
 		add_record(new_db, YP_DOMAIN_KEY, yp_domain_name, FALSE);
 	if (bflag)
@@ -305,13 +291,11 @@ create_database(infile, database, yp_input_file, yp_output_file,
 		    db_outfile);
 		exit(1);
 	}
-	
+
 }
 
 int
-main (argc,argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	aflag, uflag, bflag, lflag, sflag, Uflag;
 	char	*yp_input_file, *yp_output_file;
@@ -322,20 +306,20 @@ main (argc,argv)
 
 	extern int optind;
 	extern char *optarg;
-	
+
 	yp_input_file = yp_output_file = NULL;
 	yp_master_name = yp_domain_name = NULL;
 	aflag = uflag = bflag = lflag = sflag = Uflag = 0;
 	infile = outfile = NULL;
-	
+
 	while ((ch = getopt(argc, argv, "Ublsui:o:m:d:")) != -1)
 		switch (ch) {
-		case 'U': 
+		case 'U':
 			uflag++;
 			Uflag++;
 			break;
 		case 'b':
-	  		bflag++;
+			bflag++;
 			aflag++;
 			break;
 		case 'l':
@@ -369,11 +353,11 @@ main (argc,argv)
 			usage++;
 			break;
 		}
-	
+
 	if ((uflag != 0) && (aflag != 0)) {
 		usage++;
 	} else {
-		
+
 		if (uflag != 0) {
 			if (argc == (optind + 1)) {
 				infile = argv[optind];
@@ -389,7 +373,7 @@ main (argc,argv)
 			}
 		}
 	}
-	
+
 	if (usage) {
 		fprintf(stderr,"%s%s%s",
 		    "usage:\tmakedbm [-u|-U] file\n\tmakedbm [-bls]",
@@ -397,7 +381,7 @@ main (argc,argv)
 		    "[-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME] infile outfile\n");
 		exit(1);
 	}
-	
+
 	if (uflag != 0) {
 		list_database(infile,Uflag);
 	} else {
@@ -405,7 +389,6 @@ main (argc,argv)
 		    yp_output_file, yp_master_name, yp_domain_name,
 		    bflag, lflag, sflag);
 	}
-	
+
 	return(0);
-	
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypdef.h,v 1.7 2001/12/01 23:27:24 miod Exp $ */
+/*	$OpenBSD: ypdef.h,v 1.8 2002/07/19 02:38:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,26 +34,26 @@
 #ifndef _YPDEF_H_
 #define _YPDEF_H_
 
-#define YP_DB_PATH "/var/yp"
-#define YP_LAST_KEY        "YP_LAST_MODIFIED"
-#define YP_LAST_LEN	   (sizeof(YP_LAST_KEY)-1)
-#define YP_INPUT_KEY       "YP_INPUT_FILE"
-#define YP_INPUT_LEN	   (sizeof(YP_INPUT_KEY)-1)
-#define YP_OUTPUT_KEY      "YP_OUTPUT_FILE"
-#define YP_OUTPUT_LEN	   (sizeof(YP_OUTPUT_KEY)-1)
-#define YP_MASTER_KEY      "YP_MASTER_NAME"
-#define YP_MASTER_LEN	   (sizeof(YP_MASTER_KEY)-1)
-#define YP_DOMAIN_KEY      "YP_DOMAIN_NAME"
-#define YP_DOMAIN_LEN	   (sizeof(YP_DOMAIN_KEY)-1)
-#define YP_INTERDOMAIN_KEY "YP_INTERDOMAIN"
-#define YP_INTERDOMAIN_LEN (sizeof(YP_INTERDOMAIN_KEY)-1)
-#define YP_SECURE_KEY      "YP_SECURE"
-#define YP_SECURE_LEN      (sizeof(YP_SECURE_KEY)-1)
+#define YP_DB_PATH		"/var/yp"
+#define YP_LAST_KEY		"YP_LAST_MODIFIED"
+#define YP_LAST_LEN		(sizeof(YP_LAST_KEY)-1)
+#define YP_INPUT_KEY		"YP_INPUT_FILE"
+#define YP_INPUT_LEN		(sizeof(YP_INPUT_KEY)-1)
+#define YP_OUTPUT_KEY		"YP_OUTPUT_FILE"
+#define YP_OUTPUT_LEN		(sizeof(YP_OUTPUT_KEY)-1)
+#define YP_MASTER_KEY		"YP_MASTER_NAME"
+#define YP_MASTER_LEN		(sizeof(YP_MASTER_KEY)-1)
+#define YP_DOMAIN_KEY		"YP_DOMAIN_NAME"
+#define YP_DOMAIN_LEN		(sizeof(YP_DOMAIN_KEY)-1)
+#define YP_INTERDOMAIN_KEY	"YP_INTERDOMAIN"
+#define YP_INTERDOMAIN_LEN	(sizeof(YP_INTERDOMAIN_KEY)-1)
+#define YP_SECURE_KEY		"YP_SECURE"
+#define YP_SECURE_LEN		(sizeof(YP_SECURE_KEY)-1)
 
-#define MAX_LAST_LEN 10
-#define MAX_MASTER_LEN 255
-#define YP_HOSTNAME "hosts.byname"
-#define YP_HOSTADDR "hosts.byaddr"
+#define MAX_LAST_LEN		10
+#define MAX_MASTER_LEN		255
+#define YP_HOSTNAME		"hosts.byname"
+#define YP_HOSTADDR		"hosts.byaddr"
 
 #ifndef TRUE
 #define TRUE 1
@@ -63,8 +63,8 @@
 #define FALSE 0
 #endif
 
-#define YPXFR_PROC "/usr/sbin/ypxfr"
-#define YPPUSH_PROC "/usr/sbin/yppush"
-#define YP_SECURENET_FILE "/var/yp/securenet"
+#define YPXFR_PROC		"/usr/sbin/ypxfr"
+#define YPPUSH_PROC		"/usr/sbin/yppush"
+#define YP_SECURENET_FILE	"/var/yp/securenet"
 
 #endif /* !_YPDEF_H_ */
