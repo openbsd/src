@@ -44,19 +44,20 @@
 #include <machine/asm.h>
 
 	.data
-randseed:
+	.globl	__randseed
+__randseed:
 	.long	1
 	.text
 ENTRY(random)
 	movl	$16807,%eax
-	imull	randseed
+	imull	__randseed
 	shld	$1,%eax,%edx
 	andl	$0x7fffffff,%eax
 	addl	%edx,%eax
 	js	1f
-	movl	%eax,randseed
+	movl	%eax,__randseed
 	ret
 1:
 	subl	$0x7fffffff,%eax
-	movl	%eax,randseed
+	movl	%eax,__randseed
 	ret

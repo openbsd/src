@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1996/06/16 01:14:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 1996/08/10 21:41:14 deraadt Exp $
 #	$NetBSD: Makefile,v 1.27 1996/05/10 21:27:32 scottr Exp $
 
 LIB=	kern
@@ -24,7 +24,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 .endif
 
 # Other stuff
-SRCS+=	md5.c getsn.c
+SRCS+=	md5.c getsn.c srandom.c
 
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
 

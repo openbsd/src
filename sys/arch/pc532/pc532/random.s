@@ -46,18 +46,19 @@
 #include <machine/asm.h>
 
 	.data
-randseed:
+	.globl	__randseed
+__randseed:
 	.long	1
 
 	.text
 ENTRY(random)
 	enter [r2],0
-	movzwd	randseed(pc), r2	/* 1st 16 bit multiply */
+	movzwd	__randseed(pc), r2	/* 1st 16 bit multiply */
 	muld	16807, r2		/* result is positive */
 	movd	r2, r1
 	bicd	0xffff0000, r2		/* save bottom 16 bits */
 	ashd	-16, r1			/* move top 16 to bottom */
-	movzwd	randseed+2(pc), r0	/* 2n 16 bit multiply */
+	movzwd	__randseed+2(pc), r0	/* 2n 16 bit multiply */
 	muld	16807, r0		
 	addd	r0, r1			/* add to top 16 bits of first  */
 	movd	r1, r0			/* save a copy in r0 */
@@ -70,6 +71,6 @@ ENTRY(random)
 	subd	0x7fffffff, r0
 
 nocarry:
-	movd	r0, randseed(pc)
+	movd	r0, __randseed(pc)
 	exit [r2]
 	ret	0

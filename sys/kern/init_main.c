@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.12 1996/06/16 10:28:39 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.13 1996/08/10 21:41:13 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -385,6 +385,8 @@ main(framep)
 #else
 	cpu_set_kpc(pfind(3), start_update);
 #endif
+
+	srandom((u_long)(time.tv_sec ^ time.tv_usec));
 
 	/* The scheduler is an infinite loop. */
 	scheduler();

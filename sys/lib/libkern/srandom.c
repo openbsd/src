@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.2 1994/10/26 06:42:42 cgd Exp $	*/
+/*	$OpenBSD: srandom.c,v 1.1 1996/08/10 21:41:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,30 +37,11 @@
 
 #include <sys/types.h>
 
-/*
- * Pseudo-random number generator for randomizing the profiling clock,
- * and whatever else we might use it for.  The result is uniform on
- * [0, 2^31 - 1].
- */
-u_long __randseed = 1;
+extern u_long _randseed;
 
-u_long
-random()
+void
+srandom(seed)
+	u_long seed;
 {
-	register long x, hi, lo, t;
-
-	/*
-	 * Compute x[n + 1] = (7^5 * x[n]) mod (2^31 - 1).
-	 * From "Random number generators: good ones are hard to find",
-	 * Park and Miller, Communications of the ACM, vol. 31, no. 10,
-	 * October 1988, p. 1195.
-	 */
-	x = __randseed;
-	hi = x / 127773;
-	lo = x % 127773;
-	t = 16807 * lo - 2836 * hi;
-	if (t <= 0)
-		t += 0x7fffffff;
-	__randseed = t;
-	return (t);
+	_randseed = seed;
 }

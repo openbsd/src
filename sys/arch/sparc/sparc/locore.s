@@ -4805,14 +4805,15 @@ ENTRY(ffs)
  * Vol 33 No 1.
  */
 	.data
-randseed:
+	.globl	__randseed
+__randseed:
 	.word	1
 	.text
 ENTRY(random)
 	sethi	%hi(16807), %o1
 	wr	%o1, %lo(16807), %y
-	 sethi	%hi(randseed), %g1
-	 ld	[%g1 + %lo(randseed)], %o0
+	 sethi	%hi(__randseed), %g1
+	 ld	[%g1 + %lo(__randseed)], %o0
 	 andcc	%g0, 0, %o2
 	mulscc  %o2, %o0, %o2
 	mulscc  %o2, %o0, %o2
@@ -4841,13 +4842,13 @@ ENTRY(random)
 	bneg	1f
 	 sethi	%hi(0x7fffffff), %o1
 	retl
-	 st	%o0, [%g1 + %lo(randseed)]
+	 st	%o0, [%g1 + %lo(__randseed)]
 1:
 	or	%o1, %lo(0x7fffffff), %o1
 	add	%o0, 1, %o0
 	and	%o1, %o0, %o0
 	retl
-	 st	%o0, [%g1 + %lo(randseed)]
+	 st	%o0, [%g1 + %lo(__randseed)]
 
 /*
  * void lo_microtime(struct timeval *tv)
