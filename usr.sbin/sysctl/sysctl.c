@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.26 1997/09/21 23:02:03 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.27 1997/10/03 20:58:04 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.26 1997/09/21 23:02:03 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.27 1997/10/03 20:58:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -502,12 +502,12 @@ parse(string, flags)
 	}
 #ifdef CPU_BIOS
 	if (special & BIOSGEO) {
-		int geo = *(int *)buf;
+		u_int geo = *(int *)buf;
 
 		if (!nflag)
 			(void)printf("%s = ", string);
-		(void) printf("spt = %d, tpc = %d\n",
-			      BIOSNSECTS(geo), BIOSNHEADS(geo));
+		printf("Cylinders=%d Tracks=%d Sectors=%d %08x\n",
+		    BIOSNTRACKS(geo), BIOSNHEADS(geo), BIOSNSECTS(geo), geo);
 		return;
 	}
 	if (special & BIOSDEV) {

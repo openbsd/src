@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.15 1997/09/30 22:10:50 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.16 1997/10/03 20:58:06 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -139,16 +139,16 @@ main(argc, argv)
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_BIOS;
 	mib[2] = BIOS_DEV;
-	size = sizeof(int);
+	size = sizeof(biosdev);
 
 	if ((nheads == -1 || nsectors == -1) &&
 	    sysctl(mib, 3, &biosdev, &size, NULL, 0) != -1) {
 
 		if (biosdev & 0x80) {
-			int geo;
+			u_int geo;
 
 			mib[2] = BIOS_GEOMETRY;
-			size = sizeof(int);
+			size = sizeof(geo);
 
 			if (sysctl(mib, 3, &geo, &size, NULL, 0) == -1)
 				err(1, "sysctl");
