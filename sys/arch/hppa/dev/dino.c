@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.6 2004/06/17 05:40:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -194,6 +194,11 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
+	pcireg_t data1;
+
+	/* fix coalescing config writes errata by interleaving w/ a read */
+	r->pci_addr = tag | PCI_ID_REG;
+	data1 = r->pci_conf_data;
 
 	r->pci_addr = tag | reg;
 	r->pci_conf_data = htole32(data);
