@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.75 2003/10/27 03:08:58 mickey Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.76 2004/01/07 18:11:16 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -764,7 +764,7 @@ scsi_probedev(scsi, target, lun)
 	struct scsi_link *sc_link;
 	static struct scsi_inquiry_data inqbuf;
 	const struct scsi_quirk_inquiry_pattern *finger;
-	int checkdtype, priority;
+	int priority;
 	struct scsibus_attach_args sa;
 	struct cfdata *cf;
 
@@ -811,24 +811,28 @@ scsi_probedev(scsi, target, lun)
 
 	/* Now go ask the device all about itself. */
 	bzero(&inqbuf, sizeof(inqbuf));
-	if (scsi_inquire(sc_link, &inqbuf, scsi_autoconf) != 0)
+
+	memset(&inqbuf.vendor, ' ', sizeof inqbuf.vendor);
+	memset(&inqbuf.product, ' ', sizeof inqbuf.product);
+	memset(&inqbuf.revision, ' ', sizeof inqbuf.revision);
+	memset(&inqbuf.extra, ' ', sizeof inqbuf.extra);
+
+	if (scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT) != 0)
 		goto bad;
 
-	{
-		int len = inqbuf.additional_length;
-		while (len < 3)
-			inqbuf.unused[len++] = '\0';
-		while (len < 3 + 28)
-			inqbuf.unused[len++] = ' ';
-		if (inqbuf.additional_length == 0) {
-			if (inqbuf.dev_qual2 == 0xb0) {
-				strncpy(inqbuf.unused+3, "DEC", 3);
-				strncpy(inqbuf.unused+11, "TZ30", 4);
-			} else if (inqbuf.dev_qual2 == 0xd0) {
-				strncpy(inqbuf.unused+3, "DEC", 3);
-				strncpy(inqbuf.unused+11, "TK50", 4);
-			}
-		}
+	switch (inqbuf.device & SID_QUAL) {
+	case SID_QUAL_RSVD:
+	case SID_QUAL_BAD_LU:
+	case SID_QUAL_LU_OFFLINE:
+		goto bad;
+
+	case SID_QUAL_LU_OK:
+		if ((inqbuf.device & SID_TYPE) == T_NODEVICE)
+			goto bad;
+		break;
+
+	default:
+		break;
 	}
 
 	finger = (const struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(
@@ -872,45 +876,6 @@ scsi_probedev(scsi, target, lun)
 	 */
 	if ((inqbuf.dev_qual2 & SID_REMOVABLE) != 0)
 		sc_link->flags |= SDEV_REMOVABLE;
-
-	/*
-	 * Any device qualifier that has the top bit set (qualifier&4 != 0)
-	 * is vendor specific and won't match in this switch.
-	 * All we do here is throw out bad/negative responses.
-	 */
-	checkdtype = 0;
-	switch (inqbuf.device & SID_QUAL) {
-	case SID_QUAL_LU_OK:
-	case SID_QUAL_LU_OFFLINE:
-		checkdtype = 1;
-		break;
-
-	case SID_QUAL_RSVD:
-	case SID_QUAL_BAD_LU:
-		goto bad;
-
-	default:
-		break;
-	}
-	if (checkdtype) {
-		switch (inqbuf.device & SID_TYPE) {
-		case T_DIRECT:
-		case T_SEQUENTIAL:
-		case T_PRINTER:
-		case T_PROCESSOR:
-		case T_CDROM:
-		case T_WORM:
-		case T_SCANNER:
-		case T_OPTICAL:
-		case T_CHANGER:
-		case T_COMM:
-		case T_RDIRECT:
-		default:
-			break;
-		case T_NODEVICE:
-			goto bad;
-		}
-	}
 
 	sa.sa_sc_link = sc_link;
 	sa.sa_inqbuf = &inqbuf;
