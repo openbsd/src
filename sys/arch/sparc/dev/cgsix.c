@@ -117,9 +117,10 @@ int		cgsixioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgsixmmap __P((dev_t, int, int));
 static void	cg6_unblank __P((struct device *));
 
-struct cfdriver cgsixcd =
-    { NULL, "cgsix", cgsixmatch, cgsixattach,
-      DV_DULL, sizeof(struct cgsix_softc) };
+struct cfdriver cgsixcd = {
+	NULL, "cgsix", cgsixmatch, cgsixattach,
+	DV_DULL, sizeof(struct cgsix_softc)
+};
 
 /* frame buffer generic driver */
 static struct fbdriver cg6_fbdriver = {

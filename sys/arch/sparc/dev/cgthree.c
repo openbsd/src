@@ -104,9 +104,6 @@ static struct fbdriver cgthreefbdriver = {
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int (*v_putc)();
-extern int nullop();
-static int cgthree_cnputc();
 
 static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
 
