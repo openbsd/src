@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.27 2003/06/18 18:08:59 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.61 2003/10/11 03:32:15 tedu Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.62 2003/10/14 17:58:23 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp 
 #
 #
@@ -52,7 +52,7 @@
 # Terminal ports:
 #	tty[a-z]*	Zilog 8530 Serial Port
 #	cua[a-z]*	Zilog 8530 Serial Port
-#	tty0*	NS16x50 serial ports
+#	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	ttyh*	Sab82532 serial devices
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
@@ -109,15 +109,24 @@ hex()
 	esac
 }
 
-trunc()
+h2d()
 {
-	# XXX pdksh can't seem to deal with locally scoped variables
-	# in ${foo#$bar} expansions
-	arg1="$1"
-	arg2="$2"
-	case $3 in
-	l)   echo ${arg2#$arg1} ;;
-	r|*) echo ${arg1#$arg2} ;;
+	local s="$1"
+	local f=${s%*[0-9a-f]} n=${s#[0-9a-f]*}
+
+	echo $(($(_h2d $f)*16+ $(_h2d $n) ))
+}
+
+_h2d()
+{
+	case $1 in
+	[0-9]) echo -n $1;;
+	a) echo -n 10;;
+	b) echo -n 11;;
+	c) echo -n 12;;
+	d) echo -n 13;;
+	e) echo -n 14;;
+	f) echo -n 15;;
 	esac
 }
 
@@ -423,9 +432,11 @@ ttyh*)
 	M ttyh$U c 77 $U 660 dialer uucp
 	;;
 
-tty0*)
-	M tty$U c 36 $U 660 dialer uucp
-	M cua$U c 36 $(($U+128)) 660 dialer uucp
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(hextod $U)
+	M tty$U c 36 $o 660 dialer uucp
+	M cua$U c 36 $(($o+128)) 660 dialer uucp
 	;;
 
 cua[a-z])
