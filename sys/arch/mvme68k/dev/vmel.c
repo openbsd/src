@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.3 1996/04/28 11:06:16 deraadt Exp $ */
+/*	$OpenBSD: vmel.c,v 1.4 1996/06/11 10:15:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -163,13 +163,14 @@ vmelwrite(dev, uio, flags)
 int
 vmelmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	int off;
+	int prot;
 {
 	int unit = minor(dev);
 	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
-	caddr_t pa;
+	void * pa;
 
-	pa = vmepmap(sc->sc_vme, (caddr_t)off, NBPG, BUS_VMEL);
+	pa = vmepmap(sc->sc_vme, (void *)off, NBPG, BUS_VMEL);
 	printf("vmel %x pa %x\n", off, pa);
 	if (pa == NULL)
 		return (-1);

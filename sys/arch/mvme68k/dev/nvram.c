@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.3 1996/04/28 11:06:11 deraadt Exp $ */
+/*	$OpenBSD: nvram.c,v 1.4 1996/06/11 10:15:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -47,8 +47,8 @@
 
 struct nvramsoftc {
 	struct device	sc_dev;
-	caddr_t		sc_paddr;
-	caddr_t		sc_vaddr;
+	void *		sc_paddr;
+	void *		sc_vaddr;
 	int		sc_len;
 	struct clockreg *sc_regs;
 };
@@ -72,7 +72,7 @@ nvrammatch(parent, vcf, args)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 
-/*X*/	if (ca->ca_vaddr == (caddr_t)-1)
+/*X*/	if (ca->ca_vaddr == (void *)-1)
 /*X*/		return (1);
 	return (!badvaddr(ca->ca_vaddr, 1));
 }
@@ -92,8 +92,8 @@ nvramattach(parent, self, args)
 	if (cputyp == CPU_147)
 		sc->sc_len = MK48T02_SIZE;
 
-/*X*/	if (sc->sc_vaddr == (caddr_t)-1)
-/*X*/		sc->sc_vaddr = mapiodev((caddr_t)sc->sc_paddr,
+/*X*/	if (sc->sc_vaddr == (void *)-1)
+/*X*/		sc->sc_vaddr = mapiodev((void *)sc->sc_paddr,
 /*X*/		    max(sc->sc_len, NBPG));
 /*X*/	if (sc->sc_vaddr == NULL)
 /*X*/		panic("failed to map!\n");

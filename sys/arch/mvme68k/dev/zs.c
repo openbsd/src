@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.3 1996/04/28 11:06:14 deraadt Exp $ */
+/*	$OpenBSD: zs.c,v 1.4 1996/06/11 10:15:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -133,7 +133,7 @@ int	zsopen	__P((dev_t, int, int, struct proc *));
 void	zsstart	__P((struct tty *));
 int	zsparam	__P((struct tty *, struct termios *));
 int	zsirq	__P((int unit));
-int	zsregs	__P((caddr_t va, int unit, volatile u_char **crp,
+int	zsregs	__P((void *va, int unit, volatile u_char **crp,
 	    volatile u_char **drp));
 int	zspclk	__P((void));
 
@@ -1083,7 +1083,7 @@ u_long zs_cons_addrs_162[] = { ZS0_PHYS_162, ZS1_PHYS_162 };
  */
 int
 zsregs(va, unit, crp, drp)
-	caddr_t	va;
+	void *va;
 	int unit;
 	volatile u_char **crp, **drp;
 {
@@ -1100,7 +1100,7 @@ zsregs(va, unit, crp, drp)
 #ifdef MVME147
 	case CPU_147:
 		if (!va)
-			va = (caddr_t)IIOV(zs_cons_addrs_147[zsunit(unit)]);
+			va = (void *)IIOV(zs_cons_addrs_147[zsunit(unit)]);
 		scc_adr_147 = (volatile struct scc_147 *)va;
 		scc_cr = &scc_adr_147->cr;
 		scc_dr = &scc_adr_147->dr;
@@ -1110,7 +1110,7 @@ zsregs(va, unit, crp, drp)
 #ifdef MVME162
 	case CPU_162:
 		if (!va)
-			va = (caddr_t)IIOV(zs_cons_addrs_162[zsunit(unit)]);
+			va = (void *)IIOV(zs_cons_addrs_162[zsunit(unit)]);
 		scc_adr_162 = (volatile struct scc_162 *)va;
 		scc_cr = &scc_adr_162->cr;
 		scc_dr = &scc_adr_162->dr;

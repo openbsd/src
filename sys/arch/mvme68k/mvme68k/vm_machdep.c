@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 1996/05/04 16:07:50 deraadt Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.7 1996/06/11 10:15:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -202,7 +202,7 @@ pagemove(from, to, size)
  * are specified by `prot'.
  */ 
 physaccess(vaddr, paddr, size, prot)
-	caddr_t vaddr, paddr;
+	void *vaddr, *paddr;
 	register int size, prot;
 {
 	register pt_entry_t *pte;

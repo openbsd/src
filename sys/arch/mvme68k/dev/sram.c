@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.3 1996/04/28 11:06:19 deraadt Exp $ */
+/*	$OpenBSD: sram.c,v 1.4 1996/06/11 10:15:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -54,8 +54,8 @@
 
 struct sramsoftc {
 	struct device	sc_dev;
-	caddr_t		sc_paddr;
-	caddr_t		sc_vaddr;
+	void *		sc_paddr;
+	void *		sc_vaddr;
 	int		sc_len;
 };
 
@@ -80,7 +80,7 @@ srammatch(parent, vcf, args)
 
 	if (cputyp == CPU_147)
 		return (0);
-	if (ca->ca_vaddr == (caddr_t)-1)
+	if (ca->ca_vaddr == (void *)-1)
 		return (!badpaddr(ca->ca_paddr, 1));
 	return (!badvaddr(ca->ca_vaddr, 1));
 }
@@ -138,7 +138,7 @@ sramattach(parent, self, args)
 	printf(": len %d", sc->sc_len);
 
 	sc->sc_paddr = ca->ca_paddr;
-	sc->sc_vaddr = mapiodev((caddr_t)sc->sc_paddr, sc->sc_len);
+	sc->sc_vaddr = mapiodev((void *)sc->sc_paddr, sc->sc_len);
 	if (sc->sc_vaddr == NULL) {
 		sc->sc_len = 0;
 		printf(" -- failed to map");

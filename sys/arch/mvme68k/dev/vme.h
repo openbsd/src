@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.3 1996/04/28 11:03:34 deraadt Exp $ */
+/*	$OpenBSD: vme.h,v 1.4 1996/06/11 10:15:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -33,7 +33,7 @@
 
 struct vmesoftc {
 	struct device	sc_dev;
-	caddr_t		sc_vaddr;
+	void *		sc_vaddr;
 	struct intrhand sc_abih;	/* `abort' switch */
 };
 
@@ -319,8 +319,8 @@ struct vme2reg {
 #define VME2_A16BASE	0xffff0000UL
 #define VME2_A24BASE	0xff000000UL
 
-caddr_t	vmepmap __P((struct vmesoftc *sc, caddr_t vmeaddr, int len,
+void * vmepmap __P((struct vmesoftc *sc, void * vmeaddr, int len,
 	    int bustype));
-caddr_t	vmemap __P((struct vmesoftc *sc, caddr_t vmeaddr, int len,
+void * vmemap __P((struct vmesoftc *sc, void * vmeaddr, int len,
 	    int bustype));
 int	vmerw __P((struct vmesoftc *sc, struct uio *uio, int flags, int bus));

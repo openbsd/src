@@ -1,4 +1,4 @@
-/*	$OpenBSD: memc.c,v 1.3 1996/04/28 11:06:09 deraadt Exp $ */
+/*	$OpenBSD: memc.c,v 1.4 1996/06/11 10:15:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -57,7 +57,7 @@
 
 struct memcsoftc {
 	struct device	sc_dev;
-	caddr_t		sc_vaddr;
+	void *		sc_vaddr;
 	struct memcreg *sc_memc;
 	struct intrhand	sc_ih;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 1996/05/29 16:37:16 chuck Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.7 1996/06/11 10:15:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -109,7 +109,7 @@ void	setroot __P((void));
 
 /* XXX must be allocated statically because of early console init */
 struct	map extiomap[EIOMAPSIZE/16];
-extern	char *extiobase;
+extern	void *extiobase;
 
 void mainbus_attach __P((struct device *, struct device *, void *));
 int  mainbus_match __P((struct device *, void *, void *));
@@ -139,7 +139,7 @@ mainbus_print(args, bus)
 	struct confargs *ca = args;
 
 	if (ca->ca_paddr != (void *)-1)
-		printf(" addr 0x%x", ca->ca_paddr);
+		printf(" addr 0x%x", (u_int32_t)ca->ca_paddr);
 	return (UNCONF);
 }
 
@@ -152,8 +152,8 @@ mainbus_scan(parent, child, args)
 	struct confargs oca;
 
 	bzero(&oca, sizeof oca);
-	oca.ca_paddr = (caddr_t)cf->cf_loc[0];
-	oca.ca_vaddr = (caddr_t)-1;
+	oca.ca_paddr = (void *)cf->cf_loc[0];
+	oca.ca_vaddr = (void *)-1;
 	oca.ca_ipl = -1;
 	oca.ca_bustype = BUS_MAIN;
 	oca.ca_name = cf->cf_driver->cd_name;
@@ -202,17 +202,17 @@ configure()
  * Allocate/deallocate a cache-inhibited range of kernel virtual address
  * space mapping the indicated physical address range [pa - pa+size)
  */
-caddr_t
+void *
 mapiodev(pa, size)
-	caddr_t pa;
+	void *pa;
 	int size;
 {
 	int ix, npf, offset;
-	caddr_t kva;
+	void *kva;
 
 	size = roundup(size, NBPG);
 	offset = (int)pa & PGOFSET;
-	pa = (caddr_t)((int)pa & ~PGOFSET);
+	pa = (void *)((int)pa & ~PGOFSET);
 
 #ifdef DEBUG
 	if (((int)pa & PGOFSET) || (size & PGOFSET))
@@ -229,7 +229,7 @@ mapiodev(pa, size)
 
 void
 unmapiodev(kva, size)
-	caddr_t kva;
+	void *kva;
 	int size;
 {
 	int ix;

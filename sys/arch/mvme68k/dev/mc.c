@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.3 1996/04/28 11:06:08 deraadt Exp $ */
+/*	$OpenBSD: mc.c,v 1.4 1996/06/11 10:15:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -55,8 +55,8 @@
 
 struct mcsoftc {
 	struct device	sc_dev;
-	caddr_t		sc_vaddr;
-	caddr_t		sc_paddr;
+	void		*sc_vaddr;
+	void		*sc_paddr;
 	struct mcreg	*sc_mc;
 	struct intrhand	sc_nmiih;
 };
@@ -126,8 +126,8 @@ mc_scan(parent, child, args)
 		oca.ca_paddr = sc->sc_paddr + oca.ca_offset;
 		oca.ca_vaddr = sc->sc_vaddr + oca.ca_offset;
 	} else {
-		oca.ca_paddr = (caddr_t)-1;
-		oca.ca_vaddr = (caddr_t)-1;
+		oca.ca_paddr = (void *)-1;
+		oca.ca_vaddr = (void *)-1;
 	}
 	oca.ca_bustype = BUS_MC;
 	oca.ca_master = (void *)sc->sc_mc;
@@ -155,7 +155,7 @@ mcattach(parent, self, args)
 	 * we must adjust our address
 	 */
 	sc->sc_paddr = ca->ca_paddr;
-	sc->sc_vaddr = (caddr_t)IIOV(sc->sc_paddr);
+	sc->sc_vaddr = (void *)IIOV(sc->sc_paddr);
 	sc->sc_mc = (struct mcreg *)(sc->sc_vaddr + MC_MCCHIP_OFF);
 	sys_mc = sc->sc_mc;
 
@@ -212,9 +212,9 @@ mc_enableflashwrite(on)
 	int on;
 {
 	struct mcsoftc *sc = (struct mcsoftc *) mc_cd.cd_devs[0];
-	volatile char *ena, x;
+	volatile u_char *ena, x;
 
-	ena = sc->sc_vaddr +
+	ena = (u_char *)sc->sc_vaddr +
 	    (on ? MC_ENAFLASHWRITE_OFFSET : MC_DISFLASHWRITE_OFFSET);
 	x = *ena;
 }
