@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.119 2004/09/15 01:00:41 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.120 2004/09/18 06:43:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -569,6 +569,8 @@ pmap_bootstrap(vstart)
 
 		if (va < (vaddr_t)&etext)
 			prot = UVM_PROT_RX;
+		else if (va < (vaddr_t)&__rodata_end)
+			prot = UVM_PROT_READ;
 		else if (va == (vaddr_t)proc0paddr + USPACE)
 			prot = UVM_PROT_NONE;
 
