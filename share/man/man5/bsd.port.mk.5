@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.113 2003/07/23 12:46:29 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.114 2003/07/25 12:54:42 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -205,6 +205,7 @@ See
 .Ev DISTFILES ,
 .Ev DIST_SUBDIR ,
 .Ev FETCH_CMD ,
+.Ev FETCH_MANUALLY ,
 .Ev FETCH_SYMLINK_DISTFILES ,
 .Ev FULL_DISTDIR ,
 .Ev MASTER_SITES ,
@@ -787,9 +788,19 @@ Defaults to
 .Xr ftp 1 .
 User settings.
 Can be used to go through excessively paranoid firewalls.
-.It Ev FETCH_DEPENDS
-See BUILD_DEPENDS for specification.
-Fetch dependencies are checked at the beginning of the extract stage.
+.It Ev FETCH_MANUALLY
+Some ports' distfiles cannot be fetched automatically for licensing reasons.
+In this case, set
+.Ev FETCH_MANUALLY
+to a list of strings that will be displayed, one per line, e.g.,
+.Bd -literal
+FETCH_MANUALLY= "You must fetch foo-1.0.tgz"
+FETCH_MANUALLY+="from http://www.fubar.com/ manually,"
+FETCH_MANUALLY+="after reading and agreeing to the license."
+.Ed
+Automatically sets
+.Ev IS_INTERACTIVE
+if some distribution files are missing.
 .It Ev FETCH_SYMLINK_DISTFILES
 User settings.
 Set to
@@ -1533,6 +1544,9 @@ instead.
 Set
 .Ev FETCH_CMD
 to point to a script that does any required special treatment instead.
+.It Ev FETCH_DEPENDS
+Used to specify dependencies that were needed to fetch files.
+It is much easier to mirror locally weird distribution files.
 .It Ev GNU_CONFIGURE
 Use
 .Ev CONFIGURE_STYLE
