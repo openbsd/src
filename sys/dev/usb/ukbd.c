@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.20 2004/07/08 22:18:44 deraadt Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.21 2004/11/30 21:11:41 matthieu Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -124,8 +124,8 @@ Static const u_int8_t ukbd_trtab[256] = {
     0x9c, 0x4f, 0x50, 0x51, 0x4b, 0x4c, 0x4d, 0x47, /* 58 - 5f */
     0x48, 0x49, 0x52, 0x53, 0x56, 0xdd,   NN, 0x59, /* 60 - 67 */
     0x5d, 0x5e, 0x5f,   NN,   NN,   NN,   NN,   NN, /* 68 - 6f */
-      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 70 - 77 */
-      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 78 - 7f */
+      NN,   NN,   NN,   NN, 0x97,   NN, 0x93, 0x95, /* 70 - 77 */
+    0x91, 0x92, 0x94, 0x9a, 0x96, 0x98, 0x99,   NN, /* 78 - 7f */
       NN,   NN,   NN,   NN,   NN, 0x7e,   NN, 0x73, /* 80 - 87 */
     0x70, 0x7d, 0x79, 0x7b, 0x5c,   NN,   NN,   NN, /* 88 - 8f */
       NN,   NN, 0x78, 0x77, 0x76,   NN,   NN,   NN, /* 90 - 97 */
