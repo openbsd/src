@@ -156,7 +156,7 @@
  */
 	.data
 
-	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
+	.globl	_cpu,_cpu_vendor,_cold,_cnvmem,_extmem,_esym,_boothowto,_bootdev,_atdevbase
 	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr,_dynamic_gdt
 #if NAPM > 0
 #include <machine/apmvar.h>
@@ -172,6 +172,8 @@ _cpu:		.long	0	# are we 386, 386sx, or 486
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
 _esym:		.long	0	# ptr to end of syms
+_cnvmem:	.long	0	# conventional memory size
+_extmem:	.long	0	# extended memory size
 _atdevbase:	.long	0	# location of start of iomem in virtual
 _cyloffset:	.long	0
 _proc0paddr:	.long	0
@@ -203,6 +205,11 @@ start:	movw	$0x1234,0x472			# warm boot
 	jz	1f
 	addl	$KERNBASE,%eax
 1: 	movl	%eax,RELOC(_esym)
+
+	movl	20(%esp),%eax
+	movl	%eax,RELOC(_extmem)
+	movl	24(%esp),%eax
+	movl	%eax,RELOC(_cnvmem)
 
 #if NAPM > 0
 

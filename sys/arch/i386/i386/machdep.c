@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 1996/09/21 07:15:33 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 1996/10/23 05:23:39 etheisen Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -160,6 +160,9 @@ void	consinit __P((void));
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
 
+extern long cnvmem;	/* BIOS's conventional memory size */
+extern long extmem;	/* BIOS's extended memory size */
+
 /*
  * Machine-dependent startup code
  */
@@ -187,7 +190,10 @@ cpu_startup()
 
 	printf(version);
 	startrtclock();
+	
 	identifycpu();
+	printf("BIOS mem  = %ldk conventional, %ldk extended\n",
+		cnvmem, extmem);
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
@@ -1153,6 +1159,7 @@ init386(first_avail)
 	isa_defaultirq();
 #endif
 
+#ifdef MEM_COMPUTE /* Default config  - get sizes from bootblocks */
 	splhigh();
 	enable_intr();
 
@@ -1166,12 +1173,16 @@ init386(first_avail)
 	 */
 	biosbasemem = (mc146818_read(NULL, NVRAM_BASEHI) << 8) |
 	    mc146818_read(NULL, NVRAM_BASELO);
-#ifdef EXTMEM_SIZE
-	biosextmem = EXTMEM_SIZE;
-#else
 	biosextmem = (mc146818_read(NULL, NVRAM_EXTHI) << 8) |
 	    mc146818_read(NULL, NVRAM_EXTLO);
-#endif /* EXTMEM_SIZE */
+#else
+	biosbasemem = cnvmem;	/* Base memory as reported by BIOS call */
+	biosextmem = extmem;	/* Extended memory as reported by BIOS call */
+#endif
+
+#ifdef EXTMEM_SIZE /* Override memory size */
+	biosextmem = EXTMEM_SIZE;
+#endif
 
 	/* Round down to whole pages. */
 	biosbasemem &= -(NBPG / 1024);
