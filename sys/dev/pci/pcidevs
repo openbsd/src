@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.376 2001/03/14 04:42:23 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.377 2001/03/14 22:49:00 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1243,6 +1243,8 @@ product LAVA PARALLELB		0x8003	Dual Parallel B
 product LAVA TWOSP_2S		0x0100	Dual Serial
 product LAVA IOFLEX_2S_0	0x0110	Serial
 product LAVA IOFLEX_2S_1	0x0111	Serial
+product LAVA LAVAPORT_0		0x0201	Serial
+product LAVA LAVAPORT_1		0x0202	Serial
 product LAVA OCTOPUS950_0	0x0180	Quad Serial
 product LAVA OCTOPUS950_1	0x0181	Quad Serial
 
