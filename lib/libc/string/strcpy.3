@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcpy.3,v 1.10 2000/04/21 15:24:20 aaron Exp $
+.\"	$OpenBSD: strcpy.3,v 1.11 2002/05/13 17:04:43 millert Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRCPY 3
@@ -76,11 +76,10 @@ characters long, and
 .Em not
 terminating
 .Fa dst
-if
+if the length of
 .Fa src
-is more than
-.Fa len
-characters long.
+is greater than or equal to
+.Fa len .
 .Sh RETURN VALUES
 The
 .Fn strcpy
@@ -108,7 +107,7 @@ null terminate
 because the source string is >= the length parameter.
 .Fn strncpy
 .Em only
-null terminates the destination string when then length of the source
+null terminates the destination string when the length of the source
 string is less than the length parameter.
 .Bd -literal -offset indent
 (void)strncpy(chararray, "abcdefgh", 6);
