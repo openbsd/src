@@ -1333,7 +1333,7 @@ PUBLIC int print_options ARGS3(
 		"   <a href=\"%s//PRINTER/number=%d/pagelen=%d/lines=%d\">",
 		STR_LYNXPRINT,
 		count, cur_printer->pagelen, lines_in_file);
-	fprintf(fp0, (cur_printer->name ?
+	fprintf(fp0, "%s", (cur_printer->name ?
 		      cur_printer->name : "No Name Given"));
 	fprintf(fp0, "</a>\n");
     }
