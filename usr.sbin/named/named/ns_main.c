@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.7 1997/04/27 23:09:44 deraadt Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.8 1998/03/20 03:06:51 angelos Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.24 1996/11/26 10:11:22 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.7 1997/04/27 23:09:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.8 1998/03/20 03:06:51 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1109,6 +1109,8 @@ getnetconf()
 			}
 			continue;
 		} else if ((ifreq.ifr_flags & IFF_POINTOPOINT)) {
+			((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr =
+				ntp->my_addr;
 			if (ioctl(vs, SIOCGIFDSTADDR, (char *)&ifreq) < 0) {
 				syslog(LOG_NOTICE, "get dst addr: %m");
 				continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.12 1998/01/17 20:30:29 millert Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.13 1998/03/20 03:10:03 angelos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.29 1997/11/27 06:10:04 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.12 1998/01/17 20:30:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.13 1998/03/20 03:10:03 angelos Exp $";
 #endif
 #endif
 
@@ -1415,6 +1415,7 @@ get_ether_addr(ipaddr, hwaddr)
 	    /*
 	     * Get its netmask and check that it's on the right subnet.
 	     */
+	    ifreq.ifr_addr = ifr->ifr_addr;
 	    if (ioctl(sockfd, SIOCGIFNETMASK, &ifreq) < 0)
 		continue;
 	    mask = ((struct sockaddr_in *) &ifreq.ifr_addr)->sin_addr.s_addr;
@@ -1510,6 +1511,7 @@ GetMask(addr)
 	/*
 	 * Get its netmask and OR it into our mask.
 	 */
+	ifreq.ifr_addr = ifr->ifr_addr;
 	if (ioctl(sockfd, SIOCGIFNETMASK, &ifreq) < 0)
 	    continue;
 	mask |= ((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr.s_addr;
