@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.h,v 1.4 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: kvm.h,v 1.5 2002/06/08 22:31:24 art Exp $	*/
 /*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
 
 /*-
@@ -42,6 +42,12 @@
 /* Default version symbol. */
 #define	VRS_SYM		"_version"
 #define	VRS_KEY		"VERSION"
+
+/*
+ * Flag for kvm_open* that disables opening of any files. We're just
+ * interested in a handle to run sysctls.
+ */
+#define KVM_NO_FILES	0x80000000
 
 #include <nlist.h>
 #include <sys/cdefs.h>

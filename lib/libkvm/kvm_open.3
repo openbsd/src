@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.6 2000/03/04 15:29:56 aaron Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.7 2002/06/08 22:31:24 art Exp $
 .\"	$NetBSD: kvm_open.3,v 1.2 1996/03/18 22:33:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -116,6 +116,10 @@ Only
 and
 .Dv O_RDWR
 are permitted.
+A special value
+.Dv KVM_NO_FILES
+can be specified which will cause no files to be opened and the handle
+can only be used on live kernels on a limited subset of all kvm operations.
 .Pp
 There are two open routines which differ only with respect to
 the error mechanism.

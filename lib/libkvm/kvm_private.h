@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.6 2002/02/16 21:27:26 millert Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.7 2002/06/08 22:31:25 art Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@ struct __kvm {
 	char	*errp;		/* XXX this can probably go away */
 	char	errbuf[_POSIX2_LINE_MAX];
 	DB	*db;
-#define ISALIVE(kd) ((kd)->vmfd >= 0)
 	int	pmfd;		/* physical memory file (or crashdump) */
 	int	vmfd;		/* virtual memory file (-1 if crashdump) */
 	int	swfd;		/* swap file (e.g., /dev/drum) */
@@ -85,6 +84,8 @@ struct __kvm {
 	 */
 	struct pglist *vm_page_buckets;
 	int vm_page_hash_mask;
+	int alive;	/* Dead or alive. */
+#define ISALIVE(kd) ((kd)->alive)
 };
 
 /*

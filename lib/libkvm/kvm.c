@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.30 2002/03/05 00:15:08 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.31 2002/06/08 22:31:24 art Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.30 2002/03/05 00:15:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.31 2002/06/08 22:31:24 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -191,6 +191,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->vmfd = -1;
 	kd->swfd = -1;
 	kd->nlfd = -1;
+	kd->alive = 0;
 	kd->procbase = 0;
 	kd->nbpg = getpagesize();
 	kd->swapspc = 0;
@@ -203,6 +204,11 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->cpu_dsize = 0;
 	kd->cpu_data = 0;
 	kd->dump_off = 0;
+
+	if (flag & KVM_NO_FILES) {
+		kd->alive = 1;
+		return (kd);
+	}	
 
 	if (uf && strlen(uf) >= MAXPATHLEN) {
 		_kvm_err(kd, kd->program, "exec file name too long");
@@ -241,6 +247,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
+		kd->alive = 1;
 		if ((kd->swfd = open(sf, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", sf);
 			goto failed;
@@ -641,6 +648,7 @@ kvm_close(kd)
 		error |= close(kd->pmfd);
 	if (kd->vmfd >= 0)
 		error |= close(kd->vmfd);
+	kd->alive = 0;
 	if (kd->nlfd >= 0)
 		error |= close(kd->nlfd);
 	if (kd->swfd >= 0)
