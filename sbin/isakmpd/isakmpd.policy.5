@@ -1,5 +1,5 @@
-.\" $EOM: isakmpd.policy.5,v 1.1 1999/10/16 20:07:18 angelos Exp $
-.\" $OpenBSD: isakmpd.policy.5,v 1.2 2000/01/26 15:21:22 niklas Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.3 2000/02/07 01:32:32 niklas Exp $
+.\" $EOM: isakmpd.policy.5,v 1.8 2000/02/07 01:30:35 angelos Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
 .\"
@@ -130,8 +130,8 @@ characteristics:
   below, for use of policy delegation).
 
 * The Licensees field can be an expression of passphrases used for
-  authentication of the Main Mode exchanges and/or public keys
-  (typically, X509 certificates).
+  authentication of the Main Mode exchanges, and/or public keys
+  (typically, X509 certificates), and/or X509 Canonical names.
 
 * The Conditions field contains an expression of attributes from the
   IPsec policy action set (see below as well as the keynote syntax man
@@ -156,6 +156,19 @@ passphrase "foobar" or the public key contained in the X509
 certificate encoded as "abcd==" will be accepted, as long as it
 contains ESP with a non-null algorithm (i.e., the packet will be
 encrypted).
+.Pp
+The following policy assertion:
+.Bd -literal
+    Authorizer: "POLICY"
+    Licensees: "CN:/CN=CA Certificate"
+    Conditions: app_domain == "IPsec policy" && esp_present == "yes"
+		&& esp_enc_alg != "null" -> "true";
+.Ed
+
+is similar to the previous one, but instead of including a complete
+X509 credential in the Licensees field, only the X509 certificate's
+Subject Canonical Name need to be specified (note that the "CN:"
+prefix is necessary).
 .Pp
 KeyNote credentials have the same format as policy assertions, with
 one difference: the Authorizer field always contains a public key, and
@@ -396,6 +409,8 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
     Authorizer: "POLICY"
     Comment: This bare-bones assertion accepts everything
 
+
+
     Authorizer: "POLICY"
     Licensees: "passphrase:mekmitasisgoat"
     Comment: This policy accepts anyone using shared-secret
@@ -405,6 +420,8 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
                 esp_present == "yes" &&
                 esp_enc_alg != "null" -> "true";
 
+
+
     Authorizer: "POLICY"
     Licensees: "subpolicy1" || "subpolicy2"
     Comment: Delegate to two other sub-policies, so we
@@ -413,10 +430,14 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
 	     have to be in isakmpd.policy.
     Conditions: app_domain == "IPsec policy";
 
+
+
     KeyNote-Version: 2
     Licensees: "passphrase:somepassword"
     Conditions: esp_present == "yes" -> "true";
     Authorizer: "subpolicy1"
+
+
 
     Conditions: ah_present == "yes" ->
                    {
@@ -426,6 +447,15 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
                    };
     Licensees: "passphrase:otherpassword" || "passphrase:thirdpassword"
     Authorizer: "subpolicy2"
+
+
+
+    keynote-version: 2
+    comment: this is an example of a policy delegating to a CN.
+    authorizer: "POLICY"
+    licensees: "CN:/CN=CA Certificate/Email=ca@foo.bar.com"
+
+
 
     keynote-version: 2
     comment: This is an example of a policy delegating to a key.
@@ -448,6 +478,8 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
     conditions: app_domain == "IPsec policy" && doi == "ipsec" &&
             pfs == "yes" && esp_present == "yes" && ah_present == "no" &&
             (esp_enc_alg == "3des" || esp_enc_alg == "idea") -> "true";
+
+
 
     keynote-version: 2
     comment: This is an example of a credential, the signature does
