@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.28 2000/03/02 10:50:29 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.29 2000/03/13 04:05:15 millert Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -335,6 +335,7 @@ putchar(c, flags, tp)
 			/* Nothing we can do */
 		}
 		mbp->msg_bufc[mbp->msg_bufx++] = c;
+		mbp->msg_bufl = min(mbp->msg_bufl+1, mbp->msg_bufs);
 		if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
 			mbp->msg_bufx = 0;
                 /* If the buffer is full, keep the most recent data. */
