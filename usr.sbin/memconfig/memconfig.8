@@ -1,4 +1,4 @@
-.\" $OpenBSD: memconfig.8,v 1.4 2000/04/12 21:47:54 aaron Exp $
+.\" $OpenBSD: memconfig.8,v 1.5 2000/10/14 17:31:40 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Chris Costello
 .\" All rights reserved.
@@ -31,24 +31,21 @@
 .Os
 .Sh NAME
 .Nm memconfig
-.Nd "Control system cache behaviour with respect to memory"
+.Nd "control system cache behaviour with respect to memory"
 .Sh SYNOPSIS
-.Nm
+.Nm memconfig
 .Ar list
 .Op Fl a
-.Pp
-.Nm
+.Nm memconfig
 .Ar set
 .Fl b Ar base
 .Fl l Ar length
 .Fl o Ar owner
 .Ar attribute
-.Pp
-.Nm
+.Nm memconfig
 .Ar clear
 .Fl o Ar owner
-.Pp
-.Nm
+.Nm memconfig
 .Ar clear
 .Fl b Ar base
 .Fl l Ar length
@@ -57,39 +54,42 @@ A number of supported system architectures allow the behaviour of the CPU
 cache to be programmed to behave differently depending on the region being
 written.
 .Pp
-.Nm Memconfig
+.Nm
 provides an interface to this facility, allowing CPU cache behavior to
 be altered for ranges of system physical memory.
 .Pp
 These ranges are typically power-of-2 aligned and sized, however the specific
 rules governing their layout vary between architectures.
 The
-.Nm memconfig
+.Nm
 program does not attempt to enforce these rules, however the system will
 reject any attempt to set an illegal combination.
+.Pp
+The operands and their options are as follows:
 .Bl -tag -width clear
 .It Ar list
 List range slots.
 .Bl -tag -width xxxxxx
 .It Op Fl a
-List all range slots, even those that are inactive
+List all range slots, even those that are inactive.
 .El
 .It Ar set
 Set memory range attributes.
 .Bl -tag -width xxxxxx
 .It Fl b Ar base
-Memory range base address
+Memory range base address.
 .It Fl l Ar length
-Length of memory range in bytes, power of 2
+Length of memory range in bytes, power of 2.
 .It Fl o Ar owner
-Text identifier for this setting (7 char max)
+Text identifier for this setting (7 char max).
 .It Ar attribute
 Attributes applied to this range; one of
 .Ar uncacheable ,
 .Ar write-combine ,
 .Ar write-through ,
 .Ar write-back ,
-.Ar write-protect
+or
+.Ar write-protect .
 .El
 .It Ar clear
 Clear memory range attributes.
@@ -98,15 +98,15 @@ Ranges may be cleared by owner or by base/length combination.
 To clear based on ownership:
 .Bl -tag -width xxxxxx
 .It Fl o Ar owner
-All ranges with this owner will be cleared
+All ranges with this owner will be cleared.
 .El
 .Pp
 To clear based on the base/length combination:
 .Bl -tag -width xxxxxx
 .It Fl b Ar base
-Memory range base address
+Memory range base address.
 .It Fl l Ar length
-Length of memory range in bytes, power of 2
+Length of memory range in bytes, power of 2.
 .El
 .Pp
 Base and length must exactly match an existing range.
@@ -114,6 +114,6 @@ Base and length must exactly match an existing range.
 .Sh SEE ALSO
 .Xr mtrr 4
 .Sh HISTORY
-.Nm memconfig
+.Nm
 was originally introduced in FreeBSD 3.3 as
 .Xr memcontrol 8 .
