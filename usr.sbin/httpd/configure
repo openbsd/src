@@ -114,7 +114,7 @@ esac
 ##
 ##  determine platform id
 ##
-PLATFORM="`$aux/GuessOS`"
+PLATFORM="`sh $aux/GuessOS`"
 
 ##
 ##  display version information
@@ -141,7 +141,7 @@ fi
 ##  determine path to (optional) Perl interpreter
 ##
 PERL=no-perl-on-this-system
-perlpath="`$aux/PrintPath perl5 perl miniperl`"
+perlpath="`sh $aux/PrintPath perl5 perl miniperl`"
 if [ "x$perlpath" != "x" ]; then
     PERL="$perlpath"
 fi
@@ -174,7 +174,7 @@ fi
 ##  problems for our scripts under some platforms.
 ##
 AWK=awk
-awkpath="`$aux/PrintPath nawk gawk awk`"
+awkpath="`sh $aux/PrintPath nawk gawk awk`"
 if [ "x$awkpath" != "x" ]; then
     AWK="$awkpath"
 fi
@@ -185,7 +185,7 @@ fi
 ## the actual data) option.
 ##
 TAR=tar
-tarpath="`$aux/PrintPath gtar gnutar tar`"
+tarpath="`sh $aux/PrintPath gtar gnutar tar`"
 if [ "x$tarpath" != "x" ]; then
     TAR="$tarpath"
 fi
@@ -205,7 +205,7 @@ esac
 ##
 SHELL=/bin/sh
 if [ ! -f "$SHELL" ]; then
-    SHELL="`$aux/PrintPath sh`"
+    SHELL="`sh $aux/PrintPath sh`"
     if [ "x$SHELL" = "x" ]; then
         echo "configure:Error: Cannot determine path to Bourne-Shell" 1>&2
         exit 1
@@ -985,7 +985,7 @@ for var in CC CPP OPTIM CFLAGS CFLAGS_SHLIB LDFLAGS LD_SHLIB LDFLAGS_SHLIB \
             -e 's:$:" \\:' >>$configstatus
     fi
 done
-echo $SEO "./configure \\" >>$configstatus
+echo $SEO "${SHELL} ./configure \\" >>$configstatus
 for arg
 do
     echo "$arg" |\
@@ -1009,7 +1009,7 @@ if [ "x$suexec" = "x1" ]; then
         echo "                 and htdocs/manual/suexec.html documents first."
         exit 1
     fi
-    if [ "x`$aux/getuid.sh`" != "x0" ]; then
+    if [ "x`${SHELL} $aux/getuid.sh`" != "x0" ]; then
         echo " + Warning: You have enabled the suEXEC feature. Be aware that you need" 1>&2
         echo " + root privileges to complete the final installation step." 1>&2
     fi
@@ -1118,12 +1118,12 @@ if [ "x$confadjust" = "x1" ]; then
             fi
         done
     fi
-    if [ "x`$aux/getuid.sh`" != "x0" ]; then
+    if [ "x`${SHELL} $aux/getuid.sh`" != "x0" ]; then
         conf_port="8080"
         conf_port_ssl="8443"
     fi
-    conf_serveradmin="`$aux/buildinfo.sh -n %u@%h%d`"
-    conf_servername="`$aux/buildinfo.sh -n %h%d`"
+    conf_serveradmin="`${SHELL} $aux/buildinfo.sh -n %u@%h%d`"
+    conf_servername="`${SHELL} $aux/buildinfo.sh -n %h%d`"
 fi
  
 ##
@@ -1491,9 +1491,9 @@ rm -f $tplconf 2>/dev/null
 ##  $src/Configure script with our custom Configuration.apaci file
 ##
 if [ "x$quiet" = "xyes" ]; then
-    (cd $src; ./Configure -file Configuration.apaci >/dev/null);
+    (cd $src; ${SHELL} ./Configure -file Configuration.apaci >/dev/null);
 else
-    (cd $src; ./Configure -file Configuration.apaci |\
+    (cd $src; ${SHELL} ./Configure -file Configuration.apaci |\
      sed -e '/^Using config file:.*/d' \
          -e "s:Makefile in :Makefile in $src\\/:" \
          -e "s:Makefile\$:Makefile in $src:")

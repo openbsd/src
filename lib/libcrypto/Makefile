@@ -73,8 +73,8 @@ files:
 	done;
 
 links:
-	@$(TOP)/util/point.sh Makefile.ssl Makefile
-	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
+	@$(SHELL) $(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(SHELL) $(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
 	@$(TOP)/util/point.sh Makefile.ssl Makefile

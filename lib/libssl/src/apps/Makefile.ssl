@@ -111,7 +111,7 @@ tags:
 tests:
 
 links:
-	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(SHELL) $(TOP)/util/point.sh Makefile.ssl Makefile
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
