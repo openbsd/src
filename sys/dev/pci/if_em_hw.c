@@ -1,39 +1,38 @@
-/**************************************************************************
+/*******************************************************************************
 
-Copyright (c) 2001-2002 Intel Corporation
-All rights reserved.
+  Copyright (c) 2001-2003, Intel Corporation 
+  All rights reserved.
+  
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are met:
+  
+   1. Redistributions of source code must retain the above copyright notice, 
+      this list of conditions and the following disclaimer.
+  
+   2. Redistributions in binary form must reproduce the above copyright 
+      notice, this list of conditions and the following disclaimer in the 
+      documentation and/or other materials provided with the distribution.
+  
+   3. Neither the name of the Intel Corporation nor the names of its 
+      contributors may be used to endorse or promote products derived from 
+      this software without specific prior written permission.
+  
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
 
-Redistribution and use in source and binary forms of the Software, with or
-without modification, are permitted provided that the following conditions
-are met:
+*******************************************************************************/
 
- 1. Redistributions of source code of the Software may retain the above
-    copyright notice, this list of conditions and the following disclaimer.
-
- 2. Redistributions in binary form of the Software may reproduce the above
-    copyright notice, this list of conditions and the following disclaimer
-    in the documentation and/or other materials provided with the
-    distribution.
-
- 3. Neither the name of the Intel Corporation nor the names of its
-    contributors shall be used to endorse or promote products derived from
-    this Software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE INTEL OR ITS CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGE.
-
-***************************************************************************/
-
-/*$FreeBSD$*/
+/*$FreeBSD: if_em_hw.c,v 1.9 2003/06/05 17:51:38 pdeuskar Exp $*/
+/* $OpenBSD: if_em_hw.c,v 1.2 2003/06/13 19:21:21 henric Exp $ */
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
  */
@@ -79,6 +78,8 @@ SUCH DAMAGE.
 
 #include <dev/pci/if_em_hw.h>
 
+static int32_t em_set_phy_type(struct em_hw *hw);
+static void em_phy_init_script(struct em_hw *hw);
 static int32_t em_setup_fiber_link(struct em_hw *hw);
 static int32_t em_setup_copper_link(struct em_hw *hw);
 static int32_t em_phy_force_speed_duplex(struct em_hw *hw);
@@ -89,14 +90,165 @@ static void em_lower_mdi_clk(struct em_hw *hw, uint32_t *ctrl);
 static void em_shift_out_mdi_bits(struct em_hw *hw, uint32_t data, uint16_t count);
 static uint16_t em_shift_in_mdi_bits(struct em_hw *hw);
 static int32_t em_phy_reset_dsp(struct em_hw *hw);
+static int32_t em_write_eeprom_spi(struct em_hw *hw, uint16_t offset,
+                                      uint16_t words, uint16_t *data);
+static int32_t em_write_eeprom_microwire(struct em_hw *hw,
+                                            uint16_t offset, uint16_t words,
+                                            uint16_t *data);
+static int32_t em_spi_eeprom_ready(struct em_hw *hw);
 static void em_raise_ee_clk(struct em_hw *hw, uint32_t *eecd);
 static void em_lower_ee_clk(struct em_hw *hw, uint32_t *eecd);
 static void em_shift_out_ee_bits(struct em_hw *hw, uint16_t data, uint16_t count);
-static uint16_t em_shift_in_ee_bits(struct em_hw *hw);
-static void em_setup_eeprom(struct em_hw *hw);
+static uint16_t em_shift_in_ee_bits(struct em_hw *hw, uint16_t count);
+static int32_t em_acquire_eeprom(struct em_hw *hw);
+static void em_release_eeprom(struct em_hw *hw);
 static void em_standby_eeprom(struct em_hw *hw);
 static int32_t em_id_led_init(struct em_hw * hw);
 
+
+
+/******************************************************************************
+ * Set the phy type member in the hw struct.
+ *
+ * hw - Struct containing variables accessed by shared code
+ *****************************************************************************/
+int32_t
+em_set_phy_type(struct em_hw *hw)
+{
+    DEBUGFUNC("em_set_phy_type");
+
+    switch(hw->phy_id) {
+    case M88E1000_E_PHY_ID:
+    case M88E1000_I_PHY_ID:
+    case M88E1011_I_PHY_ID:
+        hw->phy_type = em_phy_m88;
+        break;
+    case IGP01E1000_I_PHY_ID:
+        hw->phy_type = em_phy_igp;
+        break;
+    default:
+        /* Should never have loaded on this device */
+        hw->phy_type = em_phy_undefined;
+        return -E1000_ERR_PHY_TYPE;
+    }
+
+    return E1000_SUCCESS;
+}
+
+/******************************************************************************
+ * IGP phy init script - initializes the GbE PHY
+ *
+ * hw - Struct containing variables accessed by shared code
+ *****************************************************************************/
+static void
+em_phy_init_script(struct em_hw *hw)
+{
+    DEBUGFUNC("em_phy_init_script");
+
+    if(hw->phy_init_script) {
+        msec_delay(10);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x0000);
+        em_write_phy_reg(hw,0x0000,0x0140);
+
+        msec_delay(5);
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x1F95);
+        em_write_phy_reg(hw,0x0015,0x0001);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x1F71);
+        em_write_phy_reg(hw,0x0011,0xBD21);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x1F79);
+        em_write_phy_reg(hw,0x0019,0x0018);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x1F30);
+        em_write_phy_reg(hw,0x0010,0x1600);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x1F31);
+        em_write_phy_reg(hw,0x0011,0x0014);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x1F32);
+        em_write_phy_reg(hw,0x0012,0x161C);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x1F94);
+        em_write_phy_reg(hw,0x0014,0x0003);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x1F96);
+        em_write_phy_reg(hw,0x0016,0x003F);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x2010);
+        em_write_phy_reg(hw,0x0010,0x0008);
+
+        em_write_phy_reg(hw,IGP01E1000_PHY_PAGE_SELECT,0x0000);
+        em_write_phy_reg(hw,0x0000,0x3300);
+    }
+}
+
+/******************************************************************************
+ * Set the mac type member in the hw struct.
+ *
+ * hw - Struct containing variables accessed by shared code
+ *****************************************************************************/
+int32_t
+em_set_mac_type(struct em_hw *hw)
+{
+    DEBUGFUNC("em_set_mac_type");
+
+    switch (hw->device_id) {
+    case E1000_DEV_ID_82542:
+        switch (hw->revision_id) {
+        case E1000_82542_2_0_REV_ID:
+            hw->mac_type = em_82542_rev2_0;
+            break;
+        case E1000_82542_2_1_REV_ID:
+            hw->mac_type = em_82542_rev2_1;
+            break;
+        default:
+            /* Invalid 82542 revision ID */
+            return -E1000_ERR_MAC_TYPE;
+        }
+        break;
+    case E1000_DEV_ID_82543GC_FIBER:
+    case E1000_DEV_ID_82543GC_COPPER:
+        hw->mac_type = em_82543;
+        break;
+    case E1000_DEV_ID_82544EI_COPPER:
+    case E1000_DEV_ID_82544EI_FIBER:
+    case E1000_DEV_ID_82544GC_COPPER:
+    case E1000_DEV_ID_82544GC_LOM:
+        hw->mac_type = em_82544;
+        break;
+    case E1000_DEV_ID_82540EM:
+    case E1000_DEV_ID_82540EM_LOM:
+    case E1000_DEV_ID_82540EP:
+    case E1000_DEV_ID_82540EP_LOM:
+    case E1000_DEV_ID_82540EP_LP:
+        hw->mac_type = em_82540;
+        break;
+    case E1000_DEV_ID_82545EM_COPPER:
+    case E1000_DEV_ID_82545EM_FIBER:
+        hw->mac_type = em_82545;
+        break;
+    case E1000_DEV_ID_82546EB_COPPER:
+    case E1000_DEV_ID_82546EB_FIBER:
+    case E1000_DEV_ID_82546EB_QUAD_COPPER:
+        hw->mac_type = em_82546;
+        break;
+    case E1000_DEV_ID_82541EI:
+    case E1000_DEV_ID_82541EP:
+        hw->mac_type = em_82541;
+        break;
+    case E1000_DEV_ID_82547EI:
+        hw->mac_type = em_82547;
+        break;
+    default:
+        /* Should never have loaded on this device */
+        return -E1000_ERR_MAC_TYPE;
+    }
+
+
+    return E1000_SUCCESS;
+}
 /******************************************************************************
  * Reset the transmit and receive units; mask and clear all interrupts.
  *
@@ -109,17 +261,14 @@ em_reset_hw(struct em_hw *hw)
     uint32_t ctrl_ext;
     uint32_t icr;
     uint32_t manc;
-    uint16_t pci_cmd_word;
+    uint32_t led_ctrl;
 
     DEBUGFUNC("em_reset_hw");
-    
+
     /* For 82542 (rev 2.0), disable MWI before issuing a device reset */
     if(hw->mac_type == em_82542_rev2_0) {
-        if(hw->pci_cmd_word & CMD_MEM_WRT_INVALIDATE) {
-            DEBUGOUT("Disabling MWI on 82542 rev 2.0\n");
-            pci_cmd_word = hw->pci_cmd_word & ~CMD_MEM_WRT_INVALIDATE;
-            em_write_pci_cfg(hw, PCI_COMMAND_REGISTER, &pci_cmd_word);
-        }
+        DEBUGOUT("Disabling MWI on 82542 rev 2.0\n");
+        em_pci_clear_mwi(hw);
     }
 
     /* Clear interrupt mask to stop board from generating interrupts */
@@ -132,13 +281,14 @@ em_reset_hw(struct em_hw *hw)
      */
     E1000_WRITE_REG(hw, RCTL, 0);
     E1000_WRITE_REG(hw, TCTL, E1000_TCTL_PSP);
+    E1000_WRITE_FLUSH(hw);
 
     /* The tbi_compatibility_on Flag must be cleared when Rctl is cleared. */
     hw->tbi_compatibility_on = FALSE;
 
     /* Delay to allow any outstanding PCI transactions to complete before
      * resetting the device
-     */ 
+     */
     msec_delay(10);
 
     /* Issue a global reset to the MAC.  This will reset the chip's
@@ -149,10 +299,26 @@ em_reset_hw(struct em_hw *hw)
     DEBUGOUT("Issuing a global reset to MAC\n");
     ctrl = E1000_READ_REG(hw, CTRL);
 
-    if(hw->mac_type > em_82543)
-        E1000_WRITE_REG_IO(hw, CTRL, (ctrl | E1000_CTRL_RST));
-    else
-        E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
+    /* Must reset the PHY before resetting the MAC */
+    if((hw->mac_type == em_82541) || (hw->mac_type == em_82547)) {
+        E1000_WRITE_REG_IO(hw, CTRL, (ctrl | E1000_CTRL_PHY_RST));
+	msec_delay(5);
+    }
+
+    switch(hw->mac_type) {
+        case em_82544:
+        case em_82540:
+        case em_82545:
+        case em_82546:
+        case em_82541:
+            /* These controllers can't ack the 64-bit write when issuing the
+             * reset, so use IO-mapping as a workaround to issue the reset */
+            E1000_WRITE_REG_IO(hw, CTRL, (ctrl | E1000_CTRL_RST));
+            break;
+        default:
+            E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
+            break;
+    }
 
     /* Force a reload from the EEPROM if necessary */
     if(hw->mac_type < em_82540) {
@@ -161,17 +327,28 @@ em_reset_hw(struct em_hw *hw)
         ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
         ctrl_ext |= E1000_CTRL_EXT_EE_RST;
         E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
+        E1000_WRITE_FLUSH(hw);
         /* Wait for EEPROM reload */
         msec_delay(2);
     } else {
         /* Wait for EEPROM reload (it happens automatically) */
-        msec_delay(4);
+        msec_delay(5);
         /* Dissable HW ARPs on ASF enabled adapters */
         manc = E1000_READ_REG(hw, MANC);
         manc &= ~(E1000_MANC_ARP_EN);
         E1000_WRITE_REG(hw, MANC, manc);
     }
-    
+
+    if((hw->mac_type == em_82541) || (hw->mac_type == em_82547)) {
+        em_phy_init_script(hw);
+
+        /* Configure activity LED after PHY reset */
+        led_ctrl = E1000_READ_REG(hw, LEDCTL);
+        led_ctrl &= IGP_ACTIVITY_LED_MASK;
+        led_ctrl |= (IGP_ACTIVITY_LED_ENABLE | IGP_LED3_MODE);
+        E1000_WRITE_REG(hw, LEDCTL, led_ctrl);
+    }
+
     /* Clear interrupt mask to stop board from generating interrupts */
     DEBUGOUT("Masking off all interrupts\n");
     E1000_WRITE_REG(hw, IMC, 0xffffffff);
@@ -182,7 +359,7 @@ em_reset_hw(struct em_hw *hw)
     /* If MWI was previously enabled, reenable it. */
     if(hw->mac_type == em_82542_rev2_0) {
         if(hw->pci_cmd_word & CMD_MEM_WRT_INVALIDATE)
-            em_write_pci_cfg(hw, PCI_COMMAND_REGISTER, &hw->pci_cmd_word);
+            em_pci_set_mwi(hw);
     }
 }
 
@@ -190,8 +367,8 @@ em_reset_hw(struct em_hw *hw)
  * Performs basic configuration of the adapter.
  *
  * hw - Struct containing variables accessed by shared code
- * 
- * Assumes that the controller has previously been reset and is in a 
+ *
+ * Assumes that the controller has previously been reset and is in a
  * post-reset uninitialized state. Initializes the receive address registers,
  * multicast table, and VLAN filter table. Calls routines to setup link
  * configuration and flow control settings. Clears all on-chip counters. Leaves
@@ -203,7 +380,6 @@ em_init_hw(struct em_hw *hw)
     uint32_t ctrl, status;
     uint32_t i;
     int32_t ret_val;
-    uint16_t pci_cmd_word;
     uint16_t pcix_cmd_word;
     uint16_t pcix_stat_hi_word;
     uint16_t cmd_mmrbc;
@@ -217,7 +393,7 @@ em_init_hw(struct em_hw *hw)
         DEBUGOUT("Error Initializing Identification LED\n");
         return ret_val;
     }
-    
+
     /* Set the Media Type and exit with error if it is not valid. */
     if(hw->mac_type != em_82543) {
         /* tbi_compatibility is only valid on 82543 */
@@ -246,12 +422,10 @@ em_init_hw(struct em_hw *hw)
 
     /* For 82542 (rev 2.0), disable MWI and put the receiver into reset */
     if(hw->mac_type == em_82542_rev2_0) {
-        if(hw->pci_cmd_word & CMD_MEM_WRT_INVALIDATE) {
-            DEBUGOUT("Disabling MWI on 82542 rev 2.0\n");
-            pci_cmd_word = hw->pci_cmd_word & ~CMD_MEM_WRT_INVALIDATE;
-            em_write_pci_cfg(hw, PCI_COMMAND_REGISTER, &pci_cmd_word);
-        }
+        DEBUGOUT("Disabling MWI on 82542 rev 2.0\n");
+        em_pci_clear_mwi(hw);
         E1000_WRITE_REG(hw, RCTL, E1000_RCTL_RST);
+        E1000_WRITE_FLUSH(hw);
         msec_delay(5);
     }
 
@@ -263,9 +437,10 @@ em_init_hw(struct em_hw *hw)
     /* For 82542 (rev 2.0), take the receiver out of reset and enable MWI */
     if(hw->mac_type == em_82542_rev2_0) {
         E1000_WRITE_REG(hw, RCTL, 0);
+        E1000_WRITE_FLUSH(hw);
         msec_delay(1);
         if(hw->pci_cmd_word & CMD_MEM_WRT_INVALIDATE)
-            em_write_pci_cfg(hw, PCI_COMMAND_REGISTER, &hw->pci_cmd_word);
+            em_pci_set_mwi(hw);
     }
 
     /* Zero out the Multicast HASH table */
@@ -290,6 +465,8 @@ em_init_hw(struct em_hw *hw)
             PCIX_COMMAND_MMRBC_SHIFT;
         stat_mmrbc = (pcix_stat_hi_word & PCIX_STATUS_HI_MMRBC_MASK) >>
             PCIX_STATUS_HI_MMRBC_SHIFT;
+        if(stat_mmrbc == PCIX_STATUS_HI_MMRBC_4K)
+            stat_mmrbc = PCIX_STATUS_HI_MMRBC_2K;
         if(cmd_mmrbc > stat_mmrbc) {
             pcix_cmd_word &= ~PCIX_COMMAND_MMRBC_MASK;
             pcix_cmd_word |= stat_mmrbc << PCIX_COMMAND_MMRBC_SHIFT;
@@ -299,6 +476,13 @@ em_init_hw(struct em_hw *hw)
 
     /* Call a subroutine to configure the link and setup flow control. */
     ret_val = em_setup_link(hw);
+
+    /* Set the transmit descriptor write-back policy */
+    if(hw->mac_type > em_82544) {
+        ctrl = E1000_READ_REG(hw, TXDCTL);
+        ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | E1000_TXDCTL_FULL_TX_DESC_WB;
+        E1000_WRITE_REG(hw, TXDCTL, ctrl);
+    }
 
     /* Clear all of the statistics registers (clear on read).  It is
      * important that we do this after we have tried to establish link
@@ -312,13 +496,13 @@ em_init_hw(struct em_hw *hw)
 
 /******************************************************************************
  * Configures flow control and link settings.
- * 
+ *
  * hw - Struct containing variables accessed by shared code
- * 
+ *
  * Determines which flow control settings to use. Calls the apropriate media-
  * specific link configuration function. Configures the flow control settings.
  * Assuming the adapter has a valid link partner, a valid link should be
- * established. Assumes the hardware has previously been reset and the 
+ * established. Assumes the hardware has previously been reset and the
  * transmitter and receiver are not enabled.
  *****************************************************************************/
 int32_t
@@ -338,7 +522,7 @@ em_setup_link(struct em_hw *hw)
      * control setting, then the variable hw->fc will
      * be initialized based on a value in the EEPROM.
      */
-    if(em_read_eeprom(hw, EEPROM_INIT_CONTROL2_REG, &eeprom_data) < 0) {
+    if(em_read_eeprom(hw, EEPROM_INIT_CONTROL2_REG, 1, &eeprom_data) < 0) {
         DEBUGOUT("EEPROM Read Error\n");
         return -E1000_ERR_EEPROM;
     }
@@ -346,7 +530,7 @@ em_setup_link(struct em_hw *hw)
     if(hw->fc == em_fc_default) {
         if((eeprom_data & EEPROM_WORD0F_PAUSE_MASK) == 0)
             hw->fc = em_fc_none;
-        else if((eeprom_data & EEPROM_WORD0F_PAUSE_MASK) == 
+        else if((eeprom_data & EEPROM_WORD0F_PAUSE_MASK) ==
                 EEPROM_WORD0F_ASM_DIR)
             hw->fc = em_fc_tx_pause;
         else
@@ -375,7 +559,7 @@ em_setup_link(struct em_hw *hw)
      * or em_phy_setup() is called.
      */
     if(hw->mac_type == em_82543) {
-        ctrl_ext = ((eeprom_data & EEPROM_WORD0F_SWPDIO_EXT) << 
+        ctrl_ext = ((eeprom_data & EEPROM_WORD0F_SWPDIO_EXT) <<
                     SWDPIO__EXT_SHIFT);
         E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
     }
@@ -401,7 +585,7 @@ em_setup_link(struct em_hw *hw)
      * these registers will be set to a default threshold that may be
      * adjusted later by the driver's runtime code.  However, if the
      * ability to transmit pause frames in not enabled, then these
-     * registers will be set to 0. 
+     * registers will be set to 0.
      */
     if(!(hw->fc & em_fc_tx_pause)) {
         E1000_WRITE_REG(hw, FCRTL, 0);
@@ -425,13 +609,12 @@ em_setup_link(struct em_hw *hw)
  * Sets up link for a fiber based adapter
  *
  * hw - Struct containing variables accessed by shared code
- * ctrl - Current value of the device control register
  *
  * Manipulates Physical Coding Sublayer functions in order to configure
  * link. Assumes the hardware has been previously reset and the transmitter
  * and receiver are not enabled.
  *****************************************************************************/
-static int32_t 
+static int32_t
 em_setup_fiber_link(struct em_hw *hw)
 {
     uint32_t ctrl;
@@ -443,29 +626,29 @@ em_setup_fiber_link(struct em_hw *hw)
 
     DEBUGFUNC("em_setup_fiber_link");
 
-    /* On adapters with a MAC newer that 82544, SW Defineable pin 1 will be 
-     * set when the optics detect a signal. On older adapters, it will be 
+    /* On adapters with a MAC newer that 82544, SW Defineable pin 1 will be
+     * set when the optics detect a signal. On older adapters, it will be
      * cleared when there is a signal
      */
     ctrl = E1000_READ_REG(hw, CTRL);
     if(hw->mac_type > em_82544) signal = E1000_CTRL_SWDPIN1;
     else signal = 0;
-   
+
     /* Take the link out of reset */
     ctrl &= ~(E1000_CTRL_LRST);
-    
+
     em_config_collision_dist(hw);
 
     /* Check for a software override of the flow control settings, and setup
      * the device accordingly.  If auto-negotiation is enabled, then software
      * will have to set the "PAUSE" bits to the correct value in the Tranmsit
      * Config Word Register (TXCW) and re-start auto-negotiation.  However, if
-     * auto-negotiation is disabled, then software will have to manually 
+     * auto-negotiation is disabled, then software will have to manually
      * configure the two flow control enable bits in the CTRL register.
      *
      * The possible values of the "fc" parameter are:
      *      0:  Flow control is completely disabled
-     *      1:  Rx flow control is enabled (we can receive pause frames, but 
+     *      1:  Rx flow control is enabled (we can receive pause frames, but
      *          not send pause frames).
      *      2:  Tx flow control is enabled (we can send pause frames but we do
      *          not support receiving pause frames).
@@ -477,8 +660,8 @@ em_setup_fiber_link(struct em_hw *hw)
         txcw = (E1000_TXCW_ANE | E1000_TXCW_FD);
         break;
     case em_fc_rx_pause:
-        /* RX Flow control is enabled and TX Flow control is disabled by a 
-         * software over-ride. Since there really isn't a way to advertise 
+        /* RX Flow control is enabled and TX Flow control is disabled by a
+         * software over-ride. Since there really isn't a way to advertise
          * that we are capable of RX Pause ONLY, we will advertise that we
          * support both symmetric and asymmetric RX PAUSE. Later, we will
          *  disable the adapter's ability to send PAUSE frames.
@@ -486,7 +669,7 @@ em_setup_fiber_link(struct em_hw *hw)
         txcw = (E1000_TXCW_ANE | E1000_TXCW_FD | E1000_TXCW_PAUSE_MASK);
         break;
     case em_fc_tx_pause:
-        /* TX Flow control is enabled, and RX Flow control is disabled, by a 
+        /* TX Flow control is enabled, and RX Flow control is disabled, by a
          * software over-ride.
          */
         txcw = (E1000_TXCW_ANE | E1000_TXCW_FD | E1000_TXCW_ASM_DIR);
@@ -511,13 +694,14 @@ em_setup_fiber_link(struct em_hw *hw)
 
     E1000_WRITE_REG(hw, TXCW, txcw);
     E1000_WRITE_REG(hw, CTRL, ctrl);
+    E1000_WRITE_FLUSH(hw);
 
     hw->txcw = txcw;
     msec_delay(1);
 
     /* If we have a signal (the cable is plugged in) then poll for a "Link-Up"
-     * indication in the Device Status Register.  Time-out if a link isn't 
-     * seen in 500 milliseconds seconds (Auto-negotiation should complete in 
+     * indication in the Device Status Register.  Time-out if a link isn't
+     * seen in 500 milliseconds seconds (Auto-negotiation should complete in
      * less than 500 milliseconds even if the other end is doing it in SW).
      */
     if((E1000_READ_REG(hw, CTRL) & E1000_CTRL_SWDPIN1) == signal) {
@@ -528,7 +712,7 @@ em_setup_fiber_link(struct em_hw *hw)
             if(status & E1000_STATUS_LU) break;
         }
         if(i == (LINK_UP_TIMEOUT / 10)) {
-            /* AutoNeg failed to achieve a link, so we'll call 
+            /* AutoNeg failed to achieve a link, so we'll call
              * em_check_for_link. This routine will force the link up if we
              * detect a signal. This will allow us to communicate with
              * non-autonegotiating link partners.
@@ -555,12 +739,12 @@ em_setup_fiber_link(struct em_hw *hw)
 * Detects which PHY is present and the speed and duplex
 *
 * hw - Struct containing variables accessed by shared code
-* ctrl - current value of the device control register
 ******************************************************************************/
-static int32_t 
+static int32_t
 em_setup_copper_link(struct em_hw *hw)
 {
     uint32_t ctrl;
+    uint32_t led_ctrl;
     int32_t ret_val;
     uint16_t i;
     uint16_t phy_data;
@@ -590,77 +774,146 @@ em_setup_copper_link(struct em_hw *hw)
     }
     DEBUGOUT1("Phy ID = %x \n", hw->phy_id);
 
-    /* Enable CRS on TX. This must be set for half-duplex operation. */
-    if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data) < 0) {
-        DEBUGOUT("PHY Read Error\n");
-        return -E1000_ERR_PHY;
-    }
-    phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
+    if (hw->phy_type == em_phy_igp) {
 
-    /* Options:
-     *   MDI/MDI-X = 0 (default)
-     *   0 - Auto for all speeds
-     *   1 - MDI mode
-     *   2 - MDI-X mode
-     *   3 - Auto for 1000Base-T only (MDI-X for 10/100Base-T modes)
-     */
-    phy_data &= ~M88E1000_PSCR_AUTO_X_MODE;
+        ret_val = em_phy_reset(hw);
+        if(ret_val < 0) {
+            DEBUGOUT("Error Resetting the PHY\n");
+            return ret_val;
+        }
 
-    switch (hw->mdix) {
-    case 1:
-        phy_data |= M88E1000_PSCR_MDI_MANUAL_MODE;
-        break;
-    case 2:
-        phy_data |= M88E1000_PSCR_MDIX_MANUAL_MODE;
-        break;
-    case 3:
-        phy_data |= M88E1000_PSCR_AUTO_X_1000T;
-        break;
-    case 0:
-    default:
-        phy_data |= M88E1000_PSCR_AUTO_X_MODE;
-        break;
+        /* Wait 10ms for MAC to configure PHY from eeprom settings */
+        msec_delay(15);
+
+        if(em_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT, 0x0000) < 0) {
+            DEBUGOUT("PHY Write Error\n");
+            return -E1000_ERR_PHY;
+        }
+
+        /* Configure activity LED after PHY reset */
+        led_ctrl = E1000_READ_REG(hw, LEDCTL);
+        led_ctrl &= IGP_ACTIVITY_LED_MASK;
+        led_ctrl |= (IGP_ACTIVITY_LED_ENABLE | IGP_LED3_MODE);
+        E1000_WRITE_REG(hw, LEDCTL, led_ctrl);
+
+        if(hw->autoneg_advertised == ADVERTISE_1000_FULL) {
+            /* Disable SmartSpeed */
+            if(em_read_phy_reg(hw, IGP01E1000_PHY_PORT_CONFIG,
+                                  &phy_data) < 0) {
+                DEBUGOUT("PHY Read Error\n");
+                return -E1000_ERR_PHY;
+            }
+            phy_data &= ~IGP01E1000_PSCFR_SMART_SPEED;
+            if(em_write_phy_reg(hw, IGP01E1000_PHY_PORT_CONFIG,
+                                   phy_data) < 0) {
+                DEBUGOUT("PHY Write Error\n");
+                return -E1000_ERR_PHY;
+            }
+            /* Set auto Master/Slave resolution process */
+            if(em_read_phy_reg(hw, PHY_1000T_CTRL, &phy_data) < 0) {
+                DEBUGOUT("PHY Read Error\n");
+                return -E1000_ERR_PHY;
+            }
+            phy_data &= ~CR_1000T_MS_ENABLE;
+            if(em_write_phy_reg(hw, PHY_1000T_CTRL, phy_data) < 0) {
+                DEBUGOUT("PHY Write Error\n");
+                return -E1000_ERR_PHY;
+            }
+        }
+
+        if(em_read_phy_reg(hw, IGP01E1000_PHY_PORT_CTRL, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+
+        /* Force MDI for IGP PHY */
+        phy_data &= ~(IGP01E1000_PSCR_AUTO_MDIX |
+                      IGP01E1000_PSCR_FORCE_MDI_MDIX);
+
+        hw->mdix = 1;
+
+        if(em_write_phy_reg(hw, IGP01E1000_PHY_PORT_CTRL, phy_data) < 0) {
+            DEBUGOUT("PHY Write Error\n");
+            return -E1000_ERR_PHY;
+        }
+
+    } else {
+        /* Enable CRS on TX. This must be set for half-duplex operation. */
+        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+        phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
+
+        /* Options:
+         *   MDI/MDI-X = 0 (default)
+         *   0 - Auto for all speeds
+         *   1 - MDI mode
+         *   2 - MDI-X mode
+         *   3 - Auto for 1000Base-T only (MDI-X for 10/100Base-T modes)
+         */
+        phy_data &= ~M88E1000_PSCR_AUTO_X_MODE;
+
+        switch (hw->mdix) {
+        case 1:
+            phy_data |= M88E1000_PSCR_MDI_MANUAL_MODE;
+            break;
+        case 2:
+            phy_data |= M88E1000_PSCR_MDIX_MANUAL_MODE;
+            break;
+        case 3:
+            phy_data |= M88E1000_PSCR_AUTO_X_1000T;
+            break;
+        case 0:
+        default:
+            phy_data |= M88E1000_PSCR_AUTO_X_MODE;
+            break;
+        }
+
+        /* Options:
+         *   disable_polarity_correction = 0 (default)
+         *       Automatic Correction for Reversed Cable Polarity
+         *   0 - Disabled
+         *   1 - Enabled
+         */
+        phy_data &= ~M88E1000_PSCR_POLARITY_REVERSAL;
+        if(hw->disable_polarity_correction == 1)
+            phy_data |= M88E1000_PSCR_POLARITY_REVERSAL;
+        if(em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data) < 0) {
+            DEBUGOUT("PHY Write Error\n");
+            return -E1000_ERR_PHY;
+        }
+
+        /* Force TX_CLK in the Extended PHY Specific Control Register
+         * to 25MHz clock.
+         */
+        if(em_read_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+        phy_data |= M88E1000_EPSCR_TX_CLK_25;
+
+        if (hw->phy_revision < M88E1011_I_REV_4) {
+            /* Configure Master and Slave downshift values */
+            phy_data &= ~(M88E1000_EPSCR_MASTER_DOWNSHIFT_MASK |
+                          M88E1000_EPSCR_SLAVE_DOWNSHIFT_MASK);
+            phy_data |= (M88E1000_EPSCR_MASTER_DOWNSHIFT_1X |
+                         M88E1000_EPSCR_SLAVE_DOWNSHIFT_1X);
+            if(em_write_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL,
+                                   phy_data) < 0) {
+                DEBUGOUT("PHY Write Error\n");
+                return -E1000_ERR_PHY;
+            }
+        }
+
+        /* SW Reset the PHY so all changes take effect */
+        ret_val = em_phy_reset(hw);
+        if(ret_val < 0) {
+            DEBUGOUT("Error Resetting the PHY\n");
+            return ret_val;
+        }
     }
 
-    /* Options:
-     *   disable_polarity_correction = 0 (default)
-     *       Automatic Correction for Reversed Cable Polarity
-     *   0 - Disabled
-     *   1 - Enabled
-     */
-    phy_data &= ~M88E1000_PSCR_POLARITY_REVERSAL;
-    if(hw->disable_polarity_correction == 1)
-        phy_data |= M88E1000_PSCR_POLARITY_REVERSAL;
-    if(em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data) < 0) {
-        DEBUGOUT("PHY Write Error\n");
-        return -E1000_ERR_PHY;
-    }
-
-    /* Force TX_CLK in the Extended PHY Specific Control Register
-     * to 25MHz clock.
-     */
-    if(em_read_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_data) < 0) {
-        DEBUGOUT("PHY Read Error\n");
-        return -E1000_ERR_PHY;
-    }
-    phy_data |= M88E1000_EPSCR_TX_CLK_25;
-    /* Configure Master and Slave downshift values */
-    phy_data &= ~(M88E1000_EPSCR_MASTER_DOWNSHIFT_MASK |
-                  M88E1000_EPSCR_SLAVE_DOWNSHIFT_MASK);
-    phy_data |= (M88E1000_EPSCR_MASTER_DOWNSHIFT_1X |
-                 M88E1000_EPSCR_SLAVE_DOWNSHIFT_1X);
-    if(em_write_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, phy_data) < 0) {
-        DEBUGOUT("PHY Write Error\n");
-        return -E1000_ERR_PHY;
-    }
-
-    /* SW Reset the PHY so all changes take effect */
-    ret_val = em_phy_reset(hw);
-    if(ret_val < 0) {
-        DEBUGOUT("Error Resetting the PHY\n");
-        return ret_val;
-    }
-    
     /* Options:
      *   autoneg = 1 (default)
      *      PHY will advertise value(s) parsed from
@@ -719,6 +972,7 @@ em_setup_copper_link(struct em_hw *hw)
                 return ret_val;
             }
         }
+        hw->get_link_status = TRUE;
     } else {
         DEBUGOUT("Forcing speed and duplex\n");
         ret_val = em_phy_force_speed_duplex(hw);
@@ -997,24 +1251,43 @@ em_phy_force_speed_duplex(struct em_hw *hw)
     /* Write the configured values back to the Device Control Reg. */
     E1000_WRITE_REG(hw, CTRL, ctrl);
 
-    /* Write the MII Control Register with the new PHY configuration. */
-    if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data) < 0) {
-        DEBUGOUT("PHY Read Error\n");
-        return -E1000_ERR_PHY;
+    if (hw->phy_type == em_phy_m88) {
+        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+
+        /* Clear Auto-Crossover to force MDI manually. M88E1000 requires MDI
+         * forced whenever speed are duplex are forced.
+         */
+        phy_data &= ~M88E1000_PSCR_AUTO_X_MODE;
+        if(em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data) < 0) {
+            DEBUGOUT("PHY Write Error\n");
+            return -E1000_ERR_PHY;
+        }
+        DEBUGOUT1("M88E1000 PSCR: %x \n", phy_data);
+
+        /* Need to reset the PHY or these changes will be ignored */
+        mii_ctrl_reg |= MII_CR_RESET;
+    } else {
+        /* Clear Auto-Crossover to force MDI manually.  IGP requires MDI
+         * forced whenever speed or duplex are forced.
+         */
+        if(em_read_phy_reg(hw, IGP01E1000_PHY_PORT_CTRL, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+
+        phy_data &= ~IGP01E1000_PSCR_AUTO_MDIX;
+        phy_data &= ~IGP01E1000_PSCR_FORCE_MDI_MDIX;
+
+        if(em_write_phy_reg(hw, IGP01E1000_PHY_PORT_CTRL, phy_data) < 0) {
+            DEBUGOUT("PHY Write Error\n");
+            return -E1000_ERR_PHY;
+        }
     }
 
-    /* Clear Auto-Crossover to force MDI manually. M88E1000 requires MDI
-     * forced whenever speed are duplex are forced.
-     */
-    phy_data &= ~M88E1000_PSCR_AUTO_X_MODE;
-    if(em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data) < 0) {
-        DEBUGOUT("PHY Write Error\n");
-        return -E1000_ERR_PHY;
-    }
-    DEBUGOUT1("M88E1000 PSCR: %x \n", phy_data);
-    
-    /* Need to reset the PHY or these changes will be ignored */
-    mii_ctrl_reg |= MII_CR_RESET;
+    /* Write back the modified PHY MII control register. */
     if(em_write_phy_reg(hw, PHY_CTRL, mii_ctrl_reg) < 0) {
         DEBUGOUT("PHY Write Error\n");
         return -E1000_ERR_PHY;
@@ -1051,7 +1324,7 @@ em_phy_force_speed_duplex(struct em_hw *hw)
         }
         if(i == 0) { /* We didn't get link */
             /* Reset the DSP and wait again for link. */
-            
+
             ret_val = em_phy_reset_dsp(hw);
             if(ret_val < 0) {
                 DEBUGOUT("Error Resetting PHY DSP\n");
@@ -1075,32 +1348,34 @@ em_phy_force_speed_duplex(struct em_hw *hw)
             }
         }
     }
-    
-    /* Because we reset the PHY above, we need to re-force TX_CLK in the
-     * Extended PHY Specific Control Register to 25MHz clock.  This value
-     * defaults back to a 2.5MHz clock when the PHY is reset.
-     */
-    if(em_read_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_data) < 0) {
-        DEBUGOUT("PHY Read Error\n");
-        return -E1000_ERR_PHY;
-    }
-    phy_data |= M88E1000_EPSCR_TX_CLK_25;
-    if(em_write_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, phy_data) < 0) {
-        DEBUGOUT("PHY Write Error\n");
-        return -E1000_ERR_PHY;
-    }
 
-    /* In addition, because of the s/w reset above, we need to enable CRS on
-     * TX.  This must be set for both full and half duplex operation.
-     */
-    if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data) < 0) {
-        DEBUGOUT("PHY Read Error\n");
-        return -E1000_ERR_PHY;
-    }
-    phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
-    if(em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data) < 0) {
-        DEBUGOUT("PHY Write Error\n");
-        return -E1000_ERR_PHY;
+    if (hw->phy_type == em_phy_m88) {
+        /* Because we reset the PHY above, we need to re-force TX_CLK in the
+         * Extended PHY Specific Control Register to 25MHz clock.  This value
+         * defaults back to a 2.5MHz clock when the PHY is reset.
+         */
+        if(em_read_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+        phy_data |= M88E1000_EPSCR_TX_CLK_25;
+        if(em_write_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, phy_data) < 0) {
+            DEBUGOUT("PHY Write Error\n");
+            return -E1000_ERR_PHY;
+        }
+
+        /* In addition, because of the s/w reset above, we need to enable CRS on
+         * TX.  This must be set for both full and half duplex operation.
+         */
+        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+        phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
+        if(em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data) < 0) {
+            DEBUGOUT("PHY Write Error\n");
+            return -E1000_ERR_PHY;
+        }
     }
     return 0;
 }
@@ -1118,12 +1393,15 @@ em_config_collision_dist(struct em_hw *hw)
 {
     uint32_t tctl;
 
+    DEBUGFUNC("em_config_collision_dist");
+
     tctl = E1000_READ_REG(hw, TCTL);
 
     tctl &= ~E1000_TCTL_COLD;
     tctl |= E1000_COLLISION_DISTANCE << E1000_COLD_SHIFT;
 
     E1000_WRITE_REG(hw, TCTL, tctl);
+    E1000_WRITE_FLUSH(hw);
 }
 
 /******************************************************************************
@@ -1153,22 +1431,43 @@ em_config_mac_to_phy(struct em_hw *hw)
     /* Set up duplex in the Device Control and Transmit Control
      * registers depending on negotiated values.
      */
-    if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data) < 0) {
-        DEBUGOUT("PHY Read Error\n");
-        return -E1000_ERR_PHY;
+    if (hw->phy_type == em_phy_igp) {
+        if(em_read_phy_reg(hw, IGP01E1000_PHY_PORT_STATUS, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+        if(phy_data & IGP01E1000_PSSR_FULL_DUPLEX) ctrl |= E1000_CTRL_FD;
+        else ctrl &= ~E1000_CTRL_FD;
+
+        em_config_collision_dist(hw);
+
+        /* Set up speed in the Device Control register depending on
+         * negotiated values.
+         */
+        if((phy_data & IGP01E1000_PSSR_SPEED_MASK) ==
+           IGP01E1000_PSSR_SPEED_1000MBPS)
+            ctrl |= E1000_CTRL_SPD_1000;
+        else if((phy_data & IGP01E1000_PSSR_SPEED_MASK) ==
+                IGP01E1000_PSSR_SPEED_100MBPS)
+            ctrl |= E1000_CTRL_SPD_100;
+    } else {
+        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+        if(phy_data & M88E1000_PSSR_DPLX) ctrl |= E1000_CTRL_FD;
+        else ctrl &= ~E1000_CTRL_FD;
+
+        em_config_collision_dist(hw);
+
+        /* Set up speed in the Device Control register depending on
+         * negotiated values.
+         */
+        if((phy_data & M88E1000_PSSR_SPEED) == M88E1000_PSSR_1000MBS)
+            ctrl |= E1000_CTRL_SPD_1000;
+        else if((phy_data & M88E1000_PSSR_SPEED) == M88E1000_PSSR_100MBS)
+            ctrl |= E1000_CTRL_SPD_100;
     }
-    if(phy_data & M88E1000_PSSR_DPLX) ctrl |= E1000_CTRL_FD;
-    else ctrl &= ~E1000_CTRL_FD;
-
-    em_config_collision_dist(hw);
-
-    /* Set up speed in the Device Control register depending on
-     * negotiated values.
-     */
-    if((phy_data & M88E1000_PSSR_SPEED) == M88E1000_PSSR_1000MBS)
-        ctrl |= E1000_CTRL_SPD_1000;
-    else if((phy_data & M88E1000_PSSR_SPEED) == M88E1000_PSSR_100MBS)
-        ctrl |= E1000_CTRL_SPD_100;
     /* Write the configured values back to the Device Control Reg. */
     E1000_WRITE_REG(hw, CTRL, ctrl);
     return 0;
@@ -1176,7 +1475,7 @@ em_config_mac_to_phy(struct em_hw *hw)
 
 /******************************************************************************
  * Forces the MAC's flow control settings.
- * 
+ *
  * hw - Struct containing variables accessed by shared code
  *
  * Sets the TFCE and RFCE bits in the device control register to reflect
@@ -1243,7 +1542,7 @@ em_force_mac_fc(struct em_hw *hw)
 
 /******************************************************************************
  * Configures flow control settings after link is established
- * 
+ *
  * hw - Struct containing variables accessed by shared code
  *
  * Should be called immediately after a valid link has been established.
@@ -1465,9 +1764,9 @@ em_check_for_link(struct em_hw *hw)
     uint16_t lp_capability;
 
     DEBUGFUNC("em_check_for_link");
-    
-    /* On adapters with a MAC newer that 82544, SW Defineable pin 1 will be 
-     * set when the optics detect a signal. On older adapters, it will be 
+
+    /* On adapters with a MAC newer that 82544, SW Defineable pin 1 will be
+     * set when the optics detect a signal. On older adapters, it will be
      * cleared when there is a signal
      */
     if(hw->mac_type > em_82544) signal = E1000_CTRL_SWDPIN1;
@@ -1500,6 +1799,10 @@ em_check_for_link(struct em_hw *hw)
 
         if(phy_data & MII_SR_LINK_STATUS) {
             hw->get_link_status = FALSE;
+            /* Check if there was DownShift, must be checked immediately after
+             * link-up */
+            em_check_downshift(hw);
+
         } else {
             /* No link detected */
             return 0;
@@ -1528,7 +1831,7 @@ em_check_for_link(struct em_hw *hw)
             }
         }
 
-        /* Configure Flow Control now that Auto-Neg has completed. First, we 
+        /* Configure Flow Control now that Auto-Neg has completed. First, we
          * need to restore the desired flow control settings because we may
          * have had to re-autoneg with a different link partner.
          */
@@ -1557,7 +1860,7 @@ em_check_for_link(struct em_hw *hw)
                                 NWAY_LPAR_100TX_HD_CAPS |
                                 NWAY_LPAR_100TX_FD_CAPS |
                                 NWAY_LPAR_100T4_CAPS)) {
-                /* If our link partner advertises anything in addition to 
+                /* If our link partner advertises anything in addition to
                  * gigabit, we do not need to enable TBI compatibility.
                  */
                 if(hw->tbi_compatibility_on) {
@@ -1721,6 +2024,7 @@ em_raise_mdi_clk(struct em_hw *hw,
      * bit), and then delay 2 microseconds.
      */
     E1000_WRITE_REG(hw, CTRL, (*ctrl | E1000_CTRL_MDC));
+    E1000_WRITE_FLUSH(hw);
     usec_delay(2);
 }
 
@@ -1738,6 +2042,7 @@ em_lower_mdi_clk(struct em_hw *hw,
      * bit), and then delay 2 microseconds.
      */
     E1000_WRITE_REG(hw, CTRL, (*ctrl & ~E1000_CTRL_MDC));
+    E1000_WRITE_FLUSH(hw);
     usec_delay(2);
 }
 
@@ -1759,7 +2064,7 @@ em_shift_out_mdi_bits(struct em_hw *hw,
     uint32_t mask;
 
     /* We need to shift "count" number of bits out to the PHY. So, the value
-     * in the "data" parameter will be shifted out to the PHY one bit at a 
+     * in the "data" parameter will be shifted out to the PHY one bit at a
      * time. In order to do this, "data" must be broken down into bits.
      */
     mask = 0x01;
@@ -1780,6 +2085,7 @@ em_shift_out_mdi_bits(struct em_hw *hw,
         else ctrl &= ~E1000_CTRL_MDIO;
 
         E1000_WRITE_REG(hw, CTRL, ctrl);
+        E1000_WRITE_FLUSH(hw);
 
         usec_delay(2);
 
@@ -1788,9 +2094,6 @@ em_shift_out_mdi_bits(struct em_hw *hw,
 
         mask = mask >> 1;
     }
-
-    /* Clear the data bit just before leaving this routine. */
-    ctrl &= ~E1000_CTRL_MDIO;
 }
 
 /******************************************************************************
@@ -1798,7 +2101,7 @@ em_shift_out_mdi_bits(struct em_hw *hw,
 *
 * hw - Struct containing variables accessed by shared code
 *
-* Bits are shifted in in MSB to LSB order. 
+* Bits are shifted in in MSB to LSB order.
 ******************************************************************************/
 static uint16_t
 em_shift_in_mdi_bits(struct em_hw *hw)
@@ -1813,7 +2116,7 @@ em_shift_in_mdi_bits(struct em_hw *hw)
      * These two bits are ignored by us and thrown away. Bits are "shifted in"
      * by raising the input to the Management Data Clock (setting the MDC bit),
      * and then reading the value of the MDIO bit.
-     */ 
+     */
     ctrl = E1000_READ_REG(hw, CTRL);
 
     /* Clear MDIO_DIR (SWDPIO1) to indicate this bit is to be used as input. */
@@ -1821,6 +2124,7 @@ em_shift_in_mdi_bits(struct em_hw *hw)
     ctrl &= ~E1000_CTRL_MDIO;
 
     E1000_WRITE_REG(hw, CTRL, ctrl);
+    E1000_WRITE_FLUSH(hw);
 
     /* Raise and Lower the clock before reading in the data. This accounts for
      * the turnaround bits. The first clock occurred when we clocked out the
@@ -1840,9 +2144,6 @@ em_shift_in_mdi_bits(struct em_hw *hw)
 
     em_raise_mdi_clk(hw, &ctrl);
     em_lower_mdi_clk(hw, &ctrl);
-
-    /* Clear the MDIO bit just before leaving this routine. */
-    ctrl &= ~E1000_CTRL_MDIO;
 
     return data;
 }
@@ -1875,7 +2176,7 @@ em_read_phy_reg(struct em_hw *hw,
          * PHY to retrieve the desired data.
          */
         mdic = ((reg_addr << E1000_MDIC_REG_SHIFT) |
-                (phy_addr << E1000_MDIC_PHY_SHIFT) | 
+                (phy_addr << E1000_MDIC_PHY_SHIFT) |
                 (E1000_MDIC_OP_READ));
 
         E1000_WRITE_REG(hw, MDIC, mdic);
@@ -1913,7 +2214,7 @@ em_read_phy_reg(struct em_hw *hw,
          * READ operation is performed.  These two bits are thrown away
          * followed by a shift in of 16 bits which contains the desired data.
          */
-        mdic = ((reg_addr) | (phy_addr << 5) | 
+        mdic = ((reg_addr) | (phy_addr << 5) |
                 (PHY_OP_READ << 10) | (PHY_SOF << 12));
 
         em_shift_out_mdi_bits(hw, mdic, 14);
@@ -1957,7 +2258,7 @@ em_write_phy_reg(struct em_hw *hw,
          */
         mdic = (((uint32_t) phy_data) |
                 (reg_addr << E1000_MDIC_REG_SHIFT) |
-                (phy_addr << E1000_MDIC_PHY_SHIFT) | 
+                (phy_addr << E1000_MDIC_PHY_SHIFT) |
                 (E1000_MDIC_OP_WRITE));
 
         E1000_WRITE_REG(hw, MDIC, mdic);
@@ -1975,12 +2276,12 @@ em_write_phy_reg(struct em_hw *hw,
     } else {
         /* We'll need to use the SW defined pins to shift the write command
          * out to the PHY. We first send a preamble to the PHY to signal the
-         * beginning of the MII instruction.  This is done by sending 32 
+         * beginning of the MII instruction.  This is done by sending 32
          * consecutive "1" bits.
          */
         em_shift_out_mdi_bits(hw, PHY_PREAMBLE, PHY_PREAMBLE_SIZE);
 
-        /* Now combine the remaining required fields that will indicate a 
+        /* Now combine the remaining required fields that will indicate a
          * write operation. We use this method instead of calling the
          * em_shift_out_mdi_bits routine for each field in the command. The
          * format of a MII write instruction is as follows:
@@ -1993,6 +2294,7 @@ em_write_phy_reg(struct em_hw *hw,
 
         em_shift_out_mdi_bits(hw, mdic, 32);
     }
+
     return 0;
 }
 
@@ -2004,8 +2306,8 @@ em_write_phy_reg(struct em_hw *hw,
 void
 em_phy_hw_reset(struct em_hw *hw)
 {
-    uint32_t ctrl;
-    uint32_t ctrl_ext;
+    uint32_t ctrl, ctrl_ext;
+    uint32_t led_ctrl;
 
     DEBUGFUNC("em_phy_hw_reset");
 
@@ -2017,8 +2319,10 @@ em_phy_hw_reset(struct em_hw *hw)
          */
         ctrl = E1000_READ_REG(hw, CTRL);
         E1000_WRITE_REG(hw, CTRL, ctrl | E1000_CTRL_PHY_RST);
+        E1000_WRITE_FLUSH(hw);
         msec_delay(10);
         E1000_WRITE_REG(hw, CTRL, ctrl);
+        E1000_WRITE_FLUSH(hw);
     } else {
         /* Read the Extended Device Control Register, assert the PHY_RESET_DIR
          * bit to put the PHY into reset. Then, take it out of reset.
@@ -2027,11 +2331,26 @@ em_phy_hw_reset(struct em_hw *hw)
         ctrl_ext |= E1000_CTRL_EXT_SDP4_DIR;
         ctrl_ext &= ~E1000_CTRL_EXT_SDP4_DATA;
         E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
+        E1000_WRITE_FLUSH(hw);
         msec_delay(10);
         ctrl_ext |= E1000_CTRL_EXT_SDP4_DATA;
         E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
+        E1000_WRITE_FLUSH(hw);
     }
     usec_delay(150);
+
+    if((hw->mac_type == em_82541) || (hw->mac_type == em_82547)) {
+        if(em_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT, 0x0000) < 0) {
+            DEBUGOUT("PHY Write Error\n");
+            return;
+        }
+
+        /* Configure activity LED after PHY reset */
+        led_ctrl = E1000_READ_REG(hw, LEDCTL);
+        led_ctrl &= IGP_ACTIVITY_LED_MASK;
+        led_ctrl |= (IGP_ACTIVITY_LED_ENABLE | IGP_LED3_MODE);
+        E1000_WRITE_REG(hw, LEDCTL, led_ctrl);
+    }
 }
 
 /******************************************************************************
@@ -2058,6 +2377,9 @@ em_phy_reset(struct em_hw *hw)
         return -E1000_ERR_PHY;
     }
     usec_delay(1);
+    if (hw->phy_type == em_phy_igp) {
+        em_phy_init_script(hw);
+    }
     return 0;
 }
 
@@ -2071,6 +2393,7 @@ em_detect_gig_phy(struct em_hw *hw)
 {
     uint16_t phy_id_high, phy_id_low;
     boolean_t match = FALSE;
+    int32_t phy_init_status;
 
     DEBUGFUNC("em_detect_gig_phy");
 
@@ -2080,13 +2403,14 @@ em_detect_gig_phy(struct em_hw *hw)
         return -E1000_ERR_PHY;
     }
     hw->phy_id = (uint32_t) (phy_id_high << 16);
-    usec_delay(2);
+    usec_delay(20);
     if(em_read_phy_reg(hw, PHY_ID2, &phy_id_low) < 0) {
         DEBUGOUT("PHY Read Error\n");
         return -E1000_ERR_PHY;
     }
     hw->phy_id |= (uint32_t) (phy_id_low & PHY_REVISION_MASK);
-    
+    hw->phy_revision = (uint32_t) phy_id_low & ~PHY_REVISION_MASK;
+
     switch(hw->mac_type) {
     case em_82543:
         if(hw->phy_id == M88E1000_E_PHY_ID) match = TRUE;
@@ -2099,11 +2423,17 @@ em_detect_gig_phy(struct em_hw *hw)
     case em_82546:
         if(hw->phy_id == M88E1011_I_PHY_ID) match = TRUE;
         break;
+    case em_82541:
+    case em_82547:
+        if(hw->phy_id == IGP01E1000_I_PHY_ID) match = TRUE;
+        break;
     default:
         DEBUGOUT1("Invalid MAC type %d\n", hw->mac_type);
         return -E1000_ERR_CONFIG;
     }
-    if(match) {
+    phy_init_status = em_set_phy_type(hw);
+
+    if ((match) && (phy_init_status == E1000_SUCCESS)) {
         DEBUGOUT1("PHY ID 0x%X detected\n", hw->phy_id);
         return 0;
     }
@@ -2121,7 +2451,7 @@ em_phy_reset_dsp(struct em_hw *hw)
 {
     int32_t ret_val = -E1000_ERR_PHY;
     DEBUGFUNC("em_phy_reset_dsp");
-    
+
     do {
         if(em_write_phy_reg(hw, 29, 0x001d) < 0) break;
         if(em_write_phy_reg(hw, 30, 0x00c1) < 0) break;
@@ -2134,6 +2464,133 @@ em_phy_reset_dsp(struct em_hw *hw)
 }
 
 /******************************************************************************
+* Get PHY information from various PHY registers for igp PHY only.
+*
+* hw - Struct containing variables accessed by shared code
+* phy_info - PHY information structure
+******************************************************************************/
+int32_t
+em_phy_igp_get_info(struct em_hw *hw, struct em_phy_info *phy_info)
+{
+    uint16_t phy_data, polarity, min_length, max_length, average;
+
+    DEBUGFUNC("em_phy_igp_get_info");
+
+    /* The downshift status is checked only once, after link is established,
+     * and it stored in the hw->speed_downgraded parameter. */
+    phy_info->downshift = hw->speed_downgraded;
+
+    /* IGP01E1000 does not need to support it. */
+    phy_info->extended_10bt_distance = em_10bt_ext_dist_enable_normal;
+
+    /* IGP01E1000 always correct polarity reversal */
+    phy_info->polarity_correction = em_polarity_reversal_enabled;
+
+    /* Check polarity status */
+    if(em_check_polarity(hw, &polarity) < 0)
+        return -E1000_ERR_PHY;
+
+    phy_info->cable_polarity = polarity;
+
+    if(em_read_phy_reg(hw, IGP01E1000_PHY_PORT_STATUS, &phy_data) < 0)
+        return -E1000_ERR_PHY;
+
+    phy_info->mdix_mode = (phy_data & IGP01E1000_PSSR_MDIX) >>
+                          IGP01E1000_PSSR_MDIX_SHIFT;
+
+    if((phy_data & IGP01E1000_PSSR_SPEED_MASK) ==
+       IGP01E1000_PSSR_SPEED_1000MBPS) {
+        /* Local/Remote Receiver Information are only valid at 1000 Mbps */
+        if(em_read_phy_reg(hw, PHY_1000T_STATUS, &phy_data) < 0)
+            return -E1000_ERR_PHY;
+
+        phy_info->local_rx = (phy_data & SR_1000T_LOCAL_RX_STATUS) >>
+                             SR_1000T_LOCAL_RX_STATUS_SHIFT;
+        phy_info->remote_rx = (phy_data & SR_1000T_REMOTE_RX_STATUS) >>
+                              SR_1000T_REMOTE_RX_STATUS_SHIFT;
+
+        /* Get cable length */
+        if(em_get_cable_length(hw, &min_length, &max_length) < 0)
+            return -E1000_ERR_PHY;
+
+        /* transalte to old method */
+        average = (max_length + min_length) / 2;
+
+        if(average <= em_igp_cable_length_50)
+            phy_info->cable_length = em_cable_length_50;
+        else if(average <= em_igp_cable_length_80)
+            phy_info->cable_length = em_cable_length_50_80;
+        else if(average <= em_igp_cable_length_110)
+            phy_info->cable_length = em_cable_length_80_110;
+        else if(average <= em_igp_cable_length_140)
+            phy_info->cable_length = em_cable_length_110_140;
+        else
+            phy_info->cable_length = em_cable_length_140;
+    }
+
+    return E1000_SUCCESS;
+}
+
+/******************************************************************************
+* Get PHY information from various PHY registers fot m88 PHY only.
+*
+* hw - Struct containing variables accessed by shared code
+* phy_info - PHY information structure
+******************************************************************************/
+int32_t
+em_phy_m88_get_info(struct em_hw *hw, struct em_phy_info *phy_info)
+{
+    uint16_t phy_data, polarity;
+
+    DEBUGFUNC("em_phy_m88_get_info");
+
+    /* The downshift status is checked only once, after link is established,
+     * and it stored in the hw->speed_downgraded parameter. */
+    phy_info->downshift = hw->speed_downgraded;
+
+    if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data) < 0)
+        return -E1000_ERR_PHY;
+
+    phy_info->extended_10bt_distance =
+        (phy_data & M88E1000_PSCR_10BT_EXT_DIST_ENABLE) >>
+        M88E1000_PSCR_10BT_EXT_DIST_ENABLE_SHIFT;
+    phy_info->polarity_correction =
+        (phy_data & M88E1000_PSCR_POLARITY_REVERSAL) >>
+        M88E1000_PSCR_POLARITY_REVERSAL_SHIFT;
+
+    /* Check polarity status */
+    if(em_check_polarity(hw, &polarity) < 0)
+        return -E1000_ERR_PHY;
+
+    phy_info->cable_polarity = polarity;
+
+    if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data) < 0)
+        return -E1000_ERR_PHY;
+
+    phy_info->mdix_mode = (phy_data & M88E1000_PSSR_MDIX) >>
+                          M88E1000_PSSR_MDIX_SHIFT;
+
+    if(phy_data & M88E1000_PSSR_1000MBS) {
+        /* Cable Length Estimation and Local/Remote Receiver Informatoion
+         * are only valid at 1000 Mbps
+         */
+        phy_info->cable_length = ((phy_data & M88E1000_PSSR_CABLE_LENGTH) >>
+                                  M88E1000_PSSR_CABLE_LENGTH_SHIFT);
+
+        if(em_read_phy_reg(hw, PHY_1000T_STATUS, &phy_data) < 0)
+            return -E1000_ERR_PHY;
+
+        phy_info->local_rx = (phy_data & SR_1000T_LOCAL_RX_STATUS) >>
+                             SR_1000T_LOCAL_RX_STATUS_SHIFT;
+
+        phy_info->remote_rx = (phy_data & SR_1000T_REMOTE_RX_STATUS) >>
+                              SR_1000T_REMOTE_RX_STATUS_SHIFT;
+    }
+
+    return E1000_SUCCESS;
+}
+
+/******************************************************************************
 * Get PHY information from various PHY registers
 *
 * hw - Struct containing variables accessed by shared code
@@ -2143,7 +2600,6 @@ int32_t
 em_phy_get_info(struct em_hw *hw,
                    struct em_phy_info *phy_info)
 {
-    int32_t ret_val = -E1000_ERR_PHY;
     uint16_t phy_data;
 
     DEBUGFUNC("em_phy_get_info");
@@ -2151,6 +2607,7 @@ em_phy_get_info(struct em_hw *hw,
     phy_info->cable_length = em_cable_length_undefined;
     phy_info->extended_10bt_distance = em_10bt_ext_dist_enable_undefined;
     phy_info->cable_polarity = em_rev_polarity_undefined;
+    phy_info->downshift = em_downshift_undefined;
     phy_info->polarity_correction = em_polarity_reversal_undefined;
     phy_info->mdix_mode = em_auto_x_mode_undefined;
     phy_info->local_rx = em_1000t_rx_status_undefined;
@@ -2161,47 +2618,23 @@ em_phy_get_info(struct em_hw *hw,
         return -E1000_ERR_CONFIG;
     }
 
-    do {
-        if(em_read_phy_reg(hw, PHY_STATUS, &phy_data) < 0) break;
-        if(em_read_phy_reg(hw, PHY_STATUS, &phy_data) < 0) break;
-        if((phy_data & MII_SR_LINK_STATUS) != MII_SR_LINK_STATUS) {
-            DEBUGOUT("PHY info is only valid if link is up\n");
-            return -E1000_ERR_CONFIG;
-        }
+    if(em_read_phy_reg(hw, PHY_STATUS, &phy_data) < 0) {
+        DEBUGOUT("PHY Read Error\n");
+        return -E1000_ERR_PHY;
+    }
+    if(em_read_phy_reg(hw, PHY_STATUS, &phy_data) < 0) {
+        DEBUGOUT("PHY Read Error\n");
+        return -E1000_ERR_PHY;
+    }
+    if((phy_data & MII_SR_LINK_STATUS) != MII_SR_LINK_STATUS) {
+        DEBUGOUT("PHY info is only valid if link is up\n");
+        return -E1000_ERR_CONFIG;
+    }
 
-        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data) < 0)
-            break;
-        phy_info->extended_10bt_distance =
-            (phy_data & M88E1000_PSCR_10BT_EXT_DIST_ENABLE) >>
-            M88E1000_PSCR_10BT_EXT_DIST_ENABLE_SHIFT;
-        phy_info->polarity_correction =
-            (phy_data & M88E1000_PSCR_POLARITY_REVERSAL) >>
-            M88E1000_PSCR_POLARITY_REVERSAL_SHIFT;
-
-        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data) < 0)
-            break;
-        phy_info->cable_polarity = (phy_data & M88E1000_PSSR_REV_POLARITY) >>
-            M88E1000_PSSR_REV_POLARITY_SHIFT;
-        phy_info->mdix_mode = (phy_data & M88E1000_PSSR_MDIX) >>
-            M88E1000_PSSR_MDIX_SHIFT;
-        if(phy_data & M88E1000_PSSR_1000MBS) {
-            /* Cable Length Estimation and Local/Remote Receiver Informatoion
-             * are only valid at 1000 Mbps
-             */
-            phy_info->cable_length = ((phy_data & M88E1000_PSSR_CABLE_LENGTH) >>
-                                      M88E1000_PSSR_CABLE_LENGTH_SHIFT);
-            if(em_read_phy_reg(hw, PHY_1000T_STATUS, &phy_data) < 0) 
-                break;
-            phy_info->local_rx = (phy_data & SR_1000T_LOCAL_RX_STATUS) >>
-                SR_1000T_LOCAL_RX_STATUS_SHIFT;
-            phy_info->remote_rx = (phy_data & SR_1000T_REMOTE_RX_STATUS) >>
-                SR_1000T_REMOTE_RX_STATUS_SHIFT;
-        }
-        ret_val = 0;
-    } while(0);
-
-    if(ret_val < 0) DEBUGOUT("PHY Read Error\n");
-    return ret_val;
+    if (hw->phy_type == em_phy_igp)
+        return em_phy_igp_get_info(hw, phy_info);
+    else
+        return em_phy_m88_get_info(hw, phy_info);
 }
 
 int32_t
@@ -2217,6 +2650,109 @@ em_validate_mdi_setting(struct em_hw *hw)
     return 0;
 }
 
+
+/******************************************************************************
+ * Sets up eeprom variables in the hw struct.  Must be called after mac_type
+ * is configured.
+ *
+ * hw - Struct containing variables accessed by shared code
+ *****************************************************************************/
+void
+em_init_eeprom_params(struct em_hw *hw)
+{
+    struct em_eeprom_info *eeprom = &hw->eeprom;
+    uint32_t eecd = E1000_READ_REG(hw, EECD);
+    uint16_t eeprom_size;
+
+    DEBUGFUNC("em_init_eeprom_params");
+
+    switch (hw->mac_type) {
+    case em_82542_rev2_0:
+    case em_82542_rev2_1:
+    case em_82543:
+    case em_82544:
+        eeprom->type = em_eeprom_microwire;
+        eeprom->word_size = 64;
+        eeprom->opcode_bits = 3;
+        eeprom->address_bits = 6;
+        eeprom->delay_usec = 50;
+        break;
+    case em_82540:
+    case em_82545:
+    case em_82546:
+        eeprom->type = em_eeprom_microwire;
+        eeprom->opcode_bits = 3;
+        eeprom->delay_usec = 50;
+        if(eecd & E1000_EECD_SIZE) {
+            eeprom->word_size = 256;
+            eeprom->address_bits = 8;
+        } else {
+            eeprom->word_size = 64;
+            eeprom->address_bits = 6;
+        }
+        break;
+    case em_82541:
+    case em_82547:
+    default:
+        if (eecd & E1000_EECD_TYPE) {
+            eeprom->type = em_eeprom_spi;
+            eeprom->opcode_bits = 8;
+            eeprom->delay_usec = 1;
+            if (eecd & E1000_EECD_ADDR_BITS) {
+                eeprom->page_size = 32;
+                eeprom->address_bits = 16;
+            } else {
+                eeprom->page_size = 8;
+                eeprom->address_bits = 8;
+            }
+        } else {
+            eeprom->type = em_eeprom_microwire;
+            eeprom->opcode_bits = 3;
+            eeprom->delay_usec = 50;
+            if (eecd & E1000_EECD_ADDR_BITS) {
+                eeprom->word_size = 256;
+                eeprom->address_bits = 8;
+            } else {
+                eeprom->word_size = 64;
+                eeprom->address_bits = 6;
+            }
+        }
+        break;
+    }
+
+    if (eeprom->type == em_eeprom_spi) {
+        eeprom->word_size = 64;
+        if (em_read_eeprom(hw, EEPROM_CFG, 1, &eeprom_size) == 0) {
+            eeprom_size &= EEPROM_SIZE_MASK;
+
+            switch (eeprom_size) {
+                case EEPROM_SIZE_16KB:
+                    eeprom->word_size = 8192;
+                    break;
+                case EEPROM_SIZE_8KB:
+                    eeprom->word_size = 4096;
+                    break;
+                case EEPROM_SIZE_4KB:
+                    eeprom->word_size = 2048;
+                    break;
+                case EEPROM_SIZE_2KB:
+                    eeprom->word_size = 1024;
+                    break;
+                case EEPROM_SIZE_1KB:
+                    eeprom->word_size = 512;
+                    break;
+                case EEPROM_SIZE_512B:
+                    eeprom->word_size = 256;
+                    break;
+                case EEPROM_SIZE_128B:
+                default:
+                    eeprom->word_size = 64;
+                    break;
+            }
+        }
+    }
+}
+
 /******************************************************************************
  * Raises the EEPROM's clock input.
  *
@@ -2228,29 +2764,31 @@ em_raise_ee_clk(struct em_hw *hw,
                    uint32_t *eecd)
 {
     /* Raise the clock input to the EEPROM (by setting the SK bit), and then
-     * wait 50 microseconds.
+     * wait <delay> microseconds.
      */
     *eecd = *eecd | E1000_EECD_SK;
     E1000_WRITE_REG(hw, EECD, *eecd);
-    usec_delay(50);
+    E1000_WRITE_FLUSH(hw);
+    usec_delay(hw->eeprom.delay_usec);
 }
 
 /******************************************************************************
  * Lowers the EEPROM's clock input.
  *
- * hw - Struct containing variables accessed by shared code 
+ * hw - Struct containing variables accessed by shared code
  * eecd - EECD's current value
  *****************************************************************************/
 static void
 em_lower_ee_clk(struct em_hw *hw,
                    uint32_t *eecd)
 {
-    /* Lower the clock input to the EEPROM (by clearing the SK bit), and then 
-     * wait 50 microseconds. 
+    /* Lower the clock input to the EEPROM (by clearing the SK bit), and then
+     * wait 50 microseconds.
      */
     *eecd = *eecd & ~E1000_EECD_SK;
     E1000_WRITE_REG(hw, EECD, *eecd);
-    usec_delay(50);
+    E1000_WRITE_FLUSH(hw);
+    usec_delay(hw->eeprom.delay_usec);
 }
 
 /******************************************************************************
@@ -2265,16 +2803,21 @@ em_shift_out_ee_bits(struct em_hw *hw,
                         uint16_t data,
                         uint16_t count)
 {
+    struct em_eeprom_info *eeprom = &hw->eeprom;
     uint32_t eecd;
     uint32_t mask;
 
     /* We need to shift "count" bits out to the EEPROM. So, value in the
      * "data" parameter will be shifted out to the EEPROM one bit at a time.
-     * In order to do this, "data" must be broken down into bits. 
+     * In order to do this, "data" must be broken down into bits.
      */
     mask = 0x01 << (count - 1);
     eecd = E1000_READ_REG(hw, EECD);
-    eecd &= ~(E1000_EECD_DO | E1000_EECD_DI);
+    if (eeprom->type == em_eeprom_microwire) {
+        eecd &= ~E1000_EECD_DO;
+    } else if (eeprom->type == em_eeprom_spi) {
+        eecd |= E1000_EECD_DO;
+    }
     do {
         /* A "1" is shifted out to the EEPROM by setting bit "DI" to a "1",
          * and then raising and then lowering the clock (the SK bit controls
@@ -2287,8 +2830,9 @@ em_shift_out_ee_bits(struct em_hw *hw,
             eecd |= E1000_EECD_DI;
 
         E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
 
-        usec_delay(50);
+        usec_delay(eeprom->delay_usec);
 
         em_raise_ee_clk(hw, &eecd);
         em_lower_ee_clk(hw, &eecd);
@@ -2308,17 +2852,17 @@ em_shift_out_ee_bits(struct em_hw *hw,
  * hw - Struct containing variables accessed by shared code
  *****************************************************************************/
 static uint16_t
-em_shift_in_ee_bits(struct em_hw *hw)
+em_shift_in_ee_bits(struct em_hw *hw, uint16_t count)
 {
     uint32_t eecd;
     uint32_t i;
     uint16_t data;
 
-    /* In order to read a register from the EEPROM, we need to shift 16 bits 
-     * in from the EEPROM. Bits are "shifted in" by raising the clock input to
-     * the EEPROM (setting the SK bit), and then reading the value of the "DO"
-     * bit.  During this "shifting in" process the "DI" bit should always be 
-     * clear..
+    /* In order to read a register from the EEPROM, we need to shift 'count'
+     * bits in from the EEPROM. Bits are "shifted in" by raising the clock
+     * input to the EEPROM (setting the SK bit), and then reading the value of
+     * the "DO" bit.  During this "shifting in" process the "DI" bit should
+     * always be clear.
      */
 
     eecd = E1000_READ_REG(hw, EECD);
@@ -2326,7 +2870,7 @@ em_shift_in_ee_bits(struct em_hw *hw)
     eecd &= ~(E1000_EECD_DO | E1000_EECD_DI);
     data = 0;
 
-    for(i = 0; i < 16; i++) {
+    for(i = 0; i < count; i++) {
         data = data << 1;
         em_raise_ee_clk(hw, &eecd);
 
@@ -2347,126 +2891,26 @@ em_shift_in_ee_bits(struct em_hw *hw)
  *
  * hw - Struct containing variables accessed by shared code
  *
- * Lowers EEPROM clock. Clears input pin. Sets the chip select pin. This 
+ * Lowers EEPROM clock. Clears input pin. Sets the chip select pin. This
  * function should be called before issuing a command to the EEPROM.
  *****************************************************************************/
-static void
-em_setup_eeprom(struct em_hw *hw)
+static int32_t
+em_acquire_eeprom(struct em_hw *hw)
 {
-    uint32_t eecd;
+    struct em_eeprom_info *eeprom = &hw->eeprom;
+    uint32_t eecd, i=0;
+
+    DEBUGFUNC("em_acquire_eeprom");
 
     eecd = E1000_READ_REG(hw, EECD);
-
-    /* Clear SK and DI */
-    eecd &= ~(E1000_EECD_SK | E1000_EECD_DI);
-    E1000_WRITE_REG(hw, EECD, eecd);
-
-    /* Set CS */
-    eecd |= E1000_EECD_CS;
-    E1000_WRITE_REG(hw, EECD, eecd);
-}
-
-/******************************************************************************
- * Returns EEPROM to a "standby" state
- * 
- * hw - Struct containing variables accessed by shared code
- *****************************************************************************/
-static void
-em_standby_eeprom(struct em_hw *hw)
-{
-    uint32_t eecd;
-
-    eecd = E1000_READ_REG(hw, EECD);
-
-    /* Deselct EEPROM */
-    eecd &= ~(E1000_EECD_CS | E1000_EECD_SK);
-    E1000_WRITE_REG(hw, EECD, eecd);
-    usec_delay(50);
-
-    /* Clock high */
-    eecd |= E1000_EECD_SK;
-    E1000_WRITE_REG(hw, EECD, eecd);
-    usec_delay(50);
-
-    /* Select EEPROM */
-    eecd |= E1000_EECD_CS;
-    E1000_WRITE_REG(hw, EECD, eecd);
-    usec_delay(50);
-
-    /* Clock low */
-    eecd &= ~E1000_EECD_SK;
-    E1000_WRITE_REG(hw, EECD, eecd);
-    usec_delay(50);
-}
-
-/******************************************************************************
- * Raises then lowers the EEPROM's clock pin
- *
- * hw - Struct containing variables accessed by shared code
- *****************************************************************************/
-static void
-em_clock_eeprom(struct em_hw *hw)
-{
-    uint32_t eecd;
-
-    eecd = E1000_READ_REG(hw, EECD);
-
-    /* Rising edge of clock */
-    eecd |= E1000_EECD_SK;
-    E1000_WRITE_REG(hw, EECD, eecd);
-    usec_delay(50);
-
-    /* Falling edge of clock */
-    eecd &= ~E1000_EECD_SK;
-    E1000_WRITE_REG(hw, EECD, eecd);
-    usec_delay(50);
-}
-
-/******************************************************************************
- * Terminates a command by lowering the EEPROM's chip select pin
- *
- * hw - Struct containing variables accessed by shared code
- *****************************************************************************/
-static void
-em_cleanup_eeprom(struct em_hw *hw)
-{
-    uint32_t eecd;
-
-    eecd = E1000_READ_REG(hw, EECD);
-
-    eecd &= ~(E1000_EECD_CS | E1000_EECD_DI);
-
-    E1000_WRITE_REG(hw, EECD, eecd);
-
-    em_clock_eeprom(hw);
-}
-
-/******************************************************************************
- * Reads a 16 bit word from the EEPROM.
- *
- * hw - Struct containing variables accessed by shared code
- * offset - offset of  word in the EEPROM to read
- * data - word read from the EEPROM 
- *****************************************************************************/
-int32_t
-em_read_eeprom(struct em_hw *hw,
-                  uint16_t offset,
-                  uint16_t *data)
-{
-    uint32_t eecd;
-    uint32_t i = 0;
-    boolean_t large_eeprom = FALSE;
-
-    DEBUGFUNC("em_read_eeprom");
 
     /* Request EEPROM Access */
     if(hw->mac_type > em_82544) {
-        eecd = E1000_READ_REG(hw, EECD);
-        if(eecd & E1000_EECD_SIZE) large_eeprom = TRUE;
         eecd |= E1000_EECD_REQ;
         E1000_WRITE_REG(hw, EECD, eecd);
         eecd = E1000_READ_REG(hw, EECD);
-        while((!(eecd & E1000_EECD_GNT)) && (i < 100)) {
+        while((!(eecd & E1000_EECD_GNT)) &&
+              (i < E1000_EEPROM_GRANT_ATTEMPTS)) {
             i++;
             usec_delay(5);
             eecd = E1000_READ_REG(hw, EECD);
@@ -2479,38 +2923,241 @@ em_read_eeprom(struct em_hw *hw,
         }
     }
 
-    /*  Prepare the EEPROM for reading  */
-    em_setup_eeprom(hw);
+    /* Setup EEPROM for Read/Write */
 
-    /*  Send the READ command (opcode + addr)  */
-    em_shift_out_ee_bits(hw, EEPROM_READ_OPCODE, 3);
-    if(large_eeprom) {
-        /* If we have a 256 word EEPROM, there are 8 address bits */
-        em_shift_out_ee_bits(hw, offset, 8);
-    } else {
-        /* If we have a 64 word EEPROM, there are 6 address bits */
-        em_shift_out_ee_bits(hw, offset, 6);
+    if (eeprom->type == em_eeprom_microwire) {
+        /* Clear SK and DI */
+        eecd &= ~(E1000_EECD_DI | E1000_EECD_SK);
+        E1000_WRITE_REG(hw, EECD, eecd);
+
+        /* Set CS */
+        eecd |= E1000_EECD_CS;
+        E1000_WRITE_REG(hw, EECD, eecd);
+    } else if (eeprom->type == em_eeprom_spi) {
+        /* Clear SK and CS */
+        eecd &= ~(E1000_EECD_CS | E1000_EECD_SK);
+        E1000_WRITE_REG(hw, EECD, eecd);
+        usec_delay(1);
     }
 
-    /* Read the data */
-    *data = em_shift_in_ee_bits(hw);
+    return E1000_SUCCESS;
+}
 
-    /* End this read operation */
-    em_standby_eeprom(hw);
+/******************************************************************************
+ * Returns EEPROM to a "standby" state
+ *
+ * hw - Struct containing variables accessed by shared code
+ *****************************************************************************/
+static void
+em_standby_eeprom(struct em_hw *hw)
+{
+    struct em_eeprom_info *eeprom = &hw->eeprom;
+    uint32_t eecd;
+
+    eecd = E1000_READ_REG(hw, EECD);
+
+    if(eeprom->type == em_eeprom_microwire) {
+        eecd &= ~(E1000_EECD_CS | E1000_EECD_SK);
+        E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
+        usec_delay(eeprom->delay_usec);
+
+        /* Clock high */
+        eecd |= E1000_EECD_SK;
+        E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
+        usec_delay(eeprom->delay_usec);
+
+        /* Select EEPROM */
+        eecd |= E1000_EECD_CS;
+        E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
+        usec_delay(eeprom->delay_usec);
+
+        /* Clock low */
+        eecd &= ~E1000_EECD_SK;
+        E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
+        usec_delay(eeprom->delay_usec);
+    } else if(eeprom->type == em_eeprom_spi) {
+        /* Toggle CS to flush commands */
+        eecd |= E1000_EECD_CS;
+        E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
+        usec_delay(eeprom->delay_usec);
+        eecd &= ~E1000_EECD_CS;
+        E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
+        usec_delay(eeprom->delay_usec);
+    }
+}
+
+/******************************************************************************
+ * Terminates a command by inverting the EEPROM's chip select pin
+ *
+ * hw - Struct containing variables accessed by shared code
+ *****************************************************************************/
+static void
+em_release_eeprom(struct em_hw *hw)
+{
+    uint32_t eecd;
+
+    DEBUGFUNC("em_release_eeprom");
+
+    eecd = E1000_READ_REG(hw, EECD);
+
+    if (hw->eeprom.type == em_eeprom_spi) {
+        eecd |= E1000_EECD_CS;  /* Pull CS high */
+        eecd &= ~E1000_EECD_SK; /* Lower SCK */
+
+        E1000_WRITE_REG(hw, EECD, eecd);
+
+        usec_delay(hw->eeprom.delay_usec);
+    } else if(hw->eeprom.type == em_eeprom_microwire) {
+        /* cleanup eeprom */
+
+        /* CS on Microwire is active-high */
+        eecd &= ~(E1000_EECD_CS | E1000_EECD_DI);
+
+        E1000_WRITE_REG(hw, EECD, eecd);
+
+        /* Rising edge of clock */
+        eecd |= E1000_EECD_SK;
+        E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
+        usec_delay(hw->eeprom.delay_usec);
+
+        /* Falling edge of clock */
+        eecd &= ~E1000_EECD_SK;
+        E1000_WRITE_REG(hw, EECD, eecd);
+        E1000_WRITE_FLUSH(hw);
+        usec_delay(hw->eeprom.delay_usec);
+    }
 
     /* Stop requesting EEPROM access */
     if(hw->mac_type > em_82544) {
-        eecd = E1000_READ_REG(hw, EECD);
         eecd &= ~E1000_EECD_REQ;
         E1000_WRITE_REG(hw, EECD, eecd);
     }
+}
+
+/******************************************************************************
+ * Reads a 16 bit word from the EEPROM.
+ *
+ * hw - Struct containing variables accessed by shared code
+ *****************************************************************************/
+int32_t
+em_spi_eeprom_ready(struct em_hw *hw)
+{
+    uint16_t retry_count = 0;
+    uint8_t spi_stat_reg;
+
+    DEBUGFUNC("em_spi_eeprom_ready");
+
+    /* Read "Status Register" repeatedly until the LSB is cleared.  The
+     * EEPROM will signal that the command has been completed by clearing
+     * bit 0 of the internal status register.  If it's not cleared within
+     * 5 milliseconds, then error out.
+     */
+    retry_count = 0;
+    do {
+        em_shift_out_ee_bits(hw, EEPROM_RDSR_OPCODE_SPI,
+                                hw->eeprom.opcode_bits);
+        spi_stat_reg = (uint8_t)em_shift_in_ee_bits(hw, 8);
+        if (!(spi_stat_reg & EEPROM_STATUS_RDY_SPI))
+            break;
+
+        usec_delay(5);
+        retry_count += 5;
+
+    } while(retry_count < EEPROM_MAX_RETRY_SPI);
+
+    /* ATMEL SPI write time could vary from 0-20mSec on 3.3V devices (and
+     * only 0-5mSec on 5V devices)
+     */
+    if(retry_count >= EEPROM_MAX_RETRY_SPI) {
+        DEBUGOUT("SPI EEPROM Status error\n");
+        return -E1000_ERR_EEPROM;
+    }
+
+    return E1000_SUCCESS;
+}
+
+/******************************************************************************
+ * Reads a 16 bit word from the EEPROM.
+ *
+ * hw - Struct containing variables accessed by shared code
+ * offset - offset of  word in the EEPROM to read
+ * data - word read from the EEPROM
+ * words - number of words to read
+ *****************************************************************************/
+int32_t
+em_read_eeprom(struct em_hw *hw,
+                  uint16_t offset,
+                  uint16_t words,
+                  uint16_t *data)
+{
+    struct em_eeprom_info *eeprom = &hw->eeprom;
+    uint32_t i = 0;
+
+    DEBUGFUNC("em_read_eeprom");
+
+    /* A check for invalid values:  offset too large, too many words, and not
+     * enough words.
+     */
+    if((offset > eeprom->word_size) || (words > eeprom->word_size - offset) ||
+       (words == 0)) {
+        DEBUGOUT("\"words\" parameter out of bounds\n");
+        return -E1000_ERR_EEPROM;
+    }
+
+    /* Prepare the EEPROM for reading  */
+    if (em_acquire_eeprom(hw) != E1000_SUCCESS)
+        return -E1000_ERR_EEPROM;
+
+    if(eeprom->type == em_eeprom_spi) {
+        uint8_t read_opcode = EEPROM_READ_OPCODE_SPI;
+
+        if(em_spi_eeprom_ready(hw)) return -E1000_ERR_EEPROM;
+
+        em_standby_eeprom(hw);
+
+        /* Some SPI eeproms use the 8th address bit embedded in the opcode */
+        if((eeprom->address_bits == 8) && (offset >= 128))
+            read_opcode |= EEPROM_A8_OPCODE_SPI;
+
+        /* Send the READ command (opcode + addr)  */
+        em_shift_out_ee_bits(hw, read_opcode, eeprom->opcode_bits);
+        em_shift_out_ee_bits(hw, (uint16_t)(offset*2), eeprom->address_bits);
+    }
+    else if(eeprom->type == em_eeprom_microwire) {
+        /* Send the READ command (opcode + addr)  */
+        em_shift_out_ee_bits(hw, EEPROM_READ_OPCODE_MICROWIRE,
+                                eeprom->opcode_bits);
+        em_shift_out_ee_bits(hw, offset, eeprom->address_bits);
+    }
+
+    /* Read the data.  The address of the eeprom internally increments with
+     * each word (microwire) or byte (spi) being read, saving on the overhead
+     * of eeprom setup and tear-down.  The address counter will roll over if
+     * reading beyond the size of the eeprom, thus allowing the entire memory
+     * to be read starting from any offset. */
+    for (i = 0; i < words; i++) {
+        uint16_t word_in = em_shift_in_ee_bits(hw, 16);
+        if (eeprom->type == em_eeprom_spi)
+            word_in = (word_in >> 8) | (word_in << 8);
+        data[i] = word_in;
+    }
+
+    /* End this read operation */
+    em_release_eeprom(hw);
 
     return 0;
 }
 
 /******************************************************************************
  * Verifies that the EEPROM has a valid checksum
- * 
+ *
  * hw - Struct containing variables accessed by shared code
  *
  * Reads the first 64 16 bit words of the EEPROM and sums the values read.
@@ -2526,7 +3173,7 @@ em_validate_eeprom_checksum(struct em_hw *hw)
     DEBUGFUNC("em_validate_eeprom_checksum");
 
     for(i = 0; i < (EEPROM_CHECKSUM_REG + 1); i++) {
-        if(em_read_eeprom(hw, i, &eeprom_data) < 0) {
+        if(em_read_eeprom(hw, i, 1, &eeprom_data) < 0) {
             DEBUGOUT("EEPROM Read Error\n");
             return -E1000_ERR_EEPROM;
         }
@@ -2536,7 +3183,7 @@ em_validate_eeprom_checksum(struct em_hw *hw)
     if(checksum == (uint16_t) EEPROM_SUM) {
         return 0;
     } else {
-        DEBUGOUT("EEPROM Checksum Invalid\n");    
+        DEBUGOUT("EEPROM Checksum Invalid\n");
         return -E1000_ERR_EEPROM;
     }
 }
@@ -2558,14 +3205,14 @@ em_update_eeprom_checksum(struct em_hw *hw)
     DEBUGFUNC("em_update_eeprom_checksum");
 
     for(i = 0; i < EEPROM_CHECKSUM_REG; i++) {
-        if(em_read_eeprom(hw, i, &eeprom_data) < 0) {
+        if(em_read_eeprom(hw, i, 1, &eeprom_data) < 0) {
             DEBUGOUT("EEPROM Read Error\n");
             return -E1000_ERR_EEPROM;
         }
         checksum += eeprom_data;
     }
     checksum = (uint16_t) EEPROM_SUM - checksum;
-    if(em_write_eeprom(hw, EEPROM_CHECKSUM_REG, checksum) < 0) {
+    if(em_write_eeprom(hw, EEPROM_CHECKSUM_REG, 1, &checksum) < 0) {
         DEBUGOUT("EEPROM Write Error\n");
         return -E1000_ERR_EEPROM;
     }
@@ -2573,118 +3220,201 @@ em_update_eeprom_checksum(struct em_hw *hw)
 }
 
 /******************************************************************************
- * Writes a 16 bit word to a given offset in the EEPROM.
+ * Parent function for writing words to the different EEPROM types.
  *
  * hw - Struct containing variables accessed by shared code
  * offset - offset within the EEPROM to be written to
- * data - 16 bit word to be writen to the EEPROM
+ * words - number of words to write
+ * data - 16 bit word to be written to the EEPROM
  *
- * If em_update_eeprom_checksum is not called after this function, the 
+ * If em_update_eeprom_checksum is not called after this function, the
  * EEPROM will most likely contain an invalid checksum.
  *****************************************************************************/
 int32_t
 em_write_eeprom(struct em_hw *hw,
                    uint16_t offset,
-                   uint16_t data)
+                   uint16_t words,
+                   uint16_t *data)
 {
-    uint32_t eecd;
-    uint32_t i = 0;
+    struct em_eeprom_info *eeprom = &hw->eeprom;
     int32_t status = 0;
-    boolean_t large_eeprom = FALSE;
 
     DEBUGFUNC("em_write_eeprom");
 
-    /* Request EEPROM Access */
-    if(hw->mac_type > em_82544) {
-        eecd = E1000_READ_REG(hw, EECD);
-        if(eecd & E1000_EECD_SIZE) large_eeprom = TRUE;
-        eecd |= E1000_EECD_REQ;
-        E1000_WRITE_REG(hw, EECD, eecd);
-        eecd = E1000_READ_REG(hw, EECD);
-        while((!(eecd & E1000_EECD_GNT)) && (i < 100)) {
-            i++;
-            usec_delay(5);
-            eecd = E1000_READ_REG(hw, EECD);
-        }
-        if(!(eecd & E1000_EECD_GNT)) {
-            eecd &= ~E1000_EECD_REQ;
-            E1000_WRITE_REG(hw, EECD, eecd);
-            DEBUGOUT("Could not acquire EEPROM grant\n");
-            return -E1000_ERR_EEPROM;
-        }
+    /* A check for invalid values:  offset too large, too many words, and not
+     * enough words.
+     */
+    if((offset > eeprom->word_size) || (words > eeprom->word_size - offset) ||
+       (words == 0)) {
+        DEBUGOUT("\"words\" parameter out of bounds\n");
+        return -E1000_ERR_EEPROM;
     }
 
     /* Prepare the EEPROM for writing  */
-    em_setup_eeprom(hw);
+    if (em_acquire_eeprom(hw) != E1000_SUCCESS)
+        return -E1000_ERR_EEPROM;
 
-    /* Send the 9-bit (or 11-bit on large EEPROM) EWEN (write enable) command
-     * to the EEPROM (5-bit opcode plus 4/6-bit dummy). This puts the EEPROM
-     * into write/erase mode. 
-     */
-    em_shift_out_ee_bits(hw, EEPROM_EWEN_OPCODE, 5);
-    if(large_eeprom) 
-        em_shift_out_ee_bits(hw, 0, 6);
+    if(eeprom->type == em_eeprom_microwire)
+        status = em_write_eeprom_microwire(hw, offset, words, data);
     else
-        em_shift_out_ee_bits(hw, 0, 4);
+        status = em_write_eeprom_spi(hw, offset, words, data);
+
+    /* Done with writing */
+    em_release_eeprom(hw);
+
+    return status;
+}
+
+/******************************************************************************
+ * Writes a 16 bit word to a given offset in an SPI EEPROM.
+ *
+ * hw - Struct containing variables accessed by shared code
+ * offset - offset within the EEPROM to be written to
+ * words - number of words to write
+ * data - pointer to array of 8 bit words to be written to the EEPROM
+ *
+ *****************************************************************************/
+int32_t
+em_write_eeprom_spi(struct em_hw *hw,
+                       uint16_t offset,
+                       uint16_t words,
+                       uint16_t *data)
+{
+    struct em_eeprom_info *eeprom = &hw->eeprom;
+    uint16_t widx = 0;
+
+    DEBUGFUNC("em_write_eeprom_spi");
+
+    while (widx < words) {
+        uint8_t write_opcode = EEPROM_WRITE_OPCODE_SPI;
+
+        if(em_spi_eeprom_ready(hw)) return -E1000_ERR_EEPROM;
+
+        em_standby_eeprom(hw);
+
+        /*  Send the WRITE ENABLE command (8 bit opcode )  */
+        em_shift_out_ee_bits(hw, EEPROM_WREN_OPCODE_SPI,
+                                    eeprom->opcode_bits);
+
+        em_standby_eeprom(hw);
+
+        /* Some SPI eeproms use the 8th address bit embedded in the opcode */
+        if((eeprom->address_bits == 8) && (offset >= 128))
+            write_opcode |= EEPROM_A8_OPCODE_SPI;
+
+        /* Send the Write command (8-bit opcode + addr) */
+        em_shift_out_ee_bits(hw, write_opcode, eeprom->opcode_bits);
+
+        em_shift_out_ee_bits(hw, (uint16_t)((offset + widx)*2),
+                                eeprom->address_bits);
+
+        /* Send the data */
+
+        /* Loop to allow for up to whole page write (32 bytes) of eeprom */
+        while (widx < words) {
+            uint16_t word_out = data[widx];
+            word_out = (word_out >> 8) | (word_out << 8);
+            em_shift_out_ee_bits(hw, word_out, 16);
+            widx++;
+
+            /* Some larger eeprom sizes are capable of a 32-byte PAGE WRITE
+             * operation, while the smaller eeproms are capable of an 8-byte
+             * PAGE WRITE operation.  Break the inner loop to pass new address
+             */
+            if((((offset + widx)*2) % eeprom->page_size) == 0) {
+                em_standby_eeprom(hw);
+                break;
+            }
+        }
+    }
+
+    return E1000_SUCCESS;
+}
+
+/******************************************************************************
+ * Writes a 16 bit word to a given offset in a Microwire EEPROM.
+ *
+ * hw - Struct containing variables accessed by shared code
+ * offset - offset within the EEPROM to be written to
+ * words - number of words to write
+ * data - pointer to array of 16 bit words to be written to the EEPROM
+ *
+ *****************************************************************************/
+int32_t
+em_write_eeprom_microwire(struct em_hw *hw,
+                             uint16_t offset,
+                             uint16_t words,
+                             uint16_t *data)
+{
+    struct em_eeprom_info *eeprom = &hw->eeprom;
+    uint32_t eecd;
+    uint16_t words_written = 0;
+    uint16_t i = 0;
+
+    DEBUGFUNC("em_write_eeprom_microwire");
+
+    /* Send the write enable command to the EEPROM (3-bit opcode plus
+     * 6/8-bit dummy address beginning with 11).  It's less work to include
+     * the 11 of the dummy address as part of the opcode than it is to shift
+     * it over the correct number of bits for the address.  This puts the
+     * EEPROM into write/erase mode.
+     */
+    em_shift_out_ee_bits(hw, EEPROM_EWEN_OPCODE_MICROWIRE,
+                            (uint16_t)(eeprom->opcode_bits + 2));
+
+    em_shift_out_ee_bits(hw, 0, (uint16_t)(eeprom->address_bits - 2));
 
     /* Prepare the EEPROM */
     em_standby_eeprom(hw);
 
-    /* Send the Write command (3-bit opcode + addr) */
-    em_shift_out_ee_bits(hw, EEPROM_WRITE_OPCODE, 3);
-    if(large_eeprom) 
-        /* If we have a 256 word EEPROM, there are 8 address bits */
-        em_shift_out_ee_bits(hw, offset, 8);
-    else
-        /* If we have a 64 word EEPROM, there are 6 address bits */
-        em_shift_out_ee_bits(hw, offset, 6);
+    while (words_written < words) {
+        /* Send the Write command (3-bit opcode + addr) */
+        em_shift_out_ee_bits(hw, EEPROM_WRITE_OPCODE_MICROWIRE,
+                                eeprom->opcode_bits);
 
-    /* Send the data */
-    em_shift_out_ee_bits(hw, data, 16);
+        em_shift_out_ee_bits(hw, (uint16_t)(offset + words_written),
+                                eeprom->address_bits);
 
-    /* Toggle the CS line.  This in effect tells to EEPROM to actually execute 
-     * the command in question.
-     */
-    em_standby_eeprom(hw);
+        /* Send the data */
+        em_shift_out_ee_bits(hw, data[words_written], 16);
 
-    /* Now read DO repeatedly until is high (equal to '1').  The EEEPROM will
-     * signal that the command has been completed by raising the DO signal.
-     * If DO does not go high in 10 milliseconds, then error out.
-     */
-    for(i = 0; i < 200; i++) {
-        eecd = E1000_READ_REG(hw, EECD);
-        if(eecd & E1000_EECD_DO) break;
-        usec_delay(50);
-    }
-    if(i == 200) {
-        DEBUGOUT("EEPROM Write did not complete\n");
-        status = -E1000_ERR_EEPROM;
-    }
+        /* Toggle the CS line.  This in effect tells the EEPROM to execute
+         * the previous command.
+         */
+        em_standby_eeprom(hw);
 
-    /* Recover from write */
-    em_standby_eeprom(hw);
+        /* Read DO repeatedly until it is high (equal to '1').  The EEPROM will
+         * signal that the command has been completed by raising the DO signal.
+         * If DO does not go high in 10 milliseconds, then error out.
+         */
+        for(i = 0; i < 200; i++) {
+            eecd = E1000_READ_REG(hw, EECD);
+            if(eecd & E1000_EECD_DO) break;
+            usec_delay(50);
+        }
+        if(i == 200) {
+            DEBUGOUT("EEPROM Write did not complete\n");
+            return -E1000_ERR_EEPROM;
+        }
 
-    /* Send the 9-bit (or 11-bit on large EEPROM) EWDS (write disable) command
-     * to the EEPROM (5-bit opcode plus 4/6-bit dummy). This takes the EEPROM
-     * out of write/erase mode.
-     */
-    em_shift_out_ee_bits(hw, EEPROM_EWDS_OPCODE, 5);
-    if(large_eeprom) 
-        em_shift_out_ee_bits(hw, 0, 6);
-    else
-        em_shift_out_ee_bits(hw, 0, 4);
+        /* Recover from write */
+        em_standby_eeprom(hw);
 
-    /* Done with writing */
-    em_cleanup_eeprom(hw);
-
-    /* Stop requesting EEPROM access */
-    if(hw->mac_type > em_82544) {
-        eecd = E1000_READ_REG(hw, EECD);
-        eecd &= ~E1000_EECD_REQ;
-        E1000_WRITE_REG(hw, EECD, eecd);
+        words_written++;
     }
 
-    return status;
+    /* Send the write disable command to the EEPROM (3-bit opcode plus
+     * 6/8-bit dummy address beginning with 10).  It's less work to include
+     * the 10 of the dummy address as part of the opcode than it is to shift
+     * it over the correct number of bits for the address.  This takes the
+     * EEPROM out of write/erase mode.
+     */
+    em_shift_out_ee_bits(hw, EEPROM_EWDS_OPCODE_MICROWIRE,
+                            (uint16_t)(eeprom->opcode_bits + 2));
+
+    em_shift_out_ee_bits(hw, 0, (uint16_t)(eeprom->address_bits - 2));
+
+    return 0;
 }
 
 /******************************************************************************
@@ -2703,7 +3433,7 @@ em_read_part_num(struct em_hw *hw,
     DEBUGFUNC("em_read_part_num");
 
     /* Get word 0 from EEPROM */
-    if(em_read_eeprom(hw, offset, &eeprom_data) < 0) {
+    if(em_read_eeprom(hw, offset, 1, &eeprom_data) < 0) {
         DEBUGOUT("EEPROM Read Error\n");
         return -E1000_ERR_EEPROM;
     }
@@ -2711,7 +3441,7 @@ em_read_part_num(struct em_hw *hw,
     *part_num = (uint32_t) (eeprom_data << 16);
 
     /* Get word 1 from EEPROM */
-    if(em_read_eeprom(hw, ++offset, &eeprom_data) < 0) {
+    if(em_read_eeprom(hw, ++offset, 1, &eeprom_data) < 0) {
         DEBUGOUT("EEPROM Read Error\n");
         return -E1000_ERR_EEPROM;
     }
@@ -2737,7 +3467,7 @@ em_read_mac_addr(struct em_hw * hw)
 
     for(i = 0; i < NODE_ADDRESS_SIZE; i += 2) {
         offset = i >> 1;
-        if(em_read_eeprom(hw, offset, &eeprom_data) < 0) {
+        if(em_read_eeprom(hw, offset, 1, &eeprom_data) < 0) {
             DEBUGOUT("EEPROM Read Error\n");
             return -E1000_ERR_EEPROM;
         }
@@ -2759,7 +3489,7 @@ em_read_mac_addr(struct em_hw * hw)
 /******************************************************************************
  * Initializes receive address filters.
  *
- * hw - Struct containing variables accessed by shared code 
+ * hw - Struct containing variables accessed by shared code
  *
  * Places the MAC address in receive address register 0 and clears the rest
  * of the receive addresss registers. Clears the multicast table. Assumes
@@ -2804,7 +3534,7 @@ em_init_rx_addrs(struct em_hw *hw)
  *
  * The given list replaces any existing list. Clears the last 15 receive
  * address registers and the multicast table. Uses receive address registers
- * for the first 15 multicast addresses, and hashes the rest into the 
+ * for the first 15 multicast addresses, and hashes the rest into the
  * multicast table.
  *****************************************************************************/
 void
@@ -2853,7 +3583,7 @@ em_mc_addr_list_update(struct em_hw *hw,
         DEBUGOUT1(" Hash value = 0x%03X\n", hash_value);
 
         /* Place this multicast address in the RAR if there is room, *
-         * else put it in the MTA            
+         * else put it in the MTA
          */
         if(rar_used_count < E1000_RAR_ENTRIES) {
             em_rar_set(hw,
@@ -2871,7 +3601,7 @@ em_mc_addr_list_update(struct em_hw *hw,
  * Hashes an address to determine its location in the multicast table
  *
  * hw - Struct containing variables accessed by shared code
- * mc_addr - the multicast address to hash 
+ * mc_addr - the multicast address to hash
  *****************************************************************************/
 uint32_t
 em_hash_mc_addr(struct em_hw *hw,
@@ -2880,7 +3610,7 @@ em_hash_mc_addr(struct em_hw *hw,
     uint32_t hash_value = 0;
 
     /* The portion of the address that is used for the hash table is
-     * determined by the mc_filter_type setting.  
+     * determined by the mc_filter_type setting.
      */
     switch (hw->mc_filter_type) {
     /* [0] [1] [2] [3] [4] [5]
@@ -2923,12 +3653,12 @@ em_mta_set(struct em_hw *hw,
     uint32_t mta;
     uint32_t temp;
 
-    /* The MTA is a register array of 128 32-bit registers.  
-     * It is treated like an array of 4096 bits.  We want to set 
+    /* The MTA is a register array of 128 32-bit registers.
+     * It is treated like an array of 4096 bits.  We want to set
      * bit BitArray[hash_value]. So we figure out what register
      * the bit is in, read it, OR in the new bit, then write
-     * back the new value.  The register is determined by the 
-     * upper 7 bits of the hash value and the bit within that 
+     * back the new value.  The register is determined by the
+     * upper 7 bits of the hash value and the bit within that
      * register are determined by the lower 5 bits of the value.
      */
     hash_reg = (hash_value >> 5) & 0x7F;
@@ -2966,7 +3696,7 @@ em_rar_set(struct em_hw *hw,
     uint32_t rar_low, rar_high;
 
     /* HW expects these in little endian so we reverse the byte order
-     * from network order (big endian) to little endian              
+     * from network order (big endian) to little endian
      */
     rar_low = ((uint32_t) addr[0] |
                ((uint32_t) addr[1] << 8) |
@@ -3024,24 +3754,24 @@ em_id_led_init(struct em_hw * hw)
     const uint32_t ledctl_off = E1000_LEDCTL_MODE_LED_OFF;
     uint16_t eeprom_data, i, temp;
     const uint16_t led_mask = 0x0F;
-        
+
     DEBUGFUNC("em_id_led_init");
-    
+
     if(hw->mac_type < em_82540) {
         /* Nothing to do */
         return 0;
     }
-    
+
     ledctl = E1000_READ_REG(hw, LEDCTL);
     hw->ledctl_default = ledctl;
     hw->ledctl_mode1 = hw->ledctl_default;
     hw->ledctl_mode2 = hw->ledctl_default;
-        
-    if(em_read_eeprom(hw, EEPROM_ID_LED_SETTINGS, &eeprom_data) < 0) {
+
+    if(em_read_eeprom(hw, EEPROM_ID_LED_SETTINGS, 1, &eeprom_data) < 0) {
         DEBUGOUT("EEPROM Read Error\n");
         return -E1000_ERR_EEPROM;
     }
-    if((eeprom_data== ID_LED_RESERVED_0000) || 
+    if((eeprom_data== ID_LED_RESERVED_0000) ||
        (eeprom_data == ID_LED_RESERVED_FFFF)) eeprom_data = ID_LED_DEFAULT;
     for(i = 0; i < 4; i++) {
         temp = (eeprom_data >> (i << 2)) & led_mask;
@@ -3092,9 +3822,9 @@ int32_t
 em_setup_led(struct em_hw *hw)
 {
     uint32_t ledctl;
- 
+
     DEBUGFUNC("em_setup_led");
-   
+
     switch(hw->device_id) {
     case E1000_DEV_ID_82542:
     case E1000_DEV_ID_82543GC_FIBER:
@@ -3112,15 +3842,22 @@ em_setup_led(struct em_hw *hw)
         hw->ledctl_default = ledctl;
         /* Turn off LED0 */
         ledctl &= ~(E1000_LEDCTL_LED0_IVRT |
-                    E1000_LEDCTL_LED0_BLINK | 
+                    E1000_LEDCTL_LED0_BLINK |
                     E1000_LEDCTL_LED0_MODE_MASK);
         ledctl |= (E1000_LEDCTL_MODE_LED_OFF << E1000_LEDCTL_LED0_MODE_SHIFT);
         E1000_WRITE_REG(hw, LEDCTL, ledctl);
         break;
+    case E1000_DEV_ID_82540EP:
+    case E1000_DEV_ID_82540EP_LOM:
+    case E1000_DEV_ID_82540EP_LP:
     case E1000_DEV_ID_82540EM:
     case E1000_DEV_ID_82540EM_LOM:
     case E1000_DEV_ID_82545EM_COPPER:
     case E1000_DEV_ID_82546EB_COPPER:
+    case E1000_DEV_ID_82546EB_QUAD_COPPER:
+    case E1000_DEV_ID_82541EI:
+    case E1000_DEV_ID_82541EP:
+    case E1000_DEV_ID_82547EI:
         E1000_WRITE_REG(hw, LEDCTL, hw->ledctl_mode1);
         break;
     default:
@@ -3150,12 +3887,19 @@ em_cleanup_led(struct em_hw *hw)
     case E1000_DEV_ID_82544GC_LOM:
         /* No cleanup necessary */
         break;
+    case E1000_DEV_ID_82540EP:
+    case E1000_DEV_ID_82540EP_LOM:
+    case E1000_DEV_ID_82540EP_LP:
     case E1000_DEV_ID_82540EM:
     case E1000_DEV_ID_82540EM_LOM:
     case E1000_DEV_ID_82545EM_COPPER:
     case E1000_DEV_ID_82545EM_FIBER:
     case E1000_DEV_ID_82546EB_COPPER:
     case E1000_DEV_ID_82546EB_FIBER:
+    case E1000_DEV_ID_82546EB_QUAD_COPPER:
+    case E1000_DEV_ID_82541EI:
+    case E1000_DEV_ID_82541EP:
+    case E1000_DEV_ID_82547EI:
         /* Restore LEDCTL settings */
         E1000_WRITE_REG(hw, LEDCTL, hw->ledctl_default);
         break;
@@ -3165,7 +3909,7 @@ em_cleanup_led(struct em_hw *hw)
     }
     return 0;
 }
-    
+
 /******************************************************************************
  * Turns on the software controllable LED
  *
@@ -3200,10 +3944,17 @@ em_led_on(struct em_hw *hw)
         ctrl |= E1000_CTRL_SWDPIO0;
         E1000_WRITE_REG(hw, CTRL, ctrl);
         break;
+    case E1000_DEV_ID_82540EP:
+    case E1000_DEV_ID_82540EP_LOM:
+    case E1000_DEV_ID_82540EP_LP:
     case E1000_DEV_ID_82540EM:
     case E1000_DEV_ID_82540EM_LOM:
     case E1000_DEV_ID_82545EM_COPPER:
     case E1000_DEV_ID_82546EB_COPPER:
+    case E1000_DEV_ID_82546EB_QUAD_COPPER:
+    case E1000_DEV_ID_82541EI:
+    case E1000_DEV_ID_82541EP:
+    case E1000_DEV_ID_82547EI:
         E1000_WRITE_REG(hw, LEDCTL, hw->ledctl_mode2);
         break;
     default:
@@ -3247,10 +3998,17 @@ em_led_off(struct em_hw *hw)
         ctrl |= E1000_CTRL_SWDPIO0;
         E1000_WRITE_REG(hw, CTRL, ctrl);
         break;
+    case E1000_DEV_ID_82540EP:
+    case E1000_DEV_ID_82540EP_LOM:
+    case E1000_DEV_ID_82540EP_LP:
     case E1000_DEV_ID_82540EM:
     case E1000_DEV_ID_82540EM_LOM:
     case E1000_DEV_ID_82545EM_COPPER:
     case E1000_DEV_ID_82546EB_COPPER:
+    case E1000_DEV_ID_82546EB_QUAD_COPPER:
+    case E1000_DEV_ID_82541EI:
+    case E1000_DEV_ID_82541EP:
+    case E1000_DEV_ID_82547EI:
         E1000_WRITE_REG(hw, LEDCTL, hw->ledctl_mode1);
         break;
     default:
@@ -3261,7 +4019,7 @@ em_led_off(struct em_hw *hw)
 }
 
 /******************************************************************************
- * Clears all hardware statistics counters. 
+ * Clears all hardware statistics counters.
  *
  * hw - Struct containing variables accessed by shared code
  *****************************************************************************/
@@ -3380,7 +4138,7 @@ em_update_adaptive(struct em_hw *hw)
     DEBUGFUNC("em_update_adaptive");
 
     if(hw->adaptive_ifs) {
-        if((hw->collision_delta * hw->ifs_ratio) > 
+        if((hw->collision_delta * hw->ifs_ratio) >
            hw->tx_packet_delta) {
             if(hw->tx_packet_delta > MIN_NUM_XMITS) {
                 hw->in_ifs_mode = TRUE;
@@ -3393,7 +4151,7 @@ em_update_adaptive(struct em_hw *hw)
                 }
             }
         } else {
-            if((hw->in_ifs_mode == TRUE) && 
+            if((hw->in_ifs_mode == TRUE) &&
                (hw->tx_packet_delta <= MIN_NUM_XMITS)) {
                 hw->current_ifs_val = 0;
                 hw->in_ifs_mode = FALSE;
@@ -3407,7 +4165,7 @@ em_update_adaptive(struct em_hw *hw)
 
 /******************************************************************************
  * Adjusts the statistic counters when a frame is accepted by TBI_ACCEPT
- * 
+ *
  * hw - Struct containing variables accessed by shared code
  * frame_len - The length of the frame in question
  * mac_addr - The Ethernet destination address of the frame in question
@@ -3435,16 +4193,16 @@ em_tbi_adjust_stats(struct em_hw *hw,
     carry_bit = 0x80000000 & stats->gorcl;
     stats->gorcl += frame_len;
     /* If the high bit of Gorcl (the low 32 bits of the Good Octets
-     * Received Count) was one before the addition, 
-     * AND it is zero after, then we lost the carry out, 
+     * Received Count) was one before the addition,
+     * AND it is zero after, then we lost the carry out,
      * need to add one to Gorch (Good Octets Received Count High).
-     * This could be simplified if all environments supported 
+     * This could be simplified if all environments supported
      * 64-bit integers.
      */
     if(carry_bit && ((stats->gorcl & 0x80000000) == 0))
         stats->gorch++;
     /* Is this a broadcast or multicast?  Check broadcast first,
-     * since the test for a multicast frame will test positive on 
+     * since the test for a multicast frame will test positive on
      * a broadcast frame.
      */
     if((mac_addr[0] == (uint8_t) 0xff) && (mac_addr[1] == (uint8_t) 0xff))
@@ -3505,7 +4263,11 @@ em_get_bus_info(struct em_hw *hw)
     status = E1000_READ_REG(hw, STATUS);
     hw->bus_type = (status & E1000_STATUS_PCIX_MODE) ?
                    em_bus_type_pcix : em_bus_type_pci;
-    if(hw->bus_type == em_bus_type_pci) {
+
+    if(hw->device_id == E1000_DEV_ID_82546EB_QUAD_COPPER) {
+        hw->bus_speed = (hw->bus_type == em_bus_type_pci) ?
+                        em_bus_speed_66 : em_bus_speed_120;
+    } else if(hw->bus_type == em_bus_type_pci) {
         hw->bus_speed = (status & E1000_STATUS_PCI66) ?
                         em_bus_speed_66 : em_bus_speed_33;
     } else {
@@ -3563,5 +4325,223 @@ em_write_reg_io(struct em_hw *hw,
 
     em_io_write(hw, io_addr, offset);
     em_io_write(hw, io_data, value);
+}
+
+
+/******************************************************************************
+ * Estimates the cable length.
+ *
+ * hw - Struct containing variables accessed by shared code
+ * min_length - The estimated minimum length
+ * max_length - The estimated maximum length
+ *
+ * returns: E1000_SUCCESS / -E1000_ERR_XXX
+ *
+ * This function always returns a ranged length (minimum & maximum).
+ * So for M88 phy's, this function interprets the one value returned from the
+ * register to the minimum and maximum range.
+ * For IGP phy's, the function calculates the range by the AGC registers.
+ *****************************************************************************/
+int32_t
+em_get_cable_length(struct em_hw *hw, uint16_t *min_length,
+                       uint16_t *max_length)
+{
+    uint16_t agc_value = 0;
+    uint16_t cur_agc, min_agc = IGP01E1000_AGC_LENGTH_TABLE_SIZE;
+    uint16_t i, phy_data;
+
+    DEBUGFUNC("em_get_cable_length");
+
+    *min_length = *max_length = 0;
+
+    /* Use old method for Phy older than IGP */
+    if(hw->phy_type == em_phy_m88) {
+        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data) < 0)
+            return -E1000_ERR_PHY;
+
+        /* Convert the enum value to ranged values */
+        switch((phy_data & M88E1000_PSSR_CABLE_LENGTH) >>
+               M88E1000_PSSR_CABLE_LENGTH_SHIFT) {
+        case em_cable_length_50:
+            *min_length = 0;
+            *max_length = em_igp_cable_length_50;
+            break;
+        case em_cable_length_50_80:
+            *min_length = em_igp_cable_length_50;
+            *max_length = em_igp_cable_length_80;
+            break;
+        case em_cable_length_80_110:
+            *min_length = em_igp_cable_length_80;
+            *max_length = em_igp_cable_length_110;
+            break;
+        case em_cable_length_110_140:
+            *min_length = em_igp_cable_length_110;
+            *max_length = em_igp_cable_length_140;
+            break;
+        case em_cable_length_140:
+            *min_length = em_igp_cable_length_140;
+            *max_length = em_igp_cable_length_170;
+            break;
+        default:
+            return -E1000_ERR_PHY;
+            break;
+        }
+    } else if(hw->phy_type == em_phy_igp) { /* For IGP PHY */
+        uint16_t agc_reg_array[IGP01E1000_PHY_AGC_NUM] = {IGP01E1000_PHY_AGC_A,
+                                                          IGP01E1000_PHY_AGC_B,
+                                                          IGP01E1000_PHY_AGC_C,
+                                                          IGP01E1000_PHY_AGC_D};
+        /* Read the AGC registers for all channels */
+        for(i = 0; i < IGP01E1000_PHY_AGC_NUM; i++) {
+            if(em_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
+                                   agc_reg_array[i]) != E1000_SUCCESS)
+                return -E1000_ERR_PHY;
+            if(em_read_phy_reg(hw, agc_reg_array[i] &
+                                  IGP01E1000_PHY_PAGE_SELECT, &phy_data) !=
+                                  E1000_SUCCESS)
+                return -E1000_ERR_PHY;
+
+            cur_agc = phy_data >> IGP01E1000_AGC_LENGTH_SHIFT;
+
+            /* Array bound check. */
+            if((cur_agc >= IGP01E1000_AGC_LENGTH_TABLE_SIZE - 1) ||
+               (cur_agc == 0))
+                return -E1000_ERR_PHY;
+
+            agc_value += cur_agc;
+
+            /* Update minimal AGC value. */
+            if(min_agc > cur_agc)
+                min_agc = cur_agc;
+        }
+
+        /* Return to page 0 */
+        if(em_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT, 0x0) !=
+           E1000_SUCCESS)
+            return -E1000_ERR_PHY;
+
+        /* Remove the minimal AGC result for length < 50m */
+        if(agc_value < IGP01E1000_PHY_AGC_NUM * em_igp_cable_length_50) {
+            agc_value -= min_agc;
+
+            /* Get the average length of the remaining 3 channels */
+            agc_value /= (IGP01E1000_PHY_AGC_NUM - 1);
+        } else {
+            /* Get the average length of all the 4 channels. */
+            agc_value /= IGP01E1000_PHY_AGC_NUM;
+        }
+
+        /* Set the range of the calculated length. */
+        *min_length = ((em_igp_cable_length_table[agc_value] -
+                       IGP01E1000_AGC_RANGE) > 0) ?
+                       (em_igp_cable_length_table[agc_value] -
+                       IGP01E1000_AGC_RANGE) : 0;
+        *max_length = em_igp_cable_length_table[agc_value] +
+                      IGP01E1000_AGC_RANGE;
+    }
+
+    return E1000_SUCCESS;
+}
+
+/******************************************************************************
+ * Check the cable polarity
+ *
+ * hw - Struct containing variables accessed by shared code
+ * polarity - output parameter : 0 - Polarity is not reversed
+ *                               1 - Polarity is reversed.
+ *
+ * returns: E1000_SUCCESS / -E1000_ERR_XXX
+ *
+ * For phy's older then IGP, this function simply reads the polarity bit in the
+ * Phy Status register.  For IGP phy's, this bit is valid only if link speed is
+ * 10 Mbps.  If the link speed is 100 Mbps there is no polarity so this bit will
+ * return 0.  If the link speed is 1000 Mbps the polarity status is in the
+ * IGP01E1000_PHY_PCS_INIT_REG.
+ *****************************************************************************/
+int32_t
+em_check_polarity(struct em_hw *hw, uint16_t *polarity)
+{
+    uint16_t phy_data;
+
+    DEBUGFUNC("em_check_polarity");
+
+    if(hw->phy_type == em_phy_m88) {
+        /* return the Polarity bit in the Status register. */
+        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data) < 0)
+            return -E1000_ERR_PHY;
+        *polarity = (phy_data & M88E1000_PSSR_REV_POLARITY) >>
+                    M88E1000_PSSR_REV_POLARITY_SHIFT;
+    } else if(hw->phy_type == em_phy_igp) {
+        /* Read the Status register to check the speed */
+        if(em_read_phy_reg(hw, IGP01E1000_PHY_PORT_STATUS, &phy_data) < 0)
+            return -E1000_ERR_PHY;
+
+        /* If speed is 1000 Mbps, must read the IGP01E1000_PHY_PCS_INIT_REG to
+         * find the polarity status */
+        if((phy_data & IGP01E1000_PSSR_SPEED_MASK) ==
+           IGP01E1000_PSSR_SPEED_1000MBPS) {
+
+            /* Read the GIG initialization PCS register (0x00B4) */
+            if(em_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT,
+                                   IGP01E1000_PHY_PCS_INIT_REG) < 0)
+                return -E1000_ERR_PHY;
+
+            if(em_read_phy_reg(hw, IGP01E1000_PHY_PCS_INIT_REG &
+                                  IGP01E1000_PHY_PAGE_SELECT, &phy_data) < 0)
+                return -E1000_ERR_PHY;
+
+            /* Return to page 0 */
+            if(em_write_phy_reg(hw, IGP01E1000_PHY_PAGE_SELECT, 0x0) !=
+               E1000_SUCCESS)
+                return -E1000_ERR_PHY;
+
+            /* Check the polarity bits */
+            *polarity = (phy_data & IGP01E1000_PHY_POLARITY_MASK) ? 1 : 0;
+        } else {
+            /* For 10 Mbps, read the polarity bit in the status register. (for
+             * 100 Mbps this bit is always 0) */
+            *polarity = phy_data & IGP01E1000_PSSR_POLARITY_REVERSED;
+        }
+    }
+    return E1000_SUCCESS;
+}
+
+/******************************************************************************
+ * Check if Downshift occured
+ *
+ * hw - Struct containing variables accessed by shared code
+ * downshift - output parameter : 0 - No Downshift ocured.
+ *                                1 - Downshift ocured.
+ *
+ * returns: E1000_SUCCESS / -E1000_ERR_XXX
+ *
+ * For phy's older then IGP, this function reads the Downshift bit in the Phy
+ * Specific Status register.  For IGP phy's, it reads the Downgrade bit in the
+ * Link Health register.  In IGP this bit is latched high, so the driver must
+ * read it immediately after link is established.
+ *****************************************************************************/
+int32_t
+em_check_downshift(struct em_hw *hw)
+{
+    uint16_t phy_data;
+
+    DEBUGFUNC("em_check_downshift");
+
+    if(hw->phy_type == em_phy_igp) {
+        if(em_read_phy_reg(hw, IGP01E1000_PHY_LINK_HEALTH, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+        hw->speed_downgraded = (phy_data & IGP01E1000_PLHR_SS_DOWNGRADE) ? 1 : 0;
+    }
+    else if(hw->phy_type == em_phy_m88) {
+        if(em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data) < 0) {
+            DEBUGOUT("PHY Read Error\n");
+            return -E1000_ERR_PHY;
+        }
+        hw->speed_downgraded = (phy_data & M88E1000_PSSR_DOWNSHIFT) >>
+                                M88E1000_PSSR_DOWNSHIFT_SHIFT;
+    }
+    return E1000_SUCCESS;
 }
 
