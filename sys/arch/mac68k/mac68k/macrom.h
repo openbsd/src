@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.h,v 1.9 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: macrom.h,v 1.10 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: macrom.h,v 1.9 1996/05/25 14:45:35 briggs Exp $	*/
 
 /*-
@@ -41,14 +41,14 @@ extern caddr_t		ROMBase;	/* Base address of ROM space */
 extern caddr_t		ADBBase;	/* Base address of ADB scratch */
 extern caddr_t		ADBYMM; 	/* Base address of yet more ADB mem */
 extern caddr_t		ADBState;	/* Base address of ADB scratch ? */
-extern void	(*JADBProc)(void); /* ADBReInit pre/post processing */
-extern void	(*Lvl1DT[8])(void); /* VIA1 interrupt table by bit */
-extern void	(*Lvl2DT[8])(void); /* VIA2 interrupt table by bit */
+extern void	(*JADBProc)(void);	/* ADBReInit pre/post processing */
+extern void	(*Lvl1DT[8])(void);	/* VIA1 interrupt table by bit */
+extern void	(*Lvl2DT[8])(void);	/* VIA2 interrupt table by bit */
 extern void	(*jADBOp)(void);	/* low memory pointer to ADBOp */
 extern void	(*jUnimplTrap)(void);	/* Unimplemented trap */
 	/* loglob(KbdLast, 0x218)	* addr of last kbd to send */
 	/* loglob(KbdType, 0x21E)	* type of last kbd to send */
-extern void	(*JKybdTask)(void); /* Keyboard task ptr? */
+extern void	(*JKybdTask)(void);	/* Keyboard task ptr? */
 extern u_char		CPUFlag;	/* Type of CPU in this machine */
 extern void	(*MacJmp)(void);	/* ??? */
 extern u_long		Lo3Bytes;	/* 0x00ffffff */
@@ -65,13 +65,13 @@ extern caddr_t		VIA;		/* VIA1 base address */
 extern caddr_t		mrg_VIA2;	/* VIA2 base address */
 extern caddr_t		SCCRd;		/* SCC read base address */
 extern u_char		FinderName[20]; /* FinderName - Pascal string */
-extern void	(*jSwapMMU)(void); /* Pointer to MMU Swap routine */
+extern void	(*jSwapMMU)(void);	/* Pointer to MMU Swap routine */
 extern void	(*jEgret)(void);	/* Pointer to MMU Swap routine */
 extern u_int16_t	HwCfgFlags;	/* Hardware config flags */
 extern u_int32_t	HwCfgFlags2;	/* more hardware config flags */
 extern u_int32_t	HwCfgFlags3;	/* more hardware config flags */
 extern u_int32_t	ADBReInit_JTBL;	/* pointer to patch table */
-extern void	(*jClkNoMem)(void); /* pointer to ClkNoMem */
+extern void	(*jClkNoMem)(void);	/* pointer to ClkNoMem */
 extern u_char		SysParam[20];	/* Place where PRam data gets stored */
 extern caddr_t		ExpandMem;	/* pointer to Expanded Memory used by */
 					/*  newer ADB routines (since LCIII) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfasvar.h,v 1.4 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: sfasvar.h,v 1.5 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: sfasvar.h,v 1.4 1996/04/21 21:12:33 veego Exp $	*/
 
 /*
@@ -204,12 +204,12 @@ struct	sfas_softc {
 
 /* Generic DMA functions */
 	int		       (*sc_setup_dma)(struct sfas_softc *sc,
-					    vm_offset_t ptr, int len, int mode);
+				    vm_offset_t ptr, int len, int mode);
 	int		       (*sc_build_dma_chain)(struct sfas_softc *sc,
-					    struct sfas_dma_chain *chain,
-					    void *p, int l);
+				    struct sfas_dma_chain *chain,
+				    void *p, int l);
 	int		       (*sc_need_bump)(struct sfas_softc *sc,
-					    vm_offset_t ptr, int len);
+				    vm_offset_t ptr, int len);
 
 /* Generic Led data */
 	int			 sc_led_status;

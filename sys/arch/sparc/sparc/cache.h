@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.7 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: cache.h,v 1.8 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
@@ -151,24 +151,24 @@ extern int cache_alias_bits;
  * Routines for dealing with the cache.
  */
 void	sun4_cache_enable(void);		/* turn it on */
-void	ms1_cache_enable(void);		/* turn it on */
-void	viking_cache_enable(void);	/* turn it on */
-void	hypersparc_cache_enable(void);	/* turn it on */
+void	ms1_cache_enable(void);			/* turn it on */
+void	viking_cache_enable(void);		/* turn it on */
+void	hypersparc_cache_enable(void);		/* turn it on */
 void	swift_cache_enable(void);		/* turn it on */
-void	cypress_cache_enable(void);	/* turn it on */
-void	turbosparc_cache_enable(void);	/* turn it on */
+void	cypress_cache_enable(void);		/* turn it on */
+void	turbosparc_cache_enable(void);		/* turn it on */
 
 void	sun4_vcache_flush_context(void);	/* flush current context */
-void	sun4_vcache_flush_region(int);	/* flush region in cur ctx */
-void	sun4_vcache_flush_segment(int, int);/* flush seg in cur ctx */
-void	sun4_vcache_flush_page(int va);	/* flush page in cur ctx */
-void	sun4_cache_flush(caddr_t, u_int);/* flush region */
+void	sun4_vcache_flush_region(int);		/* flush region in cur ctx */
+void	sun4_vcache_flush_segment(int, int);	/* flush seg in cur ctx */
+void	sun4_vcache_flush_page(int va);		/* flush page in cur ctx */
+void	sun4_cache_flush(caddr_t, u_int);	/* flush region */
 
 void	srmmu_vcache_flush_context(void);	/* flush current context */
-void	srmmu_vcache_flush_region(int);	/* flush region in cur ctx */
-void	srmmu_vcache_flush_segment(int, int);/* flush seg in cur ctx */
+void	srmmu_vcache_flush_region(int);		/* flush region in cur ctx */
+void	srmmu_vcache_flush_segment(int, int);	/* flush seg in cur ctx */
 void	srmmu_vcache_flush_page(int va);	/* flush page in cur ctx */
-void	srmmu_cache_flush(caddr_t, u_int);/* flush region */
+void	srmmu_cache_flush(caddr_t, u_int);	/* flush region */
 void	hypersparc_pure_vcache_flush(void);
 
 void	ms1_cache_flush_all(void);

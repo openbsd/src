@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.5 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.6 2002/03/15 01:20:04 millert Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -122,22 +122,28 @@ struct ip6protosw {
 	short	pr_flags;		/* see below */
 
 /* protocol-protocol hooks */
-	int	(*pr_input)		/* input to protocol (from below) */(struct mbuf **, int *, int);
-	int	(*pr_output)		/* output to protocol (from above) */(struct mbuf *, ...);
-	void	(*pr_ctlinput)		/* control input (from below) */(int, struct sockaddr *, void *);
-	int	(*pr_ctloutput)		/* control output (from above) */(int, struct socket *, int, int, struct mbuf **);
+					/* input to protocol (from below) */
+	int	(*pr_input)(struct mbuf **, int *, int);
+					/* output to protocol (from above) */
+	int	(*pr_output)(struct mbuf *, ...);
+					/* control input (from below) */
+	void	(*pr_ctlinput)(int, struct sockaddr *, void *);
+					/* control output (from above) */
+	int	(*pr_ctloutput)(int, struct socket *, int, int, struct mbuf **);
 
 /* user-protocol hook */
-	int	(*pr_usrreq)		/* user request: see list below */(struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct proc *);
+					/* user request: see list below */
+	int	(*pr_usrreq)(struct socket *, int, struct mbuf *,
+		    struct mbuf *, struct mbuf *, struct proc *);
 
 /* utility hooks */
-	void	(*pr_init)		/* initialization hook */(void);
+	void	(*pr_init)(void);	/* initialization hook */
 
-	void	(*pr_fasttimo)		/* fast timeout (200ms) */(void);
-	void	(*pr_slowtimo)		/* slow timeout (500ms) */(void);
-	void	(*pr_drain)		/* flush any excess space possible */(void);
-	int	(*pr_sysctl)		/* sysctl for protocol */(int *, u_int, void *, size_t *, void *, size_t);
+	void	(*pr_fasttimo)(void);	/* fast timeout (200ms) */
+	void	(*pr_slowtimo)(void);	/* slow timeout (500ms) */
+	void	(*pr_drain)(void);	/* flush any excess space possible */
+					/* sysctl for protocol */
+	int	(*pr_sysctl)(int *, u_int, void *, size_t *, void *, size_t);
 };
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */

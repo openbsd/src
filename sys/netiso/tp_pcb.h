@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_pcb.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: tp_pcb.h,v 1.4 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: tp_pcb.h,v 1.9 1996/02/13 22:11:44 christos Exp $	*/
 
 /*-
@@ -122,26 +122,43 @@ struct tp_refinfo {
 };
 
 struct nl_protosw {
-	int		nlp_afamily;	/* address family */
-	void		(*nlp_putnetaddr)	/* puts addresses in nl pcb */(void *, struct sockaddr *, int);
-	void		(*nlp_getnetaddr)	/* gets addresses from nl pcb */(void *, struct mbuf *, int);
-	int		(*nlp_cmpnetaddr)	/* compares address in pcb */(void *, struct sockaddr *, int);
+	int		nlp_afamily;		/* address family */
+						/* puts addresses in nl pcb */
+	void		(*nlp_putnetaddr)(void *, struct sockaddr *, int);
+						/* gets addresses from nl pcb */
+	void		(*nlp_getnetaddr)(void *, struct mbuf *, int);
+						/* compares address in pcb */
 						/* with sockaddr */
-	void		(*nlp_putsufx)		/* puts transport suffixes in */(void *, caddr_t, int, int);
+	int		(*nlp_cmpnetaddr)(void *, struct sockaddr *, int);
+						/* puts transport suffixes in */
 						/* nl pcb */
-	void		(*nlp_getsufx)		/* gets transport suffixes */(void *, u_short *, caddr_t, int);
+	void		(*nlp_putsufx)(void *, caddr_t, int, int);
+						/* gets transport suffixes */
 						/* from nl pcb */
-	void		(*nlp_recycle_suffix)	/* clears suffix from nl pcb */(void *);		 
-	int		(*nlp_mtu)		/* figures out mtu based on */(void *);	/* nl used */
-	int		(*nlp_pcbbind)		/* bind to pcb for net level */(void *, struct mbuf *);
-	int		(*nlp_pcbconn)		/* connect for net level */(void *, struct mbuf *);
-	void		(*nlp_pcbdisc)		/* disconnect net level */(void *);
-	void		(*nlp_pcbdetach)	/* detach net level pcb */(void *);
-	int		(*nlp_pcballoc)		/* allocate a net level pcb */(struct socket *, void *);
-	int		(*nlp_output)		/* prepare a packet to give */(struct mbuf *, ...); /* to nl */
-	int		(*nlp_dgoutput)		/* prepare a packet to give */(struct mbuf *, ...); /*to nl*/
-	int		(*nlp_ctloutput)	/* hook for network set/get */(int, int, caddr_t, struct mbuf *);
+	void		(*nlp_getsufx)(void *, u_short *, caddr_t, int);
+						/* clears suffix from nl pcb */
+	void		(*nlp_recycle_suffix)(void *);
+	int		(*nlp_mtu)(void *);	/* figures out mtu based on */
+						/* nl used */
+						/* bind to pcb for net level */
+	int		(*nlp_pcbbind)(void *, struct mbuf *);
+						/* connect for net level */
+	int		(*nlp_pcbconn)(void *, struct mbuf *);
+						/* disconnect net level */
+	void		(*nlp_pcbdisc)(void *);
+						/* detach net level pcb */
+	void		(*nlp_pcbdetach)(void *);
+						/* allocate a net level pcb */
+	int		(*nlp_pcballoc)(struct socket *, void *);
+						/* prepare a packet to give */
+						/* to nl */
+	int		(*nlp_output)(struct mbuf *, ...);
+						/* prepare a packet to give */
+						/* to nl */
+	int		(*nlp_dgoutput)(struct mbuf *, ...);
+						/* hook for network set/get */
 						/* options */
+	int		(*nlp_ctloutput)(int, int, caddr_t, struct mbuf *);
 	caddr_t		nlp_pcblist;	/* list of xx_pcb's for connections */
 };
 
@@ -150,16 +167,16 @@ struct tp_pcb {
 	struct tp_pcb  *tp_next;
 	struct tp_pcb  *tp_prev;
 	struct tp_pcb  *tp_nextlisten;	/* chain all listeners */
-	struct socket  *tp_sock;/* back ptr */
+	struct socket  *tp_sock;	/* back ptr */
 	u_short		tp_state;	/* state of fsm */
 	short		tp_retrans;	/* # times can still retrans */
-	caddr_t		tp_npcb;/* to lower layer pcb */
+	caddr_t		tp_npcb;	/* to lower layer pcb */
 	struct nl_protosw *tp_nlproto;	/* lower-layer dependent routines */
 	struct rtentry **tp_routep;	/* obtain mtu; inside npcb */
 
 
-	RefNum		tp_lref;/* local reference */
-	RefNum		tp_fref;/* foreign reference */
+	RefNum		tp_lref;	/* local reference */
+	RefNum		tp_fref;	/* foreign reference */
 
 	u_int		tp_seqmask;	/* mask for seq space */
 	u_int		tp_seqbit;	/* bit for seq number wraparound */
@@ -190,7 +207,7 @@ struct tp_pcb {
 					 * needed for perf measurements only */
 	u_short		tp_lcredit;	/* current local credit in # packets */
 	u_short		tp_maxlcredit;	/* needed for reassembly queue */
-	struct mbuf   **tp_rsyq;/* unacked stuff recvd out of order */
+	struct mbuf   **tp_rsyq;	/* unacked stuff recvd out of order */
 	int		tp_rsycnt;	/* number of packets "" "" "" ""    */
 	u_long		tp_rhiwat;	/* remember original RCVBUF size */
 
@@ -244,11 +261,11 @@ struct tp_pcb {
 	 * the size we'll use when sending, in # chars
 	 */
 
-	int		tp_rtv; /* max round-trip time variance */
-	int		tp_rtt; /* smoothed round-trip time */
+	int		tp_rtv;		/* max round-trip time variance */
+	int		tp_rtt;		/* smoothed round-trip time */
 	SeqNum		tp_rttseq;	/* packet being timed */
 	int		tp_rttemit;	/* when emitted, in ticks */
-	int		tp_idle;/* last activity, in ticks */
+	int		tp_idle;	/* last activity, in ticks */
 	short		tp_rxtcur;	/* current retransmit value */
 	short		tp_rxtshift;	/* log(2) of rexmt exp. backoff */
 	u_char		tp_cebit_off;	/* real DEC bit algorithms not in use */
@@ -297,7 +314,7 @@ struct tp_pcb {
 #define SHORT_FSUFXP(tpcb) ((short *)((tpcb)->tp_fsuffix))
 
 	/* Timer stuff */
-	u_char		tp_vers;/* protocol version */
+	u_char		tp_vers;		/* protocol version */
 	u_char		tp_peer_acktime;	/* used for DT retrans time */
 	u_char		tp_refstate;	/* values REF_FROZEN, etc. above */
 	struct tp_pcb  *tp_fasttimeo;	/* limit pcbs to examine */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.45 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: mount.h,v 1.46 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -566,8 +566,11 @@ extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;
 extern	struct simplelock mountlist_slock;
 
 struct	mount *getvfs(fsid_t *);	    /* return vfs given fsid */
-int	vfs_export			    /* process mount export info */(struct mount *, struct netexport *, struct export_args *);
-struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */(struct mount *, struct netexport *, struct mbuf *);
+					    /* process mount export info */
+int	vfs_export(struct mount *, struct netexport *, struct export_args *);
+					    /* lookup host in fs export list */
+struct	netcred *vfs_export_lookup(struct mount *, struct netexport *,
+	    struct mbuf *);
 int	vfs_allocate_syncvnode(struct mount *);
 int	speedup_syncer(void);
 

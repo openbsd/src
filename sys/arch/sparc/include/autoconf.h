@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.10 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.11 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -126,8 +126,7 @@ struct confargs {
  * it will use that instead of creating one, but you must only do this if
  * you get it from ../sparc/vaddrs.h.
  */
-void	*mapdev(struct rom_reg *pa, int va,
-		     int offset, int size);
+void	*mapdev(struct rom_reg *pa, int va, int offset, int size);
 #define	mapiodev(pa, offset, size) \
 	mapdev(pa, 0, offset, size)
 /*

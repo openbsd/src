@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.33 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if.h,v 1.34 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -159,12 +159,17 @@ struct ifnet {				/* and the entries */
 	int	if_capabilities;	/* interface capabilities */
 
 	/* procedure handles */
-	int	(*if_output)		/* output routine (enqueue) */(struct ifnet *, struct mbuf *, struct sockaddr *,
+					/* output routine (enqueue) */
+	int	(*if_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);
-	void	(*if_start)		/* initiate output routine */(struct ifnet *);
-	int	(*if_ioctl)		/* ioctl routine */(struct ifnet *, u_long, caddr_t);
-	int	(*if_reset)		/* XXX bus reset routine */(struct ifnet *);
-	void	(*if_watchdog)		/* timer routine */(struct ifnet *);
+					/* initiate output routine */
+	void	(*if_start)(struct ifnet *);
+					/* ioctl routine */
+	int	(*if_ioctl)(struct ifnet *, u_long, caddr_t);
+					/* XXX bus reset routine */
+	int	(*if_reset)(struct ifnet *);
+					/* timer routine */
+	void	(*if_watchdog)(struct ifnet *);
 	struct	ifaltq if_snd;		/* output queue (includes altq) */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 };
@@ -290,7 +295,8 @@ struct ifaddr {
 	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
-	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */(int, struct rtentry *, struct rt_addrinfo *);
+					/* check or clean routes (+ or -)'d */
+	void	(*ifa_rtrequest)(int, struct rtentry *, struct rt_addrinfo *);
 	u_int	ifa_flags;		/* mostly rt_flags for cloning */
 	u_int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */

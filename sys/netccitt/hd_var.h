@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd_var.h,v 1.3 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: hd_var.h,v 1.4 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: hd_var.h,v 1.7 1996/02/13 22:04:34 christos Exp $	*/
 
 /*
@@ -77,7 +77,8 @@ struct	hdcb {
 	struct	ifaddr *hd_ifa;	/* device's X.25 network address */
 	struct	x25config *hd_xcp;
 	caddr_t	hd_pkp;		/* Level III junk */
-	int	(*hd_output)	/* separate entry for HDLC direct output */(struct mbuf *, ...);
+				/* separate entry for HDLC direct output */
+	int	(*hd_output)(struct mbuf *, ...);
 
 	/* link statistics */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi_if.h,v 1.4 2002/03/14 03:16:03 millert Exp $	*/
+/*	$OpenBSD: midi_if.h,v 1.5 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: midi_if.h,v 1.3 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct midi_hw_if {
 			void (*)(void *, int), /* input callback */
 			void (*)(void *), /* output callback */
 			void *);
-	void	(*close)(void *);		/* close hardware */
+	void	(*close)(void *);	/* close hardware */
 	int	(*output)(void *, int);	/* output a byte */
 	void	(*getinfo)(void *, struct midi_info *);
 	int	(*ioctl)(void *, u_long, caddr_t, int, struct proc *);

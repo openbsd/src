@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_var.h,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: iso_var.h,v 1.5 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: iso_var.h,v 1.8 1996/02/13 22:10:32 christos Exp $	*/
 
 /*-
@@ -144,8 +144,7 @@ int iso_hash(struct sockaddr_iso *, struct afhash *);
 int iso_netof(struct iso_addr *, caddr_t);
 int iso_control(struct socket *, u_long, caddr_t, struct ifnet *);
 void iso_ifscrub(struct ifnet *, struct iso_ifaddr *);
-int iso_ifinit(struct ifnet *, struct iso_ifaddr *, struct sockaddr_iso *,
-		    int );
+int iso_ifinit(struct ifnet *, struct iso_ifaddr *, struct sockaddr_iso *, int);
 struct ifaddr *iso_ifwithidi(struct sockaddr *);
 int iso_ck_addr(struct iso_addr *);
 int iso_eqtype(struct iso_addr *, struct iso_addr *);

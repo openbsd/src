@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.22 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: device.h,v 1.23 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct cfdata {
 	int	cf_flags;		/* flags from config */
 	short	*cf_parents;		/* potential parents */
 	int	cf_locnames;		/* start of names */
-	void	(**cf_ivstubs)		/* config-generated vectors, if any */(void);
+	void	(**cf_ivstubs)(void);	/* config-generated vectors, if any */
 	short	cf_starunit1;		/* 1st usable unit number by STAR */
 };
 extern struct cfdata cfdata[];

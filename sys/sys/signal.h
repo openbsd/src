@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.12 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.13 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -168,14 +168,14 @@ struct	sigaltstack {
  * Signal vector "template" used in sigvec call.
  */
 struct	sigvec {
-	void	(*sv_handler)(int); /* signal handler */
+	void	(*sv_handler)(int);	/* signal handler */
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };
 #define SV_ONSTACK	SA_ONSTACK
 #define SV_INTERRUPT	SA_RESTART	/* same bit, opposite sense */
 #define SV_RESETHAND	SA_RESETHAND
-#define sv_onstack sv_flags	/* isn't compatibility wonderful! */
+#define sv_onstack	sv_flags	/* isn't compatibility wonderful! */
 
 /*
  * Structure used in sigstack call.

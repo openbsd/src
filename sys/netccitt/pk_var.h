@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_var.h,v 1.3 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: pk_var.h,v 1.4 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: pk_var.h,v 1.8 1996/02/13 22:05:47 christos Exp $	*/
 
 /* 
@@ -55,9 +55,11 @@ struct pklcd {
 		struct	pklcd_q *q_forw;	/* debugging chain */
 		struct	pklcd_q *q_back;	/* debugging chain */
 	} lcd_q;
-	int	(*lcd_upper) 		/* switch to socket vs datagram vs ...*/(struct mbuf *, void *);
+					/* switch to socket vs datagram vs ...*/
+	int	(*lcd_upper)(struct mbuf *, void *);
 	caddr_t	lcd_upnext;		/* reference for lcd_upper() */
-	void	(*lcd_send)		/* if X.25 front end, direct connect */(struct pklcd *);
+					/* if X.25 front end, direct connect */
+	void	(*lcd_send)(struct pklcd *);
 	caddr_t lcd_downnext;		/* reference for lcd_send() */
 	short   lcd_lcn;		/* Logical channel number */
 	short   lcd_state;		/* Logical Channel state */
@@ -109,8 +111,10 @@ struct	pkcb {
 	} pk_q;
 	short	pk_state;		/* packet level status */
 	u_short	pk_maxlcn;		/* local copy of xc_maxlcn */
-	int	(*pk_lloutput)		/* link level output procedure */(struct mbuf *, ...);
-	void    *(*pk_llctlinput)	/* link level ctloutput procedure */(int, struct sockaddr *, void *);
+					/* link level output procedure */
+	int	(*pk_lloutput)(struct mbuf *, ...);
+					/* link level ctloutput procedure */
+	void    *(*pk_llctlinput)(int, struct sockaddr *, void *);
 	caddr_t pk_llnext;		/* handle for next level down */
 	struct	x25config *pk_xcp;	/* network specific configuration */
 	struct	x25_ifaddr *pk_ia;	/* backpointer to ifaddr */
@@ -142,7 +146,7 @@ struct x25_ifaddr {
 	struct	x25config ia_xc;	/* network specific configuration */
 	struct  pkcb *ia_pkcb;
 #define ia_maxlcn ia_xc.xc_maxlcn
-	int	(*ia_start)		/* connect, confirm method */(struct pklcd *);
+	int	(*ia_start)(struct pklcd *); /* connect, confirm method */
 	struct	sockaddr_x25 ia_dstaddr; /* reserve space for route dst */
 };
 

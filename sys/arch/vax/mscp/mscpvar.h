@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscpvar.h,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: mscpvar.h,v 1.5 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: mscpvar.h,v 1.7 1999/06/06 19:16:18 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -81,23 +81,35 @@ struct mscp_xi {
 };
 
 struct	mscp_ctlr {
-	void	(*mc_ctlrdone)		/* controller operation complete */(struct device *);
-	void	(*mc_go)		/* device-specific start routine */(struct device *, struct mscp_xi *);
-	void	(*mc_saerror)		/* ctlr error handling */(struct device *, int);
+					/* controller operation complete */
+	void	(*mc_ctlrdone)(struct device *);
+					/* device-specific start routine */
+	void	(*mc_go)(struct device *, struct mscp_xi *);
+					/* ctlr error handling */
+	void	(*mc_saerror)(struct device *, int);
 };
 
 struct mscp_softc;
 
 struct	mscp_device {
-	void	(*me_dgram)	/* error datagram */(struct device *, struct mscp *, struct mscp_softc *);
-	void	(*me_iodone)	/* normal I/O is done */(struct device *, struct buf *);
-	int	(*me_online)	/* drive on line */(struct device *, struct mscp *);
-	int	(*me_gotstatus) /* got unit status */(struct device *, struct mscp *);
-	void	(*me_replace)	/* replace done */(struct device *, struct mscp *);
-	int	(*me_ioerr)	/* read or write failed */(struct device *, struct mscp *, struct buf *);
-	void	(*me_bb)	/* B_BAD io done */(struct device *, struct mscp *, struct buf *);
-	void	(*me_fillin)	/* Fill in mscp info for this drive */(struct buf *,struct mscp *);
-	void	(*me_cmddone)	/* Non-data transfer operation is done */(struct device *, struct mscp *);
+				/* error datagram */
+	void	(*me_dgram)(struct device *, struct mscp *, struct mscp_softc *);
+				/* normal I/O is done */
+	void	(*me_iodone)(struct device *, struct buf *);
+				/* drive on line */
+	int	(*me_online)(struct device *, struct mscp *);
+				/* got unit status */
+	int	(*me_gotstatus)(struct device *, struct mscp *);
+				/* replace done */
+	void	(*me_replace)(struct device *, struct mscp *);
+				/* read or write failed */
+	int	(*me_ioerr)(struct device *, struct mscp *, struct buf *);
+				/* B_BAD io done */
+	void	(*me_bb)(struct device *, struct mscp *, struct buf *);
+				/* Fill in mscp info for this drive */
+	void	(*me_fillin)(struct buf *,struct mscp *);
+				/* Non-data transfer operation is done */
+	void	(*me_cmddone)(struct device *, struct mscp *);
 };
 
 /*

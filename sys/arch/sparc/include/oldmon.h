@@ -1,4 +1,4 @@
-/*	$OpenBSD: oldmon.h,v 1.8 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: oldmon.h,v 1.9 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: oldmon.h,v 1.11 1996/03/31 22:21:38 pk Exp $ */
 
 /*
@@ -155,14 +155,14 @@ struct om_vector {
 	int	*diagberr;		/* Bus err handler for diags */
 
 	/* Monitor and hardware revision and identification */
-	struct om_bootparam **bootParam;	/* Info for bootstrapped pgm */
+	struct om_bootparam **bootParam;/* Info for bootstrapped pgm */
  	u_long	*memorySize;		/* Usable memory in bytes */
 
 	/* Single-character input and output */
 	int	(*getChar)(void);	/* Get char from input source */
 	void	(*putChar)(int);	/* Put char to output sink */
 	int	(*mayGet)(void);	/* Maybe get char, or -1 */
-	int	(*mayPut)(int);	/* Maybe put char, or -1 */
+	int	(*mayPut)(int);		/* Maybe put char, or -1 */
 	u_char	*echo;			/* Should getchar echo? */
 	u_char	*inSource;		/* Input source selector */
 	u_char	*outSink;		/* Output sink selector */
@@ -173,7 +173,7 @@ struct om_vector {
 
 	/* Keyboard input (scanned by monitor nmi routine) */
 	int	(*getKey)(void);	/* Get next key if one exists */
-	int	(*initGetKey)(void);/* Initialize get key */
+	int	(*initGetKey)(void);	/* Initialize get key */
 	u_int	*translation;		/* Kbd translation selector */
 	u_char	*keyBid;		/* Keyboard ID byte */
 	int	*screen_x;		/* V2: Screen x pos (R/O) */
@@ -184,7 +184,7 @@ struct om_vector {
 	char	*monId;
 
 	/* Frame buffer output and terminal emulation */
-	int	(*fbWriteChar)(void);/* Write a character to FB */
+	int	(*fbWriteChar)(void);	/* Write a character to FB */
 	int	*fbAddr;		/* Address of frame buffer */
 	char	**font;			/* Font table for FB */
 	void	(*fbWriteStr)(char *, int);
@@ -198,14 +198,14 @@ struct om_vector {
 	u_char	**linePtr;		/* Cur pointer into linebuf */
 	int	*lineSize;		/* length of line in linebuf */
 	int	(*getLine)(void);	/* Get line from user */
-	u_char	(*getNextChar)(void);/* Get next char from linebuf */
-	u_char	(*peekNextChar)(void);/* Peek at next char */
+	u_char	(*getNextChar)(void);	/* Get next char from linebuf */
+	u_char	(*peekNextChar)(void);	/* Peek at next char */
 	int	*fbThere;		/* =1 if frame buffer there */
 	int	(*getNum)(void);	/* Grab hex num from line */
 
 	/* Print formatted output to current output sink */
 	int	(*printf)(void);	/* Similar to "Kernel printf" */
-	int	(*printHex)(void);/* Format N digits in hex */
+	int	(*printHex)(void);	/* Format N digits in hex */
 
 	/* Led stuff */
 	u_char	*leds;			/* RAM copy of LED register */
@@ -213,7 +213,7 @@ struct om_vector {
 
 	/* Non-maskable interrupt  (nmi) information */
 	int	(*nmiAddr)(void);	/* Addr for level 7 vector */
-	void	(*abortEntry)(void);/* Entry for keyboard abort */
+	void	(*abortEntry)(void);	/* Entry for keyboard abort */
 	int	*nmiClock;		/* Counts up in msec */
 
 	/* Frame buffer type: see <machine/fbio.h> */
@@ -231,9 +231,11 @@ struct om_vector {
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
 
-	void	(*exitToMon)(void) __attribute__((__noreturn__));/* Exit from user program */
+					/* Exit from user program */
+	void	(*exitToMon)(void) __attribute__((__noreturn__));
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
-	void	(*setcxsegmap)		/* Set seg in any context */(int, caddr_t, int);
+					/* Set seg in any context */
+	void	(*setcxsegmap)(int, caddr_t, int);
 	void	(**vector_cmd)(u_long, char *);/* V2: Handler for 'v' cmd */
   	u_long	*ExpectedTrapSig;
   	u_long	*TrapVectorTable;

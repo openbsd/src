@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.14 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.15 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.27 1997/01/26 22:58:32 rat Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct genericconf genericconf[] = {
 	{ 0 },
 };
 
-struct genericconf * getgenconf(char *); 
+struct genericconf *getgenconf(char *); 
 
 struct genericconf *
 getgenconf(bp)

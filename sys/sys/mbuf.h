@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.59 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.60 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -90,7 +90,8 @@ struct	pkthdr {
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
-	void	(*ext_free)		/* free routine if not the usual */(caddr_t, u_int, void *);
+					/* free routine if not the usual */
+	void	(*ext_free)(caddr_t, u_int, void *);
 	void	*ext_arg;		/* argument for ext_free */
 	u_int	ext_size;		/* size of buffer, for ext_free */
 	int	ext_type;

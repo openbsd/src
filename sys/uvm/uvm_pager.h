@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.18 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.19 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -87,23 +87,34 @@
  */
 
 struct uvm_pagerops {
-	void		(*pgo_init)(void);/* init pager */
-	void		(*pgo_reference)	/* add reference to obj */(struct uvm_object *);		
-	void			(*pgo_detach)	/* drop reference to obj */(struct uvm_object *);
-	int			(*pgo_fault)	/* special nonstd fault fn */(struct uvm_faultinfo *, vaddr_t,
+						/* init pager */
+	void			(*pgo_init)(void);
+						/* add reference to obj */
+	void			(*pgo_reference)(struct uvm_object *);
+						/* drop reference to obj */
+	void			(*pgo_detach)(struct uvm_object *);
+						/* special nonstd fault fn */
+	int			(*pgo_fault)(struct uvm_faultinfo *, vaddr_t,
 				 vm_page_t *, int, int, vm_fault_t,
 				 vm_prot_t, int);
-	boolean_t		(*pgo_flush)	/* flush pages out of obj */(struct uvm_object *, voff_t, voff_t, int);
-	int			(*pgo_get)	/* get/read page */(struct uvm_object *, voff_t,
+						/* flush pages out of obj */
+	boolean_t		(*pgo_flush)(struct uvm_object *, voff_t,
+				 voff_t, int);
+						/* get/read page */
+	int			(*pgo_get)(struct uvm_object *, voff_t,
 				 vm_page_t *, int *, int, vm_prot_t, int, int);
-	int			(*pgo_put)	/* put/write page */(struct uvm_object *, vm_page_t *, 
+						/* put/write page */
+	int			(*pgo_put)(struct uvm_object *, vm_page_t *,
 				 int, boolean_t);
-	void			(*pgo_cluster)	/* return range of cluster */(struct uvm_object *, voff_t, voff_t *,
-				voff_t *);
-	struct vm_page **	(*pgo_mk_pcluster)	/* make "put" cluster */(struct uvm_object *, struct vm_page **,
-				 int *, struct vm_page *, int, voff_t,
-				 voff_t);
-	boolean_t		(*pgo_releasepg)	/* release page */(struct vm_page *, struct vm_page **);
+						/* return range of cluster */
+	void			(*pgo_cluster)(struct uvm_object *, voff_t,
+				 voff_t *, voff_t *);
+						/* make "put" cluster */
+	struct vm_page **	(*pgo_mk_pcluster)(struct uvm_object *,
+				 struct vm_page **, int *, struct vm_page *,
+				 int, voff_t, voff_t);
+						/* release page */
+	boolean_t		(*pgo_releasepg)(struct vm_page *, struct vm_page **);
 };
 
 /* pager flags [mostly for flush] */

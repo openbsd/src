@@ -1,4 +1,4 @@
-/*	$OpenBSD: scc.c,v 1.13 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: scc.c,v 1.14 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: scc.c,v 1.28 1996/12/05 01:39:43 cgd Exp $	*/
 
 /*
@@ -115,8 +115,8 @@
 #define	SCCLINE(dev)	(minor(dev) & 0x1)
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
-void	(*sccDivertXInput)(int cc); /* X windows keyboard input routine */
-void	(*sccMouseEvent)(int);	/* X windows mouse motion event routine */
+void	(*sccDivertXInput)(int cc);	/* X windows keyboard input routine */
+void	(*sccMouseEvent)(int);		/* X windows mouse motion event routine */
 void	(*sccMouseButtons)(int);	/* X windows mouse buttons event routine */
 #ifdef DEBUG
 int	debugChar;

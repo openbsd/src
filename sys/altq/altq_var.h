@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_var.h,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_var.h,v 1.4 2002/03/15 01:20:03 millert Exp $	*/
 /*	$KAME: altq_var.h,v 1.8 2001/02/09 09:44:41 kjc Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ struct callout {
 /* dummy callout structure */
 struct callout {
 	void		*c_arg;			/* function argument */
-	void		(*c_func)(void *);/* functiuon to call */
+	void		(*c_func)(void *);	/* function to call */
 };
 #define	CALLOUT_INIT(c)		do { bzero((c), sizeof(*(c))); } while (0)
 #define	CALLOUT_RESET(c,t,f,a)	do {	(c)->c_arg = (a);	\

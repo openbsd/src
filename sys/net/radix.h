@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.7 2002/03/14 03:16:10 millert Exp $	*/
+/*	$OpenBSD: radix.h,v 1.8 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -111,19 +111,31 @@ struct radix_node_head {
 	struct	radix_node *rnh_treetop;
 	int	rnh_addrsize;		/* permit, but not require fixed keys */
 	int	rnh_pktsize;		/* permit, but not require fixed keys */
-	struct	radix_node *(*rnh_addaddr)	/* add based on sockaddr */(void *v, void *mask,
+					/* add based on sockaddr */
+	struct	radix_node *(*rnh_addaddr)(void *v, void *mask,
 		     struct radix_node_head *head, struct radix_node nodes[]);
-	struct	radix_node *(*rnh_addpkt)	/* add based on packet hdr */(void *v, void *mask,
+					/* add based on packet hdr */
+	struct	radix_node *(*rnh_addpkt)(void *v, void *mask,
 		     struct radix_node_head *head, struct radix_node nodes[]);
-	struct	radix_node *(*rnh_deladdr)	/* remove based on sockaddr */(void *v, void *mask, struct radix_node_head *head);
-	struct	radix_node *(*rnh_delpkt)	/* remove based on packet hdr */(void *v, void *mask, struct radix_node_head *head);
-	struct	radix_node *(*rnh_matchaddr)	/* locate based on sockaddr */(void *v, struct radix_node_head *head);
-	struct	radix_node *(*rnh_lookup)	/* locate based on sockaddr */(void *v, void *mask, struct radix_node_head *head);
-	struct	radix_node *(*rnh_matchpkt)	/* locate based on packet hdr */(void *v, struct radix_node_head *head);
-	int	(*rnh_walktree)			/* traverse tree */
-		(struct radix_node_head *,
+					/* remove based on sockaddr */
+	struct	radix_node *(*rnh_deladdr)(void *v, void *mask,
+		    struct radix_node_head *head);
+					/* remove based on packet hdr */
+	struct	radix_node *(*rnh_delpkt)(void *v, void *mask,
+		    struct radix_node_head *head);
+					/* locate based on sockaddr */
+	struct	radix_node *(*rnh_matchaddr)(void *v,
+		    struct radix_node_head *head);
+					/* locate based on sockaddr */
+	struct	radix_node *(*rnh_lookup)(void *v, void *mask,
+		    struct radix_node_head *head);
+					/* locate based on packet hdr */
+	struct	radix_node *(*rnh_matchpkt)(void *v,
+		    struct radix_node_head *head);
+					/* traverse tree */
+	int	(*rnh_walktree)(struct radix_node_head *,
 		     int (*)(struct radix_node *, void *), void *);
-	struct	radix_node rnh_nodes[3];	/* empty tree for common case */
+	struct	radix_node rnh_nodes[3];/* empty tree for common case */
 };
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mon.h,v 1.7 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: mon.h,v 1.8 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: mon.h,v 1.19 1996/11/20 18:57:12 gwr Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ typedef struct {
 	u_char	(*getChar)(void);	/* Get char from input source */
 	int	(*putChar)(int);	/* Put char to output sink */
 	int	(*mayGet)(void);	/* Maybe get char, or -1 */
-	int	(*mayPut)(int);	/* Maybe put char, or -1 */
+	int	(*mayPut)(int);		/* Maybe put char, or -1 */
 	u_char	*echo;			/* Should getchar echo? */
 	u_char	*inSource;		/* Input source selector */
 	u_char	*outSink;		/* Output sink selector */
@@ -134,7 +134,7 @@ typedef struct {
 	 */
 
 	int	(*getKey)(void);		/* Get next key if one exists */
-	int	(*initGetKey)(void *);	/* Initialize get key */
+	int	(*initGetKey)(void *);		/* Initialize get key */
 	u_int	*translation;			/* Kbd translation selector
 						   (see keyboard.h in sun
 						    monitor code) */
@@ -153,7 +153,7 @@ typedef struct {
 	 * Frame buffer output and terminal emulation
 	 */
 
-	int	(*fbWriteChar)(int); /* Write a character to FB */
+	int	(*fbWriteChar)(int);	/* Write a character to FB */
 	int	*fbAddr;		/* Address of frame buffer */
 	char	**font;			/* Font table for FB */
 	/* Quickly write string to FB */
@@ -174,8 +174,8 @@ typedef struct {
 	u_char	**linePtr;			/* Cur pointer into linebuf */
 	int	*lineSize;			/* length of line in linebuf */
 	int	(*getLine)(int);		/* Get line from user */
-	u_char	(*getNextChar)(void);	/* Get next char from linebuf */
-	u_char	(*peekNextChar)(void);	/* Peek at next char */
+	u_char	(*getNextChar)(void);		/* Get next char from linebuf */
+	u_char	(*peekNextChar)(void);		/* Peek at next char */
 	int	*fbThere;			/* =1 if frame buffer there */
 	int	(*getNum)(void);		/* Grab hex num from line */
 
@@ -183,8 +183,8 @@ typedef struct {
 	 * Print formatted output to current output sink
 	 */
 
-	int	(*printf)(char *, ...);	/* Similar to "Kernel printf" */
-	int	(*printHex)(int,int);	/* Format N digits in hex */
+	int	(*printf)(char *, ...);		/* Similar to "Kernel printf" */
+	int	(*printHex)(int,int);		/* Format N digits in hex */
 
 	/*
 	 * Led stuff

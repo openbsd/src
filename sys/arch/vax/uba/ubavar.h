@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubavar.h,v 1.11 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: ubavar.h,v 1.12 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: ubavar.h,v 1.21 1999/01/19 21:04:48 ragge Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct	uba_softc {
 	struct	pte *uh_mr;		/* start of page map */
 	int	uh_memsize;		/* size of uba memory, pages */
 	caddr_t	uh_iopage;		/* start of uba io page */
-	void	(**uh_reset)(int);/* UBA reset function array */
+	void	(**uh_reset)(int);	/* UBA reset function array */
 	int	*uh_resarg;		/* array of ubareset args */
 	int	uh_resno;		/* Number of devices to reset */
 	short	uh_mrwant;		/* someone is waiting for map reg */

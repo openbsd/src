@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppvar.h,v 1.10 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.11 2002/03/15 01:20:04 millert Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
@@ -61,7 +61,7 @@ struct ppp_softc {
 	int	sc_unit;		/* XXX unit number */
 	u_int	sc_flags;		/* control/status bits; see if_ppp.h */
 	void	*sc_devp;		/* pointer to device-dep structure */
-	void	(*sc_start)(struct ppp_softc *);	/* start output proc */
+	void	(*sc_start)(struct ppp_softc *); /* start output proc */
 	void	(*sc_ctlp)(struct ppp_softc *); /* rcvd control pkt */
 	void	(*sc_relinq)(struct ppp_softc *); /* relinquish ifunit */
 	u_int16_t sc_mru;		/* max receive unit */
@@ -81,7 +81,7 @@ struct ppp_softc {
 	void	*sc_rc_state;		/* receive decompressor state */
 	time_t	sc_last_sent;		/* time (secs) last NP pkt sent */
 	time_t	sc_last_recv;		/* time (secs) last NP pkt rcvd */
-	struct	bpf_program sc_pass_filt;   /* filter for packets to pass */
+	struct	bpf_program sc_pass_filt; /* filter for packets to pass */
 	struct	bpf_program sc_active_filt; /* filter for "non-idle" packets */
 #ifdef	VJC
 	struct	slcompress *sc_comp; 	/* vjc control buffer */
