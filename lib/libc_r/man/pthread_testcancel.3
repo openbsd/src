@@ -1,4 +1,5 @@
-.\" $OpenBSD: pthread_testcancel.3,v 1.6 2000/01/22 13:59:29 aaron Exp $
+.\" $OpenBSD: pthread_testcancel.3,v 1.7 2002/02/21 20:12:19 fgsch Exp $
+.\"
 .Dd January 17, 1999
 .Dt PTHREAD_TESTCANCEL 3
 .Os
@@ -21,7 +22,11 @@ The
 function atomically both sets the calling thread's cancelability state
 to the indicated
 .Fa state
-and returns the previous cancelability state at the location referenced by
+and, if
+.Fa oldstate
+is not
+.Dv NULL ,
+returns the previous cancelability state at the location referenced by
 .Fa oldstate .
 Legal values for
 .Fa state
@@ -35,7 +40,11 @@ The
 function atomically both sets the calling thread's cancelability type
 to the indicated
 .Fa type
-and returns the previous cancelability type at the location referenced by
+and, if
+.Fa oldtype
+is not
+.Dv NULL ,
+returns the previous cancelability type at the location referenced by
 .Fa oldtype .
 Legal values for
 .Fa type
@@ -178,6 +187,5 @@ or
 .Xr pthread_cancel 3
 .Sh STANDARDS
 .Fn pthread_testcancel
-conforms to ISO/IEC 9945-1 ANSI/IEEE
-.Pq Dq Tn POSIX
-Std 1003.1 Second Edition 1996-07-12.
+conforms to
+.St -p1003.1-96   

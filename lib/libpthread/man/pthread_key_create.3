@@ -1,4 +1,5 @@
-.\" $OpenBSD: pthread_key_create.3,v 1.5 1999/11/24 05:35:32 d Exp $
+.\" $OpenBSD: pthread_key_create.3,v 1.6 2002/02/21 20:12:19 fgsch Exp $
+.\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
 .\"
@@ -95,6 +96,5 @@ Insufficient memory exists to create the key.
 .Xr pthread_setspecific 3
 .Sh STANDARDS
 .Fn pthread_key_create
-conforms to ISO/IEC 9945-1 ANSI/IEEE
-.Pq Dq Tn POSIX
-Std 1003.1 Second Edition 1996-07-12.
+conforms to
+.St -p1003.1-96 .

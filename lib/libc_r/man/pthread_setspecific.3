@@ -1,4 +1,5 @@
-.\" $OpenBSD: pthread_setspecific.3,v 1.8 2001/06/24 23:46:35 jasoni Exp $
+.\" $OpenBSD: pthread_setspecific.3,v 1.9 2002/02/21 20:12:19 fgsch Exp $
+.\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
 .\"
@@ -55,11 +56,11 @@ reserved for use by the calling thread.
 The effect of calling
 .Fn pthread_setspecific
 with a key value not obtained from
-.Fn pthread_key_create ,
+.Fn pthread_key_create
 or after
 .Fa key
 has been deleted with
-.Fn pthread_key_delete ,
+.Fn pthread_key_delete
 is undefined.
 .Pp
 .Fn pthread_setspecific
@@ -88,6 +89,5 @@ value is invalid.
 .Xr pthread_key_delete 3
 .Sh STANDARDS
 .Fn pthread_setspecific
-conforms to ISO/IEC 9945-1 ANSI/IEEE
-.Pq Dq Tn POSIX
-Std 1003.1 Second Edition 1996-07-12.
+conforms to
+.St -p1003.1-96 .
