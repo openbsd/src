@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1995/03/21 09:11:16 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1996/05/07 18:20:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,4 +47,4 @@ void	optlist __P((void));
 void	print __P((struct termios *, struct winsize *, int, enum FMT));
 void	usage __P((void));
 
-extern struct cchar cchars1[], cchars2[];
+extern const struct cchar cchars1[], cchars2[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: gfmt.c,v 1.9 1995/03/21 09:11:19 cgd Exp $	*/
+/*	$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: gfmt.c,v 1.9 1995/03/21 09:11:19 cgd Exp $";
+static char rcsid[] = "$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ gprint(tp, wp, ldisc)
 	struct winsize *wp;
 	int ldisc;
 {
-	struct cchar *cp;
+	const struct cchar *cp;
 
 	(void)printf("gfmt1:cflag=%x:iflag=%x:lflag=%x:oflag=%x:",
 	    tp->c_cflag, tp->c_iflag, tp->c_lflag, tp->c_oflag);
@@ -80,7 +80,7 @@ gread(tp, s)
 	struct termios *tp;
 	char *s;
 {
-	struct cchar *cp;
+	const struct cchar *cp;
 	char *ep, *p;
 	long tmp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cchar.c,v 1.9 1995/03/21 09:11:15 cgd Exp $	*/
+/*	$NetBSD: cchar.c,v 1.10 1996/05/07 18:20:05 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: cchar.c,v 1.9 1995/03/21 09:11:15 cgd Exp $";
+static char rcsid[] = "$NetBSD: cchar.c,v 1.10 1996/05/07 18:20:05 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$NetBSD: cchar.c,v 1.9 1995/03/21 09:11:15 cgd Exp $";
  * The first are displayed, but both are recognized on the
  * command line.
  */
-struct cchar cchars1[] = {
+const struct cchar cchars1[] = {
 	{ "discard",	VDISCARD, 	CDISCARD },
 	{ "dsusp", 	VDSUSP,		CDSUSP },
 	{ "eof",	VEOF,		CEOF },
@@ -81,7 +81,7 @@ struct cchar cchars1[] = {
 	{ NULL },
 };
 
-struct cchar cchars2[] = {
+const struct cchar cchars2[] = {
 	{ "brk",	VEOL,		CEOL },
 	{ "flush",	VDISCARD, 	CDISCARD },
 	{ "rprnt",	VREPRINT, 	CREPRINT },
@@ -92,7 +92,6 @@ static int
 c_cchar(a, b)
         const void *a, *b;
 {
-
         return (strcmp(((struct cchar *)a)->name, ((struct cchar *)b)->name));
 }
 

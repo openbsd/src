@@ -1,4 +1,4 @@
-/*	$NetBSD: modes.c,v 1.8 1995/03/21 09:11:23 cgd Exp $	*/
+/*	$NetBSD: modes.c,v 1.9 1996/05/07 18:20:09 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: modes.c,v 1.8 1995/03/21 09:11:23 cgd Exp $";
+static char rcsid[] = "$NetBSD: modes.c,v 1.9 1996/05/07 18:20:09 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ static char rcsid[] = "$NetBSD: modes.c,v 1.8 1995/03/21 09:11:23 cgd Exp $";
 #include "stty.h"
 
 struct modes {
-	char *name;
+	const char *name;
 	long set;
 	long unset;
 };
@@ -56,7 +56,7 @@ struct modes {
  * The code in optlist() depends on minus options following regular
  * options, i.e. "foo" must immediately precede "-foo".
  */
-struct modes cmodes[] = {
+const struct modes cmodes[] = {
 	{ "cs5",	CS5, CSIZE },
 	{ "cs6",	CS6, CSIZE },
 	{ "cs7",	CS7, CSIZE },
@@ -90,7 +90,7 @@ struct modes cmodes[] = {
 	{ NULL },
 };
 
-struct modes imodes[] = {
+const struct modes imodes[] = {
 	{ "ignbrk",	IGNBRK, 0 },
 	{ "-ignbrk",	0, IGNBRK },
 	{ "brkint",	BRKINT, 0 },
@@ -126,7 +126,7 @@ struct modes imodes[] = {
 	{ NULL },
 };
 
-struct modes lmodes[] = {
+const struct modes lmodes[] = {
 	{ "echo",	ECHO, 0 },
 	{ "-echo",	0, ECHO },
 	{ "echoe",	ECHOE, 0 },
@@ -178,7 +178,7 @@ struct modes lmodes[] = {
 	{ NULL },
 };
 
-struct modes omodes[] = {
+const struct modes omodes[] = {
 	{ "opost",	OPOST, 0 },
 	{ "-opost",	0, OPOST },
 	{ "litout",	0, OPOST },
@@ -192,14 +192,14 @@ struct modes omodes[] = {
 	{ NULL },
 };
 
-#define	CHK(s)	(*name == s[0] && !strcmp(name, s))
+#define	CHK(s)	(!strcmp(name, s))
 
 int
 msearch(argvp, ip)
 	char ***argvp;
 	struct info *ip;
 {
-	struct modes *mp;
+	const struct modes *mp;
 	char *name;
 
 	name = **argvp;

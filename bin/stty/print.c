@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 1995/03/21 09:11:24 cgd Exp $	*/
+/*	$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.10 1995/03/21 09:11:24 cgd Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: print.c,v 1.10 1995/03/21 09:11:24 cgd Exp $";
 
 static void  binit __P((char *));
 static void  bput __P((char *));
-static char *ccval __P((struct cchar *, int));
+static char *ccval __P((const struct cchar *, int));
 
 void
 print(tp, wp, ldisc, fmt)
@@ -61,7 +61,7 @@ print(tp, wp, ldisc, fmt)
 	int ldisc;
 	enum FMT fmt;
 {
-	struct cchar *p;
+	const struct cchar *p;
 	long tmp;
 	u_char *cc;
 	int cnt, ispeed, ospeed;
@@ -241,7 +241,7 @@ bput(s)
 
 static char *
 ccval(p, c)
-	struct cchar *p;
+	const struct cchar *p;
 	int c;
 {
 	static char buf[5];
