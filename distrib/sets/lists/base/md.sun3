@@ -477,6 +477,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/eisa/eisareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/eisa/eisavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aac_tables.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aacreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/aacvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ac97.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ad1848reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/adv.ph
@@ -548,6 +551,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mb86960reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mc146818reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mc6845.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mc6845reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/midwayreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/midwayvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/monitors.ph
@@ -564,6 +568,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/opl3sa3reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/oplreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/oplvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/pcdisplay.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/pcdisplayvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/pckbcvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/pdqreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/pdqvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ramdac.ph
@@ -588,6 +595,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/twevar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/uhareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/uhavar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/vgareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/vgavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/wdcreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/wdcvar.ph
@@ -601,6 +609,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/ariareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/btreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/cs4231var.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/egavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/elink.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/essreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/essvar.ph
@@ -630,6 +639,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/mcdreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/opti.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/pasreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/pcdisplayvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/pcppireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/pcppivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/pnpdevs.ph
@@ -733,6 +743,11 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/vga_pcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/wdt50x.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/xmaciireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pckbc
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pckbc/pckbdreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pckbc/pckbdvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pckbc/psmreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pckbc/wskbdmap_mfii.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/if_cnwreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/if_rayreg.ph
@@ -1137,6 +1152,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/net_osdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/netisr.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/netisr_dispatch.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/ppp-comp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/ppp_defs.ph
@@ -1534,6 +1550,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/errno.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/event.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/eventvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/exec.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/exec_aout.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/exec_ecoff.ph
