@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.14 1998/05/18 19:12:03 deraadt Exp $
+ * $OpenBSD: readlink.c,v 1.15 1998/07/08 04:36:37 mickey Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -65,9 +65,12 @@ main(argc, argv)
 	}
 
 	n = strlen(argv[0]);
-	if (n > PATH_MAX - 1)
-		errx(1, "filename longer than PATH_MAX-1 (%d)\n",
-		    PATH_MAX - 1);
+	if (n > PATH_MAX - 1) {
+		fprintf(stderr,
+			"readlink: filename longer than PATH_MAX-1 (%d)\n",
+			PATH_MAX - 1);
+		exit(1);
+	}
 
 	if (fflag)
 		realpath(argv[0], buf);
