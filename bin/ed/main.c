@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1997/07/08 18:56:27 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1997/07/08 19:30:27 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/07/08 18:56:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1997/07/08 19:30:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,11 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/07/08 18:56:27 millert Exp $"
  */
 
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <ctype.h>
 #include <setjmp.h>
 #include <pwd.h>
-#include <unistd.h>
 
 #include "ed.h"
 
@@ -153,10 +153,14 @@ top:
 	}
 
 	if (!(interactive = isatty(0))) {
-		/* not seekable so default to interactive */
-		if (lseek(0, 0, SEEK_CUR)) {
-			interactive = 1;
-			setlinebuf(stdout);
+		struct stat sb;
+
+		/* assert: pipes show up as fifo's when fstat'd */
+		if (fstat(0, &sb) || !S_ISFIFO(sb.st_mode)) {
+			if (lseek(0, 0, SEEK_CUR)) {
+				interactive = 1;
+				setlinebuf(stdout);
+			}
 		}
 	}
 
