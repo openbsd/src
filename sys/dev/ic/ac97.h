@@ -1,4 +1,4 @@
-/*      $OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $ */
+/*      $OpenBSD: ac97.h,v 1.5 2001/03/03 21:28:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -41,7 +41,8 @@ struct ac97_host_if {
 	void (*reset)(void *arg);
 
 	enum ac97_host_flags {
-		AC97_HOST_DONT_READ = 0x1
+		AC97_HOST_DONT_READ = 0x1,
+		AC97_HOST_DONT_READANY = 0x2
 	};
 
 	enum ac97_host_flags (*flags)(void *arg);
