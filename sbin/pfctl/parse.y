@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.299 2003/01/25 18:16:05 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.300 2003/01/25 22:53:45 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2075,13 +2075,15 @@ rport		: STRING			{
 				if (($$.a = getservice($1)) == -1)
 					YYERROR;
 				$$.b = 0;
-				$$.t = PF_OP_RRG;
+				$$.t = 1;
 			} else {
 				*p++ = 0;
 				if (($$.a = getservice($1)) == -1 ||
 				    ($$.b = getservice(p)) == -1)
 					YYERROR;
-				$$.t = PF_OP_RRG;
+				if ($$.a == $$.b)
+					$$.b = 0;
+				$$.t = 0;
 			}
 		}
 		;
@@ -2515,7 +2517,11 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 				if ($11->host == NULL)
 					YYERROR;
 				rdr.rpool.proxy_port[0] = $11->rport.a;
-				rdr.rpool.port_op |= $11->rport.t;
+				if ($11->rport.t && $10.b) {
+					rdr.rpool.proxy_port[1] = $11->rport.a +
+					    (rdr.dst.port[1] - rdr.dst.port[0]);
+				} else
+					rdr.rpool.proxy_port[1] = $11->rport.b;
 
 				if ($11->host->next) {
 					rdr.rpool.opts = $12.type;

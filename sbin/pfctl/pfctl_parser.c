@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.133 2003/01/20 17:16:56 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.134 2003/01/25 22:53:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -478,8 +478,8 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 	case PF_RDR:
 		if (p1) {
 			printf(" port %u", ntohs(p1));
-			if (p2 & PF_OP_RRG)
-				printf(":*");
+			if (p2)
+				printf(":%u", ntohs(p2));
 		}
 		break;
 	default:
@@ -653,14 +653,14 @@ print_rdr(struct pf_rule *r, int verbose)
 		printf("any ");
 	if (r->dst.port[0]) {
 		printf("port %u", ntohs(r->dst.port[0]));
-		if (r->rpool.port_op & PF_OP_RRG)
+		if (r->dst.port_op & PF_OP_RRG)
 			printf(":%u", ntohs(r->dst.port[1]));
 		printf(" ");
 	}
 	if (!r->anchorname[0] && (r->action == PF_RDR)) {
 		printf("-> ");
 		print_pool(&r->rpool, r->rpool.proxy_port[0],
-		    r->rpool.port_op, r->af, PF_RDR);
+		    r->rpool.proxy_port[1], r->af, PF_RDR);
 	}
 	printf("\n");
 }
