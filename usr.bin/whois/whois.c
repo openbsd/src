@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.18 2002/12/19 20:37:24 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.19 2002/12/19 21:34:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.18 2002/12/19 20:37:24 millert Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.19 2002/12/19 21:34:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ static const char rcsid[] = "$OpenBSD: whois.c,v 1.18 2002/12/19 20:37:24 miller
 
 #define	NICHOST		"whois.crsnic.net"
 #define	INICHOST	"whois.internic.net"
+#define	CNICHOST	"whois.corenic.net"
 #define	DNICHOST	"whois.nic.mil"
 #define	GNICHOST	"whois.nic.gov"
 #define	ANICHOST	"whois.arin.net"
@@ -259,22 +260,31 @@ whois(const char *name, const char *server, int flags)
 
 /*
  * If no country is specified determine the top level domain from the query.
- * If the TLD is a number, query ARIN.  Otherwise, use TLD.whois-server.net.
- * If the domain does not contain '.', fall back to NICHOST (or VNICHOST
- * if name is a handle that starts with a '!').
+ * If the TLD is a number, query ARIN, otherwise, use TLD.whois-server.net.
+ * If the domain does not contain '.', check to see if it is an NSI handle
+ * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+).
+ * Fall back to NICHOST for the non-handle case.
  */
 static char *
 choose_server(const char *name, const char *country)
 {
 	static char *server;
 	const char *qhead;
+	char *ep;
 	size_t len;
 
 	if (country != NULL)
 		qhead = country;
-	else if ((qhead = strrchr(name, '.')) == NULL)
-		return (*name == '!' ? VNICHOST : NICHOST);
-	else if (isdigit(*(++qhead)))
+	else if ((qhead = strrchr(name, '.')) == NULL) {
+		if (*name == '!')
+			return (VNICHOST);
+		else if ((strncasecmp(name, "COCO-", 5) == 0 ||
+		    strncasecmp(name, "COHO-", 5) == 0) &&
+		    strtol(name + 5, &ep, 10) > 0 && *ep == '\0')
+			return (CNICHOST);  
+		else
+			return (NICHOST);
+	} else if (isdigit(*(++qhead)))
 		return (ANICHOST);
 	len = strlen(qhead) + sizeof(QNICHOST_TAIL);
 	if ((server = realloc(server, len)) == NULL)
