@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2003/07/09 10:54:37 markus Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/07/10 07:48:41 markus Exp $
 
 LIB=	event
 SRCS=	event.c select.c signal.c kqueue.c
@@ -11,7 +11,12 @@ MLINKS=	event.3 event_init.3 event.3 event_dispatch.3 event.3 event_loop.3 \
         evtimer_del.3 event.3 evtimer_pending.3 event.3 evtimer_initialized.3 \
         event.3 signal_set.3 event.3 signal_add.3 event.3 signal_del.3 \
 	event.3 signal_pending.3 event.3 signal_initialized.3
-CFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}
+
+CFLAGS+= -I${.CURDIR} \
+	-DHAVE_WORKING_KQUEUE \
+	-DHAVE_SELECT \
+	-DHAVE_SYS_TIME_H \
+
 NOPIC=
 
 includes:
