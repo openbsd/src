@@ -1,4 +1,4 @@
-.\" $OpenBSD: gx.4,v 1.1 2002/04/02 12:57:53 nate Exp $
+.\" $OpenBSD: gx.4,v 1.2 2002/04/02 13:25:50 nate Exp $
 .\" Copyright (c) 2001
 .\"	Jonathan Lemon <jlemon@FreeBSD.org>. All rights reserved.
 .\"
@@ -76,7 +76,7 @@ and 1000mbps modes in full or half duplex, however half duplex
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width ".Cm 10baseT"
+.Bl -tag -width "1000baseTX"
 .It Cm autoselect
 Enable autoselection of the media type and options.
 User can manually override
@@ -185,6 +185,6 @@ driver was written by
 .An Jonathan Lemon Aq jlemon@FreeBSD.org .
 .Pp
 Support for the newer 82544 based chips (Cordova) was added by
-.An Nathan Binkert Aq nate@OpenBSD.org 
+.An Nathan Binkert Aq nate@OpenBSD.org
 who also did the port to
 .Ox .
