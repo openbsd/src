@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.25 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.26 2004/12/23 17:43:18 aaron Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -420,7 +420,7 @@ pci_intr_map(pa, ihp)
 	int bus, dev, func;
 #endif
 
-#if NPCIBIOS > 0
+#if (NPCIBIOS > 0) || (NIOAPIC > 0)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
 #endif
