@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.468 2004/12/07 05:30:25 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.469 2004/12/07 09:36:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -682,14 +682,14 @@ pf_src_connlimit(struct pf_state **state)
 		    &p, time_second);
 
 		/* kill existing states if that's required. */
-		if ((*state)->rule.ptr->flush) {
+		if ((*state)->rule.ptr->rule_flag & PFRULE_SRCTRACK_FLUSH) {
 			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
 			
 			RB_FOREACH(s, pf_state_tree_id, &tree_id) {
 				/*
-				 * Kill states from this source.  (Only those
-				 * from the same rule if PF_FLUSH_GLOBAL is not
-				 * set)
+				 * Kill all states from this source.
+				 *
+				 * XXX Kill states _to_ the source?
 				 */
 				if (s->af == (*state)->af &&
 				    (((*state)->direction == PF_OUT &&
@@ -697,10 +697,7 @@ pf_src_connlimit(struct pf_state **state)
 				    &s->lan.addr, s->af)) ||
 				    ((*state)->direction == PF_IN &&
 				    PF_AEQ(&(*state)->src_node->addr,
-                                    &s->ext.addr, s->af))) &&
-				    ((*state)->rule.ptr->flush &
-				    PF_FLUSH_GLOBAL ||
-				    (*state)->rule.ptr == s->rule.ptr)) {
+                                    &s->ext.addr, s->af)))) {
 					s->timeout = PFTM_PURGE;
 					s->src.state = s->dst.state =
 					    TCPS_CLOSED;
