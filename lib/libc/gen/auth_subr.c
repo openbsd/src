@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.1 2000/11/21 00:51:16 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.2 2000/11/21 04:17:44 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -122,6 +122,8 @@ static char *auth_environ[] = {
 };
 
 static char defservice[] = LOGIN_DEFSERVICE;
+
+static va_list nilap;
 
 /*
  * Quick one liners that only exist to keep auth_session_t opaque
@@ -747,6 +749,7 @@ auth_call(auth_session_t *as, char *path, ...)
 	char *argv[64];		/* 64 args should more than enough */
 #define	Nargc	(sizeof(argv)/sizeof(argv[0]))
 
+	memset(&(as->ap0), 0, sizeof(as->ap0));
 	va_start(as->ap0, path);
 
 	argc = 0;
@@ -766,13 +769,13 @@ auth_call(auth_session_t *as, char *path, ...)
 		++argc;
 
 	if (argc >= Nargc - 1 && _auth_next_arg(as)) {
-		if (as->ap0) {
+		if (memcmp(&nilap, &(as->ap0), sizeof(nilap)) != 0) {
 			va_end(as->ap0);
-			as->ap0 = NULL;
+			memset(&(as->ap0), 0, sizeof(as->ap0));
 		}
-		if (as->ap) {
+		if (memcmp(&nilap, &(as->ap), sizeof(nilap)) != 0) {
 			va_end(as->ap);
-			as->ap = NULL;
+			memset(&(as->ap), 0, sizeof(as->ap));
 		}
 		syslog(LOG_ERR, "too many arguments");
 		goto fail;
@@ -909,14 +912,14 @@ fail:
 		free(data);
 	}
 
-	if (as->ap0) {
+	if (memcmp(&nilap, &(as->ap0), sizeof(nilap)) != 0) {
 		va_end(as->ap0);
-		as->ap0 = NULL;
+		memset(&(as->ap0), 0, sizeof(as->ap0));
 	}
 
-	if (as->ap) {
+	if (memcmp(&nilap, &(as->ap), sizeof(nilap)) != 0) {
 		va_end(as->ap);
-		as->ap = NULL;
+		memset(&(as->ap), 0, sizeof(as->ap));
 	}
 	return (okay);
 }
@@ -970,17 +973,17 @@ _auth_next_arg(auth_session_t *as)
 {
 	char *arg;
 
-	if (as->ap0) {
+	if (memcmp(&nilap, &(as->ap0), sizeof(nilap)) != 0) {
 		if ((arg = va_arg(as->ap0, char *)) != NULL)
 			return (arg);
 		va_end(as->ap0);
-		as->ap0 = NULL;
+		memset(&(as->ap0), 0, sizeof(as->ap0));
 	}
-	if (as->ap) {
+	if (memcmp(&nilap, &(as->ap), sizeof(nilap)) != 0) {
 		if ((arg = va_arg(as->ap, char *)) != NULL)
 			return (arg);
 		va_end(as->ap);
-		as->ap = NULL;
+		memset(&(as->ap), 0, sizeof(as->ap));
 	}
 	return (NULL);
 }
