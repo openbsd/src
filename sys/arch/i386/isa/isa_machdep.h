@@ -107,6 +107,7 @@ struct isabus_attach_args;	/* XXX */
 void	isa_attach_hook __P((struct device *, struct device *,
 	    struct isabus_attach_args *));
 int	isa_intr_alloc __P((isa_chipset_tag_t, int, int, int *));
+int	isa_intr_check __P((isa_chipset_tag_t, int, int));
 void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg, char *ih_what));
 void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.29 1998/06/27 22:42:22 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.30 1998/06/29 02:12:58 downsj Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -445,6 +445,33 @@ isa_intr_alloc(ic, mask, type, irq)
 }
 
 /*
+ * Just check to see if an IRQ is available/can be shared.
+ */
+int
+isa_intr_check(ic, irq, type)
+	isa_chipset_tag_t ic;	/* Not used. */
+	int irq;
+	int type;
+{
+	if (!LEGAL_IRQ(irq) || type == IST_NONE)
+		return (0);
+
+	switch (intrtype[irq]) {
+	case IST_NONE:
+		break;
+	case IST_EDGE:
+	case IST_LEVEL:
+		if (type != intrtype[irq])
+			return (0);
+		break;
+	case IST_PULSE:
+		if (type != IST_NONE)
+			return (0);
+	}
+	return (1);
+}
+
+/*
  * Set up an interrupt handler to start being called.
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
  */
@@ -464,16 +491,12 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL) {
-		printf("%s: isa_intr_establish: can't malloc handler info\n",
-		    ih_what);
-		return NULL;
-	}
+	if (ih == NULL)
+		panic("isa_intr_establish: can't malloc handler info");
 
-	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
-		printf("%s: intr_establish: bogus irq or type\n", ih_what);
-		return NULL;
-	}
+	if (!LEGAL_IRQ(irq) || type == IST_NONE)
+		panic("intr_establish: bogus irq or type");
+
 	switch (intrtype[irq]) {
 	case IST_NONE:
 		intrtype[irq] = type;
@@ -483,12 +506,10 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 		if (type == intrtype[irq])
 			break;
 	case IST_PULSE:
-		if (type != IST_NONE) {
-			/*printf("%s: intr_establish: can't share %s with %s, irq %d\n",
-			    ih_what, isa_intr_typename(intrtype[irq]),
-			    isa_intr_typename(type), irq);*/
-			return NULL;
-		}
+		if (type != IST_NONE)
+			panic("intr_establish: can't share %s with %s, irq %d",
+			    isa_intr_typename(intrtype[irq]),
+			    isa_intr_typename(type), irq);
 		break;
 	}
 

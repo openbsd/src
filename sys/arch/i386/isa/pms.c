@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.19 1998/06/27 22:42:47 deraadt Exp $	*/
+/*	$OpenBSD: pms.c,v 1.20 1998/06/29 02:13:00 downsj Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -186,7 +186,6 @@ pmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	void *ih;
 	u_char x;
 
 	/*
@@ -209,15 +208,16 @@ pmsprobe(parent, match, aux)
 	x = inb(PMS_DATA);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
-		return 0;
+		return (0);
 
-	ih = isa_intr_establish(aux, cf->cf_loc[0],
-	    IST_EDGE, IPL_TTY, pmsintr, NULL, pms_cd.cd_name);
-	if (ih == NULL)
-		return 0;
+	/* Make sure the IRQ is available. */
+	if (!isa_intr_check((isa_chipset_tag_t)0, cf->cf_loc[0], IST_EDGE)) {
+		printf ("%s%d: irq %d already in use\n", cf->cf_driver->cd_name,
+		    cf->cf_unit, cf->cf_loc[0]);
+		return (0);
+	}
 
-	isa_intr_disestablish(aux, ih);
-	return 1;
+	return (1);
 }
 
 void
