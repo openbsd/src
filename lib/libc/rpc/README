@@ -163,7 +163,7 @@ the compiler file mip/manifest.h:
    */
 ! #define TNULL	PTR		/* pointer to UNDEF */
   #define TVOID	FTN		/* function returning UNDEF (for void) */
-  
+
   /*
 --- 21,27 ----
   /*
@@ -171,7 +171,7 @@ the compiler file mip/manifest.h:
    */
 ! #define TNULL	INCREF(MOETY)	/* pointer to MOETY -- impossible type */
   #define TVOID	FTN		/* function returning UNDEF (for void) */
-  
+
   /*
 
 If you cannot fix your compiler, change the declaration in reply_proc()
