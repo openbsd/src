@@ -1,4 +1,9 @@
 #!./perl
+#	$OpenBSD$
+#
+# This is hacked up, in order to support DESTDIR.
+#
+
 BEGIN { @INC=('./lib', '../lib') }
 use File::Find;
 use File::Path qw(mkpath);
@@ -35,14 +40,26 @@ die "Patchlevel of perl ($patchlevel)",
     "and patchlevel of config.sh ($Config{'PATCHLEVEL'}) don't match\n"
 	if $patchlevel != $Config{'PATCHLEVEL'};
 
-# Fetch some frequently-used items from %Config
-$installbin = $Config{installbin};
-$installscript = $Config{installscript};
-$installprivlib = $Config{installprivlib};
-$installarchlib = $Config{installarchlib};
-$installsitelib = $Config{installsitelib};
-$installsitearch = $Config{installsitearch};
-$installman1dir = $Config{installman1dir};
+$installdest = $ENV{"DESTDIR"};
+if ($installdest ne '') {
+    # Fetch some frequently-used items from %Config, prefixing them with
+    # DESTDIR.
+    $installbin = "$installdest/$Config{installbin}";
+    $installscript = "$installdest/$Config{installscript}";
+    $installprivlib = "$installdest/$Config{installprivlib}";
+    $installarchlib = "$installdest/$Config{installarchlib}";
+    $installsitelib = "$installdest/$Config{installsitelib}";
+    $installsitearch = "$installdest/$Config{installsitearch}";
+    $installman1dir = "$installdest/$Config{installman1dir}";
+} else {
+    # Fetch some frequently-used items from %Config.
+    $installbin = $Config{installbin};
+    $installscript = $Config{installscript};
+    $installprivlib = $Config{installprivlib};
+    $installarchlib = $Config{installarchlib};
+    $installsitelib = $Config{installsitelib};
+    $installsitearch = $Config{installsitearch};
+}
 $man1ext = $Config{man1ext};
 # Did we build libperl as a shared library?
 $d_shrplib = $Config{d_shrplib};

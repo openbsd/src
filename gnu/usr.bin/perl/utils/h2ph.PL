@@ -1,4 +1,8 @@
 #!/usr/local/bin/perl
+#	$OpenBSD$
+#
+# This is slightly hacked up in order to support DESTDIR.
+#
 
 use Config;
 use File::Basename qw(&basename &dirname);
@@ -42,7 +46,14 @@ $Config{'startperl'}
 
 print OUT <<'!NO!SUBS!';
 
-chdir '/usr/include' || die "Can't cd /usr/include";
+$destdir = $ENV{"DESTDIR"};
+if ($destdir ne '')  {
+    chdir "$destdir/usr/include" || die "Can't cd $destdir/usr/include";
+    # whack $perlincl
+    $perlincl = "$destdir/$perlincl";
+} else {
+    chdir '/usr/include' || die "Can't cd /usr/include";
+}
 
 @isatype = split(' ',<<END);
 	char	uchar	u_char
