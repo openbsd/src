@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.c,v 1.18 1999/08/05 10:32:14 brian Exp $
+ * $Id: ipcp.c,v 1.19 2000/01/07 03:26:54 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -41,7 +41,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-#ifndef NOALIAS
+#ifndef NONAT
 #ifdef __FreeBSD__
 #include <alias.h>
 #else
@@ -82,11 +82,100 @@
 #include "prompt.h"
 #include "route.h"
 #include "iface.h"
+#include "ip.h"
 
 #undef REJECTED
 #define	REJECTED(p, x)	((p)->peer_reject & (1<<(x)))
 #define issep(ch) ((ch) == ' ' || (ch) == '\t')
 #define isip(ch) (((ch) >= '0' && (ch) <= '9') || (ch) == '.')
+
+static u_short default_urgent_tcp_ports[] = {
+  21,	/* ftp */
+  22,	/* ssh */
+  23,	/* telnet */
+  513,	/* login */
+  514,	/* shell */
+  543,	/* klogin */
+  544	/* kshell */
+};
+
+static u_short default_urgent_udp_ports[] = { };
+
+#define NDEFTCPPORTS \
+  (sizeof default_urgent_tcp_ports / sizeof default_urgent_tcp_ports[0])
+#define NDEFUDPPORTS \
+  (sizeof default_urgent_udp_ports / sizeof default_urgent_udp_ports[0])
+
+int
+ipcp_IsUrgentPort(struct port_range *range, u_short src, u_short dst)
+{
+  int f;
+
+  for (f = 0; f < range->nports; f++)
+    if (range->port[f] == src || range->port[f] == dst)
+      return 1;
+
+  return 0;
+}
+
+void
+ipcp_AddUrgentPort(struct port_range *range, u_short port)
+{
+  u_short *newport;
+  int p;
+
+  if (range->nports == range->maxports) {
+    range->maxports += 10;
+    newport = (u_short *)realloc(range->port,
+                                 range->maxports * sizeof(u_short));
+    if (newport == NULL) {
+      log_Printf(LogERROR, "ipcp_AddUrgentPort: realloc: %s\n",
+                 strerror(errno));
+      range->maxports -= 10;
+      return;
+    }
+    range->port = newport;
+  }
+
+  for (p = 0; p < range->nports; p++)
+    if (range->port[p] == port) {
+      log_Printf(LogWARN, "%u: Port already set to urgent\n", port);
+      break;
+    } else if (range->port[p] > port) {
+      memmove(range->port + p + 1, range->port + p,
+              (range->nports - p) * sizeof(u_short));
+      range->port[p] = port;
+      range->nports++;
+      break;
+    }
+
+  if (p == range->nports)
+    range->port[range->nports++] = port;
+}
+
+void
+ipcp_RemoveUrgentPort(struct port_range *range, u_short port)
+{
+  int p;
+
+  for (p = 0; p < range->nports; p++)
+    if (range->port[p] == port) {
+      if (p != range->nports - 1)
+        memmove(range->port + p, range->port + p + 1,
+                (range->nports - p - 1) * sizeof(u_short));
+      range->nports--;
+      return;
+    }
+
+  if (p == range->nports)
+    log_Printf(LogWARN, "%u: Port not set to urgent\n", port);
+}
+
+void
+ipcp_ClearUrgentPorts(struct port_range *range)
+{
+  range->nports = 0;
+}
 
 struct compreq {
   u_short proto;
@@ -119,7 +208,7 @@ static struct fsm_callbacks ipcp_Callbacks = {
   fsm_NullRecvResetAck
 };
 
-static const char *cftypes[] = {
+static const char * const cftypes[] = {
   /* Check out the latest ``Assigned numbers'' rfc (rfc1700.txt) */
   "???",
   "IPADDRS",	/* 1: IP-Addresses */	/* deprecated */
@@ -129,7 +218,7 @@ static const char *cftypes[] = {
 
 #define NCFTYPES (sizeof cftypes/sizeof cftypes[0])
 
-static const char *cftypes128[] = {
+static const char * const cftypes128[] = {
   /* Check out the latest ``Assigned numbers'' rfc (rfc1700.txt) */
   "???",
   "PRIDNS",	/* 129: Primary DNS Server Address */
@@ -268,6 +357,7 @@ int
 ipcp_Show(struct cmdargs const *arg)
 {
   struct ipcp *ipcp = &arg->bundle->ncp.ipcp;
+  int p;
 
   prompt_Printf(arg->prompt, "%s [%s]\n", ipcp->fsm.name,
                 State2Nam(ipcp->fsm.state));
@@ -276,6 +366,7 @@ ipcp_Show(struct cmdargs const *arg)
 	          inet_ntoa(ipcp->peer_ip), vj2asc(ipcp->peer_compproto));
     prompt_Printf(arg->prompt, " My side:         %s, %s\n",
 	          inet_ntoa(ipcp->my_ip), vj2asc(ipcp->my_compproto));
+    prompt_Printf(arg->prompt, " Queued packets:  %d\n", ip_QueueLen(ipcp));
   }
 
   if (ipcp->route) {
@@ -315,7 +406,27 @@ ipcp_Show(struct cmdargs const *arg)
 	        inet_ntoa(ipcp->cfg.ns.nbns[0]));
   prompt_Printf(arg->prompt, "%s\n", inet_ntoa(ipcp->cfg.ns.nbns[1]));
 
-  prompt_Printf(arg->prompt, "\n");
+  prompt_Printf(arg->prompt, " Urgent ports\n");
+  prompt_Printf(arg->prompt, "          TCP:    ");
+  if (ipcp->cfg.urgent.tcp.nports == 0)
+    prompt_Printf(arg->prompt, "none");
+  else
+    for (p = 0; p < ipcp->cfg.urgent.tcp.nports; p++) {
+      if (p)
+        prompt_Printf(arg->prompt, ", ");
+      prompt_Printf(arg->prompt, "%u", ipcp->cfg.urgent.tcp.port[p]);
+    }
+  prompt_Printf(arg->prompt, "\n          UDP:    ");
+  if (ipcp->cfg.urgent.udp.nports == 0)
+    prompt_Printf(arg->prompt, "none");
+  else
+    for (p = 0; p < ipcp->cfg.urgent.udp.nports; p++) {
+      if (p)
+        prompt_Printf(arg->prompt, ", ");
+      prompt_Printf(arg->prompt, "%u", ipcp->cfg.urgent.udp.port[p]);
+    }
+
+  prompt_Printf(arg->prompt, "\n\n");
   throughput_disp(&ipcp->throughput, arg->prompt);
 
   return 0;
@@ -352,7 +463,7 @@ ipcp_Init(struct ipcp *ipcp, struct bundle *bundle, struct link *l,
 {
   struct hostent *hp;
   char name[MAXHOSTNAMELEN];
-  static const char *timer_names[] =
+  static const char * const timer_names[] =
     {"IPCP restart", "IPCP openmode", "IPCP stopped"};
 
   fsm_Init(&ipcp->fsm, "IPCP", PROTO_IPCP, 1, IPCP_MAXCODE, LogIPCP,
@@ -378,6 +489,16 @@ ipcp_Init(struct ipcp *ipcp, struct bundle *bundle, struct link *l,
   ipcp->cfg.ns.nbns[0].s_addr = INADDR_ANY;
   ipcp->cfg.ns.nbns[1].s_addr = INADDR_ANY;
 
+  ipcp->cfg.urgent.tcp.nports = ipcp->cfg.urgent.tcp.maxports = NDEFTCPPORTS;
+  ipcp->cfg.urgent.tcp.port = (u_short *)malloc(NDEFTCPPORTS * sizeof(u_short));
+  memcpy(ipcp->cfg.urgent.tcp.port, default_urgent_tcp_ports,
+         NDEFTCPPORTS * sizeof(u_short));
+
+  ipcp->cfg.urgent.udp.nports = ipcp->cfg.urgent.udp.maxports = NDEFUDPPORTS;
+  ipcp->cfg.urgent.udp.port = (u_short *)malloc(NDEFUDPPORTS * sizeof(u_short));
+  memcpy(ipcp->cfg.urgent.udp.port, default_urgent_udp_ports,
+         NDEFUDPPORTS * sizeof(u_short));
+
   ipcp->cfg.fsm.timeout = DEF_FSMRETRY;
   ipcp->cfg.fsm.maxreq = DEF_FSMTRIES;
   ipcp->cfg.fsm.maxtrm = DEF_FSMTRIES;
@@ -388,6 +509,21 @@ ipcp_Init(struct ipcp *ipcp, struct bundle *bundle, struct link *l,
   throughput_init(&ipcp->throughput, SAMPLE_PERIOD);
   memset(ipcp->Queue, '\0', sizeof ipcp->Queue);
   ipcp_Setup(ipcp, INADDR_NONE);
+}
+
+void
+ipcp_Destroy(struct ipcp *ipcp)
+{
+  if (ipcp->cfg.urgent.tcp.maxports) {
+    ipcp->cfg.urgent.tcp.nports = ipcp->cfg.urgent.tcp.maxports = 0;
+    free(ipcp->cfg.urgent.tcp.port);
+    ipcp->cfg.urgent.tcp.port = NULL;
+  }
+  if (ipcp->cfg.urgent.udp.maxports) {
+    ipcp->cfg.urgent.udp.nports = ipcp->cfg.urgent.udp.maxports = 0;
+    free(ipcp->cfg.urgent.udp.port);
+    ipcp->cfg.urgent.udp.port = NULL;
+  }
 }
 
 void
@@ -745,8 +881,8 @@ ipcp_InterfaceUp(struct ipcp *ipcp)
     return 0;
   }
 
-#ifndef NOALIAS
-  if (ipcp->fsm.bundle->AliasEnabled)
+#ifndef NONAT
+  if (ipcp->fsm.bundle->NatEnabled)
     PacketAliasSetAddress(ipcp->my_ip);
 #endif
 
@@ -1148,14 +1284,14 @@ extern struct mbuf *
 ipcp_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 {
   /* Got PROTO_IPCP from link */
-  mbuf_SetType(bp, MB_IPCPIN);
+  m_settype(bp, MB_IPCPIN);
   if (bundle_Phase(bundle) == PHASE_NETWORK)
     fsm_Input(&bundle->ncp.ipcp.fsm, bp);
   else {
     if (bundle_Phase(bundle) < PHASE_NETWORK)
       log_Printf(LogIPCP, "%s: Error: Unexpected IPCP in phase %s (ignored)\n",
                  l->name, bundle_PhaseName(bundle));
-    mbuf_Free(bp);
+    m_freem(bp);
   }
   return NULL;
 }

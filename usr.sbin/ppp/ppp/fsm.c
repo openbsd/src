@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.c,v 1.11 1999/08/10 10:50:44 brian Exp $
+ * $Id: fsm.c,v 1.12 2000/01/07 03:26:54 brian Exp $
  *
  *  TODO:
  */
@@ -103,7 +103,7 @@ Code2Nam(u_int code)
 const char *
 State2Nam(u_int state)
 {
-  static const char *StateNames[] = {
+  static const char * const StateNames[] = {
     "Initial", "Starting", "Closed", "Stopped", "Closing", "Stopping",
     "Req-Sent", "Ack-Rcvd", "Ack-Sent", "Opened",
   };
@@ -132,7 +132,7 @@ void
 fsm_Init(struct fsm *fp, const char *name, u_short proto, int mincode,
          int maxcode, int LogLevel, struct bundle *bundle,
          struct link *l, const struct fsm_parent *parent,
-         struct fsm_callbacks *fn, const char *timer_names[3])
+         struct fsm_callbacks *fn, const char * const timer_names[3])
 {
   fp->name = name;
   fp->proto = proto;
@@ -201,12 +201,13 @@ fsm_Output(struct fsm *fp, u_int code, u_int id, u_char *ptr, int count,
   lh.code = code;
   lh.id = id;
   lh.length = htons(plen);
-  bp = mbuf_Alloc(plen, mtype);
+  bp = m_get(plen, mtype);
   memcpy(MBUF_CTOP(bp), &lh, sizeof(struct fsmheader));
   if (count)
     memcpy(MBUF_CTOP(bp) + sizeof(struct fsmheader), ptr, count);
   log_DumpBp(LogDEBUG, "fsm_Output", bp);
-  link_PushPacket(fp->link, bp, fp->bundle, PRI_LINK, fp->proto);
+  link_PushPacket(fp->link, bp, fp->bundle, LINK_QUEUES(fp->link) - 1,
+                  fp->proto);
 }
 
 static void
@@ -453,12 +454,12 @@ FsmRecvConfigReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
   int plen, flen;
   int ackaction = 0;
 
-  plen = mbuf_Length(bp);
+  plen = m_length(bp);
   flen = ntohs(lhp->length) - sizeof *lhp;
   if (plen < flen) {
     log_Printf(LogWARN, "%s: FsmRecvConfigReq: plen (%d) < flen (%d)\n",
 	      fp->link->name, plen, flen);
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   }
 
@@ -470,28 +471,28 @@ FsmRecvConfigReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
        * ccp_SetOpenMode() leaves us in initial if we're disabling
        * & denying everything.
        */
-      bp = mbuf_Prepend(bp, lhp, sizeof *lhp, 2);
+      bp = m_prepend(bp, lhp, sizeof *lhp, 2);
       bp = proto_Prepend(bp, fp->proto, 0, 0);
-      bp = mbuf_Contiguous(bp);
-      lcp_SendProtoRej(&fp->link->lcp, MBUF_CTOP(bp), bp->cnt);
-      mbuf_Free(bp);
+      bp = m_pullup(bp);
+      lcp_SendProtoRej(&fp->link->lcp, MBUF_CTOP(bp), bp->m_len);
+      m_freem(bp);
       return;
     }
     /* Drop through */
   case ST_STARTING:
     log_Printf(fp->LogLevel, "%s: Oops, RCR in %s.\n",
               fp->link->name, State2Nam(fp->state));
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   case ST_CLOSED:
     (*fp->fn->SendTerminateAck)(fp, lhp->id);
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   case ST_CLOSING:
     log_Printf(fp->LogLevel, "%s: Error: Got ConfigReq while state = %s\n",
               fp->link->name, State2Nam(fp->state));
   case ST_STOPPING:
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   case ST_OPENED:
     (*fp->fn->LayerDown)(fp);
@@ -499,7 +500,7 @@ FsmRecvConfigReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
     break;
   }
 
-  bp = mbuf_Contiguous(bp);
+  bp = m_pullup(bp);
   dec.ackend = dec.ack;
   dec.nakend = dec.nak;
   dec.rejend = dec.rej;
@@ -569,7 +570,7 @@ FsmRecvConfigReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
       NewState(fp, ST_REQSENT);
     break;
   }
-  mbuf_Free(bp);
+  m_freem(bp);
 
   if (dec.rejend != dec.rej && --fp->more.rejs <= 0) {
     log_Printf(LogPHASE, "%s: Too many %s REJs sent - abandoning negotiation\n",
@@ -623,7 +624,7 @@ FsmRecvConfigAck(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
     (*fp->parent->LayerDown)(fp->parent->object, fp);
     break;
   }
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
@@ -633,10 +634,10 @@ FsmRecvConfigNak(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
   struct fsm_decode dec;
   int plen, flen;
 
-  plen = mbuf_Length(bp);
+  plen = m_length(bp);
   flen = ntohs(lhp->length) - sizeof *lhp;
   if (plen < flen) {
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   }
 
@@ -648,20 +649,20 @@ FsmRecvConfigNak(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
   case ST_STARTING:
     log_Printf(fp->LogLevel, "%s: Oops, RCN in %s.\n",
               fp->link->name, State2Nam(fp->state));
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   case ST_CLOSED:
   case ST_STOPPED:
     (*fp->fn->SendTerminateAck)(fp, lhp->id);
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   case ST_CLOSING:
   case ST_STOPPING:
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   }
 
-  bp = mbuf_Contiguous(bp);
+  bp = m_pullup(bp);
   dec.ackend = dec.ack;
   dec.nakend = dec.nak;
   dec.rejend = dec.rej;
@@ -687,7 +688,7 @@ FsmRecvConfigNak(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
     break;
   }
 
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
@@ -723,7 +724,7 @@ FsmRecvTermReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
     /* A delayed ST_STOPPED is now scheduled */
     break;
   }
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
@@ -751,7 +752,7 @@ FsmRecvTermAck(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
     (*fp->parent->LayerDown)(fp->parent->object, fp);
     break;
   }
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
@@ -761,10 +762,10 @@ FsmRecvConfigRej(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
   struct fsm_decode dec;
   int plen, flen;
 
-  plen = mbuf_Length(bp);
+  plen = m_length(bp);
   flen = ntohs(lhp->length) - sizeof *lhp;
   if (plen < flen) {
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   }
 
@@ -776,20 +777,20 @@ FsmRecvConfigRej(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
   case ST_STARTING:
     log_Printf(fp->LogLevel, "%s: Oops, RCJ in %s.\n",
               fp->link->name, State2Nam(fp->state));
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   case ST_CLOSED:
   case ST_STOPPED:
     (*fp->fn->SendTerminateAck)(fp, lhp->id);
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   case ST_CLOSING:
   case ST_STOPPING:
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   }
 
-  bp = mbuf_Contiguous(bp);
+  bp = m_pullup(bp);
   dec.ackend = dec.ack;
   dec.nakend = dec.nak;
   dec.rejend = dec.rej;
@@ -814,13 +815,13 @@ FsmRecvConfigRej(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
     NewState(fp, ST_REQSENT);
     break;
   }
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
 FsmRecvCodeRej(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
 {
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
@@ -829,8 +830,8 @@ FsmRecvProtoRej(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
   struct physical *p = link2physical(fp->link);
   u_short proto;
 
-  if (mbuf_Length(bp) < 2) {
-    mbuf_Free(bp);
+  if (m_length(bp) < 2) {
+    m_freem(bp);
     return;
   }
   bp = mbuf_Read(bp, &proto, 2);
@@ -882,7 +883,7 @@ FsmRecvProtoRej(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
     }
     break;
   }
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
@@ -892,21 +893,25 @@ FsmRecvEchoReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
   u_char *cp;
   u_int32_t magic;
 
-  mbuf_SetType(bp, MB_ECHOIN);
-  if (lcp && mbuf_Length(bp) >= 4) {
+  bp = m_pullup(bp);
+  m_settype(bp, MB_ECHOIN);
+
+  if (lcp && ntohs(lhp->length) - sizeof *lhp >= 4) {
     cp = MBUF_CTOP(bp);
     ua_ntohl(cp, &magic);
     if (magic != lcp->his_magic) {
-      log_Printf(fp->LogLevel, "%s: RecvEchoReq: Error: His magic is bad!!\n",
-                fp->link->name);
+      log_Printf(fp->LogLevel, "%s: RecvEchoReq: magic 0x%08lx is wrong,"
+                 " expecting 0x%08lx\n", fp->link->name, (u_long)magic,
+                 (u_long)lcp->his_magic);
       /* XXX: We should send terminate request */
     }
     if (fp->state == ST_OPENED) {
       ua_htonl(&lcp->want_magic, cp);		/* local magic */
-      fsm_Output(fp, CODE_ECHOREP, lhp->id, cp, mbuf_Length(bp), MB_ECHOOUT);
+      fsm_Output(fp, CODE_ECHOREP, lhp->id, cp,
+                 ntohs(lhp->length) - sizeof *lhp, MB_ECHOOUT);
     }
   }
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
@@ -915,25 +920,25 @@ FsmRecvEchoRep(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
   if (fsm2lcp(fp))
     bp = lqr_RecvEcho(fp, bp);
 
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
 FsmRecvDiscReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
 {
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
 FsmRecvIdent(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
 {
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
 FsmRecvTimeRemain(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
 {
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
@@ -941,20 +946,20 @@ FsmRecvResetReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
 {
   (*fp->fn->RecvResetReq)(fp);
   /*
-   * All sendable compressed packets are queued in the PRI_NORMAL modem
-   * output queue.... dump 'em to the priority queue so that they arrive
-   * at the peer before our ResetAck.
+   * All sendable compressed packets are queued in the first (lowest
+   * priority) modem output queue.... dump 'em to the priority queue
+   * so that they arrive at the peer before our ResetAck.
    */
   link_SequenceQueue(fp->link);
   fsm_Output(fp, CODE_RESETACK, lhp->id, NULL, 0, MB_CCPOUT);
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 static void
 FsmRecvResetAck(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
 {
   (*fp->fn->RecvResetAck)(fp, lhp->id);
-  mbuf_Free(bp);
+  m_freem(bp);
 }
 
 void
@@ -964,12 +969,17 @@ fsm_Input(struct fsm *fp, struct mbuf *bp)
   struct fsmheader lh;
   const struct fsmcodedesc *codep;
 
-  len = mbuf_Length(bp);
+  len = m_length(bp);
   if (len < sizeof(struct fsmheader)) {
-    mbuf_Free(bp);
+    m_freem(bp);
     return;
   }
   bp = mbuf_Read(bp, &lh, sizeof lh);
+
+  if (ntohs(lh.length) != len)
+    log_Printf(LogWARN, "%s: Oops: Got %d bytes but %d byte payload\n",
+               fp->link->name, len, (int)ntohs(lh.length));
+
   if (lh.code < fp->min_code || lh.code > fp->max_code ||
       lh.code > sizeof FsmCodes / sizeof *FsmCodes) {
     /*
@@ -978,10 +988,10 @@ fsm_Input(struct fsm *fp, struct mbuf *bp)
      */
     static u_char id;
 
-    bp = mbuf_Prepend(bp, &lh, sizeof lh, 0);
-    bp = mbuf_Contiguous(bp);
-    fsm_Output(fp, CODE_CODEREJ, id++, MBUF_CTOP(bp), bp->cnt, MB_UNKNOWN);
-    mbuf_Free(bp);
+    bp = m_prepend(bp, &lh, sizeof lh, 0);
+    bp = m_pullup(bp);
+    fsm_Output(fp, CODE_CODEREJ, id++, MBUF_CTOP(bp), bp->m_len, MB_UNKNOWN);
+    m_freem(bp);
     return;
   }
 

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: radius.c,v 1.4 1999/05/08 11:06:39 brian Exp $
+ *	$Id: radius.c,v 1.5 2000/01/07 03:26:55 brian Exp $
  *
  */
 
@@ -41,6 +41,9 @@
 #include <string.h>
 #include <sys/time.h>
 #include <termios.h>
+#include <ttyent.h>
+#include <unistd.h>
+#include <netdb.h>
 
 #include "layer.h"
 #include "defs.h"
@@ -173,7 +176,10 @@ radius_Process(struct radius *r, int got)
         dest.ipaddr.s_addr = dest.mask.s_addr = INADDR_ANY;
         dest.width = 0;
         argc = command_Interpret(nuke, strlen(nuke), argv);
-        if (argc < 2)
+        if (argc < 0)
+          log_Printf(LogWARN, "radius: %s: Syntax error\n",
+                     argc == 1 ? argv[0] : "\"\"");
+        else if (argc < 2)
           log_Printf(LogWARN, "radius: %s: Invalid route\n",
                      argc == 1 ? argv[0] : "\"\"");
         else if ((strcasecmp(argv[0], "default") != 0 &&
@@ -336,8 +342,12 @@ void
 radius_Authenticate(struct radius *r, struct authinfo *authp, const char *name,
                     const char *key, const char *challenge)
 {
+  struct ttyent *ttyp;
   struct timeval tv;
-  int got;
+  int got, slot;
+  char hostname[MAXHOSTNAMELEN];
+  struct hostent *hp;
+  struct in_addr hostaddr;
 
   if (!*r->cfg.file)
     return;
@@ -391,6 +401,44 @@ radius_Authenticate(struct radius *r, struct authinfo *authp, const char *name,
     rad_close(r->cx.rad);
     return;
   }
+
+  if (gethostname(hostname, sizeof hostname) != 0)
+    log_Printf(LogERROR, "rad_put: gethostname(): %s\n", strerror(errno));
+  else {
+    if ((hp = gethostbyname(hostname)) != NULL) {
+      hostaddr.s_addr = *(u_long *)hp->h_addr;
+      if (rad_put_addr(r->cx.rad, RAD_NAS_IP_ADDRESS, hostaddr) != 0) {
+        log_Printf(LogERROR, "rad_put: rad_put_string: %s\n",
+                   rad_strerror(r->cx.rad));
+        rad_close(r->cx.rad);
+        return;
+      }
+    }
+    if (rad_put_string(r->cx.rad, RAD_NAS_IDENTIFIER, hostname) != 0) {
+      log_Printf(LogERROR, "rad_put: rad_put_string: %s\n",
+                 rad_strerror(r->cx.rad));
+      rad_close(r->cx.rad);
+      return;
+    }
+  }
+
+  if (authp->physical->handler &&
+      authp->physical->handler->type == TTY_DEVICE) {
+    setttyent();
+    for (slot = 1; (ttyp = getttyent()); ++slot)
+      if (!strcmp(ttyp->ty_name, authp->physical->name.base)) {
+        if(rad_put_int(r->cx.rad, RAD_NAS_PORT, slot) != 0) {
+          log_Printf(LogERROR, "rad_put: rad_put_string: %s\n",
+                      rad_strerror(r->cx.rad));
+          rad_close(r->cx.rad);
+          endttyent();
+          return;
+        }
+        break;
+      }
+    endttyent();
+  }
+
 
   if ((got = rad_init_send_request(r->cx.rad, &r->cx.fd, &tv)))
     radius_Process(r, got);

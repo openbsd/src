@@ -23,13 +23,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *  $Id: link.c,v 1.9 1999/07/15 02:10:32 brian Exp $
+ *  $Id: link.c,v 1.10 2000/01/07 03:26:54 brian Exp $
  *
  */
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
-#include <netdb.h>
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -83,45 +82,53 @@ link_AddOutOctets(struct link *l, int n)
 void
 link_SequenceQueue(struct link *l)
 {
+  struct mqueue *queue, *highest;
+
   log_Printf(LogDEBUG, "link_SequenceQueue\n");
-  while (l->Queue[PRI_NORMAL].qlen)
-    mbuf_Enqueue(l->Queue + PRI_LINK, mbuf_Dequeue(l->Queue + PRI_NORMAL));
+
+  highest = LINK_HIGHQ(l);
+  for (queue = l->Queue; queue < highest; queue++)
+    while (queue->len)
+      m_enqueue(highest, m_dequeue(queue));
 }
 
 void
 link_DeleteQueue(struct link *l)
 {
-  struct mqueue *queue;
+  struct mqueue *queue, *highest;
 
-  for (queue = l->Queue; queue < l->Queue + LINK_QUEUES; queue++)
+  highest = LINK_HIGHQ(l);
+  for (queue = l->Queue; queue <= highest; queue++)
     while (queue->top)
-      mbuf_Free(mbuf_Dequeue(queue));
+      m_freem(m_dequeue(queue));
 }
 
-int
+size_t
 link_QueueLen(struct link *l)
 {
-  int i, len;
+  int i;
+  size_t len;
 
-  for (i = 0, len = 0; i < LINK_QUEUES; i++)
-    len += l->Queue[i].qlen;
+  for (i = 0, len = 0; i < LINK_QUEUES(l); i++)
+    len += l->Queue[i].len;
 
   return len;
 }
 
-int
+size_t
 link_QueueBytes(struct link *l)
 {
-  int i, len, bytes;
+  int i;
+  size_t len, bytes;
   struct mbuf *m;
 
   bytes = 0;
-  for (i = 0, len = 0; i < LINK_QUEUES; i++) {
-    len = l->Queue[i].qlen;
+  for (i = 0, len = 0; i < LINK_QUEUES(l); i++) {
+    len = l->Queue[i].len;
     m = l->Queue[i].top;
     while (len--) {
-      bytes += mbuf_Length(m);
-      m = m->pnext;
+      bytes += m_length(m);
+      m = m->m_nextpkt;
     }
   }
 
@@ -134,11 +141,12 @@ link_Dequeue(struct link *l)
   int pri;
   struct mbuf *bp;
 
-  for (bp = (struct mbuf *)0, pri = LINK_QUEUES - 1; pri >= 0; pri--)
-    if (l->Queue[pri].qlen) {
-      bp = mbuf_Dequeue(l->Queue + pri);
+  for (bp = NULL, pri = LINK_QUEUES(l) - 1; pri >= 0; pri--)
+    if (l->Queue[pri].len) {
+      bp = m_dequeue(l->Queue + pri);
       log_Printf(LogDEBUG, "link_Dequeue: Dequeued from queue %d,"
-                " containing %d more packets\n", pri, l->Queue[pri].qlen);
+                " containing %lu more packets\n", pri,
+                (u_long)l->Queue[pri].len);
       break;
     }
 
@@ -209,7 +217,7 @@ link_PushPacket(struct link *l, struct mbuf *bp, struct bundle *b, int pri,
    * packet (as we do with ``pull''s).
    */
 
-  if(pri < 0 || pri >= LINK_QUEUES)
+  if(pri < 0 || pri >= LINK_QUEUES(l))
     pri = 0;
 
   for (layer = l->nlayers; layer && bp; layer--)
@@ -217,9 +225,9 @@ link_PushPacket(struct link *l, struct mbuf *bp, struct bundle *b, int pri,
       bp = (*l->layer[layer - 1]->push)(b, l, bp, pri, &proto);
 
   if (bp) {
-    link_AddOutOctets(l, mbuf_Length(bp));
+    link_AddOutOctets(l, m_length(bp));
     log_Printf(LogDEBUG, "link_PushPacket: Transmit proto 0x%04x\n", proto);
-    mbuf_Enqueue(l->Queue + pri, mbuf_Contiguous(bp));
+    m_enqueue(l->Queue + pri, m_pullup(bp));
   }
 }
 
@@ -234,7 +242,7 @@ link_PullPacket(struct link *l, char *buf, size_t len, struct bundle *b)
    * When we ``pull'' a packet from the link, it gets processed by the
    * ``pull'' function in each layer starting at the bottom.
    * Each ``pull'' may produce multiple packets, chained together using
-   * bp->pnext.
+   * bp->m_nextpkt.
    * Each packet that results from each pull has to be pulled through
    * all of the higher layers before the next resulting packet is pulled
    * through anything; this ensures that packets that depend on the
@@ -245,7 +253,7 @@ link_PullPacket(struct link *l, char *buf, size_t len, struct bundle *b)
   link_AddInOctets(l, len);
 
   memset(lbp, '\0', sizeof lbp);
-  lbp[0] = mbuf_Alloc(len, MB_UNKNOWN);
+  lbp[0] = m_get(len, MB_UNKNOWN);
   memcpy(MBUF_CTOP(lbp[0]), buf, len);
   lproto[0] = 0;
   layer = 0;
@@ -256,8 +264,8 @@ link_PullPacket(struct link *l, char *buf, size_t len, struct bundle *b)
       continue;
     }
     bp = lbp[layer];
-    lbp[layer] = bp->pnext;
-    bp->pnext = NULL;
+    lbp[layer] = bp->m_nextpkt;
+    bp->m_nextpkt = NULL;
     proto = lproto[layer];
 
     if (l->layer[layer]->pull != NULL)
@@ -266,8 +274,8 @@ link_PullPacket(struct link *l, char *buf, size_t len, struct bundle *b)
     if (layer == l->nlayers - 1) {
       /* We've just done the top layer, despatch the packet(s) */
       while (bp) {
-        next = bp->pnext;
-        bp->pnext = NULL;
+        next = bp->m_nextpkt;
+        bp->m_nextpkt = NULL;
         log_Printf(LogDEBUG, "link_PullPacket: Despatch proto 0x%04x\n", proto);
         Despatch(b, l, bp, proto);
         bp = next;
@@ -331,13 +339,13 @@ Despatch(struct bundle *bundle, struct link *l, struct mbuf *bp, u_short proto)
     log_Printf(LogPHASE, "%s protocol 0x%04x (%s)\n",
                f == DSIZE ? "Unknown" : "Unexpected", proto,
                hdlc_Protocol2Nam(proto));
-    bp = mbuf_Contiguous(proto_Prepend(bp, proto, 0, 0));
-    lcp_SendProtoRej(&l->lcp, MBUF_CTOP(bp), bp->cnt);
+    bp = m_pullup(proto_Prepend(bp, proto, 0, 0));
+    lcp_SendProtoRej(&l->lcp, MBUF_CTOP(bp), bp->m_len);
     if (p) {
       p->hdlc.lqm.SaveInDiscards++;
       p->hdlc.stats.unknownproto++;
     }
-    mbuf_Free(bp);
+    m_freem(bp);
   }
 }
 

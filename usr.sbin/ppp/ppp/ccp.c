@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ccp.c,v 1.10 1999/06/02 15:58:40 brian Exp $
+ * $Id: ccp.c,v 1.11 2000/01/07 03:26:53 brian Exp $
  *
  *	TODO:
  *		o Support other compression protocols
@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string.h>	/* memcpy() on some archs */
 #include <termios.h>
 
 #include "layer.h"
@@ -90,10 +90,10 @@ static struct fsm_callbacks ccp_Callbacks = {
   CcpRecvResetAck
 };
 
-static const char *ccp_TimerNames[] =
+static const char * const ccp_TimerNames[] =
   {"CCP restart", "CCP openmode", "CCP stopped"};
 
-static char const *cftypes[] = {
+static char const * const cftypes[] = {
   /* Check out the latest ``Compression Control Protocol'' rfc (rfc1962.txt) */
   "OUI",		/* 0: OUI */
   "PRED1",		/* 1: Predictor type 1 */
@@ -126,7 +126,7 @@ protoname(int proto)
 }
 
 /* We support these algorithms, and Req them in the given order */
-static const struct ccp_algorithm *algorithm[] = {
+static const struct ccp_algorithm * const algorithm[] = {
   &DeflateAlgorithm,
   &Pred1Algorithm,
   &PppdDeflateAlgorithm
@@ -534,14 +534,14 @@ extern struct mbuf *
 ccp_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 {
   /* Got PROTO_CCP from link */
-  mbuf_SetType(bp, MB_CCPIN);
+  m_settype(bp, MB_CCPIN);
   if (bundle_Phase(bundle) == PHASE_NETWORK)
     fsm_Input(&l->ccp.fsm, bp);
   else {
     if (bundle_Phase(bundle) < PHASE_NETWORK)
       log_Printf(LogCCP, "%s: Error: Unexpected CCP in phase %s (ignored)\n",
                  l->ccp.fsm.link->name, bundle_PhaseName(bundle));
-    mbuf_Free(bp);
+    m_freem(bp);
   }
   return NULL;
 }
@@ -584,10 +584,10 @@ ccp_LayerPush(struct bundle *b, struct link *l, struct mbuf *bp,
            (l->ccp.out.state, &l->ccp, l, pri, proto, bp);
     switch (*proto) {
       case PROTO_ICOMPD:
-        mbuf_SetType(bp, MB_ICOMPDOUT);
+        m_settype(bp, MB_ICOMPDOUT);
         break;
       case PROTO_COMPD:
-        mbuf_SetType(bp, MB_COMPDOUT);
+        m_settype(bp, MB_COMPDOUT);
         break;
     }
   }
@@ -616,15 +616,15 @@ ccp_LayerPull(struct bundle *b, struct link *l, struct mbuf *bp, u_short *proto)
                (l->ccp.in.state, &l->ccp, proto, bp);
         switch (*proto) {
           case PROTO_ICOMPD:
-            mbuf_SetType(bp, MB_ICOMPDIN);
+            m_settype(bp, MB_ICOMPDIN);
             break;
           case PROTO_COMPD:
-            mbuf_SetType(bp, MB_COMPDIN);
+            m_settype(bp, MB_COMPDIN);
             break;
         }
         return bp;
       }
-      mbuf_Free(bp);
+      m_freem(bp);
       bp = NULL;
     } else if (PROTO_COMPRESSIBLE(*proto) && l->ccp.in.state != NULL) {
       log_Printf(LogDEBUG, "ccp_LayerPull: Ignore packet (dict only)\n");

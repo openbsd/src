@@ -23,11 +23,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tun.c,v 1.7 1999/08/05 10:32:14 brian Exp $
+ *	$Id: tun.c,v 1.8 2000/01/07 03:26:56 brian Exp $
  */
 
 #include <sys/param.h>
-#ifdef __OpenBSD__
+#ifndef __FreeBSD__
 #include <sys/socket.h>		/* For IFF_ defines */
 #include <net/if.h>		/* For IFF_ defines */
 #endif
@@ -40,7 +40,9 @@
 
 #include <errno.h>
 #include <string.h>
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 #include <sys/ioctl.h>
+#endif
 #include <termios.h>
 #ifdef __NetBSD__
 #include <stdio.h>

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: chat.h,v 1.3 1999/05/08 11:06:34 brian Exp $
+ *	$Id: chat.h,v 1.4 2000/01/07 03:26:53 brian Exp $
  */
 
 #define CHAT_EXPECT 0
@@ -76,6 +76,7 @@ struct chat {
   ((d)->type == CHAT_DESCRIPTOR ? (struct chat *)(d) : NULL)
 #define	VECSIZE(v)	(sizeof(v) / sizeof(v[0]))
 
-extern void chat_Init(struct chat *, struct physical *, const char *, int,
-                      const char *);
+extern void chat_Init(struct chat *, struct physical *);
+extern int chat_Setup(struct chat *, const char *, const char *);
+extern void chat_Finish(struct chat *);
 extern void chat_Destroy(struct chat *);

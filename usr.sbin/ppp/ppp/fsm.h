@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.4 1999/06/02 15:58:40 brian Exp $
+ * $Id: fsm.h,v 1.5 2000/01/07 03:26:54 brian Exp $
  *
  *	TODO:
  */
@@ -159,7 +159,7 @@ struct fsmconfig {
 
 extern void fsm_Init(struct fsm *, const char *, u_short, int, int, int,
                      struct bundle *, struct link *, const  struct fsm_parent *,
-                     struct fsm_callbacks *, const char *[3]);
+                     struct fsm_callbacks *, const char * const [3]);
 extern void fsm_Output(struct fsm *, u_int, u_int, u_char *, int, int);
 extern void fsm_Open(struct fsm *);
 extern void fsm_Up(struct fsm *);

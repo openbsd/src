@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcp.c,v 1.16 1999/06/09 20:32:37 brian Exp $
+ * $Id: lcp.c,v 1.17 2000/01/07 03:26:54 brian Exp $
  *
  */
 
@@ -101,10 +101,10 @@ static struct fsm_callbacks lcp_Callbacks = {
   fsm_NullRecvResetAck
 };
 
-static const char *lcp_TimerNames[] =
+static const char * const lcp_TimerNames[] =
   {"LCP restart", "LCP openmode", "LCP stopped"};
 
-static const char *cftypes[] = {
+static const char * const cftypes[] = {
   /* Check out the latest ``Assigned numbers'' rfc (rfc1700.txt) */
   "???",
   "MRU",	/* 1: Maximum-Receive-Unit */
@@ -540,7 +540,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, int plen, int mode_type,
   struct mp *mp;
   struct physical *p = link2physical(fp->link);
 
-  callback_req = 0;
+  sz = op = callback_req = 0;
 
   while (plen >= sizeof(struct fsmconfig)) {
     type = *cp;
@@ -1154,7 +1154,7 @@ extern struct mbuf *
 lcp_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 {
   /* Got PROTO_LCP from link */
-  mbuf_SetType(bp, MB_LCPIN);
+  m_settype(bp, MB_LCPIN);
   fsm_Input(&l->lcp.fsm, bp);
   return NULL;
 }

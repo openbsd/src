@@ -19,6 +19,8 @@
              Very minor changes to conform with
              local/global/function naming conventions
              withing the packet alising module.
+
+    $Id: alias_irc.c,v 1.2 2000/01/07 03:26:52 brian Exp $
 */
 
 /* Includes */

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *  $Id: link.h,v 1.4 1999/05/15 02:25:23 brian Exp $
+ *  $Id: link.h,v 1.5 2000/01/07 03:26:54 brian Exp $
  *
  */
 
@@ -31,7 +31,6 @@
 #define PHYSICAL_LINK	1
 #define LOGICAL_LINK	2
 
-#define LINK_QUEUES (PRI_MAX + 1)
 #define NPROTOSTAT 13
 
 struct bundle;
@@ -43,7 +42,7 @@ struct link {
   const char *name;                       /* Points to datalink::name */
   int len;                                /* full size of parent struct */
   struct pppThroughput throughput;        /* Link throughput statistics */
-  struct mqueue Queue[LINK_QUEUES];       /* Our output queue of mbufs */
+  struct mqueue Queue[2];                 /* Our output queue of mbufs */
 
   u_long proto_in[NPROTOSTAT];            /* outgoing protocol stats */
   u_long proto_out[NPROTOSTAT];           /* incoming protocol stats */
@@ -55,13 +54,16 @@ struct link {
   int nlayers;
 };
 
+#define LINK_QUEUES(link) (sizeof (link)->Queue / sizeof (link)->Queue[0])
+#define LINK_HIGHQ(link) ((link)->Queue + LINK_QUEUES(link) - 1)
+
 extern void link_AddInOctets(struct link *, int);
 extern void link_AddOutOctets(struct link *, int);
 
 extern void link_SequenceQueue(struct link *);
 extern void link_DeleteQueue(struct link *);
-extern int link_QueueLen(struct link *);
-extern int link_QueueBytes(struct link *);
+extern size_t link_QueueLen(struct link *);
+extern size_t link_QueueBytes(struct link *);
 extern struct mbuf *link_Dequeue(struct link *);
 
 extern void link_PushPacket(struct link *, struct mbuf *, struct bundle *,

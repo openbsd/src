@@ -23,13 +23,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tty.h,v 1.3 1999/06/05 21:36:03 brian Exp $
+ *	$Id: tty.h,v 1.4 2000/01/07 03:26:56 brian Exp $
  */
 
 struct physical;
 struct device;
 
+#define DEF_TTYCDDELAY	1		/* Default ``set cd'' value */
+
 extern struct device *tty_Create(struct physical *);
 extern struct device *tty_iov2device(int, struct physical *,
-                                     struct iovec *, int *, int);
+                                     struct iovec *, int *, int, int *, int *);
 extern int tty_DeviceSize(void);

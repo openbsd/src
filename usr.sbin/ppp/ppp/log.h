@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: log.h,v 1.3 1999/05/12 10:03:52 brian Exp $
+ *	$Id: log.h,v 1.4 2000/01/07 03:26:54 brian Exp $
  */
 
 #define LogMIN		(1)
@@ -87,6 +87,7 @@ extern int log_ShowLevel(struct cmdargs const *);
 extern int log_SetLevel(struct cmdargs const *);
 extern int log_ShowWho(struct cmdargs const *);
 
+extern struct prompt *log_PromptContext;
 extern int log_PromptListChanged;
 extern void log_RegisterPrompt(struct prompt *);
 extern void log_UnRegisterPrompt(struct prompt *);

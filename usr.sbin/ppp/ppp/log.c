@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: log.c,v 1.7 1999/08/08 15:19:54 brian Exp $
+ *	$Id: log.c,v 1.8 2000/01/07 03:26:54 brian Exp $
  */
 
 #include <sys/types.h>
@@ -42,7 +42,7 @@
 #include "descriptor.h"
 #include "prompt.h"
 
-static const char *LogNames[] = {
+static const char * const LogNames[] = {
   "Async",
   "CBCP",
   "CCP",
@@ -72,6 +72,7 @@ static u_long LogMask = MSK(LogPHASE);
 static u_long LogMaskLocal = MSK(LogERROR) | MSK(LogALERT) | MSK(LogWARN);
 static int LogTunno = -1;
 static struct prompt *promptlist;	/* Where to log local stuff */
+struct prompt *log_PromptContext;
 int log_PromptListChanged;
 
 struct prompt *
@@ -307,20 +308,23 @@ log_Printf(int lev, const char *fmt,...)
   if (log_IsKept(lev)) {
     char nfmt[200];
 
-    if ((log_IsKept(lev) & LOG_KEPT_LOCAL) && promptlist) {
+    if (promptlist && (log_IsKept(lev) & LOG_KEPT_LOCAL)) {
       if ((log_IsKept(LogTUN) & LOG_KEPT_LOCAL) && LogTunno != -1)
         snprintf(nfmt, sizeof nfmt, "%s%d: %s: %s", TUN_NAME,
 	         LogTunno, log_Name(lev), fmt);
       else
         snprintf(nfmt, sizeof nfmt, "%s: %s", log_Name(lev), fmt);
   
-      for (prompt = promptlist; prompt; prompt = prompt->next)
+      if (log_PromptContext && lev == LogWARN)
+        /* Warnings just go to the current prompt */
+        prompt_vPrintf(log_PromptContext, nfmt, ap);
+      else for (prompt = promptlist; prompt; prompt = prompt->next)
         if (lev > LogMAXCONF || (prompt->logmask & MSK(lev)))
           prompt_vPrintf(prompt, nfmt, ap);
     }
 
     if ((log_IsKept(lev) & LOG_KEPT_SYSLOG) &&
-        (lev != LogWARN || !promptlist)) {
+        (lev != LogWARN || !log_PromptContext)) {
       if ((log_IsKept(LogTUN) & LOG_KEPT_SYSLOG) && LogTunno != -1)
         snprintf(nfmt, sizeof nfmt, "%s%d: %s: %s", TUN_NAME,
 	         LogTunno, log_Name(lev), fmt);
@@ -347,7 +351,7 @@ log_DumpBp(int lev, const char *hdr, const struct mbuf *bp)
     b = buf;
     c = b + 50;
     do {
-      f = bp->cnt;
+      f = bp->m_len;
       ptr = CONST_MBUF_CTOP(bp);
       while (f--) {
 	sprintf(b, " %02x", (int) *ptr);
@@ -362,7 +366,7 @@ log_DumpBp(int lev, const char *hdr, const struct mbuf *bp)
           c = b + 50;
         }
       }
-    } while ((bp = bp->next) != NULL);
+    } while ((bp = bp->m_next) != NULL);
 
     if (b > buf) {
       memset(b, ' ', 50 - (b - buf));

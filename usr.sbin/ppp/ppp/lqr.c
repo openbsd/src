@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lqr.c,v 1.7 1999/06/02 15:58:41 brian Exp $
+ * $Id: lqr.c,v 1.8 2000/01/07 03:26:54 brian Exp $
  *
  *	o LQR based on RFC1333
  *
@@ -85,7 +85,7 @@ lqr_RecvEcho(struct fsm *fp, struct mbuf *bp)
   struct lcp *lcp = fsm2lcp(fp);
   struct echolqr lqr;
 
-  if (mbuf_Length(bp) == sizeof lqr) {
+  if (m_length(bp) == sizeof lqr) {
     bp = mbuf_Read(bp, &lqr, sizeof lqr);
     lqr.magic = ntohl(lqr.magic);
     lqr.signature = ntohl(lqr.signature);
@@ -109,10 +109,10 @@ lqr_RecvEcho(struct fsm *fp, struct mbuf *bp)
         hdlc->lqm.echo.seq_recv = lqr.sequence;
     } else
       log_Printf(LogWARN, "lqr_RecvEcho: Got sig 0x%08lx, not 0x%08lx !\n",
-                (u_long)ntohl(lqr.signature), (u_long)SIGNATURE);
+                (u_long)lqr.signature, (u_long)SIGNATURE);
   } else
     log_Printf(LogWARN, "lqr_RecvEcho: Got packet size %d, expecting %ld !\n",
-              mbuf_Length(bp), (long)sizeof(struct echolqr));
+              m_length(bp), (long)sizeof(struct echolqr));
   return bp;
 }
 
@@ -136,10 +136,11 @@ SendLqrData(struct lcp *lcp)
 
   extra = proto_WrapperOctets(lcp, PROTO_LQR) +
           acf_WrapperOctets(lcp, PROTO_LQR);
-  bp = mbuf_Alloc(sizeof(struct lqrdata) + extra, MB_LQROUT);
-  bp->cnt -= extra;
-  bp->offset += extra;
-  link_PushPacket(lcp->fsm.link, bp, lcp->fsm.bundle, PRI_LINK, PROTO_LQR);
+  bp = m_get(sizeof(struct lqrdata) + extra, MB_LQROUT);
+  bp->m_len -= extra;
+  bp->m_offset += extra;
+  link_PushPacket(lcp->fsm.link, bp, lcp->fsm.bundle,
+                  LINK_QUEUES(lcp->fsm.link) - 1, PROTO_LQR);
 }
 
 static void
@@ -190,24 +191,24 @@ lqr_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 
   if (p == NULL) {
     log_Printf(LogERROR, "lqr_Input: Not a physical link - dropped\n");
-    mbuf_Free(bp);
+    m_freem(bp);
     return NULL;
   }
 
   p->hdlc.lqm.lqr.SaveInLQRs++;
 
-  len = mbuf_Length(bp);
+  len = m_length(bp);
   if (len != sizeof(struct lqrdata))
     log_Printf(LogWARN, "lqr_Input: Got packet size %d, expecting %ld !\n",
               len, (long)sizeof(struct lqrdata));
   else if (!IsAccepted(l->lcp.cfg.lqr) && !(p->hdlc.lqm.method & LQM_LQR)) {
-    bp = mbuf_Contiguous(proto_Prepend(bp, PROTO_LQR, 0, 0));
-    lcp_SendProtoRej(lcp, MBUF_CTOP(bp), bp->cnt);
+    bp = m_pullup(proto_Prepend(bp, PROTO_LQR, 0, 0));
+    lcp_SendProtoRej(lcp, MBUF_CTOP(bp), bp->m_len);
   } else {
     struct lqrdata *lqr;
     u_int32_t lastLQR;
 
-    bp = mbuf_Contiguous(bp);
+    bp = m_pullup(bp);
     lqr = (struct lqrdata *)MBUF_CTOP(bp);
     if (ntohl(lqr->MagicNumber) != lcp->his_magic)
       log_Printf(LogWARN, "lqr_Input: magic 0x%08lx is wrong,"
@@ -238,7 +239,7 @@ lqr_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
         SendLqrData(lcp);
     }
   }
-  mbuf_Free(bp);
+  m_freem(bp);
   return NULL;
 }
 
@@ -356,7 +357,7 @@ lqr_LayerPush(struct bundle *b, struct link *l, struct mbuf *bp,
 
   if (!p) {
     /* Oops - can't happen :-] */
-    mbuf_Free(bp);
+    m_freem(bp);
     return NULL;
   }
 
@@ -378,8 +379,8 @@ lqr_LayerPush(struct bundle *b, struct link *l, struct mbuf *bp,
    * don't do LQR without these layers.
    */
 
-  bp = mbuf_Contiguous(bp);
-  len = mbuf_Length(bp);
+  bp = m_pullup(bp);
+  len = m_length(bp);
 
   if (!physical_IsSync(p))
     p->hdlc.lqm.OutOctets += hdlc_WrapperOctets(&l->lcp, *proto);
@@ -427,7 +428,7 @@ lqr_LayerPull(struct bundle *b, struct link *l, struct mbuf *bp, u_short *proto)
    * to lqr_Input()
    */
   if (*proto == PROTO_LQR)
-    mbuf_SetType(bp, MB_LQRIN);
+    m_settype(bp, MB_LQRIN);
   return bp;
 }
 

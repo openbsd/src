@@ -1,15 +1,17 @@
-.\" $Id: ppp.8,v 1.71 1999/10/05 20:53:10 aaron Exp $
+.\" $Id: ppp.8,v 1.72 2000/01/07 03:26:55 brian Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Dt PPP 8
 .Os
 .Sh NAME
 .Nm ppp
-.Nd Point to Point Protocol (a.k.a. user-ppp)
+.Nd Point to Point Protocol (a.k.a. user-ppp) 
 .Sh SYNOPSIS
-.Nm ppp
-.Op Fl alias
+.Nm
 .Op Fl Va mode
+.Op Fl nat
+.Op Fl quiet
+.Op Fl unit Ns Ar N
 .Op Ar system Ns
 .No ...
 .Sh DESCRIPTION
@@ -26,17 +28,41 @@ is done as a user process with the help of the
 tunnel device driver (tun).
 .Pp
 The
+.Fl nat
+flag (or
 .Fl alias
-flag does the equivalent of an
-.Dq alias enable yes ,
+flag for backwards compatability) does the equivalent of a
+.Dq nat enable yes ,
 enabling
 .Nm ppp Ns No s
-packet aliasing features.  This allows
+network address translation features.  This allows
 .Nm ppp
 to act as a NAT or masquerading engine for all machines on an internal 
 LAN.  Refer to
 .Xr libalias 3
 for details.
+.Pp
+The
+.Fl quiet
+flag tells
+.Nm
+to be silent at startup rather than displaying the mode and interface
+to standard output.
+.Pp
+The
+.Fl unit
+flag tells
+.Nm
+to only attempt to open
+.Pa /dev/tun Ns Ar N .
+Normally,
+.Nm
+will start with a value of 0 for
+.Ar N ,
+and keep trying to open a tunnel device by incrementing the value of
+.Ar N
+by one each time until it succeeds.  If it fails three times in a row
+because the device file is missing, it gives up.
 .Pp
 The following
 .Va mode Ns No s
@@ -81,6 +107,14 @@ goes into the background and the parent process returns an exit code
 of 0.  If it fails,
 .Nm
 exits with a non-zero result.
+.It Fl foreground
+In foreground mode,
+.Nm
+attempts to establish a connection with the peer immediately, but never
+becomes a daemon.  The link is created in background mode.  This is useful
+if you wish to control
+.Nm ppp Ns No s
+invocation from another process.
 .It Fl direct
 This is used for receiving incoming connections.
 .Nm
@@ -172,7 +206,7 @@ will force it to exit.
 .Nm
 can use either the standard LCP callback protocol or the Microsoft
 CallBack Control Protocol (ftp://ftp.microsoft.com/developr/rfc/cbcp.txt).
-.It Supports packet aliasing.
+.It Supports NAT or packet aliasing.
 Packet aliasing (a.k.a. IP masquerading) allows computers on a
 private, unregistered network to access the Internet.  The
 .Em PPP
@@ -243,12 +277,39 @@ link.
 .It Supports PPP over TCP and PPP over UDP.
 If a device name is specified as
 .Em host Ns No : Ns Em port Ns
-.Op / Ns Em tcp Ns No | Ns Em udp ,
+.Xo
+.Op / Ns tcp|udp ,
+.Xc
 .Nm
 will open a TCP or UDP connection for transporting data rather than using a
 conventional serial device.  UDP connections force
 .Nm
 into synchronous mode.
+.It Supports PPP over ISDN.
+If
+.Nm
+is given a raw B-channel i4b device to open as a link, it's able to talk
+to the
+.Xr isdnd 8
+daemon to establish an ISDN connection.
+.It Supports PPP over Ethernet (rfc 2516).
+If
+.Nm
+is given a device specification of the format
+.No PPPoE: Ns Ar iface Ns Xo
+.Op \&: Ns Ar provider Ns
+.Xc
+and if
+.Xr netgraph 4
+is available,
+.Nm
+will attempt talk
+.Em PPP
+over Ethernet to
+.Ar provider
+using the
+.Ar iface
+network interface.
 .It "Supports IETF draft Predictor-1 (rfc 1978) and DEFLATE (rfc 1979) compression."
 .Nm
 supports not only VJ-compression but also Predictor-1 and DEFLATE compression.
@@ -281,23 +342,24 @@ and group
 .Dv network ,
 with permissions
 .Dv 04554 .
-By default,
+By default, 
 .Nm
-will not run if the invoking user ID is not 0.  This may be overridden
+will not run if the invoking user id is not zero.  This may be overridden
 by using the
 .Dq allow users
 command in
 .Pa /etc/ppp/ppp.conf .
 When running as a normal user,
 .Nm
-switches to user ID 0 in order to alter the system routing table, set up
+switches to user id 0 in order to alter the system routing table, set up
 system lock files and read the ppp configuration files.  All
 external commands (executed via the "shell" or "!bg" commands) are executed
-as the user ID that invoked
+as the user id that invoked
 .Nm ppp .
 Refer to the
 .Sq ID0
-logging facility if you're interested in what exactly is done as user ID 0.
+logging facility if you're interested in what exactly is done as user id
+zero.
 .Sh GETTING STARTED
 When you first run
 .Nm
@@ -344,7 +406,7 @@ command in
 .It
 Create a log file.
 .Nm
-uses
+uses 
 .Xr syslog 3
 to log information.  A common log file name is
 .Pa /var/log/ppp.log .
@@ -484,7 +546,7 @@ Defaults:
 Connect time: 0 secs
 0 octets in, 0 octets out
 Overall 0 bytes/sec
-ppp ON awfulhak>
+ppp ON awfulhak> 
 .Ed
 .Pp
 The term command can now be used to talk directly to the device:
@@ -1066,6 +1128,7 @@ and
 .Dq set nbns
 commands.  Refer to their descriptions below.
 .El
+.Pp
 .Sh RECEIVING INCOMING PPP CONNECTIONS (Method 2)
 This method differs in that we use
 .Nm ppp
@@ -1317,10 +1380,13 @@ from "tcp" to "udp".  When using UDP as a transport,
 .Nm
 will operate in synchronous mode.  This is another gain as the incoming
 data does not have to be rearranged into packets.
-.Sh PACKET ALIASING
+.Pp
+.Sh NETWORK ADDRESS TRANSLATION (PACKET ALIASING)
 The
-.Fl alias
-command line option enables packet aliasing.  This allows the
+.Fl nat
+.Pq \&or Fl alias
+command line option enables network address translation (a.k.a. packet
+aliasing).  This allows the
 .Nm
 host to act as a masquerading gateway for other computers over
 a local area network.  Outgoing IP packets are aliased so that
@@ -1333,9 +1399,9 @@ subnets to have Internet access, although they are invisible
 from the outside world.
 In general, correct
 .Nm
-operation should first be verified with packet aliasing disabled.
-Then, the
-.Fl alias
+operation should first be verified with network address translation disabled.
+Then, the 
+.Fl nat
 option should be switched on, and network applications (web browser,
 .Xr telnet 1 ,
 .Xr ftp 1 ,
@@ -1675,6 +1741,7 @@ is established.
 192.244.177.2/0 means that I'll accept/permit any IP address but I'll
 try to insist that 192.244.177.2 be used first.
 .El
+.Pp
 .Sh CONNECTING WITH YOUR INTERNET SERVICE PROVIDER
 The following steps should be taken when connecting to your ISP:
 .Bl -enum
@@ -1935,7 +2002,8 @@ Generate a CCP packet trace.
 .It Li Chat
 Generate
 .Sq dial ,
-.Sq login
+.Sq login ,
+.Sq logout
 and
 .Sq hangup
 chat script trace logs.
@@ -1949,7 +2017,7 @@ Log debug information.
 .It Li HDLC
 Dump HDLC packet in hex.
 .It Li ID0
-Log all function calls specifically made as user ID 0.
+Log all function calls specifically made as user id 0.
 .It Li IPCP
 Generate an IPCP packet trace.
 .It Li LCP
@@ -2047,6 +2115,7 @@ This signal, tells
 to close any existing server socket, dropping all existing diagnostic
 connections.
 .El
+.Pp
 .Sh MULTI-LINK PPP
 If you wish to use more than one physical link to connect to a
 .Em PPP
@@ -2057,7 +2126,7 @@ protocol.  Refer to RFC 1990 for specification details.
 The peer is identified using a combination of his
 .Dq endpoint discriminator
 and his
-.Dq authentication ID .
+.Dq authentication id .
 Either or both of these may be specified.  It is recommended that
 at least one is specified, otherwise there is no way of ensuring that
 all links are actually connected to the same peer program, and some
@@ -2609,7 +2678,7 @@ layer shuts down, and is also available using the
 .Dq show
 command.  Throughput statistics are available at the
 .Dq IPCP
-and
+and 
 .Dq physical
 levels.
 .It utmp
@@ -2625,24 +2694,24 @@ not to make any utmp or wtmp entries.  This is usually only necessary if
 you require the user to both login and authenticate themselves.
 .It iface-alias
 Default: Enabled if
-.Fl alias
+.Fl nat
 is specified.  This option simply tells
 .Nm
 to add new interface addresses to the interface rather than replacing them.
-The option can only be enabled if IP aliasing is enabled
-.Pq Dq alias enable yes .
+The option can only be enabled if network address translation is enabled
+.Pq Dq nat enable yes .
 .Pp
 With this option enabled,
 .Nm
-will pass traffic for old interface addresses through the IP alias engine
+will pass traffic for old interface addresses through the NAT engine
 .Pq see Xr libalias 5 ,
 resulting in the ability (in
 .Fl auto
 mode) to properly connect the process that caused the PPP link to
 come up in the first place.
 .Pp
-Disabling IP aliasing with
-.Dq alias enable no
+Disabling NAT with
+.Dq nat enable no
 will also disable
 .Sq iface-alias .
 .El
@@ -2728,13 +2797,13 @@ in
 .Fl background
 mode.
 .Pp
-User ID 0 is immune to these commands.
+User id 0 is immune to these commands.
 .Bl -tag -width XX
 .It allow user Ns Xo
 .Op s
 .Ar logname Ns No ...
 .Xc
-By default, only user ID 0 is allowed access to
+By default, only user id 0 is allowed access to
 .Nm ppp .
 If this command is used, all of the listed users are allowed access to
 the section in which the
@@ -2784,36 +2853,46 @@ When running in multi-link mode, a section can be loaded if it allows
 of the currently existing line modes.
 .El
 .Pp
-.It alias Ar command Op Ar args
-This command allows the control of the aliasing (or masquerading)
-facilities that are built into
+.It nat Ar command Op Ar args
+This command allows the control of the network address translation (also
+known as masquerading or IP aliasing) facilities that are built into
 .Nm ppp .
-If aliasing is enabled on your system (it may be omitted at compile time),
+NAT is done on the external interface only, and is unlikely to make sense
+if used with the
+.Fl direct
+flag.
+.Pp
+For backwards compatibility, the word
+.Dq alias
+may be used in place of
+.Dq nat .
+If nat is enabled on your system (it may be omitted at compile time),
 the following commands are possible:
 .Bl -tag -width XX
-.It alias enable Op yes|no
-This command either switches aliasing on or turns it off.
+.It nat enable yes|no
+This command either switches network address translation on or turns it off.
 The
-.Fl alias
+.Fl nat
 command line flag is synonymous with
-.Dq alias enable yes .
-.It alias addr Op Ar addr_local addr_alias
+.Dq nat enable yes .
+.It nat addr Op Ar addr_local addr_alias
 This command allows data for
 .Ar addr_alias
 to be redirected to
 .Ar addr_local .
 It is useful if you own a small number of real IP numbers that
 you wish to map to specific machines behind your gateway.
-.It alias deny_incoming Op yes|no
+.It nat deny_incoming yes|no
 If set to yes, this command will refuse all incoming connections
 by dropping the packets in much the same way as a firewall would.
-.It alias help|?
-This command gives a summary of available alias commands.
-.It alias log Op yes|no
-This option causes various aliasing statistics and information to
+.It nat help|?
+This command gives a summary of available nat commands.
+.It nat log yes|no
+This option causes various NAT statistics and information to
 be logged to the file
 .Pa /var/log/alias.log .
-.It alias port Ar proto Ar targetIP Ns Xo
+This file name is likely to change in the near future.
+.It nat port Ar proto Ar targetIP Ns Xo
 .No : Ns Ar targetPort Ns
 .Oo
 .No - Ns Ar targetPort
@@ -2855,10 +2934,10 @@ or a range of ports the same size as the other ranges.
 This option is useful if you wish to run things like Internet phone on
 machines behind your gateway, but is limited in that connections to only
 one interior machine per source machine and target port are possible.
-.It alias pptp Op Ar addr
+.It nat pptp Op Ar addr
 This tells
 .Nm
-to alias any
+to translate any
 .Em G Ns No eneral
 .Em R Ns No outing
 .Em E Ns No encapsulated
@@ -2877,8 +2956,8 @@ If
 .Ar addr
 is not specified,
 .Dv PPTP
-aliasing is disabled.
-.It "alias proxy cmd" Ar arg Ns No ...
+address translation is disabled.
+.It "nat proxy cmd" Ar arg Ns No ...
 This command tells
 .Nm
 to proxy certain connections, redirecting them to a given server.  Refer
@@ -2887,16 +2966,16 @@ to the description of
 in
 .Xr libalias 3
 for details of the available commands.
-.It alias same_ports Op yes|no
-When enabled, this command will tell the alias library attempt to
-avoid changing the port number on outgoing packets.  This is useful
+.It nat same_ports yes|no
+When enabled, this command will tell the network address translation engine to
+ attempt to avoid changing the port number on outgoing packets.  This is useful
 if you want to support protocols such as RPC and LPD which require
 connections to come from a well known port.
-.It alias use_sockets Op yes|no
-When enabled, this option tells the alias library to create a
-socket so that it can guarantee a correct incoming ftp data or
+.It nat use_sockets yes|no
+When enabled, this option tells the network address translation engine to
+create a socket so that it can guarantee a correct incoming ftp data or
 IRC connection.
-.It alias unregistered_only Op yes|no
+.It nat unregistered_only yes|no
 Only alter outgoing packets with an unregistered source ad-
 dress.  According to RFC 1918, unregistered source addresses
 are 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16.
@@ -2943,7 +3022,7 @@ This is replaced with the IP number assigned to the local interface.
 .It Li PEER_ENDDISC
 This is replaced with the value of the peers endpoint discriminator.
 .It Li PROCESSID
-This is replaced with the current process ID.
+This is replaced with the current process id.
 .It Li USER
 This is replaced with the username that has been authenticated with PAP or
 CHAP.  Normally, this variable is assigned only in -direct mode.  This value
@@ -3342,17 +3421,17 @@ to be sent with the CHAP response.
 .It
 The
 .Dq authkey ,
-which is encrypted with the challenge and request ID, the answer being sent
+which is encrypted with the challenge and request id, the answer being sent
 in the CHAP response packet.
 .El
 .Pp
 When configuring
 .Nm
-in this manner, it's expected that the host challenge is a series of ascii
+in this manner, it's expected that the host challenge is a series of ASCII
 digits or characters.  An encryption device or Secure ID card is usually
 required to calculate the secret appropriate for the given challenge.
 .It set authname Ar id
-This sets the authentication ID used in client mode PAP or CHAP negotiation.
+This sets the authentication id used in client mode PAP or CHAP negotiation.
 .Pp
 If used in
 .Fl direct
@@ -3519,23 +3598,70 @@ be agreeable with the peer), or if
 is specified,
 .Nm
 will expect the peer to specify the number.
-.It set cd Ar seconds Ns Op \&!
+.It set cd Oo
+.No off| Ns Ar seconds Ns Op \&!
+.Oc
 Normally,
 .Nm
-checks for the existence of carrier one second after the login script is
-complete.  If it's not set,
+checks for the existence of carrier depending on the type of device
+that has been opened:
+.Bl -tag -width XXX -offset XXX
+.It Terminal Devices
+Carrier is checked one second after the login script is complete.  If it's
+not set,
 .Nm
 assumes that this is because the device doesn't support carrier (which
-is true for most NULL-modem cables), logs the fact and stops checking
-for carrier.  However, some modems take some time to assert the carrier
-signal, resulting in
+is true for most
+.Dq laplink
+NULL-modem cables), logs the fact and stops checking
+for carrier.
+.Pp
+As ptys don't support the TIOCMGET ioctl, the tty device will switch all
+carrier detection off when it detects that the device is a pty.
+.It ISDN (i4b) Devices
+Carrier is checked once per second for 6 seconds.  If it's not set after
+the sixth second, the connection attempt is considered to have failed and
+the device is closed.  Carrier is always required for i4b devices.
+.It PPPoE (netgraph) Devices
+Carrier is checked once per second for 5 seconds.  If it's not set after
+the fifth second, the connection attempt is considered to have failed and
+the device is closed.  Carrier is always required for PPPoE devices.
+.El
+.Pp
+All other device types don't support carrier.  Setting a carrier value will
+result in a warning when the device is opened.
+.Pp
+Some modems take more than one second after connecting to assert the carrier
+signal.  If this delay isn't increased, this will result in
 .Nm ppp Ns No s
-inability to detect when the link is dropped.
-.Ar Seconds
-specifies the number of seconds that
+inability to detect when the link is dropped, as
 .Nm
-should wait after the login script has finished before first checking for
-carrier.
+assumes that the device isn't asserting carrier.
+.Pp
+The
+.Dq set cd
+command overrides the default carrier behaviour.
+.Ar seconds
+specifies the maximum number of seconds that
+.Nm
+should wait after the dial script has finished before deciding if
+carrier is available or not.
+.Pp
+If
+.Dq off
+is specified,
+.Nm
+will not check for carrier on the device, otherwise
+.Nm
+will not proceed to the login script until either carrier is detected
+or until
+.Ar seconds
+has elapsed, at which point
+.Nm
+assumes that the device will not set carrier.
+.Pp
+If no arguments are given, carrier settings will go back to their default
+values.
 .Pp
 If
 .Ar seconds
@@ -3544,12 +3670,9 @@ is followed immediately by an exclaimation mark
 .Nm
 will
 .Em require
-carrier.  If carrier is not detected at the first check, the link will
-be considered disconnected.
-.Pp
-Carrier
-.Em require Ns No ment
-is ignored when the link is not a tty device.
+carrier.  If carrier is not detected after
+.Ar seconds
+seconds, the link will be disconnected.
 .It set choked Op Ar timeout
 This sets the number of seconds that
 .Nm
@@ -3567,9 +3690,9 @@ has read a certain number of packets from the local network for transmission,
 but cannot send the data due to link failure (the peer is busy etc.).
 .Nm
 will not read packets indefinitely.  Instead, it reads up to
-.Em 20
+.Em 30
 packets (or
-.Em 20 No +
+.Em 30 No +
 .Em nlinks No *
 .Em 2
 packets in multi-link mode), then stops reading the network interface
@@ -3615,16 +3738,28 @@ This sets the device(s) to which
 .Nm
 will talk to the given
 .Dq value .
-All serial device names are expected to begin with
+.Pp
+All ISDN and serial device names are expected to begin with
 .Pa /dev/ .
+ISDN devices are usually called
+.Pa i4brbchX
+and serial devices are usually called
+.Pa cuaXX .
+.Pp
 If
 .Dq value
 does not begin with
 .Pa /dev/ ,
 it must either begin with an exclamation mark
-.Pq Dq \&!
+.Pq Dq \&! ,
+be of the format
+.No PPPoE: Ns Ar iface Ns Xo
+.Op \&: Ns Ar provider Ns
+.Xc
 or be of the format
-.Dq host:port .
+.Ar host Ns No : Ns Ar port Ns Oo
+.No /tcp|udp
+.Oc .
 .Pp
 If it begins with an exclamation mark, the rest of the device name is
 treated as a program name, and that program is executed when the device
@@ -3633,15 +3768,41 @@ is opened.  Standard input, output and error are fed back to
 and are read and written as if they were a regular device.
 .Pp
 If a
-.Dq host:port Ns Op /tcp|/udp
+.No PPPoE: Ns Ar iface Ns Xo
+.Op \&: Ns Ar provider Ns
+.Xc
+specification is given,
+.Nm
+will attempt to create a
+.Em PPP
+over Ethernet connection using the given
+.Ar iface
+interface.  The given
+.Ar provider
+is passed as the service name in the PPPoE Discovery Initiation (PADI)
+packet.  If no provider is given, an empty value will be used.  Refer to
+.Xr netgraph 4
+and
+.Xr ng_pppoe 8
+for further details.
+.Pp
+If a
+.Ar host Ns No : Ns Ar port Ns Oo
+.No /tcp|udp
+.Oc
 specification is given,
 .Nm
 will attempt to connect to the given
-.Dq host
+.Ar host
 on the given
-.Dq port .
-If a tcp or udp specification is not given, the default is tcp.  Refer to
-the section on
+.Ar port .
+If a
+.Dq /tcp
+or
+.Dq /udp
+suffix is not provided, the default is
+.Dq /tcp .
+Refer to the section on
 .Em PPP OVER TCP and UDP
 above for further details.
 .Pp
@@ -3725,7 +3886,7 @@ is running in interactive mode, file descriptor 3 is attached to
 For example (wrapped for readability);
 .Bd -literal -offset indent
 set login "TIMEOUT 5 \\"\\" \\"\\" login:--login: ppp \e
-word: ppp \\"!sh \\\\\\\\-c \\\\\\"echo \\\\\\\\-n label: >&2\\\\\\"\\" \e
+word: ppp \\"!sh \\\\-c \\\\\\"echo \\\\-n label: >&2\\\\\\"\\" \e
 \\"!/bin/echo in\\" HELLO"
 .Ed
 .Pp
@@ -3735,8 +3896,8 @@ command before dialing):
 .Bd -literal -offset indent
 Dial attempt 1 of 1
 dial OK!
-Chat: Expecting:
-Chat: Sending:
+Chat: Expecting: 
+Chat: Sending: 
 Chat: Expecting: login:--login:
 Chat: Wait for (5): login:
 Chat: Sending: ppp
@@ -3747,7 +3908,7 @@ Chat: Expecting: !sh \\-c "echo \\-n label: >&2"
 Chat: Exec: sh -c "echo -n label: >&2"
 Chat: Wait for (5): !sh \\-c "echo \\-n label: >&2" --> label:
 Chat: Exec: /bin/echo in
-Chat: Sending:
+Chat: Sending: 
 Chat: Expecting: HELLO
 Chat: Wait for (5): HELLO
 login OK!
@@ -3870,8 +4031,8 @@ into the machine and the
 filter specifies packets that are allowed out of the machine.
 .Pp
 Filtering is done prior to any IP alterations that might be done by the
-alias engine on outgoing packets and after any IP alterations that might
-be done by the alias engine on incoming packets.  By default all filter
+NAT engine on outgoing packets and after any IP alterations that might
+be done by the NAT engine on incoming packets.  By default all filter
 sets allow all packets to pass.  Rules are processed in order according to
 .Ar rule-no
 (unless skipped by specifying a rule number as the
@@ -4046,6 +4207,9 @@ This
 compliments the dial-script.  If both are specified, the login
 script will be executed after the dial script.  Escape sequences
 available in the dial script are also available here.
+.It set logout Ar chat-script
+This specifies the chat script that will be used to logout
+before the hangup script is called.  It should not normally be necessary.
 .It set lqrperiod Ar frequency
 This command sets the
 .Ar frequency
@@ -4069,7 +4233,7 @@ or
 .Pp
 Note: If you issue the command
 .Dq set mode auto ,
-and have IP aliasing enabled, it may be useful to
+and have network address translation enabled, it may be useful to
 .Dq enable iface-alias
 afterwards.  This will allow
 .Nm
@@ -4354,10 +4518,7 @@ If you wish to specify a local domain socket,
 .Ar LocalName
 must be specified as an absolute file name, otherwise it is assumed
 to be the name or number of a TCP port.  You must specify the octal umask
-that should be used with local domain sockets as a four character octal
-number beginning with
-.Sq 0 .
-Refer to
+to be used with a local domain socket.  Refer to
 .Xr umask 2
 for umask details.  Refer to
 .Xr services 5
@@ -4434,6 +4595,46 @@ is specified,
 .Nm
 will never idle out before the link has been up for at least that number
 of seconds.
+.It set urgent Xo
+.Op tcp|udp
+.Oo Op +|- Ns
+.Ar port
+.Oc No ...
+.Xc
+This command controls the ports that
+.Nm
+prioritizes when transmitting data.  The default priority TCP ports
+are ports 21 (ftp control), 22 (ssh), 23 (telnet), 513 (login), 514 (shell),
+543 (klogin) and 544 (kshell).  There are no priority UDP ports by default.
+See
+.Xr services 5
+for details.
+.Pp
+If neither
+.Dq tcp
+or
+.Dq udp
+are specified,
+.Dq tcp
+is assumed.
+.Pp
+If no
+.Ar port Ns No s
+are given, the priority port lists are cleared (although if
+.Dq tcp
+or
+.Dq udp
+is specified, only that list is cleared).  If the first
+.Ar port
+argument is prefixed with a plus
+.Pq Dq \&+
+or a minus
+.Pq Dq \&- ,
+the current list is adjusted, otherwise the list is reassigned.
+.Ar port Ns No s
+prefixed with a plus or not prefixed at all are added to the list and
+.Ar port Ns No s
+prefixed with a minus are removed from the list.
 .It set vj slotcomp on|off
 This command tells
 .Nm
@@ -4536,6 +4737,7 @@ peer is detected,
 .Nm
 automatically enables Packet Mode and goes back into command mode.
 .El
+.Pp
 .Sh MORE DETAILS
 .Bl -bullet
 .It
@@ -4543,7 +4745,7 @@ Read the example configuration files.  They are a good source of information.
 .It
 Use
 .Dq help ,
-.Dq alias ? ,
+.Dq nat ? ,
 .Dq enable ? ,
 .Dq set ?
 and
@@ -4559,6 +4761,7 @@ http://www.FreeBSD.org/handbook/userppp.html
 .El
 .Pp
 .El
+.Pp
 .Sh FILES
 .Nm
 refers to four files:
@@ -4589,12 +4792,12 @@ Logging and debugging information file.  Note, this name is specified in
 See
 .Xr syslog.conf 5
 for further details.
-.It Pa /var/spool/lock/LCK..*
+.It Pa /var/spool/lock/LCK..* 
 tty port locking file.  Refer to
 .Xr uucplock 3
 for further details.
 .It Pa /var/run/tunN.pid
-The process ID (PID) of the
+The process id (pid) of the
 .Nm
 program connected to the tunN device, where
 .Sq N
@@ -4622,6 +4825,7 @@ to HEX to determine the actual file name.
 This socket is used to pass links between different instances of
 .Nm ppp .
 .El
+.Pp
 .Sh SEE ALSO
 .Xr at 1 ,
 .Xr ftp 1 ,
@@ -4633,6 +4837,7 @@ This socket is used to pass links between different instances of
 .Xr libalias 3 ,
 .Xr syslog 3 ,
 .Xr uucplock 3 ,
+.Xr netgraph 4 ,
 .Xr crontab 5 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
@@ -4644,7 +4849,9 @@ This socket is used to pass links between different instances of
 .Xr getty 8 ,
 .Xr inetd 8 ,
 .Xr init 8 ,
+.Xr isdn 8 ,
 .Xr named 8 ,
+.Xr ng_pppoe 8 ,
 .Xr ping 8 ,
 .Xr pppctl 8 ,
 .Xr pppd 8 ,
@@ -4654,12 +4861,20 @@ This socket is used to pass links between different instances of
 .Xr traceroute 8 ,
 .Xr vipw 8
 .Sh HISTORY
-This program was originally written by Toshiharu OHNO (tony-o@iij.ad.jp),
-and was submitted to FreeBSD-2.0.5 by Atsushi Murai (amurai@spec.co.jp).
+This program was originally written by
+.An Toshiharu OHNO Aq tony-o@iij.ad.jp ,
+and was submitted to
+.Fx 2.0.5
+by
+.An Atsushi Murai Aq amurai@spec.co.jp .
 .Pp
-It was substantially modified during 1997 by Brian Somers
-(brian@Awfulhak.org), and was ported to OpenBSD in November that year
+It was substantially modified during 1997 by
+.An Brian Somers Aq brian@Awfulhak.org ,
+and was ported to
+.Ox
+in November that year
 (just after the 2.2 release).
 .Pp
-Most of the code was rewritten by Brian Somers in early 1998 when
-multi-link ppp support was added.
+Most of the code was rewritten by
+.An Brian Somers
+in early 1998 when multi-link ppp support was added.

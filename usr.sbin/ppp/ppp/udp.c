@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: udp.c,v 1.5 1999/07/15 02:10:32 brian Exp $
+ *	$Id: udp.c,v 1.6 2000/01/07 03:26:56 brian Exp $
  */
 
 #include <sys/types.h>
@@ -45,7 +45,6 @@
 #include "defs.h"
 #include "mbuf.h"
 #include "log.h"
-#include "sync.h"
 #include "timer.h"
 #include "lqr.h"
 #include "hdlc.h"
@@ -117,7 +116,7 @@ udp_Free(struct physical *p)
 
 static void
 udp_device2iov(struct device *d, struct iovec *iov, int *niov,
-               int maxiov, pid_t newpid)
+               int maxiov, int *auxfd, int *nauxfd)
 {
   int sz = physical_MaxDeviceSize();
 
@@ -133,6 +132,9 @@ udp_device2iov(struct device *d, struct iovec *iov, int *niov,
 static const struct device baseudpdevice = {
   UDP_DEVICE,
   "udp",
+  { CD_NOTREQUIRED, 0 },
+  NULL,
+  NULL,
   NULL,
   NULL,
   NULL,
@@ -147,7 +149,7 @@ static const struct device baseudpdevice = {
 
 struct device *
 udp_iov2device(int type, struct physical *p, struct iovec *iov, int *niov,
-               int maxiov)
+               int maxiov, int *auxfd, int *nauxfd)
 {
   if (type == UDP_DEVICE) {
     struct udpdevice *dev = (struct udpdevice *)iov[(*niov)++].iov_base;
@@ -231,7 +233,7 @@ udp_Create(struct physical *p)
 
   dev = NULL;
   if (p->fd < 0) {
-    if ((cp = strchr(p->name.full, ':')) != NULL) {
+    if ((cp = strchr(p->name.full, ':')) != NULL && !strchr(cp + 1, ':')) {
       *cp = '\0';
       host = p->name.full;
       port = cp + 1;
@@ -240,8 +242,10 @@ udp_Create(struct physical *p)
         *cp = ':';
         return NULL;
       }
-      if (svc)
+      if (svc) {
+        p->fd--;     /* We own the device but maybe can't use it - change fd */
         *svc = '\0';
+      }
 
       if (*host && *port)
         dev = udp_CreateDevice(p, host, port);
@@ -279,6 +283,8 @@ udp_Create(struct physical *p)
   if (dev) {
     memcpy(&dev->dev, &baseudpdevice, sizeof dev->dev);
     physical_SetupStack(p, dev->dev.name, PHYSICAL_FORCE_SYNC);
+    if (p->cfg.cd.necessity != CD_DEFAULT)
+      log_Printf(LogWARN, "Carrier settings ignored\n");
     return &dev->dev;
   }
 

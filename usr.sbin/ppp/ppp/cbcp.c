@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: cbcp.c,v 1.10 1999/07/27 13:50:20 brian Exp $
+ *	$Id: cbcp.c,v 1.11 2000/01/07 03:26:53 brian Exp $
  */
 
 #include <sys/param.h>
@@ -142,7 +142,7 @@ cbcp_StartTimer(struct cbcp *cbcp, int timeout)
 #define CBCP_RESPSENT	(3)	/* Waiting for an ACK */
 #define CBCP_ACKSENT	(4)	/* Waiting for an LCP Term REQ */
 
-static const char *cbcpname[] = {
+static const char * const cbcpname[] = {
   "closed", "stopped", "req-sent", "resp-sent", "ack-sent"
 };
 
@@ -195,7 +195,7 @@ cbcp_Output(struct cbcp *cbcp, u_char code, struct cbcp_data *data)
   struct cbcp_header *head;
   struct mbuf *bp;
 
-  bp = mbuf_Alloc(sizeof *head + data->length, MB_CBCPOUT);
+  bp = m_get(sizeof *head + data->length, MB_CBCPOUT);
   head = (struct cbcp_header *)MBUF_CTOP(bp);
   head->code = code;
   head->id = cbcp->fsm.id;
@@ -203,13 +203,13 @@ cbcp_Output(struct cbcp *cbcp, u_char code, struct cbcp_data *data)
   memcpy(MBUF_CTOP(bp) + sizeof *head, data, data->length);
   log_DumpBp(LogDEBUG, "cbcp_Output", bp);
   link_PushPacket(&cbcp->p->link, bp, cbcp->p->dl->bundle,
-                  PRI_LINK, PROTO_CBCP);
+                  LINK_QUEUES(&cbcp->p->link) - 1, PROTO_CBCP);
 }
 
 static const char *
 cbcp_data_Type(int type)
 {
-  static const char *types[] = {
+  static const char * const types[] = {
     "No callback", "User-spec", "Server-spec", "list"
   };
 
@@ -622,29 +622,29 @@ cbcp_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 
   if (p == NULL) {
     log_Printf(LogERROR, "cbcp_Input: Not a physical link - dropped\n");
-    mbuf_Free(bp);
+    m_freem(bp);
     return NULL;
   }
 
-  bp = mbuf_Contiguous(bp);
-  len = mbuf_Length(bp);
+  bp = m_pullup(bp);
+  len = m_length(bp);
   if (len < sizeof(struct cbcp_header)) {
-    mbuf_Free(bp);
+    m_freem(bp);
     return NULL;
   }
   head = (struct cbcp_header *)MBUF_CTOP(bp);
   if (ntohs(head->length) != len) {
     log_Printf(LogWARN, "Corrupt CBCP packet (code %d, length %d not %d)"
                " - ignored\n", head->code, ntohs(head->length), len);
-    mbuf_Free(bp);
+    m_freem(bp);
     return NULL;
   }
-  mbuf_SetType(bp, MB_CBCPIN);
+  m_settype(bp, MB_CBCPIN);
 
   /* XXX check the id */
 
-  bp->offset += sizeof(struct cbcp_header);
-  bp->cnt -= sizeof(struct cbcp_header);
+  bp->m_offset += sizeof(struct cbcp_header);
+  bp->m_len -= sizeof(struct cbcp_header);
   data = (struct cbcp_data *)MBUF_CTOP(bp);
 
   switch (head->code) {
@@ -731,7 +731,7 @@ cbcp_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
       break;
   }
 
-  mbuf_Free(bp);
+  m_freem(bp);
   return NULL;
 }
 

@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: defs.h,v 1.10 1999/08/05 10:32:13 brian Exp $
+ * $Id: defs.h,v 1.11 2000/01/07 03:26:53 brian Exp $
  *
  *	TODO:
  */
@@ -58,8 +58,7 @@
 #define MIN_FSMRETRY 3		/* Minimum FSM retry frequency */
 #define DEF_FSMRETRY 3		/* FSM retry frequency */
 #define DEF_FSMTRIES 5		/* Default max retries */
-#define DEF_FSMAUTHTRIES 3		/* Default max auth retries */
-#define DEF_CDDELAY  1		/* Delay before checking for carrier */
+#define DEF_FSMAUTHTRIES 3	/* Default max auth retries */
 
 #define	CONFFILE 	"ppp.conf"
 #define	LINKUPFILE 	"ppp.linkup"
@@ -89,7 +88,13 @@
 #define	PHYS_DEDICATED		8  /* Dedicated link */
 #define	PHYS_DDIAL		16 /* Dial immediately, stay connected */
 #define PHYS_BACKGROUND		32 /* Dial immediately, deleted when closed */
-#define PHYS_ALL		63
+#define PHYS_FOREGROUND		64 /* Pseudo mode, same as background */
+#define PHYS_ALL		127
+
+/* flags passed to findblank() and MakeArgs() */
+#define PARSE_NORMAL	0
+#define PARSE_REDUCE	1
+#define PARSE_NOHASH	2
 
 extern void randinit(void);
 extern ssize_t fullread(int, void *, size_t);
@@ -98,4 +103,5 @@ extern int Nam2mode(const char *);
 extern struct in_addr GetIpAddr(const char *);
 extern int SpeedToInt(speed_t);
 extern speed_t IntToSpeed(int);
-extern int MakeArgs(char *, char **, int);
+extern char *findblank(char *, int);
+extern int MakeArgs(char *, char **, int, int);

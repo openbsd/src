@@ -23,30 +23,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: layer.h,v 1.2 2000/01/07 03:26:54 brian Exp $
+ *	$Id: i4b.h,v 1.1 2000/01/07 03:26:54 brian Exp $
  */
 
-#define	LAYER_ASYNC	2
-#define	LAYER_SYNC	3
-#define	LAYER_HDLC	4
-#define	LAYER_ACF	5
-#define	LAYER_PROTO	6
-#define	LAYER_LQR	7
-#define	LAYER_CCP	8
-#define	LAYER_VJ	9
-#define	LAYER_NAT	10
+struct physical;
+struct device;
 
-#define	LAYER_MAX	10	/* How many layers we can handle on a link */
+#define DEF_I4BCDDELAY	6		/* Default ``set cd'' value */
 
-struct mbuf;
-struct link;
-struct bundle;
-
-struct layer {
-  int type;
-  const char *name;
-  struct mbuf *(*push)(struct bundle *, struct link *, struct mbuf *,
-                       int pri, u_short *proto);
-  struct mbuf *(*pull)(struct bundle *, struct link *, struct mbuf *,
-                       u_short *);
-};
+extern struct device *i4b_Create(struct physical *);
+extern struct device *i4b_iov2device(int, struct physical *,
+                                     struct iovec *, int *, int, int *, int *);
+extern int i4b_DeviceSize(void);

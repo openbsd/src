@@ -23,16 +23,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.c,v 1.9 1999/08/17 15:00:39 brian Exp $
+ *	$Id: exec.c,v 1.10 2000/01/07 03:26:53 brian Exp $
  */
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <sys/un.h>
 
 #include <errno.h>
@@ -49,7 +44,6 @@
 #include "defs.h"
 #include "mbuf.h"
 #include "log.h"
-#include "sync.h"
 #include "timer.h"
 #include "lqr.h"
 #include "hdlc.h"
@@ -59,29 +53,24 @@
 #include "ccp.h"
 #include "link.h"
 #include "async.h"
-#include "slcompress.h"
-#include "iplist.h"
-#include "ipcp.h"
-#include "filter.h"
 #include "descriptor.h"
 #include "physical.h"
 #include "mp.h"
-#ifndef NORADIUS
-#include "radius.h"
-#endif
 #include "chat.h"
 #include "command.h"
-#include "bundle.h"
-#include "prompt.h"
 #include "auth.h"
 #include "chap.h"
 #include "cbcp.h"
 #include "datalink.h"
+#include "id.h"
 #include "exec.h"
 
 static struct device execdevice = {
   EXEC_DEVICE,
   "exec",
+  { CD_NOTREQUIRED, 0 },
+  NULL,
+  NULL,
   NULL,
   NULL,
   NULL,
@@ -96,7 +85,7 @@ static struct device execdevice = {
 
 struct device *
 exec_iov2device(int type, struct physical *p, struct iovec *iov,
-                int *niov, int maxiov)
+                int *niov, int maxiov, int *auxfd, int *nauxfd)
 {
   if (type == EXEC_DEVICE) {
     free(iov[(*niov)++].iov_base);
@@ -112,6 +101,8 @@ exec_Create(struct physical *p)
 {
   if (p->fd < 0 && *p->name.full == '!') {
     int fids[2];
+
+    p->fd--;	/* We own the device but maybe can't use it - change fd */
 
     if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fids) < 0)
       log_Printf(LogPHASE, "Unable to create pipe for line exec: %s\n",
@@ -136,7 +127,7 @@ exec_Create(struct physical *p)
         case  0:
           close(fids[0]);
           timer_TermService();
-          setuid(geteuid());
+          setuid(ID0realuid());
 
           switch (fork()) {
             case 0:
@@ -151,15 +142,21 @@ exec_Create(struct physical *p)
 
           log_Printf(LogDEBUG, "Exec'ing ``%s''\n", p->name.base);
 
+          if ((argc = MakeArgs(p->name.base, argv, VECSIZE(argv),
+                               PARSE_REDUCE|PARSE_NOHASH)) < 0) {
+            log_Printf(LogWARN, "Syntax error in exec command\n");
+            _exit(127);
+          }
+
+          command_Expand(argv, argc, (char const *const *)argv,
+                         p->dl->bundle, 0, realpid);
+
           dup2(fids[1], STDIN_FILENO);
           dup2(fids[1], STDOUT_FILENO);
           dup2(fids[1], STDERR_FILENO);
           for (i = getdtablesize(); i > STDERR_FILENO; i--)
             fcntl(i, F_SETFD, 1);
 
-          argc = MakeArgs(p->name.base, argv, VECSIZE(argv));
-          command_Expand(argv, argc, (char const *const *)argv,
-                         p->dl->bundle, 0, realpid);
           execvp(*argv, argv);
           printf("execvp failed: %s: %s\r\n", *argv, strerror(errno));
           _exit(127);
@@ -171,6 +168,8 @@ exec_Create(struct physical *p)
           waitpid(pid, &stat, 0);
           log_Printf(LogDEBUG, "Using descriptor %d for child\n", p->fd);
           physical_SetupStack(p, execdevice.name, PHYSICAL_FORCE_ASYNC);
+          if (p->cfg.cd.necessity != CD_DEFAULT)
+            log_Printf(LogWARN, "Carrier settings ignored\n");
           return &execdevice;
       }
     }

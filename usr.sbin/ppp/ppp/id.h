@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: id.h,v 1.2 1999/02/06 03:22:37 brian Exp $
+ *	$Id: id.h,v 1.3 2000/01/07 03:26:54 brian Exp $
  */
 
 struct utmp;
@@ -41,7 +41,14 @@ extern int ID0uu_lock(const char *);
 extern int ID0uu_lock_txfr(const char *, pid_t);
 extern int ID0uu_unlock(const char *);
 extern void ID0login(struct utmp *);
-extern void ID0logout(const char *);
+extern void ID0logout(const char *, int);
 extern int ID0bind_un(int, const struct sockaddr_un *);
 extern int ID0connect_un(int, const struct sockaddr_un *);
 extern int ID0kill(pid_t, int);
+extern void ID0setproctitle(const char *);
+#if defined(__FreeBSD__) && !defined(NOKLDLOAD)
+extern int ID0kldload(const char *);
+#endif
+#ifndef NONETGRAPH
+extern int ID0NgMkSockNode(const char *, int *, int *);
+#endif

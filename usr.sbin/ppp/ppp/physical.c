@@ -16,15 +16,12 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $Id: physical.c,v 1.17 1999/08/05 10:32:14 brian Exp $
+ *  $Id: physical.c,v 1.18 2000/01/07 03:26:55 brian Exp $
  *
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <sys/un.h>
@@ -37,7 +34,6 @@
 #include <string.h>
 #include <sys/tty.h>	/* TIOCOUTQ */
 #include <sys/uio.h>
-#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include <utmp.h>
@@ -49,8 +45,8 @@
 #endif
 
 #include "layer.h"
-#ifndef NOALIAS
-#include "alias_cmd.h"
+#ifndef NONAT
+#include "nat_cmd.h"
 #endif
 #include "proto.h"
 #include "acf.h"
@@ -91,11 +87,17 @@
 #include "udp.h"
 #include "exec.h"
 #include "tty.h"
+#ifndef NOI4B
+#include "i4b.h"
+#endif
+#ifndef NONETGRAPH
+#include "ether.h"
+#endif
 
+
+#define PPPOTCPLINE "ppp"
 
 static int physical_DescriptorWrite(struct descriptor *, struct bundle *,
-                                    const fd_set *);
-static void physical_DescriptorRead(struct descriptor *, struct bundle *,
                                     const fd_set *);
 
 static int
@@ -106,11 +108,18 @@ physical_DeviceSize(void)
 
 struct {
   struct device *(*create)(struct physical *);
-  struct device *(*iov2device)(int, struct physical *, struct iovec *iov,
-                               int *niov, int maxiov);
+  struct device *(*iov2device)(int, struct physical *, struct iovec *,
+                               int *, int, int *, int *);
   int (*DeviceSize)(void);
 } devices[] = {
+#ifndef NOI4B
+  { i4b_Create, i4b_iov2device, i4b_DeviceSize },
+#endif
   { tty_Create, tty_iov2device, tty_DeviceSize },
+#ifndef NONETGRAPH
+  /* This must come before ``udp'' & ``tcp'' */
+  { ether_Create, ether_iov2device, ether_DeviceSize },
+#endif
   { tcp_Create, tcp_iov2device, tcp_DeviceSize },
   { udp_Create, udp_iov2device, udp_DeviceSize },
   { exec_Create, exec_iov2device, exec_DeviceSize }
@@ -123,6 +132,16 @@ physical_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e,
                    int *n)
 {
   return physical_doUpdateSet(d, r, w, e, n, 0);
+}
+
+void
+physical_SetDescriptor(struct physical *p)
+{
+  p->desc.type = PHYSICAL_DESCRIPTOR;
+  p->desc.UpdateSet = physical_UpdateSet;
+  p->desc.IsSet = physical_IsSet;
+  p->desc.Read = physical_DescriptorRead;
+  p->desc.Write = physical_DescriptorWrite;
 }
 
 struct physical *
@@ -147,11 +166,7 @@ physical_Create(struct datalink *dl, int type)
   link_EmptyStack(&p->link);
 
   p->handler = NULL;
-  p->desc.type = PHYSICAL_DESCRIPTOR;
-  p->desc.UpdateSet = physical_UpdateSet;
-  p->desc.IsSet = physical_IsSet;
-  p->desc.Read = physical_DescriptorRead;
-  p->desc.Write = physical_DescriptorWrite;
+  physical_SetDescriptor(p);
   p->type = type;
 
   hdlc_Init(&p->hdlc, &p->link.lcp);
@@ -173,8 +188,8 @@ physical_Create(struct datalink *dl, int type)
   p->cfg.parity = CS8;
   memcpy(p->cfg.devlist, MODEM_LIST, sizeof MODEM_LIST);
   p->cfg.ndev = NMODEMS;
-  p->cfg.cd.required = 0;
-  p->cfg.cd.delay = DEF_CDDELAY;
+  p->cfg.cd.necessity = CD_DEFAULT;
+  p->cfg.cd.delay = 0;		/* reconfigured or device specific default */
 
   lcp_Init(&p->link.lcp, dl->bundle, &p->link, &dl->fsmp);
   ccp_Init(&p->link.ccp, dl->bundle, &p->link, &dl->fsmp);
@@ -308,7 +323,12 @@ physical_Close(struct physical *p)
 
   physical_StopDeviceTimer(p);
   if (p->Utmp) {
-    ID0logout(p->name.base);
+    if (p->handler && (p->handler->type == TCP_DEVICE ||
+                       p->handler->type == UDP_DEVICE))
+      /* Careful - we logged in on line ``ppp'' with IP as our host */
+      ID0logout(PPPOTCPLINE, 1);
+    else
+      ID0logout(p->name.base, 0);
     p->Utmp = 0;
   }
   newsid = tcgetpgrp(p->fd) == getpgrp();
@@ -364,14 +384,14 @@ physical_DescriptorWrite(struct descriptor *d, struct bundle *bundle,
     p->out = link_Dequeue(&p->link);
 
   if (p->out) {
-    nw = physical_Write(p, MBUF_CTOP(p->out), p->out->cnt);
+    nw = physical_Write(p, MBUF_CTOP(p->out), p->out->m_len);
     log_Printf(LogDEBUG, "%s: DescriptorWrite: wrote %d(%d) to %d\n",
-               p->link.name, nw, p->out->cnt, p->fd);
+               p->link.name, nw, p->out->m_len, p->fd);
     if (nw > 0) {
-      p->out->cnt -= nw;
-      p->out->offset += nw;
-      if (p->out->cnt == 0)
-	p->out = mbuf_FreeSeg(p->out);
+      p->out->m_len -= nw;
+      p->out->m_offset += nw;
+      if (p->out->m_len == 0)
+	p->out = m_free(p->out);
       result = 1;
     } else if (nw < 0) {
       if (errno != EAGAIN) {
@@ -391,6 +411,7 @@ int
 physical_ShowStatus(struct cmdargs const *arg)
 {
   struct physical *p = arg->cx->physical;
+  struct cd *cd;
   const char *dev;
   int n;
 
@@ -416,8 +437,8 @@ physical_ShowStatus(struct cmdargs const *arg)
       prompt_Printf(arg->prompt, " Physical outq:   %d\n", n);
 #endif
 
-  prompt_Printf(arg->prompt, " Queued Packets:  %d\n",
-                link_QueueLen(&p->link));
+  prompt_Printf(arg->prompt, " Queued Packets:  %lu\n",
+                (u_long)link_QueueLen(&p->link));
   prompt_Printf(arg->prompt, " Phone Number:    %s\n", arg->cx->phone.chosen);
 
   prompt_Printf(arg->prompt, "\nDefaults:\n");
@@ -455,19 +476,26 @@ physical_ShowStatus(struct cmdargs const *arg)
 
   prompt_Printf(arg->prompt, ", CTS/RTS %s\n", (p->cfg.rts_cts ? "on" : "off"));
 
-  prompt_Printf(arg->prompt, " CD check delay:  %d second%s",
-                p->cfg.cd.delay, p->cfg.cd.delay == 1 ? "" : "s");
-  if (p->cfg.cd.required)
-    prompt_Printf(arg->prompt, " (required!)\n\n");
-  else
-    prompt_Printf(arg->prompt, "\n\n");
+  prompt_Printf(arg->prompt, " CD check delay:  ");
+  cd = p->handler ? &p->handler->cd : &p->cfg.cd;
+  if (cd->necessity == CD_NOTREQUIRED)
+    prompt_Printf(arg->prompt, "no cd");
+  else if (p->cfg.cd.necessity == CD_DEFAULT) {
+    prompt_Printf(arg->prompt, "device specific");
+  } else {
+    prompt_Printf(arg->prompt, "%d second%s", p->cfg.cd.delay,
+                  p->cfg.cd.delay == 1 ? "" : "s");
+    if (p->cfg.cd.necessity == CD_REQUIRED)
+      prompt_Printf(arg->prompt, " (required!)");
+  }
+  prompt_Printf(arg->prompt, "\n\n");
 
   throughput_disp(&p->link.throughput, arg->prompt);
 
   return 0;
 }
 
-static void
+void
 physical_DescriptorRead(struct descriptor *d, struct bundle *bundle,
                      const fd_set *fdset)
 {
@@ -522,7 +550,7 @@ physical_DescriptorRead(struct descriptor *d, struct bundle *bundle,
 
 struct physical *
 iov2physical(struct datalink *dl, struct iovec *iov, int *niov, int maxiov,
-             int fd)
+             int fd, int *auxfd, int *nauxfd)
 {
   struct physical *p;
   int len, h, type;
@@ -572,11 +600,10 @@ iov2physical(struct datalink *dl, struct iovec *iov, int *niov, int maxiov,
   type = (long)p->handler;
   p->handler = NULL;
   for (h = 0; h < NDEVICES && p->handler == NULL; h++)
-    p->handler = (*devices[h].iov2device)(type, p, iov, niov, maxiov);
-
+    p->handler = (*devices[h].iov2device)(type, p, iov, niov, maxiov,
+                                          auxfd, nauxfd);
   if (p->handler == NULL) {
-    log_Printf(LogPHASE, "%s: Device %s, unknown link type\n",
-               p->link.name, p->name.full);
+    log_Printf(LogPHASE, "%s: Unknown link type\n", p->link.name);
     free(iov[(*niov)++].iov_base);
     physical_SetupStack(p, "unknown", PHYSICAL_NOFORCE);
   } else
@@ -611,7 +638,7 @@ physical_MaxDeviceSize()
 
 int
 physical2iov(struct physical *p, struct iovec *iov, int *niov, int maxiov,
-             pid_t newpid)
+             int *auxfd, int *nauxfd)
 {
   struct device *h;
   int sz;
@@ -627,8 +654,7 @@ physical2iov(struct physical *p, struct iovec *iov, int *niov, int maxiov,
     timer_Stop(&p->link.lcp.fsm.StoppedTimer);
     timer_Stop(&p->link.ccp.fsm.StoppedTimer);
     if (p->handler) {
-      if (p->handler->device2iov)
-        h = p->handler;
+      h = p->handler;
       p->handler = (struct device *)(long)p->handler->type;
     }
 
@@ -638,7 +664,6 @@ physical2iov(struct physical *p, struct iovec *iov, int *niov, int maxiov,
     else
       p->session_owner = (pid_t)-1;
     timer_Stop(&p->link.throughput.Timer);
-    physical_ChangedPid(p, newpid);
   }
 
   if (*niov + 2 >= maxiov) {
@@ -649,28 +674,27 @@ physical2iov(struct physical *p, struct iovec *iov, int *niov, int maxiov,
     return -1;
   }
 
-  iov[*niov].iov_base = p ? (void *)p : malloc(sizeof *p);
+  iov[*niov].iov_base = (void *)p;
   iov[*niov].iov_len = sizeof *p;
   (*niov)++;
 
-  iov[*niov].iov_base = p ? (void *)p->link.throughput.SampleOctets :
-                            malloc(SAMPLE_PERIOD * sizeof(long long));
+  iov[*niov].iov_base = p ? (void *)p->link.throughput.SampleOctets : NULL;
   iov[*niov].iov_len = SAMPLE_PERIOD * sizeof(long long);
   (*niov)++;
 
   sz = physical_MaxDeviceSize();
   if (p) {
-    if (h)
-      (*h->device2iov)(h, iov, niov, maxiov, newpid);
+    if (h && h->device2iov)
+      (*h->device2iov)(h, iov, niov, maxiov, auxfd, nauxfd);
     else {
       iov[*niov].iov_base = malloc(sz);
-      if (p->handler)
-        memcpy(iov[*niov].iov_base, p->handler, sizeof *p->handler);
+      if (h)
+        memcpy(iov[*niov].iov_base, h, sizeof *h);
       iov[*niov].iov_len = sz;
       (*niov)++;
     }
   } else {
-    iov[*niov].iov_base = malloc(sz);
+    iov[*niov].iov_base = NULL;
     iov[*niov].iov_len = sz;
     (*niov)++;
   }
@@ -678,10 +702,19 @@ physical2iov(struct physical *p, struct iovec *iov, int *niov, int maxiov,
   return p ? p->fd : 0;
 }
 
+const char *
+physical_LockedDevice(struct physical *p)
+{
+  if (p->fd >= 0 && *p->name.full == '/' && p->type != PHYS_DIRECT)
+    return p->name.base;
+
+  return NULL;
+}
+
 void
 physical_ChangedPid(struct physical *p, pid_t newpid)
 {
-  if (p->fd >= 0 && *p->name.full == '/' && p->type != PHYS_DIRECT) {
+  if (physical_LockedDevice(p)) {
     int res;
 
     if ((res = ID0uu_lock_txfr(p->name.base, newpid)) != UU_LOCK_OK)
@@ -788,28 +821,32 @@ physical_doUpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e,
 int
 physical_RemoveFromSet(struct physical *p, fd_set *r, fd_set *w, fd_set *e)
 {
-  int sets;
+  if (p->handler && p->handler->removefromset)
+    return (*p->handler->removefromset)(p, r, w, e);
+  else {
+    int sets;
 
-  sets = 0;
-  if (p->fd >= 0) {
-    if (r && FD_ISSET(p->fd, r)) {
-      FD_CLR(p->fd, r);
-      log_Printf(LogTIMER, "%s: fdunset(r) %d\n", p->link.name, p->fd);
-      sets++;
+    sets = 0;
+    if (p->fd >= 0) {
+      if (r && FD_ISSET(p->fd, r)) {
+        FD_CLR(p->fd, r);
+        log_Printf(LogTIMER, "%s: fdunset(r) %d\n", p->link.name, p->fd);
+        sets++;
+      }
+      if (e && FD_ISSET(p->fd, e)) {
+        FD_CLR(p->fd, e);
+        log_Printf(LogTIMER, "%s: fdunset(e) %d\n", p->link.name, p->fd);
+        sets++;
+      }
+      if (w && FD_ISSET(p->fd, w)) {
+        FD_CLR(p->fd, w);
+        log_Printf(LogTIMER, "%s: fdunset(w) %d\n", p->link.name, p->fd);
+        sets++;
+      }
     }
-    if (e && FD_ISSET(p->fd, e)) {
-      FD_CLR(p->fd, e);
-      log_Printf(LogTIMER, "%s: fdunset(e) %d\n", p->link.name, p->fd);
-      sets++;
-    }
-    if (w && FD_ISSET(p->fd, w)) {
-      FD_CLR(p->fd, w);
-      log_Printf(LogTIMER, "%s: fdunset(w) %d\n", p->link.name, p->fd);
-      sets++;
-    }
+
+    return sets;
   }
-  
-  return sets;
 }
 
 int
@@ -825,16 +862,25 @@ physical_Login(struct physical *p, const char *name)
   if (p->type == PHYS_DIRECT && *p->name.base && !p->Utmp) {
     struct utmp ut;
     const char *connstr;
+    char *colon;
 
     memset(&ut, 0, sizeof ut);
     time(&ut.ut_time);
     strncpy(ut.ut_name, name, sizeof ut.ut_name);
-    strncpy(ut.ut_line, p->name.base, sizeof ut.ut_line);
+    if (p->handler && (p->handler->type == TCP_DEVICE ||
+                       p->handler->type == UDP_DEVICE)) {
+      strncpy(ut.ut_line, PPPOTCPLINE, sizeof ut.ut_line);
+      strncpy(ut.ut_host, p->name.base, sizeof ut.ut_host);
+      colon = memchr(ut.ut_host, ':', sizeof ut.ut_host);
+      if (colon)
+        *colon = '\0';
+    } else
+      strncpy(ut.ut_line, p->name.base, sizeof ut.ut_line);
     if ((connstr = getenv("CONNECT")))
       /* mgetty sets this to the connection speed */
       strncpy(ut.ut_host, connstr, sizeof ut.ut_host);
     ID0login(&ut);
-    p->Utmp = 1;
+    p->Utmp = ut.ut_time;
   }
 }
 
@@ -844,6 +890,7 @@ physical_SetMode(struct physical *p, int mode)
   if ((p->type & (PHYS_DIRECT|PHYS_DEDICATED) ||
        mode & (PHYS_DIRECT|PHYS_DEDICATED)) &&
       (!(p->type & PHYS_DIRECT) || !(mode & PHYS_BACKGROUND))) {
+    /* Note:  The -direct -> -background is for callback ! */
     log_Printf(LogWARN, "%s: Cannot change mode %s to %s\n", p->link.name,
                mode2Nam(p->type), mode2Nam(mode));
     return 0;
@@ -856,7 +903,7 @@ void
 physical_DeleteQueue(struct physical *p)
 {
   if (p->out) {
-    mbuf_Free(p->out);
+    m_freem(p->out);
     p->out = NULL;
   }
   link_DeleteQueue(&p->link);
@@ -907,7 +954,7 @@ physical_Found(struct physical *p)
 int
 physical_Open(struct physical *p, struct bundle *bundle)
 {
-  int devno, h, wasopen, err;
+  int devno, h, wasfd, err;
   char *dev;
 
   if (p->fd >= 0)
@@ -917,7 +964,7 @@ physical_Open(struct physical *p, struct bundle *bundle)
     physical_SetDevice(p, "");
     p->fd = STDIN_FILENO;
     for (h = 0; h < NDEVICES && p->handler == NULL && p->fd >= 0; h++)
-        p->handler = (*devices[h].create)(p);
+      p->handler = (*devices[h].create)(p);
     if (p->fd >= 0) {
       if (p->handler == NULL) {
         physical_SetupStack(p, "unknown", PHYSICAL_NOFORCE);
@@ -939,10 +986,9 @@ physical_Open(struct physical *p, struct bundle *bundle)
             err = errno;
         }
 
-        wasopen = p->fd >= 0;
+        wasfd = p->fd;
         for (h = 0; h < NDEVICES && p->handler == NULL; h++)
-          if ((p->handler = (*devices[h].create)(p)) == NULL &&
-              wasopen && p->fd == -1)
+          if ((p->handler = (*devices[h].create)(p)) == NULL && wasfd != p->fd)
             break;
 
         if (p->fd < 0) {
@@ -952,7 +998,7 @@ physical_Open(struct physical *p, struct bundle *bundle)
                          strerror(errno));
             else
 	      log_Printf(LogWARN, "%s: Device (%s) must begin with a '/',"
-                         " a '!' or be a host:port pair\n", p->link.name,
+                         " a '!' or contain at least one ':'\n", p->link.name,
                          p->name.full);
           }
           physical_Unlock(p);
@@ -971,20 +1017,21 @@ void
 physical_SetupStack(struct physical *p, const char *who, int how)
 {
   link_EmptyStack(&p->link);
-  if (how == PHYSICAL_FORCE_SYNC ||
+  if (how == PHYSICAL_FORCE_SYNC || how == PHYSICAL_FORCE_SYNCNOACF ||
       (how == PHYSICAL_NOFORCE && physical_IsSync(p)))
     link_Stack(&p->link, &synclayer);
   else {
     link_Stack(&p->link, &asynclayer);
     link_Stack(&p->link, &hdlclayer);
   }
-  link_Stack(&p->link, &acflayer);
+  if (how != PHYSICAL_FORCE_SYNCNOACF)
+    link_Stack(&p->link, &acflayer);
   link_Stack(&p->link, &protolayer);
   link_Stack(&p->link, &lqrlayer);
   link_Stack(&p->link, &ccplayer);
   link_Stack(&p->link, &vjlayer);
-#ifndef NOALIAS
-  link_Stack(&p->link, &aliaslayer);
+#ifndef NONAT
+  link_Stack(&p->link, &natlayer);
 #endif
   if (how == PHYSICAL_FORCE_ASYNC && physical_IsSync(p)) {
     log_Printf(LogWARN, "Sync device setting ignored for ``%s'' device\n", who);
@@ -1001,4 +1048,13 @@ physical_StopDeviceTimer(struct physical *p)
 {
   if (p->handler && p->handler->stoptimer)
     (*p->handler->stoptimer)(p);
+}
+
+int
+physical_AwaitCarrier(struct physical *p)
+{
+  if (p->handler && p->handler->awaitcarrier)
+    return (*p->handler->awaitcarrier)(p);
+
+  return CARRIER_OK;
 }

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: chat.c,v 1.10 1999/08/17 15:00:38 brian Exp $
+ *	$Id: chat.c,v 1.11 2000/01/07 03:26:53 brian Exp $
  */
 
 #include <sys/param.h>
@@ -72,6 +72,7 @@
 #include "radius.h"
 #endif
 #include "bundle.h"
+#include "id.h"
 
 #define BUFLEFT(c) (sizeof (c)->buf - ((c)->bufend - (c)->buf))
 
@@ -531,8 +532,7 @@ chat_Write(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
 }
 
 void
-chat_Init(struct chat *c, struct physical *p, const char *data, int emptybuf,
-          const char *phone)
+chat_Init(struct chat *c, struct physical *p)
 {
   c->desc.type = CHAT_DESCRIPTOR;
   c->desc.UpdateSet = chat_UpdateSet;
@@ -540,7 +540,20 @@ chat_Init(struct chat *c, struct physical *p, const char *data, int emptybuf,
   c->desc.Read = chat_Read;
   c->desc.Write = chat_Write;
   c->physical = p;
+  *c->script = '\0';
+  c->argc = 0;
+  c->arg = -1;
+  c->argptr = NULL;
+  c->nargptr = NULL;
+  c->bufstart = c->bufend = c->buf;
 
+  memset(&c->pause, '\0', sizeof c->pause);
+  memset(&c->timeout, '\0', sizeof c->timeout);
+}
+
+int
+chat_Setup(struct chat *c, const char *data, const char *phone)
+{
   c->state = CHAT_EXPECT;
 
   if (data == NULL) {
@@ -549,33 +562,38 @@ chat_Init(struct chat *c, struct physical *p, const char *data, int emptybuf,
   } else {
     strncpy(c->script, data, sizeof c->script - 1);
     c->script[sizeof c->script - 1] = '\0';
-    c->argc =  MakeArgs(c->script, c->argv, VECSIZE(c->argv));
+    c->argc = MakeArgs(c->script, c->argv, VECSIZE(c->argv), PARSE_NOHASH);
   }
 
   c->arg = -1;
   c->argptr = NULL;
   c->nargptr = NULL;
 
-  if (emptybuf)
-    c->bufstart = c->bufend = c->buf;
-
   c->TimeoutSec = 30;
   c->TimedOut = 0;
   c->phone = phone;
   c->abort.num = 0;
 
-  memset(&c->pause, '\0', sizeof c->pause);
-  memset(&c->timeout, '\0', sizeof c->timeout);
+  timer_Stop(&c->pause);
+  timer_Stop(&c->timeout);
+
+  return c->argc >= 0;
 }
 
 void
-chat_Destroy(struct chat *c)
+chat_Finish(struct chat *c)
 {
   timer_Stop(&c->pause);
   timer_Stop(&c->timeout);
   while (c->abort.num)
     free(c->abort.string[--c->abort.num].data);
   c->abort.num = 0;
+}
+
+void
+chat_Destroy(struct chat *c)
+{
+  chat_Finish(c);
 }
 
 /*
@@ -685,7 +703,13 @@ ExecStr(struct physical *physical, char *command, char *out, int olen)
   int stat, nb, argc, i;
 
   log_Printf(LogCHAT, "Exec: %s\n", command);
-  argc = MakeArgs(command, vector, VECSIZE(vector));
+  if ((argc = MakeArgs(command, vector, VECSIZE(vector),
+                       PARSE_REDUCE|PARSE_NOHASH)) <= 0) {
+    if (argc < 0)
+      log_Printf(LogWARN, "Syntax error in exec command\n");
+    *out = '\0';
+    return;
+  }
   command_Expand(argv, argc, (char const *const *)vector,
                  physical->dl->bundle, 0, getpid());
 
@@ -708,7 +732,7 @@ ExecStr(struct physical *physical, char *command, char *out, int olen)
       open(_PATH_DEVNULL, O_RDWR);	/* Leave it closed if it fails... */
     for (i = getdtablesize(); i > 3; i--)
       fcntl(i, F_SETFD, 1);
-    setuid(geteuid());
+    setuid(ID0realuid());
     execvp(argv[0], argv);
     fprintf(stderr, "execvp: %s: %s\n", argv[0], strerror(errno));
     _exit(127);

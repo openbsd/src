@@ -17,9 +17,9 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: filter.c,v 1.10 1999/08/02 15:28:47 brian Exp $
+ * $Id: filter.c,v 1.11 2000/01/07 03:26:53 brian Exp $
  *
- *	TODO: Shoud send ICMP error message when we discard packets.
+ *	TODO: Should send ICMP error message when we discard packets.
  */
 
 #include <sys/param.h>
@@ -277,6 +277,24 @@ ParseIgmp(int argc, char const * const *argv, struct filterent *tgt)
   return 1;
 }
 
+#ifdef P_GRE
+static int
+ParseGRE(int argc, char const * const *argv, struct filterent *tgt)
+{
+  /*
+   * Filter currently is a catch-all. Requests are either permitted or
+   * dropped.
+   */
+  if (argc != 0) {
+    log_Printf(LogWARN, "ParseGRE: Too many parameters\n");
+    return 0;
+  } else
+    tgt->f_srcop = OP_NONE;
+
+  return 1;
+}
+#endif
+
 #ifdef P_OSPF
 static int
 ParseOspf(int argc, char const * const *argv, struct filterent *tgt)
@@ -458,6 +476,11 @@ Parse(struct ipcp *ipcp, int argc, char const *const *argv,
     val = ParseOspf(argc, argv, &filterdata);
     break;
 #endif
+#ifdef P_GRE
+  case P_GRE:
+    val = ParseGRE(argc, argv, &filterdata);
+    break;
+#endif
   }
 
   log_Printf(LogDEBUG, "Parse: Src: %s\n", inet_ntoa(filterdata.f_src.ipaddr));
@@ -510,7 +533,7 @@ filter_Set(struct cmdargs const *arg)
 const char *
 filter_Action2Nam(int act)
 {
-  static const char *actname[] = { "  none ", "permit ", "  deny " };
+  static const char * const actname[] = { "  none ", "permit ", "  deny " };
   static char	buf[8];
 
   if (act >= 0 && act < MAXFILTERS) {
@@ -595,8 +618,8 @@ filter_Show(struct cmdargs const *arg)
   return 0;
 }
 
-static const char *protoname[] = {
-  "none", "tcp", "udp", "icmp", "ospf", "igmp"
+static const char * const protoname[] = {
+  "none", "tcp", "udp", "icmp", "ospf", "igmp", "gre"
 };
 
 const char *
@@ -622,7 +645,7 @@ filter_Nam2Proto(int argc, char const *const *argv)
   return proto;
 }
 
-static const char *opname[] = {"none", "eq", "gt", "unknown", "lt"};
+static const char * const opname[] = {"none", "eq", "gt", "lt"};
 
 const char *
 filter_Op2Nam(int op)

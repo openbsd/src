@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tcp.c,v 1.6 1999/07/15 02:10:32 brian Exp $
+ *	$Id: tcp.c,v 1.7 2000/01/07 03:26:55 brian Exp $
  */
 
 #include <sys/types.h>
@@ -44,7 +44,6 @@
 #include "defs.h"
 #include "mbuf.h"
 #include "log.h"
-#include "sync.h"
 #include "timer.h"
 #include "lqr.h"
 #include "hdlc.h"
@@ -100,6 +99,9 @@ tcp_OpenConnection(const char *name, char *host, char *port)
 static struct device tcpdevice = {
   TCP_DEVICE,
   "tcp",
+  { CD_NOTREQUIRED, 0 },
+  NULL,
+  NULL,
   NULL,
   NULL,
   NULL,
@@ -114,7 +116,7 @@ static struct device tcpdevice = {
 
 struct device *
 tcp_iov2device(int type, struct physical *p, struct iovec *iov,
-               int *niov, int maxiov)
+               int *niov, int maxiov, int *auxfd, int *nauxfd)
 {
   if (type == TCP_DEVICE) {
     free(iov[(*niov)++].iov_base);
@@ -131,7 +133,7 @@ tcp_Create(struct physical *p)
   char *cp, *host, *port, *svc;
 
   if (p->fd < 0) {
-    if ((cp = strchr(p->name.full, ':')) != NULL) {
+    if ((cp = strchr(p->name.full, ':')) != NULL && !strchr(cp + 1, ':')) {
       *cp = '\0';
       host = p->name.full;
       port = cp + 1;
@@ -140,8 +142,10 @@ tcp_Create(struct physical *p)
         *cp = ':';
         return 0;
       }
-      if (svc)
+      if (svc) {
+        p->fd--;     /* We own the device but maybe can't use it - change fd */
         *svc = '\0';
+      }
       if (*host && *port) {
         p->fd = tcp_OpenConnection(p->link.name, host, port);
         *cp = ':';
@@ -184,6 +188,8 @@ tcp_Create(struct physical *p)
         p->name.base = p->name.full;
       }
       physical_SetupStack(p, tcpdevice.name, PHYSICAL_FORCE_ASYNC);
+      if (p->cfg.cd.necessity != CD_DEFAULT)
+        log_Printf(LogWARN, "Carrier settings ignored\n");
       return &tcpdevice;
     }
   }

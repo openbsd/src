@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ip.c,v 1.17 1999/08/02 15:28:47 brian Exp $
+ * $Id: ip.c,v 1.18 2000/01/07 03:26:54 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -38,7 +38,6 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -66,18 +65,12 @@
 #include "radius.h"
 #endif
 #include "bundle.h"
-#include "vjcomp.h"
 #include "tun.h"
 #include "ip.h"
 
-static const u_short interactive_ports[32] = {
-  544, 513, 514, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  80, 81, 0, 0, 0, 21, 22, 23, 0, 0, 0, 0, 0, 0, 0, 543,
+static const char * const TcpFlags[] = {
+  "FIN", "SYN", "RST", "PSH", "ACK", "URG"
 };
-
-#define	INTERACTIVE(p)	(interactive_ports[(p) & 0x1F] == (p))
-
-static const char *TcpFlags[] = { "FIN", "SYN", "RST", "PSH", "ACK", "URG" };
 
 static __inline int
 PortMatch(int op, u_short pport, u_short rport)
@@ -130,7 +123,7 @@ FilterCheck(const struct ip *pip, const struct filter *filter)
     if (len < (24 >> 3))	/* don't allow fragment to over-write header */
       return (1);
     /* permit fragments on in and out filter */
-    return (filter->fragok);
+    return (!filter->fragok);
   }
   
   cproto = gotinfo = estab = syn = finrst = didname = 0;
@@ -179,6 +172,15 @@ FilterCheck(const struct ip *pip, const struct filter *filter)
 	    estab = syn = finrst = -1;
 	    sport = ntohs(0);
 	    break;
+#ifdef IPPROTO_GRE
+          case IPPROTO_GRE:
+            cproto = P_GRE;
+            if (datalen < 2)    /* GRE uses 2-octet+ messages */
+              return (1);
+            estab = syn = finrst = -1;
+            sport = ntohs(0);
+            break;
+#endif
 #ifdef IPPROTO_OSPFIGP
 	  case IPPROTO_OSPFIGP:
 	    cproto = P_OSPF;
@@ -301,10 +303,10 @@ IcmpError(struct ip *pip, int code)
   struct mbuf *bp;
 
   if (pip->ip_p != IPPROTO_ICMP) {
-    bp = mbuf_Alloc(cnt, MB_IPIN);
-    memcpy(MBUF_CTOP(bp), ptr, cnt);
+    bp = m_get(m_len, MB_IPIN);
+    memcpy(MBUF_CTOP(bp), ptr, m_len);
     vj_SendFrame(bp);
-    ipcp_AddOutOctets(cnt);
+    ipcp_AddOutOctets(m_len);
   }
 }
 #endif
@@ -321,7 +323,7 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
   struct icmp *icmph;
   char *ptop;
   int mask, len, n;
-  int pri = PRI_NORMAL;
+  int pri = 0;
   int logit, loglen;
   char logbuf[200];
 
@@ -348,9 +350,18 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
       loglen += strlen(logbuf + loglen);
     }
     break;
+
   case IPPROTO_UDP:
+    uh = (struct udphdr *) ptop;
+    if (pip->ip_tos == IPTOS_LOWDELAY)
+      pri++;
+
+    if ((ntohs(pip->ip_off) & IP_OFFMASK) == 0 &&
+        ipcp_IsUrgentUdpPort(&bundle->ncp.ipcp, ntohs(uh->uh_sport),
+                          ntohs(uh->uh_dport)))
+      pri++;
+
     if (logit && loglen < sizeof logbuf) {
-      uh = (struct udphdr *) ptop;
       snprintf(logbuf + loglen, sizeof logbuf - loglen,
 	   "UDP: %s:%d ---> ", inet_ntoa(pip->ip_src), ntohs(uh->uh_sport));
       loglen += strlen(logbuf + loglen);
@@ -359,6 +370,20 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
       loglen += strlen(logbuf + loglen);
     }
     break;
+
+#ifdef IPPROTO_GRE
+  case IPPROTO_GRE:
+    if (logit && loglen < sizeof logbuf) {
+      snprintf(logbuf + loglen, sizeof logbuf - loglen,
+          "GRE: %s ---> ", inet_ntoa(pip->ip_src));
+      loglen += strlen(logbuf + loglen);
+      snprintf(logbuf + loglen, sizeof logbuf - loglen,
+              "%s", inet_ntoa(pip->ip_dst));
+      loglen += strlen(logbuf + loglen);
+    }
+    break;
+#endif
+
 #ifdef IPPROTO_OSPFIGP
   case IPPROTO_OSPFIGP:
     if (logit && loglen < sizeof logbuf) {
@@ -371,6 +396,7 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
     }
     break;
 #endif
+
   case IPPROTO_IPIP:
     if (logit && loglen < sizeof logbuf) {
       uh = (struct udphdr *) ptop;
@@ -382,6 +408,7 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
       loglen += strlen(logbuf + loglen);
     }
     break;
+
   case IPPROTO_IGMP:
     if (logit && loglen < sizeof logbuf) {
       uh = (struct udphdr *) ptop;
@@ -393,14 +420,17 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
       loglen += strlen(logbuf + loglen);
     }
     break;
+
   case IPPROTO_TCP:
     th = (struct tcphdr *) ptop;
     if (pip->ip_tos == IPTOS_LOWDELAY)
-      pri = PRI_FAST;
-    else if ((ntohs(pip->ip_off) & IP_OFFMASK) == 0) {
-      if (INTERACTIVE(ntohs(th->th_sport)) || INTERACTIVE(ntohs(th->th_dport)))
-	pri = PRI_FAST;
-    }
+      pri++;
+
+    if ((ntohs(pip->ip_off) & IP_OFFMASK) == 0 &&
+        ipcp_IsUrgentTcpPort(&bundle->ncp.ipcp, ntohs(th->th_sport),
+                          ntohs(th->th_dport)))
+      pri++;
+
     if (logit && loglen < sizeof logbuf) {
       len = ntohs(pip->ip_len) - (pip->ip_hl << 2) - (th->th_off << 2);
       snprintf(logbuf + loglen, sizeof logbuf - loglen,
@@ -465,17 +495,17 @@ ip_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 
   if (bundle->ncp.ipcp.fsm.state != ST_OPENED) {
     log_Printf(LogWARN, "ip_Input: IPCP not open - packet dropped\n");
-    mbuf_Free(bp);
+    m_freem(bp);
     return NULL;
   }
 
-  mbuf_SetType(bp, MB_IPIN);
+  m_settype(bp, MB_IPIN);
   tun_fill_header(tun, AF_INET);
-  nb = mbuf_Length(bp);
+  nb = m_length(bp);
   if (nb > sizeof tun.data) {
     log_Printf(LogWARN, "ip_Input: %s: Packet too large (got %d, max %d)\n",
                l->name, nb, (int)(sizeof tun.data));
-    mbuf_Free(bp);
+    m_freem(bp);
     return NULL;
   }
   mbuf_Read(bp, tun.data, nb);
@@ -507,20 +537,20 @@ ip_Enqueue(struct ipcp *ipcp, int pri, char *ptr, int count)
 {
   struct mbuf *bp;
 
-  if (pri < 0 || pri > sizeof ipcp->Queue / sizeof ipcp->Queue[0])
+  if (pri < 0 || pri >= IPCP_QUEUES(ipcp))
     log_Printf(LogERROR, "Can't store in ip queue %d\n", pri);
   else {
     /*
      * We allocate an extra 6 bytes, four at the front and two at the end.
      * This is an optimisation so that we need to do less work in
-     * mbuf_Prepend() in acf_LayerPush() and proto_LayerPush() and
+     * m_prepend() in acf_LayerPush() and proto_LayerPush() and
      * appending in hdlc_LayerPush().
      */
-    bp = mbuf_Alloc(count + 6, MB_IPOUT);
-    bp->offset += 4;
-    bp->cnt -= 6;
+    bp = m_get(count + 6, MB_IPOUT);
+    bp->m_offset += 4;
+    bp->m_len -= 6;
     memcpy(MBUF_CTOP(bp), ptr, count);
-    mbuf_Enqueue(&ipcp->Queue[pri], bp);
+    m_enqueue(ipcp->Queue + pri, bp);
   }
 }
 
@@ -529,19 +559,20 @@ ip_DeleteQueue(struct ipcp *ipcp)
 {
   struct mqueue *queue;
 
-  for (queue = ipcp->Queue; queue < ipcp->Queue + PRI_MAX; queue++)
+  for (queue = ipcp->Queue; queue < ipcp->Queue + IPCP_QUEUES(ipcp); queue++)
     while (queue->top)
-      mbuf_Free(mbuf_Dequeue(queue));
+      m_freem(m_dequeue(queue));
 }
 
-int
+size_t
 ip_QueueLen(struct ipcp *ipcp)
 {
   struct mqueue *queue;
-  int result = 0;
+  size_t result;
 
-  for (queue = ipcp->Queue; queue < ipcp->Queue + PRI_MAX; queue++)
-    result += queue->qlen;
+  result = 0;
+  for (queue = ipcp->Queue; queue < ipcp->Queue + IPCP_QUEUES(ipcp); queue++)
+    result += queue->len;
 
   return result;
 }
@@ -553,22 +584,24 @@ ip_PushPacket(struct link *l, struct bundle *bundle)
   struct mqueue *queue;
   struct mbuf *bp;
   struct ip *pip;
-  int cnt;
+  int m_len;
 
   if (ipcp->fsm.state != ST_OPENED)
     return 0;
 
-  for (queue = &ipcp->Queue[PRI_FAST]; queue >= ipcp->Queue; queue--)
+  queue = ipcp->Queue + IPCP_QUEUES(ipcp) - 1;
+  do {
     if (queue->top) {
-      bp = mbuf_Contiguous(mbuf_Dequeue(queue));
-      cnt = mbuf_Length(bp);
+      bp = m_pullup(m_dequeue(queue));
+      m_len = m_length(bp);
       pip = (struct ip *)MBUF_CTOP(bp);
       if (!FilterCheck(pip, &bundle->filter.alive))
         bundle_StartIdleTimer(bundle);
-      link_PushPacket(l, bp, bundle, PRI_NORMAL, PROTO_IP);
-      ipcp_AddOutOctets(ipcp, cnt);
+      link_PushPacket(l, bp, bundle, 0, PROTO_IP);
+      ipcp_AddOutOctets(ipcp, m_len);
       return 1;
     }
+  } while (queue-- != ipcp->Queue);
 
   return 0;
 }

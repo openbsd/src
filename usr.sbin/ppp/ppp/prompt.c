@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: prompt.c,v 1.4 1999/05/08 11:06:39 brian Exp $
+ *	$Id: prompt.c,v 1.5 2000/01/07 03:26:55 brian Exp $
  */
 
 #include <sys/param.h>
@@ -173,6 +173,7 @@ static void
 prompt_Read(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
 {
   struct prompt *p = descriptor2prompt(d);
+  struct prompt *op;
   int n;
   char ch;
   char linebuff[LINE_LEN];
@@ -186,8 +187,13 @@ prompt_Read(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
         linebuff[n] = '\0';
       p->nonewline = 1;		/* Maybe command_Decode does a prompt */
       prompt_Required(p);
-      if (n)
-        command_Decode(bundle, linebuff, n, p, p->src.from);
+      if (n) {
+        if ((op = log_PromptContext) == NULL)
+          log_PromptContext = p;
+        if (!command_Decode(bundle, linebuff, n, p, p->src.from))
+          prompt_Printf(p, "Syntax error\n");
+        log_PromptContext = op;
+      }
     } else if (n <= 0) {
       log_Printf(LogPHASE, "%s: Client connection closed.\n", p->src.from);
       if (!p->owner)

@@ -34,6 +34,8 @@
          withing the packet alising module.
 
     See HISTORY file for record of revisions.
+
+    $Id: alias_ftp.c,v 1.3 2000/01/07 03:26:52 brian Exp $
 */
 
 /* Includes */
