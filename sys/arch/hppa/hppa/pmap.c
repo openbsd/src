@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.58 2002/02/08 03:49:21 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.59 2002/02/12 16:28:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -223,7 +223,6 @@ pmap_hash(pa_space_t sp, vaddr_t va)
 	__asm __volatile (
 		"extru	%2, 23, 20, %%r22\n\t"	/* r22 = (va >> 8) */
 		"zdep	%1, 22, 16, %%r23\n\t"	/* r23 = (sp << 9) */
-		"dep	%%r0, 31, 4, %%r22\n\t"	/* r22 &= ~0xf */
 		"xor	%%r22,%%r23, %%r23\n\t"	/* r23 ^= r22 */
 		"mfctl	%%cr24, %%r22\n\t"	/* r22 = sizeof(HPT)-1 */
 		"and	%%r22,%%r23, %%r23\n\t"	/* r23 &= r22 */
