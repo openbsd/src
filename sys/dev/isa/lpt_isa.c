@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.4 1997/09/30 18:56:25 mickey Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.5 1997/10/07 04:47:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -102,7 +102,7 @@ lpt_isa_probe(parent, match, aux)
 	bus_space_handle_t ioh;
 	bus_addr_t base;
 	u_int8_t mask, data;
-	int i, rv;
+	int i, rv, iosz;
 
 #ifdef DEBUG
 #define	ABORT								     \
@@ -117,9 +117,8 @@ lpt_isa_probe(parent, match, aux)
 
 	iot = ia->ia_iot;
 	base = ia->ia_iobase;
-	if (ia->ia_iosize == -1)
-		ia->ia_iosize = LPT_NPORTS;
-	if (bus_space_map(iot, base, ia->ia_iosize, 0, &ioh))
+	iosz = (ia->ia_iosize == -1) ? LPT_NPORTS : ia->ia_iosize;
+	if (bus_space_map(iot, base, iosz, 0, &ioh))
 		return 0;
 
 	rv = 0;
@@ -153,7 +152,7 @@ lpt_isa_probe(parent, match, aux)
 	rv = 1;
 
 out:
-	bus_space_unmap(iot, ioh, ia->ia_iosize);
+	bus_space_unmap(iot, ioh, iosz);
 	return rv;
 }
 
@@ -166,6 +165,7 @@ lpt_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	int iosz;
 
 	if (ia->ia_irq != IRQUNK)
 		printf("\n");
@@ -177,7 +177,8 @@ lpt_isa_attach(parent, self, aux)
 	sc->sc_state = 0;
 
 	iot = sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
+	iosz = (ia->ia_iosize == -1) ? LPT_NPORTS : ia->ia_iosize;
+	if (bus_space_map(iot, ia->ia_iobase, iosz, 0, &ioh))
 		panic("lpt_isa_attach: couldn't map I/O ports");
 	sc->sc_ioh = ioh;
 
