@@ -419,6 +419,7 @@
 ./usr/include/dev/pci/pciide_cmd_reg.h
 ./usr/include/dev/pci/pciide_cy693_reg.h
 ./usr/include/dev/pci/pciide_hpt_reg.h
+./usr/include/dev/pci/pciide_natsemi_reg.h
 ./usr/include/dev/pci/pciide_opti_reg.h
 ./usr/include/dev/pci/pciide_pdc202xx_reg.h
 ./usr/include/dev/pci/pciide_piix_reg.h
@@ -543,6 +544,8 @@
 ./usr/include/dev/rndvar.h
 ./usr/include/dev/sbus
 ./usr/include/dev/sbus/bereg.h
+./usr/include/dev/sbus/cs4231reg.h
+./usr/include/dev/sbus/cs4231var.h
 ./usr/include/dev/sbus/lebuffervar.h
 ./usr/include/dev/sbus/qecreg.h
 ./usr/include/dev/sbus/qecvar.h

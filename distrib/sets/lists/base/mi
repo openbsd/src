@@ -505,6 +505,10 @@
 ./usr/lib/apache/modules
 ./usr/lib/gcc-lib
 ./usr/libdata
+./usr/libdata/cvs
+./usr/libdata/cvs/contrib
+./usr/libdata/cvs/contrib/README
+./usr/libdata/cvs/contrib/intro.doc
 ./usr/libdata/lint
 ./usr/libdata/perl5
 ./usr/libdata/perl5/AnyDBM_File.pm
@@ -1134,6 +1138,7 @@
 ./usr/libexec/cvs/contrib/cvs2vendor
 ./usr/libexec/cvs/contrib/cvs_acls
 ./usr/libexec/cvs/contrib/cvscheck
+./usr/libexec/cvs/contrib/debug_check_log
 ./usr/libexec/cvs/contrib/log
 ./usr/libexec/cvs/contrib/log_accum
 ./usr/libexec/cvs/contrib/mfpipe

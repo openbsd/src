@@ -453,6 +453,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/lofnvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/maestro_reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_natsemi_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pcscpreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/plx9060reg.ph
@@ -466,6 +467,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/rasops/rasops_masks.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/bereg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/cs4231reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/cs4231var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/lebuffervar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/qecreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/qecvar.ph
