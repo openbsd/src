@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.45 2001/04/24 07:27:36 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.46 2001/05/05 00:48:11 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1710,6 +1710,13 @@ exchange_establish (char *name,
 	      return;
 	    }
 
+	  /*
+	   * XXX We're losing information here (what the original finalize
+	   * routine was. As a result, if an exchange does not manage to
+	   * get through, there may be application-specific information
+	   * that won't get cleaned up, since no error signalling will be
+	   * done. This is the case with dynamic SAs and PFKEY.
+	   */
 	  exchange_establish (peer, exchange_establish_finalize, name);
 	}
       else
