@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.468 2001/11/23 04:17:58 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.469 2001/11/26 16:37:32 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1813,6 +1813,7 @@ product SIS 630			0x0630	630 Host-PCI
 product SIS 730			0x0730	730 Host-PCI
 product SIS 900			0x0900	900 10/100BaseTX
 product SIS 7016		0x7016	7016 10/100BaseTX
+product SIS 7018		0x7018	Trident 4D WAVE
 product SIS 5511		0x5511	5511
 product SIS 5512		0x5512	5512
 product SIS 5513		0x5513	5513 EIDE
