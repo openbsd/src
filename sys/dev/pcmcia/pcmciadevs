@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.31 2000/02/01 16:57:17 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.32 2000/02/02 16:50:29 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -237,6 +237,7 @@ vendor SVEC			-1	SVEC/Hawking
 vendor AMBICOM			-1	AmbiCom
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
+vendor MELCO			-1	Melco Inc
 vendor EDIMAX			-1	Edimax
 vendor CNET			-1	CNet
 vendor SHUTTLE			-1	Shuttle
@@ -271,6 +272,7 @@ product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL }
 product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL }
 product EPSON EEN10B		{ "Seiko&spEpson&spCorp.", "Ethernet", "P/N:&spEEN10B&spRev.&sp00", NULL }
 product EXP EXPMULTIMEDIA	{ "EXP&sp&sp&sp", "PnPIDE", "F1", NULL }
+product MELCO WLI_PCM		{ "AMD", "Am79C930", NULL, NULL }
 product PROXIM RL2_7200		{ "PROXIM", "LAN&spCARD", "RANGELAN2", NULL }
 product PROXIM RL2_7400		{ "PROXIM", "LAN&spPC&spCARD", "RANGELAN2", NULL }
 product PROXIM SYMPHONY		{ "PROXIM", "LAN&spPC&spCARD", "SYMPHONY", NULL }
