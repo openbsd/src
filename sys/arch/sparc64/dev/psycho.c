@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.27 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.28 2003/03/05 00:20:13 henric Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -454,9 +454,9 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 
 		memset(sc->sc_is, 0, sizeof *sc->sc_is);
 
-		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0) {
+		if (getproplen(sc->sc_node, "no-streaming-cache") < 0) {
 			struct strbuf_ctl *sb = &pp->pp_sb;
-			vaddr_t va = (vaddr_t)pp->pp_flush[0x40];
+			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
 
 			/*
 			 * Initialize the strbuf_ctl.
@@ -482,7 +482,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
 		if (bus_space_map(sc->sc_configtag,
-		    sc->sc_basepaddr, 0x0100000, 0, &sc->sc_configaddr))
+		    sc->sc_basepaddr, 0x01000000, 0, &sc->sc_configaddr))
 			panic("could not map psycho PCI configuration space");
 	} else {
 		/* Just copy IOMMU state, config tag and address */
@@ -490,9 +490,9 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
 
-		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0) {
+		if (getproplen(sc->sc_node, "no-streaming-cache") < 0) {
 			struct strbuf_ctl *sb = &pp->pp_sb;
-			vaddr_t va = (vaddr_t)pp->pp_flush[0x40];
+			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
 
 			/*
 			 * Initialize the strbuf_ctl.
