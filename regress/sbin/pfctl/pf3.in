@@ -4,3 +4,6 @@ pass in from any to any
 block in proto tcp from any to any flags FUPEW
 block in proto tcp from any to any flags SF/SFRA
 block in proto tcp from any to any flags /SFRAW
+
+pass in proto { udp, icmp, tcp } from any to any flags S
+pass in from any to any flags S
