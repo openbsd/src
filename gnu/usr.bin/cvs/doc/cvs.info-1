@@ -27,7 +27,7 @@ File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.9.2.
+1.9.4.
 
 * Menu:
 
@@ -135,7 +135,7 @@ Binary files
      (release 1.15 and later are OK).  You must also configure both RCS
      and CVS to handle binary files when you install them.
 
-     Keword substitution can be a source of trouble with binary files.
+     Keyword substitution can be a source of trouble with binary files.
      *Note Keyword substitution::, for solutions.
 
 The `admin' command
@@ -160,9 +160,9 @@ G. Grubbs <dgg@think.com>.
    Some text has been extracted from the man pages for RCS.
 
    The CVS FAQ by David G. Grubbs has provided useful material.  The
-FAQ is no longer maintained, however, and this manual about the closest
-thing there is to a successor (with respect to documenting how to use
-CVS, at least).
+FAQ is no longer maintained, however, and this manual is about the
+closest thing there is to a successor (with respect to documenting how
+to use CVS, at least).
 
    In addition, the following persons have helped by telling me about
 mistakes I've made: Roxanne Brunskill <rbrunski@datap.ca>, Kathy Dyer
@@ -844,6 +844,14 @@ creates them read-only (see the sections on watches, *Note Setting a
 watch::; -r, *Note Global options::; or CVSREAD, *Note Environment
 variables::).
 
+   Note that using the client/server CVS (*note Remote
+repositories::.), there is no good way to set `CVSUMASK'; the setting
+on the client machine has no effect.  If you are connecting with `rsh',
+you can set `CVSUMASK' in `.bashrc' or `.cshrc', as described in the
+documentation for your operating system.  This behavior might change in
+future versions of CVS; do not rely on the setting of `CVSUMASK' on the
+client having no effect.
+
    Since CVS was not written to be run setuid, it is unsafe to try to
 run it setuid.  You cannot use the setuid features of RCS together with
 CVS.
@@ -982,12 +990,41 @@ are described in *Note Connecting via rsh::.
 
 * Menu:
 
+* Server requirements::         Memory and other resources for servers
 * Connecting via rsh::          Using the `rsh' program to connect
 * Password authenticated::      Direct connections using passwords
 * Kerberos authenticated::      Direct connections with kerberos
 
 
-File: cvs.info,  Node: Connecting via rsh,  Next: Password authenticated,  Up: Remote repositories
+File: cvs.info,  Node: Server requirements,  Next: Connecting via rsh,  Up: Remote repositories
+
+Server requirements
+-------------------
+
+   The quick answer to what sort of machine is suitable as a server is
+that requirements are modest--a server with 32M of memory or even less
+can handle a fairly large source tree with a fair amount of activity.
+
+   The real answer, of course, is more complicated.  The CVS server
+consists of two processes for each client that it is serving.  Memory
+consumption on the child process should remain fairly small.  Memory
+consumption on the parent process, particularly if the network
+connection to the client is slow, can be expected to grow to slightly
+more than the size of the sources in a single directory, or two
+megabytes, whichever is larger.
+
+   Multiplying the size of each CVS server by the number of servers
+which you expect to have active at one time should give an idea of
+memory requirements for the server.  For the most part, the memory
+consumed by the parent process probably can be swap space rather than
+physical memory.
+
+   Resource consumption for the client or the non-client/server CVS is
+even more modest--any machine with enough capacity to run the operating
+system in question should have little trouble.
+
+
+File: cvs.info,  Node: Connecting via rsh,  Next: Password authenticated,  Prev: Server requirements,  Up: Remote repositories
 
 Connecting with rsh
 -------------------
@@ -1027,11 +1064,11 @@ program which can transmit data to and from the server without modifying
 it; for example the Windows NT `rsh' is not suitable since it by
 default translates between CRLF and LF.  The OS/2 CVS port has a hack
 to pass `-b' to `rsh' to get around this, but since this could
-potentially cause programs for programs other than the standard `rsh',
+potentially cause problems for programs other than the standard `rsh',
 it may change in the future.  If you set `CVS_RSH' to `SSH' or some
 other rsh replacement, the instructions in the rest of this section
-concerning `.rhosts' and so on are likely to be incorrect; consult the
-documentation for your rsh replacement.
+concerning `.rhosts' and so on are likely to be inapplicable; consult
+the documentation for your rsh replacement.
 
    Continuing our example, supposing you want to access the module
 `foo' in the repository `/usr/local/cvsroot/', on machine
@@ -1151,51 +1188,4 @@ as well.
    Right now, the only way to put a password in the CVS `passwd' file
 is to paste it there from somewhere else.  Someday, there may be a `cvs
 passwd' command.
-
-
-File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
-
-Using the client with password authentication
-.............................................
-
-   Before connecting to the server, the client must "log in" with the
-command `cvs login'.  Logging in verifies a password with the server,
-and also records the password for later transactions with the server.
-The `cvs login' command needs to know the username, server hostname,
-and full repository path, and it gets this information from the
-repository argument or the `CVSROOT' environment variable.
-
-   `cvs login' is interactive -- it prompts for a password:
-
-     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot login
-     CVS password:
-
-   The password is checked with the server; if it is correct, the
-`login' succeeds, else it fails, complaining that the password was
-incorrect.
-
-   Once you have logged in, you can force CVS to connect directly to
-the server and authenticate with the stored password:
-
-     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
-
-   The `:pserver:' is necessary because without it, CVS will assume it
-should use `rsh' to connect with the server (*note Connecting via
-rsh::.).  (Once you have a working copy checked out and are running CVS
-commands from within it, there is no longer any need to specify the
-repository explicitly, because CVS records it in the working copy's
-`CVS' subdirectory.)
-
-   Passwords are stored by default in the file `$HOME/.cvspass'.  Its
-format is human-readable, but don't edit it unless you know what you
-are doing.  The passwords are not stored in cleartext, but are
-trivially encoded to protect them from "innocent" compromise (i.e.,
-inadvertently being seen by a system administrator who happens to look
-at that file).
-
-   The `CVS_PASSFILE' environment variable overrides this default.  If
-you use this variable, make sure you set it *before* `cvs login' is
-run.  If you were to set it after running `cvs login', then later CVS
-commands would be unable to look up the password for transmission to
-the server.
 

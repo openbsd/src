@@ -22,6 +22,56 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
+
+Using the client with password authentication
+.............................................
+
+   Before connecting to the server, the client must "log in" with the
+command `cvs login'.  Logging in verifies a password with the server,
+and also records the password for later transactions with the server.
+The `cvs login' command needs to know the username, server hostname,
+and full repository path, and it gets this information from the
+repository argument or the `CVSROOT' environment variable.
+
+   `cvs login' is interactive -- it prompts for a password:
+
+     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot login
+     CVS password:
+
+   The password is checked with the server; if it is correct, the
+`login' succeeds, else it fails, complaining that the password was
+incorrect.
+
+   Once you have logged in, you can force CVS to connect directly to
+the server and authenticate with the stored password:
+
+     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+
+   The `:pserver:' is necessary because without it, CVS will assume it
+should use `rsh' to connect with the server (*note Connecting via
+rsh::.).  (Once you have a working copy checked out and are running CVS
+commands from within it, there is no longer any need to specify the
+repository explicitly, because CVS records it in the working copy's
+`CVS' subdirectory.)
+
+   Passwords are stored by default in the file `$HOME/.cvspass'.  Its
+format is human-readable, but don't edit it unless you know what you
+are doing.  The passwords are not stored in cleartext, but are
+trivially encoded to protect them from "innocent" compromise (i.e.,
+inadvertently being seen by a system administrator who happens to look
+at that file).
+
+   The password for the currently choosen remote repository can be
+removed from the CVS_PASSFILE by using the `cvs logout' command.
+
+   The `CVS_PASSFILE' environment variable overrides this default.  If
+you use this variable, make sure you set it *before* `cvs login' is
+run.  If you were to set it after running `cvs login', then later CVS
+commands would be unable to look up the password for transmission to
+the server.
+
+
 File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
 
 Security considerations with password authentication
@@ -335,12 +385,13 @@ get complicated.  Often, two people try to edit the same file
 simultaneously.  One solution, known as "file locking" or "reserved
 checkouts", is to allow only one person to edit each file at a time.
 This is the only solution with some version control systems, including
-RCS and SCCS.  CVS doesn't have a very nice implementation of reserved
-checkouts (yet) but there are ways to get it working (for example, see
-the `cvs admin -l' command in *Note admin options::).  It also may be
-possible to use the watches features described below, together with
-suitable procedures (not enforced by software), to avoid having two
-people edit at the same time.
+RCS and SCCS.  Currently the usual way to get reserved checkouts with
+CVS is the `cvs admin -l' command (*note admin options::.).  This is
+not as nicely integrated into CVS as the watch features, described
+below, but it seems that most people with a need for reserved checkouts
+find it adequate.  It also may be possible to use the watches features
+described below, together with suitable procedures (not enforced by
+software), to avoid having two people edit at the same time.
 
    The default model with CVS is known as "unreserved checkouts".  In
 this model, developers can edit their own "working copy" of a file
@@ -407,10 +458,11 @@ Needs Merge
      Someone else has committed a newer revision to the repository, and
      you have also made modifications to the file.
 
-Unresolved Conflict
+File had conflicts on merge
      This is like Locally Modified, except that a previous `update'
-     command gave a conflict.  You need to resolve the conflict as
-     described in *Note Conflicts example::.
+     command gave a conflict.  If you have not already done so, you
+     need to resolve the conflict as described in *Note Conflicts
+     example::.
 
 Unknown
      CVS doesn't know anything about this file.  For example, you have
@@ -1177,79 +1229,4 @@ created by adding a digit at the tail of the revision number it is
 based on.  (If `release-1-0' corresponds to revision 1.4, the branch's
 revision number will be 1.4.2.  For obscure reasons CVS always gives
 branches even numbers, starting at 2.  *Note Revision numbers::.).
-
-
-File: cvs.info,  Node: Sticky tags,  Prev: Creating a branch,  Up: Branches
-
-Sticky tags
-===========
-
-   The `-r release-1-0-patches' flag that was given to `checkout' in
-the previous example is "sticky", that is, it will apply to subsequent
-commands in this directory.  If you commit any modifications, they are
-committed on the branch.  You can later merge the modifications into
-the main trunk.  *Note Merging::.
-
-   You can use the `status' command to see what sticky tags or dates
-are set:
-
-     $ vi driver.c   # Fix the bugs
-     $ cvs commit -m "Fixed initialization bug" driver.c
-     Checking in driver.c;
-     /usr/local/cvsroot/yoyodyne/tc/driver.c,v  <--  driver.c
-     new revision: 1.7.2.1; previous revision: 1.7
-     done
-     $ cvs status -v driver.c
-     ===================================================================
-     File: driver.c          Status: Up-to-date
-     
-         Version:            1.7.2.1 Sat Dec  5 19:35:03 1992
-         RCS Version:        1.7.2.1 /usr/local/cvsroot/yoyodyne/tc/driver.c,v
-         Sticky Tag:         release-1-0-patches (branch: 1.7.2)
-         Sticky Date:        (none)
-         Sticky Options:     (none)
-     
-         Existing Tags:
-             release-1-0-patches             (branch: 1.7.2)
-             release-1-0                     (revision: 1.7)
-
-   The sticky tags will remain on your working files until you delete
-them with `cvs update -A'.  The `-A' option retrieves the version of
-the file from the head of the trunk, and forgets any sticky tags,
-dates, or options.
-
-   Sticky tags are not just for branches.  For example, suppose that
-you want to avoid updating your working directory, to isolate yourself
-from possibly destabilizing changes other people are making.  You can,
-of course, just refrain from running `cvs update'.  But if you want to
-avoid updating only a portion of a larger tree, then sticky tags can
-help.  If you check out a certain revision (such as 1.4) it will become
-sticky.  Subsequent `cvs update' will not retrieve the latest revision
-until you reset the tag with `cvs update -A'.  Likewise, use of the
-`-D' option to `update' or `checkout' sets a "sticky date", which,
-similarly, causes that date to be used for future retrievals.
-
-   Many times you will want to retrieve an old version of a file
-without setting a sticky tag.  The way to do that is with the `-p'
-option to `checkout' or `update', which sends the contents of the file
-to standard output.  For example, suppose you have a file named `file1'
-which existed as revision 1.1, and you then removed it (thus adding a
-dead revision 1.2).  Now suppose you want to add it again, with the same
-contents it had previously.  Here is how to do it:
-
-     $ cvs update -p -r 1.1 file1 >file1
-     ===================================================================
-     Checking out file1
-     RCS:  /tmp/cvs-sanity/cvsroot/first-dir/Attic/file1,v
-     VERS: 1.1
-     ***************
-     $ cvs add file1
-     cvs add: re-adding file file1 (in place of dead revision 1.2)
-     cvs add: use 'cvs commit' to add this file permanently
-     $ cvs commit -m test
-     Checking in file1;
-     /tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
-     new revision: 1.3; previous revision: 1.2
-     done
-     $
 

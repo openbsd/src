@@ -554,6 +554,7 @@ Index
 * Export (subcommand):                  export.
 * Export program:                       modules.
 * Fetching source:                      Getting the source.
+* File had conflicts on merge:          File status.
 * File locking:                         Multiple developers.
 * File permissions:                     File permissions.
 * File status:                          File status.
@@ -603,6 +604,7 @@ Index
 * Layout of repository:                 Repository.
 * Left-hand options:                    Global options.
 * Linear development:                   Revision numbers.
+* link, symbolic, importing:            import output.
 * List, mailing list:                   What is CVS?.
 * Locally Added:                        File status.
 * Locally Modified:                     File status.
@@ -623,6 +625,7 @@ Index
 * Login (subcommand):                   Password authentication client.
 * loginfo (admin file):                 loginfo.
 * LOGNAME:                              Environment variables.
+* Logout (subcommand):                  Password authentication client.
 * Mail, automatic mail on commit:       Informing others.
 * Mailing list:                         What is CVS?.
 * Mailing log messages:                 loginfo.
@@ -764,6 +767,7 @@ Index
 * Structure:                            Structure.
 * Subdirectories:                       Recursive behavior.
 * Support, getting CVS support:         Preface.
+* symbolic link, importing:             import output.
 * Symbolic name (tag):                  Tags.
 * Syntax of info files:                 syntax.
 * Tag (subcommand):                     tag.
@@ -798,7 +802,6 @@ Index
 * unedit (subcommand):                  Editing files.
 * Unknown:                              File status.
 * unreserved checkouts:                 Multiple developers.
-* Unresolved Conflict:                  File status.
 * Up-to-date:                           File status.
 * Update (subcommand):                  update.
 * Update program:                       modules.
@@ -820,6 +823,7 @@ Index
 * watchers (subcommand):                Watch information.
 * Watches:                              Watches.
 * Wdiff (import example):               First import.
+* web pages, maintaining with CVS:      Keeping a checked out copy.
 * What (shell command):                 Using keywords.
 * What branches are good for:           Branches motivation.
 * What is CVS?:                         What is CVS?.

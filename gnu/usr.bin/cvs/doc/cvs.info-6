@@ -22,21 +22,123 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: modules,  Next: Wrappers,  Up: Administrative files
+
+The modules file
+================
+
+   The `modules' file records your definitions of names for collections
+of source code.  CVS will use these definitions if you use CVS to
+update the modules file (use normal commands like `add', `commit', etc).
+
+   The `modules' file may contain blank lines and comments (lines
+beginning with `#') as well as module definitions.  Long lines can be
+continued on the next line by specifying a backslash (`\') as the last
+character on the line.
+
+   A module definition is a single line of the `modules' file, in
+either of two formats.  In both cases, MNAME represents the symbolic
+module name, and the remainder of the line is its definition.
+
+`MNAME -a ALIASES...'
+     This represents the simplest way of defining a module MNAME.  The
+     `-a' flags the definition as a simple alias: CVS will treat any
+     use of MNAME (as a command argument) as if the list of names
+     ALIASES had been specified instead.  ALIASES may contain either
+     other module names or paths.  When you use paths in aliases,
+     `checkout' creates all intermediate directories in the working
+     directory, just as if the path had been specified explicitly in
+     the CVS arguments.
+
+`MNAME [ options ] DIR [ FILES... ] [ &MODULE... ]'
+     In the simplest case, this form of module definition reduces to
+     `MNAME DIR'.  This defines all the files in directory DIR as
+     module mname.  DIR is a relative path (from `$CVSROOT') to a
+     directory of source in the source repository.  In this case, on
+     checkout, a single directory called MNAME is created as a working
+     directory; no intermediate directory levels are used by default,
+     even if DIR was a path involving several directory levels.
+
+     By explicitly specifying files in the module definition after DIR,
+     you can select particular files from directory DIR.  The sample
+     definition for `modules' is an example of a module defined with a
+     single file from a particular directory.  Here is another example:
+
+          m4test  unsupported/gnu/m4 foreach.m4 forloop.m4
+
+     With this definition, executing `cvs checkout m4test' will create
+     a single working directory `m4test' containing the two files
+     listed, which both come from a common directory several levels deep
+     in the CVS source repository.
+
+     A module definition can refer to other modules by including
+     `&MODULE' in its definition.  `checkout' creates a subdirectory
+     for each such module, in the directory containing the module.  For
+     example, if modules contains
+
+          m4test &unsupported
+
+     then a checkout will create an `m4test' directory which contains a
+     directory called `unsupported', which in turns contains all the
+     directories and files which live there.
+
+    `-d NAME'
+          Name the working directory something other than the module
+          name.
+
+    `-e PROG'
+          Specify a program PROG to run whenever files in a module are
+          exported.  PROG runs with a single argument, the module name.
+
+    `-i PROG'
+          Specify a program PROG to run whenever files in a module are
+          committed.  PROG runs with a single argument, the full
+          pathname of the affected directory in a source repository.
+          The `commitinfo', `loginfo', and `verifymsg' files provide
+          other ways to call a program on commit.
+
+    `-o PROG'
+          Specify a program PROG to run whenever files in a module are
+          checked out.  PROG runs with a single argument, the module
+          name.
+
+    `-s STATUS'
+          Assign a status to the module.  When the module file is
+          printed with `cvs checkout -s' the modules are sorted
+          according to primarily module status, and secondarily
+          according to the module name.  This option has no other
+          meaning.  You can use this option for several things besides
+          status: for instance, list the person that is responsible for
+          this module.
+
+    `-t PROG'
+          Specify a program PROG to run whenever files in a module are
+          tagged with `rtag'.  PROG runs with two arguments: the module
+          name and the symbolic tag specified to `rtag'.  There is no
+          way to specify a program to run when `tag' is executed.
+
+    `-u PROG'
+          Specify a program PROG to run whenever `cvs update' is
+          executed from the top-level directory of the checked-out
+          module.  PROG runs with a single argument, the full path to
+          the source repository for this module.
+
+
 File: cvs.info,  Node: Wrappers,  Next: commit files,  Prev: modules,  Up: Administrative files
 
 The cvswrappers file
 ====================
 
    Wrappers allow you to set a hook which transforms files on their way
-in and out of CVS.  Most or all of the wrappers features do not work
-with client/server CVS.
+in and out of CVS.
 
    The file `cvswrappers' defines the script that will be run on a file
 when its name matches a regular expresion. There are two scripts that
 can be run on a file or directory. One script is executed on the
 file/directory before being checked into the repository (this is denoted
 with the `-t' flag) and the other when the file is checked out of the
-repository (this is denoted with the `-f' flag)
+repository (this is denoted with the `-f' flag).  The `-t'/`-f' feature
+does not work with client/server CVS.
 
    The `cvswrappers' also has a `-m' option to specify the merge
 methodology that should be used when the file is updated.  `MERGE'
@@ -83,6 +185,15 @@ the resulting filtered file should be placed.
 The `-f' filter is called with one argument, which is the name of the
 file to filter from. The end result of this filter will be a file in
 the users directory that they can work on as they normally would.
+
+   Note that the `-t'/`-f' features do not conveniently handle one
+portion of CVS's operation: determining when files are modified.  CVS
+will still want a file (or directory) to exist, and it will use its
+modification time to determine whether a file is modified.  If CVS
+erroneously thinks a file is unmodified (for example, a directory is
+unchanged but one of the files within it is changed), you can force it
+to check in the file anyway by specifying the `-f' option to `cvs
+commit' (*note commit options::.).
 
    For another example, the following command imports a directory,
 treating files whose name ends in `.exe' as binary:
@@ -681,8 +792,7 @@ All environment variables which affect CVS
 `$CVSEDITOR'
      Specifies the program to use for recording log messages during
      commit.  If not set, the default is `/usr/ucb/vi'.  `$CVSEDITOR'
-     overrides `$EDITOR'.  `$CVSEDITOR' does not exist in CVS 1.3, but
-     the next release will probably include it.
+     overrides `$EDITOR'.
 
 `$PATH'
      If `$RCSBIN' is not set, and no path is compiled into CVS, it will

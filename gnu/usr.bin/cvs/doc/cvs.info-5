@@ -22,6 +22,109 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: import,  Next: log,  Prev: history,  Up: CVS commands
+
+import--Import sources into CVS, using vendor branches
+======================================================
+
+   * Synopsis: import [-options] repository vendortag releasetag...
+
+   * Requires: Repository, source distribution directory.
+
+   * Changes: repository.
+
+   Use `import' to incorporate an entire source distribution from an
+outside source (e.g., a source vendor) into your source repository
+directory.  You can use this command both for initial creation of a
+repository, and for wholesale updates to the module from the outside
+source.  *Note Tracking sources::, for a discussion on this subject.
+
+   The REPOSITORY argument gives a directory name (or a path to a
+directory) under the CVS root directory for repositories; if the
+directory did not exist, import creates it.
+
+   When you use import for updates to source that has been modified in
+your source repository (since a prior import), it will notify you of
+any files that conflict in the two branches of development; use
+`checkout -j' to reconcile the differences, as import instructs you to
+do.
+
+   If CVS decides a file should be ignored (*note cvsignore::.), it
+does not import it and prints `I ' followed by the filename (*note
+import output::., for a complete description of the output).
+
+   If the file `$CVSROOT/CVSROOT/cvswrappers' exists, any file whose
+names match the specifications in that file will be treated as packages
+and the appropriate filtering will be performed on the file/directory
+before being imported, *Note Wrappers::.
+
+   The outside source is saved in a first-level RCS branch, by default
+1.1.1.  Updates are leaves of this branch; for example, files from the
+first imported collection of source will be revision 1.1.1.1, then
+files from the first imported update will be revision 1.1.1.2, and so
+on.
+
+   At least three arguments are required.  REPOSITORY is needed to
+identify the collection of source.  VENDORTAG is a tag for the entire
+branch (e.g., for 1.1.1).  You must also specify at least one
+RELEASETAG to identify the files at the leaves created each time you
+execute `import'.
+
+   Note that `import' does *not* change the directory in which you
+invoke it.  In particular, it does not set up that directory as a CVS
+working directory; if you want to work with the sources import them
+first and then check them out into a different directory (*note Getting
+the source::.).
+
+* Menu:
+
+* import options::              import options
+* import output::               import output
+* import examples::             import examples
+
+
+File: cvs.info,  Node: import options,  Next: import output,  Up: import
+
+import options
+--------------
+
+   This standard option is supported by `import' (*note Common
+options::., for a complete description):
+
+`-m MESSAGE'
+     Use MESSAGE as log information, instead of invoking an editor.
+
+   There are three additional special options.
+
+`-b BRANCH'
+     Specify a first-level branch other than 1.1.1.  Unless the `-b
+     BRANCH' flag is given, revisions will *always* be made to the
+     branch 1.1.1--even if a VENDORTAG that matches another branch is
+     given!  What happens in that case, is that the tag will be reset
+     to 1.1.1.  Warning: This behavior might change in the future.
+
+`-k SUBST'
+     Indicate the RCS keyword expansion mode desired.  This setting
+     will apply to all files created during the import, but not to any
+     files that previously existed in the repository.  See *Note
+     Substitution modes::, for a list of valid `-k' settings.
+
+`-I NAME'
+     Specify file names that should be ignored during import.  You can
+     use this option repeatedly.  To avoid ignoring any files at all
+     (even those ignored by default), specify `-I !'.
+
+     NAME can be a file name pattern of the same type that you can
+     specify in the `.cvsignore' file.  *Note cvsignore::.
+
+`-W SPEC'
+     Specify file names that should be filtered during import.  You can
+     use this option repeatedly.
+
+     SPEC can be a file name pattern of the same type that you can
+     specify in the `.cvswrappers' file. *Note Wrappers::.
+
+
 File: cvs.info,  Node: import output,  Next: import examples,  Prev: import options,  Up: import
 
 import output
@@ -45,10 +148,12 @@ each file, preceded by one character indicating the status of the file:
      The file is being ignored (*note cvsignore::.).
 
 `L FILE'
-     The file is a symbolic link; at the moment (and for the forseeable
-     future), symbolic links are ignored.  (Various options in the
-     `modules' file can be used to recreate symbolic links on checkout,
-     update, etc.; *note modules::..)
+     The file is a symbolic link; `cvs import' ignores symbolic links.
+     People periodically suggest that this behavior should be changed,
+     but if there is a consensus on what it should be changed to, it
+     doesn't seem to be apparent.  (Various options in the `modules'
+     file can be used to recreate symbolic links on checkout, update,
+     etc.; *note modules::..)
 
 
 File: cvs.info,  Node: import examples,  Prev: import output,  Up: import
@@ -1207,6 +1312,10 @@ options::.) and *Note Index::.
      Prompt for password for authenticating server.  See *Note Password
      authentication client::.
 
+`logout'
+     Remove stored password for authenticating server.  See *Note
+     Password authentication client::.
+
 `rdiff [OPTIONS] MODULES...'
      Show differences between releases.  See *Note rdiff::.
 
@@ -1459,106 +1568,4 @@ defines the modules inside the repository.
 * cvsignore::                   Ignoring files via cvsignore
 * history file::                History information
 * Variables::                   Various variables are expanded
-
-
-File: cvs.info,  Node: modules,  Next: Wrappers,  Up: Administrative files
-
-The modules file
-================
-
-   The `modules' file records your definitions of names for collections
-of source code.  CVS will use these definitions if you use CVS to
-update the modules file (use normal commands like `add', `commit', etc).
-
-   The `modules' file may contain blank lines and comments (lines
-beginning with `#') as well as module definitions.  Long lines can be
-continued on the next line by specifying a backslash (`\') as the last
-character on the line.
-
-   A module definition is a single line of the `modules' file, in
-either of two formats.  In both cases, MNAME represents the symbolic
-module name, and the remainder of the line is its definition.
-
-`MNAME -a ALIASES...'
-     This represents the simplest way of defining a module MNAME.  The
-     `-a' flags the definition as a simple alias: CVS will treat any
-     use of MNAME (as a command argument) as if the list of names
-     ALIASES had been specified instead.  ALIASES may contain either
-     other module names or paths.  When you use paths in aliases,
-     `checkout' creates all intermediate directories in the working
-     directory, just as if the path had been specified explicitly in
-     the CVS arguments.
-
-`MNAME [ options ] DIR [ FILES... ] [ &MODULE... ]'
-     In the simplest case, this form of module definition reduces to
-     `MNAME DIR'.  This defines all the files in directory DIR as
-     module mname.  DIR is a relative path (from `$CVSROOT') to a
-     directory of source in the source repository.  In this case, on
-     checkout, a single directory called MNAME is created as a working
-     directory; no intermediate directory levels are used by default,
-     even if DIR was a path involving several directory levels.
-
-     By explicitly specifying files in the module definition after DIR,
-     you can select particular files from directory DIR.  The sample
-     definition for `modules' is an example of a module defined with a
-     single file from a particular directory.  Here is another example:
-
-          m4test  unsupported/gnu/m4 foreach.m4 forloop.m4
-
-     With this definition, executing `cvs checkout m4test' will create
-     a single working directory `m4test' containing the two files
-     listed, which both come from a common directory several levels deep
-     in the CVS source repository.
-
-     A module definition can refer to other modules by including
-     `&MODULE' in its definition.  `checkout' creates a subdirectory
-     for each such module, in the directory containing the module.  For
-     example, if modules contains
-
-          m4test &unsupported
-
-     then a checkout will create an `m4test' directory which contains a
-     directory called `unsupported', which in turns contains all the
-     directories and files which live there.
-
-    `-d NAME'
-          Name the working directory something other than the module
-          name.
-
-    `-e PROG'
-          Specify a program PROG to run whenever files in a module are
-          exported.  PROG runs with a single argument, the module name.
-
-    `-i PROG'
-          Specify a program PROG to run whenever files in a module are
-          committed.  PROG runs with a single argument, the full
-          pathname of the affected directory in a source repository.
-          The `commitinfo', `loginfo', and `verifymsg' files provide
-          other ways to call a program on commit.
-
-    `-o PROG'
-          Specify a program PROG to run whenever files in a module are
-          checked out.  PROG runs with a single argument, the module
-          name.
-
-    `-s STATUS'
-          Assign a status to the module.  When the module file is
-          printed with `cvs checkout -s' the modules are sorted
-          according to primarily module status, and secondarily
-          according to the module name.  This option has no other
-          meaning.  You can use this option for several things besides
-          status: for instance, list the person that is responsible for
-          this module.
-
-    `-t PROG'
-          Specify a program PROG to run whenever files in a module are
-          tagged with `rtag'.  PROG runs with two arguments: the module
-          name and the symbolic tag specified to `rtag'.  There is no
-          way to specify a program to run when `tag' is executed.
-
-    `-u PROG'
-          Specify a program PROG to run whenever `cvs update' is
-          executed from the top-level directory of the checked-out
-          module.  PROG runs with a single argument, the full path to
-          the source repository for this module.
 

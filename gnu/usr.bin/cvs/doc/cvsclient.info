@@ -9,7 +9,7 @@ CVS Client/Server
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.9.2 of the protocol
+regular CVS manual for that.  This is version 1.9.4 of the protocol
 specification--*Note Introduction::, for more on what this version
 number means.
 
@@ -57,7 +57,7 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.9.2 of the protocol specification.  This version
+   This is version 1.9.4 of the protocol specification.  This version
 number is intended only to aid in distinguishing different versions of
 this specification.  Although the specification is currently maintained
 in conjunction with the CVS implementation, and carries the same
@@ -178,18 +178,17 @@ pserver
      cvs root, a linefeed, the username, a linefeed, the password
      trivially encoded (see scramble.c in the cvs sources), a linefeed,
      the string `END AUTH REQUEST', and a linefeed.  The client must
-     sent the identical string for cvs root here, as it sends later, in
-     the `Root' request of the cvs protocol itself.  Servers are
-     encouraged to enforce this restriction.  The server responds with
-     `I LOVE YOU' and a linefeed if the authentication is successful or
-     `I HATE YOU' and a linefeed if the authentication fails.  After
-     receiving `I LOVE YOU', the client proceeds with the cvs protocol.
-     If the client wishes to merely authenticate without starting the
-     cvs protocol, the procedure is the same, except `BEGIN AUTH
-     REQUEST' is replaced with `BEGIN VERIFICATION REQUEST', `END AUTH
-     REQUEST' is replaced with `END VERIFICATION REQUEST', and upon
-     receipt of `I LOVE YOU' the connection is closed rather than
-     continuing.
+     send the identical string for cvs root both here and later in the
+     `Root' request of the cvs protocol itself.  Servers are encouraged
+     to enforce this restriction.  The server responds with `I LOVE
+     YOU' and a linefeed if the authentication is successful or `I HATE
+     YOU' and a linefeed if the authentication fails.  After receiving
+     `I LOVE YOU', the client proceeds with the cvs protocol.  If the
+     client wishes to merely authenticate without starting the cvs
+     protocol, the procedure is the same, except `BEGIN AUTH REQUEST' is
+     replaced with `BEGIN VERIFICATION REQUEST', `END AUTH REQUEST' is
+     replaced with `END VERIFICATION REQUEST', and upon receipt of `I
+     LOVE YOU' the connection is closed rather than continuing.
 
 
 File: cvsclient.info,  Node: Protocol,  Prev: Connection and Authentication,  Up: Top
@@ -936,14 +935,14 @@ Node: Introduction885
 Node: Goals3419
 Node: Protocol Notes5226
 Node: Connection and Authentication6904
-Node: Protocol9708
-Node: Entries Lines10168
-Node: Modes10876
-Node: Filenames12399
-Node: Requests13150
-Node: Responses27275
-Node: Example36266
-Node: Requirements40193
-Node: Obsolete41101
+Node: Protocol9699
+Node: Entries Lines10159
+Node: Modes10867
+Node: Filenames12390
+Node: Requests13141
+Node: Responses27266
+Node: Example36257
+Node: Requirements40184
+Node: Obsolete41092
 
 End Tag Table
