@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.7 1998/11/11 23:01:51 aaron Exp $
+.\"	$OpenBSD: install.1,v 1.8 1999/01/26 04:09:35 millert Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -42,14 +42,16 @@
 .Nd install binaries
 .Sh SYNOPSIS
 .Nm install
-.Op Fl CcpSs
+.Op Fl bCcpSs
+.Op Fl B Ar suffix
 .Op Fl f Ar flags
 .Op Fl g Ar group
 .Op Fl m Ar mode
 .Op Fl o Ar owner
 .Ar file1 file2
 .Nm install
-.Op Fl CcpSs
+.Op Fl bCcpSs
+.Op Fl B Ar suffix
 .Op Fl f Ar flags
 .Op Fl g Ar group
 .Op Fl m Ar mode
@@ -73,9 +75,30 @@ If the destination is a directory, then the
 is moved into
 .Ar directory
 with its original filename.
-If the target file already exists, it is overwritten if permissions
-allow.
+If the target file already exists, it is 
+either renamed to
+.Ar file.old
+if the 
+.Fl b
+option is given
+or overwritten
+if permissions allow, An alternate backup suffix may be specified via the
+.Fl B
+option's argument.
+.Pp
 .Bl -tag -width Ds
+.It Fl b
+Backup any existing files before overwriting them by renaming
+them to 
+.Ar file.old . See
+.Fl B
+for specifying a different backup suffix.
+.It Fl B Ar suffix
+Use 
+.Ar suffix
+as the backup suffix if 
+.Fl b
+is given.
 .It Fl C
 Copy the file.
 If the target file already exists and the files are the same,

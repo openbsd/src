@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.18 1998/12/17 17:19:49 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.19 1999/01/26 04:09:35 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.18 1998/12/17 17:19:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.19 1999/01/26 04:09:35 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,17 +68,19 @@ static char rcsid[] = "$OpenBSD: xinstall.c,v 1.18 1998/12/17 17:19:49 millert E
 
 #include "pathnames.h"
 
-struct passwd *pp;
-struct group *gp;
-int docompare, dodir, dopreserve, dostrip, safecopy;
-int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-char pathbuf[MAXPATHLEN], tempfile[MAXPATHLEN];
-uid_t uid;
-gid_t gid;
-
 #define	DIRECTORY	0x01		/* Tell install it's a directory. */
 #define	SETFLAGS	0x02		/* Tell install to set flags. */
 #define NOCHANGEBITS	(UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND)
+#define BACKUP_SUFFIX	".old"
+
+struct passwd *pp;
+struct group *gp;
+int dobackup, docompare, dodir, dopreserve, dostrip, safecopy;
+int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+char pathbuf[MAXPATHLEN], tempfile[MAXPATHLEN];
+char *suffix = BACKUP_SUFFIX;
+uid_t uid;
+gid_t gid;
 
 void	copy __P((int, char *, int, char *, off_t, int));
 int	compare __P((int, const char *, size_t, int, const char *, size_t));
@@ -104,10 +106,16 @@ main(argc, argv)
 	char *flags, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "Ccdf:g:m:o:pSs")) != -1)
+	while ((ch = getopt(argc, argv, "BbCcdf:g:m:o:pSs")) != -1)
 		switch((char)ch) {
 		case 'C':
 			docompare = 1;
+			break;
+		case 'B':
+			suffix = optarg;
+			/* fall through; -B implies -b */
+		case 'b':
+			dobackup = 1;
 			break;
 		case 'c':
 			/* For backwards compatibility. */
@@ -343,6 +351,17 @@ install(from_name, to_name, fset, flags)
 		/* Try to turn off the immutable bits. */
 		if (to_sb.st_flags & (NOCHANGEBITS))
 			(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
+		if (dobackup) {
+			char backup[MAXPATHLEN];
+			(void)snprintf(backup, MAXPATHLEN, "%s%s", to_name,
+			    suffix);
+			if (rename(to_name, backup) < 0) {
+				serrno = errno;
+				unlink(tempfile);
+				errx(EX_OSERR, "rename: %s to %s: %s", to_name,
+				     backup, strerror(serrno));
+			}
+		}
 		if (rename(tempfile, to_name) < 0 ) {
 			serrno = errno;
 			unlink(tempfile);
@@ -424,8 +443,8 @@ copy(from_fd, from_name, to_fd, to_name, size, sparse)
 	if (!sparse && size <= 8 * 1048576) {
 		volatile size_t siz;
 
-		if ((p = mmap(NULL, (size_t)size, PROT_READ,
-		    MAP_PRIVATE, from_fd, (off_t)0)) == (char *)-1) {
+		if ((p = mmap(NULL, (size_t)size, PROT_READ, MAP_PRIVATE,
+		    from_fd, (off_t)0)) == (char *)-1) {
 			serrno = errno;
 			(void)unlink(to_name);
 			errx(EX_OSERR, "%s: %s", from_name, strerror(serrno));
@@ -596,8 +615,8 @@ void
 usage()
 {
 	(void)fprintf(stderr, "\
-usage: install [-CcpSs] [-f flags] [-g group] [-m mode] [-o owner] file1 file2\n\
-       install [-CcpSs] [-f flags] [-g group] [-m mode] [-o owner] file1 ... fileN directory\n\
+usage: install [-bCcpSs] [-B suffix] [-f flags] [-g group] [-m mode] [-o owner] file1 file2\n\
+       install [-bCcpSs] [-B suffix] [-f flags] [-g group] [-m mode] [-o owner] file1 ... fileN directory\n\
        install  -d   [-g group] [-m mode] [-o owner] directory ...\n");
 	exit(EX_USAGE);
 	/* NOTREACHED */
@@ -636,6 +655,8 @@ create_newfile(path, sbp)
         char *path;
 	struct stat *sbp;
 {
+	char backup[MAXPATHLEN];
+
 	/*
 	 * Unlink now... avoid ETXTBSY errors later.  Try and turn
 	 * off the append/immutable bits -- if we fail, go ahead,
@@ -644,7 +665,12 @@ create_newfile(path, sbp)
 	if (sbp->st_flags & (NOCHANGEBITS))
 		(void)chflags(path, sbp->st_flags & ~(NOCHANGEBITS));
 
-	(void)unlink(path);
+	if (dobackup) {
+		(void)snprintf(backup, MAXPATHLEN, "%s%s", path, suffix);
+		if (rename(path, backup) < 0)
+			err(EX_OSERR, "rename: %s to %s", path, backup);
+	} else
+		(void)unlink(path);
 
 	return(open(path, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR));
 }
