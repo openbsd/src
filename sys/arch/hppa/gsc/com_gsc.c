@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.1 1998/09/30 04:45:46 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.2 1998/11/23 03:16:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -44,6 +44,7 @@
 #include <dev/ic/comvar.h>
 
 #include <hppa/dev/cpudevs.h>
+#include <hppa/gsc/gscbusvar.h>
 
 int	com_gsc_probe __P((struct device *, void *, void *));
 void	com_gsc_attach __P((struct device *, struct device *, void *));
@@ -80,19 +81,22 @@ com_gsc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct com_softc *sc = (void *)self;
-	struct confargs *ca = aux;
+	register struct com_softc *sc = (void *)self;
+	register struct gsc_attach_args *ga = aux;
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	sc->sc_iobase = (bus_addr_t)ca->ca_hpa;
-	sc->sc_iot = ca->ca_iot;
+	sc->sc_iobase = (bus_addr_t)ga->ga_hpa;
+	sc->sc_iot = HPPA_BUS_TAG_SET_BYTE(ga->ga_iot);
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, COM_NPORTS, 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, sc->sc_iobase, IOMOD_HPASIZE,
+			  0, &sc->sc_ioh))
 		panic ("com_gsc_attach: mapping io space");
+
+	sc->sc_ih = gsc_intr_establish(ga->ga_ic, IPL_TTY, comintr, sc,
+				       sc->sc_dev.dv_xname);
 
 	sc->sc_ioh |= IOMOD_DEVOFFSET;
 	com_attach_subr(sc);
 }
-
 
