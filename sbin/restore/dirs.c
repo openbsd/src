@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.26 2003/08/25 23:28:16 tedu Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.27 2004/04/13 21:51:18 henning Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: dirs.c,v 1.26 2003/08/25 23:28:16 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: dirs.c,v 1.27 2004/04/13 21:51:18 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ static void		 dcvt(struct odirect *, struct direct *);
 static void		 flushent(void);
 static struct inotab	*inotablookup(ino_t);
 static RST_DIR		*opendirfile(const char *);
-static void		 putdir(char *, long);
+static void		 putdir(char *, size_t);
 static void		 putent(struct direct *);
 static void		 rst_seekdir(RST_DIR *, long, long);
 static long		 rst_telldir(RST_DIR *);
@@ -341,13 +341,13 @@ searchdir(inum, name)
 static void
 putdir(buf, size)
 	char *buf;
-	long size;
+	size_t size;
 {
 	struct direct cvtbuf;
 	struct odirect *odp;
 	struct odirect *eodp;
 	struct direct *dp;
-	long loc, i;
+	size_t loc, i;
 
 	if (cvtflag) {
 		eodp = (struct odirect *)&buf[size];
@@ -382,12 +382,13 @@ putdir(buf, size)
 					   "reclen not multiple of 4 ");
 				if (dp->d_reclen < DIRSIZ(0, dp))
 					Vprintf(stdout,
-					   "reclen less than DIRSIZ (%d < %d) ",
-					   dp->d_reclen, DIRSIZ(0, dp));
+					   "reclen less than DIRSIZ (%u < %u) ",
+					   (unsigned)dp->d_reclen,
+					   (unsigned)DIRSIZ(0, dp));
 				if (dp->d_namlen > NAME_MAX)
 					Vprintf(stdout,
-					   "reclen name too big (%d > %d) ",
-					   dp->d_namlen, NAME_MAX);
+					   "reclen name too big (%u > %u) ",
+					   (unsigned)dp->d_namlen, NAME_MAX);
 				Vprintf(stdout, "\n");
 				loc += i;
 				continue;

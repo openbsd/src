@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.27 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.28 2004/04/13 21:51:18 henning Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.27 2003/07/29 18:38:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.28 2004/04/13 21:51:18 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static char	*host = NULL;
 static int	ofile;
 static char	*map;
 static char	lnkbuf[MAXPATHLEN + 1];
-static int	pathlen;
+static size_t	pathlen;
 
 int		oldinofmt;	/* old inode format conversion required */
 int		Bcvt;		/* Swap Bytes (for CCI or sun) */
@@ -100,12 +100,12 @@ static u_long	 swabl(u_long);
 static u_char	*swablong(u_char *, int);
 static u_char	*swabshort(u_char *, int);
 static void	 terminateinput(void);
-static void	 xtrfile(char *, long);
-static void	 xtrlnkfile(char *, long);
-static void	 xtrlnkskip(char *, long);
-static void	 xtrmap(char *, long);
-static void	 xtrmapskip(char *, long);
-static void	 xtrskip(char *, long);
+static void	 xtrfile(char *, size_t);
+static void	 xtrlnkfile(char *, size_t);
+static void	 xtrlnkskip(char *, size_t);
+static void	 xtrmap(char *, size_t);
+static void	 xtrmapskip(char *, size_t);
+static void	 xtrskip(char *, size_t);
 
 /*
  * Set up an input source
@@ -639,12 +639,12 @@ skipfile()
  */
 void
 getfile(fill, skip)
-	void	(*fill)(char *, long);
-	void	(*skip)(char *, long);
+	void	(*fill)(char *, size_t);
+	void	(*skip)(char *, size_t);
 {
 	int i;
 	volatile int curblk = 0;
-	volatile long size = spcl.c_dinode.di_size;
+	volatile off_t size = spcl.c_dinode.di_size;
 	static char clearedbuf[MAXBSIZE];
 	char buf[MAXBSIZE / TP_BSIZE][TP_BSIZE];
 	char junk[TP_BSIZE];
@@ -663,19 +663,19 @@ loop:
 			readtape(&buf[curblk++][0]);
 			if (curblk == fssize / TP_BSIZE) {
 				(*fill)((char *)buf, size > TP_BSIZE ?
-				     (long) (fssize) :
-				     (curblk - 1) * TP_BSIZE + size);
+				     fssize :
+				     ((off_t)curblk - 1) * TP_BSIZE + size);
 				curblk = 0;
 			}
 		} else {
 			if (curblk > 0) {
 				(*fill)((char *)buf, size > TP_BSIZE ?
-				     (long) (curblk * TP_BSIZE) :
-				     (curblk - 1) * TP_BSIZE + size);
+				     (curblk * TP_BSIZE) :
+				     ((off_t)curblk - 1) * TP_BSIZE + size);
 				curblk = 0;
 			}
 			(*skip)(clearedbuf, size > TP_BSIZE ?
-				(long) TP_BSIZE : size);
+				TP_BSIZE : size);
 		}
 		if ((size -= TP_BSIZE) <= 0) {
 			for (i++; i < spcl.c_count; i++)
@@ -692,7 +692,7 @@ loop:
 			curfile.name, blksread);
 	}
 	if (curblk > 0)
-		(*fill)((char *)buf, (curblk * TP_BSIZE) + size);
+		(*fill)((char *)buf, ((off_t)curblk * TP_BSIZE) + size);
 	findinode(&spcl);
 	gettingfile = 0;
 }
@@ -703,12 +703,12 @@ loop:
 static void
 xtrfile(buf, size)
 	char	*buf;
-	long	size;
+	size_t	size;
 {
 
 	if (Nflag)
 		return;
-	if (write(ofile, buf, (int) size) == -1)
+	if (write(ofile, buf, size) == -1)
 		err(1, "write error extracting inode %d, name %s\nwrite",
 		    curfile.ino, curfile.name);
 }
@@ -720,10 +720,10 @@ xtrfile(buf, size)
 static void
 xtrskip(buf, size)
 	char *buf;
-	long size;
+	size_t size;
 {
 
-	if (lseek(ofile, size, SEEK_CUR) == -1)
+	if (lseek(ofile, (off_t)size, SEEK_CUR) == -1)
 		err(1, "seek error extracting inode %d, name %s\nlseek",
 		    curfile.ino, curfile.name);
 }
@@ -734,13 +734,13 @@ xtrskip(buf, size)
 static void
 xtrlnkfile(buf, size)
 	char	*buf;
-	long	size;
+	size_t	size;
 {
 
 	pathlen += size;
 	if (pathlen > MAXPATHLEN)
-		errx(1, "symbolic link name: %s->%s%s; too long %d",
-		    curfile.name, lnkbuf, buf, pathlen);
+		errx(1, "symbolic link name: %s->%s%s; too long %lu",
+		    curfile.name, lnkbuf, buf, (u_long)pathlen);
 	(void)strlcat(lnkbuf, buf, sizeof(lnkbuf));
 }
 
@@ -751,7 +751,7 @@ xtrlnkfile(buf, size)
 static void
 xtrlnkskip(buf, size)
 	char *buf;
-	long size;
+	size_t size;
 {
 
 	errx(1, "unallocated block in symbolic link %s", curfile.name);
@@ -763,7 +763,7 @@ xtrlnkskip(buf, size)
 static void
 xtrmap(buf, size)
 	char	*buf;
-	long	size;
+	size_t	size;
 {
 
 	memcpy(map, buf, size);
@@ -777,7 +777,7 @@ xtrmap(buf, size)
 static void
 xtrmapskip(buf, size)
 	char *buf;
-	long size;
+	size_t size;
 {
 
 	panic("hole in map\n");
@@ -791,7 +791,7 @@ xtrmapskip(buf, size)
 void
 xtrnull(buf, size)
 	char *buf;
-	long size;
+	size_t size;
 {
 
 	return;

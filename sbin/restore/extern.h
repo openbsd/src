@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2004/04/13 21:51:18 henning Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ void		 freeentry(struct entry *);
 void		 freename(char *);
 int	 	 genliteraldir(char *, ino_t);
 char		*gentempname(struct entry *);
-void		 getfile(void (*)(char *, long), void (*)(char *, long));
+void		 getfile(void (*)(char *, size_t), void (*)(char *, size_t));
 void		 getvol(long);
 void		 initsymtable(char *);
 int	 	 inodetype(ino_t);
@@ -98,7 +98,7 @@ void		 swabst(u_char *, u_char *);
 void	 	 treescan(char *, ino_t, long (*)(char *, ino_t, int));
 ino_t		 upperbnd(ino_t);
 long		 verifyfile(char *, ino_t, int);
-void		 xtrnull(char *, long);
+void		 xtrnull(char *, size_t);
 
 /* From ../dump/dumprmt.c */
 void		rmtclose(void);
