@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.5 1996/11/03 22:25:58 deraadt Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.6 1997/02/11 18:10:57 deraadt Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: showmount.c,v 1.5 1996/11/03 22:25:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: showmount.c,v 1.6 1997/02/11 18:10:57 deraadt Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -115,9 +115,14 @@ main(argc, argv)
 {
 	struct exportslist *exp;
 	struct grouplist *grp;
-	int estat, rpcs = 0, mntvers = 1;
+	struct sockaddr_in clnt_sin;
+	struct hostent *hp;
+	struct timeval timeout;
+	int rpcs = 0, mntvers = 1;
+	enum clnt_stat estat;
+	CLIENT *client;
 	char *host;
-	int ch;
+	int ch, clnt_sock;
 
 	while ((ch = getopt(argc, argv, "ade3")) != -1)
 		switch((char)ch) {
@@ -156,22 +161,42 @@ main(argc, argv)
 	if (rpcs == 0)
 		rpcs = DODUMP;
 
-	if (rpcs & DODUMP)
-		if ((estat = callrpc(host, RPCPROG_MNT, mntvers,
-			RPCMNT_DUMP, xdr_void, (char *)0,
-			xdr_mntdump, (char *)&mntdump)) != 0) {
+	if ((hp = gethostbyname(host)) == NULL) {
+		fprintf(stderr, "showmount: unknown host %s\n", host);
+		exit(1);
+	}
+	bzero(&clnt_sin, sizeof clnt_sin);
+	clnt_sin.sin_len = sizeof clnt_sin;
+	clnt_sin.sin_family = AF_INET;
+	bcopy(hp->h_addr, (char *)&clnt_sin.sin_addr, hp->h_length);
+	clnt_sock = RPC_ANYSOCK;
+	client = clnttcp_create(&clnt_sin, RPCPROG_MNT, mntvers,
+	    &clnt_sock, 0, 0);
+	if (client == NULL) {
+		clnt_pcreateerror("showmount: clnttcp_create");
+		exit(1);
+	}
+	timeout.tv_sec = 30;
+	timeout.tv_usec = 0;
+
+	if (rpcs & DODUMP) {
+		estat = clnt_call(client, RPCMNT_DUMP, xdr_void, (char *)0,
+		    xdr_mntdump, (char *)&mntdump, timeout);
+		if (estat != RPC_SUCCESS) {
 			fprintf(stderr, "showmount: Can't do Mountdump rpc: ");
 			clnt_perrno(estat);
 			exit(1);
 		}
-	if (rpcs & DOEXPORTS)
-		if ((estat = callrpc(host, RPCPROG_MNT, mntvers,
-			RPCMNT_EXPORT, xdr_void, (char *)0,
-			xdr_exports, (char *)&exports)) != 0) {
+	}
+	if (rpcs & DOEXPORTS) {
+		estat = clnt_call(client, RPCMNT_EXPORT, xdr_void, (char *)0,
+		    xdr_exports, (char *)&exports, timeout);
+		if (estat != RPC_SUCCESS) {
 			fprintf(stderr, "showmount: Can't do Exports rpc: ");
 			clnt_perrno(estat);
 			exit(1);
 		}
+	}
 
 	/* Now just print out the results */
 	if (rpcs & DODUMP) {
@@ -321,7 +346,8 @@ xdr_exports(xdrsp, exp)
 		if (!xdr_bool(xdrsp, &grpbool))
 			return (0);
 		while (grpbool) {
-			gp = (struct grouplist *)malloc(sizeof(struct grouplist));
+			gp = (struct grouplist *)malloc(
+			    sizeof(struct grouplist));
 			if (gp == NULL)
 				return (0);
 			strp = gp->gr_name;
