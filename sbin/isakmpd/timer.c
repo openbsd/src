@@ -1,5 +1,5 @@
-/*	$OpenBSD: timer.c,v 1.3 1998/11/17 11:10:20 niklas Exp $	*/
-/*	$EOM: timer.c,v 1.7 1998/08/11 15:03:26 niklas Exp $	*/
+/*	$OpenBSD: timer.c,v 1.4 1999/02/26 03:50:50 niklas Exp $	*/
+/*	$EOM: timer.c,v 1.8 1999/02/25 11:39:23 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,8 @@
 #include <sys/queue.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "log.h"
 #include "timer.h"
