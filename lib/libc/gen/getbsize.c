@@ -1,4 +1,4 @@
-/*	$NetBSD: getbsize.c,v 1.7 1995/06/16 07:12:41 jtc Exp $	*/
+/*	$NetBSD: getbsize.c,v 1.8 1996/01/22 16:34:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getbsize.c,v 1.7 1995/06/16 07:12:41 jtc Exp $";
+static char rcsid[] = "$NetBSD: getbsize.c,v 1.8 1996/01/22 16:34:08 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ fmterr:			_warnx("%s: unknown blocksize", p);
 			n = max;
 		}
 		if ((blocksize = n * mul) < 512) {
-underflow:		_warnx("%s: minimum blocksize is 512");
+underflow:		_warnx("%s: minimum blocksize is 512", p);
 			form = "";
 			blocksize = n = 512;
 		}
