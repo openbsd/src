@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1996/05/22 11:34:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 1996/06/02 07:28:42 tholo Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -28,13 +28,17 @@ LFILES=	errno.h fcntl.h syslog.h termios.h
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm ddb
 
-RDIRS=	../lib/libcurses ../lib/librpcsvc ../lib/libpcap
+RDIRS=	../lib/libcurses ../lib/libocurses ../lib/libcurses ../lib/librpcsvc \
+	../lib/libtermlib
 
 NOOBJ=	noobj
 
 # Change SYS_INCLUDE in bsd.own.mk to "symlinks" if you don't want copies
 .include <bsd.own.mk>
 SYS_INCLUDE?=	copies
+.if defined(KERBEROS)
+RDIRS+=	../kerberosIV/include ../kerberosIV/kadm ../kerberosIV/krb ../kerberosIV/ss
+.endif
 
 includes:
 	@echo installing ${FILES}
