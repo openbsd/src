@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 1996/10/19 13:26:04 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.8 1996/11/06 01:38:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.7 1996/10/19 13:26:04 mickey Exp $
+ *      $Id: conf.c,v 1.8 1996/11/06 01:38:26 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -317,6 +317,24 @@ chrtoblk(dev)
 	if (major(dev) >= MAXDEV || (blkmaj = chrtoblktbl[major(dev)]) == NODEV)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
+}
+
+/*
+ * Convert a character device number to a block device number.
+ */
+dev_t
+blktochr(dev)
+	dev_t dev;
+{
+	int blkmaj = major(dev);
+	int i;
+
+	if (blkmaj >= nblkdev)
+		return (NODEV);
+	for (i = 0; i < sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]); i++)
+		if (blkmaj == chrtoblktbl[i])
+			return (makedev(i, minor(dev)));
+	return (NODEV);
 }
 
 /*
