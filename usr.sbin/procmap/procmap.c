@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.7 2004/02/18 04:07:35 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.8 2004/02/18 04:32:17 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -193,6 +193,7 @@ int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 void load_name_cache(kvm_t *);
 void cache_enter(struct namecache *);
 static void __dead usage(void);
+static pid_t strtopid(const char *);
 
 int
 main(int argc, char *argv[])
@@ -200,7 +201,7 @@ main(int argc, char *argv[])
 	kvm_t *kd;
 	pid_t pid;
 	int many, ch, rc;
-	char errbuf[_POSIX2_LINE_MAX + 1];
+	char errbuf[_POSIX2_LINE_MAX];
 	/* u_long addr, next; */
 	struct kinfo_proc *kproc;
 	/* struct proc proc; */
@@ -235,9 +236,7 @@ main(int argc, char *argv[])
 			kernel = optarg;
 			break;
 		case 'p':
-			if (!isdigit(optarg[0]))
-				usage();
-			pid = atoi(optarg);
+			pid = strtopid(optarg);
 			break;
 		case 'P':
 			pid = getpid();
@@ -284,7 +283,6 @@ main(int argc, char *argv[])
 	setegid(getgid());
 	setgid(getgid());
 
-	errbuf[_POSIX2_LINE_MAX] = '\0';
 	if (kd == NULL)
 		errx(1, "%s", errbuf);
 
@@ -296,9 +294,7 @@ main(int argc, char *argv[])
 			if (argc == 0)
 				pid = getppid();
 			else {
-				if (!isdigit(argv[0][0]))
-					usage();
-				pid = atoi(argv[0]);
+				pid = strtopid(argv[0]);
 				argv++;
 				argc--;
 			}
@@ -953,4 +949,19 @@ usage(void)
 	    "[-M core] [-N system] [-p pid] [pid ...]\n",
 	    __progname);
 	exit(1);
+}
+
+static pid_t
+strtopid(const char *str)
+{
+	pid_t pid;
+	char *endptr;
+
+	errno = 0;
+	pid = strtoul(str, &endptr, 10);
+	if (str[0] == '\0' || *endptr != '\0')
+		usage();
+	if (errno == ERANGE && pid == ULONG_MAX)
+		usage();
+	return (pid);
 }
