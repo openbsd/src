@@ -1,4 +1,4 @@
-/*	$OpenBSD: rxp.c,v 1.3 1999/03/27 04:45:26 pjanzen Exp $	*/
+/*	$OpenBSD: rxp.c,v 1.4 1999/10/02 06:36:45 pjanzen Exp $	*/
 /*	$NetBSD: rxp.c,v 1.5 1995/04/22 10:17:00 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rxp.c,v 1.3 1999/03/27 04:45:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rxp.c,v 1.4 1999/10/02 06:36:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,11 @@ rxp__compile(s, first)
 	Rxp_t *alt_ptr;
 	int esc, err;
 
+	if (s == NULL) {
+		(void)snprintf(rxperr, sizeof(rxperr),
+		    "null string sent to rxp_compile");
+		return(FALSE);
+	}
 	esc = 0;
 	if (first) {
 		rp = rxpbuf;
