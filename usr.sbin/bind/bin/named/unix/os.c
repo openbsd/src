@@ -510,7 +510,7 @@ open_pidfile(const char *filename, isc_boolean_t first_time) {
 	cleanup_pidfile();
 
 	if (filename == NULL)
-		return;
+		return -1;
 
 	len = strlen(filename);
 	pidfile = malloc(len + 1);
