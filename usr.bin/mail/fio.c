@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.11 1997/07/28 15:20:30 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.12 1997/08/31 14:32:13 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.11 1997/07/28 15:20:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.12 1997/08/31 14:32:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -342,7 +342,7 @@ expand(name)
 	register char *cp, *shell;
 	int pivec[2];
 	struct stat sbuf;
-	extern union wait wait_status;
+	extern int wait_status;
 
 	/*
 	 * The order of evaluation is "%" and "#" expand into constants.
@@ -394,7 +394,8 @@ expand(name)
 	(void)close(pivec[1]);
 	l = read(pivec[0], xname, PATHSIZE);
 	(void)close(pivec[0]);
-	if (wait_child(pid) < 0 && wait_status.w_termsig != SIGPIPE) {
+	if (wait_child(pid) < 0 && WIFSIGNALED(wait_status) &&
+	    WTERMSIG(wait_status) != SIGPIPE) {
 		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
 		return(NULL);
 	}

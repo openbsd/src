@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.6 1997/07/30 07:19:29 millert Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.7 1997/08/31 14:32:13 millert Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd2.c,v 1.6 1997/07/30 07:19:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd2.c,v 1.7 1997/08/31 14:32:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -383,7 +383,7 @@ core(v)
 	void *v;
 {
 	int pid;
-	extern union wait wait_status;
+	extern int wait_status;
 
 	switch (pid = vfork()) {
 	case -1:
@@ -396,7 +396,7 @@ core(v)
 	fputs("Okie dokie", stdout);
 	fflush(stdout);
 	wait_child(pid);
-	if (wait_status.w_coredump)
+	if (WIFSIGNALED(wait_status) && WCOREDUMP(wait_status))
 		puts(" -- Core dumped.");
 	else
 		puts(" -- Can't dump core.");

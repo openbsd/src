@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.12 1997/08/05 04:00:00 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.13 1997/08/31 14:32:14 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.12 1997/08/05 04:00:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.13 1997/08/31 14:32:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ struct child {
 	int pid;
 	char done;
 	char free;
-	union wait status;
+	int status;
 	struct child *link;
 };
 static struct child *child;
@@ -345,12 +345,12 @@ sigchild(signo)
 	int signo;
 {
 	int pid;
-	union wait status;
+	int status;
 	register struct child *cp;
 	int save_errno = errno;
 
 	while ((pid =
-	    wait3((int *)&status, WNOHANG, (struct rusage *)0)) > 0) {
+	    waitpid((pid_t)-1, &status, WNOHANG)) > 0) {
 		cp = findchild(pid);
 		if (cp->free)
 			delchild(cp);
@@ -362,7 +362,7 @@ sigchild(signo)
 	errno = save_errno;
 }
 
-union wait wait_status;
+int wait_status;
 
 /*
  * Wait for a specific child to die.
@@ -383,7 +383,7 @@ wait_child(pid)
 	wait_status = cp->status;
 	delchild(cp);
 	sigprocmask(SIG_SETMASK, &oset, NULL);
-	return(wait_status.w_status ? -1 : 0);
+	return((WIFEXITED(wait_status) && WEXITSTATUS(wait_status)) ? -1 : 0);
 }
 
 /*
