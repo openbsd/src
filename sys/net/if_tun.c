@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.18 1997/07/29 05:53:22 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.19 1997/07/29 07:18:20 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -87,9 +87,6 @@ struct tun_softc {
 	int	tun_pgrp;		/* the process group - if any */
 	struct	selinfo	tun_rsel;	/* read select */
 	struct	selinfo	tun_wsel;	/* write select (not used) */
-#if NBPFILTER > 0
-	caddr_t		tun_bpf;
-#endif
 };
 
 #ifdef	TUN_DEBUG
