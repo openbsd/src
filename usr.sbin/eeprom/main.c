@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2002/02/16 21:28:02 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2002/06/14 04:21:54 art Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -45,17 +45,11 @@
 
 #ifdef __sparc__
 #include <fcntl.h>
-#include <kvm.h>
 #include <limits.h>
-#include <nlist.h>
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
 
 #include <machine/openpromio.h>
-
-struct	nlist nl[] = {
-	{ "_cputyp" },
-#define SYM_CPUTYP	0
-	{ NULL },
-};
 
 static	char *system = NULL;
 #endif /* __sparc__ */
@@ -216,34 +210,19 @@ main(argc, argv)
 }
 
 #ifdef __sparc__
-#define KVM_ABORT(kd, str) {						\
-	(void)kvm_close((kd));						\
-	errx(1, "%s: %s", (str), kvm_geterr((kd)));			\
-}
-
 static int
 getcputype()
 {
-	char errbuf[_POSIX2_LINE_MAX];
+	int mib[2];
+	size_t len;
 	int cputype;
-	kvm_t *kd;
 
-	bzero(errbuf, sizeof(errbuf));
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_CPUTYPE;
+	len = sizeof(cputype);
+	if (sysctl(mib, 2, &cputype, &len, NULL, 0) < 0)
+		err(1, "sysctl(machdep.cputype)");
 
-	if ((kd = kvm_openfiles(system, NULL, NULL, O_RDONLY, errbuf)) == NULL)
-		errx(1, "can't open kvm: %s", errbuf);
-
-	setegid(getgid());
-	setgid(getgid());
-
-	if (kvm_nlist(kd, nl))
-		KVM_ABORT(kd, "can't read symbol table");
-
-	if (kvm_read(kd, nl[SYM_CPUTYP].n_value, (char *)&cputype,
-	    sizeof(cputype)) != sizeof(cputype))
-		KVM_ABORT(kd, "can't determine cpu type");
-
-	(void)kvm_close(kd);
 	return (cputype);
 }
 #endif /* __sparc__ */
