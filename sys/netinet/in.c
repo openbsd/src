@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.2 1996/03/03 22:30:28 niklas Exp $	*/
+/*	$OpenBSD: in.c,v 1.3 1996/09/12 06:04:47 tholo Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #ifdef INET
 
 #ifndef SUBNETSARELOCAL
-#define	SUBNETSARELOCAL	1
+#define	SUBNETSARELOCAL	0
 #endif
 int subnetsarelocal = SUBNETSARELOCAL;
 /*
