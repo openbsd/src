@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.4 1997/06/29 23:40:52 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.5 2001/04/13 20:21:19 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.3 1997/04/11 17:52:49 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.4 1997/06/29 23:40:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.5 2001/04/13 20:21:19 deraadt Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -756,7 +756,7 @@ tty_bind_char(el, force)
 {
     unsigned char *t_n = el->el_tty.t_c[ED_IO];
     unsigned char *t_o = el->el_tty.t_ed.c_cc;
-    char new[2], old[2];
+    unsigned char new[2], old[2];
     ttymap_t *tp;
     el_action_t  *dmap, *dalt, *map, *alt;
     new[1] = old[1] = '\0';
