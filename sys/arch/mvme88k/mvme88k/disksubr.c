@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.13 2001/03/09 05:44:41 smurph Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.14 2001/03/16 00:09:08 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -53,6 +53,7 @@ static void bsdtocpulabel __P((struct disklabel *lp,
 	struct cpu_disklabel *clp));
 static void cputobsdlabel __P((struct disklabel *lp,
 	struct cpu_disklabel *clp));
+int get_target __P((void));
 
 #ifdef DEBUG
 static void printlp __P((struct disklabel *lp, char *str));
@@ -60,34 +61,34 @@ static void printclp __P((struct cpu_disklabel *clp, char *str));
 #endif
 
 /* 
- * Returns the ID of the SCSI disk based on Motorala's CLUN/DLUN stuff
+ * Returns the ID of the SCSI disk based on Motorola's CLUN/DLUN stuff
  * bootdev == CLUN << 8 | DLUN.
- * This handels SBC SCSI and MVME328.  It will need to be modified for 
- * MVME327.  We do not handel MVME328 daughter cards.  smurph
+ * This handles SBC SCSI and MVME328.  It will need to be modified for 
+ * MVME327.  We do not handle MVME328 daughter cards.  smurph
  */
 int
-get_target(void)
+get_target()
 {
-   extern int bootdev;
-   switch (bootdev)
-   {
-   case 0x0000: case 0x0600: case 0x0700: case 0x1600: case 0x1700: case 0x1800: case 0x1900:
-      return 0;
-   case 0x0010: case 0x0608: case 0x0708: case 0x1608: case 0x1708: case 0x1808: case 0x1908:
-      return 1;
-   case 0x0020: case 0x0610: case 0x0710: case 0x1610: case 0x1710: case 0x1810: case 0x1910:
-      return 2;
-   case 0x0030: case 0x0618: case 0x0718: case 0x1618: case 0x1718: case 0x1818: case 0x1918:
-      return 3;
-   case 0x0040: case 0x0620: case 0x0720: case 0x1620: case 0x1720: case 0x1820: case 0x1920:
-      return 4;
-   case 0x0050: case 0x0628: case 0x0728: case 0x1628: case 0x1728: case 0x1828: case 0x1928:
-      return 5;
-   case 0x0060: case 0x0630: case 0x0730: case 0x1630: case 0x1730: case 0x1830: case 0x1930:
-      return 6;
-   default:
-      return 0;
-   }
+	extern int bootdev;
+
+	switch (bootdev) {
+	case 0x0000: case 0x0600: case 0x0700: case 0x1600: case 0x1700: case 0x1800: case 0x1900:
+		return 0;
+	case 0x0010: case 0x0608: case 0x0708: case 0x1608: case 0x1708: case 0x1808: case 0x1908:
+		return 1;
+	case 0x0020: case 0x0610: case 0x0710: case 0x1610: case 0x1710: case 0x1810: case 0x1910:
+		return 2;
+	case 0x0030: case 0x0618: case 0x0718: case 0x1618: case 0x1718: case 0x1818: case 0x1918:
+		return 3;
+	case 0x0040: case 0x0620: case 0x0720: case 0x1620: case 0x1720: case 0x1820: case 0x1920:
+		return 4;
+	case 0x0050: case 0x0628: case 0x0728: case 0x1628: case 0x1728: case 0x1828: case 0x1928:
+		return 5;
+	case 0x0060: case 0x0630: case 0x0730: case 0x1630: case 0x1730: case 0x1830: case 0x1930:
+		return 6;
+	default:
+		return 0;
+	}
 }
 
 void
@@ -714,7 +715,7 @@ cputobsdlabel(lp, clp)
 		lp->d_checksum = 0;
 		lp->d_checksum = dkcksum(lp);
 	}
-#if DEBUG
+#if defined(DEBUG)
 	if (disksubr_debug > 0) {
 		printlp(lp, "translated label read from disk\n");
 	}
