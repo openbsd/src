@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 1998/03/26 13:08:01 niklas Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.6 1998/03/26 14:20:11 niklas Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -177,7 +177,7 @@
 #ifndef MAX_KMAP
 #define MAX_KMAP	10
 #endif
-#ifdef MAX_KMAPENT
+#ifndef MAX_KMAPENT
 #define MAX_KMAPENT	500
 #endif
 
