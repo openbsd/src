@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.11 2001/06/26 15:29:05 wilfried Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.12 2001/06/26 18:18:58 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -301,13 +301,19 @@ print_status(struct pf_status *s)
 {
 	time_t t = time(NULL);
 
-	printf("%u %u %u", t, s->since, s->running);
+	printf("Time: %u Since: %u Running: %u", t, s->since, s->running);
 	if (s->running) {
-		printf(" %u %u", s->bytes[0], s->bytes[1]);
-		printf(" %u %u", s->packets[0][0], s->packets[0][1]);
-		printf(" %u %u", s->packets[1][0], s->packets[1][1]);
-		printf(" %u %u %u %u", s->states, s->state_inserts,
-		    s->state_removals, s->state_searches);
+		printf(" Bytes In: %u  Bytes Out: %u\n", 
+		       s->bytes[PF_IN], s->bytes[PF_OUT]);
+		printf(" Inbound Packets: Passed: %u Dropped: %u\n", 
+		       s->packets[PF_IN][PF_DROP], 
+		       s->packets[PF_IN][PF_DROP]);
+		printf(" Outbound Packets: Passed: %u Dropped: %u\n", 
+		       s->packets[PF_OUT][PF_PASS], 
+		       s->packets[PF_OUT][PF_DROP]);
+		printf(" States: %u  Inserts: %u Removals: %u Searches: %u", 
+		       s->states, s->state_inserts,
+		       s->state_removals, s->state_searches);
 	}
 	printf("\n");
 }
