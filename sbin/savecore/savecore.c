@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.31 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.32 2003/04/07 23:04:06 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.31 2002/07/03 22:32:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.32 2003/04/07 23:04:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -346,8 +346,9 @@ check_kmem(void)
 			vislen = strlen(visout);
 			if (cp - panic_mesg + vislen >= sizeof(panic_mesg))
 				break;
-			strcat(cp, visout);
-			cp += vislen;
+			strlcat(cp, visout,
+			    panic_mesg + sizeof panic_mesg - cp);
+			cp += strlen(cp);
 		}
 	}
 }
