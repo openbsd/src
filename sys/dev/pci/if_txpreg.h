@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.12 2001/04/10 22:10:09 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.13 2001/04/11 16:22:38 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -223,19 +223,34 @@
 #define	TXP_STAT_UDPCKSUMGOOD	0x0200
 
 struct txp_tx_desc {
-	u_int8_t		tx_desctype:3,
-				tx_rsvd:5;
-
-	u_int8_t		tx_num;
-	u_int16_t		tx_rsvd1;
-	u_int32_t		tx_addrlo;
-	u_int32_t		tx_addrhi;
-
-	u_int32_t		tx_proc_flags:9,
-				tx_proc_rsvd1:3,
-				tx_proc_vlanpri:16,
-				tx_proc_rsvd2:4;
+	volatile u_int8_t	tx_flags;	/* type/descriptor flags */
+	volatile u_int8_t	tx_numdesc;	/* number of descriptors */
+	volatile u_int16_t	tx_totlen;	/* total packet length */
+	volatile u_int32_t	tx_addrlo;	/* phys addr low word */
+	volatile u_int32_t	tx_addrhi;	/* phys addr high word */
+	volatile u_int32_t	tx_pflags;	/* processing flags */
 };
+#define	TX_FLAGS_TYPE_M		0x07		/* type mask */
+#define	TX_FLAGS_TYPE_FRAG	0x00		/* type: fragment */
+#define	TX_FLAGS_TYPE_DATA	0x01		/* type: data frame */
+#define	TX_FLAGS_TYPE_CMD	0x02		/* type: command frame */
+#define	TX_FLAGS_TYPE_OPT	0x03		/* type: options */
+#define	TX_FLAGS_TYPE_RX	0x04		/* type: command */
+#define	TX_FLAGS_TYPE_RESP	0x05		/* type: response */
+#define	TX_FLAGS_RESP		0x40		/* response requested */
+#define	TX_FLAGS_VALID		0x80		/* valid descriptor */
+
+#define	TX_PFLAGS_DNAC		0x00000001	/* do not add crc */
+#define	TX_PFLAGS_IPCKSUM	0x00000002	/* ip checksum */
+#define	TX_PFLAGS_TCPCKSUM	0x00000004	/* tcp checksum */
+#define	TX_PFLAGS_TCPSEG	0x00000008	/* tcp segmentation */
+#define	TX_PFLAGS_VLAN		0x00000010	/* insert vlan */
+#define	TX_PFLAGS_IPSEC		0x00000020	/* perform ipsec */
+#define	TX_PFLAGS_PRIO		0x00000040	/* priority field valid */
+#define	TX_PFLAGS_UDPCKSUM	0x00000080	/* udp checksum */
+#define	TX_PFLAGS_PADFRAME	0x00000100	/* pad frame */
+#define	TX_PFLAGS_VLANTAG_M	0x000ff000	/* vlan tag mask */
+#define	TX_PFLAGS_VLANPRI_M	0x00300000	/* vlan priority mask */
 
 struct txp_rx_desc {
 	u_int8_t		rx_desctype:3,
@@ -264,12 +279,12 @@ struct txp_cmd_desc {
 	volatile u_int32_t	cmd_par3;
 };
 #define	CMD_FLAGS_TYPE_M	0x07		/* type mask */
-#define	CMD_FLAGS_TYPE_FRAG	0x01		/* type: fragment */
-#define	CMD_FLAGS_TYPE_DATA	0x02		/* type: data frame */
-#define	CMD_FLAGS_TYPE_CMD	0x03		/* type: command frame */
-#define	CMD_FLAGS_TYPE_OPT	0x04		/* type: options */
-#define	CMD_FLAGS_TYPE_RX	0x05		/* type: command */
-#define	CMD_FLAGS_TYPE_RESP	0x06		/* type: response */
+#define	CMD_FLAGS_TYPE_FRAG	0x00		/* type: fragment */
+#define	CMD_FLAGS_TYPE_DATA	0x01		/* type: data frame */
+#define	CMD_FLAGS_TYPE_CMD	0x02		/* type: command frame */
+#define	CMD_FLAGS_TYPE_OPT	0x03		/* type: options */
+#define	CMD_FLAGS_TYPE_RX	0x04		/* type: command */
+#define	CMD_FLAGS_TYPE_RESP	0x05		/* type: response */
 #define	CMD_FLAGS_RESP		0x40		/* response requested */
 #define	CMD_FLAGS_VALID		0x80		/* valid descriptor */
 
@@ -283,24 +298,29 @@ struct txp_rsp_desc {
 	volatile u_int32_t	rsp_par3;
 };
 #define	RSP_FLAGS_TYPE_M	0x07		/* type mask */
-#define	RSP_FLAGS_TYPE_FRAG	0x01		/* type: fragment */
-#define	RSP_FLAGS_TYPE_DATA	0x02		/* type: data frame */
-#define	RSP_FLAGS_TYPE_CMD	0x03		/* type: command frame */
-#define	RSP_FLAGS_TYPE_OPT	0x04		/* type: options */
-#define	RSP_FLAGS_TYPE_RX	0x05		/* type: command */
-#define	RSP_FLAGS_TYPE_RESP	0x06		/* type: response */
+#define	RSP_FLAGS_TYPE_FRAG	0x00		/* type: fragment */
+#define	RSP_FLAGS_TYPE_DATA	0x01		/* type: data frame */
+#define	RSP_FLAGS_TYPE_CMD	0x02		/* type: command frame */
+#define	RSP_FLAGS_TYPE_OPT	0x03		/* type: options */
+#define	RSP_FLAGS_TYPE_RX	0x04		/* type: command */
+#define	RSP_FLAGS_TYPE_RESP	0x05		/* type: response */
 #define	RSP_FLAGS_ERROR		0x40		/* response error */
 
 struct txp_frag_desc {
-	u_int8_t		frag_desctype:3,
-				frag_rsvd:5;
-
-	u_int8_t		frag_rsvd1;
-	u_int16_t		frag_num;
-	u_int32_t		frag_addrlo;
-	u_int32_t		frag_addrhi;
-	u_int32_t		frag_rsvd2;
+	volatile u_int8_t	frag_flags;	/* type/descriptor flags */
+	volatile u_int8_t	frag_rsvd1;
+	volatile u_int16_t	frag_len;	/* bytes in this fragment */
+	volatile u_int32_t	frag_addrlo;	/* phys addr low word */
+	volatile u_int32_t	frag_addrhi;	/* phys addr high word */
+	volatile u_int32_t	frag_rsvd2;
 };
+#define	FRAG_FLAGS_TYPE_M	0x07		/* type mask */
+#define	FRAG_FLAGS_TYPE_FRAG	0x00		/* type: fragment */
+#define	FRAG_FLAGS_TYPE_DATA	0x01		/* type: data frame */
+#define	FRAG_FLAGS_TYPE_CMD	0x02		/* type: command frame */
+#define	FRAG_FLAGS_TYPE_OPT	0x03		/* type: options */
+#define	FRAG_FLAGS_TYPE_RX	0x04		/* type: command */
+#define	FRAG_FLAGS_TYPE_RESP	0x05		/* type: response */
 
 struct txp_opt_desc {
 	u_int8_t		opt_desctype:3,
