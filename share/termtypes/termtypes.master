@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.21 2000/03/30 06:28:09 millert Exp $
+# $OpenBSD: termtypes.master,v 1.22 2000/04/14 21:04:58 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -1245,7 +1245,7 @@ pcvtXX|pcvt vt200 emulator (DEC VT220),
 #	50 lines entries; 80 columns
 pcvt25|dec vt220 emulation with 25 lines, 
 	cols#80, lines#25, 
-	is2=\E[1;25r\E[25;1H, use=pcvtXX, 
+	is2=\E[1;25r\E[25;1H, use=pcvtXX, use=ecma+color, 
 pcvt28|dec vt220 emulation with 28 lines, 
 	cols#80, lines#28, 
 	is2=\E[1;28r\E[28;1H, use=pcvtXX, 
