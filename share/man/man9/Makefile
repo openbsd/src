@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2002/08/27 01:16:58 wcobb Exp $
+#	$OpenBSD: Makefile,v 1.58 2002/09/02 03:54:14 wcobb Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -10,7 +10,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 bus_dma.9 bus_space.9 copy.9 \
 	fetch.9 fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 \
 	kern.9 kthread.9 lock.9 malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
-	panic.9 pfind.9 physio.9 \
+	panic.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
@@ -126,6 +126,15 @@ MLINKS+=random.9 add_true_randomness.9 \
 	random.9 get_random_bytes.9 \
 	random.9 arc4random.9
 MLINKS+=pfind.9 pgfind.9
+MLINKS+=pmap.9 pmap_init.9 pmap.9 pmap_enter.9 pmap.9 pmap_remove.9 \
+	pmap.9 pmap_unwire.9 pmap.9 pmap_protect.9 pmap.9 pmap_page_protect.9 \
+	pmap.9 pmap_is_modified.9 pmap.9 pmap_clear_modify.9 \
+	pmap.9 pmap_is_referenced.9 pmap.9 pmap_clear_reference.9 \
+	pmap.9 pmap_copy_page.9 pmap.9 pmap_zero_page.9 \
+	pmap.9 pmap_create.9 pmap.9 pmap_reference.9 pmap.9 pmap_destroy.9 \
+	pmap.9 pmap_steal_memory.9 pmap.9 pmap_growkernel.9 \
+	pmap.9 pmap_update.9 pmap.9 pmap_collect.9 pmap.9 pmap_virtual_space.9 \
+	pmap.9 pmap_copy.9 pmap.9 pmap_kenter_pa.9 pmap.9 pmap_kremove.9
 MLINKS+=pool.9 pool_init.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
 	pool.9 pool_setlowat.9
@@ -152,7 +161,6 @@ MLINKS+=vm_map_copy.9 vm_copy.9
 MLINKS+=vm_map_inherit.9 vm_inherit.9
 MLINKS+=vm_map_protect.9 vm_protect.9
 MLINKS+=malloc.9 MALLOC.9 malloc.9 free.9 malloc.9 FREE.9
-
 MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 max.9 kern.9 min.9 kern.9 ulmax.9 kern.9 ulmin.9 kern.9 abs.9 \
 	kern.9 assert.9 kern.9 KASSERT.9 kern.9 KDASSERT.9 \
