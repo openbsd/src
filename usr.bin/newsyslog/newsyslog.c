@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.4 1996/07/22 10:09:17 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.5 1996/08/31 14:20:36 deraadt Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.4 1996/07/22 10:09:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.5 1996/08/31 14:20:36 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -427,10 +427,18 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         if (!noaction && !(flags & CE_BINARY))
                 (void) log_trim(log);  /* Report the trimming to the old log */
 
-        if (noaction) 
-                printf("mv %s to %s\n",log,file1);
-        else
-                (void) rename(log,file1);
+	if (numdays == -1) {
+		if (noaction)
+			printf("rm %s\n",log);
+		else
+			(void) unlink(log);
+	} else {
+		if (noaction) 
+	                printf("mv %s to %s\n",log,file1);
+	        else
+	                (void) rename(log,file1);
+	}
+
         if (noaction) 
                 printf("Start new log...");
         else {
