@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.23 2001/12/04 00:00:36 niklas Exp $	*/
+/*	$OpenBSD: npx.c,v 1.24 2002/02/18 07:58:39 ericj Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -151,30 +151,26 @@ extern int i386_fpu_fdivbug;
  * latch stuff in probintr() can be moved to npxprobe().
  */
 void probeintr __P((void));
-asm ("
-	.text
-_probeintr:
-	ss
-	incl	_npx_intrs_while_probing
-	pushl	%eax
-	movb	$0x20,%al	# EOI (asm in strings loses cpp features)
-	outb	%al,$0xa0	# IO_ICU2
-	outb	%al,$0x20	# IO_ICU1
-	movb	$0,%al
-	outb	%al,$0xf0	# clear BUSY# latch
-	popl	%eax
-	iret
-");
+asm (".text\n\t"
+"_probeintr:\n\t"
+	"ss\n\t"
+	"incl	_npx_intrs_while_probing\n\t"
+	"pushl	%eax\n\t"
+	"movb	$0x20,%al	# EOI (asm in strings loses cpp features)\n\t"
+	"outb	%al,$0xa0	# IO_ICU2\n\t"
+	"outb	%al,$0x20	# IO_ICU1\n\t"
+	"movb	$0,%al\n\t"
+	"outb	%al,$0xf0	# clear BUSY# latch\n\t"
+	"popl	%eax\n\t"
+	"iret\n\t");
 
 void probetrap __P((void));
-asm ("
-	.text
-_probetrap:
-	ss
-	incl	_npx_traps_while_probing
-	fnclex
-	iret
-");
+asm (".text\n\t"
+"_probetrap:\n\t"
+	"ss\n\t"
+	"incl	_npx_traps_while_probing\n\t"
+	"fnclex\n\t"
+	"iret\n\t");
 
 static inline int
 npxprobe1(ia)
@@ -310,20 +306,18 @@ npxprobe(parent, match, aux)
 }
 
 int npx586bug1 __P((int, int));
-asm ("
-	.text
-_npx586bug1:
-	fildl	4(%esp)		# x
-	fildl	8(%esp)		# y
-	fld	%st(1)
-	fdiv	%st(1),%st	# x/y
-	fmulp	%st,%st(1)	# (x/y)*y
-	fsubrp	%st,%st(1)	# x-(x/y)*y
-	pushl	$0
-	fistpl	(%esp)
-	popl	%eax
-	ret
-");
+asm (".text\n\t"
+"_npx586bug1:\n\t"
+	"fildl	4(%esp)		# x\n\t"
+	"fildl	8(%esp)		# y\n\t"
+	"fld	%st(1)\n\t"
+	"fdiv	%st(1),%st	# x/y\n\t"
+	"fmulp	%st,%st(1)	# (x/y)*y\n\t"
+	"fsubrp	%st,%st(1)	# x-(x/y)*y\n\t"
+	"pushl	$0\n\t"
+	"fistpl	(%esp)\n\t"
+	"popl	%eax\n\t"
+	"ret\n\t");
 
 /*
  * Attach routine - announce which it is, and wire into system
