@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.17 2003/12/28 17:18:58 mcbride Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.18 2003/12/28 21:06:46 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.17 2003/12/28 17:18:58 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.18 2003/12/28 21:06:46 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -93,7 +93,6 @@ pfsync_ip_print(const u_char *bp, u_int len, const u_char *bp2)
 {
 	const struct ip *ip = (const struct ip *)bp2;
 	struct pfsync_header *hdr = (struct pfsync_header *)bp;
-	u_int hlen = ip->ip_hl << 2;
 
 	if (len < PFSYNC_HDRLEN)
 		printf("[|pfsync]");
@@ -181,7 +180,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 			    betoh64(d->id), htonl(d->creatorid));
 		}
 		break;
-	case PFSYNC_REQ_UPD:
+	case PFSYNC_ACT_UREQ:
 		for (i = 1, r = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*r) <= len; i++, d++) {
 			printf("\tid: %016llx creatorid: %08x\n",
