@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.4 1997/07/15 16:06:17 deraadt Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.5 1997/08/04 08:24:54 deraadt Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -260,14 +260,15 @@ vn_read(fp, uio, cred)
 	struct ucred *cred;
 {
 	register struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error;
+	int count, error = 0;
 
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
 	VOP_LOCK(vp);
 	uio->uio_offset = fp->f_offset;
 	count = uio->uio_resid;
-	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
-		cred);
+	if (vp->v_type != VDIR)
+		error = VOP_READ(vp, uio,
+		    (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0, cred);
 	fp->f_offset += count - uio->uio_resid;
 	VOP_UNLOCK(vp);
 	return (error);
