@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.17 1998/07/12 18:56:06 weingart Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.18 1998/08/09 06:13:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -302,11 +302,30 @@ update_led(void)
 static void
 settpmrate(int rate)
 {
+	int opri, response1, response2;
+
+	opri = spltty();
 	tpmrate = rate & 0x7f;
-	if(kbd_cmd(KEYB_C_TYPEM) != 0)
+	if (kbd_cmd(KEYB_C_TYPEM) != 0) {
 		printf("Keyboard TYPEMATIC command timeout\n");
-	else if(kbd_cmd(tpmrate) != 0)
+		splx(opri);
+		return;
+	}
+	response1 = kbd_response();		/* wait for ACK */
+
+	if (kbd_cmd(tpmrate) != 0) {
 		printf("Keyboard TYPEMATIC data timeout\n");
+		splx(opri);
+		return;
+	}
+	response2 = kbd_response();		/* wait for ACK */
+
+	if (response1 != KEYB_R_ACK || response2 != KEYB_R_ACK) {
+		printf(
+		   "Keyboard TYPEMATIC command not ACKed (responses %#x %#x)\n",
+		   response1, response2);
+	}
+	splx(opri);
 }
 
 /*---------------------------------------------------------------------------*
