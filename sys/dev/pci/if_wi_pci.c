@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.37 2004/10/20 12:53:29 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.38 2004/10/20 13:19:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -92,14 +92,20 @@ static const struct wi_pci_product {
 } wi_pci_products[] = {
 	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P, wi_pci_plx_attach },
 	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02, wi_pci_plx_attach },
+	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P03, wi_pci_plx_attach },
+	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_8031, wi_pci_plx_attach },
 	{ PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P, wi_pci_plx_attach },
 	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_WL11000P, wi_pci_plx_attach },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A, wi_pci_plx_attach },
 	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301, wi_pci_plx_attach },
 	{ PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_SS1023, wi_pci_plx_attach },
+	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_AWA100, wi_pci_plx_attach },
+	{ PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6000, wi_pci_plx_attach },
 	{ PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130, wi_pci_plx_attach },
 	{ PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2, wi_pci_tmd_attach },
 	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN, wi_pci_native_attach },
+	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3872, wi_pci_native_attach },
+	{ PCI_VENDOR_SAMSUNG, PCI_PRODUCT_SAMSUNG_SWL2210P, wi_pci_native_attach },
 	{ PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_211818A, wi_pci_acex_attach },
 	{ PCI_VENDOR_SYMBOL, PCI_PRODUCT_SYMBOL_LA41X3, wi_pci_acex_attach },
 	{ 0, 0, 0 }
