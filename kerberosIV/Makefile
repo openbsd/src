@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 1998/03/12 19:04:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 1998/03/16 03:07:47 deraadt Exp $
 #	from @(#)Makefile	5.1 (Berkeley) 6/25/90
 
 SUBDIR=
@@ -16,6 +16,10 @@ SUBDIR+=ext_srvtab kadmin kadmind kdb_destroy kdb_init kdb_edit \
 SUBDIR+=man doc
 
 .include <bsd.own.mk> # for AFS
+
+.if (${AFS} == "yes")
+SUBDIR+=afslog
+.endif
 
 build:
 	(cd ${.CURDIR}/include && ${MAKE} includes)
