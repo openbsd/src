@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.81 2004/09/19 23:22:29 jaredy Exp $
+#	$OpenBSD: Makefile,v 1.82 2004/09/22 21:26:02 jmc Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	altq.9 audio.9 autoconf.9 boot.9 bus_dma.9 bus_space.9 \
+MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	copy.9 crypto.9 ctxsw.9 disk.9 disklabel.9 \
 	dohooks.9 dopowerhooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	extattr.9 file.9 \
@@ -28,7 +28,12 @@ MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_attach.9 autoconf.9 config_detach.9 \
 	autoconf.9 config_activate.9 autoconf.9 config_deactivate.9 \
 	autoconf.9 config_defer.9
-
+MLINKS+=buffercache.9 bread.9 buffercache.9 breada.9 buffercache.9 breadn.9 \
+	buffercache.9 bwrite.9 buffercache.9 bawrite.9 \
+	buffercache.9 bdwrite.9 buffercache.9 getblk.9 \
+	buffercache.9 geteblk.9 buffercache.9 incore.9 \
+	buffercache.9 allocbuf.9 buffercache.9 brelse.9 \
+	buffercache.9 biodone.9 buffercache.9 biowait.9
 MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
 	bus_dma.9 bus_dmamap_load.9 bus_dma.9 bus_dmamap_load_mbuf.9 \
 	bus_dma.9 bus_dmamap_load_uio.9 bus_dma.9 bus_dmamap_load_raw.9 \
