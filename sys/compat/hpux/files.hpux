@@ -1,7 +1,7 @@
-#	$OpenBSD: files.hpux,v 1.4 1999/11/10 15:55:21 mickey Exp $
+#	$OpenBSD: files.hpux,v 1.5 2002/12/10 23:47:53 miod Exp $
 #	$NetBSD: files.hpux,v 1.2 1995/11/28 08:39:52 thorpej Exp $
 #
-# Config.new file description for machine-independent HPUX compat code.
+# Config file description for machine-independent HPUX compat code.
 # Included by ports that need it.
 
 # ports should define any machine-specific files they need in their
