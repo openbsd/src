@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.89 2003/04/25 20:32:18 grange Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.90 2003/05/06 19:27:47 henning Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.89 2003/04/25 20:32:18 grange Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.90 2003/05/06 19:27:47 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -874,21 +874,25 @@ parse(char *string, int flags)
 		if (size > 0) {
 			if (!nflag)
 				printf("%s = ", string);
-			printf("(device = %s, type = ", s->device);
+			printf("%s, %s, ", s->device, s->desc);
 			switch (s->type) {
 			case SENSOR_TEMP:
-				printf("temp");
+				printf("temp, %.2f degC / %.2f degF",
+				    (s->value / 1000000.0) - 273.16,
+				    ((s->value / 1000000.0) - 273.16) * 9 / 5 +
+				    32);
 				break;
 			case SENSOR_FANRPM:
-				printf("fanrpm");
+				printf("fanrpm, %lld RPM", s->value);
 				break;
 			case SENSOR_VOLTS_DC:
-				printf("volts_dc");
+				printf("volts_dc, %.2f V",
+				    s->value / 1000000.0);
 				break;
 			default:
 				printf("unknown");
 			}
-			printf(", desc=%s, value=%ld)\n", s->desc, s->value);
+			printf("\n");
 		}
 		return;
 	}
