@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.4 1997/11/05 19:47:11 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.5 1997/11/07 03:42:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: build.c,v 1.4 1997/11/05 19:47:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: build.c,v 1.5 1997/11/07 03:42:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: build.c,v 1.4 1997/11/05 19:47:11 deraadt Exp $
 #include <dirent.h>
 #include <unistd.h>
 #include <ar.h>
+#include <limits.h>
 #include <ranlib.h>
 #include <stdio.h>
 #include <string.h>
