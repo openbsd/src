@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.9 1999/01/08 20:24:57 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.10 1999/01/10 16:45:49 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -517,11 +517,13 @@ c_exitreturn(wp)
 		return 1;
 	arg = wp[builtin_opt.optind];
 
-	if (arg != NULL && !getn(arg, &n)) {
-		exstat = 1;
-		warningf(TRUE, "%s: bad number", arg);
-	} else
-		exstat = n;
+	if (arg != NULL) {
+		if (!getn(arg, &n)) {
+			exstat = 1;
+			warningf(TRUE, "%s: bad number", arg);
+		} else
+			exstat = n;
+	}
 	if (wp[0][0] == 'r') { /* return */
 		struct env *ep;
 
