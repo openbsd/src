@@ -121,8 +121,8 @@ typedef struct {
 #define	__ISDIRTY	0x01		/* Line is dirty. */
 #define __ISPASTEOL	0x02		/* Cursor is past end of line */
 #define __FORCEPAINT	0x04		/* Force a repaint of the line */
-	u_int flags;
-	u_int hash;			/* Hash value for the line. */
+	unsigned int flags;
+	unsigned int hash;			/* Hash value for the line. */
 	size_t *firstchp, *lastchp;	/* First and last chngd columns ptrs */
 	size_t firstch, lastch;		/* First and last changed columns. */
 	__LDATA *line;			/* Pointer to the line text. */
@@ -147,7 +147,7 @@ typedef struct __window {		/* Window structure. */
 #define	__CLEAROK	0x040		/* Clear on next refresh. */
 #define __WSTANDOUT	0x080		/* Standout window */
 #define __LEAVEOK	0x100		/* If curser left */	
-	u_int flags;
+	unsigned int flags;
 } WINDOW;
 
 /* Curses external declarations. */
@@ -302,7 +302,7 @@ __END_DECLS
 /* Private functions. */
 #ifdef _CURSES_PRIVATE
 void	 __CTRACE __P((const char *, ...));
-u_int	 __hash __P((char *, int));
+unsigned int	 __hash __P((char *, int));
 void	 __id_subwins __P((WINDOW *));
 int	 __mvcur __P((int, int, int, int, int));
 void	 __restore_stophandler __P((void));
