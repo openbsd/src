@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.62 2004/08/31 05:31:39 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.63 2004/09/16 22:32:46 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -145,10 +145,15 @@ struct carp_if {
 	struct ifnet *vhif_ifp;
 };
 
-#define	CARP_LOG(s,a) if (carp_opts[CARPCTL_LOG])			\
-	log(LOG_INFO, "carp: " s "\n", (a));
-#define	CARP_LOG1(sc,s,a) if (carp_opts[CARPCTL_LOG])			\
-	log(LOG_INFO, "%s: " s "\n", (sc)->sc_ac.ac_if.if_xname, (a));
+#define	CARP_LOG(sc, s)							\
+	if (carp_opts[CARPCTL_LOG]) {					\
+		if (sc == NULL) 					\
+			log(LOG_INFO, "%s: ", (sc)->sc_ac.ac_if.if_xname);\
+		else							\
+			log(LOG_INFO, "carp: ");			\
+		addlog s;						\
+		addlog("\n");						\
+	}
 
 void	carp_hmac_prepare(struct carp_softc *);
 void	carp_hmac_generate(struct carp_softc *, u_int32_t *,
@@ -306,6 +311,7 @@ void
 carp_input(struct mbuf *m, ...)
 {
 	struct ip *ip = mtod(m, struct ip *);
+	struct carp_softc *sc = NULL;
 	struct carp_header *ch;
 	int iplen, len, hlen;
 	va_list ap;
@@ -324,8 +330,8 @@ carp_input(struct mbuf *m, ...)
 	/* check if received on a valid carp interface */
 	if (m->m_pkthdr.rcvif->if_carp == NULL) {
 		carpstats.carps_badif++;
-		CARP_LOG("packet received on non-carp interface: %s",
-		    m->m_pkthdr.rcvif->if_xname);
+		CARP_LOG(sc, ("packet received on non-carp interface: %s",
+		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
 	}
@@ -333,7 +339,8 @@ carp_input(struct mbuf *m, ...)
 	/* verify that the IP TTL is 255.  */
 	if (ip->ip_ttl != CARP_DFLTTL) {
 		carpstats.carps_badttl++;
-		CARP_LOG("received ttl %d != 255", ip->ip_ttl);
+		CARP_LOG(sc, ("received ttl %d != 255i on %s", ip->ip_ttl,
+		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
 	}
@@ -342,8 +349,8 @@ carp_input(struct mbuf *m, ...)
 
 	if (m->m_pkthdr.len < iplen + sizeof(*ch)) {
 		carpstats.carps_badlen++;
-		CARP_LOG("received len %d < 36",
-		    m->m_len - sizeof(struct ip));
+		CARP_LOG(sc, ("received len %d < 36 on %s",
+		    m->m_len - sizeof(struct ip), m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
 	}
@@ -365,7 +372,8 @@ carp_input(struct mbuf *m, ...)
 	len = iplen + sizeof(*ch);
 	if (len > m->m_pkthdr.len) {
 		carpstats.carps_badlen++;
-		CARP_LOG("packet too short %d", m->m_pkthdr.len);
+		CARP_LOG(sc, ("packet too short %d on %d", m->m_pkthdr.len,
+		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
 	}
@@ -381,7 +389,8 @@ carp_input(struct mbuf *m, ...)
 	m->m_data += iplen;
 	if (carp_cksum(m, len - iplen)) {
 		carpstats.carps_badsum++;
-		CARP_LOG("checksum failed", 0);
+		CARP_LOG(sc, ("checksum failed on %s",
+		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
 	}
@@ -395,6 +404,7 @@ int
 carp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
+	struct carp_softc *sc = NULL;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct carp_header *ch;
 	u_int len;
@@ -409,8 +419,8 @@ carp6_input(struct mbuf **mp, int *offp, int proto)
 	/* check if received on a valid carp interface */
 	if (m->m_pkthdr.rcvif->if_carp == NULL) {
 		carpstats.carps_badif++;
-		CARP_LOG("packet received on non-carp interface: %s",
-		    m->m_pkthdr.rcvif->if_xname);
+		CARP_LOG(sc, ("packet received on non-carp interface: %s",
+		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return (IPPROTO_DONE);
 	}
@@ -418,7 +428,8 @@ carp6_input(struct mbuf **mp, int *offp, int proto)
 	/* verify that the IP TTL is 255 */
 	if (ip6->ip6_hlim != CARP_DFLTTL) {
 		carpstats.carps_badttl++;
-		CARP_LOG("received ttl %d != 255", ip6->ip6_hlim);
+		CARP_LOG(sc, ("received ttl %d != 255 on %s", ip6->ip6_hlim,
+		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return (IPPROTO_DONE);
 	}
@@ -428,7 +439,8 @@ carp6_input(struct mbuf **mp, int *offp, int proto)
 	IP6_EXTHDR_GET(ch, struct carp_header *, m, *offp, sizeof(*ch));
 	if (ch == NULL) {
 		carpstats.carps_badlen++;
-		CARP_LOG("packet size %u too small", len);
+		CARP_LOG(sc, ("packet size %u too small on %s", len,
+		    m->m_pkthdr.rcvif->if_xname));
 		return (IPPROTO_DONE);
 	}
 
@@ -437,7 +449,8 @@ carp6_input(struct mbuf **mp, int *offp, int proto)
 	m->m_data += *offp;
 	if (carp_cksum(m, sizeof(*ch))) {
 		carpstats.carps_badsum++;
-		CARP_LOG("checksum failed", 0);
+		CARP_LOG(sc, ("checksum failed, on %s",
+		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return (IPPROTO_DONE);
 	}
@@ -494,7 +507,7 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 	if (ch->carp_version != CARP_VERSION) {
 		carpstats.carps_badver++;
 		sc->sc_ac.ac_if.if_ierrors++;
-		CARP_LOG1(sc, "invalid version %d", ch->carp_version);
+		CARP_LOG(sc, ("invalid version %d", ch->carp_version));
 		m_freem(m);
 		return;
 	}
@@ -503,7 +516,7 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 	if (carp_hmac_verify(sc, ch->carp_counter, ch->carp_md)) {
 		carpstats.carps_badauth++;
 		sc->sc_ac.ac_if.if_ierrors++;
-		CARP_LOG("incorrect hash", 0);
+		CARP_LOG(sc, ("incorrect hash"));
 		m_freem(m);
 		return;
 	}
