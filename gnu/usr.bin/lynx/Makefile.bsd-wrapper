@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2000/06/28 18:53:46 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2000/07/31 20:54:57 espie Exp $
 
 MAN=	lynx.1
 CLEANFILES=	lynx.1
@@ -27,7 +27,7 @@ LYNX_CAT1=lynx.cat1
 .endif
 
 all:	config.status ${LYNX_CAT1}
-	${MAKE} ${GNUCFLAGS}
+	${MAKE}
 
 .FORCE:	.IGNORE
 
