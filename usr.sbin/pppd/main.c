@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2003/04/04 20:25:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2003/04/14 03:14:59 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.40 2003/04/04 20:25:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.41 2003/04/14 03:14:59 deraadt Exp $";
 #endif
 #endif
 
@@ -1341,7 +1341,7 @@ pr_log(void *arg, char *fmt, ...)
 	syslog(LOG_DEBUG, "%s", line);
 	linep = line;
     }
-    strcpy(linep, buf);
+    strlcpy(linep, buf, line + sizeof line - linep);
     linep += n;
 }
 
