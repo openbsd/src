@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.2 1996/09/30 22:29:32 deraadt Exp $	*/
+/*	$OpenBSD: md.h,v 1.3 1998/05/11 20:27:19 niklas Exp $	*/
 /*	$NetBSD: md.h,v 1.1 1995/10/19 13:10:20 ragge Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -36,7 +36,10 @@
 #define NEED_SWAP
 #endif
 
-#define	MAX_ALIGNMENT		(sizeof (long))
+#undef __LDPGSZ
+#include <sys/arch/vax/include/exec.h>
+
+#define	MAX_ALIGNMENT		4	/* (sizeof (long)) */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #define PAGSIZ			__LDPGSZ
@@ -49,13 +52,13 @@
 #define N_SET_FLAG(ex,f)	(oldmagic || N_GETMAGIC(ex)==QMAGIC ? (0) : \
 					N_SETMAGIC(ex,			\
 						   N_GETMAGIC(ex),	\
-						   MID_MACHINE,		\
+						   MID_VAX,		\
 						   N_GETFLAG(ex)|(f)))
 
 #define N_IS_DYNAMIC(ex)	((N_GETFLAG(ex) & EX_DYNAMIC))
 
 #define N_BADMID(ex) \
-	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE)
+	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_VAX)
 
 #endif
 
@@ -67,11 +70,11 @@
 				  (netzmagic == 0 ?			\
 					N_SETMAGIC(ex,			\
 						   N_GETMAGIC(ex),	\
-						   MID_MACHINE,		\
+						   MID_VAX,		\
 						   N_GETFLAG(ex)|(f)) :	\
 					N_SETMAGIC_NET(ex,		\
 						   N_GETMAGIC_NET(ex),	\
-						   MID_MACHINE,		\
+						   MID_VAX,		\
 						   N_GETFLAG_NET(ex)|(f)) ))
 
 #define N_IS_DYNAMIC(ex)	((N_GETMAGIC_NET(ex) == ZMAGIC) ?	\

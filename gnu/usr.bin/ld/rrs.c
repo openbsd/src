@@ -1,4 +1,4 @@
-/* *	$OpenBSD: rrs.c,v 1.2 1998/03/26 19:46:23 niklas Exp $*/
+/* *	$OpenBSD: rrs.c,v 1.3 1998/05/11 20:27:14 niklas Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include <unistd.h>
 #include <err.h>
 #include <fcntl.h>
+#include <ranlib.h>
 #include <a.out.h>
 #include <stab.h>
 #include <string.h>

@@ -41,6 +41,7 @@ int	isdigit();
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <ranlib.h>
 #include <a.out.h>
 #include <ctype.h>
 #include <dirent.h>

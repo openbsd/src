@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.c,v 1.2 1996/09/30 22:29:32 deraadt Exp $	*/
+/*	$OpenBSD: md.c,v 1.3 1998/05/11 20:27:17 niklas Exp $	*/
 /*	$NetBSD: md.c,v 1.1 1995/10/19 13:10:19 ragge Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <err.h>
 #include <fcntl.h>
+#include <ranlib.h>
 #include <a.out.h>
 #include <stab.h>
 #include <string.h>
@@ -249,15 +250,15 @@ int		magic, flags;
 	if (oldmagic || magic == QMAGIC)
 		hp->a_midmag = magic;
 	else
-		N_SETMAGIC((*hp), magic, MID_I386, flags);
+		N_SETMAGIC((*hp), magic, MID_VAX, flags);
 #endif
 #ifdef FreeBSD
 	if (oldmagic)
 		hp->a_midmag = magic;
 	else if (netzmagic)
-		N_SETMAGIC_NET((*hp), magic, MID_I386, flags);
+		N_SETMAGIC_NET((*hp), magic, MID_VAX, flags);
 	else
-		N_SETMAGIC((*hp), magic, MID_I386, flags);
+		N_SETMAGIC((*hp), magic, MID_VAX, flags);
 #endif
 
 	/* TEXT_START depends on the value of outheader.a_entry.  */
