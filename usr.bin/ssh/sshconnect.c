@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.88 2001/01/02 20:50:56 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.89 2001/01/04 22:41:03 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -109,15 +109,15 @@ ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
 
 		/* Stderr is left as it is so that error messages get
 		   printed on the user's terminal. */
-		argv[0] = "/bin/sh";
+		argv[0] = _PATH_BSHELL;
 		argv[1] = "-c";
 		argv[2] = command_string;
 		argv[3] = NULL;
 
 		/* Execute the proxy command.  Note that we gave up any
 		   extra privileges above. */
-		execv("/bin/sh", argv);
-		perror("/bin/sh");
+		execv(argv[0], argv);
+		perror(argv[0]);
 		exit(1);
 	}
 	/* Parent. */
