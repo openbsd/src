@@ -61,8 +61,6 @@ int encdebug = 1;
 
 /*
  * This is the proper place to define the various encapsulation transforms.
- * CAUTION: the human-readable string should be LESS than 200 bytes if the
- * kernfs is to work properly.
  */
 
 struct xformsw xformsw[] = {
