@@ -123,6 +123,7 @@
 ./sbin/newfs_msdos
 ./sbin/nfsd
 ./sbin/nologin
+./sbin/pfctl
 ./sbin/photurisd
 ./sbin/ping
 ./sbin/ping6
@@ -160,6 +161,7 @@
 ./usr/bin/apply
 ./usr/bin/apropos
 ./usr/bin/arch
+./usr/bin/asn1_compile
 ./usr/bin/at
 ./usr/bin/atq
 ./usr/bin/atrm
@@ -274,6 +276,7 @@
 ./usr/bin/kdestroy
 ./usr/bin/kdump
 ./usr/bin/keynote
+./usr/bin/kf
 ./usr/bin/kinit
 ./usr/bin/klist
 ./usr/bin/ktrace
@@ -462,6 +465,7 @@
 ./usr/bin/uuto
 ./usr/bin/uux
 ./usr/bin/vacation
+./usr/bin/verify_krb5_conf
 ./usr/bin/vgrind
 ./usr/bin/vi
 ./usr/bin/view
@@ -1110,8 +1114,10 @@
 ./usr/libexec/auth/login_activ
 ./usr/libexec/auth/login_chpass
 ./usr/libexec/auth/login_crypto
-./usr/libexec/auth/login_kerberos
-./usr/libexec/auth/login_krb-or-pwd
+./usr/libexec/auth/login_krb4
+./usr/libexec/auth/login_krb4-or-pwd
+./usr/libexec/auth/login_krb5
+./usr/libexec/auth/login_krb5-or-pwd
 ./usr/libexec/auth/login_lchpass
 ./usr/libexec/auth/login_passwd
 ./usr/libexec/auth/login_reject
@@ -1139,10 +1145,17 @@
 ./usr/libexec/ftpd
 ./usr/libexec/getNAME
 ./usr/libexec/getty
+./usr/libexec/hprop
+./usr/libexec/hpropd
 ./usr/libexec/identd
+./usr/libexec/ipropd-master
+./usr/libexec/ipropd-slave
 ./usr/libexec/kadmind
 ./usr/libexec/kauthd
+./usr/libexec/kdc
 ./usr/libexec/kerberos
+./usr/libexec/kfd
+./usr/libexec/kpasswdd
 ./usr/libexec/kpropd
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
@@ -1267,6 +1280,7 @@
 ./usr/sbin/kprop
 ./usr/sbin/ksrvutil
 ./usr/sbin/kstash
+./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
 ./usr/sbin/logresolve
 ./usr/sbin/lpc

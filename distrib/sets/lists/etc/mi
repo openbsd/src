@@ -30,6 +30,10 @@
 ./etc/hosts.equiv
 ./etc/hosts.lpd
 ./etc/inetd.conf
+./etc/kerberosV
+./etc/kerberosV/README
+./etc/nat.conf
+./etc/pf.conf
 ./etc/kerberosIV/README
 ./etc/kerberosIV/krb.conf
 ./etc/kerberosIV/krb.equiv

@@ -1,3 +1,9 @@
+./usr/lib/lib45_pic.a
+./usr/lib/libasn1_pic.a
+./usr/lib/libgssapi_pic.a
+./usr/lib/libkadm5clnt_pic.a
+./usr/lib/libkadm5srv_pic.a
+./usr/lib/libkrb5_pic.a
 ./usr/bin/addr2line
 ./usr/bin/c++filt
 ./usr/bin/gasp
