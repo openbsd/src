@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.7 2003/04/04 00:42:34 deraadt Exp $	*/
+/*	$OpenBSD: which.c,v 1.8 2003/04/04 03:25:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: which.c,v 1.7 2003/04/04 00:42:34 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: which.c,v 1.8 2003/04/04 03:25:28 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/param.h>
@@ -62,9 +62,7 @@ void usage(void);
  */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char *path;
 	size_t n;
@@ -123,11 +121,7 @@ main(argc, argv)
 }
 
 int
-findprog(prog, path, progmode, allmatches)
-	char *prog;
-	char *path;
-	int progmode;
-	int allmatches;
+findprog(char *prog, char *path, int progmode, int allmatches)
 {
 	char *p, filename[MAXPATHLEN];
 	int proglen, plen, rval = 0;
@@ -162,9 +156,7 @@ findprog(prog, path, progmode, allmatches)
 			return(0);
 		}
 
-		(void)strlcpy(filename, p, sizeof filename);
-		filename[plen] = '/';
-		(void)strlcpy(filename + plen + 1, prog, sizeof filename - (plen + 1));
+		snprintf(filename, sizeof(filename), "%s/%s", p, prog);
 		if ((stat(filename, &sbuf) == 0) && S_ISREG(sbuf.st_mode) &&
 		    access(filename, X_OK) == 0) {
 			(void)puts(filename);
@@ -182,7 +174,7 @@ findprog(prog, path, progmode, allmatches)
 }
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr, "Usage: %s [-a] name [...]\n", __progname);
 	exit(1);
