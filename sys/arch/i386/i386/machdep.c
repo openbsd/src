@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.261 2004/01/12 08:09:23 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.262 2004/01/24 11:23:20 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -914,9 +914,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, "C3 Samuel 1",
-				"C3 Samule 2/Ezra",
-				"C3 Ezra-T", 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0,
+				"C3 Samuel",
+				"C3 Samuel 2/Ezra",
+				"C3 Ezra-T",
+				"C3 Nehemiah", 0, 0, 0, 0, 0, 0,
 				"C3"		/* Default */
 			},
 			cyrix3_cpu_setup
@@ -1104,7 +1106,7 @@ winchip_cpu_setup(cpu_device, model, step)
 
 #if defined(I686_CPU)
 /*
- * Note, the VIA C3 Nehemia provides 4 internal 8-byte buffers, which
+ * Note, the VIA C3 Nehemiah provides 4 internal 8-byte buffers, which
  * store random data, and can be accessed a lot quicker than waiting
  * for new data to be generated.  As we are using every 8th bit only
  * due to whitening. Since the RNG generates in excess of 21KB/s at
@@ -1510,7 +1512,7 @@ cyrix3_cpu_setup(cpu_device, model, step)
 			break;
 
 		/* 
-		 * C3 Nehemia:
+		 * C3 Nehemiah:
 		 * First we check for extended feature flags, and then
 		 * (if present) retrieve the ones at 0xC0000001.  In this
 		 * bit 2 tells us if the RNG is present.  Bit 3 tells us
@@ -1772,13 +1774,6 @@ cyrix3_cpu_name(model, step)
 		else
 			name = "C3 Ezra";
 		break;
-	case 8:
-		if (step < 8)
-			name = "C3 Ezra-T";
-		break;
-	case 9:
-		name = "C3 Nehemia";
-		break;
 	}
 	return name;
 }
@@ -1881,7 +1876,12 @@ identifycpu()
 			token = cpup->cpu_id;
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
-			/* Special hack for the VIA C3 series. */
+			/*
+			 * Special hack for the VIA C3 series.
+			 *
+			 * VIA bought Centaur Technology from IDT in Aug 1999
+			 * and marketed the processors as VIA Cyrix III/C3.
+			 */
 			if (vendor == CPUVENDOR_IDT && family >= 6) {
 				vendor = CPUVENDOR_VIA;
 				vendorname = "VIA";
@@ -1900,7 +1900,7 @@ identifycpu()
 				name = intel686_cpu_name(model);
 			/* Special hack for the VIA C3 series. */
 			} else if (vendor == CPUVENDOR_VIA && family == 6 &&
-				   model >= 7 && model <= 8) {
+				   model == 7) {
 				name = cyrix3_cpu_name(model, step);
 			/* Special hack for the TMS5x00 series. */
 			} else if (vendor == CPUVENDOR_TRANSMETA && 
