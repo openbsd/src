@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.40 2003/03/02 23:37:24 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.41 2003/03/03 14:16:18 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -1022,22 +1022,21 @@ rate2str(double rate)
 	char		*buf;
 	static char	 r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring bufer */
 	static int	 idx = 0;
+	int		 i;
+	static const char unit[] = " KMG";
 
 	buf = r2sbuf[idx++];
 	if (idx == R2S_BUFS)
 		idx = 0;
 
-	if (rate == 0.0)
-		snprintf(buf, RATESTR_MAX, "0b");
-	else if (rate >= 1000 * 1000 * 1000)
-		snprintf(buf, RATESTR_MAX, "%.2fGb",
-		    rate / (1000.0 * 1000.0 * 1000.0));
-	else if (rate >= 1000 * 1000)
-		snprintf(buf, RATESTR_MAX, "%.2fMb", rate / (1000.0 * 1000.0));
-	else if (rate >= 1000)
-		snprintf(buf, RATESTR_MAX, "%.2fKb", rate / 1000.0);
+	for (i = 0; rate >= 1000 && i <= 3; i++)
+		rate /= 1000;
+
+	if ((int)(rate * 100) % 100)
+		snprintf(buf, RATESTR_MAX, "%.2f%cb", rate, unit[i]);
 	else
-		snprintf(buf, RATESTR_MAX, "%db", (int)rate);
+		snprintf(buf, RATESTR_MAX, "%d%cb", (int)rate, unit[i]);
+
 	return (buf);
 }
 
