@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.19 2000/12/01 16:29:32 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.20 2000/12/10 02:50:07 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1045,9 +1045,6 @@ ${FAKE_FLAGS} is used to set variables on
 .Xr make 1
 command line, which will override the port Makefile contents.
 Thus, a port that mentions DESTDIR= does not need any patch to work with fake.
-.Pp
-Recursive makes are a problem, and will often need FAKE_FLAGS to be changed
-to ensure that the right values are passed down to submakes.
 .Sh FLAVORS AND MULTI_PACKAGES
 Starting with
 .Ox 2.7 ,
@@ -1085,7 +1082,7 @@ This is not yet supported for dependencies.
 .Pp
 Finally, packing information will use templates with the canonical package
 extension if they are available: if FLAVOR='option1 option2' and both
-DESCR and DESCR-option1-option2 are available, DESCR-option1-option2 will
+COMMENT and COMMENT-option1-option2 are available, COMMENT-option1-option2 will
 be used.
 .Pp
 If a port can generate several useful packages, set MULTI_PACKAGES
