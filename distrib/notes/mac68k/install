@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.27 2004/04/08 21:26:27 xsa Exp $
+dnl	$OpenBSD: install,v 1.28 2004/04/20 17:12:57 xsa Exp $
 OpenBSDInstallPrelude
 
 The installation can be broken down into four basic steps:
@@ -64,7 +64,7 @@ If you are installing onto a single root partition, proceed to the
 	partition(s) by hand:
 
 		* Select "Build Devices" from the "File" menu.  This builds
-		  the necessary tree of device files on your filesystem in
+		  a minimal tree of device files on your filesystem in
 		  /dev.
 
 		* Select "Mini Shell" from the "File" menu.
@@ -93,9 +93,9 @@ Installation of base files:
 	while the installation takes place.
 
 	At some point after installing the base package, select the "Build
-	Devices" option from the "File" menu.  This will create a bunch of
-	device nodes for you in /dev and your initial /etc/fstab.  The
-	installer program also has an option to give you a mini-shell.
+	Devices" option from the "File" menu.  This will create a minimal
+	set of device nodes for you in /dev and your initial /etc/fstab.
+	The installer program also has an option to give you a mini-shell.
 
 
 Booting the system:
@@ -130,6 +130,9 @@ network or set a root password as part of the installation process. The user
 will have to do this after the first OpenBSD boot.  Upon first boot, root
 will have no password, just hit RETURN when prompted. You will want to set
 the root password using the passwd(1) command.
+
+To generate all the available device nodes, cd to the /dev directory and run
+"./MAKEDEV all".
 
 To set up basic networking, you will need to create or edit the following
 files, all of which are in the /etc directory:
