@@ -359,7 +359,7 @@ int	devfd;
 		int i;
 
 		*block_size_p = 512;
-		*block_count_p = (isofseblk - isofsblk) * (2048/512);
+		*block_count_p = (isofseblk - isofsblk + 1) * (2048/512);
 		if (*block_count_p > max_block_count)
 			errx(1, "%s: Too many blocks", boot);
 		if (verbose)
