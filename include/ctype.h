@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.13 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.14 2003/06/10 22:00:31 millert Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -50,12 +50,12 @@
 #define	_X	0x40
 #define	_B	0x80
 
+__BEGIN_DECLS
+
 extern const char	*_ctype_;
 extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
 
-#ifdef _ANSI_LIBRARY
-__BEGIN_DECLS
 int	isalnum(int);
 int	isalpha(int);
 int	iscntrl(int);
@@ -76,107 +76,108 @@ int	isascii(int);
 int	toascii(int);
 int	_tolower(int);
 int	_toupper(int);
-#endif
-__END_DECLS
+#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
-#else /* !_ANSI_LIBRARY */
+#ifndef _ANSI_LIBRARY
 
-static __inline int isalnum(int c)
+extern __inline int isalnum(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_U|_L|_N)));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L|_N)));
 }
 
-static __inline int isalpha(int c)
+extern __inline int isalpha(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_U|_L)));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L)));
 }
 
-static __inline int iscntrl(int c)
+extern __inline int iscntrl(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _C));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _C));
 }
 
-static __inline int isdigit(int c)
+extern __inline int isdigit(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _N));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _N));
 }
 
-static __inline int isgraph(int c)
+extern __inline int isgraph(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_P|_U|_L|_N)));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N)));
 }
 
-static __inline int islower(int c)
+extern __inline int islower(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _L));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _L));
 }
 
-static __inline int isprint(int c)
+extern __inline int isprint(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_P|_U|_L|_N|_B)));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N|_B)));
 }
 
-static __inline int ispunct(int c)
+extern __inline int ispunct(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _P));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _P));
 }
 
-static __inline int isspace(int c)
+extern __inline int isspace(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _S));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _S));
 }
 
-static __inline int isupper(int c)
+extern __inline int isupper(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _U));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _U));
 }
 
-static __inline int isxdigit(int c)
+extern __inline int isxdigit(int c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_N|_X)));
+	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_N|_X)));
 }
 
-static __inline int tolower(int c)
+extern __inline int tolower(int c)
 {
 	if ((unsigned int)c > 0177)
 		return (c);
 	return ((_tolower_tab_ + 1)[c]);
 }
 
-static __inline int toupper(int c)
+extern __inline int toupper(int c)
 {
 	if ((unsigned int)c > 0177)
 		return (c);
 	return ((_toupper_tab_ + 1)[c]);
 }
 
-#if !defined(_ANSI_SOURCE) && !defined (_POSIX_SOURCE)
-static __inline int isblank(int c)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+extern __inline int isblank(int c)
 {
 	return (c == ' ' || c == '\t');
 }
 
-static __inline int isascii(int c)
+extern __inline int isascii(int c)
 {
 	return ((unsigned int)c <= 0177);
 }
 
-static __inline int toascii(int c)
+extern __inline int toascii(int c)
 {
 	return (c & 0177);
 }
 
-static __inline int _tolower(int c)
+extern __inline int _tolower(int c)
 {
 	return (c - 'A' + 'a');
 }
 
-static __inline int _toupper(int c)
+extern __inline int _toupper(int c)
 {
 	return (c - 'a' + 'A');
 }
-#endif
+#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
 #endif /* !_ANSI_LIBRARY */
+
+__END_DECLS
 
 #endif /* !_CTYPE_H_ */
