@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.22 2001/06/25 23:05:17 provos Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.23 2001/11/02 16:19:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.22 2001/06/25 23:05:17 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.23 2001/11/02 16:19:27 deraadt Exp $ (LBL)";
 #endif
 
 /*
@@ -385,23 +385,26 @@ RETSIGTYPE
 cleanup(int signo)
 {
 	struct pcap_stat stat;
+	char buf[1024];
 
 	/* Can't print the summary if reading from a savefile */
 	if (pd != NULL && pcap_file(pd) == NULL) {
-		/* XXX unsafe */
-		(void)fflush(stdout);
-		putc('\n', stderr);
-		if (pcap_stats(pd, &stat) < 0)
-			(void)fprintf(stderr, "pcap_stats: %s\n",
-			    pcap_geterr(pd));
-		else {
-			(void)fprintf(stderr, "%d packets received by filter\n",
-			    stat.ps_recv);
-			(void)fprintf(stderr, "%d packets dropped by kernel\n",
-			    stat.ps_drop);
+		(void)fflush(stdout);	/* XXX unsafe */
+		(void)write(STDERR_FILENO, "\n", 1);
+		if (pcap_stats(pd, &stat) < 0) {
+			(void)snprintf(buf, sizeof buf,
+			    "pcap_stats: %s\n", pcap_geterr(pd));
+			write(STDOUT_FILENO, buf, strlen(buf));
+		} else {
+			(void)snprintf(buf, sizeof buf,
+			    "%d packets received by filter\n", stat.ps_recv);
+			write(STDOUT_FILENO, buf, strlen(buf));
+			(void)snprintf(buf, sizeof buf,
+			    "%d packets dropped by kernel\n", stat.ps_drop);
+			write(STDOUT_FILENO, buf, strlen(buf));
 		}
 	}
-	exit(0);
+	_exit(0);
 }
 
 /* dump the buffer in `emacs-hexl' style */
