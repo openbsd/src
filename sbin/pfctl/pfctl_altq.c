@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.53 2003/04/12 15:09:57 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.54 2003/04/12 16:39:01 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -818,45 +818,51 @@ print_hfsc_opts(const struct pf_altq *a)
 
 	opts = &a->pq_u.hfsc_opts;
 
-	printf("hfsc(");
-	if (opts->flags & HFCF_RED)
-		printf(" red");
-	if (opts->flags & HFCF_ECN)
-		printf(" ecn");
-	if (opts->flags & HFCF_RIO)
-		printf(" rio");
-	if (opts->flags & HFCF_CLEARDSCP)
-		printf(" cleardscp");
-	if (opts->flags & HFCF_DEFAULTCLASS)
-		printf(" default");
-	if (opts->rtsc_m2 != 0) {
-		if (opts->rtsc_d != 0)
-			printf(" realtime(%s %ums %s)",
-			    rate2str((double)opts->rtsc_m1), opts->rtsc_d,
-			    rate2str((double)opts->rtsc_m2));
-		else
-			printf(" realtime %s",
-			    rate2str((double)opts->rtsc_m2));
-	}
-	if (opts->lssc_m2 != 0) {
-		if (opts->lssc_d != 0)
-			printf(" linkshare(%s %ums %s)",
-			    rate2str((double)opts->lssc_m1), opts->lssc_d,
-			    rate2str((double)opts->lssc_m2));
-		else
-			printf(" linkshare %s",
-			    rate2str((double)opts->lssc_m2));
-	}
-	if (opts->ulsc_m2 != 0) {
-		if (opts->ulsc_d != 0)
-			printf(" upperlimit(%s %ums %s)",
-			    rate2str((double)opts->ulsc_m1), opts->ulsc_d,
-			    rate2str((double)opts->ulsc_m2));
+	if (opts->flags || opts->rtsc_m2 != 0 || opts->lssc_m2 != 0 ||
+	    opts->ulsc_m2 != 0) {
+		printf("hfsc(");
+		if (opts->flags & HFCF_RED)
+			printf(" red");
+		if (opts->flags & HFCF_ECN)
+			printf(" ecn");
+		if (opts->flags & HFCF_RIO)
+			printf(" rio");
+		if (opts->flags & HFCF_CLEARDSCP)
+			printf(" cleardscp");
+		if (opts->flags & HFCF_DEFAULTCLASS)
+			printf(" default");
+		if (opts->rtsc_m2 != 0) {
+			if (opts->rtsc_d != 0)
+				printf(" realtime(%s %ums %s)",
+				    rate2str((double)opts->rtsc_m1),
+				    opts->rtsc_d,
+				    rate2str((double)opts->rtsc_m2));
 			else
-				printf(" upperlimit(%s)",
+				printf(" realtime %s",
+				    rate2str((double)opts->rtsc_m2));
+		}
+		if (opts->lssc_m2 != 0) {
+			if (opts->lssc_d != 0)
+				printf(" linkshare(%s %ums %s)",
+				    rate2str((double)opts->lssc_m1),
+				    opts->lssc_d,
+				    rate2str((double)opts->lssc_m2));
+			else
+				printf(" linkshare %s",
+				    rate2str((double)opts->lssc_m2));
+		}
+		if (opts->ulsc_m2 != 0) {
+			if (opts->ulsc_d != 0)
+				printf(" upperlimit(%s %ums %s)",
+				    rate2str((double)opts->ulsc_m1),
+				    opts->ulsc_d,
 				    rate2str((double)opts->ulsc_m2));
+				else
+					printf(" upperlimit(%s)",
+					    rate2str((double)opts->ulsc_m2));
+		}
+		printf(" ) ");
 	}
-	printf(" ) ");
 }
 
 /*
