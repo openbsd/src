@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.7 1996/07/05 06:52:31 mickey Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.8 1996/07/14 08:54:05 downsj Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -53,6 +53,9 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
  * Vnode tag types.
  * These are for the benefit of external programs only (e.g., pstat)
  * and should NEVER be inspected by the kernel.
+ *
+ * Note that v_tag is actually used to tell MFS from FFS, and EXT2FS from
+ * the rest, so don't believe the above comment!
  */
 enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS, VT_FDESC,
