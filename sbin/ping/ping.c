@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.58 2003/04/14 10:21:03 itojun Exp $	*/
+/*	$OpenBSD: ping.c,v 1.59 2003/04/14 19:57:38 cloder Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.58 2003/04/14 10:21:03 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.59 2003/04/14 19:57:38 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -593,7 +593,7 @@ pinger(void)
 	icp->icmp_type = ICMP_ECHO;
 	icp->icmp_code = 0;
 	icp->icmp_cksum = 0;
-	icp->icmp_seq = htons(ntransmitted++);
+	icp->icmp_seq = htons(ntransmitted);
 	icp->icmp_id = ident;			/* ID */
 
 	CLR(ntohs(icp->icmp_seq) % mx_dup_ck);
@@ -634,6 +634,8 @@ pinger(void)
 	}
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);
+
+	ntransmitted++;
 }
 
 /*
