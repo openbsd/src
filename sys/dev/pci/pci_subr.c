@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.16 2004/10/23 16:06:07 brad Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.17 2004/11/21 17:01:39 grange Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	else if (product_namep != NULL)
 		snprintf(cp, cp_max, "\"%s %s\"", vendor_namep, product_namep);
 	else
-		snprintf(cp, cp_max, "vendor \"%s\", unknown product 0x%x",
+		snprintf(cp, cp_max, "vendor \"%s\", unknown product 0x%04x",
 		    vendor_namep, product);
 	if (showclass && product_namep == NULL) {
 		strlcat(cp, " (", cp_max);
