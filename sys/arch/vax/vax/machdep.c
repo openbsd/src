@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.22 1996/01/04 22:22:58 jtc Exp $  */
+/* $NetBSD: machdep.c,v 1.23 1996/01/28 12:22:54 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -350,8 +350,12 @@ setstatclockrate(hzrate)
 consinit()
 {
 #ifdef DDB
-	db_machine_init();
+/*	db_machine_init(); */
 	ddb_init();
+#ifdef donotworkbyunknownreason
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 #endif
 }
 
@@ -385,19 +389,19 @@ sys_sigreturn(p, v, retval)
 	scf->fp = cntx->sc_fp;
 	scf->ap = cntx->sc_ap;
 	scf->pc = cntx->sc_pc;
+	scf->sp = cntx->sc_sp;
 	scf->psl = cntx->sc_ps;
-	mtpr(cntx->sc_sp, PR_USP);
 	return (EJUSTRETURN);
 }
 
 struct trampframe {
-	u_int           sig;	/* Signal number */
-	u_int           code;	/* Info code */
-	u_int           scp;	/* Pointer to struct sigcontext */
-	u_int           r0, r1, r2, r3, r4, r5;	/* Registers saved when
+	unsigned	sig;	/* Signal number */
+	unsigned	code;	/* Info code */
+	unsigned	scp;	/* Pointer to struct sigcontext */
+	unsigned	r0, r1, r2, r3, r4, r5;	/* Registers saved when
 						 * interrupt */
-	u_int           pc;	/* Address of signal handler */
-	u_int           arg;	/* Pointer to first (and only) sigreturn
+	unsigned	pc;	/* Address of signal handler */
+	unsigned	arg;	/* Pointer to first (and only) sigreturn
 				 * argument */
 };
 
@@ -407,14 +411,14 @@ sendsig(catcher, sig, mask, code)
 	int             sig, mask;
 	u_long          code;
 {
-	struct proc    *p = curproc;
-	struct sigacts *psp = p->p_sigacts;
-	struct trapframe *syscf;
-	struct sigcontext *sigctx;
-	struct trampframe *trampf;
-	u_int          *cursp;
-	int             oonstack;
-	extern char     sigcode[], esigcode[];
+	struct	proc    *p = curproc;
+	struct	sigacts *psp = p->p_sigacts;
+	struct	trapframe *syscf;
+	struct	sigcontext *sigctx;
+	struct	trampframe *trampf;
+	unsigned	cursp;
+	int     oonstack;
+	extern	char sigcode[], esigcode[];
 	/*
 	 * Allocate and validate space for the signal handler context. Note
 	 * that if the stack is in P0 space, the call to grow() is a nop, and
@@ -422,26 +426,26 @@ sendsig(catcher, sig, mask, code)
 	 * allocated the space with a `brk'. We shall allocate space on the
 	 * stack for both struct sigcontext and struct calls...
 	 */
+	syscf = p->p_addr->u_pcb.framep;
+
 	/* First check what stack to work on */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		cursp = (u_int *) (psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size);
+		cursp = (int)(psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
-		cursp = (u_int *) mfpr(PR_USP);
-	if ((u_int) cursp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
-		(void) grow(p, (u_int) cursp);
+		cursp = syscf->sp;
+	if (cursp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+		(void) grow(p, cursp);
 
 	/* Set up positions for structs on stack */
-	sigctx = (struct sigcontext *) ((u_int) cursp -
-	    sizeof(struct sigcontext));
-	trampf = (struct trampframe *) ((u_int) sigctx -
+	sigctx = (struct sigcontext *) (cursp - sizeof(struct sigcontext));
+	trampf = (struct trampframe *) ((unsigned)sigctx -
 	    sizeof(struct trampframe));
-	cursp = (u_int *) sigctx - 2;	/* Place for pointer to arg list in
-					 * sigreturn */
 
-	syscf = p->p_addr->u_pcb.framep;
+	 /* Place for pointer to arg list in sigreturn */
+	cursp = (unsigned)sigctx - 8;
+
 	if (useracc((caddr_t) cursp, sizeof(struct sigcontext) +
 		    sizeof(struct trampframe), B_WRITE) == 0) {
 		/*
@@ -458,7 +462,7 @@ sendsig(catcher, sig, mask, code)
 	}
 	/* Set up pointers for sigreturn args */
 	trampf->arg = (int) sigctx;
-	trampf->pc = (u_int) catcher;
+	trampf->pc = (unsigned) catcher;
 	trampf->scp = (int) sigctx;
 	trampf->code = code;
 	trampf->sig = sig;
@@ -468,14 +472,14 @@ sendsig(catcher, sig, mask, code)
 	sigctx->sc_ps = syscf->psl;
 	sigctx->sc_ap = syscf->ap;
 	sigctx->sc_fp = syscf->fp;
-	sigctx->sc_sp = mfpr(PR_USP);
+	sigctx->sc_sp = syscf->sp;
 	sigctx->sc_onstack = oonstack;
 	sigctx->sc_mask = mask;
 
-	syscf->pc = (u_int) (((char *) PS_STRINGS) - (esigcode - sigcode));
+	syscf->pc = (unsigned) (((char *) PS_STRINGS) - (esigcode - sigcode));
 	syscf->psl = PSL_U | PSL_PREVU;
-	syscf->ap = (u_int) cursp;
-	mtpr(cursp, PR_USP);
+	syscf->ap = cursp;
+	syscf->sp = cursp;
 }
 
 int             waittime = -1;
@@ -616,21 +620,10 @@ process_read_regs(p, regs)
 {
 	struct trapframe *tf = p->p_addr->u_pcb.framep;
 
-	regs->r0 = tf->r0;
-	regs->r1 = tf->r1;
-	regs->r2 = tf->r2;
-	regs->r3 = tf->r3;
-	regs->r4 = tf->r4;
-	regs->r5 = tf->r5;
-	regs->r6 = tf->r6;
-	regs->r7 = tf->r7;
-	regs->r8 = tf->r8;
-	regs->r9 = tf->r9;
-	regs->r10 = tf->r10;
-	regs->r11 = tf->r11;
+	bcopy(&tf->r0, &regs->r0, 12 * sizeof(int));
 	regs->ap = tf->ap;
 	regs->fp = tf->fp;
-	regs->sp = mfpr(PR_USP);
+	regs->sp = tf->sp;
 	regs->pc = tf->pc;
 	regs->psl = tf->psl;
 	return 0;
@@ -643,21 +636,10 @@ process_write_regs(p, regs)
 {
 	struct trapframe *tf = p->p_addr->u_pcb.framep;
 
-	tf->r0 = regs->r0;
-	tf->r1 = regs->r1;
-	tf->r2 = regs->r2;
-	tf->r3 = regs->r3;
-	tf->r4 = regs->r4;
-	tf->r5 = regs->r5;
-	tf->r6 = regs->r6;
-	tf->r7 = regs->r7;
-	tf->r8 = regs->r8;
-	tf->r9 = regs->r9;
-	tf->r10 = regs->r10;
-	tf->r11 = regs->r11;
+	bcopy(&regs->r0, &tf->r0, 12 * sizeof(int));
 	tf->ap = regs->ap;
 	tf->fp = regs->fp;
-	mtpr(regs->sp, PR_USP);
+	tf->sp = regs->sp;
 	tf->pc = regs->pc;
 	tf->psl = regs->psl;
 	return 0;
@@ -665,11 +647,11 @@ process_write_regs(p, regs)
 
 int
 process_set_pc(p, addr)
-	struct proc    *p;
-	caddr_t         addr;
+	struct	proc *p;
+	caddr_t addr;
 {
-	void           *ptr;
-	struct trapframe *tf;
+	struct	trapframe *tf;
+	void	*ptr;
 
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
@@ -677,7 +659,7 @@ process_set_pc(p, addr)
 	ptr = (char *) p->p_addr->u_pcb.framep;
 	tf = ptr;
 
-	tf->pc = (u_int) addr;
+	tf->pc = (unsigned) addr;
 
 	return (0);
 }
@@ -703,12 +685,6 @@ process_sstep(p, sstep)
 	return (0);
 }
 
-#undef setsoftnet
-setsoftnet()
-{
-	panic("setsoftnet");
-}
-
 ns_cksum()
 {
 	panic("ns_cksum");
@@ -716,8 +692,10 @@ ns_cksum()
 
 cmrerr()
 {
+#if 0
 	switch (cpunumber) {
 	case VAX_750:
 		ka750_memerr();
 	}
+#endif
 }

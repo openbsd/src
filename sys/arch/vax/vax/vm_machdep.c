@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.18 1995/12/13 18:47:59 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.19 1996/01/28 12:22:49 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -51,6 +51,7 @@
 #include "machine/macros.h"
 #include "machine/trap.h"
 #include "machine/pcb.h"
+#include "machine/frame.h"
 
 #include <sys/syscallargs.h>
 
@@ -126,7 +127,6 @@ cpu_fork(p1, p2)
 	nyproc->P0LR = AST_PCB;
 	nyproc->P1LR = 0x200000;
 #endif
-	nyproc->USP = mfpr(PR_USP);
 	nyproc->iftrap = NULL;
 	nyproc->KSP = (u_int)p2->p_addr + USPACE;
 
@@ -135,6 +135,7 @@ cpu_fork(p1, p2)
 	bcopy(&tf->r2,&nyproc->R[2],10*sizeof(int));
 	nyproc->AP = tf->ap;
 	nyproc->FP = tf->fp;
+	nyproc->USP = tf->sp;
 	nyproc->PC = tf->pc;
 	nyproc->PSL = tf->psl & ~PSL_C;
 	nyproc->R[0] = p1->p_pid; /* parent pid. (shouldn't be needed) */
@@ -158,30 +159,25 @@ cpu_set_kpc(p, pc)
 {
 	struct pcb *nyproc;
 	struct {
-		u_int	chand;
-		u_int	mask;
-		u_int	ap;
-		u_int	fp;
-		u_int	pc;
-		u_int	nargs;
-		u_int	pp;
-		u_int	rpc;
-		u_int	rpsl;
+		struct	callsframe cf;
+		struct	trapframe tf;
 	} *kc;
-	extern int rei;
-
-	kc = (void *)p->p_addr + USPACE - sizeof(*kc);
-	kc->chand = 0;
-	kc->mask = 0x20000000;
-	kc->pc = (u_int)&rei;
-	kc->nargs = 1;
-	kc->pp = (u_int)p;
-	kc->rpsl = 0x3c00000;
+	extern int sret, boothowto;
 
 	nyproc = &p->p_addr->u_pcb;
-	nyproc->framep = (void *)p->p_addr + USPACE - sizeof(struct trapframe);
-	nyproc->AP = (u_int)&kc->nargs;
-	nyproc->FP = nyproc->KSP = (u_int)kc;
+	(unsigned)kc = nyproc->FP = nyproc->KSP =
+	    (unsigned)p->p_addr + USPACE - sizeof(*kc);
+	kc->cf.ca_cond = 0;
+	kc->cf.ca_maskpsw = 0x20000000;
+	kc->cf.ca_pc = (unsigned)&sret;
+	kc->cf.ca_argno = 1;
+	kc->cf.ca_arg1 = (unsigned)p;
+	kc->tf.r11 = boothowto;	/* If we have old init */
+	kc->tf.psl = 0x3c00000;
+
+	nyproc->framep = (void *)&kc->tf;
+	nyproc->AP = (unsigned)&kc->cf.ca_argno;
+	nyproc->FP = nyproc->KSP = (unsigned)kc;
 	nyproc->PC = pc + 2;
 }
 
@@ -453,7 +449,6 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(struct md_coredump);
 
 	bcopy(tf, &state, sizeof(struct md_coredump));
-	state.md_tf.code = mfpr(PR_USP); /* XXX */
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_VAX, CORE_CPU);
 	cseg.c_addr = 0;
@@ -506,7 +501,7 @@ cpu_swapin(p)
 
 	uarea = (u_int)p->p_addr;
 
-	for(i = uarea;i < uarea + USPACE;i += PAGE_SIZE) {
+	for (i = uarea;i < uarea + USPACE;i += PAGE_SIZE) {
 		j = (u_int *)kvtopte(i);
 		if ((*j & PG_V) == 0) {
 			rv = vm_fault(kernel_map, i,

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.12 1995/11/10 19:05:46 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.13 1996/01/28 12:22:55 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -56,7 +56,7 @@
 	.long	label+stack;
 		.text
 
-	.globl	_kernbase,_rpb
+	.globl	_kernbase, _rpb
 _kernbase:
 _rpb:	
 /*
@@ -212,15 +212,17 @@ ptelen:	movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 syscall:
 	pushl	$T_SYSCALL
 	pushr	$0xfff
+	mfpr	$PR_USP, -(sp)
 	pushl	ap
 	pushl	fp
 	pushl	sp		# pointer to syscall frame; defined in trap.h
-	calls	$1,_syscall
-	movl	(sp)+,fp
-	movl	(sp)+,ap
+	calls	$1, _syscall
+	movl	(sp)+, fp
+	movl	(sp)+, ap
+	mtpr	(sp)+, $PR_USP
 	popr	$0xfff
-	addl2	$8,sp
-	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
+	addl2	$8, sp
+	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
 	rei
 
 	STRAY(0, 44)
@@ -259,7 +261,7 @@ syscall:
 
 	STRAY(0, B4)
 	STRAY(0, B8)
-	TRAPCALL(ddbtrap,T_KDBTRAP)
+	TRAPCALL(ddbtrap, T_KDBTRAP)
 
 		.align	2
 		.globl	hardclock
@@ -293,16 +295,26 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 	FASTINTR(consrint, gencnrint)
 	FASTINTR(constint, gencntint)
 
+/*
+ * Main routine for traps; all go through this.
+ * Note that we put USP on the frame here, which sometimes should
+ * be KSP to be correct, but because we only alters it when we are 
+ * called from user space it doesn't care.
+ * _sret is used in cpu_set_kpc to jump out to user space first time.
+ */
+	.globl	_sret
 trap:	pushr	$0xfff
+	mfpr	$PR_USP, -(sp)
 	pushl	ap
 	pushl	fp
 	pushl	sp
-	calls	$1,_arithflt
-	movl	(sp)+,fp
-	movl	(sp)+,ap
-        popr	$0xfff
-	addl2	$8,sp
-	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
+	calls	$1, _arithflt
+_sret:	movl	(sp)+, fp
+	movl	(sp)+, ap
+	mtpr	(sp)+, $PR_USP
+	popr	$0xfff
+	addl2	$8, sp
+	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
 	rei
 
 #if VAX630 || VAX650
