@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.27 2001/08/30 22:10:18 miod Exp $
+#	$OpenBSD: Makefile.sun3,v 1.28 2001/12/14 08:51:21 miod Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -24,10 +24,12 @@
 
 .include <bsd.own.mk>
 
+AS?=	as
 CC?=	cc
+CPP?=	cpp
 LD?=	ld
-MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -37,13 +39,13 @@ SUN3=	$S/arch/sun3
 M68K=	$S/arch/m68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmc68020 -Dsun3
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+		-Dmc68020 -Dsun3
 CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 CMACHFLAGS=	-m68020 -msoft-float
-COPTS?=		-O2
 
-CFLAGS= 	${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
+CFLAGS= 	${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 STRIPFLAGS=	-d

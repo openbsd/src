@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.12 2001/08/30 22:10:18 miod Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.13 2001/12/14 08:51:21 miod Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -36,7 +36,8 @@ MVME68K=$S/arch/mvme68k
 M68K=	$S/arch/m68k
 
 INCLUDES=	 -I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme68k
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+		-Dmc68020 -Dmvme68k
 CWARNFLAGS=	-Werror
 
 .if empty(IDENT:M-DM68060)
@@ -46,7 +47,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030
 .endif
 CMACHFLAGS+=	-msoft-float
 
-CFLAGS=		${DEBUG} ${CWARNFLAGS} ${COPTS} ${CMACHFLAGS}
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext 0x10000 -z -e start
 STRIPFLAGS=	-d

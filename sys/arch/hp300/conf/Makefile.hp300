@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.24 2001/11/25 23:23:45 miod Exp $
+#	$OpenBSD: Makefile.hp300,v 1.25 2001/12/14 08:51:19 miod Exp $
 #	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
 
 # Makefile for OpenBSD
@@ -28,7 +28,8 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
-COPTS?=		-O2
+TOUCH?=	touch -f -c
+COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -40,14 +41,16 @@ M68K=	$S/arch/m68k
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dhp300
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
-		-Wno-format -Wno-main
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main
+CMACHFLAGS=	-msoft-float
+
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
 
-HOSTCC=	${CC}
+HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 

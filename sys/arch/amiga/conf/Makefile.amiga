@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.28 2001/12/13 22:00:50 miod Exp $
+#	$OpenBSD: Makefile.amiga,v 1.29 2001/12/14 08:51:17 miod Exp $
 #	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
@@ -39,8 +39,8 @@ AMIGA=	$S/arch/amiga
 M68K=	$S/arch/m68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmc68020 -Damiga
-
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+		-Dmc68020 -Damiga
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 
