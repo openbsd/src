@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2001/05/04 22:48:59 aaron Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2001/05/05 02:41:24 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.75 1999/06/15 22:18:07 thorpej Exp $	*/
 
 /*-
@@ -1339,7 +1339,12 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
+#ifdef UVM
 		pmap_ptpage_addref(trunc_page(pte));
+#else
+		(void) vm_map_pageable(pt_map, trunc_page(pte),
+		    round_page(pte+1), FALSE);
+#endif
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -2192,6 +2197,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * For user mappings decrement the wiring count on
 	 * the PT page.
 	 */
+#ifdef UVM
 	if (pmap != pmap_kernel()) {
 		vaddr_t ptpva = trunc_page(pte);
 		int refs = pmap_ptpage_delref(ptpva);
@@ -2236,6 +2242,17 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			    ptpva, pa));
 		}
 	}
+#else
+	if (pmap != pmap_kernel()) {
+		vaddr_t ptpva = trunc_page(pte);
+
+		(void) vm_map_pageable(pt_map, ptpva, round_page(pte+1), TRUE);
+#ifdef DEBUG
+		if (pmapdebug & PDB_WIRING)
+			pmap_check_wiring("remove", ptpva);
+#endif
+	}
+#endif
 	/*
 	 * If this isn't a managed page, we are all done.
 	 */
@@ -2787,6 +2804,7 @@ pmap_enter_ptpage(pmap, va)
 	splx(s);
 }
 
+#ifdef UVM
 /*
  * pmap_ptpage_addref:
  *
@@ -2822,6 +2840,7 @@ pmap_ptpage_delref(ptpva)
 	simple_unlock(&uvm.kernel_object->vmobjlock);
 	return (rv);
 }
+#endif
 
 #ifdef DEBUG
 /*
