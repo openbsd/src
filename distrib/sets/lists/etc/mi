@@ -186,7 +186,6 @@
 ./var/www/htdocs/manual/configuring.html.fr
 ./var/www/htdocs/manual/configuring.html.html
 ./var/www/htdocs/manual/configuring.html.ja.jis
-./var/www/htdocs/manual/content-negotiation.html
 ./var/www/htdocs/manual/content-negotiation.html.en
 ./var/www/htdocs/manual/content-negotiation.html.html
 ./var/www/htdocs/manual/content-negotiation.html.ja.jis
@@ -344,7 +343,6 @@
 ./var/www/htdocs/manual/mod/mod_isapi.html
 ./var/www/htdocs/manual/mod/mod_log_agent.html
 ./var/www/htdocs/manual/mod/mod_log_common.html
-./var/www/htdocs/manual/mod/mod_log_config.html
 ./var/www/htdocs/manual/mod/mod_log_config.html.en
 ./var/www/htdocs/manual/mod/mod_log_config.html.html
 ./var/www/htdocs/manual/mod/mod_log_config.html.ja.jis
