@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.164 2002/10/07 14:34:40 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.165 2002/10/08 01:17:43 vincent Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -794,14 +794,14 @@ host		: address
 			struct node_host *n;
 			for (n = $1; n; n = n->next) {
 				if ($1->af == AF_INET) {
-					if ($3 < 0 || $3 > 32) {
+					if ($3 > 32) {
 						yyerror(
 						    "illegal netmask value /%d",
 						    $3);
 						YYERROR;
 					}
 				} else {
-					if ($3 < 0 || $3 > 128) {
+					if ($3 > 128) {
 						yyerror(
 						    "illegal netmask value /%d",
 						    $3);
@@ -814,8 +814,7 @@ host		: address
 		}
 		;
 
-number:		STRING
-		{
+number		: STRING			{
 			u_long ulval;
 
 			if (atoul($1, &ulval) == -1) {
@@ -888,7 +887,7 @@ port		: STRING			{
 			u_long ulval;
 
 			if (atoul($1, &ulval) == 0) {
-				if (ulval < 0 || ulval > 65535) {
+				if (ulval > 65535) {
 					yyerror("illegal port value %d", ulval);
 					YYERROR;
 				}
@@ -975,7 +974,7 @@ uid		: STRING			{
 					$$ = pw->pw_uid;
 				}
 			} else {
-				if (ulval < 0 || ulval >= UID_MAX) {
+				if (ulval >= UID_MAX) {
 					yyerror("illegal uid value %ul", ulval);
 					YYERROR;
 				}
@@ -1053,7 +1052,7 @@ gid		: STRING			{
 					$$ = grp->gr_gid;
 				}
 			} else {
-				if (ulval < 0 || ulval >= GID_MAX) {
+				if (ulval >= GID_MAX) {
 					yyerror("illegal gid value %ul", ulval);
 					YYERROR;
 				}
@@ -1117,7 +1116,7 @@ icmp_item	: icmptype		{
 			u_long ulval;
 
 			if (atoul($3, &ulval) == 0) {
-				if (ulval < 0 || ulval > 255) {
+				if (ulval > 255) {
 					yyerror("illegal icmp-code %d", ulval);
 					YYERROR;
 				}
@@ -1155,7 +1154,7 @@ icmp6_item	: icmp6type		{
 			u_long ulval;
 
 			if (atoul($3, &ulval) == 0) {
-				if (ulval < 0 || ulval > 255) {
+				if (ulval > 255) {
 					yyerror("illegal icmp6-code %ld", ulval);
 					YYERROR;
 				}
@@ -1183,7 +1182,7 @@ icmptype	: STRING			{
 			u_long ulval;
 
 			if (atoul($1, &ulval) == 0) {
-				if (ulval < 0 || ulval > 255) {
+				if (ulval > 255) {
 					yyerror("illegal icmp-type %d", ulval);
 					YYERROR;
 				}
@@ -1203,7 +1202,7 @@ icmp6type	: STRING			{
 			u_long ulval;
 
 			if (atoul($1, &ulval) == 0) {
-				if (ulval < 0 || ulval > 255) {
+				if (ulval > 255) {
 					yyerror("illegal icmp6-type %d", ulval);
 					YYERROR;
 				}
@@ -1280,17 +1279,14 @@ state_opt_item	: MAXIMUM number		{
 			int i;
 
 			for (i = 0; pf_timeouts[i].name &&
-			    strcmp(pf_timeouts[i].name, $1); ++i);
+			    strcmp(pf_timeouts[i].name, $1); ++i)
+				;	/* nothing */
 			if (!pf_timeouts[i].name) {
 				yyerror("illegal timeout name %s", $1);
 				YYERROR;
 			}
 			if (strchr(pf_timeouts[i].name, '.') == NULL) {
 				yyerror("illegal state timeout %s", $1);
-				YYERROR;
-			}
-			if ($2 < 0) {
-				yyerror("illegal timeout value %d", $2);
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_state_opt));
@@ -1309,7 +1305,7 @@ fragment	: /* empty */			{ $$ = 0; }
 
 minttl		: /* empty */			{ $$ = 0; }
 		| MINTTL number			{
-			if ($2 < 0 || $2 > 255) {
+			if ($2 > 255) {
 				yyerror("illegal min-ttl value %d", $2);
 				YYERROR;
 			}
@@ -1322,13 +1318,7 @@ nodf		: /* empty */			{ $$ = 0; }
 		;
 
 maxmss		: /* empty */			{ $$ = 0; }
-		| MAXMSS number			{
-			if ($2 < 0) {
-				yyerror("illegal max-mss value %d", $2);
-				YYERROR;
-			}
-			$$ = $2;
-		}
+		| MAXMSS number			{ $$ = $2; }
 		;
 
 allowopts	: /* empty */			{ $$ = 0; }
@@ -3002,7 +2992,7 @@ getservice(char *n)
 	u_long ulval;
 
 	if (atoul(n, &ulval) == 0) {
-		if (ulval < 0 || ulval > 65535) {
+		if (ulval > 65535) {
 			yyerror("illegal port value %d", ulval);
 			return (-1);
 		}
