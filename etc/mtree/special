@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.21 1999/08/19 20:03:37 jakob Exp $
+#	$OpenBSD: special,v 1.22 1999/12/12 00:53:32 hugh Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -46,12 +46,15 @@ monthly.local	type=file mode=0644 uname=root gname=wheel optional
 mtree		type=dir mode=0755 uname=root gname=wheel
 special		type=file mode=0600 uname=root gname=wheel
 ..	#mtree
-named.boot	type=file mode=0644 uname=root gname=wheel optional
 netstart	type=file mode=0644 uname=root gname=wheel
 passwd		type=file mode=0644 uname=root gname=wheel
+passwd.conf	type=file mode=0644 uname=root gname=wheel
 printcap	type=file mode=0644 uname=root gname=wheel
 rc		type=file mode=0644 uname=root gname=wheel
+rc.conf		type=file mode=0644 uname=root gname=wheel
 rc.local	type=file mode=0644 uname=root gname=wheel
+rc.securelevel	type=file mode=0644 uname=root gname=wheel
+rc.shutdown	type=file mode=0644 uname=root gname=wheel
 security	type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 sendmail.cf	type=file mode=0644 uname=root gname=wheel optional
@@ -140,7 +143,6 @@ utmp		type=file mode=0664 uname=root gname=utmp
 spool		type=dir mode=0755 uname=root gname=wheel
 ftp		type=dir mode=0555 uname=root gname=wheel optional
 bin		type=dir mode=0511 uname=root gname=wheel optional
-ls		type=file mode=0111 uname=root gname=wheel optional
 ..	#var/spool/ftp/bin
 etc		type=dir mode=0511 uname=root gname=wheel optional
 group		type=file mode=0444 uname=root gname=wheel optional
