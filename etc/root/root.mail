@@ -16,7 +16,7 @@ subsystem is also installed with further documentation resources; to read
 info pages type "info".
 
 If you have installed the X11 packages during the install process, you can find
-further information in the file /usr/X11R6/README.
+further information regarding configuration in the file /usr/X11R6/README.
 
 Binary packages of emacs 20.2, bash 2.01.1, tcsh--6.07.02, and pine-3.96 are
 available on most architectures. The files are in the directory
@@ -30,5 +30,6 @@ on our FTP servers (as described above).  In particular, we provide the USA and
 international versions of ssh and pgp.  The filenames are ssh-usa-1.2.22.tgz,
 ssh-intl-1.2.22.tgz, pgp-usa-2.6.3.tgz, and pgp-intl-2.6.3.tgz.
 
-You are strongly urged to install ssh and use it instead of telnet or rlogin.
+You are strongly urged to install an ssh package and use it instead of telnet
+or rlogin.
 
