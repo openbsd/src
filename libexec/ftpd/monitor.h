@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.h,v 1.1 2004/11/28 18:49:30 henning Exp $	*/
+/*	$OpenBSD: monitor.h,v 1.2 2004/12/11 08:38:26 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@jodeit.org>
@@ -20,7 +20,6 @@
 #define _MONITOR_H
 
 #define FTPD_PRIVSEP_USER "_ftp"
-#define PREAUTH_SLAVE_DIED 3
 
 enum auth_ret {
 	AUTH_FAILED,

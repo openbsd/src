@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.47 2004/12/06 23:04:14 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.48 2004/12/11 08:38:26 moritz Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpcmd.y,v 1.47 2004/12/06 23:04:14 deraadt Exp $";
+    "$OpenBSD: ftpcmd.y,v 1.48 2004/12/11 08:38:26 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ cmd
 
 			/* Terminate unprivileged pre-auth slave */
 			if (quit)
-				_exit(PREAUTH_SLAVE_DIED);
+				_exit(0);
 		}
 	| PORT check_login_epsvall SP host_port CRLF
 		{

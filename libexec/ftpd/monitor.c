@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.5 2004/12/06 20:52:04 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.6 2004/12/11 08:38:26 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@jodeit.org>
@@ -60,12 +60,10 @@ int	fd_slave = -1;
 int	nullfd;
 pid_t	slave_pid = -1;
 enum monitor_state	state = PREAUTH;
-volatile sig_atomic_t	quit = 0;
 
 void	send_data(int, void *, size_t);
 void	recv_data(int, void *, size_t);
-int	recv_cmd(int, void *, size_t);
-int	handle_cmds(void);
+void	handle_cmds(void);
 void	set_monitor_signals(void);
 void	sig_pass_to_slave(int);
 void	sig_chld(int);
@@ -114,22 +112,6 @@ recv_data(int sock, void *buf, size_t len)
 	}
 }
 
-/*
- * Receive command from socket and return 1 if something fails.
- * If command was received successfuly, 0 is returned.
- */
-int
-recv_cmd(int sock, void *buf, size_t len)
-{
-	ssize_t n;
-
-	n = read(sock, buf, len);
-	if (n <= 0)
-		return (1);
-
-	return (0);
-}
-
 void
 set_monitor_signals(void)
 {
@@ -137,7 +119,7 @@ set_monitor_signals(void)
 	int i;
 
 	sigfillset(&act.sa_mask);
-	act.sa_flags = 0;
+	act.sa_flags = SA_RESTART;
 
 	act.sa_handler = SIG_DFL;
 	for (i = 1; i < _NSIG; i++)
@@ -207,10 +189,7 @@ monitor_init(void)
 	setproctitle("%s: [priv pre-auth]", remotehost);
 #endif
 
-	if (handle_cmds() == 1) {
-		debugmsg("slave lost. monitor quits now.");
-		_exit(0);
-	}
+	handle_cmds();
 
 	/* User-privileged slave */
 	return (0);
@@ -250,28 +229,24 @@ monitor_post_auth()
 }
 
 /*
- * Handles commands received from the slave process. It returns twice.
- * It returns 0 for the user-privileged slave process after successful
- * authentication and 1 if the user-privileged slave died.
+ * Handles commands received from the slave process. It will not return
+ * except in one situation: After successful authentication it will
+ * return as the user-privileged slave process.
  */
-int
+void
 handle_cmds(void)
 {
 	enum monitor_command cmd;
 	enum auth_ret auth;
 	int err, s, slavequit, serrno;
+	pid_t preauth_slave_pid;
 	size_t len;
 	struct sockaddr sa;
 	socklen_t salen;
 	char *name, *pw;
 
-	while (quit == 0) {
-		if (recv_cmd(fd_slave, &cmd, sizeof(cmd)) != 0) {
-			if (quit == 1)
-				break;
-			else
-				continue;
-		}
+	for (;;) {
+		recv_data(fd_slave, &cmd, sizeof(cmd));
 
 		switch (cmd) {
 		case CMD_USER:
@@ -297,6 +272,8 @@ handle_cmds(void)
 				recv_data(fd_slave, pw, len);
 			pw[len] = '\0';
 
+			preauth_slave_pid = slave_pid;
+
 			auth = pass(pw);
 			bzero(pw, len);
 			free(pw);
@@ -312,9 +289,8 @@ handle_cmds(void)
 			case AUTH_SLAVE:
 				/* User-privileged slave */
 				debugmsg("user-privileged slave started");
-				return (0);
+				return;
 				/* NOTREACHED */
-				break;
 			case AUTH_MONITOR:
 				/* Post-auth monitor */
 				debugmsg("monitor went into post-auth phase");
@@ -327,11 +303,14 @@ handle_cmds(void)
 
 				send_data(fd_slave, &slavequit,
 				    sizeof(slavequit));
+
+				while (waitpid(preauth_slave_pid, NULL, 0) < 0
+				    && errno == EINTR)
+					;
 				break;
 			default:
 				fatalx("bad return value from pass()");
 				/* NOTREACHED */
-				break;
 			}
 			break;
 		case CMD_BIND:
@@ -368,11 +347,9 @@ handle_cmds(void)
 		default:
 			fatalx("monitor received unknown command %d", cmd);
 			/* NOTREACHED */
-			break;
 		}
 	}
-
-	return (1);
+	/* NOTREACHED */
 }
 
 void
@@ -394,13 +371,10 @@ sig_chld(int signo)
 	int stat, olderrno = errno;
 
 	do {
-		pid = waitpid(-1, &stat, WNOHANG);
+		pid = waitpid(slave_pid, &stat, WNOHANG);
+		if (pid > 0)
+			_exit(0);
 	} while (pid == -1 && errno == EINTR);
-
-	if (pid == slave_pid && stat != PREAUTH_SLAVE_DIED) {
-		quit = 1;
-		slave_pid = -1;
-	}
 
 	errno = olderrno;
 }
