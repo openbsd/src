@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.59 1999/03/04 08:56:51 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.60 1999/03/10 18:45:37 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -389,6 +389,7 @@ com/pccom	USR3031 # U.S. Robotics 56K FAX INT
 #le		BRI1001	# BOCALANcard COMBO	(PNP8200)
 #ne		@@@9519	# ACCTON EN166X MPX2 ETHERNET CAR (PNP80D6)
 #ne		RTL8019	# Realtek Plug & Play Ethernet Ca (PNP80D6)
+#ne		EDI0119	# PLUG & PLAY ETHERNET CARD (PNP80D6)
 ne		@@@1980	# OvisLink LE-8019R
 we		SMC8416 # SMC EtherEZ
 
@@ -404,7 +405,9 @@ we		SMC8416 # SMC EtherEZ
 #wdc		CTL2011	# Creative SB32 PnP (PNP0600)
 #wdc		YMH002F # OPL3-SA3/X Sound Board
 #joy		ASB16FD	# AdLib NSC 16 PNP (PNPB02F)
+#joy		YMH0022	# OPL3-SA3 Snd System (PNPB02F)
 #pcic		SCM0469	# SCM SwapBox Plug and Play
+#wdc		CSC0004	# CX4237B-SIDE CD (?)
 joy		@P@1001	# ALS100+
 joy		AZT3001	# AZT1008 PnP SOUND DEVICE (GAME PORT)
 joy		CSC0001	# AW35/Pro gameport
