@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.22 1999/05/27 23:52:03 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.23 1999/06/01 23:43:41 ho Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -122,6 +122,7 @@
 #define	M_ADOSFSBITMAP	71	/* adosfs bitmap */
 #define	M_EXT2FSNODE	72	/* EXT2FS vnode private part */
 #define	M_PFIL		73	/* packer filter */
+#define	M_PFKEY		74	/* pfkey data */
 #define	M_TDB		75	/* Transforms database */
 #define	M_XDATA		76	/* IPsec data */
 #define M_VFS           77      /* VFS file systems */
@@ -232,7 +233,7 @@
 	"adosfs bitmap", /* 71 M_ADOSFSBITMAP */ \
 	"EXT2FS node",	/* 72 M_EXT2FSNODE */ \
 	"pfil",		/* 73 M_PFIL */ \
-	NULL, \
+	"pfkey data",   /* 74 M_PFKEY */ \
 	"tdb",		/* 75 M_TDB */ \
 	"xform_data",	/* 76 M_XDATA */ \
 	"vfs",          /* 77 M_VFS */ \
@@ -256,9 +257,9 @@
 	"Sec Assoc",	/* 95 M_SECA */ \
 	"IPv6 if info",	/* 96 M_I6IFP */ \
 	"RaidFrame data", /* 97 M_RAIDFRAME */ \
-	"UVM amap",	/* 93 M_UVMAMAP */ \
-	"UVM aobj",	/* 94 M_UVMAOBJ */ \
-	"pool",		/* 95 M_POOL */ \
+	"UVM amap",	/* 98 M_UVMAMAP */ \
+	"UVM aobj",	/* 99 M_UVMAOBJ */ \
+	"pool",		/* 100 M_POOL */ \
 	NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \

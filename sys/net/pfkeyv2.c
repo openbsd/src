@@ -118,7 +118,7 @@ pfkeyv2_create(struct socket *socket)
 {
   struct pfkeyv2_socket *pfkeyv2_socket;
 
-  if (!(pfkeyv2_socket = malloc(sizeof(struct pfkeyv2_socket), M_TEMP,
+  if (!(pfkeyv2_socket = malloc(sizeof(struct pfkeyv2_socket), M_PFKEY,
 				M_DONTWAIT)))
     return ENOMEM;
 
@@ -154,7 +154,7 @@ pfkeyv2_release(struct socket *socket)
     if (pfkeyv2_socket->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
       npromisc--;
 
-    free(pfkeyv2_socket, M_TEMP);
+    free(pfkeyv2_socket, M_PFKEY);
   }
 
   return 0;
@@ -460,7 +460,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
     if (headers[i])
       j += ((struct sadb_ext *)headers[i])->sadb_ext_len * sizeof(uint64_t);
 
-  if (!(buffer = malloc(j + sizeof(struct sadb_msg), M_TEMP, M_DONTWAIT))) {
+  if (!(buffer = malloc(j + sizeof(struct sadb_msg), M_PFKEY, M_DONTWAIT))) {
     rval = ENOMEM;
     goto ret;
   }
@@ -550,7 +550,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 ret:
   if (buffer != NULL) {
     bzero(buffer, j + sizeof(struct sadb_msg));
-    free(buffer, M_TEMP);
+    free(buffer, M_PFKEY);
   }
   return rval;
 }
@@ -589,7 +589,7 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
   if (sa->tdb_dstid_len)
     i += PADUP(sa->tdb_dstid_len) + sizeof(struct sadb_ident);
 
-  if (!(p = malloc(i, M_TEMP, M_DONTWAIT))) {
+  if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
     rval = ENOMEM;
     goto ret;
   }
@@ -664,7 +664,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
       return rval;
     rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_UNICAST,
 			       dump_state->socket, 0, 0);
-    free(buffer, M_TEMP);
+    free(buffer, M_PFKEY);
     if (rval)
       return rval;
   }
@@ -699,7 +699,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
   if (npromisc) {
     struct mbuf *packet;
 
-    if (!(freeme = malloc(sizeof(struct sadb_msg) + len, M_TEMP,
+    if (!(freeme = malloc(sizeof(struct sadb_msg) + len, M_PFKEY,
 			  M_DONTWAIT))) {
       rval = ENOMEM;
       goto ret;
@@ -726,7 +726,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
     m_freem(packet);
 
     bzero(freeme, sizeof(struct sadb_msg) + len);
-    free(freeme, M_TEMP);
+    free(freeme, M_PFKEY);
     freeme = NULL;
   }
 
@@ -788,7 +788,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
       if (sa.tdb_spi == 0)
 	goto ret;
 
-      if (!(freeme = malloc(sizeof(struct sadb_sa), M_TEMP, M_DONTWAIT))) {
+      if (!(freeme = malloc(sizeof(struct sadb_sa), M_PFKEY, M_DONTWAIT))) {
 	rval = ENOMEM;
 	goto ret;
       }
@@ -1065,7 +1065,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
       i = sizeof(struct sadb_supported) + sizeof(ealgs) + sizeof(aalgs);
 
-      if (!(freeme = malloc(i, M_TEMP, M_DONTWAIT))) {
+      if (!(freeme = malloc(i, M_PFKEY, M_DONTWAIT))) {
 	rval = ENOMEM;
 	goto ret;
       }
@@ -1608,8 +1608,8 @@ ret:
 
 realret:
   if (freeme)
-    free(freeme, M_TEMP);
-  free(message, M_TEMP);
+    free(freeme, M_PFKEY);
+  free(message, M_PFKEY);
 
   return rval;
 
@@ -1641,7 +1641,7 @@ pfkeyv2_acquire(void *os)
     i += PADUP(os->rekeysa->srcident.bytes) +
 	 PADUP(os->rekeysa->dstident.bytes);
 
-  if (!(p = malloc(i, M_TEMP, M_DONTWAIT))) {
+  if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
     rval = ENOMEM;
     goto ret;
   }
@@ -1732,7 +1732,7 @@ pfkeyv2_acquire(void *os)
 ret:
   if (buffer != NULL) {
     bzero(buffer, i);
-    free(buffer, M_TEMP);
+    free(buffer, M_PFKEY);
   }
   return rval;
 #endif
@@ -1767,7 +1767,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
       sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_src.sa)) +
       sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_dst.sa));
 
-  if (!(p = malloc(i, M_TEMP, M_DONTWAIT))) {
+  if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
     rval = ENOMEM;
     goto ret;
   }
@@ -1809,7 +1809,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 ret:
   if (buffer != NULL) {
     bzero(buffer, i);
-    free(buffer, M_TEMP);
+    free(buffer, M_PFKEY);
   }
   return rval;
 }

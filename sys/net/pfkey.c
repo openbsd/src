@@ -135,7 +135,7 @@ pfkey_output(struct mbuf *mbuf, struct socket *socket)
     goto ret;
   }
 
-  if (!(message = malloc((unsigned long) mbuf->m_pkthdr.len, M_TEMP,
+  if (!(message = malloc((unsigned long) mbuf->m_pkthdr.len, M_PFKEY,
 			 M_DONTWAIT))) {
     error = ENOMEM;
     goto ret;
@@ -270,7 +270,7 @@ pfkey_buildprotosw(void)
       j++;
 
   if (j) {
-    if (!(protosw = malloc(j * sizeof(struct protosw), M_TEMP, M_DONTWAIT)))
+    if (!(protosw = malloc(j * sizeof(struct protosw), M_PFKEY, M_DONTWAIT)))
       return ENOMEM;
 
     for (i = 0, p = protosw; i <= PFKEY_PROTOCOL_MAX; i++)
@@ -281,18 +281,18 @@ pfkey_buildprotosw(void)
       }
 
     if (pfkey_domain.dom_protosw)
-      free(pfkey_domain.dom_protosw, M_TEMP);
+      free(pfkey_domain.dom_protosw, M_PFKEY);
 
     pfkey_domain.dom_protosw = protosw;
     pfkey_domain.dom_protoswNPROTOSW = p;
   } else  {
-    if (!(protosw = malloc(sizeof(struct protosw), M_TEMP, M_DONTWAIT)))
+    if (!(protosw = malloc(sizeof(struct protosw), M_PFKEY, M_DONTWAIT)))
       return ENOMEM;
 
     bcopy(&pfkey_protosw_template, protosw, sizeof(struct protosw));
 
     if (pfkey_domain.dom_protosw)
-      free(pfkey_domain.dom_protosw, M_TEMP);
+      free(pfkey_domain.dom_protosw, M_PFKEY);
 
     pfkey_domain.dom_protosw = protosw;
     pfkey_domain.dom_protoswNPROTOSW = protosw;
