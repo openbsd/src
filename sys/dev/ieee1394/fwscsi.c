@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.8 2002/12/30 11:42:41 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.9 2002/12/30 11:52:21 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -108,11 +108,14 @@ void fwscsi_command_data(struct ieee1394_abuf *, int);
 
 typedef struct fwscsi_orb_data {
 	u_int32_t	data_hash;
+	u_int32_t	data_mask;
 	size_t		data_len;
 	caddr_t		data_addr;
 	struct ieee1394_abuf *data_ab;
 	TAILQ_ENTRY(fwscsi_orb_data) data_chain;
 } fwscsi_orb_data;
+static TAILQ_HEAD(fwscsi_data_tq, fwscsi_orb_data) fwscsi_datalist;
+static int fwscsi_data_valid;
 
 typedef struct fwscsi_status {
 	u_int8_t	flags;
@@ -150,28 +153,17 @@ struct scsi_device fwscsi_dev = {
 #endif
 
 typedef struct fwscsi_softc {
-	struct device sc_dev;
-#ifdef	__NetBSD__
-	struct scsipi_adapter sc_adapter;
-	struct scsipi_channel sc_channel;
-#else
-	struct scsi_link sc_link;
-#endif
+	struct device		  sc_dev;
+	struct p1212_dir	**sc_unitdir;
+	int			  sc_units;
 
-	struct fwnode_softc *sc_fwnode;
-	struct p1212_dir **sc_unitdir;
+	struct scsi_link	  sc_adapter_link;
 
-	u_int8_t sc_speed;
-	u_int32_t sc_maxpayload;
+	u_int16_t		  sc_lun;
+	u_int8_t		  sc_speed;		/* log2(n / 100M) */
+	u_int8_t		  sc_maxpayload;	/* log2(n / 4) */
 
-	u_int64_t sc_csrbase;
-	u_int64_t sc_mgmtreg;
-	int sc_loginid;
-	int sc_lun;
-
-	struct device *sc_bus;
-
-	TAILQ_HEAD(, fwscsi_orb_data) sc_data;
+	struct scsibus_softc	 *sc_bus;
 } fwscsi_softc;
 
 struct cfattach fwscsi_ca = {
@@ -190,8 +182,9 @@ fwscsi_datafind(struct fwscsi_softc *sc, u_int32_t hash)
 {
 	struct fwscsi_orb_data *data;
 
-	TAILQ_FOREACH(data, &sc->sc_data, data_chain) {
-		if (data->data_hash == hash)
+	TAILQ_FOREACH(data, &fwscsi_datalist, data_chain) {
+		if ((data->data_hash & data->data_mask) ==
+		    (hash & data->data_mask))
 			break;
 	}
 
@@ -271,64 +264,60 @@ fwscsi_match(struct device *parent, void *match, void *aux)
 void
 fwscsi_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ieee1394_softc *psc = (struct ieee1394_softc *)parent;
-	struct ieee1394_softc *buspsc =
-	    (struct ieee1394_softc *)parent->dv_parent;
+	struct fwnode_softc *fwsc = (struct fwnode_softc *)parent;
 	struct fwscsi_softc *sc = (struct fwscsi_softc *)self;
 	struct p1212_dir **udir = (struct p1212_dir **)aux;
-	int lun, n;
 	struct sbp2_login_orb *login_orb;
-
-	DPRINTF(("%s: cpl = %d(%08x)\n", __func__, cpl, cpl));
-
-#ifdef	__NetBSD__
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
-	sc->sc_adapter.adapt_nchannels = 1;
-	sc->sc_adapter.adapt_max_periph = 1;
-	sc->sc_adapter.adapt_request = fwscsi_scsipi_request;
-	sc->sc_adapter.adapt_minphys = fwscsi_scsipi_minphys;
-	sc->sc_adapter.adapt_openings = 8;
-
-	sc->sc_channel.chan_adapter = &sc->sc_adapter;
-	sc->sc_channel.chan_bustype = &scsi_bustype;
-	sc->sc_channel.chan_channel = 0;
-	sc->sc_channel.chan_flags = SCSIPI_CHAN_CANGROW | SCSIPI_CHAN_NOSETTLE;
-	sc->sc_channel.chan_ntargets = 2;
-	sc->sc_channel.chan_nluns = SBP2_MAX_LUNS;
-	sc->sc_channel.chan_id = 1;
-#else	/* __NetBSD__ */
-	sc->sc_link.adapter_target = 7;
-	sc->sc_link.adapter_buswidth = 8;
-	sc->sc_link.openings = 2;
-	sc->sc_link.device = &fwscsi_dev;
-	sc->sc_link.device_softc = sc;
-	sc->sc_link.adapter = &fwscsi_switch;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.quirks |= SDEV_NOLUNS | SDEV_NOTAGS | SDEV_NOCDB6;
-#endif	/* ! __NetBSD__ */
-
-	sc->sc_fwnode = (struct fwnode_softc *)parent;
-
-	n = 0;
-	while (udir[n++]) {};
-	sc->sc_unitdir = malloc(n * sizeof(*sc->sc_unitdir), M_DEVBUF,
-	    M_WAITOK);
-	MPRINTF("malloc(DEVBUF)", sc->sc_unitdir);
-	bcopy(udir, sc->sc_unitdir, n * sizeof(*sc->sc_unitdir));
-
-	sc->sc_speed = psc->sc1394_link_speed;
-	sc->sc_maxpayload = buspsc->sc1394_max_receive - 1;
-
-	sc->sc_loginid = 0;
-	sc->sc_lun = 0;
+	int lun;
 
 	printf("\n");
-	lun = sbp2_init(sc->sc_fwnode, *sc->sc_unitdir);
+
+	for (sc->sc_units = 0; udir[sc->sc_units]; sc->sc_units++) {};
+	DPRINTF(("%s: cpl = %d(%08x), %d unit(s)\n", __func__,
+	    cpl, cpl, sc->sc_units));
+
+	if (!sc->sc_units) {
+		sc->sc_unitdir = NULL;
+		return;
+	}
+
+	if (!fwscsi_data_valid) {
+		TAILQ_INIT(&fwscsi_datalist);
+		fwscsi_data_valid = 1;
+	}
+	sc->sc_adapter_link.adapter_target = 7;
+	sc->sc_adapter_link.adapter_buswidth = 8;
+	sc->sc_adapter_link.openings = 2;
+	sc->sc_adapter_link.device = &fwscsi_dev;
+	sc->sc_adapter_link.device_softc = sc;
+	sc->sc_adapter_link.adapter = &fwscsi_switch;
+	sc->sc_adapter_link.adapter_softc = sc;
+	sc->sc_adapter_link.flags = 0;
+	sc->sc_adapter_link.inquiry_flags = 0;
+	sc->sc_adapter_link.inquiry_flags2 = 0;
+	sc->sc_adapter_link.quirks |=
+	    SDEV_NOLUNS | SDEV_NOTAGS | SDEV_NOCDB6;
+
+	sc->sc_speed = fwsc->sc_sc1394.sc1394_link_speed;
+	sc->sc_maxpayload = fwsc->sc_sc1394.sc1394_max_receive - 1;
+
+	sc->sc_lun = 0;
+
+	sc->sc_unitdir = malloc(sc->sc_units * sizeof(*sc->sc_unitdir),
+	    M_DEVBUF, M_NOWAIT);
+	MPRINTF("malloc(DEVBUF)", sc->sc_unitdir);
+	if (sc->sc_unitdir == NULL) {
+		printf("%s: memory allocation failure.\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	bcopy(udir, sc->sc_unitdir, sc->sc_units * sizeof(*sc->sc_unitdir));
+
+	lun = sbp2_init(fwsc, *sc->sc_unitdir);
 	if (lun < 0) {
 		DPRINTF(("%s: initialization failure... (-1)\n", __func__));
 		return;
 	}
-	sc->sc_lun = lun;
+	sc->sc_lun = (u_int16_t)lun;
 
 #ifdef	FWSCSI_DEBUG
 	if (fwscsidebug & 4)
@@ -340,7 +329,7 @@ fwscsi_attach(struct device *parent, struct device *self, void *aux)
 	bzero(login_orb, sizeof(struct sbp2_login_orb));
 
 	login_orb->lun = htons(sc->sc_lun);
-	sbp2_login(sc->sc_fwnode, login_orb, fwscsi_login_cb, (void *)sc);
+	sbp2_login(fwsc, login_orb, fwscsi_login_cb, (void *)sc);
 }
 
 void
@@ -373,7 +362,6 @@ fwscsi_login_cb(void *arg, struct sbp2_status_notification *notification)
 		login_orb = NULL;	/* XXX */
 	}
 
-	TAILQ_INIT(&sc->sc_data);
 	sc->sc_bus = NULL;
 
 #ifdef	FWSCSI_DEBUG
@@ -395,13 +383,12 @@ fwscsi_config_thread(void *arg)
 	struct device *dev;
 	struct fwscsi_softc * const sc = arg;
 
-#ifdef	__NetBSD__
-	dev = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
-#else
-	dev = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
-#endif
-
-	sc->sc_bus = dev;
+	dev = config_found((void *)sc, &sc->sc_adapter_link, scsiprint);
+	sc->sc_bus = (struct scsibus_softc *)dev;
+	if (sc->sc_bus != NULL) {
+		sc->sc_bus->moreluns = 0;
+		sc->sc_bus->sc_buswidth = 8;
+	}
 
 	DPRINTF(("%s: exiting...\n", __func__));
 
@@ -431,6 +418,9 @@ int
 fwscsi_detach(struct device *self, int flags)
 {
 	struct fwscsi_softc *sc = (struct fwscsi_softc *)self;
+	struct fwnode_softc *fwsc =
+	    (struct fwnode_softc *)sc->sc_dev.dv_parent;
+	struct device *dev = (struct device *)sc->sc_bus;
 	int s, rv;
 
 	DPRINTF(("%s: cpl = %d(%08x)\n", __func__, cpl, cpl));
@@ -441,13 +431,15 @@ fwscsi_detach(struct device *self, int flags)
 		DPRINTF(("%s: detach %s\n", __func__,
 		    sc->sc_bus->dv_xname));
 		s = splbio();
-		rv += config_detach(sc->sc_bus, flags);
+		rv += config_detach(dev, flags);
 		splx(s);
 	}
-	sbp2_clean(sc->sc_fwnode, *sc->sc_unitdir, 0);
-	free(sc->sc_unitdir, M_DEVBUF);
-	MPRINTF("free(DEVBUF)", sc->sc_unitdir);
-	sc->sc_unitdir = NULL;	/* XXX */
+	if (sc->sc_unitdir) {
+		sbp2_clean(fwsc, *sc->sc_unitdir, 0);
+		free(sc->sc_unitdir, M_DEVBUF);
+		MPRINTF("free(DEVBUF)", sc->sc_unitdir);
+		sc->sc_unitdir = NULL;	/* XXX */
+	}
 
 	return (rv);
 }
@@ -494,10 +486,11 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 	struct fwscsi_orb_data *data_elm;
 	struct fwscsi_softc *sc =
 	    (struct fwscsi_softc *)xs->sc_link->adapter_softc;
-	struct fwnode_softc *fwsc = sc->sc_fwnode;
+	struct fwnode_softc *fwsc =
+	    (struct fwnode_softc *)sc->sc_dev.dv_parent;
 	struct fwohci_softc *ohsc;
 	struct ieee1394_abuf *data_ab;
-	u_int32_t dhash;
+	u_int32_t dhash, hash_mask;
 	u_int16_t options, host_id;
 	size_t datalen;
 	int datashift, s;
@@ -574,13 +567,14 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		    __func__, host_id, (u_int32_t)(xs->data),
 		    xs->datalen, xs->resid));
 		datashift = 0;
-		datalen = xs->datalen / 256;
+		datalen = xs->datalen / (1 << SBP2_DATA_SHIFT);
 		while (datalen) {
 			datashift++;
 			datalen /= 2;
 		}
+		hash_mask = ~(1 << datashift) + 1;
 		do {
-			dhash = arc4random() & (~(1 << datashift) + 1);
+			dhash = arc4random();
 		} while (!dhash || fwscsi_datafind(sc, dhash) != NULL);
 
 		MALLOC(data_elm, struct fwscsi_orb_data *, sizeof(*data_elm),
@@ -597,10 +591,6 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 			return (TRY_AGAIN_LATER);
 		}
 		bzero(data_elm, sizeof(*data_elm));
-
-		data_elm->data_hash = dhash;
-		data_elm->data_addr = xs->data;
-		data_elm->data_len = xs->datalen;
 
 		MALLOC(data_ab, struct ieee1394_abuf *, sizeof(*data_ab),
 		    M_1394DATA, M_NOWAIT);
@@ -619,15 +609,21 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		}
 		bzero(data_ab, sizeof(*data_ab));
 
+		data_elm->data_hash = dhash;
+		data_elm->data_mask = hash_mask;
+		data_elm->data_addr = xs->data;
+		data_elm->data_len = xs->datalen;
+
 		data_ab->ab_req = (struct ieee1394_softc *)fwsc;
 		data_ab->ab_retlen = 0;
 		datalen = roundup(xs->datalen, 4);
 		data_ab->ab_length = datalen & 0xffff;
-		data_ab->ab_addr = SBP2_CMD_DATA + ((u_int64_t)dhash << 8);
+		data_ab->ab_addr = SBP2_DATA_BLOCK +
+		    ((u_int64_t)(dhash & hash_mask) << SBP2_DATA_SHIFT);
 		data_ab->ab_cb = fwscsi_command_data;
 		data_ab->ab_cbarg = xs;
 
-		TAILQ_INSERT_TAIL(&sc->sc_data, data_elm, data_chain);
+		TAILQ_INSERT_TAIL(&fwscsi_datalist, data_elm, data_chain);
 		xs->data = (u_char *)data_elm;
 
 		/* Check direction of data transfer. */
@@ -656,10 +652,10 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		data_elm->data_ab = data_ab;
 
 		cmd_orb->data_descriptor.node_id = htons(host_id);
-		data_ab->ab_addr = SBP2_CMD_DATA + ((u_int64_t)dhash << 8);
-		cmd_orb->data_descriptor.hi = htons((SBP2_CMD_DATA >> 32) +
-		    ((dhash >> 24) & 0xFF));
-		cmd_orb->data_descriptor.lo = htonl((dhash << 8) & 0xFFFFFFFF);
+		cmd_orb->data_descriptor.hi =
+		    htons((u_int16_t)(data_ab->ab_addr >> 32));
+		cmd_orb->data_descriptor.lo =
+		    htonl((u_int32_t)(data_ab->ab_addr & 0xFFFFFFFF));
 		cmd_orb->data_size = htons(datalen & 0xFFFF);
 	}
 
@@ -681,6 +677,7 @@ fwscsi_command_timeout(void *arg)
 {
 	struct sbp2_status_notification notification;
 	struct sbp2_status_block *status;
+	int s;
 
 	DPRINTF(("%s: cpl = %d(%08x)\n", __func__, cpl, cpl));
 
@@ -694,7 +691,9 @@ fwscsi_command_timeout(void *arg)
 
 	notification.origin = ((struct scsi_xfer *)arg)->cmd;
 	notification.status = status;
+	s = spl0();
 	fwscsi_command_wait(arg, &notification);
+	splx(s);
 }
 
 void
@@ -703,9 +702,12 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	struct scsi_xfer *xs = (struct scsi_xfer *)aux;
 	struct fwscsi_orb_data *data_elm = (struct fwscsi_orb_data *)xs->data;
 	struct fwscsi_softc *sc = xs->sc_link->adapter_softc;
+	struct fwnode_softc *fwsc =
+	    (struct fwnode_softc *)sc->sc_dev.dv_parent;
 	struct sbp2_command_orb *cmd_orb;
 	struct ieee1394_abuf *data_ab;
 	struct fwscsi_status *status = NULL;
+	const char *error_str;
 	u_int32_t tmp;
 	int s;
 #ifdef	FWSCSI_DEBUG
@@ -713,6 +715,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	int i;
 #endif	/* FWSCSI_DEBUG */
 
+	splassert(IPL_NONE);
 	DPRINTF(("%s: cpl = %d(%08x)\n", __func__, cpl, cpl));
 
 	s = splbio();
@@ -738,9 +741,10 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	if (data_elm != NULL) {
 		data_ab = data_elm->data_ab;
 		if (data_ab) {
-			data_ab->ab_addr = SBP2_CMD_DATA +
-			    ((u_int64_t)data_elm->data_hash << 8);
-			sc->sc_fwnode->sc1394_unreg(data_ab, TRUE);
+			data_ab->ab_addr = SBP2_DATA_BLOCK +
+			    ((u_int64_t)(data_elm->data_hash &
+			     data_elm->data_mask) << SBP2_DATA_SHIFT);
+			fwsc->sc1394_unreg(data_ab, TRUE);
 			if ((void *)data_ab->ab_data > (void *)1) { /* XXX */
 				free(data_ab->ab_data, M_1394DATA);
 				MPRINTF("free(1394DATA)", data_ab->ab_data);
@@ -753,7 +757,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 
 		xs->data = data_elm->data_addr;
 		s = splbio();
-		TAILQ_REMOVE(&sc->sc_data, data_elm, data_chain);
+		TAILQ_REMOVE(&fwscsi_datalist, data_elm, data_chain);
 		splx(s);
 		FREE(data_elm, M_1394CTL);
 		MPRINTF("FREE(1394CTL)", data_elm);
@@ -766,7 +770,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	     (status->flags & SBP2_STATUS_RESPONSE_MASK) ==
 	        SBP2_STATUS_RESP_VENDOR) &&
 	    status->status != 0) {
-		DPRINTF(("%s: sbp_status 0x%02x, scsi_status 0x%02x\n",
+		DPRINTF(("%s: sbp_status 0x%02x, scsi_status 0x%02x --> XS_SENSE\n",
 		    __func__, status->status, status->scsi_status));
 		xs->error = XS_SENSE;
 		xs->status = status->scsi_status & 0x3F;
@@ -794,7 +798,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	     (status->flags & SBP2_STATUS_RESPONSE_MASK) ==
 	        SBP2_STATUS_RESP_ILLEGAL_REQ)) {
 
-		DPRINTF(("%s: device error (flags 0x%02x, status 0x%02x)\n",
+		DPRINTF(("%s: device error (flags 0x%02x, status 0x%02x) --> XS_SENSE\n",
 		    __func__, status->flags, status->status));
 		xs->error = XS_SENSE;
 		xs->status = SCSI_CHECK;
@@ -811,7 +815,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		FREE(status, M_1394DATA);
 		MPRINTF("FREE(1394DATA)", status);
 		status = NULL;	/* XXX */
-		sbp2_command_del(sc->sc_fwnode, sc->sc_lun, cmd_orb);
+		sbp2_command_del(fwsc, sc->sc_lun, cmd_orb);
 		free(cmd_orb, M_1394DATA);
 		MPRINTF("free(1394DATA)", cmd_orb);
 		cmd_orb = NULL;	/* XXX */
@@ -833,14 +837,15 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	 */
 	if (xs->error == XS_NOERROR) {
 		if (status->flags & SBP2_STATUS_RESPONSE_MASK) {
-			DPRINTF(("  -> XS_SENSE\n"));
 			xs->error = XS_SENSE;
+			error_str = "SENSE";
 		} else if (status->flags & SBP2_STATUS_DEAD) {
-			DPRINTF(("  -> XS_DRIVER_STUFFUP\n"));
 			xs->error = XS_DRIVER_STUFFUP;
+			error_str = "DRIVER_STUFFUP";
 		} else {
-			DPRINTF(("  -> XS_NOERROR\n"));
+			error_str = "NOERROR";
 		}
+		DPRINTF((" --> XS_%s\n", error_str));
 	}
 
 	if (status != NULL) {
@@ -855,7 +860,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		DPRINTF(("%s: Nullify orb(0x%08x)\n", __func__,
 		    (u_int32_t)cmd_orb));
 		cmd_orb->options = htons(SBP2_DUMMY_TYPE);
-		sbp2_command_del(sc->sc_fwnode, sc->sc_lun, cmd_orb);
+		sbp2_command_del(fwsc, sc->sc_lun, cmd_orb);
 		free(cmd_orb, M_1394DATA);
 		MPRINTF("free(1394DATA)", cmd_orb);
 		cmd_orb = NULL;	/* XXX */
@@ -899,17 +904,17 @@ fwscsi_command_data(struct ieee1394_abuf *ab, int rcode)
 	data_elm = (struct fwscsi_orb_data *)xs->data;
 
 	datalen = MIN(ab->ab_retlen, ab->ab_length);
-	dataptr = data_elm->data_addr + (size_t)((ab->ab_addr & 0xFFFFFFFFFF) -
-	    ((u_int64_t)data_elm->data_hash << 8));
+	dataptr = data_elm->data_addr +
+	    (size_t)((ab->ab_addr & SBP2_DATA_MASK) -
+	     ((u_int64_t)(data_elm->data_hash & data_elm->data_mask)
+	      << SBP2_DATA_SHIFT));
 
 	if ((dataptr < data_elm->data_addr) ||
 	    ((dataptr + datalen) >
 	     (data_elm->data_addr + roundup(data_elm->data_len, 4)))) {
-#ifdef	FWSCSI_DEBUG
 		DPRINTF(("%s: Data (0x%08x[%d]) out of range (0x%08x[%d])\n",
 		    __func__, dataptr, datalen, data_elm->data_addr,
 		    data_elm->data_len));
-#endif	/* FWSCSI_DEBUG */
 		if ((void *)ab->ab_data > (void *)1) {		/* XXX */
 			free(ab->ab_data, M_1394DATA);
 			MPRINTF("free(1394DATA)", ab->ab_data);
