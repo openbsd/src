@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.305 2003/02/03 15:44:52 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.306 2003/02/03 16:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -265,10 +265,8 @@ struct sym	*symhead = NULL;
 int	 symset(const char *, const char *);
 char	*symget(const char *);
 
-void	 decide_address_family(struct node_host *,
-	    sa_family_t *);
-void	 remove_invalid_hosts(struct node_host **,
-	    sa_family_t *);
+void	 decide_address_family(struct node_host *, sa_family_t *);
+void	 remove_invalid_hosts(struct node_host **, sa_family_t *);
 u_int16_t parseicmpspec(char *, sa_family_t);
 
 typedef struct {
