@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rt.4,v 1.4 2002/01/07 18:37:45 mickey Exp $
+.\"	$OpenBSD: rt.4,v 1.5 2002/01/23 19:17:13 mickey Exp $
 .\"	$RuOBSD: rt.4,v 1.3 2001/10/26 05:38:43 form Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -56,6 +56,10 @@ the configuration file and must be either 0x20c or 0x30c.
 .Sh BUGS
 Support for the SF16-FMI cards is rather ugly, volume control is not working
 and the driver can not correctly determine signal state.
+.Pp
+It is impossible to determine the frequency tuned into.
+Thus, the driver will report an internally stored value even if it is not
+correct (e.g. tunning was done through the direct I/O access).
 .Sh SEE ALSO
 .Xr isa 4 ,
 .Xr radio 4 ,
