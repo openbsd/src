@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 1997/07/06 08:02:05 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 1997/11/06 19:42:37 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -498,6 +498,7 @@ struct hp300_model hp300_models[] = {
 	{ HP_370,	"370",		"        ", "33.33"	},
 	{ HP_375,	"375",		"	 ", "50"	},
 	{ HP_380,	"380",		"        ", "25"	},
+	{ HP_385,	"385",		"        ", "33"	},
 	{ HP_400,	"400",		"        ", "50"	},
 	{ HP_425,	"425",		"     t s", "25"	},
 	{ HP_433,	"433",		"    t s ", "33"	},
@@ -653,6 +654,9 @@ identifycpu()
 #endif
 #if !defined(HP380)
 	case HP_380:
+#endif
+#if !defined(HP385)
+	case HP_385:
 #endif
 #if !defined(HP400)
 	case HP_400:

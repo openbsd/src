@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp300spu.h,v 1.1 1997/07/06 08:02:11 downsj Exp $	*/
+/*	$OpenBSD: hp300spu.h,v 1.2 1997/11/06 19:42:41 millert Exp $	*/
 /*	$NetBSD: hp300spu.h,v 1.2 1997/05/01 05:26:48 thorpej Exp $	*/
 
 /*-
@@ -58,10 +58,12 @@
 #define	HP_380		9	/* 25MHz 68040 */
 #define	HP_425		10	/* 26MHz 68040 */
 #define HP_433		11	/* 33MHz 68040 */
+#define	HP_385		12	/* 33MHz 68040 */
 
 /* values for mmuid - used to differentiate similar CPU/cache combos */
 #define	MMUID_345	1	/* 345 */
 #define	MMUID_375	3	/* 375 */
+#define	MMUID_385	2	/* 385 */
 #define	MMUID_425_T	5	/* 425t - 25MHz Trailways */
 #define	MMUID_425_S	7	/* 425s - 25MHz Strider */
 #define	MMUID_433_T	4	/* 433t - 33MHz Trailways */
@@ -95,6 +97,7 @@ extern	int mmuid;		/* MMU id */
 #include "opt_hp370.h"
 #include "opt_hp375.h"
 #include "opt_hp380.h"
+#include "opt_hp385.h"
 #include "opt_hp400.h"
 #include "opt_hp425.h"
 #include "opt_hp433.h"
@@ -111,7 +114,7 @@ extern	int mmuid;		/* MMU id */
 #define M68030
 #endif
 
-#if defined(HP380) || defined(HP425) || defined(HP433)
+#if defined(HP380) || defined(HP385) || defined(HP425) || defined(HP433)
 #define M68040
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 1997/07/14 08:14:25 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 1997/11/06 19:42:43 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1997/06/28 07:20:25 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,8 @@ getmachineid()
 		cp = "375"; break;
 	case HP_380:
 		cp = "380"; break;
+	case HP_385:
+		cp = "385"; break;
 	case HP_400:
 		cp = "400"; break;
 	case HP_425:

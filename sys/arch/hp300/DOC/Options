@@ -1,4 +1,4 @@
-$OpenBSD: Options,v 1.5 1997/09/23 07:09:52 downsj Exp $
+$OpenBSD: Options,v 1.6 1997/11/06 19:42:26 millert Exp $
 $NetBSD: Options,v 1.7 1997/09/12 08:04:12 mycroft Exp $
 
 Here is a list of hp300 specific kernel compilation options and what they
@@ -37,7 +37,8 @@ HP370
 	place, in dealing with flushing the external cache.
 
 HP380
-	Support for "current" hp380/425 (and 433) machines: 25 (33) mhz 68040
+HP385
+	Support for "current" hp380/425/385/433 machines: 25 (33) mhz 68040
 	with MMU/FPU.  Compiles in support for 68040.
 
 FPSP

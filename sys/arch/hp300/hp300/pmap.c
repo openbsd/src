@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 1997/07/06 08:02:07 downsj Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 1997/11/06 19:42:38 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1997/06/10 18:52:23 veego Exp $	*/
 
 /* 
@@ -47,7 +47,7 @@
  *	68020 with HP MMU	models 320, 350
  *	68020 with 68551 MMU	models 318, 319, 330
  *	68030 with on-chip MMU	models 340, 360, 370, 345, 375, 400
- *	68040 with on-chip MMU	models 380, 425, 433
+ *	68040 with on-chip MMU	models 380, 385, 425, 433
  *
  * Notes:
  *	Don't even pay lip service to multiprocessor support.

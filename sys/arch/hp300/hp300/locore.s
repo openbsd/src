@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.19 1997/09/23 07:09:54 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.20 1997/11/06 19:42:34 millert Exp $	*/
 /*	$NetBSD: locore.s,v 1.79 1997/09/12 08:41:55 mycroft Exp $	*/
 
 /*
@@ -270,8 +270,10 @@ Lnot68030:
 	jeq	Lisa425
 	cmpb	#MMUID_433_T,d0		| or a 433t?
 	jeq	Lisa433
-	cmpb	#MMUID_433_S,d0		| last chance...
+	cmpb	#MMUID_433_S,d0		| maybe a 433s?
 	jeq	Lisa433
+	cmpb	#MMUID_385,d0		| last chance...
+	jeq	Lisa385
 	movl	#HP_380,a0@		| guess we're a 380
 	jra	Lstart1
 Lisa425:
@@ -279,6 +281,9 @@ Lisa425:
 	jra	Lstart1
 Lisa433:
 	movl	#HP_433,a0@
+	jra	Lstart1
+Lisa385:
+	movl	#HP_385,a0@
 	jra	Lstart1
 
 	/*

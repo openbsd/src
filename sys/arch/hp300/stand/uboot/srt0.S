@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.1 1997/07/14 08:14:58 downsj Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.2 1997/11/06 19:42:45 millert Exp $	*/
 /*	$NetBSD: srt0.S,v 1.4 1997/05/12 07:56:00 thorpej Exp $	*/
 
 /*
@@ -179,8 +179,10 @@ not68030:
 	jeq	isa425
 	cmpb	#MMUID_433_T,d0		| or a 433t?
 	jeq	isa433
-	cmpb	#MMUID_433_S,d0		| last chance...
+	cmpb	#MMUID_433_S,d0		| maybe a 433s?
 	jeq	isa433
+	cmpb	#MMUID_385,d0		| last chance...
+	jeq	isa385
 	movl	#HP_380,a0@		| guess we're a 380
 	jra	ihpibcheck
 isa425:
@@ -188,6 +190,9 @@ isa425:
 	jra	ihpibcheck
 isa433:
 	movl	#HP_433,a0@
+	jra	ihpibcheck
+isa385:
+	movl	#HP_385,a0@
 	jra	ihpibcheck
 
 	/*

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 1997/07/06 08:01:42 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.22 1997/11/06 19:42:30 millert Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -19,6 +19,7 @@ option	 	HP360
 option	 	HP370
 option	 	HP375
 option	 	HP380
+option	 	HP385
 option	 	HP400
 option	 	HP425
 option	 	HP433
