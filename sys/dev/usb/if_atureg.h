@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.9 2004/12/04 08:02:02 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.10 2004/12/04 08:29:42 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.9 2004/12/04 08:02:02 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.10 2004/12/04 08:29:42 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -557,6 +557,18 @@ struct atu_fw {
  * The header the AT76c503 puts in front of RX packets (for both managment &
  * data)
  */
+struct atu_rx_hdr {
+	u_int16_t		length;
+	u_int8_t		rx_rate;
+	u_int8_t		newbss;
+	u_int8_t		fragmentation;
+	u_int8_t		rssi;
+	u_int8_t		link_quality;
+	u_int8_t		noise_level;
+	u_int32_t		rx_time;
+};
+#define ATU_RX_HDRLEN sizeof(struct atu_rx_hdr)
+
 struct at76c503_rx_buffer {
 	u_int16_t		wlength;
 	u_int8_t		rx_rate;

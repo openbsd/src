@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.27 2004/12/04 08:02:02 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.28 2004/12/04 08:29:41 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2311,27 +2311,22 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
 	struct atu_softc	*sc = c->atu_sc;
-	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 	struct ieee80211com	*ic = &sc->sc_ic;
-	struct mbuf		*m;
-	u_int32_t		total_len;
-	int			s;
-
-	struct atu_rxpkt	*pkt;
-	int			offset;
-
+	struct ifnet		*ifp = &ic->ic_if;
+	struct atu_rx_hdr	*h;
 	struct ieee80211_frame	*wh;
 	struct ieee80211_node	*ni;
+	struct mbuf		*m;
+	u_int32_t		len;
+	int			s;
 
-	DPRINTFN(25, ("%s: atu_rxeof: enter\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(25, ("%s: atu_rxeof\n", USBDEVNAME(sc->atu_dev)));
 
 	if (sc->atu_dying)
 		return;
 
-	if (!(ifp->if_flags & IFF_RUNNING))
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP))
 		goto done;
-
-	DPRINTFN(25, ("%s: got a packet\n", USBDEVNAME(sc->atu_dev)));
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("%s: status != USBD_NORMAL_COMPLETION\n",
@@ -2368,48 +2363,24 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done;
 	}
 
-	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
+	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	if (total_len <= 1) {
+	if (len <= 1) {
 		DPRINTF(("%s: atu_rxeof: too short\n",
 		    USBDEVNAME(sc->atu_dev)));
 		goto done;
 	}
 
+	h = (struct atu_rx_hdr *)c->atu_buf;
+	len = h->length - 4; /* XXX magic number */
+
+	wh = mtod(m, struct ieee80211_frame *);
+	ni = ieee80211_find_rxnode(ic, wh);
+
 	m = c->atu_mbuf;
-	memcpy(mtod(m, char *), c->atu_buf, total_len);
-
-	pkt = mtod(m, struct atu_rxpkt *);
-
-	DPRINTFN(25, ("%s: -- RX (rate=%d enc=%d) mac=%s",
-	    USBDEVNAME(sc->atu_dev), pkt->AtHeader.rx_rate,
-	    (pkt->WiHeader.frame_ctl & WI_FCTL_WEP) != 0,
-	    ether_sprintf(pkt->WiHeader.addr3)));
-	DPRINTFN(25, (" bssid=%s\n", ether_sprintf(pkt->WiHeader.addr2)));
-
-	DPRINTFN(25, ("%s: rx frag:%02x rssi:%02x q:%02x nl:%02x time:%d\n",
-	    USBDEVNAME(sc->atu_dev), pkt->AtHeader.fragmentation,
-	    pkt->AtHeader.rssi, pkt->AtHeader.link_quality,
-	    pkt->AtHeader.noise_level, pkt->AtHeader.rx_time));
-
-	/* if (total_len > 1514) { */
-	if (total_len > 1548) {
-		DPRINTF(("%s: AAARRRGGGHHH!! Invalid packet size? (%d)\n",
-		    USBDEVNAME(sc->atu_dev), total_len));
-		ifp->if_ierrors++;
-		goto done;
-	}
-
-	total_len = pkt->AtHeader.wlength - 4;
-
-	ifp->if_ipackets++;
+	memcpy(mtod(m, char *), c->atu_buf + ATU_RX_HDRLEN, len);
 	m->m_pkthdr.rcvif = ifp;
-
-	/* Adjust mbuf for headers */
-	offset = sizeof(pkt->AtHeader);
-	m->m_pkthdr.len = m->m_len = total_len + offset;
-	/* cut off Atmel header */
-	m_adj(m, offset);
+	m->m_pkthdr.len = m->m_len = len;
 
 	/*
 	 * XXX stolen from iwi, needs fixing
@@ -2420,29 +2391,27 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		atu_fix_channel(ic, m);
 
-	wh = mtod(m, struct ieee80211_frame *);
-	ni = ieee80211_find_rxnode(ic, wh);
+	ifp->if_ipackets++;
 
 	s = splnet();
+
+	if (atu_newbuf(sc, c, NULL) == ENOBUFS) {
+		ifp->if_ierrors++;
+		goto done1; /* XXX if we cant allocate, why restart it? */
+	}
+
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		BPF_MTAP(ifp, m);
 #endif
 
-	ieee80211_input(ifp, m, ni, pkt->AtHeader.rssi,
-	    pkt->AtHeader.rx_time);
+	ieee80211_input(ifp, m, ni, h->rssi, h->rx_time);
 
 	if (ni == ic->ic_bss)
 		ieee80211_unref_node(&ni);
 	else
 		ieee80211_free_node(ic, ni);
-
-	if (atu_newbuf(sc, c, NULL) == ENOBUFS) {
-		ifp->if_ierrors++;
-		goto done1;
-	}
-
 done1:
 	splx(s);
 done:
