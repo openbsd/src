@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.8 1997/05/30 07:51:12 downsj Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.9 1997/06/15 13:45:13 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -37,8 +37,11 @@ pctrattach (int num)
 {
   pctrval id;
 
-  if (num > 1)
-    panic ("no more than one pctr device");
+  if (num > 1) {
+    printf ("Ignoring pctr device #%d\n", num);
+    printf ("(config file should read `pseudo-device pctr 1')\n");
+    return;
+  }
 
   id = __cpuid ();
   usetsc = __hastsc (id);
