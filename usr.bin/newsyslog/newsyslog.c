@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.15 1998/12/28 06:28:15 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.16 1999/01/04 19:24:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.15 1998/12/28 06:28:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.16 1999/01/04 19:24:17 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -129,7 +129,7 @@ int     noaction = 0;           /* Don't do anything, just show it */
 int	monitor = 0;		/* Don't do monitoring by default */
 char    *conf = CONF;           /* Configuration file to use */
 time_t  timenow;
-#define MIN_PID		3
+#define MIN_PID		4
 #define MAX_PID		99999
 char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;               /* timenow in human readable form */
@@ -151,23 +151,30 @@ int isnumberstr __P((char *));
 void domonitor __P((char *, char *));
 FILE *openmail __P((void));
 void closemail __P((FILE *));
+void child_killer __P((int));
 
 int main(argc, argv)
         int argc;
         char **argv;
 {
         struct conf_entry *p, *q;
+	int status;
         
         PRS(argc,argv);
         if (needroot && getuid() && geteuid())
 		errx(1, "You must be root.");
         p = q = parse_file();
+	signal(SIGCHLD, child_killer);
         while (p) {
                 do_entry(p);
                 p=p->next;
                 free(q);
                 q=p;
         }
+
+	/* Wait for children to finish, then exit */
+	while (waitpid(-1, &status, 0) != -1)
+		;
         exit(0);
 }
 
@@ -536,7 +543,7 @@ int log_trim(log)
         return(0);
 }
 
-/* Fork of /usr/ucb/compress to compress the old log file */
+/* Fork off compress or gzip to compress the old log file */
 void compress_log(log)
         char    *log;
 {
@@ -549,7 +556,8 @@ void compress_log(log)
 		err(1, "fork");
         } else if (!pid) {
                 (void) execl(COMPRESS,"compress","-f",tmp,0);
-		err(1, COMPRESS);
+		warn(COMPRESS);
+		_exit(1);
         }
 }
 
@@ -735,4 +743,13 @@ void closemail(pfp)
 	FILE *pfp;
 {
 	pclose(pfp);
+}
+
+void child_killer(signum)
+	int signum;
+{
+	int status;
+
+	while (waitpid(-1, &status, WNOHANG) > 0)
+		;
 }
