@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.9 2003/11/04 17:55:17 espie Exp $
+# $OpenBSD: pkg_delete,v 1.10 2003/11/06 17:49:31 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -333,7 +333,7 @@ for my $pkgname (@ARGV) {
 	    }
 	}
 	next unless is_installed($pkgname);
-	push(@realnames, $pkgname);
+	push(@realnames, installed_name($pkgname));
 }
 
 # Then check that dependencies are okay

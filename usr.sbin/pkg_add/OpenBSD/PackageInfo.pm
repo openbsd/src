@@ -1,4 +1,4 @@
-# $OpenBSD: PackageInfo.pm,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.2 2003/11/06 17:49:31 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -27,7 +27,7 @@ use strict;
 use warnings;
 package OpenBSD::PackageInfo;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(installed_packages installed_info info_names is_info_name 
+our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name 
     add_installed is_installed CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE 
     REQUIRED_BY DISPLAY MTREE_DIRS);
 
@@ -89,7 +89,12 @@ sub installed_packages()
 sub installed_info($)
 {
 	my $name =  shift;
-	return "$pkg_db/$name/";
+
+	if ($name =~ m|^\Q$pkg_db\E/?|) {
+		return "$name/";
+	} else {
+		return "$pkg_db/$name/";
+	}
 }
 
 sub is_installed($)
@@ -99,6 +104,14 @@ sub is_installed($)
 	return unless -d $dir;
 	return unless -f $dir.CONTENTS;
 	return $dir;
+}
+
+sub installed_name($)
+{
+	my $name = shift;
+	$name =~ s|/$||;
+	$name =~ s|^\Q$pkg_db\E/?||;
+	return $name;
 }
 
 sub info_names()
