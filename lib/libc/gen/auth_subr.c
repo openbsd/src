@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.13 2002/10/13 21:12:59 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.14 2002/10/15 17:10:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -297,7 +297,7 @@ auth_challenge(auth_session_t *as)
 
 	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", as->style);
 	auth_call(as, path, as->style, "-s", "challenge", as->name,
-	    as->class, NULL);
+	    as->class, (char *)NULL);
 	if (as->state & AUTH_CHALLENGE)
 		as->challenge = auth_getvalue(as, "challenge");
 	as->state = 0;
