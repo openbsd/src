@@ -1,0 +1,15 @@
+.
+./boot
+./usr/include/cast.h
+./usr/include/vax
+./usr/lib/gcc-lib/vax-unknown-openbsd2.7
+./usr/lib/gcc-lib/vax-unknown-openbsd2.7/2.95.2
+./usr/lib/gcc-lib/vax-unknown-openbsd2.7/2.95.2/include
+./usr/lib/libstdc++.a.2.10.0
+./usr/lib/scrt0.o
+./usr/mdec/hpboot
+./usr/mdec/raboot
+./usr/mdec/rdboot
+./usr/mdec/sdboot
+./usr/mdec/xxboot
+
