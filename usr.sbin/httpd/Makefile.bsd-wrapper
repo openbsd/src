@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.7 1999/10/06 20:47:58 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.8 1999/10/07 21:57:34 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -131,8 +131,11 @@ INCFILES= \
 	src/include/ap_compat.h \
 	src/include/ap_config.h \
 	src/include/ap_config_auto.h \
+	src/include/ap_ctx.h \
 	src/include/ap_ctype.h \
+	src/include/ap_hook.h \
 	src/include/ap_md5.h \
+	src/include/ap_mm.h \
 	src/include/ap_mmn.h \
 	src/include/ap_sha1.h \
 	src/include/buff.h \
