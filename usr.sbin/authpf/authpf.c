@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.75 2004/01/29 01:55:10 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.76 2004/04/09 12:42:06 cedric Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -908,4 +908,10 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 void
 pfctl_print_title(char *title)
 {
+}
+
+FILE *
+pfctl_fopen(const char *name, const char *mode)
+{
+	return fopen(name, mode);
 }

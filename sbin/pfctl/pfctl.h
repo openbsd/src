@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.33 2004/02/19 21:37:01 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.34 2004/04/09 12:42:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -86,6 +86,7 @@ int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
 int	 pfctl_show_altq(int, const char *, int, int);
 void	 warn_namespace_collision(const char *);
 int	 pfctl_show_ifaces(const char *, int);
+FILE	*pfctl_fopen(const char *, const char *);
 
 #ifndef DEFAULT_PRIORITY
 #define DEFAULT_PRIORITY	1

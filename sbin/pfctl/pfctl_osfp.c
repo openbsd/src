@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.8 2004/02/27 10:42:00 henning Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.9 2004/04/09 12:42:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -97,8 +97,8 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 
 	pfctl_flush_my_fingerprints(&classes);
 
-	if ((in = fopen(fp_filename, "r")) == NULL) {
-		warn("fopen(%s)", fp_filename);
+	if ((in = pfctl_fopen(fp_filename, "r")) == NULL) {
+		warn("%s", fp_filename);
 		return (1);
 	}
 	class = version = subtype = desc = tcpopts = NULL;

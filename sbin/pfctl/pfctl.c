@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.213 2004/03/20 09:31:42 david Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.214 2004/04/09 12:42:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -1061,7 +1062,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 		fin = stdin;
 		infile = "stdin";
 	} else {
-		if ((fin = fopen(filename, "r")) == NULL) {
+		if ((fin = pfctl_fopen(filename, "r")) == NULL) {
 			warn("%s", filename);
 			return (1);
 		}
@@ -1148,6 +1149,27 @@ _error:
 
 #undef ERR
 #undef ERRX
+}
+
+FILE *
+pfctl_fopen(const char *name, const char *mode) 
+{
+	struct stat	 st;
+	FILE		*fp;
+
+	fp = fopen(name, mode);
+	if (fp == NULL)
+		return (NULL);
+	if (fstat(fileno(fp), &st)) {
+		fclose(fp);
+		return (NULL);
+	}
+	if (S_ISDIR(st.st_mode)) {
+		fclose(fp);
+		errno = EISDIR;
+		return (NULL);
+	}
+	return (fp);
 }
 
 int
