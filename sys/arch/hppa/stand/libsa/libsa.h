@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.5 1998/09/29 07:22:45 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.6 1999/05/06 02:26:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -65,5 +65,16 @@ void ite_pollc __P((dev_t, int));
 void machdep __P((void));
 void devboot __P((dev_t, char *));
 void fcacheall __P((void));
+
+int     lif_open __P((char *path, struct open_file *f));
+int     lif_close __P((struct open_file *f));
+int     lif_read __P((struct open_file *f, void *buf,
+                size_t size, size_t *resid));
+int     lif_write __P((struct open_file *f, void *buf,
+		size_t size, size_t *resid));
+off_t   lif_seek __P((struct open_file *f, off_t offset, int where));
+int     lif_stat __P((struct open_file *f, struct stat *sb));
+int     lif_readdir __P((struct open_file *f, char *name));
+
 
 extern int debug;
