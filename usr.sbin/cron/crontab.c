@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.16 2000/08/21 21:03:25 deraadt Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.17 2000/08/21 21:04:22 deraadt Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -534,7 +534,7 @@ replace_cmd() {
 		return (-2);
 	}
 
-	TempFilename = strdup(__CONCAT(SPOOL_DIR,"tmp.XXXXXXXXXX"));
+	TempFilename = strdup(__CONCAT(SPOOL_DIR,"/tmp.XXXXXXXXXX"));
 	if (TempFilename == NULL) {
 		fprintf(stderr, "%s: Cannot allocate memory.\n", ProgramName);
 		return (-2);
