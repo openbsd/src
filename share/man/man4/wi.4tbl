@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.22 2002/07/29 19:04:19 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.23 2002/09/10 22:22:02 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -204,6 +204,7 @@ The following such adapters are supported or expected to work:
 .It LinkSys WDT11 (a rebadged GL24110P02)
 .It Netgear MA301
 .It US Robotics 2415 (rebadged WL11000P)
+.It Siemens/Efficient Networks SpeedStream 1023
 .El
 .Pp
 .Sh EXAMPLES
