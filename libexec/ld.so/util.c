@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2004/02/25 23:36:11 drahn Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2004/06/14 15:07:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,7 +51,6 @@ __stack_smash_handler(char func[], int damaged)
 /*
  * Static vars usable after bootstrapping.
  */
-static void *_dl_malloc_base;
 static void *_dl_malloc_pool = 0;
 static long *_dl_malloc_free = 0;
 
@@ -67,6 +66,8 @@ _dl_strdup(const char *orig)
 	return (newstr);
 }
 
+#define	_dl_round_page(x)	(((x) + (__LDPGSZ - 1)) & ~(__LDPGSZ - 1))
+
 /*
  * The following malloc/free code is a very simplified implementation
  * of a malloc function. However, we do not need to be very complex here
@@ -76,15 +77,15 @@ _dl_strdup(const char *orig)
  * we can reuse that one to without a lot of complex colapsing code.
  */
 void *
-_dl_malloc(size_t size)
+_dl_malloc(size_t need)
 {
-	long *p, *t, *n;
+	long *p, *t, *n, have;
 
-	size = (size + 8 + DL_MALLOC_ALIGN - 1) & ~(DL_MALLOC_ALIGN - 1);
+	need = (need + 8 + DL_MALLOC_ALIGN - 1) & ~(DL_MALLOC_ALIGN - 1);
 
 	if ((t = _dl_malloc_free) != 0) {	/* Try free list first */
 		n = (long *)&_dl_malloc_free;
-		while (t && t[-1] < size) {
+		while (t && t[-1] < need) {
 			n = t;
 			t = (long *)*t;
 		}
@@ -94,20 +95,25 @@ _dl_malloc(size_t size)
 			return((void *)t);
 		}
 	}
-	if (_dl_malloc_pool == 0 ||
-	    _dl_malloc_pool + size > _dl_malloc_base + 4096) {
-		_dl_malloc_pool = (void *)_dl_mmap((void *)0, 4096,
-		    PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+	have = _dl_round_page((long)_dl_malloc_pool) - (long)_dl_malloc_pool;
+	if (need > have) {
+		if (have >= 8 + DL_MALLOC_ALIGN) {
+			p = _dl_malloc_pool;
+			*p = have;
+			_dl_free((void *)(p + 1));	/* move to freelist */
+		}
+		_dl_malloc_pool = (void *)_dl_mmap((void *)0,
+		    _dl_round_page(need), PROT_READ|PROT_WRITE,
+		    MAP_ANON|MAP_PRIVATE, -1, 0);
 		if (_dl_malloc_pool == 0 || _dl_malloc_pool == MAP_FAILED ) {
 			_dl_printf("Dynamic loader failure: malloc.\n");
 			_dl_exit(7);
 		}
-		_dl_malloc_base = _dl_malloc_pool;
 	}
 	p = _dl_malloc_pool;
-	_dl_malloc_pool += size;
-	_dl_memset(p, 0, size);
-	*p = size;
+	_dl_malloc_pool += need;
+	_dl_memset(p, 0, need);
+	*p = need;
 	return((void *)(p + 1));
 }
 
