@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.25 2003/07/04 02:54:36 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.26 2003/07/04 17:37:07 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -230,11 +230,6 @@ diffreg(void)
 	FILE *f1, *f2;
 	int i, j;
 
-	if (hflag) {
-		diffargv[0] = "diffh";
-		execv(_PATH_DIFFH, diffargv);
-		error("%s", _PATH_DIFFH);
-	}
 	chrtran = (iflag ? cup2low : clow2low);
 	if (strcmp(file1, "-") == 0 && strcmp(file2, "-") == 0)
 		errorx("can't specify - -");

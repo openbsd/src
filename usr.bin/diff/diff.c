@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.19 2003/07/04 02:54:36 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.20 2003/07/04 17:37:07 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -54,7 +54,6 @@ int	opt;
 int	aflag;			/* treat all files as text */
 int	tflag;			/* expand tabs on output */
 /* Algorithm related options. */
-int	hflag;			/* -h, use halfhearted DIFFH */
 int	bflag;			/* ignore blanks in comparisons */
 int	wflag;			/* totally ignore blanks in comparisons */
 int	iflag;			/* ignore case in comparisons */
@@ -92,7 +91,7 @@ main(int argc, char **argv)
 	status = 2;
 	diffargv = argv;
 
-	while ((ch = getopt(argc, argv, "abC:cD:efhilnrS:stU:uw")) != -1) {
+	while ((ch = getopt(argc, argv, "abC:cD:efilnrS:stU:uw")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag++;
@@ -119,9 +118,6 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			opt = D_REVERSE;
-			break;
-		case 'h':
-			hflag++;
 			break;
 		case 'i':
 			iflag++;
@@ -169,8 +165,6 @@ main(int argc, char **argv)
 		errorx("two filename arguments required");
 	file1 = argv[0];
 	file2 = argv[1];
-	if (hflag && opt)
-		errorx("-h doesn't support -D, -c, -C, -e, -f, -I, -n, -u or -U");
 	if (!strcmp(file1, "-"))
 		stb1.st_mode = S_IFREG;
 	else if (stat(file1, &stb1) < 0)
