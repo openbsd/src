@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #define LINKER_NAME "ld"
 
 #undef LINK_SPEC
-#define LINK_SPEC "-m elf32ppc %{shared:-shared} \
+#define LINK_SPEC "%{shared:-shared} \
   %{!shared: \
     %{!static: \
       %{rdynamic:-export-dynamic} \
