@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2003/01/30 21:05:00 mickey Exp $
+#	$OpenBSD: install.md,v 1.2 2003/09/18 00:02:42 krw Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -12,26 +12,9 @@ md_set_term() {
 }
 
 md_installboot() {
-	local _rawdev _prefix
-
-	if [ -z "$1" ]; then
-		echo No disk device specified, you must run installboot manually.
-		return
-	fi
-	_rawdev=/dev/r${1}c
-
-	# use extracted mdec if it exists (may be newer)
-	if [ -e /mnt/usr/mdec/boot ]; then
-		_prefix=/mnt/usr/mdec
-	elif [ -e /usr/mdec/boot ]; then
-		_prefix=/usr/mdec
-	else
-		echo No boot block prototypes found, you must run installboot manually.
-		return
-	fi
-
-	echo Installing boot block...
+	echo -n "Installing boot block..."
 	/sbin/disklabel -B $1
+	echo "done."
 }
 
 md_checkfordisklabel() {
