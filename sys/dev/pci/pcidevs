@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.377 2001/03/14 22:49:00 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.378 2001/03/24 20:06:20 fgsch Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -495,6 +495,7 @@ vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS
+vendor NORTEL		0x126c	Nortel Networks
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor TRANSMETA	0x1279	Transmeta
@@ -566,6 +567,7 @@ product 2MICRO OZ6832		0x6832	OZ6832 CardBus
 /* 3Com Products */
 product 3COM 3C985		0x0001	3c985
 product 3COM 3C339		0x3390	3c339
+product 3COM 3C359		0x3590	3c359
 product 3COM 3C450		0x4500	3c450
 product 3COM 3C590		0x5900	3c590 10Mbps
 product 3COM 3C595TX		0x5950	3c595 100Base-TX
@@ -1435,6 +1437,9 @@ product NEXGEN NX82C501		0x4e78	NX82C501 Host-PCI
 
 /* NKK products */
 product NKK NDR4600		0xA001	NDR4600 Host-PCI
+
+/* Nortel Networks products */
+product NORTEL BS21		0x1211	BS21 10/100
 
 /* Number Nine products */
 product NUMBER9 I128		0x2309	Imagine-128
