@@ -66,6 +66,8 @@ options		GENERIC
 
 ae*	at nubus0	slot -1   id ?   claimed 0
 
+sn0	at mainbus?		# SONIC ethernet (68040)
+
 ncrscsi0	at mainbus?		# SCSI NCR 5380
 ncr96scsi0	at mainbus?		# SCSI NCR 53C96
 
@@ -74,6 +76,9 @@ sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+su*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?
 
 pseudo-device	pty		16
 pseudo-device	bpfilter	12
