@@ -65,6 +65,9 @@
 #ifdef TE_NetBSD
 #define TARGET_FORMAT		"a.out-i386-netbsd"
 #endif
+#ifdef TE_OpenBSD
+#define TARGET_FORMAT		"a.out-i386-openbsd"
+#endif
 #ifdef TE_386BSD
 #define TARGET_FORMAT		"a.out-i386-bsd"
 #endif

@@ -26,7 +26,11 @@
 #ifdef TE_NetBSD
 #define TARGET_FORMAT "a.out-sparc-netbsd"
 #else
+#ifdef TE_OpenBSD
+#define TARGET_FORMAT "a.out-sparc-openbsd"
+#else
 #define TARGET_FORMAT "a.out-sunos-big"
+#endif
 #endif
 #endif
 #ifdef OBJ_BOUT

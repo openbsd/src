@@ -4,7 +4,7 @@
 if [istarget mips*-*-*] then {
     set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] ]
     set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
-    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*]]
+    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*] ]
 
     run_dump_test "abs"
     run_dump_test "add"

@@ -29,7 +29,11 @@
 #ifdef TE_NetBSD
 #define TARGET_FORMAT "a.out-m68k-netbsd"
 #else
+#ifdef TE_OpenBSD
+#define TARGET_FORMAT "a.out-m68k-openbsd"
+#else
 #define TARGET_FORMAT "a.out-zero-big"
+#endif
 #endif
 #endif
 #endif
