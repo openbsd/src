@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.3 1999/09/26 11:07:32 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.4 2001/01/15 12:00:09 art Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,6 +37,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/user.h>
+#include <machine/cpu.h>
 
 #include <vm/vm.h>
 
@@ -112,7 +113,6 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack, fsize, rndfsize;
 	extern char netbsd_sigcode[], netbsd_esigcode[];
-	extern struct proc *fpcurproc;
 	struct netbsd_sigcontext nbsc;
 
 	frame = p->p_md.md_tf;
@@ -134,13 +134,13 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 	} else
 		scp = (struct sigcontext *)(alpha_pal_rdusp() - rndfsize);
 	if ((u_long)scp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
-		(void)grow(p, (u_long)scp);
+		(void)uvm_grow(p, (u_long)scp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("netbsd_sendsig(%d): sig %d ssp %p usp %p scp %p\n",
 		    p->p_pid, sig, &oonstack, alpha_pal_rdusp(), scp);
 #endif
-	if (useracc((caddr_t)scp, fsize, B_WRITE) == 0) {
+	if (uvm_useracc((caddr_t)scp, fsize, B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("netbsd_sendsig(%d): useracc failed on sig %d\n",
@@ -228,7 +228,6 @@ netbsd_sys___sigreturn14(p, v, retval)
 		syscallarg(struct netbsd_sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext ksc;
-	extern struct proc *fpcurproc;
 	struct netbsd_sigcontext *nbscp, nbsc;
 
 	nbscp = SCARG(uap, sigcntxp);
@@ -243,7 +242,7 @@ netbsd_sys___sigreturn14(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (useracc((caddr_t)nbscp, sizeof (*nbscp), B_WRITE) == 0 ||
+	if (uvm_useracc((caddr_t)nbscp, sizeof (*nbscp), B_WRITE) == 0 ||
 	    copyin((caddr_t)nbscp, (caddr_t)&nbsc, sizeof (nbsc)))
 		return (EFAULT);
 
