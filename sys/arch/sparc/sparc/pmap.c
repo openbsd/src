@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.100 2001/11/28 15:34:16 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.101 2001/12/05 14:40:48 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -217,18 +217,6 @@ static struct pool L23_pool;
 void *pgt_page_alloc __P((unsigned long, int, int));
 void  pgt_page_free __P((void *, unsigned long, int));
 
-void    pcache_flush __P((caddr_t, caddr_t, int));
-void
-pcache_flush(va, pa, n)
-        caddr_t va, pa;
-        int     n;
-{
-        void (*f)__P((int,int)) = cpuinfo.pcache_flush_line;
-
-        while ((n -= 4) >= 0)
-                (*f)((u_int)va+n, (u_int)pa+n);
-}
-
 /*
  * Page table pool back-end.
  */
@@ -238,16 +226,26 @@ pgt_page_alloc(sz, flags, mtype)
         int flags;
         int mtype;
 {
-        caddr_t p;
+	struct vm_page *pg;
+	int nocache = (cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0;
+	vaddr_t va;
+	paddr_t pa;
 
-        p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
-                                      (vsize_t)sz, UVM_KMF_NOWAIT);
+	if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
+		return (NULL);
 
-        if (p != NULL && ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)) {
-                pcache_flush(p, (caddr_t)VA2PA(p), sz);
-                kvm_uncache(p, atop(sz));
-        }
-        return (p);
+	if ((va = uvm_km_valloc(kernel_map, PAGE_SIZE)) == 0) {
+		uvm_pagefree(pg);
+		return (NULL);
+	}
+
+	pa = VM_PAGE_TO_PHYS(pg);
+	if (nocache)
+		pcache_flush_page(pa, 1);
+
+	pmap_kenter_pa(va, pa | (nocache ? PMAP_NC : 0),
+	    VM_PROT_READ|VM_PROT_WRITE);
+        return ((void *)va);
 }       
    
 void
@@ -3233,11 +3231,32 @@ pmap_bootstrap4m(void)
 		cpuinfo.ctx_tbl[i] = cpuinfo.ctx_tbl[0];
 #endif
 
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-		/* Flush page tables from cache */
-		pcache_flush((caddr_t)pagetables_start,
-			     (caddr_t)VA2PA((caddr_t)pagetables_start),
-			     pagetables_end - pagetables_start);
+	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
+		/*
+		 * The page tables have been setup. Since we're still
+		 * running on the PROM's memory map, the memory we
+		 * allocated for our page tables might still be cached.
+		 * Flush it now, and don't touch it again until we
+		 * switch to our own tables (will be done immediately below).
+		 */
+		int size = pagetables_end - pagetables_start;
+
+		if (CACHEINFO.c_vactype != VAC_NONE) {
+			int va = (vaddr_t)pagetables_start;
+			while (size != 0) {
+				cache_flush_page(va);
+				va += NBPG;
+				size -= NBPG;
+			}
+		} else if (cpuinfo.pcache_flush_page != NULL) {
+			int pa = pagetables_start;
+			while (size != 0) {
+				pcache_flush_page(pa, 0);
+				pa += NBPG;
+				size -= NBPG;
+			}
+		}
+	}
 
 	/*
 	 * Now switch to kernel pagetables (finally!)
@@ -5994,14 +6013,11 @@ pmap_zero_page4m(pa)
 	if (ptep == NULL)
 		ptep = getptep4m(pmap_kernel(), (va = (vaddr_t)vpage[0]));
 
-	if (pmap_initialized && (pv = pvhead(atop(pa))) != NULL &&
-	    CACHEINFO.c_vactype != VAC_NONE) {
-		/*
-		 * The following might not be necessary since the page
-		 * is being cleared because it is about to be allocated,
-		 * i.e., is in use by no one.
-		 */
-		pv_flushcache(pv);
+	if (pmap_initialized && (pv = pvhead(atop(pa))) != NULL) {
+		if (CACHEINFO.c_vactype != VAC_NONE)
+			pv_flushcache(pv);
+		else
+			pcache_flush_page(pa, 1);
 	}
 
 	pte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
