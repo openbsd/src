@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2003/07/18 20:46:42 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2003/07/25 20:10:53 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.39 2003/07/18 20:46:42 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.40 2003/07/25 20:10:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -606,8 +606,16 @@ decompress(const char *in, char *out, const struct compressor *method,
 	}
 
 	if (!nosave) {
-		sb->st_mtimespec.tv_sec = info.mtime;
-		sb->st_mtimespec.tv_nsec = 0;
+		if (info.mtime != 0) {
+			sb->st_mtimespec.tv_sec =
+			    sb->st_atimespec.tv_sec = info.mtime;
+			sb->st_mtimespec.tv_nsec =
+			    sb->st_atimespec.tv_nsec = 0;
+		} else
+			nosave = 1;		/* no timestamp to restore */
+
+		if (cat && strcmp(out, "/dev/stdout") != 0)
+			cat = 0;		/* have a real output name */
 	}
 
 	if (ofd != -1 && close(ofd)) {
@@ -635,12 +643,23 @@ setfile(const char *name, struct stat *fs)
 {
 	struct timeval tv[2];
 
-	fs->st_mode &= S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO;
+	if (!pipin || !nosave) {
+		TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
+		TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
+		if (utimes(name, tv))
+			warn("utimes: %s", name);
+	}
 
-	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
-	if (utimes(name, tv))
-		warn("utimes: %s", name);
+	/*
+	 * If input was a pipe we don't have any info to restore but we
+	 * must set the mode since the current mode on the file is 0200.
+	 */
+	if (pipin) {
+		mode_t mask = umask(022);
+		chmod(name, DEFFILEMODE & ~mask);
+		umask(mask);
+		return;
+	}
 
 	/*
 	 * Changing the ownership probably won't succeed, unless we're root
@@ -648,6 +667,7 @@ setfile(const char *name, struct stat *fs)
 	 * the mode; current BSD behavior is to remove all setuid bits on
 	 * chown.  If chown fails, lose setuid/setgid bits.
 	 */
+	fs->st_mode &= S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO;
 	if (chown(name, fs->st_uid, fs->st_gid)) {
 		if (errno != EPERM)
 			warn("chown: %s", name);
