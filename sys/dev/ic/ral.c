@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.38 2005/03/23 14:14:24 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.39 2005/04/01 09:25:36 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1767,6 +1767,7 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
 	struct ral_node *rn;
+	struct ieee80211_rateset *rs;
 	struct ieee80211_frame *wh;
 	struct mbuf *mnew;
 	uint16_t dur;
@@ -1775,10 +1776,17 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	rn = (struct ral_node *)ni;
-	ni->ni_txrate = ieee80211_rssadapt_choose(&rn->rssadapt, &ni->ni_rates,
-	    wh, m0->m_pkthdr.len, ic->ic_fixed_rate, NULL, 0);
-	rate = ni->ni_rates.rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL;
+	if (ic->ic_fixed_rate != -1) {
+		rs = &ic->ic_sup_rates[ic->ic_curmode];
+		rate = rs->rs_rates[ic->ic_fixed_rate];
+	} else {
+		rs = &ni->ni_rates;
+		rn = (struct ral_node *)ni;
+		ni->ni_txrate = ieee80211_rssadapt_choose(&rn->rssadapt, rs,
+		    wh, m0->m_pkthdr.len, -1, NULL, 0);
+		rate = rs->rs_rates[ni->ni_txrate];
+	}
+	rate &= IEEE80211_RATE_VAL;
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
@@ -1917,10 +1925,13 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data->ni = ni;
 
 	/* remember link conditions for rate adaptation algorithm */
-	data->id.id_len = m0->m_pkthdr.len;
-	data->id.id_rateidx = ni->ni_txrate;
-	data->id.id_node = ni;
-	data->id.id_rssi = ni->ni_rssi;
+	if (ic->ic_fixed_rate == -1) {
+		data->id.id_len = m0->m_pkthdr.len;
+		data->id.id_rateidx = ni->ni_txrate;
+		data->id.id_node = ni;
+		data->id.id_rssi = ni->ni_rssi;
+	} else
+		data->id.id_node = NULL;
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		flags |= RAL_TX_NEED_ACK;
