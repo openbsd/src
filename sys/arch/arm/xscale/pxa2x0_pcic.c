@@ -1,6 +1,6 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.7 2005/01/27 17:03:23 millert Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.8 2005/02/23 00:05:38 drahn Exp $ */
 /*
- * Copyright (c) Dale Rahn <drahn@openbsd.org>
+ * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -270,14 +270,7 @@ pxapcic_intr_string(pch, ih)
         pcmcia_chipset_handle_t pch;
         void *ih;
 {
-	struct pxapcic_socket *so = pch;
-	static char irqstr[64];
-
-	if (ih == NULL)
-		snprintf(irqstr, sizeof(irqstr), "couldn't establish interrupt");
-	else
-		snprintf(irqstr, sizeof(irqstr), "irq %d", so->irqpin);
-	return (irqstr);
+	return pxa2x0_gpio_intr_string(ih);
 }
 
 void
