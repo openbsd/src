@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.12 1998/01/07 11:03:28 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.13 1998/02/25 23:54:00 deraadt Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -125,7 +125,6 @@ ep_pci_attach(parent, self, aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	pcireg_t i;
-	char *model;
 	const char *intrstr = NULL;
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
@@ -144,30 +143,6 @@ ep_pci_attach(parent, self, aux)
 	i = pci_conf_read(pc, pa->pa_tag, PCI_CONN);
 
 	GO_WINDOW(0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_3COM_3C590:
-		model = "3Com 3C590 Ethernet";
-		break;
-	case PCI_PRODUCT_3COM_3C595MII:
-	case PCI_PRODUCT_3COM_3C595T4:
-	case PCI_PRODUCT_3COM_3C595TX:
-		model = "3Com 3C595 Ethernet";
-		break;
-	case PCI_PRODUCT_3COM_3C900COMBO:
-	case PCI_PRODUCT_3COM_3C900TPO:
-		model = "3Com 3C900 Ethernet";
-		break;
-	case PCI_PRODUCT_3COM_3C905T4:
-	case PCI_PRODUCT_3COM_3C905TX:
-		model = "3Com 3C905 Ethernet";
-		break;
-	default:
-		model = "unknown model!";
-		break;
-	}
-
-	printf(": <%s> ", model);
 
 	epconfig(sc, EP_CHIPSET_VORTEX);
 
