@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.17 2001/07/18 10:47:05 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.18 2001/07/19 14:31:32 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.25 1999/09/12 01:17:38 chs Exp $	*/
 
 /* 
@@ -979,14 +979,8 @@ uvm_pagealloc_contig(size, low, high, alignment)
 		pg->offset = temp_addr - vm_map_min(kernel_map);
 		uvm_pageinsert(pg);
 		uvm_pagewire(pg);
-#if defined(PMAP_NEW)
 		pmap_kenter_pa(temp_addr, VM_PAGE_TO_PHYS(pg), 
 			       VM_PROT_READ|VM_PROT_WRITE);
-#else
-		pmap_enter(pmap_kernel(), temp_addr, VM_PAGE_TO_PHYS(pg),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE,
-			   VM_PROT_READ|VM_PROT_WRITE);
-#endif
 		temp_addr += PAGE_SIZE;
 	}
 	return addr;
