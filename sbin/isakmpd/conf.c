@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.45 2002/09/11 09:50:43 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.46 2002/11/14 16:13:27 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -224,7 +224,8 @@ static void
 conf_parse_line (int trans, char *line, size_t sz)
 {
   char *val;
-  int i;
+  size_t i;
+  int j;
   static char *section = 0;
   static int ln = 0;
 
@@ -273,9 +274,8 @@ conf_parse_line (int trans, char *line, size_t sz)
 	line[strcspn (line, " \t=")] = '\0';
 	val = line + i + 1 + strspn (line + i + 1, " \t");
 	/* Skip trailing whitespace, if any */
-	i = strcspn (val, " \t\r");
-	if (i)
-	  val[i] = '\0';
+	for (j = sz - (val - line) - 1; j > 0 && isspace (val[j]); j--)
+	  val[j] = '\0';
 	/* XXX Perhaps should we not ignore errors?  */
 	conf_set (trans, section, line, val, 0, 0);
 	return;
@@ -562,7 +562,7 @@ conf_load_defaults (int tr)
 void
 conf_init (void)
 {
-  int i;
+  unsigned int i;
 
   for (i = 0; i < sizeof conf_bindings / sizeof conf_bindings[0]; i++)
     LIST_INIT (&conf_bindings[i]);
@@ -575,7 +575,8 @@ void
 conf_reinit (void)
 {
   struct conf_binding *cb = 0;
-  int fd, i, trans;
+  int fd, trans;
+  unsigned int i;
   size_t sz;
   char *new_conf_addr = 0;
   struct stat sb;
@@ -600,7 +601,7 @@ conf_reinit (void)
 	}
 
       /* XXX I assume short reads won't happen here.  */
-      if (read (fd, new_conf_addr, sz) != sz)
+      if (read (fd, new_conf_addr, sz) != (int)sz)
         {
 	    log_error ("conf_reinit: read (%d, %p, %lu) failed",
 		       fd, new_conf_addr, (unsigned long)sz);
@@ -726,7 +727,7 @@ conf_get_str (char *section, char *tag)
 struct conf_list *
 conf_get_list (char *section, char *tag)
 {
-  char *liststr = 0, *p, *field;
+  char *liststr = 0, *p, *field, *t;
   struct conf_list *list = 0;
   struct conf_list_node *node;
 
@@ -742,8 +743,15 @@ conf_get_list (char *section, char *tag)
   if (!liststr)
     goto cleanup;
   p = liststr;
-  while ((field = strsep (&p, ", \t")) != NULL)
+  while ((field = strsep (&p, ",")) != NULL)
     {
+      /* Skip leading whitespace */
+      while (isspace (*field))
+	field++;
+      /* Skip trailing whitespace */
+      if (p)
+	for (t = p - 1; t > field && isspace (*t); t--)
+	  *t = '\0';
       if (*field == '\0')
 	{
 	  log_print ("conf_get_list: empty field, ignoring...");
@@ -865,30 +873,6 @@ conf_decode_base64 (u_int8_t *out, u_int32_t *len, u_char *buf)
   *len = c;
   return 1;
 
-}
-
-/* Read a line from a stream to the buffer.  */
-int
-conf_get_line (FILE *stream, char *buf, u_int32_t len)
-{
-  int c;
-
-  while (len-- > 1)
-    {
-      c = fgetc (stream);
-      if (c == '\n')
-	{
-	  *buf = 0;
-	  return 1;
-	}
-      else if (c == EOF)
-	break;
-
-      *buf++ = c;
-    }
-
-  *buf = 0;
-  return 0;
 }
 
 void
@@ -1102,7 +1086,7 @@ void
 conf_report (void)
 {
   struct conf_binding *cb, *last = 0;
-  int i, len;
+  unsigned int i, len;
   char *current_section = (char *)0;
   struct dumper *dumper, *dnode;
 
