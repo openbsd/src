@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/02/10 09:20:48 downsj Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/02/18 01:07:19 downsj Exp $
 #	$NetBSD: Makefile,v 1.5 1996/06/26 17:44:42 thorpej Exp $
 
 LIB=	sa
@@ -17,7 +17,7 @@ CFLAGS+=-I${.CURDIR}/../../../..  -I${.CURDIR}/../../../../lib/libsa
 
 # stand routines
 SRCS=	alloc.c exit.c exec.c getfile.c gets.c globals.c \
-	memcmp.c memcpy.c memset.c printf.c strerror.c
+	memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
