@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.14 2002/11/14 15:15:54 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.15 2002/11/23 04:09:34 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -177,12 +177,12 @@ Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
     const Elf_Sym **ref, int flags, int req_size, const char *module_name)
 {
-	const Elf_Sym *weak_sym = 0;
+	const Elf_Sym *weak_sym = NULL;
 	const char *weak_symn = NULL; /* remove warning */
 	Elf_Addr weak_offs = 0;
 	unsigned long h = 0;
 	const char *p = name;
-	elf_object_t *object;
+	elf_object_t *object, *weak_object = NULL;
 
 	while (*p) {
 		unsigned long g;
@@ -248,23 +248,21 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 					weak_sym = sym;
 					weak_symn = symn;
 					weak_offs = object->load_offs;
+					weak_object = object;
 				}
 			}
 		}
 	}
-	if (flags & SYM_WARNNOTFOUND) {
-		if (!weak_sym && ((*ref == NULL) ||
-		    ELF_ST_BIND((*ref)->st_info) != STB_WEAK)) {
-			_dl_printf("%s:%s: undefined symbol '%s'\n",
-			    _dl_progname, module_name, name);
-		}
+	if (flags & SYM_WARNNOTFOUND && weak_sym == NULL) {
+		_dl_printf("%s:%s: undefined symbol '%s'\n",
+		    _dl_progname, module_name, name);
 	}
 	*ref = weak_sym;
-	if (weak_sym && req_size != weak_sym->st_size &&
+	if (weak_sym != NULL && req_size != weak_sym->st_size &&
 	    req_size != 0 && (ELF_ST_TYPE(weak_sym->st_info) != STT_FUNC)) {
 		_dl_printf("%s:%s: %s : WARNING: "
 		    "symbol(%s) size mismatch ",
-		    _dl_progname, module_name, object->load_name,
+		    _dl_progname, module_name, weak_object->load_name,
 		    weak_symn);
 		_dl_printf("relink your program\n");
 	}
