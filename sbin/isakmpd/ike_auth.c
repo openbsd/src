@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.46 2001/06/07 04:19:03 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.47 2001/06/07 04:48:21 angelos Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -72,6 +72,9 @@
 #include "transport.h"
 #include "util.h"
 #include "key.h"
+#if defined (USE_X509)
+#include "x509.h"
+#endif
 
 #ifdef notyet
 static u_int8_t *enc_gen_skeyid (struct exchange *, size_t *);
@@ -636,7 +639,9 @@ rsa_sig_decode_hash (struct message *msg)
 			    handler->id));
 		  exchange->recv_cert = cert;
 		  exchange->recv_certtype = handler->id;
-		  handler->cert_insert (exchange->policy_id, cert);
+#if defined(USE_X509)
+		  x509_generate_kn (exchange->policy_id, cert);
+#endif /* USE_X509 */
 		}
 	    }
 	}
