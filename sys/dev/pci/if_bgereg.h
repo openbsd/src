@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.19 2005/03/04 00:55:44 krw Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.20 2005/03/07 13:31:40 krw Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -208,14 +208,20 @@
 #define BGE_PCIMISCCTL_INDIRECT_ACCESS	0x00000080
 #define BGE_PCIMISCCTL_ASICREV		0xFFFF0000
 
-#define BGE_BIGENDIAN_INIT						\
-	(BGE_PCIMISCCTL_ENDIAN_BYTESWAP|				\
-	BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_CLEAR_INTA|	\
-	BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR)
+#define BGE_HIF_SWAP_OPTIONS	(BGE_PCIMISCCTL_ENDIAN_WORDSWAP)
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define BGE_DMA_SWAP_OPTIONS \
+	BGE_MODECTL_WORDSWAP_NONFRAME| \
+	BGE_MODECTL_BYTESWAP_DATA|BGE_MODECTL_WORDSWAP_DATA
+#else
+#define BGE_DMA_SWAP_OPTIONS \
+	BGE_MODECTL_WORDSWAP_NONFRAME|BGE_MODECTL_BYTESWAP_NONFRAME| \
+	BGE_MODECTL_BYTESWAP_DATA|BGE_MODECTL_WORDSWAP_DATA
+#endif
 
-#define BGE_LITTLEENDIAN_INIT						\
-	(BGE_PCIMISCCTL_CLEAR_INTA|BGE_PCIMISCCTL_MASK_PCI_INTR|	\
-	BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_INDIRECT_ACCESS)
+#define BGE_INIT \
+	(BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_CLEAR_INTA| \
+	 BGE_PCIMISCCTL_MASK_PCI_INTR|BGE_PCIMISCCTL_INDIRECT_ACCESS)
 
 #define BGE_CHIPID_TIGON_I		0x40000000
 #define BGE_CHIPID_TIGON_II		0x60000000
@@ -1758,7 +1764,10 @@ typedef struct {
 #define BGE_HOSTADDR(x,y)						\
 	do {								\
 		(x).bge_addr_lo = ((u_int64_t) (y) & 0xffffffff);	\
-		(x).bge_addr_hi = ((u_int64_t) (y) >> 32);		\
+		if (sizeof(bus_addr_t) == 8)				\
+			(x).bge_addr_hi = ((u_int64_t) (y) >> 32);	\
+		else							\
+			(x).bge_addr_hi = 0;				\
 	} while(0)
 
 /* Ring control block structure */
@@ -1783,10 +1792,17 @@ struct bge_rcb {
 
 struct bge_tx_bd {
 	bge_hostaddr		bge_addr;
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u_int16_t		bge_flags;
 	u_int16_t		bge_len;
 	u_int16_t		bge_vlan_tag;
 	u_int16_t		bge_rsvd;
+#else
+	u_int16_t		bge_len;
+	u_int16_t		bge_flags;
+	u_int16_t		bge_rsvd;
+	u_int16_t		bge_vlan_tag;
+#endif
 };
 
 #define BGE_TXBDFLAG_TCP_UDP_CSUM	0x0001
@@ -1808,6 +1824,7 @@ struct bge_tx_bd {
 
 struct bge_rx_bd {
 	bge_hostaddr		bge_addr;
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u_int16_t		bge_len;
 	u_int16_t		bge_idx;
 	u_int16_t		bge_flags;
@@ -1816,6 +1833,16 @@ struct bge_rx_bd {
 	u_int16_t		bge_ip_csum;
 	u_int16_t		bge_vlan_tag;
 	u_int16_t		bge_error_flag;
+#else
+	u_int16_t		bge_idx;
+	u_int16_t		bge_len;
+	u_int16_t		bge_type;
+	u_int16_t		bge_flags;
+	u_int16_t		bge_ip_csum;
+	u_int16_t		bge_tcp_udp_csum;
+	u_int16_t		bge_error_flag;
+	u_int16_t		bge_vlan_tag;
+#endif
 	u_int32_t		bge_rsvd;
 	u_int32_t		bge_opaque;
 };
@@ -1839,17 +1866,29 @@ struct bge_rx_bd {
 #define BGE_RXERRFLAG_GIANT		0x0080
 
 struct bge_sts_idx {
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u_int16_t		bge_rx_prod_idx;
 	u_int16_t		bge_tx_cons_idx;
+#else
+	u_int16_t		bge_tx_cons_idx;
+	u_int16_t		bge_rx_prod_idx;
+#endif
 };
 
 struct bge_status_block {
 	u_int32_t		bge_status;
 	u_int32_t		bge_rsvd0;
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u_int16_t		bge_rx_jumbo_cons_idx;
 	u_int16_t		bge_rx_std_cons_idx;
 	u_int16_t		bge_rx_mini_cons_idx;
 	u_int16_t		bge_rsvd1;
+#else
+	u_int16_t		bge_rx_std_cons_idx;
+	u_int16_t		bge_rx_jumbo_cons_idx;
+	u_int16_t		bge_rsvd1;
+	u_int16_t		bge_rx_mini_cons_idx;
+#endif
 	struct bge_sts_idx	bge_idx[16];
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.52 2005/03/04 00:55:44 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.53 2005/03/07 13:31:40 krw Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1006,13 +1006,8 @@ bge_chipinit(sc)
 #endif
 
 	/* Set endianness before we access any non-PCI registers. */
-#if BYTE_ORDER == BIG_ENDIAN
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
-	    BGE_BIGENDIAN_INIT);
-#else
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
-	    BGE_LITTLEENDIAN_INIT);
-#endif
+	    BGE_INIT);
 
 	/*
 	 * Check the 'ROM failed' bit on the RX CPU to see if
@@ -1093,13 +1088,11 @@ bge_chipinit(sc)
 	 * Set up general mode register.
 	 */
 #ifndef BGE_CHECKSUM
-	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_MODECTL_WORDSWAP_NONFRAME|
-		    BGE_MODECTL_BYTESWAP_DATA|BGE_MODECTL_WORDSWAP_DATA|
+	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS|
 		    BGE_MODECTL_TX_NO_PHDR_CSUM|BGE_MODECTL_RX_NO_PHDR_CSUM);
 #else
-	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_MODECTL_WORDSWAP_NONFRAME|
-		    BGE_MODECTL_BYTESWAP_DATA|BGE_MODECTL_WORDSWAP_DATA|
+	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS);
 #endif
 
@@ -1135,6 +1128,8 @@ bge_blockinit(sc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	vaddr_t			rcb_addr;
 	int			i;
+	bge_hostaddr		taddr;
+
 
 	/*
 	 * Initialize the memory window pointer register so that
@@ -1303,9 +1298,9 @@ bge_blockinit(sc)
 
 	/* Configure TX RCB 0 (we use only the first ring) */
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
-	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, 0);
-	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo,
-		    BGE_RING_DMA_ADDR(sc, bge_tx_ring));
+	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_tx_ring));
+	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, taddr.bge_addr_hi);
+	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, taddr.bge_addr_lo);
 	RCB_WRITE_4(sc, rcb_addr, bge_nicaddr,
 		    BGE_NIC_TXRING_ADDR(0, BGE_TX_RING_CNT));
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
@@ -1338,9 +1333,9 @@ bge_blockinit(sc)
 	 * nicaddr field in the RCB isn't used.
 	 */
 	rcb_addr = BGE_MEMWIN_START + BGE_RX_RETURN_RING_RCB;
-	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, 0);
-	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo,
-		    BGE_RING_DMA_ADDR(sc, bge_rx_return_ring));
+	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_rx_return_ring));
+	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, taddr.bge_addr_hi);
+	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, taddr.bge_addr_lo);
 	RCB_WRITE_4(sc, rcb_addr, bge_nicaddr, 0x00000000);
 	RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 	    BGE_RCB_MAXLEN_FLAGS(sc->bge_return_ring_cnt, 0));
@@ -1411,9 +1406,9 @@ bge_blockinit(sc)
 	}
 
 	/* Set up address of status block */
-	CSR_WRITE_4(sc, BGE_HCC_STATUSBLK_ADDR_HI, 0);
-	CSR_WRITE_4(sc, BGE_HCC_STATUSBLK_ADDR_LO,
-		    BGE_RING_DMA_ADDR(sc, bge_status_block));
+	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_status_block));
+	CSR_WRITE_4(sc, BGE_HCC_STATUSBLK_ADDR_HI, taddr.bge_addr_hi);
+	CSR_WRITE_4(sc, BGE_HCC_STATUSBLK_ADDR_LO, taddr.bge_addr_lo);
 
 	sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx = 0;
 	sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx = 0;
@@ -2063,7 +2058,7 @@ bge_reset(sc)
 
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
-	    BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_PCISTATE_RW);
+	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
 
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS|(65<<1);
 
@@ -2099,7 +2094,7 @@ bge_reset(sc)
 	/* Reset some of the PCI state that got zapped by reset */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
-	    BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_PCISTATE_RW);
+	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ, cachesize);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD, command);
 	bge_writereg_ind(sc, BGE_MISC_CFG, (65 << 1));
@@ -2156,8 +2151,7 @@ bge_reset(sc)
 	}
 
 	/* Fix up byte swapping */
-	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_MODECTL_BYTESWAP_NONFRAME|
-	    BGE_MODECTL_BYTESWAP_DATA);
+	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
 
 	CSR_WRITE_4(sc, BGE_MAC_MODE, 0);
 
