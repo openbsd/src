@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_print.3,v 1.7 1998/09/13 19:16:21 millert Exp $
+.\" $OpenBSD: curs_print.3,v 1.8 2003/05/14 08:55:19 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -48,7 +48,7 @@ keeping the rate of writes to the printer below its continuous throughput rate
 rule of thumb is to sleep for a second after shipping each 80-character line.
 
 .SH RETURN VALUE
-The \fBmcprint\fR function returns \fBERR\fR if the write operation aborted 
+The \fBmcprint\fR function returns \fBERR\fR if the write operation aborted
 for some reason.  In this case, errno will contain either an error associated
 with \fBwrite(2)\fR or one of the following:
 .TP 5

@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_window.3,v 1.8 2000/07/10 03:06:09 millert Exp $
+.\" $OpenBSD: curs_window.3,v 1.9 2003/05/14 08:55:19 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -144,7 +144,7 @@ The subwindow functions (\fIsubwin\fR, \fIderwin\fR, \fImvderwin\fR,
 incompletely implemented, and not well tested.
 
 The System V curses documentation is very unclear about what \fBwsyncup\fR
-and \fBwsyncdown\fR actually do.  It seems to imply that they are only 
+and \fBwsyncdown\fR actually do.  It seems to imply that they are only
 supposed to touch exactly those lines that are affected by ancestor changes.
 The language here, and the behavior of the \fBcurses\fR implementation,
 is patterned on the XPG4 curses standard.  The weaker XPG4 spec may result

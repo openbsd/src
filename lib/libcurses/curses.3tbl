@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.18 2001/01/22 18:01:33 millert Exp $
+.\" $OpenBSD: curses.3tbl,v 1.19 2003/05/14 08:55:19 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -507,22 +507,22 @@ integer value other than \fBERR\fR upon successful completion, unless
 otherwise noted in the routine descriptions.
 
 All macros return the value of the \fBw\fR version, except \fBsetscrreg\fR,
-\fBwsetscrreg\fR, \fBgetyx\fR, \fBgetbegyx\fR, \fBgetmaxyx\fR.  The return
+\fBwsetscrreg\fR, \fBgetyx\fR, \fBgetbegyx\fR, and \fBgetmaxyx\fR.  The return
 values of \fBsetscrreg\fR, \fBwsetscrreg\fR, \fBgetyx\fR, \fBgetbegyx\fR, and
-\fBgetmaxyx\fR are undefined (\fIi\fR.\fIe\fR., these should not be used as the
+\fBgetmaxyx\fR are undefined (i.e., these should not be used as the
 right-hand side of assignment statements).
 
 Routines that return pointers return \fBNULL\fR on error.
 .SH ENVIRONMENT
 The following environment symbols are useful for customizing the
 runtime behavior of the \fBcurses\fR library.  The most important
-ones have been already discussed in detail.
+ones have already been discussed in detail.
 .TP 5
 BAUDRATE
 The debugging library checks this environment symbol when the application
 has redirected output to a file.
 The symbol's numeric value is used for the baudrate.
-If no value is found \fBcurses\fR uses 9600.
+If no value is found, \fBcurses\fR uses 9600.
 This allows testers to construct repeatable test-cases
 that take into account costs that depend on baudrate.
 .TP 5
@@ -666,7 +666,7 @@ The complete list of directories in order follows:
 .RS
 .TP 3
 -
-the last directory to which \fBcurses\fR wrote, if any, is searched first.
+the last directory to which \fBcurses\fR wrote, if any, is searched first
 .TP 3
 -
 the directory specified by the TERMINFO symbol
@@ -695,7 +695,7 @@ the TERMPATH symbol.
 This is a list of filenames separated by colons (i.e., ":").
 If the TERMPATH symbol is not set, \fBcurses\fR looks in the files
 /etc/termcap, /usr/share/termcap and $HOME/.termcap, in that order.
-.PP  
+.PP
 The library will disregard the following variables when the
 application uses setuid or setgid permissions:
 $TERMCAP, $TERMINFO, $TERMINFO_DIRS, $TERMPATH, as well as $HOME.
@@ -819,7 +819,7 @@ calls in support of wide (multibyte) characters are not yet implemented:
 \fBmvwins_nwstr\fP,
 \fBmvwins_wch\fP,
 \fBmvwins_wstr\fP,
-\fBmvwinwchnstr\fP.
+\fBmvwinwchnstr\fP,
 \fBmvwinwstr\fP,
 \fBmvwvline_set\fP,
 \fBpecho_wchar\fP,

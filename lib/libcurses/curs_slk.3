@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_slk.3,v 1.8 2001/02/25 17:00:08 millert Exp $
+.\" $OpenBSD: curs_slk.3,v 1.9 2003/05/14 08:55:19 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -79,7 +79,7 @@ The slk* functions manipulate the set of soft function-key labels that exist on
 many terminals.  For those terminals that do not have soft labels,
 \fBcurses\fR takes over the bottom line of \fBstdscr\fR, reducing the size of
 \fBstdscr\fR and the variable \fBLINES\fR.  \fBcurses\fR standardizes on eight
-labels of up to eight characters each. In addition to this, the ncurses 
+labels of up to eight characters each. In addition to this, the ncurses
 implementation supports a mode where it simulates 12 labels of up to five
 characters each. This is most common for todays PC like enduser devices.
 Please note that ncurses simulates this mode by taking over up to two lines at
@@ -96,10 +96,10 @@ PC like 4-4-4 mode. If \fBfmt\fR is set to \fB3\fR, it is again the PC like
 identify the key numbers easily.
 
 The \fBslk_set\fR routine requires \fIlabnum\fR to be a label number,
-from \fB1\fR to \fB8\fR (resp. \fB12\fR); \fIlabel\fR must be the string 
+from \fB1\fR to \fB8\fR (resp. \fB12\fR); \fIlabel\fR must be the string
 to be put on the label, up to eight (resp. five) characters in length.
 A null string or a null pointer sets up a blank label. \fIfmt\fR is either
-\fB0\fR, \fB1\fR, or \fB2\fR, indicating whether the label is  to be 
+\fB0\fR, \fB1\fR, or \fB2\fR, indicating whether the label is  to be
 left-justified, centered, or right-justified, respectively, within the
 label.
 
@@ -111,7 +111,7 @@ The \fBslk_label\fR routine returns the current label for label number
 
 The \fBslk_clear\fR routine clears the soft labels from the screen.
 
-The \fBslk_restore\fR routine, restores the soft labels to the screen
+The \fBslk_restore\fR routine restores the soft labels to the screen
 after a \fBslk_clear\fR has been performed.
 
 The \fBslk_touch\fR routine forces all the soft labels to be output
@@ -120,7 +120,7 @@ the next time a \fBslk_noutrefresh\fR is performed.
 The \fBslk_attron\fR, \fBslk_attrset\fR, \fBslk_attroff\fR and \fBslk_attr\fR
 routines correspond to \fBattron\fR, \fBattrset\fR, \fBattroff\fR and \fBattr_get\fR.
 They have an effect only if soft labels are simulated on the bottom line of
-the screen.  The default highlight for soft keys is A_STANDOUT (as in 
+the screen.  The default highlight for soft keys is A_STANDOUT (as in
 System V curses, which does not document this fact).
 
 The \fBslk_color\fR routine corresponds to \fBcolor_set\fR. It has an effect only

@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_pad.3,v 1.7 2000/07/10 03:06:08 millert Exp $
+.\" $OpenBSD: curs_pad.3,v 1.8 2003/05/14 08:55:19 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -55,7 +55,7 @@ structure with the given number of lines, \fInlines\fR, and columns,
 screen size, and is not necessarily associated with a particular part of the
 screen.  Pads can be used when a large window is needed, and only a part of the
 window will be on the screen at one time.  Automatic refreshes of pads
-(\fIe\fR.\fIg\fR., from scrolling or echoing of input) do not occur.  It is not
+(e.g., from scrolling or echoing of input) do not occur.  It is not
 legal to call \fBwrefresh\fR with a \fIpad\fR as an argument; the routines
 \fBprefresh\fR or \fBpnoutrefresh\fR should be called instead.  Note that these
 routines require additional parameters to specify the part of the pad to be
@@ -86,7 +86,7 @@ they were zero.
 The \fBpechochar\fR routine is functionally equivalent to a call to \fBaddch\fR
 followed by a call to \fBrefresh\fR, a call to \fBwaddch\fR followed by a call
 to \fBwrefresh\fR, or a call to \fBwaddch\fR followed by a call to
-\fBprefresh.\fR The knowledge that only a single character is being output is
+\fBprefresh\fR. The knowledge that only a single character is being output is
 taken into consideration and, for non-control characters, a considerable
 performance gain might be seen by using these routines instead of their
 equivalents.  In the case of \fBpechochar\fR, the last location of the pad on
@@ -97,7 +97,7 @@ Routines that return an integer return \fBERR\fR upon failure and \fBOK\fR
 completion.
 
 Routines that return pointers return \fBNULL\fR on error, and set \fBerrno\fR
-to \fBENOMEM\fR.  
+to \fBENOMEM\fR.
 .SH NOTES
 Note that \fBpechochar\fR may be a macro.
 .SH PORTABILITY

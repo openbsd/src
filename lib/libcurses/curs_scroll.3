@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_scroll.3,v 1.7 2000/07/10 03:06:09 millert Exp $
+.\" $OpenBSD: curs_scroll.3,v 1.8 2003/05/14 08:55:19 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -59,11 +59,11 @@ These routines return \fBERR\fR upon failure, and \fBOK\fR (SVr4 only specifies
 .SH NOTES
 Note that \fBscrl\fR and \fBscroll\fR may be macros.
 
-The SVr4 documentation says that the optimization of physically scrolling 
+The SVr4 documentation says that the optimization of physically scrolling
 immediately if the scroll region is the entire screen "is" performed, not
 "may be" performed.  This implementation deliberately does not guarantee
 that this will occur, in order to leave open the possibility of smarter
-optimization of multiple scroll actions on the next update. 
+optimization of multiple scroll actions on the next update.
 
 Neither the SVr4 nor the XSI documentation specify whether the current
 attribute or

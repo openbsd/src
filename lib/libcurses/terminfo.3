@@ -1,4 +1,4 @@
-.\" $OpenBSD: terminfo.3,v 1.8 2001/01/22 18:01:35 millert Exp $
+.\" $OpenBSD: terminfo.3,v 1.9 2003/05/14 08:55:19 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1999,2000 Free Software Foundation, Inc.                   *
@@ -108,10 +108,8 @@ with \fBtputs\fR or \fBputp\fR.  Call the \fBreset_shell_mode\fR to restore the
 tty modes before exiting [see \fBcurs_kernel\fR(3)].  Programs which use
 cursor addressing should output \fBenter_ca_mode\fR upon startup and should
 output \fBexit_ca_mode\fR before exiting.  Programs desiring shell escapes
-should call
-
-\fBreset_shell_mode\fR and output \fBexit_ca_mode\fR before the shell
-is called and should output \fBenter_ca_mode\fR and call
+should call \fBreset_shell_mode\fR and output \fBexit_ca_mode\fR before the
+shell is called and should output \fBenter_ca_mode\fR and call
 \fBreset_prog_mode\fR after returning from the shell.
 
 The \fBsetupterm\fR routine reads in the \fBterminfo\fR database,
@@ -264,7 +262,7 @@ XSI notes that after calling \fBmvcur\fR, the curses state may not match the
 actual terminal state, and that an application should touch and refresh
 the window before resuming normal curses calls.
 Both ncurses and System V Release 4 curses implement \fBmvcur\fR using
-the SCREEN data allocated in either \fBinitscr\fR or \fBnewterm\fR. 
+the SCREEN data allocated in either \fBinitscr\fR or \fBnewterm\fR.
 So though it is documented as a terminfo function,
 \fBmvcur\fR is really a curses function which is not well specified.
 .SH SEE ALSO

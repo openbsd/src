@@ -1,4 +1,4 @@
-.\" $OpenBSD: term.7,v 1.6 2003/04/14 06:51:49 jmc Exp $
+.\" $OpenBSD: term.7,v 1.7 2003/05/14 08:55:19 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\"***************************************************************************
 .\"
 .\" $From: term.7,v 1.12 2000/08/13 01:56:42 tom Exp $
-.\" $OpenBSD: term.7,v 1.6 2003/04/14 06:51:49 jmc Exp $
+.\" $OpenBSD: term.7,v 1.7 2003/05/14 08:55:19 jmc Exp $
 .TH TERM 7
 .ds n 5
 .ds d /usr/share/terminfo
@@ -99,7 +99,7 @@ terminals that also explains how to parse them:
 First, choose a root name.  The root will consist of a lower-case letter
 followed by up to seven lower-case letters or digits.  You need to avoid using
 punctuation characters in root names, because they are used and interpreted as
-filenames and shell meta-characters (such as !, $, *, ? etc.) embedded in them
+filenames, and shell meta-characters (such as !, $, *, ?, etc.) embedded in them
 may cause odd and unhelpful behavior.  The slash (/), or any other character
 that may be interpreted by anyone's file system (\e, $, [, ]), is especially
 dangerous (terminfo is platform-independent, and choosing names with special
@@ -139,29 +139,29 @@ with another that has this suffix and uses magic cookies to support multiple
 attributes.
 .TP 5
 -am
-Enable auto-margin (right-margin wraparound)
+Enable auto-margin (right-margin wraparound).
 .TP 5
 -m
-Mono mode - suppress color support
+Mono mode - suppress color support.
 .TP 5
 -na
 No arrow keys - termcap ignores arrow keys which are actually there on the
 terminal, so the user can use the arrow keys locally.
 .TP 5
 -nam
-No auto-margin - suppress am capability
+No auto-margin - suppress am capability.
 .TP 5
 -nl
-No labels - suppress soft labels
+No labels - suppress soft labels.
 .TP 5
 -nsl
-No status line - suppress status line
+No status line - suppress status line.
 .TP 5
 -pp
 Has a printer port which is used.
 .TP 5
 -rv
-Terminal in reverse video mode (black on white)
+Terminal in reverse video mode (black on white).
 .TP 5
 -s
 Enable status line.
@@ -193,10 +193,10 @@ should be unique within the first 14 characters.
 compiled terminal capability database
 .TP 5
 /etc/inittab
-tty line initialization (AT&T-like UNIXes).
+tty line initialization (AT&T-like UNIXes)
 .TP 5
 /etc/ttys
-tty line initialization (BSD-like UNIXes).
+tty line initialization (BSD-like UNIXes)
 .SH "SEE ALSO"
 \fBcurses\fR(3), \fBterminfo\fR(\*n), \fBterm\fR(\*n).
 .\"#
