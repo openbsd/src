@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 1996/08/29 13:24:17 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.33 1996/09/02 02:34:09 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -52,7 +52,7 @@ pcmcia* at pcic?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
-isapnp0	at isa?
+#isapnp0	at isa?
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
@@ -123,7 +123,7 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
-mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq 15
