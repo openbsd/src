@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.19 1999/07/15 14:11:05 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.20 1999/08/15 00:07:43 pjanzen Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/acct.h>
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
+#include <sys/sched.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -369,9 +370,7 @@ loop:
 				return (0);
 			}
 
-			/* Charge us for our child's sins */
-			curproc->p_estcpu = min(curproc->p_estcpu +
-			    p->p_estcpu, UCHAR_MAX);
+			scheduler_wait_hook(curproc, p);
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
 			FREE(p->p_ru, M_ZOMBIE);

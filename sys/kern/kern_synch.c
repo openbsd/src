@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.15 1999/04/21 01:21:48 alex Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.16 1999/08/15 00:07:44 pjanzen Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
+#include <sys/sched.h>
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
@@ -199,21 +200,21 @@ schedcpu(arg)
 		/*
 		 * p_pctcpu is only for ps.
 		 */
+		KASSERT(profhz);
 #if	(FSHIFT >= CCPU_SHIFT)
-		p->p_pctcpu += (hz == 100)?
+		p->p_pctcpu += (profhz == 100)?
 			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
                 	100 * (((fixpt_t) p->p_cpticks)
-				<< (FSHIFT - CCPU_SHIFT)) / hz;
+				<< (FSHIFT - CCPU_SHIFT)) / profhz;
 #else
 		p->p_pctcpu += ((FSCALE - ccpu) *
-			(p->p_cpticks * FSCALE / hz)) >> FSHIFT;
+			(p->p_cpticks * FSCALE / profhz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
-		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu) + p->p_nice;
-		p->p_estcpu = min(newcpu, UCHAR_MAX);
+		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);
+		p->p_estcpu = newcpu;
 		resetpriority(p);
 		if (p->p_priority >= PUSER) {
-#define	PPQ	(128 / NQS)		/* priorities per queue */
 			if ((p != curproc) &&
 			    p->p_stat == SRUN &&
 			    (p->p_flag & P_INMEM) &&
@@ -253,7 +254,7 @@ updatepri(p)
 		p->p_slptime--;	/* the first time was done in schedcpu */
 		while (newcpu && --p->p_slptime)
 			newcpu = (int) decay_cpu(loadfac, newcpu);
-		p->p_estcpu = min(newcpu, UCHAR_MAX);
+		p->p_estcpu = newcpu;
 	}
 	resetpriority(p);
 }
@@ -691,11 +692,36 @@ resetpriority(p)
 {
 	register unsigned int newpriority;
 
-	newpriority = PUSER + p->p_estcpu / 4 + 2 * p->p_nice;
+	newpriority = PUSER + p->p_estcpu + NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	p->p_usrpri = newpriority;
 	if (newpriority < curpriority)
 		need_resched();
+}
+
+/*
+ * We adjust the priority of the current process.  The priority of a process
+ * gets worse as it accumulates CPU time.  The cpu usage estimator (p_estcpu)
+ * is increased here.  The formula for computing priorities (in kern_synch.c)
+ * will compute a different value each time p_estcpu increases. This can
+ * cause a switch, but unless the priority crosses a PPQ boundary the actual
+ * queue will not change.  The cpu usage estimator ramps up quite quickly
+ * when the process is running (linearly), and decays away exponentially, at
+ * a rate which is proportionally slower when the system is busy.  The basic
+ * principal is that the system will 90% forget that the process used a lot
+ * of CPU time in 5 * loadav seconds.  This causes the system to favor
+ * processes which haven't run much recently, and to round-robin among other
+ * processes.
+ */
+
+void
+schedclock(p)
+	struct proc *p;
+{
+	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);
+	resetpriority(p);
+	if (p->p_priority >= PUSER)
+		p->p_priority = p->p_usrpri;
 }
 
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.22 1999/07/17 21:49:37 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.23 1999/08/15 00:07:43 pjanzen Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/ktrace.h>
+#include <sys/sched.h>
 #include <dev/rndvar.h>
 
 #include <sys/syscallargs.h>
@@ -302,7 +303,7 @@ again:
 	 * XXX should move p_estcpu into the region of struct proc which gets
 	 * copied.
 	 */
-	p2->p_estcpu = p1->p_estcpu;
+	scheduler_fork_hook(p1, p2);
 
 	/*
 	 * This begins the section where we must prevent the parent
