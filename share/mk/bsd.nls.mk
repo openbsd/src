@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.2 1995/04/27 18:05:38 jtc Exp $
+#	$OpenBSD: bsd.nls.mk,v 1.2 1996/02/25 19:02:35 mickey Exp $
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.23 1995/11/03 23:33:33 cgd Exp $
+#	$OpenBSD: bsd.own.mk,v 1.4 1996/02/25 19:02:35 mickey Exp $
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes

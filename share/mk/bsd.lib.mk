@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.4 1996/02/25 19:02:33 mickey Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)

@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.22 1995/09/24 23:49:09 christos Exp $
+#	$OpenBSD: sys.mk,v 1.3 1996/02/25 19:02:37 mickey Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run OpenBSD.

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.2 1996/02/25 19:02:32 mickey Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.10 1995/07/24 04:22:29 cgd Exp $
+#	$OpenBSD: bsd.subdir.mk,v 1.4 1996/02/25 19:02:36 mickey Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
 .if !target(.MAIN)

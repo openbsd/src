@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.20 1994/07/26 19:42:37 mycroft Exp $
+#	$OpenBSD: bsd.doc.mk,v 1.2 1996/02/25 19:02:32 mickey Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
