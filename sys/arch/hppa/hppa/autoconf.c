@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 1999/02/25 19:13:31 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.3 1999/04/20 20:37:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -85,6 +85,7 @@ configure()
 
 	setroot();
 	swapconf();
+	dumpconf();
 	cold = 0;
 }
 
@@ -109,14 +110,52 @@ swapconf()
 			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
 	}
-	dumpconf();
 }
 
+/*
+ * This is called by configure to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
 void
 dumpconf()
 {
-}
+	extern int dumpsize;
+	int nblks, dumpblks;	/* size of dump area */
+	int maj;
 
+	if (dumpdev == NODEV)
+		goto bad;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		goto bad;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		goto bad;
+	dumpblks = cpu_dumpsize();
+	if (dumpblks < 0)  
+		goto bad;
+	dumpblks += ctod(physmem);
+
+	/* If dump won't fit (incl. room for possible label), punt. */
+	if (dumpblks > (nblks - ctod(1)))
+		goto bad;
+
+	/* Put dump at end of partition */
+	dumplo = nblks - dumpblks;
+
+	/* dumpsize is in page units, and doesn't include headers. */
+	dumpsize = physmem;
+	return;
+
+bad:
+	dumpsize = 0;
+	return;
+}
 
 struct nam2blk {
 	char *name;
@@ -134,7 +173,7 @@ struct nam2blk {
 };
 
 #ifdef RAMDISK_HOOKS
-static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
+/*static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };*/
 #endif
 
 static int
