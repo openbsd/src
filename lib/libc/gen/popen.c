@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: popen.c,v 1.14 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.15 2004/08/06 18:31:11 pedro Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -145,14 +145,15 @@ pclose(FILE *iop)
 	int pstat;
 	pid_t pid;
 
-	(void)fclose(iop);
-
 	/* Find the appropriate file pointer. */
 	for (last = NULL, cur = pidlist; cur; last = cur, cur = cur->next)
 		if (cur->fp == iop)
 			break;
+
 	if (cur == NULL)
 		return (-1);
+
+	(void)fclose(iop);
 
 	do {
 		pid = waitpid(cur->pid, &pstat, 0);
