@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.6 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: pmap.9,v 1.7 2003/07/11 13:47:41 jmc Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -120,7 +120,7 @@ in the target physical map
 .Fa pmap
 with protection specified by
 .Fa prot :
-.Bl -tag -width "VM_PROT_EXECUTE" -indent
+.Bl -tag -width "VM_PROT_EXECUTE"
 .It VM_PROT_READ
 The mapping must allow reading.
 .It VM_PROT_WRITE
@@ -142,7 +142,7 @@ faults on platforms that track modified/referenced information in
 software.
 Other information provided by
 .Fa flags :
-.Bl -tag -width "PMAP_CANFAIL" -indent
+.Bl -tag -width "PMAP_CANFAIL"
 .It PMAP_WIRED
 The mapping being created is a wired mapping.
 .It PMAP_CANFAIL

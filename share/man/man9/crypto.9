@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.24 2003/06/17 12:56:49 jfb Exp $
+.\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -142,7 +142,6 @@ Errors are only returned to the invoking function if not
 enough information to call the callback is available (meaning, there
 was a fatal error in verifying the arguments).
 For session initialization and teardown there is no callback mechanism used.
-.br
 .Pp
 The
 .Fn crypto_newsession
@@ -297,7 +296,7 @@ Each descriptor provides
 information about what type of cryptographic operation should be done
 on the input buffer.
 The various fields are:
-.Bl -tag -width=crd_inject
+.Bl -tag
 .It Fa crd_skip
 The offset in the input buffer where processing should start.
 .It Fa crd_len
