@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.3 2001/07/17 22:22:14 provos Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.4 2001/08/01 23:07:36 provos Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -86,6 +86,9 @@ void			 pf_free_fragment(struct pf_fragment *);
 struct pf_fragment	*pf_find_fragment(struct ip *);
 struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment *,
 			    struct pf_frent *, int);
+u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
+int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
+			    int, int, struct ip *, struct tcphdr *);
 
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
@@ -542,3 +545,100 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	return (PF_DROP);
 }
 
+int
+pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
+    int off, struct ip *h, struct tcphdr *th)
+{
+	struct pf_rule *r, *rm = NULL;
+	int rewrite = 0, reason;
+	u_int8_t flags;
+
+	r = TAILQ_FIRST(pf_rules_active);
+	while (r != NULL) {
+		if (r->action != PF_SCRUB) {
+			r = TAILQ_NEXT(r, entries);
+			continue;
+		}
+		if (r->proto && r->proto != h->ip_p)
+			r = r->skip[0];
+		else if (r->src.mask && !pf_match_addr(r->src.not,
+			     r->src.addr, r->src.mask, h->ip_src.s_addr))
+			r = r->skip[1];
+		else if (r->src.port_op && !pf_match_port(r->src.port_op,
+			     r->src.port[0], r->src.port[1], th->th_sport))
+			r = r->skip[2];
+		else if (r->dst.mask && !pf_match_addr(r->dst.not,
+			     r->dst.addr, r->dst.mask, h->ip_dst.s_addr))
+			r = r->skip[3];
+		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
+			     r->dst.port[0], r->dst.port[1], th->th_dport))
+			r = r->skip[4];
+		else if (r->direction != dir)
+			r = TAILQ_NEXT(r, entries);
+		else if (r->ifp != NULL && r->ifp != ifp)
+			r = TAILQ_NEXT(r, entries);
+		else {
+			rm = r;
+			break;
+		}
+	}
+
+	if (rm == NULL)
+		return (PF_PASS);
+
+	flags = th->th_flags;
+	if (flags & TH_SYN) {
+		/* Illegal packet */
+		if (flags & TH_RST)
+			goto tcp_drop;
+
+		if (flags & TH_FIN)
+			flags &= ~TH_FIN;
+	} else {
+		/* Illegal packet */
+		if (!(flags & (TH_ACK|TH_RST)))
+			goto tcp_drop;
+	}
+
+	if (!(flags & TH_ACK)) {
+		/* These flags are only valid if ACK is set */
+		if ((flags & TH_FIN) || (flags & TH_PUSH) || (flags & TH_URG))
+			goto tcp_drop;
+	}
+
+	/* Check for illegal header length */
+	if (th->th_off < (sizeof(struct tcphdr) >> 2))
+		goto tcp_drop;
+
+	/* If flags changed, or reserved data set, then adjust */
+	if (flags != th->th_flags || th->th_x2 != 0) {
+		u_int16_t ov, nv;
+
+		ov = *(u_int16_t *)(&th->th_ack + 1);
+		th->th_flags = flags;
+		th->th_x2 = 0;
+		nv = *(u_int16_t *)(&th->th_ack + 1);
+
+		th->th_sum = pf_cksum_fixup(th->th_sum, ov, nv);
+		rewrite = 1;
+	}
+
+	/* Remove urgent pointer, if TH_URG is not set */
+	if (!(flags & TH_URG) && th->th_urp) {
+		th->th_sum = pf_cksum_fixup(th->th_sum, th->th_urp, 0);
+		th->th_urp = 0;
+		rewrite = 1;
+	}
+
+	/* copy back packet headers if we sanitized */
+	if (rewrite)
+		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+
+	return (PF_PASS);
+
+ tcp_drop:
+	REASON_SET(&reason, PFRES_NORM);
+	if (rm != NULL && rm->log)
+		PFLOG_PACKET(h, m, AF_INET, dir, reason, rm);
+	return (PF_DROP);
+}

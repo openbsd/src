@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.121 2001/07/30 23:00:37 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.122 2001/08/01 23:07:36 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -145,8 +145,6 @@ void			 pf_change_icmp(u_int32_t *, u_int16_t *, u_int32_t *,
 			    u_int16_t *, u_int16_t *);
 void			 pf_send_reset(struct ip *, int, struct tcphdr *);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t);
-int			 pf_match_port(u_int8_t, u_int16_t, u_int16_t,
-			    u_int16_t);
 u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
 struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t, u_int32_t,
 			    u_int32_t);
@@ -178,6 +176,8 @@ int			 pf_get_sport(u_int8_t, u_int16_t, u_int16_t,
 void			 pf_put_sport(u_int8_t, u_int16_t);
 int			 pf_add_sport(struct pf_port_list *, u_int16_t);
 int			 pf_chk_sport(struct pf_port_list *, u_int16_t);
+int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
+			     int, int, struct ip *, struct tcphdr *);
 
 #if NPFLOG > 0
 #define	PFLOG_PACKET(x,a,b,c,d,e) \
@@ -2599,6 +2599,9 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
+		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &th);
+		if (action == PF_DROP)
+			break;
 		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h , &th);
 		if (action == PF_PASS) {
 			r = s->rule;

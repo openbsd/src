@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.37 2001/07/29 12:53:17 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.38 2001/08/01 23:07:36 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -308,6 +308,7 @@ int	pf_tree_remove(struct pf_tree_node **, struct pf_tree_node *,
 
 int	pflog_packet(struct mbuf *, int, u_short, u_short, struct pf_rule *);
 int	pf_match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
+int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
