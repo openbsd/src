@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.14 1997/12/16 02:56:08 millert Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.15 1998/01/17 16:20:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.14 1997/12/16 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.15 1998/01/17 16:20:29 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -353,13 +353,54 @@ _ti_getterminfo(name)
     return (i + 1);
 }
 
+void
+_ti_get_screensize(linep, colp, tabp)
+    int *linep;
+    int *colp;
+    int *tabp;
+{
+    char *s;
+#ifdef TIOCGWINSZ
+    struct winsize winsz;
+#endif
+
+    *linep = lines;
+    *colp = columns;
+    if (tabp != NULL) {
+	if (init_tabs == 0)
+	    init_tabs = *tabp = 8;
+	else
+	    *tabp = init_tabs;
+    }
+    if (_ti_use_env) {
+#ifdef TIOCGWINSZ
+	/*
+	 * get the current window size, overrides entries in termcap
+	 */
+	if (ioctl(cur_term->fd, TIOCGWINSZ, &winsz) >= 0) {
+	    if (winsz.ws_row > 0)
+		*linep = winsz.ws_row;
+	    if (winsz.ws_col > 0)
+		*colp = winsz.ws_col;
+	}
+#endif
+	/*
+	 * LINES and COLS environment variables overrides any other
+	 * method of getting the terminal window size
+	 */
+	if ((s = getenv("LINES")) != NULL)
+	    *linep = atoi(s);
+	if ((s = getenv("COLUMNS")) != NULL)
+	    *colp = atoi(s);
+    }
+    lines = *linep;
+    columns = *colp;
+}
+
 int
 _ti_getterm(name)
      const char *name;
 {
-#ifdef TIOCGWINSZ
-    struct winsize winsz;
-#endif
     int ret = 1;
     char *s;
 
@@ -388,36 +429,7 @@ _ti_getterm(name)
 	UP = cursor_up;
 	BC = backspace_if_not_bs;
 	PC = pad_char ? pad_char[0] : '\0';
-
-	LINES = lines;
-	COLS = columns;
-	TABSIZE = init_tabs;
-	if (TABSIZE == 0)
-	    TABSIZE = 8;
-	init_tabs = TABSIZE;
-	if (_ti_use_env) {
-#ifdef TIOCGWINSZ
-	    /*
-	     * get the current window size, overrides entries in termcap
-	     */
-	    if (ioctl(cur_term->fd, TIOCGWINSZ, &winsz) >= 0) {
-		if (winsz.ws_row > 0)
-		    LINES = winsz.ws_row;
-		if (winsz.ws_col > 0)
-		    COLS = winsz.ws_col;
-	    }
-#endif
-	    /*
-	     * LINES and COLS environment variables overrides any other
-	     * method of getting the terminal window size
-	     */
-	    if ((s = getenv("LINES")) != NULL)
-		LINES = atoi(s);
-	    if ((s = getenv("COLUMNS")) != NULL)
-		COLS = atoi(s);
-	}
-	lines = LINES;
-	columns = COLS;
+	_ti_get_screensize(&LINES, &COLS, &TABSIZE);
     }
     return ret;
 }
