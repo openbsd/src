@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.42 2000/12/12 00:36:58 angelos Exp $	*/
+/*	$OpenBSD: apm.c,v 1.43 2001/01/02 16:16:50 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -158,11 +158,11 @@ struct apmregs {
 	u_int32_t	dx;
 };
 
-int apmcall __P((u_int, u_int, struct apmregs *));
+int  apmcall __P((u_int, u_int, struct apmregs *));
 void apm_power_print __P((struct apm_softc *, struct apmregs *));
-void apm_handle_event __P((struct apm_softc *, struct apmregs *));
+int  apm_handle_event __P((struct apm_softc *, struct apmregs *));
 void apm_set_ver __P((struct apm_softc *));
-int apm_periodic_check __P((struct apm_softc *));
+int  apm_periodic_check __P((struct apm_softc *));
 void apm_thread_create __P((void *v));
 void apm_thread __P((void *));
 void apm_disconnect __P((struct apm_softc *));
@@ -170,7 +170,7 @@ void apm_perror __P((const char *, struct apmregs *));
 void apm_powmgt_enable __P((int onoff));
 void apm_powmgt_engage __P((int onoff, u_int devid));
 /* void apm_devpowmgt_enable __P((int onoff, u_int devid)); */
-int apm_record_event __P((struct apm_softc *sc, u_int event_type));
+int  apm_record_event __P((struct apm_softc *sc, u_int event_type));
 const char *apm_err_translate __P((int code));
 
 #define	apm_get_powstat(r) apmcall(APM_POWER_STATUS, APM_DEV_ALLDEVS, r)
@@ -384,16 +384,19 @@ apm_record_event(sc, event_type)
 	return (sc->sc_flags & SCFLAG_OWRITE) ? 0 : 1; /* user may handle */
 }
 
-void
+int
 apm_handle_event(sc, regs)
 	struct apm_softc *sc;
 	struct apmregs *regs;
 {
-	int error;
 	struct apmregs nregs;
-	char *p;
+	int ret = 0;
 
 	switch(regs->bx) {
+	case APM_NOEVENT:
+		ret++;
+		break;
+
 	case APM_USER_STANDBY_REQ:
 		if (apm_resumes || apm_op_inprog)
 			break;
@@ -411,6 +414,7 @@ apm_handle_event(sc, regs)
 		if (apm_standbys || apm_suspends) {
 			DPRINTF(("premature standby\n"));
 			apm_error++;
+			ret++;
 		}
 		apm_op_inprog++;
 		if (apm_record_event(sc, regs->bx)) {
@@ -435,6 +439,7 @@ apm_handle_event(sc, regs)
 		if (apm_standbys || apm_suspends) {
 			DPRINTF(("premature suspend\n"));
 			apm_error++;
+			ret++;
 		}
 		apm_op_inprog++;
 		if (apm_record_event(sc, regs->bx)) {
@@ -444,8 +449,7 @@ apm_handle_event(sc, regs)
 		break;
 	case APM_POWER_CHANGE:
 		DPRINTF(("power status change\n"));
-		error = apm_get_powstat(&nregs);
-		if (error == 0 &&
+		if (apm_get_powstat(&nregs) == 0 &&
 		    BATT_LIFE(&nregs) != APM_BATT_LIFE_UNKNOWN &&
 		    BATT_LIFE(&nregs) < cpu_apmwarn &&
 		    (sc->sc_flags & SCFLAG_PRINT) != SCFLAG_NOPRINT &&
@@ -494,15 +498,21 @@ apm_handle_event(sc, regs)
 			}
 		}
 		break;
-	default:
+	default: {
+#ifdef APMDEBUG
+		char *p;
 		switch (regs->bx >> 8) {
 		case 0:	p = "reserved system";	break;
 		case 1:	p = "reserved device";	break;
 		case 2:	p = "OEM defined";	break;
 		default:p = "reserved";		break;
 		}
+#endif
 		DPRINTF(("apm_handle_event: %s event, code %d\n", p, regs->bx));
+	    }
 	}
+
+	return ret;
 }
 
 int
@@ -515,8 +525,9 @@ apm_periodic_check(sc)
 	if (apm_op_inprog)
 		apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
 
-	while (apm_get_event(&regs) == 0 && !apm_error)
-		apm_handle_event(sc, &regs);
+	while (apm_get_event(&regs) == 0)
+		if (apm_handle_event(sc, &regs))
+			break;
 
 	/* i think some bioses actually combine the error codes */
 	if (!(APM_ERR_CODE(&regs) & APM_ERR_NOEVENTS))
