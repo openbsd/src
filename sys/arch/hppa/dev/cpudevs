@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.14 2000/04/28 17:43:22 mickey Exp $
+$OpenBSD: cpudevs,v 1.15 2000/04/28 17:45:33 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -184,8 +184,8 @@ board	HP780_C180	0x59c	780/C180 (Raven U 180)
 board	HP780_C200	0x59d	780/C200 (Raven U 200)
 #board	HP		0x59e	(ThunderHawk T' 120)
 board	HP780_C180P	0x59f	780/C180+ (Raven U 180+)
-board	HP841		0x5a0	841/D260/D360 (UltraLight 1-way T120 1MB)
-board	HP851		0x5a1	851/D260/D360 (UltraLight 2-way T120 1MB)
+board	HP841_1		0x5a0	841/D260/D360 (UltraLight 1-way T120 1MB)
+board	HP851_1		0x5a1	851/D260/D360 (UltraLight 2-way T120 1MB)
 board	HP861		0x5a2	861/D270/D370 (UltraLight 1-way U160 512K)
 board	HP871		0x5a3	871/D270/D370 (UltraLight 2-way U160 512K)
 board	HP802		0x5a4	802/K250 (MoHawk U160 1M DC3-)
