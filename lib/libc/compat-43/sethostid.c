@@ -38,14 +38,9 @@ static char sccsid[] = "@(#)sethostid.c	8.1 (Berkeley) 6/2/93";
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
-#if __STDC__
-int
-sethostid(long hostid)
-#else
 int
 sethostid(hostid)
 	long hostid;
-#endif
 {
 	int mib[2];
 
