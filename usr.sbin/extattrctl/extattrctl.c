@@ -1,4 +1,4 @@
-/*	$OpenBSD: extattrctl.c,v 1.3 2002/12/08 05:10:10 millert Exp $	*/
+/*	$OpenBSD: extattrctl.c,v 1.4 2003/04/13 22:42:57 avsm Exp $	*/
 /*-
  * Copyright (c) 1999, 2000, 2001 Robert N. M. Watson
  * All rights reserved.
@@ -72,8 +72,6 @@ num_inodes_by_path(char *path)
 		perror("statfs");
 		return (-1);
 	}
-	printf("num files %d\n");
-
 	return (buf.f_files);
 }
 
