@@ -1,4 +1,4 @@
-/*	$OpenBSD: genget.c,v 1.3 1997/07/14 01:33:42 millert Exp $	*/
+/*	$OpenBSD: genget.c,v 1.4 1998/03/12 04:48:50 art Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,18 +36,14 @@
 #ifndef lint
 /* from: static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95"; */
 /* from: static char *rcsid = "$NetBSD: genget.c,v 1.5 1996/02/24 01:15:21 jtk Exp $"; */
-static char *rcsid = "$OpenBSD: genget.c,v 1.3 1997/07/14 01:33:42 millert Exp $";
+static char *rcsid = "$OpenBSD: genget.c,v 1.4 1998/03/12 04:48:50 art Exp $";
 #endif /* not lint */
 
 
 #include <ctype.h>
 #include "misc-proto.h"
 
-int isprefix __P((char *, char *));
-char **genget __P((char *, char **, int));
-int Ambiguous __P((char *));
-
-#define	LOWER(x) (isupper(x) ? tolower(x) : (x))
+#define	LOWER(x) (isupper((int)x) ? tolower((int)x) : (x))
 /*
  * The prefix function returns 0 if *s1 is not a prefix
  * of *s2.  If *s1 exactly matches *s2, the negative of
@@ -107,7 +103,7 @@ genget(name, table, stlen)
  */
 	int
 Ambiguous(s)
-	char *s;
+	void *s;
 {
 	return((char **)s == &ambiguous);
 }

@@ -34,13 +34,15 @@
 #ifndef lint
 /* from: static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93"; */
 /* from: static char rcsid[] = "$NetBSD: misc.c,v 1.5 1996/02/24 01:15:25 jtk Exp $"; */
-static char rcsid[] = "$OpenBSD: misc.c,v 1.2 1996/03/19 23:15:55 niklas Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1998/03/12 04:48:54 art Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "misc.h"
+#include "auth.h"
+#include "encrypt.h"
 
 char *RemoteHostName;
 char *LocalHostName;
@@ -56,9 +58,13 @@ auth_encrypt_init(local, remote, name, server)
 {
 	RemoteHostName = remote;
 	LocalHostName = local;
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	auth_init(name, server);
 #endif
+#ifdef ENCRYPTION
+	encrypt_init(name, server);
+#endif
+
 	if (UserNameRequested) {
 		free(UserNameRequested);
 		UserNameRequested = 0;
@@ -84,7 +90,7 @@ auth_encrypt_connect(cnt)
 
 	void
 printd(data, cnt)
-	unsigned char *data;
+	const unsigned char *data;
 	int cnt;
 {
 	if (cnt > 16)

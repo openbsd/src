@@ -1,3 +1,4 @@
+/*	$OpenBSD: enc-proto.h,v 1.1 1998/03/12 04:48:47 art Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,9 +31,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)auth-proto.h	8.1 (Berkeley) 6/4/93
- *	$OpenBSD: auth-proto.h,v 1.3 1998/03/12 04:48:43 art Exp $
- *	$NetBSD: auth-proto.h,v 1.5 1996/02/24 01:15:16 jtk Exp $
+ *	@(#)enc-proto.h	8.1 (Berkeley) 6/4/93
+ *
+ *	@(#)enc-proto.h	5.2 (Berkeley) 3/22/91
  */
 
 /*
@@ -54,7 +55,7 @@
  * to require a specific license from the United States Government.
  * It is the responsibility of any person or organization contemplating
  * export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
@@ -67,52 +68,79 @@
  * or implied warranty.
  */
 
-#include <sys/cdefs.h>
+/* $KTH: enc-proto.h,v 1.8 1997/11/02 03:57:10 assar Exp $ */
 
-#if	defined(AUTHENTICATION)
-Authenticator *findauthenticator __P((int, int));
+#if	defined(ENCRYPTION)
+Encryptions *findencryption __P((int));
+Encryptions *finddecryption __P((int));
+int EncryptAutoDec __P((int));
+int EncryptAutoEnc __P((int));
+int EncryptDebug __P((int));
+int EncryptDisable __P((char*, char*));
+int EncryptEnable __P((char*, char*));
+int EncryptStart __P((char*));
+int EncryptStartInput __P((void));
+int EncryptStartOutput __P((void));
+int EncryptStatus __P((void));
+int EncryptStop __P((char*));
+int EncryptStopInput __P((void));
+int EncryptStopOutput __P((void));
+int EncryptType __P((char*, char*));
+int EncryptVerbose __P((int));
+int net_write __P((unsigned char *, int));
+void decrypt_auto __P((int));
+void encrypt_auto __P((int));
+void encrypt_debug __P((int));
+void encrypt_dec_keyid __P((unsigned char*, int));
+void encrypt_display __P((void));
+void encrypt_enc_keyid __P((unsigned char*, int));
+void encrypt_end __P((void));
+void encrypt_gen_printsub __P((unsigned char*, int, unsigned char*, int));
+void encrypt_init __P((char*, int));
+void encrypt_is __P((unsigned char*, int));
+void encrypt_list_types __P((void));
+void encrypt_not __P((void));
+void encrypt_printsub __P((unsigned char*, int, unsigned char*, int));
+void encrypt_reply __P((unsigned char*, int));
+void encrypt_request_end __P((void));
+void encrypt_request_start __P((unsigned char*, int));
+void encrypt_send_end __P((void));
+void encrypt_send_keyid __P((int, unsigned char*, int, int));
+void encrypt_send_request_end __P((void));
+void encrypt_send_request_start __P((void));
+void encrypt_send_support __P((void));
+void encrypt_session_key __P((Session_Key*, int));
+void encrypt_start __P((unsigned char*, int));
+void encrypt_start_output __P((int));
+void encrypt_support __P((unsigned char*, int));
+void encrypt_verbose_quiet __P((int));
+void encrypt_wait __P((void));
+int encrypt_delay __P((void));
 
-void auth_init __P((char *, int));
-int auth_cmd __P((int, char **));
-void auth_request __P((void));
-void auth_send __P((unsigned char *, int));
-void auth_send_retry __P((void));
-void auth_is __P((unsigned char *, int));
-void auth_reply __P((unsigned char *, int));
-void auth_finished __P((Authenticator *, int));
-int auth_wait __P((char *));
-void auth_disable_name __P((char *));
-void auth_gen_printsub __P((unsigned char *, int, unsigned char *, int));
-
-int getauthmask __P((char *, int *));
-int auth_enable __P((char *));
-int auth_disable __P((char *));
-int auth_onoff __P((char *, int));
-int auth_togdebug __P((int));
-int auth_status __P((void));
-void auth_name __P((unsigned char *, int));
-int auth_sendname __P((unsigned char *, int));
-void auth_debug __P((int));
-void auth_printsub __P((unsigned char *, int, unsigned char *, int));
-
-#ifdef	KRB4
-int kerberos4_init __P((Authenticator *, int));
-int kerberos4_forward __P((Authenticator *));
-int kerberos4_send_oneway __P((Authenticator *));
-int kerberos4_send_mutual __P((Authenticator *));
-void kerberos4_is __P((Authenticator *, unsigned char *, int));
-void kerberos4_reply __P((Authenticator *, unsigned char *, int));
-int kerberos4_status __P((Authenticator *, char *, int));
-void kerberos4_printsub __P((unsigned char *, int, unsigned char *, int));
+#ifdef	TELENTD
+void encrypt_wait __P((void));
+#else
+void encrypt_display __P((void));
 #endif
 
-#ifdef	KRB5
-int kerberos5_init __P((Authenticator *, int));
-int kerberos5_send_mutual __P((Authenticator *));
-int kerberos5_send_oneway __P((Authenticator *));
-void kerberos5_is __P((Authenticator *, unsigned char *, int));
-void kerberos5_reply __P((Authenticator *, unsigned char *, int));
-int kerberos5_status __P((Authenticator *, char *, int));
-void kerberos5_printsub __P((unsigned char *, int, unsigned char *, int));
-#endif
+void cfb64_encrypt __P((unsigned char *, int));
+int cfb64_decrypt __P((int));
+void cfb64_init __P((int));
+int cfb64_start __P((int, int));
+int cfb64_is __P((unsigned char *, int));
+int cfb64_reply __P((unsigned char *, int));
+void cfb64_session __P((Session_Key *, int));
+int cfb64_keyid __P((int, unsigned char *, int *));
+void cfb64_printsub __P((unsigned char *, int, unsigned char *, int));
+
+void ofb64_encrypt __P((unsigned char *, int));
+int ofb64_decrypt __P((int));
+void ofb64_init __P((int));
+int ofb64_start __P((int, int));
+int ofb64_is __P((unsigned char *, int));
+int ofb64_reply __P((unsigned char *, int));
+void ofb64_session __P((Session_Key *, int));
+int ofb64_keyid __P((int, unsigned char *, int *));
+void ofb64_printsub __P((unsigned char *, int, unsigned char *, int));
+
 #endif
