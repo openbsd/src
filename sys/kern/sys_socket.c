@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.6 2001/05/14 11:04:04 art Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.7 2001/05/14 12:38:47 art Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 
 struct	fileops socketops = {
 	soo_read, soo_write, soo_ioctl, soo_select, soo_kqfilter,
-	soo_close
+	soo_stat, soo_close
 };
 
 /* ARGSUSED */

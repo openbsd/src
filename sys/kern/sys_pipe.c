@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.28 2001/05/14 10:51:26 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.29 2001/05/14 12:38:47 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -72,7 +72,7 @@ int	pipe_ioctl __P((struct file *, u_long, caddr_t, struct proc *));
 
 static struct fileops pipeops = {
 	pipe_read, pipe_write, pipe_ioctl, pipe_select, pipe_kqfilter,
-	pipe_close 
+	pipe_stat, pipe_close 
 };
 
 void	filt_pipedetach(struct knote *kn);

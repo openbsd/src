@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_net.c,v 1.10 2001/03/01 20:54:32 provos Exp $	 */
+/*	$OpenBSD: svr4_net.c,v 1.11 2001/05/14 12:38:48 art Exp $	 */
 /*	$NetBSD: svr4_net.c,v 1.12 1996/09/07 12:40:51 mycroft Exp $	 */
 
 /*
@@ -83,7 +83,7 @@ static int svr4_soo_close __P((struct file *fp, struct proc *p));
 
 static struct fileops svr4_netops = {
 	soo_read, soo_write, soo_ioctl, soo_select, soo_kqfilter,
-	svr4_soo_close
+	soo_stat, svr4_soo_close
 };
 
 

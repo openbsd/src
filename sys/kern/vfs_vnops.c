@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.29 2001/05/14 12:11:53 art Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.30 2001/05/14 12:38:47 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -72,7 +72,8 @@ int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
 	    struct proc *p));
 
 struct 	fileops vnops =
-	{ vn_read, vn_write, vn_ioctl, vn_select, vn_kqfilter, vn_closefile };
+	{ vn_read, vn_write, vn_ioctl, vn_select, vn_kqfilter, vn_statfile,
+	  vn_closefile };
 
 /*
  * Common code for vnode open operations.
