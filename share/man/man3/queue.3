@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.26 2003/01/15 04:18:19 millert Exp $
+.\"	$OpenBSD: queue.3,v 1.27 2003/03/09 17:18:44 millert Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -846,7 +846,7 @@ TAILQ_INSERT_AFTER(&head, n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 TAILQ_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
-for (np = TAILQ_FIRST(&head); np; np = TAILQ_NEXT(np, entries))
+for (np = TAILQ_FIRST(&head); np != NULL; np = TAILQ_NEXT(np, entries))
 	np-> ...
 					/* Delete. */
 while (np = TAILQ_FIRST(&head))
