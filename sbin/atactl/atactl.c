@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.20 2002/08/04 14:11:41 gluk Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.21 2002/10/16 13:00:51 gluk Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -1356,6 +1356,9 @@ device_attr(int argc, char *argv[])
 	char raw[13], *format;
 	int i, k, threshold_exceeded = 0;
 
+	if (argc != 1)
+		goto usage;
+
 	memset(&req, 0, sizeof(req));
 	memset(&attr_val, 0, sizeof(attr_val));	/* XXX */
 	memset(&attr_thr, 0, sizeof(attr_thr));	/* XXX */
@@ -1383,10 +1386,11 @@ device_attr(int argc, char *argv[])
 		 */
 		return;
 	}
-	printf("Attributes table revision: %d\n", attr_val.revision);
 
 	attr = attr_val.attribute;
 	thr = attr_thr.threshold;
+
+	printf("Attributes table revision: %d\n", attr_val.revision);
 	printf("ID\tAttribute name\t\t\tThreshold\tValue\tRaw\n");
 	for (i = 0; i < 30; i++) {
 		if (thr[i].id != 0 && thr[i].id == attr[i].id) {
@@ -1413,6 +1417,12 @@ device_attr(int argc, char *argv[])
 	}
 	if (threshold_exceeded)
 		fprintf(stderr, "One or more threshold values exceeded!\n");
+
+	return;
+
+usage:
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
+	exit(1);
 }
 
 /*
@@ -1430,15 +1440,9 @@ device_acoustic(int argc, char *argv[])
 
 	acoustic = strtoul(argv[1], &end, 0);
 
-	if (*end != '\0') {
-		fprintf(stderr, "Invalid acoustic management value: \"%s\""
+	if (*end != '\0' || acoustic > 126) {
+		fprintf(stderr, "Invalid acoustic management value: \"%s\" "
 		    "(valid values range from 0 to 126)\n", argv[1]);
-		exit(1);
-	}
-
-	if (acoustic > 126) {
-		fprintf(stderr, "Automatic acoustic management has a "
-		    "maximum value of 126\n");
 		exit(1);
 	}
 
@@ -1477,16 +1481,10 @@ device_apm(int argc, char *argv[])
 
 	power = strtoul(argv[1], &end, 0);
 
-	if (*end != '\0') {
+	if (*end != '\0' || power > 253) {
 		fprintf(stderr, "Invalid advanced power management value: "
 		    "\"%s\" (valid values range from 0 to 253)\n",
 		    argv[1]);
-		exit(1);
-	}
-
-	if (power > 253) {
-		fprintf(stderr, "Advanced power management has a "
-		    "maximum value of 253\n");
 		exit(1);
 	}
 
@@ -1573,14 +1571,9 @@ device_setidle(int argc, char *argv[])
 
 	idle = strtoul(argv[1], &end, 0);
 
-	if (*end != '\0') {
-		fprintf(stderr, "Invalid idle time: \"%s\"\n", argv[1]);
-		exit(1);
-	}
-
-	if (idle > 19800) {
-		fprintf(stderr, "Idle time has a maximum value of 5.5 "
-		    "hours\n");
+	if (*end != '\0' || idle > 19800) {
+		fprintf(stderr, "Invalid idle time: \"%s\" "
+		    "(valid values range from 1 to 19800)\n", argv[1]);
 		exit(1);
 	}
 
