@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.4 2001/09/02 19:41:40 miod Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.5 2001/09/21 02:11:58 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -54,8 +54,6 @@
 
 #include <mvmeppc/pci/pcibrvar.h>
 #include <mvmeppc/dev/ravenreg.h>
-
-extern vm_map_t phys_map;
 
 int    mpcpcibrmatch __P((struct device *, void *, void *));
 void   mpcpcibrattach __P((struct device *, struct device *, void *));

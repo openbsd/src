@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.33 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.34 2001/09/21 02:11:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -207,8 +207,6 @@ cpu_swapin(struct proc *p)
 
 	save_u_area(p, (vm_offset_t)p->p_addr);
 }
-
-extern vm_map_t phys_map;
 
 /*
  * Map an IO request into kernel virtual address space.  Requests fall into

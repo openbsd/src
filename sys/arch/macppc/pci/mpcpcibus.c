@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.1 2001/09/01 15:55:17 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.2 2001/09/21 02:11:58 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -62,7 +62,6 @@
 #include <macppc/pci/mpc106reg.h>
 
 #include <dev/ofw/openfirm.h>
-extern vm_map_t phys_map;
 
 int	 mpcpcibrmatch __P((struct device *, void *, void *));
 void	 mpcpcibrattach __P((struct device *, struct device *, void *));
