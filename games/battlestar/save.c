@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.5 1997/08/24 21:55:13 deraadt Exp $	*/
+/*	$OpenBSD: save.c,v 1.6 1997/09/01 18:13:20 millert Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/03/21 15:07:57 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ void
 restore()
 {
 	char *home;
-	char home1[1024];
+	char home1[PATH_MAX];
 	register int n;
 	int tmp;
 	register FILE *fp;
@@ -62,10 +62,10 @@ restore()
 		return;
 	}
 	setegid(egid);
-	if ((fp = fopen(home1, "r")) == 0) {
-		perror(home1);
+	if ((fp = fopen(home1, "r")) == NULL) {
+		warn("can't open %s for reading", home1);
 		setegid(getgid());
-		exit(1);
+		return;
 	}
 	setegid(getgid());
 	fread(&WEIGHT, sizeof WEIGHT, 1, fp);
@@ -110,7 +110,7 @@ void
 save()
 {
 	char *home;
-	char home1[100];
+	char home1[PATH_MAX];
 	register int n;
 	int tmp;
 	FILE *fp;
@@ -124,8 +124,8 @@ save()
 		return;
 	}
 	setegid(egid);
-	if ((fp = fopen(home1, "w")) == 0) {
-		perror(home1);
+	if ((fp = fopen(home1, "w")) == NULL) {
+		warn("can't open %s for writing", home1);
 		setegid(getgid());
 		return;
 	}

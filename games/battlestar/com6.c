@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.5 1997/08/24 21:55:04 deraadt Exp $	*/
+/*	$OpenBSD: com6.c,v 1.6 1997/09/01 18:13:13 millert Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -105,8 +105,8 @@ static FILE *score_fp;
 
 open_score_file()
 {
-	if ((score_fp = fopen(_PATH_SCORE,"a")) == NULL)
-		perror(_PATH_SCORE);
+	if ((score_fp = fopen(_PATH_SCORE, "a")) == NULL)
+		warn("can't append to %s", _PATH_SCORE);
 }
 
 void

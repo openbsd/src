@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.3 1997/08/24 21:55:08 deraadt Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.4 1997/09/01 18:13:18 millert Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ getcom(buf, size, prompt, error)
 	char *prompt, *error;
 {
 	for (;;) {
-		fputs(prompt, stdout); 
+		fputs(prompt, stdout);
 		if (fgets(buf, size, stdin) == 0) {
 			clearerr(stdin);
 			continue;

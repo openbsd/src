@@ -1,4 +1,4 @@
-/*	$OpenBSD: com4.c,v 1.3 1997/08/24 21:55:03 deraadt Exp $	*/
+/*	$OpenBSD: com4.c,v 1.4 1997/09/01 18:13:11 millert Exp $	*/
 /*	$NetBSD: com4.c,v 1.3 1995/03/21 15:07:04 cgd Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ unsigned int from[];
 					clearbit(location[position].objects,BATHGOD);
 				} else if (!testbit(location[position].objects,BATHGOD))
 					puts("You're in no position to take her.");
-				else 
+				else
 					puts("She moves away from you.");
 				break;
 
@@ -262,7 +262,7 @@ throw(name)
 			}
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
-			else 
+			else
 				return(first);
 		}
 		return(first);
@@ -384,7 +384,7 @@ eat()
 					printf("You aren't holding the %s.\n", objsht[value]);
 				if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 					wordnumber++;
-				else 
+				else
 					return(firstnumber);
 		} /* end switch */
 	} /* end while */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.1 1997/08/24 21:55:07 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.2 1997/09/01 18:13:16 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -44,7 +44,9 @@
 #include <sys/time.h>
 #undef _KERNEL
 
+#include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>

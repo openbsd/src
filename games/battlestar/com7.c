@@ -1,4 +1,4 @@
-/*	$OpenBSD: com7.c,v 1.3 1997/08/24 21:55:04 deraadt Exp $	*/
+/*	$OpenBSD: com7.c,v 1.4 1997/09/01 18:13:14 millert Exp $	*/
 /*	$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ fighton:
 				hurt = rnd(50)%(WEIGHT-carrying)-card(injuries,NUMOFINJURIES)-encumber - exhaustion;
 			else if (testbit(inven,KNIFE) || testbit(inven,MALLET) || testbit(inven,CHAIN) || testbit(inven,MACE) || testbit(inven,HALBERD))
 				hurt = rnd(15) - card(injuries,NUMOFINJURIES) - exhaustion;
-			else 
+			else
 				hurt = rnd(7) - encumber;
 			if (hurt < 5)
 				switch(rnd(3)){

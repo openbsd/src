@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.3 1997/08/24 21:55:01 deraadt Exp $	*/
+/*	$OpenBSD: com1.c,v 1.4 1997/09/01 18:13:08 millert Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ news()
 		fight(WOODSMAN,50);
 	}
 	switch(position){
-		
+
 		case 267:
 		case 257:	/* entering a cave */
 		case 274:
@@ -239,7 +239,7 @@ crash()
 	if (!location[position].flyhere || (testbit(location[position].objects,LAND) && fuel <= 0)){
 		if (!location[position].flyhere)
 			puts("You're flying too low.  We're going to crash!");
-		else{ 
+		else{
 			puts("You're out of fuel.  We'll have to crash land!");
 			if (!location[position].down){
 				puts("Your viper strikes the ground and explodes into firey fragments.");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.3 1997/08/24 21:55:02 deraadt Exp $	*/
+/*	$OpenBSD: com2.c,v 1.4 1997/09/01 18:13:10 millert Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -94,11 +94,11 @@ wearit()		/* synonyms = {sheathe, sheath} */
 				}
 				else if (testbit(wear,value))
 					printf("You are already wearing the %s.\n", objsht[value]);
-				else 
+				else
 					printf("You aren't holding the %s.\n", objsht[value]);
 				if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 					wordnumber++;
-				else 
+				else
 					return(firstnumber);
 		} /* end switch */
 	} /* end while */
@@ -305,7 +305,7 @@ follow()
 		notes[CANTSEE] = 1;
 		return(0);
 	}
-	else 
+	else
 		puts("There is no one to follow.");
 	return(-1);
 }

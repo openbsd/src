@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 1997/08/24 21:55:09 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 1997/09/01 18:13:19 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
 
 /*
@@ -132,13 +132,15 @@ checkout(uname)
 		if (strcmp(*ptr, uname) == 0) {
 			printf("You are the Poor anti-wizard %s.  Good Luck!\n",
 				uname);
-			CUMBER = 3;
-			WEIGHT = 9;	/* that'll get him! */
-			bclock = 10;
-			setbit(location[7].objects, WOODSMAN);	/* viper room */
-			setbit(location[20].objects, WOODSMAN);	/* laser " */
-			setbit(location[13].objects, DARK);	/* amulet " */
-			setbit(location[8].objects, ELF);	/* closet */
+			if (location != NULL) {
+				CUMBER = 3;
+				WEIGHT = 9;	/* that'll get him! */
+				bclock = 10;
+				setbit(location[7].objects, WOODSMAN);	/* viper room */
+				setbit(location[20].objects, WOODSMAN);	/* laser " */
+				setbit(location[13].objects, DARK);	/* amulet " */
+				setbit(location[8].objects, ELF);	/* closet */
+			}
 			return 0;	/* anything else, Chris? */
 		}
 	return 0;
