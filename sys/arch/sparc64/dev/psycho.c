@@ -1,3 +1,4 @@
+/*	$OpenBSD: psycho.c,v 1.2 2001/08/29 04:59:57 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.34 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -129,6 +130,18 @@ struct cfdriver psycho_cd = {
         NULL, "psycho", DV_DULL
 };
 
+struct psycho_type {
+	char *p_name;
+	int p_type;
+} psycho_types[] = {
+	{ "SUNW,sabre",		PSYCHO_MODE_SABRE	},
+	{ "pci180e,a000",	PSYCHO_MODE_SABRE	},
+	{ "pci108e,a001",	PSYCHO_MODE_SABRE	},
+	{ "SUNW,psycho",	PSYCHO_MODE_PSYCHO	},
+	{ "pci108e,8000",	PSYCHO_MODE_PSYCHO	},
+	{ NULL, 0 }
+};
+
 /*
  * "sabre" is the UltraSPARC IIi onboard UPA to PCI bridge.  It manages a
  * single PCI bus and does not have a streaming buffer.  It often has an APB
@@ -178,13 +191,21 @@ psycho_match(parent, match, aux)
 	void		*aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model = getpropstring(ma->ma_node, "model");
+	struct psycho_type *ptype;
+	char *str;
 
 	/* match on a name of "pci" and a sabre or a psycho */
-	if (strcmp(ma->ma_name, ROM_PCI_NAME) == 0 &&
-	    (strcmp(model, ROM_SABRE_MODEL) == 0 ||
-	     strcmp(model, ROM_PSYCHO_MODEL) == 0))
-		return (1);
+	if (strcmp(ma->ma_name, ROM_PCI_NAME) != 0)
+		return (0);
+
+	for (ptype = psycho_types; ptype->p_name != NULL; ptype++) {
+		str = getpropstring(ma->ma_node, "model");
+		if (strcmp(str, ptype->p_name) == 0)
+			return (1);
+		str = getpropstring(ma->ma_node, "compatible");
+		if (strcmp(str, ptype->p_name) == 0)
+			return (1);
+	}
 
 	return (0);
 }
@@ -215,7 +236,7 @@ psycho_attach(parent, self, aux)
 	u_int64_t csr;
 	int psycho_br[2], n;
 	struct pci_ctl *pci_ctl;
-	char *model = getpropstring(ma->ma_node, "model");
+	struct psycho_type *ptype;
 
 	printf("\n");
 
@@ -227,12 +248,19 @@ psycho_attach(parent, self, aux)
 	 * call the model-specific initialisation routine.
 	 */
 
-	if (strcmp(model, ROM_SABRE_MODEL) == 0)
-		sc->sc_mode = PSYCHO_MODE_SABRE;
-	else if (strcmp(model, ROM_PSYCHO_MODEL) == 0)
-		sc->sc_mode = PSYCHO_MODE_PSYCHO;
-	else
-		panic("psycho_attach: unknown model %s?", model);
+	for (ptype = psycho_types; ptype->p_name != NULL; ptype++) {
+		char *str;
+
+		str = getpropstring(ma->ma_node, "model");
+		if (strcmp(str, ptype->p_name) == 0)
+			break;
+		str = getpropstring(ma->ma_node, "compatible");
+		if (strcmp(str, ptype->p_name) == 0)
+			break;
+	}
+	if (ptype->p_name == NULL)
+		panic("psycho_attach: unknown model?");
+	sc->sc_mode = ptype->p_type;
 
 	/*
 	 * The psycho gets three register banks:
@@ -300,9 +328,9 @@ psycho_attach(parent, self, aux)
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
 		sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
 
-	printf("%s: impl %d, version %d: ign %x ",
-		model, PSYCHO_GCSR_IMPL(csr), PSYCHO_GCSR_VERS(csr),
-		sc->sc_ign);
+	printf("%s: impl %d, version %d: ign %x ", ptype->p_name,
+	    PSYCHO_GCSR_IMPL(csr), PSYCHO_GCSR_VERS(csr), sc->sc_ign);
+
 	/*
 	 * Match other psycho's that are already configured against
 	 * the base physical address. This will be the same for a
@@ -991,10 +1019,10 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 		/* Enable the interrupt */
 		intrmap |= INTMAP_V;
 		DPRINTF(PDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
-		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx\n",
+		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx",
 			(unsigned long long)intrmap));
 		*intrmapptr = intrmap;
-		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
+		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx\n",
 			(unsigned long long)(intrmap = *intrmapptr)));
 	}
 	return (ih);
