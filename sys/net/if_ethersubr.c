@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.14 1996/12/19 10:59:21 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.15 1996/12/19 12:58:14 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ ether_ioctl(ifp, arp, cmd, data)
 	caddr_t data;
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *) data;
 	int	error = 0;
 
 	switch (cmd) {
@@ -146,6 +147,12 @@ ether_ioctl(ifp, arp, cmd, data)
 		    }
 #endif /* NS */
 		}
+		break;
+
+	case SIOCGIFADDR:
+		bcopy((caddr_t) arp->ac_enaddr,
+		      (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		      ETHER_ADDR_LEN);
 		break;
 
 	default:
