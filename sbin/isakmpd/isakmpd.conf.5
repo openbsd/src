@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.12 1999/03/31 20:30:21 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.14 1999/03/31 20:24:51 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.13 1999/03/31 23:47:23 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.15 1999/03/31 23:33:21 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -128,6 +128,8 @@ really are handled by the same code inside isakmpd.
 .It Em Transport
 The name of the transport protocol, normally
 .Li udp .
+.It Em Listen-address
+The Local IP-address to use, if we are multi-homed, or have aliases.
 .It Em Address
 The IP-address of the peer.
 .It Em Port
