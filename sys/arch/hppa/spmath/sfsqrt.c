@@ -1,25 +1,25 @@
-/*	$OpenBSD: sfsqrt.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
+/*	$OpenBSD: sfsqrt.c,v 1.5 2001/03/29 03:58:19 mickey Exp $	*/
 
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc.   
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
- * 
+ * Copyright 1996 1995 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  */
 /*
  * pmk1.1
@@ -27,15 +27,15 @@
 /*
  * (c) Copyright 1986 HEWLETT-PACKARD COMPANY
  *
- * To anyone who acknowledges that this file is provided "AS IS" 
+ * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *     permission to use, copy, modify, and distribute this file 
- * for any purpose is hereby granted without fee, provided that 
- * the above copyright notice and this notice appears in all 
- * copies, and that the name of Hewlett-Packard Company not be 
- * used in advertising or publicity pertaining to distribution 
- * of the software without specific, written prior permission.  
- * Hewlett-Packard Company makes no representations about the 
+ *     permission to use, copy, modify, and distribute this file
+ * for any purpose is hereby granted without fee, provided that
+ * the above copyright notice and this notice appears in all
+ * copies, and that the name of Hewlett-Packard Company not be
+ * used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
 
@@ -55,44 +55,44 @@ unsigned int *status;
 {
 	register unsigned int src, result;
 	register int src_exponent, newbit, sum;
-	register boolean guardbit = FALSE, even_exponent;
+	register int guardbit = FALSE, even_exponent;
 
 	src = *srcptr;
-        /*
-         * check source operand for NaN or infinity
-         */
-        if ((src_exponent = Sgl_exponent(src)) == SGL_INFINITY_EXPONENT) {
-                /*
-                 * is signaling NaN?
-                 */
-                if (Sgl_isone_signaling(src)) {
-                        /* trap if INVALIDTRAP enabled */
-                        if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
-                        /* make NaN quiet */
-                        Set_invalidflag();
-                        Sgl_set_quiet(src);
-                }
-                /*
-                 * Return quiet NaN or positive infinity.
-		 *  Fall thru to negative test if negative infinity.
-                 */
-		if (Sgl_iszero_sign(src) || Sgl_isnotzero_mantissa(src)) {
-                	*dstptr = src;
-                	return(NOEXCEPTION);
+	/*
+	 * check source operand for NaN or infinity
+	 */
+	if ((src_exponent = Sgl_exponent(src)) == SGL_INFINITY_EXPONENT) {
+		/*
+		 * is signaling NaN?
+		 */
+		if (Sgl_isone_signaling(src)) {
+			/* trap if INVALIDTRAP enabled */
+			if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
+			/* make NaN quiet */
+			Set_invalidflag();
+			Sgl_set_quiet(src);
 		}
-        }
+		/*
+		 * Return quiet NaN or positive infinity.
+		 *  Fall thru to negative test if negative infinity.
+		 */
+		if (Sgl_iszero_sign(src) || Sgl_isnotzero_mantissa(src)) {
+			*dstptr = src;
+			return(NOEXCEPTION);
+		}
+	}
 
-        /*
-         * check for zero source operand
-         */
+	/*
+	 * check for zero source operand
+	 */
 	if (Sgl_iszero_exponentmantissa(src)) {
 		*dstptr = src;
 		return(NOEXCEPTION);
 	}
 
-        /*
-         * check for negative source operand 
-         */
+	/*
+	 * check for negative source operand
+	 */
 	if (Sgl_isone_sign(src)) {
 		/* trap if INVALIDTRAP enabled */
 		if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
@@ -124,7 +124,7 @@ unsigned int *status;
 	}
 	/*
 	 * Add comment here.  Explain following algorithm.
-	 * 
+	 *
 	 * Trust me, it works.
 	 *
 	 */
@@ -147,7 +147,7 @@ unsigned int *status;
 
 	/* check for inexact */
 	if (Sgl_isnotzero(src)) {
-		if (!even_exponent & Sgl_islessthan(result,src)) 
+		if (!even_exponent & Sgl_islessthan(result,src))
 			Sgl_increment(result);
 		guardbit = Sgl_lowmantissa(result);
 		Sgl_rightshiftby1(result);
@@ -158,7 +158,7 @@ unsigned int *status;
 		     Sgl_increment(result);
 		     break;
 		case ROUNDNEAREST:
-		     /* stickybit is always true, so guardbit 
+		     /* stickybit is always true, so guardbit
 		      * is enough to determine rounding */
 		     if (guardbit) {
 			Sgl_increment(result);

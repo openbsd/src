@@ -1,25 +1,25 @@
-/*	$OpenBSD: fcnvxf.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
+/*	$OpenBSD: fcnvxf.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc.   
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
- * 
+ * Copyright 1996 1995 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  */
 /*
  * pmk1.1
@@ -27,15 +27,15 @@
 /*
  * (c) Copyright 1986 HEWLETT-PACKARD COMPANY
  *
- * To anyone who acknowledges that this file is provided "AS IS" 
+ * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *     permission to use, copy, modify, and distribute this file 
- * for any purpose is hereby granted without fee, provided that 
- * the above copyright notice and this notice appears in all 
- * copies, and that the name of Hewlett-Packard Company not be 
- * used in advertising or publicity pertaining to distribution 
- * of the software without specific, written prior permission.  
- * Hewlett-Packard Company makes no representations about the 
+ *     permission to use, copy, modify, and distribute this file
+ * for any purpose is hereby granted without fee, provided that
+ * the above copyright notice and this notice appears in all
+ * copies, and that the name of Hewlett-Packard Company not be
+ * used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
 
@@ -58,21 +58,21 @@ unsigned int *status;
 	register unsigned int result = 0;
 
 	src = *srcptr;
-	/* 
-	 * set sign bit of result and get magnitude of source 
+	/*
+	 * set sign bit of result and get magnitude of source
 	 */
 	if (src < 0) {
-		Sgl_setone_sign(result);  
+		Sgl_setone_sign(result);
 		Int_negate(src);
 	}
 	else {
 		Sgl_setzero_sign(result);
-        	/* Check for zero */ 
-        	if (src == 0) { 
-                	Sgl_setzero(result); 
+		/* Check for zero */
+		if (src == 0) {
+			Sgl_setzero(result);
 			*dstptr = result;
-                	return(NOEXCEPTION); 
-        	} 
+			return(NOEXCEPTION);
+		}
 	}
 	/*
 	 * Generate exponent and normalized mantissa
@@ -93,12 +93,12 @@ unsigned int *status;
 	/* check for inexact */
 	if (Int_isinexact_to_sgl(src)) {
 		switch (Rounding_mode()) {
-			case ROUNDPLUS: 
-				if (Sgl_iszero_sign(result)) 
+			case ROUNDPLUS:
+				if (Sgl_iszero_sign(result))
 					Sgl_increment(result);
 				break;
-			case ROUNDMINUS: 
-				if (Sgl_isone_sign(result)) 
+			case ROUNDMINUS:
+				if (Sgl_isone_sign(result))
 					Sgl_increment(result);
 				break;
 			case ROUNDNEAREST:
@@ -115,7 +115,7 @@ unsigned int *status;
 }
 
 /*
- *  Single Fixed-point to Double Floating-point 
+ *  Single Fixed-point to Double Floating-point
  */
 int
 sgl_to_dbl_fcnvxf(srcptr,dstptr,status)
@@ -128,21 +128,21 @@ unsigned int *status;
 	register unsigned int resultp1 = 0, resultp2 = 0;
 
 	src = *srcptr;
-	/* 
-	 * set sign bit of result and get magnitude of source 
+	/*
+	 * set sign bit of result and get magnitude of source
 	 */
 	if (src < 0) {
-		Dbl_setone_sign(resultp1);  
+		Dbl_setone_sign(resultp1);
 		Int_negate(src);
 	}
 	else {
 		Dbl_setzero_sign(resultp1);
-        	/* Check for zero */
-        	if (src == 0) {
-                	Dbl_setzero(resultp1,resultp2);
-                	Dbl_copytoptr(resultp1,resultp2,dstptr);
-                	return(NOEXCEPTION);
-        	}
+		/* Check for zero */
+		if (src == 0) {
+			Dbl_setzero(resultp1,resultp2);
+			Dbl_copytoptr(resultp1,resultp2,dstptr);
+			return(NOEXCEPTION);
+		}
 	}
 	/*
 	 * Generate exponent and normalized mantissa
@@ -165,7 +165,7 @@ unsigned int *status;
 }
 
 /*
- *  Double Fixed-point to Single Floating-point 
+ *  Double Fixed-point to Single Floating-point
  */
 int
 dbl_to_sgl_fcnvxf(srcptr,dstptr,status)
@@ -178,22 +178,22 @@ unsigned int *status;
 	unsigned int result = 0, srcp2;
 
 	Dint_copyfromptr(srcptr,srcp1,srcp2);
-	/* 
-	 * set sign bit of result and get magnitude of source 
+	/*
+	 * set sign bit of result and get magnitude of source
 	 */
 	if (srcp1 < 0) {
-		Sgl_setone_sign(result);  
+		Sgl_setone_sign(result);
 		Dint_negate(srcp1,srcp2);
 	}
 	else {
 		Sgl_setzero_sign(result);
-        	/* Check for zero */
-        	if (srcp1 == 0 && srcp2 == 0) {
-                	Sgl_setzero(result);
-                	*dstptr = result;
-                	return(NOEXCEPTION);
+		/* Check for zero */
+		if (srcp1 == 0 && srcp2 == 0) {
+			Sgl_setzero(result);
+			*dstptr = result;
+			return(NOEXCEPTION);
 		}
-        }
+	}
 	/*
 	 * Generate exponent and normalized mantissa
 	 */
@@ -207,15 +207,15 @@ unsigned int *status;
 		Find_ms_one_bit(srcp2,dst_exponent);
 		/*  left justify source, with msb at bit position 1  */
 		if (dst_exponent >= 0) {
-			srcp1 = srcp2 << dst_exponent;    
+			srcp1 = srcp2 << dst_exponent;
 			srcp2 = 0;
 		}
 		else {
 			srcp1 = srcp2 >> 1;
-			srcp2 <<= 31; 
+			srcp2 <<= 31;
 		}
 		/*
-		 *  since msb set is in second word, need to 
+		 *  since msb set is in second word, need to
 		 *  adjust bit position count
 		 */
 		dst_exponent += 32;
@@ -231,12 +231,12 @@ unsigned int *status;
 		/*  left justify source, with msb at bit position 1  */
 		if (dst_exponent > 0) {
 			Variable_shift_double(srcp1,srcp2,(32-dst_exponent),
-			 srcp1); 
+			 srcp1);
 			srcp2 <<= dst_exponent;
 		}
 		/*
 		 * If dst_exponent = 0, we don't need to shift anything.
-		 * If dst_exponent = -1, src = - 2**63 so we won't need to 
+		 * If dst_exponent = -1, src = - 2**63 so we won't need to
 		 * shift srcp2.
 		 */
 		else srcp1 >>= -(dst_exponent);
@@ -247,12 +247,12 @@ unsigned int *status;
 	/* check for inexact */
 	if (Dint_isinexact_to_sgl(srcp1,srcp2)) {
 		switch (Rounding_mode()) {
-			case ROUNDPLUS: 
-				if (Sgl_iszero_sign(result)) 
+			case ROUNDPLUS:
+				if (Sgl_iszero_sign(result))
 					Sgl_increment(result);
 				break;
-			case ROUNDMINUS: 
-				if (Sgl_isone_sign(result)) 
+			case ROUNDMINUS:
+				if (Sgl_isone_sign(result))
 					Sgl_increment(result);
 				break;
 			case ROUNDNEAREST:
@@ -269,7 +269,7 @@ unsigned int *status;
 }
 
 /*
- *  Double Fixed-point to Double Floating-point 
+ *  Double Fixed-point to Double Floating-point
  */
 int
 dbl_to_dbl_fcnvxf(srcptr,dstptr,status)
@@ -282,8 +282,8 @@ unsigned int *status;
 	register unsigned int srcp2, resultp1 = 0, resultp2 = 0;
 
 	Dint_copyfromptr(srcptr,srcp1,srcp2);
-	/* 
-	 * set sign bit of result and get magnitude of source 
+	/*
+	 * set sign bit of result and get magnitude of source
 	 */
 	if (srcp1 < 0) {
 		Dbl_setone_sign(resultp1);
@@ -291,13 +291,13 @@ unsigned int *status;
 	}
 	else {
 		Dbl_setzero_sign(resultp1);
-        	/* Check for zero */
-        	if (srcp1 == 0 && srcp2 ==0) {
-                	Dbl_setzero(resultp1,resultp2);
-                	Dbl_copytoptr(resultp1,resultp2,dstptr);
-                	return(NOEXCEPTION);
+		/* Check for zero */
+		if (srcp1 == 0 && srcp2 ==0) {
+			Dbl_setzero(resultp1,resultp2);
+			Dbl_copytoptr(resultp1,resultp2,dstptr);
+			return(NOEXCEPTION);
 		}
-        }
+	}
 	/*
 	 * Generate exponent and normalized mantissa
 	 */
@@ -311,7 +311,7 @@ unsigned int *status;
 		Find_ms_one_bit(srcp2,dst_exponent);
 		/*  left justify source, with msb at bit position 1  */
 		if (dst_exponent >= 0) {
-			srcp1 = srcp2 << dst_exponent;    
+			srcp1 = srcp2 << dst_exponent;
 			srcp2 = 0;
 		}
 		else {
@@ -319,7 +319,7 @@ unsigned int *status;
 			srcp2 <<= 31;
 		}
 		/*
-		 *  since msb set is in second word, need to 
+		 *  since msb set is in second word, need to
 		 *  adjust bit position count
 		 */
 		dst_exponent += 32;
@@ -334,12 +334,12 @@ unsigned int *status;
 		/*  left justify source, with msb at bit position 1  */
 		if (dst_exponent > 0) {
 			Variable_shift_double(srcp1,srcp2,(32-dst_exponent),
-			 srcp1); 
+			 srcp1);
 			srcp2 <<= dst_exponent;
 		}
 		/*
 		 * If dst_exponent = 0, we don't need to shift anything.
-		 * If dst_exponent = -1, src = - 2**63 so we won't need to 
+		 * If dst_exponent = -1, src = - 2**63 so we won't need to
 		 * shift srcp2.
 		 */
 		else srcp1 >>= -(dst_exponent);
@@ -351,12 +351,12 @@ unsigned int *status;
 	/* check for inexact */
 	if (Dint_isinexact_to_dbl(srcp2)) {
 		switch (Rounding_mode()) {
-			case ROUNDPLUS: 
+			case ROUNDPLUS:
 				if (Dbl_iszero_sign(resultp1)) {
 					Dbl_increment(resultp1,resultp2);
 				}
 				break;
-			case ROUNDMINUS: 
+			case ROUNDMINUS:
 				if (Dbl_isone_sign(resultp1)) {
 					Dbl_increment(resultp1,resultp2);
 				}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2000/01/11 21:26:24 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2001/03/29 03:58:17 mickey Exp $
 #
 #	NOTE:	$S must correspond to the top of the 'sys' tree
 #		$HPPA must correspond to the top of hppa tree
@@ -32,7 +32,7 @@ clean::		.NOTMAIN __always_make_spmath
 	@echo cleaning the kern library objects
 	@${SPMATHMAKE} clean
 
-depend:: 	.NOTMAIN __always_make_spmath
+depend::	.NOTMAIN __always_make_spmath
 	@echo depending the kern library objects
 	@${SPMATHMAKE} depend
 

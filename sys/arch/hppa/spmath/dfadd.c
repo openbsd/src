@@ -1,24 +1,24 @@
-/*	$OpenBSD: dfadd.c,v 1.3 1998/07/02 19:04:57 mickey Exp $	*/
+/*	$OpenBSD: dfadd.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc.   
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ * Copyright 1996 1995 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * pmk1.1
@@ -26,15 +26,15 @@
 /*
  * (c) Copyright 1986 HEWLETT-PACKARD COMPANY
  *
- * To anyone who acknowledges that this file is provided "AS IS" 
+ * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *     permission to use, copy, modify, and distribute this file 
- * for any purpose is hereby granted without fee, provided that 
- * the above copyright notice and this notice appears in all 
- * copies, and that the name of Hewlett-Packard Company not be 
- * used in advertising or publicity pertaining to distribution 
- * of the software without specific, written prior permission.  
- * Hewlett-Packard Company makes no representations about the 
+ *     permission to use, copy, modify, and distribute this file
+ * for any purpose is hereby granted without fee, provided that
+ * the above copyright notice and this notice appears in all
+ * copies, and that the name of Hewlett-Packard Company not be
+ * used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
 
@@ -52,18 +52,18 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
     register unsigned int signless_upper_left, signless_upper_right, save;
     register unsigned int leftp1, leftp2, rightp1, rightp2, extent;
     register unsigned int resultp1 = 0, resultp2 = 0;
-    
+
     register int result_exponent, right_exponent, diff_exponent;
     register int sign_save, jumpsize;
-    register boolean inexact = FALSE;
-    register boolean underflowtrap;
-        
+    register int inexact = FALSE;
+    register int underflowtrap;
+
     /* Create local copies of the numbers */
     Dbl_copyfromptr(leftptr,leftp1,leftp2);
     Dbl_copyfromptr(rightptr,rightp1,rightp2);
 
-    /* A zero "save" helps discover equal operands (for later),  *
-     * and is used in swapping operands (if needed).             */
+    /* A zero "save" helps discover equal operands (for later),	*
+     * and is used in swapping operands (if needed).		*/
     Dbl_xortointp1(leftp1,rightp1,/*to*/save);
 
     /*
@@ -71,48 +71,48 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
      */
     if ((result_exponent = Dbl_exponent(leftp1)) == DBL_INFINITY_EXPONENT)
 	{
-	if (Dbl_iszero_mantissa(leftp1,leftp2)) 
+	if (Dbl_iszero_mantissa(leftp1,leftp2))
 	    {
-	    if (Dbl_isnotnan(rightp1,rightp2)) 
+	    if (Dbl_isnotnan(rightp1,rightp2))
 		{
-		if (Dbl_isinfinity(rightp1,rightp2) && save!=0) 
+		if (Dbl_isinfinity(rightp1,rightp2) && save!=0)
 		    {
-		    /* 
+		    /*
 		     * invalid since operands are opposite signed infinity's
 		     */
 		    if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
-                    Set_invalidflag();
-                    Dbl_makequietnan(resultp1,resultp2);
+		    Set_invalidflag();
+		    Dbl_makequietnan(resultp1,resultp2);
 		    Dbl_copytoptr(resultp1,resultp2,dstptr);
 		    return(NOEXCEPTION);
 		    }
 		/*
-	 	 * return infinity
-	 	 */
+		 * return infinity
+		 */
 		Dbl_copytoptr(leftp1,leftp2,dstptr);
 		return(NOEXCEPTION);
 		}
 	    }
-	else 
+	else
 	    {
-            /*
-             * is NaN; signaling or quiet?
-             */
-            if (Dbl_isone_signaling(leftp1)) 
-		{
-               	/* trap if INVALIDTRAP enabled */
-		if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
-        	/* make NaN quiet */
-        	Set_invalidflag();
-        	Dbl_set_quiet(leftp1);
-        	}
-	    /* 
-	     * is second operand a signaling NaN? 
+	    /*
+	     * is NaN; signaling or quiet?
 	     */
-	    else if (Dbl_is_signalingnan(rightp1)) 
+	    if (Dbl_isone_signaling(leftp1))
 		{
-        	/* trap if INVALIDTRAP enabled */
-               	if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
+		/* trap if INVALIDTRAP enabled */
+		if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
+		/* make NaN quiet */
+		Set_invalidflag();
+		Dbl_set_quiet(leftp1);
+	    }
+	    /*
+	     * is second operand a signaling NaN?
+	     */
+	    else if (Dbl_is_signalingnan(rightp1))
+		{
+		/* trap if INVALIDTRAP enabled */
+		if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
 		/* make NaN quiet */
 		Set_invalidflag();
 		Dbl_set_quiet(rightp1);
@@ -120,29 +120,29 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 		return(NOEXCEPTION);
 		}
 	    /*
- 	     * return quiet NaN
- 	     */
+	     * return quiet NaN
+	     */
 	    Dbl_copytoptr(leftp1,leftp2,dstptr);
- 	    return(NOEXCEPTION);
+	    return(NOEXCEPTION);
 	    }
 	} /* End left NaN or Infinity processing */
     /*
      * check second operand for NaN's or infinity
      */
-    if (Dbl_isinfinity_exponent(rightp1)) 
+    if (Dbl_isinfinity_exponent(rightp1))
 	{
-	if (Dbl_iszero_mantissa(rightp1,rightp2)) 
+	if (Dbl_iszero_mantissa(rightp1,rightp2))
 	    {
 	    /* return infinity */
 	    Dbl_copytoptr(rightp1,rightp2,dstptr);
 	    return(NOEXCEPTION);
 	    }
-        /*
-         * is NaN; signaling or quiet?
-         */
-        if (Dbl_isone_signaling(rightp1)) 
+	/*
+	 * is NaN; signaling or quiet?
+	 */
+	if (Dbl_isone_signaling(rightp1))
 	    {
-            /* trap if INVALIDTRAP enabled */
+	    /* trap if INVALIDTRAP enabled */
 	    if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
 	    /* make NaN quiet */
 	    Set_invalidflag();
@@ -150,10 +150,10 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 	    }
 	/*
 	 * return quiet NaN
- 	 */
+	 */
 	Dbl_copytoptr(rightp1,rightp2,dstptr);
 	return(NOEXCEPTION);
-    	} /* End right NaN or Infinity processing */
+	} /* End right NaN or Infinity processing */
 
     /* Invariant: Must be dealing with finite numbers */
 
@@ -164,19 +164,19 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
     /* sign difference selects add or sub operation. */
     if(Dbl_ismagnitudeless(leftp2,rightp2,signless_upper_left,signless_upper_right))
 	{
-	/* Set the left operand to the larger one by XOR swap *
-	 *  First finish the first word using "save"          */
+	/* Set the left operand to the larger one by XOR swap	*
+	 *  First finish the first word using "save"		*/
 	Dbl_xorfromintp1(save,rightp1,/*to*/rightp1);
 	Dbl_xorfromintp1(save,leftp1,/*to*/leftp1);
-     	Dbl_swap_lower(leftp2,rightp2);
+	Dbl_swap_lower(leftp2,rightp2);
 	result_exponent = Dbl_exponent(leftp1);
 	}
-    /* Invariant:  left is not smaller than right. */ 
+    /* Invariant:  left is not smaller than right. */
 
     if((right_exponent = Dbl_exponent(rightp1)) == 0)
-        {
+	{
 	/* Denormalized operands.  First look for zeroes */
-	if(Dbl_iszero_mantissa(rightp1,rightp2)) 
+	if(Dbl_iszero_mantissa(rightp1,rightp2))
 	    {
 	    /* right is zero */
 	    if(Dbl_iszero_exponentmantissa(leftp1,leftp2))
@@ -191,7 +191,7 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 		    Dbl_and_signs(leftp1,/*with*/rightp1);
 		    }
 		}
-	    else 
+	    else
 		{
 		/* Left is not a zero and must be the result.  Trapped
 		 * underflows are signaled if left is denormalized.  Result
@@ -199,11 +199,11 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 		if( (result_exponent == 0) && Is_underflowtrap_enabled() )
 		    {
 		    /* need to normalize results mantissa */
-	    	    sign_save = Dbl_signextendedsign(leftp1);
+		    sign_save = Dbl_signextendedsign(leftp1);
 		    Dbl_leftshiftby1(leftp1,leftp2);
 		    Dbl_normalize(leftp1,leftp2,result_exponent);
 		    Dbl_set_sign(leftp1,/*using*/sign_save);
-                    Dbl_setwrapped_exponent(leftp1,result_exponent,unfl);
+		    Dbl_setwrapped_exponent(leftp1,result_exponent,unfl);
 		    Dbl_copytoptr(leftp1,leftp2,dstptr);
 		    /* inexact = FALSE */
 		    return(UNDERFLOWEXCEPTION);
@@ -251,14 +251,14 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 	    if(Is_underflowtrap_enabled())
 		{
 		/* need to normalize result */
-	    	sign_save = Dbl_signextendedsign(resultp1);
+		sign_save = Dbl_signextendedsign(resultp1);
 		Dbl_leftshiftby1(resultp1,resultp2);
 		Dbl_normalize(resultp1,resultp2,result_exponent);
 		Dbl_set_sign(resultp1,/*using*/sign_save);
-                Dbl_setwrapped_exponent(resultp1,result_exponent,unfl);
-	        Dbl_copytoptr(resultp1,resultp2,dstptr);
+		Dbl_setwrapped_exponent(resultp1,result_exponent,unfl);
+		Dbl_copytoptr(resultp1,resultp2,dstptr);
 		/* inexact = FALSE */
-	        return(UNDERFLOWEXCEPTION);
+		return(UNDERFLOWEXCEPTION);
 		}
 	    Dbl_copytoptr(resultp1,resultp2,dstptr);
 	    return(NOEXCEPTION);
@@ -273,8 +273,8 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
     Dbl_clear_exponent_set_hidden(leftp1);
     diff_exponent = result_exponent - right_exponent;
 
-    /* 
-     * Special case alignment of operands that would force alignment 
+    /*
+     * Special case alignment of operands that would force alignment
      * beyond the extent of the extension.  A further optimization
      * could special case this but only reduces the path length for this
      * infrequent case.
@@ -283,7 +283,7 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 	{
 	diff_exponent = DBL_THRESHOLD;
 	}
-    
+
     /* Align right operand by shifting to right */
     Dbl_right_align(/*operand*/rightp1,rightp2,/*shifted by*/diff_exponent,
     /*and lower to*/extent);
@@ -307,17 +307,17 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 	     * Only the two most significant bits (round and guard) are
 	     * needed.  If only a single shift is needed then the guard
 	     * bit becomes a significant low order bit and the extension
-	     * must participate in the rounding.  If more than a single 
-	     * shift is needed, then all bits to the right of the guard 
+	     * must participate in the rounding.  If more than a single
+	     * shift is needed, then all bits to the right of the guard
 	     * bit are zeros, and the guard bit may or may not be zero. */
 	    sign_save = Dbl_signextendedsign(resultp1);
-            Dbl_leftshiftby1_withextent(resultp1,resultp2,extent,resultp1,resultp2);
+	    Dbl_leftshiftby1_withextent(resultp1,resultp2,extent,resultp1,resultp2);
 
-            /* Need to check for a zero result.  The sign and exponent
+	    /* Need to check for a zero result.  The sign and exponent
 	     * fields have already been zeroed.  The more efficient test
 	     * of the full object can be used.
 	     */
-    	    if(Dbl_iszero(resultp1,resultp2))
+	    if(Dbl_iszero(resultp1,resultp2))
 		/* Must have been "x-x" or "x+(-x)". */
 		{
 		if(Is_rounding_mode(ROUNDMINUS)) Dbl_setone_sign(resultp1);
@@ -338,7 +338,7 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 		    {
 		    /* No further normalization is needed. */
 		    Dbl_set_sign(resultp1,/*using*/sign_save);
-	    	    Ext_leftshiftby1(extent);
+		    Ext_leftshiftby1(extent);
 		    goto round;
 		    }
 		}
@@ -383,7 +383,7 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 		return(NOEXCEPTION);
 		}
 	    Dbl_sethigh4bits(resultp1,/*using*/sign_save);
-	    switch(jumpsize) 
+	    switch(jumpsize)
 		{
 		case 1:
 		    {
@@ -408,23 +408,23 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 		    break;
 		    }
 		}
-	    if(result_exponent > 0) 
+	    if(result_exponent > 0)
 		{
 		Dbl_set_exponent(resultp1,/*using*/result_exponent);
 		Dbl_copytoptr(resultp1,resultp2,dstptr);
-		return(NOEXCEPTION); 	/* Sign bit is already set */
+		return(NOEXCEPTION);	/* Sign bit is already set */
 		}
 	    /* Fixup potential underflows */
 	  underflow:
 	    if(Is_underflowtrap_enabled())
 		{
 		Dbl_set_sign(resultp1,sign_save);
-                Dbl_setwrapped_exponent(resultp1,result_exponent,unfl);
+		Dbl_setwrapped_exponent(resultp1,result_exponent,unfl);
 		Dbl_copytoptr(resultp1,resultp2,dstptr);
 		/* inexact = FALSE */
 		return(UNDERFLOWEXCEPTION);
 		}
-	    /* 
+	    /*
 	     * Since we cannot get an inexact denormalized result,
 	     * we can now return.
 	     */
@@ -436,7 +436,7 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 	    } /* end if(hidden...)... */
 	/* Fall through and round */
 	} /* end if(save < 0)... */
-    else 
+    else
 	{
 	/* Add magnitudes */
 	Dbl_addition(leftp1,leftp2,rightp1,rightp2,/*to*/resultp1,resultp2);
@@ -448,7 +448,7 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 	    result_exponent++;
 	    } /* end if hiddenoverflow... */
 	} /* end else ...add magnitudes... */
-    
+
     /* Round the result.  If the extension is all zeros,then the result is
      * exact.  Otherwise round in the correct direction.  No underflow is
      * possible. If a postnormalization is necessary, then the mantissa is
@@ -479,23 +479,23 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 		Dbl_increment(resultp1,resultp2);
 		}
 	    break;
-	    
+
 	    case ROUNDMINUS:
 	    if(Dbl_isone_sign(resultp1))
 		{
 		/* Round down negative results */
 		Dbl_increment(resultp1,resultp2);
 		}
-	    
+
 	    case ROUNDZERO:;
 	    /* truncate is simple */
 	    } /* end switch... */
 	if(Dbl_isone_hiddenoverflow(resultp1)) result_exponent++;
 	}
     if(result_exponent == DBL_INFINITY_EXPONENT)
-        {
-        /* Overflow */
-        if(Is_overflowtrap_enabled())
+	{
+	/* Overflow */
+	if(Is_overflowtrap_enabled())
 	    {
 	    Dbl_setwrapped_exponent(resultp1,result_exponent,ovfl);
 	    Dbl_copytoptr(resultp1,resultp2,dstptr);
@@ -507,7 +507,7 @@ dbl_fadd(leftptr, rightptr, dstptr, status)
 	    }
 	    return(OVERFLOWEXCEPTION);
 	    }
-        else
+	else
 	    {
 	    inexact = TRUE;
 	    Set_overflowflag();

@@ -1,25 +1,25 @@
-/*	$OpenBSD: impys.S,v 1.4 2001/03/28 23:55:59 mickey Exp $	*/
+/*	$OpenBSD: impys.S,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc.   
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
- * 
+ * Copyright 1996 1995 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  */
 /*
  * pmk1.1
@@ -27,15 +27,15 @@
 /*
  * (c) Copyright 1986 HEWLETT-PACKARD COMPANY
  *
- * To anyone who acknowledges that this file is provided "AS IS" 
+ * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *     permission to use, copy, modify, and distribute this file 
- * for any purpose is hereby granted without fee, provided that 
- * the above copyright notice and this notice appears in all 
- * copies, and that the name of Hewlett-Packard Company not be 
- * used in advertising or publicity pertaining to distribution 
- * of the software without specific, written prior permission.  
- * Hewlett-Packard Company makes no representations about the 
+ *     permission to use, copy, modify, and distribute this file
+ * for any purpose is hereby granted without fee, provided that
+ * the above copyright notice and this notice appears in all
+ * copies, and that the name of Hewlett-Packard Company not be
+ * used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
 
@@ -43,11 +43,11 @@
 
 /****************************************************************************
  *
- * Implement an integer multiply routine for 32-bit operands and 64-bit product 
+ * Implement an integer multiply routine for 32-bit operands and 64-bit product
  * with operand values of zero (multiplicand only) and -2**31 treated specially.
  * The algorithm uses the absolute value of the multiplier, four bits at a time,
  * from right to left, to generate partial product.  Execution speed is more
- * important than program size in this implementation. 
+ * important than program size in this implementation.
  *
  ***************************************************************************/
 /*
@@ -88,14 +88,14 @@ mpy1	comb,<		op1,gr0,mpya		; br. if multiplicand < 0
 	addib,=		0,op1,fini0		; op1 = 0, product = 0
 mpy2	addi		1,gr0,pc		; initialize pc to 00...01
 	movib,tr	8,cnt,mloop		; set count for mpy loop
-	extru		op2,31,4,brindex	; 4 bits as index into table 
+	extru		op2,31,4,brindex	; 4 bits as index into table
 ;
 	.align		8
 ;
 	b		sh4c			; br. if sign overflow
 sh4n	shd		pu,pl,4,pl		; shift product right 4 bits
 	addib,<=	-1,cnt,mulend		; reduce count by 1, exit if
-	extru  		pu,27,28,pu		;   <= zero
+	extru		pu,27,28,pu		;   <= zero
 ;
 mloop	blr		brindex,gr0		; br. into table
 						;   entries of 2 words
@@ -118,13 +118,13 @@ mtable						; two words per entry
 ;
 ;  ----	bits = 0010 ---- add op1, add op1, then shift 4 bits
 ;
-	addb,tr		op1,pu,sh4n		; add 2*op1, to shift 
-	addb,uv 	op1,pu,sh4c		;   product right 4 bits
+	addb,tr		op1,pu,sh4n		; add 2*op1, to shift
+	addb,uv		op1,pu,sh4c		;   product right 4 bits
 ;
 ;  ---- bits = 0011 ---- add op1, add 2*op1, shift 4 bits
 ;
-	addb,tr		op1,pu,sh4n-4		; add op1 & 2*op1, shift 
-	sh1add,nsv 	op1,pu,pu		;   product right 4 bits
+	addb,tr		op1,pu,sh4n-4		; add op1 & 2*op1, shift
+	sh1add,nsv	op1,pu,pu		;   product right 4 bits
 ;
 ;  ----	bits = 0100 ---- shift 2, add op1, shift 2
 ;
@@ -207,21 +207,21 @@ sh4c	addib,>		-1,cnt,mloop		; decrement count, loop if > 0
 mpyb	add,=		op2,op2,gr0		; if <> 0, back to main sect.
 	b		mpy1
 	sub		0,op2,op2		; op2 = |multiplier|
-	add,>=		op1,gr0,gr0		; if op1 < 0, invert sign, 
+	add,>=		op1,gr0,gr0		; if op1 < 0, invert sign,
 	xor		pm,sign,sign		;   for correct result
 ;
 ;	special case for multiplier = -2**31, op1 = signed multiplicand
 ;		or multiplicand = -2**31, op1 = signed multiplier
 ;
 	shd		op1,0,1,pl		; shift op1 left 31 bits
-mmax	extrs		op1,30,31,pu	
+mmax	extrs		op1,30,31,pu
 	b		signs			; negate product (if needed)
 	bb,>=,n		sign,0,fini		; test sign of product
 ;
 mpya	add,=		op1,op1,gr0		; op1 = -2**31, special case
 	b		mpy2
 	sub		0,op1,op1		; op1 = |multiplicand|
-	add,>=		op2,gr0,gr0		; if op2 < 0, invert sign, 
+	add,>=		op2,gr0,gr0		; if op2 < 0, invert sign,
 	xor		pm,sign,sign		;   for correct result
 	movb,tr		op2,op1,mmax		; use op2 as multiplicand
 	shd		op1,0,1,pl		; shift it left 31 bits
@@ -252,8 +252,8 @@ sh1	addib,>		-1,cnt,mloop		; loop if count > 0
 sh2ns	addib,tr	1,brindex,sh2sb+4	; increment index
 	extru		pu,29,30,pu		; shift unsigned
 ;
-sh2s	shd		pu,pl,2,pl		; shift with minus sign 
-	shd		pm,pu,2,pu		; 
+sh2s	shd		pu,pl,2,pl		; shift with minus sign
+	shd		pm,pu,2,pu		;
 	sub		pu,op1,pu		; subtract op1
 	shd		pu,pl,2,pl		; shift with minus sign
 	addib,tr	-1,cnt,mloop		; decrement count, loop
@@ -279,7 +279,7 @@ sh2us	extru		pu,29,30,pu		; shift 2 unsigned
 	addb,tr		op1,pu,sh2a		; add op1
 	shd		pu,pl,2,pl		; shift 2 bits
 ;
-sh2c	shd		pu,pl,2,pl	
+sh2c	shd		pu,pl,2,pl
 	shd		pc,pu,2,pu		; shift with carry
 	addb,tr		op1,pu,sh2a		; add op1 to product
 	shd		pu,pl,2,pl		; br. to sh2 to shift pu

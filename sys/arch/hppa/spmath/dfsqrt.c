@@ -1,25 +1,25 @@
-/*	$OpenBSD: dfsqrt.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
+/*	$OpenBSD: dfsqrt.c,v 1.5 2001/03/29 03:58:17 mickey Exp $	*/
 
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc.   
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
- * 
+ * Copyright 1996 1995 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  */
 /*
  * pmk1.1
@@ -27,15 +27,15 @@
 /*
  * (c) Copyright 1986 HEWLETT-PACKARD COMPANY
  *
- * To anyone who acknowledges that this file is provided "AS IS" 
+ * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *     permission to use, copy, modify, and distribute this file 
- * for any purpose is hereby granted without fee, provided that 
- * the above copyright notice and this notice appears in all 
- * copies, and that the name of Hewlett-Packard Company not be 
- * used in advertising or publicity pertaining to distribution 
- * of the software without specific, written prior permission.  
- * Hewlett-Packard Company makes no representations about the 
+ *     permission to use, copy, modify, and distribute this file
+ * for any purpose is hereby granted without fee, provided that
+ * the above copyright notice and this notice appears in all
+ * copies, and that the name of Hewlett-Packard Company not be
+ * used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
 
@@ -56,45 +56,45 @@ unsigned int *status;
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
 	register unsigned int newbitp1, newbitp2, sump1, sump2;
 	register int src_exponent;
-	register boolean guardbit = FALSE, even_exponent;
+	register int guardbit = FALSE, even_exponent;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
-        /*
-         * check source operand for NaN or infinity
-         */
-        if ((src_exponent = Dbl_exponent(srcp1)) == DBL_INFINITY_EXPONENT) {
-                /*
-                 * is signaling NaN?
-                 */
-                if (Dbl_isone_signaling(srcp1)) {
-                        /* trap if INVALIDTRAP enabled */
-                        if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
-                        /* make NaN quiet */
-                        Set_invalidflag();
-                        Dbl_set_quiet(srcp1);
-                }
-                /*
-                 * Return quiet NaN or positive infinity.
-		 *  Fall thru to negative test if negative infinity.
-                 */
-		if (Dbl_iszero_sign(srcp1) || 
-		    Dbl_isnotzero_mantissa(srcp1,srcp2)) {
-                	Dbl_copytoptr(srcp1,srcp2,dstptr);
-                	return(NOEXCEPTION);
+	/*
+	 * check source operand for NaN or infinity
+	 */
+	if ((src_exponent = Dbl_exponent(srcp1)) == DBL_INFINITY_EXPONENT) {
+		/*
+		 * is signaling NaN?
+		 */
+		if (Dbl_isone_signaling(srcp1)) {
+			/* trap if INVALIDTRAP enabled */
+			if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
+			/* make NaN quiet */
+			Set_invalidflag();
+			Dbl_set_quiet(srcp1);
 		}
-        }
+		/*
+		 * Return quiet NaN or positive infinity.
+		 *  Fall thru to negative test if negative infinity.
+		 */
+		if (Dbl_iszero_sign(srcp1) ||
+		    Dbl_isnotzero_mantissa(srcp1,srcp2)) {
+			Dbl_copytoptr(srcp1,srcp2,dstptr);
+			return(NOEXCEPTION);
+		}
+	}
 
-        /*
-         * check for zero source operand
-         */
+	/*
+	 * check for zero source operand
+	 */
 	if (Dbl_iszero_exponentmantissa(srcp1,srcp2)) {
 		Dbl_copytoptr(srcp1,srcp2,dstptr);
 		return(NOEXCEPTION);
 	}
 
-        /*
-         * check for negative source operand 
-         */
+	/*
+	 * check for negative source operand
+	 */
 	if (Dbl_isone_sign(srcp1)) {
 		/* trap if INVALIDTRAP enabled */
 		if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
@@ -126,7 +126,7 @@ unsigned int *status;
 	}
 	/*
 	 * Add comment here.  Explain following algorithm.
-	 * 
+	 *
 	 * Trust me, it works.
 	 *
 	 */
@@ -139,7 +139,7 @@ unsigned int *status;
 			Dbl_leftshiftby1(newbitp1,newbitp2);
 			/* update result */
 			Dbl_addition(resultp1,resultp2,newbitp1,newbitp2,
-			 resultp1,resultp2);  
+			 resultp1,resultp2);
 			Dbl_subtract(srcp1,srcp2,sump1,sump2,srcp1,srcp2);
 			Dbl_rightshiftby2(newbitp1,newbitp2);
 		}
@@ -167,7 +167,7 @@ unsigned int *status;
 		     Dbl_increment(resultp1,resultp2);
 		     break;
 		case ROUNDNEAREST:
-		     /* stickybit is always true, so guardbit 
+		     /* stickybit is always true, so guardbit
 		      * is enough to determine rounding */
 		     if (guardbit) {
 			    Dbl_increment(resultp1,resultp2);

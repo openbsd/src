@@ -1,25 +1,25 @@
-/*	$OpenBSD: dfmpy.c,v 1.3 1998/07/02 19:05:01 mickey Exp $	*/
+/*	$OpenBSD: dfmpy.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc.   
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
- * 
+ * Copyright 1996 1995 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  */
 /*
  * pmk1.1
@@ -27,15 +27,15 @@
 /*
  * (c) Copyright 1986 HEWLETT-PACKARD COMPANY
  *
- * To anyone who acknowledges that this file is provided "AS IS" 
+ * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *     permission to use, copy, modify, and distribute this file 
- * for any purpose is hereby granted without fee, provided that 
- * the above copyright notice and this notice appears in all 
- * copies, and that the name of Hewlett-Packard Company not be 
- * used in advertising or publicity pertaining to distribution 
- * of the software without specific, written prior permission.  
- * Hewlett-Packard Company makes no representations about the 
+ *     permission to use, copy, modify, and distribute this file
+ * for any purpose is hereby granted without fee, provided that
+ * the above copyright notice and this notice appears in all
+ * copies, and that the name of Hewlett-Packard Company not be
+ * used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
 
@@ -55,17 +55,17 @@ unsigned int *status;
 	register unsigned int opnd1p1, opnd1p2, opnd2p1, opnd2p2;
 	register unsigned int opnd3p1, opnd3p2, resultp1, resultp2;
 	register int dest_exponent, count;
-	register boolean inexact = FALSE, guardbit = FALSE, stickybit = FALSE;
-	boolean is_tiny;
+	register int inexact = FALSE, guardbit = FALSE, stickybit = FALSE;
+	int is_tiny;
 
 	Dbl_copyfromptr(srcptr1,opnd1p1,opnd1p2);
 	Dbl_copyfromptr(srcptr2,opnd2p1,opnd2p2);
 
-	/* 
-	 * set sign bit of result 
+	/*
+	 * set sign bit of result
 	 */
-	if (Dbl_sign(opnd1p1) ^ Dbl_sign(opnd2p1)) 
-		Dbl_setnegativezerop1(resultp1); 
+	if (Dbl_sign(opnd1p1) ^ Dbl_sign(opnd2p1))
+		Dbl_setnegativezerop1(resultp1);
 	else Dbl_setzerop1(resultp1);
 	/*
 	 * check first operand for NaN's or infinity
@@ -74,55 +74,55 @@ unsigned int *status;
 		if (Dbl_iszero_mantissa(opnd1p1,opnd1p2)) {
 			if (Dbl_isnotnan(opnd2p1,opnd2p2)) {
 				if (Dbl_iszero_exponentmantissa(opnd2p1,opnd2p2)) {
-					/* 
-					 * invalid since operands are infinity 
-					 * and zero 
+					/*
+					 * invalid since operands are infinity
+					 * and zero
 					 */
 					if (Is_invalidtrap_enabled())
-                                		return(INVALIDEXCEPTION);
-                                	Set_invalidflag();
-                                	Dbl_makequietnan(resultp1,resultp2);
+						return(INVALIDEXCEPTION);
+					Set_invalidflag();
+					Dbl_makequietnan(resultp1,resultp2);
 					Dbl_copytoptr(resultp1,resultp2,dstptr);
 					return(NOEXCEPTION);
 				}
 				/*
-			 	 * return infinity
-			 	 */
+				 * return infinity
+				 */
 				Dbl_setinfinity_exponentmantissa(resultp1,resultp2);
 				Dbl_copytoptr(resultp1,resultp2,dstptr);
 				return(NOEXCEPTION);
 			}
 		}
 		else {
-                	/*
-                 	 * is NaN; signaling or quiet?
-                 	 */
-                	if (Dbl_isone_signaling(opnd1p1)) {
-                        	/* trap if INVALIDTRAP enabled */
-                        	if (Is_invalidtrap_enabled()) 
-                            		return(INVALIDEXCEPTION);
-                        	/* make NaN quiet */
-                        	Set_invalidflag();
-                        	Dbl_set_quiet(opnd1p1);
-                	}
-			/* 
-			 * is second operand a signaling NaN? 
+			/*
+			 * is NaN; signaling or quiet?
+			 */
+			if (Dbl_isone_signaling(opnd1p1)) {
+				/* trap if INVALIDTRAP enabled */
+				if (Is_invalidtrap_enabled())
+					return(INVALIDEXCEPTION);
+				/* make NaN quiet */
+				Set_invalidflag();
+				Dbl_set_quiet(opnd1p1);
+			}
+			/*
+			 * is second operand a signaling NaN?
 			 */
 			else if (Dbl_is_signalingnan(opnd2p1)) {
-                        	/* trap if INVALIDTRAP enabled */
-                        	if (Is_invalidtrap_enabled())
-                            		return(INVALIDEXCEPTION);
-                        	/* make NaN quiet */
-                        	Set_invalidflag();
-                        	Dbl_set_quiet(opnd2p1);
+				/* trap if INVALIDTRAP enabled */
+				if (Is_invalidtrap_enabled())
+					return(INVALIDEXCEPTION);
+				/* make NaN quiet */
+				Set_invalidflag();
+				Dbl_set_quiet(opnd2p1);
 				Dbl_copytoptr(opnd2p1,opnd2p2,dstptr);
-                		return(NOEXCEPTION);
+				return(NOEXCEPTION);
 			}
-                	/*
-                 	 * return quiet NaN
-                 	 */
+			/*
+			 * return quiet NaN
+			 */
 			Dbl_copytoptr(opnd1p1,opnd1p2,dstptr);
-                	return(NOEXCEPTION);
+			return(NOEXCEPTION);
 		}
 	}
 	/*
@@ -133,9 +133,9 @@ unsigned int *status;
 			if (Dbl_iszero_exponentmantissa(opnd1p1,opnd1p2)) {
 				/* invalid since operands are zero & infinity */
 				if (Is_invalidtrap_enabled())
-                                	return(INVALIDEXCEPTION);
-                                Set_invalidflag();
-                                Dbl_makequietnan(opnd2p1,opnd2p2);
+					return(INVALIDEXCEPTION);
+				Set_invalidflag();
+				Dbl_makequietnan(opnd2p1,opnd2p2);
 				Dbl_copytoptr(opnd2p1,opnd2p2,dstptr);
 				return(NOEXCEPTION);
 			}
@@ -146,24 +146,24 @@ unsigned int *status;
 			Dbl_copytoptr(resultp1,resultp2,dstptr);
 			return(NOEXCEPTION);
 		}
-                /*
-                 * is NaN; signaling or quiet?
-                 */
-                if (Dbl_isone_signaling(opnd2p1)) {
-                        /* trap if INVALIDTRAP enabled */
-                        if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
-                        /* make NaN quiet */
-                        Set_invalidflag();
-                        Dbl_set_quiet(opnd2p1);
-                }
-                /*
-                 * return quiet NaN
-                 */
+		/*
+		 * is NaN; signaling or quiet?
+		 */
+		if (Dbl_isone_signaling(opnd2p1)) {
+			/* trap if INVALIDTRAP enabled */
+			if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
+			/* make NaN quiet */
+			Set_invalidflag();
+			Dbl_set_quiet(opnd2p1);
+		}
+		/*
+		 * return quiet NaN
+		 */
 		Dbl_copytoptr(opnd2p1,opnd2p2,dstptr);
-                return(NOEXCEPTION);
+		return(NOEXCEPTION);
 	}
 	/*
-	 * Generate exponent 
+	 * Generate exponent
 	 */
 	dest_exponent = Dbl_exponent(opnd1p1) + Dbl_exponent(opnd2p1) -DBL_BIAS;
 
@@ -181,9 +181,9 @@ unsigned int *status;
 			Dbl_copytoptr(resultp1,resultp2,dstptr);
 			return(NOEXCEPTION);
 		}
-                /* is denormalized, adjust exponent */
-                Dbl_clear_signexponent(opnd1p1);
-                Dbl_leftshiftby1(opnd1p1,opnd1p2);
+		/* is denormalized, adjust exponent */
+		Dbl_clear_signexponent(opnd1p1);
+		Dbl_leftshiftby1(opnd1p1,opnd1p2);
 		Dbl_normalize(opnd1p1,opnd1p2,dest_exponent);
 	}
 	/* opnd2 needs to have hidden bit set with msb in hidden bit */
@@ -197,9 +197,9 @@ unsigned int *status;
 			Dbl_copytoptr(resultp1,resultp2,dstptr);
 			return(NOEXCEPTION);
 		}
-                /* is denormalized; want to normalize */
-                Dbl_clear_signexponent(opnd2p1);
-                Dbl_leftshiftby1(opnd2p1,opnd2p2);
+		/* is denormalized; want to normalize */
+		Dbl_clear_signexponent(opnd2p1);
+		Dbl_leftshiftby1(opnd2p1,opnd2p2);
 		Dbl_normalize(opnd2p1,opnd2p2,dest_exponent);
 	}
 
@@ -208,28 +208,28 @@ unsigned int *status;
 	/* make room for guard bits */
 	Dbl_leftshiftby7(opnd2p1,opnd2p2);
 	Dbl_setzero(opnd3p1,opnd3p2);
-        /* 
-         * Four bits at a time are inspected in each loop, and a 
-         * simple shift and add multiply algorithm is used. 
-         */ 
+	/*
+	 * Four bits at a time are inspected in each loop, and a
+	 * simple shift and add multiply algorithm is used.
+	 */
 	for (count=1;count<=DBL_P;count+=4) {
 		stickybit |= Dlow4p2(opnd3p2);
 		Dbl_rightshiftby4(opnd3p1,opnd3p2);
 		if (Dbit28p2(opnd1p2)) {
-	 		/* Twoword_add should be an ADDC followed by an ADD. */
-                        Twoword_add(opnd3p1, opnd3p2, opnd2p1<<3 | opnd2p2>>29, 
+			/* Twoword_add should be an ADDC followed by an ADD. */
+			Twoword_add(opnd3p1, opnd3p2, opnd2p1<<3 | opnd2p2>>29,
 				    opnd2p2<<3);
 		}
 		if (Dbit29p2(opnd1p2)) {
-                        Twoword_add(opnd3p1, opnd3p2, opnd2p1<<2 | opnd2p2>>30, 
+			Twoword_add(opnd3p1, opnd3p2, opnd2p1<<2 | opnd2p2>>30,
 				    opnd2p2<<2);
 		}
 		if (Dbit30p2(opnd1p2)) {
-                        Twoword_add(opnd3p1, opnd3p2, opnd2p1<<1 | opnd2p2>>31,
+			Twoword_add(opnd3p1, opnd3p2, opnd2p1<<1 | opnd2p2>>31,
 				    opnd2p2<<1);
 		}
 		if (Dbit31p2(opnd1p2)) {
-                        Twoword_add(opnd3p1, opnd3p2, opnd2p1, opnd2p2);
+			Twoword_add(opnd3p1, opnd3p2, opnd2p1, opnd2p2);
 		}
 		Dbl_rightshiftby4(opnd1p1,opnd1p2);
 	}
@@ -246,7 +246,7 @@ unsigned int *status;
 		dest_exponent--;
 	}
 	/*
-	 * check for guard, sticky and inexact bits 
+	 * check for guard, sticky and inexact bits
 	 */
 	stickybit |= Dallp2(opnd3p2) << 25;
 	guardbit = (Dallp2(opnd3p2) << 24) >> 31;
@@ -255,39 +255,39 @@ unsigned int *status;
 	/* align result mantissa */
 	Dbl_rightshiftby8(opnd3p1,opnd3p2);
 
-	/* 
-	 * round result 
+	/*
+	 * round result
 	 */
 	if (inexact && (dest_exponent>0 || Is_underflowtrap_enabled())) {
 		Dbl_clear_signexponent(opnd3p1);
 		switch (Rounding_mode()) {
-			case ROUNDPLUS: 
-				if (Dbl_iszero_sign(resultp1)) 
+			case ROUNDPLUS:
+				if (Dbl_iszero_sign(resultp1))
 					Dbl_increment(opnd3p1,opnd3p2);
 				break;
-			case ROUNDMINUS: 
-				if (Dbl_isone_sign(resultp1)) 
+			case ROUNDMINUS:
+				if (Dbl_isone_sign(resultp1))
 					Dbl_increment(opnd3p1,opnd3p2);
 				break;
 			case ROUNDNEAREST:
-				if (guardbit) {
-			   	if (stickybit || Dbl_isone_lowmantissap2(opnd3p2))
-			      	Dbl_increment(opnd3p1,opnd3p2);
-				}
+				if (guardbit &&
+				    (stickybit || Dbl_isone_lowmantissap2(opnd3p2)))
+					Dbl_increment(opnd3p1,opnd3p2);
+				break;
 		}
 		if (Dbl_isone_hidden(opnd3p1)) dest_exponent++;
 	}
 	Dbl_set_mantissa(resultp1,resultp2,opnd3p1,opnd3p2);
 
-        /* 
-         * Test for overflow
-         */
+	/*
+	 * Test for overflow
+	 */
 	if (dest_exponent >= DBL_INFINITY_EXPONENT) {
-                /* trap if OVERFLOWTRAP enabled */
-                if (Is_overflowtrap_enabled()) {
-                        /*
-                         * Adjust bias of result
-                         */
+		/* trap if OVERFLOWTRAP enabled */
+		if (Is_overflowtrap_enabled()) {
+			/*
+			 * Adjust bias of result
+			 */
 			Dbl_setwrapped_exponent(resultp1,dest_exponent,ovfl);
 			Dbl_copytoptr(resultp1,resultp2,dstptr);
 			if (inexact) {
@@ -297,21 +297,21 @@ unsigned int *status;
 				Set_inexactflag();
 			}
 			return (OVERFLOWEXCEPTION);
-                }
+		}
 		inexact = TRUE;
 		Set_overflowflag();
-                /* set result to infinity or largest number */
+		/* set result to infinity or largest number */
 		Dbl_setoverflow(resultp1,resultp2);
 	}
-        /* 
-         * Test for underflow
-         */
+	/*
+	 * Test for underflow
+	 */
 	else if (dest_exponent <= 0) {
-                /* trap if UNDERFLOWTRAP enabled */
-                if (Is_underflowtrap_enabled()) {
-                        /*
-                         * Adjust bias of result
-                         */
+		/* trap if UNDERFLOWTRAP enabled */
+		if (Is_underflowtrap_enabled()) {
+			/*
+			 * Adjust bias of result
+			 */
 			Dbl_setwrapped_exponent(resultp1,dest_exponent,unfl);
 			Dbl_copytoptr(resultp1,resultp2,dstptr);
 			if (inexact) {
@@ -321,34 +321,34 @@ unsigned int *status;
 				Set_inexactflag();
 			}
 			return (UNDERFLOWEXCEPTION);
-                }
+		}
 
 		/* Determine if should set underflow flag */
 		is_tiny = TRUE;
 		if (dest_exponent == 0 && inexact) {
 			switch (Rounding_mode()) {
-			case ROUNDPLUS: 
+			case ROUNDPLUS:
 				if (Dbl_iszero_sign(resultp1)) {
 					Dbl_increment(opnd3p1,opnd3p2);
 					if (Dbl_isone_hiddenoverflow(opnd3p1))
-                			    is_tiny = FALSE;
+						is_tiny = FALSE;
 					Dbl_decrement(opnd3p1,opnd3p2);
 				}
 				break;
-			case ROUNDMINUS: 
+			case ROUNDMINUS:
 				if (Dbl_isone_sign(resultp1)) {
 					Dbl_increment(opnd3p1,opnd3p2);
 					if (Dbl_isone_hiddenoverflow(opnd3p1))
-                			    is_tiny = FALSE;
+						is_tiny = FALSE;
 					Dbl_decrement(opnd3p1,opnd3p2);
 				}
 				break;
 			case ROUNDNEAREST:
-				if (guardbit && (stickybit || 
+				if (guardbit && (stickybit ||
 				    Dbl_isone_lowmantissap2(opnd3p2))) {
-				      	Dbl_increment(opnd3p1,opnd3p2);
+					Dbl_increment(opnd3p1,opnd3p2);
 					if (Dbl_isone_hiddenoverflow(opnd3p1))
-                			    is_tiny = FALSE;
+					is_tiny = FALSE;
 					Dbl_decrement(opnd3p1,opnd3p2);
 				}
 				break;
@@ -365,24 +365,24 @@ unsigned int *status;
 		/* return zero or smallest number */
 		if (inexact) {
 			switch (Rounding_mode()) {
-			case ROUNDPLUS: 
+			case ROUNDPLUS:
 				if (Dbl_iszero_sign(resultp1)) {
 					Dbl_increment(opnd3p1,opnd3p2);
 				}
 				break;
-			case ROUNDMINUS: 
+			case ROUNDMINUS:
 				if (Dbl_isone_sign(resultp1)) {
 					Dbl_increment(opnd3p1,opnd3p2);
 				}
 				break;
 			case ROUNDNEAREST:
-				if (guardbit && (stickybit || 
+				if (guardbit && (stickybit ||
 				    Dbl_isone_lowmantissap2(opnd3p2))) {
-			      		Dbl_increment(opnd3p1,opnd3p2);
+					Dbl_increment(opnd3p1,opnd3p2);
 				}
 				break;
 			}
-                	if (is_tiny) Set_underflowflag();
+			if (is_tiny) Set_underflowflag();
 		}
 		Dbl_set_exponentmantissa(resultp1,resultp2,opnd3p1,opnd3p2);
 	}
