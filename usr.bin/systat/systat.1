@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.28 2003/06/03 02:56:17 millert Exp $
+.\"	$OpenBSD: systat.1,v 1.29 2003/07/25 06:52:07 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -237,9 +237,7 @@ twenty seconds.
 The second row reports on memory usage of all processes.
 The first column reports on the number of physical pages
 claimed by processes.
-The second column reports the number of physical pages that
-are devoted to read-only text pages.
-The third and fourth columns report the same two figures for
+The second column reports the same figure for
 virtual pages, that is, the number of pages that would be
 needed if all processes had all of their pages.
 Finally, the last column shows the number of physical pages
@@ -248,8 +246,6 @@ on the free list.
 Below the memory display is a list of the average number of processes
 (over the last refresh interval) that are runnable
 .Pq Sq r ,
-in page wait
-.Pq Sq p ,
 in disk wait other than paging
 .Pq Sq d ,
 sleeping
@@ -265,7 +261,7 @@ user (shown as
 nice (shown as
 .Ql - ) ,
 and idle time (shown as
-.Ql \  ) .
+.Ql \ \& ) .
 .Pp
 To the right of the Proc display are statistics about
 Context switches
