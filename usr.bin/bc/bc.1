@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.11 2003/11/11 09:16:53 otto Exp $
+.\"	$OpenBSD: bc.1,v 1.12 2003/11/11 19:49:40 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -84,7 +84,11 @@ means statement.
 Comments
 .Bd -unfilled -offset indent -compact
 are enclosed in /* and */
+are enclosed in # and the next newline
 .Ed
+.Pp
+The newline is not part of the line comment,
+which in itself is a non-portable extension.
 .Pp
 Names
 .Bd -unfilled -offset indent -compact
@@ -172,6 +176,22 @@ define L ( L ,..., L ) {
 	return ( E )
 }
 .Ed
+.Pp
+As a non-portable extension, the opening brace of the define statement
+may appear on the next line.
+The return statement may also appear in the following forms:
+.Pp
+.Bd -unfilled -offset indent
+return
+return ()
+return E
+.Ed
+.Pp
+The first two are equivalent to the statement
+.Dq return 0 .
+The last form is a non-portable extension.
+Not specifying a return statement is equivalent to writing
+.Dq return (0) .
 .Pp
 Functions available in the math library, which is loaded by specifying the
 .Fl l
