@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.18 2001/12/06 17:32:59 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.19 2001/12/06 20:12:00 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -715,6 +715,7 @@ struct dc_softc {
 	caddr_t			sc_listkva;
 	bus_dmamap_t		sc_rx_sparemap;
 	bus_dmamap_t		sc_tx_sparemap;
+	int			sc_hasmac;
 };
 
 #define DC_TX_POLL		0x00000001

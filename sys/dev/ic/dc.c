@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.38 2001/12/06 17:32:59 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.39 2001/12/06 20:12:00 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -946,10 +946,10 @@ void dc_setfilt_21143(sc)
 	sp = &sc->dc_ldata->dc_sbuf[0];
 	bzero((char *)sp, DC_SFRAME_LEN);
 
-	sframe->dc_data = sc->sc_listmap->dm_segs[0].ds_addr +
-	    offsetof(struct dc_list_data, dc_sbuf);
-	sframe->dc_ctl = DC_SFRAME_LEN | DC_TXCTL_SETUP | DC_TXCTL_TLINK |
-	    DC_FILTER_HASHPERF | DC_TXCTL_FINT;
+	sframe->dc_data = htole32(sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct dc_list_data, dc_sbuf));
+	sframe->dc_ctl = htole32(DC_SFRAME_LEN | DC_TXCTL_SETUP |
+	    DC_TXCTL_TLINK | DC_FILTER_HASHPERF | DC_TXCTL_FINT);
 
 	sc->dc_cdata.dc_tx_chain[i].sd_mbuf =
 	    (struct mbuf *)&sc->dc_ldata->dc_sbuf[0];
@@ -982,7 +982,7 @@ void dc_setfilt_21143(sc)
 	sp[40] = ((u_int16_t *)sc->arpcom.ac_enaddr)[1];
 	sp[41] = ((u_int16_t *)sc->arpcom.ac_enaddr)[2];
 
-	sframe->dc_status = DC_TXSTAT_OWN;
+	sframe->dc_status = htole32(DC_TXSTAT_OWN);
 	CSR_WRITE_4(sc, DC_TXSTART, 0xFFFFFFFF);
 
 	/*
@@ -1146,10 +1146,10 @@ void dc_setfilt_xircom(sc)
 	sp = &sc->dc_ldata->dc_sbuf[0];
 	bzero((char *)sp, DC_SFRAME_LEN);
 
-	sframe->dc_data = sc->sc_listmap->dm_segs[0].ds_addr +
-	    offsetof(struct dc_list_data, dc_sbuf);
-	sframe->dc_ctl = DC_SFRAME_LEN | DC_TXCTL_SETUP | DC_TXCTL_TLINK |
-	    DC_FILTER_HASHPERF | DC_TXCTL_FINT;
+	sframe->dc_data = htole32(sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct dc_list_data, dc_sbuf));
+	sframe->dc_ctl = htole32(DC_SFRAME_LEN | DC_TXCTL_SETUP |
+	    DC_TXCTL_TLINK | DC_FILTER_HASHPERF | DC_TXCTL_FINT);
 
 	sc->dc_cdata.dc_tx_chain[i].sd_mbuf =
 	    (struct mbuf *)&sc->dc_ldata->dc_sbuf[0];
@@ -1186,7 +1186,7 @@ void dc_setfilt_xircom(sc)
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_TX_ON);
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ON);
 	ifp->if_flags |= IFF_RUNNING;
-	sframe->dc_status = DC_TXSTAT_OWN;
+	sframe->dc_status = htole32(DC_TXSTAT_OWN);
 	CSR_WRITE_4(sc, DC_TXSTART, 0xFFFFFFFF);
 
 	/*
@@ -1594,6 +1594,9 @@ void dc_attach(sc)
 	/*
 	 * Get station address from the EEPROM.
 	 */
+	if (sc->sc_hasmac)
+		goto hasmac;
+
 	switch(sc->dc_type) {
 	case DC_TYPE_98713:
 	case DC_TYPE_98713A:
@@ -1625,6 +1628,7 @@ void dc_attach(sc)
 		    DC_EE_NODEADDR, 3, 0);
 		break;
 	}
+hasmac:
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct dc_list_data),
 	    PAGE_SIZE, 0, sc->sc_listseg, 1, &sc->sc_listnseg,
@@ -1821,9 +1825,9 @@ int dc_list_tx_init(sc)
 			next +=
 			    offsetof(struct dc_list_data, dc_tx_list[i + 1]);
 		cd->dc_tx_chain[i].sd_mbuf = NULL;
-		ld->dc_tx_list[i].dc_data = 0;
-		ld->dc_tx_list[i].dc_ctl = 0;
-		ld->dc_tx_list[i].dc_next = next;
+		ld->dc_tx_list[i].dc_data = htole32(0);
+		ld->dc_tx_list[i].dc_ctl = htole32(0);
+		ld->dc_tx_list[i].dc_next = htole32(next);
 	}
 
 	cd->dc_tx_prod = cd->dc_tx_cons = cd->dc_tx_cnt = 0;
@@ -1858,7 +1862,7 @@ int dc_list_rx_init(sc)
 		else
 			next +=
 			    offsetof(struct dc_list_data, dc_rx_list[i + 1]);
-		ld->dc_rx_list[i].dc_next = next;
+		ld->dc_rx_list[i].dc_next = htole32(next);
 	}
 
 	cd->dc_rx_prod = 0;
@@ -1922,11 +1926,16 @@ int dc_newbuf(sc, i, m)
 	if (sc->dc_flags & DC_PNIC_RX_BUG_WAR)
 		bzero((char *)mtod(m_new, char *), m_new->m_len);
 
+	bus_dmamap_sync(sc->sc_dmat, sc->dc_cdata.dc_rx_chain[i].sd_map, 0,
+	    sc->dc_cdata.dc_rx_chain[i].sd_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+
 	sc->dc_cdata.dc_rx_chain[i].sd_mbuf = m_new;
-	c->dc_data = sc->dc_cdata.dc_rx_chain[i].sd_map->dm_segs[0].ds_addr +
-	    sizeof(u_int64_t);
-	c->dc_ctl = DC_RXCTL_RLINK | DC_RXLEN;
-	c->dc_status = DC_RXSTAT_OWN;
+	c->dc_data = htole32(
+	    sc->dc_cdata.dc_rx_chain[i].sd_map->dm_segs[0].ds_addr +
+	    sizeof(u_int64_t));
+	c->dc_ctl = htole32(DC_RXCTL_RLINK | DC_RXLEN);
+	c->dc_status = htole32(DC_RXSTAT_OWN);
 
 	return(0);
 }
@@ -2003,7 +2012,7 @@ void dc_pnic_rx_bug_war(sc, idx)
 	/* Copy all the bytes from the bogus buffers. */
 	while (1) {
 		c = &sc->dc_ldata->dc_rx_list[i];
-		rxstat = c->dc_status;
+		rxstat = letoh32(c->dc_status);
 		m = sc->dc_cdata.dc_rx_chain[i].sd_mbuf;
 		bcopy(mtod(m, char *), ptr, DC_RXLEN);
 		ptr += DC_RXLEN;
@@ -2037,7 +2046,7 @@ void dc_pnic_rx_bug_war(sc, idx)
 	 */
 	dc_newbuf(sc, i, m);
 	bcopy(ptr, mtod(m, char *), total_len);	
-	cur_rx->dc_status = rxstat | DC_RXSTAT_FIRSTFRAG;
+	cur_rx->dc_status = htole32(rxstat | DC_RXSTAT_FIRSTFRAG);
 
 	return;
 }
@@ -2063,7 +2072,7 @@ int dc_rx_resync(sc)
 
 	for (i = 0; i < DC_RX_LIST_CNT; i++) {
 		cur_rx = &sc->dc_ldata->dc_rx_list[pos];
-		if (!(cur_rx->dc_status & DC_RXSTAT_OWN))
+		if (!(cur_rx->dc_status & htole32(DC_RXSTAT_OWN)))
 			break;
 		DC_INC(pos, DC_RX_LIST_CNT);
 	}
@@ -2094,11 +2103,12 @@ void dc_rxeof(sc)
 	ifp = &sc->arpcom.ac_if;
 	i = sc->dc_cdata.dc_rx_prod;
 
-	while(!(sc->dc_ldata->dc_rx_list[i].dc_status & DC_RXSTAT_OWN)) {
+	while(!(sc->dc_ldata->dc_rx_list[i].dc_status &
+	    htole32(DC_RXSTAT_OWN))) {
 		struct mbuf		*m0 = NULL;
 
 		cur_rx = &sc->dc_ldata->dc_rx_list[i];
-		rxstat = cur_rx->dc_status;
+		rxstat = letoh32(cur_rx->dc_status);
 		m = sc->dc_cdata.dc_rx_chain[i].sd_mbuf;
 		total_len = DC_RXBYTES(rxstat);
 
@@ -2111,7 +2121,7 @@ void dc_rxeof(sc)
 					continue;
 				}
 				dc_pnic_rx_bug_war(sc, i);
-				rxstat = cur_rx->dc_status;
+				rxstat = letoh32(cur_rx->dc_status);
 				total_len = DC_RXBYTES(rxstat);
 			}
 		}
@@ -2150,6 +2160,10 @@ void dc_rxeof(sc)
 
 		/* No errors; receive the packet. */	
 		total_len -= ETHER_CRC_LEN;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->dc_cdata.dc_rx_chain[i].sd_map,
+		    0, sc->dc_cdata.dc_rx_chain[i].sd_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
 
 		m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
 		    total_len + ETHER_ALIGN, 0, ifp, NULL);
@@ -2202,15 +2216,15 @@ void dc_txeof(sc)
 		u_int32_t		txstat;
 
 		cur_tx = &sc->dc_ldata->dc_tx_list[idx];
-		txstat = cur_tx->dc_status;
+		txstat = letoh32(cur_tx->dc_status);
 
 		if (txstat & DC_TXSTAT_OWN)
 			break;
 
-		if (!(cur_tx->dc_ctl & DC_TXCTL_LASTFRAG) ||
-		    cur_tx->dc_ctl & DC_TXCTL_SETUP) {
+		if (!(cur_tx->dc_ctl & htole32(DC_TXCTL_LASTFRAG)) ||
+		    cur_tx->dc_ctl & htole32(DC_TXCTL_SETUP)) {
 			sc->dc_cdata.dc_tx_cnt--;
-			if (cur_tx->dc_ctl & DC_TXCTL_SETUP) {
+			if (cur_tx->dc_ctl & htole32(DC_TXCTL_SETUP)) {
 				/*
 				 * Yes, the PNIC is so brain damaged
 				 * that it will sometimes generate a TX
@@ -2264,8 +2278,11 @@ void dc_txeof(sc)
 
 		ifp->if_opackets++;
 		if (sc->dc_cdata.dc_tx_chain[idx].sd_map->dm_nsegs != 0) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->dc_cdata.dc_tx_chain[idx].sd_map);
+			bus_dmamap_t map = sc->dc_cdata.dc_tx_chain[idx].sd_map;
+
+			bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, map);
 		}
 		if (sc->dc_cdata.dc_tx_chain[idx].sd_mbuf != NULL) {
 			m_freem(sc->dc_cdata.dc_tx_chain[idx].sd_mbuf);
@@ -2503,13 +2520,13 @@ int dc_encap(sc, m_head, txidx)
 		}
 
 		f = &sc->dc_ldata->dc_tx_list[frag];
-		f->dc_ctl = DC_TXCTL_TLINK | map->dm_segs[i].ds_len;
+		f->dc_ctl = htole32(DC_TXCTL_TLINK | map->dm_segs[i].ds_len);
 		if (cnt == 0) {
-			f->dc_status = 0;
-			f->dc_ctl |= DC_TXCTL_FIRSTFRAG;
+			f->dc_status = htole32(0);
+			f->dc_ctl |= htole32(DC_TXCTL_FIRSTFRAG);
 		} else
-			f->dc_status = DC_TXSTAT_OWN;
-		f->dc_data = map->dm_segs[i].ds_addr;
+			f->dc_status = htole32(DC_TXSTAT_OWN);
+		f->dc_data = htole32(map->dm_segs[i].ds_addr);
 		cur = frag;
 		DC_INC(frag, DC_TX_LIST_CNT);
 		cnt++;
@@ -2519,19 +2536,25 @@ int dc_encap(sc, m_head, txidx)
 	sc->dc_cdata.dc_tx_chain[cur].sd_mbuf = m_head;
 	sc->sc_tx_sparemap = sc->dc_cdata.dc_tx_chain[cur].sd_map;
 	sc->dc_cdata.dc_tx_chain[cur].sd_map = map;
-	sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_LASTFRAG;
+	sc->dc_ldata->dc_tx_list[cur].dc_ctl |= htole32(DC_TXCTL_LASTFRAG);
 	if (sc->dc_flags & DC_TX_INTR_FIRSTFRAG)
-		sc->dc_ldata->dc_tx_list[*txidx].dc_ctl |= DC_TXCTL_FINT;
+		sc->dc_ldata->dc_tx_list[*txidx].dc_ctl |=
+		    htole32(DC_TXCTL_FINT);
 	if (sc->dc_flags & DC_TX_INTR_ALWAYS)
-		sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_FINT;
+		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
+		    htole32(DC_TXCTL_FINT);
 	if (sc->dc_flags & DC_TX_USE_TX_INTR && sc->dc_cdata.dc_tx_cnt > 64)
-		sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_FINT;
+		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
+		    htole32(DC_TXCTL_FINT);
 #ifdef ALTQ
 	else if ((sc->dc_flags & DC_TX_USE_TX_INTR) &&
 		 TBR_IS_ENABLED(&sc->arpcom.ac_if.if_snd))
-		sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_FINT;
+		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
+		    htole32(DC_TXCTL_FINT);
 #endif
-	sc->dc_ldata->dc_tx_list[*txidx].dc_status = DC_TXSTAT_OWN;
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+	sc->dc_ldata->dc_tx_list[*txidx].dc_status = htole32(DC_TXSTAT_OWN);
 	*txidx = frag;
 
 	return(0);
@@ -3013,8 +3036,11 @@ void dc_stop(sc)
 	 */
 	for (i = 0; i < DC_RX_LIST_CNT; i++) {
 		if (sc->dc_cdata.dc_rx_chain[i].sd_map->dm_nsegs != 0) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->dc_cdata.dc_rx_chain[i].sd_map);
+			bus_dmamap_t map = sc->dc_cdata.dc_rx_chain[i].sd_map;
+
+			bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+			    BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, map);
 		}
 		if (sc->dc_cdata.dc_rx_chain[i].sd_mbuf != NULL) {
 			m_freem(sc->dc_cdata.dc_rx_chain[i].sd_mbuf);
@@ -3029,12 +3055,15 @@ void dc_stop(sc)
 	 */
 	for (i = 0; i < DC_TX_LIST_CNT; i++) {
 		if (sc->dc_cdata.dc_tx_chain[i].sd_map->dm_nsegs != 0) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->dc_cdata.dc_tx_chain[i].sd_map);
+			bus_dmamap_t map = sc->dc_cdata.dc_tx_chain[i].sd_map;
+
+			bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, map);
 		}
 		if (sc->dc_cdata.dc_tx_chain[i].sd_mbuf != NULL) {
 			if (sc->dc_ldata->dc_tx_list[i].dc_ctl &
-			    DC_TXCTL_SETUP) {
+			    htole32(DC_TXCTL_SETUP)) {
 				sc->dc_cdata.dc_tx_chain[i].sd_mbuf = NULL;
 				continue;
 			}

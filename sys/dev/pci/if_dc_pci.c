@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.20 2001/12/06 05:42:12 jason Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.21 2001/12/06 20:12:00 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -443,6 +443,14 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_pmode = DC_PMODE_SYM;
 	} else if (!sc->dc_pmode)
 		sc->dc_pmode = DC_PMODE_MII;
+
+#ifdef __sparc64__
+	{
+		extern void myetheraddr __P((u_char *));
+		myetheraddr(sc->arpcom.ac_enaddr);
+		sc->sc_hasmac = 1;
+	}
+#endif
 
 #ifdef SRM_MEDIA
 	sc->dc_srm_media = 0;
