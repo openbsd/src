@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.22 2005/02/24 19:37:19 mickey Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.23 2005/03/29 22:23:42 mickey Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -616,7 +616,7 @@ print_ccd_info(struct ccd_softc *cs, kvm_t *kd)
 	memset(cip, 0, readsize);
 
 	/* Dump out softc information. */
-	printf("%s\t\t%d\t0x%x\t", cs->sc_xname, cs->sc_ileave,
+	printf("%s\t%d\t0x%x\t", cs->sc_xname, cs->sc_ileave,
 	    cs->sc_cflags & CCDF_USERMASK);
 	fflush(stdout);
 
