@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vnops.c,v 1.11 1998/08/06 19:34:51 csapuntz Exp $	*/
+/*	$OpenBSD: union_vnops.c,v 1.12 1998/08/18 07:08:29 deraadt Exp $	*/
 /*	$NetBSD: union_vnops.c,v 1.30.4.1 1996/05/25 22:10:14 jtc Exp $	*/
 
 /*
@@ -1644,14 +1644,14 @@ start:
 			error = vn_lock(un->un_uppervp, flags, p);
 			if (error)
 				return (error);
- 			un->un_flags |= UN_ULOCK;
+			un->un_flags |= UN_ULOCK;
 		}
 #ifdef DIAGNOSTIC
 		if (un->un_flags & UN_KLOCK) {
 			vprint("union: dangling klock", vp);
 			panic("union: dangling upper lock (%lx)", vp);
 		}
- #endif
+#endif
  	}
 
 	if (un->un_flags & UN_LOCKED) {
