@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.51 2002/04/11 05:40:51 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.52 2002/04/26 17:08:36 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -389,7 +389,7 @@ bootpath_build()
 	 * that were given after the boot command.  On SS2s, pv_v0bootargs
 	 * is NULL but *promvec->pv_v2bootargs.v2_bootargs points to
 	 * "vmunix -s" or whatever.
-	 * XXX	DO THIS BEFORE pmap_boostrap?
+	 * XXX	DO THIS BEFORE pmap_bootstrap?
 	 */
 	bzero(bootpath, sizeof(bootpath));
 	bp = bootpath;
@@ -891,7 +891,6 @@ cpu_configure()
 	setroot();
 	swapconf();
 	cold = 0;
-
 
 	/*
 	 * Re-zero proc0's user area, to nullify the effect of the
