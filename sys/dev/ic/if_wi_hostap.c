@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.5 2002/03/30 22:40:26 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.6 2002/04/01 20:57:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -158,8 +158,8 @@ put_tlv(caddr_t *ppkt, u_int8_t id, void *src, u_int8_t len)
 static int
 put_rates(caddr_t *ppkt, u_int16_t rates)
 {
-	int len = 0;
 	u_int8_t ratebuf[8];
+	int len = 0;
 
 	if (rates & WI_SUPPRATES_1M)
 		ratebuf[len++] = 0x82;
@@ -930,19 +930,23 @@ wihap_check_tx(struct wihap_info *whi, u_int8_t addr[], u_int8_t *txrate)
 {
 	struct wihap_sta_info *sta;
 	static u_int8_t txratetable[] = { 10, 20, 55, 110 };
+	int s;
 
 	if (addr[0] & 0x01) {
 		*txrate = 0; /* XXX: multicast rate? */
 		return(1);
 	}
 
+	s = splsoftclock();
 	sta = wihap_sta_find(whi, addr);
 	if (sta != NULL && (sta->flags & WI_SIFLAGS_ASSOC)) {
 		/* Keep it active. */
 		timeout_add(&sta->tmo, hz * whi->inactivity_time);
 		*txrate = txratetable[sta->tx_curr_rate];
+		splx(s);
 		return(1);
 	}
+	spx(s);
 
 	return(0);
 }
