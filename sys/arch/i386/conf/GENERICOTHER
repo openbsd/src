@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERICOTHER,v 1.9 1996/05/09 20:50:04 hvozda Exp $
-#	$NetBSD: GENERICOTHER,v 1.19 1996/04/25 20:14:21 scottr Exp $
+#	$OpenBSD: GENERICOTHER,v 1.10 1996/05/10 12:44:25 deraadt Exp $
+#	$NetBSD: GENERICOTHER,v 1.20 1996/05/07 01:00:05 thorpej Exp $
 #
 #	GENERICOTHER -- everything that's currently supported, except
 #	             Adaptec SCSI controllers.
@@ -180,6 +180,7 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
 ep*     at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
+fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 
 pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver

@@ -1,5 +1,5 @@
-#	$OpenBSD: INSTADP,v 1.8 1996/05/09 20:50:03 hvozda Exp $
-#	$NetBSD: INSTADP,v 1.14 1996/04/25 20:14:23 scottr Exp $
+#	$OpenBSD: INSTADP,v 1.9 1996/05/10 12:44:26 deraadt Exp $
+#	$NetBSD: INSTADP,v 1.15 1996/05/07 01:00:12 thorpej Exp $
 #
 #	INSTADP -- like GENERICADP.  This supports only Adaptec SCSI
 #                     adapters.  This kernel is GENERICADP with lines
@@ -136,6 +136,7 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
 ep*     at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
+fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP

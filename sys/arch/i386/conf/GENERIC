@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.12 1996/05/09 20:50:03 hvozda Exp $
-#	$NetBSD: GENERIC,v 1.44 1996/04/25 20:14:13 scottr Exp $
+#	$OpenBSD: GENERIC,v 1.13 1996/05/10 12:44:24 deraadt Exp $
+#	$NetBSD: GENERIC,v 1.45 1996/05/07 00:59:53 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -190,6 +190,7 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
 ep*     at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
+fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 
 pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver

@@ -1,5 +1,5 @@
-#	$OpenBSD: INSTOTHER,v 1.6 1996/05/09 20:50:02 hvozda Exp $
-#	$NetBSD: INSTOTHER,v 1.13 1996/04/25 20:14:26 scottr Exp $
+#	$OpenBSD: INSTOTHER,v 1.7 1996/05/10 12:44:26 deraadt Exp $
+#	$NetBSD: INSTOTHER,v 1.14 1996/05/07 01:00:21 thorpej Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
