@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.15 2002/06/21 06:48:18 deraadt Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.16 2002/06/22 16:41:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -110,15 +110,15 @@ struct wi_softc	{
 };
 
 /* Values for wi_flags. */
-#define WI_FLAGS_ATTACHED		0x01
-#define WI_FLAGS_INITIALIZED		0x02
-#define WI_FLAGS_HAS_WEP		0x04
-#define WI_FLAGS_HAS_IBSS		0x08
-#define WI_FLAGS_HAS_CREATE_IBSS	0x10
-#define WI_FLAGS_HAS_MOR		0x20
-#define WI_FLAGS_HAS_ROAMING		0x30
-#define WI_FLAGS_HAS_DIVERSITY		0x40
-#define WI_FLAGS_HAS_HOSTAP		0x80
+#define WI_FLAGS_ATTACHED		0x0001
+#define WI_FLAGS_INITIALIZED		0x0002
+#define WI_FLAGS_HAS_WEP		0x0004
+#define WI_FLAGS_HAS_IBSS		0x0008
+#define WI_FLAGS_HAS_CREATE_IBSS	0x0010
+#define WI_FLAGS_HAS_MOR		0x0020
+#define WI_FLAGS_HAS_ROAMING		0x0040
+#define WI_FLAGS_HAS_DIVERSITY		0x0080
+#define WI_FLAGS_HAS_HOSTAP		0x0100
 
 /* Firmware types */
 #define WI_LUCENT	0
