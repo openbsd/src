@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.177 2000/04/13 18:25:35 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.178 2000/04/14 15:59:41 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -48,7 +48,6 @@ option		EISAVERBOSE
 #option		PCMCIAVERBOSE
 #option		USBVERBOSE
 
-#option	BIOS32,PCIBIOS,PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -64,11 +63,14 @@ pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
 
-# CardBus bus support
+# CardBus bus support (also see NOTE below)
 #cardbus*	at cardslot?
 #pcmcia*		at cardslot?
 #cbb*		at pci? dev ? function ?
 #cardslot*	at cbb?
+
+# NOTE: You may need to uncomment the following line for CardBus to work
+#option	BIOS32,PCIBIOS,PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP
 
 # PCI USB Controllers
 #uhci*	at pci?				# Universal Host Controller (Intel)
