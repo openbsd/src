@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.32 2002/03/14 03:16:10 millert Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.33 2002/06/06 21:34:16 provos Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -88,10 +88,14 @@ void	bpf_attachd(struct bpf_d *, struct bpf_if *);
 void	bpf_detachd(struct bpf_d *);
 int	bpf_setif(struct bpf_d *, struct ifreq *);
 int	bpfselect(dev_t, int, struct proc *);
+int	bpfkqfilter(dev_t, struct knote *);
 static __inline void bpf_wakeup(struct bpf_d *);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
 	    void (*)(const void *, void *, size_t));
 void	bpf_reset_d(struct bpf_d *);
+
+void	filt_bpfrdetach(struct knote *);
+int	filt_bpfread(struct knote *, long);
 
 int
 bpf_movein(uio, linktype, mp, sockp)
@@ -476,6 +480,7 @@ bpf_wakeup(d)
 	selwakeup(&d->bd_sel);
 	/* XXX */
 	d->bd_sel.si_selpid = 0;
+	KNOTE(&d->bd_sel.si_note, 0);
 }
 
 int
@@ -965,6 +970,61 @@ bpfselect(dev, rw, p)
 	selrecord(p, &d->bd_sel);
 	splx(s);
 	return (0);
+}
+
+struct filterops bpfread_filtops =
+	{ 1, NULL, filt_bpfrdetach, filt_bpfread };
+
+int
+bpfkqfilter(dev_t dev,struct knote *kn)
+{
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &d->bd_sel.si_note;
+		kn->kn_fop = &bpfread_filtops;
+		break;
+	case EVFILT_WRITE:
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (caddr_t)((u_long)dev);
+
+	s = splimp();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
+void
+filt_bpfrdetach(struct knote *kn)
+{
+	dev_t dev = (dev_t)((u_long)kn->kn_hook);
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	int s = splimp();
+
+	SLIST_REMOVE(&d->bd_sel.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_bpfread(struct knote *kn, long hint)
+{
+	dev_t dev = (dev_t)((u_long)kn->kn_hook);
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	int res, s;
+
+	kn->kn_data = 0;
+
+	s = splimp();
+	res = d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0);
+	splx(s);
+	return (res);
 }
 
 /*
