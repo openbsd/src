@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 1996/05/30 09:30:09 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 1996/05/30 10:17:53 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1194,16 +1194,6 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
-
-#ifdef USER_LDT
-#define MAXPROC ((MAXGDTSIZ-NGDT)/2)
-#else
-#define MAXPROC (MAXGDTSIZ-NGDT)
-#endif
-	if (maxproc > MAXPROC) {
-		printf("reducing maxproc to %d to fit into gdt\n", MAXPROC);
-		maxproc = MAXPROC;
-	}
 
 #ifdef DDB
 	ddb_init();
