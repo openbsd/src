@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.7 1997/06/04 05:44:28 mickey Exp $
+.\"	$OpenBSD: sysctl.8,v 1.8 1997/06/13 13:50:59 mickey Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -152,6 +152,9 @@ privilege can change the value.
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
 .It net.inet.tcp.keepinittime	integer	yes
+.It net.inet.tcp.keepidle	integer	yes
+.It net.inet.tcp.keepintvl	integer	yes
+.It net.inet.tcp.slowhz	integer	no
 .It net.inet.udp.checksum	integer	yes
 .It net.ipx.ipx.recvspace	integer	yes
 .It net.ipx.ipx.sendspace	integer	yes
