@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.11 1998/08/21 13:55:23 kstailey Exp $	*/
+/*	$OpenBSD: machine.c,v 1.12 1998/09/20 05:58:54 niklas Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -596,7 +596,7 @@ static unsigned char sorted_state[] =
 
 
 #define ORDERKEY_PCTCPU \
-	if (lresult = PP(p2, p_pctcpu) - PP(p1, p_pctcpu), \
+	if (lresult = (pctcpu)PP(p2, p_pctcpu) - (pctcpu)PP(p1, p_pctcpu), \
            (result = lresult > 0 ? 1 : lresult < 0 ? -1 : 0) == 0)
 #define ORDERKEY_CPUTIME \
 	if ((result = PP(p2, p_rtime.tv_sec) - PP(p1, p_rtime.tv_sec)) == 0) \
