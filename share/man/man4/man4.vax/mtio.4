@@ -1,3 +1,4 @@
+.\"	$NetBSD: mtio.4,v 1.3 1996/01/07 20:11:35 ragge Exp $
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -30,75 +31,69 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mtio.4	6.5 (Berkeley) 3/27/91
-.\"	$Id: mtio.4,v 1.1.1.1 1995/10/18 08:44:35 deraadt Exp $
 .\"
-.Dd March 27, 1991
+.Dd January 7, 1996
 .Dt MTIO 4 vax
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm mtio
 .Nd
-.Tn UNIX
+.Tn NetBSD
 magtape interface
 .Sh DESCRIPTION
-The special files
-named
-.Pa /dev/mt0
-and
-.Pa /dev/rmt0
-through
-.Pa /dev/mt23
-and
-.Pa /dev/rmt23
-refer to
-.Tn UNIX
-magtape drives,
-which may be on the
+Each tape subsystem has a couple of special devices associated with it.
+The magtape devices may be on the
 .Tn MASSBUS
 using the
 .Tn TM03
-formatter
+formatter,
 .Xr ht 4 ,
 or
 .Tn TM78
 formatter,
 .Xr mt 4 ,
 or on the
-.Tn UNIBUS
+.Tn UNIBUS/QBUS
 using either the
 .Tn TM11
 or
-.Tn TS11
-formatters
+.Tn TE10
+formatters,
 .Xr tm 4 ,
 .Tn TU45
 compatible formatters,
 .Xr ut 4 ,
 or
+.Tn TS11/TSV05
+tape formatters,
 .Xr ts 4 .
 These devices are typical tape block devices,
 see
 .Xr physio 4 .
 .Pp
-The following table of the converntional device names
+The conventional device letters/numbers
 is applicable to any of the transport/controller pairs.
 (But note that only 1600
 .Tn BPI
 is available with the
-.Tn TS11 . )
-.Bl -column "no-rewindxxx" "or lowest densityxx" "or lowest densityxx" "or lowest densityxx" -offset indent
-	      800 BPI	      1600 BPI	      6500 BPI
-.Em	or lowest density	or second density	or third density
-
-Rewind	     mt0/rmt0	      mt8/rmt8	       mt16/rmt16
-Rewind	     mt1/rmt1	      mt9/rmt9	       mt17/rmt17
-Rewind	     mt2/rmt2	      mt10/rmt10	       mt18/rmt18
-Rewind	     mt3/rmt3	      mt11/rmt11	       mt19/rmt19
-No-rewind	    nmt4/nrmt4	    nmt12/nrmt12	    nmt20/nrmt20
-No-rewind	    nmt5/nrmt5	    nmt13/nrmt13	    nmt21/nrmt21
-No-rewind	    nmt6/nrmt6	    nmt14/nrmt14	    nmt22/nrmt22
-No-rewind	    nmt7/nrmt7	    nmt15/nrmt15	    nmt23/nrmt32
-.El
+.Tn TS11 ,
+and that 800
+.Tn BPI
+is not applicable to
+.Tn TM78 . )
+.Pp
+When the device last number is between
+.Em 0-7
+the device will operate at 800
+.Tn BPI
+(or its lowest density), between 
+.Em 8-15
+it will operate at 1600
+.Tn BPI
+(or its second density), and between
+.Em 16-23
+it will operate at 6250
+.Tn BPI .
 .Pp
 The rewind devices automatically rewind
 when the last requested read, write or seek has finished, or the end of the tape
@@ -230,6 +225,3 @@ manual appeared in
 .Bx 4.2 .
 .Sh BUGS
 The status should be returned in a device independent format.
-.Pp
-The special file naming should be redone in a more consistent and
-understandable manner.
