@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.12 2004/12/08 21:11:07 djm Exp $	*/
+/*	$OpenBSD: diff.c,v 1.13 2004/12/14 21:40:39 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -498,6 +498,11 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 			cvs_senddir(root, cfp);
 		}
 
+		return (0);
+	}
+
+	if (cfp->cf_cvstat == CVS_FST_LOST) {
+		cvs_log(LP_WARN, "cannot find file %s", CVS_FILE_NAME(cfp));
 		return (0);
 	}
 
