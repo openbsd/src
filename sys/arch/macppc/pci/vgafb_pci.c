@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.13 2003/10/15 23:00:57 drahn Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.14 2003/11/12 20:08:31 miod Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -61,7 +61,6 @@ struct vgafb_pci_softc {
  
 	pcitag_t sc_pcitag;		/* PCI tag, in case we need it. */
 	struct vgafb_config *sc_vc;	/* VGA configuration */ 
-	int nscreens;
 };
 
 int vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
@@ -402,6 +401,7 @@ vgafb_pci_console(bus_space_tag_t iot, u_int32_t ioaddr, u_int32_t iosize,
 		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
 
 	vgafb_cnattach(iot, memt, pc, bus, device, function);
+	vc->nscreens++;
 }
 
 int
@@ -424,31 +424,30 @@ int
 vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *attrp)
 {
-	struct vgafb_pci_softc *sc = v;
+	struct vgafb_config *vc = v;
 	long defattr;
 
-	if (sc->nscreens > 0)
+	if (vc->nscreens > 0)
 		return (ENOMEM);
   
-	*cookiep = &sc->sc_vc->dc_rinfo; /* one and only for now */
+	*cookiep = &vc->dc_rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	sc->sc_vc->dc_rinfo.ri_ops.alloc_attr(&sc->sc_vc->dc_rinfo,
-	    0, 0, 0, &defattr);
+	vc->dc_rinfo.ri_ops.alloc_attr(&vc->dc_rinfo, 0, 0, 0, &defattr);
 	*attrp = defattr;
-	sc->nscreens++; 
+	vc->nscreens++; 
 	return (0);
 }
   
 void
 vgafb_free_screen(void *v, void *cookie)
 {
-	struct vgafb_pci_softc *sc = v;
+	struct vgafb_config *vc = v;
 
-	if (sc->sc_vc == &vgafb_pci_console_vc)
+	if (vc == &vgafb_pci_console_vc)
 		panic("vgafb_free_screen: console");
 
-	sc->nscreens--;
+	vc->nscreens--;
 }
         
 int
