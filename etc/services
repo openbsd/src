@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.20 1999/08/08 21:35:47 d Exp $
+#	$OpenBSD: services,v 1.21 1999/09/21 07:38:26 jakob Exp $
 #
 # Network services, Internet style
 #
@@ -84,8 +84,8 @@ netbios-dgm	138/tcp				# NETBIOS Datagram Service
 netbios-dgm	138/udp
 netbios-ssn	139/tcp				# NETBIOS session service
 netbios-ssn	139/udp
-imap2		143/tcp				# Interim Mail Access Proto v2
-imap2		143/udp
+imap		143/tcp		imap2 		# Internet Message Access Proto
+imap		143/udp		imap2 		# Internet Message Access Proto
 bftp		152/tcp				# Background File Transfer Proto
 snmp		161/udp				# Simple Net Mgmt Proto
 snmp-trap	162/udp		snmptrap	# Traps for SNMP
