@@ -1,4 +1,4 @@
-/*	$OpenBSD: rz.c,v 1.16 1998/10/04 20:05:51 millert Exp $	*/
+/*	$OpenBSD: rz.c,v 1.17 1998/10/04 20:40:08 millert Exp $	*/
 /*	$NetBSD: rz.c,v 1.38 1998/05/08 00:05:19 simonb Exp $	*/
 
 /*
@@ -117,35 +117,6 @@ struct	size {
 	u_long	strtblk;
 	u_long	nblocks;
 #define RZ_END	((u_long) -1)
-};
-
-
-/*
- * Since the SCSI standard tends to hide the disk structure, we define
- * partitions in terms of DEV_BSIZE blocks.  The default partition table
- * (for an unlabeled disk) reserves 8K for a boot area, has an 8 meg
- * root and 32 meg of swap.  The rest of the space on the drive goes in
- * the G partition.  As usual, the C partition covers the entire disk
- * (including the boot area).
- */
-static struct size rzdefaultpart[MAXPARTITIONS] = {
-	/*   Start     Size         Partition */
-	{       0,   65536 },	/* A -- 32Mbyte root */
-	{   63356,  131072 },	/* B -- 64Mbyte swap */
-	{       0,  RZ_END },	/* C -- entire disk */
-	{  196608,   16384 },	/* D -- 8meg for var or miniroots */
-	{  212992,  409600 },	/* E -- /usr */
-	{  622592,  409600 },	/* F -- /home, alternate /usr */
-	{ 1032912,  RZ_END },	/* G -- F to end of disk */
-	{  196608,  RZ_END },	/* H -- B to end of disk */
-	{	0,	 0 },	/* I */
-	{	0,	 0 },	/* J */
-	{	0,	 0 },	/* K */
-	{	0,	 0 },	/* L */
-	{	0,	 0 },	/* M */
-	{	0,	 0 },	/* N */
-	{	0,	 0 },	/* O */
-	{	0,	 0 }	/* P */
 };
 
 
@@ -1511,33 +1482,19 @@ rzgetdefaultlabel(sc, lp)
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
-	lp->d_npartitions = MAXPARTITIONS;
 
 	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
 	lp->d_bbsize = BBSIZE;
 	lp->d_sbsize = SBSIZE;
 
-	/* Set default partitions based on table in rzdefaultpart */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		register struct partition *pp = & lp->d_partitions[i];
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit *
+	    (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
 
-		pp->p_size = rzdefaultpart[i].nblocks;
-		pp->p_offset = rzdefaultpart[i].strtblk;
-
-		/* Change RZ_END to be end-of-disk */
-		if (pp->p_size == RZ_END)
-			pp->p_size = sc->params.disksize - pp->p_offset;
-
-		/*
-		 * Clip end of partition against end of disk.
-		 * If both start and end beyond end of disk, set to zero.
-		 */
-		if (pp->p_offset > sc->params.disksize) {
-			pp->p_size = 0;
-			pp->p_offset = 0;
-		} else if ((pp->p_size + pp->p_offset) > sc->params.disksize)
-			pp->p_size = sc->params.disksize - pp->p_offset;
-	}
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
 }
 
