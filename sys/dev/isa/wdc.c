@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.30 1998/07/07 19:15:31 deraadt Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.31 1998/07/09 05:37:21 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -252,14 +252,11 @@ wdcprobe(parent, match, aux)
 
 	ia->ia_iosize = 8;
 	ia->ia_msize = 0;
-#ifdef notyet
-	/* when we are ready for it... */
-	bus_space_unmap(iot, ioh, 8);
-#endif
 	return 1;
 
 nomatch:
-	bus_space_unmap(iot, ioh, 8);
+	if (!IS_ISAPNP(parent))
+		bus_space_unmap(iot, ioh, 8);
 	return 0;
 }
 
