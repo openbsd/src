@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.30 2001/12/14 03:42:16 nate Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.31 2002/01/02 06:07:41 nordin Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -84,12 +84,6 @@
  * If the statistics clock is running fast, it must be divided by the ratio
  * profhz/stathz for statistics.  (For profiling, every tick counts.)
  */
-
-/*
- * TODO:
- *	allocate more timeout table slots when table overflows.
- */
-
 
 #ifdef NTP	/* NTP phase-locked loop in kernel */
 /*
@@ -915,7 +909,7 @@ statclock(frame)
  * For uncompensated quartz crystal oscillatores and nominal update
  * intervals less than 1024 s, operation should be in phase-lock mode
  * (STA_FLL = 0), where the loop is disciplined to phase. For update
- * intervals greater than thiss, operation should be in frequency-lock
+ * intervals greater than this, operation should be in frequency-lock
  * mode (STA_FLL = 1), where the loop is disciplined to frequency.
  *
  * Note: splclock() is in effect.
