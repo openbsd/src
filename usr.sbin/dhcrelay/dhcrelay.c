@@ -175,7 +175,6 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 {
 	struct server_list	*sp;
 	struct sockaddr_in	 to;
-	struct interface_info	*out;
 	struct hardware		 hto;
 
 	if (packet->hlen > sizeof packet->chaddr) {
@@ -203,27 +202,11 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		memcpy(hto.haddr, packet->chaddr, hto.hlen);
 		hto.htype = packet->htype;
 
-/* XXX broken */
-		/* Find the interface that corresponds to the giaddr
-		   in the packet. */
-		for (out = interfaces; out; out = out->next) {
-			if (!memcmp (&out->primary_address,
-				     &packet->giaddr,
-				     sizeof packet->giaddr))
-				break;
-		}
-		if (!out) {
-			warn("packet to bogus giaddr %s.",
-			    inet_ntoa(packet->giaddr));
-			return;
-		}
-
-		if (send_packet(out, NULL, packet, length, out->primary_address,
-		    &to, &hto) != -1)
+		if (send_packet(interfaces, NULL, packet, length,
+		    interfaces->primary_address, &to, &hto) != -1)
 			debug("forwarded BOOTREPLY for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
-			    packet->chaddr), inet_ntoa (to.sin_addr));
-/* XXX */
+			    packet->chaddr), inet_ntoa(to.sin_addr));
 		return;
 	}
 
