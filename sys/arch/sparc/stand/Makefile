@@ -1,6 +1,6 @@
 #	$NetBSD: Makefile,v 1.10 1995/10/09 23:25:54 pk Exp $
 
-SUBDIR= boot bootxx installboot
+SUBDIR= zboot boot bootxx installboot
 
 ### find out what to use for libkern and libsa
 SAREL=

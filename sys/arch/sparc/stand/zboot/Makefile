@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
+#	$OpenBSD: Makefile,v 1.1 1997/05/29 08:22:07 grr Exp $
 
 S=	${.CURDIR}/../../../..
 R=	..
 .PATH:	${.CURDIR}/${R}
-PROG=	boot
+PROG=	zboot
 SRCS=	srt0.S boot.c promdev.c dvma.c bootnet.c netif_sun.c conf.c version.c
 INSTALL_STRIP=
 NOMAN=	1
