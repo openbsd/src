@@ -1,4 +1,4 @@
-/*	$OpenBSD: klogin.c,v 1.1 2000/12/12 02:31:38 millert Exp $	*/
+/*	$OpenBSD: klogin.c,v 1.1 2001/06/24 23:26:22 hin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: klogin.c,v 1.1 2000/12/12 02:31:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: klogin.c,v 1.1 2001/06/24 23:26:22 hin Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS

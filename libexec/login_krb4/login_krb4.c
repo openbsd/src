@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_kerberos.c,v 1.1 2000/12/12 02:31:38 millert Exp $	*/
+/*	$OpenBSD: login_krb4.c,v 1.1 2001/06/24 23:26:23 hin Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
