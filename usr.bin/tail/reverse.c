@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.5 1999/04/29 04:18:43 mickey Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.6 1999/08/04 18:24:10 mickey Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.5 1999/04/29 04:18:43 mickey Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.6 1999/08/04 18:24:10 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -126,8 +126,8 @@ r_reg(fp, style, off, sbp)
 	if (size > SIZE_T_MAX)
 		return (1);
 
-	if ((start = mmap(NULL, (size_t)size, PROT_READ, 0, fileno(fp),
-	    (off_t)0)) == (caddr_t)-1)
+	if ((start = mmap(NULL, (size_t)size, PROT_READ, MAP_PRIVATE,
+	    fileno(fp), (off_t)0)) == (caddr_t)-1)
 		return (1);
 	p = start + size - 1;
 

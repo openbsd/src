@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.21 1999/05/29 20:17:35 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.22 1999/08/04 18:24:09 mickey Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.21 1999/05/29 20:17:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.22 1999/08/04 18:24:09 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -522,11 +522,11 @@ compare(from_fd, from_name, from_len, to_fd, to_name, to_len)
 		length = MIN(remainder, 8 * 1048576);
 		remainder -= length;
 
-		if ((p1 = mmap(NULL, length, PROT_READ, 0, from_fd, from_off))
-		     == MAP_FAILED)
+		if ((p1 = mmap(NULL, length, PROT_READ, MAP_PRIVATE,
+		    from_fd, from_off)) == MAP_FAILED)
 			err(EX_OSERR, "%s", from_name);
-		if ((p2 = mmap(NULL, length, PROT_READ, 0, to_fd, to_off))
-		     == MAP_FAILED)
+		if ((p2 = mmap(NULL, length, PROT_READ, MAP_PRIVATE,
+		    to_fd, to_off)) == MAP_FAILED)
 			err(EX_OSERR, "%s", to_name);
 
 		dfound = memcmp(p1, p2, length);
