@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.36 2001/06/25 03:20:20 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.37 2001/06/28 02:58:57 kjc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,6 +70,7 @@
 #	tun*	network tunnel driver
 #	*random	inkernal random data source
 #	xfs*	XFS filesystem devices
+#	altq	ALTQ control interface
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
@@ -188,7 +189,7 @@ all)
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this bwtwo0 cgtwo0 cgfour0
 	sh $this random local
-	sh $this xfs0
+	sh $this xfs0 altq
 	;;
 
 ramdisk)
@@ -480,6 +481,19 @@ ss*)
 #	backwards compatibility with older PINTs
 	rm -f scan$unit
 	ln -s ss$unit scan$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 85 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)

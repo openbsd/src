@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.49 2001/06/25 03:19:47 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.50 2001/06/28 02:58:53 kjc Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -91,6 +91,7 @@
 #	*random	inkernal random data source
 #	audio*	one unit of the audio device. Unit 0 is custom chip audio.
 #	joy*	amiga joysticks
+#	altq	ALTQ control interface
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
@@ -169,7 +170,7 @@ all)
 	sh $this view00 view01 view02 view03 view04 view05 pty0 pty1
 	sh $this lpa0 lpa1 lpt0 lpt1 lpt2
 	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 ch0 uk0 uk1
-	sh $this pf tun0 tun1 par0 lkm ss0 random audio0 xfs0 local
+	sh $this pf tun0 tun1 par0 lkm ss0 random audio0 xfs0 altq local
 	;;
 
 floppy|ramdisk)
@@ -674,6 +675,19 @@ xfs*)
 	mknod xfs$unit c 51 $unit 
 	chmod 600 xfs$unit 
 	chown root.wheel xfs$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 52 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)

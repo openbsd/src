@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.30 2001/06/25 03:20:24 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.31 2001/06/28 02:58:57 kjc Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -62,6 +62,7 @@
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
 #	*random	Random number generator
+#	altq	ALTQ control interface
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
@@ -71,7 +72,7 @@ do
 case $i in
 
 all)
-	sh $0 std fd vnd0 ccd0 pty0 pty1 lkm random
+	sh $0 std fd vnd0 ccd0 pty0 pty1 lkm random altq
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 pf tun0 tun1
 	sh $0 mt0 mt1 ts0 ts1 st0 st1 uk0 ss0 cd0 vt0
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 hd0 hd1 hd2
@@ -623,6 +624,19 @@ ttyv0)
 	if [ ! -f ttyqe ]; then sh ./$0 pty1; fi
 	mv ttyqf ttyv0
 	mv ptyqf ptyv0
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 75 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)

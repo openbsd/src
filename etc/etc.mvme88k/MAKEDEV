@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.13 2001/06/25 03:20:11 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.14 2001/06/28 02:58:55 kjc Exp $
 #	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:23 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -56,6 +56,7 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
+#	altq	ALTQ control interface
 #
 # Machine specific devices:
 #	sram	static ram available on some models.
@@ -85,7 +86,7 @@ all)
 	#sh $this lp0 lptwo0
 	sh $this random
 	sh $this uk0 uk1
-	sh $this ss0
+	sh $this ss0 altq
 	;;
 
 std)
@@ -345,6 +346,19 @@ lkm)
 	mknod lkm c 24 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 52 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)

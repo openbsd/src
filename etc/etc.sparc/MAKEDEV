@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.68 2001/06/25 03:20:17 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.69 2001/06/28 02:58:56 kjc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,6 +86,7 @@
 #	spif*	spif card (makes 8 tty and 1 bpp)
 #	bpp*	bpp
 #	xfs*	XFS filesystem devices
+#	altq	ALTQ control interface
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
@@ -208,7 +209,7 @@ all)
 	sh $this bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
 	sh $this cgeight0 cgfourteen0 tcx0
 	sh $this lkm random local
-	sh $this xfs0
+	sh $this xfs0 altq
 	;;
 
 floppy)
@@ -732,6 +733,19 @@ ss*)
 #	backwards compatibility with older PINTs
 	rm -f scan$unit
 	ln -s ss$unit scan$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 125 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.58 2001/06/25 18:24:28 nate Exp $
+#	$OpenBSD: MAKEDEV,v 1.59 2001/06/28 02:58:52 kjc Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -83,6 +83,7 @@
 #	*random	inkernal random data source
 #	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
+#	altq	ALTQ control interface
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
@@ -162,7 +163,7 @@ all)
 	sh $this mmclock lpa0 lpt0 random
 	sh $this uk0 uk1 ss0 ss1
 	sh $this ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
-	sh $this local xfs0
+	sh $this local xfs0 altq
 	sh $this usbs wscons ttyCcfg 
 	;;
 
@@ -585,6 +586,19 @@ xfs*)
 	mknod xfs$unit c 51 $unit 
 	chmod 600 xfs$unit 
 	chown root.wheel xfs$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 53 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)

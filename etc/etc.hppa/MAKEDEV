@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.6 2001/06/25 03:19:57 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.7 2001/06/28 02:58:54 kjc Exp $
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
@@ -31,6 +31,7 @@
 #	lkm	loadable kernel modules interface
 #	*random	inkernel random number generator
 #	xfs*	XFS filesystem devices
+#	altq	ALTQ control interface
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -105,7 +106,7 @@ all)
 	sh MAKEDEV sd0 sd1 sd2 rd0 rd1 pty0 vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV hil com0 com1 com2 com3 
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh MAKEDEV pf tun0 tun1 tun2 tun3 lkm random xfs0
+	sh MAKEDEV pf tun0 tun1 tun2 tun3 lkm random xfs0 altq
 	sh MAKEDEV local
 	;;
 
@@ -326,6 +327,19 @@ xfs*)
 	mknod xfs$unit c 31 $unit 
 	chmod 600 xfs$unit 
 	chown root.wheel xfs$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 33 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)

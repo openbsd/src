@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.100 2001/06/24 23:36:02 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.101 2001/06/28 02:58:54 kjc Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -98,6 +98,7 @@
 #	bktr0	video capturing
 #	tuner0	tuner device
 #	wdt0	watchdog timer
+#	altq	ALTQ control interface
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -196,7 +197,7 @@ all)
 	sh $this random ses0 uk0 uk1 ss0 ss1 pctr bktr0 tuner0 wdt0
 	sh $this fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
 	sh $this fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
-	sh $this xfs0 music
+	sh $this xfs0 music altq
 	sh $this rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $this usbs crypto
 # MISSING:
@@ -754,6 +755,19 @@ pci*)
 	mknod pci c 72 0
 	chown root.kmem pci
 	chmod 664 pci
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 74 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)

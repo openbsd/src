@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.50 2001/06/26 07:04:17 drahn Exp $
+#	$OpenBSD: MAKEDEV,v 1.51 2001/06/28 02:58:56 kjc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -77,6 +77,7 @@
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
 #	*random	inkernal random data source
+#	altq	ALTQ control interface
 #
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
@@ -162,7 +163,7 @@ all)
 	sh $this random uk0 uk1 ss0 ss1
 	sh $this wscons
 	sh $this pci
-	sh $this lkm xfs0
+	sh $this lkm xfs0 altq
 	sh $this usbs
 	sh $this local
 	;;
@@ -632,6 +633,19 @@ xfs*)
 	mknod xfs$unit c 51 $unit 
 	chmod 600 xfs$unit 
 	chown root.wheel xfs$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 72 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 local)
