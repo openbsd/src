@@ -1,4 +1,4 @@
-/*	$OpenBSD: group.c,v 1.2 2001/08/23 04:26:05 fgsch Exp $	*/
+/*	$OpenBSD: group.c,v 1.3 2001/09/11 04:57:32 pvalchev Exp $	*/
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 /*
@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include "test.h"
 
-struct group * getgrgid_r(gid_t, struct group *);
+struct group * getgrgid_r(gid_t, struct group *, char *, size_t, struct group **);
 
 char fail[] = "fail";
 
@@ -37,6 +37,7 @@ test(void* arg)
 	char *s;
 	char *oname;
 	char *opasswd;
+	size_t size = 0;
 
 	/* Acquire lock for running first part. */
 	CHECKr(pthread_mutex_lock(&display));
@@ -46,7 +47,7 @@ test(void* arg)
 
 	/* Call getgrgid_r() */
 	printf("gid %d\n", gid);
-	CHECKn(grp = getgrgid_r(gid, &grpbuf));
+	CHECKn(grp = getgrgid_r(gid, &grpbuf, buf, size, &grp));
 
 	/* Test for non-alteration of group structure */
 	ASSERT(grp->gr_name != fail);
