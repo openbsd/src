@@ -1,3 +1,5 @@
+.\" $OpenBSD
+.\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +34,7 @@
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
 .Dd June 4, 1993
-.Dt CURSES 3
+.Dt OCURSES 3
 .Os BSD 4
 .Sh NAME
 .Nm curses
@@ -41,7 +43,7 @@
 .Nm cc
 .Op Ar flags
 .Ar files
-.Fl lcurses ltermcap
+.Fl locurses
 .Op Ar libraries
 .Sh DESCRIPTION
 These routines give the user a method of updating screens with reasonable
@@ -58,6 +60,7 @@ should be called before exiting.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr getenv 3 ,
+.Xr termcap 3
 .Xr tty 4 ,
 .Xr termcap 5
 .Rs
