@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.24 1998/10/06 06:32:54 deraadt Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.25 1998/10/11 05:36:32 deraadt Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.24 1998/10/06 06:32:54 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.25 1998/10/11 05:36:32 deraadt Exp $";
 #endif
 
 
@@ -588,7 +588,7 @@ char *line;
 	ipn.in_ifname[sizeof(ipn.in_ifname) - 1] = '\0';
 	if (!(s = strtok(NULL, " \t"))) {
 		fprintf(stderr, "missing fields (%s)\n", 
-			ipn.in_redir ? "destination": "source");
+			ipn.in_redir & NAT_MAP ? "source": "destination");
 		return NULL;
 	}
 	shost = s;
@@ -621,7 +621,7 @@ char *line;
 		snetm = strrchr(shost, '/');
 		if (!snetm) {
 			fprintf(stderr, "missing fields (%s netmask)\n",
-				ipn.in_redir ? "destination":"source");
+				ipn.in_redir & NAT_MAP ? "source":"destination");
 			return NULL;
 		}
 	} else {
@@ -631,7 +631,7 @@ char *line;
 		}
 		if (!(s = strtok(NULL, " \t"))) {
 			fprintf(stderr, "missing fields (%s netmask)\n",
-				ipn.in_redir ? "destination":"source");
+				ipn.in_redir & NAT_MAP ? "source":"destination");
 			return NULL;
 		}
 		snetm = s;
@@ -639,7 +639,7 @@ char *line;
 
         if (!(s = strtok(NULL, " \t"))) {
 		fprintf(stderr, "missing fields (%s)\n",
-			ipn.in_redir ? "destination":"target");
+			ipn.in_redir & NAT_MAP ? "target":"destination");
 		return NULL;
 	}
         dhost = s;
