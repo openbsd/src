@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.31 2002/03/30 20:23:28 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.32 2002/03/30 22:43:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.31 2002/03/30 20:23:28 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.32 2002/03/30 22:43:58 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2047,6 +2047,10 @@ wi_media_change(ifp)
 	    (IFM_IEEE80211_ADHOC|IFM_IEEE80211_HOSTAP)) ==
 	    (IFM_IEEE80211_ADHOC|IFM_IEEE80211_HOSTAP))
 		return (EINVAL);
+	if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_HOSTAP) &&
+	    !sc->sc_prism2)
+		return (EINVAL);
+
 	if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_ADHOC))
 		sc->wi_ptype = WI_PORTTYPE_ADHOC;
 	else if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_HOSTAP))
