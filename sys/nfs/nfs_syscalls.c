@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.40 2004/06/24 19:35:26 tholo Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.41 2004/06/25 00:54:28 tholo Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -892,7 +892,6 @@ nfsd_rt(sotype, nd, cacherep)
 	int cacherep;
 {
 	struct drt *rt;
-	struct timeval tv;
 
 	rt = &nfsdrt.drt[nfsdrt.pos];
 	if (cacherep == RC_DOIT)
@@ -907,13 +906,13 @@ nfsd_rt(sotype, nd, cacherep)
 		rt->flag |= DRT_NFSV3;
 	rt->proc = nd->nd_procnum;
 	if (mtod(nd->nd_nam, struct sockaddr *)->sa_family == AF_INET)
-	    rt->ipadr = mtod(nd->nd_nam, struct sockaddr_in *)->sin_addr.s_addr;
+		rt->ipadr = mtod(nd->nd_nam, struct sockaddr_in *)->sin_addr.s_addr;
 	else
-	    rt->ipadr = INADDR_ANY;
-	getmicrotime(&tv);
-	rt->resptime = ((tv.tv_sec - nd->nd_starttime.tv_sec) * 1000000) +
-		(tv.tv_usec - nd->nd_starttime.tv_usec);
-	rt->tstamp = tv;
+		rt->ipadr = INADDR_ANY;
+	getmicrotime(&rt->tstamp);
+	rt->resptime =
+	    ((rt->tstamp.tv_sec - nd->nd_starttime.tv_sec) * 1000000) +
+		(rt->tstamp.tv_usec - nd->nd_starttime.tv_usec);
 	nfsdrt.pos = (nfsdrt.pos + 1) % NFSRTTLOGSIZ;
 }
 #endif /* NFSSERVER */

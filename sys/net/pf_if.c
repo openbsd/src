@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.14 2004/06/21 23:50:36 tholo Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.15 2004/06/25 00:54:27 tholo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -736,7 +736,7 @@ pfi_get_ifaces(const char *name, struct pfi_if *buf, int *size, int flags)
 			continue;
 		if (*size > n++) {
 			if (!p->pfik_tzero)
-				p->pfik_tzero = boottime.tv_sec;
+				p->pfik_tzero = time_second;
 			if (copyout(p, buf++, sizeof(*buf))) {
 				splx(s);
 				return (EFAULT);

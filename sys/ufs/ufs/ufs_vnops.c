@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.56 2004/06/24 19:35:27 tholo Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.57 2004/06/25 00:54:28 tholo Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -2079,7 +2079,7 @@ ufs_vinit(mntp, specops, fifoops, vpp)
 	/*
 	 * Initialize modrev times
 	 */
-	microuptime(&mtv);
+	getmicrouptime(&mtv);
 	SETHIGH(ip->i_modrev, mtv.tv_sec);
 	SETLOW(ip->i_modrev, mtv.tv_usec * 4294);
 	*vpp = vp;
