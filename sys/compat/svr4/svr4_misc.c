@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.14 1997/11/06 05:58:06 csapuntz Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.15 1997/11/13 06:21:31 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -746,7 +746,7 @@ svr4_sys_ulimit(p, v, retval)
 		return 0;
 
 	default:
-		return ENOSYS;
+		return EINVAL;
 	}
 }
 
