@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 1999/11/14 02:33:44 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 1999/11/19 18:47:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -1131,37 +1131,6 @@ pmap_remove(pmap, sva, eva)
 
 	simple_unlock(&pmap->pmap_lock);
 }
-
-#if FORCE_MAP_KERNEL
-/*
- *	Used to map a range of physical addresses into kernel
- *	virtual address space.
- *
- *	For now, VM is already on, we only need to map the
- *	specified memory.
- */
-vaddr_t
-pmap_map(va, spa, epa, prot, wired)
-	vaddr_t va;
-	paddr_t spa;
-	paddr_t epa;
-	vm_prot_t prot;
-	int wired;
-{
-
-#ifdef PMAPDEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_map(%x, %x, %x, %x)\n", va, spa, epa, prot);
-#endif
-
-	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, wired, 0);
-		va += NBPG;
-		spa += NBPG;
-	}
-	return va;
-}
-#endif /* FORCE_MAP_KERNEL */
 
 /*
  *	pmap_page_protect(pa, prot)
