@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.31 2001/05/16 05:07:52 millert Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.32 2001/06/03 08:55:11 angelos Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ sys_wait4(q, v, retval)
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
-	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG))
+	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG))
 		return (EINVAL);
 
 loop:
