@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.6 2000/04/26 23:26:06 jasoni Exp $	*/
+/*	$OpenBSD: inode.c,v 1.7 2001/05/15 19:37:55 mickey Exp $	*/
 /*	$NetBSD: inode.c,v 1.1 1997/06/11 11:21:49 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #if 0
 static char rcsid[] = "$NetBSD: inode.c,v 1.1 1997/06/11 11:21:49 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.6 2000/04/26 23:26:06 jasoni Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.7 2001/05/15 19:37:55 mickey Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -409,8 +409,10 @@ cacheino(dp, inumber)
 		blks = NDADDR + NIADDR;
 	inp = (struct inoinfo *)
 		malloc(sizeof(*inp) + (blks - 1) * sizeof(daddr_t));
-	if (inp == NULL)
+	if (inp == NULL) {
+		errexit("cannot malloc inode cache entry\n");
 		return;
+	}
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
