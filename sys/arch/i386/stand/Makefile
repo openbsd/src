@@ -1,6 +1,9 @@
-#	$OpenBSD: Makefile,v 1.8 1998/02/24 22:06:36 weingart Exp $
+#	$OpenBSD: Makefile,v 1.9 2000/05/26 11:50:46 deraadt Exp $
 
-SUBDIR=	etc libsa libz biosboot installboot boot mbr
+.if ${MACHINE} == "i386"
+SUBDIR=	etc libsa libz mbr
+.endif
+SUBDIR+= biosboot installboot boot
 
 test-fd0:
 	sudo mount /dev/fd0a /mnt

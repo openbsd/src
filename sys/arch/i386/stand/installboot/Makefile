@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 2000/05/25 21:55:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2000/05/26 11:50:46 deraadt Exp $
 
-PROG=	installboot
 MAN=	installboot.8
 MANSUBDIR=/i386
+
+.if ${MACHINE} == "i386"
+PROG=	installboot
 
 LDADD=	-lutil
 DPADD=	${LIBUTIL}
@@ -10,5 +12,8 @@ DPADD=	${LIBUTIL}
 LDSTATIC=	-static
 
 SADIR=	${.CURDIR}/..
+.else
+NOPROG=
+.endif
 
 .include <bsd.prog.mk>
