@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.29 1998/07/11 05:01:11 marc Exp $
+#	$OpenBSD: security,v 1.30 1998/08/17 16:43:47 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -459,8 +459,8 @@ pending="\nChecking setuid/setgid files and devices:\n"
 (find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
 	-o -fstype procfs \) -a -prune -o \
 	-type f -a \( -perm -u+s -o -perm -g+s \) -print0 -o \
-	! -type d -a ! -type f -a ! -type l -a ! -type s -print0 | \
-xargs -0 ls -ldgT | sort +9 > $LIST) 2> $OUTPUT
+	! -type d -a ! -type f -a ! -type l -a ! -type s -a ! -type p \
+	-print0 | xargs -0 ls -ldgT | sort +9 > $LIST) 2> $OUTPUT
 
 # Display any errors that occurred during system file walk.
 if [ -s $OUTPUT ] ; then
