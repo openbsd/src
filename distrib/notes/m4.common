@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.40 2002/12/30 11:12:58 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.41 2003/02/15 21:38:21 miod Exp $
 dnl
 dnl a simple MACHINE->MACHINE_ARCH converter.
 define(`MACHINE_ARCH',
@@ -111,12 +111,12 @@ dnl
 define({:-OpenBSDetc-:},
 {:-	etc{:--:}OSrev	 This distribution set contains the system configuration
 		 files that reside in /etc and in several other places.
-		 This set MUST be installed if you are installing the
+		 This set MUST be installed{:--:}ifelse(X$3,X,{:- if you are installing the
 		 system from scratch, but should NOT be used if you are
-		 upgrading.{:--:}ifelse(X$3,X,{:-(If you are upgrading, it's recommended that
+		 upgrading. (If you are upgrading, it's recommended that
 		 you get a copy of this set and CAREFULLY upgrade your
 		 configuration files by hand, see the section named "Upgrading
-		 a previously-installed OpenBSD System" below.)-:})showsize($1,$2)-:})dnl
+		 a previously-installed OpenBSD System" below.)-:},.)showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDgame( compressed size, uncompressed size )
