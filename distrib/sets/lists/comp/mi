@@ -576,6 +576,7 @@
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
 ./usr/include/net/netisr.h
+./usr/include/net/pfkeyv2.h
 ./usr/include/net/ppp-comp.h
 ./usr/include/net/ppp_defs.h
 ./usr/include/net/radix.h
@@ -1152,6 +1153,7 @@
 ./usr/share/man/cat2/msync.0
 ./usr/share/man/cat2/munlock.0
 ./usr/share/man/cat2/munmap.0
+./usr/share/man/cat2/nanosleep.0
 ./usr/share/man/cat2/nfssvc.0
 ./usr/share/man/cat2/open.0
 ./usr/share/man/cat2/pathconf.0
@@ -2158,8 +2160,8 @@
 ./usr/share/man/cat9/intro.0
 ./usr/share/man/cat9/md5.0
 ./usr/share/man/cat9/mono_time.0
-./usr/share/man/cat9/resettodr.0
 ./usr/share/man/cat9/random.0
+./usr/share/man/cat9/resettodr.0
 ./usr/share/man/cat9/runtime.0
 ./usr/share/man/cat9/shutdownhook_disestablish.0
 ./usr/share/man/cat9/shutdownhook_establish.0

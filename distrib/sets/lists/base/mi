@@ -50,6 +50,7 @@
 ./etc/namedb
 ./etc/ppp
 ./etc/sliphome
+./etc/termcap
 ./etc/uucp
 ./home
 ./mnt
@@ -285,6 +286,9 @@
 ./usr/bin/od
 ./usr/bin/oldrdist
 ./usr/bin/olf2elf
+./usr/bin/otp-md4
+./usr/bin/otp-md5
+./usr/bin/otp-sha1
 ./usr/bin/page
 ./usr/bin/pagesize
 ./usr/bin/passwd
@@ -334,6 +338,7 @@
 ./usr/bin/skeyaudit
 ./usr/bin/skeyinfo
 ./usr/bin/skeyinit
+./usr/bin/skeyprune
 ./usr/bin/sort
 ./usr/bin/split
 ./usr/bin/strings
@@ -696,6 +701,7 @@
 ./usr/sbin/ac
 ./usr/sbin/accton
 ./usr/sbin/addr
+./usr/sbin/adduser
 ./usr/sbin/amd
 ./usr/sbin/amq
 ./usr/sbin/arp
@@ -704,8 +710,8 @@
 ./usr/sbin/bootpgw
 ./usr/sbin/bootptest
 ./usr/sbin/chat
-./usr/sbin/chown
 ./usr/sbin/chgrp
+./usr/sbin/chown
 ./usr/sbin/chroot
 ./usr/sbin/cron
 ./usr/sbin/ctm
@@ -783,8 +789,8 @@
 ./usr/sbin/rdconfig
 ./usr/sbin/repquota
 ./usr/sbin/revnetgroup
-./usr/sbin/rmt
 ./usr/sbin/rmgroup
+./usr/sbin/rmt
 ./usr/sbin/rmuser
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.pcnfsd
@@ -990,8 +996,8 @@
 ./usr/share/man/cat2
 ./usr/share/man/cat3
 ./usr/share/man/cat4
-./usr/share/man/cat4/arm32
 ./usr/share/man/cat4/amiga
+./usr/share/man/cat4/arm32
 ./usr/share/man/cat4/atari
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/i386
@@ -1007,10 +1013,11 @@
 ./usr/share/man/cat6
 ./usr/share/man/cat7
 ./usr/share/man/cat8
-./usr/share/man/cat8/arm32
+./usr/share/man/cat8/adduser.0
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/arc
+./usr/share/man/cat8/arm32
 ./usr/share/man/cat8/atari
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/i386
@@ -1030,8 +1037,8 @@
 ./usr/share/man/man2
 ./usr/share/man/man3
 ./usr/share/man/man4
-./usr/share/man/man4/arm32
 ./usr/share/man/man4/amiga
+./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/i386
@@ -1047,10 +1054,10 @@
 ./usr/share/man/man6
 ./usr/share/man/man7
 ./usr/share/man/man8
-./usr/share/man/man8/arm32
 ./usr/share/man/man8/alpha
 ./usr/share/man/man8/amiga
 ./usr/share/man/man8/arc
+./usr/share/man/man8/arm32
 ./usr/share/man/man8/atari
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/i386
@@ -1726,13 +1733,8 @@
 ./var/tmp
 ./var/tmp/vi.recover
 ./var/yp
+./var/yp/Makefile.main
 ./var/yp/Makefile.main.dist
+./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/bin/skeyprune
-./usr/sbin/adduser
-./usr/share/man/cat8/adduser.0
-./usr/bin/otp-md4
-./usr/bin/otp-md5
-./usr/bin/otp-sha1
-./etc/termcap
