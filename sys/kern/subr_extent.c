@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.16 2001/07/05 10:00:45 art Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.17 2001/07/26 14:34:43 art Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -247,6 +247,9 @@ extent_destroy(ex)
 		LIST_REMOVE(orp, er_link);
 		extent_free_region_descriptor(ex, orp);
 	}
+
+	/* Remove from the list of all extents. */
+	LIST_REMOVE(ex, ex_link);
 
 	/* If we're not a fixed extent, free the extent descriptor itself. */
 	if ((ex->ex_flags & EXF_FIXED) == 0)
