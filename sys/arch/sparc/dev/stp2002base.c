@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp2002base.c,v 1.1 1998/07/17 21:33:11 jason Exp $	*/
+/*	$OpenBSD: stp2002base.c,v 1.2 1998/07/22 17:27:15 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -93,24 +93,24 @@ stp2002_meminit(stp)
 		    M_NOWAIT); /* XXX must be aligned on 64 byte boundary */
 
 
-	stp->stp_rx_dvma = (u_long) stp->stp_desc_dva +   
-	    (((u_long) &stp->stp_desc->stp_rxd[0]) - ((u_long)stp->stp_desc));  
-	stp->stp_tx_dvma = (u_long) stp->stp_desc_dva +   
-	    (((u_long) &stp->stp_desc->stp_txd[0]) - ((u_long)stp->stp_desc));
+	stp->stp_rx_dvma = (u_int32_t)&stp->stp_desc_dva->stp_rxd[0];
+	stp->stp_tx_dvma = (u_int32_t)&stp->stp_desc_dva->stp_txd[0];
 
 	desc = stp->stp_desc;
 
 	/* setup tx descriptors */
 	stp->stp_first_td = stp->stp_last_td = stp->stp_no_td = 0;
-	for (i = 0; i < STP_TX_RING_SIZE; i++)
+	for (i = 0; i < STP_TX_RING_SIZE; i++) {
+		stp->stp_desc->stp_txd[i].tx_addr =
+		    (u_int32_t) &stp->stp_bufs_dva->tx_buf[i][0];
 		desc->stp_txd[i].tx_flags = 0;
+	}
 
 	/* setup rx descriptors */
 	stp->stp_last_rd = 0;
 	for (i = 0; i < STP_RX_RING_SIZE; i++) {
-		desc->stp_rxd[i].rx_addr = (u_long) stp->stp_bufs_dva +
-		    (((u_long) &(stp->stp_bufs->rx_buf[i])) -
-		    ((u_long) stp->stp_bufs));
+		desc->stp_rxd[i].rx_addr =
+		    (u_int32_t) &stp->stp_bufs_dva->rx_buf[i][0];
 		desc->stp_rxd[i].rx_flags =
 		    STP_RXFLAG_OWN |
 		    ((STP_RX_PKT_BUF_SZ - STP_RX_OFFSET) << 16);
@@ -320,9 +320,6 @@ stp2002_start(stp)
 		/*
 		 * Initialize transmit registers and start transmission
 		 */
-		stp->stp_desc->stp_txd[bix].tx_addr = (u_long) stp->stp_bufs_dva +
-			(((u_long) &(stp->stp_bufs->tx_buf[bix])) -
-			((u_long) stp->stp_bufs));
 		stp->stp_desc->stp_txd[bix].tx_flags =
 			STP_TXFLAG_OWN | STP_TXFLAG_SOP | STP_TXFLAG_EOP |
 			(len & STP_TXFLAG_SIZE);
