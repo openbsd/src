@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.3 1997/01/09 05:21:28 rahnds Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.4 1997/02/06 23:44:55 rahnds Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1996/09/30 16:35:00 ws Exp $	*/
 
 /*
@@ -92,10 +92,12 @@ free(ptr, size)
 {
 	struct ml *f = (struct ml *)(ptr - ALIGN(sizeof(struct ml)));
 	
+#if IGNORE_FOR_NOW
 	if (f->size != roundup(ALIGN(size) + ALIGN(sizeof(struct ml)), NBPG))
 		panic("free: wrong size (%x != %x)",
 		      f->size,
 		      roundup(ALIGN(size) + ALIGN(sizeof(struct ml)), NBPG));
+#endif
 	f->next = fl;
 	fl = f;
 }

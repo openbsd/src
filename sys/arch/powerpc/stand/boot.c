@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 1997/01/09 03:52:51 rahnds Exp $	*/
+/*	$OpenBSD: boot.c,v 1.4 1997/02/06 23:44:56 rahnds Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1996/10/07 21:43:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/disklabel.h>
 
 #include <sys/exec_elf.h>
-#include <machine/cpu.h>
 
 #include "ofdev.h"
 #include "openfirm.h"
@@ -211,7 +210,6 @@ loadfile(fd, addr, args)
 	}
 #endif
 	close(fd);
-	syncicache(addr, exec_addr);
 	if (floppyboot) {
 		printf("Please insert root disk and press ENTER ");
 		getchar();
