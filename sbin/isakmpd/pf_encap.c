@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.7 1999/03/02 15:48:23 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.46 1999/03/02 15:43:00 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.8 1999/03/24 14:41:41 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.50 1999/03/24 11:04:12 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -116,8 +116,8 @@ pf_encap_expire (struct encap_msghdr *emsg)
 {
   struct sa *sa;
 
-  log_debug (LOG_PF_ENCAP, 20,
-	     "pf_encap_handler: NOTIFY_%s_EXPIRE dst %s spi %x sproto %d",
+  log_debug (LOG_SYSDEP, 20,
+	     "pf_encap_expire: NOTIFY_%s_EXPIRE dst %s spi %x sproto %d",
 	     emsg->em_not_type == NOTIFY_SOFT_EXPIRE ? "SOFT" : "HARD",
 	     inet_ntoa (emsg->em_not_dst), emsg->em_not_spi,
 	     emsg->em_not_sproto);
@@ -159,17 +159,16 @@ pf_encap_expire (struct encap_msghdr *emsg)
        * even if we have started a new negotiation, considering it might
        * fail.
        */
-    }
 
-  /* If this was a hard expire, remove the old SA, it isn't useful anymore.  */
-  if (emsg->em_not_type == NOTIFY_HARD_EXPIRE)
-    sa_free (sa);
+      /* Remove the old SA, it isn't useful anymore.  */
+      sa_free (sa);
+    }
 }
 
 static void
 pf_encap_notify (struct encap_msghdr *emsg)
 {
-  log_debug_buf (LOG_PF_ENCAP, 90, "pf_encap_notify: emsg", (u_int8_t *)emsg,
+  log_debug_buf (LOG_SYSDEP, 90, "pf_encap_notify: emsg", (u_int8_t *)emsg,
 		 sizeof *emsg);
 
   switch (emsg->em_not_type)
@@ -185,7 +184,7 @@ pf_encap_notify (struct encap_msghdr *emsg)
       break;
 
     default:
-      log_print ("pf_encap_handler: unknown notify message type (%d)",
+      log_print ("pf_encap_notify: unknown notify message type (%d)",
 		 emsg->em_not_type);
       free (emsg);
       break;
@@ -245,7 +244,7 @@ pf_encap_write (struct encap_msghdr *em)
 
   em->em_version = PFENCAP_VERSION_1;
 
-  log_debug_buf (LOG_PF_ENCAP, 30, "pf_encap_write: em", (u_int8_t *)em,
+  log_debug_buf (LOG_SYSDEP, 30, "pf_encap_write: em", (u_int8_t *)em,
 		 em->em_msglen);
   n = write (pf_encap_socket, em, em->em_msglen);
   if (n == -1)
@@ -275,7 +274,8 @@ pf_encap_request_sa (struct encap_msghdr *emsg)
 {
   char *conn;
 
-  log_debug (LOG_PF_ENCAP, 10, "pf_encap_handler: SA requested for %s type %d",
+  log_debug (LOG_SYSDEP, 10,
+	     "pf_encap_request_sa: SA requested for %s type %d",
 	     inet_ntoa (emsg->em_not_dst), emsg->em_not_satype);
 
   /* XXX pf_encap_on_demand_connection should return a list of connections.  */
@@ -366,15 +366,17 @@ pf_encap_read ()
 }
 
 /*
- * Generate a SPI for protocol PROTO and the destination signified by
- * ID & ID_SZ.  Stash the SPI size in SZ.
+ * Generate a SPI for protocol PROTO and the source/destination pair given by
+ * SRC, SRCLEN, DST & DSTLEN.  Stash the SPI size in SZ.
  */
 u_int8_t *
-pf_encap_get_spi (size_t *sz, u_int8_t proto, void *id, size_t id_sz)
+pf_encap_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src, int srclen,
+		  struct sockaddr *dst, int dstlen)
 {
   struct encap_msghdr *emsg = 0;
   u_int8_t *spi = 0;
-  struct sockaddr_in *ipv4_id = id;
+  /* IPv4-specific, but so is PF_ENCAP.  */
+  struct sockaddr_in *ipv4_dst = (struct sockaddr_in *)dst;
 
   emsg = calloc (1, EMT_RESERVESPI_FLEN);
   if (!emsg)
@@ -383,7 +385,7 @@ pf_encap_get_spi (size_t *sz, u_int8_t proto, void *id, size_t id_sz)
   emsg->em_msglen = EMT_RESERVESPI_FLEN;
   emsg->em_type = EMT_RESERVESPI;
   emsg->em_gen_spi = 0;
-  memcpy (&emsg->em_gen_dst, &ipv4_id->sin_addr, sizeof ipv4_id->sin_addr);
+  memcpy (&emsg->em_gen_dst, &ipv4_src->sin_addr, sizeof ipv4_src->sin_addr);
   emsg->em_gen_sproto =
     proto == IPSEC_PROTO_IPSEC_ESP ? IPPROTO_ESP : IPPROTO_AH;
 
@@ -401,7 +403,7 @@ pf_encap_get_spi (size_t *sz, u_int8_t proto, void *id, size_t id_sz)
   memcpy (spi, &emsg->em_gen_spi, *sz);
   free (emsg);
 
-  log_debug_buf (LOG_PF_ENCAP, 50, "pf_encap_get_spi: spi", spi, *sz);
+  log_debug_buf (LOG_SYSDEP, 50, "pf_encap_get_spi: spi", spi, *sz);
 
   return spi;
 
@@ -413,10 +415,10 @@ pf_encap_get_spi (size_t *sz, u_int8_t proto, void *id, size_t id_sz)
   return 0;
 }
 
-/* Group 2 SPIs in a chain.  XXX not implemented yet.  */
+/* Group 2 SPIs in a chain.  */
 int
 pf_encap_group_spis (struct sa *sa, struct proto *proto1, struct proto *proto2,
-		     int role)
+		     int incoming)
 {
   struct encap_msghdr *emsg = 0;
   struct sockaddr *dst;
@@ -429,10 +431,13 @@ pf_encap_group_spis (struct sa *sa, struct proto *proto1, struct proto *proto2,
   emsg->em_msglen = EMT_GRPSPIS_FLEN;
   emsg->em_type = EMT_GRPSPIS;
 
-  memcpy (&emsg->em_rel_spi, proto1->spi[role], sizeof emsg->em_rel_spi);
-  memcpy (&emsg->em_rel_spi2, proto2->spi[role],
+  memcpy (&emsg->em_rel_spi, proto1->spi[incoming], sizeof emsg->em_rel_spi);
+  memcpy (&emsg->em_rel_spi2, proto2->spi[incoming],
 	  sizeof emsg->em_rel_spi2);
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  if (incoming)
+    sa->transport->vtbl->get_src (sa->transport, &dst, &dstlen);
+  else
+    sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   emsg->em_rel_dst = emsg->em_rel_dst2 = ((struct sockaddr_in *)dst)->sin_addr;
   /* XXX What if IPCOMP etc. comes along?  */
   emsg->em_rel_sproto
@@ -444,7 +449,7 @@ pf_encap_group_spis (struct sa *sa, struct proto *proto1, struct proto *proto2,
     goto cleanup;
   free (emsg);
 
-  log_debug (LOG_PF_ENCAP, 50, "pf_encap_group_spis: done");
+  log_debug (LOG_SYSDEP, 50, "pf_encap_group_spis: done");
 
   return 0;
 
@@ -454,9 +459,13 @@ pf_encap_group_spis (struct sa *sa, struct proto *proto1, struct proto *proto2,
   return -1;
 }
 
-/* Store/update a SPI with full information into the kernel.  */
+/*
+ * Store/update a PF_KEY_V2 security association with full information from the
+ * IKE SA and PROTO into the kernel.  INCOMING is set if we are setting the
+ * parameters for the incoming SA, and cleared otherwise.
+ */
 int
-pf_encap_set_spi (struct sa *sa, struct proto *proto, int role, int initiator)
+pf_encap_set_spi (struct sa *sa, struct proto *proto, int incoming)
 {
   struct encap_msghdr *emsg = 0;
   struct ipsec_proto *iproto = proto->data;
@@ -530,11 +539,12 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int role, int initiator)
       edx->edx_ivlen = 8;
       edx->edx_confkeylen = keylen;
       edx->edx_authkeylen = hashlen;
-      edx->edx_wnd = iproto->replay_window;
+      edx->edx_wnd
+	= conf_get_str ("General", "Shared-SADB") ? -1 : iproto->replay_window;
       edx->edx_flags = iproto->auth ? ESP_NEW_FLAG_AUTH : 0;
-      memcpy (edx->edx_data + 8, iproto->keymat[role], keylen);
+      memcpy (edx->edx_data + 8, iproto->keymat[incoming], keylen);
       if (iproto->auth)
-	memcpy (edx->edx_data + keylen + 8, iproto->keymat[role] + keylen,
+	memcpy (edx->edx_data + keylen + 8, iproto->keymat[incoming] + keylen,
 		hashlen);
       break;
 
@@ -567,8 +577,9 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int role, int initiator)
 	}
 
       amx->amx_keylen = hashlen;
-      amx->amx_wnd = iproto->replay_window;
-      memcpy (amx->amx_key, iproto->keymat[role], hashlen);
+      amx->amx_wnd
+	= conf_get_str ("General", "Shared-SADB") ? -1 : iproto->replay_window;
+      memcpy (amx->amx_key, iproto->keymat[incoming], hashlen);
       break;
 
     default:
@@ -578,7 +589,7 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int role, int initiator)
 
   emsg->em_msglen = len;
   emsg->em_type = EMT_SETSPI;
-  memcpy (&emsg->em_spi, proto->spi[role], sizeof emsg->em_spi);
+  memcpy (&emsg->em_spi, proto->spi[incoming], sizeof emsg->em_spi);
   emsg->em_ttl = IP4_DEFAULT_TTL;
   /* Fill in a well-defined value in this reserved field.  */
   emsg->em_satype = 0;
@@ -589,9 +600,9 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int role, int initiator)
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
   emsg->em_dst
-    = ((struct sockaddr_in *)((initiator ^ role) ? dst : src))->sin_addr;
+    = ((struct sockaddr_in *)(incoming ? src : dst))->sin_addr;
   emsg->em_src
-    = ((struct sockaddr_in *)((initiator ^ role) ? src : dst))->sin_addr;
+    = ((struct sockaddr_in *)(incoming ? dst : src))->sin_addr;
   if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL)
     {
       emsg->em_odst = emsg->em_dst;
@@ -620,13 +631,13 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int role, int initiator)
   emsg->em_packets_hard = 0;
   emsg->em_packets_soft = 0;
 
-  log_debug (LOG_PF_ENCAP, 10, "pf_encap_set_spi: proto %d dst %s SPI 0x%x",
+  log_debug (LOG_SYSDEP, 10, "pf_encap_set_spi: proto %d dst %s SPI 0x%x",
 	     emsg->em_sproto, inet_ntoa (emsg->em_dst), htonl (emsg->em_spi));
   if (pf_encap_write (emsg))
     goto cleanup;
   free (emsg);
 
-  log_debug (LOG_PF_ENCAP, 50, "pf_encap_set_spi: done");
+  log_debug (LOG_SYSDEP, 50, "pf_encap_set_spi: done");
 
   return 0;
 
@@ -636,9 +647,12 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int role, int initiator)
   return -1;
 }
  
-/* Delete a specific SPI from the IPSEC kernel subsystem.  */
+/*
+ * Delete the IPSec SA represented by the INCOMING direction in protocol PROTO
+ * of the IKE security association SA.
+ */
 int
-pf_encap_delete_spi (struct sa *sa, struct proto *proto, int initiator)
+pf_encap_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 {
   struct encap_msghdr *emsg = 0;
   struct sockaddr *dst;
@@ -651,8 +665,11 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int initiator)
   emsg->em_msglen = EMT_DELSPI_FLEN;
   emsg->em_type = EMT_DELSPI;
 
-  memcpy (&emsg->em_gen_spi, proto->spi[initiator], sizeof emsg->em_gen_spi);
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  memcpy (&emsg->em_gen_spi, proto->spi[incoming], sizeof emsg->em_gen_spi);
+  if (incoming)
+    sa->transport->vtbl->get_src (sa->transport, &dst, &dstlen);
+  else
+    sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   emsg->em_gen_dst = ((struct sockaddr_in *)dst)->sin_addr;
   /* XXX What if IPCOMP etc. comes along?  */
   emsg->em_gen_sproto
@@ -662,7 +679,7 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int initiator)
     goto cleanup;
   free (emsg);
 
-  log_debug (LOG_PF_ENCAP, 50, "pf_encap_delete_spi: done");
+  log_debug (LOG_SYSDEP, 50, "pf_encap_delete_spi: done");
 
   return 0;
 
@@ -674,7 +691,7 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int initiator)
 
 /* Enable a flow given a SA.  */
 int
-pf_encap_enable_sa (struct sa *sa, int initiator)
+pf_encap_enable_sa (struct sa *sa)
 {
   struct ipsec_sa *isa = sa->data;
   struct sockaddr *dst;
@@ -686,7 +703,7 @@ pf_encap_enable_sa (struct sa *sa, int initiator)
   /* XXX Check why byte ordering is backwards.  */
   return pf_encap_enable_spi (htonl (isa->src_net), htonl (isa->src_mask),
 			      htonl (isa->dst_net), htonl (isa->dst_mask),
-			      proto->spi[!initiator], proto->proto,
+			      proto->spi[0], proto->proto,
 			      ((struct sockaddr_in *)dst)->sin_addr.s_addr);
 }
 
@@ -709,7 +726,7 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   memcpy (&emsg->em_ena_spi, spi, sizeof emsg->em_ena_spi);
   emsg->em_ena_dst.s_addr = dst;
 
-  log_debug (LOG_PF_ENCAP, 50, "pf_encap_enable_spi: src %x %x dst %x %x",
+  log_debug (LOG_SYSDEP, 50, "pf_encap_enable_spi: src %x %x dst %x %x",
 	     laddr, lmask, raddr, rmask);
   emsg->em_ena_isrc.s_addr = laddr;
   emsg->em_ena_ismask.s_addr = lmask;
@@ -739,7 +756,7 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 	goto cleanup;
     }
   free (emsg);
-  log_debug (LOG_PF_ENCAP, 50, "pf_encap_enable_spi: done");
+  log_debug (LOG_SYSDEP, 50, "pf_encap_enable_spi: done");
   return 0;
 
  cleanup:
@@ -755,7 +772,7 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
  */
 int
 pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
-		in_addr_t rmask, u_int8_t spi, in_addr_t dst, char *conn)
+		in_addr_t rmask, u_int32_t spi, in_addr_t dst, char *conn)
 {
   int s = -1;
   int off, err;
@@ -766,7 +783,9 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   if (err)
     return -1;
 
-  rtmsg = calloc (1, EMT_ENABLESPI_FLEN);
+  rtmsg = calloc (1,
+		  sizeof *rtmsg + 2 * ROUNDUP (SENT_IP4_LEN)
+		  + ROUNDUP (SENT_IPSP_LEN));
   if (!rtmsg)
     /* XXX Log?  */
     goto fail;
