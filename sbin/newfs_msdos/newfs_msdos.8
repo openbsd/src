@@ -1,10 +1,5 @@
-.\" $OpenBSD: newfs_msdos.8,v 1.12 1999/07/07 10:50:11 aaron Exp $
-.\"
-.\" Copyright (c) 1995, 1996 Joerg Wunsch
-.\"
+.\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
-.\"
-.\" This program is free software.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -12,122 +7,172 @@
 .\" 1. Redistributions of source code must retain the above copyright
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
-.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
-.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+.\" IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
+.\" $FreeBSD: src/sbin/newfs_msdos/newfs_msdos.8,v 1.6 1999/08/28 00:13:52 peter Exp $
 .\"
-.Dd November 5, 1995
-.Dt NEWFS_MSDOS 1
+.Dd July 6, 1998
+.Dt NEWFS_MSDOS 8
 .Os
 .Sh NAME
 .Nm newfs_msdos
-.Nd create an MS-DOS (FAT) file system
+.Nd construct a new MS-DOS (FAT) file system
 .Sh SYNOPSIS
 .Nm newfs_msdos
-.Bq Fl s Ar kilobytes
-.Bq Fl L Ar vollabel
-.Ar device
+.Op Fl N
+.Op Fl B Ar boot
+.Op Fl F Ar FAT-type
+.Op Fl I Ar volid
+.Op Fl L Ar label
+.Op Fl O Ar OEM
+.Op Fl S Ar sector-size
+.Op Fl a Ar FAT-size
+.Op Fl b Ar block-size
+.Op Fl c Ar cluster-size
+.Op Fl e Ar dirents
+.Op Fl f Ar format
+.Op Fl h Ar heads
+.Op Fl i Ar info
+.Op Fl k Ar backup
+.Op Fl m Ar media
+.Op Fl n Ar FATs
+.Op Fl o Ar hidden
+.Op Fl r Ar reserved
+.Op Fl s Ar total
+.Op Fl u Ar track-size
+.Ar special
+.Op Ar disktype
 .Sh DESCRIPTION
+The
 .Nm
-establishes a file system structure on
-.Ar device
-that is understood by
-.Xr mount_msdos 8
-and some ancient program loaders.
-.Ar device
-will typically be the character device node for a floppy disk drive,
-.Pq e.g. Pa /dev/rfd0 ,
-although any existing writable file or device is acceptable.  In case
-of a regular file it is treated as a dumped image of an MS-DOS file
-system; only the file system structure will be written to it, and it
-won't be truncated.
+utility creates a FAT12, FAT16, or FAT32 file system on device
+.Ar special ,
+using
+.Xr disktab 5
+entry
+.Ar disktype
+to determine geometry, if required.
 .Pp
-The options are as follows:
-.Bl -tag -width 10n -offset indent
-.It Fl s Ar kilobytes
-Use defaults for a typical file system with
-.Ar capacity
-kilobytes.  Currently, the values 360, 720, 1200, and 1440 are
-recognized.
-.Pp
-If this option is not specified,
-.Nm
-attempts to determine the size of the
-.Ar device .
-This is not reliably possible in all cases, but is believed to work
-for the more common situations.
-.It Fl L Ar vollabel
-Use
-.Ar vollabel
-to describe the file system, instead of the default
-.Dq 4.4BSD .
+The options are as follow:
+.Bl -tag -width indent
+.It Fl N
+Don't create a file system: just print out parameters.
+.It Fl B Ar boot
+Get bootstrap from file.
+.It Fl F Ar FAT-type
+FAT type (one of 12, 16, or 32).
+.It Fl I Ar volid
+Volume ID.
+.It Fl L Ar label
+Volume label (up to 11 characters).  The label should consist of
+only those characters permitted in regular DOS (8+3) filenames.
+.It Fl O Ar OEM
+OEM string (up to 8 characters).  The default is
+"BSD  4.4".
+.It Fl S Ar sector-size
+Number of bytes per sector.  Acceptable values are powers of 2
+in the range 128 through 32768.
+.It Fl a Ar FAT-size
+Number of sectors per FAT.
+.It Fl b Ar block-size
+File system block size (bytes per cluster).  This should resolve to an
+acceptable number of sectors per cluster (see below).
+.It Fl c Ar cluster-size
+Sectors per cluster.  Acceptable values are powers of 2 in the range
+1 through 128.
+.It Fl e Ar dirents
+Number of root directory entries (FAT12 and FAT16 only).
+.It Fl f Ar format
+Specify a standard (floppy disk) format.  The eight standard formats
+are (capacities in kilobytes): 160, 180, 320, 360, 720, 1200, 1440,
+2880.
+.It Fl h Ar heads
+Number of drive heads.
+.It Fl i Ar info
+Location of the file system info sector (FAT32 only).
+A value of 0xffff signifies no info sector.
+.It Fl k Ar backup
+Location of the backup boot sector (FAT32 only).  A value
+of 0xffff signifies no backup sector.
+.It Fl m Ar media
+Media descriptor (acceptable range 0xf0 to 0xff).
+.It Fl n Ar FATs
+Number of FATs.  Acceptable values are 1 to 16 inclusive. The default
+is 2.
+.It Fl o Ar hidden
+Number of hidden sectors.
+.It Fl r Ar reserved
+Number of reserved sectors.
+.It Fl s Ar total
+File system size.
+.It Fl u Ar track-size
+Number of sectors per track.
 .El
-.Pp
-The file system structure consists of three major areas:
-.Bl -tag -width 10n -offset indent
-.It Em The bootsector
-This is the very first (512-byte) sector.  It contains executable
-code that normally would bootstrap an operating system when loaded.
-Since it's beyond the scope of
-.Nm
-to install an operating system on the medium, this boot code will only
-print a message that the disk does not contain a bootable system.
-Inside the
-.Em bootsector
-is the
-.Em BIOS parameter block (BPB) ,
-where several statistical parameters of the file system are being
-held.
-.It Em The file allocation table(s) (FAT)
-Sectors next to the
-.Em bootsector
-hold the FAT, which is used to register file system allocation,
-as well as keeping pointer chains for the chunks constituting
-one file.  There are usually two identical copies of the FAT.
-.It Em The root directory
-The final structure is the root directory for this medium.  It is
-merely a space reservation, padded with 0s, and unfortunately fixed
-in its size.
-.Nm
-initializes it to empty, and enters a volume label record into the
-very first directory slot.
-.El
-.Sh DIAGNOSTICS
-An exit status of 0 is returned upon successful operation. Exit status
-1 is returned on any errors during file system creation, and an exit status
-of 2 reflects invalid arguments given to the program (along with an
-appropriate information written to diagnostic output).
+.Sh NOTES
+FAT file system parameters occupy a "Boot Sector BPB (BIOS Parameter
+Block)" in the first of the "reserved" sectors which precede the actual
+file system.  For reference purposes, this structure is presented
+below.
+.Bd -literal
+struct bsbpb {
+    u_int16_t	bps;		/* [-S] bytes per sector */
+    u_int8_t	spc;		/* [-c] sectors per cluster */
+    u_int16_t	res;		/* [-r] reserved sectors */
+    u_int8_t	nft;		/* [-n] number of FATs */
+    u_int16_t	rde;		/* [-e] root directory entries */
+    u_int16_t	sec;		/* [-s] total sectors */
+    u_int8_t	mid;		/* [-m] media descriptor */
+    u_int16_t	spf;		/* [-a] sectors per FAT */
+    u_int16_t	spt;		/* [-u] sectors per track */
+    u_int16_t	hds;		/* [-h] drive heads */
+    u_int32_t	hid;		/* [-o] hidden sectors */
+    u_int32_t	bsec;		/* [-s] big total sectors */
+};
+/* FAT32 extensions */
+struct bsxbpb {
+    u_int32_t	bspf;		/* [-a] big sectors per FAT */
+    u_int16_t	xflg;		/* control flags */
+    u_int16_t	vers;		/* file system version */
+    u_int32_t	rdcl;		/* root directory start cluster */
+    u_int16_t	infs;		/* [-i] file system info sector */
+    u_int16_t	bkbs;		/* [-k] backup boot sector */
+};
+.Ed
+.Sh EXAMPLES
+
+	newfs_msdos /dev/rwd0i
+
+Create a file system, using default parameters, on /dev/rwd0i.
+
+	newfs_msdos -f 1440 -L foo fd0c
+
+Create a standard 1.44M file system, with volume label "foo", on
+/dev/rfd0c.
 .Sh SEE ALSO
-.Xr fdformat 1 ,
-.Xr mount_msdos 8 ,
+.Xr disktab 5 ,
+.Xr disklabel 8 ,
+.Xr fdisk 8 ,
 .Xr newfs 8
-.Sh BUGS
-There is currently no way to specify obscure file system parameters.
-Thus, only media with one of the supported capacity values can be
-formatted.  For the same reason, it's not possible to handle hard disk
-partitions.  More options should be added to allow this.  More entries
-should be added to the table of known formats, too.
-.Pp
-No attempt is made to handle media defects.  However, this is beyond
-the scope of
-.Nm
-and should better be handled by the (nonexistent)
-.Xr dosfsck 1
-utility.
+.Sh DIAGNOSTICS
+Exit status is 0 on success and 1 on error.
 .Sh HISTORY
+The
 .Nm
-appeared in
-.Fx 2.2 .
-.Sh AUTHOR
-The program has been contributed by Joerg Wunsch, Dresden.
+command first appeared in
+.Fx 3.0 .
+.Sh AUTHORS
+.An Robert Nordier Aq rnordier@FreeBSD.org .
