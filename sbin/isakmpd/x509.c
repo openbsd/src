@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.6 1999/02/26 03:53:16 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.9 1999/02/25 11:39:29 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.7 1999/03/24 15:00:36 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.10 1999/03/13 17:43:20 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -713,7 +713,7 @@ x509_validate_signed (u_int8_t *asn, u_int32_t asnlen,
    * the padding bits at the end. Per definition there are no padding
    * bits at the end in this case, so just skip it.
    */
-  if (!pkcs_rsa_decrypt (PKCS_PRIVATE, key->n, key->e, tmp->data + 1,
+  if (!pkcs_rsa_decrypt (PKCS_PRIVATE, key, NULL, tmp->data + 1,
 			 &dec, &declen))
     goto fail;
 
@@ -798,7 +798,7 @@ x509_create_signed (u_int8_t *data, u_int32_t datalen,
     goto fail;
 
   /* Encrypt the Digest Info with Private Key */
-  res = pkcs_rsa_encrypt (PKCS_PRIVATE, key->n, key->d, diginfo, 
+  res = pkcs_rsa_encrypt (PKCS_PRIVATE, NULL, key, diginfo, 
 			  asn_get_len (diginfo), &enc, &enclen);
   free (diginfo);
   if (!res)
