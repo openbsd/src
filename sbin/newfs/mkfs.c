@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.29 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.30 2003/06/25 21:24:10 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.29 2003/06/11 06:22:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.30 2003/06/25 21:24:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ char	*buf;
 int	fsi, fso;
 
 daddr_t		alloc(int, int);
-static int	charsperline();
+static int	charsperline(void);
 void		initcg(int, time_t);
 void		wtfs(daddr_t, int, void *);
 void		fsinit(time_t);
@@ -1176,7 +1176,6 @@ charsperline(void)
 	int columns;
 	char *cp;
 	struct winsize ws;
-	extern char *getenv();
 
 	columns = 0;
 	if (ioctl(0, TIOCGWINSZ, &ws) != -1)

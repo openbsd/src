@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.41 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.42 2003/06/25 21:24:10 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.41 2003/06/11 06:22:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.42 2003/06/25 21:24:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 	struct partition *pp;
 	struct disklabel *lp;
 	struct disklabel mfsfakelabel;
-	struct disklabel *getdisklabel();
+	struct disklabel *getdisklabel(char *, int);
 	struct partition oldpartition;
 	struct stat st;
 	struct statfs *mp;
@@ -682,7 +682,7 @@ getdisklabel(char *s, int fd)
 	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
 #ifdef COMPAT
 		if (disktype) {
-			struct disklabel *lp, *getdiskbyname();
+			struct disklabel *lp;
 
 			unlabeled++;
 			lp = getdiskbyname(disktype);
