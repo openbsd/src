@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.236 2004/03/02 15:56:28 deraadt Exp $
+#	$OpenBSD: rc,v 1.237 2004/03/02 16:11:10 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -430,10 +430,6 @@ fi
 
 echo -n starting network daemons:
 
-if [ X"${sshd_flags}" != X"NO" ]; then
-	echo -n ' sshd';		/usr/sbin/sshd ${sshd_flags};
-fi
-
 # $routed_flags are imported from /etc/rc.conf.
 # If $routed_flags == NO, routed isn't run.
 if [ "X${routed_flags}" != X"NO" ]; then
@@ -529,6 +525,10 @@ fi
 
 if [ X${inetd} = X"YES" -a -e /etc/inetd.conf ]; then
 	echo -n ' inetd';		inetd
+fi
+
+if [ X"${sshd_flags}" != X"NO" ]; then
+	echo -n ' sshd';		/usr/sbin/sshd ${sshd_flags};
 fi
 
 # $rarpd_flags is imported from /etc/rc.conf;
