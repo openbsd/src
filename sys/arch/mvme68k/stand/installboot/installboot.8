@@ -1,11 +1,11 @@
-.\"	$OpenBSD: installboot.8,v 1.8 2000/03/03 00:54:52 todd Exp $
+.\"	$OpenBSD: installboot.8,v 1.9 2003/02/07 07:45:12 jmc Exp $
 .\"
 .Dd 31 May 1995
 .Dt INSTALLBOOT 8 mvme68k
 .Os
 .Sh NAME
 .Nm installboot
-.Nd install a bootstrap on a FFS disk
+.Nd install a bootstrap on an FFS disk
 .Sh SYNOPSIS
 .Nm installboot
 .Op Fl n
@@ -16,7 +16,7 @@
 .Sh DESCRIPTION
 .Nm installboot
 is used to install a "first-stage" boot program into the boot area
-of a FFS disk partition, and initialize the table of block numbers the
+of an FFS disk partition, and initialize the table of block numbers the
 .Ar bootxx
 program uses to load the second-stage boot program.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.21 2002/11/18 20:18:20 millert Exp $
+.\"	$OpenBSD: mtree.8,v 1.22 2003/02/07 07:45:13 jmc Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -42,12 +42,14 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm mtree
+.Bk -words
 .Op Fl cdeilnqrUux
 .Op Fl f Ar spec
 .Op Fl K Ar keywords
 .Op Fl k Ar keywords
 .Op Fl p Ar path
 .Op Fl s Ar seed
+.Ek
 .Sh DESCRIPTION
 The utility
 .Nm mtree
@@ -72,7 +74,7 @@ Read the specification from file
 instead of from the standard input.
 .It Fl i
 Indents the output 4 spaces each time a directory level is descended when
-create a specification with the
+creating a specification with the
 .Fl c
 option.
 This does not affect either the /set statements or the comment before each
@@ -117,7 +119,7 @@ instead of the current directory.
 Quiet mode.
 Do not complain when a
 .Dq missing
-directory cannot be created because it is already exists.
+directory cannot be created because it already exists.
 This occurs when the directory is a symbolic link.
 .It Fl r
 Remove any files in the file hierarchy that are not described in the
@@ -137,7 +139,7 @@ Modify the owner, group, and permissions of existing files to match
 the specification and create any missing directories.
 User, group, and permissions must all be specified for missing directories
 to be created.
-Exit with a status of 0 on success, 1 if any error occurred,
+Exit with a status of 0 on success, 1 if any error occurred;
 a mismatch is not considered an error if it was corrected.
 .It Fl u
 Same as the
@@ -149,7 +151,7 @@ Don't descend below mount points in the file hierarchy.
 .El
 .Pp
 Specifications are mostly composed of
-.Dq keywords ,
+.Dq keywords
 (i.e., strings that specify values relating to files).
 No keywords have default values, and if a keyword has no value set, no
 checks based on it are performed.

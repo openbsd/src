@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.28 2002/05/06 19:27:16 millert Exp $
+.\"	$OpenBSD: newfs.8,v 1.29 2003/02/07 07:45:13 jmc Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -42,6 +42,7 @@
 .Nd construct a new file system
 .Sh SYNOPSIS
 .Nm newfs
+.Bk -words
 .Op Fl NO
 .Op Fl S Ar sector-size
 .Op Fl a Ar maxcontig
@@ -65,8 +66,10 @@
 .Op Fl x Ar sectors
 .Op Fl z Ar tracks
 .Ar special
+.Ek
 .Pp
 .Nm mount_mfs
+.Bk -words
 .Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cylinders
@@ -78,6 +81,7 @@
 .Op Fl o Ar options
 .Op Fl s Ar size
 .Ar special node
+.Ek
 .Sh DESCRIPTION
 Before running
 .Nm

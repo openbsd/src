@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.22 2001/09/20 21:05:25 mickey Exp $
+.\"	$OpenBSD: installboot.8,v 1.23 2003/02/07 07:45:12 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm installboot
-.Nd installs a bootstrap on a FFS disk or partition
+.Nd installs a bootstrap on an FFS disk or partition
 .Sh SYNOPSIS
 .Nm installboot
 .Op Fl n
@@ -50,7 +50,7 @@
 is used to install a
 .Dq first-stage
 boot program into the boot area
-of a FFS disk partition, and initialize the table of block numbers the
+of an FFS disk partition, and initialize the table of block numbers the
 .Ar biosboot
 program uses to load the second-stage boot program.
 .Pp

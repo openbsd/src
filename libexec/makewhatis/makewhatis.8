@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makewhatis.8,v 1.9 2000/10/30 17:46:08 aaron Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.10 2003/02/07 07:45:13 jmc Exp $
 .\"	$NetBSD: makewhatis.8,v 1.2.2.1 1997/11/10 19:57:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,9 +104,9 @@ database.
 .Sh FILES
 .Bl -tag -width /etc/man.conf -compact
 .It Pa whatis.db
-index to man pages in directory,
+index to man pages in directory
 .It Pa /etc/man.conf
-man configuration information.
+man configuration information
 .El
 .Sh BUGS
 .Nm
@@ -115,10 +115,11 @@ should parse
 and deal with extra configuration information.
 In particular, it does not handle
 .Xr nroff 1
-me format.
+.Cm me
+format.
 Likewise, its use of
 heuristics to retrieve subjects from most man pages is not 100% accurate.
 .Sh SEE ALSO
-.Xr nroff 1 , 
 .Xr man 1 ,
-.Xr man.conf 5 .
+.Xr nroff 1 ,
+.Xr man.conf 5
