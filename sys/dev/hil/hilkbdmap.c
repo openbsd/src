@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbdmap.c,v 1.5 2005/01/18 18:52:31 miod Exp $	*/
+/*	$OpenBSD: hilkbdmap.c,v 1.6 2005/02/28 20:40:04 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -335,7 +335,7 @@ const keysym_t hilkbd_keydesc_de[] = {
     KC(57),		KS_6,		KS_ampersand,
     KC(58),		KS_5,		KS_percent,
     KC(59),		KS_4,		KS_dollar,
-    KC(60),		KS_3,		KS_paragraph,	KS_threesuperior,
+    KC(60),		KS_3,		KS_section,	KS_threesuperior,
     KC(61),		KS_2,		KS_quotedbl,	KS_twosuperior,
     KC(62),		KS_1,		KS_exclam,
     KC(63),		KS_dead_circumflex,	KS_dead_abovering,
@@ -400,7 +400,7 @@ const keysym_t hilkbd_keydesc_fr[] = {
     KC(53),			KS_z,
     KC(54),			KS_a,
     KC(56),			KS_egrave,	KS_7,
-    KC(57),			KS_paragraph,	KS_6,
+    KC(57),			KS_section,	KS_6,
     KC(58),			KS_parenleft,	KS_5,
     KC(59),			KS_apostrophe,	KS_4,
     KC(60),			KS_quotedbl,	KS_3,
