@@ -200,7 +200,9 @@ char	*av[];
 #endif
 
 	init_prob();
+#if 0
 	srandom((int)(time((time_t *) NULL) + getpid()));
+#endif
 	do {
 		get_fort();
 	} while ((Short_only && fortlen() > SLEN) ||
@@ -937,7 +939,7 @@ get_fort()
 	if (File_list->next == NULL || File_list->percent == NO_PROB)
 		fp = File_list;
 	else {
-		choice = random() % 100;
+		choice = arc4random() % 100;
 		DPRINTF(1, (stderr, "choice = %d\n", choice));
 		for (fp = File_list; fp->percent != NO_PROB; fp = fp->next)
 			if (choice < fp->percent)
@@ -957,7 +959,7 @@ get_fort()
 	else {
 		if (fp->next != NULL) {
 			sum_noprobs(fp);
-			choice = random() % Noprob_tbl.str_numstr;
+			choice = arc4random() % Noprob_tbl.str_numstr;
 			DPRINTF(1, (stderr, "choice = %d (of %d) \n", choice,
 				    Noprob_tbl.str_numstr));
 			while (choice >= fp->tbl.str_numstr) {
@@ -1000,7 +1002,7 @@ FILEDESC	*parent;
 	register int		choice;
 
 	if (Equal_probs) {
-		choice = random() % parent->num_children;
+		choice = arc4random() % parent->num_children;
 		DPRINTF(1, (stderr, "    choice = %d (of %d)\n",
 			    choice, parent->num_children));
 		for (fp = parent->child; choice--; fp = fp->next)
@@ -1010,7 +1012,7 @@ FILEDESC	*parent;
 	}
 	else {
 		get_tbl(parent);
-		choice = random() % parent->tbl.str_numstr;
+		choice = arc4random() % parent->tbl.str_numstr;
 		DPRINTF(1, (stderr, "    choice = %d (of %d)\n",
 			    choice, parent->tbl.str_numstr));
 		for (fp = parent->child; choice >= fp->tbl.str_numstr;
@@ -1099,7 +1101,7 @@ FILEDESC	*fp;
 #ifdef	OK_TO_WRITE_DISK
 		if ((fd = open(fp->posfile, 0)) < 0 ||
 		    read(fd, &fp->pos, sizeof fp->pos) != sizeof fp->pos)
-			fp->pos = random() % fp->tbl.str_numstr;
+			fp->pos = arc4random() % fp->tbl.str_numstr;
 		else if (ntohl(fp->pos) >= fp->tbl.str_numstr)
 			fp->pos %= fp->tbl.str_numstr;
 		else
@@ -1107,7 +1109,7 @@ FILEDESC	*fp;
 		if (fd >= 0)
 			(void) close(fd);
 #else
-		fp->pos = random() % fp->tbl.str_numstr;
+		fp->pos = arc4random() % fp->tbl.str_numstr;
 #endif /* OK_TO_WRITE_DISK */
 	}
 	if (++(fp->pos) >= fp->tbl.str_numstr)
