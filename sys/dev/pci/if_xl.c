@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.32 1999/12/07 20:19:36 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.33 1999/12/07 20:23:19 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2557,7 +2557,7 @@ xl_attach(parent, self, aux)
 	 * type to something sane.
 	 */
 	if (sc->xl_xcvr == XL_XCVR_AUTO) {
-		xl_choose_xcvr(sc, 1);
+		xl_choose_xcvr(sc, 0);
 		xl_reset(sc);
 	}
 
