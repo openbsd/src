@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.1 2004/08/06 22:21:16 pefo Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.2 2004/08/23 18:58:37 pvalchev Exp $	*/
 /*	$NetBSD: crt0.c,v 1.7 1995/06/03 13:16:15 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.1 2004/08/06 22:21:16 pefo Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 2004/08/23 18:58:37 pvalchev Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -113,8 +113,6 @@ asm("eprol:");
 asm ("_callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(kfp->kargc, argv, environ));
 }
-
-__main() {}
 
 #ifdef MCRT0
 asm ("	.text");
