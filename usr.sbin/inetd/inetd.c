@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.86 2001/11/05 09:43:50 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.87 2002/02/10 01:19:02 millert Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.86 2001/11/05 09:43:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.87 2002/02/10 01:19:02 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -463,7 +463,7 @@ main(argc, argv, envp)
 		(void) sigprocmask(SIG_SETMASK, &emptymask, NULL);
 	    }
 	    
-	    if (wantretry || wantconfig || wantreap) {
+	    if (wantretry || wantconfig || wantreap || wantdie) {
 		if (wantretry) {
 		    doretry();
 		    wantretry = 0;
