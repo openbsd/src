@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.47 2004/07/30 10:45:27 ho Exp $	 */
+/* $OpenBSD: util.c,v 1.48 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -256,7 +256,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa)
 
 	*sa = malloc(sysdep_sa_len(ai->ai_addr));
 	if (!*sa) {
-      		freeaddrinfo(ai);
+		freeaddrinfo(ai);
 		return -1;
 	}
 

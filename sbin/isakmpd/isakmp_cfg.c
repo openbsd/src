@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.33 2004/06/20 17:17:35 ho Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.34 2004/08/08 19:11:06 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -893,7 +893,7 @@ cfg_encode_attributes(struct isakmp_cfg_attr_head *attrs, u_int32_t type,
 				    "attribute %s - expected %s got %s data",
 				    field,
 				    (family == AF_INET ? "IPv4" : "IPv6"),
-				    (sa->sa_family == 
+				    (sa->sa_family ==
 					AF_INET ? "IPv4" : "IPv6"));
 				free(sa);
 				attr->length = 0;
@@ -911,7 +911,7 @@ cfg_encode_attributes(struct isakmp_cfg_attr_head *attrs, u_int32_t type,
 			free(sa);
 
 			/* _SUBNET types need some extra work. */
-			if (attr->type == 
+			if (attr->type ==
 			    ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET) {
 				sa = conf_get_address(id_string, "Netmask");
 				if (!sa) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.72 2004/07/29 20:02:02 ho Exp $	 */
+/* $OpenBSD: conf.c,v 1.73 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -449,7 +449,7 @@ conf_load_defaults(int tr)
 {
 	int	 enc, auth, hash, group, proto, mode, pfs;
 	char	*dflt;
-	
+
 	char	*mm_auth[] = {"PRE_SHARED", "DSS", "RSA_SIG", 0};
 	char	*mm_auth_p[] = {"", "-DSS", "-RSA_SIG", 0};
 	char	*mm_hash[] = {"MD5", "SHA", 0};
@@ -1074,7 +1074,7 @@ conf_report(void)
 						snprintf(dnode->s, len, "[%s]",
 						    current_section);
 						dnode->next = (struct dumper *)
-						    calloc(1, 
+						    calloc(1,
 							sizeof(struct dumper));
 						dnode = dnode->next;
 						if (!dnode)
@@ -1082,7 +1082,7 @@ conf_report(void)
 
 						dnode->s = "";
 						dnode->next = (struct dumper *)
-						    calloc(1, 
+						    calloc(1,
 							sizeof(struct dumper));
 						dnode = dnode->next;
 						if (!dnode)

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.93 2004/06/17 19:32:06 hshoexer Exp $	 */
+/* $OpenBSD: x509.c,v 1.94 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -108,10 +108,10 @@ int
 x509_generate_kn(int id, X509 *cert)
 {
 	char	*fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s"
-	    	     "\"\nConditions: %s >= \"%s\" && %s <= \"%s\";\n";
+		    "\"\nConditions: %s >= \"%s\" && %s <= \"%s\";\n";
 	char	*ikey, *skey, *buf, isname[256], subname[256];
 	char	*fmt2 = "Authorizer: \"DN:%s\"\nLicensees: \"DN:%s\"\n"
-		     "Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
+		    "Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
 	X509_NAME *issuer, *subject;
 	struct keynote_deckey dc;
 	X509_STORE_CTX  csc;
@@ -522,7 +522,7 @@ x509_hash_init(void)
 	x509_tab = malloc((bucket_mask + 1) * sizeof(struct x509_list));
 	if (!x509_tab)
 		log_fatal("x509_hash_init: malloc (%lu) failed",
-		    (bucket_mask + 1) * 
+		    (bucket_mask + 1) *
 		    (unsigned long)sizeof(struct x509_list));
 	for (i = 0; i <= bucket_mask; i++) {
 		LIST_INIT(&x509_tab[i]);
@@ -567,7 +567,7 @@ x509_hash_find(u_int8_t *id, size_t len)
 		return cert->cert;
 	}
 
-	LOG_DBG((LOG_CRYPTO, 70, 
+	LOG_DBG((LOG_CRYPTO, 70,
 	    "x509_hash_find: no certificate matched query"));
 	return 0;
 }
@@ -752,7 +752,7 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		if (file->d_type != DT_UNKNOWN) {
 			if (file->d_type != DT_REG && file->d_type != DT_LNK)
 				continue;
-		} 
+		}
 
 		LOG_DBG((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading "
 		    "CRL %s", file->d_name));

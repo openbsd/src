@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.94 2004/06/23 03:01:52 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.95 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -673,7 +673,7 @@ rsa_sig_decode_hash(struct message *msg)
 			    "be validated");
 			continue;
 		}
-		if (GET_ISAKMP_CERT_ENCODING(p->p) == 
+		if (GET_ISAKMP_CERT_ENCODING(p->p) ==
 		    ISAKMP_CERTENC_X509_SIG) {
 			if (!handler->cert_get_subjects(cert, &n, &id_cert,
 			    &id_cert_len)) {

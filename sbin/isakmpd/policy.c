@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.77 2004/06/25 20:25:34 hshoexer Exp $	 */
+/* $OpenBSD: policy.c,v 1.78 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1173,7 +1173,7 @@ policy_callback(char *name)
 
 			case IPSEC_ID_USER_FQDN:
 				remote_filter_type = "User FQDN";
-				remote_filter = malloc(idremotesz - 
+				remote_filter = malloc(idremotesz -
 				    ISAKMP_ID_DATA_OFF + 1);
 				if (!remote_filter) {
 					log_error("policy_callback: "
@@ -1211,13 +1211,13 @@ policy_callback(char *name)
 			case IPSEC_ID_KEY_ID:
 				remote_filter_type = "Key ID";
 				remote_filter
-					= calloc(2 * (idremotesz - 
+					= calloc(2 * (idremotesz -
 					    ISAKMP_ID_DATA_OFF) + 1,
 					    sizeof(char));
 				if (!remote_filter) {
 					log_error("policy_callback: "
 					    "calloc (%lu, %lu) failed",
-					    2 * ((unsigned long)idremotesz - 
+					    2 * ((unsigned long)idremotesz -
 						ISAKMP_ID_DATA_OFF) + 1,
 					    (unsigned long)sizeof(char));
 					goto bad;
@@ -1483,7 +1483,7 @@ policy_callback(char *name)
 
 			case IPSEC_ID_FQDN:
 				local_filter_type = "FQDN";
-				local_filter = malloc(idlocalsz - 
+				local_filter = malloc(idlocalsz -
 				    ISAKMP_ID_DATA_OFF + 1);
 				if (!local_filter) {
 					log_error("policy_callback: "
@@ -1553,7 +1553,7 @@ policy_callback(char *name)
 				 * Does it contain any non-printable
 				 * characters ?
 				 */
-				for (i = 0; 
+				for (i = 0;
 				     i < idlocalsz - ISAKMP_ID_DATA_OFF; i++)
 					if (!isprint(*(idlocal +
 					    ISAKMP_ID_DATA_OFF + i)))
@@ -1743,7 +1743,7 @@ policy_callback(char *name)
 	}
 	if (strcmp(name, "phase_1") == 0)
 		return phase_1;
-	
+
 	if (strcmp(name, "GMTTimeOfDay") == 0) {
 		tt = time((time_t)NULL);
 		strftime(mytimeofday, 14, "%Y%m%d%H%M%S", gmtime(&tt));

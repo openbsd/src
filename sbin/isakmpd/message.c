@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.85 2004/07/07 09:16:20 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.86 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -135,7 +135,7 @@ static u_int8_t payload_revmap[] = {
 	ISAKMP_PAYLOAD_SIG, ISAKMP_PAYLOAD_NONCE, ISAKMP_PAYLOAD_NOTIFY,
 	ISAKMP_PAYLOAD_DELETE, ISAKMP_PAYLOAD_VENDOR, ISAKMP_PAYLOAD_ATTRIBUTE,
 #ifdef notyet
-	ISAKMP_PAYLOAD_SAK, ISAKMP_PAYLOAD_SAT, ISAKMP_PAYLOAD_KD, 
+	ISAKMP_PAYLOAD_SAK, ISAKMP_PAYLOAD_SAT, ISAKMP_PAYLOAD_KD,
 	ISAKMP_PAYLOAD_SEQ, ISAKMP_PAYLOAD_POP
 #endif
 	ISAKMP_PAYLOAD_NAT_D, ISAKMP_PAYLOAD_NAT_OA
@@ -1115,7 +1115,7 @@ message_validate_vendor(struct message *msg, struct payload *p)
 	}
 #if defined (USE_DPD)
 	dpd_check_vendor_payload(msg, p);
-#endif	
+#endif
 #if defined (USE_NAT_TRAVERSAL)
 	nat_t_check_vendor_payload(msg, p);
 #endif
@@ -2461,7 +2461,7 @@ struct payload *
 payload_last(struct message *msg, u_int8_t payload)
 {
 	if (payload_map[payload])
-		return TAILQ_LAST(&msg->payload[payload_map[payload]], 
+		return TAILQ_LAST(&msg->payload[payload_map[payload]],
 		    payload_head);
 	else
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.2 2004/06/20 17:17:34 ho Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.3 2004/08/08 19:11:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -243,7 +243,7 @@ dpd_initiator_recv_ack(struct message *msg)
 
 	isakmp_sa->dpd_nextev = timer_add_event("dpd_event", dpd_event,
 	    isakmp_sa, &tv);
-	if (!isakmp_sa->dpd_nextev) 
+	if (!isakmp_sa->dpd_nextev)
 		log_print("dpd_initiator_recv_ack: timer_add_event "
 		    "failed");
 	else
@@ -269,7 +269,7 @@ dpd_responder_recv_notify(struct message *msg)
 		return -1;
 	}
 
-	if (GET_ISAKMP_NOTIFY_MSG_TYPE(p->p) != 
+	if (GET_ISAKMP_NOTIFY_MSG_TYPE(p->p) !=
 	    ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE)	{
 		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
 		return -1;
@@ -313,7 +313,7 @@ dpd_responder_recv_notify(struct message *msg)
 
 		isakmp_sa->dpd_nextev = timer_add_event("dpd_event", dpd_event,
 		    isakmp_sa, &tv);
-		if (!isakmp_sa->dpd_nextev) 
+		if (!isakmp_sa->dpd_nextev)
 			log_print("dpd_responder_recv_notify: timer_add_event "
 			    "failed");
 		else
@@ -349,4 +349,3 @@ dpd_event(void *v_sa)
 
 	/* Create a new DPD exchange.  XXX */
 }
-	

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.6 2004/08/03 10:54:09 ho Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.7 2004/08/08 19:11:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -354,10 +354,10 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	if (sockaddr2text(if_addr, &addr_str, 0))
 		addr_str = 0;
 
-	LOG_DBG((LOG_TRANSPORT, 90, 
+	LOG_DBG((LOG_TRANSPORT, 90,
 	    "virtual_bind_if: interface %s family %s address %s",
 	    ifname ? ifname : "<unknown>",
-	    if_addr->sa_family == AF_INET ? "v4" : 
+	    if_addr->sa_family == AF_INET ? "v4" :
 	    (if_addr->sa_family == AF_INET6 ? "v6" : "<unknown>"),
 	    addr_str ? addr_str : "<invalid>"));
 	if (addr_str)
@@ -523,7 +523,7 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 		v2->main = 0; /* No need to clone this.  */
 	else {
 		v2->main = v->main->vtbl->clone(v->main, raddr);
-		v2->main->virtual = (struct transport *)v2;	
+		v2->main->virtual = (struct transport *)v2;
 	}
 #if defined (USE_NAT_TRAVERSAL)
 	/* XXX fix strtol() call */
@@ -540,7 +540,7 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 	transport_setup(t, 1);
 	return t;
 }
-  
+
 static struct transport *
 virtual_create(char *name)
 {
@@ -613,7 +613,7 @@ virtual_handle_message(struct transport *t)
 		/* XXX drain pending message. See udp_handle_message().  */
 
 		virtual_reinit();
-      
+
 		/*
 		 * As we don't know the actual destination address of the
 		 * packet, we can't really deal with it. So, just ignore it
@@ -647,7 +647,7 @@ virtual_send_message(struct message *msg, struct transport *t)
 #if defined (USE_NAT_TRAVERSAL)
 	struct sockaddr *dst;
 	in_port_t port;
-	
+
 	/*
 	 * Activate NAT-T Encapsulation if
 	 *   - the exchange says we can, and

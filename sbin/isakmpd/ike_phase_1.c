@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.55 2004/07/29 08:54:08 ho Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.56 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -568,7 +568,7 @@ ike_phase_1_send_KE_NONCE(struct message *msg, size_t nonce_sz)
 			/* XXX Log? */
 			return -1;
 		}
-#endif			
+#endif
 	return 0;
 }
 
@@ -1180,7 +1180,7 @@ ike_phase_1_validate_prop(struct exchange *exchange, struct sa *sa,
 					 */
 					for (node = LIST_FIRST(&vs.attrs);
 					     node; node = next_node) {
-						next_node = 
+						next_node =
 						    LIST_NEXT(node, link);
 						if (node->type ==
 						    constant_value(ike_attr_cst,

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.84 2004/06/25 20:25:34 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.85 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -199,7 +199,7 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 		strlcpy(principal[1], "passphrase-md5-hex:", len);
 		MD5(isakmp_sa->recv_key, strlen(isakmp_sa->recv_key), hashbuf);
 		for (i = 0; i < 16; i++)
-			snprintf(principal[1] + 2 * i + 
+			snprintf(principal[1] + 2 * i +
 			    sizeof "passphrase-md5-hex:" - 1, 3, "%02x",
 			    hashbuf[i]);
 
@@ -375,7 +375,7 @@ policydone:
 	/* Remove the policies */
 	for (i = 0; i < policy_asserts_num; i++) {
 		if (keynote_ids[i] != -1)
-			kn_remove_assertion(isakmp_sa->policy_id, 
+			kn_remove_assertion(isakmp_sa->policy_id,
 			    keynote_ids[i]);
 	}
 
@@ -623,8 +623,8 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 						 * XXX Deals with 16 and 32
 						 * bit lifetimes only
 						 */
-						value = 
-						    conf_get_num(life->field, 
+						value =
+						    conf_get_num(life->field,
 							"LIFE_DURATION", 0);
 						if (value) {
 							if (value <= 0xffff)
@@ -702,7 +702,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 					    IPSEC_ATTR_ECN_TUNNEL, value);
 
 				/* Record the real transform size.  */
-				transforms_len[prop_no] += 
+				transforms_len[prop_no] +=
 				    (transform_len[prop_no][xf_no]
 					= attr - transform[prop_no][xf_no]);
 
@@ -744,7 +744,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 				goto bail_out;
 			}
 			proposal_len = ISAKMP_PROP_SPI_OFF + spi_sz;
-			proposals_len += 
+			proposals_len +=
 			    proposal_len + transforms_len[prop_no];
 			proposal[prop_no] = malloc(proposal_len);
 			if (!proposal[prop_no]) {
@@ -1421,7 +1421,7 @@ post_quick_mode(struct message *msg)
 					LOG_DBG_BUF((LOG_NEGOTIATION, 90,
 					    "post_quick_mode: SPI",
 					    proto->spi[i], proto->spi_sz[i]));
-					prf->Update(prf->prfctx, 
+					prf->Update(prf->prfctx,
 					    proto->spi[i], proto->spi_sz[i]);
 					LOG_DBG_BUF((LOG_NEGOTIATION, 90,
 					    "post_quick_mode: Ni_b",

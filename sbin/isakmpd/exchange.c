@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.100 2004/07/09 16:06:48 deraadt Exp $	 */
+/* $OpenBSD: exchange.c,v 1.101 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -814,7 +814,7 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 		    flag = TAILQ_NEXT(flag, link))
 			if (strcasecmp(flag->field, "ikecfg") == 0) {
 				struct exchange_finalization_node *node;
-				
+
 				node = calloc(1, (unsigned long)sizeof *node);
 				if (!node) {
 					log_print("exchange_establish_p1: "
@@ -1075,7 +1075,7 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 		}
 		if (type != GET_ISAKMP_HDR_EXCH_TYPE(msg->iov[0].iov_base)) {
 			log_print("exchange_setup_p1: "
-			    "expected exchange type %s got %s", str, 
+			    "expected exchange type %s got %s", str,
 			    constant_name(isakmp_exch_cst,
 				GET_ISAKMP_HDR_EXCH_TYPE(msg->iov[0].iov_base)));
 			return 0;
@@ -1099,7 +1099,7 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 		     flag = TAILQ_NEXT(flag, link))
 			if (strcasecmp(flag->field, "ikecfg") == 0) {
 				struct exchange_finalization_node *node;
-				
+
 				node = calloc(1, (unsigned long)sizeof *node);
 				if (!node) {
 					log_print("exchange_establish_p1: "
@@ -1152,7 +1152,7 @@ exchange_setup_p2(struct message *msg, u_int8_t doi)
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_ENABLE;
 	if (msg->isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE)
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_KEEPALIVE;
-#endif	
+#endif
 	exchange_enter(exchange);
 #ifdef USE_DEBUG
 	exchange_dump("exchange_setup_p2", exchange);
@@ -1224,7 +1224,7 @@ exchange_report(void)
 static void
 exchange_free_aux(void *v_exch)
 {
-	struct exchange 	*exchange = v_exch;
+	struct exchange		*exchange = v_exch;
 	struct sa		*sa, *next_sa;
 	struct cert_handler	*handler;
 
@@ -1491,7 +1491,7 @@ exchange_finalize(struct message *msg)
 			msg->isakmp_sa->flags |= SA_FLAG_NAT_T_ENABLE;
 		if (exchange->flags & EXCHANGE_FLAG_NAT_T_KEEPALIVE)
 			msg->isakmp_sa->flags |= SA_FLAG_NAT_T_KEEPALIVE;
-#endif		
+#endif
 
 		LOG_DBG((LOG_EXCHANGE, 10,
 		    "exchange_finalize: phase 1 done: %s, %s", id_doi,

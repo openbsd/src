@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.101 2004/06/23 00:55:59 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.102 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -371,12 +371,12 @@ ipsec_finalize_exchange(struct message *msg)
 					if (sysdep_ipsec_set_spi(sa, proto,
 					    0, isakmp_sa) ||
 					    (last_proto &&
-					    	sysdep_ipsec_group_spis(sa,
-					    	last_proto, proto, 0)) ||
+					    sysdep_ipsec_group_spis(sa,
+						last_proto, proto, 0)) ||
 					    sysdep_ipsec_set_spi(sa, proto,
 						1, isakmp_sa) ||
 					    (last_proto &&
-					    	sysdep_ipsec_group_spis(sa,
+						sysdep_ipsec_group_spis(sa,
 						last_proto, proto, 1)))
 						/*
 						 * XXX Tear down this
@@ -523,7 +523,7 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		break;
 	}
 
-	memcpy(&isa->sport, 
+	memcpy(&isa->sport,
 	    src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
 	    IPSEC_ID_PORT_LEN);
 
@@ -1779,7 +1779,7 @@ ipsec_get_proto_port(char *section, u_int8_t *tproto, u_int16_t *port)
 	struct protoent	*pe = NULL;
 	struct servent	*se;
 	char	*pstr;
-	
+
 	pstr = conf_get_str(section, "Protocol");
 	if (!pstr) {
 		*tproto = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.h,v 1.17 2004/07/30 10:45:27 ho Exp $	 */
+/* $OpenBSD: sysdep.h,v 1.18 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: sysdep.h,v 1.17 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -71,7 +71,7 @@ extern u_int8_t sysdep_sa_len(struct sockaddr *);
  */
 void	*GC_debug_malloc(size_t, char *, int);
 void	*GC_debug_realloc(void *, size_t, char *, int);
-void	 GC_debug_free(void *); 
+void	 GC_debug_free(void *);
 char	*gc_strdup(const char *);
 
 #define malloc(x)	GC_debug_malloc ((x), __FILE__, __LINE__)

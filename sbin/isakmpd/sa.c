@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.84 2004/08/02 15:48:22 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.85 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1128,11 +1128,11 @@ sa_reinit(void)
 
 	LOG_DBG((LOG_SA, 30, "sa_reinit: renegotiating active connections"));
 
-	/* 
+	/*
 	 * Get phase 2 SAs. Soft expire those without active exchanges.  Do
 	 * not touch a phase 2 SA where the soft expiration is not set, ie.
 	 * the SA is not yet established.
-	 * */
+	 */
 	for (i = 0; i <= bucket_mask; i++)
 		for (sa = LIST_FIRST(&sa_tab[i]); sa; sa = LIST_NEXT(sa, link))
 			if (sa->phase == 2)
@@ -1156,7 +1156,7 @@ sa_flag(char *attr)
 		{
 			"active-only", SA_FLAG_ACTIVE_ONLY
 		},
-		
+
 		/*
 		 * Below this point are flags that are internal to the
 		 * implementation.

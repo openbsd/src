@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.29 2004/08/03 10:54:09 ho Exp $	 */
+/* $OpenBSD: transport.c,v 1.30 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -223,7 +223,7 @@ transport_pending_wfd_set(fd_set * fds)
 		if (TAILQ_FIRST(&t->virtual->sendq) ||
 		    TAILQ_FIRST(&t->virtual->prio_sendq)) {
 			n = t->vtbl->fd_set(t, fds, 1);
-			LOG_DBG((LOG_TRANSPORT, 95, 
+			LOG_DBG((LOG_TRANSPORT, 95,
 			    "transport_pending_wfd_set: "
 			    "transport %p (virtual %p) fd %d pending", t,
 			    t->virtual, n));
@@ -276,7 +276,7 @@ transport_send_messages(fd_set * fds)
 	 */
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
 		transport_reference(t->virtual);
-	
+
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
 		if ((TAILQ_FIRST(&t->virtual->sendq) ||
 		    TAILQ_FIRST(&t->virtual->prio_sendq)) &&

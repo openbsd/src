@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.27 2004/06/26 06:07:03 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.28 2004/08/08 19:11:06 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -137,7 +137,7 @@ monitor_init(int debug)
 		log_print("monitor_init: stopped %s PID %d fd %d%s",
 		    m_state.pid ? "priv" : "child", getpid(), m_state.s,
 		    m_state.pid ? ", waiting for SIGCONT" : "");
-		kill(getpid(), SIGSTOP); 	/* Wait here for SIGCONT.  */
+		kill(getpid(), SIGSTOP);	/* Wait here for SIGCONT.  */
 		if (m_state.pid)
 			kill(m_state.pid, SIGCONT); /* Continue child.  */
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.48 2004/06/25 00:58:39 hshoexer Exp $	 */
+/* $OpenBSD: log.c,v 1.49 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -220,7 +220,7 @@ _log_print(int error, int syslog_level, const char *fmt, va_list ap,
 			/*
 			 * Close log_output to prevent isakmpd from locking
 			 * the file.  We may need to explicitly close stdout
-			 * to do this properly.  
+			 * to do this properly.
 			 * XXX - Figure out how to match two FILE *'s and
 			 * rewrite.
 			 */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.146 2004/06/26 06:07:03 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.147 2004/08/08 19:11:06 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -658,7 +658,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 #endif
 
 	/* Setup the ADDRESS extensions.  */
-	len = 
+	len =
 	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(src));
 	addr = calloc(1, len);
 	if (!addr)
@@ -2166,7 +2166,7 @@ cleanup:
 		LOG_DBG((LOG_SYSDEP, 50, "pf_key_v2_flow: "
 		    "SPDADD returns EEXIST"));
 	} else if (err) {
-		log_print("pf_key_v2_flow: SPD%s: %s", 
+		log_print("pf_key_v2_flow: SPD%s: %s",
 		    delete ? "DELETE" : "ADD", strerror(err));
 		goto cleanup;
 	}
@@ -2846,12 +2846,12 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
          */
 	switch (msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
-		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi, 
+		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi,
 		    IPSEC_PROTO_IPSEC_ESP);
 		break;
 
 	case SADB_SATYPE_AH:
-		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi, 
+		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi,
 		    IPSEC_PROTO_IPSEC_AH);
 		break;
 
@@ -3290,7 +3290,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 					goto fail;
 				}
 				if (srcident->sadb_ident_id) {
-					pwd = 
+					pwd =
 					    getpwuid(srcident->sadb_ident_id);
 					if (!pwd) {
 						log_error("pf_key_v2_acquire: "
@@ -3343,7 +3343,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				    || conf_set(af, srcid, "Refcount", "1", 1,
 					0)
 				    || conf_set(af, srcid, "Name",
-					srcid + sizeof "ID:/" - 1 + 
+					srcid + sizeof "ID:/" - 1 +
 					strlen(prefstring), 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
@@ -3847,7 +3847,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 						goto fail;
 					}
 					memcpy(authm, sauth + 1,
-					    sauth->sadb_x_cred_len - 
+					    sauth->sadb_x_cred_len -
 					    sizeof *sauth + 1);
 
 					/* Set the passphrase in the peer. */
@@ -3891,7 +3891,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 						goto fail;
 					}
 					/*
-					 * Set the key in the peer. We don't 
+					 * Set the key in the peer. We don't
 					 * use "Authentication" to avoid
 					 * potential conflicts with file-based
 					 * configurations that use public key
@@ -4010,7 +4010,7 @@ pf_key_v2_handler(int fd)
 
 	/*
 	 * As synchronous read/writes to the socket can have taken place
-	 * between the select(2) call of the main loop and this handler, we 
+	 * between the select(2) call of the main loop and this handler, we
 	 * need to recheck the readability.
          */
 	if (ioctl(pf_key_v2_socket, FIONREAD, &n) == -1) {
@@ -4169,7 +4169,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 		goto cleanup;
 	}
 	protocol.sadb_protocol_reserved2 = 0;
-	if (pf_key_v2_msg_add(grpspis, 
+	if (pf_key_v2_msg_add(grpspis,
 	    (struct sadb_ext *)&protocol, 0) == -1)
 		goto cleanup;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.41 2004/06/25 00:58:39 hshoexer Exp $	 */
+/* $OpenBSD: ui.c,v 1.42 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -159,13 +159,13 @@ static void
 ui_conn_reinit(void)
 {
 	struct timeval tv;
-	
+
 	if (ui_cr_event)
 		timer_remove_event(ui_cr_event);
 
 	gettimeofday(&tv, 0);
 	tv.tv_sec += 5;
-	
+
 	ui_cr_event = timer_add_event("ui_conn_reinit", ui_conn_reinit_event,
 	    0, &tv);
 	if (!ui_cr_event)
@@ -383,7 +383,7 @@ ui_report_sa(char *cmd)
 	FILE *fd = ui_open_result();
 	if (!fd)
 		return;
-	
+
 	sa_report_all(fd);
 
 	fclose(fd);

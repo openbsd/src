@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.78 2004/08/03 10:54:09 ho Exp $	 */
+/* $OpenBSD: udp.c,v 1.79 2004/08/08 19:11:06 deraadt Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -343,7 +343,7 @@ udp_create(char *name)
 		rv = 0;
 		goto ret;
 	}
-	
+
 	v = virtual_listen_lookup(addr);
 	free(addr);
 	if (!v) {
