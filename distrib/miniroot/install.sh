@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.22 1998/03/28 21:40:45 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.23 1998/04/11 09:47:27 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -486,6 +486,28 @@ mount | while read line; do
 	fi
 done
 
+resp=""		# force one iteration
+echo
+echo 'Please enter the initial password that the root acount will have.'
+while [ "X${resp}" = X"" ]; do
+	echo -n "Password (will not echo): "
+	stty -echo
+	getresp "${_password}"
+	stty echo
+	echo ""
+	_password=$resp
+
+	echo -n "Password (again): "
+	stty -echo
+	getresp "${_password}"
+	stty echo
+	echo ""
+	if [ "${_password}" != "${resp}" ]; then
+		echo "Passwords do not match, try again."
+		resp=""
+	fi
+done
+
 install_sets $THESETS
 
 # Copy in configuration information and make devices in target root.
@@ -540,6 +562,12 @@ sh MAKEDEV all
 #kill $pid
 echo "done."
 cd /
+
+_encr=`echo ${_password} | /mnt/usr/bin/encrypt -b 7`
+echo "1,s@^root::@root:${_encr}:@
+w
+q" | ed /mnt/etc/master.passwd 2> /dev/null
+/mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 
 unmount_fs /tmp/fstab.shadow
 
