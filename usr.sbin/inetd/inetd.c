@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.35 1997/07/08 20:37:30 kstailey Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.36 1997/07/22 21:12:28 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.35 1997/07/08 20:37:30 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.36 1997/07/22 21:12:28 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -420,7 +420,7 @@ main(argc, argv, envp)
 				if (errno == EINTR)
 					continue;
 				syslog(LOG_WARNING, "accept (for %s): %m",
-					sep->se_service);
+				    sep->se_service);
 				continue;
 			}
 			plen = sizeof(peer);
@@ -490,8 +490,8 @@ main(argc, argv, envp)
 			else {
 				if ((pwd = getpwnam(sep->se_user)) == NULL) {
 					syslog(LOG_ERR,
-						"getpwnam: %s: No such user",
-						sep->se_user);
+					    "getpwnam: %s: No such user",
+					    sep->se_user);
 					if (sep->se_socktype != SOCK_STREAM)
 						recv(0, buf, sizeof (buf), 0);
 					_exit(1);
@@ -540,7 +540,7 @@ main(argc, argv, envp)
 #ifdef RLIMIT_NOFILE
 				if (rlim_ofile.rlim_cur != rlim_ofile_cur) {
 					if (setrlimit(RLIMIT_NOFILE,
-							&rlim_ofile) < 0)
+					    &rlim_ofile) < 0)
 						syslog(LOG_ERR,"setrlimit: %m");
 				}
 #endif
@@ -683,7 +683,8 @@ config(sig)
 			if (n > sizeof sep->se_ctrladdr_un.sun_path - 1) 
 				n = sizeof sep->se_ctrladdr_un.sun_path - 1;
 			strncpy(sep->se_ctrladdr_un.sun_path,
-				sep->se_service, n);
+			    sep->se_service, n);
+			sep->se_ctrladdr_un.sun_path[n] = '\0';
 			sep->se_ctrladdr_un.sun_family = AF_UNIX;
 			sep->se_ctrladdr_size = n +
 			    sizeof sep->se_ctrladdr_un.sun_family;
@@ -997,7 +998,7 @@ matchconf (old, new)
 		(bcmp(&old->se_ctrladdr_in.sin_addr,
 		    &new->se_ctrladdr_in.sin_addr,
 		    sizeof(new->se_ctrladdr_in.sin_addr)) != 0)) {
-				return (0);
+			return (0);
 	}
 
 	return (1);
@@ -1190,7 +1191,7 @@ more:
 				break;
 		if (bi->bi_service == 0) {
 			syslog(LOG_ERR, "internal service %s unknown",
-				sep->se_service);
+			    sep->se_service);
 			goto more;
 		}
 		sep->se_bi = bi;
@@ -1451,7 +1452,7 @@ dupconfig(sep)
 
 	for (argc = 0; argc <= MAXARGV; argc++)
 		newtab->se_argv[argc] = sep->se_argv[argc] ?
-			newstr(sep->se_argv[argc]) : NULL;
+		    newstr(sep->se_argv[argc]) : NULL;
 	newtab->se_max = sep->se_max;
 
 #ifdef MULOG
@@ -1476,6 +1477,7 @@ inetd_setproctitle(a, s)
 	(void) snprintf(buf, sizeof buf, "-%s", a);
 	if (getpeername(s, (struct sockaddr *)&sin, &size) == 0) {
 		char *s = inet_ntoa(sin.sin_addr);
+
 		buf[sizeof(buf) - 1 - strlen(s) - 3] = '\0';
 		strcat(buf, " [");
 		strcat(buf, s);
@@ -1515,8 +1517,8 @@ bump_nofile()
 	rl.rlim_cur = MIN(FD_SETSIZE, rl.rlim_cur + FD_CHUNK);
 	if (rl.rlim_cur <= rlim_ofile_cur) {
 		syslog(LOG_ERR,
-			"bump_nofile: cannot extend file limit, max = %d",
-			(int)rl.rlim_cur);
+		    "bump_nofile: cannot extend file limit, max = %d",
+		    (int)rl.rlim_cur);
 		return -1;
 	}
 
@@ -1583,7 +1585,7 @@ discard_stream(s, sep)		/* Discard service -- ignore data */
 
 	inetd_setproctitle(sep->se_service, s);
 	while ((errno = 0, read(s, buffer, sizeof(buffer)) > 0) ||
-			errno == EINTR)
+	    errno == EINTR)
 		;
 	exit(0);
 }
@@ -1786,7 +1788,7 @@ print_service(action, sep)
 		fprintf(stderr, "%s: %s ", action, sep->se_service);
 	else
 		fprintf(stderr, "%s: %s:%s ", action, sep->se_hostaddr,
-			sep->se_service);
+		    sep->se_service);
 
 	if (isrpcservice(sep))
 		fprintf(stderr, "rpcprog=%d, rpcvers=%d/%d, proto=%s,",
@@ -1796,9 +1798,9 @@ print_service(action, sep)
 		fprintf(stderr, "proto=%s,", sep->se_proto);
 
 	fprintf(stderr,
-		" wait.max=%hd.%d user.group=%s.%s builtin=%lx server=%s\n",
-		sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
-		(long)sep->se_bi, sep->se_server);
+	    " wait.max=%hd.%d user.group=%s.%s builtin=%lx server=%s\n",
+	    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
+	    (long)sep->se_bi, sep->se_server);
 }
 
 #ifdef MULOG
@@ -1835,7 +1837,7 @@ dolog(sep, ctrl)
 	}
 
 	hp = gethostbyaddr((char *) &sin->sin_addr.s_addr,
-				sizeof (sin->sin_addr.s_addr), AF_INET);
+	    sizeof (sin->sin_addr.s_addr), AF_INET);
 
 	host = hp?hp->h_name:inet_ntoa(sin->sin_addr);
 
@@ -1850,7 +1852,7 @@ dolog(sep, ctrl)
 			break;
 		if (debug)
 			fprintf(stderr, "check \"%s\" against curdom \"%s\"\n",
-					host, curdom);
+			    host, curdom);
 		if (strcasecmp(dp, curdom) == 0)
 			return;
 		break;
@@ -1862,11 +1864,10 @@ dolog(sep, ctrl)
 	openlog("", LOG_NOWAIT, MULOG);
 
 	if (connected && (sep->se_log & MULOG_RFC931))
-		syslog(LOG_INFO, "%s@%s wants %s",
-				rfc931_name(sin, ctrl), host, sep->se_service);
+		syslog(LOG_INFO, "%s@%s wants %s", rfc931_name(sin, ctrl),
+		    host, sep->se_service);
 	else
-		syslog(LOG_INFO, "%s wants %s",
-				host, sep->se_service);
+		syslog(LOG_INFO, "%s wants %s", host, sep->se_service);
 }
 /*
  * From tcp_log by
@@ -1885,15 +1886,14 @@ static char sccsid[] = "@(#) rfc931.c 1.3 92/08/31 22:54:46";
 static jmp_buf timebuf;
 
 /* timeout - handle timeouts */
-
-static void timeout(sig)
-int     sig;
+static void
+timeout(sig)
+	int	sig;
 {
 	longjmp(timebuf, sig);
 }
 
 /* rfc931_name - return remote user name */
-
 char *
 rfc931_name(there, ctrl)
 struct sockaddr_in *there;		/* remote link information */
@@ -1940,7 +1940,6 @@ int	ctrl;
 	alarm(TIMEOUT);
 
 	/* Connect to the RFC931 daemon. */
-
 	sin = *there;
 	sin.sin_port = htons(RFC931_PORT);
 	if (connect(s, (struct sockaddr *) &sin, sizeof(sin)) == -1) {
@@ -1952,9 +1951,9 @@ int	ctrl;
 	/* Query the RFC 931 server. Would 13-byte writes ever be broken up? */
 	sprintf(buf, "%u,%u\r\n", ntohs(there->sin_port), ntohs(here.sin_port));
 
-
 	for (len = 0, cp = buf; len < strlen(buf); ) {
-		int	n;
+		int n;
+
 		if ((n = write(s, cp, strlen(buf) - len)) == -1) {
 			close(s);
 			alarm(0);
@@ -1978,9 +1977,9 @@ int	ctrl;
 	}
 	*cp = '\0';
 
-	if (sscanf(buf, "%u , %u : USERID :%*[^:]:%255s", &remote, &local, user) == 3
-		&& ntohs(there->sin_port) == remote
-		&& ntohs(here.sin_port) == local) {
+	if (sscanf(buf, "%u , %u : USERID :%*[^:]:%255s", &remote,
+	    &local, user) == 3 && ntohs(there->sin_port) == remote &&
+	    ntohs(here.sin_port) == local) {
 
 		/* Strip trailing carriage return. */
 		if (cp = strchr(user, '\r'))
