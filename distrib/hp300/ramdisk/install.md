@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.9 1998/03/27 18:20:35 millert Exp $
+#	$OpenBSD: install.md,v 1.10 1998/03/29 19:58:14 millert Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -478,25 +478,41 @@ md_copy_kernel() {
 
 md_welcome_banner() {
 (
-	echo	""
-	echo	"Welcome to the OpenBSD/hp300 ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
-	cat << \__welcome_banner_1
+	if [ "$MODE" = "install" ]; then
+		echo "Welcome to the OpenBSD/hp300 ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
+		cat << \__welcome_banner_1
 
-This program is designed to help you install OpenBSD on your system in a
-simple and rational way.  You'll be asked several questions, and it would
-probably be useful to have your disk's hardware manual, the installation
-notes, and a calculator handy.
+This program is designed to help you put OpenBSD on your system in a
+simple and rational way.
+__welcome_banner_1
 
-As with anything which modifies your hard disk's contents, this program
-can cause SIGNIFICANT data loss, and you are advised to make sure your
-hard drive is backed up before beginning the installation process.
+	else
+		echo "Welcome to the OpenBSD/alpha ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
+		cat << \__welcome_banner_2
 
-Default answers are displyed in brackets after the questions.  You
+This program is designed to help you upgrade your OpenBSD system in a
+simple and rational way.
+
+As a reminder, installing the `etc' binary set is NOT recommended.
+Once the rest of your system has been upgraded, you should manually
+merge any changes to files in the `etc' set into those files which
+already exist on your system.
+
+__welcome_banner_2
+	fi
+
+cat << \__welcome_banner_3
+
+As with anything which modifies your disk's contents, this program can
+cause SIGNIFICANT data loss, and you are advised to make sure your
+data is backed up before beginning the installation process.
+
+Default answers are displayed in brackets after the questions.  You
 can hit Control-C at any time to quit, but if you do so at a prompt,
 you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
-__welcome_banner_1
+__welcome_banner_3
 ) | less -E
 }
 
