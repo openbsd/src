@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.27 2001/07/18 13:25:17 espie Exp $
+#	$OpenBSD: bsd.README,v 1.28 2001/08/16 15:12:48 brad Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -233,11 +233,11 @@ SYS_INCLUDE	Copy or symlink kernel include files into /usr/include.
 		Possible values are "symlinks" or "copies" (which is
 		the same as the variable being unset).
 
-NOPROFILE	Do not build profiled versions of system libraries
+NOPROFILE	Do not build profiled versions of system libraries.
 
 NOPIC		Do not build PIC versions of system libraries, and
-		do not build shared libraries.  [set if ${MACHINE_ARCH}
-		is "mips", "vax", or "alpha", unset otherwise.]
+		do not build shared libraries.
+variable).
 
 NOLINT		Do not build lint libraries. [set, set unconditionally]
 
@@ -349,7 +349,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 		The following libraries are predefined for DPADD:
 
-			LIBATALK	/usr/lib/libatalk.a
 			LIBC		/lib/libc.a
 			LIBCOMPAT	/usr/lib/libcompat.a
 			LIBCURSES	/usr/lib/libcurses.a
@@ -497,4 +496,3 @@ POSTINSTALL	Program to pass with '-p' flag to the modload.
 
 The include file <bsd.lkm.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.
-
