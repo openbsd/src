@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.146 2002/09/12 09:48:57 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.147 2002/09/12 10:05:08 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -244,6 +244,7 @@ typedef struct {
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL SELF
 %token	FRAGNORM FRAGDROP FRAGCROP
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE
+%token	ANTISPOOF FOR
 %token	<v.string> STRING
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
@@ -265,6 +266,7 @@ typedef struct {
 %type	<v.keep_state>	keep
 %type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>	logquick
+%type	<v.interface>	antispoof_ifspc antispoof_iflst
 %%
 
 ruleset		: /* empty */
@@ -276,6 +278,7 @@ ruleset		: /* empty */
 		| ruleset rdrrule '\n'
 		| ruleset pfrule '\n'
 		| ruleset varset '\n'
+		| ruleset antispoof '\n'
 		| ruleset error '\n'		{ errors++; }
 		;
 
@@ -369,6 +372,43 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 
 		}
 		;
+
+antispoof	: ANTISPOOF logquick antispoof_ifspc af {
+			struct pf_rule r;
+			struct node_host *h = NULL;
+			struct node_if *i, *j;
+
+			if (check_rulestate(PFCTL_STATE_FILTER))
+				YYERROR;
+
+			for (i = $3; i; i = i->next) {
+				memset(&r, 0, sizeof(r));
+
+				r.action = PF_DROP;
+				r.direction = PF_IN;
+				r.log = $2.log;
+				r.quick = $2.quick;
+				r.af = $4;
+
+				j = calloc(1, sizeof(struct node_if));
+				strlcpy(j->ifname, i->ifname, IFNAMSIZ);
+				j->not = 1;
+				h = ifa_lookup(j->ifname, PFCTL_IFLOOKUP_NET);
+
+				expand_rule(&r, j, NULL, h, NULL, NULL, NULL,
+				    NULL, NULL, NULL);
+			}
+
+		}
+		;
+
+antispoof_ifspc	: FOR if_item			{ $$ = $2; }
+		| FOR '{' antispoof_iflst '}'	{ $$ = $3; }
+		;
+
+
+antispoof_iflst	: if_item			{ $$ = $1; }
+		| antispoof_iflst comma if_item	{ $3->next = $1; $$ = $3; }
 
 pfrule		: action dir logquick interface route af proto fromto
 		  uids gids flags icmpspec keep fragment allowopts label
@@ -2168,6 +2208,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "all",	ALL},
 		{ "allow-opts",	ALLOWOPTS},
+		{ "antispoof",	ANTISPOOF},
 		{ "any",	ANY},
 		{ "binat",	BINAT},
 		{ "block",	BLOCK},
@@ -2177,6 +2218,7 @@ lookup(char *s)
 		{ "dup-to",	DUPTO},
 		{ "fastroute",	FASTROUTE},
 		{ "flags",	FLAGS},
+		{ "for", 	FOR},
 		{ "fragment",	FRAGMENT},
 		{ "from",	FROM},
 		{ "group",	GROUP},
