@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:34:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/09/16 10:16:57 downsj Exp $
 
-LDSTATIC=-static
+LDSTATIC=${STATIC}
 PROG=	kdump
 CFLAGS+=-I${.CURDIR}/../ktrace
 SRCS=	kdump.c ioctl.c subr.c
