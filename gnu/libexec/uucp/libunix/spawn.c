@@ -353,8 +353,10 @@ ixsspawn (pazargs, aidescs, fkeepuid, fkeepenv, zchdir, fnosigs, fshell,
   if (! fkeepuid)
     {
       /* Return to the uid of the invoking user.  */
-      (void) setuid (getuid ());
+      (void) setegid (getgid ());
       (void) setgid (getgid ());
+      (void) seteuid (getuid ());
+      (void) setuid (getuid ());
     }
   else
     {

@@ -272,8 +272,10 @@ usysdep_initialize (puuconf,iflags)
       && geteuid () == 0)
     {
       q = getpwnam (OWNER);
-      if (q != NULL)
+      if (q != NULL) P
+	seteuid (q->pw_uid);
 	setuid (q->pw_uid);
+      }
     }
 
   if ((iflags & INIT_GETCWD) != 0)
@@ -371,8 +373,10 @@ usysdep_exit (fsuccess)
 boolean fsysdep_other_config (z)
      const char *z;
 {
-  (void) setuid (getuid ());
+  (void) setegid (getgid ());
   (void) setgid (getgid ());
+  (void) seteuid (getuid ());
+  (void) setuid (getuid ());
   return TRUE;
 }
 
