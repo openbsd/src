@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.12 1999/10/17 20:24:36 aaron Exp $
+.\"	$OpenBSD: top.1,v 1.13 2000/03/11 21:40:05 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -47,10 +47,13 @@
 .Sh DESCRIPTION
 .Nm
 displays the top processes on the system and periodically updates this
-information.  If standard output is an intelligent terminal (see below) then
+information.
+If standard output is an intelligent terminal (see below) then
 as many processes as will fit on the terminal screen are displayed
-by default.  Otherwise, a good number of them are shown (around 20).
-Raw CPU percentage is used to rank the processes.  If
+by default.
+Otherwise, a good number of them are shown (around 20).
+Raw CPU percentage is used to rank the processes.
+If
 .Ar number
 is given, then the top
 .Ar number
@@ -58,14 +61,16 @@ processes will be displayed instead of the default.
 .Pp
 .Nm
 makes a distinction between terminals that support advanced capabilities
-and those that do not.  This
-distinction affects the choice of defaults for certain options.  In the
-remainder of this document, an
+and those that do not.
+This distinction affects the choice of defaults for certain options.
+In the remainder of this document, an
 .Em intelligent
 terminal is one that supports cursor addressing, clear screen, and clear
-to end of line.  Conversely, a
-.Em dumb
-terminal is one that does not support such features.  If the output of
+to end of line.
+Conversely, a
+.Dq dumb
+terminal is one that does not support such features.
+If the output of
 .Nm
 is redirected to a file, it acts as if it were being run on a dumb
 terminal.
@@ -73,63 +78,79 @@ terminal.
 The options are as follows:
 .Bl -tag -width XxXXXXXXXXX
 .It Fl S
-Show system processes in the display.  Normally, system processes such as
-the pager and the swapper are not shown.  This option makes them visible.
+Show system processes in the display.
+Normally, system processes such as the pager and the swapper are not shown.
+This option makes them visible.
 .It Fl b
 Use
 .Em batch
-mode.  In this mode, all input from the terminal is
-ignored.  Interrupt characters (such as ^C and ^\e) still have an effect.
+mode.
+In this mode, all input from the terminal is ignored.
+Interrupt characters (such as
+.Ql ^C
+and
+.Ql ^\e )
+still have an effect.
 This is the default on a dumb terminal, or when the output is not a terminal.
 .It Fl i
 Use
 .Em interactive
-mode.  In this mode, any input is immediately read for processing.  See the
-section on
+mode.
+In this mode, any input is immediately read for processing.
+See the section on
 .Sx INTERACTIVE MODE
-for an explanation of which keys perform what functions.  After the command
+for an explanation of which keys perform what functions.
+After the command
 is processed, the screen will immediately be updated, even if the command was
-not understood.  This mode is the default when standard output is an
-intelligent terminal.
+not understood.
+This mode is the default when standard output is an intelligent terminal.
 .It Fl I
 Do not display idle processes.
 By default, top displays both active and idle processes.
 .It Fl n
 Use
 .Em non-interactive
-mode.  This is identical to
+mode.
+This is identical to
 .Em batch
 mode.
 .It Fl q
 Renice
 .Nm
-to -20 so that it will run faster.  This can be used when the system is
+to -20 so that it will run faster.
+This can be used when the system is
 being very sluggish to improve the possibility of discovering the problem.
 This option can only be used by root.
 .It Fl u
-Do not take the time to map UID numbers to usernames.  Normally,
+Do not take the time to map UID numbers to usernames.
+Normally,
 .Nm
 will read as much of the password database as is necessary to map
-all the user ID numbers it encounters into login names.  This option
-disables all that, while possibly decreasing execution time.  The UID
-numbers are displayed instead of the names.
+all the user ID numbers it encounters into login names.
+This option
+disables all that, while possibly decreasing execution time.
+The UID numbers are displayed instead of the names.
 .It Fl d Ar count
 Show only
 .Ar count
-displays, then exit.  A display is considered to be one update of the
-screen.  This option allows the user to select the number of displays
+displays, then exit.
+A display is considered to be one update of the screen.
+This option allows the user to select the number of displays
 to be shown before
 .Nm
-automatically exits.  For intelligent terminals, no upper limit
-is set.  The default is 1 for dumb terminals.
+automatically exits.
+For intelligent terminals, no upper limit is set.
+The default is 1 for dumb terminals.
 .It Fl s Ar time
 Set the delay between screen updates to
 .Ar time
-seconds.  The default delay between updates is 5 seconds.
+seconds.
+The default delay between updates is 5 seconds.
 .It Fl o Ar field
-Sort the process display area using the specified field as the primary
-key.  The field name is the name of the column as seen in the output,
-but in lower case.  The
+Sort the process display area using the specified field as the primary key.
+The field name is the name of the column as seen in the output,
+but in lower case.
+The
 .Ox
 version of top supports
 .Ar cpu ,
@@ -151,8 +172,8 @@ and
 .Ar number
 fields can be specified as
 .Li infinite ,
-indicating that they can stretch as far as possible.  This is accomplished
-by using any proper prefix of the keywords
+indicating that they can stretch as far as possible.
+This is accomplished by using any proper prefix of the keywords
 .Li infinity ,
 .Li maximum ,
 or
@@ -164,8 +185,9 @@ on an intelligent terminal is, in fact,
 .Pp
 The environment variable
 .Ev TOP
-is examined for options before the command line is scanned.  This enables
-a user to set his or her own defaults.  The number of processes to display
+is examined for options before the command line is scanned.
+This enables a user to set his or her own defaults.
+The number of processes to display
 can also be specified in the environment variable
 .Ev TOP .
 .Pp
@@ -174,8 +196,10 @@ The options
 .Fl S ,
 and
 .Fl u
-are actually toggles.  A second specification of any of these options
-will negate the first.  Thus a user who has the environment variable
+are actually toggles.
+A second specification of any of these options
+will negate the first.
+Thus a user who has the environment variable
 .Ev TOP
 set to
 .Dq -I
@@ -187,22 +211,26 @@ When
 .Nm
 is running in
 .Em interactive mode ,
-it reads commands from the terminal and acts upon them accordingly.  In this
-mode, the terminal is put in
+it reads commands from the terminal and acts upon them accordingly.
+In this mode, the terminal is put in
 .Dv CBREAK ,
-so that a character will be processed as soon as it is typed.  Almost always,
-a key will be pressed when
+so that a character will be processed as soon as it is typed.
+Almost always, a key will be pressed when
 .Nm
 is between displays; that is, while it is waiting for
 .Ar time
-seconds to elapse.  If this is the case, the command will be
+seconds to elapse.
+If this is the case, the command will be
 processed and the display will be updated immediately thereafter
-(reflecting any changes that the command may have specified).  This
-happens even if the command was incorrect.  If a key is pressed while
+(reflecting any changes that the command may have specified).
+This happens even if the command was incorrect.
+If a key is pressed while
 .Nm
 is in the middle of updating the display, it will finish the update and
-then process the command.  Some commands require additional information,
-and the user will be prompted accordingly.  While typing this information
+then process the command.
+Some commands require additional information,
+and the user will be prompted accordingly.
+While typing this information
 in, the user's erase and kill keys (as set up by the command
 .Xr stty 1 )
 are recognized, and a newline terminates the input.
@@ -231,12 +259,14 @@ Change the number of seconds to delay between displays
 .It k
 Send a signal
 .Ns ( Dv TERM
-by default) to a list of processes.  This acts similarly to the command
+by default) to a list of processes.
+This acts similarly to the command
 .Xr kill 1 .
 .It r
 Change the priority (the
 .Em nice )
-of a list of processes.  This acts similarly to the command
+of a list of processes.
+This acts similarly to the command
 .Xr renice 8 .
 .It u
 Display only processes owned by a specific username (prompt for username).
@@ -272,9 +302,11 @@ and a percentage of time spent in each of the processor states
 It also includes information about physial and virtual memory allocation.
 .Pp
 The remainder of the screen displays information about individual
-processes.  This display is similar in spirit to
+processes.
+This display is similar in spirit to
 .Xr ps 1
-but it is not exactly the same.  PID is the process ID, USERNAME is the name
+but it is not exactly the same.
+PID is the process ID, USERNAME is the name
 of the process's owner (if
 .Fl u
 is specified, a UID column will be substituted for USERNAME),
@@ -306,7 +338,8 @@ The
 .Em ABANDONED
 state (known in the kernel as
 .Em SWAIT Ns )
-was abandoned, thus the name.  A process should never end up in this state.
+was abandoned, thus the name.
+A process should never end up in this state.
 .Sh AUTHOR
 William LeFebvre, EECS Department, Northwestern University
 .Sh ENVIRONMENT
@@ -322,10 +355,18 @@ kernel memory
 physical memory
 .It Pa /bsd
 kernel image
+.Sh SEE ALSO
+.Xr kill 1 ,
+.Xr ps 1 ,
+.Xr stty 1 ,
+.Xr systat 1 ,
+.Xr mem 4 ,
+.Xr renice 8
 .Sh BUGS
 Don't shoot me, but the default for
 .Fl I
-has changed once again.  So many people were confused by the fact that
+has changed once again.
+So many people were confused by the fact that
 .Nm
 wasn't showing them all the processes that I have decided to make the
 default behavior show idle processes, just like it did in version 2.
@@ -336,7 +377,8 @@ options in the environment variable
 .Ev TOP
 (see the
 .Sx OPTIONS
-section).  Those who want the behavior that version 3.0 had need only set
+section).
+Those who want the behavior that version 3.0 had need only set
 the environment variable
 .Ev TOP
 to
@@ -349,12 +391,6 @@ As with
 .Xr ps 1 ,
 things can change while
 .Nm
-is collecting information for an update.  The picture it gives is only a
+is collecting information for an update.
+The picture it gives is only a
 close approximation to reality.
-.Sh SEE ALSO
-.Xr kill 1 ,
-.Xr ps 1 ,
-.Xr stty 1 ,
-.Xr systat 1 ,
-.Xr mem 4 ,
-.Xr renice 8

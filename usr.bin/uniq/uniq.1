@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uniq.1,v 1.4 2000/03/05 00:28:56 aaron Exp $
+.\"	$OpenBSD: uniq.1,v 1.5 2000/03/11 21:40:07 aaron Exp $
 .\"	$NetBSD: uniq.1,v 1.5 1994/12/06 07:51:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -54,7 +54,7 @@
 .Oc
 .Sh DESCRIPTION
 The
-.Nm uniq
+.Nm
 utility reads the standard input comparing adjacent lines and writes
 a copy of each unique input line to the standard output.
 The second and succeeding copies of identical adjacent input lines are
@@ -75,7 +75,7 @@ Ignore the first
 in each input line when doing comparisons.
 A field is a string of non-blank characters separated from adjacent fields
 by blanks.
-Field numbers are one based, i.e. the first field is field one.
+Field numbers are one based, i.e., the first field is field one.
 .It Fl s Ar chars
 Ignore the first
 .Ar chars
@@ -87,7 +87,7 @@ option, the first
 characters after the first
 .Ar fields
 fields will be ignored.
-Character numbers are one based, i.e. the first character is character one.
+Character numbers are one based, i.e., the first character is character one.
 .It Fl u
 Don't output lines that are repeated in the input.
 .\".It Fl Ns Ar n
@@ -115,19 +115,19 @@ such argument is used as the name of an input file, the second is used
 as the name of an output file.
 .Pp
 The
-.Nm uniq
+.Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh SEE ALSO
+.Xr sort 1
 .Sh COMPATIBILITY
 The historic
 .Cm \&\(pl Ns Ar number
 and
 .Fl Ns Ar number
 options have been deprecated but are still supported in this implementation.
-.Sh SEE ALSO
-.Xr sort 1
 .Sh STANDARDS
 The
-.Nm uniq
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.

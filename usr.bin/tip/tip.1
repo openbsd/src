@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tip.1,v 1.6 1999/06/05 01:21:43 aaron Exp $
+.\"	$OpenBSD: tip.1,v 1.7 2000/03/11 21:40:05 aaron Exp $
 .\"	$NetBSD: tip.1,v 1.7 1994/12/08 09:31:05 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -58,12 +58,13 @@
 .\" .Op Fl l Ar line
 .\" .Op Fl #
 .Sh DESCRIPTION
-.Nm tip
+.Nm
 .\" and
 .\" .Nm cu
 establishes a full-duplex connection to another machine,
 giving the appearance of being logged in directly on the
-remote CPU.  It goes without saying that you must have a login
+remote CPU.
+It goes without saying that you must have a login
 on the machine (or equivalent) to which you wish to connect.
 .\" The preferred interface is
 .\" .Nm tip .
@@ -85,7 +86,8 @@ No escape (disable tilde).
 .El
 .Pp
 Typed characters are normally transmitted directly to the remote
-machine (which does the echoing as well).  A tilde
+machine (which does the echoing as well).
+A tilde
 .Pq Ql ~
 appearing
 as the first character of a line is an escape signal; the following
@@ -105,25 +107,27 @@ Escape to a shell (exiting the shell will return you to
 .Nm tip Ns ).
 .It Ic \&~>
 Copy file from local to remote.
-.Nm tip
+.Nm
 prompts for the name of a local file to transmit.
 .It Ic \&~<
 Copy file from remote to local.
-.Nm tip
+.Nm
 prompts first for the name of the file to be sent, then for
 a command to be executed on the remote machine.
 .It Ic \&~p Ar from Op Ar to
 Send a file to a remote
 .Ux
-host.  The put command causes the remote
+host.
+The put command causes the remote
 .Ux
 system to run the command string
 .Dq cat > 'to' ,
 while
-.Nm tip
+.Nm
 sends it the
 .Dq from
-file.  If the
+file.
+If the
 .Dq to
 file isn't specified the
 .Dq from
@@ -164,7 +168,8 @@ The command string sent to the local
 system is processed by the shell.
 .It Ic \&~C
 Fork a child process on the local system to perform special protocols
-such as \s-1XMODEM\s+1.  The child program will be run with the following
+such as \s-1XMODEM\s+1.
+The child program will be run with the following
 somewhat unusual arrangement of file descriptors:
 .nf
 .in +1i
@@ -212,11 +217,12 @@ to find how to reach a particular
 system and to find out how it should operate while talking
 to the system;
 refer to
-.Xr remote  5
+.Xr remote 5
 for a full description.
 Each system has a default baud rate with which to
-establish a connection.  If this value is not suitable, the baud rate
-to be used may be specified on the command line, e.g.
+establish a connection.
+If this value is not suitable, the baud rate
+to be used may be specified on the command line, e.g.,
 .Ql "tip -300 mds" .
 .Pp
 When
@@ -230,9 +236,10 @@ is defined in
 .Pp
 When
 .Nm
-prompts for an argument (e.g. during setup of
+prompts for an argument (e.g., during setup of
 a file transfer) the line typed may be edited with the standard
-erase and kill characters.  A null line in response to a prompt,
+erase and kill characters.
+A null line in response to a prompt,
 or an interrupt, will abort the dialogue and return you to the
 remote machine.
 .Pp
@@ -254,9 +261,9 @@ commands, the
 and
 .Dq eofwrite
 variables are used to recognize end-of-file when reading, and
-specify end-of-file when writing (see below).  File transfers
-normally depend on tandem mode for flow control.  If the remote
-system does not support tandem mode,
+specify end-of-file when writing (see below).
+File transfers normally depend on tandem mode for flow control.
+If the remote system does not support tandem mode,
 .Dq echocheck
 may be set to indicate
 .Nm
@@ -283,39 +290,45 @@ Bizcomp 1031 and 1032 integral call unit/modems.
 maintains a set of variables
 which control its operation.
 Some of these variables are read-only to normal users (root is allowed
-to change anything of interest).  Variables may be displayed
-and set through the
+to change anything of interest).
+Variables may be displayed and set through the
 .Sq s
-escape.  The syntax for variables is patterned after
+escape.
+The syntax for variables is patterned after
 .Xr vi 1
 and
 .Xr Mail 1 .
 Supplying
 .Dq all
 as an argument to the set command displays all variables readable by
-the user.  Alternatively, the user may request display of a particular
+the user.
+Alternatively, the user may request display of a particular
 variable by attaching a
 .Ql ?
-to the end.  For example
+to the end.
+For example,
 .Dq escape?
 displays the current escape character.
 .Pp
-Variables are numeric, string, character, or boolean values.  Boolean
+Variables are numeric, string, character, or boolean values.
+Boolean
 variables are set merely by specifying their name; they may be reset
 by prepending a
 .Ql !
-to the name.  Other variable types are set by
-concatenating an
+to the name.
+Other variable types are set by concatenating an
 .Ql =
-and the value.  The entire assignment must not
-have any blanks in it.  A single set command may be used to interrogate
+and the value.
+The entire assignment must not have any blanks in it.
+A single set command may be used to interrogate
 as well as set a number of variables.
 Variables may be initialized at run time by placing set commands
 (without the
 .Ql ~s
 prefix in a file
 .Pa .tiprc
-in one's home directory).  The
+in one's home directory).
+The
 .Fl v
 option causes
 .Nm
@@ -363,13 +376,13 @@ default value is
 .It Ar exceptions
 (str) The set of characters which should not be discarded
 due to the beautification switch; abbreviated
-.Ar ex  ;
+.Ar ex ;
 default value is
 .Dq \et\en\ef\eb .
 .It Ar force
 (char) The character used to force literal data transmission;
 abbreviated
-.Ar fo  ;
+.Ar fo ;
 default value is
 .Ql ^P .
 .It Ar framesize
@@ -385,8 +398,8 @@ host; abbreviated
 .Ar pr ;
 default value is
 .Ql \en .
-This value is used to synchronize during
-data transfers.  The count of lines transferred during a file transfer
+This value is used to synchronize during data transfers.
+The count of lines transferred during a file transfer
 command is based on receipt of this character.
 .It Ar raise
 (bool) Upper case mapping mode; abbreviated
@@ -411,7 +424,7 @@ default value is
 .Dq tip.record .
 .It Ar script
 (bool) Session scripting mode; abbreviated
-.Ar sc  ;
+.Ar sc ;
 default is
 .Ar off .
 When
@@ -427,20 +440,20 @@ If the
 switch is on, only printable
 .Tn ASCII
 characters will be included in
-the script file (those characters between 040 and 0177).  The
-variable
+the script file (those characters between 040 and 0177).
+The variable
 .Ar exceptions
 is used to indicate characters which are an exception to the normal
 beautification rules.
 .It Ar tabexpand
 (bool) Expand tabs to spaces during file transfers; abbreviated
-.Ar tab  ;
+.Ar tab ;
 default value is
 .Ar false .
 Each tab is expanded to 8 spaces.
 .It Ar verbose
 (bool) Verbose mode; abbreviated
-.Ar verb  ;
+.Ar verb ;
 default is
 .Ar true .
 When verbose mode is enabled,
@@ -450,8 +463,8 @@ of lines transferred during a file transfer operations,
 and more.
 .El
 .Sh ENVIRONMENT
-.Nm
-uses the following environment variables:
+The following environment variables affect the execution of
+.Nm tip :
 .Bl -tag -width Fl
 .It Ev SHELL
 (str) The name of the shell to use for the
@@ -492,8 +505,6 @@ line access log
 lock file to avoid conflicts with
 .Xr uucp
 .El
-.Sh DIAGNOSTICS
-Diagnostics are, hopefully, self-explanatory.
 .Sh SEE ALSO
 .Xr phones 5 ,
 .Xr remote 5

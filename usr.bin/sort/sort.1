@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.7 2000/03/05 00:28:55 aaron Exp $
+.\"	$OpenBSD: sort.1,v 1.8 2000/03/11 21:40:03 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,13 +57,13 @@
 .Ar ...
 .Sh DESCRIPTION
 The
-.Nm sort
+.Nm
 utility
 sorts text files by lines.
 Comparisons are based on one or more sort keys extracted
-from each line of input, and are performed
-lexicographically. By default, if keys are not given,
-.Nm sort
+from each line of input, and are performed lexicographically.
+By default, if keys are not given,
+.Nm
 regards each input line as a single field.
 .Pp
 The options are as follows:
@@ -71,12 +71,12 @@ The options are as follows:
 .It Fl c
 Check that the single input file is sorted.
 If the file is not sorted,
-.Nm sort
+.Nm
 produces the appropriate error messages and exits with code 1;
 otherwise,
-.Nm sort
+.Nm
 returns 0.
-.Nm sort
+.Nm
 .Fl c
 produces no output, except the error messages on
 .Em stderr .
@@ -92,8 +92,8 @@ can be the same as one of the input files.
 .It Fl T Ar dir
 Use
 .Ar dir
-as the directory for temporary files.  The default is the contents
-of the environment variable
+as the directory for temporary files.
+The default is the contents of the environment variable
 .Ev TMPDIR
 or
 .Pa /var/tmp
@@ -148,8 +148,8 @@ option.)
 .It Fl r
 Reverse the sense of comparisons.
 .It Fl H
-Use a merge sort instead of a radix sort.  This option should be
-used for files larger than 60Mb.
+Use a merge sort instead of a radix sort.
+This options should be used for files larger than 60Mb.
 .El
 .Pp
 The treatment of field separators can be altered using these
@@ -179,7 +179,8 @@ option
 has no effect unless key fields are specified.
 .It Fl t Ar char
 .Ar char
-is used as the field separator character. The initial
+is used as the field separator character.
+The initial
 .Ar char
 is not considered to be part of a field when determining
 key offsets.
@@ -248,7 +249,8 @@ considered to be part of the first field.
 Fields are specified
 by the
 .Fl k Ar field1[,field2]
-argument. A missing
+argument.
+A missing
 .Ar field2
 argument defaults to the end of a line.
 .Pp
@@ -342,8 +344,23 @@ option is still supported, except for
 which has no
 .Fl k
 equivalent.
+.Pp
+The
+.Nm
+utility shall exit with one of the following values:
+.Pp
+.Bl -tag -width flag -compact
+.It 0
+Normal behavior.
+.It 1
+On disorder (or non-uniqueness) with the
+.Fl c
+option.
+.It 2
+An error occurred.
+.El
 .Sh ENVIRONMENT
-If the following environment variable exists, it is utilized by
+The following environment variables affect the execution of
 .Nm sort :
 .Bl -tag -width Fl
 .It Ev TMPDIR
@@ -368,32 +385,19 @@ already exists
 .Xr comm 1 ,
 .Xr join 1 ,
 .Xr uniq 1
-.Sh RETURN VALUES
-.Nm sort
-exits with one of the following values:
-.Pp
-.Bl -tag -width flag -compact
-.It 0
-Normal behavior.
-.It 1
-On disorder (or non-uniqueness) with the
-.Fl c
-option.
-.It 2
-An error occurred.
 .Sh BUGS
 Lines longer than 65522 characters are discarded and processing continues.
 To sort files larger than 60Mb, use
-.Nm sort
+.Nm
 .Fl H ;
 files larger than 704Mb must be sorted in smaller pieces, then merged.
 To protect data
-.Nm sort
+.Nm
 .Fl o
 calls link and unlink, and thus fails in protected directories.
 .Sh HISTORY
 A
-.Nm sort
+.Nm
 command appeared in
 .At v6 .
 .Sh NOTES
@@ -408,9 +412,9 @@ argument of the
 .Fl k
 option should be used whenever possible.
 Similarly,
-.Nm sort
+.Nm
 .Fl k1f
 is equivalent to
-.Nm sort
+.Nm
 .Fl f
 and may take twice as long.

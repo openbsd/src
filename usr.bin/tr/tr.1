@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.5 2000/03/05 00:28:55 aaron Exp $
+.\"	$OpenBSD: tr.1,v 1.6 2000/03/11 21:40:05 aaron Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -61,7 +61,7 @@
 .Ar string1 string2
 .Sh DESCRIPTION
 The
-.Nm tr
+.Nm
 utility copies the standard input to the standard output with substitution
 or deletion of selected characters.
 .Pp
@@ -146,7 +146,7 @@ the octal sequence to the full 3 octal digits.
 .It \echaracter
 A backslash followed by certain special characters maps to special
 values.
-.sp
+.Pp
 .Bl -column
 .It \ea	<alert character>
 .It \eb	<backspace>
@@ -156,14 +156,14 @@ values.
 .It \et	<tab>
 .It \ev	<vertical tab>
 .El
-.sp
+.Pp
 A backslash followed by any other character maps to that character.
 .It c-c
 Represents the range of characters between the range endpoints, inclusively.
 .It [:class:]
 Represents all characters belonging to the defined character class.
 Class names are:
-.sp
+.Pp
 .Bl -column
 .It alnum	<alphanumeric characters>
 .It alpha	<alphabetic characters>
@@ -246,23 +246,25 @@ it's interpreted as a decimal value.
 .El
 .Pp
 The
-.Nm tr
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
-.sp
+.Pp
 Create a list of the words in file1, one per line, where a word is taken to
 be a maximal string of letters.
-.sp
+.Pp
 .D1 Li "tr -cs \*q[:alpha:]\*q \*q\en\*q < file1"
-.sp
+.Pp
 Translate the contents of file1 to upper-case.
-.sp
+.Pp
 .D1 Li "tr \*q[:lower:]\*q \*q[:upper:]\*q < file1"
-.sp
+.Pp
 Strip out non-printable characters from file1.
-.sp
+.Pp
 .D1 Li "tr -cd \*q[:print:]\*q < file1"
+.Sh SEE ALSO
+.Xr sed 1
 .Sh COMPATIBILITY
 System V has historically implemented character ranges using the syntax
 .Dq [c-c]
@@ -271,7 +273,7 @@ instead of the
 used by historic BSD implementations and
 standardized by POSIX.
 System V shell scripts should work under this implementation as long as
-the range is intended to map in another range, i.e. the command
+the range is intended to map in another range, i.e., the command
 .Dq tr\ [a-z]\ [A-Z]
 will work as it will map the
 .Dq [
@@ -302,13 +304,13 @@ will have to be rewritten as
 .Dq a\e-z .
 .Pp
 The
-.Nm tr
+.Nm
 utility has historically not permitted the manipulation of NUL bytes in
 its input and, additionally, has stripped NUL's from its input stream.
 This implementation has removed this behavior as a bug.
 .Pp
 The
-.Nm tr
+.Nm
 utility has historically been extremely forgiving of syntax errors:
 for example, the
 .Fl c
@@ -318,7 +320,7 @@ options were ignored unless two strings were specified.
 This implementation will not permit illegal syntax.
 .Sh STANDARDS
 The
-.Nm tr
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.

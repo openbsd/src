@@ -1,4 +1,5 @@
-.\"	$OpenBSD: tn3270.1,v 1.7 2000/03/05 00:28:58 aaron Exp $
+.\"	$OpenBSD: tn3270.1,v 1.8 2000/03/11 21:40:05 aaron Exp $
+.\"
 .\" Copyright (c) 1986, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -71,7 +72,7 @@ Terminal Communication System II.
 is actually a modification of the Arpanet
 .Tn TELNET
 user interface (see
-.Xr telnet  1  )
+.Xr telnet 1 )
 which will, in certain circumstances, interpret and generate
 raw 3270 control streams.
 .Pp
@@ -99,9 +100,10 @@ data received from the remote
 .Tn IBM
 machine.
 .It Ar sysname
-The name of the remote system.  If the remote name
-is NOT specified, the user will be prompted for a
-command (see below).
+The name of the remote system.
+If the remote name is
+.Em not
+specified, the user will be prompted for a command (see below).
 .It Ar port
 The port to connect to on the remote system.
 Normally,
@@ -128,7 +130,7 @@ looks at the number of lines and columns on the actual terminal (as
 defined in the
 .Ev TERM
 environment variable; see
-.Xr termcap  5  ) .
+.Xr termcap 5 ) .
 The terminal (or window in which
 .Nm tn3270
 is running, on multiple
@@ -173,14 +175,14 @@ This mapping is terminal dependent and is specified
 in a description file,
 .Pa /usr/share/misc/map3270 ,
 (see
-.Xr map3270  5  )
+.Xr map3270 5 )
 or in an environment variable
 .Ev MAP3270
 (and, if necessary,
-.Ev MAP3270A  ,
+.Ev MAP3270A ,
 .Ev MAP3270B ,
 and so on - see
-.Xr mset  1  ) .
+.Xr mset 1 ) .
 Any special function keys on the
 .Tn ASCII
 keyboard are used whenever possible.
@@ -193,7 +195,7 @@ If this is not found,
 .Nm tn3270
 uses a default keyboard mapping
 (see
-.Xr map3270  5  ) .
+.Xr map3270 5 ) .
 .Pp
 The first character of each special keyboard mapping sequence
 is either an
@@ -226,7 +228,7 @@ In this mode,
 .Nm tn3270
 accepts and executes
 all the commands of
-.Xr telnet  1  ,
+.Xr telnet 1 ,
 plus one additional command:
 .Bl -tag -width Ar
 .It Ic transcom
@@ -244,7 +246,7 @@ If
 .Nm tn3270
 has succeeded in negotiating 3270 mode with the remote host, the
 escape sequence will be as defined by the map3270 (see
-.Xr map3270  5  )
+.Xr map3270 5 )
 entry for the user's terminal type
 (typically control-C);
 otherwise the escape sequence will initially be set to the
@@ -260,7 +262,11 @@ The host login session may be resumed by entering an empty line
 key)
 in response to the command prompt.
 A session may be terminated by logging off the foreign host,
-or by typing ``quit'' or ``close'' while in local command mode.
+or by typing
+.Ic quit
+or
+.Ic close
+while in local command mode.
 .Sh FILES
 .Bl -tag -width /usr/share/misc/termcap -compact
 .It Pa /usr/share/misc/termcap

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.4 2000/03/05 00:28:55 aaron Exp $
+.\"	$OpenBSD: touch.1,v 1.5 2000/03/11 21:40:05 aaron Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -51,7 +51,7 @@
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
-.Nm touch
+.Nm
 utility sets the modification and access times of files to the
 current time of day.
 If the file doesn't exist, it is created with default permissions.
@@ -66,7 +66,7 @@ flag is also specified.
 .It Fl c
 Do not create the file if it does not exist.
 The
-.Nm touch
+.Nm
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
 .It Fl f
@@ -127,7 +127,7 @@ letter pair is not specified, the value defaults to 0.
 .El
 .Pp
 The
-.Nm touch
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr utimes 2
@@ -157,14 +157,14 @@ If the
 .Dq YY
 letter pair is in the range 69 to 99, the year is set to 1969 to 1999,
 otherwise, the year is set in the 21st century.
-.Sh HISTORY
-A
-.Nm touch
-utility appeared in
 .At v7 .
 .Sh STANDARDS
 The
-.Nm touch
+.Nm
 utility is expected to be a superset of the
 .St -p1003.2
 specification.
+.Sh HISTORY
+A
+.Nm
+utility appeared in

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tail.1,v 1.8 2000/01/22 02:17:49 aaron Exp $
+.\"	$OpenBSD: tail.1,v 1.9 2000/03/11 21:40:04 aaron Exp $
 .\"	$NetBSD: tail.1,v 1.4 1994/11/23 07:42:13 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993
@@ -61,17 +61,20 @@ or, by default, its standard input, to the standard output.
 .Pp
 The display begins at a byte, line or 512-byte block location in the
 input.
-Numbers having a leading plus (``+'') sign are relative to the beginning
-of the input, for example,
-.Dq -c +2
+Numbers having a leading plus
+.Pq Ql +
+sign are relative to the beginning of the input, for example,
+.Ic -c +2
 starts the display at the second
 byte of the input.
-Numbers having a leading minus (``-'') sign or no explicit sign are
+Numbers having a leading minus
+.Pq Ql -
+sign or no explicit sign are
 relative to the end of the input, for example,
-.Dq -n 2
+.Ic -n 2
 displays the last two lines of the input.
 The default starting location is
-.Dq -n 10 ,
+.Ic -n 10 ,
 or the last 10 lines of the input.
 .Pp
 The options are as follows:
@@ -90,12 +93,14 @@ The
 option causes
 .Nm
 to not stop when end-of-file is reached, but rather to wait for additional
-data to be appended to the input.  If the file is replaced (i.e., the
-inode number changes),
+data to be appended to the input.
+If the file is replaced (i.e., the inode number changes),
 .Nm
-will reopen the file and continue.  If the file is truncated,
+will reopen the file and continue.
+If the file is truncated,
 .Nm
-will reset its position back to the beginning.  This makes
+will reset its position back to the beginning.
+This makes
 .Nm
 more useful for watching log files that may get rotated.
 The
@@ -164,8 +169,11 @@ and
 .Fl n
 options modify the
 .Fl r
-option, i.e. ``-r -c 4'' displays the last 4 characters of the last line
-of the input, while the historic tail (using the historic syntax ``-4cr'')
+option, i.e.,
+.Ic -r -c 4
+displays the last 4 characters of the last line
+of the input, while the historic tail (using the historic syntax
+.Ic -4cr )
 would ignore the
 .Fl c
 option and display the last 4 lines of the input.

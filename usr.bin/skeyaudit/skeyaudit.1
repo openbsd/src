@@ -1,5 +1,4 @@
-.\" $OpenBSD: skeyaudit.1,v 1.5 2000/03/05 00:28:58 aaron Exp $
-.\"
+.\" $OpenBSD: skeyaudit.1,v 1.6 2000/03/11 21:40:02 aaron Exp $
 .\"
 .Dd 22 July 1997
 .Dt SKEYAUDIT 1
@@ -27,15 +26,15 @@ The options are as follows:
 .It Fl a
 Check all keys in
 .Pa /etc/skeykeys .
-This option is only available to the super user and
+This option is only available to the superuser and
 is useful to run regularly via
 .Xr cron 8 .
 .It Fl i
-Interactive mode.  Don't send mail, just print to standard output.
+Interactive mode.
+Don't send mail, just print to the standard output.
 .It Fl l Ar limit
-The limit used to determine whether or not a user should
-be notified.  The default is to notify if there are fewer
-than 12 keys left.
+The limit used to determine whether or not a user should be notified.
+The default is to notify if there are fewer than 12 keys left.
 .Sh FILES
 .Bl -tag -width /etc/skeykeys -compact
 .It Pa /etc/skeykeys

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.7 2000/03/06 03:17:40 aaron Exp $
+.\"	$OpenBSD: unifdef.1,v 1.8 2000/03/11 21:40:06 aaron Exp $
 .\"	$NetBSD: unifdef.1,v 1.4 1994/12/07 00:33:48 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -55,10 +55,10 @@
 .Ar ...
 .Op Ar file
 .Sh DESCRIPTION
-.Nm unifdef
+.Nm
 is useful for removing ifdef'ed lines
 from a file while otherwise leaving the file alone.
-.Nm unifdef
+.Nm
 acts on
 #ifdef, #ifndef, #else, and #endif lines,
 and it knows only enough about C
@@ -74,9 +74,10 @@ it will not complain if it gets
 to the end of a line and finds no backslash for continuation.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds -compact
-.It Fl D Ns Ar sym
-.It Fl U Ns Ar sym
+.Bl -tag -width Ds
+.It Xo Fl D Ns Ar sym ,
+.Fl U Ns Ar sym
+.Xc
 Specify which symbols to define or undefine,
 and the lines inside those ifdefs will be copied to the output or removed as
 appropriate.
@@ -84,41 +85,39 @@ The ifdef, ifndef, else, and endif lines associated with
 .Ar sym
 will also be removed.
 ifdefs involving symbols you don't specify
-and ``#if'' control lines
-are untouched and copied out
+and
+.Dq #if
+control lines are untouched and copied out
 along with their associated
 ifdef, else, and endif lines.
 If an ifdef X occurs nested inside another ifdef X, then the
 inside ifdef is treated as if it were an unrecognized symbol.
 If the same symbol appears in more than one argument,
 the last occurrence dominates.
-.Pp
 .It Fl c
 If the
 .Fl c
 flag is specified,
 then the operation of
-.Nm unifdef
+.Nm
 is complemented,
-i.e. the lines that would have been removed or blanked
+i.e., the lines that would have been removed or blanked
 are retained and vice versa.
-.Pp
 .It Fl l
 Replace removed lines with blank lines
 instead of deleting them.
-.Pp
 .It Fl t
 Disables parsing for C comments and quotes, which is useful
 for plain text.
-.Pp
-.It Fl iD Ns Ar sym
-.It Fl iU Ns Ar sym
+.It Xo Fl iD Ns Ar sym ,
+.Fl iU Ns Ar sym
+.Xc
 Ignore ifdefs.
 If your C code uses ifdefs to delimit non-C lines,
 such as comments
 or code which is under construction,
 then you must tell
-.Nm unifdef
+.Nm
 which symbols are used for that purpose so that it won't try to parse
 for quotes and comments
 inside those ifdefs.
@@ -133,7 +132,7 @@ and
 above.
 .El
 .Pp
-.Nm unifdef
+.Nm
 copies its output to
 .Em stdout
 and will take its input from
@@ -142,14 +141,12 @@ if no
 .Ar file
 argument is given.
 .Pp
-.Nm unifdef
+.Nm
 works nicely with the
 .Fl D Ns Ar sym
 option added to
 .Xr diff 1
 as of the 4.1 Berkeley Software Distribution.
-.Sh SEE ALSO
-.Xr diff 1
 .Sh DIAGNOSTICS
 Inappropriate else or endif.
 .br
@@ -158,12 +155,16 @@ Premature
 with line numbers of the unterminated #ifdefs.
 .Pp
 Exit status is 0 if output is exact copy of input, 1 if not, 2 if trouble.
+.Sh SEE ALSO
+.Xr diff 1
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.3 .
 .Sh BUGS
-Should try to deal with ``#if'' lines.
+Should try to deal with
+.Dq #if
+lines.
 .Pp
 Doesn't work correctly if input contains null characters.

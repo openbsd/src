@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsort.1,v 1.5 2000/03/04 22:19:27 aaron Exp $
+.\"	$OpenBSD: tsort.1,v 1.6 2000/03/11 21:40:06 aaron Exp $
 .\"	$NetBSD: tsort.1,v 1.6 1996/01/17 20:37:49 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -49,7 +49,7 @@
 .Op Fl q
 .Op Ar file
 .Sh DESCRIPTION
-.Nm tsort
+.Nm
 takes a list of pairs of node names representing directed arcs in
 a graph and prints the nodes in topological order on standard output.
 Input is taken from the named
@@ -74,7 +74,8 @@ The options are as follows:
 Search for and display the longest cycle.
 Can take a very long time.
 .It Fl q
-Do not display informational messages about cycles.  This is primarily
+Do not display informational messages about cycles.
+This is primarily
 intended for building libraries, where optimal ordering is not critical,
 and cycles occur often.
 .El
@@ -86,6 +87,6 @@ A
 command appeared in
 .At v7 .
 This
-.Nm tsort
+.Nm
 command and manual page are derived from sources contributed to Berkeley by
 Michael Rendell of Memorial University of Newfoundland.
