@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.24 2003/08/05 18:20:33 deraadt Exp $	*/
+/*	$OpenBSD: inp.c,v 1.25 2003/08/08 07:53:19 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.24 2003/08/05 18:20:33 deraadt Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.25 2003/08/08 07:53:19 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -37,6 +37,7 @@ static LINENUM	lines_per_buf;	/* how many lines per buffer */
 static int	tireclen;	/* length of records in tmp file */
 
 static bool	rev_in_string(const char *);
+static bool	reallocate_lines(size_t *);
 
 /* returns false if insufficient memory */
 static bool	plan_a(const char *);
@@ -81,6 +82,24 @@ scan_input(const char *filename)
 	}
 }
 
+static bool
+reallocate_lines(size_t *lines_allocated)
+{
+	char **p;
+
+	*lines_allocated = *lines_allocated * 3 / 2;
+	p = realloc(i_ptr, (*lines_allocated + 2) * sizeof(char *));
+	if (p == NULL) {	/* shucks, it was a near thing */
+		munmap(i_womp, i_size);
+		i_womp = NULL;
+		free(i_ptr);
+		i_ptr = NULL;
+		return false;
+	}
+	i_ptr = p;
+	return true;
+}
+
 /* Try keeping everything in memory. */
 
 static bool
@@ -92,6 +111,7 @@ plan_a(const char *filename)
 	struct stat	filestat;
 	off_t		i;
 	ptrdiff_t	sz;
+	size_t		lines_allocated;
 
 #ifdef DEBUGGING
 	if (debug & 8)
@@ -208,33 +228,27 @@ plan_a(const char *filename)
 
 	close(ifd);
 
-	/* count the lines in the buffer so we know how many pointers we need */
-	iline = 0;
+	/* estimate the number of lines */
+	lines_allocated = i_size / 25;
+	if (lines_allocated < 100)
+		lines_allocated = 100;
 
-	/* test for NUL too, to maintain the behavior of the original code */
-	for (i = 0; i < i_size && i_womp[i] != '\0'; i++) {
-		if (i_womp[i] == '\n')
-			iline++;
-	}
-	if (i_size > 0 && i_womp[i_size - 1] != '\n')
-		iline++;
-
-
-	i_ptr = (char **) malloc((iline + 2) * sizeof(char *));
-
-	if (i_ptr == NULL) {	/* shucks, it was a near thing */
-		munmap(i_womp, i_size);
-		i_womp = NULL;
+	if (!reallocate_lines(&lines_allocated)) 
 		return false;
-	}
 
 	/* now scan the buffer and build pointer array */
 	iline = 1;
 	i_ptr[iline] = i_womp;
 	/* test for NUL too, to maintain the behavior of the original code */
 	for (s = i_womp, i = 0; i < i_size && *s != '\0'; s++, i++) {
-		if (*s == '\n')
-			i_ptr[++iline] = s + 1;	/* these are NOT NUL terminated */
+		if (*s == '\n') {
+			if (iline == lines_allocated) {
+				if (!reallocate_lines(&lines_allocated))
+					return false;
+			}
+			/* these are NOT NUL terminated */
+			i_ptr[++iline] = s + 1;
+		}
 	}
 	/* if the last line contains no EOL, append one */
 	if (i_size > 0 && i_womp[i_size - 1] != '\n') {
