@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.2 1997/06/22 22:32:38 downsj Exp $	*/
+/*	$OpenBSD: power.c,v 1.3 1997/06/22 22:45:34 downsj Exp $	*/
 /*	$NetBSD: power.c,v 1.2 1996/05/16 15:56:56 abrown Exp $ */
 
 /*
@@ -67,8 +67,6 @@ static char power_attached = 0;
  * This is the driver for the "power" register available on some Sun4m
  * machines. This allows the machine to remove power automatically when
  * shutdown or halted or whatever.
- *
- * XXX: this capability is not utilized in the current kernel.
  */
 
 static int
