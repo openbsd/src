@@ -5,7 +5,8 @@ environment variable to point to the disk and kernel you intend to boot.
 
 You should also examine the guide on the OpenBSD/pmax web site, which
 will hopefully soon have more complete and more up-to-date
-instructions than are given in the install document.
+instructions than are given in the install document. I will try to
+put there all the corrections to this document in the future. 
 
 If you're installing OpenBSD/pmax for the first time it's a very good idea
 to look at the partition sizes of disk you intend installing OpenBSD on.

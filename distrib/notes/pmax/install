@@ -1,16 +1,18 @@
 Installing OpenBSD is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
 
+Also i wanted to note that the installation procedure via install
+script is new for the pmax and i had only the chance of limited
+testing for it - so if you run into any problems with it or if this
+documentation is somehow unclear - please send me a mail and i'll try
+to help you or to fix the problem.
+
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD simpleroot that can
 be booted off your local disk. Alternatively, if your Decstation is
-hooked up in a network you can find a server and arrange for a
-diskless setup which is another convenient way to install
-OpenBSD/pmax. But at the moment i haven't tested the installation via
-network so i mostly recommend the installation via simpleroot. I plan
-to write something down about installing OpenBSD/pmax via the network
-in the near future - so watch out for documentation on that topic at
-the pmax section of the OpenBSD www server at http://www.OpenBSD.org.
+hooked up in a network you can find a server and arrange for a diskless
+setup which is another convenient way to install OpenBSD/pmax.
+
 
 Installing using the OpenBSD simpleroot.
 
@@ -38,7 +40,6 @@ After transferring the simpleroot to disk, bring the system down by:
 	# halt
 
 and hang the disk onto the pmax you want to install OpenBSD/pmax on.
-
 Then boot the simpleroot by typing the appropriate command at the PROM:
 
 	>> boot rz(0,0,0)/bsd		# for Decstation 2100/3100
@@ -59,11 +60,6 @@ installation from single user mode" below.
 
 Installing using a diskless setup.
 
-Again i want to note that thios method is at the moment only very bad
-documented - so you need some experiences with netbooting Decstations
-to do it. I hope to supply some more documentation about this topic
-soon. 
-
 First, you must setup a diskless client configuration on a server. If
 you are using a OpenBSD system as the boot-server, have a look at the
 diskless(8) manual page for guidelines on how to proceed with this.
@@ -81,7 +77,7 @@ A few configuration files need to be edited:
 		Add the IP addresses of both server and client.
 
 	<root>/etc/myname
-		This files contains the client's hostname; use the same
+		This file contains the client's hostname; use the same
 		name as in <root>/etc/hosts.
 
 	<root>/etc/fstab
@@ -104,6 +100,124 @@ devices on the server using
 
 This may not not work correctly on some operatingsystems.
 
+Ok here is in shortform what you have to do on the Server to prepare a
+diskless installation of OpenBSD/pmax assuming the Server is an
+OpenBSD machine (for instance a PC running OpenBSD/i386). As said
+above for other systems you'll have to look into the supplied
+documentation for that systems. All the following should apply also
+without any major changes to an FreeBSD or NetBSD server.
+
+If the following instructions are not enough - you may look at the
+manpages for the following commands:
+
+* tftpd
+* rarpd
+* bootpd
+* rpc.bootparamd
+
+Ok - now let's see what to do to set up the server:
+
+* set up a file /etc/ethers containing the ethernet hardware address
+  of the pmax you want to boot via net and it's hostname (the hardware
+  address you should get via PROM commands)
+
+  example:
+  --- snip ---
+  08:00:2b:1a:4b:41       summer
+  --- snip ---
+
+* add an entry to /etc/bootptab which looks like the following:
+  --- snip ---
+  .ris.dec:hn:vm=rfc1048
+  summer:ht=ethernet:ha=08002b1c4d51:ip=10.0.0.5:bf=/bsd
+  --- snip ---
+
+* make shure that the following line in /etc/inetd.conf is not
+  commented out:
+  --- snip ---
+  tftp           dgram   udp     wait    root    /usr/libexec/tftpd tftpd -s /tftpboot
+  --- snip ---
+  if it is commented out (which is the default on OpenBSD for security
+  reasons) - uncomment it and send the inetd process and HUP signal
+
+    kill -HUP `cat /var/run/inetd.pid`
+
+  so that it rereads the /etc/inetd.conf file
+
+* untar the simpleroot.tar.gz on the server in an nfs exported
+  directory - for instance /export/root - so /etc/exports should
+  contain a line like (OpenBSD syntax !)
+  --- snip ---
+  /export -alldirs -root=0:0 summer
+  --- snip ---
+  for the example above - on OpenBSD the tar should be intelligent
+  enough to unpack the /dev directory correctly - on other systems you
+  may look at the comment about /dev above. So what you have to do in
+  this example you have to do:
+    
+    mkdir /export/root
+    cd /export/root
+    tar xvpzf /some_path/simpleroot21.tar.gz
+    vi /etc/exports (to add the above line)
+    kill -HUP `cat /var/run/mountd.pid` (so that mountd rereads exports)
+
+  Note: also make shure that the server is configured as nfs server -
+        i.e. for OpenBSD "option NFSSERVER" for the kernel and the
+        following set in /etc/netstart:
+        --- snip ---
+	nfs_server="YES"
+        nfs_client="YES"
+        --- snip ---
+
+* create an swapfile using (example 16 mbytes):
+
+    cd /exports
+    dd if=/dev/zero of=swap bs=1024k count=16
+
+* copy the kernel from the /export/root area to the tftp area:
+
+    mkdir /tftpboot
+    cp /export/root/bsd_nfs /tftpboot
+
+* create a /etc/bootparams file - for example:
+  --- snip ---
+  summer  root=prospero:/amd/prospero/0/home/rzpd/export/root \
+          swap=prospero:/amd/prospero/0/home/rzpd/export/swap
+  --- snip ---
+  prospero is the hostname of the server in this example
+
+* start the rquired daemons on the server:
+
+    /usr/sbin/rpc.bootparamd
+    /usr/sbin/rarpd -a
+
+  and bootpd - either by uncommenting the entry in /etc/inetd.conf and
+  sending inetd an HUP signal like above or by starting it explicitely
+
+    /usr/sbin/bootpd
+
+* now you should be able to boot the pmax using:
+
+    >> boot -f tftp()/bsd_nfs
+
+  for 2100/3100 systems or
+
+    >> boot 6/tftp
+
+  for a 5000/200 - look into the manual of your pmax for details how
+  to boot via tftp
+
+If you plan to use OpenBSD/pmax on a diskless system in the future -
+keep in mind that the Decstations can only boot ecoff format kernels
+via net - so you have to convert them explicitely after the kernel
+compilation to ecoff - therefor in the kernel compile dir you can do
+the following after the kernel compile has finished
+
+  elf2ecoff bsd.elf bsd.ecoff
+
+then you can use the bsd.ecoff for netbooting - as a startingpoint for
+the kernel config file you may choose GENERIC_NFS.
+
 After you have set up everything correctly you can boot your system
 over the network into singleuser mode and continue the installation.
 
@@ -121,14 +235,32 @@ So here's what you have to do after going into single user mode:
 
 	# fsck /dev/rrz0a		; check the filesystem
 	# mount /dev/rz0a /		; mount / read write
-	# disklabel -e rz0
-
-  If you want to install onto another disk than the one you booted
-  from then you have to give this disk to the disklabel command.
+	# ./install
 
 - network boot
 
-	# disklabel -e rz0
+	# ./install
+
+This script should bring you to a completely installed OpenBSD/pmax
+system (in theory :-) - if you should run into any problems while
+installing - please first look at
+
+  http://www.OpenBSD.org/pmax.html
+
+I'll try to collect there any hints, fixes and so on. If your problem
+can't be solved that way just send me a mail to graichen@OpenBSD.org
+and i'll try to help you fixing it.
+
+If you should somehow fail using the install script and want to
+restart - you may have to umount any filesystems mounted while running
+the install script (so all except /) and clean /tmp using:
+
+  rm /tmp/*
+
+then it should be possible to rerun it again.
+
+Now some more notes about labeling the disk - which you will hjave to
+do in the process of running the install script.
 
 Here follows an example of what you'll see while in the dislabel editor.
 Do not touch any of the parameters except for the `label: ' entry and
@@ -166,7 +298,7 @@ looks like:
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel rz0
- # /dev/rrz0c:
+# /dev/rrz0c:
 type: SCSI
 disk: simpleroot
 label: 
@@ -197,7 +329,7 @@ disk above (SEAGATE ST1480).
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel rz0
- # /dev/rrz0c:
+# /dev/rrz0c:
 type: SCSI
 disk: SEAGATE ST1480 r
 label: 
@@ -230,59 +362,41 @@ the a and b partitions if you are relabeling the disk you are running
 the simpleroot on - you'll have to accept the simpleroot values here
 for those 2 partitions.
 
-If you have done labeled your disk successfully then you have to
-create filesystems on the partitions. (Note: you don't have to do
-anything special for the swap partition). In the example above this
-would look like:
+Note: if you have finished the disklabeling and exited the editor for
+editing the label in the process of the installation and if you then
+get a message like: "no disklabel on disk - use the -r option to write
+one" you should ignore it - this is due to a problem with the pmax
+disklabel code and it should be worked around by the install script.
 
-- you are installing on the disk your simpleroot is running on - so
-  you don't have to create a root filestem on it - because it is
-  already there from the simpleroot image
+So what does the install script explicitely do ?
 
-	# newfs /dev/rrz0d
-
-- you are installing onto another disk - so you'll have to create the
-  rootfilesystem too
-
-	# newfs /dev/rrz0a
-	# newfs /dev/rrz0d
-
-Now the are done with all the preparations and can go on with the
-installation via some simle scripts:
-
-	# sh install.sh
-
-These scripts will do most of the work of transferring the system from the
+These script will do most of the work of transferring the system from the
 tar files onto your disk. You will frequently be asked for confirmation
 before the script proceeds with each phase of the installation process.
 Occasionally, you'll have to provide a piece of information such as the
 name of the disk you want to install on or IP addresses and domain names
-you want to assign. If your system has more than one disk, you may want
-to look at the output of the dmesg(8) command to see how your disks
-have been identified by the kernel.
+you want to assign.
 
 The installation script goes through the following phases:
 
 	- determination of the disk to install OpenBSD on
 	- checking of the partition information on the disk
-
-XXX really creating filesystems here ? XXX
-
 	- creating and mounting the OpenBSD filesystems
-
-XXX really creating filesystems here ? XXX
-
 	- setup of IP configuration
 	- extraction of the distribution tar files
 	- installation of boot programs
 
+If the installation worked fine we can go on.
 
 Now try a reboot.  (If needed, swap your scsi id's first).  Initially
 I'd suggest you "boot" (Decstation 2100/3100) or "boot/rz0a/bsd", then
 try multiuser after that. if you boot single-user the OpenBSD
 incarnation to make the root filesystem writable is
 
-    OpenBSD# mount -u /dev/sd0a /
+    OpenBSD# fsck -p
+    OpenBSD# mount -u /dev/rz0a /
+
+assuming your rootdisk is rz0.
 
 Congratulations, you have successfully installed OpenBSD 2.1.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
@@ -296,3 +410,7 @@ almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like
 system administration, it's recommended that you buy a book that
 discusses it.
+
+I am very interested in reports of how the installation worked - so if
+you got OpenBSD/pmax installed (or if you have problems doing this)
+please send a mail to me: graichen@OpenBSD.org - thanks.

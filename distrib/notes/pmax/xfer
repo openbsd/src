@@ -6,6 +6,8 @@ Installation is supported from several media types, including:
 The steps necessary to prepare the distribution sets
 for installation depend on which method of installation
 you choose.  The various methods are explained below.
+Those are only the preparationis required before you start
+the installation.
 
 To prepare for installing via an NFS partition:
 
@@ -32,13 +34,6 @@ To prepare for installing via an NFS partition:
 	system for OpenBSD installation.
 
 To prepare for installing via FTP:
-
-	NOTE: this method of installation is recommended
-	      only for those already familiar with using
-	      the BSD network-manipulation commands and
-	      interfaces.  If you aren't, this documentation
-	      should help, but is not intended to be
-	      all-encompassing.
 
 	The preparations for this method of installation
 	are easy: all you have to do is make sure that

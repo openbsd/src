@@ -5,17 +5,18 @@ out as follows:
 .../2.1/pmax/
 		INSTALL.pmax	Installation notes; this file.
 
-		bins/		pmax binary distribution sets;
+		*.gz		pmax binary distribution sets;
 				see below.
 
-		simpleroot/	pmax boot and installation
-				floppies; see below.
+		simpleroot*	pmax boot and installation
+				simpleroot files; see below.
 
-There is a pmax simpleroot image to be found in the "pmax/simpleroot"
-subdirectory of the OpenBSD 2.1 distribution.  This file you can dump
-onto a disk and boot from it to start the installation of
-OpenBSD/pmax. Also there is a simpleroot tar file there.  It can be
-used as root area on the NFS server if you plan to install via
+There is a pmax simpleroot image named simpleroot21.fs (it is usually
+compressed using gzip - simpleroot21.fs.gz - so you need gunzip first
+to uncompress it) subdirectory of the OpenBSD 2.1 distribution.  This
+file you can dump onto a disk and boot from it to start the installation
+of OpenBSD/pmax. Also there is a simpleroot21.tar.gz file there.  It
+can be used as root area on the NFS server if you plan to install via
 network.
 
 The OpenBSD/pmax binary distribution sets contain the binaries which
