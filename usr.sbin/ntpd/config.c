@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2004/07/07 03:15:37 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.5 2004/07/07 03:53:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -66,7 +66,7 @@ host(const char *s, u_int8_t *len)
 		mask = strtol(p+1, &q, 0);
 		if (errno == ERANGE || !q || *q || mask > 128 || q == (p+1)) {
 			log_warnx("invalid netmask");
-			return (0);
+			return (NULL);
 		}
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			fatal("host: malloc");
@@ -107,10 +107,10 @@ host_v4(const char *s, u_int8_t *len)
 	bzero(&ina, sizeof(struct in_addr));
 	if (strrchr(s, '/') != NULL) {
 		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
-			return (0);
+			return (NULL);
 	} else {
 		if (inet_pton(AF_INET, s, &ina) != 1)
-			return (0);
+			return (NULL);
 	}
 
 	if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
@@ -167,7 +167,7 @@ host_dns(const char *s, u_int8_t *len)
 	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
 	error = getaddrinfo(s, NULL, &hints, &res0);
 	if (error)
-		return (0);
+		return (NULL);
 
 	for (res = res0; res; res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
