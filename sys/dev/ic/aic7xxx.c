@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.33 2001/11/06 19:53:18 miod Exp $
+ * $OpenBSD: aic7xxx.c,v 1.34 2001/11/15 10:57:01 ho Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -643,7 +643,7 @@ ahcfreescb(ahc, scb)
 	hscb = scb->hscb;
 
 #ifdef AHC_DEBUG
-	if (ahc_debug & AHC_SHOWSCBALLOC)
+	if (ahc_debug & AHC_SHOWSCBS)
 		printf("%s: free SCB tag %x\n", ahc_name(ahc), hscb->tag);
 #endif
 
@@ -3920,10 +3920,8 @@ ahc_init(ahc)
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWMISC)
-		printf("NEEDSDTR == 0x%x\nNEEDWDTR == 0x%x\n"
-		       "DISCENABLE == 0x%x\nULTRAENB == 0x%x\n",
-		       ahc->needsdtr_orig, ahc->needwdtr_orig,
-		       discenable, ultraenb);
+		printf("DISCENABLE == 0x%x\nULTRAENB == 0x%x\n",
+		    discenable, ultraenb);
 #endif
 
 	/* Don't have any special messages to send to targets */
@@ -4993,7 +4991,7 @@ bus_reset:
 			sc_print_addr(active_scb->xs->sc_link);
 			printf("BDR message in message buffer\n");
 			active_scb->flags |=  SCB_DEVICE_RESET;
-			    timeout_add(&active_scb->xs->stimeout, 2 * hz);
+			timeout_add(&active_scb->xs->stimeout, 2 * hz);
 			unpause_sequencer(ahc);
 		} else {
 			int	 disconnected;
