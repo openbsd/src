@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.5 1998/05/15 03:16:43 art Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.6 1998/07/27 15:29:29 millert Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
  */
 
 #include "telnet_locl.h"
-#include <term.h>
 
 #define        strip(x) (eight ? (x) : ((x) & 0x7f))
 
