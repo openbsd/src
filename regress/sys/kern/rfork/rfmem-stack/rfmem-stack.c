@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfmem-stack.c,v 1.1 2002/02/21 21:07:11 art Exp $	*/
+/*	$OpenBSD: rfmem-stack.c,v 1.2 2002/02/21 21:14:37 art Exp $	*/
 /*
  * Written by Artur Grabowski <art@openbsd.org>, 2002 Public Domain.
  */
@@ -32,7 +32,7 @@ main()
 		memcpy(map, MAGIC, sizeof(MAGIC));
 		sleep(1);
 		if (memcmp(map2, MAGIC, sizeof(MAGIC)) == 0);
-			fprintf(stderr, "child stack polluted\n");
+			write(2, "child stack polluted\n", 21);
 		_exit(0);
 	}
 
