@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.4 2001/06/07 20:05:38 art Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.5 2001/06/08 05:20:38 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -151,12 +151,12 @@ doit(char *name)
 		}
 		if (WIFSIGNALED(status)) {
 			fprintf(stderr, "%s: signal %d\n", name,
-				WTERMSIG(status));
+			    WTERMSIG(status));
 			return 1;
 		}
 		if (WEXITSTATUS(status)) {
 			fprintf(stderr, "%s: exit status %d\n", name,
-				WEXITSTATUS(status));
+			    WEXITSTATUS(status));
 			return 1;
 		}
 	}
