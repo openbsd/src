@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.40 2000/04/18 15:14:36 millert Exp $
+.\"	$OpenBSD: afterboot.8,v 1.41 2000/04/18 16:57:14 kjell Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -451,6 +451,11 @@ to make lawyers comfortable and make sure that no mention
 of the word "Welcome" appears.
 (Some U.S. lawyers have stated that
 the word "Welcome" is an invitation to come on in.)
+Note that this file is modified by
+.Pa /etc/rc
+whenever the system is booted. To keep any custom message intact, ensure
+that you leave two blank lines at the top, or your message will be
+overwritten.
 .Ss Add new users
 Add users.
 There is an
