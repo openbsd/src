@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.21 2003/10/05 20:35:26 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.22 2003/10/08 13:26:12 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1079,6 +1079,7 @@ m8820x_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 
 	CMMU_LOCK;
 
+#if !defined(BROKEN_MMU_MASK)
 	if (size > PAGE_SIZE) {
 		m8820x_cmmu_set(CMMU_SCR,
 		    kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL,
@@ -1094,6 +1095,12 @@ m8820x_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 		    ADDR_VAL | ACCESS_VAL, cpu, 0,
 		    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, vaddr);
 	}
+#else
+	m8820x_cmmu_set(CMMU_SCR,
+	    kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL,
+	    ACCESS_VAL, cpu, 0,
+	    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, 0);
+#endif
 
 	CMMU_UNLOCK;
 	splx(s);
