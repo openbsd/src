@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.111 2002/12/16 08:49:22 kjc Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.112 2002/12/17 12:30:13 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -38,13 +38,17 @@
 #include <sys/tree.h>
 
 enum	{ PF_IN=1, PF_OUT=2 };
-enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2 };
+enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2, PF_NAT=3, PF_NONAT=4,
+	  PF_BINAT=5, PF_NOBINAT=6, PF_RDR=7, PF_NORDR=8 };
+enum	{ PF_RULESET_RULE=0, PF_RULESET_NAT=1,
+	  PF_RULESET_BINAT=2, PF_RULESET_RDR=3 };
+#define PF_RULESET_MAX		PF_RULESET_RDR + 1
 enum	{ PF_OP_IRG=1, PF_OP_EQ=2, PF_OP_NE=3, PF_OP_LT=4,
-	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7, PF_OP_XRG=8 };
+	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7, PF_OP_XRG=8, PF_OP_RRG=9 };
 enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
 enum	{ PF_CHANGE_ADD_HEAD=1, PF_CHANGE_ADD_TAIL=2,
 	  PF_CHANGE_ADD_BEFORE=3, PF_CHANGE_ADD_AFTER=4,
-	  PF_CHANGE_REMOVE=5 };
+	  PF_CHANGE_REMOVE=5, PF_CHANGE_GET_TICKET=6 };
 enum	{ PFTM_TCP_FIRST_PACKET=0, PFTM_TCP_OPENING=1, PFTM_TCP_ESTABLISHED=2,
 	  PFTM_TCP_CLOSING=3, PFTM_TCP_FIN_WAIT=4, PFTM_TCP_CLOSED=5,
 	  PFTM_UDP_FIRST_PACKET=6, PFTM_UDP_SINGLE=7, PFTM_UDP_MULTIPLE=8,
@@ -53,9 +57,7 @@ enum	{ PFTM_TCP_FIRST_PACKET=0, PFTM_TCP_OPENING=1, PFTM_TCP_ESTABLISHED=2,
 	  PFTM_OTHER_MULTIPLE=13, PFTM_FRAG=14, PFTM_INTERVAL=15, PFTM_MAX=16 };
 enum	{ PF_FASTROUTE=1, PF_ROUTETO=2, PF_DUPTO=3, PF_REPLYTO=4 };
 enum	{ PF_LIMIT_STATES=0, PF_LIMIT_FRAGS=1, PF_LIMIT_MAX=2 };
-enum    { PF_POOL_RULE_RT=0, PF_POOL_NAT_R=1, PF_POOL_RDR_R=2 };
 #define PF_POOL_IDMASK		0x0f
-#define PF_POOL_LAST		0x10
 enum	{ PF_POOL_NONE=0, PF_POOL_BITMASK=1, PF_POOL_RANDOM=2,
 	  PF_POOL_SRCHASH=3, PF_POOL_ROUNDROBIN=4 };
 #define PF_POOL_TYPEMASK	0x0f
@@ -246,7 +248,7 @@ struct pf_rule_addr {
 };
 
 struct pf_pooladdr {
-	struct pf_addr_wrap		 addr;
+	struct pf_rule_addr		 addr;
 	TAILQ_ENTRY(pf_pooladdr)	 entries;
 	char				 ifname[IFNAMSIZ];
 	struct ifnet			*ifp;
@@ -270,6 +272,8 @@ struct pf_pool {
 	struct pf_pooladdr	*cur;
 	struct pf_poolhashkey	 key;
 	struct pf_addr		 counter;
+	u_int16_t		 proxy_port[2];
+	u_int8_t		 port_op;
 	u_int8_t		 opts;
 };
 
@@ -297,7 +301,7 @@ struct pf_rule {
 #define	PF_ANCHOR_NAME_SIZE	 16
 	char			 anchorname[PF_ANCHOR_NAME_SIZE];
 	TAILQ_ENTRY(pf_rule)	 entries;
-	struct pf_pool		 rt_pool;
+	struct pf_pool		 rpool;
 
 	u_int64_t		 evaluations;
 	u_int64_t		 packets;
@@ -401,67 +405,7 @@ struct pf_tree_node {
 	u_int8_t	 proto;
 };
 
-
-struct pf_nat {
-	struct pf_rule_addr	 src;
-	struct pf_rule_addr	 dst;
-	struct pf_pool		 rpool;
-	struct pf_pooladdr	*rcur;
-	char			 ifname[IFNAMSIZ];
-	char			 anchorname[PF_ANCHOR_NAME_SIZE];
-	struct ifnet		*ifp;
-	struct pf_anchor	*anchor;
-	TAILQ_ENTRY(pf_nat)	 entries;
-	u_int32_t		 rlistid;
-	u_int16_t		 proxy_port[2];
-	sa_family_t		 af;
-	u_int8_t		 proto;
-	u_int8_t		 ifnot;
-	u_int8_t		 no;
-};
-
-struct pf_binat {
-	char			 ifname[IFNAMSIZ];
-	char			 anchorname[PF_ANCHOR_NAME_SIZE];
-	struct ifnet		*ifp;
-	struct pf_anchor	*anchor;
-	TAILQ_ENTRY(pf_binat)	 entries;
-	struct pf_addr_wrap	 saddr;
-	struct pf_addr_wrap	 daddr;
-	struct pf_addr_wrap	 raddr;
-	sa_family_t		 af;
-	u_int8_t		 proto;
-	u_int8_t		 dnot;
-	u_int8_t		 no;
-};
-
-struct pf_rdr {
-	char			 ifname[IFNAMSIZ];
-	char			 anchorname[PF_ANCHOR_NAME_SIZE];
-	struct ifnet		*ifp;
-	struct pf_anchor	*anchor;
-	TAILQ_ENTRY(pf_rdr)	 entries;
-	struct pf_addr_wrap	 saddr;
-	struct pf_addr_wrap	 daddr;
-	struct pf_pool		 rpool;
-	struct pf_pooladdr	*rcur;
-	u_int32_t		 rlistid;
-	u_int16_t		 dport;
-	u_int16_t		 dport2;
-	u_int16_t		 rport;
-	sa_family_t		 af;
-	u_int8_t		 proto;
-	u_int8_t		 snot;
-	u_int8_t		 dnot;
-	u_int8_t		 ifnot;
-	u_int8_t		 opts;
-	u_int8_t		 no;
-};
-
 TAILQ_HEAD(pf_rulequeue, pf_rule);
-TAILQ_HEAD(pf_natqueue, pf_nat);
-TAILQ_HEAD(pf_binatqueue, pf_binat);
-TAILQ_HEAD(pf_rdrqueue, pf_rdr);
 
 struct pf_anchor;
 
@@ -475,28 +419,7 @@ struct pf_ruleset {
 			struct pf_rulequeue	*ptr;
 			u_int32_t		 ticket;
 		}			 active, inactive;
-	}			 rules;
-	struct {
-		struct pf_natqueue	 queues[2];
-		struct {
-			struct pf_natqueue	*ptr;
-			u_int32_t		 ticket;
-		}			 active, inactive;
-	}			 nats;
-	struct {
-		struct pf_rdrqueue	 queues[2];
-		struct {
-			struct pf_rdrqueue	*ptr;
-			u_int32_t		 ticket;
-		}			 active, inactive;
-	}			 rdrs;
-	struct {
-		struct pf_binatqueue	 queues[2];
-		struct {
-			struct pf_binatqueue	*ptr;
-			u_int32_t		 ticket;
-		}			 active, inactive;
-	}			 binats;
+	}			 rules[4];
 	struct pf_anchor	*anchor;
 };
 
@@ -685,61 +608,26 @@ struct pf_altq {
  */
 
 struct pfioc_pooladdr {
+	u_int32_t		 action;
 	u_int32_t		 ticket;
 	u_int32_t		 nr;
 	u_int32_t		 r_num;
-	u_int8_t		 r_id;
+	u_int8_t		 r_action;
+	u_int8_t		 r_last;
 	u_int8_t		 af;
 	char			 anchor[PF_ANCHOR_NAME_SIZE];
 	char			 ruleset[PF_RULESET_NAME_SIZE];
 	struct pf_pooladdr	 addr;
 };
 
-struct pfioc_changeaddr {
-	u_int32_t		 action;
-	u_int32_t		 r_num;
-	u_int8_t		 r_id;
-	u_int8_t		 af;
-	char			 anchor[PF_ANCHOR_NAME_SIZE];
-	char			 ruleset[PF_RULESET_NAME_SIZE];
-	struct pf_pooladdr	 newaddr;
-	struct pf_pooladdr	 oldaddr;
-};
-
 struct pfioc_rule {
+	u_int32_t	 action;
 	u_int32_t	 ticket;
 	u_int32_t	 pool_ticket;
 	u_int32_t	 nr;
 	char		 anchor[PF_ANCHOR_NAME_SIZE];
 	char		 ruleset[PF_RULESET_NAME_SIZE];
 	struct pf_rule	 rule;
-};
-
-struct pfioc_changerule {
-	u_int32_t	 pool_ticket;
-	u_int32_t	 action;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 ruleset[PF_RULESET_NAME_SIZE];
-	struct pf_rule	 oldrule;
-	struct pf_rule	 newrule;
-};
-
-struct pfioc_nat {
-	u_int32_t	 ticket;
-	u_int32_t	 pool_ticket;
-	u_int32_t	 nr;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 ruleset[PF_RULESET_NAME_SIZE];
-	struct pf_nat	 nat;
-};
-
-struct pfioc_changenat {
-	u_int32_t	 pool_ticket;
-	u_int32_t	 action;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 ruleset[PF_RULESET_NAME_SIZE];
-	struct pf_nat	 oldnat;
-	struct pf_nat	 newnat;
 };
 
 struct pfioc_natlook {
@@ -754,40 +642,6 @@ struct pfioc_natlook {
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
-};
-
-struct pfioc_binat {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 ruleset[PF_RULESET_NAME_SIZE];
-	struct pf_binat	 binat;
-};
-
-struct pfioc_changebinat {
-	u_int32_t	 action;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 ruleset[PF_RULESET_NAME_SIZE];
-	struct pf_binat	 oldbinat;
-	struct pf_binat	 newbinat;
-};
-
-struct pfioc_rdr {
-	u_int32_t	 ticket;
-	u_int32_t	 pool_ticket;
-	u_int32_t	 nr;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 ruleset[PF_RULESET_NAME_SIZE];
-	struct pf_rdr	 rdr;
-};
-
-struct pfioc_changerdr {
-	u_int32_t	 pool_ticket;
-	u_int32_t	 action;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 ruleset[PF_RULESET_NAME_SIZE];
-	struct pf_rdr	 oldrdr;
-	struct pf_rdr	 newrdr;
 };
 
 struct pfioc_state {
@@ -870,16 +724,7 @@ struct pfioc_ruleset {
 #define DIOCCOMMITRULES	_IOWR('D',  5, struct pfioc_rule)
 #define DIOCGETRULES	_IOWR('D',  6, struct pfioc_rule)
 #define DIOCGETRULE	_IOWR('D',  7, struct pfioc_rule)
-#define DIOCBEGINNATS	_IOWR('D',  8, struct pfioc_nat)
-#define DIOCADDNAT	_IOWR('D',  9, struct pfioc_nat)
-#define DIOCCOMMITNATS	_IOWR('D', 10, struct pfioc_nat)
-#define DIOCGETNATS	_IOWR('D', 11, struct pfioc_nat)
-#define DIOCGETNAT	_IOWR('D', 12, struct pfioc_nat)
-#define DIOCBEGINRDRS	_IOWR('D', 13, struct pfioc_rdr)
-#define DIOCADDRDR	_IOWR('D', 14, struct pfioc_rdr)
-#define DIOCCOMMITRDRS	_IOWR('D', 15, struct pfioc_rdr)
-#define DIOCGETRDRS	_IOWR('D', 16, struct pfioc_rdr)
-#define DIOCGETRDR	_IOWR('D', 17, struct pfioc_rdr)
+/* XXX cut 8 - 17 */
 #define DIOCCLRSTATES	_IO  ('D', 18)
 #define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
@@ -888,17 +733,10 @@ struct pfioc_ruleset {
 #define DIOCNATLOOK	_IOWR('D', 23, struct pfioc_natlook)
 #define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
 #define DIOCGETSTATES	_IOWR('D', 25, struct pfioc_states)
-#define DIOCCHANGERULE	_IOWR('D', 26, struct pfioc_changerule)
-#define DIOCCHANGENAT	_IOWR('D', 27, struct pfioc_changenat)
-#define DIOCCHANGERDR	_IOWR('D', 28, struct pfioc_changerdr)
+#define DIOCCHANGERULE	_IOWR('D', 26, struct pfioc_rule)
+/* XXX cut 26 - 28 */
 #define DIOCSETTIMEOUT	_IOWR('D', 29, struct pfioc_tm)
 #define DIOCGETTIMEOUT	_IOWR('D', 30, struct pfioc_tm)
-#define DIOCBEGINBINATS	_IOWR('D', 31, struct pfioc_binat)
-#define DIOCADDBINAT	_IOWR('D', 32, struct pfioc_binat)
-#define DIOCCOMMITBINATS _IOWR('D', 33, struct pfioc_binat)
-#define DIOCGETBINATS	_IOWR('D', 34, struct pfioc_binat)
-#define DIOCGETBINAT	_IOWR('D', 35, struct pfioc_binat)
-#define DIOCCHANGEBINAT	_IOWR('D', 36, struct pfioc_changebinat)
 #define DIOCADDSTATE	_IOWR('D', 37, struct pfioc_state)
 #define DIOCCLRRULECTRS	_IO  ('D', 38)
 #define DIOCGETLIMIT	_IOWR('D', 39, struct pfioc_limit)
@@ -917,7 +755,7 @@ struct pfioc_ruleset {
 #define DIOCADDADDR	_IOWR('D', 52, struct pfioc_pooladdr)
 #define DIOCGETADDRS	_IOWR('D', 53, struct pfioc_pooladdr)
 #define DIOCGETADDR	_IOWR('D', 54, struct pfioc_pooladdr)
-#define DIOCCHANGEADDR	_IOWR('D', 55, struct pfioc_changeaddr)
+#define DIOCCHANGEADDR	_IOWR('D', 55, struct pfioc_pooladdr)
 #define	DIOCGETANCHORS	_IOWR('D', 56, struct pfioc_anchor)
 #define	DIOCGETANCHOR	_IOWR('D', 57, struct pfioc_anchor)
 #define	DIOCGETRULESETS	_IOWR('D', 58, struct pfioc_ruleset)
@@ -951,11 +789,8 @@ extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_update_anchor_rules(void);
 extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
-extern struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl;
-extern struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl,
-				    pf_addr_pl;
-extern struct pool		 pf_altq_pl;
-extern struct pool		 pf_pooladdr_pl;
+extern struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
+extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 extern void			 pf_purge_timeout(void *);
 extern int			 pftm_interval;
 extern void			 pf_purge_expired_states(void);

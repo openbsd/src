@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.40 2002/12/06 00:47:32 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.41 2002/12/17 12:30:13 mcbride Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -799,7 +799,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	int ip_len;
 	int ip_off;
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_RULE].active.ptr);
 	while (r != NULL) {
 		if (r->action != PF_SCRUB)
 			r = r->skip[PF_SKIP_ACTION];
@@ -1000,7 +1000,7 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	u_int8_t flags;
 	sa_family_t af = pd->af;
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_RULE].active.ptr);
 	while (r != NULL) {
 		if (r->action != PF_SCRUB)
 			r = r->skip[PF_SKIP_ACTION];
