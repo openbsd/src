@@ -1,4 +1,4 @@
-.\"	$OpenBSD: domainname.1,v 1.12 2001/05/28 15:36:07 aaron Exp $
+.\"	$OpenBSD: domainname.1,v 1.13 2002/05/16 13:21:52 miod Exp $
 .\"	$NetBSD: domainname.1,v 1.7 1995/07/25 19:36:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
@@ -51,12 +51,13 @@ The superuser can set the domain name by supplying a
 .Pa /etc/defaultdomain
 file.
 This is used at system boot time by
-.Xr rc 8
+.Xr netstart 8
 to initialize the domainname.
 .Sh SEE ALSO
 .Xr hostname 1 ,
 .Xr getdomainname 3 ,
-.Xr setdomainname 3
+.Xr setdomainname 3 ,
+.Xr netstart 8
 .Sh HISTORY
 The
 .Nm

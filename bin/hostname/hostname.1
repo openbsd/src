@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.1,v 1.13 2001/05/28 15:36:08 aaron Exp $
+.\"	$OpenBSD: hostname.1,v 1.14 2002/05/16 13:21:55 miod Exp $
 .\"	$NetBSD: hostname.1,v 1.11 1995/09/07 06:28:39 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
@@ -52,7 +52,7 @@ The superuser can set the host name by supplying a
 .Pa /etc/myname
 file.
 This is used at system boot time by
-.Xr rc 8
+.Xr netstart 8
 to initialize the hostname.
 .Pp
 The options are as follows:
@@ -64,7 +64,8 @@ name.
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr gethostname 3 ,
-.Xr sethostname 3
+.Xr sethostname 3 ,
+;Xr netstart 8
 .Sh HISTORY
 The
 .Nm
