@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.8 1996/01/30 01:09:32 tholo Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.9 1996/01/30 03:22:47 tholo Exp $
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/cvsinit.8 man/mkmodules.1
 
@@ -18,7 +18,8 @@ install: maninstall
 		bindir=${DESTDIR}/usr/bin INSTALL_MAN= install
 
 clean cleandir:
-	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+	rm -f man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 man/cvsinit.cat8 man/mkmodules.cat1
 
 depend:
 	# Nothing here so far...
