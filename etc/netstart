@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.10 1996/09/04 10:25:55 deraadt Exp $
+#	$OpenBSD: netstart,v 1.11 1996/09/23 13:06:37 deraadt Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -31,6 +31,7 @@ amd_dir=/amd			# AMD's mount directory
 amd_master=/etc/amd/master	# AMD 'master' map
 ipfilter_rules=/etc/ipf.rules	# Rules for IP packet filtering
 ipmon_flags=-s			# To disable logging, use ipmon_flags=NO
+rfc1323=YES			# TCP RFC1323 extensions (disable if tcp is slow)
 
 # /etc/myname contains my symbolic name
 #

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.24 1996/09/07 20:45:24 millert Exp $
+#	$OpenBSD: rc,v 1.25 1996/09/23 13:06:36 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -78,6 +78,10 @@ mount /var >/dev/null 2>&1
 
 if [ X"${ipfilter}" = X"YES" -a X"${ipmon_flags}" != X"NO" ]; then
 	ipmon ${ipmon_flags} &
+fi
+
+if [ X"${rfc1323}" = X"NO" ]; then
+	echo 'disabling rfc1323'; 	sysctl -w net.inet.tcp.rfc1323=0
 fi
 
 # clean up left-over files
