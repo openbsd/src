@@ -219,7 +219,7 @@ get_cmd (int argc, char **argv)
 			       &dbhost, 
 			       arlalib_getauthflag (noauth, 0, 0, 0));
     if (ret) {
-	warnx ("get: arlalib_getsyncsite: %s (%d)\n", 
+	warnx ("get: arlalib_getsyncsite: %s (%d)", 
 	       koerr_gettext(ret), ret);
 	return 0;
     }
