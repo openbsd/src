@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.17 2000/06/08 20:49:19 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.71 2000/05/12 12:41:23 ho Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.18 2000/12/12 01:46:29 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.73 2000/12/04 04:46:34 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -707,7 +707,7 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 
 /* Enable a flow given an SA.  */
 int
-pf_encap_enable_sa (struct sa *sa)
+pf_encap_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 {
   struct ipsec_sa *isa = sa->data;
   struct sockaddr *dst;
@@ -904,6 +904,8 @@ pf_encap_connection_check (char *conn)
   char *conf, *doi_str, *local_id, *remote_id, *peer, *address;
   struct in_addr laddr, lmask, raddr, rmask, gwaddr;
   int lid, rid, err;
+  u_int8_t tproto;
+  u_int16_t sport, dport;
 
   if (sa_lookup_by_name (conn, 2) || exchange_lookup_by_name (conn, 2))
     {
@@ -940,9 +942,9 @@ pf_encap_connection_check (char *conn)
       return;
     }
 
-  if (ipsec_get_id (local_id, &lid, &laddr, &lmask))
+  if (ipsec_get_id (local_id, &lid, &laddr, &lmask, &tproto, &sport))
     return;
-  if (ipsec_get_id (remote_id, &rid, &raddr, &rmask))
+  if (ipsec_get_id (remote_id, &rid, &raddr, &rmask, &tproto, &dport))
     return;
 
   peer = conf_get_str (conn, "ISAKMP-peer");
