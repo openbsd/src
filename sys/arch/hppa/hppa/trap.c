@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2002/10/07 14:38:34 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2002/10/18 19:48:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -153,7 +153,12 @@ trap(type, frame)
 		va = frame->tf_ior;
 		space = frame->tf_isr;
 		/* what is the vftype for the T_ITLBMISSNA ??? XXX */
-		vftype = inst_store(opcode) ? VM_PROT_WRITE : VM_PROT_READ;
+		if (va == frame->tf_iioq_head)
+			vftype = VM_PROT_EXECUTE;
+		else if (inst_store(opcode))
+			vftype = VM_PROT_WRITE;
+		else
+			vftype = VM_PROT_READ;
 	}
 
 	if (frame->tf_flags & TFF_LAST)
@@ -309,7 +314,7 @@ trap(type, frame)
 	case T_HIGHERPL | T_USER:
 	case T_LOWERPL | T_USER:
 		sv.sival_int = va;
-		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_ACCERR, sv);
+		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
 		break;
 
 	case T_IPROT | T_USER:
@@ -325,7 +330,6 @@ trap(type, frame)
 	case T_ITLBMISSNA:	case T_USER | T_ITLBMISSNA:
 	case T_DTLBMISSNA:	case T_USER | T_DTLBMISSNA:
 	case T_TLB_DIRTY:	case T_USER | T_TLB_DIRTY:
-		va = hppa_trunc_page(va);
 		vm = p->p_vmspace;
 
 		if (!vm) {
@@ -358,7 +362,7 @@ trap(type, frame)
 			pmapdebug = 0xffffff;
 		}
 #endif
-		ret = uvm_fault(map, va, fault, vftype);
+		ret = uvm_fault(map, hppa_trunc_page(va), fault, vftype);
 
 #ifdef TRAPDEBUG
 		if (space == -1) {
@@ -377,9 +381,9 @@ trap(type, frame)
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if (va >= (vaddr_t)vm->vm_maxsaddr + vm->vm_ssize) {
+		if (va >= (vaddr_t)vm->vm_maxsaddr + ctob(vm->vm_ssize)) {
 			if (ret == 0) {
-				vsize_t nss = btoc(va - USRSTACK + NBPG);
+				vsize_t nss = btoc(va - USRSTACK + NBPG - 1);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (ret == EACCES)
@@ -392,8 +396,10 @@ trap(type, frame)
 if (kdb_trap (type, va, frame))
 	return;
 #endif
-				sv.sival_int = frame->tf_ior;
-				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+				sv.sival_int = va;
+				trapsignal(p, SIGSEGV, vftype,
+				    ret == EACCES? SEGV_ACCERR : SEGV_MAPERR,
+				    sv);
 			} else {
 				if (p && p->p_addr->u_pcb.pcb_onfault) {
 #if 0
