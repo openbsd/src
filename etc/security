@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.63 2003/07/03 23:05:42 millert Exp $
+#	$OpenBSD: security,v 1.64 2003/07/07 15:35:55 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -52,7 +52,7 @@ awk -F: '{
 		printf("Login %s has a negative user ID.\n", $1);
 	if ($4 < 0)
 		printf("Login %s has a negative group ID.\n", $1);
-	if ($7 != 0 && system("test "$7" -lt `date +%s`") == 0)
+	if (int($7) != 0 && system("test "$7" -lt `date +%s`") == 0)
 		printf("Login %s has expired.\n", $1);
 }' < $MP > $OUTPUT
 if [ -s $OUTPUT ] ; then
