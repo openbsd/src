@@ -1304,7 +1304,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/objc/sarray.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/objc/typedstream.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/obstack.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/panel.ph

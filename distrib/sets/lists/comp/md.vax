@@ -4,7 +4,6 @@
 ./usr/include/bfdlink.h
 ./usr/include/frame.h
 ./usr/include/link.h
-./usr/include/obstack.h
 ./usr/include/readline
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h

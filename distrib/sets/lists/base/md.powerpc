@@ -1223,7 +1223,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/objc/sarray.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/objc/typedstream.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/obstack.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/panel.ph

@@ -36,7 +36,6 @@
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
-./usr/include/obstack.h
 ./usr/include/readline
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h

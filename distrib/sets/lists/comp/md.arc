@@ -94,7 +94,6 @@
 ./usr/include/mips/types.h
 ./usr/include/mips/varargs.h
 ./usr/include/mips/vmparam.h
-./usr/include/obstack.h
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h
 ./usr/include/readline/readline.h

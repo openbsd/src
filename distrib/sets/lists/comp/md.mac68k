@@ -79,7 +79,6 @@
 ./usr/include/mac68k/viareg.h
 ./usr/include/mac68k/vmparam.h
 ./usr/include/mac68k/z8530var.h
-./usr/include/obstack.h
 ./usr/include/readline
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h

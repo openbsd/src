@@ -48,7 +48,6 @@
 ./usr/include/mips/types.h
 ./usr/include/mips/varargs.h
 ./usr/include/mips/vmparam.h
-./usr/include/obstack.h
 ./usr/include/pmax
 ./usr/include/pmax/ansi.h
 ./usr/include/pmax/aout_machdep.h

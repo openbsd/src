@@ -51,7 +51,6 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vid.h
 ./usr/include/machine/vmparam.h
-./usr/include/obstack.h
 ./usr/include/vm/lock.h
 ./usr/lib
 ./usr/lib/c++rt0.o

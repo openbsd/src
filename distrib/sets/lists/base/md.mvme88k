@@ -202,7 +202,6 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/nl_types.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/nlist.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/ocurses.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/olf_abi.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/panel.ph

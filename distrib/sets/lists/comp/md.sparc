@@ -5,7 +5,6 @@
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
 ./usr/include/link.h
-./usr/include/obstack.h
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h
 ./usr/include/readline/readline.h

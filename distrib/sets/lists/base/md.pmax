@@ -1293,7 +1293,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/objc/sarray.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/objc/typedstream.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/obstack.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/panel.ph

@@ -63,7 +63,6 @@
 ./usr/include/i386/vm86.h
 ./usr/include/i386/vmparam.h
 ./usr/include/link.h
-./usr/include/obstack.h
 ./usr/include/readline
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h

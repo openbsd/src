@@ -253,7 +253,6 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/nl_types.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/nlist.ph
-./usr/lib/perl5/site_perl/mips-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ocurses.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/olf_abi.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/panel.ph

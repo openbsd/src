@@ -1335,7 +1335,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/objc/sarray.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/objc/typedstream.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/obstack.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/panel.ph

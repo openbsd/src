@@ -72,7 +72,6 @@
 ./usr/include/mvme68k/types.h
 ./usr/include/mvme68k/varargs.h
 ./usr/include/mvme68k/vmparam.h
-./usr/include/obstack.h
 ./usr/include/readline
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h

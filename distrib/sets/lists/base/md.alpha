@@ -1275,7 +1275,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/objc/sarray.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/objc/typedstream.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/obstack.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/panel.ph

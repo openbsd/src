@@ -1389,6 +1389,7 @@
 ./usr/lib/gcrt0.o
 ./usr/lib/libacl.a
 ./usr/lib/libacl_p.a
+./usr/lib/libbfd.la
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
 ./usr/lib/libc_r.a
@@ -1438,6 +1439,7 @@
 ./usr/lib/libobjc_p.a
 ./usr/lib/libocurses.a
 ./usr/lib/libocurses_p.a
+./usr/lib/libopcodes.la
 ./usr/lib/libossaudio.a
 ./usr/lib/libossaudio_p.a
 ./usr/lib/libotermcap.a
