@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_pcb.c,v 1.9 2000/02/07 06:09:10 itojun Exp $ */
+/*	$OpenBSD: in6_pcb.c,v 1.10 2000/02/28 11:55:22 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95

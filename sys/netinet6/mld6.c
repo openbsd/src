@@ -1,4 +1,5 @@
-/*	$OpenBSD: mld6.c,v 1.5 2000/02/07 06:09:10 itojun Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.6 2000/02/28 11:55:22 itojun Exp $	*/
+/*	$KAME: mld6.c,v 1.16 2000/02/22 14:04:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -117,7 +118,7 @@ mld6_init()
 	mld6_timers_are_running = 0;
 
 	/* ip6h_nxt will be fill in later */
-	hbh->ip6h_len = 0;	/* (8 >> 3) - 1*/
+	hbh->ip6h_len = 0;	/* (8 >> 3) - 1 */
 
 	/* XXX: grotty hard coding... */
 	hbh_buf[2] = IP6OPT_PADN;	/* 2 byte padding */
@@ -138,7 +139,7 @@ mld6_start_listening(in6m)
 	int s = splnet();
 
 	/*
-	 * (draft-ietf-ipngwg-mld, page 10)
+	 * RFC2710 page 10:
 	 * The node never sends a Report or Done for the link-scope all-nodes
 	 * address.
 	 * MLD messages are never sent for multicast addresses whose scope is 0
@@ -182,7 +183,7 @@ mld6_input(m, off)
 	int off;
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct mld6_hdr *mldh = (struct mld6_hdr *)(mtod(m, caddr_t) + off);
+	struct mld6_hdr *mldh;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct in6_multi *in6m;
 	struct in6_ifaddr *ia;
@@ -194,12 +195,24 @@ mld6_input(m, off)
 		    "mld6_input: src %s is not link-local\n",
 		    ip6_sprintf(&ip6->ip6_src));
 		/*
-		 * spec(draft-ietf-ipngwg-mld) does not explicitly
+		 * spec (RFC2710) does not explicitly
 		 * specify to discard the packet from a non link-local
 		 * source address. But we believe it's expected to do so.
 		 */
+		m_freem(m);
 		return;
 	}
+
+#ifndef PULLDOWN_TEST
+	IP6_EXTHDR_CHECK(m, off, sizeof(*mldh),);
+	mldh = (struct mld6_hdr *)(mtod(m, caddr_t) + off);
+#else
+	IP6_EXTHDR_GET(mldh, struct mld6_hdr *, m, off, sizeof(*mldh));
+	if (mldh == NULL) {
+		icmp6stat.icp6s_tooshort++;
+		return;
+	}
+#endif
 
 	/*
 	 * In the MLD6 specification, there are 3 states and a flag.
@@ -225,25 +238,25 @@ mld6_input(m, off)
 				htons(ifp->if_index); /* XXX */
 
 		/*
-		* - Start the timers in all of our membership records
-		*   that the query applies to for the interface on
-		*   which the query arrived excl. those that belong
-		*   to the "all-nodes" group (ff02::1).
-		* - Restart any timer that is already running but has
-		*   A value longer than the requested timeout.
-		* - Use the value specified in the query message as
-		*   the maximum timeout.
-		*/
+		 * - Start the timers in all of our membership records
+		 *   that the query applies to for the interface on
+		 *   which the query arrived excl. those that belong
+		 *   to the "all-nodes" group (ff02::1).
+		 * - Restart any timer that is already running but has
+		 *   A value longer than the requested timeout.
+		 * - Use the value specified in the query message as
+		 *   the maximum timeout.
+		 */
 		IFP_TO_IA6(ifp, ia);
 		if (ia == NULL)
 			break;
 
 		/*
-		* XXX: System timer resolution is too low to handle Max
-		* Response Delay, so set 1 to the internal timer even if
-		* the calculated value equals to zero when Max Response
-		* Delay is positive.
-		*/
+		 * XXX: System timer resolution is too low to handle Max
+		 * Response Delay, so set 1 to the internal timer even if
+		 * the calculated value equals to zero when Max Response
+		 * Delay is positive.
+		 */
 		timer = ntohs(mldh->mld6_maxdelay)*PR_FASTHZ/MLD6_TIMER_SCALE;
 		if (timer == 0 && mldh->mld6_maxdelay)
 			timer = 1;
@@ -285,14 +298,14 @@ mld6_input(m, off)
 		break;
 	case MLD6_LISTENER_REPORT:
 		/*
-		* For fast leave to work, we have to know that we are the
-		* last person to send a report for this group.  Reports
-		* can potentially get looped back if we are a multicast
-		* router, so discard reports sourced by me.
-		* Note that it is impossible to check IFF_LOOPBACK flag of
-		* ifp for this purpose, since ip6_mloopback pass the physical
-		* interface to looutput.
-		*/
+		 * For fast leave to work, we have to know that we are the
+		 * last person to send a report for this group.  Reports
+		 * can potentially get looped back if we are a multicast
+		 * router, so discard reports sourced by me.
+		 * Note that it is impossible to check IFF_LOOPBACK flag of
+		 * ifp for this purpose, since ip6_mloopback pass the physical
+		 * interface to looutput.
+		 */
 		if (m->m_flags & M_LOOP) /* XXX: grotty flag, but efficient */
 			break;
 
@@ -303,9 +316,9 @@ mld6_input(m, off)
 			mldh->mld6_addr.s6_addr16[1] =
 				htons(ifp->if_index); /* XXX */
 		/*
-		* If we belong to the group being reported, stop
-		* our timer for that group.
-		*/
+		 * If we belong to the group being reported, stop
+		 * our timer for that group.
+		 */
 		IN6_LOOKUP_MULTI(mldh->mld6_addr, ifp, in6m);
 		if (in6m) {
 			in6m->in6m_timer = 0; /* transit to idle state */
@@ -319,6 +332,8 @@ mld6_input(m, off)
 		log(LOG_ERR, "mld6_input: illegal type(%d)", mldh->mld6_type);
 		break;
 	}
+
+	m_freem(m);
 }
 
 void
@@ -371,7 +386,8 @@ mld6_sendpkt(in6m, type, dst)
 	 * At first, find a link local address on the outgoing interface
 	 * to use as the source address of the MLD packet.
 	 */
-	if ((ia = in6ifa_ifpforlinklocal(ifp)) == NULL)
+	if ((ia = in6ifa_ifpforlinklocal(ifp, IN6_IFF_NOTREADY|IN6_IFF_ANYCAST))
+	    == NULL)
 		return;
 
 	/*

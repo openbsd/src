@@ -1,4 +1,5 @@
-/* $OpenBSD: in6_var.h,v 1.8 2000/02/04 18:13:36 itojun Exp $ */
+/*	$OpenBSD: in6_var.h,v 1.9 2000/02/28 11:55:22 itojun Exp $	*/
+/*	$KAME: in6_var.h,v 1.29 2000/02/25 05:20:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -356,9 +357,17 @@ struct	in6_rrenumreq {
 
 #define SIOCSIFADDR_IN6		 _IOW('i', 12, struct in6_ifreq)
 #define SIOCGIFADDR_IN6		_IOWR('i', 33, struct in6_ifreq)
+
+#ifdef _KERNEL
+/*
+ * SIOCSxxx ioctls should be unused (see comments in in6.c), but
+ * we do not shift numbers for binary compatibility.
+ */
 #define SIOCSIFDSTADDR_IN6	 _IOW('i', 14, struct in6_ifreq)
-#define SIOCGIFDSTADDR_IN6	_IOWR('i', 34, struct in6_ifreq)
 #define SIOCSIFNETMASK_IN6	 _IOW('i', 22, struct in6_ifreq)
+#endif 
+
+#define SIOCGIFDSTADDR_IN6	_IOWR('i', 34, struct in6_ifreq)
 #define SIOCGIFNETMASK_IN6	_IOWR('i', 37, struct in6_ifreq)
 
 #define SIOCDIFADDR_IN6		 _IOW('i', 25, struct in6_ifreq)
@@ -383,6 +392,9 @@ struct	in6_rrenumreq {
 #define SIOCGIFSTAT_IN6		_IOWR('i', 83, struct in6_ifreq)
 #define SIOCGIFSTAT_ICMP6	_IOWR('i', 84, struct in6_ifreq)
 
+#define SIOCSDEFIFACE_IN6	_IOWR('i', 85, struct in6_ndifreq)
+#define SIOCGDEFIFACE_IN6	_IOWR('i', 86, struct in6_ndifreq)
+
 #define SIOCSIFPREFIX_IN6	_IOW('i', 100, struct in6_prefixreq) /* set */
 #define SIOCGIFPREFIX_IN6	_IOWR('i', 101, struct in6_prefixreq) /* get */
 #define SIOCDIFPREFIX_IN6	_IOW('i', 102, struct in6_prefixreq) /* del */
@@ -405,6 +417,11 @@ struct	in6_rrenumreq {
 
 /* do not input/output */
 #define IN6_IFF_NOTREADY (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)
+
+#ifdef _KERNEL
+#define IN6_ARE_SCOPE_CMP(a,b) ((a)-(b))
+#define IN6_ARE_SCOPE_EQUAL(a,b) ((a)==(b))
+#endif
 
 #ifdef _KERNEL
 extern struct in6_ifaddr *in6_ifaddr;
@@ -549,10 +566,11 @@ void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));
 void	in6_purgemkludge __P((struct ifnet *));
-struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *));
+struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *, int));
 struct in6_ifaddr *in6ifa_ifpwithaddr __P((struct ifnet *,
 					     struct in6_addr *));
 char	*ip6_sprintf __P((struct in6_addr *));
+int	in6_addr2scopeid __P((struct ifnet *, struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
 int	in6_are_prefix_equal __P((struct in6_addr *p1, struct in6_addr *p2,
 				  int len));

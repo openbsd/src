@@ -1,4 +1,5 @@
-/*	$OpenBSD: nd6.h,v 1.3 2000/02/04 18:13:36 itojun Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.4 2000/02/28 11:55:22 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.16 2000/02/24 16:34:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,6 +33,11 @@
 #ifndef _NETINET6_ND6_H_
 #define _NETINET6_ND6_H_
 
+/* see net/route.h, or net/if_inarp.h */
+#ifndef RTF_ANNOUNCE
+#define RTF_ANNOUNCE	RTF_PROTO2
+#endif
+
 #include <sys/queue.h>
 
 struct	llinfo_nd6 {
@@ -52,6 +58,8 @@ struct	llinfo_nd6 {
 #define ND6_LLINFO_STALE	2
 #define ND6_LLINFO_DELAY	3
 #define ND6_LLINFO_PROBE	4
+
+#define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
 
 struct nd_ifinfo {
 	u_int32_t linkmtu;		/* LinkMTU */
@@ -92,6 +100,7 @@ struct	in6_prlist {
 		struct	in6_addr prefix;
 		struct prf_ra raflags;
 		u_char	prefixlen;
+		u_char	origin;
 		u_long	vltime;
 		u_long	pltime;
 		u_long	expire;
@@ -105,6 +114,12 @@ struct	in6_ndireq {
 	char ifname[IFNAMSIZ];
 	struct nd_ifinfo ndi;
 };
+
+struct	in6_ndifreq {
+	char ifname[IFNAMSIZ];
+	u_long ifindex;
+};
+
 
 /* protocol constants */
 #define MAX_RTR_SOLICITATION_DELAY	1	/*1sec*/
@@ -124,9 +139,9 @@ struct	in6_ndireq {
 		(((MIN_RANDOM_FACTOR * (x >> 10)) + (arc4random() & \
 		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10)))) /1000)
 
+TAILQ_HEAD(nd_drhead, nd_defrouter);
 struct	nd_defrouter {
-	LIST_ENTRY(nd_defrouter) dr_entry;
-#define dr_next dr_entry.le_next
+	TAILQ_ENTRY(nd_defrouter) dr_entry;
 	struct	in6_addr rtaddr;
 	u_char	flags;
 	u_short	rtlifetime;
@@ -204,7 +219,6 @@ struct nd_pfxrouter {
 	struct nd_defrouter *router;
 };
 
-LIST_HEAD(nd_drhead, nd_defrouter);
 LIST_HEAD(nd_prhead, nd_prefix);
 
 /* nd6.c */
@@ -213,11 +227,14 @@ extern int nd6_delay;
 extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
 extern int nd6_useloopback;
-extern int nd6_proxyall;
 extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
+
+/* nd6_rtr.c */
+extern struct ifnet *nd6_defifp;  /* XXXYYY */
+extern int nd6_defifindex;
 
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[9];
@@ -279,7 +296,7 @@ int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,
 /* nd6_nbr.c */
 void nd6_na_input __P((struct mbuf *, int, int));
 void nd6_na_output __P((struct ifnet *, struct in6_addr *,
- 			struct in6_addr *, u_long, int));
+ 			struct in6_addr *, u_long, int, struct sockaddr *));
 void nd6_ns_input __P((struct mbuf *, int, int));
 void nd6_ns_output __P((struct ifnet *, struct in6_addr *,
 			struct in6_addr *, struct llinfo_nd6 *, int));
@@ -293,15 +310,18 @@ void nd6_ra_input __P((struct mbuf *, int, int));
 void prelist_del __P((struct nd_prefix *));
 void defrouter_addreq __P((struct nd_defrouter *));
 void defrouter_delreq __P((struct nd_defrouter *, int));
+void defrouter_select __P((void));
 void defrtrlist_del __P((struct nd_defrouter *));
 void prelist_remove __P((struct nd_prefix *));
 int prelist_update __P((struct nd_prefix *, struct nd_defrouter *,
 	struct mbuf *));
+void pfxlist_onlink_check __P((void));
 struct nd_defrouter *defrouter_lookup __P((struct in6_addr *,
 					   struct ifnet *));
 int in6_ifdel __P((struct ifnet *, struct in6_addr *));
 int in6_init_prefix_ltimes __P((struct nd_prefix *ndpr));
 void rt6_flush __P((struct in6_addr *, struct ifnet *));
+int nd6_setdefaultiface __P((int));
 
 #endif /* _KERNEL */
 

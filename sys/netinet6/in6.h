@@ -1,4 +1,5 @@
-/* $OpenBSD: in6.h,v 1.11 2000/02/19 17:31:40 deraadt Exp $ */
+/*	$OpenBSD: in6.h,v 1.12 2000/02/28 11:55:22 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -532,21 +533,9 @@ struct in6_pktinfo {
 #define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
-#ifdef MAPPED_ADDR_ENABLED
-#define IPV6CTL_MAPPED_ADDR	23
-#endif /* MAPPED_ADDR_ENABLED */
+/*#define IPV6CTL_MAPPED_ADDR	23	not for openbsd */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 #define IPV6CTL_MAXID		24
-
-#ifdef MAPPED_ADDR_ENABLED
-#define IPV6CTL_NAMES_MAPPED_ADDR	"mapped_addr"
-#define IPV6CTL_TYPE_MAPPED_ADDR	CTLTYPE_INT
-#define IPV6CTL_VARS_MAPPED_ADDR	&ip6_mapped_addr_on
-#else  /* MAPPED_ADDR_ENABLED */
-#define IPV6CTL_NAMES_MAPPED_ADDR	0
-#define IPV6CTL_TYPE_MAPPED_ADDR	0
-#define IPV6CTL_VARS_MAPPED_ADDR	0
-#endif /* MAPPED_ADDR_ENABLED */
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -572,41 +561,14 @@ struct in6_pktinfo {
 	{ "kame_version", CTLTYPE_STRING }, \
 	{ "use_deprecated", CTLTYPE_INT }, \
 	{ "rr_prune", CTLTYPE_INT }, \
-	{ IPV6CTL_NAMES_MAPPED_ADDR, IPV6CTL_TYPE_MAPPED_ADDR }, \
+	{ 0, 0 }, \
 }
 
-#define IPV6CTL_VARS { \
-	0, \
-	&ip6_forwarding, \
-	&ip6_sendredirects, \
-	&ip6_defhlim, \
-	0, \
-	&ip6_forward_srcrt, \
-	0, \
-	0, \
-	0, \
-	&ip6_maxfragpackets, \
-	&ip6_sourcecheck, \
-	&ip6_sourcecheck_interval, \
-	&ip6_accept_rtadv, \
-	&ip6_keepfaith, \
-	&ip6_log_interval, \
-	&ip6_hdrnestlimit, \
-	&ip6_dad_count, \
-	&ip6_auto_flowlabel, \
-	&ip6_defmcasthlim, \
-	&ip6_gif_hlim, \
-	0, \
-	&ip6_use_deprecated, \
-	&ip6_rr_prune, \
-	IPV6CTL_VARS_MAPPED_ADDR, \
-}
 #endif /* !_XOPEN_SOURCE */
 
 #ifdef _KERNEL
 struct cmsghdr;
 
-int	in6_canforward __P((struct in6_addr *, struct in6_addr *));
 int	in6_cksum __P((struct mbuf *, u_int8_t, u_int32_t, u_int32_t));
 int	in6_localaddr __P((struct in6_addr *));
 int	in6_addrscope __P((struct in6_addr *));

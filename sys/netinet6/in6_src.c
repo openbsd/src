@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.3 2000/02/07 06:09:10 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.4 2000/02/28 11:55:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -86,9 +86,6 @@
 #include <netinet/in_pcb.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#if 0
-#include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 

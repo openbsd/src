@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.2 2000/02/07 05:45:55 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.3 2000/02/28 11:55:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -469,12 +469,12 @@ struct icmp6_filter {
 
 #ifdef _KERNEL
 #define	ICMP6_FILTER_SETPASSALL(filterp) \
-    {								\
+do {								\
 	int i; u_char *p;					\
 	p = (u_char *)filterp;					\
 	for (i = 0; i < sizeof(struct icmp6_filter); i++)	\
 		p[i] = 0xff;					\
-    }
+} while (0)
 #define	ICMP6_FILTER_SETBLOCKALL(filterp) \
 	bzero(filterp, sizeof(struct icmp6_filter))
 #else /* _KERNEL */
@@ -525,7 +525,7 @@ struct icmp6stat {
 #define ICMPV6CTL_ND6_UMAXTRIES	9
 #define ICMPV6CTL_ND6_MMAXTRIES		10
 #define ICMPV6CTL_ND6_USELOOPBACK	11
-#define ICMPV6CTL_ND6_PROXYALL	12
+/*#define ICMPV6CTL_ND6_PROXYALL	12	obsoleted, do not reuse here */
 #define ICMPV6CTL_NODEINFO	13
 #define ICMPV6CTL_MAXID		14
 
@@ -542,26 +542,8 @@ struct icmp6stat {
 	{ "nd6_umaxtries", CTLTYPE_INT }, \
 	{ "nd6_mmaxtries", CTLTYPE_INT }, \
 	{ "nd6_useloopback", CTLTYPE_INT }, \
-	{ "nd6_proxyall", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "nodeinfo", CTLTYPE_INT }, \
-}
-
-#define ICMPV6CTL_VARS { \
-	0, \
-	0, \
-	&icmp6_rediraccept,   \
-	&icmp6_redirtimeout,  \
-	0, \
-	0, \
-	&icmp6errratelim, \
-	&nd6_prune,	\
-	0, \
-	&nd6_delay,	\
-	&nd6_umaxtries, \
-	&nd6_mmaxtries,	\
-	&nd6_useloopback, \
-	&nd6_proxyall, \
-	&icmp6_nodeinfo, \
 }
 
 #define RTF_PROBEMTU	RTF_PROTO1

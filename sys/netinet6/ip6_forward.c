@@ -1,4 +1,5 @@
-/*	$OpenBSD: ip6_forward.c,v 1.3 2000/02/07 06:09:10 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.4 2000/02/28 11:55:22 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.29 2000/02/26 18:08:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,22 +47,17 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#include <netinet/ip_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
-
-#undef IPSEC
 
 #ifdef IPSEC_IPV6FWD
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /* IPSEC_IPV6FWD */
-
-#ifdef IPV6FIREWALL
-#include <netinet6/ip6_fw.h>
-#endif
 
 #include <net/net_osdep.h>
 
@@ -111,19 +107,17 @@ ip6_forward(m, srcrt)
 	}
 #endif /*IPSEC_IPV6FWD*/
 
-	if (m->m_flags & (M_BCAST|M_MCAST) ||
-	   in6_canforward(&ip6->ip6_src, &ip6->ip6_dst) == 0) {
+	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
+	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		ip6stat.ip6s_cantforward++;
-		ip6stat.ip6s_badscope++;
 		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard) */
 		if (ip6_log_time + ip6_log_interval < time_second) {
-			char addr[INET6_ADDRSTRLEN];
 			ip6_log_time = time_second;
-			strncpy(addr, ip6_sprintf(&ip6->ip6_src), sizeof(addr));
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "from %s to %s nxt %d received on %s\n",
-			    addr, ip6_sprintf(&ip6->ip6_dst),
+			    ip6_sprintf(&ip6->ip6_src),
+			    ip6_sprintf(&ip6->ip6_dst),
 			    ip6->ip6_nxt,
 			    if_name(m->m_pkthdr.rcvif));
 		}
@@ -327,17 +321,73 @@ ip6_forward(m, srcrt)
 		}
 	}
 	rt = ip6_forward_rt.ro_rt;
-	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu){
+
+	/*
+	 * Scope check: if a packet can't be delivered to its destination
+	 * for the reason that the destination is beyond the scope of the
+	 * source address, discard the packet and return an icmp6 destination
+	 * unreachable error with Code 2 (beyond scope of source address).
+	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
+	 */
+	if (in6_addr2scopeid(m->m_pkthdr.rcvif, &ip6->ip6_src) !=
+	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)) {
+		ip6stat.ip6s_cantforward++;
+		ip6stat.ip6s_badscope++;
+		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
+
+		if (ip6_log_time + ip6_log_interval < time_second) {
+			ip6_log_time = time_second;
+			log(LOG_DEBUG,
+			    "cannot forward "
+			    "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
+			    ip6_sprintf(&ip6->ip6_src),
+			    ip6_sprintf(&ip6->ip6_dst),
+			    ip6->ip6_nxt,
+			    if_name(m->m_pkthdr.rcvif), if_name(rt->rt_ifp));
+		}
+		if (mcopy)
+			icmp6_error(mcopy, ICMP6_DST_UNREACH,
+				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
+		m_freem(m);
+		return;
+	}
+
+	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
 		if (mcopy) {
+			u_long mtu;
+#ifdef IPSEC_IPV6FWD
+			struct secpolicy *sp;
+			int ipsecerror;
+			size_t ipsechdrsiz;
+#endif
+
+			mtu = rt->rt_ifp->if_mtu;
+#ifdef IPSEC_IPV6FWD
 			/*
-			 * XXX
 			 * When we do IPsec tunnel ingress, we need to play
 			 * with if_mtu value (decrement IPsec header size
-			 * from mtu value).  see ip_input().
+			 * from mtu value).  The code is much simpler than v4
+			 * case, as we have the outgoing interface for
+			 * encapsulated packet as "rt->rt_ifp".
 			 */
-			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0,
-				rt->rt_ifp->if_mtu);
+			sp = ipsec6_getpolicybyaddr(mcopy, IPSEC_DIR_OUTBOUND,
+				IP_FORWARDING, &ipsecerror);
+			if (sp) {
+				ipsechdrsiz = ipsec6_hdrsiz(mcopy,
+					IPSEC_DIR_OUTBOUND, NULL);
+				if (ipsechdrsiz < mtu)
+					mtu -= ipsechdrsiz;
+			}
+
+			/*
+			 * if mtu becomes less than minimum MTU, 
+			 * tell minimum MTU (and I'll need to fragment it).
+			 */
+			if (mtu < IPV6_MMTU)
+				mtu = IPV6_MMTU;
+#endif
+			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, mtu);
 		}
 		m_freem(m);
 		return;

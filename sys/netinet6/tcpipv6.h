@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpipv6.h,v 1.5 2000/02/07 06:09:10 itojun Exp $ */
+/*	$OpenBSD: tcpipv6.h,v 1.6 2000/02/28 11:55:23 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
