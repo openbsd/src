@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 2004/07/22 11:19:14 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 2004/07/22 15:50:18 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2520,9 +2520,8 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
 		if (vm_physseg_find(btop(opte & PG_FRAME), &off) != -1) {
-			printf("pmap_remove_pte: managed page without "
-			      "PG_PVLIST for 0x%lx\n", va);
-			Debugger();
+			panic("pmap_remove_pte: managed page without "
+			      "PG_PVLIST for 0x%lx", va);
 		}
 #endif
 		return(TRUE);
