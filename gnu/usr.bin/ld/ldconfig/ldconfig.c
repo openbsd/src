@@ -1,3 +1,5 @@
+/*	$OpenBSD: ldconfig.c,v 1.3 1996/06/28 22:02:27 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: ldconfig.c,v 1.2 1996/01/12 19:56:20 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -104,7 +104,7 @@ char	*argv[];
 			verbose = 1;
 			break;
 		default:
-			errx(1, "Usage: %s [-r][-s][-v][dir ...]",
+			errx(1, "Usage: %s [-mrsv] [dir ...]",
 				__progname);
 			break;
 		}
