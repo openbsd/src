@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.107 2005/02/27 13:12:12 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.108 2005/03/02 13:27:12 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -450,7 +450,7 @@ exchange_resize(void)
 
 /* Lookup a phase 1 exchange out of just the initiator cookie.  */
 struct exchange *
-exchange_lookup_from_icookie(u_int8_t * cookie)
+exchange_lookup_from_icookie(u_int8_t *cookie)
 {
 	struct exchange *exchange;
 	int	i;
@@ -779,7 +779,7 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 			}
 			type = constant_value(isakmp_exch_cst, str);
 			if (!type) {
-				log_print("exchange_setup_p1: "
+				log_print("exchange_establish_p1: "
 				    "unknown exchange type %s", str);
 				return;
 			}
