@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.32 2001/05/23 12:34:42 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.33 2001/05/27 08:34:10 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -570,7 +570,6 @@ DirExpandCurlyi(word, endw, path, expansions)
 				/* Keep track of nested braces. If we hit
 				 * the right brace with bracelevel == 0,
 				 * this is the end of the clause. */
-	const char	*cp;	/* Current position in brace clause */
 	size_t		otherLen;
 				/* The length of the non-curlied part of
 				 * the current expansion */
@@ -583,7 +582,8 @@ DirExpandCurlyi(word, endw, path, expansions)
 		free(toexpand);
 	    } else
 		Lst_AtEnd(expansions, toexpand);
-	}
+	    continue;
+	} 
 
 	start = brace+1;
 
@@ -601,27 +601,32 @@ DirExpandCurlyi(word, endw, path, expansions)
 	end++;
 	otherLen = brace - toexpand + strlen(end);
 
-	for (cp = start; cp < end; cp++) {
+	for (;;) {
 	    char	*file;	/* To hold current expansion */
-
-		/* Find the end of the current expansion */
-	    bracelevel = 0;
-	    while (*cp != ',') {
+	    const char	*cp;
+	
+	    /* Find the end of the current expansion */
+	    for (bracelevel = 0, cp = start; 
+	    	bracelevel != 0 || (*cp != '}' && *cp != ','); cp++) {
 		if (*cp == '{')
 		    bracelevel++;
-		else if (*cp == '}' && bracelevel-- <= 0)
-		    break;
-		cp++;
+		else if (*cp == '}')
+		    bracelevel--;
 	    }
+
 	    /* Build the current combination and enqueue it.  */
 	    file = emalloc(otherLen + cp - start + 1);
 	    if (brace != toexpand)
-		memcpy(file, toexpand, brace-word);
+	    	memcpy(file, toexpand, brace-toexpand);
 	    if (cp != start)
-		memcpy(file+(brace-toexpand), start, cp-start);
+	    	memcpy(file+(brace-toexpand), start, cp-start);
 	    strcpy(file+(brace-toexpand)+(cp-start), end);
 	    Lst_EnQueue(&curled, file);
+	    if (*cp == '}')
+	    	break;
+	    start = cp+1;
 	}
+	free(toexpand);
     }
 }
 
