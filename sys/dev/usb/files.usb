@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.5 1999/09/27 18:03:54 fgsch Exp $
+#	$OpenBSD: files.usb,v 1.6 2000/03/26 18:49:44 aaron Exp $
 #	$NetBSD: files.usb,v 1.8 1999/06/30 06:44:22 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -64,3 +64,18 @@ file	dev/usb/umodem.c		umodem		needs-flag
 #attach	ums at uhub
 #file	dev/usb/ums.c			ums		needs-flag
 
+# Ethernet adapters
+# ADMtek AN986 Pegasus
+#device	aue: ether, ifnet, mii, ifmedia
+#attach	aue at uhub
+#file	dev/usb/if_aue.c		aue
+
+# CATC USB-EL1201A
+#device	cue: ether, ifnet, ifmedia
+#attach	cue at uhub
+#file	dev/usb_if_cue.c		cue
+
+# Kawasaki LSI KL5KUSB101B
+device	kue: ether, ifnet, ifmedia
+attach	kue at uhub
+file	dev/usb/if_kue.c		kue

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.161 2000/03/22 18:35:50 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.162 2000/03/26 18:49:43 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -79,6 +79,9 @@ pcmcia*	at pcic? controller ? socket ?
 
 # USB audio
 #uaudio* at uhub? port ? configuration ?
+
+# USB Ethernet adapters
+#kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based adapters
 
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?
