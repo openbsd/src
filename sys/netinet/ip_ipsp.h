@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.95 2001/05/30 11:14:42 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.96 2001/05/30 12:20:20 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -362,9 +362,6 @@ struct tdb_crypto {
     u_int32_t			tc_spi;
     union sockaddr_union	tc_dst;
     u_int8_t			tc_proto;
-    u_int32_t			tc_spi2;
-    union sockaddr_union	tc_dst2;
-    u_int8_t			tc_proto2;
     int                         tc_protoff;
     int                         tc_skip;
     caddr_t                     tc_ptr;
@@ -389,7 +386,7 @@ struct xformsw
     int		(*xf_init)(struct tdb *, struct xformsw *, struct ipsecinit *);
     int		(*xf_zeroize)(struct tdb *); /* termination */
     int         (*xf_input)(struct mbuf *, struct tdb *, int, int); /* input */
-    int		(*xf_output)(struct mbuf *, struct tdb *, struct mbuf **, int, int, struct tdb *);        /* output */
+    int		(*xf_output)(struct mbuf *, struct tdb *, struct mbuf **, int, int);        /* output */
 };
 
 /* xform IDs */
@@ -514,8 +511,7 @@ extern int tdb_walk(int (*)(struct tdb *, void *, int), void *);
 extern int ipe4_attach(void);
 extern int ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ipe4_zeroize(struct tdb *);
-extern int ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int,
-		       struct tdb *);
+extern int ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 extern void ipe4_input __P((struct mbuf *, ...));
 extern void ipip_input __P((struct mbuf *, int));
 
@@ -536,8 +532,7 @@ extern void etherip_input __P((struct mbuf *, ...));
 extern int ah_attach(void);
 extern int ah_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ah_zeroize(struct tdb *);
-extern int ah_output(struct mbuf *, struct tdb *, struct mbuf **, int, int,
-		     struct tdb *);
+extern int ah_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 extern int ah_output_cb(void *);
 extern int ah_input(struct mbuf *, struct tdb *, int, int);
 extern int ah_input_cb(void *);
@@ -558,8 +553,7 @@ extern int ah6_input_cb __P((struct mbuf *, int, int));
 extern int esp_attach(void);
 extern int esp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int esp_zeroize(struct tdb *);
-extern int esp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int,
-		      struct tdb *);
+extern int esp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 extern int esp_output_cb(void *);
 extern int esp_input(struct mbuf *, struct tdb *, int, int);
 extern int esp_input_cb(void *);
@@ -583,8 +577,7 @@ extern int tcp_signature_tdb_zeroize __P((struct tdb *));
 extern int tcp_signature_tdb_input __P((struct mbuf *, struct tdb *, int,
 					int));
 extern int tcp_signature_tdb_output __P((struct mbuf *, struct tdb *,
-					 struct mbuf **, int, int,
-					 struct tdb *));
+					 struct mbuf **, int, int));
 
 /* Padding */
 extern caddr_t m_pad(struct mbuf *, int);
@@ -596,8 +589,7 @@ extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
 extern unsigned char ipseczeroes[];
 
 /* Packet processing */
-extern int ipsp_process_packet(struct mbuf *, struct tdb *, int, int,
-			       struct tdb *);
+extern int ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
 extern int ipsp_process_done(struct mbuf *, struct tdb *, struct tdb *);
 extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *, int,
                                    struct tdb *, struct inpcb *);
