@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.7 1998/10/30 00:02:57 aaron Exp $
+.\" $OpenBSD: vpn.8,v 1.8 1999/02/12 04:54:46 kjell Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd May 23, 1998
+.Dd Feb 9, 1999
 .Dt VPN 8
 .Os
 .Sh NAME
@@ -45,6 +45,74 @@ is used to provide the necessary network-layer cryptographic services.
 This document describes the configuration process for setting up a 
 .Nm VPN .
 .Pp
+Briefly, creating a VPN consists of the following steps
+.Bl -enum -compact
+.It
+Choose a key exchange method: manual keyed or 
+.Xr photurisd 8
+.It
+Create a Security Association (SA) for each endpoint
+.It
+Create the appropriate IPSec flows
+.It 
+Configure your firewall rules appropriately
+.El
+.Ss Choosing a key exchange method
+There are currently two key exchange methods available:
+.Pp
+.Bl -bullet -inset -compact
+.It
+manual (symmetric shared secret)
+.It
+.Xr photurisd 8
+.El
+.Pp
+At present VPNs between private networks must use manual keying.
+.Xr photurisd 8
+may only be used in situations where both
+security gateways are within their protected network ranges.
+.Ss Generating Manual Keys
+The shared secret symmetric keys used to create a VPN can
+be any hexadecimal value, so long as both sides of the connection use 
+the same values. Since the security of the VPN is based on these keys 
+being unguessable, it is very important that the keys be chosen using a
+strong random source. One practical method of generating them
+is by using the 
+.Xr random 4
+device. Eg:
+.Bd -literal
+   dd if=/dev/urandom bs=1024 count=1 | sha1
+.Ed
+.Pp
+Different cipher types may require different sized keys.
+.Pp
+.Bl -column "Cipher" "Key Length" -compact
+.It Em Cipher	Key Length
+.It Li DES Ta "8 bytes"
+.It Li 3DES Ta "24 bytes"
+.It Li BLF Ta "Variable"
+.It Li CAST Ta "Variable"
+.El
+.Pp
+Initialization vectors (IV) are always 8 byte hexadecimal values.
+.Ss Creating Security Associations
+Before the IPSec flows can be defined, two Security Associations (SAs)
+must be defined on each end of the VPN. Eg:
+.Bd -literal
+ipsecadm new esp -spi SPI_OUT -src A_EXTERNAL_IP
+         -dst B_EXTERNAL_IP
+         -tunnel A_EXTERNAL_IP B_EXTERNAL_IP
+         -enc 3des -auth sha1 -iv INITIALIZATION_VECTOR
+         -key ENCRYPTION_KEY -authkey AUTHENTICATION_KEY
+   
+ipsecadm new esp -spi SPI_IN -src B_EXTERNAL_IP
+         -dst A_EXTERNAL_IP
+         -tunnel B_EXTERNAL_IP A_EXTERNAL_IP
+         -enc 3des -auth sha1 -iv INITIALIZATION_VECTOR
+         -key ENCRYPTION_KEY -authkey AUTHENTICATION_KEY
+.Ed
+.Pp
+.Ss Creating IPSec Flows
 Both subnets need to configure
 .Xr ipsec 4
 routes with the 
@@ -53,33 +121,59 @@ tool:
 .Pp
 On the security gateway of subnet A:
 .Bd -literal
-ipsecadm flow -dst gatewB -spi 1 -addr netA netAmask netB netBmask -local
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT
+         -addr A_EXTERNAL_IP 255.255.255.255
+               B_EXTERNAL_IP 255.255.255.255 -local
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT
+         -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
+               B_INTERNAL_NETWORK B_INTERNAL_NETMASK
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT
+         -addr A_EXTERNAL_IP 255.255.255.255
+               B_INTERNAL_NETWORK B_INTERNAL_NETMASK -local
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT
+         -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
+               B_EXTERNAL_IP 255.255.255.255
 .Ed
 .Pp
 and on the security gateway of subnet B:
 .Bd -literal
-ipsecadm flow -dst gatewA -spi 1 -addr netB netBmask netA netAmask -local
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN
+         -addr B_EXTERNAL_IP 255.255.255.255
+               A_EXTERNAL_IP 255.255.255.255 -local
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN
+         -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
+               A_INTERNAL_NETWORK A_INTERNAL_NETMASK
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT
+         -addr B_EXTERNAL_IP 255.255.255.255
+               A_INTERNAL_NETWORK A_INTERNAL_NETMASK -local
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT
+         -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
+               A_EXTERNAL_IP 255.255.255.255
 .Ed
 .Pp
-Furthermore, both security gateways need to start the
+Furthermore, unless manual keying is used, 
+both security gateways need to start the
 .Xr photurisd 8
 key management daemon with the
 .Fl v
-flag and need to make sure that it is configured properly on both sides to 
+flag and make sure it is configured properly on both sides to 
 provide the required security services (typically, encryption and
 authentication).
-.Pp
+.Ss Configuring Firewall Rules
 .Xr ipf 1
-needs to be configured such that all packets from the outside are blocked.
-Only packets from the security gateways either on the
-.Pa enc0
-interface (successfully IPsec-processed packets) or 
+needs to be configured such that all packets from the outside are blocked
+by default. Only successfully IPSec-processed packets (from the 
+.Nm enc0 
+interface), or 
+key management packets (for 
+.Xr photurisd 8 , 
 .Tn UDP
-packets with source and remote ports of 468 (Photuris) should be allowed in.
+packets with source and destination ports of 468) should be allowed to pass.
 .Pp 
 The
 .Xr ipf 5
-rules for a tunnel which only uses encryption (the ESP IPsec protocol)
+rules for a tunnel which uses encryption (the ESP IPsec protocol) and 
+.Xr photurisid 8
 on security gateway A might look like this:
 .Bd -literal
 # ed0 is the only interface going to the outside.
@@ -88,8 +182,8 @@ block out log on ed0 from any to any
 block in log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
-pass in proto sipp-esp from gatewB to gatewA
-pass out proto sipp-esp from gatewA to gatewB
+pass in proto sipp-esp from gatewB/32 to gatewA/32
+pass out proto sipp-esp from gatewA/32 to gatewB/32
 
 # Passing in traffic from the designated subnets.
 pass in on enc0 from netB/netBmask to netA/netAmask
@@ -102,11 +196,131 @@ pass out on ed0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
 If there are no other
 .Xr ipf 5
 rules, the "quick" clause can be added to the last three rules.
+.Sh EXAMPLES
+To create a manual keyed VPN between two class C networks using 
+3DES encryption and the following IP addresses:
+.Pp
+.Bd -literal
+ A_INTERNAL_IP = 10.0.50.1
+ A_EXTERNAL_IP = 192.168.1.254 
+ B_EXTERNAL_IP = 192.168.2.1
+ B_INTERNAL_IP = 10.0.99.1
+.Ed
+.Pp
+.Bl -enum
+.It
+Choose the shared secrets using a suitably random method:
+.Pp
+.Bd -literal
+# dd if=/dev/urandom bs=1024 count=1 | sha1
+cd28c327c7fd0943596a96cc7bf9108cd896f33c
+
+# dd if=/dev/urandom bs=1024 count=1 | sha1
+44aedc8aa8acf0b8c74acd626cd1b1057fb12c76
+
+# dd if=/dev/urandom bs=1024 count=1 | sha1
+c9fff55b501206a6607fb45c392c5e1568db2aaf
+.Ed
+.Pp
+.It
+Create the Security Associations (on both endpoints):
+.Pp
+.Bd -literal
+# /sbin/ipsecadm new esp -src 198.168.2.1 -dst 198.168.1.254 \e\ 
+   -tunnel 198.168.2.1 198.168.1.254 \e\  
+   -spi 1000 -enc 3des -auth sha1 -iv cd28c327c7fd0943 \e\ 
+   -key 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 \e\ 
+   -authkey c9fff55b501206a6607fb45c392c5e1568db2aaf
+
+# /sbin/ipsecadm new esp -src 198.168.1.254 -dst 198.168.2.1  \e\ 
+   -tunnel 198.168.1.254 198.168.2.1 \e\ 
+   -spi 1001 -enc 3des -auth sha1 -iv cd28c327c7fd0943 \e\ 
+   -key 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 \e\ 
+   -authkey c9fff55b501206a6607fb45c392c5e1568db2aaf
+.Ed
+.Pp
+.It
+Create the ipsec route on machine A:
+.Pp
+.Bd -literal
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 \e\ 
+    -addr 192.168.1.254 255.255.255.255 \e\ 
+          192.168.2.1 255.255.255.255 -local
+
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 \e\ 
+    -addr 10.0.50.0 255.255.255.0 10.0.99.0 255.255.255.0
+
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 \e\ 
+    -addr 192.168.1.254 255.255.255.255 \e\ 
+          10.0.99.0 255.255.255.0 -local
+
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 \e\ 
+    -addr 10.0.50.0 255.255.255.0 192.168.2.1 255.255.255.255
+.Ed
+.It
+Create the ipsec flow on machine B:
+.Bd -literal
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 \e\ 
+    -addr 192.168.2.1 255.255.255.255 \e\ 
+          192.168.1.254 255.255.255.255 -local
+
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 \e\ 
+    -addr 10.0.99.0 255.255.255.0 10.0.50.0 255.255.255.0
+
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 \e\ 
+     -addr 192.168.2.1 255.255.255.255 \e\ 
+           10.0.50.0 255.255.255.0 -local
+
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 \e\ 
+     -addr 10.0.99.0 255.255.255.0 192.168.1.254 255.255.255.255
+.Ed
+.It
+Configure the firewall rules on machine A:
+.Bd -literal
+# ed0 is the only interface going to the outside.
+block in log on ed0 from any to any
+block out log on ed0 from any to any
+block in log on enc0 from any to any
+
+# Passing in encrypted traffic from security gateways
+pass in proto sipp-esp from 192.168.2.1/32 to 192.168.1.254/32
+pass out proto sipp-esp from 192.168.1.254/32 to 192.168.2.1/32
+
+# Passing in traffic from the designated subnets.
+pass in quick on enc0 from 10.0.99.0/24 to 10.0.50.0/24
+.Ed
+.It
+Configure the firewall rules on machine B:
+.Bd -literal
+# ed0 is the only interface going to the outside.
+block in log on ed0 from any to any
+block out log on ed0 from any to any
+block in log on enc0 from any to any
+
+# Passing in encrypted traffic from security gateways
+pass in proto sipp-esp from 192.168.1.254/32 to 192.168.2.1/32
+pass out proto sipp-esp from 192.168.2.1/32 to 192.168.1.254/32
+
+# Passing in traffic from the designated subnets.
+pass in quick on enc0 from 10.0.50.0/24 to 10.0.99.0/24
+.Ed
+.El
+.Sh FILES
+.Bl -tag -width /etc/photuris/photuris.conf -compact
+.It Pa /usr/share/ipsec/rc.vpn
+Sample VPN configuration file
+.It Pa /etc/photuris/photuris.conf
+Photuris configuration file
+.It Pa /etc/ipf.rules
+Firewall configuration file
+.El
 .Sh BUGS
-At the moment both of your security gateways need to be in the protected
+When using 
+.Xr photurisd 8
+in VPN mode, both of your security gateways need to be in the protected
 network; that is, the gateway IP and network mask = network. This means
-that it is not possible to tunnel private networks. Hopefully
-support for that will be available in the next release.
+that it is only possible to tunnel private networks using manual keying.
+This should be fixed in the next release.
 .Sh SEE ALSO
 .Xr ipf 1 ,
 .Xr ipsecadm 1 ,
