@@ -11,6 +11,7 @@
 static	char	sccsid[] = "@(#)resend.c	1.3 1/11/96 (C)1995 Darren Reed";
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <netdb.h>
 #include <string.h>
 #include <sys/types.h>
