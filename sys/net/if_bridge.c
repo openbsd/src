@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.121 2003/06/30 19:09:25 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.122 2003/07/25 10:36:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2259,14 +2259,6 @@ bridge_ipsec(int dir, int af, int hlen, struct mbuf *m)
 			if (m == NULL)
 				return (1);
 #endif /* NPF */
-#ifdef INET
-			if (af == AF_INET) {
-				ip = mtod(m, struct ip *);
-				HTONS(ip->ip_len);
-				HTONS(ip->ip_id);
-				HTONS(ip->ip_off);
-			}
-#endif /* INET */
 			error = ipsp_process_packet(m, tdb, af, 0);
 			return (1);
 		} else
@@ -2361,20 +2353,17 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 			goto dropit;
 		}
 
-		NTOHS(ip->ip_len);
-		if (ip->ip_len < hlen)
+		if (ntohs(ip->ip_len) < hlen)
 			goto dropit;
-		NTOHS(ip->ip_id);
-		NTOHS(ip->ip_off);
 
-		if (m->m_pkthdr.len < ip->ip_len)
+		if (m->m_pkthdr.len < ntohs(ip->ip_len))
 			goto dropit;
-		if (m->m_pkthdr.len > ip->ip_len) {
+		if (m->m_pkthdr.len > ntohs(ip->ip_len)) {
 			if (m->m_len == m->m_pkthdr.len) {
-				m->m_len = ip->ip_len;
-				m->m_pkthdr.len = ip->ip_len;
+				m->m_len = ntohs(ip->ip_len);
+				m->m_pkthdr.len = ntohs(ip->ip_len);
 			} else
-				m_adj(m, ip->ip_len - m->m_pkthdr.len);
+				m_adj(m, ntohs(ip->ip_len) - m->m_pkthdr.len);
 		}
 
 #ifdef IPSEC
@@ -2398,9 +2387,6 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		if (m->m_len < sizeof(struct ip))
 			goto dropit;
 		ip = mtod(m, struct ip *);
-		HTONS(ip->ip_len);
-		HTONS(ip->ip_id);
-		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
 
@@ -2530,11 +2516,9 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 	    (m = m_pullup(m, sizeof(struct ip))) == NULL)
 		goto dropit;
 	ip = mtod(m, struct ip *);
-	NTOHS(ip->ip_len);
-	NTOHS(ip->ip_off);
 
 	/* Respect IP_DF, return a ICMP_UNREACH_NEEDFRAG. */
-	if (ip->ip_off & IP_DF) {
+	if (ip->ip_off & htons(IP_DF)) {
 		bridge_send_icmp_err(sc, ifp, eh, m, hassnap, &llc,
 		    ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
 		return;
@@ -2645,16 +2629,14 @@ bridge_send_icmp_err(struct bridge_softc *sc, struct ifnet *ifp,
 	m->m_len -= hlen;
 	icp = mtod(m, struct icmp *);
 	icp->icmp_cksum = 0;
-	icp->icmp_cksum = in_cksum(m, ip->ip_len - hlen);
+	icp->icmp_cksum = in_cksum(m, ntohs(ip->ip_len) - hlen);
 	m->m_data -= hlen;
 	m->m_len += hlen;
 
 	ip->ip_v = IPVERSION;
-	ip->ip_off &= IP_DF;
+	ip->ip_off &= ntohs(IP_DF);
 	ip->ip_id = htons(ip_randomid());
 	ip->ip_ttl = MAXTTL;
-	HTONS(ip->ip_len);
-	HTONS(ip->ip_off);
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(m, hlen);
 
