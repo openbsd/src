@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.33 2001/06/27 01:34:07 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.34 2001/06/27 04:41:32 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -568,18 +568,22 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 int
 ipsec_delete_policy(struct ipsec_policy *ipo)
 {
+	struct ipsec_acquire *ipa;
 	int err = 0;
 
-	/* Delete */
+	/* Delete from SPD. */
 	if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
 		err = rtrequest(RTM_DELETE, (struct sockaddr *) &ipo->ipo_addr,
 		    (struct sockaddr *) 0,
 		    (struct sockaddr *) &ipo->ipo_mask,
 		    0, (struct rtentry **) 0);
 
-	if (ipo->ipo_tdb)
+	if (ipo->ipo_tdb != NULL)
 		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 		    ipo_tdb_next);
+
+	while ((ipa = TAILQ_FIRST(&ipo->ipo_acquires)) != NULL)
+		ipsp_delete_acquire(ipa);
 
 	TAILQ_REMOVE(&ipsec_policy_head, ipo, ipo_list);
 
@@ -645,6 +649,7 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 	ipon->ipo_sproto = sproto;
 	ipon->ipo_type = type;
 
+	TAILQ_INIT(&ipon->ipo_acquires);
 	TAILQ_INSERT_HEAD(&ipsec_policy_head, ipon, ipo_list);
 
 	return ipon;
@@ -661,6 +666,9 @@ ipsp_delete_acquire(void *v)
 
 	timeout_del(&ipa->ipa_timeout);
 	TAILQ_REMOVE(&ipsec_acquire_head, ipa, ipa_next);
+	if (ipa->ipa_policy != NULL)
+		TAILQ_REMOVE(&ipa->ipa_policy->ipo_acquires, ipa,
+		    ipa_ipo_next);
 	pool_put(&ipsec_acquire_pool, ipa);
 }
 
@@ -713,6 +721,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 	bzero(ipa, sizeof(struct ipsec_acquire));
 	bcopy(gw, &ipa->ipa_addr, sizeof(union sockaddr_union));
+
 	timeout_set(&ipa->ipa_timeout, ipsp_delete_acquire, ipa);
 
 	ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
@@ -811,7 +820,10 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	}
 
 	timeout_add(&ipa->ipa_timeout, ipsec_expire_acquire * hz);
+
 	TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
+	TAILQ_INSERT_TAIL(&ipo->ipo_acquires, ipa, ipa_ipo_next);
+	ipa->ipa_policy = ipo;
 
 	/* PF_KEYv2 notification message. */
 	return pfkeyv2_acquire(ipo, gw, laddr, &ipa->ipa_seq, ddst);
