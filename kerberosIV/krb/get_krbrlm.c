@@ -51,11 +51,12 @@ krb_get_lrealm_f(char *r, int n, const char *fname)
 	    p[strcspn(p, " \t\r\n")] = 0;
 	    p[REALM_SZ - 1] = 0;
 	    strcpy(r, p);
-	    ret = KSUCCESS;
+	    if (*p != '#')
+		ret = KSUCCESS;
 	}
 	fclose(f);
     }
-    return (*r == '#' ? KFAILURE : ret);
+    return ret;
 }
 
 int
@@ -80,6 +81,9 @@ krb_get_lrealm(char *r, int n)
   for (i = 0; files[i] != 0; i++)
     if (krb_get_lrealm_f(r, n, files[i]) == KSUCCESS)
       return KSUCCESS;
+
+  if (r[0] == '#')
+	return(KFAILURE);
 
   /* If nothing else works try LOCALDOMAIN, if it exists */
   if (n == 1)
