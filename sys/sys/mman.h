@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.12 2003/04/14 04:53:50 art Exp $	*/
+/*	$OpenBSD: mman.h,v 1.13 2003/04/25 18:30:18 drahn Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ int	munlockall(void);
 int	madvise(void *, size_t, int);
 int	mincore(void *, size_t, char *);
 int	minherit(void *, size_t, int);
-int	mquery(int flags, void **addr, size_t size, int fd, off_t off);
+void *	mquery(void *, size_t, int, int, int, off_t);
 __END_DECLS
 
 #endif /* !_KERNEL */

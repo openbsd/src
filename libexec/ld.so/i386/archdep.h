@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2003/04/17 03:40:49 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2003/04/25 18:30:18 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -56,11 +56,14 @@ _dl_mmap(void *addr, unsigned int len, unsigned int prot,
 		flags, fd, 0, offset));
 }
 
-static inline int
-_dl_mquery(int flags, void **addr, size_t size, int fd, off_t off)
+static inline void *
+_dl_mquery(void *addr, unsigned int len, unsigned int prot,
+	unsigned int flags, int fd, off_t offset)
 {
-        return(_dl__syscall((quad_t)SYS_mquery, flags, addr, size, fd, off));
+	return((void *)_dl__syscall((quad_t)SYS_mquery, addr, len, prot,
+		flags, fd, 0, offset));
 }
+
 
 static inline void
 RELOC_REL(Elf32_Rel *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
