@@ -1,5 +1,5 @@
-/*	$OpenBSD: sbus.c,v 1.6 2001/08/31 15:12:05 jason Exp $	*/
-/*	$NetBSD: sbus.c,v 1.43 2001/07/20 00:07:13 eeh Exp $ */
+/*	$OpenBSD: sbus.c,v 1.7 2001/10/15 03:36:16 jason Exp $	*/
+/*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -142,8 +142,9 @@ static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct sbus_intr **, int *, int));
-static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			      int, bus_space_handle_t *));
+bus_addr_t sbus_bus_addr __P((bus_space_tag_t, u_int, u_int));
 static int sbus_overtemp __P((void *));
 static int _sbus_bus_map __P((
 		bus_space_tag_t,
@@ -281,7 +282,7 @@ sbus_attach(parent, self, aux)
 	char *name;
 	int node = ma->ma_node;
 
-	int error;
+	int node0, error;
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
 
@@ -323,7 +324,8 @@ sbus_attach(parent, self, aux)
 	/* punch in our copies */
 	sc->sc_is.is_bustag = sc->sc_bustag;
 	sc->sc_is.is_iommu = &sc->sc_sysio->sys_iommu;
-	sc->sc_is.is_sb = &sc->sc_sysio->sys_strbuf;
+	sc->sc_is.is_sb[0] = &sc->sc_sysio->sys_strbuf;
+	sc->sc_is.is_sb[1] = NULL;
 
 	/* give us a nice name.. */
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
@@ -366,7 +368,8 @@ sbus_attach(parent, self, aux)
 	 * `specials' is an array of device names that are treated
 	 * specially:
 	 */
-	for (node = firstchild(node); node; node = nextsibling(node)) {
+	node0 = firstchild(node);
+	for (node = node0; node; node = nextsibling(node)) {
 		char *name = getpropstring(node, "name");
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
@@ -509,11 +512,32 @@ sbus_bus_mmap(t, btype, paddr, flags, hp)
 
 		paddr = sc->sc_range[i].poffset + offset;
 		paddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
-		return (bus_space_mmap(sc->sc_bustag, 0, paddr,
-				       flags, hp));
+		return (bus_space_mmap(sc->sc_bustag, 0, paddr, flags, hp));
 	}
 
-	return (-1);
+		return (-1);
+}
+
+bus_addr_t
+sbus_bus_addr(t, btype, offset)
+	bus_space_tag_t t;
+	u_int btype;
+	u_int offset;
+{
+	bus_addr_t baddr;
+	int slot = btype;
+	struct sbus_softc *sc = t->cookie;
+	int i;
+
+	for (i = 0; i < sc->sc_nrange; i++) {
+		if (sc->sc_range[i].cspace != slot)
+			continue;
+
+		baddr = sc->sc_range[i].poffset + offset;
+		baddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
+	}
+
+	return (baddr);
 }
 
 
@@ -782,7 +806,7 @@ sbus_alloc_bustag(sc)
 	sbt->parent = sc->sc_bustag;
 	sbt->type = SBUS_BUS_SPACE;
 	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sbus_bus_mmap;
+	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
 }

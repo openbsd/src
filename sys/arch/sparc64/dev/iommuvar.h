@@ -1,5 +1,5 @@
-/*	$OpenBSD: iommuvar.h,v 1.3 2001/09/26 19:31:57 jason Exp $	*/
-/*	$NetBSD: iommuvar.h,v 1.7 2001/07/20 00:07:13 eeh Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.4 2001/10/15 03:36:16 jason Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -45,12 +45,12 @@ struct iommu_state {
 
 	paddr_t			is_flushpa;	/* used to flush the SBUS */
 	/* Needs to be volatile or egcs optimizes away loads */
-	volatile int64_t	is_flush;
+	volatile int64_t	is_flush[2];
 
 	/* copies of our parents state, to allow us to be self contained */
 	bus_space_tag_t		is_bustag;	/* our bus tag */
 	struct iommureg		*is_iommu;	/* IOMMU registers */
-	struct iommu_strbuf	*is_sb;		/* streaming buffer */
+	struct iommu_strbuf	*is_sb[2];	/* streaming buffer(s) */
 };
 
 /* interfaces for PCI/SBUS code */
@@ -58,6 +58,7 @@ void	iommu_init __P((char *, struct iommu_state *, int, u_int32_t));
 void	iommu_reset __P((struct iommu_state *));
 void    iommu_enter __P((struct iommu_state *, vaddr_t, int64_t, int));
 void    iommu_remove __P((struct iommu_state *, vaddr_t, size_t));
+paddr_t iommu_extract __P((struct iommu_state *, vaddr_t));
 
 int	iommu_dvmamap_load __P((bus_dma_tag_t, struct iommu_state *,
 	    bus_dmamap_t, void *, bus_size_t, struct proc *, int));
@@ -76,6 +77,5 @@ int	iommu_dvmamem_map __P((bus_dma_tag_t, struct iommu_state *,
 	    bus_dma_segment_t *, int, size_t, caddr_t *, int));
 void	iommu_dvmamem_unmap __P((bus_dma_tag_t, struct iommu_state *,
 	    caddr_t, size_t));
-paddr_t	iommu_extract __P((struct iommu_state *, vaddr_t));
 
 #endif /* _SPARC64_DEV_IOMMUVAR_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: psycho.c,v 1.7 2001/09/27 20:45:34 jason Exp $	*/
-/*	$NetBSD: psycho.c,v 1.34 2001/07/20 00:07:13 eeh Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.8 2001/10/15 03:36:16 jason Exp $	*/
+/*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -111,7 +111,6 @@ void psycho_dmamem_free __P((bus_dma_tag_t, bus_dma_segment_t *, int));
 int psycho_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
     caddr_t *, int));
 void psycho_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
-int psycho_get_childspace __P((int));
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
@@ -122,25 +121,15 @@ extern struct sparc_pci_chipset _sparc_pci_chipset;
 int	psycho_match __P((struct device *, void *, void *));
 void	psycho_attach __P((struct device *, struct device *, void *));
 int	psycho_print __P((void *aux, const char *p));
+int	psycho_get_childspace __P((int));
+
 
 struct cfattach psycho_ca = {
         sizeof(struct psycho_softc), psycho_match, psycho_attach
 };
 
 struct cfdriver psycho_cd = {
-        NULL, "psycho", DV_DULL
-};
-
-struct psycho_type {
-	char *p_name;
-	int p_type;
-} psycho_types[] = {
-	{ "SUNW,sabre",		PSYCHO_MODE_SABRE	},
-	{ "pci180e,a000",	PSYCHO_MODE_SABRE	},
-	{ "pci108e,a001",	PSYCHO_MODE_SABRE	},
-	{ "SUNW,psycho",	PSYCHO_MODE_PSYCHO	},
-	{ "pci108e,8000",	PSYCHO_MODE_PSYCHO	},
-	{ NULL, 0 }
+	NULL, "psycho", DV_DULL
 };
 
 /*
@@ -181,9 +170,18 @@ struct psycho_type {
  *
  */
 #define	ROM_PCI_NAME		"pci"
-#define ROM_SABRE_MODEL		"SUNW,sabre"
-#define ROM_SIMBA_MODEL		"SUNW,simba"
-#define ROM_PSYCHO_MODEL	"SUNW,psycho"
+
+struct psycho_type {
+	char *p_name;
+	int p_type;
+} psycho_types[] = {
+	{ "SUNW,psycho",        PSYCHO_MODE_PSYCHO      },
+	{ "pci108e,8000",       PSYCHO_MODE_PSYCHO      },
+	{ "SUNW,sabre",         PSYCHO_MODE_SABRE       },
+	{ "pci108e,a000",       PSYCHO_MODE_SABRE       },
+	{ "pci108e,a001",       PSYCHO_MODE_SABRE       },
+	{ NULL, 0 }
+};
 
 int
 psycho_match(parent, match, aux)
@@ -207,7 +205,6 @@ psycho_match(parent, match, aux)
 		if (strcmp(str, ptype->p_name) == 0)
 			return (1);
 	}
-
 	return (0);
 }
 
@@ -361,14 +358,10 @@ psycho_attach(parent, self, aux)
 	 */
 	csr = bus_space_read_8(sc->sc_bustag,
 	    (bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0);
-	csr |= PCICTL_MRLM |
-	       PCICTL_ARB_PARK |
-	       PCICTL_ERRINTEN |
-	       PCICTL_4ENABLE;
-	csr &= ~(PCICTL_SERR |
-		 PCICTL_CPU_PRIO |
-		 PCICTL_ARB_PRIO |
-		 PCICTL_RTRYWAIT);
+	csr |= PCICTL_MRLM | PCICTL_ARB_PARK | PCICTL_ERRINTEN |
+	    PCICTL_4ENABLE;
+	csr &= ~(PCICTL_SERR | PCICTL_CPU_PRIO | PCICTL_ARB_PRIO |
+	    PCICTL_RTRYWAIT);
 	bus_space_write_8(sc->sc_bustag,
 	    (bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0, csr);
 
@@ -456,6 +449,17 @@ psycho_attach(parent, self, aux)
 		 *
 		 * For the moment, 32KB should be more than enough.
 		 */
+		sc->sc_is = malloc(sizeof(struct iommu_state),
+			M_DEVBUF, M_NOWAIT);
+		if (sc->sc_is == NULL)
+			panic("psycho_attach: malloc iommu_state");
+
+
+		sc->sc_is->is_sb[0] = 0;
+		sc->sc_is->is_sb[1] = 0;
+		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0)
+			sc->sc_is->is_sb[0] = &pci_ctl->pci_strbuf;
+
 		psycho_iommu_init(sc, 2);
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
@@ -469,6 +473,10 @@ psycho_attach(parent, self, aux)
 		sc->sc_is = osc->sc_is;
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
+
+		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0)
+			sc->sc_is->is_sb[1] = &pci_ctl->pci_strbuf;
+		iommu_reset(sc->sc_is);
 	}
 
 	/*
@@ -707,25 +715,14 @@ psycho_iommu_init(sc, tsbsize)
 	int tsbsize;
 {
 	char *name;
-	struct iommu_state *is;
+	struct iommu_state *is = sc->sc_is;
 	u_int32_t iobase = -1;
 	int *vdma = NULL;
 	int nitem;
 
-	is = malloc(sizeof(struct iommu_state), M_DEVBUF, M_NOWAIT);
-	if (is == NULL)
-		panic("psycho_iommu_init: malloc is");
-
-	sc->sc_is = is;
-
 	/* punch in our copies */
 	is->is_bustag = sc->sc_bustag;
 	is->is_iommu = &sc->sc_regs->psy_iommu;
-
-	if (getproplen(sc->sc_node, "no-streaming-cache") < 0)
-		is->is_sb = 0;
-	else
-		is->is_sb = &sc->sc_regs->psy_iommu_strbuf;
 
 	/*
 	 * Separate the men from the boys.  Get the `virtual-dma'
