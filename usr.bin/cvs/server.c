@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.8 2005/03/31 17:18:24 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.9 2005/04/01 09:52:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -63,7 +63,7 @@ int
 cvs_server(int argc, char **argv)
 {
 	size_t len;
-	char reqbuf[128];
+	char reqbuf[512];
 
 	if (argc != 1) {
 		return (EX_USAGE);
