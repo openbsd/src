@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.33 2004/01/21 23:45:18 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.34 2004/01/21 23:47:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -81,18 +81,14 @@ main(int argc, char *argv[])
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "control_init: socket");
-		exit(1);
-	}
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, SOCKET_NAME, sizeof(sun.sun_path));
-	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", SOCKET_NAME);
-		exit(1);
-	}
 
 	imsg_init(&ibuf, fd);
 	done = 0;
