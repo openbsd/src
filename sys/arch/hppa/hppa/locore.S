@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.24 2000/01/11 20:27:57 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.25 2000/01/12 04:44:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -316,7 +316,7 @@ $callmain
 	/* should never return... */
 	bv	(rp)
 	nop
-EXIT(__start)
+EXIT($start)
 
 /* int
  * pdc_call(func, pdc_flag, ...)
@@ -1703,12 +1703,13 @@ EXIT(longjmp)
 #define	FUSUX(name)				  \
 ENTRY(name)					! \
 	ldil	L%VM_MAXUSER_ADDRESS, t1	! \
-	comb,>=	arg0, t1, fusubadaddr		! \
+	comb,>>= arg0, t1, fusubadaddr		! \
 	ldil	L%curproc, t1			! \
+	ldw	R%curproc(t1), t1		! \
 	ldw	p_addr(t1), t1			! \
 	ldil	L%fusufault, t2			! \
-	ldw	u_pcb+pcb_onfault(t1), t3	! \
 	ldo	R%fusufault(t2), t2		! \
+	ldw	u_pcb+pcb_onfault(t1), t3	! \
 	stw	t2, u_pcb+pcb_onfault(t1)	! \
 	ldw	u_pcb+pcb_space(t1), t2		! \
 	mtsp	t2, sr1
@@ -1716,18 +1717,18 @@ ENTRY(name)					! \
 #define	FUX(name,insn)				  \
 	FUSUX(name)				! \
 	insn	0(sr1, arg0), ret0		! \
-	b,n	fusuexit			! \
+	bv	r0(rp)				! \
+	stw	r0, u_pcb+pcb_onfault(t1)	! \
 EXIT(name)
 
 #define	SUX(name,insn)				  \
 	FUSUX(name)				! \
 	insn	arg1, 0(sr1, arg0)		! \
-	b,n	fusuexit			! \
+	bv	r0(rp)				! \
+	stw	r0, u_pcb+pcb_onfault(t1)	! \
 EXIT(name)
 
-ENTRY(fusuexit)
-	bv	r0(rp)	/* execute stw in a delay slot */
-ALTENTRY(fusufault)
+ENTRY(fusufault)
 	stw	r0, u_pcb+pcb_onfault(t1)
 ALTENTRY(fusubadaddr)
 	bv	0(rp)
@@ -1885,6 +1886,7 @@ $setrunqueue_ok
 	stw	t2, p_back(arg0)
 Lsrqfmt
 	.asciz	"setrunqueue: bit=%x, qs=%p\n"
+	.align	8
 EXIT(setrunqueue)
 
 /*
