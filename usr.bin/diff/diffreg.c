@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.18 2003/06/25 22:38:11 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.19 2003/06/26 04:47:30 vincent Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -381,7 +381,7 @@ splice(char *dir, char *file)
 		tail = file;
 	else
 		tail++;
-	len = strlen(dir) + strlen(tail) + 1;
+	len = strlen(dir) + 1 + strlen(tail) + 1;
 	buf = emalloc(len);
 	snprintf(buf, len, "%s/%s", dir, tail);
 	return (buf);
