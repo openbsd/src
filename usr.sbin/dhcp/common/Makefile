@@ -42,4 +42,7 @@ NOPROFILE=yes
 install: maninstall
 
 .include <bsd.lib.mk>
-.include <bsd.man.mk>
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
