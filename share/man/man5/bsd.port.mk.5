@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.100 2003/07/12 15:36:24 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.101 2003/07/12 15:46:21 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -355,6 +355,9 @@ User-settings.
 Set to
 .Sq Yes 
 to avoid ports that require user-interaction 
+Use in conjunction with
+.Ev INTERACTIVE
+to simplify bulk-package builds.
 .Po 
 See IGNORE
 .Pc .
@@ -742,9 +745,15 @@ Defaults to ${PKGNAME}${FLAVOR_EXT}.
 .It Ev FULLPKGNAME-foo
 Full package name for sub-package foo, if the default value is not
 appropriate.
+.It Ev FULLPKGPATH
+Path to the current port's directory, relative to ${PORTSDIR},
+including flavors and subpackages.
+Read-only.
 .It Ev GMAKE
 Location of the gnu make binary, if needed.
 Defaults to gmake.
+.It Ev HOMEPAGE
+Set to a link to the homepage of the software, if applicable.
 .It Ev IGNOREFILES
 Set to the list of files that cannot be checksummed.
 For use by ports which
@@ -795,6 +804,14 @@ corresponding directory, respectively).
 Target invoked to install the software, during fake installation.
 Default is
 .Sq install .
+.It Ev INTERACTIVE
+User settings.
+Set to
+.Sq Yes
+to skip all non-interactive ports.
+Used in conjunction with
+.Ev BATCH
+to simplify bulk-package builds.
 .It Ev IS_INTERACTIVE
 Set to
 .Sq Yes
