@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.7 1996/07/14 07:46:30 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.8 1996/07/14 08:10:02 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -656,10 +656,8 @@ ext2_mountfs(devvp, mp, p)
 	bp = NULL;
 	fs = ump->um_e2fs;
 	fs->s_rd_only = ronly;	/* ronly is set according to mnt_flags */
-	if (!(fs->s_es->s_state & EXT2_VALID_FS)) {
-		printf("WARNING: %s was not properly dismounted\n",
-			fs->fs_fsmnt);
-	}
+	if (!(fs->s_es->s_state & EXT2_VALID_FS))
+		printf("WARNING: filesystem was not properly dismounted.\n");
 	/* if the fs is not mounted read-only, make sure the super block is 
 	   always written back on a sync()
 	 */
