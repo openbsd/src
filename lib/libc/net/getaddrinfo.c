@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.18 2000/04/25 13:39:02 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.19 2000/04/26 12:31:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,7 +76,9 @@
  *	  friends.
  */
 
+#ifndef INET6
 #define INET6
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,7 +220,7 @@ static struct addrinfo *get_ai __P((const struct addrinfo *,
 static int get_portmatch __P((const struct addrinfo *, const char *));
 static int get_port __P((struct addrinfo *, const char *, int));
 static const struct afd *find_afd __P((int));
-#ifdef AI_ADDRCONFIG
+#if 0
 static int addrconfig __P((const struct addrinfo *));
 #endif
 #ifdef INET6
@@ -280,6 +282,7 @@ do { \
 	/* external reference: error, and label bad */ \
 	error = (err); \
 	goto bad; \
+	/*NOTREACHED*/ \
 } while (/*CONSTCOND*/0)
 
 #define MATCH_FAMILY(x, y, w) \
@@ -515,10 +518,11 @@ explore_fqdn(pai, hostname, servname, res)
 
 	result = NULL;
 
-#ifdef AI_ADDRCONFIG
+#if 0
 	/*
 	 * If AI_ADDRCONFIG is specified, check if we are expected to
 	 * return the address family or not.
+	 * XXX does not handle PF_UNSPEC case, should filter final result
 	 */
 	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && !addrconfig(pai))
 		return 0;
@@ -647,7 +651,6 @@ explore_numeric(pai, hostname, servname, res)
 	struct addrinfo sentinel;
 	int error;
 	char pton[PTON_MAX];
-	int flags;
 
 	*res = NULL;
 	sentinel.ai_next = NULL;
@@ -660,7 +663,6 @@ explore_numeric(pai, hostname, servname, res)
 		return 0;
 
 	afd = find_afd(pai->ai_family);
-	flags = pai->ai_flags;
 
 	switch (afd->a_af) {
 #if 0 /*X/Open spec*/
@@ -765,7 +767,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 		for (cur = *res; cur; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET6)
 				continue;
-			sin6 = (struct sockaddr_in6 *)cur->ai_addr;
+			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
 			if ((scopeid = ip6_str2scopeid(scope, sin6)) == -1) {
 				free(hostname2);
 				return(EAI_NONAME); /* XXX: is return OK? */
@@ -810,12 +812,12 @@ get_ai(pai, afd, addr)
 		return NULL;
 
 	memcpy(ai, pai, sizeof(struct addrinfo));
-	ai->ai_addr = (struct sockaddr *)(ai + 1);
+	ai->ai_addr = (struct sockaddr *)(void *)(ai + 1);
 	memset(ai->ai_addr, 0, (size_t)afd->a_socklen);
 	ai->ai_addr->sa_len = afd->a_socklen;
 	ai->ai_addrlen = afd->a_socklen;
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
-	p = (char *)(ai->ai_addr);
+	p = (char *)(void *)(ai->ai_addr);
 	memcpy(p + afd->a_off, addr, (size_t)afd->a_addrlen);
 	return ai;
 }
@@ -827,6 +829,7 @@ get_portmatch(ai, servname)
 {
 
 	/* get_port does not touch first argument. when matchonly == 1. */
+	/* LINTED const cast */
 	return get_port((struct addrinfo *)ai, servname, 1);
 }
 
@@ -894,11 +897,13 @@ get_port(ai, servname, matchonly)
 	if (!matchonly) {
 		switch (ai->ai_family) {
 		case AF_INET:
-			((struct sockaddr_in *)ai->ai_addr)->sin_port = port;
+			((struct sockaddr_in *)(void *)
+			    ai->ai_addr)->sin_port = port;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			((struct sockaddr_in6 *)ai->ai_addr)->sin6_port = port;
+			((struct sockaddr_in6 *)(void *)
+			    ai->ai_addr)->sin6_port = port;
 			break;
 #endif
 		}
@@ -922,7 +927,7 @@ find_afd(af)
 	return NULL;
 }
 
-#ifdef AI_ADDRCONFIG
+#if 0
 /*
  * post-2553: AI_ADDRCONFIG check.  if we use getipnodeby* as backend, backend
  * will take care of it.
@@ -1011,14 +1016,12 @@ getanswer(answer, anslen, qname, qtype, pai)
 	int type, class, buflen, ancount, qdcount;
 	int haveanswer, had_error;
 	char tbuf[MAXDNAME];
-	const char *tname;
 	int (*name_ok) __P((const char *));
 	char hostbuf[8*1024];
 
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
 
-	tname = qname;
 	canonname = NULL;
 	eom = answer->buf + anslen;
 	switch (qtype) {
@@ -1153,7 +1156,7 @@ getanswer(answer, anslen, qname, qtype, pai)
 				cp += n;
 				continue;
 			}
-			cur->ai_next = get_ai(&ai, afd, cp);
+			cur->ai_next = get_ai(&ai, afd, (const char *)cp);
 			if (cur->ai_next == NULL)
 				had_error++;
 			while (cur && cur->ai_next)
@@ -1189,7 +1192,6 @@ _dns_getaddrinfo(name, pai)
 	querybuf buf, buf2;
 	struct addrinfo sentinel, *cur;
 	struct res_target q, q2;
-	int ancount;
 
 	memset(&q, 0, sizeof(q2));
 	memset(&q2, 0, sizeof(q2));
@@ -1224,7 +1226,7 @@ _dns_getaddrinfo(name, pai)
 	default:
 		return NULL;
 	}
-	if ((ancount = res_searchN(name, &q)) < 0)
+	if (res_searchN(name, &q) < 0)
 		return NULL;
 	ai = getanswer(&buf, q.n, q.name, q.type, pai);
 	if (ai) {
@@ -1359,13 +1361,13 @@ _yphostent(line, pai)
 	const char *addr, *canonname;
 	char *nextline;
 	char *cp;
-	int more;
 
 	addr = canonname = NULL;
 
-nextline:
-	more = 0;
+	memset(&sentinel, 0, sizeof(sentinel));
+	cur = &sentinel;
 
+nextline:
 	/* terminate line */
 	cp = strchr(p, '\n');
 	if (cp) {
