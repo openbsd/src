@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.7 1998/02/03 19:06:27 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.8 1999/01/07 22:28:01 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -35,6 +35,18 @@
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
  */
+
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,6 +353,82 @@ nospace:
 }
 
 /*
+ * m_copym2() is like m_copym(), except it COPIES cluster mbufs, instead
+ * of merely bumping the reference count.
+ *
+ * The hope is to obsolete this function someday.
+ */
+struct mbuf *
+m_copym2(m, off0, len, wait)
+	register struct mbuf *m;
+	int off0, wait;
+	register int len;
+{
+	register struct mbuf *n, **np;
+	register int off = off0;
+	struct mbuf *top;
+	int copyhdr = 0;
+
+	if (off < 0 || len < 0)
+		panic("m_copym");
+	if (off == 0 && m->m_flags & M_PKTHDR)
+		copyhdr = 1;
+	while (off > 0) {
+		if (m == 0)
+			panic("m_copym2 (null mbuf)");
+		if (off < m->m_len)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+	np = &top;
+	top = 0;
+	while (len > 0) {
+		if (m == 0) {
+			if (len != M_COPYALL)
+				panic("m_copym2 (len != M_COPYALL)");
+			break;
+		}
+		MGET(n, wait, m->m_type);
+		*np = n;
+		if (n == 0)
+			goto nospace;
+		if (copyhdr) {
+			M_COPY_PKTHDR(n, m);
+			if (len == M_COPYALL)
+				n->m_pkthdr.len -= off0;
+			else
+				n->m_pkthdr.len = len;
+			copyhdr = 0;
+		}
+		n->m_len = min(len, m->m_len - off);
+		if ((m->m_flags & M_EXT) && (n->m_len >MHLEN)) {
+			/* This is a cheesy hack. */
+			MCLGET(n,wait);
+			if (n->m_flags & M_EXT)
+				bcopy(mtod(m,caddr_t)+off,mtod(n,caddr_t),
+				    (unsigned)n->m_len);
+			else
+				goto nospace;
+		} else
+			bcopy(mtod(m, caddr_t)+off, mtod(n, caddr_t),
+			    (unsigned)n->m_len);
+		if (len != M_COPYALL)
+			len -= n->m_len;
+		off = 0;
+		m = m->m_next;
+		np = &n->m_next;
+	}
+	if (top == 0)
+		MCFail++;
+	return (top);
+nospace:
+	m_freem(top);
+	MCFail++;
+	return (0);
+}
+
+/*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
  * continuing for "len" bytes, into the indicated buffer.
  */
@@ -545,6 +633,78 @@ bad:
 }
 
 /*
+ * m_pullup2() works like m_pullup, save that len can be <= MCLBYTES.
+ * m_pullup2() only works on values of len such that MHLEN < len <= MCLBYTES,
+ * it calls m_pullup() for values <= MHLEN.  It also only coagulates the
+ * reqested number of bytes.  (For those of us who expect unwieldly option
+ * headers.     
+ *		      
+ * KEBE SAYS:  Remember that dtom() calls with data in clusters does not work!
+ */
+struct mbuf *   
+m_pullup2(n, len)       
+	register struct mbuf *n;
+	int len;
+{
+	register struct mbuf *m;
+	register int count;
+	int space; 
+	if (len <= MHLEN)
+		return m_pullup(n, len);
+ 
+	if ((n->m_flags & M_EXT) != 0 &&
+	    n->m_data + len < &n->m_data[MCLBYTES] && n->m_next) {
+		if (n->m_len >= len)
+			return (n);
+		m = n;
+		n = n->m_next;
+		len -= m->m_len;
+	} else {
+		if (len > MCLBYTES)
+			goto bad;
+		MGET(m, M_DONTWAIT, n->m_type);
+		if (m == 0)
+			goto bad; 
+		MCLGET(m,M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0)
+			goto bad;
+		m->m_len = 0;
+		if (n->m_flags & M_PKTHDR) {
+			/* M_COPY_PKTHDR(m, n);*//* Too many adverse side effects. */
+			m->m_pkthdr = n->m_pkthdr;
+			m->m_flags = (n->m_flags & M_COPYFLAGS) | M_EXT;
+			n->m_flags &= ~M_PKTHDR;
+			/* n->m_data is cool. */
+		}
+	}
+
+	do {
+		count = min(len, n->m_len);
+		bcopy(mtod(n, caddr_t), mtod(m, caddr_t) + m->m_len,
+		    (unsigned)count);
+		len -= count;
+		m->m_len += count;
+		n->m_len -= count;
+		space -= count;
+		if (n->m_len)
+			n->m_data += count;
+		else
+			n = m_free(n);
+	} while (len > 0 && n);
+	if (len > 0) {
+		(void) m_free(m);
+		goto bad;
+	}	 
+	m->m_next = n;
+		
+	return (m);
+bad:	    
+	m_freem(n);
+	MPFail++;
+	return (0);
+}
+
+/*
  * Partition an mbuf chain in two pieces, returning the tail --
  * all but the first len0 bytes.  In case of failure, it returns NULL and
  * attempts to restore the chain to its original state.
@@ -681,4 +841,20 @@ m_devget(buf, totlen, off0, ifp, copy)
 			cp = buf;
 	}
 	return (top);
+}
+
+void
+m_zero(m)
+	struct mbuf *m;
+{
+	while (m) {
+		if (m->m_flags & M_PKTHDR)
+			bzero((void *)m + sizeof(struct m_hdr) +
+			    sizeof(struct pkthdr), MHLEN);
+		else
+			bzero((void *)m + sizeof(struct m_hdr), MLEN);
+		if (m->m_flags & M_EXT)
+			bzero(m->m_ext.ext_buf, m->m_ext.ext_size);
+		m = m->m_next;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.7 1998/06/10 23:57:08 provos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.8 1999/01/07 22:28:01 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ struct m_hdr {
 	struct	mbuf *mh_next;		/* next buffer in chain */
 	struct	mbuf *mh_nextpkt;	/* next chain in queue/record */
 	caddr_t	mh_data;		/* location of data */
-	int	mh_len;			/* amount of data in this mbuf */
+	u_int	mh_len;			/* amount of data in this mbuf */
 	short	mh_type;		/* type of data in this mbuf */
 	short	mh_flags;		/* flags; see below */
 };
@@ -127,8 +127,11 @@ struct mbuf {
 #define M_AUTH		0x0800  /* packet was authenticated (AH) */
 #define M_TUNNEL       	0x1000  /* packet was tunneled */
 
+#define M_DAD		0x2000	/* Used on outbound packets to indicate that
+				 * this is for duplicate address detection */
+
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CONF|M_AUTH|M_TUNNEL)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CONF|M_AUTH|M_TUNNEL|M_DAD)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
@@ -246,6 +249,14 @@ union mcluster {
 		mbstat.m_clfree++; \
 	  } \
 	)
+
+#ifdef INET6
+/*
+ * For cluster mbufs (regardless of header or not).
+ */
+#define MCL_ALIGN(m, len) \
+	{ (m)->m_data += (MCLBYTES - (len)) &~ (sizeof(long) -1); }
+#endif /* INET6 */
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
@@ -374,6 +385,7 @@ extern	int needqueuedrain;		/* True if allocation failed at */
 					/* interrupt level */
 
 void	mbinit __P((void));
+struct	mbuf *m_copym2 __P((struct mbuf *, int, int, int));
 struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
 struct	mbuf *m_free __P((struct mbuf *));
 struct	mbuf *m_get __P((int, int));
@@ -381,6 +393,7 @@ struct	mbuf *m_getclr __P((int, int));
 struct	mbuf *m_gethdr __P((int, int));
 struct	mbuf *m_prepend __P((struct mbuf *, int, int));
 struct	mbuf *m_pullup __P((struct mbuf *, int));
+struct	mbuf *m_pullup2 __P((struct mbuf *, int));
 struct	mbuf *m_retry __P((int, int));
 struct	mbuf *m_retryhdr __P((int, int));
 struct	mbuf *m_split __P((struct mbuf *, int, int));
@@ -393,6 +406,7 @@ void	m_copydata __P((struct mbuf *, int, int, caddr_t));
 void	m_cat __P((struct mbuf *, struct mbuf *));
 struct mbuf *m_devget __P((char *, int, int, struct ifnet *,
 			   void (*) __P((const void *, void *, size_t))));
+void	m_zero __P((struct mbuf *));
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
