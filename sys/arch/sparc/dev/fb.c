@@ -77,7 +77,7 @@ fb_attach(fb)
 {
 
 	if (devfb)
-		panic("multiple /dev/fb declarers");
+		printf("warning: multiple /dev/fb declarers");
 	devfb = fb;
 }
 
