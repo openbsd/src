@@ -1,4 +1,4 @@
-	$OpenBSD: usbdevs,v 1.6 1999/09/27 17:52:03 fgsch Exp $	
+	$OpenBSD: usbdevs,v 1.7 1999/10/06 12:52:18 fgsch Exp $	
 
 /* $NetBSD: usbdevs,v 1.45 1999/09/15 13:57:09 augustss Exp $ */
 /*
@@ -94,6 +94,7 @@ vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
+vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
 vendor PLX		0x10b5	PLX
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
@@ -271,6 +272,10 @@ product ENTREGA 4S		0x0004	4S serial connector
 product ENTREGA CENTRONICS	0x0006	Centronics connector
 product ENTREGA 1S9		0x0093	1S9 serial connector
 product ENTREGA SERIAL		0x8001	DB25 Serial connector
+
+/* ActiveWire Inc. products */
+product ACTIVEWIRE IOBOARD	0x0100	I/O Board
+product ACTIVEWIRE IOBOARD_FW1	0x0101	I/O Board, rev. 1 firmware
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
