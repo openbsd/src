@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcvt.4,v 1.18 1999/10/16 18:56:37 aaron Exp $
+.\" $OpenBSD: pcvt.4,v 1.19 1999/11/25 20:24:19 aaron Exp $
 .\"
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
 .\"                           Joerg Wunsch and Holger Veit.
@@ -260,9 +260,9 @@ Default: on
 .It Em PCVT_24LINESDEF
 If enabled, the 25-line modi
 .Po
-VT emulation with 25 lines, and HP emulation with 28 lines
+VT emulation with 25 lines
 .Pc
-default to 24 lines only to provide a better compatibility to the
+defaults to 24 lines only to provide a better compatibility to the
 original DEV VT220 (TM). Thus it should be possible to use the
 terminal information for those terminals without further changes.
 Note that this is a startup option; it is possible to toggle between
@@ -651,13 +651,10 @@ struct screeninfo {
                         /* on write, if -1, make this screen   */
                         /* the current screen, else set current*/
                         /* displayed screen to parameter       */
-    int pure_vt_mode;   /* flag, pure VT mode or HP/VT mode    */
-                        /* on write, if -1, no change          */
     int screen_size;    /* screen size                         */
                         /* on write, if -1, no change          */
     int force_24lines;  /* force 24 lines if 25 lines VT mode  */
-                        /* or 28 lines HP mode to get pure     */
-                        /* VT220 screen size                   */
+                        /* to get pure VT220 screen size       */
                         /* on write, if -1, no change          */
     int vga_family;     /* if adaptor_type = VGA, this reflects*/
                         /* the chipset family after a read     */
@@ -670,12 +667,6 @@ struct screeninfo {
                         /* currently ignored on write          */
 };
 .Ed
-
-Its field
-.Em pure_vt_mode
-may take the values M_HPVT for a mixed VTxxx and HP Mode, with function
-key labels and a status line, or M_PUREVT for only VTxxx sequences
-recognized, with no labels.
 
 .Bl -tag -width 20n -offset indent -compact
 .It VGASETCOLMS

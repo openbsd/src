@@ -1,4 +1,4 @@
-/*	$OpenBSD: scon.c,v 1.16 1999/10/16 18:56:37 aaron Exp $	*/
+/*	$OpenBSD: scon.c,v 1.17 1999/11/25 20:24:20 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -74,8 +74,6 @@ int lflag = -1;
 int mflag = -1;
 int oflag = -1;
 int current = -1;
-int pflag = -1;
-int hflag = -1;
 int res = -1;
 char *device;
 int dflag = -1;
@@ -244,14 +242,6 @@ char *argv[];
 				fflag = 1;
 				break;
 				
-			case 'V':
-				pflag = 1;
-				break;
-
-			case 'H':
-				hflag = 1;
-				break;
-
 			case 's':
 				if     (!strncmp(optarg, "25", 2))
 					res = SIZ_25ROWS;
@@ -343,11 +333,8 @@ char *argv[];
 		}
 	}
 
-	if((pflag == 1) && (hflag == 1))
-		usage();
-
-	if(dflag == -1 && lflag == -1 && current == -1 && pflag == -1 &&
-	   hflag == -1 && res == -1 && Pflag == 0 && tflag == 0 && fflag == -1
+	if(dflag == -1 && lflag == -1 && current == -1 &&
+	   res == -1 && Pflag == 0 && tflag == 0 && fflag == -1
 	   && colms == 0 && mflag == -1 && bflag == -1 && oflag == -1)
 	{
 		lflag = 1;
@@ -506,24 +493,6 @@ char *argv[];
 			exit(1);
 		}
 		exit(0);
-	}
-
-	if(pflag == 1)
-	{
-		if(vflag)
-			printf("processing option -V, setting emulation to pure VT220\n");
-		screeninfo.pure_vt_mode = M_PUREVT;
-	}
-	else if(hflag == 1)
-	{
-		if(vflag)
-			printf("processing option -H, setting emulation to VT220 + HP Labels\n");
-		screeninfo.pure_vt_mode = M_HPVT;
-	}
-	else
-	{
-		if(vflag)
-			printf("no change in terminal emulation\n");
 	}
 
 	if(vflag)

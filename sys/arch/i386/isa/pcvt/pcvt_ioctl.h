@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ioctl.h,v 1.12 1999/10/16 18:56:36 aaron Exp $	*/
+/*	$OpenBSD: pcvt_ioctl.h,v 1.13 1999/11/25 20:24:21 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -197,21 +197,6 @@ struct kbd_ovlkey				/* complete definition of a key */
 
 #define KBDRMKEY	_IOW('K',19, int)	/* remove a key assignment */
 #define KBDDEFAULT	_IO('K',20)		/* remove all key assignments */
-
-/* mouse emulator definitions */
-
-struct mousedefs {
-	int leftbutton;		/* (PC) scan code for "left button" key */
-	int middlebutton;	/* (PC) scan code for "mid button" key */
-	int rightbutton;	/* (PC) scan code for "right button" key */
-	int stickybuttons;	/* if true, the buttons are "sticky" */
-	int acceltime;		/* timeout in microseconds to start pointer */
-				/* movement acceleration */
-	/* defaults to: scan(F1), scan(F2), scan(F3), false, 500000 */
-};
-
-#define KBDMOUSEGET	_IOR('K', 25, struct mousedefs)	/* read defs */
-#define KBDMOUSESET	_IOW('K', 26, struct mousedefs)	/* set defs */
 
 /*---------------------------------------------------------------------------*
  *		IOCTLs for Video Adapter
@@ -455,8 +440,6 @@ struct pcvtinfo {			/* compile time option values */
 #define CONF_CTRL_ALT_DEL	0x00000008
 #define CONF_USEKBDSEC		0x00000010
 #define CONF_24LINESDEF		0x00000020
-#define CONF_EMU_MOUSE		0x00000040
-#define CONF_SHOWKEYS		0x00000080
 #define CONF_KEYBDID		0x00000100
 #define CONF_SIGWINCH		0x00000200
 #define CONF_NULLCHARS		0x00000400

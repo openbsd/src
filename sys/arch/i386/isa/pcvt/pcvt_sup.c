@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.12 1999/11/20 18:52:00 espie Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.13 1999/11/25 20:24:22 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -109,7 +109,7 @@ static u_short getrand ( void );
  *	execute vga ioctls
  *---------------------------------------------------------------------------*/
 int
-vgaioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
+vgaioctl(Dev_t dev, int cmd, caddr_t data, int flag)
 {
 	if(minor(dev) >= PCVT_NSCREENS)
 		return -1;
@@ -306,12 +306,6 @@ vgapcvtinfo(struct pcvtinfo *data)
 #endif
 #if PCVT_24LINESDEF
 	| CONF_24LINESDEF
-#endif
-#if PCVT_EMU_MOUSE
-	| CONF_EMU_MOUSE
-#endif
-#if PCVT_SHOWKEYS
-	| CONF_SHOWKEYS
 #endif
 #if PCVT_KEYBDID
 	| CONF_KEYBDID
@@ -612,7 +606,6 @@ vid_getscreen(struct screeninfo *data, Dev_t dev)
 	/* screen size */
 	data->screen_size = vgacs[(vs[device].vga_charset)].screen_size;
 	/* pure VT mode or HP/VT mode */
-	data->pure_vt_mode = vs[device].vt_pure_mode;
 	data->vga_family = vga_family;		/* manufacturer, family */
 	data->vga_type = vga_type;		/* detected chipset type */
 	data->vga_132 = can_do_132col;		/* 132 column support */
@@ -656,53 +649,25 @@ vid_setscreen(struct screeninfo *data, Dev_t dev)
 	if(screen != current_video_screen)
 		return;		/* XXX should say "EAGAIN" here */
 
-	if((data->screen_size != -1) || (data->force_24lines != -1))
-	{
+	if((data->screen_size != -1) || (data->force_24lines != -1)) {
 		if(data->screen_size == -1)
 			data->screen_size =
 				vgacs[(vs[screen].vga_charset)].screen_size;
 
 		if(data->force_24lines != -1)
-		{
 			vs[screen].force24 = data->force_24lines;
-
-			if(vs[screen].force24)
-			{
-				swritefkl(2,(u_char *)"FORCE24 ENABLE *",
-					  &vs[screen]);
-			}
-			else
-			{
-				swritefkl(2,(u_char *)"FORCE24 ENABLE  ",
-					  &vs[screen]);
-			}
-		}
 
 		if((data->screen_size == SIZ_25ROWS) ||
 		   (data->screen_size == SIZ_28ROWS) ||
 		   (data->screen_size == SIZ_35ROWS) ||
 		   (data->screen_size == SIZ_40ROWS) ||
 		   (data->screen_size == SIZ_43ROWS) ||
-		   (data->screen_size == SIZ_50ROWS))
-		{
+		   (data->screen_size == SIZ_50ROWS)) {
 			if(data->screen_no == -1)
 				set_screen_size(vsp, data->screen_size);
 			else
 				set_screen_size(&vs[minor(dev)],
 						data->screen_size);
-		}
-	}
-
-	if(data->pure_vt_mode != -1)
-	{
-		if((data->pure_vt_mode == M_HPVT) ||
-		   (data->pure_vt_mode == M_PUREVT))
-		{
-			if(data->screen_no == -1)
-				set_emulation_mode(vsp, data->pure_vt_mode);
-			else
-				set_emulation_mode(&vs[minor(dev)],
-						   data->pure_vt_mode);
 		}
 	}
 }
@@ -740,15 +705,6 @@ set_screen_size(struct video_state *svsp, int size)
 				svsp->vs_tty->t_winsize.ws_ypixel = 400;
 				svsp->vs_tty->t_winsize.ws_row =
 					svsp->screen_rows;
-			}
-
-			/* screen_rows already calculated in set_charset() */
-			if(svsp->vt_pure_mode == M_HPVT && svsp->labels_on)
-			{
-				if(svsp->which_fkl == SYS_FKL)
-					sw_sfkl(svsp);
-				else if(svsp->which_fkl == USR_FKL)
-					sw_ufkl(svsp);
 			}
 
 			svsp->scrr_len = svsp->screen_rows;
@@ -956,136 +912,6 @@ async_update()
 			outb(addr_6845+1, (lastpos));
 		}
 	}
-
-	/*-------------------------------------------------------------------*/
-	/* this takes place ONLY on screen 0 if in HP mode, labels on, !X    */
-	/*-------------------------------------------------------------------*/
-
-	/* additional processing for HP necessary ? */
-
-	if((vs[0].vt_pure_mode == M_HPVT) && (vs[0].labels_on))
-	{
-		static volatile u_char buffer[] =
-		       "System Load: 1min: 0.00 5min: 0.00 15min: 0.00";
-		register int tmp, i;
-#if PCVT_SHOWKEYS
-		extern u_char rawkeybuf[80];
-
-		if(keyboard_show)
-		{
-			for(i = 0; i < 80; i++)
-			{
-				*((vs[0].Crtat+((vs[0].screen_rows+2)
-					* vs[0].maxcol))+i) =
-				 user_attr | rawkeybuf[i];
-			}
-		}
-		else
-		{
-#endif	/* PCVT_SHOWKEYS */
-
-		/* display load averages in last line (taken from tty.c) */
-			i = 18;
-#ifdef NEW_AVERUNNABLE
-	 		tmp = (averunnable.ldavg[0] * 100 + FSCALE / 2)
-				>> FSHIFT;
-#else
-			tmp = (averunnable[0] * 100 + FSCALE / 2) >> FSHIFT;
-#endif
-
-			buffer[i++] =
-				((((tmp/100)/10) == 0) ?
-				 ' ' :
-				 ((tmp/100)/10) + '0');
-			buffer[i++] = ((tmp/100)%10) + '0';
-			buffer[i++] = '.';
-			buffer[i++] = ((tmp%100)/10) + '0';
-			buffer[i++] = ((tmp%100)%10) + '0';
-			i += 6;
-#ifdef NEW_AVERUNNABLE
-	 		tmp = (averunnable.ldavg[1] * 100 + FSCALE / 2)
-				>> FSHIFT;
-#else
-			tmp = (averunnable[1] * 100 + FSCALE / 2) >> FSHIFT;
-#endif
-			buffer[i++] = ((((tmp/100)/10) == 0) ?
-				       ' ' :
-				       ((tmp/100)/10) + '0');
-			buffer[i++] = ((tmp/100)%10) + '0';
-			buffer[i++] = '.';
-			buffer[i++] = ((tmp%100)/10) + '0';
-			buffer[i++] = ((tmp%100)%10) + '0';
-			i += 7;
-#ifdef NEW_AVERUNNABLE
-	 		tmp = (averunnable.ldavg[2] * 100 + FSCALE / 2)
-				>> FSHIFT;
-#else
-			tmp = (averunnable[2] * 100 + FSCALE / 2) >> FSHIFT;
-#endif
-			buffer[i++] = ((((tmp/100)/10) == 0) ?
-				       ' ' :
-				       ((tmp/100)/10) + '0');
-			buffer[i++] = ((tmp/100)%10) + '0';
-			buffer[i++] = '.';
-			buffer[i++] = ((tmp%100)/10) + '0';
-			buffer[i++] = ((tmp%100)%10) + '0';
-			buffer[i] = '\0';
-
-			for(i = 0; buffer[i]; i++)
-			{
-				*((vs[0].Crtat +
-				   ((vs[0].screen_rows + 2) * vs[0].maxcol)
-				   ) + i
-				  ) = user_attr | buffer[i];
-			}
-
-#if PCVT_SHOWKEYS
-			for(; i < 77; i++)
-			{
-				*((vs[0].Crtat +
-				   ((vs[0].screen_rows + 2) * vs[0].maxcol)
-				   ) + i
-				  ) = user_attr | ' ';
-			}
-
-		}
-#endif	/* PCVT_SHOWKEYS */
-	}
-
-	/*-------------------------------------------------------------------*/
-	/* this takes place on EVERY screen which is in HP mode, labels on,!X*/
-	/*-------------------------------------------------------------------*/
-
-	if((vsp->vt_pure_mode == M_HPVT) && (vsp->labels_on))
-	{
-		register int col = vsp->col+1;
-		register u_short *p = vsp->Crtat +
-				(vsp->screen_rows * vsp->maxcol);
-
-		/* update column display between labels */
-
-		if(vsp->maxcol == SCR_COL132)
-		{
-			p += (SCR_COL132 - SCR_COL80)/2;
-
-			if(col >= 100)
-			{
-				*(p + LABEL_COLU) = user_attr | '1';
-				col -= 100;
-			}
-			else
-			{
-				*(p + LABEL_COLU) = user_attr | '0';
-			}
-		}
-		*(p + LABEL_COLH) = user_attr | ((col/10) + '0');
-		*(p + LABEL_COLL) = user_attr | ((col%10) + '0');
-
-		/* update row display between labels */
-
-		*(p + LABEL_ROWH) = (user_attr | (((vsp->row+1)/10) + '0'));
-		*(p + LABEL_ROWL) = (user_attr | (((vsp->row+1)%10) + '0'));
-	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -1108,8 +934,6 @@ set_charset(struct video_state *svsp, int curvgacs)
 	oldrows = svsp->screen_rows;
 	newsize = sizetab[(vgacs[curvgacs].screen_size)];
 	newrows = newsize;
-	if (svsp->vt_pure_mode == M_HPVT)
-		newrows -= 3;
 	if (newrows == 25 && svsp->force24)
 		newrows = 24;
 	if (newrows < oldrows) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.28 1999/11/20 18:52:00 espie Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.29 1999/11/25 20:24:21 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -74,7 +74,7 @@
  *---------------------------------------------------------------------------*/
 
 #include "vt.h"
-#if NVT > 0
+/* #if NVT > 0 */
 
 #include "pcvt_hdr.h"		/* global include */
 
@@ -95,7 +95,6 @@ static void cfkey9(void), cfkey10(void), cfkey11(void), cfkey12(void);
 static inline int kbd_wait_output(void);
 static inline int kbd_wait_input(void);
 int kbd_response(void);
-
 
 static void	doreset ( void );
 static void	ovlinit ( int force );
@@ -122,44 +121,7 @@ static void scrollback_restore_screen ( void );
 
 extern int kbd_reset;
 
-#if PCVT_SHOWKEYS
-u_char rawkeybuf[80];
-#endif
-
 #include "pcvt_kbd.h"		/* tables etc */
-
-#if PCVT_SHOWKEYS
-/*---------------------------------------------------------------------------*
- *	keyboard debugging: put kbd communication char into some buffer
- *---------------------------------------------------------------------------*/
-static void showkey (char delim, u_char val)
-{
-	int rki;
-
-	for(rki = 3; rki < 80; rki++)		/* shift left buffer */
-		rawkeybuf[rki-3] = rawkeybuf[rki];
-
-	rawkeybuf[77] = delim;		/* delimiter */
-
-	rki = (val & 0xf0) >> 4;	/* ms nibble */
-
-	if(rki <= 9)
-		rki = rki + '0';
-	else
-		rki = rki - 10 + 'A';
-
-	rawkeybuf[78] = rki;
-
-	rki = val & 0x0f;		/* ls nibble */
-
-	if(rki <= 9)
-		rki = rki + '0';
-	else
-		rki = rki - 10 + 'A';
-
-	rawkeybuf[79] = rki;
-}
-#endif	/* PCVT_SHOWKEYS */
 
 /*---------------------------------------------------------------------------*
  *	function to switch to another virtual screen
@@ -167,12 +129,11 @@ static void showkey (char delim, u_char val)
 static void
 do_vgapage(int page)
 {
-	if(critical_scroll)		/* executing critical region ? */
+	if (critical_scroll)		/* executing critical region ? */
 		switch_page = page;	/* yes, auto switch later */
 	else
 		vgapage(page);		/* no, switch now */
 }
-
 
 /*
  * This code from Lon Willett enclosed in #if PCVT_UPDLED_LOSES_INTR is
@@ -214,11 +175,10 @@ static void
 check_for_lost_intr (void *arg)
 {
 	lost_intr_timeout_queued = 0;
-	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
-	{
-		int opri = spltty ();
-		(void) pcrint ();
-		splx (opri);
+	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF) {
+		int opri = spltty();
+		(void)pcrint();
+		splx(opri);
 	}
 }
 
@@ -230,24 +190,19 @@ check_for_lost_intr (void *arg)
 void
 update_led(void)
 {
-
 #if !PCVT_NO_LED_UPDATE
-
 	/* Don't update LED's unless necessary. */
 
 	int opri, new_ledstate, response1, response2;
 
 	opri = spltty();
-	new_ledstate = ((vsp->scroll_lock) |
-			(vsp->num_lock * 2) |
+	new_ledstate = ((vsp->scroll_lock) | (vsp->num_lock * 2) |
 			(vsp->caps_lock * 4));
 
-	if (new_ledstate != ledstate)
-	{
+	if (new_ledstate != ledstate) {
 		ledstate = LEDSTATE_UPDATE_PENDING;
 
-		if (kbd_cmd(KEYB_C_LEDS) != 0)
-		{
+		if (kbd_cmd(KEYB_C_LEDS) != 0) {
 			printf("Keyboard LED command timeout\n");
 			splx(opri);
 			return;
@@ -315,15 +270,13 @@ settpmrate(int rate)
 	tpmrate = rate & 0x7f;
 	if (kbd_cmd(KEYB_C_TYPEM) != 0) {
 		printf("Keyboard TYPEMATIC command timeout\n");
-		splx(opri);
-		return;
+		goto fail;
 	}
 	response1 = kbd_response();		/* wait for ACK */
 
 	if (kbd_cmd(tpmrate) != 0) {
 		printf("Keyboard TYPEMATIC data timeout\n");
-		splx(opri);
-		return;
+		goto fail;
 	}
 	response2 = kbd_response();		/* wait for ACK */
 
@@ -332,7 +285,9 @@ settpmrate(int rate)
 		   "Keyboard TYPEMATIC command not ACKed (responses %#x %#x)\n",
 		   response1, response2);
 	}
+fail:
 	splx(opri);
+	return;
 }
 
 /*---------------------------------------------------------------------------*
@@ -373,7 +328,6 @@ kbd_wait_input()
 static int
 kbc_8042cmd(int val)
 {
-
 	if (!kbd_wait_output())
 		return (-1);
 	outb(CONTROLLER_CTRL, val);
@@ -387,14 +341,9 @@ kbc_8042cmd(int val)
 int
 kbd_cmd(int val)
 {
-
 	if (!kbd_wait_output())
 		return (-1);
 	outb(CONTROLLER_DATA, val);
-
-#if PCVT_SHOWKEYS
-	showkey ('>', val);
-#endif	/* PCVT_SHOWKEYS */
 
 	return (0);
 }
@@ -412,10 +361,6 @@ kbd_response(void)
 		return (-1);
 	ch = inb(CONTROLLER_DATA);
 
-#if PCVT_SHOWKEYS
-	showkey ('<', ch);
-#endif	/* PCVT_SHOWKEYS */
-
 	return ch;
 }
 
@@ -425,18 +370,15 @@ kbd_response(void)
 void
 kbd_setmode(int mode)
 {
-#if PCVT_SCANSET > 1		/* switch only if we are running */
-				/*           keyboard scancode 2 */
-
+#if PCVT_SCANSET > 1		/* switch only if we are running scancode 2 */
 	int cmd;
-
 #if PCVT_USEKBDSEC
-	cmd =                  COMMAND_SYSFLG | COMMAND_IRQEN;
+	cmd = COMMAND_SYSFLG | COMMAND_IRQEN;
 #else
 	cmd = COMMAND_INHOVR | COMMAND_SYSFLG | COMMAND_IRQEN;
 #endif
 
-	if(mode == K_RAW)		/* switch to scancode 1 ? */
+	if (mode == K_RAW)		/* switch to scancode 1 ? */
 		cmd |= COMMAND_PCSCAN;	/*     yes, setup command */
 
 	kbc_8042cmd(CONTR_WRITE);
@@ -444,7 +386,7 @@ kbd_setmode(int mode)
 	
 #endif /* PCVT_SCANSET > 1 */
 
-	if(mode == K_RAW)
+	if (mode == K_RAW)
 		shift_down = meta_down = altgr_down = ctrl_down = 0;
 }
 
@@ -465,7 +407,7 @@ void doreset(void)
 	unsigned int wait_retries, seen_negative_response;
 
 	/* Enable interrupts and keyboard, etc. */
-	if(kbc_8042cmd(CONTR_WRITE) != 0)
+	if (kbc_8042cmd(CONTR_WRITE) != 0)
 		printf("pcvt: doreset() - timeout controller write command\n");
 
 #if PCVT_USEKBDSEC		/* security enabled */
@@ -487,7 +429,7 @@ void doreset(void)
 
 #endif /* PCVT_USEKBDSEC */
 
-	if(kbd_cmd(KBDINITCMD) != 0)
+	if (kbd_cmd(KBDINITCMD) != 0)
 		printf("pcvt: doreset() - timeout writing keyboard init command\n");
 
 	/*
@@ -505,36 +447,30 @@ void doreset(void)
 	}
 
 	/* Start keyboard reset */
-
 	opri = spltty();
 
-	if(kbd_cmd(KEYB_C_RESET) != 0)
-		printf("pcvt: doreset() - timeout for keyboard reset command\n");
+	if (kbd_cmd(KEYB_C_RESET) != 0)
+		printf("pcvt: doreset() - keyboard reset command timeout\n");
 
 	/* Wait for the first response to reset and handle retries */
-	while((response = kbd_response()) != KEYB_R_ACK)
-	{
-		if(response < 0)
-		{
-			if(!again)	/* print message only once ! */
+	while ((response = kbd_response()) != KEYB_R_ACK) {
+		if (response < 0) {
+			if (!again)	/* print message only once ! */
 				printf("pcvt: doreset() - response != ack and response < 0 [one time only msg]\n");
 			response = KEYB_R_RESEND;
 		}
-		if(response == KEYB_R_RESEND)
-		{
-			if(!again)	/* print message only once ! */
+		if (response == KEYB_R_RESEND) {
+			if (!again)	/* print message only once ! */
 				printf("pcvt: doreset() - got KEYB_R_RESEND response ... [one time only msg]\n");
 
-			if(++again > PCVT_NONRESP_KEYB_TRY)
-			{
+			if (++again > PCVT_NONRESP_KEYB_TRY) {
 				printf("pcvt: doreset() - Caution - no PC keyboard detected!\n");
 				keyboard_type = KB_UNKNOWN;
 				splx(opri);
 				return;
 			}
 
-			if((kbd_cmd(KEYB_C_RESET) != 0) && (once == 0))
-			{
+			if ((kbd_cmd(KEYB_C_RESET) != 0) && (once == 0)) {
 				once++;		/* print message only once ! */
 				printf("pcvt: doreset() - timeout for loop keyboard reset command [one time only msg]\n");
 			}
@@ -545,8 +481,7 @@ void doreset(void)
 
 	wait_retries = seen_negative_response = 0;
 
-	while((response = kbd_response()) != KEYB_R_SELFOK)
-	{
+	while ((response = kbd_response()) != KEYB_R_SELFOK) {
 		/*
 		 *  Let's be a little more tolerant here...
 		 *  Receiving a -1 could indicate that the keyboard
@@ -554,11 +489,10 @@ void doreset(void)
 		 *  Such cases have been noticed with e.g. Alps Membrane.
 		 */
 
-		if(response < 0)
+		if (response < 0)
 			seen_negative_response = 1;
 
-		if(seen_negative_response && (wait_retries >= 10))
-		{
+		if (seen_negative_response && (wait_retries >= 10)) {
 			printf("pcvt: doreset() - response != OK and response < 0\n");
 
 			/*
@@ -581,8 +515,7 @@ void doreset(void)
 	kbc_8042cmd(CONTR_READ);
 	response = kbd_response();
 
-	if (!(response & COMMAND_PCSCAN))
-	{
+	if (!(response & COMMAND_PCSCAN)) {
 		if (kbd_cmd(KEYB_C_SCANSET) != 0)
 			printf("pcvt: doreset() - keyboard SCANSET command timeout\n");
 		else if (kbd_cmd(1) != 0)
@@ -592,7 +525,6 @@ void doreset(void)
 	 }
 #endif
 
-
 	splx(opri);
 
 #if PCVT_KEYBDID
@@ -601,17 +533,13 @@ query_kbd_id:
 
 	opri = spltty();
 
-	if(kbd_cmd(KEYB_C_ID) != 0)
-	{
+	if (kbd_cmd(KEYB_C_ID) != 0) {
 		printf("pcvt: doreset() - timeout for keyboard ID command\n");
 		keyboard_type = KB_UNKNOWN;
 	}
-	else
-	{
-
+	else {
 r_entry:
-		if((response = kbd_response()) == KEYB_R_MF2ID1)
-		{
+		if ((response = kbd_response()) == KEYB_R_MF2ID1) {
 			switch ((response = kbd_response())) {
 			case KEYB_R_RESEND:
 				/*
@@ -628,34 +556,27 @@ r_entry:
 			case KEYB_R_MF2ID2TP2:
 				keyboard_type = KB_MFII;
 				break;
+
 			default:
 				printf("\npcvt: doreset() - kbdid, response 2 = [%d]\n", response);
 				keyboard_type = KB_UNKNOWN;
 				break;
 			}
 		}
-		else if(response == KEYB_R_ACK)
-		{
+		else if (response == KEYB_R_ACK)
 			goto r_entry;
-		}
-		else if(response == -1)
-		{
+		else if (response == -1)
 			keyboard_type = KB_AT;
-		}
-		else
-		{
-			printf("\npcvt: doreset() - kbdid, response 1 = [%d]\n", response);
+		else {
+			printf("\npcvt: doreset() - kbdid, response 1 = [%d]\n",
+			    response);
 		}
 	}
-
 	splx(opri);
 
 #else /* PCVT_KEYBDID */
-
 	keyboard_type = KB_MFII;	/* force it .. */
-
 #endif /* PCVT_KEYBDID */
-
 }
 
 /*---------------------------------------------------------------------------*
@@ -689,15 +610,13 @@ void ovlinit(int force)
 {
 	int i;
 
-	if(force || ovlinitflag==0)
-	{
-		if(ovlinitflag == 0 &&
+	if (force || ovlinitflag == 0) {
+		if (ovlinitflag == 0 &&
 		   (ovltbl = (Ovl_tbl *)malloc(sizeof(Ovl_tbl) * OVLTBL_SIZE,
 					       M_DEVBUF, M_WAITOK)) == NULL)
 			panic("pcvt_kbd: malloc of Ovl_tbl failed");
 
-		for(i=0; i<OVLTBL_SIZE; i++)
-		{
+		for(i = 0; i < OVLTBL_SIZE; i++) {
 			ovltbl[i].keynum =
 			ovltbl[i].type = 0;
 			ovltbl[i].unshift[0] =
@@ -721,59 +640,51 @@ void ovlinit(int force)
 static int
 getokeydef(unsigned key, Ovl_tbl *thisdef)
 {
-	if(key == 0 || key > MAXKEYNUM)
+	if (key == 0 || key > MAXKEYNUM)
 		return EINVAL;
 
 	thisdef->keynum = key;
 	thisdef->type = key2ascii[key].type;
 
-	if(key2ascii[key].unshift.subtype == STR)
-	{
+	if (key2ascii[key].unshift.subtype == STR) {
 		bcopy((u_char *)(key2ascii[key].unshift.what.string),
-		       thisdef->unshift, CODE_SIZE);
+		    thisdef->unshift, CODE_SIZE);
 		thisdef->subu = KBD_SUBT_STR;
 	}
-	else
-	{
+	else {
 		bcopy("", thisdef->unshift, CODE_SIZE);
 		thisdef->subu = KBD_SUBT_FNC;
 	}
 
-	if(key2ascii[key].shift.subtype == STR)
-	{
+	if (key2ascii[key].shift.subtype == STR) {
 		bcopy((u_char *)(key2ascii[key].shift.what.string),
-		       thisdef->shift, CODE_SIZE);
+		    thisdef->shift, CODE_SIZE);
 		thisdef->subs = KBD_SUBT_STR;
 	}
-	else
-	{
-		bcopy("",thisdef->shift,CODE_SIZE);
+	else {
+		bcopy("", thisdef->shift,CODE_SIZE);
 		thisdef->subs = KBD_SUBT_FNC;
 	}
 
-	if(key2ascii[key].ctrl.subtype == STR)
-	{
+	if (key2ascii[key].ctrl.subtype == STR) {
 		bcopy((u_char *)(key2ascii[key].ctrl.what.string),
-		       thisdef->ctrl, CODE_SIZE);
+		    thisdef->ctrl, CODE_SIZE);
 		thisdef->subc = KBD_SUBT_STR;
 	}
-	else
-	{
+	else {
 		bcopy("",thisdef->ctrl,CODE_SIZE);
 		thisdef->subc = KBD_SUBT_FNC;
 	}
 
 	/* deliver at least anything for ALTGR settings ... */
 
-	if(key2ascii[key].unshift.subtype == STR)
-	{
+	if (key2ascii[key].unshift.subtype == STR) {
 		bcopy((u_char *)(key2ascii[key].unshift.what.string),
-		       thisdef->altgr, CODE_SIZE);
+		    thisdef->altgr, CODE_SIZE);
 		thisdef->suba = KBD_SUBT_STR;
 	}
-	else
-	{
-		bcopy("",thisdef->altgr, CODE_SIZE);
+	else {
+		bcopy("", thisdef->altgr, CODE_SIZE);
 		thisdef->suba = KBD_SUBT_FNC;
 	}
 	return 0;
@@ -787,10 +698,10 @@ getckeydef(unsigned key, Ovl_tbl *thisdef)
 {
 	u_short type = key2ascii[key].type;
 
-	if(key>MAXKEYNUM)
+	if (key > MAXKEYNUM)
 		return EINVAL;
 
-	if(type & KBD_OVERLOAD)
+	if (type & KBD_OVERLOAD)
 		*thisdef = ovltbl[key2ascii[key].ovlindex];
 	else
 		getokeydef(key,thisdef);
@@ -805,6 +716,7 @@ getckeydef(unsigned key, Ovl_tbl *thisdef)
 static u_char *
 xlatkey2ascii(U_short key)
 {
+	int		n;
 	static u_char	capchar[2] = {0, 0};
 #if PCVT_META_ESC
 	static u_char	metachar[3] = {0x1b, 0, 0};
@@ -812,26 +724,23 @@ xlatkey2ascii(U_short key)
 	static u_char	metachar[2] = {0, 0};
 #endif
 	static Ovl_tbl	thisdef;
-	int		n;
-
-    static u_char altgr_shft_key[KBDMAXOVLKEYSIZE];
+	static u_char altgr_shft_key[KBDMAXOVLKEYSIZE];
 	
 	void		(*fnc)(void);
 
-	if(key==0)			/* ignore the NON-KEY */
+	/* ignore the NON-KEY */
+	if (key == 0)
 		return 0;
 
-	getckeydef(key&0x7F, &thisdef);	/* get the current ASCII value */
+	/* get the current ASCII value */
+	getckeydef(key & 0x7F, &thisdef);
 
 	thisdef.type &= KBD_MASK;
 
-	if(key&0x80)			/* special handling of ALT-KEYPAD */
-	{
+	if (key & 0x80) {		/* special handling of ALT-KEYPAD */
 		/* is the ALT Key released? */
-		if(thisdef.type==KBD_META || thisdef.type==KBD_ALTGR)
-		{
-			if(altkpflag)	/* have we been in altkp mode? */
-			{
+		if (thisdef.type == KBD_META || thisdef.type == KBD_ALTGR) {
+			if (altkpflag) { /* have we been in altkp mode? */
 				capchar[0] = altkpval;
 				altkpflag = 0;
 				altkpval = 0;
@@ -841,191 +750,53 @@ xlatkey2ascii(U_short key)
 		return 0;
 	}
 
-	switch(thisdef.type)		/* convert the keys */
-	{
-		case KBD_BREAK:
-		case KBD_ASCII:
-		case KBD_FUNC:
-			fnc = NULL;
-			more_chars = NULL;
+	switch (thisdef.type) {		/* convert the keys */
+	case KBD_BREAK:
+	case KBD_ASCII:
+	case KBD_FUNC:
+		fnc = NULL;
+		more_chars = NULL;
 
-			if(altgr_down)
-			{
-                if(shift_down) /* XXX this is hack to support simple
-                				AltGr + Shift remapping. This should work
-                				for KOI-8 keymap style */
-                {
-                	altgr_shft_key[0] = *(u_char*)thisdef.altgr+040;
-                	more_chars = (u_char*)altgr_shft_key;
-                }
-                else more_chars = (u_char *)thisdef.altgr;
-			}
-			else if(!ctrl_down && (shift_down || vsp->shift_lock))
-			{
-				if(key2ascii[key].shift.subtype == STR)
-					more_chars = (u_char *)thisdef.shift;
-				else
-					fnc = key2ascii[key].shift.what.func;
-			}
-
-			else if(ctrl_down)
-			{
-				if(key2ascii[key].ctrl.subtype == STR)
-					more_chars = (u_char *)thisdef.ctrl;
-				else
-					fnc = key2ascii[key].ctrl.what.func;
-			}
-
-			else
-			{
-				if(key2ascii[key].unshift.subtype == STR)
-					more_chars = (u_char *)thisdef.unshift;
-				else
-					fnc = key2ascii[key].unshift.what.func;
-			}
-
-			if(fnc)
-				(*fnc)();	/* execute function */
-
-			if((more_chars != NULL) && (more_chars[1] == 0))
-			{
-				if(vsp->caps_lock && more_chars[0] >= 'a'
-				   && more_chars[0] <= 'z')
-				{
-					capchar[0] = *more_chars - ('a'-'A');
-					more_chars = capchar;
-				}
-				if(meta_down)
-				{
-#if PCVT_META_ESC
-					metachar[1] = *more_chars;
-#else
-					metachar[0] = *more_chars | 0x80;
-#endif
-					more_chars = metachar;
-				}
-			}
-			return(more_chars);
-
-		case KBD_KP:
-			fnc = NULL;
-			more_chars = NULL;
-
-			if(meta_down)
-			{
-				switch(key)
-				{
-					case 95:	/* / */
-						altkpflag = 0;
-						more_chars =
-						 (u_char *)"\033OQ";
-						return(more_chars);
-
-					case 100:	/* * */
-						altkpflag = 0;
-						more_chars =
-						 (u_char *)"\033OR";
-						return(more_chars);
-
-					case 105:	/* - */
-						altkpflag = 0;
-						more_chars =
-						 (u_char *)"\033OS";
-						return(more_chars);
-				}
-			}
-
-			if(meta_down || altgr_down)
-			{
-				if((n = keypad2num[key-91]) >= 0)
-				{
-					if(!altkpflag)
-					{
-						/* start ALT-KP mode */
-						altkpflag = 1;
-						altkpval = 0;
-					}
-					altkpval *= 10;
-					altkpval += n;
-				}
-				else
-					altkpflag = 0;
-				return 0;
-			}
-
-			if(!(vsp->num_lock))
-			{
-				if(key2ascii[key].shift.subtype == STR)
-					more_chars = (u_char *)thisdef.shift;
-				else
-					fnc = key2ascii[key].shift.what.func;
-			}
-			else
-			{
-				if(key2ascii[key].unshift.subtype == STR)
-					more_chars = (u_char *)thisdef.unshift;
-				else
-					fnc = key2ascii[key].unshift.what.func;
-			}
-
-			if(fnc)
-				(*fnc)();	/* execute function */
-			return(more_chars);
-
-		case KBD_CURSOR:
-			fnc = NULL;
-			more_chars = NULL;
-
-			if(vsp->ckm)
-			{
-				if(key2ascii[key].shift.subtype == STR)
-					more_chars = (u_char *)thisdef.shift;
-				else
-					fnc = key2ascii[key].shift.what.func;
-			}
-			else
-			{
-				if(key2ascii[key].unshift.subtype == STR)
-					more_chars = (u_char *)thisdef.unshift;
-				else
-					fnc = key2ascii[key].unshift.what.func;
-			}
-
-			if(fnc)
-				(*fnc)();	/* execute function */
-			return(more_chars);
-
-		case KBD_NUM:		/*  special kp-num handling */
-			more_chars = NULL;
-
-			if(meta_down)
-			{
-				more_chars = (u_char *)"\033OP"; /* PF1 */
-			}
-			else
-			{
-				vsp->num_lock ^= 1;
-				update_led();
-			}
-			return(more_chars);
-
-		case KBD_RETURN:
-			more_chars = NULL;
-
-			if(!(vsp->num_lock))
-			{
+		if (altgr_down) {
+			/* XXX this is hack to support simple AltGr + Shift
+	 	 	 * remapping. This should work for KOI-8 keymap style.
+			 */
+			if (shift_down) {
+                		altgr_shft_key[0] = *(u_char*)thisdef.altgr+040;
+                		more_chars = (u_char*)altgr_shft_key;
+                	}
+                	else
+				more_chars = (u_char *)thisdef.altgr;
+		}
+		else if (!ctrl_down && (shift_down || vsp->shift_lock)) {
+			if (key2ascii[key].shift.subtype == STR)
 				more_chars = (u_char *)thisdef.shift;
-			}
 			else
-			{
+				fnc = key2ascii[key].shift.what.func;
+		     }
+		else if (ctrl_down) {
+			if (key2ascii[key].ctrl.subtype == STR)
+				more_chars = (u_char *)thisdef.ctrl;
+			else
+				fnc = key2ascii[key].ctrl.what.func;
+		     }
+		else {
+			if (key2ascii[key].unshift.subtype == STR)
 				more_chars = (u_char *)thisdef.unshift;
+			else
+				fnc = key2ascii[key].unshift.what.func;
+		}
+
+		if (fnc)
+			(*fnc)();	/* execute function */
+
+		if ((more_chars != NULL) && (more_chars[1] == 0)) {
+			if (vsp->caps_lock && more_chars[0] >= 'a'
+			   && more_chars[0] <= 'z') {
+				capchar[0] = *more_chars - ('a' - 'A');
+				more_chars = capchar;
 			}
-			if(vsp->lnm && (*more_chars == '\r'))
-			{
-				more_chars = (u_char *)"\r\n"; /* CR LF */
-			}
-			if(meta_down)
-			{
+			if (meta_down) {
 #if PCVT_META_ESC
 				metachar[1] = *more_chars;
 #else
@@ -1033,17 +804,128 @@ xlatkey2ascii(U_short key)
 #endif
 				more_chars = metachar;
 			}
-			return(more_chars);
+		}
+		return (more_chars);
 
-		case KBD_META:		/* these keys are	*/
-		case KBD_ALTGR:		/*  handled directly	*/
-		case KBD_SCROLL:	/*  by the keyboard	*/
-		case KBD_CAPS:		/*  handler - they are	*/
-		case KBD_SHFTLOCK:	/*  ignored here	*/
-		case KBD_CTL:
-		case KBD_NONE:
-		default:
+	case KBD_KP:
+		fnc = NULL;
+		more_chars = NULL;
+
+		if (meta_down) {
+			switch (key) {
+			case 95:	/* / */
+				altkpflag = 0;
+				more_chars = (u_char *)"\033OQ";
+				return (more_chars);
+
+			case 100:	/* * */
+				altkpflag = 0;
+				more_chars = (u_char *)"\033OR";
+				return (more_chars);
+
+			case 105:	/* - */
+				altkpflag = 0;
+		 		more_chars = (u_char *)"\033OS";
+				return (more_chars);
+			}
+		}
+
+		if (meta_down || altgr_down) {
+			if ((n = keypad2num[key-91]) >= 0) {
+				if (!altkpflag) {
+					/* start ALT-KP mode */
+					altkpflag = 1;
+					altkpval = 0;
+				}
+				altkpval *= 10;
+				altkpval += n;
+			}
+			else
+				altkpflag = 0;
 			return 0;
+		}
+
+		if (!vsp->num_lock) {
+			if (key2ascii[key].shift.subtype == STR)
+				more_chars = (u_char *)thisdef.shift;
+			else
+				fnc = key2ascii[key].shift.what.func;
+		}
+		else {
+			if (key2ascii[key].unshift.subtype == STR)
+				more_chars = (u_char *)thisdef.unshift;
+			else
+				fnc = key2ascii[key].unshift.what.func;
+		}
+
+		if (fnc)
+			(*fnc)();	/* execute function */
+
+		return (more_chars);
+
+	case KBD_CURSOR:
+		fnc = NULL;
+		more_chars = NULL;
+
+		if (vsp->ckm) {
+			if (key2ascii[key].shift.subtype == STR)
+				more_chars = (u_char *)thisdef.shift;
+			else
+				fnc = key2ascii[key].shift.what.func;
+		}
+		else {
+			if (key2ascii[key].unshift.subtype == STR)
+				more_chars = (u_char *)thisdef.unshift;
+			else
+				fnc = key2ascii[key].unshift.what.func;
+		}
+
+		if (fnc)
+			(*fnc)();	/* execute function */
+
+		return (more_chars);
+
+	case KBD_NUM:		/*  special kp-num handling */
+		more_chars = NULL;
+
+		if (meta_down)
+			more_chars = (u_char *)"\033OP"; /* PF1 */
+		else {
+			vsp->num_lock ^= 1;
+			update_led();
+		}
+		return (more_chars);
+
+	case KBD_RETURN:
+		more_chars = NULL;
+
+		if (!vsp->num_lock)
+			more_chars = (u_char *)thisdef.shift;
+		else
+			more_chars = (u_char *)thisdef.unshift;
+
+		if (vsp->lnm && (*more_chars == '\r'))
+			more_chars = (u_char *)"\r\n"; /* CR LF */
+
+		if (meta_down) {
+#if PCVT_META_ESC
+			metachar[1] = *more_chars;
+#else
+			metachar[0] = *more_chars | 0x80;
+#endif
+			more_chars = metachar;
+		}
+		return (more_chars);
+
+	case KBD_META:		/* these keys are	*/
+	case KBD_ALTGR:		/*  handled directly	*/
+	case KBD_SCROLL:	/*  by the keyboard	*/
+	case KBD_CAPS:		/*  handler - they are	*/
+	case KBD_SHFTLOCK:	/*  ignored here	*/
+	case KBD_CTL:
+	case KBD_NONE:
+	default:
+		return 0;
 	}
 }
 
@@ -1062,19 +944,17 @@ extern	short	pcvt_kbd_count;
 u_char *
 sgetc(int noblock)
 {
-	u_char		*cp;
-	u_char		dt;
-	u_char		key;
-	u_short		type;
-
 #if PCVT_KBD_FIFO
 	int		s;
 #endif
+	u_char *cp, dt, key;
+	u_short	type;
+	static u_char kbd_lastkey = 0; /* last keystroke */
+#ifdef XSERVER
+	static char	keybuf[2] = {0}; /* the second 0 is a delimiter! */
+#endif /* XSERVER */
 
-	static u_char	kbd_lastkey = 0; /* last keystroke */
-
-	static struct
-	{
+	static struct {
 		u_char extended: 1;	/* extended prefix seen */
 		u_char ext1: 1;		/* extended prefix 1 seen */
 		u_char breakseen: 1;	/* break code seen */
@@ -1082,10 +962,6 @@ sgetc(int noblock)
 		u_char vcontrol: 1;	/* virtual control pending */
 		u_char sysrq: 1;	/* sysrq pressed */
 	} kbd_status = {0};
-
-#ifdef XSERVER
-	static char	keybuf[2] = {0}; /* the second 0 is a delimiter! */
-#endif /* XSERVER */
 
 loop:
 
@@ -1102,15 +978,12 @@ loop:
 	/* the keyboard fifo or from the 8042 keyboard controller	*/
 
 	if ((( noblock) && (pcvt_kbd_count)) ||
-	    ((!noblock) && (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)))
-	{
-		if (!noblock)		/* source = 8042 */
-		{
+	    ((!noblock) && (inb(CONTROLLER_CTRL) & STATUS_OUTPBF))) {
+		if (!noblock) {		/* source = 8042 */
 			PCVT_KBD_DELAY();	/* 7 us delay */
 			dt = inb(CONTROLLER_DATA);	/* get from obuf */
 		}
-		else			/* source = keyboard fifo */
-		{
+		else {			/* source = keyboard fifo */
 			dt = pcvt_kbd_fifo[pcvt_kbd_rptr++];
 			s = spltty();
 			pcvt_kbd_count--;
@@ -1122,12 +995,9 @@ loop:
 #else /* !PCVT_KB_FIFO */
 
 	/* see if there is data from the keyboard available from the 8042 */
-
-	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
-	{
+	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF) {
 		PCVT_KBD_DELAY();		/* 7 us delay */
 		dt = inb(CONTROLLER_DATA);	/* yes, get data */
-
 #endif /* !PCVT_KBD_FIFO */
 
 		/*
@@ -1137,238 +1007,8 @@ loop:
 		 * execute pcvt internal functions caused by keys (such
 		 * as screen flipping).
 		 */
-
- 		if (vsp->kbd_state == K_RAW)
-		{
+ 		if (vsp->kbd_state == K_RAW) {
 			keybuf[0] = dt;
-
-#if PCVT_EMU_MOUSE
-			/*
-			 * The (mouse systems) mouse emulator. The mouse
-			 * device allocates the first device node that is
-			 * not used by a virtual terminal. (E.g., you have
-			 * eight vtys, /dev/ttyv0 thru /dev/ttyv7, so the
-			 * mouse emulator were /dev/ttyv8.)
-			 * Currently the emulator only works if the keyboard
-			 * is in raw (PC scan code) mode. This is the typic-
-			 * al case when running the X server.
-			 * It is activated if the num locks LED is active
-			 * for the current vty, and if the mouse device
-			 * has been opened by at least one process. It
-			 * grabs the numerical keypad events (but only
-			 * the "non-extended", so the separate arrow keys
-			 * continue to work), and three keys for the "mouse
-			 * buttons", preferrably F1 thru F3. Any of the
-			 * eight directions (N, NE, E, SE, S, SW, W, NW)
-			 * is supported, and frequent key presses (less
-			 * than e.g. half a second between key presses)
-			 * cause the emulator to accelerate the pointer
-			 * movement by 6, while single presses result in
-			 * single moves, so each point can be reached.
-			 */
-			/*
-			 * NB: the following code is spagghetti.
-			 * Only eat it with lotta tomato ketchup and
-			 * Parmesan cheese:-)
-			 */
-			/*
-			 * look whether we will have to steal the keys
-			 * and cook them into mouse events
-			 */
-			if(vsp->num_lock && mouse.opened)
-			{
-				int button, accel, i;
-				enum mouse_dir
-				{
-					MOUSE_NW, MOUSE_N, MOUSE_NE,
-					MOUSE_W,  MOUSE_0, MOUSE_E,
-					MOUSE_SW, MOUSE_S, MOUSE_SE
-				}
-				move;
-				struct timeval now;
-				/* from sys/kern/kern_time.c */
-				extern void timevalsub
-					(struct timeval *, struct timeval *);
-				dev_t dummy = makedev(0, mouse.minor);
-				struct tty *mousetty = get_pccons(dummy);
-				/*
-				 * strings to send for each mouse event,
-				 * indexed by the movement direction and
-				 * the "accelerator" value (TRUE for frequent
-				 * key presses); note that the first byte
-				 * of each string is actually overwritten
-				 * by the current button value before sending
-				 * the string
-				 */
-				static u_char mousestrings[2][MOUSE_SE+1][5] =
-				{
-				{
-					/* first, the non-accelerated strings*/
-					{0x87,  -1,   1,   0,   0}, /* NW */
-					{0x87,   0,   1,   0,   0}, /* N */
-					{0x87,   1,   1,   0,   0}, /* NE */
-					{0x87,  -1,   0,   0,   0}, /* W */
-					{0x87,   0,   0,   0,   0}, /* 0 */
-					{0x87,   1,   0,   0,   0}, /* E */
-					{0x87,  -1,  -1,   0,   0}, /* SW */
-					{0x87,   0,  -1,   0,   0}, /* S */
-					{0x87,   1,  -1,   0,   0}  /* SE */
-				},
-				{
-					/* now, 6 steps at once */
-					{0x87,  -4,   4,   0,   0}, /* NW */
-					{0x87,   0,   6,   0,   0}, /* N */
-					{0x87,   4,   4,   0,   0}, /* NE */
-					{0x87,  -6,   0,   0,   0}, /* W */
-					{0x87,   0,   0,   0,   0}, /* 0 */
-					{0x87,   6,   0,   0,   0}, /* E */
-					{0x87,  -4,  -4,   0,   0}, /* SW */
-					{0x87,   0,  -6,   0,   0}, /* S */
-					{0x87,   4,  -4,   0,   0}  /* SE */
-				}
-				};
-
-				if(dt == 0xe0)
-				{
-					/* ignore extended scan codes */
-					mouse.extendedseen = 1;
-					goto no_mouse_event;
-				}
-				if(mouse.extendedseen)
-				{
-					mouse.extendedseen = 0;
-					goto no_mouse_event;
-				}
-				mouse.extendedseen = 0;
-
-				/*
-				 * Note that we cannot use a switch here
-				 * since we want to have the keycodes in
-				 * a variable
-				 */
-				if((dt & 0x7f) == mousedef.leftbutton) {
-					button = 4;
-					goto do_button;
-				}
-				else if((dt & 0x7f) == mousedef.middlebutton) {
-					button = 2;
-					goto do_button;
-				}
-				else if((dt & 0x7f) == mousedef.rightbutton) {
-					button = 1;
-				do_button:
-
-					/*
-					 * i would really like to give
-					 * some acustical support
-					 * (pling/plong); i am not sure
-					 * whether it is safe to call
-					 * sysbeep from within an intr
-					 * service, since it calls
-					 * timeout in turn which mani-
-					 * pulates the spl mask - jw
-					 */
-
-# define PLING sysbeep(PCVT_SYSBEEPF / 1500, 2)
-# define PLONG sysbeep(PCVT_SYSBEEPF / 1200, 2)
-
-					if(mousedef.stickybuttons)
-					{
-						if(dt & 0x80) {
-							mouse.breakseen = 1;
-							return (u_char *)0;
-						}
-						else if(mouse.buttons == button
-							&& !mouse.breakseen) {
-							/* ignore repeats */
-							return (u_char *)0;
-						}
-						else
-							mouse.breakseen = 0;
-						if(mouse.buttons == button) {
-							/* release it */
-							mouse.buttons = 0;
-							PLONG;
-						} else {
-							/*
-							 * eventually, release
-							 * any other button,
-							 * and stick this one
-							 */
-							mouse.buttons = button;
-							PLING;
-						}
-					}
-					else
-					{
-						if(dt & 0x80) {
-							mouse.buttons &=
-								~button;
-							PLONG;
-						}
-						else if((mouse.buttons
-							& button) == 0) {
-							mouse.buttons |=
-								button;
-							PLING;
-						}
-						/*else: ignore same btn press*/
-					}
-					move = MOUSE_0;
-					accel = 0;
-				}
-# undef PLING
-# undef PLONG
-				else switch(dt & 0x7f)
-				{
-				/* the arrow keys - KP 1 thru KP 9 */
-				case 0x47:	move = MOUSE_NW; goto do_move;
-				case 0x48:	move = MOUSE_N; goto do_move;
-				case 0x49:	move = MOUSE_NE; goto do_move;
-				case 0x4b:	move = MOUSE_W; goto do_move;
-				case 0x4c:	move = MOUSE_0; goto do_move;
-				case 0x4d:	move = MOUSE_E; goto do_move;
-				case 0x4f:	move = MOUSE_SW; goto do_move;
-				case 0x50:	move = MOUSE_S; goto do_move;
-				case 0x51:	move = MOUSE_SE;
-				do_move:
-					if(dt & 0x80)
-						/*
-						 * arrow key break events are
-						 * of no importance for us
-						 */
-						return (u_char *)0;
-					/*
-					 * see whether the last move did
-					 * happen "recently", i.e. before
-					 * less than half a second
-					 */
-					now = time;
-
-					timersub(&now,&mouse.lastmove,&now);
-
-					mouse.lastmove = time;
-					accel = (now.tv_sec == 0
-						 && now.tv_usec
-						 < mousedef.acceltime);
-					break;
-
-				default: /* not a mouse-emulating key */
-					goto no_mouse_event;
-				}
-				mousestrings[accel][move][0] =
-					0x80 + (~mouse.buttons & 7);
-				/* finally, send the string */
-				for(i = 0; i < 5; i++)
-					(*linesw[mousetty->t_line].l_rint)
-						(mousestrings[accel][move][i],
-						 mousetty);
-				return (u_char *)0; /* not a kbd event */
-			}
-no_mouse_event:
-
-#endif /* PCVT_EMU_MOUSE */
-
 			return ((u_char *)keybuf);
 		}
 	}
@@ -1381,15 +1021,12 @@ no_mouse_event:
 	/* the keyboard fifo or from the 8042 keyboard controller	*/
 
 	if ((( noblock) && (pcvt_kbd_count)) ||
-	    ((!noblock) && (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)))
-	{
-		if (!noblock)		/* source = 8042 */
-		{
+	    ((!noblock) && (inb(CONTROLLER_CTRL) & STATUS_OUTPBF))) {
+		if (!noblock) {		/* source = 8042 */
 			PCVT_KBD_DELAY();	/* 7 us delay */
 			dt = inb(CONTROLLER_DATA);
 		}
-		else			/* source = keyboard fifo */
-		{
+		else {			/* source = keyboard fifo */
 			dt = pcvt_kbd_fifo[pcvt_kbd_rptr++]; /* yes, get it ! */
 			s = spltty();
 			pcvt_kbd_count--;
@@ -1402,9 +1039,7 @@ no_mouse_event:
 #else /* !PCVT_KBD_FIFO */
 
 	/* see if there is data from the keyboard available from the 8042 */
-
-	if(inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
-	{
+	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF) {
 		PCVT_KBD_DELAY();		/* 7 us delay */
 		dt = inb(CONTROLLER_DATA);	/* yes, get data ! */
 	}
@@ -1413,89 +1048,77 @@ no_mouse_event:
 
 #endif /* !XSERVER */
 
-	else
-	{
-		if(noblock)
+	else {
+		if (noblock)
 			return NULL;
 		else
 			goto loop;
 	}
 
-#if PCVT_SHOWKEYS
-	showkey (' ', dt);
-#endif /* PCVT_SHOWKEYS */
-
 	/* lets look what we got */
-	switch(dt)
-	{
-		case KEYB_R_OVERRUN0:	/* keyboard buffer overflow */
+	switch (dt) {
+	case KEYB_R_OVERRUN0:	/* keyboard buffer overflow */
+#if PCVT_SCANSET == 2
+	case KEYB_R_SELFOK:	/* keyboard selftest ok */
+#endif /* PCVT_SCANSET == 2 */
+	case KEYB_R_ECHO:	/* keyboard response to KEYB_C_ECHO */
+	case KEYB_R_ACK:	/* acknowledge after command has rx'd*/
+	case KEYB_R_SELFBAD:	/* keyboard selftest FAILED */
+	case KEYB_R_DIAGBAD:	/* keyboard self diagnostic failure */
+	case KEYB_R_RESEND:	/* keyboard wants us to resend cmnd */
+	case KEYB_R_OVERRUN1:	/* keyboard buffer overflow */
+		break;
+
+	case KEYB_R_EXT1:	/* keyboard extended scancode pfx 2 */
+		kbd_status.ext1 = 1;
+		/* FALLTHROUGH */
+
+	case KEYB_R_EXT0:	/* keyboard extended scancode pfx 1 */
+		kbd_status.extended = 1;
+		break;
 
 #if PCVT_SCANSET == 2
-		case KEYB_R_SELFOK:	/* keyboard selftest ok */
+	case KEYB_R_BREAKPFX:	/* break code prefix for set 2 and 3 */
+		kbd_status.breakseen = 1;
+		break;
 #endif /* PCVT_SCANSET == 2 */
 
-		case KEYB_R_ECHO:	/* keyboard response to KEYB_C_ECHO */
-		case KEYB_R_ACK:	/* acknowledge after command has rx'd*/
-		case KEYB_R_SELFBAD:	/* keyboard selftest FAILED */
-		case KEYB_R_DIAGBAD:	/* keyboard self diagnostic failure */
-		case KEYB_R_RESEND:	/* keyboard wants us to resend cmnd */
-		case KEYB_R_OVERRUN1:	/* keyboard buffer overflow */
-			break;
-
-		case KEYB_R_EXT1:	/* keyboard extended scancode pfx 2 */
-			kbd_status.ext1 = 1;
-			/* FALLTHROUGH */
-		case KEYB_R_EXT0:	/* keyboard extended scancode pfx 1 */
-			kbd_status.extended = 1;
-			break;
-
-#if PCVT_SCANSET == 2
-		case KEYB_R_BREAKPFX:	/* break code prefix for set 2 and 3 */
-			kbd_status.breakseen = 1;
-			break;
-#endif /* PCVT_SCANSET == 2 */
-
-		default:
-			goto regular;	/* regular key */
+	default:
+		goto regular;	/* regular key */
 	}
 
-	if(noblock)
+	if (noblock)
 		return NULL;
 	else
 		goto loop;
 
 	/* got a normal scan key */
 regular:
-
 #if PCVT_SCANSET == 1
 	kbd_status.breakseen = dt & 0x80 ? 1 : 0;
 	dt &= 0x7f;
 #endif	/* PCVT_SCANSET == 1 */
 
 	/*   make a keycode from scan code	*/
-	if(dt >= sizeof scantokey / sizeof(u_char))
+	if (dt >= sizeof scantokey / sizeof(u_char))
 		key = 0;
 	else
 		key = kbd_status.extended ? extscantokey[dt] : scantokey[dt];
 
-	if(kbd_status.ext1 && key == 64)
+	if (kbd_status.ext1 && key == 64)
 		/* virtual control key */
 		key = 129;
 
 	kbd_status.extended = kbd_status.ext1 = 0;
 
-	if ((key == 85) && shift_down && kbd_lastkey != 85)
-	{
-		if (vsp->scr_offset > vsp->row)
-		{
-			if (!vsp->scrolling)
-			{
+	if ((key == 85) && shift_down &&
+	    (kbd_lastkey != 85 || !kbd_status.breakseen)) {
+		if (vsp->scr_offset > vsp->row) {
+			if (!vsp->scrolling) {
 				vsp->scrolling += vsp->row - 1;
-				if (vsp->Scrollback)
-				{
+				if (vsp->Scrollback) {
 					scrollback_save_screen();
-					if (vsp->scr_offset == vsp->max_off)
-					{
+					if (vsp->scr_offset == vsp->max_off) {
 						bcopy(vsp->Scrollback +
 						      vsp->maxcol,
 						      vsp->Scrollback,
@@ -1525,22 +1148,19 @@ regular:
 		kbd_lastkey = 85;
 		goto loop;
 	}
-	else if ((key == 86) && shift_down && kbd_lastkey != 86)
-	     {
+	else if ((key == 86) && shift_down &&
+		(kbd_lastkey != 86 || !kbd_status.breakseen)) {
 scroll_reset:
-		if (vsp->scrolling > 0)
-		{
+		if (vsp->scrolling > 0) {
 			vsp->scrolling -= vsp->screen_rows - 1;
 			if (vsp->scrolling < 0)
 				vsp->scrolling = 0;
 
-			if (vsp->scrolling <= vsp->row)
-			{
+			if (vsp->scrolling <= vsp->row) {
 				vsp->scrolling = 0;
 				scrollback_restore_screen();
 			}
-			else
-			{
+			else {
 				if (vsp->scrolling + 2 < vsp->screen_rows)
 					fillw(user_attr | ' ',
 					      (caddr_t)vsp->Crtat,
@@ -1554,12 +1174,9 @@ scroll_reset:
 			}
 		}
 
-		if (vsp->scrolling == 0)
-		{
+		if (vsp->scrolling == 0) {
 			if (vsp->cursor_on)
-			{
 				sw_cursor(1);
-			}
 		}
 
 		if (noblock == 31337)
@@ -1567,38 +1184,34 @@ scroll_reset:
 
 		if (key != 86)
 			goto regular;
-		else
-		{
+		else {
 			kbd_lastkey = 86;
 			goto loop;
 		}
 	}
 	else if (vsp->scrolling && key != 128 && key != 44 && key != 85 &&
-		 key != 86)
-	     {
+		 key != 86) {
 			vsp->scrolling = 1;
 			goto scroll_reset;
 	     }
 
-	if(kbd_reset && (key == 76) && ctrl_down && (meta_down||altgr_down)) {
+	if (kbd_reset && (key == 76) && ctrl_down && (meta_down||altgr_down)) {
 		printf("\nconsole halt requested: going down.\n");
 		kbd_reset = 0;
 		psignal(initproc, SIGUSR1);
 	}
 
 #if NDDB > 0 || defined(DDB)		 /*   Check for cntl-alt-esc	*/
-
-  	if((key == 110) && ctrl_down && (meta_down || altgr_down))
- 	{
+  	if ((key == 110) && ctrl_down && (meta_down || altgr_down)) {
  		static u_char in_Debugger;
 
- 		if(!in_Debugger)
- 		{
+ 		if (!in_Debugger) {
  			in_Debugger = 1;
 			if (db_console)
 	 			Debugger();
  			in_Debugger = 0;
- 			if(noblock)
+
+ 			if (noblock)
  				return NULL;
  			else
  				goto loop;
@@ -1607,8 +1220,7 @@ scroll_reset:
 #endif /* NDDB > 0 || defined(DDB) */
 
 	/* look for keys with special handling */
-	if(key == 128)
-	{
+	if (key == 128) {
 		/*
 		 * virtual shift; sent around PrtScr, and around the arrow
 		 * keys if the NumLck LED is on
@@ -1616,33 +1228,30 @@ scroll_reset:
 		kbd_status.vshift = !kbd_status.breakseen;
 		key = 0;	/* no key */
 	}
-	else if(key == 129)
-	{
+	else if (key == 129) {
 		/*
 		 * virtual control - the most ugly thingie at all
 		 * the Pause key sends:
 		 * <virtual control make> <numlock make> <virtual control
 		 * break> <numlock break>
 		 */
-		if(!kbd_status.breakseen)
+		if (!kbd_status.breakseen)
 			kbd_status.vcontrol = 1;
 		/* else: let the numlock hook clear this */
 		key = 0;	/* no key */
 	}
-	else if(key == 90)
-	{
+	else if (key == 90) {
 		/* NumLock, look whether this is rather a Pause */
-		if(kbd_status.vcontrol)
+		if (kbd_status.vcontrol)
 			key = 126;
 		/*
 		 * if this is the final break code of a Pause key,
 		 * clear the virtual control status, too
 		 */
-		if(kbd_status.vcontrol && kbd_status.breakseen)
+		if (kbd_status.vcontrol && kbd_status.breakseen)
 			kbd_status.vcontrol = 0;
 	}
-	else if(key == 127)
-	{
+	else if (key == 127) {
 		/*
 		 * a SysRq; some keyboards are brain-dead enough to
 		 * repeat the SysRq key make code by sending PrtScr
@@ -1651,22 +1260,20 @@ scroll_reset:
 		 */
 		kbd_status.sysrq = !kbd_status.breakseen;
 	}
-	else if(key == 124)
-	{
+	else if (key == 124) {
 		/*
 		 * PrtScr; look whether this is really PrtScr or rather
 		 * a silly repeat of a SysRq key
 		 */
-		if(kbd_status.sysrq)
+		if (kbd_status.sysrq)
 			/* ignore the garbage */
 			key = 0;
 	}
 
 	/* in NOREPEAT MODE ignore the key if it was the same as before */
 
-	if(!kbrepflag && key == kbd_lastkey && !kbd_status.breakseen)
-	{
-		if(noblock)
+	if (!kbrepflag && key == kbd_lastkey && !kbd_status.breakseen) {
+		if (noblock)
 			return NULL;
 		else
 			goto loop;
@@ -1674,65 +1281,56 @@ scroll_reset:
 
 	type = key2ascii[key].type;
 
-	if(type & KBD_OVERLOAD)
+	if (type & KBD_OVERLOAD)
 		type = ovltbl[key2ascii[key].ovlindex].type;
 
 	type &= KBD_MASK;
 
-	switch(type)
-	{
-		case KBD_SHFTLOCK:
-			if(!kbd_status.breakseen && key != kbd_lastkey)
-			{
-				vsp->shift_lock ^= 1;
-			}
-			break;
+	switch (type) {
+	case KBD_SHFTLOCK:
+		if (!kbd_status.breakseen && key != kbd_lastkey)
+			vsp->shift_lock ^= 1;
+		break;
 
-		case KBD_CAPS:
-			if(!kbd_status.breakseen && key != kbd_lastkey)
-			{
-				vsp->caps_lock ^= 1;
-				update_led();
-			}
-			break;
+	case KBD_CAPS:
+		if (!kbd_status.breakseen && key != kbd_lastkey) {
+			vsp->caps_lock ^= 1;
+			update_led();
+		}
+		break;
 
-		case KBD_SCROLL:
-			if(!kbd_status.breakseen && key != kbd_lastkey)
-			{
-				vsp->scroll_lock ^= 1;
-				update_led();
+	case KBD_SCROLL:
+		if (!kbd_status.breakseen && key != kbd_lastkey) {
+			vsp->scroll_lock ^= 1;
+			update_led();
 
-				if(!(vsp->scroll_lock))
-				{
-					/* someone may be sleeping */
-					wakeup((caddr_t)&(vsp->scroll_lock));
-				}
-			}
-			break;
+			if (!(vsp->scroll_lock))
+				wakeup((caddr_t)&(vsp->scroll_lock));
+		}
+		break;
 
-		case KBD_SHIFT:
-			shift_down = kbd_status.breakseen ? 0 : 1;
-			break;
+	case KBD_SHIFT:
+		shift_down = kbd_status.breakseen ? 0 : 1;
+		break;
 
-		case KBD_META:
-			meta_down = kbd_status.breakseen ? 0 : 0x80;
-			break;
+	case KBD_META:
+		meta_down = kbd_status.breakseen ? 0 : 0x80;
+		break;
 
-		case KBD_ALTGR:
-			altgr_down = kbd_status.breakseen ? 0 : 1;
-			break;
+	case KBD_ALTGR:
+		altgr_down = kbd_status.breakseen ? 0 : 1;
+		break;
 
-		case KBD_CTL:
-			ctrl_down = kbd_status.breakseen ? 0 : 1;
-			break;
+	case KBD_CTL:
+		ctrl_down = kbd_status.breakseen ? 0 : 1;
+		break;
 
-		case KBD_NONE:
-		default:
-			break;			/* deliver a key */
+	case KBD_NONE:
+	default:
+		break;			/* deliver a key */
 	}
 
-	if(kbd_status.breakseen)
-	{
+	if (kbd_status.breakseen) {
 		key |= 0x80;
 		kbd_status.breakseen = 0;
 		kbd_lastkey = 0; /* -hv- I know this is a bug with */
@@ -1742,7 +1340,7 @@ scroll_reset:
 
 	cp = xlatkey2ascii(key);	/* have a key */
 
-	if(cp == NULL && !noblock)
+	if (cp == NULL && !noblock)
 		goto loop;
 
 	return cp;
@@ -1768,11 +1366,10 @@ rmkeydef(int key)
 {
 	register Ovl_tbl *ref;
 
-	if(key==0 || key > MAXKEYNUM)
+	if (key == 0 || key > MAXKEYNUM)
 		return EINVAL;
 
-	if(key2ascii[key].type & KBD_OVERLOAD)
-	{
+	if (key2ascii[key].type & KBD_OVERLOAD) {
 		ref = &ovltbl[key2ascii[key].ovlindex];
 		ref->keynum = 0;
 		ref->type = 0;
@@ -1793,7 +1390,7 @@ setkeydef(Ovl_tbl *data)
 {
 	int i;
 
-	if( data->keynum > MAXKEYNUM		 ||
+	if ( data->keynum > MAXKEYNUM		 ||
 	    (data->type & KBD_MASK) == KBD_BREAK ||
 	    (data->type & KBD_MASK) > KBD_SHFTLOCK)
 		return EINVAL;
@@ -1812,17 +1409,14 @@ setkeydef(Ovl_tbl *data)
 
 	/* if key already overloaded, use that slot else find free slot */
 
-	if(key2ascii[data->keynum].type & KBD_OVERLOAD)
-	{
+	if (key2ascii[data->keynum].type & KBD_OVERLOAD)
 		i = key2ascii[data->keynum].ovlindex;
-	}
-	else
-	{
-		for(i=0; i<OVLTBL_SIZE; i++)
-			if(ovltbl[i].keynum==0)
+	else {
+		for (i = 0; i < OVLTBL_SIZE; i++)
+			if (ovltbl[i].keynum==0)
 				break;
 
-		if(i==OVLTBL_SIZE)
+		if (i == OVLTBL_SIZE)
 			return ENOSPC;	/* no space, abuse of ENOSPC(!) */
 	}
 
@@ -1838,97 +1432,69 @@ setkeydef(Ovl_tbl *data)
  *	keyboard ioctl's entry
  *---------------------------------------------------------------------------*/
 int
-kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
+kbdioctl(Dev_t dev, int cmd, caddr_t data, int flag)
 {
 	int key;
 
-	switch(cmd)
-	{
-		case KBDRESET:
-			doreset();
-			ovlinit(1);
-			settpmrate(KBD_TPD500|KBD_TPM100);
-			setlockkeys(0);
-			break;
+	switch (cmd) {
+	case KBDRESET:
+		doreset();
+		ovlinit(1);
+		settpmrate(KBD_TPD500 | KBD_TPM100);
+		setlockkeys(0);
+		break;
 
-		case KBDGTPMAT:
-			*(int *)data = tpmrate;
-			break;
+	case KBDGTPMAT:
+		*(int *)data = tpmrate;
+		break;
 
-		case KBDSTPMAT:
-			settpmrate(*(int *)data);
-			break;
+	case KBDSTPMAT:
+		settpmrate(*(int *)data);
+		break;
 
-		case KBDGREPSW:
-			*(int *)data = kbrepflag;
-			break;
+	case KBDGREPSW:
+		*(int *)data = kbrepflag;
+		break;
 
-		case KBDSREPSW:
-			kbrepflag = (*(int *)data) & 1;
-			break;
+	case KBDSREPSW:
+		kbrepflag = (*(int *)data) & 1;
+		break;
 
-		case KBDGLOCK:
-			*(int *)data = ( (vsp->scroll_lock) |
-					 (vsp->num_lock * 2) |
-					 (vsp->caps_lock * 4));
-			break;
+	case KBDGLOCK:
+		*(int *)data = ( (vsp->scroll_lock) | (vsp->num_lock * 2) |
+				 (vsp->caps_lock * 4));
+		break;
 
-		case KBDSLOCK:
-			setlockkeys(*(int *)data);
-			break;
+	case KBDSLOCK:
+		setlockkeys(*(int *)data);
+		break;
 
-		case KBDGCKEY:
-			key = ((Ovl_tbl *)data)->keynum;
-			return getckeydef(key,(Ovl_tbl *)data);
+	case KBDGCKEY:
+		key = ((Ovl_tbl *)data)->keynum;
+		return getckeydef(key,(Ovl_tbl *)data);
 
-		case KBDSCKEY:
-			key = ((Ovl_tbl *)data)->keynum;
-			return setkeydef((Ovl_tbl *)data);
+	case KBDSCKEY:
+		key = ((Ovl_tbl *)data)->keynum;
+		return setkeydef((Ovl_tbl *)data);
 
-		case KBDGOKEY:
-			key = ((Ovl_tbl *)data)->keynum;
-			return getokeydef(key,(Ovl_tbl *)data);
+	case KBDGOKEY:
+		key = ((Ovl_tbl *)data)->keynum;
+		return getokeydef(key,(Ovl_tbl *)data);
 
-		case KBDRMKEY:
-			key = *(int *)data;
-			return rmkeydef(key);
+	case KBDRMKEY:
+		key = *(int *)data;
+		return rmkeydef(key);
 
-		case KBDDEFAULT:
-			ovlinit(1);
-			break;
+	case KBDDEFAULT:
+		ovlinit(1);
+		break;
 
-		default:
-			/* proceed with vga ioctls */
-			return -1;
+	default:
+		/* proceed with vga ioctls */
+		return -1;
 	}
 	return 0;
 }
-
-#if PCVT_EMU_MOUSE
-/*--------------------------------------------------------------------------*
- *	mouse emulator ioctl
- *--------------------------------------------------------------------------*/
-int
-mouse_ioctl(Dev_t dev, int cmd, caddr_t data)
-{
-	struct mousedefs *def = (struct mousedefs *)data;
-
-	switch(cmd)
-	{
-		case KBDMOUSEGET:
-			*def = mousedef;
-			break;
-
-		case KBDMOUSESET:
-			mousedef = *def;
-			break;
-
-		default:
-			return -1;
-	}
-	return 0;
-}
-#endif	/* PCVT_EMU_MOUSE */
 
 /*---------------------------------------------------------------------------*
  *	convert ISO-8859 style keycode into IBM 437
@@ -1936,7 +1502,7 @@ mouse_ioctl(Dev_t dev, int cmd, caddr_t data)
 static inline u_char
 iso2ibm(u_char c)
 {
-	if(c < 0x80)
+	if (c < 0x80)
 		return c;
 	return iso2ibm437[c - 0x80];
 }
@@ -1953,20 +1519,19 @@ get_usl_keymap(keymap_t *map)
 
 	map->n_keys = 0x59;	/* that many keys we know about */
 
-	for(i = 1; i < N_KEYNUMS; i++)
-	{
+	for(i = 1; i < N_KEYNUMS; i++) {
 		Ovl_tbl kdef;
 		u_char c;
 		int j;
 		int idx = key2scan1[i];
 
-		if(idx == 0 || idx >= map->n_keys)
+		if (idx == 0 || idx >= map->n_keys)
 			continue;
 
 		getckeydef(i, &kdef);
 		kdef.type &= KBD_MASK;
-		switch(kdef.type)
-		{
+
+		switch (kdef.type) {
 		case KBD_ASCII:
 		case KBD_RETURN:
 			map->key[idx].map[0] = iso2ibm(kdef.unshift[0]);
@@ -1983,35 +1548,41 @@ get_usl_keymap(keymap_t *map)
 			 * this should at least work for ISO8859 letters,
 			 * but also for (e.g.) russian KOI-8 style
 			 */
-			if((c & 0x7f) >= 0x40)
+			if ((c & 0x7f) >= 0x40)
 				map->key[idx].map[5] = iso2ibm(c ^ 0x20);
 			break;
 
 		case KBD_FUNC:
 			/* we are only interested in F1 thru F12 here */
-			if(i >= 112 && i <= 123) {
+			if (i >= 112 && i <= 123) {
 				map->key[idx].map[0] = i - 112 + 27;
 				map->key[idx].spcl = 0x80;
 			}
 			break;
 
 		case KBD_SHIFT:
-			c = i == 44? 2 /* lSh */: 3 /* rSh */; goto special;
+			c = i == 44 ? 2 /* lSh */ : 3 /* rSh */;
+			goto special;
 
 		case KBD_CAPS:
-			c = 4; goto special;
+			c = 4;
+			goto special;
 
 		case KBD_NUM:
-			c = 5; goto special;
+			c = 5;
+			goto special;
 
 		case KBD_SCROLL:
-			c = 6; goto special;
+			c = 6;
+			goto special;
 
 		case KBD_META:
-			c = 7; goto special;
+			c = 7;
+			goto special;
 
 		case KBD_CTL:
-			c = 9; goto special;
+			c = 9;
+			goto special;
 		special:
 			for(j = 0; j < NUM_STATES; j++)
 				map->key[idx].map[j] = c;
@@ -2052,20 +1623,10 @@ vt_keyappl(struct video_state *svsp)
 static void
 fkey1(void)
 {
-	if(!meta_down)
-	{
-		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))
-			toggl_columns(vsp);
-		else
-			more_chars = (u_char *)"\033[17~";	/* F6 */
-	}
+	if (!meta_down)
+		more_chars = (u_char *)"\033[17~";	/* F6 */
 	else
-	{
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[26~";	/* F14 */
-	}
+		more_chars = (u_char *)"\033[26~";	/* F14 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2074,20 +1635,10 @@ fkey1(void)
 static void
 fkey2(void)
 {
-	if(!meta_down)
-	{
-		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))
-			vt_ris(vsp);
-		else
-			more_chars = (u_char *)"\033[18~";	/* F7 */
-	}
+	if (!meta_down)
+		more_chars = (u_char *)"\033[18~";	/* F7 */
 	else
-	{
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[28~";	/* HELP */
-	}
+		more_chars = (u_char *)"\033[28~";	/* HELP */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2096,20 +1647,10 @@ fkey2(void)
 static void
 fkey3(void)
 {
-	if(!meta_down)
-	{
-		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))
-			toggl_24l(vsp);
-		else
-			more_chars = (u_char *)"\033[19~";	/* F8 */
-	}
+	if (!meta_down)
+		more_chars = (u_char *)"\033[19~";	/* F8 */
 	else
-	{
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[29~";	/* DO */
-	}
+		more_chars = (u_char *)"\033[29~";	/* DO */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2118,28 +1659,10 @@ fkey3(void)
 static void
 fkey4(void)
 {
-	if(!meta_down)
-	{
-
-#if PCVT_SHOWKEYS
-		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))
-			toggl_kbddbg(vsp);
-		else
-			more_chars = (u_char *)"\033[20~";	/* F9 */
-#else
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[20~";	/* F9 */
-#endif /* PCVT_SHOWKEYS */
-
-	}
+	if (!meta_down)
+		more_chars = (u_char *)"\033[20~";	/* F9 */
 	else
-	{
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[31~";	/* F17 */
-	}
+		more_chars = (u_char *)"\033[31~";	/* F17 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2148,20 +1671,10 @@ fkey4(void)
 static void
 fkey5(void)
 {
-	if(!meta_down)
-	{
-		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))
-			toggl_bell(vsp);
-		else
-			more_chars = (u_char *)"\033[21~";	/* F10 */
-	}
+	if (!meta_down)
+		more_chars = (u_char *)"\033[21~";	/* F10 */
 	else
-	{
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[32~";	/* F18 */
-	}
+		more_chars = (u_char *)"\033[32~";	/* F18 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2170,20 +1683,10 @@ fkey5(void)
 static void
 fkey6(void)
 {
-	if(!meta_down)
-	{
-		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))
-			toggl_sevenbit(vsp);
-		else
-			more_chars = (u_char *)"\033[23~";	/* F11 */
-	}
+	if (!meta_down)
+		more_chars = (u_char *)"\033[23~";	/* F11 */
 	else
-	{
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[33~";	/* F19 */
-	}
+		more_chars = (u_char *)"\033[33~";	/* F19 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2192,20 +1695,10 @@ fkey6(void)
 static void
 fkey7(void)
 {
-	if(!meta_down)
-	{
-		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))
-			toggl_dspf(vsp);
-		else
-			more_chars = (u_char *)"\033[24~";	/* F12 */
-	}
+	if (!meta_down)
+		more_chars = (u_char *)"\033[24~";	/* F12 */
 	else
-	{
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[34~";	/* F20 */
-	}
+		more_chars = (u_char *)"\033[34~";	/* F20 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2214,20 +1707,10 @@ fkey7(void)
 static void
 fkey8(void)
 {
-	if(!meta_down)
-	{
-		if((vsp->vt_pure_mode == M_HPVT)
-		   && (vsp->which_fkl == SYS_FKL))
-			toggl_awm(vsp);
-		else
-			more_chars = (u_char *)"\033[25~";	/* F13 */
-	}
+	if (!meta_down)
+		more_chars = (u_char *)"\033[25~";	/* F13 */
 	else
-	{
-		if(vsp->vt_pure_mode == M_PUREVT
-		   || (vsp->which_fkl == USR_FKL))
-			more_chars = (u_char *)"\033[35~";	/* F21 ??!! */
-	}
+		more_chars = (u_char *)"\033[35~";	/* F21 ??!! */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2236,20 +1719,10 @@ fkey8(void)
 static void
 fkey9(void)
 {
-	if(meta_down)
-	{
-		if(vsp->vt_pure_mode == M_PUREVT)
-			return;
-
-		if(vsp->labels_on)	/* toggle label display on/off */
-			fkl_off(vsp);
-		else
-			fkl_on(vsp);
-	}
+	if (meta_down)
+		return;
 	else
-	{
 		do_vgapage(0);
-	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -2258,20 +1731,8 @@ fkey9(void)
 static void
 fkey10(void)
 {
-	if(meta_down)
-	{
-		if(vsp->vt_pure_mode != M_PUREVT && vsp->labels_on)
-		{
-			if(vsp->which_fkl == USR_FKL)
-				sw_sfkl(vsp);
-			else if(vsp->which_fkl == SYS_FKL)
-				sw_ufkl(vsp);
-		}
-	}
-	else
-	{
+	if (!meta_down)
 		do_vgapage(1);
-	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -2280,17 +1741,7 @@ fkey10(void)
 static void
 fkey11(void)
 {
-	if(meta_down)
-	{
-		if(vsp->vt_pure_mode == M_PUREVT)
-			set_emulation_mode(vsp, M_HPVT);
-		else if(vsp->vt_pure_mode == M_HPVT)
-			set_emulation_mode(vsp, M_PUREVT);
-	}
-	else
-	{
-		do_vgapage(2);
-	}
+	do_vgapage(2);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2299,15 +1750,13 @@ fkey11(void)
 static void
 fkey12(void)
 {
-	if(meta_down)
-	{
-		if(current_video_screen + 1 > totalscreens-1)
+	if (meta_down) {
+		if (current_video_screen + 1 > totalscreens-1)
 			do_vgapage(0);
 		else
 			do_vgapage(current_video_screen + 1);
 	}
-	else
-	{
+	else {
 		do_vgapage(3);
 	}
 }
@@ -2318,15 +1767,13 @@ fkey12(void)
 static void
 sfkey1(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[0])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[0])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[0]]);
 	}
-	else
-	{
-		if(vsp->ukt.length[9])	/* entry available ? */
+	else {
+		if (vsp->ukt.length[9])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[9]]);
 	}
@@ -2338,15 +1785,13 @@ sfkey1(void)
 static void
 sfkey2(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[1])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[1])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[1]]);
 	}
-	else
-	{
-		if(vsp->ukt.length[11])	/* entry available ? */
+	else {
+		if (vsp->ukt.length[11])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[11]]);
 	}
@@ -2358,15 +1803,13 @@ sfkey2(void)
 static void
 sfkey3(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[2])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[2])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[2]]);
 	}
-	else
-	{
-		if(vsp->ukt.length[12])	/* entry available ? */
+	else {
+		if (vsp->ukt.length[12])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[12]]);
 	}
@@ -2378,15 +1821,13 @@ sfkey3(void)
 static void
 sfkey4(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[3])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[3])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[3]]);
 	}
-	else
-	{
-		if(vsp->ukt.length[13])	/* entry available ? */
+	else {
+		if (vsp->ukt.length[13])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[13]]);
 	}
@@ -2398,15 +1839,13 @@ sfkey4(void)
 static void
 sfkey5(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[4])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[4])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[4]]);
 	}
-	else
-	{
-		if(vsp->ukt.length[14])	/* entry available ? */
+	else {
+		if (vsp->ukt.length[14])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[14]]);
 	}
@@ -2418,15 +1857,13 @@ sfkey5(void)
 static void
 sfkey6(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[6])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[6])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[6]]);
 	}
-	else
-	{
-		if(vsp->ukt.length[15])	/* entry available ? */
+	else {
+		if (vsp->ukt.length[15])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[15]]);
 	}
@@ -2438,15 +1875,13 @@ sfkey6(void)
 static void
 sfkey7(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[7])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[7])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[7]]);
 	}
-	else
-	{
-		if(vsp->ukt.length[16])	/* entry available ? */
+	else {
+		if (vsp->ukt.length[16])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[16]]);
 	}
@@ -2458,15 +1893,13 @@ sfkey7(void)
 static void
 sfkey8(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[8])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[8])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[8]]);
 	}
-	else
-	{
-		if(vsp->ukt.length[17])	/* entry available ? */
+	else {
+		if (vsp->ukt.length[17])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[17]]);
 	}
@@ -2509,7 +1942,7 @@ sfkey12(void)
 static void
 cfkey1(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(0);
 }
 
@@ -2519,7 +1952,7 @@ cfkey1(void)
 static void
 cfkey2(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(1);
 }
 
@@ -2529,7 +1962,7 @@ cfkey2(void)
 static void
 cfkey3(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(2);
 }
 
@@ -2539,7 +1972,7 @@ cfkey3(void)
 static void
 cfkey4(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(3);
 }
 
@@ -2549,7 +1982,7 @@ cfkey4(void)
 static void
 cfkey5(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(4);
 }
 
@@ -2559,7 +1992,7 @@ cfkey5(void)
 static void
 cfkey6(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(5);
 }
 
@@ -2569,7 +2002,7 @@ cfkey6(void)
 static void
 cfkey7(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(6);
 }
 
@@ -2579,7 +2012,7 @@ cfkey7(void)
 static void
 cfkey8(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(7);
 }
 
@@ -2589,7 +2022,7 @@ cfkey8(void)
 static void
 cfkey9(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(8);
 }
 
@@ -2599,7 +2032,7 @@ cfkey9(void)
 static void
 cfkey10(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(9);
 }
 
@@ -2609,7 +2042,7 @@ cfkey10(void)
 static void
 cfkey11(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(10);
 }
 
@@ -2619,7 +2052,7 @@ cfkey11(void)
 static void
 cfkey12(void)
 {
-	if(meta_down)
+	if (meta_down)
 		do_vgapage(11);
 }
 
@@ -2631,7 +2064,7 @@ cfkey12(void)
 static void
 fkey1(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[23~"; /* F11 */
 	else
 		do_vgapage(0);
@@ -2643,7 +2076,7 @@ fkey1(void)
 static void
 fkey2(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[24~"; /* F12 */
 	else
 		do_vgapage(1);
@@ -2655,7 +2088,7 @@ fkey2(void)
 static void
 fkey3(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[25~"; /* F13 */
 	else
 		do_vgapage(2);
@@ -2667,7 +2100,7 @@ fkey3(void)
 static void
 fkey4(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[26~"; /* F14 */
 	else
 		do_vgapage(3);
@@ -2679,11 +2112,10 @@ fkey4(void)
 static void
 fkey5(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[28~"; /* Help */
-	else
-	{
-		if((current_video_screen + 1) > totalscreens-1)
+	else {
+		if ((current_video_screen + 1) > totalscreens-1)
 			do_vgapage(0);
 		else
 			do_vgapage(current_video_screen + 1);
@@ -2696,7 +2128,7 @@ fkey5(void)
 static void
 fkey6(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[29~"; /* DO */
 	else
 		more_chars = (u_char *)"\033[17~"; /* F6 */
@@ -2708,7 +2140,7 @@ fkey6(void)
 static void
 fkey7(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[31~"; /* F17 */
 	else
 		more_chars = (u_char *)"\033[18~"; /* F7 */
@@ -2720,7 +2152,7 @@ fkey7(void)
 static void
 fkey8(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[32~"; /* F18 */
 	else
 		more_chars = (u_char *)"\033[19~"; /* F8 */
@@ -2732,7 +2164,7 @@ fkey8(void)
 static void
 fkey9(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[33~"; /* F19 */
 	else
 		more_chars = (u_char *)"\033[20~"; /* F9 */
@@ -2744,7 +2176,7 @@ fkey9(void)
 static void
 fkey10(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\033[34~"; /* F20 */
 	else
 		more_chars = (u_char *)"\033[21~"; /* F10 */
@@ -2756,7 +2188,7 @@ fkey10(void)
 static void
 fkey11(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\0x8FP"; /* PF1 */
 	else
 		more_chars = (u_char *)"\033[23~"; /* F11 */
@@ -2768,7 +2200,7 @@ fkey11(void)
 static void
 fkey12(void)
 {
-	if(meta_down)
+	if (meta_down)
 		more_chars = (u_char *)"\0x8FQ"; /* PF2 */
 	else
 		more_chars = (u_char *)"\033[24~"; /* F12 */
@@ -2780,18 +2212,15 @@ fkey12(void)
 static void
 sfkey1(void)
 {
-	if(meta_down)
-	{
-		if(vsp->ukt.length[6])	/* entry available ? */
+	if (meta_down) {
+		if (vsp->ukt.length[6])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[6]]);
 		else
 			more_chars = (u_char *)"\033[23~"; /* F11 */
 	}
 	else
-	{
 		do_vgapage(4);
-	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -2800,18 +2229,15 @@ sfkey1(void)
 static void
 sfkey2(void)
 {
-	if(meta_down)
-	{
-		if(vsp->ukt.length[7])	/* entry available ? */
+	if (meta_down) {
+		if (vsp->ukt.length[7])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[7]]);
 		else
 			more_chars = (u_char *)"\033[24~"; /* F12 */
 	}
 	else
-	{
 		do_vgapage(5);
-	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -2820,18 +2246,15 @@ sfkey2(void)
 static void
 sfkey3(void)
 {
-	if(meta_down)
-	{
-		if(vsp->ukt.length[8])	/* entry available ? */
+	if (meta_down) {
+		if (vsp->ukt.length[8])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[8]]);
 		else
 			more_chars = (u_char *)"\033[25~"; /* F13 */
 	}
 	else
-	{
 		do_vgapage(6);
-	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -2840,18 +2263,15 @@ sfkey3(void)
 static void
 sfkey4(void)
 {
-	if(meta_down)
-	{
-		if(vsp->ukt.length[9])	/* entry available ? */
+	if (meta_down) {
+		if (vsp->ukt.length[9])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[9]]);
 		else
 			more_chars = (u_char *)"\033[26~"; /* F14 */
 	}
 	else
-	{
 		do_vgapage(7);
-	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -2860,17 +2280,15 @@ sfkey4(void)
 static void
 sfkey5(void)
 {
-	if(meta_down)
-	{
-		if(vsp->ukt.length[11])	/* entry available ? */
+	if (meta_down) {
+		if (vsp->ukt.length[11])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[11]]);
 		else
 			more_chars = (u_char *)"\033[28~"; /* Help */
 	}
-	else
-	{
-		if(current_video_screen <= 0)
+	else {
+		if (current_video_screen <= 0)
 			do_vgapage(totalscreens-1);
 		else
 			do_vgapage(current_video_screen - 1);
@@ -2883,15 +2301,14 @@ sfkey5(void)
 static void
 sfkey6(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[0])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[0])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[0]]);
 		else
 			more_chars = (u_char *)"\033[17~"; /* F6 */
 	}
-	else if(vsp->ukt.length[12])	/* entry available ? */
+	else if (vsp->ukt.length[12])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[12]]);
 	     else
@@ -2904,15 +2321,14 @@ sfkey6(void)
 static void
 sfkey7(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[1])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[1])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[1]]);
 		else
 			more_chars = (u_char *)"\033[18~"; /* F7 */
 	}
-	else if(vsp->ukt.length[14])	/* entry available ? */
+	else if (vsp->ukt.length[14])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[14]]);
 	     else
@@ -2925,15 +2341,14 @@ sfkey7(void)
 static void
 sfkey8(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[2])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[2])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[2]]);
 		else
 			more_chars = (u_char *)"\033[19~"; /* F8 */
 	}
-	else if(vsp->ukt.length[14])	/* entry available ? */
+	else if (vsp->ukt.length[14])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[15]]);
 	     else
@@ -2946,15 +2361,14 @@ sfkey8(void)
 static void
 sfkey9(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[3])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[3])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[3]]);
 		else
 			more_chars = (u_char *)"\033[20~"; /* F9 */
 	}
-	else if(vsp->ukt.length[16])	/* entry available ? */
+	else if (vsp->ukt.length[16])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[16]]);
 	     else
@@ -2967,15 +2381,14 @@ sfkey9(void)
 static void
 sfkey10(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[4])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[4])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[4]]);
 		else
 			more_chars = (u_char *)"\033[21~"; /* F10 */
 	}
-	else if(vsp->ukt.length[17])	/* entry available ? */
+	else if (vsp->ukt.length[17])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[17]]);
 	     else
@@ -2988,9 +2401,8 @@ sfkey10(void)
 static void
 sfkey11(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[6])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[6])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[6]]);
 		else
@@ -3004,148 +2416,14 @@ sfkey11(void)
 static void
 sfkey12(void)
 {
-	if(!meta_down)
-	{
-		if(vsp->ukt.length[7])	/* entry available ? */
+	if (!meta_down) {
+		if (vsp->ukt.length[7])	/* entry available ? */
 			more_chars = (u_char *)
 				&(vsp->udkbuf[vsp->ukt.first[7]]);
 		else
 			more_chars = (u_char *)"\033[24~"; /* F12 */
 	}
 }
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 1
- *---------------------------------------------------------------------------*/
-static void
-cfkey1(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_columns(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 2
- *---------------------------------------------------------------------------*/
-static void
-cfkey2(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		vt_ris(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 3
- *---------------------------------------------------------------------------*/
-static void
-cfkey3(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_24l(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 4
- *---------------------------------------------------------------------------*/
-static void
-cfkey4(void)
-{
-
-#if PCVT_SHOWKEYS
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_kbddbg(vsp);
-#endif /* PCVT_SHOWKEYS */
-
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 5
- *---------------------------------------------------------------------------*/
-static void
-cfkey5(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_bell(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 6
- *---------------------------------------------------------------------------*/
-static void
-cfkey6(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_sevenbit(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 7
- *---------------------------------------------------------------------------*/
-static void
-cfkey7(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_dspf(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 8
- *---------------------------------------------------------------------------*/
-static void
-cfkey8(void)
-{
-	if(vsp->which_fkl == SYS_FKL)
-		toggl_awm(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 9
- *---------------------------------------------------------------------------*/
-static void
-cfkey9(void)
-{
-	if(vsp->labels_on)	/* toggle label display on/off */
-	        fkl_off(vsp);
-	else
-	        fkl_on(vsp);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 10
- *---------------------------------------------------------------------------*/
-static void
-cfkey10(void)
-{
-	if(vsp->labels_on)	/* toggle user/system fkey labels */
-	{
-		if(vsp->which_fkl == USR_FKL)
-			sw_sfkl(vsp);
-		else if(vsp->which_fkl == SYS_FKL)
-			sw_ufkl(vsp);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 11
- *---------------------------------------------------------------------------*/
-static void
-cfkey11(void)
-{
-	if(vsp->vt_pure_mode == M_PUREVT)
-	        set_emulation_mode(vsp, M_HPVT);
-	else if(vsp->vt_pure_mode == M_HPVT)
-	        set_emulation_mode(vsp, M_PUREVT);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 12
- *---------------------------------------------------------------------------*/
-static void
-cfkey12(void)
-{
-}
-
-#endif	/* PCVT_VT220KEYB */
 
 #endif	/* NVT > 0 */
 
@@ -3162,8 +2440,7 @@ scrollback_save_screen(void)
 
 	scrnsv_size = s;
 
-	if (!(scrollback_savedscreen = (u_short *)malloc(s, M_TEMP, M_NOWAIT)))
-	{
+	if (!(scrollback_savedscreen = (u_short *)malloc(s, M_TEMP, M_NOWAIT))){
 		splx(x);
 		return;
 	}

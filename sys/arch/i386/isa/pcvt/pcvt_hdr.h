@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.28 1999/11/20 18:52:00 espie Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.29 1999/11/25 20:24:21 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -452,19 +452,6 @@
 #define VGA_PMSK	0x3F		/* palette mask, 64 distinct values */
 #define NVGAPEL 	256		/* number of palette entries */
 
-/*---------------------------------------------------------------------------*
- *	function key labels
- *---------------------------------------------------------------------------*/
-
-#define LABEL_LEN	9		/* length of one label */
-#define LABEL_MID	8		/* mid-part (row/col)	*/
-
-#define LABEL_ROWH	((4*LABEL_LEN)+1)
-#define LABEL_ROWL	((4*LABEL_LEN)+2)
-#define LABEL_COLU	((4*LABEL_LEN)+4)
-#define LABEL_COLH	((4*LABEL_LEN)+5)
-#define LABEL_COLL	((4*LABEL_LEN)+6)
-
 /* tab setting */
 
 #define MAXTAB 132		/* no of possible tab stops */
@@ -513,30 +500,6 @@
 #define	MAXUDKEYS	18	/* plus holes .. */
 #define DSCS_LENGTH	3	/* descriptor length */
 #define MAXSIXEL	8	/* sixels forever ! */
-
-/* sub-states for HP-terminal emulator */
-
-#define SHP_INIT	0
-
-/* esc & f family */
-
-#define SHP_AND_F	1
-#define SHP_AND_Fa	2
-#define SHP_AND_Fak	3
-#define SHP_AND_Fak1	4
-#define SHP_AND_Fakd	5
-#define SHP_AND_FakdL	6
-#define SHP_AND_FakdLl	7
-#define SHP_AND_FakdLls	8
-
-/* esc & j family */
-
-#define SHP_AND_J	9
-#define SHP_AND_JL	10
-
-/* esc & every-thing-else */
-
-#define SHP_AND_ETE	11
 
 /* additionals for function key labels */
 
@@ -598,11 +561,6 @@
 #define D_G2_96		5	/* designated as G2 for 96-char charsets */
 #define D_G3_96		6	/* designated as G3 for 96-char charsets */
 
-/* which fkey-labels */
-
-#define SYS_FKL		0	/* in hp mode, sys-fkls are active */
-#define USR_FKL		1	/* in hp mode, user-fkls are active */
-
 /* initial default scrollback buffer size (in pages) */
 #define SCROLLBACK_PAGES	8
 
@@ -623,15 +581,7 @@ EXTERN	u_char	pcdisp_special;		/* are we printing special chars */
 EXTERN	u_short	kern_attr;		/* kernel messages char attributes */
 EXTERN	u_short	user_attr;		/* character attributes */
 
-#if !PCVT_EMU_MOUSE
-
 EXTERN struct tty *pc_tty[PCVT_NSCREENS];
-
-#else /* PCVT_EMU_MOUSE */
-
-EXTERN struct tty *pc_tty[PCVT_NSCREENS + 1];
-
-#endif /* PCVT_EMU_MOUSE */
 
 struct sixels {
 	u_char lower[MAXSIXEL];		/* lower half of char */
@@ -694,14 +644,9 @@ typedef struct video_state {
 	u_short	*sc_GL;			/* save GL ptr */
 	u_short	*sc_GR;			/* save GR ptr */
 	u_char	sc_sel;			/* selective erase state */
-	u_char	ufkl[8][17];		/* user fkey-labels */
-	u_char	sfkl[8][17];		/* system fkey-labels */
-	u_char	labels_on;		/* display fkey labels etc. on/off */
-	u_char	which_fkl;		/* which fkey labels are active */
 	char	tab_stops[MAXTAB]; 	/* table of active tab stops */
 	u_char	parmi;			/* parameter index */
 	u_char	parms[MAXPARMS];	/* parameter array */
-	u_char	hp_state;		/* hp escape sequence state machine */
 	u_char	attribute;		/* attribute normal, tx only, local */
 	u_char	key;			/* fkey label no */
 	u_char	l_len;			/* buffer length's */
@@ -712,7 +657,6 @@ typedef struct video_state {
 	u_char	s_buf[MAX_STRING+1];
 	u_char	m_buf[MAX_STATUS+1];
 	u_char	openf;			/* we are opened ! */
-	u_char	vt_pure_mode;		/* no fkey labels, row/col, status */
 	u_char	cursor_start;		/* Start of cursor */
 	u_char	cursor_end;		/* End of cursor */
 	u_char	cursor_on;		/* cursor switched on */
@@ -787,17 +731,6 @@ struct vga_char_state {
 
 EXTERN struct vga_char_state vgacs[NVGAFONTS];	/* Character set states */
 
-#if PCVT_EMU_MOUSE
-struct mousestat {
-	struct timeval lastmove; /* last time the pointer moved */
-	u_char opened;		 /* someone would like to use a mouse */
-	u_char minor;		 /* minor device number */
-	u_char buttons;		 /* current "buttons" pressed */
-	u_char extendedseen;	 /* 0xe0 has been seen, do not use next key */
-	u_char breakseen;	 /* key break has been seen for a sticky btn */
-};
-#endif /* PCVT_EMU_MOUSE */
-
 #ifdef WAS_EXTERN
 
 struct vt_softc {
@@ -833,11 +766,6 @@ u_short *Crtat;			/* screen start address */
 u_short *Scrollbuffer;		/* scrollback buffer */
 u_short scrollback_pages;	/* size of scrollback buffer (pages) */
 
-#if PCVT_EMU_MOUSE
-struct mousestat	mouse = {{0}};
-struct mousedefs	mousedef = {0x3b, 0x3c, 0x3d, 0,     250000};
-#endif /* PCVT_EMU_MOUSE */	/*  F1,   F2,   F3,   false, 0.25 sec */
-
 video_state *vsp 		= &vs[0]; /* ptr to current screen parms */
 
 int	vt_switch_pending	= 0; 		/* if > 0, a vt switch is */
@@ -861,10 +789,6 @@ u_char	chargen_access		= 0;		/* synchronize access */
 u_char	keyboard_type		= KB_UNKNOWN;	/* type of keyboard */
 u_char	keyboard_is_initialized = 0;		/* for ddb sanity */
 u_char	kbd_polling		= 0;		/* keyboard is being polled */
-
-#if PCVT_SHOWKEYS
-u_char	keyboard_show		= 0;		/* normal display */
-#endif /* PCVT_SHOWKEYS */
 
 u_char	cursor_pos_valid	= 0;		/* sput left a valid position*/
 
@@ -961,11 +885,6 @@ extern u_char		vga_type;
 extern struct tty	*pcconsp;
 extern video_state	*vsp;
 
-#if PCVT_EMU_MOUSE
-extern struct mousestat mouse;
-extern struct mousedefs mousedef;
-#endif /* PCVT_EMU_MOUSE */
-
 extern int		vt_switch_pending;
 extern u_int		addr_6845;
 extern u_short		*Crtat;
@@ -992,10 +911,6 @@ extern u_char		kbd_polling;
 
 extern u_short		*Scrollbuffer;
 extern u_short		scrollback_pages;
-
-#if PCVT_SHOWKEYS
-extern u_char		keyboard_show;
-#endif /* PCVT_SHOWKEYS */
 
 u_char	cursor_pos_valid;
 
@@ -1033,7 +948,7 @@ int	pcopen ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcclose ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcread ( Dev_t dev, struct uio *uio, int flag );
 int	pcwrite ( Dev_t dev, struct uio *uio, int flag );
-int	pcioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p );
+int	pcioctl ( Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p );
 int	pcmmap ( Dev_t dev, int offset, int nprot );
 
 struct tty *
@@ -1049,15 +964,11 @@ void	pcstart ( struct tty *tp );
 void	pcstop ( struct tty *tp, int flag );
 
 void	switch_screen ( int n, int oldgrafx, int newgrafx );
-int	usl_vt_ioctl (Dev_t dev, u_long cmd,caddr_t data,int flag,struct proc *);
+int	usl_vt_ioctl (Dev_t dev,int cmd,caddr_t data,int flag,struct proc *);
 int	vt_activate ( int newscreen );
 int	vgapage ( int n );
 void	get_usl_keymap( keymap_t *map );
 void	reset_usl_modes (struct video_state *vsx);
-
-#if PCVT_EMU_MOUSE
-int	mouse_ioctl ( Dev_t dev, int cmd, caddr_t data );
-#endif /*  PCVT_EMU_MOUSE */
 
 #if PCVT_SCREENSAVER
 void 	pcvt_scrnsv_reset ( void );
@@ -1069,16 +980,12 @@ void	clr_parms ( struct video_state *svsp );
 void	cons_highlight ( void );
 void	cons_normal ( void );
 int	egavga_test ( void );
-void	fkl_off ( struct video_state *svsp );
-void	fkl_on ( struct video_state *svsp );
 struct tty *get_pccons ( Dev_t dev );
-void	init_sfkl ( struct video_state *svsp );
-void	init_ufkl ( struct video_state *svsp );
 int	kbd_cmd ( int val );
 void	kbd_code_init ( void );
 void	kbd_code_init1 ( void );
 void	kbd_setmode(int mode);
-int	kbdioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
+int	kbdioctl ( Dev_t dev, int cmd, caddr_t data, int flag );
 void	loadchar ( int fontset, int character, int char_scanlines,
 		   u_char *char_table );
 void	mda2egaorvga ( void );
@@ -1086,22 +993,17 @@ void	roll_up ( struct video_state *svsp, int n );
 void	select_vga_charset ( int vga_charset );
 void	set_2ndcharset ( void );
 void	set_charset ( struct video_state *svsp, int curvgacs );
-void	set_emulation_mode ( struct video_state *svsp, int mode );
 void	set_screen_size ( struct video_state *svsp, int size );
 void	reallocate_scrollbuffer ( struct video_state *svsp, int pages );
 u_char *sgetc ( int noblock );
 void	sixel_vga ( struct sixels *charsixel, u_char *charvga );
 void	sput ( u_char *s, U_char attrib, int len, int page );
 void	sw_cursor ( int onoff );
-void	sw_sfkl ( struct video_state *svsp );
-void	sw_ufkl ( struct video_state *svsp );
-void	swritefkl ( int num, u_char *string, struct video_state *svsp );
 void	toggl_awm ( struct video_state *svsp );
 void	toggl_bell ( struct video_state *svsp );
 void	toggl_columns ( struct video_state *svsp );
 void	toggl_dspf ( struct video_state *svsp );
 void	toggl_sevenbit ( struct video_state *svsp );
-void 	update_hp ( struct video_state *svsp );
 void	update_led ( void );
 void	vga10_vga10 ( u_char *invga, u_char *outvga );
 void	vga10_vga14 ( u_char *invga, u_char *outvga );
@@ -1114,7 +1016,7 @@ void	vga_screen_off ( void );
 void	vga_screen_on ( void );
 char   *vga_string ( int number );
 int	vga_test ( void );
-int	vgaioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
+int	vgaioctl ( Dev_t dev, int cmd, caddr_t data, int flag );
 void	vgapaletteio ( unsigned idx, struct rgb *val, int writeit );
 void	vt_aln ( struct video_state *svsp );
 void	vt_clearudk ( struct video_state *svsp );

@@ -1,16 +1,13 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.25 1999/11/20 18:52:00 espie Exp $	*/
-
+/*	$OpenBSD: pcvt_drv.c,v 1.26 1999/11/25 20:24:20 aaron Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
- *
  * Copyright (c) 1992, 1993 Brian Dunford-Shore and Scott Turner.
- *
  * Copyright (c) 1993 Charles Hannum.
  *
  * All rights reserved.
  *
  * Parts of this code regarding the NetBSD interface were written
- * by Charles Hannum.
+ * by Charles Hannum. Parts regarding OpenBSD written by Aaron Campbell.
  *
  * This code is derived from software contributed to Berkeley by
  * William Jolitz and Don Ahn.
@@ -42,49 +39,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *
  * @(#)pcvt_drv.c, 3.32, Last Edit-Date: [Tue Oct  3 11:19:47 1995]
  *
  */
-
-/*---------------------------------------------------------------------------*
- *
- *	pcvt_drv.c	VT220 Driver Main Module / OS - Interface
- *	---------------------------------------------------------
- *	-hm	------------ Release 3.00 --------------
- *	-hm	integrating NetBSD-current patches
- *	-hm	adding ttrstrt() proto for NetBSD 0.9
- *	-hm	kernel/console output cursor positioning fixed
- *	-hm	kernel/console output switches optional to screen 0
- *	-hm	FreeBSD 1.1 porting
- *	-hm	the NetBSD 0.9 compiler detected a nondeclared var which was
- *		 NOT detected by neither the NetBSD-current nor FreeBSD 1.x!
- *	-hm	including Michael's keyboard fifo code
- *	-hm	Joergs patch for FreeBSD tty-malloc code
- *	-hm	adjustments for NetBSD-current
- *	-hm	FreeBSD bugfix from Joerg re timeout/untimeout casts
- *	-jw	including Thomas Gellekum's FreeBSD 1.1.5 patch
- *	-hm	adjusting #if's for NetBSD-current
- *	-hm	applying Joerg's patch for FreeBSD 2.0
- *	-hm	patch from Onno & Martin for NetBSD-current (post 1.0)
- *	-hm	some adjustments for NetBSD 1.0
- *	-hm	NetBSD PR #400: screen size report for new session
- *	-hm	patch from Rafael Boni/Lon Willett for NetBSD-current
- *	-hm	bell patch from Thomas Eberhardt for NetBSD
- *	-hm	multiple X server bugfixes from Lon Willett
- *	-hm	patch from joerg - pcdevtotty for FreeBSD pre-2.1
- *	-hm	delay patch from Martin Husemann after port-i386 ml-discussion
- *	-jw	add some code to provide more FreeBSD pre-2.1 support
- *	-hm	patches from Michael for NetBSD-current (Apr/21/95) support
- *	-hm	merged in changes from FreeBSD 2.0.5-RELEASE
- *	-hm	NetBSD-current patches from John Kohl
- *	-hm	---------------- Release 3.30 -----------------------
- *	-hm	patch from Joerg in pcopen() to make mouse emulator work again
- *	-hm	patch from Frank van der Linden for keyboard state per VT
- *	-hm	no TS_ASLEEP anymore in FreeBSD 2.1.0 SNAP 950928
- *	-hm	---------------- Release 3.32 -----------------------
- *
- *---------------------------------------------------------------------------*/
 
 #include "vt.h"
 #if NVT > 0
@@ -93,24 +50,15 @@
 
 #include "pcvt_hdr.h"		/* global include */
 
-#ifdef NOTDEF
-unsigned	__debug = 0; /*0xffe */;
-static		__color;
-static		nrow;
-#endif
-
 static void vgapelinit(void);	/* read initial VGA DAC palette */
-int getchar(void);
 
 void pccnpollc(Dev_t, int);
 int pcprobe(struct device *, void *, void *);
 void pcattach(struct device *, struct device *, void *);
 
-
 int
 pcprobe(struct device *parent, void *match, void *aux)
 {
-
 	kbd_code_init();
 
 	((struct isa_attach_args *)aux)->ia_iosize = 16;
@@ -132,20 +80,16 @@ pcattach(struct device *parent, struct device *self, void *aux)
 
 	printf(": ");
 
-	switch(adaptor_type)
-	{
+	switch(adaptor_type) {
 		case MDA_ADAPTOR:
 			printf("mda");
 			break;
-
 		case CGA_ADAPTOR:
 			printf("cga");
 			break;
-
 		case EGA_ADAPTOR:
 			printf("ega");
 			break;
-
 		case VGA_ADAPTOR:
 			printf("%s, ", (char *)vga_string(vga_type));
 			if(can_do_132col)
@@ -154,7 +98,6 @@ pcattach(struct device *parent, struct device *self, void *aux)
 				printf("80 col");
 			vgapelinit();
 			break;
-
 		default:
 			printf("unknown");
 			break;
@@ -167,16 +110,13 @@ pcattach(struct device *parent, struct device *self, void *aux)
 
 	printf(", %d scr, ", totalscreens);
 
-	switch(keyboard_type)
-	{
+	switch(keyboard_type) {
 		case KB_AT:
 			printf("at-");
 			break;
-
 		case KB_MFII:
 			printf("mf2-");
 			break;
-
 		default:
 			printf("unknown ");
 			break;
@@ -189,16 +129,11 @@ pcattach(struct device *parent, struct device *self, void *aux)
 			break;
 	}
 
-	for(i = 0; i < totalscreens; i++)
-	{
+	for (i = 0; i < totalscreens; i++) {
 		vs[i].vs_tty = ttymalloc();
 		vs[i].vs_tty->t_dev = makedev(maj, i);
 		tty_attach(vs[i].vs_tty);
 	}
-
-#if PCVT_EMU_MOUSE
-	pc_tty[totalscreens] = ttymalloc(); /* the mouse emulator tty */
-#endif /* PCVT_EMU_MOUSE */
 
 	pcconsp = vs[0].vs_tty;
 
@@ -223,11 +158,6 @@ get_pccons(Dev_t dev)
 {
 	register int i = minor(dev);
 
-#if PCVT_EMU_MOUSE
-	if(i == totalscreens)
-		return(pc_tty[i]);
-#endif /* PCVT_EMU_MOUSE */
-
 	if(i >= PCVT_NSCREENS)
 		return(NULL);
 
@@ -247,28 +177,10 @@ pcopen(Dev_t dev, int flag, int mode, struct proc *p)
 	int winsz = 0;
 	int i = minor(dev);
 
-#if PCVT_EMU_MOUSE
-	if(i == totalscreens)
-		vsx = 0;
-	else
-#endif /* PCVT_EMU_MOUSE */
-
 	vsx = &vs[i];
 
   	if((tp = get_pccons(dev)) == NULL)
 		return ENXIO;
-
-#if PCVT_EMU_MOUSE
-	if(i == totalscreens)
-	{
-		if(mouse.opened == 0)
-			mouse.buttons = mouse.extendedseen =
-				mouse.breakseen = mouse.lastmove.tv_sec = 0;
-		mouse.minor = i;
-		mouse.opened++;
-	}
-	else
-#endif /* PCVT_EMU_MOUSE */
 
 	vsx->openf++;
 
@@ -276,8 +188,7 @@ pcopen(Dev_t dev, int flag, int mode, struct proc *p)
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
 
-	if ((tp->t_state & TS_ISOPEN) == 0)
-	{
+	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -299,13 +210,7 @@ pcopen(Dev_t dev, int flag, int mode, struct proc *p)
 
 	retval = ((*linesw[tp->t_line].l_open)(dev, tp));
 
-	if(winsz == 1
-#if PCVT_EMU_MOUSE
-	   && vsx		/* the mouse device has no vsx */
-#endif /* PCVT_EMU_MOUSE */
-	    )
-	{
-
+	if (winsz == 1) {
 		/*
 		 * The line discipline has clobbered t_winsize if TS_ISOPEN
 	         * was clear. (NetBSD PR #400 from Bill Sommerfeld)
@@ -333,12 +238,6 @@ pcclose(Dev_t dev, int flag, int mode, struct proc *p)
 	register struct video_state *vsx;
 	int i = minor(dev);
 
-#if PCVT_EMU_MOUSE
-	if(i == totalscreens)
-		vsx = 0;
-	else
-#endif /* PCVT_EMU_MOUSE */
-
 	vsx = &vs[i];
 
 	if((tp = get_pccons(dev)) == NULL)
@@ -347,20 +246,7 @@ pcclose(Dev_t dev, int flag, int mode, struct proc *p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 
-#if PCVT_EMU_MOUSE
-	if(i == totalscreens)
-		mouse.opened = 0;
-	else
-#endif /* PCVT_EMU_MOUSE */
-
 	vsx->openf = 0;
-
-#if PCVT_EMU_MOUSE
-
-	if(i == totalscreens)
-		return (0);
-
-#endif /* PCVT_EMU_MOUSE */
 
 	reset_usl_modes(vsx);
 
@@ -401,7 +287,7 @@ pctty(Dev_t dev)
 }
 
 int
-pcioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+pcioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
 	register int error;
 	register struct tty *tp;
@@ -415,99 +301,14 @@ pcioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	 * appropriate variables arrays
 	 */
 
-#if PCVT_EMU_MOUSE
-	if(minor(dev) == totalscreens)
-	{
-		if((error = mouse_ioctl(dev, cmd, data)) >= 0)
-			return error;
-		goto do_standard;
-	}
-#endif /* PCVT_EMU_MOUSE */
-
-
 	if((error = usl_vt_ioctl(dev, cmd, data, flag, p)) >= 0)
 		return (error == PCVT_ERESTART) ? ERESTART : error;
-
-#ifdef XSERVER
-	/*
-	 * just for compatibility:
-	 * XFree86 < 2.0 and SuperProbe still might use it
-	 *
-	 * NB: THIS IS A HACK! Do not use it unless you explicitly need.
-	 * Especially, since the vty is not put into process-controlled
-	 * mode (this would require the application to co-operate), any
-	 * attempts to switch vtys while this kind of X mode is active
-	 * may cause serious trouble.
-	 */
-	switch(cmd)
-	{
-	  case CONSOLE_X_MODE_ON:
-	  {
-	    int i;
-
-	    if((error = usl_vt_ioctl(dev, KDENABIO, 0, flag, p)) > 0)
-	      return error;
-
-	    i = KD_GRAPHICS;
-	    if((error = usl_vt_ioctl(dev, KDSETMODE, (caddr_t)&i, flag, p))
-	       > 0)
-	      return error;
-
-	    i = K_RAW;
-	    error = usl_vt_ioctl(dev, KDSKBMODE, (caddr_t)&i, flag, p);
-	    ttyflush(tp, FREAD);
-	    return error;
-	  }
-
-	  case CONSOLE_X_MODE_OFF:
-	  {
-	    int i;
-
-	    (void)usl_vt_ioctl(dev, KDDISABIO, 0, flag, p);
-
-	    i = KD_TEXT;
-	    (void)usl_vt_ioctl(dev, KDSETMODE, (caddr_t)&i, flag, p);
-
-	    i = K_XLATE;
-	    (void)usl_vt_ioctl(dev, KDSKBMODE, (caddr_t)&i, flag, p);
-	    ttyflush(tp, FREAD);
-	    return 0;
-	  }
-
-
-	  case CONSOLE_X_BELL:
-
-		/*
-		 * If `data' is non-null, the first int value denotes
-		 * the pitch, the second a duration. Otherwise, behaves
-		 * like BEL.
-		 */
-
-		if (data)
-		{
-			sysbeep(((int *)data)[0],
-				((int *)data)[1] * hz / 1000);
-		}
-		else
-		{
-			sysbeep(PCVT_SYSBEEPF / 1493, hz / 4);
-		}
-		return (0);
-
-	  default: /* fall through */ ;
-	}
-
-#endif /* XSERVER */
 
 	if((error = kbdioctl(dev,cmd,data,flag)) >= 0)
 		return error;
 
 	if((error = vgaioctl(dev,cmd,data,flag)) >= 0)
 		return error;
-
-#if PCVT_EMU_MOUSE
-do_standard:
-#endif /* PCVT_EMU_MOUSE */
 
 	if((error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return (error);
@@ -523,6 +324,7 @@ pcmmap(Dev_t dev, int offset, int nprot)
 {
 	if ((u_int)offset > 0x20000)
 		return -1;
+
 	return i386_btop((0xa0000 + offset));
 }
 
@@ -543,12 +345,13 @@ u_char pcvt_kbd_fifo[PCVT_KBD_FIFO_SZ];
 int pcvt_kbd_wptr = 0;
 int pcvt_kbd_rptr = 0;
 short pcvt_kbd_count= 0;
-static u_char pcvt_timeout_scheduled = 0;
+static u_char pcvt_timeout_scheduled;
 
-static	void	pcvt_timeout (void *arg)
+static void
+pcvt_timeout(void *arg)
 {
+	int s;
 	u_char *cp;
-	int	s;
 
 	pcvt_timeout_scheduled = 0;
 
@@ -556,23 +359,20 @@ static	void	pcvt_timeout (void *arg)
 	pcvt_scrnsv_reset();
 #endif /* PCVT_SCREENSAVER */
 
-	while (pcvt_kbd_count)
-	{
-		if (((cp = sgetc(1)) != 0) &&
-		    (vs[current_video_screen].openf))
-		{
-
+	while (pcvt_kbd_count) {
+		if ((cp = sgetc(1)) && (vs[current_video_screen].openf)) {
 #if PCVT_NULLCHARS
-			if(*cp == '\0')
-			{
+			if(*cp == '\0') {
 				/* pass a NULL character */
-				(*linesw[pcconsp->t_line].l_rint)('\0', pcconsp);
+				(*linesw[pcconsp->t_line].l_rint)('\0',
+				    pcconsp);
 			}
 /* XXX */		else
 #endif /* PCVT_NULLCHARS */
 
 			while (*cp)
-				(*linesw[pcconsp->t_line].l_rint)(*cp++ & 0xff, pcconsp);
+				(*linesw[pcconsp->t_line].l_rint)(*cp++ & 0xff,
+				    pcconsp);
 		}
 
 		s = spltty();
@@ -605,16 +405,14 @@ pcintr(void *arg)
 #endif /* PCVT_SCREENSAVER */
 
 #if PCVT_KBD_FIFO
-	if (kbd_polling)
-	{
+	if (kbd_polling) {
 		if(sgetc(1) == 0)
 			return -1;
 		else
 			return 1;
 	}
 
-	while (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)	/* check 8042 buffer */
-	{
+	while (inb(CONTROLLER_CTRL) & STATUS_OUTPBF) {	/* check 8042 buffer */
 		ret = 1;				/* got something */
 
 		PCVT_KBD_DELAY();			/* 7 us delay */
@@ -622,11 +420,8 @@ pcintr(void *arg)
 		dt = inb(CONTROLLER_DATA);		/* get it 8042 data */
 
 		if (pcvt_kbd_count >= PCVT_KBD_FIFO_SZ)	/* fifo overflow ? */
-		{
 			log (LOG_WARNING, "pcvt: keyboard buffer overflow\n");
-		}
-		else
-		{
+		else {
 			pcvt_kbd_fifo[pcvt_kbd_wptr++] = dt; /* data -> fifo */
 
 			s = spltty();	/* XXX necessary ? */
@@ -638,13 +433,11 @@ pcintr(void *arg)
 		}
 	}
 
-	if (ret == 1)	/* got data from keyboard ? */
-	{
-		if (!pcvt_timeout_scheduled)	/* if not already active .. */
-		{
+	if (ret == 1) {	/* got data from keyboard ? */
+		if (!pcvt_timeout_scheduled) {	/* if not already active .. */
 			s = spltty();
 			pcvt_timeout_scheduled = 1;	/* flag active */
-			timeout((TIMEOUT_FUNC_T)pcvt_timeout, (caddr_t) 0, 1); /* fire off */
+			timeout((TIMEOUT_FUNC_T)pcvt_timeout, (caddr_t) 0, 1);
 			splx(s);
 		}
 	}
@@ -662,8 +455,7 @@ pcintr(void *arg)
 		return 1;
 
 #if PCVT_NULLCHARS
-	if(*cp == '\0')
-	{
+	if(*cp == '\0') {
 		/* pass a NULL character */
 		(*linesw[pcconsp->t_line].l_rint)('\0', pcconsp);
 		return 1;
@@ -689,9 +481,7 @@ pcstart(register struct tty *tp)
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
 
-	if (tp->t_outq.c_cc == 0 &&
-	    tp->t_wsel.si_selpid == 0)
-	{
+	if (tp->t_outq.c_cc == 0 && tp->t_wsel.si_selpid == 0) {
 		async_update();
 		goto low;
 	}
@@ -705,8 +495,7 @@ pcstart(register struct tty *tp)
 	 * expensive and we don't want our serial ports to overflow.
 	 */
 
-	while ((len = q_to_b(&tp->t_outq, buf, PCVT_PCBURST)) != 0)
-	{
+	while ((len = q_to_b(&tp->t_outq, buf, PCVT_PCBURST)) != 0) {
 		if (vs[minor(tp->t_dev)].scrolling)
 			sgetc(31337);
 		sput(&buf[0], 0, len, minor(tp->t_dev));
@@ -719,11 +508,9 @@ pcstart(register struct tty *tp)
 	tp->t_state |= TS_TIMEOUT;
 	timeout(ttrstrt, tp, 1);
 
-	if (tp->t_outq.c_cc <= tp->t_lowat)
-	{
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
 low:
-		if (tp->t_state&TS_ASLEEP)
-		{
+		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)&tp->t_outq);
 		}
@@ -743,7 +530,6 @@ pcstop(struct tty *tp, int flag)
 /*---------------------------------------------------------------------------*
  *		/dev/console
  *---------------------------------------------------------------------------*/
-
 void
 pccnprobe(struct consdev *cp)
 {
@@ -751,14 +537,12 @@ pccnprobe(struct consdev *cp)
 
 	/* locate the major number */
 
-	for (maj = 0; maj < nchrdev; maj++)
-	{
+	for (maj = 0; maj < nchrdev; maj++) {
 		if ((u_int)cdevsw[maj].d_open == (u_int)pcopen)
 			break;
 	}
 
-	if (maj == nchrdev)
-	{
+	if (maj == nchrdev) {
 		/* we are not in cdevsw[], give up */
 		panic("pcvt is not in cdevsw[]");
 	}
@@ -783,9 +567,7 @@ pccnputc(Dev_t dev, U_char c)
 #if PCVT_SW0CNOUTP
 
 	if(current_video_screen != 0)
-	{
 		switch_screen(0, 0);
-	}
 
 #endif /* PCVT_SW0CNOUTP */
 
@@ -823,8 +605,6 @@ pccngetc(Dev_t dev)
 void
 pccnpollc(Dev_t dev, int on)
 {
-	struct vt_softc *sc = NULL;	/* XXX not used */
-
 	kbd_polling = on;
 	if (!on) {
 		register int s;
@@ -835,9 +615,7 @@ pccnpollc(Dev_t dev, int on)
 		 * won't get any further interrupts.
 		 */
 		s = spltty();
-
-		pcintr(sc);
-
+		pcintr(NULL);
 		splx(s);
 	}
 }
@@ -857,61 +635,6 @@ pcparam(struct tty *tp, struct termios *t)
         tp->t_cflag = cflag;
 
 	return(0);
-}
-
-/* special characters */
-#define bs	8
-#define lf	10
-#define cr	13
-#define cntlc	3
-#define del	0177
-#define cntld	4
-
-int
-getchar(void)
-{
-	u_char	thechar;
-	int	x;
-
-	kbd_polling = 1;
-
-	x = splhigh();
-
-	sput(">", 1, 1, 0);
-
-	async_update();
-
-	thechar = *(sgetc(0));
-
-	kbd_polling = 0;
-
-	splx(x);
-
-	switch (thechar)
-	{
-		default:
-			if (thechar >= ' ')
-				sput(&thechar, 1, 1, 0);
-			return(thechar);
-
-		case cr:
-		case lf:
-			sput("\r\n", 1, 2, 0);
-			return(lf);
-
-		case bs:
-		case del:
-			 sput("\b \b", 1, 3, 0);
-			 return(thechar);
-
-		case cntlc:
-			 sput("^C\r\n", 1, 4, 0) ;
-			 cpu_reset();
-
-		case cntld:
-			 sput("^D\r\n", 1, 4, 0) ;
-			 return(0);
-	}
 }
 
 /*----------------------------------------------------------------------*
@@ -936,4 +659,3 @@ vgapelinit(void)
 
 #endif	/* NVT > 0 */
 
-/*-------------------------- E O F -------------------------------------*/

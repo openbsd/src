@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.9 1999/11/16 21:57:49 aaron Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.10 1999/11/25 20:24:22 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -566,9 +566,6 @@ vt_str(struct video_state *svsp)
 	svsp->selchar = 0;			/* selective attribute off */
 	vt_initsel(svsp);
 
-	init_ufkl(svsp);			/* init user fkey labels */
-	init_sfkl(svsp);			/* init system fkey labels */
-
 	update_led();				/* update keyboard LED's */
 }
 
@@ -645,7 +642,6 @@ vt_set_dec_priv_qm(struct video_state *svsp)
 
 		case 7:		/* AWM - auto wrap mode */
 			svsp->m_awm = 1;
-			swritefkl(7,(u_char *)"AUTOWRAPENABLE *",svsp);
 			break;
 
 		case 8:		/* ARM - auto repeat mode */
@@ -703,7 +699,6 @@ vt_reset_dec_priv_qm(struct video_state *svsp)
 
 		case 7:		/* AWM - auto wrap mode */
 			svsp->m_awm = 0;
-			swritefkl(7,(u_char *)"AUTOWRAPENABLE  ",svsp);
 			break;
 
 		case 8:		/* ARM - auto repeat mode */

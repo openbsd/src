@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.23 1999/11/20 18:52:00 espie Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.24 1999/11/25 20:24:21 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -2387,13 +2387,12 @@ switch_screen(int n, int oldgrafx, int newgrafx)
 	if(!newgrafx)
 	{
 		update_led();	/* update led's */
-		update_hp(vsp);	/* update fkey labels, if present */
 
 		/* if we switch to a vt with force 24 lines mode and	*/
 		/* pure VT emulation and 25 rows charset, then we have	*/
 		/* to clear the last line on display ...		*/
 
-		if(vsp->force24 && (vsp->vt_pure_mode == M_PUREVT) &&
+		if(vsp->force24 &&
 			(vgacs[vsp->vga_charset].screen_size == SIZ_25ROWS))
 		{
 			fillw(' ', (caddr_t)
@@ -2562,7 +2561,7 @@ vgapage(int new_screen)
  *	VT_USL ioctl handling 
  *---------------------------------------------------------------------------*/
 int
-usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
 	int i, j, error, opri, mode;
 	struct vt_mode newmode;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_conf.h,v 1.13 1998/06/30 20:51:07 millert Exp $	*/
+/*	$OpenBSD: pcvt_conf.h,v 1.14 1999/11/25 20:24:20 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -163,14 +163,6 @@
 				/* compatibility (24 lines) by using	*/
 				/* the scon utility at runtime		*/
 
-#if !defined PCVT_EMU_MOUSE	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_EMU_MOUSE 0	/* emulate a mouse systems mouse via	*/
-#elif PCVT_EMU_MOUSE != 0	/* the keypad; this is experimental	*/
-# undef PCVT_EMU_MOUSE		/* code intented to be used on note-	*/
-# define PCVT_EMU_MOUSE 1	/* books in conjunction with XFree86;	*/
-#endif				/* look at the comments in pcvt_kbd.c	*/
-				/* if you are interested in testing it.	*/
-
 #if !defined PCVT_META_ESC      /* ---------- DEFAULT: OFF ------------ */
 # define PCVT_META_ESC 0        /* if ON, send the sequence "ESC key"	*/
 #elif PCVT_META_ESC != 0        /* for a meta-shifted key; if OFF,	*/
@@ -184,19 +176,6 @@
 # undef PCVT_SW0CNOUTP          /* 0 if not already at screen 0.        */
 # define PCVT_SW0CNOUTP 1	/* CAUTION: CURRENTLY THIS CAUSES AN X- */
 #endif				/* SESSION TO CLUTTER VIDEO MEMORY !!!! */
-
-/* -------------------------------------------------------------------- */
-/* -------------------- DRIVER DEBUGGING ------------------------------ */
-/* -------------------------------------------------------------------- */
-
-#if !defined PCVT_SHOWKEYS	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_SHOWKEYS 0	/* this replaces the system load line	*/
-#elif PCVT_SHOWKEYS != 0	/* on the vt 0 in hp mode with a display*/
-# undef PCVT_SHOWKEYS		/* of the most recent keyboard scan-	*/
-# define PCVT_SHOWKEYS 1	/* and status codes received from the	*/
-#endif				/* keyboard controller chip.		*/
-				/* this is just for some hardcore	*/
-				/* keyboarders ....			*/
 
 /* -------------------------------------------------------------------- */
 /* -------------------- DRIVER OPTIONS -------------------------------- */
