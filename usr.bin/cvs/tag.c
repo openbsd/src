@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.2 2004/12/14 22:30:48 jfb Exp $	*/
+/*	$OpenBSD: tag.c,v 1.3 2005/01/14 18:02:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <amni@pandora.be>
@@ -55,20 +55,23 @@ cvs_tag(int argc, char **argv)
 {
 	int ch, flags;
 	struct cvsroot *root;
-	char *tag, *old_tag;
+	char *tag, *old_tag, *date;
 	int branch, delete;
 
-	old_tag = NULL;
+	date = old_tag = NULL;
 	branch = delete = 0;
 	flags = CF_SORT|CF_IGNORE|CF_RECURSE;
 
-	while ((ch = getopt(argc, argv, "bdlr:")) != -1) {
+	while ((ch = getopt(argc, argv, "bdD:lr:")) != -1) {
 		switch (ch) {
 		case 'b':
 			branch = 1;
 			break;
 		case 'd':
 			delete = 1;
+			break;
+		case 'D':
+			date = optarg;
 			break;
 		case 'l':
 			flags &= ~CF_RECURSE;
@@ -100,6 +103,14 @@ cvs_tag(int argc, char **argv)
 	if (delete && old_tag)
 		old_tag = NULL;
 
+	if (delete && date)
+		date = NULL;
+
+	if (old_tag != NULL && date != NULL) {
+		cvs_log(LP_ERROR, "-r and -D options are mutually exclusive");
+		return (-1);
+	}
+
 	if (argc == 0)
 		cvs_files = cvs_file_get(".", flags);
 	else
@@ -124,8 +135,14 @@ cvs_tag(int argc, char **argv)
 		if (delete && (cvs_sendarg(root, "-d", 0) < 0))
 			return (EX_PROTOCOL);
 		if (old_tag) {
-			cvs_sendarg(root, "-r", 0);
-			cvs_sendarg(root, old_tag, 0);
+			if ((cvs_sendarg(root, "-r", 0) < 0) ||
+			    (cvs_sendarg(root, old_tag, 0) < 0))
+				return (EX_PROTOCOL);
+		}
+		if (date) {
+			if ((cvs_sendarg(root, "-D", 0) < 0) ||
+			    (cvs_sendarg(root, date, 0) < 0))
+				return (EX_PROTOCOL);
 		}
 		if (cvs_sendarg(root, tag, 0) < 0)
 			return (EX_PROTOCOL);

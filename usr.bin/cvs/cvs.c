@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.34 2005/01/13 23:39:42 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.35 2005/01/14 18:02:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -260,7 +260,7 @@ static struct cvs_cmd {
 	},
 	{
 		CVS_OP_TAG, "tag",      { "ta", "freeze" }, cvs_tag,
-		"",
+		"[-bdl] [-D date | -r rev] tagname",
 		"",
 		"Add a symbolic tag to checked out version of files",
 		NULL,
