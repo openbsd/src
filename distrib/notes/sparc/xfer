@@ -188,6 +188,7 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 	by the netboot setup.
 
 
+
 The steps necessary to prepare the distribution sets for installation
 depend on which method of installation you choose.  Some methods
 require a bit of setup first that is explained below.
@@ -203,35 +204,36 @@ from there, rather than directly on the internet.
 To install or upgrade OpenBSD using a tape, you need to do the following:
 
 	To install OpenBSD from a tape, you need to make a tape that
-	contains the distribution set files, in "tar" format.  If
-	you're making the tape on a UN*X-like system, the easiest way
-	to do so is probably something like:
+	contains the distribution set files, each in "tar" format or
+	in "gzipped tar format".  First you will need to transfer the
+	distribution sets to your local system, using ftp or by mounting
+	the CD-ROM containing the release.  Then you need to a tape
+	with the files.
 
-		tar cf <tape_device> <dist_directories>
+	If you're making the tape on a UN*X-like system, the easiest way
+	to do so is make a shell script along the following lines, call it
+	"/tmp/maketape".
 
-	where "<tape_device>" is the name of the tape device that
-	describes the tape drive you're using (possibly /dev/rst0, or
-	something similar, but it will vary from system to system.
-	(If you can't figure it out, ask your system administrator.)
-	In the above example, "<dist_directories>" are the
-	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base21"
-	and "etc21" distributions on tape (in order to do the absolute
-	minimum installation to a new disk), you would do the
-	following:
+	#! /bin/sh
+	tape=/dev/nrst0
+	mt -f ${tape} rewind
+	for file in base21 etc21 comp21 game21 man21 misc21 text21
+	do
+		dd if=${file}.tar.gz of=${tape}
+	done
+	tar cf ${tape} bsd
+	mt -f ${tape} offline
+	# end of script
 
-		cd .../2.1		# the top of the tree
-		cd sparc
-		tar cf <tape_device> base21 etc21
 
-	(Note that you still need to fill in "<tape_device>" in the
-	example.)
+	And then:
 
-	Once you have the files on the tape, you can proceed to the
-	next step in the installation or upgrade process.  If you're
-	installing OpenBSD from scratch, go to the section on preparing
-	your hard disk, below.  If you're upgrading an existing
-	installation, go directly to the section on upgrading.
+	cd .../2.1/sparc
+	sh -x /tmp/maketape
+
+
+If you're using a system other than OpenBSD or SunOS, the tape name and
+other requirements may change.
 
 
 To install OpenBSD using a remote partition, mounted via
