@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.20 2001/08/03 15:21:16 mpech Exp $
+.\" $OpenBSD: ports.7,v 1.21 2001/10/09 20:55:26 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -333,7 +333,7 @@ Directory to put the package in.
 .It Ev PKGFILE
 The full path to the package.
 .El
-.It Ev PREFIX
+.It Ev LOCALBASE
 Where to install things in general
 .Po
 usually
@@ -362,8 +362,9 @@ Normally
 .Xr ftp 1 .
 .It Ev FORCE_PKG_REGISTER
 If set, overwrite any existing package registration on the system.
-.It Ev MOTIFLIB
-Location of libXm.{a,so}.
+.Po
+Not recommended.
+.Pc
 .It Ev PATCH_DEBUG
 If defined, display verbose output when applying each patch.
 .It Ev INTERACTIVE
