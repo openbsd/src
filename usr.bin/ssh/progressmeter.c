@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: progressmeter.c,v 1.12 2003/07/30 07:53:27 markus Exp $");
+RCSID("$OpenBSD: progressmeter.c,v 1.13 2003/07/31 22:34:03 markus Exp $");
 
 #include "progressmeter.h"
 #include "atomicio.h"
@@ -39,6 +39,7 @@ static int can_output(void);
 
 /* formats and inserts the specified size into the given buffer */
 static void format_size(char *, int, off_t);
+static void format_rate(char *, int, off_t);
 
 /* updates the progressmeter to reflect the current state of the transfer */
 void refresh_progress_meter(void);
@@ -56,6 +57,9 @@ static long stalled; 		/* how long we have been stalled */
 static int bytes_per_second; 	/* current speed in bytes per second */
 static int win_size; 		/* terminal window size */
 
+/* units for format_size */
+static const char unit[] = " KMGT";
+
 static int
 can_output(void)
 {
@@ -63,13 +67,31 @@ can_output(void)
 }
 
 static void
+format_rate(char *buf, int size, off_t bytes)
+{
+	int i;
+
+	bytes *= 100;
+	for (i = 0; bytes >= 100*1000 && unit[i] != 'T'; i++)
+		bytes = (bytes + 512) / 1024;
+	if (i == 0) {
+		i++;
+		bytes = (bytes + 512) / 1024;
+	}
+	snprintf(buf, size, "%3lld.%1lld%c%s",
+	    (long long) bytes / 100,
+	    (long long) (bytes + 5) / 10 % 10,
+	    unit[i],
+	    i ? "B" : " ");
+}
+
+static void
 format_size(char *buf, int size, off_t bytes)
 {
-	static const char unit[] = " KMGT";
 	int i;
 
 	for (i = 0; bytes >= 10000 && unit[i] != 'T'; i++)
-		bytes /= 1024;
+		bytes = (bytes + 512) / 1024;
 	snprintf(buf, size, "%4lld%c%s",
 	    (long long) bytes,
 	    unit[i],
@@ -115,7 +137,7 @@ refresh_progress_meter(void)
 
 	/* filename */
 	buf[0] = '\0';
-	file_len = win_size - 34;
+	file_len = win_size - 35;
 	if (file_len > 0) {
 		len = snprintf(buf, file_len, "\r%s", file);
 		for (i = len;  i < file_len; i++ )
@@ -137,7 +159,7 @@ refresh_progress_meter(void)
 	strlcat(buf, " ", win_size);
 
 	/* bandwidth usage */
-	format_size(buf + strlen(buf), win_size - strlen(buf),
+	format_rate(buf + strlen(buf), win_size - strlen(buf),
 	    bytes_per_second);
 	strlcat(buf, "/s ", win_size);
 
