@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.16 1999/01/02 00:02:39 niklas Exp $	*/
+/*	$OpenBSD: audio.c,v 1.17 1999/06/19 19:49:02 jason Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -1288,7 +1288,7 @@ audio_write(dev, uio, ioflag)
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp, *einp;
-	int error, s, n, cc, used;
+	int saveerror, error, s, n, cc, used;
 
 	DPRINTFN(2, ("audio_write: sc=%p(unit=%d) count=%d used=%d(hi=%d)\n", sc, unit,
 		 uio->uio_resid, sc->sc_pr.used, sc->sc_pr.usedhigh));
@@ -1420,8 +1420,14 @@ audio_write(dev, uio, ioflag)
 			cc = 0;
 		cb->needfill = 0;
 		cb->copying = 0;
-		if (!sc->sc_pbus && !cb->pause)
-			error = audiostartp(sc); /* XXX should not clobber error */
+		if (!sc->sc_pbus && !cb->pause) {
+			saveerror = error;
+			error = audiostartp(sc);
+			if (saveerror != 0) {
+				/* Report the first error that occured. */
+				error = saveerror;
+			}
+		}
 		splx(s);
 		if (cc) {
 			DPRINTFN(1, ("audio_write: fill %d\n", cc));
