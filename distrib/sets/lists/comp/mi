@@ -55,6 +55,7 @@
 ./usr/include/ddb/db_watch.h
 ./usr/include/des.h
 ./usr/include/dev/atapi
+./usr/include/dev/auconv.h
 ./usr/include/dev/atapi/atapi.h
 ./usr/include/dev/atapi/atapilink.h
 ./usr/include/dev/audio_if.h
