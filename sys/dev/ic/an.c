@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.32 2003/09/26 01:29:55 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.33 2003/10/05 01:26:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -645,11 +645,14 @@ an_read_record(sc, ltv)
 		rlen = ltv_data_length;
 
 	/* Now read the data. */
+	len -= 2; rlen -= 2;	/* skip the type */
 	ptr = ltv->an_val;
-	for (i = 0; i < rlen; i += 2)
+	for (i = 0; (rlen - i) > 1; i += 2)
 		*ptr++ = CSR_READ_2(sc, AN_DATA1);
-	for (; i < len; i += 2)
-		v = CSR_READ_2(sc, AN_DATA1);
+	if (rlen - i == 1)
+		*(u_int8_t *)ptr = CSR_READ_1(sc, AN_DATA1);
+	for (; i < len; i++)
+		v = CSR_READ_1(sc, AN_DATA1);
 
 #if BYTE_ORDER == BIG_ENDIAN
 	switch (ltv->an_type) {
