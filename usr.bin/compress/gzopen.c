@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.7 2003/06/22 15:22:43 deraadt Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.8 2003/06/27 19:29:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,7 +59,7 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.7 2003/06/22 15:22:43 deraadt Exp $";
+    "$OpenBSD: gzopen.c,v 1.8 2003/06/27 19:29:45 millert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -252,16 +252,9 @@ gz_flush(void *cookie, int flush)
 static int
 put_int32(gz_stream *s, u_int32_t x)
 {
-	if (write(s->z_fd, &x, 1) != 1)
-		return Z_ERRNO;
-	x >>= 8;
-	if (write(s->z_fd, &x, 1) != 1)
-		return Z_ERRNO;
-	x >>= 8;
-	if (write(s->z_fd, &x, 1) != 1)
-		return Z_ERRNO;
-	x >>= 8;
-	if (write(s->z_fd, &x, 1) != 1)
+	u_int32_t y = htole32(x);
+
+	if (write(s->z_fd, &y, sizeof(y)) != sizeof(y))
 		return Z_ERRNO;
 	return 0;
 }
