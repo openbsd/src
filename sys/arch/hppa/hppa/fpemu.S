@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.10 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.11 2004/04/21 07:36:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -235,6 +235,7 @@ $fpemu0c_2_0
 	sh3add	t1, arg3, arg1
 	extru,=	t4, 19, 1, r0	/* see if it's the L reg */
 	addi	4, arg1, arg1
+	extru	t4, 31, 5, arg2
 	FP_TABLE2(fcmp,sgl,dbl,invalid,invalid)
 
 $fpemu0c_2_1
