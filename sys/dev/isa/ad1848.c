@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.16 1999/01/24 15:58:53 mickey Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.17 1999/05/03 18:50:01 deraadt Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -438,14 +438,15 @@ ad1848_probe(sc)
 	    if ((tmp1 & 0x8f) == 0x8a) {
 		tmp1 = ad_read(sc, CS_VERSION_ID);
 		switch (tmp1 & 0xe7) {
-       		case 0xA0:
+		case 0xA0:
 		    sc->chip_name = "CS4231A";
 		    break;
-       		case 0x80:
+		case 0x80:
 		    /*  XXX I25 no good, AD1845 same as CS4231 */
 		    sc->chip_name = "CS4231 or AD1845";
 		    break;
-       		case 0x82:
+		case 0x82:
+		case 0xa2:
 		    sc->chip_name = "CS4232";
 		    break;
 		case 0x03:
