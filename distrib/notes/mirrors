@@ -40,7 +40,6 @@ ftp://ftp.grolier.fr/pub/OpenBSD ==
 	ftp://ftp2.fr.openbsd.org/pub/OpenBSD
 ftp://ftp.bsdfr.org/pub/OpenBSD ==
 	ftp://ftp3.fr.openbsd.org/pub/OpenBSD
-ftp://ftp.claranet.fr/pub/OpenBSD
 
 Germany:
 
@@ -48,6 +47,7 @@ ftp://ftp.fu-berlin.de/unix/OpenBSD ==
 	ftp://ftp.de.openbsd.org/unix/OpenBSD
 ftp://ftp.leo.org/pub/OpenBSD ==
 	ftp://ftp2.de.openbsd.org/unix/OpenBSD
+ftp://ftp.fh-wolfenbuettel.de/pub/os/openbsd
 ftp://ftp.freenet.de/pub/ftp.openbsd.org/pub/OpenBSD
 ftp://ftp.gigabell.net/pub/OpenBSD
 
@@ -56,13 +56,17 @@ Greece:
 ftp://filoktitis.noc.uoa.gr/pub/OpenBSD
 ftp://ftp.duth.gr/pub/OpenBSD
 
+Hungary:
+
+ftp://ftp.fsn.hu/pub/OpenBSD
+
 Ireland:
 
 ftp://ftp.esat.net/pub/OpenBSD
 
 Italy:
 
-ftp://ftp.volftp.mondadori.com/mirror/OpenBSD
+ftp://ftp.volftp.mondadori.com/mirror/openbsd
 
 Japan:
 
@@ -89,10 +93,6 @@ Norway:
 ftp://ftp.inet.no/pub/OpenBSD
 ftp://sunsite.uio.no/pub/OpenBSD
 
-Poland:
-
-ftp://ftp.task.gda.pl/pub/OpenBSD
-
 Romania:
 
 ftp://quasar.uvt.ro/pub/OpenBSD
@@ -103,9 +103,13 @@ ftp://ftp.chg.ru/pub/OpenBSD
 ftp://ftp.radio-msu.net/pub/OpenBSD
 ftp://vell.nsc.ru/pub/OpenBSD
 
+Saudi Arabia:
+
+ftp://ftp.isu.net.sa/pub/mirrors/ftp.openbsd.org/pub/OpenBSD
+
 South Korea:
 
-ftp://ftp.snu.ac.kr/pub/OpenBSD
+ftp://ftp.snu.ac.kr/pub/BSD/OpenBSD
 
 Spain:
 
@@ -116,6 +120,7 @@ Sweden:
 ftp://ftp.stacken.kth.se/pub/OpenBSD ==
 	ftp://ftp.se.openbsd.org/pub/OpenBSD
 	ftp://ftp1.se.openbsd.org/pub/OpenBSD
+ftp://ftp.luth.se/pub/OpenBSD
 ftp://ftp.sunet.se/pub/OpenBSD
 
 Switzerland:
@@ -150,13 +155,17 @@ ftp://ftp.eecs.umich.edu/pub/OpenBSD ==
 	ftp://ftp1.usa.openbsd.org/pub/OpenBSD
 	ftp://ftp4.usa.openbsd.org/pub/OpenBSD
 ftp://ftp.cerias.purdue.edu/pub/os/OpenBSD ==
-	ftp://ftp7.usa.openbsd.org/pub/OpenBSD
+	ftp://ftp7.usa.openbsd.org/pub/os/OpenBSD
+ftp://archive.progeny.com/OpenBSD
 ftp://carroll.cac.psu.edu/pub/OpenBSD
 ftp://download.sourceforge.net/pub/mirrors/OpenBSD
 ftp://ftp.geto.net/OpenBSD
 ftp://ftp.op.net/pub/OpenBSD
+ftp://ftp.src.uchicago.edu/pub/OpenBSD
 ftp://ftp.tux.org/bsd/openbsd
+ftp://ftp.twoguys.org/pub/OpenBSD
 ftp://gandalf.neark.org/pub/distributions/OpenBSD
+ftp://mirror.csit.fsu.edu/pub/OpenBSD
 ftp://mirrors.rcn.net/pub/OpenBSD
 ftp://rt.fm/pub/OpenBSD
 ftp://uiarchive.uiuc.edu/pub/systems/OpenBSD
