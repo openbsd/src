@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.19 2004/01/09 21:32:23 brad Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.20 2004/06/24 09:07:39 itojun Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -2085,7 +2085,7 @@ ADW_SOFTC	*sc;
 		free_carrp = sc->irq_sp;
 		sc->irq_sp = ADW_CARRIER_VADDR(sc, ADW_GET_CARRP(irq_next_pa));
 
-		free_carrp->next_ba = (sc->carr_freelist == NULL)? NULL
+		free_carrp->next_ba = (sc->carr_freelist == NULL) ? NULL
 					: sc->carr_freelist->carr_ba;
 		sc->carr_freelist = free_carrp;
 		sc->carr_pending_cnt--;
