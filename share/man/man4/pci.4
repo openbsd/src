@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.78 2003/08/19 03:44:44 mickey Exp $
+.\"	$OpenBSD: pci.4,v 1.79 2003/10/12 01:17:34 brad Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -44,6 +44,9 @@
 .Cd "pci* at irongate?"
 .Cd "pci* at lca?"
 .Cd "pci* at tsp?"
+.Pp
+.Cd "# hppa"
+.Cd "pci* at dino?"
 .Pp
 .Cd "# i386"
 .Cd "pci* at mainbus0 bus ?"
@@ -440,7 +443,7 @@ driver.
 .Xr ahc 4 ,
 .Xr ami 4 ,
 .Xr an 4 ,
-.\" no manpage .Xr apecs 4
+.Xr apecs 4
 .Xr auich 4 ,
 .Xr autri 4 ,
 .Xr auvia 4 ,
@@ -449,7 +452,7 @@ driver.
 .Xr bktr 4 ,
 .Xr cac 4 ,
 .Xr cardbus 4 ,
-.\" no manpage .Xr cia 4
+.Xr cia 4
 .Xr clcs 4 ,
 .Xr clct 4 ,
 .Xr cmpci 4 ,
@@ -457,6 +460,7 @@ driver.
 .Xr cz 4 ,
 .Xr dc 4 ,
 .Xr de 4 ,
+.Xr dino 4 ,
 .Xr dpt 4 ,
 .Xr eap 4 ,
 .Xr eisa 4 ,
@@ -475,12 +479,12 @@ driver.
 .Xr iha 4 ,
 .Xr intro 4 ,
 .Xr iop 4 ,
-.\" no manpage .Xr irongate 4
+.Xr irongate 4
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr ises 4 ,
 .Xr isp 4 ,
-.\" no manpage .Xr lca 4
+.Xr lca 4
 .Xr le 4 ,
 .Xr lge 4 ,
 .Xr lmc 4 ,
@@ -503,7 +507,7 @@ driver.
 .Xr psycho 4 ,
 .Xr puc 4 ,
 .Xr rl 4 ,
-.\" no manpage .Xr tsp 4
+.Xr tsp 4
 .Xr safe 4 ,
 .Xr schizo 4 ,
 .Xr sf 4 ,
