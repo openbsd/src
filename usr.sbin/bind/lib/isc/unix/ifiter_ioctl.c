@@ -15,12 +15,30 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: ifiter_ioctl.c,v 1.19.2.2 2001/12/12 00:16:47 marka Exp $ */
+/* $ISC: ifiter_ioctl.c,v 1.19.2.2.4.1 2003/02/19 04:32:41 marka Exp $ */
 
 /*
  * Obtain the list of network interfaces using the SIOCGLIFCONF ioctl.
  * See netintro(4).
  */
+#ifdef __hpux
+#undef SIOCGLIFCONF
+#undef lifc_len
+#undef lifc_buf
+#undef lifc_req
+#undef lifconf
+#undef SIOCGLIFADDR
+#undef SIOCGLIFFLAGS
+#undef SIOCGLIFDSTADDR
+#undef SIOCGLIFNETMASK
+#undef lifr_addr
+#undef lifr_name
+#undef lifr_dstaddr
+#undef lifr_flags
+#undef ss_family
+#undef lifreq
+#endif
+
 #ifndef SIOCGLIFCONF
 #define SIOCGLIFCONF SIOCGIFCONF
 #define lifc_len ifc_len

@@ -1,6 +1,6 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: host.docbook,v 1.2 2001/06/08 17:18:13 gson Exp $ -->
+<!-- $ISC: host.docbook,v 1.2.10.2 2003/02/17 07:05:03 marka Exp $ -->
 
 <refentry>
 
@@ -104,7 +104,7 @@ output.
 List mode is selected by the <option>-l</option> option.  This makes
 <command>host</command> perform a zone transfer for zone
 <parameter>name</parameter>.  The argument is provided for
-compatibility with older implemementations.  This option is equivalent
+compatibility with older implementations.  This option is equivalent
 to making a query of type AXFR.
 </para>
 

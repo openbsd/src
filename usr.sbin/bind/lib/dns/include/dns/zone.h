@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: zone.h,v 1.106.2.5 2002/07/11 05:44:08 marka Exp $ */
+/* $ISC: zone.h,v 1.106.2.5.4.2 2003/02/17 07:05:10 marka Exp $ */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -215,7 +215,7 @@ isc_result_t
 dns_zone_loadnew(dns_zone_t *zone);
 /*
  *	Cause the database to be loaded from its backing store.
- *	Confirm that the mimimum requirements for the zone type are
+ *	Confirm that the minimum requirements for the zone type are
  *	met, otherwise DNS_R_BADZONE is returned.
  *
  *	dns_zone_loadnew() only loads zones that are not yet loaded.

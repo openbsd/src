@@ -44,13 +44,15 @@ BIND 9
 		Nominum, Inc.
 
 
-BIND 9.2.2 (release candidate 1)
+BIND 9.2.2
 
-	BIND 9.2.1 is a maintenance release, containing fixes for
-	a number of bugs in 9.2.1 but no new features.
+	BIND 9.2.2 is a maintenance release, containing fixes for
+	a number of bugs in 9.2.1 but no new features.  RFC 2535
+	style DNSSEC is disabled as it is incompatible with the
+	forthcoming DS style DNSSEC.
 
 	libbind: from BIND 8.3.3. [CERT CA-2002-19]
-	Mimimum OpenSSL version now 0.9.6e. [CERT CA-2002-23]
+	Minimum OpenSSL version now 0.9.6e. [CERT CA-2002-23]
 
 BIND 9.2.1
 
@@ -85,7 +87,7 @@ BIND 9.2.0
 
           - The named.conf parser has been completely rewritten.
             It now supports "include" directives in more
-            places such as inside "view" statememnts, and it no
+            places such as inside "view" statements, and it no
             longer has any reserved words.
 
           - The "rndc status" command is now implemented.
@@ -220,6 +222,13 @@ Building
 		Any additional preprocessor symbols you want defined.
 		Defaults to empty string.
 
+		Possible settings:
+		-DISC_RFC2535
+			Enable support RFC 2535 style DNSSEC.  This
+			is incompatable with the upcoming DS support
+			and SHOULD NOT be set unless you are currently
+			making use of it.
+
 	To build shared libraries, specify "--with-libtool" on the
 	configure command line.
 
@@ -270,6 +279,10 @@ Building
 
 	Building with gcc is not supported, unless gcc is the vendor's usual
 	compiler (e.g. the various BSD systems, Linux).
+	
+	* gcc-3.2.1 and gcc-3.1.1 is known to cause problems with solaris-x86
+	  if the optimiser is enabled.  Use -O0 to disable the optimiser.
+	* gcc ultrasparc generates incorrect code at -02.
 
 	A limited test suite can be run with "make test".  Many of
 	the tests require you to configure a set of virtual IP addresses

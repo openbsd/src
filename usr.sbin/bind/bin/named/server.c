@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: server.c,v 1.339.2.8 2002/07/10 04:27:23 marka Exp $ */
+/* $ISC: server.c,v 1.339.2.8.4.3 2003/02/18 03:27:58 marka Exp $ */
 
 #include <config.h>
 
@@ -163,6 +163,7 @@ configure_view_acl(cfg_obj_t *vconfig, cfg_obj_t *config,
 	return (result);
 }
 
+#ifdef ISC_RFC2335
 static isc_result_t
 configure_view_dnsseckey(cfg_obj_t *vconfig, cfg_obj_t *key,
 			 dns_keytable_t *keytable, isc_mem_t *mctx)
@@ -258,6 +259,7 @@ configure_view_dnsseckey(cfg_obj_t *vconfig, cfg_obj_t *key,
 
 	return (result);
 }
+#endif
 
 /*
  * Configure DNSSEC keys for a view.  Currently used only for
@@ -271,15 +273,21 @@ configure_view_dnsseckeys(cfg_obj_t *vconfig, cfg_obj_t *config,
 			  isc_mem_t *mctx, dns_keytable_t **target)
 {
 	isc_result_t result;
+#ifdef ISC_RFC2535
 	cfg_obj_t *keys = NULL;
 	cfg_obj_t *voptions = NULL;
 	cfg_listelt_t *element, *element2;
 	cfg_obj_t *keylist;
 	cfg_obj_t *key;
+#endif
 	dns_keytable_t *keytable = NULL;
 
 	CHECK(dns_keytable_create(mctx, &keytable));
 
+#ifndef ISC_RFC2535
+	UNUSED(vconfig);
+	UNUSED(config);
+#else
 	if (vconfig != NULL)
 		voptions = cfg_tuple_get(vconfig, "options");
 
@@ -303,7 +311,7 @@ configure_view_dnsseckeys(cfg_obj_t *vconfig, cfg_obj_t *config,
 						       keytable, mctx));
 		}
 	}
-
+#endif
 	dns_keytable_detach(target);
 	*target = keytable; /* Transfer ownership. */
 	keytable = NULL;

@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2002  Internet Software Consortium.
+# Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: rules.in,v 1.40.2.3 2002/07/10 00:35:46 marka Exp $
+# $ISC: rules.in,v 1.40.2.3.4.2 2003/02/17 07:05:11 marka Exp $
 
 ###
 ### Common Makefile rules for BIND 9.
@@ -201,6 +201,7 @@ SGMLSPL = sgmlspl
 #
 .docbook.html:
 	${OPENJADE} -c ${SGMLCATALOG} -t sgml -d ${HTMLSTYLE} $<
+	echo "" >> r1.htm
 	cat ${top_srcdir}/docutil/HTML_COPYRIGHT r1.htm > $@
 
 .docbook.1:

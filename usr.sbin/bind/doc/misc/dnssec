@@ -1,4 +1,4 @@
-Copyright (C) 2000-2002  Internet Software Consortium.
+Copyright (C) 2000-2003  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
 DNSSEC Release Notes
@@ -9,10 +9,11 @@ this release of BIND9.
 
 OpenSSL Library Required
 
-To support DNSSEC, BIND 9 must be linked with version 0.9.5a or newer of
-the OpenSSL library.  As of BIND 9.2, the library is no longer
-included in the distribution - it must be provided by the operating
-system or installed separately.
+To support DNSSEC, BIND 9 must be linked with version 0.9.6e or 0.9.7beta3
+or newer of the OpenSSL library (patched versions of 0.9.5a - 0.9.6d,
+0.9.7beta1 and 0.9.7beta2 will also be accepted: CERT CA-2002-23).
+As of BIND 9.2, the library is no longer included in the distribution - it
+must be provided by the operating system or installed separately.
 
 To build BIND 9 with OpenSSL, use "configure --with-openssl".  If
 the OpenSSL library is installed in a nonstandard location, you can
@@ -88,4 +89,4 @@ future as we consider them inferior to the use of TSIG or SIG(0) to
 ensure the integrity of zone transfers.
 
 
-$ISC: dnssec,v 1.14.2.3 2002/02/08 03:57:24 marka Exp $
+$ISC: dnssec,v 1.14.2.3.4.2 2003/02/17 07:05:07 marka Exp $

@@ -231,7 +231,7 @@ the queries and / or the replies.
 
 Q: How can I make a server a slave for both an internal and
 an external view at the same time?  When I tried, both views
-on the slave were transfered from the same view on the master.
+on the slave were transferred from the same view on the master.
 
 A: You will need to give the master and slave multiple IP addresses and
 use those to make sure you reach the correct view on the other machine.
@@ -282,7 +282,7 @@ the name server using IPv6.
 Q: I have Freebsd 4.4 and "rndc-confgen -a" just sits there.
 
 A: /dev/random is not configured.  Use rndcontrol(8) to tell the kernel
-to use certian interupts as a source of random events.  You can make this
+to use certain interrupts as a source of random events.  You can make this
 permanent by setting rand_irqs in /etc/rc.conf.
 
 e.g.
@@ -298,10 +298,10 @@ port and/or address.
 
 
 Q: I get error messages like "multiple RRs of singleton type" and
-"CNAME and other data" when transfering a zone.  What does this mean?
+"CNAME and other data" when transferring a zone.  What does this mean?
 
 A: These indicate a malformed master zone.  You can identify the
-exact records involved by transfering the zone using dig then
+exact records involved by transferring the zone using dig then
 running named-checkzone on it.
 
 	e.g.

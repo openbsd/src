@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: query.c,v 1.198.2.8 2002/08/02 04:17:21 marka Exp $ */
+/* $ISC: query.c,v 1.198.2.8.4.2 2003/02/17 07:05:04 marka Exp $ */
 
 #include <config.h>
 
@@ -3300,9 +3300,11 @@ ns_query_start(ns_client_t *client) {
 	if ((message->flags & DNS_MESSAGEFLAG_RD) != 0)
 		client->query.attributes |= NS_QUERYATTR_WANTRECURSION;
 	
+#ifdef ISC_RFC2535
 	if ((client->extflags & DNS_MESSAGEEXTFLAG_DO) != 0 ||
 	    (message->flags & DNS_MESSAGEFLAG_AD) != 0)
 		client->query.attributes |= NS_QUERYATTR_WANTDNSSEC;
+#endif
 	
 	if (client->view->minimalresponses)
 		client->query.attributes |= (NS_QUERYATTR_NOAUTHORITY |

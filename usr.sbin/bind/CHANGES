@@ -1,4 +1,26 @@
 
+	--- 9.2.2 released ---
+
+1428.	[port]		hpux: temporary work around of hpux 11.11 interface
+			scanning.
+
+1427.	[bug]		Race condition in adb with threaded build.
+
+1426.   [cleanup]	Disable RFC2535 style DNSSEC.  This is incompatible
+			with the forthcoming DS style DNSSEC.
+
+1425.	[port]		linux/libbind: define __USE_MISC when testing *_r()
+			function prototypes in netdb.h.  [RT #4921]
+
+1395.	[port]		OpenSSL 0.9.7 defines CRYPTO_LOCK_ENGINE but doesn't
+			have a working implementation.  [RT #4079]
+
+1382.	[bug]		make install failed with --enable-libbind. [RT #3656]
+
+1381.	[bug]		named failed to correctly process answers that
+			contained DNAME records where the resulting CNAME
+			resulted in a negative answer.
+
 	--- 9.2.2rc1 released ---
 
 1357.	[bug]		--enable-libbind would fail when not built in the
@@ -28,7 +50,7 @@
 1350.	[bug]		dns_name_fromtext() failed to handle too many labels
 			gracefully.
 
-1349.	[security]	Mimimum OpenSSL version now 0.9.6e (was 0.9.5a).
+1349.	[security]	Minimum OpenSSL version now 0.9.6e (was 0.9.5a).
 			http://www.cert.org/advisories/CA-2002-23.html
 
 1346.	[bug]		Win32: select timeout in socket.c was too small
@@ -140,7 +162,7 @@
 
 1274.	[bug]		Memory leak in lwres_gnbarequest_parse().
 
-1273.	[port]		libbind: solaris: 64 bit binary compatability.
+1273.	[port]		libbind: solaris: 64 bit binary compatibility.
 
 1272.	[contrib]	Berkeley DB 4.0 sdb implementation from
 			Nuno Miguel Rodrigues <nmr@co.sapo.pt>.
@@ -215,7 +237,7 @@
 
 1095.	[func]		libbind: resolver option: no-tld-query.  disables
 			trying unqualified as a tld.  no_tld_query is also
-			supported for FreeBSD compatability.
+			supported for FreeBSD compatibility.
 
 1094.	[func]		libbind: add support gcc's format string checking.
 

@@ -1,6 +1,6 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: dig.docbook,v 1.4.2.2 2001/11/28 23:35:02 gson Exp $ -->
+<!-- $ISC: dig.docbook,v 1.4.2.2.4.2 2003/02/17 07:05:02 marka Exp $ -->
 
 <refentry>
 
@@ -290,7 +290,7 @@ Deprecated, treated as a synonym for <parameter>+[no]search</parameter>
 
 <varlistentry><term><option>+[no]aaonly</option></term>
 <listitem><para>
-This option does nothing.  It is provided for compatibilty with old
+This option does nothing.  It is provided for compatibility with old
 versions of <command>dig</command> where it set an unimplemented
 resolver flag.
 </para></listitem></varlistentry>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: net.c,v 1.3 2001/07/09 21:06:12 gson Exp $ */
+/* $ISC: net.c,v 1.3.8.2 2003/02/17 07:05:10 marka Exp $ */
 
 #include <config.h>
 
@@ -39,17 +39,15 @@ static isc_result_t	ipv6_result = ISC_R_NOTFOUND;
 
 static isc_result_t
 try_proto(int domain) {
-	int s;
+	SOCKET s;
 	isc_result_t result = ISC_R_SUCCESS;
 
 	s = socket(domain, SOCK_STREAM, 0);
-	if (s == -1) {
+	if (s == INVALID_SOCKET) {
 		switch (WSAGetLastError()) {
 		case WSAEAFNOSUPPORT:
 		case WSAEPROTONOSUPPORT:
-#ifdef EINVAL
-		case EINVAL:
-#endif
+		case WSAEINVAL:
 			return (ISC_R_NOTFOUND);
 		default:
 			UNEXPECTED_ERROR(__FILE__, __LINE__,

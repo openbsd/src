@@ -63,7 +63,7 @@
 
 1187.	[bug]		named was incorrectly returning DNSSEC records
 			in negative responses when the DO bit was not set.
-			[ Requires API change (new arguement) to
+			[ Requires API change (new argument) to
 			dns_rdataset_towire(), dns_rdataset_towirepartial()
 			and dns_rdataset_towirepartial() ]
 

@@ -20,7 +20,7 @@
 >lwres_buffer</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.61
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
 "></HEAD
 ><BODY
 CLASS="REFENTRY"
@@ -210,13 +210,19 @@ functions in the ISC library.</P
 ><P
 >A buffer is a region of memory, together with a set of related
 subregions.
-The <I
+The <SPAN
+CLASS="emphasis"
+><I
 CLASS="EMPHASIS"
 >used region</I
+></SPAN
 > and the
-<I
+<SPAN
+CLASS="emphasis"
+><I
 CLASS="EMPHASIS"
 >available</I
+></SPAN
 > region are disjoint, and
 their union is the buffer's region.
 The used region extends from the beginning of the buffer region to the
@@ -228,31 +234,46 @@ buffer commands.
 Initially, the used region is empty.</P
 ><P
 >The used region is further subdivided into two disjoint regions: the
-<I
+<SPAN
+CLASS="emphasis"
+><I
 CLASS="EMPHASIS"
 >consumed region</I
-> and the <I
+></SPAN
+> and the <SPAN
+CLASS="emphasis"
+><I
 CLASS="EMPHASIS"
 >remaining region</I
+></SPAN
 >.
 The union of these two regions is the used region.
 The consumed region extends from the beginning of the used region to
-the byte before the <I
+the byte before the <SPAN
+CLASS="emphasis"
+><I
 CLASS="EMPHASIS"
 >current</I
+></SPAN
 > offset (if any).
-The <I
+The <SPAN
+CLASS="emphasis"
+><I
 CLASS="EMPHASIS"
 >remaining</I
+></SPAN
 > region the current pointer to the end of the used
 region.
 The size of the consumed region can be changed using various
 buffer commands.
 Initially, the consumed region is empty.</P
 ><P
->The <I
+>The <SPAN
+CLASS="emphasis"
+><I
 CLASS="EMPHASIS"
 >active region</I
+></SPAN
 > is an (optional) subregion of the remaining
 region.
 It extends from the current offset to an offset in the

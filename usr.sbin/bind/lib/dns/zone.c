@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: zone.c,v 1.333.2.13 2002/08/06 02:24:15 marka Exp $ */
+/* $ISC: zone.c,v 1.333.2.13.4.2 2003/02/17 07:05:08 marka Exp $ */
 
 #include <config.h>
 
@@ -4781,7 +4781,7 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 		}
 		if (result == ISC_R_SUCCESS && xfrresult == ISC_R_SUCCESS)
 			dns_zone_log(zone, ISC_LOG_INFO,
-				     "transfered serial %u", zone->serial);
+				     "transferred serial %u", zone->serial);
 
 		break;
 

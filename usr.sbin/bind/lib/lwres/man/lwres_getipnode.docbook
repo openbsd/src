@@ -1,6 +1,6 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <!--
- - Copyright (C) 2001  Internet Software Consortium.
+ - Copyright (C) 2001, 2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: lwres_getipnode.docbook,v 1.4 2001/06/18 22:06:55 gson Exp $ -->
+<!-- $ISC: lwres_getipnode.docbook,v 1.4.118.2 2003/02/17 07:05:11 marka Exp $ -->
 
 <refentry>
 
@@ -231,7 +231,7 @@ and
 <function>lwres_getipnodebyaddr()</function>
 set
 <parameter>*error_num</parameter>
-to an approriate error code and the function returns a
+to an appropriate error code and the function returns a
 <type>NULL</type>
 pointer.
 The error codes and their meanings are defined in

@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: socket.c,v 1.207.2.14 2002/07/11 04:04:26 marka Exp $ */
+/* $ISC: socket.c,v 1.207.2.14.4.2 2003/02/18 07:28:41 marka Exp $ */
 
 #include <config.h>
 
@@ -338,7 +338,7 @@ wakeup_socket(isc_socketmgr_t *manager, int fd, int msg) {
 	 * or writes.
 	 */
 
-	INSIST(fd >= 0 && fd < FD_SETSIZE);
+	INSIST(fd >= 0 && fd < (int)FD_SETSIZE);
 
 	if (manager->fdstate[fd] == CLOSE_PENDING) {
 		manager->fdstate[fd] = CLOSED;
@@ -1153,7 +1153,7 @@ destroy(isc_socket_t **sockp) {
 	INSIST(ISC_LIST_EMPTY(sock->recv_list));
 	INSIST(ISC_LIST_EMPTY(sock->send_list));
 	INSIST(sock->connect_ev == NULL);
-	REQUIRE(sock->fd >= 0 && sock->fd < FD_SETSIZE);
+	REQUIRE(sock->fd >= 0 && sock->fd < (int)FD_SETSIZE);
 
 	LOCK(&manager->lock);
 
@@ -1316,7 +1316,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		break;
 	}
 
-	if (sock->fd >= FD_SETSIZE) {
+	if (sock->fd >= (int)FD_SETSIZE) {
 		(void)close(sock->fd);
 		isc_log_iwrite(isc_lctx, ISC_LOGCATEGORY_GENERAL,
 			      ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
@@ -1795,7 +1795,7 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 					 sock->pf);
 			(void)close(fd);
 			goto soft_error;
-		} else if (fd >= FD_SETSIZE) {
+		} else if (fd >= (int)FD_SETSIZE) {
 			isc_log_iwrite(isc_lctx, ISC_LOGCATEGORY_GENERAL,
 				       ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
 				       isc_msgcat, ISC_MSGSET_SOCKET,
@@ -2007,7 +2007,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 	isc_socket_t *sock;
 	isc_boolean_t unlock_sock;
 
-	REQUIRE(maxfd <= FD_SETSIZE);
+	REQUIRE(maxfd <= (int)FD_SETSIZE);
 
 	/*
 	 * Process read/writes on other fds here.  Avoid locking
@@ -2366,7 +2366,7 @@ isc_socketmgr_destroy(isc_socketmgr_t **managerp) {
 	(void)isc_condition_destroy(&manager->shutdown_ok);
 #endif /* ISC_PLATFORM_USETHREADS */
 
-	for (i = 0 ; i < FD_SETSIZE ; i++)
+	for (i = 0 ; i < (int)FD_SETSIZE ; i++)
 		if (manager->fdstate[i] == CLOSE_PENDING)
 			close(i);
 

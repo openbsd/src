@@ -19,7 +19,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $ISC: openssl_link.c,v 1.46 2001/07/31 03:45:04 marka Exp $
+ * $ISC: openssl_link.c,v 1.46.8.1 2003/02/18 06:24:45 marka Exp $
  */
 #ifdef OPENSSL
 
@@ -38,7 +38,11 @@
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
 
-#ifdef CRYPTO_LOCK_ENGINE
+#if defined(CRYPTO_LOCK_ENGINE) && (OPENSSL_VERSION_NUMBER < 0x00907000L)
+#define USE_ENGINE 1
+#endif
+
+#ifdef USE_ENGINE
 #include <openssl/engine.h>
 #endif
 
@@ -46,7 +50,7 @@ static RAND_METHOD *rm = NULL;
 static isc_mutex_t *locks = NULL;
 static int nlocks;
 
-#ifdef CRYPTO_LOCK_ENGINE
+#ifdef USE_ENGINE
 static ENGINE *e;
 #endif
 
@@ -120,7 +124,7 @@ dst__openssl_init() {
 	rm->add = entropy_add;
 	rm->pseudorand = entropy_getpseudo;
 	rm->status = NULL;
-#ifdef CRYPTO_LOCK_ENGINE
+#ifdef USE_ENGINE
 	e = ENGINE_new();
 	if (e == NULL) {
 		result = ISC_R_NOMEMORY;
@@ -133,7 +137,7 @@ dst__openssl_init() {
 #endif
 	return (ISC_R_SUCCESS);
 
-#ifdef CRYPTO_LOCK_ENGINE
+#ifdef USE_ENGINE
  cleanup_rm:
 	dst__mem_free(rm);
 #endif
@@ -146,6 +150,12 @@ dst__openssl_init() {
 
 void
 dst__openssl_destroy() {
+#ifdef USE_ENGINE
+	if (e != NULL) {
+		ENGINE_free(e);
+		e = NULL;
+	}
+#endif
 	if (locks != NULL) {
 		RUNTIME_CHECK(isc_mutexblock_destroy(locks, nlocks) ==
 			      ISC_R_SUCCESS);
