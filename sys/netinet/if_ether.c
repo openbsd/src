@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.43 2002/06/09 05:25:50 itojun Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.44 2002/06/09 07:50:57 itojun Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -543,6 +543,17 @@ in_arpinput(m)
 			if (ia->ia_ifp == m->m_pkthdr.rcvif)
 				break;
 		}
+	}
+
+	if (ia == NULL) {
+		struct ifaddr *ifa;
+
+		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+			if (ifa->ifa_addr->sa_family == AF_INET)
+				break;
+		}
+		if (ifa)
+			ia = (struct in_ifaddr *)ifa;
 	}
 
 	if (ia == NULL)
