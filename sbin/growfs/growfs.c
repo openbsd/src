@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.6 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.7 2003/10/14 05:23:30 drahn Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.6 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.7 2003/10/14 05:23:30 drahn Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -1849,7 +1849,7 @@ main(int argc, char **argv)
 {
 	DBG_FUNC("main")
 	char	*device, *special, *cp;
-	char	ch;
+	int	ch;
 	unsigned int	size = 0;
 	size_t	len;
 	unsigned int	Nflag = 0;
