@@ -62,7 +62,7 @@ extern isc_task_t *global_task;
 extern char *progname;
 
 static isc_boolean_t short_form = ISC_TRUE,
-	tcpmode = ISC_FALSE, deprecation_msg = ISC_TRUE,
+	tcpmode = ISC_FALSE, deprecation_msg = ISC_FALSE,
 	identify = ISC_FALSE, stats = ISC_TRUE,
 	comments = ISC_TRUE, section_question = ISC_TRUE,
 	section_answer = ISC_TRUE, section_authority = ISC_TRUE,
