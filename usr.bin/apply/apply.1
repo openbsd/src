@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apply.1,v 1.10 1999/12/05 22:21:39 aaron Exp $
+.\"	$OpenBSD: apply.1,v 1.11 2000/01/08 01:14:35 aaron Exp $
 .\"	$NetBSD: apply.1,v 1.4 1996/03/18 23:16:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -73,7 +73,7 @@ The options are as follows:
 .Bl -tag -width "-ac"
 .It Fl Ns Ar #
 Normally arguments are taken singly; the optional number
-.Fl #
+.Fl Ns Ar #
 specifies the number of arguments to be passed to
 .Ar command .
 If the number is zero,
@@ -86,14 +86,13 @@ If any sequences of
 occur in
 .Ar command ,
 the
-.Fl #
+.Fl Ns Ar #
 option is ignored.
 .It Fl a Ns Ar c
-The use of the character
-.Ql %
-as a magic character may be changed with the
-.Fl a
-option.
+Use
+.Ar c
+as the magic character instead of the default
+.Ql % .
 .It Fl d
 Debug mode.
 Print commands to the standard output but do not actually execute them.
@@ -107,7 +106,7 @@ Pathname of shell to use.
 If this variable is not defined, the Bourne shell is used.
 .El
 .Sh EXAMPLES
-.Bl -tag -width apply -compact
+.Bl -tag -width apply
 .It Li "apply echo a*"
 is similar to
 .Xr ls 1 ;
@@ -115,7 +114,8 @@ is similar to
 compares the
 .Sq a
 files to the
-.Sq b files;
+.Sq b
+files;
 .It Li "apply \-0 who 1 2 3 4 5"
 runs
 .Xr who 1
