@@ -42,6 +42,10 @@
 #define	IPL_CLOCK	6	/* clock */
 #define	IPL_HIGH	7	/* everything */
 
+#ifndef _LOCORE
+int imask[IPL_HIGH+1];
+#endif
+
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
 #define	IST_PULSE	1	/* pulsed */
@@ -60,7 +64,6 @@
 #ifndef _LOCORE
 
 volatile int cpl, ipending, astpending;
-int imask[7];
 
 extern void Xspllower __P((void));
 
