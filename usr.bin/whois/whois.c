@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.11 2000/07/12 18:01:57 itojun Exp $	*/
+/*	$OpenBSD: whois.c,v 1.12 2001/10/04 19:28:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: whois.c,v 1.11 2000/07/12 18:01:57 itojun Exp $";
+static char rcsid[] = "$OpenBSD: whois.c,v 1.12 2001/10/04 19:28:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ whois(name, res, flags)
 	int flags;
 {
 	FILE *sfi, *sfo;
-	char *buf, *p, *nhost;
+	char *buf, *p, *nhost, *nbuf = NULL;
 	size_t len;
 	int s, nomatch;
 	const char *reason = NULL;
@@ -242,8 +242,14 @@ whois(name, res, flags)
 	while ((buf = fgetln(sfi, &len))) {
 		if (buf[len - 2] == '\r')
 			buf[len - 2] = '\0';
-		else
+		else if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
+		else {
+			nbuf = malloc(len + 1);
+			memcpy(nbuf, buf, len);
+			nbuf[len] = '\0';
+			buf = nbuf;
+		}
 
 		if ((flags & WHOIS_RECURSE) && !nhost &&
 		    (p = strstr(buf, "Whois Server: "))) {
@@ -264,6 +270,8 @@ whois(name, res, flags)
 		}
 		(void)puts(buf);
 	}
+	if (nbuf)
+		free(nbuf);
 
 	/* Do second lookup as needed */
 	if (nomatch && !nhost) {
