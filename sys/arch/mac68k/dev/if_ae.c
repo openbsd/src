@@ -1006,7 +1006,7 @@ aeintr(arg)
 		 * otherwise - resulting in an infinite loop.
 		 */
 		if (isr & ED_ISR_CNT) {
-			static unsigned char	dummy;
+			static u_char	dummy;
 			dummy = NIC_GET(sc, ED_P0_CNTR0);
 			dummy = NIC_GET(sc, ED_P0_CNTR1);
 			dummy = NIC_GET(sc, ED_P0_CNTR2);
