@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.49 2004/01/07 13:32:53 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.50 2004/01/08 11:39:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/tree.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 #include <net/route.h>
 #include <err.h>
 #include <errno.h>
@@ -45,6 +46,7 @@ struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
 	struct kroute		 r;
 	int			 flags;
+	u_short			 ifindex;
 };
 
 struct knexthop_node {
@@ -53,19 +55,38 @@ struct knexthop_node {
 	struct kroute_node	*kroute;
 };
 
+struct kif_kr {
+	LIST_ENTRY(kif_kr)	 entry;
+	struct kroute_node	*kr;
+};
+
+LIST_HEAD(kif_kr_head, kif_kr);
+
+struct kif_node {
+	RB_ENTRY(kif_node)	 entry;
+	u_short			 ifindex;
+	int			 flags;
+	struct kif_kr_head	 kroute_l;
+};
+
 int		kroute_protect_lo(void);
 int		kroute_msg(int, int, struct kroute *);
 int		kroute_insert(struct kroute_node *);
+int		kroute_insert_connected(struct kroute_node *);
+int		kroute_remove_connected(struct kroute_node *);
 int		kroute_compare(struct kroute_node *, struct kroute_node *);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
 int		kroute_fetchtable(void);
+int		kroute_fetchifs(int);
 int		kroute_remove(struct kroute_node *);
 int		kroute_nexthop_insert(in_addr_t, struct kroute_nexthop *);
 int		kroute_nexthop_checkmatch(in_addr_t, struct knexthop_node *);
 int		knexthop_compare(struct knexthop_node *,
 		    struct knexthop_node *);
+int		kif_compare(struct kif_node *, struct kif_node *);
+void		kroute_interface_statuschange(u_short, int);
 
 struct kroute_node	*kroute_match(in_addr_t);
 
@@ -77,10 +98,15 @@ RB_HEAD(knexthop_tree, knexthop_node)	knexthop_tree, knt;
 RB_PROTOTYPE(knexthop_tree, knexthop_node, entry, knexthop_compare);
 RB_GENERATE(knexthop_tree, knexthop_node, entry, knexthop_compare);
 
+RB_HEAD(kif_tree, kif_node)		kif_tree, kit;
+RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare);
+RB_GENERATE(kif_tree, kif_node, entry, kif_compare);
+
 #define	F_BGPD_INSERTED		0x0001
 #define	F_KERNEL		0x0002
 #define	F_CONNECTED		0x0004
 #define	F_NEXTHOP		0x0008
+#define	F_DOWN			0x0010
 
 int
 kroute_init(int fs)
@@ -104,6 +130,10 @@ kroute_init(int fs)
 
 	RB_INIT(&krt);
 	RB_INIT(&knt);
+	RB_INIT(&kit);
+
+	if (kroute_fetchifs(0) == -1)
+		return (-1);
 
 	if (kroute_fetchtable() == -1)
 		return (-1);
@@ -266,7 +296,68 @@ kroute_insert(struct kroute_node *kr)
 				send_nexthop_update(&nh);
 			}
 		}
+		if (kr->flags & F_CONNECTED)
+			if (kroute_insert_connected(kr) == -1)
+				return (-1);
 	}
+	return (0);
+}
+
+int
+kroute_insert_connected(struct kroute_node *kr)
+{
+	struct kif_node	*kif, s;
+	struct kif_kr	*kkr;
+
+	bzero(&s, sizeof(s));
+	s.ifindex = kr->ifindex;
+
+	if ((kif = RB_FIND(kif_tree, &kit, &s)) == NULL) {
+		logit(LOG_CRIT, "interface with index %u not found",
+		    kr->ifindex);
+		return (0);
+	}
+
+	if ((kkr = calloc(1, sizeof(struct kif_kr))) == NULL) {
+		log_err("kroute_insert_connected");
+		return (-1);
+	}
+
+	kkr->kr = kr;
+
+	LIST_INSERT_HEAD(&kif->kroute_l, kkr, entry);
+
+	return (0);
+}
+
+int
+kroute_remove_connected(struct kroute_node *kr)
+{
+	struct kif_node	*kif, s;
+	struct kif_kr	*a;
+
+	bzero(&s, sizeof(s));
+	s.ifindex = kr->ifindex;
+
+	if ((kif = RB_FIND(kif_tree, &kit, &s)) == NULL) {
+		logit(LOG_CRIT, "interface with index %u not found",
+		    kr->ifindex);
+		return (0);
+	}
+
+	for (a = LIST_FIRST(&kif->kroute_l); a != NULL && a->kr != kr;
+	    a = LIST_NEXT(a, entry))
+		;	/* nothing */
+
+	if (a == NULL) {
+		logit(LOG_CRIT, "can't remove connected route from interface "
+		    "with index %u: not found", kr->ifindex);
+		return (-1);
+	}
+
+	LIST_REMOVE(a, entry);
+	free(a);
+
 	return (0);
 }
 
@@ -470,6 +561,7 @@ kroute_fetchtable(void)
 				break;
 			case AF_LINK:
 				kr->flags |= F_CONNECTED;
+				kr->ifindex = rtm->rtm_index;
 				break;
 			}
 
@@ -481,17 +573,70 @@ kroute_fetchtable(void)
 }
 
 int
+kroute_fetchifs(int ifindex)
+{
+	size_t			 len;
+	int			 mib[6];
+	char			*buf, *next, *lim;
+	struct if_msghdr	*ifm;
+	struct kif_node		*kif;
+
+	mib[0] = CTL_NET;
+	mib[1] = AF_ROUTE;
+	mib[2] = 0;
+	mib[3] = AF_INET;
+	mib[4] = NET_RT_IFLIST;
+	mib[5] = ifindex;
+
+	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
+		log_err("sysctl");
+		return (-1);
+	}
+	if ((buf = malloc(len)) == NULL) {
+		log_err("kroute_fetchif");
+		return (-1);
+	}
+	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
+		log_err("sysctl");
+		return (-1);
+	}
+
+	lim = buf + len;
+	for (next = buf; next < lim; next += ifm->ifm_msglen) {
+		ifm = (struct if_msghdr *)next;
+		if (ifm->ifm_type != RTM_IFINFO)
+			continue;
+
+		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
+			log_err("kroute_fetchifs");
+			return (-1);
+		}
+
+		LIST_INIT(&kif->kroute_l);
+		kif->ifindex = ifm->ifm_index;
+		kif->flags = ifm->ifm_flags;
+		if (RB_INSERT(kif_tree, &kit, kif) != NULL) {
+			logit(LOG_CRIT, "RB_INSERT(kif_tree, &kit, kif)");
+			free(kif);
+		}
+	}
+	return (0);
+}
+
+int
 kroute_dispatch_msg(void)
 {
 	char			 buf[RT_BUF_SIZE];
 	ssize_t			 n;
 	char			*next, *lim;
 	struct rt_msghdr	*rtm;
+	struct if_msghdr	*ifm;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
 	struct kroute_node	*kr, s;
 	in_addr_t		 nexthop;
 	int			 flags;
+	u_short			 ifindex;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
 		log_err("kroute_dispatch_msg: read error");
@@ -508,8 +653,11 @@ kroute_dispatch_msg(void)
 		rtm = (struct rt_msghdr *)next;
 		sa = (struct sockaddr *)(rtm + 1);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
+		bzero(&s, sizeof(s));
 		flags = F_KERNEL;
 		nexthop = 0;
+		ifindex = 0;
 
 		if ((sa = rti_info[RTAX_DST]) == NULL)
 			continue;
@@ -539,8 +687,9 @@ kroute_dispatch_msg(void)
 				s.r.prefixlen = prefixlen_classful(s.r.prefix);
 			break;
 		default:
-			continue;
-			/* not reached */
+			if (rtm->rtm_type != RTM_IFINFO)
+				continue;
+			break;
 		}
 
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
@@ -551,6 +700,7 @@ kroute_dispatch_msg(void)
 				break;
 			case AF_LINK:
 				flags |= F_CONNECTED;
+				ifindex = rtm->rtm_index;
 				break;
 			}
 
@@ -569,6 +719,12 @@ kroute_dispatch_msg(void)
 					kr->r.nexthop = nexthop;
 					if (kr->flags & F_NEXTHOP) /* XXX */
 						flags |= F_NEXTHOP;
+					if ((kr->flags & F_CONNECTED) &&
+					    !(flags & F_CONNECTED))
+						kroute_remove_connected(kr);
+					if ((flags & F_CONNECTED) &&
+					    !(kr->flags & F_CONNECTED))
+						kroute_insert_connected(kr);
 					kr->flags = flags;
 				}
 			} else {
@@ -593,6 +749,11 @@ kroute_dispatch_msg(void)
 				continue;
 			if (kroute_remove(kr) == -1)
 				return (-1);
+			break;
+		case RTM_IFINFO:
+			ifm = (struct if_msghdr *)next;
+			kroute_interface_statuschange(ifm->ifm_index,
+			    ifm->ifm_flags);
 			break;
 		default:
 			/* ignore for now */
@@ -635,6 +796,13 @@ kroute_remove(struct kroute_node *kr)
 					send_nexthop_update(&h);
 				}
 			}
+
+	if (kr->flags & F_CONNECTED)
+		if (kroute_remove_connected(kr) == -1) {
+			free(kr);
+			return (-1);
+		}
+
 	free(kr);
 	return (0);
 }
@@ -748,7 +916,7 @@ kroute_nexthop_checkmatch(in_addr_t key, struct knexthop_node *h)
 	struct kroute_node	*kr;
 
 	if ((kr = kroute_match(key)) != NULL)
-		if (kr->flags & F_KERNEL) {	/* must be non-bgp! */
+		if (!(kr->flags & F_DOWN)) {	/* may be bgp, bad idea tho */
 			h->kroute = kr;
 			kr->flags |= F_NEXTHOP;
 			return (1);
@@ -763,3 +931,45 @@ knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
 	return (b->nexthop - a->nexthop);
 }
 
+int
+kif_compare(struct kif_node *a, struct kif_node *b)
+{
+	return (b->ifindex - a->ifindex);
+}
+
+void
+kroute_interface_statuschange(u_short ifindex, int flags)
+{
+	struct kif_node		*kif, s;
+	struct kif_kr		*kkr;
+	struct kroute_nexthop	 nh;
+	struct knexthop_node	*n;
+
+	bzero(&s, sizeof(s));
+	s.ifindex = ifindex;
+
+	if ((kif = RB_FIND(kif_tree, &kit, &s)) == NULL) {
+		logit(LOG_CRIT, "interface with index %u not found",
+		    ifindex);
+		return;
+	}
+
+	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
+		if (flags & IFF_UP)
+			kkr->kr->flags &= ~F_DOWN;
+		else
+			kkr->kr->flags |= F_DOWN;
+
+		RB_FOREACH(n, knexthop_tree, &knt)
+			if (n->kroute == kkr->kr) {
+				bzero(&nh, sizeof(nh));
+				nh.nexthop = n->nexthop;
+				if (!(kkr->kr->flags & F_DOWN)) {
+					nh.valid = 1;
+					nh.connected = 1;
+					nh.gateway = kkr->kr->r.nexthop;
+				}
+				send_nexthop_update(&nh);
+			}
+	}
+}
