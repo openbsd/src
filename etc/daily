@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.9 1996/07/27 14:12:24 downsj Exp $
+#	$OpenBSD: daily,v 1.10 1996/11/06 23:03:21 deraadt Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -84,8 +84,12 @@ if [ -f /var/account/acct ]; then
 fi
 
 echo ""
-echo "Running calendar:"
-calendar -a
+if [ -d /var/yp/binding -a ! -d /var/yp/`domainname` ]; then 
+  echo "Not running calendar, (yp client)"
+else
+  echo "Running calendar:"
+  calendar -a
+fi
 
 # Rotation of mail log now handled automatically by cron and 'newsyslog'
 
