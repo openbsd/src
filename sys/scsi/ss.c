@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.15 1997/03/08 18:59:41 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.16 1997/03/08 20:43:09 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -70,10 +70,13 @@ struct quirkdata {
 #define SS_Q_NEEDS_WINDOW_DESC_LEN	0x0001 /* needs special WDL */
 #define SS_Q_USES_HALFTONE		0x0002 /* uses non-zero halftone */
 #define SS_Q_NEEDS_RIF_SET		0x0004
-#define SS_Q_NEEDS_PADDING_TYPE		0x0008 /* does not pad to byte boundary */
+#define SS_Q_NEEDS_PADDING_TYPE		0x0008 /* does not pad to byte
+						  boundary */
 #define SS_Q_USES_BIT_ORDERING		0x0010 /* uses non-zero bit ordering */
-#define SS_Q_VENDOR_UNIQUE_SETWINDOW	0x0020 /* 40 bytes of parms is not enough */
-#define SS_Q_GET_BUFFER_SIZE		0x0040 /* use GET_BUFFER_SIZE while reading */
+#define SS_Q_VENDOR_UNIQUE_SETWINDOW	0x0020 /* 40 bytes of parms is not
+						  enough */
+#define SS_Q_GET_BUFFER_SIZE		0x0040 /* use GET_BUFFER_SIZE while
+						  reading */
 
 	long window_descriptor_length;
 	u_int8_t halftone_pattern[2];
@@ -92,13 +95,18 @@ void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
 void	ssminphys __P((struct buf *));
 
-void	ss_identify_scanner __P((struct ss_softc *, struct scsi_inquiry_data *));
+void	ss_identify_scanner __P((struct ss_softc *, struct scsi_inquiry_data*));
 int	ss_set_window __P((struct ss_softc *, struct scan_io *));
 
 int	ricoh_is410_sw __P((struct ss_softc *, struct scan_io *,
 			    struct scsi_set_window *, void *));
 int	umax_uc630_sw __P((struct ss_softc *, struct scan_io *,
 			   struct scsi_set_window *, void *));
+#ifdef NOTYET	/* for ADF support  */
+int	fujitsu_m3096g_sw __P((struct ss_softc *, struct scan_io *,
+			       struct scsi_set_window *, void *));
+#endif
+
 
 /*
  * WDL:
@@ -138,9 +146,25 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 0x2e, { 0, 1 }, 0, 0,
 		 umax_uc630_sw
 	 }},
-#ifdef NOTYET
+#ifdef NOTYET			/* ADF version */
 	{{T_SCANNER, T_FIXED,
 	 "FUJITSU ", "M3096Gm         ", "    "}, {
+		 "Fujitsu M3096G",
+		 SS_Q_NEEDS_WINDOW_DESC_LEN |
+		 SS_Q_USES_HALFTONE |
+		 SS_Q_NEEDS_RIF_SET |
+		 SS_Q_NEEDS_PADDING_TYPE,
+		 64, { 0, 1 }, 0, 0,
+		 fujistsu_m3096g_sw
+	 }},
+#else				/* flatbed-only version */
+	{{T_SCANNER, T_FIXED,
+	 "FUJITSU ", "M3096Gm         ", "    "}, {
+		 "Fujitsu M3096G",
+		 SS_Q_USES_HALFTONE |
+		 SS_Q_NEEDS_PADDING_TYPE,
+		 0, { 0, 1 }, 0, 0,
+		 NULL
 	 }},
 #endif
 };
@@ -653,7 +677,8 @@ ss_set_window(ss, sio)
 		    &window_cmd, (void*)&wd));
 	else
 		/* send the command to the scanner */
-		return (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &window_cmd,
+		return (scsi_scsi_cmd(sc_link,
+		        (struct scsi_generic *)&window_cmd,
 			sizeof(window_cmd), (u_char *) &wd.window_data,
 			sizeof(wd.window_data), 4, 5000, NULL, SCSI_DATA_OUT));
 }
@@ -673,7 +698,7 @@ ricoh_is410_sw(ss, sio, wcmd, vwd)
 		u_int8_t filtering:3;
 		u_int8_t gamma_id:4;
 	} *rwd = (struct ricoh_is410_window_data*)vwd;
-	struct scsi_link	*sc_link = ss->sc_link;;
+	struct scsi_link *sc_link = ss->sc_link;
 
 	rwd->mrif = 1;		/* force grayscale to match PGM */
 
@@ -690,7 +715,6 @@ umax_uc630_sw(ss, sio, wcmd, vwd)
 	struct scan_io *sio;
 	struct scsi_set_window *wcmd;
 	void *vwd;
-
 {
 	struct umax_uc630_window_data {
 		struct scsi_window_data	window_data;
@@ -700,7 +724,7 @@ umax_uc630_sw(ss, sio, wcmd, vwd)
 		u_int8_t shadow;
 		u_int8_t paper_length[2];
 	} *uwd = (struct umax_uc630_window_data*)vwd;
-	struct scsi_link	*sc_link = ss->sc_link;;
+	struct scsi_link *sc_link = ss->sc_link;
 
 	uwd->speed = 1;		/* speed: fastest speed that doesn't smear */
 	switch (sio->scan_image_mode) {	/* UMAX has three-pass color. */
@@ -724,3 +748,48 @@ umax_uc630_sw(ss, sio, wcmd, vwd)
 	    sizeof(struct umax_uc630_window_data), 4, 5000, NULL,
 	    SCSI_DATA_OUT));
 }
+
+#ifdef NOTYET /* for ADF support */
+int
+fujitsu_m3096g_sw(ss, sio, wcmd, vwd)
+	struct ss_softc *ss;
+	struct scan_io *sio;
+	struct scsi_set_window *wcmd;
+	void *vwd;
+{
+	struct fujitsu_m3096g_window_data {
+		struct scsi_window_data	window_data;
+		u_int8_t id;
+		u_int8_t res1;
+		u_int8_t outline;
+		u_int8_t emphasis;
+		u_int8_t mixed;
+		u_int8_t mirroring;
+		u_int8_t res2[5];
+		u_int8_t subwindow_list[2];
+		u_int8_t paper_size_std:2;
+		u_int8_t res3:1;
+		u_int8_t paper_orientaton:1;
+		u_int8_t paper_size_type:4;
+/* defines for Paper Size Type: */
+#define FUJITSU_PST_A3			0x03
+#define FUJITSU_PST_A4			0x04
+#define FUJITSU_PST_A5			0x05
+#define FUJITSU_PST_DOUBLE_LETTER	0x06
+#define FUJITSU_PST_LETTER		0x07
+#define FUJITSU_PST_B4			0x0C
+#define FUJITSU_PST_B5			0x0D
+#define FUJITSU_PST_LEGAL		0x0F
+		u_int8_t paper_width_x[4];
+		u_int8_t paper_width_y[4];
+		u_int8_t res4[2];
+	} *fwd = (struct fujitsu_m3096g_window_data*)vwd;
+	struct scsi_link *sc_link = ss->sc_link;
+
+	/* send the command to the scanner */
+	return (scsi_scsi_cmd(sc_link, (struct scsi_generic *)wcmd,
+	    sizeof(struct scsi_set_window), (u_char *)fwd,
+	    sizeof(struct fujitsu_m3096g_window_data), 4, 5000, NULL,
+	    SCSI_DATA_OUT));
+}
+#endif
