@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.12 2004/05/28 07:03:48 deraadt Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.13 2005/03/03 00:14:17 cloder Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -126,20 +126,21 @@ int
 uu_lock_txfr(const char *ttyname, pid_t pid)
 {
 	char lckname[sizeof(_PATH_UUCPLOCK) + MAXNAMLEN];
-	int fd, err;
+	int fd, err, ret;
 
 	snprintf(lckname, sizeof(lckname), _PATH_UUCPLOCK LOCKFMT, ttyname);
 
 	if ((fd = open(lckname, O_RDWR)) < 0)
 		return UU_LOCK_OWNER_ERR;
 	if (get_pid(fd, &err) != getpid())
-		return UU_LOCK_OWNER_ERR;
-        lseek(fd, 0, SEEK_SET);
-	if (put_pid(fd, pid))
-		return UU_LOCK_WRITE_ERR;
-	close(fd);
+		ret = UU_LOCK_OWNER_ERR;
+	else {
+		lseek(fd, 0, SEEK_SET);
+		ret = put_pid(fd, pid) ? UU_LOCK_OK : UU_LOCK_WRITE_ERR;
+	}
 
-	return UU_LOCK_OK;
+	close(fd);
+	return ret;
 }
 
 int
@@ -200,7 +201,7 @@ put_pid(int fd, pid_t pid)
 
 	len = snprintf(buf, sizeof buf, "%10ld\n", (long)pid);
 
-	if (write (fd, buf, len) == len) {
+	if (len < sizeof buf && len != -1 && write (fd, buf, len) == len) {
 		/* We don't mind too much if ftruncate() fails - see get_pid */
 		ftruncate(fd, len);
 		return 1;
