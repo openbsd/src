@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.24 2002/12/29 03:02:34 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.25 2002/12/30 21:36:06 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -176,10 +176,7 @@ __END_DECLS
 
 #define	BUFSIZ	1024		/* size of buffer used by setbuf */
 
-#ifndef	__EOF
-#define	__EOF	(-1)
-#endif
-#define	EOF	__EOF
+#define	EOF	(-1)
 
 /*
  * FOPEN_MAX is a minimum maximum, and should be the number of descriptors
