@@ -4,8 +4,8 @@ OpenBSD/sparc 2.1 runs on the following classes of machines:
 		for the 4/400 processor is incomplete)
 	- sun4m (e.g. sparc classic, 4, 5, 10, and 20)
 
-OpenBSD/sparc 2.1 does *not* run on these machines (yet):
-	- sun-4/400 (lacking support for the I/O cache, and has
+OpenBSD/sparc 2.1 does NOT run on these machines (yet):
+	- Sun 4/400 (lacking support for the I/O cache, and has
 			ethernet problems)
 	- sun4d (e.g. sparc center 2000)
 	- sun4u (e.g. Ultrasparcs)
@@ -18,36 +18,50 @@ around 16M of RAM, getting more RAM is more important than getting a
 faster CPU.)
 
 Supported devices include:
-	sun4c sbus video: 
+	sun4c and sun4m SBus video: 
 		cgsix, cgthree, and bwtwo frame buffers
-	sun4 video (not thoroughly tested?): 
-		P4 on-board bwtwo, and VME cgtwo card
+
+	sun4 video (not thoroughly tested...): 
+		P4  -- on-board bwtwo, cgfour, cgsix, cgeight,
+                VME -- cgtwo card
+
 	serial ports: 
-		ttya and ttyb (can be used as console if needed)
+		ttya and ttyb (can be used as console if needed),
+                ttyc and ttyd (Sun 4/300 only)
+
 	ethernet: 
 		on-board AMD Lance ethernet ("le0"), 
-		Sbus AMD Lance ethernet cards, 
+		SBus AMD Lance ethernet cards, 
 		on-board Intel 82586 ethernet (ie0 on 4/100's and 4/200's), 
 		VME Intel 82586 ethernet cards
+
 	SCSI: 
 		on-board "esp" SCSI controller (sun4c's, and the 4/300),
-		sbus "esp" SCSI controller, 
+		SBus "esp" SCSI controller, 
 		Sun "SUN-3"/"si" VME SCSI controller (polled mode only, slow),
 		Sun "SCSI Weird"/"sw" on-board controller (4/110 only, polled)
+
 	VME disks:
 		Xylogics 7053 VME/SMD disk controller ("xd"),
 		Xylogics 450/451 VME disk controller ("xy")
 		[note: VME/IPI disks are not supported]
-	sun floppy disk drive on sun4c's
-	sun keyboard and mouse
-	sun4c audio
+
+	Sun floppy disk drive on sun4c machines.
+
+	Sun keyboard and mouse.
+
+	sun4c audio.
 
 
 Hardware the we do NOT currently support, but get many questions
 about:
-	multiprocessor machines
-	audio drivers for sun4m machines
+	multiprocessor machines (ignores other CPUs..)
+	audio driver for sun4m machines
 	floppy driver for sun4m machines
-	interrupt driven SCSI driver for sun-4/100's and sun-4/200's
+	interrupt driven SCSI driver for Sun 4/100's and 4/200's
+        cgfourteen (SX) framebuffer
+        Graphics Tower (GT) framebuffer
+        Leo (ZX) framebuffer
+        S24 (ss5 only) framebuffer
 
 

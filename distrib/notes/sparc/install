@@ -38,16 +38,15 @@ After transferring the miniroot to disk, bring the system down by:
 
 Then boot the miniroot by typing the appropriate command at the PROM:
 
-	> b sd(,,1)bsd -s			# for sun4 monitors
+	> b sd(,,1)bsd -s		# for sun4 monitors
 	ok boot sd(,,1)bsd -s		# for version 1 OpenBOOT ROMs
 	ok boot disk:b bsd -s		# for version 2 OpenBOOT ROMs
 
 If you've loaded the miniroot onto some other disk than `sd0' adapt
 the boot specifier accordingly, e.g.:
 
-	ok boot disk1:b bsd -s
-
-to boot from SCSI disk target 1 from a version 2 OpenBOOT ROM.
+        > b sd(0,20,1)bsd -s       # example - scsi target 4 on sun4 monitors
+	ok boot disk1:b bsd -s     # example - scsi target 1 on v2 OpenBOOT ROM
 
 This will cause the kernel contained in the miniroot to be booted.
 After the initial probe messages you'll asked to start the install
@@ -154,7 +153,7 @@ Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
 this command takes one of the following forms:
 
-	> b le()bsd -s		# for sun4 monitors
+	> b le()bsd -s			# for sun4 monitors
 	ok boot le()bsd -s		# for version 1 OpenBOOT ROMs
 	ok boot net bsd -s		# for version 2 OpenBOOT ROMs
 
@@ -278,8 +277,8 @@ filesystem writable is
 
     OpenBSD# mount -u /dev/sd0a /
 
-The Sun monitor normally tries to load a file called "vmunix". On
-OpenBOOT ROM systems you can change it to load OpenBSD instead using
+The Sun monitor normally tries to load a file called "vmunix".   
+On OpenBOOT ROM systems you can change it to load OpenBSD instead using
 the following commands:
 
 On version 1 OpenBOOT ROMs:
@@ -291,6 +290,8 @@ On version 2 OpenBOOT ROMs:
     ok setenv boot-file bsd
     ok setenv boot-device /sbus/esp/sd@0,0
 
+On sun4 systems, you may not need to specify the boot file, as 
+the OpenBSD boot blocks will look for "bsd" on the boot device by default.
 
 Congratulations, you have successfully installed OpenBSD 2.1.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.

@@ -47,11 +47,11 @@ Bootable installation/upgrade floppies:
 
   upgr21.fs
 	This disk contains a file system, and has holds the utilities 
-	needed in order to upgrade a system to the current version of OpenBSD.
+	needed in order to upgrade a system to OpenBSD 2.1
   
   miniroot21.fs
 	This is a miniroot filesystem image which can be copied to the
-	swap partition of an existing OpenBSD, NetBSD, or SunOS
+	swap partition of an existing OpenBSD, NetBSD, SunOS, or Solaris
 	installation to allow upgrading to OpenBSD 2.1
 
 The OpenBSD/sparc binary distribution sets contain the binaries which
