@@ -18,27 +18,6 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#define CTORS_SECTION_FUNCTION						\
-void									\
-ctors_section ()							\
-{									\
-  if (in_section != in_ctors)						\
-    {									\
-      fprintf (asm_out_file, "%s\n", CTORS_SECTION_ASM_OP);		\
-      in_section = in_ctors;						\
-    }									\
-}
-
-#define DTORS_SECTION_FUNCTION						\
-void									\
-dtors_section ()							\
-{									\
-  if (in_section != in_dtors)						\
-    {									\
-      fprintf (asm_out_file, "%s\n", DTORS_SECTION_ASM_OP);		\
-      in_section = in_dtors;						\
-    }									\
-}
 
 #include <pa/pa.h>
 #define OBSD_HAS_DECLARE_FUNCTION_NAME
@@ -145,8 +124,8 @@ do { \
 
 #undef TEXT_SECTION_ASM_OP
 #define TEXT_SECTION_ASM_OP "\t.text"
-#undef READONLY_DATA_ASM_OP
-#define READONLY_DATA_ASM_OP "\t.section\t.rodata"
+#undef CONST_SECTION_ASM_OP
+#define CONST_SECTION_ASM_OP "\t.section\t.rodata"
 #undef DATA_SECTION_ASM_OP
 #define DATA_SECTION_ASM_OP "\t.data"
 #undef BSS_SECTION_ASM_OP
@@ -161,3 +140,90 @@ do { \
 #undef DO_GLOBAL_DTORS_BODY
 #define	HAS_INIT_SECTION
 
+#undef CTORS_SECTION_FUNCTION
+#define CTORS_SECTION_FUNCTION						\
+void									\
+ctors_section ()							\
+{									\
+  if (in_section != in_ctors)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", CTORS_SECTION_ASM_OP);		\
+      in_section = in_ctors;						\
+    }									\
+}
+
+#undef DTORS_SECTION_FUNCTION
+#define DTORS_SECTION_FUNCTION						\
+void									\
+dtors_section ()							\
+{									\
+  if (in_section != in_dtors)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", DTORS_SECTION_ASM_OP);		\
+      in_section = in_dtors;						\
+    }									\
+}
+
+#undef READONLY_DATA_SECTION
+#define READONLY_DATA_SECTION() const_section ()
+
+#undef CONST_SECTION_FUNCTION
+#define CONST_SECTION_FUNCTION						\
+void									\
+const_section ()                                                        \
+{									\
+  if (in_section != in_const)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", CONST_SECTION_ASM_OP);		\
+      in_section = in_const;						\
+    }									\
+}
+
+#undef EXTRA_SECTIONS
+#define EXTRA_SECTIONS in_const, in_ctors, in_dtors
+
+#undef EXTRA_SECTION_FUNCTIONS
+#define EXTRA_SECTION_FUNCTIONS						\
+  CONST_SECTION_FUNCTION						\
+  CTORS_SECTION_FUNCTION						\
+  DTORS_SECTION_FUNCTION
+
+/* A C statement or statements to switch to the appropriate
+   section for output of DECL.  DECL is either a `VAR_DECL' node
+   or a constant of some sort.  RELOC indicates whether forming
+   the initial value of DECL requires link-time relocations.  */
+
+#undef SELECT_SECTION
+#define SELECT_SECTION(DECL,RELOC)					\
+{									\
+  if (TREE_CODE (DECL) == STRING_CST)					\
+    {									\
+      if (! flag_writable_strings)					\
+	const_section ();						\
+      else								\
+	data_section ();						\
+    }									\
+  else if (TREE_CODE (DECL) == VAR_DECL					\
+	   || TREE_CODE (DECL) == CONSTRUCTOR)				\
+    {									\
+      if ((flag_pic && RELOC)						\
+	  || !TREE_READONLY (DECL) || TREE_SIDE_EFFECTS (DECL)		\
+	  || !DECL_INITIAL (DECL)					\
+	  || (DECL_INITIAL (DECL) != error_mark_node			\
+	      && !TREE_CONSTANT (DECL_INITIAL (DECL))))			\
+	data_section ();						\
+      else								\
+	const_section ();						\
+    }									\
+  else									\
+    const_section ();							\
+}
+
+/* A C statement or statements to switch to the appropriate
+   section for output of RTX in mode MODE.  RTX is some kind
+   of constant in RTL.  The argument MODE is redundant except
+   in the case of a `const_int' rtx.  Currently, these always
+   go into the const section.  */
+
+#undef SELECT_RTX_SECTION
+#define SELECT_RTX_SECTION(MODE,RTX) const_section()
