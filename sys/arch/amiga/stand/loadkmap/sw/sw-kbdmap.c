@@ -1,3 +1,4 @@
+/*	$OpenBSD: sw-kbdmap.c,v 1.2 1996/10/04 22:35:40 niklas Exp $	*/
 /*	$NetBSD: sw-kbdmap.c,v 1.2.4.1 1996/06/08 16:04:02 is Exp $	*/
 
 /*

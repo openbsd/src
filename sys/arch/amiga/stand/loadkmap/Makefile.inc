@@ -1,13 +1,15 @@
-# $OpenBSD: Makefile.inc,v 1.1 1996/08/23 23:38:04 niklas Exp $
+# $OpenBSD: Makefile.inc,v 1.2 1996/10/04 22:35:35 niklas Exp $
 # $NetBSD: Makefile.inc,v 1.1.2.3 1996/06/25 01:13:36 jtc Exp $
 
-BINDIR=$(DESTDIR)/usr/share/keymaps/amiga
+BINDIR=	/usr/share/keymaps/amiga
 NOMAN=
+CC=	${HOSTCC}
 
-realinstall: ${PROG}
-.if !.exists(${BINDIR}(
-	mkdir -p ${BINDIR}
-.endif
-	./${PROG} > ${BINDIR}/${MAP}
-	chmod 555 ${BINDIR}/${MAP}
-	chown ${BINOWN}.${BINGRP} ${BINDIR}/${MAP}
+all:	${MAP}
+
+${MAP}: ${PROG}
+	./${PROG} >${MAP}
+
+realinstall:
+	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 555 ${MAP} \
+	    ${DESTDIR}${BINDIR}

@@ -1,3 +1,4 @@
+/*	$OpenBSD: loadkmap.c,v 1.2 1996/10/04 22:35:36 niklas Exp $	*/
 /*	$NetBSD: loadkmap.c,v 1.4 1994/10/26 02:07:09 cgd Exp $	*/
 
 #include <sys/types.h>
