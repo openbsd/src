@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.14 2003/04/25 23:22:21 deraadt Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.15 2004/02/19 21:09:47 brad Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.14 2003/04/25 23:22:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.15 2004/02/19 21:09:47 brad Exp $";
 #endif
 
 #include <sys/param.h>
@@ -330,7 +330,9 @@ main(argc, argv)
 	appcstrg(&cppflags, "-undef");
 	/* even with -undef cpp still identifies as GNUC */
 	appcstrg(&cppflags, "-U__GNUC__");
+#if defined(__GNUC__) && __GNUC__ < 3
 	appcstrg(&cppflags, "-$");
+#endif
 	appcstrg(&cppflags, "-C");
 	appcstrg(&cppflags, "-Wcomment");
 	appcstrg(&cppflags, "-D__OpenBSD__");
