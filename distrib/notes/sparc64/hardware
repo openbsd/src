@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.69 2004/08/25 21:13:52 brad Exp $
+dnl	$OpenBSD: hardware,v 1.70 2004/08/26 07:41:37 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -230,6 +230,50 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 			LC2+1Sp, 2+1Sp, 4+1Sp, 8+2Sp, and 2+1HS Sp
 		SBus Serial Parallel Interface (spif)
 		Aurora SBus sio2 Serial Interface (asio)
+		PCI `universal' communication cards, providing serial
+		  and parallel ports, including:
+		    Dolphin Peripherals 4035 (dual serial)
+		    SIIG Cyber 2P1S (dual parallel, single serial)
+			and 2S1P (dual serial, single parallel)
+		    SIIG Cyber 4S (quad serial)
+		    SIIG Cyber I/O (single parallel, single serial)
+		    SIIG Cyber Serial, Serial Dual
+		    VScom PCI 800  (8 port serial)
+		    VScom PCI 100H (1 port serial)
+		    VScom PCI 110H (1 port serial and 1 port parallel)
+		    VScom PCI 200H (2 port serial)
+		    VScom PCI 210H (2 port serial and 1 port parallel)
+		    VScom PCI 400H (4 port serial)
+		    VScom PCI 410H (4 port serial and 1 port parallel)
+		    VScom PCI 800H (8 port serial)
+		    VScom PCI 100L (1 port serial)
+		    VScom PCI 200L (2 port serial)
+		    VScom PCI 210L (2 port serial and 1 port parallel)
+		    VScom PCI 400L (4 port serial)
+		    VScom PCI 800L (8 port serial)
+		    AT&T/Lucent Venus Modem (found on IBM 33L4618
+			card, Actiontec 56K, and others)
+		    US Robotics 3CP5609 PCI (modem)
+		    Lava Computers 2SP-PCI and Quattro-PCI (dual
+			serial)
+		    NEC PK-UG-X008 (serial)
+		    NEC PK-UG-X001 K56flex PCI (modem)
+		    Koutech IOFLEX-2S (dual serial)
+		    Syba Tech Ltd. PCI-4S2P-550-ECP (4 port serial, 2
+			port parallel)
+		    Moxa Technologies Co., Ltd. PCI I/O Card 4S (4 port
+			serial)
+		    Moxa Technologies Co., Ltd. C104H/PCI (4 port serial)
+		    NetMos 2S1P (2 port serial and 1 port parallel)
+		    Boca Research Turbo Serial 654 PCI (4 port serial)
+		    Boca Research Turbo Serial 658 PCI (8 port serial)
+		    SUNIX 402x (1 port serial)
+		    SUNIX 403x (2 port serial)
+		    SUNIX 405x (4 port serial)
+		    SUNIX 406x (8 port serial)
+		    SUNIX 407x (2 port serial and 1 port parallel)
+		    SUNIX 408x (2 port serial and 2 port parallel)
+		    SUNIX 409x (4 port serial and 2 port parallel)
 
 	Sound devices:
 		onboard SBus CS4321 (audiocs)
@@ -256,9 +300,20 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 
 	Framebuffers:
 		SBUS framebuffers:
-			bwtwo (monochrome, unaccelerated)
-			cgthree (8 bit color, unaccelerated)
-			cgsix (8 bit color)
+			bwtwo - monochrome, unaccelerated
+			cgthree - 8 bit color, unaccelerated
+			cgsix - 8 bit color
+			Fujitsu AG-10e (agten) - 24-bit color, accelerated
+			    (currently only supported in 8-bit
+			    unaccelerated mode)
+			RasterFlex series (rfx) - 8/24-bit color,
+			    accelerated (currently only supported in 8-bit
+			    unaccelerated mode)
+			Southland Media Systems MGX and MGXPlus (mgx) -
+			    24-bit color, accelerated (currently only
+			    supported in 8-bit unaccelerated mode)
+			ZX (aka Leo) - 8/24-bit color, overlay planes,
+			    double-buffered, 3-D acceleration
 		PCI video boards:
 			ATI Rage (vgafb), includes the on-board PGX (8 bit
 			    color, unaccelerated) and PGX24 (24 bit color,
