@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.7 2004/12/26 03:48:19 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.8 2004/12/30 07:43:09 dlg Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1110,9 +1110,9 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct udav_chain *c = priv;
 	struct udav_softc *sc = c->udav_sc;
 	struct ifnet *ifp = GET_IFP(sc);
+	struct udav_rx_hdr *h;
 	struct mbuf *m;
 	u_int32_t total_len;
-	u_int8_t *pktstat;
 	int s;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
@@ -1141,31 +1141,27 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	/* copy data to mbuf */
-	m = c->udav_mbuf;
-	memcpy(mtod(m, char *), c->udav_buf, total_len);
+	h = (struct udav_rx_hdr *)c->udav_buf;
+	total_len = UGETW(h->length) - ETHER_CRC_LEN;
+	
+	DPRINTF(("%s: RX Status: 0x%02x\n", h->pktstat));
 
-	/* first byte in received data */
-	pktstat = mtod(m, u_int8_t *);
-	m_adj(m, sizeof(u_int8_t));
-	DPRINTF(("%s: RX Status: 0x%02x\n", *pktstat));
-
-	total_len = UGETW(mtod(m, u_int8_t *));
-	m_adj(m, sizeof(u_int16_t));
-
-	if (*pktstat & UDAV_RSR_LCS) {
+	if (h->pktstat & UDAV_RSR_LCS) {
 		ifp->if_collisions++;
 		goto done;
 	}
 
 	if (total_len < sizeof(struct ether_header) ||
-	    *pktstat & UDAV_RSR_ERR) {
+	    h->pktstat & UDAV_RSR_ERR) {
 		ifp->if_ierrors++;
 		goto done;
 	}
 
+	/* copy data to mbuf */
+	m = c->udav_mbuf;
+	memcpy(mtod(m, char *), c->udav_buf + UDAV_RX_HDRLEN, total_len);
+
 	ifp->if_ipackets++;
-	total_len -= ETHER_CRC_LEN;
 
 	m->m_pkthdr.len = m->m_len = total_len;
 	m->m_pkthdr.rcvif = ifp;
