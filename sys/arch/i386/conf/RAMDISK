@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.122 2003/08/08 19:37:59 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.123 2003/12/23 03:15:11 mickey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -222,10 +222,9 @@ tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 #wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
+#dc*	at cardbus? dev ? function ?		# 21143, "tulip" clone ethernet
 sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
 #ste*	at pci? dev ? function ?		# Sundance ST201 ethernet
-#dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
-#dc*	at cardbus? dev ? function ?		# 21143, "tulip" clone ethernet
 #ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 #skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 #sk*	at skc?					#  each port of above
