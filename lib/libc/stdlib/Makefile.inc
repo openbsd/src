@@ -5,7 +5,7 @@
 
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	calloc.c cfree.c exit.c ecvt.c gcvt.c getenv.c getopt.c getopt_long.c \
-	getsubopt.c heapsort.c l64a.c malloc.c merge.c multibyte.c putenv.c =
+	getsubopt.c heapsort.c l64a.c malloc.c merge.c multibyte.c putenv.c \
 	qsort.c radixsort.c rand.c random.c realpath.c setenv.c strtod.c \
 	strtol.c strtoll.c strtoul.c strtoull.c system.c tfind.c tsearch.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
