@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.49 2002/08/12 02:36:25 stevesk Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.50 2002/08/12 02:40:52 stevesk Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.49 2002/08/12 02:36:25 stevesk Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.50 2002/08/12 02:40:52 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -631,6 +631,9 @@ main(int argc, char *argv[])
 					printf(" !S");
 					break;
 				case ICMP_UNREACH_FILTER_PROHIB:
+					++unreachable;
+					printf(" !X");
+					break;
 				case ICMP_UNREACH_NET_PROHIB: /*misuse*/
 					++unreachable;
 					printf(" !A");
