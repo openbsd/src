@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.126 2003/04/29 10:25:41 miod Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.127 2003/05/19 02:03:28 dhartmei Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2243,7 +2243,7 @@ dodata:							/* XXX */
 		}
 	}
 	if (so->so_options & SO_DEBUG) {
-		switch (tp->pf == PF_INET6) {
+		switch (tp->pf) {
 #ifdef INET6
 		case PF_INET6:
 			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti6,
