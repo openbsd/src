@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2001/12/17 03:19:01 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.30 2002/01/20 03:41:29 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 
 	pmap_extract(pmap_kernel(),
-		 (vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
+		(vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
 	
 	/*
 	 * Setup the trap frame for the new process
@@ -135,7 +135,7 @@ cpu_swapin(p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	
 	pmap_extract(pmap_kernel(),
-		(vm_offset_t)pcb->pcb_pm, (paddr_t *)pcb->pcb_pmreal);
+		(vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
 }
 
 /*
