@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.284 2003/01/09 17:59:23 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.285 2003/01/09 18:42:44 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -734,8 +734,8 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af {
 				j = calloc(1, sizeof(struct node_if));
 				if (j == NULL)
 					err(1, "antispoof: calloc");
-				if (strlcpy(j->ifname, i->ifname, IFNAMSIZ) >=
-				    IFNAMSIZ) {
+				if (strlcpy(j->ifname, i->ifname,
+				    sizeof(j->ifname)) >= sizeof(j->ifname)) {
 					free(j);
 					yyerror("interface name too long");
 					YYERROR;
@@ -861,7 +861,7 @@ queuespec	: QUEUE STRING queue_opts qassign {
 			memset(&a, 0, sizeof(a));
 
 			if (strlcpy(a.qname, $2, sizeof(a.qname)) >=
-			    PF_QNAME_SIZE) {
+			    sizeof(a.qname)) {
 				yyerror("queue name too long (max "
 				    "%d chars)", PF_QNAME_SIZE-1);
 				YYERROR;
@@ -1059,11 +1059,12 @@ qassign_list	: qassign_item			{ $$ = $1; }
 qassign_item	: STRING			{
 			$$ = calloc(1, sizeof(struct node_queue));
 			if ($$ == NULL)
-				err(1, "queue_item: calloc");
-			if (strlcpy($$->queue, $1, PF_QNAME_SIZE) >=
-			    PF_QNAME_SIZE) {
+				err(1, "qassign_item: calloc");
+			if (strlcpy($$->queue, $1, sizeof($$->queue)) >=
+			    sizeof($$->queue)) {
 				free($$);
-				yyerror("queue name too long");
+				yyerror("queue name '%s' too long (max "
+				    "%d chars)", $1, sizeof($$->queue)-1);
 				YYERROR;
 			}
 			$$->next = NULL;
@@ -1191,9 +1192,9 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			if ($9.label) {
 				if (strlcpy(r.label, $9.label,
-				    sizeof(r.label)) >= PF_RULE_LABEL_SIZE) {
+				    sizeof(r.label)) >= sizeof(r.label)) {
 					yyerror("rule label too long (max "
-					    "%d chars)", PF_RULE_LABEL_SIZE-1);
+					    "%d chars)", sizeof(r.label)-1);
 					YYERROR;
 				}
 				free($9.label);
@@ -1201,18 +1202,18 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			if ($9.queues.qname != NULL) {
 				if (strlcpy(r.qname, $9.queues.qname,
-				    sizeof(r.qname)) >= PF_QNAME_SIZE) {
+				    sizeof(r.qname)) >= sizeof(r.qname)) {
 					yyerror("rule qname too long (max "
-					    "%d chars)", PF_QNAME_SIZE-1);
+					    "%d chars)", sizeof(r.qname)-1);
 					YYERROR;
 				}
 				free($9.queues.qname);
 			}
 			if ($9.queues.pqname != NULL) {
 				if (strlcpy(r.pqname, $9.queues.pqname,
-				    sizeof(r.pqname)) >= PF_QNAME_SIZE) {
+				    sizeof(r.pqname)) >= sizeof(r.pqname)) {
 					yyerror("rule pqname too long (max "
-					    "%d chars)", PF_QNAME_SIZE-1);
+					    "%d chars)", sizeof(r.pqname)-1);
 					YYERROR;
 				}
 				free($9.queues.pqname);
@@ -1406,8 +1407,8 @@ if_item		: STRING			{
 			$$ = calloc(1, sizeof(struct node_if));
 			if ($$ == NULL)
 				err(1, "if_item: calloc");
-			if (strlcpy($$->ifname, $1, IFNAMSIZ) >=
-			    IFNAMSIZ) {
+			if (strlcpy($$->ifname, $1, sizeof($$->ifname)) >=
+			    sizeof($$->ifname)) {
 				free($$);
 				yyerror("interface name too long");
 				YYERROR;
@@ -1545,7 +1546,10 @@ host		: address
 			if ($$ == NULL)
 				err(1, "host: calloc");
 			$$->addr.type = PF_ADDR_TABLE;
-			strlcpy($$->addr.v.tblname, $2, PF_TABLE_NAME_SIZE);
+			if (strlcpy($$->addr.v.tblname, $2,
+			    sizeof($$->addr.v.tblname)) >=
+			    sizeof($$->addr.v.tblname))
+				errx(1, "host: strlcpy");
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -2851,14 +2855,22 @@ expand_label_if(const char *name, char *label, const char *ifname)
 	char	*p;
 
 	while ((p = strstr(label, name)) != NULL) {
-		tmp[0] = 0;
-		strlcat(tmp, label, p-label+1);
-		if (!*ifname)
-			strlcat(tmp, "any", PF_RULE_LABEL_SIZE);
-		else
-			strlcat(tmp, ifname, PF_RULE_LABEL_SIZE);
-		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
+		if (p-label >= sizeof(tmp))
+			errx(1, "expand_label_if: label too long");
+		memcpy(tmp, label, p-label);
+		tmp[p-label] = 0;
+		if (!*ifname) {
+			if (strlcat(tmp, "any", sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_if: strlcat");
+		} else {
+			if (strlcat(tmp, ifname, sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_if: strlcat");
+		}
+		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
+			errx(1, "expand_label_if: strlcat");
+		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
+		    PF_RULE_LABEL_SIZE)
+			errx(1, "expand_label_if: strlcpy");
 	}
 }
 
@@ -2870,37 +2882,50 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 	char	*p;
 
 	while ((p = strstr(label, name)) != NULL) {
-		tmp[0] = 0;
-
-		strlcat(tmp, label, p-label+1);
-
-		if (h->not)
-			strlcat(tmp, "! ", PF_RULE_LABEL_SIZE);
+		if (p-label >= sizeof(tmp))
+			errx(1, "expand_label_addr: label too long");
+		memcpy(tmp, label, p-label);
+		tmp[p-label] = 0;
+		if (h->not) {
+			if (strlcat(tmp, "! ", sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_addr: strlcat");
+		}
 		if (h->addr.type == PF_ADDR_DYNIFTL) {
-			strlcat(tmp, "(", PF_RULE_LABEL_SIZE);
-			strlcat(tmp, h->addr.v.ifname,
-			    PF_RULE_LABEL_SIZE);
-			strlcat(tmp, ")", PF_RULE_LABEL_SIZE);
+			if (strlcat(tmp, "(", sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_addr: strlcat");
+			if (strlcat(tmp, h->addr.v.ifname, sizeof(tmp)) >=
+			    sizeof(tmp))
+				errx(1, "expand_label_addr: strlcat");
+			if (strlcat(tmp, ")", sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_addr: strlcat");
 		} else if (!af || (PF_AZERO(&h->addr.v.a.addr, af) &&
-		    PF_AZERO(&h->addr.v.a.mask, af)))
-			strlcat(tmp, "any", PF_RULE_LABEL_SIZE);
-		else {
+		    PF_AZERO(&h->addr.v.a.mask, af))) {
+			if (strlcat(tmp, "any", sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_addr: strlcat");
+		} else {
 			char	a[48];
 			int	bits;
 
 			if (inet_ntop(af, &h->addr.v.a.addr, a,
-			    sizeof(a)) == NULL)
-				strlcat(a, "?", sizeof(a));
-			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
+			    sizeof(a)) == NULL) {
+				if (strlcat(a, "?", sizeof(a)) >= sizeof(a))
+					errx(1, "expand_label_addr: strlcat");
+			}
+			if (strlcat(tmp, a, sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_addr: strlcat");
 			bits = unmask(&h->addr.v.a.mask, af);
 			a[0] = 0;
 			if ((af == AF_INET && bits < 32) ||
 			    (af == AF_INET6 && bits < 128))
 				snprintf(a, sizeof(a), "/%d", bits);
-			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
+			if (strlcat(tmp, a, sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_addr: strlcat");
 		}
-		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
+		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
+			errx(1, "expand_label_addr: strlcat");
+		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
+		    PF_RULE_LABEL_SIZE)
+			errx(1, "expand_label_addr: strlcpy");
 	}
 }
 
@@ -2912,10 +2937,10 @@ expand_label_port(const char *name, char *label, struct node_port *port)
 	char	 a1[6], a2[6], op[13];
 
 	while ((p = strstr(label, name)) != NULL) {
-		tmp[0] = 0;
-
-		strlcat(tmp, label, p-label+1);
-
+		if (p-label >= sizeof(tmp))
+			errx(1, "expand_label_port: label too long");
+		memcpy(tmp, label, p-label);
+		tmp[p-label] = 0;
 		snprintf(a1, sizeof(a1), "%u", ntohs(port->port[0]));
 		snprintf(a2, sizeof(a2), "%u", ntohs(port->port[1]));
 		if (!port->op)
@@ -2936,9 +2961,13 @@ expand_label_port(const char *name, char *label, struct node_port *port)
 			snprintf(op, sizeof(op), ">%s", a1);
 		else if (port->op == PF_OP_GE)
 			snprintf(op, sizeof(op), ">=%s", a1);
-		strlcat(tmp, op, PF_RULE_LABEL_SIZE);
-		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
+		if (strlcat(tmp, op, sizeof(tmp)) >= sizeof(tmp))
+			errx(1, "expand_label_port: strlcat");
+		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
+			errx(1, "expand_label_port: strlcat");
+		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
+		    PF_RULE_LABEL_SIZE)
+			errx(1, "expand_label_port: strlcpy");
 	}
 }
 
@@ -2950,16 +2979,22 @@ expand_label_proto(const char *name, char *label, u_int8_t proto)
 	struct protoent	*pe;
 
 	while ((p = strstr(label, name)) != NULL) {
-		tmp[0] = 0;
-		strlcat(tmp, label, p-label+1);
+		if (p-label >= sizeof(tmp))
+			errx(1, "expand_label_proto: label too long");
+		memcpy(tmp, label, p-label);
+		tmp[p-label] = 0;
 		pe = getprotobynumber(proto);
-		if (pe != NULL)
-		    strlcat(tmp, pe->p_name, PF_RULE_LABEL_SIZE);
-		else
-		    snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
-			"%u", proto);
-		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
+		if (pe != NULL) {
+			if (strlcat(tmp, pe->p_name, sizeof(tmp)) >= sizeof(tmp))
+				errx(1, "expand_label_proto: strlcat");
+		} else
+			snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
+			    "%u", proto);
+		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
+			errx(1, "expand_label_proto: strlcat");
+		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
+		    PF_RULE_LABEL_SIZE)
+			errx(1, "expand_label_proto: strlcpy");
 	}
 }
 
@@ -2970,12 +3005,17 @@ expand_label_nr(const char *name, char *label)
 	char	*p;
 
 	while ((p = strstr(label, name)) != NULL) {
-		tmp[0] = 0;
-		strlcat(tmp, label, p-label+1);
+		if (p-label >= sizeof(tmp))
+			errx(1, "expand_label_nr: label too long");
+		memcpy(tmp, label, p-label);
+		tmp[p-label] = 0;
 		snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
 		    "%u", pf->rule_nr);
-		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
-		strlcpy(label, tmp, PF_RULE_LABEL_SIZE);
+		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
+			errx(1, "expand_label_nr: strlcat");
+		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
+		    PF_RULE_LABEL_SIZE)
+			errx(1, "expand_label_nr: strlcpy");
 	}
 }
 
@@ -3005,7 +3045,9 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 		memcpy(&pa, a, sizeof(struct pf_altq));
-		strlcpy(pa.ifname, interface->ifname, IFNAMSIZ);
+		if (strlcpy(pa.ifname, interface->ifname,
+		    sizeof(pa.ifname)) >= sizeof(pa.ifname))
+			errx(1, "expand_altq: strlcpy");
 
 		if (interface->not) {
 			yyerror("altq on ! <interface> is not supported");
@@ -3035,11 +3077,18 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			if (pa.scheduler == ALTQT_CBQ) {
 				/* now create a root queue */
 				memset(&pb, 0, sizeof(struct pf_altq));
-				strlcpy(qname, "root_", sizeof(qname));
-				strlcat(qname, interface->ifname,
-				    sizeof(qname));
-				strlcpy(pb.qname, qname, PF_QNAME_SIZE);
-				strlcpy(pb.ifname, interface->ifname, IFNAMSIZ);
+				if (strlcpy(qname, "root_", sizeof(qname)) >=
+				    sizeof(qname))
+					errx(1, "expand_altq: strlcpy");
+				if (strlcat(qname, interface->ifname,
+				    sizeof(qname)) >= sizeof(qname))
+					errx(1, "expand_altq: strlcat");
+				if (strlcpy(pb.qname, qname,
+				    sizeof(pb.qname)) >= sizeof(pb.qname))
+					errx(1, "expand_altq: strlcpy");
+				if (strlcpy(pb.ifname, interface->ifname,
+				    sizeof(pb.ifname)) >= sizeof(pb.ifname))
+					errx(1, "expand_altq: strlcpy");
 				pb.qlimit = pa.qlimit;
 				pb.scheduler = pa.scheduler;
 				pb.pq_u.cbq_opts = pa.pq_u.cbq_opts;
@@ -3055,10 +3104,16 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 				if (n == NULL)
 					err(1, "expand_altq: calloc");
 				if (pa.scheduler == ALTQT_CBQ)
-					strlcpy(n->parent, qname,
-					    PF_QNAME_SIZE);
-				strlcpy(n->queue, queue->queue, PF_QNAME_SIZE);
-				strlcpy(n->ifname, interface->ifname, IFNAMSIZ);
+					if (strlcpy(n->parent, qname,
+					    sizeof(n->parent)) >=
+					    sizeof(n->parent))
+						errx(1, "expand_altq: strlcpy");
+				if (strlcpy(n->queue, queue->queue,
+				    sizeof(n->queue)) >= sizeof(n->queue))
+					errx(1, "expand_altq: strlcpy");
+				if (strlcpy(n->ifname, interface->ifname,
+				    sizeof(n->ifname)) >= sizeof(n->ifname))
+					errx(1, "expand_altq: strlcpy");
 				n->scheduler = pa.scheduler;
 				n->next = NULL;
 				n->tail = n;
@@ -3120,9 +3175,15 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 				n = calloc(1, sizeof(struct node_queue));
 				if (n == NULL)
 					err(1, "expand_queue: calloc");
-				strlcpy(n->parent, a->qname, PF_QNAME_SIZE);
-				strlcpy(n->queue, queue->queue, PF_QNAME_SIZE);
-				strlcpy(n->ifname, tqueue->ifname, IFNAMSIZ);
+				if (strlcpy(n->parent, a->qname,
+				    sizeof(n->parent)) >= sizeof(n->parent))
+					errx(1, "expand_queue: strlcpy");
+				if (strlcpy(n->queue, queue->queue,
+				    sizeof(n->queue)) >= sizeof(n->queue))
+					errx(1, "expand_queue: strlcpy");
+				if (strlcpy(n->ifname, tqueue->ifname,
+				    sizeof(n->ifname)) >= sizeof(n->ifname))
+					errx(1, "expand_queue: strlcpy");
 				n->scheduler = a->scheduler;
 				n->next = NULL;
 				n->tail = n;
@@ -3133,8 +3194,12 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 					queues->tail = n;
 				}
 			);
-			strlcpy(a->ifname, tqueue->ifname, IFNAMSIZ);
-			strlcpy(a->parent, tqueue->parent, PF_QNAME_SIZE);
+			if (strlcpy(a->ifname, tqueue->ifname,
+			    sizeof(a->ifname)) >= sizeof(a->ifname))
+				errx(1, "expand_queue: strlcpy");
+			if (strlcpy(a->parent, tqueue->parent,
+			    sizeof(a->parent)) >= sizeof(a->parent))
+				errx(1, "expand_queue: strlcpy");
 
 			if (!eval_pfqueue(pf, a, bwspec.bw_absolute,
 			    bwspec.bw_percent))
@@ -3181,7 +3246,8 @@ expand_rule(struct pf_rule *r,
 	struct node_host	*h;
 	u_int8_t		 flags, flagset;
 
-	strlcpy(label, r->label, sizeof(label));
+	if (strlcpy(label, r->label, sizeof(label)) >= sizeof(label))
+		errx(1, "expand_rule: strlcpy");
 	flags = r->flags;
 	flagset = r->flagset;
 
@@ -3220,7 +3286,9 @@ expand_rule(struct pf_rule *r,
 		else
 			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
 
-		strlcpy(r->label, label, PF_RULE_LABEL_SIZE);
+		if (strlcpy(r->label, label, sizeof(r->label)) >=
+		    sizeof(r->label))
+			errx(1, "expand_rule: strlcpy");
 		expand_label(r->label, r->ifname, r->af, src_host, src_port,
 		    dst_host, dst_port, proto->proto);
 		r->qid = qname_to_qid(r->qname, r->ifname);
@@ -3265,9 +3333,12 @@ expand_rule(struct pf_rule *r,
 				error++;
 			}
 			pa->addr.addr = h->addr;
-			if (h->ifname != NULL)
-				strlcpy(pa->ifname, h->ifname, IFNAMSIZ);
-			else
+			if (h->ifname != NULL) {
+				if (strlcpy(pa->ifname, h->ifname,
+				    sizeof(pa->ifname)) >=
+				    sizeof(pa->ifname))
+					errx(1, "expand_rule: strlcpy");
+			} else
 				pa->ifname[0] = 0;
 			TAILQ_INSERT_TAIL(&r->rpool.list, pa, entries);
 		}
