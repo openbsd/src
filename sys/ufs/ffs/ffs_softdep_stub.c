@@ -1,10 +1,12 @@
-/*	$OpenBSD: ffs_softdep_stub.c,v 1.2 1999/12/05 08:30:38 art Exp $	*/
+/*	$OpenBSD: ffs_softdep_stub.c,v 1.3 2001/02/21 23:24:31 csapuntz Exp $	*/
 
 /*
- * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
+ * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
  *
- * This code is derived from work done by Greg Ganger and Yale Patt at the
- * University of Michigan.
+ * The soft updates code is derived from the appendix of a University
+ * of Michigan technical report (Gregory R. Ganger and Yale N. Patt,
+ * "Soft Updates: A Solution to the Metadata Update Problem in File
+ * Systems", CSE-TR-254-95, August 1995).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,9 +16,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. None of the names of McKusick, Ganger, Patt, or the University of 
- *    Michigan may be used to endorse or promote products derived from 
- *    this software without specific prior written permission.
+ * 3. None of the names of McKusick, Ganger, or the University of Michigan
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY MARSHALL KIRK MCKUSICK ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -30,7 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_softdep.stub.c	9.1 (McKusick) 7/9/97
+ *	from: @(#)ffs_softdep_stub.c	9.1 (McKusick) 7/10/97
+ * $FreeBSD: src/sys/ufs/ffs/ffs_softdep_stub.c,v 1.14 2000/08/09 00:41:54 tegge Exp $
  */
 
 #ifndef FFS_SOFTUPDATES
@@ -141,12 +144,10 @@ softdep_setup_freeblocks(ip, length)
 }
 
 void
-softdep_freefile(ap)
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap;
+softdep_freefile(pvp, ino, mode)
+		struct vnode *pvp;
+		ino_t ino;
+		int mode;
 {
 
 	panic("softdep_freefile called");
@@ -200,11 +201,11 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 }
 
 void
-softdep_increase_linkcnt(ip)
+softdep_change_linkcnt(ip)
 	struct inode *ip;
 {
 
-	panic("softdep_increase_linkcnt called");
+	panic("softdep_change_linkcnt called");
 }
 
 void 
@@ -225,13 +226,23 @@ softdep_update_inodeblock(ip, bp, waitfor)
 	panic("softdep_update_inodeblock called");
 }
 
-int
-softdep_fsync(vp)
+void
+softdep_fsync_mountdev(vp)
 	struct vnode *vp;
 {
 
-	panic("softdep_fsync called");
-	return (EIO);
+	return;
+}
+
+int
+softdep_flushworklist(oldmnt, countp, p)
+	struct mount *oldmnt;
+	int *countp;
+	struct proc *p;
+{
+
+	*countp = 0;
+	return (0);
 }
 
 int
@@ -247,11 +258,11 @@ softdep_sync_metadata(ap)
 	return (0);
 }
 
-void
-softdep_fsync_mountdev(vp)
+int
+softdep_slowdown(vp)
 	struct vnode *vp;
 {
-	panic("softdep_fsync_mountdev called");
+	panic("softdep_slowdown called");
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.48 2001/02/08 00:32:11 mickey Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.49 2001/02/21 23:24:30 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2208,4 +2208,18 @@ vfs_unregister(vfs)
 	maxvfsconf = maxtypenum;
 
 	return 0;
+}
+
+/*
+ * Check if vnode represents a disk device
+ */
+int
+vn_isdisk(vp, errp)
+	struct vnode *vp;
+	int *errp;
+{
+	if (vp->v_type != VBLK && vp->v_type != VCHR)
+		return (0);
+
+	return (1);
 }

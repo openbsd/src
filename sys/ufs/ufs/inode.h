@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.11 1999/09/10 23:39:10 art Exp $	*/
+/*	$OpenBSD: inode.h,v 1.12 2001/02/21 23:24:31 csapuntz Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -247,6 +247,7 @@ struct indir {
 #else
 #define DOINGSOFTDEP(vp)      (0)
 #endif
+#define DOINGASYNC(vp)        ((vp)->v_mount->mnt_flag & MNT_ASYNC)
 
 /* This overlays the fid structure (see mount.h). */
 struct ufid {

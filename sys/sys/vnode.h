@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.26 2000/11/21 21:49:56 provos Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.27 2001/02/21 23:24:30 csapuntz Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -507,4 +507,9 @@ void 	vput __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
 int	vaccess __P((mode_t file_mode, uid_t uid, gid_t gid,
 		     mode_t acc_mode, struct ucred *cred));
+
+int     vn_isdisk __P((struct vnode *vp, int *errp));
+
+int     softdep_fsync __P((struct vnode *vp));
+
 #endif /* _KERNEL */

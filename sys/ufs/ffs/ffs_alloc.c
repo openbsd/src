@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.18 2000/01/14 19:23:34 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.19 2001/02/21 23:24:30 csapuntz Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ nospace:
  * logical blocks to be made contiguous is given. The allocator attempts
  * to find a range of sequential blocks starting as close as possible to
  * an fs_rotdelay offset from the end of the allocation for the logical
- * block immediately preceeding the current range. If successful, the
+ * block immediately preceding the current range. If successful, the
  * physical block numbers in the buffer pointers and in the inode are
  * changed to reflect the new allocation. If unsuccessful, the allocation
  * is left unchanged. The success in doing the reallocation is returned.
@@ -1414,7 +1414,7 @@ ffs_vfree(v)
 
 
 	if (DOINGSOFTDEP(ap->a_pvp)) {
-		softdep_freefile(ap);
+		softdep_freefile(ap->a_pvp, ap->a_ino, ap->a_mode);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.17 2000/06/23 02:14:38 mickey Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.18 2001/02/21 23:24:30 csapuntz Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -703,8 +703,8 @@ redo:
 		tbp->b_flags &= ~(B_READ | B_DONE | B_ERROR | B_DELWRI);
 		tbp->b_flags |= (B_ASYNC | B_AGE);
 
-		if (LIST_FIRST(&tbp->b_dep) != NULL && bioops.io_start)
-			(*bioops.io_start)(tbp);
+		if (LIST_FIRST(&tbp->b_dep) != NULL)
+			buf_start(tbp);
 
 		pagemove(tbp->b_data, cp, size);
 		bp->b_bcount += size;

@@ -1,21 +1,17 @@
-/*	$OpenBSD: softdep.h,v 1.3 2001/02/10 11:08:40 fgsch Exp $	*/
+/*	$OpenBSD: softdep.h,v 1.4 2001/02/21 23:24:31 csapuntz Exp $	*/
 /*
- * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
+ * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
  * The soft updates code is derived from the appendix of a University
  * of Michigan technical report (Gregory R. Ganger and Yale N. Patt,
  * "Soft Updates: A Solution to the Metadata Update Problem in File
  * Systems", CSE-TR-254-95, August 1995).
  *
- * The following are the copyrights and redistribution conditions that
- * apply to this copy of the soft update software. For a license
- * to use, redistribute or sell the soft update software under
- * conditions other than those described here, please contact the
- * author at one of the following addresses:
+ * Further information about soft updates can be obtained from:
  *
- *	Marshall Kirk McKusick		mckusick@mckusick.com
- *	1614 Oxford Street		+1-510-843-9542
- *	Berkeley, CA 94709-1608
+ *	Marshall Kirk McKusick		http://www.mckusick.com/softdep/
+ *	1614 Oxford Street		mckusick@mckusick.com
+ *	Berkeley, CA 94709-1608		+1-510-843-9542
  *	USA
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,19 +23,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. None of the names of McKusick, Ganger, Patt, or the University of
- *    Michigan may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
- * 4. Redistributions in any form must be accompanied by information on
- *    how to obtain complete source code for any accompanying software
- *    that uses this software. This source code must either be included
- *    in the distribution or be available for no more than the cost of
- *    distribution plus a nominal fee, and must be freely redistributable
- *    under reasonable conditions. For an executable file, complete
- *    source code means the source code for all modules it contains.
- *    It does not mean source code for modules or files that typically
- *    accompany the operating system on which the executable file runs,
- *    e.g., standard library modules or system header files.
  *
  * THIS SOFTWARE IS PROVIDED BY MARSHALL KIRK MCKUSICK ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -53,7 +36,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)softdep.h	9.6 (McKusick) 2/25/99
+ *	@(#)softdep.h	9.7 (McKusick) 6/21/00
+ * $FreeBSD: src/sys/ufs/ffs/softdep.h,v 1.10 2000/06/22 00:29:53 mckusick Exp $
  */
 
 #include <sys/queue.h>
@@ -353,7 +337,7 @@ struct allocdirect {
 struct indirdep {
 	struct	worklist ir_list;	/* buffer holding indirect block */
 #	define	ir_state ir_list.wk_state /* indirect block pointer state */
-	ufs_daddr_t *ir_saveddata;	/* buffer cache contents */
+	caddr_t ir_saveddata;		/* buffer cache contents */
 	struct	buf *ir_savebp;		/* buffer holding safe copy */
 	struct	allocindirhd ir_donehd;	/* done waiting to update safecopy */
 	struct	allocindirhd ir_deplisthd; /* allocindir deps for this block */
@@ -399,7 +383,7 @@ struct freefrag {
 	struct	worklist ff_list;	/* id_inowait or delayed worklist */
 #	define	ff_state ff_list.wk_state /* owning user; should be uid_t */
 	struct	vnode *ff_devvp;	/* filesystem device vnode */
-	struct	fs *ff_fs;		/* addr of superblock */
+	struct	mount *ff_mnt;		/* associated mount point */
 	ufs_daddr_t ff_blkno;		/* fragment physical block number */
 	long	ff_fragsize;		/* size of fragment being deleted */
 	ino_t	ff_inum;		/* owning inode number */
@@ -415,7 +399,7 @@ struct freeblks {
 	struct	worklist fb_list;	/* id_inowait or delayed worklist */
 	ino_t	fb_previousinum;	/* inode of previous owner of blocks */
 	struct	vnode *fb_devvp;	/* filesystem device vnode */
-	struct	fs *fb_fs;		/* addr of superblock */
+	struct	mount *fb_mnt;		/* associated mount point */
 	off_t	fb_oldsize;		/* previous file size */
 	off_t	fb_newsize;		/* new file size */
 	int	fb_chkcnt;		/* used to check cnt of blks released */
@@ -435,7 +419,7 @@ struct freefile {
 	mode_t	fx_mode;		/* mode of inode */
 	ino_t	fx_oldinum;		/* inum of the unlinked file */
 	struct	vnode *fx_devvp;	/* filesystem device vnode */
-	struct	fs *fx_fs;		/* addr of superblock */
+	struct	mount *fx_mnt;		/* associated mount point */
 };
 
 /*

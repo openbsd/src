@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.29 2001/02/20 01:50:12 assar Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.30 2001/02/21 23:24:31 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -868,7 +868,7 @@ ffs_sync(mp, waitfor, cred, p)
 	register struct inode *ip;
 	register struct ufsmount *ump = VFSTOUFS(mp);
 	register struct fs *fs;
-	int error, allerror = 0;
+	int error, allerror = 0, count;
 
 	fs = ump->um_fs;
 	/*
@@ -923,6 +923,13 @@ loop:
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
+	if ((ump->um_mountp->mnt_flag & MNT_SOFTDEP) && waitfor == MNT_WAIT) {
+		if ((error == softdep_flushworklist(ump->um_mountp, &count, p))
+		    != 0)
+			allerror = error;
+		if (count)
+			goto loop;
+	}
         if (waitfor != MNT_LAZY) {
                 if (ump->um_mountp->mnt_flag & MNT_SOFTDEP)
                         waitfor = MNT_NOWAIT;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.15 1999/02/26 02:15:41 art Exp $	*/
+/*	$OpenBSD: buf.h,v 1.16 2001/02/21 23:24:30 csapuntz Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -62,13 +62,12 @@ LIST_HEAD(workhead, worklist);
  * to use these hooks, a pointer to a set of bio_ops could be added
  * to each buffer.
  */
-struct mount;
 extern struct bio_ops {
 	void	(*io_start) __P((struct buf *));
 	void	(*io_complete) __P((struct buf *));
- 	void	(*io_deallocate) __P((struct buf *));
-	int     (*io_fsync) __P((struct vnode *));
- 	int	(*io_sync) __P((struct mount *));
+	void	(*io_deallocate) __P((struct buf *));
+	void	(*io_movedeps) __P((struct buf *, struct buf *));
+	int	(*io_countdeps) __P((struct buf *, int));
 } bioops;
  
 
@@ -174,6 +173,7 @@ struct cluster_save {
 	(bp)->b_resid = 0;						\
 }
 
+
 /* Flags to low-level allocation routines. */
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
@@ -221,6 +221,44 @@ int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
 void  brelvp __P((struct buf *));
 void  reassignbuf __P((struct buf *, struct vnode *));
 void  bgetvp __P((struct vnode *, struct buf *));
+
+static __inline void
+buf_start(struct buf *bp)
+{
+        if (bioops.io_start)
+                (*bioops.io_start)(bp);
+}
+
+static __inline void
+buf_complete(struct buf *bp)
+{
+        if (bioops.io_complete)
+                (*bioops.io_complete)(bp);
+}
+
+static __inline void
+buf_deallocate(struct buf *bp)
+{
+        if (bioops.io_deallocate)
+                (*bioops.io_deallocate)(bp);
+}
+
+static __inline void
+buf_movedeps(struct buf *bp, struct buf *bp2)
+{
+        if (bioops.io_movedeps)
+                (*bioops.io_movedeps)(bp, bp2);
+}
+
+static __inline int
+buf_countdeps(struct buf *bp, int i)
+{
+        if (bioops.io_countdeps)
+                return ((*bioops.io_countdeps)(bp, i));
+        else
+                return (0);
+}
+
 __END_DECLS
 #endif
 #endif /* !_SYS_BUF_H_ */

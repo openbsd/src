@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.16 2000/06/23 02:14:39 mickey Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.17 2001/02/21 23:24:31 csapuntz Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ ffs_update(v)
 
 	*((struct dinode *)bp->b_data +
 	    ino_to_fsbo(fs, ip->i_number)) = ip->i_din.ffs_din;
-	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+	if (ap->a_waitfor && !DOINGASYNC(ap->a_vp)) {
 		return (bwrite(bp));
 	} else {
 		bdwrite(bp);
@@ -210,7 +210,7 @@ ffs_truncate(v)
 #endif
 	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
 	if (DOINGSOFTDEP(ovp)) {
-		if (length > 0) {
+		if (length > 0 || softdep_slowdown(ovp)) {
 			/*
 			 * If a file is only partially truncated, then
 			 * we have to clean up the data structures
@@ -510,7 +510,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		bcopy((caddr_t)bap, (caddr_t)copy, (u_int)fs->fs_bsize);
 		bzero((caddr_t)&bap[last + 1],
 		    (u_int)(NINDIR(fs) - (last + 1)) * sizeof (daddr_t));
-		if ((vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+		if (!DOINGASYNC(vp)) {
 			error = bwrite(bp);
 			if (error)
 				allerror = error;

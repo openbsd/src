@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.12 1999/02/26 03:35:18 art Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.13 2001/02/21 23:24:31 csapuntz Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -958,19 +958,31 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
  		ep->d_reclen += dp->i_reclen;
 	}
 out:
- 	if (ip) {
- 		ip->i_effnlink--;
- 		ip->i_flag |= IN_CHANGE;
- 	}
  	if (DOINGSOFTDEP(dvp)) {
- 		if (ip)
- 			softdep_setup_remove(bp, dp, ip, isrmdir);
- 		bdwrite(bp);
+		if (ip) {
+			ip->i_effnlink--;
+			softdep_change_linkcnt(ip);
+			softdep_setup_remove(bp, dp, ip, isrmdir);
+		}
+		if (softdep_slowdown(dvp)) {
+			error = bwrite(bp);
+		} else {
+			bdwrite(bp);
+			error = 0;
+		}
  	} else {
- 		if (ip)
- 			ip->i_ffs_nlink--;   /* XXX */
-
-		error = VOP_BWRITE(bp);
+		if (ip) {
+			ip->i_effnlink--;
+			ip->i_ffs_nlink--;
+			ip->i_flag |= IN_CHANGE;
+		}
+		if (flags & DOWHITEOUT)
+			error = bwrite(bp);
+		else if (DOINGASYNC(dvp) && dp->i_count != 0) {
+			bdwrite(bp);
+			error = 0;
+		} else
+			error = bwrite(bp);
 	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);
@@ -1000,13 +1012,19 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
 	if (vdp->v_mount->mnt_maxsymlinklen > 0)
  		ep->d_type = newtype;
  	oip->i_effnlink--;
- 	oip->i_flag |= IN_CHANGE;
  	if (DOINGSOFTDEP(vdp)) {
+		softdep_change_linkcnt(oip);
  		softdep_setup_directory_change(bp, dp, oip, newinum, isrmdir);
  		bdwrite(bp);
  	} else {
- 		oip->i_ffs_nlink--; /* XXX */
- 		error = VOP_BWRITE(bp);
+ 		oip->i_ffs_nlink--;
+		oip->i_flag |= IN_CHANGE;
+		if (DOINGASYNC(vdp)) {
+			bdwrite(bp);
+			error = 0;
+		} else {
+			error = VOP_BWRITE(bp);
+		}
  	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);

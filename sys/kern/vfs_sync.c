@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.12 2000/03/23 15:57:33 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.13 2001/02/21 23:24:30 csapuntz Exp $  */
 
 /*
  *  Portions of this code are:
@@ -55,6 +55,10 @@
 
 #include <sys/kernel.h>
 
+#ifdef FFS_SOFTUPDATES
+int   softdep_process_worklist __P((struct mount *));
+#endif
+
 /*
  * The workitem queue.
  */ 
@@ -67,7 +71,7 @@ int rushjob = 0;			/* number of slots to run ASAP */
 int stat_rush_requests = 0;		/* number of rush requests */
  
 static int syncer_delayno = 0;
-static long syncer_last;
+static long syncer_mask;
 LIST_HEAD(synclist, vnode);
 static struct synclist *syncer_workitem_pending;
 
@@ -105,16 +109,9 @@ void
 vn_initialize_syncerd()
 
 {
-	int i;
-
-	syncer_last = SYNCER_MAXDELAY + 2;
-
-	syncer_workitem_pending =
-		malloc(syncer_last * sizeof(struct synclist), 
-		       M_VNODE, M_WAITOK);
-
-	for (i = 0; i < syncer_last; i++)
-		LIST_INIT(&syncer_workitem_pending[i]);
+	syncer_workitem_pending = hashinit(syncer_maxdelay, M_VNODE, M_WAITOK,
+	    &syncer_mask);
+	syncer_maxdelay = syncer_mask + 1;
 }
 
 /*
@@ -132,9 +129,10 @@ vn_syncer_add_to_worklist(vp, delay)
 	if (vp->v_flag & VONSYNCLIST)
 		LIST_REMOVE(vp, v_synclist);
 
-	if (delay > syncer_maxdelay)
-		delay = syncer_maxdelay;
-	slot = (syncer_delayno + delay) % syncer_last;
+	if (delay > syncer_maxdelay - 2)
+		delay = syncer_maxdelay - 2;
+	slot = (syncer_delayno + delay) & syncer_mask;
+
 	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
 	vp->v_flag |= VONSYNCLIST;
 	splx(s);
@@ -164,7 +162,7 @@ sched_sync(p)
 		s = splbio();
 		slp = &syncer_workitem_pending[syncer_delayno];
 		syncer_delayno += 1;
-		if (syncer_delayno >= syncer_last)
+		if (syncer_delayno == syncer_maxdelay)
 			syncer_delayno = 0;
 		splx(s);
 		while ((vp = LIST_FIRST(slp)) != NULL) {
@@ -182,11 +180,12 @@ sched_sync(p)
 			}
 		}
 
+#ifdef FFS_SOFTUPDATES
 		/*
 		 * Do soft update processing.
 		 */
-		if (bioops.io_sync)
-			(*bioops.io_sync)(NULL);
+		softdep_process_worklist(NULL);
+#endif
 
 		/*
 		 * The variable rushjob allows the kernel to speed up the

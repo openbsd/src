@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.28 2000/11/21 21:49:57 provos Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.29 2001/02/21 23:24:32 csapuntz Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -758,7 +758,7 @@ ufs_link(v)
 	ip->i_ffs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(vp))
-		softdep_increase_linkcnt(ip);
+		softdep_change_linkcnt(ip);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if ((error = VOP_UPDATE(vp, &ts, &ts, !DOINGSOFTDEP(vp))) == 0) {
 		ufs_makedirentry(ip, cnp, &newdir);
@@ -768,6 +768,8 @@ ufs_link(v)
 		ip->i_effnlink--;
 		ip->i_ffs_nlink--;
 		ip->i_flag |= IN_CHANGE;
+		if (DOINGSOFTDEP(vp))
+			softdep_change_linkcnt(ip);
 	}
 	FREE(cnp->cn_pnbuf, M_NAMEI);
 	VN_KNOTE(vp, NOTE_LINK);
@@ -924,9 +926,22 @@ abortit:
 		error = EPERM;
 		goto abortit;
 	}
+
+	/*
+	 * Check if just deleting a link name or if we've lost a race.
+	 * If another process completes the same rename after we've looked
+	 * up the source and have blocked looking up the target, then the
+	 * source and target inodes may be identical now although the
+	 * names were never linked.
+	 */
 	if (fvp == tvp) {
 		if (fvp->v_type == VDIR) {
-			error = EINVAL;
+			/*
+			 * Linked directories are impossible, so we must
+			 * have lost the race.  Pretend that the rename
+			 * completed before the lookup.
+			 */
+			error = ENOENT;
 			goto abortit;
 		}
 
@@ -935,7 +950,12 @@ abortit:
 		vput(tdvp);
 		vput(tvp);
 
-		/* Delete source. */
+		/*
+		 * Delete source.  There is another race now that everything
+		 * is unlocked, but this doesn't cause any new complications.
+		 * Relookup() may find a file that is unrelated to the
+		 * original one, or it may fail.  Too bad.
+		 */
 		vrele(fdvp);
 		vrele(fvp);
 		fcnp->cn_flags &= ~MODMASK;
@@ -1012,7 +1032,7 @@ abortit:
 	ip->i_ffs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(fvp))
-		softdep_increase_linkcnt(ip);
+		softdep_change_linkcnt(ip);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if ((error = VOP_UPDATE(fvp, &ts, &ts, !DOINGSOFTDEP(fvp))) != 0) {
 		VOP_UNLOCK(fvp, 0, p);
@@ -1077,12 +1097,14 @@ abortit:
 			dp->i_ffs_nlink++;
 			dp->i_flag |= IN_CHANGE;
 			if (DOINGSOFTDEP(tdvp))
-                               softdep_increase_linkcnt(dp);
+                               softdep_change_linkcnt(dp);
 			if ((error = VOP_UPDATE(tdvp, &ts, &ts,
 						!DOINGSOFTDEP(tdvp))) != 0) {
 				dp->i_effnlink--;
 				dp->i_ffs_nlink--;
 				dp->i_flag |= IN_CHANGE;
+				if (DOINGSOFTDEP(tdvp))
+					softdep_change_linkcnt(dp);
 				goto bad;
 			}
 		}
@@ -1092,6 +1114,8 @@ abortit:
 				dp->i_effnlink--;
 				dp->i_ffs_nlink--;
 				dp->i_flag |= IN_CHANGE;
+				if (DOINGSOFTDEP(tdvp))
+					softdep_change_linkcnt(dp);
 				(void)VOP_UPDATE(tdvp, &ts, &ts, 1);
 			}
 			goto bad;
@@ -1105,7 +1129,7 @@ abortit:
 		 * Short circuit rename(foo, foo).
 		 */
 		if (xp->i_number == ip->i_number)
-			panic("rename: same file");
+			panic("ufs_rename: same file");
 		/*
 		 * If the parent directory is "sticky", then the user must
 		 * own the parent directory, or the destination of the rename,
@@ -1146,10 +1170,12 @@ abortit:
 		if (doingdirectory) {
 			if (!newparent) {
 				dp->i_effnlink--;
-				dp->i_flag |= IN_CHANGE;
+				if (DOINGSOFTDEP(tdvp))
+					softdep_change_linkcnt(dp);
 			}
 			xp->i_effnlink--;
-			xp->i_flag |= IN_CHANGE;
+			if (DOINGSOFTDEP(tvp))
+				softdep_change_linkcnt(xp);
 		}
 		if (doingdirectory && !DOINGSOFTDEP(tvp)) {
 		       /*
@@ -1163,10 +1189,13 @@ abortit:
                         * disk, so when running with that code we avoid doing
                         * them now.
                         */
-			if (!newparent)
+			if (!newparent) {
 				dp->i_ffs_nlink--;
+				dp->i_flag |= IN_CHANGE;
+			}
 
 			xp->i_ffs_nlink--;
+			xp->i_flag |= IN_CHANGE;
 			if ((error = VOP_TRUNCATE(tvp, (off_t)0, IO_SYNC,
 			        tcnp->cn_cred, tcnp->cn_proc)) != 0)
 				goto bad;
@@ -1194,7 +1223,7 @@ abortit:
 		 * From name has disappeared.
 		 */
 		if (doingdirectory)
-			panic("rename: lost dir entry");
+			panic("ufs_rename: lost dir entry");
 		vrele(ap->a_fvp);
 		return (0);
 	}
@@ -1209,7 +1238,7 @@ abortit:
 	 */
 	if (xp != ip) {
 		if (doingdirectory)
-			panic("rename: lost dir entry");
+			panic("ufs_rename: lost dir entry");
 	} else {
 		/*
 		 * If the source is a directory with a
@@ -1244,6 +1273,9 @@ out:
 		ip->i_effnlink--;
 		ip->i_ffs_nlink--;
 		ip->i_flag |= IN_CHANGE;
+		ip->i_flag &= ~IN_RENAME;
+		if (DOINGSOFTDEP(fvp))
+			softdep_change_linkcnt(ip);
 		vput(fvp);
 	} else
 		vrele(fvp);
@@ -1311,7 +1343,7 @@ ufs_mkdir(v)
 	ip->i_effnlink = 2;
 	ip->i_ffs_nlink = 2;
 	if (DOINGSOFTDEP(tvp))
-		softdep_increase_linkcnt(ip);
+		softdep_change_linkcnt(ip);
 
 	if (cnp->cn_flags & ISWHITEOUT)
 		ip->i_ffs_flags |= UF_OPAQUE;
@@ -1325,7 +1357,7 @@ ufs_mkdir(v)
 	dp->i_ffs_nlink++;
 	dp->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(dvp))
-		softdep_increase_linkcnt(dp);
+		softdep_change_linkcnt(dp);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if ((error = VOP_UPDATE(dvp, &ts, &ts, !DOINGSOFTDEP(dvp))) != 0)
 		goto bad;
@@ -1395,6 +1427,8 @@ bad:
                 dp->i_effnlink--;
                 dp->i_ffs_nlink--;
                 dp->i_flag |= IN_CHANGE;
+		if (DOINGSOFTDEP(dvp))
+			softdep_change_linkcnt(dp);
                 /*
                  * No need to do an explicit VOP_TRUNCATE here, vrele will
                  * do this for us because we set the link count to 0.
@@ -1402,7 +1436,8 @@ bad:
                 ip->i_effnlink = 0;
                 ip->i_ffs_nlink = 0;
                 ip->i_flag |= IN_CHANGE;
-
+		if (DOINGSOFTDEP(tvp))
+			softdep_change_linkcnt(ip);
 		vput(tvp);
 	}
 out:
@@ -1469,28 +1504,41 @@ ufs_rmdir(v)
 	 * inode.  If we crash in between, the directory
 	 * will be reattached to lost+found,
 	 */
-	if ((error = ufs_dirremove(dvp, ip, cnp->cn_flags, 1)) != 0)
+	dp->i_effnlink--;
+	ip->i_effnlink--;
+	if (DOINGSOFTDEP(vp)) {
+		softdep_change_linkcnt(dp);
+		softdep_change_linkcnt(ip);
+	}
+	if ((error = ufs_dirremove(dvp, ip, cnp->cn_flags, 1)) != 0) {
+		dp->i_effnlink++;
+		ip->i_effnlink++;
+		if (DOINGSOFTDEP(vp)) {
+			softdep_change_linkcnt(dp);
+			softdep_change_linkcnt(ip);
+		}
 		goto out;
+	}
+
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
         /*
 	 * Truncate inode. The only stuff left in the directory is "." and
 	 * "..". The "." reference is inconsequential since we are quashing
-	 * it. We have removed the "." reference and the reference in the
-	 * parent directory, but there may be other hard links. The soft
-	 * update code will arange to do these operations after the parent
-	 * directory has been deleted on disk, so when running with
-	 * that code we avoid doing them now.
+	 * it. The soft dependency code will arrange to do these operations
+	 * after the parent directory entry has been deleted on disk, so
+	 * when running with that code we avoid doing them now.
 	 */
-	dp->i_effnlink--;
-	dp->i_flag |= IN_CHANGE;
-	ip->i_effnlink--;
-	ip->i_flag |= IN_CHANGE;
 	if (!DOINGSOFTDEP(vp)) {
+		int ioflag;
+
 		dp->i_ffs_nlink--;
+		dp->i_flag |= IN_CHANGE;
 		ip->i_ffs_nlink--;
-		error = VOP_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-		   cnp->cn_proc);
+		ip->i_flag |= IN_CHANGE;
+		ioflag = DOINGASYNC(vp) ? 0 : IO_SYNC;
+		error = VOP_TRUNCATE(vp, (off_t)0, ioflag, cnp->cn_cred,
+		    cnp->cn_proc);
 	}
 	cache_purge(vp);
 out:
@@ -2114,7 +2162,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	ip->i_effnlink = 1;
 	ip->i_ffs_nlink = 1;
 	if (DOINGSOFTDEP(tvp))
-		softdep_increase_linkcnt(ip);
+		softdep_change_linkcnt(ip);
 	if ((ip->i_ffs_mode & ISGID) &&
 		!groupmember(ip->i_ffs_gid, cnp->cn_cred) &&
 	    suser(cnp->cn_cred, NULL))
@@ -2150,6 +2198,8 @@ bad:
 	ip->i_effnlink = 0;
 	ip->i_ffs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
+	if (DOINGSOFTDEP(tvp))
+		softdep_change_linkcnt(ip);
 	vput(tvp);
 
 	return (error);
