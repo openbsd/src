@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.106 2003/07/06 21:17:32 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.107 2003/07/14 22:06:19 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.104 2003/07/06 21:16:59 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.105 2003/07/14 22:05:15 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -68,6 +68,7 @@
 #define	PCMCIA_VENDOR_GREYCELL	0x0143	/* Grey Cell */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_NETGEAR	0x0149	/* Netgear */
+#define	PCMCIA_VENDOR_SIEMENS	0x02ac	/* Siemens */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent */
@@ -431,6 +432,10 @@
 /* Simple Technology */
 #define	PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288	0x0100
+
+/* Siemens */
+#define	PCMCIA_CIS_SIEMENS_SS1021	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIEMENS_SS1021	0x0002
 
 /* Socket Communications */
 #define	PCMCIA_CIS_SOCKET_EA_ETHER	{ NULL, NULL, NULL, NULL }
