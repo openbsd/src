@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.10 2003/08/01 07:44:05 miod Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.11 2004/01/26 20:11:14 deraadt Exp $	*/
 
 /* This file has local changes by MOTOROLA
 Thu Sep  9 09:06:29 CDT 1993 Dale Rahn (drahn@pacific)
@@ -14,9 +14,9 @@ Thu Sep  9 09:06:29 CDT 1993 Dale Rahn (drahn@pacific)
 #define __GNUC_VA_LIST
 
 typedef struct __va_list_tag {
-	int  __va_arg;		/* argument number */
-	int *__va_stk;		/* start of args passed on stack */
-	int *__va_reg;		/* start of args passed in regs */
+	unsigned int  __va_arg;		/* argument number */
+	unsigned int *__va_stk;		/* start of args passed on stack */
+	unsigned int *__va_reg;		/* start of args passed in regs */
 } __va_list[1], __gnuc_va_list[1];
 
 #endif /* not __GNUC_VA_LIST */
