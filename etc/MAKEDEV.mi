@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.45 2002/04/21 23:37:02 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.46 2002/05/16 16:18:44 provos Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -148,6 +148,7 @@ target(all, rx, 0, 1)dnl
 target(all, wd, 0, 1, 2, 3)dnl
 target(all, xd, 0, 1, 2, 3)dnl
 twrget(all, aflo, fd, 0, 1, 2, 3)dnl
+target(all, systrace)dnl
 target(all, pctr)dnl
 target(all, pctr0)dnl
 target(all, altq)dnl
@@ -976,6 +977,8 @@ _mkdev(apm, apm*, {-M apm	c major_apm_c 0 644
 __devitem(pcmcia, pcmcia*, PCMCIA card drivers)dnl
 __devitem(pctr, pctr*, PC Performance Tuning Register access device)dnl
 _mkdev(pctr, pctr, {-M pctr c major_pctr_c 0 644-})dnl
+__devitem(systrace, systrace*, system call tracing device)dnl
+_mkdev(systrace, systrace, {-M systrace c major_systrace_c 0 644-})dnl
 __devitem(au, audio*, audio device)dnl
 _mkdev(au, audio*, {-M sound$U	c major_au_c $U
 	M mixer$U	c major_au_c Add($U, 16)
