@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/09/21 05:55:35 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/09/21 07:49:07 etheisen Exp $
 
 LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 
@@ -7,6 +7,7 @@ LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 #
 PREFIX=		/usr
 DATADIR=	$(PREFIX)/share/misc
+LESS_HLP=	more.help
 MAN=		less.1 lesskey.1
 MLINKS=		less.1 more.1 less.1 page.1
 CLEANFILES=	config.cache config.log $(MAN)
@@ -29,7 +30,7 @@ config.status:
 	/bin/sh $(.CURDIR)/configure --prefix=$(PREFIX)
 
 gnu_build:
-	$(MAKE) $(WCFLAGS) $(WLDFLAGS) datadir=$(DATADIR)
+	$(MAKE) $(WCFLAGS) $(WLDFLAGS) datadir=$(DATADIR) LESS_HLP=$(LESS_HLP)
 
 install: gnu_install maninstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
@@ -46,7 +47,7 @@ install: gnu_install maninstall _SUBDIRUSE
 .endif
 
 gnu_install:
-	$(MAKE) $(WCFLAGS) $(WLDFLAGS) datadir=$(DATADIR) \
+	$(MAKE) $(WCFLAGS) $(WLDFLAGS) datadir=$(DATADIR) LESS_HLP=$(LESS_HLP) \
 		INSTALL_PROGRAM="install $(COPY) $(STRIP) -o $(BINOWN) -g $(BINGRP) -m $(BINMODE)" \
 		INSTALL_DATA="install $(COPY) -o ${BINOWN} -g ${BINGRP} -m 444" \
 		INSTALL_MAN= INSTALLDIRS= install

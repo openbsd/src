@@ -16,6 +16,7 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_MAN=install_man
 MANPAGES=less.nro lesskey.nro
 INSTALLDIRS=installdirs
+LESS_HLP=more.help
 
 CFLAGS = @CFLAGS@
 CFLAGS_COMPILE_ONLY = -c
@@ -79,12 +80,12 @@ lesskey: lesskey.${O} version.${O}
 ${OBJ}: less.h defines.h funcs.h
 
 filename.${O}: filename.c
-	${CC} -c -DHELPFILE=\"${datadir}/less.hlp\" -I. ${CPPFLAGS} ${CFLAGS} ${srcdir}/filename.c
+	${CC} -c -DHELPFILE=\"${datadir}/${LESS_HLP}\" -I. ${CPPFLAGS} ${CFLAGS} ${srcdir}/filename.c
 
 install: all less.hlp $(INSTALL_MAN) $(INSTALLDIRS)
 	${INSTALL_PROGRAM} less ${bindir}/${binprefix}less
 	${INSTALL_PROGRAM} lesskey ${bindir}/${binprefix}lesskey
-	${INSTALL_DATA} ${srcdir}/less.hlp ${datadir}/less.hlp
+	${INSTALL_DATA} ${srcdir}/less.hlp ${datadir}/${LESS_HLP}
 
 installdirs: mkinstalldirs
 	${srcdir}/mkinstalldirs ${bindir} ${datadir} ${mandir}
@@ -95,7 +96,7 @@ install_man: ${MANPAGES}
 
 uninstall:
 	rm -f ${bindir}/${binprefix}less ${bindir}/${binprefix}lesskey
-	rm -f ${datadir}/less.hlp
+	rm -f ${datadir}/${LESS_HLP}
 	rm -f ${mandir}/less.${manext} ${mandir}/lesskey.${manext}
 
 info:
