@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.20 1997/03/27 15:50:12 niklas Exp $
+#	$OpenBSD: Makefile.amiga,v 1.21 1997/09/15 02:40:25 deraadt Exp $
 #	$NetBSD: Makefile.amiga,v 1.52 1996/12/01 12:10:07 veego Exp $
 
 # Makefile for OpenBSD
@@ -154,8 +154,7 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${AMIGA}/amiga/Locore.c ${CFILES} ${AMIGA}/amiga/swapgeneric.c \
-	    ioconf.c param.c | \
+	    ${CFILES} ${AMIGA}/amiga/swapgeneric.c ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:

@@ -136,8 +136,7 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-		${PPC}/powerpc/Locore.c ${CFILES} ${PPC}/powerpc/swapgeneric.c \
-		ioconf.c param.c | \
+		${CFILES} ${PPC}/powerpc/swapgeneric.c ioconf.c param.c | \
 		grep -v 'static function .* unused'
 
 tags:

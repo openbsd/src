@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.8 1997/03/31 00:23:54 downsj Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.9 1997/09/15 02:40:31 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -126,8 +126,7 @@ clean::
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
-	    ${MVME68K}/mvme68k/Locore.c ${CFILES} ${MVME68K}/mvme68k/swapgeneric.c \
-	    ioconf.c param.c | \
+	    ${CFILES} ${MVME68K}/mvme68k/swapgeneric.c ioconf.c param.c | \
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 

@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.mvme88k,v 1.2 1997/05/24 03:02:28 rahnds Exp $
+#	$Id: Makefile.mvme88k,v 1.3 1997/09/15 02:40:32 deraadt Exp $
 #
 # Makefile for NetBSD
 #
@@ -127,8 +127,7 @@ clean::
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${CFLAGS} ${CPPFLAGS} ${PARAM} -UKGDB \
-	    ${MVME88K}/mvme88k/Locore.c ${CFILES} ${MVME88K}/mvme88k/swapgeneric.c \
-	    ioconf.c param.c| \
+	    ${CFILES} ${MVME88K}/mvme88k/swapgeneric.c ioconf.c param.c| \
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 

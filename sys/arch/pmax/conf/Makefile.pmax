@@ -156,8 +156,7 @@ clean::
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
-	    ${CFILES} ${PMAX}/pmax/swapgeneric.c \
-	    ioconf.c param.c | \
+	    ${CFILES} ${PMAX}/pmax/swapgeneric.c ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:

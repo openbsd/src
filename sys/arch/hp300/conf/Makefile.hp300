@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.16 1997/04/20 07:01:10 downsj Exp $
+#	$OpenBSD: Makefile.hp300,v 1.17 1997/09/15 02:40:28 deraadt Exp $
 #	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
 
 # Makefile for OpenBSD
@@ -130,8 +130,7 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${HP300}/hp300/Locore.c ${CFILES} ${HP300}/hp300/swapgeneric.c \
-	    ioconf.c param.c | \
+	    ${CFILES} ${HP300}/hp300/swapgeneric.c ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:

@@ -81,7 +81,7 @@ clean::
 
 #lint: /tmp param.c
 #	@lint -hbxn -I. -DGENERIC -Dvolatile= ${COPTS} ${PARAM} \
-#	  ${I386}/i386/Locore.c ${CFILES} ioconf.c param.c | \
+#	  ${CFILES} ioconf.c param.c | \
 #	    grep -v 'struct/union .* never defined' | \
 #	    grep -v 'possible pointer alignment problem'
 

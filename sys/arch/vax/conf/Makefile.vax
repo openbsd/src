@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.6 1997/09/10 07:34:19 maja Exp $
+#	$OpenBSD: Makefile.vax,v 1.7 1997/09/15 02:40:37 deraadt Exp $
 #	$NetBSD: Makefile.vax,v 1.32 1997/03/14 23:27:35 mycroft Exp $
 
 # Makefile for NetBSD
@@ -124,8 +124,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${VAX}/vax/Locore.c ${CFILES} ${VAX}/vax/swapgeneric.c \
-	    ioconf.c param.c | \
+	    ${CFILES} ${VAX}/vax/swapgeneric.c ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:

@@ -111,8 +111,7 @@ clean::
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
-	    ${ATARI}/atari/Locore.c ${CFILES} ${ATARI}/atari/swapgeneric.c \
-	    ioconf.c param.c| \
+	    ${CFILES} ${ATARI}/atari/swapgeneric.c ioconf.c param.c| \
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.20 1997/06/09 19:45:29 kstailey Exp $
+#	$OpenBSD: Makefile.sun3,v 1.21 1997/09/15 02:40:36 deraadt Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -138,8 +138,7 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${SUN3}/sun3/Locore.c ${CFILES} ${SUN3}/sun3/swapgeneric.c \
-	    ioconf.c param.c | \
+	    ${CFILES} ${SUN3}/sun3/swapgeneric.c ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:

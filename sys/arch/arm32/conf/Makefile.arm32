@@ -129,8 +129,7 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
-	    ${ARM32}/arm32/Locore.c ${CFILES} ${ARM32}/arm32/swapgeneric.c \
-	    ioconf.c param.c | \
+	    ${CFILES} ${ARM32}/arm32/swapgeneric.c ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:
