@@ -29,8 +29,10 @@ divert(-1)
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 divert(0)
-VERSIONID(`$OpenBSD: sigmasoft.m4,v 1.1 1996/06/02 05:02:46 tholo Exp $')dnl
+VERSIONID(`$OpenBSD: sigmasoft.m4,v 1.2 1998/08/02 06:50:23 tholo Exp $')dnl
 define(`UUCP_RELAY', relay1.uu.net)dnl
 define(`BITNET_RELAY', relay2.uu.net)dnl
 define(`confME_TOO', True)dnl
+FEATURE(rbl)dnl
 FEATURE(redirect)dnl
+FEATURE(relay_based_on_MX)dnl

@@ -30,16 +30,16 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')dnl
-VERSIONID(`$OpenBSD: gandalf.mc,v 1.2 1996/11/11 04:25:30 tholo Exp $')dnl
+VERSIONID(`$OpenBSD: gandalf.mc,v 1.3 1998/08/02 06:50:22 tholo Exp $')dnl
 OSTYPE(bsd4.4)dnl
 DOMAIN(sigmasoft)dnl
 MASQUERADE_AS(SigmaSoft.COM)dnl
 FEATURE(allmasquerade)dnl
 FEATURE(local_procmail)dnl
+FEATURE(access_db)dnl
 define(`confAUTO_REBUILD', True)dnl
 MAILER(local)dnl
 MAILER(procmail)dnl
 MAILER(smtp)dnl
 
 Cw SigmaSoft.COM
-Cw saruman.SigmaSoft.COM
