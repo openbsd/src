@@ -1,0 +1,165 @@
+.\"     $NetBSD: amd64_get_mtrr.2,v 1.6 2002/02/20 20:40:48 gmcgarry Exp $
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Gregory McGarry.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 10, 2001
+.Dt amd64_GET_MTRR 3 amd64
+.Os
+.Sh NAME
+.Nm amd64_get_mtrr ,
+.Nm amd64_set_mtrr
+.Nd access Memory Type Range Registers
+.Sh LIBRARY
+.Lb libamd64
+.Sh SYNOPSIS
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]machine/sysarch.h\*[Gt]
+.Fd #include \*[Lt]machine/mtrr.h\*[Gt]
+.Ft int
+.Fn amd64_get_mtrr "struct mtrr *mtrrp" "int *n"
+.Ft int
+.Fn amd64_set_mtrr "struct mtrr *mtrrp" "int *n"
+.Sh DESCRIPTION
+These functions provide an interface to the MTRR registers found on
+686-class processors for controlling processor access to memory ranges.
+This is most useful for accessing devices such as video accelerators
+on
+.Xr pci 4
+and
+.Xr agp 4
+busses.  For example, enabling write-combining allows bus-write transfers
+to be combined into a larger transfer before bursting over the bus.  This
+can increase performance of write operations 2.5 times or more. 
+.Pp
+.Fa mtrrp
+is a pointer to one or more mtrr structures, as described below. The
+.Fa n
+argument is a pointer to an integer containing the number of structures
+pointed to by
+.Fa mtrrp .
+For
+.Fn amd64_set_mtrr
+the integer pointed to by
+.Fa n
+will be updated to reflect the actual number of MTRRs successfully set.
+For
+.Fn amd64_get_mtrr
+no more than
+.Fa n
+structures will be copied out, and the integer value pointed to by
+.Fa n
+will be updated to reflect the actual number of valid structures
+retrieved.
+A NULL argument to
+.Fa mtrrp
+will result in just the number of MTRRs available being returned
+in the integer pointed to by
+.Fa n .
+.Pp
+The argument
+.Fa mtrrp
+has the following structure:
+.Bd -literal
+struct mtrr {
+        uint64_t base;
+        uint64_t len;
+        uint8_t type;
+        int flags;
+        pid_t owner;
+};
+.Ed
+.Pp
+The location of the mapping is described by its physical base address
+.Em base
+and length
+.Em len .
+Valid values for
+.Em type
+are:
+.Pp
+.Bl -tag -offset indent -width MTRR_TYPE_UNDEF1 -compact
+.It MTRR_TYPE_UC
+uncached memory
+.It MTRR_TYPE_WC
+use write-combining
+.It MTRR_TYPE_WT
+use write-through caching
+.It MTRR_TYPE_WP
+write-protected memory
+.It MTRR_TYPE_WB
+use write-back caching
+.El
+.Pp
+Valid values for
+.Em flags
+are:
+.Pp
+.Bl -tag -offset indent -width MTRR_PRIVATE -compact
+.It MTRR_PRIVATE
+own range, reset the MTRR when the current process exits
+.It MTRR_FIXED
+use fixed range MTRR
+.It MTRR_VALID
+entry is valid
+.El
+.Pp
+The
+.Em owner
+member the PID of the user process which claims the mapping.  It is
+only valid if MTRR_PRIVATE is set in
+.Em flags .
+To clear/reset MTRRs, use a
+.Em flags
+field without MTRR_VALID set.
+.Sh RETURN VALUES
+Upon successful completion zero is returned, otherwise -1 is returned
+on failure, and the global variable
+.Va errno
+is set to indicate the error. The integer value pointed to by
+.Fa n
+will be container the number of successfully processed mtrr structures
+in both cases.
+.Sh ERRORS
+.Bl -tag -width [EINVAL]
+.It Bq Er ENOSYS
+The currently running kernel or CPU has no MTRR support.
+.It Bq Er EINVAL
+The currently running kernel has no MTRR support, or one of the mtrr
+structures pointed to by
+.Fa mtrrp
+is invalid.
+.It Bq Er EBUSY
+No unused MTRRs are available.
+.El
