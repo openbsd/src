@@ -40,8 +40,9 @@ MODULE_ID("$From: cursslk.cc,v 1.7 2000/12/09 23:46:12 tom Exp $")
 
 void Soft_Label_Key_Set::Soft_Label_Key::operator=(char *text)  {
   delete[] label;
-  label = new char[1 + ::strlen(text)];
-  (strcpy)(label,text);
+  size_t k = 1 + ::strlen(text);
+  label = new char[k];
+  (::strlcpy)(label, text, k);
 }
 
 long Soft_Label_Key_Set::count      = 0L;
