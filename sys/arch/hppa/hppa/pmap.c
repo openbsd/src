@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 1999/09/18 20:05:54 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 1999/10/27 01:22:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -1361,7 +1361,7 @@ pmap_extract(pmap, va)
 		printf("pmap_extract(%p, %x)\n", pmap, va);
 #endif
 
-	if (!(pv = pmap_find_va(pmap_sid(pmap, va), va)))
+	if (!(pv = pmap_find_va(pmap_sid(pmap, va), va & ~PGOFSET)))
 		return(0);
 	else
 		return tlbptob(pv->pv_tlbpage) + (va & PGOFSET);
