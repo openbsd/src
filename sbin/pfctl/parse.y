@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2002/01/09 11:30:53 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.52 2002/01/09 12:39:42 mpech Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -821,6 +821,7 @@ natrule		: no NAT interface proto FROM ipspec TO ipspec redirection
 				memcpy(nat.ifname, $3->ifname,
 				    sizeof(nat.ifname));
 				nat.ifnot = $3->not;
+				free($3);
 			}
 			if ($4 != NULL) {
 				nat.proto = $4->proto;
@@ -888,6 +889,7 @@ binatrule	: no BINAT interface proto FROM address TO ipspec redirection
 			if ($3 != NULL) {
 				memcpy(binat.ifname, $3->ifname,
 				    sizeof(binat.ifname));
+				free($3);
 			}
 			if ($4 != NULL) {
 				binat.proto = $4->proto;
@@ -954,6 +956,7 @@ rdrrule		: no RDR interface proto FROM ipspec TO ipspec dport redirection
 				memcpy(rdr.ifname, $3->ifname,
 				    sizeof(rdr.ifname));
 				rdr.ifnot = $3->not;
+				free($3);
 			}
 			if ($4 != NULL) {
 				rdr.proto = $4->proto;
