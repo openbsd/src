@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.1 1998/11/30 21:14:45 mickey Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.2 2000/04/18 20:55:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -47,6 +47,12 @@ struct hppa_eisa_chipset {
 					   int (*)(void *), void *, char *));
 	void	(*ec_intr_disestablish) __P((void *, void *));
 };
+
+#if 0
+#define	EISA_SLOTOFF_PRIMING	EISA_SLOTOFF_VID
+#define	EISA_PRIMING_VID(i)	({ (void)(i), 0xff; })
+#define	EISA_PRIMING_PID(i)	({ (void)(i), 0x00; })
+#endif
 
 /*
  * Functions provided to machine-independent EISA code.
