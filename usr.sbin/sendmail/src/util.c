@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1995 Eric P. Allman
+ * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)util.c	8.84.1.4 (Berkeley) 9/16/96";
+static char sccsid[] = "@(#)util.c	8.113 (Berkeley) 11/24/96";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -215,7 +215,7 @@ printav(av)
 	while (*av != NULL)
 	{
 		if (tTd(0, 44))
-			printf("\n\t%08x=", *av);
+			printf("\n\t%08lx=", (u_long) *av);
 		else
 			(void) putchar(' ');
 		xputs(*av++);
@@ -260,50 +260,71 @@ xputs(s)
 {
 	register int c;
 	register struct metamac *mp;
+	bool shiftout = FALSE;
 	extern struct metamac MetaMacros[];
 
 	if (s == NULL)
 	{
-		printf("<null>");
+		printf("%s<null>%s", TermEscape.te_rv_on, TermEscape.te_rv_off);
 		return;
 	}
 	while ((c = (*s++ & 0377)) != '\0')
 	{
+		if (shiftout)
+		{
+			printf("%s", TermEscape.te_rv_off);
+			shiftout = FALSE;
+		}
 		if (!isascii(c))
 		{
 			if (c == MATCHREPL)
 			{
-				putchar('$');
-				continue;
+				printf("%s$", TermEscape.te_rv_on);
+				shiftout = TRUE;
+				if (*s == '\0')
+					continue;
+				c = *s++ & 0377;
+				goto printchar;
 			}
 			if (c == MACROEXPAND)
 			{
-				putchar('$');
+				printf("%s$", TermEscape.te_rv_on);
+				shiftout = TRUE;
 				if (strchr("=~&?", *s) != NULL)
 					putchar(*s++);
 				if (bitset(0200, *s))
 					printf("{%s}", macname(*s++ & 0377));
+				else
+					printf("%c", *s++);
 				continue;
 			}
 			for (mp = MetaMacros; mp->metaname != '\0'; mp++)
 			{
 				if ((mp->metaval & 0377) == c)
 				{
-					printf("$%c", mp->metaname);
+					printf("%s$%c",
+						TermEscape.te_rv_on,
+						mp->metaname);
+					shiftout = TRUE;
 					break;
 				}
 			}
 			if (c == MATCHCLASS || c == MATCHNCLASS)
 			{
-				if (!bitset(0200, *s))
-					continue;
-				printf("{%s}", macname(*s++ & 0377));
+				if (bitset(0200, *s))
+					printf("{%s}", macname(*s++ & 0377));
+				else
+					printf("%c", *s++);
 			}
 			if (mp->metaname != '\0')
 				continue;
-			(void) putchar('\\');
+
+			/* unrecognized meta character */
+			printf("%sM-", TermEscape.te_rv_on);
+			shiftout = TRUE;
 			c &= 0177;
 		}
+  printchar:
 		if (isprint(c))
 		{
 			putchar(c);
@@ -324,15 +345,25 @@ xputs(s)
 		  case '\t':
 			c = 't';
 			break;
-
-		  default:
+		}
+		if (!shiftout)
+		{
+			printf("%s", TermEscape.te_rv_on);
+			shiftout = TRUE;
+		}
+		if (isprint(c))
+		{
+			(void) putchar('\\');
+			(void) putchar(c);
+		}
+		else
+		{
 			(void) putchar('^');
 			(void) putchar(c ^ 0100);
-			continue;
 		}
-		(void) putchar('\\');
-		(void) putchar(c);
 	}
+	if (shiftout)
+		printf("%s", TermEscape.te_rv_off);
 	(void) fflush(stdout);
 }
 /*
@@ -384,11 +415,11 @@ makelower(p)
 */
 
 void
-buildfname(gecos, login, buf, bufsiz)
+buildfname(gecos, login, buf, buflen)
 	register char *gecos;
 	char *login;
 	char *buf;
-	int bufsiz;
+	int buflen;
 {
 	register char *p;
 	register char *bp = buf;
@@ -396,16 +427,21 @@ buildfname(gecos, login, buf, bufsiz)
 	if (*gecos == '*')
 		gecos++;
 
-	for (p = gecos; *p != '\0' && *p != ',' && *p != ';' && *p != '%'
-		&& ((bp - buf) <= (bufsiz - 1)); p++)
+	/* copy gecos, interpolating & to be full name */
+	for (p = gecos; *p != '\0' && *p != ',' && *p != ';' && *p != '%'; p++)
 	{
+		if (bp >= &buf[buflen - 1])
+		{
+			/* buffer overflow -- just use login name */
+			snprintf(buf, buflen, "%s", login);
+			return;
+		}
 		if (*p == '&')
 		{
-			(void) strncpy(bp, login, (bufsiz - (bp - buf) - 1));
-			buf[bufsiz - 1] = '\0';
+			/* interpolate full name */
+			snprintf(bp, buflen - (bp - buf), "%s", login);
 			*bp = toupper(*bp);
-			while (*bp != '\0')
-				bp++;
+			bp += strlen(bp);
 		}
 		else
 			*bp++ = *p;
@@ -455,8 +491,8 @@ buildfname(gecos, login, buf, bufsiz)
 int
 safefile(fn, uid, gid, uname, flags, mode, st)
 	char *fn;
-	uid_t uid;
-	gid_t gid;
+	UID_T uid;
+	GID_T gid;
 	char *uname;
 	int flags;
 	int mode;
@@ -470,7 +506,7 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 
 	if (tTd(44, 4))
 		printf("safefile(%s, uid=%d, gid=%d, flags=%x, mode=%o):\n",
-			fn, uid, gid, flags, mode);
+			fn, (int) uid, (int) gid, flags, mode);
 	errno = 0;
 	if (st == NULL)
 		st = &fstbuf;
@@ -537,7 +573,7 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 			    bitset(S_IXGRP, stbuf.st_mode))
 				continue;
 #ifndef NO_GROUP_SET
-			if (uname != NULL &&
+			if (uname != NULL && !DontInitGroups &&
 			    ((gr != NULL && gr->gr_gid == stbuf.st_gid) ||
 			     (gr = getgrgid(stbuf.st_gid)) != NULL))
 			{
@@ -598,8 +634,8 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 		}
 		ret = errno;
 		if (tTd(44, 4))
-			printf("\t[final dir %s uid %d mode %o] %s\n",
-				fn, stbuf.st_uid, stbuf.st_mode,
+			printf("\t[final dir %s uid %d mode %lo] %s\n",
+				fn, (int) stbuf.st_uid, (u_long) stbuf.st_mode,
 				errstring(ret));
 		*p = '/';
 		st->st_mode = ST_MODE_NOFILE;
@@ -627,6 +663,12 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 			printf("\t[exec bits %o]\tEPERM]\n", st->st_mode);
 		return EPERM;
 	}
+	if (st->st_nlink > 1)
+	{
+		if (tTd(44, 4))
+			printf("\t[link count %d]\tEPERM\n", st->st_nlink);
+		return EPERM;
+	}
 
 	if (uid == 0 && !bitset(SFF_ROOTOK, flags))
 		mode >>= 6;
@@ -636,7 +678,7 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 		if (st->st_gid == gid)
 			;
 #ifndef NO_GROUP_SET
-		else if (uname != NULL &&
+		else if (uname != NULL && !DontInitGroups &&
 			 ((gr != NULL && gr->gr_gid == st->st_gid) ||
 			  (gr = getgrgid(st->st_gid)) != NULL))
 		{
@@ -653,8 +695,9 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 			mode >>= 3;
 	}
 	if (tTd(44, 4))
-		printf("\t[uid %d, stat %o, mode %o] ",
-			st->st_uid, st->st_mode, mode);
+		printf("\t[uid %d, nlink %d, stat %lo, mode %lo] ",
+			(int) st->st_uid, (int) st->st_nlink,
+			(u_long) st->st_mode, (u_long) mode);
 	if ((st->st_uid == uid || st->st_uid == 0 ||
 	     !bitset(SFF_MUSTOWN, flags)) &&
 	    (st->st_mode & mode) == mode)
@@ -800,12 +843,12 @@ struct omodes
 	char	*farg;
 } OpenModes[] =
 {
-	O_ACCMODE,		O_RDONLY,		"r",
-	O_ACCMODE|O_APPEND,	O_WRONLY,		"w",
-	O_ACCMODE|O_APPEND,	O_WRONLY|O_APPEND,	"a",
-	O_TRUNC,		0,			"w+",
-	O_APPEND,		O_APPEND,		"a+",
-	0,			0,			"r+",
+	{ O_ACCMODE,		O_RDONLY,		"r"	},
+	{ O_ACCMODE|O_APPEND,	O_WRONLY,		"w"	},
+	{ O_ACCMODE|O_APPEND,	O_WRONLY|O_APPEND,	"a"	},
+	{ O_TRUNC,		0,			"w+"	},
+	{ O_APPEND,		O_APPEND,		"a+"	},
+	{ 0,			0,			"r+"	},
 };
 
 FILE *
@@ -929,7 +972,7 @@ putxline(l, mci, pxflags)
 			p = &l[strlen(l)];
 
 		if (TrafficLogFile != NULL)
-			fprintf(TrafficLogFile, "%05d >>> ", getpid());
+			fprintf(TrafficLogFile, "%05d >>> ", (int) getpid());
 
 		/* check for line overflow */
 		while (mci->mci_mailer->m_linelimit > 0 &&
@@ -961,7 +1004,7 @@ putxline(l, mci, pxflags)
 			(void) putc(' ', mci->mci_out);
 			if (TrafficLogFile != NULL)
 				fprintf(TrafficLogFile, "%s!\n%05d >>>  ",
-					l, getpid());
+					l, (int) getpid());
 			*q = svchar;
 			l = q;
 			slop = 1;
@@ -974,6 +1017,15 @@ putxline(l, mci, pxflags)
 			(void) putc('.', mci->mci_out);
 			if (TrafficLogFile != NULL)
 				(void) putc('.', TrafficLogFile);
+		}
+		else if (l[0] == 'F' && slop == 0 &&
+			 bitset(PXLF_MAPFROM, pxflags) &&
+			 strncmp(l, "From ", 5) == 0 &&
+			 bitnset(M_ESCFROM, mci->mci_mailer->m_flags))
+		{
+			(void) putc('>', mci->mci_out);
+			if (TrafficLogFile != NULL)
+				(void) putc('>', TrafficLogFile);
 		}
 		if (TrafficLogFile != NULL)
 			fprintf(TrafficLogFile, "%.*s\n", p - l, l);
@@ -1041,7 +1093,7 @@ xfclose(fp, a, b)
 	char *a, *b;
 {
 	if (tTd(53, 99))
-		printf("xfclose(%x) %s %s\n", fp, a, b);
+		printf("xfclose(%lx) %s %s\n", (u_long) fp, a, b);
 #if XDEBUG
 	if (fileno(fp) == 1)
 		syserr("xfclose(%s %s): fd = 1", a, b);
@@ -1094,9 +1146,11 @@ sfgets(buf, siz, fp, timeout, during)
 		if (setjmp(CtxReadTimeout) != 0)
 		{
 # ifdef LOG
-			syslog(LOG_NOTICE,
-			    "timeout waiting for input from %.100s during %s",
-			    CurHostName? CurHostName: "local", during);
+			if (LogLevel > 1)
+				syslog(LOG_NOTICE,
+				       "timeout waiting for input from %.100s during %s",
+				       CurHostName ? CurHostName : "local",
+				       during);
 # endif
 			errno = 0;
 			usrerr("451 timeout waiting for input during %s",
@@ -1130,11 +1184,11 @@ sfgets(buf, siz, fp, timeout, during)
 	{
 		buf[0] = '\0';
 		if (TrafficLogFile != NULL)
-			fprintf(TrafficLogFile, "%05d <<< [EOF]\n", getpid());
+			fprintf(TrafficLogFile, "%05d <<< [EOF]\n", (int) getpid());
 		return (NULL);
 	}
 	if (TrafficLogFile != NULL)
-		fprintf(TrafficLogFile, "%05d <<< %s", getpid(), buf);
+		fprintf(TrafficLogFile, "%05d <<< %s", (int) getpid(), buf);
 	if (SevenBitInput)
 	{
 		for (p = buf; *p != '\0'; p++)
@@ -1324,19 +1378,21 @@ atooct(s)
 
 int
 waitfor(pid)
-	int pid;
+	pid_t pid;
 {
 #ifdef WAITUNION
 	union wait st;
 #else
 	auto int st;
 #endif
-	int i;
+	pid_t i;
 
 	do
 	{
 		errno = 0;
 		i = wait(&st);
+		if (i > 0)
+			proc_list_drop(i);
 	} while ((i >= 0 || errno == EINTR) && i != pid);
 	if (i < 0)
 		return -1;
@@ -1455,7 +1511,7 @@ checkfd012(where)
 
 	for (i = 0; i < 3; i++)
 	{
-		if (fstat(i, &stbuf) < 0 && errno != EOPNOTSUPP)
+		if (fstat(i, &stbuf) < 0 && errno == EBADF)
 		{
 			/* oops.... */
 			int fd;
@@ -1470,6 +1526,90 @@ checkfd012(where)
 		}
 	}
 #endif /* XDEBUG */
+}
+/*
+**  CHECKFDOPEN -- make sure file descriptor is open -- for extended debugging
+**
+**	Parameters:
+**		fd -- file descriptor to check.
+**		where -- tag to print on failure.
+**
+**	Returns:
+**		none.
+*/
+
+void
+checkfdopen(fd, where)
+	int fd;
+	char *where;
+{
+#if XDEBUG
+	struct stat st;
+
+	if (fstat(fd, &st) < 0 && errno == EBADF)
+	{
+		syserr("checkfdopen(%d): %s not open as expected!", fd, where);
+		printopenfds(TRUE);
+	}
+#endif
+}
+/*
+**  CHECKFDS -- check for new or missing file descriptors
+**
+**	Parameters:
+**		where -- tag for printing.  If null, take a base line.
+**
+**	Returns:
+**		none
+**
+**	Side Effects:
+**		If where is set, shows changes since the last call.
+*/
+
+void
+checkfds(where)
+	char *where;
+{
+	int maxfd;
+	register int fd;
+	bool printhdr = TRUE;
+	int save_errno = errno;
+	static BITMAP baseline;
+	extern int DtableSize;
+
+	if (DtableSize > 256)
+		maxfd = 256;
+	else
+		maxfd = DtableSize;
+	if (where == NULL)
+		clrbitmap(baseline);
+
+	for (fd = 0; fd < maxfd; fd++)
+	{
+		struct stat stbuf;
+
+		if (fstat(fd, &stbuf) < 0 && errno != EOPNOTSUPP)
+		{
+			if (!bitnset(fd, baseline))
+				continue;
+			clrbitn(fd, baseline);
+		}
+		else if (!bitnset(fd, baseline))
+			setbitn(fd, baseline);
+		else
+			continue;
+
+		/* file state has changed */
+		if (where == NULL)
+			continue;
+		if (printhdr)
+		{
+			syslog(LOG_DEBUG, "%s: changed fds:", where);
+			printhdr = FALSE;
+		}
+		dumpfd(fd, TRUE, TRUE);
+	}
+	errno = save_errno;
 }
 /*
 **  PRINTOPENFDS -- print the open file descriptors (for debugging)
@@ -1527,10 +1667,15 @@ dumpfd(fd, printclosed, logit)
 
 	if (fstat(fd, &st) < 0)
 	{
-		if (printclosed || errno != EBADF)
+		if (errno != EBADF)
 		{
 			snprintf(p, SPACELEFT(buf, p), "CANNOT STAT (%s)",
 				errstring(errno));
+			goto printit;
+		}
+		else if (printclosed)
+		{
+			snprintf(p, SPACELEFT(buf, p), "CLOSED");
 			goto printit;
 		}
 		return;
@@ -1797,8 +1942,10 @@ prog_open(argv, pfd, e)
 
 	/* run as default user */
 	endpwent();
-	setgid(DefGid);
-	setuid(DefUid);
+	if (setgid(DefGid) < 0)
+		syserr("prog_open: setgid(%ld) failed", (long) DefGid);
+	if (setuid(DefUid) < 0)
+		syserr("prog_open: setuid(%ld) failed", (long) DefUid);
 
 	/* run in some directory */
 	if (ProgMailer != NULL)
@@ -1841,6 +1988,7 @@ prog_open(argv, pfd, e)
 	if (transienterror(saveerrno))
 		_exit(EX_OSERR);
 	_exit(EX_CONFIG);
+	return -1;	/* avoid compiler warning on IRIX */
 }
 /*
 **  GET_COLUMN  -- look up a Column in a line buffer
@@ -1889,7 +2037,7 @@ get_column(line, col, delim, buf, buflen)
 
 	if (col == 0 && delim == '\0')
 	{
-		while (*begin && isspace(*begin))
+		while (*begin != '\0' && isascii(*begin) && isspace(*begin))
 			begin++;
 	}
 
@@ -1900,14 +2048,14 @@ get_column(line, col, delim, buf, buflen)
 		begin++;
 		if (delim == '\0')
 		{
-			while (*begin && isspace(*begin))
+			while (*begin != '\0' && isascii(*begin) && isspace(*begin))
 				begin++;
 		}
 	}
 	
 	end = strpbrk(begin, delimbuf);
 	if (end == NULL)
-		i = strlen(buf);
+		i = strlen(begin);
 	else
 		i = end - begin;
 	if (i >= buflen)
@@ -2006,4 +2154,179 @@ denlstring(s, strict, logattacks)
 #endif
 
 	return bp;
+}
+/*
+**  PATH_IS_DIR -- check to see if file exists and is a directory.
+**
+**	Parameters:
+**		pathname -- pathname to check for directory-ness.
+**		createflag -- if set, create directory if needed.
+**
+**	Returns:
+**		TRUE -- if the indicated pathname is a directory
+**		FALSE -- otherwise
+*/
+
+int
+path_is_dir(pathname, createflag)
+	char *pathname;
+	bool createflag;
+{
+	struct stat statbuf;
+
+	if (stat(pathname, &statbuf) < 0)
+	{
+		if (errno != ENOENT || !createflag)
+			return FALSE;
+		if (mkdir(pathname, 0755) < 0)
+			return FALSE;
+		return TRUE;
+	}
+	if (!S_ISDIR(statbuf.st_mode))
+	{
+		errno = ENOTDIR;
+		return FALSE;
+	}
+	return TRUE;
+}
+/*
+**  PROC_LIST_ADD -- add process id to list of our children
+**
+**	Parameters:
+**		pid -- pid to add to list.
+**
+**	Returns:
+**		none
+*/
+
+static pid_t	*ProcListVec	= NULL;
+static int	ProcListSize	= 0;
+
+#define NO_PID		((pid_t) 0)
+#ifndef PROC_LIST_SEG
+# define PROC_LIST_SEG	32		/* number of pids to alloc at a time */
+#endif
+
+void
+proc_list_add(pid)
+	pid_t pid;
+{
+	int i;
+	extern void proc_list_probe __P((void));
+
+	for (i = 0; i < ProcListSize; i++)
+	{
+		if (ProcListVec[i] == NO_PID)
+			break;
+	}
+	if (i >= ProcListSize)
+	{
+		/* probe the existing vector to avoid growing infinitely */
+		proc_list_probe();
+
+		/* now scan again */
+		for (i = 0; i < ProcListSize; i++)
+		{
+			if (ProcListVec[i] == NO_PID)
+				break;
+		}
+	}
+	if (i >= ProcListSize)
+	{
+		/* grow process list */
+		pid_t *npv;
+
+		npv = (pid_t *) xalloc(sizeof (pid_t) * (ProcListSize + PROC_LIST_SEG));
+		if (ProcListSize > 0)
+		{
+			bcopy(ProcListVec, npv, ProcListSize * sizeof (pid_t));
+			free(ProcListVec);
+		}
+		for (i = ProcListSize; i < ProcListSize + PROC_LIST_SEG; i++)
+			npv[i] = NO_PID;
+		i = ProcListSize;
+		ProcListSize += PROC_LIST_SEG;
+		ProcListVec = npv;
+	}
+	ProcListVec[i] = pid;
+	CurChildren++;
+}
+/*
+**  PROC_LIST_DROP -- drop pid from process list
+**
+**	Parameters:
+**		pid -- pid to drop
+**
+**	Returns:
+**		none.
+*/
+
+void
+proc_list_drop(pid)
+	pid_t pid;
+{
+	int i;
+
+	for (i = 0; i < ProcListSize; i++)
+	{
+		if (ProcListVec[i] == pid)
+		{
+			ProcListVec[i] = NO_PID;
+			break;
+		}
+	}
+	if (CurChildren > 0)
+		CurChildren--;
+}
+/*
+**  PROC_LIST_CLEAR -- clear the process list
+**
+**	Parameters:
+**		none.
+**
+**	Returns:
+**		none.
+*/
+
+void
+proc_list_clear()
+{
+	int i;
+
+	for (i = 0; i < ProcListSize; i++)
+		ProcListVec[i] = NO_PID;
+	CurChildren = 0;
+}
+/*
+**  PROC_LIST_PROBE -- probe processes in the list to see if they still exist
+**
+**	Parameters:
+**		none
+**
+**	Returns:
+**		none
+*/
+
+void
+proc_list_probe()
+{
+	int i;
+
+	for (i = 0; i < ProcListSize; i++)
+	{
+		if (ProcListVec[i] == NO_PID)
+			continue;
+		if (kill(ProcListVec[i], 0) < 0)
+		{
+#ifdef LOG
+			if (LogLevel > 3)
+				syslog(LOG_DEBUG, "proc_list_probe: lost pid %d",
+					ProcListVec[i]);
+#endif
+			ProcListVec[i] = NO_PID;
+			CurChildren--;
+		}
+	}
+	if (CurChildren < 0)
+		CurChildren = 0;
 }

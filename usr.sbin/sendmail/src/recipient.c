@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1995 Eric P. Allman
+ * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)recipient.c	8.108.1.1 (Berkeley) 9/12/96";
+static char sccsid[] = "@(#)recipient.c	8.118 (Berkeley) 12/1/96";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -241,7 +241,7 @@ recipient(a, sendq, aliaslevel, e)
 	int i;
 	char *buf;
 	char buf0[MAXNAME + 1];		/* unquoted image of the user name */
-	extern int safefile();
+	extern void alias __P((ADDRESS *, ADDRESS **, int, ENVELOPE *));
 
 	e->e_to = a->q_paddr;
 	m = a->q_mailer;
@@ -267,7 +267,7 @@ recipient(a, sendq, aliaslevel, e)
 	if (aliaslevel > MaxAliasRecursion)
 	{
 		a->q_status = "5.4.6";
-		usrerr("554 aliasing/forwarding loop broken (%d aliases deep; %d max",
+		usrerr("554 aliasing/forwarding loop broken (%d aliases deep; %d max)",
 			aliaslevel, MaxAliasRecursion);
 		return (a);
 	}
@@ -474,14 +474,16 @@ recipient(a, sendq, aliaslevel, e)
 
 	if (tTd(29, 5))
 	{
-		printf("recipient: testing local?  cl=%d, rr5=%x\n\t",
-			ConfigLevel, RewriteRules[5]);
+		printf("recipient: testing local?  cl=%d, rr5=%lx\n\t",
+			ConfigLevel, (u_long) RewriteRules[5]);
 		printaddr(a, FALSE);
 	}
 	if (!bitset(QNOTREMOTE|QDONTSEND|QQUEUEUP|QVERIFIED, a->q_flags) &&
 	    ConfigLevel >= 2 && RewriteRules[5] != NULL &&
 	    bitnset(M_TRYRULESET5, m->m_flags))
 	{
+		extern void maplocaluser __P((ADDRESS *, ADDRESS **, int, ENVELOPE *));
+
 		maplocaluser(a, sendq, aliaslevel + 1, e);
 	}
 
@@ -495,7 +497,7 @@ recipient(a, sendq, aliaslevel, e)
 	{
 		auto bool fuzzy;
 		register struct passwd *pw;
-		extern struct passwd *finduser();
+		extern void forward __P((ADDRESS *, ADDRESS **, int, ENVELOPE *));
 
 		/* warning -- finduser may trash buf */
 		pw = finduser(buf, &fuzzy);
@@ -599,7 +601,7 @@ recipient(a, sendq, aliaslevel, e)
 	if (aliaslevel == 0)
 	{
 		int nrcpts = 0;
-		ADDRESS *only;
+		ADDRESS *only = NULL;
 
 		for (q = *sendq; q != NULL; q = q->q_next)
 		{
@@ -738,8 +740,7 @@ finduser(name, fuzzyp)
 		{
 			if (tTd(29, 4))
 				printf("found (case wrapped)\n");
-			*fuzzyp = TRUE;
-			return pw;
+			break;
 		}
 # endif
 
@@ -749,17 +750,22 @@ finduser(name, fuzzyp)
 			if (tTd(29, 4))
 				printf("fuzzy matches %s\n", pw->pw_name);
 			message("sending to login name %s", pw->pw_name);
-			*fuzzyp = TRUE;
-			return (pw);
+			break;
 		}
 	}
-	if (tTd(29, 4))
+	if (pw != NULL)
+		*fuzzyp = TRUE;
+	else if (tTd(29, 4))
 		printf("no fuzzy match found\n");
+# if DEC_OSF_BROKEN_GETPWENT	/* DEC OSF/1 3.2 or earlier */
+	endpwent();
+# endif
+	return pw;
 #else
 	if (tTd(29, 4))
 		printf("not found (fuzzy disabled)\n");
+	return NULL;
 #endif
-	return (NULL);
 }
 /*
 **  WRITABLE -- predicate returning if the file is writable.
@@ -901,7 +907,7 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	volatile gid_t savedgid, gid;
 	char *volatile uname;
 	int rval = 0;
-	int sfflags = SFF_REGONLY;
+	volatile int sfflags = SFF_REGONLY;
 	struct stat st;
 	char buf[MAXLINE];
 #ifdef _POSIX_CHOWN_RESTRICTED
@@ -926,7 +932,7 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	if (tTd(27, 2))
 		printf("include(%s)\n", fname);
 	if (tTd(27, 4))
-		printf("   ruid=%d euid=%d\n", getuid(), geteuid());
+		printf("   ruid=%d euid=%d\n", (int) getuid(), (int) geteuid());
 	if (tTd(27, 14))
 	{
 		printf("ctladdr ");
@@ -934,7 +940,8 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	}
 
 	if (tTd(27, 9))
-		printf("include: old uid = %d/%d\n", getuid(), geteuid());
+		printf("include: old uid = %d/%d\n",
+		       (int) getuid(), (int) geteuid());
 
 	if (forwarding)
 		sfflags |= SFF_MUSTOWN|SFF_ROOTOK|SFF_NOSLINK;
@@ -979,7 +986,8 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 #endif
 
 	if (tTd(27, 9))
-		printf("include: new uid = %d/%d\n", getuid(), geteuid());
+		printf("include: new uid = %d/%d\n",
+		       (int) getuid(), (int) geteuid());
 
 	/*
 	**  If home directory is remote mounted but server is down,
@@ -1007,7 +1015,7 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 		/* don't use this :include: file */
 		if (tTd(27, 4))
 			printf("include: not safe (uid=%d): %s\n",
-				uid, errstring(rval));
+				(int) uid, errstring(rval));
 	}
 	else
 	{
@@ -1047,7 +1055,8 @@ resetuid:
 #endif
 
 	if (tTd(27, 9))
-		printf("include: reset uid = %d/%d\n", getuid(), geteuid());
+		printf("include: reset uid = %d/%d\n",
+		       (int) getuid(), (int) geteuid());
 
 	if (rval == EOPENTIMEOUT)
 		usrerr("451 open timeout on %s", fname);
@@ -1077,7 +1086,7 @@ resetuid:
 		ctladdr->q_flags |= ca->q_flags & QBOGUSSHELL;
 		ctladdr->q_ruser = ca->q_ruser;
 	}
-	else
+	else if (!forwarding)
 	{
 		register struct passwd *pw;
 
@@ -1122,19 +1131,21 @@ resetuid:
 	/*
 	** Check to see if some bad guy can write this file
 	**
-	**	This should really do something clever with group
-	**	permissions; currently we just view world writable
-	**	as unsafe.  Also, we don't check for writable
+	**	Group write checking could be more clever, e.g.,
+	**	guessing as to which groups are actually safe ("sys"
+	**	may be; "user" probably is not).
+	**	Also, we don't check for writable
 	**	directories in the path.  We've got to leave
 	**	something for the local sysad to do.
 	*/
 
-	if (bitset(S_IWOTH, st.st_mode))
+	if (bitset(S_IWOTH | (UnsafeGroupWrites ? S_IWGRP : 0), st.st_mode))
 	{
 #ifdef LOG
 		if (LogLevel >= 12)
-			syslog(LOG_INFO, "%s: world writable %s file, marked unsafe",
+			syslog(LOG_INFO, "%s: %s writable %s file, marked unsafe",
 				shortenstring(fname, 203),
+				bitset(S_IWOTH, st.st_mode) ? "world" : "group",
 				forwarding ? "forward" : ":include:");
 #endif
 		ctladdr->q_flags |= QUNSAFEADDR;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1995 Eric P. Allman
+ * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if USERDB
-static char sccsid [] = "@(#)udb.c	8.33.1.2 (Berkeley) 9/16/96 (with USERDB)";
+static char sccsid [] = "@(#)udb.c	8.46 (Berkeley) 12/1/96 (with USERDB)";
 #else
-static char sccsid [] = "@(#)udb.c	8.33.1.2 (Berkeley) 9/16/96 (without USERDB)";
+static char sccsid [] = "@(#)udb.c	8.46 (Berkeley) 12/1/96 (without USERDB)";
 #endif
 #endif
 
@@ -119,6 +119,8 @@ struct option
 	char	*name;
 	char	*val;
 };
+
+extern int _udbx_init __P((void));
 /*
 **  UDBEXPAND -- look up user in database and expand
 **
@@ -159,7 +161,6 @@ udbexpand(a, sendq, aliaslevel, e)
 	int keylen;
 	int naddrs;
 	char keybuf[MAXKEY];
-	char buf[BUFSIZ];
 
 	if (tTd(28, 1))
 		printf("udbexpand(%s)\n", a->q_paddr);
@@ -172,8 +173,6 @@ udbexpand(a, sendq, aliaslevel, e)
 	/* on first call, locate the database */
 	if (!UdbInitialized)
 	{
-		extern int _udbx_init();
-
 		if (_udbx_init() == EX_TEMPFAIL)
 			return EX_TEMPFAIL;
 	}
@@ -187,7 +186,7 @@ udbexpand(a, sendq, aliaslevel, e)
 		return EX_OK;
 
 	/* if name is too long, assume it won't match */
-	if (strlen(a->q_user) > sizeof keybuf - 12)
+	if (strlen(a->q_user) > (SIZE_T) sizeof keybuf - 12)
 		return EX_OK;
 
 	/* if name begins with a colon, it indicates our metadata */
@@ -203,6 +202,17 @@ udbexpand(a, sendq, aliaslevel, e)
 	for (up = UdbEnts; !breakout; up++)
 	{
 		char *user;
+		int usersize;
+		int userleft;
+		char userbuf[MEMCHUNKSIZE];
+#if defined(HESIOD) && defined(HES_GETMAILHOST)
+		char pobuf[MAXNAME];
+#endif
+
+		user = userbuf;
+		userbuf[0] = '\0';
+		usersize = sizeof userbuf;
+		userleft = sizeof userbuf - 1;
 
 		/*
 		**  Select action based on entry type.
@@ -227,17 +237,19 @@ udbexpand(a, sendq, aliaslevel, e)
 				if (tTd(28, 2))
 					printf("udbexpand: no match on %s (%d)\n",
 						keybuf, keylen);
-				continue;
+				break;
 			}
 			if (tTd(28, 80))
 				printf("udbexpand: match %.*s: %.*s\n",
-					key.size, key.data, info.size, info.data);
+					(int) key.size, (char *) key.data,
+					(int) info.size, (char *) info.data);
 
-			naddrs = 0;
 			a->q_flags &= ~QSELFREF;
 			while (i == 0 && key.size == keylen &&
 					bcmp(key.data, keybuf, keylen) == 0)
 			{
+				char *p;
+
 				if (bitset(EF_VRFYONLY, e->e_flags))
 				{
 					a->q_flags |= QVERIFIED;
@@ -245,24 +257,26 @@ udbexpand(a, sendq, aliaslevel, e)
 				}
 
 				breakout = TRUE;
-				if (info.size < sizeof buf)
-					user = buf;
-				else
-					user = xalloc(info.size + 1);
-				bcopy(info.data, user, info.size);
+				if (info.size >= userleft - 1)
+				{
+					char *nuser = xalloc(usersize + MEMCHUNKSIZE);
+
+					bcopy(user, nuser, usersize);
+					if (user != userbuf)
+						free(user);
+					user = nuser;
+					usersize += MEMCHUNKSIZE;
+					userleft += MEMCHUNKSIZE;
+				}
+				p = &user[strlen(user)];
+				if (p != user)
+				{
+					*p++ = ',';
+					userleft--;
+				}
+				bcopy(info.data, p, info.size);
 				user[info.size] = '\0';
-
-				message("expanded to %s", user);
-#ifdef LOG
-				if (LogLevel >= 10)
-					syslog(LOG_INFO, "%s: expand %.100s => %s",
-						e->e_id, e->e_to,
-						shortenstring(user, 203));
-#endif
-				naddrs += sendtolist(user, a, sendq, aliaslevel + 1, e);
-
-				if (user != buf)
-					free(user);
+				userleft -= info.size;
 
 				/* get the next record */
 				i = (*up->udb_dbp->seq)(up->udb_dbp, &key, &info, R_NEXT);
@@ -270,8 +284,16 @@ udbexpand(a, sendq, aliaslevel, e)
 
 			/* if nothing ever matched, try next database */
 			if (!breakout)
-				continue;
+				break;
 
+			message("expanded to %s", user);
+#ifdef LOG
+			if (LogLevel >= 10)
+				syslog(LOG_INFO, "%s: expand %.100s => %s",
+					e->e_id, e->e_to,
+					shortenstring(user, 203));
+#endif
+			naddrs = sendtolist(user, a, sendq, aliaslevel + 1, e);
 			if (naddrs > 0 && !bitset(QSELFREF, a->q_flags))
 			{
 				if (tTd(28, 5))
@@ -357,13 +379,24 @@ udbexpand(a, sendq, aliaslevel, e)
 					if (tTd(28, 2))
 						printf("hes_getmailhost(%s): %d\n",
 							a->q_user, hes_error());
-					continue;
+					break;
 				}
+				if (strlen(hp->po_name) + strlen(hp->po_host) >
+				    sizeof pobuf - 2)
+				{
+					if (tTd(28, 2))
+						printf("hes_getmailhost(%s): expansion too long: %.30s@%.30s\n",
+							a->q_user,
+							hp->po_name,
+							hp->po_host);
+					break;
+				}
+				info.data = pobuf;
 				snprintf(pobuf, sizeof pobuf, "%s@%s",
 					hp->po_name, hp->po_host);
 				info.size = strlen(info.data);
 #else
-				continue;
+				break;
 #endif
 			}
 			if (tTd(28, 80))
@@ -378,9 +411,7 @@ udbexpand(a, sendq, aliaslevel, e)
 			}
 
 			breakout = TRUE;
-			if (info.size < sizeof buf)
-				user = buf;
-			else
+			if (info.size >= usersize)
 				user = xalloc(info.size + 1);
 			bcopy(info.data, user, info.size);
 			user[info.size] = '\0';
@@ -393,9 +424,6 @@ udbexpand(a, sendq, aliaslevel, e)
 					shortenstring(user, 203));
 #endif
 			naddrs = sendtolist(user, a, sendq, aliaslevel + 1, e);
-
-			if (user != buf)
-				free(user);
 
 			if (naddrs > 0 && !bitset(QSELFREF, a->q_flags))
 			{
@@ -428,17 +456,18 @@ udbexpand(a, sendq, aliaslevel, e)
 
 		  case UDB_REMOTE:
 			/* not yet implemented */
-			continue;
+			break;
 
 		  case UDB_FORWARD:
 			if (bitset(EF_VRFYONLY, e->e_flags))
 				return EX_OK;
 			i = strlen(up->udb_fwdhost) + strlen(a->q_user) + 1;
-			if (i < sizeof buf)
-				user = buf;
-			else
-				user = xalloc(i + 1);
-			(void) snprintf(user, i, "%s@%s",
+			if (i >= usersize)
+			{
+				usersize = i + 1;
+				user = xalloc(usersize);
+			}
+			(void) snprintf(user, usersize, "%s@%s",
 				a->q_user, up->udb_fwdhost);
 			message("expanded to %s", user);
 			a->q_flags &= ~QSELFREF;
@@ -452,19 +481,19 @@ udbexpand(a, sendq, aliaslevel, e)
 				}
 				a->q_flags |= QDONTSEND;
 			}
-			if (user != buf)
-				free(user);
 			breakout = TRUE;
 			break;
 
 		  case UDB_EOLIST:
 			breakout = TRUE;
-			continue;
+			break;
 
 		  default:
 			/* unknown entry type */
-			continue;
+			break;
 		}
+		if (user != userbuf)
+			free(user);
 	}
 	return EX_OK;
 }
@@ -790,6 +819,7 @@ _udbx_init()
 	{
 		char *spec;
 		int nopts;
+		int l;
 # if 0
 		auto int rcode;
 		int nmx;
@@ -798,6 +828,7 @@ _udbx_init()
 		char *mxhosts[MAXMXHOSTS + 1];
 # endif
 		struct option opts[MAXUDBOPTS + 1];
+		extern int _udb_parsespec __P((char *, struct option [], int));
 
 		while (*p == ' ' || *p == '\t' || *p == ',')
 			p++;
@@ -906,9 +937,20 @@ _udbx_init()
 
 #ifdef NEWDB
 		  case '/':	/* look up remote name */
-			up->udb_dbname = spec;
+			l = strlen(spec);
+			if (l > 3 && strcmp(&spec[l - 3], ".db") == 0)
+			{
+				up->udb_dbname = spec;
+			}
+			else
+			{
+				up->udb_dbname = xalloc(l + 4);
+				strcpy(up->udb_dbname, spec);
+				strcat(up->udb_dbname, ".db");
+			}
 			errno = 0;
-			up->udb_dbp = dbopen(spec, O_RDONLY, 0644, DB_BTREE, NULL);
+			up->udb_dbp = dbopen(up->udb_dbname, O_RDONLY,
+					     0644, DB_BTREE, NULL);
 			if (up->udb_dbp == NULL)
 			{
 				if (tTd(28, 1))
@@ -916,7 +958,8 @@ _udbx_init()
 					int saveerrno = errno;
 
 					printf("dbopen(%s): %s",
-						spec, errstring(errno));
+						up->udb_dbname,
+						errstring(errno));
 					errno = saveerrno;
 				}
 				if (errno != ENOENT && errno != EACCES)
@@ -924,11 +967,16 @@ _udbx_init()
 #ifdef LOG
 					if (LogLevel > 2)
 						syslog(LOG_ERR, "dbopen(%s): %s",
-							spec, errstring(errno));
+							up->udb_dbname,
+							errstring(errno));
 #endif
 					up->udb_type = UDB_EOLIST;
+					if (up->udb_dbname != spec)
+						free(up->udb_dbname);
 					goto tempfail;
 				}
+				if (up->udb_dbname != spec)
+					free(up->udb_dbname);
 				break;
 			}
 			up->udb_type = UDB_DBFETCH;
@@ -950,7 +998,7 @@ badspec:
 		{
 			switch (up->udb_type)
 			{
-#ifdef DAEMON
+#if DAEMON
 			  case UDB_REMOTE:
 				printf("REMOTE: addr %s, timeo %d\n",
 					anynet_ntoa((SOCKADDR *) &up->udb_addr),

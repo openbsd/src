@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1995 Eric P. Allman
+ * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)collect.c	8.49 (Berkeley) 10/29/95";
+static char sccsid[] = "@(#)collect.c	8.61 (Berkeley) 11/24/96";
 #endif /* not lint */
 
 # include <errno.h>
@@ -90,19 +90,19 @@ collect(fp, smtpmode, requeueflag, hdrp, e)
 	HDR **hdrp;
 	register ENVELOPE *e;
 {
-	register FILE *tf;
-	bool ignrdot = smtpmode ? FALSE : IgnrDot;
-	time_t dbto = smtpmode ? TimeOuts.to_datablock : 0;
-	register char *bp;
-	int c = '\0';
-	bool inputerr = FALSE;
+	register FILE *volatile tf;
+	volatile bool ignrdot = smtpmode ? FALSE : IgnrDot;
+	volatile time_t dbto = smtpmode ? TimeOuts.to_datablock : 0;
+	register char *volatile bp;
+	volatile int c = '\0';
+	volatile bool inputerr = FALSE;
 	bool headeronly;
-	char *buf;
-	int buflen;
-	int istate;
-	int mstate;
-	char *pbp;
-	char peekbuf[8];
+	char *volatile buf;
+	volatile int buflen;
+	volatile int istate;
+	volatile int mstate;
+	u_char *volatile pbp;
+	u_char peekbuf[8];
 	char dfname[20];
 	char bufbuf[MAXLINE];
 	extern bool isheader();
@@ -170,9 +170,10 @@ collect(fp, smtpmode, requeueflag, hdrp, e)
 		if (setjmp(CtxCollectTimeout) != 0)
 		{
 #ifdef LOG
-			syslog(LOG_NOTICE,
-			    "timeout waiting for input from %s during message collect",
-			    CurHostName ? CurHostName : "<local machine>");
+			if (LogLevel > 2)
+				syslog(LOG_NOTICE,
+				    "timeout waiting for input from %s during message collect",
+				    CurHostName ? CurHostName : "<local machine>");
 #endif
 			errno = 0;
 			usrerr("451 timeout waiting for input during message collect");
@@ -204,7 +205,7 @@ collect(fp, smtpmode, requeueflag, hdrp, e)
 				{
 					if (istate == IS_BOL)
 						fprintf(TrafficLogFile, "%05d <<< ",
-							getpid());
+							(int) getpid());
 					if (c == EOF)
 						fprintf(TrafficLogFile, "[EOF]\n");
 					else
@@ -216,8 +217,6 @@ collect(fp, smtpmode, requeueflag, hdrp, e)
 					c &= 0x7f;
 				else
 					HasEightBits |= bitset(0x80, c);
-				if (!headeronly)
-					e->e_msgsize++;
 			}
 			if (tTd(30, 94))
 				printf("istate=%d, c=%c (0x%x)\n",
@@ -253,7 +252,7 @@ collect(fp, smtpmode, requeueflag, hdrp, e)
 				break;
 
 			  case IS_DOTCR:
-				if (c == '\n')
+				if (c == '\n' && !ignrdot)
 					goto readerr;
 				else
 				{
@@ -287,6 +286,8 @@ collect(fp, smtpmode, requeueflag, hdrp, e)
 				istate = IS_NORM;
 
 bufferchar:
+			if (!headeronly)
+				e->e_msgsize++;
 			if (mstate == MS_BODY)
 			{
 				/* just put the character out */
@@ -316,7 +317,13 @@ bufferchar:
 				if (obuf != bufbuf)
 					free(obuf);
 			}
-			if (c != '\0')
+			if (c >= 0200 && c <= 0237)
+			{
+#if 0	/* causes complaints -- figure out something for 8.9 */
+				usrerr("Illegal character 0x%x in header", c);
+#endif
+			}
+			else if (c != '\0')
 				*bp++ = c;
 			if (istate == IS_BOL)
 				break;
@@ -481,7 +488,7 @@ readerr:
 	**	Examples are who is the from person & the date.
 	*/
 
-	eatheader(e, !requeueflag);
+	eatheader(e, TRUE);
 
 	if (GrabTo && e->e_sendqueue == NULL)
 		usrerr("No recipient addresses found in header");
@@ -550,6 +557,7 @@ readerr:
 	/* check for message too large */
 	if (MaxMessageSize > 0 && e->e_msgsize > MaxMessageSize)
 	{
+		e->e_flags |= EF_NO_BODY_RETN;
 		e->e_status = "5.2.3";
 		usrerr("552 Message exceeds maximum fixed size (%ld)",
 			MaxMessageSize);
@@ -564,7 +572,8 @@ readerr:
 	if (HasEightBits)
 	{
 		e->e_flags |= EF_HAS8BIT;
-		if (!bitset(MM_PASS8BIT|MM_MIME8BIT, MimeMode))
+		if (!bitset(MM_PASS8BIT|MM_MIME8BIT, MimeMode) &&
+		    !bitset(EF_IS_MIME, e->e_flags))
 		{
 			e->e_status = "5.6.1";
 			usrerr("554 Eight bit data not allowed");
@@ -625,6 +634,7 @@ tferror(tf, e)
 		struct stat st;
 		long avail;
 		long bsize;
+		extern long freediskspace __P((char *, long *));
 
 		e->e_flags |= EF_NO_BODY_RETN;
 		if (fstat(fileno(tf), &st) < 0)
@@ -637,7 +647,7 @@ tferror(tf, e)
 				st.st_size);
 		else
 			fprintf(tf, "\n*** Mail of at least %ld bytes could not be accepted\n",
-				st.st_size);
+				(long) st.st_size);
 		fprintf(tf, "*** at %s due to lack of disk space for temp file.\n",
 			MyHostName);
 		avail = freediskspace(QueueDir, &bsize);
@@ -729,7 +739,6 @@ eatfrom(fm, e)
 	if (*p != '\0')
 	{
 		char *q;
-		extern char *arpadate();
 
 		/* we have found a date */
 		q = xalloc(25);
