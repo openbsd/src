@@ -1,4 +1,4 @@
-/* $OpenBSD: autoconf.h,v 1.9 2000/11/08 21:27:17 ericj Exp $ */
+/* $OpenBSD: autoconf.h,v 1.10 2000/11/08 21:44:35 art Exp $ */
 /* $NetBSD: autoconf.h,v 1.19 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
@@ -109,6 +109,7 @@ struct alpha_variation_table {
 };
 
 #ifdef _KERNEL
+extern struct device *booted_device;
 extern int booted_partition;
 extern struct bootdev_data *bootdev_data;
 extern struct bootinfo_kernel bootinfo;
