@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.10 1997/02/21 09:09:50 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.11 1997/02/26 03:08:43 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.10 1997/02/21 09:09:50 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.11 1997/02/26 03:08:43 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -598,6 +598,8 @@ ah_stats(off, name)
 #define p(f, m) if (ahstat.f || sflag <= 1) \
     printf(m, ahstat.f, plural(ahstat.f))
 
+	p(ahs_input, "\t%u input AH packets\n");
+	p(ahs_output, "\t%u output AH packets\n");
         p(ahs_hdrops, "\t%u packet%s shorter than header shows\n");
         p(ahs_notdb, "\t%u packet%s for which no TDB was found\n");
         p(ahs_badkcr, "\t%u input packet%s that failed to be processed\n");
@@ -660,6 +662,7 @@ ip4_stats(off, name)
     printf(m, ip4stat.f, plural(ip4stat.f))
 
         p(ip4s_ipackets, "\t%u total input packet%s\n");
+        p(ip4s_opackets, "\t%u total output packet%s\n");
         p(ip4s_hdrops, "\t%u packet%s shorter than header shows\n");
         p(ip4s_notip4, "\t%u packet%s with internal header not IPv4 received\n");
         p(ip4s_qfull, "\t%u packet%s were dropeed due to full output queue\n");
