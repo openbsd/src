@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetround.c,v 1.3 2004/02/02 15:59:25 drahn Exp $	*/
+/*	$OpenBSD: fpgetround.c,v 1.4 2004/02/06 17:32:51 drahn Exp $	*/
 /* $NetBSD: fpgetround.c,v 1.2 2002/01/13 21:45:53 thorpej Exp $ */
 
 /*-
@@ -49,7 +49,7 @@
 #include "softfloat.h"
 
 #ifdef __weak_alias
-__weak_alias(fpgetround,_fpgetround);
+__weak_alias(_fpgetround,fpgetround);
 #endif
 
 fp_rnd
