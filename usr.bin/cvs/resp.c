@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.2 2004/08/03 05:08:45 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.3 2004/08/06 20:16:52 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -321,7 +321,9 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 	int fd;
 	char rpath[MAXPATHLEN], statpath[MAXPATHLEN];
 
-	cvs_getln(root, rpath, sizeof(rpath));
+	/* remote directory line */
+	if (cvs_getln(root, rpath, sizeof(rpath)) < 0)
+		return (-1);
 
 	snprintf(statpath, sizeof(statpath), "%s/%s", line,
 	    CVS_PATH_STATICENTRIES);
@@ -335,8 +337,8 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 	else if (type == CVS_RESP_SETSTATDIR) {
 		fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0400);
 		if (fd == -1) {
-			cvs_log(LP_ERRNO, "failed to create %s file",
-			    CVS_PATH_STATICENTRIES);
+			cvs_log(LP_ERRNO,
+			    "failed to set static directory on %s", line);
 			return (-1);
 		}
 		(void)close(fd);
@@ -607,11 +609,10 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_removed(struct cvsroot *root, int type, char *line)
 {
-	char base[MAXPATHLEN], file[MAXNAMLEN];
+	char base[MAXPATHLEN], *file;
 	CVSENTRIES *ef;
 
-	cvs_splitpath(line, base, sizeof(base), file, sizeof(file));
-
+	cvs_splitpath(line, base, sizeof(base), &file);
 	ef = cvs_ent_open(base, O_RDWR);
 	if (ef == NULL)
 		return (-1);
