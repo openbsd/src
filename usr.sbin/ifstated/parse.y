@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2004/02/14 11:24:35 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2004/02/15 00:56:01 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -597,28 +597,31 @@ top:
 	return (c);
 }
 
-int
-parse_config(char *filename, struct ifsd_config *xconf)
+struct ifsd_config *
+parse_config(char *filename, int opts)
 {
 	struct sym	*sym, *next;
 	struct ifsd_state *state;
 
-	if ((conf = calloc(1, sizeof(struct ifsd_config))) == NULL)
+	if ((conf = calloc(1, sizeof(struct ifsd_config))) == NULL) {
 		errx(1, "parse_config calloc");
+		return (NULL);
+	}
+
+	if ((fin = fopen(filename, "r")) == NULL) {
+		warn("%s", filename);
+		free(conf);
+		return (NULL);
+	}
+	infile = filename;
 
 	TAILQ_INIT(&conf->states);
 
 	init_state(&conf->always);
 	curaction = conf->always.always;
 	conf->loglevel = IFSD_LOG_NORMAL;
-	conf->opts = xconf->opts;
+	conf->opts = opts;
 
-	if ((fin = fopen(filename, "r")) == NULL) {
-		warn("%s", filename);
-		free(conf);
-		return (-1);
-	}
-	infile = filename;
 
 	yyparse();
 
@@ -657,10 +660,12 @@ parse_config(char *filename, struct ifsd_config *xconf)
 		}
 	}
 
-	bcopy(conf, xconf, sizeof(*conf));
-	free(conf);
+	if (errors) {
+		clear_config(conf);
+		return (NULL);
+	}
 
-	return (errors ? -1 : 0);
+	return (conf);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.9 2004/02/12 19:22:13 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.10 2004/02/15 00:56:01 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -47,15 +47,17 @@
 
 #include "ifstated.h"
 
-struct	 ifsd_config conf;
+struct	 ifsd_config *conf = NULL, *newconf = NULL;
 
+int	 opts = 0;
 int	 opt_debug = 0;
 int	 opt_inhibit = 0;
 char	*configfile = "/etc/ifstated.conf";
+struct event	rt_msg_ev, sighup_ev, startup_ev, sigchld_ev;
 
 void	startup_handler(int, short, void *);
 void	sighup_handler(int, short, void *);
-void	load_config(void);
+int	load_config(void);
 void	sigchld_handler(int, short, void *);
 void	rt_msg_handler(int, short, void *);
 void	external_handler(int, short, void *);
@@ -70,7 +72,6 @@ void	adjust_expressions(struct ifsd_expression_list *, int);
 void	eval_state(struct ifsd_state *);
 void	state_change(void);
 void	do_action(struct ifsd_action *);
-void	clear_config(struct ifsd_config *);
 void	remove_action(struct ifsd_action *, struct ifsd_state *);
 void	remove_expression(struct ifsd_expression *, struct ifsd_state *);
 void	logit(int level, const char *fmt, ...);
@@ -85,8 +86,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct event startup_ev, sighup_ev, sigchld_ev, rt_msg_ev;
-	int rt_fd, ch;
+	int ch;
 	struct timeval tv;
 
 	while ((ch = getopt(argc, argv, "dD:f:hniv")) != -1) {
@@ -106,15 +106,15 @@ main(int argc, char *argv[])
 			usage();
 			break;
 		case 'n':
-			conf.opts |= IFSD_OPT_NOACTION;
+			opts |= IFSD_OPT_NOACTION;
 			break;
 		case 'i':
 			opt_inhibit = 1;
 			break;
 		case 'v':
-			if (conf.opts & IFSD_OPT_VERBOSE)
-				conf.opts |= IFSD_OPT_VERBOSE2;
-			conf.opts |= IFSD_OPT_VERBOSE;
+			if (opts & IFSD_OPT_VERBOSE)
+				opts |= IFSD_OPT_VERBOSE2;
+			opts |= IFSD_OPT_VERBOSE;
 			break;
 		default:
 			usage();
@@ -123,8 +123,8 @@ main(int argc, char *argv[])
 
 	event_init();
 
-	if (conf.opts & IFSD_OPT_NOACTION) {
-		if (parse_config(configfile, &conf) != 0)
+	if (opts & IFSD_OPT_NOACTION) {
+		if ((newconf = parse_config(configfile, opts)) == NULL)
 			exit(1);
 		warnx("configuration OK");
 		exit(0);
@@ -134,16 +134,6 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 		setproctitle(NULL);
 	}
-
-	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
-		err(1, "no routing socket");
-
-	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST,
-	    rt_msg_handler, &rt_msg_ev);
-	event_add(&rt_msg_ev, NULL);
-
-	signal_set(&sighup_ev, SIGHUP, sighup_handler, &sighup_ev);
-	signal_add(&sighup_ev, NULL);
 
 	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, &sigchld_ev);
 	signal_add(&sigchld_ev, NULL);
@@ -161,32 +151,53 @@ main(int argc, char *argv[])
 void
 startup_handler(int fd, short event, void *arg)
 {
+	int rt_fd;
+
+	if (load_config() != 0) {
+		logit(IFSD_LOG_NORMAL, "unable to load config");
+		exit(1);
+	}
+
+	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+		err(1, "no routing socket");
+
+	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST,
+	    rt_msg_handler, &rt_msg_ev);
+	event_add(&rt_msg_ev, NULL);
+
+	signal_set(&sighup_ev, SIGHUP, sighup_handler, &sighup_ev);
+	signal_add(&sighup_ev, NULL);
+
 	logit(IFSD_LOG_NORMAL, "started");
-	load_config();
 }
 
 void
 sighup_handler(int fd, short event, void *arg)
 {
 	logit(IFSD_LOG_NORMAL, "reloading config");
-	clear_config(&conf);
-	load_config();
+	if (load_config() != 0)
+		logit(IFSD_LOG_NORMAL, "unable to reload config");
 }
 
-void
+int
 load_config(void)
 {
-	parse_config(configfile, &conf);
-	conf.always.entered = time(NULL);
+	if ((newconf = parse_config(configfile, opts)) == NULL)
+		return (-1);
+	if (conf != NULL)
+		clear_config(conf);
+	conf = newconf;
+	conf->always.entered = time(NULL);
 	fetch_state();
-	eval_state(&conf.always);
-	if (conf.curstate != NULL) {
+	eval_state(&conf->always);
+	if (conf->curstate != NULL) {
 		logit(IFSD_LOG_NORMAL,
-		    "initial state: %s", conf.curstate->name);
-		conf.curstate->entered = time(NULL);
-		eval_state(conf.curstate);
+		    "initial state: %s", conf->curstate->name);
+		conf->curstate->entered = time(NULL);
+		eval_state(conf->curstate);
 	}
-	external_evtimer_setup(&conf.always, IFSD_EVTIMER_ADD);
+	external_evtimer_setup(&conf->always, IFSD_EVTIMER_ADD);
+	return (0);
 }
 
 void
@@ -212,19 +223,19 @@ rt_msg_handler(int fd, short event, void *arg)
 	memcpy(&ifm, rtm, sizeof(ifm));
 
 	if (scan_ifstate(ifm.ifm_index, ifm.ifm_data.ifi_link_state,
-	    &conf.always))
-		eval_state(&conf.always);
-	if ((conf.curstate != NULL) && scan_ifstate(ifm.ifm_index,
-	    ifm.ifm_data.ifi_link_state, conf.curstate))
-		eval_state(conf.curstate);
+	    &conf->always))
+		eval_state(&conf->always);
+	if ((conf->curstate != NULL) && scan_ifstate(ifm.ifm_index,
+	    ifm.ifm_data.ifi_link_state, conf->curstate))
+		eval_state(conf->curstate);
 }
 
 void
 sigchld_handler(int fd, short event, void *arg)
 {
-	check_external_status(&conf.always);
-	if (conf.curstate != NULL)
-		check_external_status(conf.curstate);
+	check_external_status(&conf->always);
+	if (conf->curstate != NULL)
+		check_external_status(conf->curstate);
 }
 
 void
@@ -328,7 +339,7 @@ loop:
 	}
 
 	if (changed) {
-		adjust_expressions(&expressions, conf.maxdepth);
+		adjust_expressions(&expressions, conf->maxdepth);
 		eval_state(state);
 	}
 }
@@ -404,7 +415,7 @@ scan_ifstate(int ifindex, int s, struct ifsd_state *state)
 	}
 
 	if (changed)
-		adjust_expressions(&expressions, conf.maxdepth);
+		adjust_expressions(&expressions, conf->maxdepth);
 	return (changed);
 }
 
@@ -482,18 +493,19 @@ eval_state(struct ifsd_state *state)
 void
 state_change(void)
 {
-	if (conf.nextstate != NULL && conf.curstate != conf.nextstate) {
+	if (conf->nextstate != NULL && conf->curstate != conf->nextstate) {
 		logit(IFSD_LOG_NORMAL, "changing state to %s",
-		    conf.nextstate->name);
-		evtimer_del(&conf.curstate->ev);
-		if (conf.curstate != NULL)
-			external_evtimer_setup(conf.curstate, IFSD_EVTIMER_DEL);
-		conf.curstate = conf.nextstate;
-		conf.nextstate = NULL;
-		conf.curstate->entered = time(NULL);
-		external_evtimer_setup(conf.curstate, IFSD_EVTIMER_ADD);
+		    conf->nextstate->name);
+		evtimer_del(&conf->curstate->ev);
+		if (conf->curstate != NULL)
+			external_evtimer_setup(conf->curstate,
+			    IFSD_EVTIMER_DEL);
+		conf->curstate = conf->nextstate;
+		conf->nextstate = NULL;
+		conf->curstate->entered = time(NULL);
+		external_evtimer_setup(conf->curstate, IFSD_EVTIMER_ADD);
 		fetch_state();
-		do_action(conf.curstate->init);
+		do_action(conf->curstate->init);
 		fetch_state();
 	}
 }
@@ -512,7 +524,7 @@ do_action(struct ifsd_action *action)
 		system(action->act.command);
 		break;
 	case IFSD_ACTION_CHANGESTATE:
-		conf.nextstate = action->act.nextstate;
+		conf->nextstate = action->act.nextstate;
 		break;
 	case IFSD_ACTION_CONDITION:
 		if ((action->act.c.expression != NULL &&
@@ -558,10 +570,10 @@ fetch_state(void)
 			continue;
 
 		scan_ifstate(if_nametoindex(ifa->ifa_name),
-		    ifrdat.ifi_link_state, &conf.always);
-		if (conf.curstate != NULL)
+		    ifrdat.ifi_link_state, &conf->always);
+		if (conf->curstate != NULL)
 			scan_ifstate(if_nametoindex(ifa->ifa_name),
-			    ifrdat.ifi_link_state, conf.curstate);
+			    ifrdat.ifi_link_state, conf->curstate);
 	}
 	close(sock);
 }
@@ -576,9 +588,9 @@ clear_config(struct ifsd_config *oconf)
 {
 	struct ifsd_state *state;
 
-	external_evtimer_setup(&conf.always, IFSD_EVTIMER_DEL);
-	if (conf.curstate != NULL)
-		external_evtimer_setup(conf.curstate, IFSD_EVTIMER_DEL);
+	external_evtimer_setup(&conf->always, IFSD_EVTIMER_DEL);
+	if (conf->curstate != NULL)
+		external_evtimer_setup(conf->curstate, IFSD_EVTIMER_DEL);
 	while ((state = TAILQ_FIRST(&oconf->states)) != NULL) {
 		TAILQ_REMOVE(&oconf->states, state, entries);
 		remove_action(state->init, state);
@@ -661,7 +673,7 @@ logit(int level, const char *fmt, ...)
 	va_list	 ap;
 	char	*nfmt;
 
-	if (level > conf.loglevel)
+	if (level > conf->loglevel)
 		return;
 
 	va_start(ap, fmt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.2 2004/02/05 02:18:55 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.3 2004/02/15 00:56:01 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -138,5 +138,6 @@ struct ifsd_config {
 };
  
 enum	{ IFSD_EVTIMER_ADD, IFSD_EVTIMER_DEL };
-int	parse_config(char *, struct ifsd_config *);
+struct ifsd_config *parse_config(char *, int);
 int	cmdline_symset(char *);
+void	clear_config(struct ifsd_config *);
