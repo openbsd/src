@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.44 2002/10/30 20:15:29 millert Exp $ */
+/*	$OpenBSD: unistd.h,v 1.45 2002/12/03 20:24:29 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -219,6 +219,8 @@ void	*valloc(size_t);		/* obsoleted by malloc() */
 pid_t	 vfork(void);
 int	 issetugid(void);
 
+#ifndef _GETOPT_DEFINED_
+#define _GETOPT_DEFINED_
 int	 getopt(int, char * const *, const char *);
 extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int opterr;
@@ -227,6 +229,7 @@ extern	 int optopt;
 extern	 int optreset;
 int	 getsubopt(char **, char * const *, char **);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
+#endif /* _GETOPT_DEFINED_ */
 #endif /* !_POSIX_SOURCE */
 
 #if (!defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE) && \

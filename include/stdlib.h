@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.23 2002/12/02 15:38:54 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.24 2002/12/03 20:24:29 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -173,6 +173,8 @@ char	*l64a(long);
 
 void	 cfree(void *);
 
+#ifndef _GETOPT_DEFINED_
+#define _GETOPT_DEFINED_
 int	 getopt(int, char * const *, const char *);
 extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int opterr;
@@ -181,6 +183,7 @@ extern	 int optopt;
 extern	 int optreset;
 int	 getsubopt(char **, char * const *, char **);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
+#endif /* _GETOPT_DEFINED_ */
 
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 mergesort(void *, size_t, size_t, int (*)(const void *, const void *));
