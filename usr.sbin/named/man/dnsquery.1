@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dnsquery.1,v 1.6 2000/03/14 21:31:37 aaron Exp $
+.\"	$OpenBSD: dnsquery.1,v 1.7 2001/08/24 22:59:40 rohee Exp $
 .TH DNSQUERY 1 "10 March 1990"
 .UC 6
 .SH NAME
@@ -139,8 +139,9 @@ The name of the host (or domain) of interest.
 .br
 <resolv.h>		list of resolver flags
 .SH "SEE ALSO"
-nslookup(1), nstest(1), nsquery(1),
-named(8), resolver(3)
+dig(1), host(1), named(8), nslookup(8), resolver(3)
+.SH AUTHORS
+Bryan Beecher
 .SH DIAGNOSTICS
 If the resolver fails to answer the query and debugging has not been
 turned on,
@@ -159,5 +160,3 @@ Query uses a call to inet_addr() to determine if the argument
 for the '-n' option is a valid Internet address.  Unfortunately,
 inet_addr() seems to cause a segmentation fault with some (bad)
 addresses (e.g., 1.2.3.4.5).
-.SH AUTHOR
-Bryan Beecher
