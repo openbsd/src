@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.3 2001/03/10 05:04:06 krw Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.4 2001/04/15 06:01:29 krw Exp $ */
 /*	$NetBSD: siopvar.h,v 1.13 2000/10/23 23:18:11 bouyer Exp $	*/
 
 /*
@@ -46,9 +46,9 @@ struct siop_softc {
 	int maxburst;
 	int maxoff;
 	int clock_div;			/* async. clock divider (scntl3) */
-	int clock_period;		/* clock period (ns * 10) */
-	int minsync;			/* min and max sync period, */
-	int maxsync;			/* as sent in SDTR message */
+	int min_dt_sync;		/* minimum acceptable double transition sync */
+	int min_st_sync;		/* minimum acceptable single transition sync */
+	int scf_index;			/* clock id == index into period_factor[].scf */
 	bus_space_tag_t sc_rt;		/* bus_space registers tag */
 	bus_space_handle_t sc_rh;	/* bus_space registers handle */
 	bus_addr_t sc_raddr;		/* register adresses */

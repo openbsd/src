@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.h,v 1.2 2001/02/20 00:32:30 krw Exp $ */
+/*	$OpenBSD: siop_pci_common.h,v 1.3 2001/04/15 06:01:31 krw Exp $ */
 /*	$NetBSD: siop_pci_common.h,v 1.2 2000/10/23 14:57:23 bouyer Exp $	*/
 
 /*
@@ -40,7 +40,10 @@ struct siop_product_desc {
 	u_int8_t maxburst;
 	u_int8_t maxoff;  /* maximum supported offset */
 	u_int8_t clock_div; /* clock divider to use for async. logic */
-	u_int8_t clock_period; /* clock period (ns * 10) */
+	u_int8_t scf_index; /* Index into a period_factor_to_scf.scf */
+#define     SF_CLOCK_2500	0
+#define	    SF_CLOCK_1250	1
+#define	    SF_CLOCK_625	2
 	int 	ram_size; /* size of RAM, if appropriate */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.5 2001/03/06 16:29:32 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.6 2001/04/15 06:01:28 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -229,19 +229,24 @@ siop_attach(sc)
 	for (i = 0; i < 16; i++)
 		sc->targets[i] = NULL;
 
-	/* find min/max sync period for this chip */
-	sc->maxsync = 0;
-	sc->minsync = 255;
-	for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++) {
-		if (sc->clock_period != scf_period[i].clock)
-			continue;
-		if (sc->maxsync < scf_period[i].period)
-			sc->maxsync = scf_period[i].period;
-		if (sc->minsync > scf_period[i].period)
-			sc->minsync = scf_period[i].period;
-	}
-	if (sc->maxsync == 255 || sc->minsync == 0)
-		panic("siop: can't find my sync parameters\n");
+	/* find min_dt_sync and min_st_sync for this chip */
+	sc->min_dt_sync = 0;
+	for (i = 0; i < sizeof(period_factor) / sizeof(period_factor[0]); i++)
+		if (period_factor[i].scf[sc->scf_index].dt_scf != 0) {
+			sc->min_dt_sync = period_factor[i].factor;
+			break;
+		}
+
+	sc->min_st_sync = 0;
+	for (i = 0; i < sizeof(period_factor) / sizeof(period_factor[0]); i++)
+		if (period_factor[i].scf[sc->scf_index].st_scf != 0) {
+			sc->min_st_sync = period_factor[i].factor;
+			break;
+		}
+
+	if (sc->min_st_sync == 0)
+		panic("%s: can't find minimum allowed sync period factor\n", sc->sc_dev.dv_xname);
+
 	/* Do a bus reset, so that devices fall back to narrow/async */
 	siop_resetbus(sc);
 	/*
@@ -742,7 +747,7 @@ scintr:
 					}
 					siop_target->status = TARST_SYNC_NEG;
 					siop_sdtr_msg(siop_cmd, 0,
-					    sc->minsync, sc->maxoff);
+					    sc->min_st_sync, sc->maxoff);
 					siop_table_sync(siop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
@@ -809,6 +814,7 @@ scintr:
 			CALL_SCRIPT(Ent_get_extmsgdata);
 			return 1;
 		case A_int_extmsgdata:
+		{
 #ifdef SIOP_DEBUG_INTR
 			{
 			int i;
@@ -821,55 +827,56 @@ scintr:
 			printf("\n");
 			}
 #endif
-			if (siop_cmd->siop_tables.msg_in[2] == MSG_EXT_WDTR) {
-				switch (siop_wdtr_neg(siop_cmd)) {
-				case SIOP_NEG_MSGOUT:
-					siop_update_scntl3(sc,
-					    siop_cmd->siop_target);
-					siop_table_sync(siop_cmd,
-					    BUS_DMASYNC_PREREAD |
-					    BUS_DMASYNC_PREWRITE);
-					CALL_SCRIPT(Ent_send_msgout);
-					return(1);
-				case SIOP_NEG_ACK:
-					siop_update_scntl3(sc,
-					    siop_cmd->siop_target);
-					CALL_SCRIPT(Ent_msgin_ack);
-					return(1);
-				default:
-					panic("invalid retval from "
-					    "siop_wdtr_neg()");
-				}
-				return(1);
+			int neg_action = SIOP_NEG_NOP;
+			const char *neg_name = "";
+
+			switch (siop_cmd->siop_tables.msg_in[2]) {
+			case MSG_EXT_WDTR:
+				neg_action = siop_wdtr_neg(siop_cmd);
+				neg_name = "wdtr";
+				break;
+			case MSG_EXT_SDTR:
+				neg_action = siop_sdtr_neg(siop_cmd);
+				neg_name = "sdtr";
+				break;
+			case MSG_EXT_PPR:
+				neg_action = siop_ppr_neg(siop_cmd);
+				neg_name = "ppr";
+				break;
+			default:
+				neg_action = SIOP_NEG_MSGREJ;
+				break;
 			}
-			if (siop_cmd->siop_tables.msg_in[2] == MSG_EXT_SDTR) {
-				switch (siop_sdtr_neg(siop_cmd)) {
-				case SIOP_NEG_MSGOUT:
-					siop_update_scntl3(sc,
-					    siop_cmd->siop_target);
-					siop_table_sync(siop_cmd,
-					    BUS_DMASYNC_PREREAD |
-					    BUS_DMASYNC_PREWRITE);
-					CALL_SCRIPT(Ent_send_msgout);
-					return(1);
-				case SIOP_NEG_ACK:
-					siop_update_scntl3(sc,
-					    siop_cmd->siop_target);
-					CALL_SCRIPT(Ent_msgin_ack);
-					return(1);
-				default:
-					panic("invalid retval from "
-					    "siop_wdtr_neg()");
-				}
-				return(1);
+
+			switch (neg_action) {
+			case SIOP_NEG_NOP:
+				break;
+			case SIOP_NEG_MSGOUT:
+				siop_update_scntl3(sc, siop_cmd->siop_target);
+				siop_table_sync(siop_cmd,
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				CALL_SCRIPT(Ent_send_msgout);
+				break;
+			case SIOP_NEG_ACK:
+				siop_update_scntl3(sc, siop_cmd->siop_target);
+				siop_table_sync(siop_cmd,
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				CALL_SCRIPT(Ent_msgin_ack);
+				break;
+			case SIOP_NEG_MSGREJ:
+				siop_cmd->siop_tables.msg_out[0] = MSG_MESSAGE_REJECT;
+				siop_cmd->siop_tables.t_msgout.count = htole32(1);
+				siop_table_sync(siop_cmd,
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				CALL_SCRIPT(Ent_send_msgout);
+				break;
+			default:
+				panic("invalid return value from siop_%s_neg(): 0x%x", neg_name, neg_action);
 			}
-			/* send a message reject */
-			siop_cmd->siop_tables.msg_out[0] = MSG_MESSAGE_REJECT;
-			siop_cmd->siop_tables.t_msgout.count = htole32(1);
-			siop_table_sync(siop_cmd,
-			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-			CALL_SCRIPT(Ent_send_msgout);
-			return 1;
+			
+			return (1);
+		}
+
 		case A_int_disc:
 			INCSTAT(siop_stat_intr_sdp);
 			offset = bus_space_read_1(sc->sc_rt, sc->sc_rh,
@@ -1180,7 +1187,7 @@ siop_handle_reset(sc)
 			}
 		}
 		sc->targets[target]->status = TARST_ASYNC;
-		sc->targets[target]->flags &= ~TARF_ISWIDE;
+		sc->targets[target]->flags &= ~(TARF_ISWIDE | TARF_ISDT | TARF_ISQAS | TARF_ISIUS);
 	}
 	/* Next commands from the urgent list */
 	for (siop_cmd = TAILQ_FIRST(&sc->urgent_list); siop_cmd != NULL;
@@ -1363,11 +1370,19 @@ siop_scsicmd(xs)
 						sc->targets[target]->flags |= TARF_TAG;
 						xs->sc_link->openings += SIOP_NTAG - SIOP_OPENINGS;
 					}
+
 					if ((inqdata->flags & SID_WBus16) && (sc->features & SF_BUS_WIDE))
 						sc->targets[target]->flags |= TARF_WIDE;
 					if (inqdata->flags & SID_Sync)
 						sc->targets[target]->flags |= TARF_SYNC;
-					if (sc->targets[target]->flags & (TARF_WIDE | TARF_SYNC)) {
+
+					if ((sc->features & SF_CHIP_C10)
+					    && (sc->targets[target]->flags & TARF_WIDE)
+					    && (inqdata->flags2 & (SID_CLOCKING | SID_QAS | SID_IUS)))
+						sc->targets[target]->flags |= TARF_PPR;
+
+					if (sc->targets[target]->flags
+					    & (TARF_WIDE | TARF_SYNC | TARF_PPR)) {
 						sc->targets[target]->status = TARST_ASYNC;
 						siop_add_dev(sc, target, lun);
 					}
@@ -1728,13 +1743,13 @@ siop_morecbd(sc)
 		newcbd->cmds[i].siop_tables.t_msgout.count= htole32(1);
 		newcbd->cmds[i].siop_tables.t_msgout.addr = htole32(dsa);
 		newcbd->cmds[i].siop_tables.t_msgin.count= htole32(1);
-		newcbd->cmds[i].siop_tables.t_msgin.addr = htole32(dsa + 8);
+		newcbd->cmds[i].siop_tables.t_msgin.addr = htole32(dsa + 16);
 		newcbd->cmds[i].siop_tables.t_extmsgin.count= htole32(2);
-		newcbd->cmds[i].siop_tables.t_extmsgin.addr = htole32(dsa + 9);
+		newcbd->cmds[i].siop_tables.t_extmsgin.addr = htole32(dsa + 17);
 		newcbd->cmds[i].siop_tables.t_extmsgdata.addr =
-		    htole32(dsa + 11);
+		    htole32(dsa + 19);
 		newcbd->cmds[i].siop_tables.t_status.count= htole32(1);
-		newcbd->cmds[i].siop_tables.t_status.addr = htole32(dsa + 16);
+		newcbd->cmds[i].siop_tables.t_status.addr = htole32(dsa + 32);
 
 		/* The select/reselect script */
 		scr = &newcbd->cmds[i].siop_xfer->resel[0];
@@ -1894,6 +1909,16 @@ siop_update_scntl3(sc, siop_target)
 	siop_script_write(sc,
 	    siop_target->lunsw->lunsw_off + (Ent_restore_scntl3 / 4) + 2,
 	    0x78050000 | (siop_target->id & 0x0000ff00));
+	/* If DT, change null op ('MOVE 0xff TO SFBR') to 'MOVE n TO SCNTL4' */
+	if (siop_target->flags & TARF_ISDT)
+		siop_script_write(sc,
+		    siop_target->lunsw->lunsw_off + (Ent_restore_scntl3 / 4) + 4,
+		    0x78bc0000 | ((siop_target->id << 8) & 0x0000ff00));
+	else
+		siop_script_write(sc,
+		    siop_target->lunsw->lunsw_off + (Ent_restore_scntl3 / 4) + 4,
+		    0x7808ff00);
+
 	siop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 }
 

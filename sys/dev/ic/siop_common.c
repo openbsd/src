@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.5 2001/03/10 05:04:06 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.6 2001/04/15 06:01:29 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
@@ -71,6 +71,8 @@ siop_common_reset(sc)
 	    SCNTL0_ARB_MASK | SCNTL0_EPC | SCNTL0_AAP);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, 0);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3, sc->clock_div);
+	if (sc->features & SF_CHIP_C10)
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL4, 0);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER, 0);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_DIEN, 0xff);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SIEN0,
@@ -129,6 +131,7 @@ siop_setuptables(siop_cmd)
 	struct scsi_xfer *xs = siop_cmd->xs;
 	int target = xs->sc_link->target;
 	int lun = xs->sc_link->lun;
+	int targ_flags = sc->targets[target]->flags;
 
 	siop_cmd->siop_tables.id = htole32(sc->targets[target]->id);
 	memset(siop_cmd->siop_tables.msg_out, 0, 8);
@@ -138,18 +141,24 @@ siop_setuptables(siop_cmd)
 		siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 0);
 	siop_cmd->siop_tables.t_msgout.count= htole32(1);
 	if (sc->targets[target]->status == TARST_ASYNC) {
-		if (sc->targets[target]->flags & TARF_WIDE) {
+		if (targ_flags & TARF_PPR) {
+			sc->targets[target]->status = TARST_PPR_NEG;
+			if (sc->min_dt_sync != 0)
+				siop_ppr_msg(siop_cmd, 1, sc->min_dt_sync, sc->maxoff);
+			else
+				siop_ppr_msg(siop_cmd, 1, sc->min_st_sync, sc->maxoff);
+		} else if (targ_flags & TARF_WIDE) {
 			sc->targets[target]->status = TARST_WIDE_NEG;
 			siop_wdtr_msg(siop_cmd, 1, MSG_EXT_WDTR_BUS_16_BIT);
-		} else if (sc->targets[target]->flags & TARF_SYNC) {
+		} else if (targ_flags & TARF_SYNC) {
 			sc->targets[target]->status = TARST_SYNC_NEG;
-			siop_sdtr_msg(siop_cmd, 1, sc->minsync, sc->maxoff);
+			siop_sdtr_msg(siop_cmd, 1, sc->min_st_sync, sc->maxoff);
 		} else {
 			sc->targets[target]->status = TARST_OK;
 			siop_print_info(sc, target);
 		}
 	} else if (sc->targets[target]->status == TARST_OK &&
-	    (sc->targets[target]->flags & TARF_TAG) &&
+	    (targ_flags & TARF_TAG) &&
 	    siop_cmd->status != CMDST_SENSE) {
 		siop_cmd->flags |= CMDFL_TAG;
 	}
@@ -173,6 +182,81 @@ siop_setuptables(siop_cmd)
 }
 
 int
+siop_ppr_neg(siop_cmd)
+	struct siop_cmd *siop_cmd;
+{
+	struct siop_softc *sc = siop_cmd->siop_sc;
+	struct siop_target *siop_target = siop_cmd->siop_target;
+	int target = siop_cmd->xs->sc_link->target;
+	struct siop_xfer_common *tables = &siop_cmd->siop_xfer->tables;
+	int offset, sync, protocol, scf;
+
+	sync     = tables->msg_in[3];
+	offset   = tables->msg_in[5];
+	protocol = tables->msg_in[7];
+
+#ifdef DEBUG
+	printf("%s: siop_ppr_neg: sync = %x, offset = %x, protocol = %x\n",
+	    sc->sc_dev.dv_xname, sync, offset, protocol);
+#endif
+	/*
+	 * Process protocol bits first, because finding the correct scf
+	 * via siop_period_factor_to_scf() requires the TARF_ISDT flag
+	 * to be correctly set.
+	 */
+	if (protocol & MSG_EXT_PPR_PROT_IUS)
+		siop_target->flags |= TARF_ISIUS;
+
+	if (protocol & MSG_EXT_PPR_PROT_DT) {
+		siop_target->flags |= TARF_ISDT;
+		sc->targets[target]->id |= SCNTL4_ULTRA3;
+	}
+
+	if (protocol & MSG_EXT_PPR_PROT_QAS)
+		siop_target->flags |= TARF_ISQAS;
+
+	scf = siop_period_factor_to_scf(sc, sync, siop_target->flags);
+
+	if ((offset > sc->maxoff) ||
+	    (scf == 0) ||
+	    ((siop_target->flags & TARF_ISDT) && (offset == 1))) {
+		tables->t_msgout.count= htole32(1);
+		tables->msg_out[0] = MSG_MESSAGE_REJECT;
+		return (SIOP_NEG_MSGOUT);
+	}
+
+	siop_target->id |= scf << (24 + SCNTL3_SCF_SHIFT);
+
+	if (((sc->features & SF_CHIP_C10) == 0) && (sync < 25))
+		siop_target->id |= SCNTL3_ULTRA << 24;
+
+	siop_target->id |= (offset & 0xff) << 8;
+	
+	if (tables->msg_in[6] == MSG_EXT_WDTR_BUS_16_BIT) {
+		siop_target->flags |= TARF_ISWIDE;
+		sc->targets[target]->id |= (SCNTL3_EWS << 24);
+	}
+
+#ifdef DEBUG
+	printf("%s: siop_ppr_neg: id now 0x%x, flags is now 0x%x\n",
+	    sc->sc_dev.dv_xname, siop_target->id, siop_target->flags);
+#endif
+	tables->id = htole32(siop_target->id);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
+	    (siop_target->id >> 24) & 0xff);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
+	    (siop_target->id >> 8) & 0xff);
+	/* Only cards with SCNTL4 can cause PPR negotiations, so ... */
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL4,
+	    (siop_target->id & 0xff));
+
+	siop_target->status = TARST_OK;
+	siop_print_info(sc, target);
+	
+	return (SIOP_NEG_ACK);
+}
+
+int
 siop_wdtr_neg(siop_cmd)
 	struct siop_cmd *siop_cmd;
 {
@@ -181,17 +265,17 @@ siop_wdtr_neg(siop_cmd)
 	int target = siop_cmd->xs->sc_link->target;
 	struct siop_xfer_common *tables = &siop_cmd->siop_xfer->tables;
 
-	/* revert to async until told otherwise */
-	sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
-	sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
-	sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
+	/* revert to narrow async until told otherwise */
+	sc->targets[target]->id    &= 0x07ff0000; /* Keep SCNTL3.CCF and id */
+	sc->targets[target]->flags &= ~(TARF_ISWIDE | TARF_ISDT | TARF_ISQAS | TARF_ISIUS);
 
 	tables->id = htole32(sc->targets[target]->id);
 	
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
 	    (sc->targets[target]->id >> 24) & 0xff);
-	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
-	    (sc->targets[target]->id >> 8) & 0xff);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,  0);
+	if (sc->features & SF_CHIP_C10)
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL4, 0);
 
 	if (siop_target->status == TARST_WIDE_NEG) {
 		/* we initiated wide negotiation */
@@ -229,7 +313,7 @@ siop_wdtr_neg(siop_cmd)
 		/* we now need to do sync */
 		if (siop_target->flags & TARF_SYNC) {
 			siop_target->status = TARST_SYNC_NEG;
-			siop_sdtr_msg(siop_cmd, 0, sc->minsync, sc->maxoff);
+			siop_sdtr_msg(siop_cmd, 0, sc->min_st_sync, sc->maxoff);
 			return SIOP_NEG_MSGOUT;
 		} else {
 			siop_target->status = TARST_OK;
@@ -269,7 +353,7 @@ siop_sdtr_neg(siop_cmd)
 	struct siop_softc *sc = siop_cmd->siop_sc;
 	struct siop_target *siop_target = siop_cmd->siop_target;
 	int target = siop_cmd->xs->sc_link->target;
-	int sync, offset, i;
+	int sync, offset, scf;
 	int send_msgout = 0;
 	struct siop_xfer_common *tables = &siop_cmd->siop_xfer->tables;
 
@@ -277,35 +361,23 @@ siop_sdtr_neg(siop_cmd)
 	offset = tables->msg_in[4];
 
 	/* revert to async until told otherwise */
-	sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
-	sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
-	sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
+	sc->targets[target]->id    &= 0x0fff0000; /* Keep SCNTL3.EWS, SCNTL3.CCF and id */
+	sc->targets[target]->flags &= ~(TARF_ISDT | TARF_ISQAS | TARF_ISIUS);
 
 	if (siop_target->status == TARST_SYNC_NEG) {
 		/* we initiated sync negotiation */
 #ifdef DEBUG
-		printf("sdtr: sync %d offset %d\n", sync, offset);
+		printf("%s: sdtr for target %d: sync %d offset %d\n",
+		    sc->sc_dev.dv_xname, target, sync, offset);
 #endif
-		if (offset > sc->maxoff || sync < sc->minsync ||
-			sync > sc->maxsync)
+		scf = siop_period_factor_to_scf(sc, sync, sc->targets[target]->flags);
+		if (offset > sc->maxoff || scf == 0)
 			goto reject;
-		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]);
-		    i++) {
-			if (sc->clock_period != scf_period[i].clock)
-				continue;
-			if (scf_period[i].period == sync) {
-				/* ok, found it. we now are sync. */
-				sc->targets[target]->id |= scf_period[i].scf
-				    << (24 + SCNTL3_SCF_SHIFT);
-				if ((sync < 25)
-				    && ((sc->features & SF_CHIP_C10) == 0))
-					sc->targets[target]->id |=
-					    SCNTL3_ULTRA << 24;
-				sc->targets[target]->id |=
-				    (offset & SXFER_MO_MASK) << 8;
-				goto end;
-			}
-		}
+		sc->targets[target]->id |= scf << (24 + SCNTL3_SCF_SHIFT);
+		if (((sc->features & SF_CHIP_C10) == 0) && (sync < 25))
+			sc->targets[target]->id |= SCNTL3_ULTRA << 24;
+		sc->targets[target]->id |= (offset & 0xff) << 8;
+		goto end;
 		/*
 		 * We didn't find it in our table, so stay async and send reject
 		 * msg.
@@ -316,37 +388,30 @@ reject:
 		tables->msg_out[0] = MSG_MESSAGE_REJECT;
 	} else { /* target initiated sync neg */
 #ifdef DEBUG
+		printf("%s: target initiated sdtr for target %d: sync %d offset %d\n",
+		    sc->sc_dev.dv_xname, target, sync, offset);
 		printf("sdtr (target): sync %d offset %d\n", sync, offset);
 #endif
+		if (sync < sc->min_st_sync)
+			sync = sc->min_st_sync;
+		scf = siop_period_factor_to_scf(sc, sync, sc->targets[target]->flags);
 		if ((sc->targets[target]->flags & TARF_SYNC) == 0
 		    || offset == 0
-		    || sync > sc->maxsync) {
+		    || scf == 0) {
 			goto async;
 		}
+		if ((offset > 31) && ((sc->targets[target]->flags & TARF_ISDT) == 0))
+			offset = 31;
 		if (offset > sc->maxoff)
 			offset = sc->maxoff;
-		if (sync < sc->minsync)
-			sync = sc->minsync;
-		/* look for sync period */
-		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]);
-		    i++) {
-			if (sc->clock_period != scf_period[i].clock)
-				continue;
-			if (scf_period[i].period == sync) {
-				/* ok, found it. we now are sync. */
-				sc->targets[target]->id |= scf_period[i].scf
-				    << (24 + SCNTL3_SCF_SHIFT);
-				if ((sync < 25)
-				    && ((sc->features & SF_CHIP_C10) == 0))
-					sc->targets[target]->id |=
-					    SCNTL3_ULTRA << 24;
-				sc->targets[target]->id |=
-				    (offset & SXFER_MO_MASK) << 8;
-				siop_sdtr_msg(siop_cmd, 0, sync, offset);
-				send_msgout = 1;
-				goto end;
-			}
-		}
+
+		sc->targets[target]->id |= scf << (24 + SCNTL3_SCF_SHIFT);
+		if (((sc->features & SF_CHIP_C10) == 0) && (sync < 25))
+			sc->targets[target]->id |= SCNTL3_ULTRA << 24;
+		sc->targets[target]->id |= (offset & 0xff) << 8;
+		siop_sdtr_msg(siop_cmd, 0, sync, offset);
+		send_msgout = 1;
+		goto end;
 async:
 		siop_sdtr_msg(siop_cmd, 0, 0, 0);
 		send_msgout = 1;
@@ -374,6 +439,40 @@ end:
 }
 
 void
+siop_ppr_msg(siop_cmd, offset, ssync, soff)
+	struct siop_cmd *siop_cmd;
+	int offset, ssync, soff;
+{
+	struct siop_softc *sc = siop_cmd->siop_sc;
+	u_int8_t protocol;
+
+	siop_cmd->siop_tables.msg_out[offset + 0] = MSG_EXTENDED;
+	siop_cmd->siop_tables.msg_out[offset + 1] = MSG_EXT_PPR_LEN;
+	siop_cmd->siop_tables.msg_out[offset + 2] = MSG_EXT_PPR;
+	siop_cmd->siop_tables.msg_out[offset + 3] = ssync;
+	siop_cmd->siop_tables.msg_out[offset + 4] = 0; /* RESERVED */
+	siop_cmd->siop_tables.msg_out[offset + 5] = soff;
+	siop_cmd->siop_tables.msg_out[offset + 6] = MSG_EXT_WDTR_BUS_16_BIT;
+
+	protocol = 0;
+	if (sc->min_dt_sync != 0)
+		protocol |= MSG_EXT_PPR_PROT_DT;
+
+	/* XXX - need tests for chip's capability to do QAS & IUS
+	 *       
+	 * if (test for QAS support)
+	 *         protocol |= MSG_EXT_PPR_PROT_QAS;
+	 * if (test for IUS support)
+	 *         protocol |= MSG_EXT_PPR_PROT_IUS;
+	 */
+
+	siop_cmd->siop_tables.msg_out[offset + 7] = protocol;
+
+	siop_cmd->siop_tables.t_msgout.count =
+	    htole32(offset + MSG_EXT_PPR_LEN + 2);
+}
+
+void
 siop_sdtr_msg(siop_cmd, offset, ssync, soff)
 	struct siop_cmd *siop_cmd;
 	int offset;
@@ -383,6 +482,10 @@ siop_sdtr_msg(siop_cmd, offset, ssync, soff)
 	siop_cmd->siop_tables.msg_out[offset + 1] = MSG_EXT_SDTR_LEN;
 	siop_cmd->siop_tables.msg_out[offset + 2] = MSG_EXT_SDTR;
 	siop_cmd->siop_tables.msg_out[offset + 3] = ssync;
+
+	if ((soff > 31) && ((siop_cmd->siop_target->flags & TARF_ISDT) == 0))
+		soff = 31;
+
 	siop_cmd->siop_tables.msg_out[offset + 4] = soff;
 	siop_cmd->siop_tables.t_msgout.count =
 	    htole32(offset + MSG_EXT_SDTR_LEN + 2);
@@ -585,30 +688,62 @@ siop_print_info(sc, target)
 {
 	struct siop_target *siop_target = sc->targets[target];
 	u_int8_t scf, offset;
-	int clock, i;
+	int scf_index, i;
 
-	offset = ((siop_target->id >> 8) & SXFER_MO_MASK) >> SXFER_MO_SHIFT;
+	const int factors = sizeof(period_factor) / sizeof(period_factor[0]);
+
+	offset = ((siop_target->id >> 8) & 0xff) >> SXFER_MO_SHIFT;
+
 	scf = ((siop_target->id >> 24) & SCNTL3_SCF_MASK) >> SCNTL3_SCF_SHIFT;
-	clock = sc->clock_period;
+	scf_index = sc->scf_index;
 
-	printf("%s: target %d now using%s%d bit ",
+	printf("%s: target %d now using %s%s%s%s%d bit ",
 	    sc->sc_dev.dv_xname, target,
-	    (siop_target->flags & TARF_TAG) ? " tagged " : " ",
+	    (siop_target->flags & TARF_TAG) ? "tagged " : "",
+	    (siop_target->flags & TARF_ISDT) ? "DT " : "",
+	    (siop_target->flags & TARF_ISQAS) ? "QAS " : "",
+	    (siop_target->flags & TARF_ISIUS) ? "IUS " : "",
 	    (siop_target->flags & TARF_ISWIDE) ? 16 : 8);
 
 	if (offset == 0)
 		printf("async ");
-	else {
-		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++)
-			if ((scf_period[i].clock == clock) 
-			    && (scf_period[i].scf == scf)) {
-				printf("%s ", scf_period[i].rate);
-				break;
+	else { 
+		for (i = 0; i < factors; i++)
+			if (siop_target->flags & TARF_ISDT) {
+				if (period_factor[i].scf[scf_index].dt_scf == scf)
+					break;
 			}
-		if (i == sizeof(scf_period) / sizeof(scf_period[0]))
-			printf("? ");
+			else if	(period_factor[i].scf[scf_index].st_scf == scf)
+				break;
+
+		if (i >= factors)
+			printf("?? ");
+		else
+			printf("%s ", period_factor[i].rate);
+
 		printf("MHz %d REQ/ACK offset ", offset);
 	}
 	
 	printf("xfers\n");
+}
+
+int
+siop_period_factor_to_scf(sc, pf, flags)
+	struct siop_softc *sc;
+	int pf, flags;
+{
+	const int scf_index = sc->scf_index;
+	int i;
+
+	const int factors = sizeof(period_factor) / sizeof(period_factor[0]);
+
+	for (i = 0; i < factors; i++)
+		if (period_factor[i].factor == pf) {
+			if (flags & TARF_ISDT)
+				return (period_factor[i].scf[scf_index].dt_scf);
+			else
+				return (period_factor[i].scf[scf_index].st_scf);
+		}
+
+	return (0);
 }

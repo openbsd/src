@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.4 2001/03/10 05:04:06 krw Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.5 2001/04/15 06:01:30 krw Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.6 2001/01/10 15:50:20 thorpej Exp $	*/
 
 /*
@@ -57,48 +57,48 @@ const struct siop_product_desc siop_products[] = {
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x00,
 	SF_PCI_RL | SF_CHIP_LS,
-	4, 8, 3, 250, 0
+	4, 8, 3, SF_CLOCK_2500, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x10,
 	SF_PCI_RL | SF_PCI_BOF | SF_CHIP_PF | SF_CHIP_LS,
-	4, 8, 3, 250, 0
+	4, 8, 3, SF_CLOCK_2500, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_815,
 	0x00,
 	SF_PCI_RL | SF_PCI_BOF,
-	4, 8, 3, 250, 0
+	4, 8, 3, SF_CLOCK_2500, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_820,
 	0x00,
 	SF_PCI_RL | SF_CHIP_LS | SF_BUS_WIDE,
-	4, 8, 3, 250, 0
+	4, 8, 3, SF_CLOCK_2500, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_825,
 	0x00,
 	SF_PCI_RL | SF_PCI_BOF | SF_BUS_WIDE,
-	4, 8, 3, 250, 0
+	4, 8, 3, SF_CLOCK_2500, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_825,
 	0x10,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_WIDE,
-	7, 8, 3, 250, 4096
+	7, 8, 3, SF_CLOCK_2500, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_860,
 	0x00,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_PF | SF_CHIP_LS |
 	SF_BUS_ULTRA,
-	4, 8, 5, 125, 0
+	4, 8, 5, SF_CLOCK_1250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_875,
 	0x00,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, 125, 4096
+	7, 16, 5, SF_CLOCK_1250, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_875,
 	0x02,
@@ -106,7 +106,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, 125, 4096
+	7, 16, 5, SF_CLOCK_1250, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_875J,
 	0x00,
@@ -114,7 +114,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, 125, 4096
+	7, 16, 5, SF_CLOCK_1250, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_885,
 	0x00,
@@ -122,7 +122,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, 125, 4096
+	7, 16, 5, SF_CLOCK_1250, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_895,
 	0x00,
@@ -130,7 +130,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, 62, 4096
+	7, 31, 7, SF_CLOCK_625, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_895A,
 	0x00,
@@ -138,7 +138,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, 62, 8192
+	7, 31, 7, SF_CLOCK_625, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_896,
 	0x00,
@@ -146,7 +146,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, 62, 8192
+	7, 31, 7, SF_CLOCK_625, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1010,
 	0x00,
@@ -154,7 +154,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_C10 |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 0, 62, 8192
+	7, 62, 0, SF_CLOCK_625, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1510D,
 	0x00,
@@ -162,7 +162,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, 62, 4096
+	7, 31, 7, SF_CLOCK_625, 4096
 	},
 	{ 0,
 	0x00,
@@ -215,7 +215,7 @@ siop_pci_attach_common(sc, pa)
 	sc->siop.maxburst = sc->sc_pp->maxburst;
 	sc->siop.maxoff = sc->sc_pp->maxoff;
 	sc->siop.clock_div = sc->sc_pp->clock_div;
-	sc->siop.clock_period = sc->sc_pp->clock_period;
+	sc->siop.scf_index = sc->sc_pp->scf_index;
 	sc->siop.ram_size = sc->sc_pp->ram_size;
 
 	sc->siop.sc_reset = siop_pci_reset;

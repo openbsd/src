@@ -1,4 +1,4 @@
-;	$OpenBSD: siop.ss,v 1.2 2001/03/01 17:14:27 krw Exp $
+;	$OpenBSD: siop.ss,v 1.3 2001/04/15 06:01:32 krw Exp $
 ;	$NetBSD: siop.ss,v 1.12 2000/10/23 14:53:53 bouyer Exp $
 
 ;
@@ -32,14 +32,14 @@
 ARCH 720
 
 ; offsets in sym_xfer
-ABSOLUTE t_id = 24;
-ABSOLUTE t_msg_in = 32;
-ABSOLUTE t_ext_msg_in = 40;
-ABSOLUTE t_ext_msg_data = 48;
-ABSOLUTE t_msg_out = 56;
-ABSOLUTE t_cmd = 64;
-ABSOLUTE t_status = 72;
-ABSOLUTE t_data = 80;
+ABSOLUTE t_id = 40;
+ABSOLUTE t_msg_in = 48;
+ABSOLUTE t_ext_msg_in = 56;
+ABSOLUTE t_ext_msg_data = 64;
+ABSOLUTE t_msg_out = 72;
+ABSOLUTE t_cmd = 80;
+ABSOLUTE t_status = 88;
+ABSOLUTE t_data = 96;
 
 ;; interrupt codes
 ; interrupts that need a valid DSA
@@ -354,6 +354,7 @@ PROC lun_switch:
 restore_scntl3:
 	MOVE 0xff TO SCNTL3;
 	MOVE 0xff TO SXFER;
+	MOVE 0xff TO SFBR;
 	JUMP abs_lunsw_return;
 lun_switch_entry:
 	CALL REL(restore_scntl3);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopreg.h,v 1.2 2001/03/10 05:04:06 krw Exp $ */
+/*	$OpenBSD: siopreg.h,v 1.3 2001/04/15 06:01:29 krw Exp $ */
 /*	$NetBSD: siopreg.h,v 1.7 2000/10/06 16:35:13 bouyer Exp $	*/
 
 /*
@@ -74,28 +74,49 @@
 #define SCNTL3_CCF_SHIFT 0
 #define SCNTL3_CCF_MASK	0x07
 
-/* periods for various SCF values, assume transfer period of 4 */
-struct scf_period {
-	int clock; /* clock period (ns * 10) */
-	int period; /* scsi period, as set in the SDTR message */
-	int scf; /* scf value to use */
-	char *rate; /* the resulting rate */
+#define SIOP_CLOCKS_SUPPORTED 3 /* 3 supported clocks: 25, 12.5, 6.25 ns */
+
+struct period_factor {
+	int factor; /* transfer period factor from sdtr/ppr */
+	char *rate; /* string describing transfer rate      */
+	struct {
+		int st_scf;
+		int dt_scf;
+	} scf[SIOP_CLOCKS_SUPPORTED];	
+		/* scf value to use in SCNTL3[6:4]
+		 *   0 == SCLK/3
+		 *   1 == SCLK/1
+		 *   2 == SCLK/1.5
+		 *   3 == SCLK/2
+		 *   4 == SCLK/3
+		 *   5 == SCLK/4
+		 *   6 == SCLK/6
+		 *   7 == SCLK/8
+		 *
+		 * One entry for each different clock
+		 * supported, showing appropriate scf
+		 * for the period_factor requested. A
+		 * value of 0 indicates the rate is
+		 * not supported.
+		 *
+		 * scf[0] == scf for a 25ns cycle
+		 * scf[1] == scf for a 12.5 ns cycle
+		 * scf[2] == scf for a 6.25 ns cycle
+		 *
+		 * min sync = first non zero in column
+		 * max sync = last  non zero in column	
+		 */
 };
 
-static const struct scf_period scf_period[] __attribute__((__unused__)) = {
-	{250, 25, 1, "10.0"},
-	{250, 37, 2, "6.67"},
-	{250, 50, 3, "5.0"},
-	{250, 75, 4, "3.33"},
-	{125, 12, 1, "20.0"},
-	{125, 18, 2, "13.33"},
-	{125, 25, 3, "10.0"},
-	{125, 37, 4, "6.67"},
-	{125, 50, 5, "5.0"},
-	{ 62, 10, 1, "40.0"},
-	{ 62, 12, 3, "20.0"},
-	{ 62, 18, 4, "13.3"},
-	{ 62, 25, 5, "10.0"},
+static const struct period_factor period_factor[] __attribute__((__unused__)) = {
+	{0x09, "80",   {{0,0},{0,0},{0,1}}},
+	{0x0a, "40",   {{0,0},{0,0},{1,3}}},
+	{0x0c, "20",   {{0,0},{1,0},{3,5}}},
+	{0x12, "13.3", {{0,0},{2,0},{4,6}}},
+	{0x19, "10",   {{1,0},{3,0},{5,7}}},
+	{0x25, "6.67", {{2,0},{4,0},{6,0}}},
+	{0x32, "5",    {{3,0},{5,0},{7,0}}},
+	{0x4b, "3.33", {{4,0},{6,0},{0,0}}},
 };
 
 #define SIOP_SCID	0x04 /* SCSI chip ID R/W */
@@ -108,7 +129,7 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 #define SXFER_TP_SHIFT	 5
 #define SXFER_TP_MASK	0xe0
 #define SXFER_MO_SHIFT  0
-#define SXFER_MO_MASK  0x1f
+#define SXFER_MO_MASK	0x1f
 
 #define SIOP_SDID	0x06 /* SCSI destiation ID, R/W */
 #define SDID_ENCID_SHIFT 0
@@ -375,5 +396,9 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 #define SIOP_SCRATCHI	0x78 /* Scratch register I, R/W, 875-only */
 
 #define SIOP_SCRATCHJ	0x7c /* Scratch register J, R/W, 875-only */
+
+#define SIOP_SCNTL4	0xbc
+#define SCNTL4_ULTRA3	0x80
+#define SCNTL4_AIP	0x40
 
 #define SIOP_DFBC	0xf0 /* DMA FIFO byte count, RO, C10-only */

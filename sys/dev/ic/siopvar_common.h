@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.3 2001/03/06 16:29:32 krw Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.4 2001/04/15 06:01:29 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.10 2001/01/26 21:58:56 bouyer Exp $	*/
 
 /*
@@ -57,22 +57,22 @@ typedef struct scr_table {
  * transfer. 
  */
 struct siop_xfer_common {
-	u_int8_t msg_out[8];	/* 0 */
-	u_int8_t msg_in[8];	/* 8 */
-	u_int32_t status;	/* 16 */
-	u_int32_t pad1;		/* 20 */
-	u_int32_t id;		/* 24 */
-	u_int32_t pad2;		/* 28 */
-	scr_table_t t_msgin;	/* 32 */
-	scr_table_t t_extmsgin;	/* 40 */
-	scr_table_t t_extmsgdata; /* 48 */
-	scr_table_t t_msgout;	/* 56 */
-	scr_table_t cmd;	/* 64 */
-	scr_table_t t_status;	/* 72 */
-	scr_table_t data[SIOP_NSG]; /* 80 */
+	u_int8_t msg_out[16];	    /*  0 */
+	u_int8_t msg_in[16];	    /* 16 */
+	u_int32_t status;	    /* 32 */
+	u_int32_t pad1;		    /* 36 */
+	u_int32_t id;		    /* 40 */
+	u_int32_t pad2;		    /* 44 */
+	scr_table_t t_msgin;	    /* 48 */
+	scr_table_t t_extmsgin;	    /* 56 */
+	scr_table_t t_extmsgdata;   /* 64 */
+	scr_table_t t_msgout;	    /* 72 */
+	scr_table_t cmd;	    /* 80 */
+	scr_table_t t_status;	    /* 88 */
+	scr_table_t data[SIOP_NSG]; /* 96 */
 } __attribute__((__packed__));
 
-/* status can hold the SCSI_* status values, and 2 additionnal values: */
+/* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
 #define SCSI_SIOP_NOSTATUS	0xff	/* device didn't report status */
 
@@ -146,7 +146,12 @@ struct siop_lun {
 struct siop_target {
 	int status;	/* target status, see below */
 	int flags;	/* target flags, see below */
-	u_int32_t id;	/* for SELECT FROM */
+	u_int32_t id;	/* for SELECT FROM
+			 * 31-24 == SCNTL3
+			 * 23-16 == SCSI id
+			 * 15- 8 == SXFER
+			 *  7- 0 == SCNTL4
+			 */
 	struct siop_lun *siop_lun[8]; /* per-lun state */
 	u_int reseloff; /* XXX */
 	struct siop_lunsw *lunsw; /* XXX */
@@ -157,13 +162,19 @@ struct siop_target {
 #define TARST_ASYNC	1 /* target needs sync/wide negotiation */
 #define TARST_WIDE_NEG	2 /* target is doing wide negotiation */
 #define TARST_SYNC_NEG	3 /* target is doing sync negotiation */
-#define TARST_OK	4 /* sync/wide agreement is valid */
+#define TARST_PPR_NEG	4 /* target is doing PPR (Parallel Protocol Request) */
+#define TARST_OK	5 /* sync/wide agreement is valid */
 
 /* target flags */
-#define TARF_SYNC	0x01 /* target can do sync */
-#define TARF_WIDE	0x02 /* target can do wide */
-#define TARF_TAG	0x04 /* target can do tags */
-#define TARF_ISWIDE	0x08 /* target is wide */
+#define TARF_SYNC	0x01 /* target can do sync xfers      */
+#define TARF_WIDE	0x02 /* target can do wide xfers      */
+#define TARF_TAG	0x04 /* target can do taggged queuing */
+#define TARF_PPR	0x08 /* target can do PPR negotiation */
+
+#define TARF_ISWIDE	0x10 /* target is using wide xfers    */
+#define TARF_ISIUS	0x20 /* target is using IUS           */
+#define TARF_ISDT	0x40 /* target is using DT            */
+#define TARF_ISQAS	0x80 /* target is using QAS           */
 
 struct siop_lunsw {
 	TAILQ_ENTRY (siop_lunsw) next;
@@ -177,7 +188,7 @@ siop_table_sync(siop_cmd, ops)
 	struct siop_cmd *siop_cmd;
 	int ops;
 {
-	struct siop_softc *sc  = siop_cmd->siop_sc;
+	struct siop_softc *sc = siop_cmd->siop_sc;
 	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, ops);
 }
 
@@ -187,18 +198,26 @@ int	siop_modechange __P((struct siop_softc *));
 
 int	siop_wdtr_neg __P((struct siop_cmd *));
 int	siop_sdtr_neg __P((struct siop_cmd *));
+int     siop_ppr_neg  __P((struct siop_cmd *));
 void	siop_sdtr_msg __P((struct siop_cmd *, int, int, int));
 void	siop_wdtr_msg __P((struct siop_cmd *, int, int));
-/* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
+void    siop_ppr_msg  __P((struct siop_cmd *, int, int, int));
+
+/* actions to take at return of siop_<xxx>_neg() */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
+#define SIOP_NEG_MSGREJ	0x3
 
 void	siop_print_info __P((struct siop_softc *, int));
 void	siop_minphys __P((struct buf *));
 void 	siop_sdp __P((struct siop_cmd *));
 void	siop_clearfifo __P((struct siop_softc *));
 void	siop_resetbus __P((struct siop_softc *));
+
+int     siop_period_factor_to_scf __P((struct siop_softc *, int, int));
+int     siop_scf_to_period_factor __P((struct siop_softc *, int, int));
+
 /* XXXX should be  callbacks */
 void	siop_add_dev __P((struct siop_softc *, int, int));
 void	siop_del_dev __P((struct siop_softc *, int, int));
