@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.24 2000/07/07 11:51:24 art Exp $	*/
+/*	$OpenBSD: zs.c,v 1.25 2000/07/11 15:00:12 deraadt Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -1201,7 +1201,7 @@ again:
 				 * bstreams	XXX gag choke
 				 */
 				if (unit == ZS_KBD)
-#if	NKDD > 0
+#if	NKBD > 0
 					kbd_rint(cc);
 #else
 					;
