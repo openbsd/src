@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.13 2003/04/23 07:05:33 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.14 2004/03/15 10:00:52 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -962,7 +962,7 @@ It must contain the
 .Dq set ifaddr
 command to {define} the remote peers IP address.
 (refer to
-.Pa /usr/share/examples/ppp/ppp.conf.sample )
+.Pa /etc/ppp/ppp.conf.sample )
 .Bd -literal -offset indent
 # ppp -auto pmdemand
 .Ed
@@ -1076,7 +1076,6 @@ are specified, the total number of attempts is still 4 (it does not
 attempt each number 4 times).
 .Pp
 Alternatively,
-.Pp
 .Bd -literal -offset indent
 set redial 10+10-5.3 20
 .Ed
@@ -1180,7 +1179,8 @@ connection request, follow these steps:
 .It
 Make sure the modem and (optionally)
 .Pa /etc/rc.serial
-is configured correctly.
+are configured correctly.
+.Pp
 .Bl -bullet -compact
 .It
 Use Hardware Handshake (CTS/RTS) for flow control.
@@ -2515,7 +2515,6 @@ will show the same information at the
 link level.
 .Pp
 Armed with this information, the following configuration might be used:
-.Pp
 .Bd -literal -offset indent
 mp:
  set timeout 0
@@ -2539,13 +2538,11 @@ Usually, the link will be configured first, then cloned.
 If you wish all links
 to be up all the time, you can add the following line to the end of your
 configuration.
-.Pp
 .Bd -literal -offset indent
   link 1,2,3 set mode ddial
 .Ed
 .Pp
 If you want the links to dial on demand, this command could be used:
-.Pp
 .Bd -literal -offset indent
   link * set mode auto
 .Ed
@@ -2555,7 +2552,6 @@ Links may be tied to specific names by removing the
 line above, and specifying the following after the
 .Dq clone
 command:
-.Pp
 .Bd -literal -offset indent
  link 1 set device /dev/cua00
  link 2 set device /dev/cua01
@@ -4236,7 +4232,6 @@ as an option.
 The
 .Ar option Ns No s
 are as follows (in this order of preference):
-.Pp
 .Bl -tag -width Ds
 .It auth
 The callee is expected to decide the callback number based on
@@ -5379,15 +5374,17 @@ encryption.
 If this
 .Dv RAD_VENDOR_MICROSOFT
 vendor specific attribute is supplied, it's value is used as the master
-key for decryption of incoming data.  When clients are authenticated using
-MSCHAPv2, the RADIUS server MUST provide this attribute if inbound MPPE is
+key for decryption of incoming data.
+When clients are authenticated using MSCHAPv2,
+the RADIUS server MUST provide this attribute if inbound MPPE is
 to function.
 .It RAD_MICROSOFT_MS_MPPE_SEND_KEY
 If this
 .Dv RAD_VENDOR_MICROSOFT
 vendor specific attribute is supplied, it's value is used as the master
-key for encryption of outgoing data.  When clients are authenticated using
-MSCHAPv2, the RADIUS server MUST provide this attribute if outbound MPPE is
+key for encryption of outgoing data.
+When clients are authenticated using MSCHAPv2,
+the RADIUS server MUST provide this attribute if outbound MPPE is
 to function.
 .El
 .Pp
