@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.18 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.19 2004/01/09 22:55:19 jmc Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.24 1997/05/03 02:29:54 briggs Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ grfmv_attach(parent, self, aux)
 		if (strncmp(cardname, "Samsung 768", 11) == 0)
 			sc->card_id = NUBUS_DRHW_SAM768;
 		else if (strncmp(cardname, "Toby frame", 10) != 0)
-			printf("%s: card masquaredes as Toby Framebuffer",
+			printf("%s: card masquerades as Toby Framebuffer",
 			    sc->sc_dev.dv_xname);
 	}
 
