@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.h,v 1.7 1999/04/19 19:54:54 niklas Exp $	*/
-/*	$EOM: conf.h,v 1.8 1999/04/02 00:57:30 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.8 1999/07/18 09:33:21 niklas Exp $	*/
+/*	$EOM: conf.h,v 1.9 1999/07/18 09:20:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -41,7 +41,7 @@
 #include <sys/queue.h>
 #include <stdio.h>
 
-#define CONFIG_FILE "/etc/isakmpd.conf"
+#define CONFIG_FILE "/etc/isakmpd/isakmpd.conf"
 
 struct conf_list_node {
   TAILQ_ENTRY (conf_list_node) link;

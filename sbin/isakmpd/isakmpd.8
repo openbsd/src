@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.8,v 1.10 1999/07/07 22:08:10 niklas Exp $
-.\" $EOM: isakmpd.8,v 1.14 1999/07/07 19:17:30 niklas Exp $
+.\" $OpenBSD: isakmpd.8,v 1.11 1999/07/18 09:33:21 niklas Exp $
+.\" $EOM: isakmpd.8,v 1.15 1999/07/18 09:20:27 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -67,7 +67,7 @@ The options are as follows:
 If given, the
 .Fl c
 option specifies an alternate configuration file instead of
-.Pa /etc/isakmpd.conf .
+.Pa /etc/isakmpd/isakmpd.conf .
 .It Fl d
 The
 .Fl d
@@ -134,7 +134,7 @@ The
 flag does not do what we document, rather it does nothing.
 .Sh FILES
 .Bl -tag -width /var/run/isakmpd.report
-.It Pa /etc/isakmpd.conf
+.It Pa /etc/isakmpd/isakmpd.conf
 The configuration file
 .It Pa /var/run/isakmpd.fifo
 The FIFO used to manually control
