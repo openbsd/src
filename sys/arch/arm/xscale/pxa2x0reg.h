@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.10 2005/02/12 06:20:21 dlg Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.11 2005/02/17 22:10:35 dlg Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -93,7 +93,7 @@
 #define PXA2X0_AC97_BASE	0x40500000
 #define PXA2X0_AC97_SIZE	0x600
 #define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client */
-#define PXA2X0_USBDC_SIZE 	0x0e04
+#define PXA2X0_USBDC_SIZE 	0x0460
 #define PXA2X0_STUART_BASE	0x40700000 /* Standard UART */
 #define PXA2X0_ICP_BASE 	0x40800000
 #define PXA2X0_RTC_BASE 	0x40900000
@@ -621,38 +621,8 @@ struct pxa2x0_dma_desc {
 #define	AC97_CODEC_BASE(c)	(AC97_PRIAUDIO + ((c) * 0x100))
 
 /*
- * USB device controller
+ * USB device controller differs between pxa255 and pxa27x, defined seperately
  */
-#define USBDC_UDCCR	0x0000  /* UDC control register    */
-#define USBDC_UDCCS(n)	(0x0010+4*(n))  /* Endpoint Control/Status Registers */
-#define USBDC_UICR0	0x0050  /* UDC Interrupt Control Register 0  */
-#define USBDC_UICR1	0x0054  /* UDC Interrupt Control Register 1  */
-#define USBDC_USIR0	0x0058  /* UDC Status Interrupt Register 0  */
-#define USBDC_USIR1	0x005C  /* UDC Status Interrupt Register 1  */
-#define USBDC_UFNHR	0x0060  /* UDC Frame Number Register High  */
-#define USBDC_UFNLR	0x0064  /* UDC Frame Number Register Low  */
-#define USBDC_UBCR2	0x0068  /* UDC Byte Count Register 2  */
-#define USBDC_UBCR4	0x006C  /* UDC Byte Count Register 4  */
-#define USBDC_UBCR7	0x0070  /* UDC Byte Count Register 7  */
-#define USBDC_UBCR9	0x0074  /* UDC Byte Count Register 9  */
-#define USBDC_UBCR12	0x0078  /* UDC Byte Count Register 12  */
-#define USBDC_UBCR14	0x007C  /* UDC Byte Count Register 14  */
-#define USBDC_UDDR0	0x0080  /* UDC Endpoint 0 Data Register  */
-#define USBDC_UDDR1	0x0100  /* UDC Endpoint 1 Data Register  */
-#define USBDC_UDDR2	0x0180  /* UDC Endpoint 2 Data Register  */
-#define USBDC_UDDR3	0x0200  /* UDC Endpoint 3 Data Register  */
-#define USBDC_UDDR4	0x0400  /* UDC Endpoint 4 Data Register  */
-#define USBDC_UDDR5	0x00A0  /* UDC Endpoint 5 Data Register  */
-#define USBDC_UDDR6	0x0600  /* UDC Endpoint 6 Data Register  */
-#define USBDC_UDDR7	0x0680  /* UDC Endpoint 7 Data Register  */
-#define USBDC_UDDR8	0x0700  /* UDC Endpoint 8 Data Register  */
-#define USBDC_UDDR9	0x0900  /* UDC Endpoint 9 Data Register  */
-#define USBDC_UDDR10	0x00C0  /* UDC Endpoint 10 Data Register  */
-#define USBDC_UDDR11	0x0B00  /* UDC Endpoint 11 Data Register  */
-#define USBDC_UDDR12	0x0B80  /* UDC Endpoint 12 Data Register  */
-#define USBDC_UDDR13	0x0C00  /* UDC Endpoint 13 Data Register  */
-#define USBDC_UDDR14	0x0E00  /* UDC Endpoint 14 Data Register  */
-#define USBDC_UDDR15	0x00E0  /* UDC Endpoint 15 Data Register  */
 
 /*
  * USB Host Controller

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.7 2005/02/12 05:20:25 dlg Exp $
+#	$OpenBSD: files.pxa2x0,v 1.8 2005/02/17 22:10:35 dlg Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -43,8 +43,13 @@ file arch/arm/xscale/pxa2x0_a4x_space.c		pxauart | obio
 file arch/arm/xscale/pxa2x0_a4x_io.S		pxauart | obio
 #defflag	opt_com.h	FFUARTCONSOLE STUARTCONSOLE BTUARTCONSOLE
 
+# PXA27x USB Device Controller
+device	pxaudc
+attach	pxaudc at pxaip
+file	arch/arm/xscale/pxa27x_udc.c		pxaudc
+
 # OHCI USB Controller
-attach ohci at pxaip with pxaohci
+attach	ohci at pxaip with pxaohci
 file	arch/arm/xscale/pxa2x0_ohci.c		pxaohci
 
 # LCD controller

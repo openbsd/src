@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.8 2005/02/14 13:55:20 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.9 2005/02/17 22:10:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -26,6 +26,7 @@
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
+#include <arm/xscale/pxa2x0_gpio.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -42,6 +43,7 @@ int	pxaohci_detach(struct device *, int);
 struct pxaohci_softc {
 	ohci_softc_t	sc;
 	void		*sc_ih;
+	void		*sc_gpioih;
 	int		sc_intr;
 };
 
@@ -57,6 +59,15 @@ pxaohci_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	return (1);
+}
+
+int pxaohci_intr(void *);
+int
+pxaohci_intr(void *arg)
+{
+
+	printf("register: %d\n", pxa2x0_gpio_get_bit(41));
+	return (ohci_intr(arg));
 }
 
 void
@@ -112,14 +123,15 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
 	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSE));
+	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
+	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSEP2));
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 	    OHCI_MIE);
 
 	/* XXX splusb? */
-	sc->sc_ih = pxa2x0_intr_establish(sc->sc_intr, IPL_USB, ohci_intr, sc,
-	    sc->sc.sc_bus.bdev.dv_xname);
 
 	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
 
@@ -136,6 +148,15 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	/* XXX splx(s) usb? */
 
+	sc->sc_ih = pxa2x0_intr_establish(sc->sc_intr, IPL_USB, ohci_intr, sc,
+	    sc->sc.sc_bus.bdev.dv_xname);
+
+        pxa2x0_gpio_set_function(35, GPIO_ALT_FN_2_IN);
+        pxa2x0_gpio_set_function(37, GPIO_ALT_FN_1_OUT);
+        pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_IN);
+	sc->sc_gpioih = pxa2x0_gpio_intr_establish(41, IST_EDGE_BOTH, IPL_BIO,
+	    ohci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
+
 	sc->sc.sc_child = config_found((void *) sc, &sc->sc.sc_bus,
 	    usbctlprint);
 }
@@ -150,6 +171,11 @@ pxaohci_detach(struct device *self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
+
+	if (sc->sc_gpioih != NULL) {
+		pxa2x0_gpio_intr_disestablish(sc->sc_gpioih);
+		sc->sc_gpioih = NULL;
+	}
 
 	if (sc->sc_ih != NULL) {
 		pxa2x0_intr_disestablish(sc->sc_ih);
