@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.25 2004/07/29 10:29:44 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.26 2004/10/07 09:50:48 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.25 2004/07/29 10:29:44 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.26 2004/10/07 09:50:48 hshoexer Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -333,7 +333,7 @@ ike_attribute_print (u_int8_t *buf, u_int8_t doi, int maxlen)
 	if (af == 0) {
 		/* AF=0; print the variable length attribute value */
 		for (val = 0; val < len; val++)
-			printf("%02x", (char)*(buf + 4 + val));
+			printf("%02x", *(buf + 4 + val));
 		return len + 4;
 	}
 
