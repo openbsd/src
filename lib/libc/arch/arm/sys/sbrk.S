@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.3 2004/02/02 15:58:19 drahn Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.4 2004/02/07 06:02:07 drahn Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -58,9 +58,9 @@ SYSENTRY(_sbrk)
 #ifdef PIC
 	/* Setup the GOT */
 	ldr	r3, .Lgot
-	add	r3, pc, r3
-.L1:
 	ldr	r2, .Lcurbrk
+.L1:
+	add	r3, pc, r3
 	ldr	r2, [r3, r2]
 #else
 	ldr	r2, .Lcurbrk
@@ -85,7 +85,7 @@ SYSENTRY(_sbrk)
 	.align	0
 #ifdef PIC
 .Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - (.L1+8)
 #endif
 .Lcurbrk:
 	.word	PIC_SYM(CURBRK, GOT)

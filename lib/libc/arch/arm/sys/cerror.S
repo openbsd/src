@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.3 2004/02/07 06:02:07 drahn Exp $	*/
 /*	$NetBSD: cerror.S,v 1.5 2003/08/07 16:42:04 agc Exp $	*/
 
 /*-
@@ -47,9 +47,9 @@ ASENTRY(CERROR)
 #ifdef PIC
 	/* Setup the GOT */
 	ldr	r3, .Lgot
-	add	r3, pc, r3
-.L1:
 	ldr	r1, .Lerrno
+.L1:
+	add	r3, pc, r3
 	ldr	r1, [r3, r1]
 #else
 	ldr	r1, .Lerrno
@@ -62,7 +62,7 @@ ASENTRY(CERROR)
 #ifdef PIC
 	.align	0
 .Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - (.L1+8)
 #endif /* PIC */
 
 	.globl	_C_LABEL(errno)

@@ -54,9 +54,9 @@ SYSENTRY(_brk)
 #ifdef PIC
 	/* Setup the GOT */
 	ldr	r3, .Lgot
-	add	r3, pc, r3
-.L1:
 	ldr	r1, .Lminbrk
+.L1:
+	add	r3, pc, r3
 	ldr	r1, [r3, r1]
 #else
 	ldr	r1, .Lminbrk
@@ -90,7 +90,7 @@ SYSENTRY(_brk)
 	.align	2
 #ifdef PIC
 .Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - (.L1+8)
 #endif
 .Lminbrk:
 	.word	PIC_SYM(_C_LABEL(__minbrk), GOT)
