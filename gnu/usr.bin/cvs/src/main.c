@@ -334,8 +334,10 @@ main (argc, argv)
     }
     if (getenv (CVSREAD_ENV) != NULL)
 	cvswrite = FALSE;
-    if (getenv (CVSREADONLYFS_ENV))
+    if (getenv (CVSREADONLYFS_ENV)) {
 	readonlyfs = TRUE;
+	logoff = TRUE;
+    }
     if ((cp = getenv (CVSUMASK_ENV)) != NULL)
     {
 	/* FIXME: Should be accepting symbolic as well as numeric mask.  */
