@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.14 2003/08/21 04:52:52 kevlo Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.15 2003/08/21 04:57:40 mickey Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
  *   1: midi and FM support
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
