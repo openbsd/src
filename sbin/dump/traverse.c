@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.4 1997/07/05 05:35:59 millert Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.5 1998/11/24 01:25:47 deraadt Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: traverse.c,v 1.4 1997/07/05 05:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: traverse.c,v 1.5 1998/11/24 01:25:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ blockest(dp)
 void
 mapfileino(ino, tapesize, dirskipped)
 	ino_t ino;
-	long *tapesize;
+	u_int64_t *tapesize;
 	int *dirskipped;
 {
 	int mode;
@@ -176,7 +176,7 @@ mapfileino(ino, tapesize, dirskipped)
 int
 mapfiles(maxino, tapesize, disk, dirv)
 	ino_t maxino;
-	long *tapesize;
+	u_int64_t *tapesize;
 	char *disk;
 	char * const *dirv;
 {
@@ -279,7 +279,7 @@ mapfiles(maxino, tapesize, disk, dirv)
 int
 mapdirs(maxino, tapesize)
 	ino_t maxino;
-	long *tapesize;
+	u_int64_t *tapesize;
 {
 	register struct	dinode *dp;
 	register int i, isdir;
@@ -560,11 +560,12 @@ blksout(blkp, frags, ino)
 		writeheader(ino);
 		bp = &blkp[i / tbperdb];
 		for (j = i; j < count; j += tbperdb, bp++)
-			if (*bp != 0)
+			if (*bp != 0) {
 				if (j + tbperdb <= count)
 					dumpblock(*bp, (int)sblock->fs_bsize);
 				else
 					dumpblock(*bp, (count - j) * TP_BSIZE);
+			}
 		spcl.c_type = TS_ADDR;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 1998/08/22 07:44:03 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 1998/11/24 01:25:47 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -479,7 +479,7 @@ main(argc, argv)
 		tapesize += (etapes - 1) *
 			(howmany(mapsize * sizeof(char), TP_BSIZE) + 1);
 		tapesize += etapes + 10;	/* headers + 10 trailer blks */
-		msg("estimated %ld tape blocks on %3.2f tape(s).\n",
+		msg("estimated %qd tape blocks on %3.2f tape(s).\n",
 		    tapesize, fetapes);
 	}
 

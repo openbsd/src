@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.7 1998/07/14 19:04:03 deraadt Exp $	*/
+/*	$OpenBSD: dump.h,v 1.8 1998/11/24 01:25:46 deraadt Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ int	pipeout;	/* true => output to standard output */
 ino_t	curino;		/* current inumber; used globally */
 int	newtape;	/* new tape flag */
 int	density;	/* density in 0.1" units */
-long	tapesize;	/* estimated tape size, blocks */
+u_int64_t tapesize;	/* estimated tape size, blocks */
 long	tsize;		/* tape size in 0.1" units */
 int	unlimited;	/* if set, write to end of medium */
 long	asize;		/* number of 0.1" units written on current tape */
@@ -108,10 +108,10 @@ void	timeest __P((void));
 /* mapping routines */
 struct	dinode;
 long	blockest __P((struct dinode *dp));
-void	mapfileino __P((ino_t, long *, int *));
-int	mapfiles __P((ino_t maxino, long *tapesize, char *disk,
+void	mapfileino __P((ino_t, u_int64_t *, int *));
+int	mapfiles __P((ino_t maxino, u_int64_t *tapesize, char *disk,
 		    char * const *dirv));
-int	mapdirs __P((ino_t maxino, long *tapesize));
+int	mapdirs __P((ino_t maxino, u_int64_t *tapesize));
 
 /* file dumping routines */
 void	blksout __P((daddr_t *blkp, int frags, ino_t ino));
