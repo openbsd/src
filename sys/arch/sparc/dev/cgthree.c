@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.23 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.24 2003/08/01 19:24:49 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -72,8 +72,9 @@
  */
 
 /*
- * color display (cgthree) driver.
- *
+ * Color display (cgthree) driver.
+ * Works with the real Sun hardware, as well as various clones from Tatung,
+ * Integrix (S20), and the Vigra VS10-EK.
  */
 
 #include <sys/param.h>
@@ -302,7 +303,23 @@ cgthreeattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
 	    round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+
+	/*
+	 * If the framebuffer width is under 1024x768, which is the case for
+	 * some clones on laptops, as well as with the VS10-EK, switch from
+	 * the PROM font to the more adequate 8x16 font here.
+	 * However, we need to adjust two things in this case:
+	 * - the display row should be overrided from the current PROM metrics,
+	 *   to prevent us from overwriting the last few lines of text.
+	 * - if the 80x34 screen would make a large margin appear around it,
+	 *   choose to clear the screen rather than keeping old prom output in
+	 *   the margins.
+	 * XXX there should be a rasops "clear margins" feature
+	 */
+	fbwscons_init(&sc->sc_sunfb, isconsole &&
+	    (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgthree_setcolor);
 
 	cgthree_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
@@ -310,12 +327,11 @@ cgthreeattach(parent, self, args)
 	cgthree_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgthree_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
-	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
-
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &cgthree_stdscreen, -1,
-		    cgthree_burner);
+		fbwscons_console_init(&sc->sc_sunfb, &cgthree_stdscreen,
+		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0, cgthree_burner);
 	}
+
 #if defined(SUN4C) || defined(SUN4M)
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
