@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.621 2003/05/14 01:15:42 pb Exp $
+	$OpenBSD: pcidevs,v 1.622 2003/05/14 02:09:28 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2267,6 +2267,7 @@ product SUN PSYCHO		0x8000	Psycho PCI
 product SUN MS_IIep		0x9000	microSPARC IIep PCI
 product SUN US_IIi		0xa000	UltraSPARC IIi PCI
 product SUN US_IIe		0xa001	UltraSPARC IIe PCI
+product SUN CE			0xabba	Cassini Ethernet
 
 /* Sundance products */
 product SUNDANCE ST201		0x0201	ST201
