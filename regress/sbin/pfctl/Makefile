@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.75 2003/02/18 19:11:57 henning Exp $
+# $OpenBSD: Makefile,v 1.76 2003/02/19 16:20:26 henning Exp $
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
@@ -8,8 +8,12 @@ PFSIMPLE=1 2
 PFSETUP=1
 PFLOAD=1 2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 23 24 25 26 27 28 29
 PFLOAD+=30 31 32 34 36 38 39 40 44 49
-#disabled now due to no altq and table in anchors
-#PFLOAD+=33 35 43 48
+# disabled; no altq in anchors
+# PFLOAD+=33 35 37 42 43 45 51
+# disabled; no table def in anchors
+# PFLOAD+=48
+# only testing parser, load test would be useless
+# PFLOAD+=6 22 41 50 52
 PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12
 PFOPT=1 2 3 4 5
 
