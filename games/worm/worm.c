@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.19 2003/05/19 07:53:54 pjanzen Exp $	*/
+/*	$OpenBSD: worm.c,v 1.20 2003/05/19 07:58:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.19 2003/05/19 07:53:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.20 2003/05/19 07:58:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,9 +101,7 @@ void	setup(void);
 void	suspend(int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int retval;
 	struct timeval t, tod;
@@ -214,31 +212,26 @@ life()
 }
 
 void
-display(pos, chr)
-	struct body *pos;
-	char chr;
+display(struct body *pos, char chr)
 {
 	wmove(tv, pos->y, pos->x);
 	waddch(tv, chr);
 }
 
 void
-leave(dummy)
-	int dummy;
+leave(int dummy)
 {
 	wantleave = 1;
 }
 
 int
-rnd(range)
-	int range;
+rnd(int range)
 {
 	return random() % range;
 }
 
 void
-newpos(bp)
-	struct body * bp;
+newpos(struct body *bp)
 {
 	if (visible_len == (LINES-3) * (COLS-3) - 1) {
 		endwin();
@@ -264,8 +257,7 @@ prize()
 }
 
 void
-process(ch)
-	int ch;
+process(int ch)
 {
 	int x,y;
 	struct body *nh;
@@ -368,8 +360,7 @@ crash()
 }
 
 void
-suspend(dummy)
-	int dummy;
+suspend(int dummy)
 {
 	wantsuspend = 1;
 }
