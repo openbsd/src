@@ -97,10 +97,7 @@ history_filename (filename)
   home = get_env_value ("HOME");
 
   if (home == 0 || *home == '\0')
-    {
-      home = ".";
-      home_len = 1;
-    }
+    return (NULL);
   else
     home_len = strlen (home);
 
