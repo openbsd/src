@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcmd.c,v 1.7 1997/04/12 19:54:50 rees Exp $	*/
+/*	$OpenBSD: kcmd.c,v 1.8 1997/06/23 09:15:06 deraadt Exp $	*/
 /*	$NetBSD: kcmd.c,v 1.2 1995/03/21 07:58:32 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-static char rcsid[] = "$OpenBSD: kcmd.c,v 1.7 1997/04/12 19:54:50 rees Exp $";
+static char rcsid[] = "$OpenBSD: kcmd.c,v 1.8 1997/06/23 09:15:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,
 	long authopts;
 {
 	int s, timo = 1, pid;
-	long oldmask;
+	int oldmask;
 	struct sockaddr_in sin, from;
 	char c;
 	int lport = IPPORT_RESERVED - 1;

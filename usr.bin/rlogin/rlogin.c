@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.12 1997/01/17 07:13:13 millert Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.13 1997/06/23 09:15:07 deraadt Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.12 1997/01/17 07:13:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.13 1997/06/23 09:15:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ struct	winsize winsize;
 
 void		catch_child __P((int));
 void		copytochild __P((int));
-__dead void	doit __P((long));
+__dead void	doit __P((int));
 __dead void	done __P((int));
 void		echo __P((char));
 u_int		getescape __P((char *));
@@ -156,7 +156,7 @@ main(argc, argv)
 	struct passwd *pw;
 	struct servent *sp;
 	struct termios tty;
-	long omask;
+	int omask;
 	int argoff, ch, dflag, one, uid;
 	char *host, *p, *user, term[64];
 
@@ -359,7 +359,7 @@ int child;
 
 void
 doit(omask)
-	long omask;
+	int omask;
 {
 
 	(void)signal(SIGINT, SIG_IGN);
