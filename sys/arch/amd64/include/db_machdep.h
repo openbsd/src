@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2004/07/22 11:15:00 art Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.4 2005/01/10 21:20:52 espie Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -47,11 +47,8 @@ typedef struct trapframe db_regs_t;
 extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#if defined(lint)
-#define	PC_REGS(regs)	((regs)->tf_rip)
-#else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_rip)
-#endif
+#define	SET_PC_REGS(regs, value) (regs)->tf_rip = (int64_t)(value)
 
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0xcc		/* breakpoint instruction */
