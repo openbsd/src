@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 1996/08/15 07:46:49 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.32 1996/08/29 13:24:17 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -61,8 +61,9 @@ com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
-#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#com*	at ast? slave ?
+ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
+#ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
+com*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
