@@ -584,6 +584,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/fxpvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/gdtreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/gdtvar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/gemreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/gemvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/hayespreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/hmereg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/hmevar.ph

@@ -37,6 +37,7 @@
 ./etc/kerberosIV/krb.realms
 ./etc/kerberosV
 ./etc/kerberosV/README
+./etc/kerberosV/krb5.conf.example
 ./etc/ksh.kshrc
 ./etc/localtime
 ./etc/locate.rc
