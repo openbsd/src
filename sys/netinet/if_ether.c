@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.36 2002/02/15 15:27:17 jason Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.37 2002/02/26 20:24:58 jason Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -505,7 +505,7 @@ in_arpinput(m)
 
 	if (ia == NULL) {
 		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-			if (itaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
+			if (isaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
 				continue;
 			if (ia->ia_ifp == m->m_pkthdr.rcvif)
 				break;
