@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpsetsticky.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
-/*	$NetBSD: fpsetsticky.S,v 1.3 2002/06/12 19:17:23 fvdl Exp $	*/
+/*	$OpenBSD: fpsetsticky.S,v 1.2 2004/07/13 11:01:06 kettenis Exp $	*/
+/*	$NetBSD: fpsetsticky.S,v 1.5 2004/03/09 17:16:13 drochner Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD
@@ -29,12 +29,15 @@ ENTRY(fpsetsticky)
 
 	movl	-24(%rsp),%eax
 	movl	%eax,%edx
-	andl	$63,%eax
+	andb	$0xc0,%dl
 
 	orl	%edi,%edx
 	movl	%edx,-24(%rsp)
 
 	movl	-32(%rsp),%edx
+	orl	%edx,%eax
+	andl	$63,%eax
+	andb	$0xc0,%dl
 	orl	%edi,%edx
 	movl	%edx,-32(%rsp)
 
