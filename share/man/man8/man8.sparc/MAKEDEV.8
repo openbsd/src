@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.5 2000/03/02 14:46:49 todd Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.6 2001/01/27 23:39:20 brad Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -66,19 +66,19 @@ If
 given,
 .Ar all
 creates device files for all devices on
-the Sparc.  If units are expected for a device
+Sparc.  If units are expected for a device
 .Nm MAKEDEV
 supplies the standard numbers.
 The
 .Ar std
-argument creates the standard devices for the Sparc.
+argument creates the standard devices for Sparc.
 Finally
 .Ar local
 is for devices specific to the local site, and
 executes the shell file
 .Pa MAKEDEV.local .
 .Pp
-The Sparc supports the following devices.
+Sparc supports the following devices.
 Where a device name is followed by a hash
 sign ("#"), the hash sign must be replaced
 by a unit number.
@@ -86,7 +86,7 @@ by a unit number.
 .Sy Pseudo\-names
 .Bl -tag -width indent -compact
 .It Ar all
-All known devices for the Sparc.
+All known devices for Sparc.
 .It Ar std
 The standard devices (console, drum, fd/*, klog, kmem, mem, null,
 stderr, stdin, stdout, tty, zero)
@@ -96,32 +96,82 @@ Configuration specific devices
 .Pp
 .Sy Device\-names
 .Bl -tag -width indent -compact
+.It At audio
+Audio device
 .It Ar bpf#
 Berkeley packet filters
+.It Ar bpp#
+Bi-directional printer ports
 .It Ar bwtwo#
 Black and white frame buffers
+.It Ar ccd#
+Concatenated disk drives
 .It Ar cd#
 SCSI CD-ROM drives
+.It Ar cgeight#
+Colour frame buffers
+.It Ar cgfour#
+Colour frame buffers
+.It Ar cgfourteen#
+Colour frame buffers
 .It Ar cgthree#
 Colour frame buffers
 .It Ar cgsix#
-Accelerated Colour frame buffers
+Accelerated colour frame buffers
+.It Ar cgtwo#
+Colour frame buffers
+.It Ar ch#
+SCSI media changer drives
+.It Ar cua#
+Serial ports
+.It Ar fd#
+.Dq floppy
+disk drives
+.It Ar ipl
+IPFilter log
 .It Ar kbd
 The keyboard
 .It Ar lkm
 Loadable kernel modules.
+.It Ar magma#
+Magma serial boards
 .It Ar mouse#
 Mouse ports
+.It Ar openprom
+OPENPROM and EEPROM interface
 .It Ar pty#
 Set of 16 master and slave pseudo terminals
+.It Ar raid#
+RAIDframe disk drives
+.It Ar random
+inkernel random number generator
+.It Ar rd#
+"Ramdisk" pseudo-disks
 .It Ar sd#
 SCSI disk drives
+.It Ar ses#
+SCSI SES/SAF-TE devices
+.It Ar spif#
+SPARC serial/parallel interfaces
 .It Ar st#
 SCSI tape drives
+.It Ar tcx#
+Accelerated colour frame buffers
 .It Ar tty#
-Onboard Serial ports
+Serial ports
+.It Ar tun#
+Network tunnel devices
+.It Ar uk#
+.Dq unknown SCSI
+devices
 .It Ar vnd#
 "File" pseudo-disks
+.It At xd#
+Xylogic 450/451 disks
+.It Ar xfs#
+XFS filesystem devices
+.It Ar xy#
+Xylogic 753/7053 disks
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact
