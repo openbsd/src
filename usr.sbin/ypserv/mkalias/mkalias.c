@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.1 1997/07/26 12:12:29 maja Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.2 1997/07/26 22:07:22 maja Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.1 1997/07/26 12:12:29 maja Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.2 1997/07/26 22:07:22 maja Exp $";
 #endif
 
 #include <ctype.h>
@@ -57,7 +57,7 @@ char *address;
 int    len;
 char  *user, *host;
 {
-	char *c,*s;
+	char *c,*s,*r;
 	int  i = 0;
 
 	if (index(address,'@')) {
@@ -77,12 +77,12 @@ char  *user, *host;
 	
 	}
 		
-	if (index(address,'!')) {
+	if (r = rindex(address,'!')) {
 		
 		s = host;
 		
 		for(c = address; i < len; i++) {
-			if (*c == '!') {
+			if (c == r) {
 				*s = '\0';
 				s = user;
 			} else {
@@ -91,7 +91,7 @@ char  *user, *host;
 			c++;
 		}
 		*s = '\0';
-	
+		
 	}
 		
 }
@@ -172,6 +172,8 @@ char *argv[];
 		db_tempname[MAXPATHLEN];
 	int	status;
 	char	user[4096],host[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
+	char	datestr[11];
+	char	myname[MAXHOSTNAMELEN];
 	
 	while ((ch = getopt(argc, argv, "Edensuv")) != -1)
 	  switch(ch) {
@@ -315,6 +317,38 @@ char *argv[];
 		}
 
 	}
+
+	if (new_db != NULL) {
+	  	sprintf(datestr, "%010d", time(0));
+		key.dptr = YP_LAST_KEY;
+		key.dsize = strlen(YP_LAST_KEY);
+		val.dptr = datestr;
+		val.dsize = strlen(datestr);
+		status = ypdb_store(new_db, key, val, YPDB_INSERT);
+		if (status != 0) {
+			printf("%s: problem storing %*.*s %*.*s\n",
+			       __progname,
+			       key.dsize, key.dsize, key.dptr,
+			       val.dsize, val.dsize, val.dptr);
+		}
+	}
+
+	if (new_db != NULL) {
+	  	gethostname(myname, sizeof(myname) - 1);
+		key.dptr = YP_MASTER_KEY;
+		key.dsize = strlen(YP_MASTER_KEY);
+		val.dptr = myname;
+		val.dsize = strlen(myname);
+		status = ypdb_store(new_db, key, val, YPDB_INSERT);
+		if (status != 0) {
+			printf("%s: problem storing %*.*s %*.*s\n",
+			       __progname,
+			       key.dsize, key.dsize, key.dptr,
+			       val.dsize, val.dsize, val.dptr);
+		}
+	}
+
+	
 
 	ypdb_close(db);
 
