@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.22 2003/10/08 13:26:12 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.23 2003/10/11 22:46:25 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -65,7 +65,6 @@
 
 #include <machine/asm_macro.h>
 #include <machine/board.h>
-#include <machine/cpus.h>
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
 
@@ -428,12 +427,11 @@ m8820x_setup_board_config()
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 		cr = m8820x_cmmu[cmmu_num].cmmu_regs;
 		if (!badwordaddr((vaddr_t)cr)) {
-			union cpupid id;
+			int type;
 
-			id.cpupid = cr->idr;
+			type = CMMU_TYPE(cr->idr);
 #ifdef DIAGNOSTIC
-			if (id.m88200.type != M88200_ID &&
-			    id.m88200.type != M88204_ID) {
+			if (type != M88200_ID && type != M88204_ID) {
 				printf("WARNING: non M8820x circuit found "
 				    "at CMMU address %p\n", cr);
 				continue;	/* will probably die quickly */
@@ -450,8 +448,7 @@ m8820x_setup_board_config()
 	 * CPU/CMMU sets seem complete (hopefully all)
 	 */
 	for (num = 0; num < max_cpus; num++) {
-		int i;
-		union cpupid id;
+		int i, type;
 
 		for (i = 0; i < cpu_cmmu_ratio; i++) {
 			dprintf(("cmmu_init: testing CMMU %d for CPU %d\n",
@@ -465,11 +462,11 @@ m8820x_setup_board_config()
 #endif
 		}
 		cpu_sets[num] = 1;   /* This cpu installed... */
-		id.cpupid = m8820x_cmmu[num * cpu_cmmu_ratio].cmmu_regs->idr;
+		type = CMMU_TYPE(m8820x_cmmu[num * cpu_cmmu_ratio].
+		    cmmu_regs->idr);
 
 		printf("CPU%d is attached with %d MC%x CMMUs\n",
-		    num, cpu_cmmu_ratio,
-		    id.m88200.type == M88204_ID ? 0x88204 : 0x88200);
+		    num, cpu_cmmu_ratio, type == M88204_ID ? 0x88204 : 0x88200);
 	}
 
 	for (num = 0; num < max_cpus; num++) {
@@ -766,7 +763,7 @@ m8820x_cpu_configuration_print(master)
 	for (mmu = cpu * cpu_cmmu_ratio; mmu < (cpu + 1) * cpu_cmmu_ratio;
 	    mmu++) {
 		int idr = m8820x_cmmu_get(mmu, CMMU_IDR);
-		int mmuid = (0xe00000 & idr) >> 21;
+		int mmuid = CMMU_TYPE(idr);
 		int access = m8820x_cmmu[mmu].cmmu_access;
 
 		if ((mmu - cpu * cpu_cmmu_ratio) % 2 == 0)
@@ -809,8 +806,7 @@ void
 m8820x_cmmu_init()
 {
 	unsigned tmp, cmmu_num;
-	union cpupid id;
-	int cpu;
+	int cpu, type;
 	struct cmmu_regs *cr;
 
 	for (cpu = 0; cpu < max_cpus; cpu++) {
@@ -821,7 +817,7 @@ m8820x_cmmu_init()
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 		if (m8820x_cmmu_alive(cmmu_num)) {
 			cr = m8820x_cmmu[cmmu_num].cmmu_regs;
-			id.cpupid = cr->idr;
+			type = CMMU_TYPE(cr->idr);
 
 			cpu_cmmu[m8820x_cmmu[cmmu_num].cmmu_cpu].pair[m8820x_cmmu[cmmu_num].which] =
 			    &m8820x_cmmu[cmmu_num];
@@ -836,7 +832,7 @@ m8820x_cmmu_init()
 			}
 
 			/* 88204 has additional cache to clear */
-			if (id.m88200.type == M88204_ID) {
+			if (type == M88204_ID) {
 				for (tmp = 0; tmp < 255; tmp++) {
 					cr->sar = tmp << 4;
 					cr->cssp1 = 0x3f0ff000;

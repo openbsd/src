@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.8 2003/10/05 20:35:22 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.9 2003/10/11 22:46:24 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -144,5 +144,10 @@
 #define CMMU_NSTRATEGIES	4
 
 #define NBSG    (4*1024*1024) /* segment size */
+
+#define	CMMU_TYPE(idr)		(((idr) >> 21) & 0x07)
+
+#define	M88200_ID		5
+#define	M88204_ID		6
 
 #endif	/* __MACHINE_M8820X_H__ */
