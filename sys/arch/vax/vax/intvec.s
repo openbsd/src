@@ -1,3 +1,4 @@
+/*	$OpenBSD: intvec.s,v 1.6 1997/05/28 23:20:17 niklas Exp $   */
 /*	$NetBSD: intvec.s,v 1.20 1996/07/20 18:20:44 ragge Exp $   */
 
 /*
@@ -77,7 +78,8 @@ ENTRY(stray/**/vecnr)		; \
 	.long	label+stack;
 		.text
 
-	.globl	_kernbase, _rpb
+	.globl	_kernel_text, _kernbase, _rpb
+_kernel_text:
 _kernbase:
 _rpb:	
 /*
