@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.57 2003/10/25 07:47:28 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.58 2003/11/20 11:23:01 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -90,7 +90,10 @@ One source of information are the RFCs mentioned below.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 4 | Fl 6
-These options control what address family (AF_INET and/or AF_INET6)
+These options control what address family
+.Pf ( Dv AF_INET
+and/or
+.Dv AF_INET6 )
 .Nm
 will use.
 The default is to use both IPv4 and IPv6.
@@ -241,11 +244,9 @@ other than mentioning that
 needs to be used to create a certificate signing request that the
 CA understands.
 The latter case, however, is described here:
-.Pp
 .Bl -enum
 .It
 Create your own CA as root.
-.Pp
 .Bd -literal
 # openssl genrsa -out /etc/ssl/private/ca.key 1024
 # openssl req -new -key /etc/ssl/private/ca.key \e
@@ -259,7 +260,6 @@ There are quite a few fields but you can leave some blank.
 For some fields there will be a default value; if you enter
 .Sq \&. ,
 the field will be left blank.
-.Pp
 .Bd -literal
 # openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \e
 	-signkey /etc/ssl/private/ca.key \e
@@ -276,7 +276,6 @@ The 10.0.0.1 below symbolizes that ID, in this case an IPv4 ID,
 and should be changed for each invocation.
 You will be asked for a DN for each run.
 Encoding the ID in the common name is recommended, as it should be unique.
-.Pp
 .Bd -literal
 # openssl genrsa -out /etc/isakmpd/private/local.key 1024
 # openssl req -new -key /etc/isakmpd/private/local.key \e
