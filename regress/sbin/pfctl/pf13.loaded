@@ -1,80 +1,80 @@
 @0 pass in quick on enc0 fastroute all 
 [ Skip steps: i=3 d=3 p=6 sa=8 sp=end da=4 dp=6 ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @1 pass in quick on enc0 fastroute inet all 
 [ Skip steps: i=3 d=3 p=6 sa=8 sp=end da=4 dp=6 ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @2 pass in quick on enc0 fastroute inet6 all 
 [ Skip steps: p=6 sa=8 sp=end da=4 dp=6 ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @3 pass out quick on tun0 route-to tun1 inet all 
 [ Skip steps: i=end d=6 f=5 p=6 sa=8 sp=end dp=6 ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @4 pass out quick on tun0 route-to tun1 inet from any to 192.168.1.1 
 [ Skip steps: i=end d=6 p=6 sa=8 sp=end dp=6 ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @5 pass out quick on tun0 route-to tun1 inet6 from any to fec0::1 
 [ Skip steps: i=end sa=8 sp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @6 block drop in on tun0 dup-to (tun1 192.168.1.1) inet proto tcp from any to any port = ftp 
 [ Skip steps: i=end d=end p=8 sa=8 sp=end da=8 dp=8 ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @7 block drop in on tun0 dup-to (tun1 fec0::1) inet6 proto tcp from any to any port = ftp 
 [ Skip steps: i=end d=end sp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @8 pass in quick on tun0 route-to tun1 inet from 192.168.1.1 to 10.1.1.1 
 [ Skip steps: i=end d=end p=10 sp=end dp=10 ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @9 pass in quick on tun0 route-to tun1 inet6 from fec0::/64 to fec1::2 
 [ Skip steps: i=end d=end sp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @10 block drop in on tun0 reply-to (tun1 192.168.1.1) inet proto tcp from any to any port = ftp 
 [ Skip steps: i=end d=end p=12 sa=12 sp=end da=12 dp=12 ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @11 block drop in on tun0 reply-to (tun1 fec0::1) inet6 proto tcp from any to any port = ftp 
 [ Skip steps: i=end d=end sp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @12 pass in quick on tun0 reply-to tun1 inet from 192.168.1.1 to 10.1.1.1 
 [ Skip steps: i=end d=end p=end sp=end dp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @13 pass in quick on tun0 reply-to tun1 inet6 from fec0::/64 to fec1::2 
 [ Skip steps: i=end d=end p=end sp=end dp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @14 pass in quick on tun0 dup-to (tun1 192.168.1.100) inet from 192.168.1.1 to 10.1.1.1 
 [ Skip steps: i=end d=end p=end sp=end dp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @15 pass in quick on tun0 dup-to (tun1 fec1::2) inet6 from fec0::/64 to fec1::2 
 [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 

@@ -1,45 +1,45 @@
 @0 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state fragment label "blah" 
 [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @1 pass in log quick on lo0 inet proto icmp all user = 3 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label "blah" queue blah 
 [ Skip steps: i=end d=end f=end p=5 sa=end sp=end da=end dp=end ]
-[ Queue: qname=blah qid=0 pqname= pqid=0 ]
+[ queue: qname=blah qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @2 pass in log quick on lo0 inet proto icmp all user = 3 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label "blah" queue blah 
 [ Skip steps: i=end d=end f=end p=5 sa=end sp=end da=end dp=end ]
-[ Queue: qname=blah qid=0 pqname= pqid=0 ]
+[ queue: qname=blah qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @3 pass in log quick on lo0 inet proto icmp all user = 0 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label "blah" queue blah 
 [ Skip steps: i=end d=end f=end p=5 sa=end sp=end da=end dp=end ]
-[ Queue: qname=blah qid=0 pqname= pqid=0 ]
+[ queue: qname=blah qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @4 pass in log quick on lo0 inet proto icmp all user = 0 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label "blah" queue blah 
 [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=end ]
-[ Queue: qname=blah qid=0 pqname= pqid=0 ]
+[ queue: qname=blah qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @5 pass in log quick on lo0 inet proto tcp all keep state 
 [ Skip steps: i=end d=end f=end p=7 sa=end sp=end da=end dp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @6 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state label "blah" queue blah 
 [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=end ]
-[ Queue: qname=blah qid=0 pqname= pqid=0 ]
+[ queue: qname=blah qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @7 pass in log quick on lo0 inet proto icmp all icmp-type echorep code 0 tos 0x08 
 [ Skip steps: i=end d=end f=end sa=end sp=end da=end dp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @8 pass in log quick on lo0 inet proto tcp all flags S/SA allow-opts 
 [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-[ Queue: qname= qid=0 pqname= pqid=0 ]
+[ queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 

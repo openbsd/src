@@ -11,7 +11,7 @@ queue   sub3 bandwidth 4Mb
 queue  drei bandwidth 1Mb {subseven}
 [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
 queue   subseven bandwidth 900Kb 
-[ qid=5 ifname=lo0 ifbandwidth=10Mb ]
+[ qid=6 ifname=lo0 ifbandwidth=10Mb ]
 queue root_tun0 bandwidth 33.60Kb priority 0 cbq( wrr root ) {zwei, vier, fuenf}
 [ qid=4294967294 ifname=tun0 ifbandwidth=33.60Kb ]
 queue  zwei bandwidth 26.88Kb {sub2, sub3}
@@ -23,6 +23,6 @@ queue   sub3 bandwidth 13.40Kb
 queue  vier bandwidth 16.80Kb cbq( default ) 
 [ qid=4294967293 ifname=tun0 ifbandwidth=33.60Kb ]
 queue  fuenf bandwidth 16.80Kb {subseven}
-[ qid=4 ifname=tun0 ifbandwidth=33.60Kb ]
-queue   subseven bandwidth 15.12Kb 
 [ qid=5 ifname=tun0 ifbandwidth=33.60Kb ]
+queue   subseven bandwidth 15.12Kb 
+[ qid=6 ifname=tun0 ifbandwidth=33.60Kb ]
