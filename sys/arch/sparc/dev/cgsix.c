@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.10 1997/12/23 21:43:19 chuck Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.11 1999/04/22 16:52:47 art Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -491,9 +491,15 @@ cgsixioctl(dev, cmd, data, flags, p)
 			if ((u_int)p->size.x > 32 || (u_int)p->size.y > 32)
 				return (EINVAL);
 			count = p->size.y * 32 / NBBY;
+#if defined(UVM)
+			if (!uvm_useracc(p->image, count, B_READ) ||
+			    !uvm_useracc(p->mask, count, B_READ))
+				return (EFAULT);
+#else
 			if (!useracc(p->image, count, B_READ) ||
 			    !useracc(p->mask, count, B_READ))
 				return (EFAULT);
+#endif
 		}
 
 		/* parameters are OK; do it */
