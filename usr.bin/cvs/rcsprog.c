@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.1 2005/03/05 18:50:43 jfb Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.2 2005/03/05 23:22:10 jmc Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -83,7 +83,7 @@ void
 rcs_usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-hiLMU] [-a users] [-b [rev]] [-c string] "
+	    "Usage: %s [-hiLMUV] [-a users] [-b [rev]] [-c string] "
 	    "[-e users] [-k opt] file ...\n"
 	    "\t-a users\tAdd the login names in the comma-separated <users>\n"
 	    "\t-b rev\t\tSet the head revision to <rev>\n"
