@@ -350,10 +350,10 @@ void usage()
 "-u[uuname] : input file is uudecoded if -[dD] or output uuencoded data if -[eE]",
 "             (uuname is the filename to put in the uuencode header).",
 "-b         : encrypt using DES in ecb encryption mode, the defaut is cbc mode.",
-"-3         : encrypt using tripple DES encryption.  This uses 2 keys",
+"-3         : encrypt using triple DES encryption.  This uses 2 keys",
 "             generated from the input key.  If the input key is less",
 "             than 8 characters long, this is equivelent to normal",
-"             encryption.  Default is tripple cbc, -b makes it tripple ecb.",
+"             encryption.  Default is triple cbc, -b makes it triple ecb.",
 NULL
 };
 	for (u=(char **)Usage; *u; u++)

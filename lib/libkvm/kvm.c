@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.19 2000/10/25 23:37:38 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.20 2001/01/04 21:51:04 todd Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.19 2000/10/25 23:37:38 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.20 2001/01/04 21:51:04 todd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -301,7 +301,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	} else {
 		/*
 		 * This is a crash dump.
-		 * Initalize the virtual address translation machinery,
+		 * Initialize the virtual address translation machinery,
 		 * but first setup the namelist fd.
 		 * If no file is specified, try opening _PATH_KSYMS and
 		 * fall back to _PATH_UNIX.

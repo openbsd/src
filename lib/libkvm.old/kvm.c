@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.11 1999/11/12 19:12:09 art Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.12 2001/01/04 21:51:04 todd Exp $	*/
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
 /*-
@@ -256,7 +256,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	} else {
 		/*
 		 * This is a crash dump.
-		 * Initalize the virtual address translation machinery,
+		 * Initialize the virtual address translation machinery,
 		 * but first setup the namelist fd.
 		 * If no file is specified, try opening _PATH_KSYMS and
 		 * fall back to _PATH_UNIX.
