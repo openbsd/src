@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcpy.3,v 1.4 1999/03/05 23:16:05 millert Exp $
+.\"	$OpenBSD: strcpy.3,v 1.5 1999/03/06 23:36:27 millert Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRCPY 3
@@ -127,7 +127,7 @@ guarantee to NUL-terminate the string itself, we must do this by hand.
 char buf[BUFSIZ];
 
 (void)strncpy(buf, input, sizeof(buf) - 1);
-buf[sizeof(buf) - 1] = '\\0';
+buf[sizeof(buf) - 1] = '\e0';
 .Ed
 .Pp
 Note that
@@ -136,7 +136,7 @@ is a better choice for this kind of operation.  The equivalent using
 .Xr strlcpy 3
 is simply:
 .Bd -literal -offset indent
-(void)strncpy(buf, input, sizeof(buf));
+(void)strlcpy(buf, input, sizeof(buf));
 .Ed
 .Sh SEE ALSO
 .Xr bcopy 3 ,
