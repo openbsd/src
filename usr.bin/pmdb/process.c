@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.5 2002/06/09 04:33:42 fgsch Exp $	*/
+/*	$OpenBSD: process.c,v 1.6 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -29,6 +29,8 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#include <machine/reg.h>
+
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
@@ -38,14 +40,13 @@
 #include <unistd.h>
 
 #include "pmdb.h"
+#include "core.h"
 #include "symbol.h"
 #include "break.h"
 
 int
 process_load(struct pstate *ps)
 {
-	int status;
-
 	if (ps->ps_state == LOADED)
 		return (0);
 
@@ -58,6 +59,13 @@ process_load(struct pstate *ps)
 	if (stat(ps->ps_argv[0], &(ps->exec_stat)) < 0)
 		err(1, "stat()");
 
+	if ((ps->ps_flags & PSF_SYMBOLS) == 0) {
+		sym_init_exec(ps, ps->ps_argv[0]);
+		ps->ps_flags |= PSF_SYMBOLS;
+	}
+
+	ps->ps_state = LOADED;
+
 	if (ps->ps_pid != 0) {
 		/* attach to an already running process */
 		if (ptrace(PT_ATTACH, ps->ps_pid, (caddr_t) 0, 0) < 0)
@@ -65,28 +73,37 @@ process_load(struct pstate *ps)
 		ps->ps_state = STOPPED;
 		ps->ps_flags |= PSF_ATCH;
 	}
-	else {
-		switch (ps->ps_pid = fork()) {
-		case 0:
-			if (ptrace(PT_TRACE_ME, getpid(), NULL, 0) != 0)
-				err(1, "ptrace(PT_TRACE_ME)");
-			execvp(*ps->ps_argv, ps->ps_argv);
-			err(1, "exec");
-			/* NOTREACHED */
-		case -1:
-			err(1, "fork");
-			/* NOTREACHED */
-		default:
-			break;
-		}
 
-		ps->ps_state = LOADED;
+	return (0);
+}
+
+
+int
+process_run(struct pstate *ps)
+{
+	int status;
+
+	if ((ps->ps_state == RUNNING) || (ps->ps_state == STOPPED)) {
+		warnx("process is already running");
+		return 0;
 	}
 
-	if ((ps->ps_flags & PSF_SYMBOLS) == 0) {
-		sym_init_exec(ps, ps->ps_argv[0]);
-		ps->ps_flags |= PSF_SYMBOLS;
+	switch (ps->ps_pid = fork()) {
+	case 0:
+		if (ptrace(PT_TRACE_ME, getpid(), NULL, 0) != 0)
+			err(1, "ptrace(PT_TRACE_ME)");
+		execvp(*ps->ps_argv, ps->ps_argv);
+		err(1, "exec");
+		/* NOTREACHED */
+	case -1:
+		err(1, "fork");
+		/* NOTREACHED */
+	default:
+		warnx("process started with PID %d", ps->ps_pid);
+		break;
 	}
+
+	ps->ps_state = LOADED;
 
 	if (wait(&status) == 0)
 		err(1, "wait");
@@ -94,11 +111,11 @@ process_load(struct pstate *ps)
 	return (0);
 }
 
+
 int
 process_kill(struct pstate *ps)
 {
 	switch(ps->ps_state) {
-	case LOADED:
 	case RUNNING:
 	case STOPPED:
 		if (ptrace(PT_KILL, ps->ps_pid, NULL, 0) != 0)
@@ -107,6 +124,59 @@ process_kill(struct pstate *ps)
 	default:
 		return (0);
 	}
+}
+
+int
+process_read(struct pstate *ps, off_t from, void *to, size_t size)
+{
+	struct ptrace_io_desc piod;
+
+	if (((ps->ps_state == NONE) || (ps->ps_state == LOADED) ||
+	    (ps->ps_state == TERMINATED)) && (ps->ps_flags & PSF_CORE)) {
+		return core_read(ps, from, to, size);
+	}
+	else {
+		piod.piod_op = PIOD_READ_D;
+		piod.piod_offs = (void *)(long)from;
+		piod.piod_addr = to;
+		piod.piod_len = size;
+
+		return (ptrace(PT_IO, ps->ps_pid, (caddr_t)&piod, 0));
+	}
+}
+
+int
+process_write(struct pstate *ps, off_t to, void *from, size_t size)
+{
+	struct ptrace_io_desc piod;
+
+	if ((ps->ps_state == NONE) && (ps->ps_flags & PSF_CORE))
+		return core_write(ps, to, from, size);
+	else {
+		piod.piod_op = PIOD_WRITE_D;
+		piod.piod_offs = (void *)(long)to;
+		piod.piod_addr = from;
+		piod.piod_len = size;
+
+		return (ptrace(PT_IO, ps->ps_pid, (caddr_t)&piod, 0));
+	}
+}
+
+int
+process_getregs(struct pstate *ps, struct reg *r)
+{
+
+	if (ps->ps_state == STOPPED) {
+		if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
+			return (-1);
+	}
+	else if (ps->ps_flags & PSF_CORE) {
+		memcpy(r, ps->ps_core->regs, sizeof(*r));
+	}
+	else
+		return (-1);
+
+	return 0;
 }
 
 int
@@ -147,6 +217,7 @@ cmd_process_run(int argc, char **argv, void *arg)
 		return (0);
 	}
 
+	process_run(ps);
 	/*
 	 * XXX - there isn't really any difference between STOPPED and
 	 * LOADED, we should probably get rid of one.

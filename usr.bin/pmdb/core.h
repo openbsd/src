@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.h,v 1.1 2002/06/05 18:02:27 fgsch Exp $	*/
+/*	$OpenBSD: core.h,v 1.2 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Jean-Francois Brousseau <krapht@secureops.com>
  * All rights reserved. 
@@ -42,3 +42,6 @@ struct corefile {
 int	read_core(const char *, struct pstate *);
 void	free_core(struct pstate *);
 void	core_printregs(struct corefile *);
+
+ssize_t core_read(struct pstate *, off_t, void *, size_t);
+ssize_t core_write(struct pstate *, off_t, void *, size_t);

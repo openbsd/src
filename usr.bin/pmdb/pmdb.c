@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.9 2002/06/09 04:33:42 fgsch Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.10 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -153,10 +153,11 @@ main(int argc, char **argv)
 	md_def_init();
 	init_sigstate(&ps);
 
-	process_load(&ps);
+	if ((core != NULL) && (read_core(core, &ps) < 0))
+		warnx("failed to load core file");
 
-	if (core != NULL)
-		read_core(core, &ps);
+	if (process_load(&ps) < 0)
+		errx(1, "failed to load process");
 
 	cm = cmdinit(cmds, NCMDS);
 	while (ps.ps_state != TERMINATED) {
@@ -270,7 +271,7 @@ cmd_show_backtrace(int argc, char **argv, void *arg)
 	struct pstate *ps = arg;
 	int i;
 
-	if (ps->ps_state != STOPPED) {
+	if (ps->ps_state != STOPPED && !(ps->ps_flags & PSF_CORE)) {
 		fprintf(stderr, "process not stopped\n");
 		return (0);
 	}

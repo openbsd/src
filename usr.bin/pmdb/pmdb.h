@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.h,v 1.3 2002/06/05 18:02:27 fgsch Exp $	*/
+/*	$OpenBSD: pmdb.h,v 1.4 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -45,6 +45,7 @@ struct callback;
 struct corefile;
 struct sym_table;
 struct sym_ops;
+struct reg;
 
 /* XXX - should be machdep some day. */
 typedef unsigned long reg;
@@ -86,6 +87,11 @@ int write_to_pid(pid_t pid, off_t to, void *from, size_t size);
 
 /* process.c */
 int process_load(struct pstate *);
+int process_run(struct pstate *);
+int process_read(struct pstate *, off_t, void *, size_t);
+int process_write(struct pstate *, off_t, void *, size_t);
+int process_getregs(struct pstate *, struct reg *);
+
 int cmd_process_run(int, char **, void *);
 int cmd_process_cont(int, char **, void *);
 int cmd_process_kill(int, char **, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: alpha_trace.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: alpha_trace.c,v 1.3 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -272,7 +272,7 @@ md_getframe(struct pstate *ps, int framec, struct md_frame *fram)
 
 		framesize = 0;
 		for (i = sizeof (int); i <= offset; i += sizeof (int)) {
-			if (read_from_pid(ps->ps_pid, pc - i, &inst, sizeof(inst)) < 0)
+			if (process_read(ps, pc - i, &inst, sizeof(inst)) < 0)
 				return -1;
 	
 			/*
@@ -324,7 +324,7 @@ md_getframe(struct pstate *ps, int framec, struct md_frame *fram)
 			if (slot[R_RA] == -1)
 				ra = regs.r_regs[R_RA];
 			else
-				if (read_from_pid(ps->ps_pid, (off_t)slot[R_RA],
+				if (process_read(ps, (off_t)slot[R_RA],
 				    &ra, sizeof(ra)) < 0)
 					return -1;
 		} else {

@@ -1,4 +1,4 @@
-/*      $OpenBSD: powerpc.c,v 1.1 2002/03/19 23:15:31 drahn Exp $       */
+/*      $OpenBSD: powerpc.c,v 1.2 2002/07/22 01:20:50 art Exp $       */
 /*
  * Copyright (c) 2002 Dale Rahn <drahn@openbsd.org>
  * All rights reserved.
@@ -67,9 +67,9 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 		if (fp != (fp & ~7)) { /* should be 0xf */
 			return -1;
 		}
-		if (read_from_pid(ps->ps_pid, fp, &fp, sizeof(fp)) < 0)
+		if (process_read(ps, fp, &fp, sizeof(fp)) < 0)
 			return -1;
-		if (read_from_pid(ps->ps_pid, fp+4, &pc, sizeof(pc)) < 0)
+		if (process_read(ps, fp+4, &pc, sizeof(pc)) < 0)
 			return -1;
 		if (fp == 0) {
 			return -1;

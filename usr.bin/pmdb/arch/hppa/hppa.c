@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa.c,v 1.2 2002/03/19 21:32:10 fgsch Exp $	*/
+/*	$OpenBSD: hppa.c,v 1.3 2002/07/22 01:20:50 art Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -71,7 +71,7 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 
 	for (i = 1; i < frame; i++) {
 
-		if (read_from_pid(ps->ps_pid, fp-60, &fr, sizeof(fr)) < 0)
+		if (process_read(ps, fp-60, &fr, sizeof(fr)) < 0)
 			return (-1);
 
 		pc = rp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: break.c,v 1.3 2002/07/12 00:24:53 deraadt Exp $	*/
+/*	$OpenBSD: break.c,v 1.4 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -79,14 +79,13 @@ bkpt_enable(struct pstate *ps, struct breakpoint *bkpt)
 {
 	reg pc = bkpt->bkpt_pc;
 
-	if (read_from_pid(ps->ps_pid, pc, &bkpt->bkpt_old, BREAKPOINT_LEN)) {
+	if (process_read(ps, pc, &bkpt->bkpt_old, BREAKPOINT_LEN)) {
 		warn("Can't read process contents at 0x%lx", pc);
 		return (-1);
 	}
-	if (write_to_pid(ps->ps_pid, pc, &bkpt_insn, BREAKPOINT_LEN)) {
+	if (process_write(ps, pc, &bkpt_insn, BREAKPOINT_LEN)) {
 		warn("Can't write breakpoint at 0x%lx, attempting backout.", pc);
-		if (write_to_pid(ps->ps_pid, pc, &bkpt->bkpt_old,
-		    BREAKPOINT_LEN))
+		if (process_write(ps, pc, &bkpt->bkpt_old, BREAKPOINT_LEN))
 			warn("Backout failed, process unstable");
 		return (-1);
 	}
@@ -130,8 +129,7 @@ bkpt_delete(struct pstate *ps, struct breakpoint *bkpt)
 {
 	TAILQ_REMOVE(&ps->ps_bkpts, bkpt, bkpt_list);
 
-	if (write_to_pid(ps->ps_pid, bkpt->bkpt_pc, &bkpt->bkpt_old,
-	    BREAKPOINT_LEN))
+	if (process_write(ps, bkpt->bkpt_pc, &bkpt->bkpt_old, BREAKPOINT_LEN))
 		warn("Breakpoint removal failed, process unstable");
 
 	free(bkpt);		

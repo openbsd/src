@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.c,v 1.1 2002/06/05 18:02:27 fgsch Exp $	*/
+/*	$OpenBSD: core.c,v 1.2 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Jean-Francois Brousseau <krapht@secureops.com>
  * All rights reserved. 
@@ -138,4 +138,48 @@ core_printregs(struct corefile *cf)
 	for (i = 0; i < md_def.nregs; i++)
 		printf("%s:\t0x%.*lx\n", md_def.md_reg_names[i],
 		    (int)(sizeof(reg) * 2), (long) rg[i]);
+}
+
+
+ssize_t
+core_read(struct pstate *ps, off_t from, void *to, size_t size)
+{
+	int i;
+	size_t read;
+	void *fp;
+	struct coreseg *cs;
+
+	for (i = 0; i < ps->ps_core->chdr->c_nseg; i++) {
+		cs = ps->ps_core->segs[i];
+		if ((from >= cs->c_addr) && (from < (cs->c_addr + cs->c_size))) {
+			read = size;
+			fp = cs + sizeof(*cs) + (from - cs->c_addr);
+			memcpy(to, fp, read);
+			return read;
+		}
+	}
+
+	return (-1);
+}
+
+
+ssize_t
+core_write(struct pstate *ps, off_t to, void *from, size_t size)
+{
+	int i;
+	size_t written;
+	void *fp;
+	struct coreseg *cs;
+
+	for (i = 0; i < ps->ps_core->chdr->c_nseg; i++) {
+		cs = ps->ps_core->segs[i];
+		if ((to > cs->c_addr) && (to < (cs->c_addr + cs->c_size))) {
+			written = size;
+			fp = cs + sizeof(*cs) + (to - cs->c_addr);
+			memcpy(fp, from, written);
+			return written;
+		}
+	}
+
+	return (-1);
 }

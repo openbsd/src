@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_syms.c,v 1.8 2002/06/11 06:34:38 art Exp $	*/
+/*	$OpenBSD: aout_syms.c,v 1.9 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -273,7 +273,6 @@ restart:
 void
 aout_update(struct pstate *ps)
 {
-	pid_t pid = ps->ps_pid;
 	struct _dynamic dyn;
 	struct so_debug sdeb;
 	struct section_dispatch_table sdt;
@@ -288,7 +287,7 @@ aout_update(struct pstate *ps)
 	}
 	addr = s->n_value + ps->ps_sym_exe->st_offs;
 
-	if (read_from_pid(pid, addr, &dyn, sizeof(dyn)) < 0) {
+	if (process_read(ps, addr, &dyn, sizeof(dyn)) < 0) {
 		warn("Can't read __DYNAMIC");
 		return;
 	}
@@ -298,7 +297,7 @@ aout_update(struct pstate *ps)
 		return;
 	}
 
-	if (read_from_pid(pid, (off_t)(reg)dyn.d_debug, &sdeb, sizeof(sdeb)) < 0) {
+	if (process_read(ps, (off_t)(reg)dyn.d_debug, &sdeb, sizeof(sdeb)) < 0) {
 		warn("Can't read __DYNAMIC.d_debug");
 		return;
 	}
@@ -308,7 +307,7 @@ aout_update(struct pstate *ps)
 		return;
 	}
 
-	if (read_from_pid(pid, (off_t)(reg)dyn.d_un.d_sdt, &sdt, sizeof(sdt)) < 0) {
+	if (process_read(ps, (off_t)(reg)dyn.d_un.d_sdt, &sdt, sizeof(sdt)) < 0) {
 		warn("Can't read section dispatch table");
 		return;
 	}
@@ -318,12 +317,12 @@ aout_update(struct pstate *ps)
 		char fname[MAXPATHLEN];
 		int i;
 
-		if (read_from_pid(pid, somp, &som, sizeof(som)) < 0) {
+		if (process_read(ps, somp, &som, sizeof(som)) < 0) {
 			warn("Can't read so_map");
 			break;
 		}
 		somp = (off_t)(reg)som.som_next;
-		if (read_from_pid(pid, (off_t)(reg)som.som_path, fname,
+		if (process_read(ps, (off_t)(reg)som.som_path, fname,
 		    sizeof(fname)) < 0) {
 			warn("Can't read so filename");
 			continue;

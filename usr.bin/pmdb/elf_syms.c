@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_syms.c,v 1.5 2002/06/05 16:54:02 fgsch Exp $	*/
+/*	$OpenBSD: elf_syms.c,v 1.6 2002/07/22 01:20:50 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -318,7 +318,6 @@ void
 elf_update(struct pstate *ps)
 {
 #ifndef __NetBSD__
-	pid_t pid = ps->ps_pid;
 	struct elf_object_v1 eobj;
 	struct r_debug rdeb;
 	reg addr;
@@ -333,7 +332,7 @@ elf_update(struct pstate *ps)
 	addr = s->st_value + ps->ps_sym_exe->st_offs;
 
 	do {
-		if (read_from_pid(pid, addr, &dyn, sizeof(dyn)) < 0) {
+		if (process_read(ps, addr, &dyn, sizeof(dyn)) < 0) {
 			warnx("Can't read _DYNAMIC");
 			return;
 		}
@@ -345,7 +344,7 @@ elf_update(struct pstate *ps)
 		return;
 	}
 
-	if (read_from_pid(pid, dyn.d_un.d_ptr, &rdeb, sizeof(rdeb)) < 0) {
+	if (process_read(ps, dyn.d_un.d_ptr, &rdeb, sizeof(rdeb)) < 0) {
 		warnx("Can't read DT_DEBUG");
 		return;
 	}
@@ -370,7 +369,7 @@ elf_update(struct pstate *ps)
 		char fname[MAXPATHLEN];
 		int i;
 
-		if (read_from_pid(pid, addr, &eobj, sizeof(eobj)) < 0) {
+		if (process_read(ps, addr, &eobj, sizeof(eobj)) < 0) {
 			warnx("Can't read symbols...");
 			return;
 		}
@@ -379,7 +378,7 @@ elf_update(struct pstate *ps)
 
 		if (eobj.load_name == NULL || eobj.load_name == (char *)-1)
 			continue;
-		if (read_from_pid(pid, (Elf_Addr)eobj.load_name, fname,
+		if (process_read(ps, (Elf_Addr)eobj.load_name, fname,
 		    sizeof(fname)) < 0) {
 			warnx("Can't read symbols...");
 			return;
