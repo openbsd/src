@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.75 2004/05/09 03:21:35 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.76 2004/05/10 06:24:42 ish Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -64,6 +64,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <err.h>
 
 #define KEYSIZE_LIMIT	1024
 
@@ -354,6 +355,7 @@ main(int argc, char *argv[])
 	u_char realkey[8192], realakey[8192];
 	struct iovec iov[30];
 	struct addrinfo hints, *res;
+	const char *errstr;
 
 	if (argc < 2) {
 		usage();
@@ -711,24 +713,21 @@ main(int argc, char *argv[])
 		}
 		if (!strcmp(argv[i] + 1, "spi") && spi == SPI_LOCAL_USE &&
 		    (i + 1 < argc) && !bypass && !deny) {
-			spi = strtoul(argv[i + 1], NULL, 16);
-			if (spi >= SPI_RESERVED_MIN && spi <= SPI_RESERVED_MAX) {
-				fprintf(stderr, "%s: invalid spi %s\n",
-				    argv[0], argv[i + 1]);
-				exit(1);
-			}
+			spi = strtonum(argv[i + 1], 0, UINT_MAX, &errstr);
+			if (errstr || (spi >= SPI_RESERVED_MIN && 
+			    spi <= SPI_RESERVED_MAX))
+				errx(1, "invalid spi %s", argv[i + 1]);
 			sa.sadb_sa_spi = htonl(spi);
 			i++;
 			continue;
 		}
 		if (!strcmp(argv[i] + 1, "spi2") && spi2 == SPI_LOCAL_USE &&
 		    iscmd(mode, GRP_SPI) && (i + 1 < argc)) {
-			spi2 = strtoul(argv[i + 1], NULL, 16);
-			if (spi2 == SPI_LOCAL_USE ||
-			    (spi2 >= SPI_RESERVED_MIN && spi2 <= SPI_RESERVED_MAX)) {
-				fprintf(stderr, "%s: invalid spi2 %s\n",
-				    argv[0], argv[i + 1]);
-				exit(1);
+			spi2 = strtonum(argv[i + 1], 0, UINT_MAX, &errstr);
+			if (errstr || (spi2 == SPI_LOCAL_USE ||
+			    (spi2 >= SPI_RESERVED_MIN && 
+			     spi2 <= SPI_RESERVED_MAX))) {
+				errx(1, "invalid spi2 %s", argv[i + 1]);
 			}
 			sa2.sadb_sa_spi = htonl(spi2);
 			i++;
@@ -736,13 +735,10 @@ main(int argc, char *argv[])
 		}
 		if (!strcmp(argv[i] + 1, "cpi") && cpi == SPI_LOCAL_USE &&
 		    (i + 1 < argc) && !bypass && !deny) {
-			cpi = strtoul(argv[i + 1], NULL, 16);
-			if (cpi >= CPI_RESERVED_MIN && (cpi <= CPI_RESERVED_MAX ||
-			    cpi >= CPI_PRIVATE_MAX)) {
-				fprintf(stderr, "%s: invalid cpi %s\n",
-				    argv[0], argv[i + 1]);
-				exit(1);
-			}
+			cpi = strtonum(argv[i + 1], 0, USHRT_MAX, &errstr);
+			if (errstr || (cpi >= CPI_RESERVED_MIN && 
+			    (cpi <= CPI_RESERVED_MAX || cpi >= CPI_PRIVATE_MAX)))
+				errx(1, "invalid cpi %s", argv[i + 1]);
 			sa.sadb_sa_spi = ntohl(cpi);
 			i++;
 			continue;
@@ -966,7 +962,9 @@ main(int argc, char *argv[])
 			udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
 			udpencap.sadb_x_udpencap_len = sizeof(udpencap) / 8;
 			udpencap.sadb_x_udpencap_port =
-			    strtoul(argv[i + 1], NULL, 10);
+			    strtonum(argv[i + 1], 0, USHRT_MAX, &errstr);
+			if (errstr)
+				errx(1, "invalid port %s", argv[i + 1]);
 			udpencap.sadb_x_udpencap_port =
 			    htons(udpencap.sadb_x_udpencap_port);
 			udpencap.sadb_x_udpencap_reserved = 0;
@@ -1193,7 +1191,11 @@ main(int argc, char *argv[])
 				tproto = tp->p_proto;
 				transportproto = argv[i + 1];
 			} else {
-				tproto = atoi(argv[i + 1]);
+				tproto = strtonum(argv[i + 1], 0, INT_MAX, 
+				    &errstr);
+				if (errstr)
+					errx(1, "bad protocol %s",
+					    argv[i + 1]);
 				tp = getprotobynumber(tproto);
 				if (tp == NULL)
 					transportproto = "UNKNOWN";
@@ -1218,8 +1220,13 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 				sport = svp->s_port;
-			} else
-				sport = htons(atoi(argv[i + 1]));
+			} else {
+				sport = strtonum(argv[i + 1], 0, USHRT_MAX,
+				    &errstr);
+				if (errstr)
+					errx(1, "invalid port %s", argv[i + 1]);
+				sport = htons(sport);
+			}
 			i++;
 			continue;
 		}
@@ -1234,8 +1241,13 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 				dport = svp->s_port;
-			} else
-				dport = htons(atoi(argv[i + 1]));
+			} else {
+				dport = strtonum(argv[i + 1], 0, USHRT_MAX,
+				    &errstr);
+				if (errstr)
+					errx(1, "invalid port %s", argv[i + 1]);
+				dport = htons(dport);
+			}
 			i++;
 			continue;
 		}
@@ -1328,14 +1340,14 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 			} else {
-				proto2 = atoi(argv[i + 1]);
-
-				if (proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH &&
-				    proto2 != IPPROTO_IPIP && proto2 != IPPROTO_IPCOMP) {
-					fprintf(stderr,
-					    "%s: unknown security protocol2 %d\n",
-					    argv[0], proto2);
-					exit(1);
+				proto2 = strtonum(argv[i + 1], 0, INT_MAX,
+				    &errstr);
+				if (errstr || (proto2 != IPPROTO_ESP && 
+				    proto2 != IPPROTO_AH &&
+				    proto2 != IPPROTO_IPIP && 
+				    proto2 != IPPROTO_IPCOMP)) {
+					errx(1, "unknown security protocol2 %s",
+					    argv[i + 1]);
 				}
 				if (proto2 == IPPROTO_ESP)
 					sprotocol.sadb_protocol_proto = sproto2 =
@@ -1376,13 +1388,14 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 			} else {
-				proto = atoi(argv[i + 1]);
-				if (proto != IPPROTO_ESP && proto != IPPROTO_AH &&
-				    proto != IPPROTO_IPIP && proto != IPPROTO_IPCOMP) {
-					fprintf(stderr,
-					    "%s: unknown security protocol %d\n",
-					    argv[0], proto);
-					exit(1);
+				proto = strtonum(argv[i + 1], 0, INT_MAX,
+				    &errstr);
+				if (errstr || (proto != IPPROTO_ESP && 
+				    proto != IPPROTO_AH &&
+				    proto != IPPROTO_IPIP && 
+				    proto != IPPROTO_IPCOMP)) {
+					errx(1, "unknown security protocol %s",
+					    argv[i + 1]);
 				}
 				if (proto == IPPROTO_ESP)
 					smsg.sadb_msg_satype = SADB_SATYPE_ESP;
