@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyreg.h,v 1.7 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: cyreg.h,v 1.8 2002/09/14 15:00:02 art Exp $	*/
 /*	$FreeBSD: cyreg.h,v 1.1 1995/07/05 12:15:51 bde Exp $	*/
 
 /*-
@@ -166,6 +166,8 @@ struct cy_port {
 /* software state for one card */
 struct cy_softc {
 	struct device		 sc_dev;
+	struct timeout		 sc_poll_to;
+	int			 sc_events;
 	void			*sc_ih;
 	bus_space_tag_t		 sc_memt;
 	bus_space_handle_t	 sc_memh;
@@ -173,14 +175,15 @@ struct cy_softc {
 	int			 sc_nports; /* number of ports on this card */
 	int			 sc_cd1400_offs[CY_MAX_CD1400s];
 	struct cy_port		 sc_ports[CY_MAX_PORTS];
+	int			 sc_nr_cd1400s;
 #ifdef CY_DEBUG1
 	int			 sc_poll_count1;
 	int			 sc_poll_count2;
 #endif
 };
 
-int	cy_probe_common(int, bus_space_tag_t, bus_space_handle_t, int);
-void	cy_attach(struct device *, struct device *, void *);
+int	cy_probe_common(bus_space_tag_t, bus_space_handle_t, int);
+void	cy_attach(struct device *, struct device *);
 int	cy_intr(void *);
 
 #endif	/* _DEV_IC_CYREG_H_ */

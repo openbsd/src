@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_isa.c,v 1.7 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: cy_isa.c,v 1.8 2002/09/14 15:00:03 art Exp $	*/
 
 /*
  * cy_isa.c
@@ -37,6 +37,7 @@ cy_isa_probe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
+	int ret;
 
 	if (ia->ia_irq == IRQUNK) {
 		printf("cy%d error: interrupt not defined\n", card);
@@ -47,10 +48,10 @@ cy_isa_probe(parent, match, aux)
 	if (bus_space_map(memt, ia->ia_maddr, 0x2000, 0, &memh) != 0)
 		return (0);
 
-	if (cy_probe_common(card, memt, memh, CY_BUSTYPE_ISA) == 0) {
-		bus_space_unmap(memt, memh, 0x2000);
+	ret = cy_probe_common(memt, memh, CY_BUSTYPE_ISA);
+	bus_space_unmap(memt, memh, 0x2000);
+	if (ret == 0)
 		return (0);
-	}
 
 	ia->ia_iosize = 0;
 	ia->ia_msize = 0x2000;
@@ -62,5 +63,24 @@ cy_isa_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	cy_attach(parent, self, aux);
+	struct cy_softc *sc = (struct cy_softc *)self;
+	struct isa_attach_args *ia = aux;
+
+	sc->sc_bustype = CY_BUSTYPE_ISA;
+	sc->sc_memt = ia->ia_memt;
+
+	if (bus_space_map(ia->ia_memt, ia->ia_maddr, 0x2000, 0,
+	    &sc->sc_memh) != 0)
+		return;
+
+	sc->sc_nr_cd1400s = cy_probe_common(sc->sc_memt, sc->sc_memh,
+	    CY_BUSTYPE_ISA);
+
+	cy_attach(parent, self);
+
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+	    IST_EDGE, IPL_TTY, cy_intr, sc, sc->sc_dev.dv_xname);
+
+	if (sc->sc_ih == NULL)
+		panic("cy: couldn't establish interrupt");
 }
