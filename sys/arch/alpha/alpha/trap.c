@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.41 2003/08/10 00:03:21 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.42 2003/10/18 20:14:40 jmc Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -392,7 +392,7 @@ trap(a0, a1, a2, entry, framep)
 				ucode =  a0;	/* exception summary */
 				break;
 			}
-			/* FALLTHROUTH */
+			/* FALLTHROUGH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
 #ifdef PTRACE

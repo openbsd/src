@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.28 2002/04/28 20:55:14 pvalchev Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.29 2003/10/18 20:14:40 jmc Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -236,7 +236,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 /*
  * Finish a swapin operation.
- * We neded to update the cached PTEs for the user area in the
+ * We needed to update the cached PTEs for the user area in the
  * machine dependent part of the proc structure.
  */
 void

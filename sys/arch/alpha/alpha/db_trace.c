@@ -1,8 +1,8 @@
-/*	$OpenBSD: db_trace.c,v 1.13 2003/06/03 21:09:01 deraadt Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.14 2003/10/18 20:14:40 jmc Exp $	*/
 
 /*
- * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
- * Copyright (c) 1997 Theo de Raadt.  All rights reserverd.
+ * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1997 Theo de Raadt.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

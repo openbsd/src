@@ -1,4 +1,4 @@
-/* $OpenBSD: cia_pci.c,v 1.9 2002/03/14 01:26:27 millert Exp $ */
+/* $OpenBSD: cia_pci.c,v 1.10 2003/10/18 20:14:42 jmc Exp $ */
 /* $NetBSD: cia_pci.c,v 1.25 2000/06/29 08:58:46 mrg Exp $ */
 
 /*
@@ -121,9 +121,9 @@ cia_conf_read(cpv, tag, offset)
 #endif
 
 	/*
-	 * Some (apparently-common) revisions of EB164 and AlphaStation
+	 * Some (apparently common) revisions of EB164 and AlphaStation
 	 * firmware do the Wrong thing with PCI master and target aborts,
-	 * which are caused by accesing the configuration space of devices
+	 * which are caused by accessing the configuration space of devices
 	 * that don't exist (for example).
 	 *
 	 * To work around this, we clear the CIA error register's PCI

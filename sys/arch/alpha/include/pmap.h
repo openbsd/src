@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.14 2003/06/02 23:27:43 millert Exp $ */
+/* $OpenBSD: pmap.h,v 1.15 2003/10/18 20:14:42 jmc Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -290,7 +290,7 @@ pmap_l3pte(pmap, v, l2pte)
  * Note that we if we access the kernel pmap in interrupt context, it
  * is only to update statistics.  Since stats are updated using atomic
  * operations, locking the kernel pmap is not necessary.  Therefore,
- * it is not necessary to block interrupts when locking pmap strucutres.
+ * it is not necessary to block interrupts when locking pmap structures.
  */
 #define	PMAP_LOCK(pmap)		simple_lock(&(pmap)->pm_slock)
 #define	PMAP_UNLOCK(pmap)	simple_unlock(&(pmap)->pm_slock)

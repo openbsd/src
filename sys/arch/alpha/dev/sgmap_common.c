@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_common.c,v 1.5 2002/06/25 21:33:21 miod Exp $ */
+/* $OpenBSD: sgmap_common.c,v 1.6 2003/10/18 20:14:41 jmc Exp $ */
 /* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -95,7 +95,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 		/*
 		 * Compute the page table size and allocate it.  At minimum,
 		 * this must be aligned to the page table size.  However,
-		 * some platforms have more strict alignment reqirements.
+		 * some platforms have more strict alignment requirements.
 		 */
 		ptsize = (sgvasize / NBPG) * ptesize;
 		if (minptalign != 0) {
