@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.47 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.48 2002/05/24 21:53:08 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -98,6 +98,7 @@
 
 int	icmpmaskrepl = 0;
 int	icmpbmcastecho = 0;
+int	icmptstamprepl = 1;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
 #endif
@@ -464,6 +465,9 @@ icmp_input(struct mbuf *m, ...)
 		goto reflect;
 
 	case ICMP_TSTAMP:
+		if (icmptstamprepl == 0)
+			break;
+
 		if (!icmpbmcastecho &&
 		    (m->m_flags & (M_MCAST | M_BCAST)) != 0) {
 			icmpstat.icps_bmcastecho++;
@@ -799,6 +803,8 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (ENOTDIR);
 
 	switch (name[0]) {
+	case ICMPCTL_TSTAMPREPL:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmptstamprepl));
 	case ICMPCTL_MASKREPL:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl));
 	case ICMPCTL_BMCASTECHO:
