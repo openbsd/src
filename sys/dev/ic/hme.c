@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.28 2003/04/27 11:22:52 ho Exp $	*/
+/*	$OpenBSD: hme.c,v 1.29 2003/06/18 15:35:47 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -241,6 +241,7 @@ hme_config(sc)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 
 	/* Initialize ifmedia structures and MII info */
 	mii->mii_ifp = ifp;
