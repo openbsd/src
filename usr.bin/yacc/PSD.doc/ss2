@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ss2,v 1.1 2002/12/03 21:36:35 mickey Exp $
+.\"	$OpenBSD: ss2,v 1.2 2004/09/18 21:25:52 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -108,7 +108,7 @@ Yacc permits an action to be written in the middle of a rule as well
 as at the end.
 This rule is assumed to return a value, accessible
 through the usual
-.QT $
+``$''
 mechanism by the actions to
 the right of it.
 In turn, it may access the values
