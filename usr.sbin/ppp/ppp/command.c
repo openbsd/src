@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.79 2004/01/23 03:48:43 deraadt Exp $
+ * $OpenBSD: command.c,v 1.80 2005/02/17 03:00:12 mbalmer Exp $
  */
 
 #include <sys/param.h>
@@ -524,7 +524,6 @@ command_Expand(char **nargv, int argc, char const *const *oargv,
   for (; arg < argc; arg++) {
     nargv[arg] = strdup(oargv[arg]);
     nargv[arg] = subst(nargv[arg], "AUTHNAME", bundle->cfg.auth.name);
-    nargv[arg] = subst(nargv[arg], "COMPILATIONDATE", __DATE__);
     nargv[arg] = substip(nargv[arg], "DNS0", bundle->ncp.ipcp.ns.dns[0]);
     nargv[arg] = substip(nargv[arg], "DNS1", bundle->ncp.ipcp.ns.dns[1]);
     nargv[arg] = subst(nargv[arg], "ENDDISC",
@@ -928,7 +927,7 @@ ShowStopped(struct cmdargs const *arg)
 static int
 ShowVersion(struct cmdargs const *arg)
 {
-  prompt_Printf(arg->prompt, "PPP Version %s - %s\n", Version, __DATE__);
+  prompt_Printf(arg->prompt, "PPP Version %s\n", Version);
   return 0;
 }
 
