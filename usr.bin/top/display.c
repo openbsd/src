@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.6 2001/08/24 20:16:35 art Exp $	*/
+/*	$OpenBSD: display.c,v 1.7 2001/09/03 18:08:10 camield Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -999,7 +999,7 @@ register char **names;
 		/* skip over the K, since it was included by format_k */
 		p = strecpy(p, thisname+1);
 	    }
-	    else
+	    else if (num > 0)
 	    {
 		p = strecpy(p, itoa(num));
 		p = strecpy(p, thisname);
@@ -1007,7 +1007,7 @@ register char **names;
 	}
 
 	/* ignore negative numbers, but display corresponding string */
-	else if (num < 0)
+	else
 	{
 	    p = strecpy(p, thisname);
 	}
