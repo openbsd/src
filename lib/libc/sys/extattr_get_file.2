@@ -1,4 +1,4 @@
-.\" $OpenBSD: extattr_get_file.2,v 1.5 2002/05/01 13:36:18 drahn Exp $
+.\" $OpenBSD: extattr_get_file.2,v 1.6 2003/06/01 20:02:40 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Dima Dorfman <dima@unixfreak.org>
 .\" All rights reserved.
@@ -129,10 +129,6 @@ is attribute-specific.
 .Pp
 For more information on named extended attributes, please see
 .Xr extattr 9 .
-.Sh CAVEATS
-This interface is under active development, and as such is subject to
-change as applications are adapted to use it.
-Developers are discouraged from relying on its stability.
 .Sh RETURN VALUES
 If successful, the
 .Fn extattr_get_file
@@ -218,3 +214,7 @@ Project, and introduced in
 .Ox 3.1 .
 It was developed to support security extensions requiring additional labels
 to be associated with each file or directory.
+.Sh CAVEATS
+This interface is under active development, and as such is subject to
+change as applications are adapted to use it.
+Developers are discouraged from relying on its stability.

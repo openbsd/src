@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.21 2003/03/28 20:05:11 millert Exp $
+.\"	$OpenBSD: fcntl.2,v 1.22 2003/06/01 20:02:40 jmc Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -358,7 +358,7 @@ to their children.
 Note that
 .Xr flock 2
 and
-.Xr fcntl 2
+.Fn fcntl
 locks may be safely used concurrently.
 .Pp
 All locks associated with a file for a given process are

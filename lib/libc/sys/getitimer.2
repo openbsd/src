@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.17 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: getitimer.2,v 1.18 2003/06/01 20:02:40 jmc Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -159,7 +159,7 @@ is non-zero.
 compares two time values in the form
 .Fa a
 CMP
-.Fa b Ns ,
+.Fa b ,
 where
 .Fa CMP
 is <, <=, ==, !=, >=, or > .
@@ -170,11 +170,11 @@ subtracts
 -
 .Fa b
 and stores the result in
-.Fa res Ns .
+.Fa res .
 .Pp
 .Fn timeradd "a, b, res"
 adds two timers and stores the result in
-.Fa res Ns .
+.Fa res .
 .Sh RETURN VALUES
 If the calls succeed, a value of 0 is returned.
 If an error occurs, the value \-1 is returned, and a more precise

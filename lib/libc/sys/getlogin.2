@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.14 2002/12/02 15:54:14 millert Exp $
+.\"	$OpenBSD: getlogin.2,v 1.15 2003/06/01 20:02:40 jmc Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -178,6 +178,11 @@ is not large enough to store the user's login name.
 .El
 .Sh SEE ALSO
 .Xr setsid 2
+.Sh HISTORY
+The
+.Fn getlogin
+function first appeared in
+.Bx 4.2 .
 .Sh BUGS
 In earlier versions of the system,
 .Fn getlogin
@@ -189,8 +194,3 @@ In earlier versions of the system, the value returned by
 .Fn getlogin
 could not be trusted without checking the user ID.
 Portable programs should probably still make this check.
-.Sh HISTORY
-The
-.Fn getlogin
-function first appeared in
-.Bx 4.2 .

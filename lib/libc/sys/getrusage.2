@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrusage.2,v 1.8 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: getrusage.2,v 1.9 2003/06/01 20:02:40 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -157,11 +157,11 @@ parameter is not in a valid part of the process address space.
 .Sh SEE ALSO
 .Xr gettimeofday 2 ,
 .Xr wait 2
-.Sh BUGS
-There is no way to obtain information about a child process
-that has not yet terminated.
 .Sh HISTORY
 The
 .Fn getrusage
 function call appeared in
 .Bx 4.2 .
+.Sh BUGS
+There is no way to obtain information about a child process
+that has not yet terminated.

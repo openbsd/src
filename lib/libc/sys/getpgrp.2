@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpgrp.2,v 1.10 2003/02/21 09:14:37 jmc Exp $
+.\"	$OpenBSD: getpgrp.2,v 1.11 2003/06/01 20:02:40 jmc Exp $
 .\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -88,22 +88,7 @@ There is no process with a process ID equal to
 .Sh SEE ALSO
 .Xr setpgid 2 ,
 .Xr termios 4
-.Sh HISTORY
-The
-.Fn getpgrp
-function call appeared in
-.Bx 4.0 .
 .Sh STANDARDS
-The
-.Fn getpgrp
-function conforms to
-.St -p1003.1-88 .
-The
-.Fn getpgid
-function call is derived from its usage in System V Release 4, and
-first appeared in
-.Nx 1.2 a.
-.Sh COMPATIBILITY
 This version of
 .Fn getpgrp
 differs from past Berkeley versions by not taking a
@@ -129,3 +114,18 @@ suffices, and the added complexity of the
 .Bx 4.3
 .Fn getpgrp
 has been omitted from POSIX.1.
+.Pp
+The
+.Fn getpgrp
+function conforms to
+.St -p1003.1-88 .
+The
+.Fn getpgid
+function call is derived from its usage in System V Release 4, and
+first appeared in
+.Nx 1.2a .
+.Sh HISTORY
+The
+.Fn getpgrp
+function call appeared in
+.Bx 4.0 .
