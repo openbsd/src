@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.24 2003/12/17 20:40:57 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.25 2003/12/20 19:06:29 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -502,6 +502,8 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct sembuf *) sops;
 		syscallarg(u_int) nsops;
 	} */ *uap = v;
+#define	NSOPS	8
+	struct sembuf sopbuf[NSOPS];
 	int semid = SCARG(uap, semid);
 	u_int nsops = SCARG(uap, nsops);
 	struct sembuf *sops;
@@ -539,13 +541,15 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		return (E2BIG);
 	}
 
-	sops = malloc(nsops * sizeof(struct sembuf), M_SEM, M_WAITOK);
+	if (nsops <= NSOPS)
+		sops = sopbuf;
+	else
+		sops = malloc(nsops * sizeof(struct sembuf), M_SEM, M_WAITOK);
 	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(struct sembuf));
 	if (error != 0) {
 		DPRINTF(("error = %d from copyin(%p, %p, %u)\n", error,
 		    SCARG(uap, sops), &sops, nsops * sizeof(struct sembuf)));
-		free(sops, M_SEM);
-		return (error);
+		goto done2;
 	}
 
 	/* 
@@ -566,8 +570,8 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 			sopptr = &sops[i];
 
 			if (sopptr->sem_num >= semaptr->sem_nsems) {
-				free(sops, M_SEM);
-				return (EFBIG);
+				error = EFBIG;
+				goto done2;
 			}
 
 			semptr = &semaptr->sem_base[sopptr->sem_num];
@@ -623,8 +627,8 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		 * NOWAIT flag set then return with EAGAIN.
 		 */
 		if (sopptr->sem_flg & IPC_NOWAIT) {
-			free(sops, M_SEM);
-			return (EAGAIN);
+			error = EAGAIN;
+			goto done2;
 		}
 
 		if (sopptr->sem_op == 0)
@@ -640,8 +644,8 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		suptr = NULL;	/* sem_undo may have been reallocated */
 
 		if (error != 0) {
-			free(sops, M_SEM);
-			return (EINTR);
+			error = EINTR;
+			goto done2;
 		}
 		DPRINTF(("semop:  good morning!\n"));
 
@@ -650,8 +654,8 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		 */
 		if (sema[semid] == NULL ||
 		    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid))) {
-			free(sops, M_SEM);
-			return (EIDRM);
+			error = EIDRM;
+			goto done2;
 		}
 
 		/*
@@ -713,8 +717,7 @@ done:
 				    sops[j].sem_op;
 
 			DPRINTF(("error = %d from semundo_adjust\n", error));
-			free(sops, M_SEM);
-			return (error);
+			goto done2;
 		} /* loop through the sops */
 	} /* if (do_undos) */
 
@@ -724,7 +727,6 @@ done:
 		semptr = &semaptr->sem_base[sopptr->sem_num];
 		semptr->sempid = p->p_pid;
 	}
-	free(sops, M_SEM);
 
 	/* Do a wakeup if any semaphore was up'd. */
 	if (do_wakeup) {
@@ -734,7 +736,10 @@ done:
 	}
 	DPRINTF(("semop:  done\n"));
 	*retval = 0;
-	return (0);
+done2:
+	if (sops != sopbuf)
+		free(sops, M_SEM);
+	return (error);
 }
 
 /*
