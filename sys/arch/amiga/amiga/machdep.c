@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.14 1996/07/27 11:40:26 deraadt Exp $	*/
-/*	$NetBSD: machdep.c,v 1.72 1996/05/19 14:55:31 is Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 1996/08/19 00:04:15 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.4.1 1996/05/26 16:23:23 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -519,7 +519,7 @@ again:
 		    phys_segs[i].first_page);
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("calling initcpu...\n");
 #endif
 	/*
@@ -527,7 +527,7 @@ again:
 	 */
 	initcpu();
 
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("survived initcpu...\n");
 #endif
 	/*
@@ -535,7 +535,7 @@ again:
 	 */
 	bufinit();
 
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("survived bufinit...\n");
 #endif
 	/*
@@ -549,7 +549,7 @@ again:
 #endif
 	}
 	configure();
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("survived configure...\n");
 #endif
 }
@@ -1280,10 +1280,11 @@ initcpu()
 #else
 	extern u_int8_t illinst;
 #endif
+	extern u_int8_t fpfault;
 #endif
 
 #ifdef DRACO
-	extern u_int8_t DraCoLev2intr, lev2intr;
+	extern u_int8_t DraCoIntr, DraCoLev2intr;
 #endif
 
 #ifdef M68060
@@ -1310,15 +1311,18 @@ initcpu()
 #else
 		vectab[61] = &illinst;
 #endif
+		vectab[48] = &fpfault;
 	}
 #endif
 
 #ifdef DRACO
 	if (is_draco()) {
+		vectab[24+1] = &DraCoIntr;
 		vectab[24+2] = &DraCoLev2intr;
-		vectab[24+4] = &lev2intr;
-		vectab[24+5] = &lev2intr;
-		vectab[24+6] = &lev2intr;
+		vectab[24+3] = &DraCoIntr;
+		vectab[24+4] = &DraCoIntr;
+		vectab[24+5] = &DraCoIntr;
+		vectab[24+6] = &DraCoIntr;
 	}
 #endif
 	DCIS();
@@ -1573,31 +1577,30 @@ add_isr(isr)
 {
 	struct isr **p, *q;
 
-#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
-	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter[isr->isr_mapped_ipl];
-	if (isr->isr_ipl == 6) {
-		if (isr->isr_mapped_ipl > isr_exter_highipl)
-			isr_exter_highipl = isr->isr_mapped_ipl;
-		if (isr->isr_mapped_ipl < isr_exter_lowipl)
-			isr_exter_lowipl = isr->isr_mapped_ipl;
-	}
-#else
-#ifdef DRACO
 	switch (isr->isr_ipl) {
 	case 2:
 		p = &isr_ports;
 		break;
+#ifdef DRACO
 	case 3:
+		panic("DraCo IPL3 not yet supported here");
 		p = &isr_slot3;
 		break;
-	default:	/* was case 6:; make gcc -Wall quiet */
-		p = &isr_exter;
-		break;
-	}
+#endif
+	case 6:
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+		p = &isr_exter[isr->isr_mapped_ipl];
+		if (isr->isr_mapped_ipl > isr_exter_highipl)
+			isr_exter_highipl = isr->isr_mapped_ipl;
+		if (isr->isr_mapped_ipl < isr_exter_lowipl)
+			isr_exter_lowipl = isr->isr_mapped_ipl;
 #else
-  	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
+		p = &isr_exter;
 #endif
-#endif
+		break;
+	default:
+		panic("add_isr: bad isr_ipl (%d)", isr->isr_ipl);
+	}
 	while ((q = *p) != NULL)
 		p = &q->isr_forw;
 	isr->isr_forw = NULL;
@@ -1617,77 +1620,77 @@ void
 remove_isr(isr)
 	struct isr *isr;
 {
-	struct isr **p, *q;
+	struct isr **p, *q, **chain;
 
-#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
-	p = isr->isr_ipl == 6 ? &isr_exter[isr->isr_mapped_ipl] : &isr_ports;
-#else
-#ifdef DRACO
 	switch (isr->isr_ipl) {
 	case 2:
-		p = &isr_ports;
+		chain = &isr_ports;
 		break;
+#ifdef DRACO
 	case 3:
-		p = &isr_slot3;
+		panic("DraCo IPL3 not yet supported here");
+		chain = &isr_slot3;
 		break;
-	default:	/* XXX to make gcc -Wall quiet, was 6: */
-		p = &isr_exter;
-		break;
-	}
+#endif
+	case 6:
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+		chain = &isr_exter[isr->isr_mapped_ipl];
 #else
-	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+		chain = &isr_exter;
 #endif
-#endif
-	while ((q = *p) != NULL && q != isr)
-		p = &q->isr_forw;
+		break;
+	default:
+		panic("remove_isr: bad isr_ipl (%d)", isr->isr_ipl);
+	}
+	for (p = chain; (q = *p) != NULL && q != isr; p = &q->isr_forw)
+		;
 	if (q)
 		*p = q->isr_forw;
 	else
 		panic("remove_isr: handler not registered");
-	/* disable interrupt if no more handlers */
+	if (*chain == NULL)
+		switch (isr->isr_ipl) {
+		case 2:
+#ifdef DRACO
+			if (is_draco())
+				*draco_intena &= ~DRIRQ_INT2;
+			else
+#endif
+				custom.intena = INTF_PORTS;
+			break;
+#ifdef DRACO
+		case 3:
+			panic("DraCo IPL3 not yet supported here");
+			break;
+#endif
+		case 6:
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
-	p = isr->isr_ipl == 6 ? &isr_exter[isr->isr_mapped_ipl] : &isr_ports;
-	if (*p == NULL) {
-		if (isr->isr_ipl == 6) {
-			if (isr->isr_mapped_ipl == isr_exter_lowipl)
+			if (isr->isr_mapped_ipl == isr_exter_lowipl) {
 				while (isr_exter_lowipl++ < 6 &&
-				    !isr_exter[isr_exter_lowipl])
+				    isr_exter[isr_exter_lowipl] == NULL)
 					;
+				if (isr_exter_lowipl == 7)
+#ifdef DRACO
+					if (is_draco())
+						*draco_intena &= ~DRIRQ_INT6;
+					else
+#endif
+						custom.intena = INTF_EXTER;
+			}
 			if (isr->isr_mapped_ipl == isr_exter_highipl)
 				while (isr_exter_highipl-- > 0 &&
-				    !isr_exter[isr_exter_highipl])
+				    isr_exter[isr_exter_highipl] == NULL)
 					;
-			if (isr_exter_lowipl == 7)
+#else
+#ifdef DRACO
+			if (is_draco())
+				*draco_intena &= ~DRIRQ_INT6;
+			else
+#endif
 				custom.intena = INTF_EXTER;
-		} else if (isr->isr_ipl == 2)
-			custom.intena = INTF_PORTS;
-	}
-#else
-#ifdef DRACO
-	switch (isr->isr_ipl) {
-	case 2:
-		p = &isr_ports;
-		break;
-	case 3:
-		p = &isr_slot3;
-		break;
-	case 6:
-		p = &isr_exter;
-		break;
-	}
-#else
-	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
 #endif
-	if (*p == NULL)
-#ifdef DRACO
-		if (is_draco())
-			*draco_intena &= isr->isr_ipl == 6 ? 
-			    ~DRIRQ_INT6 : ~DRIRQ_INT2;
-		else
-#endif
-			custom.intena = isr->isr_ipl == 6 ? 
-			    INTF_EXTER : INTF_PORTS;
-#endif
+			break;
+		}
 }
 
 void

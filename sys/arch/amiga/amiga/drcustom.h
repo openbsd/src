@@ -1,6 +1,6 @@
 /* 
- * $OpenBSD: drcustom.h,v 1.2 1996/06/04 12:49:13 niklas Exp $
- * $NetBSD: drcustom.h,v 1.1 1996/05/09 20:30:36 is Exp $
+ * $OpenBSD: drcustom.h,v 1.3 1996/08/19 00:04:13 niklas Exp $
+ * $NetBSD: drcustom.h,v 1.1.4.1 1996/06/21 06:42:44 jtc Exp $
  * 
  * Motherboard addresses for the DraCo.
  *
@@ -18,10 +18,10 @@
 #define DRCIATOP  0x02802000
 #define NDRCIAPG ((DRCIATOP - DRCIABASE) / NBPG)	/* which is 1 */
 
-#define NDRCCPG (7+1+1) /* (3 int+msc+ctrl+superio+cia)+scsi+altais */
+#define NDRCCPG (8+1+1) /* (3 int+msc+ctrl+superio+cia+1stkick)+scsi+altais */
 
 #define DRCCBASE	0x01000000
-#define DRCCSTRIDE	0x00400000	/* for up to and including CIA */
+#define DRCCSTRIDE	0x00400000	/* for up to and including 1st kick pg */
 
 #define DRZ2BASE	0x03000000	/*
 					 * not really used, appears as Z3 to
@@ -45,7 +45,11 @@
 #define	DRIOCTLPG 4
 #define	DRSUPIOPG 5
 #define DRCIAPG 6
-#define DRSCSIPG 7
+#define DRKICKPG 7	/*
+			 * kick page, used only as a stopgap delay address
+			 * for early DraCos
+			 */
+#define DRSCSIPG 8
 
 #ifdef _KERNEL
 #ifndef _LOCORE

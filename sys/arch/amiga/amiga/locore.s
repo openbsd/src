@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.10 1996/05/29 10:14:27 niklas Exp $	*/
-/*	$NetBSD: locore.s,v 1.56 1996/05/21 18:22:13 is Exp $	*/
+/*	$OpenBSD: locore.s,v 1.11 1996/08/19 00:04:14 niklas Exp $	*/
+/*	$NetBSD: locore.s,v 1.56.2.2 1996/06/14 11:20:45 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -209,18 +209,38 @@ Lbe10:
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
 	movl	d1,a0			| fault address
-	ptestr	#1,a0@,#7		| do a table search
+	movl	sp@,d0			| function code from ssw
+	btst	#8,d0			| data fault?
+	jne	Lbe10a
+	movql	#1,d0			| user program access FC
+					| (we dont seperate data/program)
+	btst	#5,a1@			| supervisor mode?
+	jeq	Lbe10a			| if no, done
+	movql	#5,d0			| else supervisor program access
+Lbe10a:
+	ptestr	d0,a0@,#7		| do a table search
 	pmove	psr,sp@			| save result
-	btst	#7,sp@			| bus error bit set?
-	jeq	Lismerr			| no, must be MMU fault
-	clrw	sp@			| yes, re-clear pad word
-	jra	Lisberr			| and process as normal bus error
+	movl	sp@,d1
+	btst	#26,d1			| invalid (incl. limit viol. and berr)?
+	jeq	Lmightnotbemerr		| no -> wp check
+	btst	#31,d1			| is it MMU table berr?
+	jeq	Lismerr			| no, must be fast
+	jra	Lisberr1		| real bus err needs not be fast.
+Lmightnotbemerr:
+	btst	#27,d1			| write protect bit set?
+	jeq	Lisberr1		| no: must be bus error
+					| ssw is in low word of d1
+	andw	#0xc0,d1		| Write protect is set on page:
+	cmpw	#0x40,d1		| was it read cycle?
+	jeq	Lisberr1		| yes, was not WPE, must be bus err
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	Ltrapnstkadj		| and deal with it
 Lisaerr:
 	movl	#T_ADDRERR,sp@-		| mark address error
 	jra	Ltrapnstkadj		| and deal with it
+Lisberr1:
+	clrw	sp@			| re-clear pad word
 Lisberr:
 	movl	#T_BUSERR,sp@-		| mark bus error
 Ltrapnstkadj:
@@ -524,7 +544,7 @@ _DraCoLev2intr:
 	CIAAADDR(a0)
 	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
 	tstb	d0			| check if CIAB was source
-	jeq	Lintrcommon
+	jeq	Ldrintrcommon
 	movel	_draco_intpen,a0
 |	andib	#4,a0@
 |XXX this would better be 
@@ -544,7 +564,24 @@ Ldraciaend:
 	moveml	sp@+,#0x0303
 	addql	#1,_cnt+V_INTR
 	jra	rei
+/* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
+	.globl _DraCoIntr
+_DraCoIntr:
+	moveml  #0xC0C0,sp@-
+Ldrintrcommon:
+	lea	Drintrcnt-4,a0
+	movw	sp@(22),d0		| use vector offset
+	andw	#0xfff,d0		|   sans frame type
+	addql	#1,a0@(-0x60,d0:w)	|     to increment apropos counter
+	movw	sr,sp@-			| push current SR value
+	clrw	sp@-			|    padded to longword
+	jbsr	_intrhand		| handle interrupt
+	addql	#4,sp			| pop SR
+	moveml	sp@+,#0x0303
+	addql	#1,_cnt+V_INTR
+	jra	rei
 #endif
+	
 
 _lev5intr:
 	moveml	d0/d1/a0/a1,sp@-
@@ -566,7 +603,6 @@ _lev3intr:
 _lev4intr:
 #endif
 	moveml	d0-d1/a0-a1,sp@-
-/* XXX on the DraCo, lev 4, 5 and 6 are vectored here by initcpu() */
 Lintrcommon:
 	lea	_intrcnt,a0
 	movw	sp@(22),d0		| use vector offset
@@ -692,7 +728,7 @@ Lexterdone:
 #endif
 	addql	#1,_intrcnt+24		| count EXTER interrupts
 	jra	Llev6done
-/* XXX endifndef DRACO used to be here */
+/* XXX endif DRACO used to be here */
 
 #else /* IPL_REMAP_1 */
 
@@ -881,6 +917,7 @@ start:
 | we dont need the AGA mode register.
 	movel	#100000,d3
 LisDraco0:
+#ifdef DEBUG_KERNEL_START
 	movb	#0,0x200003c8
 	movb	#00,0x200003c9
 	movb	#40,0x200003c9
@@ -892,6 +929,7 @@ LisDraco0:
 	movb	#00,0x200003c9
 	subql	#1,d3
 	jcc	LisDraco0
+#endif
 
 	RELOC(_chipmem_start, a0)
 	movl	#0,a0@
@@ -1471,6 +1509,13 @@ Lres2:
 	.word	0xf518			| pflusha (68040)
 |	movl	#CACHE40_ON,d0
 |	movc	d0,cacr			| invalidate cache(s)
+#ifdef M68060
+	btst	#7,_machineid+3
+	jeq	Lres3
+	movc	cacr,d2
+	orl	#0x00200000,d2		| clear user branch cache entries
+	movc	d2,cacr
+#endif
 Lres3:
 	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
@@ -1762,7 +1807,7 @@ Lmc68851d:
 	pflushs	#0,#4			| flush user TLB entries
 	rts
 Ltbiau040:
-| 68040 can't specify supervisor/user on pflusha, so we flush all
+| 68040 cannot specify supervisor/user on pflusha, so we flush all
 	.word	0xf518			| pflusha
 #ifdef M68060
 	btst	#7,_machineid+3
@@ -2322,8 +2367,21 @@ _intrnames:
 	.asciz	"nmi"		| non-maskable
 	.asciz	"clock"		| clock interrupts
 	.asciz	"spur6"		| spurious level 6
+#ifdef DRACO
+	.asciz	"kbd/soft"	| 1: native keyboard, soft ints
+	.asciz	"cia/zbus"	| 2: cia, PORTS
+	.asciz	"lclbus"	| 3: local bus, e.g. Altais vbl
+	.asciz	"drscsi"	| 4: mainboard scsi
+	.asciz	"superio"	| 5: superio chip
+	.asciz	"lcl/zbus"	| 6: lcl/zorro lev6
+	.asciz	"buserr"	| 7: nmi: bus timeout
+#endif
 _eintrnames:
 	.align	2
 _intrcnt:
 	.long	0,0,0,0,0,0,0,0,0,0
+#ifdef DRACO
+Drintrcnt:
+	.long	0,0,0,0,0,0,0
+#endif
 _eintrcnt:

@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.5 1996/05/29 10:14:20 niklas Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.38 1996/05/12 02:41:00 mhitch Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 1996/08/19 00:04:13 niklas Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38.4.1 1996/05/26 16:23:26 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -69,7 +69,9 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
+#ifdef DEBUG_KERNEL_START
 	printf("survived autoconf, going to enable interrupts\n");
+#endif
 	
 #ifdef DRACO
 	if (is_draco()) {
@@ -83,22 +85,34 @@ configure()
 		/* also enable hardware aided software interrupts */
 		custom.intena = INTF_SETCLR | INTF_SOFTINT;
 	}
+#ifdef DEBUG_KERNEL_START
 	printf("survived interrupt enable\n");
+#endif
 
 #ifdef GENERIC
 	if ((boothowto & RB_ASKNAME) == 0) {
 		setroot();
+#ifdef DEBUG_KERNEL_START
 		printf("survived setroot()\n");
+#endif
 	}
 	setconf();
+#ifdef DEBUG_KERNEL_START
 	printf("survived setconf()\n");
+#endif
 #else
 	setroot();
+#ifdef DEBUG_KERNEL_START
 	printf("survived setroot()\n");
 #endif
+#endif
+#ifdef DEBUG_KERNEL_START
 	printf("survived root device search\n");
+#endif
 	swapconf();
+#ifdef DEBUG_KERNEL_START
 	printf("survived swap device search\n");
+#endif
 	cold = 0;
 }
 
