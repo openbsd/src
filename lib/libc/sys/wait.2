@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wait.2,v 1.17 2003/08/03 23:30:55 millert Exp $
+.\"	$OpenBSD: wait.2,v 1.18 2004/01/12 15:25:37 jmc Exp $
 .\"	$NetBSD: wait.2,v 1.6 1995/02/27 12:39:37 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -78,12 +78,22 @@ The other wait functions are implemented using
 The
 .Fa wpid
 parameter specifies the set of child processes for which to wait.
+The following symbolic constants are currently defined in
+.Aq Pa sys/wait.h :
+.Bd -unfilled -offset indent
+#define WAIT_ANY        (-1)    /* any process */
+#define WAIT_MYPGRP     0       /* any process in my process group */
+.Ed
+.Pp
 If
 .Fa wpid
-is \-1, the call waits for any child process.
+is set to
+.Dv WAIT_ANY ,
+the call waits for any child process.
 If
 .Fa wpid
-is 0,
+is set to
+.Dv WAIT_MYPGRP ,
 the call waits for any child process in the process group of the caller.
 If
 .Fa wpid
