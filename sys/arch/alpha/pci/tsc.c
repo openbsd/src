@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.1 2000/11/16 04:50:18 ericj Exp $ */
+/* $OpenBSD: tsc.c,v 1.2 2001/04/14 22:19:11 mjacob Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -81,6 +81,11 @@ struct cfdriver tsp_cd = {
 
 
 static int tspprint __P((void *, const char *pnp));
+
+#if	0
+static int tsp_bus_get_window __P((int, int,
+	struct alpha_bus_space_translation *));
+#endif
 
 /* There can be only one */
 static int tscfound;
@@ -176,8 +181,18 @@ tspattach(parent, self, aux)
 
 	printf("\n");
 	pcp = tsp_init(1, t->tsp_slot);
+
 	tsp_dma_init(pcp);
+	
+	/*
+	 * Do PCI memory initialization that needs to be deferred until
+	 * malloc is safe.  On the Tsunami, we need to do this after
+	 * DMA is initialized, as well.
+	 */
+	tsp_bus_mem_init2(pcp);
+
 	pci_6600_pickintr(pcp);
+
 	pba.pba_busname = "pci";
 	pba.pba_iot = pcp->pc_iot;
 	pba.pba_memt = pcp->pc_memt;
@@ -185,7 +200,7 @@ tspattach(parent, self, aux)
 	    alphabus_dma_get_tag(&pcp->pc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &pcp->pc_pc;
 	pba.pba_bus = 0;
-#if 0
+#ifdef	notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 #endif
