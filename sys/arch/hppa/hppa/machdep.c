@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2000/08/08 21:46:05 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2000/08/15 20:12:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -118,11 +118,12 @@ int cold = 1;		/* unset when engine is up to go */
 int msgbufmapped;	/* set when safe to use msgbuf */
 
 /*
- * things to kill
+ * cache configuration, for most machines is the same
+ * numbers, so it makes sense to do defines w/ numbers depending
+ * on cofigured cpu types in the kernel
  */
-int icache_stride;
-int dcache_stride;
-int dcache_line_mask;
+int icache_stride, icache_line_mask;
+int dcache_stride, dcache_line_mask;
 
 /*
  * things to not kill
@@ -135,17 +136,26 @@ int machine_ledword, machine_leds;
  */
 struct pdc_cache pdc_cache PDC_ALIGNMENT;
 struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
+
 	/* w/ a little deviation should be the same for all installed cpus */
 u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
+
 	/* exported info */
 char	machine[] = MACHINE_ARCH;
 char	cpu_model[128];
 enum hppa_cpu_type cpu_type;
-int (*cpu_btlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
+const char *cpu_typename;
 #ifdef COMPAT_HPUX
 int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 #endif
+
+/*
+ * exported methods for cpus
+ */
+int (*cpu_desidhash) __P((void));
+int (*cpu_hpt_init) __P((vaddr_t hpt, vsize_t hptsize));
+int (*cpu_btlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot));
 
 dev_t	bootdev;
 int	totalphysmem, resvmem, physmem, esym;
@@ -173,6 +183,7 @@ void hpmc_dump __P((void));
 struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
 struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
 struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
+struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
 
 #ifdef DEBUG
 int sigdebug = 0xff;
@@ -187,35 +198,68 @@ extern u_int itlb_x[], dtlb_x[], tlbd_x[];
 extern u_int itlb_s[], dtlb_s[], tlbd_s[];
 extern u_int itlb_t[], dtlb_t[], tlbd_t[];
 extern u_int itlb_l[], dtlb_l[], tlbd_l[];
-int btlb_g __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
+int ibtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot));
+int ibtlb_t __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot));
+int ibtlb_l __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot));
+int ibtlb_g __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot));
+int pbtlb_g __P((int i));
+int hpti_l __P((vaddr_t, vsize_t));
+int hpti_g __P((vaddr_t, vsize_t));
+int desidhash_x __P((void));
+int desidhash_s __P((void));
+int desidhash_t __P((void));
+int desidhash_l __P((void));
+int desidhash_g __P((void));
 const struct hppa_cpu_typed {
-	char symid[8];
+	char name[8];
 	enum hppa_cpu_type type;
 	int  arch;
 	int  features;
+	int (*desidhash) __P((void));
 	u_int *itlbh, *dtlbh, *tlbdh;
 	int (*btlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 	    vsize_t sz, u_int prot));
+	int (*btlbprg) __P((int i));
+	int (*hptinit) __P((vaddr_t hpt, vsize_t hptsize));
 } cpu_types[] = {
+#ifdef HP7000_CPU
 	{ "PCX",   hpcx,  0x10, 0,
-				itlb_x, dtlb_x, tlbd_x, btlb_g},
+	    desidhash_x, itlb_x, dtlb_x, tlbd_x, ibtlb_g, pbtlb_g},
+#endif
+#ifdef HP7100_CPU
 	{ "PCXS",  hpcxs, 0x11, HPPA_FTRS_BTLBS,
-				itlb_s, dtlb_s, tlbd_s, btlb_g},
+	    desidhash_s, itlb_s, dtlb_s, tlbd_s, ibtlb_g, pbtlb_g},
+#endif
+#ifdef HP7200_CPU
 	{ "PCXT",  hpcxt, 0x11, HPPA_FTRS_BTLBU,
-				itlb_t, dtlb_t, tlbd_t, btlb_g},
-	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
-				itlb_t, dtlb_t, tlbd_t, btlb_g},
+	    desidhash_t, itlb_t, dtlb_t, tlbd_t, ibtlb_g, pbtlb_g},
+/* HOW?	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
+	    desidhash_t, itlb_t, dtlb_t, tlbd_t, ibtlb_g, pbtlb_g}, */
+#endif
+#ifdef HP7100LC_CPU
 	{ "PCXL",  hpcxl, 0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-				itlb_l, dtlb_l, tlbd_l, btlb_g},
-	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-				itlb_l, dtlb_l, tlbd_l, btlb_g},
+	    desidhash_l, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g},
+#endif
+#ifdef HP7300LC_CPU
+/* HOW?	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	    desidhash_l, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g}, */
+#endif
+#ifdef HP8000_CPU
 	{ "PCXU",  hpcxu, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-				itlb_l, dtlb_l, tlbd_l, btlb_g},
-	{ "PCXU2", hpcxu2,0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-				itlb_l, dtlb_l, tlbd_l, btlb_g},
-	{ "PCXW",  hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-				itlb_l, dtlb_l, tlbd_l, btlb_g},
+	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g},
+#endif
+#ifdef HP8200_CPU
+/* HOW?	{ "PCXU2", hpcxu2,0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g}, */
+#endif
+#ifdef HP8500_CPU
+/* HOW?	{ "PCXW",  hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g}, */
+#endif
 	{ "", 0 }
 };
 
@@ -244,9 +288,9 @@ hppa_init(start)
 #endif
 	}
 
-	/* XXX these gonna die */
 	dcache_line_mask = pdc_cache.dc_conf.cc_line * 16 - 1;
 	dcache_stride = pdc_cache.dc_stride;
+	icache_line_mask = pdc_cache.ic_conf.cc_line * 16 - 1;
 	icache_stride = pdc_cache.ic_stride;
 
 	/* cache coherence params (pbably available for 8k only) */
@@ -257,6 +301,9 @@ hppa_init(start)
 	    pdc_coherence.ia_cst, pdc_coherence.da_cst,
 	    pdc_coherence.ita_cst, pdc_coherence.dta_cst, error);
 #endif
+	error = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_GETSPIDB,
+	    &pdc_spidbits, 0, 0, 0, 0);
+	printf("SPID bits: 0x%x, error = %d\n", pdc_spidbits.spidbits, error);
 
 	/* setup hpmc handler */
 	{
@@ -335,24 +382,24 @@ hppa_init(start)
 			printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK (%x)\n",
 			    cpu_features);
 		else {
-		/*
-		 * Ptrs to various tlb handlers, to be filled based on cpu
-		 * features.
-		 * from locore.S
-		 */
-		extern u_int trap_ep_T_TLB_DIRTY[];
-		extern u_int trap_ep_T_ITLBMISS[];
-		extern u_int trap_ep_T_DTLBMISS[];
-		extern u_int trap_ep_T_ITLBMISSNA[];
-		extern u_int trap_ep_T_DTLBMISSNA[];
+			/*
+			 * Ptrs to various tlb handlers, to be filled
+			 * based on cpu features.
+			 * from locore.S
+			 */
+			extern u_int trap_ep_T_TLB_DIRTY[];
+			extern u_int trap_ep_T_ITLBMISS[];
+			extern u_int trap_ep_T_DTLBMISS[];
+			extern u_int trap_ep_T_ITLBMISSNA[];
+			extern u_int trap_ep_T_DTLBMISSNA[];
+
+			cpu_type      = p->type;
+			cpu_typename  = p->name;
+			cpu_btlb_ins  = p->btlbins;
+			cpu_hpt_init  = p->hptinit;
+			cpu_desidhash = p->desidhash;
+
 #define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1])
-
-#ifdef DEBUG
-			printf("cputype: %s\n", p->symid);
-#endif
-			cpu_type = p->type;
-
-			cpu_btlb_ins = p->btlbins;
 			LDILDO(trap_ep_T_TLB_DIRTY , p->tlbdh);
 			LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
 			LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
@@ -448,9 +495,7 @@ hppa_init(start)
 		u_int hpt;
 
 		mfctl(CR_VTOP, hpt);
-		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_TLB,
-		    PDC_TLB_CONFIG, &pdc_hwtlb, hpt, hptsize,
-		    PDC_TLB_CURRPDE)) < 0) {
+		if ((error = (cpu_hpt_init)(hpt, hptsize)) < 0) {
 #ifdef DEBUG
 			printf("WARNING: HPT init error %d\n", error);
 #endif
@@ -498,7 +543,12 @@ cpu_startup()
 	pmapdebug = 0;
 #endif
 
-	/* good night */
+	/*
+	 * i won't understand a friend of mine,
+	 * who sat in a room full of artificial ice,
+	 * fogging the air w/ humid cries --
+	 *	WELCOME TO SUMMER!
+	 */
 	printf(version);
 
 	/* identify system type */
@@ -747,7 +797,31 @@ ptlball()
 }
 
 int
-btlb_g(i, sp, va, pa, sz, prot)
+desidhash_g()
+{
+	/* TODO call PDC to disable SID hashing in the cache index */
+
+	return 0;
+}
+
+int
+hpti_g(hpt, hptsize)
+	vaddr_t hpt;
+	vsize_t hptsize;
+{
+	return pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_CONFIG,
+	    &pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
+}
+
+int
+pbtlb_g(i)
+	int i;
+{
+	return -1;
+}
+
+int
+ibtlb_g(i, sp, va, pa, sz, prot)
 	int i;
 	pa_space_t sp;
 	vaddr_t va;

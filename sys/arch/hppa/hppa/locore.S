@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.36 2000/08/15 19:56:17 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.37 2000/08/15 20:12:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -70,11 +70,21 @@
 #include <machine/pdc.h>
 #include <machine/intr.h>
 #include <machine/frame.h>
+#include <machine/reg.h>
 #ifdef	GPROF
 #include <machine/gprof.h>
 #endif
 #include "assym.h"
 
+/*
+ * hv-specific instructions
+ */
+#define	DR_PAGE0	.word (5 << 26) | (0x70 << 5)
+#define	DR_PAGE1	.word (5 << 26) | (0x72 << 5)
+#define	MTCPU_T(x,t) .word (5 << 26) | ((t) << 21) | ((x) << 16) | (0xc0 << 5)
+#define	MTCPU_C(x,t) .word (5 << 26) | ((t) << 21) | ((x) << 16) | (0x12 << 5)
+#define	MFCPU_T(r,x) .word (5 << 26) | ((r) << 21) | (0xa0 << 5) | (x)
+#define	MFCPU_C(r,x) .word (5 << 26) | ((r) << 21) | ((x) << 16) | (0x30 << 5)
 
 	.import	$global$, data
 	.import pdc, data
@@ -864,21 +874,29 @@ $syscall_end
 	ldil	L%$name,%r1		! \
 	ldo	R%$name(%r1), %r1
 
+#ifdef HP7000_CPU
 LDILDO(itlb_x)
 LDILDO(dtlb_x)
 LDILDO(tlbd_x)
+#endif
 
+#ifdef HP7100_CPU
 LDILDO(itlb_s)
 LDILDO(dtlb_s)
 LDILDO(tlbd_s)
+#endif
 
+#ifdef HP7200_CPU
 LDILDO(itlb_t)
 LDILDO(dtlb_t)
 LDILDO(tlbd_t)
+#endif
 
+#ifdef HP7100LC_CPU
 LDILDO(itlb_l)
 LDILDO(dtlb_l)
 LDILDO(tlbd_l)
+#endif
 
 #define	ITLBPRE \
 	mfctl	pcoq,r9		/* Offset */			! \
@@ -1141,7 +1159,7 @@ TLABEL(excpt)
 	stw	r1, TF_CR11(r31)
 
 	extru,<> arg0, 10, 1, r0
-	extru,=  arg0, 11, 1, r0
+	extru,= arg0, 11, 1, r0
 	or,tr	r0, r0, r0
 	bl,n	$sfu_emu, rp
 
@@ -1198,7 +1216,7 @@ $sfu_emu
 	xor	r16, r24, r24		/* r24 ^= r16 */		! \
 	and	r17, r24, r24		/* r24 &= r17 */		! \
 	mfctl	vtop, r16		/* r16 = address of HPT table */! \
-	or	r24, r16, r16		/* r16 = HPT entry */
+	or	r16, r24, r24		/* r24 = HPT entry */
 
 	/* Construct the virtual address tag. */
 #define	VTAG ! \
@@ -1207,18 +1225,55 @@ $sfu_emu
 	depi	1, 0, 1, r16		/* and set the valid bit */
 
 	.align	64
+/*
+ * void desidhash_s(void)
+ */
+#if defined(HP7000_CPU) || defined(HP7100_CPU)
+ENTRY(desidhash_s)
+ALTENTRY(desidhash_x)
+	MFCPU_T(DR_CPUCFG,t1)
+	MFCPU_T(DR_CPUCFG,t1)
+	depi	0, DR0_PCXS_DHE, 3, t1	/* 3 4 DR0_PCXS_DOMAIN|DR0_PCXS_IHE */
+	depi	1, DR0_PCXS_EQWSTO, 1, t1
+	depi	0, DR0_PCXS_DHPMC, 1, t1
+	depi	0, DR0_PCXS_ILPMC, 1, t1
+	MTCPU_T(t1,DR_CPUCFG)
+	MTCPU_T(t1,DR_CPUCFG)
+	bv	0(rp)
+	extru	t1, 4, 5, ret0	/* return chip revision */
+EXIT(desidhash_s)
+#endif /* HP7000_CPU || HP7100_CPU */
+
+#ifdef HP7200_CPU
+/*
+ * void desidhash_t(void)
+ */
+ENTRY(desidhash_t)
+	MFCPU_T(DR_CPUCFG,t1)
+	MFCPU_T(DR_CPUCFG,t1)
+	depi	0, DR0_PCXT_IHE, 1, t1
+	depi	0, DR0_PCXT_DHE, 1, t1
+	depi	0, DR0_PCXT_DHPMC, 1, t1
+	depi	0, DR0_PCXT_ILPMC, 1, t1
+	MTCPU_T(t1,DR_CPUCFG)
+	MTCPU_T(t1,DR_CPUCFG)
+	bv	0(rp)
+	extru	t1, 4, 5, ret0	/* return chip revision */
+EXIT(desidhash_t)
+#endif
+
 $tlbd_x
 $tlbd_s
 $tlbd_t
 	HPTENT
-	mtctl	r16, cr28
+	mtctl	r24, cr28
 
 	/*
 	 * Chase the list of entries for this hash bucket until we find
 	 * the correct mapping or NULL.
 	 */
-	ldw	hpt_entry(r16), r24
-$hash_loop_tlbd_t		/* XXX must use ,sl */
+	ldw	hpt_entry(r24), r24
+$hash_loop_tlbd_t
 	comb,=,n r0, r24, TLABEL(all)
 	ldw	pv_va(r24), r25
 	ldw	pv_space(r24), r17
@@ -1233,7 +1288,6 @@ $hash_loop_tlbd_t		/* XXX must use ,sl */
 	b	$tlb_inshpt_t
 	depi	1, TLB_DIRTY_POS, 1, r25
 
-	.align	32
 $itlb_x
 $itlb_s
 $itlb_t
@@ -1250,10 +1304,9 @@ $dtlb_t
 	 */
 
 	HPTENT
-	mtctl	r16, cr28
-	copy	r16, r24
+	mtctl	r24, cr28
 
-	ldw	hpt_tag(r16),r17
+	ldw	hpt_tag(r24),r17
 	VTAG	/* (r8,r9) -> r16 */
 
 	/* Compare the tag against the HPT entry.
@@ -1285,7 +1338,6 @@ $hash_loop_t
 
 	/*
 	 * Load the HPT cache with the miss information for the next time.
-	 * The HPT entry address was saved by the HPTENT
 	 */
 $tlb_inshpt_t
 	stw	r25, pv_tlbprot(r24)
@@ -1303,6 +1355,7 @@ $tlb_gothpt_t
 
 	idtlba	r17,(sr1, r9)
 	idtlbp	r25,(sr1, r9)
+	nop ! nop
 	mtsp	r16, sr1
 	rfir
 	nop
@@ -1310,9 +1363,63 @@ $tlb_gothpt_t
 $tlb_itlb_t
 	iitlba	r17,(sr1, r9)
 	iitlbp	r25,(sr1, r9)
+	nop ! nop
 	mtsp	r16, sr1
 	rfir
 	nop
+
+#ifdef HP7100LC_CPU
+/*
+ * int
+ * ibtlb_l(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
+ */
+ENTRY(ibtlb_l)
+	rsm	(PSW_R|PSW_I), t4
+
+	bv	0(rp)
+	mtsm	t4
+EXIT(ibtlb_l)
+
+/*
+ * int
+ * pbtlb_l(int i)
+ */
+ENTRY(pbtlb_l)
+	; DR_PAGE0
+	rsm	(PSW_R|PSW_I), t4
+	ldil	L%0xc041, t1
+	dep	arg0, 30, 3, t1
+	MTCPU_T(t1,DR_DTLB)
+	mtsp	r0, sr1
+	idtlba	r0,(sr1,r0)
+	idtlbp	r0,(sr1,r0)
+	zdepi	-1, 18, 1, t1
+	MTCPU_T(t1,DR_DTLB)
+	bv	0(rp)
+	mtsm	t4
+EXIT(pbtlb_l)
+
+ENTRY(hpti_l)
+	bv,n	r0(rp)
+	nop
+EXIT(hpti_l)
+
+/*
+ * int desidhash_l(void)
+ */
+ENTRY(desidhash_l)
+	MFCPU_C(DR_CPUCFG,t1)
+	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* 2 is 4 DR0_PCXL_L2DHASH_EN */
+	depi	0, DR0_PCXL_L2IHPMC, 1, t1	/* don't reset */
+	depi	0, DR0_PCXL_L2DHPMC, 1, t1	/* don't reset */
+	depi	0, DR0_PCXL_L1IHPMC, 1, t1	/* don't reset */
+	depi	0, DR0_PCXL_L2PARERR,1, t1	/* don't reset */
+		/* set DR0_PCXL_L1ICACHE_EN ??? */
+	MTCPU_C(t1,DR_CPUCFG)
+	bv	0(rp)
+	extru	t1, 4, 5, ret0	/* return chip revision */
+EXIT(desidhash_l)
+
 
 	.align	32
 $tlbd_l
@@ -1342,43 +1449,43 @@ $hash_loop_tlbd_l
 $itlb_l
 	HPTENT
 #ifdef DDB
-	mtctl	r16, cr28
+	mtctl	r24, cr28
 #endif
 	b	$tlbmiss_l
 	depi	1, TFF_ITLB_POS, 1, r1	/* mark for ITLB insert */
 
 	.align	8
 $dtlb_l
-	/*mfctl	cr28, r16*/
+	/*mfctl	cr28, r24*/
 	HPTENT	/* weird, but sometimes dtlbmissna does not set cr28 */
 #ifdef DDB
-	mtctl	r16, cr28
+	mtctl	r24, cr28
 #endif
 $tlbmiss_l
 	/*
 	 * r1 is the trap type
 	 * r8 is the space of the address that had the TLB miss
 	 * r9 is the offset of the address that had the TLB miss
-	 * r16 is the correspondent HPT entry pointer
+	 * r24 is the correspondent HPT entry pointer
 	 */
 
 	/*
 	 * Chase the list of entries for this hash bucket until we find
 	 * the correct mapping or NULL.
 	 */
-	ldw	hpt_entry(r16),r24
+	ldw	hpt_entry(r24),r16
 $hash_loop_l
-	comb,=,n r0, r24, $tlbiflpa
-	ldw	pv_va(r24),r25
-	ldw	pv_space(r24),r17
+	comb,=,n r0, r16, $tlbiflpa
+	ldw	pv_va(r16),r25
+	ldw	pv_space(r16),r17
 	comb,<>,n r9,r25,$hash_loop_l
-	ldw	pv_hash(r24),r24
+	ldw	pv_hash(r16),r16
 	comb,<>,n r8,r17,$hash_loop_l
-	ldw	pv_hash(r24),r24
+	ldw	pv_hash(r16),r16
 
 	/* Now set things up to enter the real mapping that we want */
-	ldw	pv_tlbpage(r24),r17
-	ldw	pv_tlbprot(r24),r25
+	ldw	pv_tlbpage(r16),r17
+	ldw	pv_tlbprot(r16),r25
 	depi	1, TLB_REF_POS, 1, r25
 
 	/*
@@ -1386,8 +1493,7 @@ $hash_loop_l
 	 * The HPT entry address was saved by the HPTENT
 	 */
 $tlb_inshpt_l
-	stw	r25, pv_tlbprot(r24)
-	copy	r16, r24
+	stw	r25, pv_tlbprot(r16)
 	VTAG	/* (r8,r9) -> r16 */
 
 	stw	r16, hpt_tag(r24)
@@ -1407,14 +1513,16 @@ $tlb_itlb_l
 	nop ! nop
 	rfir
 	nop
+#endif /* HP7100LC_CPU */
 
+	.export $tlbiflpa, entry
 $tlbiflpa
 	ldi	T_DTLBMISSNA, r16
-	comb,<>,n r1, r16, TLABEL(all)
 	mfctl	iir, r17
+	comb,<>,n r1, r16, TLABEL(all)
 	extru	r17, 5, 6, r16
-	comib,<>,n 1, r16, TLABEL(all)
 	ldi	0x4d, r25
+	comib,<>,n 1, r16, TLABEL(all)
 	extru	r17, 25, 8, r16
 	comb,<>,n r25, r16, TLABEL(all)
 
@@ -1746,7 +1854,7 @@ $trapnowvirt
 
 	/*
 	 * Copy partially saved state from the store into the frame
-	 * N.B. we are not doing any bundeling since it's only 16 words
+	 * N.B. we are not doing any bundleing since it's only 16 words
 	 */
 	ldil	$trap_tmp_save, arg0
 	copy	t3, arg1
@@ -1864,9 +1972,11 @@ fdc_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, fdc_short
 	fdc,m	arg3(sr1, arg1)
 
-	addi	-1, arg0, arg1
-	fdc	(sr1, arg1)
+	/*addi	-1, arg0, arg1
+	fdc	(sr1, arg1)*/
 
+	sync
+	syncdma
 	bv	r0(r2)
 	sync
 EXIT(fdcache)
@@ -1909,9 +2019,11 @@ pdc_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, pdc_short
 	pdc,m	arg3(sr1, arg1)
 
-	addi	-1, arg0, arg1
-	pdc	(sr1, arg1)
+	/*addi	-1, arg0, arg1
+	pdc	(sr1, arg1)*/
 
+	sync
+	syncdma
 	bv	r0(r2)
 	sync
 EXIT(pdcache)
@@ -1954,9 +2066,11 @@ fic_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, fic_short
 	fic,m	arg3(sr1, arg1)
 
-	addi	-1, arg0, arg1
-	fic	(sr1, arg1)
+	/*addi	-1, arg0, arg1
+	fic	(sr1, arg1)*/
 
+	sync
+	syncdma
 	bv	r0(r2)
 	sync
 EXIT(ficache)
@@ -2494,9 +2608,16 @@ EXIT(switch_trampoline)
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
 ENTRY(sigcode)
-	/* TODO signal trampoline */
-	bv	0(rp)
-	nop
+	/* TODO call signal handler */
+
+	/*ldo	SIGF_SC(sp), arg0*/
+	ldil	L%SYSCALLGATE, r1
+	ble	4(sr7, r1)
+	ldi	SYS_sigreturn, t1
+	copy	ret0, arg0
+	ldil	L%SYSCALLGATE, r1
+	ble	4(sr7, r1)
+	ldi	SYS_exit, t1
 ALTENTRY(esigcode)
 EXIT(sigcode)
 
