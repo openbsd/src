@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.24 2001/01/21 17:09:21 art Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.25 2001/01/22 14:52:56 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -491,6 +491,10 @@ struct elf_args {
         u_long  arg_os;			/* OS tag */
 };
 
+#endif
+
+#if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
+#define ELFSIZE ARCH_ELFSIZE
 #endif
 
 #if defined(ELFSIZE)
