@@ -1,4 +1,4 @@
-/*	$OpenBSD: startup.c,v 1.3 1996/06/26 05:43:21 deraadt Exp $	*/
+/*	$OpenBSD: startup.c,v 1.4 1997/02/25 00:04:17 downsj Exp $	*/
 /*	$NetBSD: startup.c,v 1.4 1996/02/08 20:45:04 mycroft Exp $	*/
 
 /*
@@ -41,11 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: startup.c,v 1.3 1996/06/26 05:43:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: startup.c,v 1.4 1997/02/25 00:04:17 downsj Exp $";
 #endif
 #endif /* not lint */
 
 #include "defs.h"
+#include <stdlib.h>
 #include "value.h"
 #include "var.h"
 #include "char.h"

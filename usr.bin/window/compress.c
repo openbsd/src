@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.2 1996/06/26 05:43:11 deraadt Exp $	*/
+/*	$OpenBSD: compress.c,v 1.3 1997/02/25 00:04:01 downsj Exp $	*/
 /*	$NetBSD: compress.c,v 1.3 1995/09/28 10:34:13 tls Exp $	*/
 
 /*
@@ -41,9 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)compress.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: compress.c,v 1.2 1996/06/26 05:43:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: compress.c,v 1.3 1997/02/25 00:04:01 downsj Exp $";
 #endif
 #endif /* not lint */
+
+#include <stdlib.h>
 
 #include "ww.h"
 #include "tt.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.h,v 1.2 1996/06/26 05:43:31 deraadt Exp $	*/
+/*	$OpenBSD: value.h,v 1.3 1997/02/25 00:04:30 downsj Exp $	*/
 /*	$NetBSD: value.h,v 1.3 1995/09/28 10:35:00 tls Exp $	*/
 
 /*
