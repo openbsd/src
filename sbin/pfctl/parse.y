@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.291 2003/01/17 12:53:52 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.292 2003/01/18 04:45:59 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2267,6 +2267,9 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 				memcpy(&nat.rpool.key, $8.key,
 				    sizeof(struct pf_poolhashkey));
 
+			if ($9 != NULL)
+				nat.rpool.opts |= PF_POOL_STATICPORT;
+			 
 			expand_nat(&nat, $3, $5, $6.src.host, $6.src.port,
 			    $6.dst.host, $6.dst.port,
 			    $7 == NULL ? NULL : $7->host);
@@ -3592,6 +3595,7 @@ lookup(char *s)
 		{ "set",		SET},
 		{ "source-hash",	SOURCEHASH},
 		{ "state",		STATE},
+		{ "static-port",	STATICPORT},
 		{ "table",		TABLE},
 		{ "tbrsize",		TBRSIZE},
 		{ "timeout",		TIMEOUT},
