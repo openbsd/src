@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2002/04/30 01:12:28 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.15 2002/06/07 21:33:43 nordin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -95,7 +95,6 @@ typedef struct clockframe clockframe;
 extern int eintstack[];
 
 #define	CLKF_USERMODE(framep)	(((framep)->psr & PSR_PS) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->psr & PSR_PIL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	((framep)->fp < (u_int)eintstack)
 

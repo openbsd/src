@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2002/03/27 15:12:22 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 2002/06/07 21:33:43 nordin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -173,7 +173,6 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(framep)	(((framep)->t.tf_tstate & TSTATE_PRIV) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->t.tf_oldpil) == 0)
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
 #define	CLKF_INTR(framep)	((!CLKF_USERMODE(framep))&&\
 				(((framep)->t.tf_kstack < (vaddr_t)EINTSTACK)&&\

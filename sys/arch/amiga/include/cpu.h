@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2002/03/25 19:41:03 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 2002/06/07 21:33:43 nordin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.36 1996/09/11 00:11:42 thorpej Exp $	*/
 
 /*
@@ -76,7 +76,6 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
 #if 0
 /* We would like to do it this way... */

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.17 2002/05/26 07:55:01 matthieu Exp $ */
+/* $OpenBSD: cpu.h,v 1.18 2002/06/07 21:33:43 nordin Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -260,8 +260,6 @@ struct clockframe {
 };
 #define	CLKF_USERMODE(framep)						\
 	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0)
-#define	CLKF_BASEPRI(framep)						\
-	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_IPL_MASK) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_tf.tf_regs[FRAME_PC])
 
 /*

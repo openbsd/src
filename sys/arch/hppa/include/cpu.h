@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2002/03/15 21:44:18 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2002/06/07 21:33:43 nordin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -104,7 +104,6 @@ extern const char *cpu_typename;
 #define	HPPA_NMODSPBUS	64
 
 #define	clockframe		trapframe
-#define	CLKF_BASEPRI(framep)	((framep)->tf_eiem == ~0U)
 #define	CLKF_PC(framep)		((framep)->tf_iioq_head)
 #define	CLKF_INTR(framep)	((framep)->tf_flags & TFF_INTR)
 #define	CLKF_USERMODE(framep)	((framep)->tf_flags & T_USER)

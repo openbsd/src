@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 2002/03/14 01:26:41 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 2002/06/07 21:33:43 nordin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <machine/psl.h>
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth != 0)
 

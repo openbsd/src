@@ -1,4 +1,4 @@
-/*      $OpenBSD: psl.h,v 1.5 2000/04/26 03:08:42 bjc Exp $      */
+/*      $OpenBSD: psl.h,v 1.6 2002/06/07 21:33:43 nordin Exp $      */
 /*      $NetBSD: psl.h,v 1.6 1997/06/07 12:15:28 ragge Exp $      */
 
 /*
@@ -105,7 +105,6 @@
  * Macros to decode processor status word.
  */
 #define	CLKF_USERMODE(framep)	((((framep)->ps) & (PSL_U)) == PSL_U)
-#define	CLKF_BASEPRI(framep)	((((framep)->ps) & (PSL_IPL1F)) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	((((framep)->ps) & (PSL_IS)) == PSL_IS)
 #define PSL2IPL(ps)             ((ps) >> 16)

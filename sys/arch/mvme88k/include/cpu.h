@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: cpu.h,v 1.19 2002/06/07 21:33:43 nordin Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -84,7 +84,6 @@ struct clockframe {
 extern int intstack;
 
 #define	CLKF_USERMODE(framep)	((((struct trapframe *)(framep))->epsr & PSR_MODE) == 0)
-#define	CLKF_BASEPRI(framep)	(((struct trapframe *)(framep))->mask == 0)
 #define	CLKF_PC(framep)		(((struct trapframe *)(framep))->sxip & ~3)
 #define	CLKF_INTR(framep)	(((struct trapframe *)(framep))->r[31] > intstack)
 
