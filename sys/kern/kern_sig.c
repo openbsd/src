@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.47 2001/08/09 14:44:42 niklas Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.48 2001/09/20 23:30:29 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -543,7 +543,7 @@ sys_sigaltstack(p, v, retval)
 	if (ss.ss_size < MINSIGSTKSZ)
 		return (ENOMEM);
 	psp->ps_flags |= SAS_ALTSTACK;
-	psp->ps_sigstk= ss;
+	psp->ps_sigstk = ss;
 	return (0);
 }
 
