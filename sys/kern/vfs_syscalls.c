@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.51 1998/12/28 19:56:22 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.52 1999/01/10 22:47:08 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ int	usermount = 0;		/* sysctl: by default, users may not mount */
 static int change_dir __P((struct nameidata *, struct proc *));
 
 void checkdirs __P((struct vnode *));
-int dounmount __P((struct mount *, int, struct proc *));
 
 /*
  * Redirection info so we don't have to include the union fs routines in 
