@@ -1,4 +1,4 @@
-/*	$OpenBSD: qereg.h,v 1.3 1998/10/20 00:57:52 jason Exp $	*/
+/*	$OpenBSD: qereg.h,v 1.4 1999/03/12 18:56:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -25,6 +25,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Documentation for MACE chip can be found on AMD's website:
+ *      http://www.amd.com/products/npd/techdocs/techdocs.html
  */
 
 /*
