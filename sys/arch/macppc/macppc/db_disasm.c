@@ -1,5 +1,5 @@
 /*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.5 2001/09/09 21:55:41 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.6 2001/09/09 23:18:41 drahn Exp $	*/
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -199,7 +199,7 @@ op_class_func op_cl_x3e, op_cl_x3f;
 op_class_func *opcodes_base[] = {
 /*x00*/	op_ill,		op_ill,		op_base,	op_ill,
 /*x04*/	op_ill,		op_ill,		op_ill,		op_base,
-/*x08*/	op_base,	op_base,	op_ill,		op_base,	
+/*x08*/	op_base,	op_base,	op_base,	op_base,	
 /*x0C*/ op_base,	op_base,	op_base/*XXX*/,	op_base/*XXX*/,
 /*x10*/ op_base,	op_base,	op_base,	op_cl_x13,
 /*x14*/	op_base,	op_base,	op_ill,		op_base,
@@ -229,10 +229,10 @@ const struct opcode opcodes[] = {
 
 	{ "mulli",	0xfc000000, 0x1c000000, Op_D | Op_A | Op_SIMM, " %{D},%{A},%{SIMM}" },
 	{ "subfic",	0xfc000000, 0x20000000, Op_D | Op_A | Op_SIMM, " %{D},%{A},%{SIMM}" },
-	{ "cmpli",	0xfc0f0000, 0x28000000, Op_L | Op_A | Op_SIMM, " %{A},%{UIMM}" },
-	{ "cmpli",	0xfc000000, 0x28000000, Op_crfD | Op_L | Op_A | Op_UIMM, " %{crfD}%{A}, %{UIMM}" },
-	{ "cmpi",	0xfc0f0000, 0x2c000000, Op_L | Op_A | Op_SIMM, " %{A},%{SIMM}"},
-	{ "cmpi",	0xfc000000, 0x2c000000, Op_crfD | Op_L | Op_A | Op_SIMM, " %{crfD}%{A},%{SIMM}" },
+	{ "cmpli",	0xffc00000, 0x28000000, Op_L | Op_A | Op_SIMM, " %{A},%{UIMM}" },
+	{ "cmpli",	0xfc400000, 0x28000000, Op_crfD | Op_L | Op_A | Op_UIMM, " %{crfD}%{A}, %{UIMM}" },
+	{ "cmpi",	0xffc00000, 0x2c000000, Op_L | Op_A | Op_SIMM, " %{A},%{SIMM}"},
+	{ "cmpi",	0xfc400000, 0x2c000000, Op_crfD | Op_L | Op_A | Op_SIMM, " %{crfD}%{A},%{SIMM}" },
 	{ "addic",	0xfc000000, 0x30000000, Op_D | Op_A | Op_SIMM, " %{D},%{A},%{SIMM}" },
 	{ "addic.",	0xfc000000, 0x34000000, Op_D | Op_A | Op_SIMM, " %{D},%{A},%{SIMM}" },
 	{ "addi",	0xfc000000, 0x38000000, Op_D | Op_A | Op_SIMM, " %{D},%{A0}%{SIMM}" },
