@@ -56,7 +56,7 @@ extern	int cons_scode;
 
 char *name;
 char *names[] = {
-	"/netbsd", "/onetbsd", "/netbsd.old",
+	"/bsd", "/obsd", "/bsd.old",
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
 

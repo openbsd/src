@@ -149,14 +149,14 @@ clean::
 	rm -f libdrive.a mkboot dboot dcopy installboot *.lif
 
 install: mkboot installboot ${ALL}
-	./mkboot pboot netbsdboot.lif
+	./mkboot pboot bsdboot.lif
 	./mkboot netboot netboot.lif
 	./mkboot sys_inst sys_inst.lif
 	./mkboot dboot diskboot.lif
 	./mkboot tboot tcopy tapeboot.lif
 	install -c -o ${BINOWN} -g ${BINGRP} -m 555 installboot \
 	    ${DESTDIR}/usr/mdec
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 netbsdboot.lif \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 bsdboot.lif \
 	    ${DESTDIR}/usr/mdec/rdboot
 	rm -f ${DESTDIR}/usr/mdec/bootrd
 	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/bootrd

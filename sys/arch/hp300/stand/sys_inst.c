@@ -70,7 +70,7 @@ extern	char *lowram;
 extern	int noconsole;
 extern	int cons_scode;
 
-char	*kernel_name = "/netbsd";
+char	*kernel_name = "/bsd";
 
 void	dsklabel __P((void));
 void	miniroot __P((void));
