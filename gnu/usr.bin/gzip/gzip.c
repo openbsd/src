@@ -45,7 +45,7 @@ static char  *license_msg[] = {
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: gzip.c,v 1.5 2002/03/13 18:14:18 millert Exp $";
+static char rcsid[] = "$Id: gzip.c,v 1.6 2002/11/05 16:16:14 henning Exp $";
 #endif
 
 #include <ctype.h>
@@ -226,10 +226,10 @@ char **args = NULL;   /* argv pointer if GZIP env variable defined */
 char z_suffix[MAX_SUFFIX+1]; /* default suffix (can be set with --suffix) */
 int  z_len;           /* strlen(z_suffix) */
 
-long bytes_in;             /* number of input bytes */
-long bytes_out;            /* number of output bytes */
-long total_in = 0;         /* input bytes for all files */
-long total_out = 0;        /* output bytes for all files */
+off_t bytes_in;             /* number of input bytes */
+off_t bytes_out;            /* number of output bytes */
+off_t total_in = 0;         /* input bytes for all files */
+off_t total_out = 0;        /* output bytes for all files */
 char ifname[MAX_PATH_LEN]; /* input file name */
 char ofname[MAX_PATH_LEN]; /* output file name */
 int  remove_ofname = 0;	   /* remove output file on error */
@@ -701,6 +701,9 @@ local void treat_stdin()
 	    fprintf(stderr, "\n");
 #endif
 	}
+	if (!test)
+		fprintf(stderr, "%lld bytes in, %lld bytes out\n",
+		    (long long)bytes_in, (long long)bytes_out);
     }
 }
 
@@ -850,6 +853,9 @@ local void treat_file(iname)
 	    fprintf(stderr, " -- replaced with %s", ofname);
 	}
 	fprintf(stderr, "\n");
+	if (!test)
+		fprintf(stderr, "%lld bytes in, %lld bytes out\n",
+		    (long long)bytes_in, (long long)bytes_out);
     }
     /* Copy modes, times, ownership, and remove the input file */
     if (!to_stdout) {
@@ -1357,10 +1363,10 @@ local void do_list(ifd, method)
     } else if (method < 0) {
 	if (total_in <= 0 || total_out <= 0) return;
 	if (verbose) {
-	    printf("                            %9lu %9lu ",
-		   total_in, total_out);
+	    printf("                            %9lld %9lld ",
+		   (long long)total_in, (long long)total_out);
 	} else if (!quiet) {
-	    printf("%9ld %9ld ", total_in, total_out);
+	    printf("%9lld %9lld ", (long long)total_in, (long long)total_out);
 	}
 	display_ratio(total_out-(total_in-header_bytes), total_out, stdout);
 	/* header_bytes is not meaningful but used to ensure the same
@@ -1381,7 +1387,7 @@ local void do_list(ifd, method)
          * Use "gunzip < foo.gz | wc -c" to get the uncompressed size if
          * you are not concerned about speed.
          */
-        bytes_in = (long)lseek(ifd, (off_t)(-8), SEEK_END);
+        bytes_in = lseek(ifd, (off_t)(-8), SEEK_END);
         if (bytes_in != -1L) {
             uch buf[8];
             bytes_in += 8L;
@@ -1398,7 +1404,7 @@ local void do_list(ifd, method)
     if (verbose) {
         printf("%5s %08lx %11s ", methods[method], crc, date);
     }
-    printf("%9ld %9ld ", bytes_in, bytes_out);
+    printf("%9lld %9lld ", (long long)bytes_in, (long long)bytes_out);
     if (bytes_in  == -1L) {
 	total_in = -1L;
 	bytes_in = bytes_out = header_bytes = 0;
