@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.10 2004/01/15 10:15:55 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.11 2004/02/02 16:04:54 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -584,7 +584,7 @@ msg_read(int pfkey)
 		}
 	}
 	print_msg(msg, promisc);
-	memset(data, len, 0);
+	memset(data, 0, len);
 	free(data);
 }
 
