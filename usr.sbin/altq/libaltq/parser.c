@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2001/08/06 06:25:16 deraadt Exp $	*/
+/*	$OpenBSD: parser.c,v 1.3 2001/08/06 06:57:37 itojun Exp $	*/
 /*	$KAME: parser.c,v 1.6 2001/05/30 10:30:44 kjc Exp $	*/
 /*******************************************************************
 
@@ -467,7 +467,7 @@ get_addr(char **cpp, struct in_addr *addr, struct in_addr *mask)
 	if (!next_word(cpp, w))
 		return (0);
 
-	if (inet_aton((char *)w, &tmp) == 0) {
+	if (inet_aton((char *)w, &tmp) != 1) {
 		/* try gethostbyname */
 		struct hostent *h;
 
@@ -486,7 +486,7 @@ get_addr(char **cpp, struct in_addr *addr, struct in_addr *mask)
 		if (!next_word(&ocp, w))
 			return (0);
 		
-		if (inet_aton((char *)w, (struct in_addr *)&tmp) == 0)
+		if (inet_aton((char *)w, (struct in_addr *)&tmp) != 1)
 			return (0);
 
 		mask->s_addr = tmp.s_addr;
@@ -969,7 +969,7 @@ get_ip6addr(char **cpp, struct in6_addr *addr, struct in6_addr *mask)
 		*prefix++ = '\0';
 	}
 
-	if (inet_pton(AF_INET6, w, addr) <= 0)
+	if (inet_pton(AF_INET6, w, addr) != 1)
 		return (0);
 
 	if (IN6_IS_ADDR_UNSPECIFIED(addr) && prefix == NULL)
