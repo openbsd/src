@@ -1,3 +1,5 @@
+.\"	$OpenBSD: vnconfig.8,v 1.4 1997/05/14 15:58:38 niklas Exp $
+.\
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,7 +62,13 @@ with the regular file
 .Ar regular_file
 allowing the latter to be accessed as though it were a disk.
 Hence a regular file within the filesystem can be used for swapping
-or can contain a filesystem that is mounted in the name space.
+or can contain a filesystem that is mounted in the name space.  Both
+traditional devices,
+.Nm vnd
+, and the cache-coherent devices,
+.Nm svnd
+, are configured through
+.Nm
 .Pp
 Options indicate an action to be performed:
 .Bl -tag -width indent
@@ -81,18 +89,17 @@ If no action option is given,
 is assumed.
 .Sh FILES
 .Bl -tag -width /etc/rvnd?? -compact
-.It Pa /dev/rvnd??
-.It Pa /dev/vnd??
+.It Pa /dev/{,r}{,s}vnd*
 .El
 .Sh EXAMPLES
 .Pp
-.Dl vnconfig vnd0 /tmp/diskimage
+.Dl vnconfig svnd0 /tmp/diskimage
 .Pp
 Configures the vnode disk
-.Pa vnd0
+.Pa svnd0
 (ie. all of it's partitions become useable).
 .Pp
-.Dl vnconfig -u vnd0
+.Dl vnconfig -u svnd0
 .Pp
 Unconfigures the same device.
 .Sh BUGS
