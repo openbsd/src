@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpt.4,v 1.1 2004/03/06 03:40:24 krw Exp $
+.\"	$OpenBSD: mpt.4,v 1.2 2004/03/21 20:33:17 marco Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -38,20 +38,24 @@
 .Os
 .Sh NAME
 .Nm mpt
-.Nd LSI Fusion-MPT SCSI/Fibre Channel driver
+.Nd LSI Fusion-MPT SCSI and FibreChannel host adapter driver
 .Sh SYNOPSIS
 .Cd "mpt* at pci? dev ? function ?"
 .Cd "scsibus* at mpt?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the LSI Logic Fusion-MPT family of
+driver provides support
+for the LSI Logic Fusion-MPT family of
 .Tn SCSI
 and
 .Tn Fibre Channel
 controllers:
 .Pp
 .Bl -bullet -compact -offset indent
+.It
+53c1020
+.Pq Single Ultra320 Tn SCSI
 .It
 53c1030
 .Pq Dual Ultra320 Tn SCSI
@@ -68,6 +72,28 @@ FC919
 FC929
 .Pq Dual 2Gb/s Tn Fibre Channel
 .El
+.Pp
+The LSI Logic SCSI and Fibre Channel controllers contain firmware that presents
+a multiprotocol service layer based on the LSI Logic Fusion-MPT architecture.
+The firmware isolates the host drivers from the hardware and controls the
+device side of the message passing interface to the host device drivers.
+The firmware manages all phases of an I/O request and optimizes the interrupt
+management for the system.
+For Fibre Channel, the firmware also manages all FC-2 through FC-4 services,
+which minimizes the amount of Fibre Channel unique services required with the
+host driver.
+.Pp
+The MPI (Message Passing Interface) defintion includes a register-level
+transport mechanism and a messaging protocol.
+A system doorbell and message queues define the MPI transport interface.
+Inbound Message Frames (MF), allocated in host memory, indentify I/O operations
+to be performed by the IO Controller (IOC).
+These operations are queued on the Request Queue by the host driver.
+Outbound Message Frames, also in host memory, track I/O operations as they
+complete.
+These frames are queued on the Reply Queue by the IOC.
+A doorbell mechanism is provided for IOC configuration, reset management,
+and IOC status.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
@@ -88,4 +114,21 @@ The
 .Om
 driver was ported from
 .Nx
-by Milos Urbanek and Marco Peereboom.
+by Milos Urbanek, Kenneth R. Westerback and Marco Peereboom.
+.Sh BUGS
+This driver does not function properly with MPT firmware levels higher than
+1.03.00.
+.Pp
+The runtime MPT firmware is displayed under the REV heading for the 1020/1030
+chips during POST.
+Example:
+.Bd -literal
+HBA ID LUN VENDOR   PRODUCT               REV SYNC  WIDE
+--- -- --- -------- ---------------- -------- ----- ----
+ 0   7  0  LSILogic 1020/1030[  102]  1013D00 320.0  16
+ 1   7  0  LSILogic 1020/1030[  102]  1013D00 320.0  16
+.Ed
+.Pp
+The version is 1013D00 which translates to 1.01.3D.00.
+The last two digits are normally not used and it is written in decimal notation.
+Thus making this example version 1.01.61.
