@@ -1,4 +1,5 @@
-/*	$OpenBSD: db_extern.h,v 1.1 1996/02/20 13:35:36 mickey Exp $	*/
+/*	$OpenBSD: db_extern.h,v 1.2 1996/03/11 11:16:07 mickey Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.1 1996/02/05 01:57:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.

@@ -1,8 +1,7 @@
-/*	$OpenBSD: db_interface.h,v 1.2 1996/03/11 11:16:10 mickey Exp $	*/
-/*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp &	*/
+/*	$OpenBSD: db_var.h,v 1.1 1996/03/11 11:16:27 mickey Exp $	*/
 
 /*
- * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
+ * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Christos Zoulas.
+ *	This product includes software developed by Michael Shalayeff.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -29,22 +28,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _DDB_DB_INTERFACE_H_
-#define _DDB_DB_INTERFACE_H_
 
-/* arch/<arch>/<arch>/db_trace.c */
-void db_stack_trace_cmd __P((db_expr_t, int, db_expr_t, char *));
+/*
+ * Different parameters/structures/functions
+ */
 
-/* arch/<arch>/<arch>/db_disasm.c */
-db_addr_t db_disasm __P((db_addr_t, boolean_t));
+#ifndef _DDB_DB_VAR_H_
+#define _DDB_DB_VAR_H_
 
-/* kern/kern_synch.c */
-void db_show_all_procs __P((db_expr_t, int, db_expr_t, char *));
+#ifndef	DB_HISTORY_SIZE
+#define	DB_HISTORY_SIZE	4000
+#endif
 
-/* kern/kern_clock.c */
-void db_show_callout __P((db_expr_t, int, db_expr_t, char *));
-
-/* arch/<arch>/<arch>/db_interface.c */
-void db_machine_init __P((void));
-
-#endif /* _DDB_DB_INTERFACE_H_ */
+#endif /* _DDB_DB_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_access.c,v 1.2 1996/02/20 13:35:30 mickey Exp $	*/
+/*	$OpenBSD: db_access.c,v 1.3 1996/03/11 11:15:52 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -23,7 +23,7 @@
  *  Pittsburgh PA 15213-3890
  * 
  * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
+ * the rights to redistribute these changes.
  *
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90

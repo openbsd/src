@@ -1,4 +1,5 @@
-/*	$OpenBSD: gdt.c,v 1.3 1996/02/28 14:38:41 mickey Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.4 1996/03/11 11:16:46 mickey Exp $	*/
+/*	$NetBSD: gdt.c,v 1.5 1995/11/17 06:47:27 jtc Exp $	*/
 
 /*
  *  Copyright (c) 1995 Charles M. Hannum.   All rights reserved.
@@ -103,7 +104,6 @@ gdt_compact()
 	int slot = NGDT, oslot;
 
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-		PHOLD(p);
 		pcb = &p->p_addr->u_pcb;
 		oslot = IDXSEL(pcb->pcb_tss_sel);
 		if (oslot >= gdt_count) {
@@ -125,7 +125,6 @@ gdt_compact()
 			dynamic_gdt[oslot].gd.gd_type = SDT_SYSNULL;
 			pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
 		}
-		PRELE(p);
 	}
 	for (; slot < gdt_count; slot++)
 		if (dynamic_gdt[slot].gd.gd_type == SDT_SYSNULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 1996/03/03 03:02:34 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 1996/03/11 11:16:50 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.191 1996/03/01 21:49:49 scottr Exp $	*/
 
 /*-
@@ -703,8 +703,8 @@ boot(howto)
 	extern int cold;
 
 	if (cold) {
-		printf("hit reset please");
-		for(;;);
+		howto |= RB_HALT;
+		goto haltsys;
 	}
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
@@ -717,8 +717,9 @@ boot(howto)
 		resettodr();
 	}
 	splhigh();
+haltsys:
+	doshutdownhooks();
 	if (howto & RB_HALT) {
-		doshutdownhooks();
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -729,7 +730,6 @@ boot(howto)
 			dumppcb.pcb_cr3 = rcr3();
 			dumpsys();
 		}
-		doshutdownhooks();
 	}
 	printf("rebooting...\n");
 	cpu_reset();

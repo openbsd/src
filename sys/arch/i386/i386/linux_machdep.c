@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_machdep.c,v 1.3 1996/03/11 11:16:48 mickey Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.24 1996/01/04 22:21:57 jtc Exp $	*/
 
 /*
@@ -502,6 +503,9 @@ linux_machdepioctl(p, v, retval)
 		break;
 #endif
 	default:
+#ifdef	DIAGNOSTIC
+		printf("linux_machdepioctl: invalid ioctl %08x\n", com);
+#endif
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;

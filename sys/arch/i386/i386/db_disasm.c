@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.2 1996/02/28 14:38:40 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 1996/03/11 11:16:40 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -11,7 +11,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 
@@ -22,10 +22,10 @@
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
  * 
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
+ * any improvements or extensions that they make and grant Carnegie Mellon
+ * the rights to redistribute these changes.
  *
- *	Id: db_disasm.c,v 2.3 91/02/05 17:11:03 mrt (CMU)
+ *	Id: db_disasm.c,v 2.6  92/01/03  20:05:00  dbg (CMU)
  */
 
 /*
@@ -281,6 +281,25 @@ struct inst	db_inst_0fcx[] = {
 /*cf*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
 };
 
+struct inst	db_inst_0fdx[] = {
+/*c0*/	{ "cmpxchg",TRUE, BYTE,	 op2(R, E),   0 },
+/*c1*/	{ "cmpxchg",TRUE, LONG,	 op2(R, E),   0 },
+/*c2*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c3*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c4*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c5*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c6*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c7*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c8*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*c9*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*ca*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*cb*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*cc*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*cd*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*ce*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*cf*/	{ "",	   FALSE, NONE,	 0,	      0 },
+};
+
 struct inst *db_inst_0f[] = {
 	db_inst_0f0x,
 	0,
@@ -295,7 +314,7 @@ struct inst *db_inst_0f[] = {
 	db_inst_0fax,
 	db_inst_0fbx,
 	db_inst_0fcx,
-	0,
+	db_inst_0fdx,
 	0,
 	0
 };
