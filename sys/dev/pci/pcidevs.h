@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.443 2001/09/06 22:36:36 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.444 2001/09/15 06:55:17 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1792,6 +1792,7 @@
 #define	PCI_PRODUCT_SUN_ERINETWORK	0x1101		/* ERI Ethernet */
 #define	PCI_PRODUCT_SUN_FIREWIRE	0x1102		/* FireWire */
 #define	PCI_PRODUCT_SUN_USB	0x1103		/* USB */
+#define	PCI_PRODUCT_SUN_GEMNETWORK	0x2bad		/* GEM */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI-PCI */
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* Psycho PCI */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
