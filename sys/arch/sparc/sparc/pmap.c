@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.65 2000/01/27 00:18:43 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.66 2000/01/27 02:06:24 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -532,7 +532,6 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 				    ASI_SRMMUFP)
 u_int	*getptep4m __P((struct pmap *, vaddr_t));
 static __inline void	setpgt4m __P((int *, int));
-static __inline void	setptesw4m __P((struct pmap *pm, vaddr_t va, int pte));
 __inline void	setpte4m __P((vaddr_t va, int pte));
 #endif
 
@@ -736,21 +735,6 @@ setpgt4m(ptep, pte)
 	int pte;
 {
 	swap(ptep, pte);
-}
-
-/*
- * Set the page table entry for va to pte. Only affects software MMU page-
- * tables (the in-core pagetables read by the MMU). Ignores TLB, and
- * thus should _not_ be called if the pte translation could be in the TLB.
- * In this case, use setpte4m().
- */
-static __inline void
-setptesw4m(pm, va, pte)
-	struct pmap *pm;
-	vaddr_t va;
-	int pte;
-{
-	setpgt4m(getptep4m(pm, va), pte);
 }
 
 /* Set the page table entry for va to pte. */
