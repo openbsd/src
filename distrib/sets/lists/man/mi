@@ -2023,8 +2023,10 @@
 ./usr/share/man/cat8/hppa/wsconsctl.0
 ./usr/share/man/cat8/hppa/wsfontload.0
 ./usr/share/man/cat8/hppa64
+./usr/share/man/cat8/hppa64/MAKEDEV.0
 ./usr/share/man/cat8/hppa64/boot.0
 ./usr/share/man/cat8/hppa64/boot.conf.0
+./usr/share/man/cat8/hppa64/boot_hppa64.0
 ./usr/share/man/cat8/hppa64/mkboot.0
 ./usr/share/man/cat8/hprop.0
 ./usr/share/man/cat8/hpropd.0
