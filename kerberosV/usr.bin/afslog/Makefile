@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2003/05/17 01:31:21 hin Exp $
+# $OpenBSD: Makefile,v 1.3 2003/07/14 16:14:44 mho Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -7,8 +7,10 @@ PROG	= afslog
 
 .PATH:	${KRB5SRC}/appl/afsutil
 
-CFLAGS	+= -I.
-DPADD	+= ${LIBKAFS} ${LIBKRB5} ${LIBKRB} ${LIBDES} ${LIBCRYPTO} ${LIBASN1}
-LDADD	+= -lkrb5 -ldes -lcrypto -lasn1 ${LIBROKEN} -lcom_err
+SRCS+=	afslog.c
+SRCS+=	${PRINTVER}
+
+DPADD	+= ${LIBKRB5} ${LIBDES} ${LIBCRYPTO}
+LDADD	+= -lkrb5 -ldes -lcrypto
 
 .include <bsd.prog.mk>

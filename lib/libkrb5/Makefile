@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2003/06/03 09:18:00 hin Exp $
+# $OpenBSD: Makefile,v 1.10 2003/07/14 16:14:43 mho Exp $
 
 KRB5DIR=	${.CURDIR}/../../kerberosV
 GENDIR=		${.CURDIR}/generated
@@ -10,6 +10,7 @@ LIB	= krb5
 .PATH:	${GENDIR}
 
 .include "Makefile.asn1.inc"
+.include "Makefile.com_err.inc"
 .include "Makefile.hdb.inc"
 .include "Makefile.kafs.inc"
 .include "Makefile.roken.inc"
@@ -17,6 +18,12 @@ LIB	= krb5
 .include "Makefile.com_err.inc"
 
 includes:
+	@echo "Removing old Kerberos include files (transitionary)"
+	@/bin/rm -rf ${DESTDIR}/usr/include/kerberosV \
+		${DESTDIR}/usr/include/kerberosIV \
+		${DESTDIR}/usr/include/com_err.h
+	@echo "Symlinking /usr/include/com_err.h (transitionary)"
+	@/bin/ln -s /usr/include/kerberosV/com_err.h ${DESTDIR}/usr/include/
 	@test -d ${DESTDIR}/usr/include/kerberosV || \
 		mkdir ${DESTDIR}/usr/include/kerberosV
 	@echo -n ${DIR_KRB5INC}:; \
@@ -37,6 +44,14 @@ includes:
 		echo
 	@echo -n ${DIR_KAFS}:; \
 	cd ${DIR_KAFS}; for i in ${HDR_KAFS}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV; done; \
+		echo
+	@echo -n ${DIR_COM_ERR}:; \
+	cd ${DIR_COM_ERR}; for i in ${HDR_COM_ERR}; do \
 		echo -n " $$i"; \
 		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
 			${INSTALL} ${INSTALL_COPY} -m 444 \

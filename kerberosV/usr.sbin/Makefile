@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.1 2001/05/25 08:21:11 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2003/07/14 16:14:45 mho Exp $
 
-SUBDIR=	kadmin ktutil
+SUBDIR=	kadmin kstash ktutil
 
 .include <bsd.subdir.mk>

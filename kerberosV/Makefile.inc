@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.8 2003/05/14 08:01:02 mho Exp $
+# $OpenBSD: Makefile.inc,v 1.9 2003/07/14 16:14:43 mho Exp $
 
 KRB5DIR	= ${.CURDIR}/${KRBDEPTH}
 KRB5SRC	= ${.CURDIR}/${KRBDEPTH}/src
@@ -14,11 +14,10 @@ CFLAGS+=	-Wall
 CFLAGS	+= -DHAVE_DLOPEN
 .endif
 
-LIBROKEN= 	-L${KRBDEPTH}/lib/roken -lroken
-LIBROKEN_PIC= 	-L${KRBDEPTH}/lib/roken -lroken_pic
+PRINTVER=	print_version.c
+ROKENSRC=	${KRB5SRC}/lib/roken
 
 .PATH:	${KRB5SRC}/man
+.PATH:	${KRB5DIR}/openbsd-vers
 
 COMPILE_ET	= /usr/bin/compile_et
-
-COM_ERR=	-lcom_err_pic

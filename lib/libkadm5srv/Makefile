@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2003/05/17 05:20:18 mho Exp $
+# $OpenBSD: Makefile,v 1.3 2003/07/14 16:14:43 mho Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
@@ -26,7 +26,8 @@ includes:	kadm5_err.h
 		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/kadm5/$$i || \
 			${INSTALL} ${INSTALL_COPY} -m 444 \
 			-o ${BINOWN} -g $(BINGRP) $$i \
-			${DESTDIR}/usr/include/kerberosV/kadm5; done
+			${DESTDIR}/usr/include/kerberosV/kadm5; done; \
+		echo
 
 SRCS=	acl.c           \
 	admin.h         \

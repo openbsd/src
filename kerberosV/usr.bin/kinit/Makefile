@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2003/05/14 06:56:02 mho Exp $
+# $OpenBSD: Makefile,v 1.8 2003/07/14 16:14:44 mho Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -6,9 +6,12 @@ KRBDEPTH=../..
 PROG=	kinit
 MLINKS=	kinit.1 kauth.1
 
+SRCS=	kinit.c
+SRCS+=	${PRINTVER}
+
 .PATH:	${KRB5SRC}/kuser
 
-DPADD+=	${LIBKRB5} ${LIBDES} ${LIBASN1} ${LIBCRYPTO} ${LIBCOM_ERR}
-LDADD+=	-lkrb5 -ldes ${LIBROKEN} -lasn1 -lcrypto -lcom_err
+DPADD+=	${LIBKRB5} ${LIBDES} ${LIBCRYPTO}
+LDADD+=	-lkrb5 -ldes -lcrypto
 
 .include <bsd.prog.mk>

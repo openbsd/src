@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2003/05/17 01:31:21 hin Exp $
+# $OpenBSD: Makefile,v 1.6 2003/07/14 16:14:44 mho Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -6,11 +6,11 @@ KRBDEPTH=../..
 PROG=	kdestroy
 
 SRCS=	kdestroy.c
+SRCS+=	${PRINTVER}
 
 .PATH:	${KRB5SRC}/kuser
 
-DPADD+= ${LIBKRB5} ${LIBDES} ${LIBKAFS} ${LIBKRB} ${LIBASN1} ${LIBCRYPTO} \
-	${LIBCOM_ERR}
-LDADD+=	-lkrb5 -ldes -lasn1 -lcrypto ${LIBROKEN} -lcom_err
+DPADD+= ${LIBKRB5} ${LIBDES} ${LIBCRYPTO}
+LDADD+=	-lkrb5 -ldes -lcrypto
 
 .include <bsd.prog.mk>

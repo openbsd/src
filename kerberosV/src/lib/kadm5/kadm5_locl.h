@@ -74,8 +74,8 @@
 #include <netdb.h>
 #endif
 #include <fnmatch.h>
-#include "admin.h"
-#include "kadm5_err.h"
+#include <kerberosV/kadm5/admin.h>
+#include <kerberosV/kadm5/kadm5_err.h>
 #include <hdb.h>
 #include <der.h>
 #include <roken.h>

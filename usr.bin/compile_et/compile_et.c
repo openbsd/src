@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile_et.c,v 1.10 2003/06/25 21:19:34 deraadt Exp $	*/
+/*	$OpenBSD: compile_et.c,v 1.11 2003/07/14 16:14:43 mho Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -147,7 +147,7 @@ generate_h(void)
 	fprintf(h_file, "#ifndef %s\n", fn);
 	fprintf(h_file, "#define %s\n", fn);
 	fprintf(h_file, "\n");
-	fprintf(h_file, "#include <com_err.h>\n");
+	fprintf(h_file, "#include <kerberosV/com_err.h>\n");
 	fprintf(h_file, "\n");
 	fprintf(h_file, 
 	    "void initialize_%s_error_table_r(struct et_list **);\n",

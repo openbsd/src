@@ -38,7 +38,7 @@
 #ifndef __COM_ERR_H__
 #define __COM_ERR_H__
 
-#include <com_right.h>
+#include <kerberosV/com_right.h>
 
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(X)

@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.8 2002/09/23 01:45:08 miod Exp $
+# $OpenBSD: Makefile,v 1.9 2003/07/14 16:14:44 mho Exp $
 
 # XXX asn1_compile is compiled in ../Makefile
 
-# kf
+# kf - not imported?
+
 SUBDIR=	afslog \
 	kauth \
 	kdestroy \
