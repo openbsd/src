@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.7 1997/01/15 23:41:42 millert Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.8 1997/06/22 22:29:06 downsj Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.7 1997/01/15 23:41:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.8 1997/06/22 22:29:06 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ struct interval {
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, killflg, mbuflen;
+static int dofast, dohalt, doreboot, dopower, killflg, mbuflen;
 static char *nosync, *whom, mbuf[BUFSIZ];
 
 void badtime __P((void));
@@ -122,7 +122,7 @@ main(argc, argv)
 #endif
 	nosync = NULL;
 	readstdin = 0;
-	while ((ch = getopt(argc, argv, "-fhknr")) != -1)
+	while ((ch = getopt(argc, argv, "-fhknpr")) != -1)
 		switch (ch) {
 		case '-':
 			readstdin = 1;
@@ -138,6 +138,9 @@ main(argc, argv)
 			break;
 		case 'n':
 			nosync = "-n";
+			break;
+		case 'p':
+			dopower = 1;
 			break;
 		case 'r':
 			doreboot = 1;
@@ -160,6 +163,11 @@ main(argc, argv)
 	if (doreboot && dohalt) {
 		(void)fprintf(stderr,
 		    "shutdown: incompatible switches -h and -r.\n");
+		usage();
+	}
+	if (dopower && !dohalt) {
+		(void)fprintf(stderr,
+		    "shutdown: switch -p must be used with -h.\n");
 		usage();
 	}
 	getoffset(*argv++);
@@ -365,7 +373,12 @@ die_you_gravy_sucking_pig_dog()
 		perror("shutdown");
 	}
 	else if (dohalt) {
-		execle(_PATH_HALT, "halt", "-l", nosync, NULL, NULL);
+		if (dopower) {
+			execle(_PATH_HALT, "halt", "-l", "-p", nosync, NULL,
+				NULL);
+		} else {
+			execle(_PATH_HALT, "halt", "-l", nosync, NULL, NULL);
+		}
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
 		perror("shutdown");
 	}
@@ -502,6 +515,6 @@ badtime()
 void
 usage()
 {
-	fprintf(stderr, "usage: shutdown [-fhknr] shutdowntime [ message ]\n");
+	fprintf(stderr, "usage: shutdown [-fhknpr] shutdowntime [ message ]\n");
 	exit(1);
 }
