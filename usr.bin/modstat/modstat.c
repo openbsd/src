@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modstat.c,v 1.1.1.1 1995/10/18 08:45:48 deraadt Exp $
+ *	$Id: modstat.c,v 1.2 1996/06/21 11:40:09 mickey Exp $
  */
 
 #include <stdio.h>
@@ -71,11 +71,13 @@ dostat(devfd, modnum, modname)
 	char *modname;
 {
 	struct lmc_stat	sbuf;
+	char name[MAXLKMNAME] = "";
+
+	sbuf.id = modnum;
+	sbuf.name = name;
 
 	if (modname != NULL)
 		strcpy(sbuf.name, modname);
-
-	sbuf.id = modnum;
 
 	if (ioctl(devfd, LMSTAT, &sbuf) == -1) {
 		switch (errno) {
@@ -92,7 +94,7 @@ dostat(devfd, modnum, modname)
 	/*
 	 * Decode this stat buffer...
 	 */
-	printf("%-7s %3d %3d %08x %04x %8x %3d %s\n",
+	printf("%-7s %3d %3d %08x %04x %8x %3d s\n",
 	    type_names[sbuf.type],
 	    sbuf.id,		/* module id */
 	    sbuf.offset,	/* offset into modtype struct */
