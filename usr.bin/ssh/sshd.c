@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.138 2000/12/12 22:30:02 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.139 2000/12/15 17:30:14 provos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1428,6 +1428,10 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 		fatal("Unsupported hostkey type %d", kex->hostkey_type);
 
 /* KEXDH */
+	/* generate DH key */
+	dh = dh_new_group1();			/* XXX depends on 'kex' */
+	dh_gen_key(dh);
+
 	debug("Wait SSH2_MSG_KEXDH_INIT.");
 	packet_read_expect(&payload_len, SSH2_MSG_KEXDH_INIT);
 
@@ -1443,9 +1447,6 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	fprintf(stderr, "\n");
 	debug("bits %d", BN_num_bits(dh_client_pub));
 #endif
-
-	/* generate DH key */
-	dh = dh_new_group1();			/* XXX depends on 'kex' */
 
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "\np= ");
@@ -1567,6 +1568,10 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	packet_put_bignum2(dh->g);
 	packet_send();
 	packet_write_wait();
+
+	/* Compute our exchange value in parallel with the client */
+
+	dh_gen_key(dh);
 
 	debug("Wait SSH2_MSG_KEX_DH_GEX_INIT.");
 	packet_read_expect(&payload_len, SSH2_MSG_KEX_DH_GEX_INIT);
