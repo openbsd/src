@@ -1,7 +1,7 @@
 /* Header file for command-reading library command.c.
 
    Copyright 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1999,
-   2000, 2002 Free Software Foundation, Inc.
+   2000, 2002, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -153,14 +153,15 @@ extern void execute_cmd_pre_hook (struct cmd_list_element *cmd);
 extern void execute_cmd_post_hook (struct cmd_list_element *cmd);
 
 /* Return the type of the command.  */
-/* NOTE: cagney/2002-03-17: The add_show_from_set() function clones
-   the set command passed as a parameter.  The clone operation will
-   include (BUG?) any ``set'' command callback, if present.  Commands
-   like ``info set'' call all the ``show'' command callbacks.
-   Unfortunately, for ``show'' commands cloned from ``set'', this
-   includes callbacks belonging to ``set'' commands.  Making this
-   worse, this only occures if add_show_from_set() is called after
-   add_cmd_sfunc() (BUG?).  */
+/* NOTE: cagney/2002-03-17: The deprecated_add_show_from_set()
+   function clones the set command passed as a parameter.  The clone
+   operation will include (BUG?) any ``set'' command callback, if
+   present.  Commands like ``info set'' call all the ``show'' command
+   callbacks.  Unfortunately, for ``show'' commands cloned from
+   ``set'', this includes callbacks belonging to ``set'' commands.
+   Making this worse, this only occures if
+   deprecated_add_show_from_set() is called after add_cmd_sfunc()
+   (BUG?).  */
 extern enum cmd_types cmd_type (struct cmd_list_element *cmd);
 
 
@@ -210,26 +211,6 @@ extern void help_list (struct cmd_list_element *, char *,
 extern void help_cmd_list (struct cmd_list_element *, enum command_class,
 			   char *, int, struct ui_file *);
 
-extern void add_setshow_cmd (char *name,
-			     enum command_class class,
-			     var_types var_type, void *var,
-			     char *set_doc, char *show_doc,
-			     cmd_sfunc_ftype *set_func,
-			     cmd_sfunc_ftype *show_func,
-			     struct cmd_list_element **set_list,
-			     struct cmd_list_element **show_list);
-
-extern void add_setshow_cmd_full (char *name,
-				  enum command_class class,
-				  var_types var_type, void *var,
-				  char *set_doc, char *show_doc,
-				  cmd_sfunc_ftype *set_func,
-				  cmd_sfunc_ftype *show_func,
-				  struct cmd_list_element **set_list,
-				  struct cmd_list_element **show_list,
-				  struct cmd_list_element **set_result,
-				  struct cmd_list_element **show_result);
-
 extern struct cmd_list_element *add_set_cmd (char *name, enum
 					     command_class class,
 					     var_types var_type, void *var,
@@ -246,7 +227,10 @@ extern struct cmd_list_element *add_set_enum_cmd (char *name,
 extern void add_setshow_auto_boolean_cmd (char *name,
 					  enum command_class class,
 					  enum auto_boolean *var,
-					  char *set_doc, char *show_doc,
+					  const char *set_doc,
+					  const char *show_doc,
+					  const char *help_doc,
+					  const char *print,
 					  cmd_sfunc_ftype *set_func,
 					  cmd_sfunc_ftype *show_func,
 					  struct cmd_list_element **set_list,
@@ -255,26 +239,63 @@ extern void add_setshow_auto_boolean_cmd (char *name,
 extern void add_setshow_boolean_cmd (char *name,
 				     enum command_class class,
 				     int *var,
-				     char *set_doc,
-				     char *show_doc,
+				     const char *set_doc, const char *show_doc,
+				     const char *help_doc, const char *print,
 				     cmd_sfunc_ftype *set_func,
 				     cmd_sfunc_ftype *show_func,
 				     struct cmd_list_element **set_list,
 				     struct cmd_list_element **show_list);
 
-extern void add_setshow_uinteger_cmd (char *name,
+extern void add_setshow_filename_cmd (char *name,
 				      enum command_class class,
-				      unsigned int *var,
-				      char *set_doc,
-				      char *show_doc,
+				      char **var,
+				      const char *set_doc,
+				      const char *show_doc,
+				      const char *help_doc,
+				      const char *print,
 				      cmd_sfunc_ftype *set_func,
 				      cmd_sfunc_ftype *show_func,
 				      struct cmd_list_element **set_list,
 				      struct cmd_list_element **show_list);
 
-extern struct cmd_list_element *add_show_from_set (struct cmd_list_element *,
-						   struct cmd_list_element
-						   **);
+extern void add_setshow_string_cmd (char *name,
+				    enum command_class class,
+				    char **var,
+				    const char *set_doc,
+				    const char *show_doc,
+				    const char *help_doc,
+				    const char *print,
+				    cmd_sfunc_ftype *set_func,
+				    cmd_sfunc_ftype *show_func,
+				    struct cmd_list_element **set_list,
+				    struct cmd_list_element **show_list);
+
+extern void add_setshow_uinteger_cmd (char *name,
+				      enum command_class class,
+				      unsigned int *var,
+				      const char *set_doc,
+				      const char *show_doc,
+				      const char *help_doc,
+				      const char *print,
+				      cmd_sfunc_ftype *set_func,
+				      cmd_sfunc_ftype *show_func,
+				      struct cmd_list_element **set_list,
+				      struct cmd_list_element **show_list);
+
+extern void add_setshow_zinteger_cmd (char *name,
+				      enum command_class class,
+				      int *var,
+				      const char *set_doc,
+				      const char *show_doc,
+				      const char *help_doc,
+				      const char *print,
+				      cmd_sfunc_ftype *set_func,
+				      cmd_sfunc_ftype *show_func,
+				      struct cmd_list_element **set_list,
+				      struct cmd_list_element **show_list);
+
+extern struct cmd_list_element *deprecated_add_show_from_set (struct cmd_list_element *,
+							      struct cmd_list_element **);
 
 /* Do a "show" command for each thing on a command list.  */
 

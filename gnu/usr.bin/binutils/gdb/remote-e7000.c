@@ -1,7 +1,7 @@
 /* Remote debugging interface for Renesas E7000 ICE, for GDB
 
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2004 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support. 
 
@@ -362,7 +362,7 @@ get_hex_regs (int n, int regno)
       val = 0;
       for (j = 0; j < 8; j++)
 	val = (val << 4) + get_hex_digit (j == 0);
-      supply_register (regno++, (char *) &val);
+      regcache_raw_supply (current_regcache, regno++, (char *) &val);
     }
 }
 #endif
@@ -371,7 +371,8 @@ get_hex_regs (int n, int regno)
    user types "run" after having attached.  */
 
 static void
-e7000_create_inferior (char *execfile, char *args, char **env)
+e7000_create_inferior (char *execfile, char *args, char **env,
+		       int from_tty)
 {
   int entry_pt;
 
@@ -629,7 +630,7 @@ e7000_start_remote (void *dummy)
   flush_cached_frames ();
   registers_changed ();
   stop_pc = read_pc ();
-  print_stack_frame (get_selected_frame (), -1, 1);
+  print_stack_frame (get_selected_frame (), 0, SRC_AND_LOC);
 
   return 1;
 }
@@ -878,9 +879,9 @@ fetch_regs_from_dump (int (*nextchar) (), char *want)
 		internal_error (__FILE__, __LINE__, "failed internal consistency check");
 	    }
 	  store_signed_integer (buf,
-				DEPRECATED_REGISTER_RAW_SIZE (regno),
+				register_size (current_gdbarch, regno),
 				(LONGEST) get_hex (&thischar));
-	  supply_register (regno, buf);
+	  regcache_raw_supply (current_regcache, regno, buf);
 	  break;
 	}
     }
@@ -925,7 +926,7 @@ e7000_fetch_registers (void)
     {
       int buf = 0;
 
-      supply_register (regno, (char *) (&buf));
+      regcache_raw_supply (current_regcache, regno, (char *) (&buf));
     }
 }
 
@@ -1568,7 +1569,7 @@ e7000_load (char *args, int from_tty)
 	  file_ptr fptr;
 
 	  section_address = bfd_get_section_vma (pbfd, section);
-	  section_size = bfd_get_section_size_before_reloc (section);
+	  section_size = bfd_get_section_size (section);
 
 	  if (!quiet)
 	    printf_filtered ("[Loading section %s at 0x%s (%s bytes)]\n",
@@ -1963,9 +1964,9 @@ sub2_from_pc (void)
   char buf2[200];
 
   store_signed_integer (buf,
-			DEPRECATED_REGISTER_RAW_SIZE (PC_REGNUM),
+			register_size (current_gdbarch, PC_REGNUM),
 			read_register (PC_REGNUM) - 2);
-  supply_register (PC_REGNUM, buf);
+  regcache_raw_supply (current_regcache, PC_REGNUM, buf);
   sprintf (buf2, ".PC %s\r", phex_nz (read_register (PC_REGNUM), 0));
   puts_e7000debug (buf2);
 }
@@ -2063,7 +2064,7 @@ e7000_wait (ptid_t ptid, struct target_waitstatus *status)
   for (regno = NUM_REALREGS; regno < NUM_REGS; regno++)
     {
       int buf = 0;
-      supply_register (regno, (char *) &buf);
+      regcache_raw_supply (current_regcache, regno, (char *) &buf);
     }
 
   stop_reason = why_stop ();
@@ -2149,7 +2150,7 @@ target e7000 foobar";
   e7000_ops.to_fetch_registers = e7000_fetch_register;
   e7000_ops.to_store_registers = e7000_store_register;
   e7000_ops.to_prepare_to_store = e7000_prepare_to_store;
-  e7000_ops.to_xfer_memory = e7000_xfer_inferior_memory;
+  e7000_ops.deprecated_xfer_memory = e7000_xfer_inferior_memory;
   e7000_ops.to_files_info = e7000_files_info;
   e7000_ops.to_insert_breakpoint = e7000_insert_breakpoint;
   e7000_ops.to_remove_breakpoint = e7000_remove_breakpoint;
@@ -2187,8 +2188,9 @@ _initialize_remote_e7000 (void)
   add_com ("drain", class_obscure, e7000_drain_command,
 	   "Drain pending e7000 text buffers.");
 
-  add_show_from_set (add_set_cmd ("usehardbreakpoints", no_class,
-				var_integer, (char *) &use_hard_breakpoints,
-	"Set use of hardware breakpoints for all breakpoints.\n", &setlist),
-		     &showlist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("usehardbreakpoints", no_class,
+		  var_integer, (char *) &use_hard_breakpoints, "\
+Set use of hardware breakpoints for all breakpoints.\n", &setlist),
+     &showlist);
 }

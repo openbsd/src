@@ -10,9 +10,9 @@ modification history
 01a,05jun90,llk  borrowed.
 */
 
-/* Define how to access the structure that the wait system call stores.
-   On many systems, there is a structure defined for this.
-   But on vanilla-ish USG systems there is not.  */
+/* Define how to access the structure that the wait system call
+   stores.  On many systems, there is a structure defined for
+   this.  */
 
 #ifndef HAVE_WAIT_STRUCT
 #define WAITTYPE int

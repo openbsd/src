@@ -462,9 +462,11 @@ const struct language_defn f_language_defn =
   range_check_on,
   type_check_on,
   case_sensitive_off,
+  array_column_major,
   &exp_descriptor_standard,
   f_parse,			/* parser */
   f_error,			/* parser error function */
+  null_post_parser,
   f_printchar,			/* Print character constant */
   f_printstr,			/* function to print string constant */
   f_emit_char,			/* Function to print a single character */
@@ -477,15 +479,13 @@ const struct language_defn f_language_defn =
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   NULL,				/* Language specific symbol demangler */
-  {"", "", "", ""},		/* Binary format info */
-  {"0%o", "0", "o", ""},	/* Octal format info */
-  {"%d", "", "d", ""},		/* Decimal format info */
-  {"0x%x", "0x", "x", ""},	/* Hex format info */
+  NULL,				/* Language specific class_name_from_physname */
   f_op_print_tab,		/* expression operators for printing */
   0,				/* arrays are first-class (not c-style) */
   1,				/* String lower bound */
   &builtin_type_f_character,	/* Type of string elements */
   default_word_break_characters,
+  NULL, /* FIXME: la_language_arch_info.  */
   LANG_MAGIC
 };
 

@@ -41,7 +41,7 @@ i386lynx_saved_pc_after_call (struct frame_info *frame)
   static const unsigned char call_inst[] =
   { 0x9a, 0, 0, 0, 0, 8, 0 };	/* lcall 0x8,0x0 */
 
-  read_memory_nobpt (frame->pc - 7, opcode, 7);
+  deprecated_read_memory_nobpt (frame->pc - 7, opcode, 7);
   if (memcmp (opcode, call_inst, 7) == 0)
     return read_memory_unsigned_integer (read_register (SP_REGNUM) + 4, 4);
 

@@ -2,5 +2,5 @@
 
 XM_CLIBS= -lbsd
 
-NAT_FILE= nm-i386lynx.h
+NAT_FILE= config/nm-lynx.h
 NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o lynx-nat.o

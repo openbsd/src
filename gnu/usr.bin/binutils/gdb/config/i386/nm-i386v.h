@@ -32,7 +32,10 @@
 #define REGISTER_U_ADDR(addr, blockend, regnum) \
   (addr) = register_u_addr ((blockend), (regnum))
 extern CORE_ADDR register_u_addr (CORE_ADDR blockend, int regnum);
-
+
+/* This is the amount to subtract from u.u_ar0
+   to get the offset in the core file of the register values.  */
+#define KERNEL_U_ADDR 0xe0000000
 
 /* Number of traps that happen between exec'ing the shell to run an
    inferior, and when we finally get to the inferior code.  This is 2

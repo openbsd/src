@@ -49,12 +49,6 @@ int display_time;
 
 int display_space;
 
-/* Whether this is the async version or not.  The async version is
-   invoked on the command line with the -nw --async options.  In this
-   version, the usual command_loop is substituted by and event loop which
-   processes UI events asynchronously. */
-int event_loop_p = 1;
-
 /* The selected interpreter.  This will be used as a set command
    variable, so it should always be malloc'ed - since
    do_setshow_command will free it. */
@@ -163,9 +157,6 @@ captured_main (void *data)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
-  /* This needs to happen before the first use of malloc.  */
-  init_malloc (NULL);
-
 #ifdef HAVE_SBRK
   lim_at_start = (char *) sbrk (0);
 #endif
@@ -253,8 +244,6 @@ captured_main (void *data)
     };
     static struct option long_options[] =
     {
-      {"async", no_argument, &event_loop_p, 1},
-      {"noasync", no_argument, &event_loop_p, 0},
 #if defined(TUI)
       {"tui", no_argument, 0, OPT_TUI},
 #endif
@@ -527,7 +516,7 @@ extern int gdbtk_test (char *);
   }
 
   /* Initialize all files.  Give the interpreter a chance to take
-     control of the console via the init_ui_hook()) */
+     control of the console via the deprecated_init_ui_hook().  */
   gdb_init (argv[0]);
 
   /* Do these (and anything which might call wrap_here or *_filtered)
@@ -737,6 +726,13 @@ extern int gdbtk_test (char *);
 
   if (batch)
     {
+      if (attach_flag)
+	/* Either there was a problem executing the command in the
+	   batch file aborted early, or the batch file forgot to do an
+	   explicit detach.  Explicitly detach the inferior ensuring
+	   that there are no zombies.  */
+	target_detach (NULL, 0);
+      
       /* We have hit the end of the batch file.  */
       exit (0);
     }
@@ -779,10 +775,10 @@ extern int gdbtk_test (char *);
 	  /* GUIs generally have their own command loop, mainloop, or whatever.
 	     This is a good place to gain control because many error
 	     conditions will end up here via longjmp(). */
-	  if (command_loop_hook)
-	    command_loop_hook ();
+	  if (deprecated_command_loop_hook)
+	    deprecated_command_loop_hook ();
 	  else
-	    command_loop ();
+	    deprecated_command_loop ();
 	  quit_command ((char *) 0, instream == stdin);
 	}
     }

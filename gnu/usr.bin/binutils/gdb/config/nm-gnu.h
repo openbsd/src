@@ -30,14 +30,12 @@
 extern char *gnu_target_pid_to_str (int pid);
 
 /* Before storing, we need to read all the registers.  */
-#define CHILD_PREPARE_TO_STORE() deprecated_read_register_bytes (0, NULL, DEPRECATED_REGISTER_BYTES)
+#define CHILD_PREPARE_TO_STORE() deprecated_read_register_bytes (0, NULL, deprecated_register_bytes ())
 
 /* Don't do wait_for_inferior on attach.  */
 #define ATTACH_NO_WAIT
 
 /* Use SVR4 style shared library support */
-#define SVR4_SHARED_LIBS
 #include "solib.h"
-#define NO_CORE_OPS
 
 #endif /* __NM_GNU_H__ */

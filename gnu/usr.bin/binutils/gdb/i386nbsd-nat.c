@@ -22,8 +22,10 @@
 #include "defs.h"
 #include "gdbcore.h"
 #include "regcache.h"
+#include "target.h"
 
 #include "i386-tdep.h"
+#include "i386bsd-nat.h"
 
 /* Support for debugging kernel virtual memory images.  */
 
@@ -77,6 +79,9 @@ void _initialize_i386nbsd_nat (void);
 void
 _initialize_i386nbsd_nat (void)
 {
+  /* We've got nothing to add to the common *BSD/i386 target.  */
+  add_target (i386bsd_target ());
+
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386nbsd_supply_pcb);
 }

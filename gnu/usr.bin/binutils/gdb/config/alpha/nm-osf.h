@@ -29,10 +29,6 @@
 
 #define U_REGS_OFFSET 0
 
-/* FIXME: Shouldn't the default definition in inferior.h be int* ? */
-
-#define PTRACE_ARG3_TYPE int*
-
 /* ptrace transfers longs, the ptrace man page is lying.  */
 
 #define PTRACE_XFER_TYPE long

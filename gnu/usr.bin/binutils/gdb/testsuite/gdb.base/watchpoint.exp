@@ -374,31 +374,8 @@ proc test_stepping {} {
 	gdb_test "break func2 if 0" "Breakpoint.*at.*"
 	gdb_test "p \$func2_breakpoint_number = \$bpnum" " = .*"
 
-	# The problem is that GDB confuses stepping through the call
-	# dummy with hitting the breakpoint at the end of the call dummy.
-	# Will be fixed once all architectures define 
-	# DEPRECATED_CALL_DUMMY_BREAKPOINT_OFFSET.
-	setup_xfail "*-*-*"
-	# This doesn't occur if the call dummy starts with a call,
-	# because we are out of the dummy by the first time the inferior
-	# stops.
-	clear_xfail "arm*-*-*"
-	clear_xfail "xscale*-*-*"
-	clear_xfail "d10v*-*-*"
-	clear_xfail "m68*-*-*"
-	clear_xfail "i*86*-*-*"
-	clear_xfail "vax-*-*"
-	# The following architectures define DEPRECATED_CALL_DUMMY_BREAKPOINT_OFFSET.
-	clear_xfail "alpha-*-*"
-	clear_xfail "mips*-*-*"
-	clear_xfail "sparc-*-*"
-	clear_xfail "hppa*-*-*bsd*"
-	# It works with the generic inferior function calling code too.
-	clear_xfail "mn10300*-*-*"
-	# The following architectures define CALL_DUMMY_HAS_COMPLETED.
-	clear_xfail "hppa*-*-*hpux*"
 	gdb_test "p func1 ()" "= 73" \
-	"calling function with watchpoint enabled"
+	    "calling function with watchpoint enabled"
 
 	# 
 	# "finish" brings us back to main.

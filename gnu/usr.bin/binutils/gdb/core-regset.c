@@ -115,5 +115,5 @@ extern void _initialize_core_regset (void);
 void
 _initialize_core_regset (void)
 {
-  add_core_fns (&regset_core_fns);
+  deprecated_add_core_fns (&regset_core_fns);
 }

@@ -313,7 +313,7 @@ fetch_inferior_registers (int regno)
 	ptrace_fun = regno == SP_REGNUM ? PTRACE_PEEKUSP : PTRACE_PEEKTHREAD;
 #endif
 	
-	for (i = 0; i < DEPRECATED_REGISTER_RAW_SIZE (regno); i += sizeof (int))
+	for (i = 0; i < register_size (current_gdbarch, regno); i += sizeof (int))
 	  {
 	    unsigned int reg;
 	    
@@ -325,7 +325,7 @@ fetch_inferior_registers (int regno)
 	    
 	    *(int *) &buf[i] = reg;
 	  }
-	supply_register (regno, buf);
+	regcache_raw_supply (current_regcache, regno, buf);
       }
   }
 }
@@ -362,7 +362,7 @@ store_inferior_registers (int regno)
       ptrace_fun = regno == SP_REGNUM ? PTRACE_POKEUSP : PTRACE_POKEUSER;
 #endif
 
-      for (i = 0; i < DEPRECATED_REGISTER_RAW_SIZE (regno); i += sizeof (int))
+      for (i = 0; i < register_size (current_gdbarch, regno); i += sizeof (int))
 	{
 	  unsigned int reg;
 
@@ -593,8 +593,8 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size, int which,
 
   for (regno = 0; regno < NUM_REGS; regno++)
     if (regmap[regno] != -1)
-      supply_register (regno, core_reg_sect + offsetof (st_t, ec)
-		       + regmap[regno]);
+      regcache_raw_supply (current_regcache, regno,
+			   core_reg_sect + offsetof (st_t, ec) + regmap[regno]);
 
 #ifdef SPARC
 /* Fetching this register causes all of the I & L regs to be read from the
@@ -620,5 +620,5 @@ static struct core_fns lynx_core_fns =
 void
 _initialize_core_lynx (void)
 {
-  add_core_fns (&lynx_core_fns);
+  deprecated_add_core_fns (&lynx_core_fns);
 }

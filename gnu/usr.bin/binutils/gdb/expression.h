@@ -378,6 +378,8 @@ struct expression
 
 extern struct expression *parse_expression (char *);
 
+extern struct expression *parse_expression_in_context (char *, int);
+
 extern struct expression *parse_exp_1 (char **, struct block *, int);
 
 /* The innermost context required by the stack and register variables

@@ -1,3 +1,2 @@
-# Target: DEC VAX running BSD or Ultrix
+# Target: VAX running 4.2BSD or Ultrix
 TDEPFILES= vax-tdep.o
-TM_FILE= tm-vaxbsd.h

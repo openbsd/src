@@ -62,8 +62,9 @@ extern void serial_un_fdopen (struct serial *scb);
 enum serial_rc {
   SERIAL_ERROR = -1,	/* General error. */
   SERIAL_TIMEOUT = -2,	/* Timeout or data-not-ready during read.
-			   Unfortunately, through ui_loop_hook(), this
-			   can also be a QUIT indication.  */
+			   Unfortunately, through
+			   deprecated_ui_loop_hook(), this can also be
+			   a QUIT indication.  */
   SERIAL_EOF = -3	/* General end-of-file or remote target
 			   connection closed, indication.  Includes
 			   things like the line dropping dead. */

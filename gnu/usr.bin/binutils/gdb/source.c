@@ -1,6 +1,6 @@
 /* List lines of source files for GDB, the GNU debugger.
    Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
-   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -46,15 +46,15 @@
 #include "ui-out.h"
 #include "readline/readline.h"
 
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
 #ifdef CRLF_SOURCE_FILES
 
 /* Define CRLF_SOURCE_FILES in an xm-*.h file if source files on the
    host use \r\n rather than just \n.  Defining CRLF_SOURCE_FILES is
    much faster than defining LSEEK_NOT_LINEAR.  */
-
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 
 #define OPEN_MODE (O_RDONLY | O_BINARY)
 #define FDOPEN_MODE FOPEN_RB
@@ -325,12 +325,12 @@ forget_cached_source_info (void)
 	{
 	  if (s->line_charpos != NULL)
 	    {
-	      xmfree (objfile->md, s->line_charpos);
+	      xfree (s->line_charpos);
 	      s->line_charpos = NULL;
 	    }
 	  if (s->fullname != NULL)
 	    {
-	      xmfree (objfile->md, s->fullname);
+	      xfree (s->fullname);
 	      s->fullname = NULL;
 	    }
 	}
@@ -636,11 +636,17 @@ is_regular_file (const char *name)
 /* Open a file named STRING, searching path PATH (dir names sep by some char)
    using mode MODE and protection bits PROT in the calls to open.
 
-   If TRY_CWD_FIRST, try to open ./STRING before searching PATH.
+   OPTS specifies the function behaviour in specific cases.
+
+   If OPF_TRY_CWD_FIRST, try to open ./STRING before searching PATH.
    (ie pretend the first element of PATH is ".").  This also indicates
    that a slash in STRING disables searching of the path (this is
    so that "exec-file ./foo" or "symbol-file ./foo" insures that you
    get that particular version of foo or an error message).
+
+   If OPTS has OPF_SEARCH_IN_PATH set, absolute names will also be
+   searched in path (we usually want this for source files but not for
+   executables).
 
    If FILENAME_OPENED is non-null, set it to a newly allocated string naming
    the actual file opened (this string will always start with a "/").  We
@@ -654,7 +660,7 @@ is_regular_file (const char *name)
 /*  >>>> This should only allow files of certain types,
     >>>>  eg executable, non-directory */
 int
-openp (const char *path, int try_cwd_first, const char *string,
+openp (const char *path, int opts, const char *string,
        int mode, int prot,
        char **filename_opened)
 {
@@ -668,11 +674,9 @@ openp (const char *path, int try_cwd_first, const char *string,
   if (!path)
     path = ".";
 
-#if defined(_WIN32) || defined(__CYGWIN__)
   mode |= O_BINARY;
-#endif
 
-  if (try_cwd_first || IS_ABSOLUTE_PATH (string))
+  if ((opts & OPF_TRY_CWD_FIRST) || IS_ABSOLUTE_PATH (string))
     {
       int i;
 
@@ -690,10 +694,15 @@ openp (const char *path, int try_cwd_first, const char *string,
 	  fd = -1;
 	}
 
-      for (i = 0; string[i]; i++)
-	if (IS_DIR_SEPARATOR (string[i]))
-	  goto done;
+      if (!(opts & OPF_SEARCH_IN_PATH))
+	for (i = 0; string[i]; i++)
+	  if (IS_DIR_SEPARATOR (string[i]))
+	    goto done;
     }
+
+  /* /foo => foo, to avoid multiple slashes that Emacs doesn't like. */
+  while (IS_DIR_SEPARATOR(string[0]))
+    string++;
 
   /* ./foo => foo */
   while (string[0] == '.' && IS_DIR_SEPARATOR (string[1]))
@@ -741,11 +750,11 @@ openp (const char *path, int try_cwd_first, const char *string,
       strcat (filename, string);
 
       if (is_regular_file (filename))
-      {
-        fd = open (filename, mode);
-        if (fd >= 0)
-          break;
-      }
+	{
+	  fd = open (filename, mode);
+	  if (fd >= 0)
+	    break;
+	}
     }
 
 done:
@@ -765,9 +774,9 @@ done:
 	  /* Beware the // my son, the Emacs barfs, the botch that catch... */
 
 	  char *f = concat (current_directory,
-           IS_DIR_SEPARATOR (current_directory[strlen (current_directory) - 1])
-				     ? "" : SLASH_STRING,
-				     filename, NULL);
+			    IS_DIR_SEPARATOR (current_directory[strlen (current_directory) - 1])
+			    ? "" : SLASH_STRING,
+			    filename, NULL);
 	  *filename_opened = xfullpath (f);
 	  xfree (f);
 	}
@@ -787,14 +796,14 @@ done:
    If the file was found, this function returns 1, and FULL_PATHNAME is
    set to the fully-qualified pathname.
 
-   Else, this functions returns 0, and FULL_PATHNAME is set to NULL.
- */
+   Else, this functions returns 0, and FULL_PATHNAME is set to NULL.  */
 int
 source_full_path_of (char *filename, char **full_pathname)
 {
   int fd;
 
-  fd = openp (source_path, 1, filename, O_RDONLY, 0, full_pathname);
+  fd = openp (source_path, OPF_TRY_CWD_FIRST | OPF_SEARCH_IN_PATH, filename,
+	      O_RDONLY, 0, full_pathname);
   if (fd < 0)
     {
       *full_pathname = NULL;
@@ -805,30 +814,46 @@ source_full_path_of (char *filename, char **full_pathname)
   return 1;
 }
 
+/* This function is capable of finding the absolute path to a
+   source file, and opening it, provided you give it an 
+   OBJFILE and FILENAME. Both the DIRNAME and FULLNAME are only
+   added suggestions on where to find the file. 
 
-/* Open a source file given a symtab S.  Returns a file descriptor or
-   negative number for error.  */
+   OBJFILE should be the objfile associated with a psymtab or symtab. 
+   FILENAME should be the filename to open.
+   DIRNAME is the compilation directory of a particular source file.
+           Only some debug formats provide this info.
+   FULLNAME can be the last known absolute path to the file in question.
 
+   On Success 
+     A valid file descriptor is returned. ( the return value is positive )
+     FULLNAME is set to the absolute path to the file just opened.
+
+   On Failure
+     A non valid file descriptor is returned. ( the return value is negitive ) 
+     FULLNAME is set to NULL.  */
 int
-open_source_file (struct symtab *s)
+find_and_open_source (struct objfile *objfile,
+		      const char *filename,
+		      const char *dirname,
+		      char **fullname)
 {
   char *path = source_path;
   const char *p;
   int result;
-  char *fullname;
 
   /* Quick way out if we already know its full name */
-  if (s->fullname)
+  if (*fullname)
     {
-      result = open (s->fullname, OPEN_MODE);
+      result = open (*fullname, OPEN_MODE);
       if (result >= 0)
 	return result;
       /* Didn't work -- free old one, try again. */
-      xmfree (s->objfile->md, s->fullname);
-      s->fullname = NULL;
+      xfree (*fullname);
+      *fullname = NULL;
     }
 
-  if (s->dirname != NULL)
+  if (dirname != NULL)
     {
       /* Replace a path entry of  $cdir  with the compilation directory name */
 #define	cdir_len	5
@@ -841,61 +866,106 @@ open_source_file (struct symtab *s)
 	  int len;
 
 	  path = (char *)
-	    alloca (strlen (source_path) + 1 + strlen (s->dirname) + 1);
+	    alloca (strlen (source_path) + 1 + strlen (dirname) + 1);
 	  len = p - source_path;
 	  strncpy (path, source_path, len);	/* Before $cdir */
-	  strcpy (path + len, s->dirname);	/* new stuff */
+	  strcpy (path + len, dirname);	/* new stuff */
 	  strcat (path + len, source_path + len + cdir_len);	/* After $cdir */
 	}
     }
 
-  result = openp (path, 0, s->filename, OPEN_MODE, 0, &s->fullname);
+  result = openp (path, OPF_SEARCH_IN_PATH, filename, OPEN_MODE, 0, fullname);
   if (result < 0)
     {
       /* Didn't work.  Try using just the basename. */
-      p = lbasename (s->filename);
-      if (p != s->filename)
-	result = openp (path, 0, p, OPEN_MODE, 0, &s->fullname);
+      p = lbasename (filename);
+      if (p != filename)
+	result = openp (path, OPF_SEARCH_IN_PATH, p, OPEN_MODE, 0, fullname);
     }
 
   if (result >= 0)
     {
-      fullname = s->fullname;
-      s->fullname = mstrsave (s->objfile->md, s->fullname);
-      xfree (fullname);
+      char *tmp_fullname;
+      tmp_fullname = *fullname;
+      *fullname = xstrdup (tmp_fullname);
+      xfree (tmp_fullname);
     }
   return result;
 }
 
-/* Return the path to the source file associated with symtab.  Returns NULL
-   if no symtab.  */
+/* Open a source file given a symtab S.  Returns a file descriptor or
+   negative number for error.  
+   
+   This function is a convience function to find_and_open_source. */
 
-char *
-symtab_to_filename (struct symtab *s)
+int
+open_source_file (struct symtab *s)
 {
-  int fd;
+  if (!s)
+    return -1;
+
+  return find_and_open_source (s->objfile, s->filename, s->dirname, 
+			       &s->fullname);
+}
+
+/* Finds the fullname that a symtab represents.
+
+   If this functions finds the fullname, it will save it in ps->fullname
+   and it will also return the value.
+
+   If this function fails to find the file that this symtab represents,
+   NULL will be returned and ps->fullname will be set to NULL.  */
+char *
+symtab_to_fullname (struct symtab *s)
+{
+  int r;
 
   if (!s)
     return NULL;
 
-  /* If we've seen the file before, just return fullname. */
+  /* Don't check s->fullname here, the file could have been 
+     deleted/moved/..., look for it again */
+  r = find_and_open_source (s->objfile, s->filename, s->dirname,
+			    &s->fullname);
 
-  if (s->fullname)
-    return s->fullname;
+  if (r)
+    {
+      close (r);
+      return s->fullname;
+    }
 
-  /* Try opening the file to setup fullname */
+  return NULL;
+}
 
-  fd = open_source_file (s);
-  if (fd < 0)
-    return s->filename;		/* File not found.  Just use short name */
+/* Finds the fullname that a partial_symtab represents.
 
-  /* Found the file.  Cleanup and return the full name */
+   If this functions finds the fullname, it will save it in ps->fullname
+   and it will also return the value.
 
-  close (fd);
-  return s->fullname;
+   If this function fails to find the file that this partial_symtab represents,
+   NULL will be returned and ps->fullname will be set to NULL.  */
+char *
+psymtab_to_fullname (struct partial_symtab *ps)
+{
+  int r;
+
+  if (!ps)
+    return NULL;
+
+  /* Don't check ps->fullname here, the file could have been
+     deleted/moved/..., look for it again */
+  r = find_and_open_source (ps->objfile, ps->filename, ps->dirname,
+			    &ps->fullname);
+
+  if (r) 
+    {
+      close (r);
+      return ps->fullname;
+    }
+
+  return NULL;
 }
 
-
 /* Create and initialize the table S->line_charpos that records
    the positions of the lines in the source file, which is assumed
    to be open on descriptor DESC.
@@ -912,8 +982,7 @@ find_source_lines (struct symtab *s, int desc)
   long mtime = 0;
   int size;
 
-  line_charpos = (int *) xmmalloc (s->objfile->md,
-				   lines_allocated * sizeof (int));
+  line_charpos = (int *) xmalloc (lines_allocated * sizeof (int));
   if (fstat (desc, &st) < 0)
     perror_with_name (s->filename);
 
@@ -943,8 +1012,8 @@ find_source_lines (struct symtab *s, int desc)
 	      {
 		lines_allocated *= 2;
 		line_charpos =
-		  (int *) xmrealloc (s->objfile->md, (char *) line_charpos,
-				     sizeof (int) * lines_allocated);
+		  (int *) xrealloc ((char *) line_charpos,
+				    sizeof (int) * lines_allocated);
 	      }
 	    line_charpos[nlines++] = lseek (desc, 0, SEEK_CUR);
 	  }
@@ -981,8 +1050,8 @@ find_source_lines (struct symtab *s, int desc)
 	      {
 		lines_allocated *= 2;
 		line_charpos =
-		  (int *) xmrealloc (s->objfile->md, (char *) line_charpos,
-				     sizeof (int) * lines_allocated);
+		  (int *) xrealloc ((char *) line_charpos,
+				    sizeof (int) * lines_allocated);
 	      }
 	    line_charpos[nlines++] = p - data;
 	  }
@@ -992,8 +1061,7 @@ find_source_lines (struct symtab *s, int desc)
 #endif /* lseek linear.  */
   s->nlines = nlines;
   s->line_charpos =
-    (int *) xmrealloc (s->objfile->md, (char *) line_charpos,
-		       nlines * sizeof (int));
+    (int *) xrealloc ((char *) line_charpos, nlines * sizeof (int));
 
 }
 
@@ -1587,7 +1655,7 @@ The matching line number is also stored as the value of \"$_\".");
       add_com_alias ("?", "reverse-search", class_files, 0);
     }
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("listsize", class_support, var_uinteger,
 		  (char *) &lines_to_list,
 		  "Set number of source lines gdb will list by default.",

@@ -3,7 +3,7 @@
  ******************************************************************************
  *
  * COPYRIGHT (C) by EMC Corporation, 1997 All rights reserved.
- * $Id: gdb_c_test.c,v 1.2 2004/05/21 20:23:43 kettenis Exp $
+ * $Id: gdb_c_test.c,v 1.3 2004/12/27 14:01:00 kettenis Exp $
  * DESCRIPTION: This module has been provided for the purpose of testing GDB.
  *
  * NOTES:
@@ -513,7 +513,7 @@ ULONG   gdb_c_test( ULONG *parm )
    end_of_stack = 
      (unsigned long) &stack_ptr + sizeof(stack_ptr) + sizeof(end_of_stack) - 1;
 
-   printp ("\n$Id: gdb_c_test.c,v 1.2 2004/05/21 20:23:43 kettenis Exp $\n");
+   printp ("\n$Id: gdb_c_test.c,v 1.3 2004/12/27 14:01:00 kettenis Exp $\n");
 
    printp( "%s: arguments = %X, %X, %X, %X, %X, %X\n",
            p, parm[ 1 ], parm[ 2 ], parm[ 3 ], parm[ 4 ], parm[ 5 ], parm[ 6 ] );

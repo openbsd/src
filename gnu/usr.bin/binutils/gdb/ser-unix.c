@@ -99,8 +99,6 @@ static void reschedule (struct serial *scb);
 
 void _initialize_ser_hardwire (void);
 
-extern int (*ui_loop_hook) (int);
-
 /* Open up a real live device for serial I/O */
 
 static int
@@ -580,11 +578,12 @@ do_hardwire_readchar (struct serial *scb, int timeout)
       /* N.B. The UI may destroy our world (for instance by calling
          remote_stop,) in which case we want to get out of here as
          quickly as possible.  It is not safe to touch scb, since
-         someone else might have freed it.  The ui_loop_hook signals that 
-         we should exit by returning 1. */
+         someone else might have freed it.  The
+         deprecated_ui_loop_hook signals that we should exit by
+         returning 1.  */
 
-      if (ui_loop_hook)
-	detach = ui_loop_hook (0);
+      if (deprecated_ui_loop_hook)
+	detach = deprecated_ui_loop_hook (0);
 
       if (detach)
 	return SERIAL_TIMEOUT;
@@ -959,12 +958,13 @@ do_unix_readchar (struct serial *scb, int timeout)
       /* N.B. The UI may destroy our world (for instance by calling
          remote_stop,) in which case we want to get out of here as
          quickly as possible.  It is not safe to touch scb, since
-         someone else might have freed it.  The ui_loop_hook signals that 
-         we should exit by returning 1. */
+         someone else might have freed it.  The
+         deprecated_ui_loop_hook signals that we should exit by
+         returning 1.  */
 
-      if (ui_loop_hook)
+      if (deprecated_ui_loop_hook)
 	{
-	  if (ui_loop_hook (0))
+	  if (deprecated_ui_loop_hook (0))
 	    return SERIAL_TIMEOUT;
 	}
 

@@ -42,10 +42,70 @@ AC_CANONICAL_SYSTEM
 # 2.5x.
 AC_CHECK_TOOL(RANLIB, ranlib, :)
 
+dnl List of object files and targets accumulated by configure.
+
+CONFIG_OBS=
+CONFIG_DEPS=
+CONFIG_SRCS=
+ENABLE_CFLAGS=
+
+CONFIG_ALL=
+CONFIG_CLEAN=
+CONFIG_INSTALL=
+CONFIG_UNINSTALL=
+
 dnl Set up for gettext.  PACKAGE is used when we call bindtextdomain.
-ALL_LINGUAS=
+
 CY_GNU_GETTEXT
-AC_DEFINE(PACKAGE, "gdb", [Name of this package. ])
+
+localedir='${datadir}/locale'
+AC_SUBST(localedir)
+
+if test "x$POSUB" != x; then
+
+  dnl Lifted from GCC's config/gettext.m4.
+  AC_MSG_CHECKING(for catalogs to be installed)
+  # Look for .po and .gmo files in the source directory.
+  CATALOGS=  AC_SUBST(CATALOGS)
+  XLINGUAS=
+  for cat in $srcdir/po/*.gmo $srcdir/po/*.po; do
+    # If there aren't any .gmo files the shell will give us the
+    # literal string "../path/to/srcdir/po/*.gmo" which has to be
+    # weeded out.
+    case "$cat" in *\**)
+      continue;;
+    esac
+    # The quadruple backslash is collapsed to a double backslash
+    # by the backticks, then collapsed again by the double quotes,
+    # leaving us with one backslash in the sed expression (right
+    # before the dot that mustn't act as a wildcard).
+    cat=`echo $cat | sed -e "s!$srcdir/!!" -e "s!\\\\.po!.gmo!"`
+    lang=`echo $cat | sed -e 's!po/!!' -e "s!\\\\.gmo!!"`
+    # The user is allowed to set LINGUAS to a list of languages to
+    # install catalogs for.  If it's empty that means "all of them."
+    if test "x$LINGUAS" = x; then
+      CATALOGS="$CATALOGS $cat"
+      XLINGUAS="$XLINGUAS $lang"
+    else
+      case "$LINGUAS" in *$lang*)
+        CATALOGS="$CATALOGS $cat"
+        XLINGUAS="$XLINGUAS $lang"
+        ;;
+      esac
+    fi
+  done
+  LINGUAS="$XLINGUAS"
+  AC_MSG_RESULT($LINGUAS)
+
+   CONFIG_ALL="$CONFIG_ALL all-po"
+   CONFIG_CLEAN="$CONFIG_CLEAN clean-po"		   
+   CONFIG_INSTALL="$CONFIG_INSTALL install-po"
+   CONFIG_UNINSTALL="$CONFIG_UNINSTALL uninstall-po"
+fi
+
+PACKAGE=gdb
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of this package. ])
+AC_SUBST(PACKAGE)
 
 debugdir=${libdir}/debug
 	 
@@ -56,17 +116,6 @@ AC_ARG_WITH(separate-debug-dir,
 AC_DEFINE_DIR(DEBUGDIR, debugdir,
               [Global directory for separate debug files. ])
 #AC_DEFINE_UNQUOTED(DEBUGDIR, "$debugdir"),
-
-dnl List of object files added by configure.
-
-CONFIG_OBS=
-CONFIG_DEPS=
-CONFIG_SRCS=
-ENABLE_CFLAGS=
-CONFIG_ALL=
-CONFIG_CLEAN=
-CONFIG_INSTALL=
-CONFIG_UNINSTALL=
 
 AC_CONFIG_SUBDIRS(doc testsuite)
 configdirs=
@@ -135,26 +184,6 @@ if test x"$enable_gdbmi" = xyes; then
   fi
 fi
 
-# FIXME: kettenis/20030102: We seem to prefer HP curses (Hcurses) over
-# Xcurses on HP-UX; see the `-D__HP_CURSES' in the relevant host
-# Makefile fragments.  That's why we need to have `Hcurses' before
-# `curses'.  I don't see why we should use HP curses if a more
-# standard curses is available, except that according to HP's
-# documentation one needs to compile `-D_XOPEN_SOURCE_EXTENDED' on
-# HP-UX 10.10 and 10.20.
-
-AC_SEARCH_LIBS(initscr, [ncurses Hcurses curses pdcurses], [],
-    [AC_MSG_WARN([no curses library found])])
-
-# Check whether the wborder function is provided by the curses
-# library detected above.  In certain implementations such as
-# the HP/UX Hcurses for instance, this function is provided by an
-# additional library.  So if we did not find this function inside
-# the curses library, try some alternate libraries we know might
-# provide it.
-AC_SEARCH_LIBS(wborder, [cur_colr], [],
-    [AC_MSG_WARN([wborder function not found, tui will be disabled])])
-
 # Enable TUI.
 AC_ARG_ENABLE(tui,
 [  --enable-tui            enable full-screen terminal user interface (TUI)],
@@ -164,21 +193,6 @@ AC_ARG_ENABLE(tui,
     *)
       AC_MSG_ERROR([bad value $enableval for --enable-tui]) ;;
   esac],enable_tui=yes)
-if test x"$enable_tui" = xyes; then
-  if test -d $srcdir/tui; then
-    if test "$ac_cv_search_initscr" != no -a "$ac_cv_search_wborder" != no; then
-      CONFIG_OBS="$CONFIG_OBS \$(SUBDIR_TUI_OBS)"
-      CONFIG_DEPS="$CONFIG_DEPS \$(SUBDIR_TUI_DEPS)"
-      CONFIG_SRCS="$CONFIG_SRCS \$(SUBDIR_TUI_SRCS)"
-      CONFIG_INITS="$CONFIG_INITS \$(SUBDIR_TUI_INITS)"
-      ENABLE_CFLAGS="$ENABLE_CFLAGS \$(SUBDIR_TUI_CFLAGS)"
-      CONFIG_ALL="${CONFIG_ALL} all-tui"
-      CONFIG_CLEAN="${CONFIG_CLEAN} clean-tui"
-      CONFIG_INSTALL="${CONFIG_INSTALL} install-tui"
-      CONFIG_UNINSTALL="${CONFIG_UNINSTALL} uninstall-tui"
-    fi
-  fi
-fi
 
 # Enable gdbtk.
 AC_ARG_ENABLE(gdbtk,
@@ -303,9 +317,20 @@ AC_SEARCH_LIBS(gethostbyname, nsl)
 # Some systems (e.g. Solaris) have `socketpair' in libsocket.
 AC_SEARCH_LIBS(socketpair, socket)
 
-# Since GDB uses Readline, we need termcap functionality, so we need
-# to find a library that provides that.  When GDB is configured with
-# the TUI, we need full curses functionality.
+# For the TUI, we need enhanced curses functionality.
+#
+# FIXME: kettenis/20040905: We prefer ncurses over the vendor-supplied
+# curses library because the latter might not provide all the
+# functionality we need.  However, this leads to problems on systems
+# where the linker searches /usr/local/lib, but the compiler doesn't
+# search /usr/local/include, if ncurses is installed in /usr/local.  A
+# default installation of ncurses on alpha*-dec-osf* will lead to such
+# a situation.
+AC_SEARCH_LIBS(waddstr, [ncurses cursesX curses])
+
+# Since GDB uses Readline, we need termcap functionality.  In many
+# cases this will be provided by the curses library, but some systems
+# have a seperate termcap library, or no curses library at all.
 
 case $host_os in
   cygwin*)
@@ -316,16 +341,10 @@ case $host_os in
   go32* | *djgpp*)
     ac_cv_search_tgetent="none required"
     ;;
-  aix*)
-    # Readline prefers curses over termcap on AIX.
-    # ??? Why?
-    AC_SEARCH_LIBS(tgetent, [tinfo ncurses curses termcap])
-    ;;
 esac
 
-# Note: We used to check for libtermlib and libterminfo too, but
-# Readline doesn't, so I think we're safe with leaving them out.
-AC_SEARCH_LIBS(tgetent, [termcap tinfo ncurses Hcurses curses])
+# These are the libraries checked by Readline.
+AC_SEARCH_LIBS(tgetent, [termcap tinfo curses ncurses])
 
 if test "$ac_cv_search_tgetent" = no; then
   AC_MSG_ERROR([no termcap library found])
@@ -342,7 +361,7 @@ AC_CHECK_HEADERS(link.h)
 AC_CHECK_HEADERS(machine/reg.h)
 AC_CHECK_HEADERS(nlist.h)
 AC_CHECK_HEADERS(poll.h sys/poll.h)
-AC_CHECK_HEADERS(proc_service.h thread_db.h)
+AC_CHECK_HEADERS(proc_service.h thread_db.h gnu/libc-version.h)
 AC_CHECK_HEADERS(stddef.h)
 AC_CHECK_HEADERS(stdlib.h)
 AC_CHECK_HEADERS(stdint.h)
@@ -358,23 +377,24 @@ AC_CHECK_HEADERS(sys/ptrace.h ptrace.h)
 AC_CHECK_HEADERS(sys/reg.h sys/debugreg.h)
 AC_CHECK_HEADERS(sys/select.h)
 AC_CHECK_HEADERS(sys/syscall.h)
+AC_CHECK_HEADERS(sys/types.h)
 AC_CHECK_HEADERS(sys/user.h)
 AC_CHECK_HEADERS(sys/wait.h wait.h)
 AC_CHECK_HEADERS(termios.h termio.h sgtty.h)
 AC_CHECK_HEADERS(unistd.h)
 
-# On Solaris 2.[78], we need to define _MSE_INT_H to avoid a clash
+# On Solaris 2.[789], we need to define _MSE_INT_H to avoid a clash
 # between <widec.h> and <wchar.h> that would cause AC_CHECK_HEADERS to
 # think that we don't have <curses.h> if we're using GCC.
 case $host_os in
-  solaris2.[[78]])
+  solaris2.[[789]])
     if test "$GCC" = yes; then
       AC_DEFINE(_MSE_INT_H, 1,
         [[Define to 1 to avoid a clash between <widec.h> and <wchar.h> on
-   Solaris 2.[78] when using GCC. ]])
+   Solaris 2.[789] when using GCC. ]])
     fi ;;
 esac
-AC_CHECK_HEADERS(curses.h ncurses.h term.h)
+AC_CHECK_HEADERS(curses.h cursesX.h ncurses.h ncurses/ncurses.h term.h)
 
 # FIXME: kettenis/20030102: In most cases we include these
 # unconditionally, so what's the point in checking these?
@@ -392,6 +412,7 @@ AC_MSG_RESULT($gdb_cv_have_struct_stat_with_st_blocks_member)
 if test $gdb_cv_have_struct_stat_with_st_blocks_member = yes; then
   AC_DEFINE(HAVE_STRUCT_STAT_ST_BLOCKS)
 fi
+
 # ------------------------- #
 # Checks for declarations.  #
 # ------------------------- #
@@ -426,6 +447,71 @@ AC_CHECK_FUNCS(setpgid setpgrp)
 AC_CHECK_FUNCS(sigaction sigprocmask sigsetmask)
 AC_CHECK_FUNCS(socketpair)
 AC_CHECK_FUNCS(syscall)
+AC_CHECK_FUNCS(ttrace)
+AC_CHECK_FUNCS(wborder)
+
+# Check the return and argument types of ptrace.  No canned test for
+# this, so roll our own.
+gdb_ptrace_headers='
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_SYS_PTRACE_H
+# include <sys/ptrace.h>
+#endif
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+'
+# There is no point in checking if we don't have a prototype.
+gcc_AC_CHECK_DECLS(ptrace, , [
+  : ${gdb_cv_func_ptrace_ret='int'}
+  : ${gdb_cv_func_ptrace_args='int,int,long,long'}
+], $gdb_ptrace_headers)
+# Check return type.
+AC_CACHE_CHECK([return type of ptrace], gdb_cv_func_ptrace_ret,
+  AC_TRY_COMPILE($gdb_ptrace_headers,
+    [extern int ptrace ();],
+    gdb_cv_func_ptrace_ret='int',
+    gdb_cv_func_ptrace_ret='long'))
+AC_DEFINE_UNQUOTED(PTRACE_TYPE_RET, $gdb_cv_func_ptrace_ret,
+  [Define as the return type of ptrace.])
+# Check argument types.
+AC_CACHE_CHECK([types of arguments for ptrace], gdb_cv_func_ptrace_args, [
+for gdb_arg1 in 'int' 'long'; do
+ for gdb_arg2 in 'pid_t' 'int' 'long'; do
+  for gdb_arg3 in 'int *' 'caddr_t' 'int' 'long'; do
+   for gdb_arg4 in 'int' 'long'; do
+     AC_TRY_COMPILE($gdb_ptrace_headers, [
+extern $gdb_cv_func_ptrace_ret
+  ptrace ($gdb_arg1, $gdb_arg2, $gdb_arg3, $gdb_arg4);
+], [gdb_cv_func_ptrace_args="$gdb_arg1,$gdb_arg2,$gdb_arg3,$gdb_arg4";
+    break 4;])
+    for gdb_arg5 in 'int *' 'int' 'long'; do
+     AC_TRY_COMPILE($gdb_ptrace_headers, [
+extern $gdb_cv_func_ptrace_ret
+  ptrace ($gdb_arg1, $gdb_arg2, $gdb_arg3, $gdb_arg4, $gdb_arg5);
+], [
+gdb_cv_func_ptrace_args="$gdb_arg1,$gdb_arg2,$gdb_arg3,$gdb_arg4,$gdb_arg5";
+    break 5;])
+    done
+   done
+  done
+ done
+done
+# Provide a safe default value.
+: ${gdb_cv_func_ptrace_args='int,int,long,long'}
+])
+ac_save_IFS=$IFS; IFS=','
+set dummy `echo "$gdb_cv_func_ptrace_args" | sed 's/\*/\*/g'`
+IFS=$ac_save_IFS
+shift
+AC_DEFINE_UNQUOTED(PTRACE_TYPE_ARG3, $[3],
+  [Define to the type of arg 3 for ptrace.])
+if test -n "$[5]"; then
+  AC_DEFINE_UNQUOTED(PTRACE_TYPE_ARG5, $[5],
+    [Define to the type of arg 5 for ptrace.])
+fi
 
 dnl AC_FUNC_SETPGRP does not work when cross compiling
 dnl Instead, assume we will have a prototype for setpgrp if cross compiling.
@@ -486,6 +572,26 @@ AC_ARG_WITH(included-regex,
 if test "$gdb_with_regex" = yes; then
   AC_DEFINE(USE_INCLUDED_REGEX, 1,
     [Define to 1 if the regex included in libiberty should be used.])
+fi
+
+# See if <sys/proc.h> defines `struct thread' with a td_pcb member.
+AC_CACHE_CHECK([for td_pcb in struct thread], gdb_cv_struct_thread_td_pcb,
+[AC_TRY_COMPILE([#include <sys/param.h>
+#include <sys/proc.h>], [struct thread td; td.td_pcb;],
+gdb_cv_struct_thread_td_pcb=yes, gdb_cv_struct_thread_td_pcb=no)])
+if test $gdb_cv_struct_thread_td_pcb = yes; then
+  AC_DEFINE(HAVE_STRUCT_THREAD_TD_PCB, 1,
+            [Define to 1 if your system has td_pcb in struct thread.])
+fi
+
+# See if <sys/lwp.h> defines `struct lwp`.
+AC_CACHE_CHECK([for struct lwp], gdb_cv_struct_lwp,
+[AC_TRY_COMPILE([#include <sys/param.h>
+#include <sys/lwp.h>], [struct lwp l;],
+gdb_cv_struct_lwp=yes, gdb_cv_struct_lwp=no)])
+if test $gdb_cv_struct_lwp = yes; then
+  AC_DEFINE(HAVE_STRUCT_LWP, 1,
+            [Define to 1 if your system has struct lwp.])
 fi
 
 # See if <machine/reg.h> degines `struct reg'.
@@ -621,6 +727,10 @@ if test "${target}" = "${host}"; then
       ;;
   *-*-solaris2.[[6789]])
       AC_DEFINE(NEW_PROC_API)
+      ;;
+  mips-sgi-irix5*)
+      # Work around <sys/proc.h> needing _KMEMUSER problem on IRIX 5.
+      AC_DEFINE([_KMEMUSER], 1)
       ;;
   esac
 fi
@@ -852,6 +962,7 @@ aix*)
 
     LDFLAGS=$LDFLAGS\ $gdb_cv_bigtoc
     AC_TRY_LINK([], [int i;], [], [gdb_cv_bigtoc=])
+    LDFLAGS="${SAVE_LDFLAGS}"
   ])
   CONFIG_LDFLAGS="${CONFIG_LDFLAGS} ${gdb_cv_bigtoc}"
   ;;
@@ -1114,7 +1225,14 @@ WIN32LDAPP=
 AC_SUBST(WIN32LIBS)
 AC_SUBST(WIN32LDAPP)
 
-configdir="unix"
+case "${host}" in
+*-*-cygwin*)
+    configdir="win"
+    ;;
+*)
+    configdir="unix"
+    ;;
+esac
 
 GDBTKLIBS=
 if test "${enable_gdbtk}" = "yes"; then
@@ -1133,14 +1251,7 @@ if test "${enable_gdbtk}" = "yes"; then
 
 	# now look for Tcl library stuff
 
-	case "${host}" in
-	*-*-cygwin*)
-	    tcldir=../tcl/win/
-	    ;;
-	*)
-	    tcldir=../tcl/unix/
-	    ;;
-	esac
+	tcldir="../tcl/${configdir}/"
 
 	TCL_DEPS="${tcldir}${TCL_LIB_FILE}"
 
@@ -1156,14 +1267,7 @@ if test "${enable_gdbtk}" = "yes"; then
 
 	   # now look for Tk library stuff
 
-	   case "${host}" in
-	   *-*-cygwin*)
-	       tkdir=../tk/win/
-	       ;;
-	   *)
-	       tkdir=../tk/unix/
-	       ;;
-	   esac
+	   tkdir="../tk/${configdir}/"
 
 	   TK_DEPS="${tkdir}${TK_LIB_FILE}"
 
@@ -1241,7 +1345,26 @@ AC_SUBST(GDBTK_SRC_DIR)
 
 AC_PATH_X
 
- 
+# Check whether we should enable the TUI, but only do so if we really
+# can.
+if test x"$enable_tui" = xyes; then
+  if test -d $srcdir/tui; then
+    if test "$ac_cv_search_waddstr" != no; then
+      CONFIG_OBS="$CONFIG_OBS \$(SUBDIR_TUI_OBS)"
+      CONFIG_DEPS="$CONFIG_DEPS \$(SUBDIR_TUI_DEPS)"
+      CONFIG_SRCS="$CONFIG_SRCS \$(SUBDIR_TUI_SRCS)"
+      CONFIG_INITS="$CONFIG_INITS \$(SUBDIR_TUI_INITS)"
+      ENABLE_CFLAGS="$ENABLE_CFLAGS \$(SUBDIR_TUI_CFLAGS)"
+      CONFIG_ALL="${CONFIG_ALL} all-tui"
+      CONFIG_CLEAN="${CONFIG_CLEAN} clean-tui"
+      CONFIG_INSTALL="${CONFIG_INSTALL} install-tui"
+      CONFIG_UNINSTALL="${CONFIG_UNINSTALL} uninstall-tui"
+    else
+      AC_MSG_WARN([no enhanced curses library found; disabling TUI])
+    fi
+  fi
+fi
+
 # Unlike the sim directory, whether a simulator is linked is controlled by 
 # presence of a SIM= and a SIM_OBS= definition in the target '.mt' file.  
 # This code just checks for a few cases where we'd like to ignore those
@@ -1286,6 +1409,11 @@ AC_SUBST(CONFIG_CLEAN)
 AC_SUBST(CONFIG_INSTALL)
 AC_SUBST(CONFIG_UNINSTALL)
 
+# List of host floatformats.
+AC_DEFINE_UNQUOTED(GDB_HOST_FLOAT_FORMAT,$gdb_host_float_format,[Host float floatformat])
+AC_DEFINE_UNQUOTED(GDB_HOST_DOUBLE_FORMAT,$gdb_host_double_format,[Host double floatformat])
+AC_DEFINE_UNQUOTED(GDB_HOST_LONG_DOUBLE_FORMAT,$gdb_host_long_double_format,[Host long double floatformat])
+
 # target_subdir is used by the testsuite to find the target libraries.
 target_subdir=
 if test "${host}" != "${target}"; then
@@ -1294,22 +1422,19 @@ fi
 AC_SUBST(target_subdir)
 
 frags=
-host_makefile_frag=${srcdir}/config/${gdb_host_cpu}/${gdb_host}.mh
-if test ! -f ${host_makefile_frag}; then
-    # When building a native debuger the .mh file containing things
-    # like NATDEPFILES is needed.  Cross debuggers don't need .mh
-    # since it no longer contains anything useful.
-    if test "${target}" = "${host}"; then
-	AC_MSG_ERROR("*** Gdb does not support native target ${host}")
-    else
-	host_makefile_frag=/dev/null
-    fi
+if test "${target}" = "${host}"; then
+  host_makefile_frag=${srcdir}/config/${gdb_host_cpu}/${gdb_host}.mh
+  if test ! -f ${host_makefile_frag}; then
+    AC_MSG_ERROR("*** Gdb does not support native target ${host}")
+  fi
+  frags="$frags $host_makefile_frag"
+else
+  host_makefile_frag=/dev/null
 fi
-frags="$frags $host_makefile_frag"
 
 target_makefile_frag=${srcdir}/config/${gdb_target_cpu}/${gdb_target}.mt
 if test ! -f ${target_makefile_frag}; then
-AC_MSG_ERROR("*** Gdb does not support target ${target}")
+  AC_MSG_ERROR("*** Gdb does not support target ${target}")
 fi
 frags="$frags $target_makefile_frag"
 
@@ -1323,7 +1448,7 @@ s/XM_FILE[ 	]*=[ 	]*\([^ 	]*\)/\1/p
 ' ${host_makefile_frag}`
 
 targetfile=`sed -n '
-s/TM_FILE[ 	]*=[ 	]*\([^ 	]*\)/\1/p
+s/DEPRECATED_TM_FILE[ 	]*=[ 	]*\([^ 	]*\)/\1/p
 ' ${target_makefile_frag}`
 
 if test "${target}" = "${host}"; then
@@ -1365,9 +1490,9 @@ fi
 
 AC_CONFIG_SUBDIRS($configdirs)
 
-# If hostfile (XM_FILE) and/or targetfile (TM_FILE) and/or nativefile
-# (NAT_FILE) is not set in config/*/*.m[ht] files, we link to an empty
-# version.
+# If hostfile (XM_FILE) and/or targetfile (DEPRECATED_TM_FILE) and/or
+# nativefile (NAT_FILE) is not set in config/*/*.m[ht] files, we link
+# to an empty version.
 
 files=
 links=
@@ -1376,10 +1501,13 @@ rm -f xm.h
 xm_h=""
 if test "${hostfile}" != ""; then
     xm_h=xm.h
-    GDB_XM_FILE="config/${gdb_host_cpu}/${hostfile}"
+    case "${hostfile}" in
+      xm-*.h ) GDB_XM_FILE="config/${gdb_host_cpu}/${hostfile}" ;;
+      * ) GDB_XM_FILE="${hostfile}"
+    esac
     files="${files} ${GDB_XM_FILE}"
     links="${links} xm.h"
-    AC_DEFINE_UNQUOTED(GDB_XM_FILE, ${GDB_XM_FILE})
+    AC_DEFINE_UNQUOTED(GDB_XM_FILE, "${GDB_XM_FILE}")
 fi
 AC_SUBST(xm_h)
 
@@ -1387,10 +1515,13 @@ rm -f tm.h
 tm_h=""
 if test "${targetfile}" != ""; then
     tm_h=tm.h
-    GDB_TM_FILE="config/${gdb_target_cpu}/${targetfile}"
+    case "${targetfile}" in
+      tm-*.h ) GDB_TM_FILE="config/${gdb_target_cpu}/${targetfile}" ;;
+      * ) GDB_TM_FILE="${targetfile}"
+    esac
     files="${files} ${GDB_TM_FILE}"
     links="${links} tm.h"
-    AC_DEFINE_UNQUOTED(GDB_TM_FILE, ${GDB_TM_FILE})
+    AC_DEFINE_UNQUOTED(GDB_TM_FILE, "${GDB_TM_FILE}")
 fi
 AC_SUBST(tm_h)
 
@@ -1398,10 +1529,13 @@ rm -f nm.h
 nm_h=""
 if test "${nativefile}" != ""; then
     nm_h=nm.h
-    GDB_NM_FILE="config/${gdb_host_cpu}/${nativefile}"
+    case "${nativefile}" in
+      nm-*.h ) GDB_NM_FILE="config/${gdb_host_cpu}/${nativefile}" ;;
+      * ) GDB_NM_FILE="${nativefile}"
+    esac
     files="${files} ${GDB_NM_FILE}"
     links="${links} nm.h"
-    AC_DEFINE_UNQUOTED(GDB_NM_FILE, ${GDB_NM_FILE})
+    AC_DEFINE_UNQUOTED(GDB_NM_FILE, "${GDB_NM_FILE}")
 fi
 AC_SUBST(nm_h)
 
@@ -1427,17 +1561,9 @@ AC_OUTPUT(Makefile .gdbinit:gdbinit.in,
 dnl Autoconf doesn't provide a mechanism for modifying definitions 
 dnl provided by makefile fragments.
 dnl
-if test "${nativefile}" = ""; then
-        < Makefile \
-        sed -e '/^NATDEPFILES[[ 	]]*=.*\\$/,/[[^\\]]$/s/^/# /' \
-            -e '/^NATDEPFILES[[ 	]]*=/s/^/# /' \
-        | sed -e '/^\(NATDEPFILES[[ 	]]*[[+]]=[[ 	]]*\)/s//# \1/' \
-	> Makefile.tem
-mv -f Makefile.tem Makefile
-fi
 
 changequote(,)dnl
-sed -e '/^TM_FILE[ 	]*=/s,^TM_FILE[ 	]*=[ 	]*,&config/'"${gdb_target_cpu}"'/,
+sed -e '/^DEPRECATED_TM_FILE[ 	]*=/s,^DEPRECATED_TM_FILE[ 	]*=[ 	]*,&config/'"${gdb_target_cpu}"'/,
 /^XM_FILE[ 	]*=/s,^XM_FILE[ 	]*=[ 	]*,&config/'"${gdb_host_cpu}"'/,
 /^NAT_FILE[ 	]*=/s,^NAT_FILE[ 	]*=[ 	]*,&config/'"${gdb_host_cpu}"'/,' <Makefile >Makefile.tmp
 mv -f Makefile.tmp Makefile

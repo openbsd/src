@@ -154,9 +154,6 @@
 /* Define if libunwind library is being used.  */
 #undef HAVE_LIBUNWIND
 
-/* Multi-arch enabled. */
-#undef GDB_MULTI_ARCH
-
 /* hostfile */
 #undef GDB_XM_FILE
 
@@ -165,3 +162,9 @@
 
 /* nativefile */
 #undef GDB_NM_FILE
+
+/* Define to 1 so <sys/proc.h> gets a definition of anon_hdl.  Works
+   around a <sys/proc.h> problem on IRIX 5.  */
+#ifndef _KMEMUSER
+#undef _KMEMUSER
+#endif

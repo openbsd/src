@@ -37,6 +37,7 @@
 #include "demangle.h"
 #include "somsolib.h"
 #include "gdb_assert.h"
+#include "hppa-tdep.h"
 
 /* Private information attached to an objfile which we use to find
    and internalize the HP C debug symbols within that objfile.  */
@@ -234,15 +235,12 @@ static void fixup_class_method_type
 
 static void hpread_adjust_bitoffsets (struct type *, int);
 
+static int hpread_adjust_stack_address (CORE_ADDR func_addr);
+
 static dnttpointer hpread_get_next_skip_over_anon_unions
   (int, dnttpointer, union dnttentry **, struct objfile *);
 
 
-/* Global to indicate presence of HP-compiled objects,
-   in particular, SOM executable file with SOM debug info 
-   Defined in symtab.c, used in hppa-tdep.c. */
-extern int hp_som_som_object_present;
-
 /* Static used to indicate a class type that requires a
    fix-up of one of its method types */
 static struct type *fixup_class = NULL;
@@ -385,6 +383,7 @@ hpread_pxdb_needed (bfd *sym_bfd)
       if (header_section_size == (bfd_size_type) sizeof (DOC_info_PXDB_header))
 	{
 	  buf = alloca (sizeof (DOC_info_PXDB_header));
+	  memset (buf, 0, sizeof (DOC_info_PXDB_header));
 
 	  if (!bfd_get_section_contents (sym_bfd,
 					 header_section,
@@ -452,6 +451,7 @@ hpread_pxdb_needed (bfd *sym_bfd)
 	{
 
 	  buf = alloca (sizeof (PXDB_header));
+	  memset (buf, 0, sizeof (PXDB_header));
 	  if (!bfd_get_section_contents (sym_bfd,
 					 header_section,
 					 buf, 0,
@@ -1668,7 +1668,7 @@ hpread_symfile_init (struct objfile *objfile)
 
   /* Allocate struct to keep track of the symfile */
   objfile->sym_private =
-    xmmalloc (objfile->md, sizeof (struct hpread_symfile_info));
+    xmalloc (sizeof (struct hpread_symfile_info));
   memset (objfile->sym_private, 0, sizeof (struct hpread_symfile_info));
 
   /* We haven't read in any types yet.  */
@@ -2286,7 +2286,7 @@ hpread_symfile_finish (struct objfile *objfile)
 {
   if (objfile->sym_private != NULL)
     {
-      xmfree (objfile->md, objfile->sym_private);
+      xfree (objfile->sym_private);
     }
 }
 
@@ -2875,7 +2875,7 @@ hpread_expand_symtab (struct objfile *objfile, int sym_offset, int sym_size,
     }
 
   current_objfile = NULL;
-  hp_som_som_object_present = 1;	/* Indicate we've processed an HP SOM SOM file */
+  deprecated_hp_som_som_object_present = 1;	/* Indicate we've processed an HP SOM SOM file */
 
   return end_symtab (text_offset + text_size, objfile, SECT_OFF_TEXT (objfile));
 }
@@ -3024,7 +3024,7 @@ hpread_lookup_type (dnttpointer hp_type, struct objfile *objfile)
 	    {
 	      DNTT_TYPE_VECTOR_LENGTH (objfile) = LNTT_SYMCOUNT (objfile) + GNTT_SYMCOUNT (objfile);
 	      DNTT_TYPE_VECTOR (objfile) = (struct type **)
-		xmmalloc (objfile->md, DNTT_TYPE_VECTOR_LENGTH (objfile) * sizeof (struct type *));
+		xmalloc (DNTT_TYPE_VECTOR_LENGTH (objfile) * sizeof (struct type *));
 	      memset (&DNTT_TYPE_VECTOR (objfile)[old_len], 0,
 		      (DNTT_TYPE_VECTOR_LENGTH (objfile) - old_len) *
 		      sizeof (struct type *));
@@ -3042,8 +3042,7 @@ hpread_lookup_type (dnttpointer hp_type, struct objfile *objfile)
 	  if (size_changed)
 	    {
 	      DNTT_TYPE_VECTOR (objfile) = (struct type **)
-		xmrealloc (objfile->md,
-			   (char *) DNTT_TYPE_VECTOR (objfile),
+		xrealloc ((char *) DNTT_TYPE_VECTOR (objfile),
 		   (DNTT_TYPE_VECTOR_LENGTH (objfile) * sizeof (struct type *)));
 
 	      memset (&DNTT_TYPE_VECTOR (objfile)[old_len], 0,
@@ -3252,10 +3251,9 @@ hpread_read_function_type (dnttpointer hp_type, union dnttentry *dn_bufp,
       if (paramp->dfparam.copyparam)
 	{
 	  SYMBOL_VALUE (sym) = paramp->dfparam.location;
-#ifdef HPREAD_ADJUST_STACK_ADDRESS
 	  SYMBOL_VALUE (sym)
-	    += HPREAD_ADJUST_STACK_ADDRESS (CURRENT_FUNCTION_VALUE (objfile));
-#endif
+	    += hpread_adjust_stack_address (CURRENT_FUNCTION_VALUE (objfile));
+
 	  /* This is likely a pass-by-invisible reference parameter,
 	     Hack on the symbol class to make GDB happy.  */
 	  /* ??rehrauer: This appears to be broken w/r/t to passing
@@ -3431,10 +3429,9 @@ hpread_read_doc_function_type (dnttpointer hp_type, union dnttentry *dn_bufp,
       if (paramp->dfparam.copyparam)
 	{
 	  SYMBOL_VALUE (sym) = paramp->dfparam.location;
-#ifdef HPREAD_ADJUST_STACK_ADDRESS
 	  SYMBOL_VALUE (sym)
-	    += HPREAD_ADJUST_STACK_ADDRESS (CURRENT_FUNCTION_VALUE (objfile));
-#endif
+	    += hpread_adjust_stack_address(CURRENT_FUNCTION_VALUE (objfile));
+
 	  /* This is likely a pass-by-invisible reference parameter,
 	     Hack on the symbol class to make GDB happy.  */
 	  /* ??rehrauer: This appears to be broken w/r/t to passing
@@ -3690,6 +3687,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 
 	  /* Get space to record the next field/data-member. */
 	  new = (struct nextfield *) alloca (sizeof (struct nextfield));
+	  memset (new, 0, sizeof (struct nextfield));
 	  new->next = list;
 	  list = new;
 
@@ -3768,6 +3766,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 	  n_templ_args++;
 	  /* Allocate and fill in a struct next_template */
 	  t_new = (struct next_template *) alloca (sizeof (struct next_template));
+	  memset (t_new, 0, sizeof (struct next_template));
 	  t_new->next = t_list;
 	  t_list = t_new;
 	  t_list->arg.name = VT (objfile) + fieldp->dtempl_arg.name;
@@ -3908,6 +3907,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 		  /* Get space to record this member function */
 		  /* Note: alloca used; this will disappear on routine exit */
 		  fn_new = (struct next_fn_field *) alloca (sizeof (struct next_fn_field));
+		  memset (fn_new, 0, sizeof (struct next_fn_field));
 		  fn_new->next = fn_list;
 		  fn_list = fn_new;
 
@@ -4025,6 +4025,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 
 	      /* Get space to record this static member */
 	      new = (struct nextfield *) alloca (sizeof (struct nextfield));
+	      memset (new, 0, sizeof (struct nextfield));
 	      new->next = list;
 	      list = new;
 
@@ -4055,6 +4056,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 		warning ("Debug info inconsistent: FIELD of anonymous union doesn't have a_union bit set");
 	      /* Get space to record the next field/data-member. */
 	      new = (struct nextfield *) alloca (sizeof (struct nextfield));
+	      memset (new, 0, sizeof (struct nextfield));
 	      new->next = list;
 	      list = new;
 
@@ -4086,6 +4088,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 		warning ("Debug info inconsistent: SVAR field in anonymous union doesn't have a_union bit set");
 	      /* Get space to record the next field/data-member. */
 	      new = (struct nextfield *) alloca (sizeof (struct nextfield));
+	      memset (new, 0, sizeof (struct nextfield));
 	      new->next = list;
 	      list = new;
 
@@ -4106,6 +4109,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 		warning ("Debug info inconsistent: DVAR field in anonymous union doesn't have a_union bit set");
 	      /* Get space to record the next field/data-member. */
 	      new = (struct nextfield *) alloca (sizeof (struct nextfield));
+	      memset (new, 0, sizeof (struct nextfield));
 	      new->next = list;
 	      list = new;
 
@@ -4154,6 +4158,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 
 	  /* Get space to record the next field/data-member. */
 	  new = (struct nextfield *) alloca (sizeof (struct nextfield));
+	  memset (new, 0, sizeof (struct nextfield));
 	  new->next = list;
 	  list = new;
 
@@ -4237,6 +4242,7 @@ hpread_read_struct_type (dnttpointer hp_type, union dnttentry *dn_bufp,
 	    break;
 
 	  i_new = (struct next_instantiation *) alloca (sizeof (struct next_instantiation));
+	  memset (i_new, 0, sizeof (struct next_instantiation));
 	  i_new->next = i_list;
 	  i_list = i_new;
 	  i_list->t = hpread_type_lookup (field, objfile);
@@ -5702,10 +5708,8 @@ hpread_process_one_debug_symbol (union dnttentry *dn_bufp, char *name,
       if (dn_bufp->dfparam.copyparam)
 	{
 	  SYMBOL_VALUE (sym) = dn_bufp->dfparam.location;
-#ifdef HPREAD_ADJUST_STACK_ADDRESS
 	  SYMBOL_VALUE (sym)
-	    += HPREAD_ADJUST_STACK_ADDRESS (CURRENT_FUNCTION_VALUE (objfile));
-#endif
+	    += hpread_adjust_stack_address (CURRENT_FUNCTION_VALUE (objfile));
 	}
       else
 	SYMBOL_VALUE (sym) = dn_bufp->dfparam.location;
@@ -5747,7 +5751,7 @@ hpread_process_one_debug_symbol (union dnttentry *dn_bufp, char *name,
 	  /* Thread-local variable.
 	   */
 	  SYMBOL_CLASS (sym) = LOC_HP_THREAD_LOCAL_STATIC;
-	  SYMBOL_BASEREG (sym) = CR27_REGNUM;
+	  SYMBOL_BASEREG (sym) = HPPA_CR27_REGNUM;
 
 	  if (objfile->flags & OBJF_SHARED)
 	    {
@@ -5759,11 +5763,14 @@ hpread_process_one_debug_symbol (union dnttentry *dn_bufp, char *name,
 	       * to "somsolib.c".  But C lets us point to one.
 	       */
 	      struct so_list *so;
+              struct hppa_objfile_private *priv;
 
-	      if (objfile->obj_private == NULL)
+              priv = (struct hppa_objfile_private *)
+	        objfile_data (objfile, hppa_objfile_priv_data);
+	      if (priv == NULL)
 		error ("Internal error in reading shared library information.");
 
-	      so = ((obj_private_data_t *) (objfile->obj_private))->so_info;
+	      so = ((struct hppa_objfile_private *) priv)->so_info;
 	      if (so == NULL)
 		error ("Internal error in reading shared library information.");
 
@@ -5786,10 +5793,8 @@ hpread_process_one_debug_symbol (union dnttentry *dn_bufp, char *name,
 	SYMBOL_CLASS (sym) = LOC_LOCAL;
 
       SYMBOL_VALUE (sym) = dn_bufp->ddvar.location;
-#ifdef HPREAD_ADJUST_STACK_ADDRESS
       SYMBOL_VALUE (sym)
-	+= HPREAD_ADJUST_STACK_ADDRESS (CURRENT_FUNCTION_VALUE (objfile));
-#endif
+	+= hpread_adjust_stack_address (CURRENT_FUNCTION_VALUE (objfile));
       SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->ddvar.type, objfile);
       if (dn_bufp->ddvar.global)
 	add_symbol_to_list (sym, &global_symbols);
@@ -6267,6 +6272,24 @@ hpread_adjust_bitoffsets (struct type *type, int bits)
 
   for (i = 0; i < TYPE_NFIELDS (type); i++)
     TYPE_FIELD_BITPOS (type, i) -= bits;
+}
+
+/* Return the adjustment necessary to make for addresses on the stack
+   as presented by hpread.c.
+
+   This is necessary because of the stack direction on the PA and the
+   bizarre way in which someone (?) decided they wanted to handle
+   frame pointerless code in GDB.  */
+int
+hpread_adjust_stack_address (CORE_ADDR func_addr)
+{
+  struct unwind_table_entry *u;
+
+  u = find_unwind_entry (func_addr);
+  if (!u)
+    return 0;
+  else
+    return u->Total_frame_size << 3;
 }
 
 /* Because of quirks in HP compilers' treatment of anonymous unions inside

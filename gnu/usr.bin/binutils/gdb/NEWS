@@ -1,7 +1,248 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
-*** Changes since GDB 6.1:
+*** Changes in GDB 6.3:
+
+* GDB works with GCC -feliminate-dwarf2-dups
+
+GDB now supports a more compact representation of DWARF-2 debug
+information using DW_FORM_ref_addr references.  These are produced
+by GCC with the option -feliminate-dwarf2-dups and also by some
+proprietary compilers.  With GCC, you must use GCC 3.3.4 or later
+to use -feliminate-dwarf2-dups.
+
+* Internationalization
+
+When supported by the host system, GDB will be built with
+internationalization (libintl).  The task of marking up the sources is
+continued, we're looking forward to our first translation.
+
+* Ada
+
+Initial support for debugging programs compiled with the GNAT 
+implementation of the Ada programming language has been integrated 
+into GDB.  In this release, support is limited to expression evaluation.
+
+* New native configurations
+
+GNU/Linux/m32r					m32r-*-linux-gnu
+
+* Remote 'p' packet
+
+GDB's remote protocol now includes support for the 'p' packet.  This
+packet is used to fetch individual registers from a remote inferior.
+
+* END-OF-LIFE registers[] compatibility module
+
+GDB's internal register infrastructure has been completely rewritten.
+The new infrastructure making possible the implementation of key new
+features including 32x64 (e.g., 64-bit amd64 GDB debugging a 32-bit
+i386 application).
+
+GDB 6.3 will be the last release to include the the registers[]
+compatibility module that allowed out-of-date configurations to
+continue to work.  This change directly impacts the following
+configurations:
+
+hppa-*-hpux
+ia64-*-aix
+mips-*-irix*
+*-*-lynx
+mips-*-linux-gnu
+sds protocol
+xdr protocol
+powerpc bdm protocol
+
+Unless there is activity to revive these configurations, they will be
+made OBSOLETE in GDB 6.4, and REMOVED from GDB 6.5.
+
+* OBSOLETE configurations and files
+
+Configurations that have been declared obsolete in this release have
+been commented out.  Unless there is activity to revive these
+configurations, the next release of GDB will have their sources
+permanently REMOVED.
+
+h8300-*-*
+mcore-*-*
+mn10300-*-*
+ns32k-*-*
+sh64-*-*
+v850-*-*
+
+*** Changes in GDB 6.2.1:
+
+* MIPS `break main; run' gave an heuristic-fence-post warning
+
+When attempting to run even a simple program, a warning about
+heuristic-fence-post being hit would be reported.  This problem has
+been fixed.
+
+* MIPS IRIX 'long double' crashed GDB
+
+When examining a long double variable, GDB would get a segmentation
+fault.  The crash has been fixed (but GDB 6.2 cannot correctly examine
+IRIX long double values).
+
+* VAX and "next"
+
+A bug in the VAX stack code was causing problems with the "next"
+command.  This problem has been fixed.
+
+*** Changes in GDB 6.2:
+
+* Fix for ``many threads''
+
+On GNU/Linux systems that use the NPTL threads library, a program
+rapidly creating and deleting threads would confuse GDB leading to the
+error message:
+
+	ptrace: No such process.
+	thread_db_get_info: cannot get thread info: generic error
+
+This problem has been fixed.
+
+* "-async" and "-noasync" options removed.
+
+Support for the broken "-noasync" option has been removed (it caused
+GDB to dump core).
+
+* New ``start'' command.
+
+This command runs the program until the begining of the main procedure.
+
+* New BSD Kernel Data Access Library (libkvm) interface
+
+Using ``target kvm'' it is now possible to debug kernel core dumps and
+live kernel memory images on various FreeBSD, NetBSD and OpenBSD
+platforms.  Currently supported (native-only) configurations are:
+
+FreeBSD/amd64			x86_64-*-freebsd*
+FreeBSD/i386			i?86-*-freebsd*
+NetBSD/i386			i?86-*-netbsd*
+NetBSD/m68k			m68*-*-netbsd*
+NetBSD/sparc			sparc-*-netbsd*
+OpenBSD/amd64			x86_64-*-openbsd*
+OpenBSD/i386			i?86-*-openbsd*
+OpenBSD/m68k			m68*-openbsd*
+OpenBSD/sparc			sparc-*-openbsd*
+
+* Signal trampoline code overhauled
+
+Many generic problems with GDB's signal handling code have been fixed.
+These include: backtraces through non-contiguous stacks; recognition
+of sa_sigaction signal trampolines; backtrace from a NULL pointer
+call; backtrace through a signal trampoline; step into and out of
+signal handlers; and single-stepping in the signal trampoline.
+
+Please note that kernel bugs are a limiting factor here.  These
+features have been shown to work on an s390 GNU/Linux system that
+include a 2.6.8-rc1 kernel.  Ref PR breakpoints/1702.
+
+* Cygwin support for DWARF 2 added.
+
+* New native configurations
+
+GNU/Linux/hppa					hppa*-*-linux*
+OpenBSD/hppa					hppa*-*-openbsd*
+OpenBSD/m68k					m68*-*-openbsd*
+OpenBSD/m88k					m88*-*-openbsd*
+OpenBSD/powerpc					powerpc-*-openbsd*
+NetBSD/vax					vax-*-netbsd*
+OpenBSD/vax					vax-*-openbsd*
+
+* END-OF-LIFE frame compatibility module
+
+GDB's internal frame infrastructure has been completely rewritten.
+The new infrastructure making it possible to support key new features
+including DWARF 2 Call Frame Information.  To aid in the task of
+migrating old configurations to this new infrastructure, a
+compatibility module, that allowed old configurations to continue to
+work, was also included.
+
+GDB 6.2 will be the last release to include this frame compatibility
+module.  This change directly impacts the following configurations:
+
+h8300-*-*
+mcore-*-*
+mn10300-*-*
+ns32k-*-*
+sh64-*-*
+v850-*-*
+xstormy16-*-*
+
+Unless there is activity to revive these configurations, they will be
+made OBSOLETE in GDB 6.3, and REMOVED from GDB 6.4.
+
+* REMOVED configurations and files
+
+Sun 3, running SunOS 3				m68*-*-sunos3*
+Sun 3, running SunOS 4				m68*-*-sunos4*
+Sun 2, running SunOS 3				m68000-*-sunos3*
+Sun 2, running SunOS 4				m68000-*-sunos4*
+Motorola 680x0 running LynxOS			m68*-*-lynxos*
+AT&T 3b1/Unix pc				m68*-att-*
+Bull DPX2 (68k, System V release 3)		m68*-bull-sysv*
+decstation					mips-dec-* mips-little-*
+riscos						mips-*-riscos* mips-*-sysv*
+sonymips					mips-sony-*
+sysv					mips*-*-sysv4* (IRIX 5/6 not included)
+
+*** Changes in GDB 6.1.1:
+
+* TUI (Text-mode User Interface) built-in (also included in GDB 6.1)
+
+The TUI (Text-mode User Interface) is now built as part of a default
+GDB configuration.  It is enabled by either selecting the TUI with the
+command line option "-i=tui" or by running the separate "gdbtui"
+program.  For more information on the TUI, see the manual "Debugging
+with GDB".
+
+* Pending breakpoint support (also included in GDB 6.1)
+
+Support has been added to allow you to specify breakpoints in shared
+libraries that have not yet been loaded.  If a breakpoint location
+cannot be found, and the "breakpoint pending" option is set to auto,
+GDB queries you if you wish to make the breakpoint pending on a future
+shared-library load.  If and when GDB resolves the breakpoint symbol,
+the pending breakpoint is removed as one or more regular breakpoints
+are created.
+
+Pending breakpoints are very useful for GCJ Java debugging.
+
+* Fixed ISO-C build problems
+
+The files bfd/elf-bfd.h, gdb/dictionary.c and gdb/types.c contained
+non ISO-C code that stopped them being built using a more strict ISO-C
+compiler (e.g., IBM's C compiler).
+
+* Fixed build problem on IRIX 5
+
+Due to header problems with <sys/proc.h>, the file gdb/proc-api.c
+wasn't able to compile compile on an IRIX 5 system.
+
+* Added execute permission to gdb/gdbserver/configure
+
+The shell script gdb/testsuite/gdb.stabs/configure lacked execute
+permission.  This bug would cause configure to fail on a number of
+systems (Solaris, IRIX).  Ref: server/519.
+
+* Fixed build problem on hpux2.0w-hp-hpux11.00 using the HP ANSI C compiler
+
+Older HPUX ANSI C compilers did not accept variable array sizes.  somsolib.c
+has been updated to use constant array sizes.
+
+* Fixed a panic in the DWARF Call Frame Info code on Solaris 2.7
+
+GCC 3.3.2, on Solaris 2.7, includes the DW_EH_PE_funcrel encoding in
+its generated DWARF Call Frame Info.  This encoding was causing GDB to
+panic, that panic has been fixed.  Ref: gdb/1628.
+
+* Fixed a problem when examining parameters in shared library code.
+
+When examining parameters in optimized shared library code generated
+by a mainline GCC, GDB would incorrectly report ``Variable "..." is
+not available''.  GDB now correctly displays the variable's value.
 
 *** Changes in GDB 6.1:
 

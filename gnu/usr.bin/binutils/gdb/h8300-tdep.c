@@ -519,9 +519,7 @@ h8300_frame_init_saved_regs (struct frame_info *fi)
 static CORE_ADDR
 h8300_frame_chain (struct frame_info *thisframe)
 {
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (thisframe),
-				   get_frame_base (thisframe),
-				   get_frame_base (thisframe)))
+  if (deprecated_pc_in_call_dummy (get_frame_pc (thisframe)))
     {				/* initialize the from_pc now */
       get_frame_extra_info (thisframe)->from_pc =
 	deprecated_read_register_dummy (get_frame_pc (thisframe),
@@ -540,9 +538,7 @@ h8300_frame_chain (struct frame_info *thisframe)
 static CORE_ADDR
 h8300_frame_saved_pc (struct frame_info *frame)
 {
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (frame),
-				   get_frame_base (frame),
-				   get_frame_base (frame)))
+  if (deprecated_pc_in_call_dummy (get_frame_pc (frame)))
     return deprecated_read_register_dummy (get_frame_pc (frame),
 					   get_frame_base (frame),
 					   E_PC_REGNUM);
@@ -632,7 +628,7 @@ h8300_init_extra_frame_info (int fromleaf, struct frame_info *fi)
      to begin with.  */
 
 static CORE_ADDR
-h8300_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
+h8300_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		       struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
 		       struct value **args, CORE_ADDR sp, int struct_return,
 		       CORE_ADDR struct_addr)
@@ -739,11 +735,9 @@ h8300_pop_frame (void)
   unsigned regno;
   struct frame_info *frame = get_current_frame ();
 
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (frame),
-				   get_frame_base (frame),
-				   get_frame_base (frame)))
+  if (deprecated_pc_in_call_dummy (get_frame_pc (frame)))
     {
-      generic_pop_dummy_frame ();
+      deprecated_pop_dummy_frame ();
     }
   else
     {
@@ -1323,10 +1317,9 @@ h8300_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
    */
   /* Stack grows up. */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_deprecated_frameless_function_invocation (gdbarch, legacy_frameless_look_for_prologue);
 
   set_gdbarch_deprecated_extract_struct_value_address (gdbarch, h8300_extract_struct_value_address);
-  set_gdbarch_use_struct_convention (gdbarch, always_use_struct_convention);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, always_use_struct_convention);
   set_gdbarch_breakpoint_from_pc (gdbarch, h8300_breakpoint_from_pc);
   set_gdbarch_push_dummy_code (gdbarch, h8300_push_dummy_code);
   set_gdbarch_push_dummy_call (gdbarch, h8300_push_dummy_call);

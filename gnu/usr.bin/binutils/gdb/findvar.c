@@ -282,24 +282,8 @@ value_of_register (int regnum, struct frame_info *frame)
 
   reg_val = allocate_value (register_type (current_gdbarch, regnum));
 
-  /* Convert raw data to virtual format if necessary.  */
-
-  if (DEPRECATED_REGISTER_CONVERTIBLE_P ()
-      && DEPRECATED_REGISTER_CONVERTIBLE (regnum))
-    {
-      DEPRECATED_REGISTER_CONVERT_TO_VIRTUAL (regnum, register_type (current_gdbarch, regnum),
-					      raw_buffer, VALUE_CONTENTS_RAW (reg_val));
-    }
-  else if (DEPRECATED_REGISTER_RAW_SIZE (regnum) == DEPRECATED_REGISTER_VIRTUAL_SIZE (regnum))
-    memcpy (VALUE_CONTENTS_RAW (reg_val), raw_buffer,
-	    DEPRECATED_REGISTER_RAW_SIZE (regnum));
-  else
-    internal_error (__FILE__, __LINE__,
-		    "Register \"%s\" (%d) has conflicting raw (%d) and virtual (%d) size",
-		    REGISTER_NAME (regnum),
-		    regnum,
-		    DEPRECATED_REGISTER_RAW_SIZE (regnum),
-		    DEPRECATED_REGISTER_VIRTUAL_SIZE (regnum));
+  memcpy (VALUE_CONTENTS_RAW (reg_val), raw_buffer,
+	  register_size (current_gdbarch, regnum));
   VALUE_LVAL (reg_val) = lval;
   VALUE_ADDRESS (reg_val) = addr;
   VALUE_REGNO (reg_val) = regnum;
@@ -671,7 +655,7 @@ value_from_register (struct type *type, int regnum, struct frame_info *frame)
       /* Copy all of the data out, whereever it may be.  */
       for (local_regnum = regnum, value_bytes_copied = 0;
 	   value_bytes_copied < len;
-	   (value_bytes_copied += DEPRECATED_REGISTER_RAW_SIZE (local_regnum),
+	   (value_bytes_copied += register_size (current_gdbarch, local_regnum),
 	    ++local_regnum))
 	{
 	  int realnum;
@@ -737,9 +721,9 @@ value_from_register (struct type *type, int regnum, struct frame_info *frame)
          some fiddling with the last register copied here for little
          endian machines.  */
       if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG
-	  && len < DEPRECATED_REGISTER_RAW_SIZE (regnum))
+	  && len < register_size (current_gdbarch, regnum))
 	/* Big-endian, and we want less than full size.  */
-	VALUE_OFFSET (v) = DEPRECATED_REGISTER_RAW_SIZE (regnum) - len;
+	VALUE_OFFSET (v) = register_size (current_gdbarch, regnum) - len;
       else
 	VALUE_OFFSET (v) = 0;
       memcpy (VALUE_CONTENTS_RAW (v), value_bytes + VALUE_OFFSET (v), len);

@@ -33,10 +33,6 @@
 #include "value.h"
 #include "exec.h"
 
-#ifdef USG
-#include <sys/types.h>
-#endif
-
 #include <fcntl.h>
 #include "readline/readline.h"
 #include "gdb_string.h"
@@ -53,7 +49,7 @@
 
 struct vmap *map_vmap (bfd *, bfd *);
 
-void (*file_changed_hook) (char *);
+void (*deprecated_file_changed_hook) (char *);
 
 /* Prototypes for local functions */
 
@@ -194,7 +190,7 @@ exec_file_attach (char *filename, int from_tty)
       char *scratch_pathname;
       int scratch_chan;
 
-      scratch_chan = openp (getenv ("PATH"), 1, filename,
+      scratch_chan = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST, filename,
 		   write_files ? O_RDWR | O_BINARY : O_RDONLY | O_BINARY, 0,
 			    &scratch_pathname);
 #if defined(__GO32__) || defined(_WIN32) || defined(__CYGWIN__)
@@ -202,8 +198,9 @@ exec_file_attach (char *filename, int from_tty)
 	{
 	  char *exename = alloca (strlen (filename) + 5);
 	  strcat (strcpy (exename, filename), ".exe");
-	  scratch_chan = openp (getenv ("PATH"), 1, exename, write_files ?
-	     O_RDWR | O_BINARY : O_RDONLY | O_BINARY, 0, &scratch_pathname);
+	  scratch_chan = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST, exename,
+	     write_files ? O_RDWR | O_BINARY : O_RDONLY | O_BINARY, 0,
+	     &scratch_pathname);
 	}
 #endif
       if (scratch_chan < 0)
@@ -267,9 +264,10 @@ exec_file_attach (char *filename, int from_tty)
       push_target (&exec_ops);
 
       /* Tell display code (if any) about the changed file name.  */
-      if (exec_file_display_hook)
-	(*exec_file_display_hook) (filename);
+      if (deprecated_exec_file_display_hook)
+	(*deprecated_exec_file_display_hook) (filename);
     }
+  bfd_cache_close_all ();
 }
 
 /*  Process the first arg in ARGS as the new exec file.
@@ -324,8 +322,8 @@ file_command (char *arg, int from_tty)
      the exec file, but that's rough.  */
   exec_file_command (arg, from_tty);
   symbol_file_command (arg, from_tty);
-  if (file_changed_hook)
-    file_changed_hook (arg);
+  if (deprecated_file_changed_hook)
+    deprecated_file_changed_hook (arg);
 }
 
 
@@ -524,8 +522,8 @@ void
 print_section_info (struct target_ops *t, bfd *abfd)
 {
   struct section_table *p;
-  /* FIXME: "016l" is not wide enough when TARGET_ADDR_BIT > 64.  */
-  char *fmt = TARGET_ADDR_BIT <= 32 ? "08l" : "016l";
+  /* FIXME: 16 is not wide enough when TARGET_ADDR_BIT > 64.  */
+  int wid = TARGET_ADDR_BIT <= 32 ? 8 : 16;
 
   printf_filtered ("\t`%s', ", bfd_get_filename (abfd));
   wrap_here ("        ");
@@ -538,8 +536,8 @@ print_section_info (struct target_ops *t, bfd *abfd)
     }
   for (p = t->to_sections; p < t->to_sections_end; p++)
     {
-      printf_filtered ("\t%s", local_hex_string_custom (p->addr, fmt));
-      printf_filtered (" - %s", local_hex_string_custom (p->endaddr, fmt));
+      printf_filtered ("\t%s", hex_string_custom (p->addr, wid));
+      printf_filtered (" - %s", hex_string_custom (p->endaddr, wid));
 
       /* FIXME: A format of "08l" is not wide enough for file offsets
 	 larger than 4GB.  OTOH, making it "016l" isn't desirable either
@@ -548,7 +546,7 @@ print_section_info (struct target_ops *t, bfd *abfd)
 	 format string accordingly.  */
       if (info_verbose)
 	printf_filtered (" @ %s",
-			 local_hex_string_custom (p->the_bfd_section->filepos, "08l"));
+			 hex_string_custom (p->the_bfd_section->filepos, 8));
       printf_filtered (" is %s", bfd_section_name (p->bfd, p->the_bfd_section));
       if (p->bfd != abfd)
 	{
@@ -701,7 +699,7 @@ Specify the filename of the executable file.";
   exec_ops.to_open = exec_open;
   exec_ops.to_close = exec_close;
   exec_ops.to_attach = find_default_attach;
-  exec_ops.to_xfer_memory = xfer_memory;
+  exec_ops.deprecated_xfer_memory = xfer_memory;
   exec_ops.to_files_info = exec_files_info;
   exec_ops.to_insert_breakpoint = ignore;
   exec_ops.to_remove_breakpoint = ignore;
@@ -745,7 +743,7 @@ This can be used if the exec file does not contain section addresses,\n\
 file itself are wrong.  Each section must be changed separately.  The\n\
 ``info files'' command lists all the sections and their addresses.");
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("write", class_support, var_boolean, (char *) &write_files,
 		  "Set writing into executable and core files.",
 		  &setlist),

@@ -394,7 +394,7 @@ serial_printf (struct serial *desc, const char *format,...)
   char *buf;
   va_start (args, format);
 
-  xvasprintf (&buf, format, args);
+  buf = xstrvprintf (format, args);
   serial_write (desc, buf, strlen (buf));
 
   xfree (buf);
@@ -686,7 +686,7 @@ Show default serial/parallel port configuration.",
 		  0/*allow-unknown*/,
 		  &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("remotelogfile", no_class,
 		  var_filename, (char *) &serial_logfile,
 		  "Set filename for remote session recording.\n\
@@ -695,18 +695,19 @@ by gdbserver.",
 		  &setlist),
      &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_enum_cmd ("remotelogbase", no_class,
 		       logbase_enums, &serial_logbase,
 		       "Set numerical base for remote session logging",
 		       &setlist),
      &showlist);
 
-  add_show_from_set (add_set_cmd ("serial",
-				  class_maintenance,
-				  var_zinteger,
-				  (char *)&global_serial_debug_p,
-				  "Set serial debugging.\n\
+  deprecated_add_show_from_set
+    (add_set_cmd ("serial",
+		  class_maintenance,
+		  var_zinteger,
+		  (char *)&global_serial_debug_p,
+		  "Set serial debugging.\n\
 When non-zero, serial port debugging is enabled.", &setdebuglist),
-		     &showdebuglist);
+     &showdebuglist);
 }

@@ -178,11 +178,11 @@ invalid_cpp_abbrev_complaint (const char *arg1)
 }
 
 static void
-reg_value_complaint (int arg1, int arg2, const char *arg3)
+reg_value_complaint (int regnum, int num_regs, const char *sym)
 {
   complaint (&symfile_complaints,
-	     "register number %d too large (max %d) in symbol %s", arg1, arg2,
-	     arg3);
+	     "register number %d too large (max %d) in symbol %s",
+             regnum, num_regs - 1, sym);
 }
 
 static void
@@ -978,61 +978,17 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	      init_type (TYPE_CODE_INT, TARGET_INT_BIT / TARGET_CHAR_BIT,
 			 TYPE_FLAG_UNSIGNED, "unsigned int", NULL);
 
-	  if (BELIEVE_PCC_PROMOTION_TYPE)
+	  /* If PCC says a parameter is a short or a char, it is
+	     really an int.  */
+	  if (TYPE_LENGTH (SYMBOL_TYPE (sym)) < TYPE_LENGTH (pcc_promotion_type)
+	      && TYPE_CODE (SYMBOL_TYPE (sym)) == TYPE_CODE_INT)
 	    {
-	      /* This is defined on machines (e.g. sparc) where we
-	         should believe the type of a PCC 'short' argument,
-	         but shouldn't believe the address (the address is the
-	         address of the corresponding int).
-
-	         My guess is that this correction, as opposed to
-	         changing the parameter to an 'int' (as done below,
-	         for PCC on most machines), is the right thing to do
-	         on all machines, but I don't want to risk breaking
-	         something that already works.  On most PCC machines,
-	         the sparc problem doesn't come up because the calling
-	         function has to zero the top bytes (not knowing
-	         whether the called function wants an int or a short),
-	         so there is little practical difference between an
-	         int and a short (except perhaps what happens when the
-	         GDB user types "print short_arg = 0x10000;").
-
-	         Hacked for SunOS 4.1 by gnu@cygnus.com.  In 4.1, the
-	         compiler actually produces the correct address (we
-	         don't need to fix it up).  I made this code adapt so
-	         that it will offset the symbol if it was pointing at
-	         an int-aligned location and not otherwise.  This way
-	         you can use the same gdb for 4.0.x and 4.1 systems.
-
-	         If the parameter is shorter than an int, and is
-	         integral (e.g. char, short, or unsigned equivalent),
-	         and is claimed to be passed on an integer boundary,
-	         don't believe it!  Offset the parameter's address to
-	         the tail-end of that integer.  */
-
-	      if (TYPE_LENGTH (SYMBOL_TYPE (sym)) < TYPE_LENGTH (pcc_promotion_type)
-		  && TYPE_CODE (SYMBOL_TYPE (sym)) == TYPE_CODE_INT
-	      && 0 == SYMBOL_VALUE (sym) % TYPE_LENGTH (pcc_promotion_type))
-		{
-		  SYMBOL_VALUE (sym) += TYPE_LENGTH (pcc_promotion_type)
-		    - TYPE_LENGTH (SYMBOL_TYPE (sym));
-		}
-	      break;
+	      SYMBOL_TYPE (sym) =
+		TYPE_UNSIGNED (SYMBOL_TYPE (sym))
+		? pcc_unsigned_promotion_type
+		: pcc_promotion_type;
 	    }
-	  else
-	    {
-	      /* If PCC says a parameter is a short or a char,
-	         it is really an int.  */
-	      if (TYPE_LENGTH (SYMBOL_TYPE (sym)) < TYPE_LENGTH (pcc_promotion_type)
-		  && TYPE_CODE (SYMBOL_TYPE (sym)) == TYPE_CODE_INT)
-		{
-		  SYMBOL_TYPE (sym) =
-		    TYPE_UNSIGNED (SYMBOL_TYPE (sym))
-		    ? pcc_unsigned_promotion_type
-		    : pcc_promotion_type;
-		}
-	      break;
-	    }
+	  break;
 	}
 
     case 'P':

@@ -308,7 +308,7 @@ maint_print_section_info (const char *name, flagword flags,
   printf_filtered ("    0x%s", paddr (addr));
   printf_filtered ("->0x%s", paddr (endaddr));
   printf_filtered (" at %s",
-		   local_hex_string_custom ((unsigned long) filepos, "08l"));
+		   hex_string_custom ((unsigned long) filepos, 8));
   printf_filtered (": %s", name);
   print_bfd_flags (flags);
   printf_filtered ("\n");
@@ -609,8 +609,8 @@ maintenance_do_deprecate (char *text, int deprecate)
 
 /* Maintenance set/show framework.  */
 
-static struct cmd_list_element *maintenance_set_cmdlist;
-static struct cmd_list_element *maintenance_show_cmdlist;
+struct cmd_list_element *maintenance_set_cmdlist;
+struct cmd_list_element *maintenance_show_cmdlist;
 
 static void
 maintenance_set_cmd (char *args, int from_tty)
@@ -848,20 +848,23 @@ testsuite can check the comamnd deprecator. You probably shouldn't use this,\n\
 If you decide you want to use it: maintenance undeprecate 'commandname'",
 	   &maintenancelist);
 
-  add_show_from_set (
-		      add_set_cmd ("watchdog", class_maintenance, var_zinteger, (char *) &watchdog,
-				   "Set watchdog timer.\n\
-When non-zero, this timeout is used instead of waiting forever for a target to\n\
-finish a low-level step or continue operation.  If the specified amount of time\n\
-passes without a response from the target, an error occurs.", &setlist),
-		      &showlist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("watchdog", class_maintenance, var_zinteger,
+		  (char *) &watchdog,
+		  "Set watchdog timer.\n\
+When non-zero, this timeout is used instead of waiting forever for a target\n\
+to finish a low-level step or continue operation.  If the specified amount\n\
+of time passes without a response from the target, an error occurs.",
+		  &setlist),
+     &showlist);
 
 
   add_setshow_boolean_cmd ("profile", class_maintenance,
-			   &maintenance_profile_p,
-			   "Set internal profiling.\n"
-			   "When enabled GDB is profiled.",
-			   "Show internal profiling.\n",
+			   &maintenance_profile_p, "\
+Set internal profiling.", "\
+Show internal profiling.", "\
+When enabled GDB is profiled.", "\
+Internal profiling is %s.",
 			   maintenance_set_profile_cmd, NULL,
 			   &maintenance_set_cmdlist,
 			   &maintenance_show_cmdlist);

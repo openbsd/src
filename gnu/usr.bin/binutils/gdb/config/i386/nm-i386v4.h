@@ -22,5 +22,6 @@
 
 #include "config/nm-sysv4.h"
 
-/* Poll causes GDB to hang, at least under Unixware 1.1.2.  */
-#define LOSING_POLL
+/* This is the amount to subtract from u.u_ar0
+   to get the offset in the core file of the register values.  */
+#define KERNEL_U_ADDR 0xe0000000

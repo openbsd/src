@@ -1,7 +1,7 @@
-/* Native support code for HPUX PA-RISC.
-   Copyright 1986, 1987, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1998, 1999, 2000, 2001
-   Free Software Foundation, Inc.
+/* Native support code for HPUX PA-RISC, for GDB the GNU debugger.
+
+   Copyright 1986, 1987, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1998, 1999, 2000, 2001, 2004 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -32,13 +32,10 @@
 #include "gdb_wait.h"
 #include "regcache.h"
 #include "gdb_string.h"
+#include "infttrace.h"
 #include <signal.h>
 
-extern int hpux_has_forked (int pid, int *childpid);
-extern int hpux_has_vforked (int pid, int *childpid);
-extern int hpux_has_execd (int pid, char **execd_pathname);
-extern int hpux_has_syscall_event (int pid, enum target_waitkind *kind,
-				   int *syscall_id);
+#include "hppa-tdep.h"
 
 static CORE_ADDR text_end;
 
@@ -98,7 +95,7 @@ store_inferior_registers (int regno)
 	return;
 
       offset = 0;
-      len = DEPRECATED_REGISTER_RAW_SIZE (regno);
+      len = register_size (current_gdbarch, regno);
 
       /* Requests for register zero actually want the save_state's
 	 ss_flags member.  As RM says: "Oh, what a hack!"  */
@@ -109,17 +106,16 @@ store_inferior_registers (int regno)
 	  len = sizeof (ss.ss_flags);
 
 	  /* Note that ss_flags is always an int, no matter what
-	     DEPRECATED_REGISTER_RAW_SIZE(0) says.  Assuming all HP-UX
-	     PA machines are big-endian, put it at the least
-	     significant end of the value, and zap the rest of the
-	     buffer.  */
-	  offset = DEPRECATED_REGISTER_RAW_SIZE (0) - len;
+	     register_size (0) says.  Assuming all HP-UX PA machines
+	     are big-endian, put it at the least significant end of
+	     the value, and zap the rest of the buffer.  */
+	  offset = register_size (current_gdbarch, 0) - len;
 	}
 
       /* Floating-point registers come from the ss_fpblock area.  */
-      else if (regno >= FP0_REGNUM)
+      else if (regno >= HPPA_FP0_REGNUM)
 	addr = (HPPAH_OFFSETOF (save_state_t, ss_fpblock) 
-		+ (DEPRECATED_REGISTER_BYTE (regno) - DEPRECATED_REGISTER_BYTE (FP0_REGNUM)));
+		+ (DEPRECATED_REGISTER_BYTE (regno) - DEPRECATED_REGISTER_BYTE (HPPA_FP0_REGNUM)));
 
       /* Wide registers come from the ss_wide area.
 	 I think it's more PC to test (ss_flags & SS_WIDEREGS) to select
@@ -145,7 +141,7 @@ store_inferior_registers (int regno)
 	 layering will not allow us to perform a 64bit register store.
 
 	 What a crock.  */
-      if (regno == PCOQ_HEAD_REGNUM || regno == PCOQ_TAIL_REGNUM && len == 8)
+      if (regno == HPPA_PCOQ_HEAD_REGNUM || regno == HPPA_PCOQ_TAIL_REGNUM && len == 8)
 	{
 	  CORE_ADDR temp;
 
@@ -173,7 +169,7 @@ store_inferior_registers (int regno)
       /* Another crock.  HPUX complains if you write a nonzero value to
 	 the high part of IPSW.  What will it take for HP to catch a
 	 clue about building sensible interfaces?  */
-     if (regno == IPSW_REGNUM && len == 8)
+     if (regno == HPPA_IPSW_REGNUM && len == 8)
 	*(int *)&deprecated_registers[DEPRECATED_REGISTER_BYTE (regno)] = 0;
 #endif
 
@@ -193,7 +189,7 @@ store_inferior_registers (int regno)
 		        REGISTER_NAME (regno), err);
 	      /* If we fail to write the PC, give a true error instead of
 		 just a warning.  */
-	      if (regno == PCOQ_HEAD_REGNUM || regno == PCOQ_TAIL_REGNUM)
+	      if (regno == HPPA_PCOQ_HEAD_REGNUM || regno == HPPA_PCOQ_TAIL_REGNUM)
 		perror_with_name (msg);
 	      else
 		warning (msg);
@@ -216,7 +212,7 @@ fetch_register (int regno)
   int i;
 
   offset = 0;
-  len = DEPRECATED_REGISTER_RAW_SIZE (regno);
+  len = register_size (current_gdbarch, regno);
 
   /* Requests for register zero actually want the save_state's
      ss_flags member.  As RM says: "Oh, what a hack!"  */
@@ -227,17 +223,17 @@ fetch_register (int regno)
       len = sizeof (ss.ss_flags);
 
       /* Note that ss_flags is always an int, no matter what
-	 DEPRECATED_REGISTER_RAW_SIZE(0) says.  Assuming all HP-UX PA
-	 machines are big-endian, put it at the least significant end
-	 of the value, and zap the rest of the buffer.  */
-      offset = DEPRECATED_REGISTER_RAW_SIZE (0) - len;
+	 register_size (0) says.  Assuming all HP-UX PA machines are
+	 big-endian, put it at the least significant end of the value,
+	 and zap the rest of the buffer.  */
+      offset = register_size (current_gdbarch, 0) - len;
       memset (buf, 0, sizeof (buf));
     }
 
   /* Floating-point registers come from the ss_fpblock area.  */
-  else if (regno >= FP0_REGNUM)
+  else if (regno >= HPPA_FP0_REGNUM)
     addr = (HPPAH_OFFSETOF (save_state_t, ss_fpblock) 
-	    + (DEPRECATED_REGISTER_BYTE (regno) - DEPRECATED_REGISTER_BYTE (FP0_REGNUM)));
+	    + (DEPRECATED_REGISTER_BYTE (regno) - DEPRECATED_REGISTER_BYTE (HPPA_FP0_REGNUM)));
 
   /* Wide registers come from the ss_wide area.
      I think it's more PC to test (ss_flags & SS_WIDEREGS) to select
@@ -282,10 +278,10 @@ fetch_register (int regno)
   /* If we're reading an address from the instruction address queue,
      mask out the bottom two bits --- they contain the privilege
      level.  */
-  if (regno == PCOQ_HEAD_REGNUM || regno == PCOQ_TAIL_REGNUM)
+  if (regno == HPPA_PCOQ_HEAD_REGNUM || regno == HPPA_PCOQ_TAIL_REGNUM)
     buf[len - 1] &= ~0x3;
 
-  supply_register (regno, buf);
+  regcache_raw_supply (current_regcache, regno, buf);
 }
 
 
@@ -293,10 +289,10 @@ fetch_register (int regno)
    to debugger memory starting at MYADDR.   Copy to inferior if
    WRITE is nonzero.
 
-   Returns the length copied, which is either the LEN argument or zero.
-   This xfer function does not do partial moves, since child_ops
-   doesn't allow memory operations to cross below us in the target stack
-   anyway.  TARGET is ignored.  */
+   Returns the length copied, which is either the LEN argument or
+   zero.  This xfer function does not do partial moves, since
+   deprecated_child_ops doesn't allow memory operations to cross below
+   us in the target stack anyway.  TARGET is ignored.  */
 
 int
 child_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len, int write,

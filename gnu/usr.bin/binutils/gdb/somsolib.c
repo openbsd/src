@@ -43,6 +43,7 @@
 #include "regcache.h"
 #include "gdb_assert.h"
 #include "exec.h"
+#include "hppa-tdep.h"
 
 #include <fcntl.h>
 
@@ -215,7 +216,8 @@ som_solib_sizeof_symbol_table (char *filename)
   /* We believe that filename was handed to us by the dynamic linker, and
      is therefore always an absolute path.
    */
-  desc = openp (getenv ("PATH"), 1, filename, O_RDONLY | O_BINARY, 0, &absolute_name);
+  desc = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST, filename,
+		O_RDONLY | O_BINARY, 0, &absolute_name);
   if (desc < 0)
     {
       perror_with_name (filename);
@@ -278,7 +280,7 @@ static void
 som_solib_add_solib_objfile (struct so_list *so, char *name, int from_tty,
 			     CORE_ADDR text_addr)
 {
-  obj_private_data_t *obj_private;
+  struct hppa_objfile_private *obj_private;
   struct obj_section *s;
 
   so->objfile = symbol_file_add (name, from_tty, NULL, 0, OBJF_SHARED);
@@ -307,17 +309,18 @@ som_solib_add_solib_objfile (struct so_list *so, char *name, int from_tty,
    */
   so->objfile->flags |= OBJF_SHARED;
 
-  if (so->objfile->obj_private == NULL)
+  obj_private = (struct hppa_objfile_private *)
+	        objfile_data (so->objfile, hppa_objfile_priv_data);
+  if (obj_private == NULL)
     {
-      obj_private = (obj_private_data_t *)
+      obj_private = (struct hppa_objfile_private *)
 	obstack_alloc (&so->objfile->objfile_obstack,
-		       sizeof (obj_private_data_t));
+		       sizeof (struct hppa_objfile_private));
+      set_objfile_data (so->objfile, hppa_objfile_priv_data, obj_private);
       obj_private->unwind_info = NULL;
       obj_private->so_info = NULL;
-      so->objfile->obj_private = obj_private;
     }
 
-  obj_private = (obj_private_data_t *) so->objfile->obj_private;
   obj_private->so_info = so;
 
   if (!bfd_check_format (so->abfd, bfd_object))
@@ -1062,7 +1065,7 @@ som_solib_remove_inferior_hook (int pid)
   CORE_ADDR addr;
   struct minimal_symbol *msymbol;
   int status;
-  char dld_flags_buffer[TARGET_INT_BIT / TARGET_CHAR_BIT];
+  char dld_flags_buffer[4];
   unsigned int dld_flags_value;
   struct cleanup *old_cleanups = save_inferior_ptid ();
 
@@ -1079,16 +1082,13 @@ som_solib_remove_inferior_hook (int pid)
   msymbol = lookup_minimal_symbol ("__dld_flags", NULL, NULL);
 
   addr = SYMBOL_VALUE_ADDRESS (msymbol);
-  status = target_read_memory (addr, dld_flags_buffer, TARGET_INT_BIT / TARGET_CHAR_BIT);
+  status = target_read_memory (addr, dld_flags_buffer, 4);
 
-  dld_flags_value = extract_unsigned_integer (dld_flags_buffer,
-					      sizeof (dld_flags_value));
+  dld_flags_value = extract_unsigned_integer (dld_flags_buffer, 4);
 
   dld_flags_value &= ~DLD_FLAGS_HOOKVALID;
-  store_unsigned_integer (dld_flags_buffer,
-			  sizeof (dld_flags_value),
-			  dld_flags_value);
-  status = target_write_memory (addr, dld_flags_buffer, TARGET_INT_BIT / TARGET_CHAR_BIT);
+  store_unsigned_integer (dld_flags_buffer, 4, dld_flags_value);
+  status = target_write_memory (addr, dld_flags_buffer, 4);
 
   do_cleanups (old_cleanups);
 }
@@ -1135,7 +1135,7 @@ som_solib_have_load_event (int pid)
 {
   CORE_ADDR event_kind;
 
-  event_kind = read_register (ARG0_REGNUM);
+  event_kind = read_register (HPPA_ARG0_REGNUM);
   return (event_kind == SHL_LOAD);
 }
 
@@ -1144,7 +1144,7 @@ som_solib_have_unload_event (int pid)
 {
   CORE_ADDR event_kind;
 
-  event_kind = read_register (ARG0_REGNUM);
+  event_kind = read_register (HPPA_ARG0_REGNUM);
   return (event_kind == SHL_UNLOAD);
 }
 
@@ -1158,7 +1158,7 @@ som_solib_library_pathname (int pid)
   static char dll_pathname[1024];
 
   /* Read the descriptor of this newly-loaded library. */
-  dll_handle_address = read_register (ARG1_REGNUM);
+  dll_handle_address = read_register (HPPA_ARG1_REGNUM);
   read_memory (dll_handle_address, (char *) &dll_descriptor, sizeof (dll_descriptor));
 
   /* We can find a pointer to the dll's pathname within the descriptor. */
@@ -1463,17 +1463,17 @@ som_sharedlibrary_info_command (char *ignore, int from_tty)
       if (so_list->objfile == NULL)
 	printf_unfiltered ("  (symbols not loaded)");
       printf_unfiltered ("\n");
-      printf_unfiltered ("    %-12s", local_hex_string_custom (flags, "08l"));
+      printf_unfiltered ("    %-12s", hex_string_custom (flags, 8));
       printf_unfiltered ("%-12s",
-	     local_hex_string_custom (so_list->som_solib.text_addr, "08l"));
+			 hex_string_custom (so_list->som_solib.text_addr, 8));
       printf_unfiltered ("%-12s",
-	      local_hex_string_custom (so_list->som_solib.text_end, "08l"));
+			 hex_string_custom (so_list->som_solib.text_end, 8));
       printf_unfiltered ("%-12s",
-	    local_hex_string_custom (so_list->som_solib.data_start, "08l"));
+			 hex_string_custom (so_list->som_solib.data_start, 8));
       printf_unfiltered ("%-12s",
-	      local_hex_string_custom (so_list->som_solib.data_end, "08l"));
+			 hex_string_custom (so_list->som_solib.data_end, 8));
       printf_unfiltered ("%-12s\n",
-	     local_hex_string_custom (so_list->som_solib.got_value, "08l"));
+			 hex_string_custom (so_list->som_solib.got_value, 8));
       so_list = so_list->next;
     }
 }
@@ -1584,7 +1584,7 @@ _initialize_som_solib (void)
   add_info ("sharedlibrary", som_sharedlibrary_info_command,
 	    "Status of loaded shared object libraries.");
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("auto-solib-add", class_support, var_boolean,
 		  (char *) &auto_solib_add,
 		  "Set autoloading of shared library symbols.\n\
@@ -1595,7 +1595,7 @@ inferior.  Otherwise, symbols must be loaded manually, using `sharedlibrary'.",
 		  &setlist),
      &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("auto-solib-limit", class_support, var_zinteger,
 		  (char *) &auto_solib_limit,
 		  "Set threshold (in Mb) for autoloading shared library symbols.\n\

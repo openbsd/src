@@ -24,8 +24,6 @@
 
 struct frame_info;
 
-#define GDB_MULTI_ARCH 1
-
 /* Minimum possible text address in AIX */
 
 #define TEXT_SEGMENT_BASE	0x10000000
@@ -71,14 +69,11 @@ extern void aix_process_linenos (void);
    to be actual register numbers as far as the user is concerned
    but do serve to get the desired values when passed to read_register.  */
 
+/* Don't use this in code specific to the RS6000 and its descendants;
+   use tdep->ppc_fp0_regnum instead.  FP0_REGNUM will be deprecated
+   soon, but we still need to define it here for the uses in
+   architecture-independent code.  */
 #define FP0_REGNUM 32		/* Floating point register 0 */
-#define FPLAST_REGNUM 63	/* Last floating point register */
-
-/* Define other aspects of the stack frame.  */
-
-#define DEPRECATED_INIT_FRAME_PC_FIRST(fromleaf, prev) \
-  (fromleaf ? DEPRECATED_SAVED_PC_AFTER_CALL (prev->next) : \
-	      prev->next ? DEPRECATED_FRAME_SAVED_PC (prev->next) : read_pc ())
 
 /* Notice when a new child process is started. */
 

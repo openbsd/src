@@ -415,9 +415,11 @@ const struct language_defn m2_language_defn =
   range_check_on,
   type_check_on,
   case_sensitive_on,
+  array_row_major,
   &exp_descriptor_standard,
   m2_parse,			/* parser */
   m2_error,			/* parser error function */
+  null_post_parser,
   m2_printchar,			/* Print character constant */
   m2_printstr,			/* function to print string constant */
   m2_emit_char,			/* Function to print a single character */
@@ -430,15 +432,13 @@ const struct language_defn m2_language_defn =
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   NULL,				/* Language specific symbol demangler */
-  {"", "", "", ""},		/* Binary format info */
-  {"%loB", "", "o", "B"},	/* Octal format info */
-  {"%ld", "", "d", ""},		/* Decimal format info */
-  {"0%lXH", "0", "X", "H"},	/* Hex format info */
+  NULL,				/* Language specific class_name_from_physname */
   m2_op_print_tab,		/* expression operators for printing */
   0,				/* arrays are first-class (not c-style) */
   0,				/* String lower bound */
   &builtin_type_m2_char,	/* Type of string elements */
   default_word_break_characters,
+  NULL, /* FIXME: la_language_arch_info.  */
   LANG_MAGIC
 };
 

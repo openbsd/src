@@ -37,6 +37,17 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+/* A cache entry for a successfully looked-up symbol.  */
+struct sym_cache
+{
+  const char *name;
+  CORE_ADDR addr;
+  struct sym_cache *next;
+};
+
+/* The symbol cache.  */
+static struct sym_cache *symbol_cache;
+
 int remote_debug = 0;
 struct ui_file *gdb_stdlog;
 
@@ -353,13 +364,14 @@ input_interrupt (int unused)
   if (select (remote_desc + 1, &readset, 0, 0, &immediate) > 0)
     {
       int cc;
-      char c;
+      char c = 0;
       
       cc = read (remote_desc, &c, 1);
 
       if (cc != 1 || c != '\003')
 	{
-	  fprintf (stderr, "input_interrupt, cc = %d c = %d\n", cc, c);
+	  fprintf (stderr, "input_interrupt, count = %d c = %d ('%c')\n",
+		   cc, c, c);
 	  return;
 	}
       
@@ -385,16 +397,33 @@ unblock_async_io (void)
   sigprocmask (SIG_UNBLOCK, &sigio_set, NULL);
 }
 
+/* Asynchronous I/O support.  SIGIO must be enabled when waiting, in order to
+   accept Control-C from the client, and must be disabled when talking to
+   the client.  */
+
+/* Current state of asynchronous I/O.  */
+static int async_io_enabled;
+
+/* Enable asynchronous I/O.  */
 void
 enable_async_io (void)
 {
+  if (async_io_enabled)
+    return;
+
   signal (SIGIO, input_interrupt);
+  async_io_enabled = 1;
 }
 
+/* Disable asynchronous I/O.  */
 void
 disable_async_io (void)
 {
+  if (!async_io_enabled)
+    return;
+
   signal (SIGIO, SIG_IGN);
+  async_io_enabled = 0;
 }
 
 /* Returns next char from remote GDB.  -1 if error.  */
@@ -692,11 +721,23 @@ decode_M_packet (char *from, CORE_ADDR *mem_addr_ptr, unsigned int *len_ptr,
   convert_ascii_to_int (&from[i++], to, *len_ptr);
 }
 
+/* Ask GDB for the address of NAME, and return it in ADDRP if found.
+   Returns 1 if the symbol is found, 0 if it is not, -1 on error.  */
+
 int
 look_up_one_symbol (const char *name, CORE_ADDR *addrp)
 {
   char own_buf[266], *p, *q;
   int len;
+  struct sym_cache *sym;
+
+  /* Check the cache first.  */
+  for (sym = symbol_cache; sym; sym = sym->next)
+    if (strcmp (name, sym->name) == 0)
+      {
+	*addrp = sym->addr;
+	return 1;
+      }
 
   /* Send the request.  */
   strcpy (own_buf, "qSymbol:");
@@ -731,6 +772,13 @@ look_up_one_symbol (const char *name, CORE_ADDR *addrp)
     return 0;
 
   decode_address (addrp, p, q - p);
+
+  /* Save the symbol in our cache.  */
+  sym = malloc (sizeof (*sym));
+  sym->name = strdup (name);
+  sym->addr = *addrp;
+  sym->next = symbol_cache;
+  symbol_cache = sym;
+
   return 1;
 }
-

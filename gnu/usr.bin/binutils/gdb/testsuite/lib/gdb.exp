@@ -16,9 +16,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
-
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
 # Generic gdb subroutines that should work for any target.  If these
@@ -183,7 +180,7 @@ proc gdb_run_cmd {args} {
 	if [target_info exists gdb,do_reload_on_run] {
 	    # Specifying no file, defaults to the executable
 	    # currently being debugged.
-	    if { [gdb_load ""] < 0 } {
+	    if { [gdb_load ""] != 0 } {
 		return;
 	    }
 	    send_gdb "continue\n";
@@ -228,7 +225,7 @@ proc gdb_run_cmd {args} {
 		    send_gdb "y\n"
 		}
 		-re "The program is not being run.*$gdb_prompt $" {
-		    if { [gdb_load ""] < 0 } {
+		    if { [gdb_load ""] != 0 } {
 			return;
 		    }
 		    send_gdb "jump *$start\n";
@@ -250,7 +247,7 @@ proc gdb_run_cmd {args} {
     }
 
     if [target_info exists gdb,do_reload_on_run] {
-	if { [gdb_load ""] < 0 } {
+	if { [gdb_load ""] != 0 } {
 	    return;
 	}
     }
@@ -661,7 +658,7 @@ proc gdb_test_multiple { command message user_code } {
 	    fail "$errmsg"
 	    set result -1
 	}
-	 -re ".*$gdb_prompt $" {
+	 -re "\r\n$gdb_prompt $" {
 	    if ![string match "" $message] then {
 		fail "$message"
 	    }
@@ -700,7 +697,17 @@ proc gdb_test_multiple { command message user_code } {
     }
 
     set result 0
-    gdb_expect $tmt $code
+    set code [catch {gdb_expect $tmt $code} string]
+    if {$code == 1} {
+	global errorInfo errorCode;
+	return -code error -errorinfo $errorInfo -errorcode $errorCode $string
+    } elseif {$code == 2} {
+	return -code return $string
+    } elseif {$code == 3} {
+	return
+    } elseif {$code > 4} {
+	return -code $code $string
+    }
     return $result
 }
 
@@ -946,39 +953,56 @@ proc default_gdb_exit {} {
     unset gdb_spawn_id
 }
 
+# Load a file into the debugger.
+# The return value is 0 for success, -1 for failure.
 #
-# load a file into the debugger.
-# return a -1 if anything goes wrong.
+# This procedure also set the global variable GDB_FILE_CMD_DEBUG_INFO
+# to one of these values:
 #
+#   debug    file was loaded successfully and has debug information
+#   nodebug  file was loaded successfully and has no debug information
+#   fail     file was not loaded
+#
+# I tried returning this information as part of the return value,
+# but ran into a mess because of the many re-implementations of
+# gdb_load in config/*.exp.
+#
+# TODO: gdb.base/sepdebug.exp and gdb.stabs/weird.exp might be able to use
+# this if they can get more information set.
+
 proc gdb_file_cmd { arg } {
-    global verbose
-    global loadpath
-    global loadfile
-    global GDB
     global gdb_prompt
-    upvar timeout timeout
+    global verbose
+    global GDB
+
+    # Set whether debug info was found.
+    # Default to "fail".
+    global gdb_file_cmd_debug_info
+    set gdb_file_cmd_debug_info "fail"
 
     if [is_remote host] {
-	set arg [remote_download host $arg];
+	set arg [remote_download host $arg]
 	if { $arg == "" } {
-	    error "download failed"
-	    return -1;
+	    perror "download failed"
+	    return -1
 	}
     }
 
     send_gdb "file $arg\n"
     gdb_expect 120 {
+	-re "Reading symbols from.*no debugging symbols found.*done.*$gdb_prompt $" {
+	    verbose "\t\tLoaded $arg into the $GDB with no debugging symbols"
+	    set gdb_file_cmd_debug_info "nodebug"
+	    return 0
+	}
         -re "Reading symbols from.*done.*$gdb_prompt $" {
             verbose "\t\tLoaded $arg into the $GDB"
-            return 0
-        }
-        -re "has no symbol-table.*$gdb_prompt $" {
-            perror "$arg wasn't compiled with \"-g\""
-            return -1
+	    set gdb_file_cmd_debug_info "debug"
+	    return 0
         }
         -re "A program is being debugged already.*Kill it.*y or n. $" {
             send_gdb "y\n"
-                verbose "\t\tKilling previous program being debugged"
+	    verbose "\t\tKilling previous program being debugged"
             exp_continue
         }
         -re "Load new symbol table from \".*\".*y or n. $" {
@@ -986,32 +1010,33 @@ proc gdb_file_cmd { arg } {
             gdb_expect 120 {
                 -re "Reading symbols from.*done.*$gdb_prompt $" {
                     verbose "\t\tLoaded $arg with new symbol table into $GDB"
-                    return 0
+		    set gdb_file_cmd_debug_info "debug"
+		    return 0
                 }
                 timeout {
                     perror "(timeout) Couldn't load $arg, other program already loaded."
-                    return -1
+		    return -1
                 }
             }
 	}
         -re "No such file or directory.*$gdb_prompt $" {
-            perror "($arg) No such file or directory\n"
-            return -1
+            perror "($arg) No such file or directory"
+	    return -1
         }
         -re "$gdb_prompt $" {
             perror "couldn't load $arg into $GDB."
-            return -1
+	    return -1
             }
         timeout {
             perror "couldn't load $arg into $GDB (timed out)."
-            return -1
+	    return -1
         }
         eof {
             # This is an attempt to detect a core dump, but seems not to
             # work.  Perhaps we need to match .* followed by eof, in which
             # gdb_expect does not seem to have a way to do that.
             perror "couldn't load $arg into $GDB (end of file)."
-            return -1
+	    return -1
         }
     }
 }
@@ -1111,6 +1136,12 @@ proc skip_cplus_tests {} {
     return 0
 }
 
+# Return a 1 if I don't even want to try to test FORTRAN.
+
+proc skip_fortran_tests {} {
+    return 0
+}
+
 # Skip all the tests in the file if you are not on an hppa running
 # hpux target.
 
@@ -1124,7 +1155,6 @@ set compiler_info		"unknown"
 set gcc_compiled		0
 set hp_cc_compiler		0
 set hp_aCC_compiler		0
-set signed_keyword_not_used	0
 
 # Figure out what compiler I am using.
 #
@@ -1190,10 +1220,11 @@ proc get_compiler_info {binfile args} {
 
     # These come from compiler.c or compiler.cc
     global compiler_info
+
+    # Legacy global data symbols.
     global gcc_compiled
     global hp_cc_compiler
     global hp_aCC_compiler
-    global signed_keyword_not_used
 
     # Choose which file to preprocess.
     set ifile "${srcdir}/lib/compiler.c"
@@ -1207,15 +1238,42 @@ proc get_compiler_info {binfile args} {
     set cppout [ gdb_compile "${ifile}" "" preprocess [list "$args" quiet] ]
     log_file -a "$outdir/$tool.log" 
 
-    # Source the output.
+    # Eval the output.
+    set unknown 0
     foreach cppline [ split "$cppout" "\n" ] {
-	if { ! [ regexp "^#" "$cppline" ] } {
-	    if { ! [ regexp "^\[\n\r\t \]*$" "$cppline" ] } {
-		verbose "get_compiler_info: $cppline" 2
-		eval "$cppline"
-	    }
+	if { [ regexp "^#" "$cppline" ] } {
+	    # line marker
+	} elseif { [ regexp "^\[\n\r\t \]*$" "$cppline" ] } {
+	    # blank line
+	} elseif { [ regexp "^\[\n\r\t \]*set\[\n\r\t \]" "$cppline" ] } {
+	    # eval this line
+	    verbose "get_compiler_info: $cppline" 2
+	    eval "$cppline"
+	} else {
+	    # unknown line
+	    verbose -log "get_compiler_info: $cppline"
+	    set unknown 1
 	}
     }
+
+    # Reset to unknown compiler if any diagnostics happened.
+    if { $unknown } {
+	set compiler_info "unknown"
+    }
+
+    # Set the legacy symbols.
+    set gcc_compiled     0
+    set hp_cc_compiler   0
+    set hp_aCC_compiler  0
+    if { [regexp "^gcc-1-" "$compiler_info" ] } { set gcc_compiled 1 }
+    if { [regexp "^gcc-2-" "$compiler_info" ] } { set gcc_compiled 2 }
+    if { [regexp "^gcc-3-" "$compiler_info" ] } { set gcc_compiled 3 }
+    if { [regexp "^gcc-4-" "$compiler_info" ] } { set gcc_compiled 4 }
+    if { [regexp "^gcc-5-" "$compiler_info" ] } { set gcc_compiled 5 }
+    if { [regexp "^hpcc-"  "$compiler_info" ] } { set hp_cc_compiler 1 }
+    if { [regexp "^hpacc-" "$compiler_info" ] } { set hp_aCC_compiler 1 }
+
+    # Log what happened.
     verbose -log "get_compiler_info: $compiler_info"
 
     # Most compilers will evaluate comparisons and other boolean
@@ -1593,7 +1651,7 @@ proc gdb_exit { } {
 
 #
 # gdb_load -- load a file into the debugger.
-#             return a -1 if anything goes wrong.
+# Many files in config/*.exp override this procedure.
 #
 proc gdb_load { arg } {
     return [gdb_file_cmd $arg]
@@ -1763,66 +1821,107 @@ proc gdb_step_for_stub { } {
     }
 }
 
-### gdb_get_line_number TEXT [FILE]
-###
-### Search the source file FILE, and return the line number of a line
-### containing TEXT.  Use this function instead of hard-coding line
-### numbers into your test script.
-###
-### Specifically, this function uses GDB's "search" command to search
-### FILE for the first line containing TEXT, and returns its line
-### number.  Thus, FILE must be a source file, compiled into the
-### executable you are running.  If omitted, FILE defaults to the
-### value of the global variable `srcfile'; most test scripts set
-### `srcfile' appropriately at the top anyway.
-###
-### Use this function to keep your test scripts independent of the
-### exact line numbering of the source file.  Don't write:
-### 
-###   send_gdb "break 20"
-### 
-### This means that if anyone ever edits your test's source file, 
-### your test could break.  Instead, put a comment like this on the
-### source file line you want to break at:
-### 
-###   /* breakpoint spot: frotz.exp: test name */
-### 
-### and then write, in your test script (which we assume is named
-### frotz.exp):
-### 
-###   send_gdb "break [gdb_get_line_number "frotz.exp: test name"]\n"
-###
-### (Yes, Tcl knows how to handle the nested quotes and brackets.
-### Try this:
-### 	$ tclsh
-### 	% puts "foo [lindex "bar baz" 1]"
-### 	foo baz
-### 	% 
-### Tcl is quite clever, for a little stringy language.)
+# gdb_get_line_number TEXT [FILE]
+#
+# Search the source file FILE, and return the line number of the
+# first line containing TEXT.  If no match is found, return -1.
+# 
+# TEXT is a string literal, not a regular expression.
+#
+# The default value of FILE is "$srcdir/$subdir/$srcfile".  If FILE is
+# specified, and does not start with "/", then it is assumed to be in
+# "$srcdir/$subdir".  This is awkward, and can be fixed in the future,
+# by changing the callers and the interface at the same time.
+# In particular: gdb.base/break.exp, gdb.base/condbreak.exp,
+# gdb.base/ena-dis-br.exp.
+#
+# Use this function to keep your test scripts independent of the
+# exact line numbering of the source file.  Don't write:
+# 
+#   send_gdb "break 20"
+# 
+# This means that if anyone ever edits your test's source file, 
+# your test could break.  Instead, put a comment like this on the
+# source file line you want to break at:
+# 
+#   /* breakpoint spot: frotz.exp: test name */
+# 
+# and then write, in your test script (which we assume is named
+# frotz.exp):
+# 
+#   send_gdb "break [gdb_get_line_number "frotz.exp: test name"]\n"
+#
+# (Yes, Tcl knows how to handle the nested quotes and brackets.
+# Try this:
+# 	$ tclsh
+# 	% puts "foo [lindex "bar baz" 1]"
+# 	foo baz
+# 	% 
+# Tcl is quite clever, for a little stringy language.)
+#
+# ===
+#
+# The previous implementation of this procedure used the gdb search command.
+# This version is different:
+#
+#   . It works with MI, and it also works when gdb is not running.
+#
+#   . It operates on the build machine, not the host machine.
+#
+#   . For now, this implementation fakes a current directory of
+#     $srcdir/$subdir to be compatible with the old implementation.
+#     This will go away eventually and some callers will need to
+#     be changed.
+#
+#   . The TEXT argument is literal text and matches literally,
+#     not a regular expression as it was before.
+#
+#   . State changes in gdb, such as changing the current file
+#     and setting $_, no longer happen.
+#
+# After a bit of time we can forget about the differences from the
+# old implementation.
+#
+# --chastain 2004-08-05
 
-proc gdb_get_line_number {text {file /omitted/}} {
-    global gdb_prompt;
-    global srcfile;
+proc gdb_get_line_number { text { file "" } } {
+    global srcdir
+    global subdir
+    global srcfile
 
-    if {! [string compare $file /omitted/]} {
-	set file $srcfile
+    if { "$file" == "" } then {
+	set file "$srcfile"
+    }
+    if { ! [regexp "^/" "$file"] } then {
+	set file "$srcdir/$subdir/$file"
     }
 
-    set result -1;
-    gdb_test "list ${file}:1,1" ".*" ""
-    send_gdb "search ${text}\n"
-    gdb_expect {
-        -re "\[\r\n\]+(\[0-9\]+)\[ \t\].*${text}.*$gdb_prompt $" {
-            set result $expect_out(1,string)
-        }
-        -re ".*$gdb_prompt $" {
-            fail "find line number containing \"${text}\""
-        }
-        timeout {
-            fail "find line number containing \"${text}\" (timeout)"
-        }
+    if { [ catch { set fd [open "$file"] } message ] } then {
+	perror "$message"
+	return -1
     }
-    return $result;
+
+    set found -1
+    for { set line 1 } { 1 } { incr line } {
+	if { [ catch { set nchar [gets "$fd" body] } message ] } then {
+	    perror "$message"
+	    return -1
+	}
+	if { $nchar < 0 } then {
+	    break
+	}
+	if { [string first "$text" "$body"] >= 0 } then {
+	    set found $line
+	    break
+	}
+    }
+
+    if { [ catch { close "$fd" } message ] } then {
+	perror "$message"
+	return -1
+    }
+
+    return $found
 }
 
 # gdb_continue_to_end:

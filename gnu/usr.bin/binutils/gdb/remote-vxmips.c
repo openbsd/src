@@ -103,19 +103,23 @@ vx_read_register (int regno)
 
   /* Copy the general registers.  */
 
-  bcopy (&mips_greg_packet[MIPS_R_GP0], &deprecated_registers[0],
-	 32 * MIPS_GREG_SIZE);
+  memcpy (&deprecated_registers[0], &mips_greg_packet[MIPS_R_GP0],
+	  32 * MIPS_GREG_SIZE);
 
   /* Copy SR, LO, HI, and PC.  */
 
-  bcopy (&mips_greg_packet[MIPS_R_SR],
-	 &deprecated_registers[DEPRECATED_REGISTER_BYTE (PS_REGNUM)], MIPS_GREG_SIZE);
-  bcopy (&mips_greg_packet[MIPS_R_LO],
-	 &deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->lo)], MIPS_GREG_SIZE);
-  bcopy (&mips_greg_packet[MIPS_R_HI],
-	 &deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->hi)], MIPS_GREG_SIZE);
-  bcopy (&mips_greg_packet[MIPS_R_PC],
-	 &deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->pc)], MIPS_GREG_SIZE);
+  memcpy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (PS_REGNUM)],
+	  &mips_greg_packet[MIPS_R_SR],
+	  MIPS_GREG_SIZE);
+  memcpy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->lo)],
+	  &mips_greg_packet[MIPS_R_LO],
+	  MIPS_GREG_SIZE);
+  memcpy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->hi)],
+	  &mips_greg_packet[MIPS_R_HI],
+	  MIPS_GREG_SIZE);
+  memcpy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->pc)],
+	  &mips_greg_packet[MIPS_R_PC],
+	  MIPS_GREG_SIZE);
 
   /* If the target has floating point registers, fetch them.
      Otherwise, zero the floating point register values in
@@ -129,22 +133,22 @@ vx_read_register (int regno)
 
       /* Copy the floating point registers.  */
 
-      bcopy (&mips_fpreg_packet[MIPS_R_FP0],
-	     &deprecated_registers[DEPRECATED_REGISTER_BYTE (FP0_REGNUM)],
-	     DEPRECATED_REGISTER_RAW_SIZE (FP0_REGNUM) * 32);
+      memcpy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (FP0_REGNUM)],
+	      &mips_fpreg_packet[MIPS_R_FP0],
+	      register_size (current_gdbarch, FP0_REGNUM) * 32);
 
       /* Copy the floating point control/status register (fpcsr).  */
 
-      bcopy (&mips_fpreg_packet[MIPS_R_FPCSR],
-	     &deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->fp_control_status)],
-	     DEPRECATED_REGISTER_RAW_SIZE (mips_regnum (current_gdbarch)->fp_control_status));
+      memcpy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->fp_control_status)],
+	      &mips_fpreg_packet[MIPS_R_FPCSR],
+	      register_size (current_gdbarch, mips_regnum (current_gdbarch)->fp_control_status));
     }
   else
     {
       memset (&deprecated_registers[DEPRECATED_REGISTER_BYTE (FP0_REGNUM)],
-	      0, DEPRECATED_REGISTER_RAW_SIZE (FP0_REGNUM) * 32);
+	      0, register_size (current_gdbarch, FP0_REGNUM) * 32);
       memset (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->fp_control_status)],
-	      0, DEPRECATED_REGISTER_RAW_SIZE (mips_regnum (current_gdbarch)->fp_control_status));
+	      0, register_size (current_gdbarch, mips_regnum (current_gdbarch)->fp_control_status));
     }
 
   /* Mark the register cache valid.  */
@@ -163,19 +167,23 @@ vx_write_register (int regno)
 
   /* Store general registers.  */
 
-  bcopy (&deprecated_registers[0], &mips_greg_packet[MIPS_R_GP0],
-	 32 * MIPS_GREG_SIZE);
+  memcpy (&mips_greg_packet[MIPS_R_GP0], &deprecated_registers[0],
+	  32 * MIPS_GREG_SIZE);
 
   /* Copy SR, LO, HI, and PC.  */
 
-  bcopy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (PS_REGNUM)],
-	 &mips_greg_packet[MIPS_R_SR], MIPS_GREG_SIZE);
-  bcopy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->lo)],
-	 &mips_greg_packet[MIPS_R_LO], MIPS_GREG_SIZE);
-  bcopy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->hi)],
-	 &mips_greg_packet[MIPS_R_HI], MIPS_GREG_SIZE);
-  bcopy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->pc)],
-	 &mips_greg_packet[MIPS_R_PC], MIPS_GREG_SIZE);
+  memcpy (&mips_greg_packet[MIPS_R_SR],
+	  &deprecated_registers[DEPRECATED_REGISTER_BYTE (PS_REGNUM)],
+	  MIPS_GREG_SIZE);
+  memcpy (&mips_greg_packet[MIPS_R_LO],
+	  &deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->lo)],
+	  MIPS_GREG_SIZE);
+  memcpy (&mips_greg_packet[MIPS_R_HI],
+	  &deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->hi)],
+	  MIPS_GREG_SIZE);
+  memcpy (&mips_greg_packet[MIPS_R_PC],
+	  &deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->pc)],
+	  MIPS_GREG_SIZE);
 
   net_write_registers (mips_greg_packet, MIPS_GREG_PLEN, PTRACE_SETREGS);
 
@@ -185,15 +193,15 @@ vx_write_register (int regno)
     {
       /* Copy the floating point data registers.  */
 
-      bcopy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (FP0_REGNUM)],
-	     &mips_fpreg_packet[MIPS_R_FP0],
-	     DEPRECATED_REGISTER_RAW_SIZE (FP0_REGNUM) * 32);
+      memcpy (&mips_fpreg_packet[MIPS_R_FP0],
+	      &deprecated_registers[DEPRECATED_REGISTER_BYTE (FP0_REGNUM)],
+	      register_size (current_gdbarch, FP0_REGNUM) * 32);
 
       /* Copy the floating point control/status register (fpcsr).  */
 
-      bcopy (&deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->fp_control_status)],
-	     &mips_fpreg_packet[MIPS_R_FPCSR],
-	     DEPRECATED_REGISTER_RAW_SIZE (mips_regnum (current_gdbarch)->fp_control_status));
+      memcpy (&mips_fpreg_packet[MIPS_R_FPCSR],
+	      &deprecated_registers[DEPRECATED_REGISTER_BYTE (mips_regnum (current_gdbarch)->fp_control_status)],
+	      register_size (current_gdbarch, mips_regnum (current_gdbarch)->fp_control_status));
 
       net_write_registers (mips_fpreg_packet, MIPS_FPREG_PLEN,
 			   PTRACE_SETFPREGS);

@@ -45,3 +45,10 @@ extern int procfs_stopped_by_watchpoint (ptid_t);
 extern int procfs_set_watchpoint (ptid_t, CORE_ADDR, int, int, int);
 
 #define TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT(SIZE) 1
+
+/* Override register locations in upage for SGI machines */
+#define REGISTER_U_ADDR(addr, blockend, regno) 		\
+  if (regno < PC_REGNUM)				\
+      addr = regno;					\
+  else							\
+      addr = regno + NSIG_HNDLRS;	/* Skip over signal handlers */

@@ -176,10 +176,6 @@ extern void generic_target_write_pc (CORE_ADDR, ptid_t);
 
 extern CORE_ADDR read_sp (void);
 
-extern void deprecated_write_sp (CORE_ADDR);
-
-extern CORE_ADDR deprecated_read_fp (void);
-
 extern CORE_ADDR unsigned_pointer_to_address (struct type *type, const void *buf);
 
 extern void unsigned_address_to_pointer (struct type *type, void *buf,
@@ -241,7 +237,7 @@ int ptrace_wait (ptid_t, int *);
 extern void child_resume (ptid_t, int, enum target_signal);
 
 #ifndef PTRACE_ARG3_TYPE
-#define PTRACE_ARG3_TYPE int	/* Correct definition for most systems. */
+#define PTRACE_ARG3_TYPE PTRACE_TYPE_ARG3
 #endif
 
 extern int call_ptrace (int, int, PTRACE_ARG3_TYPE, int);
@@ -364,10 +360,6 @@ extern CORE_ADDR step_range_end;	/* Exclusive */
 
 extern struct frame_id step_frame_id;
 
-/* Our notion of the current stack pointer.  */
-
-extern CORE_ADDR step_sp;
-
 /* 1 means step over all subroutine calls.
    -1 means step over calls to undebuggable functions.  */
 
@@ -439,38 +431,6 @@ extern int attach_flag;
 #define ON_STACK 1
 #define AT_ENTRY_POINT 4
 #define AT_SYMBOL 5
-
-/* FIXME: cagney/2000-04-17: gdbarch should manage this.  The default
-   shouldn't be necessary. */
-
-#if !defined PUSH_DUMMY_FRAME
-#define PUSH_DUMMY_FRAME (internal_error (__FILE__, __LINE__, "PUSH_DUMMY_FRAME"), 0)
-#endif
-
-#if !defined STORE_STRUCT_RETURN
-#define STORE_STRUCT_RETURN(a1,a2) (internal_error (__FILE__, __LINE__, "STORE_STRUCT_RETURN"), 0)
-#endif
-
-
-/* Are we in a call dummy? */
-
-/* NOTE: cagney/2002-11-24: Targets need to both switch to generic
-   dummy frames, and use generic_pc_in_call_dummy().  The generic
-   version should be able to handle all cases since that code works by
-   saving the address of the dummy's breakpoint (where ever it is).  */
-
-extern int deprecated_pc_in_call_dummy_on_stack (CORE_ADDR pc,
-						 CORE_ADDR sp,
-						 CORE_ADDR frame_address);
-
-/* NOTE: cagney/2002-11-24: Targets need to both switch to generic
-   dummy frames, and use generic_pc_in_call_dummy().  The generic
-   version should be able to handle all cases since that code works by
-   saving the address of the dummy's breakpoint (where ever it is).  */
-
-extern int deprecated_pc_in_call_dummy_at_entry_point (CORE_ADDR pc,
-						       CORE_ADDR sp,
-						       CORE_ADDR frame_address);
 
 /* If STARTUP_WITH_SHELL is set, GDB's "run"
    will attempts to start up the debugee under a shell.

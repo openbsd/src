@@ -76,10 +76,6 @@ typedef struct mips_extra_func_info
 #endif
 #endif
 
-#ifdef USG
-#include <sys/types.h>
-#endif
-
 #include "gdb_stat.h"
 #include "gdb_string.h"
 
@@ -92,7 +88,6 @@ typedef struct mips_extra_func_info
 #include "aout/stab_gnu.h"	/* STABS information */
 
 #include "expression.h"
-#include "language.h"		/* For local_hex_string() */
 
 extern void _initialize_mdebugread (void);
 
@@ -321,10 +316,6 @@ static void handle_psymbol_enumerators (struct objfile *, FDR *, int,
 
 static char *mdebug_next_symbol_text (struct objfile *);
 
-/* Address bounds for the signal trampoline in inferior, if any */
-
-CORE_ADDR sigtramp_address, sigtramp_end;
-
 /* Allocate zeroed memory */
 
 static void *
@@ -3274,7 +3265,7 @@ parse_partial_symbols (struct objfile *objfile)
 		    /* If we haven't found it yet, ignore it.  It's probably some
 		       new type we don't know about yet.  */
 		    complaint (&symfile_complaints, "unknown symbol type %s",
-			       local_hex_string (type_code)); /*CUR_SYMBOL_TYPE*/
+			       hex_string (type_code)); /*CUR_SYMBOL_TYPE*/
 		    continue;
 		  }
 		if (stabstring
@@ -3604,13 +3595,6 @@ parse_partial_symbols (struct objfile *objfile)
 		       dependency_list, dependencies_used, textlow_not_set);
       includes_used = 0;
       dependencies_used = 0;
-
-      if (objfile->ei.entry_point >= save_pst->textlow &&
-	  objfile->ei.entry_point < save_pst->texthigh)
-	{
-	  objfile->ei.deprecated_entry_file_lowpc = save_pst->textlow;
-	  objfile->ei.deprecated_entry_file_highpc = save_pst->texthigh;
-	}
 
       /* The objfile has its functions reordered if this partial symbol
          table overlaps any other partial symbol table.
@@ -4751,126 +4735,6 @@ elfmdebug_build_psymtabs (struct objfile *objfile,
   install_minimal_symbols (objfile);
   do_cleanups (back_to);
 }
-
-
-/* Things used for calling functions in the inferior.
-   These functions are exported to our companion
-   mips-tdep.c file and are here because they play
-   with the symbol-table explicitly. */
-
-/* Sigtramp: make sure we have all the necessary information
-   about the signal trampoline code. Since the official code
-   from MIPS does not do so, we make up that information ourselves.
-   If they fix the library (unlikely) this code will neutralize itself. */
-
-/* FIXME: This function is called only by mips-tdep.c.  It needs to be
-   here because it calls functions defined in this file, but perhaps
-   this could be handled in a better way.  Only compile it in when
-   tm-mips.h is included. */
-
-#ifdef TM_MIPS_H
-
-void
-fixup_sigtramp (void)
-{
-  struct symbol *s;
-  struct symtab *st;
-  struct block *b, *b0 = NULL;
-
-  sigtramp_address = -1;
-
-  /* We have to handle the following cases here:
-     a) The Mips library has a sigtramp label within sigvec.
-     b) Irix has a _sigtramp which we want to use, but it also has sigvec.  */
-  s = lookup_symbol ("sigvec", 0, VAR_DOMAIN, 0, NULL);
-  if (s != 0)
-    {
-      b0 = SYMBOL_BLOCK_VALUE (s);
-      s = lookup_symbol ("sigtramp", b0, VAR_DOMAIN, 0, NULL);
-    }
-  if (s == 0)
-    {
-      /* No sigvec or no sigtramp inside sigvec, try _sigtramp.  */
-      s = lookup_symbol ("_sigtramp", 0, VAR_DOMAIN, 0, NULL);
-    }
-
-  /* But maybe this program uses its own version of sigvec */
-  if (s == 0)
-    return;
-
-  /* Did we or MIPSco fix the library ? */
-  if (SYMBOL_CLASS (s) == LOC_BLOCK)
-    {
-      sigtramp_address = BLOCK_START (SYMBOL_BLOCK_VALUE (s));
-      sigtramp_end = BLOCK_END (SYMBOL_BLOCK_VALUE (s));
-      return;
-    }
-
-  sigtramp_address = SYMBOL_VALUE (s);
-  sigtramp_end = sigtramp_address + 0x88;	/* black magic */
-
-  /* But what symtab does it live in ? */
-  st = find_pc_symtab (SYMBOL_VALUE (s));
-
-  /*
-   * Ok, there goes the fix: turn it into a procedure, with all the
-   * needed info.  Note we make it a nested procedure of sigvec,
-   * which is the way the (assembly) code is actually written.
-   */
-  SYMBOL_DOMAIN (s) = VAR_DOMAIN;
-  SYMBOL_CLASS (s) = LOC_BLOCK;
-  SYMBOL_TYPE (s) = init_type (TYPE_CODE_FUNC, 4, 0, (char *) NULL,
-			       st->objfile);
-  TYPE_TARGET_TYPE (SYMBOL_TYPE (s)) = mdebug_type_void;
-
-  /* Need a block to allocate MIPS_EFI_SYMBOL_NAME in */
-  b = new_block (NON_FUNCTION_BLOCK);
-  SYMBOL_BLOCK_VALUE (s) = b;
-  BLOCK_START (b) = sigtramp_address;
-  BLOCK_END (b) = sigtramp_end;
-  BLOCK_FUNCTION (b) = s;
-  BLOCK_SUPERBLOCK (b) = BLOCK_SUPERBLOCK (b0);
-  add_block (b, st);
-  sort_blocks (st);
-
-  /* Make a MIPS_EFI_SYMBOL_NAME entry for it */
-  {
-    struct mips_extra_func_info *e =
-    ((struct mips_extra_func_info *)
-     xzalloc (sizeof (struct mips_extra_func_info)));
-
-    e->numargs = 0;		/* the kernel thinks otherwise */
-    e->pdr.frameoffset = 32;
-    e->pdr.framereg = SP_REGNUM;
-    /* Note that setting pcreg is no longer strictly necessary as
-       mips_frame_saved_pc is now aware of signal handler frames.  */
-    e->pdr.pcreg = PC_REGNUM;
-    e->pdr.regmask = -2;
-    /* Offset to saved r31, in the sigtramp case the saved registers
-       are above the frame in the sigcontext.
-       We have 4 alignment bytes, 12 bytes for onstack, mask and pc,
-       32 * 4 bytes for the general registers, 12 bytes for mdhi, mdlo, ownedfp
-       and 32 * 4 bytes for the floating point registers.  */
-    e->pdr.regoffset = 4 + 12 + 31 * 4;
-    e->pdr.fregmask = -1;
-    /* Offset to saved f30 (first saved *double* register).  */
-    e->pdr.fregoffset = 4 + 12 + 32 * 4 + 12 + 30 * 4;
-    e->pdr.isym = (long) s;
-    e->pdr.adr = sigtramp_address;
-
-    current_objfile = st->objfile;	/* Keep new_symbol happy */
-    s = new_symbol (MIPS_EFI_SYMBOL_NAME);
-    SYMBOL_VALUE (s) = (long) e;
-    SYMBOL_DOMAIN (s) = LABEL_DOMAIN;
-    SYMBOL_CLASS (s) = LOC_CONST;
-    SYMBOL_TYPE (s) = mdebug_type_void;
-    current_objfile = NULL;
-  }
-
-  dict_add_symbol (BLOCK_DICT (b), s);
-}
-
-#endif /* TM_MIPS_H */
 
 void
 _initialize_mdebugread (void)

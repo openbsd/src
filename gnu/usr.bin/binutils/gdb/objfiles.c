@@ -180,11 +180,11 @@ allocate_objfile (bfd *abfd, int flags)
   objfile->obfd = abfd;
   if (objfile->name != NULL)
     {
-      xmfree (objfile->md, objfile->name);
+      xfree (objfile->name);
     }
   if (abfd != NULL)
     {
-      objfile->name = mstrsave (objfile->md, bfd_get_filename (abfd));
+      objfile->name = xstrdup (bfd_get_filename (abfd));
       objfile->mtime = bfd_get_mtime (abfd);
 
       /* Build section table.  */
@@ -197,7 +197,7 @@ allocate_objfile (bfd *abfd, int flags)
     }
   else
     {
-      objfile->name = mstrsave (objfile->md, "<<anonymous objfile>>");
+      objfile->name = xstrdup ("<<anonymous objfile>>");
     }
 
   /* Initialize the section indexes for this objfile, so that we can
@@ -250,12 +250,6 @@ init_entry_point_info (struct objfile *objfile)
       /* Examination of non-executable.o files.  Short-circuit this stuff.  */
       objfile->ei.entry_point = INVALID_ENTRY_POINT;
     }
-  objfile->ei.deprecated_entry_file_lowpc = INVALID_ENTRY_LOWPC;
-  objfile->ei.deprecated_entry_file_highpc = INVALID_ENTRY_HIGHPC;
-  objfile->ei.entry_func_lowpc = INVALID_ENTRY_LOWPC;
-  objfile->ei.entry_func_highpc = INVALID_ENTRY_HIGHPC;
-  objfile->ei.main_func_lowpc = INVALID_ENTRY_LOWPC;
-  objfile->ei.main_func_highpc = INVALID_ENTRY_HIGHPC;
 }
 
 /* Get current entry point address.  */
@@ -447,19 +441,19 @@ free_objfile (struct objfile *objfile)
   objfile_free_data (objfile);
   if (objfile->name != NULL)
     {
-      xmfree (objfile->md, objfile->name);
+      xfree (objfile->name);
     }
   if (objfile->global_psymbols.list)
-    xmfree (objfile->md, objfile->global_psymbols.list);
+    xfree (objfile->global_psymbols.list);
   if (objfile->static_psymbols.list)
-    xmfree (objfile->md, objfile->static_psymbols.list);
+    xfree (objfile->static_psymbols.list);
   /* Free the obstacks for non-reusable objfiles */
   bcache_xfree (objfile->psymbol_cache);
   bcache_xfree (objfile->macro_cache);
   if (objfile->demangled_names_hash)
     htab_delete (objfile->demangled_names_hash);
   obstack_free (&objfile->objfile_obstack, 0);
-  xmfree (objfile->md, objfile);
+  xfree (objfile);
   objfile = NULL;
 }
 
@@ -650,24 +644,6 @@ objfile_relocate (struct objfile *objfile, struct section_offsets *new_offsets)
 	s->endaddr += ANOFFSET (delta, idx);
       }
   }
-
-  if (objfile->ei.entry_func_lowpc != INVALID_ENTRY_LOWPC)
-    {
-      objfile->ei.entry_func_lowpc += ANOFFSET (delta, SECT_OFF_TEXT (objfile));
-      objfile->ei.entry_func_highpc += ANOFFSET (delta, SECT_OFF_TEXT (objfile));
-    }
-
-  if (objfile->ei.deprecated_entry_file_lowpc != INVALID_ENTRY_LOWPC)
-    {
-      objfile->ei.deprecated_entry_file_lowpc += ANOFFSET (delta, SECT_OFF_TEXT (objfile));
-      objfile->ei.deprecated_entry_file_highpc += ANOFFSET (delta, SECT_OFF_TEXT (objfile));
-    }
-
-  if (objfile->ei.main_func_lowpc != INVALID_ENTRY_LOWPC)
-    {
-      objfile->ei.main_func_lowpc += ANOFFSET (delta, SECT_OFF_TEXT (objfile));
-      objfile->ei.main_func_highpc += ANOFFSET (delta, SECT_OFF_TEXT (objfile));
-    }
 
   /* Relocate breakpoints as necessary, after things are relocated. */
   breakpoint_re_set ();

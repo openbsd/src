@@ -399,22 +399,6 @@ ns32k_frame_init_saved_regs (struct frame_info *frame)
 }
 
 static void
-ns32k_push_dummy_frame (void)
-{
-  CORE_ADDR sp = read_register (SP_REGNUM);
-  int regnum;
-
-  sp = push_word (sp, read_register (PC_REGNUM));
-  sp = push_word (sp, read_register (DEPRECATED_FP_REGNUM));
-  write_register (DEPRECATED_FP_REGNUM, sp);
-
-  for (regnum = 0; regnum < 8; regnum++)
-    sp = push_word (sp, read_register (regnum));
-
-  write_register (SP_REGNUM, sp);
-}
-
-static void
 ns32k_pop_frame (void)
 {
   struct frame_info *frame = get_current_frame ();
@@ -434,42 +418,34 @@ ns32k_pop_frame (void)
   write_register (SP_REGNUM, fp + 8);
   flush_cached_frames ();
 }
-
-/* The NS32000 call dummy sequence:
 
-	enter	0xff,0			82 ff 00
-	jsr	@0x00010203		7f ae c0 01 02 03
-	adjspd	0x69696969		7f a5 01 02 03 04
-	bpt				f2
-
-   It is 16 bytes long.  */
-
-static LONGEST ns32k_call_dummy_words[] =
+static CORE_ADDR
+ns32k_push_arguments (int nargs, struct value **args, CORE_ADDR sp,
+		      int struct_return, CORE_ADDR struct_addr)
 {
-  0x7f00ff82,
-  0x0201c0ae,
-  0x01a57f03,
-  0xf2040302
-};
-static int sizeof_ns32k_call_dummy_words = sizeof (ns32k_call_dummy_words);
+  /* ASSERT ( !struct_return); */
+  int i;
+  for (i = nargs - 1; i >= 0; i--)
+    {
+      struct value *arg = args[i];
+      int len = TYPE_LENGTH (VALUE_ENCLOSING_TYPE (arg));
+      int container_len = len;
+      int offset;
 
-#define NS32K_CALL_DUMMY_ADDR         5
-#define NS32K_CALL_DUMMY_NARGS        11
+      /* Are we going to put it at the high or low end of the
+	 container?  */
+      if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+	offset = container_len - len;
+      else
+	offset = 0;
 
-static void
-ns32k_fix_call_dummy (char *dummy, CORE_ADDR pc, CORE_ADDR fun, int nargs,
-                      struct value **args, struct type *type, int gcc_p)
-{
-  int flipped;
-
-  flipped = fun | 0xc0000000;
-  flip_bytes (&flipped, 4);
-  store_unsigned_integer (dummy + NS32K_CALL_DUMMY_ADDR, 4, flipped);
-
-  flipped = - nargs * 4;
-  flip_bytes (&flipped, 4);
-  store_unsigned_integer (dummy + NS32K_CALL_DUMMY_NARGS, 4, flipped);
+      /* Stack grows downward.  */
+      sp -= container_len;
+      write_memory (sp + offset, VALUE_CONTENTS_ALL (arg), len);
+    }
+  return sp;
 }
+
 
 static void
 ns32k_store_struct_return (CORE_ADDR addr, CORE_ADDR sp)
@@ -499,7 +475,6 @@ ns32k_gdbarch_init_32082 (struct gdbarch *gdbarch)
   set_gdbarch_num_regs (gdbarch, NS32K_NUM_REGS_32082);
 
   set_gdbarch_register_name (gdbarch, ns32k_register_name_32082);
-  set_gdbarch_deprecated_register_bytes (gdbarch, NS32K_REGISTER_BYTES_32082);
   set_gdbarch_deprecated_register_byte (gdbarch, ns32k_register_byte_32082);
 }
 
@@ -509,7 +484,6 @@ ns32k_gdbarch_init_32382 (struct gdbarch *gdbarch)
   set_gdbarch_num_regs (gdbarch, NS32K_NUM_REGS_32382);
 
   set_gdbarch_register_name (gdbarch, ns32k_register_name_32382);
-  set_gdbarch_deprecated_register_bytes (gdbarch, NS32K_REGISTER_BYTES_32382);
   set_gdbarch_deprecated_register_byte (gdbarch, ns32k_register_byte_32382);
 }
 
@@ -545,10 +519,7 @@ ns32k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_deprecated_register_size (gdbarch, NS32K_REGISTER_SIZE);
   set_gdbarch_deprecated_register_raw_size (gdbarch, ns32k_register_raw_size);
-  set_gdbarch_deprecated_max_register_raw_size (gdbarch, NS32K_MAX_REGISTER_RAW_SIZE);
   set_gdbarch_deprecated_register_virtual_size (gdbarch, ns32k_register_virtual_size);
-  set_gdbarch_deprecated_max_register_virtual_size (gdbarch,
-                                         NS32K_MAX_REGISTER_VIRTUAL_SIZE);
   set_gdbarch_deprecated_register_virtual_type (gdbarch, ns32k_register_virtual_type);
 
   /* Frame and stack info */
@@ -574,16 +545,9 @@ ns32k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_deprecated_store_return_value (gdbarch, ns32k_store_return_value);
 
   /* Call dummy info */
-  set_gdbarch_deprecated_push_dummy_frame (gdbarch, ns32k_push_dummy_frame);
   set_gdbarch_deprecated_pop_frame (gdbarch, ns32k_pop_frame);
   set_gdbarch_call_dummy_location (gdbarch, ON_STACK);
-  set_gdbarch_deprecated_call_dummy_words (gdbarch, ns32k_call_dummy_words);
-  set_gdbarch_deprecated_sizeof_call_dummy_words (gdbarch, sizeof_ns32k_call_dummy_words);
-  set_gdbarch_deprecated_fix_call_dummy (gdbarch, ns32k_fix_call_dummy);
-  set_gdbarch_deprecated_call_dummy_start_offset (gdbarch, 3);
-  set_gdbarch_deprecated_call_dummy_breakpoint_offset (gdbarch, 15);
-  set_gdbarch_deprecated_use_generic_dummy_frames (gdbarch, 0);
-  set_gdbarch_deprecated_pc_in_call_dummy (gdbarch, deprecated_pc_in_call_dummy_on_stack);
+  set_gdbarch_deprecated_push_arguments (gdbarch, ns32k_push_arguments);
 
   /* Breakpoint info */
   set_gdbarch_breakpoint_from_pc (gdbarch, ns32k_breakpoint_from_pc);

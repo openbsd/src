@@ -560,10 +560,6 @@ extern struct value *find_function_in_inferior (const char *);
 
 extern struct value *value_allocate_space_in_inferior (int);
 
-extern CORE_ADDR legacy_push_arguments (int nargs, struct value ** args,
-					CORE_ADDR sp, int struct_return,
-					CORE_ADDR struct_addr);
-
 extern struct value *value_of_local (const char *name, int complain);
 
 #endif /* !defined (VALUE_H) */

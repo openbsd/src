@@ -28,11 +28,11 @@
 #include "osabi.h"
 
 #include "gdb_string.h"
-#include "solib-svr4.h"
 
 #include "alpha-tdep.h"
 #include "alphabsd-tdep.h"
 #include "nbsd-tdep.h"
+#include "solib-svr4.h"
 
 static void
 fetch_core_registers (char *core_reg_sect, unsigned core_reg_size, int which,
@@ -70,9 +70,9 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size, int which,
 
   /* Integer registers.  */
   for (regno = 0; regno < ALPHA_ZERO_REGNUM; regno++)
-    supply_register (regno, regs + (regmap[regno] * 8));
-  supply_register (ALPHA_ZERO_REGNUM, NULL);
-  supply_register (PC_REGNUM, regs + (28 * 8));
+    regcache_raw_supply (current_regcache, regno, regs + (regmap[regno] * 8));
+  regcache_raw_supply (current_regcache, ALPHA_ZERO_REGNUM, NULL);
+  regcache_raw_supply (current_regcache, PC_REGNUM, regs + (28 * 8));
 
   /* Floating point registers.  */
   alphabsd_supply_fpreg (fpregs, -1);
@@ -155,7 +155,7 @@ alphanbsd_sigtramp_offset (CORE_ADDR pc)
   LONGEST off;
   int i;
 
-  if (read_memory_nobpt (pc, (char *) w, 4) != 0)
+  if (deprecated_read_memory_nobpt (pc, (char *) w, 4) != 0)
     return -1;
 
   for (i = 0; i < RETCODE_NWORDS; i++)
@@ -169,7 +169,7 @@ alphanbsd_sigtramp_offset (CORE_ADDR pc)
   off = i * 4;
   pc -= off;
 
-  if (read_memory_nobpt (pc, (char *) ret, sizeof (ret)) != 0)
+  if (deprecated_read_memory_nobpt (pc, (char *) ret, sizeof (ret)) != 0)
     return -1;
 
   if (memcmp (ret, sigtramp_retcode, RETCODE_SIZE) == 0)
@@ -206,8 +206,6 @@ alphanbsd_init_abi (struct gdbarch_info info,
   /* Hook into the MDEBUG frame unwinder.  */
   alpha_mdebug_init_abi (info, gdbarch);
 
-  set_gdbarch_pc_in_sigtramp (gdbarch, alphanbsd_pc_in_sigtramp);
-
   /* NetBSD/alpha does not provide single step support via ptrace(2); we
      must use software single-stepping.  */
   set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
@@ -216,6 +214,7 @@ alphanbsd_init_abi (struct gdbarch_info info,
                                  nbsd_lp64_solib_svr4_fetch_link_map_offsets);
 
   tdep->dynamic_sigtramp_offset = alphanbsd_sigtramp_offset;
+  tdep->pc_in_sigtramp = alphanbsd_pc_in_sigtramp;
   tdep->sigcontext_addr = alphanbsd_sigcontext_addr;
 
   tdep->jb_pc = 2;
@@ -230,6 +229,6 @@ _initialize_alphanbsd_tdep (void)
   gdbarch_register_osabi (bfd_arch_alpha, 0, GDB_OSABI_OPENBSD_ELF,
                           alphanbsd_init_abi);
 
-  add_core_fns (&alphanbsd_core_fns);
-  add_core_fns (&alphanbsd_elfcore_fns);
+  deprecated_add_core_fns (&alphanbsd_core_fns);
+  deprecated_add_core_fns (&alphanbsd_elfcore_fns);
 }

@@ -1,5 +1,6 @@
 /* Native-dependent code for MIPS systems running NetBSD.
-   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Copyright 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,7 +44,7 @@ fetch_inferior_registers (int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't get registers");
       
       mipsnbsd_supply_reg ((char *) &regs, regno);
@@ -56,7 +57,7 @@ fetch_inferior_registers (int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't get floating point status");
 
       mipsnbsd_supply_fpreg ((char *) &fpregs, regno);
@@ -71,13 +72,13 @@ store_inferior_registers (int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't get registers");
 
       mipsnbsd_fill_reg ((char *) &regs, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid), 
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't write registers");
 
       if (regno != -1)
@@ -89,13 +90,13 @@ store_inferior_registers (int regno)
       struct fpreg fpregs; 
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't get floating point status");
 
       mipsnbsd_fill_fpreg ((char *) &fpregs, regno);
 
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't write floating point status");
     }
 }

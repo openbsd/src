@@ -97,8 +97,10 @@ struct type *builtin_type_vec64;
 struct type *builtin_type_vec64i;
 struct type *builtin_type_vec128;
 struct type *builtin_type_vec128i;
+struct type *builtin_type_ieee_single[BFD_ENDIAN_UNKNOWN];
 struct type *builtin_type_ieee_single_big;
 struct type *builtin_type_ieee_single_little;
+struct type *builtin_type_ieee_double[BFD_ENDIAN_UNKNOWN];
 struct type *builtin_type_ieee_double_big;
 struct type *builtin_type_ieee_double_little;
 struct type *builtin_type_ieee_double_littlebyte_bigword;
@@ -107,10 +109,13 @@ struct type *builtin_type_m68881_ext;
 struct type *builtin_type_i960_ext;
 struct type *builtin_type_m88110_ext;
 struct type *builtin_type_m88110_harris_ext;
+struct type *builtin_type_arm_ext[BFD_ENDIAN_UNKNOWN];
 struct type *builtin_type_arm_ext_big;
 struct type *builtin_type_arm_ext_littlebyte_bigword;
+struct type *builtin_type_ia64_spill[BFD_ENDIAN_UNKNOWN];
 struct type *builtin_type_ia64_spill_big;
 struct type *builtin_type_ia64_spill_little;
+struct type *builtin_type_ia64_quad[BFD_ENDIAN_UNKNOWN];
 struct type *builtin_type_ia64_quad_big;
 struct type *builtin_type_ia64_quad_little;
 struct type *builtin_type_void_data_ptr;
@@ -774,8 +779,12 @@ create_array_type (struct type *result_type, struct type *element_type,
 struct type *
 create_string_type (struct type *result_type, struct type *range_type)
 {
+  struct type *string_char_type;
+      
+  string_char_type = language_string_char_type (current_language,
+						current_gdbarch);
   result_type = create_array_type (result_type,
-				   *current_language->string_char_type,
+				   string_char_type,
 				   range_type);
   TYPE_CODE (result_type) = TYPE_CODE_STRING;
   return (result_type);
@@ -1026,24 +1035,6 @@ type_name_no_tag (const struct type *type)
   return TYPE_NAME (type);
 }
 
-/* Lookup a primitive type named NAME. 
-   Return zero if NAME is not a primitive type. */
-
-struct type *
-lookup_primitive_typename (char *name)
-{
-  struct type **const *p;
-
-  for (p = current_language->la_builtin_type_vector; *p != NULL; p++)
-    {
-      if (strcmp (TYPE_NAME (**p), name) == 0)
-	{
-	  return (**p);
-	}
-    }
-  return (NULL);
-}
-
 /* Lookup a typedef or primitive type named NAME,
    visible in lexical block BLOCK.
    If NOERR is nonzero, return zero if NAME is not suitably defined.  */
@@ -1057,7 +1048,9 @@ lookup_typename (char *name, struct block *block, int noerr)
   sym = lookup_symbol (name, block, VAR_DOMAIN, 0, (struct symtab **) NULL);
   if (sym == NULL || SYMBOL_CLASS (sym) != LOC_TYPEDEF)
     {
-      tmp = lookup_primitive_typename (name);
+      tmp = language_lookup_primitive_type_by_name (current_language,
+						    current_gdbarch,
+						    name);
       if (tmp)
 	{
 	  return (tmp);
@@ -3227,57 +3220,13 @@ build_gdbtypes (void)
     init_type (TYPE_CODE_STRING, TARGET_CHAR_BIT / TARGET_CHAR_BIT,
 	       0,
 	       "string", (struct objfile *) NULL);
-  builtin_type_int0 =
-    init_type (TYPE_CODE_INT, 0 / 8,
-	       0,
-	       "int0_t", (struct objfile *) NULL);
-  builtin_type_int8 =
-    init_type (TYPE_CODE_INT, 8 / 8,
-	       0,
-	       "int8_t", (struct objfile *) NULL);
-  builtin_type_uint8 =
-    init_type (TYPE_CODE_INT, 8 / 8,
-	       TYPE_FLAG_UNSIGNED,
-	       "uint8_t", (struct objfile *) NULL);
-  builtin_type_int16 =
-    init_type (TYPE_CODE_INT, 16 / 8,
-	       0,
-	       "int16_t", (struct objfile *) NULL);
-  builtin_type_uint16 =
-    init_type (TYPE_CODE_INT, 16 / 8,
-	       TYPE_FLAG_UNSIGNED,
-	       "uint16_t", (struct objfile *) NULL);
-  builtin_type_int32 =
-    init_type (TYPE_CODE_INT, 32 / 8,
-	       0,
-	       "int32_t", (struct objfile *) NULL);
-  builtin_type_uint32 =
-    init_type (TYPE_CODE_INT, 32 / 8,
-	       TYPE_FLAG_UNSIGNED,
-	       "uint32_t", (struct objfile *) NULL);
-  builtin_type_int64 =
-    init_type (TYPE_CODE_INT, 64 / 8,
-	       0,
-	       "int64_t", (struct objfile *) NULL);
-  builtin_type_uint64 =
-    init_type (TYPE_CODE_INT, 64 / 8,
-	       TYPE_FLAG_UNSIGNED,
-	       "uint64_t", (struct objfile *) NULL);
-  builtin_type_int128 =
-    init_type (TYPE_CODE_INT, 128 / 8,
-	       0,
-	       "int128_t", (struct objfile *) NULL);
-  builtin_type_uint128 =
-    init_type (TYPE_CODE_INT, 128 / 8,
-	       TYPE_FLAG_UNSIGNED,
-	       "uint128_t", (struct objfile *) NULL);
   builtin_type_bool =
     init_type (TYPE_CODE_BOOL, TARGET_CHAR_BIT / TARGET_CHAR_BIT,
 	       0,
 	       "bool", (struct objfile *) NULL);
 
   /* Add user knob for controlling resolution of opaque types */
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("opaque-type-resolution", class_support, var_boolean, (char *) &opaque_type_resolution,
 		  "Set resolution of opaque struct/class/union types (if set before loading symbols).",
 		  &setlist),
@@ -3360,12 +3309,222 @@ build_gdbtypes (void)
 	       "__bfd_vma", (struct objfile *) NULL);
 }
 
+static struct gdbarch_data *gdbtypes_data;
+
+const struct builtin_type *
+builtin_type (struct gdbarch *gdbarch)
+{
+  return gdbarch_data (gdbarch, gdbtypes_data);
+}
+
+
+static struct type *
+build_flt (int bit, char *name, const struct floatformat *floatformat)
+{
+  struct type *t;
+  if (bit <= 0 || floatformat == NULL)
+    {
+      gdb_assert (builtin_type_error != NULL);
+      return builtin_type_error;
+    }
+  t = init_type (TYPE_CODE_FLT, bit / TARGET_CHAR_BIT,
+		 0, name, (struct objfile *) NULL);
+  TYPE_FLOATFORMAT (t) = floatformat;
+  return t;
+}
+
+static struct type *
+build_complex (int bit, char *name, struct type *target_type)
+{
+  struct type *t;
+  if (bit <= 0 || target_type == builtin_type_error)
+    {
+      gdb_assert (builtin_type_error != NULL);
+      return builtin_type_error;
+    }
+  t = init_type (TYPE_CODE_COMPLEX, 2 * bit / TARGET_CHAR_BIT,
+		 0, name, (struct objfile *) NULL);
+  TYPE_TARGET_TYPE (t) = target_type;
+  return t;
+}
+
+static void *
+gdbtypes_post_init (struct gdbarch *gdbarch)
+{
+  struct builtin_type *builtin_type
+    = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct builtin_type);
+
+  builtin_type->builtin_void =
+    init_type (TYPE_CODE_VOID, 1,
+	       0,
+	       "void", (struct objfile *) NULL);
+  builtin_type->builtin_char =
+    init_type (TYPE_CODE_INT, TARGET_CHAR_BIT / TARGET_CHAR_BIT,
+	       (TYPE_FLAG_NOSIGN
+                | (TARGET_CHAR_SIGNED ? 0 : TYPE_FLAG_UNSIGNED)),
+	       "char", (struct objfile *) NULL);
+  builtin_type->builtin_true_char =
+    init_type (TYPE_CODE_CHAR, TARGET_CHAR_BIT / TARGET_CHAR_BIT,
+	       0,
+	       "true character", (struct objfile *) NULL);
+  builtin_type->builtin_signed_char =
+    init_type (TYPE_CODE_INT, TARGET_CHAR_BIT / TARGET_CHAR_BIT,
+	       0,
+	       "signed char", (struct objfile *) NULL);
+  builtin_type->builtin_unsigned_char =
+    init_type (TYPE_CODE_INT, TARGET_CHAR_BIT / TARGET_CHAR_BIT,
+	       TYPE_FLAG_UNSIGNED,
+	       "unsigned char", (struct objfile *) NULL);
+  builtin_type->builtin_short =
+    init_type (TYPE_CODE_INT, TARGET_SHORT_BIT / TARGET_CHAR_BIT,
+	       0,
+	       "short", (struct objfile *) NULL);
+  builtin_type->builtin_unsigned_short =
+    init_type (TYPE_CODE_INT, TARGET_SHORT_BIT / TARGET_CHAR_BIT,
+	       TYPE_FLAG_UNSIGNED,
+	       "unsigned short", (struct objfile *) NULL);
+  builtin_type->builtin_int =
+    init_type (TYPE_CODE_INT, TARGET_INT_BIT / TARGET_CHAR_BIT,
+	       0,
+	       "int", (struct objfile *) NULL);
+  builtin_type->builtin_unsigned_int =
+    init_type (TYPE_CODE_INT, TARGET_INT_BIT / TARGET_CHAR_BIT,
+	       TYPE_FLAG_UNSIGNED,
+	       "unsigned int", (struct objfile *) NULL);
+  builtin_type->builtin_long =
+    init_type (TYPE_CODE_INT, TARGET_LONG_BIT / TARGET_CHAR_BIT,
+	       0,
+	       "long", (struct objfile *) NULL);
+  builtin_type->builtin_unsigned_long =
+    init_type (TYPE_CODE_INT, TARGET_LONG_BIT / TARGET_CHAR_BIT,
+	       TYPE_FLAG_UNSIGNED,
+	       "unsigned long", (struct objfile *) NULL);
+  builtin_type->builtin_long_long =
+    init_type (TYPE_CODE_INT, TARGET_LONG_LONG_BIT / TARGET_CHAR_BIT,
+	       0,
+	       "long long", (struct objfile *) NULL);
+  builtin_type->builtin_unsigned_long_long =
+    init_type (TYPE_CODE_INT, TARGET_LONG_LONG_BIT / TARGET_CHAR_BIT,
+	       TYPE_FLAG_UNSIGNED,
+	       "unsigned long long", (struct objfile *) NULL);
+  builtin_type->builtin_float
+    = build_flt (gdbarch_float_bit (gdbarch), "float",
+		 gdbarch_float_format (gdbarch));
+  builtin_type->builtin_double
+    = build_flt (gdbarch_double_bit (gdbarch), "double",
+		 gdbarch_double_format (gdbarch));
+  builtin_type->builtin_long_double
+    = build_flt (gdbarch_long_double_bit (gdbarch), "long double",
+		 gdbarch_long_double_format (gdbarch));
+  builtin_type->builtin_complex
+    = build_complex (gdbarch_float_bit (gdbarch), "complex",
+		     builtin_type->builtin_float);
+  builtin_type->builtin_double_complex
+    = build_complex (gdbarch_double_bit (gdbarch), "double complex",
+		     builtin_type->builtin_double);
+  builtin_type->builtin_string =
+    init_type (TYPE_CODE_STRING, TARGET_CHAR_BIT / TARGET_CHAR_BIT,
+	       0,
+	       "string", (struct objfile *) NULL);
+  builtin_type->builtin_bool =
+    init_type (TYPE_CODE_BOOL, TARGET_CHAR_BIT / TARGET_CHAR_BIT,
+	       0,
+	       "bool", (struct objfile *) NULL);
+
+  /* Pointer/Address types. */
+
+  /* NOTE: on some targets, addresses and pointers are not necessarily
+     the same --- for example, on the D10V, pointers are 16 bits long,
+     but addresses are 32 bits long.  See doc/gdbint.texinfo,
+     ``Pointers Are Not Always Addresses''.
+
+     The upshot is:
+     - gdb's `struct type' always describes the target's
+       representation.
+     - gdb's `struct value' objects should always hold values in
+       target form.
+     - gdb's CORE_ADDR values are addresses in the unified virtual
+       address space that the assembler and linker work with.  Thus,
+       since target_read_memory takes a CORE_ADDR as an argument, it
+       can access any memory on the target, even if the processor has
+       separate code and data address spaces.
+
+     So, for example:
+     - If v is a value holding a D10V code pointer, its contents are
+       in target form: a big-endian address left-shifted two bits.
+     - If p is a D10V pointer type, TYPE_LENGTH (p) == 2, just as
+       sizeof (void *) == 2 on the target.
+
+     In this context, builtin_type->CORE_ADDR is a bit odd: it's a
+     target type for a value the target will never see.  It's only
+     used to hold the values of (typeless) linker symbols, which are
+     indeed in the unified virtual address space.  */
+  builtin_type->builtin_data_ptr
+    = make_pointer_type (builtin_type->builtin_void, NULL);
+  builtin_type->builtin_func_ptr
+    = lookup_pointer_type (lookup_function_type (builtin_type->builtin_void));
+  builtin_type->builtin_core_addr =
+    init_type (TYPE_CODE_INT, TARGET_ADDR_BIT / 8,
+	       TYPE_FLAG_UNSIGNED,
+	       "__CORE_ADDR", (struct objfile *) NULL);
+
+  return builtin_type;
+}
+
 extern void _initialize_gdbtypes (void);
 void
 _initialize_gdbtypes (void)
 {
   struct cmd_list_element *c;
+
+  builtin_type_int0 =
+    init_type (TYPE_CODE_INT, 0 / 8,
+	       0,
+	       "int0_t", (struct objfile *) NULL);
+  builtin_type_int8 =
+    init_type (TYPE_CODE_INT, 8 / 8,
+	       0,
+	       "int8_t", (struct objfile *) NULL);
+  builtin_type_uint8 =
+    init_type (TYPE_CODE_INT, 8 / 8,
+	       TYPE_FLAG_UNSIGNED,
+	       "uint8_t", (struct objfile *) NULL);
+  builtin_type_int16 =
+    init_type (TYPE_CODE_INT, 16 / 8,
+	       0,
+	       "int16_t", (struct objfile *) NULL);
+  builtin_type_uint16 =
+    init_type (TYPE_CODE_INT, 16 / 8,
+	       TYPE_FLAG_UNSIGNED,
+	       "uint16_t", (struct objfile *) NULL);
+  builtin_type_int32 =
+    init_type (TYPE_CODE_INT, 32 / 8,
+	       0,
+	       "int32_t", (struct objfile *) NULL);
+  builtin_type_uint32 =
+    init_type (TYPE_CODE_INT, 32 / 8,
+	       TYPE_FLAG_UNSIGNED,
+	       "uint32_t", (struct objfile *) NULL);
+  builtin_type_int64 =
+    init_type (TYPE_CODE_INT, 64 / 8,
+	       0,
+	       "int64_t", (struct objfile *) NULL);
+  builtin_type_uint64 =
+    init_type (TYPE_CODE_INT, 64 / 8,
+	       TYPE_FLAG_UNSIGNED,
+	       "uint64_t", (struct objfile *) NULL);
+  builtin_type_int128 =
+    init_type (TYPE_CODE_INT, 128 / 8,
+	       0,
+	       "int128_t", (struct objfile *) NULL);
+  builtin_type_uint128 =
+    init_type (TYPE_CODE_INT, 128 / 8,
+	       TYPE_FLAG_UNSIGNED,
+	       "uint128_t", (struct objfile *) NULL);
+
   build_gdbtypes ();
+
+  gdbtypes_data = gdbarch_data_register_post_init (gdbtypes_post_init);
 
   /* FIXME - For the moment, handle types by swapping them in and out.
      Should be using the per-architecture data-pointer and a large
@@ -3388,16 +3547,6 @@ _initialize_gdbtypes (void)
   DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_complex);
   DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_double_complex);
   DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_string);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_int8);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_uint8);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_int16);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_uint16);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_int32);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_uint32);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_int64);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_uint64);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_int128);
-  DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_uint128);
   DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_v4sf);
   DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_v4si);
   DEPRECATED_REGISTER_GDBARCH_SWAP (builtin_type_v16qi);
@@ -3433,6 +3582,14 @@ _initialize_gdbtypes (void)
     init_type (TYPE_CODE_FLT, floatformat_ieee_single_little.totalsize / 8,
 	       0, "builtin_type_ieee_single_little", NULL);
   TYPE_FLOATFORMAT (builtin_type_ieee_single_little) = &floatformat_ieee_single_little;
+  builtin_type_ieee_single[BFD_ENDIAN_BIG]
+    = build_flt (floatformat_ieee_single_big.totalsize,
+		 "builtin_type_ieee_single_big",
+		 &floatformat_ieee_single_big);
+  builtin_type_ieee_single[BFD_ENDIAN_LITTLE]
+    = build_flt (floatformat_ieee_single_little.totalsize,
+		 "builtin_type_ieee_single_little",
+		 &floatformat_ieee_single_little);
   builtin_type_ieee_double_big =
     init_type (TYPE_CODE_FLT, floatformat_ieee_double_big.totalsize / 8,
 	       0, "builtin_type_ieee_double_big", NULL);
@@ -3441,6 +3598,14 @@ _initialize_gdbtypes (void)
     init_type (TYPE_CODE_FLT, floatformat_ieee_double_little.totalsize / 8,
 	       0, "builtin_type_ieee_double_little", NULL);
   TYPE_FLOATFORMAT (builtin_type_ieee_double_little) = &floatformat_ieee_double_little;
+  builtin_type_ieee_double[BFD_ENDIAN_BIG]
+    = build_flt (floatformat_ieee_double_big.totalsize,
+		 "builtin_type_ieee_double_big",
+		 &floatformat_ieee_double_big);
+  builtin_type_ieee_double[BFD_ENDIAN_LITTLE]
+    = build_flt (floatformat_ieee_double_little.totalsize,
+		 "builtin_type_ieee_double_little",
+		 &floatformat_ieee_double_little);
   builtin_type_ieee_double_littlebyte_bigword =
     init_type (TYPE_CODE_FLT, floatformat_ieee_double_littlebyte_bigword.totalsize / 8,
 	       0, "builtin_type_ieee_double_littlebyte_bigword", NULL);
@@ -3473,6 +3638,14 @@ _initialize_gdbtypes (void)
     init_type (TYPE_CODE_FLT, floatformat_arm_ext_littlebyte_bigword.totalsize / 8,
 	       0, "builtin_type_arm_ext_littlebyte_bigword", NULL);
   TYPE_FLOATFORMAT (builtin_type_arm_ext_littlebyte_bigword) = &floatformat_arm_ext_littlebyte_bigword;
+  builtin_type_arm_ext[BFD_ENDIAN_BIG]
+    = build_flt (floatformat_arm_ext_big.totalsize,
+		 "builtin_type_arm_ext_big",
+		 &floatformat_arm_ext_big);
+  builtin_type_arm_ext[BFD_ENDIAN_LITTLE]
+    = build_flt (floatformat_arm_ext_littlebyte_bigword.totalsize,
+		 "builtin_type_arm_ext_littlebyte_bigword",
+		 &floatformat_arm_ext_littlebyte_bigword);
   builtin_type_ia64_spill_big =
     init_type (TYPE_CODE_FLT, floatformat_ia64_spill_big.totalsize / 8,
 	       0, "builtin_type_ia64_spill_big", NULL);
@@ -3481,6 +3654,14 @@ _initialize_gdbtypes (void)
     init_type (TYPE_CODE_FLT, floatformat_ia64_spill_little.totalsize / 8,
 	       0, "builtin_type_ia64_spill_little", NULL);
   TYPE_FLOATFORMAT (builtin_type_ia64_spill_little) = &floatformat_ia64_spill_little;
+  builtin_type_ia64_spill[BFD_ENDIAN_BIG]
+    = build_flt (floatformat_ia64_spill_big.totalsize,
+		 "builtin_type_ia64_spill_big",
+		 &floatformat_ia64_spill_big);
+  builtin_type_ia64_spill[BFD_ENDIAN_LITTLE]
+    = build_flt (floatformat_ia64_spill_little.totalsize,
+		 "builtin_type_ia64_spill_little",
+		 &floatformat_ia64_spill_little);
   builtin_type_ia64_quad_big =
     init_type (TYPE_CODE_FLT, floatformat_ia64_quad_big.totalsize / 8,
 	       0, "builtin_type_ia64_quad_big", NULL);
@@ -3489,11 +3670,18 @@ _initialize_gdbtypes (void)
     init_type (TYPE_CODE_FLT, floatformat_ia64_quad_little.totalsize / 8,
 	       0, "builtin_type_ia64_quad_little", NULL);
   TYPE_FLOATFORMAT (builtin_type_ia64_quad_little) = &floatformat_ia64_quad_little;
+  builtin_type_ia64_quad[BFD_ENDIAN_BIG]
+    = build_flt (floatformat_ia64_quad_big.totalsize,
+		 "builtin_type_ia64_quad_big",
+		 &floatformat_ia64_quad_big);
+  builtin_type_ia64_quad[BFD_ENDIAN_LITTLE]
+    = build_flt (floatformat_ia64_quad_little.totalsize,
+		 "builtin_type_ia64_quad_little",
+		 &floatformat_ia64_quad_little);
 
-  add_show_from_set (
-		     add_set_cmd ("overload", no_class, var_zinteger, (char *) &overload_debug,
-				  "Set debugging of C++ overloading.\n\
-			  When enabled, ranking of the functions\n\
-			  is displayed.", &setdebuglist),
-		     &showdebuglist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("overload", no_class, var_zinteger, (char *) &overload_debug,
+		  "Set debugging of C++ overloading.\n\
+When enabled, ranking of the functions is displayed.", &setdebuglist),
+     &showdebuglist);
 }

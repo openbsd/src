@@ -35,12 +35,6 @@ hppabsd_gregset_supplies_p (int regnum)
   return (regnum >= HPPA_R0_REGNUM && regnum <= HPPA_PCOQ_TAIL_REGNUM);
 }
 
-static int
-hppabsd_fpregset_supplies_p (int regnum)
-{
-  return 0;
-}
-
 /* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
 
 static void
@@ -70,7 +64,7 @@ hppabsd_collect_gregset (const struct regcache *regcache,
   for (i = HPPA_R1_REGNUM; i <= HPPA_R31_REGNUM; i++)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_collect (regcache, regnum, regs + i * 4);
+	regcache_raw_collect (regcache, i, regs + i * 4);
     }
 
   if (regnum == -1 || regnum == HPPA_SAR_REGNUM)
@@ -95,7 +89,7 @@ fetch_inferior_registers (int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't get registers");
 
       hppabsd_supply_gregset (regcache, &regs);
@@ -113,13 +107,13 @@ store_inferior_registers (int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+                  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name ("Couldn't get registers");
 
       hppabsd_collect_gregset (current_regcache, &regs, regnum);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	          (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+	          (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name ("Couldn't write registers");
     }
 }

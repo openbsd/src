@@ -1574,7 +1574,7 @@ rewait:
     }
 
   /* Pass back out our results.  */
-  bcopy (&inf->wait.status, status, sizeof (*status));
+  memcpy (status, &inf->wait.status, sizeof (*status));
 
   thread = inf->wait.thread;
   if (thread)
@@ -2040,7 +2040,8 @@ cur_inf (void)
 }
 
 static void
-gnu_create_inferior (char *exec_file, char *allargs, char **env)
+gnu_create_inferior (char *exec_file, char *allargs, char **env,
+		     int from_tty)
 {
   struct inf *inf = cur_inf ();
 
@@ -2102,8 +2103,6 @@ gnu_can_run (void)
 }
 
 
-#ifdef ATTACH_DETACH
-
 /* Attach to process PID, then initialize for debugging it
    and wait for the trace-trap that results from attaching.  */
 static void
@@ -2188,8 +2187,6 @@ gnu_detach (char *args, int from_tty)
 
   unpush_target (&gnu_ops);	/* Pop out of handling an inferior */
 }
-#endif /* ATTACH_DETACH */
-
 
 static void
 gnu_terminal_init_inferior (void)
@@ -2600,7 +2597,7 @@ init_gnu_ops (void)
   gnu_ops.to_fetch_registers = gnu_fetch_registers;    /* to_fetch_registers */
   gnu_ops.to_store_registers = gnu_store_registers;    /* to_store_registers */
   gnu_ops.to_prepare_to_store = gnu_prepare_to_store; /* to_prepare_to_store */
-  gnu_ops.to_xfer_memory = gnu_xfer_memory; /* to_xfer_memory */
+  gnu_ops.deprecated_xfer_memory = gnu_xfer_memory;
   gnu_ops.to_find_memory_regions = gnu_find_memory_regions;
   gnu_ops.to_insert_breakpoint = memory_insert_breakpoint;
   gnu_ops.to_remove_breakpoint = memory_remove_breakpoint;

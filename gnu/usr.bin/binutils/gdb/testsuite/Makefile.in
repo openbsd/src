@@ -1,5 +1,5 @@
 # Makefile for regression testing the GNU debugger.
-# Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2002, 2003
+# Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2002, 2003, 2004
 # Free Software Foundation, Inc.
 
 # This file is part of GDB.
@@ -35,8 +35,10 @@ SHELL = @SHELL@
 EXEEXT = @EXEEXT@
 SUBDIRS = @subdirs@
 RPATH_ENVVAR = @RPATH_ENVVAR@
-ALL_SUBDIRS = gdb.arch gdb.asm gdb.base gdb.cp gdb.disasm gdb.java gdb.mi \
-	gdb.objc gdb.threads gdb.trace $(SUBDIRS)
+ALL_SUBDIRS = gdb.ada gdb.arch gdb.asm gdb.base gdb.cp gdb.disasm \
+	gdb.dwarf2 \
+	gdb.fortran gdb.java gdb.mi gdb.objc gdb.threads gdb.trace \
+	$(SUBDIRS)
 
 EXPECT = `if [ -f $${rootme}/../../expect/expect ] ; then \
           echo $${rootme}/../../expect/expect ; \

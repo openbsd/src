@@ -82,7 +82,27 @@ enum type_code
   {
     TYPE_CODE_UNDEF,		/* Not used; catches errors */
     TYPE_CODE_PTR,		/* Pointer type */
-    TYPE_CODE_ARRAY,		/* Array type with lower & upper bounds. */
+
+    /* Array type with lower & upper bounds.
+
+       Regardless of the language, GDB represents multidimensional
+       array types the way C does: as arrays of arrays.  So an
+       instance of a GDB array type T can always be seen as a series
+       of instances of TYPE_TARGET_TYPE (T) laid out sequentially in
+       memory.
+
+       Row-major languages like C lay out multi-dimensional arrays so
+       that incrementing the rightmost index in a subscripting
+       expression results in the smallest change in the address of the
+       element referred to.  Column-major languages like Fortran lay
+       them out so that incrementing the leftmost index results in the
+       smallest change.
+
+       This means that, in column-major languages, working our way
+       from type to target type corresponds to working through indices
+       from right to left, not left to right.  */
+    TYPE_CODE_ARRAY,
+
     TYPE_CODE_STRUCT,		/* C struct or Pascal record */
     TYPE_CODE_UNION,		/* C union or Pascal variant part */
     TYPE_CODE_ENUM,		/* Enumeration type */
@@ -136,7 +156,7 @@ enum type_code
     TYPE_CODE_TEMPLATE,		/* C++ template */
     TYPE_CODE_TEMPLATE_ARG,	/* C++ template arg */
 
-    TYPE_CODE_NAMESPACE,	/* C++ namespace.  */
+    TYPE_CODE_NAMESPACE		/* C++ namespace.  */
   };
 
 /* For now allow source to use TYPE_CODE_CLASS for C++ classes, as an
@@ -272,6 +292,17 @@ enum type_code
 				     | TYPE_FLAG_ADDRESS_CLASS_2)
 #define TYPE_ADDRESS_CLASS_ALL(t) (TYPE_INSTANCE_FLAGS(t) \
 				   & TYPE_FLAG_ADDRESS_CLASS_ALL)
+
+/* The debugging formats (especially STABS) do not contain enough information
+   to represent all Ada types---especially those whose size depends on
+   dynamic quantities.  Therefore, the GNAT Ada compiler includes
+   extra information in the form of additional type definitions
+   connected by naming conventions.  This flag indicates that the 
+   type is an ordinary (unencoded) GDB type that has been created from 
+   the necessary run-time information, and does not need further 
+   interpretation. Optionally marks ordinary, fixed-size GDB type. */
+
+#define TYPE_FLAG_FIXED_INSTANCE (1 << 15)
 
 /*  Array bound type.  */
 enum array_bound_type
@@ -923,7 +954,58 @@ extern void allocate_cplus_struct_type (struct type *);
                                   (TYPE_NFIELDS (thistype) == 0)                     && \
                                   (TYPE_CPLUS_SPECIFIC (thistype) && (TYPE_NFN_FIELDS (thistype) == 0)))
 
+struct builtin_type
+{
+  /* Address/pointer types.  */
 
+  /* `pointer to data' type.  Some target platforms use an implicitly
+     {sign,zero} -extended 32-bit ABI pointer on a 64-bit ISA.  */
+  struct type *builtin_data_ptr;
+
+  /* `pointer to function (returning void)' type.  Harvard
+     architectures mean that ABI function and code pointers are not
+     interconvertible.  Similarly, since ANSI, C standards have
+     explicitly said that pointers to functions and pointers to data
+     are not interconvertible --- that is, you can't cast a function
+     pointer to void * and back, and expect to get the same value.
+     However, all function pointer types are interconvertible, so void
+     (*) () can server as a generic function pointer.  */
+  struct type *builtin_func_ptr;
+
+  /* The target CPU's address type.  This is the ISA address size.  */
+  struct type *builtin_core_addr;
+
+  /* Integral types.  */
+
+  /* We use this for the '/c' print format, because c_char is just a
+     one-byte integral type, which languages less laid back than C
+     will print as ... well, a one-byte integral type.  */
+  struct type *builtin_true_char;
+
+  /* Implicit size/sign (based on the the architecture's ABI).  */
+  struct type *builtin_void;
+  struct type *builtin_char;
+  struct type *builtin_short;
+  struct type *builtin_int;
+  struct type *builtin_long;
+  struct type *builtin_signed_char;
+  struct type *builtin_unsigned_char;
+  struct type *builtin_unsigned_short;
+  struct type *builtin_unsigned_int;
+  struct type *builtin_unsigned_long;
+  struct type *builtin_float;
+  struct type *builtin_double;
+  struct type *builtin_long_double;
+  struct type *builtin_complex;
+  struct type *builtin_double_complex;
+  struct type *builtin_string;
+  struct type *builtin_bool;
+  struct type *builtin_long_long;
+  struct type *builtin_unsigned_long_long;
+};
+
+/* Return the type table for the specified architecture.  */
+extern const struct builtin_type *builtin_type (struct gdbarch *gdbarch);
 
 /* Implicit sizes */
 extern struct type *builtin_type_void;
@@ -999,8 +1081,10 @@ extern struct type *builtin_type_vec128;
 extern struct type *builtin_type_vec128i;
 
 /* Explicit floating-point formats.  See "floatformat.h".  */
+extern struct type *builtin_type_ieee_single[BFD_ENDIAN_UNKNOWN];
 extern struct type *builtin_type_ieee_single_big;
 extern struct type *builtin_type_ieee_single_little;
+extern struct type *builtin_type_ieee_double[BFD_ENDIAN_UNKNOWN];
 extern struct type *builtin_type_ieee_double_big;
 extern struct type *builtin_type_ieee_double_little;
 extern struct type *builtin_type_ieee_double_littlebyte_bigword;
@@ -1009,10 +1093,13 @@ extern struct type *builtin_type_m68881_ext;
 extern struct type *builtin_type_i960_ext;
 extern struct type *builtin_type_m88110_ext;
 extern struct type *builtin_type_m88110_harris_ext;
+extern struct type *builtin_type_arm_ext[BFD_ENDIAN_UNKNOWN];
 extern struct type *builtin_type_arm_ext_big;
 extern struct type *builtin_type_arm_ext_littlebyte_bigword;
+extern struct type *builtin_type_ia64_spill[BFD_ENDIAN_UNKNOWN];
 extern struct type *builtin_type_ia64_spill_big;
 extern struct type *builtin_type_ia64_spill_little;
+extern struct type *builtin_type_ia64_quad[BFD_ENDIAN_UNKNOWN];
 extern struct type *builtin_type_ia64_quad_big;
 extern struct type *builtin_type_ia64_quad_little;
 
@@ -1153,11 +1240,7 @@ extern struct type *check_typedef (struct type *);
 
 extern void check_stub_method_group (struct type *, int);
 
-extern struct type *lookup_primitive_typename (char *);
-
 extern char *gdb_mangle_name (struct type *, int, int);
-
-extern struct type *builtin_type (char **);
 
 extern struct type *lookup_typename (char *, struct block *, int);
 

@@ -35,11 +35,11 @@ static void print_value_flags (struct type *);
 
 static void breakpoint_changed (struct breakpoint *);
 
-void (*annotate_starting_hook) (void);
-void (*annotate_stopped_hook) (void);
-void (*annotate_signalled_hook) (void);
-void (*annotate_signal_hook) (void);
-void (*annotate_exited_hook) (void);
+void (*deprecated_annotate_starting_hook) (void);
+void (*deprecated_annotate_stopped_hook) (void);
+void (*deprecated_annotate_signalled_hook) (void);
+void (*deprecated_annotate_signal_hook) (void);
+void (*deprecated_annotate_exited_hook) (void);
 
 static int ignore_count_changed = 0;
 
@@ -102,8 +102,8 @@ void
 annotate_starting (void)
 {
 
-  if (annotate_starting_hook)
-    annotate_starting_hook ();
+  if (deprecated_annotate_starting_hook)
+    deprecated_annotate_starting_hook ();
   else
     {
       if (annotation_level > 1)
@@ -116,8 +116,8 @@ annotate_starting (void)
 void
 annotate_stopped (void)
 {
-  if (annotate_stopped_hook)
-    annotate_stopped_hook ();
+  if (deprecated_annotate_stopped_hook)
+    deprecated_annotate_stopped_hook ();
   else
     {
       if (annotation_level > 1)
@@ -133,8 +133,8 @@ annotate_stopped (void)
 void
 annotate_exited (int exitstatus)
 {
-  if (annotate_exited_hook)
-    annotate_exited_hook ();
+  if (deprecated_annotate_exited_hook)
+    deprecated_annotate_exited_hook ();
   else
     {
       if (annotation_level > 1)
@@ -145,8 +145,8 @@ annotate_exited (int exitstatus)
 void
 annotate_signalled (void)
 {
-  if (annotate_signalled_hook)
-    annotate_signalled_hook ();
+  if (deprecated_annotate_signalled_hook)
+    deprecated_annotate_signalled_hook ();
 
   if (annotation_level > 1)
     printf_filtered ("\n\032\032signalled\n");
@@ -183,8 +183,8 @@ annotate_signal_string_end (void)
 void
 annotate_signal (void)
 {
-  if (annotate_signal_hook)
-    annotate_signal_hook ();
+  if (deprecated_annotate_signal_hook)
+    deprecated_annotate_signal_hook ();
 
   if (annotation_level > 1)
     printf_filtered ("\n\032\032signal\n");
@@ -579,7 +579,7 @@ _initialize_annotate (void)
 {
   if (annotation_level > 1)
     {
-      delete_breakpoint_hook = breakpoint_changed;
-      modify_breakpoint_hook = breakpoint_changed;
+      deprecated_delete_breakpoint_hook = breakpoint_changed;
+      deprecated_modify_breakpoint_hook = breakpoint_changed;
     }
 }

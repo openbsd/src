@@ -30,7 +30,6 @@
 /* We have more complex, useful breakpoints on the target.  */
 #define	DECR_PC_AFTER_BREAK	0
 
-#include "m68k/tm-m68k.h"
 #include "config/tm-vxworks.h"
 
 /* Takes the current frame-struct pointer and returns the chain-pointer
@@ -64,15 +63,3 @@
 #define JB_A4 13
 #define JB_A5 14
 #define JB_A6 15
-
-/* Figure out where the longjmp will land.  Slurp the args out of the stack.
-   We expect the first arg to be a pointer to the jmp_buf structure from which
-   we extract the pc (JB_PC) that we will land at.  The pc is copied into ADDR.
-   This routine returns true on success */
-
-#define GET_LONGJMP_TARGET(ADDR) m68k_get_longjmp_target(ADDR)
-
-/* Number of registers in a ptrace_getfpregs call. */
-
-#define VX_SIZE_FPREGS (8 * DEPRECATED_REGISTER_RAW_SIZE (FP0_REGNUM) \
-			+ (3 * DEPRECATED_REGISTER_SIZE))

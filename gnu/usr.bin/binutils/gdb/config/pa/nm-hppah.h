@@ -41,10 +41,6 @@ struct target_ops;
    So I don't feel the least bit guilty about this.  */
 #define PTRACE_ARG3_TYPE CORE_ADDR
 
-/* HPUX 8.0, in its infinite wisdom, has chosen to prototype ptrace
-   with five arguments, so programs written for normal ptrace lose.  */
-#define FIVE_ARG_PTRACE
-
 /* We need to figure out where the text region is so that we use the
    appropriate ptrace operator to manipulate text.  Simply
    reading/writing user space will crap out HPUX.  */
@@ -91,15 +87,6 @@ extern int hppa_require_detach (int, int);
 #define PT_WRITE_I	PT_WIUSER
 #define PT_WRITE_D	PT_WDUSER
 
-/* attach/detach works to some extent under BSD and HPUX.  So long
-   as the process you're attaching to isn't blocked waiting on io,
-   blocked waiting on a signal, or in a system call things work 
-   fine.  (The problems in those cases are related to the fact that
-   the kernel can't provide complete register information for the
-   target process...  Which really pisses off GDB.)  */
-
-#define ATTACH_DETACH
-
 /* In infptrace or infttrace.c: */
 
 /* Starting with HP-UX 10.30, support is provided (in the form of
@@ -110,8 +97,6 @@ extern int hppa_require_detach (int, int);
    Stubs of these functions will be provided in infptrace.c, so that
    10.20 will at least link.  However, the "can I use a fast watchpoint?"
    query will always return "No" for 10.20. */
-
-#define TARGET_HAS_HARDWARE_WATCHPOINTS
 
 /* The PA can watch any number of locations (generic routines already check
    that all intermediates are in watchable memory locations). */
@@ -125,31 +110,6 @@ extern int hppa_can_use_hw_watchpoint (int type, int cnt, int ot);
    DEPRECATED_REGISTER_SIZE.)  */
 #define TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT(byte_count) \
         (1)
-
-/* However, some addresses may not be profitable to use hardware to watch,
-   or may be difficult to understand when the addressed object is out of
-   scope, and hence should be unwatched.  On some targets, this may have
-   severe performance penalties, such that we might as well use regular
-   watchpoints, and save (possibly precious) hardware watchpoints for other
-   locations.
-
-   On HP-UX, we choose not to watch stack-based addresses, because
-
-   [1] Our implementation relies on page protection traps.  The granularity
-   of these is large and so can generate many false hits, which are expensive
-   to respond to.
-
-   [2] Watches of "*p" where we may not know the symbol that p points to,
-   make it difficult to know when the addressed object is out of scope, and
-   hence shouldn't be watched.  Page protection that isn't removed when the
-   addressed object is out of scope will either degrade execution speed
-   (false hits) or give false triggers (when the address is recycled by
-   other calls).
-
-   Since either of these points results in a slow-running inferior, we might
-   as well use normal watchpoints, aka single-step & test. */
-#define TARGET_RANGE_PROFITABLE_FOR_HW_WATCHPOINT(pid,start,len) \
-        hppa_range_profitable_for_hw_watchpoint(pid, start, (LONGEST)(len))
 
 /* On HP-UX, we're using page-protection to implement hardware watchpoints.
    When an instruction attempts to write to a write-protected memory page,
@@ -258,10 +218,6 @@ extern int hppa_resume_execd_vforking_child_to_get_parent_vfork (void);
 
 #define HPUXHPPA
 
-#define MAY_SWITCH_FROM_INFERIOR_PID (1)
-
 #define MAY_FOLLOW_EXEC (1)
-
-#define USE_THREAD_STEP_NEEDED (1)
 
 #include "infttrace.h" /* For parent_attach_all.  */

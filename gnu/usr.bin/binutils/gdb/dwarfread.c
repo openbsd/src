@@ -29,7 +29,7 @@
 
    DWARF-1 is slowly headed for obsoletion.
 
-   In gcc HEAD 2003-11-29 16:28:31 UTC, no targets prefer dwarf-1.
+   In gcc 3.4.0, support for dwarf-1 has been removed.
 
    In gcc 3.3.2, these targets prefer dwarf-1:
 
@@ -73,11 +73,22 @@
    Some non-gcc compilers produce dwarf-1: 
 
      PR gdb/1179 was from a user with Diab C++ 4.3.
+     On 2003-07-25 the gdb list received a report from a user
+      with Diab Compiler 4.4b.
      Other users have also reported using Diab compilers with dwarf-1.
+
+     Diab Compiler Suite 5.0.1 supports dwarf-2/dwarf-3 for C and C++.
+     (Diab(tm) Compiler Suite 5.0.1 Release Notes, DOC-14691-ZD-00,
+     Wind River Systems, 2002-07-31).
+
      On 2003-06-09 the gdb list received a report from a user
        with Absoft ProFortran f77 which is dwarf-1.
 
-   -- chastain 2003-12-01
+     Absoft ProFortran Linux[sic] Fortran User Guide (no version,
+     but copyright dates are 1991-2001) says that Absoft ProFortran
+     supports -gdwarf1 and -gdwarf2.
+
+   -- chastain 2004-04-24
 */
 
 /*
@@ -1781,12 +1792,6 @@ read_func_scope (struct dieinfo *dip, char *thisdie, char *enddie,
       return;
     }
 
-  if (objfile->ei.entry_point >= dip->at_low_pc &&
-      objfile->ei.entry_point < dip->at_high_pc)
-    {
-      objfile->ei.entry_func_lowpc = dip->at_low_pc;
-      objfile->ei.entry_func_highpc = dip->at_high_pc;
-    }
   new = push_context (0, dip->at_low_pc);
   new->name = new_symbol (dip, objfile);
   list_in_scope = &local_symbols;
@@ -1882,12 +1887,6 @@ read_file_scope (struct dieinfo *dip, char *thisdie, char *enddie,
   struct cleanup *back_to;
   struct symtab *symtab;
 
-  if (objfile->ei.entry_point >= dip->at_low_pc &&
-      objfile->ei.entry_point < dip->at_high_pc)
-    {
-      objfile->ei.deprecated_entry_file_lowpc = dip->at_low_pc;
-      objfile->ei.deprecated_entry_file_highpc = dip->at_high_pc;
-    }
   set_cu_language (dip);
   if (dip->at_producer != NULL)
     {

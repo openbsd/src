@@ -42,6 +42,10 @@
 #include <sys/ioctl.h>
 #endif
 
+#ifndef O_NOCTTY
+#define O_NOCTTY 0
+#endif
+
 #if defined (SIGIO) && defined (FASYNC) && defined (FD_SET) && defined (F_SETOWN)
 static void handle_sigio (int);
 #endif
@@ -537,12 +541,7 @@ new_tty (void)
 #endif
 
   /* Now open the specified new terminal.  */
-
-#ifdef USE_O_NOCTTY
   tty = open (inferior_thisrun_terminal, O_RDWR | O_NOCTTY);
-#else
-  tty = open (inferior_thisrun_terminal, O_RDWR);
-#endif
   if (tty == -1)
     {
       print_sys_errmsg (inferior_thisrun_terminal, errno);
@@ -595,9 +594,9 @@ kill_command (char *arg, int from_tty)
       if (deprecated_selected_frame == NULL)
 	fputs_filtered ("No selected stack frame.\n", gdb_stdout);
       else
-	print_stack_frame (deprecated_selected_frame,
-			   frame_relative_level (deprecated_selected_frame), 1);
+	print_stack_frame (get_selected_frame (), 1, SRC_AND_LOC);
     }
+  bfd_cache_close_all ();
 }
 
 /* Call set_sigint_trap when you need to pass a signal on to an attached

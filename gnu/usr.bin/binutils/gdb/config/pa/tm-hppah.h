@@ -36,21 +36,6 @@ struct frame_info;
 #include "somsolib.h"
 #endif
 
-extern void hppa32_hpux_frame_saved_pc_in_sigtramp (struct frame_info *fi,
-                                                  CORE_ADDR *tmp);
-#define FRAME_SAVED_PC_IN_SIGTRAMP(FRAME, TMP) \
-  hppa32_hpux_frame_saved_pc_in_sigtramp (FRAME, TMP)
-
-extern void hppa32_hpux_frame_base_before_sigtramp (struct frame_info *fi,
-                                                  CORE_ADDR *tmp);
-#define FRAME_BASE_BEFORE_SIGTRAMP(FRAME, TMP) \
-  hppa32_hpux_frame_base_before_sigtramp (FRAME, TMP)
-
-extern void hppa32_hpux_frame_find_saved_regs_in_sigtramp
-              (struct frame_info *fi, CORE_ADDR *fsr);
-#define FRAME_FIND_SAVED_REGS_IN_SIGTRAMP(FRAME, FSR) \
-  hppa32_hpux_frame_find_saved_regs_in_sigtramp (FRAME, FSR)
-
 /* For HP-UX on PA-RISC we have an implementation
    for the exception handling target op (in hppa-tdep.c) */
 #define CHILD_ENABLE_EXCEPTION_CALLBACK

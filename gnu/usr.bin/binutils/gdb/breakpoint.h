@@ -414,7 +414,8 @@ extern void bpstat_clear (bpstat *);
    is part of the bpstat is copied as well.  */
 extern bpstat bpstat_copy (bpstat);
 
-extern bpstat bpstat_stop_status (CORE_ADDR pc, ptid_t ptid);
+extern bpstat bpstat_stop_status (CORE_ADDR pc, ptid_t ptid, 
+				  int stopped_by_watchpoint);
 
 /* This bpstat_what stuff tells wait_for_inferior what to do with a
    breakpoint (a challenging task).  */
@@ -619,13 +620,6 @@ extern int breakpoint_inserted_here_p (CORE_ADDR);
 
 extern int software_breakpoint_inserted_here_p (CORE_ADDR);
 
-/* FIXME: cagney/2002-11-10: The current [generic] dummy-frame code
-   implements a functional superset of this function.  The only reason
-   it hasn't been removed is because some architectures still don't
-   use the new framework.  Once they have been fixed, this can go.  */
-struct frame_info;
-extern int deprecated_frame_in_dummy (struct frame_info *);
-
 extern int breakpoint_thread_match (CORE_ADDR, ptid_t);
 
 extern void until_break_command (char *, int, int);
@@ -801,5 +795,14 @@ extern void delete_command (char *arg, int from_tty);
 /* Pull all H/W watchpoints from the target. Return non-zero if the
    remove fails. */
 extern int remove_hw_watchpoints (void);
+
+
+/* Indicator of whether exception catchpoints should be nuked between
+   runs of a program.  */
+extern int deprecated_exception_catchpoints_are_fragile;
+
+/* Indicator of when exception catchpoints set-up should be
+   reinitialized -- e.g. when program is re-run.  */
+extern int deprecated_exception_support_initialized;
 
 #endif /* !defined (BREAKPOINT_H) */

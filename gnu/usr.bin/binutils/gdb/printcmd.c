@@ -499,9 +499,7 @@ print_scalar_formatted (void *valaddr, struct type *type, int format, int size,
 	    if (*cp == '\0')
 	      cp--;
 	  }
-	strcpy (buf, local_binary_format_prefix ());
-	strcat (buf, cp);
-	strcat (buf, local_binary_format_suffix ());
+	strcpy (buf, cp);
 	fputs_filtered (buf, stream);
       }
       break;
@@ -2146,18 +2144,18 @@ but no count or size letter (see \"x\" command).", NULL));
 environment, the value is printed in its own window.");
   set_cmd_completer (c, location_completer);
 
-  add_show_from_set (
-		 add_set_cmd ("max-symbolic-offset", no_class, var_uinteger,
-			      (char *) &max_symbolic_offset,
+  deprecated_add_show_from_set
+    (add_set_cmd ("max-symbolic-offset", no_class, var_uinteger,
+		  (char *) &max_symbolic_offset,
        "Set the largest offset that will be printed in <symbol+1234> form.",
-			      &setprintlist),
-		      &showprintlist);
-  add_show_from_set (
-		      add_set_cmd ("symbol-filename", no_class, var_boolean,
-				   (char *) &print_symbol_filename,
-	   "Set printing of source filename and line number with <symbol>.",
-				   &setprintlist),
-		      &showprintlist);
+		  &setprintlist),
+     &showprintlist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("symbol-filename", no_class, var_boolean,
+		  (char *) &print_symbol_filename, "\
+Set printing of source filename and line number with <symbol>.",
+		  &setprintlist),
+     &showprintlist);
 
   /* For examine/instruction a single byte quantity is specified as
      the data.  This avoids problems with value_at_lazy() requiring a

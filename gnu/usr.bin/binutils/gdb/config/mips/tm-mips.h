@@ -26,8 +26,6 @@
 #ifndef TM_MIPS_H
 #define TM_MIPS_H 1
 
-#define GDB_MULTI_ARCH 1
-
 #include "regcache.h"
 
 struct frame_info;
@@ -56,7 +54,6 @@ extern int mips_step_skips_delay (CORE_ADDR);
 #define V0_REGNUM 2		/* Function integer return value */
 #define A0_REGNUM 4		/* Loc of first arg during a subr call */
 #define T9_REGNUM 25		/* Contains address of callee in PIC */
-#define SP_REGNUM 29		/* Contains address of top of stack */
 #define RA_REGNUM 31		/* Contains return address value */
 #define PS_REGNUM 32		/* Contains processor status */
 #define	UNUSED_REGNUM 73	/* Never used, FIXME */
@@ -99,12 +96,8 @@ typedef struct mips_extra_func_info
 #define SETUP_ARBITRARY_FRAME(argc, argv) setup_arbitrary_frame (argc, argv)
 extern struct frame_info *setup_arbitrary_frame (int, CORE_ADDR *);
 
-/* These are defined in mdebugread.c and are used in mips-tdep.c  */
-extern CORE_ADDR sigtramp_address, sigtramp_end;
-extern void fixup_sigtramp (void);
-
 /* Functions for dealing with MIPS16 call and return stubs.  */
-#define IGNORE_HELPER_CALL(pc)			mips_ignore_helper (pc)
+#define DEPRECATED_IGNORE_HELPER_CALL(pc)			mips_ignore_helper (pc)
 extern int mips_ignore_helper (CORE_ADDR pc);
 
 /* Definitions and declarations used by mips-tdep.c and remote-mips.c  */

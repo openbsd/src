@@ -5,7 +5,7 @@
 
 @c This is a dir.info fragment to support semi-automated addition of
 @c manuals to an info tree.
-@dircategory Programming & development tools.
+@dircategory Software development
 @direntry
 * Stabs: (stabs).                 The "stabs" debugging information format.   
 @end direntry
@@ -35,7 +35,7 @@ Free Documentation License''.
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.4 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.5 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par
@@ -422,9 +422,33 @@ file.  This information is contained in a symbol of stab type
 value of the symbol is the start address of the portion of the
 text section corresponding to that file.
 
-With the Sun Solaris2 compiler, the desc field contains a
-source-language code.
-@c Do the debuggers use it?  What are the codes? -djm
+Some compilers use the desc field to indicate the language of the
+source file.  Sun's compilers started this usage, and the first
+constants are derived from their documentation.  Languages added
+by gcc/gdb start at 0x32 to avoid conflict with languages Sun may
+add in the future.  A desc field with a value 0 indicates that no
+language has been specified via this mechanism.
+
+@table @asis
+@item @code{N_SO_AS} (0x1)
+Assembly language
+@item @code{N_SO_C}  (0x2)
+K&R traditional C
+@item @code{N_SO_ANSI_C} (0x3)
+ANSI C
+@item @code{N_SO_CC}  (0x4)
+C++
+@item @code{N_SO_FORTRAN} (0x5)
+Fortran
+@item @code{N_SO_PASCAL} (0x6)
+Pascal
+@item @code{N_SO_FORTRAN90} (0x7)
+Fortran90
+@item @code{N_SO_OBJC} (0x32)
+Objective-C
+@item @code{N_SO_OBJCPLUS} (0x33)
+Objective-C++
+@end table
 
 Some compilers (for example, GCC2 and SunOS4 @file{/bin/cc}) also
 include the directory in which the source was compiled, in a second

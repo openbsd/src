@@ -222,14 +222,15 @@ get_hex_regs (int n, int regno)
       val = 0;
       for (j = 0; j < 8; j++)
 	val = (val << 4) + get_hex_digit (j == 0);
-      supply_register (regno++, (char *) &val);
+      regcache_raw_supply (current_regcache, regno++, (char *) &val);
     }
 }
 
 /* This is called not only when we first attach, but also when the
    user types "run" after having attached.  */
 static void
-st2000_create_inferior (char *execfile, char *args, char **env)
+st2000_create_inferior (char *execfile, char *args, char **env,
+			int from_tty)
 {
   int entry_pt;
 
@@ -774,7 +775,7 @@ the speed to connect at in bits per second.";
   st2000_ops.to_fetch_registers = st2000_fetch_register;
   st2000_ops.to_store_registers = st2000_store_register;
   st2000_ops.to_prepare_to_store = st2000_prepare_to_store;
-  st2000_ops.to_xfer_memory = st2000_xfer_inferior_memory;
+  st2000_ops.deprecated_xfer_memory = st2000_xfer_inferior_memory;
   st2000_ops.to_files_info = st2000_files_info;
   st2000_ops.to_insert_breakpoint = st2000_insert_breakpoint;
   st2000_ops.to_remove_breakpoint = st2000_remove_breakpoint;	/* Breakpoints */

@@ -228,7 +228,7 @@ init_sh3_cmds (void)
   sh3_cmds.getreg.term_cmd = ".\r";	/* getreg.term_cmd */
   sh3_cmds.dump_registers = "r\r";	/* dump_registers */
   sh3_cmds.register_pattern = "\\(\\w+\\)=\\([0-9a-fA-F]+\\( +[0-9a-fA-F]+\\b\\)*\\)";
-  sh3_cmds.supply_register = sh3_supply_register;	/* supply_register */
+  sh3_cmds.supply_register = sh3_supply_register;
   sh3_cmds.load_routine = sh3_load;	/* load_routine */
   sh3_cmds.load = NULL;		/* download command */
   sh3_cmds.loadresp = NULL;	/* Load response */

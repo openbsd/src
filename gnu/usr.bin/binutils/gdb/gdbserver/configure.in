@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB server.
-dnl Copyright 2000, 2002 Free Software Foundation, Inc.
+dnl Copyright 2000, 2002, 2003, 2004 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -114,6 +114,11 @@ if test "$srv_linux_thread_db" = "yes"; then
   else
     srv_libs="$srv_cv_thread_db"
   fi
+  old_LDFLAGS="$LDFLAGS"
+  LDFLAGS="$LDFLAGS -rdynamic"
+  AC_TRY_LINK([], [], [RDYNAMIC=-rdynamic], [RDYNAMIC=])
+  AC_SUBST(RDYNAMIC)
+  LDFLAGS="$old_LDFLAGS"
 fi
 
 if test "$srv_linux_thread_db" = "yes"; then

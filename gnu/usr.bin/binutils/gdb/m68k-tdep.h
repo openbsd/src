@@ -70,6 +70,10 @@ struct gdbarch_tdep
   /* The size of each entry in the jump buffer.  */
   size_t jb_elt_size;
 
+  /* Register in which the address to store a structure value is
+     passed to a function.  */
+  int struct_value_regnum;
+
   /* Convention for returning structures.  */
   enum struct_return struct_return;
 };

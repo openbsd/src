@@ -59,12 +59,9 @@ read_alphacoff_dynamic_symtab (struct section_offsets *,
    symbol file is specified (not just adding some symbols from another
    file, e.g. a shared library).  */
 
-extern CORE_ADDR sigtramp_address;
-
 static void
 mipscoff_new_init (struct objfile *ignore)
 {
-  sigtramp_address = 0;
   stabsread_new_init ();
   buildsym_new_init ();
 }
@@ -105,25 +102,6 @@ mipscoff_symfile_read (struct objfile *objfile, int mainline)
      minimal symbols for this objfile. */
 
   install_minimal_symbols (objfile);
-
-  /* If the entry_file bounds are still unknown after processing the
-     partial symbols, then try to set them from the minimal symbols
-     surrounding the entry_point.  */
-
-  if (mainline
-      && objfile->ei.entry_point != INVALID_ENTRY_POINT
-      && objfile->ei.deprecated_entry_file_lowpc == INVALID_ENTRY_LOWPC)
-    {
-      struct minimal_symbol *m;
-
-      m = lookup_minimal_symbol_by_pc (objfile->ei.entry_point);
-      if (m && DEPRECATED_SYMBOL_NAME (m + 1))
-	{
-	  objfile->ei.deprecated_entry_file_lowpc = SYMBOL_VALUE_ADDRESS (m);
-	  objfile->ei.deprecated_entry_file_highpc = SYMBOL_VALUE_ADDRESS (m + 1);
-	}
-    }
-
   do_cleanups (back_to);
 }
 
@@ -256,10 +234,10 @@ read_alphacoff_dynamic_symtab (struct section_offsets *section_offsets,
       || si.got_sect == NULL)
     return;
 
-  sym_secsize = bfd_get_section_size_before_reloc (si.sym_sect);
-  str_secsize = bfd_get_section_size_before_reloc (si.str_sect);
-  dyninfo_secsize = bfd_get_section_size_before_reloc (si.dyninfo_sect);
-  got_secsize = bfd_get_section_size_before_reloc (si.got_sect);
+  sym_secsize = bfd_get_section_size (si.sym_sect);
+  str_secsize = bfd_get_section_size (si.str_sect);
+  dyninfo_secsize = bfd_get_section_size (si.dyninfo_sect);
+  got_secsize = bfd_get_section_size (si.got_sect);
   sym_secptr = xmalloc (sym_secsize);
   cleanups = make_cleanup (free, sym_secptr);
   str_secptr = xmalloc (str_secsize);

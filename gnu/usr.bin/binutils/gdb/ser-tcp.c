@@ -44,12 +44,11 @@
 
 static int net_open (struct serial *scb, const char *name);
 static void net_close (struct serial *scb);
-extern int (*ui_loop_hook) (int);
 void _initialize_ser_tcp (void);
 
 /* seconds to wait for connect */
 #define TIMEOUT 15
-/* how many times per second to poll ui_loop_hook */
+/* how many times per second to poll deprecated_ui_loop_hook */
 #define POLL_INTERVAL 2
 
 /* Open a tcp socket */
@@ -133,9 +132,9 @@ net_open (struct serial *scb, const char *name)
 	  /* While we wait for the connect to complete 
 	     poll the UI so it can update or the user can 
 	     interrupt. */
-	  if (ui_loop_hook)
+	  if (deprecated_ui_loop_hook)
 	    {
-	      if (ui_loop_hook (0))
+	      if (deprecated_ui_loop_hook (0))
 		{
 		  errno = EINTR;
 		  net_close (scb);

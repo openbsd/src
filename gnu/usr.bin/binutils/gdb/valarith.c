@@ -1,7 +1,7 @@
 /* Perform arithmetic and other operations on values, for GDB.
 
    Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software
+   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
 
    This file is part of GDB.
@@ -91,16 +91,15 @@ value_add (struct value *arg1, struct value *arg2)
   LONGEST sz;
   struct type *type1, *type2, *valptrtype;
 
-  COERCE_NUMBER (arg1);
-  COERCE_NUMBER (arg2);
+  COERCE_ARRAY (arg1);
+  COERCE_ARRAY (arg2);
   type1 = check_typedef (VALUE_TYPE (arg1));
   type2 = check_typedef (VALUE_TYPE (arg2));
 
   if ((TYPE_CODE (type1) == TYPE_CODE_PTR
        || TYPE_CODE (type2) == TYPE_CODE_PTR)
       &&
-      (TYPE_CODE (type1) == TYPE_CODE_INT
-       || TYPE_CODE (type2) == TYPE_CODE_INT))
+      (is_integral_type (type1) || is_integral_type (type2)))
     /* Exactly one argument is a pointer, and one is an integer.  */
     {
       struct value *retval;
@@ -134,14 +133,14 @@ struct value *
 value_sub (struct value *arg1, struct value *arg2)
 {
   struct type *type1, *type2;
-  COERCE_NUMBER (arg1);
-  COERCE_NUMBER (arg2);
+  COERCE_ARRAY (arg1);
+  COERCE_ARRAY (arg2);
   type1 = check_typedef (VALUE_TYPE (arg1));
   type2 = check_typedef (VALUE_TYPE (arg2));
 
   if (TYPE_CODE (type1) == TYPE_CODE_PTR)
     {
-      if (TYPE_CODE (type2) == TYPE_CODE_INT)
+      if (is_integral_type (type2))
 	{
 	  /* pointer - integer.  */
 	  LONGEST sz = find_size_for_pointer_math (type1);
@@ -203,7 +202,10 @@ value_subscript (struct value *array, struct value *idx)
 	  LONGEST index = value_as_long (idx);
 	  if (index >= lowerbound && index <= upperbound)
 	    return value_subscripted_rvalue (array, idx, lowerbound);
-	  warning ("array or string index out of range");
+	  /* Emit warning unless we have an array of unknown size.
+	     An array of unknown size has lowerbound 0 and upperbound -1.  */
+	  if (upperbound > -1)
+	    warning ("array or string index out of range");
 	  /* fall doing C stuff */
 	  c_style = 1;
 	}
@@ -752,22 +754,12 @@ value_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 
   COERCE_REF (arg1);
   COERCE_REF (arg2);
-  COERCE_ENUM (arg1);
-  COERCE_ENUM (arg2);
   type1 = check_typedef (VALUE_TYPE (arg1));
   type2 = check_typedef (VALUE_TYPE (arg2));
 
-  if ((TYPE_CODE (type1) != TYPE_CODE_FLT
-       && TYPE_CODE (type1) != TYPE_CODE_CHAR
-       && TYPE_CODE (type1) != TYPE_CODE_INT
-       && TYPE_CODE (type1) != TYPE_CODE_BOOL
-       && TYPE_CODE (type1) != TYPE_CODE_RANGE)
+  if ((TYPE_CODE (type1) != TYPE_CODE_FLT && !is_integral_type (type1))
       ||
-      (TYPE_CODE (type2) != TYPE_CODE_FLT
-       && TYPE_CODE (type2) != TYPE_CODE_CHAR
-       && TYPE_CODE (type2) != TYPE_CODE_INT
-       && TYPE_CODE (type2) != TYPE_CODE_BOOL
-       && TYPE_CODE (type2) != TYPE_CODE_RANGE))
+      (TYPE_CODE (type2) != TYPE_CODE_FLT && !is_integral_type (type2)))
     error ("Argument to arithmetic operation not a number or boolean.");
 
   if (TYPE_CODE (type1) == TYPE_CODE_FLT
@@ -1051,7 +1043,10 @@ value_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 	      break;
 
 	    case BINOP_DIV:
-	      v = v1 / v2;
+	      if (v2 != 0)
+		v = v1 / v2;
+	      else
+		error ("Division by zero");
               break;
 
             case BINOP_EXP:
@@ -1061,7 +1056,10 @@ value_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 	      break;
 
 	    case BINOP_REM:
-	      v = v1 % v2;
+	      if (v2 != 0)
+		v = v1 % v2;
+	      else
+		error ("Division by zero");
 	      break;
 
 	    case BINOP_MOD:
@@ -1221,28 +1219,30 @@ value_equal (struct value *arg1, struct value *arg2)
   struct type *type1, *type2;
   enum type_code code1;
   enum type_code code2;
+  int is_int1, is_int2;
 
-  COERCE_NUMBER (arg1);
-  COERCE_NUMBER (arg2);
+  COERCE_ARRAY (arg1);
+  COERCE_ARRAY (arg2);
 
   type1 = check_typedef (VALUE_TYPE (arg1));
   type2 = check_typedef (VALUE_TYPE (arg2));
   code1 = TYPE_CODE (type1);
   code2 = TYPE_CODE (type2);
+  is_int1 = is_integral_type (type1);
+  is_int2 = is_integral_type (type2);
 
-  if ((code1 == TYPE_CODE_INT || code1 == TYPE_CODE_BOOL) &&
-      (code2 == TYPE_CODE_INT || code2 == TYPE_CODE_BOOL))
+  if (is_int1 && is_int2)
     return longest_to_int (value_as_long (value_binop (arg1, arg2,
 						       BINOP_EQUAL)));
-  else if ((code1 == TYPE_CODE_FLT || code1 == TYPE_CODE_INT || code1 == TYPE_CODE_BOOL)
-	   && (code2 == TYPE_CODE_FLT || code2 == TYPE_CODE_INT || code2 == TYPE_CODE_BOOL))
+  else if ((code1 == TYPE_CODE_FLT || is_int1)
+	   && (code2 == TYPE_CODE_FLT || is_int2))
     return value_as_double (arg1) == value_as_double (arg2);
 
   /* FIXME: Need to promote to either CORE_ADDR or LONGEST, whichever
      is bigger.  */
-  else if (code1 == TYPE_CODE_PTR && (code2 == TYPE_CODE_INT || code2 == TYPE_CODE_BOOL))
+  else if (code1 == TYPE_CODE_PTR && is_int2)
     return value_as_address (arg1) == (CORE_ADDR) value_as_long (arg2);
-  else if (code2 == TYPE_CODE_PTR && (code1 == TYPE_CODE_INT || code1 == TYPE_CODE_BOOL))
+  else if (code2 == TYPE_CODE_PTR && is_int1)
     return (CORE_ADDR) value_as_long (arg1) == value_as_address (arg2);
 
   else if (code1 == code2
@@ -1278,30 +1278,32 @@ value_less (struct value *arg1, struct value *arg2)
   enum type_code code1;
   enum type_code code2;
   struct type *type1, *type2;
+  int is_int1, is_int2;
 
-  COERCE_NUMBER (arg1);
-  COERCE_NUMBER (arg2);
+  COERCE_ARRAY (arg1);
+  COERCE_ARRAY (arg2);
 
   type1 = check_typedef (VALUE_TYPE (arg1));
   type2 = check_typedef (VALUE_TYPE (arg2));
   code1 = TYPE_CODE (type1);
   code2 = TYPE_CODE (type2);
+  is_int1 = is_integral_type (type1);
+  is_int2 = is_integral_type (type2);
 
-  if ((code1 == TYPE_CODE_INT || code1 == TYPE_CODE_BOOL) &&
-      (code2 == TYPE_CODE_INT || code2 == TYPE_CODE_BOOL))
+  if (is_int1 && is_int2)
     return longest_to_int (value_as_long (value_binop (arg1, arg2,
 						       BINOP_LESS)));
-  else if ((code1 == TYPE_CODE_FLT || code1 == TYPE_CODE_INT || code1 == TYPE_CODE_BOOL)
-	   && (code2 == TYPE_CODE_FLT || code2 == TYPE_CODE_INT || code2 == TYPE_CODE_BOOL))
+  else if ((code1 == TYPE_CODE_FLT || is_int1)
+	   && (code2 == TYPE_CODE_FLT || is_int2))
     return value_as_double (arg1) < value_as_double (arg2);
   else if (code1 == TYPE_CODE_PTR && code2 == TYPE_CODE_PTR)
     return value_as_address (arg1) < value_as_address (arg2);
 
   /* FIXME: Need to promote to either CORE_ADDR or LONGEST, whichever
      is bigger.  */
-  else if (code1 == TYPE_CODE_PTR && (code2 == TYPE_CODE_INT || code2 == TYPE_CODE_BOOL))
+  else if (code1 == TYPE_CODE_PTR && is_int2)
     return value_as_address (arg1) < (CORE_ADDR) value_as_long (arg2);
-  else if (code2 == TYPE_CODE_PTR && (code1 == TYPE_CODE_INT || code1 == TYPE_CODE_BOOL))
+  else if (code2 == TYPE_CODE_PTR && is_int1)
     return (CORE_ADDR) value_as_long (arg1) < value_as_address (arg2);
   else if (code1 == TYPE_CODE_STRING && code2 == TYPE_CODE_STRING)
     return value_strcmp (arg1, arg2) < 0;
@@ -1321,13 +1323,12 @@ value_neg (struct value *arg1)
   struct type *result_type = VALUE_TYPE (arg1);
 
   COERCE_REF (arg1);
-  COERCE_ENUM (arg1);
 
   type = check_typedef (VALUE_TYPE (arg1));
 
   if (TYPE_CODE (type) == TYPE_CODE_FLT)
     return value_from_double (result_type, -value_as_double (arg1));
-  else if (TYPE_CODE (type) == TYPE_CODE_INT || TYPE_CODE (type) == TYPE_CODE_BOOL)
+  else if (is_integral_type (type))
     {
       /* Perform integral promotion for ANSI C/C++.  FIXME: What about
          FORTRAN and (the deleted) chill ?  */
@@ -1348,15 +1349,12 @@ value_complement (struct value *arg1)
 {
   struct type *type;
   struct type *result_type = VALUE_TYPE (arg1);
-  int typecode;
 
   COERCE_REF (arg1);
-  COERCE_ENUM (arg1);
 
   type = check_typedef (VALUE_TYPE (arg1));
 
-  typecode = TYPE_CODE (type);
-  if ((typecode != TYPE_CODE_INT) && (typecode != TYPE_CODE_BOOL))
+  if (!is_integral_type (type))
     error ("Argument to complement operation not an integer or boolean.");
 
   /* Perform integral promotion for ANSI C/C++.

@@ -1,4 +1,4 @@
-/* Native-dependent code for VAX BSD's.
+/* Native-dependent code for modern VAX BSD's.
 
    Copyright 2004 Free Software Foundation, Inc.
 
@@ -22,12 +22,14 @@
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
+#include "target.h"
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
 #include "vax-tdep.h"
+#include "inf-ptrace.h"
 
 /* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
 
@@ -62,13 +64,13 @@ vaxbsd_collect_gregset (const struct regcache *regcache,
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers.  */
 
-void
-fetch_inferior_registers (int regnum)
+static void
+vaxbsd_fetch_inferior_registers (int regnum)
 {
   struct reg regs;
 
   if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name ("Couldn't get registers");
 
   vaxbsd_supply_gregset (current_regcache, &regs);
@@ -77,19 +79,19 @@ fetch_inferior_registers (int regnum)
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers.  */
 
-void
-store_inferior_registers (int regnum)
+static void
+vaxbsd_store_inferior_registers (int regnum)
 {
   struct reg regs;
 
   if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name ("Couldn't get registers");
 
   vaxbsd_collect_gregset (current_regcache, &regs, regnum);
 
   if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name ("Couldn't write registers");
 }
 
@@ -133,6 +135,13 @@ void _initialize_vaxbsd_nat (void);
 void
 _initialize_vaxbsd_nat (void)
 {
+  struct target_ops *t;
+
+  t = inf_ptrace_target ();
+  t->to_fetch_registers = vaxbsd_fetch_inferior_registers;
+  t->to_store_registers = vaxbsd_store_inferior_registers;
+  add_target (t);
+
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (vaxbsd_supply_pcb);
 }

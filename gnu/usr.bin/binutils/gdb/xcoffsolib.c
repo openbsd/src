@@ -48,11 +48,11 @@ xcoff_solib_address (CORE_ADDR addr)
     if (vp->tstart <= addr && addr < vp->tend)
       {
 	xfree (buffer);
-	xasprintf (&buffer, "%s%s%s%s",
-			    vp->name,
-			    *vp->member ? "(" : "",
-			    vp->member,
-			    *vp->member ? ")" : "");
+	buffer = xstrprintf ("%s%s%s%s",
+			     vp->name,
+			     *vp->member ? "(" : "",
+			     vp->member,
+			     *vp->member ? ")" : "");
 	return buffer;
       }
   return NULL;
@@ -183,7 +183,7 @@ _initialize_xcoffsolib (void)
   add_info ("sharedlibrary", solib_info,
 	    "Status of loaded shared object libraries");
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("auto-solib-add", class_support, var_boolean,
 		  (char *) &auto_solib_add,
 		  "Set autoloading of shared library symbols.\n\

@@ -144,7 +144,7 @@ init_abug_cmds (void)
   abug_cmds.getreg.term_cmd = ".\r";	/* getreg.term_cmd */
   abug_cmds.dump_registers = "rd\r";	/* dump_registers */
   abug_cmds.register_pattern = "\\(\\w+\\) +=\\([0-9a-fA-F]+\\b\\)";	/* register_pattern */
-  abug_cmds.supply_register = abug_supply_register;	/* supply_register */
+  abug_cmds.supply_register = abug_supply_register;
   abug_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   abug_cmds.load = "lo 0\r";	/* download command */
   abug_cmds.loadresp = "\n";	/* load response */

@@ -29,7 +29,6 @@
 #include "i386/nm-i386sco.h"
 
 /* ... but it can do a lot of SVR4 type stuff too.  */
-#define SVR4_SHARED_LIBS
 #include "solib.h"		/* Pick up shared library support.  */
 
 /* SCO is unlike other SVR4 systems in that it has SVR4 style shared
@@ -50,9 +49,6 @@
 
 #define KERNEL_U_SIZE kernel_u_size ()
 extern int kernel_u_size (void);
-
-/* We can attach and detach.  */
-#define ATTACH_DETACH
 
 /* Hardware-assisted breakpoints and watchpoints.  */
 

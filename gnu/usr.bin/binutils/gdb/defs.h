@@ -66,29 +66,6 @@
 /* For BFD64 and bfd_vma.  */
 #include "bfd.h"
 
-
-/* The target is partially multi-arched.  Both "tm.h" and the
-   multi-arch vector provide definitions.  "tm.h" normally overrides
-   the multi-arch vector (but there are a few exceptions).  */
-
-#define GDB_MULTI_ARCH_PARTIAL 1
-
-/* The target is partially multi-arched. Both the multi-arch vector
-   and "tm.h" provide definitions. "tm.h" cannot override a definition
-   provided by the multi-arch vector.  It is detected as a compilation
-   error.
-
-   This setting is only useful during a multi-arch conversion. */
-
-#define GDB_MULTI_ARCH_TM 2
-
-/* The target is pure multi-arch.  The MULTI-ARCH vector provides all
-   definitions.  "tm.h" is linked to an empty file. */
-
-#define GDB_MULTI_ARCH_PURE 3
-
-
-
 /* An address in the program being debugged.  Host byte order.  Rather
    than duplicate all the logic in BFD which figures out what type
    this is (long, long long, etc.) and whether it needs to be 64
@@ -198,7 +175,7 @@ extern void quit (void);
 #else
 #define QUIT { \
   if (quit_flag) quit (); \
-  if (interactive_hook) interactive_hook (); \
+  if (deprecated_interactive_hook) deprecated_interactive_hook (); \
 }
 #endif
 
@@ -220,7 +197,9 @@ enum language
     language_asm,		/* Assembly language */
     language_scm,    		/* Scheme / Guile */
     language_pascal,		/* Pascal */
-    language_minimal		/* All other languages, minimal support only */
+    language_ada,		/* Ada */
+    language_minimal,		/* All other languages, minimal support only */
+    nr_languages
   };
 
 enum precision_type
@@ -250,7 +229,19 @@ enum return_value_convention
      should be stored.  While typically, and historically, used for
      large structs, this is convention is applied to values of many
      different types.  */
-  RETURN_VALUE_STRUCT_CONVENTION
+  RETURN_VALUE_STRUCT_CONVENTION,
+  /* Like the "struct return convention" above, but where the ABI
+     guarantees that the called function stores the address at which
+     the value being returned is stored in a well-defined location,
+     such as a register or memory slot in the stack frame.  Don't use
+     this if the ABI doesn't explicitly guarantees this.  */
+  RETURN_VALUE_ABI_RETURNS_ADDRESS,
+  /* Like the "struct return convention" above, but where the ABI
+     guarantees that the address at which the value being returned is
+     stored will be available in a well-defined location, such as a
+     register or memory slot in the stack frame.  Don't use this if
+     the ABI doesn't explicitly guarantees this.  */
+  RETURN_VALUE_ABI_PRESERVES_ADDRESS,
 };
 
 /* the cleanup list records things that have to be undone
@@ -327,10 +318,6 @@ struct frame_info;
 
 extern int inside_entry_func (struct frame_info *this_frame);
 
-extern int deprecated_inside_entry_file (CORE_ADDR addr);
-
-extern int inside_main_func (CORE_ADDR pc);
-
 /* From utils.c */
 
 extern void initialize_utils (void);
@@ -346,8 +333,6 @@ extern int streq (const char *, const char *);
 extern int subset_compare (char *, char *);
 
 extern char *safe_strerror (int);
-
-extern void init_malloc (void *);
 
 extern void request_quit (int);
 
@@ -375,6 +360,10 @@ extern struct cleanup *make_cleanup_freeargv (char **);
 
 struct ui_file;
 extern struct cleanup *make_cleanup_ui_file_delete (struct ui_file *);
+
+struct section_addr_info;
+extern struct cleanup *(make_cleanup_free_section_addr_info 
+                        (struct section_addr_info *));
 
 extern struct cleanup *make_cleanup_close (int fd);
 
@@ -527,6 +516,7 @@ extern char *paddr_d (LONGEST addr);
 
 extern char *phex (ULONGEST l, int sizeof_l);
 extern char *phex_nz (ULONGEST l, int sizeof_l);
+extern char *int_string (LONGEST, int, int, int, int);
 
 /* Like paddr() only print/scan raw CORE_ADDR.  The output from
    core_addr_to_string() can be passed direct to
@@ -534,6 +524,11 @@ extern char *phex_nz (ULONGEST l, int sizeof_l);
 extern const char *core_addr_to_string (const CORE_ADDR addr);
 extern const char *core_addr_to_string_nz (const CORE_ADDR addr);
 extern CORE_ADDR string_to_core_addr (const char *my_string);
+
+/* Return a string that contains a number formatted as a hex
+   string.  */
+extern char *hex_string (LONGEST);
+extern char *hex_string_custom (LONGEST, int);
 
 extern void fprintf_symbol_filtered (struct ui_file *, char *,
 				     enum language, int);
@@ -600,6 +595,9 @@ extern void print_address (CORE_ADDR, struct ui_file *);
 
 /* From source.c */
 
+#define OPF_TRY_CWD_FIRST     0x01
+#define OPF_SEARCH_IN_PATH    0x02
+
 extern int openp (const char *, int, const char *, int, int, char **);
 
 extern int source_full_path_of (char *, char **);
@@ -615,8 +613,6 @@ extern char *source_path;
 extern void init_source_path (void);
 
 extern void init_last_source_visited (void);
-
-extern char *symtab_to_filename (struct symtab *);
 
 /* From exec.c */
 
@@ -808,11 +804,16 @@ typedef struct ptid ptid_t;
 #include "tm.h"
 #endif
 
-/* If the xm.h file did not define the mode string used to open the
-   files, assume that binary files are opened the same way as text
-   files */
+/* Assume that fopen accepts the letter "b" in the mode string.
+   Support for is demanded by ISO C90, and should be supported on all
+   platforms that claim to have a standards conforming C library.  On
+   true POSIX systems it will be ignored and have no effect.  There
+   may still be systems without a standards conforming C library where
+   an ISO C90 compiler (GCC) is available.  Known examples are SunOS
+   4.x and 4.3BSD.  This assumption means these systems are no longer
+   supported.  */
 #ifndef FOPEN_RB
-#include "fopen-same.h"
+# include "fopen-bin.h"
 #endif
 
 /* Defaults for system-wide constants (if not defined by xm.h, we fake it).
@@ -857,17 +858,6 @@ extern int longest_to_int (LONGEST);
 
 extern char *savestring (const char *, size_t);
 
-extern char *msavestring (void *, const char *, size_t);
-
-extern char *mstrsave (void *, const char *);
-
-/* Robust versions of same.  Throw an internal error when no memory,
-   guard against stray NULL arguments. */
-extern void *xmmalloc (void *md, size_t size);
-extern void *xmrealloc (void *md, void *ptr, size_t size);
-extern void *xmcalloc (void *md, size_t number, size_t size);
-extern void xmfree (void *md, void *ptr);
-
 /* xmalloc(), xrealloc() and xcalloc() have already been declared in
    "libiberty.h". */
 extern void xfree (void *);
@@ -884,8 +874,10 @@ extern void xfree (void *);
 extern void xasprintf (char **ret, const char *format, ...) ATTR_FORMAT (printf, 2, 3);
 extern void xvasprintf (char **ret, const char *format, va_list ap);
 
-/* Like asprintf, but return the string, throw an error if no memory.  */
+/* Like asprintf and vasprintf, but return the string, throw an error
+   if no memory.  */
 extern char *xstrprintf (const char *format, ...) ATTR_FORMAT (printf, 1, 2);
+extern char *xstrvprintf (const char *format, va_list ap);
 
 extern int parse_escape (char **);
 
@@ -1067,10 +1059,6 @@ enum gdb_osabi
    Libiberty thingies are no longer declared here.  We include libiberty.h
    above, instead.  */
 
-#ifndef GETENV_PROVIDED
-extern char *getenv (const char *);
-#endif
-
 /* From other system libraries */
 
 #ifdef HAVE_STDDEF_H
@@ -1087,15 +1075,6 @@ extern char *getenv (const char *);
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
-
-/* We take the address of fclose later, but some stdio's forget
-   to declare this.  We can't always declare it since there's
-   no way to declare the parameters without upsetting some compiler
-   somewhere. */
-
-#ifndef FCLOSE_PROVIDED
-extern int fclose (FILE *);
-#endif
 
 #ifndef atof
 extern double atof (const char *);	/* X3.159-1989  4.10.1.1 */
@@ -1121,15 +1100,6 @@ extern void *alloca ();
 #endif /* Not HAVE_ALLOCA_H */
 #endif /* Not GNU C */
 #endif /* alloca not defined */
-
-/* Is GDB multi-arch?  If there's a "tm.h" file, it is not.  */
-#ifndef GDB_MULTI_ARCH
-#ifdef GDB_TM_FILE
-#define GDB_MULTI_ARCH GDB_MULTI_ARCH_PARTIAL
-#else
-#define GDB_MULTI_ARCH GDB_MULTI_ARCH_PURE
-#endif
-#endif
 
 /* Dynamic target-system-dependent parameters for GDB. */
 #include "gdbarch.h"
@@ -1197,57 +1167,59 @@ extern int watchdog;
 extern char *interpreter_p;
 
 /* If a given interpreter matches INTERPRETER_P then it should update
-   command_loop_hook and init_ui_hook with the per-interpreter
-   implementation. */
-/* FIXME: command_loop_hook and init_ui_hook should be moved here. */
+   deprecated_command_loop_hook and deprecated_init_ui_hook with the
+   per-interpreter implementation.  */
+/* FIXME: deprecated_command_loop_hook and deprecated_init_ui_hook
+   should be moved here. */
 
 struct target_waitstatus;
 struct cmd_list_element;
 
-/* Should the asynchronous variant of the interpreter (using the
-   event-loop) be enabled? */
-extern int event_loop_p;
-
-extern void (*init_ui_hook) (char *argv0);
-extern void (*command_loop_hook) (void);
-extern void (*show_load_progress) (const char *section,
-				   unsigned long section_sent, 
-				   unsigned long section_size, 
-				   unsigned long total_sent, 
-				   unsigned long total_size);
-extern void (*print_frame_info_listing_hook) (struct symtab * s,
-					      int line, int stopline,
-					      int noerror);
+extern void (*deprecated_pre_add_symbol_hook) (const char *);
+extern void (*deprecated_post_add_symbol_hook) (void);
+extern void (*selected_frame_level_changed_hook) (int);
+extern int (*deprecated_ui_loop_hook) (int signo);
+extern void (*deprecated_init_ui_hook) (char *argv0);
+extern void (*deprecated_command_loop_hook) (void);
+extern void (*deprecated_show_load_progress) (const char *section,
+					      unsigned long section_sent, 
+					      unsigned long section_size, 
+					      unsigned long total_sent, 
+					      unsigned long total_size);
+extern void (*deprecated_print_frame_info_listing_hook) (struct symtab * s,
+							 int line, int stopline,
+							 int noerror);
 extern struct frame_info *parse_frame_specification (char *frame_exp);
-extern int (*query_hook) (const char *, va_list);
-extern void (*warning_hook) (const char *, va_list);
-extern void (*flush_hook) (struct ui_file * stream);
-extern void (*create_breakpoint_hook) (struct breakpoint * b);
-extern void (*delete_breakpoint_hook) (struct breakpoint * bpt);
-extern void (*modify_breakpoint_hook) (struct breakpoint * bpt);
-extern void (*interactive_hook) (void);
-extern void (*registers_changed_hook) (void);
-extern void (*readline_begin_hook) (char *,...);
-extern char *(*readline_hook) (char *);
-extern void (*readline_end_hook) (void);
-extern void (*register_changed_hook) (int regno);
-extern void (*memory_changed_hook) (CORE_ADDR addr, int len);
-extern void (*context_hook) (int);
-extern ptid_t (*target_wait_hook) (ptid_t ptid,
+extern int (*deprecated_query_hook) (const char *, va_list);
+extern void (*deprecated_warning_hook) (const char *, va_list);
+extern void (*deprecated_flush_hook) (struct ui_file * stream);
+extern void (*deprecated_create_breakpoint_hook) (struct breakpoint * b);
+extern void (*deprecated_delete_breakpoint_hook) (struct breakpoint * bpt);
+extern void (*deprecated_modify_breakpoint_hook) (struct breakpoint * bpt);
+extern void (*deprecated_interactive_hook) (void);
+extern void (*deprecated_registers_changed_hook) (void);
+extern void (*deprecated_readline_begin_hook) (char *,...);
+extern char *(*deprecated_readline_hook) (char *);
+extern void (*deprecated_readline_end_hook) (void);
+extern void (*deprecated_register_changed_hook) (int regno);
+extern void (*deprecated_memory_changed_hook) (CORE_ADDR addr, int len);
+extern void (*deprecated_context_hook) (int);
+extern ptid_t (*deprecated_target_wait_hook) (ptid_t ptid,
                                          struct target_waitstatus * status);
 
-extern void (*attach_hook) (void);
-extern void (*detach_hook) (void);
-extern void (*call_command_hook) (struct cmd_list_element * c,
-				  char *cmd, int from_tty);
+extern void (*deprecated_attach_hook) (void);
+extern void (*deprecated_detach_hook) (void);
+extern void (*deprecated_call_command_hook) (struct cmd_list_element * c,
+					     char *cmd, int from_tty);
 
-extern void (*set_hook) (struct cmd_list_element * c);
+extern void (*deprecated_set_hook) (struct cmd_list_element * c);
 
-extern NORETURN void (*error_hook) (void) ATTR_NORETURN;
+extern void (*deprecated_error_hook) (void);
 
-extern void (*error_begin_hook) (void);
+extern void (*deprecated_error_begin_hook) (void);
 
-extern int (*ui_load_progress_hook) (const char *section, unsigned long num);
+extern int (*deprecated_ui_load_progress_hook) (const char *section,
+						unsigned long num);
 
 
 /* Inhibit window interface if non-zero. */

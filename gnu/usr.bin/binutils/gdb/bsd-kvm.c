@@ -26,11 +26,14 @@
 #include "regcache.h"
 #include "target.h"
 #include "value.h"
+#include "gdbcore.h"		/* for get_exec_file */
 
 #include "gdb_assert.h"
 #include <fcntl.h>
 #include <kvm.h>
+#ifdef HAVE_NLIST_H
 #include <nlist.h>
+#endif
 #include "readline/readline.h"
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -73,6 +76,7 @@ bsd_kvm_open (char *filename, int from_tty)
 	}
     }
 
+  execfile = get_exec_file (0);
   temp_kd = kvm_openfiles (execfile, filename, NULL, O_RDONLY, errbuf);
   if (temp_kd == NULL)
     error ("%s", errbuf);
@@ -228,7 +232,11 @@ bsd_kvm_proc_cmd (char *arg, int fromtty)
     error ("No kernel memory image.");
 
   addr = parse_and_eval_address (arg);
+#ifdef HAVE_STRUCT_LWP
+  addr += offsetof (struct lwp, l_addr);
+#else
   addr += offsetof (struct proc, p_addr);
+#endif
 
   if (kvm_read (core_kd, addr, &bsd_kvm_paddr, sizeof bsd_kvm_paddr) == -1)
     error ("%s", kvm_geterr (core_kd));
@@ -277,7 +285,7 @@ Optionally specify the filename of a core dump.";
   bsd_kvm_ops.to_open = bsd_kvm_open;
   bsd_kvm_ops.to_close = bsd_kvm_close;
   bsd_kvm_ops.to_fetch_registers = bsd_kvm_fetch_registers;
-  bsd_kvm_ops.to_xfer_memory = bsd_kvm_xfer_memory;
+  bsd_kvm_ops.deprecated_xfer_memory = bsd_kvm_xfer_memory;
   bsd_kvm_ops.to_stratum = process_stratum;
   bsd_kvm_ops.to_has_memory = 1;
   bsd_kvm_ops.to_has_stack = 1;

@@ -23,8 +23,6 @@
 
 #define	DEFAULT_PROMPT		"(os68k) "
 
-#include "m68k/tm-m68k.h"
-
 /* We have more complex, useful breakpoints on the target.  */
 #undef DECR_PC_AFTER_BREAK
 #define	DECR_PC_AFTER_BREAK	0

@@ -191,7 +191,7 @@ static int target_is_thumb;
 
 /* Flag set by arm_fix_call_dummy that tells whether the calling
    function is a Thumb function.  This flag is checked by
-   arm_pc_is_thumb and arm_call_dummy_breakpoint_offset.  */
+   arm_pc_is_thumb.  */
 
 static int caller_is_thumb;
 
@@ -234,7 +234,7 @@ arm_pc_is_thumb_dummy (CORE_ADDR memaddr)
      frame location (true if we have not pushed large data structures or
      gone too many levels deep) and that our 1024 is not enough to consider
      code regions as part of the stack (true for most practical purposes).  */
-  if (DEPRECATED_PC_IN_CALL_DUMMY (memaddr, sp, sp + 1024))
+  if (deprecated_pc_in_call_dummy (memaddr))
     return caller_is_thumb;
   else
     return 0;
@@ -267,39 +267,6 @@ static CORE_ADDR
 arm_saved_pc_after_call (struct frame_info *frame)
 {
   return ADDR_BITS_REMOVE (read_register (ARM_LR_REGNUM));
-}
-
-/* Determine whether the function invocation represented by FI has a
-   frame on the stack associated with it.  If it does return zero,
-   otherwise return 1.  */
-
-static int
-arm_frameless_function_invocation (struct frame_info *fi)
-{
-  CORE_ADDR func_start, after_prologue;
-  int frameless;
-
-  /* Sometimes we have functions that do a little setup (like saving the
-     vN registers with the stmdb instruction, but DO NOT set up a frame.
-     The symbol table will report this as a prologue.  However, it is
-     important not to try to parse these partial frames as frames, or we
-     will get really confused.
-
-     So I will demand 3 instructions between the start & end of the
-     prologue before I call it a real prologue, i.e. at least
-	mov ip, sp,
-	stmdb sp!, {}
-	sub sp, ip, #4.  */
-
-  func_start = (get_frame_func (fi) + FUNCTION_START_OFFSET);
-  after_prologue = SKIP_PROLOGUE (func_start);
-
-  /* There are some frameless functions whose first two instructions
-     follow the standard APCS form, in which case after_prologue will
-     be func_start + 8.  */
-
-  frameless = (after_prologue < func_start + 12);
-  return frameless;
 }
 
 /* A typical Thumb prologue looks like this:
@@ -407,7 +374,7 @@ arm_skip_prologue (CORE_ADDR pc)
   struct symtab_and_line sal;
 
   /* If we're in a dummy frame, don't even try to skip the prologue.  */
-  if (DEPRECATED_PC_IN_CALL_DUMMY (pc, 0, 0))
+  if (deprecated_pc_in_call_dummy (pc))
     return pc;
 
   /* See what the symbol table says.  */
@@ -993,15 +960,6 @@ arm_prologue_this_id (struct frame_info *next_frame,
     return;
 
   id = frame_id_build (cache->prev_sp, func);
-
-  /* Check that we're not going round in circles with the same frame
-     ID (but avoid applying the test to sentinel frames which do go
-     round in circles).  */
-  if (frame_relative_level (next_frame) >= 0
-      && get_frame_type (next_frame) == NORMAL_FRAME
-      && frame_id_eq (get_frame_id (next_frame), id))
-    return;
-
   *this_id = id;
 }
 
@@ -1038,8 +996,8 @@ arm_prologue_prev_register (struct frame_info *next_frame,
       return;
     }
 
-  trad_frame_prev_register (next_frame, cache->saved_regs, prev_regnum,
-			    optimized, lvalp, addrp, realnump, valuep);
+  trad_frame_get_prev_register (next_frame, cache->saved_regs, prev_regnum,
+				optimized, lvalp, addrp, realnump, valuep);
 }
 
 struct frame_unwind arm_prologue_unwind = {
@@ -1131,8 +1089,8 @@ arm_sigtramp_prev_register (struct frame_info *next_frame,
     *this_cache = arm_make_sigtramp_cache (next_frame);
   cache = *this_cache;
 
-  trad_frame_prev_register (next_frame, cache->saved_regs, prev_regnum,
-			    optimized, lvalp, addrp, realnump, valuep);
+  trad_frame_get_prev_register (next_frame, cache->saved_regs, prev_regnum,
+				optimized, lvalp, addrp, realnump, valuep);
 }
 
 struct frame_unwind arm_sigtramp_unwind = {
@@ -1144,13 +1102,8 @@ struct frame_unwind arm_sigtramp_unwind = {
 static const struct frame_unwind *
 arm_sigtramp_unwind_sniffer (struct frame_info *next_frame)
 {
-  /* Note: If an ARM PC_IN_SIGTRAMP method ever needs to compare
-     against the name of the function, the code below will have to be
-     changed to first fetch the name of the function and then pass
-     this name to PC_IN_SIGTRAMP.  */
-
   if (SIGCONTEXT_REGISTER_ADDRESS_P ()
-      && PC_IN_SIGTRAMP (frame_pc_unwind (next_frame), (char *) 0))
+      && legacy_pc_in_sigtramp (frame_pc_unwind (next_frame), (char *) 0))
     return &arm_sigtramp_unwind;
 
   return NULL;
@@ -1186,20 +1139,6 @@ arm_unwind_sp (struct gdbarch *gdbarch, struct frame_info *this_frame)
 {
   return frame_unwind_register_unsigned (this_frame, ARM_SP_REGNUM);
 }
-
-/* DEPRECATED_CALL_DUMMY_WORDS:
-   This sequence of words is the instructions
-
-   mov  lr,pc
-   mov  pc,r4
-   illegal
-
-   Note this is 12 bytes.  */
-
-static LONGEST arm_call_dummy_words[] =
-{
-  0xe1a0e00f, 0xe1a0f004, 0xe7ffdefe
-};
 
 /* When arguments must be pushed onto the stack, they go on in reverse
    order.  The code below implements a FILO (stack) to do this.  */
@@ -1238,7 +1177,7 @@ pop_stack_item (struct stack_item *si)
    we should probably support some of them based on the selected ABI.  */
 
 static CORE_ADDR
-arm_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
+arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		     struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
 		     struct value **args, CORE_ADDR sp, int struct_return,
 		     CORE_ADDR struct_addr)
@@ -2738,9 +2677,6 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep->lowest_pc = 0x20;
   tdep->jb_pc = -1;	/* Longjump support not enabled by default.  */
 
-  set_gdbarch_deprecated_call_dummy_words (gdbarch, arm_call_dummy_words);
-  set_gdbarch_deprecated_sizeof_call_dummy_words (gdbarch, 0);
-
   set_gdbarch_push_dummy_call (gdbarch, arm_push_dummy_call);
 
   set_gdbarch_write_pc (gdbarch, arm_write_pc);
@@ -2749,8 +2685,6 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_unwind_dummy_id (gdbarch, arm_unwind_dummy_id);
   set_gdbarch_unwind_pc (gdbarch, arm_unwind_pc);
   set_gdbarch_unwind_sp (gdbarch, arm_unwind_sp);
-
-  set_gdbarch_deprecated_frameless_function_invocation (gdbarch, arm_frameless_function_invocation);
 
   frame_base_set_default (gdbarch, &arm_normal_base);
 
@@ -2776,10 +2710,6 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_sp_regnum (gdbarch, ARM_SP_REGNUM);
   set_gdbarch_pc_regnum (gdbarch, ARM_PC_REGNUM);
   set_gdbarch_deprecated_register_byte (gdbarch, arm_register_byte);
-  set_gdbarch_deprecated_register_bytes (gdbarch,
-					 (NUM_GREGS * INT_REGISTER_SIZE
-					  + NUM_FREGS * FP_REGISTER_SIZE
-					  + NUM_SREGS * STATUS_REGISTER_SIZE));
   set_gdbarch_num_regs (gdbarch, NUM_GREGS + NUM_FREGS + NUM_SREGS);
   set_gdbarch_register_type (gdbarch, arm_register_type);
 
@@ -2793,7 +2723,7 @@ arm_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Returning results.  */
   set_gdbarch_extract_return_value (gdbarch, arm_extract_return_value);
   set_gdbarch_store_return_value (gdbarch, arm_store_return_value);
-  set_gdbarch_use_struct_convention (gdbarch, arm_use_struct_convention);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, arm_use_struct_convention);
   set_gdbarch_deprecated_extract_struct_value_address (gdbarch, arm_extract_struct_value_address);
 
   /* Single stepping.  */
@@ -2961,7 +2891,7 @@ _initialize_arm_tdep (void)
 			      &setlist);
   set_cmd_sfunc (new_set, set_disassembly_style_sfunc);
   deprecate_cmd (new_set, "set arm disassembly");
-  deprecate_cmd (add_show_from_set (new_set, &showlist),
+  deprecate_cmd (deprecated_add_show_from_set (new_set, &showlist),
 		 "show arm disassembly");
 
   /* And now add the new interface.  */
@@ -2970,22 +2900,14 @@ _initialize_arm_tdep (void)
 			      helptext, &setarmcmdlist);
 
   set_cmd_sfunc (new_set, set_disassembly_style_sfunc);
-  add_show_from_set (new_set, &showarmcmdlist);
+  deprecated_add_show_from_set (new_set, &showarmcmdlist);
 
-  add_setshow_cmd_full ("apcs32", no_class,
-			var_boolean, (char *) &arm_apcs_32,
-			"Set usage of ARM 32-bit mode.",
-			"Show usage of ARM 32-bit mode.",
-			NULL, NULL,
-			&setlist, &showlist, &new_set, &new_show);
-  deprecate_cmd (new_set, "set arm apcs32");
-  deprecate_cmd (new_show, "show arm apcs32");
-
-  add_setshow_boolean_cmd ("apcs32", no_class, &arm_apcs_32,
-			   "Set usage of ARM 32-bit mode.  "
-			   "When off, a 26-bit PC will be used.",
-			   "Show usage of ARM 32-bit mode.  "
-			   "When off, a 26-bit PC will be used.",
+  add_setshow_boolean_cmd ("apcs32", no_class, &arm_apcs_32, "\
+Set usage of ARM 32-bit mode.", "\
+Show usage of ARM 32-bit mode.", "\
+When off, a 26-bit PC will be used.\n\
+When off, a 26-bit PC will be used.", "\
+Usage of ARM 32-bit mode is %s.",
 			   NULL, NULL,
 			   &setarmcmdlist, &showarmcmdlist);
 
@@ -3000,7 +2922,8 @@ _initialize_arm_tdep (void)
      "vfp - VFP co-processor.",
      &setarmcmdlist);
   set_cmd_sfunc (new_set, set_fp_model_sfunc);
-  set_cmd_sfunc (add_show_from_set (new_set, &showarmcmdlist), show_fp_model);
+  set_cmd_sfunc (deprecated_add_show_from_set (new_set, &showarmcmdlist),
+		 show_fp_model);
 
   /* Add the deprecated "othernames" command.  */
   deprecate_cmd (add_com ("othernames", class_obscure, arm_othernames,
@@ -3008,11 +2931,11 @@ _initialize_arm_tdep (void)
 		 "set arm disassembly");
 
   /* Debugging flag.  */
-  add_setshow_boolean_cmd ("arm", class_maintenance, &arm_debug,
-			   "Set ARM debugging.  "
-			   "When on, arm-specific debugging is enabled.",
-			   "Show ARM debugging.  "
-			   "When on, arm-specific debugging is enabled.",
+  add_setshow_boolean_cmd ("arm", class_maintenance, &arm_debug, "\
+Set ARM debugging.", "\
+Show ARM debugging.", "\
+When on, arm-specific debugging is enabled.", "\
+ARM debugging is %s.",
 			   NULL, NULL,
 			   &setdebuglist, &showdebuglist);
 }

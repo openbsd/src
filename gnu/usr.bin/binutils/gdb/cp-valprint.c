@@ -36,10 +36,6 @@
 #include "cp-abi.h"
 #include "valprint.h"
 
-/* Indication of presence of HP-compiled object files */
-extern int hp_som_som_object_present;	/* defined in symtab.c */
-
-
 int vtblprint;			/* Controls printing of vtbl's */
 int objectprint;		/* Controls looking up an object's derived type
 				   using what we find in its vtables.  */
@@ -115,7 +111,7 @@ cp_print_class_method (char *valaddr,
       if (sym == 0)
 	{
 	  /* 1997-08-01 Currently unsupported with HP aCC */
-	  if (hp_som_som_object_present)
+	  if (deprecated_hp_som_som_object_present)
 	    {
 	      fputs_filtered ("?? <not supported with HP aCC>", stream);
 	      return;
@@ -808,7 +804,7 @@ cp_print_hpacc_virtual_table_entries (struct type *type, int *vfuncs,
 void
 _initialize_cp_valprint (void)
 {
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("static-members", class_support, var_boolean,
 		  (char *) &static_field_print,
 		  "Set printing of C++ static members.",
@@ -817,13 +813,13 @@ _initialize_cp_valprint (void)
   /* Turn on printing of static fields.  */
   static_field_print = 1;
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("vtbl", class_support, var_boolean, (char *) &vtblprint,
 		  "Set printing of C++ virtual function tables.",
 		  &setprintlist),
      &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("object", class_support, var_boolean, (char *) &objectprint,
 	      "Set printing of object's derived type based on vtable info.",
 		  &setprintlist),

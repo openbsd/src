@@ -121,7 +121,7 @@ static void
 print_i387_status_word (unsigned int status, struct ui_file *file)
 {
   fprintf_filtered (file, "Status Word:         %s",
-		   local_hex_string_custom (status, "04"));
+		    hex_string_custom (status, 4));
   fputs_filtered ("  ", file);
   fprintf_filtered (file, " %s", (status & 0x0001) ? "IE" : "  ");
   fprintf_filtered (file, " %s", (status & 0x0002) ? "DE" : "  ");
@@ -151,7 +151,7 @@ static void
 print_i387_control_word (unsigned int control, struct ui_file *file)
 {
   fprintf_filtered (file, "Control Word:        %s",
-		   local_hex_string_custom (control, "04"));
+		    hex_string_custom (control, 4));
   fputs_filtered ("  ", file);
   fprintf_filtered (file, " %s", (control & 0x0001) ? "IM" : "  ");
   fprintf_filtered (file, " %s", (control & 0x0002) ? "DM" : "  ");
@@ -276,15 +276,15 @@ i387_print_float_info (struct gdbarch *gdbarch, struct ui_file *file,
   print_i387_status_word (fstat, file);
   print_i387_control_word (fctrl, file);
   fprintf_filtered (file, "Tag Word:            %s\n",
-		    local_hex_string_custom (ftag, "04"));
+		    hex_string_custom (ftag, 4));
   fprintf_filtered (file, "Instruction Pointer: %s:",
-		    local_hex_string_custom (fiseg, "02"));
-  fprintf_filtered (file, "%s\n", local_hex_string_custom (fioff, "08"));
+		    hex_string_custom (fiseg, 2));
+  fprintf_filtered (file, "%s\n", hex_string_custom (fioff, 8));
   fprintf_filtered (file, "Operand Pointer:     %s:",
-		    local_hex_string_custom (foseg, "02"));
-  fprintf_filtered (file, "%s\n", local_hex_string_custom (fooff, "08"));
+		    hex_string_custom (foseg, 2));
+  fprintf_filtered (file, "%s\n", hex_string_custom (fooff, 8));
   fprintf_filtered (file, "Opcode:              %s\n",
-		    local_hex_string_custom (fop ? (fop | 0xd800) : 0, "04"));
+		    hex_string_custom (fop ? (fop | 0xd800) : 0, 4));
 
 #undef I387_ST0_REGNUM
 }
@@ -340,7 +340,6 @@ i387_value_to_register (struct frame_info *frame, int regnum,
   put_frame_register (frame, regnum, to);
 }
 
-
 
 /* Handle FSAVE and FXSAVE formats.  */
 
@@ -391,9 +390,11 @@ i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
 
-  /* Define I387_ST0_REGNUM such that we use the proper definitions
-     for REGCACHE's architecture.  */
+  /* Define I387_ST0_REGNUM and I387_NUM_XMM_REGS such that we use the
+     proper definitions for REGCACHE's architecture.  */
+
 #define I387_ST0_REGNUM tdep->st0_regnum
+#define I387_NUM_XMM_REGS tdep->num_xmm_regs
 
   for (i = I387_ST0_REGNUM; i < I387_XMM0_REGNUM; i++)
     if (regnum == -1 || regnum == i)
@@ -420,18 +421,31 @@ i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
 	else
 	  regcache_raw_supply (regcache, i, FSAVE_ADDR (regs, i));
       }
+
+  /* Provide dummy values for the SSE registers.  */
+  for (i = I387_XMM0_REGNUM; i < I387_MXCSR_REGNUM; i++)
+    if (regnum == -1 || regnum == i)
+      regcache_raw_supply (regcache, i, NULL);
+  if (regnum == -1 || regnum == I387_MXCSR_REGNUM)
+    {
+      char buf[4];
+
+      store_unsigned_integer (buf, 4, 0x1f80);
+      regcache_raw_supply (regcache, I387_MXCSR_REGNUM, buf);
+    }
+
 #undef I387_ST0_REGNUM
+#undef I387_NUM_XMM_REGS
 }
 
 /* Fill register REGNUM (if it is a floating-point register) in *FSAVE
-   with the value in GDB's register cache.  If REGNUM is -1, do this
-   for all registers.  This function doesn't touch any of the reserved
-   bits in *FSAVE.  */
+   with the value from REGCACHE.  If REGNUM is -1, do this for all
+   registers.  This function doesn't touch any of the reserved bits in
+   *FSAVE.  */
 
 void
-i387_fill_fsave (void *fsave, int regnum)
+i387_collect_fsave (const struct regcache *regcache, int regnum, void *fsave)
 {
-  struct regcache *regcache = current_regcache;
   struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
   char *regs = fsave;
   int i;
@@ -467,6 +481,17 @@ i387_fill_fsave (void *fsave, int regnum)
 	  regcache_raw_collect (regcache, i, FSAVE_ADDR (regs, i));
       }
 #undef I387_ST0_REGNUM
+}
+
+/* Fill register REGNUM (if it is a floating-point register) in *FSAVE
+   with the value in GDB's register cache.  If REGNUM is -1, do this
+   for all registers.  This function doesn't touch any of the reserved
+   bits in *FSAVE.  */
+
+void
+i387_fill_fsave (void *fsave, int regnum)
+{
+  i387_collect_fsave (current_regcache, regnum, fsave);
 }
 
 

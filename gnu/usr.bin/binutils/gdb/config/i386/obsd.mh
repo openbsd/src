@@ -1,8 +1,6 @@
 # Host: OpenBSD/i386 ELF
-NATDEPFILES= fork-child.o infptrace.o inftarg.o \
+NATDEPFILES= fork-child.o inf-ptrace.o \
 	i386bsd-nat.o i386obsd-nat.o i386nbsd-nat.o bsd-kvm.o
 NAT_FILE= nm-obsd.h
-XM_FILE= xm-i386.h
 
 LOADLIBES= -lkvm
-

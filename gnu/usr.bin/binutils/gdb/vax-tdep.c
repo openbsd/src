@@ -1,4 +1,4 @@
-/* Print VAX instructions for GDB, the GNU debugger.
+/* Target-dependent code for the VAX.
 
    Copyright 1986, 1989, 1991, 1992, 1995, 1996, 1998, 1999, 2000,
    2002, 2003, 2004 Free Software Foundation, Inc.
@@ -21,20 +21,18 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
-#include "symtab.h"
-#include "opcode/vax.h"
-#include "gdbcore.h"
-#include "inferior.h"
-#include "regcache.h"
+#include "arch-utils.h"
+#include "dis-asm.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
+#include "gdbcore.h"
+#include "gdbtypes.h"
+#include "osabi.h"
+#include "regcache.h"
+#include "regset.h"
 #include "trad-frame.h"
 #include "value.h"
-#include "arch-utils.h"
-#include "osabi.h"
-#include "dis-asm.h"
-#include "regset.h"
 
 #include "gdb_string.h"
 
@@ -108,7 +106,7 @@ vax_regset_from_core_section (struct gdbarch *gdbarch,
   return NULL;
 }
 
-/* The VAX Unix calling convention uses R1 to pass a structure return
+/* The VAX UNIX calling convention uses R1 to pass a structure return
    value address instead of passing it as a first (hidden) argument as
    the VMS calling convention suggests.  */
 
@@ -146,7 +144,7 @@ vax_store_arguments (struct regcache *regcache, int nargs,
 }
 
 static CORE_ADDR
-vax_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
+vax_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		     struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
 		     struct value **args, CORE_ADDR sp, int struct_return,
 		     CORE_ADDR struct_addr)
@@ -214,7 +212,21 @@ vax_return_value (struct gdbarch *gdbarch, struct type *type,
   if (TYPE_CODE (type) == TYPE_CODE_STRUCT
       || TYPE_CODE (type) == TYPE_CODE_UNION
       || TYPE_CODE (type) == TYPE_CODE_ARRAY)
-    return RETURN_VALUE_STRUCT_CONVENTION;
+    {
+      /* The default on VAX is to return structures in static memory.
+         Consequently a function must return the address where we can
+         find the return value.  */
+
+      if (readbuf)
+	{
+	  ULONGEST addr;
+
+	  regcache_raw_read_unsigned (regcache, VAX_R0_REGNUM, &addr);
+	  read_memory (addr, readbuf, len);
+	}
+
+      return RETURN_VALUE_ABI_RETURNS_ADDRESS;
+    }
 
   if (readbuf)
     {
@@ -258,26 +270,28 @@ vax_breakpoint_from_pc (CORE_ADDR *pc, int *len)
 static CORE_ADDR
 vax_skip_prologue (CORE_ADDR pc)
 {
-  int op = (unsigned char) read_memory_integer (pc, 1);
+  unsigned char op = read_memory_unsigned_integer (pc, 1);
+
   if (op == 0x11)
     pc += 2;			/* skip brb */
   if (op == 0x31)
     pc += 3;			/* skip brw */
   if (op == 0xC2
-      && ((unsigned char) read_memory_integer (pc + 2, 1)) == 0x5E)
+      && (read_memory_unsigned_integer (pc + 2, 1)) == 0x5E)
     pc += 3;			/* skip subl2 */
   if (op == 0x9E
-      && ((unsigned char) read_memory_integer (pc + 1, 1)) == 0xAE
-      && ((unsigned char) read_memory_integer (pc + 3, 1)) == 0x5E)
+      && (read_memory_unsigned_integer (pc + 1, 1)) == 0xAE
+      && (read_memory_unsigned_integer (pc + 3, 1)) == 0x5E)
     pc += 4;			/* skip movab */
   if (op == 0x9E
-      && ((unsigned char) read_memory_integer (pc + 1, 1)) == 0xCE
-      && ((unsigned char) read_memory_integer (pc + 4, 1)) == 0x5E)
+      && (read_memory_unsigned_integer (pc + 1, 1)) == 0xCE
+      && (read_memory_unsigned_integer (pc + 4, 1)) == 0x5E)
     pc += 5;			/* skip movab */
   if (op == 0x9E
-      && ((unsigned char) read_memory_integer (pc + 1, 1)) == 0xEE
-      && ((unsigned char) read_memory_integer (pc + 6, 1)) == 0x5E)
+      && (read_memory_unsigned_integer (pc + 1, 1)) == 0xEE
+      && (read_memory_unsigned_integer (pc + 6, 1)) == 0x5E)
     pc += 7;			/* skip movab */
+
   return pc;
 }
 
@@ -380,8 +394,8 @@ vax_frame_prev_register (struct frame_info *next_frame, void **this_cache,
 {
   struct vax_frame_cache *cache = vax_frame_cache (next_frame, this_cache);
 
-  trad_frame_prev_register (next_frame, cache->saved_regs, regnum,
-			    optimizedp, lvalp, addrp, realnump, valuep);
+  trad_frame_get_prev_register (next_frame, cache->saved_regs, regnum,
+				optimizedp, lvalp, addrp, realnump, valuep);
 }
 
 static const struct frame_unwind vax_frame_unwind =
@@ -429,7 +443,7 @@ vax_frame_num_args (struct frame_info *frame)
 
   /* Assume that the argument pointer for the outermost frame is
      hosed, as is the case on NetBSD/vax ELF.  */
-  if (get_frame_base (frame) == 0)
+  if (get_frame_base_address (frame) == 0)
     return 0;
 
   args = get_frame_register_unsigned (frame, VAX_AP_REGNUM);
@@ -476,7 +490,6 @@ vax_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Frame and stack info */
   set_gdbarch_skip_prologue (gdbarch, vax_skip_prologue);
   set_gdbarch_frame_num_args (gdbarch, vax_frame_num_args);
-
   set_gdbarch_frame_args_skip (gdbarch, 4);
 
   /* Stack grows downward.  */
@@ -493,8 +506,10 @@ vax_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_breakpoint_from_pc (gdbarch, vax_breakpoint_from_pc);
 
   /* Misc info */
-  set_gdbarch_function_start_offset (gdbarch, 2);
+  set_gdbarch_deprecated_function_start_offset (gdbarch, 2);
   set_gdbarch_believe_pcc_promotion (gdbarch, 1);
+
+  set_gdbarch_print_insn (gdbarch, print_insn_vax);
 
   set_gdbarch_unwind_pc (gdbarch, vax_unwind_pc);
 
@@ -505,12 +520,11 @@ vax_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   frame_unwind_append_sniffer (gdbarch, vax_frame_sniffer);
 
-  set_gdbarch_print_insn (gdbarch, print_insn_vax);
-
   return (gdbarch);
 }
 
-extern initialize_file_ftype _initialize_vax_tdep; /* -Wmissing-prototypes */
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+void _initialize_vax_tdep (void);
 
 void
 _initialize_vax_tdep (void)

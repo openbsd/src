@@ -24,6 +24,7 @@
 #define C_LANG_H 1
 
 struct ui_file;
+struct language_arch_info;
 
 #include "value.h"
 #include "macroexp.h"
@@ -61,7 +62,8 @@ extern void *expression_macro_lookup_baton;
 
 extern struct type *c_create_fundamental_type (struct objfile *, int);
 
-extern struct type **const (c_builtin_types[]);
+extern void c_language_arch_info (struct gdbarch *gdbarch,
+				  struct language_arch_info *lai);
 
 /* These are in c-typeprint.c: */
 

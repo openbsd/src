@@ -21,8 +21,6 @@
 
 /* Contributed by Steve Chamberlain sac@cygnus.com */
 
-#define GDB_MULTI_ARCH 1
-
 #define NUM_REALREGS 59 /* used in remote-e7000.c which is not multiarched. */
 
 #define DEPRECATED_BIG_REMOTE_BREAKPOINT    { 0xc3, 0x20 } /* Used in remote.c */

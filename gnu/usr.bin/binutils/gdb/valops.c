@@ -42,18 +42,13 @@
 #include "gdb_string.h"
 #include "gdb_assert.h"
 #include "cp-support.h"
-
-/* Flag indicating HP compilers were used; needed to correctly handle some
-   value operations with HP aCC code/runtime. */
-extern int hp_som_som_object_present;
+#include "observer.h"
 
 extern int overload_debug;
 /* Local functions.  */
 
 static int typecmp (int staticp, int varargs, int nargs,
 		    struct field t1[], struct value *t2[]);
-
-static CORE_ADDR value_push (CORE_ADDR, struct value *);
 
 static struct value *search_struct_field (char *, struct value *, int,
 				      struct type *, int);
@@ -299,8 +294,8 @@ value_cast (struct type *type, struct value *arg2)
     {
       LONGEST longest;
 
-      if (hp_som_som_object_present &&	/* if target compiled by HP aCC */
-	  (code2 == TYPE_CODE_PTR))
+      if (deprecated_hp_som_som_object_present	/* if target compiled by HP aCC */
+	  && (code2 == TYPE_CODE_PTR))
 	{
 	  unsigned int *ptr;
 	  struct value *retvalp;
@@ -530,8 +525,6 @@ value_assign (struct value *toval, struct value *fromval)
 {
   struct type *type;
   struct value *val;
-  char raw_buffer[MAX_REGISTER_SIZE];
-  int use_buffer = 0;
   struct frame_id old_frame;
 
   if (!toval->modifiable)
@@ -574,10 +567,10 @@ value_assign (struct value *toval, struct value *fromval)
 	char *dest_buffer;
 	CORE_ADDR changed_addr;
 	int changed_len;
+        char buffer[sizeof (LONGEST)];
 
 	if (VALUE_BITSIZE (toval))
 	  {
-	    char buffer[sizeof (LONGEST)];
 	    /* We assume that the argument to read_memory is in units of
 	       host chars.  FIXME:  Is that correct?  */
 	    changed_len = (VALUE_BITPOS (toval)
@@ -596,12 +589,6 @@ value_assign (struct value *toval, struct value *fromval)
 	    changed_addr = VALUE_ADDRESS (toval) + VALUE_OFFSET (toval);
 	    dest_buffer = buffer;
 	  }
-	else if (use_buffer)
-	  {
-	    changed_addr = VALUE_ADDRESS (toval) + VALUE_OFFSET (toval);
-	    changed_len = use_buffer;
-	    dest_buffer = raw_buffer;
-	  }
 	else
 	  {
 	    changed_addr = VALUE_ADDRESS (toval) + VALUE_OFFSET (toval);
@@ -610,9 +597,8 @@ value_assign (struct value *toval, struct value *fromval)
 	  }
 
 	write_memory (changed_addr, dest_buffer, changed_len);
-	if (memory_changed_hook)
-	  memory_changed_hook (changed_addr, changed_len);
-	target_changed_event ();
+	if (deprecated_memory_changed_hook)
+	  deprecated_memory_changed_hook (changed_addr, changed_len);
       }
       break;
 
@@ -663,7 +649,7 @@ value_assign (struct value *toval, struct value *fromval)
 	    {
 	      int offset;
 	      for (reg_offset = value_reg, offset = 0;
-		   offset + DEPRECATED_REGISTER_RAW_SIZE (reg_offset) <= VALUE_OFFSET (toval);
+		   offset + register_size (current_gdbarch, reg_offset) <= VALUE_OFFSET (toval);
 		   reg_offset++);
 	      byte_offset = VALUE_OFFSET (toval) - offset;
 	    }
@@ -681,7 +667,7 @@ value_assign (struct value *toval, struct value *fromval)
 	    /* Copy it in.  */
 	    for (regno = reg_offset, amount_copied = 0;
 		 amount_copied < amount_to_copy;
-		 amount_copied += DEPRECATED_REGISTER_RAW_SIZE (regno), regno++)
+		 amount_copied += register_size (current_gdbarch, regno), regno++)
 	      frame_register_read (frame, regno, buffer + amount_copied);
 	    
 	    /* Modify what needs to be modified.  */
@@ -689,8 +675,6 @@ value_assign (struct value *toval, struct value *fromval)
 	      modify_field (buffer + byte_offset,
 			    value_as_long (fromval),
 			    VALUE_BITPOS (toval), VALUE_BITSIZE (toval));
-	    else if (use_buffer)
-	      memcpy (buffer + VALUE_OFFSET (toval), raw_buffer, use_buffer);
 	    else
 	      memcpy (buffer + byte_offset, VALUE_CONTENTS (fromval),
 		      TYPE_LENGTH (type));
@@ -698,13 +682,13 @@ value_assign (struct value *toval, struct value *fromval)
 	    /* Copy it out.  */
 	    for (regno = reg_offset, amount_copied = 0;
 		 amount_copied < amount_to_copy;
-		 amount_copied += DEPRECATED_REGISTER_RAW_SIZE (regno), regno++)
+		 amount_copied += register_size (current_gdbarch, regno), regno++)
 	      put_frame_register (frame, regno, buffer + amount_copied);
 
 	  }
-	if (register_changed_hook)
-	  register_changed_hook (-1);
-	target_changed_event ();
+	if (deprecated_register_changed_hook)
+	  deprecated_register_changed_hook (-1);
+	observer_notify_target_changed (&current_target);
 	break;
       }
       
@@ -1006,58 +990,6 @@ push_bytes (CORE_ADDR sp, char *buffer, int len)
       sp += len;
     }
 
-  return sp;
-}
-
-#ifndef PARM_BOUNDARY
-#define PARM_BOUNDARY (0)
-#endif
-
-/* Push onto the stack the specified value VALUE.  Pad it correctly for
-   it to be an argument to a function.  */
-
-static CORE_ADDR
-value_push (CORE_ADDR sp, struct value *arg)
-{
-  int len = TYPE_LENGTH (VALUE_ENCLOSING_TYPE (arg));
-  int container_len = len;
-  int offset;
-
-  /* How big is the container we're going to put this value in?  */
-  if (PARM_BOUNDARY)
-    container_len = ((len + PARM_BOUNDARY / TARGET_CHAR_BIT - 1)
-		     & ~(PARM_BOUNDARY / TARGET_CHAR_BIT - 1));
-
-  /* Are we going to put it at the high or low end of the container?  */
-  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
-    offset = container_len - len;
-  else
-    offset = 0;
-
-  if (INNER_THAN (1, 2))
-    {
-      /* stack grows downward */
-      sp -= container_len;
-      write_memory (sp + offset, VALUE_CONTENTS_ALL (arg), len);
-    }
-  else
-    {
-      /* stack grows upward */
-      write_memory (sp + offset, VALUE_CONTENTS_ALL (arg), len);
-      sp += container_len;
-    }
-
-  return sp;
-}
-
-CORE_ADDR
-legacy_push_arguments (int nargs, struct value **args, CORE_ADDR sp,
-		       int struct_return, CORE_ADDR struct_addr)
-{
-  /* ASSERT ( !struct_return); */
-  int i;
-  for (i = nargs - 1; i >= 0; i--)
-    sp = value_push (sp, args[i]);
   return sp;
 }
 
@@ -2918,14 +2850,14 @@ void
 _initialize_valops (void)
 {
 #if 0
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("abandon", class_support, var_boolean, (char *) &auto_abandon,
 		  "Set automatic abandonment of expressions upon failure.",
 		  &setlist),
      &showlist);
 #endif
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("overload-resolution", class_support, var_boolean, (char *) &overload_resolution,
 		  "Set overload resolution in evaluating C++ functions.",
 		  &setlist),

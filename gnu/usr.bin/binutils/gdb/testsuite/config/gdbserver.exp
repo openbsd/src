@@ -207,7 +207,7 @@ proc gdb_load { arg } {
 	}
     }
 
-    set res [gdbserver_gdb_load $host_exec]
+    set res [gdbserver_gdb_load $server_exec]
     set protocol [lindex $res 0]
     set gdbport [lindex $res 1]
 

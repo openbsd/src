@@ -38,7 +38,6 @@
 #include "complaints.h"
 #include "gdb_string.h"
 #include "expression.h"		/* For "enum exp_opcode" used by... */
-#include "language.h"		/* For "local_hex_string" */
 #include "bcache.h"
 #include "filenames.h"		/* For DOSish file names */
 #include "macrotab.h"
@@ -521,7 +520,7 @@ make_blockvector (struct objfile *objfile)
 		= BLOCK_START (BLOCKVECTOR_BLOCK (blockvector, i));
 
 	      complaint (&symfile_complaints, "block at %s out of order",
-			 local_hex_string ((LONGEST) start));
+			 hex_string ((LONGEST) start));
 	    }
 	}
     }

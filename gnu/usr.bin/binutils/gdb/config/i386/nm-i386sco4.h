@@ -25,8 +25,6 @@
 
 #include "i386/nm-i386sco.h"
 
-#define ATTACH_DETACH
-
 /* SCO, in its wisdom, does not provide <sys/ptrace.h>.  infptrace.c
    does not have defaults for these values.  */
 #define PTRACE_ATTACH 10

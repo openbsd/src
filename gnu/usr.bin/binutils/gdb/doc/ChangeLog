@@ -1,3 +1,259 @@
+2004-10-12  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Versions and Branches): New chapter.
+	(Releasing GDB): Delete "Versions and Branches" section.
+	(Top): Add "Versions and Branches".
+
+2004-10-08  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Editing, History): Add cross-references to the
+	included Readline and History user documentation.  Remove
+	references to the symbol have-readline-appendices which is unused
+	and undefined.
+	(History): Fix indexing.
+
+2004-10-08  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* gdbint.texinfo (target_stopped_data_address): Update to
+	new prototype.
+	(i386_stopped_data_address): Update prototype and description.
+	(i386_stopped_by_watchpoint): New function and description.
+
+2004-10-03  Paul N. Hilfinger  <hilfinger@gnat.com>
+
+	* gdb.texinfo (Filenames): Add Ada suffixes.
+	(Ada) New section.
+
+2004-09-27  Andrew Cagney  <cagney@gnu.org>
+	    Robert Picco  <Robert.Picco@hp.com>
+
+	* gdb.texinfo (Packets): Document the "p" packet.
+
+2004-09-21  Jason Molenda  (jmolenda@apple.com)
+
+	* gdb.texinfo (Paths and Names of the Source Files): Document the
+	meaning of values in the 'desc' field of a SO stab.
+
+2004-09-20  Daniel Jacobowitz  <dan@debian.org>
+
+	* gdb.texinfo (Maintenance Commands): Document "maint set dwarf2
+	max-cache-age" and "maint show dwarf2 max-cache-age".
+
+2004-09-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Set Breaks): Add index entry for setting
+	breakpoints on overloaded C++ functions that are not members of
+	any classes.  Add an example and an index entry for setting
+	breakpoints on all program functions.
+	(Character Sets, Macros, Overlay Commands)
+	(Non-debug DLL symbols, GDB/MI Output Syntax)
+	(Annotations Overview, Maintenance Commands, File-I/O Overview):
+	Use "(@value{GDBP})" instead of a literal "(gdb)".
+
+2004-09-12  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Native Debugging): Delete description of
+	FILES_INFO_HOOK.
+
+2004-09-11  Paul Hilfinger  <hilfinger@gnat.com>
+
+	* gdbint.texinfo (User Interface): Change local_hex_string_custom 
+	to hex_string_custom (not historically correct, but more 
+	understandable, given the current code).
+
+2004-09-03  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Native Debugging): Delete SVR4_SHARED_LIBS.
+
+2004-09-01  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* observer.texi (solib_unloaded): New observer.
+
+2004-08-24  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Target Architecture Definition): Add missing
+	comma.
+
+2004-08-20  Michael Chastain  <mec.gnu@mindspring.com>
+
+	* (Using the Testsuite): build != host is supported,
+	but some test scripts do not support build != host.
+
+2004-08-14  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdbint.texinfo (Host Definition): Delete description of
+	FCLOSE_PROVIDED and GETENV_PROVIDED.
+
+2004-08-05  Mark Kettenis  <kettenis@chello.nl>
+
+	* gdbint.texinfo (Host Definition): Delete description of
+	NO_SYS_FILE.
+	(Native Debugging): Delete description of KERNEL_U_ADDR_BSD and
+	PTRACE_FP_BUG.
+
+2004-08-05  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	reference to deprecated_read_fp.
+
+2004-08-02  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	description of DEPRECATED_REGISTER_BYTES.
+
+2004-07-30  Baurjan Ismagulov  <ibr@ata.cs.hun.edu.tr>
+
+	* gdb.texinfo (Source Path): Document the new behavior of
+	searching for the source files.
+
+2004-07-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Edit): Fix markup of EDITOR and improve wording.
+	(Search, Expressions, Arrays, Variables, Data, Machine Code)
+	(Auto Display): Improve indexing.
+
+2004-07-16  Andrew Cagney  <cagney@gnu.org>
+
+	* gdb.texinfo (Mode Options): Delete documentation on "-async" and
+	"-noasync".
+
+2004-07-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo: Fix @kindex entries so that multiple commands that
+	have the same prefix have only their prefix in the index.
+
+2004-07-03  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdb.texinfo (BSD libkvm Interface): New node (section)
+	(Native): Add it to the menu.
+
+2004-07-01  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdbint.texinfo (Target Architecture Definition): Remove
+	PCC_SOL_BROKEN.
+
+2004-06-24  Mark Kettenis  <kettenis@gnu.org>
+
+	* gdbint.texinfo (Target Architecture Definition): Remove
+	SUN_FIXED_LBRAC_BUG.
+
+2004-06-26  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Coding): Replace xasprintf with xstrprintf.
+
+2004-06-20  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Target Architecture Definition): Deprecate
+	USE_STRUCT_CONVENTION.
+
+2004-06-19  Michael Chastain  <mec.gnu@mindspring.com>
+
+	gdb.texinfo (Bug Reporting): Mention session recording,
+	with the script command or Emacs.
+
+2004-06-18  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Target Architecture Definition): Deprecate
+	FUNCTION_START_OFFSET.
+
+2004-06-14  Andrew Cagney  <cagney@gnu.org>
+
+	Based on changes from Karl Berry.
+	* gdb.texinfo: Do not use @sc in a direntry.
+	* stabs.texinfo: Change @dircateogry to "Software development".
+	* gdbint.texinfo, gdb.texinfo, annotate.texinfo: Ditto.
+
+2004-06-13  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	description of RETURN_VALUE_ON_STACK.
+
+2004-06-09  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Native Debugging): Restore "@table @code"
+	deleted by previous patch.
+
+2004-06-08  Andrew Cagney  <cagney@gnu.org>
+
+	* gdbint.texinfo (Native Debugging): Delete documentation on
+	ATTACH_DETACH.
+
+2004-06-06  Randolph Chung  <tausq@debian.org>
+
+	* gdb.texinfo (push_dummy_call): Use @code{struct value}.
+
+2004-06-06  Randolph Chung  <tausq@debian.org>
+
+	* gdb.texinfo (push_dummy_call): Update argument list to match 
+	the new push_dummy_call method signature.  Describe the function
+	argument.
+
+2004-05-24  Joel Brobecker  <brobecker@gnat.com>
+
+	* gdb.texinfo (Starting): Document new start command.
+
+2004-05-21  Andrew Cagney  <cagney@redhat.com>
+
+	* observer.texi (GDB Observers): Document "inferior_created".
+
+2004-05-08  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	description of DO_DEFERRED_STORES.
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	references to DEPRECATED_FIX_CALL_DUMMY.
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	description of DEPRECATED_CALL_DUMMY_WORDS,
+	DEPRECATED_SIZEOF_CALL_DUMMY_WORDS, and CALL_DUMMY.
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	description of DEPRECATED_PUSH_DUMMY_FRAME.
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	reference to DEPRECATED_CALL_DUMMY_BREAKPOINT_OFFSET.
+
+2004-05-07  Andrew Cagney  <cagney@redhat.com>
+
+	* observer.texi (GDB Observers): Add "Debugging" section.  Include
+	cross reference to "set/show debug observer".
+	* gdb.texinfo (Debugging Output): Document "set/show debug
+	observer".
+
+2004-05-01  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	description of DEPRECATED_PC_IN_SIGTRAMP.
+
+2004-04-30  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	documentation for BELIEVE_PCC_PROMOTION_TYPE, no longer defined.
+
+2004-04-30  Orjan Friberg  <orjanf@axis.com>
+
+	* observer.texi (GDB Observers): Correct spelling.
+
+2004-04-26  Orjan Friberg  <orjanf@axis.com>
+
+	* observer.texi (GDB Observers): Add target_changed event.
+
+2004-04-08  Andrew Cagney  <cagney@redhat.com>
+
+	* observer.texi (GDB Observers): Rework, provide generic observer
+	definitions and then a list of observable events.
+
+2004-04-04  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Host Definition): Delete reference to
+	NO_SIGINTERRUPT.
+
+2004-04-02  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	reference to DEPRECATED_CALL_DUMMY_LENGTH.
+
 2004-03-28  Stephane Carrez  <stcarrez@nerim.fr>
 
 	* gdb.texinfo (TUI Commands): Document tui reg commands.
@@ -8,6 +264,31 @@
 	"gdbtui".
 	(Mode Options): Mention "gdbtui".  Use "Text" not "Terminal".
 	(Contributors): Mention both Text and Terminal User Interface.
+
+2004-03-23  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Target Architecture Definition): Deprecate
+	references to SIGTRAMP_START and SIGTRAMP_END.
+
+2004-03-23  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Target Architecture Definition): Deprecate
+	references to PC_IN_SIGTRAMP.
+
+2004-03-19  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Target Architecture Definition): Delete
+	reference to GDB_TARGET_IS_HPPA.
+
+2004-03-18  Andrew Cagney  <cagney@redhat.com>
+
+	* gdbint.texinfo (Coding): Update section on gdbarch_data,
+	describe pre_init and post_init.
+
+2004-03-09  Daniel Jacobowitz  <drow@mvista.com>
+
+	* gdb.texinfo (Debugging Output): Document values for "set debug
+	target".
 
 2004-02-28  Andrew Cagney  <cagney@redhat.com>
 
@@ -130,7 +411,7 @@
 	(Coding): Add -Wunused-label to list of -Werror warnings.
 
 2004-01-08  Jason Molenda  <jmolenda@apple.com>
-            Eli Zaretskii  <eliz@is.elta.co.il>
+            Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo: Update copyright.
 	(Objective-C): "methodName" typeo fixed.  Add @code/@var markup
@@ -888,7 +1169,7 @@
 
 2002-09-20  Kevin Buettner  <kevinb@redhat.com>
 
-	From Eli Zaretskii  <eliz@is.elta.co.il>:
+	From Eli Zaretskii  <eliz@gnu.org>:
 	* gdb.texinfo (Character Sets): Use @smallexample instead of
 	@example.  Use GNU/Linux instead of Linux.
 
@@ -1159,14 +1440,14 @@
 	* gdbint.texinfo (Target Architecture Definition): Delete
 	definition of HAVE_REGISTER_WINDOWS.
 
-2002-04-19  Eli Zaretskii  <eliz@is.elta.co.il>
+2002-04-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdbint.texinfo (Releasing GDB, Coding): Fix typos.  Reported by
 	"Theodore A. Roth" <troth@verinet.com>.
 
 2002-04-15  Don Howard  <dhoward@redhat.com>
 
-	From Eli Zaretskii <eliz@is.elta.co.il>
+	From Eli Zaretskii <eliz@gnu.org>
 	* gdb.texinfo (show max-user-call-depth): Correct formatting.
 	Provide a better explaination of this feature.
 
@@ -1270,7 +1551,7 @@
 	'_ovly_debug_event', which allows GDB to keep better track
 	of overlays.
 
-2002-02-03  Eli Zaretskii  <eliz@is.elta.co.il>
+2002-02-03  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Memory Region Attributes): Fix the wording.
 	Suggested by Dmitry Sivachenko.
@@ -1295,7 +1576,7 @@
 	* gdbint.texinfo (Target Architecture Definition): Delete
 	description of TARGET_BYTE_ORDER_DEFAULT.
 
-2002-01-27  Eli Zaretskii  <eliz@is.elta.co.il>
+2002-01-27  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo: Fix typos and markup.  From Dmitry Sivachenko
 	<mitya@cavia.pp.ru>.
@@ -1353,7 +1634,7 @@ Tue Jan 22 11:57:38 2002  Andrew Cagney  <cagney@redhat.com>
 	* gdbint.texinfo (Target Architecture Definition): Remove
 	definition of IEEE_FLOAT.
 
-2002-01-20  Eli Zaretskii  <eliz@is.elta.co.il>
+2002-01-20  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo: Beautify copyright years; fix a typo.
 	(DJGPP Native): Fix overfull hboxes in examples.  From Brian Youmans
@@ -1379,7 +1660,7 @@ Tue Jan 22 11:57:38 2002  Andrew Cagney  <cagney@redhat.com>
 
 	* fdl.texi: Remove next/prev from @node.
 
-2002-01-17  Eli Zaretskii  <eliz@is.elta.co.il>
+2002-01-17  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo: @include fdl.texi.  Fixes for overfull hboxes and
 	for monstrous @multitable (from Brian Youmans).
@@ -1411,7 +1692,7 @@ Tue Jan 22 11:57:38 2002  Andrew Cagney  <cagney@redhat.com>
 
 	* gdb.texinfo (--pid): Document new command line option (attach).
 
-2002-01-07  Eli Zaretskii  <eliz@is.elta.co.il>
+2002-01-07  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Tracepoints): Clarify that tracepoints need support
 	in the stub.
@@ -1435,7 +1716,7 @@ Tue Jan 22 11:57:38 2002  Andrew Cagney  <cagney@redhat.com>
 	* gdb.texinfo (Free Software): New section ``Free Software Needs
 	Free Documentation''.
 
-2001-12-30  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-12-30  Eli Zaretskii  <eliz@gnu.org>
 
 	* stabs.texinfo:
 	* gdb.texinfo:
@@ -1482,7 +1763,7 @@ Tue Jan 22 11:57:38 2002  Andrew Cagney  <cagney@redhat.com>
 	* gdb.texinfo (Options): Eliminate attempt to explain .gdbinit/gdb.ini
 	use since it is described in the referenced section.
 
-	From Eli Zaretskii <eliz@is.elta.co.il>
+	From Eli Zaretskii <eliz@gnu.org>
 	* gdb.texinfo (Command Files): Reword to make gdb.ini requirement
 	clearer when using DJGPP.
 
@@ -1596,7 +1877,7 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 
 	* gdbint.texinfo (libgdb): Rewrite.
 
-2001-07-26  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-07-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* Makefile.in (gdbgui.dvi, gdb-gui, gdbgui.info): Targets deleted.
 
@@ -1610,7 +1891,7 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 	* gdbint.texinfo (Host Definition): Remove description of
 	NEED_POSIX_SETPGID.
 
-2001-07-23  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-07-23  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.tex (DJGPP Native): New node, with descriptions of
 	DJGPP-specific commands.
@@ -1649,7 +1930,7 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 	EXTRACT_STRUCT_VALUE_ADDRESS and EXTRACT_STRUCT_VALUE_ADDRESS_P.
 	The latter has been changed to a true predicate.
 
-2001-06-17  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-06-17  Eli Zaretskii  <eliz@gnu.org>
 
 	* annotate.texi: Add @noindent where needed.  From Dmitry
 	Sivachenko <dima@Chg.RU>.
@@ -1668,7 +1949,7 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 
 	* gdb.texinfo (Protocol): Add doc for new packet "qSymbol:".
 
-2001-06-13  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-06-13  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Signals): Clarify the default setting of signal
 	handling.
@@ -1682,20 +1963,20 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 
 	* Makefile.in (GDBvn.texi): Set GDBVN from ../version.in.
 
-2001-05-10  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-05-10  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdbint.texinfo (Clean Design and Portable Implementation):
 	Renamed from "Clean Design".
 	(Clean Design and Portable Implementation): Document portable
 	methods of handling file names, and the associated macros.
 
-2001-04-02  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-04-02  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Tracepoint Actions): Mention the "info scope"
 	command and provide a cross-reference to its description.
 	(Symbols): Note that "info scope" is useful for trace experiments.
 
-2001-04-01  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-04-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Symbols): Document "info scope".
 	(Tracepoints): New chapter.
@@ -1707,7 +1988,7 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 
 	* stabs.texinfo: Change Permissions to GFDL.  Update Copyright.
 
-2001-03-26  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-03-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo: Change Permissions to GFDL.  Update Copyright.
 
@@ -1722,7 +2003,7 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 	a cross-reference to its description.
 	(Symbols): Document "info symbol".
 
-2001-03-21  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-03-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdbint.texinfo (Algorithms): New section "Watchpoints" and new
 	subsection "x86 Watchpoints".
@@ -1741,11 +2022,11 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 	* Makefile.in, all-cfg.texi, annotate.texi, gdb.texinfo,
 	gdbint.texinfo, refcard.tex: Update/correct copyright notices.
 
-2001-02-21  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-02-21  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Signals): Document "ignore", "noignore", and "all".
 
-2001-02-11  Eli Zaretskii  <eliz@is.elta.co.il>
+2001-02-11  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Environment): Document that `path' does not change
 	the value of PATH in GDB's own environment (it did in the past,
@@ -1764,7 +2045,7 @@ Wed Aug 15 10:47:28 2001  Christopher Faylor <cgf@cygnus.com>
 
 	* gdbint.texinfo (POP_FRAME): Document use by return_command.
 
-2000-12-25  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-12-25  Eli Zaretskii  <eliz@gnu.org>
 
 	* refcard.tex: Version and copyright fixed.  From Phil Edwards
 	<pedwards@disaster.jaj.com>.
@@ -1779,7 +2060,7 @@ Mon Nov 20 21:29:35 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	* gdbint.texinfo (Coding): Update current value of
  	--enable-build-warnings.  Mention --enable-gdb-build-warnings.
 
-2000-11-19  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-11-19  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Continuing and Stepping):  Fixed markup and typos,
 	as suggested by Dmitry Sivachenko <dima@Chg.RU>.
@@ -1788,12 +2069,12 @@ Mon Nov 20 21:29:35 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gdb.texinfo: Document new 'set step-mode' command.
 
-2000-10-16  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-10-16  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Contributors, MIPS Embedded): Minor spelling
 	changes from Dmitry Sivachenko <dima@Chg.RU>.
 
-2000-09-26  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-09-26  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Hooks): Document the new post-hook functionality.
 	From Steven Johnson <sbjohnson@ozemail.com.au>.
@@ -1802,7 +2083,7 @@ Mon Nov 20 21:29:35 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gdbint.texinfo (Overall Structure): Spelling fix.
 
-2000-08-10  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-08-10  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdbint.texinfo (Target Architecture Definition): Document that
 	REGISTER_CONVERT_TO_VIRTUAL should only be called on a register
@@ -1818,12 +2099,12 @@ Mon Nov 20 21:29:35 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	* stabs.texinfo: Fix spelling errors.
 	(String Field): FILE-NUMBER starts from 0, not 1.
 
-2000-07-05  Eli Zaretskii <eliz@is.elta.co.il>
+2000-07-05  Eli Zaretskii <eliz@gnu.org>
 
 	* refcard.tex: Remove \centerline from the blurb.  Patch from
         Brian Youmans.
 
-2000-06-25  Eli Zaretskii <eliz@is.elta.co.il>
+2000-06-25  Eli Zaretskii <eliz@gnu.org>
 
 	* Makefile.in (install-info): Support installation from outside of
         the source directory.  Reported by Mark Harig
@@ -1842,7 +2123,7 @@ Fri May 26 15:55:33 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	(gdb.texinfo, gdbint.texinfo, stabs.texinfo): When TeX insert the
  	@contents at the start.
 
-2000-05-24  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-05-24  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo: Remove duplicate @syncodeindex.  From Brian
         Youmans.
@@ -1861,7 +2142,7 @@ Tue May 23 22:57:41 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure: Regenerate.
 
-2000-05-17  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-05-17  Eli Zaretskii  <eliz@gnu.org>
 
 	* Makefile.in (install-info): Run install-info on installed Info
 	files.
@@ -1871,7 +2152,7 @@ Fri May 12 20:18:04 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	* gdb.texinfo: Add Stan Shebs, et.al. as authors.  Mention
  	Andrew Cagney.
 
-2000-05-09  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-05-09  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo: Proofreading changes from Brian Youmans.
 
@@ -1880,7 +2161,7 @@ Fri May 12 20:18:04 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	* gdb.texinfo (Command Files): Mention -x, use @enumerate for
 	startup sequence, minor edits.
 
-2000-05-01  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-05-01  Eli Zaretskii  <eliz@gnu.org>
 
 	* annotate.texi: Remove "@syncodeindex fn cp", it causes grief in
 	TeX.
@@ -1894,7 +2175,7 @@ Sat Apr 29 17:01:04 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gdbint.texinfo (Hints): Do not use @value{GDBN in @nodes.
 
-2000-04-23  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-04-23  Eli Zaretskii  <eliz@gnu.org>
 
 	* Makefile.in (GDBMI_DIR): New variable.
 	(SET_TEXINPUTS): Add $(GDBMI_DIR).
@@ -1913,19 +2194,19 @@ Sat Apr 29 17:01:04 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	* gdb.texinfo (Files): Update description of add-symbol-file
  	command.
 
-2000-04-17  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-04-17  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Porting GDB): Don't use @value in the node name, it
 	prevents the build (and is generally a Bad Idea).
 
-2000-04-17  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-04-17  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Protocol): Prevent makeinfo from complaining about
 	a comma inside @var.
 	(Command Files): Index markup changes from Dmitry Sivachenko
 	<dima@Chg.RU>.
 
-2000-04-16  Eli Zaretskii  <eliz@is.elta.co.il>
+2000-04-16  Eli Zaretskii  <eliz@gnu.org>
 
 	* Makefile.in (LN_S): Define.
 	(gdb-cfg.texi, gdb.dvi, links2roff, inc-hist.texinfo): Don't
@@ -2037,7 +2318,7 @@ Fri Mar 24 17:56:48 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	<dima@Chg.RU>, also clarification of allowed content for
 	string constants.
 
-2000-03-16  Eli Zaretskii <eliz@is.elta.co.il>
+2000-03-16  Eli Zaretskii <eliz@gnu.org>
 
 	* gdb.texinfo (main menu): Add Annotations.
 	(File Options): Add @cindex entries for each command-line option.
@@ -2126,7 +2407,7 @@ Thu Oct 14 21:17:17 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gdb.texinfo: Fix uses of @multitable.
 
-	From Eli Zaretskii  <eliz@is.elta.co.il>:
+	From Eli Zaretskii  <eliz@gnu.org>:
 	* gdb.texinfo: Include details specific to DOS host, clarify
  	some confusing language, fix @ref/@xref/@pxref usages, add
 	comments about using with optimization, add more indexing,
@@ -2183,7 +2464,7 @@ Wed Aug 25 10:47:03 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gdbint.texinfo (Breakpoint Handling): Add missing words.
 
-1999-08-10  Eli Zaretskii  <eliz@is.elta.co.il>
+1999-08-10  Eli Zaretskii  <eliz@gnu.org>
 
 	* gdb.texinfo (Set Watchpoints): Explain some subtleties about
  	watch, awatch, and rwatch.  Explain why the latter two cannot be

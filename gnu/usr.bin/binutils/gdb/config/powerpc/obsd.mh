@@ -1,3 +1,3 @@
 # Host: OpenBSD/powerpc
 NATDEPFILES= ppcobsd-nat.o fork-child.o infptrace.o inftarg.o
-NAT_FILE= nm-obsd.h
+NAT_FILE= config/nm-bsd.h

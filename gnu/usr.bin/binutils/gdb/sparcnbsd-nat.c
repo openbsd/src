@@ -20,8 +20,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
-#include "gdbcore.h"
 #include "regcache.h"
+#include "target.h"
 
 #include "sparc-tdep.h"
 #include "sparc-nat.h"
@@ -38,7 +38,7 @@ sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   /* The following is true for NetBSD 1.6.2:
 
-     The pcb contains %sp, %sp, %psr and %wim.  From this information
+     The pcb contains %sp, %pc, %psr and %wim.  From this information
      we reconstruct the register state as it would look when we just
      returned from cpu_switch().  */
 
@@ -65,6 +65,9 @@ void
 _initialize_sparcnbsd_nat (void)
 {
   sparc_gregset = &sparc32nbsd_gregset;
+
+  /* We've got nothing to add to the generic SPARC target.  */
+  add_target (sparc_target ());
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc32nbsd_supply_pcb);

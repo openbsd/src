@@ -99,7 +99,7 @@ fetch_osf_core_registers (char *core_reg_sect, unsigned core_reg_size,
     {
       if (CANNOT_FETCH_REGISTER (regno))
 	{
-	  supply_register (regno, NULL);
+	  regcache_raw_supply (current_regcache, regno, NULL);
 	  continue;
 	}
       addr = 8 * core_reg_mapping[regno];
@@ -108,7 +108,7 @@ fetch_osf_core_registers (char *core_reg_sect, unsigned core_reg_size,
 	  /* ??? UNIQUE is a new addition.  Don't generate an error.  */
 	  if (regno == ALPHA_UNIQUE_REGNUM)
 	    {
-	      supply_register (regno, NULL);
+	      regcache_raw_supply (current_regcache, regno, NULL);
 	      continue;
 	    }
 	  if (bad_reg < 0)
@@ -116,7 +116,7 @@ fetch_osf_core_registers (char *core_reg_sect, unsigned core_reg_size,
 	}
       else
 	{
-	  supply_register (regno, core_reg_sect + addr);
+	  regcache_raw_supply (current_regcache, regno, core_reg_sect + addr);
 	}
     }
   if (bad_reg >= 0)
@@ -267,6 +267,6 @@ static struct core_fns alpha_elf_core_fns =
 void
 _initialize_core_alpha (void)
 {
-  add_core_fns (&alpha_osf_core_fns);
-  add_core_fns (&alpha_elf_core_fns);
+  deprecated_add_core_fns (&alpha_osf_core_fns);
+  deprecated_add_core_fns (&alpha_elf_core_fns);
 }

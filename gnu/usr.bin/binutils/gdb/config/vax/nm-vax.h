@@ -1,5 +1,6 @@
-/* Common definitions for GDB native support on Vaxen under 4.2bsd and Ultrix.
-   Copyright (C) 1986, 1987, 1989, 1992 Free Software Foundation, Inc.
+/* Native-dependent definitions for VAXen under 4.2 BSD and ULTRIX.
+
+   Copyright 1986, 1987, 1989, 1992, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,12 +19,14 @@
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-#define AP_REGNUM 12	/* XXXJRT */
+#ifndef NM_VAX_H
+#define NM_VAX_H
 
-#define REGISTER_U_ADDR(addr, blockend, regno)		\
-{ addr = blockend - 0110 + regno * 4;			\
-  if (regno == PC_REGNUM) addr = blockend - 8;		\
-  if (regno == PS_REGNUM) addr = blockend - 4;		\
-  if (regno == DEPRECATED_FP_REGNUM) addr = blockend - 0120;	\
-  if (regno == AP_REGNUM) addr = blockend - 0124;	\
-  if (regno == SP_REGNUM) addr = blockend - 20; }
+extern CORE_ADDR vax_kernel_u_addr;
+#define KERNEL_U_ADDR vax_kernel_u_addr
+
+extern CORE_ADDR vax_register_u_addr (CORE_ADDR u_ar0, int regnum);
+#define REGISTER_U_ADDR(addr, u_ar0, regnum) \
+  (addr) = vax_register_u_addr (u_ar0, regnum)
+
+#endif /* nm-vax.h */

@@ -1,3 +1,3 @@
 # Target: NetBSD/vax
 TDEPFILES= vax-tdep.o vaxnbsd-tdep.o corelow.o solib.o solib-svr4.o
-TM_FILE= tm-nbsd.h
+DEPRECATED_TM_FILE= solib.h

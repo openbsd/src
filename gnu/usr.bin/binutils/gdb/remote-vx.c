@@ -202,7 +202,7 @@ vx_remove_breakpoint (int addr)
    On VxWorks, we ignore exec_file.  */
 
 static void
-vx_create_inferior (char *exec_file, char *args, char **env)
+vx_create_inferior (char *exec_file, char *args, char **env, int from_tty)
 {
   enum clnt_stat status;
   arg_array passArgs;
@@ -466,7 +466,7 @@ static void
 vx_prepare_to_store (void)
 {
   /* Fetch all registers, if any of them are not yet fetched.  */
-  deprecated_read_register_bytes (0, NULL, DEPRECATED_REGISTER_BYTES);
+  deprecated_read_register_bytes (0, NULL, deprecated_register_bytes ());
 }
 
 /* Copy LEN bytes to or from remote inferior's memory starting at MEMADDR
@@ -566,7 +566,7 @@ vx_run_files_info (void)
 {
   printf_unfiltered ("\tRunning %s VxWorks process %s",
 		     vx_running ? "child" : "attached",
-		     local_hex_string (PIDGET (inferior_ptid)));
+		     hex_string (PIDGET (inferior_ptid)));
   if (vx_running)
     printf_unfiltered (", function `%s'", vx_running);
   printf_unfiltered (".\n");
@@ -747,17 +747,8 @@ net_step (void)
   SOURCE_STEP source_step;
 
   source_step.taskId = PIDGET (inferior_ptid);
-
-  if (step_range_end)
-    {
-      source_step.startAddr = step_range_start;
-      source_step.endAddr = step_range_end;
-    }
-  else
-    {
-      source_step.startAddr = 0;
-      source_step.endAddr = 0;
-    }
+  source_step.startAddr = 0;
+  source_step.endAddr = 0;
 
   status = net_clnt_call (VX_SOURCE_STEP, xdr_SOURCE_STEP, &source_step,
 			  xdr_int, &step_status);
@@ -981,7 +972,7 @@ vx_wait (ptid_t ptid_to_wait_for, struct target_waitstatus *status)
       else if (pid != PIDGET (inferior_ptid))
 	internal_error (__FILE__, __LINE__,
 			"Bad pid for debugged task: %s\n",
-			local_hex_string ((unsigned long) pid));
+			hex_string ((unsigned long) pid));
     }
   while (pid == 0);
 
@@ -1192,7 +1183,7 @@ vx_attach (char *args, int from_tty)
 
   if (from_tty)
     printf_unfiltered ("Attaching pid %s.\n",
-		       local_hex_string ((unsigned long) pid));
+		       hex_string ((unsigned long) pid));
 
   memset ((char *) &ptrace_in, '\0', sizeof (ptrace_in));
   memset ((char *) &ptrace_out, '\0', sizeof (ptrace_out));
@@ -1239,7 +1230,7 @@ vx_detach (char *args, int from_tty)
 
   if (from_tty)
     printf_unfiltered ("Detaching pid %s.\n",
-		       local_hex_string (
+		       hex_string (
 		         (unsigned long) PIDGET (inferior_ptid)));
 
   if (args)			/* FIXME, should be possible to leave suspended */
@@ -1271,7 +1262,8 @@ vx_kill (void)
   Ptrace_return ptrace_out;
   int status;
 
-  printf_unfiltered ("Killing pid %s.\n", local_hex_string ((unsigned long) PIDGET (inferior_ptid)));
+  printf_unfiltered ("Killing pid %s.\n", 
+		     hex_string ((unsigned long) PIDGET (inferior_ptid)));
 
   memset ((char *) &ptrace_in, '\0', sizeof (ptrace_in));
   memset ((char *) &ptrace_out, '\0', sizeof (ptrace_out));
@@ -1351,7 +1343,7 @@ Specify the name of the machine to connect to.";
   vx_ops.to_open = vx_open;
   vx_ops.to_close = vx_close;
   vx_ops.to_attach = vx_attach;
-  vx_ops.to_xfer_memory = vx_xfer_memory;
+  vx_ops.deprecated_xfer_memory = vx_xfer_memory;
   vx_ops.to_files_info = vx_files_info;
   vx_ops.to_load = vx_load_command;
   vx_ops.to_lookup_symbol = vx_lookup_symbol;
@@ -1376,7 +1368,7 @@ init_vx_run_ops (void)
   vx_run_ops.to_fetch_registers = vx_read_register;
   vx_run_ops.to_store_registers = vx_write_register;
   vx_run_ops.to_prepare_to_store = vx_prepare_to_store;
-  vx_run_ops.to_xfer_memory = vx_xfer_memory;
+  vx_run_ops.deprecated_xfer_memory = vx_xfer_memory;
   vx_run_ops.to_files_info = vx_run_files_info;
   vx_run_ops.to_insert_breakpoint = vx_insert_breakpoint;
   vx_run_ops.to_remove_breakpoint = vx_remove_breakpoint;
@@ -1400,7 +1392,7 @@ _initialize_vx (void)
   init_vx_run_ops ();
   add_target (&vx_run_ops);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("vxworks-timeout", class_support, var_uinteger,
 		  (char *) &rpcTimeout.tv_sec,
 		  "Set seconds to wait for rpc calls to return.\n\

@@ -41,6 +41,7 @@
 #include "source.h"
 #include "filenames.h"		/* for FILENAME_CMP */
 #include "objc-lang.h"
+#include "ada-lang.h"
 
 #include "hashtab.h"
 
@@ -69,7 +70,7 @@ static void variables_info (char *, int);
 
 static void sources_info (char *, int);
 
-static void output_source_filename (char *, int *);
+static void output_source_filename (const char *, int *);
 
 static int find_line_common (struct linetable *, int, int *);
 
@@ -114,9 +115,9 @@ struct symbol *lookup_symbol_aux_minsyms (const char *name,
 					  struct symtab **symtab);
 #endif
 
-/* This flag is used in hppa-tdep.c, and set in hp-symtab-read.c */
-/* Signals the presence of objects compiled by HP compilers */
-int hp_som_som_object_present = 0;
+/* This flag is used in hppa-tdep.c, and set in hp-symtab-read.c.
+   Signals the presence of objects compiled by HP compilers.  */
+int deprecated_hp_som_som_object_present = 0;
 
 static void fixup_section (struct general_symbol_info *, struct objfile *);
 
@@ -181,21 +182,25 @@ got_symtab:
     
     if (full_path != NULL)
       {
-	const char *fp = symtab_to_filename (s);
-	if (FILENAME_CMP (full_path, fp) == 0)
-	  {
-	    return s;
-	  }
+        const char *fp = symtab_to_fullname (s);
+        if (fp != NULL && FILENAME_CMP (full_path, fp) == 0)
+          {
+            return s;
+          }
       }
 
     if (real_path != NULL)
       {
-	char *rp = gdb_realpath (symtab_to_filename (s));
-        make_cleanup (xfree, rp);
-	if (FILENAME_CMP (real_path, rp) == 0)
-	  {
-	    return s;
-	  }
+        char *fullname = symtab_to_fullname (s);
+        if (fullname != NULL)
+          {
+            char *rp = gdb_realpath (fullname);
+            make_cleanup (xfree, rp);
+            if (FILENAME_CMP (real_path, rp) == 0)
+              {
+                return s;
+              }
+          }
       }
   }
 
@@ -268,8 +273,7 @@ lookup_partial_symtab (const char *name)
        this symtab and use its absolute path.  */
     if (full_path != NULL)
       {
-	if (pst->fullname == NULL)
-	  source_full_path_of (pst->filename, &pst->fullname);
+	psymtab_to_fullname (pst);
 	if (pst->fullname != NULL
 	    && FILENAME_CMP (full_path, pst->fullname) == 0)
 	  {
@@ -280,8 +284,7 @@ lookup_partial_symtab (const char *name)
     if (real_path != NULL)
       {
         char *rp = NULL;
-	if (pst->fullname == NULL)
-	  source_full_path_of (pst->filename, &pst->fullname);
+	psymtab_to_fullname (pst);
         if (pst->fullname != NULL)
           {
             rp = gdb_realpath (pst->fullname);
@@ -427,9 +430,9 @@ create_demangled_names_hash (struct objfile *objfile)
      Choosing a much larger table size wastes memory, and saves only about
      1% in symbol reading.  */
 
-  objfile->demangled_names_hash = htab_create_alloc_ex
+  objfile->demangled_names_hash = htab_create_alloc
     (256, htab_hash_string, (int (*) (const void *, const void *)) streq,
-     NULL, objfile->md, xmcalloc, xmfree);
+     NULL, xcalloc, xfree);
 }
 
 /* Try to determine the demangled name for a symbol, based on the
@@ -632,17 +635,24 @@ symbol_init_demangled_name (struct general_symbol_info *gsymbol,
 char *
 symbol_natural_name (const struct general_symbol_info *gsymbol)
 {
-  if ((gsymbol->language == language_cplus
-       || gsymbol->language == language_java
-       || gsymbol->language == language_objc)
-      && (gsymbol->language_specific.cplus_specific.demangled_name != NULL))
+  switch (gsymbol->language) 
     {
-      return gsymbol->language_specific.cplus_specific.demangled_name;
+    case language_cplus:
+    case language_java:
+    case language_objc:
+      if (gsymbol->language_specific.cplus_specific.demangled_name != NULL)
+	return gsymbol->language_specific.cplus_specific.demangled_name;
+      break;
+    case language_ada:
+      if (gsymbol->language_specific.cplus_specific.demangled_name != NULL)
+	return gsymbol->language_specific.cplus_specific.demangled_name;
+      else
+	return ada_decode_symbol (gsymbol);
+      break;
+    default:
+      break;
     }
-  else
-    {
-      return gsymbol->name;
-    }
+  return gsymbol->name;
 }
 
 /* Return the demangled name for a symbol based on the language for
@@ -650,13 +660,35 @@ symbol_natural_name (const struct general_symbol_info *gsymbol)
 char *
 symbol_demangled_name (struct general_symbol_info *gsymbol)
 {
-  if (gsymbol->language == language_cplus
-      || gsymbol->language == language_java
-      || gsymbol->language == language_objc)
-    return gsymbol->language_specific.cplus_specific.demangled_name;
+  switch (gsymbol->language) 
+    {
+    case language_cplus:
+    case language_java:
+    case language_objc:
+      if (gsymbol->language_specific.cplus_specific.demangled_name != NULL)
+	return gsymbol->language_specific.cplus_specific.demangled_name;
+      break;
+    case language_ada:
+      if (gsymbol->language_specific.cplus_specific.demangled_name != NULL)
+	return gsymbol->language_specific.cplus_specific.demangled_name;
+      else
+	return ada_decode_symbol (gsymbol);
+      break;
+    default:
+      break;
+    }
+  return NULL;
+}
 
-  else 
-    return NULL;
+/* Return the search name of a symbol---generally the demangled or
+   linkage name of the symbol, depending on how it will be searched for.
+   If there is no distinct demangled name, then returns the same value 
+   (same pointer) as SYMBOL_LINKAGE_NAME. */
+char *symbol_search_name (const struct general_symbol_info *gsymbol) {
+  if (gsymbol->language == language_ada)
+    return gsymbol->name;
+  else
+    return symbol_natural_name (gsymbol);
 }
 
 /* Initialize the structure fields to zero values.  */
@@ -868,6 +900,62 @@ fixup_section (struct general_symbol_info *ginfo, struct objfile *objfile)
       ginfo->bfd_section = SYMBOL_BFD_SECTION (msym);
       ginfo->section = SYMBOL_SECTION (msym);
     }
+  else if (objfile)
+    {
+      /* Static, function-local variables do appear in the linker
+	 (minimal) symbols, but are frequently given names that won't
+	 be found via lookup_minimal_symbol().  E.g., it has been
+	 observed in frv-uclinux (ELF) executables that a static,
+	 function-local variable named "foo" might appear in the
+	 linker symbols as "foo.6" or "foo.3".  Thus, there is no
+	 point in attempting to extend the lookup-by-name mechanism to
+	 handle this case due to the fact that there can be multiple
+	 names.
+	 
+	 So, instead, search the section table when lookup by name has
+	 failed.  The ``addr'' and ``endaddr'' fields may have already
+	 been relocated.  If so, the relocation offset (i.e. the
+	 ANOFFSET value) needs to be subtracted from these values when
+	 performing the comparison.  We unconditionally subtract it,
+	 because, when no relocation has been performed, the ANOFFSET
+	 value will simply be zero.
+	 
+	 The address of the symbol whose section we're fixing up HAS
+	 NOT BEEN adjusted (relocated) yet.  It can't have been since
+	 the section isn't yet known and knowing the section is
+	 necessary in order to add the correct relocation value.  In
+	 other words, we wouldn't even be in this function (attempting
+	 to compute the section) if it were already known.
+
+	 Note that it is possible to search the minimal symbols
+	 (subtracting the relocation value if necessary) to find the
+	 matching minimal symbol, but this is overkill and much less
+	 efficient.  It is not necessary to find the matching minimal
+	 symbol, only its section.  
+	 
+	 Note that this technique (of doing a section table search)
+	 can fail when unrelocated section addresses overlap.  For
+	 this reason, we still attempt a lookup by name prior to doing
+	 a search of the section table.  */
+	 
+      CORE_ADDR addr;
+      struct obj_section *s;
+
+      addr = ginfo->value.address;
+
+      ALL_OBJFILE_OSECTIONS (objfile, s)
+	{
+	  int idx = s->the_bfd_section->index;
+	  CORE_ADDR offset = ANOFFSET (objfile->section_offsets, idx);
+
+	  if (s->addr - offset <= addr && addr < s->endaddr - offset)
+	    {
+	      ginfo->bfd_section = s->the_bfd_section;
+	      ginfo->section = idx;
+	      return;
+	    }
+	}
+    }
 }
 
 struct symbol *
@@ -932,11 +1020,22 @@ lookup_symbol (const char *name, const struct block *block,
 
   modified_name = name;
 
-  /* If we are using C++ language, demangle the name before doing a lookup, so
+  /* If we are using C++ or Java, demangle the name before doing a lookup, so
      we can always binary search. */
   if (current_language->la_language == language_cplus)
     {
       demangled_name = cplus_demangle (name, DMGL_ANSI | DMGL_PARAMS);
+      if (demangled_name)
+	{
+	  mangled_name = name;
+	  modified_name = demangled_name;
+	  needtofreename = 1;
+	}
+    }
+  else if (current_language->la_language == language_java)
+    {
+      demangled_name = cplus_demangle (name, 
+		      		       DMGL_ANSI | DMGL_PARAMS | DMGL_JAVA);
       if (demangled_name)
 	{
 	  mangled_name = name;
@@ -1467,7 +1566,7 @@ lookup_partial_symbol (struct partial_symtab *pst, const char *name,
 	    {
 	      do_linear_search = 1;
 	    }
-	  if (strcmp_iw_ordered (SYMBOL_NATURAL_NAME (*center), name) >= 0)
+	  if (strcmp_iw_ordered (SYMBOL_SEARCH_NAME (*center), name) >= 0)
 	    {
 	      top = center;
 	    }
@@ -1482,7 +1581,7 @@ lookup_partial_symbol (struct partial_symtab *pst, const char *name,
       while (top <= real_top
 	     && (linkage_name != NULL
 		 ? strcmp (SYMBOL_LINKAGE_NAME (*top), linkage_name) == 0
-		 : SYMBOL_MATCHES_NATURAL_NAME (*top,name)))
+		 : SYMBOL_MATCHES_SEARCH_NAME (*top,name)))
 	{
 	  if (SYMBOL_DOMAIN (*top) == domain)
 	    {
@@ -1503,7 +1602,7 @@ lookup_partial_symbol (struct partial_symtab *pst, const char *name,
 	    {
 	      if (linkage_name != NULL
 		  ? strcmp (SYMBOL_LINKAGE_NAME (*psym), linkage_name) == 0
-		  : SYMBOL_MATCHES_NATURAL_NAME (*psym, name))
+		  : SYMBOL_MATCHES_SEARCH_NAME (*psym, name))
 		{
 		  return (*psym);
 		}
@@ -2349,7 +2448,7 @@ find_function_start_sal (struct symbol *sym, int funfirstline)
 	  !section_is_mapped (section))
 	pc = overlay_unmapped_address (pc, section);
 
-      pc += FUNCTION_START_OFFSET;
+      pc += DEPRECATED_FUNCTION_START_OFFSET;
       pc = SKIP_PROLOGUE (pc);
 
       /* For overlays, map pc back into its mapped VMA range */
@@ -2554,7 +2653,7 @@ filename_seen (const char *file, int add, int *first)
    NAME is the name to print and *FIRST is nonzero if this is the first
    name printed.  Set *FIRST to zero.  */
 static void
-output_source_filename (char *name, int *first)
+output_source_filename (const char *name, int *first)
 {
   /* Since a single source file can result in several partial symbol
      tables, we need to avoid printing it more than once.  Note: if
@@ -2603,7 +2702,8 @@ sources_info (char *ignore, int from_tty)
   first = 1;
   ALL_SYMTABS (objfile, s)
   {
-    output_source_filename (s->filename, &first);
+    const char *fullname = symtab_to_fullname (s);
+    output_source_filename (fullname ? fullname : s->filename, &first);
   }
   printf_filtered ("\n\n");
 
@@ -2614,7 +2714,8 @@ sources_info (char *ignore, int from_tty)
   {
     if (!ps->readin)
       {
-	output_source_filename (ps->filename, &first);
+	const char *fullname = psymtab_to_fullname (ps);
+	output_source_filename (fullname ? fullname : ps->filename, &first);
       }
   }
   printf_filtered ("\n");
@@ -3068,12 +3169,12 @@ print_msymbol_info (struct minimal_symbol *msymbol)
   char *tmp;
 
   if (TARGET_ADDR_BIT <= 32)
-    tmp = local_hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol)
-				   & (CORE_ADDR) 0xffffffff,
-				   "08l");
+    tmp = hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol)
+			     & (CORE_ADDR) 0xffffffff,
+			     8);
   else
-    tmp = local_hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol),
-				   "016l");
+    tmp = hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol),
+			     16);
   printf_filtered ("%s  %s\n",
 		   tmp, SYMBOL_PRINT_NAME (msymbol));
 }
@@ -3921,7 +4022,7 @@ skip_prologue_using_sal (CORE_ADDR func_addr)
 
   /* Get an initial range for the function.  */
   find_pc_partial_function (func_addr, NULL, &start_pc, &end_pc);
-  start_pc += FUNCTION_START_OFFSET;
+  start_pc += DEPRECATED_FUNCTION_START_OFFSET;
 
   prologue_sal = find_pc_line (start_pc, 0);
   if (prologue_sal.line != 0)

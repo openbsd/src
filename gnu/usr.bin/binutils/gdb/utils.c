@@ -51,6 +51,7 @@
 #include "charset.h"
 #include "annotate.h"
 #include "filenames.h"
+#include "symfile.h"
 
 #include "inferior.h"		/* for signed_pointer_to_address */
 
@@ -83,7 +84,7 @@ extern char *canonicalize_file_name (const char *);
 /* readline defines this.  */
 #undef savestring
 
-void (*error_begin_hook) (void);
+void (*deprecated_error_begin_hook) (void);
 
 /* Holds the last error message issued by gdb */
 
@@ -259,6 +260,19 @@ make_cleanup_ui_file_delete (struct ui_file *arg)
 {
   return make_my_cleanup (&cleanup_chain, do_ui_file_delete, arg);
 }
+
+static void
+do_free_section_addr_info (void *arg)
+{
+  free_section_addr_info (arg);
+}
+
+struct cleanup *
+make_cleanup_free_section_addr_info (struct section_addr_info *addrs)
+{
+  return make_my_cleanup (&cleanup_chain, do_free_section_addr_info, addrs);
+}
+
 
 struct cleanup *
 make_my_cleanup (struct cleanup **pmy_chain, make_cleanup_ftype *function,
@@ -566,8 +580,8 @@ discard_all_intermediate_continuations (void)
 void
 vwarning (const char *string, va_list args)
 {
-  if (warning_hook)
-    (*warning_hook) (string, args);
+  if (deprecated_warning_hook)
+    (*deprecated_warning_hook) (string, args);
   else
     {
       target_terminal_ours ();
@@ -659,8 +673,8 @@ error_output_message (char *pre_print, char *msg)
 NORETURN void
 error_stream (struct ui_file *stream)
 {
-  if (error_begin_hook)
-    error_begin_hook ();
+  if (deprecated_error_begin_hook)
+    deprecated_error_begin_hook ();
 
   /* Copy the stream into the GDB_LASTERR buffer.  */
   ui_file_rewind (gdb_lasterr);
@@ -752,8 +766,8 @@ internal_vproblem (struct internal_problem *problem,
      so that the user knows that they are living on the edge.  */
   {
     char *msg;
-    xvasprintf (&msg, fmt, ap);
-    xasprintf (&reason, "\
+    msg = xstrvprintf (fmt, ap);
+    reason = xstrprintf ("\
 %s:%d: %s: %s\n\
 A problem internal to GDB has been detected,\n\
 further debugging may prove unreliable.", file, line, problem->name, msg);
@@ -838,7 +852,7 @@ internal_error (const char *file, int line, const char *string, ...)
 }
 
 static struct internal_problem internal_warning_problem = {
-  "internal-error", AUTO_BOOLEAN_AUTO, AUTO_BOOLEAN_AUTO
+  "internal-warning", AUTO_BOOLEAN_AUTO, AUTO_BOOLEAN_AUTO
 };
 
 void
@@ -974,51 +988,14 @@ void
 request_quit (int signo)
 {
   quit_flag = 1;
-  /* Restore the signal handler.  Harmless with BSD-style signals, needed
-     for System V-style signals.  So just always do it, rather than worrying
-     about USG defines and stuff like that.  */
+  /* Restore the signal handler.  Harmless with BSD-style signals,
+     needed for System V-style signals.  */
   signal (signo, request_quit);
 
   if (immediate_quit)
     quit ();
 }
 
-/* Memory management stuff (malloc friends).  */
-
-static void *
-mmalloc (void *md, size_t size)
-{
-  return malloc (size);		/* NOTE: GDB's only call to malloc() */
-}
-
-static void *
-mrealloc (void *md, void *ptr, size_t size)
-{
-  if (ptr == 0)			/* Guard against old realloc's */
-    return mmalloc (md, size);
-  else
-    return realloc (ptr, size);	/* NOTE: GDB's only call to ralloc() */
-}
-
-static void *
-mcalloc (void *md, size_t number, size_t size)
-{
-  return calloc (number, size);	/* NOTE: GDB's only call to calloc() */
-}
-
-static void
-mfree (void *md, void *ptr)
-{
-  free (ptr);			/* NOTE: GDB's only call to free() */
-}
-
-/* This used to do something interesting with USE_MMALLOC.
- * It can be retired any time.  -- chastain 2004-01-19.  */
-void
-init_malloc (void *md)
-{
-}
-
 /* Called when a memory allocation fails, with the number of bytes of
    memory requested in SIZE. */
 
@@ -1037,18 +1014,17 @@ nomem (long size)
     }
 }
 
-/* The xmmalloc() family of memory management routines.
+/* The xmalloc() (libiberty.h) family of memory management routines.
 
-   These are are like the mmalloc() family except that they implement
+   These are like the ISO-C malloc() family except that they implement
    consistent semantics and guard against typical memory management
-   problems: if a malloc fails, an internal error is thrown; if
-   free(NULL) is called, it is ignored; if *alloc(0) is called, NULL
-   is returned.
+   problems.  */
 
-   All these routines are implemented using the mmalloc() family. */
+/* NOTE: These are declared using PTR to ensure consistency with
+   "libiberty.h".  xfree() is GDB local.  */
 
-void *
-xmmalloc (void *md, size_t size)
+PTR				/* OK: PTR */
+xmalloc (size_t size)
 {
   void *val;
 
@@ -1057,15 +1033,15 @@ xmmalloc (void *md, size_t size)
   if (size == 0)
     size = 1;
 
-  val = mmalloc (md, size);
+  val = malloc (size);		/* OK: malloc */
   if (val == NULL)
     nomem (size);
 
   return (val);
 }
 
-void *
-xmrealloc (void *md, void *ptr, size_t size)
+PTR				/* OK: PTR */
+xrealloc (PTR ptr, size_t size)	/* OK: PTR */
 {
   void *val;
 
@@ -1075,17 +1051,17 @@ xmrealloc (void *md, void *ptr, size_t size)
     size = 1;
 
   if (ptr != NULL)
-    val = mrealloc (md, ptr, size);
+    val = realloc (ptr, size);	/* OK: realloc */
   else
-    val = mmalloc (md, size);
+    val = malloc (size);		/* OK: malloc */
   if (val == NULL)
     nomem (size);
 
   return (val);
 }
 
-void *
-xmcalloc (void *md, size_t number, size_t size)
+PTR				/* OK: PTR */
+xcalloc (size_t number, size_t size)
 {
   void *mem;
 
@@ -1097,7 +1073,7 @@ xmcalloc (void *md, size_t number, size_t size)
       size = 1;
     }
 
-  mem = mcalloc (md, number, size);
+  mem = calloc (number, size);		/* OK: xcalloc */
   if (mem == NULL)
     nomem (number * size);
 
@@ -1105,45 +1081,10 @@ xmcalloc (void *md, size_t number, size_t size)
 }
 
 void
-xmfree (void *md, void *ptr)
-{
-  if (ptr != NULL)
-    mfree (md, ptr);
-}
-
-/* The xmalloc() (libiberty.h) family of memory management routines.
-
-   These are like the ISO-C malloc() family except that they implement
-   consistent semantics and guard against typical memory management
-   problems.  See xmmalloc() above for further information.
-
-   All these routines are wrappers to the xmmalloc() family. */
-
-/* NOTE: These are declared using PTR to ensure consistency with
-   "libiberty.h".  xfree() is GDB local.  */
-
-PTR				/* OK: PTR */
-xmalloc (size_t size)
-{
-  return xmmalloc (NULL, size);
-}
-
-PTR				/* OK: PTR */
-xrealloc (PTR ptr, size_t size)	/* OK: PTR */
-{
-  return xmrealloc (NULL, ptr, size);
-}
-
-PTR				/* OK: PTR */
-xcalloc (size_t number, size_t size)
-{
-  return xmcalloc (NULL, number, size);
-}
-
-void
 xfree (void *ptr)
 {
-  xmfree (NULL, ptr);
+  if (ptr != NULL)
+    free (ptr);		/* OK: free */
 }
 
 
@@ -1156,7 +1097,7 @@ xstrprintf (const char *format, ...)
   char *ret;
   va_list args;
   va_start (args, format);
-  xvasprintf (&ret, format, args);
+  ret = xstrvprintf (format, args);
   va_end (args);
   return ret;
 }
@@ -1166,26 +1107,31 @@ xasprintf (char **ret, const char *format, ...)
 {
   va_list args;
   va_start (args, format);
-  xvasprintf (ret, format, args);
+  (*ret) = xstrvprintf (format, args);
   va_end (args);
 }
 
 void
 xvasprintf (char **ret, const char *format, va_list ap)
 {
-  int status = vasprintf (ret, format, ap);
-  /* NULL could be returned due to a memory allocation problem; a
-     badly format string; or something else. */
-  if ((*ret) == NULL)
-    internal_error (__FILE__, __LINE__,
-		    "vasprintf returned NULL buffer (errno %d)", errno);
-  /* A negative status with a non-NULL buffer shouldn't never
-     happen. But to be sure. */
+  (*ret) = xstrvprintf (format, ap);
+}
+
+char *
+xstrvprintf (const char *format, va_list ap)
+{
+  char *ret = NULL;
+  int status = vasprintf (&ret, format, ap);
+  /* NULL is returned when there was a memory allocation problem.  */
+  if (ret == NULL)
+    nomem (0);
+  /* A negative status (the printed length) with a non-NULL buffer
+     should never happen, but just to be sure.  */
   if (status < 0)
     internal_error (__FILE__, __LINE__,
 		    "vasprintf call failed (errno %d)", errno);
+  return ret;
 }
-
 
 /* My replacement for the read system call.
    Used like `read' but keeps going if `read' returns too soon.  */
@@ -1222,21 +1168,6 @@ savestring (const char *ptr, size_t size)
   return p;
 }
 
-char *
-msavestring (void *md, const char *ptr, size_t size)
-{
-  char *p = (char *) xmmalloc (md, size + 1);
-  memcpy (p, ptr, size);
-  p[size] = 0;
-  return p;
-}
-
-char *
-mstrsave (void *md, const char *ptr)
-{
-  return (msavestring (md, ptr, strlen (ptr)));
-}
-
 void
 print_spaces (int n, struct ui_file *file)
 {
@@ -1270,11 +1201,10 @@ query (const char *ctlstr, ...)
   int ans2;
   int retval;
 
-  va_start (args, ctlstr);
-
-  if (query_hook)
+  if (deprecated_query_hook)
     {
-      return query_hook (ctlstr, args);
+      va_start (args, ctlstr);
+      return deprecated_query_hook (ctlstr, args);
     }
 
   /* Automatically answer "yes" if input is not from a terminal.  */
@@ -1289,7 +1219,9 @@ query (const char *ctlstr, ...)
       if (annotation_level > 1)
 	printf_filtered ("\n\032\032pre-query\n");
 
+      va_start (args, ctlstr);
       vfprintf_filtered (gdb_stdout, ctlstr, args);
+      va_end (args);
       printf_filtered ("(y or n) ");
 
       if (annotation_level > 1)
@@ -1372,9 +1304,9 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
       n_string = "[n]";
     }
 
-  if (query_hook)
+  if (deprecated_query_hook)
     {
-      return query_hook (ctlstr, args);
+      return deprecated_query_hook (ctlstr, args);
     }
 
   /* Automatically answer default value if input is not from a terminal.  */
@@ -1387,13 +1319,13 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
       gdb_flush (gdb_stdout);
 
       if (annotation_level > 1)
-	printf_filtered ("\n\032\032pre-%cquery\n", defchar);
+	printf_filtered ("\n\032\032pre-query\n");
 
       vfprintf_filtered (gdb_stdout, ctlstr, args);
       printf_filtered ("(%s or %s) ", y_string, n_string);
 
       if (annotation_level > 1)
-	printf_filtered ("\n\032\032%cquery\n", defchar);
+	printf_filtered ("\n\032\032query\n");
 
       wrap_here ("");
       gdb_flush (gdb_stdout);
@@ -1437,7 +1369,7 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
     }
 
   if (annotation_level > 1)
-    printf_filtered ("\n\032\032post-%cquery\n", defchar);
+    printf_filtered ("\n\032\032post-query\n");
   return retval;
 }
 
@@ -1855,12 +1787,7 @@ prompt_for_continue (void)
       while (*p == ' ' || *p == '\t')
 	++p;
       if (p[0] == 'q')
-	{
-	  if (!event_loop_p)
-	    request_quit (SIGINT);
-	  else
-	    async_request_quit (0);
-	}
+	async_request_quit (0);
       xfree (ignore);
     }
   immediate_quit--;
@@ -2259,7 +2186,7 @@ vfprintf_maybe_filtered (struct ui_file *stream, const char *format,
   char *linebuffer;
   struct cleanup *old_cleanups;
 
-  xvasprintf (&linebuffer, format, args);
+  linebuffer = xstrvprintf (format, args);
   old_cleanups = make_cleanup (xfree, linebuffer);
   fputs_maybe_filtered (linebuffer, stream, filter);
   do_cleanups (old_cleanups);
@@ -2278,7 +2205,7 @@ vfprintf_unfiltered (struct ui_file *stream, const char *format, va_list args)
   char *linebuffer;
   struct cleanup *old_cleanups;
 
-  xvasprintf (&linebuffer, format, args);
+  linebuffer = xstrvprintf (format, args);
   old_cleanups = make_cleanup (xfree, linebuffer);
   fputs_unfiltered (linebuffer, stream);
   do_cleanups (old_cleanups);
@@ -2609,23 +2536,23 @@ initialize_utils (void)
   c = add_set_cmd ("width", class_support, var_uinteger, &chars_per_line,
 		   "Set number of characters gdb thinks are in a line.",
 		   &setlist);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
   set_cmd_sfunc (c, set_width_command);
 
   c = add_set_cmd ("height", class_support, var_uinteger, &lines_per_page,
 		   "Set number of lines gdb thinks are in a page.", &setlist);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
   set_cmd_sfunc (c, set_height_command);
 
   init_page_info ();
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("demangle", class_support, var_boolean,
 		  (char *) &demangle,
 		  "Set demangling of encoded C++/ObjC names when displaying symbols.",
 		  &setprintlist), &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("pagination", class_support,
 		  var_boolean, (char *) &pagination_enabled,
 		  "Set state of pagination.", &setlist), &showlist);
@@ -2638,13 +2565,13 @@ initialize_utils (void)
 	       "Disable pagination");
     }
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("sevenbit-strings", class_support, var_boolean,
 		  (char *) &sevenbit_strings,
 		  "Set printing of 8-bit characters in strings as \\nnn.",
 		  &setprintlist), &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("asm-demangle", class_support, var_boolean,
 		  (char *) &asm_demangle,
 		  "Set demangling of C++/ObjC names in disassembly listings.",
@@ -2659,7 +2586,7 @@ SIGWINCH_HANDLER_BODY
 /* print routines to handle variable size regs, etc. */
 /* temporary storage using circular buffer */
 #define NUMCELLS 16
-#define CELLSIZE 32
+#define CELLSIZE 50
 static char *
 get_cell (void)
 {
@@ -2689,7 +2616,7 @@ paddr_nz (CORE_ADDR addr)
 }
 
 static void
-decimal2str (char *paddr_str, char *sign, ULONGEST addr)
+decimal2str (char *paddr_str, char *sign, ULONGEST addr, int width)
 {
   /* steal code from valprint.c:print_decimal().  Should this worry
      about the real size of addr as the above does? */
@@ -2700,18 +2627,60 @@ decimal2str (char *paddr_str, char *sign, ULONGEST addr)
       temp[i] = addr % (1000 * 1000 * 1000);
       addr /= (1000 * 1000 * 1000);
       i++;
+      width -= 9;
     }
   while (addr != 0 && i < (sizeof (temp) / sizeof (temp[0])));
+  width += 9;
+  if (width < 0)
+    width = 0;
   switch (i)
     {
     case 1:
-      sprintf (paddr_str, "%s%lu", sign, temp[0]);
+      sprintf (paddr_str, "%s%0*lu", sign, width, temp[0]);
       break;
     case 2:
-      sprintf (paddr_str, "%s%lu%09lu", sign, temp[1], temp[0]);
+      sprintf (paddr_str, "%s%0*lu%09lu", sign, width, temp[1], temp[0]);
       break;
     case 3:
-      sprintf (paddr_str, "%s%lu%09lu%09lu", sign, temp[2], temp[1], temp[0]);
+      sprintf (paddr_str, "%s%0*lu%09lu%09lu", sign, width,
+	       temp[2], temp[1], temp[0]);
+      break;
+    default:
+      internal_error (__FILE__, __LINE__,
+		      "failed internal consistency check");
+    }
+}
+
+static void
+octal2str (char *paddr_str, ULONGEST addr, int width)
+{
+  unsigned long temp[3];
+  int i = 0;
+  do
+    {
+      temp[i] = addr % (0100000 * 0100000);
+      addr /= (0100000 * 0100000);
+      i++;
+      width -= 10;
+    }
+  while (addr != 0 && i < (sizeof (temp) / sizeof (temp[0])));
+  width += 10;
+  if (width < 0)
+    width = 0;
+  switch (i)
+    {
+    case 1:
+      if (temp[0] == 0)
+	sprintf (paddr_str, "%*o", width, 0);
+      else
+	sprintf (paddr_str, "0%0*lo", width, temp[0]);
+      break;
+    case 2:
+      sprintf (paddr_str, "0%0*lo%010lo", width, temp[1], temp[0]);
+      break;
+    case 3:
+      sprintf (paddr_str, "0%0*lo%010lo%010lo", width,
+	       temp[2], temp[1], temp[0]);
       break;
     default:
       internal_error (__FILE__, __LINE__,
@@ -2723,7 +2692,7 @@ char *
 paddr_u (CORE_ADDR addr)
 {
   char *paddr_str = get_cell ();
-  decimal2str (paddr_str, "", addr);
+  decimal2str (paddr_str, "", addr, 0);
   return paddr_str;
 }
 
@@ -2732,9 +2701,9 @@ paddr_d (LONGEST addr)
 {
   char *paddr_str = get_cell ();
   if (addr < 0)
-    decimal2str (paddr_str, "-", -addr);
+    decimal2str (paddr_str, "-", -addr, 0);
   else
-    decimal2str (paddr_str, "", addr);
+    decimal2str (paddr_str, "", addr, 0);
   return paddr_str;
 }
 
@@ -2799,6 +2768,87 @@ phex_nz (ULONGEST l, int sizeof_l)
   return str;
 }
 
+/* Converts a LONGEST to a C-format hexadecimal literal and stores it
+   in a static string.  Returns a pointer to this string.  */
+char *
+hex_string (LONGEST num)
+{
+  char *result = get_cell ();
+  snprintf (result, CELLSIZE, "0x%s", phex_nz (num, sizeof (num)));
+  return result;
+}
+
+/* Converts a LONGEST number to a C-format hexadecimal literal and
+   stores it in a static string.  Returns a pointer to this string
+   that is valid until the next call.  The number is padded on the
+   left with 0s to at least WIDTH characters.  */
+char *
+hex_string_custom (LONGEST num, int width)
+{
+  char *result = get_cell ();
+  char *result_end = result + CELLSIZE - 1;
+  const char *hex = phex_nz (num, sizeof (num));
+  int hex_len = strlen (hex);
+
+  if (hex_len > width)
+    width = hex_len;
+  if (width + 2 >= CELLSIZE)
+    internal_error (__FILE__, __LINE__,
+		    "hex_string_custom: insufficient space to store result");
+
+  strcpy (result_end - width - 2, "0x");
+  memset (result_end - width, '0', width);
+  strcpy (result_end - hex_len, hex);
+  return result_end - width - 2;
+}
+
+/* Convert VAL to a numeral in the given radix.  For
+ * radix 10, IS_SIGNED may be true, indicating a signed quantity;
+ * otherwise VAL is interpreted as unsigned.  If WIDTH is supplied, 
+ * it is the minimum width (0-padded if needed).  USE_C_FORMAT means
+ * to use C format in all cases.  If it is false, then 'x' 
+ * and 'o' formats do not include a prefix (0x or leading 0). */
+
+char *
+int_string (LONGEST val, int radix, int is_signed, int width, 
+	    int use_c_format)
+{
+  switch (radix) 
+    {
+    case 16:
+      {
+	char *result;
+	if (width == 0)
+	  result = hex_string (val);
+	else
+	  result = hex_string_custom (val, width);
+	if (! use_c_format)
+	  result += 2;
+	return result;
+      }
+    case 10:
+      {
+	char *result = get_cell ();
+	if (is_signed && val < 0)
+	  decimal2str (result, "-", -val, width);
+	else
+	  decimal2str (result, "", val, width);
+	return result;
+      }
+    case 8:
+      {
+	char *result = get_cell ();
+	octal2str (result, val, width);
+	if (use_c_format || val == 0)
+	  return result;
+	else
+	  return result + 1;
+      }
+    default:
+      internal_error (__FILE__, __LINE__,
+		      "failed internal consistency check");
+    }
+}	
 
 /* Convert a CORE_ADDR into a string.  */
 const char *

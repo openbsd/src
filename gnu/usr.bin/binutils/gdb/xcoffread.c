@@ -31,7 +31,7 @@
 #include "gdb_string.h"
 
 #include <sys/param.h>
-#ifndef	NO_SYS_FILE
+#ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
 #include "gdb_stat.h"
@@ -1838,8 +1838,7 @@ static void
 xcoff_symfile_init (struct objfile *objfile)
 {
   /* Allocate struct to keep track of the symfile */
-  objfile->sym_private = xmmalloc (objfile->md,
-				   sizeof (struct coff_symfile_info));
+  objfile->sym_private = xmalloc (sizeof (struct coff_symfile_info));
 
   /* XCOFF objects may be reordered, so set OBJF_REORDERED.  If we
      find this causes a significant slowdown in gdb then we could
@@ -1859,7 +1858,7 @@ xcoff_symfile_finish (struct objfile *objfile)
 {
   if (objfile->sym_private != NULL)
     {
-      xmfree (objfile->md, objfile->sym_private);
+      xfree (objfile->sym_private);
     }
 
   /* Start with a fresh include table for the next objfile.  */

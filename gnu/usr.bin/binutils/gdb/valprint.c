@@ -209,202 +209,52 @@ val_print_type_code_int (struct type *type, char *valaddr,
 
 /* Print a number according to FORMAT which is one of d,u,x,o,b,h,w,g.
    The raison d'etre of this function is to consolidate printing of 
-   LONG_LONG's into this one function.  Some platforms have long longs but
-   don't have a printf() that supports "ll" in the format string.  We handle
-   these by seeing if the number is representable as either a signed or
-   unsigned long, depending upon what format is desired, and if not we just
-   bail out and print the number in hex.
+   LONG_LONG's into this one function. The format chars b,h,w,g are 
+   from print_scalar_formatted().  Numbers are printed using C
+   format. 
 
-   The format chars b,h,w,g are from print_scalar_formatted().  If USE_LOCAL,
-   format it according to the current language (this should be used for most
-   integers which GDB prints, the exception is things like protocols where
-   the format of the integer is a protocol thing, not a user-visible thing).
- */
-
-#if defined (CC_HAS_LONG_LONG) && !defined (PRINTF_HAS_LONG_LONG)
-static void print_decimal (struct ui_file * stream, char *sign,
-			   int use_local, ULONGEST val_ulong);
-static void
-print_decimal (struct ui_file *stream, char *sign, int use_local,
-	       ULONGEST val_ulong)
-{
-  unsigned long temp[3];
-  int i = 0;
-  do
-    {
-      temp[i] = val_ulong % (1000 * 1000 * 1000);
-      val_ulong /= (1000 * 1000 * 1000);
-      i++;
-    }
-  while (val_ulong != 0 && i < (sizeof (temp) / sizeof (temp[0])));
-  switch (i)
-    {
-    case 1:
-      fprintf_filtered (stream, "%s%lu",
-			sign, temp[0]);
-      break;
-    case 2:
-      fprintf_filtered (stream, "%s%lu%09lu",
-			sign, temp[1], temp[0]);
-      break;
-    case 3:
-      fprintf_filtered (stream, "%s%lu%09lu%09lu",
-			sign, temp[2], temp[1], temp[0]);
-      break;
-    default:
-      internal_error (__FILE__, __LINE__, "failed internal consistency check");
-    }
-  return;
-}
-#endif
+   USE_C_FORMAT means to use C format in all cases.  Without it, 
+   'o' and 'x' format do not include the standard C radix prefix
+   (leading 0 or 0x). 
+   
+   Hilfinger/2004-09-09: USE_C_FORMAT was originally called USE_LOCAL
+   and was intended to request formating according to the current
+   language and would be used for most integers that GDB prints.  The
+   exceptional cases were things like protocols where the format of
+   the integer is a protocol thing, not a user-visible thing).  The
+   parameter remains to preserve the information of what things might
+   be printed with language-specific format, should we ever resurrect
+   that capability. */
 
 void
-print_longest (struct ui_file *stream, int format, int use_local,
+print_longest (struct ui_file *stream, int format, int use_c_format,
 	       LONGEST val_long)
 {
-#if defined (CC_HAS_LONG_LONG) && !defined (PRINTF_HAS_LONG_LONG)
-  if (sizeof (long) < sizeof (LONGEST))
-    {
-      switch (format)
-	{
-	case 'd':
-	  {
-	    /* Print a signed value, that doesn't fit in a long */
-	    if ((long) val_long != val_long)
-	      {
-		if (val_long < 0)
-		  print_decimal (stream, "-", use_local, -val_long);
-		else
-		  print_decimal (stream, "", use_local, val_long);
-		return;
-	      }
-	    break;
-	  }
-	case 'u':
-	  {
-	    /* Print an unsigned value, that doesn't fit in a long */
-	    if ((unsigned long) val_long != (ULONGEST) val_long)
-	      {
-		print_decimal (stream, "", use_local, val_long);
-		return;
-	      }
-	    break;
-	  }
-	case 'x':
-	case 'o':
-	case 'b':
-	case 'h':
-	case 'w':
-	case 'g':
-	  /* Print as unsigned value, must fit completely in unsigned long */
-	  {
-	    unsigned long temp = val_long;
-	    if (temp != val_long)
-	      {
-		/* Urk, can't represent value in long so print in hex.
-		   Do shift in two operations so that if sizeof (long)
-		   == sizeof (LONGEST) we can avoid warnings from
-		   picky compilers about shifts >= the size of the
-		   shiftee in bits */
-		unsigned long vbot = (unsigned long) val_long;
-		LONGEST temp = (val_long >> (sizeof (long) * HOST_CHAR_BIT - 1));
-		unsigned long vtop = temp >> 1;
-		fprintf_filtered (stream, "0x%lx%08lx", vtop, vbot);
-		return;
-	      }
-	    break;
-	  }
-	}
-    }
-#endif
-
-#if defined (CC_HAS_LONG_LONG) && defined (PRINTF_HAS_LONG_LONG)
-  switch (format)
-    {
-    case 'd':
-      fprintf_filtered (stream,
-			use_local ? local_decimal_format_custom ("ll")
-			: "%lld",
-			(long long) val_long);
-      break;
-    case 'u':
-      fprintf_filtered (stream, "%llu", (long long) val_long);
-      break;
-    case 'x':
-      fprintf_filtered (stream,
-			use_local ? local_hex_format_custom ("ll")
-			: "%llx",
-			(unsigned long long) val_long);
-      break;
-    case 'o':
-      fprintf_filtered (stream,
-			use_local ? local_octal_format_custom ("ll")
-			: "%llo",
-			(unsigned long long) val_long);
-      break;
-    case 'b':
-      fprintf_filtered (stream, local_hex_format_custom ("02ll"), val_long);
-      break;
-    case 'h':
-      fprintf_filtered (stream, local_hex_format_custom ("04ll"), val_long);
-      break;
-    case 'w':
-      fprintf_filtered (stream, local_hex_format_custom ("08ll"), val_long);
-      break;
-    case 'g':
-      fprintf_filtered (stream, local_hex_format_custom ("016ll"), val_long);
-      break;
-    default:
-      internal_error (__FILE__, __LINE__, "failed internal consistency check");
-    }
-#else /* !CC_HAS_LONG_LONG || !PRINTF_HAS_LONG_LONG */
-  /* In the following it is important to coerce (val_long) to a long. It does
-     nothing if !LONG_LONG, but it will chop off the top half (which we know
-     we can ignore) if the host supports long longs.  */
+  const char *val;
 
   switch (format)
     {
     case 'd':
-      fprintf_filtered (stream,
-			use_local ? local_decimal_format_custom ("l")
-			: "%ld",
-			(long) val_long);
-      break;
+      val = int_string (val_long, 10, 1, 0, 1); break;
     case 'u':
-      fprintf_filtered (stream, "%lu", (unsigned long) val_long);
-      break;
+      val = int_string (val_long, 10, 0, 0, 1); break;
     case 'x':
-      fprintf_filtered (stream,
-			use_local ? local_hex_format_custom ("l")
-			: "%lx",
-			(unsigned long) val_long);
+      val = int_string (val_long, 16, 0, 0, use_c_format); break;
+    case 'b':
+      val = int_string (val_long, 16, 0, 2, 1); break;
+    case 'h':
+      val = int_string (val_long, 16, 0, 4, 1); break;
+    case 'w':
+      val = int_string (val_long, 16, 0, 8, 1); break;
+    case 'g':
+      val = int_string (val_long, 16, 0, 16, 1); break;
       break;
     case 'o':
-      fprintf_filtered (stream,
-			use_local ? local_octal_format_custom ("l")
-			: "%lo",
-			(unsigned long) val_long);
-      break;
-    case 'b':
-      fprintf_filtered (stream, local_hex_format_custom ("02l"),
-			(unsigned long) val_long);
-      break;
-    case 'h':
-      fprintf_filtered (stream, local_hex_format_custom ("04l"),
-			(unsigned long) val_long);
-      break;
-    case 'w':
-      fprintf_filtered (stream, local_hex_format_custom ("08l"),
-			(unsigned long) val_long);
-      break;
-    case 'g':
-      fprintf_filtered (stream, local_hex_format_custom ("016l"),
-			(unsigned long) val_long);
-      break;
+      val = int_string (val_long, 8, 0, 0, use_c_format); break;
     default:
       internal_error (__FILE__, __LINE__, "failed internal consistency check");
-    }
-#endif /* CC_HAS_LONG_LONG || PRINTF_HAS_LONG_LONG */
+    } 
+  fputs_filtered (val, stream);
 }
 
 /* This used to be a macro, but I don't think it is called often enough
@@ -449,9 +299,8 @@ print_floating (char *valaddr, struct type *type, struct ui_file *stream)
       if (floatformat_is_negative (fmt, valaddr))
 	fprintf_filtered (stream, "-");
       fprintf_filtered (stream, "nan(");
-      fputs_filtered (local_hex_format_prefix (), stream);
+      fputs_filtered ("0x", stream);
       fputs_filtered (floatformat_mantissa (fmt, valaddr), stream);
-      fputs_filtered (local_hex_format_suffix (), stream);
       fprintf_filtered (stream, ")");
       return;
     }
@@ -512,7 +361,6 @@ print_binary_chars (struct ui_file *stream, unsigned char *valaddr,
 
   /* FIXME: We should be not printing leading zeroes in most cases.  */
 
-  fputs_filtered (local_binary_format_prefix (), stream);
   if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
     {
       for (p = valaddr;
@@ -550,7 +398,6 @@ print_binary_chars (struct ui_file *stream, unsigned char *valaddr,
 	    }
 	}
     }
-  fputs_filtered (local_binary_format_suffix (), stream);
 }
 
 /* VALADDR points to an integer of LEN bytes.
@@ -599,7 +446,7 @@ print_octal_chars (struct ui_file *stream, unsigned char *valaddr, unsigned len)
   cycle = (len * BITS_IN_BYTES) % BITS_IN_OCTAL;
   carry = 0;
 
-  fputs_filtered (local_octal_format_prefix (), stream);
+  fputs_filtered ("0", stream);
   if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
     {
       for (p = valaddr;
@@ -698,7 +545,6 @@ print_octal_chars (struct ui_file *stream, unsigned char *valaddr, unsigned len)
 	}
     }
 
-  fputs_filtered (local_octal_format_suffix (), stream);
 }
 
 /* VALADDR points to an integer of LEN bytes.
@@ -740,8 +586,6 @@ print_decimal_chars (struct ui_file *stream, unsigned char *valaddr,
     {
       digits[i] = 0;
     }
-
-  fputs_filtered (local_decimal_format_prefix (), stream);
 
   /* Ok, we have an unknown number of bytes of data to be printed in
    * decimal.
@@ -837,8 +681,6 @@ print_decimal_chars (struct ui_file *stream, unsigned char *valaddr,
       fprintf_filtered (stream, "%1d", digits[i]);
     }
   xfree (digits);
-
-  fputs_filtered (local_decimal_format_suffix (), stream);
 }
 
 /* VALADDR points to an integer of LEN bytes.  Print it in hex on stream.  */
@@ -850,7 +692,7 @@ print_hex_chars (struct ui_file *stream, unsigned char *valaddr, unsigned len)
 
   /* FIXME: We should be not printing leading zeroes in most cases.  */
 
-  fputs_filtered (local_hex_format_prefix (), stream);
+  fputs_filtered ("0x", stream);
   if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
     {
       for (p = valaddr;
@@ -869,7 +711,6 @@ print_hex_chars (struct ui_file *stream, unsigned char *valaddr, unsigned len)
 	  fprintf_filtered (stream, "%02x", *p);
 	}
     }
-  fputs_filtered (local_hex_format_suffix (), stream);
 }
 
 /* VALADDR points to a char integer of LEN bytes.  Print it out in appropriate language form on stream.  
@@ -1359,21 +1200,21 @@ _initialize_valprint (void)
   add_alias_cmd ("p", "print", no_class, 1, &showlist);
   add_alias_cmd ("pr", "print", no_class, 1, &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("elements", no_class, var_uinteger, (char *) &print_max,
 		  "Set limit on string chars or array elements to print.\n\
 \"set print elements 0\" causes there to be no limit.",
 		  &setprintlist),
      &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("null-stop", no_class, var_boolean,
 		  (char *) &stop_print_at_null,
 		  "Set printing of char arrays to stop at first null char.",
 		  &setprintlist),
      &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("repeats", no_class, var_uinteger,
 		  (char *) &repeat_count_threshold,
 		  "Set threshold for repeated print elements.\n\
@@ -1381,27 +1222,27 @@ _initialize_valprint (void)
 		  &setprintlist),
      &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("pretty", class_support, var_boolean,
 		  (char *) &prettyprint_structs,
 		  "Set prettyprinting of structures.",
 		  &setprintlist),
      &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("union", class_support, var_boolean, (char *) &unionprint,
 		  "Set printing of unions interior to structures.",
 		  &setprintlist),
      &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("array", class_support, var_boolean,
 		  (char *) &prettyprint_arrays,
 		  "Set prettyprinting of arrays.",
 		  &setprintlist),
      &showprintlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("address", class_support, var_boolean, (char *) &addressprint,
 		  "Set printing of addresses.",
 		  &setprintlist),
@@ -1411,21 +1252,21 @@ _initialize_valprint (void)
 		   (char *) &input_radix,
 		   "Set default input radix for entering numbers.",
 		   &setlist);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
   set_cmd_sfunc (c, set_input_radix);
 
   c = add_set_cmd ("output-radix", class_support, var_uinteger,
 		   (char *) &output_radix,
 		   "Set default output radix for printing of values.",
 		   &setlist);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
   set_cmd_sfunc (c, set_output_radix);
 
-  /* The "set radix" and "show radix" commands are special in that they are
-     like normal set and show commands but allow two normally independent
-     variables to be either set or shown with a single command.  So the
-     usual add_set_cmd() and add_show_from_set() commands aren't really
-     appropriate. */
+  /* The "set radix" and "show radix" commands are special in that
+     they are like normal set and show commands but allow two normally
+     independent variables to be either set or shown with a single
+     command.  So the usual deprecated_add_set_cmd() and
+     add_show_from_set() commands aren't really appropriate. */
   add_cmd ("radix", class_support, set_radix,
 	   "Set default input and output number radices.\n\
 Use 'set input-radix' or 'set output-radix' to independently set each.\n\

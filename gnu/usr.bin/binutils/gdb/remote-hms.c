@@ -119,7 +119,7 @@ init_hms_cmds (void)
   hms_cmds.getreg.term_cmd = "\003";	/* getreg.term_cmd */
   hms_cmds.dump_registers = "r\r";	/* dump_registers */
   hms_cmds.register_pattern = "\\(\\w+\\)=\\([0-9a-fA-F]+\\)";	/* register_pattern */
-  hms_cmds.supply_register = hms_supply_register;	/* supply_register */
+  hms_cmds.supply_register = hms_supply_register;
   hms_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   hms_cmds.load = "tl\r";	/* download command */
   hms_cmds.loadresp = NULL;	/* load response */

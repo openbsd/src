@@ -38,9 +38,6 @@
 #include "gdb_string.h"
 #include <errno.h>
 
-/* Flag indicating target was compiled by HP compiler */
-extern int hp_som_som_object_present;
-
 static void cp_type_print_method_args (struct type *mtype, char *prefix,
 				       char *varstring, int staticp,
 				       struct ui_file *stream);
@@ -1078,7 +1075,7 @@ c_type_print_base (struct type *type, struct ui_file *stream, int show,
     case TYPE_CODE_ENUM:
       c_type_print_modifier (type, stream, 0, 1);
       /* HP C supports sized enums */
-      if (hp_som_som_object_present)
+      if (deprecated_hp_som_som_object_present)
 	switch (TYPE_LENGTH (type))
 	  {
 	  case 1:

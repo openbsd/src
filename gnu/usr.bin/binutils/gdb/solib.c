@@ -42,6 +42,7 @@
 #include "filenames.h"		/* for DOSish file names */
 #include "exec.h"
 #include "solist.h"
+#include "observer.h"
 #include "readline/readline.h"
 
 /* external data declarations */
@@ -156,15 +157,15 @@ solib_open (char *in_pathname, char **found_pathname)
   
   /* If not found, search the solib_search_path (if any).  */
   if (found_file < 0 && solib_search_path != NULL)
-    found_file = openp (solib_search_path,
-			1, in_pathname, O_RDONLY, 0, &temp_pathname);
+    found_file = openp (solib_search_path, OPF_TRY_CWD_FIRST,
+			in_pathname, O_RDONLY, 0, &temp_pathname);
   
   /* If not found, next search the solib_search_path (if any) for the basename
      only (ignoring the path).  This is to allow reading solibs from a path
      that differs from the opened path.  */
   if (found_file < 0 && solib_search_path != NULL)
-    found_file = openp (solib_search_path, 
-                        1, lbasename (in_pathname), O_RDONLY, 0,
+    found_file = openp (solib_search_path, OPF_TRY_CWD_FIRST,
+                        lbasename (in_pathname), O_RDONLY, 0,
                         &temp_pathname);
 
   /* If not found, try to use target supplied solib search method */
@@ -175,13 +176,15 @@ solib_open (char *in_pathname, char **found_pathname)
   /* If not found, next search the inferior's $PATH environment variable. */
   if (found_file < 0 && solib_absolute_prefix == NULL)
     found_file = openp (get_in_environ (inferior_environ, "PATH"),
-			1, in_pathname, O_RDONLY, 0, &temp_pathname);
+			OPF_TRY_CWD_FIRST, in_pathname, O_RDONLY, 0,
+			&temp_pathname);
 
   /* If not found, next search the inferior's $LD_LIBRARY_PATH 
      environment variable. */
   if (found_file < 0 && solib_absolute_prefix == NULL)
     found_file = openp (get_in_environ (inferior_environ, "LD_LIBRARY_PATH"),
-			1, in_pathname, O_RDONLY, 0, &temp_pathname);
+			OPF_TRY_CWD_FIRST, in_pathname, O_RDONLY, 0,
+			&temp_pathname);
 
   /* Done.  If not found, tough luck.  Return found_file and 
      (optionally) found_pathname.  */
@@ -333,6 +336,14 @@ free_so (struct so_list *so)
 }
 
 
+/* Return address of first so_list entry in master shared object list.  */
+struct so_list *
+master_so_list (void)
+{
+  return so_list_head;
+}
+
+
 /* A small stub to get us past the arg-passing pinhole of catch_errors.  */
 
 static int
@@ -468,6 +479,10 @@ update_solib_list (int from_tty, struct target_ops *target)
       /* If it's not on the inferior's list, remove it from GDB's tables.  */
       else
 	{
+	  /* Notify any observer that the SO has been unloaded
+	     before we remove it from the gdb tables.  */
+	  observer_notify_solib_unloaded (gdb);
+
 	  *gdb_link = gdb->next;
 
 	  /* Unless the user loaded it explicitly, free SO's objfile.  */
@@ -630,18 +645,11 @@ info_sharedlibrary_command (char *ignore, int from_tty)
   struct so_list *so = NULL;	/* link map state variable */
   int header_done = 0;
   int addr_width;
-  char *addr_fmt;
 
   if (TARGET_PTR_BIT == 32)
-    {
-      addr_width = 8 + 4;
-      addr_fmt = "08l";
-    }
+    addr_width = 8 + 4;
   else if (TARGET_PTR_BIT == 64)
-    {
-      addr_width = 16 + 4;
-      addr_fmt = "016l";
-    }
+    addr_width = 16 + 4;
   else
     {
       internal_error (__FILE__, __LINE__,
@@ -665,15 +673,15 @@ info_sharedlibrary_command (char *ignore, int from_tty)
 
 	  printf_unfiltered ("%-*s", addr_width,
 			     so->textsection != NULL 
-			       ? local_hex_string_custom (
+			       ? hex_string_custom (
 			           (LONGEST) so->textsection->addr,
-	                           addr_fmt)
+	                           addr_width - 4)
 			       : "");
 	  printf_unfiltered ("%-*s", addr_width,
 			     so->textsection != NULL 
-			       ? local_hex_string_custom (
+			       ? hex_string_custom (
 			           (LONGEST) so->textsection->endaddr,
-	                           addr_fmt)
+	                           addr_width - 4)
 			       : "");
 	  printf_unfiltered ("%-12s", so->symbols_loaded ? "Yes" : "No");
 	  printf_unfiltered ("%s\n", so->so_name);
@@ -877,7 +885,7 @@ _initialize_solib (void)
   add_com ("nosharedlibrary", class_files, no_shared_libraries,
 	   "Unload all shared object library symbols.");
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("auto-solib-add", class_support, var_boolean,
 		  (char *) &auto_solib_add,
 		  "Set autoloading of shared library symbols.\n\
@@ -893,7 +901,7 @@ inferior.  Otherwise, symbols must be loaded manually, using `sharedlibrary'.",
 		   "Set prefix for loading absolute shared library symbol files.\n\
 For other (relative) files, you can add values using `set solib-search-path'.",
 		   &setlist);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
   set_cmd_cfunc (c, reload_shared_libraries);
   set_cmd_completer (c, filename_completer);
 
@@ -906,7 +914,7 @@ For other (relative) files, you can add values using `set solib-search-path'.",
 		   "Set the search path for loading non-absolute shared library symbol files.\n\
 This takes precedence over the environment variables PATH and LD_LIBRARY_PATH.",
 		   &setlist);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
   set_cmd_cfunc (c, reload_shared_libraries);
   set_cmd_completer (c, filename_completer);
 }

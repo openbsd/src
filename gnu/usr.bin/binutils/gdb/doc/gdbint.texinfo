@@ -1,7 +1,7 @@
 \input texinfo   @c -*- texinfo -*-
 @setfilename gdbint.info
 @include gdb-cfg.texi
-@dircategory Programming & development tools.
+@dircategory Software development
 @direntry
 * Gdb-Internals: (gdbint).	The GNU debugger's internals.
 @end direntry
@@ -38,7 +38,7 @@ Free Documentation License''.
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.5 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.6 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Solutions\par
 \hfill \manvers\par
@@ -84,6 +84,7 @@ as the mechanisms that adapt @value{GDBN} to specific hosts and targets.
 * Support Libraries::
 * Coding::
 * Porting GDB::
+* Versions and Branches::
 * Releasing GDB::
 * Testsuite::
 * Hints::
@@ -476,9 +477,10 @@ no other code touches these values, the implementations of the above
 two macros can use them for their internal purposes.
 
 @findex target_stopped_data_address
-@item target_stopped_data_address ()
-If the inferior has some watchpoint that triggered, return the address
-associated with that watchpoint.  Otherwise, return zero.
+@item target_stopped_data_address (@var{addr_p})
+If the inferior has some watchpoint that triggered, place the address
+associated with the watchpoint at the location pointed to by
+@var{addr_p} and return non-zero.  Otherwise, return zero.
 
 @findex HAVE_STEPPABLE_WATCHPOINT
 @item HAVE_STEPPABLE_WATCHPOINT
@@ -598,14 +600,24 @@ less than 4, the number of debug registers available to x86
 processors.
 
 @findex i386_stopped_data_address
-@item i386_stopped_data_address (void)
-The macros @code{STOPPED_BY_WATCHPOINT} and
-@code{target_stopped_data_address} are set to call this function.  The
-argument passed to @code{STOPPED_BY_WATCHPOINT} is ignored.  This
+@item i386_stopped_data_address (@var{addr_p})
+The target function
+@code{target_stopped_data_address} is set to call this function.
+This
 function examines the breakpoint condition bits in the DR6 Debug
 Status register, as returned by the @code{I386_DR_LOW_GET_STATUS}
 macro, and returns the address associated with the first bit that is
 set in DR6.
+
+@findex i386_stopped_by_watchpoint
+@item i386_stopped_by_watchpoint (void)
+The macro @code{STOPPED_BY_WATCHPOINT}
+is set to call this function.  The
+argument passed to @code{STOPPED_BY_WATCHPOINT} is ignored.  This
+function examines the breakpoint condition bits in the DR6 Debug
+Status register, as returned by the @code{I386_DR_LOW_GET_STATUS}
+macro, and returns true if any bit is set.  Otherwise, false is
+returned.
 
 @findex i386_insert_watchpoint
 @findex i386_remove_watchpoint
@@ -654,7 +666,7 @@ register.
 @item i386_stopped_by_hwbp (void)
 This function returns non-zero if the inferior has some watchpoint or
 hardware breakpoint that triggered.  It works like
-@code{i386_stopped_data_address}, except that it doesn't return the
+@code{i386_stopped_data_address}, except that it doesn't record the
 address whose watchpoint triggered.
 
 @findex i386_cleanup_dregs
@@ -1372,7 +1384,7 @@ Finally, here's an example of printing an address.  The original code:
 @smallexample
   annotate_field (4);
   printf_filtered ("%s ",
-        local_hex_string_custom ((unsigned long) b->address, "08l"));
+        hex_string_custom ((unsigned long) b->address, 8));
 @end smallexample
 
 It became:
@@ -2134,9 +2146,6 @@ The default name of @value{GDBN}'s initialization file (normally
 @item NO_STD_REGS
 This macro is deprecated.
 
-@item NO_SYS_FILE
-Define this if your system does not have a @code{<sys/file.h>}.
-
 @item SIGWINCH_HANDLER
 If your host defines @code{SIGWINCH}, you can define this to be the name
 of a function to be called if @code{SIGWINCH} is received.
@@ -2168,18 +2177,8 @@ The default value of the prompt string (normally @code{"(gdb) "}).
 @cindex terminal device
 The name of the generic TTY device, defaults to @code{"/dev/tty"}.
 
-@item FCLOSE_PROVIDED
-Define this if the system declares @code{fclose} in the headers included
-in @code{defs.h}.  This isn't needed unless your compiler is unusually
-anal.
-
 @item FOPEN_RB
 Define this if binary files are opened the same way as text files.
-
-@item GETENV_PROVIDED
-Define this if the system declares @code{getenv} in its headers included
-in @code{defs.h}.  This isn't needed unless your compiler is unusually
-anal.
 
 @item HAVE_MMAP
 @findex mmap
@@ -2251,10 +2250,6 @@ of functions to indicate that they never return.  The default is already
 set correctly if compiling with GCC.  This will almost never need to be
 defined.
 
-@item NO_SIGINTERRUPT
-@findex siginterrupt
-Define this to indicate that @code{siginterrupt} is not available.
-
 @item SEEK_CUR
 @itemx SEEK_SET
 Define these to appropriate value for the system @code{lseek}, if not already
@@ -2263,11 +2258,6 @@ defined.
 @item STOP_SIGNAL
 This is the signal for stopping @value{GDBN}.  Defaults to
 @code{SIGTSTP}.  (Only redefined for the Convex.)
-
-@item USE_O_NOCTTY
-Define this if the interior's tty should be opened with the @code{O_NOCTTY}
-flag.  (FIXME: This should be a native-only flag, but @file{inflow.c} is
-always linked in.)
 
 @item USG
 Means that System V (prior to SVR4) include files are in use.  (FIXME:
@@ -2930,12 +2920,6 @@ Define if the compiler promotes a @code{short} or @code{char}
 parameter to an @code{int}, but still reports the parameter as its
 original type, rather than the promoted type.
 
-@item BELIEVE_PCC_PROMOTION_TYPE
-@findex BELIEVE_PCC_PROMOTION_TYPE
-Define this if @value{GDBN} should believe the type of a @code{short}
-argument when compiled by @code{pcc}, but look within a full int space to get
-its value.  Only defined for Sun-3 at present.
-
 @item BITS_BIG_ENDIAN
 @findex BITS_BIG_ENDIAN
 Define this if the numbering of bits in the targets does @strong{not} match the
@@ -3041,35 +3025,6 @@ Since the adjustment of a breakpoint may significantly alter a user's
 expectation, @value{GDBN} prints a warning when an adjusted breakpoint
 is initially set and each time that that breakpoint is hit.
 
-@item DEPRECATED_CALL_DUMMY_WORDS
-@findex DEPRECATED_CALL_DUMMY_WORDS
-Pointer to an array of @code{LONGEST} words of data containing
-host-byte-ordered @code{DEPRECATED_REGISTER_SIZE} sized values that
-partially specify the sequence of instructions needed for an inferior
-function call.
-
-Should be deprecated in favor of a macro that uses target-byte-ordered
-data.
-
-This method has been replaced by @code{push_dummy_code}
-(@pxref{push_dummy_code}).
-
-@item DEPRECATED_SIZEOF_CALL_DUMMY_WORDS
-@findex DEPRECATED_SIZEOF_CALL_DUMMY_WORDS
-The size of @code{DEPRECATED_CALL_DUMMY_WORDS}.  This must return a
-positive value.  See also @code{DEPRECATED_CALL_DUMMY_LENGTH}.
-
-This method has been replaced by @code{push_dummy_code}
-(@pxref{push_dummy_code}).
-
-@item CALL_DUMMY
-@findex CALL_DUMMY
-A static initializer for @code{DEPRECATED_CALL_DUMMY_WORDS}.
-Deprecated.
-
-This method has been replaced by @code{push_dummy_code}
-(@pxref{push_dummy_code}).
-
 @item CALL_DUMMY_LOCATION
 @findex CALL_DUMMY_LOCATION
 See the file @file{inferior.h}.
@@ -3089,15 +3044,6 @@ A C expression that should be nonzero if @var{regno} should not be
 written to the target.  This is often the case for program counters,
 status words, and other special registers.  If this is not defined,
 @value{GDBN} will assume that all registers may be written.
-
-@item DO_DEFERRED_STORES
-@itemx CLEAR_DEFERRED_STORES
-@findex CLEAR_DEFERRED_STORES
-@findex DO_DEFERRED_STORES
-Define this to execute any deferred stores of registers into the inferior,
-and to cancel any deferred stores.
-
-Currently only implemented correctly for native Sparc configurations?
 
 @item int CONVERT_REGISTER_P(@var{regnum})
 @findex CONVERT_REGISTER_P
@@ -3308,20 +3254,20 @@ function end symbol is 0.  For such targets, you must define
 @code{FUNCTION_EPILOGUE_SIZE} to expand into the standard size of a
 function's epilogue.
 
-@item FUNCTION_START_OFFSET
-@findex FUNCTION_START_OFFSET
+@item DEPRECATED_FUNCTION_START_OFFSET
+@findex DEPRECATED_FUNCTION_START_OFFSET
 An integer, giving the offset in bytes from a function's address (as
 used in the values of symbols, function pointers, etc.), and the
 function's first genuine instruction.
 
 This is zero on almost all machines: the function's address is usually
-the address of its first instruction.  However, on the VAX, for example,
-each function starts with two bytes containing a bitmask indicating
-which registers to save upon entry to the function.  The VAX @code{call}
-instructions check this value, and save the appropriate registers
-automatically.  Thus, since the offset from the function's address to
-its first instruction is two bytes, @code{FUNCTION_START_OFFSET} would
-be 2 on the VAX.
+the address of its first instruction.  However, on the VAX, for
+example, each function starts with two bytes containing a bitmask
+indicating which registers to save upon entry to the function.  The
+VAX @code{call} instructions check this value, and save the
+appropriate registers automatically.  Thus, since the offset from the
+function's address to its first instruction is two bytes,
+@code{DEPRECATED_FUNCTION_START_OFFSET} would be 2 on the VAX.
 
 @item GCC_COMPILED_FLAG_SYMBOL
 @itemx GCC2_COMPILED_FLAG_SYMBOL
@@ -3411,10 +3357,10 @@ The epilogue of a function is defined as the part of a function where
 the stack frame of the function already has been destroyed up to the
 final `return from function call' instruction.
 
-@item SIGTRAMP_START (@var{pc})
-@findex SIGTRAMP_START
-@itemx SIGTRAMP_END (@var{pc})
-@findex SIGTRAMP_END
+@item DEPRECATED_SIGTRAMP_START (@var{pc})
+@findex DEPRECATED_SIGTRAMP_START
+@itemx DEPRECATED_SIGTRAMP_END (@var{pc})
+@findex DEPRECATED_SIGTRAMP_END
 Define these to be the start and end address of the @code{sigtramp} for the
 given @var{pc}.  On machines where the address is just a compile time
 constant, the macro expansion will typically just ignore the supplied
@@ -3551,43 +3497,6 @@ form.
 Return the appropriate register set for a core file section with name
 @var{sect_name} and size @var{sect_size}.
 
-
-@item RETURN_VALUE_ON_STACK(@var{type})
-@findex RETURN_VALUE_ON_STACK
-@cindex returning structures by value
-@cindex structures, returning by value
-
-Return non-zero if values of type TYPE are returned on the stack, using
-the ``struct convention'' (i.e., the caller provides a pointer to a
-buffer in which the callee should store the return value).  This
-controls how the @samp{finish} command finds a function's return value,
-and whether an inferior function call reserves space on the stack for
-the return value.
-
-The full logic @value{GDBN} uses here is kind of odd.  
-
-@itemize @bullet
-@item
-If the type being returned by value is not a structure, union, or array,
-and @code{RETURN_VALUE_ON_STACK} returns zero, then @value{GDBN}
-concludes the value is not returned using the struct convention.
-
-@item
-Otherwise, @value{GDBN} calls @code{USE_STRUCT_CONVENTION} (see below).
-If that returns non-zero, @value{GDBN} assumes the struct convention is
-in use.
-@end itemize
-
-In other words, to indicate that a given type is returned by value using
-the struct convention, that type must be either a struct, union, array,
-or something @code{RETURN_VALUE_ON_STACK} likes, @emph{and} something
-that @code{USE_STRUCT_CONVENTION} likes.
-
-Note that, in C and C@t{++}, arrays are never returned by value.  In those
-languages, these predicates will always see a pointer type, never an
-array type.  All the references above to arrays being returned by value
-apply only to other languages.
-
 @item SOFTWARE_SINGLE_STEP_P()
 @findex SOFTWARE_SINGLE_STEP_P
 Define this as 1 if the target does not have a hardware single-step
@@ -3631,22 +3540,6 @@ the address.
 and guess the starting and ending addresses of the compilation unit from
 them.
 @end itemize
-
-@item PCC_SOL_BROKEN
-@findex PCC_SOL_BROKEN
-(Used only in the Convex target.)
-
-@item PC_IN_SIGTRAMP (@var{pc}, @var{name})
-@findex PC_IN_SIGTRAMP
-@cindex sigtramp
-The @dfn{sigtramp} is a routine that the kernel calls (which then calls
-the signal handler).  On most machines it is a library routine that is
-linked into the executable.
-
-This function, given a program counter value in @var{pc} and the
-(possibly NULL) name of the function in which that @var{pc} resides,
-returns nonzero if the @var{pc} and/or @var{name} show that we are in
-sigtramp.
 
 @item PC_LOAD_SEGMENT
 @findex PC_LOAD_SEGMENT
@@ -3695,7 +3588,7 @@ definition is only used in generic code when parsing "$ps".)
 If defined, used by @code{frame_pop} to remove a stack frame.  This
 method has been superseeded by generic code.
 
-@item push_dummy_call (@var{gdbarch}, @var{func_addr}, @var{regcache}, @var{pc_addr}, @var{nargs}, @var{args}, @var{sp}, @var{struct_return}, @var{struct_addr})
+@item push_dummy_call (@var{gdbarch}, @var{function}, @var{regcache}, @var{pc_addr}, @var{nargs}, @var{args}, @var{sp}, @var{struct_return}, @var{struct_addr})
 @findex push_dummy_call
 @findex DEPRECATED_PUSH_ARGUMENTS.
 @anchor{push_dummy_call} Define this to push the dummy frame's call to
@@ -3703,13 +3596,15 @@ the inferior function onto the stack.  In addition to pushing
 @var{nargs}, the code should push @var{struct_addr} (when
 @var{struct_return}), and the return address (@var{bp_addr}).
 
+@var{function} is a pointer to a @code{struct value}; on architectures that use
+function descriptors, this contains the function descriptor value.
+
 Returns the updated top-of-stack pointer.
 
 This method replaces @code{DEPRECATED_PUSH_ARGUMENTS}.
 
 @item CORE_ADDR push_dummy_code (@var{gdbarch}, @var{sp}, @var{funaddr}, @var{using_gcc}, @var{args}, @var{nargs}, @var{value_type}, @var{real_pc}, @var{bp_addr})
 @findex push_dummy_code
-@findex DEPRECATED_FIX_CALL_DUMMY
 @anchor{push_dummy_code} Given a stack based call dummy, push the
 instruction sequence (including space for a breakpoint) to which the
 called function should return.
@@ -3722,24 +3617,8 @@ By default, the stack is grown sufficient to hold a frame-aligned
 (@pxref{frame_align}) breakpoint, @var{bp_addr} is set to the address
 reserved for that breakpoint, and @var{real_pc} set to @var{funaddr}.
 
-This method replaces @code{DEPRECATED_CALL_DUMMY_WORDS},
-@code{DEPRECATED_SIZEOF_CALL_DUMMY_WORDS}, @code{CALL_DUMMY},
-@code{CALL_DUMMY_LOCATION}, @code{DEPRECATED_REGISTER_SIZE},
-@code{GDB_TARGET_IS_HPPA},
-@code{DEPRECATED_CALL_DUMMY_BREAKPOINT_OFFSET}, and
-@code{DEPRECATED_FIX_CALL_DUMMY}.
-
-@item DEPRECATED_PUSH_DUMMY_FRAME
-@findex DEPRECATED_PUSH_DUMMY_FRAME
-Used in @samp{call_function_by_hand} to create an artificial stack frame.
-
-@item DEPRECATED_REGISTER_BYTES
-@findex DEPRECATED_REGISTER_BYTES
-The total amount of space needed to store @value{GDBN}'s copy of the
-machine's register state.
-
-This is no longer needed.  @value{GDBN} instead computes the size of the
-register buffer at run-time.
+This method replaces @code{CALL_DUMMY_LOCATION},
+@code{DEPRECATED_REGISTER_SIZE}.
 
 @item REGISTER_NAME(@var{i})
 @findex REGISTER_NAME
@@ -3870,10 +3749,6 @@ value that is to be returned.
 This method has been deprecated in favour of @code{gdbarch_return_value}
 (@pxref{gdbarch_return_value}).
 
-@item SUN_FIXED_LBRAC_BUG
-@findex SUN_FIXED_LBRAC_BUG
-(Used only for Sun-3 and Sun-4 targets.)
-
 @item SYMBOL_RELOADING_DEFAULT
 @findex SYMBOL_RELOADING_DEFAULT
 The default value of the ``symbol-reloading'' variable.  (Never defined in
@@ -3953,9 +3828,9 @@ Number of bits in a short integer; defaults to @code{2 * TARGET_CHAR_BIT}.
 @findex read_sp
 @findex read_fp
 @anchor{TARGET_READ_SP} These change the behavior of @code{read_pc},
-@code{write_pc}, @code{read_sp} and @code{deprecated_read_fp}.  For most
-targets, these may be left undefined.  @value{GDBN} will call the read
-and write register functions with the relevant @code{_REGNUM} argument.
+@code{write_pc}, and @code{read_sp}.  For most targets, these may be
+left undefined.  @value{GDBN} will call the read and write register
+functions with the relevant @code{_REGNUM} argument.
 
 These macros are useful when a target keeps one of these registers in a
 hard to get at place; for example, part in a segment register and part
@@ -3996,8 +3871,8 @@ frame.  The value returned must match the dummy frame stack value
 previously saved using @code{SAVE_DUMMY_FRAME_TOS}.
 @xref{SAVE_DUMMY_FRAME_TOS}.
 
-@item USE_STRUCT_CONVENTION (@var{gcc_p}, @var{type})
-@findex USE_STRUCT_CONVENTION
+@item DEPRECATED_USE_STRUCT_CONVENTION (@var{gcc_p}, @var{type})
+@findex DEPRECATED_USE_STRUCT_CONVENTION
 If defined, this must be an expression that is nonzero if a value of the
 given @var{type} being returned from a function must have space
 allocated for it on the stack.  @var{gcc_p} is true if the function
@@ -4471,10 +4346,6 @@ target systems are the same.  These macros should be defined (or left
 undefined) in @file{nm-@var{system}.h}.
 
 @table @code
-@item ATTACH_DETACH
-@findex ATTACH_DETACH
-If defined, then @value{GDBN} will include support for the @code{attach} and
-@code{detach} commands.
 
 @item CHILD_PREPARE_TO_STORE
 @findex CHILD_PREPARE_TO_STORE
@@ -4492,10 +4363,6 @@ Define this if the native-dependent code will provide its own routines
 @file{@var{host}-nat.c}.  If this symbol is @emph{not} defined, and
 @file{infptrace.c} is included in this configuration, the default
 routines in @file{infptrace.c} are used for these functions.
-
-@item FILES_INFO_HOOK
-@findex FILES_INFO_HOOK
-(Only defined for Convex.)
 
 @item FP0_REGNUM
 @findex FP0_REGNUM
@@ -4527,12 +4394,6 @@ needs to know this so that it can subtract this address from absolute
 addresses in the upage, that are obtained via ptrace or from core files.
 On systems that don't need this value, set it to zero.
 
-@item KERNEL_U_ADDR_BSD
-@findex KERNEL_U_ADDR_BSD
-Define this to cause @value{GDBN} to determine the address of @code{u} at
-runtime, by using Berkeley-style @code{nlist} on the kernel's image in
-the root directory.
-
 @item KERNEL_U_ADDR_HPUX
 @findex KERNEL_U_ADDR_HPUX
 Define this to cause @value{GDBN} to determine the address of @code{u} at
@@ -4549,10 +4410,6 @@ user that another process may be running with the same executable.
 Defines the format for the name of a @file{/proc} device.  Should be
 defined in @file{nm.h} @emph{only} in order to override the default
 definition in @file{procfs.c}.
-
-@item PTRACE_FP_BUG
-@findex PTRACE_FP_BUG
-See @file{mach386-xdep.c}.
 
 @item PTRACE_ARG3_TYPE
 @findex PTRACE_ARG3_TYPE
@@ -4592,10 +4449,6 @@ twice; once when
 the shell execs, and once when the program itself execs.  If the actual
 number of traps is something other than 2, then define this macro to
 expand into the number expected.
-
-@item SVR4_SHARED_LIBS
-@findex SVR4_SHARED_LIBS
-Define this to indicate that SVR4-style shared libraries are in use.
 
 @item USE_PROC_FS
 @findex USE_PROC_FS
@@ -4872,133 +4725,103 @@ functions, since they might never return to your code (they
 @cindex multi-arch data
 @cindex data-pointer, per-architecture/per-module
 
-The multi-arch framework includes a mechanism for adding module specific
-per-architecture data-pointers to the @code{struct gdbarch} architecture
-object.
+The multi-arch framework includes a mechanism for adding module
+specific per-architecture data-pointers to the @code{struct gdbarch}
+architecture object.
 
-A module registers one or more per-architecture data-pointers using the
-function @code{register_gdbarch_data}:
+A module registers one or more per-architecture data-pointers using:
 
-@deftypefun struct gdbarch_data *register_gdbarch_data (gdbarch_data_init_ftype *@var{init})
-
-The @var{init} function is used to obtain an initial value for a
-per-architecture data-pointer.  The function is called, after the
-architecture has been created, when the data-pointer is still
-uninitialized (@code{NULL}) and its value has been requested via a call
-to @code{gdbarch_data}.  A data-pointer can also be initialize
-explicitly using @code{set_gdbarch_data}.
-
-Any memory required by the @var{init} function should be allocated
-using @code{GDBARCH_OBSTACK_ZALLOC}.  That memory is automatically
-released when the corresponding architecture is deleted.
-
-The function @code{register_gdbarch_data} returns a @code{struct
-gdbarch_data} that is used to identify the data-pointer that was added
-to the module.
-
+@deftypefun struct gdbarch_data *gdbarch_data_register_pre_init (gdbarch_data_pre_init_ftype *@var{pre_init})
+@var{pre_init} is used to, on-demand, allocate an initial value for a
+per-architecture data-pointer using the architecture's obstack (passed
+in as a parameter).  Since @var{pre_init} can be called during
+architecture creation, it is not parameterized with the architecture.
+and must not call modules that use per-architecture data.
 @end deftypefun
 
-A typical module has an @code{init} function of the form:
+@deftypefun struct gdbarch_data *gdbarch_data_register_post_init (gdbarch_data_post_init_ftype *@var{post_init})
+@var{post_init} is used to obtain an initial value for a
+per-architecture data-pointer @emph{after}.  Since @var{post_init} is
+always called after architecture creation, it both receives the fully
+initialized architecture and is free to call modules that use
+per-architecture data (care needs to be taken to ensure that those
+other modules do not try to call back to this module as that will
+create in cycles in the initialization call graph).
+@end deftypefun
 
-@smallexample
-struct nozel @{ int total; @};
-static struct gdbarch_data *nozel_handle;
-static void *
-nozel_init (struct gdbarch *gdbarch)
-@{
-  struct nozel *data = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct nozel);
-  @dots{}
-  return data;
-@}
-@end smallexample
-
-Since uninitialized (@code{NULL}) data-pointers are initialized
-on-demand, an @code{init} function is free to call other modules that
-use data-pointers.  Those modules data-pointers will be initialized as
-needed.  Care should be taken to ensure that the @code{init} call graph
-does not contain cycles.
-
-The data-pointer is registered with the call:
-
-@smallexample
-void
-_initialize_nozel (void)
-@{
-  nozel_handle = register_gdbarch_data (nozel_init);
-@dots{}
-@end smallexample
+These functions return a @code{struct gdbarch_data} that is used to
+identify the per-architecture data-pointer added for that module.
 
 The per-architecture data-pointer is accessed using the function:
 
 @deftypefun void *gdbarch_data (struct gdbarch *@var{gdbarch}, struct gdbarch_data *@var{data_handle})
 Given the architecture @var{arch} and module data handle
-@var{data_handle} (returned by @code{register_gdbarch_data}, this
-function returns the current value of the per-architecture data-pointer.
+@var{data_handle} (returned by @code{gdbarch_data_register_pre_init}
+or @code{gdbarch_data_register_post_init}), this function returns the
+current value of the per-architecture data-pointer.  If the data
+pointer is @code{NULL}, it is first initialized by calling the
+corresponding @var{pre_init} or @var{post_init} method.
 @end deftypefun
 
-The non-@code{NULL} data-pointer returned by @code{gdbarch_data} should
-be saved in a local variable and then used directly:
+The examples below assume the following definitions:
 
 @smallexample
-int
-nozel_total (struct gdbarch *gdbarch)
-@{
-  int total;
-  struct nozel *data = gdbarch_data (gdbarch, nozel_handle);
-  @dots{}
-  return total;
-@}
+struct nozel @{ int total; @};
+static struct gdbarch_data *nozel_handle;
 @end smallexample
 
-It is also possible to directly initialize the data-pointer using:
+A module can extend the architecture vector, adding additional
+per-architecture data, using the @var{pre_init} method.  The module's
+per-architecture data is then initialized during architecture
+creation.
 
-@deftypefun void set_gdbarch_data (struct gdbarch *@var{gdbarch}, struct gdbarch_data *@var{handle}, void *@var{pointer})
-Set the still @code{NULL} data-pointer corresponding to @var{handle}
-to the non-@code{NULL} @var{pointer} value.
-@end deftypefun
-
-This function is used by modules that require a mechanism for explicitly
-setting the per-architecture data-pointer during architecture creation:
+In the below, the module's per-architecture @emph{nozel} is added.  An
+architecture can specify its nozel by calling @code{set_gdbarch_nozel}
+from @code{gdbarch_init}.
 
 @smallexample
-/* Always return a non-NULL nozel.  */
-static struct nozel *
-gdbarch_nozel (struct gdbarch *gdbarch)
+static void *
+nozel_pre_init (struct obstack *obstack)
 @{
-  struct nozel *nozel = gdbarch_data (gdbarch, nozel_handle);
-  if (nozel == NULL)
-    @{
-      nozel = nozel_init (gdbarch);
-      set_gdbarch_data (gdbarch, nozel_handle, nozel);
-    @}
-  return nozel;
+  struct nozel *data = OBSTACK_ZALLOC (obstack, struct nozel);
+  return data;
 @}
 @end smallexample
 
 @smallexample
-/* Called during architecture creation.  */
 extern void
 set_gdbarch_nozel (struct gdbarch *gdbarch, int total)
 @{
-  struct nozel *data = gdbarch_nozel (gdbarch);
-  @dots{}
-  data->total = total;
+  struct nozel *data = gdbarch_data (gdbarch, nozel_handle);
+  data->total = nozel;
+@}
+@end smallexample
+
+A module can on-demand create architecture dependant data structures
+using @code{post_init}.
+
+In the below, the nozel's total is computed on-demand by
+@code{nozel_post_init} using information obtained from the
+architecture.
+
+@smallexample
+static void *
+nozel_post_init (struct gdbarch *gdbarch)
+@{
+  struct nozel *data = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct nozel);
+  nozel->total = gdbarch@dots{} (gdbarch);
+  return data;
 @}
 @end smallexample
 
 @smallexample
-void
-_initialize_nozel (void)
+extern int
+nozel_total (struct gdbarch *gdbarch)
 @{
-  nozel_handle = register_gdbarch_data (nozel_init);
-  @dots{}
+  struct nozel *data = gdbarch_data (gdbarch, nozel_handle);
+  return data->total;
+@}
 @end smallexample
-
-@noindent
-Note that an @code{init} function still needs to be registered.  It is
-used to initialize the data-pointer when the architecture creation phase
-fail to set an initial value.
-
 
 @section Wrapping Output Lines
 @cindex line wrap in output
@@ -5079,7 +4902,7 @@ allocation of small temporary values (such as strings).
 restrict the memory being allocated to no more than a few kilobytes.}
 
 @value{GDBN} uses the string function @code{xstrdup} and the print
-function @code{xasprintf}.
+function @code{xstrprintf}.
 
 @emph{Pragmatics: @code{asprintf} and @code{strdup} can fail.  Print
 functions such as @code{sprintf} are very prone to buffer overflow
@@ -5557,109 +5380,198 @@ target-dependent @file{.h} and @file{.c} files used for your
 configuration.
 @end itemize
 
-@node Releasing GDB
+@node Versions and Branches
+@chapter Versions and Branches
 
-@chapter Releasing @value{GDBN}
-@cindex making a new release of gdb
+@section Versions
 
-@section Versions and Branches
-
-@subsection Version Identifiers
-
-@value{GDBN}'s version is determined by the file @file{gdb/version.in}.
-
-@value{GDBN}'s mainline uses ISO dates to differentiate between
-versions.  The CVS repository uses @var{YYYY}-@var{MM}-@var{DD}-cvs
-while the corresponding snapshot uses @var{YYYYMMDD}.
-
-@value{GDBN}'s release branch uses a slightly more complicated scheme.
-When the branch is first cut, the mainline version identifier is
-prefixed with the @var{major}.@var{minor} from of the previous release
-series but with .90 appended.  As draft releases are drawn from the
-branch, the minor minor number (.90) is incremented.  Once the first
-release (@var{M}.@var{N}) has been made, the version prefix is updated
-to @var{M}.@var{N}.0.90 (dot zero, dot ninety).  Follow on releases have
-an incremented minor minor version number (.0).
-
-Using 5.1 (previous) and 5.2 (current), the example below illustrates a
-typical sequence of version identifiers:
+@value{GDBN}'s version is determined by the file
+@file{gdb/version.in} and takes one of the following forms:
 
 @table @asis
-@item 5.1.1
-final release from previous branch
-@item 2002-03-03-cvs
-main-line the day the branch is cut
-@item 5.1.90-2002-03-03-cvs
-corresponding branch version
-@item 5.1.91
-first draft release candidate
-@item 5.1.91-2002-03-17-cvs
-updated branch version
-@item 5.1.92
-second draft release candidate
-@item 5.1.92-2002-03-31-cvs
-updated branch version
-@item 5.1.93
-final release candidate (see below)
-@item 5.2
-official release
-@item 5.2.0.90-2002-04-07-cvs
-updated CVS branch version
-@item 5.2.1
-second official release
+@item @var{major}.@var{minor}
+@itemx @var{major}.@var{minor}.@var{patchlevel}
+an official release (e.g., 6.0 or 6.0.1)
+@item @var{major}.@var{minor}.@var{patchlevel}_@var{YYYY}@var{MM}@var{DD}
+a snapshot (e.g., 6.0.50_20020630)
+@item @var{major}.@var{minor}.@var{patchlevel}_@var{YYYY}-@var{MM}-@var{DD}-cvs
+a @sc{cvs} check out (e.g., 6.0.90_2004-02-30-cvs)
+@item @var{major}.@var{minor}.@var{patchlevel}_@var{YYYY}@var{MM}@var{DD} (@var{vendor})
+a vendor specific release of @value{GDBN}, that while based on@*
+@var{major}.@var{minor}.@var{patchlevel}_@var{YYYY}@var{MM}@var{DD},
+may contain additional changes
 @end table
 
-Notes:
+@value{GDBN}'s mainline uses the @var{major} and @var{minor} version
+numbers from the most recent release branch, with a @var{patchlevel}
+of 50.  As each new release branch is created, the mainline
+@var{major} and @var{minor} version numbers are accordingly updated.
 
-@itemize @bullet
-@item
-Minor minor minor draft release candidates such as 5.2.0.91 have been
-omitted from the example.  Such release candidates are, typically, never
-made.
-@item
-For 5.1.93 the bziped tar ball @file{gdb-5.1.93.tar.bz2} is just the
-official @file{gdb-5.2.tar} renamed and compressed.
-@end itemize
+@value{GDBN}'s release branch uses a similar, but slightly more
+complicated scheme.  When the branch is first cut, the mainline's
+@var{patchlevel} is changed to .90.  As draft releases are drawn from
+the branch, the @var{patchlevel} is incremented.  Once the first
+release (@var{major}.@var{minor}) has been made, the version prefix is
+updated to @var{major}.@var{minor}.0.90.  Follow on releases have an
+incremented @var{patchlevel}.
+
+If the previous @value{GDBN} version is 6.1 and the current version is
+6.2, then, substituting 6 for @var{major} and 1 or 2 for @var{minor},
+here's an illustration of a typical sequence:
+
+@smallexample
+     <HEAD>
+        |
+6.1.50_2002-03-02-cvs
+        |
+        +---------------------------.
+        |                    <gdb_6_2-branch>
+        |                           |
+6.2.50_2002-03-03-cvs        6.1.90 (draft #1)
+        |                           |
+6.2.50_2002-03-04-cvs        6.1.90_2002-03-04-cvs
+        |                           |
+6.2.50_2002-03-05-cvs        6.1.91 (draft #2)
+        |                           |
+6.2.50_2002-03-06-cvs        6.1.91_2002-03-06-cvs
+        |                           |
+6.2.50_2002-03-07-cvs        6.2 (release)
+        |                          |
+6.2.50_2002-03-08-cvs        6.2.0.90_2002-03-08-cvs
+        |                          |
+6.2.50_2002-03-09-cvs        6.2.1 (update)
+        |                           |
+6.2.50_2002-03-10-cvs         <branch closed>
+        |
+6.2.50_2002-03-11-cvs
+        |
+        +---------------------------.
+        |                     <gdb_6_3-branch>
+        |                           |
+6.3.50_2002-03-12-cvs        6.2.90 (draft #1)
+        |                           |
+@end smallexample
+
+@section Release Branches
+@cindex Release Branches
+
+@value{GDBN} draws a release series (6.2, 6.2.1, @dots{}) from a
+single release branch, and identifies that branch using the @sc{cvs}
+branch tags:
+
+@smallexample
+gdb_@var{major}_@var{minor}-@var{YYYY}@var{MM}@var{DD}-branchpoint
+gdb_@var{major}_@var{minor}-branch
+gdb_@var{major}_@var{minor}-@var{YYYY}@var{MM}@var{DD}-release
+@end smallexample
+
+@emph{Pragmatics: To help identify the date at which a branch or
+release is made, both the branchpoint and release tags include the
+date that they are cut (@var{YYYY}@var{MM}@var{DD}) in the tag.  The
+branch tag, denoting the head of the branch, does not need this.}
+
+@section Vendor Branches
+@cindex vendor branches
 
 To avoid version conflicts, vendors are expected to modify the file
 @file{gdb/version.in} to include a vendor unique alphabetic identifier
 (an official @value{GDBN} release never uses alphabetic characters in
-its version identifer).
+its version identifer).  E.g., @samp{6.2widgit2}, or @samp{6.2 (Widgit
+Inc Patch 2)}.
 
-Since @value{GDBN} does not make minor minor minor releases (e.g.,
-5.1.0.1) the conflict between that and a minor minor draft release
-identifier (e.g., 5.1.0.90) is avoided.
+@section Experimental Branches
+@cindex experimental branches
 
+@subsection Guidelines
 
-@subsection Branches
+@value{GDBN} permits the creation of branches, cut from the @sc{cvs}
+repository, for experimental development.  Branches make it possible
+for developers to share preliminary work, and maintainers to examine
+significant new developments.
 
-@value{GDBN} draws a release series (5.2, 5.2.1, @dots{}) from a single
-release branch (gdb_5_2-branch).  Since minor minor minor releases
-(5.1.0.1) are not made, the need to branch the release branch is avoided
-(it also turns out that the effort required for such a a branch and
-release is significantly greater than the effort needed to create a new
-release from the head of the release branch).
+The following are a set of guidelines for creating such branches:
 
-Releases 5.0 and 5.1 used branch and release tags of the form:
+@table @emph
 
+@item a branch has an owner
+The owner can set further policy for a branch, but may not change the
+ground rules.  In particular, they can set a policy for commits (be it
+adding more reviewers or deciding who can commit).
+
+@item all commits are posted
+All changes committed to a branch shall also be posted to
+@email{gdb-patches@@sources.redhat.com, the @value{GDBN} patches
+mailing list}.  While commentary on such changes are encouraged, people
+should remember that the changes only apply to a branch.
+
+@item all commits are covered by an assignment
+This ensures that all changes belong to the Free Software Foundation,
+and avoids the possibility that the branch may become contaminated.
+
+@item a branch is focused
+A focused branch has a single objective or goal, and does not contain
+unnecessary or irrelevant changes.  Cleanups, where identified, being
+be pushed into the mainline as soon as possible.
+
+@item a branch tracks mainline
+This keeps the level of divergence under control.  It also keeps the
+pressure on developers to push cleanups and other stuff into the
+mainline.
+
+@item a branch shall contain the entire @value{GDBN} module
+The @value{GDBN} module @code{gdb} should be specified when creating a
+branch (branches of individual files should be avoided).  @xref{Tags}.
+
+@item a branch shall be branded using @file{version.in}
+The file @file{gdb/version.in} shall be modified so that it identifies
+the branch @var{owner} and branch @var{name}, e.g.,
+@samp{6.2.50_20030303_owner_name} or @samp{6.2 (Owner Name)}.
+
+@end table
+
+@subsection Tags
+@anchor{Tags}
+
+To simplify the identification of @value{GDBN} branches, the following
+branch tagging convention is strongly recommended:
+
+@table @code
+
+@item @var{owner}_@var{name}-@var{YYYYMMDD}-branchpoint
+@itemx @var{owner}_@var{name}-@var{YYYYMMDD}-branch
+The branch point and corresponding branch tag.  @var{YYYYMMDD} is the
+date that the branch was created.  A branch is created using the
+sequence: @anchor{experimental branch tags}
 @smallexample
-gdb_N_M-YYYY-MM-DD-branchpoint
-gdb_N_M-YYYY-MM-DD-branch
-gdb_M_N-YYYY-MM-DD-release
+cvs rtag @var{owner}_@var{name}-@var{YYYYMMDD}-branchpoint gdb
+cvs rtag -b -r @var{owner}_@var{name}-@var{YYYYMMDD}-branchpoint \
+   @var{owner}_@var{name}-@var{YYYYMMDD}-branch gdb
 @end smallexample
 
-Release 5.2 is trialing the branch and release tags:
-
+@item @var{owner}_@var{name}-@var{yyyymmdd}-mergepoint
+The tagged point, on the mainline, that was used when merging the branch
+on @var{yyyymmdd}.  To merge in all changes since the branch was cut,
+use a command sequence like:
 @smallexample
-gdb_N_M-YYYY-MM-DD-branchpoint
-gdb_N_M-branch
-gdb_M_N-YYYY-MM-DD-release
+cvs rtag @var{owner}_@var{name}-@var{yyyymmdd}-mergepoint gdb
+cvs update \
+   -j@var{owner}_@var{name}-@var{YYYYMMDD}-branchpoint
+   -j@var{owner}_@var{name}-@var{yyyymmdd}-mergepoint
 @end smallexample
+@noindent
+Similar sequences can be used to just merge in changes since the last
+merge.
 
-@emph{Pragmatics: The branchpoint and release tags need to identify when
-a branch and release are made.  The branch tag, denoting the head of the
-branch, does not have this criteria.}
+@end table
 
+@noindent
+For further information on @sc{cvs}, see
+@uref{http://www.gnu.org/software/cvs/, Concurrent Versions System}.
+ 
+@node Releasing GDB
+
+@chapter Releasing @value{GDBN}
+@cindex making a new release of gdb
 
 @section Branch Commit Policy
 
@@ -6459,6 +6371,15 @@ failure, please add a test case for it.  Some cases are extremely
 difficult to test, such as code that handles host OS failures or bugs
 in particular versions of compilers, and it's OK not to try to write
 tests for all of those.
+
+DejaGNU supports separate build, host, and target machines.  However,
+some @value{GDBN} test scripts do not work if the build machine and
+the host machine are not the same.  In such an environment, these scripts
+will give a result of ``UNRESOLVED'', like this:
+
+@smallexample
+UNRESOLVED: gdb.base/example.exp: This test script does not work on a remote host.
+@end smallexample
 
 @section Testsuite Organization
 

@@ -37,16 +37,14 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include "gdbcore.h"
-#include "value.h"		/* For supply_register.  */
+#include "value.h"
 #include "regcache.h"
 
 /* These are needed on various systems to expand REGISTER_U_ADDR.  */
-#ifndef USG
 #include "gdb_dirent.h"
 #include <sys/file.h>
 #include "gdb_stat.h"
 #include <sys/user.h>
-#endif
 
 #ifndef CORE_REGISTER_ADDR
 #define CORE_REGISTER_ADDR(regno, regptr) register_addr(regno, regptr)
@@ -99,7 +97,7 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size, int which,
 	  && bad_reg < 0)
 	bad_reg = regno;
       else
-	supply_register (regno, core_reg_sect + addr);
+	regcache_raw_supply (current_regcache, regno, core_reg_sect + addr);
     }
 
   if (bad_reg >= 0)
@@ -142,5 +140,5 @@ static struct core_fns aout_core_fns =
 void
 _initialize_core_aout (void)
 {
-  add_core_fns (&aout_core_fns);
+  deprecated_add_core_fns (&aout_core_fns);
 }

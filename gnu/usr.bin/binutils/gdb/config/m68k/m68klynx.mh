@@ -1,6 +1,0 @@
-# OBSOLETE # Host: Motorola 680x0 running LynxOS
-# OBSOLETE 
-# OBSOLETE XM_CLIBS= -lbsd
-# OBSOLETE 
-# OBSOLETE NAT_FILE= nm-m68klynx.h
-# OBSOLETE NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o lynx-nat.o

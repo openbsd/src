@@ -11,8 +11,8 @@
  */
 
 /*
- * RCS $Revision: 1.2 $
- * Checkin $Date: 2004/05/21 20:23:36 $
+ * RCS $Revision: 1.3 $
+ * Checkin $Date: 2004/12/27 14:00:54 $
  */
 
 /* Minor points of uncertainty are indicated by a question mark in the

@@ -27,45 +27,25 @@
 struct regset;
 struct regcache;
 
-/* Register set description.  */
-
-/* FIXME: kettenis/20040418: There is nothing OpenBSD-specific about
-   this structure; it was written to be as general as possible.  This
-   stuff should probably be moved to ppc-tdep.h.  */
-
-struct ppc_reg_offsets
-{
-  /* General-purpose registers.  */
-  int r0_offset;
-  int pc_offset;
-  int ps_offset;
-  int cr_offset;
-  int lr_offset;
-  int ctr_offset;
-  int xer_offset;
-  int mq_offset;
-
-  /* Floating-point registers.  */
-  int f0_offset;
-  int fpscr_offset;
-
-  /* AltiVec registers.  */
-  int vr0_offset;
-  int vscr_offset;
-  int vrsave_offset;
-};
-
-
-/* Register offsets for OpenBSD/macppc.  */
+/* Register offsets for OpenBSD/powerpc.  */
 extern struct ppc_reg_offsets ppcobsd_reg_offsets;
 
-/* Register sets for OpenBSD/macppc.  */
+/* Register sets for OpenBSD/powerpc.  */
 extern struct regset ppcobsd_gregset;
 
+
+/* Supply register REGNUM in the general-purpose register set REGSET
+   from the buffer specified by GREGS and LEN to register cache
+   REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
 
 extern void ppcobsd_supply_gregset (const struct regset *regset,
 				    struct regcache *regcache, int regnum,
 				    const void *gregs, size_t len);
+
+/* Collect register REGNUM in the general-purpose register set
+   REGSET. from register cache REGCACHE into the buffer specified by
+   GREGS and LEN.  If REGNUM is -1, do this for all registers in
+   REGSET.  */
 
 extern void ppcobsd_collect_gregset (const struct regset *regset,
 				     const struct regcache *regcache,

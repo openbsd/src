@@ -114,7 +114,7 @@ fetch_inferior_registers (int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't get registers");
 
       m68kbsd_supply_gregset (current_regcache, &regs);
@@ -125,7 +125,7 @@ fetch_inferior_registers (int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't get floating point status");
 
       m68kbsd_supply_fpregset (current_regcache, &fpregs);
@@ -143,13 +143,13 @@ store_inferior_registers (int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+                  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name ("Couldn't get registers");
 
       m68kbsd_collect_gregset (current_regcache, &regs, regnum);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	          (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+	          (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name ("Couldn't write registers");
     }
 
@@ -158,13 +158,13 @@ store_inferior_registers (int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't get floating point status");
 
       m68kbsd_collect_fpregset (current_regcache, &fpregs, regnum);
 
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't write floating point status");
     }
 }

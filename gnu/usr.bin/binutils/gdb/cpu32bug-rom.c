@@ -142,7 +142,7 @@ init_cpu32bug_cmds (void)
   cpu32bug_cmds.getreg.term_cmd = NULL;		/* getreg.term_cmd */
   cpu32bug_cmds.dump_registers = "rd\r";	/* dump_registers */
   cpu32bug_cmds.register_pattern = "\\(\\w+\\) +=\\([0-9a-fA-F]+\\b\\)";	/* register_pattern */
-  cpu32bug_cmds.supply_register = cpu32bug_supply_register;	/* supply_register */
+  cpu32bug_cmds.supply_register = cpu32bug_supply_register;
   cpu32bug_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   cpu32bug_cmds.load = "lo\r";	/* download command */
   cpu32bug_cmds.loadresp = "\n";	/* load response */

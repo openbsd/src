@@ -20,4 +20,3 @@
 
 #include "rs6000/nm-rs6000.h"
 
-#define PTRACE_ARG3_TYPE int*

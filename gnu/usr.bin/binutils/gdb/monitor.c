@@ -153,7 +153,7 @@ static void monitor_debug (const char *fmt, ...) ATTR_FORMAT(printf, 1, 2);
 static int monitor_debug_p = 0;
 
 /* NOTE: This file alternates between monitor_debug_p and remote_debug
-   when determining if debug information is printed.  Perhaphs this
+   when determining if debug information is printed.  Perhaps this
    could be simplified. */
 
 static void
@@ -921,9 +921,9 @@ monitor_supply_register (int regno, char *valstr)
 
   /* supply register stores in target byte order, so swap here */
 
-  store_unsigned_integer (regbuf, DEPRECATED_REGISTER_RAW_SIZE (regno), val);
+  store_unsigned_integer (regbuf, register_size (current_gdbarch, regno), val);
 
-  supply_register (regno, regbuf);
+  regcache_raw_supply (current_regcache, regno, regbuf);
 
   return p;
 }
@@ -1184,7 +1184,7 @@ monitor_fetch_register (int regno)
   if (!name || (*name == '\0'))
     {
       monitor_debug ("No register known for %d\n", regno);
-      supply_register (regno, zerobuf);
+      regcache_raw_supply (current_regcache, regno, zerobuf);
       return;
     }
 
@@ -1227,7 +1227,7 @@ monitor_fetch_register (int regno)
      spaces, but stop reading if something else is seen.  Some monitors
      like to drop leading zeros.  */
 
-  for (i = 0; i < DEPRECATED_REGISTER_RAW_SIZE (regno) * 2; i++)
+  for (i = 0; i < register_size (current_gdbarch, regno) * 2; i++)
     {
       int c;
       c = readchar (timeout);
@@ -1344,7 +1344,7 @@ monitor_store_register (int regno)
 
   val = read_register (regno);
   monitor_debug ("MON storeg %d %s\n", regno,
-		 phex (val, DEPRECATED_REGISTER_RAW_SIZE (regno)));
+		 phex (val, register_size (current_gdbarch, regno)));
 
   /* send the register deposit command */
 
@@ -2011,7 +2011,8 @@ monitor_kill (void)
    the program at that point.  */
 
 static void
-monitor_create_inferior (char *exec_file, char *args, char **env)
+monitor_create_inferior (char *exec_file, char *args, char **env,
+			 int from_tty)
 {
   if (args && (*args != '\000'))
     error ("Args are not supported by the monitor.");
@@ -2255,7 +2256,7 @@ init_base_monitor_ops (void)
   monitor_ops.to_fetch_registers = monitor_fetch_registers;
   monitor_ops.to_store_registers = monitor_store_registers;
   monitor_ops.to_prepare_to_store = monitor_prepare_to_store;
-  monitor_ops.to_xfer_memory = monitor_xfer_memory;
+  monitor_ops.deprecated_xfer_memory = monitor_xfer_memory;
   monitor_ops.to_files_info = monitor_files_info;
   monitor_ops.to_insert_breakpoint = monitor_insert_breakpoint;
   monitor_ops.to_remove_breakpoint = monitor_remove_breakpoint;
@@ -2293,14 +2294,15 @@ void
 _initialize_remote_monitors (void)
 {
   init_base_monitor_ops ();
-  add_show_from_set (add_set_cmd ("hash", no_class, var_boolean,
-				  (char *) &hashmark,
-				  "Set display of activity while downloading a file.\n\
+  deprecated_add_show_from_set
+    (add_set_cmd ("hash", no_class, var_boolean,
+		  (char *) &hashmark,
+		  "Set display of activity while downloading a file.\n\
 When enabled, a hashmark \'#\' is displayed.",
-				  &setlist),
-		     &showlist);
+		  &setlist),
+     &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("monitor", no_class, var_zinteger,
 		  (char *) &monitor_debug_p,
 		  "Set debugging of remote monitor communication.\n\

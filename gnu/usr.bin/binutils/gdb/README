@@ -1,5 +1,5 @@
-		     README for gdb-6.1 release
-		Updated 29 February, 2004 by Andrew Cagney
+		     README for gdb-6.3 release
+		Updated 8, November, 2004 by Andrew Cagney
 
 This is GDB, the GNU source-level debugger.
 
@@ -20,7 +20,7 @@ Unpacking and Installation -- quick overview
    In this release, the GDB debugger sources, the generic GNU include
 files, the BFD ("binary file description") library, the readline
 library, and other libraries all have directories of their own
-underneath the gdb-6.1 directory.  The idea is that a variety of GNU
+underneath the gdb-6.3 directory.  The idea is that a variety of GNU
 tools can share a common copy of these things.  Be aware of variation
 over time--for example don't try to build gdb with a copy of bfd from
 a release other than the gdb release (such as a binutils release),
@@ -29,22 +29,21 @@ Configuration scripts and makefiles exist to cruise up and down this
 directory tree and automatically build all the pieces in the right
 order.
 
-   When you unpack the gdb-6.1.tar.gz file, you'll find a directory
-called `gdb-6.1', which contains:
+   When you unpack the gdb-6.3.tar.gz file, you'll find a directory
+called `gdb-6.3', which contains:
 
-  COPYING       config.sub    intl         missing         opcodes
-  COPYING.LIB   configure     libiberty    mkinstalldirs   readline
-  Makefile.in   configure.in  libtool.m4   mmalloc         sim
-  README        djunpack.bat  ltcf-c.sh    move-if-change  symlink-tree
-  bfd           etc           ltcf-cxx.sh  mpw-README      texinfo
-  config        gdb           ltcf-gcj.sh  mpw-build.in    utils
-  config-ml.in  gettext.m4    ltconfig     mpw-config.in   ylwrap
-  config.guess  include       ltmain.sh    mpw-configure
-  config.if     install-sh    md5.sum      mpw-install
+  COPYING       config-ml.in  gdb          ltcf-gcj.sh     readline
+  COPYING.LIB   config.guess  gettext.m4   ltconfig        sim
+  Makefile.def  config.if     include      ltmain.sh       src-release
+  Makefile.in   config.sub    install-sh   md5.sum         symlink-tree
+  Makefile.tpl  configure     libiberty    missing         texinfo
+  README        configure.in  libtool.m4   mkinstalldirs   ylwrap
+  bfd           djunpack.bat  ltcf-c.sh    move-if-change
+  config        etc           ltcf-cxx.sh  opcodes
 
 You can build GDB right in the source directory:
 
-      cd gdb-6.1
+      cd gdb-6.3
       ./configure
       make
       cp gdb/gdb /usr/local/bin/gdb	(or wherever you want)
@@ -58,25 +57,25 @@ You can build GDB in any empty build directory:
 
       mkdir build
       cd build
-      <full path to your sources>/gdb-6.1/configure
+      <full path to your sources>/gdb-6.3/configure
       make
       cp gdb/gdb /usr/local/bin/gdb	(or wherever you want)
 
 (Building GDB with DJGPP tools for MS-DOS/MS-Windows is slightly
-different; see the file gdb-6.1/gdb/config/djgpp/README for details.)
+different; see the file gdb-6.3/gdb/config/djgpp/README for details.)
 
    This will configure and build all the libraries as well as GDB.  If
 `configure' can't determine your system type, specify one as its
 argument, e.g., `./configure sun4' or `./configure decstation'.
 
-   Make sure that your 'configure' line ends in 'gdb-6.1/configure':
+   Make sure that your 'configure' line ends in 'gdb-6.3/configure':
 
-      /berman/migchain/source/gdb-6.1/configure      # RIGHT
-      /berman/migchain/source/gdb-6.1/gdb/configure  # WRONG
+      /berman/migchain/source/gdb-6.3/configure      # RIGHT
+      /berman/migchain/source/gdb-6.3/gdb/configure  # WRONG
 
    The gdb package contains several subdirectories, such as 'gdb',
 'bfd', and 'readline'.  If your 'configure' line ends in
-'gdb-6.1/gdb/configure', then you are configuring only the gdb
+'gdb-6.3/gdb/configure', then you are configuring only the gdb
 subdirectory, not the whole gdb package.  This leads to build errors
 such as:
 
@@ -107,7 +106,7 @@ documentation and TeX (or `texi2roff') to typeset the printed version.
 
    GDB includes an already formatted copy of the on-line Info version
 of this manual in the `gdb/doc' subdirectory.  The main Info file is
-`gdb-6.1/gdb/doc/gdb.info', and it refers to subordinate files
+`gdb-6.3/gdb/doc/gdb.info', and it refers to subordinate files
 matching `gdb.info*' in the same directory.  If necessary, you can
 print out these files, or read them with any editor; but they are
 easier to read using the `info' subsystem in GNU Emacs or the
@@ -119,7 +118,7 @@ Info formatting programs, such as `texinfo-format-buffer' or
 `makeinfo'.
 
    If you have `makeinfo' installed, and are in the top level GDB
-source directory (`gdb-6.1', in the case of version 6.1), you can make
+source directory (`gdb-6.3', in the case of version 6.3), you can make
 the Info file by typing:
 
       cd gdb/doc
@@ -128,7 +127,7 @@ the Info file by typing:
    If you want to typeset and print copies of this manual, you need
 TeX, a program to print its DVI output files, and `texinfo.tex', the
 Texinfo definitions file.  This file is included in the GDB
-distribution, in the directory `gdb-6.1/texinfo'.
+distribution, in the directory `gdb-6.3/texinfo'.
 
    TeX is a typesetting program; it does not print files directly, but
 produces output files called DVI files.  To print a typeset document,
@@ -142,11 +141,11 @@ without any extension or a `.dvi' extension.
 This file tells TeX how to typeset a document written in Texinfo
 format.  On its own, TeX cannot read, much less typeset a Texinfo file.
  `texinfo.tex' is distributed with GDB and is located in the
-`gdb-6.1/texinfo' directory.
+`gdb-6.3/texinfo' directory.
 
    If you have TeX and a DVI printer program installed, you can typeset
 and print this manual.  First switch to the the `gdb' subdirectory of
-the main source directory (for example, to `gdb-6.1/gdb') and then type:
+the main source directory (for example, to `gdb-6.3/gdb') and then type:
 
       make doc/gdb.dvi
 
@@ -169,56 +168,45 @@ preparing GDB for installation; you can then use `make' to build the
 a single directory, whose name is usually composed by appending the
 version number to `gdb'.
 
-   For example, the GDB version 6.1 distribution is in the `gdb-6.1'
+   For example, the GDB version 6.3 distribution is in the `gdb-6.3'
 directory.  That directory contains:
 
-`gdb-6.1/{COPYING,COPYING.LIB}'
+`gdb-6.3/{COPYING,COPYING.LIB}'
      Standard GNU license files.  Please read them.
 
-`gdb-6.1/bfd'
+`gdb-6.3/bfd'
      source for the Binary File Descriptor library
 
-`gdb-6.1/config*'
+`gdb-6.3/config*'
      script for configuring GDB, along with other support files
 
-`gdb-6.1/gdb'
+`gdb-6.3/gdb'
      the source specific to GDB itself
 
-`gdb-6.1/include'
+`gdb-6.3/include'
      GNU include files
 
-`gdb-6.1/libiberty'
+`gdb-6.3/libiberty'
      source for the `-liberty' free software library
 
-`gdb-6.1/mmalloc'
-     source for the GNU memory-mapped malloc package
-
-`gdb-6.1/opcodes'
+`gdb-6.3/opcodes'
      source for the library of opcode tables and disassemblers
 
-`gdb-6.1/readline'
+`gdb-6.3/readline'
      source for the GNU command-line interface
      NOTE:  The readline library is compiled for use by GDB, but will
      not be installed on your system when "make install" is issued.
 
-`gdb-6.1/sim'
+`gdb-6.3/sim'
      source for some simulators (ARM, D10V, SPARC, M32R, MIPS, PPC, V850, etc)
 
-`gdb-6.1/intl'
-     source for the GNU gettext library, for internationalization.
-     This is slightly modified from the standalone gettext
-     distribution you can get from GNU.
-
-`gdb-6.1/texinfo'
+`gdb-6.3/texinfo'
      The `texinfo.tex' file, which you need in order to make a printed
      manual using TeX.
 
-`gdb-6.1/etc'
+`gdb-6.3/etc'
      Coding standards, useful files for editing GDB, and other
      miscellanea.
-
-`gdb-6.1/utils'
-     A grab bag of random utilities.
 
    Note: the following instructions are for building GDB on Unix or
 Unix-like systems.  Instructions for building with DJGPP for
@@ -226,14 +214,14 @@ MS-DOS/MS-Windows are in the file gdb/config/djgpp/README.
 
    The simplest way to configure and build GDB is to run `configure'
 from the `gdb-VERSION-NUMBER' source directory, which in this example
-is the `gdb-6.1' directory.
+is the `gdb-6.3' directory.
 
    First switch to the `gdb-VERSION-NUMBER' source directory if you are
 not already in it; then run `configure'.
 
    For example:
 
-      cd gdb-6.1
+      cd gdb-6.3
       ./configure
       make
 
@@ -249,8 +237,8 @@ you may need to run `sh' on it explicitly:
       sh configure
 
    If you run `configure' from a directory that contains source
-directories for multiple libraries or programs, such as the `gdb-6.1'
-source directory for version 6.1, `configure' creates configuration
+directories for multiple libraries or programs, such as the `gdb-6.3'
+source directory for version 6.3, `configure' creates configuration
 files for every directory level underneath (unless you tell it not to,
 with the `--norecursion' option).
 
@@ -258,10 +246,10 @@ with the `--norecursion' option).
 directories in the GDB distribution, if you only want to configure that
 subdirectory; but be sure to specify a path to it.
 
-   For example, with version 6.1, type the following to configure only
+   For example, with version 6.3, type the following to configure only
 the `bfd' subdirectory:
 
-      cd gdb-6.1/bfd
+      cd gdb-6.3/bfd
       ../configure
 
    You can install `gdb' anywhere; it has no hardwired paths. However,
@@ -290,13 +278,13 @@ directory.  If the path to `configure' would be the same as the
 argument to `--srcdir', you can leave out the `--srcdir' option; it
 will be assumed.)
 
-   For example, with version 6.1, you can build GDB in a separate
+   For example, with version 6.3, you can build GDB in a separate
 directory for a Sun 4 like this:
 
-     cd gdb-6.1
+     cd gdb-6.3
      mkdir ../gdb-sun4
      cd ../gdb-sun4
-     ../gdb-6.1/configure
+     ../gdb-6.3/configure
      make
 
    When `configure' builds a configuration using a remote source
@@ -317,8 +305,8 @@ called `configure' (or one of its subdirectories).
 
    The `Makefile' that `configure' generates in each source directory
 also runs recursively.  If you type `make' in a source directory such
-as `gdb-6.1' (or in a separate configured directory configured with
-`--srcdir=PATH/gdb-6.1'), you will build all the required libraries,
+as `gdb-6.3' (or in a separate configured directory configured with
+`--srcdir=PATH/gdb-6.3'), you will build all the required libraries,
 and then build GDB.
 
    When you have multiple hosts or targets configured in separate
@@ -361,7 +349,7 @@ you can use it to test your guesses on abbreviations--for example:
      Invalid configuration `i786v': machine `i786v' not recognized
 
 `config.sub' is also distributed in the GDB source directory
-(`gdb-6.1', for version 6.1).
+(`gdb-6.3', for version 6.3).
 
 
 `configure' options
@@ -491,7 +479,7 @@ As an alternative, the bug report can be submitted, via e-mail, to the
 address "bug-gdb@gnu.org".
 
    When submitting a bug, please include the GDB version number (e.g.,
-gdb-6.1), and how you configured it (e.g., "sun4" or "mach386 host,
+gdb-6.3), and how you configured it (e.g., "sun4" or "mach386 host,
 i586-intel-synopsys target").  Since GDB now supports so many
 different configurations, it is important that you be precise about
 this.  If at all possible, you should include the actual banner that
@@ -546,17 +534,17 @@ ftp://sources.redhat.com/pub/dejagnu/ will contain a recent snapshot.
 Once DejaGNU is installed, you can run the tests in one of the
 following ways:
 
-  (1)	cd gdb-6.1
+  (1)	cd gdb-6.3
 	make check-gdb
 
 or
 
-  (2)	cd gdb-6.1/gdb
+  (2)	cd gdb-6.3/gdb
 	make check
 
 or
 
-  (3)	cd gdb-6.1/gdb/testsuite
+  (3)	cd gdb-6.3/gdb/testsuite
 	make site.exp	(builds the site specific file)
 	runtest -tool gdb GDB=../gdb    (or GDB=<somepath> as appropriate)
 

@@ -578,131 +578,6 @@ binop_result_type (struct value *v1, struct value *v2)
 }
 
 #endif /* 0 */
-
-
-/* This page contains functions that return format strings for
-   printf for printing out numbers in different formats */
-
-/* Returns the appropriate printf format for hexadecimal
-   numbers. */
-char *
-local_hex_format_custom (char *pre)
-{
-  static char form[50];
-
-  strcpy (form, local_hex_format_prefix ());
-  strcat (form, "%");
-  strcat (form, pre);
-  strcat (form, local_hex_format_specifier ());
-  strcat (form, local_hex_format_suffix ());
-  return form;
-}
-
-/* Converts a LONGEST to custom hexadecimal and stores it in a static
-   string.  Returns a pointer to this string. */
-char *
-local_hex_string (LONGEST num)
-{
-  return local_hex_string_custom (num, "l");
-}
-
-/* Converts a LONGEST number to custom hexadecimal and stores it in a static
-   string.  Returns a pointer to this string. Note that the width parameter
-   should end with "l", e.g. "08l" as with calls to local_hex_string_custom */
-
-char *
-local_hex_string_custom (LONGEST num, char *width)
-{
-#define RESULT_BUF_LEN 50
-  static char res2[RESULT_BUF_LEN];
-  char format[RESULT_BUF_LEN];
-  int field_width;
-  int num_len;
-  int num_pad_chars;
-  char *pad_char;		/* string with one character */
-  int pad_on_left;
-  char *parse_ptr;
-  char temp_nbr_buf[RESULT_BUF_LEN];
-
-  /* Use phex_nz to print the number into a string, then
-     build the result string from local_hex_format_prefix, padding and 
-     the hex representation as indicated by "width".  */
-  strcpy (temp_nbr_buf, phex_nz (num, sizeof (num)));
-  /* parse width */
-  parse_ptr = width;
-  pad_on_left = 1;
-  pad_char = " ";
-  if (*parse_ptr == '-')
-    {
-      parse_ptr++;
-      pad_on_left = 0;
-    }
-  if (*parse_ptr == '0')
-    {
-      parse_ptr++;
-      if (pad_on_left)
-	pad_char = "0";		/* If padding is on the right, it is blank */
-    }
-  field_width = atoi (parse_ptr);
-  num_len = strlen (temp_nbr_buf);
-  num_pad_chars = field_width - strlen (temp_nbr_buf);	/* possibly negative */
-
-  if (strlen (local_hex_format_prefix ()) + num_len + num_pad_chars
-      >= RESULT_BUF_LEN)		/* paranoia */
-    internal_error (__FILE__, __LINE__,
-		    "local_hex_string_custom: insufficient space to store result");
-
-  strcpy (res2, local_hex_format_prefix ());
-  if (pad_on_left)
-    {
-      while (num_pad_chars > 0)
-	{
-	  strcat (res2, pad_char);
-	  num_pad_chars--;
-	}
-    }
-  strcat (res2, temp_nbr_buf);
-  if (!pad_on_left)
-    {
-      while (num_pad_chars > 0)
-	{
-	  strcat (res2, pad_char);
-	  num_pad_chars--;
-	}
-    }
-  return res2;
-
-}				/* local_hex_string_custom */
-
-/* Returns the appropriate printf format for octal
-   numbers. */
-char *
-local_octal_format_custom (char *pre)
-{
-  static char form[50];
-
-  strcpy (form, local_octal_format_prefix ());
-  strcat (form, "%");
-  strcat (form, pre);
-  strcat (form, local_octal_format_specifier ());
-  strcat (form, local_octal_format_suffix ());
-  return form;
-}
-
-/* Returns the appropriate printf format for decimal numbers. */
-char *
-local_decimal_format_custom (char *pre)
-{
-  static char form[50];
-
-  strcpy (form, local_decimal_format_prefix ());
-  strcat (form, "%");
-  strcat (form, pre);
-  strcat (form, local_decimal_format_specifier ());
-  strcat (form, local_decimal_format_suffix ());
-  return form;
-}
-
 #if 0
 /* This page contains functions that are used in type/range checking.
    They all return zero if the type/range check fails.
@@ -1176,6 +1051,16 @@ language_demangle (const struct language_defn *current_language,
   return NULL;
 }
 
+/* Return class name from physname or NULL.  */
+char *
+language_class_name_from_physname (const struct language_defn *current_language,
+				   const char *physname)
+{
+  if (current_language != NULL && current_language->la_class_name_from_physname)
+    return current_language->la_class_name_from_physname (physname);
+  return NULL;
+}
+
 /* Return the default string containing the list of characters
    delimiting words.  This is a reasonable default value that
    most languages should be able to use.  */
@@ -1258,27 +1143,38 @@ static char *unk_lang_demangle (const char *mangled, int options)
   return cplus_demangle (mangled, options);
 }
 
-
-static struct type **const (unknown_builtin_types[]) =
+static char *unk_lang_class_name (const char *mangled)
 {
-  0
-};
+  return NULL;
+}
+
 static const struct op_print unk_op_print_tab[] =
 {
   {NULL, OP_NULL, PREC_NULL, 0}
 };
 
+static void
+unknown_language_arch_info (struct gdbarch *gdbarch,
+			    struct language_arch_info *lai)
+{
+  lai->string_char_type = builtin_type (gdbarch)->builtin_char;
+  lai->primitive_type_vector = GDBARCH_OBSTACK_CALLOC (gdbarch, 1,
+						       struct type *);
+}
+
 const struct language_defn unknown_language_defn =
 {
   "unknown",
   language_unknown,
-  &unknown_builtin_types[0],
+  NULL,
   range_check_off,
   type_check_off,
+  array_row_major,
   case_sensitive_on,
   &exp_descriptor_standard,
   unk_lang_parser,
   unk_lang_error,
+  null_post_parser,
   unk_lang_printchar,		/* Print character constant */
   unk_lang_printstr,
   unk_lang_emit_char,
@@ -1291,15 +1187,13 @@ const struct language_defn unknown_language_defn =
   basic_lookup_symbol_nonlocal, /* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   unk_lang_demangle,		/* Language specific symbol demangler */
-  {"", "", "", ""},		/* Binary format info */
-  {"0%lo", "0", "o", ""},	/* Octal format info */
-  {"%ld", "", "d", ""},		/* Decimal format info */
-  {"0x%lx", "0x", "x", ""},	/* Hex format info */
+  unk_lang_class_name,		/* Language specific class_name_from_physname */
   unk_op_print_tab,		/* expression operators for printing */
   1,				/* c-style arrays */
   0,				/* String lower bound */
-  &builtin_type_char,		/* Type of string elements */
+  NULL,
   default_word_break_characters,
+  unknown_language_arch_info,	/* la_language_arch_info.  */
   LANG_MAGIC
 };
 
@@ -1308,13 +1202,15 @@ const struct language_defn auto_language_defn =
 {
   "auto",
   language_auto,
-  &unknown_builtin_types[0],
+  NULL,
   range_check_off,
   type_check_off,
+  array_row_major,
   case_sensitive_on,
   &exp_descriptor_standard,
   unk_lang_parser,
   unk_lang_error,
+  null_post_parser,
   unk_lang_printchar,		/* Print character constant */
   unk_lang_printstr,
   unk_lang_emit_char,
@@ -1327,15 +1223,13 @@ const struct language_defn auto_language_defn =
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   unk_lang_demangle,		/* Language specific symbol demangler */
-  {"", "", "", ""},		/* Binary format info */
-  {"0%lo", "0", "o", ""},	/* Octal format info */
-  {"%ld", "", "d", ""},		/* Decimal format info */
-  {"0x%lx", "0x", "x", ""},	/* Hex format info */
+  unk_lang_class_name,		/* Language specific class_name_from_physname */
   unk_op_print_tab,		/* expression operators for printing */
   1,				/* c-style arrays */
   0,				/* String lower bound */
-  &builtin_type_char,		/* Type of string elements */
+  NULL,
   default_word_break_characters,
+  unknown_language_arch_info,	/* la_language_arch_info.  */
   LANG_MAGIC
 };
 
@@ -1343,13 +1237,15 @@ const struct language_defn local_language_defn =
 {
   "local",
   language_auto,
-  &unknown_builtin_types[0],
+  NULL,
   range_check_off,
   type_check_off,
   case_sensitive_on,
+  array_row_major,
   &exp_descriptor_standard,
   unk_lang_parser,
   unk_lang_error,
+  null_post_parser,
   unk_lang_printchar,		/* Print character constant */
   unk_lang_printstr,
   unk_lang_emit_char,
@@ -1362,18 +1258,86 @@ const struct language_defn local_language_defn =
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   unk_lang_demangle,		/* Language specific symbol demangler */
-  {"", "", "", ""},		/* Binary format info */
-  {"0%lo", "0", "o", ""},	/* Octal format info */
-  {"%ld", "", "d", ""},		/* Decimal format info */
-  {"0x%lx", "0x", "x", ""},	/* Hex format info */
+  unk_lang_class_name,		/* Language specific class_name_from_physname */
   unk_op_print_tab,		/* expression operators for printing */
   1,				/* c-style arrays */
   0,				/* String lower bound */
-  &builtin_type_char,		/* Type of string elements */
+  NULL,
   default_word_break_characters,
+  unknown_language_arch_info,	/* la_language_arch_info.  */
   LANG_MAGIC
 };
 
+/* Per-architecture language information.  */
+
+static struct gdbarch_data *language_gdbarch_data;
+
+struct language_gdbarch
+{
+  /* A vector of per-language per-architecture info.  Indexed by "enum
+     language".  */
+  struct language_arch_info arch_info[nr_languages];
+};
+
+static void *
+language_gdbarch_post_init (struct gdbarch *gdbarch)
+{
+  struct language_gdbarch *l;
+  int i;
+
+  l = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct language_gdbarch);
+  for (i = 0; i < languages_size; i++)
+    {
+      if (languages[i] != NULL
+	  && languages[i]->la_language_arch_info != NULL)
+	languages[i]->la_language_arch_info
+	  (gdbarch, l->arch_info + languages[i]->la_language);
+    }
+  return l;
+}
+
+struct type *
+language_string_char_type (const struct language_defn *la,
+			   struct gdbarch *gdbarch)
+{
+  struct language_gdbarch *ld = gdbarch_data (gdbarch,
+					      language_gdbarch_data);
+  if (ld->arch_info[la->la_language].string_char_type != NULL)
+    return ld->arch_info[la->la_language].string_char_type;
+  else
+    return (*la->string_char_type);
+}
+
+struct type *
+language_lookup_primitive_type_by_name (const struct language_defn *la,
+					struct gdbarch *gdbarch,
+					const char *name)
+{
+  struct language_gdbarch *ld = gdbarch_data (gdbarch,
+					      language_gdbarch_data);
+  if (ld->arch_info[la->la_language].primitive_type_vector != NULL)
+    {
+      struct type *const *p;
+      for (p = ld->arch_info[la->la_language].primitive_type_vector;
+	   (*p) != NULL;
+	   p++)
+	{
+	  if (strcmp (TYPE_NAME (*p), name) == 0)
+	    return (*p);
+	}
+    }
+  else
+    {
+      struct type **const *p;
+      for (p = current_language->la_builtin_type_vector; *p != NULL; p++)
+	{
+	  if (strcmp (TYPE_NAME (**p), name) == 0)
+	    return (**p);
+	}
+    }
+  return (NULL);
+}
+
 /* Initialize the language routines */
 
 void
@@ -1381,13 +1345,16 @@ _initialize_language (void)
 {
   struct cmd_list_element *set, *show;
 
+  language_gdbarch_data
+    = gdbarch_data_register_post_init (language_gdbarch_post_init);
+
   /* GDB commands for language specific stuff */
 
   set = add_set_cmd ("language", class_support, var_string_noescape,
 		     (char *) &language,
 		     "Set the current source language.",
 		     &setlist);
-  show = add_show_from_set (set, &showlist);
+  show = deprecated_add_show_from_set (set, &showlist);
   set_cmd_cfunc (set, set_language_command);
   set_cmd_cfunc (show, show_language_command);
 
@@ -1407,7 +1374,7 @@ _initialize_language (void)
 		     (char *) &type,
 		     "Set type checking.  (on/warn/off/auto)",
 		     &setchecklist);
-  show = add_show_from_set (set, &showchecklist);
+  show = deprecated_add_show_from_set (set, &showchecklist);
   set_cmd_cfunc (set, set_type_command);
   set_cmd_cfunc (show, show_type_command);
 
@@ -1415,7 +1382,7 @@ _initialize_language (void)
 		     (char *) &range,
 		     "Set range checking.  (on/warn/off/auto)",
 		     &setchecklist);
-  show = add_show_from_set (set, &showchecklist);
+  show = deprecated_add_show_from_set (set, &showchecklist);
   set_cmd_cfunc (set, set_range_command);
   set_cmd_cfunc (show, show_range_command);
 
@@ -1424,7 +1391,7 @@ _initialize_language (void)
                      "Set case sensitivity in name search.  (on/off/auto)\n\
 For Fortran the default is off; for other languages the default is on.",
                      &setlist);
-  show = add_show_from_set (set, &showlist);
+  show = deprecated_add_show_from_set (set, &showlist);
   set_cmd_cfunc (set, set_case_command);
   set_cmd_cfunc (show, show_case_command);
 

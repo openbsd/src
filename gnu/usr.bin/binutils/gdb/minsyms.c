@@ -145,7 +145,15 @@ add_minsym_to_demangled_hash_table (struct minimal_symbol *sym,
    Note:  One instance where there may be duplicate minimal symbols with
    the same name is when the symbol tables for a shared library and the
    symbol tables for an executable contain global symbols with the same
-   names (the dynamic linker deals with the duplication).  */
+   names (the dynamic linker deals with the duplication).
+
+   It's also possible to have minimal symbols with different mangled
+   names, but identical demangled names.  For example, the GNU C++ v3
+   ABI requires the generation of two (or perhaps three) copies of
+   constructor functions --- "in-charge", "not-in-charge", and
+   "allocate" copies; destructors may be duplicated as well.
+   Obviously, there must be distinct mangled names for each of these,
+   but the demangled names are all the same: S::S or S::~S.  */
 
 struct minimal_symbol *
 lookup_minimal_symbol (const char *name, const char *sfile,
@@ -580,26 +588,23 @@ prim_record_minimal_symbol_and_info (const char *name, CORE_ADDR address,
   struct msym_bunch *new;
   struct minimal_symbol *msymbol;
 
-  if (ms_type == mst_file_text)
-    {
-      /* Don't put gcc_compiled, __gnu_compiled_cplus, and friends into
-         the minimal symbols, because if there is also another symbol
-         at the same address (e.g. the first function of the file),
-         lookup_minimal_symbol_by_pc would have no way of getting the
-         right one.  */
-      if (name[0] == 'g'
-	  && (strcmp (name, GCC_COMPILED_FLAG_SYMBOL) == 0
-	      || strcmp (name, GCC2_COMPILED_FLAG_SYMBOL) == 0))
-	return (NULL);
+  /* Don't put gcc_compiled, __gnu_compiled_cplus, and friends into
+     the minimal symbols, because if there is also another symbol
+     at the same address (e.g. the first function of the file),
+     lookup_minimal_symbol_by_pc would have no way of getting the
+     right one.  */
+  if (ms_type == mst_file_text && name[0] == 'g'
+      && (strcmp (name, GCC_COMPILED_FLAG_SYMBOL) == 0
+	  || strcmp (name, GCC2_COMPILED_FLAG_SYMBOL) == 0))
+    return (NULL);
 
-      {
-	const char *tempstring = name;
-	if (tempstring[0] == get_symbol_leading_char (objfile->obfd))
-	  ++tempstring;
-	if (strncmp (tempstring, "__gnu_compiled", 14) == 0)
-	  return (NULL);
-      }
-    }
+  /* It's safe to strip the leading char here once, since the name
+     is also stored stripped in the minimal symbol table. */
+  if (name[0] == get_symbol_leading_char (objfile->obfd))
+    ++name;
+
+  if (ms_type == mst_file_text && strncmp (name, "__gnu_compiled", 14) == 0)
+    return (NULL);
 
   if (msym_bunch_index == BUNCH_SIZE)
     {
@@ -794,7 +799,7 @@ build_minimal_symbol_hash_tables (struct objfile *objfile)
       add_minsym_to_hash_table (msym, objfile->msymbol_hash);
 
       msym->demangled_hash_next = 0;
-      if (SYMBOL_DEMANGLED_NAME (msym) != NULL)
+      if (SYMBOL_SEARCH_NAME (msym) != SYMBOL_LINKAGE_NAME (msym))
 	add_minsym_to_demangled_hash_table (msym,
                                             objfile->msymbol_demangled_hash);
     }
@@ -831,7 +836,6 @@ install_minimal_symbols (struct objfile *objfile)
   struct msym_bunch *bunch;
   struct minimal_symbol *msymbols;
   int alloc_count;
-  char leading_char;
 
   if (msym_count > 0)
     {
@@ -859,18 +863,11 @@ install_minimal_symbols (struct objfile *objfile)
          each bunch is full. */
 
       mcount = objfile->minimal_symbol_count;
-      leading_char = get_symbol_leading_char (objfile->obfd);
 
       for (bunch = msym_bunch; bunch != NULL; bunch = bunch->next)
 	{
 	  for (bindex = 0; bindex < msym_bunch_index; bindex++, mcount++)
-	    {
-	      msymbols[mcount] = bunch->contents[bindex];
-	      if (SYMBOL_LINKAGE_NAME (&msymbols[mcount])[0] == leading_char)
-		{
-		  SYMBOL_LINKAGE_NAME (&msymbols[mcount])++;
-		}
-	    }
+	    msymbols[mcount] = bunch->contents[bindex];
 	  msym_bunch_index = BUNCH_SIZE;
 	}
 

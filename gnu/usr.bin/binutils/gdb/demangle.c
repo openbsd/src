@@ -195,7 +195,7 @@ _initialize_demangler (void)
 			  "Set the current C++ demangling style.\n\
 Use `set demangle-style' without arguments for a list of demangling styles.",
 			  &setlist);
-  show = add_show_from_set (set, &showlist);
+  show = deprecated_add_show_from_set (set, &showlist);
   set_cmd_sfunc (set, set_demangling_command);
 
   /* Set the default demangling style chosen at compilation time. */

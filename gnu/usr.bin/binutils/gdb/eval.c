@@ -37,9 +37,6 @@
 #include "block.h"
 #include "parser-defs.h"
 
-/* Defined in symtab.c */
-extern int hp_som_som_object_present;
-
 /* This is defined in valops.c */
 extern int overload_resolution;
 
@@ -972,7 +969,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	  /* 1997-08-01 Currently we do not support function invocation
 	     via pointers-to-methods with HP aCC. Pointer does not point
 	     to the function, but possibly to some thunk. */
-	  if (hp_som_som_object_present)
+	  if (deprecated_hp_som_som_object_present)
 	    {
 	      error ("Not implemented: function invocation through pointer to method with HP aCC");
 	    }
@@ -1368,7 +1365,7 @@ evaluate_subexp_standard (struct type *expect_type,
       arg2 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
 
       /* With HP aCC, pointers to methods do not point to the function code */
-      if (hp_som_som_object_present &&
+      if (deprecated_hp_som_som_object_present &&
 	  (TYPE_CODE (VALUE_TYPE (arg2)) == TYPE_CODE_PTR) &&
       (TYPE_CODE (TYPE_TARGET_TYPE (VALUE_TYPE (arg2))) == TYPE_CODE_METHOD))
 	error ("Pointers to methods not supported with HP aCC");	/* 1997-08-19 */
@@ -1381,7 +1378,7 @@ evaluate_subexp_standard (struct type *expect_type,
       arg2 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
 
       /* With HP aCC, pointers to methods do not point to the function code */
-      if (hp_som_som_object_present &&
+      if (deprecated_hp_som_som_object_present &&
 	  (TYPE_CODE (VALUE_TYPE (arg2)) == TYPE_CODE_PTR) &&
       (TYPE_CODE (TYPE_TARGET_TYPE (VALUE_TYPE (arg2))) == TYPE_CODE_METHOD))
 	error ("Pointers to methods not supported with HP aCC");	/* 1997-08-19 */
@@ -1391,7 +1388,7 @@ evaluate_subexp_standard (struct type *expect_type,
     handle_pointer_to_member:
       /* HP aCC generates offsets that have bit #29 set; turn it off to get
          a real offset to the member. */
-      if (hp_som_som_object_present)
+      if (deprecated_hp_som_som_object_present)
 	{
 	  if (!mem_offset)	/* no bias -> really null */
 	    error ("Attempted dereference of null pointer-to-member");
@@ -1431,7 +1428,7 @@ evaluate_subexp_standard (struct type *expect_type,
       arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
 
       /* Do special stuff for HP aCC pointers to members */
-      if (hp_som_som_object_present)
+      if (deprecated_hp_som_som_object_present)
 	{
 	  /* 1997-08-19 Can't assign HP aCC pointers to methods. No details of
 	     the implementation yet; but the pointer appears to point to a code
@@ -1613,9 +1610,8 @@ evaluate_subexp_standard (struct type *expect_type,
 
     multi_f77_subscript:
       {
-	int subscript_array[MAX_FORTRAN_DIMS + 1];	/* 1-based array of 
-							   subscripts, max == 7 */
-	int array_size_array[MAX_FORTRAN_DIMS + 1];
+	int subscript_array[MAX_FORTRAN_DIMS];
+	int array_size_array[MAX_FORTRAN_DIMS];
 	int ndimensions = 1, i;
 	struct type *tmp_type;
 	int offset_item;	/* The array offset where the item lives */
@@ -1633,7 +1629,8 @@ evaluate_subexp_standard (struct type *expect_type,
 	   let us actually find out where this element exists in the array. */
 
 	offset_item = 0;
-	for (i = 1; i <= nargs; i++)
+	/* Take array indices left to right */
+	for (i = 0; i < nargs; i++)
 	  {
 	    /* Evaluate each subscript, It must be a legal integer in F77 */
 	    arg2 = evaluate_subexp_with_coercion (exp, pos, noside);
@@ -1641,7 +1638,11 @@ evaluate_subexp_standard (struct type *expect_type,
 	    /* Fill in the subscript and array size arrays */
 
 	    subscript_array[i] = value_as_long (arg2);
+	  }
 
+	/* Internal type of array is arranged right to left */
+	for (i = 0; i < nargs; i++)
+	  {
 	    retcode = f77_get_dynamic_upperbound (tmp_type, &upper);
 	    if (retcode == BOUND_FETCH_ERROR)
 	      error ("Cannot obtain dynamic upper bound");
@@ -1650,11 +1651,11 @@ evaluate_subexp_standard (struct type *expect_type,
 	    if (retcode == BOUND_FETCH_ERROR)
 	      error ("Cannot obtain dynamic lower bound");
 
-	    array_size_array[i] = upper - lower + 1;
+	    array_size_array[nargs - i - 1] = upper - lower + 1;
 
 	    /* Zero-normalize subscripts so that offsetting will work. */
 
-	    subscript_array[i] -= lower;
+	    subscript_array[nargs - i - 1] -= lower;
 
 	    /* If we are at the bottom of a multidimensional 
 	       array type then keep a ptr to the last ARRAY
@@ -1664,17 +1665,17 @@ evaluate_subexp_standard (struct type *expect_type,
 	       of base element type that we apply a simple 
 	       offset to. */
 
-	    if (i < nargs)
+	    if (i < nargs - 1)
 	      tmp_type = check_typedef (TYPE_TARGET_TYPE (tmp_type));
 	  }
 
 	/* Now let us calculate the offset for this item */
 
-	offset_item = subscript_array[ndimensions];
+	offset_item = subscript_array[ndimensions - 1];
 
-	for (i = ndimensions - 1; i >= 1; i--)
+	for (i = ndimensions - 1; i > 0; --i)
 	  offset_item =
-	    array_size_array[i] * offset_item + subscript_array[i];
+	    array_size_array[i - 1] * offset_item + subscript_array[i - 1];
 
 	/* Construct a value node with the value of the offset */
 
@@ -1934,7 +1935,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	{
 	  struct value *retvalp = evaluate_subexp_for_address (exp, pos, noside);
 	  /* If HP aCC object, use bias for pointers to members */
-	  if (hp_som_som_object_present &&
+	  if (deprecated_hp_som_som_object_present &&
 	      (TYPE_CODE (VALUE_TYPE (retvalp)) == TYPE_CODE_PTR) &&
 	      (TYPE_CODE (TYPE_TARGET_TYPE (VALUE_TYPE (retvalp))) == TYPE_CODE_MEMBER))
 	    {

@@ -5,7 +5,7 @@
 @c @setchapternewpage off
 @c %**end of header
 
-@c Revision: $Id: agentexpr.texi,v 1.2 2004/05/21 20:23:27 kettenis Exp $
+@c Revision: $Id: agentexpr.texi,v 1.3 2004/12/27 14:00:51 kettenis Exp $
 
 @node Agent Expressions
 @appendix The GDB Agent Expression Mechanism

@@ -585,7 +585,7 @@ dcache_info (char *exp, int tty)
 void
 _initialize_dcache (void)
 {
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("remotecache", class_support, var_boolean,
 		  (char *) &dcache_enabled_p,
 		  "\

@@ -1,7 +1,7 @@
 /* Remote debugging interface for MIPS remote debugging protocol.
 
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002 Free Software Foundation, Inc.
+   2002, 2003, 2004 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by Ian Lance Taylor
    <ian@cygnus.com>.
@@ -113,8 +113,6 @@ static int mips_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len,
 			     struct target_ops *target);
 
 static void mips_files_info (struct target_ops *ignore);
-
-static void mips_create_inferior (char *execfile, char *args, char **env);
 
 static void mips_mourn_inferior (void);
 
@@ -1588,7 +1586,7 @@ device is attached to the target board (e.g., /dev/ttya).\n"
   flush_cached_frames ();
   registers_changed ();
   stop_pc = read_pc ();
-  print_stack_frame (get_selected_frame (), -1, 1);
+  print_stack_frame (get_selected_frame (), 0, SRC_AND_LOC);
   xfree (serial_port_name);
 }
 
@@ -1759,17 +1757,17 @@ mips_wait (ptid_t ptid, struct target_waitstatus *status)
     {
       char buf[MAX_REGISTER_SIZE];
 
-      store_unsigned_integer (buf, DEPRECATED_REGISTER_RAW_SIZE (PC_REGNUM), rpc);
-      supply_register (PC_REGNUM, buf);
+      store_unsigned_integer (buf, register_size (current_gdbarch, PC_REGNUM), rpc);
+      regcache_raw_supply (current_regcache, PC_REGNUM, buf);
 
-      store_unsigned_integer (buf, DEPRECATED_REGISTER_RAW_SIZE (PC_REGNUM), rfp);
-      supply_register (30, buf);	/* This register they are avoiding and so it is unnamed */
+      store_unsigned_integer (buf, register_size (current_gdbarch, PC_REGNUM), rfp);
+      regcache_raw_supply (current_regcache, 30, buf);	/* This register they are avoiding and so it is unnamed */
 
-      store_unsigned_integer (buf, DEPRECATED_REGISTER_RAW_SIZE (SP_REGNUM), rsp);
-      supply_register (SP_REGNUM, buf);
+      store_unsigned_integer (buf, register_size (current_gdbarch, SP_REGNUM), rsp);
+      regcache_raw_supply (current_regcache, SP_REGNUM, buf);
 
-      store_unsigned_integer (buf, DEPRECATED_REGISTER_RAW_SIZE (DEPRECATED_FP_REGNUM), 0);
-      supply_register (DEPRECATED_FP_REGNUM, buf);
+      store_unsigned_integer (buf, register_size (current_gdbarch, DEPRECATED_FP_REGNUM), 0);
+      regcache_raw_supply (current_regcache, DEPRECATED_FP_REGNUM, buf);
 
       if (nfields == 9)
 	{
@@ -1940,8 +1938,8 @@ mips_fetch_registers (int regno)
 
     /* We got the number the register holds, but gdb expects to see a
        value in the target byte ordering.  */
-    store_unsigned_integer (buf, DEPRECATED_REGISTER_RAW_SIZE (regno), val);
-    supply_register (regno, buf);
+    store_unsigned_integer (buf, register_size (current_gdbarch, regno), val);
+    regcache_raw_supply (current_regcache, regno, buf);
   }
 }
 
@@ -2178,7 +2176,7 @@ Give up (and stop debugging it)? "))
 /* Start running on the target board.  */
 
 static void
-mips_create_inferior (char *execfile, char *args, char **env)
+mips_create_inferior (char *execfile, char *args, char **env, int from_tty)
 {
   CORE_ADDR entry_pt;
 
@@ -2650,20 +2648,20 @@ mips_load_srec (char *args)
 	  /* FIXME!  vma too small????? */
 	  printf_filtered ("%s\t: 0x%4lx .. 0x%4lx  ", s->name,
 			   (long) s->vma,
-			   (long) (s->vma + s->_raw_size));
+			   (long) (s->vma + bfd_get_section_size (s)));
 	  gdb_flush (gdb_stdout);
 
-	  for (i = 0; i < s->_raw_size; i += numbytes)
+	  for (i = 0; i < bfd_get_section_size (s); i += numbytes)
 	    {
-	      numbytes = min (srec_frame, s->_raw_size - i);
+	      numbytes = min (srec_frame, bfd_get_section_size (s) - i);
 
 	      bfd_get_section_contents (abfd, s, buffer, i, numbytes);
 
 	      reclen = mips_make_srec (srec, '3', s->vma + i, buffer, numbytes);
 	      send_srec (srec, reclen, s->vma + i);
 
-	      if (ui_load_progress_hook)
-		ui_load_progress_hook (s->name, i);
+	      if (deprecated_ui_load_progress_hook)
+		deprecated_ui_load_progress_hook (s->name, i);
 
 	      if (hashmark)
 		{
@@ -3137,11 +3135,11 @@ pmon_load_fast (char *file)
   for (s = abfd->sections; s && !finished; s = s->next)
     if (s->flags & SEC_LOAD)	/* only deal with loadable sections */
       {
-	bintotal += s->_raw_size;
-	final = (s->vma + s->_raw_size);
+	bintotal += bfd_get_section_size (s);
+	final = (s->vma + bfd_get_section_size (s));
 
 	printf_filtered ("%s\t: 0x%4x .. 0x%4x  ", s->name, (unsigned int) s->vma,
-			 (unsigned int) (s->vma + s->_raw_size));
+			 (unsigned int) (s->vma + bfd_get_section_size (s)));
 	gdb_flush (gdb_stdout);
 
 	/* Output the starting address */
@@ -3162,11 +3160,13 @@ pmon_load_fast (char *file)
 
 	    reclen = 0;
 
-	    for (i = 0; ((i < s->_raw_size) && !finished); i += binamount)
+	    for (i = 0;
+		 i < bfd_get_section_size (s) && !finished;
+		 i += binamount)
 	      {
 		int binptr = 0;
 
-		binamount = min (BINCHUNK, s->_raw_size - i);
+		binamount = min (BINCHUNK, bfd_get_section_size (s) - i);
 
 		bfd_get_section_contents (abfd, s, binbuf, i, binamount);
 
@@ -3186,8 +3186,8 @@ pmon_load_fast (char *file)
 			    break;
 			  }
 
-			if (ui_load_progress_hook)
-			  ui_load_progress_hook (s->name, i);
+			if (deprecated_ui_load_progress_hook)
+			  deprecated_ui_load_progress_hook (s->name, i);
 
 			if (hashmark)
 			  {
@@ -3306,7 +3306,7 @@ _initialize_remote_mips (void)
   mips_ops.to_fetch_registers = mips_fetch_registers;
   mips_ops.to_store_registers = mips_store_registers;
   mips_ops.to_prepare_to_store = mips_prepare_to_store;
-  mips_ops.to_xfer_memory = mips_xfer_memory;
+  mips_ops.deprecated_xfer_memory = mips_xfer_memory;
   mips_ops.to_files_info = mips_files_info;
   mips_ops.to_insert_breakpoint = mips_insert_breakpoint;
   mips_ops.to_remove_breakpoint = mips_remove_breakpoint;
@@ -3368,54 +3368,56 @@ of the TFTP temporary file, if it differs from the filename seen by the board.";
   add_target (&ddb_ops);
   add_target (&lsi_ops);
 
-  add_show_from_set (
-		      add_set_cmd ("timeout", no_class, var_zinteger,
-				   (char *) &mips_receive_wait,
-		       "Set timeout in seconds for remote MIPS serial I/O.",
-				   &setlist),
-		      &showlist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("timeout", no_class, var_zinteger,
+		  (char *) &mips_receive_wait,
+		  "Set timeout in seconds for remote MIPS serial I/O.",
+		  &setlist),
+     &showlist);
 
-  add_show_from_set (
-		  add_set_cmd ("retransmit-timeout", no_class, var_zinteger,
-			       (char *) &mips_retransmit_wait,
-			       "Set retransmit timeout in seconds for remote MIPS serial I/O.\n\
+  deprecated_add_show_from_set
+    (add_set_cmd ("retransmit-timeout", no_class, var_zinteger,
+		  (char *) &mips_retransmit_wait, "\
+Set retransmit timeout in seconds for remote MIPS serial I/O.\n\
 This is the number of seconds to wait for an acknowledgement to a packet\n\
 before resending the packet.", &setlist),
-		      &showlist);
+     &showlist);
 
-  add_show_from_set (
-		   add_set_cmd ("syn-garbage-limit", no_class, var_zinteger,
-				(char *) &mips_syn_garbage,
-				"Set the maximum number of characters to ignore when scanning for a SYN.\n\
+  deprecated_add_show_from_set
+    (add_set_cmd ("syn-garbage-limit", no_class, var_zinteger,
+		  (char *) &mips_syn_garbage, "\
+Set the maximum number of characters to ignore when scanning for a SYN.\n\
 This is the maximum number of characters GDB will ignore when trying to\n\
-synchronize with the remote system.  A value of -1 means that there is no limit\n\
-(Note that these characters are printed out even though they are ignored.)",
-				&setlist),
-		      &showlist);
+synchronize with the remote system.  A value of -1 means that there is no\n\
+limit. (Note that these characters are printed out even though they are\n\
+ignored.)",
+		  &setlist),
+     &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("monitor-prompt", class_obscure, var_string,
 		  (char *) &mips_monitor_prompt,
 		  "Set the prompt that GDB expects from the monitor.",
 		  &setlist),
      &showlist);
 
-  add_show_from_set (
-	       add_set_cmd ("monitor-warnings", class_obscure, var_zinteger,
-			    (char *) &monitor_warnings,
-			    "Set printing of monitor warnings.\n"
-		"When enabled, monitor warnings about hardware breakpoints "
-			    "will be displayed.",
-			    &setlist),
-		      &showlist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("monitor-warnings", class_obscure, var_zinteger,
+		  (char *) &monitor_warnings,
+		  "Set printing of monitor warnings.\n"
+		  "When enabled, monitor warnings about hardware breakpoints "
+		  "will be displayed.",
+		  &setlist),
+     &showlist);
 
   add_com ("pmon <command>", class_obscure, pmon_command,
 	   "Send a packet to PMON (must be in debug mode).");
 
-  add_show_from_set (add_set_cmd ("mask-address", no_class,
-				  var_boolean, &mask_address_p,
-				  "Set zeroing of upper 32 bits of 64-bit addresses when talking to PMON targets.\n\
+  deprecated_add_show_from_set
+    (add_set_cmd ("mask-address", no_class,
+		  var_boolean, &mask_address_p, "\
+Set zeroing of upper 32 bits of 64-bit addresses when talking to PMON targets.\n\
 Use \"on\" to enable the masking and \"off\" to disable it.\n",
-				  &setlist),
-		     &showlist);
+		  &setlist),
+     &showlist);
 }

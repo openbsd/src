@@ -40,6 +40,7 @@
 #include "arch-utils.h"
 #include "osabi.h"
 #include "block.h"
+#include "infcall.h"
 
 #include "elf-bfd.h"
 
@@ -142,18 +143,6 @@ static int
 alpha_register_byte (int regno)
 {
   return (regno * 8);
-}
-
-static int
-alpha_register_raw_size (int regno)
-{
-  return 8;
-}
-
-static int
-alpha_register_virtual_size (int regno)
-{
-  return 8;
 }
 
 /* The following represents exactly the conversion performed by
@@ -263,7 +252,7 @@ alpha_value_to_register (struct frame_info *frame, int regnum,
    structure to be returned is passed as a hidden first argument.  */
 
 static CORE_ADDR
-alpha_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
+alpha_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		       struct regcache *regcache, CORE_ADDR bp_addr,
 		       int nargs, struct value **args, CORE_ADDR sp,
 		       int struct_return, CORE_ADDR struct_addr)
@@ -281,6 +270,7 @@ alpha_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
   struct alpha_arg *m_arg;
   char arg_reg_buffer[ALPHA_REGISTER_SIZE * ALPHA_NUM_ARG_REGS];
   int required_arg_regs;
+  CORE_ADDR func_addr = find_function_addr (function, NULL);
 
   /* The ABI places the address of the called function in T12.  */
   regcache_cooked_write_signed (regcache, ALPHA_T12_REGNUM, func_addr);
@@ -626,7 +616,7 @@ alpha_read_insn (CORE_ADDR pc)
   char buf[4];
   int status;
 
-  status = read_memory_nobpt (pc, buf, 4);
+  status = deprecated_read_memory_nobpt (pc, buf, 4);
   if (status)
     memory_error (status, pc);
   return extract_unsigned_integer (buf, 4);
@@ -863,14 +853,20 @@ alpha_sigtramp_frame_sniffer (struct frame_info *next_frame)
   CORE_ADDR pc = frame_pc_unwind (next_frame);
   char *name;
 
-  /* We shouldn't even bother to try if the OSABI didn't register
-     a sigcontext_addr handler.  */
-  if (!gdbarch_tdep (current_gdbarch)->sigcontext_addr)
+  /* NOTE: cagney/2004-04-30: Do not copy/clone this code.  Instead
+     look at tramp-frame.h and other simplier per-architecture
+     sigtramp unwinders.  */
+
+  /* We shouldn't even bother to try if the OSABI didn't register a
+     sigcontext_addr handler or pc_in_sigtramp hander.  */
+  if (gdbarch_tdep (current_gdbarch)->sigcontext_addr == NULL)
+    return NULL;
+  if (gdbarch_tdep (current_gdbarch)->pc_in_sigtramp == NULL)
     return NULL;
 
   /* Otherwise we should be in a signal frame.  */
   find_pc_partial_function (pc, &name, NULL, NULL);
-  if (PC_IN_SIGTRAMP (pc, name))
+  if (gdbarch_tdep (current_gdbarch)->pc_in_sigtramp (pc, name))
     return &alpha_sigtramp_frame_unwind;
 
   return NULL;
@@ -1295,16 +1291,16 @@ alpha_supply_int_regs (int regno, const void *r0_r30,
 
   for (i = 0; i < 31; ++i)
     if (regno == i || regno == -1)
-      supply_register (i, (const char *)r0_r30 + i*8);
+      regcache_raw_supply (current_regcache, i, (const char *)r0_r30 + i*8);
 
   if (regno == ALPHA_ZERO_REGNUM || regno == -1)
-    supply_register (ALPHA_ZERO_REGNUM, NULL);
+    regcache_raw_supply (current_regcache, ALPHA_ZERO_REGNUM, NULL);
 
   if (regno == ALPHA_PC_REGNUM || regno == -1)
-    supply_register (ALPHA_PC_REGNUM, pc);
+    regcache_raw_supply (current_regcache, ALPHA_PC_REGNUM, pc);
 
   if (regno == ALPHA_UNIQUE_REGNUM || regno == -1)
-    supply_register (ALPHA_UNIQUE_REGNUM, unique);
+    regcache_raw_supply (current_regcache, ALPHA_UNIQUE_REGNUM, unique);
 }
 
 void
@@ -1314,13 +1310,13 @@ alpha_fill_int_regs (int regno, void *r0_r30, void *pc, void *unique)
 
   for (i = 0; i < 31; ++i)
     if (regno == i || regno == -1)
-      regcache_collect (i, (char *)r0_r30 + i*8);
+      regcache_raw_collect (current_regcache, i, (char *)r0_r30 + i*8);
 
   if (regno == ALPHA_PC_REGNUM || regno == -1)
-    regcache_collect (ALPHA_PC_REGNUM, pc);
+    regcache_raw_collect (current_regcache, ALPHA_PC_REGNUM, pc);
 
   if (unique && (regno == ALPHA_UNIQUE_REGNUM || regno == -1))
-    regcache_collect (ALPHA_UNIQUE_REGNUM, unique);
+    regcache_raw_collect (current_regcache, ALPHA_UNIQUE_REGNUM, unique);
 }
 
 void
@@ -1330,10 +1326,11 @@ alpha_supply_fp_regs (int regno, const void *f0_f30, const void *fpcr)
 
   for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; ++i)
     if (regno == i || regno == -1)
-      supply_register (i, (const char *)f0_f30 + (i - ALPHA_FP0_REGNUM) * 8);
+      regcache_raw_supply (current_regcache, i,
+			   (const char *)f0_f30 + (i - ALPHA_FP0_REGNUM) * 8);
 
   if (regno == ALPHA_FPCR_REGNUM || regno == -1)
-    supply_register (ALPHA_FPCR_REGNUM, fpcr);
+    regcache_raw_supply (current_regcache, ALPHA_FPCR_REGNUM, fpcr);
 }
 
 void
@@ -1343,10 +1340,11 @@ alpha_fill_fp_regs (int regno, void *f0_f30, void *fpcr)
 
   for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; ++i)
     if (regno == i || regno == -1)
-      regcache_collect (i, (char *)f0_f30 + (i - ALPHA_FP0_REGNUM) * 8);
+      regcache_raw_collect (current_regcache, i,
+			    (char *)f0_f30 + (i - ALPHA_FP0_REGNUM) * 8);
 
   if (regno == ALPHA_FPCR_REGNUM || regno == -1)
-    regcache_collect (ALPHA_FPCR_REGNUM, fpcr);
+    regcache_raw_collect (current_regcache, ALPHA_FPCR_REGNUM, fpcr);
 }
 
 
@@ -1493,7 +1491,7 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Lowest text address.  This is used by heuristic_proc_start()
      to decide when to stop looking.  */
-  tdep->vm_min_address = (CORE_ADDR) 0x120000000;
+  tdep->vm_min_address = (CORE_ADDR) 0x120000000LL;
 
   tdep->dynamic_sigtramp_offset = NULL;
   tdep->sigcontext_addr = NULL;
@@ -1521,8 +1519,6 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_register_name (gdbarch, alpha_register_name);
   set_gdbarch_deprecated_register_byte (gdbarch, alpha_register_byte);
-  set_gdbarch_deprecated_register_raw_size (gdbarch, alpha_register_raw_size);
-  set_gdbarch_deprecated_register_virtual_size (gdbarch, alpha_register_virtual_size);
   set_gdbarch_register_type (gdbarch, alpha_register_type);
 
   set_gdbarch_cannot_fetch_register (gdbarch, alpha_cannot_fetch_register);
@@ -1542,7 +1538,7 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Call info.  */
 
-  set_gdbarch_use_struct_convention (gdbarch, always_use_struct_convention);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, always_use_struct_convention);
   set_gdbarch_extract_return_value (gdbarch, alpha_extract_return_value);
   set_gdbarch_store_return_value (gdbarch, alpha_store_return_value);
   set_gdbarch_deprecated_extract_struct_value_address (gdbarch, alpha_extract_struct_value_address);
@@ -1611,5 +1607,5 @@ search.  The only need to set it is when debugging a stripped executable.",
   /* We need to throw away the frame cache when we set this, since it
      might change our ability to get backtraces.  */
   set_cmd_sfunc (c, reinit_frame_cache_sfunc);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
 }

@@ -83,12 +83,12 @@ elf_locate_sections (bfd *ignore_abfd, asection *sectp, void *eip)
   if (strcmp (sectp->name, ".debug") == 0)
     {
       ei->dboffset = sectp->filepos;
-      ei->dbsize = bfd_get_section_size_before_reloc (sectp);
+      ei->dbsize = bfd_get_section_size (sectp);
     }
   else if (strcmp (sectp->name, ".line") == 0)
     {
       ei->lnoffset = sectp->filepos;
-      ei->lnsize = bfd_get_section_size_before_reloc (sectp);
+      ei->lnsize = bfd_get_section_size (sectp);
     }
   else if (strcmp (sectp->name, ".stab") == 0)
     {
@@ -377,7 +377,7 @@ elf_symtab_read (struct objfile *objfile, int dynamic)
 				      + (sizeof (CORE_ADDR)
 					 * max_index));
 			      sectinfo = (struct stab_section_info *)
-				xmmalloc (objfile->md, size);
+				xmalloc (size);
 			      memset (sectinfo, 0, size);
 			      sectinfo->num_sections = max_index;
 			      if (filesym == NULL)
@@ -499,7 +499,7 @@ elf_symfile_read (struct objfile *objfile, int mainline)
 
   /* Allocate struct to keep track of the symfile */
   objfile->sym_stab_info = (struct dbx_symfile_info *)
-    xmmalloc (objfile->md, sizeof (struct dbx_symfile_info));
+    xmalloc (sizeof (struct dbx_symfile_info));
   memset ((char *) objfile->sym_stab_info, 0, sizeof (struct dbx_symfile_info));
   make_cleanup (free_elfinfo, (void *) objfile);
 
@@ -575,7 +575,7 @@ elf_symfile_read (struct objfile *objfile, int mainline)
 				str_sect->filepos,
 				bfd_section_size (abfd, str_sect));
     }
-  if (dwarf2_has_info (abfd))
+  if (dwarf2_has_info (objfile))
     {
       /* DWARF 2 sections */
       dwarf2_build_psymtabs (objfile, mainline);
@@ -608,7 +608,7 @@ free_elfinfo (void *objp)
   while (ssi)
     {
       nssi = ssi->next;
-      xmfree (objfile->md, ssi);
+      xfree (ssi);
       ssi = nssi;
     }
 
@@ -639,7 +639,7 @@ elf_symfile_finish (struct objfile *objfile)
 {
   if (objfile->sym_stab_info != NULL)
     {
-      xmfree (objfile->md, objfile->sym_stab_info);
+      xfree (objfile->sym_stab_info);
     }
 }
 

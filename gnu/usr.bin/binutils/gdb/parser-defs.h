@@ -172,6 +172,8 @@ extern char *op_name_standard (enum exp_opcode);
 
 extern struct type *follow_types (struct type *);
 
+extern void null_post_parser (struct expression **, int);
+
 /* During parsing of a C expression, the pointer to the next character
    is in this variable.  */
 

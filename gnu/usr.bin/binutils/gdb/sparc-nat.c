@@ -35,6 +35,7 @@
 
 #include "sparc-tdep.h"
 #include "sparc-nat.h"
+#include "inf-ptrace.h"
 
 /* With some trickery we can use the code in this file for most (if
    not all) ptrace(2) based SPARC systems, which includes SunOS 4,
@@ -166,7 +167,7 @@ fetch_inferior_registers (int regnum)
     {
       gregset_t regs;
 
-      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't get registers");
 
       sparc_supply_gregset (sparc_gregset, regcache, -1, &regs);
@@ -178,7 +179,7 @@ fetch_inferior_registers (int regnum)
     {
       fpregset_t fpregs;
 
-      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't get floating point status");
 
       sparc_supply_fpregset (regcache, -1, &fpregs);
@@ -201,12 +202,12 @@ store_inferior_registers (int regnum)
     {
       gregset_t regs;
 
-      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+      if (ptrace (PTRACE_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't get registers");
 
       sparc_collect_gregset (sparc_gregset, regcache, regnum, &regs);
 
-      if (ptrace (PTRACE_SETREGS, pid, (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+      if (ptrace (PTRACE_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
 	perror_with_name ("Couldn't write registers");
 
       /* Deal with the stack regs.  */
@@ -227,7 +228,7 @@ store_inferior_registers (int regnum)
     {
       fpregset_t fpregs, saved_fpregs;
 
-      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+      if (ptrace (PTRACE_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	perror_with_name ("Couldn't get floating-point registers");
 
       memcpy (&saved_fpregs, &fpregs, sizeof (fpregs));
@@ -240,7 +241,7 @@ store_inferior_registers (int regnum)
       if (memcmp (&saved_fpregs, &fpregs, sizeof (fpregs)) != 0)
 	{
 	  if (ptrace (PTRACE_SETFPREGS, pid,
-		      (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		      (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
 	    perror_with_name ("Couldn't write floating-point registers");
 	}
 
@@ -284,7 +285,7 @@ sparc_xfer_wcookie (struct target_ops *ops, enum target_object object,
     gdb_assert (sizeof (wcookie) == sizeof (register_t));
 
     /* Fetch the cookie.  */
-    if (ptrace (PT_WCOOKIE, pid, (PTRACE_ARG3_TYPE) &wcookie, 0) == -1)
+    if (ptrace (PT_WCOOKIE, pid, (PTRACE_TYPE_ARG3) &wcookie, 0) == -1)
       {
 	if (errno != EINVAL)
 	  perror_with_name ("Couldn't get StackGhost cookie");
@@ -303,6 +304,20 @@ sparc_xfer_wcookie (struct target_ops *ops, enum target_object object,
 
   memcpy (readbuf, buf + offset, len);
   return len;
+}
+
+/* Create a prototype generic SPARC target.  The client can override
+   it with local methods.  */
+
+struct target_ops *
+sparc_target (void)
+{
+  struct target_ops *t;
+
+  t = inf_ptrace_target ();
+  t->to_fetch_registers = fetch_inferior_registers;
+  t->to_store_registers = store_inferior_registers;
+  return t;
 }
 
 

@@ -1,7 +1,7 @@
 /* Support for complaint handling during symbol reading in GDB.
 
-   Copyright 1990, 1991, 1992, 1993, 1995, 1998, 1999, 2000, 2002 Free
-   Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1995, 1998, 1999, 2000, 2002,
+   2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -186,8 +186,8 @@ vcomplaint (struct complaints **c, const char *file, int line, const char *fmt,
 
   if (complaint->file != NULL)
     internal_vwarning (complaint->file, complaint->line, complaint->fmt, args);
-  else if (warning_hook)
-    (*warning_hook) (complaint->fmt, args);
+  else if (deprecated_warning_hook)
+    (*deprecated_warning_hook) (complaint->fmt, args);
   else
     {
       if (complaints->explanation == NULL)
@@ -197,7 +197,7 @@ vcomplaint (struct complaints **c, const char *file, int line, const char *fmt,
 	{
 	  char *msg;
 	  struct cleanup *cleanups;
-	  xvasprintf (&msg, complaint->fmt, args);
+	  msg = xstrvprintf (complaint->fmt, args);
 	  cleanups = make_cleanup (xfree, msg);
 	  wrap_here ("");
 	  if (series != SUBSEQUENT_MESSAGE)
@@ -311,11 +311,11 @@ clear_complaints (struct complaints **c, int less_verbose, int noisy)
 void
 _initialize_complaints (void)
 {
-  add_setshow_cmd ("complaints", class_support, var_zinteger,
-		   &stop_whining,
-		   "Set max number of complaints about incorrect symbols.",
-		   "Show max number of complaints about incorrect symbols.",
-		   NULL, NULL,
-		   &setlist, &showlist);
+  add_setshow_zinteger_cmd ("complaints", class_support, &stop_whining, "\
+Set max number of complaints about incorrect symbols.", "\
+Show max number of complaints about incorrect symbols.", NULL, "\
+Max number of complaints about incorrect symbols is %s.",
+			    NULL, NULL,
+			    &setlist, &showlist);
 
 }

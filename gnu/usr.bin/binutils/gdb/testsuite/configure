@@ -917,7 +917,7 @@ else
   if { (eval echo configure:918: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }; then
     for file in conftest.*; do
       case $file in
-      *.c | *.C | *.o | *.obj | *.ilk | *.pdb) ;;
+      *.c | *.o | *.obj | *.ilk | *.pdb) ;;
       *) ac_cv_exeext=`echo $file | sed -e s/conftest//` ;;
       esac
     done
@@ -1049,8 +1049,11 @@ done
 
 ac_given_srcdir=$srcdir
 
-trap 'rm -fr `echo "Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile \
-  gdb.cp/Makefile gdb.disasm/Makefile gdb.java/Makefile gdb.mi/Makefile \
+trap 'rm -fr `echo "Makefile \
+  gdb.ada/Makefile gdb.ada/gnat_ada.gpr:gdb.ada/gnat_ada.gin \
+  gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile \
+  gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile \
+  gdb.fortran/Makefile gdb.java/Makefile gdb.mi/Makefile \
   gdb.objc/Makefile gdb.threads/Makefile gdb.trace/Makefile" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
@@ -1143,8 +1146,11 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile \
-  gdb.cp/Makefile gdb.disasm/Makefile gdb.java/Makefile gdb.mi/Makefile \
+CONFIG_FILES=\${CONFIG_FILES-"Makefile \
+  gdb.ada/Makefile gdb.ada/gnat_ada.gpr:gdb.ada/gnat_ada.gin \
+  gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile \
+  gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile \
+  gdb.fortran/Makefile gdb.java/Makefile gdb.mi/Makefile \
   gdb.objc/Makefile gdb.threads/Makefile gdb.trace/Makefile"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF

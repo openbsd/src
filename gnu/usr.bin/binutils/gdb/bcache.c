@@ -303,7 +303,7 @@ print_percentage (int portion, int total)
   if (total == 0)
     printf_filtered ("(not applicable)\n");
   else
-    printf_filtered ("%3d%%\n", portion * 100 / total);
+    printf_filtered ("%3d%%\n", (int) (portion * 100.0 / total));
 }
 
 

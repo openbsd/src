@@ -36,6 +36,4 @@
 
 /*#define NUM_REGS 18 */
 
-#include "m68k/tm-m68k.h"
-
 /* FIXME, should do GET_LONGJMP_TARGET for newlib.  */

@@ -645,7 +645,7 @@ remote_rdp_fetch_register (int regno)
 	{
 	  printf ("Help me with fetch reg %d\n", regno);
 	}
-      supply_register (regno, buf);
+      regcache_raw_supply (current_regcache, regno, buf);
     }
 }
 
@@ -721,7 +721,7 @@ rdp_set_command_line (char *command, char *args)
   if (commandline != NULL)
     xfree (commandline);
 
-  xasprintf (&commandline, "%s %s", command, args);
+  commandline = xstrprintf ("%s %s", command, args);
 }
 
 static void
@@ -1181,7 +1181,7 @@ remote_rdp_open (char *args, int from_tty)
   flush_cached_frames ();
   registers_changed ();
   stop_pc = read_pc ();
-  print_stack_frame (get_selected_frame (), -1, 1);
+  print_stack_frame (get_selected_frame (), 0, SRC_AND_LOC);
 }
 
 
@@ -1351,7 +1351,8 @@ remote_rdp_files_info (struct target_ops *target)
 
 
 static void
-remote_rdp_create_inferior (char *exec_file, char *allargs, char **env)
+remote_rdp_create_inferior (char *exec_file, char *allargs, char **env,
+			    int from_tty)
 {
   CORE_ADDR entry_point;
 
@@ -1404,7 +1405,7 @@ init_remote_rdp_ops (void)
   remote_rdp_ops.to_fetch_registers = remote_rdp_fetch_register;
   remote_rdp_ops.to_store_registers = remote_rdp_store_register;
   remote_rdp_ops.to_prepare_to_store = remote_rdp_prepare_to_store;
-  remote_rdp_ops.to_xfer_memory = remote_rdp_xfer_inferior_memory;
+  remote_rdp_ops.deprecated_xfer_memory = remote_rdp_xfer_inferior_memory;
   remote_rdp_ops.to_files_info = remote_rdp_files_info;
   remote_rdp_ops.to_insert_breakpoint = remote_rdp_insert_breakpoint;
   remote_rdp_ops.to_remove_breakpoint = remote_rdp_remove_breakpoint;

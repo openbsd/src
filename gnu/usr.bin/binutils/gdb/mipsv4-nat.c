@@ -51,24 +51,26 @@ supply_gregset (gregset_t *gregsetp)
   memset (zerobuf, 0, MAX_REGISTER_SIZE);
 
   for (regi = 0; regi <= CXT_RA; regi++)
-    supply_register (regi, (char *) (regp + regi));
+    regcache_raw_supply (current_regcache, regi, (char *) (regp + regi));
 
-  supply_register (mips_regnum (current_gdbarch)->pc,
-		   (char *) (regp + CXT_EPC));
-  supply_register (mips_regnum (current_gdbarch)->hi,
-		   (char *) (regp + CXT_MDHI));
-  supply_register (mips_regnum (current_gdbarch)->lo,
-		   (char *) (regp + CXT_MDLO));
-  supply_register (mips_regnum (current_gdbarch)->cause,
-		   (char *) (regp + CXT_CAUSE));
+  regcache_raw_supply (current_regcache, mips_regnum (current_gdbarch)->pc,
+		       (char *) (regp + CXT_EPC));
+  regcache_raw_supply (current_regcache, mips_regnum (current_gdbarch)->hi,
+		       (char *) (regp + CXT_MDHI));
+  regcache_raw_supply (current_regcache, mips_regnum (current_gdbarch)->lo,
+		       (char *) (regp + CXT_MDLO));
+  regcache_raw_supply (current_regcache, mips_regnum (current_gdbarch)->cause,
+		       (char *) (regp + CXT_CAUSE));
 
   /* Fill inaccessible registers with zero.  */
-  supply_register (PS_REGNUM, zerobuf);
-  supply_register (mips_regnum (current_gdbarch)->badvaddr, zerobuf);
-  supply_register (DEPRECATED_FP_REGNUM, zerobuf);
-  supply_register (UNUSED_REGNUM, zerobuf);
+  regcache_raw_supply (current_regcache, PS_REGNUM, zerobuf);
+  regcache_raw_supply (current_regcache,
+		       mips_regnum (current_gdbarch)->badvaddr,
+		       zerobuf);
+  regcache_raw_supply (current_regcache, DEPRECATED_FP_REGNUM, zerobuf);
+  regcache_raw_supply (current_regcache, UNUSED_REGNUM, zerobuf);
   for (regi = FIRST_EMBED_REGNUM; regi <= LAST_EMBED_REGNUM; regi++)
-    supply_register (regi, zerobuf);
+    regcache_raw_supply (current_regcache, regi, zerobuf);
 }
 
 void
@@ -110,15 +112,18 @@ supply_fpregset (fpregset_t *fpregsetp)
   memset (zerobuf, 0, MAX_REGISTER_SIZE);
 
   for (regi = 0; regi < 32; regi++)
-    supply_register (mips_regnum (current_gdbarch)->fp0 + regi,
-		     (char *) &fpregsetp->fp_r.fp_regs[regi]);
+    regcache_raw_supply (current_regcache,
+			 mips_regnum (current_gdbarch)->fp0 + regi,
+			 (char *) &fpregsetp->fp_r.fp_regs[regi]);
 
-  supply_register (mips_regnum (current_gdbarch)->fp_control_status,
-		   (char *) &fpregsetp->fp_csr);
+  regcache_raw_supply (current_regcache,
+		       mips_regnum (current_gdbarch)->fp_control_status,
+		       (char *) &fpregsetp->fp_csr);
 
   /* FIXME: how can we supply FCRIR?  The ABI doesn't tell us. */
-  supply_register (mips_regnum (current_gdbarch)->fp_implementation_revision,
-		   zerobuf);
+  regcache_raw_supply (current_regcache,
+		       mips_regnum (current_gdbarch)->fp_implementation_revision,
+		       zerobuf);
 }
 
 void
@@ -134,7 +139,7 @@ fill_fpregset (fpregset_t *fpregsetp, int regno)
 	{
 	  from = (char *) &deprecated_registers[DEPRECATED_REGISTER_BYTE (regi)];
 	  to = (char *) &(fpregsetp->fp_r.fp_regs[regi - mips_regnum (current_gdbarch)->fp0]);
-	  memcpy (to, from, DEPRECATED_REGISTER_RAW_SIZE (regi));
+	  memcpy (to, from, register_size (current_gdbarch, regi));
 	}
     }
 

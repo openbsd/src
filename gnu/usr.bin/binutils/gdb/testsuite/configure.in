@@ -1,7 +1,7 @@
 #                                                       -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-# Copyright 2002, 2003
+# Copyright 2002, 2003, 2004
 # Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA.
+
+# NOTE ON AUTOCONF VERSION:
+#   AC_PREREQ says 2.13.
+#   The output file says "Generated automatically using autoconf version 2.13".
+#   But that is wrong.  This file must be processed with autoconf 000227,
+#   a special version which identifies itself as autoconf 2.13.
 
 AC_PREREQ(2.13)
 AC_INIT(gdb.base)
@@ -112,6 +118,9 @@ AC_CHECK_HEADERS(pthread.h)
 AC_EXEEXT
 
 AC_CONFIG_SUBDIRS($configdirs)
-AC_OUTPUT([Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile \
-  gdb.cp/Makefile gdb.disasm/Makefile gdb.java/Makefile gdb.mi/Makefile \
+AC_OUTPUT([Makefile \
+  gdb.ada/Makefile gdb.ada/gnat_ada.gpr:gdb.ada/gnat_ada.gin \
+  gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile \
+  gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile \
+  gdb.fortran/Makefile gdb.java/Makefile gdb.mi/Makefile \
   gdb.objc/Makefile gdb.threads/Makefile gdb.trace/Makefile])

@@ -80,7 +80,7 @@ extern int cannot_store_register (int regno);
 #endif
 
 /* Override child_resume in `infptrace.c'.  */
-#define CHILD_RESUME
+#define DEPRECATED_CHILD_RESUME
 
 /* `linux-nat.c' and `i386-nat.c' have their own versions of
    child_post_startup_inferior.  Define this to use the copy in

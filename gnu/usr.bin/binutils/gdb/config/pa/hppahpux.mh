@@ -1,7 +1,5 @@
 # Host: Hewlett-Packard PA-RISC machine, running HPUX
 
-XM_FILE= xm-hppah.h
-
 NAT_FILE= nm-hppah.h
 NATDEPFILES= hppah-nat.o corelow.o core-aout.o inftarg.o fork-child.o somread.o infptrace.o hpread.o somsolib.o
 

@@ -1,5 +1,0 @@
-# OBSOLETE # Host: Motorola Delta Series sysV68 R3V7.1
-# OBSOLETE 
-# OBSOLETE XM_FILE= xm-delta68.h
-# OBSOLETE NAT_FILE= nm-delta68.h
-# OBSOLETE NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o delta68-nat.o

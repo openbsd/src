@@ -148,7 +148,7 @@ init_est_cmds (void)
   est_cmds.getreg.term_cmd = NULL;	/* getreg.term_cmd */
   est_cmds.dump_registers = "dr\r";	/* dump_registers */
   est_cmds.register_pattern = "\\(\\w+\\) = \\([0-9a-fA-F]+\\)";	/* register_pattern */
-  est_cmds.supply_register = est_supply_register;	/* supply_register */
+  est_cmds.supply_register = est_supply_register;
   est_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   est_cmds.load = "dl\r";	/* download command */
   est_cmds.loadresp = "+";	/* load response */

@@ -48,8 +48,6 @@
 
 extern void _initialize_remote_sim (void);
 
-extern int (*ui_loop_hook) (int signo);
-
 static void dump_mem (char *buf, int len);
 
 static void init_callbacks (void);
@@ -82,8 +80,6 @@ static void gdbsim_store_register (int regno);
 static void gdbsim_kill (void);
 
 static void gdbsim_load (char *prog, int fromtty);
-
-static void gdbsim_create_inferior (char *exec_file, char *args, char **env);
 
 static void gdbsim_open (char *args, int from_tty);
 
@@ -268,8 +264,8 @@ gdb_os_evprintf_filtered (host_callback * p, const char *format, va_list ap)
 static void
 gdb_os_error (host_callback * p, const char *format,...)
 {
-  if (error_hook)
-    (*error_hook) ();
+  if (deprecated_error_hook)
+    (*deprecated_error_hook) ();
   else
     {
       va_list args;
@@ -308,7 +304,7 @@ gdbsim_fetch_register (int regno)
 	char buf[MAX_REGISTER_SIZE];
 	int nr_bytes;
 	memset (buf, 0, MAX_REGISTER_SIZE);
-	supply_register (regno, buf);
+	regcache_raw_supply (current_regcache, regno, buf);
 	set_register_cached (regno, -1);
 	break;
       }
@@ -321,14 +317,14 @@ gdbsim_fetch_register (int regno)
 	memset (buf, 0, MAX_REGISTER_SIZE);
 	nr_bytes = sim_fetch_register (gdbsim_desc,
 				       REGISTER_SIM_REGNO (regno),
-				       buf, DEPRECATED_REGISTER_RAW_SIZE (regno));
-	if (nr_bytes > 0 && nr_bytes != DEPRECATED_REGISTER_RAW_SIZE (regno) && warn_user)
+				       buf, register_size (current_gdbarch, regno));
+	if (nr_bytes > 0 && nr_bytes != register_size (current_gdbarch, regno) && warn_user)
 	  {
 	    fprintf_unfiltered (gdb_stderr,
 				"Size of register %s (%d/%d) incorrect (%d instead of %d))",
 				REGISTER_NAME (regno),
 				regno, REGISTER_SIM_REGNO (regno),
-				nr_bytes, DEPRECATED_REGISTER_RAW_SIZE (regno));
+				nr_bytes, register_size (current_gdbarch, regno));
 	    warn_user = 0;
 	  }
 	/* FIXME: cagney/2002-05-27: Should check `nr_bytes == 0'
@@ -336,12 +332,12 @@ gdbsim_fetch_register (int regno)
 	   which registers are fetchable.  */
 	/* Else if (nr_bytes < 0): an old simulator, that doesn't
 	   think to return the register size.  Just assume all is ok.  */
-	supply_register (regno, buf);
+	regcache_raw_supply (current_regcache, regno, buf);
 	if (sr_get_debug ())
 	  {
 	    printf_filtered ("gdbsim_fetch_register: %d", regno);
 	    /* FIXME: We could print something more intelligible.  */
-	    dump_mem (buf, DEPRECATED_REGISTER_RAW_SIZE (regno));
+	    dump_mem (buf, register_size (current_gdbarch, regno));
 	  }
 	break;
       }
@@ -365,8 +361,8 @@ gdbsim_store_register (int regno)
       deprecated_read_register_gen (regno, tmp);
       nr_bytes = sim_store_register (gdbsim_desc,
 				     REGISTER_SIM_REGNO (regno),
-				     tmp, DEPRECATED_REGISTER_RAW_SIZE (regno));
-      if (nr_bytes > 0 && nr_bytes != DEPRECATED_REGISTER_RAW_SIZE (regno))
+				     tmp, register_size (current_gdbarch, regno));
+      if (nr_bytes > 0 && nr_bytes != register_size (current_gdbarch, regno))
 	internal_error (__FILE__, __LINE__,
 			"Register size different to expected");
       /* FIXME: cagney/2002-05-27: Should check `nr_bytes == 0'
@@ -376,7 +372,7 @@ gdbsim_store_register (int regno)
 	{
 	  printf_filtered ("gdbsim_store_register: %d", regno);
 	  /* FIXME: We could print something more intelligible.  */
-	  dump_mem (tmp, DEPRECATED_REGISTER_RAW_SIZE (regno));
+	  dump_mem (tmp, register_size (current_gdbarch, regno));
 	}
     }
 }
@@ -429,7 +425,7 @@ gdbsim_load (char *prog, int fromtty)
    user types "run" after having attached.  */
 
 static void
-gdbsim_create_inferior (char *exec_file, char *args, char **env)
+gdbsim_create_inferior (char *exec_file, char *args, char **env, int from_tty)
 {
   int len;
   char *arg_buf, **argv;
@@ -636,8 +632,8 @@ gdbsim_stop (void)
 static int
 gdb_os_poll_quit (host_callback *p)
 {
-  if (ui_loop_hook != NULL)
-    ui_loop_hook (0);
+  if (deprecated_ui_loop_hook != NULL)
+    deprecated_ui_loop_hook (0);
 
   if (quit_flag)		/* gdb's idea of quit */
     {
@@ -867,7 +863,7 @@ init_gdbsim_ops (void)
   gdbsim_ops.to_fetch_registers = gdbsim_fetch_register;
   gdbsim_ops.to_store_registers = gdbsim_store_register;
   gdbsim_ops.to_prepare_to_store = gdbsim_prepare_to_store;
-  gdbsim_ops.to_xfer_memory = gdbsim_xfer_inferior_memory;
+  gdbsim_ops.deprecated_xfer_memory = gdbsim_xfer_inferior_memory;
   gdbsim_ops.to_files_info = gdbsim_files_info;
   gdbsim_ops.to_insert_breakpoint = gdbsim_insert_breakpoint;
   gdbsim_ops.to_remove_breakpoint = gdbsim_remove_breakpoint;

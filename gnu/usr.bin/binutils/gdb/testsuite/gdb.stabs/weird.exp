@@ -317,7 +317,7 @@ gdb_expect 60 {
 	send_gdb "y\n"
 	exp_continue
     }
-    -re "^Reading symbols from $binfile\\.\\.\\.done\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)\r\n$gdb_prompt $" {
+    -re "^Reading symbols from .*$binfile\\.\\.\\.done\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)\r\n$gdb_prompt $" {
 	pass "weirdx.o read without error"
     }
     -re ".*$gdb_prompt $" {

@@ -1150,7 +1150,10 @@ yylex ()
 	yylval.tsym.type = SYMBOL_TYPE (sym);
 	return TYPENAME;
       }
-    if ((yylval.tsym.type = lookup_primitive_typename (tmp)) != 0)
+    yylval.tsym.type
+      = language_lookup_primitive_type_by_name (current_language,
+						current_gdbarch, tmp);
+    if (yylval.tsym.type != NULL)
       return TYPENAME;
     
     /* Input names that aren't symbols but ARE valid hex numbers,

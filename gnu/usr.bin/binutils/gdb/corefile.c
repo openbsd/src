@@ -41,17 +41,18 @@
 extern void _initialize_core (void);
 static void call_extra_exec_file_hooks (char *filename);
 
-/* You can have any number of hooks for `exec_file_command' command to call.
-   If there's only one hook, it is set in exec_file_display hook.
-   If there are two or more hooks, they are set in exec_file_extra_hooks[],
-   and exec_file_display_hook is set to a function that calls all of them.
-   This extra complexity is needed to preserve compatibility with
-   old code that assumed that only one hook could be set, and which called
-   exec_file_display_hook directly.  */
+/* You can have any number of hooks for `exec_file_command' command to
+   call.  If there's only one hook, it is set in exec_file_display
+   hook.  If there are two or more hooks, they are set in
+   exec_file_extra_hooks[], and deprecated_exec_file_display_hook is
+   set to a function that calls all of them.  This extra complexity is
+   needed to preserve compatibility with old code that assumed that
+   only one hook could be set, and which called
+   deprecated_exec_file_display_hook directly.  */
 
 typedef void (*hook_type) (char *);
 
-hook_type exec_file_display_hook;	/* the original hook */
+hook_type deprecated_exec_file_display_hook;	/* the original hook */
 static hook_type *exec_file_extra_hooks;	/* array of additional hooks */
 static int exec_file_hook_count = 0;	/* size of array */
 
@@ -100,7 +101,7 @@ specify_exec_file_hook (void (*hook) (char *))
 {
   hook_type *new_array;
 
-  if (exec_file_display_hook != NULL)
+  if (deprecated_exec_file_display_hook != NULL)
     {
       /* There's already a hook installed.  Arrange to have both it
        * and the subsequent hooks called. */
@@ -108,8 +109,8 @@ specify_exec_file_hook (void (*hook) (char *))
 	{
 	  /* If this is the first extra hook, initialize the hook array. */
 	  exec_file_extra_hooks = (hook_type *) xmalloc (sizeof (hook_type));
-	  exec_file_extra_hooks[0] = exec_file_display_hook;
-	  exec_file_display_hook = call_extra_exec_file_hooks;
+	  exec_file_extra_hooks[0] = deprecated_exec_file_display_hook;
+	  deprecated_exec_file_display_hook = call_extra_exec_file_hooks;
 	  exec_file_hook_count = 1;
 	}
 
@@ -124,7 +125,7 @@ specify_exec_file_hook (void (*hook) (char *))
       exec_file_extra_hooks[exec_file_hook_count - 1] = hook;
     }
   else
-    exec_file_display_hook = hook;
+    deprecated_exec_file_display_hook = hook;
 }
 
 /* The exec file must be closed before running an inferior.
@@ -449,7 +450,7 @@ No arg means have no core file.  This command has been superseded by the\n\
 Use `set gnutarget auto' to specify automatic detection.",
 		   &setlist);
   set_cmd_sfunc (c, set_gnutarget_command);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
 
   if (getenv ("GNUTARGET"))
     set_gnutarget (getenv ("GNUTARGET"));

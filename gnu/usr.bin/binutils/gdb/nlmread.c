@@ -177,7 +177,6 @@ nlm_symfile_read (struct objfile *objfile, int mainline)
   bfd *abfd = objfile->obfd;
   struct cleanup *back_to;
   CORE_ADDR offset;
-  struct symbol *mainsym;
 
   init_minimal_symbol_collection ();
   back_to = make_cleanup_discard_minimal_symbols ();
@@ -199,16 +198,6 @@ nlm_symfile_read (struct objfile *objfile, int mainline)
 
   stabsect_build_psymtabs (objfile, mainline, ".stab",
 			   ".stabstr", ".text");
-
-  mainsym = lookup_symbol (main_name (), NULL, VAR_DOMAIN, NULL, NULL);
-
-  if (mainsym
-      && SYMBOL_CLASS (mainsym) == LOC_BLOCK)
-    {
-      objfile->ei.main_func_lowpc = BLOCK_START (SYMBOL_BLOCK_VALUE (mainsym));
-      objfile->ei.main_func_highpc = BLOCK_END (SYMBOL_BLOCK_VALUE (mainsym));
-    }
-
   /* FIXME:  We could locate and read the optional native debugging format
      here and add the symbols to the minimal symbol table. */
 }
@@ -224,7 +213,7 @@ nlm_symfile_finish (struct objfile *objfile)
 {
   if (objfile->sym_private != NULL)
     {
-      xmfree (objfile->md, objfile->sym_private);
+      xfree (objfile->sym_private);
     }
 }
 

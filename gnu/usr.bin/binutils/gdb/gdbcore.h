@@ -1,6 +1,8 @@
 /* Machine independent variables that describe the core file under GDB.
-   Copyright 1986, 1987, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+
+   Copyright 1986, 1987, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1997, 1998, 1999, 2000, 2001, 2004 Free Software Foundation,
+   Inc.
 
    This file is part of GDB.
 
@@ -43,7 +45,12 @@ extern int have_core_file_p (void);
    address out of bounds.  If breakpoints are inserted, returns shadow
    contents, not the breakpoints themselves.  From breakpoint.c.  */
 
-extern int read_memory_nobpt (CORE_ADDR memaddr, char *myaddr, unsigned len);
+/* NOTE: cagney/2004-06-10: Code reading from a live inferior can use
+   the get_frame_memory methods, code reading from an exec can use the
+   target methods.  */
+
+extern int deprecated_read_memory_nobpt (CORE_ADDR memaddr, char *myaddr,
+					 unsigned len);
 
 /* Report a memory error with error().  */
 
@@ -96,12 +103,12 @@ extern void generic_search (int len, char *data, char *mask,
 
 /* Hook for `exec_file_command' command to call.  */
 
-extern void (*exec_file_display_hook) (char *filename);
+extern void (*deprecated_exec_file_display_hook) (char *filename);
 
 /* Hook for "file_command", which is more useful than above
    (because it is invoked AFTER symbols are read, not before) */
 
-extern void (*file_changed_hook) (char *filename);
+extern void (*deprecated_file_changed_hook) (char *filename);
 
 extern void specify_exec_file_hook (void (*hook) (char *filename));
 
@@ -194,15 +201,18 @@ struct core_fns
 				 unsigned core_reg_size,
 				 int which, CORE_ADDR reg_addr);
 
-    /* Finds the next struct core_fns.  They are allocated and initialized
-       in whatever module implements the functions pointed to; an 
-       initializer calls add_core_fns to add them to the global chain.  */
+    /* Finds the next struct core_fns.  They are allocated and
+       initialized in whatever module implements the functions pointed
+       to; an initializer calls deprecated_add_core_fns to add them to
+       the global chain.  */
 
     struct core_fns *next;
 
   };
 
-extern void add_core_fns (struct core_fns *cf);
+/* NOTE: cagney/2004-04-05: Replaced by "regset.h" and
+   regset_from_core_section().  */
+extern void deprecated_add_core_fns (struct core_fns *cf);
 extern int default_core_sniffer (struct core_fns *cf, bfd * abfd);
 extern int default_check_format (bfd * abfd);
 

@@ -29,14 +29,6 @@
 
 #define U_REGS_OFFSET 0
 
-/* FIXME: This is probably true, or should be, on all GNU/Linux ports.
-   IA64?  Sparc64?  */
-#define PTRACE_ARG3_TYPE long
-
-/* ptrace transfers longs, the ptrace man page is lying.  */
-
-#define PTRACE_XFER_TYPE long
-
 /* The alpha does not step over a breakpoint, the manpage is lying again.  */
 
 #define CANNOT_STEP_BREAKPOINT 1

@@ -24,6 +24,7 @@
 #include "osabi.h"
 #include "regcache.h"
 #include "regset.h"
+#include "gdb_assert.h"
 
 #include "gdb_string.h"
 
@@ -31,171 +32,14 @@
 #include "ppcobsd-tdep.h"
 #include "solib-svr4.h"
 
-
-/* Register set support functions.  */
-
-/* FIXME: kettenis/20040418: There is nothing OpenBSD-specific about
-   the functions on this page; they were written to be as general as
-   possible.  This stuff should probably be moved to rs6000-tdep.c or
-   perhaps a new ppc-tdep.c.  */
-
-static void
-ppc_supply_reg (struct regcache *regcache, int regnum, 
-		const char *regs, size_t offset)
-{
-  if (regnum != -1 && offset != -1)
-    regcache_raw_supply (regcache, regnum, regs + offset);
-}
-
-static void
-ppc_collect_reg (const struct regcache *regcache, int regnum,
-		 char *regs, size_t offset)
-{
-  if (regnum != -1 && offset != -1)
-    regcache_raw_collect (regcache, regnum, regs + offset);
-}
-    
-/* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
-
-void
-ppc_supply_gregset (const struct regset *regset, struct regcache *regcache,
-		    int regnum, const void *gregs, size_t len)
-{
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const struct ppc_reg_offsets *offsets = regset->descr;
-  size_t offset;
-  int i;
-
-  for (i = 0, offset = offsets->r0_offset; i < 32; i++, offset += 4)
-    {
-      if (regnum == -1 || regnum == i)
-	ppc_supply_reg (regcache, i, gregs, offset);
-    }
-
-  if (regnum == -1 || regnum == PC_REGNUM)
-    ppc_supply_reg (regcache, PC_REGNUM, gregs, offsets->pc_offset);
-  if (regnum == -1 || regnum == tdep->ppc_ps_regnum)
-    ppc_supply_reg (regcache, tdep->ppc_ps_regnum,
-		    gregs, offsets->ps_offset);
-  if (regnum == -1 || regnum == tdep->ppc_cr_regnum)
-    ppc_supply_reg (regcache, tdep->ppc_cr_regnum,
-		    gregs, offsets->cr_offset);
-  if (regnum == -1 || regnum == tdep->ppc_lr_regnum)
-    ppc_supply_reg (regcache, tdep->ppc_lr_regnum,
-		    gregs, offsets->lr_offset);
-  if (regnum == -1 || regnum == tdep->ppc_ctr_regnum)
-    ppc_supply_reg (regcache, tdep->ppc_ctr_regnum,
-		    gregs, offsets->ctr_offset);
-  if (regnum == -1 || regnum == tdep->ppc_xer_regnum)
-    ppc_supply_reg (regcache, tdep->ppc_xer_regnum,
-		    gregs, offsets->cr_offset);
-  if (regnum == -1 || regnum == tdep->ppc_mq_regnum)
-    ppc_supply_reg (regcache, tdep->ppc_mq_regnum, gregs, offsets->mq_offset);
-}
-
-/* Supply the floating-point registers stored in FPREGS to REGCACHE.  */
-
-void
-ppc_supply_fpregset (const struct regset *regset, struct regcache *regcache,
-		     int regnum, const void *fpregs, size_t len)
-{
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const struct ppc_reg_offsets *offsets = regset->descr;
-  size_t offset;
-  int i;
-
-  offset = offsets->f0_offset;
-  for (i = FP0_REGNUM; i < FP0_REGNUM + 32; i++, offset += 4)
-    {
-      if (regnum == -1 || regnum == i)
-	ppc_supply_reg (regcache, i, fpregs, offset);
-    }
-
-  if (regnum == -1 || regnum == tdep->ppc_fpscr_regnum)
-    ppc_supply_reg (regcache, tdep->ppc_fpscr_regnum,
-		    fpregs, offsets->fpscr_offset);
-}
-
-/* Collect the general-purpose registers from REGCACHE and store them
-   in GREGS.  */
-
-void
-ppc_collect_gregset (const struct regset *regset,
-		     const struct regcache *regcache,
-		     int regnum, void *gregs, size_t len)
-{
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const struct ppc_reg_offsets *offsets = &ppcobsd_reg_offsets;
-  size_t offset;
-  int i;
-
-  offset = offsets->r0_offset;
-  for (i = 0; i <= 32; i++, offset += 4)
-    {
-      if (regnum == -1 || regnum == i)
-	ppc_collect_reg (regcache, regnum, gregs, offset);
-    }
-
-  if (regnum == -1 || regnum == PC_REGNUM)
-    ppc_collect_reg (regcache, PC_REGNUM, gregs, offsets->pc_offset);
-  if (regnum == -1 || regnum == tdep->ppc_ps_regnum)
-    ppc_collect_reg (regcache, tdep->ppc_ps_regnum,
-		     gregs, offsets->ps_offset);
-  if (regnum == -1 || regnum == tdep->ppc_cr_regnum)
-    ppc_collect_reg (regcache, tdep->ppc_cr_regnum,
-		     gregs, offsets->cr_offset);
-  if (regnum == -1 || regnum == tdep->ppc_lr_regnum)
-    ppc_collect_reg (regcache, tdep->ppc_lr_regnum,
-		     gregs, offsets->lr_offset);
-  if (regnum == -1 || regnum == tdep->ppc_ctr_regnum)
-    ppc_collect_reg (regcache, tdep->ppc_ctr_regnum,
-		     gregs, offsets->ctr_offset);
-  if (regnum == -1 || regnum == tdep->ppc_xer_regnum)
-    ppc_collect_reg (regcache, tdep->ppc_xer_regnum,
-		     gregs, offsets->xer_offset);
-  if (regnum == -1 || regnum == tdep->ppc_mq_regnum)
-    ppc_collect_reg (regcache, tdep->ppc_mq_regnum,
-		     gregs, offsets->mq_offset);
-}
-
-/* Collect the floating-point registers from REGCACHE and store them
-   in FPREGS.  */
-
-void
-ppc_collect_fpregset (const struct regset *regset,
-		      const struct regcache *regcache,
-		      int regnum, void *fpregs, size_t len)
-{
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const struct ppc_reg_offsets *offsets = &ppcobsd_reg_offsets;
-  size_t offset;
-  int i;
-
-  offset = offsets->f0_offset;
-  for (i = FP0_REGNUM; i <= FP0_REGNUM + 32; i++, offset += 4)
-    {
-      if (regnum == -1 || regnum == i)
-	ppc_collect_reg (regcache, regnum, fpregs, offset);
-    }
-
-  if (regnum == -1 || regnum == tdep->ppc_fpscr_regnum)
-    ppc_collect_reg (regcache, tdep->ppc_fpscr_regnum,
-		     fpregs, offsets->fpscr_offset);
-}
-
-
 /* Register offsets from <machine/reg.h>.  */
 struct ppc_reg_offsets ppcobsd_reg_offsets;
 
 
 /* Core file support.  */
 
-/* Supply register REGNUM from the buffer specified by GREGS and LEN
-   in the general-purpose register set REGSET to register cache
+/* Supply register REGNUM in the general-purpose register set REGSET
+   from the buffer specified by GREGS and LEN to register cache
    REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
 
 void
@@ -203,20 +47,49 @@ ppcobsd_supply_gregset (const struct regset *regset,
 			struct regcache *regcache, int regnum,
 			const void *gregs, size_t len)
 {
+  /* FIXME: jimb/2004-05-05: Some PPC variants don't have floating
+     point registers.  Traditionally, GDB's register set has still
+     listed the floating point registers for such machines, so this
+     code is harmless.  However, the new E500 port actually omits the
+     floating point registers entirely from the register set --- they
+     don't even have register numbers assigned to them.
+
+     It's not clear to me how best to update this code, so this assert
+     will alert the first person to encounter the OpenBSD/E500
+     combination to the problem.  */
+  gdb_assert (ppc_floating_point_unit_p (current_gdbarch));
+
   ppc_supply_gregset (regset, regcache, regnum, gregs, len);
   ppc_supply_fpregset (regset, regcache, regnum, gregs, len);
 }
+
+/* Collect register REGNUM in the general-purpose register set
+   REGSET. from register cache REGCACHE into the buffer specified by
+   GREGS and LEN.  If REGNUM is -1, do this for all registers in
+   REGSET.  */
 
 void
 ppcobsd_collect_gregset (const struct regset *regset,
 			 const struct regcache *regcache, int regnum,
 			 void *gregs, size_t len)
 {
+  /* FIXME: jimb/2004-05-05: Some PPC variants don't have floating
+     point registers.  Traditionally, GDB's register set has still
+     listed the floating point registers for such machines, so this
+     code is harmless.  However, the new E500 port actually omits the
+     floating point registers entirely from the register set --- they
+     don't even have register numbers assigned to them.
+
+     It's not clear to me how best to update this code, so this assert
+     will alert the first person to encounter the OpenBSD/E500
+     combination to the problem.  */
+  gdb_assert (ppc_floating_point_unit_p (current_gdbarch));
+
   ppc_collect_gregset (regset, regcache, regnum, gregs, len);
   ppc_collect_fpregset (regset, regcache, regnum, gregs, len);
 }
 
-/* OpenBS/macppc register set.  */
+/* OpenBS/powerpc register set.  */
 
 struct regset ppcobsd_gregset =
 {
@@ -276,6 +149,8 @@ _initialize_ppcobsd_tdep (void)
   gdbarch_register_osabi_sniffer (bfd_arch_powerpc, bfd_target_unknown_flavour,
                                   ppcobsd_core_osabi_sniffer);
 
+  gdbarch_register_osabi (bfd_arch_rs6000, 0, GDB_OSABI_OPENBSD_ELF,
+			  ppcobsd_init_abi);
   gdbarch_register_osabi (bfd_arch_powerpc, 0, GDB_OSABI_OPENBSD_ELF,
 			  ppcobsd_init_abi);
 

@@ -35,10 +35,6 @@
 #include "language.h"
 #include "gdbcore.h"
 
-#ifdef USG
-#include <sys/types.h>
-#endif
-
 #include <sys/param.h>
 #include <sys/dir.h>
 #include <signal.h>

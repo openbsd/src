@@ -1,7 +1,7 @@
 /* Definitions to target GDB to GNU/Linux on 386.
 
-   Copyright 1992, 1993, 1995, 1996, 1998, 1999, 2000, 2001, 2002 Free
-   Software Foundation, Inc.
+   Copyright 1992, 1993, 1995, 1996, 1998, 1999, 2000, 2001, 2002,
+   2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,6 @@
 #ifndef TM_LINUX_H
 #define TM_LINUX_H
 
-#include "i386/tm-i386.h"
 #include "config/tm-linux.h"
 
 /* The following works around a problem with /usr/include/sys/procfs.h  */

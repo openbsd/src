@@ -20,7 +20,7 @@ dnl This gets the standard macros, like the TCL, TK, etc ones.
 sinclude(../config/acinclude.m4)
 
 dnl CYGNUS LOCAL: This gets the right posix flag for gcc
-AC_DEFUN(CY_AC_TCL_LYNX_POSIX,
+AC_DEFUN([CY_AC_TCL_LYNX_POSIX],
 [AC_REQUIRE([AC_PROG_CC])AC_REQUIRE([AC_PROG_CPP])
 AC_MSG_CHECKING([if running LynxOS])
 AC_CACHE_VAL(ac_cv_os_lynx,
@@ -60,7 +60,7 @@ fi
 # makes configure think it's cross compiling. If --target wasn't used, then
 # we can't configure, so something is wrong. We don't use the cache
 # here cause if somebody fixes their compiler install, we want this to work.
-AC_DEFUN(CY_AC_C_WORKS,
+AC_DEFUN([CY_AC_C_WORKS],
 [# If we cannot compile and link a trivial program, we can't expect anything to work
 AC_MSG_CHECKING(whether the compiler ($CC) actually works)
 AC_TRY_COMPILE(, [/* don't need anything here */],
@@ -79,7 +79,7 @@ fi
 AC_MSG_RESULT(yes)
 ])
 
-AC_DEFUN(CY_AC_PATH_TCLH, [
+AC_DEFUN([CY_AC_PATH_TCLH], [
 #
 # Ok, lets find the tcl source trees so we can use the headers
 # Warning: transition of version 9 to 10 will break this algorithm
@@ -168,7 +168,7 @@ AC_SUBST(TCLHDIR)
 ])
 
 
-AC_DEFUN(CY_AC_PATH_TCLCONFIG, [
+AC_DEFUN([CY_AC_PATH_TCLCONFIG], [
 #
 # Ok, lets find the tcl configuration
 # First, look for one uninstalled.  
@@ -241,7 +241,7 @@ fi
 
 # Defined as a separate macro so we don't have to cache the values
 # from PATH_TCLCONFIG (because this can also be cached).
-AC_DEFUN(CY_AC_LOAD_TCLCONFIG, [
+AC_DEFUN([CY_AC_LOAD_TCLCONFIG], [
     . $TCLCONFIG
 
     AC_SUBST(TCL_VERSION)
@@ -297,7 +297,7 @@ dnl    AC_SUBST(TCL_UNSHARED_LIB_SUFFIX)
 #  - Symbols in tkConfig.sh are different than tclConfig.sh
 #  - Acceptable for Tk to be missing but not Tcl.
 
-AC_DEFUN(CY_AC_PATH_TKH, [
+AC_DEFUN([CY_AC_PATH_TKH], [
 #
 # Ok, lets find the tk source trees so we can use the headers
 # If the directory (presumably symlink) named "tk" exists, use that one
@@ -391,7 +391,7 @@ AC_SUBST(TKHDIR)
 ])
 
 
-AC_DEFUN(CY_AC_PATH_TKCONFIG, [
+AC_DEFUN([CY_AC_PATH_TKCONFIG], [
 #
 # Ok, lets find the tk configuration
 # First, look for one uninstalled.  
@@ -465,7 +465,7 @@ fi
 
 # Defined as a separate macro so we don't have to cache the values
 # from PATH_TKCONFIG (because this can also be cached).
-AC_DEFUN(CY_AC_LOAD_TKCONFIG, [
+AC_DEFUN([CY_AC_LOAD_TKCONFIG], [
     if test -f "$TKCONFIG" ; then
       . $TKCONFIG
     fi
@@ -496,7 +496,7 @@ dnl    AC_SUBST(TK_EXEC_PREFIX)
 
 # check for Itcl headers. 
 
-AC_DEFUN(CY_AC_PATH_ITCLCONFIG, [
+AC_DEFUN([CY_AC_PATH_ITCLCONFIG], [
 #
 # Ok, lets find the itcl configuration
 # First, look for one uninstalled.  
@@ -569,7 +569,7 @@ fi
 
 # Defined as a separate macro so we don't have to cache the values
 # from PATH_ITCLCONFIG (because this can also be cached).
-AC_DEFUN(CY_AC_LOAD_ITCLCONFIG, [
+AC_DEFUN([CY_AC_LOAD_ITCLCONFIG], [
     if test -f "$ITCLCONFIG" ; then
       . $ITCLCONFIG
     fi
@@ -598,7 +598,7 @@ dnl    AC_SUBST(ITCL_EXEC_PREFIX)
 
 # check for Itcl headers. 
 
-AC_DEFUN(CY_AC_PATH_ITCLH, [
+AC_DEFUN([CY_AC_PATH_ITCLH], [
 AC_MSG_CHECKING(for Itcl private headers. srcdir=${srcdir})
 if test x"${ac_cv_c_itclh}" = x ; then
   for i in ${srcdir}/../itcl ${srcdir}/../../itcl ${srcdir}/../../../itcl ${srcdir}/../itcl/itcl; do
@@ -622,7 +622,7 @@ AC_SUBST(ITCLHDIR)
 ])
 
 
-AC_DEFUN(CY_AC_PATH_ITKCONFIG, [
+AC_DEFUN([CY_AC_PATH_ITKCONFIG], [
 #
 # Ok, lets find the itk configuration
 # First, look for one uninstalled.  
@@ -696,7 +696,7 @@ fi
 
 # Defined as a separate macro so we don't have to cache the values
 # from PATH_ITKCONFIG (because this can also be cached).
-AC_DEFUN(CY_AC_LOAD_ITKCONFIG, [
+AC_DEFUN([CY_AC_LOAD_ITKCONFIG], [
     if test -f "$ITKCONFIG" ; then
       . $ITKCONFIG
     fi
@@ -723,7 +723,7 @@ dnl    AC_SUBST(ITK_EXEC_PREFIX)
     AC_SUBST(ITK_LIB_SPEC)
 ])
 
-AC_DEFUN(CY_AC_PATH_ITKH, [
+AC_DEFUN([CY_AC_PATH_ITKH], [
 AC_MSG_CHECKING(for Itk private headers. srcdir=${srcdir})
 if test x"${ac_cv_c_itkh}" = x ; then
   for i in ${srcdir}/../itcl ${srcdir}/../../itcl ${srcdir}/../../../itcl ${srcdir}/../itcl/itk; do
@@ -957,7 +957,7 @@ dnl to use a different cache variable name in this macro if it is invoked
 dnl in a different context somewhere else.
 dnl gcc_AC_CHECK_DECL(SYMBOL,
 dnl 	[ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, INCLUDES]]])
-AC_DEFUN(gcc_AC_CHECK_DECL,
+AC_DEFUN([gcc_AC_CHECK_DECL],
 [AC_MSG_CHECKING([whether $1 is declared])
 AC_CACHE_VAL(gcc_cv_have_decl_$1,
 [AC_TRY_COMPILE([$4],
@@ -975,7 +975,7 @@ dnl Check multiple functions to see whether each needs a declaration.
 dnl Arrange to define HAVE_DECL_<FUNCTION> to 0 or 1 as appropriate.
 dnl gcc_AC_CHECK_DECLS(SYMBOLS,
 dnl 	[ACTION-IF-NEEDED [, ACTION-IF-NOT-NEEDED [, INCLUDES]]])
-AC_DEFUN(gcc_AC_CHECK_DECLS,
+AC_DEFUN([gcc_AC_CHECK_DECLS],
 [for ac_func in $1
 do
 changequote(, )dnl

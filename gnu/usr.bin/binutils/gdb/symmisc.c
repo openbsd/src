@@ -99,12 +99,12 @@ free_symtab_block (struct objfile *objfile, struct block *b)
 
   ALL_BLOCK_SYMBOLS (b, iter, sym)
     {
-      xmfree (objfile->md, DEPRECATED_SYMBOL_NAME (sym));
-      xmfree (objfile->md, sym);
+      xfree (DEPRECATED_SYMBOL_NAME (sym));
+      xfree (sym);
     }
 
   dict_free (BLOCK_DICT (b));
-  xmfree (objfile->md, b);
+  xfree (b);
 }
 
 /* Free all the storage associated with the struct symtab <- S.
@@ -138,7 +138,7 @@ free_symtab (struct symtab *s)
       for (i = 0; i < n; i++)
 	free_symtab_block (s->objfile, BLOCKVECTOR_BLOCK (bv, i));
       /* Free the blockvector itself.  */
-      xmfree (s->objfile->md, bv);
+      xfree (bv);
       /* Also free the linetable.  */
 
     case free_linetable:
@@ -146,7 +146,7 @@ free_symtab (struct symtab *s)
          or by some other symtab, except for our linetable.
          Free that now.  */
       if (LINETABLE (s))
-	xmfree (s->objfile->md, LINETABLE (s));
+	xfree (LINETABLE (s));
       break;
     }
 
@@ -156,12 +156,12 @@ free_symtab (struct symtab *s)
 
   /* Free source-related stuff */
   if (s->line_charpos != NULL)
-    xmfree (s->objfile->md, s->line_charpos);
+    xfree (s->line_charpos);
   if (s->fullname != NULL)
-    xmfree (s->objfile->md, s->fullname);
+    xfree (s->fullname);
   if (s->debugformat != NULL)
-    xmfree (s->objfile->md, s->debugformat);
-  xmfree (s->objfile->md, s);
+    xfree (s->debugformat);
+  xfree (s);
 }
 
 void
@@ -1232,14 +1232,14 @@ extend_psymbol_list (struct psymbol_allocation_list *listp,
     {
       new_size = 255;
       listp->list = (struct partial_symbol **)
-	xmmalloc (objfile->md, new_size * sizeof (struct partial_symbol *));
+	xmalloc (new_size * sizeof (struct partial_symbol *));
     }
   else
     {
       new_size = listp->size * 2;
       listp->list = (struct partial_symbol **)
-	xmrealloc (objfile->md, (char *) listp->list,
-		   new_size * sizeof (struct partial_symbol *));
+	xrealloc ((char *) listp->list,
+		  new_size * sizeof (struct partial_symbol *));
     }
   /* Next assumes we only went one over.  Should be good if
      program works correctly */

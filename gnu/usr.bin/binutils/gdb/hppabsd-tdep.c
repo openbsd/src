@@ -95,6 +95,9 @@ hppabsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_regset_from_core_section
     (gdbarch, hppabsd_regset_from_core_section);
 
+  /* OpenBSD and NetBSD use ELF.  */
+  tdep->is_elf = 1;
+
   /* OpenBSD and NetBSD uses SVR4-style shared libraries.  */
   set_gdbarch_in_solib_call_trampoline
     (gdbarch, generic_in_solib_call_trampoline);
