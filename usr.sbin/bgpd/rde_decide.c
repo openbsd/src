@@ -1,7 +1,7 @@
-/*	$OpenBSD: rde_decide.c,v 1.9 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.10 2004/01/06 10:51:14 claudio Exp $ */
 
 /*
- * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any

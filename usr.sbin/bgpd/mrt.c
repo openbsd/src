@@ -1,7 +1,7 @@
-/*	$OpenBSD: mrt.c,v 1.16 2004/01/06 10:42:50 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.17 2004/01/06 10:51:14 claudio Exp $ */
 
 /*
- * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

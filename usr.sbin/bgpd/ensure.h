@@ -1,7 +1,7 @@
-/*	$OpenBSD: ensure.h,v 1.2 2003/12/17 18:11:31 henning Exp $ */
+/*	$OpenBSD: ensure.h,v 1.3 2004/01/06 10:51:14 claudio Exp $ */
 
 /*
- * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
+ * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
