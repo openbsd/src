@@ -1,5 +1,32 @@
-/*	$OpenBSD: var.c,v 1.16 1999/12/06 22:24:32 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.17 1999/12/06 22:27:37 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
+
+/*
+ * Copyright (c) 1999 Marc Espie.
+ *
+ * Extensive code modifications for the OpenBSD project.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+ * PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.16 1999/12/06 22:24:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.17 1999/12/06 22:27:37 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,8 +155,9 @@ static char	varNoError[] = "";
  * The four contexts are searched in the reverse order from which they are
  * listed.
  */
-GNode          *VAR_GLOBAL;   /* variables from the makefile */
-GNode          *VAR_CMD;      /* variables defined on the command-line */
+GNode		*VAR_GLOBAL;	/* variables from the makefile */
+GNode		*VAR_CMD;	/* variables defined on the command-line */
+static GNode	*VAR_ENV;	/* variables read from env */
 
 static Lst	allVars;      /* List of all variables */
 
@@ -143,7 +171,6 @@ typedef struct Var {
     int	    	  flags;    	/* miscellaneous status flags */
 #define VAR_IN_USE	1   	    /* Variable's value currently being used.
 				     * Used to avoid recursion */
-#define VAR_FROM_ENV	2   	    /* Variable comes from the environment */
 #define VAR_JUNK  	4   	    /* Variable is a junk variable that
 				     * should be destroyed when done with
 				     * it. Used by Var_Parse for undefined,
@@ -177,7 +204,7 @@ typedef struct {
 
 static int VarCmp __P((ClientData, ClientData));
 static Var *VarFind __P((char *, GNode *, int));
-static void VarAdd __P((char *, char *, GNode *));
+static Var *VarAdd __P((char *, char *, GNode *));
 static void VarDelete __P((ClientData));
 static Boolean VarHead __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarTail __P((char *, Boolean, Buffer, ClientData));
@@ -235,7 +262,7 @@ VarCmp (v, name)
  *	NIL if the variable does not exist.
  *
  * Side Effects:
- *	None
+ *	Caches env variables in the VAR_ENV context.
  *-----------------------------------------------------------------------
  */
 static Var *
@@ -247,7 +274,7 @@ VarFind (name, ctxt, flags)
 				 * FIND_CMD set means to look in the VAR_CMD
 				 * context also.
 				 * FIND_ENV set means to look in the
-				 * environment */
+				 * environment/VAR_ENV context.  */
 {
     LstNode         	var;
     Var		  	*v;
@@ -292,49 +319,30 @@ VarFind (name, ctxt, flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Lst_Find (ctxt->context, (ClientData)name, VarCmp);
+    var = Lst_Find(ctxt->context, (ClientData)name, VarCmp);
 
-    if ((var == NILLNODE) && (flags & FIND_CMD) && (ctxt != VAR_CMD)) {
+    if ((var == NILLNODE) && (flags & FIND_CMD) && (ctxt != VAR_CMD))
 	var = Lst_Find (VAR_CMD->context, (ClientData)name, VarCmp);
-    }
     if (!checkEnvFirst && (var == NILLNODE) && (flags & FIND_GLOBAL) &&
-	(ctxt != VAR_GLOBAL))
-    {
+	(ctxt != VAR_GLOBAL)) {
 	var = Lst_Find (VAR_GLOBAL->context, (ClientData)name, VarCmp);
     }
     if ((var == NILLNODE) && (flags & FIND_ENV)) {
-	char *env;
+    	var = Lst_Find(VAR_ENV->context, (ClientData)name, VarCmp);
+	if (var == NILLNODE) {
+	    char *env;
 
-	if ((env = getenv (name)) != NULL) {
-	    size_t  	len;
-
-	    v = (Var *) emalloc(sizeof(Var));
-	    v->name = estrdup(name);
-
-	    len = strlen(env);
-
-	    v->val = Buf_Init(len);
-	    Buf_AddChars(v->val, len, env);
-
-	    v->flags = VAR_FROM_ENV;
-	    return (v);
-	} else if (checkEnvFirst && (flags & FIND_GLOBAL) &&
-		   (ctxt != VAR_GLOBAL))
-	{
-	    var = Lst_Find (VAR_GLOBAL->context, (ClientData)name, VarCmp);
-	    if (var == NILLNODE) {
-		return ((Var *) NIL);
-	    } else {
-		return ((Var *)Lst_Datum(var));
-	    }
-	} else {
-	    return((Var *)NIL);
+	    if ((env = getenv(name)) != NULL)
+	    	return VarAdd(name, env, VAR_ENV);
 	}
-    } else if (var == NILLNODE) {
-	return ((Var *) NIL);
-    } else {
-	return ((Var *) Lst_Datum (var));
     }
+    if (var == NILLNODE && checkEnvFirst && (flags & FIND_GLOBAL) &&
+		   (ctxt != VAR_GLOBAL)) 
+	    var = Lst_Find(VAR_GLOBAL->context, (ClientData)name, VarCmp);
+    if (var == NILLNODE)
+	return ((Var *) NIL);
+    else 
+	return ((Var *) Lst_Datum (var));
 }
 
 /*-
@@ -343,7 +351,7 @@ VarFind (name, ctxt, flags)
  *	Add a new variable of name name and value val to the given context
  *
  * Results:
- *	None
+ *	The added variable
  *
  * Side Effects:
  *	The new variable is placed at the front of the given context
@@ -351,8 +359,8 @@ VarFind (name, ctxt, flags)
  *	safely be freed.
  *-----------------------------------------------------------------------
  */
-static void
-VarAdd (name, val, ctxt)
+static Var *
+VarAdd(name, val, ctxt)
     char           *name;	/* name of variable to add */
     char           *val;	/* value to set it to */
     GNode          *ctxt;	/* context in which to set it */
@@ -375,6 +383,7 @@ VarAdd (name, val, ctxt)
     if (DEBUG(VAR)) {
 	printf("%s:%s = %s\n", ctxt->name, name, val);
     }
+    return v;
 }
 
 
@@ -473,7 +482,7 @@ Var_Set (name, val, ctxt)
      */
     v = VarFind (name, ctxt, 0);
     if (v == (Var *) NIL) {
-	VarAdd (name, val, ctxt);
+	(void)VarAdd(name, val, ctxt);
     } else {
 	Buf_Discard(v->val, Buf_Size(v->val));
 	Buf_AddChars(v->val, strlen(val), val);
@@ -484,10 +493,14 @@ Var_Set (name, val, ctxt)
     }
     /*
      * Any variables given on the command line are automatically exported
-     * to the environment (as per POSIX standard)
+     * to the environment (as per POSIX standard).  
+     * We put them into the env cache directly.
+     * (Note that additions to VAR_CMD occur very early, so VAR_ENV is
+     * actually empty at this point).
      */
     if (ctxt == VAR_CMD) {
 	setenv(name, val, 1);
+	(void)VarAdd(name, val, VAR_ENV);
     }
 }
 
@@ -524,7 +537,7 @@ Var_Append (name, val, ctxt)
     v = VarFind (name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
     if (v == (Var *) NIL) {
-	VarAdd (name, val, ctxt);
+	(void)VarAdd(name, val, ctxt);
     } else {
 	Buf_AddChar(v->val, ' ');
 	Buf_AddChars(v->val, strlen(val), val);
@@ -534,16 +547,6 @@ Var_Append (name, val, ctxt)
 		   Buf_GetAll(v->val, NULL));
 	}
 
-	if (v->flags & VAR_FROM_ENV) {
-	    /*
-	     * If the original variable came from the environment, we
-	     * have to install it in the global context (we could place
-	     * it in the environment, but then we should provide a way to
-	     * export other variables...)
-	     */
-	    v->flags &= ~VAR_FROM_ENV;
-	    Lst_AtFront(ctxt->context, (ClientData)v);
-	}
     }
 }
 
@@ -569,14 +572,10 @@ Var_Exists(name, ctxt)
 
     v = VarFind(name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
 
-    if (v == (Var *)NIL) {
-	return(FALSE);
-    } else if (v->flags & VAR_FROM_ENV) {
-	free(v->name);
-	Buf_Destroy(v->val, TRUE);
-	free((char *)v);
-    }
-    return(TRUE);
+    if (v == (Var *)NIL)
+	return FALSE;
+    else
+	return TRUE;
 }
 
 /*-
@@ -603,15 +602,9 @@ Var_Value (name, ctxt, frp)
     *frp = NULL;
     if (v != (Var *) NIL) {
 	char *p = Buf_GetAll(v->val, NULL);
-	if (v->flags & VAR_FROM_ENV) {
-	    Buf_Destroy(v->val, FALSE);
-	    free((Address) v);
-	    *frp = p;
-	}
 	return p;
-    } else {
-	return ((char *) NULL);
-    }
+    } else
+	return NULL;
 }
 
 /*-
@@ -2106,21 +2099,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	*tstr = endc;
     }
 
-    if (v->flags & VAR_FROM_ENV) {
-	Boolean	  destroy = FALSE;
-
-	if (str != Buf_GetAll(v->val, NULL)) {
-	    destroy = TRUE;
-	} else {
-	    /*
-	     * Returning the value unmodified, so tell the caller to free
-	     * the thing.
-	     */
-	    *freePtr = TRUE;
-	}
-	Buf_Destroy(v->val, destroy);
-	free((Address)v);
-    } else if (v->flags & VAR_JUNK) {
+    if (v->flags & VAR_JUNK) {
 	/*
 	 * Perform any free'ing needed and set *freePtr to FALSE so the caller
 	 * doesn't try to free a static pointer.
@@ -2375,8 +2354,9 @@ Var_GetHead(file)
 void
 Var_Init ()
 {
-    VAR_GLOBAL = Targ_NewGN ("Global");
-    VAR_CMD = Targ_NewGN ("Command");
+    VAR_GLOBAL = Targ_NewGN("Global");
+    VAR_CMD = Targ_NewGN("Command");
+    VAR_ENV = Targ_NewGN("Environment");
     allVars = Lst_Init(FALSE);
 
 }
