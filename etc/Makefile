@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.210 2004/08/16 17:39:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.211 2004/08/26 03:34:15 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -258,15 +258,16 @@ release: distribution snap_pre snap_md
 	cd ${.CURDIR}/../distrib/sets && exec ${SUDO} sh maketars ${OSrev}
 	-cp ${DESTDIR}/snapshot/bsd* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*boot* ${RELEASEDIR}
+	-cp ${DESTDIR}/snapshot/cdbr ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*BOOT* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/cd*.iso ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/INSTALL.* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*.fs ${DESTDIR}/snapshot/*.fs.gz ${RELEASEDIR}
 	-cd ${RELEASEDIR}; \
-		md5 bsd!(*.gz) *boot* *BOOT* INSTALL.* *.fs *.iso *.gz *.tgz \
+		md5 bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* *.fs *.iso *.gz *.tgz \
 		    > MD5
 	-cd ${RELEASEDIR}; \
-		cksum bsd!(*.gz) *boot* *BOOT* INSTALL.* *.fs *.iso *.gz *.tgz \
+		cksum bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* *.fs *.iso *.gz *.tgz \
 		    > CKSUM
 .if defined(MACHINE_HAS_TOOLS)
 	mkdir -p ${RELEASEDIR}/tools
@@ -372,7 +373,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.210 2004/08/16 17:39:21 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.211 2004/08/26 03:34:15 deraadt Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \

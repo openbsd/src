@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2004/06/13 22:05:14 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2004/08/26 03:34:16 deraadt Exp $
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -23,6 +23,8 @@ notes:
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/pxeboot ${DESTDIR}/snapshot
+	cp ${DESTDIR}/usr/mdec/cdboot ${DESTDIR}/snapshot
+	cp ${DESTDIR}/usr/mdec/cdbr ${DESTDIR}/snapshot
 
 .PHONY: bsd notes bootblocks
 
