@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.4 1997/02/22 08:28:28 millert Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.5 1997/03/16 01:18:48 flipk Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ sys_settimeofday(p, v, retval)
 		 * but not set back). This feature prevent interlopers from
 		 * setting arbitrary time stamps on files.
 		 */
-		if (securelevel > 0 && timercmp(&atv, &time, <))
+		if (securelevel > 1 && timercmp(&atv, &time, <))
 			return (EPERM);
 		/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
 		s = splclock();
