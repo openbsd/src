@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.11 1997/09/14 01:15:23 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.12 1997/09/21 23:15:59 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -73,7 +73,7 @@ u_int8_t *block_count_p;	/* block count var. in prototype image */
 u_int8_t *block_table_p;	/* block number array in prototype image */
 int	maxblocknum;		/* size of this array */
 
-#ifdef CPU_BIOSDEV
+#ifdef CPU_BIOS
 int biosdev;
 #endif
 
@@ -137,12 +137,13 @@ main(argc, argv)
 	proto = argv[optind + 1];
 	realdev = dev = argv[optind + 2];
 
-#ifdef CPU_BIOSDEV
+#ifdef CPU_BIOS
 	if (heads == -1 || nsectors == -1) {
 		int mib[3], size;
 
 		mib[0] = CTL_MACHDEP;
-		mib[1] = CPU_BIOSDEV;
+		mib[1] = CPU_BIOS;
+		mib[2] = BIOS_DEV;
 		size = sizeof(int);
 
 		if (sysctl(mib, 2, &biosdev, &size, NULL, 0) == -1)
@@ -151,7 +152,7 @@ main(argc, argv)
 		if (biosdev & 0x80) {
 			int geo;
 
-			mib[1] = CPU_BIOSGEOMETRY;
+			mib[2] = BIOS_GEOMETRY;
 			size = sizeof(int);
 
 			if (sysctl(mib, 2, &geo, &size, NULL, 0) == -1)
