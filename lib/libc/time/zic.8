@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.10 2000/03/04 22:19:32 aaron Exp $
+.\"	$OpenBSD: zic.8,v 1.11 2000/03/30 23:56:27 millert Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -376,6 +376,8 @@ field of the earliest transition time's rule to ensure that
 the earliest transition time recorded in the compiled file is correct.
 .Sh FILES
 .Bl -tag -width "/usr/share/zoneinfo" -compact
+.It Pa /etc/localtime
+link to local time zone
 .It Pa /usr/share/zoneinfo
 standard directory used for created files
 .El
