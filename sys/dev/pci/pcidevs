@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.120 1999/02/19 02:15:10 deraadt Exp $
+$OpenBSD: pcidevs,v 1.121 1999/02/20 19:00:09 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -490,6 +490,7 @@ vendor 3DO		0x1239	The 3D0 Company
 vendor CCUBE		0x123f	C-Cube
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
+vendor ASIX		0x125b	ASIX
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS Technology Inc
 vendor ENSONIQ		0x1274	Ensoniq
@@ -637,6 +638,9 @@ product ARC 2000PV		0xa099	2000PV
 product ARC 2000MT		0xa0a1	2000MT
 product ARC 2000MI		0xa0a9	2000MI
 
+/* ASIX Electronics products */
+product ASIX AX88140A		0x1400	AX88140A 10/100 Ethernet
+
 /* ATI products */
 product ATI MACH32		0x4158	Mach32
 product ATI MACH64_CT		0x4354	Mach64 CT
@@ -763,6 +767,7 @@ product	COMPAQ NF3P_BNC		0xf150	NetFlex 3/PB
 
 /* Compex */
 product COMPEX COMPEXE		0x1401	Ethernet
+product	COMPEX RL100ATX		0x2011	RL100-ATX 10/100
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB
@@ -1246,6 +1251,7 @@ product WD 90C			0xC24A	90C
 
 /* Winbond Electronics products */
 product WINBOND W83769F		0x0001	W83769F
+product WINBOND W89C840F	0x0840	W89C840F 10/100 Ethernet
 product WINBOND W89C940F	0x0940	Linksys EtherPCI II
 
 /* Winbond Electronics products (PCI products set 2) */
