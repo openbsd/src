@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.8 2000/04/18 15:24:26 mickey Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.9 2000/04/18 20:17:54 mickey Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.8 2000/04/18 15:24:26 mickey Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.9 2000/04/18 20:17:54 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,25 +59,37 @@ static char *rcsid = "$OpenBSD: nfsstat.c,v 1.8 2000/04/18 15:24:26 mickey Exp $
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <ctype.h>
 #include <errno.h>
+#include <kvm.h>
+#include <nlist.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
+#include <paths.h>
 #include <err.h>
 
 #define SHOW_SERVER 0x01
 #define SHOW_CLIENT 0x02
 #define SHOW_ALL (SHOW_SERVER | SHOW_CLIENT)
 
+struct nlist nl[] = {
+#define	N_NFSSTAT	0
+	{ "_nfsstats" },
+	{ "" },
+};
+kvm_t *kd;
 u_char	signalled;			/* set if alarm goes off "early" */
 int nfs_id;
 
 void getnfsstats __P((struct nfsstats *));
-static __inline void printhdr __P((void));
-static __inline void intpr __P((u_int));
-static __inline void sidewaysintpr __P((u_int, u_int));
-static __inline void usage __P((void));
+void printhdr __P((void));
+void intpr __P((u_int));
+void sidewaysintpr __P((u_int, u_int));
+void usage __P((void));
 
 int
 main(argc, argv)
@@ -89,14 +101,18 @@ main(argc, argv)
 	char *p;
 	u_int interval;
 	u_int display = SHOW_ALL;
+	char *memf, *nlistf;
 	int ch;
 
 	interval = 0;
+	memf = nlistf = NULL;
 	while ((ch = getopt(argc, argv, "M:N:w:sc")) != -1)
 		switch(ch) {
 		case 'M':
+			memf = optarg;
+			break;
 		case 'N':
-			/* compat */
+			nlistf = optarg;
 			break;
 		case 'w':
 			interval = (u_int)strtol(optarg, &p, 0);
@@ -116,7 +132,25 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	{
+#define	BACKWARD_COMPATIBILITY
+#ifdef	BACKWARD_COMPATIBILITY
+	if (*argv) {
+		interval = atoi(*argv);
+		if (*++argv) {
+			nlistf = *argv;
+			if (*++argv)
+				memf = *argv;
+		}
+	}
+#endif
+	if (nlistf || memf) {
+		char errbuf[_POSIX2_LINE_MAX];
+
+		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == 0)
+			errx(1, "nfsstat: %s", errbuf);
+		if (kvm_nlist(kd, nl) != 0)
+			errx(1, "kvm_nlist: can't get names");
+	} else {
 		int mib[3];
 		size_t len;
 
@@ -147,11 +181,6 @@ main(argc, argv)
 			errx(1, "cannot find nfs filesystem id");
 	}
 
-#define	BACKWARD_COMPATIBILITY
-#ifdef	BACKWARD_COMPATIBILITY
-	if (*argv)
-		interval = atoi(*argv);
-#endif
 	if (interval)
 		sidewaysintpr(interval, display);
 	else
@@ -164,21 +193,26 @@ void
 getnfsstats(p)
 	struct nfsstats *p;
 {
-	int mib[3];
-	size_t len = sizeof(*p);
+	if (kd) {
+		if (kvm_read(kd, nl[N_NFSSTAT].n_value, p, sizeof(*p)) != sizeof(*p))
+			errx(1, "kvm_read failed");
+	} else {
+		int mib[3];
+		size_t len = sizeof(*p);
 
-	mib[0] = CTL_VFS;
-	mib[1] = nfs_id; /* 2 */
-	mib[2] = NFS_NFSSTATS;
+		mib[0] = CTL_VFS;
+		mib[1] = nfs_id; /* 2 */
+		mib[2] = NFS_NFSSTATS;
 
-	if (sysctl(mib, 3, p, &len, NULL, 0))
-		err(1, "sysctl");
+		if (sysctl(mib, 3, p, &len, NULL, 0))
+			err(1, "sysctl");
+	}
 }
 
 /*
  * Print a description of the nfs stats.
  */
-static __inline void
+void
 intpr(display)
 	u_int display;
 {
@@ -331,7 +365,7 @@ intpr(display)
  * collected over that interval.  Assumes that interval is non-zero.
  * First line printed at top of screen is always cumulative.
  */
-static __inline void
+void
 sidewaysintpr(interval, display)
 	u_int interval;
 	u_int display;
@@ -387,7 +421,7 @@ sidewaysintpr(interval, display)
 	/*NOTREACHED*/
 }
 
-static __inline void
+void
 printhdr()
 {
 	printf("        %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s\n",
@@ -406,10 +440,12 @@ catchalarm()
 	signalled = 1;
 }
 
-static __inline void
+void
 usage()
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-s] [-c] [-w interval]\n", __progname);
+	fprintf(stderr,
+	    "usage: %s [-M core] [-N system] [-s] [-c] [-w interval]\n",
+	    __progname);
 	exit(1);
 }
