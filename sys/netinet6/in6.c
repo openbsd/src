@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.58 2004/08/21 06:57:50 tedu Exp $	*/
+/*	$OpenBSD: in6.c,v 1.59 2004/08/24 02:57:33 tedu Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2190,7 +2190,7 @@ in6_are_prefix_equal(p1, p2, len)
 	int bytelen, bitlen;
 
 	/* sanity check */
-	if (0 > len || len >= 128) {
+	if (0 > len || len > 128) {
 		log(LOG_ERR, "in6_are_prefix_equal: invalid prefix length(%d)\n",
 		    len);
 		return (0);
@@ -2201,6 +2201,7 @@ in6_are_prefix_equal(p1, p2, len)
 
 	if (bcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
 		return (0);
+	/* len == 128 is ok because bitlen == 0 then */
 	if (bitlen != 0 &&
 	    p1->s6_addr[bytelen] >> (8 - bitlen) !=
 	    p2->s6_addr[bytelen] >> (8 - bitlen))
@@ -2218,7 +2219,7 @@ in6_prefixlen2mask(maskp, len)
 	int bytelen, bitlen, i;
 
 	/* sanity check */
-	if (0 > len || len >= 128) {
+	if (0 > len || len > 128) {
 		log(LOG_ERR, "in6_prefixlen2mask: invalid prefix length(%d)\n",
 		    len);
 		return;
@@ -2229,6 +2230,7 @@ in6_prefixlen2mask(maskp, len)
 	bitlen = len % 8;
 	for (i = 0; i < bytelen; i++)
 		maskp->s6_addr[i] = 0xff;
+	/* len == 128 is ok because bitlen == 0 then */
 	if (bitlen)
 		maskp->s6_addr[bytelen] = maskarray[bitlen - 1];
 }
