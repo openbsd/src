@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.3 1996/02/20 14:34:00 mickey Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.4 1996/02/21 12:50:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -70,8 +70,10 @@
 #include <net/if_tun.h>
 
 #ifdef	TUN_DEBUG
-#define TUNDEBUG	if (tundebug) printf
 int	tundebug = TUN_DEBUG;
+#define TUNDEBUG(a)	(tundebug? printf a : 0)
+#else
+#define TUNDEBUG(a)	/* (tundebug? printf a : 0) */
 #endif
 
 struct tun_softc tunctl[NTUN];
@@ -149,7 +151,7 @@ tunopen(dev, flag, mode, p)
 		return ENXIO;
 	ifp = &tp->tun_if;
 	tp->tun_flags |= TUN_OPEN;
-	TUNDEBUG("%s%d: open\n", ifp->if_name, ifp->if_unit);
+	TUNDEBUG(("%s%d: open\n", ifp->if_name, ifp->if_unit));
 	return (0);
 }
 
@@ -200,7 +202,7 @@ tunclose(dev, flag, mode, p)
 	tp->tun_pgrp = 0;
 	selwakeup(&tp->tun_rsel);
 		
-	TUNDEBUG ("%s%d: closed\n", ifp->if_name, ifp->if_unit);
+	TUNDEBUG(("%s%d: closed\n", ifp->if_name, ifp->if_unit));
 	return (0);
 }
 
@@ -212,7 +214,7 @@ tuninit(unit)
 	struct ifnet	*ifp = &tp->tun_if;
 	register struct ifaddr *ifa;
 
-	TUNDEBUG("%s%d: tuninit\n", ifp->if_name, ifp->if_unit);
+	TUNDEBUG(("%s%d: tuninit\n", ifp->if_name, ifp->if_unit));
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
@@ -250,13 +252,12 @@ tunifioctl(ifp, cmd, data)
 	switch(cmd) {
 	case SIOCSIFADDR:
 		tuninit(ifp->if_unit);
-		TUNDEBUG("%s%d: address set\n",
-			 ifp->if_name, ifp->if_unit);
+		TUNDEBUG(("%s%d: address set\n", ifp->if_name, ifp->if_unit));
 		break;
 	case SIOCSIFDSTADDR:
 		tuninit(ifp->if_unit);
-		TUNDEBUG("%s%d: destination address set\n",
-			 ifp->if_name, ifp->if_unit);
+		TUNDEBUG(("%s%d: destination address set\n",
+			 ifp->if_name, ifp->if_unit));
 		break;
 	default:
 		error = EINVAL;
@@ -279,11 +280,11 @@ tunoutput(ifp, m0, dst, rt)
 	struct proc	*p;
 	int		s;
 
-	TUNDEBUG ("%s%d: tunoutput\n", ifp->if_name, ifp->if_unit);
+	TUNDEBUG(("%s%d: tunoutput\n", ifp->if_name, ifp->if_unit));
 
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
-		TUNDEBUG ("%s%d: not ready 0%o\n", ifp->if_name,
-			  ifp->if_unit, tp->tun_flags);
+		TUNDEBUG(("%s%d: not ready 0%o\n", ifp->if_name,
+			  ifp->if_unit, tp->tun_flags));
 		m_freem (m0);
 		return EHOSTDOWN;
 	}
@@ -412,10 +413,10 @@ tunread(dev, uio,flags)
 	struct mbuf	*m, *m0;
 	int		error=0, len, s;
 
-	TUNDEBUG ("%s%d: read\n", ifp->if_name, ifp->if_unit);
+	TUNDEBUG(("%s%d: read\n", ifp->if_name, ifp->if_unit));
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
-		TUNDEBUG ("%s%d: not ready 0%o\n", ifp->if_name,
-			  ifp->if_unit, tp->tun_flags);
+		TUNDEBUG(("%s%d: not ready 0%o\n", ifp->if_name,
+			  ifp->if_unit, tp->tun_flags));
 		return EHOSTDOWN;
 	}
 
@@ -445,7 +446,7 @@ tunread(dev, uio,flags)
 	}
 
 	if (m0) {
-		TUNDEBUG("Dropping mbuf\n");
+		TUNDEBUG(("Dropping mbuf\n"));
 		m_freem(m0);
 	}
 	if (error)
@@ -471,11 +472,11 @@ tunwrite(dev, uio, flags)
 	int		isr;
 	int		error=0, s, tlen, mlen;
 
-	TUNDEBUG("%s%d: tunwrite\n", ifp->if_name, ifp->if_unit);
+	TUNDEBUG(("%s%d: tunwrite\n", ifp->if_name, ifp->if_unit));
 
 	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
-		TUNDEBUG("%s%d: len=%d!\n", ifp->if_name, ifp->if_unit,
-		    uio->uio_resid);
+		TUNDEBUG(("%s%d: len=%d!\n", ifp->if_name, ifp->if_unit,
+		    uio->uio_resid));
 		return EIO;
 	}
 	tlen = uio->uio_resid;
@@ -582,14 +583,14 @@ tunselect(dev, rw, p)
 	struct ifnet	*ifp = &tp->tun_if;
 
 	s = splimp();
-	TUNDEBUG("%s%d: tunselect\n", ifp->if_name, ifp->if_unit);
+	TUNDEBUG(("%s%d: tunselect\n", ifp->if_name, ifp->if_unit));
 
 	switch (rw) {
 	case FREAD:
 		if (ifp->if_snd.ifq_len > 0) {
 			splx(s);
-			TUNDEBUG("%s%d: tunselect q=%d\n", ifp->if_name,
-			    ifp->if_unit, ifp->if_snd.ifq_len);
+			TUNDEBUG(("%s%d: tunselect q=%d\n", ifp->if_name,
+			    ifp->if_unit, ifp->if_snd.ifq_len));
 			return 1;
 		}
 		selrecord(curproc, &tp->tun_rsel);
@@ -599,7 +600,7 @@ tunselect(dev, rw, p)
 		return 1;
 	}
 	splx(s);
-	TUNDEBUG("%s%d: tunselect waiting\n", ifp->if_name, ifp->if_unit);
+	TUNDEBUG(("%s%d: tunselect waiting\n", ifp->if_name, ifp->if_unit));
 	return 0;
 }
 
