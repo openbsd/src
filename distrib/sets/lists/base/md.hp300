@@ -1684,7 +1684,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/vmparam.ph
-./usr/libdata/perl5/File/Temp.pm
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cacheops.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cacheops_20.ph
@@ -1693,8 +1692,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cacheops_60.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/sysctl.ph
-./usr/share/man/cat8/rc.conf.local.0
-./usr/share/man/cat3p/File::Temp.0
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph
