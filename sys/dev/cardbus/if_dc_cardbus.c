@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.2 2000/10/26 22:37:04 aaron Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.3 2000/10/27 18:48:27 nate Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,16 +196,10 @@ dc_cardbus_detach(self, flags)
 	struct dc_softc *sc = &csc->sc_dc;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-#if 0
-	struct mii_softc *msc;
-#endif
 	int rv = 0;
 
-#if 0
-	for (msc = LIST_FIRST(&sc->sc_mii.mii_phys); msc;
-	    msc = LIST_FIRST(&sc->sc_mii.mii_phys))
-		rv |= mii_detach(msc, flags);
-#endif
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
 	/* unmap cardbus resources */
 	Cardbus_mapreg_unmap(ct,
