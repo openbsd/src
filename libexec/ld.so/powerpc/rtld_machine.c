@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.22 2003/02/02 16:57:58 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.23 2003/02/15 00:30:16 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -170,8 +170,9 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	 */
 	load_list = object->load_list;
 	while (load_list != NULL) {
-		_dl_mprotect(load_list->start, load_list->size,
-		    load_list->prot|PROT_WRITE);
+		if ((load_list->prot & PROT_WRITE) == 0)
+			_dl_mprotect(load_list->start, load_list->size,
+			    load_list->prot|PROT_WRITE);
 		load_list = load_list->next;
 	}
 
@@ -431,7 +432,9 @@ _dl_printf(" found other symbol at %x size %d\n",
 	}
 	load_list = object->load_list;
 	while (load_list != NULL) {
-		_dl_mprotect(load_list->start, load_list->size, load_list->prot);
+		if ((load_list->prot & PROT_WRITE) == 0)
+			_dl_mprotect(load_list->start, load_list->size,
+			    load_list->prot);
 		load_list = load_list->next;
 	}
 	return(fails);
