@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.122 2004/09/15 08:46:00 otto Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.123 2005/04/02 18:10:52 otto Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.122 2004/09/15 08:46:00 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.123 2005/04/02 18:10:52 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -376,6 +376,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	umask(022);
 	if (debug == 0) {
 		daemon(0, 0);
 		if (uid == 0)
@@ -958,6 +959,7 @@ setup(struct servtab *sep)
 {
 	int on = 1;
 	int r;
+	mode_t mask = 0;
 
 	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) < 0) {
 		syslog(LOG_ERR, "%s/%s: socket: %m",
@@ -1000,8 +1002,13 @@ setsockopt(fd, SOL_SOCKET, opt, &on, sizeof (on))
 					errno = saveerrno;
 			}
 		}
-	} else
+	} else {
+		if (sep->se_family == AF_UNIX)
+			mask = umask(0111);
 		r = bind(sep->se_fd, &sep->se_ctrladdr, sep->se_ctrladdr_size);
+		if (sep->se_family == AF_UNIX)
+			umask(mask);
+	}
 	if (r < 0) {
 		syslog(LOG_ERR, "%s/%s: bind: %m",
 		    sep->se_service, sep->se_proto);
@@ -1968,12 +1975,6 @@ spawn(struct servtab *sep, int ctrl)
 					pwd->pw_gid = grp->gr_gid;
 					tmpint |= LOGIN_SETGROUP;
 				}
-				if (sep->se_family == AF_UNIX &&
-				    chown(sep->se_ctrladdr_un.sun_path,
-				    pwd->pw_uid, pwd->pw_gid) < 0)
-					syslog(LOG_WARNING,
-					    "%s/%s: UNIX domain socket: %m",
-					    sep->se_service, sep->se_proto);
 				if (setusercontext(NULL, pwd, pwd->pw_uid,
 				    tmpint) < 0) {
 					syslog(LOG_ERR,
