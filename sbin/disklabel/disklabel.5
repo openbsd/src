@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.5,v 1.3 1998/07/11 22:42:56 angelos Exp $
+.\"	$OpenBSD: disklabel.5,v 1.4 1998/07/14 22:19:33 angelos Exp $
 .\"	$NetBSD: disklabel.5,v 1.3 1995/03/18 14:54:36 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
@@ -129,13 +129,6 @@ is
 #endif
 
 #define DISKMAGIC	((u_long) 0x82564557)	/* The disk magic number */
-#ifndef MAXPARTITIONS
-#if amiga
-#define MAXPARTITIONS	8
-#else
-#define	MAXPARTITIONS	16
-#endif
-#endif
 
 #ifndef LOCORE
 struct disklabel {
@@ -232,7 +225,10 @@ struct disklabel {
 #define	p_cpg	__partition_u1.cpg
 #define	p_sgs	__partition_u1.sgs
 		u_short	p_cpg;	/* filesystem cylinders per group */
-	} d_partitions[MAXPARTITIONS];	/* actually may be more */
+	} d_partitions[MAXPARTITIONS];	/* actually may be more, MAXPARTITIONS
+					 * depends on the architecture, and
+					 * typically varies between 8 and 16.
+					 */
 };
 
 /* d_type values: */
