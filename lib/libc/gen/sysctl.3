@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.51 2000/09/19 03:17:10 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.52 2000/09/25 10:01:33 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -524,7 +524,7 @@ Get or set various global information about IPv4
 The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
-.Bl -column "Protocol name" "ipsec-soft-firstuse" "integer" -offset indent
+.Bl -column "Protocol name" "ipsec-soft-bytes" "integer" -offset indent
 .It Sy Protocol name	Variable name	Type	Changeable
 .It ip	forwarding	integer	yes
 .It ip	redirect	integer	yes
@@ -550,6 +550,8 @@ The currently defined protocols and names are:
 .It ip	ipsec-enc-alg	string	yes
 .It ip	ipsec-auth-alg	string	yes
 .It ip	ipsec-expire-acquire	integer	yes
+.It ip	mtudisc	integer	yes
+.It ip	mtudisctimeout	integer	yes
 .It icmp	maskrepl	integer	yes
 .It icmp	bmcastecho	integer	yes
 .It ipip	allow	integer	yes
@@ -731,6 +733,12 @@ The default value is 30 seconds.
 How long half-created security associations should be kept by the kernel
 (these are created by key management daemons while negotiating).
 The default value is 60 seconds.
+.It Li ip.mtudisc
+Returns 1 if Path MTU Discovery is enabled.
+.It Li ip.mtudisctimeout
+Returns the number of seconds in which a route added by the Path MTU
+Discovery engine will time out.  When the route times out, the Path
+MTU Discovery engine will attempt to probe a larger path MTU.
 .It Li ipip.allow
 If set to 0, incoming IP-in-IP packets will not be processed.
 If set to any other value, processing will occur.
