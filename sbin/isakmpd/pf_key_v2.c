@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.84 2001/08/14 20:33:02 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.85 2001/08/19 18:24:29 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2255,22 +2255,18 @@ pf_key_v2_remove_conf (char *section)
     af = conf_begin ();
 
     configname = conf_get_str (section, "Configuration");
-
-    if (pf_key_v2_conf_refhandle (af, section))
-      {
-	conf_end (af, 1);
-	return 0;
-      }
-
     conf_remove_section (af, configname);
 
+    /* These are the Phase 2 Local/Remote IDs. */
     localid = conf_get_str (section, "Local-ID");
+    pf_key_v2_conf_refhandle (af, localid);
+
     remoteid = conf_get_str (section, "Remote-ID");
+    pf_key_v2_conf_refhandle (af, remoteid);
+
     ikepeer = conf_get_str (section, "ISAKMP-peer");
 
-    /* These are the Phase 2 Local/Remote IDs. */
-    pf_key_v2_conf_refhandle (af, localid);
-    pf_key_v2_conf_refhandle (af, remoteid);
+    pf_key_v2_conf_refhandle (af, section);
 
     if (ikepeer)
       {
@@ -2278,12 +2274,7 @@ pf_key_v2_remove_conf (char *section)
 	localid = conf_get_str (ikepeer, "ID");
 	configname = conf_get_str (ikepeer, "Configuration");
 
-	if (pf_key_v2_conf_refhandle (af, ikepeer))
-	  {
-	    conf_end (af, 1);
-	    return 0;
-	  }
-
+	pf_key_v2_conf_refhandle (af, ikepeer);
 	pf_key_v2_conf_refhandle (af, configname);
 
 	/* Phase 1 IDs */
