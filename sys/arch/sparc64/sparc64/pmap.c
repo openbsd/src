@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.3 2001/09/19 20:50:57 mickey Exp $	*/
-/*	$NetBSD: pmap.c,v 1.106 2001/08/09 01:01:31 eeh Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 2001/09/20 23:23:59 jason Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -707,10 +707,23 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	BDPRINTF(PDB_BOOT1, 
 		("Kernel data is mapped at %lx, next free seg: %lx, %lx\r\n",
 			(long)kdata, (u_long)mp1->start, (u_long)mp1->size));
-	/* 
-	 * This it bogus and will be changed when the kernel is rounded to 4MB.
+
+	/*
+	 * We save where we can start allocating memory.
 	 */
 	firstaddr = (ekdata + 07) & ~ 07;	/* Longword align */
+
+	/*
+	 * We reserve 100K to grow.
+	 */
+	ekdata += 100*KB;
+
+	/*
+	 * And set the end of the data segment to the end of what our
+	 * bootloader allocated for us, if we still fit in there.
+	 */
+	if (ekdata < mp1->start)
+		ekdata = mp1->start;
 
 #if 1
 #define	valloc(name, type, num) (name) = (type *)firstaddr; firstaddr += (num)
@@ -734,15 +747,14 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * rest should be less than 1K, so 100KB extra should be plenty.
 	 */
 	kdsize = round_page(ekdata - kdata);
+	BDPRINTF(PDB_BOOT1, ("Kernel data size is %lx\r\n", (long)kdsize));
 
 	if ((kdatap & (4*MEG-1)) == 0) {
 		/* We were at a 4MB boundary -- claim the rest */
-		psize_t szdiff = 4*MEG - (kdsize & (4*MEG-1));
+		psize_t szdiff = (4*MEG - kdsize) & (4*MEG - 1);
 
-		if (szdiff < 100*KB /* ~100KB slack */ ) {
-			/* We've overflowed, or soon will, get another page */
-			szdiff += 4*MEG;
-		}
+		BDPRINTF(PDB_BOOT1, ("Need to extend dseg by %lx\r\n",
+			(long)szdiff));
 		if (szdiff) {
 			/* Claim the rest of the physical page. */
 			newkp = kdatap + kdsize;
@@ -773,7 +785,7 @@ remap_data:
 		 * Leave 1MB of extra fiddle space in the calculations.
 		 */
 
-		sz = (kdsize + 4*MEG + 100*KB) & ~(4*MEG-1);
+		sz = (kdsize + 4*MEG - 1) & ~(4*MEG-1);
 		BDPRINTF(PDB_BOOT1, 
 			 ("Allocating new %lx kernel data at 4MB boundary\r\n",
 			  (u_long)sz));
@@ -2851,7 +2863,7 @@ pmap_clear_modify(pg)
 			if (data & (TLB_MODIFY))
 				changed |= 1;
 #ifdef HWREF
-			data &= ~(TLB_MODIFY);
+			data &= ~(TLB_MODIFY|TLB_W);
 #else
 			data &= ~(TLB_MODIFY|TLB_W|TLB_REAL_W);
 #endif
@@ -3235,7 +3247,6 @@ pmap_page_protect(pg, prot)
 			       
 		firstpv = pv = pa_to_pvh(pa);
 		s = splvm();
-		if (firstpv->pv_pmap) simple_lock(&firstpv->pv_pmap->pm_lock);
 
 		/* First remove the entire list of continuation pv's*/
 		for (npv = pv->pv_next; npv; npv = pv->pv_next) {
@@ -3304,6 +3315,7 @@ pmap_page_protect(pg, prot)
 		}
 #endif
 		if (pv->pv_pmap != NULL) {
+			simple_lock(&pv->pv_pmap->pm_lock);
 #ifdef DEBUG
 			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF|PDB_REMOVE)) {
 				printf("pmap_page_protect: demap va %p of pa %lx from pm %p...\n",
