@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.59 2000/04/04 15:19:43 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.60 2000/04/04 15:30:51 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1467,8 +1467,8 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	    dh_server_pub,
 	    shared_secret
 	);
-	buffer_clear(client_kexinit);
-	buffer_clear(server_kexinit);
+	buffer_free(client_kexinit);
+	buffer_free(server_kexinit);
 	xfree(client_kexinit);
 	xfree(server_kexinit);
 #ifdef DEBUG_KEXDH
