@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.18 2005/01/31 21:23:08 claudio Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.19 2005/01/31 22:21:44 claudio Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -400,6 +400,13 @@ dhcprelease(struct packet *packet)
 	    packet->interface->name,
 	    lease ? "" : "not ");
 
+	/* If we're already acking this lease, don't do it again. */
+	if (lease && lease->state) {
+		note("DHCPRELEASE already acking lease %s",
+		    piaddr(lease->ip_addr));
+		return;
+	}
+
 	/* If we found a lease, release it. */
 	if (lease && lease->ends > cur_time) {
 		/*
@@ -462,6 +469,13 @@ dhcpdecline(struct packet *packet)
 	    packet->raw->hlen, packet->raw->chaddr),
 	    packet->raw->giaddr.s_addr ? inet_ntoa(packet->raw->giaddr) :
 	    packet->interface->name);
+
+	/* If we're already acking this lease, don't do it again. */
+	if (lease && lease->state) {
+		note("DHCPDECLINE already acking lease %s",
+		    piaddr(lease->ip_addr));
+		return;
+	}
 
 	/* If we found a lease, mark it as unusable and complain. */
 	if (lease)
