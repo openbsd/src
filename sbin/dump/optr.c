@@ -440,6 +440,8 @@ getfstab()
 		return;
 	}
 	while ((fs = getfsent()) != NULL) {
+		if (strcmp(fs->fs_vfstype, "ffs"))
+			continue;
 		if (strcmp(fs->fs_type, FSTAB_RW) &&
 		    strcmp(fs->fs_type, FSTAB_RO) &&
 		    strcmp(fs->fs_type, FSTAB_RQ))
