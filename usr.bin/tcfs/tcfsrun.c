@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrun.c,v 1.8 2000/06/20 10:46:52 fgsch Exp $	*/
+/*	$OpenBSD: tcfsrun.c,v 1.9 2000/06/20 18:15:58 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -40,7 +40,7 @@ run_main(int argc, char *argv[], char *envp[])
 
 	uid = getuid();
 
-	while ((x = getopt(argc, argv, "p:f:")) != EOF) {
+	while ((x = getopt(argc, argv, "p:f:")) != -1) {
 		switch(x) {
 		case 'p':
 			strlcpy(fspath, optarg, sizeof(fspath));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrmuser.c,v 1.8 2000/06/20 08:59:53 fgsch Exp $	*/
+/*	$OpenBSD: tcfsrmuser.c,v 1.9 2000/06/20 18:15:58 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -46,7 +46,7 @@ rmuser_main(int argn, char *argv[])
 	 if ((user = (char *)malloc(LOGIN_NAME_MAX + 1)) == NULL)
 		 err(1, NULL);
 
-	 while ((val = getopt(argn, argv, "l:hv")) != EOF)
+	 while ((val = getopt(argn, argv, "l:hv")) != -1)
 		switch (val) {
 		case 'l':
 			strlcpy(user, optarg, LOGIN_NAME_MAX + 1);
