@@ -2,7 +2,7 @@
 #define _JOB_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.h,v 1.10 2001/05/23 12:34:45 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.11 2002/03/02 00:23:14 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -109,7 +109,6 @@ typedef struct Job_ {
 				 * if we can't export it and maxLocal is 0 */
 #define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing
 				 * commands */
-#define JOB_REMOTE	0x010	/* Job is running remotely */
 #define JOB_FIRST	0x020	/* Job is first job for the node */
 #define JOB_REMIGRATE	0x040	/* Job needs to be remigrated */
 #define JOB_RESTART	0x080	/* Job needs to be completely restarted */
@@ -202,24 +201,6 @@ typedef struct Shell_ {
     char	  *echo;	/* echo commands */
     char	  *exit;	/* exit on error */
 }		Shell;
-
-
-#ifdef REMOTE
-extern char	*targFmt;	/* Format string for banner that separates
-				 * output from multiple jobs. Contains a
-				 * single %s where the name of the node being
-				 * made should be put. */
-extern GNode	*lastNode;	/* Last node for which a banner was printed.
-				 * If Rmt module finds it necessary to print
-				 * a banner, it should set this to the node
-				 * for which the banner was printed */
-extern int	nJobs;		/* Number of jobs running (local and remote) */
-extern int	nLocal; 	/* Number of jobs running locally */
-extern LIST	jobs;		/* List of active job descriptors */
-extern bool	jobFull;	/* Non-zero if no more jobs should/will start*/
-extern LIST	stoppedJobs;	/* List of jobs that are stopped or didn't
-				 * quite get started */
-#endif
 
 
 extern void Job_Touch(GNode *, bool);
