@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.9 2003/06/11 08:45:33 pjanzen Exp $	*/
+/*	$OpenBSD: answer.c,v 1.10 2004/01/16 00:13:19 espie Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -74,7 +74,7 @@ answer_first()
 	socklen = sizeof sockstruct;
 	newsock = accept(Socket, (struct sockaddr *) &sockstruct, &socklen);
 	if (newsock < 0) {
-		log(LOG_ERR, "accept");
+		logit(LOG_ERR, "accept");
 		return;
 	}
 
@@ -90,7 +90,7 @@ answer_first()
 	/* Remember this spawning connection: */
 	sp = (struct spawn *)malloc(sizeof *sp);
 	if (sp == NULL) {
-		log(LOG_ERR, "malloc");
+		logit(LOG_ERR, "malloc");
 		close(newsock);
 		return;
 	}
@@ -271,7 +271,7 @@ answer_next(sp)
 
 error:
 	if (len < 0) 
-		log(LOG_WARNING, "read");
+		logit(LOG_WARNING, "read");
 	else
 		logx(LOG_WARNING, "lost connection to new client");
 
@@ -499,7 +499,7 @@ get_ident(sa, salen, uid, name, team)
 		/* Alloc new entry -- it is released in clear_scores() */
 		ip = (IDENT *) malloc(sizeof (IDENT));
 		if (ip == NULL) {
-			log(LOG_ERR, "malloc");
+			logit(LOG_ERR, "malloc");
 			/* Fourth down, time to punt */
 			ip = &punt;
 		}
@@ -548,7 +548,7 @@ answer_info(fp)
 		sa = (struct sockaddr_in *)&sp->source;
 		bf = inet_ntop(AF_INET, &sa->sin_addr, buf, sizeof buf);
 		if (!bf)  {
-			log(LOG_WARNING, "inet_ntop");
+			logit(LOG_WARNING, "inet_ntop");
 			bf = "?";
 		}
 		fprintf(fp, "fd %d: state %d, from %s:%d\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2004/01/16 00:13:19 espie Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.16 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.17 2004/01/16 00:13:19 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ again:
 					ask("save file name? ");
 					(void)getline(fname, sizeof(fname));
 					if ((fp = fopen(fname, "w")) == NULL) {
-						log("cannot create save file");
+						logit("cannot create save file");
 						goto getinput;
 					}
 					for (i = 0; i < movenum - 1; i++)
@@ -273,7 +273,7 @@ again:
 				}
 				if (curmove != RESIGN &&
 				    board[curmove].s_occ != EMPTY) {
-				/*	log("Illegal move"); */
+				/*	logit("Illegal move"); */
 					beep();
 					goto getinput;
 				}
@@ -297,7 +297,7 @@ again:
 		if (interactive) {
 			snprintf(fmtbuf, sizeof fmtbuf,
 				fmt[color], movenum, stoc(curmove));
-			log(fmtbuf);
+			logit(fmtbuf);
 		}
 		if ((i = makemove(color, curmove)) != MOVEOK)
 			break;
@@ -337,7 +337,7 @@ again:
 				ask("save file name? ");
 				(void)getline(buf, sizeof(buf));
 				if ((fp = fopen(buf, "w")) == NULL) {
-					log("cannot create save file");
+					logit("cannot create save file");
 					goto replay;
 				}
 				for (i = 0; i < movenum - 1; i++)
@@ -533,7 +533,7 @@ dlog(str)
 }
 
 void
-log(str)
+logit(str)
 	char *str;
 {
 

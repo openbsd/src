@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.7 2003/12/28 01:09:49 espie Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.8 2004/01/16 00:13:19 espie Exp $	*/
 /*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -251,7 +251,7 @@ logx(prio, fmt)
 }
 
 void
-log(prio, fmt)
+logit(prio, fmt)
 	int prio;
 	const char *fmt;
 {

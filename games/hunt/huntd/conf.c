@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2001/02/13 11:55:09 pjanzen Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 2004/01/16 00:13:19 espie Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <stdio.h>
@@ -309,7 +309,7 @@ config()
 			fclose(f);
 		} 
 		else if (errno != ENOENT)
-			log(LOG_WARNING, "%s", nm);
+			logit(LOG_WARNING, "%s", nm);
 	}
 }
 

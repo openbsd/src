@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.5 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: extern.c,v 1.6 2004/01/16 00:13:18 espie Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/03/21 15:08:50 cgd Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ bool	muggins		= FALSE;	/* player mistakes exploited */
 bool	quiet		= FALSE;	/* if suppress random mess */
 bool	rflag		= FALSE;	/* if all cuts random */
 
-char	expl[128];			/* explanation */
+char	expl_string[128];			/* explanation */
 
 int	cgames		= 0;		/* number games comp won */
 int	cscore		= 0;		/* comp score in this game */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cribbage.h,v 1.6 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: cribbage.h,v 1.7 2004/01/16 00:13:18 espie Exp $	*/
 /*	$NetBSD: cribbage.h,v 1.3 1995/03/21 15:08:46 cgd Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ extern  bool		rflag;			/* if all cuts random */
 extern  bool		quiet;			/* if suppress random mess */
 extern	bool		playing;		/* currently playing game */
 
-extern  char		expl[128];		/* string for explanation */
+extern  char		expl_string[128];		/* string for explanation */
 
 void	 addmsg(const char *, ...);
 int	 adjust(CARD [], CARD);

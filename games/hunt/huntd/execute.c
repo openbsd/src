@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.7 2003/06/11 08:45:33 pjanzen Exp $	*/
+/*	$OpenBSD: execute.c,v 1.8 2004/01/16 00:13:19 espie Exp $	*/
 /*	$NetBSD: execute.c,v 1.2 1997/10/10 16:33:13 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -518,7 +518,7 @@ create_shot(type, y, x, face, charge, size, owner, score, expl, over)
 
 	bp = (BULLET *) malloc(sizeof (BULLET));	/* NOSTRICT */
 	if (bp == NULL) {
-		log(LOG_ERR, "malloc");
+		logit(LOG_ERR, "malloc");
 		if (owner != NULL)
 			message(owner, "Out of memory");
 		return NULL;

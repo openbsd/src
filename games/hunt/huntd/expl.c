@@ -1,4 +1,4 @@
-/*	$OpenBSD: expl.c,v 1.7 2003/06/11 08:45:33 pjanzen Exp $	*/
+/*	$OpenBSD: expl.c,v 1.8 2004/01/16 00:13:19 espie Exp $	*/
 /*	$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -60,7 +60,7 @@ showexpl(y, x, type)
 		return;
 	ep = (EXPL *) malloc(sizeof (EXPL));	/* NOSTRICT */
 	if (ep == NULL) {
-		log(LOG_ERR, "malloc");
+		logit(LOG_ERR, "malloc");
 		return;
 	}
 	ep->e_y = y;
@@ -156,7 +156,7 @@ init_removed()
 {
 	rem_index = removed = malloc(conf_maxremove * sizeof(REGEN));
 	if (rem_index == NULL) {
-		log(LOG_ERR, "malloc");
+		logit(LOG_ERR, "malloc");
 		cleanup(1);
 	}
 }

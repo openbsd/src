@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.15 2003/06/11 08:45:33 pjanzen Exp $	*/
+/*	$OpenBSD: driver.c,v 1.16 2004/01/16 00:13:19 espie Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -144,7 +144,7 @@ again:
 			nready = select(Num_fds, &read_fds, NULL, NULL, 
 			    &timeout);
 			if (nready < 0 && errno != EINTR) {
-				log(LOG_ERR, "select");
+				logit(LOG_ERR, "select");
 				cleanup(1);
 			}
 		} while (nready < 0);
@@ -177,7 +177,7 @@ again:
 				nready = select(Num_fds, &read_fds, NULL, NULL, 
 				    to);
 				if (nready < 0 && errno != EINTR) {
-					log(LOG_ERR, "select");
+					logit(LOG_ERR, "select");
 					cleanup(1);
 				}
 			} while (nready < 0);
@@ -282,7 +282,7 @@ again:
 	linger.tv_sec = conf_linger;
 	while ((ret = select(Num_fds, &read_fds, NULL, NULL, &linger)) < 0) {
 		if (errno != EINTR) {
-			log(LOG_WARNING, "select");
+			logit(LOG_WARNING, "select");
 			break;
 		}
 		read_fds = Fds_mask;
@@ -367,17 +367,17 @@ init()
 
 	Status = socket(AF_INET, SOCK_STREAM, 0);
 	if (bind(Status, (struct sockaddr *) &addr, sizeof addr) < 0) {
-		log(LOG_ERR, "bind");
+		logit(LOG_ERR, "bind");
 		cleanup(1);
 	}
 	if (listen(Status, 5) == -1) {
-		log(LOG_ERR, "listen");
+		logit(LOG_ERR, "listen");
 		cleanup(1);
 	}
 
 	len = sizeof (struct sockaddr_in);
 	if (getsockname(Status, (struct sockaddr *) &addr, &len) < 0)  {
-		log(LOG_ERR, "getsockname");
+		logit(LOG_ERR, "getsockname");
 		cleanup(1);
 	}
 	stat_port = ntohs(addr.sin_port);
@@ -390,17 +390,17 @@ init()
 	Socket = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (bind(Socket, (struct sockaddr *) &addr, sizeof addr) < 0) {
-		log(LOG_ERR, "bind");
+		logit(LOG_ERR, "bind");
 		cleanup(1);
 	}
 	if (listen(Socket, 5) == -1) {
-		log(LOG_ERR, "listen");
+		logit(LOG_ERR, "listen");
 		cleanup(1);
 	}
 
 	len = sizeof (struct sockaddr_in);
 	if (getsockname(Socket, (struct sockaddr *) &addr, &len) < 0)  {
-		log(LOG_ERR, "getsockname");
+		logit(LOG_ERR, "getsockname");
 		cleanup(1);
 	}
 	sock_port = ntohs(addr.sin_port);
@@ -442,11 +442,11 @@ init()
 		/* Permit multiple huntd's on the same port. */
 		if (setsockopt(Server_socket, SOL_SOCKET, SO_REUSEPORT, &true, 
 		    sizeof true) < 0)
-			log(LOG_ERR, "setsockopt SO_REUSEADDR");
+			logit(LOG_ERR, "setsockopt SO_REUSEADDR");
 
 		if (bind(Server_socket, (struct sockaddr *) &test_port,
 		    sizeof test_port) < 0) {
-			log(LOG_ERR, "bind port %d", Server_port);
+			logit(LOG_ERR, "bind port %d", Server_port);
 			cleanup(1);
 		}
 
@@ -947,7 +947,7 @@ check_again:
 #endif
 			return FALSE;
 		}
-		log(LOG_INFO, "read");
+		logit(LOG_INFO, "read");
 	}
 	if (ret > 0) {
 		/* Got some data */
@@ -1033,7 +1033,7 @@ send_stats()
 
 	fp = fdopen(s, "w");
 	if (fp == NULL) {
-		log(LOG_ERR, "fdopen");
+		logit(LOG_ERR, "fdopen");
 		(void) close(s);
 		return;
 	}
@@ -1156,7 +1156,7 @@ handle_wkport(fd)
 	fromlen = sizeof fromaddr;
 	if (recvfrom(fd, &query, sizeof query, 0, &fromaddr, &fromlen) == -1)
 	{
-		log(LOG_WARNING, "recvfrom");
+		logit(LOG_WARNING, "recvfrom");
 		return;
 	}
 
@@ -1200,12 +1200,12 @@ handle_wkport(fd)
 		response = sock_port;
 		break;
 	  default:
-		log(LOG_INFO, "unknown udp query %d", query);
+		logit(LOG_INFO, "unknown udp query %d", query);
 		return;
 	}
 
 	response = ntohs(response);
 	if (sendto(fd, &response, sizeof response, 0,
 	    &fromaddr, sizeof fromaddr) == -1)
-		log(LOG_WARNING, "sendto");
+		logit(LOG_WARNING, "sendto");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.8 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.9 2004/01/16 00:13:19 espie Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -290,7 +290,7 @@ void	init_overlap(void);
 #ifdef DEBUG
 int	list_eq(struct combostr **, struct combostr **, int);
 #endif
-void	log(char *);
+void	logit(char *);
 int	lton(int);
 void	makecombo(struct combostr *, struct spotstr *, int, int);
 void	makecombo2(struct combostr *, struct spotstr *, int, int);
