@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.2 1999/09/28 04:45:37 provos Exp $");
+RCSID("$Id: ssh-agent.c,v 1.3 1999/09/29 06:15:00 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -538,6 +538,16 @@ main(int ac, char **av)
 
   int sockets[2], i;
   int *dups;
+
+  /* check if RSA support exists */
+  if (rsa_alive() == 0) {
+    extern char *__progname;
+
+    fprintf(stderr,
+      "%s: no RSA support in libssl and libcrypto.  See ssl(8).\n",
+      __progname);
+    exit(1);
+  }
 
   if (ac < 2)
     {

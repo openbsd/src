@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.2 1999/09/28 04:45:37 provos Exp $");
+RCSID("$Id: sshd.c,v 1.3 1999/09/29 06:15:00 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -267,6 +267,12 @@ main(int ac, char **av)
     av0 = strrchr(av[0], '/') + 1;
   else
     av0 = av[0];
+
+  /* check if RSA support exists */
+  if (rsa_alive() == 0) {
+    log("no RSA support in libssl and libcrypto -- exiting.  See ssl(8)");
+    exit(1);
+  }
 
   /* Initialize configuration options to their default values. */
   initialize_server_options(&options);

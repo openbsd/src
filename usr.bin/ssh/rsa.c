@@ -35,13 +35,26 @@ Description of the RSA algorithm can be found e.g. from the following sources:
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.1 1999/09/28 04:45:37 provos Exp $");
+RCSID("$Id: rsa.c,v 1.2 1999/09/29 06:15:00 deraadt Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
 #include "xmalloc.h"
 
 int rsa_verbose = 1;
+
+int
+rsa_alive()
+{
+  RSA *key;
+  extern char *__progname;
+
+  key = RSA_generate_key(32, 3, NULL, NULL);
+  if (key == NULL)
+    return (0);
+  RSA_free(key);
+  return (1);
+}
 
 /* Generates RSA public and private keys.  This initializes the data
    structures; they should be freed with rsa_clear_private_key and

@@ -14,7 +14,7 @@ Identity and host key generation and maintenance.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.3 1999/09/28 19:42:05 deraadt Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.4 1999/09/29 06:15:00 deraadt Exp $");
 
 #ifndef HAVE_GETHOSTNAME
 #include <sys/utsname.h>
@@ -321,6 +321,16 @@ main(int ac, char **av)
 #endif
   extern int optind;
   extern char *optarg;
+
+  /* check if RSA support exists */
+  if (rsa_alive() == 0) {
+    extern char *__progname;
+
+    fprintf(stderr,
+      "%s: no RSA support in libssl and libcrypto.  See ssl(8).\n",
+      __progname);
+    exit(1);
+  }
 
   /* Get user\'s passwd structure.  We need this for the home directory. */
   pw = getpwuid(getuid());

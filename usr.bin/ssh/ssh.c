@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.4 1999/09/29 00:10:16 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.5 1999/09/29 06:15:00 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -421,6 +421,16 @@ main(int ac, char **av)
  /* Check that we got a host name. */
   if (!host)
     usage();
+
+  /* check if RSA support exists */
+  if (rsa_alive() == 0) {
+    extern char *__progname;
+
+    fprintf(stderr,
+      "%s: no RSA support in libssl and libcrypto.  See ssl(8).\n",
+      __progname);
+    exit(1);
+  }
 
   /* Initialize the command to execute on remote host. */
   buffer_init(&command);
