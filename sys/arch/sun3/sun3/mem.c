@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.10 2001/05/05 20:56:54 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.11 2001/05/30 20:40:04 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.19 1995/08/08 21:09:01 gwr Exp $	*/
 
 /*
@@ -196,8 +196,13 @@ mmrw(dev, uio, flags)
 			 */
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
+#ifdef UVM
+			if (!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+#else
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+#endif
 			{
 				error = EFAULT;
 				goto unlock;

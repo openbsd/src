@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.8 1999/01/11 05:12:05 millert Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.9 2001/05/30 20:40:03 miod Exp $	*/
 /*	$NetBSD: dvma.c,v 1.5 1996/11/20 18:57:29 gwr Exp $	*/
 
 /*-
@@ -53,6 +53,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
+#ifdef UVM
+#include <uvm/uvm.h>
+#endif
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/control.h>
@@ -83,8 +87,13 @@ dvma_init()
 	 * then allocate the segment pool from that.  The
 	 * remainder will be used as the DVMA page pool.
 	 */
+#ifdef UVM
+	phys_map = uvm_map_create(pmap_kernel(),
+		DVMA_SPACE_START, DVMA_SPACE_END, 1);
+#else
 	phys_map = vm_map_create(pmap_kernel(),
 		DVMA_SPACE_START, DVMA_SPACE_END, 1);
+#endif
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 
@@ -93,7 +102,11 @@ dvma_init()
 	 * The remainder of phys_map is used for DVMA scratch
 	 * memory pages (i.e. driver control blocks, etc.)
 	 */
+#ifdef UVM
+	segmap_addr = uvm_km_valloc_wait(phys_map, dvma_segmap_size);
+#else
 	segmap_addr = kmem_alloc_wait(phys_map, dvma_segmap_size);
+#endif
 	if (segmap_addr != DVMA_SPACE_START)
 		panic("dvma_init: unable to allocate DVMA segments");
 
@@ -119,7 +132,11 @@ dvma_malloc(bytes)
     if (!bytes)
 		return NULL;
     new_size = m68k_round_page(bytes);
+#ifdef UVM
+    new_mem = (caddr_t) uvm_km_alloc(phys_map, new_size);
+#else
     new_mem = (caddr_t) kmem_alloc(phys_map, new_size);
+#endif
     if (!new_mem)
 		panic("dvma_malloc: no space in phys_map");
     /* The pmap code always makes DVMA pages non-cached. */
@@ -136,7 +153,11 @@ dvma_free(addr, size)
 {
 	vm_size_t sz = m68k_round_page(size);
 
+#ifdef UVM
+	uvm_km_free(phys_map, (vm_offset_t)addr, sz);
+#else
 	kmem_free(phys_map, (vm_offset_t)addr, sz);
+#endif
 }
 
 /*

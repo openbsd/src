@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2001/05/05 20:56:55 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2001/05/30 20:40:04 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -209,7 +209,11 @@ trap(type, code, v, frame)
 	u_quad_t sticks;
 	int si_type;
 
+#ifdef UVM
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	p = curproc;
 	ucode = 0;
 	sig = 0;
@@ -527,7 +531,11 @@ trap(type, code, v, frame)
 		}
 
 		/* OK, let the VM code handle the fault. */
+#ifdef UVM
+		rv = uvm_fault(map, va, 0, ftype);
+#else
 		rv = vm_fault(map, va, ftype, FALSE);
+#endif
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
@@ -618,7 +626,11 @@ syscall(code, frame)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
+#ifdef UVM
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;

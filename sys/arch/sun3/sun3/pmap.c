@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2001/05/13 00:33:34 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2001/05/30 20:40:04 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -81,6 +81,10 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#ifdef UVM
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/pte.h>
 #include <machine/control.h>
@@ -378,7 +382,6 @@ static void pv_unlink __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pv_remove_all __P(( vm_offset_t pa));
 static void pv_changepte __P((pv_entry_t, int, int));
 static void pv_syncflags __P((pv_entry_t head));
-static void pv_init __P((void));
 
 static void pmeg_clean __P((pmeg_t pmegp));
 static void pmeg_clean_free __P((void));
@@ -402,6 +405,8 @@ static void pmap_enter_user __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 static void pmap_protect_range_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_protect_range_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_protect_range __P((pmap_t, vm_offset_t, vm_offset_t));
+
+void pmap_switch __P((pmap_t pmap));
 
 extern int pmap_page_index __P((paddr_t));
 extern u_int pmap_free_pages __P((void));
@@ -1408,22 +1413,6 @@ pv_unlink(pmap, pa, va)
 }
 
 static void
-pv_init()
-{
-	int sz;
-
-	sz = PA_PGNUM(avail_end);
-	sz *= sizeof(struct pv_entry);
-
-	pv_head_table = (pv_entry_t) kmem_alloc(kernel_map, sz);
-	if (!pv_head_table)
-		mon_panic("pmap: kmem_alloc() of pv table failed");
-	bzero((caddr_t) pv_head_table, sz);
-
-	pv_initialized++;
-}
-
-static void
 sun3_protection_init()
 {
 	unsigned int *kp, prot;
@@ -1486,8 +1475,13 @@ pmap_bootstrap()
 	/* Initialization for pmap_next_page() */
 	avail_next = avail_start;
 
+#ifdef UVM
+	uvmexp.pagesize = PAGE_SIZE;
+	uvm_setpagesize();
+#else
 	cnt.v_page_size = PAGE_SIZE;
 	vm_set_page_size();
+#endif
 
 	sun3_protection_init();
 
@@ -1609,8 +1603,21 @@ void
 pmap_init()
 {
 	extern int physmem;
+	int sz;
 
-	pv_init();
+	sz = PA_PGNUM(avail_end);
+	sz *= sizeof(struct pv_entry);
+
+#ifdef UVM
+	pv_head_table = (pv_entry_t) uvm_km_zalloc(kernel_map, sz);
+#else
+	pv_head_table = (pv_entry_t) kmem_alloc(kernel_map, sz);
+#endif
+	if (!pv_head_table)
+		mon_panic("pmap: kmem_alloc() of pv table failed");
+	bzero((caddr_t) pv_head_table, sz);
+
+	pv_initialized++;
 	physmem = btoc((u_int)avail_end);
 }
 
@@ -1659,14 +1666,26 @@ pmap_page_upload()
 		 */
 		a = atop(avail_start);
 		b = atop(hole_start);
+#ifdef UVM
+		uvm_page_physload(a, b, a, b, VM_FREELIST_DEFAULT);
+#else
 		vm_page_physload(a, b, a, b);
+#endif
 		c = atop(hole_start + hole_size);
 		d = atop(avail_end);
+#ifdef UVM
+		uvm_page_physload(b, d, c, d, VM_FREELIST_DEFAULT);
+#else
 		vm_page_physload(b, d, c, d);
+#endif
 	} else {
 		a = atop(avail_start);
 		d = atop(avail_end);
+#ifdef UVM
+		uvm_page_physload(a, d, a, d, VM_FREELIST_DEFAULT);
+#else
 		vm_page_physload(a, d, a, d);
+#endif
 	}
 }
 
@@ -2669,7 +2688,7 @@ pmap_is_referenced(pa)
  * switching to a new process.  Load new translations.
  */
 void
-pmap_activate(pmap)
+pmap_switch(pmap)
 	pmap_t pmap;
 {
 	int old_ctx;
@@ -2776,12 +2795,12 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  *	Function:
  *		Extract the physical page address associated
  *		with the given map/virtual_address pair.
- *	Returns zero if VA not valid.
+ *	Returns FALSE if VA not valid.
  */
 vm_offset_t
 pmap_extract(pmap, va)
 	pmap_t	pmap;
-	vm_offset_t va;
+	vaddr_t va;
 {
 	int s, sme, segnum, ptenum, pte;
 	vm_offset_t pa;
@@ -3340,4 +3359,25 @@ set_pte_pmeg(int pmeg_num, int page_num, int pte)
 	set_segmap(temp_seg_va, SEGINV);
 
 	temp_seg_inuse--;
+}
+
+void
+pmap_activate(p)
+	struct proc *p;
+{
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	int s;
+
+	if (p == curproc) {
+		s = splpmap();
+		pmap_switch(pmap);
+		splx(s);
+	}
+}
+
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
+	/* not implemented. */
 }

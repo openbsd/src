@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.22 2001/01/04 22:42:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.23 2001/05/30 20:40:04 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -812,14 +812,14 @@ Lswnofpsave:
 #endif
 
 	/*
-	 * Call pmap_activate() to set the MMU context register
+	 * Call pmap_switch() to set the MMU context register
 	 */
 	movl	a2@(VM_PMAP),a2		| pmap = &vm.vm_map.pmap
 	pea	a2@			| push pmap
-	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(pmap)
+	jbsr	_C_LABEL(pmap_switch)	| pmap_switch(pmap)
 	addql	#4,sp
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
-| Note: pmap_activate will clear the cache if needed.
+| Note: pmap_switch will clear the cache if needed.
 
 	/*
 	 * Reload the registers for the new process.

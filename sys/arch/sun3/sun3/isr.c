@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.12 2001/01/04 22:33:52 miod Exp $	*/
+/*	$OpenBSD: isr.c,v 1.13 2001/05/30 20:40:03 miod Exp $	*/
 /*	$NetBSD: isr.c,v 1.25 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -54,6 +54,12 @@
 #include <machine/mon.h>
 #include <machine/obio.h>
 
+#include <vm/vm.h>
+
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif
+
 #include "vector.h"
 
 extern int intrcnt[];	/* statistics */
@@ -101,7 +107,11 @@ isr_autovec(evec)
 
 	n = intrcnt[ipl];
 	intrcnt[ipl] = n+1;
+#ifdef UVM
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 
 	isr = isr_autovec_list[ipl];
 	if (isr == NULL) {
@@ -168,7 +178,11 @@ isr_vectored(evec)
 	ipl = (ipl >> 8) & 7;
 
 	intrcnt[ipl]++;
+#ifdef UVM
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 
 	if (vec < 64 || vec >= 256) {
 		printf("isr_vectored: vector=0x%x (invalid)\n", vec);
