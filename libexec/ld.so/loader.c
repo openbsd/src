@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.12 2001/05/31 13:58:24 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.13 2001/06/01 09:20:58 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -220,7 +220,7 @@ _dl_printf("%p %p 0x%lx %p %p\n", argv, envp, loff, dynp, dl_data);
 						   dl_data, OBJTYPE_EXE, 0, 0);
 		}
 		if(phdp->p_type == PT_INTERP) {
-			us = (char *)_dl_malloc(_dl_strlen((char *)phdp->p_vaddr));
+			us = (char *)_dl_malloc(_dl_strlen((char *)phdp->p_vaddr) + 1);
 			_dl_strcpy(us, (char *)phdp->p_vaddr);
 		}
 		phdp++;
@@ -295,7 +295,7 @@ _dl_printf("%p %p 0x%lx %p %p\n", argv, envp, loff, dynp, dl_data);
 	/*
 	 *  Finally make something to help gdb when poking around in the code.
 	 */
-#ifdef __powerpc__
+#if defined(__powerpc__) || defined(__alpha__)
 	{
 		int done = 0;
 		 
@@ -615,6 +615,7 @@ _dl_rtld(elf_object_t *object)
 	_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	_dl_md_reloc(object, DT_RELA, DT_RELASZ);
 #if defined(__alpha__)
+	/* We assume that DT_PTREL is DT_RELA */
 	_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 #endif
 	if(_dl_bindnow) {	/* XXX Perhaps more checking ? */
