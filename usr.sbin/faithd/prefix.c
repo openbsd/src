@@ -1,4 +1,4 @@
-/*	$OpenBSD: prefix.c,v 1.2 2001/09/05 01:31:33 itojun Exp $	*/
+/*	$OpenBSD: prefix.c,v 1.3 2001/11/21 04:53:13 itojun Exp $	*/
 /*	$KAME: prefix.c,v 1.9 2001/07/02 14:36:49 itojun Exp $	*/
 
 /*
@@ -67,12 +67,14 @@ prefix_set(s, prefix, slash)
 	struct prefix *prefix;
 	int slash;
 {
-	char *p, *q, *r;
+	char *p = NULL, *q, *r;
 	struct addrinfo hints, *res = NULL;
 	int max;
 	char *a;
 
 	p = strdup(s);
+	if (!p)
+		goto fail;
 	q = strchr(p, '/');
 	if (q) {
 		if (!slash)
