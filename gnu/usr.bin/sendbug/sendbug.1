@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendbug.1,v 1.9 2003/09/18 09:25:43 jmc Exp $
+.\"	$OpenBSD: sendbug.1,v 1.10 2004/03/30 17:12:22 jmc Exp $
 .\"
 .\" -*- nroff -*-
 .\" ---------------------------------------------------------------------------
@@ -98,7 +98,7 @@ itself will help ensure all necessary information will reach the
 .Ox
 bugs database.
 .Sh ENVIRONMENT
-.Bl -tag -width "/tmp/pbad.XXXXXXX"
+.Bl -tag -width "PR_FORM"
 .It Ev EDITOR
 Specifies the editor to invoke on the template.
 The default editor is
@@ -137,12 +137,12 @@ Contact
 .Aq bugs@OpenBSD.org
 for instructions on submitting larger test cases and problematic source code.
 .Sh FILES
-.Bl -tag -width "/tmp/pbad.XXXXXXX" -compact
-.It Pa /tmp/p.XXXXXX
+.Bl -tag -width "/tmp/pbad.XXXXXXXXXX" -compact
+.It Pa /tmp/p.XXXXXXXXXX
 copy of PR used in editing session
-.It Pa /tmp/pf.XXXXXX
+.It Pa /tmp/pf.XXXXXXXXXX
 copy of empty PR form (testing purposes)
-.It Pa /tmp/pbad.XXXXXX
+.It Pa /tmp/pbad.XXXXXXXXXX
 file for rejected PRs
 .El
 .Sh AUTHORS
