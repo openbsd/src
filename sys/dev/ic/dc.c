@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.47 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: dc.c,v 1.48 2002/04/18 19:11:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -655,6 +655,15 @@ int dc_miibus_readreg(self, phy, reg)
 	if (DC_IS_ADMTEK(sc) && phy != DC_ADMTEK_PHYADDR)
 		return(0);
 
+	/*
+	 * Note: the ukphy probs of the RS7112 report a PHY at
+	 * MII address 0 (possibly HomePNA?) and 1 (ethernet)
+	 * so we only respond to correct one.
+	 */
+	
+	if (DC_IS_CONEXANT(sc) && phy != DC_CONEXANT_PHYADDR)
+		return (0);
+
 	if (sc->dc_pmode != DC_PMODE_MII) {
 		if (phy == (MII_NPHY - 1)) {
 			switch(reg) {
@@ -758,6 +767,8 @@ void dc_miibus_writereg(self, phy, reg, data)
 	bzero((char *)&frame, sizeof(frame));
 
 	if (DC_IS_ADMTEK(sc) && phy != DC_ADMTEK_PHYADDR)
+		return;
+	if (DC_IS_CONEXANT(sc) && phy != DC_CONEXANT_PHYADDR)
 		return;
 
 	if (DC_IS_PNIC(sc)) {
@@ -1210,7 +1221,7 @@ void dc_setfilt(sc)
 	struct dc_softc		*sc;
 {
 	if (DC_IS_INTEL(sc) || DC_IS_MACRONIX(sc) || DC_IS_PNIC(sc) ||
-	    DC_IS_PNICII(sc) || DC_IS_DAVICOM(sc))
+	    DC_IS_PNICII(sc) || DC_IS_DAVICOM(sc) || DC_IS_CONEXANT(sc))
 		dc_setfilt_21143(sc);
 
 	if (DC_IS_ASIX(sc))
@@ -1394,7 +1405,7 @@ void dc_reset(sc)
 	}
 
 	if (DC_IS_ASIX(sc) || DC_IS_ADMTEK(sc) || DC_IS_XIRCOM(sc) ||
-	    DC_IS_INTEL(sc)) {
+	    DC_IS_INTEL(sc) || DC_IS_CONEXANT(sc)) {
 		DELAY(10000);
 		DC_CLRBIT(sc, DC_BUSCTL, DC_BUSCTL_RESET);
 		i = 0;
@@ -1629,6 +1640,10 @@ void dc_attach(sc)
 		    ETHER_ADDR_LEN);
 		break;
 	case DC_TYPE_XIRCOM:
+		break;
+	case DC_TYPE_CONEXANT:
+		bcopy(&sc->dc_srom + DC_CONEXANT_EE_NODEADDR,
+		    &sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 		break;
 	default:
 		dc_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
@@ -2271,11 +2286,15 @@ void dc_txeof(sc)
 			continue;
 		}
 
-		if (DC_IS_XIRCOM(sc)) {
+		if (DC_IS_XIRCOM(sc) || DC_IS_CONEXANT(sc)) {
 			/*
 			 * XXX: Why does my Xircom taunt me so?
 			 * For some reason it likes setting the CARRLOST flag
-			 * even when the carrier is there. wtf?! */
+			 * even when the carrier is there. wtf?!
+			 * Who knows, but Conexant chips have the
+			 * same problem. Maybe they took lessons
+			 * from Xircom.
+			 */
 			if (/*sc->dc_type == DC_TYPE_21143 &&*/
 			    sc->dc_pmode == DC_PMODE_MII &&
 			    ((txstat & 0xFFFF) & ~(DC_TXSTAT_ERRSUM|

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.23 2002/04/16 21:29:54 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.24 2002/04/18 19:11:18 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -83,6 +83,7 @@
 #define DC_TYPE_PNICII		0x9	/* 82c115 PNIC II */
 #define DC_TYPE_PNIC		0xA	/* 82c168/82c169 PNIC I */
 #define DC_TYPE_XIRCOM		0xB	/* Xircom X3201 */
+#define DC_TYPE_CONEXANT	0xC	/* Conexant LANfinity RS7112 */
 
 #define DC_IS_MACRONIX(x)			\
 	(x->dc_type == DC_TYPE_98713 ||		\
@@ -101,6 +102,7 @@
 #define DC_IS_PNICII(x)		(x->dc_type == DC_TYPE_PNICII)
 #define DC_IS_PNIC(x)		(x->dc_type == DC_TYPE_PNIC)
 #define DC_IS_XIRCOM(x)		(x->dc_type == DC_TYPE_XIRCOM)
+#define DC_IS_CONEXANT(x)	(x->dc_type == DC_TYPE_CONEXANT)
 
 /* MII/symbol mode port types */
 #define DC_PMODE_MII		0x1
@@ -678,6 +680,15 @@ struct dc_mii_frame {
 #define DC_PN_NWAY_LPAR100T4	0x80000000
 
 /* End of PNIC specific registers */
+
+/*
+ * CONEXANT specific registers.
+ */
+
+#define DC_CONEXANT_PHYADDR	0x1
+#define DC_CONEXANT_EE_NODEADDR	0x19A
+
+/* End of CONEXANT specific register */
 
 struct dc_softc {
 	struct device		sc_dev;
