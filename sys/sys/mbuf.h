@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.43 2001/06/25 01:50:18 fgsch Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.44 2001/06/25 02:35:11 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -416,14 +416,14 @@ void _sk_mclget(struct mbuf *, int);
 #define M_COPY_HDR(to, from) { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
 	(from)->m_flags &= ~M_PKTHDR; \
-	m_tag_init((from)); \
+	SLIST_INIT(&(from)->m_pkthdr.tags); \
 }
 
 /*
  * Duplicate just m_pkthdr from from to to.
  */
 #define M_DUP_HDR(to, from) { \
-	M_COPY_HDR((to), (from)); \
+	(to)->m_pkthdr = (from)->m_pkthdr; \
 	SLIST_INIT(&(to)->m_pkthdr.tags); \
 	m_tag_copy_chain((to), (from)); \
 }
