@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.54 2004/09/16 00:55:08 mcbride Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.55 2004/09/19 22:22:05 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -908,7 +908,7 @@ int ti_newbuf_jumbo(sc, i, m)
 
 /*
  * The standard receive ring has 512 entries in it. At 2K per mbuf cluster,
- * that's 1MB or memory, which is a lot. For now, we fill only the first
+ * that's 1MB of memory, which is a lot. For now, we fill only the first
  * 256 ring entries and hope that our CPU is fast enough to keep up with
  * the NIC.
  */
