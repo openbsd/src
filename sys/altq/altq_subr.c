@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.14 2002/12/16 17:27:20 henning Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.15 2003/10/17 19:13:01 henning Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ int pfaltq_running;	/* keep track of running state */
  * alternate queueing support routines
  */
 
-/* look up the queue state by the interface name and the queuing type. */
+/* look up the queue state by the interface name and the queueing type. */
 void *
 altq_lookup(name, type)
 	char *name;

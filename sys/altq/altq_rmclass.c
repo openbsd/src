@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.10 2003/08/22 21:50:34 david Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.11 2003/10/17 19:13:01 henning Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
 #endif
 
 	/*
-	 * If CBQ's WRR is enabled, then initailize the class WRR state.
+	 * If CBQ's WRR is enabled, then initialize the class WRR state.
 	 */
 	if (ifd->wrr_) {
 		ifd->alloc_[cl->pri_] += cl->allotment_ - old_allotment;
@@ -515,7 +515,7 @@ rmc_depth_recompute(rm_class_t *cl)
 /*
  * void
  * rmc_delete_class(struct rm_ifdat *ifdat, struct rm_class *cl) - This
- *	function deletes a class from the link-sharing stucture and frees
+ *	function deletes a class from the link-sharing structure and frees
  *	all resources associated with the class.
  *
  *	Returns: NONE
