@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_esp_new.c,v 1.5 1997/11/18 00:13:44 provos Exp $ */
+/* $OpenBSD: xf_esp_new.c,v 1.6 1998/04/04 22:48:30 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -111,7 +111,7 @@ int newpadding;
 	     xd->edx_data[i+ivlen] = x2i(keyp+2*i);
 
 	for (i = 0; i < alen; i++)
-	     xd->edx_data[i+ivlen+klen] = x2i(keyp+2*i);
+	     xd->edx_data[i+ivlen+klen] = x2i(authp+2*i);
 
 	return xf_set(em);
 }

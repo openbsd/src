@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.13 1997/11/24 19:15:58 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.14 1998/04/04 22:48:28 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -228,7 +228,7 @@ main(argc, argv)
 		       exit(1);
 		  }
 		  authp = argv[++i];
-		  alen = strlen(keyp);
+		  alen = strlen(authp);
 	     } else if (!strcmp(argv[i]+1, "iv") && ivp == NULL && i+1 < argc) {
 		  if (mode & (AH_OLD|AH_NEW)) {
 		       fprintf(stderr, "%s: Invalid option %s with auth\n",
