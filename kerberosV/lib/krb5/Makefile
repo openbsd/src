@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2001/07/31 07:38:07 jakob Exp $
+# $OpenBSD: Makefile,v 1.18 2001/07/31 20:17:25 deraadt Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -23,6 +23,7 @@ MLINKS+=krb5_warn.3 krb5_err.3
 MLINKS+=krb5_warn.3 krb5_errx.3
 MLINKS+=krb5_warn.3 krb5_verr.3
 MLINKS+=krb5_warn.3 krb5_verrx.3
+MLINKS+=krb5_warn.3 krb5_set_warn_dest.3
 
 MAN+=	krb5_425_conv_principal.3
 MLINKS+=krb5_425_conv_principal.3 krb5_425_conv_principal_ext.3
