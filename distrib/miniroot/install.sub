@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.370 2005/04/02 14:27:08 krw Exp $
+#	$OpenBSD: install.sub,v 1.371 2005/04/03 19:33:59 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -73,9 +73,10 @@
 #	MDTERM      - 'vt220' assumed if not provided
 #	MDFSTYPE    - nothing assumed if not provided
 #	MDFSOPTS    - nothing assumed if not provided
-#	MDDISKDEVS  - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
+#	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
-#	MDXAPERTURE - if not empty, set machdep.allowaperture=value in sysctl.conf
+#	MDMTDEVS    - '/^[cmsw]t[0-9][0-9]* /s/ .*//p'
+#	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
 . install.md
 
 set_term() {
@@ -161,17 +162,8 @@ __EOT
 	echo "Cool!  Let's get to it..."
 }
 
-get_dkdevs() {
-	bsort `sed -ne "${MDDISKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}" /var/run/dmesg.boot`
-}
-
-get_cddevs() {
-	bsort `sed -ne "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}" /var/run/dmesg.boot`
-}
-
-get_tapedevs () {
-	bsort $(egrep "^(ct|mt|st|ts|wt)[[:digit:]]+ " /var/run/dmesg.boot \
-		| sed -e "s/ .*//p" )
+scan_dmesg() {
+	bsort $(sed -ne "$1" /var/run/dmesg.boot)
 }
 
 get_ifdevs() {
@@ -183,17 +175,15 @@ get_ifdevs() {
 # Get the first (lowest unit #) serial device if any, if MDSERIAL is set.
 # NOTE: Only single digit serial devices (<dev>0 -> <dev>9) are looked for.
 get_serialdev() {
-	local _devs _d _bd _td
+	local _d _bd _td
 
 	[[ -n $MDSERIAL ]] || exit
 	set -- $MDSERIAL
 	_d=$1
 	_bd=$2
 	_td=$3
-	_devs=$(sed -ne "/^${_d}\([0-9]\) .*/s//\1/p" /var/run/dmesg.boot)
-	_devs=$(bsort $_devs)
-	set -- $_devs
-	echo "${_bd}${1} ${_td}${1}"
+	set -- $(scan_dmesg "/^${_d}\([0-9]\) .*/s//\1/p")
+	echo "$_bd$1 $_td$1"
 }
 
 get_drive() {
@@ -1238,7 +1228,7 @@ install_tape() {
 	fi
 
 	# Get the name of the tape device.
-	get_drive "tape drive" "$TAPEDEVS" || return
+	get_drive "tape drive" "$MTDEVS" || return
 	export TAPE=/dev/nr$resp
 	if [[ ! -c $TAPE ]]; then
 		echo "$TAPE is not a character special file."
@@ -1672,10 +1662,10 @@ done
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 
 # Scan /var/run/dmesg.boot for interesting devices.
-DKDEVS=$(get_dkdevs)
-CDDEVS=$(get_cddevs)
+DKDEVS=$(scan_dmesg "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
+CDDEVS=$(scan_dmesg "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
+MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cmsw]t[0-9][0-9]* /s/ .*//p}")
 IFDEVS=$(get_ifdevs)
-TAPEDEVS=$(get_tapedevs)
 SERIALDEV=$(get_serialdev)
 
 # Devices created with makedev().
