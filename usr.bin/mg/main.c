@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2005/03/09 16:20:48 jfb Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2005/03/10 16:47:33 henning Exp $	*/
 
 /*
  *	Mainline.
@@ -32,9 +32,13 @@ main(int argc, char **argv)
 	char	*cp, *init_fcn_name = NULL;
 	PF init_fcn = NULL;
 	int o, i, nfiles, status;
+	int nobackups = 0;
 
-	while ((o = getopt(argc, argv, "f:")) != -1)
+	while ((o = getopt(argc, argv, "nf:")) != -1)
 		switch (o) {
+		case 'n':
+			nobackups = 1;
+			break;
 		case 'f':
 			if (init_fcn_name != NULL)
 				errx(1, "cannot specify more than one "
@@ -86,6 +90,9 @@ main(int argc, char **argv)
 	if ((cp = startupfile(NULL)) != NULL)
 		(void)load(cp);
 #endif	/* !NO_STARTUP */
+
+	if (nobackups)
+		makebkfile(FFARG, 0);
 
 	for (nfiles = 0, i = 0; i < argc; i++) {
 		if (argv[i][0] == '+' && strlen(argv[i]) >= 2) {
