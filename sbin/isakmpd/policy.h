@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.h,v 1.5 2000/05/02 14:36:43 niklas Exp $	*/
-/*	$EOM: policy.h,v 1.7 2000/04/29 15:07:16 angelos Exp $ */
+/*	$OpenBSD: policy.h,v 1.6 2000/06/08 20:50:52 niklas Exp $	*/
+/*	$EOM: policy.h,v 1.11 2000/05/21 04:24:54 angelos Exp $ */
 
 /*
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
@@ -42,6 +42,9 @@
 #endif /* POLICY_FILE_DEFAULT */
 
 #if defined (USE_KEYNOTE)
+#define CREDENTIAL_FILE "credentials"
+#define PRIVATE_KEY_FILE "private_key"
+
 #define LK(sym, args) sym args
 #define LKV(sym) sym
 #elif defined (HAVE_DLOPEN) && 0
@@ -71,10 +74,32 @@ extern char *(*lk_kn_encode_key) (struct keynote_deckey *, int, int, int);
 extern int (*lk_kn_init) (void);
 extern char **(*lk_kn_read_asserts) (char *, int, int *);
 extern int (*lk_kn_remove_authorizer) (int, char *);
+extern void (*lk_kn_free_key) (struct keynote_deckey *);
+extern void *(*lk_kn_get_authorizer) (int, int, int*);
 #endif /* HAVE_DLOPEN && !USE_KEYNOTE */
 
 extern int keynote_sessid;
+extern int keynote_policy_asserts_num;
+extern int x509_policy_asserts_num;
+extern int x509_policy_asserts_num_alloc;
+extern char **keynote_policy_asserts;
+extern char **x509_policy_asserts;
+extern struct exchange *policy_exchange;
+extern struct sa *policy_sa;
+extern struct sa *policy_isakmp_sa;
 
 extern void policy_init (void);
-
+extern char *policy_callback (char *);
+extern int keynote_cert_init (void);
+extern void *keynote_cert_get (u_int8_t *, u_int32_t);
+extern int keynote_cert_validate (void *);
+extern int keynote_cert_insert (int, void *);
+extern void keynote_cert_free (void *);
+extern int keynote_certreq_validate (u_int8_t *, u_int32_t);
+extern void *keynote_certreq_decode (u_int8_t *, u_int32_t);
+extern void keynote_free_aca (void *);
+extern int keynote_cert_obtain (u_int8_t *, size_t, void *,
+				u_int8_t **, u_int32_t *);
+extern int keynote_cert_get_subject (void *, u_int8_t **, u_int32_t *);
+extern int keynote_cert_get_key (void *, void *);
 #endif /* _POLICY_H_ */
