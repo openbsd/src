@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.7 2001/08/26 02:39:05 krw Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.8 2001/10/30 00:02:55 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.10 2001/01/26 21:58:56 bouyer Exp $	*/
 
 /*
@@ -38,10 +38,10 @@
 #endif
 
 /* tables used by SCRIPT */
-typedef struct scr_table {
+struct scr_table {
 	u_int32_t count;
 	u_int32_t addr;
-} scr_table_t ;
+} __attribute__((__packed__));
 
 /* Number of scatter/gather entries */
 #define SIOP_NSG	(MAXPHYS/NBPG + 1)	/* XXX NBPG */
@@ -57,19 +57,19 @@ typedef struct scr_table {
  * transfer. 
  */
 struct siop_xfer_common {
-	u_int8_t msg_out[16];	    /*  0 */
-	u_int8_t msg_in[16];	    /* 16 */
-	u_int32_t status;	    /* 32 */
-	u_int32_t pad1;		    /* 36 */
-	u_int32_t id;		    /* 40 */
-	u_int32_t pad2;		    /* 44 */
-	scr_table_t t_msgin;	    /* 48 */
-	scr_table_t t_extmsgin;	    /* 56 */
-	scr_table_t t_extmsgdata;   /* 64 */
-	scr_table_t t_msgout;	    /* 72 */
-	scr_table_t cmd;	    /* 80 */
-	scr_table_t t_status;	    /* 88 */
-	scr_table_t data[SIOP_NSG]; /* 96 */
+	u_int8_t msg_out[16];	         /*  0 */
+	u_int8_t msg_in[16];	         /* 16 */
+	u_int32_t status;	         /* 32 */
+	u_int32_t pad1;		         /* 36 */
+	u_int32_t id;		         /* 40 */
+	u_int32_t pad2;		         /* 44 */
+	struct scr_table t_msgin;	 /* 48 */
+	struct scr_table t_extmsgin;	 /* 56 */
+	struct scr_table t_extmsgdata;   /* 64 */
+	struct scr_table t_msgout;	 /* 72 */
+	struct scr_table cmd;	         /* 80 */
+	struct scr_table t_status;	 /* 88 */
+	struct scr_table data[SIOP_NSG]; /* 96 */
 } __attribute__((__packed__));
 
 /* status can hold the SCSI_* status values, and 2 additional values: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.15 2001/10/26 02:20:22 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.16 2001/10/30 00:02:55 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -905,7 +905,7 @@ scintr:
 			if (offset < SIOP_NSG) {
 				bcopy(&siop_cmd->siop_tables.data[offset],
 				    &siop_cmd->siop_tables.data[0],
-				    (SIOP_NSG - offset) * sizeof(scr_table_t));
+				    (SIOP_NSG - offset) * sizeof(struct scr_table));
 				siop_table_sync(siop_cmd,
 				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			}
