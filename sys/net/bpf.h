@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.29 2004/12/17 15:56:58 reyk Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.30 2005/01/07 16:28:38 reyk Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -115,6 +115,8 @@ struct bpf_version {
 #define	BIOCSETWF	_IOW('B',119, struct bpf_program)
 #define BIOCGFILDROP	_IOR('B',120, u_int)
 #define BIOCSFILDROP	_IOW('B',121, u_int)
+#define BIOCSDLT	_IOW('B',122, u_int)
+#define BIOCGDLTLIST	_IOWR('B',123, struct bpf_dltlist)
 
 struct bpf_timeval {
 	u_int32_t	tv_sec;
@@ -174,6 +176,7 @@ struct bpf_hdr {
 #define DLT_PPP_ETHER		51	/* PPP over Ethernet; session only w/o ether header */
 #define DLT_IEEE802_11		105	/* IEEE 802.11 wireless */
 #define DLT_PFLOG		117	/* Packet filter logging, by pcap people */
+#define DLT_IEEE802_11_RADIO	127	/* IEEE 802.11 plus WLAN header */
 
 /*
  * The instruction encodings.
@@ -239,6 +242,14 @@ struct bpf_insn {
 	u_char		jt;
 	u_char		jf;
 	u_int32_t	k;
+};
+
+/*
+ * Structure to retrieve available DLTs for the interface.
+ */
+struct bpf_dltlist {
+	u_int	bfl_len;	/* number of bfd_list array */
+	u_int	*bfl_list;	/* array of DLTs */
 };
 
 /*

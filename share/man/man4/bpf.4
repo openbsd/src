@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.22 2004/05/31 17:06:37 canacar Exp $
+.\"	$OpenBSD: bpf.4,v 1.23 2005/01/07 16:28:38 reyk Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -146,6 +146,44 @@ The device types, prefixed with
 .Dq DLT_ ,
 are defined in
 .Aq Pa net/bpf.h .
+.It Dv BIOCGDLTLIST (struct bpf_dltlist)
+Returns an array of the available types of the data link layer
+underlying the attached interface:
+.Bd -literal -offset indent
+struct bpf_dltlist {
+	u_int bfl_len;
+	u_int *bfl_list;
+};
+.Ed
+.Pp
+The available types are returned in the array pointed to by the
+.Va bfl_list
+field while their length in
+.Vt u_int
+is supplied to the
+.Va bfl_len
+field.
+.Er ENOMEM
+is returned if there is not enough buffer space and
+.Er EFAULT
+is returned if a bad address is encountered. The
+.Va bfl_len
+field is modified on return to indicate the actual length in
+.Vt u_int
+of the array returned.
+If
+.Va bfl_list
+is
+.Dv NULL ,
+the
+.Va bfl_len
+field is set to indicate the required length of the array in
+.Vt u_int .
+.It Dv BIOCSDLT (u_int)
+Changes the type of the data link layer underlying the attached interface.
+.Er EINVAL
+is returned if no interface has been specified or the specified
+type is not available for the interface.
 .It Dv BIOCPROMISC
 Forces the interface into promiscuous mode.
 All packets, not just those destined for the local host, are processed.

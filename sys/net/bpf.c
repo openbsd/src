@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.55 2004/12/17 15:56:58 reyk Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.56 2005/01/07 16:28:38 reyk Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -92,6 +92,8 @@ static __inline void bpf_wakeup(struct bpf_d *);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
 	    void (*)(const void *, void *, size_t));
 void	bpf_reset_d(struct bpf_d *);
+int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
+int	bpf_setdlt(struct bpf_d *, u_int);
 
 void	filt_bpfrdetach(struct knote *);
 int	filt_bpfread(struct knote *, long);
@@ -573,7 +575,9 @@ bpf_reset_d(struct bpf_d *d)
  *  BIOCSETF		Set ethernet read filter.
  *  BIOCFLUSH		Flush read packet buffer.
  *  BIOCPROMISC		Put interface into promiscuous mode.
+ *  BIOCGDLTLIST	Get supported link layer types.
  *  BIOCGDLT		Get link layer type.
+ *  BIOCSDLT		Set link layer type.
  *  BIOCGETIF		Get interface name.
  *  BIOCSETIF		Set interface.
  *  BIOCSRTIMEOUT	Set read timeout.
@@ -598,6 +602,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		case BIOCGBLEN:
 		case BIOCFLUSH:
 		case BIOCGDLT:
+		case BIOCGDLTLIST:
 		case BIOCGETIF:
 		case BIOCGRTIMEOUT:
 		case BIOCGSTATS:
@@ -706,6 +711,16 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	/*
+	 * Get a list of supported device parameters.
+	 */
+	case BIOCGDLTLIST:
+		if (d->bd_bif == NULL)
+			error = EINVAL;
+		else
+			error = bpf_getdltlist(d, (struct bpf_dltlist *)addr);
+		break;
+
+	/*
 	 * Get device parameters.
 	 */
 	case BIOCGDLT:
@@ -713,6 +728,16 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			error = EINVAL;
 		else
 			*(u_int *)addr = d->bd_bif->bif_dlt;
+		break;
+
+	/*
+	 * Set device parameters.
+	 */
+	case BIOCSDLT:
+		if (d->bd_bif == NULL)
+			error = EINVAL;
+		else
+			error = bpf_setdlt(d, *(u_int *)addr);
 		break;
 
 	/*
@@ -1419,4 +1444,62 @@ bpfilter_destroy(struct bpf_d *bd)
 {
 	LIST_REMOVE(bd, bd_list);
 	free(bd, M_DEVBUF);
+}
+
+/*
+ * Get a list of available data link type of the interface.
+ */
+int
+bpf_getdltlist(struct bpf_d *d, struct bpf_dltlist *bfl)
+{
+	int n, error;
+	struct ifnet *ifp;
+	struct bpf_if *bp;
+
+	ifp = d->bd_bif->bif_ifp;
+	n = 0;
+	error = 0;
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+		if (bp->bif_ifp != ifp)
+			continue;
+		if (bfl->bfl_list != NULL) {
+			if (n >= bfl->bfl_len)
+				return (ENOMEM);
+			error = copyout(&bp->bif_dlt,
+			    bfl->bfl_list + n, sizeof(u_int));
+			if (error)
+				break;
+		}
+		n++;
+	}
+
+	bfl->bfl_len = n;
+	return (error);
+}
+
+/*
+ * Set the data link type of a BPF instance.
+ */
+int
+bpf_setdlt(struct bpf_d *d, u_int dlt)
+{
+	int s;
+	struct ifnet *ifp;
+	struct bpf_if *bp;
+
+	if (d->bd_bif->bif_dlt == dlt)
+		return (0);
+	ifp = d->bd_bif->bif_ifp;
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+		if (bp->bif_ifp == ifp && bp->bif_dlt == dlt)
+			break;
+	}
+	if (bp == NULL)
+		return (EINVAL);
+	s = splimp();
+	bpf_detachd(d);
+	bpf_attachd(d, bp);
+	bpf_reset_d(d);
+	splx(s);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.4 2004/12/30 23:32:55 reyk Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.5 2005/01/07 16:28:38 reyk Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -47,11 +47,6 @@
  * function of...") that I cannot set false expectations for lawyerly
  * readers.
  */
-#ifdef _KERNEL
-#ifndef DLT_IEEE802_11_RADIO
-#define	DLT_IEEE802_11_RADIO	127	/* 802.11 plus WLAN header */
-#endif
-#endif /* _KERNEL */
 
 /* XXX tcpdump/libpcap do not tolerate variable-length headers,
  * yet, so we pad every radiotap header to 64 bytes. Ugh.
